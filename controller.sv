@@ -230,7 +230,7 @@ module controller
       hwloop_regid_o               = 2'b0;
       hwloop_wb_mux_sel_o          = 1'b0;
       hwloop_cnt_mux_sel_o         = 2'b00;
-      immediate_mux_sel_o          = `IMM_I;  // TODO: Check if sensible default
+      immediate_mux_sel_o          = `IMM_I;
 
       sp_we_o                      = 1'b0;
 
@@ -429,22 +429,65 @@ module controller
             //////////////////////////////////
 
             `OPCODE_STORE: begin
-              alu_op_b_mux_sel_o = `OP_B_IMM;
-              alu_operator       = `ALU_ADD;
-              data_req           = 1'b1;
-              data_we            = 1'b1;
-              rega_used          = 1'b1;
-              regb_used          = 1'b1;
+              alu_op_b_mux_sel_o  = `OP_B_IMM;
+              immediate_mux_sel_o = `IMM_S;
+              alu_operator        = `ALU_ADD;
+              data_req            = 1'b1;
+              data_we             = 1'b1;
+              rega_used           = 1'b1;
+              regb_used           = 1'b1;
 
               unique case (instr_rdata_i) inside
                 `INSTR_SW:  data_type_o = 2'b00;
                 `INSTR_SH:  data_type_o = 2'b01;
                 `INSTR_SB:  data_type_o = 2'b10;
                 default: begin
+                  // synopsys translate_off
+                  $display("%t: Illegal STORE instruction: %b", $time, instr_rdata_i);
+                  // synopsys translate_on
                   data_req  = 1'b0;
                   data_we   = 1'b0;
                   rega_used = 1'b0;
                   regb_used = 1'b0;
+                  illegal_insn_o = 1'b1;
+                end
+              endcase // unique case (instr_rdata_i)
+            end
+
+            `OPCODE_LOAD: begin
+              alu_op_b_mux_sel_o       = `OP_B_IMM;
+              immediate_mux_sel_o      = `IMM_I;
+              alu_operator             = `ALU_ADD;
+              data_req                 = 1'b1;
+              regfile_wdata_mux_sel_o  = 1'b1;
+              regfile_we               = 1'b1;
+              rega_used                = 1'b1;
+              data_type_o              = 2'b00;
+              data_sign_extension_o    = 1'b1;
+
+              unique case (instr_rdata_i) inside
+                `INSTR_LW: ;                    // Load Word
+                `INSTR_LH: data_type_o = 2'b01; // Load Half-Word Sign-Extended
+                `INSTR_LB: data_type_o = 2'b10; // Load Byte Sign-Extended
+
+                `INSTR_LHU: begin               // Load Half-Word Zero-Extended
+                  data_type_o              = 2'b01;
+                  data_sign_extension_o    = 1'b0;
+                end
+
+                `INSTR_LBU: begin               // Load Byte Zero-Extended
+                  data_type_o              = 2'b10;
+                  data_sign_extension_o    = 1'b0;
+                end
+
+                default: begin
+                  // synopsys translate_off
+                  $display("%t: Illegal LOAD instruction: %b", $time, instr_rdata_i);
+                  // synopsys translate_on
+                  data_req   = 1'b0;
+                  regfile_we = 1'b0;
+                  rega_used  = 1'b0;
+                  illegal_insn_o = 1'b1;
                 end
               endcase // unique case (instr_rdata_i)
             end
@@ -541,61 +584,6 @@ module controller
               data_sign_extension_o  = instr_rdata_i[1];
             end
 
-            `OPCODE_LWZ, `OPCODE_LWS: begin // Load Single Word and Extend with Zero/Sign (is equal in 32-bit)
-              alu_op_b_mux_sel_o       = `OP_B_IMM;
-              immediate_mux_sel_o      = `IMM_16;
-              alu_operator             = `ALU_ADD;
-              data_req                 = 1'b1;
-              regfile_wdata_mux_sel_o  = 1'b1;
-              regfile_we               = 1'b1;
-              rega_used                = 1'b1;
-            end
-
-            `OPCODE_LBZ: begin   // Load Byte and Extend with Zero
-              alu_op_b_mux_sel_o       = `OP_B_IMM;
-              immediate_mux_sel_o      = `IMM_16;
-              alu_operator             = `ALU_ADD;
-              data_req                 = 1'b1;
-              regfile_wdata_mux_sel_o  = 1'b1;
-              regfile_we               = 1'b1;
-              data_type_o              = 2'b10;
-              rega_used                = 1'b1;
-            end
-
-            `OPCODE_LBS: begin   // Load Byte and Extend with Sign
-              alu_op_b_mux_sel_o       = `OP_B_IMM;
-              immediate_mux_sel_o      = `IMM_16;
-              alu_operator             = `ALU_ADD;
-              data_req                 = 1'b1;
-              regfile_wdata_mux_sel_o  = 1'b1;
-              regfile_we               = 1'b1;
-              data_type_o              = 2'b10;
-              data_sign_extension_o    = 1'b1;
-              rega_used                = 1'b1;
-            end
-
-            `OPCODE_LHZ: begin   // Load Half Word and Extend with Zero
-              alu_op_b_mux_sel_o       = `OP_B_IMM;
-              immediate_mux_sel_o      = `IMM_16;
-              alu_operator             = `ALU_ADD;
-              data_req                 = 1'b1;
-              regfile_wdata_mux_sel_o  = 1'b1;
-              regfile_we               = 1'b1;
-              data_type_o              = 2'b01;
-              rega_used                = 1'b1;
-            end
-
-            `OPCODE_LHS: begin   // Load Half Word and Extend with Sign
-              alu_op_b_mux_sel_o       = `OP_B_IMM;
-              immediate_mux_sel_o      = `IMM_16;
-              alu_operator             = `ALU_ADD;
-              data_req                 = 1'b1;
-              regfile_wdata_mux_sel_o  = 1'b1;
-              regfile_we               = 1'b1;
-              data_type_o              = 2'b01;
-              data_sign_extension_o    = 1'b1;
-              rega_used                = 1'b1;
-            end
 
              */
 
@@ -643,6 +631,13 @@ module controller
                 `INSTR_SLLI:  alu_operator = `ALU_SLL;  // Shift Left Logical by Immediate
                 `INSTR_SRLI:  alu_operator = `ALU_SRL;  // Shift Right Logical by Immediate
                 `INSTR_SRAI:  alu_operator = `ALU_SRA;  // Shift Right Arithmetically by Immediate
+                default: begin
+                  // synopsys translate_off
+                  $display("%t: Illegal OP-IMM instruction: %b", $time, instr_rdata_i);
+                  // synopsys translate_on
+                  regfile_alu_we = 1'b0;
+                  illegal_insn_o = 1'b1;
+                end
               endcase // unique case (instr_rdata_i)
             end // case: `OPCODE_OPIMM
 
@@ -682,6 +677,13 @@ module controller
                 `INSTR_SRA:  alu_operator = `ALU_SRA;  // Shift Right Arithmetic
                 `INSTR_OR:   alu_operator = `ALU_OR;   // Or
                 `INSTR_AND:  alu_operator = `ALU_AND;  // And
+                default: begin
+                  // synopsys translate_off
+                  $display("%t: Illegal OP instruction: %b", $time, instr_rdata_i);
+                  // synopsys translate_on
+                  regfile_alu_we = 1'b0;
+                  illegal_insn_o = 1'b1;
+                end
               endcase // unique case (instr_rdata_i)
             end
 
