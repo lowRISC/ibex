@@ -54,7 +54,7 @@ module id_stage
     output logic                        pc_mux_boot_o,
     output logic [1:0]                  exc_pc_mux_o,
     output logic                        force_nop_o,
-    output logic [31:0]                 pc_from_regfile_fw_o,
+    output logic [31:0]                 pc_from_regfile_o,
 
     input  logic [31:0]                 current_pc_if_i,
     input  logic [31:0]                 current_pc_id_i,
@@ -177,11 +177,11 @@ module id_stage
 
 
   // Immediate decoding and sign extension
-  logic [31:0] imm_i_type;
-  logic [31:0] imm_s_type;
-  logic [31:0] imm_sb_type;
-  logic [31:0] imm_u_type;
-  logic [31:0] imm_uj_type;
+  logic [31:0]     imm_i_type;
+  logic [31:0]     imm_s_type;
+  logic [31:0]     imm_sb_type;
+  logic [31:0]     imm_u_type;
+  logic [31:0]     imm_uj_type;
 
   logic [31:0]     immediate_b;       // contains the immediate for operand b
 
@@ -189,6 +189,7 @@ module id_stage
 
   logic            exc_pc_sel;
   logic [2:0]      pc_mux_sel_int;    // selects next PC in if stage
+  logic            pc_from_immediate_mux_sel = 1'b0; // TODO: FIXME
 
   logic            irq_present;
 
@@ -290,27 +291,25 @@ module id_stage
 
   assign pc_mux_sel_o = (exc_pc_sel == 1'b1) ? `PC_EXCEPTION : pc_mux_sel_int;
 
-
-  // Instruction Parts
-
-  logic [31:0] instr;
-  assign instr = instr_rdata_i; // TODO: Remove
-
-  assign imm_i_type  = { {20 {instr[31]}}, instr[31:20] };
-  assign imm_s_type  = { {20 {instr[31]}}, instr[31:25], instr[11:7] };
-  assign imm_sb_type = { {20 {instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8] };
-  assign imm_u_type  = { instr[31:12], {12 {1'b0}} };
-  assign imm_uj_type = { {20 {instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0 };
+  // immediate extraction and sign extension
+  assign imm_i_type  = { {20 {instr_rdata_i[31]}}, instr_rdata_i[31:20] };
+  assign imm_s_type  = { {20 {instr_rdata_i[31]}}, instr_rdata_i[31:25], instr_rdata_i[11:7] };
+  assign imm_sb_type = { {20 {instr_rdata_i[31]}}, instr_rdata_i[31], instr_rdata_i[7],
+                         instr_rdata_i[30:25], instr_rdata_i[11:8] };
+  assign imm_u_type  = { instr_rdata_i[31:12], {12 {1'b0}} };
+  assign imm_uj_type = { {20 {instr_rdata_i[31]}}, instr_rdata_i[19:12],
+                         instr_rdata_i[20], instr_rdata_i[30:21], 1'b0 };
 
   // source registers
-  assign regfile_addr_ra_id  = instr[19:15];
-  assign regfile_addr_rb_id  = instr[24:20];
-  //assign regfile_addr_rc_id  = instr_rdata_i[25:21];
+  assign regfile_addr_ra_id = instr_rdata_i[`REG_RS1];
+  assign regfile_addr_rb_id = instr_rdata_i[`REG_RS2];
+  //assign regfile_addr_rc_id = instr_rdata_i[25:21];
+
+  // destination registers
+  assign regfile_waddr_id = instr_rdata_i[`REG_RD];
 
   //assign alu_vec_ext         = instr_rdata_i[9:8];
 
-  // destination registers
-  assign regfile_waddr_id = instr[11:7];
 
   // Second Register Write Adress Selection
   // Used for prepost load/store and multiplier
@@ -323,6 +322,7 @@ module id_stage
     endcase
   end
 
+
   ///////////////////////////////////////////////////////////////////////////////////////
   //  ____                                         ____                  _             //
   // |  _ \ _ __ ___   __ _ _ __ __ _ _ __ ___    / ___|___  _   _ _ __ | |_ ___ _ __  //
@@ -332,8 +332,15 @@ module id_stage
   //                  |___/                                                            //
   ///////////////////////////////////////////////////////////////////////////////////////
 
-  // to instruction fetch pc mux
-  //assign pc_from_immediate_o = immediate26_id;
+  // PC offset for `PC_FROM_IMM PC mux
+  //assign pc_from_immediate_o = imm_uj_type;
+  always_comb
+  begin : pc_from_immediate_mux
+    case (pc_from_immediate_mux_sel)
+      1'b0: pc_from_immediate_o = imm_uj_type; // JAL
+      1'b1: pc_from_immediate_o = imm_i_type;  // JALR
+    endcase // case (pc_from_immediate_mux_sel)
+  end
 
   // PC Mux
   always_comb
@@ -348,13 +355,12 @@ module id_stage
   // but not allowed to forward data from load/store unit and from the
   // pre/post increment and multiplier
   always_comb
-  begin : pc_from_regfile_fw_mux
+  begin : pc_from_regfile_mux
     case (operand_b_fw_mux_sel)
-      `SEL_FW_EX:    pc_from_regfile_fw_o =  regfile_alu_wdata_fw_pc_i;
-      `SEL_FW_WB:    pc_from_regfile_fw_o =  wdata_reg_i;
-      //`SEL_REGFILE:  pc_from_regfile_fw_o =  regfile_data_rb_id;
-      //default:       pc_from_regfile_fw_o =  regfile_data_rb_id;
-      default:       pc_from_regfile_fw_o =  regfile_alu_wdata_fw_pc_i;
+      `SEL_FW_EX:    pc_from_regfile_o =  regfile_alu_wdata_fw_pc_i;
+      `SEL_FW_WB:    pc_from_regfile_o =  wdata_reg_i;
+      `SEL_REGFILE:  pc_from_regfile_o =  regfile_data_ra_id;
+      default:       pc_from_regfile_o =  regfile_data_ra_id;
     endcase; // case (operand_b_fw_mux_sel)
   end
 
