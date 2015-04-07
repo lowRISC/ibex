@@ -346,7 +346,7 @@ module id_stage
   always_comb
   begin : alu_pc_mux
     case (alu_pc_mux_sel)
-      1'b0:       current_pc = current_pc_if_i;
+      1'b0:       current_pc = current_pc_if_i;  // TODO: FIXME 1'b0 is never used
       1'b1:       current_pc = current_pc_id_i;
     endcase; // case (alu_pc_mux_sel)
   end

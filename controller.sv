@@ -207,7 +207,7 @@ module controller
     extend_immediate_o           = 1'b0;
     alu_op_a_mux_sel_o           = `OP_A_REGA_OR_FWD;
     alu_op_b_mux_sel_o           = `OP_B_REGB_OR_FWD;
-    alu_pc_mux_sel_o             = 1'b0;
+    alu_pc_mux_sel_o             = 1'b1;
 
     vector_mode_o                = `VEC_MODE32;
     scalar_replication_o         = 1'b0;
@@ -315,12 +315,11 @@ module controller
 
           `OPCODE_JAL: begin   // Jump and Link
             if (instr_rdata_i ==? `INSTR_JAL) begin
-              pc_mux_sel_o        = `PC_FROM_IMM;
-              alu_pc_mux_sel_o    = 1'b1;
+              pc_mux_sel_o        = `PC_FROM_ALU;
               alu_op_a_mux_sel_o  = `OP_A_CURRPC;
               alu_op_b_mux_sel_o  = `OP_B_IMM;
-              immediate_mux_sel_o = `IMM_C4;
-              alu_operator        = `ALU_ADD;
+              immediate_mux_sel_o = `IMM_UJ;
+              alu_operator        = `ALU_JAL;
               regfile_alu_we      = 1'b1;
             end else begin
               illegal_insn_o      = 1'b1;
@@ -329,11 +328,10 @@ module controller
 
           `OPCODE_JALR: begin  // Jump and Link Register
             if (instr_rdata_i ==? `INSTR_JALR) begin
-              pc_mux_sel_o        = `PC_FROM_REGFILE;
-              alu_op_a_mux_sel_o  = `OP_A_CURRPC;
+              pc_mux_sel_o        = `PC_FROM_ALU;
               alu_op_b_mux_sel_o  = `OP_B_IMM;
-              immediate_mux_sel_o = `IMM_C4;
-              alu_operator        = `ALU_ADD;
+              immediate_mux_sel_o = `IMM_I;
+              alu_operator        = `ALU_JAL;
               regfile_alu_we      = 1'b1;
               rega_used           = 1'b1;
             end else begin
