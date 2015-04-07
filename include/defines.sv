@@ -84,9 +84,6 @@
 `define OPCODE_SF     6'h39
  */
 
-
-
-
 `define OPCODE_SYSTEM 7'h73
 `define OPCODE_FENCE  7'h0f
 `define OPCODE_OP     7'h33
@@ -147,12 +144,12 @@
 // SYSTEM
 `define INSTR_SCALL      { {11 {1'b0}}, 1'b0, {13 {1'b0}}, `OPCODE_SYSTEM }
 `define INSTR_SBREAK     { {11 {1'b0}}, 1'b1, {13 {1'b0}}, `OPCODE_SYSTEM }
-`define INSTR_RDCYCLE    { 5'b11000, {5 {5'b0}}, 2'b00, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
-`define INSTR_RDCYCLEH   { 5'b11001, {5 {5'b0}}, 2'b00, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
-`define INSTR_RDTIME     { 5'b11000, {5 {5'b0}}, 2'b01, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
-`define INSTR_RDTIMEH    { 5'b11001, {5 {5'b0}}, 2'b01, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
-`define INSTR_RDINSTRET  { 5'b11000, {5 {5'b0}}, 2'b10, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
-`define INSTR_RDINSTRETH { 5'b11001, {5 {5'b0}}, 2'b10, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
+`define INSTR_RDCYCLE    { 5'b11000, {5 {1'b0}}, 2'b00, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
+`define INSTR_RDCYCLEH   { 5'b11001, {5 {1'b0}}, 2'b00, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
+`define INSTR_RDTIME     { 5'b11000, {5 {1'b0}}, 2'b01, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
+`define INSTR_RDTIMEH    { 5'b11001, {5 {1'b0}}, 2'b01, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
+`define INSTR_RDINSTRET  { 5'b11000, {5 {1'b0}}, 2'b10, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
+`define INSTR_RDINSTRETH { 5'b11001, {5 {1'b0}}, 2'b10, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
 
 // RV32M
 `define INSTR_MUL        { 7'b0000001, {10 {1'b?}}, 3'b000, {5 {1'b?}}, `OPCODE_OP }
@@ -170,6 +167,36 @@
 `define REG_RS1 19:15
 `define REG_RS2 24:20
 `define REG_RD  11:07
+
+
+// synopsis translate off
+function void prettyPrintInstruction(input [31:0] instr);
+  string opcode;
+  begin
+    unique case (instr[6:0])
+      `OPCODE_SYSTEM: opcode = "SYSTEM";
+      `OPCODE_FENCE:  opcode = "FENCE";
+      `OPCODE_OP:     opcode = "OP";
+      `OPCODE_OPIMM:  opcode = "OPIMM";
+      `OPCODE_STORE:  opcode = "STORE";
+      `OPCODE_LOAD:   opcode = "LOAD";
+      `OPCODE_BRANCH: opcode = "BRANCH";
+      `OPCODE_JALR:   opcode = "JALR";
+      `OPCODE_JAL:    opcode = "JAL";
+      `OPCODE_AUIPC:  opcode = "AUIPC";
+      `OPCODE_LUI:    opcode = "LUI";
+      default:        opcode = "Unknown";
+    endcase // unique case (instr[6:0])
+
+    $display("%t: %s Instruction 0x%h.", $time, opcode, instr[31:0]);
+    $display("%t:   | fct7  | rs2 | rs1 |   | rd  | opc.  |", $time);
+    $display("%t: 0b %b %b %b %b %b %b", $time, instr[31:25], instr[`REG_RS2],
+             instr[`REG_RS1], instr[14:12], instr[`REG_RD], instr[6:0]);
+    $display();
+  end
+endfunction // prettyPrintInstruction
+// synopsis translate on
+
 
 
 //////////////////////////////////////////////////////////////////////////////

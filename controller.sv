@@ -303,13 +303,6 @@ module controller
 
       DECODE:
       begin
-        // synopsys translate_off
-        $display("%t: Decoding Instruction", $time);
-        $display("%t:   | fct7  | rs2 | rs1 |   | rd  | opc.  |", $time);
-        $display("%t: 0b %b %b %b %b %b %b", $time, instr_rdata_i[31:25], instr_rdata_i[`REG_RS2],
-                 instr_rdata_i[`REG_RS1], instr_rdata_i[14:12], instr_rdata_i[`REG_RD],
-                 instr_rdata_i[6:0]);
-        // synopsys translate_on
         unique case (instr_rdata_i[6:0])
 
           //////////////////////////////////////
@@ -321,36 +314,30 @@ module controller
           //////////////////////////////////////
 
           `OPCODE_JAL: begin   // Jump and Link
-            if (instr_rdata_i inside `INSTR_JAL) begin
-              pc_mux_sel_o                = `PC_FROM_IMM;
-              alu_pc_mux_sel_o            = 1'b1;
-              alu_op_a_mux_sel_o          = `OP_A_CURRPC;
-              alu_op_b_mux_sel_o          = `OP_B_IMM;
-              immediate_mux_sel_o         = `IMM_C4;
-              alu_operator                = `ALU_ADD;
-              regfile_alu_we              = 1'b1;
+            if (instr_rdata_i ==? `INSTR_JAL) begin
+              pc_mux_sel_o        = `PC_FROM_IMM;
+              alu_pc_mux_sel_o    = 1'b1;
+              alu_op_a_mux_sel_o  = `OP_A_CURRPC;
+              alu_op_b_mux_sel_o  = `OP_B_IMM;
+              immediate_mux_sel_o = `IMM_C4;
+              alu_operator        = `ALU_ADD;
+              regfile_alu_we      = 1'b1;
             end else begin
-              // synopsys translate_off
-              $display("%t: Illegal JAL instruction: %b", $time, instr_rdata_i);
-              // synopsys translate_on
-              illegal_insn_o = 1'b1;
+              illegal_insn_o      = 1'b1;
             end
           end
 
           `OPCODE_JALR: begin  // Jump and Link Register
-            if (instr_rdata_i inside `INSTR_JALR) begin
-              pc_mux_sel_o                 = `PC_FROM_REGFILE;
-              alu_op_a_mux_sel_o           = `OP_A_CURRPC;
-              alu_op_b_mux_sel_o           = `OP_B_IMM;
-              immediate_mux_sel_o          = `IMM_C4;
-              alu_operator                 = `ALU_ADD;
-              regfile_alu_we               = 1'b1;
-              rega_used                    = 1'b1;
+            if (instr_rdata_i ==? `INSTR_JALR) begin
+              pc_mux_sel_o        = `PC_FROM_REGFILE;
+              alu_op_a_mux_sel_o  = `OP_A_CURRPC;
+              alu_op_b_mux_sel_o  = `OP_B_IMM;
+              immediate_mux_sel_o = `IMM_C4;
+              alu_operator        = `ALU_ADD;
+              regfile_alu_we      = 1'b1;
+              rega_used           = 1'b1;
             end else begin
-              // synopsys translate_off
-              $display("%t: Illegal JALR instruction: %b", $time, instr_rdata_i);
-              // synopsys translate_on
-              illegal_insn_o = 1'b1;
+              illegal_insn_o      = 1'b1;
             end
           end
 
@@ -464,9 +451,6 @@ module controller
               `INSTR_SH:  data_type_o = 2'b01;
               `INSTR_SB:  data_type_o = 2'b10;
               default: begin
-                // synopsys translate_off
-                $display("%t: Illegal STORE instruction: %b", $time, instr_rdata_i);
-                // synopsys translate_on
                 data_req  = 1'b0;
                 data_we   = 1'b0;
                 rega_used = 1'b0;
@@ -503,9 +487,6 @@ module controller
               end
 
               default: begin
-                // synopsys translate_off
-                $display("%t: Illegal LOAD instruction: %b", $time, instr_rdata_i);
-                // synopsys translate_on
                 data_req   = 1'b0;
                 regfile_we = 1'b0;
                 rega_used  = 1'b0;
@@ -652,9 +633,6 @@ module controller
               `INSTR_SRLI:  alu_operator = `ALU_SRL;  // Shift Right Logical by Immediate
               `INSTR_SRAI:  alu_operator = `ALU_SRA;  // Shift Right Arithmetically by Immediate
               default: begin
-                // synopsys translate_off
-                $display("%t: Illegal OP-IMM instruction: %b", $time, instr_rdata_i);
-                // synopsys translate_on
                 regfile_alu_we = 1'b0;
                 illegal_insn_o = 1'b1;
               end
@@ -1158,9 +1136,6 @@ module controller
           */
 
           default: begin
-            // synopsys translate_off
-            $display("%t: Unknown Instruction 0x%h.", $time, instr_rdata_i[31:0]);
-            // synopsys translate_on
             illegal_insn_o = 1'b1;
             // TODO: Replace with exception
             pc_mux_sel_o = `NO_INCR;
@@ -1168,8 +1143,12 @@ module controller
 
         endcase; // case (instr_rdata_i[6:0])
 
-        if (illegal_insn_o = 1'b1) begin
-
+        if (illegal_insn_o == 1'b1) begin
+          // synopsys translate_off
+          $display("%t: Illegal instruction:", $time, instr_rdata_i);
+          prettyPrintInstruction(instr_rdata_i);
+          $stop;
+          // synopsys translate_on
         end
 
         // misaligned access was detected by the LSU
