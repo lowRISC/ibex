@@ -159,13 +159,17 @@
 `define INSTR_MULH       { 7'b0000001, {10 {1'b?}}, 3'b001, {5 {1'b?}}, `OPCODE_OP }
 `define INSTR_MULHSU     { 7'b0000001, {10 {1'b?}}, 3'b010, {5 {1'b?}}, `OPCODE_OP }
 `define INSTR_MULHU      { 7'b0000001, {10 {1'b?}}, 3'b011, {5 {1'b?}}, `OPCODE_OP }
-/*
+/* not implemented
 `define INSTR_DIV        { 7'b0000001, {10 {1'b?}}, 3'b100, {5 {1'b?}}, `OPCODE_OP }
 `define INSTR_DIVU       { 7'b0000001, {10 {1'b?}}, 3'b101, {5 {1'b?}}, `OPCODE_OP }
 `define INSTR_REM        { 7'b0000001, {10 {1'b?}}, 3'b110, {5 {1'b?}}, `OPCODE_OP }
 `define INSTR_REMU       { 7'b0000001, {10 {1'b?}}, 3'b111, {5 {1'b?}}, `OPCODE_OP }
 */
 
+// Source/Destination register instruction index
+`define REG_RS1 19:15
+`define REG_RS2 24:20
+`define REG_RD  11:07
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -289,10 +293,6 @@
 `define SR_OV  5'd11
 `define SR_DSX 5'd13
 
-//igor addon
-`define REG_A 20:16
-`define REG_B 15:11
-
 // forwarding operand mux
 `define SEL_REGFILE    2'b00
 `define SEL_FW_EX      2'b01
@@ -324,7 +324,7 @@
 `define IMM_SB 3'b011
 `define IMM_U  3'b100
 `define IMM_UJ 3'b101
-
+`define IMM_C4 3'b110
 
 // PC mux selector defines
 `define INCR_PC          3'b000

@@ -359,7 +359,7 @@ module riscv_core
         .exc_pc_mux_o                 ( exc_pc_mux_id                 ),
         .force_nop_o                  ( force_nop_id                  ),
 
-        .pc_from_regfile_fw_o         ( pc_from_regfile_id            ),
+        .pc_from_regfile_o            ( pc_from_regfile_id            ),
         .current_pc_if_i              ( current_pc_if                 ),
         .current_pc_id_i              ( current_pc_id                 ),
         .pc_from_immediate_o          ( pc_from_immediate_id          ),
