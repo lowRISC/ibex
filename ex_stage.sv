@@ -128,7 +128,6 @@ module ex_stage
 );
 
 
-
   // Alu outputs - OVerflow and CarrY
   logic         alu_overflow_int;
   logic         alu_carry_int;
@@ -143,7 +142,6 @@ module ex_stage
   logic         mult_overflow_int;
 
 
-
   // Result Selection: Select between ALU output signals and MUL
   assign carry_o                   = (mult_is_running_i == 1'b1) ? mult_carry_int    : alu_carry_int;
   assign overflow_o                = (mult_is_running_i == 1'b1) ? mult_overflow_int : alu_overflow_int;
@@ -156,10 +154,6 @@ module ex_stage
   // generate flags: goes to special purpose register
   assign set_overflow_o        = (stall_ex_i == 1'b0) ? set_overflow_i : 1'b0;
   assign set_carry_o           = (stall_ex_i == 1'b0) ? set_carry_i    : 1'b0;
-
-  //NOTE Igor fix: replaced alu_adder_int with alu_adder_lsu_int --> Now data_addr is calculated with
-  //NOTE a dedicated adder, no carry is considered , just op_a + op_b from id stage
-  assign data_addr_ex_o        = (prepost_useincr_i == 1'b1) ? alu_adder_lsu_int : alu_operand_a_i;
 
   // hwloop mux. selects the right data to be sent to the hwloop registers (start/end-address and counter)
   always_comb
@@ -177,6 +171,17 @@ module ex_stage
   assign hwloop_cnt_data_o = hwloop_cnt_i;
 
 
+  // LSU address calculation
+  // NOTE Igor fix: replaced alu_adder_int with alu_adder_lsu_int --> Now data_addr is calculated with
+  // NOTE a dedicated adder, no carry is considered , just op_a + op_b from id stage
+`ifdef TCDM_ADDR_PRECAL
+  assign alu_adder_lsu_int = alu_adder_i;
+`else
+  assign alu_adder_lsu_int = alu_operand_a_i + alu_operand_b_i;
+`endif
+  assign data_addr_ex_o    = (prepost_useincr_i == 1'b1) ? alu_adder_lsu_int : alu_operand_a_i;
+
+
   ////////////////////////////
   //     _    _    _   _    //
   //    / \  | |  | | | |   //
@@ -192,9 +197,7 @@ module ex_stage
    .operand_b_i   ( alu_operand_b_i   ),
    .carry_i       ( alu_carry_i       ),
    .flag_i        ( alu_flag_i        ),
-`ifdef TCDM_ADDR_PRECAL
-   .adder_i       ( alu_adder_i       ),
-`endif
+
    .vector_mode_i ( vector_mode_i     ),
    .cmp_mode_i    ( alu_cmp_mode_i    ),
    .vec_ext_i     ( alu_vec_ext_i     ),
@@ -242,29 +245,29 @@ module ex_stage
   ///////////////////////////////////////
   always_ff @(posedge clk, negedge rst_n)
   begin : EX_WB_Pipeline_Register
-     if (rst_n == 1'b0)
-     begin
-        regfile_wdata_wb_o          <= 16'h0000;
-        regfile_waddr_wb_o          <= 5'b0_0000;
-        regfile_wdata_mux_sel_wb_o  <= 1'b0;
-        regfile_we_wb_o             <= 1'b0;
-        regfile_rb_data_wb_o        <= 32'h0000_0000;
-        sp_we_wb_o                  <= 1'b0;
-        eoc_o                       <= 1'b0;
-     end
-     else
-     begin
-        if (stall_wb_i == 1'b0)
-        begin
-           regfile_we_wb_o             <= regfile_we_i;
-           regfile_waddr_wb_o          <= regfile_waddr_i;
-           regfile_wdata_wb_o          <= alu_result[15:0];                // this is only used for SPR address
-           regfile_wdata_mux_sel_wb_o  <= regfile_wdata_mux_sel_i;
-           regfile_rb_data_wb_o        <= regfile_rb_data_i;
-           sp_we_wb_o                  <= sp_we_i;
-           eoc_o                       <= eoc_i;
-        end
-     end
+    if (rst_n == 1'b0)
+    begin
+      regfile_wdata_wb_o           <= 16'h0000;
+      regfile_waddr_wb_o           <= 5'b0_0000;
+      regfile_wdata_mux_sel_wb_o   <= 1'b0;
+      regfile_we_wb_o              <= 1'b0;
+      regfile_rb_data_wb_o         <= 32'h0000_0000;
+      sp_we_wb_o                   <= 1'b0;
+      eoc_o                        <= 1'b0;
+    end
+    else
+    begin
+      if (stall_wb_i == 1'b0)
+      begin
+        regfile_we_wb_o            <= regfile_we_i;
+        regfile_waddr_wb_o         <= regfile_waddr_i;
+        regfile_wdata_wb_o         <= alu_result[15:0];         // this is only used for SPR address
+        regfile_wdata_mux_sel_wb_o <= regfile_wdata_mux_sel_i;
+        regfile_rb_data_wb_o       <= regfile_rb_data_i;
+        sp_we_wb_o                 <= sp_we_i;
+        eoc_o                      <= eoc_i;
+      end
+    end
   end
 
 endmodule

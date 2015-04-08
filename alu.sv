@@ -38,27 +38,17 @@ module alu
    input  logic [31:0]              operand_b_i,
    input  logic                     carry_i,
    input  logic                     flag_i,
-`ifdef TCDM_ADDR_PRECAL
-   input logic [31:0]               adder_i,
-`endif
 
    input  logic [1:0]               vector_mode_i,
    input  logic [1:0]               cmp_mode_i,
    input  logic [1:0]               vec_ext_i,
 
-   output logic [31:0]              adder_lsu_o,
    output logic [31:0]              result_o,
    output logic                     overflow_o,
    output logic                     carry_o,
    output logic                     flag_o
 );
 
-
-`ifdef TCDM_ADDR_PRECAL
-  assign adder_lsu_o = adder_i;
-`else
-  assign adder_lsu_o = operand_a_i + operand_b_i;
-`endif
 
   logic [31:0] operand_a_rev;     // bit reversed signal of operand_a_i
 
