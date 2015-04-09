@@ -53,6 +53,7 @@ module controller
   output logic                         extend_immediate_o,         // Extend a 16 bit immediate to 32 bit
   output logic [1:0]                   alu_op_a_mux_sel_o,         // Operator a is selected between reg value, PC or immediate
   output logic [1:0]                   alu_op_b_mux_sel_o,         // Operator b is selected between reg value or immediate
+  output logic                         alu_op_c_mux_sel_o,         // Operator c is selected between reg value or PC
   output logic                         alu_pc_mux_sel_o,           // selects IF or ID PC for ALU computations
   output logic [3:0]                   immediate_mux_sel_o,
 
@@ -134,6 +135,9 @@ module controller
   output logic [1:0]                   operand_b_fw_mux_sel_o,      // regfile rb data selector form ID stage
   output logic [1:0]                   operand_c_fw_mux_sel_o,      // regfile rc data selector form ID stage
 
+  // Jump target calcuation done detection
+  input  logic                         jump_in_ex_i,                // jump is being calculated in ALU
+
   output logic                         drop_instruction_o,          // prevent instruction to enter ID stage
 `ifdef BRANCH_PREDICTION
   output logic                         wrong_branch_taken_o,        // 1 if the wrong branch was selected
@@ -175,7 +179,7 @@ module controller
   logic       mfspr_stall;
   logic       instr_ack_stall;
   logic       load_stall;
-  logic       jr_stall;
+  logic       j_stall;
 
   logic       set_npc;
 `ifdef BRANCH_PREDICTION
@@ -207,6 +211,7 @@ module controller
     extend_immediate_o           = 1'b0;
     alu_op_a_mux_sel_o           = `OP_A_REGA_OR_FWD;
     alu_op_b_mux_sel_o           = `OP_B_REGB_OR_FWD;
+    alu_op_c_mux_sel_o           = `OP_C_REGC_OR_FWD;
     alu_pc_mux_sel_o             = 1'b1;
 
     vector_mode_o                = `VEC_MODE32;
@@ -318,6 +323,7 @@ module controller
               pc_mux_sel_o        = `PC_FROM_ALU;
               alu_op_a_mux_sel_o  = `OP_A_CURRPC;
               alu_op_b_mux_sel_o  = `OP_B_IMM;
+              alu_op_c_mux_sel_o  = `OP_C_CURRPC;
               immediate_mux_sel_o = `IMM_UJ;
               alu_operator        = `ALU_JAL;
               regfile_alu_we      = 1'b1;
@@ -330,6 +336,7 @@ module controller
             if (instr_rdata_i ==? `INSTR_JALR) begin
               pc_mux_sel_o        = `PC_FROM_ALU;
               alu_op_b_mux_sel_o  = `OP_B_IMM;
+              alu_op_c_mux_sel_o  = `OP_C_CURRPC;
               immediate_mux_sel_o = `IMM_I;
               alu_operator        = `ALU_JAL;
               regfile_alu_we      = 1'b1;
@@ -1141,13 +1148,13 @@ module controller
 
         endcase; // case (instr_rdata_i[6:0])
 
+        // synopsys translate_off
         if (illegal_insn_o == 1'b1) begin
-          // synopsys translate_off
-          $display("%t: Illegal instruction:", $time, instr_rdata_i);
-          prettyPrintInstruction(instr_rdata_i);
+          $display("%t: Illegal instruction:", $time);
+          prettyPrintInstruction(instr_rdata_i, id_stage.current_pc_id_i);
           $stop;
-          // synopsys translate_on
         end
+        // synopsys translate_on
 
         // misaligned access was detected by the LSU
         if (data_misaligned_i == 1'b1)
@@ -1196,7 +1203,7 @@ module controller
      mfspr_stall   = 1'b0;
      mtspr_stall   = 1'b0;
      load_stall    = 1'b0;
-     jr_stall      = 1'b0;
+     j_stall       = 1'b0;
      deassert_we   = 1'b0;
 
 
@@ -1230,16 +1237,24 @@ module controller
      // Stall because of jr path
      // - Load results cannot directly be forwarded to PC
      // - Multiplication results cannot be forwarded to PC
-     if (((instr_rdata_i[6:0] == `OPCODE_JALR) || (instr_rdata_i[6:0] == `OPCODE_JAL)) &&
+     if ((instr_rdata_i[6:0] == `OPCODE_JALR) &&
          (((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_b_id == 1'b1) && (data_rvalid_i == 1'b1)) ||
           ((regfile_we_ex_i == 1'b1) && (reg_d_ex_is_reg_b_id == 1'b1))                            ||
           ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_b_id == 1'b1) && (mult_is_running_ex_i == 1'b1))) )
      begin
-       jr_stall        = 1'b1;
+       j_stall         = 1'b1;
        deassert_we     = 1'b1;
      end
 
-     /*
+     // Stall because of JAL/JALR
+     // Stall until jump target is calculated in EX (1 cycle, then fetch instruction)
+     if ( (instr_rdata_i[6:0] == `OPCODE_JAL || instr_rdata_i[6:0] == `OPCODE_JALR) &&
+          (jump_in_ex_i == 1'b0) )
+     begin
+       j_stall           = 1'b1;
+       //deassert_we     = 1'b1;
+     end
+
 `ifdef BRANCH_PREDICTION
       // Stall because of set_flag path
      if (wrong_branch_taken)
@@ -1247,14 +1262,13 @@ module controller
        deassert_we     = 1'b1;
      end
 `endif
-      */
 
    end
 
 `ifdef BRANCH_PREDICTION
-   assign drop_instruction_o = wrong_branch_taken;
+   assign drop_instruction_o = wrong_branch_taken | j_stall;
 `else
-   assign drop_instruction_o = 1'b0;
+   assign drop_instruction_o = j_stall;
 `endif
 
    // Stall because of IF miss
@@ -1285,8 +1299,8 @@ module controller
      // we unstall the if_stage if the debug unit wants to set a new
      // pc, so that the new value gets written into current_pc_if and is
      // used by the instr_core_interface
-     stall_if_o = (instr_ack_stall | mfspr_stall | mtspr_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_stall_i | (~pc_valid_i));
-     stall_id_o =  instr_ack_stall | mfspr_stall | mtspr_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_stall_i;
+     stall_if_o = (instr_ack_stall | mfspr_stall | mtspr_stall | load_stall | j_stall | lsu_stall | misalign_stall | dbg_stall_i | (~pc_valid_i));
+     stall_id_o =  instr_ack_stall | mfspr_stall | mtspr_stall | load_stall | j_stall | lsu_stall | misalign_stall | dbg_stall_i;
      stall_ex_o = instr_ack_stall | lsu_stall | dbg_stall_i;
      stall_wb_o = lsu_stall | dbg_stall_i;
    end
@@ -1297,14 +1311,14 @@ module controller
    //  RiscV register encoding:  rs1 is [19:15], rs2 is [24:20], rd is [11:7]                //
    //  Or10n register encoding:  ra  is [20:16], rb  is [15:11], rd is [25:21]               //
    ////////////////////////////////////////////////////////////////////////////////////////////
-   assign reg_d_ex_is_reg_a_id  = (regfile_waddr_ex_i     == instr_rdata_i[`REG_RS1]) && (rega_used == 1'b1);
-   assign reg_d_ex_is_reg_b_id  = (regfile_waddr_ex_i     == instr_rdata_i[`REG_RS2]) && (regb_used == 1'b1);
-   assign reg_d_ex_is_reg_c_id  = (regfile_waddr_ex_i     == instr_rdata_i[`REG_RD])  && (regc_used == 1'b1);
-   assign reg_d_wb_is_reg_a_id  = (regfile_waddr_wb_i     == instr_rdata_i[`REG_RS1]) && (rega_used == 1'b1);
-   assign reg_d_wb_is_reg_b_id  = (regfile_waddr_wb_i     == instr_rdata_i[`REG_RS2]) && (regb_used == 1'b1);
-   assign reg_d_wb_is_reg_c_id  = (regfile_waddr_wb_i     == instr_rdata_i[`REG_RD])  && (regc_used == 1'b1);
-   assign reg_d_alu_is_reg_a_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_RS1]) && (rega_used == 1'b1);
-   assign reg_d_alu_is_reg_b_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_RS2]) && (regb_used == 1'b1);
+   assign reg_d_ex_is_reg_a_id  = (regfile_waddr_ex_i     == instr_rdata_i[`REG_S1]) && (rega_used == 1'b1);
+   assign reg_d_ex_is_reg_b_id  = (regfile_waddr_ex_i     == instr_rdata_i[`REG_S2]) && (regb_used == 1'b1);
+   assign reg_d_ex_is_reg_c_id  = (regfile_waddr_ex_i     == instr_rdata_i[`REG_D])  && (regc_used == 1'b1);
+   assign reg_d_wb_is_reg_a_id  = (regfile_waddr_wb_i     == instr_rdata_i[`REG_S1]) && (rega_used == 1'b1);
+   assign reg_d_wb_is_reg_b_id  = (regfile_waddr_wb_i     == instr_rdata_i[`REG_S2]) && (regb_used == 1'b1);
+   assign reg_d_wb_is_reg_c_id  = (regfile_waddr_wb_i     == instr_rdata_i[`REG_D])  && (regc_used == 1'b1);
+   assign reg_d_alu_is_reg_a_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_S1]) && (rega_used == 1'b1);
+   assign reg_d_alu_is_reg_b_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_S2]) && (regb_used == 1'b1);
    //assign reg_d_alu_is_reg_c_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_RD])  && (regc_used == 1'b1);
 
    always_comb

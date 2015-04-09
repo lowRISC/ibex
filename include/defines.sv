@@ -164,13 +164,13 @@
 */
 
 // Source/Destination register instruction index
-`define REG_RS1 19:15
-`define REG_RS2 24:20
-`define REG_RD  11:07
+`define REG_S1 19:15
+`define REG_S2 24:20
+`define REG_D  11:07
 
 
 // synopsis translate off
-function void prettyPrintInstruction(input [31:0] instr);
+function void prettyPrintInstruction(input [31:0] instr, input [31:0] pc);
   string opcode;
   begin
     unique case (instr[6:0])
@@ -188,10 +188,10 @@ function void prettyPrintInstruction(input [31:0] instr);
       default:        opcode = "Unknown";
     endcase // unique case (instr[6:0])
 
-    $display("%t: %s Instruction 0x%h.", $time, opcode, instr[31:0]);
+    $display("%t: %s Instruction 0x%h at 0x%h.", $time, opcode, instr[31:0], pc[31:0]);
     $display("%t:   | fct7  | rs2 | rs1 |   | rd  | opc.  |", $time);
-    $display("%t: 0b %b %b %b %b %b %b", $time, instr[31:25], instr[`REG_RS2],
-             instr[`REG_RS1], instr[14:12], instr[`REG_RD], instr[6:0]);
+    $display("%t: 0b %b %b %b %b %b %b", $time, instr[31:25], instr[`REG_S2],
+             instr[`REG_S1], instr[14:12], instr[`REG_D], instr[6:0]);
     $display();
   end
 endfunction // prettyPrintInstruction
@@ -268,6 +268,9 @@ endfunction // prettyPrintInstruction
 `define ALU_FL1   6'b11_0011
 `define ALU_CLB   6'b11_0001
 
+// next PC and PC+4 computation for JAL/JALR in RiscV
+`define ALU_JAL   6'b11_1000
+
 
 // Vector Mode
 `define VEC_MODE32  2'b00
@@ -321,20 +324,24 @@ endfunction // prettyPrintInstruction
 `define SR_DSX 5'd13
 
 // forwarding operand mux
-`define SEL_REGFILE    2'b00
-`define SEL_FW_EX      2'b01
-`define SEL_FW_WB      2'b10
+`define SEL_REGFILE      2'b00
+`define SEL_FW_EX        2'b01
+`define SEL_FW_WB        2'b10
 
 // operand a selection
-`define OP_A_REGA_OR_FWD   2'b00
-`define OP_A_CURRPC        2'b10
-`define OP_A_IMM16         2'b11
-`define OP_A_ZERO          2'b11
+`define OP_A_REGA_OR_FWD 2'b00
+`define OP_A_CURRPC      2'b10
+`define OP_A_IMM16       2'b11
+`define OP_A_ZERO        2'b11
 
 // operand b selection
-`define OP_B_REGB_OR_FWD   2'b00
-`define OP_B_REGC_OR_FWD   2'b01
-`define OP_B_IMM           2'b10
+`define OP_B_REGB_OR_FWD 2'b00
+`define OP_B_REGC_OR_FWD 2'b01
+`define OP_B_IMM         2'b10
+
+// operand c selection
+`define OP_C_REGC_OR_FWD 1'b0
+`define OP_C_CURRPC      1'b1
 
 // immediate selection
 // - `define IMM_5N11           4'b0000
@@ -357,7 +364,8 @@ endfunction // prettyPrintInstruction
 `define INCR_PC          3'b000
 `define NO_INCR          3'b001
 `define PC_FROM_REGFILE  3'b010
-`define PC_FROM_IMM      3'b011
+//`define PC_FROM_IMM      3'b011  Replaced in RiscV
+`define PC_FROM_ALU      3'b011
 `define PC_EXCEPTION     3'b100
 `define EXC_PC_REG       3'b101
 `define HWLOOP_ADDR      3'b110

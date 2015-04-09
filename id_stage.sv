@@ -177,111 +177,113 @@ module id_stage
 
 
   // Immediate decoding and sign extension
-  logic [31:0]     imm_i_type;
-  logic [31:0]     imm_s_type;
-  logic [31:0]     imm_sb_type;
-  logic [31:0]     imm_u_type;
-  logic [31:0]     imm_uj_type;
+  logic [31:0] imm_i_type;
+  logic [31:0] imm_s_type;
+  logic [31:0] imm_sb_type;
+  logic [31:0] imm_u_type;
+  logic [31:0] imm_uj_type;
 
-  logic [31:0]     immediate_b;       // contains the immediate for operand b
+  logic [31:0] immediate_b;       // contains the immediate for operand b
 
-  logic [31:0]     current_pc;        // PC to be used in ALU (either IF or ID)
+  logic [31:0] current_pc;        // PC to be used in ALU (either IF or ID)
 
-  logic            exc_pc_sel;
-  logic [2:0]      pc_mux_sel_int;    // selects next PC in if stage
-  logic            pc_from_immediate_mux_sel = 1'b0; // TODO: FIXME
+  logic        exc_pc_sel;
+  logic [2:0]  pc_mux_sel_int;    // selects next PC in if stage
+  //logic        pc_from_immediate_mux_sel = 1'b0; // TODO: FIXME (remove)
 
-  logic            irq_present;
+  logic        irq_present;
 
   // Signals running between controller and exception controller
-  logic            jump_in_id;
-  logic            jump_in_ex;        // registered copy of jump_in_id
-  logic            illegal_insn;
-  logic            trap_insn;
-  logic            pipe_flush;
-  logic            pc_valid;
-  logic            clear_isr_running;
+  logic        jump_in_id;
+  logic        jump_in_ex;        // registered copy of jump_in_id
+  logic        illegal_insn;
+  logic        trap_insn;
+  logic        pipe_flush;
+  logic        pc_valid;
+  logic        clear_isr_running;
 
 
-  logic [4:0]      regfile_addr_ra_id;
-  logic [4:0]      regfile_addr_rb_id;
-  logic [4:0]      regfile_addr_rc_id;
+  logic [4:0]  regfile_addr_ra_id;
+  logic [4:0]  regfile_addr_rb_id;
+  logic [4:0]  regfile_addr_rc_id;
 
-  logic [4:0]      regfile_waddr_id;
-  logic [4:0]      regfile_alu_waddr_id;
-  logic            regfile_alu_we_id;
+  logic [4:0]  regfile_waddr_id;
+  logic [4:0]  regfile_alu_waddr_id;
+  logic        regfile_alu_we_id;
 
-  logic [31:0]     regfile_data_ra_id;
-  logic [31:0]     regfile_data_rb_id;
-  logic [31:0]     regfile_data_rc_id;
+  logic [31:0] regfile_data_ra_id;
+  logic [31:0] regfile_data_rb_id;
+  logic [31:0] regfile_data_rc_id;
 
-  logic            imm_sign_ext_sel;
+  logic        imm_sign_ext_sel;
 
   // ALU Control
-  logic [`ALU_OP_WIDTH-1:0]  alu_operator;
-  logic [1:0]      alu_op_a_mux_sel;
-  logic [1:0]      alu_op_b_mux_sel;
-  logic            scalar_replication;
+  logic [`ALU_OP_WIDTH-1:0] alu_operator;
+  logic [1:0]  alu_op_a_mux_sel;
+  logic [1:0]  alu_op_b_mux_sel;
+  logic        alu_op_c_mux_sel;
+  logic        scalar_replication;
 
-  logic [1:0]      vector_mode;
-  logic [1:0]      alu_cmp_mode;
-  logic [1:0]      alu_vec_ext;
+  logic [1:0]  vector_mode;
+  logic [1:0]  alu_cmp_mode;
+  logic [1:0]  alu_vec_ext;
 
-  logic            alu_pc_mux_sel;
-  logic [3:0]      immediate_mux_sel;
+  logic        alu_pc_mux_sel;
+  logic [3:0]  immediate_mux_sel;
 
   // Multiplier Control
-  logic            mult_is_running;  // output of the controller (1 if the opcode is a multiplication)
-  logic [1:0]      mult_sel_subword; // Select a subword when doing multiplications
-  logic [1:0]      mult_signed_mode; // Signed mode multiplication at the output of the controller, and before the pipe registers
-  logic            mult_use_carry;   // Enables carry in for the MAC
-  logic            mult_mac_en;      // Enables the use of the accumulator
+  logic        mult_is_running;  // output of the controller (1 if the opcode is a multiplication)
+  logic [1:0]  mult_sel_subword; // Select a subword when doing multiplications
+  logic [1:0]  mult_signed_mode; // Signed mode multiplication at the output of the controller, and before the pipe registers
+  logic        mult_use_carry;   // Enables carry in for the MAC
+  logic        mult_mac_en;      // Enables the use of the accumulator
 
-  logic            eoc;              // End of computation generated from the controller
+  logic        eoc;              // End of computation generated from the controller
 
   // Register Write Control
-  logic            regfile_wdata_mux_sel;
-  logic            regfile_we_id;
-  logic [1:0]      regfile_alu_waddr_mux_sel;  // TODO: FixMe -> 1bit
+  logic        regfile_wdata_mux_sel;
+  logic        regfile_we_id;
+  logic [1:0]  regfile_alu_waddr_mux_sel;  // TODO: FixMe -> 1bit
 
   // Special-Purpose Register Write Control
-  logic            sp_we_id;
+  logic        sp_we_id;
 
   // Data Memory Control
-  logic            data_we_id;
-  logic [1:0]      data_type_id;
-  logic            data_sign_ext_id;
-  logic [1:0]      data_reg_offset_id;
-  logic            data_req_id;
+  logic        data_we_id;
+  logic [1:0]  data_type_id;
+  logic        data_sign_ext_id;
+  logic [1:0]  data_reg_offset_id;
+  logic        data_req_id;
 
   // hwloop signals
-  logic [1:0]      hwloop_regid;
-  logic [2:0]      hwloop_we;
-  logic            hwloop_wb_mux_sel;
-  logic [1:0]      hwloop_cnt_mux_sel;
-  logic [31:0]     hwloop_cnt;
-  logic            hwloop_jump;
-  logic            hwloop_enable;
+  logic [1:0]  hwloop_regid;
+  logic [2:0]  hwloop_we;
+  logic        hwloop_wb_mux_sel;
+  logic [1:0]  hwloop_cnt_mux_sel;
+  logic [31:0] hwloop_cnt;
+  logic        hwloop_jump;
+  logic        hwloop_enable;
 
   // Supervision Register
-  logic            set_flag;
-  logic            set_carry;
-  logic            set_overflow;
+  logic        set_flag;
+  logic        set_carry;
+  logic        set_overflow;
 
-  logic            prepost_useincr;
+  logic        prepost_useincr;
 
   // Forwarding
-  logic [1:0]      operand_a_fw_mux_sel;
-  logic [1:0]      operand_b_fw_mux_sel;
-  logic [1:0]      operand_c_fw_mux_sel;
-  logic [31:0]     operand_a_fw_id;
-  logic [31:0]     operand_b_fw_id;
+  logic [1:0]  operand_a_fw_mux_sel;
+  logic [1:0]  operand_b_fw_mux_sel;
+  logic [1:0]  operand_c_fw_mux_sel;
+  logic [31:0] operand_a_fw_id;
+  logic [31:0] operand_b_fw_id;
 
-  logic [31:0]     alu_operand_a;
-  logic [31:0]     alu_operand_b;
-  logic [31:0]     alu_operand_c;
-  logic [31:0]     operand_b;      // before going through the scalar replication mux
-  logic [31:0]     operand_b_vec;  // scalar replication of operand_b for 8 and 16 bit
+  logic [31:0] alu_operand_a;
+  logic [31:0] alu_operand_b;
+  logic [31:0] alu_operand_c;
+  logic [31:0] operand_b;      // before going through the scalar replication mux
+  logic [31:0] operand_b_vec;  // scalar replication of operand_b for 8 and 16 bit
+  logic [31:0] operand_c;
 
 
   // TODO: FIXME temporary assignments while not everything is implemented (e.g. exceptions)
@@ -301,12 +303,13 @@ module id_stage
                          instr_rdata_i[20], instr_rdata_i[30:21], 1'b0 };
 
   // source registers
-  assign regfile_addr_ra_id = instr_rdata_i[`REG_RS1];
-  assign regfile_addr_rb_id = instr_rdata_i[`REG_RS2];
+  assign regfile_addr_ra_id = instr_rdata_i[`REG_S1];
+  assign regfile_addr_rb_id = instr_rdata_i[`REG_S2];
   //assign regfile_addr_rc_id = instr_rdata_i[25:21];
+  assign regfile_addr_rc_id = 32'd0;
 
   // destination registers
-  assign regfile_waddr_id = instr_rdata_i[`REG_RD];
+  assign regfile_waddr_id = instr_rdata_i[`REG_D];
 
   //assign alu_vec_ext         = instr_rdata_i[9:8];
 
@@ -333,14 +336,14 @@ module id_stage
   ///////////////////////////////////////////////////////////////////////////////////////
 
   // PC offset for `PC_FROM_IMM PC mux
-  //assign pc_from_immediate_o = imm_uj_type;
-  always_comb
-  begin : pc_from_immediate_mux
-    case (pc_from_immediate_mux_sel)
-      1'b0: pc_from_immediate_o = imm_uj_type; // JAL
-      1'b1: pc_from_immediate_o = imm_i_type;  // JALR
-    endcase // case (pc_from_immediate_mux_sel)
-  end
+  //assign pc_from_immediate_o = imm_uj_type;  // riscv no longer used
+  //always_comb
+  //begin : pc_from_immediate_mux
+  //  case (pc_from_immediate_mux_sel)
+  //    1'b0: pc_from_immediate_o = imm_uj_type; // JAL
+  //    1'b1: pc_from_immediate_o = imm_i_type;  // JALR
+  //  endcase // case (pc_from_immediate_mux_sel)
+  //end
 
   // PC Mux
   always_comb
@@ -472,14 +475,23 @@ module id_stage
   //       |_|                                        //
   //////////////////////////////////////////////////////
 
+  // ALU OP C Mux
+  always_comb
+  begin : alu_operand_c_mux
+    case (alu_op_c_mux_sel)
+      `OP_C_CURRPC: operand_c = current_pc;
+      default:      operand_c = regfile_data_rc_id;
+    endcase // case (alu_op_c_mux_sel)
+  end
+
   // Operand c forwarding mux
   always_comb
   begin : operand_c_fw_mux
      case (operand_c_fw_mux_sel)
        `SEL_FW_EX:    alu_operand_c = regfile_alu_wdata_fw_i;
        `SEL_FW_WB:    alu_operand_c = regfile_wdata_wb_i;
-       `SEL_REGFILE:  alu_operand_c = regfile_data_rc_id;
-       default:       alu_operand_c = regfile_data_rc_id;
+       `SEL_REGFILE:  alu_operand_c = operand_c;
+       default:       alu_operand_c = operand_c;
      endcase; // case (operand_b_fw_mux_sel)
   end
 
@@ -551,6 +563,7 @@ module id_stage
       .extend_immediate_o           ( imm_sign_ext_sel      ),
       .alu_op_a_mux_sel_o           ( alu_op_a_mux_sel      ),
       .alu_op_b_mux_sel_o           ( alu_op_b_mux_sel      ),
+      .alu_op_c_mux_sel_o           ( alu_op_c_mux_sel      ),
       .alu_pc_mux_sel_o             ( alu_pc_mux_sel        ),
       .immediate_mux_sel_o          ( immediate_mux_sel     ),
 
@@ -638,11 +651,13 @@ module id_stage
       .operand_b_fw_mux_sel_o       ( operand_b_fw_mux_sel  ),
       .operand_c_fw_mux_sel_o       ( operand_c_fw_mux_sel  ),
 
+      .jump_in_ex_i                 ( jump_in_ex             ),
+
       // branch prediction
-      .drop_instruction_o           ( drop_instruction_o      ),
+      .drop_instruction_o           ( drop_instruction_o     ),
 `ifdef BRANCH_PREDICTION
-      .wrong_branch_taken_o         ( wrong_branch_taken_o    ),
-      .take_branch_o                ( take_branch_o           ),
+      .wrong_branch_taken_o         ( wrong_branch_taken_o   ),
+      .take_branch_o                ( take_branch_o          ),
 `endif
       // Stall signals
       .stall_if_o                   ( stall_if_o            ),

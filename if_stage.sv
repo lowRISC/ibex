@@ -52,7 +52,8 @@ module if_stage
     input  logic         force_nop_i,           // insert a NOP in the pipe
     input  logic [31:0]  exception_pc_reg_i,    // address used to restore the program counter when the interrupt/exception is served
     input  logic [31:0]  pc_from_regfile_i,     // pc from reg file
-    input  logic [31:0]  pc_from_immediate_i,   // pc from immediate
+    input  logic [31:0]  pc_from_alu_i,         // calculated jump target form ALU
+    //input  logic [31:0]  pc_from_immediate_i,   // pc from immediate
     input  logic [31:0]  pc_from_hwloop_i,      // pc from hwloop start addr
     input  logic [2:0]   pc_mux_sel_i,          // sel for pc multiplexer
     input  logic         pc_mux_boot_i,         // load boot address as PC
@@ -93,8 +94,8 @@ module if_stage
   // Address to fetch the instruction
   assign instr_addr_o = next_pc;
 
-  assign branch_taken = current_pc_id_o + pc_from_immediate_i;
-  assign branch_not_taken = current_pc_if_o + 32'd4;
+  //assign branch_taken = current_pc_id_o + pc_from_immediate_i;
+  //assign branch_not_taken = current_pc_if_o + 32'd4;
 
   // Next PC Selection: pc_mux_sel_i comes from id_stage.controller
   always_comb
@@ -103,7 +104,8 @@ module if_stage
       `INCR_PC:         begin  next_pc = current_pc_if_o + 32'd4; end // PC is incremented and points the next instruction
       `NO_INCR:         begin  next_pc = current_pc_if_o;         end // PC is not incremented
       `PC_FROM_REGFILE: begin  next_pc = pc_from_regfile_i;       end // PC is taken from the regfile
-      `PC_FROM_IMM:     begin  next_pc = branch_taken;            end // PC is taken from current PC in id + the immediate displacement
+      `PC_FROM_ALU:     begin  next_pc = pc_from_alu_i;           end // use calculated jump target from ALU
+      //`PC_FROM_IMM:     begin  next_pc = branch_taken;            end // PC is taken from current PC in id + the immediate displacement
       `PC_EXCEPTION:    begin  next_pc = exc_pc;                  end // PC that points to the exception
       `EXC_PC_REG:      begin  next_pc = exception_pc_reg_i;      end // restore the PC when exiting from interr/ecpetions
       `HWLOOP_ADDR:     begin  next_pc = pc_from_hwloop_i;        end // PC is taken from hwloop start addr

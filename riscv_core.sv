@@ -89,7 +89,10 @@ module riscv_core
 
 
    // Forwarding
-   logic [31:0]   pc_from_immediate_id; //take PC from immediate in case of Jump
+   //logic [31:0]   pc_from_immediate_id; //take PC from immediate in case of Jump
+
+   // Jump handling
+   logic [31:0]   jump_target;
 
    // Stalling
    logic          stall_if;          // Stall instruction fetch(deassert request)
@@ -278,7 +281,8 @@ module riscv_core
        .force_nop_i         ( force_nop_id         ),   // select incoming instr or NOP
        .exception_pc_reg_i  ( epcr                 ),   // Exception PC register
        .pc_from_regfile_i   ( pc_from_regfile_id   ),   // pc from reg file
-       .pc_from_immediate_i ( pc_from_immediate_id ),   // pc from immediate
+       //.pc_from_immediate_i ( pc_from_immediate_id ),   // pc from immediate
+       .pc_from_alu_i       ( jump_target          ),   // calculated jump target from ALU (EX)
        .pc_from_hwloop_i    ( hwloop_targ_addr     ),   // pc from hwloop start address
        .pc_mux_sel_i        ( pc_mux_sel_id        ),   // sel for pc multiplexer
        .pc_mux_boot_i       ( pc_mux_boot          ),   // load boot address as PC
@@ -362,7 +366,7 @@ module riscv_core
         .pc_from_regfile_o            ( pc_from_regfile_id            ),
         .current_pc_if_i              ( current_pc_if                 ),
         .current_pc_id_i              ( current_pc_id                 ),
-        .pc_from_immediate_o          ( pc_from_immediate_id          ),
+        //.pc_from_immediate_o          ( pc_from_immediate_id          ),
 
         .sr_flag_fw_i                 ( sr_flag_fw                    ),
         .sr_flag_i                    ( sr_flag                       ),
@@ -562,6 +566,9 @@ module riscv_core
 
         .sp_we_wb_o                 ( sp_we_wb                     ),
         .eoc_o                      ( eoc_wb                       ),
+
+        // Jump target address
+        .jump_target_o              ( jump_target                  ),
 
         // To ID stage: Forwarding signals
         .regfile_alu_waddr_fw_o     ( regfile_alu_waddr_fw         ),

@@ -36,6 +36,7 @@ module alu
    input  logic [`ALU_OP_WIDTH-1:0] operator_i,
    input  logic [31:0]              operand_a_i,
    input  logic [31:0]              operand_b_i,
+   input  logic [31:0]              operand_c_i, // for jump target calculation
    input  logic                     carry_i,
    input  logic                     flag_i,
 
@@ -44,11 +45,14 @@ module alu
    input  logic [1:0]               vec_ext_i,
 
    output logic [31:0]              result_o,
+   output logic [31:0]              jump_target_o,
    output logic                     overflow_o,
    output logic                     carry_o,
    output logic                     flag_o
 );
 
+
+  logic [31:0] pc_after_jal;
 
   logic [31:0] operand_a_rev;     // bit reversed signal of operand_a_i
 
@@ -139,6 +143,9 @@ module alu
   assign {carry_out[1], adder_result[15: 8]} = adder_op_a[15: 8] + adder_op_b[15: 8] + carry_in[1];
   assign {carry_out[2], adder_result[23:16]} = adder_op_a[23:16] + adder_op_b[23:16] + carry_in[2];
   assign {carry_out[3], adder_result[31:24]} = adder_op_a[31:24] + adder_op_b[31:24] + carry_in[3];
+
+  // additional 32 bit adder for PC after JAL(R) instruction
+  assign pc_after_jal = operand_c_i + 32'd4;
 
 
   // averaging by right shifting of one bit
@@ -539,18 +546,19 @@ module alu
 
   always_comb
   begin
-    shift_left = 1'b0;
-    shift_amt  = operand_b_i;
-    result_o   = 'x;
-    carry_o    = 1'b0;
-    overflow_o = 1'b0;
-    flag_o     = 1'b0;
+    shift_left    = 1'b0;
+    shift_amt     = operand_b_i;
+    result_o      = 'x;
+    jump_target_o = 1'b0;
+    carry_o       = 1'b0;
+    overflow_o    = 1'b0;
+    flag_o        = 1'b0;
 
     unique case (operator_i)
       // Standard Operations
       `ALU_ADD, `ALU_ADDC, `ALU_SUB:
       begin // Addition defined above
-        result_o   = adder_result[31:0];
+        result_o   = adder_result;
         carry_o    = carry_out[3];
         overflow_o = (adder_op_a[31] ^ adder_result[31]) & (adder_op_b[31] ^ adder_result[31]); // ++ => - and -- => +
       end
@@ -558,6 +566,13 @@ module alu
       `ALU_AND: result_o = operand_a_i & operand_b_i;
       `ALU_OR:  result_o = operand_a_i | operand_b_i;
       `ALU_XOR: result_o = operand_a_i ^ operand_b_i;
+
+      // Jump Target Calculation
+      `ALU_JAL:
+      begin
+        result_o      = pc_after_jal;
+        jump_target_o = adder_result;
+      end
 
       // Shift Operations
       `ALU_MOVHI:

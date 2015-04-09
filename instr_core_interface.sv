@@ -7,8 +7,8 @@
 // Additional contributions by:                                               //
 //                                                                            //
 //                                                                            //
-// Create Date:    06/08/2014                                                 // 
-// Design Name:    Instruction Fetch interface                                // 
+// Create Date:    06/08/2014                                                 //
+// Design Name:    Instruction Fetch interface                                //
 // Module Name:    instr_core_interface.sv                                    //
 // Project Name:   OR10N                                                      //
 // Language:       SystemVerilog                                              //
@@ -31,20 +31,20 @@ module instr_core_interface
   (
    input  logic          clk,
    input  logic          rst_n,
-  
-  
+
+
    input  logic	         req_i,
    input  logic [31:0]	 addr_i,
    output logic          ack_o,
    output logic [31:0]   rdata_o,
-  
-  
+
+
    output logic          instr_req_o,
    output logic [31:0]   instr_addr_o,
    input  logic          instr_gnt_i,
    input  logic          instr_r_valid_i,
    input  logic [31:0]   instr_r_rdata_i,
-  
+
    input  logic	         stall_if_i,
 
    input  logic          drop_request_i
@@ -58,7 +58,7 @@ module instr_core_interface
 
    logic 		 wait_gnt;
    logic [31:0] 	 addr_Q;
-      
+
    always_ff @(posedge clk, negedge rst_n)
      begin
 	if(rst_n == 1'b0)
@@ -70,19 +70,19 @@ module instr_core_interface
 	else
 	  begin
 	     CS <= NS;
-	     
+
 	     if(wait_gnt)
 	       addr_Q <= addr_i;
-	     
+
 	     if(save_rdata)
 	       rdata_Q <= instr_r_rdata_i;
 	  end
      end
-   
-   
+
+
    always_comb
      begin
-	
+
 	instr_req_o   = 1'b0;
 	ack_o         = 1'b0;
 	save_rdata    = 1'b0;
@@ -90,16 +90,16 @@ module instr_core_interface
         instr_addr_o  = addr_i;
 
         wait_gnt      = 1'b0;
-	
+
 	case(CS)
-	  
-	  IDLE : 
+
+	  IDLE :
 	    begin
 	       instr_req_o = req_i;
 	       ack_o       = 1'b0;
 	       rdata_o     = rdata_Q;
-	       
-	       
+
+
 	       if(req_i)
 		 begin
 		    if(instr_gnt_i) //~>  granted request
@@ -115,10 +115,10 @@ module instr_core_interface
 		 end
 	    end // case: IDLE
 
-	  
+
 	  WAIT_GNT :
 	    begin
-	       
+
 	       instr_addr_o = addr_Q;
 	       instr_req_o  = 1'b1;
 
@@ -131,17 +131,17 @@ module instr_core_interface
 //		    else
 		      NS = WAIT_GNT;
 		 end
-	       
+
 	    end // case: WAIT_GNT
-	  
-	  
-	  PENDING : 
+
+
+	  PENDING :
 	    begin
 
 	       if(instr_r_valid_i)
 		 begin
 		    save_rdata = 1'b1;
-		    
+
 		    ack_o = 1'b1;
 		    if(stall_if_i)
 		      begin
@@ -165,7 +165,7 @@ module instr_core_interface
 			   end
 			 else
 			   NS = IDLE;
-		      end 
+		      end
 		 end
 	       else
 		 begin
@@ -174,23 +174,23 @@ module instr_core_interface
 		    ack_o       = 1'b0;
 		 end
 	    end // case: PENDING
-	  
-	  WAIT_RVALID : 
+
+	  WAIT_RVALID :
 	    begin
-	       
-	       
+
+
 	       if(instr_r_valid_i)
 		 begin
-		    
+
 		    ack_o       = 1'b1;
 		    save_rdata  = 1'b1;
-		    
-		    
+
+
 		    if(stall_if_i)
 		      begin
 			 instr_req_o = 1'b0;
 			 NS          = WAIT_IF_STALL;
-			 
+
 		      end
 		    else
 		      begin
@@ -205,7 +205,7 @@ module instr_core_interface
 			 else
 			   NS = IDLE;
 		      end
-		    
+
 		 end
 	       else
 		 begin
@@ -214,14 +214,14 @@ module instr_core_interface
 		    instr_req_o = 1'b0;
 		 end
 	    end // case: WAIT_RVALID
-	  
-	  
-	  
+
+
+
 	  WAIT_IF_STALL :
 	    begin
 	       ack_o   = 1'b1;
 	       rdata_o = rdata_Q;
-		    
+
 	       if(stall_if_i)
 		 begin
 		    instr_req_o = 1'b0;
@@ -229,7 +229,7 @@ module instr_core_interface
 		 end
 	       else
 		 begin
-		    
+
 		    instr_req_o = req_i;
 		    if(req_i)
 		      if(instr_gnt_i)
@@ -241,11 +241,11 @@ module instr_core_interface
 		    else
 		      NS = IDLE;
 		 end
-	       
-	       
-	       
+
+
+
 	    end // case: WAIT_IF_STALL
-	  
+
 	  ABORT:
 	    begin
 	       ack_o = 1'b1;
@@ -264,17 +264,17 @@ module instr_core_interface
 		    NS = IDLE;
 		 end
 	    end // case: ABORT
-	       
-	  
-	  default : 
+
+
+	  default :
 	    begin
 	       NS          = IDLE;
 	       instr_req_o = 1'b0;
 	    end
-	  
+
 	endcase
-	
+
      end
-   
+
 
 endmodule

@@ -119,7 +119,10 @@ module ex_stage
     output logic  [4:0]               regfile_alu_waddr_fw_o,
     output logic                      regfile_alu_we_fw_o,
     output logic [31:0]               regfile_alu_wdata_fw_o,    // forward to RF and ID/EX pipe, ALU & MUL
-    output logic [31:0]               regfile_alu_wdata_fw_pc_o  // forward to PC, no multiplication
+    output logic [31:0]               regfile_alu_wdata_fw_pc_o,  // forward to PC, no multiplication
+
+    // JAL/JALR jumpt target calculation (to IF)
+    output logic [31:0]               jump_target_o
 
 `ifdef TCDM_ADDR_PRECAL
     ,
@@ -134,6 +137,7 @@ module ex_stage
 
   // Internal output of the LU
   logic [31:0]  alu_result;
+  logic [31:0]  alu_jump_target_int;
 
   logic [31:0]  alu_adder_lsu_int; // to LS unit
 
@@ -182,6 +186,10 @@ module ex_stage
   assign data_addr_ex_o    = (prepost_useincr_i == 1'b1) ? alu_adder_lsu_int : alu_operand_a_i;
 
 
+  // PC calculation for JAL/JALR
+  assign jump_target_o     = alu_jump_target_int;
+
+
   ////////////////////////////
   //     _    _    _   _    //
   //    / \  | |  | | | |   //
@@ -192,21 +200,22 @@ module ex_stage
   ////////////////////////////
   alu alu_i
   (
-   .operator_i    ( alu_operator_i    ),
-   .operand_a_i   ( alu_operand_a_i   ),
-   .operand_b_i   ( alu_operand_b_i   ),
-   .carry_i       ( alu_carry_i       ),
-   .flag_i        ( alu_flag_i        ),
+   .operator_i    ( alu_operator_i      ),
+   .operand_a_i   ( alu_operand_a_i     ),
+   .operand_b_i   ( alu_operand_b_i     ),
+   .operand_c_i   ( alu_operand_c_i     ),
+   .carry_i       ( alu_carry_i         ),
+   .flag_i        ( alu_flag_i          ),
 
-   .vector_mode_i ( vector_mode_i     ),
-   .cmp_mode_i    ( alu_cmp_mode_i    ),
-   .vec_ext_i     ( alu_vec_ext_i     ),
+   .vector_mode_i ( vector_mode_i       ),
+   .cmp_mode_i    ( alu_cmp_mode_i      ),
+   .vec_ext_i     ( alu_vec_ext_i       ),
 
-   .adder_lsu_o   ( alu_adder_lsu_int ),
-   .result_o      ( alu_result        ),
-   .overflow_o    ( alu_overflow_int  ), // Internal signal
-   .carry_o       ( alu_carry_int     ), // Internal signal
-   .flag_o        ( alu_flag_o        )
+   .result_o      ( alu_result          ),
+   .jump_target_o ( alu_jump_target_int ),
+   .overflow_o    ( alu_overflow_int    ), // Internal signal
+   .carry_o       ( alu_carry_int       ), // Internal signal
+   .flag_o        ( alu_flag_o          )
   );
 
 
