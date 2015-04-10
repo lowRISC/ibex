@@ -793,6 +793,158 @@ module riscv_core
 
 
 
+  // Execution trace generation
+  // synopsis translate off
+  integer f;
+  string fn;
+  logic [31:0] r[32];
+  logic [31:0] instr;
+  logic [31:0] pc;
+
+  // open/close output file for writing
+  initial
+  begin
+    #1
+    $sformat(fn, "trace_core_%h.log", core_id_i);
+    $display("Output file: %s", fn);
+    f = $fopen(fn, "w");
+  end
+
+  final
+  begin
+    $fclose(f);
+  end
+
+  // log execution
+  always @(posedge clk)
+  begin
+    #1
+    r     = id_stage_i.registers_i.MemContentxDP;
+    instr = id_stage_i.instr_rdata_i[31:0];
+    pc    = id_stage_i.current_pc_id_i;
+
+    if (fetch_enable_i == 1'b1 && id_stage_i.stall_id_o == 1'b0)
+    begin
+      //$display("%h", instr);
+      $fwrite(f, "%t:\t0x%h\t0x%h\t", $time, pc, instr);
+      casex (instr)
+        `INSTR_LUI:        printIInstr("LUI");
+        `INSTR_AUIPC:      printIInstr("AUIPC");
+        `INSTR_JAL:        printUJInstr("JAL");
+        `INSTR_JALR:       printIInstr("JALR");
+        // BRANCH
+        `INSTR_BEQ:        printSBInstr("BEQ");
+        `INSTR_BNE:        printSBInstr("BNE");
+        `INSTR_BLT:        printSBInstr("BLT");
+        `INSTR_BGE:        printSBInstr("BGE");
+        `INSTR_BLTU:       printSBInstr("BLTU");
+        `INSTR_BGEU:       printSBInstr("BGEU");
+        // LOAD
+        `INSTR_LB:         printIInstr("LB");
+        `INSTR_LH:         printIInstr("LH");
+        `INSTR_LW:         printIInstr("LW");
+        `INSTR_LBU:        printIInstr("LBU");
+        `INSTR_LHU:        printIInstr("LHU");
+        // STORE
+        `INSTR_SB:         printSInstr("SB");
+        `INSTR_SH:         printSInstr("SH");
+        `INSTR_SW:         printSInstr("SW");
+        // OPIMM
+        `INSTR_ADDI:       printIInstr("ADDI");
+        `INSTR_SLTI:       printIInstr("SLTI");
+        `INSTR_SLTIU:      printIInstr("SLTIU");
+        `INSTR_XORI:       printIInstr("XORI");
+        `INSTR_ORI:        printIInstr("ORI");
+        `INSTR_ANDI:       printIInstr("ANDI");
+        `INSTR_SLLI:       printIInstr("SLLI");
+        `INSTR_SRLI:       printIInstr("SRLI");
+        `INSTR_SRAI:       printIInstr("SRAI");
+        // OP
+        `INSTR_ADD:        printRInstr("ADD");
+        `INSTR_SUB:        printRInstr("SUB");
+        `INSTR_SLL:        printRInstr("SLL");
+        `INSTR_SLT:        printRInstr("SLT");
+        `INSTR_SLTU:       printRInstr("SLTU");
+        `INSTR_XOR:        printRInstr("XOR");
+        `INSTR_SRL:        printRInstr("SRL");
+        `INSTR_SRA:        printRInstr("SRA");
+        `INSTR_OR:         printRInstr("OR");
+        `INSTR_AND:        printRInstr("AND");
+        // FENCE
+        `INSTR_FENCE:      $fdisplay(f, "FENCE");
+        `INSTR_FENCEI:     $fdisplay(f, "FENCEI");
+        // SYSTEM
+        `INSTR_SCALL:      $fdisplay(f, "SCALL");
+        `INSTR_SBREAK:     $fdisplay(f, "SBREAK");
+        `INSTR_RDCYCLE:    printRDInstr("RDCYCLE");
+        `INSTR_RDCYCLEH:   printRDInstr("RDCYCLEH");
+        `INSTR_RDTIME:     printRDInstr("RDTIME");
+        `INSTR_RDTIMEH:    printRDInstr("RDTIMEH");
+        `INSTR_RDINSTRET:  printRDInstr("RDINSTRET");
+        `INSTR_RDINSTRETH: printRDInstr("RDINSTRETH");
+        // RV32M
+        `INSTR_MUL:        printRInstr("MUL");
+        `INSTR_MULH:       printRInstr("MULH");
+        `INSTR_MULHSU:     printRInstr("MULHSU");
+        `INSTR_MULHU:      printRInstr("MULHU");
+        default:           $fdisplay(f, "Unknown instruction");
+      endcase // unique case (instr)
+    end
+  end
+
+  function void printRInstr(input string mnemonic);
+    begin
+      $fdisplay(f, "%s x%0d, x%d (0x%h), x%0d (0x%h)", mnemonic, instr[`REG_D],
+                instr[`REG_S1], r[instr[`REG_S1]], instr[`REG_S2], r[instr[`REG_S2]]);
+    end
+  endfunction // printRInstr
+
+  function void printIInstr(input string mnemonic);
+    logic [31:0] i_imm;
+    begin
+      i_imm = { {20 {instr[31]}}, instr[31:20] };
+      $fdisplay(f, "%s x%0d, x%0d (0x%h), 0x%0d (imm)", mnemonic, instr[`REG_D],
+                instr[`REG_S1], r[instr[`REG_S1]], i_imm);
+    end
+  endfunction // printIInstr
+
+  function void printSInstr(input string mnemonic);
+    logic [31:0] s_imm;
+    begin
+      s_imm  = { {20 {instr[31]}}, instr[31:25], instr[11:7] };
+      $fdisplay(f, "%s x%0d (0x%h), x%d (0x%h), 0x%h (imm)", mnemonic,
+                instr[`REG_S1], r[instr[`REG_S1]], instr[`REG_S2], r[instr[`REG_S2]],
+                s_imm);
+    end
+  endfunction // printSInstr
+
+  function void printSBInstr(input string mnemonic);
+    logic [31:0] sb_imm;
+    begin
+      sb_imm = { {20 {instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8] };
+      $fdisplay(f, "%s x%0d (0x%h), x%d (0x%h), 0x%h (imm)", mnemonic,
+                instr[`REG_S1], r[instr[`REG_S1]], instr[`REG_S2], r[instr[`REG_S2]],
+                sb_imm);
+    end
+  endfunction // printSBInstr
+
+  function void printUJInstr(input string mnemonic);
+    logic [31:0] uj_imm;
+    begin
+      uj_imm = { {20 {instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0 };
+      $fdisplay(f, "%s x%0d, 0x%h", mnemonic, instr[`REG_D], uj_imm);
+    end
+  endfunction // printUJInstr
+
+  function void printRDInstr(input string mnemonic);
+    begin
+      $fdisplay(f, "%s x%0d", mnemonic, instr[`REG_D]);
+    end
+  endfunction // printRDInstr
+
+  // synopsis translate on
+
+
 ///////////////////
 endmodule // cpu //
 ///////////////////
