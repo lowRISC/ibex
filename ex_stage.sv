@@ -122,7 +122,10 @@ module ex_stage
     output logic [31:0]               regfile_alu_wdata_fw_pc_o,  // forward to PC, no multiplication
 
     // JAL/JALR jumpt target calculation (to IF)
-    output logic [31:0]               jump_target_o
+    output logic [31:0]               jump_target_o,
+
+    // Branch decision (to controller)
+    output logic                      branch_taken_o
 
 `ifdef TCDM_ADDR_PRECAL
     ,
@@ -188,6 +191,9 @@ module ex_stage
 
   // PC calculation for JAL/JALR
   assign jump_target_o     = alu_jump_target_int;
+
+  // Branch is taken when result == 1'b1
+  assign branch_taken_o    = alu_result[0];
 
 
   ////////////////////////////

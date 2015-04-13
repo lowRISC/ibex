@@ -90,9 +90,13 @@ module riscv_core
 
    // Forwarding
    //logic [31:0]   pc_from_immediate_id; //take PC from immediate in case of Jump
+   logic [31:0]   pc_from_immediate_id; //take PC from immediate in case of branch (RiscV)
 
    // Jump handling
    logic [31:0]   jump_target;
+
+   // Branch decision from EX
+   logic          branch_taken;
 
    // Stalling
    logic          stall_if;          // Stall instruction fetch(deassert request)
@@ -281,7 +285,7 @@ module riscv_core
        .force_nop_i         ( force_nop_id         ),   // select incoming instr or NOP
        .exception_pc_reg_i  ( epcr                 ),   // Exception PC register
        .pc_from_regfile_i   ( pc_from_regfile_id   ),   // pc from reg file
-       //.pc_from_immediate_i ( pc_from_immediate_id ),   // pc from immediate
+       .pc_from_immediate_i ( pc_from_immediate_id ),   // pc from immediate
        .pc_from_alu_i       ( jump_target          ),   // calculated jump target from ALU (EX)
        .pc_from_hwloop_i    ( hwloop_targ_addr     ),   // pc from hwloop start address
        .pc_mux_sel_i        ( pc_mux_sel_id        ),   // sel for pc multiplexer
@@ -350,6 +354,8 @@ module riscv_core
         // Processor Enable
         .fetch_enable_i               ( fetch_enable_i                ),
 
+        .branch_taken_i               ( branch_taken                  ),
+
         .core_busy_o                  ( core_busy_o                   ),
 
         // Interface to instruction memory
@@ -366,7 +372,7 @@ module riscv_core
         .pc_from_regfile_o            ( pc_from_regfile_id            ),
         .current_pc_if_i              ( current_pc_if                 ),
         .current_pc_id_i              ( current_pc_id                 ),
-        //.pc_from_immediate_o          ( pc_from_immediate_id          ),
+        .pc_from_immediate_o          ( pc_from_immediate_id          ),
 
         .sr_flag_fw_i                 ( sr_flag_fw                    ),
         .sr_flag_i                    ( sr_flag                       ),
@@ -569,6 +575,9 @@ module riscv_core
 
         // Jump target address
         .jump_target_o              ( jump_target                  ),
+
+        // Branch decision
+        .branch_taken_o             ( branch_taken                 ),
 
         // To ID stage: Forwarding signals
         .regfile_alu_waddr_fw_o     ( regfile_alu_waddr_fw         ),
@@ -818,7 +827,6 @@ module riscv_core
   // log execution
   always @(posedge clk)
   begin
-    #1
     r     = id_stage_i.registers_i.MemContentxDP;
     instr = id_stage_i.instr_rdata_i[31:0];
     pc    = id_stage_i.current_pc_id_i;
@@ -827,7 +835,7 @@ module riscv_core
     begin
       //$display("%h", instr);
       $fwrite(f, "%t:\t0x%h\t0x%h\t", $time, pc, instr);
-      casex (instr)
+      unique case (instr) inside
         `INSTR_LUI:        printIInstr("LUI");
         `INSTR_AUIPC:      printIInstr("AUIPC");
         `INSTR_JAL:        printUJInstr("JAL");
@@ -912,7 +920,7 @@ module riscv_core
     logic [31:0] s_imm;
     begin
       s_imm  = { {20 {instr[31]}}, instr[31:25], instr[11:7] };
-      $fdisplay(f, "%s x%0d (0x%h), x%d (0x%h), 0x%h (imm)", mnemonic,
+      $fdisplay(f, "%s x%0d (0x%h), x%0d (0x%h), 0x%h (imm)", mnemonic,
                 instr[`REG_S1], r[instr[`REG_S1]], instr[`REG_S2], r[instr[`REG_S2]],
                 s_imm);
     end
@@ -922,7 +930,7 @@ module riscv_core
     logic [31:0] sb_imm;
     begin
       sb_imm = { {20 {instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8] };
-      $fdisplay(f, "%s x%0d (0x%h), x%d (0x%h), 0x%h (imm)", mnemonic,
+      $fdisplay(f, "%s x%0d (0x%h), x%0d (0x%h), 0x%h (imm)", mnemonic,
                 instr[`REG_S1], r[instr[`REG_S1]], instr[`REG_S2], r[instr[`REG_S2]],
                 sb_imm);
     end

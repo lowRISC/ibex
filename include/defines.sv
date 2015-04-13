@@ -363,7 +363,8 @@ endfunction // prettyPrintInstruction
 // PC mux selector defines
 `define INCR_PC          3'b000
 `define NO_INCR          3'b001
-`define PC_FROM_REGFILE  3'b010
+//`define PC_FROM_REGFILE  3'b010  Removed in RiscV
+`define PC_FROM_IMM      3'b010
 //`define PC_FROM_IMM      3'b011  Replaced in RiscV
 `define PC_FROM_ALU      3'b011
 `define PC_EXCEPTION     3'b100

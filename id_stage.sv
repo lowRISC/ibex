@@ -41,6 +41,8 @@ module id_stage
     input logic                         fetch_enable_i,
     output logic                        core_busy_o,
 
+    input  logic                        branch_taken_i,
+
     // Interface to instruction memory
     input  logic [31:0]                 instr_rdata_i,      // comes from pipeline of IF stage
     output logic                        instr_req_o,
@@ -297,7 +299,7 @@ module id_stage
   assign imm_i_type  = { {20 {instr_rdata_i[31]}}, instr_rdata_i[31:20] };
   assign imm_s_type  = { {20 {instr_rdata_i[31]}}, instr_rdata_i[31:25], instr_rdata_i[11:7] };
   assign imm_sb_type = { {20 {instr_rdata_i[31]}}, instr_rdata_i[31], instr_rdata_i[7],
-                         instr_rdata_i[30:25], instr_rdata_i[11:8] };
+                         instr_rdata_i[30:25], instr_rdata_i[11:8], 1'b0 };
   assign imm_u_type  = { instr_rdata_i[31:12], {12 {1'b0}} };
   assign imm_uj_type = { {20 {instr_rdata_i[31]}}, instr_rdata_i[19:12],
                          instr_rdata_i[20], instr_rdata_i[30:21], 1'b0 };
@@ -344,6 +346,7 @@ module id_stage
   //    1'b1: pc_from_immediate_o = imm_i_type;  // JALR
   //  endcase // case (pc_from_immediate_mux_sel)
   //end
+  assign pc_from_immediate_o = imm_sb_type;  // TODO: Remove/Replace?
 
   // PC Mux
   always_comb
@@ -549,6 +552,8 @@ module id_stage
       .fetch_enable_i               ( fetch_enable_i        ),
       .eoc_o                        ( eoc                   ),
       .core_busy_o                  ( core_busy_o           ),
+
+      .branch_taken_i               ( branch_taken_i        ),
 
       // Signal from-to PC pipe (instr rdata) and instr mem system (req and ack)
       .instr_rdata_i                ( instr_rdata_i         ),

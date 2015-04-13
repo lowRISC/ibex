@@ -138,6 +138,9 @@ module controller
   // Jump target calcuation done detection
   input  logic                         jump_in_ex_i,                // jump is being calculated in ALU
 
+  // Branch result from ALU
+  input  logic                         branch_taken_i,
+
   output logic                         drop_instruction_o,          // prevent instruction to enter ID stage
 `ifdef BRANCH_PREDICTION
   output logic                         wrong_branch_taken_o,        // 1 if the wrong branch was selected
@@ -343,6 +346,30 @@ module controller
               rega_used           = 1'b1;
             end else begin
               illegal_insn_o      = 1'b1;
+            end
+          end
+
+          `OPCODE_BRANCH: begin // Branch
+            rega_used = 1'b1;
+            regb_used = 1'b1;
+
+            unique case (instr_rdata_i) inside
+              `INSTR_BEQ:  alu_operator = `ALU_EQ;
+              `INSTR_BNE:  alu_operator = `ALU_NE;
+              `INSTR_BLT:  alu_operator = `ALU_LTS;
+              `INSTR_BGE:  alu_operator = `ALU_GES;
+              `INSTR_BLTU: alu_operator = `ALU_LTU;
+              `INSTR_BGEU: alu_operator = `ALU_GEU;
+
+              default: begin
+                illegal_insn_o = 1'b1;
+              end
+            endcase // case (instr_rdata_i)
+
+            if (branch_taken_i == 1'b1) begin
+              pc_mux_sel_o = `PC_FROM_IMM;  // TODO: Think about clever adder use
+            end else begin
+              pc_mux_sel_o = `INCR_PC;
             end
           end
 
@@ -1246,10 +1273,10 @@ module controller
        deassert_we     = 1'b1;
      end
 
-     // Stall because of JAL/JALR
-     // Stall until jump target is calculated in EX (1 cycle, then fetch instruction)
-     if ( (instr_rdata_i[6:0] == `OPCODE_JAL || instr_rdata_i[6:0] == `OPCODE_JALR) &&
-          (jump_in_ex_i == 1'b0) )
+     // Stall because of JAL/JALR/branch
+     // Stall until jump target or branch decision is calculated in EX (1 cycle, then fetch instruction)
+     if ( (instr_rdata_i[6:0] == `OPCODE_JAL || instr_rdata_i[6:0] == `OPCODE_JALR
+           || instr_rdata_i[6:0] == `OPCODE_BRANCH) && (jump_in_ex_i == 1'b0) )
      begin
        j_stall           = 1'b1;
        //deassert_we     = 1'b1;
@@ -1265,6 +1292,7 @@ module controller
 
    end
 
+  // NOTE: current_pc_id_i is wrong after drop instruction !
 `ifdef BRANCH_PREDICTION
    assign drop_instruction_o = wrong_branch_taken | j_stall;
 `else
@@ -1365,7 +1393,8 @@ module controller
                           (instr_rdata_i[31:26] == `OPCODE_RFE) );
    */
   // TODO: FIXME
-  assign jump_in_id_o = ((instr_rdata_i[6:0] == `OPCODE_JAL) || (instr_rdata_i[6:0] == `OPCODE_JALR));
+  assign jump_in_id_o = ((instr_rdata_i[6:0] == `OPCODE_JAL) || (instr_rdata_i[6:0] == `OPCODE_JALR) ||
+                         (instr_rdata_i[6:0] == `OPCODE_BRANCH));
 
 
   // update registers
