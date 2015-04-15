@@ -121,11 +121,13 @@ module ex_stage
     output logic [31:0]               regfile_alu_wdata_fw_o,    // forward to RF and ID/EX pipe, ALU & MUL
     output logic [31:0]               regfile_alu_wdata_fw_pc_o,  // forward to PC, no multiplication
 
-    // JAL/JALR jumpt target calculation (to IF)
-    output logic [31:0]               jump_target_o,
+    // From ID: Jump and branch indication
+    input  logic  [1:0]               jump_in_id_i,
 
-    // Branch decision (to controller)
-    output logic                      branch_taken_o
+    // To IF: Jump and branch target and decision
+    output logic [31:0]               jump_target_o,
+    output logic  [1:0]               jump_in_ex_o,
+    output logic                      branch_decision_o
 
 `ifdef TCDM_ADDR_PRECAL
     ,
@@ -140,7 +142,6 @@ module ex_stage
 
   // Internal output of the LU
   logic [31:0]  alu_result;
-  logic [31:0]  alu_jump_target_int;
 
   logic [31:0]  alu_adder_lsu_int; // to LS unit
 
@@ -183,17 +184,17 @@ module ex_stage
   // NOTE a dedicated adder, no carry is considered , just op_a + op_b from id stage
 `ifdef TCDM_ADDR_PRECAL
   assign alu_adder_lsu_int = alu_adder_i;
+  $stop("TCDM_ADDR_PRECAL unsupported in RiscV! (jump/branch target calculation not implemented yet");
 `else
   assign alu_adder_lsu_int = alu_operand_a_i + alu_operand_b_i;
 `endif
   assign data_addr_ex_o    = (prepost_useincr_i == 1'b1) ? alu_adder_lsu_int : alu_operand_a_i;
 
 
-  // PC calculation for JAL/JALR
-  assign jump_target_o     = alu_jump_target_int;
 
   // Branch is taken when result == 1'b1
-  assign branch_taken_o    = alu_result[0];
+  assign branch_decision_o = alu_result[0];
+  assign jump_target_o     = alu_operand_c_i;
 
 
   ////////////////////////////
@@ -218,7 +219,6 @@ module ex_stage
    .vec_ext_i     ( alu_vec_ext_i       ),
 
    .result_o      ( alu_result          ),
-   .jump_target_o ( alu_jump_target_int ),
    .overflow_o    ( alu_overflow_int    ), // Internal signal
    .carry_o       ( alu_carry_int       ), // Internal signal
    .flag_o        ( alu_flag_o          )
@@ -269,6 +269,7 @@ module ex_stage
       regfile_rb_data_wb_o         <= 32'h0000_0000;
       sp_we_wb_o                   <= 1'b0;
       eoc_o                        <= 1'b0;
+      jump_in_ex_o                 <= '0;
     end
     else
     begin
@@ -281,6 +282,7 @@ module ex_stage
         regfile_rb_data_wb_o       <= regfile_rb_data_i;
         sp_we_wb_o                 <= sp_we_i;
         eoc_o                      <= eoc_i;
+        jump_in_ex_o               <= jump_in_id_i;
       end
     end
   end

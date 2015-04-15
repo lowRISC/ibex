@@ -93,8 +93,8 @@ module riscv_core
 
   // Jump and branch target and decision (EX->IF)
   logic [31:0] jump_target;
-  logic        jump_in_ex;
-  logic        branch_in_ex;
+  logic  [1:0] jump_in_id;
+  logic  [1:0] jump_in_ex;
   logic        branch_decision;
 
 
@@ -289,6 +289,11 @@ module riscv_core
       .dbg_pc_from_npc     ( dbg_npc              ),
       .dbg_set_npc         ( dbg_set_npc          ),
 
+      // Jump and branch target and decision
+      .jump_in_ex_i        ( jump_in_ex           ),
+      .branch_decision_i   ( branch_decision      ),
+      .jump_target_i       ( jump_target          ),
+
       // pipeline stalls
       .stall_if_i          ( stall_if             ),
       .stall_id_i          ( stall_id             )
@@ -341,6 +346,9 @@ module riscv_core
       // Processor Enable
       .fetch_enable_i               ( fetch_enable_i                ),
 
+      .jump_in_id_o                 ( jump_in_id                    ),
+      .jump_in_ex_i                 ( jump_in_ex                    ),
+
       .core_busy_o                  ( core_busy_o                   ),
 
       // Interface to instruction memory
@@ -357,7 +365,7 @@ module riscv_core
       .pc_from_regfile_o            ( pc_from_regfile_id            ),
       .current_pc_if_i              ( current_pc_if                 ),
       .current_pc_id_i              ( current_pc_id                 ),
-      //.pc_from_immediate_o          ( pc_from_immediate_id          ),
+      //.pc_from_immediate_o          ( pc_from_immediate_id          ), //TODO
 
       .sr_flag_fw_i                 ( sr_flag_fw                    ),
       .sr_flag_i                    ( sr_flag                       ),
@@ -535,7 +543,6 @@ module riscv_core
       .regfile_rb_data_i          ( regfile_rb_data_ex           ),
       .sp_we_i                    ( sp_we_ex                     ),
 
-
       // Output of ex stage pipeline
       .regfile_wdata_wb_o         ( result_wb                    ),
       .regfile_waddr_wb_o         ( regfile_waddr_fw_wb_o        ),
@@ -553,10 +560,12 @@ module riscv_core
       .sp_we_wb_o                 ( sp_we_wb                     ),
       .eoc_o                      ( eoc_wb                       ),
 
+      // From ID: Jump and Branch detection
+      .jump_in_id_i               ( jump_in_id                   ),
+
       // To IF: Jump and branch target and decision
       .jump_target_o              ( jump_target                  ),
       .jump_in_ex_o               ( jump_in_ex                   ),
-      .branch_in_ex_o             ( branch_in_ex                 ),
       .branch_decision_o          ( branch_decision              ),
 
       // To ID stage: Forwarding signals
@@ -812,7 +821,7 @@ module riscv_core
     instr = id_stage_i.instr_rdata_i[31:0];
     pc    = id_stage_i.current_pc_id_i;
 
-    if (fetch_enable_i == 1'b1 && id_stage_i.stall_id_o == 1'b0)
+    if (fetch_enable_i == 1'b1 && id_stage_i.stall_id_o == 1'b0 && id_stage_i.controller_i.ctrl_fsm_cs == id_stage_i.controller_i.DECODE)
     begin
       //$display("%h", instr);
       $fwrite(f, "%t:\t0x%h\t0x%h\t", $time, pc, instr);
@@ -883,7 +892,7 @@ module riscv_core
 
   function void printRInstr(input string mnemonic);
     begin
-      $fdisplay(f, "%s x%0d, x%d (0x%h), x%0d (0x%h)", mnemonic, instr[`REG_D],
+      $fdisplay(f, "%s\tx%0d, x%d (0x%h), x%0d (0x%h)", mnemonic, instr[`REG_D],
                 instr[`REG_S1], r[instr[`REG_S1]], instr[`REG_S2], r[instr[`REG_S2]]);
     end
   endfunction // printRInstr
@@ -892,7 +901,7 @@ module riscv_core
     logic [31:0] i_imm;
     begin
       i_imm = { {20 {instr[31]}}, instr[31:20] };
-      $fdisplay(f, "%s x%0d, x%0d (0x%h), 0x%0d (imm)", mnemonic, instr[`REG_D],
+      $fdisplay(f, "%s\tx%0d, x%0d (0x%h), 0x%0d (imm)", mnemonic, instr[`REG_D],
                 instr[`REG_S1], r[instr[`REG_S1]], i_imm);
     end
   endfunction // printIInstr
@@ -901,7 +910,7 @@ module riscv_core
     logic [31:0] s_imm;
     begin
       s_imm  = { {20 {instr[31]}}, instr[31:25], instr[11:7] };
-      $fdisplay(f, "%s x%0d (0x%h), x%0d (0x%h), 0x%h (imm)", mnemonic,
+      $fdisplay(f, "%s\tx%0d (0x%h), x%0d (0x%h), 0x%h (imm)", mnemonic,
                 instr[`REG_S1], r[instr[`REG_S1]], instr[`REG_S2], r[instr[`REG_S2]],
                 s_imm);
     end
@@ -911,7 +920,7 @@ module riscv_core
     logic [31:0] sb_imm;
     begin
       sb_imm = { {20 {instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8] };
-      $fdisplay(f, "%s x%0d (0x%h), x%0d (0x%h), 0x%h (imm)", mnemonic,
+      $fdisplay(f, "%s\tx%0d (0x%h), x%0d (0x%h), 0x%h (imm)", mnemonic,
                 instr[`REG_S1], r[instr[`REG_S1]], instr[`REG_S2], r[instr[`REG_S2]],
                 sb_imm);
     end
@@ -921,13 +930,13 @@ module riscv_core
     logic [31:0] uj_imm;
     begin
       uj_imm = { {20 {instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0 };
-      $fdisplay(f, "%s x%0d, 0x%h", mnemonic, instr[`REG_D], uj_imm);
+      $fdisplay(f, "%s\tx%0d, 0x%h", mnemonic, instr[`REG_D], uj_imm);
     end
   endfunction // printUJInstr
 
   function void printRDInstr(input string mnemonic);
     begin
-      $fdisplay(f, "%s x%0d", mnemonic, instr[`REG_D]);
+      $fdisplay(f, "%s\tx%0d", mnemonic, instr[`REG_D]);
     end
   endfunction // printRDInstr
 

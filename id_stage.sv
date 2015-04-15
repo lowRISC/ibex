@@ -41,16 +41,18 @@ module id_stage
     input logic                         fetch_enable_i,
     output logic                        core_busy_o,
 
-    input  logic                        branch_taken_i,
-
     // Interface to instruction memory
     input  logic [31:0]                 instr_rdata_i,      // comes from pipeline of IF stage
     output logic                        instr_req_o,
     input  logic                        instr_gnt_i,
     input  logic                        instr_ack_i,
 
+    // Jumps and branches
+    output logic [1:0]                  jump_in_id_o,
+    input  logic [1:0]                  jump_in_ex_i,
+
     // IF and ID stage signals
-    output logic [31:0]                 pc_from_immediate_o,
+    //output logic [31:0]                 pc_from_immediate_o,  // TODO: remove
 
     output logic [2:0]                  pc_mux_sel_o,
     output logic                        pc_mux_boot_o,
@@ -61,12 +63,6 @@ module id_stage
     input  logic [31:0]                 current_pc_if_i,
     input  logic [31:0]                 current_pc_id_i,
 
-    // branch prediction
-    output logic                        drop_instruction_o,
-`ifdef BRANCH_PREDICTION
-    output logic                        wrong_branch_taken_o,
-    output logic                        take_branch_o,
-`endif
     // STALLS
     output logic                        stall_if_o,
     output logic                        stall_id_o,
@@ -189,15 +185,19 @@ module id_stage
 
   logic [31:0] current_pc;        // PC to be used in ALU (either IF or ID)
 
+  logic [31:0] jump_target;       // calculated jump target (-> EX -> IF)
+
   logic        exc_pc_sel;
   logic [2:0]  pc_mux_sel_int;    // selects next PC in if stage
   //logic        pc_from_immediate_mux_sel = 1'b0; // TODO: FIXME (remove)
 
+  logic        force_nop_controller;
+
   logic        irq_present;
 
   // Signals running between controller and exception controller
-  logic        jump_in_id;
-  logic        jump_in_ex;        // registered copy of jump_in_id
+  //logic        jump_in_id;
+  //logic        jump_in_ex;        // registered copy of jump_in_id
   logic        illegal_insn;
   logic        trap_insn;
   logic        pipe_flush;
@@ -308,7 +308,6 @@ module id_stage
   assign regfile_addr_ra_id = instr_rdata_i[`REG_S1];
   assign regfile_addr_rb_id = instr_rdata_i[`REG_S2];
   //assign regfile_addr_rc_id = instr_rdata_i[25:21];
-  assign regfile_addr_rc_id = 32'd0;
 
   // destination registers
   assign regfile_waddr_id = instr_rdata_i[`REG_D];
@@ -346,7 +345,7 @@ module id_stage
   //    1'b1: pc_from_immediate_o = imm_i_type;  // JALR
   //  endcase // case (pc_from_immediate_mux_sel)
   //end
-  assign pc_from_immediate_o = imm_sb_type;  // TODO: Remove/Replace?
+  //assign pc_from_immediate_o = imm_sb_type;  // TODO: Remove/Replace?
 
   // PC Mux
   always_comb
@@ -382,6 +381,26 @@ module id_stage
     endcase; // case (hwloop_cnt_mux_sel)
   end
   */
+
+
+  //////////////////////////////////////////////////////////////////
+  //       _                         _____                    _   //
+  //     | |_   _ _ __ ___  _ __   |_   _|_ _ _ __ __ _  ___| |_  //
+  //  _  | | | | | '_ ` _ \| '_ \    | |/ _` | '__/ _` |/ _ \ __| //
+  // | |_| | |_| | | | | | | |_) |   | | (_| | | | (_| |  __/ |_  //
+  //  \___/ \__,_|_| |_| |_| .__/    |_|\__,_|_|  \__, |\___|\__| //
+  //                       |_|                    |___/           //
+  //////////////////////////////////////////////////////////////////
+
+  always_comb
+  begin
+    unique case (instr_rdata_i[6:0])
+      `OPCODE_JAL:    jump_target = current_pc_id_i + imm_uj_type;
+      `OPCODE_JALR:   jump_target = operand_a_fw_id + imm_i_type;
+      `OPCODE_BRANCH: jump_target = current_pc_id_i + imm_sb_type;
+      default:        jump_target = '0;
+    endcase // unique case (instr_rdata_i[6:0])
+  end
 
 
   ////////////////////////////////////////////////////////
@@ -429,13 +448,12 @@ module id_stage
   always_comb
   begin : immediate_mux
      case (immediate_mux_sel)
-       default: immediate_b = 32'h4;
        //`IMM_VEC:   immediate_b = immediate_vec_id;
-       `IMM_I:  immediate_b = imm_i_type;
-       `IMM_S:  immediate_b = imm_s_type;
-       //`IMM_SB: immediate_b = imm_sb_type;
-       `IMM_U:  immediate_b = imm_u_type;
-       `IMM_UJ: immediate_b = imm_uj_type;
+       `IMM_I:    immediate_b = imm_i_type;
+       `IMM_S:    immediate_b = imm_s_type;
+       `IMM_U:    immediate_b = imm_u_type;
+       `IMM_HEX4: immediate_b = 32'h4;
+       default:   immediate_b = 32'h4;
      endcase; // case (immediate_mux_sel)
   end
 
@@ -482,8 +500,9 @@ module id_stage
   always_comb
   begin : alu_operand_c_mux
     case (alu_op_c_mux_sel)
-      `OP_C_CURRPC: operand_c = current_pc;
-      default:      operand_c = regfile_data_rc_id;
+      `OP_C_JT: operand_c = jump_target;
+      //`OP_C_CURRPC: operand_c = current_pc;
+      default:  operand_c = regfile_data_rc_id;
     endcase // case (alu_op_c_mux_sel)
   end
 
@@ -553,7 +572,7 @@ module id_stage
       .eoc_o                        ( eoc                   ),
       .core_busy_o                  ( core_busy_o           ),
 
-      .branch_taken_i               ( branch_taken_i        ),
+      .force_nop_o                  ( force_nop_controller  ),
 
       // Signal from-to PC pipe (instr rdata) and instr mem system (req and ack)
       .instr_rdata_i                ( instr_rdata_i         ),
@@ -620,7 +639,7 @@ module id_stage
       .irq_present_i                ( irq_present           ),
 
       // Exception Controller Signals
-      .jump_in_id_o                 ( jump_in_id            ),
+      //.jump_in_id_o                 ( jump_in_id            ),
       .illegal_insn_o               ( illegal_insn          ),
       .trap_insn_o                  ( trap_insn             ),
       .pipe_flush_o                 ( pipe_flush            ),
@@ -656,14 +675,12 @@ module id_stage
       .operand_b_fw_mux_sel_o       ( operand_b_fw_mux_sel  ),
       .operand_c_fw_mux_sel_o       ( operand_c_fw_mux_sel  ),
 
-      .jump_in_ex_i                 ( jump_in_ex             ),
+      // To controller (TODO: Remove when control/decode separated and moved)
+      .jump_in_ex_i                 ( jump_in_ex_i          ),
 
-      // branch prediction
-      .drop_instruction_o           ( drop_instruction_o     ),
-`ifdef BRANCH_PREDICTION
-      .wrong_branch_taken_o         ( wrong_branch_taken_o   ),
-      .take_branch_o                ( take_branch_o          ),
-`endif
+      // To EX: Jump/Branch indication
+      .jump_in_id_o                 ( jump_in_id_o          ),
+
       // Stall signals
       .stall_if_o                   ( stall_if_o            ),
       .stall_id_o                   ( stall_id_o            ),
@@ -680,7 +697,8 @@ module id_stage
   //                                                                   //
   ///////////////////////////////////////////////////////////////////////
 
-  assign force_nop_o = 1'b0;
+  assign force_nop_o = force_nop_controller;
+
   /*
   exc_controller exc_controller_i
   (
@@ -823,8 +841,6 @@ module id_stage
       hwloop_wb_mux_sel_ex_o      <= 1'b0;
       hwloop_cnt_o                <= 32'b0;
 
-      jump_in_ex                  <= 1'b0;
-
       eoc_ex_o                    <= 1'b0;
 
       `ifdef TCDM_ADDR_PRECAL
@@ -898,14 +914,11 @@ module id_stage
       hwloop_wb_mux_sel_ex_o      <= hwloop_wb_mux_sel;
       hwloop_cnt_o                <= hwloop_cnt;
 
-      jump_in_ex                  <= jump_in_id;
-
       eoc_ex_o                    <= eoc;
 
 `ifdef TCDM_ADDR_PRECAL
       alu_adder_o                 <= alu_operand_a + alu_operand_b;
 `endif
-
     end
   end
 

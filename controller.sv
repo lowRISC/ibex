@@ -40,6 +40,8 @@ module controller
   output logic                         eoc_o,                      // End of computation: triggered by a special instruction
   output logic                         core_busy_o,                // Core is busy processing instructions
 
+  output logic                         force_nop_o,
+
   input  logic [31:0]                  instr_rdata_i,              // Instruction read from instr memory/cache: (sampled in the if stage)
   output logic                         instr_req_o,                // Fetch instruction Request:
   input  logic                         instr_gnt_i,                // grant from icache
@@ -103,7 +105,7 @@ module controller
   input  logic                         irq_present_i,               // there is an IRQ, so if we are sleeping we should wake up now
 
   // Exception Controller Signals
-  output logic                         jump_in_id_o,                // jump instruction in ID stage
+  //output logic                         jump_in_id_o,                // jump instruction in ID stage
   output logic                         illegal_insn_o,              // illegal instruction encountered
   output logic                         trap_insn_o,                 // trap instruction encountered
   output logic                         pipe_flush_o,                // pipe flush requested by controller
@@ -136,16 +138,9 @@ module controller
   output logic [1:0]                   operand_c_fw_mux_sel_o,      // regfile rc data selector form ID stage
 
   // Jump target calcuation done detection
-  input  logic                         jump_in_ex_i,                // jump is being calculated in ALU
+  input  logic [1:0]                   jump_in_ex_i,                // jump is being calculated in ALU
+  output logic [1:0]                   jump_in_id_o,                // jump is being calculated in ALU
 
-  // Branch result from ALU
-  input  logic                         branch_taken_i,
-
-  output logic                         drop_instruction_o,          // prevent instruction to enter ID stage
-`ifdef BRANCH_PREDICTION
-  output logic                         wrong_branch_taken_o,        // 1 if the wrong branch was selected
-  output logic                         take_branch_o,               // 1 if branch should be taken
-`endif
   output logic                         stall_if_o,                  // Stall IF stage (deassert requests)
   output logic                         stall_id_o,                  // Stall ID stage (and instr and data memory interface) ( ID_STAGE )
   output logic                         stall_ex_o,                  // Stall ex stage                                       ( EX_STAGE )
@@ -182,7 +177,7 @@ module controller
   logic       mfspr_stall;
   logic       instr_ack_stall;
   logic       load_stall;
-  logic       j_stall;
+  logic       jr_stall;
 
   logic       set_npc;
 `ifdef BRANCH_PREDICTION
@@ -207,8 +202,9 @@ module controller
 
     instr_req_o                  = 1'b1;
 
-    pc_mux_sel_o                 = `INCR_PC;
+    pc_mux_sel_o                 = `PC_INCR;
     pc_mux_boot_o                = 1'b0;
+    jump_in_id_o                 = 2'b00;
 
     alu_operator                 = `ALU_NOP;
     extend_immediate_o           = 1'b0;
@@ -287,7 +283,7 @@ module controller
         // we begin execution when either fetch_enable is high or an
         // interrupt has arrived
         instr_req_o     = fetch_enable_i || irq_present_i;
-        pc_mux_sel_o    = `NO_INCR;
+        pc_mux_sel_o    = `PC_NO_INCR;
 
         if (fetch_enable_i || irq_present_i)
         begin
@@ -323,13 +319,17 @@ module controller
 
           `OPCODE_JAL: begin   // Jump and Link
             if (instr_rdata_i ==? `INSTR_JAL) begin
-              pc_mux_sel_o        = `PC_FROM_ALU;
+              // Insert bubbles
+              pc_mux_sel_o        = `PC_NO_INCR;
+              jump_in_id_o        = 2'b01;
+              // Calculate and store PC+4
               alu_op_a_mux_sel_o  = `OP_A_CURRPC;
               alu_op_b_mux_sel_o  = `OP_B_IMM;
-              alu_op_c_mux_sel_o  = `OP_C_CURRPC;
-              immediate_mux_sel_o = `IMM_UJ;
-              alu_operator        = `ALU_JAL;
+              immediate_mux_sel_o = `IMM_HEX4;
+              alu_operator        = `ALU_ADD;
               regfile_alu_we      = 1'b1;
+              // Calculate jump target (= PC + UJ imm)
+              alu_op_c_mux_sel_o  = `OP_C_JT;
             end else begin
               illegal_insn_o      = 1'b1;
             end
@@ -337,21 +337,29 @@ module controller
 
           `OPCODE_JALR: begin  // Jump and Link Register
             if (instr_rdata_i ==? `INSTR_JALR) begin
-              pc_mux_sel_o        = `PC_FROM_ALU;
+              // Insert bubbles
+              pc_mux_sel_o        = `PC_NO_INCR;
+              jump_in_id_o        = 2'b01;
+              // Calculate and store PC+4
+              alu_op_a_mux_sel_o  = `OP_A_CURRPC;
               alu_op_b_mux_sel_o  = `OP_B_IMM;
-              alu_op_c_mux_sel_o  = `OP_C_CURRPC;
-              immediate_mux_sel_o = `IMM_I;
-              alu_operator        = `ALU_JAL;
+              immediate_mux_sel_o = `IMM_HEX4;
+              alu_operator        = `ALU_ADD;
               regfile_alu_we      = 1'b1;
+              // Calculate jump target (= RS1 + I imm)
               rega_used           = 1'b1;
+              alu_op_c_mux_sel_o  = `OP_C_JT;
             end else begin
               illegal_insn_o      = 1'b1;
             end
           end
 
           `OPCODE_BRANCH: begin // Branch
-            rega_used = 1'b1;
-            regb_used = 1'b1;
+            pc_mux_sel_o        = `PC_NO_INCR;
+            jump_in_id_o        = 2'b10;
+            alu_op_c_mux_sel_o  = `OP_C_JT;
+            rega_used           = 1'b1;
+            regb_used           = 1'b1;
 
             unique case (instr_rdata_i) inside
               `INSTR_BEQ:  alu_operator = `ALU_EQ;
@@ -366,31 +374,14 @@ module controller
               end
             endcase // case (instr_rdata_i)
 
-            if (branch_taken_i == 1'b1) begin
+            /*if (branch_taken_i == 1'b1) begin
               pc_mux_sel_o = `PC_FROM_IMM;  // TODO: Think about clever adder use
             end else begin
               pc_mux_sel_o = `INCR_PC;
-            end
+            end*/
           end
 
           /*
-
-          `OPCODE_JR:
-          begin    // Jump Register
-            pc_mux_sel_o = `PC_FROM_REGFILE;
-            regb_used    = 1'b1;
-          end
-
-          `OPCODE_JALR: begin  // Jump and Link Register
-            pc_mux_sel_o                 = `PC_FROM_REGFILE;
-            alu_op_a_mux_sel_o           = `OP_A_CURRPC;
-            alu_op_b_mux_sel_o           = `OP_B_IMM;
-            immediate_mux_sel_o          = `IMM_HEX4;
-            alu_operator                 = `ALU_ADD;
-            regfile_alu_waddr_mux_sel_o  = 2'b10; // select r9 to write back return address
-            regfile_alu_we               = 1'b1;
-            regb_used                    = 1'b1;
-          end
 
 `ifndef BRANCH_PREDICTION
           `OPCODE_BNF:
@@ -448,7 +439,7 @@ module controller
 
           `OPCODE_EOC: begin   // End of Computation (Custom Instruction 1)
             eoc_o        = 1'b1;
-            pc_mux_sel_o = `NO_INCR;
+            pc_mux_sel_o = `PC_NO_INCR;
           end
 
           `OPCODE_RFE:
@@ -619,8 +610,8 @@ module controller
             data_sign_extension_o  = instr_rdata_i[1];
           end
 
-
            */
+
 
           //////////////////////////
           //     _    _    _   _  //
@@ -671,19 +662,7 @@ module controller
             endcase // unique case (instr_rdata_i)
           end // case: `OPCODE_OPIMM
 
-          /*
-          `OPCODE_ADDIC: begin // Add Immediate and Carry
-            alu_op_b_mux_sel_o       = `OP_B_IMM;
-            immediate_mux_sel_o      = `IMM_16;
-            alu_operator             = `ALU_ADDC;
-            regfile_alu_we           = 1'b1;
-            set_overflow             = 1'b1;
-            set_carry                = 1'b1;
-            rega_used                = 1'b1;
-          end
-          */
-
-          `OPCODE_OP: begin  // ALU register-register operation
+          `OPCODE_OP: begin  // Register-Register ALU operation
             regfile_alu_we = 1'b1;
             rega_used      = 1'b1;
             regb_used      = 1'b1;
@@ -711,24 +690,6 @@ module controller
 
 
           /*
-
-          `OPCODE_MOVHI:
-          begin
-            if (instr_rdata_i[16] == 1'b0)
-            begin // Move Immediate High
-              extend_immediate_o       = 1'b1;
-              alu_op_a_mux_sel_o       = `OP_A_IMM16;
-              alu_operator             = `ALU_MOVHI;
-              regfile_alu_we           = 1'b1;
-            end
-            else
-            begin
-              // synopsys translate_off
-              $display("%t: Illegal l.movhi received.", $time);
-              // synopsys translate_on
-              illegal_insn_o = 1'b1;
-            end
-          end
 
           `OPCODE_MULI: begin  // Multiply Immediate Signed
             alu_op_b_mux_sel_o   = `OP_B_IMM;
@@ -909,37 +870,6 @@ module controller
                 illegal_insn_o     = 1'b1;
               end
             endcase
-          end
-
-          `OPCODE_SFI: begin   // Set Flag Immediate-Instructions
-            if (instr_rdata_i[25] == 1'b0) begin
-              alu_op_b_mux_sel_o    = `OP_B_IMM;
-              immediate_mux_sel_o   = `IMM_16;
-              alu_operator          = {2'b10, instr_rdata_i[24:21]};
-              set_flag              = 1'b1;
-              rega_used             = 1'b1;
-            end
-            else begin
-              // synopsys translate_off
-              $display("%t: Illegal Set Flag Immediate instruction received.", $time);
-              // synopsys translate_on
-              illegal_insn_o     = 1'b1;
-            end
-          end
-
-          `OPCODE_SF: begin    // Set Flag Instruction
-            if (instr_rdata_i[25] == 1'b0) begin
-              alu_operator          = {2'b10, instr_rdata_i[24:21]};
-              set_flag              = 1'b1;
-              rega_used             = 1'b1;
-              regb_used             = 1'b1;
-            end
-            else begin
-              // synopsys translate_off
-              $display("%t: Illegal Set Flag instruction received.", $time);
-              // synopsys translate_on
-              illegal_insn_o = 1'b1;
-            end
           end
 
           `OPCODE_VEC: begin // vectorial alu operations
@@ -1168,11 +1098,10 @@ module controller
           */
 
           default: begin
-            illegal_insn_o = 1'b1;
             // TODO: Replace with exception
-            pc_mux_sel_o = `NO_INCR;
+            illegal_insn_o = 1'b1;
+            pc_mux_sel_o = `PC_NO_INCR;
           end
-
         endcase; // case (instr_rdata_i[6:0])
 
         // synopsys translate_off
@@ -1203,7 +1132,7 @@ module controller
         end
 
         if ( set_npc == 1'b1 )
-          pc_mux_sel_o = `NO_INCR;
+          pc_mux_sel_o = `PC_NO_INCR;
 
         // hwloop detected, jump to start address!
         if (hwloop_jump_i == 1'b1)
@@ -1218,184 +1147,153 @@ module controller
           ctrl_fsm_ns = IDLE;
       end
     endcase
-   end
+  end
 
-   assign core_busy_o = (ctrl_fsm_cs != IDLE);
+  assign core_busy_o = (ctrl_fsm_cs != IDLE);
 
-   ////////////////////////////////////////////////////////////////////////////////////////////
-   // Generate Stall Signals!                                                                //
-   ////////////////////////////////////////////////////////////////////////////////////////////
-   always_comb
-   begin
-     mfspr_stall   = 1'b0;
-     mtspr_stall   = 1'b0;
-     load_stall    = 1'b0;
-     j_stall       = 1'b0;
-     deassert_we   = 1'b0;
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  // Generate Stall Signals!                                                                //
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  always_comb
+  begin
+    mfspr_stall = 1'b0;
+    mtspr_stall = 1'b0;
+    load_stall  = 1'b0;
+    jr_stall    = 1'b0;
+    deassert_we = 1'b0;
 
+    /*
+    // Stall because of l.mfspr with dependency
+    if ((regfile_wdata_mux_sel_ex_i == 1'b0) && (regfile_we_ex_i == 1'b1) &&
+        ((reg_d_ex_is_reg_a_id == 1'b1) || (reg_d_ex_is_reg_b_id == 1'b1) || (reg_d_ex_is_reg_c_id == 1'b1)) )
+    begin
+      deassert_we     = 1'b1;
+      mfspr_stall     = 1'b1;
+    end
 
-     /*
-     // Stall because of l.mfspr with dependency
-     if ((regfile_wdata_mux_sel_ex_i == 1'b0) && (regfile_we_ex_i == 1'b1) &&
-         ((reg_d_ex_is_reg_a_id == 1'b1) || (reg_d_ex_is_reg_b_id == 1'b1) || (reg_d_ex_is_reg_c_id == 1'b1)) )
-     begin
-       deassert_we     = 1'b1;
-       mfspr_stall     = 1'b1;
-     end
+    // Stall because of l.mtspr (always...)
+    // mtspr in ex stage, normal instruction in id stage which can change an spr reg
+    if ((sp_we_ex_i == 1'b1) && (instr_rdata_i[31:26] != `OPCODE_MTSPR))
+    begin
+      deassert_we     = 1'b1;
+      mtspr_stall     = 1'b1;
+    end
+    */
 
-     // Stall because of l.mtspr (always...)
-     // mtspr in ex stage, normal instruction in id stage which can change an spr reg
-     if ((sp_we_ex_i == 1'b1) && (instr_rdata_i[31:26] != `OPCODE_MTSPR))
-     begin
-       deassert_we     = 1'b1;
-       mtspr_stall     = 1'b1;
-     end
-     */
+    // Stall because of load operation
+    if ((data_req_ex_i == 1'b1) && (regfile_we_ex_i == 1'b1) &&
+        ((reg_d_ex_is_reg_a_id == 1'b1) || (reg_d_ex_is_reg_b_id == 1'b1) || (reg_d_ex_is_reg_c_id == 1'b1)) )
+    begin
+      deassert_we     = 1'b1;
+      load_stall      = 1'b1;
+    end
 
-     // Stall because of load operation
-     if ((data_req_ex_i == 1'b1) && (regfile_we_ex_i == 1'b1) &&
-         ((reg_d_ex_is_reg_a_id == 1'b1) || (reg_d_ex_is_reg_b_id == 1'b1) || (reg_d_ex_is_reg_c_id == 1'b1)) )
-     begin
-       deassert_we     = 1'b1;
-       load_stall      = 1'b1;
-     end
+    // TODO: check JALR/JR
+    // Stall because of jr path
+    // - Load results cannot directly be forwarded to PC
+    // - Multiplication results cannot be forwarded to PC
+    if ((instr_rdata_i[6:0] == `OPCODE_JALR) &&
+        (((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_b_id == 1'b1) && (data_rvalid_i == 1'b1)) ||
+         ((regfile_we_ex_i == 1'b1) && (reg_d_ex_is_reg_b_id == 1'b1))                            ||
+         ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_b_id == 1'b1) && (mult_is_running_ex_i == 1'b1))) )
+    begin
+      jr_stall        = 1'b1;
+      deassert_we     = 1'b1;
+    end
+  end
 
-     // TODO: check JALR/JR
-     // Stall because of jr path
-     // - Load results cannot directly be forwarded to PC
-     // - Multiplication results cannot be forwarded to PC
-     if ((instr_rdata_i[6:0] == `OPCODE_JALR) &&
-         (((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_b_id == 1'b1) && (data_rvalid_i == 1'b1)) ||
-          ((regfile_we_ex_i == 1'b1) && (reg_d_ex_is_reg_b_id == 1'b1))                            ||
-          ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_b_id == 1'b1) && (mult_is_running_ex_i == 1'b1))) )
-     begin
-       j_stall         = 1'b1;
-       deassert_we     = 1'b1;
-     end
+  // Stall because of IF miss
+  assign instr_ack_stall = ~instr_ack_i;
 
-     // Stall because of JAL/JALR/branch
-     // Stall until jump target or branch decision is calculated in EX (1 cycle, then fetch instruction)
-     if ( (instr_rdata_i[6:0] == `OPCODE_JAL || instr_rdata_i[6:0] == `OPCODE_JALR
-           || instr_rdata_i[6:0] == `OPCODE_BRANCH) && (jump_in_ex_i == 1'b0) )
-     begin
-       j_stall           = 1'b1;
-       //deassert_we     = 1'b1;
-     end
+  // Stall if TCDM contention has been detected
+  assign lsu_stall = ~data_ack_i;
 
-`ifdef BRANCH_PREDICTION
-      // Stall because of set_flag path
-     if (wrong_branch_taken)
-     begin
-       deassert_we     = 1'b1;
-     end
-`endif
+  assign misalign_stall = data_misaligned_i;
 
-   end
-
-  // NOTE: current_pc_id_i is wrong after drop instruction !
-`ifdef BRANCH_PREDICTION
-   assign drop_instruction_o = wrong_branch_taken | j_stall;
-`else
-   assign drop_instruction_o = j_stall;
-`endif
-
-   // Stall because of IF miss
-   assign instr_ack_stall = ~instr_ack_i;
-
-   // Stall if TCDM contention has been detected
-   assign lsu_stall = ~data_ack_i;
-
-   assign misalign_stall = data_misaligned_i;
-
-   // deassert we signals (in case of stalls)
-   assign alu_operator_o    = (deassert_we) ? `ALU_NOP : alu_operator;
-   assign mult_is_running_o = (deassert_we) ? 1'b0     : mult_is_running;
-   assign regfile_we_o      = (deassert_we) ? 1'b0     : regfile_we;
-   assign regfile_alu_we_o  = (deassert_we) ? 1'b0     : regfile_alu_we;
-   assign data_we_o         = (deassert_we) ? 1'b0     : data_we;
-   assign data_req_o        = (deassert_we) ? 1'b0     : data_req;
-   assign set_flag_o        = (deassert_we) ? 1'b0     : set_flag;
-   assign set_overflow_o    = (deassert_we) ? 1'b0     : set_overflow;
-   assign set_carry_o       = (deassert_we) ? 1'b0     : set_carry;
+  // deassert we signals (in case of stalls)
+  assign alu_operator_o    = (deassert_we) ? `ALU_NOP : alu_operator;
+  assign mult_is_running_o = (deassert_we) ? 1'b0     : mult_is_running;
+  assign regfile_we_o      = (deassert_we) ? 1'b0     : regfile_we;
+  assign regfile_alu_we_o  = (deassert_we) ? 1'b0     : regfile_alu_we;
+  assign data_we_o         = (deassert_we) ? 1'b0     : data_we;
+  assign data_req_o        = (deassert_we) ? 1'b0     : data_req;
+  assign set_flag_o        = (deassert_we) ? 1'b0     : set_flag;
+  assign set_overflow_o    = (deassert_we) ? 1'b0     : set_overflow;
+  assign set_carry_o       = (deassert_we) ? 1'b0     : set_carry;
 
 
-   ////////////////////////////////////////////////////////////////////////////////////////////
-   // Freeze Unit. This unit controls the pipeline stages                                    //
-   ////////////////////////////////////////////////////////////////////////////////////////////
-   always_comb
-   begin
-     // we unstall the if_stage if the debug unit wants to set a new
-     // pc, so that the new value gets written into current_pc_if and is
-     // used by the instr_core_interface
-     stall_if_o = (instr_ack_stall | mfspr_stall | mtspr_stall | load_stall | j_stall | lsu_stall | misalign_stall | dbg_stall_i | (~pc_valid_i));
-     stall_id_o =  instr_ack_stall | mfspr_stall | mtspr_stall | load_stall | j_stall | lsu_stall | misalign_stall | dbg_stall_i;
-     stall_ex_o = instr_ack_stall | lsu_stall | dbg_stall_i;
-     stall_wb_o = lsu_stall | dbg_stall_i;
-   end
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  // Jump and Branch handling                                                               //
+  ////////////////////////////////////////////////////////////////////////////////////////////
+
+  assign force_nop_o = (jump_in_id_o != 2'b00 || jump_in_ex_i != 2'b00)? 1'b1 : 1'b0;
+  assign drop_instruction_o = 1'b0;
+
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  // Freeze Unit. This unit controls the pipeline stages                                    //
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  always_comb
+  begin
+    // we unstall the if_stage if the debug unit wants to set a new
+    // pc, so that the new value gets written into current_pc_if and is
+    // used by the instr_core_interface
+    stall_if_o = (instr_ack_stall | mfspr_stall | mtspr_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_stall_i | (~pc_valid_i));
+    stall_id_o =  instr_ack_stall | mfspr_stall | mtspr_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_stall_i;
+    stall_ex_o = instr_ack_stall | lsu_stall | dbg_stall_i;
+    stall_wb_o = lsu_stall | dbg_stall_i;
+  end
 
 
-   ////////////////////////////////////////////////////////////////////////////////////////////
-   // Forwarding control unit. (Forwarding from wb and ex stage to id stage)                 //
-   //  RiscV register encoding:  rs1 is [19:15], rs2 is [24:20], rd is [11:7]                //
-   //  Or10n register encoding:  ra  is [20:16], rb  is [15:11], rd is [25:21]               //
-   ////////////////////////////////////////////////////////////////////////////////////////////
-   assign reg_d_ex_is_reg_a_id  = (regfile_waddr_ex_i     == instr_rdata_i[`REG_S1]) && (rega_used == 1'b1);
-   assign reg_d_ex_is_reg_b_id  = (regfile_waddr_ex_i     == instr_rdata_i[`REG_S2]) && (regb_used == 1'b1);
-   assign reg_d_ex_is_reg_c_id  = (regfile_waddr_ex_i     == instr_rdata_i[`REG_D])  && (regc_used == 1'b1);
-   assign reg_d_wb_is_reg_a_id  = (regfile_waddr_wb_i     == instr_rdata_i[`REG_S1]) && (rega_used == 1'b1);
-   assign reg_d_wb_is_reg_b_id  = (regfile_waddr_wb_i     == instr_rdata_i[`REG_S2]) && (regb_used == 1'b1);
-   assign reg_d_wb_is_reg_c_id  = (regfile_waddr_wb_i     == instr_rdata_i[`REG_D])  && (regc_used == 1'b1);
-   assign reg_d_alu_is_reg_a_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_S1]) && (rega_used == 1'b1);
-   assign reg_d_alu_is_reg_b_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_S2]) && (regb_used == 1'b1);
-   //assign reg_d_alu_is_reg_c_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_RD])  && (regc_used == 1'b1);
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  // Forwarding control unit. (Forwarding from wb and ex stage to id stage)                 //
+  //  RiscV register encoding:  rs1 is [19:15], rs2 is [24:20], rd is [11:7]                //
+  //  Or10n register encoding:  ra  is [20:16], rb  is [15:11], rd is [25:21]               //
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  assign reg_d_ex_is_reg_a_id  = (regfile_waddr_ex_i     == instr_rdata_i[`REG_S1]) && (rega_used == 1'b1);
+  assign reg_d_ex_is_reg_b_id  = (regfile_waddr_ex_i     == instr_rdata_i[`REG_S2]) && (regb_used == 1'b1);
+  assign reg_d_ex_is_reg_c_id  = (regfile_waddr_ex_i     == instr_rdata_i[`REG_D])  && (regc_used == 1'b1);
+  assign reg_d_wb_is_reg_a_id  = (regfile_waddr_wb_i     == instr_rdata_i[`REG_S1]) && (rega_used == 1'b1);
+  assign reg_d_wb_is_reg_b_id  = (regfile_waddr_wb_i     == instr_rdata_i[`REG_S2]) && (regb_used == 1'b1);
+  assign reg_d_wb_is_reg_c_id  = (regfile_waddr_wb_i     == instr_rdata_i[`REG_D])  && (regc_used == 1'b1);
+  assign reg_d_alu_is_reg_a_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_S1]) && (rega_used == 1'b1);
+  assign reg_d_alu_is_reg_b_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_S2]) && (regb_used == 1'b1);
+  //assign reg_d_alu_is_reg_c_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_RD])  && (regc_used == 1'b1);
 
-   always_comb
-   begin
-     // default assignements
-     operand_a_fw_mux_sel_o = `SEL_REGFILE;
-     operand_b_fw_mux_sel_o = `SEL_REGFILE;
-     operand_c_fw_mux_sel_o = `SEL_REGFILE;
+  always_comb
+  begin
+    // default assignements
+    operand_a_fw_mux_sel_o = `SEL_REGFILE;
+    operand_b_fw_mux_sel_o = `SEL_REGFILE;
+    operand_c_fw_mux_sel_o = `SEL_REGFILE;
 
-     // Forwarding WB -> ID
-     if (regfile_we_wb_i == 1'b1)
-     begin
-       if (reg_d_wb_is_reg_a_id == 1'b1)
-         operand_a_fw_mux_sel_o = `SEL_FW_WB;
-       if (reg_d_wb_is_reg_b_id == 1'b1)
-         operand_b_fw_mux_sel_o = `SEL_FW_WB;
-       if (reg_d_wb_is_reg_c_id == 1'b1)
-         operand_c_fw_mux_sel_o = `SEL_FW_WB;
-     end
+    // Forwarding WB -> ID
+    if (regfile_we_wb_i == 1'b1)
+    begin
+      if (reg_d_wb_is_reg_a_id == 1'b1)
+        operand_a_fw_mux_sel_o = `SEL_FW_WB;
+      if (reg_d_wb_is_reg_b_id == 1'b1)
+        operand_b_fw_mux_sel_o = `SEL_FW_WB;
+      if (reg_d_wb_is_reg_c_id == 1'b1)
+        operand_c_fw_mux_sel_o = `SEL_FW_WB;
+    end
 
-     // Forwarding EX -> ID
-     if (regfile_alu_we_fw_i == 1'b1)
-     begin
-      if (reg_d_alu_is_reg_a_id == 1'b1)
-        operand_a_fw_mux_sel_o = `SEL_FW_EX;
-      if (reg_d_alu_is_reg_b_id == 1'b1)
-        operand_b_fw_mux_sel_o = `SEL_FW_EX;
-      if (reg_d_alu_is_reg_c_id == 1'b1)
-        operand_c_fw_mux_sel_o = `SEL_FW_EX;
-     end
+    // Forwarding EX -> ID
+    if (regfile_alu_we_fw_i == 1'b1)
+    begin
+     if (reg_d_alu_is_reg_a_id == 1'b1)
+       operand_a_fw_mux_sel_o = `SEL_FW_EX;
+     if (reg_d_alu_is_reg_b_id == 1'b1)
+       operand_b_fw_mux_sel_o = `SEL_FW_EX;
+     if (reg_d_alu_is_reg_c_id == 1'b1)
+       operand_c_fw_mux_sel_o = `SEL_FW_EX;
+    end
 
-     if (data_misaligned_i == 1'b1)
-     begin
-       operand_a_fw_mux_sel_o  = `SEL_FW_EX;
-       operand_b_fw_mux_sel_o  = `SEL_REGFILE;
-     end
-   end
-
-   // check if jump or branch in pipeline
-  /*
-   assign jump_in_id_o = ((instr_rdata_i[31:26] == `OPCODE_BF)  || (instr_rdata_i[31:26] == `OPCODE_BNF)  ||
-                          (instr_rdata_i[31:26] == `OPCODE_J)   || (instr_rdata_i[31:26] == `OPCODE_JR)   ||
-                          (instr_rdata_i[31:26] == `OPCODE_JAL) || (instr_rdata_i[31:26] == `OPCODE_JALR) ||
-                          (instr_rdata_i[31:26] == `OPCODE_RFE) );
-   */
-  // TODO: FIXME
-  assign jump_in_id_o = ((instr_rdata_i[6:0] == `OPCODE_JAL) || (instr_rdata_i[6:0] == `OPCODE_JALR) ||
-                         (instr_rdata_i[6:0] == `OPCODE_BRANCH));
-
+    if (data_misaligned_i == 1'b1)
+    begin
+      operand_a_fw_mux_sel_o  = `SEL_FW_EX;
+      operand_b_fw_mux_sel_o  = `SEL_REGFILE;
+    end
+  end
 
   // update registers
   always_ff @(posedge clk , negedge rst_n)
@@ -1425,21 +1323,5 @@ module controller
          set_npc <= 1'b0;
     end
   end
-
-`ifdef BRANCH_PREDICTION
-  // Wrong branch was taken!
-  always_ff @(posedge clk , negedge rst_n)
-  begin : WRONG_BRANCH
-    if ( rst_n == 1'b0 )
-    begin
-       wrong_branch_taken <= 1'b0;
-    end
-    else
-    begin
-       if (stall_if_o == 1'b0)
-         wrong_branch_taken <= wrong_branch_taken_o;
-    end
-  end
-`endif
 
 endmodule // controller

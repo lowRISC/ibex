@@ -170,6 +170,8 @@
 
 
 // synopsis translate off
+`define TRACE_EXECUTION
+
 function void prettyPrintInstruction(input [31:0] instr, input [31:0] pc);
   string opcode;
   begin
@@ -268,9 +270,6 @@ endfunction // prettyPrintInstruction
 `define ALU_FL1   6'b11_0011
 `define ALU_CLB   6'b11_0001
 
-// next PC and PC+4 computation for JAL/JALR in RiscV
-`define ALU_JAL   6'b11_1000
-
 
 // Vector Mode
 `define VEC_MODE32  2'b00
@@ -341,32 +340,22 @@ endfunction // prettyPrintInstruction
 
 // operand c selection
 `define OP_C_REGC_OR_FWD 1'b0
-`define OP_C_CURRPC      1'b1
+`define OP_C_JT          1'b1
 
-// immediate selection
-// - `define IMM_5N11           4'b0000
-// - `define IMM_21S            4'b0001
-// - `define IMM_8Z             4'b0010
-// - `define IMM_16Z            4'b0011
-// - `define IMM_16             4'b0100
-// - `define IMM_11S            4'b0101
-// - `define IMM_5N6S           4'b0110
-// - `define IMM_VEC            4'b0111
-// - `define IMM_HEX4           4'b1000
-`define IMM_I  3'b000
-`define IMM_S  3'b010
+// operand b immediate selection
+`define IMM_I    2'b00
+`define IMM_S    2'b01
+`define IMM_U    2'b10
+`define IMM_HEX4 2'b11
+/* not used:
 `define IMM_SB 3'b011
-`define IMM_U  3'b100
 `define IMM_UJ 3'b101
 `define IMM_C4 3'b110
+ */
 
 // PC mux selector defines
-`define INCR_PC          3'b000
-`define NO_INCR          3'b001
-//`define PC_FROM_REGFILE  3'b010  Removed in RiscV
-`define PC_FROM_IMM      3'b010
-//`define PC_FROM_IMM      3'b011  Replaced in RiscV
-`define PC_FROM_ALU      3'b011
+`define PC_INCR          3'b000
+`define PC_NO_INCR       3'b001
 `define PC_EXCEPTION     3'b100
 `define EXC_PC_REG       3'b101
 `define HWLOOP_ADDR      3'b110
@@ -409,4 +398,4 @@ endfunction // prettyPrintInstruction
 // TCDM_ADDRES PRE CALCULATION --> Bring part of the alu_adder_o calculation in the ID stage
 //`define TCDM_ADDR_PRECAL
 
-                                                            //`define BRANCH_PREDICTION
+//`define BRANCH_PREDICTION
