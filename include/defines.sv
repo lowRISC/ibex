@@ -343,10 +343,12 @@ endfunction // prettyPrintInstruction
 `define OP_C_JT          1'b1
 
 // operand b immediate selection
-`define IMM_I    2'b00
-`define IMM_S    2'b01
-`define IMM_U    2'b10
-`define IMM_HEX4 2'b11
+`define IMM_I    3'b000
+`define IMM_S    3'b001
+`define IMM_U    3'b010
+`define IMM_HEX4 3'b011
+`define IMM_CID  3'b100 // core id
+`define IMM_CLID 3'b100 // cluster id
 /* not used:
 `define IMM_SB 3'b011
 `define IMM_UJ 3'b101

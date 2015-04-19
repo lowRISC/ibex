@@ -299,6 +299,13 @@ module controller
           ctrl_fsm_ns = DECODE;
         end
 
+        // Store core ID in x18 (a0) // TODO: Temporary hack
+        alu_op_a_mux_sel_o  = `OP_A_ZERO;
+        alu_op_b_mux_sel_o  = `OP_B_IMM;
+        immediate_mux_sel_o = `IMM_CID;
+        alu_operator        = `ALU_ADD;
+        regfile_alu_we      = 1'b1;
+
         // hwloop detected, jump to start address!
         // Attention: This has to be done in the DECODE and the FIRST_FETCH states
         if (hwloop_jump_i == 1'b1)
@@ -1226,7 +1233,10 @@ module controller
   // Jump and Branch handling                                                               //
   ////////////////////////////////////////////////////////////////////////////////////////////
 
+  //assign force_nop_o = (jump_in_id_o != 2'b00)? 1'b1 : 1'b0;
   assign force_nop_o = (jump_in_id_o != 2'b00 || jump_in_ex_i != 2'b00)? 1'b1 : 1'b0;
+  //assign force_nop_o = (!instr_ack_stall && (jump_in_id_o != 2'b00 || jump_in_ex_i != 2'b00))? 1'b1 : 1'b0;
+  //assign force_nop_o = (!stall_ex_o && jump_in_id_o == 2'b01)? 1'b1 : 1'b0;
   assign drop_instruction_o = 1'b0;
 
   ////////////////////////////////////////////////////////////////////////////////////////////
@@ -1237,8 +1247,8 @@ module controller
     // we unstall the if_stage if the debug unit wants to set a new
     // pc, so that the new value gets written into current_pc_if and is
     // used by the instr_core_interface
-    stall_if_o = (instr_ack_stall | mfspr_stall | mtspr_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_stall_i | (~pc_valid_i));
-    stall_id_o =  instr_ack_stall | mfspr_stall | mtspr_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_stall_i;
+    stall_if_o = instr_ack_stall | mfspr_stall | mtspr_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_stall_i | (~pc_valid_i);
+    stall_id_o = instr_ack_stall | mfspr_stall | mtspr_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_stall_i;
     stall_ex_o = instr_ack_stall | lsu_stall | dbg_stall_i;
     stall_wb_o = lsu_stall | dbg_stall_i;
   end
@@ -1293,6 +1303,12 @@ module controller
       operand_a_fw_mux_sel_o  = `SEL_FW_EX;
       operand_b_fw_mux_sel_o  = `SEL_REGFILE;
     end
+
+    // Make sure x0 is never forwarded
+    if (instr_rdata_i[`REG_S1] == 5'b0)
+      operand_a_fw_mux_sel_o = `SEL_REGFILE;
+    if (instr_rdata_i[`REG_S2] == 5'b0)
+      operand_b_fw_mux_sel_o = `SEL_REGFILE;
   end
 
   // update registers

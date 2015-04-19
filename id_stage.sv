@@ -38,6 +38,8 @@ module id_stage
     input  logic                        clk,
     input  logic                        rst_n,
 
+    input  logic  [4:0]                 core_id_i,
+
     input logic                         fetch_enable_i,
     output logic                        core_busy_o,
 
@@ -49,7 +51,8 @@ module id_stage
 
     // Jumps and branches
     output logic [1:0]                  jump_in_id_o,
-    input  logic [1:0]                  jump_in_ex_i,
+    //input  logic [1:0]                  jump_in_ex_i,
+    output logic [1:0]                  jump_in_ex_o,
 
     // IF and ID stage signals
     //output logic [31:0]                 pc_from_immediate_o,  // TODO: remove
@@ -197,7 +200,9 @@ module id_stage
 
   // Signals running between controller and exception controller
   //logic        jump_in_id;
-  //logic        jump_in_ex;        // registered copy of jump_in_id
+  logic        jump_in_ex;        // registered copy of jump_in_id
+  assign jump_in_ex_o = jump_in_ex;
+
   logic        illegal_insn;
   logic        trap_insn;
   logic        pipe_flush;
@@ -453,6 +458,7 @@ module id_stage
        `IMM_S:    immediate_b = imm_s_type;
        `IMM_U:    immediate_b = imm_u_type;
        `IMM_HEX4: immediate_b = 32'h4;
+       `IMM_CID:  immediate_b = core_id_i; // TODO: Temporary hack
        default:   immediate_b = 32'h4;
      endcase; // case (immediate_mux_sel)
   end
@@ -676,7 +682,7 @@ module id_stage
       .operand_c_fw_mux_sel_o       ( operand_c_fw_mux_sel  ),
 
       // To controller (TODO: Remove when control/decode separated and moved)
-      .jump_in_ex_i                 ( jump_in_ex_i          ),
+      .jump_in_ex_i                 ( jump_in_ex_o          ),
 
       // To EX: Jump/Branch indication
       .jump_in_id_o                 ( jump_in_id_o          ),
@@ -841,6 +847,8 @@ module id_stage
       hwloop_wb_mux_sel_ex_o      <= 1'b0;
       hwloop_cnt_o                <= 32'b0;
 
+      jump_in_ex                  <= 1'b0;
+
       eoc_ex_o                    <= 1'b0;
 
       `ifdef TCDM_ADDR_PRECAL
@@ -913,6 +921,8 @@ module id_stage
       hwloop_regid_ex_o           <= hwloop_regid;
       hwloop_wb_mux_sel_ex_o      <= hwloop_wb_mux_sel;
       hwloop_cnt_o                <= hwloop_cnt;
+
+      jump_in_ex                  <= jump_in_id_o;
 
       eoc_ex_o                    <= eoc;
 

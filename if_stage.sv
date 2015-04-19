@@ -178,6 +178,10 @@ module if_stage
         begin : ENABLED_PIPE
           current_pc_if_o  <= next_pc;
         end
+      else if ( jump_in_ex_i == 2'b01 )
+        begin
+          current_pc_if_o  <= next_pc;
+        end
     end
   end
 

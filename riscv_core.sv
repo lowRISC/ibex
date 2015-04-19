@@ -343,11 +343,13 @@ module riscv_core
       .clk                          ( clk                           ),
       .rst_n                        ( rst_n                         ),
 
+      .core_id_i                    ( core_id_i                     ),  // TODO: Temporary hack
+
       // Processor Enable
       .fetch_enable_i               ( fetch_enable_i                ),
 
       .jump_in_id_o                 ( jump_in_id                    ),
-      .jump_in_ex_i                 ( jump_in_ex                    ),
+      .jump_in_ex_o                 ( jump_in_ex                    ),
 
       .core_busy_o                  ( core_busy_o                   ),
 
@@ -565,7 +567,7 @@ module riscv_core
 
       // To IF: Jump and branch target and decision
       .jump_target_o              ( jump_target                  ),
-      .jump_in_ex_o               ( jump_in_ex                   ),
+      //.jump_in_ex_o               ( jump_in_ex                   ),
       .branch_decision_o          ( branch_decision              ),
 
       // To ID stage: Forwarding signals

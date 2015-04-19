@@ -126,7 +126,7 @@ module ex_stage
 
     // To IF: Jump and branch target and decision
     output logic [31:0]               jump_target_o,
-    output logic  [1:0]               jump_in_ex_o,
+    //output logic  [1:0]               jump_in_ex_o,
     output logic                      branch_decision_o
 
 `ifdef TCDM_ADDR_PRECAL
@@ -269,7 +269,7 @@ module ex_stage
       regfile_rb_data_wb_o         <= 32'h0000_0000;
       sp_we_wb_o                   <= 1'b0;
       eoc_o                        <= 1'b0;
-      jump_in_ex_o                 <= '0;
+      //jump_in_ex_o                 <= '0;
     end
     else
     begin
@@ -282,7 +282,7 @@ module ex_stage
         regfile_rb_data_wb_o       <= regfile_rb_data_i;
         sp_we_wb_o                 <= sp_we_i;
         eoc_o                      <= eoc_i;
-        jump_in_ex_o               <= jump_in_id_i;
+        //jump_in_ex_o               <= jump_in_id_i;
       end
     end
   end
