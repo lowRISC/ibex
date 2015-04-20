@@ -299,13 +299,6 @@ module controller
           ctrl_fsm_ns = DECODE;
         end
 
-        // Store core ID in x18 (a0) // TODO: Temporary hack
-        alu_op_a_mux_sel_o  = `OP_A_ZERO;
-        alu_op_b_mux_sel_o  = `OP_B_IMM;
-        immediate_mux_sel_o = `IMM_CID;
-        alu_operator        = `ALU_ADD;
-        regfile_alu_we      = 1'b1;
-
         // hwloop detected, jump to start address!
         // Attention: This has to be done in the DECODE and the FIRST_FETCH states
         if (hwloop_jump_i == 1'b1)
@@ -315,6 +308,15 @@ module controller
       DECODE:
       begin
         unique case (instr_rdata_i[6:0])
+
+          `OPCODE_CUST0: begin  // Custom-0 opcode: Get core id
+            // TODO: Temporary hack?
+            alu_op_a_mux_sel_o  = `OP_A_ZERO;
+            alu_op_b_mux_sel_o  = `OP_B_IMM;
+            immediate_mux_sel_o = `IMM_CID;
+            alu_operator        = `ALU_ADD;
+            regfile_alu_we      = 1'b1;
+          end
 
           //////////////////////////////////////
           //      _ _   _ __  __ ____  ____   //

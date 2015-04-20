@@ -798,9 +798,10 @@ module riscv_core
   `ifdef TRACE_EXECUTION
   integer f;
   string fn;
-  logic [31:0] r[32];
   logic [31:0] instr;
   logic [31:0] pc;
+  logic  [5:0] rd, rs1, rs2;
+  logic [31:0] rs1_value, rs2_value;
 
   // open/close output file for writing
   initial
@@ -819,15 +820,23 @@ module riscv_core
   // log execution
   always @(posedge clk)
   begin
-    r     = id_stage_i.registers_i.MemContentxDP;
+    // get current PC and instruction
     instr = id_stage_i.instr_rdata_i[31:0];
     pc    = id_stage_i.current_pc_id_i;
+    
+    // get register values
+    rd        = instr[`REG_D];
+    rs1       = instr[`REG_S1];
+    rs1_value = id_stage_i.operand_a_fw_id; //r[rs1];
+    rs2       = instr[`REG_S2];
+    rs2_value = id_stage_i.operand_b_fw_id; //r[rs2];
 
     if (fetch_enable_i == 1'b1 && id_stage_i.stall_id_o == 1'b0 && id_stage_i.controller_i.ctrl_fsm_cs == id_stage_i.controller_i.DECODE)
     begin
       //$display("%h", instr);
       $fwrite(f, "%t:\t0x%h\t0x%h\t", $time, pc, instr);
       casex (instr)
+        `INSTR_CUSTOM0:    $fdisplay(f, "CUSTOM0");
         `INSTR_LUI:        printIInstr("LUI");
         `INSTR_AUIPC:      printIInstr("AUIPC");
         `INSTR_JAL:        printUJInstr("JAL");
@@ -894,8 +903,8 @@ module riscv_core
 
   function void printRInstr(input string mnemonic);
     begin
-      $fdisplay(f, "%s\tx%0d, x%d (0x%h), x%0d (0x%h)", mnemonic, instr[`REG_D],
-                instr[`REG_S1], r[instr[`REG_S1]], instr[`REG_S2], r[instr[`REG_S2]]);
+      $fdisplay(f, "%s\tx%0d, x%d (0x%h), x%0d (0x%h)", mnemonic,
+                rd, rs1, rs1_value, rs2, rs2_value);
     end
   endfunction // printRInstr
 
@@ -903,8 +912,8 @@ module riscv_core
     logic [31:0] i_imm;
     begin
       i_imm = { {20 {instr[31]}}, instr[31:20] };
-      $fdisplay(f, "%s\tx%0d, x%0d (0x%h), 0x%0d (imm)", mnemonic, instr[`REG_D],
-                instr[`REG_S1], r[instr[`REG_S1]], i_imm);
+      $fdisplay(f, "%s\tx%0d, x%0d (0x%h), 0x%0d (imm)", mnemonic,
+                rd, rs1, rs1_value, i_imm);
     end
   endfunction // printIInstr
 
@@ -913,8 +922,7 @@ module riscv_core
     begin
       s_imm  = { {20 {instr[31]}}, instr[31:25], instr[11:7] };
       $fdisplay(f, "%s\tx%0d (0x%h), x%0d (0x%h), 0x%h (imm)", mnemonic,
-                instr[`REG_S1], r[instr[`REG_S1]], instr[`REG_S2], r[instr[`REG_S2]],
-                s_imm);
+                rs1, rs1_value, rs2, rs2_value, s_imm);
     end
   endfunction // printSInstr
 
@@ -922,9 +930,8 @@ module riscv_core
     logic [31:0] sb_imm;
     begin
       sb_imm = { {20 {instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8] };
-      $fdisplay(f, "%s\tx%0d (0x%h), x%0d (0x%h), 0x%h (imm)", mnemonic,
-                instr[`REG_S1], r[instr[`REG_S1]], instr[`REG_S2], r[instr[`REG_S2]],
-                sb_imm);
+      $fdisplay(f, "%s\tx%0d (0x%h), x%0d (0x%h), 0x%h (-> 0x%h)", mnemonic,
+                rs1, rs1_value, rs2, rs2_value, sb_imm, sb_imm+pc);
     end
   endfunction // printSBInstr
 
@@ -932,13 +939,13 @@ module riscv_core
     logic [31:0] uj_imm;
     begin
       uj_imm = { {20 {instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0 };
-      $fdisplay(f, "%s\tx%0d, 0x%h", mnemonic, instr[`REG_D], uj_imm);
+      $fdisplay(f, "%s\tx%0d, 0x%h (-> 0x%h)", mnemonic, rd, uj_imm, uj_imm+pc);
     end
   endfunction // printUJInstr
 
   function void printRDInstr(input string mnemonic);
     begin
-      $fdisplay(f, "%s\tx%0d", mnemonic, instr[`REG_D]);
+      $fdisplay(f, "%s\tx%0d", mnemonic, rd);
     end
   endfunction // printRDInstr
 

@@ -95,7 +95,9 @@
 `define OPCODE_JAL    7'h6f
 `define OPCODE_AUIPC  7'h17
 `define OPCODE_LUI    7'h37
+`define OPCODE_CUST0  7'h0b
 
+`define INSTR_CUSTOM0    { {25 {1'b?}}, `OPCODE_CUST0 }
 `define INSTR_LUI        { {25 {1'b?}}, `OPCODE_LUI }
 `define INSTR_AUIPC      { {25 {1'b?}}, `OPCODE_AUIPC }
 `define INSTR_JAL        { {25 {1'b?}}, `OPCODE_JAL }
