@@ -199,8 +199,7 @@ module id_stage
   logic        irq_present;
 
   // Signals running between controller and exception controller
-  //logic        jump_in_id;
-  logic        jump_in_ex;        // registered copy of jump_in_id
+  logic  [1:0] jump_in_ex;        // registered copy of jump_in_id
   assign jump_in_ex_o = jump_in_ex;
 
   logic        illegal_insn;
@@ -847,7 +846,7 @@ module id_stage
       hwloop_wb_mux_sel_ex_o      <= 1'b0;
       hwloop_cnt_o                <= 32'b0;
 
-      jump_in_ex                  <= 1'b0;
+      jump_in_ex                  <= 2'b0;
 
       eoc_ex_o                    <= 1'b0;
 
