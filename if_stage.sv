@@ -60,6 +60,7 @@ module if_stage
 
     // jump and branch target and decision
     input  logic [31:0] jump_target_i,      // jump target
+    input  logic  [1:0] jump_in_id_i,
     input  logic  [1:0] jump_in_ex_i,       // jump in EX -> get PC from jump target (could also be branch)
     input  logic        branch_decision_i,
 
@@ -84,35 +85,16 @@ module if_stage
   // Address to fetch the instruction
   assign instr_addr_o = next_pc;
 
-  // Next PC Selection: pc_mux_sel_i comes from id_stage.controller
-  /*always_comb
-  begin : PC_MUX
-    case (pc_mux_sel_i)
-      `INCR_PC:         begin  next_pc = current_pc_if_o + 32'd4; end // PC is incremented and points the next instruction
-      `NO_INCR:         begin  next_pc = current_pc_if_o;         end // PC is not incremented
-      //`PC_FROM_REGFILE: begin  next_pc = pc_from_regfile_i;       end // PC is taken from the regfile
-      //`PC_FROM_ALU:     begin  next_pc = pc_from_alu_i;           end // use calculated jump target from ALU
-      `PC_EXCEPTION:    begin  next_pc = exc_pc;                  end // PC that points to the exception
-      `EXC_PC_REG:      begin  next_pc = exception_pc_reg_i;      end // restore the PC when exiting from interr/ecpetions
-      `HWLOOP_ADDR:     begin  next_pc = pc_from_hwloop_i;        end // PC is taken from hwloop start addr
-`ifdef BRANCH_PREDICTION
-      `PC_BRANCH_PRED:  begin  next_pc = correct_branch;          end // take pc from branch prediction
-`endif
-       default:         begin  next_pc = current_pc_if_o + 32'd4; end
-     endcase //~case (pc_mux_sel_i)
-  end */
-
   // Exception PC selection
   always_comb
   begin : EXC_PC_MUX
     case (exc_pc_mux_i)
-      `EXC_PC_IRQ:      begin  exc_pc = {boot_addr_i[31:8], `EXC_IRQ    };     end
-      `EXC_PC_IRQ_NM:   begin  exc_pc = {boot_addr_i[31:8], `EXC_IRQ_NM };     end
-      `EXC_PC_ILLINSN:  begin  exc_pc = {boot_addr_i[31:8], `EXC_ILLINSN};     end
-      `EXC_PC_NO_INCR:  begin  exc_pc = current_pc_if_o;                       end
+      `EXC_PC_NO_INCR:  begin  exc_pc = current_pc_if_o;                        end
+      `EXC_PC_ILLINSN:  begin  exc_pc = {boot_addr_i[31:5], `EXC_OFF_ILLINSN }; end
+      `EXC_PC_IRQ:      begin  exc_pc = {boot_addr_i[31:5], `EXC_OFF_IRQ     }; end
+      `EXC_PC_IRQ_NM:   begin  exc_pc = {boot_addr_i[31:5], `EXC_OFF_IRQ_NM  }; end
     endcase //~case (exc_pc_mux_i)
   end
-
 
   // PC selection and force NOP logic
   always_comb
@@ -124,30 +106,36 @@ module if_stage
       `PC_INCR:         next_pc = current_pc_if_o + 32'd4;  // PC is incremented and points the next instruction
       `PC_NO_INCR:      next_pc = current_pc_if_o;          // PC is not incremented
       `PC_EXCEPTION:    next_pc = exc_pc;                   // PC that points to the exception
-      `EXC_PC_REG:      next_pc = exception_pc_reg_i;       // restore the PC when exiting from interr/ecpetions
+      `PC_ERET:         next_pc = exception_pc_reg_i;       // restore the PC when returning from IRQ/exception
       `HWLOOP_ADDR:     next_pc = pc_from_hwloop_i;         // PC is taken from hwloop start addr
        default:
        begin
          next_pc = current_pc_if_o;
-         // synopsis translate off
+         // synopsys translate_off
          $display("%t: Illegal pc_mux_sel value (%0d)!", $time, pc_mux_sel_i);
-         // synopsis translate on
+         // synopsys translate_on
        end
     endcase // unique case (pc_mux_sel_i)
 
     // if force NOP, do not increase PC
     if (force_nop_i == 1'b1) begin
       instr_rdata_int = { 25'b0, `OPCODE_OPIMM }; // addi x0 = x0 + 0
+    end
+
+    // freeze PC if jump/branch in pipeline
+    if (jump_in_id_i != 2'b00) begin
       next_pc = current_pc_if_o;
     end
 
     if (jump_in_ex_i == 2'b01) begin
+      // jump handling
       next_pc = jump_target_i;
     end else if (jump_in_ex_i == 2'b10) begin
+      // branch handling
       if (branch_decision_i == 1'b1)
         next_pc = jump_target_i;
       else
-        next_pc = current_pc_if_o;// + 32'd4; // TODO: Check if merged with previous adder (from PC mux)
+        next_pc = current_pc_if_o;
     end
 
   end
@@ -166,8 +154,8 @@ module if_stage
     begin : DEASSERT_RESET
       if ( pc_mux_boot_i == 1'b1 )
         begin
-          // set PC to boot address if we were just reset
-          current_pc_if_o  <= boot_addr_i;
+          // set PC to reset vector
+          current_pc_if_o  <= {boot_addr_i[31:5], `EXC_OFF_RST};
         end
       else if ( dbg_set_npc == 1'b1 )
         begin

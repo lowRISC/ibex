@@ -233,7 +233,6 @@ module ex_stage
   // |_|  |_|\___/|_____|_| |___|_|   |_____|___|_____|_| \_\   //
   //                                                            //
   ////////////////////////////////////////////////////////////////
-  /*
   mult mult_i
   (
    .vector_mode_i   ( vector_mode_i        ),
@@ -252,7 +251,6 @@ module ex_stage
    .carry_o         ( mult_carry_int       ),
    .overflow_o      ( mult_overflow_int    )
   );
-   */
 
 
   ///////////////////////////////////////

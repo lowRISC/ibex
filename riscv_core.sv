@@ -127,10 +127,6 @@ module riscv_core
   logic            carry_ex;
   logic            overflow_ex;
 
-  // End of Computation
-  logic            eoc_ex;
-  logic            eoc_wb;
-
   // Multiplier Control
   logic            mult_is_running_ex;
   logic [1:0]      mult_sel_subword_ex;
@@ -248,6 +244,9 @@ module riscv_core
 `endif
 
 
+  // TODO: Remove from cluster
+  assign eoc_o = 1'b0;
+
 
     //////////////////////////////////////////////////
     //   ___ _____   ____ _____  _    ____ _____    //
@@ -279,7 +278,6 @@ module riscv_core
       .force_nop_i         ( force_nop_id         ),   // select incoming instr or NOP
       .exception_pc_reg_i  ( epcr                 ),   // Exception PC register
       .pc_from_regfile_i   ( pc_from_regfile_id   ),   // pc from reg file
-      //.pc_from_immediate_i ( pc_from_immediate_id ),   // pc from immediate
       .pc_from_hwloop_i    ( hwloop_targ_addr     ),   // pc from hwloop start address
       .pc_mux_sel_i        ( pc_mux_sel_id        ),   // sel for pc multiplexer
       .pc_mux_boot_i       ( pc_mux_boot          ),   // load boot address as PC
@@ -290,6 +288,7 @@ module riscv_core
       .dbg_set_npc         ( dbg_set_npc          ),
 
       // Jump and branch target and decision
+      .jump_in_id_i        ( jump_in_id           ),
       .jump_in_ex_i        ( jump_in_ex           ),
       .branch_decision_i   ( branch_decision      ),
       .jump_target_i       ( jump_target          ),
@@ -389,8 +388,6 @@ module riscv_core
       .vector_mode_ex_o             ( vector_mode_ex                ), // from ID to EX stage
       .alu_cmp_mode_ex_o            ( alu_cmp_mode_ex               ), // from ID to EX stage
       .alu_vec_ext_ex_o             ( alu_vec_ext_ex                ), // from ID to EX stage
-
-      .eoc_ex_o                     ( eoc_ex                        ),
 
       .mult_is_running_ex_o         ( mult_is_running_ex            ), // from ID to EX stage
       .mult_sel_subword_ex_o        ( mult_sel_subword_ex           ), // from ID to EX stage
@@ -541,7 +538,6 @@ module riscv_core
       .set_overflow_i             ( set_overflow_ex              ),
       .set_carry_i                ( set_carry_ex                 ),
 
-      .eoc_i                      ( eoc_ex                       ),
       .regfile_rb_data_i          ( regfile_rb_data_ex           ),
       .sp_we_i                    ( sp_we_ex                     ),
 
@@ -560,7 +556,6 @@ module riscv_core
       .hwloop_cnt_data_o          ( hwloop_cnt_data              ),
 
       .sp_we_wb_o                 ( sp_we_wb                     ),
-      .eoc_o                      ( eoc_wb                       ),
 
       // From ID: Jump and Branch detection
       .jump_in_id_i               ( jump_in_id                   ),
@@ -602,10 +597,7 @@ module riscv_core
       .lsu_data_reg_i          ( lsu_data_reg              ),
       // Mux output
       .regfile_wdata_o         ( regfile_wdata             ),
-      .wdata_reg_o             ( wdata_reg_fw_id           ),
-
-      .eoc_i                   ( eoc_wb                    ),
-      .eoc_o                   ( eoc_o                     )
+      .wdata_reg_o             ( wdata_reg_fw_id           )
     );
 
 
@@ -748,9 +740,6 @@ module riscv_core
     );
 
 
-    */
-
-
     /////////////////////////////////////////////////////////////
     //  ____  _____ ____  _   _  ____   _   _ _   _ ___ _____  //
     // |  _ \| ____| __ )| | | |/ ___| | | | | \ | |_ _|_   _| //
@@ -791,10 +780,14 @@ module riscv_core
       .regfile_rdata_i ( dbg_rdata       )
     );
 
+  */
+
+  assign dbg_reg_mux = 0;
+  assign dbg_stall = 0;
 
 
   // Execution trace generation
-  // synopsis translate off
+  // synopsys translate_off
   `ifdef TRACE_EXECUTION
   integer f;
   string fn;
@@ -802,6 +795,8 @@ module riscv_core
   logic [31:0] pc;
   logic  [5:0] rd, rs1, rs2;
   logic [31:0] rs1_value, rs2_value;
+  logic [31:0] imm;
+  string mnemonic;
 
   // open/close output file for writing
   initial
@@ -820,10 +815,12 @@ module riscv_core
   // log execution
   always @(posedge clk)
   begin
+    #1
+
     // get current PC and instruction
     instr = id_stage_i.instr_rdata_i[31:0];
     pc    = id_stage_i.current_pc_id_i;
-    
+
     // get register values
     rd        = instr[`REG_D];
     rs1       = instr[`REG_S1];
@@ -831,12 +828,17 @@ module riscv_core
     rs2       = instr[`REG_S2];
     rs2_value = id_stage_i.operand_b_fw_id; //r[rs2];
 
-    if (fetch_enable_i == 1'b1 && id_stage_i.stall_id_o == 1'b0 && id_stage_i.controller_i.ctrl_fsm_cs == id_stage_i.controller_i.DECODE)
+    if (id_stage_i.stall_id_o == 1'b0 && id_stage_i.controller_i.ctrl_fsm_cs == id_stage_i.controller_i.DECODE)
     begin
-      //$display("%h", instr);
+      mnemonic = "";
+      imm = 0;
+
       $fwrite(f, "%t:\t0x%h\t0x%h\t", $time, pc, instr);
       casex (instr)
-        `INSTR_CUSTOM0:    $fdisplay(f, "CUSTOM0");
+        // Aliases
+        32'h00_00_00_13:   printMnemonic("NOP");
+        // Regular opcodes
+        `INSTR_CUSTOM0:    printMnemonic("CUSTOM0");
         `INSTR_LUI:        printIInstr("LUI");
         `INSTR_AUIPC:      printIInstr("AUIPC");
         `INSTR_JAL:        printUJInstr("JAL");
@@ -880,11 +882,12 @@ module riscv_core
         `INSTR_OR:         printRInstr("OR");
         `INSTR_AND:        printRInstr("AND");
         // FENCE
-        `INSTR_FENCE:      $fdisplay(f, "FENCE");
-        `INSTR_FENCEI:     $fdisplay(f, "FENCEI");
+        `INSTR_FENCE:      printMnemonic("FENCE");
+        `INSTR_FENCEI:     printMnemonic("FENCEI");
         // SYSTEM
-        `INSTR_SCALL:      $fdisplay(f, "SCALL");
-        `INSTR_SBREAK:     $fdisplay(f, "SBREAK");
+        `INSTR_ECALL:      printMnemonic("ECALL");
+        `INSTR_EBREAK:     printMnemonic("EBREAK");
+        `INSTR_ERET:       printMnemonic("ERET");
         `INSTR_RDCYCLE:    printRDInstr("RDCYCLE");
         `INSTR_RDCYCLEH:   printRDInstr("RDCYCLEH");
         `INSTR_RDTIME:     printRDInstr("RDTIME");
@@ -893,64 +896,75 @@ module riscv_core
         `INSTR_RDINSTRETH: printRDInstr("RDINSTRETH");
         // RV32M
         `INSTR_MUL:        printRInstr("MUL");
+        /*
         `INSTR_MULH:       printRInstr("MULH");
         `INSTR_MULHSU:     printRInstr("MULHSU");
         `INSTR_MULHU:      printRInstr("MULHU");
-        default:           $fdisplay(f, "Unknown instruction");
+        */
+        default:           printMnemonic("Unknown instruction");
       endcase // unique case (instr)
     end
-  end
+  end // always @ (posedge clk)
+
+  function void printMnemonic(input string mnemonic);
+    begin
+      riscv_core.mnemonic = mnemonic;
+      $fdisplay(f, "%s", mnemonic);
+    end
+  endfunction // printMnemonic
 
   function void printRInstr(input string mnemonic);
     begin
+      riscv_core.mnemonic = mnemonic;
       $fdisplay(f, "%s\tx%0d, x%d (0x%h), x%0d (0x%h)", mnemonic,
                 rd, rs1, rs1_value, rs2, rs2_value);
     end
   endfunction // printRInstr
 
   function void printIInstr(input string mnemonic);
-    logic [31:0] i_imm;
     begin
-      i_imm = { {20 {instr[31]}}, instr[31:20] };
+      riscv_core.mnemonic = mnemonic;
+      imm = id_stage_i.imm_i_type;
       $fdisplay(f, "%s\tx%0d, x%0d (0x%h), 0x%0d (imm)", mnemonic,
-                rd, rs1, rs1_value, i_imm);
+                rd, rs1, rs1_value, imm);
     end
   endfunction // printIInstr
 
   function void printSInstr(input string mnemonic);
-    logic [31:0] s_imm;
     begin
-      s_imm  = { {20 {instr[31]}}, instr[31:25], instr[11:7] };
-      $fdisplay(f, "%s\tx%0d (0x%h), x%0d (0x%h), 0x%h (imm)", mnemonic,
-                rs1, rs1_value, rs2, rs2_value, s_imm);
+      riscv_core.mnemonic = mnemonic;
+      imm = id_stage_i.imm_s_type;
+      $fdisplay(f, "%s\tx%0d (0x%h), x%0d (0x%h), 0x%h (imm) (-> 0x%h)", mnemonic,
+                rs1, rs1_value, rs2, rs2_value, imm, imm+rs1_value);
     end
   endfunction // printSInstr
 
   function void printSBInstr(input string mnemonic);
-    logic [31:0] sb_imm;
     begin
-      sb_imm = { {20 {instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8] };
+      riscv_core.mnemonic = mnemonic;
+      imm = id_stage_i.imm_sb_type;
       $fdisplay(f, "%s\tx%0d (0x%h), x%0d (0x%h), 0x%h (-> 0x%h)", mnemonic,
-                rs1, rs1_value, rs2, rs2_value, sb_imm, sb_imm+pc);
+                rs1, rs1_value, rs2, rs2_value, imm, imm+pc);
     end
   endfunction // printSBInstr
 
   function void printUJInstr(input string mnemonic);
-    logic [31:0] uj_imm;
     begin
-      uj_imm = { {20 {instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0 };
-      $fdisplay(f, "%s\tx%0d, 0x%h (-> 0x%h)", mnemonic, rd, uj_imm, uj_imm+pc);
+      riscv_core.mnemonic = mnemonic;
+      imm = id_stage_i.imm_uj_type;
+      $fdisplay(f, "%s\tx%0d, 0x%h (-> 0x%h)", mnemonic, rd, imm, imm+pc);
     end
   endfunction // printUJInstr
 
   function void printRDInstr(input string mnemonic);
     begin
+      riscv_core.mnemonic = mnemonic;
       $fdisplay(f, "%s\tx%0d", mnemonic, rd);
     end
   endfunction // printRDInstr
 
   `endif // TRACE_EXECUTION
-  // synopsis translate on
+  // synopsys translate_on
 
 
 ///////////////////

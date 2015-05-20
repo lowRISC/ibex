@@ -51,11 +51,9 @@ module id_stage
 
     // Jumps and branches
     output logic [1:0]                  jump_in_id_o,
-    //input  logic [1:0]                  jump_in_ex_i,
     output logic [1:0]                  jump_in_ex_o,
 
     // IF and ID stage signals
-    //output logic [31:0]                 pc_from_immediate_o,  // TODO: remove
 
     output logic [2:0]                  pc_mux_sel_o,
     output logic                        pc_mux_boot_o,
@@ -85,8 +83,6 @@ module id_stage
     output logic [1:0]                  vector_mode_ex_o,
     output logic [1:0]                  alu_cmp_mode_ex_o,
     output logic [1:0]                  alu_vec_ext_ex_o,
-
-    output logic                        eoc_ex_o,
 
     output logic                        mult_is_running_ex_o, // TODO: Rename (-> mult enable ?)
     output logic [1:0]                  mult_sel_subword_ex_o,
@@ -192,9 +188,9 @@ module id_stage
 
   logic        exc_pc_sel;
   logic [2:0]  pc_mux_sel_int;    // selects next PC in if stage
-  //logic        pc_from_immediate_mux_sel = 1'b0; // TODO: FIXME (remove)
 
   logic        force_nop_controller;
+  logic        force_nop_exc;
 
   logic        irq_present;
 
@@ -244,8 +240,6 @@ module id_stage
   logic        mult_use_carry;   // Enables carry in for the MAC
   logic        mult_mac_en;      // Enables the use of the accumulator
 
-  logic        eoc;              // End of computation generated from the controller
-
   // Register Write Control
   logic        regfile_wdata_mux_sel;
   logic        regfile_we_id;
@@ -292,11 +286,8 @@ module id_stage
   logic [31:0] operand_c;
 
 
-  // TODO: FIXME temporary assignments while not everything is implemented (e.g. exceptions)
-  assign exc_pc_sel = 1'b0;
-  assign pc_valid = 1'b1;
 
-
+  assign force_nop_o = force_nop_controller | force_nop_exc;
   assign pc_mux_sel_o = (exc_pc_sel == 1'b1) ? `PC_EXCEPTION : pc_mux_sel_int;
 
   // immediate extraction and sign extension
@@ -339,17 +330,6 @@ module id_stage
   // |_|   |_|  \___/ \__, |_|  \__,_|_| |_| |_|  \____\___/ \__,_|_| |_|\__\___|_|    //
   //                  |___/                                                            //
   ///////////////////////////////////////////////////////////////////////////////////////
-
-  // PC offset for `PC_FROM_IMM PC mux
-  //assign pc_from_immediate_o = imm_uj_type;  // riscv no longer used
-  //always_comb
-  //begin : pc_from_immediate_mux
-  //  case (pc_from_immediate_mux_sel)
-  //    1'b0: pc_from_immediate_o = imm_uj_type; // JAL
-  //    1'b1: pc_from_immediate_o = imm_i_type;  // JALR
-  //  endcase // case (pc_from_immediate_mux_sel)
-  //end
-  //assign pc_from_immediate_o = imm_sb_type;  // TODO: Remove/Replace?
 
   // PC Mux
   always_comb
@@ -574,7 +554,6 @@ module id_stage
       .clk                          ( clk                   ),
       .rst_n                        ( rst_n                 ),
       .fetch_enable_i               ( fetch_enable_i        ),
-      .eoc_o                        ( eoc                   ),
       .core_busy_o                  ( core_busy_o           ),
 
       .force_nop_o                  ( force_nop_controller  ),
@@ -702,9 +681,6 @@ module id_stage
   //                                                                   //
   ///////////////////////////////////////////////////////////////////////
 
-  assign force_nop_o = force_nop_controller;
-
-  /*
   exc_controller exc_controller_i
   (
       .clk                  ( clk               ),
@@ -715,7 +691,7 @@ module id_stage
       // to IF stage
       .exc_pc_sel_o         ( exc_pc_sel        ),
       .exc_pc_mux_o         ( exc_pc_mux_o      ),
-      .force_nop_o          ( force_nop_o       ),
+      .force_nop_o          ( force_nop_exc     ),
 
       // hwloop signals
       .hwloop_enable_o      ( hwloop_enable     ),
@@ -752,7 +728,6 @@ module id_stage
       .dbg_set_npc_i        ( dbg_set_npc_i     ),
       .dbg_trap_o           ( dbg_trap_o        )
     );
-   */
 
 
   //////////////////////////////////////////////////////////////////////////
@@ -848,8 +823,6 @@ module id_stage
 
       jump_in_ex                  <= 2'b0;
 
-      eoc_ex_o                    <= 1'b0;
-
       `ifdef TCDM_ADDR_PRECAL
       alu_adder_o                 <= '0;
       `endif
@@ -922,8 +895,6 @@ module id_stage
       hwloop_cnt_o                <= hwloop_cnt;
 
       jump_in_ex                  <= jump_in_id_o;
-
-      eoc_ex_o                    <= eoc;
 
 `ifdef TCDM_ADDR_PRECAL
       alu_adder_o                 <= alu_operand_a + alu_operand_b;

@@ -37,7 +37,6 @@ module controller
   input  logic                         rst_n,
 
   input  logic                         fetch_enable_i,             // Start the decoding
-  output logic                         eoc_o,                      // End of computation: triggered by a special instruction
   output logic                         core_busy_o,                // Core is busy processing instructions
 
   output logic                         force_nop_o,
@@ -198,8 +197,6 @@ module controller
   always_comb
   begin
     // Default values
-    eoc_o                        = 1'b0;
-
     instr_req_o                  = 1'b1;
 
     pc_mux_sel_o                 = `PC_INCR;
@@ -265,7 +262,7 @@ module controller
     take_branch_o                = 1'b0;
 `endif
 
-    case (ctrl_fsm_cs)
+    unique case (ctrl_fsm_cs)
       RESET:
       begin
         // We were just reset and have to copy the boot address from
@@ -317,6 +314,10 @@ module controller
             alu_operator        = `ALU_ADD;
             regfile_alu_we      = 1'b1;
           end
+
+          `OPCODE_CUST1: begin // custom-1: Flush pipeline (e.g. wait for event)
+          end
+
 
           //////////////////////////////////////
           //      _ _   _ __  __ ____  ____   //
@@ -382,12 +383,6 @@ module controller
                 illegal_insn_o = 1'b1;
               end
             endcase // case (instr_rdata_i)
-
-            /*if (branch_taken_i == 1'b1) begin
-              pc_mux_sel_o = `PC_FROM_IMM;  // TODO: Think about clever adder use
-            end else begin
-              pc_mux_sel_o = `INCR_PC;
-            end*/
           end
 
           /*
@@ -438,26 +433,6 @@ module controller
           end
 `endif
 
-          `OPCODE_NOP:
-          begin   // No Operation
-            // if (instr_rdata_i[25:24] == 2'b01)
-            //   $display("%t: Executing l.nop with 0x%h.", $time, instr_rdata_i[15:0]);
-            // else
-            //   $display("%t: Illegal l.nop received.", $time);
-          end
-
-          `OPCODE_EOC: begin   // End of Computation (Custom Instruction 1)
-            eoc_o        = 1'b1;
-            pc_mux_sel_o = `PC_NO_INCR;
-          end
-
-          `OPCODE_RFE:
-          begin
-            pc_mux_sel_o        = `EXC_PC_REG; // restore PC from EPCR
-            restore_sr_o        = 1'b1;
-            clear_isr_running_o = 1'b1;
-          end
-
            */
 
           //////////////////////////////////
@@ -485,8 +460,6 @@ module controller
               default: begin
                 data_req  = 1'b0;
                 data_we   = 1'b0;
-                rega_used = 1'b0;
-                regb_used = 1'b0;
                 illegal_insn_o = 1'b1;
               end
             endcase // unique case (instr_rdata_i)
@@ -521,7 +494,6 @@ module controller
               default: begin
                 data_req   = 1'b0;
                 regfile_we = 1'b0;
-                rega_used  = 1'b0;
                 illegal_insn_o = 1'b1;
               end
             endcase // unique case (instr_rdata_i)
@@ -621,7 +593,6 @@ module controller
 
            */
 
-
           //////////////////////////
           //     _    _    _   _  //
           //    / \  | |  | | | | //
@@ -687,6 +658,9 @@ module controller
               `INSTR_SRA:  alu_operator = `ALU_SRA;  // Shift Right Arithmetic
               `INSTR_OR:   alu_operator = `ALU_OR;   // Or
               `INSTR_AND:  alu_operator = `ALU_AND;  // And
+
+              `INSTR_MUL:  mult_is_running = 1'b1;   // Multiplication
+
               default: begin
                 // synopsys translate_off
                 $display("%t: Illegal OP instruction: %b", $time, instr_rdata_i);
@@ -998,6 +972,28 @@ module controller
           //                                            //
           ////////////////////////////////////////////////
 
+          */
+
+          `OPCODE_SYSTEM: begin
+            unique case (instr_rdata_i) inside
+              `INSTR_ECALL: begin
+                trap_insn_o  = 1'b1;
+              end
+              `INSTR_ERET:  begin
+                pc_mux_sel_o = `PC_ERET;
+                restore_sr_o = 1'b1; // TODO: Check if needed
+                clear_isr_running_o = 1'b1; // TODO: Check if needed
+              end
+              `INSTR_WFI:   begin
+                // flush pipeline
+                pipe_flush_o = 1'b1;
+              end
+              default:      illegal_insn_o = 1'b1;
+            endcase // unique case (instr_rdata_i)
+          end
+
+          /*
+
           `OPCODE_MTSPR: begin // Move To Special-Purpose Register
             alu_operator             = `ALU_OR;
             alu_op_b_mux_sel_o       = `OP_B_IMM;
@@ -1117,7 +1113,6 @@ module controller
         if (illegal_insn_o == 1'b1) begin
           $display("%t: Illegal instruction:", $time);
           prettyPrintInstruction(instr_rdata_i, id_stage.current_pc_id_i);
-          $stop;
         end
         // synopsys translate_on
 
@@ -1234,12 +1229,8 @@ module controller
   ////////////////////////////////////////////////////////////////////////////////////////////
   // Jump and Branch handling                                                               //
   ////////////////////////////////////////////////////////////////////////////////////////////
-
-  //assign force_nop_o = (jump_in_id_o != 2'b00)? 1'b1 : 1'b0;
   assign force_nop_o = (jump_in_id_o != 2'b00 || jump_in_ex_i != 2'b00)? 1'b1 : 1'b0;
-  //assign force_nop_o = (!instr_ack_stall && (jump_in_id_o != 2'b00 || jump_in_ex_i != 2'b00))? 1'b1 : 1'b0;
-  //assign force_nop_o = (!stall_ex_o && jump_in_id_o == 2'b01)? 1'b1 : 1'b0;
-  assign drop_instruction_o = 1'b0;
+
 
   ////////////////////////////////////////////////////////////////////////////////////////////
   // Freeze Unit. This unit controls the pipeline stages                                    //

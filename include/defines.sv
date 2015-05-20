@@ -40,50 +40,6 @@
 //        |_|                                 //
 ////////////////////////////////////////////////
 
-/*
-`define OPCODE_J      6'h00
-`define OPCODE_JAL    6'h01
-`define OPCODE_HWLOOP 6'h02
-`define OPCODE_BNF    6'h03
-`define OPCODE_BF     6'h04
-`define OPCODE_NOP    6'h05
-`define OPCODE_MOVHI  6'h06 // also used for l.macrc
-`define OPCODE_SYNC   6'h08 // also used for l.trap
-`define OPCODE_RFE    6'h09
-`define OPCODE_VEC    6'h0a // vectorial instructions
-`define OPCODE_VCMP   6'h0b // vectorial compare instructions
-`define OPCODE_JR     6'h11
-`define OPCODE_JALR   6'h12
-`define OPCODE_MACI   6'h13
-`define OPCODE_EOC    6'h1c // l.eoc = l.cust1
-`define OPCODE_STPOST 6'h14 // ST post-increment
-`define OPCODE_STPRE  6'h15 // ST pre-increment
-`define OPCODE_LDPOST 6'h16 // LD post-increment
-`define OPCODE_LDPRE  6'h17 // LD pre-increment
-`define OPCODE_LWZ    6'h21
-`define OPCODE_LWS    6'h22
-`define OPCODE_LBZ    6'h23
-`define OPCODE_LBS    6'h24
-`define OPCODE_LHZ    6'h25
-`define OPCODE_LHS    6'h26
-`define OPCODE_ADDI   6'h27
-`define OPCODE_ADDIC  6'h28
-`define OPCODE_ANDI   6'h29
-`define OPCODE_ORI    6'h2a
-`define OPCODE_XORI   6'h2b
-`define OPCODE_MULI   6'h2c
-`define OPCODE_MFSPR  6'h2d
-`define OPCODE_SHIFT  6'h2e
-`define OPCODE_SFI    6'h2f
-`define OPCODE_MTSPR  6'h30
-`define OPCODE_MAC    6'h31
-`define OPCODE_SW     6'h35
-`define OPCODE_SB     6'h36
-`define OPCODE_SH     6'h37
-`define OPCODE_ALU    6'h38
-`define OPCODE_SF     6'h39
- */
-
 `define OPCODE_SYSTEM 7'h73
 `define OPCODE_FENCE  7'h0f
 `define OPCODE_OP     7'h33
@@ -96,6 +52,7 @@
 `define OPCODE_AUIPC  7'h17
 `define OPCODE_LUI    7'h37
 `define OPCODE_CUST0  7'h0b
+`define OPCODE_CUST1  7'h2b
 
 `define INSTR_CUSTOM0    { {25 {1'b?}}, `OPCODE_CUST0 }
 `define INSTR_LUI        { {25 {1'b?}}, `OPCODE_LUI }
@@ -144,8 +101,10 @@
 `define INSTR_FENCE      { 4'b0000, {8 {1'b?}}, {13 {1'b0}}, `OPCODE_FENCE }
 `define INSTR_FENCEI     { {17 {1'b0}}, 3'b001, {5 {1'b0}}, `OPCODE_FENCE }
 // SYSTEM
-`define INSTR_SCALL      { {11 {1'b0}}, 1'b0, {13 {1'b0}}, `OPCODE_SYSTEM }
-`define INSTR_SBREAK     { {11 {1'b0}}, 1'b1, {13 {1'b0}}, `OPCODE_SYSTEM }
+`define INSTR_ECALL      { 12'b000000000000, {13 {1'b0}}, `OPCODE_SYSTEM }
+`define INSTR_EBREAK     { 12'b000000000001, {13 {1'b0}}, `OPCODE_SYSTEM }
+`define INSTR_ERET       { 12'b000100000000, {13 {1'b0}}, `OPCODE_SYSTEM }
+`define INSTR_WFI        { 12'b000100000010, {13 {1'b0}}, `OPCODE_SYSTEM }
 `define INSTR_RDCYCLE    { 5'b11000, {5 {1'b0}}, 2'b00, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
 `define INSTR_RDCYCLEH   { 5'b11001, {5 {1'b0}}, 2'b00, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
 `define INSTR_RDTIME     { 5'b11000, {5 {1'b0}}, 2'b01, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
@@ -155,10 +114,10 @@
 
 // RV32M
 `define INSTR_MUL        { 7'b0000001, {10 {1'b?}}, 3'b000, {5 {1'b?}}, `OPCODE_OP }
+/* not implemented
 `define INSTR_MULH       { 7'b0000001, {10 {1'b?}}, 3'b001, {5 {1'b?}}, `OPCODE_OP }
 `define INSTR_MULHSU     { 7'b0000001, {10 {1'b?}}, 3'b010, {5 {1'b?}}, `OPCODE_OP }
 `define INSTR_MULHU      { 7'b0000001, {10 {1'b?}}, 3'b011, {5 {1'b?}}, `OPCODE_OP }
-/* not implemented
 `define INSTR_DIV        { 7'b0000001, {10 {1'b?}}, 3'b100, {5 {1'b?}}, `OPCODE_OP }
 `define INSTR_DIVU       { 7'b0000001, {10 {1'b?}}, 3'b101, {5 {1'b?}}, `OPCODE_OP }
 `define INSTR_REM        { 7'b0000001, {10 {1'b?}}, 3'b110, {5 {1'b?}}, `OPCODE_OP }
@@ -171,7 +130,7 @@
 `define REG_D  11:07
 
 
-// synopsis translate off
+// synopsys translate_off
 `define TRACE_EXECUTION
 
 function void prettyPrintInstruction(input [31:0] instr, input [31:0] pc);
@@ -199,7 +158,7 @@ function void prettyPrintInstruction(input [31:0] instr, input [31:0] pc);
     $display();
   end
 endfunction // prettyPrintInstruction
-// synopsis translate on
+// synopsys translate_on
 
 
 
@@ -361,7 +320,7 @@ endfunction // prettyPrintInstruction
 `define PC_INCR          3'b000
 `define PC_NO_INCR       3'b001
 `define PC_EXCEPTION     3'b100
-`define EXC_PC_REG       3'b101
+`define PC_ERET          3'b101
 `define HWLOOP_ADDR      3'b110
 `define PC_BRANCH_PRED   3'b111
 
@@ -372,12 +331,16 @@ endfunction // prettyPrintInstruction
 `define EXC_PC_IRQ_NM    2'b11
 
 // Exceptions offsets
-// It is assumed that the lower 8 bits are enough for all exception
-// offsets, so the upper 24 bits of the boot address are used and the
-// lower 8 bits of the exception offset
-`define EXC_ILLINSN      8'h30
-`define EXC_IRQ          8'h38
-`define EXC_IRQ_NM       8'h70
+// target address = {boot_addr[31:5], EXC_OFF} (boot_addr must be 32 BYTE aligned!)
+`define EXC_OFF_RST      5'h10
+`define EXC_OFF_IRQ      5'h00
+`define EXC_OFF_IRQ_NM   5'h04
+`define EXC_OFF_ILLINSN  5'h08
+//      unused           5'h0c
+
+// Exception causes
+`define EXC_CAUSE_ECALL  {1'b0, 4'd11};
+`define EXC_CAUSE_EBREAK {1'b0, 4'd03};
 
 
 // Hardware loops addon
