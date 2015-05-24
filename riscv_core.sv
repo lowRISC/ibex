@@ -1,9 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Company:        IIS @ ETHZ - Federal Institute of Technology               //
+//                 DEI @ UNIBO - University of Bologna                        //
 //                                                                            //
-// Engineer:       Sven Stucki - svstucki@student.ethz.ch                     //
+// Engineer:       Renzo Andri - andrire@student.ethz.ch                      //
 //                                                                            //
 // Additional contributions by:                                               //
+//                 Igor Loi - igor.loi@unibo.it                               //
+//                 Andreas Traber - atraber@student.ethz.ch                   //
 //                                                                            //
 //                                                                            //
 // Create Date:    24/3/2015                                                  //
@@ -20,7 +23,6 @@
 //                                                                            //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
-
 
 `include "defines.sv"
 
@@ -69,7 +71,6 @@ module riscv_core
 
   // CPU Control Signals
   input  logic        fetch_enable_i,
-  output logic        eoc_o,                 // End of Computation
   output logic        core_busy_o
 );
 
@@ -88,8 +89,6 @@ module riscv_core
 
 
   // Forwarding
-  //logic [31:0]   pc_from_immediate_id; //take PC from immediate in case of Jump
-  //logic [31:0]   pc_from_immediate_id; //take PC from immediate in case of branch (RiscV)
 
   // Jump and branch target and decision (EX->IF)
   logic [31:0] jump_target;
@@ -106,8 +105,6 @@ module riscv_core
 
 
   // Register Data
-  logic [31:0]   pc_from_regfile_id;    // take PC from Register File
-  logic [31:0]   wdata_reg_fw_id;       //
   logic [31:0]   regfile_rb_data_ex;    // from id stage to load/store unit and ex stage
   logic [31:0]   regfile_rb_data_wb;    // from ex stage to sp register
 
@@ -128,7 +125,7 @@ module riscv_core
   logic            overflow_ex;
 
   // Multiplier Control
-  logic            mult_is_running_ex;
+  logic            mult_en_ex;
   logic [1:0]      mult_sel_subword_ex;
   logic [1:0]      mult_signed_mode_ex;
   logic            mult_use_carry_ex;
@@ -150,7 +147,6 @@ module riscv_core
   logic [4:0]      regfile_alu_waddr_fw;
   logic            regfile_alu_we_fw;
   logic [31:0]     regfile_alu_wdata_fw;
-  logic [31:0]     regfile_alu_wdata_fw_pc;
 
   // Special-Purpose Register Control
   logic            sp_we_ex;         // Output of ID_stage to EX stage
@@ -180,7 +176,6 @@ module riscv_core
   logic            set_overflow_ex;
   logic            set_carry_fw_ex;
   logic            set_overflow_fw_ex;
-  logic            set_dsx;
 
   // Direct Supervision-Register access
   logic            sr_flag;
@@ -188,7 +183,7 @@ module riscv_core
   logic            carry_sp;
 
   // Calculation Result
-  logic [15:0]     result_wb;
+  logic [15:0]     sp_addr_wb;
 
   // Signals between instruction core interface and pipe (if and id stages)
   logic [31:0]     instr_rdata_int;  // read instruction from the instruction core interface to if_stage
@@ -204,21 +199,37 @@ module riscv_core
   logic            save_sr;
   logic            restore_sr;
 
-  // hwloops
-  logic [31:0]                    hwloop_cnt_ex;        // from id to ex stage (hwloop_regs)
-  logic [2:0]                     hwloop_we_ex;         // from id to ex stage (hwloop_regs)
-  logic [1:0]                     hwloop_regid_ex;      // from id to ex stage (hwloop_regs)
-  logic                           hwloop_wb_mux_sel_ex; // from id to ex stage (hwloop_regs)
-  logic [31:0]                    hwloop_start_data;    // hwloop data to write to hwloop_regs
-  logic [31:0]                    hwloop_end_data;      // hwloop data to write to hwloop_regs
-  logic [31:0]                    hwloop_cnt_data;      // hwloop data to write to hwloop_regs
+  // hwloop data from ALU
+  logic [31:0]                    hwlp_cnt_ex;        // from id to ex stage (hwloop_regs)
+  logic [2:0]                     hwlp_we_ex;         // from id to ex stage (hwloop_regs)
+  logic [1:0]                     hwlp_regid_ex;      // from id to ex stage (hwloop_regs)
+  logic                           hwlp_wb_mux_sel_ex; // from id to ex stage (hwloop_regs)
+  logic [31:0]                    hwlp_start_data_ex; // hwloop data to write to hwloop_regs
+  logic [31:0]                    hwlp_end_data_ex;   // hwloop data to write to hwloop_regs
+  logic [31:0]                    hwlp_cnt_data_ex;   // hwloop data to write to hwloop_regs
+
+  // spr access to hwloops
+  logic [31:0]                    sp_hwlp_start;
+  logic [31:0]                    sp_hwlp_end;
+  logic [31:0]                    sp_hwlp_cnt;
+  logic [2:0]                     sp_hwlp_we;
+  logic [1:0]                     sp_hwlp_regid;
+
+  // Access to hwloop registers
+  logic [31:0]                    hwlp_start_data;
+  logic [31:0]                    hwlp_end_data;
+  logic [31:0]                    hwlp_cnt_data;
+  logic [2:0]                     hwlp_we;
+  logic [1:0]                     hwlp_regid;
 
 
-  logic [`HWLOOP_REGS-1:0] [31:0] hwloop_start_addr;  // to hwloop controller
-  logic [`HWLOOP_REGS-1:0] [31:0] hwloop_end_addr;    // to hwloop controller
-  logic [`HWLOOP_REGS-1:0] [31:0] hwloop_counter;     // to hwloop controller
-  logic [`HWLOOP_REGS-1:0]        hwloop_dec_cnt;     // from hwloop controller to hwloop regs
-  logic [31:0]                    hwloop_targ_addr;   // from hwloop controller to if stage
+  // hwloop controller signals
+  logic [`HWLOOP_REGS-1:0] [31:0] hwlp_start_addr;  // to hwloop controller
+  logic [`HWLOOP_REGS-1:0] [31:0] hwlp_end_addr;    // to hwloop controller
+  logic [`HWLOOP_REGS-1:0] [31:0] hwlp_counter;     // to hwloop controller
+  logic [`HWLOOP_REGS-1:0]        hwlp_dec_cnt;     // from hwloop controller to hwloop regs
+  logic [31:0]                    hwlp_targ_addr;   // from hwloop controller to if stage
+
 
   // Debug Unit
   logic               dbg_stall;
@@ -242,10 +253,6 @@ module riscv_core
 `ifdef TCDM_ADDR_PRECAL
   logic [31:0]         alu_adder_ex;
 `endif
-
-
-  // TODO: Remove from cluster
-  assign eoc_o = 1'b0;
 
 
     //////////////////////////////////////////////////
@@ -277,8 +284,7 @@ module riscv_core
       // Forwrding ports - control signals
       .force_nop_i         ( force_nop_id         ),   // select incoming instr or NOP
       .exception_pc_reg_i  ( epcr                 ),   // Exception PC register
-      .pc_from_regfile_i   ( pc_from_regfile_id   ),   // pc from reg file
-      .pc_from_hwloop_i    ( hwloop_targ_addr     ),   // pc from hwloop start address
+      .pc_from_hwloop_i    ( hwlp_targ_addr       ),   // pc from hwloop start address
       .pc_mux_sel_i        ( pc_mux_sel_id        ),   // sel for pc multiplexer
       .pc_mux_boot_i       ( pc_mux_boot          ),   // load boot address as PC
       .exc_pc_mux_i        ( exc_pc_mux_id        ),   // selector for exception multiplexer
@@ -363,10 +369,8 @@ module riscv_core
       .exc_pc_mux_o                 ( exc_pc_mux_id                 ),
       .force_nop_o                  ( force_nop_id                  ),
 
-      .pc_from_regfile_o            ( pc_from_regfile_id            ),
       .current_pc_if_i              ( current_pc_if                 ),
       .current_pc_id_i              ( current_pc_id                 ),
-      //.pc_from_immediate_o          ( pc_from_immediate_id          ), //TODO
 
       .sr_flag_fw_i                 ( sr_flag_fw                    ),
       .sr_flag_i                    ( sr_flag                       ),
@@ -389,7 +393,7 @@ module riscv_core
       .alu_cmp_mode_ex_o            ( alu_cmp_mode_ex               ), // from ID to EX stage
       .alu_vec_ext_ex_o             ( alu_vec_ext_ex                ), // from ID to EX stage
 
-      .mult_is_running_ex_o         ( mult_is_running_ex            ), // from ID to EX stage
+      .mult_en_ex_o                 ( mult_en_ex                    ), // from ID to EX stage
       .mult_sel_subword_ex_o        ( mult_sel_subword_ex           ), // from ID to EX stage
       .mult_signed_mode_ex_o        ( mult_signed_mode_ex           ), // from ID to EX stage
       .mult_use_carry_ex_o          ( mult_use_carry_ex             ), // from ID to EX stage
@@ -403,12 +407,12 @@ module riscv_core
       .regfile_alu_waddr_ex_o       ( regfile_alu_waddr_ex          ),
 
       // hwloop signals
-      .hwloop_we_ex_o               ( hwloop_we_ex                  ),
-      .hwloop_regid_ex_o            ( hwloop_regid_ex               ),
-      .hwloop_wb_mux_sel_ex_o       ( hwloop_wb_mux_sel_ex          ),
-      .hwloop_cnt_o                 ( hwloop_cnt_ex                 ),
-      .hwloop_dec_cnt_o             ( hwloop_dec_cnt                ),
-      .hwloop_targ_addr_o           ( hwloop_targ_addr              ),
+      .hwloop_we_ex_o               ( hwlp_we_ex                    ),
+      .hwloop_regid_ex_o            ( hwlp_regid_ex                 ),
+      .hwloop_wb_mux_sel_ex_o       ( hwlp_wb_mux_sel_ex            ),
+      .hwloop_cnt_o                 ( hwlp_cnt_ex                   ),
+      .hwloop_dec_cnt_o             ( hwlp_dec_cnt                  ),
+      .hwloop_targ_addr_o           ( hwlp_targ_addr                ),
 
       .sp_we_ex_o                   ( sp_we_ex                      ),
 
@@ -427,7 +431,6 @@ module riscv_core
       .set_flag_ex_o                ( set_flag_ex                   ), // to ex_stage
       .set_carry_ex_o               ( set_carry_ex                  ), // to ex_stage
       .set_overflow_ex_o            ( set_overflow_ex               ), // to ex_stage
-      .set_dsx_o                    ( set_dsx                       ), // to SPR
 
       // Interrupt Signals
       .irq_i                        ( irq_i                         ), // incoming interrupts
@@ -439,9 +442,9 @@ module riscv_core
       .restore_sr_o                 ( restore_sr                    ), // restore status register
 
       // from hwloop regs
-      .hwloop_start_addr_i          ( hwloop_start_addr             ),
-      .hwloop_end_addr_i            ( hwloop_end_addr               ),
-      .hwloop_counter_i             ( hwloop_counter                ),
+      .hwloop_start_addr_i          ( hwlp_start_addr               ),
+      .hwloop_end_addr_i            ( hwlp_end_addr                 ),
+      .hwloop_counter_i             ( hwlp_counter                  ),
 
       // Debug Unit Signals
       .dbg_flush_pipe_i             ( dbg_flush_pipe                ),
@@ -461,18 +464,15 @@ module riscv_core
       .regfile_alu_waddr_fw_i       ( regfile_alu_waddr_fw          ),
       .regfile_alu_we_fw_i          ( regfile_alu_we_fw             ),
       .regfile_alu_wdata_fw_i       ( regfile_alu_wdata_fw          ),
-      .regfile_alu_wdata_fw_pc_i    ( regfile_alu_wdata_fw_pc       ),
 
       .regfile_waddr_wb_i           ( regfile_waddr_fw_wb_o         ),  // Write address ex-wb pipeline
       .regfile_we_wb_i              ( regfile_we_wb                 ),  // write enable for the register file
-      .regfile_wdata_wb_i           ( regfile_wdata                 ),  // write data to commit in the register file
-      .wdata_reg_i                  ( wdata_reg_fw_id               )   // write data to regfile, origin is always a register(not data memory)
+      .regfile_wdata_wb_i           ( regfile_wdata                 )   // write data to commit in the register file
 `ifdef TCDM_ADDR_PRECAL
       ,
       .alu_adder_o                  ( alu_adder_ex                  )
 `endif
     );
-
 
 
     /////////////////////////////////////////////////////
@@ -503,7 +503,7 @@ module riscv_core
       .alu_vec_ext_i              ( alu_vec_ext_ex               ), // from ID/EX pipe registers
 
       // Multipler
-      .mult_is_running_i          ( mult_is_running_ex           ),
+      .mult_en_i                  ( mult_en_ex                   ),
       .mult_sel_subword_i         ( mult_sel_subword_ex          ),
       .mult_signed_mode_i         ( mult_signed_mode_ex          ),
       .mult_use_carry_i           ( mult_use_carry_ex            ),
@@ -530,9 +530,9 @@ module riscv_core
       .regfile_alu_waddr_i        ( regfile_alu_waddr_ex         ),
 
       // From ID stage: hwloop wb reg signals
-      .hwloop_wb_mux_sel_i        ( hwloop_wb_mux_sel_ex         ),
+      .hwloop_wb_mux_sel_i        ( hwlp_wb_mux_sel_ex           ),
       .hwloop_pc_plus4_i          ( current_pc_id                ),
-      .hwloop_cnt_i               ( hwloop_cnt_ex                ),
+      .hwloop_cnt_i               ( hwlp_cnt_ex                  ),
 
       //From ID stage.Controller
       .set_overflow_i             ( set_overflow_ex              ),
@@ -541,8 +541,9 @@ module riscv_core
       .regfile_rb_data_i          ( regfile_rb_data_ex           ),
       .sp_we_i                    ( sp_we_ex                     ),
 
+
       // Output of ex stage pipeline
-      .regfile_wdata_wb_o         ( result_wb                    ),
+      .sp_addr_wb_o               ( sp_addr_wb                   ),
       .regfile_waddr_wb_o         ( regfile_waddr_fw_wb_o        ),
       .regfile_wdata_mux_sel_wb_o ( regfile_wdata_mux_sel_wb     ),
       .regfile_we_wb_o            ( regfile_we_wb                ),
@@ -551,32 +552,26 @@ module riscv_core
       .data_addr_ex_o             ( data_addr_ex                 ),
 
       // To hwloop regs
-      .hwloop_start_data_o        ( hwloop_start_data            ),
-      .hwloop_end_data_o          ( hwloop_end_data              ),
-      .hwloop_cnt_data_o          ( hwloop_cnt_data              ),
+      .hwloop_start_data_o        ( hwlp_start_data_ex           ),
+      .hwloop_end_data_o          ( hwlp_end_data_ex             ),
+      .hwloop_cnt_data_o          ( hwlp_cnt_data_ex             ),
 
       .sp_we_wb_o                 ( sp_we_wb                     ),
 
-      // From ID: Jump and Branch detection
-      .jump_in_id_i               ( jump_in_id                   ),
-
       // To IF: Jump and branch target and decision
       .jump_target_o              ( jump_target                  ),
-      //.jump_in_ex_o               ( jump_in_ex                   ),
       .branch_decision_o          ( branch_decision              ),
 
       // To ID stage: Forwarding signals
       .regfile_alu_waddr_fw_o     ( regfile_alu_waddr_fw         ),
       .regfile_alu_we_fw_o        ( regfile_alu_we_fw            ),
-      .regfile_alu_wdata_fw_o     ( regfile_alu_wdata_fw         ),
-      .regfile_alu_wdata_fw_pc_o  ( regfile_alu_wdata_fw_pc      )
+      .regfile_alu_wdata_fw_o     ( regfile_alu_wdata_fw         )
 
 `ifdef TCDM_ADDR_PRECAL
       ,
       .alu_adder_i                ( alu_adder_ex                 )
 `endif
     );
-
 
 
     /////////////////////////////////////////////////////////
@@ -596,8 +591,7 @@ module riscv_core
       .data_rdata_i            ( data_rdata_int            ),
       .lsu_data_reg_i          ( lsu_data_reg              ),
       // Mux output
-      .regfile_wdata_o         ( regfile_wdata             ),
-      .wdata_reg_o             ( wdata_reg_fw_id           )
+      .regfile_wdata_o         ( regfile_wdata             )
     );
 
 
@@ -645,7 +639,6 @@ module riscv_core
 
   /*
 
-
     //////////////////////////////////////////////
     //  ____  ____    ____                      //
     // / ___||  _ \  |  _ \ ___  __ _ ___       //
@@ -683,10 +676,20 @@ module riscv_core
       .set_flag_i              ( set_flag_ex           ), // From EX stage
       .set_carry_i             ( set_carry_fw_ex       ), // From EX stage
       .set_overflow_i          ( set_overflow_fw_ex    ), // From EX stage
-      .set_dsx_i               ( set_dsx               ), // from exc controller
 
       // Stall direct write
       .enable_direct_write_i   ( stall_wb              ),
+
+      // HWLoop signals
+      .hwlp_start_addr_i       ( hwlp_start_addr       ),
+      .hwlp_end_addr_i         ( hwlp_end_addr         ),
+      .hwlp_counter_i          ( hwlp_counter          ),
+
+      .hwlp_start_o            ( sp_hwlp_start         ),
+      .hwlp_end_o              ( sp_hwlp_end           ),
+      .hwlp_counter_o          ( sp_hwlp_cnt           ),
+      .hwlp_regid_o            ( sp_hwlp_regid         ),
+      .hwlp_we_o               ( sp_hwlp_we            ),
 
       .curr_pc_if_i            ( current_pc_if         ), // from IF stage
       .curr_pc_id_i            ( current_pc_id         ), // from IF stage
@@ -706,7 +709,7 @@ module riscv_core
     );
 
     // Mux for SPR access through Debug Unit
-    assign sp_addr       = (dbg_sp_mux == 1'b0) ? result_wb          : dbg_reg_addr;
+    assign sp_addr       = (dbg_sp_mux == 1'b0) ? sp_addr_wb         : dbg_reg_addr;
     assign sp_wdata      = (dbg_sp_mux == 1'b0) ? regfile_rb_data_wb : dbg_reg_wdata;
     assign sp_we         = (dbg_sp_mux == 1'b0) ? sp_we_wb           : dbg_reg_we;
     assign dbg_rdata     = (dbg_sp_mux == 1'b0) ? dbg_reg_rdata      : sp_rdata;
@@ -717,27 +720,34 @@ module riscv_core
     //////////////////////////////////////////////
     hwloop_regs hwloop_regs_i
     (
-      .clk                     ( clk                   ),
-      .rst_n                   ( rst_n                 ),
+      .clk                     ( clk                 ),
+      .rst_n                   ( rst_n               ),
 
       // from ex stage
-      .hwloop_start_data_i     ( hwloop_start_data     ),
-      .hwloop_end_data_i       ( hwloop_end_data       ),
-      .hwloop_cnt_data_i       ( hwloop_cnt_data       ),
-      .hwloop_we_i             ( hwloop_we_ex          ),
-      .hwloop_regid_i          ( hwloop_regid_ex       ),
+      .hwloop_start_data_i     ( hwlp_start_data     ),
+      .hwloop_end_data_i       ( hwlp_end_data       ),
+      .hwloop_cnt_data_i       ( hwlp_cnt_data       ),
+      .hwloop_we_i             ( hwlp_we             ),
+      .hwloop_regid_i          ( hwlp_regid          ),
 
       // from controller
-      .stall_id_i              ( stall_id              ),
+      .stall_id_i              ( stall_id            ),
 
       // to hwloop controller
-      .hwloop_start_addr_o     ( hwloop_start_addr     ),
-      .hwloop_end_addr_o       ( hwloop_end_addr       ),
-      .hwloop_counter_o        ( hwloop_counter        ),
+      .hwloop_start_addr_o     ( hwlp_start_addr     ),
+      .hwloop_end_addr_o       ( hwlp_end_addr       ),
+      .hwloop_counter_o        ( hwlp_counter        ),
 
       // from hwloop controller
-      .hwloop_dec_cnt_i        ( hwloop_dec_cnt        )
+      .hwloop_dec_cnt_i        ( hwlp_dec_cnt        )
     );
+
+   // write to hwloop registers via SPR or instructions
+   assign hwlp_start_data = (hwlp_we_ex[0] == 1'b1) ? hwlp_start_data_ex : sp_hwlp_start;
+   assign hwlp_end_data   = (hwlp_we_ex[1] == 1'b1) ? hwlp_end_data_ex   : sp_hwlp_end;
+   assign hwlp_cnt_data   = (hwlp_we_ex[2] == 1'b1) ? hwlp_cnt_data_ex   : sp_hwlp_cnt;
+   assign hwlp_regid      = (|hwlp_we_ex)           ? hwlp_regid_ex      : sp_hwlp_regid;
+   assign hwlp_we         = hwlp_we_ex | sp_hwlp_we;
 
 
     /////////////////////////////////////////////////////////////

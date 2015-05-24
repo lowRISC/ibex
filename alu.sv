@@ -44,12 +44,19 @@ module alu
    input  logic [1:0]               cmp_mode_i,
    input  logic [1:0]               vec_ext_i,
 
+   output logic [31:0]              adder_lsu_o,
    output logic [31:0]              result_o,
    output logic                     overflow_o,
    output logic                     carry_o,
    output logic                     flag_o
 );
 
+
+`ifdef TCDM_ADDR_PRECAL
+  assign adder_lsu_o = adder_i;
+`else
+  assign adder_lsu_o = operand_a_i + operand_b_i;
+`endif
 
   logic [31:0] operand_a_rev;     // bit reversed signal of operand_a_i
 
@@ -469,6 +476,7 @@ module alu
   /////////////////////////////////////////////////////////////////////
 
   logic [31:0] ff_input;   // either op_a_i or its bit reversed version
+  logic [5:0]  clb_result; // count leading bits
   logic [5:0]  ff1_result; // holds the index of the first '1'
   logic [5:0]  fl1_result; // holds the index of the last '1'
   logic        ff_cmp;     // compare value for ff1 and fl1
@@ -477,16 +485,15 @@ module alu
   assign ff_input  = (operator_i == `ALU_FF1) ? operand_a_i : operand_a_rev;
   assign ff_cmp    = (operator_i == `ALU_CLB) ? ~operand_a_i[31] : 1'b1;
 
-  // search for first bit set to '1'
   always_comb
   begin
     ff1_result = 6'd0;
 
-    for(q = 0; q < 32; q++)
+    for(q = 1; q < 33; q++)
     begin
-      if(ff_input[q] == ff_cmp)
+      if(ff_input[q - 1] == ff_cmp)
       begin
-        ff1_result = q + 6'd1;
+        ff1_result = q;
         break;
       end
     end
@@ -494,6 +501,8 @@ module alu
 
   // special case if ff1_res is 0 (no 1 found), then we keep the 0
   assign fl1_result = (ff1_result == 6'd0) ? 6'd0 : (6'd33 - ff1_result);
+  assign clb_result = (ff1_result == 6'd0) ? 6'd0 : (ff1_result - 6'd2);
+
 
   // count the number of '1's in a word
   logic [5:0]  cnt_result; // holds the number of '1's in a word
@@ -540,18 +549,18 @@ module alu
 
   always_comb
   begin
-    shift_left    = 1'b0;
-    shift_amt     = operand_b_i;
-    result_o      = 'x;
-    carry_o       = 1'b0;
-    overflow_o    = 1'b0;
-    flag_o        = 1'b0;
+    shift_left = 1'b0;
+    shift_amt  = operand_b_i;
+    result_o   = 'x;
+    carry_o    = 1'b0;
+    overflow_o = 1'b0;
+    flag_o     = 1'b0;
 
     unique case (operator_i)
       // Standard Operations
       `ALU_ADD, `ALU_ADDC, `ALU_SUB:
       begin // Addition defined above
-        result_o   = adder_result;
+        result_o   = adder_result[31:0];
         carry_o    = carry_out[3];
         overflow_o = (adder_op_a[31] ^ adder_result[31]) & (adder_op_b[31] ^ adder_result[31]); // ++ => - and -- => +
       end
@@ -612,7 +621,7 @@ module alu
 
       `ALU_FF1: result_o = {26'h0, ff1_result};
       `ALU_FL1: result_o = {26'h0, fl1_result};
-      `ALU_CLB: result_o = {26'h0, fl1_result};
+      `ALU_CLB: result_o = {26'h0, clb_result};
       `ALU_CNT: result_o = {26'h0, cnt_result};
 
       `ALU_NOP: ; // Do nothing

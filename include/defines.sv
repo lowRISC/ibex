@@ -255,33 +255,38 @@ endfunction // prettyPrintInstruction
 
 // Special-Purpose Register Addresses
 // see OpenRISC manual p. 22ff
-`define SP_NPC        16'h0010
-`define SP_SR         16'h0011
-`define SP_MACLO      16'h2801 // TODO: remove
-`define SP_MACHI      16'h2802 // TODO: remove
-`define SP_EPCR       16'd0032
-`define SP_ESR        16'd0064
-`define SP_DVR0       16'h3000
-`define SP_DCR0       16'h3008
-`define SP_DMR1       16'h3010
-`define SP_DMR2       16'h3011
-
-// Core and Cluster ID are put into the system control and status
-// registers group
-`define SP_COREID     16'h0680
-`define SP_CLUSTERID  16'h0681
-
-`define SP_DVR_MSB 8'h00
-`define SP_DCR_MSB 8'h01
-`define SP_DMR_MSB 8'h02
-`define SP_DSR_MSB 8'h04
+`define SP_GRP_SYS     5'h00
+`define SP_NPC        11'h010
+`define SP_SR         11'h011
+`define SP_PPC        11'h012
+`define SP_EPCR       11'd032
+`define SP_ESR        11'd064
 
 // Supervision Register
 `define SR_IEE 5'd2
 `define SR_F   5'd9
 `define SR_CY  5'd10
 `define SR_OV  5'd11
-`define SR_DSX 5'd13
+
+// Core and Cluster ID are put into the system control and status
+// registers group
+`define SP_COREID     16'h0680
+`define SP_CLUSTERID  16'h0681
+
+// SPR for HWLoops
+`define SP_GRP_HWLP          5'h0C
+
+// SPR for debugger, not accessible by CPU
+`define SP_DVR0       16'h3000
+`define SP_DCR0       16'h3008
+`define SP_DMR1       16'h3010
+`define SP_DMR2       16'h3011
+
+`define SP_DVR_MSB 8'h00
+`define SP_DCR_MSB 8'h01
+`define SP_DMR_MSB 8'h02
+`define SP_DSR_MSB 8'h04
+
 
 // forwarding operand mux
 `define SEL_REGFILE      2'b00
@@ -310,11 +315,6 @@ endfunction // prettyPrintInstruction
 `define IMM_HEX4 3'b011
 `define IMM_CID  3'b100 // core id
 `define IMM_CLID 3'b100 // cluster id
-/* not used:
-`define IMM_SB 3'b011
-`define IMM_UJ 3'b101
-`define IMM_C4 3'b110
- */
 
 // PC mux selector defines
 `define PC_INCR          3'b000

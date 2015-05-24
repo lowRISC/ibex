@@ -59,7 +59,6 @@ module id_stage
     output logic                        pc_mux_boot_o,
     output logic [1:0]                  exc_pc_mux_o,
     output logic                        force_nop_o,
-    output logic [31:0]                 pc_from_regfile_o,
 
     input  logic [31:0]                 current_pc_if_i,
     input  logic [31:0]                 current_pc_id_i,
@@ -84,7 +83,7 @@ module id_stage
     output logic [1:0]                  alu_cmp_mode_ex_o,
     output logic [1:0]                  alu_vec_ext_ex_o,
 
-    output logic                        mult_is_running_ex_o, // TODO: Rename (-> mult enable ?)
+    output logic                        mult_en_ex_o,
     output logic [1:0]                  mult_sel_subword_ex_o,
     output logic [1:0]                  mult_signed_mode_ex_o,
     output logic                        mult_use_carry_ex_o,
@@ -123,7 +122,6 @@ module id_stage
     output logic                        set_flag_ex_o,
     output logic                        set_carry_ex_o,
     output logic                        set_overflow_ex_o,
-    output logic                        set_dsx_o,
 
     // Interrupt signals
     input  logic                        irq_i,
@@ -160,10 +158,7 @@ module id_stage
 
     input  logic [4:0]                  regfile_alu_waddr_fw_i,
     input  logic                        regfile_alu_we_fw_i,
-    input  logic [31:0]                 regfile_alu_wdata_fw_i,
-    input  logic [31:0]                 regfile_alu_wdata_fw_pc_i,
-
-    input  logic [31:0]                 wdata_reg_i
+    input  logic [31:0]                 regfile_alu_wdata_fw_i
 
 `ifdef TCDM_ADDR_PRECAL
     ,
@@ -200,6 +195,7 @@ module id_stage
 
   logic        illegal_insn;
   logic        trap_insn;
+  logic        trap_hit;
   logic        pipe_flush;
   logic        pc_valid;
   logic        clear_isr_running;
@@ -234,7 +230,7 @@ module id_stage
   logic [3:0]  immediate_mux_sel;
 
   // Multiplier Control
-  logic        mult_is_running;  // output of the controller (1 if the opcode is a multiplication)
+  logic        mult_en;          // multiplication is used instead of ALU
   logic [1:0]  mult_sel_subword; // Select a subword when doing multiplications
   logic [1:0]  mult_signed_mode; // Signed mode multiplication at the output of the controller, and before the pipe registers
   logic        mult_use_carry;   // Enables carry in for the MAC
@@ -307,7 +303,8 @@ module id_stage
   // destination registers
   assign regfile_waddr_id = instr_rdata_i[`REG_D];
 
-  //assign alu_vec_ext         = instr_rdata_i[9:8];
+  //assign alu_vec_ext         = instr_rdata_i[9:8]; TODO
+  assign alu_vec_ext = 1'b0;
 
 
   // Second Register Write Adress Selection
@@ -340,32 +337,20 @@ module id_stage
     endcase; // case (alu_pc_mux_sel)
   end
 
-  // pc_from_regfile fw Mux, similar to operand_b_fw_mux,
-  // but not allowed to forward data from load/store unit and from the
-  // pre/post increment and multiplier
-  always_comb
-  begin : pc_from_regfile_mux
-    case (operand_b_fw_mux_sel)
-      `SEL_FW_EX:    pc_from_regfile_o =  regfile_alu_wdata_fw_pc_i;
-      `SEL_FW_WB:    pc_from_regfile_o =  wdata_reg_i;
-      `SEL_REGFILE:  pc_from_regfile_o =  regfile_data_ra_id;
-      default:       pc_from_regfile_o =  regfile_data_ra_id;
-    endcase; // case (operand_b_fw_mux_sel)
-  end
-
-  /*
   // hwloop_cnt_mux
   always_comb
   begin : hwloop_cnt_mux
     case (hwloop_cnt_mux_sel)
       2'b00:      hwloop_cnt = 32'b0;
-      2'b01:      hwloop_cnt = immediate21z_id;
-      2'b10:      hwloop_cnt = immediate13z_id;
+      //2'b01:      hwloop_cnt = immediate21z_id; // TODO: FixMe
+      //2'b10:      hwloop_cnt = immediate13z_id;
       2'b11:      hwloop_cnt = operand_a_fw_id;
+      default:    hwloop_cnt = 32'b0;
     endcase; // case (hwloop_cnt_mux_sel)
   end
-  */
 
+  // hwloop register id
+  assign hwloop_regid = instr_rdata_i[22:21];     // set hwloop register id
 
   //////////////////////////////////////////////////////////////////
   //       _                         _____                    _   //
@@ -404,7 +389,6 @@ module id_stage
        `OP_A_REGA_OR_FWD:  alu_operand_a = operand_a_fw_id;
        `OP_A_CURRPC:       alu_operand_a = current_pc;
        `OP_A_ZERO:         alu_operand_a = 32'b0;
-       //`OP_A_IMM16:        alu_operand_a = immediate16_id;
      endcase; // case (alu_op_a_mux_sel)
   end
 
@@ -454,7 +438,7 @@ module id_stage
   end
 
   // scalar replication for operand B
-  //assign operand_b_vec = (vector_mode == `VEC_MODE8) ? {4{operand_b[7:0]}} : {2{operand_b[15:0]}};
+  assign operand_b_vec = (vector_mode == `VEC_MODE8) ? {4{operand_b[7:0]}} : {2{operand_b[15:0]}};
 
   // choose normal or scalar replicated version of operand b
   assign alu_operand_b = (scalar_replication == 1'b1) ? operand_b_vec : operand_b;
@@ -486,7 +470,6 @@ module id_stage
   begin : alu_operand_c_mux
     case (alu_op_c_mux_sel)
       `OP_C_JT: operand_c = jump_target;
-      //`OP_C_CURRPC: operand_c = current_pc;
       default:  operand_c = regfile_data_rc_id;
     endcase // case (alu_op_c_mux_sel)
   end
@@ -580,8 +563,7 @@ module id_stage
       .alu_cmp_mode_o               ( alu_cmp_mode          ),
 
       // mult signals
-      .mult_is_running_o            ( mult_is_running       ),
-      .mult_is_running_ex_i         ( mult_is_running_ex_o  ),
+      .mult_en_o                    ( mult_en               ),
       .mult_sel_subword_o           ( mult_sel_subword      ),
       .mult_signed_mode_o           ( mult_signed_mode      ),
       .mult_use_carry_o             ( mult_use_carry        ),
@@ -614,7 +596,6 @@ module id_stage
 
       // hwloop signals
       .hwloop_we_o                  ( hwloop_we             ),
-      .hwloop_regid_o               ( hwloop_regid          ),
       .hwloop_wb_mux_sel_o          ( hwloop_wb_mux_sel     ),
       .hwloop_cnt_mux_sel_o         ( hwloop_cnt_mux_sel    ),
       .hwloop_jump_i                ( hwloop_jump           ),
@@ -623,17 +604,18 @@ module id_stage
       .irq_present_i                ( irq_present           ),
 
       // Exception Controller Signals
-      //.jump_in_id_o                 ( jump_in_id            ),
       .illegal_insn_o               ( illegal_insn          ),
       .trap_insn_o                  ( trap_insn             ),
       .pipe_flush_o                 ( pipe_flush            ),
       .pc_valid_i                   ( pc_valid              ),
       .clear_isr_running_o          ( clear_isr_running     ),
       .pipe_flushed_i               ( pipe_flushed_o        ),
+      .trap_hit_i                   ( trap_hit              ),
 
       // Debug Unit Signals
       .dbg_stall_i                  ( dbg_stall_i           ),
       .dbg_set_npc_i                ( dbg_set_npc_i         ),
+      .dbg_trap_o                   ( dbg_trap_o            ),
 
       // SPR Signals
       .sr_flag_fw_i                 ( sr_flag_fw_i          ), // Forwarded Branch Signal
@@ -662,7 +644,7 @@ module id_stage
       // To controller (TODO: Remove when control/decode separated and moved)
       .jump_in_ex_i                 ( jump_in_ex_o          ),
 
-      // To EX: Jump/Branch indication
+      // To exception controller and EX: Jump/Branch indication
       .jump_in_id_o                 ( jump_in_id_o          ),
 
       // Stall signals
@@ -706,27 +688,25 @@ module id_stage
       .save_pc_if_o         ( save_pc_if_o      ),
       .save_pc_id_o         ( save_pc_id_o      ),
       .save_sr_o            ( save_sr_o         ),
-      .set_dsx_o            ( set_dsx_o         ),
 
       // Controller
       .core_busy_i          ( core_busy_o       ),
-      .jump_in_id_i         ( jump_in_id        ),
+      .jump_in_id_i         ( jump_in_id_o      ),
       .jump_in_ex_i         ( jump_in_ex        ),
       .stall_id_i           ( stall_id_o        ),
       .illegal_insn_i       ( illegal_insn      ),
       .trap_insn_i          ( trap_insn         ),
+      //.drop_instruction_i   ( drop_instruction_o), // TODO: check if needed
       .pipe_flush_i         ( pipe_flush        ),
       .pc_valid_o           ( pc_valid          ),
       .clear_isr_running_i  ( clear_isr_running ),
+      .trap_hit_o           ( trap_hit          ),
 
       // Debug Unit Signals
       .dbg_flush_pipe_i     ( dbg_flush_pipe_i  ),
       .pipe_flushed_o       ( pipe_flushed_o    ),
       .dbg_st_en_i          ( dbg_st_en_i       ),
-      .dbg_dsr_i            ( dbg_dsr_i         ),
-      .dbg_stall_i          ( dbg_stall_i       ),
-      .dbg_set_npc_i        ( dbg_set_npc_i     ),
-      .dbg_trap_o           ( dbg_trap_o        )
+      .dbg_dsr_i            ( dbg_dsr_i         )
     );
 
 
@@ -787,7 +767,7 @@ module id_stage
       alu_cmp_mode_ex_o           <= `ALU_CMP_FULL;
       alu_vec_ext_ex_o            <= 2'h0;
 
-      mult_is_running_ex_o        <= 1'b0;
+      mult_en_ex_o                <= 1'b0;
       mult_sel_subword_ex_o       <= 2'b0;
       mult_signed_mode_ex_o       <= 2'b0;
       mult_use_carry_ex_o         <= 1'b0;
@@ -858,7 +838,7 @@ module id_stage
       alu_cmp_mode_ex_o           <= alu_cmp_mode;
       alu_vec_ext_ex_o            <= alu_vec_ext;
 
-      mult_is_running_ex_o        <= mult_is_running;
+      mult_en_ex_o                <= mult_en;
       mult_sel_subword_ex_o       <= mult_sel_subword;
       mult_signed_mode_ex_o       <= mult_signed_mode;
       mult_use_carry_ex_o         <= mult_use_carry;
@@ -899,6 +879,7 @@ module id_stage
 `ifdef TCDM_ADDR_PRECAL
       alu_adder_o                 <= alu_operand_a + alu_operand_b;
 `endif
+
     end
   end
 

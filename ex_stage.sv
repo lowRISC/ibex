@@ -57,7 +57,7 @@ module ex_stage
     input  logic [1:0]                alu_vec_ext_i,
 
     // Multiplier signals
-    input  logic                      mult_is_running_i,
+    input  logic                      mult_en_i,
     input  logic [1:0]                mult_sel_subword_i,
     input  logic [1:0]                mult_signed_mode_i,
     input  logic                      mult_use_carry_i,
@@ -88,7 +88,6 @@ module ex_stage
     input  logic                      set_overflow_i,
     input  logic                      set_carry_i,
 
-    input  logic                      eoc_i,
     input  logic                      sp_we_i,
 
     // Output of EX stage pipeline
@@ -102,7 +101,7 @@ module ex_stage
     output logic                      set_overflow_o,
     output logic                      set_carry_o,
 
-    output logic [15:0]               regfile_wdata_wb_o,
+    output logic [15:0]               sp_addr_wb_o,
     output logic [4:0]                regfile_waddr_wb_o,
     output logic                      regfile_wdata_mux_sel_wb_o,
     output logic                      regfile_we_wb_o,
@@ -113,20 +112,14 @@ module ex_stage
     output logic [31:0]               hwloop_cnt_data_o,
 
     output logic                      sp_we_wb_o,
-    output logic                      eoc_o,
 
     // Forwarding ports : to ID stage
     output logic  [4:0]               regfile_alu_waddr_fw_o,
     output logic                      regfile_alu_we_fw_o,
     output logic [31:0]               regfile_alu_wdata_fw_o,    // forward to RF and ID/EX pipe, ALU & MUL
-    output logic [31:0]               regfile_alu_wdata_fw_pc_o,  // forward to PC, no multiplication
-
-    // From ID: Jump and branch indication
-    input  logic  [1:0]               jump_in_id_i,
 
     // To IF: Jump and branch target and decision
     output logic [31:0]               jump_target_o,
-    //output logic  [1:0]               jump_in_ex_o,
     output logic                      branch_decision_o
 
 `ifdef TCDM_ADDR_PRECAL
@@ -151,17 +144,20 @@ module ex_stage
 
 
   // Result Selection: Select between ALU output signals and MUL
-  assign carry_o                   = (mult_is_running_i == 1'b1) ? mult_carry_int    : alu_carry_int;
-  assign overflow_o                = (mult_is_running_i == 1'b1) ? mult_overflow_int : alu_overflow_int;
+  assign carry_o                   = (mult_en_i == 1'b1) ? mult_carry_int    : alu_carry_int;
+  assign overflow_o                = (mult_en_i == 1'b1) ? mult_overflow_int : alu_overflow_int;
 
   assign regfile_alu_we_fw_o       = regfile_alu_we_i;
   assign regfile_alu_waddr_fw_o    = regfile_alu_waddr_i;
-  assign regfile_alu_wdata_fw_o    = (mult_is_running_i == 1'b0) ? alu_result : mult_result;
-  assign regfile_alu_wdata_fw_pc_o = alu_result;               // forwarding to PC, multiplication not allowed
+  assign regfile_alu_wdata_fw_o    = (mult_en_i == 1'b0) ? alu_result : mult_result;
 
   // generate flags: goes to special purpose register
   assign set_overflow_o        = (stall_ex_i == 1'b0) ? set_overflow_i : 1'b0;
   assign set_carry_o           = (stall_ex_i == 1'b0) ? set_carry_i    : 1'b0;
+
+  //NOTE Igor fix: replaced alu_adder_int with alu_adder_lsu_int --> Now data_addr is calculated with
+  //NOTE a dedicated adder, no carry is considered , just op_a + op_b from id stage
+  assign data_addr_ex_o        = (prepost_useincr_i == 1'b1) ? alu_adder_lsu_int : alu_operand_a_i;
 
   // hwloop mux. selects the right data to be sent to the hwloop registers (start/end-address and counter)
   always_comb
@@ -177,20 +173,6 @@ module ex_stage
 
   // assign hwloop mux. selects the right data to be sent to the hwloop registers (start/end-address and counter)
   assign hwloop_cnt_data_o = hwloop_cnt_i;
-
-
-  // LSU address calculation
-  // NOTE Igor fix: replaced alu_adder_int with alu_adder_lsu_int --> Now data_addr is calculated with
-  // NOTE a dedicated adder, no carry is considered , just op_a + op_b from id stage
-`ifdef TCDM_ADDR_PRECAL
-  assign alu_adder_lsu_int = alu_adder_i;
-  $stop("TCDM_ADDR_PRECAL unsupported in RiscV! (jump/branch target calculation not implemented yet");
-`else
-  assign alu_adder_lsu_int = alu_operand_a_i + alu_operand_b_i;
-`endif
-  assign data_addr_ex_o    = (prepost_useincr_i == 1'b1) ? alu_adder_lsu_int : alu_operand_a_i;
-
-
 
   // Branch is taken when result == 1'b1
   assign branch_decision_o = alu_result[0];
@@ -217,6 +199,8 @@ module ex_stage
    .vector_mode_i ( vector_mode_i       ),
    .cmp_mode_i    ( alu_cmp_mode_i      ),
    .vec_ext_i     ( alu_vec_ext_i       ),
+
+   .adder_lsu_o   ( alu_adder_lsu_int   ),
 
    .result_o      ( alu_result          ),
    .overflow_o    ( alu_overflow_int    ), // Internal signal
@@ -260,27 +244,23 @@ module ex_stage
   begin : EX_WB_Pipeline_Register
     if (rst_n == 1'b0)
     begin
-      regfile_wdata_wb_o           <= 16'h0000;
+      sp_addr_wb_o                 <= 16'h0000;
       regfile_waddr_wb_o           <= 5'b0_0000;
       regfile_wdata_mux_sel_wb_o   <= 1'b0;
       regfile_we_wb_o              <= 1'b0;
       regfile_rb_data_wb_o         <= 32'h0000_0000;
       sp_we_wb_o                   <= 1'b0;
-      eoc_o                        <= 1'b0;
-      //jump_in_ex_o                 <= '0;
     end
     else
     begin
       if (stall_wb_i == 1'b0)
       begin
+        sp_addr_wb_o               <= alu_result[15:0];         // this is only used for SPR address
         regfile_we_wb_o            <= regfile_we_i;
         regfile_waddr_wb_o         <= regfile_waddr_i;
-        regfile_wdata_wb_o         <= alu_result[15:0];         // this is only used for SPR address
         regfile_wdata_mux_sel_wb_o <= regfile_wdata_mux_sel_i;
         regfile_rb_data_wb_o       <= regfile_rb_data_i;
         sp_we_wb_o                 <= sp_we_i;
-        eoc_o                      <= eoc_i;
-        //jump_in_ex_o               <= jump_in_id_i;
       end
     end
   end

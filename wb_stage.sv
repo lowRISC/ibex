@@ -45,37 +45,19 @@ module wb_stage
     input  logic [31:0] data_rdata_i,            // read Data from data memory system
     input  logic [31:0] lsu_data_reg_i,          // read data registered in LSU
     // MUX OUTPUT
-    output logic [31:0] regfile_wdata_o,         // write data for register file
-    output logic [31:0] wdata_reg_o,             // goes to pc_mux, origin is always a register!
-
-    input  logic        eoc_i,
-    output logic        eoc_o
+    output logic [31:0] regfile_wdata_o         // write data for register file
 
 );
 
-   assign eoc_o = eoc_i;
-
    // Register Write Data Selection --> Data to write in the regfile
    // Select between:
-   // 00,01: From EX stage (Alu Results)
-   // 10:    From Special Register
-   // 11:    From Data Memory
+   // 0:    From Special Register
+   // 1:    From Data Memory
    always_comb
    begin : REGFILE_WDATA_MUX
       casex (regfile_wdata_mux_sel_i)
         1'b0:  begin regfile_wdata_o <= sp_rdata_i;        end
         1'b1:  begin regfile_wdata_o <= data_rdata_i;      end
-      endcase; // case (regfile_wdata_mux_sel_i)
-   end
-
-   // wdata_reg_o is very similar to regfile_wdata_o, except that the
-   // output of the LSU is registered. This signal is then used by the PC
-   // mux instead of regfile_wdata_o in case forwarding is necessary
-   always_comb
-   begin : WDATA_FW_MUX
-      casex (regfile_wdata_mux_sel_i)
-        1'b0:  begin wdata_reg_o <= sp_rdata_i;        end
-        1'b1:  begin wdata_reg_o <= lsu_data_reg_i;    end
       endcase; // case (regfile_wdata_mux_sel_i)
    end
 

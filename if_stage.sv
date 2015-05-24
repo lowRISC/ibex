@@ -51,8 +51,6 @@ module if_stage
     // Forwarding ports - control signals
     input  logic        force_nop_i,           // insert a NOP in the pipe
     input  logic [31:0] exception_pc_reg_i,    // address used to restore the program counter when the interrupt/exception is served
-    input  logic [31:0] pc_from_regfile_i,     // pc from reg file
-    //input  logic [31:0] pc_from_immediate_i,   // pc from immediate
     input  logic [31:0] pc_from_hwloop_i,      // pc from hwloop start addr
     input  logic  [2:0] pc_mux_sel_i,          // sel for pc multiplexer
     input  logic        pc_mux_boot_i,         // load boot address as PC

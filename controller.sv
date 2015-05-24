@@ -63,8 +63,7 @@ module controller
   output logic [1:0]                   alu_cmp_mode_o,             // selects comparison mode for ALU (i.e. full, any, all)
 
   // Mupliplicator related control signals
-  output logic                         mult_is_running_o,          // Multiplication operation is running
-  input  logic                         mult_is_running_ex_i,       // Multiplication operation is running in EX
+  output logic                         mult_en_o,                  // Multiplication operation is running
   output logic [1:0]                   mult_sel_subword_o,         // Select subwords for 16x16 bit of multiplier
   output logic [1:0]                   mult_signed_mode_o,         // Multiplication in signed mode
   output logic                         mult_use_carry_o,           // Use carry for MAC
@@ -95,7 +94,6 @@ module controller
 
   // hwloop signals
   output logic [2:0]                   hwloop_we_o,                 // write enables for hwloop regs
-  output logic [1:0]                   hwloop_regid_o,              // identifies the hwloop reg set
   output logic                         hwloop_wb_mux_sel_o,         // select data to write to hwloop regs
   output logic [1:0]                   hwloop_cnt_mux_sel_o,        // selects hwloop counter input
   input  logic                         hwloop_jump_i,               // modify pc_mux_sel to select the hwloop addr
@@ -104,17 +102,18 @@ module controller
   input  logic                         irq_present_i,               // there is an IRQ, so if we are sleeping we should wake up now
 
   // Exception Controller Signals
-  //output logic                         jump_in_id_o,                // jump instruction in ID stage
   output logic                         illegal_insn_o,              // illegal instruction encountered
   output logic                         trap_insn_o,                 // trap instruction encountered
   output logic                         pipe_flush_o,                // pipe flush requested by controller
   input logic                          pc_valid_i,                  // is the next_pc currently valid?
   output logic                         clear_isr_running_o,         // an l.rfe instruction was encountered, exit ISR
   input  logic                         pipe_flushed_i,              // Pipe is flushed
+  input  logic                         trap_hit_i,                  // a trap was hit, so we have to flush EX and WB
 
   // Debug Unit Signals
   input  logic                         dbg_stall_i,                 // Pipeline stall is requested
   input  logic                         dbg_set_npc_i,               // Change PC to value from debug unit
+  output logic                         dbg_trap_o,                  // trap hit, inform debug unit
 
   // SPR Signals
   input  logic                         sr_flag_fw_i,                // forwared branch signal
@@ -160,7 +159,7 @@ module controller
   logic reg_d_alu_is_reg_c_id;
 
   logic [`ALU_OP_WIDTH-1:0] alu_operator;
-  logic                     mult_is_running;
+  logic                     mult_en;
   logic                     regfile_we;
   logic                     regfile_alu_we;
   logic                     data_we;
@@ -177,6 +176,7 @@ module controller
   logic       instr_ack_stall;
   logic       load_stall;
   logic       jr_stall;
+   logic       trap_stall;
 
   logic       set_npc;
 `ifdef BRANCH_PREDICTION
@@ -185,6 +185,11 @@ module controller
   logic       rega_used;
   logic       regb_used;
   logic       regc_used;
+
+  // dbg fsm
+  enum  logic [2:0]  { DBG_IDLE, DBG_EX, DBG_WB, DBG_STALL, DBG_FLUSH, DBG_FLUSH2 }     dbg_fsm_cs, dbg_fsm_ns;
+  logic       dbg_halt;
+  logic       dbg_flush;
 
   ////////////////////////////////////////////////////////////////////////////////////////////
   //   ____ ___  ____  _____    ____ ___  _   _ _____ ____   ___  _     _     _____ ____    //
@@ -208,13 +213,13 @@ module controller
     alu_op_a_mux_sel_o           = `OP_A_REGA_OR_FWD;
     alu_op_b_mux_sel_o           = `OP_B_REGB_OR_FWD;
     alu_op_c_mux_sel_o           = `OP_C_REGC_OR_FWD;
-    alu_pc_mux_sel_o             = 1'b1;
+    alu_pc_mux_sel_o             = 1'b0;  // TODO: Check if still needed (1'b0 never used)
 
     vector_mode_o                = `VEC_MODE32;
     scalar_replication_o         = 1'b0;
     alu_cmp_mode_o               = `ALU_CMP_FULL;
 
-    mult_is_running              = 1'b0;
+    mult_en                      = 1'b0;
     mult_signed_mode_o           = 2'b00;
     mult_sel_subword_o           = 2'b00;
     mult_use_carry_o             = 1'b0;
@@ -228,7 +233,6 @@ module controller
     prepost_useincr_o            = 1'b1;
 
     hwloop_we_o                  = 3'b0;
-    hwloop_regid_o               = 2'b0;
     hwloop_wb_mux_sel_o          = 1'b0;
     hwloop_cnt_mux_sel_o         = 2'b00;
     immediate_mux_sel_o          = `IMM_I;
@@ -257,6 +261,7 @@ module controller
     rega_used                    = 1'b0;
     regb_used                    = 1'b0;
     regc_used                    = 1'b0;
+
 `ifdef BRANCH_PREDICTION
     wrong_branch_taken_o         = 1'b0;
     take_branch_o                = 1'b0;
@@ -315,9 +320,6 @@ module controller
             regfile_alu_we      = 1'b1;
           end
 
-          `OPCODE_CUST1: begin // custom-1: Flush pipeline (e.g. wait for event)
-          end
-
 
           //////////////////////////////////////
           //      _ _   _ __  __ ____  ____   //
@@ -325,6 +327,7 @@ module controller
           //  _  | | | | | |\/| | |_) \___ \  //
           // | |_| | |_| | |  | |  __/ ___) | //
           //  \___/ \___/|_|  |_|_|   |____/  //
+          //                                  //
           //////////////////////////////////////
 
           `OPCODE_JAL: begin   // Jump and Link
@@ -333,6 +336,7 @@ module controller
               pc_mux_sel_o        = `PC_NO_INCR;
               jump_in_id_o        = 2'b01;
               // Calculate and store PC+4
+              alu_pc_mux_sel_o    = 1'b1;
               alu_op_a_mux_sel_o  = `OP_A_CURRPC;
               alu_op_b_mux_sel_o  = `OP_B_IMM;
               immediate_mux_sel_o = `IMM_HEX4;
@@ -351,6 +355,7 @@ module controller
               pc_mux_sel_o        = `PC_NO_INCR;
               jump_in_id_o        = 2'b01;
               // Calculate and store PC+4
+              alu_pc_mux_sel_o    = 1'b1;
               alu_op_a_mux_sel_o  = `OP_A_CURRPC;
               alu_op_b_mux_sel_o  = `OP_B_IMM;
               immediate_mux_sel_o = `IMM_HEX4;
@@ -385,55 +390,6 @@ module controller
             endcase // case (instr_rdata_i)
           end
 
-          /*
-
-`ifndef BRANCH_PREDICTION
-          `OPCODE_BNF:
-          begin   // Branch if No Flag
-             if (sr_flag_fw_i == 1'b0)
-               pc_mux_sel_o = `PC_FROM_IMM;
-          end
-
-          `OPCODE_BF:
-          begin    // Branch if Flag
-             if (sr_flag_fw_i == 1'b1)
-               pc_mux_sel_o = `PC_FROM_IMM;
-          end
-`else // BRANCH_PREDICTION
-          `OPCODE_BNF:
-          begin   // Branch if No Flag
-            if (set_flag_ex_i == 1'b0)
-              if (sr_flag_i == 1'b0)
-                pc_mux_sel_o = `PC_FROM_IMM;
-              else
-                pc_mux_sel_o = `INCR_PC;
-            else // default branch
-            begin
-              pc_mux_sel_o = instr_rdata_i[25] ? `PC_FROM_IMM : `INCR_PC;
-              // decision was wrong
-              wrong_branch_taken_o = (sr_flag_fw_i ^ instr_rdata_i[25]) ? 1'b0 : 1'b1;
-              take_branch_o = instr_rdata_i[25] ? `INCR_PC : `PC_FROM_IMM;
-            end
-          end
-
-          `OPCODE_BF:
-          begin    // Branch if Flag
-            if (set_flag_ex_i == 1'b0)
-              if (sr_flag_i == 1'b1)
-                pc_mux_sel_o = `PC_FROM_IMM;
-              else
-                pc_mux_sel_o = `INCR_PC;
-            else // default branch
-            begin
-              pc_mux_sel_o = instr_rdata_i[25] ? `PC_FROM_IMM : `INCR_PC;
-              // decision was wrong
-              wrong_branch_taken_o = (sr_flag_fw_i ^ instr_rdata_i[25]) ? 1'b1 : 1'b0;
-              take_branch_o = instr_rdata_i[25] ? `INCR_PC : `PC_FROM_IMM;
-            end
-          end
-`endif
-
-           */
 
           //////////////////////////////////
           //  _     ____    ______ _____  //
@@ -659,7 +615,7 @@ module controller
               `INSTR_OR:   alu_operator = `ALU_OR;   // Or
               `INSTR_AND:  alu_operator = `ALU_AND;  // And
 
-              `INSTR_MUL:  mult_is_running = 1'b1;   // Multiplication
+              `INSTR_MUL:  mult_en      = 1'b1;      // Multiplication
 
               default: begin
                 // synopsys translate_off
@@ -670,7 +626,6 @@ module controller
               end
             endcase // unique case (instr_rdata_i)
           end
-
 
           /*
 
@@ -976,7 +931,8 @@ module controller
 
           `OPCODE_SYSTEM: begin
             unique case (instr_rdata_i) inside
-              `INSTR_ECALL: begin
+              `INSTR_EBREAK: begin
+                // debugger trap
                 trap_insn_o  = 1'b1;
               end
               `INSTR_ERET:  begin
@@ -1103,7 +1059,6 @@ module controller
           */
 
           default: begin
-            // TODO: Replace with exception
             illegal_insn_o = 1'b1;
             pc_mux_sel_o = `PC_NO_INCR;
           end
@@ -1134,13 +1089,6 @@ module controller
           // the second memory access we do use the adder
           prepost_useincr_o   = 1'b1;
         end
-
-        if ( set_npc == 1'b1 )
-          pc_mux_sel_o = `PC_NO_INCR;
-
-        // hwloop detected, jump to start address!
-        if (hwloop_jump_i == 1'b1)
-          pc_mux_sel_o  = `HWLOOP_ADDR;
 
 `ifdef BRANCH_PREDICTION
         if (wrong_branch_taken)
@@ -1197,11 +1145,16 @@ module controller
     // - Load results cannot directly be forwarded to PC
     // - Multiplication results cannot be forwarded to PC
     if ((instr_rdata_i[6:0] == `OPCODE_JALR) &&
-        (((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_b_id == 1'b1) && (data_rvalid_i == 1'b1)) ||
-         ((regfile_we_ex_i == 1'b1) && (reg_d_ex_is_reg_b_id == 1'b1))                            ||
-         ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_b_id == 1'b1) && (mult_is_running_ex_i == 1'b1))) )
+        (((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_b_id == 1'b1)) ||
+         ((regfile_we_ex_i == 1'b1) && (reg_d_ex_is_reg_b_id == 1'b1)) ||
+         ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_b_id == 1'b1))) )
     begin
       jr_stall        = 1'b1;
+      deassert_we     = 1'b1;
+    end
+
+    if (dbg_flush)
+    begin
       deassert_we     = 1'b1;
     end
   end
@@ -1214,9 +1167,11 @@ module controller
 
   assign misalign_stall = data_misaligned_i;
 
+  assign trap_stall = trap_insn_o;
+
   // deassert we signals (in case of stalls)
   assign alu_operator_o    = (deassert_we) ? `ALU_NOP : alu_operator;
-  assign mult_is_running_o = (deassert_we) ? 1'b0     : mult_is_running;
+  assign mult_en_o         = (deassert_we) ? 1'b0     : mult_en;
   assign regfile_we_o      = (deassert_we) ? 1'b0     : regfile_we;
   assign regfile_alu_we_o  = (deassert_we) ? 1'b0     : regfile_alu_we;
   assign data_we_o         = (deassert_we) ? 1'b0     : data_we;
@@ -1240,8 +1195,8 @@ module controller
     // we unstall the if_stage if the debug unit wants to set a new
     // pc, so that the new value gets written into current_pc_if and is
     // used by the instr_core_interface
-    stall_if_o = instr_ack_stall | mfspr_stall | mtspr_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_stall_i | (~pc_valid_i);
-    stall_id_o = instr_ack_stall | mfspr_stall | mtspr_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_stall_i;
+    stall_if_o = instr_ack_stall | mfspr_stall | mtspr_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_halt | dbg_stall_i | (~pc_valid_i);
+    stall_id_o = instr_ack_stall | mfspr_stall | mtspr_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_halt | dbg_stall_i;
     stall_ex_o = instr_ack_stall | lsu_stall | dbg_stall_i;
     stall_wb_o = lsu_stall | dbg_stall_i;
   end
@@ -1310,10 +1265,12 @@ module controller
     if ( rst_n == 1'b0 )
     begin
       ctrl_fsm_cs <= RESET;
+      dbg_fsm_cs  <= DBG_IDLE;
     end
     else
     begin
       ctrl_fsm_cs <= ctrl_fsm_ns;
+      dbg_fsm_cs  <= dbg_fsm_ns;
     end
   end
 
@@ -1331,6 +1288,76 @@ module controller
        else if (stall_if_o == 1'b0)
          set_npc <= 1'b0;
     end
+  end
+
+  // Trap control FSM for debug unit
+  always_comb
+  begin
+    dbg_fsm_ns       = dbg_fsm_cs;
+    dbg_trap_o       = 1'b0;
+    dbg_halt         = 1'b0;
+    dbg_flush        = 1'b0;
+
+    case (dbg_fsm_cs)
+      DBG_IDLE:
+      begin
+        if(trap_hit_i == 1'b1 && stall_ex_o == 1'b0 && jump_in_id_o == 1'b0)
+        begin
+          dbg_halt  = 1'b1;
+          dbg_fsm_ns = DBG_EX;
+        end
+      end
+
+      // First NOP is in EX
+      DBG_EX:
+      begin
+        dbg_halt  = 1'b1;
+        dbg_flush = 1'b1;
+
+        if(stall_ex_o == 1'b0)
+          dbg_fsm_ns = DBG_WB;
+      end
+
+      // NOPs in EX and WB
+      DBG_WB:
+      begin
+        dbg_halt  = 1'b1;
+        dbg_flush = 1'b1;
+
+        if(stall_ex_o == 1'b0)
+          dbg_fsm_ns = DBG_STALL;
+      end
+
+      // Start to stall in this cycle
+      DBG_STALL:
+      begin
+        dbg_halt  = 1'b1;
+        dbg_flush = 1'b1;
+        dbg_trap_o = 1'b1;
+
+        dbg_fsm_ns = DBG_FLUSH;
+      end
+
+      // Flush instruction in ID stage
+      DBG_FLUSH:
+      begin
+        dbg_flush = 1'b1;
+
+        if(dbg_set_npc_i == 1'b1)
+          dbg_fsm_ns = DBG_FLUSH2;
+        else if(stall_ex_o == 1'b0)
+          dbg_fsm_ns = DBG_IDLE;
+      end
+
+      // Flush instruction in ID stage
+      DBG_FLUSH2:
+      begin
+        dbg_flush = 1'b1;
+
+        if(stall_ex_o == 1'b0)
+          dbg_fsm_ns = DBG_FLUSH;
+      end
+    endcase // case (dbg_fsm_cs)
   end
 
 endmodule // controller
