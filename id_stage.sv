@@ -696,7 +696,7 @@ module id_stage
       .stall_id_i           ( stall_id_o        ),
       .illegal_insn_i       ( illegal_insn      ),
       .trap_insn_i          ( trap_insn         ),
-      //.drop_instruction_i   ( drop_instruction_o), // TODO: check if needed
+      .drop_instruction_i   ( 1'b0              ),
       .pipe_flush_i         ( pipe_flush        ),
       .pc_valid_o           ( pc_valid          ),
       .clear_isr_running_i  ( clear_isr_running ),

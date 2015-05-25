@@ -188,7 +188,7 @@ module exc_controller
             // execute pending delay slot (l.psync won't have one),
             // flush the pipeline and stop
             ExcFlush: begin
-              if (jump_in_id_i == 1'b0)
+              if (jump_in_id_i == 2'b00)
               begin // no delay slot
                 force_nop_o   = 1'b1;
                 exc_pc_sel_o  = 1'b1;
@@ -206,7 +206,7 @@ module exc_controller
             // an IRQ is present, execute pending delay slots and jump
             // to the ISR without flushing the pipeline
             ExcIR: begin
-              if (jump_in_id_i == 1'b0)
+              if (jump_in_id_i == 2'b00)
               begin // no delay slot
                 // synopsys translate_off
                 $display("%t: Entering exception routine.", $time);

@@ -320,6 +320,11 @@ module controller
             regfile_alu_we      = 1'b1;
           end
 
+          `OPCODE_CUST1: begin  // Custom-1 opcode: Flush pipeline
+            // TODO: Replace with WFI instruction as soon as compiler support available
+            pipe_flush_o = 1'b1;
+          end
+
 
           //////////////////////////////////////
           //      _ _   _ __  __ ____  ____   //

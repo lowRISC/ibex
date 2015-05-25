@@ -55,6 +55,7 @@
 `define OPCODE_CUST1  7'h2b
 
 `define INSTR_CUSTOM0    { {25 {1'b?}}, `OPCODE_CUST0 }
+`define INSTR_CUSTOM1    { {25 {1'b?}}, `OPCODE_CUST1 }
 `define INSTR_LUI        { {25 {1'b?}}, `OPCODE_LUI }
 `define INSTR_AUIPC      { {25 {1'b?}}, `OPCODE_AUIPC }
 `define INSTR_JAL        { {25 {1'b?}}, `OPCODE_JAL }
@@ -252,6 +253,11 @@ endfunction // prettyPrintInstruction
 // |____/|_|     |_| \_\___|\__, |_|___/\__\___|_|    //
 //                          |___/                     //
 ////////////////////////////////////////////////////////
+
+`define CSR_IDX_MSCRATCH  0
+`define CSR_IDX_MEPC      1
+
+`define CSR_MAX_IDX       1
 
 // Special-Purpose Register Addresses
 // see OpenRISC manual p. 22ff

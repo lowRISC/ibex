@@ -152,8 +152,7 @@ module riscv_core
   logic            sp_we_ex;         // Output of ID_stage to EX stage
   logic            sp_we_wb;
   logic [31:0]     sp_rdata;
-
-  logic [15:0]     sp_addr;
+  logic [11:0]     sp_addr;
   logic [31:0]     sp_wdata;
   logic            sp_we;
 
@@ -253,6 +252,13 @@ module riscv_core
 `ifdef TCDM_ADDR_PRECAL
   logic [31:0]         alu_adder_ex;
 `endif
+
+
+  // TODO: Temporary assignments while not everything from OR10N is implemented (e.g. debug unit)
+  assign dbg_dsr        = 2'b0;
+  assign dbg_st_en      = 1'b0;
+  assign dbg_sp_mux     = 1'b0;
+  assign dbg_flush_pipe = 1'b0;
 
 
     //////////////////////////////////////////////////
@@ -637,18 +643,17 @@ module riscv_core
       .ex_stall_i            ( stall_ex                )
     );
 
-  /*
 
-    //////////////////////////////////////////////
-    //  ____  ____    ____                      //
-    // / ___||  _ \  |  _ \ ___  __ _ ___       //
-    // \___ \| |_) | | |_) / _ \/ _` / __|      //
-    //  ___) |  __/  |  _ <  __/ (_| \__ \      //
-    // |____/|_|     |_| \_\___|\__, |___/      //
-    //                          |___/           //
-    //      Special Purpose REGISTERS           //
-    //////////////////////////////////////////////
-    sp_registers sp_registers_i
+    //////////////////////////////////////
+    //        ____ ____  ____           //
+    //       / ___/ ___||  _ \ ___      //
+    //      | |   \___ \| |_) / __|     //
+    //      | |___ ___) |  _ <\__ \     //
+    //       \____|____/|_| \_\___/     //
+    //                                  //
+    //   Control and Status Registers   //
+    //////////////////////////////////////
+    cs_registers cs_registers_i
     (
       .clk                     ( clk                   ),
       .rst_n                   ( rst_n                 ),
@@ -660,22 +665,8 @@ module riscv_core
       // Interface to Special register (SRAM LIKE)
       .sp_addr_i               ( sp_addr               ),
       .sp_wdata_i              ( sp_wdata              ),
-      .sp_we_i                 ( sp_we                 ), // from ex-wb pipe regs
-      .sp_rdata_o              ( sp_rdata              ), // to write back stage
-
-
-      // Direct interface with MUL-ALU and Controller
-      // Flag
-      .flag_i                  ( alu_flag_ex           ), // comparison flag
-
-      // Overflow and Carry - From ALU
-      .carry_i                 ( carry_ex              ),
-      .overflow_i              ( overflow_ex           ),
-
-      // From the controller
-      .set_flag_i              ( set_flag_ex           ), // From EX stage
-      .set_carry_i             ( set_carry_fw_ex       ), // From EX stage
-      .set_overflow_i          ( set_overflow_fw_ex    ), // From EX stage
+      .sp_we_i                 ( sp_we                 ),
+      .sp_rdata_o              ( sp_rdata              ),
 
       // Stall direct write
       .enable_direct_write_i   ( stall_wb              ),
@@ -701,11 +692,7 @@ module riscv_core
       .irq_enable_o            ( irq_enable            ),
 
       .npc_o                   ( dbg_npc               ), // PC from debug unit
-      .set_npc_o               ( dbg_set_npc           ), // set PC to new value
-
-      .flag_fw_o               ( sr_flag_fw            ),
-      .flag_o                  ( sr_flag               ),
-      .carry_o                 ( carry_sp              )
+      .set_npc_o               ( dbg_set_npc           )  // set PC to new value
     );
 
     // Mux for SPR access through Debug Unit
@@ -714,6 +701,8 @@ module riscv_core
     assign sp_we         = (dbg_sp_mux == 1'b0) ? sp_we_wb           : dbg_reg_we;
     assign dbg_rdata     = (dbg_sp_mux == 1'b0) ? dbg_reg_rdata      : sp_rdata;
 
+
+    /*
 
     //////////////////////////////////////////////
     //      Hardware Loop Registers             //
@@ -849,6 +838,7 @@ module riscv_core
         32'h00_00_00_13:   printMnemonic("NOP");
         // Regular opcodes
         `INSTR_CUSTOM0:    printMnemonic("CUSTOM0");
+        `INSTR_CUSTOM1:    printMnemonic("CUSTOM1");
         `INSTR_LUI:        printIInstr("LUI");
         `INSTR_AUIPC:      printIInstr("AUIPC");
         `INSTR_JAL:        printUJInstr("JAL");

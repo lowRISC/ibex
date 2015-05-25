@@ -135,7 +135,6 @@ module if_stage
       else
         next_pc = current_pc_if_o;
     end
-
   end
 
 
