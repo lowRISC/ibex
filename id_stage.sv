@@ -174,6 +174,7 @@ module id_stage
   logic [31:0] imm_sb_type;
   logic [31:0] imm_u_type;
   logic [31:0] imm_uj_type;
+  logic [31:0] imm_z_type;
 
   logic [31:0] immediate_b;       // contains the immediate for operand b
 
