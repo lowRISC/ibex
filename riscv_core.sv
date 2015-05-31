@@ -148,14 +148,14 @@ module riscv_core
   logic            regfile_alu_we_fw;
   logic [31:0]     regfile_alu_wdata_fw;
 
-  // Special-Purpose Register Control
-  logic            sp_we_ex;         // Output of ID_stage to EX stage
-  logic            sp_we_wb;
-  logic [31:0]     sp_rdata;
-  logic [11:0]     sp_addr;
-  logic [31:0]     sp_wdata;
-  logic            sp_we;
+  // CSR control
+  logic            csr_access_ex;
+  logic  [1:0]     csr_op_ex;
 
+  logic  [1:0]     csr_op;
+  logic [11:0]     csr_addr;
+  logic [31:0]     csr_rdata;
+  logic [31:0]     csr_wdata;
 
   // Data Memory Control:  From ID stage (id-ex pipe) <--> load store unit
   logic            data_we_ex;
@@ -180,9 +180,6 @@ module riscv_core
   logic            sr_flag;
   logic            sr_flag_fw;
   logic            carry_sp;
-
-  // Calculation Result
-  logic [15:0]     sp_addr_wb;
 
   // Signals between instruction core interface and pipe (if and id stages)
   logic [31:0]     instr_rdata_int;  // read instruction from the instruction core interface to if_stage
@@ -241,7 +238,7 @@ module riscv_core
   logic               dbg_reg_mux;
   logic               dbg_sp_mux;
   logic               dbg_reg_we;
-  logic [15:0]        dbg_reg_addr;
+  logic [11:0]        dbg_reg_addr;
   logic [31:0]        dbg_reg_wdata;
   logic [31:0]        dbg_reg_rdata;
   logic [31:0]        dbg_rdata;
@@ -354,8 +351,6 @@ module riscv_core
       .clk                          ( clk                           ),
       .rst_n                        ( rst_n                         ),
 
-      .core_id_i                    ( core_id_i                     ),  // TODO: Temporary hack
-
       // Processor Enable
       .fetch_enable_i               ( fetch_enable_i                ),
 
@@ -412,6 +407,10 @@ module riscv_core
       .regfile_alu_we_ex_o          ( regfile_alu_we_ex             ),
       .regfile_alu_waddr_ex_o       ( regfile_alu_waddr_ex          ),
 
+      // CSR ID/EX
+      .csr_access_ex_o              ( csr_access_ex                 ),
+      .csr_op_ex_o                  ( csr_op_ex                     ),
+
       // hwloop signals
       .hwloop_we_ex_o               ( hwlp_we_ex                    ),
       .hwloop_regid_ex_o            ( hwlp_regid_ex                 ),
@@ -419,8 +418,6 @@ module riscv_core
       .hwloop_cnt_o                 ( hwlp_cnt_ex                   ),
       .hwloop_dec_cnt_o             ( hwlp_dec_cnt                  ),
       .hwloop_targ_addr_o           ( hwlp_targ_addr                ),
-
-      .sp_we_ex_o                   ( sp_we_ex                      ),
 
       .prepost_useincr_ex_o         ( useincr_addr_ex               ),
       .data_misaligned_i            ( data_misaligned               ),
@@ -515,11 +512,16 @@ module riscv_core
       .mult_use_carry_i           ( mult_use_carry_ex            ),
       .mult_mac_en_i              ( mult_mac_en_ex               ),
 
+/*
       // interface with Special registers
       .carry_o                    ( carry_ex                     ),
       .overflow_o                 ( overflow_ex                  ),
       .set_overflow_o             ( set_overflow_fw_ex           ), // to special registers
       .set_carry_o                ( set_carry_fw_ex              ), // to special registers
+*/
+      // interface with CSRs
+      .csr_access_i               ( csr_access_ex                ),
+      .csr_rdata_i                ( csr_rdata                    ),
 
       // input from ID stage
       .stall_ex_i                 ( stall_ex                     ),
@@ -545,11 +547,8 @@ module riscv_core
       .set_carry_i                ( set_carry_ex                 ),
 
       .regfile_rb_data_i          ( regfile_rb_data_ex           ),
-      .sp_we_i                    ( sp_we_ex                     ),
-
 
       // Output of ex stage pipeline
-      .sp_addr_wb_o               ( sp_addr_wb                   ),
       .regfile_waddr_wb_o         ( regfile_waddr_fw_wb_o        ),
       .regfile_wdata_mux_sel_wb_o ( regfile_wdata_mux_sel_wb     ),
       .regfile_we_wb_o            ( regfile_we_wb                ),
@@ -561,8 +560,6 @@ module riscv_core
       .hwloop_start_data_o        ( hwlp_start_data_ex           ),
       .hwloop_end_data_o          ( hwlp_end_data_ex             ),
       .hwloop_cnt_data_o          ( hwlp_cnt_data_ex             ),
-
-      .sp_we_wb_o                 ( sp_we_wb                     ),
 
       // To IF: Jump and branch target and decision
       .jump_target_o              ( jump_target                  ),
@@ -593,7 +590,6 @@ module riscv_core
       // Mux selector of regfile wdata
       .regfile_wdata_mux_sel_i ( regfile_wdata_mux_sel_wb  ),
       // Mux inputs
-      .sp_rdata_i              ( sp_rdata                  ),
       .data_rdata_i            ( data_rdata_int            ),
       .lsu_data_reg_i          ( lsu_data_reg              ),
       // Mux output
@@ -663,9 +659,55 @@ module riscv_core
       .cluster_id_i            ( cluster_id_i          ),
 
       // Interface to Special register (SRAM LIKE)
+      .csr_addr_i              ( csr_addr              ),
+      .csr_wdata_i             ( csr_wdata             ),
+      .csr_op_i                ( csr_op                ),
+      .csr_rdata_o             ( csr_rdata             ),
+
+      // HWLoop signals
+      .hwlp_start_addr_i       ( hwlp_start_addr       ),
+      .hwlp_end_addr_i         ( hwlp_end_addr         ),
+      .hwlp_counter_i          ( hwlp_counter          ),
+
+      .hwlp_start_o            ( sp_hwlp_start         ),
+      .hwlp_end_o              ( sp_hwlp_end           ),
+      .hwlp_counter_o          ( sp_hwlp_cnt           ),
+      .hwlp_regid_o            ( sp_hwlp_regid         ),
+      .hwlp_we_o               ( sp_hwlp_we            ),
+
+      .curr_pc_if_i            ( current_pc_if         ), // from IF stage
+      .curr_pc_id_i            ( current_pc_id         ), // from IF stage
+      .save_pc_if_i            ( save_pc_if            ),
+      .save_pc_id_i            ( save_pc_id            ),
+      .epcr_o                  ( epcr                  ),
+      .irq_enable_o            ( irq_enable            ),
+
+      .npc_o                   ( dbg_npc               ), // PC from debug unit
+      .set_npc_o               ( dbg_set_npc           )  // set PC to new value
+    );
+
+    // Mux for SPR access through Debug Unit
+    assign csr_addr      = (dbg_sp_mux == 1'b0) ? alu_operand_b_ex[11:0] : dbg_reg_addr;
+    assign csr_wdata     = (dbg_sp_mux == 1'b0) ? alu_operand_a_ex : dbg_reg_wdata;
+    assign csr_op        = (dbg_sp_mux == 1'b0) ? csr_op_ex
+                                                : (dbg_reg_we == 1'b1 ? `CSR_OP_WRITE : `CSR_OP_NONE);
+    assign dbg_rdata     = (dbg_sp_mux == 1'b0) ? dbg_reg_rdata    : csr_rdata;
+
+
+    /*
+    sp_registers sp_registers_i
+    (
+      .clk                     ( clk                   ),
+      .rst_n                   ( rst_n                 ),
+
+      // Core and Cluster ID from outside
+      .core_id_i               ( core_id_i             ),
+      .cluster_id_i            ( cluster_id_i          ),
+
+      // Interface to Special register (SRAM LIKE)
       .sp_addr_i               ( sp_addr               ),
       .sp_wdata_i              ( sp_wdata              ),
-      .sp_we_i                 ( sp_we                 ),
+      .sp_op_i                 ( sp_op                 ),
       .sp_rdata_o              ( sp_rdata              ),
 
       // Stall direct write
@@ -698,8 +740,10 @@ module riscv_core
     // Mux for SPR access through Debug Unit
     assign sp_addr       = (dbg_sp_mux == 1'b0) ? sp_addr_wb         : dbg_reg_addr;
     assign sp_wdata      = (dbg_sp_mux == 1'b0) ? regfile_rb_data_wb : dbg_reg_wdata;
-    assign sp_we         = (dbg_sp_mux == 1'b0) ? sp_we_wb           : dbg_reg_we;
+    assign sp_op         = (dbg_sp_mux == 1'b0) ? sp_op_wb
+                                                : (dbg_reg_we == 1'b1 ? `CSR_OP_WRITE : `CSR_OP_NONE);
     assign dbg_rdata     = (dbg_sp_mux == 1'b0) ? dbg_reg_rdata      : sp_rdata;
+    */
 
 
     /*
@@ -884,10 +928,18 @@ module riscv_core
         // FENCE
         `INSTR_FENCE:      printMnemonic("FENCE");
         `INSTR_FENCEI:     printMnemonic("FENCEI");
-        // SYSTEM
+        // SYSTEM (CSR manipulation)
+        `INSTR_CSRRW:      printCSRInstr("CSRRW");
+        `INSTR_CSRRS:      printCSRInstr("CSRRS");
+        `INSTR_CSRRC:      printCSRInstr("CSRRC");
+        `INSTR_CSRRWI:     printCSRInstr("CSRRWI");
+        `INSTR_CSRRSI:     printCSRInstr("CSRRSI");
+        `INSTR_CSRRCI:     printCSRInstr("CSRRCI");
+        // SYSTEM (others)
         `INSTR_ECALL:      printMnemonic("ECALL");
         `INSTR_EBREAK:     printMnemonic("EBREAK");
         `INSTR_ERET:       printMnemonic("ERET");
+        `INSTR_WFI:        printMnemonic("WFI");
         `INSTR_RDCYCLE:    printRDInstr("RDCYCLE");
         `INSTR_RDCYCLEH:   printRDInstr("RDCYCLEH");
         `INSTR_RDTIME:     printRDInstr("RDTIME");
@@ -916,7 +968,7 @@ module riscv_core
   function void printRInstr(input string mnemonic);
     begin
       riscv_core.mnemonic = mnemonic;
-      $fdisplay(f, "%s\tx%0d, x%d (0x%h), x%0d (0x%h)", mnemonic,
+      $fdisplay(f, "%s\tx%0d, x%0d (0x%h), x%0d (0x%h)", mnemonic,
                 rd, rs1, rs1_value, rs2, rs2_value);
     end
   endfunction // printRInstr
@@ -962,6 +1014,22 @@ module riscv_core
       $fdisplay(f, "%s\tx%0d", mnemonic, rd);
     end
   endfunction // printRDInstr
+
+  function void printCSRInstr(input string mnemonic);
+    logic [11:0] csr;
+    begin
+      riscv_core.mnemonic = mnemonic;
+      imm = id_stage_i.imm_z_type;
+      csr = instr[31:20];
+
+      if (instr[14] == 1'b0) begin
+        $fdisplay(f, "%s\tx%0d, 0x%h (csr), x%0d (0x%h)", mnemonic, rd, csr,
+          rs1, rs1_value);
+      end else begin
+        $fdisplay(f, "%s\tx%0d, 0x%h (csr), 0x%h (imm)", mnemonic, rd, csr, imm);
+      end
+    end
+  endfunction // printCSRInstr
 
   `endif // TRACE_EXECUTION
   // synopsys translate_on

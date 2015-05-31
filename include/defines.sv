@@ -102,6 +102,12 @@
 `define INSTR_FENCE      { 4'b0000, {8 {1'b?}}, {13 {1'b0}}, `OPCODE_FENCE }
 `define INSTR_FENCEI     { {17 {1'b0}}, 3'b001, {5 {1'b0}}, `OPCODE_FENCE }
 // SYSTEM
+`define INSTR_CSRRW      { {17 {1'b?}}, 3'b001, {5 {1'b?}}, `OPCODE_SYSTEM }
+`define INSTR_CSRRS      { {17 {1'b?}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
+`define INSTR_CSRRC      { {17 {1'b?}}, 3'b011, {5 {1'b?}}, `OPCODE_SYSTEM }
+`define INSTR_CSRRWI     { {17 {1'b?}}, 3'b101, {5 {1'b?}}, `OPCODE_SYSTEM }
+`define INSTR_CSRRSI     { {17 {1'b?}}, 3'b110, {5 {1'b?}}, `OPCODE_SYSTEM }
+`define INSTR_CSRRCI     { {17 {1'b?}}, 3'b111, {5 {1'b?}}, `OPCODE_SYSTEM }
 `define INSTR_ECALL      { 12'b000000000000, {13 {1'b0}}, `OPCODE_SYSTEM }
 `define INSTR_EBREAK     { 12'b000000000001, {13 {1'b0}}, `OPCODE_SYSTEM }
 `define INSTR_ERET       { 12'b000100000000, {13 {1'b0}}, `OPCODE_SYSTEM }
@@ -245,19 +251,26 @@ endfunction // prettyPrintInstruction
 `define ALU_CMP_ALL  2'b10
 
 
-////////////////////////////////////////////////////////
-//  ____  ____    ____            _     _             //
-// / ___||  _ \  |  _ \ ___  __ _(_)___| |_ ___ _ __  //
-// \___ \| |_) | | |_) / _ \/ _` | / __| __/ _ \ '__| //
-//  ___) |  __/  |  _ <  __/ (_| | \__ \ ||  __/ |    //
-// |____/|_|     |_| \_\___|\__, |_|___/\__\___|_|    //
-//                          |___/                     //
-////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+//    ____ ____    ____            _     _             //
+//   / ___/ ___|  |  _ \ ___  __ _(_)___| |_ ___ _ __  //
+//  | |   \___ \  | |_) / _ \/ _` | / __| __/ _ \ '__| //
+//  | |___ ___) | |  _ <  __/ (_| | \__ \ ||  __/ |    //
+//   \____|____/  |_| \_\___|\__, |_|___/\__\___|_|    //
+//                           |___/                     //
+/////////////////////////////////////////////////////////
 
+// internal CSR addresses
 `define CSR_IDX_MSCRATCH  0
 `define CSR_IDX_MEPC      1
 
 `define CSR_MAX_IDX       1
+
+// CSR operations
+`define CSR_OP_NONE  2'b00
+`define CSR_OP_WRITE 2'b01
+`define CSR_OP_SET   2'b10
+`define CSR_OP_CLEAR 2'b11
 
 // Special-Purpose Register Addresses
 // see OpenRISC manual p. 22ff
@@ -301,8 +314,8 @@ endfunction // prettyPrintInstruction
 
 // operand a selection
 `define OP_A_REGA_OR_FWD 2'b00
-`define OP_A_CURRPC      2'b10
-`define OP_A_IMM16       2'b11
+`define OP_A_CURRPC      2'b01
+`define OP_A_ZIMM        2'b10
 `define OP_A_ZERO        2'b11
 
 // operand b selection
@@ -315,12 +328,10 @@ endfunction // prettyPrintInstruction
 `define OP_C_JT          1'b1
 
 // operand b immediate selection
-`define IMM_I    3'b000
-`define IMM_S    3'b001
-`define IMM_U    3'b010
-`define IMM_HEX4 3'b011
-`define IMM_CID  3'b100 // core id
-`define IMM_CLID 3'b100 // cluster id
+`define IMM_I    2'b00
+`define IMM_S    2'b01
+`define IMM_U    2'b10
+`define IMM_HEX4 2'b11
 
 // PC mux selector defines
 `define PC_INCR          3'b000

@@ -41,14 +41,14 @@ module wb_stage
     input  logic        regfile_wdata_mux_sel_i,  // Comes from the controller (thru id-ex and ex-wb pipe)
 
     // MUX INPUTS
-    input  logic [31:0] sp_rdata_i,              // From the read port of the special register
     input  logic [31:0] data_rdata_i,            // read Data from data memory system
-    input  logic [31:0] lsu_data_reg_i,          // read data registered in LSU
+    input  logic [31:0] lsu_data_reg_i,          // TODO: remove; read data registered in LSU
     // MUX OUTPUT
     output logic [31:0] regfile_wdata_o         // write data for register file
 
 );
 
+   // TODO: Remove this mux and the associated signals
    // Register Write Data Selection --> Data to write in the regfile
    // Select between:
    // 0:    From Special Register
@@ -56,7 +56,7 @@ module wb_stage
    always_comb
    begin : REGFILE_WDATA_MUX
       casex (regfile_wdata_mux_sel_i)
-        1'b0:  begin regfile_wdata_o <= sp_rdata_i;        end
+        //1'b0:  begin regfile_wdata_o <= sp_rdata_i;        end
         1'b1:  begin regfile_wdata_o <= data_rdata_i;      end
       endcase; // case (regfile_wdata_mux_sel_i)
    end

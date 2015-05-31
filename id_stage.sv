@@ -7,16 +7,17 @@
 // Additional contributions by:                                               //
 //                 Igor Loi - igor.loi@unibo.it                               //
 //                 Andreas Traber - atraber@student.ethz.ch                   //
+//                 Sven Stucki - svstucki@student.ethz.ch                     //
 //                                                                            //
 //                                                                            //
 // Create Date:    19/09/2013                                                 //
 // Design Name:    Decode stage                                               //
 // Module Name:    id_stage.sv                                                //
-// Project Name:   OR10N                                                      //
+// Project Name:   RiscV                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
-// Description:    Decode stage of the OR10N core. It decodes the instructions//
-//                 and hosts the register file and the pipe controller        //
+// Description:    Decode stage of the core. It decodes the instructions      //
+//                 and hosts the register file.                               //
 //                                                                            //
 // Revision:                                                                  //
 // Revision v0.1 - File Created                                               //
@@ -37,8 +38,6 @@ module id_stage
 (
     input  logic                        clk,
     input  logic                        rst_n,
-
-    input  logic  [4:0]                 core_id_i,
 
     input logic                         fetch_enable_i,
     output logic                        core_busy_o,
@@ -106,7 +105,8 @@ module id_stage
     output logic [`HWLOOP_REGS-1:0]     hwloop_dec_cnt_o,
     output logic [31:0]                 hwloop_targ_addr_o,
 
-    output logic                        sp_we_ex_o,
+    output logic                        csr_access_ex_o,
+    output logic [1:0]                  csr_op_ex_o,
 
     // Interface to load store unit
     output logic                        data_we_ex_o,
@@ -241,9 +241,6 @@ module id_stage
   logic        regfile_we_id;
   logic [1:0]  regfile_alu_waddr_mux_sel;  // TODO: FixMe -> 1bit
 
-  // Special-Purpose Register Write Control
-  logic        sp_we_id;
-
   // Data Memory Control
   logic        data_we_id;
   logic [1:0]  data_type_id;
@@ -259,6 +256,10 @@ module id_stage
   logic [31:0] hwloop_cnt;
   logic        hwloop_jump;
   logic        hwloop_enable;
+
+  // CSR control
+  logic        csr_access;
+  logic [1:0]  csr_op;
 
   // Supervision Register
   logic        set_flag;
@@ -294,6 +295,9 @@ module id_stage
   assign imm_u_type  = { instr_rdata_i[31:12], {12 {1'b0}} };
   assign imm_uj_type = { {20 {instr_rdata_i[31]}}, instr_rdata_i[19:12],
                          instr_rdata_i[20], instr_rdata_i[30:21], 1'b0 };
+
+  // immediate for CSR manipulatin (zero extended)
+  assign imm_z_type  = { 27'b0, instr_rdata_i[`REG_S1] };
 
   // source registers
   assign regfile_addr_ra_id = instr_rdata_i[`REG_S1];
@@ -342,7 +346,7 @@ module id_stage
   begin : hwloop_cnt_mux
     case (hwloop_cnt_mux_sel)
       2'b00:      hwloop_cnt = 32'b0;
-      //2'b01:      hwloop_cnt = immediate21z_id; // TODO: FixMe
+      //2'b01:      hwloop_cnt = immediate21z_id; // TODO: FIXME use correct immediate when adding hwloops
       //2'b10:      hwloop_cnt = immediate13z_id;
       2'b11:      hwloop_cnt = operand_a_fw_id;
       default:    hwloop_cnt = 32'b0;
@@ -388,6 +392,7 @@ module id_stage
        default:            alu_operand_a = operand_a_fw_id;
        `OP_A_REGA_OR_FWD:  alu_operand_a = operand_a_fw_id;
        `OP_A_CURRPC:       alu_operand_a = current_pc;
+       `OP_A_ZIMM:         alu_operand_a = imm_z_type;
        `OP_A_ZERO:         alu_operand_a = 32'b0;
      endcase; // case (alu_op_a_mux_sel)
   end
@@ -421,7 +426,6 @@ module id_stage
        `IMM_S:    immediate_b = imm_s_type;
        `IMM_U:    immediate_b = imm_u_type;
        `IMM_HEX4: immediate_b = 32'h4;
-       `IMM_CID:  immediate_b = core_id_i; // TODO: Temporary hack
        default:   immediate_b = 32'h4;
      endcase; // case (immediate_mux_sel)
   end
@@ -432,7 +436,7 @@ module id_stage
      case (alu_op_b_mux_sel)
        default:            operand_b = operand_b_fw_id;
        `OP_B_REGB_OR_FWD:  operand_b = operand_b_fw_id;
-       //`OP_B_REGC_OR_FWD:  operand_b = alu_operand_c;
+       // `OP_B_REGC_OR_FWD:  operand_b = alu_operand_c;
        `OP_B_IMM:          operand_b = immediate_b;
      endcase // case (alu_op_b_mux_sel)
   end
@@ -580,9 +584,9 @@ module id_stage
       .prepost_useincr_o            ( prepost_useincr            ),
       .data_misaligned_i            ( data_misaligned_i          ),
 
-      // SP register signals
-      .sp_we_o                      ( sp_we_id              ),
-      .sp_we_ex_i                   ( sp_we_ex_o            ),
+      // CSR control signals
+      .csr_access_o                 ( csr_access            ),
+      .csr_op_o                     ( csr_op                ),
 
       // Data bus interface
       .data_we_o                    ( data_we_id            ),
@@ -773,7 +777,6 @@ module id_stage
       mult_use_carry_ex_o         <= 1'b0;
       mult_mac_en_ex_o            <= 1'b0;
 
-
       regfile_waddr_ex_o          <= 5'b0;
       regfile_wdata_mux_sel_ex_o  <= 1'b0;
       regfile_we_ex_o             <= 1'b0;
@@ -782,7 +785,8 @@ module id_stage
       regfile_alu_we_ex_o         <= 1'b0;
       prepost_useincr_ex_o        <= 1'b0;
 
-      sp_we_ex_o                  <= 1'b0;
+      csr_access_ex_o             <= 1'b0;
+      csr_op_ex_o                 <= 2'b0;
 
       data_we_ex_o                <= 1'b0;
       data_type_ex_o              <= 2'b0;
@@ -854,8 +858,8 @@ module id_stage
 
       prepost_useincr_ex_o        <= prepost_useincr;
 
-
-      sp_we_ex_o                  <= sp_we_id;
+      csr_access_ex_o             <= csr_access;
+      csr_op_ex_o                 <= csr_op;
 
       data_we_ex_o                <= data_we_id;
       data_type_ex_o              <= data_type_id;

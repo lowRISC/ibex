@@ -35,9 +35,8 @@
 // wb  = writeback
 // sp  = special registers
 
-
-
 `include "defines.sv"
+
 
 module ex_stage
 (
@@ -88,7 +87,9 @@ module ex_stage
     input  logic                      set_overflow_i,
     input  logic                      set_carry_i,
 
-    input  logic                      sp_we_i,
+    // CSR access
+    input  logic                      csr_access_i,
+    input  logic [31:0]               csr_rdata_i,
 
     // Output of EX stage pipeline
 
@@ -101,7 +102,6 @@ module ex_stage
     output logic                      set_overflow_o,
     output logic                      set_carry_o,
 
-    output logic [15:0]               sp_addr_wb_o,
     output logic [4:0]                regfile_waddr_wb_o,
     output logic                      regfile_wdata_mux_sel_wb_o,
     output logic                      regfile_we_wb_o,
@@ -110,8 +110,6 @@ module ex_stage
     output logic [31:0]               hwloop_start_data_o,
     output logic [31:0]               hwloop_end_data_o,
     output logic [31:0]               hwloop_cnt_data_o,
-
-    output logic                      sp_we_wb_o,
 
     // Forwarding ports : to ID stage
     output logic  [4:0]               regfile_alu_waddr_fw_o,
@@ -149,7 +147,18 @@ module ex_stage
 
   assign regfile_alu_we_fw_o       = regfile_alu_we_i;
   assign regfile_alu_waddr_fw_o    = regfile_alu_waddr_i;
-  assign regfile_alu_wdata_fw_o    = (mult_en_i == 1'b0) ? alu_result : mult_result;
+
+  always_comb
+  begin
+    regfile_alu_wdata_fw_o = alu_result;
+
+    if (mult_en_i == 1'b1)
+      regfile_alu_wdata_fw_o = mult_result;
+
+    if (csr_access_i == 1'b1)
+      regfile_alu_wdata_fw_o = csr_rdata_i;
+  end
+  // assign regfile_alu_wdata_fw_o    = (mult_en_i == 1'b0) ? alu_result : mult_result;
 
   // generate flags: goes to special purpose register
   assign set_overflow_o        = (stall_ex_i == 1'b0) ? set_overflow_i : 1'b0;
@@ -244,23 +253,19 @@ module ex_stage
   begin : EX_WB_Pipeline_Register
     if (rst_n == 1'b0)
     begin
-      sp_addr_wb_o                 <= 16'h0000;
       regfile_waddr_wb_o           <= 5'b0_0000;
       regfile_wdata_mux_sel_wb_o   <= 1'b0;
       regfile_we_wb_o              <= 1'b0;
       regfile_rb_data_wb_o         <= 32'h0000_0000;
-      sp_we_wb_o                   <= 1'b0;
     end
     else
     begin
       if (stall_wb_i == 1'b0)
       begin
-        sp_addr_wb_o               <= alu_result[15:0];         // this is only used for SPR address
         regfile_we_wb_o            <= regfile_we_i;
         regfile_waddr_wb_o         <= regfile_waddr_i;
         regfile_wdata_mux_sel_wb_o <= regfile_wdata_mux_sel_i;
         regfile_rb_data_wb_o       <= regfile_rb_data_i;
-        sp_we_wb_o                 <= sp_we_i;
       end
     end
   end

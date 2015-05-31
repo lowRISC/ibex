@@ -79,8 +79,9 @@ module controller
   output logic                         prepost_useincr_o,          // When not active bypass the alu result=op_a
   input  logic                         data_misaligned_i,
 
-  output logic                         sp_we_o,                     // Write enable to special purpose register
-  input  logic                         sp_we_ex_i,                  // Manipulated sp_we from ex stage : FW
+  // CSR manipulation
+  output logic                         csr_access_o,
+  output logic [1:0]                   csr_op_o,
 
   // LD/ST unit signals
   output logic                         data_we_o,                   // Write enable to data memory
@@ -171,8 +172,6 @@ module controller
 
   logic       lsu_stall;
   logic       misalign_stall;
-  logic       mtspr_stall;
-  logic       mfspr_stall;
   logic       instr_ack_stall;
   logic       load_stall;
   logic       jr_stall;
@@ -225,7 +224,7 @@ module controller
     mult_use_carry_o             = 1'b0;
     mult_mac_en_o                = 1'b0;
 
-    regfile_wdata_mux_sel_o      = 1'b1;
+    regfile_wdata_mux_sel_o      = 1'b1;  // TODO: Remove, no longer used
     regfile_we                   = 1'b0;
     regfile_alu_we               = 1'b0;
     regfile_alu_waddr_mux_sel_o  = 2'b01;
@@ -237,7 +236,8 @@ module controller
     hwloop_cnt_mux_sel_o         = 2'b00;
     immediate_mux_sel_o          = `IMM_I;
 
-    sp_we_o                      = 1'b0;
+    csr_access_o                 = 1'b0;
+    csr_op_o                     = `CSR_OP_NONE;
 
     data_we                      = 1'b0;
     data_type_o                  = 2'b00;
@@ -311,6 +311,7 @@ module controller
       begin
         unique case (instr_rdata_i[6:0])
 
+          /*
           `OPCODE_CUST0: begin  // Custom-0 opcode: Get core id
             // TODO: Temporary hack?
             alu_op_a_mux_sel_o  = `OP_A_ZERO;
@@ -324,6 +325,7 @@ module controller
             // TODO: Replace with WFI instruction as soon as compiler support available
             pipe_flush_o = 1'b1;
           end
+          */
 
 
           //////////////////////////////////////
@@ -431,7 +433,6 @@ module controller
             immediate_mux_sel_o      = `IMM_I;
             alu_operator             = `ALU_ADD;
             data_req                 = 1'b1;
-            regfile_wdata_mux_sel_o  = 1'b1;
             regfile_we               = 1'b1;
             rega_used                = 1'b1;
             data_type_o              = 2'b00;
@@ -934,62 +935,55 @@ module controller
 
           */
 
+
           `OPCODE_SYSTEM: begin
-            unique case (instr_rdata_i) inside
-              `INSTR_EBREAK: begin
-                // debugger trap
-                trap_insn_o  = 1'b1;
-              end
-              `INSTR_ERET:  begin
-                pc_mux_sel_o = `PC_ERET;
-                restore_sr_o = 1'b1; // TODO: Check if needed
-                clear_isr_running_o = 1'b1; // TODO: Check if needed
-              end
-              `INSTR_WFI:   begin
-                // flush pipeline
-                pipe_flush_o = 1'b1;
-              end
-              default:      illegal_insn_o = 1'b1;
-            endcase // unique case (instr_rdata_i)
-          end
-
-          /*
-
-          `OPCODE_MTSPR: begin // Move To Special-Purpose Register
-            alu_operator             = `ALU_OR;
-            alu_op_b_mux_sel_o       = `OP_B_IMM;
-            sp_we_o                  = 1'b1;
-            rega_used                = 1'b1;
-            regb_used                = 1'b1;
-          end
-
-          `OPCODE_MFSPR: begin // Move From Special-Purpose Register
-            alu_operator             = `ALU_OR;
-            alu_op_b_mux_sel_o       = `OP_B_IMM;
-            immediate_mux_sel_o      = `IMM_16;
-            regfile_wdata_mux_sel_o  = 1'b0;
-            regfile_we               = 1'b1;
-            rega_used                = 1'b1;
-          end
-
-          `OPCODE_SYNC:
-          begin
-            if (instr_rdata_i[25] == 1'b1) // sync operation
-            begin // l.psync, flush pipeline. Actually this also does l.msync
-              pipe_flush_o = 1'b1;
+            if (instr_rdata_i[14:12] == 3'b000)
+            begin
+              // non CSR realted SYSTEM instructions
+              unique case (instr_rdata_i) inside
+                `INSTR_EBREAK: begin
+                  // debugger trap
+                  trap_insn_o  = 1'b1;
+                end
+                `INSTR_ERET:  begin
+                  pc_mux_sel_o = `PC_ERET;
+                  clear_isr_running_o = 1'b1;
+                end
+                `INSTR_WFI:   begin
+                  // flush pipeline
+                  pipe_flush_o = 1'b1;
+                end
+                default:      illegal_insn_o = 1'b1;
+              endcase // unique case (instr_rdata_i)
             end
             else
             begin
-              if (instr_rdata_i[24:16] == 9'h100)
-              begin
-                // l.trap
-                // Currently we ignore the immediate
-                trap_insn_o = 1'b1;
+              // instructions to read/modify CSRs
+              csr_access_o        = 1'b1;
+              regfile_alu_we      = 1'b1;
+              alu_op_b_mux_sel_o  = `OP_B_IMM;
+              immediate_mux_sel_o = `IMM_I;    // CSR address is encoded in I imm
+
+              if (instr_rdata_i[14] == 1'b1) begin
+                // rs1 field is immediate
+                alu_op_a_mux_sel_o = `OP_A_ZIMM;
+              end else begin
+                rega_used          = 1'b1;
+                alu_op_a_mux_sel_o = `OP_A_REGA_OR_FWD;
               end
-              else
-                illegal_insn_o = 1'b1;
+
+              unique case (instr_rdata_i[13:12])
+                2'b01:   csr_op_o = `CSR_OP_WRITE;
+                2'b10:   csr_op_o = `CSR_OP_SET;
+                2'b11:   csr_op_o = `CSR_OP_CLEAR;
+                default: illegal_insn_o = 1'b1;
+              endcase
             end
+
           end
+
+
+          /*
 
           ///////////////////////////////////////////////
           //  _   ___        ___     ___   ___  ____   //
@@ -1113,29 +1107,9 @@ module controller
   ////////////////////////////////////////////////////////////////////////////////////////////
   always_comb
   begin
-    mfspr_stall = 1'b0;
-    mtspr_stall = 1'b0;
     load_stall  = 1'b0;
     jr_stall    = 1'b0;
     deassert_we = 1'b0;
-
-    /*
-    // Stall because of l.mfspr with dependency
-    if ((regfile_wdata_mux_sel_ex_i == 1'b0) && (regfile_we_ex_i == 1'b1) &&
-        ((reg_d_ex_is_reg_a_id == 1'b1) || (reg_d_ex_is_reg_b_id == 1'b1) || (reg_d_ex_is_reg_c_id == 1'b1)) )
-    begin
-      deassert_we     = 1'b1;
-      mfspr_stall     = 1'b1;
-    end
-
-    // Stall because of l.mtspr (always...)
-    // mtspr in ex stage, normal instruction in id stage which can change an spr reg
-    if ((sp_we_ex_i == 1'b1) && (instr_rdata_i[31:26] != `OPCODE_MTSPR))
-    begin
-      deassert_we     = 1'b1;
-      mtspr_stall     = 1'b1;
-    end
-    */
 
     // Stall because of load operation
     if ((data_req_ex_i == 1'b1) && (regfile_we_ex_i == 1'b1) &&
@@ -1200,8 +1174,8 @@ module controller
     // we unstall the if_stage if the debug unit wants to set a new
     // pc, so that the new value gets written into current_pc_if and is
     // used by the instr_core_interface
-    stall_if_o = instr_ack_stall | mfspr_stall | mtspr_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_halt | dbg_stall_i | (~pc_valid_i);
-    stall_id_o = instr_ack_stall | mfspr_stall | mtspr_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_halt | dbg_stall_i;
+    stall_if_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_halt | dbg_stall_i | (~pc_valid_i);
+    stall_id_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_halt | dbg_stall_i;
     stall_ex_o = instr_ack_stall | lsu_stall | dbg_stall_i;
     stall_wb_o = lsu_stall | dbg_stall_i;
   end
