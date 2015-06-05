@@ -55,9 +55,10 @@ module wb_stage
    // 1:    From Data Memory
    always_comb
    begin : REGFILE_WDATA_MUX
-      casex (regfile_wdata_mux_sel_i)
-        //1'b0:  begin regfile_wdata_o <= sp_rdata_i;        end
-        1'b1:  begin regfile_wdata_o <= data_rdata_i;      end
+      case (regfile_wdata_mux_sel_i)
+        //1'b0:  regfile_wdata_o <= sp_rdata_i;
+        1'b1:    regfile_wdata_o <= data_rdata_i;
+        default: regfile_wdata_o <= data_rdata_i;
       endcase; // case (regfile_wdata_mux_sel_i)
    end
 

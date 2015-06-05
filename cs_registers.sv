@@ -99,6 +99,7 @@ module cs_registers
   // address decoder for constant CSRs
   always_comb
   begin
+    constant_rdata_int = '0;
     is_constant = 1'b1;
     unique case (csr_addr_i)
       12'hF00: constant_rdata_int = 32'h00_00_01_00;  // mcpuid: RV32I
@@ -112,6 +113,7 @@ module cs_registers
   // address decoder for regular CSRs
   always_comb
   begin
+    csr_index = '0;
     is_register = 1'b1;
     unique case (csr_addr_i)
       12'h340: csr_index = `CSR_IDX_MSCRATCH;
