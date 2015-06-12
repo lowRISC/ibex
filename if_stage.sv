@@ -49,6 +49,7 @@ module if_stage
     output logic [31:0] instr_addr_o,          // address for instruction fetch
 
     // Forwarding ports - control signals
+    input  logic        compressed_instr_i,    // ID decoded a compressed instruction
     input  logic        force_nop_i,           // insert a NOP in the pipe
     input  logic [31:0] exception_pc_reg_i,    // address used to restore the program counter when the interrupt/exception is served
     input  logic [31:0] pc_from_hwloop_i,      // pc from hwloop start addr
@@ -75,7 +76,8 @@ module if_stage
   ////////////////////////////////////
   // Instruction Fetch (IF) signals //
   ////////////////////////////////////
-  logic [31:0] next_pc;            // Next program counter
+  logic [31:0] next_pc;            // Next PC (directly sent to I$)
+  logic [31:0] incr_pc;            // Increased PC
   logic [31:0] exc_pc;             // Exception PC
   logic [31:0] instr_rdata_int;    // The instruction read from instr memory/cache is forwarded to ID stage, and the controller can force this forwarding to a nop (BUBBLE)
 
@@ -94,6 +96,17 @@ module if_stage
     endcase //~case (exc_pc_mux_i)
   end
 
+  // increased PC calculation
+  always_comb
+  begin
+    if (instr_rdata_i[1:0] != 2'b11) begin
+      // compressed instruction
+      incr_pc = current_pc_if_o + 32'd2;
+    end else begin
+      incr_pc = current_pc_if_o + 32'd4;
+    end
+  end
+
   // PC selection and force NOP logic
   always_comb
   begin
@@ -101,10 +114,10 @@ module if_stage
     instr_rdata_int = instr_rdata_i;
 
     unique case (pc_mux_sel_i)
-      `PC_INCR:         next_pc = current_pc_if_o + 32'd4;  // PC is incremented and points the next instruction
+      `PC_INCR:         next_pc = incr_pc;                  // PC is incremented and points the next instruction
       `PC_NO_INCR:      next_pc = current_pc_if_o;          // PC is not incremented
       `PC_EXCEPTION:    next_pc = exc_pc;                   // PC that points to the exception
-      `PC_ERET:         next_pc = exception_pc_reg_i;       // restore the PC when returning from IRQ/exception
+      `PC_ERET:         next_pc = exception_pc_reg_i;       // PC is restored when returning from IRQ/exception
       `HWLOOP_ADDR:     next_pc = pc_from_hwloop_i;         // PC is taken from hwloop start addr
        default:
        begin

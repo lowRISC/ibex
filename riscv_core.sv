@@ -84,6 +84,8 @@ module riscv_core
   logic          pc_mux_boot;       // load boot address as PC
   logic [1:0]    exc_pc_mux_id;     // Mux selector for exception PC
 
+  logic          compressed_instr;
+
   logic          useincr_addr_ex;   // Active when post increment
   logic          data_misaligned;   // Active when post increment
 
@@ -302,6 +304,8 @@ module riscv_core
       .branch_decision_i   ( branch_decision      ),
       .jump_target_i       ( jump_target          ),
 
+      .compressed_instr_i  ( compressed_instr     ),
+
       // pipeline stalls
       .stall_if_i          ( stall_if             ),
       .stall_id_i          ( stall_id             )
@@ -372,6 +376,8 @@ module riscv_core
 
       .current_pc_if_i              ( current_pc_if                 ),
       .current_pc_id_i              ( current_pc_id                 ),
+
+      .compressed_instr_o           ( compressed_instr              ),
 
       .sr_flag_fw_i                 ( sr_flag_fw                    ),
       .sr_flag_i                    ( sr_flag                       ),
@@ -835,6 +841,7 @@ module riscv_core
   integer f;
   string fn;
   logic [31:0] instr;
+  logic        compressed;
   logic [31:0] pc;
   logic  [5:0] rd, rs1, rs2;
   logic [31:0] rs1_value, rs2_value;
@@ -861,15 +868,16 @@ module riscv_core
     #1
 
     // get current PC and instruction
-    instr = id_stage_i.instr_rdata_i[31:0];
-    pc    = id_stage_i.current_pc_id_i;
+    instr      = id_stage_i.instr[31:0];
+    compressed = id_stage_i.compressed_instr_o;
+    pc         = id_stage_i.current_pc_id_i;
 
     // get register values
-    rd        = instr[`REG_D];
-    rs1       = instr[`REG_S1];
-    rs1_value = id_stage_i.operand_a_fw_id; //r[rs1];
-    rs2       = instr[`REG_S2];
-    rs2_value = id_stage_i.operand_b_fw_id; //r[rs2];
+    rd         = instr[`REG_D];
+    rs1        = instr[`REG_S1];
+    rs1_value  = id_stage_i.operand_a_fw_id; //r[rs1];
+    rs2        = instr[`REG_S2];
+    rs2_value  = id_stage_i.operand_b_fw_id; //r[rs2];
 
     if (id_stage_i.stall_id_o == 1'b0 && id_stage_i.controller_i.ctrl_fsm_cs == id_stage_i.controller_i.DECODE)
     begin
@@ -877,6 +885,13 @@ module riscv_core
       imm = 0;
 
       $fwrite(f, "%t:\t0x%h\t0x%h\t", $time, pc, instr);
+      if (compressed)
+        //$fwrite(f, "C (0x%4h)\t", id_stage_i.instr_rdata_i[15:0]);
+        $fwrite(f, "C\t");
+      else
+        $fwrite(f, "I\t");
+
+      // use casex instead of case inside due to ModelSim bug
       casex (instr)
         // Aliases
         32'h00_00_00_13:   printMnemonic("NOP");

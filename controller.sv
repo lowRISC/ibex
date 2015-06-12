@@ -33,117 +33,117 @@
 
 module controller
 (
-  input  logic                         clk,
-  input  logic                         rst_n,
+  input  logic                     clk,
+  input  logic                     rst_n,
 
-  input  logic                         fetch_enable_i,             // Start the decoding
-  output logic                         core_busy_o,                // Core is busy processing instructions
+  input  logic                     fetch_enable_i,             // Start the decoding
+  output logic                     core_busy_o,                // Core is busy processing instructions
 
-  output logic                         force_nop_o,
+  output logic                     force_nop_o,
 
-  input  logic [31:0]                  instr_rdata_i,              // Instruction read from instr memory/cache: (sampled in the if stage)
-  output logic                         instr_req_o,                // Fetch instruction Request:
-  input  logic                         instr_gnt_i,                // grant from icache
-  input  logic                         instr_ack_i,                // Acknow from instr memory or cache (means that data is available)
+  input  logic [31:0]              instr_rdata_i,              // Instruction read from instr memory/cache: (sampled in the if stage)
+  output logic                     instr_req_o,                // Fetch instruction Request:
+  input  logic                     instr_gnt_i,                // grant from icache
+  input  logic                     instr_ack_i,                // Acknow from instr memory or cache (means that data is available)
 
-  output logic [2:0]                   pc_mux_sel_o,               // Selector in the Fetch stage to select the rigth PC (normal, jump ...)
-  output logic                         pc_mux_boot_o,              // load boot address as PC, goes to the IF stage
+  output logic [2:0]               pc_mux_sel_o,               // Selector in the Fetch stage to select the rigth PC (normal, jump ...)
+  output logic                     pc_mux_boot_o,              // load boot address as PC, goes to the IF stage
 
   // ALU signals
-  output logic [`ALU_OP_WIDTH-1:0]     alu_operator_o,             // Operator in the Ex stage for the ALU block
-  output logic                         extend_immediate_o,         // Extend a 16 bit immediate to 32 bit
-  output logic [1:0]                   alu_op_a_mux_sel_o,         // Operator a is selected between reg value, PC or immediate
-  output logic [1:0]                   alu_op_b_mux_sel_o,         // Operator b is selected between reg value or immediate
-  output logic                         alu_op_c_mux_sel_o,         // Operator c is selected between reg value or PC
-  output logic                         alu_pc_mux_sel_o,           // selects IF or ID PC for ALU computations
-  output logic [3:0]                   immediate_mux_sel_o,
+  output logic [`ALU_OP_WIDTH-1:0] alu_operator_o,             // Operator in the Ex stage for the ALU block
+  output logic                     extend_immediate_o,         // Extend a 16 bit immediate to 32 bit
+  output logic [1:0]               alu_op_a_mux_sel_o,         // Operator a is selected between reg value, PC or immediate
+  output logic [1:0]               alu_op_b_mux_sel_o,         // Operator b is selected between reg value or immediate
+  output logic                     alu_op_c_mux_sel_o,         // Operator c is selected between reg value or PC
+  output logic                     alu_pc_mux_sel_o,           // selects IF or ID PC for ALU computations
+  output logic [3:0]               immediate_mux_sel_o,
 
-  output logic [1:0]                   vector_mode_o,              // selects between 32 bit, 16 bit and 8 bit vectorial modes
-  output logic                         scalar_replication_o,       // activates scalar_replication for vectorial mode
-  output logic [1:0]                   alu_cmp_mode_o,             // selects comparison mode for ALU (i.e. full, any, all)
+  output logic [1:0]               vector_mode_o,              // selects between 32 bit, 16 bit and 8 bit vectorial modes
+  output logic                     scalar_replication_o,       // activates scalar_replication for vectorial mode
+  output logic [1:0]               alu_cmp_mode_o,             // selects comparison mode for ALU (i.e. full, any, all)
 
   // Mupliplicator related control signals
-  output logic                         mult_en_o,                  // Multiplication operation is running
-  output logic [1:0]                   mult_sel_subword_o,         // Select subwords for 16x16 bit of multiplier
-  output logic [1:0]                   mult_signed_mode_o,         // Multiplication in signed mode
-  output logic                         mult_use_carry_o,           // Use carry for MAC
-  output logic                         mult_mac_en_o,              // Use the accumulator after multiplication
+  output logic                     mult_en_o,                  // Multiplication operation is running
+  output logic [1:0]               mult_sel_subword_o,         // Select subwords for 16x16 bit of multiplier
+  output logic [1:0]               mult_signed_mode_o,         // Multiplication in signed mode
+  output logic                     mult_use_carry_o,           // Use carry for MAC
+  output logic                     mult_mac_en_o,              // Use the accumulator after multiplication
 
-  output logic                         regfile_wdata_mux_sel_o,    // Mul selctor used in WB stage to select regfile wdata from ex result (ALU-MUL), from data memory, or special registers
-  input  logic                         regfile_wdata_mux_sel_ex_i, // FW signal: Mul selctor used in WB stage to select regfile wdata from ex result (ALU-MUL), from data memory, or special registers
-  output logic                         regfile_we_o,               // Write Enable to regfile
-  output logic [1:0]                   regfile_alu_waddr_mux_sel_o, // Select register write address for ALU/MUL operations
+  output logic                     regfile_wdata_mux_sel_o,    // Mul selctor used in WB stage to select regfile wdata from ex result (ALU-MUL), from data memory, or special registers
+  input  logic                     regfile_wdata_mux_sel_ex_i, // FW signal: Mul selctor used in WB stage to select regfile wdata from ex result (ALU-MUL), from data memory, or special registers
+  output logic                     regfile_we_o,               // Write Enable to regfile
+  output logic [1:0]               regfile_alu_waddr_mux_sel_o, // Select register write address for ALU/MUL operations
 
-  output logic                         regfile_alu_we_o,           // Write Enable to regfile 2nd port
+  output logic                     regfile_alu_we_o,           // Write Enable to regfile 2nd port
 
-  output logic                         prepost_useincr_o,          // When not active bypass the alu result=op_a
-  input  logic                         data_misaligned_i,
+  output logic                     prepost_useincr_o,          // When not active bypass the alu result=op_a
+  input  logic                     data_misaligned_i,
 
   // CSR manipulation
-  output logic                         csr_access_o,
-  output logic [1:0]                   csr_op_o,
+  output logic                     csr_access_o,
+  output logic [1:0]               csr_op_o,
 
   // LD/ST unit signals
-  output logic                         data_we_o,                   // Write enable to data memory
-  output logic [1:0]                   data_type_o,                 // Data type on data memory: byte, half word or word
-  output logic                         data_sign_extension_o,       // Sign extension on read data from data memory
-  output logic [1:0]                   data_reg_offset_o,           // Offset in bytes inside register for stores
-  output logic                         data_req_o,                  // Request for a transaction to data memory
-  input  logic                         data_ack_i,                  // Data memory request-acknowledge
-  input  logic                         data_req_ex_i,               // Delayed copy of the data_req_o
-  input  logic                         data_rvalid_i,               // rvalid from data memory
+  output logic                     data_we_o,                   // Write enable to data memory
+  output logic [1:0]               data_type_o,                 // Data type on data memory: byte, half word or word
+  output logic                     data_sign_extension_o,       // Sign extension on read data from data memory
+  output logic [1:0]               data_reg_offset_o,           // Offset in bytes inside register for stores
+  output logic                     data_req_o,                  // Request for a transaction to data memory
+  input  logic                     data_ack_i,                  // Data memory request-acknowledge
+  input  logic                     data_req_ex_i,               // Delayed copy of the data_req_o
+  input  logic                     data_rvalid_i,               // rvalid from data memory
 
   // hwloop signals
-  output logic [2:0]                   hwloop_we_o,                 // write enables for hwloop regs
-  output logic                         hwloop_wb_mux_sel_o,         // select data to write to hwloop regs
-  output logic [1:0]                   hwloop_cnt_mux_sel_o,        // selects hwloop counter input
-  input  logic                         hwloop_jump_i,               // modify pc_mux_sel to select the hwloop addr
+  output logic [2:0]               hwloop_we_o,                 // write enables for hwloop regs
+  output logic                     hwloop_wb_mux_sel_o,         // select data to write to hwloop regs
+  output logic [1:0]               hwloop_cnt_mux_sel_o,        // selects hwloop counter input
+  input  logic                     hwloop_jump_i,               // modify pc_mux_sel to select the hwloop addr
 
   // Interrupt signals
-  input  logic                         irq_present_i,               // there is an IRQ, so if we are sleeping we should wake up now
+  input  logic                     irq_present_i,               // there is an IRQ, so if we are sleeping we should wake up now
 
   // Exception Controller Signals
-  output logic                         illegal_insn_o,              // illegal instruction encountered
-  output logic                         trap_insn_o,                 // trap instruction encountered
-  output logic                         pipe_flush_o,                // pipe flush requested by controller
-  input logic                          pc_valid_i,                  // is the next_pc currently valid?
-  output logic                         clear_isr_running_o,         // an l.rfe instruction was encountered, exit ISR
-  input  logic                         pipe_flushed_i,              // Pipe is flushed
-  input  logic                         trap_hit_i,                  // a trap was hit, so we have to flush EX and WB
+  output logic                     illegal_insn_o,              // illegal instruction encountered
+  output logic                     trap_insn_o,                 // trap instruction encountered
+  output logic                     pipe_flush_o,                // pipe flush requested by controller
+  input logic                      pc_valid_i,                  // is the next_pc currently valid?
+  output logic                     clear_isr_running_o,         // an l.rfe instruction was encountered, exit ISR
+  input  logic                     pipe_flushed_i,              // Pipe is flushed
+  input  logic                     trap_hit_i,                  // a trap was hit, so we have to flush EX and WB
 
   // Debug Unit Signals
-  input  logic                         dbg_stall_i,                 // Pipeline stall is requested
-  input  logic                         dbg_set_npc_i,               // Change PC to value from debug unit
-  output logic                         dbg_trap_o,                  // trap hit, inform debug unit
+  input  logic                     dbg_stall_i,                 // Pipeline stall is requested
+  input  logic                     dbg_set_npc_i,               // Change PC to value from debug unit
+  output logic                     dbg_trap_o,                  // trap hit, inform debug unit
 
   // SPR Signals
-  input  logic                         sr_flag_fw_i,                // forwared branch signal
-  input  logic                         sr_flag_i,                   // branch signal
-  input  logic                         set_flag_ex_i,               // alu is currently updating the flag if 1
-  output logic                         set_flag_o,                  // to special purpose registers --> flag
-  output logic                         set_carry_o,                 // to special purpose registers --> carry
-  output logic                         set_overflow_o,              // to special purpose registers --> overflow
-  output logic                         restore_sr_o,                // restores status register after interrupt
+  input  logic                     sr_flag_fw_i,                // forwared branch signal
+  input  logic                     sr_flag_i,                   // branch signal
+  input  logic                     set_flag_ex_i,               // alu is currently updating the flag if 1
+  output logic                     set_flag_o,                  // to special purpose registers --> flag
+  output logic                     set_carry_o,                 // to special purpose registers --> carry
+  output logic                     set_overflow_o,              // to special purpose registers --> overflow
+  output logic                     restore_sr_o,                // restores status register after interrupt
 
   // Forwarding signals from regfile
-  input  logic [4:0]                   regfile_waddr_ex_i,          // FW: write address from EX stage
-  input  logic                         regfile_we_ex_i,             // FW: write enable from  EX stage
-  input  logic [4:0]                   regfile_waddr_wb_i,          // FW: write address from WB stage
-  input  logic                         regfile_we_wb_i,             // FW: write enable from  WB stage
-  input  logic [4:0]                   regfile_alu_waddr_fw_i,      // FW: ALU/MUL write address from EX stage
-  input  logic                         regfile_alu_we_fw_i,         // FW: ALU/MUL write enable from  EX stage
-  output logic [1:0]                   operand_a_fw_mux_sel_o,      // regfile ra data selector form ID stage
-  output logic [1:0]                   operand_b_fw_mux_sel_o,      // regfile rb data selector form ID stage
-  output logic [1:0]                   operand_c_fw_mux_sel_o,      // regfile rc data selector form ID stage
+  input  logic [4:0]               regfile_waddr_ex_i,          // FW: write address from EX stage
+  input  logic                     regfile_we_ex_i,             // FW: write enable from  EX stage
+  input  logic [4:0]               regfile_waddr_wb_i,          // FW: write address from WB stage
+  input  logic                     regfile_we_wb_i,             // FW: write enable from  WB stage
+  input  logic [4:0]               regfile_alu_waddr_fw_i,      // FW: ALU/MUL write address from EX stage
+  input  logic                     regfile_alu_we_fw_i,         // FW: ALU/MUL write enable from  EX stage
+  output logic [1:0]               operand_a_fw_mux_sel_o,      // regfile ra data selector form ID stage
+  output logic [1:0]               operand_b_fw_mux_sel_o,      // regfile rb data selector form ID stage
+  output logic [1:0]               operand_c_fw_mux_sel_o,      // regfile rc data selector form ID stage
 
-  // Jump target calcuation done detection
-  input  logic [1:0]                   jump_in_ex_i,                // jump is being calculated in ALU
-  output logic [1:0]                   jump_in_id_o,                // jump is being calculated in ALU
+  // Jump target calcuation done decision
+  input  logic [1:0]               jump_in_ex_i,                // jump is being calculated in ALU
+  output logic [1:0]               jump_in_id_o,                // jump is being calculated in ALU
 
-  output logic                         stall_if_o,                  // Stall IF stage (deassert requests)
-  output logic                         stall_id_o,                  // Stall ID stage (and instr and data memory interface) ( ID_STAGE )
-  output logic                         stall_ex_o,                  // Stall ex stage                                       ( EX_STAGE )
-  output logic                         stall_wb_o                   // Stall write to register file due contentions      ( WB_STAGE )
+  output logic                     stall_if_o,                  // Stall IF stage (deassert requests)
+  output logic                     stall_id_o,                  // Stall ID stage (and instr and data memory interface) ( ID_STAGE )
+  output logic                     stall_ex_o,                  // Stall ex stage                                       ( EX_STAGE )
+  output logic                     stall_wb_o                   // Stall write to register file due contentions      ( WB_STAGE )
 );
 
   // FSM state encoding
@@ -170,20 +170,23 @@ module controller
   logic                     set_carry;
   logic                     deassert_we;
 
-  logic       lsu_stall;
-  logic       misalign_stall;
-  logic       instr_ack_stall;
-  logic       load_stall;
-  logic       jr_stall;
-   logic       trap_stall;
+  logic        lsu_stall;
+  logic        misalign_stall;
+  logic        instr_ack_stall;
+  logic        load_stall;
+  logic        jr_stall;
+  logic        trap_stall;
 
-  logic       set_npc;
+  logic        set_npc;
 `ifdef BRANCH_PREDICTION
-  logic       wrong_branch_taken;
+  logic        wrong_branch_taken;
 `endif
-  logic       rega_used;
-  logic       regb_used;
-  logic       regc_used;
+  logic        rega_used;
+  logic        regb_used;
+  logic        regc_used;
+
+  logic [31:0] instr;
+  logic        compressed_instr;
 
   // dbg fsm
   enum  logic [2:0]  { DBG_IDLE, DBG_EX, DBG_WB, DBG_STALL, DBG_FLUSH, DBG_FLUSH2 }     dbg_fsm_cs, dbg_fsm_ns;
@@ -346,7 +349,7 @@ module controller
               alu_pc_mux_sel_o    = 1'b1;
               alu_op_a_mux_sel_o  = `OP_A_CURRPC;
               alu_op_b_mux_sel_o  = `OP_B_IMM;
-              immediate_mux_sel_o = `IMM_HEX4;
+              immediate_mux_sel_o = `IMM_PCINCR;
               alu_operator        = `ALU_ADD;
               regfile_alu_we      = 1'b1;
               // Calculate jump target (= PC + UJ imm)
@@ -365,7 +368,7 @@ module controller
               alu_pc_mux_sel_o    = 1'b1;
               alu_op_a_mux_sel_o  = `OP_A_CURRPC;
               alu_op_b_mux_sel_o  = `OP_B_IMM;
-              immediate_mux_sel_o = `IMM_HEX4;
+              immediate_mux_sel_o = `IMM_PCINCR;
               alu_operator        = `ALU_ADD;
               regfile_alu_we      = 1'b1;
               // Calculate jump target (= RS1 + I imm)

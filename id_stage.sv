@@ -53,7 +53,7 @@ module id_stage
     output logic [1:0]                  jump_in_ex_o,
 
     // IF and ID stage signals
-
+    output logic                        compressed_instr_o,
     output logic [2:0]                  pc_mux_sel_o,
     output logic                        pc_mux_boot_o,
     output logic [1:0]                  exc_pc_mux_o,
@@ -167,6 +167,10 @@ module id_stage
 
 );
 
+
+  // Compressed instruction decoding
+  logic [31:0] instr;
+  logic        illegal_compressed_instr;
 
   // Immediate decoding and sign extension
   logic [31:0] imm_i_type;
@@ -288,27 +292,38 @@ module id_stage
   assign force_nop_o = force_nop_controller | force_nop_exc;
   assign pc_mux_sel_o = (exc_pc_sel == 1'b1) ? `PC_EXCEPTION : pc_mux_sel_int;
 
+
+  // compressed instruction decoding
+  compressed_decoder compressed_decoder_i (
+    .instr_i         (instr_rdata_i),
+    .instr_o         (instr),
+    .is_compressed_o (compressed_instr_o),
+    .illegal_instr_o (illegal_compressed_instr)
+  );
+
+
+
   // immediate extraction and sign extension
-  assign imm_i_type  = { {20 {instr_rdata_i[31]}}, instr_rdata_i[31:20] };
-  assign imm_s_type  = { {20 {instr_rdata_i[31]}}, instr_rdata_i[31:25], instr_rdata_i[11:7] };
-  assign imm_sb_type = { {20 {instr_rdata_i[31]}}, instr_rdata_i[31], instr_rdata_i[7],
-                         instr_rdata_i[30:25], instr_rdata_i[11:8], 1'b0 };
-  assign imm_u_type  = { instr_rdata_i[31:12], {12 {1'b0}} };
-  assign imm_uj_type = { {20 {instr_rdata_i[31]}}, instr_rdata_i[19:12],
-                         instr_rdata_i[20], instr_rdata_i[30:21], 1'b0 };
+  assign imm_i_type  = { {20 {instr[31]}}, instr[31:20] };
+  assign imm_s_type  = { {20 {instr[31]}}, instr[31:25], instr[11:7] };
+  assign imm_sb_type = { {20 {instr[31]}}, instr[31], instr[7],
+                         instr[30:25], instr[11:8], 1'b0 };
+  assign imm_u_type  = { instr[31:12], {12 {1'b0}} };
+  assign imm_uj_type = { {20 {instr[31]}}, instr[19:12],
+                         instr[20], instr[30:21], 1'b0 };
 
   // immediate for CSR manipulatin (zero extended)
-  assign imm_z_type  = { 27'b0, instr_rdata_i[`REG_S1] };
+  assign imm_z_type  = { 27'b0, instr[`REG_S1] };
 
   // source registers
-  assign regfile_addr_ra_id = instr_rdata_i[`REG_S1];
-  assign regfile_addr_rb_id = instr_rdata_i[`REG_S2];
-  //assign regfile_addr_rc_id = instr_rdata_i[25:21];
+  assign regfile_addr_ra_id = instr[`REG_S1];
+  assign regfile_addr_rb_id = instr[`REG_S2];
+  //assign regfile_addr_rc_id = instr[25:21];
 
   // destination registers
-  assign regfile_waddr_id = instr_rdata_i[`REG_D];
+  assign regfile_waddr_id = instr[`REG_D];
 
-  //assign alu_vec_ext         = instr_rdata_i[9:8]; TODO
+  //assign alu_vec_ext         = instr[9:8]; TODO
   assign alu_vec_ext = 1'b0;
 
 
@@ -355,7 +370,7 @@ module id_stage
   end
 
   // hwloop register id
-  assign hwloop_regid = instr_rdata_i[22:21];     // set hwloop register id
+  assign hwloop_regid = instr[22:21];     // set hwloop register id
 
   //////////////////////////////////////////////////////////////////
   //       _                         _____                    _   //
@@ -368,12 +383,12 @@ module id_stage
 
   always_comb
   begin
-    unique case (instr_rdata_i[6:0])
+    unique case (instr[6:0])
       `OPCODE_JAL:    jump_target = current_pc_id_i + imm_uj_type;
       `OPCODE_JALR:   jump_target = operand_a_fw_id + imm_i_type;
       `OPCODE_BRANCH: jump_target = current_pc_id_i + imm_sb_type;
       default:        jump_target = '0;
-    endcase // unique case (instr_rdata_i[6:0])
+    endcase // unique case (instr[6:0])
   end
 
 
@@ -421,13 +436,12 @@ module id_stage
   // Immediate Mux for operand B
   always_comb
   begin : immediate_mux
-     case (immediate_mux_sel)
-       //`IMM_VEC:   immediate_b = immediate_vec_id;
-       `IMM_I:    immediate_b = imm_i_type;
-       `IMM_S:    immediate_b = imm_s_type;
-       `IMM_U:    immediate_b = imm_u_type;
-       `IMM_HEX4: immediate_b = 32'h4;
-       default:   immediate_b = 32'h4;
+     unique case (immediate_mux_sel)
+       //`IMM_VEC:    immediate_b = immediate_vec_id;
+       `IMM_I:      immediate_b = imm_i_type;
+       `IMM_S:      immediate_b = imm_s_type;
+       `IMM_U:      immediate_b = imm_u_type;
+       `IMM_PCINCR: immediate_b = compressed_instr_o ? 32'h2 : 32'h4;
      endcase; // case (immediate_mux_sel)
   end
 
@@ -547,7 +561,7 @@ module id_stage
       .force_nop_o                  ( force_nop_controller  ),
 
       // Signal from-to PC pipe (instr rdata) and instr mem system (req and ack)
-      .instr_rdata_i                ( instr_rdata_i         ),
+      .instr_rdata_i                ( instr                 ),
       .instr_req_o                  ( instr_req_o           ),
       .instr_gnt_i                  ( instr_gnt_i           ),
       .instr_ack_i                  ( instr_ack_i           ),
