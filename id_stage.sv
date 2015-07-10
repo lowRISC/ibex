@@ -442,6 +442,7 @@ module id_stage
        `IMM_S:      immediate_b = imm_s_type;
        `IMM_U:      immediate_b = imm_u_type;
        `IMM_PCINCR: immediate_b = compressed_instr_o ? 32'h2 : 32'h4;
+       default:     immediate_b = imm_i_type;
      endcase; // case (immediate_mux_sel)
   end
 
