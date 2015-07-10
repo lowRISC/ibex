@@ -1068,7 +1068,7 @@ module controller
 
         // synopsys translate_off
         if (illegal_insn_o == 1'b1) begin
-          $display("%t: Illegal instruction:", $time);
+          $display("%t: Illegal instruction (core %0d):", $time, riscv_core.core_id_i);
           prettyPrintInstruction(instr_rdata_i, id_stage.current_pc_id_i);
         end
         // synopsys translate_on
@@ -1100,7 +1100,13 @@ module controller
         if ((pipe_flushed_i == 1'b1) && (fetch_enable_i == 1'b0))
           ctrl_fsm_ns = IDLE;
       end
+
+      default: begin
+        instr_req_o = 1'b0;
+        ctrl_fsm_ns = RESET;
+      end
     endcase
+
   end
 
   assign core_busy_o = (ctrl_fsm_cs != IDLE);
@@ -1261,14 +1267,14 @@ module controller
   begin : HOLD_NPC
     if ( rst_n == 1'b0 )
     begin
-       set_npc    <= 1'b0;
+      set_npc    <= 1'b0;
     end
     else
     begin
-       if (dbg_set_npc_i == 1'b1)
-         set_npc <= 1'b1;
-       else if (stall_if_o == 1'b0)
-         set_npc <= 1'b0;
+      if (dbg_set_npc_i == 1'b1)
+        set_npc <= 1'b1;
+      else if (stall_if_o == 1'b0)
+        set_npc <= 1'b0;
     end
   end
 
