@@ -117,10 +117,6 @@ module controller
   output logic                     dbg_trap_o,                  // trap hit, inform debug unit
 
   // SPR Signals
-  input  logic                     sr_flag_fw_i,                // forwared branch signal
-  input  logic                     sr_flag_i,                   // branch signal
-  input  logic                     set_flag_ex_i,               // alu is currently updating the flag if 1
-  output logic                     set_flag_o,                  // to special purpose registers --> flag
   output logic                     set_carry_o,                 // to special purpose registers --> carry
   output logic                     set_overflow_o,              // to special purpose registers --> overflow
   output logic                     restore_sr_o,                // restores status register after interrupt
@@ -165,7 +161,6 @@ module controller
   logic                     regfile_alu_we;
   logic                     data_we;
   logic                     data_req;
-  logic                     set_flag;
   logic                     set_overflow;
   logic                     set_carry;
   logic                     deassert_we;
@@ -248,7 +243,6 @@ module controller
     data_reg_offset_o            = 2'b00;
     data_req                     = 1'b0;
 
-    set_flag                     = 1'b0;
     set_overflow                 = 1'b0;
     set_carry                    = 1'b0;
 
@@ -1164,7 +1158,6 @@ module controller
   assign regfile_alu_we_o  = (deassert_we) ? 1'b0     : regfile_alu_we;
   assign data_we_o         = (deassert_we) ? 1'b0     : data_we;
   assign data_req_o        = (deassert_we) ? 1'b0     : data_req;
-  assign set_flag_o        = (deassert_we) ? 1'b0     : set_flag;
   assign set_overflow_o    = (deassert_we) ? 1'b0     : set_overflow;
   assign set_carry_o       = (deassert_we) ? 1'b0     : set_carry;
 

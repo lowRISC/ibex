@@ -49,7 +49,6 @@ module ex_stage
     input  logic [31:0]               alu_operand_b_i,
     input  logic [31:0]               alu_operand_c_i,
     input  logic                      alu_carry_i,
-    input  logic                      alu_flag_i,
 
     input  logic [1:0]                vector_mode_i,
     input  logic [1:0]                alu_cmp_mode_i,
@@ -92,9 +91,6 @@ module ex_stage
     input  logic [31:0]               csr_rdata_i,
 
     // Output of EX stage pipeline
-
-    //interface with Special registers
-    output logic                      alu_flag_o,
 
     output logic                      carry_o,
     output logic                      overflow_o,
@@ -203,7 +199,6 @@ module ex_stage
    .operand_b_i   ( alu_operand_b_i     ),
    .operand_c_i   ( alu_operand_c_i     ),
    .carry_i       ( alu_carry_i         ),
-   .flag_i        ( alu_flag_i          ),
 
    .vector_mode_i ( vector_mode_i       ),
    .cmp_mode_i    ( alu_cmp_mode_i      ),
@@ -214,7 +209,6 @@ module ex_stage
    .result_o      ( alu_result          ),
    .overflow_o    ( alu_overflow_int    ), // Internal signal
    .carry_o       ( alu_carry_int       ), // Internal signal
-   .flag_o        ( alu_flag_o          )
   );
 
 

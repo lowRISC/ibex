@@ -116,7 +116,6 @@ module riscv_core
   logic [31:0]              alu_operand_a_ex;
   logic [31:0]              alu_operand_b_ex;
   logic [31:0]              alu_operand_c_ex;
-  logic                     alu_flag_ex;
 
   logic [1:0]               vector_mode_ex;
   logic [1:0]               alu_cmp_mode_ex;
@@ -172,15 +171,12 @@ module riscv_core
   logic            data_ack_int;
 
   // Supervision Register
-  logic            set_flag_ex;
   logic            set_carry_ex;
   logic            set_overflow_ex;
   logic            set_carry_fw_ex;
   logic            set_overflow_fw_ex;
 
   // Direct Supervision-Register access
-  logic            sr_flag;
-  logic            sr_flag_fw;
   logic            carry_sp;
 
   // Signals between instruction core interface and pipe (if and id stages)
@@ -379,9 +375,6 @@ module riscv_core
 
       .compressed_instr_o           ( compressed_instr              ),
 
-      .sr_flag_fw_i                 ( sr_flag_fw                    ),
-      .sr_flag_i                    ( sr_flag                       ),
-
       // STALLS
       .stall_if_o                   ( stall_if                      ),
       .stall_id_o                   ( stall_id                      ),
@@ -437,7 +430,6 @@ module riscv_core
       .data_ack_i                   ( data_ack_int                  ), // from load store unit
       .data_rvalid_i                ( data_r_valid_i                ),
 
-      .set_flag_ex_o                ( set_flag_ex                   ), // to ex_stage
       .set_carry_ex_o               ( set_carry_ex                  ), // to ex_stage
       .set_overflow_ex_o            ( set_overflow_ex               ), // to ex_stage
 
@@ -504,8 +496,6 @@ module riscv_core
       .alu_operand_b_i            ( alu_operand_b_ex             ), // from ID/EX pipe registers
       .alu_operand_c_i            ( alu_operand_c_ex             ), // from ID/EX pipe registers
       .alu_carry_i                ( carry_sp                     ), // from spr carry
-      .alu_flag_i                 ( sr_flag                      ), // from spr flag
-      .alu_flag_o                 ( alu_flag_ex                  ), // to spr flag
 
       .vector_mode_i              ( vector_mode_ex               ), // from ID/EX pipe registers
       .alu_cmp_mode_i             ( alu_cmp_mode_ex              ), // from ID/EX pipe registers

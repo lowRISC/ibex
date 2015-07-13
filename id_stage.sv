@@ -68,9 +68,6 @@ module id_stage
     output logic                        stall_ex_o,
     output logic                        stall_wb_o,
 
-    input logic                         sr_flag_fw_i,
-    input logic                         sr_flag_i,
-
     // To the Pipeline ID/EX
     output logic [31:0]                 regfile_rb_data_ex_o,
     output logic [31:0]                 alu_operand_a_ex_o,
@@ -119,7 +116,6 @@ module id_stage
     input  logic                        data_rvalid_i,
 
     // SPR signals
-    output logic                        set_flag_ex_o,
     output logic                        set_carry_ex_o,
     output logic                        set_overflow_ex_o,
 
@@ -267,7 +263,6 @@ module id_stage
   logic [1:0]  csr_op;
 
   // Supervision Register
-  logic        set_flag;
   logic        set_carry;
   logic        set_overflow;
 
@@ -638,10 +633,6 @@ module id_stage
       .dbg_trap_o                   ( dbg_trap_o            ),
 
       // SPR Signals
-      .sr_flag_fw_i                 ( sr_flag_fw_i          ), // Forwarded Branch Signal
-      .sr_flag_i                    ( sr_flag_i             ),
-      .set_flag_ex_i                ( set_flag_ex_o         ),
-      .set_flag_o                   ( set_flag              ),
       .set_overflow_o               ( set_overflow          ),
       .set_carry_o                  ( set_carry             ),
       .restore_sr_o                 ( restore_sr_o          ),
@@ -812,7 +803,6 @@ module id_stage
 
       data_misaligned_ex_o        <= 1'b0;
 
-      set_flag_ex_o               <= 1'b0;
       set_overflow_ex_o           <= 1'b0;
       set_carry_ex_o              <= 1'b0;
 
@@ -885,7 +875,6 @@ module id_stage
 
       data_misaligned_ex_o        <= 1'b0;
 
-      set_flag_ex_o               <= set_flag;
       set_overflow_ex_o           <= set_overflow;
       set_carry_ex_o              <= set_carry;
 
