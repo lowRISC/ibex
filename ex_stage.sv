@@ -207,8 +207,8 @@ module ex_stage
    .adder_lsu_o   ( alu_adder_lsu_int   ),
 
    .result_o      ( alu_result          ),
-   .overflow_o    ( alu_overflow_int    ), // Internal signal
-   .carry_o       ( alu_carry_int       ), // Internal signal
+   .overflow_o    ( alu_overflow_int    ),
+   .carry_o       ( alu_carry_int       )
   );
 
 
