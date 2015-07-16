@@ -62,6 +62,14 @@ module compressed_decoder
             if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
           end
 
+          3'b001: begin
+            // c.srai -> srai rd, rd, shamt
+            instr_o = {2'b01, 5'b0, instr_i[6:2], instr_i[11:7], 3'b101, instr_i[11:7], `OPCODE_OPIMM};
+            if (instr_i[12] != 1'b0)   illegal_instr_o = 1'b1;
+            if (instr_i[6:2] == 5'b0)  illegal_instr_o = 1'b1;
+            if (instr_i[11:7] == 5'b0) illegal_instr_o = 1'b1;
+          end
+
           3'b010: begin
             // c.sw -> sw rs2', imm(rs1')
             instr_o = {5'b0, instr_i[5], instr_i[12], 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b010, instr_i[11:10], instr_i[6], 2'b00, `OPCODE_STORE};
@@ -72,19 +80,28 @@ module compressed_decoder
               // c.xor -> xor rd', rd', rs2'
               5'b00000: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b100, 2'b01, instr_i[9:7], `OPCODE_OP};
               // c.sltr
+              // c.srl -> srl rd', rd', rs2'
+              5'b00101: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b101, 2'b01, instr_i[9:7], `OPCODE_OP};
               // c.sltur -> sltu rd', rs1', rd'
               5'b01111: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b011, 2'b01, instr_i[4:2], `OPCODE_OP};
               default:  illegal_instr_o = 1'b1;
             endcase
           end
 
+          3'b100: begin
+            // c.sub -> sub rd, rd rs2
+            instr_o = {2'b01, 5'b0, instr_i[6:2], instr_i[11:7], 3'b000, instr_i[11:7], `OPCODE_OP};
+            if (instr_i[12] != 1'b0)   illegal_instr_o = 1'b1;
+            if (instr_i[6:2] == 5'b0)  illegal_instr_o = 1'b1;
+            if (instr_i[11:7] == 5'b0) illegal_instr_o = 1'b1;
+          end
+
           3'b101: begin
             unique case (instr_i[6:5])
               // c.add3 -> add rd', rs1', rs2'
               2'b00:  instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b000, 2'b01, instr_i[12:10], `OPCODE_OP};
-
-              // c.sub3
-
+              // c.sub3 -> sub rd', rs1', rs2'
+              2'b01:  instr_o = {2'b01, 5'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b000, 2'b01, instr_i[12:10], `OPCODE_OP};
               // c.or3 -> or rd'1, rs1', rs2'
               2'b10:  instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b110, 2'b01, instr_i[12:10], `OPCODE_OP};
               // c.and3 -> and rd', rs1', rs2'
