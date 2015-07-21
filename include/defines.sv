@@ -29,6 +29,8 @@
 // http://patorjk.com/software/taag/#p=display&v=0&f=Standard&t=Fancy%20ASCII%20Art
 ////////////////////////////////////////////////////////////////////////////////
 
+`ifndef _CORE_DEFINES
+`define _CORE_DEFINES
 
 
 ////////////////////////////////////////////////
@@ -383,3 +385,5 @@ endfunction // prettyPrintInstruction
 //`define TCDM_ADDR_PRECAL
 
 //`define BRANCH_PREDICTION
+
+`endif

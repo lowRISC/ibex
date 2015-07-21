@@ -82,6 +82,10 @@ module compressed_decoder
               // c.sltr
               // c.srl -> srl rd', rd', rs2'
               5'b00101: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b101, 2'b01, instr_i[9:7], `OPCODE_OP};
+              // c.sllr -> sll rd', rs1', rd'
+              5'b01100: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[4:2], 3'b001, 2'b01, instr_i[4:2], `OPCODE_OP};
+              // c.srlr
+              // c.sltr
               // c.sltur -> sltu rd', rs1', rd'
               5'b01111: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b011, 2'b01, instr_i[4:2], `OPCODE_OP};
               default:  illegal_instr_o = 1'b1;
