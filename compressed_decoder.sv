@@ -151,13 +151,13 @@ module compressed_decoder
           3'b100: begin
             unique case (instr_i[6:5])
               // c.addin -> addi rd', rs1', imm
-              2'b00:  instr_o = {{8 {instr_i[12]}}, instr_i[12:10], 2'b01, instr_i[9:7], 3'b000, 2'b01, instr_i[4:2], `OPCODE_OPIMM};
+              2'b00:  instr_o = {{9 {instr_i[12]}}, instr_i[12:10], 2'b01, instr_i[9:7], 3'b000, 2'b01, instr_i[4:2], `OPCODE_OPIMM};
               // c.xorin -> xori rd', rs1', imm
-              2'b01:  instr_o = {{8 {instr_i[12]}}, instr_i[12:10], 2'b01, instr_i[9:7], 3'b100, 2'b01, instr_i[4:2], `OPCODE_OPIMM};
+              2'b01:  instr_o = {{9 {instr_i[12]}}, instr_i[12:10], 2'b01, instr_i[9:7], 3'b100, 2'b01, instr_i[4:2], `OPCODE_OPIMM};
               // c.orin -> ori rd', rs1', imm
-              2'b10:  instr_o = {{8 {instr_i[12]}}, instr_i[12:10], 2'b01, instr_i[9:7], 3'b110, 2'b01, instr_i[4:2], `OPCODE_OPIMM};
+              2'b10:  instr_o = {{9 {instr_i[12]}}, instr_i[12:10], 2'b01, instr_i[9:7], 3'b110, 2'b01, instr_i[4:2], `OPCODE_OPIMM};
               // c.andin -> andi rd', rs1', imm
-              2'b11:  instr_o = {{8 {instr_i[12]}}, instr_i[12:10], 2'b01, instr_i[9:7], 3'b111, 2'b01, instr_i[4:2], `OPCODE_OPIMM};
+              2'b11:  instr_o = {{9 {instr_i[12]}}, instr_i[12:10], 2'b01, instr_i[9:7], 3'b111, 2'b01, instr_i[4:2], `OPCODE_OPIMM};
               default:  illegal_instr_o = 1'b1;
             endcase
             if (instr_i[12:10] == 3'b0) illegal_instr_o = 1'b1;

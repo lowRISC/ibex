@@ -617,7 +617,7 @@ module alu
       end
 
       // Set Lower Than Operations (result = 1, if a < b)
-      `ALU_SLTS, `ALU_SLTU: result_o = {30'b0, cmp_result[0]};
+      `ALU_SLTS, `ALU_SLTU: result_o = {31'b0, cmp_result[0]};
 
       `ALU_FF1: result_o = {26'h0, ff1_result};
       `ALU_FL1: result_o = {26'h0, fl1_result};

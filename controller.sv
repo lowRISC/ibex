@@ -56,7 +56,7 @@ module controller
   output logic [1:0]               alu_op_b_mux_sel_o,         // Operator b is selected between reg value or immediate
   output logic                     alu_op_c_mux_sel_o,         // Operator c is selected between reg value or PC
   output logic                     alu_pc_mux_sel_o,           // selects IF or ID PC for ALU computations
-  output logic [3:0]               immediate_mux_sel_o,
+  output logic [2:0]               immediate_mux_sel_o,
 
   output logic [1:0]               vector_mode_o,              // selects between 32 bit, 16 bit and 8 bit vectorial modes
   output logic                     scalar_replication_o,       // activates scalar_replication for vectorial mode
@@ -1273,7 +1273,7 @@ module controller
     case (dbg_fsm_cs)
       DBG_IDLE:
       begin
-        if(trap_hit_i == 1'b1 && stall_ex_o == 1'b0 && jump_in_id_o == 1'b0)
+        if(trap_hit_i == 1'b1 && stall_ex_o == 1'b0 && jump_in_id_o == 2'b0)
         begin
           dbg_halt  = 1'b1;
           dbg_fsm_ns = DBG_EX;

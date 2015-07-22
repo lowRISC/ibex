@@ -806,7 +806,7 @@ module riscv_core
   logic [31:0] instr;
   logic        compressed;
   logic [31:0] pc;
-  logic  [5:0] rd, rs1, rs2;
+  logic  [4:0] rd, rs1, rs2;
   logic [31:0] rs1_value, rs2_value;
   logic [31:0] imm;
   string mnemonic;

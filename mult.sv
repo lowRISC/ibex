@@ -61,7 +61,7 @@ module mult
   logic [32:0]        mac_int;
 
 
-  assign mac_int = (mac_en_i == 1'b1) ? mac_i : 33'b0;
+  assign mac_int = (mac_en_i == 1'b1) ? {1'b0, mac_i} : 33'b0;
 
   // this block performs the subword selection and sign extensions
   always_comb
@@ -92,7 +92,7 @@ module mult
     case(vector_mode_i)
       default: // VEC_MODE32, VEC_MODE216
       begin
-        result[32: 0] = mac_int + op_a_sel * op_b_sel + (use_carry_i & carry_i);
+        result[32: 0] = mac_int + op_a_sel * op_b_sel + {32'b0, (use_carry_i & carry_i)};
       end
 
       `VEC_MODE16:

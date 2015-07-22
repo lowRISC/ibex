@@ -224,7 +224,7 @@ module id_stage
   logic [1:0]  alu_vec_ext;
 
   logic        alu_pc_mux_sel;
-  logic [3:0]  immediate_mux_sel;
+  logic [2:0]  immediate_mux_sel;
 
   // Multiplier Control
   logic        mult_en;          // multiplication is used instead of ALU
@@ -293,10 +293,10 @@ module id_stage
   // immediate extraction and sign extension
   assign imm_i_type  = { {20 {instr[31]}}, instr[31:20] };
   assign imm_s_type  = { {20 {instr[31]}}, instr[31:25], instr[11:7] };
-  assign imm_sb_type = { {20 {instr[31]}}, instr[31], instr[7],
+  assign imm_sb_type = { {19 {instr[31]}}, instr[31], instr[7],
                          instr[30:25], instr[11:8], 1'b0 };
   assign imm_u_type  = { instr[31:12], {12 {1'b0}} };
-  assign imm_uj_type = { {20 {instr[31]}}, instr[19:12],
+  assign imm_uj_type = { {12 {instr[31]}}, instr[19:12],
                          instr[20], instr[30:21], 1'b0 };
 
   // immediate for CSR manipulatin (zero extended)
@@ -311,7 +311,7 @@ module id_stage
   assign regfile_waddr_id = instr[`REG_D];
 
   //assign alu_vec_ext         = instr[9:8]; TODO
-  assign alu_vec_ext = 1'b0;
+  assign alu_vec_ext = '0;
 
 
   // Second Register Write Adress Selection
@@ -778,7 +778,7 @@ module id_stage
       regfile_wdata_mux_sel_ex_o  <= 1'b0;
       regfile_we_ex_o             <= 1'b0;
 
-      regfile_alu_waddr_ex_o      <= 4'b0;
+      regfile_alu_waddr_ex_o      <= 5'b0;
       regfile_alu_we_ex_o         <= 1'b0;
       prepost_useincr_ex_o        <= 1'b0;
 
