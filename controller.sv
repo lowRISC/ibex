@@ -116,9 +116,7 @@ module controller
   input  logic                     dbg_set_npc_i,               // Change PC to value from debug unit
   output logic                     dbg_trap_o,                  // trap hit, inform debug unit
 
-  // SPR Signals
-  output logic                     set_carry_o,                 // to special purpose registers --> carry
-  output logic                     set_overflow_o,              // to special purpose registers --> overflow
+  // CSR Signals
   output logic                     restore_sr_o,                // restores status register after interrupt
 
   // Forwarding signals from regfile
@@ -161,8 +159,6 @@ module controller
   logic                     regfile_alu_we;
   logic                     data_we;
   logic                     data_req;
-  logic                     set_overflow;
-  logic                     set_carry;
   logic                     deassert_we;
 
   logic        lsu_stall;
@@ -242,9 +238,6 @@ module controller
     data_sign_extension_o        = 1'b0;
     data_reg_offset_o            = 2'b00;
     data_req                     = 1'b0;
-
-    set_overflow                 = 1'b0;
-    set_carry                    = 1'b0;
 
     restore_sr_o                 = 1'b0;
     clear_isr_running_o          = 1'b0;
@@ -1158,8 +1151,6 @@ module controller
   assign regfile_alu_we_o  = (deassert_we) ? 1'b0     : regfile_alu_we;
   assign data_we_o         = (deassert_we) ? 1'b0     : data_we;
   assign data_req_o        = (deassert_we) ? 1'b0     : data_req;
-  assign set_overflow_o    = (deassert_we) ? 1'b0     : set_overflow;
-  assign set_carry_o       = (deassert_we) ? 1'b0     : set_carry;
 
 
   ////////////////////////////////////////////////////////////////////////////////////////////

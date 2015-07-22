@@ -121,10 +121,6 @@ module riscv_core
   logic [1:0]               alu_cmp_mode_ex;
   logic [1:0]               alu_vec_ext_ex;
 
-  // Result Control
-  logic            carry_ex;
-  logic            overflow_ex;
-
   // Multiplier Control
   logic            mult_en_ex;
   logic [1:0]      mult_sel_subword_ex;
@@ -169,15 +165,6 @@ module riscv_core
   logic [31:0]     data_rdata_int;
   logic [31:0]     lsu_data_reg;
   logic            data_ack_int;
-
-  // Supervision Register
-  logic            set_carry_ex;
-  logic            set_overflow_ex;
-  logic            set_carry_fw_ex;
-  logic            set_overflow_fw_ex;
-
-  // Direct Supervision-Register access
-  logic            carry_sp;
 
   // Signals between instruction core interface and pipe (if and id stages)
   logic [31:0]     instr_rdata_int;  // read instruction from the instruction core interface to if_stage
@@ -430,9 +417,6 @@ module riscv_core
       .data_ack_i                   ( data_ack_int                  ), // from load store unit
       .data_rvalid_i                ( data_r_valid_i                ),
 
-      .set_carry_ex_o               ( set_carry_ex                  ), // to ex_stage
-      .set_overflow_ex_o            ( set_overflow_ex               ), // to ex_stage
-
       // Interrupt Signals
       .irq_i                        ( irq_i                         ), // incoming interrupts
       .irq_nm_i                     ( irq_nm_i                      ), // incoming interrupts
@@ -495,7 +479,6 @@ module riscv_core
       .alu_operand_a_i            ( alu_operand_a_ex             ), // from ID/EX pipe registers
       .alu_operand_b_i            ( alu_operand_b_ex             ), // from ID/EX pipe registers
       .alu_operand_c_i            ( alu_operand_c_ex             ), // from ID/EX pipe registers
-      .alu_carry_i                ( carry_sp                     ), // from spr carry
 
       .vector_mode_i              ( vector_mode_ex               ), // from ID/EX pipe registers
       .alu_cmp_mode_i             ( alu_cmp_mode_ex              ), // from ID/EX pipe registers
@@ -508,13 +491,6 @@ module riscv_core
       .mult_use_carry_i           ( mult_use_carry_ex            ),
       .mult_mac_en_i              ( mult_mac_en_ex               ),
 
-/*
-      // interface with Special registers
-      .carry_o                    ( carry_ex                     ),
-      .overflow_o                 ( overflow_ex                  ),
-      .set_overflow_o             ( set_overflow_fw_ex           ), // to special registers
-      .set_carry_o                ( set_carry_fw_ex              ), // to special registers
-*/
       // interface with CSRs
       .csr_access_i               ( csr_access_ex                ),
       .csr_rdata_i                ( csr_rdata                    ),
@@ -539,9 +515,6 @@ module riscv_core
       .hwloop_cnt_i               ( hwlp_cnt_ex                  ),
 
       //From ID stage.Controller
-      .set_overflow_i             ( set_overflow_ex              ),
-      .set_carry_i                ( set_carry_ex                 ),
-
       .regfile_rb_data_i          ( regfile_rb_data_ex           ),
 
       // Output of ex stage pipeline

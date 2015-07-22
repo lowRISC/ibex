@@ -48,7 +48,6 @@ module ex_stage
     input  logic [31:0]               alu_operand_a_i,
     input  logic [31:0]               alu_operand_b_i,
     input  logic [31:0]               alu_operand_c_i,
-    input  logic                      alu_carry_i,
 
     input  logic [1:0]                vector_mode_i,
     input  logic [1:0]                alu_cmp_mode_i,
@@ -83,21 +82,11 @@ module ex_stage
     input  logic [31:0]               hwloop_pc_plus4_i,
     input  logic [31:0]               hwloop_cnt_i,
 
-    input  logic                      set_overflow_i,
-    input  logic                      set_carry_i,
-
     // CSR access
     input  logic                      csr_access_i,
     input  logic [31:0]               csr_rdata_i,
 
     // Output of EX stage pipeline
-
-    output logic                      carry_o,
-    output logic                      overflow_o,
-
-    output logic                      set_overflow_o,
-    output logic                      set_carry_o,
-
     output logic [4:0]                regfile_waddr_wb_o,
     output logic                      regfile_wdata_mux_sel_wb_o,
     output logic                      regfile_we_wb_o,
@@ -123,23 +112,13 @@ module ex_stage
 );
 
 
-  // Alu outputs - OVerflow and CarrY
-  logic         alu_overflow_int;
-  logic         alu_carry_int;
-
   // Internal output of the LU
   logic [31:0]  alu_result;
 
   logic [31:0]  alu_adder_lsu_int; // to LS unit
 
   logic [31:0]  mult_result;
-  logic         mult_carry_int;
-  logic         mult_overflow_int;
 
-
-  // Result Selection: Select between ALU output signals and MUL
-  assign carry_o                   = (mult_en_i == 1'b1) ? mult_carry_int    : alu_carry_int;
-  assign overflow_o                = (mult_en_i == 1'b1) ? mult_overflow_int : alu_overflow_int;
 
   assign regfile_alu_we_fw_o       = regfile_alu_we_i;
   assign regfile_alu_waddr_fw_o    = regfile_alu_waddr_i;
@@ -155,10 +134,6 @@ module ex_stage
       regfile_alu_wdata_fw_o = csr_rdata_i;
   end
   // assign regfile_alu_wdata_fw_o    = (mult_en_i == 1'b0) ? alu_result : mult_result;
-
-  // generate flags: goes to special purpose register
-  assign set_overflow_o        = (stall_ex_i == 1'b0) ? set_overflow_i : 1'b0;
-  assign set_carry_o           = (stall_ex_i == 1'b0) ? set_carry_i    : 1'b0;
 
   //NOTE Igor fix: replaced alu_adder_int with alu_adder_lsu_int --> Now data_addr is calculated with
   //NOTE a dedicated adder, no carry is considered , just op_a + op_b from id stage
@@ -198,7 +173,8 @@ module ex_stage
    .operand_a_i   ( alu_operand_a_i     ),
    .operand_b_i   ( alu_operand_b_i     ),
    .operand_c_i   ( alu_operand_c_i     ),
-   .carry_i       ( alu_carry_i         ),
+   .carry_i       ( 1'b0                ),
+   .flag_i        ( 1'b0                ),
 
    .vector_mode_i ( vector_mode_i       ),
    .cmp_mode_i    ( alu_cmp_mode_i      ),
@@ -207,8 +183,9 @@ module ex_stage
    .adder_lsu_o   ( alu_adder_lsu_int   ),
 
    .result_o      ( alu_result          ),
-   .overflow_o    ( alu_overflow_int    ),
-   .carry_o       ( alu_carry_int       )
+   .overflow_o    (                     ),
+   .carry_o       (                     ),
+   .flag_o        (                     )
   );
 
 
@@ -231,12 +208,12 @@ module ex_stage
    .op_a_i          ( alu_operand_a_i      ),
    .op_b_i          ( alu_operand_b_i      ),
    .mac_i           ( alu_operand_c_i      ),
-   .carry_i         ( alu_carry_i          ),
+   .carry_i         ( 1'b0                 ),
 
    .result_o        ( mult_result          ),
 
-   .carry_o         ( mult_carry_int       ),
-   .overflow_o      ( mult_overflow_int    )
+   .carry_o         (                      ),
+   .overflow_o      (                      )
   );
 
 

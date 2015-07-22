@@ -115,10 +115,6 @@ module id_stage
     input  logic                        data_ack_i,      // Grant from data memory
     input  logic                        data_rvalid_i,
 
-    // SPR signals
-    output logic                        set_carry_ex_o,
-    output logic                        set_overflow_ex_o,
-
     // Interrupt signals
     input  logic                        irq_i,
     input  logic                        irq_nm_i,
@@ -261,10 +257,6 @@ module id_stage
   // CSR control
   logic        csr_access;
   logic [1:0]  csr_op;
-
-  // Supervision Register
-  logic        set_carry;
-  logic        set_overflow;
 
   logic        prepost_useincr;
 
@@ -633,8 +625,6 @@ module id_stage
       .dbg_trap_o                   ( dbg_trap_o            ),
 
       // SPR Signals
-      .set_overflow_o               ( set_overflow          ),
-      .set_carry_o                  ( set_carry             ),
       .restore_sr_o                 ( restore_sr_o          ),
 
       // regfile port 1
@@ -803,9 +793,6 @@ module id_stage
 
       data_misaligned_ex_o        <= 1'b0;
 
-      set_overflow_ex_o           <= 1'b0;
-      set_carry_ex_o              <= 1'b0;
-
       hwloop_we_ex_o              <= 3'b0;
       hwloop_regid_ex_o           <= 2'b0;
       hwloop_wb_mux_sel_ex_o      <= 1'b0;
@@ -874,9 +861,6 @@ module id_stage
       data_req_ex_o               <= data_req_id;
 
       data_misaligned_ex_o        <= 1'b0;
-
-      set_overflow_ex_o           <= set_overflow;
-      set_carry_ex_o              <= set_carry;
 
       hwloop_we_ex_o              <= hwloop_we;
       hwloop_regid_ex_o           <= hwloop_regid;
