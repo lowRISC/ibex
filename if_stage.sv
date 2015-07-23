@@ -49,7 +49,6 @@ module if_stage
     output logic [31:0] instr_addr_o,          // address for instruction fetch
 
     // Forwarding ports - control signals
-    input  logic        compressed_instr_i,    // ID decoded a compressed instruction
     input  logic        force_nop_i,           // insert a NOP in the pipe
     input  logic [31:0] exception_pc_reg_i,    // address used to restore the program counter when the interrupt/exception is served
     input  logic [31:0] pc_from_hwloop_i,      // pc from hwloop start addr

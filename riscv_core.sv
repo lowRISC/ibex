@@ -287,8 +287,6 @@ module riscv_core
       .branch_decision_i   ( branch_decision      ),
       .jump_target_i       ( jump_target          ),
 
-      .compressed_instr_i  ( compressed_instr     ),
-
       // pipeline stalls
       .stall_if_i          ( stall_if             ),
       .stall_id_i          ( stall_id             )
