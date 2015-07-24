@@ -79,15 +79,24 @@ module compressed_decoder
             unique case ({instr_i[12:10], instr_i[6:5]})
               // c.xor -> xor rd', rd', rs2'
               5'b00000: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b100, 2'b01, instr_i[9:7], `OPCODE_OP};
-              // c.sltr
+
+              // c.sll -> sll rd', rd', rs2'
+              5'b00100: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b001, 2'b01, instr_i[9:7], `OPCODE_OP};
               // c.srl -> srl rd', rd', rs2'
               5'b00101: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b101, 2'b01, instr_i[9:7], `OPCODE_OP};
+              // c.sltu -> sltu rd', rd', rs2'
+              5'b00111: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b011, 2'b01, instr_i[9:7], `OPCODE_OP};
+
               // c.sllr -> sll rd', rs1', rd'
               5'b01100: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[4:2], 3'b001, 2'b01, instr_i[4:2], `OPCODE_OP};
-              // c.srlr
-              // c.sltr
+              // c.srlr -> srl rd', rs1', rd'
+              5'b01101: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[4:2], 3'b101, 2'b01, instr_i[4:2], `OPCODE_OP};
               // c.sltur -> sltu rd', rs1', rd'
               5'b01111: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b011, 2'b01, instr_i[4:2], `OPCODE_OP};
+
+              // c.sra
+              // c.slt
+              // c.sltr
               default:  illegal_instr_o = 1'b1;
             endcase
           end
@@ -146,6 +155,11 @@ module compressed_decoder
           3'b010: begin
             // c.swsp -> sw rs2, imm(x2)
             instr_o = {4'b0, instr_i[8:7], instr_i[12], instr_i[6:2], 5'h02, 3'b010, instr_i[11:9], 2'b00, `OPCODE_STORE};
+          end
+
+          3'b011: begin
+            // c.bltz -> blt rs1', x0, imm
+            instr_o = {{3 {instr_i[12]}}, instr_i[12:10], instr_i[2], 5'b0, 2'b01, instr_i[9:7], 3'b100, instr_i[6:3], instr_i[12], `OPCODE_BRANCH};
           end
 
           3'b100: begin
