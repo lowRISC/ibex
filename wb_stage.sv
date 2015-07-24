@@ -11,7 +11,7 @@
 // Create Date:    01/07/2014                                                 //
 // Design Name:    Write Back stage                                           //
 // Module Name:    wb_stage.sv                                                //
-// Project Name:   OR10N                                                      //
+// Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Execution stage: hosts a Multiplexer that select data to   //

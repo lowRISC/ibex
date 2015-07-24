@@ -9,9 +9,9 @@
 //                                                                            //
 //                                                                            //
 // Create Date:    19/09/2013                                                 //
-// Design Name:    Pipelined Processor                                        //
+// Design Name:    RISC-V processor core                                      //
 // Module Name:    alu.sv                                                     //
-// Project Name:   Processor                                                  //
+// Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Arithmetic logic unit of the pipelined processor           //
@@ -22,7 +22,6 @@
 // Revision v0.2 - (August 6th 2014) Changed port and signal names, addedd    //
 //                 comments                                                   //
 // Revision v0.3 - (December 17 2014) Added vector support                    //
-//                                                                            //
 //                                                                            //
 //                                                                            //
 //                                                                            //

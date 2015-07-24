@@ -797,7 +797,6 @@ module riscv_core
 
   // Execution trace generation
   // synopsys translate_off
-  /* verilator lint off */
   `ifdef TRACE_EXECUTION
   integer f;
   string fn;

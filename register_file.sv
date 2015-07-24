@@ -33,13 +33,6 @@ module riscv_register_file
 
   localparam    NUM_WORDS = 2**ADDR_WIDTH;
 
-  // Read address register, located at the input of the address decoder
-  logic [ADDR_WIDTH-1:0]      RAddrRegxDPa;
-  logic [ADDR_WIDTH-1:0]      RAddrRegxDPb;
-  logic [ADDR_WIDTH-1:0]      RAddrRegxDPc;
-  logic [NUM_WORDS-1:0]       RAddrOneHotxD;
-  logic [ADDR_WIDTH-1:0]      s_raddr_c;
-
   logic [DATA_WIDTH-1:0]      MemContentxDP[NUM_WORDS];
 
   logic [NUM_WORDS-1:0]       WAddrOneHotxDa;
@@ -57,8 +50,6 @@ module riscv_register_file
   int unsigned i;
   int unsigned j;
   int unsigned k;
-  int unsigned l;
-  int unsigned m;
 
   genvar x;
   genvar y;

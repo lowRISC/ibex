@@ -11,9 +11,9 @@
 //                                                                            //
 //                                                                            //
 // Create Date:    01/07/2014                                                 //
-// Design Name:    Instruction fetch stage                                    //
+// Design Name:    RISC-V processor core                                      //
 // Module Name:    if_stage.sv                                                //
-// Project Name:   RiscV                                                      //
+// Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Instruction fetch unit: Selection of the next PC, and      //
@@ -42,8 +42,8 @@ module if_stage
 
     // Output of IF Pipeline stage
     output logic [31:0] instr_rdata_id_o,      // read instruction is sampled and sent to ID stage for decoding
-    output logic [31:0] current_pc_if_o,       // "current" pc program counter
-    output logic [31:0] current_pc_id_o,       // current pc program counter
+    output logic [31:0] current_pc_if_o,       // program counter of IF stage
+    output logic [31:0] current_pc_id_o,       // program counter of ID stage
 
     // From to Instr memory
     input  logic [31:0] instr_rdata_i,         // Instruction read from instruction memory /cache

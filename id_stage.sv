@@ -13,7 +13,7 @@
 // Create Date:    19/09/2013                                                 //
 // Design Name:    Decode stage                                               //
 // Module Name:    id_stage.sv                                                //
-// Project Name:   RiscV                                                      //
+// Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Decode stage of the core. It decodes the instructions      //
@@ -25,7 +25,6 @@
 // Revision v0.3 - (August 7th 2014) Changed port and signal names, added     //
 //                 comments                                                   //
 // Revision v0.4 - (December 1th 2014) Merged debug unit                      //
-//                                                                            //
 //                                                                            //
 //                                                                            //
 //                                                                            //

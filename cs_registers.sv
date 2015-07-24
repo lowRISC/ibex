@@ -7,9 +7,9 @@
 //                                                                            //
 //                                                                            //
 // Create Date:    25/05/2015                                                 //
-// Design Name:    Pipelined Processor                                        //
+// Design Name:    RISC-V processor core                                      //
 // Module Name:    cs_registers.sv                                            //
-// Project Name:   Processor                                                  //
+// Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Control and Status Registers (CSRs) loosely following the  //

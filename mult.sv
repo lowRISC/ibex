@@ -8,17 +8,13 @@
 //                                                                            //
 //                                                                            //
 // Create Date:    19/09/2013                                                 //
-// Design Name:    Pipelined Processor                                        //
+// Design Name:    Vectorial Multiplier and MAC                               //
 // Module Name:    mult.sv                                                    //
-// Project Name:   Processor                                                  //
+// Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
-// Description:    Multiplier of the pipelined processor                      //
-//                 Design ware multiplier requires two cycles to complete.    //
-//                 Generic multiplier requires only one cycle. result will be //
-//                 stored in a FF. Best synthesis results are achieved with   //
-//                 moving the result register in the multiplier with automatic//
-//                 retiming!                                                  //
+// Description:    Advanced MAC unit for PULP.                                //
+//                                                                            //
 //                                                                            //
 // Revision:                                                                  //
 // Revision v0.1 - File Created                                               //

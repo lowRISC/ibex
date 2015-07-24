@@ -7,9 +7,9 @@
 //                                                                            //
 //                                                                            //
 // Create Date:    10/06/2015                                                 //
-// Design Name:    Compressed Instruction Decoder                             //
-// Module Name:    id_stage.sv                                                //
-// Project Name:   RiscV                                                      //
+// Design Name:    Compressed instruction decoder                             //
+// Module Name:    compressed_decoder.sv                                      //
+// Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Decodes RISC-V compressed instructions into their RV32     //

@@ -8,9 +8,9 @@
 //                                                                            //
 //                                                                            //
 // Create Date:    06/08/2014                                                 //
-// Design Name:    Instruction Fetch interface                                //
+// Design Name:    RISC-V processor core                                      //
 // Module Name:    instr_core_interface.sv                                    //
-// Project Name:   OR10N                                                      //
+// Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Instruction Fetch interface used to properly handle        //
@@ -18,8 +18,6 @@
 //                                                                            //
 // Revision:                                                                  //
 // Revision v0.1 - File Created                                               //
-//                                                                            //
-//                                                                            //
 //                                                                            //
 //                                                                            //
 //                                                                            //

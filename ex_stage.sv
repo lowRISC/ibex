@@ -6,22 +6,18 @@
 //                                                                            //
 // Additional contributions by:                                               //
 //                 Igor Loi - igor.loi@unibo.it                               //
+//                 Sven Stucki - svstucki@student.ethz.ch                     //
 //                                                                            //
 //                                                                            //
 // Create Date:    01/07/2014                                                 //
-// Design Name:    Execute stage                                              //
+// Design Name:    Excecute stage                                             //
 // Module Name:    ex_stage.sv                                                //
-// Project Name:   OR10N                                                      //
+// Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
-// Description:    Execution stage: Host Alu and Multiplier                   //
+// Description:    Execution stage: Hosts ALU and MAC unit                    //
 //                 ALU: computes additions/subtractions/comparisons           //
-//                 (in a pure combinational way)                              //
-//                 Multiplier:                                                //
-//                 32bit multiplication: takes two cycles to complete. The    //
-//                 Result goes to the register file (only the 32 lsb)         //
-//                 64bit multiplication(l.muld): takes two cycles to complete //
-//                 Result goes to sp register maclo(32lsb) and machi(32msb)   //
+//                 MAC:                                                       //
 //                                                                            //
 //                                                                            //
 // Revision:                                                                  //

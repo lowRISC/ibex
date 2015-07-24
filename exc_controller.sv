@@ -6,11 +6,10 @@
 // Additional contributions by:                                               //
 //                                                                            //
 //                                                                            //
-//                                                                            //
 // Create Date:    20/01/2015                                                 //
-// Design Name:    Pipelined OpenRISC Processor                               //
+// Design Name:    RISC-V processor core                                      //
 // Module Name:    exc_controller.sv                                          //
-// Project Name:   OR10N                                                      //
+// Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Exception Controller of the pipelined processor            //

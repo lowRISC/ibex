@@ -6,16 +6,16 @@
 // Additional contributions by:                                               //
 //                 Igor Loi - igor.loi@unibo.it                               //
 //                 Andreas Traber - atraber@student.ethz.ch                   //
-//                                                                            //
+//                 Sven Stucki - svstucki@student.ethz.ch                     //
 //                                                                            //
 //                                                                            //
 // Create Date:    19/09/2013                                                 //
-// Design Name:    Pipelined OpenRISC Processor                               //
+// Design Name:    RISC-V processor core                                      //
 // Module Name:    controller.sv                                              //
-// Project Name:   OR10N                                                      //
+// Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
-// Description:    CPU Controller of the pipelined processor                  //
+// Description:    Main CPU controller of the processor                       //
 //                                                                            //
 //                                                                            //
 // Revision:                                                                  //

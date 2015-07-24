@@ -10,7 +10,7 @@
 // Create Date:    01/07/2014                                                 //
 // Design Name:    Load Store Unit                                            //
 // Module Name:    load_store_unit.sv                                         //
-// Project Name:   OR10N                                                      //
+// Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Load Store Unit, used to eliminate multiple access during  //
@@ -89,7 +89,7 @@ module load_store_unit
   ///////////////////////////////// BE generation ////////////////////////////////
   always_comb
   begin
-    casex (data_type_ex_i) // Data type 00 Word, 01 Half word, 11,10 byte
+    case (data_type_ex_i) // Data type 00 Word, 01 Half word, 11,10 byte
       2'b00:
       begin // Writing a word
         if (misaligned_st == 1'b0)
@@ -129,7 +129,8 @@ module load_store_unit
         end
       end
 
-      2'b1X: begin // Writing a byte
+      2'b10,
+      2'b11: begin // Writing a byte
         case (data_addr_ex_i[1:0])
           2'b00: data_be = 4'b0001;
           2'b01: data_be = 4'b0010;
@@ -137,7 +138,7 @@ module load_store_unit
           2'b11: data_be = 4'b1000;
         endcase; // case (data_addr_ex_i[1:0])
       end
-    endcase; // casex (data_type_ex_i)
+    endcase; // case (data_type_ex_i)
   end
 
   // prepare data to be written to the memory
