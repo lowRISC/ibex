@@ -7,6 +7,7 @@
 // Additional contributions by:                                               //
 //                 Igor Loi - igor.loi@unibo.it                               //
 //                 Andreas Traber - atraber@student.ethz.ch                   //
+//                 Sven Stucki - svstucki@student.ethz.ch                     //
 //                                                                            //
 //                                                                            //
 // Create Date:    01/07/2014                                                 //

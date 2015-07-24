@@ -10,12 +10,12 @@
 //                                                                            //
 //                                                                            //
 // Create Date:    24/3/2015                                                  //
-// Design Name:    RiscV Minion                                               //
+// Design Name:    RISCV-V Core                                               //
 // Module Name:    riscv_core.sv                                              //
-// Project Name:   RISCV                                                      //
+// Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
-// Description:    RiscV core                                                 //
+// Description:    Main module of the core                                    //
 //                                                                            //
 //                                                                            //
 // Revision:                                                                  //
@@ -494,7 +494,6 @@ module riscv_core
       .csr_rdata_i                ( csr_rdata                    ),
 
       // input from ID stage
-      .stall_ex_i                 ( stall_ex                     ),
       .stall_wb_i                 ( stall_wb                     ),
 
       .prepost_useincr_i          ( useincr_addr_ex              ),
@@ -798,6 +797,7 @@ module riscv_core
 
   // Execution trace generation
   // synopsys translate_off
+  /* verilator lint off */
   `ifdef TRACE_EXECUTION
   integer f;
   string fn;

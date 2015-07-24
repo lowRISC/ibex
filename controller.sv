@@ -55,7 +55,6 @@ module controller
   output logic [1:0]               alu_op_a_mux_sel_o,         // Operator a is selected between reg value, PC or immediate
   output logic [1:0]               alu_op_b_mux_sel_o,         // Operator b is selected between reg value or immediate
   output logic                     alu_op_c_mux_sel_o,         // Operator c is selected between reg value or PC
-  output logic                     alu_pc_mux_sel_o,           // selects IF or ID PC for ALU computations
   output logic [2:0]               immediate_mux_sel_o,
 
   output logic [1:0]               vector_mode_o,              // selects between 32 bit, 16 bit and 8 bit vectorial modes
@@ -206,7 +205,6 @@ module controller
     alu_op_a_mux_sel_o           = `OP_A_REGA_OR_FWD;
     alu_op_b_mux_sel_o           = `OP_B_REGB_OR_FWD;
     alu_op_c_mux_sel_o           = `OP_C_REGC_OR_FWD;
-    alu_pc_mux_sel_o             = 1'b0;  // TODO: Check if still needed (1'b0 never used)
 
     vector_mode_o                = `VEC_MODE32;
     scalar_replication_o         = 1'b0;
@@ -333,7 +331,6 @@ module controller
               pc_mux_sel_o        = `PC_NO_INCR;
               jump_in_id_o        = 2'b01;
               // Calculate and store PC+4
-              alu_pc_mux_sel_o    = 1'b1;
               alu_op_a_mux_sel_o  = `OP_A_CURRPC;
               alu_op_b_mux_sel_o  = `OP_B_IMM;
               immediate_mux_sel_o = `IMM_PCINCR;
@@ -352,7 +349,6 @@ module controller
               pc_mux_sel_o        = `PC_NO_INCR;
               jump_in_id_o        = 2'b01;
               // Calculate and store PC+4
-              alu_pc_mux_sel_o    = 1'b1;
               alu_op_a_mux_sel_o  = `OP_A_CURRPC;
               alu_op_b_mux_sel_o  = `OP_B_IMM;
               immediate_mux_sel_o = `IMM_PCINCR;
@@ -563,7 +559,6 @@ module controller
           end
 
           `OPCODE_AUIPC: begin  // Add Upper Immediate to PC
-            alu_pc_mux_sel_o    = 1'b1;
             alu_op_a_mux_sel_o  = `OP_A_CURRPC;
             alu_op_b_mux_sel_o  = `OP_B_IMM;
             immediate_mux_sel_o = `IMM_U;
@@ -1328,6 +1323,11 @@ module controller
 
         if(stall_ex_o == 1'b0)
           dbg_fsm_ns = DBG_FLUSH;
+      end
+
+      default:
+      begin
+        dbg_fsm_ns = DBG_IDLE;
       end
     endcase // case (dbg_fsm_cs)
   end

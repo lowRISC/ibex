@@ -28,35 +28,33 @@
 
 module instr_core_interface
 (
-  input  logic          clk,
-  input  logic          rst_n,
+  input  logic        clk,
+  input  logic        rst_n,
 
+  input  logic        req_i,
+  input  logic [31:0] addr_i,
+  output logic        ack_o,
+  output logic [31:0] rdata_o,
 
-  input  logic          req_i,
-  input  logic [31:0]   addr_i,
-  output logic          ack_o,
-  output logic [31:0]   rdata_o,
+  output logic        instr_req_o,
+  output logic [31:0] instr_addr_o,
+  input  logic        instr_gnt_i,
+  input  logic        instr_r_valid_i,
+  input  logic [31:0] instr_r_rdata_i,
 
+  input  logic        stall_if_i,
 
-  output logic          instr_req_o,
-  output logic [31:0]   instr_addr_o,
-  input  logic          instr_gnt_i,
-  input  logic          instr_r_valid_i,
-  input  logic [31:0]   instr_r_rdata_i,
-
-  input  logic          stall_if_i,
-
-  input  logic          drop_request_i
+  input  logic        drop_request_i
 );
 
 
   enum logic [2:0] {IDLE, PENDING, WAIT_RVALID, WAIT_IF_STALL, WAIT_GNT, ABORT} CS, NS;
 
-  logic     save_rdata;
-  logic [31:0]    rdata_Q;
+  logic        save_rdata;
+  logic [31:0] rdata_Q;
 
-  logic     wait_gnt;
-  logic [31:0]    addr_Q;
+  logic        wait_gnt;
+  logic [31:0] addr_Q;
 
   always_ff @(posedge clk, negedge rst_n)
   begin

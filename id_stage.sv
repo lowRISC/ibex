@@ -223,7 +223,6 @@ module id_stage
   logic [1:0]  alu_cmp_mode;
   logic [1:0]  alu_vec_ext;
 
-  logic        alu_pc_mux_sel;
   logic [2:0]  immediate_mux_sel;
 
   // Multiplier Control
@@ -335,14 +334,7 @@ module id_stage
   //                  |___/                                                            //
   ///////////////////////////////////////////////////////////////////////////////////////
 
-  // PC Mux
-  always_comb
-  begin : alu_pc_mux
-    case (alu_pc_mux_sel)
-      1'b0:       current_pc = current_pc_if_i;  // TODO: FIXME 1'b0 is never used
-      1'b1:       current_pc = current_pc_id_i;
-    endcase; // case (alu_pc_mux_sel)
-  end
+  assign current_pc = current_pc_id_i;
 
   // hwloop_cnt_mux
   always_comb
@@ -562,7 +554,6 @@ module id_stage
       .alu_op_a_mux_sel_o           ( alu_op_a_mux_sel      ),
       .alu_op_b_mux_sel_o           ( alu_op_b_mux_sel      ),
       .alu_op_c_mux_sel_o           ( alu_op_c_mux_sel      ),
-      .alu_pc_mux_sel_o             ( alu_pc_mux_sel        ),
       .immediate_mux_sel_o          ( immediate_mux_sel     ),
 
       .scalar_replication_o         ( scalar_replication    ),

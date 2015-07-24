@@ -63,7 +63,6 @@ module ex_stage
     output logic [31:0]               data_addr_ex_o,
 
     // input from ID stage
-    input  logic                      stall_ex_i,
     input  logic                      stall_wb_i,
 
     input  logic [4:0]                regfile_alu_waddr_i,
