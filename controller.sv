@@ -445,6 +445,7 @@ module controller
                   // illegal instruction
                   data_req       = 1'b0;
                   regfile_we     = 1'b0;
+                  regfile_alu_we = 1'b0;
                   illegal_insn_o = 1'b1;
                 end
               endcase
@@ -455,6 +456,7 @@ module controller
               // LD, LWU -> RV64 only
               data_req       = 1'b0;
               regfile_we     = 1'b0;
+              regfile_alu_we = 1'b0;
               illegal_insn_o = 1'b1;
             end
           end
@@ -506,51 +508,6 @@ module controller
             // offset inside value to be stored, e.g. l.sh1, l.sb1 and so on
             data_reg_offset_o      = instr_rdata_i[1:0];
           end
-
-          // Pre/Post-Increment Loads and Register-Register Loads
-          `OPCODE_LDPOST, `OPCODE_LDPRE: begin
-            alu_operator                = `ALU_ADD;  // addr is generated in ID stage so no need for addr gen in alu TODO: always use ID stage addr
-            data_req                    = 1'b1;
-            rega_used                   = 1'b1;
-            regfile_wdata_mux_sel_o     = 1'b1; // get data from wb
-            regfile_alu_waddr_mux_sel_o = 2'b00;
-            regfile_we                  = 1'b1;  // write regfile portA with data coming from mem
-
-            if (instr_rdata_i[31:26] == `OPCODE_LDPOST)
-              prepost_useincr_o = 1'b0; // if post increment instruction, don't use the modified address
-
-            // Since we also support register-register loads without
-            // pre/post-increment, we have to distinguish the two cases
-            // here. If no pre/post is used, we don't write back to
-            // the second write port of the RF
-            if (instr_rdata_i[5:4] == 2'b01) // normal case
-              regfile_alu_we   = 1'b0;
-            else // pre/post case
-              regfile_alu_we   = 1'b1;  // write new addr value into regfile using portB
-
-            if (instr_rdata_i[4] == 1'b0)
-            begin
-              alu_op_b_mux_sel_o   = `OP_B_IMM;
-              immediate_mux_sel_o  = `IMM_11S;  // offset in 11bit immediate
-            end
-            else
-            begin
-              alu_op_b_mux_sel_o = `OP_B_REGB_OR_FWD; // offset in rB register
-              regb_used          = 1'b1;
-            end
-
-            // Word, Half Word or Byte load
-            case (instr_rdata_i[3:2])
-              default: data_type_o = 2'b00;
-              2'b00:   data_type_o = 2'b00; // word
-              2'b10:   data_type_o = 2'b01; // half word
-              2'b11:   data_type_o = 2'b10; // byte
-            endcase // case(instr_rdata_i[4:3]
-
-            // sign extension
-            data_sign_extension_o  = instr_rdata_i[1];
-          end
-
            */
 
           //////////////////////////
@@ -599,7 +556,7 @@ module controller
                 illegal_insn_o = 1'b1;
               end
             endcase // unique case (instr_rdata_i)
-          end // case: `OPCODE_OPIMM
+          end
 
           `OPCODE_OP: begin  // Register-Register ALU operation
             regfile_alu_we = 1'b1;
