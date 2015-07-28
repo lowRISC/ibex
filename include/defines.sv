@@ -42,20 +42,26 @@
 //        |_|                                 //
 ////////////////////////////////////////////////
 
-`define OPCODE_SYSTEM 7'h73
-`define OPCODE_FENCE  7'h0f
-`define OPCODE_OP     7'h33
-`define OPCODE_OPIMM  7'h13
-`define OPCODE_STORE  7'h23
-`define OPCODE_LOAD   7'h03
-`define OPCODE_BRANCH 7'h63
-`define OPCODE_JALR   7'h67
-`define OPCODE_JAL    7'h6f
-`define OPCODE_AUIPC  7'h17
-`define OPCODE_LUI    7'h37
-`define OPCODE_CUST0  7'h0b
-`define OPCODE_CUST1  7'h2b
+`define OPCODE_SYSTEM     7'h73
+`define OPCODE_FENCE      7'h0f
+`define OPCODE_OP         7'h33
+`define OPCODE_OPIMM      7'h13
+`define OPCODE_STORE      7'h23
+`define OPCODE_LOAD       7'h03
+`define OPCODE_BRANCH     7'h63
+`define OPCODE_JALR       7'h67
+`define OPCODE_JAL        7'h6f
+`define OPCODE_AUIPC      7'h17
+`define OPCODE_LUI        7'h37
+`define OPCODE_CUST0      7'h0b
+`define OPCODE_CUST1      7'h2b
 
+// PULP custom
+`define OPCODE_STORE_POST 7'h27
+`define OPCODE_LOAD_POST  7'h07
+
+
+// instructions
 `define INSTR_CUSTOM0    { {25 {1'b?}}, `OPCODE_CUST0 }
 `define INSTR_CUSTOM1    { {25 {1'b?}}, `OPCODE_CUST1 }
 `define INSTR_LUI        { {25 {1'b?}}, `OPCODE_LUI }
@@ -132,6 +138,13 @@
 `define INSTR_REM        { 7'b0000001, {10 {1'b?}}, 3'b110, {5 {1'b?}}, `OPCODE_OP }
 `define INSTR_REMU       { 7'b0000001, {10 {1'b?}}, 3'b111, {5 {1'b?}}, `OPCODE_OP }
 */
+
+// PULP custom instructions
+
+// Post-indexed load
+`define INSTR_LBPOST     { {17 {1'b?}}, 3'b011, {5 {1'b?}}, `OPCODE_LOAD_POST }
+`define INSTR_LHPOST     { {17 {1'b?}}, 3'b110, {5 {1'b?}}, `OPCODE_LOAD_POST }
+`define INSTR_LWPOST     { {17 {1'b?}}, 3'b111, {5 {1'b?}}, `OPCODE_LOAD_POST }
 
 // Source/Destination register instruction index
 `define REG_S1 19:15

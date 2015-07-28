@@ -871,8 +871,11 @@ module riscv_core
         `INSTR_BGEU:       printSBInstr("BGEU");
         // LOAD
         `INSTR_LB:         printILInstr("LB");
+        `INSTR_LBPOST:     printILInstr("LBPOST");
         `INSTR_LH:         printILInstr("LH");
+        `INSTR_LHPOST:     printILInstr("LHPOST");
         `INSTR_LW:         printILInstr("LW");
+        `INSTR_LWPOST:     printILInstr("LWPOST");
         `INSTR_LBU:        printILInstr("LBU");
         `INSTR_LHU:        printILInstr("LHU");
         // STORE

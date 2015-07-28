@@ -175,13 +175,10 @@ module controller
   logic        regb_used;
   logic        regc_used;
 
-  logic [31:0] instr;
-  logic        compressed_instr;
-
   // dbg fsm
-  enum  logic [2:0]  { DBG_IDLE, DBG_EX, DBG_WB, DBG_STALL, DBG_FLUSH, DBG_FLUSH2 }     dbg_fsm_cs, dbg_fsm_ns;
-  logic       dbg_halt;
-  logic       dbg_flush;
+  enum  logic [2:0] {DBG_IDLE, DBG_EX, DBG_WB, DBG_STALL, DBG_FLUSH, DBG_FLUSH2} dbg_fsm_cs, dbg_fsm_ns;
+  logic        dbg_halt;
+  logic        dbg_flush;
 
   ////////////////////////////////////////////////////////////////////////////////////////////
   //   ____ ___  ____  _____    ____ ___  _   _ _____ ____   ___  _     _     _____ ____    //
@@ -194,65 +191,65 @@ module controller
   always_comb
   begin
     // Default values
-    instr_req_o                  = 1'b1;
+    instr_req_o                 = 1'b1;
 
-    pc_mux_sel_o                 = `PC_INCR;
-    pc_mux_boot_o                = 1'b0;
-    jump_in_id_o                 = 2'b00;
+    pc_mux_sel_o                = `PC_INCR;
+    pc_mux_boot_o               = 1'b0;
+    jump_in_id_o                = 2'b00;
 
-    alu_operator                 = `ALU_NOP;
-    extend_immediate_o           = 1'b0;
-    alu_op_a_mux_sel_o           = `OP_A_REGA_OR_FWD;
-    alu_op_b_mux_sel_o           = `OP_B_REGB_OR_FWD;
-    alu_op_c_mux_sel_o           = `OP_C_REGC_OR_FWD;
+    alu_operator                = `ALU_NOP;
+    extend_immediate_o          = 1'b0;
+    alu_op_a_mux_sel_o          = `OP_A_REGA_OR_FWD;
+    alu_op_b_mux_sel_o          = `OP_B_REGB_OR_FWD;
+    alu_op_c_mux_sel_o          = `OP_C_REGC_OR_FWD;
 
-    vector_mode_o                = `VEC_MODE32;
-    scalar_replication_o         = 1'b0;
-    alu_cmp_mode_o               = `ALU_CMP_FULL;
+    vector_mode_o               = `VEC_MODE32;
+    scalar_replication_o        = 1'b0;
+    alu_cmp_mode_o              = `ALU_CMP_FULL;
 
-    mult_en                      = 1'b0;
-    mult_signed_mode_o           = 2'b00;
-    mult_sel_subword_o           = 2'b00;
-    mult_use_carry_o             = 1'b0;
-    mult_mac_en_o                = 1'b0;
+    mult_en                     = 1'b0;
+    mult_signed_mode_o          = 2'b00;
+    mult_sel_subword_o          = 2'b00;
+    mult_use_carry_o            = 1'b0;
+    mult_mac_en_o               = 1'b0;
 
-    regfile_wdata_mux_sel_o      = 1'b1;  // TODO: Remove, no longer used
-    regfile_we                   = 1'b0;
-    regfile_alu_we               = 1'b0;
-    regfile_alu_waddr_mux_sel_o  = 2'b01;
+    regfile_wdata_mux_sel_o     = 1'b1;  // TODO: Remove, no longer used
+    regfile_we                  = 1'b0;
+    regfile_alu_we              = 1'b0;
+    regfile_alu_waddr_mux_sel_o = 2'b01;
 
-    prepost_useincr_o            = 1'b1;
+    prepost_useincr_o           = 1'b1;
 
-    hwloop_we_o                  = 3'b0;
-    hwloop_wb_mux_sel_o          = 1'b0;
-    hwloop_cnt_mux_sel_o         = 2'b00;
-    immediate_mux_sel_o          = `IMM_I;
+    hwloop_we_o                 = 3'b0;
+    hwloop_wb_mux_sel_o         = 1'b0;
+    hwloop_cnt_mux_sel_o        = 2'b00;
+    immediate_mux_sel_o         = `IMM_I;
 
-    csr_access_o                 = 1'b0;
-    csr_op_o                     = `CSR_OP_NONE;
+    csr_access_o                = 1'b0;
+    csr_op_o                    = `CSR_OP_NONE;
 
-    data_we                      = 1'b0;
-    data_type_o                  = 2'b00;
-    data_sign_extension_o        = 1'b0;
-    data_reg_offset_o            = 2'b00;
-    data_req                     = 1'b0;
+    data_we                     = 1'b0;
+    data_type_o                 = 2'b00;
+    data_sign_extension_o       = 1'b0;
+    data_reg_offset_o           = 2'b00;
+    data_req                    = 1'b0;
 
-    restore_sr_o                 = 1'b0;
-    clear_isr_running_o          = 1'b0;
+    restore_sr_o                = 1'b0;
+    clear_isr_running_o         = 1'b0;
 
-    illegal_insn_o               = 1'b0;
-    trap_insn_o                  = 1'b0;
-    pipe_flush_o                 = 1'b0;
+    illegal_insn_o              = 1'b0;
+    trap_insn_o                 = 1'b0;
+    pipe_flush_o                = 1'b0;
 
-    ctrl_fsm_ns                  = ctrl_fsm_cs;
+    ctrl_fsm_ns                 = ctrl_fsm_cs;
 
-    rega_used                    = 1'b0;
-    regb_used                    = 1'b0;
-    regc_used                    = 1'b0;
+    rega_used                   = 1'b0;
+    regb_used                   = 1'b0;
+    regc_used                   = 1'b0;
 
 `ifdef BRANCH_PREDICTION
-    wrong_branch_taken_o         = 1'b0;
-    take_branch_o                = 1'b0;
+    wrong_branch_taken_o        = 1'b0;
+    take_branch_o               = 1'b0;
 `endif
 
     unique case (ctrl_fsm_cs)
@@ -298,23 +295,6 @@ module controller
       DECODE:
       begin
         unique case (instr_rdata_i[6:0])
-
-          /*
-          `OPCODE_CUST0: begin  // Custom-0 opcode: Get core id
-            // TODO: Temporary hack?
-            alu_op_a_mux_sel_o  = `OP_A_ZERO;
-            alu_op_b_mux_sel_o  = `OP_B_IMM;
-            immediate_mux_sel_o = `IMM_CID;
-            alu_operator        = `ALU_ADD;
-            regfile_alu_we      = 1'b1;
-          end
-
-          `OPCODE_CUST1: begin  // Custom-1 opcode: Flush pipeline
-            // TODO: Replace with WFI instruction as soon as compiler support available
-            pipe_flush_o = 1'b1;
-          end
-          */
-
 
           //////////////////////////////////////
           //      _ _   _ __  __ ____  ____   //
@@ -414,37 +394,69 @@ module controller
             endcase // unique case (instr_rdata_i)
           end
 
-          `OPCODE_LOAD: begin
-            alu_op_b_mux_sel_o       = `OP_B_IMM;
-            immediate_mux_sel_o      = `IMM_I;
-            alu_operator             = `ALU_ADD;
+          `OPCODE_LOAD,
+          `OPCODE_LOAD_POST: begin
             data_req                 = 1'b1;
             regfile_we               = 1'b1;
             rega_used                = 1'b1;
             data_type_o              = 2'b00;
-            data_sign_extension_o    = 1'b1;
 
-            unique case (instr_rdata_i) inside
-              `INSTR_LW: ;                    // Load Word
-              `INSTR_LH: data_type_o = 2'b01; // Load Half-Word Sign-Extended
-              `INSTR_LB: data_type_o = 2'b10; // Load Byte Sign-Extended
+            // offset from immediate
+            alu_operator             = `ALU_ADD;
+            alu_op_b_mux_sel_o       = `OP_B_IMM;
+            immediate_mux_sel_o      = `IMM_I;
 
-              `INSTR_LHU: begin               // Load Half-Word Zero-Extended
-                data_type_o              = 2'b01;
-                data_sign_extension_o    = 1'b0;
-              end
+            // post-increment setup
+            if (instr_rdata_i[6:0] == `OPCODE_LOAD_POST) begin
+              regfile_alu_waddr_mux_sel_o = 2'b00;
+              prepost_useincr_o           = 1'b0;
+              regfile_alu_we              = 1'b1;
+            end
 
-              `INSTR_LBU: begin               // Load Byte Zero-Extended
-                data_type_o              = 2'b10;
-                data_sign_extension_o    = 1'b0;
-              end
+            // sign/zero extension
+            data_sign_extension_o = ~instr_rdata_i[14];
 
-              default: begin
-                data_req   = 1'b0;
-                regfile_we = 1'b0;
-                illegal_insn_o = 1'b1;
-              end
-            endcase // unique case (instr_rdata_i)
+            // load size
+            unique case (instr_rdata_i[13:12])
+              2'b00:   data_type_o = 2'b10; // LB
+              2'b01:   data_type_o = 2'b01; // LH
+              2'b10:   data_type_o = 2'b00; // LW
+              default: data_type_o = 2'b00; // illegal or reg-reg
+            endcase
+
+            // reg-reg load (different encoding)
+            if (instr_rdata_i[14:12] == 3'b111) begin
+              // offset from RS2
+              regb_used          = 1'b1;
+              alu_op_b_mux_sel_o = `OP_B_REGB_OR_FWD;
+
+              // sign/zero extension
+              data_sign_extension_o = ~instr_rdata_i[30];
+
+              // load size
+              unique case (instr_rdata_i[31:25])
+                7'b0000_000,
+                7'b0100_000: data_type_o = 2'b10; // LB, LBU
+                7'b0001_000,
+                7'b0101_000: data_type_o = 2'b01; // LH, LHU
+                7'b0010_000: data_type_o = 2'b00; // LW
+                default: begin
+                  data_type_o    = 2'b00;
+                  // illegal instruction
+                  data_req       = 1'b0;
+                  regfile_we     = 1'b0;
+                  illegal_insn_o = 1'b1;
+                end
+              endcase
+            end
+
+            if (instr_rdata_i[14:12] == 3'b011 || instr_rdata_i[14:12] == 3'b110)
+            begin
+              // LD, LWU -> RV64 only
+              data_req       = 1'b0;
+              regfile_we     = 1'b0;
+              illegal_insn_o = 1'b1;
+            end
           end
 
           /*
