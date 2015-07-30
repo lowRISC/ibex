@@ -373,25 +373,42 @@ module controller
           //                              //
           //////////////////////////////////
 
-          `OPCODE_STORE: begin
-            alu_op_b_mux_sel_o  = `OP_B_IMM;
-            immediate_mux_sel_o = `IMM_S;
-            alu_operator        = `ALU_ADD;
+          `OPCODE_STORE,
+          `OPCODE_STORE_POST: begin
             data_req            = 1'b1;
             data_we             = 1'b1;
             rega_used           = 1'b1;
             regb_used           = 1'b1;
+            alu_operator        = `ALU_ADD;
 
-            unique case (instr_rdata_i) inside
-              `INSTR_SW:  data_type_o = 2'b00;
-              `INSTR_SH:  data_type_o = 2'b01;
-              `INSTR_SB:  data_type_o = 2'b10;
+            // post-increment setup
+            if (instr_rdata_i[6:0] == `OPCODE_STORE_POST) begin
+              prepost_useincr_o           = 1'b0;
+              regfile_alu_waddr_mux_sel_o = 2'b00;
+              regfile_alu_we              = 1'b1;
+            end
+
+            if (instr_rdata_i[14] == 1'b0) begin
+              // offset from immediate
+              immediate_mux_sel_o = `IMM_S;
+              alu_op_b_mux_sel_o  = `OP_B_IMM;
+            end else begin
+              // offset from register
+              regc_used = 1'b1;
+              alu_op_b_mux_sel_o = `OP_B_REGC_OR_FWD;
+            end
+
+            // store size
+            unique case (instr_rdata_i[13:12])
+              2'b00: data_type_o = 2'b10; // SB
+              2'b01: data_type_o = 2'b01; // SH
+              2'b10: data_type_o = 2'b00; // SW
               default: begin
-                data_req  = 1'b0;
-                data_we   = 1'b0;
+                data_req = 1'b0;
+                data_we  = 1'b0;
                 illegal_insn_o = 1'b1;
               end
-            endcase // unique case (instr_rdata_i)
+            endcase
           end
 
           `OPCODE_LOAD,
@@ -408,8 +425,8 @@ module controller
 
             // post-increment setup
             if (instr_rdata_i[6:0] == `OPCODE_LOAD_POST) begin
-              regfile_alu_waddr_mux_sel_o = 2'b00;
               prepost_useincr_o           = 1'b0;
+              regfile_alu_waddr_mux_sel_o = 2'b00;
               regfile_alu_we              = 1'b1;
             end
 

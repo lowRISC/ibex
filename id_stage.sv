@@ -303,7 +303,7 @@ module id_stage
   // source registers
   assign regfile_addr_ra_id = instr[`REG_S1];
   assign regfile_addr_rb_id = instr[`REG_S2];
-  //assign regfile_addr_rc_id = instr[25:21];
+  assign regfile_addr_rc_id = instr[`REG_D];
 
   // destination registers
   assign regfile_waddr_id = instr[`REG_D];
@@ -430,7 +430,7 @@ module id_stage
      case (alu_op_b_mux_sel)
        default:            operand_b = operand_b_fw_id;
        `OP_B_REGB_OR_FWD:  operand_b = operand_b_fw_id;
-       // `OP_B_REGC_OR_FWD:  operand_b = alu_operand_c;
+       `OP_B_REGC_OR_FWD:  operand_b = alu_operand_c;
        `OP_B_IMM:          operand_b = immediate_b;
      endcase // case (alu_op_b_mux_sel)
   end
@@ -494,8 +494,8 @@ module id_stage
   /////////////////////////////////////////////////////////
   riscv_register_file  registers_i
   (
-    .clk          ( clk               ),
-    .rst_n        ( rst_n             ),
+    .clk          ( clk                ),
+    .rst_n        ( rst_n              ),
 
     // Read port a
     .raddr_a_i    ( (dbg_reg_mux_i == 1'b0) ? regfile_addr_ra_id : dbg_reg_addr_i ),
