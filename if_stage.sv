@@ -34,20 +34,28 @@
 
 module if_stage
 (
-    input  logic clk,
-    input  logic rst_n,
+    input  logic        clk,
+    input  logic        rst_n,
 
     // the boot address is used to calculate the exception offsets
     input  logic [31:0] boot_addr_i,
 
+    // instruction request control
+    input  logic        req_i,
+    output logic        ack_o,
+    input  logic        drop_request_i,
+
+    // instruction cache interface
+    output logic        instr_req_o,
+    output logic [31:0] instr_addr_o,
+    input  logic        instr_gnt_i,
+    input  logic        instr_rvalid_i,
+    input  logic [31:0] instr_rdata_i,
+
     // Output of IF Pipeline stage
     output logic [31:0] instr_rdata_id_o,      // read instruction is sampled and sent to ID stage for decoding
-    output logic [31:0] current_pc_if_o,       // program counter of IF stage
-    output logic [31:0] current_pc_id_o,       // program counter of ID stage
-
-    // From to Instr memory
-    input  logic [31:0] instr_rdata_i,         // Instruction read from instruction memory /cache
-    output logic [31:0] instr_addr_o,          // address for instruction fetch
+    output logic [31:0] current_pc_if_o,
+    output logic [31:0] current_pc_id_o,
 
     // Forwarding ports - control signals
     input  logic        force_nop_i,           // insert a NOP in the pipe
@@ -58,18 +66,18 @@ module if_stage
     input  logic  [1:0] exc_pc_mux_i,          // select which exception to execute
 
     // jump and branch target and decision
-    input  logic [31:0] jump_target_i,      // jump target
+    input  logic [31:0] jump_target_i,      // jump target address
     input  logic  [1:0] jump_in_id_i,
     input  logic  [1:0] jump_in_ex_i,       // jump in EX -> get PC from jump target (could also be branch)
     input  logic        branch_decision_i,
 
     // from debug unit
-    input  logic [31:0]  dbg_pc_from_npc,
-    input  logic         dbg_set_npc,
+    input  logic [31:0] dbg_pc_from_npc,
+    input  logic        dbg_set_npc,
 
     // pipeline stall
-    input  logic         stall_if_i,
-    input  logic         stall_id_i             // Stall in the id stage: here (if_stage) freeze the registers
+    input  logic        stall_if_i,
+    input  logic        stall_id_i
 );
 
 

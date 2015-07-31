@@ -7,6 +7,7 @@
 // Additional contributions by:                                               //
 //                 Igor Loi - igor.loi@unibo.it                               //
 //                 Andreas Traber - atraber@student.ethz.ch                   //
+//                 Sven Stucki - svstucki@student.ethz.ch                     //
 //                                                                            //
 //                                                                            //
 // Create Date:    24/3/2015                                                  //
@@ -244,73 +245,50 @@ module riscv_core
     //////////////////////////////////////////////////
     if_stage if_stage_i
     (
-       // Global signals reset and clock
-      .clk                 ( clk                  ),   // Clock
-      .rst_n               ( rst_n                ),   // active low reset
-
-      // Boot address for exception vector offsets
-      .boot_addr_i         ( boot_addr_i          ),
-
-      // outputs to ID stage
-      .instr_rdata_id_o    ( instr_rdata_id       ),   // Output of IF Pipeline stage
-      .current_pc_if_o     ( current_pc_if        ),   // current pc
-      .current_pc_id_o     ( current_pc_id        ),   // current pc
-
-      //Input - OUtput from-to  instruction memory
-      .instr_rdata_i       ( instr_rdata_int      ),   // From Instr memory
-      .instr_addr_o        ( instr_addr_int       ),   // address for instruction fetch to instr memory/cache
-
-      // Forwrding ports - control signals
-      .force_nop_i         ( force_nop_id         ),   // select incoming instr or NOP
-      .exception_pc_reg_i  ( epcr                 ),   // Exception PC register
-      .pc_from_hwloop_i    ( hwlp_targ_addr       ),   // pc from hwloop start address
-      .pc_mux_sel_i        ( pc_mux_sel_id        ),   // sel for pc multiplexer
-      .pc_mux_boot_i       ( pc_mux_boot          ),   // load boot address as PC
-      .exc_pc_mux_i        ( exc_pc_mux_id        ),   // selector for exception multiplexer
-
-      // from debug unit
-      .dbg_pc_from_npc     ( dbg_npc              ),
-      .dbg_set_npc         ( dbg_set_npc          ),
-
-      // Jump and branch target and decision
-      .jump_in_id_i        ( jump_in_id           ),
-      .jump_in_ex_i        ( jump_in_ex           ),
-      .branch_decision_i   ( branch_decision      ),
-      .jump_target_i       ( jump_target          ),
-
-      // pipeline stalls
-      .stall_if_i          ( stall_if             ),
-      .stall_id_i          ( stall_id             )
-    );
-
-
-    ///////////////////////////////////////////////////////////////////////////////////
-    //  ___ _   _ ____ _____ ____     ____ ___  ____  _____   ___ _   _ _____ _____  //
-    // |_ _| \ | / ___|_   _|  _ \   / ___/ _ \|  _ \| ____| |_ _| \ | |_   _|  ___| //
-    //  | ||  \| \___ \ | | | |_) | | |  | | | | |_) |  _|    | ||  \| | | | | |_    //
-    //  | || |\  |___) || | |  _ <  | |__| |_| |  _ <| |___   | || |\  | | | |  _|   //
-    // |___|_| \_|____/ |_| |_| \_\  \____\___/|_| \_\_____| |___|_| \_| |_| |_|     //
-    //                                                                               //
-    ///////////////////////////////////////////////////////////////////////////////////
-    instr_core_interface        instr_core_interface_i
-    (
       .clk                 ( clk             ),
       .rst_n               ( rst_n           ),
 
-      .stall_if_i          ( stall_if        ),
+      // boot address (trap vector location)
+      .boot_addr_i         ( boot_addr_i     ),
 
+      // instruction request control
       .req_i               ( instr_req_int   ),
-      .addr_i              ( instr_addr_int  ),
       .ack_o               ( instr_ack_int   ),
-      .rdata_o             ( instr_rdata_int ),
+      .drop_request_i      ( 1'b0 ),
 
+      // instruction cache interface
       .instr_req_o         ( instr_req_o     ),
       .instr_addr_o        ( instr_addr_o    ),
       .instr_gnt_i         ( instr_grant_i   ),
-      .instr_r_valid_i     ( instr_rvalid_i  ),
-      .instr_r_rdata_i     ( instr_rdata_i   ),
+      .instr_rvalid_i      ( instr_rvalid_i  ),
+      .instr_rdata_i       ( instr_rdata_i   ),
 
-      .drop_request_i      ( 1'b0 )
+      // outputs to ID stage
+      .instr_rdata_id_o    ( instr_rdata_id  ),   // Output of IF Pipeline stage
+      .current_pc_if_o     ( current_pc_if   ),   // current pc
+      .current_pc_id_o     ( current_pc_id   ),   // current pc
+
+      // Forwrding ports - control signals
+      .force_nop_i         ( force_nop_id    ),   // select incoming instr or NOP
+      .exception_pc_reg_i  ( epcr            ),   // Exception PC register
+      .pc_from_hwloop_i    ( hwlp_targ_addr  ),   // pc from hwloop start address
+      .pc_mux_sel_i        ( pc_mux_sel_id   ),   // sel for pc multiplexer
+      .pc_mux_boot_i       ( pc_mux_boot     ),   // load boot address as PC
+      .exc_pc_mux_i        ( exc_pc_mux_id   ),   // selector for exception multiplexer
+
+      // from debug unit
+      .dbg_pc_from_npc     ( dbg_npc         ),
+      .dbg_set_npc         ( dbg_set_npc     ),
+
+      // Jump and branch target and decision
+      .jump_in_id_i        ( jump_in_id      ),
+      .jump_in_ex_i        ( jump_in_ex      ),
+      .branch_decision_i   ( branch_decision ),
+      .jump_target_i       ( jump_target     ),
+
+      // pipeline stalls
+      .stall_if_i          ( stall_if        ),
+      .stall_id_i          ( stall_id        )
     );
 
 
