@@ -37,8 +37,8 @@ module instr_core_interface
   output logic        instr_req_o,
   output logic [31:0] instr_addr_o,
   input  logic        instr_gnt_i,
-  input  logic        instr_r_valid_i,
-  input  logic [31:0] instr_r_rdata_i,
+  input  logic        instr_rvalid_i,
+  input  logic [31:0] instr_rdata_i,
 
   input  logic        stall_if_i,
 
@@ -70,7 +70,7 @@ module instr_core_interface
         addr_Q <= addr_i;
 
       if(save_rdata)
-        rdata_Q <= instr_r_rdata_i;
+        rdata_Q <= instr_rdata_i;
     end
   end
 
@@ -80,7 +80,7 @@ module instr_core_interface
     instr_req_o   = 1'b0;
     ack_o         = 1'b0;
     save_rdata    = 1'b0;
-    rdata_o       = instr_r_rdata_i;
+    rdata_o       = instr_rdata_i;
     instr_addr_o  = addr_i;
     wait_gnt      = 1'b0;
 
@@ -124,7 +124,7 @@ module instr_core_interface
 
       PENDING:
       begin
-        if (instr_r_valid_i) begin
+        if (instr_rvalid_i) begin
           save_rdata = 1'b1;
           ack_o = 1'b1;
 
@@ -157,7 +157,7 @@ module instr_core_interface
         ack_o       = 1'b0;
         instr_req_o = 1'b0;
 
-        if (instr_r_valid_i) begin
+        if (instr_rvalid_i) begin
           ack_o       = 1'b1;
           save_rdata  = 1'b1;
 
