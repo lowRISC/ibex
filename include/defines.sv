@@ -4,29 +4,26 @@
 // Engineer:       Matthias Baer - baermatt@student.ethz.ch                   //
 //                                                                            //
 // Additional contributions by:                                               //
-//                                                                            //
+//                 Sven Stucki - svstucki@student.ethz.ch                     //
 //                                                                            //
 //                                                                            //
 // Create Date:    19/09/2013                                                 //
-// Design Name:    Pipelined Processor                                        //
+// Design Name:    RISC-V processor core                                      //
 // Module Name:    defines.sv                                                 //
-// Project Name:   Processor                                                  //
+// Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
-// Description:    Defines for the the pipelined processor                    //
+// Description:    Defines for various constants used by the processor core.  //
 //                                                                            //
 //                                                                            //
 // Revision:                                                                  //
 // Revision v0.1 - File Created                                               //
-//                                                                            //
-//                                                                            //
-//                                                                            //
-//                                                                            //
+// Revision v0.2 - Adapted for RISC-V                                         //
 //                                                                            //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
-// BTW: If you want to create more of those fancy ASCII art comments:
-// http://patorjk.com/software/taag/#p=display&v=0&f=Standard&t=Fancy%20ASCII%20Art
+// BTW: If you want to create more of those fancy ASCII art comments:         //
+// http://patorjk.com/software/taag/#f=Standard&t=Fancy%20ASCII%20Art         //
 ////////////////////////////////////////////////////////////////////////////////
 
 `ifndef _CORE_DEFINES
@@ -287,25 +284,6 @@ endfunction // prettyPrintInstruction
 `define CSR_OP_SET   2'b10
 `define CSR_OP_CLEAR 2'b11
 
-// Special-Purpose Register Addresses
-// see OpenRISC manual p. 22ff
-`define SP_GRP_SYS     5'h00
-`define SP_NPC        11'h010
-`define SP_SR         11'h011
-`define SP_PPC        11'h012
-`define SP_EPCR       11'd032
-`define SP_ESR        11'd064
-
-// Supervision Register
-`define SR_IEE 5'd2
-`define SR_F   5'd9
-`define SR_CY  5'd10
-`define SR_OV  5'd11
-
-// Core and Cluster ID are put into the system control and status
-// registers group
-`define SP_COREID     16'h0680
-`define SP_CLUSTERID  16'h0681
 
 // SPR for HWLoops
 `define SP_GRP_HWLP          5'h0C
@@ -321,6 +299,15 @@ endfunction // prettyPrintInstruction
 `define SP_DMR_MSB 8'h02
 `define SP_DSR_MSB 8'h04
 
+
+///////////////////////////////////////////////
+//   ___ ____    ____  _                     //
+//  |_ _|  _ \  / ___|| |_ __ _  __ _  ___   //
+//   | || | | | \___ \| __/ _` |/ _` |/ _ \  //
+//   | || |_| |  ___) | || (_| | (_| |  __/  //
+//  |___|____/  |____/ \__\__,_|\__, |\___|  //
+//                              |___/        //
+///////////////////////////////////////////////
 
 // forwarding operand mux
 `define SEL_REGFILE      2'b00
@@ -338,22 +325,32 @@ endfunction // prettyPrintInstruction
 `define OP_B_REGC_OR_FWD 2'b01
 `define OP_B_IMM         2'b10
 
-// operand c selection
-`define OP_C_REGC_OR_FWD 1'b0
-`define OP_C_JT          1'b1
-
 // operand b immediate selection
 `define IMM_I      3'b000
 `define IMM_S      3'b001
 `define IMM_U      3'b010
 `define IMM_PCINCR 3'b011
 
+// operand c selection
+`define OP_C_REGC_OR_FWD 1'b0
+`define OP_C_JT          1'b1
+
+
+///////////////////////////////////////////////
+//   ___ _____   ____  _                     //
+//  |_ _|  ___| / ___|| |_ __ _  __ _  ___   //
+//   | || |_    \___ \| __/ _` |/ _` |/ _ \  //
+//   | ||  _|    ___) | || (_| | (_| |  __/  //
+//  |___|_|     |____/ \__\__,_|\__, |\___|  //
+//                              |___/        //
+///////////////////////////////////////////////
+
 // PC mux selector defines
 `define PC_INCR          3'b000
 `define PC_NO_INCR       3'b001
 `define PC_EXCEPTION     3'b100
 `define PC_ERET          3'b101
-`define HWLOOP_ADDR      3'b110
+`define PC_HWLOOP        3'b110
 `define PC_BRANCH_PRED   3'b111
 
 // Exception PC mux selector defines
@@ -370,10 +367,10 @@ endfunction // prettyPrintInstruction
 `define EXC_OFF_ILLINSN  5'h08
 //      unused           5'h0c
 
+
 // Exception causes
 `define EXC_CAUSE_ECALL  {1'b0, 4'd11};
 `define EXC_CAUSE_EBREAK {1'b0, 4'd03};
-
 
 // Hardware loops addon
 `define HWLOOP_REGS 2
