@@ -289,7 +289,7 @@ module controller
         // hwloop detected, jump to start address!
         // Attention: This has to be done in the DECODE and the FIRST_FETCH states
         if (hwloop_jump_i == 1'b1)
-          pc_mux_sel_o  = `HWLOOP_ADDR;
+          pc_mux_sel_o  = `PC_HWLOOP;
       end
 
       DECODE:

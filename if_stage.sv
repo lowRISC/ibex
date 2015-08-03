@@ -118,7 +118,7 @@ module if_stage
       `PC_NO_INCR:      next_pc = current_pc_if_o;          // PC is not incremented
       `PC_EXCEPTION:    next_pc = exc_pc;                   // PC that points to the exception
       `PC_ERET:         next_pc = exception_pc_reg_i;       // PC is restored when returning from IRQ/exception
-      `HWLOOP_ADDR:     next_pc = pc_from_hwloop_i;         // PC is taken from hwloop start addr
+      `PC_HWLOOP:       next_pc = pc_from_hwloop_i;         // PC is taken from hwloop start addr
        default:
        begin
          next_pc = current_pc_if_o;
