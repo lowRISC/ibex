@@ -40,11 +40,12 @@ module instr_core_interface
   input  logic        instr_rvalid_i,
   input  logic [31:0] instr_rdata_i,
 
+  output logic [31:0] last_addr_o,
+
   input  logic        stall_if_i,
 
   input  logic        drop_request_i
 );
-
 
   enum logic [2:0] {IDLE, PENDING, WAIT_RVALID, WAIT_IF_STALL, WAIT_GNT, ABORT} CS, NS;
 
@@ -66,13 +67,19 @@ module instr_core_interface
     begin
       CS <= NS;
 
-      if(wait_gnt)
+      if (instr_req_o && instr_gnt_i)
+        addr_Q <= instr_addr_o;
+
+      if (wait_gnt)
         addr_Q <= addr_i;
 
-      if(save_rdata)
+      if (save_rdata)
         rdata_Q <= instr_rdata_i;
     end
   end
+
+
+  assign last_addr_o = addr_Q;
 
 
   always_comb
