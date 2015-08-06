@@ -800,6 +800,7 @@ module riscv_core
   `ifdef TRACE_EXECUTION
   integer f;
   string fn;
+  integer      cycles;
   logic [31:0] instr;
   logic        compressed;
   logic [31:0] pc;
@@ -811,10 +812,12 @@ module riscv_core
   // open/close output file for writing
   initial
   begin
-    #1
+    #1 // delay needed for valid core_id_i
     $sformat(fn, "trace_core_%h.log", core_id_i);
-    $display("Output file: %s", fn);
+    $display("[TRACER] Output filename is: %s", fn);
     f = $fopen(fn, "w");
+    $fwrite(f, "%19s\t%6s\t%10s\t%10s\t \t%s\n", "Time", "Cycles", "PC", "Instr", "Mnemonic");
+    //$fwrite(f, "Time\tCycles\tPC\tInstruction\n");
   end
 
   final
@@ -825,8 +828,6 @@ module riscv_core
   // log execution
   always @(posedge clk)
   begin
-    #1
-
     // get current PC and instruction
     instr      = id_stage_i.instr[31:0];
     compressed = id_stage_i.compressed_instr_o;
@@ -835,21 +836,20 @@ module riscv_core
     // get register values
     rd         = instr[`REG_D];
     rs1        = instr[`REG_S1];
-    rs1_value  = id_stage_i.operand_a_fw_id; //r[rs1];
+    rs1_value  = id_stage_i.operand_a_fw_id;
     rs2        = instr[`REG_S2];
-    rs2_value  = id_stage_i.operand_b_fw_id; //r[rs2];
+    rs2_value  = id_stage_i.operand_b_fw_id;
 
     if (id_stage_i.stall_id_o == 1'b0 && id_stage_i.controller_i.ctrl_fsm_cs == id_stage_i.controller_i.DECODE)
     begin
       mnemonic = "";
       imm = 0;
 
-      $fwrite(f, "%t:\t0x%h\t0x%h\t", $time, pc, instr);
+      $fwrite(f, "%t\t%6d\t0x%h\t", $time, cycles, pc);
       if (compressed)
-        //$fwrite(f, "C (0x%4h)\t", id_stage_i.instr_rdata_i[15:0]);
-        $fwrite(f, "C\t");
+        $fwrite(f, "0x    %4h\tC\t", id_stage_i.instr_rdata_i[15:0]);
       else
-        $fwrite(f, "I\t");
+        $fwrite(f, "0x%h\tI\t", instr);
 
       // use casex instead of case inside due to ModelSim bug
       casex (instr)
@@ -931,22 +931,32 @@ module riscv_core
         `INSTR_MULHSU:     printRInstr("MULHSU");
         `INSTR_MULHU:      printRInstr("MULHU");
         */
-        default:           printMnemonic("Unknown instruction");
+        default:           printMnemonic("INVALID");
       endcase // unique case (instr)
+
+      $fflush(f);
     end
   end // always @ (posedge clk)
+
+  always_ff @(posedge clk, negedge rst_n)
+  begin
+    if (rst_n == 1'b0)
+      cycles = 0;
+    else
+      cycles = cycles + 1;
+  end
 
   function void printMnemonic(input string mnemonic);
     begin
       riscv_core.mnemonic = mnemonic;
-      $fdisplay(f, "%s", mnemonic);
+      $fdisplay(f, "%7s", mnemonic);
     end
   endfunction // printMnemonic
 
   function void printRInstr(input string mnemonic);
     begin
       riscv_core.mnemonic = mnemonic;
-      $fdisplay(f, "%s\tx%0d, x%0d (0x%h), x%0d (0x%h)", mnemonic,
+      $fdisplay(f, "%7s\tx%0d, x%0d (0x%h), x%0d (0x%h)", mnemonic,
                 rd, rs1, rs1_value, rs2, rs2_value);
     end
   endfunction // printRInstr
@@ -955,7 +965,7 @@ module riscv_core
     begin
       riscv_core.mnemonic = mnemonic;
       imm = id_stage_i.imm_i_type;
-      $fdisplay(f, "%s\tx%0d, x%0d (0x%h), 0x%0h (imm)", mnemonic,
+      $fdisplay(f, "%7s\tx%0d, x%0d (0x%h), 0x%0h (imm)", mnemonic,
                 rd, rs1, rs1_value, imm);
     end
   endfunction // printIInstr
@@ -964,7 +974,7 @@ module riscv_core
     begin
       riscv_core.mnemonic = mnemonic;
       imm = id_stage_i.imm_i_type;
-      $fdisplay(f, "%s\tx%0d, x%0d (0x%h), 0x%0h (imm) (-> 0x%h)", mnemonic,
+      $fdisplay(f, "%7s\tx%0d, x%0d (0x%h), 0x%0h (imm) (-> 0x%h)", mnemonic,
                 rd, rs1, rs1_value, imm, imm+rs1_value);
     end
   endfunction // printILInstr
@@ -973,7 +983,7 @@ module riscv_core
     begin
       riscv_core.mnemonic = mnemonic;
       imm = id_stage_i.imm_s_type;
-      $fdisplay(f, "%s\tx%0d (0x%h), x%0d (0x%h), 0x%0h (imm) (-> 0x%h)", mnemonic,
+      $fdisplay(f, "%7s\tx%0d (0x%h), x%0d (0x%h), 0x%0h (imm) (-> 0x%h)", mnemonic,
                 rs1, rs1_value, rs2, rs2_value, imm, imm+rs1_value);
     end
   endfunction // printSInstr
@@ -982,7 +992,7 @@ module riscv_core
     begin
       riscv_core.mnemonic = mnemonic;
       imm = id_stage_i.imm_sb_type;
-      $fdisplay(f, "%s\tx%0d (0x%h), x%0d (0x%h), 0x%0h (-> 0x%h)", mnemonic,
+      $fdisplay(f, "%7s\tx%0d (0x%h), x%0d (0x%h), 0x%0h (-> 0x%h)", mnemonic,
                 rs1, rs1_value, rs2, rs2_value, imm, imm+pc);
     end
   endfunction // printSBInstr
@@ -991,14 +1001,14 @@ module riscv_core
     begin
       riscv_core.mnemonic = mnemonic;
       imm = id_stage_i.imm_uj_type;
-      $fdisplay(f, "%s\tx%0d, 0x%h (-> 0x%h)", mnemonic, rd, imm, imm+pc);
+      $fdisplay(f, "%7s\tx%0d, 0x%h (-> 0x%h)", mnemonic, rd, imm, imm+pc);
     end
   endfunction // printUJInstr
 
   function void printRDInstr(input string mnemonic);
     begin
       riscv_core.mnemonic = mnemonic;
-      $fdisplay(f, "%s\tx%0d", mnemonic, rd);
+      $fdisplay(f, "%7s\tx%0d", mnemonic, rd);
     end
   endfunction // printRDInstr
 
@@ -1010,10 +1020,10 @@ module riscv_core
       csr = instr[31:20];
 
       if (instr[14] == 1'b0) begin
-        $fdisplay(f, "%s\tx%0d, 0x%h (csr), x%0d (0x%h)", mnemonic, rd, csr,
+        $fdisplay(f, "%7s\tx%0d, 0x%h (csr), x%0d (0x%h)", mnemonic, rd, csr,
           rs1, rs1_value);
       end else begin
-        $fdisplay(f, "%s\tx%0d, 0x%h (csr), 0x%h (imm)", mnemonic, rd, csr, imm);
+        $fdisplay(f, "%7s\tx%0d, 0x%h (csr), 0x%h (imm)", mnemonic, rd, csr, imm);
       end
     end
   endfunction // printCSRInstr
