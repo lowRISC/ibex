@@ -955,7 +955,7 @@ module riscv_core
     begin
       riscv_core.mnemonic = mnemonic;
       imm = id_stage_i.imm_i_type;
-      $fdisplay(f, "%s\tx%0d, x%0d (0x%h), 0x%0d (imm)", mnemonic,
+      $fdisplay(f, "%s\tx%0d, x%0d (0x%h), 0x%0h (imm)", mnemonic,
                 rd, rs1, rs1_value, imm);
     end
   endfunction // printIInstr
@@ -964,7 +964,7 @@ module riscv_core
     begin
       riscv_core.mnemonic = mnemonic;
       imm = id_stage_i.imm_i_type;
-      $fdisplay(f, "%s\tx%0d, x%0d (0x%h), 0x%0d (imm) (-> 0x%h)", mnemonic,
+      $fdisplay(f, "%s\tx%0d, x%0d (0x%h), 0x%0h (imm) (-> 0x%h)", mnemonic,
                 rd, rs1, rs1_value, imm, imm+rs1_value);
     end
   endfunction // printILInstr
@@ -973,7 +973,7 @@ module riscv_core
     begin
       riscv_core.mnemonic = mnemonic;
       imm = id_stage_i.imm_s_type;
-      $fdisplay(f, "%s\tx%0d (0x%h), x%0d (0x%h), 0x%h (imm) (-> 0x%h)", mnemonic,
+      $fdisplay(f, "%s\tx%0d (0x%h), x%0d (0x%h), 0x%0h (imm) (-> 0x%h)", mnemonic,
                 rs1, rs1_value, rs2, rs2_value, imm, imm+rs1_value);
     end
   endfunction // printSInstr
@@ -982,7 +982,7 @@ module riscv_core
     begin
       riscv_core.mnemonic = mnemonic;
       imm = id_stage_i.imm_sb_type;
-      $fdisplay(f, "%s\tx%0d (0x%h), x%0d (0x%h), 0x%h (-> 0x%h)", mnemonic,
+      $fdisplay(f, "%s\tx%0d (0x%h), x%0d (0x%h), 0x%0h (-> 0x%h)", mnemonic,
                 rs1, rs1_value, rs2, rs2_value, imm, imm+pc);
     end
   endfunction // printSBInstr
