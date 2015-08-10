@@ -236,12 +236,6 @@ module riscv_core
 `endif
 
 
-  // TODO: Temporary assignments while not everything from OR10N is implemented (e.g. debug unit)
-  assign dbg_dsr        = 2'b0;
-  assign dbg_st_en      = 1'b0;
-  assign dbg_sp_mux     = 1'b0;
-  assign dbg_flush_pipe = 1'b0;
-
 
     //////////////////////////////////////////////////
     //   ___ _____   ____ _____  _    ____ _____    //
@@ -646,10 +640,7 @@ module riscv_core
       .save_pc_if_i            ( save_pc_if            ),
       .save_pc_id_i            ( save_pc_id            ),
       .epcr_o                  ( epcr                  ),
-      .irq_enable_o            ( irq_enable            ),
-
-      .npc_o                   ( dbg_npc               ), // PC from debug unit
-      .set_npc_o               ( dbg_set_npc           )  // set PC to new value
+      .irq_enable_o            ( irq_enable            )
     );
 
     // Mux for SPR access through Debug Unit
@@ -747,6 +738,7 @@ module riscv_core
    assign hwlp_cnt_data   = (hwlp_we_ex[2] == 1'b1) ? hwlp_cnt_data_ex   : sp_hwlp_cnt;
    assign hwlp_regid      = (|hwlp_we_ex)           ? hwlp_regid_ex      : sp_hwlp_regid;
    assign hwlp_we         = hwlp_we_ex | sp_hwlp_we;
+   */
 
 
     /////////////////////////////////////////////////////////////
@@ -786,13 +778,12 @@ module riscv_core
       .regfile_we_o    ( dbg_reg_we      ),
       .regfile_addr_o  ( dbg_reg_addr    ),
       .regfile_wdata_o ( dbg_reg_wdata   ),
-      .regfile_rdata_i ( dbg_rdata       )
+      .regfile_rdata_i ( dbg_rdata       ),
+
+      .npc_o           ( dbg_npc         ), // PC from debug unit
+      .set_npc_o       ( dbg_set_npc     )  // set PC to new value
     );
 
-  */
-
-  assign dbg_reg_mux = 0;
-  assign dbg_stall = 0;
 
 
   // Execution trace generation

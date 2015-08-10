@@ -58,11 +58,7 @@ module cs_registers
   output  logic [31:0]                   hwlp_end_o,
   output  logic [31:0]                   hwlp_counter_o,
   output  logic [1:0]                    hwlp_regid_o,
-  output  logic [2:0]                    hwlp_we_o,
-
-  // Signals for NPC register
-  output logic [31:0] npc_o, // TODO: check if needed
-  output logic        set_npc_o // TODO: check if needed
+  output  logic [2:0]                    hwlp_we_o
 );
 
 
@@ -105,6 +101,11 @@ module cs_registers
       12'hF00: constant_rdata_int = 32'h00_00_01_00;  // mcpuid: RV32I
       12'hF01: constant_rdata_int = 32'h00_00_80_00;  // mimpid: PULP3, anonymous source (no allocated ID)
       12'hF10: constant_rdata_int = {22'b0, cluster_id_i, core_id_i}; // mhartid: unique hardware thread id
+
+      // debug registers
+      12'hFC0: constant_rdata_int = curr_pc_id_i; // Previous Program Counter for Debug
+
+      12'h780: constant_rdata_int = curr_pc_if_i; // Next Program Counter for Debug
 
       default: is_constant = 1'b0;
     endcase

@@ -57,25 +57,25 @@ module debug_unit
   output logic         sp_mux_o,
   output logic         regfile_mux_o,
   output logic         regfile_we_o,
-  output logic [15:0]  regfile_addr_o,
+  output logic [11:0]  regfile_addr_o,
   output logic [31:0]  regfile_wdata_o,
-  input  logic [31:0]  regfile_rdata_i
+  input  logic [31:0]  regfile_rdata_i,
+
+  // Signals for NPC register
+  output logic [31:0] npc_o,
+  output logic        set_npc_o
 
   );
 
   // registers for debug control
   logic [1:0]         DSR_DP,  DSR_DN;  // Debug Stop Register: IIE, INTE
   logic [1:0]         DMR1_DP, DMR1_DN; // only single step trace and branch trace bits
-  logic [2*`N_WP-1:0] DMR2_DP, DMR2_DN; // only BP enable control and BP cause status
-
-  // watchpoint status
-  logic [`N_WP-1:0]   WP_Status_D;
 
   // BP control FSM
   enum logic [2:0]   {Idle, Trap, DebugStall, StallCore} BP_State_SN, BP_State_SP;
 
   // ack to debug interface
-  assign dbginf_ack_o = (dbginf_strobe_i && (BP_State_SP == StallCore));
+  assign dbginf_ack_o = dbginf_strobe_i && ((BP_State_SP == StallCore) || (dbginf_addr_i[15:11] == 5'b00110));
 
   always_comb
   begin
@@ -83,38 +83,32 @@ module debug_unit
     stall_core_o  = 1'b0;
     dbginf_bp_o   = 1'b0;
     flush_pipe_o  = 1'b0;
+
     case (BP_State_SP)
       Idle:
       begin
         if(trap_i == 1'b1)
-          BP_State_SN = Trap;
-
-        if(dbginf_stall_i)
+        begin
+          dbginf_bp_o  = 1'b1;
+          stall_core_o = 1'b1;
+          BP_State_SN  = StallCore;
+        end
+        else if(dbginf_stall_i)
         begin
           flush_pipe_o = 1'b1;
-          BP_State_SN = DebugStall;
+          BP_State_SN  = DebugStall;
         end
       end
 
-      // A trap was encountered, wait for for the pipeline to be
-      // flushed
-      Trap:
-      begin
-        if(pipe_flushed_i == 1'b1)
-        begin
-          dbginf_bp_o = 1'b1;
-          BP_State_SN = StallCore;
-        end
-      end
-
-      // A stall from adv dbg was seen, flush the pipeline and wait for unstalling
+      // A stall from adv dbg unit was seen, flush the pipeline and wait for unstalling
       DebugStall:
       begin
         flush_pipe_o = 1'b1;
 
-        if(pipe_flushed_i == 1'b1)
+        if(trap_i == 1'b1)
         begin
-          BP_State_SN = StallCore;
+          stall_core_o = 1'b1;
+          BP_State_SN  = StallCore;
         end
       end
 
@@ -137,15 +131,19 @@ module debug_unit
   assign dbg_st_en_o       = DMR1_DP[0];
   assign dbg_dsr_o         = DSR_DP;
 
+  // handle set next program counter
+  assign set_npc_o = (regfile_addr_o == 12'h780) && (sp_mux_o == 1'b1) && (regfile_we_o == 1'b1);
+  assign npc_o     = dbginf_data_i;
+
+
   // address decoding, write and read controller
   always_comb
   begin
     DMR1_DN            = DMR1_DP;
-    DMR2_DN[`N_WP-1:0] = DMR2_DP[`N_WP-1:0];
     DSR_DN             = DSR_DP;
     dbginf_data_o      = 32'b0;
     regfile_we_o       = 1'b0;
-    regfile_addr_o     = 16'b0;
+    regfile_addr_o     = 'h0;
     regfile_mux_o      = 1'b0;
     sp_mux_o           = 1'b0;
 
@@ -160,13 +158,6 @@ module debug_unit
             else
               dbginf_data_o[`DMR1_ST+1:`DMR1_ST] = DMR1_DP;
           end
-          11'd17: begin // SP_DMR2
-            if(dbginf_we_i == 1'b1)
-              DMR2_DN[`N_WP-1:0] = dbginf_data_i[`DMR2_WGB0 + (`N_WP-1):`DMR2_WGB0];
-            else
-              dbginf_data_o[`DMR2_WGB0 + (`N_WP-1):`DMR2_WGB0] = DMR2_DP[`N_WP-1:0];
-              dbginf_data_o[`DMR2_WBS0 + (`N_WP-1):`DMR2_WBS0] = DMR2_DP[2*`N_WP-1:`N_WP];
-          end
           11'd20: begin // SP_DSR
             // currently we only handle IIE and INTE
             if(dbginf_we_i == 1'b1)
@@ -177,27 +168,31 @@ module debug_unit
           default: ;
         endcase // casex [10:0]
       end
-      // check if GPRs are accessed
-      else if(dbginf_addr_i[15:10] == 6'b000001)
+      // check if internal registers (GPR or SPR) are accessed
+      else if(BP_State_SP == StallCore)
       begin
-        regfile_mux_o       = 1'b1;
-        regfile_addr_o[4:0] = dbginf_addr_i[4:0];
+        // check if GPRs are accessed
+        if(dbginf_addr_i[15:10] == 6'b000001)
+        begin
+          regfile_mux_o       = 1'b1;
+          regfile_addr_o[4:0] = dbginf_addr_i[4:0];
 
-        if(dbginf_we_i == 1'b1)
-          regfile_we_o  = 1'b1;
+          if(dbginf_we_i == 1'b1)
+            regfile_we_o  = 1'b1;
+          else
+            dbginf_data_o = regfile_rdata_i;
+        end
+        // some other SPR is accessed
         else
-          dbginf_data_o = regfile_rdata_i;
-      end
-      // some other SPR is accessed
-      else
-      begin
-        sp_mux_o        = 1'b1;
-        regfile_addr_o  = dbginf_addr_i;
+        begin
+          sp_mux_o        = 1'b1;
+          regfile_addr_o  = dbginf_addr_i[11:0];
 
-        if(dbginf_we_i == 1'b1)
-          regfile_we_o = 1'b1;
-        else
-          dbginf_data_o = regfile_rdata_i;
+          if(dbginf_we_i == 1'b1)
+            regfile_we_o = 1'b1;
+          else
+            dbginf_data_o = regfile_rdata_i;
+        end
       end
     end
   end
@@ -206,13 +201,11 @@ module debug_unit
   always_ff@(posedge clk or negedge rst_n) begin
     if (~rst_n) begin
       DMR1_DP     <= 2'b0;
-      DMR2_DP     <= 'b0;
       DSR_DP      <= 'b0;
       BP_State_SP <= Idle;
     end
     else begin
       DMR1_DP     <= DMR1_DN;
-      DMR2_DP     <= DMR2_DN;
       DSR_DP      <= DSR_DN;
       BP_State_SP <= BP_State_SN;
     end

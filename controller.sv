@@ -1254,7 +1254,10 @@ module controller
     case (dbg_fsm_cs)
       DBG_IDLE:
       begin
-        if(trap_hit_i == 1'b1 && stall_ex_o == 1'b0 && jump_in_id_o == 2'b0)
+        // branches take two cycles, jumps just one
+        // everything else can be done immediately
+        // TODO: there is a bug here, I'm sure of it
+        if(trap_hit_i == 1'b1 && stall_ex_o == 1'b0 && jump_in_id_o == 2'b0 && jump_in_ex_i == 2'b0)
         begin
           dbg_halt  = 1'b1;
           dbg_fsm_ns = DBG_EX;
