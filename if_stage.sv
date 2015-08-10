@@ -280,28 +280,6 @@ module if_stage
               sample_addr = 1'b1;
               fetch_fsm_ns = FETCH;
             end
-            // check if request can be served from local cache
-            if (fetch_unaligned && fetch_hit) begin
-              //if (is_compressed[1]) begin
-              //  // instruction is compressed and can be served from cache
-              //  pc_if_offset_n = 1'b1;
-              //  fetch_fsm_ns = SERVE_OFFSET;
-              //end else begin
-              //  // fetch next instruction
-              //  fetch_addr_n = last_fetch_addr + 4;
-              //  sample_addr = 1'b1;
-              //  fetch_fsm_ns = FETCH_NEXT;
-              //end
-            end else if (fetch_unaligned) begin
-              // fetch two words
-              //sample_addr = 1'b1;
-              //fetch_fsm_ns = FETCH;
-            end else begin
-              //// fetch single requested word
-              //sample_addr = 1'b1;
-              //fetch_fsm_ns = FETCH;
-            end
-            //fetch_fsm_ns = FETCH;
           end
         end
       end
