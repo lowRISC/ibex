@@ -24,8 +24,8 @@
 //                 comments                                                   //
 // Revision v0.3 - (December 1th 2014) Merged debug unit and added more       //
 //                 exceptions                                                 //
-// Revision v0.4 - (July 30th 2015) Removed instr_core_interface, handling    //
-//                 the cache interface in IF now                              //
+// Revision v0.4 - (July 30th 2015) Moved instr_core_interface into IF,       //
+//                 handling compressed instructions with FSM                  //
 //                                                                            //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
@@ -90,18 +90,21 @@ module if_stage
   logic [31:0] exc_pc;             // PC from exception
 
 
-  enum logic [2:0] {IDLE, WAIT_BRANCH, FETCH_STALLED, FETCH_UNSTALLED, WAIT_IF_STALL} CS, NS;
+  //enum logic [2:0] {IDLE, WAIT_BRANCH, FETCH_STALLED, FETCH_UNSTALLED, WAIT_IF_STALL} CS, NS;
 
 
-  // PC generation FSM
-  enum logic [0:0] {REGULAR, HANDLE_BRANCH} CS_PCGEN, NS_PCGEN;
-
-  // instruction cache interface signals
-  //enum logic [1:0] {IDLE, WAIT_GNT, WAIT_RVALID, WAIT_IF_STALL} CS_FETCH, NS_FETCH;
+  logic sample_addr;
   logic [31:0] fetch_addr, fetch_addr_n;
-  logic [31:0] fetch_data, fetch_data_n;
 
-  logic [31:0] instr_addr_o_n;
+  always_ff @(posedge clk, negedge rst_n)
+  begin
+    if (rst_n == 1'b0) begin
+      fetch_addr   <= '0;
+    end else begin
+      if (sample_addr)
+        fetch_addr <= fetch_addr_n;
+    end
+  end
 
 
   logic [31:0] last_fetch_addr;
@@ -110,23 +113,233 @@ module if_stage
   // instr_core_interface
   logic        req_int;
   logic        ack_int;
-  logic [31:0] addr_int;
   logic [31:0] rdata_int;
 
 
+  // local cache
+  logic [31:0] data_tag;
+  logic [1:0][31:0] data_arr;
+
+
+  logic bypass_data_reg; // use data from instr_core_if, not from data_arr
+  logic pc_if_offset, pc_if_offset_n;
+
+
+
+  enum logic[3:0] {INVALID, VALID, FETCH, FETCH_NEXT, SERVE_OFFSET} fetch_fsm_cs, fetch_fsm_ns;
+
+  always_ff @(posedge clk, negedge rst_n)
+  begin
+    if (rst_n == 1'b0) begin
+      fetch_fsm_cs <= INVALID;
+
+      pc_if_offset <= '0;
+    end else begin
+      fetch_fsm_cs <= fetch_fsm_ns;
+
+      pc_if_offset <= pc_if_offset_n;
+    end
+  end
+
+
   logic        force_nop_int;
+  logic        handle_branch;
+  logic        do_fetch;
   logic [31:0] instr_rdata_int;
-  assign instr_rdata_int = (force_nop_int == 1'b0)? rdata_int : {25'b0, `OPCODE_OPIMM};
 
 
-  // increased PC calculation
+  logic fetch_unaligned;
+  logic fetch_hit;
+
+  logic  [1:0] is_compressed;
+
+
+  assign compressed_instr = instr_rdata_int[1:0] != 2'b11;
+
+  assign do_fetch = req_i;
+
   always_comb
   begin
-    if (rdata_int[1:0] != 2'b11) begin
-      // compressed instruction
-      incr_pc = current_pc_if_o + 32'd2;
+    if (pc_if_offset) begin
+      incr_pc = fetch_addr + (is_compressed[1] ? 32'd2 : 32'd4);
     end else begin
-      incr_pc = current_pc_if_o + 32'd4;
+      incr_pc = fetch_addr + (is_compressed[0] ? 32'd2 : 32'd4);
+    end
+  end
+  //assign incr_pc = current_pc_if_o + (instr_rdata_int[1:0] != 2'b11 ? 32'd2 : 32'd4);
+
+
+  // store instr_core_if data in local cache
+  always_ff @(posedge clk, negedge rst_n)
+  begin
+    if (rst_n == 1'b0) begin
+      data_tag <= '0;
+      data_arr <= '0;
+    end else begin
+      if (ack_int) begin
+        data_tag    <= last_fetch_addr;
+        data_arr[1] <= data_arr[0];
+        data_arr[0] <= rdata_int;
+      end
+    end
+  end
+
+  // cache data output muxes
+  always_comb
+  begin
+    if (bypass_data_reg) begin
+      // bypass cache and get data directly from instr_core_if
+      if (pc_if_offset)
+        instr_rdata_int = {rdata_int[15:0], data_arr[0][31:16]};
+      else
+        instr_rdata_int = rdata_int;
+    end else begin
+      // serve data from cache
+      if (pc_if_offset)
+        instr_rdata_int = {data_arr[0][15:0], data_arr[1][31:16]};
+      else
+        instr_rdata_int = data_arr[0];
+    end
+
+    if (force_nop_int)
+      instr_rdata_int = {25'b0, `OPCODE_OPIMM};
+  end
+
+  assign is_compressed[0] = instr_rdata_int[1:0]   != 2'b11;
+  assign is_compressed[1] = instr_rdata_int[17:16] != 2'b11;
+
+
+  assign current_pc_if_o = pc_if_offset ? {fetch_addr[31:2], 2'b10} : fetch_addr;
+
+
+  always_comb
+  begin
+    fetch_unaligned = next_pc[1:0] != 2'b0;
+    //fetch_hit       = (next_pc[31:2] == data_tag[31:2]);
+    fetch_hit       = (fetch_addr[31:2] == data_tag[31:2]);
+  end
+
+
+  always_comb
+  begin
+    fetch_fsm_ns    = fetch_fsm_cs;
+
+    fetch_addr_n    = {next_pc[31:2], 2'b0};
+    sample_addr     = 1'b0;
+
+    pc_if_offset_n  = pc_if_offset; //1'b0;
+    //sample_offset   = 1'b0;
+    ack_o           = 1'b0;
+    req_int         = 1'b0;
+    force_nop_int   = 1'b0;
+
+    bypass_data_reg = 1'b0;
+
+
+    unique case (fetch_fsm_cs)
+      INVALID:
+      begin
+        if (do_fetch) begin
+          if (force_nop_i) begin
+            force_nop_int = 1'b1;
+            ack_o = 1'b1;
+          end else begin
+            fetch_fsm_ns = FETCH;
+          end
+        end
+      end
+
+      VALID:
+      begin
+        if (do_fetch) begin
+          if (force_nop_i) begin
+            force_nop_int = 1'b1;
+            ack_o = 1'b1;
+          end else begin
+            if (fetch_hit) begin
+              if (pc_if_offset) begin
+                fetch_addr_n = last_fetch_addr + 4;
+                sample_addr = 1'b1;
+                if (is_compressed[1]) begin
+                  pc_if_offset_n = 1'b0;
+                  ack_o = 1'b1;
+                end else begin
+                  fetch_fsm_ns = FETCH_NEXT;
+                end
+              end else begin
+                ack_o = 1'b1;
+                if (is_compressed[0]) begin
+                  pc_if_offset_n = 1'b1;
+                end else begin
+                  fetch_addr_n = last_fetch_addr + 4;
+                  sample_addr = 1'b1;
+                end
+              end
+            end else begin
+              // fetch single requested word
+              sample_addr = 1'b1;
+              fetch_fsm_ns = FETCH;
+            end
+            // check if request can be served from local cache
+            if (fetch_unaligned && fetch_hit) begin
+              //if (is_compressed[1]) begin
+              //  // instruction is compressed and can be served from cache
+              //  pc_if_offset_n = 1'b1;
+              //  fetch_fsm_ns = SERVE_OFFSET;
+              //end else begin
+              //  // fetch next instruction
+              //  fetch_addr_n = last_fetch_addr + 4;
+              //  sample_addr = 1'b1;
+              //  fetch_fsm_ns = FETCH_NEXT;
+              //end
+            end else if (fetch_unaligned) begin
+              // fetch two words
+              //sample_addr = 1'b1;
+              //fetch_fsm_ns = FETCH;
+            end else begin
+              //// fetch single requested word
+              //sample_addr = 1'b1;
+              //fetch_fsm_ns = FETCH;
+            end
+            //fetch_fsm_ns = FETCH;
+          end
+        end
+      end
+
+      SERVE_OFFSET:
+      begin
+        ack_o = 1'b1;
+        fetch_fsm_ns = VALID;
+      end
+
+      FETCH:
+      begin
+        req_int = 1'b1;
+        if (ack_int) begin
+          req_int = 1'b0; // TODO: Maybe only assert req_int before going into FETCH state
+          bypass_data_reg = 1'b1;
+          //ack_o = 1'b1;
+          fetch_fsm_ns = VALID;
+        end
+      end
+
+      FETCH_NEXT:
+      begin
+        req_int = 1'b1;
+        if (ack_int) begin
+          req_int = 1'b0; // TODO: Maybe only assert req_int before going into FETCH state
+          bypass_data_reg = 1'b1;
+          ack_o = 1'b1;
+          fetch_fsm_ns = VALID;
+
+          sample_addr = 1'b1;
+        end
+      end
+    endcase
+
+    if (pc_mux_boot_i) begin
+      sample_addr  = 1'b1;
+      fetch_fsm_ns = INVALID;
     end
   end
 
@@ -153,7 +366,7 @@ module if_stage
       `PC_HWLOOP:    next_pc = pc_from_hwloop_i;   // PC is taken from hwloop start addr
       default:
       begin
-        next_pc = current_pc_if_o;
+        next_pc = {boot_addr_i[31:5], `EXC_OFF_RST};
         // synopsys translate_off
         $display("%t: Illegal pc_mux_sel value (%0d)!", $time, pc_mux_sel_i);
         // synopsys translate_on
@@ -169,108 +382,10 @@ module if_stage
         next_pc = jump_target_i;
       else
         next_pc = incr_pc;
-        //next_pc = current_pc_if_o;
     end
 
     if (pc_mux_boot_i)
       next_pc = {boot_addr_i[31:5], `EXC_OFF_RST};
-  end
-
-
-  always_comb
-  begin
-    NS = CS;
-
-    req_int = 1'b0;
-    addr_int = '0;
-
-    ack_o = 1'b0;
-
-    force_nop_int = 1'b0;
-
-    unique case (CS)
-      IDLE:
-      begin
-        if (req_i) begin
-          if (jump_in_id_i == 2'b0) begin
-            if (force_nop_i) begin
-              force_nop_int = 1'b1;
-              ack_o = 1'b1;
-            end else begin
-              // no branch, do normal fetch
-              req_int = 1'b1;
-              addr_int = next_pc;
-              if (stall_if_i) begin
-                NS = FETCH_STALLED;
-              end else begin
-                NS = FETCH_UNSTALLED;
-              end
-            end
-          end
-          else
-          begin
-            // wait for branch decision / jump target
-            force_nop_int = 1'b1;
-            ack_o = 1'b1;
-            NS = WAIT_BRANCH;
-          end
-        end
-      end
-
-      WAIT_BRANCH:
-      begin
-        if (jump_in_ex_i != 2'b0) begin
-          req_int = 1'b1;
-          addr_int = next_pc;
-          if (stall_if_i) begin
-            NS = FETCH_STALLED;
-          end else begin
-            NS = FETCH_UNSTALLED;
-          end
-        end
-      end
-
-      FETCH_STALLED,
-      FETCH_UNSTALLED:
-      begin
-        if (ack_int) begin
-          NS = IDLE;
-          ack_o = 1'b1;
-          if (stall_if_i) begin
-            if (CS == FETCH_STALLED) begin
-              // already fetched instruction for after stall
-              NS = WAIT_IF_STALL;
-            end
-          end
-        end
-      end
-
-      WAIT_IF_STALL:
-      begin
-        NS = IDLE;
-        ack_o = 1'b1;
-
-        if (stall_if_i)
-          NS = WAIT_IF_STALL;
-      end
-
-      default:
-      begin
-        $display("%t: invalid state", $time);
-      end
-    endcase
-  end
-
-  always_ff @(posedge clk, negedge rst_n)
-  begin
-    if (rst_n == 1'b0)
-    begin
-      CS <= IDLE;
-    end
-    else
-    begin
-      CS <= NS;
-    end
   end
 
 
@@ -282,7 +397,7 @@ module if_stage
 
     .req_i          ( req_int        ),
     .ack_o          ( ack_int        ),
-    .addr_i         ( addr_int       ),
+    .addr_i         ( fetch_addr     ),
     .rdata_o        ( rdata_int      ),
 
     .instr_req_o    ( instr_req_o    ),
@@ -304,23 +419,24 @@ module if_stage
   begin : IF_PIPELINE
     if (rst_n == 1'b0)
     begin
-      current_pc_if_o    <= 32'h0;
+      //current_pc_if_o    <= 32'h0;
     end
     else
     begin
-      if (pc_mux_boot_i == 1'b1)
+      //if (pc_mux_boot_i == 1'b1)
+      //begin
+      //  // set PC to reset vector
+      //  current_pc_if_o  <= {boot_addr_i[31:5], `EXC_OFF_RST};
+      //end
+      //else if (dbg_set_npc == 1'b1)
+      //begin
+      //  // debug units sets NPC, PC_MUX_SEL holds this value
+      //  current_pc_if_o  <= dbg_pc_from_npc;
+      //end
+      //else if (stall_if_i == 1'b0)
+      if (stall_if_i == 1'b0)
       begin
-        // set PC to reset vector
-        current_pc_if_o  <= {boot_addr_i[31:5], `EXC_OFF_RST};
-      end
-      else if (dbg_set_npc == 1'b1)
-      begin
-        // debug units sets NPC, PC_MUX_SEL holds this value
-        current_pc_if_o  <= dbg_pc_from_npc;
-      end
-      else if (stall_if_i == 1'b0)
-      begin
-        current_pc_if_o  <= last_fetch_addr;
+        //current_pc_if_o  <= last_fetch_addr;
       end
     end
   end
@@ -338,8 +454,7 @@ module if_stage
       if (stall_id_i == 1'b0)
       begin : ENABLED_PIPE
         instr_rdata_id_o <= instr_rdata_int;
-        //current_pc_id_o  <= current_pc_if_o;
-        current_pc_id_o  <= last_fetch_addr;
+        current_pc_id_o  <= current_pc_if_o;
       end
     end
   end
