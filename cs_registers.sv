@@ -47,7 +47,6 @@ module cs_registers
   input logic         save_pc_if_i,
   input logic         save_pc_id_i, // TODO: check if both IF/ID pc save is needed
   output logic [31:0] epcr_o,
-  output logic        irq_enable_o, // TODO: check if needed
 
   // HWLoop Signals
   input  logic [`HWLOOP_REGS-1:0] [31:0] hwlp_start_addr_i,
@@ -101,11 +100,6 @@ module cs_registers
       12'hF00: constant_rdata_int = 32'h00_00_01_00;  // mcpuid: RV32I
       12'hF01: constant_rdata_int = 32'h00_00_80_00;  // mimpid: PULP3, anonymous source (no allocated ID)
       12'hF10: constant_rdata_int = {22'b0, cluster_id_i, core_id_i}; // mhartid: unique hardware thread id
-
-      // debug registers
-      12'hFC0: constant_rdata_int = curr_pc_id_i; // Previous Program Counter for Debug
-
-      12'h780: constant_rdata_int = curr_pc_if_i; // Next Program Counter for Debug
 
       default: is_constant = 1'b0;
     endcase

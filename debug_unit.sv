@@ -61,7 +61,10 @@ module debug_unit
   output logic [31:0]  regfile_wdata_o,
   input  logic [31:0]  regfile_rdata_i,
 
-  // Signals for NPC register
+  // Signals for PPC & NPC register
+  input logic  [31:0] curr_pc_if_i,
+  input logic  [31:0] curr_pc_id_i,
+
   output logic [31:0] npc_o,
   output logic        set_npc_o
 
@@ -131,8 +134,6 @@ module debug_unit
   assign dbg_st_en_o       = DMR1_DP[0];
   assign dbg_dsr_o         = DSR_DP;
 
-  // handle set next program counter
-  assign set_npc_o = (regfile_addr_o == 12'h780) && (sp_mux_o == 1'b1) && (regfile_we_o == 1'b1);
   assign npc_o     = dbginf_data_i;
 
 
@@ -146,12 +147,23 @@ module debug_unit
     regfile_addr_o     = 'h0;
     regfile_mux_o      = 1'b0;
     sp_mux_o           = 1'b0;
+    set_npc_o          = 1'b0;
 
     if(dbginf_strobe_i == 1'b1) begin
       // address decoding, first stage: evaluate higher 5 Bits to detect if debug regs are accessed
       if(dbginf_addr_i[15:11] == 5'b00110) begin
         // second stage: evaluate Bits 10:0 to detect which part of debug registers is accessed
         casex(dbginf_addr_i[10:0])
+          11'd0: begin // NPC
+            set_npc_o = dbginf_we_i;
+
+            dbginf_data_o = curr_pc_if_i;
+          end
+
+          11'd1: begin // PPC
+            dbginf_data_o = curr_pc_id_i;
+          end
+
           11'd16: begin // SP_DMR1
             if(dbginf_we_i == 1'b1)
               DMR1_DN = dbginf_data_i[`DMR1_ST+1:`DMR1_ST];

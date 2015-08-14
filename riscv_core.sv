@@ -639,8 +639,7 @@ module riscv_core
       .curr_pc_id_i            ( current_pc_id         ), // from IF stage
       .save_pc_if_i            ( save_pc_if            ),
       .save_pc_id_i            ( save_pc_id            ),
-      .epcr_o                  ( epcr                  ),
-      .irq_enable_o            ( irq_enable            )
+      .epcr_o                  ( epcr                  )
     );
 
     // Mux for SPR access through Debug Unit
@@ -780,6 +779,9 @@ module riscv_core
       .regfile_wdata_o ( dbg_reg_wdata   ),
       .regfile_rdata_i ( dbg_rdata       ),
 
+      // signals for PPC and NPC
+      .curr_pc_if_i    ( current_pc_if   ), // from IF stage
+      .curr_pc_id_i    ( current_pc_id   ), // from IF stage
       .npc_o           ( dbg_npc         ), // PC from debug unit
       .set_npc_o       ( dbg_set_npc     )  // set PC to new value
     );
