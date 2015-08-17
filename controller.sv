@@ -140,7 +140,7 @@ module controller
 );
 
   // FSM state encoding
-  enum  logic [1:0]  { RESET, IDLE, FIRST_FETCH, DECODE}     ctrl_fsm_cs, ctrl_fsm_ns;
+  enum  logic [2:0]  { RESET, IDLE, FIRST_FETCH, DECODE, DBG_FLUSH_EX, DBG_FLUSH_WB, DBG_SIGNAL, DBG_WAIT }     ctrl_fsm_cs, ctrl_fsm_ns;
 
   logic reg_d_ex_is_reg_a_id;
   logic reg_d_ex_is_reg_b_id;
@@ -176,10 +176,7 @@ module controller
   logic        regb_used;
   logic        regc_used;
 
-  // dbg fsm
-  enum  logic [2:0] {DBG_IDLE, DBG_EX, DBG_WB, DBG_STALL, DBG_FLUSH, DBG_FLUSH2} dbg_fsm_cs, dbg_fsm_ns;
   logic        dbg_halt;
-  logic        dbg_flush;
 
   /////////////////////////////////////////////
   //   ____                     _            //
@@ -1036,6 +1033,9 @@ module controller
 
     core_busy_o   = 1'b1;
 
+    dbg_halt      = 1'b0;
+    dbg_trap_o    = 1'b0;
+
     unique case (ctrl_fsm_cs)
       default: begin
         instr_req_o = 1'b0;
@@ -1072,7 +1072,7 @@ module controller
       FIRST_FETCH:
       begin
         // Stall because of IF miss
-        if (instr_ack_i == 1'b1)
+        if ((instr_ack_i == 1'b1) && (dbg_stall_i == 1'b0))
         begin
           ctrl_fsm_ns = DECODE;
         end
@@ -1101,6 +1101,49 @@ module controller
         // the pipeline is flushed and we are requested to go to sleep
         if ((pipe_flushed_i == 1'b1) && (fetch_enable_i == 1'b0))
           ctrl_fsm_ns = IDLE;
+
+        // take care of debug
+        // branches take two cycles, jumps just one
+        // everything else can be done immediately
+        // TODO: there is a bug here, I'm sure of it
+        if(trap_hit_i == 1'b1 && stall_ex_o == 1'b0 && jump_in_id_o == 2'b0 && jump_in_ex_i == 2'b0)
+        begin
+          dbg_halt  = 1'b1;
+          ctrl_fsm_ns = DBG_FLUSH_EX;
+        end
+      end
+
+      DBG_FLUSH_EX:
+      begin
+        dbg_halt = 1'b1;
+
+        if(stall_ex_o == 1'b0)
+          ctrl_fsm_ns = DBG_FLUSH_WB;
+      end
+
+      DBG_FLUSH_WB:
+      begin
+        dbg_halt = 1'b1;
+
+        if(stall_ex_o == 1'b0)
+          ctrl_fsm_ns = DBG_SIGNAL;
+      end
+
+      DBG_SIGNAL:
+      begin
+        dbg_trap_o = 1'b1;
+        dbg_halt   = 1'b1;
+
+        ctrl_fsm_ns = DBG_WAIT;
+      end
+
+      DBG_WAIT:
+      begin
+        if(dbg_set_npc_i == 1'b1)
+          ctrl_fsm_ns = FIRST_FETCH;
+
+        if(dbg_stall_i == 1'b0)
+          ctrl_fsm_ns = DECODE;
       end
     endcase
   end
@@ -1118,6 +1161,10 @@ module controller
     load_stall  = 1'b0;
     jr_stall    = 1'b0;
     deassert_we = 1'b0;
+
+    // deassert WE when the core is not decoding instructions
+    if (ctrl_fsm_cs != DECODE)
+      deassert_we = 1'b1;
 
     // Stall because of load operation
     if ((data_req_ex_i == 1'b1) && (regfile_we_ex_i == 1'b1) &&
@@ -1137,11 +1184,6 @@ module controller
          ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_b_id == 1'b1))) )
     begin
       jr_stall        = 1'b1;
-      deassert_we     = 1'b1;
-    end
-
-    if (dbg_flush)
-    begin
       deassert_we     = 1'b1;
     end
   end
@@ -1249,12 +1291,10 @@ module controller
     if ( rst_n == 1'b0 )
     begin
       ctrl_fsm_cs <= RESET;
-      dbg_fsm_cs  <= DBG_IDLE;
     end
     else
     begin
       ctrl_fsm_cs <= ctrl_fsm_ns;
-      dbg_fsm_cs  <= dbg_fsm_ns;
     end
   end
 
@@ -1272,84 +1312,6 @@ module controller
       else if (stall_if_o == 1'b0)
         set_npc <= 1'b0;
     end
-  end
-
-  // Trap control FSM for debug unit
-  always_comb
-  begin
-    dbg_fsm_ns       = dbg_fsm_cs;
-    dbg_trap_o       = 1'b0;
-    dbg_halt         = 1'b0;
-    dbg_flush        = 1'b0;
-
-    case (dbg_fsm_cs)
-      DBG_IDLE:
-      begin
-        // branches take two cycles, jumps just one
-        // everything else can be done immediately
-        // TODO: there is a bug here, I'm sure of it
-        if(trap_hit_i == 1'b1 && stall_ex_o == 1'b0 && jump_in_id_o == 2'b0 && jump_in_ex_i == 2'b0)
-        begin
-          dbg_halt  = 1'b1;
-          dbg_fsm_ns = DBG_EX;
-        end
-      end
-
-      // First NOP is in EX
-      DBG_EX:
-      begin
-        dbg_halt  = 1'b1;
-        dbg_flush = 1'b1;
-
-        if(stall_ex_o == 1'b0)
-          dbg_fsm_ns = DBG_WB;
-      end
-
-      // NOPs in EX and WB
-      DBG_WB:
-      begin
-        dbg_halt  = 1'b1;
-        dbg_flush = 1'b1;
-
-        if(stall_ex_o == 1'b0)
-          dbg_fsm_ns = DBG_STALL;
-      end
-
-      // Start to stall in this cycle
-      DBG_STALL:
-      begin
-        dbg_halt  = 1'b1;
-        dbg_flush = 1'b1;
-        dbg_trap_o = 1'b1;
-
-        dbg_fsm_ns = DBG_FLUSH;
-      end
-
-      // Flush instruction in ID stage
-      DBG_FLUSH:
-      begin
-        dbg_flush = 1'b1;
-
-        if(dbg_set_npc_i == 1'b1)
-          dbg_fsm_ns = DBG_FLUSH2;
-        else if(stall_ex_o == 1'b0)
-          dbg_fsm_ns = DBG_IDLE;
-      end
-
-      // Flush instruction in ID stage
-      DBG_FLUSH2:
-      begin
-        dbg_flush = 1'b1;
-
-        if(stall_ex_o == 1'b0)
-          dbg_fsm_ns = DBG_FLUSH;
-      end
-
-      default:
-      begin
-        dbg_fsm_ns = DBG_IDLE;
-      end
-    endcase // case (dbg_fsm_cs)
   end
 
 endmodule // controller
