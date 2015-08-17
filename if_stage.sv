@@ -97,8 +97,6 @@ module if_stage
 
 
   logic        force_nop_int;
-  logic        handle_branch;
-  logic        do_fetch;
   logic [31:0] instr_rdata_int;
 
 
@@ -137,12 +135,11 @@ module if_stage
 
   assign compressed_instr = instr_rdata_int[1:0] != 2'b11;
 
-  assign do_fetch = req_i;
 
   always_comb
   begin
     if (pc_if_offset) begin
-      incr_pc = fetch_addr + (is_compressed[1] ? 32'd2 : 32'd4);
+      incr_pc = fetch_addr + (is_compressed[1] ? 32'd4 : 32'd6);
     end else begin
       incr_pc = fetch_addr + (is_compressed[0] ? 32'd2 : 32'd4);
     end
@@ -186,8 +183,18 @@ module if_stage
       instr_rdata_int = {25'b0, `OPCODE_OPIMM};
   end
 
-  assign is_compressed[0] = data_arr[0][1:0]   != 2'b11;
-  assign is_compressed[1] = data_arr[0][17:16] != 2'b11;
+  always_comb
+  begin
+    if (fetch_fsm_cs == WAIT_ACK) begin
+      is_compressed[0] = rdata_int[1:0]   != 2'b11;
+      is_compressed[1] = rdata_int[17:16] != 2'b11;
+    end else begin
+      is_compressed[0] = data_arr[0][1:0]   != 2'b11;
+      is_compressed[1] = data_arr[0][17:16] != 2'b11;
+    end
+  end
+  //assign is_compressed[0] = data_arr[0][1:0]   != 2'b11;
+  //assign is_compressed[1] = data_arr[0][17:16] != 2'b11;
   //assign is_compressed[0] = rdata_int[1:0]   != 2'b11;
   //assign is_compressed[1] = rdata_int[17:16] != 2'b11;
 
@@ -204,18 +211,15 @@ module if_stage
 
   always_comb
   begin
-    fetch_fsm_ns    = fetch_fsm_cs;
+    fetch_fsm_ns   = fetch_fsm_cs;
+    pc_if_offset_n = pc_if_offset;
 
     force_nop_int   = 1'b0;
     bypass_data_reg = 1'b1;
-    sample_addr     = 1'b1;
-
-    //ack_o          = ack_int;
-    //req_int        = req_i;
-    ack_o          = 1'b0;
-    req_int        = 1'b0;
-    fetch_addr_n   = {next_pc[31:2], 2'b0};
-    pc_if_offset_n = pc_if_offset;
+    sample_addr     = 1'b0;
+    ack_o           = 1'b0;
+    req_int         = 1'b0;
+    fetch_addr_n    = {next_pc[31:2], 2'b0};
 
     case (fetch_fsm_cs)
       IDLE:
@@ -225,19 +229,30 @@ module if_stage
           fetch_fsm_ns = WAIT_REQ;
       end
 
-      WAIT_REQ:
+      WAIT_REQ,
+      WAIT_ACK:
       begin
+        if (fetch_fsm_cs == WAIT_ACK) begin
+          fetch_fsm_ns = WAIT_ACK;
+          sample_addr = 1'b0;
+          if (ack_int) begin
+            ack_o = 1'b1;
+            fetch_fsm_ns = WAIT_REQ;
+            // TODO: Already handle request here
+          end
+        end
+
         if (req_i) begin
           fetch_fsm_ns = WAIT_ACK;
           req_int = 1'b1;
 
           if (pc_if_offset) begin
             if (is_compressed[1]) begin
-              // serve second part of already fetched instruction
+              // serve second part of fetched instruction and request next
               pc_if_offset_n = 1'b0;
               ack_o          = 1'b1;
-              req_int        = 1'b1;
-              fetch_fsm_ns   = WAIT_REQ;
+              sample_addr    = 1'b1;
+              fetch_fsm_ns   = WAIT_ACK;
             end else begin
               // cross line access
               // .. need to fetch next word here and delay everything till then
@@ -246,21 +261,16 @@ module if_stage
             end
           end else begin
             if (is_compressed[0]) begin
+              // compressed instruction, increase PC by two bytes
               sample_addr    = 1'b0;
               ack_o          = 1'b1;
               pc_if_offset_n = 1'b1;
+              fetch_fsm_ns   = WAIT_REQ;
+            end else begin
+              // regular fetch
+              sample_addr = 1'b1;
             end
           end
-        end
-      end
-
-      WAIT_ACK:
-      begin
-        sample_addr = 1'b0;
-        if (ack_int) begin
-          ack_o = 1'b1;
-          fetch_fsm_ns = WAIT_REQ;
-          // TODO: Already handle request here
         end
       end
 
@@ -270,6 +280,7 @@ module if_stage
         if (ack_int) begin
           //sample_addr = 1'b1;
           ack_o = 1'b1;
+          bypass_data_reg = 1'b0;
           fetch_fsm_ns = WAIT_REQ;
         end
       end
@@ -383,10 +394,10 @@ module if_stage
   always_comb
   begin : EXC_PC_MUX
     unique case (exc_pc_mux_i)
-      `EXC_PC_NO_INCR:  begin  exc_pc = current_pc_if_o;                        end
-      `EXC_PC_ILLINSN:  begin  exc_pc = {boot_addr_i[31:5], `EXC_OFF_ILLINSN }; end
-      `EXC_PC_IRQ:      begin  exc_pc = {boot_addr_i[31:5], `EXC_OFF_IRQ     }; end
-      `EXC_PC_IRQ_NM:   begin  exc_pc = {boot_addr_i[31:5], `EXC_OFF_IRQ_NM  }; end
+      `EXC_PC_NO_INCR: begin exc_pc = current_pc_if_o;                        end
+      `EXC_PC_ILLINSN: begin exc_pc = {boot_addr_i[31:5], `EXC_OFF_ILLINSN }; end
+      `EXC_PC_IRQ:     begin exc_pc = {boot_addr_i[31:5], `EXC_OFF_IRQ     }; end
+      `EXC_PC_IRQ_NM:  begin exc_pc = {boot_addr_i[31:5], `EXC_OFF_IRQ_NM  }; end
     endcase
   end
 
@@ -490,7 +501,11 @@ module if_stage
       if (stall_id_i == 1'b0)
       begin : ENABLED_PIPE
         instr_rdata_id_o <= instr_rdata_int;
-        current_pc_id_o  <= last_fetch_addr + (pc_if_offset? 32'd2 : '0);
+        if (pc_if_offset)
+          current_pc_id_o  <= last_fetch_addr + (bypass_data_reg? 32'd2 : -2); // TODO: Cleanup
+        else
+          current_pc_id_o  <= last_fetch_addr;
+        //current_pc_id_o  <= last_fetch_addr + (pc_if_offset? 32'd2 : '0);
         //current_pc_id_o  <= current_pc_if_o;
       end
     end
