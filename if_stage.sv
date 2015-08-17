@@ -226,42 +226,46 @@ module if_stage
       begin
         if (fetch_fsm_cs == WAIT_ACK) begin
           fetch_fsm_ns = WAIT_ACK;
-          sample_addr = 1'b0;
+          sample_addr  = 1'b0;
+          req_int      = 1'b1; // keep req_int asserted or start request (for branches)
           if (ack_int) begin
+            req_int = 1'b0;
             ack_o = 1'b1;
             fetch_fsm_ns = WAIT_REQ;
           end
         end
 
         // handle requests
-        if (req_i) begin
-          fetch_fsm_ns = WAIT_ACK;
-          req_int = 1'b1;
+        if (fetch_fsm_cs == WAIT_REQ || ack_int) begin
+          if (req_i) begin
+            fetch_fsm_ns = WAIT_ACK;
+            req_int = 1'b1;
 
-          if (pc_if_offset) begin
-            if (is_compressed[1]) begin
-              // serve second part of fetched instruction and request next
-              pc_if_offset_n = 1'b0;
-              ack_o          = 1'b1;
-              sample_addr    = 1'b1;
-              fetch_fsm_ns   = WAIT_ACK;
+            if (pc_if_offset) begin
+              if (is_compressed[1]) begin
+                // serve second part of fetched instruction and request next
+                pc_if_offset_n = 1'b0;
+                ack_o          = 1'b1;
+                sample_addr    = 1'b1;
+                fetch_fsm_ns   = WAIT_ACK;
+              end else begin
+                // cross line access
+                // .. need to fetch next word here and delay everything till then
+                sample_addr  = 1'b1;
+                fetch_fsm_ns = FETCH_NEXT;
+              end
             end else begin
-              // cross line access
-              // .. need to fetch next word here and delay everything till then
-              sample_addr  = 1'b1;
-              fetch_fsm_ns = FETCH_NEXT;
-            end
-          end else begin
-            if (is_compressed[0]) begin
-              // compressed instruction, only increase PC by two bytes
-              sample_addr    = 1'b0;
-              req_int        = 1'b0;
-              ack_o          = 1'b1;
-              pc_if_offset_n = 1'b1;
-              fetch_fsm_ns   = WAIT_REQ;
-            end else begin
-              // regular fetch
-              sample_addr = 1'b1;
+              if (is_compressed[0]) begin
+                // compressed instruction, only increase PC by two bytes
+                sample_addr    = 1'b0;
+                req_int        = 1'b0;
+                ack_o          = 1'b1;
+                pc_if_offset_n = 1'b1;
+                fetch_fsm_ns   = WAIT_REQ;
+              end else begin
+                // regular fetch
+                sample_addr = 1'b1;
+              end
             end
           end
         end
@@ -292,19 +296,20 @@ module if_stage
           if (jump_in_ex_i == `BRANCH_COND && branch_decision_i == 1'b0) begin
             // branch not taken, continue as before
             // TODO: Already serve request here?
-            fetch_fsm_ns   = WAIT_REQ;
+            fetch_fsm_ns = WAIT_REQ;
           end else begin
-            // set new PC
-            fetch_addr_n = {jump_target_i[31:2], 2'b0};
-            sample_addr = 1'b1;
+            // set PC
+            // next_pc already contains correct jump target, but need to
+            // handle special cases with compressed instructions here
+            sample_addr  = 1'b1;
             if (jump_target_i[1:0] == 2'b0) begin
               // regular fetch
               pc_if_offset_n = 1'b0;
-              fetch_fsm_ns   = WAIT_REQ;
+              fetch_fsm_ns   = WAIT_ACK;
             end else begin
               // unaligned access
               pc_if_offset_n = 1'b1;
-              fetch_fsm_ns = FETCH;
+              fetch_fsm_ns   = FETCH;
             end
             // TODO: Already send request here?
           end
@@ -368,16 +373,16 @@ module if_stage
       end
     endcase
 
-    //if (jump_in_ex_i == 2'b01) begin
-    //  // jump handling
-    //  next_pc = jump_target_i;
-    //end else if (jump_in_ex_i == 2'b10) begin
-    //  // branch handling
-    //  if (branch_decision_i == 1'b1)
-    //    next_pc = jump_target_i;
-    //  else
-    //    next_pc = incr_pc;
-    //end
+    // jump handling
+    if (jump_in_ex_i == `BRANCH_JAL || jump_in_ex_i == `BRANCH_JALR) begin
+      next_pc = jump_target_i;
+    end else if (jump_in_ex_i == `BRANCH_COND) begin
+      // branch handling
+      if (branch_decision_i == 1'b1)
+        next_pc = jump_target_i;
+      else
+        next_pc = current_pc_if_o;
+    end
 
     if (pc_mux_boot_i)
       next_pc = {boot_addr_i[31:5], `EXC_OFF_RST};
@@ -427,7 +432,6 @@ module if_stage
         // get PC from debug unit
         fetch_addr   <= {dbg_pc_from_npc[31:2], 2'b0};
         pc_if_offset <= (dbg_pc_from_npc[1:0] != 2'b0);
-      //end else if (stall_if_i == 1'b0) begin
       end else begin
         // update PC
         pc_if_offset <= pc_if_offset_n;
@@ -454,8 +458,6 @@ module if_stage
           current_pc_id_o  <= last_fetch_addr + (bypass_data_reg? 32'd2 : -2); // TODO: Cleanup
         else
           current_pc_id_o  <= last_fetch_addr;
-        //current_pc_id_o  <= last_fetch_addr + (pc_if_offset? 32'd2 : '0);
-        //current_pc_id_o  <= current_pc_if_o;
       end
     end
   end
