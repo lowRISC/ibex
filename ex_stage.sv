@@ -69,7 +69,6 @@ module ex_stage
     // directly passed through to WB stage, not used in EX
     input  logic                      regfile_we_i,
     input  logic [4:0]                regfile_waddr_i,
-    input  logic                      regfile_wdata_mux_sel_i,
 
     input  logic [31:0]               regfile_rb_data_i,
 
@@ -83,7 +82,6 @@ module ex_stage
 
     // Output of EX stage pipeline
     output logic [4:0]                regfile_waddr_wb_o,
-    output logic                      regfile_wdata_mux_sel_wb_o,
     output logic                      regfile_we_wb_o,
     output logic [31:0]               regfile_rb_data_wb_o,
 
@@ -220,7 +218,6 @@ module ex_stage
     if (rst_n == 1'b0)
     begin
       regfile_waddr_wb_o           <= 5'b0_0000;
-      regfile_wdata_mux_sel_wb_o   <= 1'b0;
       regfile_we_wb_o              <= 1'b0;
       regfile_rb_data_wb_o         <= 32'h0000_0000;
     end
@@ -230,7 +227,6 @@ module ex_stage
       begin
         regfile_we_wb_o            <= regfile_we_i;
         regfile_waddr_wb_o         <= regfile_waddr_i;
-        regfile_wdata_mux_sel_wb_o <= regfile_wdata_mux_sel_i;
         regfile_rb_data_wb_o       <= regfile_rb_data_i;
       end
     end

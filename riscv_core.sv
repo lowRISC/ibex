@@ -130,12 +130,10 @@ module riscv_core
 
   // Register Write Control
   logic [4:0]      regfile_waddr_ex;
-  logic            regfile_wdata_mux_sel_ex;
   logic            regfile_we_ex;
   logic [4:0]      regfile_waddr_fw_wb_o;        // From WB to ID
   logic            regfile_we_wb;
   logic [31:0]     regfile_wdata;
-  logic            regfile_wdata_mux_sel_wb;
 
   logic [4:0]      regfile_alu_waddr_ex;
   logic            regfile_alu_we_ex;
@@ -163,7 +161,6 @@ module riscv_core
   logic [31:0]     data_addr_ex;
   logic            data_misaligned_ex;
   logic [31:0]     data_rdata_int;
-  logic [31:0]     lsu_data_reg;
   logic            data_ack_int;
 
   // Signals between instruction core interface and pipe (if and id stages)
@@ -379,7 +376,6 @@ module riscv_core
       .mult_mac_en_ex_o             ( mult_mac_en_ex                ), // from ID to EX stage
 
       .regfile_waddr_ex_o           ( regfile_waddr_ex              ),
-      .regfile_wdata_mux_sel_ex_o   ( regfile_wdata_mux_sel_ex      ),
       .regfile_we_ex_o              ( regfile_we_ex                 ),
 
       .regfile_alu_we_ex_o          ( regfile_alu_we_ex             ),
@@ -494,7 +490,6 @@ module riscv_core
 
       // From ID Stage: Regfile control signals
       .regfile_waddr_i            ( regfile_waddr_ex             ),
-      .regfile_wdata_mux_sel_i    ( regfile_wdata_mux_sel_ex     ),
       .regfile_we_i               ( regfile_we_ex                ),
 
       .regfile_alu_we_i           ( regfile_alu_we_ex            ),
@@ -510,7 +505,6 @@ module riscv_core
 
       // Output of ex stage pipeline
       .regfile_waddr_wb_o         ( regfile_waddr_fw_wb_o        ),
-      .regfile_wdata_mux_sel_wb_o ( regfile_wdata_mux_sel_wb     ),
       .regfile_we_wb_o            ( regfile_we_wb                ),
       .regfile_rb_data_wb_o       ( regfile_rb_data_wb           ),
 
@@ -545,13 +539,11 @@ module riscv_core
     //     \_/\_/  |____/  |____/ |_/_/   \_\____|_____|   //
     //                                                     //
     /////////////////////////////////////////////////////////
+    // TODO: the wb stage does absolutely nothing anymore, consider removing it
     wb_stage  wb_stage_i
     (
-      // Mux selector of regfile wdata
-      .regfile_wdata_mux_sel_i ( regfile_wdata_mux_sel_wb  ),
       // Mux inputs
       .data_rdata_i            ( data_rdata_int            ),
-      .lsu_data_reg_i          ( lsu_data_reg              ),
       // Mux output
       .regfile_wdata_o         ( regfile_wdata             )
     );
@@ -578,7 +570,6 @@ module riscv_core
 
       .data_sign_ext_ex_i    ( data_sign_ext_ex        ),  // sign extension
       .data_rdata_ex_o       ( data_rdata_int          ),
-      .lsu_data_reg_o        ( lsu_data_reg            ),
       .data_req_ex_i         ( data_req_ex             ),
       .data_addr_ex_i        ( data_addr_ex            ),
       .data_ack_int_o        ( data_ack_int            ),  // ack used in controller to stall

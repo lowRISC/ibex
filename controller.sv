@@ -68,8 +68,6 @@ module controller
   output logic                     mult_use_carry_o,           // Use carry for MAC
   output logic                     mult_mac_en_o,              // Use the accumulator after multiplication
 
-  output logic                     regfile_wdata_mux_sel_o,    // Mul selctor used in WB stage to select regfile wdata from ex result (ALU-MUL), from data memory, or special registers
-  input  logic                     regfile_wdata_mux_sel_ex_i, // FW signal: Mul selctor used in WB stage to select regfile wdata from ex result (ALU-MUL), from data memory, or special registers
   output logic                     regfile_we_o,               // Write Enable to regfile
   output logic [1:0]               regfile_alu_waddr_mux_sel_o, // Select register write address for ALU/MUL operations
 
@@ -208,7 +206,6 @@ module controller
     mult_use_carry_o            = 1'b0;
     mult_mac_en_o               = 1'b0;
 
-    regfile_wdata_mux_sel_o     = 1'b1;  // TODO: Remove, no longer used
     regfile_we                  = 1'b0;
     regfile_alu_we              = 1'b0;
     regfile_alu_waddr_mux_sel_o = 2'b01;

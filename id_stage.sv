@@ -85,7 +85,6 @@ module id_stage
     output logic                        mult_mac_en_ex_o,
 
     output logic [4:0]                  regfile_waddr_ex_o,
-    output logic                        regfile_wdata_mux_sel_ex_o,
     output logic                        regfile_we_ex_o,
 
     output logic [4:0]                  regfile_alu_waddr_ex_o,
@@ -232,7 +231,6 @@ module id_stage
   logic        mult_mac_en;      // Enables the use of the accumulator
 
   // Register Write Control
-  logic        regfile_wdata_mux_sel;
   logic        regfile_we_id;
   logic [1:0]  regfile_alu_waddr_mux_sel;  // TODO: FixMe -> 1bit
 
@@ -567,8 +565,6 @@ module id_stage
       .mult_mac_en_o                ( mult_mac_en           ),
 
       // Register file control signals
-      .regfile_wdata_mux_sel_o      ( regfile_wdata_mux_sel      ),
-      .regfile_wdata_mux_sel_ex_i   ( regfile_wdata_mux_sel_ex_o ),
       .regfile_we_o                 ( regfile_we_id              ),
 
       .regfile_alu_we_o             ( regfile_alu_we_id          ),
@@ -765,7 +761,6 @@ module id_stage
       mult_mac_en_ex_o            <= 1'b0;
 
       regfile_waddr_ex_o          <= 5'b0;
-      regfile_wdata_mux_sel_ex_o  <= 1'b0;
       regfile_we_ex_o             <= 1'b0;
 
       regfile_alu_waddr_ex_o      <= 5'b0;
@@ -833,7 +828,6 @@ module id_stage
 
 
       regfile_waddr_ex_o          <= regfile_waddr_id;
-      regfile_wdata_mux_sel_ex_o  <= regfile_wdata_mux_sel;
       regfile_we_ex_o             <= regfile_we_id;
 
       regfile_alu_waddr_ex_o      <= regfile_alu_waddr_id;
