@@ -58,90 +58,90 @@
 `define OPCODE_LOAD_POST  7'h07
 
 
-// instructions
-`define INSTR_CUSTOM0    { {25 {1'b?}}, `OPCODE_CUST0 }
-`define INSTR_CUSTOM1    { {25 {1'b?}}, `OPCODE_CUST1 }
-`define INSTR_LUI        { {25 {1'b?}}, `OPCODE_LUI }
-`define INSTR_AUIPC      { {25 {1'b?}}, `OPCODE_AUIPC }
-`define INSTR_JAL        { {25 {1'b?}}, `OPCODE_JAL }
-`define INSTR_JALR       { {17 {1'b?}}, 3'b000, {5 {1'b?}}, `OPCODE_JALR }
+// instruction masks (for tracer)
+`define INSTR_CUSTOM0    { 25'b?, `OPCODE_CUST0 }
+`define INSTR_CUSTOM1    { 25'b?, `OPCODE_CUST1 }
+`define INSTR_LUI        { 25'b?, `OPCODE_LUI }
+`define INSTR_AUIPC      { 25'b?, `OPCODE_AUIPC }
+`define INSTR_JAL        { 25'b?, `OPCODE_JAL }
+`define INSTR_JALR       { 17'b?, 3'b000, 5'b?, `OPCODE_JALR }
 // BRANCH
-`define INSTR_BEQ        { {17 {1'b?}}, 3'b000, {5 {1'b?}}, `OPCODE_BRANCH }
-`define INSTR_BNE        { {17 {1'b?}}, 3'b001, {5 {1'b?}}, `OPCODE_BRANCH }
-`define INSTR_BLT        { {17 {1'b?}}, 3'b100, {5 {1'b?}}, `OPCODE_BRANCH }
-`define INSTR_BGE        { {17 {1'b?}}, 3'b101, {5 {1'b?}}, `OPCODE_BRANCH }
-`define INSTR_BLTU       { {17 {1'b?}}, 3'b110, {5 {1'b?}}, `OPCODE_BRANCH }
-`define INSTR_BGEU       { {17 {1'b?}}, 3'b111, {5 {1'b?}}, `OPCODE_BRANCH }
+`define INSTR_BEQ        { 17'b?, 3'b000, 5'b?, `OPCODE_BRANCH }
+`define INSTR_BNE        { 17'b?, 3'b001, 5'b?, `OPCODE_BRANCH }
+`define INSTR_BLT        { 17'b?, 3'b100, 5'b?, `OPCODE_BRANCH }
+`define INSTR_BGE        { 17'b?, 3'b101, 5'b?, `OPCODE_BRANCH }
+`define INSTR_BLTU       { 17'b?, 3'b110, 5'b?, `OPCODE_BRANCH }
+`define INSTR_BGEU       { 17'b?, 3'b111, 5'b?, `OPCODE_BRANCH }
 // LOAD
-`define INSTR_LB         { {17 {1'b?}}, 3'b000, {5 {1'b?}}, `OPCODE_LOAD }
-`define INSTR_LH         { {17 {1'b?}}, 3'b001, {5 {1'b?}}, `OPCODE_LOAD }
-`define INSTR_LW         { {17 {1'b?}}, 3'b010, {5 {1'b?}}, `OPCODE_LOAD }
-`define INSTR_LBU        { {17 {1'b?}}, 3'b100, {5 {1'b?}}, `OPCODE_LOAD }
-`define INSTR_LHU        { {17 {1'b?}}, 3'b101, {5 {1'b?}}, `OPCODE_LOAD }
+`define INSTR_LB         { 17'b?, 3'b000, 5'b?, `OPCODE_LOAD }
+`define INSTR_LH         { 17'b?, 3'b001, 5'b?, `OPCODE_LOAD }
+`define INSTR_LW         { 17'b?, 3'b010, 5'b?, `OPCODE_LOAD }
+`define INSTR_LBU        { 17'b?, 3'b100, 5'b?, `OPCODE_LOAD }
+`define INSTR_LHU        { 17'b?, 3'b101, 5'b?, `OPCODE_LOAD }
 // STORE
-`define INSTR_SB         { {17 {1'b?}}, 3'b000, {5 {1'b?}}, `OPCODE_STORE }
-`define INSTR_SH         { {17 {1'b?}}, 3'b001, {5 {1'b?}}, `OPCODE_STORE }
-`define INSTR_SW         { {17 {1'b?}}, 3'b010, {5 {1'b?}}, `OPCODE_STORE }
+`define INSTR_SB         { 17'b?, 3'b000, 5'b?, `OPCODE_STORE }
+`define INSTR_SH         { 17'b?, 3'b001, 5'b?, `OPCODE_STORE }
+`define INSTR_SW         { 17'b?, 3'b010, 5'b?, `OPCODE_STORE }
 // OPIMM
-`define INSTR_ADDI       { {17 {1'b?}}, 3'b000, {5 {1'b?}}, `OPCODE_OPIMM }
-`define INSTR_SLTI       { {17 {1'b?}}, 3'b010, {5 {1'b?}}, `OPCODE_OPIMM }
-`define INSTR_SLTIU      { {17 {1'b?}}, 3'b011, {5 {1'b?}}, `OPCODE_OPIMM }
-`define INSTR_XORI       { {17 {1'b?}}, 3'b100, {5 {1'b?}}, `OPCODE_OPIMM }
-`define INSTR_ORI        { {17 {1'b?}}, 3'b110, {5 {1'b?}}, `OPCODE_OPIMM }
-`define INSTR_ANDI       { {17 {1'b?}}, 3'b111, {5 {1'b?}}, `OPCODE_OPIMM }
-`define INSTR_SLLI       { 7'b0000000, {10 {1'b?}}, 3'b001, {5 {1'b?}}, `OPCODE_OPIMM }
-`define INSTR_SRLI       { 7'b0000000, {10 {1'b?}}, 3'b101, {5 {1'b?}}, `OPCODE_OPIMM }
-`define INSTR_SRAI       { 7'b0100000, {10 {1'b?}}, 3'b101, {5 {1'b?}}, `OPCODE_OPIMM }
+`define INSTR_ADDI       { 17'b?, 3'b000, 5'b?, `OPCODE_OPIMM }
+`define INSTR_SLTI       { 17'b?, 3'b010, 5'b?, `OPCODE_OPIMM }
+`define INSTR_SLTIU      { 17'b?, 3'b011, 5'b?, `OPCODE_OPIMM }
+`define INSTR_XORI       { 17'b?, 3'b100, 5'b?, `OPCODE_OPIMM }
+`define INSTR_ORI        { 17'b?, 3'b110, 5'b?, `OPCODE_OPIMM }
+`define INSTR_ANDI       { 17'b?, 3'b111, 5'b?, `OPCODE_OPIMM }
+`define INSTR_SLLI       { 7'b0000000, 10'b?, 3'b001, 5'b?, `OPCODE_OPIMM }
+`define INSTR_SRLI       { 7'b0000000, 10'b?, 3'b101, 5'b?, `OPCODE_OPIMM }
+`define INSTR_SRAI       { 7'b0100000, 10'b?, 3'b101, 5'b?, `OPCODE_OPIMM }
 // OP
-`define INSTR_ADD        { 7'b0000000, {10 {1'b?}}, 3'b000, {5 {1'b?}}, `OPCODE_OP }
-`define INSTR_SUB        { 7'b0100000, {10 {1'b?}}, 3'b000, {5 {1'b?}}, `OPCODE_OP }
-`define INSTR_SLL        { 7'b0000000, {10 {1'b?}}, 3'b001, {5 {1'b?}}, `OPCODE_OP }
-`define INSTR_SLT        { 7'b0000000, {10 {1'b?}}, 3'b010, {5 {1'b?}}, `OPCODE_OP }
-`define INSTR_SLTU       { 7'b0000000, {10 {1'b?}}, 3'b011, {5 {1'b?}}, `OPCODE_OP }
-`define INSTR_XOR        { 7'b0000000, {10 {1'b?}}, 3'b100, {5 {1'b?}}, `OPCODE_OP }
-`define INSTR_SRL        { 7'b0000000, {10 {1'b?}}, 3'b101, {5 {1'b?}}, `OPCODE_OP }
-`define INSTR_SRA        { 7'b0100000, {10 {1'b?}}, 3'b101, {5 {1'b?}}, `OPCODE_OP }
-`define INSTR_OR         { 7'b0000000, {10 {1'b?}}, 3'b110, {5 {1'b?}}, `OPCODE_OP }
-`define INSTR_AND        { 7'b0000000, {10 {1'b?}}, 3'b111, {5 {1'b?}}, `OPCODE_OP }
+`define INSTR_ADD        { 7'b0000000, 10'b?, 3'b000, 5'b?, `OPCODE_OP }
+`define INSTR_SUB        { 7'b0100000, 10'b?, 3'b000, 5'b?, `OPCODE_OP }
+`define INSTR_SLL        { 7'b0000000, 10'b?, 3'b001, 5'b?, `OPCODE_OP }
+`define INSTR_SLT        { 7'b0000000, 10'b?, 3'b010, 5'b?, `OPCODE_OP }
+`define INSTR_SLTU       { 7'b0000000, 10'b?, 3'b011, 5'b?, `OPCODE_OP }
+`define INSTR_XOR        { 7'b0000000, 10'b?, 3'b100, 5'b?, `OPCODE_OP }
+`define INSTR_SRL        { 7'b0000000, 10'b?, 3'b101, 5'b?, `OPCODE_OP }
+`define INSTR_SRA        { 7'b0100000, 10'b?, 3'b101, 5'b?, `OPCODE_OP }
+`define INSTR_OR         { 7'b0000000, 10'b?, 3'b110, 5'b?, `OPCODE_OP }
+`define INSTR_AND        { 7'b0000000, 10'b?, 3'b111, 5'b?, `OPCODE_OP }
 // FENCE
-`define INSTR_FENCE      { 4'b0000, {8 {1'b?}}, {13 {1'b0}}, `OPCODE_FENCE }
-`define INSTR_FENCEI     { {17 {1'b0}}, 3'b001, {5 {1'b0}}, `OPCODE_FENCE }
+`define INSTR_FENCE      { 4'b0, 8'b?, 13'b0, `OPCODE_FENCE }
+`define INSTR_FENCEI     { 17'b0, 3'b001, 5'b0, `OPCODE_FENCE }
 // SYSTEM
-`define INSTR_CSRRW      { {17 {1'b?}}, 3'b001, {5 {1'b?}}, `OPCODE_SYSTEM }
-`define INSTR_CSRRS      { {17 {1'b?}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
-`define INSTR_CSRRC      { {17 {1'b?}}, 3'b011, {5 {1'b?}}, `OPCODE_SYSTEM }
-`define INSTR_CSRRWI     { {17 {1'b?}}, 3'b101, {5 {1'b?}}, `OPCODE_SYSTEM }
-`define INSTR_CSRRSI     { {17 {1'b?}}, 3'b110, {5 {1'b?}}, `OPCODE_SYSTEM }
-`define INSTR_CSRRCI     { {17 {1'b?}}, 3'b111, {5 {1'b?}}, `OPCODE_SYSTEM }
-`define INSTR_ECALL      { 12'b000000000000, {13 {1'b0}}, `OPCODE_SYSTEM }
-`define INSTR_EBREAK     { 12'b000000000001, {13 {1'b0}}, `OPCODE_SYSTEM }
-`define INSTR_ERET       { 12'b000100000000, {13 {1'b0}}, `OPCODE_SYSTEM }
-`define INSTR_WFI        { 12'b000100000010, {13 {1'b0}}, `OPCODE_SYSTEM }
-`define INSTR_RDCYCLE    { 5'b11000, {5 {1'b0}}, 2'b00, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
-`define INSTR_RDCYCLEH   { 5'b11001, {5 {1'b0}}, 2'b00, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
-`define INSTR_RDTIME     { 5'b11000, {5 {1'b0}}, 2'b01, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
-`define INSTR_RDTIMEH    { 5'b11001, {5 {1'b0}}, 2'b01, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
-`define INSTR_RDINSTRET  { 5'b11000, {5 {1'b0}}, 2'b10, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
-`define INSTR_RDINSTRETH { 5'b11001, {5 {1'b0}}, 2'b10, {5 {1'b0}}, 3'b010, {5 {1'b?}}, `OPCODE_SYSTEM }
+`define INSTR_CSRRW      { 17'b?, 3'b001, 5'b?, `OPCODE_SYSTEM }
+`define INSTR_CSRRS      { 17'b?, 3'b010, 5'b?, `OPCODE_SYSTEM }
+`define INSTR_CSRRC      { 17'b?, 3'b011, 5'b?, `OPCODE_SYSTEM }
+`define INSTR_CSRRWI     { 17'b?, 3'b101, 5'b?, `OPCODE_SYSTEM }
+`define INSTR_CSRRSI     { 17'b?, 3'b110, 5'b?, `OPCODE_SYSTEM }
+`define INSTR_CSRRCI     { 17'b?, 3'b111, 5'b?, `OPCODE_SYSTEM }
+`define INSTR_ECALL      { 12'b000000000000, 13'b0, `OPCODE_SYSTEM }
+`define INSTR_EBREAK     { 12'b000000000001, 13'b0, `OPCODE_SYSTEM }
+`define INSTR_ERET       { 12'b000100000000, 13'b0, `OPCODE_SYSTEM }
+`define INSTR_WFI        { 12'b000100000010, 13'b0, `OPCODE_SYSTEM }
+`define INSTR_RDCYCLE    { 5'b11000, 5'b0, 2'b00, 5'b0, 3'b010, 5'b?, `OPCODE_SYSTEM }
+`define INSTR_RDCYCLEH   { 5'b11001, 5'b0, 2'b00, 5'b0, 3'b010, 5'b?, `OPCODE_SYSTEM }
+`define INSTR_RDTIME     { 5'b11000, 5'b0, 2'b01, 5'b0, 3'b010, 5'b?, `OPCODE_SYSTEM }
+`define INSTR_RDTIMEH    { 5'b11001, 5'b0, 2'b01, 5'b0, 3'b010, 5'b?, `OPCODE_SYSTEM }
+`define INSTR_RDINSTRET  { 5'b11000, 5'b0, 2'b10, 5'b0, 3'b010, 5'b?, `OPCODE_SYSTEM }
+`define INSTR_RDINSTRETH { 5'b11001, 5'b0, 2'b10, 5'b0, 3'b010, 5'b?, `OPCODE_SYSTEM }
 
 // RV32M
-`define INSTR_MUL        { 7'b0000001, {10 {1'b?}}, 3'b000, {5 {1'b?}}, `OPCODE_OP }
+`define INSTR_MUL        { 7'b0000001, 10'b?, 3'b000, 5'b?, `OPCODE_OP }
 /* not implemented
-`define INSTR_MULH       { 7'b0000001, {10 {1'b?}}, 3'b001, {5 {1'b?}}, `OPCODE_OP }
-`define INSTR_MULHSU     { 7'b0000001, {10 {1'b?}}, 3'b010, {5 {1'b?}}, `OPCODE_OP }
-`define INSTR_MULHU      { 7'b0000001, {10 {1'b?}}, 3'b011, {5 {1'b?}}, `OPCODE_OP }
-`define INSTR_DIV        { 7'b0000001, {10 {1'b?}}, 3'b100, {5 {1'b?}}, `OPCODE_OP }
-`define INSTR_DIVU       { 7'b0000001, {10 {1'b?}}, 3'b101, {5 {1'b?}}, `OPCODE_OP }
-`define INSTR_REM        { 7'b0000001, {10 {1'b?}}, 3'b110, {5 {1'b?}}, `OPCODE_OP }
-`define INSTR_REMU       { 7'b0000001, {10 {1'b?}}, 3'b111, {5 {1'b?}}, `OPCODE_OP }
+`define INSTR_MULH       { 7'b0000001, 10'b?, 3'b001, 5'b?, `OPCODE_OP }
+`define INSTR_MULHSU     { 7'b0000001, 10'b?, 3'b010, 5'b?, `OPCODE_OP }
+`define INSTR_MULHU      { 7'b0000001, 10'b?, 3'b011, 5'b?, `OPCODE_OP }
+`define INSTR_DIV        { 7'b0000001, 10'b?, 3'b100, 5'b?, `OPCODE_OP }
+`define INSTR_DIVU       { 7'b0000001, 10'b?, 3'b101, 5'b?, `OPCODE_OP }
+`define INSTR_REM        { 7'b0000001, 10'b?, 3'b110, 5'b?, `OPCODE_OP }
+`define INSTR_REMU       { 7'b0000001, 10'b?, 3'b111, 5'b?, `OPCODE_OP }
 */
 
 // PULP custom instructions
 
 // Post-indexed load
-`define INSTR_LBPOST     { {17 {1'b?}}, 3'b011, {5 {1'b?}}, `OPCODE_LOAD_POST }
-`define INSTR_LHPOST     { {17 {1'b?}}, 3'b110, {5 {1'b?}}, `OPCODE_LOAD_POST }
-`define INSTR_LWPOST     { {17 {1'b?}}, 3'b111, {5 {1'b?}}, `OPCODE_LOAD_POST }
+`define INSTR_LBPOST     { 17'b?, 3'b011, 5'b?, `OPCODE_LOAD_POST }
+`define INSTR_LHPOST     { 17'b?, 3'b110, 5'b?, `OPCODE_LOAD_POST }
+`define INSTR_LWPOST     { 17'b?, 3'b111, 5'b?, `OPCODE_LOAD_POST }
 
 // Source/Destination register instruction index
 `define REG_S1 19:15
