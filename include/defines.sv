@@ -335,6 +335,12 @@ endfunction // prettyPrintInstruction
 `define OP_C_REGC_OR_FWD 1'b0
 `define OP_C_JT          1'b1
 
+// branch types
+`define BRANCH_NONE 2'b00
+`define BRANCH_JAL  2'b01
+`define BRANCH_JALR 2'b10
+`define BRANCH_COND 2'b11 // conditional branches
+
 
 ///////////////////////////////////////////////
 //   ___ _____   ____  _                     //

@@ -121,7 +121,7 @@ module if_stage
   logic pc_if_offset, pc_if_offset_n;
 
 
-  enum logic[3:0] {INVALID, VALID, FETCH, FETCH_NEXT, SERVE_OFFSET, WAIT_ACK, WAIT_REQ, IDLE} fetch_fsm_cs, fetch_fsm_ns;
+  enum logic[3:0] {INVALID, VALID, FETCH, FETCH_NEXT, SERVE_OFFSET, WAIT_ACK, WAIT_REQ, IDLE, HANDLE_BRANCH} fetch_fsm_cs, fetch_fsm_ns;
 
   always_ff @(posedge clk, negedge rst_n)
   begin
@@ -131,9 +131,6 @@ module if_stage
       fetch_fsm_cs <= fetch_fsm_ns;
     end
   end
-
-
-  assign compressed_instr = instr_rdata_int[1:0] != 2'b11;
 
 
   always_comb
@@ -193,13 +190,8 @@ module if_stage
       is_compressed[1] = data_arr[0][17:16] != 2'b11;
     end
   end
-  //assign is_compressed[0] = data_arr[0][1:0]   != 2'b11;
-  //assign is_compressed[1] = data_arr[0][17:16] != 2'b11;
-  //assign is_compressed[0] = rdata_int[1:0]   != 2'b11;
-  //assign is_compressed[1] = rdata_int[17:16] != 2'b11;
 
   assign current_pc_if_o = pc_if_offset ? {last_fetch_addr[31:2], 2'b10} : fetch_addr;
-  //assign current_pc_if_o = pc_if_offset ? {fetch_addr[31:2], 2'b10} : fetch_addr;
 
 
   always_comb
@@ -238,10 +230,10 @@ module if_stage
           if (ack_int) begin
             ack_o = 1'b1;
             fetch_fsm_ns = WAIT_REQ;
-            // TODO: Already handle request here
           end
         end
 
+        // handle requests
         if (req_i) begin
           fetch_fsm_ns = WAIT_ACK;
           req_int = 1'b1;
@@ -261,8 +253,9 @@ module if_stage
             end
           end else begin
             if (is_compressed[0]) begin
-              // compressed instruction, increase PC by two bytes
+              // compressed instruction, only increase PC by two bytes
               sample_addr    = 1'b0;
+              req_int        = 1'b0;
               ack_o          = 1'b1;
               pc_if_offset_n = 1'b1;
               fetch_fsm_ns   = WAIT_REQ;
@@ -272,6 +265,59 @@ module if_stage
             end
           end
         end
+
+        // handle jumps and branches (note: if jump_in_ex is signaling
+        // a branch in this state, it is because the IF/ID stage was stalled
+        // when the state changed from HANDLE_BRANCH to WAIT_REQ/-ACK)
+        if (jump_in_id_i != `BRANCH_NONE) begin
+          // restore all state changes
+          pc_if_offset_n = pc_if_offset;
+          sample_addr    = 1'b0;
+          req_int        = 1'b0;
+          // insert NOPs and wait for valid target
+          force_nop_int  = 1'b1;
+          ack_o          = 1'b1;
+          fetch_fsm_ns   = HANDLE_BRANCH;
+        end
+      end
+
+      HANDLE_BRANCH:
+      begin
+        if (jump_in_ex_i == `BRANCH_NONE) begin
+          // insert NOPs until branch arrives in EX
+          // TODO: probably not needed
+          force_nop_int = 1'b1;
+          ack_o         = req_i;
+        end else begin
+          if (jump_in_ex_i == `BRANCH_COND && branch_decision_i == 1'b0) begin
+            // branch not taken, continue as before
+            // TODO: Already serve request here?
+            fetch_fsm_ns   = WAIT_REQ;
+          end else begin
+            // set new PC
+            fetch_addr_n = {jump_target_i[31:2], 2'b0};
+            sample_addr = 1'b1;
+            if (jump_target_i[1:0] == 2'b0) begin
+              // regular fetch
+              pc_if_offset_n = 1'b0;
+              fetch_fsm_ns   = WAIT_REQ;
+            end else begin
+              // unaligned access
+              pc_if_offset_n = 1'b1;
+              fetch_fsm_ns = FETCH;
+            end
+            // TODO: Already send request here?
+          end
+        end
+      end
+
+      FETCH:
+      begin
+        req_int = 1'b1;
+
+        if (ack_int) begin
+          fetch_fsm_ns = WAIT_REQ;
+        end
       end
 
       FETCH_NEXT:
@@ -279,115 +325,18 @@ module if_stage
         sample_addr = 1'b0;
         if (ack_int) begin
           //sample_addr = 1'b1;
-          ack_o = 1'b1;
-          bypass_data_reg = 1'b0;
-          fetch_fsm_ns = WAIT_REQ;
+          ack_o           = 1'b1;
+          bypass_data_reg = 1'b0; // TODO: Use different signal for IF PC calculation
+          fetch_fsm_ns    = WAIT_REQ;
         end
+      end
+
+      default:
+      begin
+        fetch_fsm_ns = IDLE;
       end
     endcase
   end
-
-
-  //always_comb
-  //begin
-  //  fetch_fsm_ns    = fetch_fsm_cs;
-
-  //  fetch_addr_n    = {next_pc[31:2], 2'b0};
-  //  sample_addr     = 1'b0;
-
-  //  pc_if_offset_n  = pc_if_offset; //1'b0;
-  //  //sample_offset   = 1'b0;
-  //  ack_o           = 1'b0;
-  //  req_int         = 1'b0;
-  //  force_nop_int   = 1'b0;
-
-  //  bypass_data_reg = 1'b0;
-
-
-  //  unique case (fetch_fsm_cs)
-  //    INVALID:
-  //    begin
-  //      if (do_fetch) begin
-  //        if (force_nop_i) begin
-  //          force_nop_int = 1'b1;
-  //          ack_o = 1'b1;
-  //        end else begin
-  //          fetch_fsm_ns = FETCH;
-  //        end
-  //      end
-  //    end
-
-  //    VALID:
-  //    begin
-  //      if (do_fetch) begin
-  //        if (force_nop_i) begin
-  //          force_nop_int = 1'b1;
-  //          ack_o = 1'b1;
-  //        end else begin
-  //          if (fetch_hit) begin
-  //            if (pc_if_offset) begin
-  //              //fetch_addr_n = last_fetch_addr + 4;
-  //              sample_addr = 1'b1;
-  //              if (is_compressed[1]) begin
-  //                pc_if_offset_n = 1'b0;
-  //                ack_o = 1'b1;
-  //              end else begin
-  //                fetch_fsm_ns = FETCH_NEXT;
-  //              end
-  //            end else begin
-  //              ack_o = 1'b1;
-  //              if (is_compressed[0]) begin
-  //                pc_if_offset_n = 1'b1;
-  //              end else begin
-  //                //fetch_addr_n = last_fetch_addr + 4;
-  //                sample_addr = 1'b1;
-  //              end
-  //            end
-  //          end else begin
-  //            // fetch single requested word
-  //            sample_addr = 1'b1;
-  //            fetch_fsm_ns = FETCH;
-  //          end
-  //        end
-  //      end
-  //    end
-
-  //    SERVE_OFFSET:
-  //    begin
-  //      ack_o = 1'b1;
-  //      fetch_fsm_ns = VALID;
-  //    end
-
-  //    FETCH:
-  //    begin
-  //      req_int = 1'b1;
-  //      if (ack_int) begin
-  //        req_int = 1'b0; // TODO: Maybe only assert req_int before going into FETCH state
-  //        bypass_data_reg = 1'b1;
-  //        ack_o = 1'b1;
-  //        fetch_fsm_ns = VALID;
-  //      end
-  //    end
-
-  //    FETCH_NEXT:
-  //    begin
-  //      req_int = 1'b1;
-  //      if (ack_int) begin
-  //        req_int = 1'b0; // TODO: Maybe only assert req_int before going into FETCH state
-  //        bypass_data_reg = 1'b1;
-  //        ack_o = 1'b1;
-  //        fetch_fsm_ns = VALID;
-
-  //        sample_addr = 1'b1;
-  //      end
-  //    end
-  //  endcase
-
-  //  if (pc_mux_boot_i) begin
-  //    sample_addr  = 1'b1;
-  //    fetch_fsm_ns = INVALID;
-  //  end
-  //end
 
 
   // exception PC selection mux
@@ -419,16 +368,16 @@ module if_stage
       end
     endcase
 
-    if (jump_in_ex_i == 2'b01) begin
-      // jump handling
-      next_pc = jump_target_i;
-    end else if (jump_in_ex_i == 2'b10) begin
-      // branch handling
-      if (branch_decision_i == 1'b1)
-        next_pc = jump_target_i;
-      else
-        next_pc = incr_pc;
-    end
+    //if (jump_in_ex_i == 2'b01) begin
+    //  // jump handling
+    //  next_pc = jump_target_i;
+    //end else if (jump_in_ex_i == 2'b10) begin
+    //  // branch handling
+    //  if (branch_decision_i == 1'b1)
+    //    next_pc = jump_target_i;
+    //  else
+    //    next_pc = incr_pc;
+    //end
 
     if (pc_mux_boot_i)
       next_pc = {boot_addr_i[31:5], `EXC_OFF_RST};
