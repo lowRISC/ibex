@@ -167,6 +167,7 @@ module controller
   logic        jr_stall;
   logic        trap_stall;
 
+  logic [2:0]  pc_mux_sel;
   logic        set_npc;
 `ifdef BRANCH_PREDICTION
   logic        wrong_branch_taken;
@@ -180,21 +181,18 @@ module controller
   logic        dbg_halt;
   logic        dbg_flush;
 
-  ////////////////////////////////////////////////////////////////////////////////////////////
-  //   ____ ___  ____  _____    ____ ___  _   _ _____ ____   ___  _     _     _____ ____    //
-  //  / ___/ _ \|  _ \| ____|  / ___/ _ \| \ | |_   _|  _ \ / _ \| |   | |   | ____|  _ \   //
-  // | |  | | | | |_) |  _|   | |  | | | |  \| | | | | |_) | | | | |   | |   |  _| | |_) |  //
-  // | |__| |_| |  _ <| |___  | |__| |_| | |\  | | | |  _ <| |_| | |___| |___| |___|  _ <   //
-  //  \____\___/|_| \_\_____|  \____\___/|_| \_| |_| |_| \_\\___/|_____|_____|_____|_| \_\  //
-  //                                                                                        //
-  ////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////
+  //   ____                     _            //
+  //  |  _ \  ___  ___ ___   __| | ___ _ __  //
+  //  | | | |/ _ \/ __/ _ \ / _` |/ _ \ '__| //
+  //  | |_| |  __/ (_| (_) | (_| |  __/ |    //
+  //  |____/ \___|\___\___/ \__,_|\___|_|    //
+  //                                         //
+  /////////////////////////////////////////////
   always_comb
   begin
     // Default values
-    instr_req_o                 = 1'b1;
-
-    pc_mux_sel_o                = `PC_INCR;
-    pc_mux_boot_o               = 1'b0;
+    pc_mux_sel                  = `PC_INCR;
     jump_in_id_o                = 2'b00;
 
     alu_operator                = `ALU_NOP;
@@ -241,8 +239,6 @@ module controller
     trap_insn_o                 = 1'b0;
     pipe_flush_o                = 1'b0;
 
-    ctrl_fsm_ns                 = ctrl_fsm_cs;
-
     rega_used                   = 1'b0;
     regb_used                   = 1'b0;
     regc_used                   = 1'b0;
@@ -251,13 +247,807 @@ module controller
     wrong_branch_taken_o        = 1'b0;
     take_branch_o               = 1'b0;
 `endif
+    unique case (instr_rdata_i[6:0])
+
+      //////////////////////////////////////
+      //      _ _   _ __  __ ____  ____   //
+      //     | | | | |  \/  |  _ \/ ___|  //
+      //  _  | | | | | |\/| | |_) \___ \  //
+      // | |_| | |_| | |  | |  __/ ___) | //
+      //  \___/ \___/|_|  |_|_|   |____/  //
+      //                                  //
+      //////////////////////////////////////
+
+      `OPCODE_JAL: begin   // Jump and Link
+        if (instr_rdata_i ==? `INSTR_JAL) begin
+          // Insert bubbles
+          pc_mux_sel          = `PC_NO_INCR;
+          jump_in_id_o        = 2'b01;
+          // Calculate and store PC+4
+          alu_op_a_mux_sel_o  = `OP_A_CURRPC;
+          alu_op_b_mux_sel_o  = `OP_B_IMM;
+          immediate_mux_sel_o = `IMM_PCINCR;
+          alu_operator        = `ALU_ADD;
+          regfile_alu_we      = 1'b1;
+          // Calculate jump target (= PC + UJ imm)
+          alu_op_c_mux_sel_o  = `OP_C_JT;
+        end else begin
+          illegal_insn_o      = 1'b1;
+        end
+      end
+
+      `OPCODE_JALR: begin  // Jump and Link Register
+        if (instr_rdata_i ==? `INSTR_JALR) begin
+          // Insert bubbles
+          pc_mux_sel          = `PC_NO_INCR;
+          jump_in_id_o        = 2'b01;
+          // Calculate and store PC+4
+          alu_op_a_mux_sel_o  = `OP_A_CURRPC;
+          alu_op_b_mux_sel_o  = `OP_B_IMM;
+          immediate_mux_sel_o = `IMM_PCINCR;
+          alu_operator        = `ALU_ADD;
+          regfile_alu_we      = 1'b1;
+          // Calculate jump target (= RS1 + I imm)
+          rega_used           = 1'b1;
+          alu_op_c_mux_sel_o  = `OP_C_JT;
+        end else begin
+          illegal_insn_o      = 1'b1;
+        end
+      end
+
+      `OPCODE_BRANCH: begin // Branch
+        pc_mux_sel          = `PC_NO_INCR;
+        jump_in_id_o        = 2'b10;
+        alu_op_c_mux_sel_o  = `OP_C_JT;
+        rega_used           = 1'b1;
+        regb_used           = 1'b1;
+
+        unique case (instr_rdata_i) inside
+          `INSTR_BEQ:  alu_operator = `ALU_EQ;
+          `INSTR_BNE:  alu_operator = `ALU_NE;
+          `INSTR_BLT:  alu_operator = `ALU_LTS;
+          `INSTR_BGE:  alu_operator = `ALU_GES;
+          `INSTR_BLTU: alu_operator = `ALU_LTU;
+          `INSTR_BGEU: alu_operator = `ALU_GEU;
+
+          default: begin
+            illegal_insn_o = 1'b1;
+          end
+        endcase // case (instr_rdata_i)
+      end
+
+
+      //////////////////////////////////
+      //  _     ____    ______ _____  //
+      // | |   |  _ \  / / ___|_   _| //
+      // | |   | | | |/ /\___ \ | |   //
+      // | |___| |_| / /  ___) || |   //
+      // |_____|____/_/  |____/ |_|   //
+      //                              //
+      //////////////////////////////////
+
+      `OPCODE_STORE,
+      `OPCODE_STORE_POST: begin
+        data_req            = 1'b1;
+        data_we             = 1'b1;
+        rega_used           = 1'b1;
+        regb_used           = 1'b1;
+        alu_operator        = `ALU_ADD;
+
+        // post-increment setup
+        if (instr_rdata_i[6:0] == `OPCODE_STORE_POST) begin
+          prepost_useincr_o           = 1'b0;
+          regfile_alu_waddr_mux_sel_o = 2'b00;
+          regfile_alu_we              = 1'b1;
+        end
+
+        if (instr_rdata_i[14] == 1'b0) begin
+          // offset from immediate
+          immediate_mux_sel_o = `IMM_S;
+          alu_op_b_mux_sel_o  = `OP_B_IMM;
+        end else begin
+          // offset from register
+          regc_used = 1'b1;
+          alu_op_b_mux_sel_o = `OP_B_REGC_OR_FWD;
+        end
+
+        // store size
+        unique case (instr_rdata_i[13:12])
+          2'b00: data_type_o = 2'b10; // SB
+          2'b01: data_type_o = 2'b01; // SH
+          2'b10: data_type_o = 2'b00; // SW
+          default: begin
+            data_req = 1'b0;
+            data_we  = 1'b0;
+            illegal_insn_o = 1'b1;
+          end
+        endcase
+      end
+
+      `OPCODE_LOAD,
+      `OPCODE_LOAD_POST: begin
+        data_req                 = 1'b1;
+        regfile_we               = 1'b1;
+        rega_used                = 1'b1;
+        data_type_o              = 2'b00;
+
+        // offset from immediate
+        alu_operator             = `ALU_ADD;
+        alu_op_b_mux_sel_o       = `OP_B_IMM;
+        immediate_mux_sel_o      = `IMM_I;
+
+        // post-increment setup
+        if (instr_rdata_i[6:0] == `OPCODE_LOAD_POST) begin
+          prepost_useincr_o           = 1'b0;
+          regfile_alu_waddr_mux_sel_o = 2'b00;
+          regfile_alu_we              = 1'b1;
+        end
+
+        // sign/zero extension
+        data_sign_extension_o = ~instr_rdata_i[14];
+
+        // load size
+        unique case (instr_rdata_i[13:12])
+          2'b00:   data_type_o = 2'b10; // LB
+          2'b01:   data_type_o = 2'b01; // LH
+          2'b10:   data_type_o = 2'b00; // LW
+          default: data_type_o = 2'b00; // illegal or reg-reg
+        endcase
+
+        // reg-reg load (different encoding)
+        if (instr_rdata_i[14:12] == 3'b111) begin
+          // offset from RS2
+          regb_used          = 1'b1;
+          alu_op_b_mux_sel_o = `OP_B_REGB_OR_FWD;
+
+          // sign/zero extension
+          data_sign_extension_o = ~instr_rdata_i[30];
+
+          // load size
+          unique case (instr_rdata_i[31:25])
+            7'b0000_000,
+            7'b0100_000: data_type_o = 2'b10; // LB, LBU
+            7'b0001_000,
+            7'b0101_000: data_type_o = 2'b01; // LH, LHU
+            7'b0010_000: data_type_o = 2'b00; // LW
+            default: begin
+              data_type_o    = 2'b00;
+              // illegal instruction
+              data_req       = 1'b0;
+              regfile_we     = 1'b0;
+              regfile_alu_we = 1'b0;
+              illegal_insn_o = 1'b1;
+            end
+          endcase
+        end
+
+        if (instr_rdata_i[14:12] == 3'b011 || instr_rdata_i[14:12] == 3'b110)
+        begin
+          // LD, LWU -> RV64 only
+          data_req       = 1'b0;
+          regfile_we     = 1'b0;
+          regfile_alu_we = 1'b0;
+          illegal_insn_o = 1'b1;
+        end
+      end
+
+      /*
+
+      // Pre/Post-Increment Stores and Register-Register Stores
+      `OPCODE_STPOST, `OPCODE_STPRE: begin
+        alu_operator                = `ALU_ADD;  // addr is generated in ID stage so no need for addr gen in alu TODO: always use ID stage addr
+        data_req                    = 1'b1;
+        regfile_alu_waddr_mux_sel_o = 2'b00;
+        rega_used                   = 1'b1;
+        regb_used                   = 1'b1;
+        data_we                     = 1'b1;      // write to memory
+
+
+        if (instr_rdata_i[31:26] == `OPCODE_STPOST)
+        begin
+          prepost_useincr_o = 1'b0; // if post increment instruction, don't use the modified address
+        end
+
+        case (instr_rdata_i[5:4])
+          default: begin
+            alu_op_b_mux_sel_o   = `OP_B_IMM;
+            immediate_mux_sel_o  = `IMM_5N6S;  // offset in 11bit immediate
+            regfile_alu_we   = 1'b1;  // write new addr value into regfile using portB
+          end
+
+          2'b11: begin // register-register store with post increment
+            regc_used = 1'b1;
+            alu_op_b_mux_sel_o = `OP_B_REGC_OR_FWD;
+            regfile_alu_we = 1'b1;  // write new addr value into regfile using portB
+          end
+
+          2'b01: begin // register-register store without pre/post-increment
+            alu_op_b_mux_sel_o = `OP_B_REGC_OR_FWD;
+            regc_used          = 1'b1;
+          end
+        endcase // case (instr_rdata_i[5:4])
+
+        // Word, Half Word or Byte store
+        case (instr_rdata_i[3:2])
+          default: data_type_o = 2'b00;
+          2'b00:   data_type_o = 2'b00; // word
+          2'b10:   data_type_o = 2'b01; // half word
+          2'b11:   data_type_o = 2'b10; // byte
+        endcase // case(instr_rdata_i[4:3]
+
+        // offset inside value to be stored, e.g. l.sh1, l.sb1 and so on
+        data_reg_offset_o      = instr_rdata_i[1:0];
+      end
+       */
+
+      //////////////////////////
+      //     _    _    _   _  //
+      //    / \  | |  | | | | //
+      //   / _ \ | |  | | | | //
+      //  / ___ \| |__| |_| | //
+      // /_/   \_\_____\___/  //
+      //                      //
+      //////////////////////////
+
+      `OPCODE_LUI: begin  // Load Upper Immediate
+        alu_op_a_mux_sel_o  = `OP_A_ZERO;
+        alu_op_b_mux_sel_o  = `OP_B_IMM;
+        immediate_mux_sel_o = `IMM_U;
+        alu_operator        = `ALU_ADD;
+        regfile_alu_we      = 1'b1;
+      end
+
+      `OPCODE_AUIPC: begin  // Add Upper Immediate to PC
+        alu_op_a_mux_sel_o  = `OP_A_CURRPC;
+        alu_op_b_mux_sel_o  = `OP_B_IMM;
+        immediate_mux_sel_o = `IMM_U;
+        alu_operator        = `ALU_ADD;
+        regfile_alu_we      = 1'b1;
+      end
+
+      `OPCODE_OPIMM: begin // Reigster-Immediate ALU Operations
+        alu_op_b_mux_sel_o  = `OP_B_IMM;
+        immediate_mux_sel_o = `IMM_I;
+        regfile_alu_we      = 1'b1;
+        rega_used           = 1'b1;
+
+        unique case (instr_rdata_i) inside
+          `INSTR_ADDI:  alu_operator = `ALU_ADD;  // Add Immediate
+          `INSTR_SLTI:  alu_operator = `ALU_SLTS; // Set to one if Lower Than Immediate
+          `INSTR_SLTIU: alu_operator = `ALU_SLTU; // Set to one if Lower Than Immediate Unsigned
+          `INSTR_XORI:  alu_operator = `ALU_XOR;  // Exclusive Or with Immediate
+          `INSTR_ORI:   alu_operator = `ALU_OR;   // Or with Immediate
+          `INSTR_ANDI:  alu_operator = `ALU_AND;  // And with Immediate
+          `INSTR_SLLI:  alu_operator = `ALU_SLL;  // Shift Left Logical by Immediate
+          `INSTR_SRLI:  alu_operator = `ALU_SRL;  // Shift Right Logical by Immediate
+          `INSTR_SRAI:  alu_operator = `ALU_SRA;  // Shift Right Arithmetically by Immediate
+          default: begin
+            regfile_alu_we = 1'b0;
+            illegal_insn_o = 1'b1;
+          end
+        endcase // unique case (instr_rdata_i)
+      end
+
+      `OPCODE_OP: begin  // Register-Register ALU operation
+        regfile_alu_we = 1'b1;
+        rega_used      = 1'b1;
+        regb_used      = 1'b1;
+
+        unique case (instr_rdata_i) inside
+          `INSTR_ADD:  alu_operator = `ALU_ADD;  // Add
+          `INSTR_SUB:  alu_operator = `ALU_SUB;  // Sub
+          `INSTR_SLL:  alu_operator = `ALU_SLL;  // Shift Left Logical
+          `INSTR_SLT:  alu_operator = `ALU_SLTS; // Set Lower Than
+          `INSTR_SLTU: alu_operator = `ALU_SLTU; // Set Lower Than Unsigned
+          `INSTR_XOR:  alu_operator = `ALU_XOR;  // Xor
+          `INSTR_SRL:  alu_operator = `ALU_SRL;  // Shift Right Logical
+          `INSTR_SRA:  alu_operator = `ALU_SRA;  // Shift Right Arithmetic
+          `INSTR_OR:   alu_operator = `ALU_OR;   // Or
+          `INSTR_AND:  alu_operator = `ALU_AND;  // And
+
+          `INSTR_MUL:  mult_en      = 1'b1;      // Multiplication
+
+          default: begin
+            // synopsys translate_off
+            $display("%t: Illegal OP instruction: %b", $time, instr_rdata_i);
+            // synopsys translate_on
+            regfile_alu_we = 1'b0;
+            illegal_insn_o = 1'b1;
+          end
+        endcase // unique case (instr_rdata_i)
+      end
+
+      /*
+
+      `OPCODE_MULI: begin  // Multiply Immediate Signed
+        alu_op_b_mux_sel_o   = `OP_B_IMM;
+        immediate_mux_sel_o  = `IMM_16;
+        mult_is_running      = 1'b1;
+
+        regfile_alu_we              = 1'b1;
+        regfile_alu_waddr_mux_sel_o = 2'b01;
+        rega_used                   = 1'b1;
+      end
+
+      `OPCODE_ALU: begin   // Arithmetic Operation
+        rega_used  = 1'b1;
+        regb_used  = 1'b1;
+
+        case (instr_rdata_i[9:8])
+          2'b00: begin    // ALU Operation
+            regfile_alu_we = 1'b1;
+
+            casex (instr_rdata_i[3:0])
+              4'b0XXX: begin // Standard Operation
+                alu_operator   = {3'b000, instr_rdata_i[2:0]};
+
+                if ((instr_rdata_i[2:0] ==? 3'b00X) || (instr_rdata_i[2:0] == 3'b010)) begin // l.add, l.addc & l.sub
+                  set_overflow = 1'b1;
+                  set_carry    = 1'b1;
+                end
+              end
+              4'b1000: begin // Shift Operation
+                 alu_operator   = {4'b0010, instr_rdata_i[7:6]};
+              end
+              4'b110X: begin // l.ext{b,h,w}{s,z}
+                 alu_operator   = {3'b010, instr_rdata_i[7:6], instr_rdata_i[0]};
+                 regb_used      = 1'b0; // register b is not used
+              end
+              4'b1110: begin // l.cmov
+                 alu_operator   = `ALU_CMOV;
+              end
+              4'b1111: begin // l.ff1
+                alu_operator = `ALU_FF1;
+              end
+              default: begin
+                // synopsys translate_off
+                $display("%t: Illegal ALU instruction received.", $time);
+                // synopsys translate_on
+                regfile_alu_we = 1'b0; // disable Write Enable for illegal instruction
+                illegal_insn_o = 1'b1;
+              end
+            endcase // casex (instr_rdata_i[3:2])
+          end
+
+          2'b01: begin // l.fl1, l.clb, l.cnt
+            regfile_alu_we = 1'b1;
+            regb_used      = 1'b0;
+
+            case (instr_rdata_i[3:0])
+              4'b1101: alu_operator = `ALU_CNT;
+              4'b1110: alu_operator = `ALU_CLB;
+              4'b1111: alu_operator = `ALU_FL1;
+
+              default: begin
+                // synopsys translate_off
+                $display("%t: Illegal ALU instruction received.", $time);
+                // synopsys translate_on
+                regfile_alu_we = 1'b0; // disable Write Enable for illegal instruction
+                illegal_insn_o = 1'b1;
+              end
+            endcase //~case(instr_rdata_i[3:0])
+          end
+
+          2'b10: begin // Min, Max, Abs, Avg
+            regfile_alu_we = 1'b1;
+
+            case (instr_rdata_i[3:0])
+              4'b0000: alu_operator = `ALU_MIN;
+              4'b0001: alu_operator = `ALU_MINU;
+              4'b0010: alu_operator = `ALU_MAX;
+              4'b0011: alu_operator = `ALU_MAXU;
+              4'b0100: alu_operator = `ALU_AVG;
+              4'b0101: alu_operator = `ALU_AVGU;
+
+              4'b1000: begin
+                regb_used    = 1'b0;
+                alu_operator = `ALU_ABS;
+              end
+
+              default: begin
+                // synopsys translate_off
+                $display("%t: Illegal ALU instruction received.", $time);
+                // synopsys translate_on
+                regfile_alu_we = 1'b0; // disable Write Enable for illegal instruction
+                illegal_insn_o = 1'b1;
+              end
+            endcase //~case(instr_rdata_i[3:0])
+          end
+
+          2'b11: begin    // Multiplication
+            if ((instr_rdata_i[3:0] == 4'b0110) || (instr_rdata_i[3:0] == 4'b1011))
+            begin // Is multiplication and no division
+              mult_is_running   = 1'b1;
+
+              if ((instr_rdata_i[3:0] == 4'b0110) || (instr_rdata_i[3:0] == 4'b1011)) // l.mul & l.mulu
+              begin
+                regfile_alu_we              = 1'b1;
+                regfile_alu_waddr_mux_sel_o = 2'b01;
+              end
+            end
+            else
+            begin
+              // synopsys translate_off
+              $display("%t: Division instruction received, this is not supported.", $time);
+              // synopsys translate_on
+              illegal_insn_o = 1'b1;
+            end
+          end
+        endcase; // case (instr_rdata_i[9:8])
+      end
+
+      `OPCODE_MAC: begin   // MAC instruction
+        mult_is_running    = 1'b1;
+
+        rega_used          = 1'b1;
+        regb_used          = 1'b1;
+
+        regfile_alu_waddr_mux_sel_o = 2'b01;
+        regfile_alu_we              = 1'b1;
+
+        case (instr_rdata_i[6:5])
+          2'b00: begin // MAC
+            case (instr_rdata_i[3:0])
+              4'b1000: begin // l.mac
+                mult_mac_en_o = 1'b1;
+                regc_used     = 1'b1;
+                set_carry     = 1'b1;
+                set_overflow  = 1'b1;
+              end
+
+              4'b1001: begin // l.mac.c
+                mult_use_carry_o = 1'b1;
+                mult_mac_en_o    = 1'b1;
+                regc_used        = 1'b1;
+                set_carry        = 1'b1;
+                set_overflow     = 1'b1;
+              end
+
+              default: begin
+                // synopsys translate_off
+                $display("%t: Illegal MAC instruction received.", $time);
+                // synopsys translate_on
+                regfile_alu_we = 1'b0;
+                illegal_insn_o     = 1'b1;
+              end
+            endcase // case (instr_rdata_i[3:0])
+          end
+
+          2'b01: begin // MAC with subword selection
+            vector_mode_o      = `VEC_MODE216;
+            mult_mac_en_o      = 1'b1;
+            regc_used          = 1'b1;
+            mult_sel_subword_o = instr_rdata_i[2:1];
+            mult_signed_mode_o = instr_rdata_i[4:3];
+            mult_use_carry_o   = instr_rdata_i[0];
+            set_carry          = 1'b1;
+            set_overflow       = 1'b1;
+          end
+
+          2'b11: begin // mult with subword selection
+            vector_mode_o      = `VEC_MODE216;
+            mult_sel_subword_o = instr_rdata_i[2:1];
+            mult_signed_mode_o = instr_rdata_i[4:3];
+          end
+
+          default: begin
+            // synopsys translate_off
+            $display("%t: Illegal MAC instruction received.", $time);
+            // synopsys translate_on
+            regfile_alu_we = 1'b0;
+            illegal_insn_o     = 1'b1;
+          end
+        endcase
+      end
+
+      `OPCODE_VEC: begin // vectorial alu operations
+        rega_used      = 1'b1;
+        regfile_alu_we = 1'b1;
+
+        if (instr_rdata_i[0] == 1'b0) // choose vector size
+          vector_mode_o = `VEC_MODE16;
+        else
+          vector_mode_o = `VEC_MODE8;
+
+        if ((instr_rdata_i[7:6] == 2'b01) || (instr_rdata_i[7:6] == 2'b10)) // replicate scalar 2 or 4 times
+          scalar_replication_o = 1'b1;
+
+        if (instr_rdata_i[7:6] == 2'b10) // use immediate as operand b
+        begin
+          alu_op_b_mux_sel_o   = `OP_B_IMM;
+          immediate_mux_sel_o  = `IMM_VEC;
+        end
+        else
+          regb_used = 1'b1;
+
+        // now decode the sub opcodes
+        case (instr_rdata_i[5:1])
+          5'b00000: alu_operator = `ALU_ADD;
+          5'b00001: alu_operator = `ALU_SUB;
+          5'b00010: alu_operator = `ALU_AVG;
+          5'b00011: alu_operator = `ALU_MIN;
+          5'b00100: alu_operator = `ALU_MAX;
+          5'b00101: alu_operator = `ALU_SRL;
+          5'b00110: alu_operator = `ALU_SRA;
+          5'b00111: alu_operator = `ALU_SLL;
+
+          5'b01000: begin // lv32.mul
+            regfile_alu_waddr_mux_sel_o = 2'b01;
+            mult_is_running             = 1'b1;
+          end
+
+          5'b01001: alu_operator = `ALU_OR;
+          5'b01010: alu_operator = `ALU_XOR;
+          5'b01011: alu_operator = `ALU_AND;
+
+          5'b01100: begin // lv32.ins
+            alu_operator         = `ALU_INS;
+            scalar_replication_o = 1'b1;
+          end
+
+          5'b10000: begin // lv32.abs
+            regb_used    = 1'b0; // abs does not use operand b
+            alu_operator = `ALU_ABS;
+          end
+
+          5'b10001: begin // lv32.ext
+            regb_used    = 1'b0;
+            alu_operator = `ALU_EXT;
+          end
+
+          default: begin // unknown instruction encountered
+            regfile_alu_we = 1'b0;
+            illegal_insn_o = 1'b1;
+            // synopsys translate_off
+            $display("%t: Unknown vector opcode 0x%h.", $time, instr_rdata_i[5:1]);
+            // synopsys translate_on
+          end
+        endcase // instr_rdata[5:1]
+      end
+
+      `OPCODE_VCMP: begin // Vectorial comparisons, i.e. lv32.cmp_*, lv32.all_*, lv32.any_*
+        rega_used      = 1'b1;
+        regfile_alu_we = 1'b1;
+
+        if (instr_rdata_i[0] == 1'b0) // choose vector size
+          vector_mode_o = `VEC_MODE16;
+        else
+          vector_mode_o = `VEC_MODE8;
+
+        if ((instr_rdata_i[7:6] == 2'b01) || (instr_rdata_i[7:6] == 2'b10)) // replicate scalar 2 or 4 times
+          scalar_replication_o = 1'b1;
+
+        if (instr_rdata_i[7:6] == 2'b10) // use immediate as operand b
+        begin
+          alu_op_b_mux_sel_o   = `OP_B_IMM;
+          immediate_mux_sel_o  = `IMM_VEC;
+        end
+        else
+          regb_used = 1'b1;
+
+        // now decode the sub opcodes for the ALU
+        case (instr_rdata_i[3:1])
+          3'b000: alu_operator = `ALU_EQ;
+          3'b001: alu_operator = `ALU_NE;
+          3'b010: alu_operator = `ALU_GTS;
+          3'b011: alu_operator = `ALU_GES;
+          3'b100: alu_operator = `ALU_LTS;
+          3'b101: alu_operator = `ALU_LES;
+
+          default: begin // unknown instruction encountered
+            illegal_insn_o = 1'b1;
+            // synopsys translate_off
+            $display("%t: Unknown vector opcode 0x%h.", $time, instr_rdata_i[5:1]);
+            // synopsys translate_on
+          end
+        endcase //~case(instr_rdata_i[3:1])
+
+        alu_cmp_mode_o = instr_rdata_i[5:4]; // which kind of comparison do we have here, i.e. full, any, all
+
+        if((instr_rdata_i[5:4] == `ALU_CMP_ANY) || (instr_rdata_i[5:4] == `ALU_CMP_ALL))
+          set_flag = 1'b1; // set the flag for lv32.all_* and lv32.any_*
+      end
+
+      ////////////////////////////////////////////////
+      //  ____  ____  _____ ____ ___    _    _      //
+      // / ___||  _ \| ____/ ___|_ _|  / \  | |     //
+      // \___ \| |_) |  _|| |    | |  / _ \ | |     //
+      //  ___) |  __/| |__| |___ | | / ___ \| |___  //
+      // |____/|_|   |_____\____|___/_/   \_\_____| //
+      //                                            //
+      ////////////////////////////////////////////////
+
+      */
+
+
+      `OPCODE_SYSTEM: begin
+        if (instr_rdata_i[14:12] == 3'b000)
+        begin
+          // non CSR realted SYSTEM instructions
+          unique case (instr_rdata_i) inside
+            `INSTR_EBREAK: begin
+              // debugger trap
+              trap_insn_o  = 1'b1;
+            end
+            `INSTR_ERET:  begin
+              pc_mux_sel   = `PC_ERET;
+              clear_isr_running_o = 1'b1;
+            end
+            `INSTR_WFI:   begin
+              // flush pipeline
+              pipe_flush_o = 1'b1;
+            end
+            default:      illegal_insn_o = 1'b1;
+          endcase // unique case (instr_rdata_i)
+        end
+        else
+        begin
+          // instructions to read/modify CSRs
+          csr_access_o        = 1'b1;
+          regfile_alu_we      = 1'b1;
+          alu_op_b_mux_sel_o  = `OP_B_IMM;
+          immediate_mux_sel_o = `IMM_I;    // CSR address is encoded in I imm
+
+          if (instr_rdata_i[14] == 1'b1) begin
+            // rs1 field is immediate
+            alu_op_a_mux_sel_o = `OP_A_ZIMM;
+          end else begin
+            rega_used          = 1'b1;
+            alu_op_a_mux_sel_o = `OP_A_REGA_OR_FWD;
+          end
+
+          unique case (instr_rdata_i[13:12])
+            2'b01:   csr_op_o = `CSR_OP_WRITE;
+            2'b10:   csr_op_o = `CSR_OP_SET;
+            2'b11:   csr_op_o = `CSR_OP_CLEAR;
+            default: illegal_insn_o = 1'b1;
+          endcase
+        end
+
+      end
+
+
+      /*
+
+      ///////////////////////////////////////////////
+      //  _   ___        ___     ___   ___  ____   //
+      // | | | \ \      / / |   / _ \ / _ \|  _ \  //
+      // | |_| |\ \ /\ / /| |  | | | | | | | |_) | //
+      // |  _  | \ V  V / | |__| |_| | |_| |  __/  //
+      // |_| |_|  \_/\_/  |_____\___/ \___/|_|     //
+      ///////////////////////////////////////////////
+
+      `OPCODE_HWLOOP: begin // hwloop instructions
+
+        hwloop_regid_o  = instr_rdata_i[22:21];     // set hwloop register id
+
+        case (instr_rdata_i[25:23])
+          3'b000,3'b110,3'b111: begin // lp.start set start address
+             hwloop_wb_mux_sel_o = 1'b1;
+             hwloop_we_o[0]      = 1'b1;                     // set we for start addr reg
+             alu_op_a_mux_sel_o  = `OP_A_CURRPC;
+             alu_op_b_mux_sel_o  = `OP_B_IMM;
+             alu_operator        = `ALU_ADD;
+             alu_pc_mux_sel_o    = 1'b1;
+             immediate_mux_sel_o = `IMM_21S;
+             // $display("%t: hwloop start address: %h", $time, instr_rdata_i);
+          end
+          3'b001: begin // lp.end set end address
+             hwloop_wb_mux_sel_o = 1'b1;
+             hwloop_we_o[1]      = 1'b1;                     // set we for end addr reg
+             alu_op_a_mux_sel_o  = `OP_A_CURRPC;
+             alu_op_b_mux_sel_o  = `OP_B_IMM;
+             alu_operator        = `ALU_ADD;
+             alu_pc_mux_sel_o    = 1'b1;
+             immediate_mux_sel_o = `IMM_21S;
+             // $display("%t: hwloop end address: %h", $time, instr_rdata_i);
+          end
+          3'b010: begin // lp.counti initialize counter from immediate
+             hwloop_cnt_mux_sel_o = 2'b01;
+             hwloop_we_o[2]       = 1'b1;                     // set we for counter reg
+             // $display("%t: hwloop counter imm: %h", $time, instr_rdata_i);
+          end
+          3'b011: begin // lp.count initialize counter from register
+             hwloop_cnt_mux_sel_o = 2'b11;
+             hwloop_we_o[2]       = 1'b1;                     // set we for counter reg
+             rega_used            = 1'b1;
+             // $display("%t: hwloop counter: %h", $time, instr_rdata_i);
+          end
+          3'b100: begin // lp.setupi
+             hwloop_wb_mux_sel_o  = 1'b0;
+             hwloop_cnt_mux_sel_o = 2'b10;
+             hwloop_we_o          = 3'b111;                     // set we for counter/start/end reg
+             alu_op_a_mux_sel_o   = `OP_A_CURRPC;
+             alu_op_b_mux_sel_o   = `OP_B_IMM;
+             alu_operator         = `ALU_ADD;
+             alu_pc_mux_sel_o     = 1'b1;
+             immediate_mux_sel_o  = `IMM_8Z;
+             // $display("%t: hwloop setup imm: %h", $time, instr_rdata_i);
+          end
+          3'b101: begin // lp.setup
+             hwloop_wb_mux_sel_o  = 1'b0;
+             hwloop_cnt_mux_sel_o = 2'b11;
+             hwloop_we_o          = 3'b111;                     // set we for counter/start/end reg
+             alu_op_a_mux_sel_o   = `OP_A_CURRPC;
+             alu_op_b_mux_sel_o   = `OP_B_IMM;
+             alu_operator         = `ALU_ADD;
+             alu_pc_mux_sel_o     = 1'b1;
+             immediate_mux_sel_o  = `IMM_16Z;
+             rega_used            = 1'b1;
+             // $display("%t: hwloop setup: %h", $time, instr_rdata_i);
+          end
+        endcase
+      end
+
+      */
+
+      default: begin
+        illegal_insn_o = 1'b1;
+        pc_mux_sel   = `PC_NO_INCR;
+      end
+    endcase; // case (instr_rdata_i[6:0])
+
+    // synopsys translate_off
+    if (illegal_insn_o == 1'b1) begin
+      $display("%t: Illegal instruction (core %0d):", $time, riscv_core.core_id_i);
+      prettyPrintInstruction(instr_rdata_i, id_stage.current_pc_id_i);
+    end
+    // synopsys translate_on
+
+    // misaligned access was detected by the LSU
+    // TODO: this section should eventually be moved out of the decoder
+    if (data_misaligned_i == 1'b1)
+    begin
+      // only part of the pipeline is unstalled, make sure that the
+      // correct operands are sent to the AGU
+      alu_op_a_mux_sel_o  = `OP_A_REGA_OR_FWD;
+      alu_op_b_mux_sel_o  = `OP_B_IMM;
+      immediate_mux_sel_o = `IMM_I;   // TODO: FIXME
+
+      // if prepost increments are used, we do not write back the
+      // second address since the first calculated address was
+      // the correct one
+      regfile_alu_we  = 1'b0;
+
+      // if post increments are used, we must make sure that for
+      // the second memory access we do use the adder
+      prepost_useincr_o   = 1'b1;
+    end
+  end
+
+
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  //   ____ ___  ____  _____    ____ ___  _   _ _____ ____   ___  _     _     _____ ____    //
+  //  / ___/ _ \|  _ \| ____|  / ___/ _ \| \ | |_   _|  _ \ / _ \| |   | |   | ____|  _ \   //
+  // | |  | | | | |_) |  _|   | |  | | | |  \| | | | | |_) | | | | |   | |   |  _| | |_) |  //
+  // | |__| |_| |  _ <| |___  | |__| |_| | |\  | | | |  _ <| |_| | |___| |___| |___|  _ <   //
+  //  \____\___/|_| \_\_____|  \____\___/|_| \_| |_| |_| \_\\___/|_____|_____|_____|_| \_\  //
+  //                                                                                        //
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  always_comb
+  begin
+    // Default values
+    instr_req_o   = 1'b1;
+
+    pc_mux_sel_o  = `PC_INCR;
+    pc_mux_boot_o = 1'b0;
+
+    ctrl_fsm_ns   = ctrl_fsm_cs;
+
+    core_busy_o   = 1'b1;
 
     unique case (ctrl_fsm_cs)
+      default: begin
+        instr_req_o = 1'b0;
+        ctrl_fsm_ns = RESET;
+      end
+
       RESET:
       begin
         // We were just reset and have to copy the boot address from
         // outside to our PC
         // We do not yet start fetching instructions as the next_pc is invalid!
+        core_busy_o   = 1'b0;
         instr_req_o   = 1'b0;
         pc_mux_boot_o = 1'b1;
 
@@ -269,6 +1059,7 @@ module controller
       begin
         // we begin execution when either fetch_enable is high or an
         // interrupt has arrived
+        core_busy_o   = 1'b0;
         instr_req_o     = fetch_enable_i || irq_present_i;
         pc_mux_sel_o    = `PC_NO_INCR;
 
@@ -294,745 +1085,7 @@ module controller
 
       DECODE:
       begin
-        unique case (instr_rdata_i[6:0])
-
-          //////////////////////////////////////
-          //      _ _   _ __  __ ____  ____   //
-          //     | | | | |  \/  |  _ \/ ___|  //
-          //  _  | | | | | |\/| | |_) \___ \  //
-          // | |_| | |_| | |  | |  __/ ___) | //
-          //  \___/ \___/|_|  |_|_|   |____/  //
-          //                                  //
-          //////////////////////////////////////
-
-          `OPCODE_JAL: begin   // Jump and Link
-            if (instr_rdata_i ==? `INSTR_JAL) begin
-              // Insert bubbles
-              pc_mux_sel_o        = `PC_NO_INCR;
-              jump_in_id_o        = 2'b01;
-              // Calculate and store PC+4
-              alu_op_a_mux_sel_o  = `OP_A_CURRPC;
-              alu_op_b_mux_sel_o  = `OP_B_IMM;
-              immediate_mux_sel_o = `IMM_PCINCR;
-              alu_operator        = `ALU_ADD;
-              regfile_alu_we      = 1'b1;
-              // Calculate jump target (= PC + UJ imm)
-              alu_op_c_mux_sel_o  = `OP_C_JT;
-            end else begin
-              illegal_insn_o      = 1'b1;
-            end
-          end
-
-          `OPCODE_JALR: begin  // Jump and Link Register
-            if (instr_rdata_i ==? `INSTR_JALR) begin
-              // Insert bubbles
-              pc_mux_sel_o        = `PC_NO_INCR;
-              jump_in_id_o        = 2'b01;
-              // Calculate and store PC+4
-              alu_op_a_mux_sel_o  = `OP_A_CURRPC;
-              alu_op_b_mux_sel_o  = `OP_B_IMM;
-              immediate_mux_sel_o = `IMM_PCINCR;
-              alu_operator        = `ALU_ADD;
-              regfile_alu_we      = 1'b1;
-              // Calculate jump target (= RS1 + I imm)
-              rega_used           = 1'b1;
-              alu_op_c_mux_sel_o  = `OP_C_JT;
-            end else begin
-              illegal_insn_o      = 1'b1;
-            end
-          end
-
-          `OPCODE_BRANCH: begin // Branch
-            pc_mux_sel_o        = `PC_NO_INCR;
-            jump_in_id_o        = 2'b10;
-            alu_op_c_mux_sel_o  = `OP_C_JT;
-            rega_used           = 1'b1;
-            regb_used           = 1'b1;
-
-            unique case (instr_rdata_i) inside
-              `INSTR_BEQ:  alu_operator = `ALU_EQ;
-              `INSTR_BNE:  alu_operator = `ALU_NE;
-              `INSTR_BLT:  alu_operator = `ALU_LTS;
-              `INSTR_BGE:  alu_operator = `ALU_GES;
-              `INSTR_BLTU: alu_operator = `ALU_LTU;
-              `INSTR_BGEU: alu_operator = `ALU_GEU;
-
-              default: begin
-                illegal_insn_o = 1'b1;
-              end
-            endcase // case (instr_rdata_i)
-          end
-
-
-          //////////////////////////////////
-          //  _     ____    ______ _____  //
-          // | |   |  _ \  / / ___|_   _| //
-          // | |   | | | |/ /\___ \ | |   //
-          // | |___| |_| / /  ___) || |   //
-          // |_____|____/_/  |____/ |_|   //
-          //                              //
-          //////////////////////////////////
-
-          `OPCODE_STORE,
-          `OPCODE_STORE_POST: begin
-            data_req            = 1'b1;
-            data_we             = 1'b1;
-            rega_used           = 1'b1;
-            regb_used           = 1'b1;
-            alu_operator        = `ALU_ADD;
-
-            // post-increment setup
-            if (instr_rdata_i[6:0] == `OPCODE_STORE_POST) begin
-              prepost_useincr_o           = 1'b0;
-              regfile_alu_waddr_mux_sel_o = 2'b00;
-              regfile_alu_we              = 1'b1;
-            end
-
-            if (instr_rdata_i[14] == 1'b0) begin
-              // offset from immediate
-              immediate_mux_sel_o = `IMM_S;
-              alu_op_b_mux_sel_o  = `OP_B_IMM;
-            end else begin
-              // offset from register
-              regc_used = 1'b1;
-              alu_op_b_mux_sel_o = `OP_B_REGC_OR_FWD;
-            end
-
-            // store size
-            unique case (instr_rdata_i[13:12])
-              2'b00: data_type_o = 2'b10; // SB
-              2'b01: data_type_o = 2'b01; // SH
-              2'b10: data_type_o = 2'b00; // SW
-              default: begin
-                data_req = 1'b0;
-                data_we  = 1'b0;
-                illegal_insn_o = 1'b1;
-              end
-            endcase
-          end
-
-          `OPCODE_LOAD,
-          `OPCODE_LOAD_POST: begin
-            data_req                 = 1'b1;
-            regfile_we               = 1'b1;
-            rega_used                = 1'b1;
-            data_type_o              = 2'b00;
-
-            // offset from immediate
-            alu_operator             = `ALU_ADD;
-            alu_op_b_mux_sel_o       = `OP_B_IMM;
-            immediate_mux_sel_o      = `IMM_I;
-
-            // post-increment setup
-            if (instr_rdata_i[6:0] == `OPCODE_LOAD_POST) begin
-              prepost_useincr_o           = 1'b0;
-              regfile_alu_waddr_mux_sel_o = 2'b00;
-              regfile_alu_we              = 1'b1;
-            end
-
-            // sign/zero extension
-            data_sign_extension_o = ~instr_rdata_i[14];
-
-            // load size
-            unique case (instr_rdata_i[13:12])
-              2'b00:   data_type_o = 2'b10; // LB
-              2'b01:   data_type_o = 2'b01; // LH
-              2'b10:   data_type_o = 2'b00; // LW
-              default: data_type_o = 2'b00; // illegal or reg-reg
-            endcase
-
-            // reg-reg load (different encoding)
-            if (instr_rdata_i[14:12] == 3'b111) begin
-              // offset from RS2
-              regb_used          = 1'b1;
-              alu_op_b_mux_sel_o = `OP_B_REGB_OR_FWD;
-
-              // sign/zero extension
-              data_sign_extension_o = ~instr_rdata_i[30];
-
-              // load size
-              unique case (instr_rdata_i[31:25])
-                7'b0000_000,
-                7'b0100_000: data_type_o = 2'b10; // LB, LBU
-                7'b0001_000,
-                7'b0101_000: data_type_o = 2'b01; // LH, LHU
-                7'b0010_000: data_type_o = 2'b00; // LW
-                default: begin
-                  data_type_o    = 2'b00;
-                  // illegal instruction
-                  data_req       = 1'b0;
-                  regfile_we     = 1'b0;
-                  regfile_alu_we = 1'b0;
-                  illegal_insn_o = 1'b1;
-                end
-              endcase
-            end
-
-            if (instr_rdata_i[14:12] == 3'b011 || instr_rdata_i[14:12] == 3'b110)
-            begin
-              // LD, LWU -> RV64 only
-              data_req       = 1'b0;
-              regfile_we     = 1'b0;
-              regfile_alu_we = 1'b0;
-              illegal_insn_o = 1'b1;
-            end
-          end
-
-          /*
-
-          // Pre/Post-Increment Stores and Register-Register Stores
-          `OPCODE_STPOST, `OPCODE_STPRE: begin
-            alu_operator                = `ALU_ADD;  // addr is generated in ID stage so no need for addr gen in alu TODO: always use ID stage addr
-            data_req                    = 1'b1;
-            regfile_alu_waddr_mux_sel_o = 2'b00;
-            rega_used                   = 1'b1;
-            regb_used                   = 1'b1;
-            data_we                     = 1'b1;      // write to memory
-
-
-            if (instr_rdata_i[31:26] == `OPCODE_STPOST)
-            begin
-              prepost_useincr_o = 1'b0; // if post increment instruction, don't use the modified address
-            end
-
-            case (instr_rdata_i[5:4])
-              default: begin
-                alu_op_b_mux_sel_o   = `OP_B_IMM;
-                immediate_mux_sel_o  = `IMM_5N6S;  // offset in 11bit immediate
-                regfile_alu_we   = 1'b1;  // write new addr value into regfile using portB
-              end
-
-              2'b11: begin // register-register store with post increment
-                regc_used = 1'b1;
-                alu_op_b_mux_sel_o = `OP_B_REGC_OR_FWD;
-                regfile_alu_we = 1'b1;  // write new addr value into regfile using portB
-              end
-
-              2'b01: begin // register-register store without pre/post-increment
-                alu_op_b_mux_sel_o = `OP_B_REGC_OR_FWD;
-                regc_used          = 1'b1;
-              end
-            endcase // case (instr_rdata_i[5:4])
-
-            // Word, Half Word or Byte store
-            case (instr_rdata_i[3:2])
-              default: data_type_o = 2'b00;
-              2'b00:   data_type_o = 2'b00; // word
-              2'b10:   data_type_o = 2'b01; // half word
-              2'b11:   data_type_o = 2'b10; // byte
-            endcase // case(instr_rdata_i[4:3]
-
-            // offset inside value to be stored, e.g. l.sh1, l.sb1 and so on
-            data_reg_offset_o      = instr_rdata_i[1:0];
-          end
-           */
-
-          //////////////////////////
-          //     _    _    _   _  //
-          //    / \  | |  | | | | //
-          //   / _ \ | |  | | | | //
-          //  / ___ \| |__| |_| | //
-          // /_/   \_\_____\___/  //
-          //                      //
-          //////////////////////////
-
-          `OPCODE_LUI: begin  // Load Upper Immediate
-            alu_op_a_mux_sel_o  = `OP_A_ZERO;
-            alu_op_b_mux_sel_o  = `OP_B_IMM;
-            immediate_mux_sel_o = `IMM_U;
-            alu_operator        = `ALU_ADD;
-            regfile_alu_we      = 1'b1;
-          end
-
-          `OPCODE_AUIPC: begin  // Add Upper Immediate to PC
-            alu_op_a_mux_sel_o  = `OP_A_CURRPC;
-            alu_op_b_mux_sel_o  = `OP_B_IMM;
-            immediate_mux_sel_o = `IMM_U;
-            alu_operator        = `ALU_ADD;
-            regfile_alu_we      = 1'b1;
-          end
-
-          `OPCODE_OPIMM: begin // Reigster-Immediate ALU Operations
-            alu_op_b_mux_sel_o  = `OP_B_IMM;
-            immediate_mux_sel_o = `IMM_I;
-            regfile_alu_we      = 1'b1;
-            rega_used           = 1'b1;
-
-            unique case (instr_rdata_i) inside
-              `INSTR_ADDI:  alu_operator = `ALU_ADD;  // Add Immediate
-              `INSTR_SLTI:  alu_operator = `ALU_SLTS; // Set to one if Lower Than Immediate
-              `INSTR_SLTIU: alu_operator = `ALU_SLTU; // Set to one if Lower Than Immediate Unsigned
-              `INSTR_XORI:  alu_operator = `ALU_XOR;  // Exclusive Or with Immediate
-              `INSTR_ORI:   alu_operator = `ALU_OR;   // Or with Immediate
-              `INSTR_ANDI:  alu_operator = `ALU_AND;  // And with Immediate
-              `INSTR_SLLI:  alu_operator = `ALU_SLL;  // Shift Left Logical by Immediate
-              `INSTR_SRLI:  alu_operator = `ALU_SRL;  // Shift Right Logical by Immediate
-              `INSTR_SRAI:  alu_operator = `ALU_SRA;  // Shift Right Arithmetically by Immediate
-              default: begin
-                regfile_alu_we = 1'b0;
-                illegal_insn_o = 1'b1;
-              end
-            endcase // unique case (instr_rdata_i)
-          end
-
-          `OPCODE_OP: begin  // Register-Register ALU operation
-            regfile_alu_we = 1'b1;
-            rega_used      = 1'b1;
-            regb_used      = 1'b1;
-
-            unique case (instr_rdata_i) inside
-              `INSTR_ADD:  alu_operator = `ALU_ADD;  // Add
-              `INSTR_SUB:  alu_operator = `ALU_SUB;  // Sub
-              `INSTR_SLL:  alu_operator = `ALU_SLL;  // Shift Left Logical
-              `INSTR_SLT:  alu_operator = `ALU_SLTS; // Set Lower Than
-              `INSTR_SLTU: alu_operator = `ALU_SLTU; // Set Lower Than Unsigned
-              `INSTR_XOR:  alu_operator = `ALU_XOR;  // Xor
-              `INSTR_SRL:  alu_operator = `ALU_SRL;  // Shift Right Logical
-              `INSTR_SRA:  alu_operator = `ALU_SRA;  // Shift Right Arithmetic
-              `INSTR_OR:   alu_operator = `ALU_OR;   // Or
-              `INSTR_AND:  alu_operator = `ALU_AND;  // And
-
-              `INSTR_MUL:  mult_en      = 1'b1;      // Multiplication
-
-              default: begin
-                // synopsys translate_off
-                $display("%t: Illegal OP instruction: %b", $time, instr_rdata_i);
-                // synopsys translate_on
-                regfile_alu_we = 1'b0;
-                illegal_insn_o = 1'b1;
-              end
-            endcase // unique case (instr_rdata_i)
-          end
-
-          /*
-
-          `OPCODE_MULI: begin  // Multiply Immediate Signed
-            alu_op_b_mux_sel_o   = `OP_B_IMM;
-            immediate_mux_sel_o  = `IMM_16;
-            mult_is_running      = 1'b1;
-
-            regfile_alu_we              = 1'b1;
-            regfile_alu_waddr_mux_sel_o = 2'b01;
-            rega_used                   = 1'b1;
-          end
-
-          `OPCODE_ALU: begin   // Arithmetic Operation
-            rega_used  = 1'b1;
-            regb_used  = 1'b1;
-
-            case (instr_rdata_i[9:8])
-              2'b00: begin    // ALU Operation
-                regfile_alu_we = 1'b1;
-
-                casex (instr_rdata_i[3:0])
-                  4'b0XXX: begin // Standard Operation
-                    alu_operator   = {3'b000, instr_rdata_i[2:0]};
-
-                    if ((instr_rdata_i[2:0] ==? 3'b00X) || (instr_rdata_i[2:0] == 3'b010)) begin // l.add, l.addc & l.sub
-                      set_overflow = 1'b1;
-                      set_carry    = 1'b1;
-                    end
-                  end
-                  4'b1000: begin // Shift Operation
-                     alu_operator   = {4'b0010, instr_rdata_i[7:6]};
-                  end
-                  4'b110X: begin // l.ext{b,h,w}{s,z}
-                     alu_operator   = {3'b010, instr_rdata_i[7:6], instr_rdata_i[0]};
-                     regb_used      = 1'b0; // register b is not used
-                  end
-                  4'b1110: begin // l.cmov
-                     alu_operator   = `ALU_CMOV;
-                  end
-                  4'b1111: begin // l.ff1
-                    alu_operator = `ALU_FF1;
-                  end
-                  default: begin
-                    // synopsys translate_off
-                    $display("%t: Illegal ALU instruction received.", $time);
-                    // synopsys translate_on
-                    regfile_alu_we = 1'b0; // disable Write Enable for illegal instruction
-                    illegal_insn_o = 1'b1;
-                  end
-                endcase // casex (instr_rdata_i[3:2])
-              end
-
-              2'b01: begin // l.fl1, l.clb, l.cnt
-                regfile_alu_we = 1'b1;
-                regb_used      = 1'b0;
-
-                case (instr_rdata_i[3:0])
-                  4'b1101: alu_operator = `ALU_CNT;
-                  4'b1110: alu_operator = `ALU_CLB;
-                  4'b1111: alu_operator = `ALU_FL1;
-
-                  default: begin
-                    // synopsys translate_off
-                    $display("%t: Illegal ALU instruction received.", $time);
-                    // synopsys translate_on
-                    regfile_alu_we = 1'b0; // disable Write Enable for illegal instruction
-                    illegal_insn_o = 1'b1;
-                  end
-                endcase //~case(instr_rdata_i[3:0])
-              end
-
-              2'b10: begin // Min, Max, Abs, Avg
-                regfile_alu_we = 1'b1;
-
-                case (instr_rdata_i[3:0])
-                  4'b0000: alu_operator = `ALU_MIN;
-                  4'b0001: alu_operator = `ALU_MINU;
-                  4'b0010: alu_operator = `ALU_MAX;
-                  4'b0011: alu_operator = `ALU_MAXU;
-                  4'b0100: alu_operator = `ALU_AVG;
-                  4'b0101: alu_operator = `ALU_AVGU;
-
-                  4'b1000: begin
-                    regb_used    = 1'b0;
-                    alu_operator = `ALU_ABS;
-                  end
-
-                  default: begin
-                    // synopsys translate_off
-                    $display("%t: Illegal ALU instruction received.", $time);
-                    // synopsys translate_on
-                    regfile_alu_we = 1'b0; // disable Write Enable for illegal instruction
-                    illegal_insn_o = 1'b1;
-                  end
-                endcase //~case(instr_rdata_i[3:0])
-              end
-
-              2'b11: begin    // Multiplication
-                if ((instr_rdata_i[3:0] == 4'b0110) || (instr_rdata_i[3:0] == 4'b1011))
-                begin // Is multiplication and no division
-                  mult_is_running   = 1'b1;
-
-                  if ((instr_rdata_i[3:0] == 4'b0110) || (instr_rdata_i[3:0] == 4'b1011)) // l.mul & l.mulu
-                  begin
-                    regfile_alu_we              = 1'b1;
-                    regfile_alu_waddr_mux_sel_o = 2'b01;
-                  end
-                end
-                else
-                begin
-                  // synopsys translate_off
-                  $display("%t: Division instruction received, this is not supported.", $time);
-                  // synopsys translate_on
-                  illegal_insn_o = 1'b1;
-                end
-              end
-            endcase; // case (instr_rdata_i[9:8])
-          end
-
-          `OPCODE_MAC: begin   // MAC instruction
-            mult_is_running    = 1'b1;
-
-            rega_used          = 1'b1;
-            regb_used          = 1'b1;
-
-            regfile_alu_waddr_mux_sel_o = 2'b01;
-            regfile_alu_we              = 1'b1;
-
-            case (instr_rdata_i[6:5])
-              2'b00: begin // MAC
-                case (instr_rdata_i[3:0])
-                  4'b1000: begin // l.mac
-                    mult_mac_en_o = 1'b1;
-                    regc_used     = 1'b1;
-                    set_carry     = 1'b1;
-                    set_overflow  = 1'b1;
-                  end
-
-                  4'b1001: begin // l.mac.c
-                    mult_use_carry_o = 1'b1;
-                    mult_mac_en_o    = 1'b1;
-                    regc_used        = 1'b1;
-                    set_carry        = 1'b1;
-                    set_overflow     = 1'b1;
-                  end
-
-                  default: begin
-                    // synopsys translate_off
-                    $display("%t: Illegal MAC instruction received.", $time);
-                    // synopsys translate_on
-                    regfile_alu_we = 1'b0;
-                    illegal_insn_o     = 1'b1;
-                  end
-                endcase // case (instr_rdata_i[3:0])
-              end
-
-              2'b01: begin // MAC with subword selection
-                vector_mode_o      = `VEC_MODE216;
-                mult_mac_en_o      = 1'b1;
-                regc_used          = 1'b1;
-                mult_sel_subword_o = instr_rdata_i[2:1];
-                mult_signed_mode_o = instr_rdata_i[4:3];
-                mult_use_carry_o   = instr_rdata_i[0];
-                set_carry          = 1'b1;
-                set_overflow       = 1'b1;
-              end
-
-              2'b11: begin // mult with subword selection
-                vector_mode_o      = `VEC_MODE216;
-                mult_sel_subword_o = instr_rdata_i[2:1];
-                mult_signed_mode_o = instr_rdata_i[4:3];
-              end
-
-              default: begin
-                // synopsys translate_off
-                $display("%t: Illegal MAC instruction received.", $time);
-                // synopsys translate_on
-                regfile_alu_we = 1'b0;
-                illegal_insn_o     = 1'b1;
-              end
-            endcase
-          end
-
-          `OPCODE_VEC: begin // vectorial alu operations
-            rega_used      = 1'b1;
-            regfile_alu_we = 1'b1;
-
-            if (instr_rdata_i[0] == 1'b0) // choose vector size
-              vector_mode_o = `VEC_MODE16;
-            else
-              vector_mode_o = `VEC_MODE8;
-
-            if ((instr_rdata_i[7:6] == 2'b01) || (instr_rdata_i[7:6] == 2'b10)) // replicate scalar 2 or 4 times
-              scalar_replication_o = 1'b1;
-
-            if (instr_rdata_i[7:6] == 2'b10) // use immediate as operand b
-            begin
-              alu_op_b_mux_sel_o   = `OP_B_IMM;
-              immediate_mux_sel_o  = `IMM_VEC;
-            end
-            else
-              regb_used = 1'b1;
-
-            // now decode the sub opcodes
-            case (instr_rdata_i[5:1])
-              5'b00000: alu_operator = `ALU_ADD;
-              5'b00001: alu_operator = `ALU_SUB;
-              5'b00010: alu_operator = `ALU_AVG;
-              5'b00011: alu_operator = `ALU_MIN;
-              5'b00100: alu_operator = `ALU_MAX;
-              5'b00101: alu_operator = `ALU_SRL;
-              5'b00110: alu_operator = `ALU_SRA;
-              5'b00111: alu_operator = `ALU_SLL;
-
-              5'b01000: begin // lv32.mul
-                regfile_alu_waddr_mux_sel_o = 2'b01;
-                mult_is_running             = 1'b1;
-              end
-
-              5'b01001: alu_operator = `ALU_OR;
-              5'b01010: alu_operator = `ALU_XOR;
-              5'b01011: alu_operator = `ALU_AND;
-
-              5'b01100: begin // lv32.ins
-                alu_operator         = `ALU_INS;
-                scalar_replication_o = 1'b1;
-              end
-
-              5'b10000: begin // lv32.abs
-                regb_used    = 1'b0; // abs does not use operand b
-                alu_operator = `ALU_ABS;
-              end
-
-              5'b10001: begin // lv32.ext
-                regb_used    = 1'b0;
-                alu_operator = `ALU_EXT;
-              end
-
-              default: begin // unknown instruction encountered
-                regfile_alu_we = 1'b0;
-                illegal_insn_o = 1'b1;
-                // synopsys translate_off
-                $display("%t: Unknown vector opcode 0x%h.", $time, instr_rdata_i[5:1]);
-                // synopsys translate_on
-              end
-            endcase // instr_rdata[5:1]
-          end
-
-          `OPCODE_VCMP: begin // Vectorial comparisons, i.e. lv32.cmp_*, lv32.all_*, lv32.any_*
-            rega_used      = 1'b1;
-            regfile_alu_we = 1'b1;
-
-            if (instr_rdata_i[0] == 1'b0) // choose vector size
-              vector_mode_o = `VEC_MODE16;
-            else
-              vector_mode_o = `VEC_MODE8;
-
-            if ((instr_rdata_i[7:6] == 2'b01) || (instr_rdata_i[7:6] == 2'b10)) // replicate scalar 2 or 4 times
-              scalar_replication_o = 1'b1;
-
-            if (instr_rdata_i[7:6] == 2'b10) // use immediate as operand b
-            begin
-              alu_op_b_mux_sel_o   = `OP_B_IMM;
-              immediate_mux_sel_o  = `IMM_VEC;
-            end
-            else
-              regb_used = 1'b1;
-
-            // now decode the sub opcodes for the ALU
-            case (instr_rdata_i[3:1])
-              3'b000: alu_operator = `ALU_EQ;
-              3'b001: alu_operator = `ALU_NE;
-              3'b010: alu_operator = `ALU_GTS;
-              3'b011: alu_operator = `ALU_GES;
-              3'b100: alu_operator = `ALU_LTS;
-              3'b101: alu_operator = `ALU_LES;
-
-              default: begin // unknown instruction encountered
-                illegal_insn_o = 1'b1;
-                // synopsys translate_off
-                $display("%t: Unknown vector opcode 0x%h.", $time, instr_rdata_i[5:1]);
-                // synopsys translate_on
-              end
-            endcase //~case(instr_rdata_i[3:1])
-
-            alu_cmp_mode_o = instr_rdata_i[5:4]; // which kind of comparison do we have here, i.e. full, any, all
-
-            if((instr_rdata_i[5:4] == `ALU_CMP_ANY) || (instr_rdata_i[5:4] == `ALU_CMP_ALL))
-              set_flag = 1'b1; // set the flag for lv32.all_* and lv32.any_*
-          end
-
-          ////////////////////////////////////////////////
-          //  ____  ____  _____ ____ ___    _    _      //
-          // / ___||  _ \| ____/ ___|_ _|  / \  | |     //
-          // \___ \| |_) |  _|| |    | |  / _ \ | |     //
-          //  ___) |  __/| |__| |___ | | / ___ \| |___  //
-          // |____/|_|   |_____\____|___/_/   \_\_____| //
-          //                                            //
-          ////////////////////////////////////////////////
-
-          */
-
-
-          `OPCODE_SYSTEM: begin
-            if (instr_rdata_i[14:12] == 3'b000)
-            begin
-              // non CSR realted SYSTEM instructions
-              unique case (instr_rdata_i) inside
-                `INSTR_EBREAK: begin
-                  // debugger trap
-                  trap_insn_o  = 1'b1;
-                end
-                `INSTR_ERET:  begin
-                  pc_mux_sel_o = `PC_ERET;
-                  clear_isr_running_o = 1'b1;
-                end
-                `INSTR_WFI:   begin
-                  // flush pipeline
-                  pipe_flush_o = 1'b1;
-                end
-                default:      illegal_insn_o = 1'b1;
-              endcase // unique case (instr_rdata_i)
-            end
-            else
-            begin
-              // instructions to read/modify CSRs
-              csr_access_o        = 1'b1;
-              regfile_alu_we      = 1'b1;
-              alu_op_b_mux_sel_o  = `OP_B_IMM;
-              immediate_mux_sel_o = `IMM_I;    // CSR address is encoded in I imm
-
-              if (instr_rdata_i[14] == 1'b1) begin
-                // rs1 field is immediate
-                alu_op_a_mux_sel_o = `OP_A_ZIMM;
-              end else begin
-                rega_used          = 1'b1;
-                alu_op_a_mux_sel_o = `OP_A_REGA_OR_FWD;
-              end
-
-              unique case (instr_rdata_i[13:12])
-                2'b01:   csr_op_o = `CSR_OP_WRITE;
-                2'b10:   csr_op_o = `CSR_OP_SET;
-                2'b11:   csr_op_o = `CSR_OP_CLEAR;
-                default: illegal_insn_o = 1'b1;
-              endcase
-            end
-
-          end
-
-
-          /*
-
-          ///////////////////////////////////////////////
-          //  _   ___        ___     ___   ___  ____   //
-          // | | | \ \      / / |   / _ \ / _ \|  _ \  //
-          // | |_| |\ \ /\ / /| |  | | | | | | | |_) | //
-          // |  _  | \ V  V / | |__| |_| | |_| |  __/  //
-          // |_| |_|  \_/\_/  |_____\___/ \___/|_|     //
-          ///////////////////////////////////////////////
-
-          `OPCODE_HWLOOP: begin // hwloop instructions
-
-            hwloop_regid_o  = instr_rdata_i[22:21];     // set hwloop register id
-
-            case (instr_rdata_i[25:23])
-              3'b000,3'b110,3'b111: begin // lp.start set start address
-                 hwloop_wb_mux_sel_o = 1'b1;
-                 hwloop_we_o[0]      = 1'b1;                     // set we for start addr reg
-                 alu_op_a_mux_sel_o  = `OP_A_CURRPC;
-                 alu_op_b_mux_sel_o  = `OP_B_IMM;
-                 alu_operator        = `ALU_ADD;
-                 alu_pc_mux_sel_o    = 1'b1;
-                 immediate_mux_sel_o = `IMM_21S;
-                 // $display("%t: hwloop start address: %h", $time, instr_rdata_i);
-              end
-              3'b001: begin // lp.end set end address
-                 hwloop_wb_mux_sel_o = 1'b1;
-                 hwloop_we_o[1]      = 1'b1;                     // set we for end addr reg
-                 alu_op_a_mux_sel_o  = `OP_A_CURRPC;
-                 alu_op_b_mux_sel_o  = `OP_B_IMM;
-                 alu_operator        = `ALU_ADD;
-                 alu_pc_mux_sel_o    = 1'b1;
-                 immediate_mux_sel_o = `IMM_21S;
-                 // $display("%t: hwloop end address: %h", $time, instr_rdata_i);
-              end
-              3'b010: begin // lp.counti initialize counter from immediate
-                 hwloop_cnt_mux_sel_o = 2'b01;
-                 hwloop_we_o[2]       = 1'b1;                     // set we for counter reg
-                 // $display("%t: hwloop counter imm: %h", $time, instr_rdata_i);
-              end
-              3'b011: begin // lp.count initialize counter from register
-                 hwloop_cnt_mux_sel_o = 2'b11;
-                 hwloop_we_o[2]       = 1'b1;                     // set we for counter reg
-                 rega_used            = 1'b1;
-                 // $display("%t: hwloop counter: %h", $time, instr_rdata_i);
-              end
-              3'b100: begin // lp.setupi
-                 hwloop_wb_mux_sel_o  = 1'b0;
-                 hwloop_cnt_mux_sel_o = 2'b10;
-                 hwloop_we_o          = 3'b111;                     // set we for counter/start/end reg
-                 alu_op_a_mux_sel_o   = `OP_A_CURRPC;
-                 alu_op_b_mux_sel_o   = `OP_B_IMM;
-                 alu_operator         = `ALU_ADD;
-                 alu_pc_mux_sel_o     = 1'b1;
-                 immediate_mux_sel_o  = `IMM_8Z;
-                 // $display("%t: hwloop setup imm: %h", $time, instr_rdata_i);
-              end
-              3'b101: begin // lp.setup
-                 hwloop_wb_mux_sel_o  = 1'b0;
-                 hwloop_cnt_mux_sel_o = 2'b11;
-                 hwloop_we_o          = 3'b111;                     // set we for counter/start/end reg
-                 alu_op_a_mux_sel_o   = `OP_A_CURRPC;
-                 alu_op_b_mux_sel_o   = `OP_B_IMM;
-                 alu_operator         = `ALU_ADD;
-                 alu_pc_mux_sel_o     = 1'b1;
-                 immediate_mux_sel_o  = `IMM_16Z;
-                 rega_used            = 1'b1;
-                 // $display("%t: hwloop setup: %h", $time, instr_rdata_i);
-              end
-            endcase
-          end
-
-          */
-
-          default: begin
-            illegal_insn_o = 1'b1;
-            pc_mux_sel_o = `PC_NO_INCR;
-          end
-        endcase; // case (instr_rdata_i[6:0])
+        pc_mux_sel_o = pc_mux_sel;
 
         // synopsys translate_off
         if (illegal_insn_o == 1'b1) begin
@@ -1040,25 +1093,6 @@ module controller
           prettyPrintInstruction(instr_rdata_i, id_stage.current_pc_id_i);
         end
         // synopsys translate_on
-
-        // misaligned access was detected by the LSU
-        if (data_misaligned_i == 1'b1)
-        begin
-          // only part of the pipeline is unstalled, make sure that the
-          // correct operands are sent to the AGU
-          alu_op_a_mux_sel_o  = `OP_A_REGA_OR_FWD;
-          alu_op_b_mux_sel_o  = `OP_B_IMM;
-          immediate_mux_sel_o = `IMM_I;   // TODO: FIXME
-
-          // if prepost increments are used, we do not write back the
-          // second address since the first calculated address was
-          // the correct one
-          regfile_alu_we  = 1'b0;
-
-          // if post increments are used, we must make sure that for
-          // the second memory access we do use the adder
-          prepost_useincr_o   = 1'b1;
-        end
 
 `ifdef BRANCH_PREDICTION
         if (wrong_branch_taken)
@@ -1068,20 +1102,17 @@ module controller
         if ((pipe_flushed_i == 1'b1) && (fetch_enable_i == 1'b0))
           ctrl_fsm_ns = IDLE;
       end
-
-      default: begin
-        instr_req_o = 1'b0;
-        ctrl_fsm_ns = RESET;
-      end
     endcase
-
   end
 
-  assign core_busy_o = (ctrl_fsm_cs != IDLE);
-
-  ////////////////////////////////////////////////////////////////////////////////////////////
-  // Generate Stall Signals!                                                                //
-  ////////////////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////
+  //  ____  _        _ _    ____            _             _  //
+  // / ___|| |_ __ _| | |  / ___|___  _ __ | |_ _ __ ___ | | //
+  // \___ \| __/ _` | | | | |   / _ \| '_ \| __| '__/ _ \| | //
+  //  ___) | || (_| | | | | |__| (_) | | | | |_| | | (_) | | //
+  // |____/ \__\__,_|_|_|  \____\___/|_| |_|\__|_|  \___/|_| //
+  //                                                         //
+  /////////////////////////////////////////////////////////////
   always_comb
   begin
     load_stall  = 1'b0;
