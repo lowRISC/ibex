@@ -191,7 +191,7 @@ module if_stage
     end
   end
 
-  assign current_pc_if_o = pc_if_offset ? {last_fetch_addr[31:2], 2'b10} : fetch_addr;
+  assign current_pc_if_o = last_fetch_addr + (pc_if_offset? 32'd2 : 32'd0);
 
 
   always_comb
@@ -299,18 +299,16 @@ module if_stage
             fetch_fsm_ns = WAIT_REQ;
           end else begin
             // set PC
-            // next_pc already contains correct jump target, but need to
-            // handle special cases with compressed instructions here
             sample_addr  = 1'b1;
+            fetch_addr_n = {jump_target_i[31:2], 2'b0};
             if (jump_target_i[1:0] == 2'b0) begin
               // regular fetch
               pc_if_offset_n = 1'b0;
-              fetch_fsm_ns   = WAIT_ACK;
             end else begin
               // unaligned access
               pc_if_offset_n = 1'b1;
-              fetch_fsm_ns   = FETCH;
             end
+            fetch_fsm_ns   = FETCH;
             // TODO: Already send request here?
           end
         end
@@ -321,6 +319,7 @@ module if_stage
         req_int = 1'b1;
 
         if (ack_int) begin
+          req_int      = 1'b0;
           fetch_fsm_ns = WAIT_REQ;
         end
       end
@@ -329,9 +328,7 @@ module if_stage
       begin
         sample_addr = 1'b0;
         if (ack_int) begin
-          //sample_addr = 1'b1;
           ack_o           = 1'b1;
-          bypass_data_reg = 1'b0; // TODO: Use different signal for IF PC calculation
           fetch_fsm_ns    = WAIT_REQ;
         end
       end
@@ -374,15 +371,15 @@ module if_stage
     endcase
 
     // jump handling
-    if (jump_in_ex_i == `BRANCH_JAL || jump_in_ex_i == `BRANCH_JALR) begin
-      next_pc = jump_target_i;
-    end else if (jump_in_ex_i == `BRANCH_COND) begin
-      // branch handling
-      if (branch_decision_i == 1'b1)
-        next_pc = jump_target_i;
-      else
-        next_pc = current_pc_if_o;
-    end
+    //if (jump_in_ex_i == `BRANCH_JAL || jump_in_ex_i == `BRANCH_JALR) begin
+    //  next_pc = jump_target_i;
+    //end else if (jump_in_ex_i == `BRANCH_COND) begin
+    //  // branch handling
+    //  if (branch_decision_i == 1'b1)
+    //    next_pc = jump_target_i;
+    //  else
+    //    next_pc = current_pc_if_o;
+    //end
 
     if (pc_mux_boot_i)
       next_pc = {boot_addr_i[31:5], `EXC_OFF_RST};
@@ -455,7 +452,7 @@ module if_stage
       begin : ENABLED_PIPE
         instr_rdata_id_o <= instr_rdata_int;
         if (pc_if_offset)
-          current_pc_id_o  <= last_fetch_addr + (bypass_data_reg? 32'd2 : -2); // TODO: Cleanup
+          current_pc_id_o  <= last_fetch_addr + ((fetch_fsm_cs != FETCH_NEXT)? 32'd2 : -2); // TODO: Cleanup
         else
           current_pc_id_o  <= last_fetch_addr;
       end
