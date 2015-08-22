@@ -67,9 +67,9 @@ module if_stage
     input  logic  [1:0] exc_pc_mux_i,          // select which exception to execute
 
     // jump and branch target and decision
-    input  logic [31:0] jump_target_i,      // jump target address
     input  logic  [1:0] jump_in_id_i,
     input  logic  [1:0] jump_in_ex_i,       // jump in EX -> get PC from jump target (could also be branch)
+    input  logic [31:0] jump_target_i,      // jump target address
     input  logic        branch_decision_i,
 
     // from debug unit
@@ -90,6 +90,7 @@ module if_stage
 
 
   logic sample_addr;
+  logic  [1:0] is_compressed;
   logic [31:0] fetch_addr, fetch_addr_n;
 
 
@@ -98,12 +99,6 @@ module if_stage
 
   logic        force_nop_int;
   logic [31:0] instr_rdata_int;
-
-
-  logic fetch_unaligned;
-  logic fetch_hit;
-
-  logic  [1:0] is_compressed;
 
 
   // instr_core_interface
@@ -121,7 +116,7 @@ module if_stage
   logic pc_if_offset, pc_if_offset_n;
 
 
-  enum logic[3:0] {INVALID, VALID, FETCH, FETCH_NEXT, SERVE_OFFSET, WAIT_ACK, WAIT_REQ, IDLE, HANDLE_BRANCH} fetch_fsm_cs, fetch_fsm_ns;
+  enum logic[3:0] {IDLE, START_REQ, WAIT_REQ, WAIT_ACK, FETCH, FETCH_NEXT, HANDLE_BRANCH} fetch_fsm_cs, fetch_fsm_ns;
 
   always_ff @(posedge clk, negedge rst_n)
   begin
@@ -196,13 +191,6 @@ module if_stage
 
   always_comb
   begin
-    fetch_unaligned = next_pc[1:0] != 2'b0;
-    fetch_hit       = (next_pc[31:2] == data_tag[31:2]);
-  end
-
-
-  always_comb
-  begin
     fetch_fsm_ns   = fetch_fsm_cs;
     pc_if_offset_n = pc_if_offset;
 
@@ -227,7 +215,7 @@ module if_stage
         if (fetch_fsm_cs == WAIT_ACK) begin
           fetch_fsm_ns = WAIT_ACK;
           sample_addr  = 1'b0;
-          req_int      = 1'b1; // keep req_int asserted or start request (for branches)
+          //req_int      = 1'b1; // keep req_int asserted or start request (for branches) TODO: remove
           if (ack_int) begin
             req_int = 1'b0;
             ack_o = 1'b1;
@@ -308,19 +296,64 @@ module if_stage
               // unaligned access
               pc_if_offset_n = 1'b1;
             end
-            fetch_fsm_ns   = FETCH;
-            // TODO: Already send request here?
+            fetch_fsm_ns = START_REQ;
           end
         end
       end
 
+      START_REQ: begin
+        req_int = 1'b1;
+        sample_addr = 1'b1;
+        fetch_fsm_ns = WAIT_ACK;
+      end
+
+      //START_REQ, FETCH:
       FETCH:
       begin
-        req_int = 1'b1;
+        if (fetch_fsm_cs == START_REQ) begin
+          req_int = 1'b1;
+          sample_addr = 1'b1;
+          fetch_fsm_ns = FETCH;
+        end
 
         if (ack_int) begin
           req_int      = 1'b0;
           fetch_fsm_ns = WAIT_REQ;
+
+          if (req_i) begin
+            fetch_fsm_ns = WAIT_ACK;
+            req_int = 1'b1;
+
+            if (pc_if_offset) begin
+              if (is_compressed[1]) begin
+                // serve second part of fetched instruction and request next
+                pc_if_offset_n = 1'b0;
+                ack_o          = 1'b1;
+                sample_addr    = 1'b1;
+                fetch_fsm_ns   = WAIT_ACK;
+              end else begin
+                // cross line access
+                // .. need to fetch next word here and delay everything till then
+                sample_addr  = 1'b1;
+                fetch_fsm_ns = FETCH_NEXT;
+              end
+            end else begin
+              if (is_compressed[0]) begin
+                // compressed instruction, only increase PC by two bytes
+                sample_addr    = 1'b0;
+                req_int        = 1'b0;
+                ack_o          = 1'b1;
+                pc_if_offset_n = 1'b1;
+                fetch_fsm_ns   = WAIT_REQ;
+              end else begin
+                // regular fetch
+                sample_addr = 1'b1;
+              end
+            end
+
+          end else begin
+            fetch_fsm_ns = WAIT_REQ;
+          end
         end
       end
 
