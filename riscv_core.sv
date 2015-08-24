@@ -820,8 +820,8 @@ module riscv_core
         // Regular opcodes
         `INSTR_CUSTOM0:    printMnemonic("CUSTOM0");
         `INSTR_CUSTOM1:    printMnemonic("CUSTOM1");
-        `INSTR_LUI:        printIInstr("LUI");
-        `INSTR_AUIPC:      printIInstr("AUIPC");
+        `INSTR_LUI:        printUInstr("LUI");
+        `INSTR_AUIPC:      printUInstr("AUIPC");
         `INSTR_JAL:        printUJInstr("JAL");
         `INSTR_JALR:       printIInstr("JALR");
         // BRANCH
@@ -914,6 +914,14 @@ module riscv_core
       $fdisplay(f, "%7s", mnemonic);
     end
   endfunction // printMnemonic
+
+  function void printUInstr(input string mnemonic);
+    begin
+      riscv_core.mnemonic = mnemonic;
+      imm = id_stage_i.imm_u_type;
+      $fdisplay(f, "%s\tx%0d, 0x%h (imm)", mnemonic, rd, imm);
+    end
+  endfunction // printUInstr
 
   function void printRInstr(input string mnemonic);
     begin
