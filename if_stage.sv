@@ -116,10 +116,11 @@ module if_stage
 
 
   logic bypass_data_reg; // use data from instr_core_if, not from data_arr
+  logic cross_line, cross_line_n;
   logic pc_if_offset, pc_if_offset_n;
 
 
-  enum logic[3:0] {IDLE, START_REQ, WAIT_REQ, WAIT_ACK, FETCH, FETCH_NEXT, HANDLE_BRANCH} fetch_fsm_cs, fetch_fsm_ns;
+  enum logic[3:0] {IDLE, START_REQ, WAIT_REQ, WAIT_ACK, FETCH_NEXT, HANDLE_BRANCH} fetch_fsm_cs, fetch_fsm_ns;
 
   always_ff @(posedge clk, negedge rst_n)
   begin
@@ -162,14 +163,18 @@ module if_stage
   begin
     if (bypass_data_reg) begin
       // bypass cache and get data directly from instr_core_if
-      if (pc_if_offset)
+      if (pc_if_offset && (cross_line || cross_line_n))
         instr_rdata_int = {rdata_int[15:0], data_arr[0][31:16]};
+      else if (pc_if_offset)
+        instr_rdata_int = {16'b0, rdata_int[31:16]};
       else
         instr_rdata_int = rdata_int;
     end else begin
       // serve data from cache
-      if (pc_if_offset)
+      if (pc_if_offset && cross_line)
         instr_rdata_int = {data_arr[0][15:0], data_arr[1][31:16]};
+      else if (pc_if_offset)
+        instr_rdata_int = {16'b0, data_arr[0][31:16]};
       else
         instr_rdata_int = data_arr[0];
     end
@@ -194,10 +199,13 @@ module if_stage
 
   always_ff @(posedge clk, negedge rst_n)
   begin
-    if (rst_n == 1'b0)
+    if (rst_n == 1'b0) begin
       ack_stalled <= 1'b0;
-    else
+      cross_line  <= 1'b0;
+    end else begin
       ack_stalled <= ack_stalled_n;
+      cross_line  <= cross_line_n;
+    end
   end
 
   // handshake to stall logic: keep ack asserted as long as ID is stalled
@@ -205,15 +213,19 @@ module if_stage
   always_comb
   begin
     ack_stalled_n   = ack_stalled;
+    cross_line_n    = cross_line;
     ack_o           = ack_int;
     bypass_data_reg = 1'b1;
 
     if (ack_stalled) begin
       ack_o = 1'b1;
       bypass_data_reg = 1'b0;
-      if (stall_id_i == 1'b0)
+      if (stall_id_i == 1'b0) begin
         ack_stalled_n = 1'b0;
+        cross_line_n  = 1'b0;
+      end
     end else begin
+      cross_line_n = (fetch_fsm_cs == FETCH_NEXT);
       if (ack_int && stall_id_i && jump_in_id_i == `BRANCH_NONE)
         ack_stalled_n = 1'b1;
     end
@@ -243,15 +255,29 @@ module if_stage
       START_REQ: begin
         req_int = 1'b1;
         sample_addr = 1'b1;
+        fetch_addr_n = fetch_addr + 32'd4;
         fetch_fsm_ns = WAIT_ACK;
       end
 
-      // WAIT_REQ:
-      //    - fetch_addr contains current IF PC
-      //    - last_fetch_addr: current IF PC (i.e. data valid)
-      WAIT_REQ:
+      FETCH_NEXT: begin
+        if (fetch_ack) begin
+          ack_int = 1'b1; // ack even in presence of stalls
+          fetch_fsm_ns = WAIT_REQ;
+        end
+      end
+
+      //FETCH_NEXT,
+      WAIT_REQ,
+      WAIT_ACK:
       begin
-        if (stall_if_i == 1'b0 && req_i) begin
+        if (fetch_fsm_cs == FETCH_NEXT || fetch_fsm_cs == WAIT_ACK) begin
+          if (fetch_ack) begin
+            ack_int = 1'b1; // ack even in presence of stalls
+            fetch_fsm_ns = WAIT_REQ;
+          end
+        end
+
+        if ((fetch_fsm_cs == WAIT_REQ || fetch_ack) && (stall_if_i == 1'b0 || (cross_line == 1'b1 && cross_line_n == 1'b0)) && req_i) begin
           if (pc_if_offset) begin
             if (is_compressed[1]) begin
               // serve second part of fetched instruction and request next
@@ -285,55 +311,6 @@ module if_stage
             end
           end
         end
-      end
-
-      //WAIT_REQ,
-      WAIT_ACK:
-      begin
-        if (fetch_fsm_cs == WAIT_ACK) begin
-          fetch_fsm_ns = WAIT_ACK;
-          sample_addr  = 1'b0;
-          if (fetch_ack) begin
-            req_int = 1'b0;
-            ack_int = 1'b1;
-            fetch_fsm_ns = WAIT_REQ;
-          end
-        end
-
-        // handle requests
-        if (stall_if_i == 1'b0 && (fetch_fsm_cs == WAIT_REQ || fetch_ack)) begin
-          if (req_i) begin
-            fetch_fsm_ns = WAIT_ACK;
-            req_int = 1'b1;
-
-            if (pc_if_offset) begin
-              if (is_compressed[1]) begin
-                // serve second part of fetched instruction and request next
-                pc_if_offset_n = 1'b0;
-                ack_int          = 1'b1;
-                sample_addr    = 1'b1;
-                fetch_fsm_ns   = WAIT_ACK;
-              end else begin
-                // cross line access
-                // .. need to fetch next word here and delay everything till then
-                sample_addr  = 1'b1;
-                fetch_fsm_ns = FETCH_NEXT;
-              end
-            end else begin
-              if (is_compressed[0]) begin
-                // compressed instruction, only increase PC by two bytes
-                sample_addr    = 1'b0;
-                req_int        = 1'b0;
-                ack_int          = 1'b1;
-                pc_if_offset_n = 1'b1;
-                fetch_fsm_ns   = WAIT_REQ;
-              end else begin
-                // regular fetch
-                sample_addr = 1'b1;
-              end
-            end
-          end
-        end
 
         // handle jumps and branches (note: if jump_in_ex is signaling
         // a branch in this state, it is because the IF/ID stage was stalled
@@ -345,7 +322,7 @@ module if_stage
           req_int        = 1'b0;
           // insert NOPs and wait for valid target
           force_nop_int  = 1'b1;
-          ack_int          = 1'b1;
+          ack_int        = 1'b1;
           fetch_fsm_ns   = HANDLE_BRANCH;
         end
       end
@@ -354,7 +331,7 @@ module if_stage
       begin
         if (jump_in_ex_i == `BRANCH_NONE) begin
           // insert NOPs until branch arrives in EX
-          // TODO: probably not needed
+          // required in case of stalls (latches NOP in IF/ID rdata register)
           force_nop_int = 1'b1;
           ack_int         = req_i;
         end else begin
@@ -378,67 +355,9 @@ module if_stage
         end
       end
 
-      //START_REQ, FETCH:
-      FETCH:
-      begin
-        if (fetch_fsm_cs == START_REQ) begin
-          req_int = 1'b1;
-          sample_addr = 1'b1;
-          fetch_fsm_ns = FETCH;
-        end
-
-        if (fetch_ack) begin
-          req_int      = 1'b0;
-          fetch_fsm_ns = WAIT_REQ;
-
-          if (req_i) begin
-            fetch_fsm_ns = WAIT_ACK;
-            req_int = 1'b1;
-
-            if (pc_if_offset) begin
-              if (is_compressed[1]) begin
-                // serve second part of fetched instruction and request next
-                pc_if_offset_n = 1'b0;
-                ack_int          = 1'b1;
-                sample_addr    = 1'b1;
-                fetch_fsm_ns   = WAIT_ACK;
-              end else begin
-                // cross line access
-                // .. need to fetch next word here and delay everything till then
-                sample_addr  = 1'b1;
-                fetch_fsm_ns = FETCH_NEXT;
-              end
-            end else begin
-              if (is_compressed[0]) begin
-                // compressed instruction, only increase PC by two bytes
-                sample_addr    = 1'b0;
-                req_int        = 1'b0;
-                ack_int          = 1'b1;
-                pc_if_offset_n = 1'b1;
-                fetch_fsm_ns   = WAIT_REQ;
-              end else begin
-                // regular fetch
-                sample_addr = 1'b1;
-              end
-            end
-
-          end else begin
-            fetch_fsm_ns = WAIT_REQ;
-          end
-        end
-      end
-
-      FETCH_NEXT:
-      begin
-        sample_addr = 1'b0;
-        if (fetch_ack) begin
-          ack_int           = 1'b1;
-          fetch_fsm_ns    = WAIT_REQ;
-        end
-      end
-
       default:
       begin
+        $print("Error: default case of fetch fsm!");
         fetch_fsm_ns = IDLE;
       end
     endcase
