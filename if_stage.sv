@@ -214,7 +214,7 @@ module if_stage
       if (stall_id_i == 1'b0)
         ack_stalled_n = 1'b0;
     end else begin
-      if (ack_int && stall_id_i)
+      if (ack_int && stall_id_i && jump_in_id_i == `BRANCH_NONE)
         ack_stalled_n = 1'b1;
     end
   end
