@@ -91,7 +91,6 @@ module if_stage
 
   logic sample_addr;
   logic  [1:0] is_compressed;
-  logic [31:0] fetch_addr, fetch_addr_n;
 
 
   logic [31:0] last_fetch_addr;
@@ -103,9 +102,13 @@ module if_stage
 
   // instr_core_interface
   logic        req_int;
-  logic        ack_int;
   logic [31:0] rdata_int;
+  logic        fetch_ack;
+  logic [31:0] fetch_addr, fetch_addr_n;
 
+  // stall ack logic
+  logic        ack_stalled, ack_stalled_n;
+  logic        ack_int;
 
   // local cache
   logic [31:0] data_tag;
@@ -146,7 +149,7 @@ module if_stage
       data_tag <= '0;
       data_arr <= 32'h0003;
     end else begin
-      if (ack_int) begin
+      if (fetch_ack) begin
         data_tag    <= last_fetch_addr;
         data_arr[1] <= data_arr[0];
         data_arr[0] <= rdata_int;
@@ -189,15 +192,42 @@ module if_stage
   assign current_pc_if_o = last_fetch_addr + (pc_if_offset? 32'd2 : 32'd0);
 
 
+  always_ff @(posedge clk, negedge rst_n)
+  begin
+    if (rst_n == 1'b0)
+      ack_stalled <= 1'b0;
+    else
+      ack_stalled <= ack_stalled_n;
+  end
+
+  // handshake to stall logic: keep ack asserted as long as ID is stalled
+  // (do not accept new requests while IF/ID stalled)
+  always_comb
+  begin
+    ack_stalled_n   = ack_stalled;
+    ack_o           = ack_int;
+    bypass_data_reg = 1'b1;
+
+    if (ack_stalled) begin
+      ack_o = 1'b1;
+      bypass_data_reg = 1'b0;
+      if (stall_id_i == 1'b0)
+        ack_stalled_n = 1'b0;
+    end else begin
+      if (ack_int && stall_id_i)
+        ack_stalled_n = 1'b1;
+    end
+  end
+
+
   always_comb
   begin
     fetch_fsm_ns   = fetch_fsm_cs;
     pc_if_offset_n = pc_if_offset;
 
     force_nop_int   = 1'b0;
-    bypass_data_reg = 1'b1;
     sample_addr     = 1'b0;
-    ack_o           = 1'b0;
+    ack_int         = 1'b0;
     req_int         = 1'b0;
     fetch_addr_n    = {next_pc[31:2], 2'b0};
 
@@ -206,25 +236,72 @@ module if_stage
       begin
         sample_addr = 1'b0;
         if (req_i)
-          fetch_fsm_ns = WAIT_REQ;
+          fetch_fsm_ns = START_REQ;
       end
 
-      WAIT_REQ,
+      // fetch word at fetch addr and start serving requests
+      START_REQ: begin
+        req_int = 1'b1;
+        sample_addr = 1'b1;
+        fetch_fsm_ns = WAIT_ACK;
+      end
+
+      // WAIT_REQ:
+      //    - fetch_addr contains current IF PC
+      //    - last_fetch_addr: current IF PC (i.e. data valid)
+      WAIT_REQ:
+      begin
+        if (stall_if_i == 1'b0 && req_i) begin
+          if (pc_if_offset) begin
+            if (is_compressed[1]) begin
+              // serve second part of fetched instruction and request next
+              sample_addr    = 1'b1;
+              req_int        = 1'b1;
+              ack_int        = 1'b1;
+              pc_if_offset_n = 1'b0;
+              fetch_fsm_ns   = WAIT_ACK;
+            end else begin
+              // cross line access
+              // .. need to fetch next word here and delay everything till then
+              sample_addr  = 1'b1;
+              req_int      = 1'b1;
+              ack_int      = 1'b0;
+              fetch_fsm_ns = FETCH_NEXT;
+            end
+          end else begin
+            if (is_compressed[0]) begin
+              // compressed instruction, only increase PC by two bytes
+              sample_addr    = 1'b0;
+              req_int        = 1'b0;
+              ack_int        = 1'b1;
+              pc_if_offset_n = 1'b1;
+              fetch_fsm_ns   = WAIT_REQ;
+            end else begin
+              // aligned 32 bit instruction
+              sample_addr  = 1'b1;
+              req_int      = 1'b1;
+              ack_int      = 1'b1;
+              fetch_fsm_ns = WAIT_ACK;
+            end
+          end
+        end
+      end
+
+      //WAIT_REQ,
       WAIT_ACK:
       begin
         if (fetch_fsm_cs == WAIT_ACK) begin
           fetch_fsm_ns = WAIT_ACK;
           sample_addr  = 1'b0;
-          //req_int      = 1'b1; // keep req_int asserted or start request (for branches) TODO: remove
-          if (ack_int) begin
+          if (fetch_ack) begin
             req_int = 1'b0;
-            ack_o = 1'b1;
+            ack_int = 1'b1;
             fetch_fsm_ns = WAIT_REQ;
           end
         end
 
         // handle requests
-        if (fetch_fsm_cs == WAIT_REQ || ack_int) begin
+        if (stall_if_i == 1'b0 && (fetch_fsm_cs == WAIT_REQ || fetch_ack)) begin
           if (req_i) begin
             fetch_fsm_ns = WAIT_ACK;
             req_int = 1'b1;
@@ -233,7 +310,7 @@ module if_stage
               if (is_compressed[1]) begin
                 // serve second part of fetched instruction and request next
                 pc_if_offset_n = 1'b0;
-                ack_o          = 1'b1;
+                ack_int          = 1'b1;
                 sample_addr    = 1'b1;
                 fetch_fsm_ns   = WAIT_ACK;
               end else begin
@@ -247,7 +324,7 @@ module if_stage
                 // compressed instruction, only increase PC by two bytes
                 sample_addr    = 1'b0;
                 req_int        = 1'b0;
-                ack_o          = 1'b1;
+                ack_int          = 1'b1;
                 pc_if_offset_n = 1'b1;
                 fetch_fsm_ns   = WAIT_REQ;
               end else begin
@@ -268,7 +345,7 @@ module if_stage
           req_int        = 1'b0;
           // insert NOPs and wait for valid target
           force_nop_int  = 1'b1;
-          ack_o          = 1'b1;
+          ack_int          = 1'b1;
           fetch_fsm_ns   = HANDLE_BRANCH;
         end
       end
@@ -279,7 +356,7 @@ module if_stage
           // insert NOPs until branch arrives in EX
           // TODO: probably not needed
           force_nop_int = 1'b1;
-          ack_o         = req_i;
+          ack_int         = req_i;
         end else begin
           if (jump_in_ex_i == `BRANCH_COND && branch_decision_i == 1'b0) begin
             // branch not taken, continue as before
@@ -301,12 +378,6 @@ module if_stage
         end
       end
 
-      START_REQ: begin
-        req_int = 1'b1;
-        sample_addr = 1'b1;
-        fetch_fsm_ns = WAIT_ACK;
-      end
-
       //START_REQ, FETCH:
       FETCH:
       begin
@@ -316,7 +387,7 @@ module if_stage
           fetch_fsm_ns = FETCH;
         end
 
-        if (ack_int) begin
+        if (fetch_ack) begin
           req_int      = 1'b0;
           fetch_fsm_ns = WAIT_REQ;
 
@@ -328,7 +399,7 @@ module if_stage
               if (is_compressed[1]) begin
                 // serve second part of fetched instruction and request next
                 pc_if_offset_n = 1'b0;
-                ack_o          = 1'b1;
+                ack_int          = 1'b1;
                 sample_addr    = 1'b1;
                 fetch_fsm_ns   = WAIT_ACK;
               end else begin
@@ -342,7 +413,7 @@ module if_stage
                 // compressed instruction, only increase PC by two bytes
                 sample_addr    = 1'b0;
                 req_int        = 1'b0;
-                ack_o          = 1'b1;
+                ack_int          = 1'b1;
                 pc_if_offset_n = 1'b1;
                 fetch_fsm_ns   = WAIT_REQ;
               end else begin
@@ -360,8 +431,8 @@ module if_stage
       FETCH_NEXT:
       begin
         sample_addr = 1'b0;
-        if (ack_int) begin
-          ack_o           = 1'b1;
+        if (fetch_ack) begin
+          ack_int           = 1'b1;
           fetch_fsm_ns    = WAIT_REQ;
         end
       end
@@ -426,7 +497,7 @@ module if_stage
     .rst_n          ( rst_n          ),
 
     .req_i          ( req_int        ),
-    .ack_o          ( ack_int        ),
+    .ack_o          ( fetch_ack      ),
     .addr_i         ( fetch_addr     ),
     .rdata_o        ( rdata_int      ),
 
