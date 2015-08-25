@@ -31,16 +31,15 @@ module instr_core_interface
 
   input  logic        req_i,
   input  logic [31:0] addr_i,
-  output logic        ack_o,
+  output logic        valid_o,
   output logic [31:0] rdata_o,
+  output logic [31:0] last_addr_o,
 
   output logic        instr_req_o,
   output logic [31:0] instr_addr_o,
   input  logic        instr_gnt_i,
   input  logic        instr_rvalid_i,
   input  logic [31:0] instr_rdata_i,
-
-  output logic [31:0] last_addr_o,
 
   input  logic        stall_if_i,
 
@@ -85,7 +84,7 @@ module instr_core_interface
   always_comb
   begin
     instr_req_o   = 1'b0;
-    ack_o         = 1'b0;
+    valid_o         = 1'b0;
     save_rdata    = 1'b0;
     rdata_o       = instr_rdata_i;
     instr_addr_o  = addr_i;
@@ -95,7 +94,7 @@ module instr_core_interface
       IDLE:
       begin
         instr_req_o = req_i;
-        ack_o       = 1'b0;
+        valid_o       = 1'b0;
         rdata_o     = rdata_Q;
 
         if(req_i)
@@ -133,7 +132,7 @@ module instr_core_interface
       begin
         if (instr_rvalid_i) begin
           save_rdata = 1'b1;
-          ack_o = 1'b1;
+          valid_o = 1'b1;
 
           if (stall_if_i) begin
             NS          = WAIT_IF_STALL;
@@ -154,18 +153,18 @@ module instr_core_interface
         end else begin
           NS          = WAIT_RVALID;
           instr_req_o = 1'b0;
-          ack_o       = 1'b0;
+          valid_o       = 1'b0;
         end
       end // case: PENDING
 
       WAIT_RVALID :
       begin
         NS          = WAIT_RVALID;
-        ack_o       = 1'b0;
+        valid_o       = 1'b0;
         instr_req_o = 1'b0;
 
         if (instr_rvalid_i) begin
-          ack_o       = 1'b1;
+          valid_o       = 1'b1;
           save_rdata  = 1'b1;
 
           if (stall_if_i) begin
@@ -188,7 +187,7 @@ module instr_core_interface
 
       WAIT_IF_STALL:
       begin
-        ack_o   = 1'b1;
+        valid_o   = 1'b1;
         rdata_o = rdata_Q;
 
         if (stall_if_i) begin
@@ -214,7 +213,7 @@ module instr_core_interface
       ABORT:
       begin
         NS = IDLE;
-        ack_o = 1'b1;
+        valid_o = 1'b1;
         instr_req_o  = 1'b1;
 
         if (req_i) begin

@@ -378,7 +378,7 @@ module if_stage
   always_comb
   begin
     unique case (pc_mux_sel_i)
-      `PC_NO_INCR:   next_pc = current_pc_if_o;    // PC is not incremented
+      `PC_JUMP:      next_pc = (branch_decision_i? jump_target_i : incr_pc);
       `PC_INCR:      next_pc = incr_pc;            // incremented PC
       `PC_EXCEPTION: next_pc = exc_pc;             // set PC to exception handler
       `PC_ERET:      next_pc = exception_pc_reg_i; // PC is restored when returning from IRQ/exception
@@ -415,9 +415,10 @@ module if_stage
     .rst_n          ( rst_n          ),
 
     .req_i          ( req_int        ),
-    .ack_o          ( fetch_ack      ),
+    .valid_o        ( fetch_ack      ),
     .addr_i         ( fetch_addr     ),
     .rdata_o        ( rdata_int      ),
+    .last_addr_o    ( last_fetch_addr ),
 
     .instr_req_o    ( instr_req_o    ),
     .instr_addr_o   ( instr_addr_o   ),
@@ -425,12 +426,14 @@ module if_stage
     .instr_rvalid_i ( instr_rvalid_i ),
     .instr_rdata_i  ( instr_rdata_i  ),
 
-    .last_addr_o    ( last_fetch_addr ),
-
-    .stall_if_i     ( stall_if_i     ),
-
-    .drop_request_i ( drop_request_i )
+    .stall_if_i     ( 1'b0 ),
+    .drop_request_i ( 1'b0 )   // TODO: Remove?
   );
+
+  always_comb
+  begin
+    
+  end
 
 
   // IF PC register
