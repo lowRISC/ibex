@@ -266,18 +266,18 @@ module if_stage
         end
       end
 
-      //FETCH_NEXT,
       WAIT_REQ,
       WAIT_ACK:
       begin
-        if (fetch_fsm_cs == FETCH_NEXT || fetch_fsm_cs == WAIT_ACK) begin
+        if (fetch_fsm_cs == WAIT_ACK) begin
           if (fetch_ack) begin
-            ack_int = 1'b1; // ack even in presence of stalls
+            if (pc_if_offset == 1'b0 || is_compressed[1])
+              ack_int = 1'b1; // ack even in presence of stalls
             fetch_fsm_ns = WAIT_REQ;
           end
         end
 
-        if ((fetch_fsm_cs == WAIT_REQ || fetch_ack) && (stall_if_i == 1'b0 || (cross_line == 1'b1 && cross_line_n == 1'b0)) && req_i) begin
+        if ((fetch_fsm_cs == WAIT_REQ || fetch_ack) && (stall_if_i == 1'b0 || (cross_line == 1'b1 && cross_line_n == 1'b0) || fetch_fsm_cs == WAIT_REQ) && req_i) begin
           if (pc_if_offset) begin
             if (is_compressed[1]) begin
               // serve second part of fetched instruction and request next
@@ -357,7 +357,6 @@ module if_stage
 
       default:
       begin
-        $print("Error: default case of fetch fsm!");
         fetch_fsm_ns = IDLE;
       end
     endcase
