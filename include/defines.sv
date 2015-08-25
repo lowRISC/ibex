@@ -352,8 +352,9 @@ endfunction // prettyPrintInstruction
 ///////////////////////////////////////////////
 
 // PC mux selector defines
-`define PC_INCR          3'b000
-`define PC_NO_INCR       3'b001
+`define PC_BOOT          3'b000
+`define PC_INCR          3'b001
+`define PC_JUMP          3'b010
 `define PC_EXCEPTION     3'b100
 `define PC_ERET          3'b101
 `define PC_HWLOOP        3'b110

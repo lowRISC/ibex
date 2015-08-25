@@ -63,7 +63,6 @@ module if_stage
     input  logic [31:0] exception_pc_reg_i,    // address used to restore PC when the interrupt/exception is served
     input  logic [31:0] pc_from_hwloop_i,      // pc from hwloop start addr
     input  logic  [2:0] pc_mux_sel_i,          // sel for pc multiplexer
-    input  logic        pc_mux_boot_i,         // load boot address as PC
     input  logic  [1:0] exc_pc_mux_i,          // select which exception to execute
 
     // jump and branch target and decision
@@ -378,7 +377,8 @@ module if_stage
   always_comb
   begin
     unique case (pc_mux_sel_i)
-      `PC_JUMP:      next_pc = (branch_decision_i? jump_target_i : incr_pc);
+      `PC_BOOT:      next_pc = {boot_addr_i[31:5], `EXC_OFF_RST};
+      `PC_JUMP:      next_pc = jump_target_i;
       `PC_INCR:      next_pc = incr_pc;            // incremented PC
       `PC_EXCEPTION: next_pc = exc_pc;             // set PC to exception handler
       `PC_ERET:      next_pc = exception_pc_reg_i; // PC is restored when returning from IRQ/exception
@@ -391,20 +391,6 @@ module if_stage
         // synopsys translate_on
       end
     endcase
-
-    // jump handling
-    //if (jump_in_ex_i == `BRANCH_JAL || jump_in_ex_i == `BRANCH_JALR) begin
-    //  next_pc = jump_target_i;
-    //end else if (jump_in_ex_i == `BRANCH_COND) begin
-    //  // branch handling
-    //  if (branch_decision_i == 1'b1)
-    //    next_pc = jump_target_i;
-    //  else
-    //    next_pc = current_pc_if_o;
-    //end
-
-    if (pc_mux_boot_i)
-      next_pc = {boot_addr_i[31:5], `EXC_OFF_RST};
   end
 
 
@@ -446,11 +432,7 @@ module if_stage
     end
     else
     begin
-      if (pc_mux_boot_i == 1'b1) begin
-        // set PC to reset vector
-        fetch_addr   <= {boot_addr_i[31:5], `EXC_OFF_RST};
-        pc_if_offset <= 1'b0;
-      end else if (dbg_set_npc == 1'b1) begin
+      if (dbg_set_npc == 1'b1) begin
         // get PC from debug unit
         fetch_addr   <= {dbg_pc_from_npc[31:2], 2'b0};
         pc_if_offset <= (dbg_pc_from_npc[1:0] != 2'b0);

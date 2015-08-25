@@ -82,7 +82,6 @@ module riscv_core
   logic [31:0]   current_pc_id;     // Current Program counter
   logic          force_nop_id;
   logic [2:0]    pc_mux_sel_id;     // Mux selector for next PC
-  logic          pc_mux_boot;       // load boot address as PC
   logic [1:0]    exc_pc_mux_id;     // Mux selector for exception PC
 
   logic          compressed_instr;
@@ -273,7 +272,6 @@ module riscv_core
       .exception_pc_reg_i  ( epcr            ),   // Exception PC register
       .pc_from_hwloop_i    ( hwlp_targ_addr  ),   // pc from hwloop start address
       .pc_mux_sel_i        ( pc_mux_sel_id   ),   // sel for pc multiplexer
-      .pc_mux_boot_i       ( pc_mux_boot     ),   // load boot address as PC
       .exc_pc_mux_i        ( exc_pc_mux_id   ),   // selector for exception multiplexer
 
       // from debug unit
@@ -320,7 +318,6 @@ module riscv_core
       .instr_ack_i                  ( instr_ack_int                 ),
 
       .pc_mux_sel_o                 ( pc_mux_sel_id                 ),
-      .pc_mux_boot_o                ( pc_mux_boot                   ),
       .exc_pc_mux_o                 ( exc_pc_mux_id                 ),
       .force_nop_o                  ( force_nop_id                  ),
 

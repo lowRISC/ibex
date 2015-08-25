@@ -54,7 +54,6 @@ module id_stage
     // IF and ID stage signals
     output logic                        compressed_instr_o,
     output logic [2:0]                  pc_mux_sel_o,
-    output logic                        pc_mux_boot_o,
     output logic [1:0]                  exc_pc_mux_o,
     output logic                        force_nop_o,
 
@@ -543,7 +542,6 @@ module id_stage
       .instr_gnt_i                  ( instr_gnt_i           ),
       .instr_ack_i                  ( instr_ack_i           ),
       .pc_mux_sel_o                 ( pc_mux_sel_int        ),
-      .pc_mux_boot_o                ( pc_mux_boot_o         ),
 
       // Alu signals
       .alu_operator_o               ( alu_operator          ),

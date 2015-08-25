@@ -47,7 +47,6 @@ module controller
   input  logic                     instr_ack_i,                // Acknow from instr memory or cache (means that data is available)
 
   output logic [2:0]               pc_mux_sel_o,               // Selector in the Fetch stage to select the rigth PC (normal, jump ...)
-  output logic                     pc_mux_boot_o,              // load boot address as PC, goes to the IF stage
 
   // ALU signals
   output logic [`ALU_OP_WIDTH-1:0] alu_operator_o,             // Operator in the Ex stage for the ALU block
