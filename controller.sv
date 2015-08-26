@@ -177,6 +177,7 @@ module controller
   logic        regc_used;
 
   logic        dbg_halt;
+  logic        illegal_insn_int;
 
   /////////////////////////////////////////////
   //   ____                     _            //
@@ -230,7 +231,7 @@ module controller
     restore_sr_o                = 1'b0;
     clear_isr_running_o         = 1'b0;
 
-    illegal_insn_o              = 1'b0;
+    illegal_insn_int            = 1'b0;
     trap_insn_o                 = 1'b0;
     pipe_flush_o                = 1'b0;
 
@@ -267,7 +268,7 @@ module controller
           // Calculate jump target (= PC + UJ imm)
           alu_op_c_mux_sel_o  = `OP_C_JT;
         end else begin
-          illegal_insn_o      = 1'b1;
+          illegal_insn_int    = 1'b1;
         end
       end
 
@@ -285,7 +286,7 @@ module controller
           rega_used           = 1'b1;
           alu_op_c_mux_sel_o  = `OP_C_JT;
         end else begin
-          illegal_insn_o      = 1'b1;
+          illegal_insn_int    = 1'b1;
         end
       end
 
@@ -304,7 +305,7 @@ module controller
           `INSTR_BGEU: alu_operator = `ALU_GEU;
 
           default: begin
-            illegal_insn_o = 1'b1;
+            illegal_insn_int = 1'b1;
           end
         endcase // case (instr_rdata_i)
       end
@@ -352,7 +353,7 @@ module controller
           default: begin
             data_req = 1'b0;
             data_we  = 1'b0;
-            illegal_insn_o = 1'b1;
+            illegal_insn_int = 1'b1;
           end
         endcase
       end
@@ -406,10 +407,10 @@ module controller
             default: begin
               data_type_o    = 2'b00;
               // illegal instruction
-              data_req       = 1'b0;
-              regfile_we     = 1'b0;
-              regfile_alu_we = 1'b0;
-              illegal_insn_o = 1'b1;
+              data_req         = 1'b0;
+              regfile_we       = 1'b0;
+              regfile_alu_we   = 1'b0;
+              illegal_insn_int = 1'b1;
             end
           endcase
         end
@@ -417,10 +418,10 @@ module controller
         if (instr_rdata_i[14:12] == 3'b011 || instr_rdata_i[14:12] == 3'b110)
         begin
           // LD, LWU -> RV64 only
-          data_req       = 1'b0;
-          regfile_we     = 1'b0;
-          regfile_alu_we = 1'b0;
-          illegal_insn_o = 1'b1;
+          data_req         = 1'b0;
+          regfile_we       = 1'b0;
+          regfile_alu_we   = 1'b0;
+          illegal_insn_int = 1'b1;
         end
       end
 
@@ -515,8 +516,8 @@ module controller
           `INSTR_SRLI:  alu_operator = `ALU_SRL;  // Shift Right Logical by Immediate
           `INSTR_SRAI:  alu_operator = `ALU_SRA;  // Shift Right Arithmetically by Immediate
           default: begin
-            regfile_alu_we = 1'b0;
-            illegal_insn_o = 1'b1;
+            regfile_alu_we   = 1'b0;
+            illegal_insn_int = 1'b1;
           end
         endcase // unique case (instr_rdata_i)
       end
@@ -541,11 +542,8 @@ module controller
           `INSTR_MUL:  mult_en      = 1'b1;      // Multiplication
 
           default: begin
-            // synopsys translate_off
-            $display("%t: Illegal OP instruction: %b", $time, instr_rdata_i);
-            // synopsys translate_on
-            regfile_alu_we = 1'b0;
-            illegal_insn_o = 1'b1;
+            regfile_alu_we   = 1'b0;
+            illegal_insn_int = 1'b1;
           end
         endcase // unique case (instr_rdata_i)
       end
@@ -597,7 +595,7 @@ module controller
                 $display("%t: Illegal ALU instruction received.", $time);
                 // synopsys translate_on
                 regfile_alu_we = 1'b0; // disable Write Enable for illegal instruction
-                illegal_insn_o = 1'b1;
+                illegal_insn_int = 1'b1;
               end
             endcase // casex (instr_rdata_i[3:2])
           end
@@ -616,7 +614,7 @@ module controller
                 $display("%t: Illegal ALU instruction received.", $time);
                 // synopsys translate_on
                 regfile_alu_we = 1'b0; // disable Write Enable for illegal instruction
-                illegal_insn_o = 1'b1;
+                illegal_insn_int = 1'b1;
               end
             endcase //~case(instr_rdata_i[3:0])
           end
@@ -642,7 +640,7 @@ module controller
                 $display("%t: Illegal ALU instruction received.", $time);
                 // synopsys translate_on
                 regfile_alu_we = 1'b0; // disable Write Enable for illegal instruction
-                illegal_insn_o = 1'b1;
+                illegal_insn_int = 1'b1;
               end
             endcase //~case(instr_rdata_i[3:0])
           end
@@ -663,7 +661,7 @@ module controller
               // synopsys translate_off
               $display("%t: Division instruction received, this is not supported.", $time);
               // synopsys translate_on
-              illegal_insn_o = 1'b1;
+              illegal_insn_int = 1'b1;
             end
           end
         endcase; // case (instr_rdata_i[9:8])
@@ -701,7 +699,7 @@ module controller
                 $display("%t: Illegal MAC instruction received.", $time);
                 // synopsys translate_on
                 regfile_alu_we = 1'b0;
-                illegal_insn_o     = 1'b1;
+                illegal_insn_int     = 1'b1;
               end
             endcase // case (instr_rdata_i[3:0])
           end
@@ -728,7 +726,7 @@ module controller
             $display("%t: Illegal MAC instruction received.", $time);
             // synopsys translate_on
             regfile_alu_we = 1'b0;
-            illegal_insn_o     = 1'b1;
+            illegal_insn_int     = 1'b1;
           end
         endcase
       end
@@ -790,7 +788,7 @@ module controller
 
           default: begin // unknown instruction encountered
             regfile_alu_we = 1'b0;
-            illegal_insn_o = 1'b1;
+            illegal_insn_int = 1'b1;
             // synopsys translate_off
             $display("%t: Unknown vector opcode 0x%h.", $time, instr_rdata_i[5:1]);
             // synopsys translate_on
@@ -828,7 +826,7 @@ module controller
           3'b101: alu_operator = `ALU_LES;
 
           default: begin // unknown instruction encountered
-            illegal_insn_o = 1'b1;
+            illegal_insn_int = 1'b1;
             // synopsys translate_off
             $display("%t: Unknown vector opcode 0x%h.", $time, instr_rdata_i[5:1]);
             // synopsys translate_on
@@ -858,21 +856,28 @@ module controller
         begin
           // non CSR related SYSTEM instructions
           unique case (instr_rdata_i) inside
-            `INSTR_EBREAK: begin
+            `INSTR_EBREAK:
+            begin
               // debugger trap
               trap_insn_o  = 1'b1;
             end
-            `INSTR_ERET:  begin
+
+            `INSTR_ERET:
+            begin
               // TODO: Handle in controller
               //pc_mux_sel   = `PC_ERET;
               clear_isr_running_o = 1'b1;
             end
-            `INSTR_WFI:   begin
+
+            `INSTR_WFI:
+            begin
               // flush pipeline
               pipe_flush_o = 1'b1;
             end
-            default:      begin
-              illegal_insn_o = 1'b1;
+
+            default:
+            begin
+              illegal_insn_int = 1'b1;
             end
           endcase // unique case (instr_rdata_i)
         end
@@ -896,7 +901,7 @@ module controller
             2'b01:   csr_op_o = `CSR_OP_WRITE;
             2'b10:   csr_op_o = `CSR_OP_SET;
             2'b11:   csr_op_o = `CSR_OP_CLEAR;
-            default: illegal_insn_o = 1'b1;
+            default: illegal_insn_int = 1'b1;
           endcase
         end
 
@@ -978,21 +983,14 @@ module controller
       */
 
       default: begin
-        illegal_insn_o = 1'b1;
+        illegal_insn_int = 1'b1;
       end
     endcase
 
     // make sure invalid compressed instruction causes an exception
     if (illegal_c_insn_i) begin
-      illegal_insn_o = 1'b1;
+      illegal_insn_int = 1'b1;
     end
-
-    // synopsys translate_off
-    if (illegal_insn_o == 1'b1) begin
-      $display("%t: Illegal instruction (core %0d):", $time, riscv_core.core_id_i);
-      prettyPrintInstruction(instr_rdata_i, id_stage.current_pc_id_i);
-    end
-    // synopsys translate_on
 
     // misaligned access was detected by the LSU
     // TODO: this section should eventually be moved out of the decoder
@@ -1035,8 +1033,9 @@ module controller
 
     core_busy_o   = 1'b1;
 
-    dbg_halt      = 1'b0;
-    dbg_trap_o    = 1'b0;
+    dbg_halt       = 1'b0;
+    dbg_trap_o     = 1'b0;
+    illegal_insn_o = 1'b0;
 
     unique case (ctrl_fsm_cs)
       default: begin
@@ -1091,12 +1090,16 @@ module controller
             ctrl_fsm_ns = BRANCH;
         end
 
-        // synopsys translate_off
-        if (illegal_insn_o == 1'b1) begin
-          $display("%t: Illegal instruction (core %0d):", $time, riscv_core.core_id_i);
-          prettyPrintInstruction(instr_rdata_i, id_stage.current_pc_id_i);
+        // handle illegal instructions
+        if (illegal_insn_int) begin
+          illegal_insn_o = 1'b1;
+
+          // synopsys translate_off
+          $display("%t: Illegal instruction (core %0d) at PC 0x%h", $time, riscv_core.core_id_i,
+                   id_stage.current_pc_id_i);
+          //prettyPrintInstruction(instr_rdata_i, id_stage.current_pc_id_i);
+          // synopsys translate_on
         end
-        // synopsys translate_on
 
         // the pipeline is flushed and we are requested to go to sleep
         if ((pipe_flushed_i == 1'b1) && (fetch_enable_i == 1'b0))
