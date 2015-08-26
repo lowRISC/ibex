@@ -279,10 +279,10 @@ module id_stage
 
   // compressed instruction decoding
   compressed_decoder compressed_decoder_i (
-    .instr_i         ( instr_rdata_i ),
-    .instr_o         ( instr ),
+    .instr_i         ( instr_rdata_i      ),
+    .instr_o         ( instr              ),
     .is_compressed_o ( compressed_instr_o ),
-    .illegal_instr_o ( illelgal_c_insn )
+    .illegal_instr_o ( illegal_c_insn     )
   );
 
 

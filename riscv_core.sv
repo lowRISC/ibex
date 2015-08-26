@@ -776,8 +776,7 @@ module riscv_core
     $sformat(fn, "trace_core_%h.log", core_id_i);
     $display("[TRACER] Output filename is: %s", fn);
     f = $fopen(fn, "w");
-    $fwrite(f, "%19s\t%6s\t%10s\t%10s\t \t%s\n", "Time", "Cycles", "PC", "Instr", "Mnemonic");
-    //$fwrite(f, "Time\tCycles\tPC\tInstruction\n");
+    $fwrite(f, "%20s\t%6s\t%10s\t%10s\t \t%s\n", "Time", "Cycles", "PC", "Instr", "Mnemonic");
   end
 
   final
@@ -807,7 +806,7 @@ module riscv_core
 
       $fwrite(f, "%t\t%6d\t0x%h\t", $time, cycles, pc);
       if (compressed)
-        $fwrite(f, "0x    %4h\tC\t", id_stage_i.instr_rdata_i[15:0]);
+        $fwrite(f, "    0x%4h\tC\t", id_stage_i.instr_rdata_i[15:0]);
       else
         $fwrite(f, "0x%h\tI\t", instr);
 
