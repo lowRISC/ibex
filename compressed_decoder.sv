@@ -235,12 +235,13 @@ module compressed_decoder
           3'b110: begin
             if (instr_i[11:7] == 5'b0) begin
               // c.addi16sp -> addi x2, x2, nzimm
+              // c.nop
               instr_o = {{3 {instr_i[12]}}, instr_i[4:2], instr_i[5], instr_i[6], 4'b0, 5'h02, 3'b000, 5'h02, `OPCODE_OPIMM};
             end else begin
               // c.addi -> addi rd, rd, nzimm
               instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], instr_i[11:7], 3'b0, instr_i[11:7], `OPCODE_OPIMM};
+              if ({instr_i[12], instr_i[6:2]} == 6'b0)  illegal_instr_o = 1'b1;
             end
-            if ({instr_i[12], instr_i[6:2]} == 6'b0)  illegal_instr_o = 1'b1;
           end
 
           3'b111: begin
