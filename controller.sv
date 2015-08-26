@@ -99,6 +99,7 @@ module controller
   input  logic                     irq_present_i,               // there is an IRQ, so if we are sleeping we should wake up now
 
   // Exception Controller Signals
+  input  logic                     illegal_c_insn_i,            // compressed instruction decode failed
   output logic                     illegal_insn_o,              // illegal instruction encountered
   output logic                     trap_insn_o,                 // trap instruction encountered
   output logic                     pipe_flush_o,                // pipe flush requested by controller
@@ -241,6 +242,7 @@ module controller
     wrong_branch_taken_o        = 1'b0;
     take_branch_o               = 1'b0;
 `endif
+
     unique case (instr_rdata_i[6:0])
 
       //////////////////////////////////////
@@ -839,6 +841,9 @@ module controller
           set_flag = 1'b1; // set the flag for lv32.all_* and lv32.any_*
       end
 
+      */
+
+
       ////////////////////////////////////////////////
       //  ____  ____  _____ ____ ___    _    _      //
       // / ___||  _ \| ____/ ___|_ _|  / \  | |     //
@@ -848,13 +853,10 @@ module controller
       //                                            //
       ////////////////////////////////////////////////
 
-      */
-
-
       `OPCODE_SYSTEM: begin
         if (instr_rdata_i[14:12] == 3'b000)
         begin
-          // non CSR realted SYSTEM instructions
+          // non CSR related SYSTEM instructions
           unique case (instr_rdata_i) inside
             `INSTR_EBREAK: begin
               // debugger trap
@@ -869,19 +871,21 @@ module controller
               // flush pipeline
               pipe_flush_o = 1'b1;
             end
-            default:      illegal_insn_o = 1'b1;
+            default:      begin
+              illegal_insn_o = 1'b1;
+            end
           endcase // unique case (instr_rdata_i)
         end
         else
         begin
-          // instructions to read/modify CSRs
+          // instruction to read/modify CSR
           csr_access_o        = 1'b1;
           regfile_alu_we      = 1'b1;
           alu_op_b_mux_sel_o  = `OP_B_IMM;
           immediate_mux_sel_o = `IMM_I;    // CSR address is encoded in I imm
 
           if (instr_rdata_i[14] == 1'b1) begin
-            // rs1 field is immediate
+            // rs1 field is used as immediate
             alu_op_a_mux_sel_o = `OP_A_ZIMM;
           end else begin
             rega_used          = 1'b1;
@@ -977,6 +981,11 @@ module controller
         illegal_insn_o = 1'b1;
       end
     endcase
+
+    // make sure invalid compressed instruction causes an exception
+    if (illegal_c_insn_i) begin
+      illegal_insn_o = 1'b1;
+    end
 
     // synopsys translate_off
     if (illegal_insn_o == 1'b1) begin

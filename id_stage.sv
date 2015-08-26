@@ -189,6 +189,7 @@ module id_stage
   assign jump_in_ex_o = jump_in_ex;
 
   logic        illegal_insn;
+  logic        illegal_c_insn;
   logic        trap_insn;
   logic        trap_hit;
   logic        pipe_flush;
@@ -278,10 +279,10 @@ module id_stage
 
   // compressed instruction decoding
   compressed_decoder compressed_decoder_i (
-    .instr_i         (instr_rdata_i),
-    .instr_o         (instr),
-    .is_compressed_o (compressed_instr_o),
-    .illegal_instr_o (illegal_compressed_instr)
+    .instr_i         ( instr_rdata_i ),
+    .instr_o         ( instr ),
+    .is_compressed_o ( compressed_instr_o ),
+    .illegal_instr_o ( illelgal_c_insn )
   );
 
 
@@ -596,6 +597,7 @@ module id_stage
       .irq_present_i                ( irq_present           ),
 
       // Exception Controller Signals
+      .illegal_c_insn_i             ( illegal_c_insn        ),
       .illegal_insn_o               ( illegal_insn          ),
       .trap_insn_o                  ( trap_insn             ),
       .pipe_flush_o                 ( pipe_flush            ),
