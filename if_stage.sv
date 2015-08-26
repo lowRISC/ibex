@@ -81,16 +81,17 @@ module if_stage
 );
 
   // offset FSM
-  enum logic[3:0] {IDLE, WAIT_ALIGNED, WAIT_UNALIGNED, VALID_ALIGNED, VALID_UNALIGNED,
-                   HANDLE_BRANCH, FETCH_UNALIGNED} offset_fsm_cs, offset_fsm_ns, offset_fsm_stored;
+  enum logic[3:0] {WAIT_ALIGNED, VALID_ALIGNED,
+                   UNALIGNED_16,
+                   WAIT_UNALIGNED_32, VALID_UNALIGNED_32,
+                   WAIT_JUMPED_ALIGNED, VALID_JUMPED_ALIGNED,
+                   WAIT_JUMPED_UNALIGNED, VALID_JUMPED_UNALIGNED,
+                   IDLE } offset_fsm_cs, offset_fsm_ns, offset_fsm_stored;
 
   logic  [1:0] is_compressed;
-  logic        crossword_n, crossword_Q;
-  logic        unaligned, unaligned_Q;
+  logic        crossword;
+  logic        unaligned;
   logic        unaligned_jump;
-
-  logic        handle_branch;
-  logic        force_nop_int;
 
   // instr_core_interface
   logic        fetch_req;
@@ -115,7 +116,7 @@ module if_stage
     current_pc_if_o   = {fetch_addr[31:2], 2'b00};
 
     if (unaligned) begin
-      if (crossword_Q) begin
+      if (crossword) begin
         // cross-word access, regular instruction
         instr_rdata_int   = {fetch_rdata[15:0], data_arr};
         current_pc_if_o   = {fetch_addr_Q[31:2], 2'b10};
@@ -127,10 +128,6 @@ module if_stage
         current_pc_if_o   = {fetch_addr[31:2], 2'b10};
       end
     end
-
-    // insert NOPs for branches
-    if (force_nop_int)
-      instr_rdata_int = {25'b0, `OPCODE_OPIMM};
   end
 
 
@@ -199,14 +196,8 @@ module if_stage
   begin
     if (rst_n == 1'b0) begin
       offset_fsm_cs     <= IDLE;
-      offset_fsm_stored <= IDLE;
     end else begin
-      if (handle_branch) begin
-        offset_fsm_cs     <= HANDLE_BRANCH;
-        offset_fsm_stored <= offset_fsm_ns;
-      end
-      else
-        offset_fsm_cs     <= offset_fsm_ns;
+      offset_fsm_cs     <= offset_fsm_ns;
     end
   end
 
@@ -215,171 +206,151 @@ module if_stage
   begin
     offset_fsm_ns = offset_fsm_cs;
 
-    handle_branch = 1'b0;
-
     fetch_req = 1'b0;
     valid_o   = 1'b0;
 
-    unaligned     = unaligned_Q;
-    crossword_n   = crossword_Q;
-    force_nop_int = 1'b0;
+    unaligned     = 1'b0;
+    crossword     = 1'b0;
 
     unique case (offset_fsm_cs)
       // no valid instruction data for ID stage
       // assume aligned
       IDLE: begin
         if (req_i) begin
+          fetch_req     = 1'b1;
+          offset_fsm_ns = WAIT_JUMPED_ALIGNED;
+        end
+      end
+
+      // aligned 32 bit or 16 bit instruction, we don't know yet
+      WAIT_ALIGNED,
+      VALID_ALIGNED: begin
+
+        if (fetch_valid || offset_fsm_cs == VALID_ALIGNED) begin
+          valid_o = 1'b1; // an instruction is ready for ID stage
+          offset_fsm_ns = VALID_ALIGNED;
+
+          if (req_i && ~stall_if_i) begin
+
+            if (~is_compressed[0]) begin
+              // 32 bit aligned instruction found
+              fetch_req = 1'b1;
+              offset_fsm_ns = WAIT_ALIGNED;
+            end else begin
+              // 16 bit aligned instruction found
+              if (is_compressed[1]) begin
+                // next is 16 bit unaligned instruction
+                // we already have that data, no need to fetch anything
+                offset_fsm_ns = UNALIGNED_16;
+              end else begin
+                // next is 32 bit unaligned instruction
+                // the upper half of this instruction is missing, start
+                // fetching it
+                fetch_req = 1'b1;
+                offset_fsm_ns = WAIT_UNALIGNED_32;
+              end
+            end
+          end
+        end
+      end
+
+      // unaligned 16 bit instruction
+      UNALIGNED_16: begin
+        unaligned = 1'b1;
+
+        // we don't need to wait for a fetch_valid as we already have the data
+        valid_o = 1'b1;
+
+        if (req_i && ~stall_if_i) begin
+          // next instruction will be aligned
           fetch_req = 1'b1;
           offset_fsm_ns = WAIT_ALIGNED;
         end
       end
 
-      // We are currently in an ALIGNED state, serving PC[1] == 1'b0
-      VALID_ALIGNED,
-      WAIT_ALIGNED: begin
-        unaligned = 1'b0;
+      // unaligned 32 bit instruction
+      WAIT_UNALIGNED_32,
+      VALID_UNALIGNED_32: begin
+        unaligned = 1'b1;
+        crossword = 1'b1;
 
-        if (fetch_valid || offset_fsm_cs == VALID_ALIGNED) begin
+        if (fetch_valid || offset_fsm_cs == VALID_UNALIGNED_32) begin
           valid_o = 1'b1;
-          offset_fsm_ns = VALID_ALIGNED;
+          offset_fsm_ns = VALID_UNALIGNED_32;
 
           if (req_i && ~stall_if_i) begin
-            crossword_n = 1'b0;
 
-            // ----------------------------------------------------------------------
-            // no branch in ID, do regular fetch
-            // ----------------------------------------------------------------------
-            if (is_compressed[0]) begin
-              // compressed instruction
-              if (is_compressed[1]) begin
-                // upper half contains compressed instruction and is available
-                // from register, don't start fetch now
-                offset_fsm_ns = VALID_UNALIGNED;
-              end else begin
-                // cross-word access, upper half is beginning of 32 bit instruction
-                crossword_n   = 1'b1;
-                fetch_req     = 1'b1;
-                offset_fsm_ns = WAIT_UNALIGNED;
-              end
+            if (is_compressed[1]) begin
+              // next is 16 bit unaligned instruction
+              // we already have that data, no need to fetch anything
+              offset_fsm_ns = UNALIGNED_16;
             end else begin
-              // regular instruction
-              fetch_req     = 1'b1;
-              offset_fsm_ns = WAIT_ALIGNED;
-            end
-
-            if (jump_in_id_i != `BRANCH_NONE) begin
-              // ----------------------------------------------------------------------
-              // need to handle branch
-              // ----------------------------------------------------------------------
-              handle_branch = 1'b1;
+              // next is 32 bit unaligned instruction
+              // the upper half of this instruction is missing, start
+              // fetching it
+              fetch_req = 1'b1;
+              offset_fsm_ns = WAIT_UNALIGNED_32;
             end
           end
         end
       end
 
-      // We are currently in an unaligned state, serving PC[1] == 1'b1
-      WAIT_UNALIGNED,
-      VALID_UNALIGNED: begin
-        unaligned = 1'b1;
+      // we did an aligned jump
+      WAIT_JUMPED_ALIGNED,
+      VALID_JUMPED_ALIGNED: begin
 
-        if (fetch_valid || offset_fsm_cs == VALID_UNALIGNED) begin
+        if (fetch_valid || offset_fsm_cs == VALID_JUMPED_ALIGNED) begin
           valid_o = 1'b1;
-          offset_fsm_ns = VALID_UNALIGNED;
+          offset_fsm_ns = VALID_JUMPED_ALIGNED;
 
           if (req_i && ~stall_if_i) begin
-            crossword_n = 1'b0;
 
-            // ----------------------------------------------------------------------
-            // no branch in ID, do regular fetch
-            // ----------------------------------------------------------------------
-            if (crossword_Q) begin
-              // last instruction was 32 bit crossword, unaligned
+            if (is_compressed[0]) begin
+              // this instruction is 16 bit
+
               if (is_compressed[1]) begin
-                // compressed instruction, next instruction will be
-                // unaligned
-                offset_fsm_ns = VALID_UNALIGNED;
+                // next instruction is also 16 bit
+                offset_fsm_ns = UNALIGNED_16;
               end else begin
-                // regular instruction, fetch following instruction
-                fetch_req     = 1'b1;
-                crossword_n   = 1'b1;
-                offset_fsm_ns = WAIT_UNALIGNED;
+                // next is 32 bit unaligned instruction
+                // the upper half of this instruction is missing, start
+                // fetching it
+                fetch_req = 1'b1;
+                offset_fsm_ns = WAIT_UNALIGNED_32;
               end
             end else begin
-              // compressed instruction because no cross-word access done,
-              // next instruction will be aligned
+              // this instruction is 32 bit, so next one will be aligned
               fetch_req = 1'b1;
               offset_fsm_ns = WAIT_ALIGNED;
-
-              assert(is_compressed[1]) else $error("Not compressed, but compressed expected");
-            end
-
-            if (jump_in_id_i != `BRANCH_NONE) begin
-              handle_branch = 1'b1;
             end
           end
         end
       end
 
-      HANDLE_BRANCH: begin
-        // assume jump/branch instruction is in EX stage
-        if (jump_in_ex_i == `BRANCH_COND && ~branch_decision_i) begin
-          // branch not taken
-
-          // let's go to one instruction after the one we already put into the
-          // pipeline
-          if (unaligned_Q) begin
-            // last state was unaligned, go back
-            if (crossword_Q) begin
-              fetch_req     = 1'b1;
-              offset_fsm_ns = WAIT_UNALIGNED;
-            end else begin
-              fetch_req     = 1'b1;
-              offset_fsm_ns = WAIT_ALIGNED;
-            end
-          end else begin
-            crossword_n   = 1'b0;
-
-            if (is_compressed[0]) begin
-              offset_fsm_ns = VALID_UNALIGNED;
-            end else begin
-              offset_fsm_ns = VALID_ALIGNED;
-            end
-          end
-
-        end else begin
-          // branch taken or jump
-          fetch_req   = 1'b1;
-          crossword_n = 1'b0;
-          if (unaligned_jump) begin
-            // if the target address is unaligned, we need to fetch the lower
-            // word first
-            offset_fsm_ns = FETCH_UNALIGNED;
-          end else begin
-            offset_fsm_ns = WAIT_ALIGNED;
-          end
-        end
-      end
-
-      // can be cross-word or compressed
-      FETCH_UNALIGNED: begin
+      // we did an unaligned jump
+      WAIT_JUMPED_UNALIGNED,
+      VALID_JUMPED_UNALIGNED: begin
         unaligned = 1'b1;
 
-        if (fetch_valid) begin
+        if (fetch_valid || offset_fsm_cs == VALID_JUMPED_UNALIGNED) begin
+          // here we might not yet have the data, if the instruction is 32 bit
+          // unaligned
+          offset_fsm_ns = VALID_JUMPED_UNALIGNED;
+
           if (is_compressed[1]) begin
-            // no cross-word access
-            crossword_n   = 1'b0;
-            valid_o       = 1'b1;
-            if (req_i && ~stall_if_i) begin
-              fetch_req     = 1'b1;
-              offset_fsm_ns = WAIT_ALIGNED;
-            end else begin
-              offset_fsm_ns = VALID_UNALIGNED;
-            end
+            // Puh, lucky, we got a 16 bit instruction
+            valid_o = 1'b1;
+
+            // next instruction will be aligned
+            fetch_req = 1'b1;
+            offset_fsm_ns = WAIT_ALIGNED;
+
           end else begin
-            // cross-word access, fetch next word
-            fetch_req     = 1'b1;
-            crossword_n   = 1'b1;
-            offset_fsm_ns = WAIT_UNALIGNED;
+            // a 32 bit unaligned instruction, let's fetch the upper half
+            // we don't wait for stalls here as we still need data to get
+            // unstalled
+            fetch_req = 1'b1;
+            offset_fsm_ns = WAIT_UNALIGNED_32;
           end
         end
       end
@@ -388,6 +359,31 @@ module if_stage
         offset_fsm_ns = IDLE;
       end
     endcase
+
+
+    // take care of jumps and branches
+    if(~stall_id_i) begin
+      if (jump_in_ex_i != `BRANCH_NONE) begin
+        if ((jump_in_ex_i == `BRANCH_COND && branch_decision_i) ||
+            jump_in_ex_i == `BRANCH_JAL || jump_in_ex_i == `BRANCH_JALR) begin
+          // branch taken
+
+          fetch_req = 1'b1;
+          if (unaligned_jump)
+            offset_fsm_ns = WAIT_JUMPED_UNALIGNED;
+          else
+            offset_fsm_ns = WAIT_JUMPED_ALIGNED;
+
+        end  else begin
+          // branch not taken
+          // we don't need to do anything?
+        end
+      end else if (jump_in_id_i != `BRANCH_NONE) begin
+        // new branch in ID, just wait
+        //fetch_req     = 1'b0;
+      end
+    end
+
   end
 
 
@@ -410,28 +406,13 @@ module if_stage
       data_arr     <= 16'b0;
       fetch_addr_Q <= 32'b0;
     end else begin
-      if (~stall_if_i) begin
+      if (fetch_req) begin
         data_arr     <= fetch_rdata[31:16];
         fetch_addr_Q <= fetch_addr;
       end
     end
   end
 
-
-  // IF PC register
-  always_ff @(posedge clk, negedge rst_n)
-  begin : IF_PIPELINE
-    if (rst_n == 1'b0)
-    begin
-      crossword_Q  <= 1'b0;
-      unaligned_Q  <= 1'b0;
-    end
-    else
-    begin
-      crossword_Q  <= crossword_n;
-      unaligned_Q  <= unaligned;
-    end
-  end
 
   // IF-ID pipeline registers, frozen when the ID stage is stalled
   always_ff @(posedge clk, negedge rst_n)

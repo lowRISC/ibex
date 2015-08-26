@@ -1126,11 +1126,13 @@ module controller
         if (jump_in_ex_i == `BRANCH_COND && ~branch_decision_i) begin
           // not taken
           pc_mux_sel_o = `PC_INCR;
-          ctrl_fsm_ns = DECODE;
+          if (~stall_id_o)
+            ctrl_fsm_ns = DECODE;
         end else begin
           // branch taken or jump
           pc_mux_sel_o = `PC_JUMP;
-          ctrl_fsm_ns = BRANCH_DELAY;
+          if (~stall_id_o)
+            ctrl_fsm_ns = BRANCH_DELAY;
         end
       end
 
@@ -1247,7 +1249,7 @@ module controller
     // we unstall the if_stage if the debug unit wants to set a new
     // pc, so that the new value gets written into current_pc_if and is
     // used by the instr_core_interface
-    stall_if_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_halt | dbg_stall_i | (~pc_valid_i);
+    stall_if_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_halt | dbg_stall_i | (~pc_valid_i) | (jump_in_id_o != `BRANCH_NONE);
     stall_id_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_halt | dbg_stall_i;
     stall_ex_o = instr_ack_stall | lsu_stall | dbg_stall_i;
     stall_wb_o = lsu_stall | dbg_stall_i;
