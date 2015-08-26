@@ -916,7 +916,7 @@ module riscv_core
     begin
       riscv_core.mnemonic = mnemonic;
       imm = id_stage_i.imm_u_type;
-      $fdisplay(f, "%s\tx%0d, 0x%h (imm)", mnemonic, rd, imm);
+      $fdisplay(f, "%7s\tx%0d, 0x%h (imm)", mnemonic, rd, imm);
     end
   endfunction // printUInstr
 
