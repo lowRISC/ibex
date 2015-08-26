@@ -50,6 +50,7 @@ module id_stage
     // Jumps and branches
     output logic [1:0]                  jump_in_id_o,
     output logic [1:0]                  jump_in_ex_o,
+    input  logic                        branch_decision_i,
 
     // IF and ID stage signals
     output logic                        compressed_instr_o,
@@ -628,6 +629,8 @@ module id_stage
 
       // To controller (TODO: Remove when control/decode separated and moved)
       .jump_in_ex_i                 ( jump_in_ex_o          ),
+
+      .branch_decision_i            ( branch_decision_i     ),
 
       // To exception controller and EX: Jump/Branch indication
       .jump_in_id_o                 ( jump_in_id_o          ),

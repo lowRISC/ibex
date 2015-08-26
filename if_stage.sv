@@ -43,7 +43,7 @@ module if_stage
 
     // instruction request control
     input  logic        req_i,
-    output logic        ack_o,
+    output logic        valid_o,
     input  logic        drop_request_i,
 
     // instruction cache interface
@@ -81,292 +81,78 @@ module if_stage
 );
 
 
-  logic [31:0] next_pc;
+  logic [31:0] exc_pc;
 
-  // next PC mux inputs
-  logic [31:0] incr_pc;            // increased PC
-  logic [31:0] exc_pc;             // PC from exception
-
-
-  logic sample_addr;
   logic  [1:0] is_compressed;
-
-
-  logic [31:0] last_fetch_addr;
-
+  logic        unaligned, unaligned_Q;
+  logic        unaligned_jump;
+  logic        branch_taken;
 
   logic        force_nop_int;
   logic [31:0] instr_rdata_int;
-
+  logic [31:0] current_pc_id_int;
 
   // instr_core_interface
-  logic        req_int;
-  logic [31:0] rdata_int;
-  logic        fetch_ack;
+  logic        fetch_req;
+  logic [31:0] fetch_rdata;
+  logic        fetch_valid;
   logic [31:0] fetch_addr, fetch_addr_n;
-
-  // stall ack logic
-  logic        ack_stalled, ack_stalled_n;
-  logic        ack_int;
+  logic [31:0] fetch_addr_Q;
 
   // local cache
-  logic [31:0] data_tag;
-  logic [1:0][31:0] data_arr;
-
-
-  logic bypass_data_reg; // use data from instr_core_if, not from data_arr
-  logic cross_line, cross_line_n;
-  logic pc_if_offset, pc_if_offset_n;
-
-
-  enum logic[3:0] {IDLE, START_REQ, WAIT_REQ, WAIT_ACK, FETCH_NEXT, HANDLE_BRANCH} fetch_fsm_cs, fetch_fsm_ns;
-
-  always_ff @(posedge clk, negedge rst_n)
-  begin
-    if (rst_n == 1'b0) begin
-      fetch_fsm_cs <= IDLE;
-    end else begin
-      fetch_fsm_cs <= fetch_fsm_ns;
-    end
-  end
-
-
-  always_comb
-  begin
-    if (pc_if_offset) begin
-      incr_pc = fetch_addr + (is_compressed[1] ? 32'd4 : 32'd6);
-    end else begin
-      incr_pc = fetch_addr + (is_compressed[0] ? 32'd2 : 32'd4);
-    end
-  end
-  //assign incr_pc = current_pc_if_o + (instr_rdata_int[1:0] != 2'b11 ? 32'd2 : 32'd4);
+  logic [15:0] data_arr;
 
 
   // store instr_core_if data in local cache
   always_ff @(posedge clk, negedge rst_n)
   begin
     if (rst_n == 1'b0) begin
-      data_tag <= '0;
-      data_arr <= 32'h0003;
+      data_arr <= 16'b0;
     end else begin
-      if (fetch_ack) begin
-        data_tag    <= last_fetch_addr;
-        data_arr[1] <= data_arr[0];
-        data_arr[0] <= rdata_int;
+      if (fetch_valid) begin
+        data_arr <= fetch_rdata[31:16];
       end
     end
   end
 
-  // cache data output muxes
+
   always_comb
   begin
-    if (bypass_data_reg) begin
-      // bypass cache and get data directly from instr_core_if
-      if (pc_if_offset && (cross_line || cross_line_n))
-        instr_rdata_int = {rdata_int[15:0], data_arr[0][31:16]};
-      else if (pc_if_offset)
-        instr_rdata_int = {16'b0, rdata_int[31:16]};
-      else
-        instr_rdata_int = rdata_int;
-    end else begin
-      // serve data from cache
-      if (pc_if_offset && cross_line)
-        instr_rdata_int = {data_arr[0][15:0], data_arr[1][31:16]};
-      else if (pc_if_offset)
-        instr_rdata_int = {16'b0, data_arr[0][31:16]};
-      else
-        instr_rdata_int = data_arr[0];
+    // default values for regular aligned access
+    instr_rdata_int   = fetch_rdata;
+    current_pc_id_int = {fetch_addr[31:2], 2'b00};
+
+    if (unaligned) begin
+      if (unaligned_Q) begin
+        // cross-word access
+        instr_rdata_int   = {fetch_rdata[15:0], data_arr};
+        current_pc_id_int = {fetch_addr_Q[31:2], 2'b10};
+      end else begin
+        // unaligned compressed instruction
+        // don't care about upper half-word, insert good value for
+        // optimization
+        instr_rdata_int   = {fetch_rdata[31:16], fetch_rdata[31:16]};
+        current_pc_id_int = {fetch_addr[31:2], 2'b10};
+      end
     end
 
+    // insert NOPs for branches
     if (force_nop_int)
       instr_rdata_int = {25'b0, `OPCODE_OPIMM};
   end
 
-  always_comb
-  begin
-    if (fetch_fsm_cs == WAIT_ACK) begin
-      is_compressed[0] = rdata_int[1:0]   != 2'b11;
-      is_compressed[1] = rdata_int[17:16] != 2'b11;
-    end else begin
-      is_compressed[0] = data_arr[0][1:0]   != 2'b11;
-      is_compressed[1] = data_arr[0][17:16] != 2'b11;
-    end
-  end
-
-  assign current_pc_if_o = last_fetch_addr + (pc_if_offset? 32'd2 : 32'd0);
+  assign current_pc_if_o = current_pc_id_int;
 
 
-  always_ff @(posedge clk, negedge rst_n)
-  begin
-    if (rst_n == 1'b0) begin
-      ack_stalled <= 1'b0;
-      cross_line  <= 1'b0;
-    end else begin
-      ack_stalled <= ack_stalled_n;
-      cross_line  <= cross_line_n;
-    end
-  end
-
-  // handshake to stall logic: keep ack asserted as long as ID is stalled
-  // (do not accept new requests while IF/ID stalled)
-  always_comb
-  begin
-    ack_stalled_n   = ack_stalled;
-    cross_line_n    = cross_line;
-    ack_o           = ack_int;
-    bypass_data_reg = 1'b1;
-
-    if (ack_stalled) begin
-      ack_o = 1'b1;
-      bypass_data_reg = 1'b0;
-      if (stall_id_i == 1'b0) begin
-        ack_stalled_n = 1'b0;
-        cross_line_n  = 1'b0;
-      end
-    end else begin
-      cross_line_n = (fetch_fsm_cs == FETCH_NEXT);
-      if (ack_int && stall_id_i && jump_in_id_i == `BRANCH_NONE)
-        ack_stalled_n = 1'b1;
-    end
-  end
-
-
-  always_comb
-  begin
-    fetch_fsm_ns   = fetch_fsm_cs;
-    pc_if_offset_n = pc_if_offset;
-
-    force_nop_int   = 1'b0;
-    sample_addr     = 1'b0;
-    ack_int         = 1'b0;
-    req_int         = 1'b0;
-    fetch_addr_n    = {next_pc[31:2], 2'b0};
-
-    case (fetch_fsm_cs)
-      IDLE:
-      begin
-        sample_addr = 1'b0;
-        if (req_i)
-          fetch_fsm_ns = START_REQ;
-      end
-
-      // fetch word at fetch addr and start serving requests
-      START_REQ: begin
-        req_int = 1'b1;
-        sample_addr = 1'b1;
-        fetch_addr_n = fetch_addr + 32'd4;
-        fetch_fsm_ns = WAIT_ACK;
-      end
-
-      FETCH_NEXT: begin
-        if (fetch_ack) begin
-          ack_int = 1'b1; // ack even in presence of stalls
-          fetch_fsm_ns = WAIT_REQ;
-        end
-      end
-
-      WAIT_REQ,
-      WAIT_ACK:
-      begin
-        if (fetch_fsm_cs == WAIT_ACK) begin
-          if (fetch_ack) begin
-            if (pc_if_offset == 1'b0 || is_compressed[1])
-              ack_int = 1'b1; // ack even in presence of stalls
-            fetch_fsm_ns = WAIT_REQ;
-          end
-        end
-
-        if ((fetch_fsm_cs == WAIT_REQ || fetch_ack) && (stall_if_i == 1'b0 || (cross_line == 1'b1 && cross_line_n == 1'b0) || fetch_fsm_cs == WAIT_REQ) && req_i) begin
-          if (pc_if_offset) begin
-            if (is_compressed[1]) begin
-              // serve second part of fetched instruction and request next
-              sample_addr    = 1'b1;
-              req_int        = 1'b1;
-              ack_int        = 1'b1;
-              pc_if_offset_n = 1'b0;
-              fetch_fsm_ns   = WAIT_ACK;
-            end else begin
-              // cross line access
-              // .. need to fetch next word here and delay everything till then
-              sample_addr  = 1'b1;
-              req_int      = 1'b1;
-              ack_int      = 1'b0;
-              fetch_fsm_ns = FETCH_NEXT;
-            end
-          end else begin
-            if (is_compressed[0]) begin
-              // compressed instruction, only increase PC by two bytes
-              sample_addr    = 1'b0;
-              req_int        = 1'b0;
-              ack_int        = 1'b1;
-              pc_if_offset_n = 1'b1;
-              fetch_fsm_ns   = WAIT_REQ;
-            end else begin
-              // aligned 32 bit instruction
-              sample_addr  = 1'b1;
-              req_int      = 1'b1;
-              ack_int      = 1'b1;
-              fetch_fsm_ns = WAIT_ACK;
-            end
-          end
-        end
-
-        // handle jumps and branches (note: if jump_in_ex is signaling
-        // a branch in this state, it is because the IF/ID stage was stalled
-        // when the state changed from HANDLE_BRANCH to WAIT_REQ/-ACK)
-        if (jump_in_id_i != `BRANCH_NONE) begin
-          // restore all state changes
-          pc_if_offset_n = pc_if_offset;
-          sample_addr    = 1'b0;
-          req_int        = 1'b0;
-          // insert NOPs and wait for valid target
-          force_nop_int  = 1'b1;
-          ack_int        = 1'b1;
-          fetch_fsm_ns   = HANDLE_BRANCH;
-        end
-      end
-
-      HANDLE_BRANCH:
-      begin
-        if (jump_in_ex_i == `BRANCH_NONE) begin
-          // insert NOPs until branch arrives in EX
-          // required in case of stalls (latches NOP in IF/ID rdata register)
-          force_nop_int = 1'b1;
-          ack_int         = req_i;
-        end else begin
-          if (jump_in_ex_i == `BRANCH_COND && branch_decision_i == 1'b0) begin
-            // branch not taken, continue as before
-            // TODO: Already serve request here?
-            fetch_fsm_ns = WAIT_REQ;
-          end else begin
-            // set PC
-            sample_addr  = 1'b1;
-            fetch_addr_n = {jump_target_i[31:2], 2'b0};
-            if (jump_target_i[1:0] == 2'b0) begin
-              // regular fetch
-              pc_if_offset_n = 1'b0;
-            end else begin
-              // unaligned access
-              pc_if_offset_n = 1'b1;
-            end
-            fetch_fsm_ns = START_REQ;
-          end
-        end
-      end
-
-      default:
-      begin
-        fetch_fsm_ns = IDLE;
-      end
-    endcase
-  end
+  // compressed instruction detection
+  assign is_compressed[0] = fetch_rdata[1:0]   != 2'b11;
+  assign is_compressed[1] = fetch_rdata[17:16] != 2'b11;
 
 
   // exception PC selection mux
   always_comb
   begin : EXC_PC_MUX
     unique case (exc_pc_mux_i)
-      `EXC_PC_NO_INCR: begin exc_pc = current_pc_if_o;                        end
       `EXC_PC_ILLINSN: begin exc_pc = {boot_addr_i[31:5], `EXC_OFF_ILLINSN }; end
       `EXC_PC_IRQ:     begin exc_pc = {boot_addr_i[31:5], `EXC_OFF_IRQ     }; end
       `EXC_PC_IRQ_NM:  begin exc_pc = {boot_addr_i[31:5], `EXC_OFF_IRQ_NM  }; end
@@ -377,15 +163,15 @@ module if_stage
   always_comb
   begin
     unique case (pc_mux_sel_i)
-      `PC_BOOT:      next_pc = {boot_addr_i[31:5], `EXC_OFF_RST};
-      `PC_JUMP:      next_pc = jump_target_i;
-      `PC_INCR:      next_pc = incr_pc;            // incremented PC
-      `PC_EXCEPTION: next_pc = exc_pc;             // set PC to exception handler
-      `PC_ERET:      next_pc = exception_pc_reg_i; // PC is restored when returning from IRQ/exception
-      `PC_HWLOOP:    next_pc = pc_from_hwloop_i;   // PC is taken from hwloop start addr
+      `PC_BOOT:      fetch_addr_n = {boot_addr_i[31:5], `EXC_OFF_RST};
+      `PC_JUMP:      fetch_addr_n = {jump_target_i[31:2], 2'b0};
+      `PC_INCR:      fetch_addr_n = fetch_addr + 32'd4; // incremented PC
+      `PC_EXCEPTION: fetch_addr_n = exc_pc;             // set PC to exception handler
+      `PC_ERET:      fetch_addr_n = exception_pc_reg_i; // PC is restored when returning from IRQ/exception
+      `PC_HWLOOP:    fetch_addr_n = pc_from_hwloop_i;   // PC is taken from hwloop start addr
       default:
       begin
-        next_pc = {boot_addr_i[31:5], `EXC_OFF_RST};
+        fetch_addr_n = {boot_addr_i[31:5], `EXC_OFF_RST};
         // synopsys translate_off
         $display("%t: Illegal pc_mux_sel value (%0d)!", $time, pc_mux_sel_i);
         // synopsys translate_on
@@ -400,11 +186,11 @@ module if_stage
     .clk            ( clk            ),
     .rst_n          ( rst_n          ),
 
-    .req_i          ( req_int        ),
-    .valid_o        ( fetch_ack      ),
-    .addr_i         ( fetch_addr     ),
-    .rdata_o        ( rdata_int      ),
-    .last_addr_o    ( last_fetch_addr ),
+    .req_i          ( fetch_req      ),
+    .valid_o        ( fetch_valid    ),
+    .addr_i         ( fetch_addr_n   ),
+    .rdata_o        ( fetch_rdata    ),
+    .last_addr_o    ( fetch_addr     ),
 
     .instr_req_o    ( instr_req_o    ),
     .instr_addr_o   ( instr_addr_o   ),
@@ -412,13 +198,167 @@ module if_stage
     .instr_rvalid_i ( instr_rvalid_i ),
     .instr_rdata_i  ( instr_rdata_i  ),
 
-    .stall_if_i     ( 1'b0 ),
-    .drop_request_i ( 1'b0 )   // TODO: Remove?
+    .stall_if_i     ( 1'b0           ),
+    .drop_request_i ( 1'b0           )  // TODO: Remove?
   );
+
+
+  // offset FSM
+  enum logic[3:0] {IDLE, WAIT_ALIGNED, WAIT_UNALIGNED, VALID_ALIGNED, VALID_UNALIGNED,
+                   HANDLE_BRANCH, FETCH_UNALIGNED} offset_fsm_cs, offset_fsm_ns;
+
+  always_ff @(posedge clk, negedge rst_n)
+  begin
+    if (rst_n == 1'b0) begin
+      offset_fsm_cs <= IDLE;
+    end else begin
+      offset_fsm_cs <= offset_fsm_ns;
+    end
+  end
+
+  // offset FSM state logic
+  always_comb
+  begin
+    offset_fsm_ns = offset_fsm_cs;
+
+    fetch_req = 1'b0;
+    valid_o = 1'b0;
+
+    unaligned = 1'b0;
+    force_nop_int = 1'b0;
+    branch_taken = 1'b0;
+
+    unique case (offset_fsm_cs)
+      // no valid instruction data for ID stage
+      // assume aligned
+      IDLE: begin
+        if (req_i) begin
+          fetch_req = 1'b1;
+          offset_fsm_ns = WAIT_ALIGNED;
+        end
+      end
+
+      VALID_ALIGNED,
+      WAIT_ALIGNED: begin
+        if (fetch_valid || offset_fsm_cs == VALID_ALIGNED) begin
+          valid_o = 1'b1;
+          offset_fsm_ns = VALID_ALIGNED;
+
+          if (req_i && ~stall_if_i) begin
+            if (jump_in_id_i == `BRANCH_NONE) begin
+              // ----------------------------------------------------------------------
+              // no branch in ID, do regular fetch
+              // ----------------------------------------------------------------------
+              if (is_compressed[0]) begin
+                // compressed instruction
+                if (is_compressed[1]) begin
+                  // upper half contains compressed instruction and is available
+                  // from register
+                  offset_fsm_ns = VALID_UNALIGNED;
+                end else begin
+                  // cross-word access, upper half is regular instruction
+                  fetch_req     = 1'b1;
+                  offset_fsm_ns = WAIT_UNALIGNED;
+                end
+              end else begin
+                // regular instruction
+                fetch_req     = 1'b1;
+                offset_fsm_ns = WAIT_ALIGNED;
+              end
+
+            end else begin
+              // ----------------------------------------------------------------------
+              // need to handle branch
+              // ----------------------------------------------------------------------
+              offset_fsm_ns = HANDLE_BRANCH;
+            end
+          end
+        end
+      end
+
+      WAIT_UNALIGNED,
+      VALID_UNALIGNED: begin
+        unaligned = 1'b1;
+
+        if (fetch_valid || offset_fsm_cs == VALID_UNALIGNED) begin
+          valid_o = 1'b1;
+
+          if (req_i && ~stall_if_i) begin
+            if (jump_in_id_i == `BRANCH_NONE) begin
+              // ----------------------------------------------------------------------
+              // no branch in ID, do regular fetch
+              // ----------------------------------------------------------------------
+              fetch_req = 1'b1;
+
+              if (is_compressed[1]) begin
+                // compressed instruction, next instruction will be aligned
+                offset_fsm_ns = WAIT_ALIGNED;
+              end else begin
+                // regular instruction, fetch following instruction
+                offset_fsm_ns = WAIT_UNALIGNED;
+              end
+            end else begin
+              // ----------------------------------------------------------------------
+              // need to handle branch
+              // ----------------------------------------------------------------------
+              offset_fsm_ns = HANDLE_BRANCH;
+            end
+          end
+        end
+      end
+
+      HANDLE_BRANCH: begin
+        // assume jump/branch instruction is in EX stage
+        if (jump_in_ex_i == `BRANCH_COND && ~branch_decision_i) begin
+          // TODO: Optimize this, already send request & valid
+          if (unaligned_Q)
+            offset_fsm_ns = VALID_UNALIGNED;
+          else
+            offset_fsm_ns = VALID_ALIGNED;
+        end else begin
+          // branch/jump taken
+          branch_taken = 1'b1;
+          fetch_req    = 1'b1;
+          if (unaligned_jump) begin
+            unaligned = 1'b1;
+            // if the target address is unaligned, we need to fetch the lower
+            // word first
+            offset_fsm_ns = FETCH_UNALIGNED;
+          end else begin
+            offset_fsm_ns = WAIT_ALIGNED;
+          end
+        end
+      end
+
+      FETCH_UNALIGNED: begin
+        unaligned = 1'b1;
+
+        if (fetch_valid) begin
+          if (is_compressed[1]) begin
+            // no cross-word access
+            valid_o = 1'b1;
+            offset_fsm_ns = WAIT_ALIGNED;
+          end else begin
+            // cross-word access, fetch next word
+            fetch_req = 1'b1;
+            offset_fsm_ns = WAIT_UNALIGNED;
+          end
+        end
+      end
+
+    endcase
+  end
+
 
   always_comb
   begin
-    
+    unaligned_jump = 1'b0;
+
+    case (pc_mux_sel_i)
+      `PC_JUMP:   unaligned_jump = jump_target_i[1];
+      `PC_ERET:   unaligned_jump = exception_pc_reg_i[1];
+      `PC_HWLOOP: unaligned_jump = pc_from_hwloop_i[1];
+    endcase
   end
 
 
@@ -427,20 +367,14 @@ module if_stage
   begin : IF_PIPELINE
     if (rst_n == 1'b0)
     begin
-      fetch_addr   <= '0;
-      pc_if_offset <= '0;
+      unaligned_Q  <= 1'b0;
+      fetch_addr_Q <= 32'b0;
     end
     else
     begin
-      if (dbg_set_npc == 1'b1) begin
-        // get PC from debug unit
-        fetch_addr   <= {dbg_pc_from_npc[31:2], 2'b0};
-        pc_if_offset <= (dbg_pc_from_npc[1:0] != 2'b0);
-      end else begin
-        // update PC
-        pc_if_offset <= pc_if_offset_n;
-        if (sample_addr)
-          fetch_addr <= fetch_addr_n;
+      if (fetch_valid) begin
+        unaligned_Q  <= unaligned;
+        fetch_addr_Q <= fetch_addr;
       end
     end
   end
@@ -458,10 +392,7 @@ module if_stage
       if (stall_id_i == 1'b0)
       begin : ENABLED_PIPE
         instr_rdata_id_o <= instr_rdata_int;
-        if (pc_if_offset)
-          current_pc_id_o  <= last_fetch_addr + ((fetch_fsm_cs != FETCH_NEXT)? 32'd2 : -2); // TODO: Cleanup
-        else
-          current_pc_id_o  <= last_fetch_addr;
+        current_pc_id_o  <= current_pc_id_int;
       end
     end
   end

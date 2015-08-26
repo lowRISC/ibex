@@ -129,6 +129,7 @@ module controller
   // Jump target calcuation done decision
   input  logic [1:0]               jump_in_ex_i,                // jump is being calculated in ALU
   output logic [1:0]               jump_in_id_o,                // jump is being calculated in ALU
+  input  logic                     branch_decision_i,
 
   output logic                     stall_if_o,                  // Stall IF stage (deassert requests)
   output logic                     stall_id_o,                  // Stall ID stage (and instr and data memory interface) ( ID_STAGE )
@@ -137,7 +138,8 @@ module controller
 );
 
   // FSM state encoding
-  enum  logic [2:0]  { RESET, IDLE, FIRST_FETCH, DECODE, DBG_FLUSH_EX, DBG_FLUSH_WB, DBG_SIGNAL, DBG_WAIT }     ctrl_fsm_cs, ctrl_fsm_ns;
+  enum  logic [3:0] { RESET, IDLE, FIRST_FETCH, DECODE, BRANCH, BRANCH_DELAY,
+                      DBG_FLUSH_EX, DBG_FLUSH_WB, DBG_SIGNAL, DBG_WAIT } ctrl_fsm_cs, ctrl_fsm_ns;
 
   logic reg_d_ex_is_reg_a_id;
   logic reg_d_ex_is_reg_b_id;
@@ -164,7 +166,6 @@ module controller
   logic        jr_stall;
   logic        trap_stall;
 
-  logic [2:0]  pc_mux_sel;
   logic        set_npc;
 `ifdef BRANCH_PREDICTION
   logic        wrong_branch_taken;
@@ -186,8 +187,7 @@ module controller
   always_comb
   begin
     // Default values
-    pc_mux_sel                  = `PC_INCR;
-    jump_in_id_o                = 2'b00;
+    jump_in_id_o                = `BRANCH_NONE;
 
     alu_operator                = `ALU_NOP;
     extend_immediate_o          = 1'b0;
@@ -254,8 +254,7 @@ module controller
       `OPCODE_JAL: begin   // Jump and Link
         if (instr_rdata_i ==? `INSTR_JAL) begin
           // Insert bubbles
-          pc_mux_sel          = `PC_NO_INCR;
-          jump_in_id_o        = 2'b01;
+          jump_in_id_o        = `BRANCH_JAL;
           // Calculate and store PC+4
           alu_op_a_mux_sel_o  = `OP_A_CURRPC;
           alu_op_b_mux_sel_o  = `OP_B_IMM;
@@ -272,8 +271,7 @@ module controller
       `OPCODE_JALR: begin  // Jump and Link Register
         if (instr_rdata_i ==? `INSTR_JALR) begin
           // Insert bubbles
-          pc_mux_sel          = `PC_NO_INCR;
-          jump_in_id_o        = 2'b01;
+          jump_in_id_o        = `BRANCH_JALR;
           // Calculate and store PC+4
           alu_op_a_mux_sel_o  = `OP_A_CURRPC;
           alu_op_b_mux_sel_o  = `OP_B_IMM;
@@ -289,8 +287,7 @@ module controller
       end
 
       `OPCODE_BRANCH: begin // Branch
-        pc_mux_sel          = `PC_NO_INCR;
-        jump_in_id_o        = 2'b10;
+        jump_in_id_o        = `BRANCH_COND;
         alu_op_c_mux_sel_o  = `OP_C_JT;
         rega_used           = 1'b1;
         regb_used           = 1'b1;
@@ -863,7 +860,8 @@ module controller
               trap_insn_o  = 1'b1;
             end
             `INSTR_ERET:  begin
-              pc_mux_sel   = `PC_ERET;
+              // TODO: Handle in controller
+              //pc_mux_sel   = `PC_ERET;
               clear_isr_running_o = 1'b1;
             end
             `INSTR_WFI:   begin
@@ -976,9 +974,8 @@ module controller
 
       default: begin
         illegal_insn_o = 1'b1;
-        pc_mux_sel   = `PC_NO_INCR;
       end
-    endcase; // case (instr_rdata_i[6:0])
+    endcase
 
     // synopsys translate_off
     if (illegal_insn_o == 1'b1) begin
@@ -1023,7 +1020,6 @@ module controller
     instr_req_o   = 1'b1;
 
     pc_mux_sel_o  = `PC_INCR;
-    pc_mux_boot_o = 1'b0;
 
     ctrl_fsm_ns   = ctrl_fsm_cs;
 
@@ -1042,13 +1038,12 @@ module controller
       begin
         // We were just reset and have to copy the boot address from
         // outside to our PC
-        // We do not yet start fetching instructions as the next_pc is invalid!
         core_busy_o   = 1'b0;
-        instr_req_o   = 1'b0;
-        pc_mux_boot_o = 1'b1;
+        instr_req_o   = fetch_enable_i;
+        pc_mux_sel_o  = `PC_BOOT;
 
         if (fetch_enable_i == 1'b1)
-          ctrl_fsm_ns = IDLE;
+          ctrl_fsm_ns = FIRST_FETCH;
       end
 
       IDLE:
@@ -1057,7 +1052,6 @@ module controller
         // interrupt has arrived
         core_busy_o   = 1'b0;
         instr_req_o     = fetch_enable_i || irq_present_i;
-        pc_mux_sel_o    = `PC_NO_INCR;
 
         if (fetch_enable_i || irq_present_i)
         begin
@@ -1081,7 +1075,11 @@ module controller
 
       DECODE:
       begin
-        pc_mux_sel_o = pc_mux_sel;
+        if (jump_in_id_o != `BRANCH_NONE) begin
+          // handle branch if decision is availble in next cycle
+          if (~stall_id_o)
+            ctrl_fsm_ns = BRANCH;
+        end
 
         // synopsys translate_off
         if (illegal_insn_o == 1'b1) begin
@@ -1090,10 +1088,6 @@ module controller
         end
         // synopsys translate_on
 
-`ifdef BRANCH_PREDICTION
-        if (wrong_branch_taken)
-          pc_mux_sel_o = `PC_BRANCH_PRED;
-`endif
         // the pipeline is flushed and we are requested to go to sleep
         if ((pipe_flushed_i == 1'b1) && (fetch_enable_i == 1'b0))
           ctrl_fsm_ns = IDLE;
@@ -1107,6 +1101,26 @@ module controller
           dbg_halt  = 1'b1;
           ctrl_fsm_ns = DBG_FLUSH_EX;
         end
+      end
+
+      BRANCH:
+      begin
+        // assume branch instruction is in EX
+        if (jump_in_ex_i == `BRANCH_COND && ~branch_decision_i) begin
+          // not taken
+          pc_mux_sel_o = `PC_INCR;
+          ctrl_fsm_ns = DECODE;
+        end else begin
+          // branch taken or jump
+          pc_mux_sel_o = `PC_JUMP;
+          ctrl_fsm_ns = BRANCH_DELAY;
+        end
+      end
+
+      BRANCH_DELAY:
+      begin
+        if (~stall_id_o)
+          ctrl_fsm_ns = DECODE;
       end
 
       DBG_FLUSH_EX:
@@ -1203,10 +1217,7 @@ module controller
   assign data_req_o        = (deassert_we) ? 1'b0     : data_req;
 
 
-  ////////////////////////////////////////////////////////////////////////////////////////////
-  // Jump and Branch handling                                                               //
-  ////////////////////////////////////////////////////////////////////////////////////////////
-  //assign force_nop_o = (jump_in_id_o != 2'b00 || jump_in_ex_i != 2'b00)? 1'b1 : 1'b0;
+  // TODO: Remove? Can be replaced with stall.
   assign force_nop_o = 1'b0;
 
 
@@ -1218,7 +1229,7 @@ module controller
     // we unstall the if_stage if the debug unit wants to set a new
     // pc, so that the new value gets written into current_pc_if and is
     // used by the instr_core_interface
-    stall_if_o = /*instr_ack_stall |*/ load_stall | jr_stall | lsu_stall | misalign_stall | dbg_halt | dbg_stall_i | (~pc_valid_i);
+    stall_if_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_halt | dbg_stall_i | (~pc_valid_i);
     stall_id_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_halt | dbg_stall_i;
     stall_ex_o = instr_ack_stall | lsu_stall | dbg_stall_i;
     stall_wb_o = lsu_stall | dbg_stall_i;

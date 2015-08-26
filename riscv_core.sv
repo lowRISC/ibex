@@ -252,7 +252,7 @@ module riscv_core
 
       // instruction request control
       .req_i               ( instr_req_int   ),
-      .ack_o               ( instr_ack_int   ),
+      .valid_o             ( instr_ack_int   ),
       .drop_request_i      ( 1'b0 ),
 
       // instruction cache interface
@@ -308,6 +308,7 @@ module riscv_core
 
       .jump_in_id_o                 ( jump_in_id                    ),
       .jump_in_ex_o                 ( jump_in_ex                    ),
+      .branch_decision_i            ( branch_decision               ),
 
       .core_busy_o                  ( core_busy_o                   ),
 
