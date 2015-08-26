@@ -157,6 +157,7 @@ module controller
   logic                     regfile_alu_we;
   logic                     data_we;
   logic                     data_req;
+  logic [1:0]               jump_in_id;
   logic                     deassert_we;
 
   logic        lsu_stall;
@@ -187,7 +188,7 @@ module controller
   always_comb
   begin
     // Default values
-    jump_in_id_o                = `BRANCH_NONE;
+    jump_in_id                  = `BRANCH_NONE;
 
     alu_operator                = `ALU_NOP;
     extend_immediate_o          = 1'b0;
@@ -254,7 +255,7 @@ module controller
       `OPCODE_JAL: begin   // Jump and Link
         if (instr_rdata_i ==? `INSTR_JAL) begin
           // Insert bubbles
-          jump_in_id_o        = `BRANCH_JAL;
+          jump_in_id          = `BRANCH_JAL;
           // Calculate and store PC+4
           alu_op_a_mux_sel_o  = `OP_A_CURRPC;
           alu_op_b_mux_sel_o  = `OP_B_IMM;
@@ -271,7 +272,7 @@ module controller
       `OPCODE_JALR: begin  // Jump and Link Register
         if (instr_rdata_i ==? `INSTR_JALR) begin
           // Insert bubbles
-          jump_in_id_o        = `BRANCH_JALR;
+          jump_in_id          = `BRANCH_JALR;
           // Calculate and store PC+4
           alu_op_a_mux_sel_o  = `OP_A_CURRPC;
           alu_op_b_mux_sel_o  = `OP_B_IMM;
@@ -287,7 +288,7 @@ module controller
       end
 
       `OPCODE_BRANCH: begin // Branch
-        jump_in_id_o        = `BRANCH_COND;
+        jump_in_id          = `BRANCH_COND;
         alu_op_c_mux_sel_o  = `OP_C_JT;
         rega_used           = 1'b1;
         regb_used           = 1'b1;
@@ -1075,7 +1076,7 @@ module controller
 
       DECODE:
       begin
-        if (jump_in_id_o != `BRANCH_NONE) begin
+        if (jump_in_id != `BRANCH_NONE) begin
           // handle branch if decision is availble in next cycle
           if (~stall_id_o)
             ctrl_fsm_ns = BRANCH;
@@ -1096,7 +1097,7 @@ module controller
         // branches take two cycles, jumps just one
         // everything else can be done immediately
         // TODO: there is a bug here, I'm sure of it
-        if(trap_hit_i == 1'b1 && stall_ex_o == 1'b0 && jump_in_id_o == 2'b0 && jump_in_ex_i == 2'b0)
+        if(trap_hit_i == 1'b1 && stall_ex_o == 1'b0 && jump_in_id == 2'b0 && jump_in_ex_i == 2'b0)
         begin
           dbg_halt  = 1'b1;
           ctrl_fsm_ns = DBG_FLUSH_EX;
@@ -1209,12 +1210,13 @@ module controller
   assign trap_stall = trap_insn_o;
 
   // deassert we signals (in case of stalls)
-  assign alu_operator_o    = (deassert_we) ? `ALU_NOP : alu_operator;
-  assign mult_en_o         = (deassert_we) ? 1'b0     : mult_en;
-  assign regfile_we_o      = (deassert_we) ? 1'b0     : regfile_we;
-  assign regfile_alu_we_o  = (deassert_we) ? 1'b0     : regfile_alu_we;
-  assign data_we_o         = (deassert_we) ? 1'b0     : data_we;
-  assign data_req_o        = (deassert_we) ? 1'b0     : data_req;
+  assign alu_operator_o    = (deassert_we) ? `ALU_NOP      : alu_operator;
+  assign mult_en_o         = (deassert_we) ? 1'b0          : mult_en;
+  assign regfile_we_o      = (deassert_we) ? 1'b0          : regfile_we;
+  assign regfile_alu_we_o  = (deassert_we) ? 1'b0          : regfile_alu_we;
+  assign data_we_o         = (deassert_we) ? 1'b0          : data_we;
+  assign data_req_o        = (deassert_we) ? 1'b0          : data_req;
+  assign jump_in_id_o      = (deassert_we) ? `BRANCH_NONE  : jump_in_id;
 
 
   // TODO: Remove? Can be replaced with stall.
