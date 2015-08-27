@@ -1094,10 +1094,20 @@ module controller
 
       DECODE:
       begin
-        if (jump_in_id != `BRANCH_NONE) begin
+        // handle conditional branches
+        if (jump_in_id == `BRANCH_COND) begin
           // handle branch if decision is availble in next cycle
           if (~stall_id_o)
             ctrl_fsm_ns = BRANCH;
+        end
+
+        // handle unconditional jumps
+        // we can jump directly since we know the address already
+        if (jump_in_id == `BRANCH_JALR || jump_in_id == `BRANCH_JAL) begin
+          pc_mux_sel_o = `PC_JUMP;
+
+          if (~stall_id_o)
+            ctrl_fsm_ns = BRANCH_DELAY;
         end
 
         // handle illegal instructions
@@ -1130,7 +1140,7 @@ module controller
             ctrl_fsm_ns = DECODE;
         end else begin
           // branch taken or jump
-          pc_mux_sel_o = `PC_JUMP;
+          pc_mux_sel_o = `PC_BRANCH;
           if (~stall_id_o)
             ctrl_fsm_ns = BRANCH_DELAY;
         end
@@ -1203,14 +1213,12 @@ module controller
       load_stall      = 1'b1;
     end
 
-    // TODO: check JALR/JR
     // Stall because of jr path
-    // - Load results cannot directly be forwarded to PC
-    // - Multiplication results cannot be forwarded to PC
-    if ((instr_rdata_i[6:0] == `OPCODE_JALR) &&
-        (((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_b_id == 1'b1)) ||
-         ((regfile_we_ex_i == 1'b1) && (reg_d_ex_is_reg_b_id == 1'b1)) ||
-         ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_b_id == 1'b1))) )
+    // - always stall if a result is to be forwarded to the PC
+    if ((jump_in_id == `BRANCH_JALR) &&
+        (((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_a_id == 1'b1)) ||
+         ((regfile_we_ex_i == 1'b1) && (reg_d_ex_is_reg_a_id == 1'b1)) ||
+         ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_a_id == 1'b1))) )
     begin
       jr_stall        = 1'b1;
       deassert_we     = 1'b1;
@@ -1249,7 +1257,7 @@ module controller
     // we unstall the if_stage if the debug unit wants to set a new
     // pc, so that the new value gets written into current_pc_if and is
     // used by the instr_core_interface
-    stall_if_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_halt | dbg_stall_i | (~pc_valid_i) | (jump_in_id_o != `BRANCH_NONE);
+    stall_if_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_halt | dbg_stall_i | (~pc_valid_i) | (jump_in_id_o == `BRANCH_COND);
     stall_id_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_halt | dbg_stall_i;
     stall_ex_o = instr_ack_stall | lsu_stall | dbg_stall_i;
     stall_wb_o = lsu_stall | dbg_stall_i;

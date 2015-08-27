@@ -67,8 +67,9 @@ module if_stage
 
     // jump and branch target and decision
     input  logic  [1:0] jump_in_id_i,
-    input  logic  [1:0] jump_in_ex_i,       // jump in EX -> get PC from jump target (could also be branch)
-    input  logic [31:0] jump_target_i,      // jump target address
+    input  logic  [1:0] jump_in_ex_i,          // jump in EX -> get PC from jump target (could also be branch)
+    input  logic [31:0] jump_target_id_i,      // jump target address
+    input  logic [31:0] jump_target_ex_i,      // jump target address
     input  logic        branch_decision_i,
 
     // from debug unit
@@ -152,7 +153,8 @@ module if_stage
   begin
     unique case (pc_mux_sel_i)
       `PC_BOOT:      fetch_addr_n = {boot_addr_i[31:5], `EXC_OFF_RST};
-      `PC_JUMP:      fetch_addr_n = {jump_target_i[31:2], 2'b0};
+      `PC_JUMP:      fetch_addr_n = {jump_target_id_i[31:2], 2'b0};
+      `PC_BRANCH:    fetch_addr_n = {jump_target_ex_i[31:2], 2'b0};
       `PC_INCR:      fetch_addr_n = fetch_addr + 32'd4; // incremented PC
       `PC_EXCEPTION: fetch_addr_n = exc_pc;             // set PC to exception handler
       `PC_ERET:      fetch_addr_n = exception_pc_reg_i; // PC is restored when returning from IRQ/exception
@@ -164,6 +166,18 @@ module if_stage
         $display("%t: Illegal pc_mux_sel value (%0d)!", $time, pc_mux_sel_i);
         // synopsys translate_on
       end
+    endcase
+  end
+
+  always_comb
+  begin
+    unaligned_jump = 1'b0;
+
+    case (pc_mux_sel_i)
+      `PC_JUMP:   unaligned_jump = jump_target_id_i[1];
+      `PC_BRANCH: unaligned_jump = jump_target_ex_i[1];
+      `PC_ERET:   unaligned_jump = exception_pc_reg_i[1];
+      `PC_HWLOOP: unaligned_jump = pc_from_hwloop_i[1];
     endcase
   end
 
@@ -341,9 +355,11 @@ module if_stage
             // Puh, lucky, we got a 16 bit instruction
             valid_o = 1'b1;
 
-            // next instruction will be aligned
-            fetch_req = 1'b1;
-            offset_fsm_ns = WAIT_ALIGNED;
+            if (req_i && ~stall_if_i) begin
+              // next instruction will be aligned
+              fetch_req = 1'b1;
+              offset_fsm_ns = WAIT_ALIGNED;
+            end
 
           end else begin
             // a 32 bit unaligned instruction, let's fetch the upper half
@@ -363,9 +379,8 @@ module if_stage
 
     // take care of jumps and branches
     if(~stall_id_i) begin
-      if (jump_in_ex_i != `BRANCH_NONE) begin
-        if ((jump_in_ex_i == `BRANCH_COND && branch_decision_i) ||
-            jump_in_ex_i == `BRANCH_JAL || jump_in_ex_i == `BRANCH_JALR) begin
+      if (jump_in_ex_i == `BRANCH_COND) begin
+        if (branch_decision_i) begin
           // branch taken
 
           fetch_req = 1'b1;
@@ -373,29 +388,17 @@ module if_stage
             offset_fsm_ns = WAIT_JUMPED_UNALIGNED;
           else
             offset_fsm_ns = WAIT_JUMPED_ALIGNED;
-
-        end  else begin
-          // branch not taken
-          // we don't need to do anything?
         end
-      end else if (jump_in_id_i != `BRANCH_NONE) begin
-        // new branch in ID, just wait
-        //fetch_req     = 1'b0;
+
+      end else if (jump_in_id_i == `BRANCH_JAL || jump_in_id_i == `BRANCH_JALR) begin
+        fetch_req = 1'b1;
+        if (unaligned_jump)
+          offset_fsm_ns = WAIT_JUMPED_UNALIGNED;
+        else
+          offset_fsm_ns = WAIT_JUMPED_ALIGNED;
       end
     end
 
-  end
-
-
-  always_comb
-  begin
-    unaligned_jump = 1'b0;
-
-    case (pc_mux_sel_i)
-      `PC_JUMP:   unaligned_jump = jump_target_i[1];
-      `PC_ERET:   unaligned_jump = exception_pc_reg_i[1];
-      `PC_HWLOOP: unaligned_jump = pc_from_hwloop_i[1];
-    endcase
   end
 
 

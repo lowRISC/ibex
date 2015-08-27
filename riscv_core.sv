@@ -93,7 +93,7 @@ module riscv_core
   // Forwarding
 
   // Jump and branch target and decision (EX->IF)
-  logic [31:0] jump_target;
+  logic [31:0] jump_target_id, jump_target_ex;
   logic  [1:0] jump_in_id;
   logic  [1:0] jump_in_ex;
   logic        branch_decision;
@@ -282,7 +282,8 @@ module riscv_core
       .jump_in_id_i        ( jump_in_id      ),
       .jump_in_ex_i        ( jump_in_ex      ),
       .branch_decision_i   ( branch_decision ),
-      .jump_target_i       ( jump_target     ),
+      .jump_target_id_i    ( jump_target_id  ),
+      .jump_target_ex_i    ( jump_target_ex  ),
 
       // pipeline stalls
       .stall_if_i          ( stall_if        ),
@@ -309,6 +310,8 @@ module riscv_core
       .jump_in_id_o                 ( jump_in_id                    ),
       .jump_in_ex_o                 ( jump_in_ex                    ),
       .branch_decision_i            ( branch_decision               ),
+
+      .jump_target_o                ( jump_target_id                ),
 
       .core_busy_o                  ( core_busy_o                   ),
 
@@ -492,7 +495,7 @@ module riscv_core
       .hwloop_cnt_data_o          ( hwlp_cnt_data_ex             ),
 
       // To IF: Jump and branch target and decision
-      .jump_target_o              ( jump_target                  ),
+      .jump_target_o              ( jump_target_ex               ),
       .branch_decision_o          ( branch_decision              ),
 
       // To ID stage: Forwarding signals

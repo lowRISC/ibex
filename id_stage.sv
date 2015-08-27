@@ -51,6 +51,7 @@ module id_stage
     output logic [1:0]                  jump_in_id_o,
     output logic [1:0]                  jump_in_ex_o,
     input  logic                        branch_decision_i,
+    output logic [31:0]                 jump_target_o,
 
     // IF and ID stage signals
     output logic                        compressed_instr_o,
@@ -359,13 +360,15 @@ module id_stage
 
   always_comb
   begin
-    unique case (instr[6:0])
-      `OPCODE_JAL:    jump_target = current_pc_id_i + imm_uj_type;
-      `OPCODE_JALR:   jump_target = operand_a_fw_id + imm_i_type;
-      `OPCODE_BRANCH: jump_target = current_pc_id_i + imm_sb_type;
+    unique case (jump_in_id_o)
+      `BRANCH_JAL:    jump_target = current_pc_id_i + imm_uj_type;
+      `BRANCH_JALR:   jump_target = regfile_data_ra_id + imm_i_type; // cannot forward rA as path too long
+      `BRANCH_COND:   jump_target = current_pc_id_i + imm_sb_type;
       default:        jump_target = '0;
     endcase // unique case (instr[6:0])
   end
+
+  assign jump_target_o = jump_target;
 
 
   ////////////////////////////////////////////////////////
