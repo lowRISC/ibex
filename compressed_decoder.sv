@@ -95,7 +95,8 @@ module compressed_decoder
               5'b01111: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b011, 2'b01, instr_i[4:2], `OPCODE_OP};
 
               // c.sra
-              // c.slt
+              // c.slt -> slt rd', rd', rs2'
+              5'b00110: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b010, 2'b01, instr_i[9:7], `OPCODE_OP};
               // c.sltr
               default:  illegal_instr_o = 1'b1;
             endcase

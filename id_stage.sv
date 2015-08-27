@@ -160,7 +160,6 @@ module id_stage
 
   // Compressed instruction decoding
   logic [31:0] instr;
-  logic        illegal_compressed_instr;
 
   // Immediate decoding and sign extension
   logic [31:0] imm_i_type;
