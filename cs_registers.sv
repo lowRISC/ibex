@@ -51,17 +51,6 @@ module cs_registers
   input logic         save_pc_id_i, // TODO: check if both IF/ID pc save is needed
   output logic [31:0] epcr_o,
 
-  // HWLoop Signals
-  input  logic [`HWLOOP_REGS-1:0] [31:0] hwlp_start_addr_i,
-  input  logic [`HWLOOP_REGS-1:0] [31:0] hwlp_end_addr_i,
-  input  logic [`HWLOOP_REGS-1:0] [31:0] hwlp_counter_i,
-
-  output  logic [31:0]                   hwlp_start_o,
-  output  logic [31:0]                   hwlp_end_o,
-  output  logic [31:0]                   hwlp_counter_o,
-  output  logic [1:0]                    hwlp_regid_o,
-  output  logic [2:0]                    hwlp_we_o,
-
   // Performance Counters
   input  logic        stall_id_i,        // Stall ID stage
 
@@ -125,7 +114,7 @@ module cs_registers
   // output mux
   always_comb
   begin
-    csr_rdata_o = 32'bx;
+    csr_rdata_o = 'x;
 
     if (is_constant == 1'b1)
       csr_rdata_o = constant_rdata_int;
@@ -162,6 +151,8 @@ module cs_registers
       default: is_register = 1'b0;
     endcase
   end
+
+  assign register_rdata_int = csr[csr_index];
 
 
 

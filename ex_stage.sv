@@ -53,7 +53,6 @@ module ex_stage
     input  logic                      mult_en_i,
     input  logic [1:0]                mult_sel_subword_i,
     input  logic [1:0]                mult_signed_mode_i,
-    input  logic                      mult_use_carry_i,
     input  logic                      mult_mac_en_i,
 
     output logic [31:0]               data_addr_ex_o,
@@ -165,9 +164,6 @@ module ex_stage
    .operator_i    ( alu_operator_i      ),
    .operand_a_i   ( alu_operand_a_i     ),
    .operand_b_i   ( alu_operand_b_i     ),
-   .operand_c_i   ( alu_operand_c_i     ),
-   .carry_i       ( 1'b0                ),
-   .flag_i        ( 1'b0                ),
 
    .vector_mode_i ( vector_mode_i       ),
    .cmp_mode_i    ( alu_cmp_mode_i      ),
@@ -195,7 +191,6 @@ module ex_stage
    .vector_mode_i   ( vector_mode_i        ),
    .sel_subword_i   ( mult_sel_subword_i   ),
    .signed_mode_i   ( mult_signed_mode_i   ),
-   .use_carry_i     ( mult_use_carry_i     ),
    .mac_en_i        ( mult_mac_en_i        ),
 
    .op_a_i          ( alu_operand_a_i      ),

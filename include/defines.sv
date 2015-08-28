@@ -196,7 +196,6 @@ endfunction // prettyPrintInstruction
 `define ALU_MOVHI 6'b001111
 // Standard Operations
 `define ALU_ADD   6'b000_000
-`define ALU_ADDC  6'b000_001
 `define ALU_SUB   6'b000_010
 `define ALU_AND   6'b000_011
 `define ALU_OR    6'b000_100
@@ -212,8 +211,6 @@ endfunction // prettyPrintInstruction
 // Set Lower Than Operations
 `define ALU_SLTS  6'b0011_00
 `define ALU_SLTU  6'b0011_01
-// CMOV operation
-`define ALU_CMOV  6'b0011_10
 // Extension Operations
 `define ALU_EXTHS 6'b010_000
 `define ALU_EXTWS 6'b010_001

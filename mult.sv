@@ -37,13 +37,11 @@ module mult
    input  logic [1:0]   vector_mode_i,
    input  logic [1:0]   sel_subword_i,
    input  logic [1:0]   signed_mode_i,
-   input  logic         use_carry_i,
    input  logic         mac_en_i,
 
    input  logic [31:0]  op_a_i,
    input  logic [31:0]  op_b_i,
    input  logic [31:0]  mac_i,
-   input  logic         carry_i,
 
    output logic [31:0]  result_o,
    output logic         carry_o,
@@ -88,7 +86,7 @@ module mult
     case(vector_mode_i)
       default: // VEC_MODE32, VEC_MODE216
       begin
-        result[32: 0] = mac_int + op_a_sel * op_b_sel + {32'b0, (use_carry_i & carry_i)};
+        result[32: 0] = mac_int + op_a_sel * op_b_sel;
       end
 
       `VEC_MODE16:

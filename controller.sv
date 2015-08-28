@@ -39,8 +39,6 @@ module controller
   input  logic                     fetch_enable_i,             // Start the decoding
   output logic                     core_busy_o,                // Core is busy processing instructions
 
-  output logic                     force_nop_o,
-
   input  logic [31:0]              instr_rdata_i,              // Instruction read from instr memory/cache: (sampled in the if stage)
   output logic                     instr_req_o,                // Fetch instruction Request:
   input  logic                     instr_gnt_i,                // grant from icache
@@ -50,7 +48,6 @@ module controller
 
   // ALU signals
   output logic [`ALU_OP_WIDTH-1:0] alu_operator_o,             // Operator in the Ex stage for the ALU block
-  output logic                     extend_immediate_o,         // Extend a 16 bit immediate to 32 bit
   output logic [1:0]               alu_op_a_mux_sel_o,         // Operator a is selected between reg value, PC or immediate
   output logic [1:0]               alu_op_b_mux_sel_o,         // Operator b is selected between reg value or immediate
   output logic                     alu_op_c_mux_sel_o,         // Operator c is selected between reg value or PC
@@ -64,7 +61,6 @@ module controller
   output logic                     mult_en_o,                  // Multiplication operation is running
   output logic [1:0]               mult_sel_subword_o,         // Select subwords for 16x16 bit of multiplier
   output logic [1:0]               mult_signed_mode_o,         // Multiplication in signed mode
-  output logic                     mult_use_carry_o,           // Use carry for MAC
   output logic                     mult_mac_en_o,              // Use the accumulator after multiplication
 
   output logic                     regfile_we_o,               // Write Enable to regfile
@@ -112,9 +108,6 @@ module controller
   input  logic                     dbg_stall_i,                 // Pipeline stall is requested
   input  logic                     dbg_set_npc_i,               // Change PC to value from debug unit
   output logic                     dbg_trap_o,                  // trap hit, inform debug unit
-
-  // CSR Signals
-  output logic                     restore_sr_o,                // restores status register after interrupt
 
   // Forwarding signals from regfile
   input  logic [4:0]               regfile_waddr_ex_i,          // FW: write address from EX stage
@@ -200,7 +193,6 @@ module controller
     jump_in_id                  = `BRANCH_NONE;
 
     alu_operator                = `ALU_NOP;
-    extend_immediate_o          = 1'b0;
     alu_op_a_mux_sel_o          = `OP_A_REGA_OR_FWD;
     alu_op_b_mux_sel_o          = `OP_B_REGB_OR_FWD;
     alu_op_c_mux_sel_o          = `OP_C_REGC_OR_FWD;
@@ -212,7 +204,6 @@ module controller
     mult_en                     = 1'b0;
     mult_signed_mode_o          = 2'b00;
     mult_sel_subword_o          = 2'b00;
-    mult_use_carry_o            = 1'b0;
     mult_mac_en_o               = 1'b0;
 
     regfile_we                  = 1'b0;
@@ -235,7 +226,6 @@ module controller
     data_reg_offset_o           = 2'b00;
     data_req                    = 1'b0;
 
-    restore_sr_o                = 1'b0;
     clear_isr_running_o         = 1'b0;
 
     illegal_insn_int            = 1'b0;
@@ -1253,10 +1243,6 @@ module controller
   assign jump_in_id_o      = (deassert_we) ? `BRANCH_NONE  : jump_in_id;
 
 
-  // TODO: Remove? Can be replaced with stall.
-  assign force_nop_o = 1'b0;
-
-
   ////////////////////////////////////////////////////////////////////////////////////////////
   // Freeze Unit. This unit controls the pipeline stages                                    //
   ////////////////////////////////////////////////////////////////////////////////////////////
@@ -1286,6 +1272,7 @@ module controller
   assign reg_d_alu_is_reg_a_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_S1]) && (rega_used == 1'b1);
   assign reg_d_alu_is_reg_b_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_S2]) && (regb_used == 1'b1);
   //assign reg_d_alu_is_reg_c_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_RD])  && (regc_used == 1'b1);
+  assign reg_d_alu_is_reg_c_id = 1'b0;
 
   always_comb
   begin

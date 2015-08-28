@@ -35,9 +35,6 @@ module alu
    input  logic [`ALU_OP_WIDTH-1:0] operator_i,
    input  logic [31:0]              operand_a_i,
    input  logic [31:0]              operand_b_i,
-   input  logic [31:0]              operand_c_i,
-   input  logic                     carry_i,
-   input  logic                     flag_i,
 
    input  logic [1:0]               vector_mode_i,
    input  logic [1:0]               cmp_mode_i,
@@ -95,8 +92,6 @@ module alu
     carry_in  = {carry_out[2], carry_out[1], carry_out[0], 1'b0};
 
     case (operator_i)
-      `ALU_ADDC: carry_in[0] = carry_i;
-
       `ALU_SUB, `ALU_ABS:
       begin
         case (vector_mode_i)
@@ -391,9 +386,6 @@ module alu
   begin
     sel_minmax[3:0] = is_greater ^ {4{do_min}};
 
-    if(operator_i == `ALU_CMOV)
-      sel_minmax[3:0] = {4{flag_i}};
-
     if(operator_i == `ALU_INS)
     begin
       if(vector_mode_i == `VEC_MODE16)
@@ -557,7 +549,7 @@ module alu
 
     unique case (operator_i)
       // Standard Operations
-      `ALU_ADD, `ALU_ADDC, `ALU_SUB:
+      `ALU_ADD, `ALU_SUB:
       begin // Addition defined above
         result_o   = adder_result[31:0];
         carry_o    = carry_out[3];
@@ -587,8 +579,8 @@ module alu
       `ALU_EXTWZ, `ALU_EXTWS: result_o = operand_a_i;
       `ALU_EXTBZ, `ALU_EXTBS, `ALU_EXTHZ, `ALU_EXTHS, `ALU_EXT: result_o = result_ext;
 
-      // Min/Max/Abs, CMOV, INS
-      `ALU_MIN, `ALU_MINU, `ALU_MAX, `ALU_MAXU, `ALU_ABS, `ALU_CMOV, `ALU_INS: result_o = result_minmax;
+      // Min/Max/Abs, INS
+      `ALU_MIN, `ALU_MINU, `ALU_MAX, `ALU_MAXU, `ALU_ABS, `ALU_INS: result_o = result_minmax;
 
       // Comparison Operations
       `ALU_EQ, `ALU_NE, `ALU_GTU, `ALU_GEU, `ALU_LTU, `ALU_LEU, `ALU_GTS, `ALU_GES, `ALU_LTS, `ALU_LES:

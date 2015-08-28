@@ -130,7 +130,6 @@ module riscv_core
   logic            mult_en_ex;
   logic [1:0]      mult_sel_subword_ex;
   logic [1:0]      mult_signed_mode_ex;
-  logic            mult_use_carry_ex;
   logic            mult_mac_en_ex;
 
   // Register Write Control
@@ -179,8 +178,6 @@ module riscv_core
   logic [31:0]     epcr;
   logic            save_pc_if;
   logic            save_pc_id;
-  logic            save_sr;
-  logic            restore_sr;
 
   // hwloop data from ALU
   logic [31:0]                    hwlp_cnt_ex;        // from id to ex stage (hwloop_regs)
@@ -362,7 +359,6 @@ module riscv_core
       .mult_en_ex_o                 ( mult_en_ex                    ), // from ID to EX stage
       .mult_sel_subword_ex_o        ( mult_sel_subword_ex           ), // from ID to EX stage
       .mult_signed_mode_ex_o        ( mult_signed_mode_ex           ), // from ID to EX stage
-      .mult_use_carry_ex_o          ( mult_use_carry_ex             ), // from ID to EX stage
       .mult_mac_en_ex_o             ( mult_mac_en_ex                ), // from ID to EX stage
 
       .regfile_waddr_ex_o           ( regfile_waddr_ex              ),
@@ -401,8 +397,6 @@ module riscv_core
       .irq_enable_i                 ( irq_enable                    ), // global interrupt enable
       .save_pc_if_o                 ( save_pc_if                    ), // control signal to save pc
       .save_pc_id_o                 ( save_pc_id                    ), // control signal to save pc
-      .save_sr_o                    ( save_sr                       ), // control signal to save status register
-      .restore_sr_o                 ( restore_sr                    ), // restore status register
 
       // from hwloop regs
       .hwloop_start_addr_i          ( hwlp_start_addr               ),
@@ -470,7 +464,6 @@ module riscv_core
       .mult_en_i                  ( mult_en_ex                   ),
       .mult_sel_subword_i         ( mult_sel_subword_ex          ),
       .mult_signed_mode_i         ( mult_signed_mode_ex          ),
-      .mult_use_carry_i           ( mult_use_carry_ex            ),
       .mult_mac_en_i              ( mult_mac_en_ex               ),
 
       // interface with CSRs
@@ -613,17 +606,6 @@ module riscv_core
       .csr_op_i                ( csr_op                ),
       .csr_rdata_o             ( csr_rdata             ),
 
-      // HWLoop signals
-      .hwlp_start_addr_i       ( hwlp_start_addr       ),
-      .hwlp_end_addr_i         ( hwlp_end_addr         ),
-      .hwlp_counter_i          ( hwlp_counter          ),
-
-      .hwlp_start_o            ( sp_hwlp_start         ),
-      .hwlp_end_o              ( sp_hwlp_end           ),
-      .hwlp_counter_o          ( sp_hwlp_cnt           ),
-      .hwlp_regid_o            ( sp_hwlp_regid         ),
-      .hwlp_we_o               ( sp_hwlp_we            ),
-
       .curr_pc_if_i            ( current_pc_if         ), // from IF stage
       .curr_pc_id_i            ( current_pc_id         ), // from IF stage
       .save_pc_if_i            ( save_pc_if            ),
@@ -652,58 +634,6 @@ module riscv_core
     assign csr_op        = (dbg_sp_mux == 1'b0) ? csr_op_ex
                                                 : (dbg_reg_we == 1'b1 ? `CSR_OP_WRITE : `CSR_OP_NONE);
     assign dbg_rdata     = (dbg_sp_mux == 1'b0) ? dbg_reg_rdata    : csr_rdata;
-
-
-    /*
-    sp_registers sp_registers_i
-    (
-      .clk                     ( clk                   ),
-      .rst_n                   ( rst_n                 ),
-
-      // Core and Cluster ID from outside
-      .core_id_i               ( core_id_i             ),
-      .cluster_id_i            ( cluster_id_i          ),
-
-      // Interface to Special register (SRAM LIKE)
-      .sp_addr_i               ( sp_addr               ),
-      .sp_wdata_i              ( sp_wdata              ),
-      .sp_op_i                 ( sp_op                 ),
-      .sp_rdata_o              ( sp_rdata              ),
-
-      // Stall direct write
-      .enable_direct_write_i   ( stall_wb              ),
-
-      // HWLoop signals
-      .hwlp_start_addr_i       ( hwlp_start_addr       ),
-      .hwlp_end_addr_i         ( hwlp_end_addr         ),
-      .hwlp_counter_i          ( hwlp_counter          ),
-
-      .hwlp_start_o            ( sp_hwlp_start         ),
-      .hwlp_end_o              ( sp_hwlp_end           ),
-      .hwlp_counter_o          ( sp_hwlp_cnt           ),
-      .hwlp_regid_o            ( sp_hwlp_regid         ),
-      .hwlp_we_o               ( sp_hwlp_we            ),
-
-      .curr_pc_if_i            ( current_pc_if         ), // from IF stage
-      .curr_pc_id_i            ( current_pc_id         ), // from IF stage
-      .save_pc_if_i            ( save_pc_if            ),
-      .save_pc_id_i            ( save_pc_id            ),
-      .save_sr_i               ( save_sr               ),
-      .restore_sr_i            ( restore_sr            ),
-      .epcr_o                  ( epcr                  ),
-      .irq_enable_o            ( irq_enable            ),
-
-      .npc_o                   ( dbg_npc               ), // PC from debug unit
-      .set_npc_o               ( dbg_set_npc           )  // set PC to new value
-    );
-
-    // Mux for SPR access through Debug Unit
-    assign sp_addr       = (dbg_sp_mux == 1'b0) ? sp_addr_wb         : dbg_reg_addr;
-    assign sp_wdata      = (dbg_sp_mux == 1'b0) ? regfile_rb_data_wb : dbg_reg_wdata;
-    assign sp_op         = (dbg_sp_mux == 1'b0) ? sp_op_wb
-                                                : (dbg_reg_we == 1'b1 ? `CSR_OP_WRITE : `CSR_OP_NONE);
-    assign dbg_rdata     = (dbg_sp_mux == 1'b0) ? dbg_reg_rdata      : sp_rdata;
-    */
 
 
     /*

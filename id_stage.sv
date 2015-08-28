@@ -82,7 +82,6 @@ module id_stage
     output logic                        mult_en_ex_o,
     output logic [1:0]                  mult_sel_subword_ex_o,
     output logic [1:0]                  mult_signed_mode_ex_o,
-    output logic                        mult_use_carry_ex_o,
     output logic                        mult_mac_en_ex_o,
 
     output logic [4:0]                  regfile_waddr_ex_o,
@@ -121,7 +120,6 @@ module id_stage
     output logic                        save_pc_if_o,
     output logic                        save_pc_id_o,
     output logic                        save_sr_o,
-    output logic                        restore_sr_o,
 
     // from hwloop regs
     input  logic [`HWLOOP_REGS-1:0] [31:0] hwloop_start_addr_i,
@@ -183,7 +181,6 @@ module id_stage
   logic        exc_pc_sel;
   logic [2:0]  pc_mux_sel_int;    // selects next PC in if stage
 
-  logic        force_nop_controller;
   logic        force_nop_exc;
 
   logic        irq_present;
@@ -213,8 +210,6 @@ module id_stage
   logic [31:0] regfile_data_rb_id;
   logic [31:0] regfile_data_rc_id;
 
-  logic        imm_sign_ext_sel;
-
   // ALU Control
   logic [`ALU_OP_WIDTH-1:0] alu_operator;
   logic [1:0]  alu_op_a_mux_sel;
@@ -232,7 +227,6 @@ module id_stage
   logic        mult_en;          // multiplication is used instead of ALU
   logic [1:0]  mult_sel_subword; // Select a subword when doing multiplications
   logic [1:0]  mult_signed_mode; // Signed mode multiplication at the output of the controller, and before the pipe registers
-  logic        mult_use_carry;   // Enables carry in for the MAC
   logic        mult_mac_en;      // Enables the use of the accumulator
 
   // Register Write Control
@@ -277,7 +271,7 @@ module id_stage
 
 
 
-  assign force_nop_o = force_nop_controller | force_nop_exc;
+  assign force_nop_o = force_nop_exc;
   assign pc_mux_sel_o = (exc_pc_sel == 1'b1) ? `PC_EXCEPTION : pc_mux_sel_int;
 
 
@@ -542,8 +536,6 @@ module id_stage
       .fetch_enable_i               ( fetch_enable_i        ),
       .core_busy_o                  ( core_busy_o           ),
 
-      .force_nop_o                  ( force_nop_controller  ),
-
       // Signal from-to PC pipe (instr rdata) and instr mem system (req and ack)
       .instr_rdata_i                ( instr                 ),
       .instr_req_o                  ( instr_req_o           ),
@@ -553,7 +545,6 @@ module id_stage
 
       // Alu signals
       .alu_operator_o               ( alu_operator          ),
-      .extend_immediate_o           ( imm_sign_ext_sel      ),
       .alu_op_a_mux_sel_o           ( alu_op_a_mux_sel      ),
       .alu_op_b_mux_sel_o           ( alu_op_b_mux_sel      ),
       .alu_op_c_mux_sel_o           ( alu_op_c_mux_sel      ),
@@ -567,7 +558,6 @@ module id_stage
       .mult_en_o                    ( mult_en               ),
       .mult_sel_subword_o           ( mult_sel_subword      ),
       .mult_signed_mode_o           ( mult_signed_mode      ),
-      .mult_use_carry_o             ( mult_use_carry        ),
       .mult_mac_en_o                ( mult_mac_en           ),
 
       // Register file control signals
@@ -616,9 +606,6 @@ module id_stage
       .dbg_stall_i                  ( dbg_stall_i           ),
       .dbg_set_npc_i                ( dbg_set_npc_i         ),
       .dbg_trap_o                   ( dbg_trap_o            ),
-
-      // SPR Signals
-      .restore_sr_o                 ( restore_sr_o          ),
 
       // regfile port 1
       .regfile_waddr_ex_i           ( regfile_waddr_ex_o    ), // Write address for register file from ex-wb- pipeline registers
@@ -773,7 +760,6 @@ module id_stage
       mult_en_ex_o                <= 1'b0;
       mult_sel_subword_ex_o       <= 2'b0;
       mult_signed_mode_ex_o       <= 2'b0;
-      mult_use_carry_ex_o         <= 1'b0;
       mult_mac_en_ex_o            <= 1'b0;
 
       regfile_waddr_ex_o          <= 5'b0;
@@ -839,7 +825,6 @@ module id_stage
       mult_en_ex_o                <= mult_en;
       mult_sel_subword_ex_o       <= mult_sel_subword;
       mult_signed_mode_ex_o       <= mult_signed_mode;
-      mult_use_carry_ex_o         <= mult_use_carry;
       mult_mac_en_ex_o            <= mult_mac_en;
 
 
