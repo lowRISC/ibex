@@ -278,9 +278,9 @@ module cs_registers
     if (is_pccr == 1'b1) begin
       unique case (csr_op_i)
         `CSR_OP_NONE:   ;
-        `CSR_OP_WRITE:  PCCR_n[i] <= csr_wdata_i;
-        `CSR_OP_SET:    PCCR_n[i] <= csr_wdata_i | PCCR_q[i];
-        `CSR_OP_CLEAR:  PCCR_n[i] <= csr_wdata_i & ~(PCCR_q[i]);
+        `CSR_OP_WRITE:  PCCR_n[0] <= csr_wdata_i;
+        `CSR_OP_SET:    PCCR_n[0] <= csr_wdata_i | PCCR_q[0];
+        `CSR_OP_CLEAR:  PCCR_n[0] <= csr_wdata_i & ~(PCCR_q[0]);
       endcase
     end
   end
