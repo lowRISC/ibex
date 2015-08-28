@@ -722,6 +722,7 @@ module riscv_core
 
 
 
+`ifndef SYNTHESIS
   // Execution trace generation
   // synopsys translate_off
   `ifdef TRACE_EXECUTION
@@ -964,6 +965,7 @@ module riscv_core
 
   `endif // TRACE_EXECUTION
   // synopsys translate_on
+`endif
 
 
 ///////////////////

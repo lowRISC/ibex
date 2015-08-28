@@ -308,18 +308,18 @@ module cs_registers
     if (is_pcmr) begin
       unique case (csr_op_i)
         `CSR_OP_NONE:   ;
-        `CSR_OP_WRITE:  PCMR_n = csr_wdata_i;
-        `CSR_OP_SET:    PCMR_n = csr_wdata_i | PCMR_q;
-        `CSR_OP_CLEAR:  PCMR_n = csr_wdata_i & ~(PCMR_q);
+        `CSR_OP_WRITE:  PCMR_n = csr_wdata_i[1:0];
+        `CSR_OP_SET:    PCMR_n = csr_wdata_i[1:0] | PCMR_q;
+        `CSR_OP_CLEAR:  PCMR_n = csr_wdata_i[1:0] & ~(PCMR_q);
       endcase
     end
 
     if (is_pcer) begin
       unique case (csr_op_i)
         `CSR_OP_NONE:   ;
-        `CSR_OP_WRITE:  PCER_n = csr_wdata_i;
-        `CSR_OP_SET:    PCER_n = csr_wdata_i | PCER_q;
-        `CSR_OP_CLEAR:  PCER_n = csr_wdata_i & ~(PCER_q);
+        `CSR_OP_WRITE:  PCER_n = csr_wdata_i[N_PERF_REGS-1:0];
+        `CSR_OP_SET:    PCER_n = csr_wdata_i[N_PERF_REGS-1:0] | PCER_q;
+        `CSR_OP_CLEAR:  PCER_n = csr_wdata_i[N_PERF_REGS-1:0] & ~(PCER_q);
       endcase
     end
   end
@@ -336,8 +336,8 @@ module cs_registers
 
       for(int i = 0; i < N_PERF_REGS; i++)
       begin
-        PCCR_q[i]     <= 'h0;
-        PCCR_inc_q[i] <= 'h0;
+        PCCR_q[i]     <= '0;
+        PCCR_inc_q[i] <= '0;
       end
     end
     else

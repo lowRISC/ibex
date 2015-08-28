@@ -149,6 +149,7 @@
 `define REG_D  11:07
 
 
+`ifndef SYNTHESIS
 // synopsys translate_off
 `define TRACE_EXECUTION
 
@@ -178,6 +179,7 @@ function void prettyPrintInstruction(input [31:0] instr, input [31:0] pc);
   end
 endfunction // prettyPrintInstruction
 // synopsys translate_on
+`endif
 
 
 

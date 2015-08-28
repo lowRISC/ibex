@@ -171,10 +171,7 @@ module ex_stage
 
    .adder_lsu_o   ( alu_adder_lsu_int   ),
 
-   .result_o      ( alu_result          ),
-   .overflow_o    (                     ),
-   .carry_o       (                     ),
-   .flag_o        (                     )
+   .result_o      ( alu_result          )
   );
 
 
@@ -196,12 +193,8 @@ module ex_stage
    .op_a_i          ( alu_operand_a_i      ),
    .op_b_i          ( alu_operand_b_i      ),
    .mac_i           ( alu_operand_c_i      ),
-   .carry_i         ( 1'b0                 ),
 
-   .result_o        ( mult_result          ),
-
-   .carry_o         (                      ),
-   .overflow_o      (                      )
+   .result_o        ( mult_result          )
   );
 
 

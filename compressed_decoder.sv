@@ -28,6 +28,7 @@ module compressed_decoder
 (
   input  logic [31:0] instr_i,
   output logic [31:0] instr_o,
+  output logic        is_compressed_o,
   output logic        illegal_instr_o
 );
 
@@ -43,6 +44,7 @@ module compressed_decoder
   always_comb
   begin
     illegal_instr_o = 1'b0;
+    is_compressed_o = 1'b1;
     instr_o         = '0;
 
     unique case (instr_i[1:0])
@@ -258,6 +260,7 @@ module compressed_decoder
       2'b11: begin
         // 32 bit (or more) instruction
         instr_o = instr_i;
+        is_compressed_o = 1'b0;
       end
     endcase
   end

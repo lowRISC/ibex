@@ -35,11 +35,11 @@ module riscv_register_file
 
   logic [DATA_WIDTH-1:0]      MemContentxDP[NUM_WORDS];
 
-  logic [NUM_WORDS-1:0]       WAddrOneHotxDa;
-  logic [NUM_WORDS-1:0]       WAddrOneHotxDb;
-  logic [NUM_WORDS-1:0]       WAddrOneHotxDb_reg;
+  logic [NUM_WORDS-1:1]       WAddrOneHotxDa;
+  logic [NUM_WORDS-1:1]       WAddrOneHotxDb;
+  logic [NUM_WORDS-1:1]       WAddrOneHotxDb_reg;
 
-  logic [NUM_WORDS-1:0]       ClocksxC;
+  logic [NUM_WORDS-1:1]       ClocksxC;
   logic [DATA_WIDTH-1:0]      WDataIntxDa;
   logic [DATA_WIDTH-1:0]      WDataIntxDb;
 

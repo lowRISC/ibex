@@ -137,10 +137,10 @@ module alu
   end
 
   // adder consisting of four slices
-  assign {carry_out[0], adder_result[ 7: 0]} = adder_op_a[ 7: 0] + adder_op_b[ 7: 0] + carry_in[0];
-  assign {carry_out[1], adder_result[15: 8]} = adder_op_a[15: 8] + adder_op_b[15: 8] + carry_in[1];
-  assign {carry_out[2], adder_result[23:16]} = adder_op_a[23:16] + adder_op_b[23:16] + carry_in[2];
-  assign {carry_out[3], adder_result[31:24]} = adder_op_a[31:24] + adder_op_b[31:24] + carry_in[3];
+  assign {carry_out[0], adder_result[ 7: 0]} = adder_op_a[ 7: 0] + adder_op_b[ 7: 0] + {7'b0, carry_in[0]};
+  assign {carry_out[1], adder_result[15: 8]} = adder_op_a[15: 8] + adder_op_b[15: 8] + {7'b0, carry_in[1]};
+  assign {carry_out[2], adder_result[23:16]} = adder_op_a[23:16] + adder_op_b[23:16] + {7'b0, carry_in[2]};
+  assign {carry_out[3], adder_result[31:24]} = adder_op_a[31:24] + adder_op_b[31:24] + {7'b0, carry_in[3]};
 
 
   // averaging by right shifting of one bit
@@ -617,12 +617,7 @@ module alu
 
       `ALU_NOP: ; // Do nothing
 
-      default:
-      begin
-        //synopsys translate_off
-
-        //synopsys translate_on
-      end
+      default: ;
     endcase //~case(operator_i)
   end
 
