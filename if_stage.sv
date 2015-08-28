@@ -87,7 +87,7 @@ module if_stage
                    WAIT_UNALIGNED_32, VALID_UNALIGNED_32,
                    WAIT_JUMPED_ALIGNED, VALID_JUMPED_ALIGNED,
                    WAIT_JUMPED_UNALIGNED, VALID_JUMPED_UNALIGNED,
-                   IDLE } offset_fsm_cs, offset_fsm_ns, offset_fsm_stored;
+                   IDLE } offset_fsm_cs, offset_fsm_ns;
 
   logic  [1:0] is_compressed;
   logic        crossword;
@@ -125,7 +125,7 @@ module if_stage
         // unaligned compressed instruction
         // don't care about upper half-word, insert good value for
         // optimization
-        instr_rdata_int   = {fetch_rdata[31:16], fetch_rdata[31:16]};
+        instr_rdata_int   = {fetch_rdata[15:0], fetch_rdata[31:16]};
         current_pc_if_o   = {fetch_addr[31:2], 2'b10};
       end
     end
@@ -239,7 +239,6 @@ module if_stage
       // aligned 32 bit or 16 bit instruction, we don't know yet
       WAIT_ALIGNED,
       VALID_ALIGNED: begin
-
         if (fetch_valid || offset_fsm_cs == VALID_ALIGNED) begin
           valid_o = 1'b1; // an instruction is ready for ID stage
           offset_fsm_ns = VALID_ALIGNED;
@@ -382,7 +381,6 @@ module if_stage
       if (jump_in_ex_i == `BRANCH_COND) begin
         if (branch_decision_i) begin
           // branch taken
-
           fetch_req = 1'b1;
           if (unaligned_jump)
             offset_fsm_ns = WAIT_JUMPED_UNALIGNED;
@@ -398,7 +396,6 @@ module if_stage
           offset_fsm_ns = WAIT_JUMPED_ALIGNED;
       end
     end
-
   end
 
 
@@ -427,7 +424,7 @@ module if_stage
     end
     else
     begin
-      if (stall_id_i == 1'b0)
+      if (~stall_id_i)
       begin : ENABLED_PIPE
         instr_rdata_id_o <= instr_rdata_int;
         current_pc_id_o  <= current_pc_if_o;
