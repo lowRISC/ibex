@@ -272,7 +272,7 @@ module cs_registers
   begin
     PCCR_n[0]   = PCCR_q[0];
 
-    if ((PCCR_inc_q[0] == 1'b1) && ((PCCR_q[0] != 32'hFFFFFFFF) || (csr[`CSR_IDX_PCMR][1] == 1'b0)))
+    if ((PCCR_inc_q[0] == 1'b1) && ((PCCR_q[0] != 32'hFFFFFFFF) || (PCMR_q[1] == 1'b0)))
       PCCR_n[0] = PCCR_q[0] + 1;
 
     if (is_pccr == 1'b1) begin
