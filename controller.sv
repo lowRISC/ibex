@@ -293,13 +293,13 @@ module controller
         rega_used           = 1'b1;
         regb_used           = 1'b1;
 
-        unique case (instr_rdata_i) inside
-          `INSTR_BEQ:  alu_operator = `ALU_EQ;
-          `INSTR_BNE:  alu_operator = `ALU_NE;
-          `INSTR_BLT:  alu_operator = `ALU_LTS;
-          `INSTR_BGE:  alu_operator = `ALU_GES;
-          `INSTR_BLTU: alu_operator = `ALU_LTU;
-          `INSTR_BGEU: alu_operator = `ALU_GEU;
+        unique case (instr_rdata_i[14:12])
+          3'b000: alu_operator = `ALU_EQ;
+          3'b001: alu_operator = `ALU_NE;
+          3'b100: alu_operator = `ALU_LTS;
+          3'b101: alu_operator = `ALU_GES;
+          3'b110: alu_operator = `ALU_LTU;
+          3'b111: alu_operator = `ALU_GEU;
 
           default: begin
             illegal_insn_int = 1'b1;
@@ -422,54 +422,6 @@ module controller
         end
       end
 
-      /*
-
-      // Pre/Post-Increment Stores and Register-Register Stores
-      `OPCODE_STPOST, `OPCODE_STPRE: begin
-        alu_operator                = `ALU_ADD;  // addr is generated in ID stage so no need for addr gen in alu TODO: always use ID stage addr
-        data_req                    = 1'b1;
-        regfile_alu_waddr_mux_sel_o = 2'b00;
-        rega_used                   = 1'b1;
-        regb_used                   = 1'b1;
-        data_we                     = 1'b1;      // write to memory
-
-
-        if (instr_rdata_i[31:26] == `OPCODE_STPOST)
-        begin
-          prepost_useincr_o = 1'b0; // if post increment instruction, don't use the modified address
-        end
-
-        case (instr_rdata_i[5:4])
-          default: begin
-            alu_op_b_mux_sel_o   = `OP_B_IMM;
-            immediate_mux_sel_o  = `IMM_5N6S;  // offset in 11bit immediate
-            regfile_alu_we   = 1'b1;  // write new addr value into regfile using portB
-          end
-
-          2'b11: begin // register-register store with post increment
-            regc_used = 1'b1;
-            alu_op_b_mux_sel_o = `OP_B_REGC_OR_FWD;
-            regfile_alu_we = 1'b1;  // write new addr value into regfile using portB
-          end
-
-          2'b01: begin // register-register store without pre/post-increment
-            alu_op_b_mux_sel_o = `OP_B_REGC_OR_FWD;
-            regc_used          = 1'b1;
-          end
-        endcase // case (instr_rdata_i[5:4])
-
-        // Word, Half Word or Byte store
-        case (instr_rdata_i[3:2])
-          default: data_type_o = 2'b00;
-          2'b00:   data_type_o = 2'b00; // word
-          2'b10:   data_type_o = 2'b01; // half word
-          2'b11:   data_type_o = 2'b10; // byte
-        endcase // case(instr_rdata_i[4:3]
-
-        // offset inside value to be stored, e.g. l.sh1, l.sb1 and so on
-        data_reg_offset_o      = instr_rdata_i[1:0];
-      end
-       */
 
       //////////////////////////
       //     _    _    _   _  //
@@ -502,21 +454,31 @@ module controller
         regfile_alu_we      = 1'b1;
         rega_used           = 1'b1;
 
-        unique case (instr_rdata_i) inside
-          `INSTR_ADDI:  alu_operator = `ALU_ADD;  // Add Immediate
-          `INSTR_SLTI:  alu_operator = `ALU_SLTS; // Set to one if Lower Than Immediate
-          `INSTR_SLTIU: alu_operator = `ALU_SLTU; // Set to one if Lower Than Immediate Unsigned
-          `INSTR_XORI:  alu_operator = `ALU_XOR;  // Exclusive Or with Immediate
-          `INSTR_ORI:   alu_operator = `ALU_OR;   // Or with Immediate
-          `INSTR_ANDI:  alu_operator = `ALU_AND;  // And with Immediate
-          `INSTR_SLLI:  alu_operator = `ALU_SLL;  // Shift Left Logical by Immediate
-          `INSTR_SRLI:  alu_operator = `ALU_SRL;  // Shift Right Logical by Immediate
-          `INSTR_SRAI:  alu_operator = `ALU_SRA;  // Shift Right Arithmetically by Immediate
-          default: begin
-            regfile_alu_we   = 1'b0;
-            illegal_insn_int = 1'b1;
+        unique case (instr_rdata_i[14:12])
+          3'b000: alu_operator = `ALU_ADD;  // Add Immediate
+          3'b010: alu_operator = `ALU_SLTS; // Set to one if Lower Than Immediate
+          3'b011: alu_operator = `ALU_SLTU; // Set to one if Lower Than Immediate Unsigned
+          3'b100: alu_operator = `ALU_XOR;  // Exclusive Or with Immediate
+          3'b110: alu_operator = `ALU_OR;   // Or with Immediate
+          3'b111: alu_operator = `ALU_AND;  // And with Immediate
+
+          3'b001: begin
+            alu_operator = `ALU_SLL;  // Shift Left Logical by Immediate
+            if (instr_rdata_i[31:25] != 7'b0)
+              illegal_insn_int = 1'b1;
           end
-        endcase // unique case (instr_rdata_i)
+
+          3'b101: begin
+            if (instr_rdata_i[31:25] == 7'b0)
+              alu_operator = `ALU_SRL;  // Shift Right Logical by Immediate
+            else if (instr_rdata_i[31:25] == 7'b010_0000)
+              alu_operator = `ALU_SRA;  // Shift Right Arithmetically by Immediate
+            else
+              illegal_insn_int = 1'b1;
+          end
+
+          default: illegal_insn_int = 1'b1;
+        endcase
       end
 
       `OPCODE_OP: begin  // Register-Register ALU operation
@@ -524,19 +486,22 @@ module controller
         rega_used      = 1'b1;
         regb_used      = 1'b1;
 
-        unique case (instr_rdata_i) inside
-          `INSTR_ADD:  alu_operator = `ALU_ADD;  // Add
-          `INSTR_SUB:  alu_operator = `ALU_SUB;  // Sub
-          `INSTR_SLL:  alu_operator = `ALU_SLL;  // Shift Left Logical
-          `INSTR_SLT:  alu_operator = `ALU_SLTS; // Set Lower Than
-          `INSTR_SLTU: alu_operator = `ALU_SLTU; // Set Lower Than Unsigned
-          `INSTR_XOR:  alu_operator = `ALU_XOR;  // Xor
-          `INSTR_SRL:  alu_operator = `ALU_SRL;  // Shift Right Logical
-          `INSTR_SRA:  alu_operator = `ALU_SRA;  // Shift Right Arithmetic
-          `INSTR_OR:   alu_operator = `ALU_OR;   // Or
-          `INSTR_AND:  alu_operator = `ALU_AND;  // And
+        unique case ({instr_rdata_i[31:25], instr_rdata_i[14:12]})
+          {7'b000_0000, 3'b000}: alu_operator = `ALU_ADD;   // Add
+          {7'b010_0000, 3'b000}: alu_operator = `ALU_SUB;   // Sub
 
-          `INSTR_MUL:  mult_en      = 1'b1;      // Multiplication
+          {7'b000_0000, 3'b010}: alu_operator = `ALU_SLTS;  // Set Lower Than
+          {7'b000_0000, 3'b011}: alu_operator = `ALU_SLTU;  // Set Lower Than Unsigned
+
+          {7'b000_0000, 3'b100}: alu_operator = `ALU_XOR;   // Xor
+          {7'b000_0000, 3'b110}: alu_operator = `ALU_OR;    // Or
+          {7'b000_0000, 3'b111}: alu_operator = `ALU_AND;   // And
+
+          {7'b000_0000, 3'b001}: alu_operator = `ALU_SLL;   // Shift Left Logical
+          {7'b000_0000, 3'b101}: alu_operator = `ALU_SRL;   // Shift Right Logical
+          {7'b010_0000, 3'b101}: alu_operator = `ALU_SRA;   // Shift Right Arithmetic
+
+          {7'b000_0001, 3'b000}: mult_en      = 1'b1;       // Multiplication
 
           default: begin
             regfile_alu_we   = 1'b0;
@@ -546,16 +511,6 @@ module controller
       end
 
       /*
-
-      `OPCODE_MULI: begin  // Multiply Immediate Signed
-        alu_op_b_mux_sel_o   = `OP_B_IMM;
-        immediate_mux_sel_o  = `IMM_16;
-        mult_is_running      = 1'b1;
-
-        regfile_alu_we              = 1'b1;
-        regfile_alu_waddr_mux_sel_o = 2'b01;
-        rega_used                   = 1'b1;
-      end
 
       `OPCODE_ALU: begin   // Arithmetic Operation
         rega_used  = 1'b1;
@@ -852,21 +807,27 @@ module controller
         if (instr_rdata_i[14:12] == 3'b000)
         begin
           // non CSR related SYSTEM instructions
-          unique case (instr_rdata_i) inside
-            `INSTR_EBREAK:
+          unique case (instr_rdata_i[31:0])
+            32'h00_00_00_73:  // ECALL
+            begin
+              // environment (system) call
+              // TODO: Handle in controller
+            end
+
+            32'h00_10_00_73:  // EBREAK
             begin
               // debugger trap
               trap_insn_o  = 1'b1;
             end
 
-            `INSTR_ERET:
+            32'h10_00_00_73:  // ERET
             begin
               // TODO: Handle in controller
               //pc_mux_sel   = `PC_ERET;
               clear_isr_running_o = 1'b1;
             end
 
-            `INSTR_WFI:
+            32'h10_20_00_73:  // WFI
             begin
               // flush pipeline
               pipe_flush_o = 1'b1;
@@ -1200,6 +1161,10 @@ module controller
 
     // deassert WE when the core is not decoding instructions
     if (ctrl_fsm_cs != DECODE)
+      deassert_we = 1'b1;
+
+    // deassert WE in case of illegal instruction
+    if (illegal_insn_int)
       deassert_we = 1'b1;
 
     // Stall because of load operation
