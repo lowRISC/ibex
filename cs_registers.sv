@@ -278,9 +278,9 @@ module cs_registers
     if (is_pccr == 1'b1) begin
       unique case (csr_op_i)
         `CSR_OP_NONE:   ;
-        `CSR_OP_WRITE:  PCCR_n[0] <= csr_wdata_i;
-        `CSR_OP_SET:    PCCR_n[0] <= csr_wdata_i | PCCR_q[0];
-        `CSR_OP_CLEAR:  PCCR_n[0] <= csr_wdata_i & ~(PCCR_q[0]);
+        `CSR_OP_WRITE:  PCCR_n[0] = csr_wdata_i;
+        `CSR_OP_SET:    PCCR_n[0] = csr_wdata_i | PCCR_q[0];
+        `CSR_OP_CLEAR:  PCCR_n[0] = csr_wdata_i & ~(PCCR_q[0]);
       endcase
     end
   end
@@ -299,9 +299,9 @@ module cs_registers
       if (is_pccr == 1'b1 && (pccr_all_sel == 1'b1 || pccr_index == i)) begin
         unique case (csr_op_i)
           `CSR_OP_NONE:   ;
-          `CSR_OP_WRITE:  PCCR_n[i] <= csr_wdata_i;
-          `CSR_OP_SET:    PCCR_n[i] <= csr_wdata_i | PCCR_q[i];
-          `CSR_OP_CLEAR:  PCCR_n[i] <= csr_wdata_i & ~(PCCR_q[i]);
+          `CSR_OP_WRITE:  PCCR_n[i] = csr_wdata_i;
+          `CSR_OP_SET:    PCCR_n[i] = csr_wdata_i | PCCR_q[i];
+          `CSR_OP_CLEAR:  PCCR_n[i] = csr_wdata_i & ~(PCCR_q[i]);
         endcase
       end
     end
@@ -317,18 +317,18 @@ module cs_registers
     if (is_pcmr) begin
       unique case (csr_op_i)
         `CSR_OP_NONE:   ;
-        `CSR_OP_WRITE:  PCMR_n <= csr_wdata_i;
-        `CSR_OP_SET:    PCMR_n <= csr_wdata_i | PCMR_q;
-        `CSR_OP_CLEAR:  PCMR_n <= csr_wdata_i & ~(PCMR_q);
+        `CSR_OP_WRITE:  PCMR_n = csr_wdata_i;
+        `CSR_OP_SET:    PCMR_n = csr_wdata_i | PCMR_q;
+        `CSR_OP_CLEAR:  PCMR_n = csr_wdata_i & ~(PCMR_q);
       endcase
     end
 
     if (is_pcer) begin
       unique case (csr_op_i)
         `CSR_OP_NONE:   ;
-        `CSR_OP_WRITE:  PCER_n <= csr_wdata_i;
-        `CSR_OP_SET:    PCER_n <= csr_wdata_i | PCER_q;
-        `CSR_OP_CLEAR:  PCER_n <= csr_wdata_i & ~(PCER_q);
+        `CSR_OP_WRITE:  PCER_n = csr_wdata_i;
+        `CSR_OP_SET:    PCER_n = csr_wdata_i | PCER_q;
+        `CSR_OP_CLEAR:  PCER_n = csr_wdata_i & ~(PCER_q);
       endcase
     end
   end
