@@ -207,10 +207,6 @@ module exc_controller
             ExcIR: begin
               if (jump_in_id_i == 2'b00)
               begin // no delay slot
-                // synopsys translate_off
-                $display("%t: Entering exception routine.", $time);
-                // synopsys translate_on
-
                 force_nop_o      = 1'b1;
                 exc_pc_sel_o     = 1'b1;
                 save_pc_if_o     = 1'b1; // save current PC
@@ -234,10 +230,6 @@ module exc_controller
             // Illegal instruction encountered, we directly jump to
             // the ISR without flushing the pipeline
             ExcIllegalInsn: begin
-              // synopsys translate_off
-              $display("%t: Entering exception routine.", $time);
-              // synopsys translate_on
-
               force_nop_o      = 1'b1;
               exc_pc_sel_o     = 1'b1;
               exc_pc_mux_o     = `EXC_PC_ILLINSN;
@@ -255,10 +247,6 @@ module exc_controller
         // Execute delay slot for IR
         NopDelayIR:
         begin
-          // synopsys translate_off
-          $display("%t: Entering exception routine.", $time);
-          // synopsys translate_on
-
           force_nop_o      = 1'b1;
           exc_pc_sel_o     = 1'b1;
           save_pc_if_o     = 1'b1; // save current PC
@@ -343,5 +331,20 @@ module exc_controller
       exc_reason_p   <= (clear_exc_reason == 1'b1)    ? ExcNone : exc_reason_n;
     end
   end
+
+`ifndef SYNTHESIS
+  // synopsys translate_off
+  // make sure we are called later so that we do not generate messages for
+  // glitches
+  always_ff @(negedge clk)
+  begin : EXC_DISPLAY
+    if ( rst_n == 1'b1 )
+    begin
+      if (exc_reason_n != ExcNone && exc_reason_n != ExcFlush)
+        $display("%t: Entering exception routine.", $time);
+    end
+  end
+  // synopsys translate_on
+`endif
 
 endmodule // exc_controller
