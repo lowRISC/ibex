@@ -594,7 +594,11 @@ module riscv_core
     //                                  //
     //   Control and Status Registers   //
     //////////////////////////////////////
-    cs_registers cs_registers_i
+    cs_registers
+    #(
+      .N_EXT_PERF_COUNTERS      ( N_EXT_PERF_COUNTERS   )
+    )
+    cs_registers_i
     (
       .clk                     ( clk                   ),
       .rst_n                   ( rst_n                 ),
