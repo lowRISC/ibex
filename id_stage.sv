@@ -149,13 +149,17 @@ module id_stage
 
     input  logic [4:0]                  regfile_alu_waddr_fw_i,
     input  logic                        regfile_alu_we_fw_i,
-    input  logic [31:0]                 regfile_alu_wdata_fw_i
+    input  logic [31:0]                 regfile_alu_wdata_fw_i,
 
 `ifdef TCDM_ADDR_PRECAL
-    ,
-    output logic [31:0]                 alu_adder_o
+    output logic [31:0]                 alu_adder_o,
 `endif
 
+    // Performance Counters
+    output logic                         perf_jump_o,                 // we are executing a jump instruction   (j, jr, jal, jalr)
+    output logic                         perf_branch_o,               // we are executing a branch instruction (bf, bnf)
+    output logic                         perf_jr_stall_o,             // jump-register-hazard
+    output logic                         perf_ld_stall_o              // load-use-hazard
 );
 
 
@@ -643,7 +647,14 @@ module id_stage
       .stall_if_o                   ( stall_if_o            ),
       .stall_id_o                   ( stall_id_o            ),
       .stall_ex_o                   ( stall_ex_o            ),
-      .stall_wb_o                   ( stall_wb_o            )
+      .stall_wb_o                   ( stall_wb_o            ),
+
+      // Performance Counters
+      .perf_jump_o                  ( perf_jump_o           ),
+      .perf_branch_o                ( perf_branch_o         ),
+      .perf_jr_stall_o              ( perf_jr_stall_o       ),
+      .perf_ld_stall_o              ( perf_ld_stall_o       )
+
     );
 
   ///////////////////////////////////////////////////////////////////////

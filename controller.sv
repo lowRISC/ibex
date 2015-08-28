@@ -135,7 +135,13 @@ module controller
   output logic                     stall_if_o,                  // Stall IF stage (deassert requests)
   output logic                     stall_id_o,                  // Stall ID stage (and instr and data memory interface) ( ID_STAGE )
   output logic                     stall_ex_o,                  // Stall ex stage                                       ( EX_STAGE )
-  output logic                     stall_wb_o                   // Stall write to register file due contentions      ( WB_STAGE )
+  output logic                     stall_wb_o,                  // Stall write to register file due contentions      ( WB_STAGE )
+
+   // Performance Counters
+   output logic                    perf_jump_o,                 // we are executing a jump instruction   (j, jr, jal, jalr)
+   output logic                    perf_branch_o,               // we are executing a branch instruction (bf, bnf)
+   output logic                    perf_jr_stall_o,             // stall due to jump-register-hazard
+   output logic                    perf_ld_stall_o              // stall due to load-use-hazard
 );
 
   // FSM state encoding
@@ -159,6 +165,7 @@ module controller
   logic                     data_we;
   logic                     data_req;
   logic [1:0]               jump_in_id;
+  logic [1:0]               csr_op;
   logic                     deassert_we;
 
   logic        lsu_stall;
@@ -220,7 +227,7 @@ module controller
     immediate_mux_sel_o         = `IMM_I;
 
     csr_access_o                = 1'b0;
-    csr_op_o                    = `CSR_OP_NONE;
+    csr_op                      = `CSR_OP_NONE;
 
     data_we                     = 1'b0;
     data_type_o                 = 2'b00;
@@ -898,9 +905,9 @@ module controller
           end
 
           unique case (instr_rdata_i[13:12])
-            2'b01:   csr_op_o = `CSR_OP_WRITE;
-            2'b10:   csr_op_o = `CSR_OP_SET;
-            2'b11:   csr_op_o = `CSR_OP_CLEAR;
+            2'b01:   csr_op   = `CSR_OP_WRITE;
+            2'b10:   csr_op   = `CSR_OP_SET;
+            2'b11:   csr_op   = `CSR_OP_CLEAR;
             default: illegal_insn_int = 1'b1;
           endcase
         end
@@ -1242,6 +1249,7 @@ module controller
   assign regfile_alu_we_o  = (deassert_we) ? 1'b0          : regfile_alu_we;
   assign data_we_o         = (deassert_we) ? 1'b0          : data_we;
   assign data_req_o        = (deassert_we) ? 1'b0          : data_req;
+  assign csr_op_o          = (deassert_we) ? `CSR_OP_NONE  : csr_op;
   assign jump_in_id_o      = (deassert_we) ? `BRANCH_NONE  : jump_in_id;
 
 
@@ -1349,5 +1357,11 @@ module controller
         set_npc <= 1'b0;
     end
   end
+
+  // Performance Counters
+  assign perf_jump_o      = (jump_in_id_o == `BRANCH_JAL || jump_in_id_o == `BRANCH_JALR);
+  assign perf_branch_o    = (jump_in_id_o == `BRANCH_COND);
+  assign perf_jr_stall_o  = jr_stall;
+  assign perf_ld_stall_o  = load_stall;
 
 endmodule // controller
