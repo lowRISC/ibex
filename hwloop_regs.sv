@@ -31,28 +31,28 @@
 `include "defines.sv"
 
 module hwloop_regs
-  (
-    input  logic        clk,
-    input  logic        rst_n,
+(
+  input  logic        clk,
+  input  logic        rst_n,
 
-    // from ex stage
-    input  logic [31:0] hwloop_start_data_i,
-    input  logic [31:0] hwloop_end_data_i,
-    input  logic [31:0] hwloop_cnt_data_i,
-    input  logic  [2:0] hwloop_we_i,
-    input  logic  [1:0] hwloop_regid_i,         // selects the register set
+  // from ex stage
+  input  logic [31:0] hwloop_start_data_i,
+  input  logic [31:0] hwloop_end_data_i,
+  input  logic [31:0] hwloop_cnt_data_i,
+  input  logic  [2:0] hwloop_we_i,
+  input  logic  [1:0] hwloop_regid_i,         // selects the register set
 
-    // from controller
-    input  logic        stall_id_i,
+  // from controller
+  input  logic        stall_id_i,
 
-    // from hwloop controller
-    input  logic [`HWLOOP_REGS-1:0]        hwloop_dec_cnt_i,
+  // from hwloop controller
+  input  logic [`HWLOOP_REGS-1:0]        hwloop_dec_cnt_i,
 
-    // to hwloop controller
-    output logic [`HWLOOP_REGS-1:0] [31:0] hwloop_start_addr_o,
-    output logic [`HWLOOP_REGS-1:0] [31:0] hwloop_end_addr_o,
-    output logic [`HWLOOP_REGS-1:0] [31:0] hwloop_counter_o
-  );
+  // to hwloop controller
+  output logic [`HWLOOP_REGS-1:0] [31:0] hwloop_start_addr_o,
+  output logic [`HWLOOP_REGS-1:0] [31:0] hwloop_end_addr_o,
+  output logic [`HWLOOP_REGS-1:0] [31:0] hwloop_counter_o
+);
 
 
   logic [`HWLOOP_REGS-1:0] [31:0]        hwloop_start_regs_q;
