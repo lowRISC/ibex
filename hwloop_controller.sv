@@ -10,7 +10,7 @@
 // Create Date:    08/08/2014                                                 //
 // Design Name:    hwloop controller                                          //
 // Module Name:    hwloop_controller.sv                                       //
-// Project Name:   OR10N                                                      //
+// Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Hardware loop controller unit. This unit is responsible to //
@@ -20,8 +20,6 @@
 //                                                                            //
 // Revision:                                                                  //
 // Revision v0.1 - File Created                                               //
-//                                                                            //
-//                                                                            //
 //                                                                            //
 //                                                                            //
 //                                                                            //
@@ -56,7 +54,11 @@ module hwloop_controller
    // generate comparators. check for end address and the loop counter
   genvar i;
   for (i = 0; i < `HWLOOP_REGS; i++) begin
-    assign pc_is_end_addr[i] = ((current_pc_i == hwloop_end_addr_i[i]) & (enable_i) & (hwloop_counter_i[i] > 32'b1)) ? 1'b1 : 1'b0;
+    assign pc_is_end_addr[i] = (
+      enable_i
+      && (current_pc_i == hwloop_end_addr_i[i])
+      && (hwloop_counter_i[i] > 32'b1)
+    );
   end
 
   // output signal for ID stage
@@ -64,9 +66,10 @@ module hwloop_controller
 
 
   // select corresponding start address and decrement counter. give highest priority to register 0
-  always_comb begin
+  always_comb
+  begin
     hwloop_targ_addr_o = 32'b0;
-    hwloop_dec_cnt_o = `HWLOOP_REGS'b0;
+    hwloop_dec_cnt_o   = '0;
 
     if (pc_is_end_addr[0]) begin
       hwloop_targ_addr_o = hwloop_start_addr_i[0];

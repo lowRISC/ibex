@@ -379,7 +379,7 @@ endfunction // prettyPrintInstruction
 `define EXC_CAUSE_ECALL  {1'b0, 4'd11};
 `define EXC_CAUSE_EBREAK {1'b0, 4'd03};
 
-// Hardware loops addon
+// Hardware loops
 `define HWLOOP_REGS 2
 
 // Debug module

@@ -35,91 +35,91 @@
 
 module id_stage
 (
-    input  logic                        clk,
-    input  logic                        rst_n,
+    input  logic        clk,
+    input  logic        rst_n,
 
-    input logic                         fetch_enable_i,
-    output logic                        core_busy_o,
+    input logic         fetch_enable_i,
+    output logic        core_busy_o,
 
     // Interface to instruction memory
-    input  logic [31:0]                 instr_rdata_i,      // comes from pipeline of IF stage
-    output logic                        instr_req_o,
-    input  logic                        instr_gnt_i,
-    input  logic                        instr_ack_i,
+    input  logic [31:0] instr_rdata_i,      // comes from pipeline of IF stage
+    output logic        instr_req_o,
+    input  logic        instr_gnt_i,
+    input  logic        instr_ack_i,
 
     // Jumps and branches
-    output logic [1:0]                  jump_in_id_o,
-    output logic [1:0]                  jump_in_ex_o,
-    input  logic                        branch_decision_i,
-    output logic [31:0]                 jump_target_o,
+    output logic [1:0]  jump_in_id_o,
+    output logic [1:0]  jump_in_ex_o,
+    input  logic        branch_decision_i,
+    output logic [31:0] jump_target_o,
 
     // IF and ID stage signals
-    output logic                        compressed_instr_o,
-    output logic [2:0]                  pc_mux_sel_o,
-    output logic [1:0]                  exc_pc_mux_o,
-    output logic                        force_nop_o,
+    output logic        compressed_instr_o,
+    output logic [2:0]  pc_mux_sel_o,
+    output logic [1:0]  exc_pc_mux_o,
+    output logic        force_nop_o,
 
-    input  logic [31:0]                 current_pc_if_i,
-    input  logic [31:0]                 current_pc_id_i,
+    input  logic [31:0] current_pc_if_i,
+    input  logic [31:0] current_pc_id_i,
 
-    // STALLS
-    output logic                        stall_if_o,
-    output logic                        stall_id_o,
-    output logic                        stall_ex_o,
-    output logic                        stall_wb_o,
+    // Stalls
+    output logic        stall_if_o,
+    output logic        stall_id_o,
+    output logic        stall_ex_o,
+    output logic        stall_wb_o,
 
     // To the Pipeline ID/EX
-    output logic [31:0]                 regfile_rb_data_ex_o,
-    output logic [31:0]                 alu_operand_a_ex_o,
-    output logic [31:0]                 alu_operand_b_ex_o,
-    output logic [31:0]                 alu_operand_c_ex_o,
-    output logic [`ALU_OP_WIDTH-1:0]    alu_operator_ex_o,
+    output logic [31:0]              regfile_rb_data_ex_o,
+    output logic [31:0]              alu_operand_a_ex_o,
+    output logic [31:0]              alu_operand_b_ex_o,
+    output logic [31:0]              alu_operand_c_ex_o,
+    output logic [`ALU_OP_WIDTH-1:0] alu_operator_ex_o,
 
-    output logic [1:0]                  vector_mode_ex_o,
-    output logic [1:0]                  alu_cmp_mode_ex_o,
-    output logic [1:0]                  alu_vec_ext_ex_o,
+    output logic [1:0]  vector_mode_ex_o,
+    output logic [1:0]  alu_cmp_mode_ex_o,
+    output logic [1:0]  alu_vec_ext_ex_o,
 
-    output logic                        mult_en_ex_o,
-    output logic [1:0]                  mult_sel_subword_ex_o,
-    output logic [1:0]                  mult_signed_mode_ex_o,
-    output logic                        mult_mac_en_ex_o,
+    output logic        mult_en_ex_o,
+    output logic [1:0]  mult_sel_subword_ex_o,
+    output logic [1:0]  mult_signed_mode_ex_o,
+    output logic        mult_mac_en_ex_o,
 
-    output logic [4:0]                  regfile_waddr_ex_o,
-    output logic                        regfile_we_ex_o,
+    output logic [4:0]  regfile_waddr_ex_o,
+    output logic        regfile_we_ex_o,
 
-    output logic [4:0]                  regfile_alu_waddr_ex_o,
-    output logic                        regfile_alu_we_ex_o,
+    output logic [4:0]  regfile_alu_waddr_ex_o,
+    output logic        regfile_alu_we_ex_o,
 
-    output logic                        prepost_useincr_ex_o,
-    input  logic                        data_misaligned_i,
+    output logic        prepost_useincr_ex_o,
+    input  logic        data_misaligned_i,
 
-    output logic [2:0]                  hwloop_we_ex_o,
-    output logic [1:0]                  hwloop_regid_ex_o,
-    output logic                        hwloop_wb_mux_sel_ex_o,
-    output logic [31:0]                 hwloop_cnt_o,
-    output logic [`HWLOOP_REGS-1:0]     hwloop_dec_cnt_o,
-    output logic [31:0]                 hwloop_targ_addr_o,
+    output logic [2:0]              hwloop_we_ex_o,
+    output logic [1:0]              hwloop_regid_ex_o,
+    output logic                    hwloop_wb_mux_sel_ex_o,
+    output logic [31:0]             hwloop_cnt_o,
+    output logic [`HWLOOP_REGS-1:0] hwloop_dec_cnt_o,
+    output logic [31:0]             hwloop_targ_addr_o,
 
-    output logic                        csr_access_ex_o,
-    output logic [1:0]                  csr_op_ex_o,
+    output logic        csr_access_ex_o,
+    output logic [1:0]  csr_op_ex_o,
 
     // Interface to load store unit
-    output logic                        data_we_ex_o,
-    output logic [1:0]                  data_type_ex_o,
-    output logic                        data_sign_ext_ex_o,
-    output logic [1:0]                  data_reg_offset_ex_o,
-    output logic                        data_misaligned_ex_o,
-    output logic                        data_req_ex_o,
-    input  logic                        data_ack_i,      // Grant from data memory
-    input  logic                        data_rvalid_i,
+    output logic        data_we_ex_o,
+    output logic [1:0]  data_type_ex_o,
+    output logic        data_sign_ext_ex_o,
+    output logic [1:0]  data_reg_offset_ex_o,
+    output logic        data_misaligned_ex_o,
+    output logic        data_req_ex_o,
+    input  logic        data_ack_i,      // Grant from data memory
+    input  logic        data_rvalid_i,
 
     // Interrupt signals
-    input  logic                        irq_i,
-    input  logic                        irq_nm_i,
-    input  logic                        irq_enable_i,
-    output logic                        save_pc_if_o,
-    output logic                        save_pc_id_o,
-    output logic                        save_sr_o,
+    input  logic        irq_i,
+    input  logic        irq_nm_i,
+    input  logic        irq_enable_i,
+    output logic        save_pc_if_o,
+    output logic        save_pc_id_o,
+    output logic        save_sr_o,
 
     // from hwloop regs
     input  logic [`HWLOOP_REGS-1:0] [31:0] hwloop_start_addr_i,
@@ -127,36 +127,36 @@ module id_stage
     input  logic [`HWLOOP_REGS-1:0] [31:0] hwloop_counter_i,
 
     // Debug Unit Signals
-    input  logic                        dbg_flush_pipe_i,
-    input  logic                        dbg_st_en_i,
-    input  logic [1:0]                  dbg_dsr_i,
-    input  logic                        dbg_stall_i,
-    output logic                        dbg_trap_o,
-    input  logic                        dbg_reg_mux_i,
-    input  logic                        dbg_reg_we_i,
-    input  logic [4:0]                  dbg_reg_addr_i,
-    input  logic [31:0]                 dbg_reg_wdata_i,
-    output logic [31:0]                 dbg_reg_rdata_o,
-    input  logic                        dbg_set_npc_i,
+    input  logic        dbg_flush_pipe_i,
+    input  logic        dbg_st_en_i,
+    input  logic [1:0]  dbg_dsr_i,
+    input  logic        dbg_stall_i,
+    output logic        dbg_trap_o,
+    input  logic        dbg_reg_mux_i,
+    input  logic        dbg_reg_we_i,
+    input  logic [4:0]  dbg_reg_addr_i,
+    input  logic [31:0] dbg_reg_wdata_i,
+    output logic [31:0] dbg_reg_rdata_o,
+    input  logic        dbg_set_npc_i,
 
     // Forward Signals
-    input  logic [4:0]                  regfile_waddr_wb_i,
-    input  logic                        regfile_we_wb_i,
-    input  logic [31:0]                 regfile_wdata_wb_i, // From wb_stage: selects data from data memory, ex_stage result and sp rdata
+    input  logic [4:0]  regfile_waddr_wb_i,
+    input  logic        regfile_we_wb_i,
+    input  logic [31:0] regfile_wdata_wb_i, // From wb_stage: selects data from data memory, ex_stage result and sp rdata
 
-    input  logic [4:0]                  regfile_alu_waddr_fw_i,
-    input  logic                        regfile_alu_we_fw_i,
-    input  logic [31:0]                 regfile_alu_wdata_fw_i,
+    input  logic [4:0]  regfile_alu_waddr_fw_i,
+    input  logic        regfile_alu_we_fw_i,
+    input  logic [31:0] regfile_alu_wdata_fw_i,
 
 `ifdef TCDM_ADDR_PRECAL
-    output logic [31:0]                 alu_adder_o,
+    output logic [31:0] alu_adder_o,
 `endif
 
     // Performance Counters
-    output logic                         perf_jump_o,                 // we are executing a jump instruction   (j, jr, jal, jalr)
-    output logic                         perf_branch_o,               // we are executing a branch instruction (bf, bnf)
-    output logic                         perf_jr_stall_o,             // jump-register-hazard
-    output logic                         perf_ld_stall_o              // load-use-hazard
+    output logic        perf_jump_o,          // we are executing a jump instruction   (j, jr, jal, jalr)
+    output logic        perf_branch_o,        // we are executing a branch instruction (bf, bnf)
+    output logic        perf_jr_stall_o,      // jump-register-hazard
+    output logic        perf_ld_stall_o       // load-use-hazard
 );
 
 
