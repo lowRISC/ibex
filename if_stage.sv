@@ -78,7 +78,10 @@ module if_stage
 
     // pipeline stall
     input  logic        stall_if_i,
-    input  logic        stall_id_i
+    input  logic        stall_id_i,
+
+    // misc signals
+    output logic        if_busy_o              // is the IF stage busy fetching instructions?
 );
 
   // offset FSM
@@ -412,6 +415,13 @@ module if_stage
       end
     end
   end
+
+  assign if_busy_o = ~(offset_fsm_cs == IDLE                   ||
+                       offset_fsm_cs == VALID_JUMPED_ALIGNED   ||
+                       offset_fsm_cs == VALID_JUMPED_UNALIGNED ||
+                       offset_fsm_cs == VALID_ALIGNED          ||
+                       offset_fsm_cs == VALID_UNALIGNED_32     ||
+                       offset_fsm_cs == UNALIGNED_16) || instr_req_o;
 
 
   // IF-ID pipeline registers, frozen when the ID stage is stalled

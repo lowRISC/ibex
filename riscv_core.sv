@@ -110,6 +110,9 @@ module riscv_core
   logic          stall_ex;          // Stall EX Stage
   logic          stall_wb;          // Stall write back stage
 
+  logic          core_busy;
+  logic          if_busy;
+
 
   // Register Data
   logic [31:0]   regfile_rb_data_ex;    // from id stage to load/store unit and ex stage
@@ -167,10 +170,8 @@ module riscv_core
   logic            data_ack_int;
 
   // Signals between instruction core interface and pipe (if and id stages)
-  logic [31:0]     instr_rdata_int;  // read instruction from the instruction core interface to if_stage
   logic            instr_req_int;    // Id stage asserts a req to instruction core interface
   logic            instr_ack_int;    // instr core interface acks the request now (read data is available)
-  logic [31:0]     instr_addr_int;   // adress sent to the inst core interface from if_Stage
 
   // Interrupts
   logic            irq_enable;
@@ -240,6 +241,9 @@ module riscv_core
 
 
 
+  assign core_busy_o = if_busy || core_busy;
+
+
     //////////////////////////////////////////////////
     //   ___ _____   ____ _____  _    ____ _____    //
     //  |_ _|  ___| / ___|_   _|/ \  / ___| ____|   //
@@ -293,7 +297,9 @@ module riscv_core
 
       // pipeline stalls
       .stall_if_i          ( stall_if        ),
-      .stall_id_i          ( stall_id        )
+      .stall_id_i          ( stall_id        ),
+
+      .if_busy_o           ( if_busy         )
     );
 
 
@@ -319,7 +325,7 @@ module riscv_core
 
       .jump_target_o                ( jump_target_id                ),
 
-      .core_busy_o                  ( core_busy_o                   ),
+      .core_busy_o                  ( core_busy                     ),
 
       // Interface to instruction memory
       .instr_rdata_i                ( instr_rdata_id                ),
