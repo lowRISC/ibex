@@ -98,10 +98,9 @@ module controller
   input  logic                     illegal_c_insn_i,            // compressed instruction decode failed
   output logic                     illegal_insn_o,              // illegal instruction encountered
   output logic                     trap_insn_o,                 // trap instruction encountered
-  output logic                     pipe_flush_o,                // pipe flush requested by controller
   input logic                      pc_valid_i,                  // is the next_pc currently valid?
   output logic                     clear_isr_running_o,         // an l.rfe instruction was encountered, exit ISR
-  input  logic                     pipe_flushed_i,              // Pipe is flushed
+  input  logic                     exc_pipe_flush_i,            // flush pipeline after exception handling
   input  logic                     trap_hit_i,                  // a trap was hit, so we have to flush EX and WB
 
   // Debug Unit Signals
@@ -138,7 +137,8 @@ module controller
 );
 
   // FSM state encoding
-  enum  logic [3:0] { RESET, IDLE, FIRST_FETCH, DECODE, BRANCH, BRANCH_DELAY,
+  enum  logic [3:0] { RESET, SLEEP, FIRST_FETCH, DECODE, BRANCH, BRANCH_DELAY,
+                      FLUSH_EX, FLUSH_WB,
                       DBG_FLUSH_EX, DBG_FLUSH_WB, DBG_SIGNAL, DBG_WAIT } ctrl_fsm_cs, ctrl_fsm_ns;
 
   logic reg_d_ex_is_reg_a_id;
@@ -159,6 +159,8 @@ module controller
   logic                     data_req;
   logic [1:0]               jump_in_id;
   logic [1:0]               csr_op;
+  logic                     pipe_flush;
+  logic                     trap_insn;
   logic                     deassert_we;
 
   logic        lsu_stall;
@@ -176,7 +178,8 @@ module controller
   logic        regb_used;
   logic        regc_used;
 
-  logic        dbg_halt;
+  logic        halt_if;
+  logic        halt_id;
   logic        illegal_insn_int;
 
   /////////////////////////////////////////////
@@ -229,8 +232,8 @@ module controller
     clear_isr_running_o         = 1'b0;
 
     illegal_insn_int            = 1'b0;
-    trap_insn_o                 = 1'b0;
-    pipe_flush_o                = 1'b0;
+    trap_insn                   = 1'b0;
+    pipe_flush                  = 1'b0;
 
     rega_used                   = 1'b0;
     regb_used                   = 1'b0;
@@ -817,7 +820,7 @@ module controller
             32'h00_10_00_73:  // EBREAK
             begin
               // debugger trap
-              trap_insn_o  = 1'b1;
+              trap_insn = 1'b1;
             end
 
             32'h10_00_00_73:  // ERET
@@ -830,7 +833,7 @@ module controller
             32'h10_20_00_73:  // WFI
             begin
               // flush pipeline
-              pipe_flush_o = 1'b1;
+              pipe_flush = 1'b1;
             end
 
             default:
@@ -1008,7 +1011,8 @@ module controller
 
     core_busy_o   = 1'b1;
 
-    dbg_halt       = 1'b0;
+    halt_if        = 1'b0;
+    halt_id        = 1'b0;
     dbg_trap_o     = 1'b0;
     illegal_insn_o = 1'b0;
 
@@ -1030,18 +1034,20 @@ module controller
           ctrl_fsm_ns = FIRST_FETCH;
       end
 
-      IDLE:
+      // instruction in IF stage is already valid, so just jump to DECODE
+      // instead of FIRST_FETCH
+      SLEEP:
       begin
         // we begin execution when either fetch_enable is high or an
         // interrupt has arrived
         core_busy_o   = 1'b0;
-        instr_req_o     = fetch_enable_i || irq_present_i;
+        instr_req_o   = fetch_enable_i || irq_present_i;
 
         if (fetch_enable_i || irq_present_i)
         begin
-          ctrl_fsm_ns  = FIRST_FETCH;
+          ctrl_fsm_ns  = DECODE;
         end
-      end // case: IDLE
+      end // case: SLEEP
 
       FIRST_FETCH:
       begin
@@ -1080,9 +1086,14 @@ module controller
           illegal_insn_o = 1'b1;
         end
 
-        // the pipeline is flushed and we are requested to go to sleep
-        if ((pipe_flushed_i == 1'b1) && (fetch_enable_i == 1'b0))
-          ctrl_fsm_ns = IDLE;
+        // handle WFI instruction, flush pipeline and (potentially) go to
+        // sleep
+        if (pipe_flush || exc_pipe_flush_i)
+        begin
+          halt_if = 1'b1;
+
+          ctrl_fsm_ns = FLUSH_EX;
+        end
 
         // take care of debug
         // branches take two cycles, jumps just one
@@ -1090,7 +1101,8 @@ module controller
         // TODO: there is a bug here, I'm sure of it
         if(trap_hit_i == 1'b1 && stall_ex_o == 1'b0 && jump_in_id == 2'b0 && jump_in_ex_i == 2'b0)
         begin
-          dbg_halt  = 1'b1;
+          halt_if = 1'b1;
+          halt_id = 1'b1;
           ctrl_fsm_ns = DBG_FLUSH_EX;
         end
       end
@@ -1119,7 +1131,8 @@ module controller
 
       DBG_FLUSH_EX:
       begin
-        dbg_halt = 1'b1;
+        halt_if = 1'b1;
+        halt_id = 1'b1;
 
         if(stall_ex_o == 1'b0)
           ctrl_fsm_ns = DBG_FLUSH_WB;
@@ -1127,7 +1140,8 @@ module controller
 
       DBG_FLUSH_WB:
       begin
-        dbg_halt = 1'b1;
+        halt_if = 1'b1;
+        halt_id = 1'b1;
 
         if(stall_ex_o == 1'b0)
           ctrl_fsm_ns = DBG_SIGNAL;
@@ -1136,7 +1150,8 @@ module controller
       DBG_SIGNAL:
       begin
         dbg_trap_o = 1'b1;
-        dbg_halt   = 1'b1;
+        halt_if = 1'b1;
+        halt_id = 1'b1;
 
         ctrl_fsm_ns = DBG_WAIT;
       end
@@ -1148,6 +1163,36 @@ module controller
 
         if(dbg_stall_i == 1'b0)
           ctrl_fsm_ns = DECODE;
+      end
+
+      FLUSH_EX:
+      begin
+        halt_if = 1'b1;
+        halt_id = 1'b1;
+
+        if(~stall_ex_o)
+          ctrl_fsm_ns = FLUSH_WB;
+      end
+
+      FLUSH_WB:
+      begin
+        halt_if = 1'b1;
+        halt_id = 1'b1;
+
+        if(~stall_wb_o)
+        begin
+          if (fetch_enable_i == 1'b0)
+            ctrl_fsm_ns = SLEEP;
+          else
+          begin
+            // unstall pipeline and continue operation
+            halt_if     = 1'b1;
+            halt_id     = 1'b0;
+
+            if (~stall_id_o)
+              ctrl_fsm_ns = DECODE;
+          end
+        end
       end
     endcase
   end
@@ -1212,6 +1257,7 @@ module controller
   assign data_we_o         = (deassert_we) ? 1'b0          : data_we;
   assign data_req_o        = (deassert_we) ? 1'b0          : data_req;
   assign csr_op_o          = (deassert_we) ? `CSR_OP_NONE  : csr_op;
+  assign trap_insn_o       = (deassert_we) ? 1'b0          : trap_insn;
   assign jump_in_id_o      = (deassert_we) ? `BRANCH_NONE  : jump_in_id;
 
 
@@ -1223,8 +1269,8 @@ module controller
     // we unstall the if_stage if the debug unit wants to set a new
     // pc, so that the new value gets written into current_pc_if and is
     // used by the instr_core_interface
-    stall_if_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_halt | dbg_stall_i | (~pc_valid_i) | (jump_in_id_o == `BRANCH_COND);
-    stall_id_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | dbg_halt | dbg_stall_i;
+    stall_if_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | halt_if | dbg_stall_i | (~pc_valid_i) | (jump_in_id_o == `BRANCH_COND);
+    stall_id_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | halt_id | dbg_stall_i;
     stall_ex_o = instr_ack_stall | lsu_stall | dbg_stall_i;
     stall_wb_o = lsu_stall | dbg_stall_i;
   end

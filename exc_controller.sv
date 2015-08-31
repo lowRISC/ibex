@@ -58,21 +58,20 @@ module exc_controller
    input  logic        illegal_insn_i,              // Illegal instruction encountered in ID stage
    input  logic        trap_insn_i,                 // Trap instruction encountered in ID stage
    input  logic        drop_instruction_i,          // If branch prediction went wrong
-   input  logic        pipe_flush_i,                // pipe flush requested by controller
    output logic        pc_valid_o,                  // is the PC in the IF stage currently valid?
    input  logic        clear_isr_running_i,         // exit ISR routine
+   output logic        exc_pipe_flush_o,            // flush pipeline and go back to sleep
 
    // Debug Unit Signals
    input  logic        dbg_flush_pipe_i,            // Pipe flush requested
-   output logic        pipe_flushed_o,              // Pipe is flushed
    input  logic        dbg_st_en_i,                 // Single-step trace mode enabled
    input  logic [1:0]  dbg_dsr_i,                   // Debug Stop Register
    output logic        trap_hit_o                   // Software Trap in ID (l.trap or similar stuff)
 );
 
   // Exception unit state encoding
-  enum  logic [2:0]  { Idle, NopDelay, NopDelayIR, NopID, NopEX, NopWB}  exc_fsm_cs, exc_fsm_ns;
-  enum  logic [1:0]  { ExcNone, ExcIR, ExcFlush, ExcIllegalInsn } exc_reason_p, exc_reason_n, exc_reason;
+  enum  logic [0:0]  { Idle, NopDelayIR }  exc_fsm_cs, exc_fsm_ns;
+  enum  logic [1:0]  { ExcNone, ExcIR, ExcIllegalInsn } exc_reason_p, exc_reason_n, exc_reason;
 
   // Registers
   logic       exc_running_p, exc_running_n;
@@ -108,7 +107,8 @@ module exc_controller
   // The decoder also takes care that no nested exceptions are performed
   always_comb
   begin
-    exc_reason = ExcNone;
+    exc_reason       = ExcNone;
+    exc_pipe_flush_o = 1'b0;
 
     if (illegal_insn_i == 1'b1)
     begin
@@ -127,11 +127,6 @@ module exc_controller
       if (dbg_dsr_i[`DSR_INTE] == 1'b0)
         exc_reason = ExcIR;
     end
-    else if(pipe_flush_i == 1'b1)
-    begin
-      // flushing pipeline because of l.psync
-      exc_reason = ExcFlush;
-    end
     else if (clear_isr_running_i == 1'b1)
     begin
       // if we receive an l.rfe instruction when we are not in an
@@ -144,7 +139,7 @@ module exc_controller
 
         // the CPU should go back to sleep
         if(fetch_enable_i == 1'b0)
-          exc_reason = ExcFlush;
+          exc_pipe_flush_o = 1'b1;
       end
       else
         exc_reason = ExcIllegalInsn;
@@ -169,7 +164,6 @@ module exc_controller
     save_pc_if_o     = 1'b0;
     save_pc_id_o     = 1'b0;
     save_sr_o        = 1'b0;
-    pipe_flushed_o   = 1'b0;
     force_nop_o      = 1'b0;
     pc_valid_o       = 1'b1;
     exc_pc_sel_o     = 1'b0;
@@ -182,26 +176,6 @@ module exc_controller
           exc_reason_n = exc_reason;
 
           unique case (exc_reason_n)
-            // A flush of the pipeline was requested by the debug
-            // unit or an l.psync instruction
-            // execute pending delay slot (l.psync won't have one),
-            // flush the pipeline and stop
-            ExcFlush: begin
-              if (jump_in_id_i == 2'b00)
-              begin // no delay slot
-                force_nop_o   = 1'b1;
-                exc_pc_sel_o  = 1'b1;
-                exc_pc_mux_o  = `EXC_PC_NO_INCR;
-                pc_valid_o    = 1'b0;
-
-                exc_fsm_ns    = NopID;
-              end
-              else
-              begin // delay slot
-                exc_fsm_ns    = NopDelay;
-              end
-            end
-
             // an IRQ is present, execute pending delay slots and jump
             // to the ISR without flushing the pipeline
             ExcIR: begin
@@ -262,54 +236,6 @@ module exc_controller
           exc_fsm_ns       = Idle;
         end
 
-
-        // Execute delay slot, start to force NOPs for new instructions
-        NopDelay:
-        begin
-          force_nop_o  = 1'b1;
-          exc_pc_sel_o = 1'b1;
-          exc_pc_mux_o = `EXC_PC_NO_INCR;
-          pc_valid_o   = 1'b0;
-
-          exc_fsm_ns   = NopID;
-        end
-
-        // First NOP is in ID stage
-        NopID:
-        begin
-          force_nop_o  = 1'b1;
-          exc_pc_sel_o = 1'b1;
-          exc_pc_mux_o = `EXC_PC_NO_INCR;
-          pc_valid_o   = 1'b0;
-
-          exc_fsm_ns   = NopEX;
-        end
-
-        // First NOP is in EX stage
-        NopEX:
-        begin
-          force_nop_o  = 1'b1;
-          pc_valid_o   = 1'b0;
-          exc_pc_sel_o = 1'b1;
-          exc_pc_mux_o = `EXC_PC_NO_INCR;
-
-          exc_fsm_ns = NopWB;
-        end
-
-        // First NOP is in WB stage
-        // Pipeline is flushed now
-        NopWB: begin
-          exc_pc_sel_o     = 1'b1;
-          exc_pc_mux_o     = `EXC_PC_NO_INCR;
-          pipe_flushed_o   = 1'b1;
-
-          pc_valid_o       = 1'b0;
-          force_nop_o      = 1'b1;
-
-          clear_exc_reason = 1'b1;
-          exc_fsm_ns       = Idle;
-        end
-
         default: exc_fsm_ns = Idle;
       endcase // case (exc_fsm_cs)
     end
@@ -340,7 +266,7 @@ module exc_controller
   begin : EXC_DISPLAY
     if ( rst_n == 1'b1 )
     begin
-      if (exc_reason_n != ExcNone && exc_reason_n != ExcFlush)
+      if (exc_reason_n != ExcNone)
         $display("%t: Entering exception routine.", $time);
     end
   end

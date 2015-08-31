@@ -51,7 +51,6 @@ module debug_unit
 
   output logic         stall_core_o,
   output logic         flush_pipe_o,
-  input  logic         pipe_flushed_i,
   input  logic         trap_i,
 
   output logic         sp_mux_o,

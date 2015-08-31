@@ -128,7 +128,6 @@ module id_stage
 
     // Debug Unit Signals
     input  logic                        dbg_flush_pipe_i,
-    output logic                        pipe_flushed_o,
     input  logic                        dbg_st_en_i,
     input  logic [1:0]                  dbg_dsr_i,
     input  logic                        dbg_stall_i,
@@ -193,9 +192,9 @@ module id_stage
   logic        illegal_c_insn;
   logic        trap_insn;
   logic        trap_hit;
-  logic        pipe_flush;
   logic        pc_valid;
   logic        clear_isr_running;
+  logic        exc_pipe_flush;
 
 
   logic [4:0]  regfile_addr_ra_id;
@@ -596,11 +595,10 @@ module id_stage
       .illegal_c_insn_i             ( illegal_c_insn        ),
       .illegal_insn_o               ( illegal_insn          ),
       .trap_insn_o                  ( trap_insn             ),
-      .pipe_flush_o                 ( pipe_flush            ),
       .pc_valid_i                   ( pc_valid              ),
       .clear_isr_running_o          ( clear_isr_running     ),
-      .pipe_flushed_i               ( pipe_flushed_o        ),
       .trap_hit_i                   ( trap_hit              ),
+      .exc_pipe_flush_i             ( exc_pipe_flush        ),
 
       // Debug Unit Signals
       .dbg_stall_i                  ( dbg_stall_i           ),
@@ -687,14 +685,13 @@ module id_stage
       .illegal_insn_i       ( illegal_insn      ),
       .trap_insn_i          ( trap_insn         ),
       .drop_instruction_i   ( 1'b0              ),
-      .pipe_flush_i         ( pipe_flush        ),
       .pc_valid_o           ( pc_valid          ),
       .clear_isr_running_i  ( clear_isr_running ),
       .trap_hit_o           ( trap_hit          ),
+      .exc_pipe_flush_o     ( exc_pipe_flush    ),
 
       // Debug Unit Signals
       .dbg_flush_pipe_i     ( dbg_flush_pipe_i  ),
-      .pipe_flushed_o       ( pipe_flushed_o    ),
       .dbg_st_en_i          ( dbg_st_en_i       ),
       .dbg_dsr_i            ( dbg_dsr_i         )
     );

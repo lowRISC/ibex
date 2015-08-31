@@ -213,7 +213,6 @@ module riscv_core
   // Debug Unit
   logic               dbg_stall;
   logic               dbg_flush_pipe;
-  logic               pipe_flushed;
   logic               dbg_trap;
   logic               dbg_st_en;       // single-step trace mode enabled
   logic [1:0]         dbg_dsr;         // Debug Stop Register
@@ -404,7 +403,6 @@ module riscv_core
 
       // Debug Unit Signals
       .dbg_flush_pipe_i             ( dbg_flush_pipe                ),
-      .pipe_flushed_o               ( pipe_flushed                  ),
       .dbg_st_en_i                  ( dbg_st_en                     ),
       .dbg_dsr_i                    ( dbg_dsr                       ),
       .dbg_stall_i                  ( dbg_stall                     ),
@@ -683,7 +681,6 @@ module riscv_core
       .dbg_dsr_o       ( dbg_dsr         ),
       .stall_core_o    ( dbg_stall       ),
       .flush_pipe_o    ( dbg_flush_pipe  ),
-      .pipe_flushed_i  ( pipe_flushed    ),
       .trap_i          ( dbg_trap        ),
 
       // register file access
@@ -748,7 +745,8 @@ module riscv_core
     rs2        = instr[`REG_S2];
     rs2_value  = id_stage_i.operand_b_fw_id;
 
-    if (id_stage_i.stall_id_o == 1'b0 && id_stage_i.controller_i.ctrl_fsm_cs == id_stage_i.controller_i.DECODE)
+    // special case for WFI because we don't wait for unstalling there
+    if ((id_stage_i.stall_id_o == 1'b0 && id_stage_i.controller_i.ctrl_fsm_cs == id_stage_i.controller_i.DECODE) || id_stage_i.controller_i.pipe_flush)
     begin
       mnemonic = "";
       imm = 0;
