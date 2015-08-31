@@ -82,7 +82,7 @@ module riscv_core
 
 
   // IF/ID signals
-  logic [31:0]   instr_rdata_id;    // Instruction  sampled nsude the PC stage
+  logic [31:0]   instr_rdata_id;    // Instruction sampled inside IF stage
   logic [31:0]   current_pc_if;     // Current Program counter
   logic [31:0]   current_pc_id;     // Current Program counter
   logic          force_nop_id;
@@ -105,18 +105,18 @@ module riscv_core
 
 
   // Stalling
-  logic          stall_if;          // Stall instruction fetch(deassert request)
-  logic          stall_id;          // Stall PC stage and instr memory and data memo
-  logic          stall_ex;          // Stall EX Stage
-  logic          stall_wb;          // Stall write back stage
+  logic        stall_if;            // Stall instruction fetch(deassert request)
+  logic        stall_id;            // Stall PC stage and instr memory and data memo
+  logic        stall_ex;            // Stall EX Stage
+  logic        stall_wb;            // Stall write back stage
 
   logic          core_busy;
   logic          if_busy;
 
 
   // Register Data
-  logic [31:0]   regfile_rb_data_ex;    // from id stage to load/store unit and ex stage
-  logic [31:0]   regfile_rb_data_wb;    // from ex stage to sp register
+  logic [31:0] regfile_rb_data_ex;  // from id stage to load/store unit and ex stage
+  logic [31:0] regfile_rb_data_wb;  // from ex stage to sp register
 
 
   // ALU Control
@@ -130,78 +130,71 @@ module riscv_core
   logic [1:0]               alu_vec_ext_ex;
 
   // Multiplier Control
-  logic            mult_en_ex;
-  logic [1:0]      mult_sel_subword_ex;
-  logic [1:0]      mult_signed_mode_ex;
-  logic            mult_mac_en_ex;
+  logic        mult_en_ex;
+  logic [1:0]  mult_sel_subword_ex;
+  logic [1:0]  mult_signed_mode_ex;
+  logic        mult_mac_en_ex;
 
   // Register Write Control
-  logic [4:0]      regfile_waddr_ex;
-  logic            regfile_we_ex;
-  logic [4:0]      regfile_waddr_fw_wb_o;        // From WB to ID
-  logic            regfile_we_wb;
-  logic [31:0]     regfile_wdata;
+  logic [4:0]  regfile_waddr_ex;
+  logic        regfile_we_ex;
+  logic [4:0]  regfile_waddr_fw_wb_o;        // From WB to ID
+  logic        regfile_we_wb;
+  logic [31:0] regfile_wdata;
 
-  logic [4:0]      regfile_alu_waddr_ex;
-  logic            regfile_alu_we_ex;
+  logic [4:0]  regfile_alu_waddr_ex;
+  logic        regfile_alu_we_ex;
 
 
-  logic [4:0]      regfile_alu_waddr_fw;
-  logic            regfile_alu_we_fw;
-  logic [31:0]     regfile_alu_wdata_fw;
+  logic [4:0]  regfile_alu_waddr_fw;
+  logic        regfile_alu_we_fw;
+  logic [31:0] regfile_alu_wdata_fw;
 
   // CSR control
-  logic            csr_access_ex;
-  logic  [1:0]     csr_op_ex;
+  logic        csr_access_ex;
+  logic  [1:0] csr_op_ex;
 
-  logic  [1:0]     csr_op;
-  logic [11:0]     csr_addr;
-  logic [31:0]     csr_rdata;
-  logic [31:0]     csr_wdata;
+  logic  [1:0] csr_op;
+  logic [11:0] csr_addr;
+  logic [31:0] csr_rdata;
+  logic [31:0] csr_wdata;
 
   // Data Memory Control:  From ID stage (id-ex pipe) <--> load store unit
-  logic            data_we_ex;
-  logic [1:0]      data_type_ex;
-  logic            data_sign_ext_ex;
-  logic [1:0]      data_reg_offset_ex;
-  logic            data_req_ex;
-  logic [31:0]     data_addr_ex;
-  logic            data_misaligned_ex;
-  logic            data_ack_int;
+  logic        data_we_ex;
+  logic [1:0]  data_type_ex;
+  logic        data_sign_ext_ex;
+  logic [1:0]  data_reg_offset_ex;
+  logic        data_req_ex;
+  logic [31:0] data_addr_ex;
+  logic        data_misaligned_ex;
+  logic        data_ack_int;
 
   // Signals between instruction core interface and pipe (if and id stages)
-  logic            instr_req_int;    // Id stage asserts a req to instruction core interface
-  logic            instr_ack_int;    // instr core interface acks the request now (read data is available)
+  logic        instr_req_int;    // Id stage asserts a req to instruction core interface
+  logic        instr_ack_int;    // instr core interface acks the request now (read data is available)
 
   // Interrupts
-  logic            irq_enable;
-  logic [31:0]     epcr;
-  logic            save_pc_if;
-  logic            save_pc_id;
+  logic        irq_enable;
+  logic [31:0] epcr;
+  logic        save_pc_if;
+  logic        save_pc_id;
 
   // hwloop data from ALU
-  logic [31:0]                    hwlp_cnt_ex;        // from id to ex stage (hwloop_regs)
-  logic [2:0]                     hwlp_we_ex;         // from id to ex stage (hwloop_regs)
-  logic [1:0]                     hwlp_regid_ex;      // from id to ex stage (hwloop_regs)
-  logic                           hwlp_wb_mux_sel_ex; // from id to ex stage (hwloop_regs)
-  logic [31:0]                    hwlp_start_data_ex; // hwloop data to write to hwloop_regs
-  logic [31:0]                    hwlp_end_data_ex;   // hwloop data to write to hwloop_regs
-  logic [31:0]                    hwlp_cnt_data_ex;   // hwloop data to write to hwloop_regs
+  logic [31:0] hwlp_cnt_ex;        // from id to ex stage (hwloop_regs)
+  logic [2:0]  hwlp_we_ex;         // from id to ex stage (hwloop_regs)
+  logic [1:0]  hwlp_regid_ex;      // from id to ex stage (hwloop_regs)
+  logic        hwlp_wb_mux_sel_ex; // from id to ex stage (hwloop_regs)
+  logic [31:0] hwlp_start_data_ex; // hwloop data to write to hwloop_regs
+  logic [31:0] hwlp_end_data_ex;   // hwloop data to write to hwloop_regs
+  logic [31:0] hwlp_cnt_data_ex;   // hwloop data to write to hwloop_regs
 
-  // spr access to hwloops
-  logic [31:0]                    sp_hwlp_start;
-  logic [31:0]                    sp_hwlp_end;
-  logic [31:0]                    sp_hwlp_cnt;
-  logic [2:0]                     sp_hwlp_we;
-  logic [1:0]                     sp_hwlp_regid;
 
   // Access to hwloop registers
-  logic [31:0]                    hwlp_start_data;
-  logic [31:0]                    hwlp_end_data;
-  logic [31:0]                    hwlp_cnt_data;
-  logic [2:0]                     hwlp_we;
-  logic [1:0]                     hwlp_regid;
-
+  logic [31:0] hwlp_start_data;
+  logic [31:0] hwlp_end_data;
+  logic [31:0] hwlp_cnt_data;
+  logic [2:0]  hwlp_we;
+  logic [1:0]  hwlp_regid;
 
   // hwloop controller signals
   logic [`HWLOOP_REGS-1:0] [31:0] hwlp_start_addr;  // to hwloop controller
@@ -212,32 +205,32 @@ module riscv_core
 
 
   // Debug Unit
-  logic               dbg_stall;
-  logic               dbg_flush_pipe;
-  logic               dbg_trap;
-  logic               dbg_st_en;       // single-step trace mode enabled
-  logic [1:0]         dbg_dsr;         // Debug Stop Register
+  logic        dbg_stall;
+  logic        dbg_flush_pipe;
+  logic        dbg_trap;
+  logic        dbg_st_en;       // single-step trace mode enabled
+  logic [1:0]  dbg_dsr;         // Debug Stop Register
 
-  logic               dbg_reg_mux;
-  logic               dbg_sp_mux;
-  logic               dbg_reg_we;
-  logic [11:0]        dbg_reg_addr;
-  logic [31:0]        dbg_reg_wdata;
-  logic [31:0]        dbg_reg_rdata;
-  logic [31:0]        dbg_rdata;
+  logic        dbg_reg_mux;
+  logic        dbg_sp_mux;
+  logic        dbg_reg_we;
+  logic [11:0] dbg_reg_addr;
+  logic [31:0] dbg_reg_wdata;
+  logic [31:0] dbg_reg_rdata;
+  logic [31:0] dbg_rdata;
 
-  logic [31:0]        dbg_npc;
-  logic               dbg_set_npc;
+  logic [31:0] dbg_npc;
+  logic        dbg_set_npc;
 
 `ifdef TCDM_ADDR_PRECAL
-  logic [31:0]         alu_adder_ex;
+  logic [31:0] alu_adder_ex;
 `endif
 
   // Performance Counters
-  logic                perf_jump;
-  logic                perf_branch;
-  logic                perf_jr_stall;
-  logic                perf_ld_stall;
+  logic        perf_jump;
+  logic        perf_branch;
+  logic        perf_jr_stall;
+  logic        perf_ld_stall;
 
 
 

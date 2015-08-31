@@ -269,7 +269,6 @@ module id_stage
   logic [31:0] operand_c;
 
 
-
   assign force_nop_o = force_nop_exc;
   assign pc_mux_sel_o = (exc_pc_sel == 1'b1) ? `PC_EXCEPTION : pc_mux_sel_int;
 
@@ -283,15 +282,12 @@ module id_stage
   );
 
 
-
   // immediate extraction and sign extension
   assign imm_i_type  = { {20 {instr[31]}}, instr[31:20] };
   assign imm_s_type  = { {20 {instr[31]}}, instr[31:25], instr[11:7] };
-  assign imm_sb_type = { {19 {instr[31]}}, instr[31], instr[7],
-                         instr[30:25], instr[11:8], 1'b0 };
-  assign imm_u_type  = { instr[31:12], {12 {1'b0}} };
-  assign imm_uj_type = { {12 {instr[31]}}, instr[19:12],
-                         instr[20], instr[30:21], 1'b0 };
+  assign imm_sb_type = { {19 {instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0 };
+  assign imm_u_type  = { instr[31:12], 12'b0 };
+  assign imm_uj_type = { {12 {instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0 };
 
   // immediate for CSR manipulatin (zero extended)
   assign imm_z_type  = { 27'b0, instr[`REG_S1] };
@@ -304,7 +300,7 @@ module id_stage
   // destination registers
   assign regfile_waddr_id = instr[`REG_D];
 
-  //assign alu_vec_ext         = instr[9:8]; TODO
+  //assign alu_vec_ext = instr[9:8]; TODO
   assign alu_vec_ext = '0;
 
 
@@ -331,20 +327,30 @@ module id_stage
 
   assign current_pc = current_pc_id_i;
 
+
+  ///////////////////////////////////////////////
+  //  _   ___        ___     ___   ___  ____   //
+  // | | | \ \      / / |   / _ \ / _ \|  _ \  //
+  // | |_| |\ \ /\ / /| |  | | | | | | | |_) | //
+  // |  _  | \ V  V / | |__| |_| | |_| |  __/  //
+  // |_| |_|  \_/\_/  |_____\___/ \___/|_|     //
+  //                                           //
+  ///////////////////////////////////////////////
+
   // hwloop_cnt_mux
   always_comb
   begin : hwloop_cnt_mux
-    case (hwloop_cnt_mux_sel)
-      2'b00:      hwloop_cnt = 32'b0;
-      //2'b01:      hwloop_cnt = immediate21z_id; // TODO: FIXME use correct immediate when adding hwloops
-      //2'b10:      hwloop_cnt = immediate13z_id;
-      2'b11:      hwloop_cnt = operand_a_fw_id;
-      default:    hwloop_cnt = 32'b0;
+    unique case (hwloop_cnt_mux_sel)
+      2'b00:   hwloop_cnt = 32'b0;
+      2'b01:   hwloop_cnt = imm_i_type;
+      2'b10:   hwloop_cnt = 32'b0;
+      2'b11:   hwloop_cnt = operand_a_fw_id;
     endcase; // case (hwloop_cnt_mux_sel)
   end
 
   // hwloop register id
-  assign hwloop_regid = instr[22:21];     // set hwloop register id
+  assign hwloop_regid = instr[8:7];      // rd contains hwloop register id
+
 
   //////////////////////////////////////////////////////////////////
   //       _                         _____                    _   //
@@ -359,10 +365,10 @@ module id_stage
   begin
     unique case (jump_in_id_o)
       `BRANCH_JAL:    jump_target = current_pc_id_i + imm_uj_type;
-      `BRANCH_JALR:   jump_target = regfile_data_ra_id + imm_i_type; // cannot forward rA as path too long
+      `BRANCH_JALR:   jump_target = regfile_data_ra_id + imm_i_type; // cannot forward rs1 as path is too long
       `BRANCH_COND:   jump_target = current_pc_id_i + imm_sb_type;
       default:        jump_target = '0;
-    endcase // unique case (instr[6:0])
+    endcase
   end
 
   assign jump_target_o = jump_target;
