@@ -1045,7 +1045,8 @@ module controller
 
         if (fetch_enable_i || irq_present_i)
         begin
-          ctrl_fsm_ns  = DECODE;
+          if (instr_ack_i == 1'b1)
+            ctrl_fsm_ns  = DECODE;
         end
       end // case: SLEEP
 
@@ -1091,6 +1092,7 @@ module controller
         if (pipe_flush || exc_pipe_flush_i)
         begin
           halt_if = 1'b1;
+          halt_id = 1'b1;
 
           ctrl_fsm_ns = FLUSH_EX;
         end
@@ -1179,19 +1181,17 @@ module controller
         halt_if = 1'b1;
         halt_id = 1'b1;
 
-        if(~stall_wb_o)
-        begin
-          if (fetch_enable_i == 1'b0)
+        if (~fetch_enable_i) begin
+          // we are requested to go to sleep
+          if(~stall_wb_o)
             ctrl_fsm_ns = SLEEP;
-          else
-          begin
-            // unstall pipeline and continue operation
-            halt_if     = 1'b1;
-            halt_id     = 1'b0;
+        end else begin
+          // unstall pipeline and continue operation
+          halt_if     = 1'b0;
+          halt_id     = 1'b0;
 
-            if (~stall_id_o)
-              ctrl_fsm_ns = DECODE;
-          end
+          if (~stall_id_o)
+            ctrl_fsm_ns = DECODE;
         end
       end
     endcase
