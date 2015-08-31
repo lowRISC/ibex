@@ -1091,8 +1091,7 @@ module controller
         // take care of debug
         // branches take two cycles, jumps just one
         // everything else can be done immediately
-        // TODO: there is a bug here, I'm sure of it
-        if(trap_hit_i == 1'b1 && stall_ex_o == 1'b0 && jump_in_id == 2'b0 && jump_in_ex_i == 2'b0)
+        if(trap_hit_i == 1'b1 && stall_ex_o == 1'b0 && jump_in_id == `BRANCH_NONE)
         begin
           halt_if = 1'b1;
           halt_id = 1'b1;
@@ -1100,26 +1099,61 @@ module controller
         end
       end
 
+      // handle branches
       BRANCH:
       begin
         // assume branch instruction is in EX
         if (jump_in_ex_i == `BRANCH_COND && ~branch_decision_i) begin
           // not taken
           pc_mux_sel_o = `PC_INCR;
-          if (~stall_id_o)
-            ctrl_fsm_ns = DECODE;
+
+          // if we want to debug, flush the pipeline
+          // the current_pc_if will take the value of the next instruction to
+          // be executed (NPC)
+          if (trap_hit_i)
+          begin
+            halt_if = 1'b1;
+            halt_id = 1'b1;
+
+            ctrl_fsm_ns = DBG_FLUSH_EX;
+          end else begin
+            if (~stall_id_o)
+              ctrl_fsm_ns = DECODE;
+          end
         end else begin
-          // branch taken or jump
+          // branch taken
           pc_mux_sel_o = `PC_BRANCH;
-          if (~stall_id_o)
-            ctrl_fsm_ns = BRANCH_DELAY;
+
+          // if we want to debug, flush the pipeline
+          // the current_pc_if will take the value of the next instruction to
+          // be executed (NPC)
+          if (trap_hit_i)
+          begin
+            ctrl_fsm_ns = DBG_FLUSH_EX;
+          end else begin
+            if (~stall_id_o)
+              ctrl_fsm_ns = BRANCH_DELAY;
+          end
         end
       end
 
+      // "delay slot" of jump and branch
+      // inserts a nop by not decoding the instruction
       BRANCH_DELAY:
       begin
-        if (~stall_id_o)
-          ctrl_fsm_ns = DECODE;
+        // if we want to debug, flush the pipeline
+        // the current_pc_if will take the value of the next instruction to
+        // be executed (NPC)
+        if (trap_hit_i)
+        begin
+          halt_if = 1'b1;
+          halt_id = 1'b1;
+
+          ctrl_fsm_ns = DBG_FLUSH_EX;
+        end else begin
+          if (~stall_id_o)
+            ctrl_fsm_ns = DECODE;
+        end
       end
 
       DBG_FLUSH_EX:
@@ -1220,6 +1254,8 @@ module controller
 
     // Stall because of jr path
     // - always stall if a result is to be forwarded to the PC
+    // we don't care about in which state the ctrl_fsm is as we deassert_we
+    // anyway when we are not in DECODE
     if ((jump_in_id == `BRANCH_JALR) &&
         (((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_a_id == 1'b1)) ||
          ((regfile_we_ex_i == 1'b1) && (reg_d_ex_is_reg_a_id == 1'b1)) ||
