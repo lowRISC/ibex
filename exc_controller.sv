@@ -97,9 +97,9 @@ module exc_controller
   // - illegal instruction exception and IIE bit is set
   // - IRQ and INTE bit is set and no exception is currently running
   // - Debuger requests halt
-  assign trap_hit_o    = trap_insn_i || dbg_flush_pipe_i || dbg_st_en_i || (illegal_insn_i & dbg_dsr_i[`DSR_IIE]) || (irq_present_o & dbg_dsr_i[`DSR_INTE] & (~exc_running_p));
+  assign trap_hit_o    = trap_insn_i || dbg_flush_pipe_i || dbg_st_en_i || (illegal_insn_i && dbg_dsr_i[`DSR_IIE]) || (irq_present_o && dbg_dsr_i[`DSR_INTE] && (~exc_running_p));
 
-  assign irq_present_o = (irq_i || irq_nm_i) & irq_enable_i;
+  assign irq_present_o = (irq_i || irq_nm_i) && irq_enable_i;
 
   // Decoder for exc_reason signal
   // this signal tells the exception controller which is the exception

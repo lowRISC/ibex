@@ -31,7 +31,6 @@
 
 module alu
 (
-   // Inputs of the ALU
    input  logic [`ALU_OP_WIDTH-1:0] operator_i,
    input  logic [31:0]              operand_a_i,
    input  logic [31:0]              operand_b_i,

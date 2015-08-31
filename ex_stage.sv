@@ -27,9 +27,6 @@
 //                                                                            //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
-// int = internal signals
-// wb  = writeback
-// sp  = special registers
 
 `include "defines.sv"
 
@@ -100,15 +97,16 @@ module ex_stage
 
 
   // Internal output of the LU
-  logic [31:0]  alu_result;
+  logic [31:0] alu_result;
+  logic        alu_flag;
 
-  logic [31:0]  alu_adder_lsu_int; // to LS unit
+  logic [31:0] alu_adder_lsu_int; // to LS unit
 
-  logic [31:0]  mult_result;
+  logic [31:0] mult_result;
 
 
-  assign regfile_alu_we_fw_o       = regfile_alu_we_i;
-  assign regfile_alu_waddr_fw_o    = regfile_alu_waddr_i;
+  assign regfile_alu_we_fw_o    = regfile_alu_we_i;
+  assign regfile_alu_waddr_fw_o = regfile_alu_waddr_i;
 
   always_comb
   begin
@@ -139,7 +137,7 @@ module ex_stage
   assign hwloop_cnt_data_o = hwloop_cnt_i;
 
   // Branch is taken when result[0] == 1'b1
-  assign branch_decision_o = alu_result[0];
+  assign branch_decision_o = alu_flag;
   assign jump_target_o     = alu_operand_c_i;
 
 
@@ -163,7 +161,8 @@ module ex_stage
 
    .adder_lsu_o   ( alu_adder_lsu_int   ),
 
-   .result_o      ( alu_result          )
+   .result_o      ( alu_result          ),
+   .flag_o        ( alu_flag            )
   );
 
 
