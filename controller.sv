@@ -945,16 +945,6 @@ module controller
       end
     endcase
 
-    // synopsys translate_off
-    // print warning in case of decoding errors
-    // note: this is done intentionally before checking RVC decoding, to
-    // suppress wrong (and annoying) messages during simulation
-    if (illegal_insn_int) begin
-      $warning("Illegal instruction (core %0d) at PC 0x%h:", $time, riscv_core.core_id_i);
-      //prettyPrintInstruction(instr_rdata_i, id_stage.current_pc_id_i);
-    end
-    // synopsys translate_on
-
     // make sure invalid compressed instruction causes an exception
     if (illegal_c_insn_i) begin
       illegal_insn_int = 1'b1;
@@ -980,6 +970,23 @@ module controller
       prepost_useincr_o   = 1'b1;
     end
   end
+
+`ifndef SYNTHESIS
+  // synopsys translate_off
+  // make sure we are called later so that we do not generate messages for
+  // glitches
+  always_ff @(negedge clk)
+  begin
+    // print warning in case of decoding errors
+    // note: this is done intentionally before checking RVC decoding, to
+    // suppress wrong (and annoying) messages during simulation
+    if (illegal_insn_o) begin
+      $warning("Illegal instruction (core %0d) at PC 0x%h:", $time, riscv_core.core_id_i);
+      //prettyPrintInstruction(instr_rdata_i, id_stage.current_pc_id_i);
+    end
+  end
+  // synopsys translate_on
+`endif
 
 
   ////////////////////////////////////////////////////////////////////////////////////////////
