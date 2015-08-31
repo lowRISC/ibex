@@ -712,7 +712,6 @@ module id_stage
   //                                                                      //
   //////////////////////////////////////////////////////////////////////////
 
-  /*
   hwloop_controller hwloop_controller_i
     (
      // from ID stage
@@ -733,8 +732,6 @@ module id_stage
      // to hwloop_regs
      .hwloop_dec_cnt_o             ( hwloop_dec_cnt_o      )
      );
-   */
-
 
 
   /////////////////////////////////////////////////////////////////////////////////

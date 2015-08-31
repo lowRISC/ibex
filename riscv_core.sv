@@ -179,6 +179,7 @@ module riscv_core
   logic        save_pc_if;
   logic        save_pc_id;
 
+
   // hwloop data from ALU
   logic [31:0] hwlp_cnt_ex;        // from id to ex stage (hwloop_regs)
   logic [2:0]  hwlp_we_ex;         // from id to ex stage (hwloop_regs)
@@ -187,7 +188,6 @@ module riscv_core
   logic [31:0] hwlp_start_data_ex; // hwloop data to write to hwloop_regs
   logic [31:0] hwlp_end_data_ex;   // hwloop data to write to hwloop_regs
   logic [31:0] hwlp_cnt_data_ex;   // hwloop data to write to hwloop_regs
-
 
   // Access to hwloop registers
   logic [31:0] hwlp_start_data;
@@ -606,15 +606,13 @@ module riscv_core
       .ext_counters_i          ( ext_perf_counters_i                    )
     );
 
-    // Mux for SPR access through Debug Unit
+    // Mux for CSR access through Debug Unit
     assign csr_addr      = (dbg_sp_mux == 1'b0) ? alu_operand_b_ex[11:0] : dbg_reg_addr;
     assign csr_wdata     = (dbg_sp_mux == 1'b0) ? alu_operand_a_ex : dbg_reg_wdata;
     assign csr_op        = (dbg_sp_mux == 1'b0) ? csr_op_ex
                                                 : (dbg_reg_we == 1'b1 ? `CSR_OP_WRITE : `CSR_OP_NONE);
     assign dbg_rdata     = (dbg_sp_mux == 1'b0) ? dbg_reg_rdata    : csr_rdata;
 
-
-    /*
 
     //////////////////////////////////////////////
     //      Hardware Loop Registers             //
@@ -643,13 +641,11 @@ module riscv_core
       .hwloop_dec_cnt_i        ( hwlp_dec_cnt        )
     );
 
-   // write to hwloop registers via SPR or instructions
-   assign hwlp_start_data = (hwlp_we_ex[0] == 1'b1) ? hwlp_start_data_ex : sp_hwlp_start;
-   assign hwlp_end_data   = (hwlp_we_ex[1] == 1'b1) ? hwlp_end_data_ex   : sp_hwlp_end;
-   assign hwlp_cnt_data   = (hwlp_we_ex[2] == 1'b1) ? hwlp_cnt_data_ex   : sp_hwlp_cnt;
-   assign hwlp_regid      = (|hwlp_we_ex)           ? hwlp_regid_ex      : sp_hwlp_regid;
-   assign hwlp_we         = hwlp_we_ex | sp_hwlp_we;
-   */
+    assign hwlp_start_data = hwlp_start_data_ex;
+    assign hwlp_end_data   = hwlp_end_data_ex;
+    assign hwlp_cnt_data   = hwlp_cnt_data_ex;
+    assign hwlp_regid      = hwlp_regid_ex;
+    assign hwlp_we         = hwlp_we_ex;
 
 
     /////////////////////////////////////////////////////////////

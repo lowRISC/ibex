@@ -56,6 +56,7 @@
 // PULP custom
 `define OPCODE_STORE_POST 7'h27
 `define OPCODE_LOAD_POST  7'h07
+`define OPCODE_HWLOOP     7'h6b
 
 
 // instruction masks (for tracer)

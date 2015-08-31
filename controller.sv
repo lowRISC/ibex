@@ -869,79 +869,70 @@ module controller
       end
 
 
-      /*
-
       ///////////////////////////////////////////////
       //  _   ___        ___     ___   ___  ____   //
       // | | | \ \      / / |   / _ \ / _ \|  _ \  //
       // | |_| |\ \ /\ / /| |  | | | | | | | |_) | //
       // |  _  | \ V  V / | |__| |_| | |_| |  __/  //
       // |_| |_|  \_/\_/  |_____\___/ \___/|_|     //
+      //                                           //
       ///////////////////////////////////////////////
 
-      `OPCODE_HWLOOP: begin // hwloop instructions
-
-        hwloop_regid_o  = instr_rdata_i[22:21];     // set hwloop register id
-
-        case (instr_rdata_i[25:23])
-          3'b000,3'b110,3'b111: begin // lp.start set start address
-             hwloop_wb_mux_sel_o = 1'b1;
-             hwloop_we_o[0]      = 1'b1;                     // set we for start addr reg
-             alu_op_a_mux_sel_o  = `OP_A_CURRPC;
-             alu_op_b_mux_sel_o  = `OP_B_IMM;
-             alu_operator        = `ALU_ADD;
-             alu_pc_mux_sel_o    = 1'b1;
-             immediate_mux_sel_o = `IMM_21S;
-             // $display("%t: hwloop start address: %h", $time, instr_rdata_i);
+      `OPCODE_HWLOOP: begin // hardware loop instructions
+        unique case (instr_rdata_i[14:12])
+          3'b000: begin // lp.starti set start address
+            hwloop_wb_mux_sel_o = 1'b1;
+            hwloop_we_o[0]      = 1'b1;                     // set we for start addr reg
+            alu_op_a_mux_sel_o  = `OP_A_CURRPC;
+            alu_op_b_mux_sel_o  = `OP_B_IMM;
+            alu_operator        = `ALU_ADD;
+            // $display("%t: hwloop start address: %h", $time, instr_rdata_i);
           end
-          3'b001: begin // lp.end set end address
-             hwloop_wb_mux_sel_o = 1'b1;
-             hwloop_we_o[1]      = 1'b1;                     // set we for end addr reg
-             alu_op_a_mux_sel_o  = `OP_A_CURRPC;
-             alu_op_b_mux_sel_o  = `OP_B_IMM;
-             alu_operator        = `ALU_ADD;
-             alu_pc_mux_sel_o    = 1'b1;
-             immediate_mux_sel_o = `IMM_21S;
-             // $display("%t: hwloop end address: %h", $time, instr_rdata_i);
+          3'b001: begin // lp.endi set end address
+            hwloop_wb_mux_sel_o = 1'b1;
+            hwloop_we_o[1]      = 1'b1;                     // set we for end addr reg
+            alu_op_a_mux_sel_o  = `OP_A_CURRPC;
+            alu_op_b_mux_sel_o  = `OP_B_IMM;
+            alu_operator        = `ALU_ADD;
+            // $display("%t: hwloop end address: %h", $time, instr_rdata_i);
           end
-          3'b010: begin // lp.counti initialize counter from immediate
-             hwloop_cnt_mux_sel_o = 2'b01;
-             hwloop_we_o[2]       = 1'b1;                     // set we for counter reg
-             // $display("%t: hwloop counter imm: %h", $time, instr_rdata_i);
+          3'b010: begin // lp.count initialize counter from register
+            hwloop_cnt_mux_sel_o = 2'b11;
+            hwloop_we_o[2]       = 1'b1;                     // set we for counter reg
+            rega_used            = 1'b1;
+            // $display("%t: hwloop counter: %h", $time, instr_rdata_i);
           end
-          3'b011: begin // lp.count initialize counter from register
-             hwloop_cnt_mux_sel_o = 2'b11;
-             hwloop_we_o[2]       = 1'b1;                     // set we for counter reg
-             rega_used            = 1'b1;
-             // $display("%t: hwloop counter: %h", $time, instr_rdata_i);
+          3'b011: begin // lp.counti initialize counter from immediate
+            hwloop_cnt_mux_sel_o = 2'b01;
+            hwloop_we_o[2]       = 1'b1;                     // set we for counter reg
+            // $display("%t: hwloop counter imm: %h", $time, instr_rdata_i);
           end
-          3'b100: begin // lp.setupi
-             hwloop_wb_mux_sel_o  = 1'b0;
-             hwloop_cnt_mux_sel_o = 2'b10;
-             hwloop_we_o          = 3'b111;                     // set we for counter/start/end reg
-             alu_op_a_mux_sel_o   = `OP_A_CURRPC;
-             alu_op_b_mux_sel_o   = `OP_B_IMM;
-             alu_operator         = `ALU_ADD;
-             alu_pc_mux_sel_o     = 1'b1;
-             immediate_mux_sel_o  = `IMM_8Z;
-             // $display("%t: hwloop setup imm: %h", $time, instr_rdata_i);
+          3'b100: begin // lp.setup
+            hwloop_wb_mux_sel_o  = 1'b0;
+            hwloop_cnt_mux_sel_o = 2'b11;
+            hwloop_we_o          = 3'b111;                     // set we for counter/start/end reg
+            alu_op_a_mux_sel_o   = `OP_A_CURRPC;
+            alu_op_b_mux_sel_o   = `OP_B_IMM;
+            alu_operator         = `ALU_ADD;
+            // TODO: immediate_mux_sel_o  = `IMM_16Z;
+            rega_used            = 1'b1;
+            // $display("%t: hwloop setup: %h", $time, instr_rdata_i);
           end
-          3'b101: begin // lp.setup
-             hwloop_wb_mux_sel_o  = 1'b0;
-             hwloop_cnt_mux_sel_o = 2'b11;
-             hwloop_we_o          = 3'b111;                     // set we for counter/start/end reg
-             alu_op_a_mux_sel_o   = `OP_A_CURRPC;
-             alu_op_b_mux_sel_o   = `OP_B_IMM;
-             alu_operator         = `ALU_ADD;
-             alu_pc_mux_sel_o     = 1'b1;
-             immediate_mux_sel_o  = `IMM_16Z;
-             rega_used            = 1'b1;
-             // $display("%t: hwloop setup: %h", $time, instr_rdata_i);
+          3'b101: begin // lp.setupi
+            hwloop_wb_mux_sel_o  = 1'b0;
+            hwloop_cnt_mux_sel_o = 2'b10;
+            hwloop_we_o          = 3'b111;                     // set we for counter/start/end reg
+            alu_op_a_mux_sel_o   = `OP_A_CURRPC;
+            alu_op_b_mux_sel_o   = `OP_B_IMM;
+            alu_operator         = `ALU_ADD;
+            // TODO: immediate_mux_sel_o  = `IMM_8Z;
+            // $display("%t: hwloop setup imm: %h", $time, instr_rdata_i);
+          end
+          default: begin
+            illegal_insn_int = 1'b1;
           end
         endcase
       end
-
-      */
 
       default: begin
         illegal_insn_int = 1'b1;
