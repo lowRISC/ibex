@@ -380,8 +380,13 @@ endfunction // prettyPrintInstruction
 `define EXC_CAUSE_ECALL  {1'b0, 4'd11};
 `define EXC_CAUSE_EBREAK {1'b0, 4'd03};
 
-// Hardware loops
+
+// Hardware loop registers
+// Caution: Changing this parameter is not sufficient to increase the number of
+// hwloop registers! There are adjustments needed in hwloop_controller and
+// controller (decoder).
 `define HWLOOP_REGS 2
+
 
 // Debug module
 `define N_WP      2     // #Watchpoints
@@ -397,10 +402,6 @@ endfunction // prettyPrintInstruction
 `define DSR_IIE   0
 `define DSR_INTE  1
 
-
-
-// TCDM_ADDRES PRE CALCULATION --> Bring part of the alu_adder_o calculation in the ID stage
-//`define TCDM_ADDR_PRECAL
 
 //`define BRANCH_PREDICTION
 

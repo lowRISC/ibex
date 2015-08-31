@@ -148,10 +148,6 @@ module id_stage
     input  logic        regfile_alu_we_fw_i,
     input  logic [31:0] regfile_alu_wdata_fw_i,
 
-`ifdef TCDM_ADDR_PRECAL
-    output logic [31:0] alu_adder_o,
-`endif
-
     // Performance Counters
     output logic        perf_jump_o,          // we are executing a jump instruction   (j, jr, jal, jalr)
     output logic        perf_branch_o,        // we are executing a branch instruction (bf, bnf)
@@ -787,10 +783,6 @@ module id_stage
 
       jump_in_ex                  <= 2'b0;
 
-      `ifdef TCDM_ADDR_PRECAL
-      alu_adder_o                 <= '0;
-      `endif
-
     end
     else if ((stall_ex_o == 1'b0) && (data_misaligned_i == 1'b1))
     begin // misaligned access case, only unstall alu operands
@@ -853,10 +845,6 @@ module id_stage
       hwloop_cnt_o                <= hwloop_cnt;
 
       jump_in_ex                  <= jump_in_id_o;
-
-`ifdef TCDM_ADDR_PRECAL
-      alu_adder_o                 <= alu_operand_a + alu_operand_b;
-`endif
 
     end
   end

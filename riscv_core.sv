@@ -222,10 +222,6 @@ module riscv_core
   logic [31:0] dbg_npc;
   logic        dbg_set_npc;
 
-`ifdef TCDM_ADDR_PRECAL
-  logic [31:0] alu_adder_ex;
-`endif
-
   // Performance Counters
   logic        perf_jump;
   logic        perf_branch;
@@ -421,9 +417,6 @@ module riscv_core
       .regfile_waddr_wb_i           ( regfile_waddr_fw_wb_o         ),  // Write address ex-wb pipeline
       .regfile_we_wb_i              ( regfile_we_wb                 ),  // write enable for the register file
       .regfile_wdata_wb_i           ( regfile_wdata                 ),  // write data to commit in the register file
-`ifdef TCDM_ADDR_PRECAL
-      .alu_adder_o                  ( alu_adder_ex                  ),
-`endif
 
       .perf_jump_o                  ( perf_jump                     ),
       .perf_branch_o                ( perf_branch                   ),
@@ -506,11 +499,6 @@ module riscv_core
       .regfile_alu_waddr_fw_o     ( regfile_alu_waddr_fw         ),
       .regfile_alu_we_fw_o        ( regfile_alu_we_fw            ),
       .regfile_alu_wdata_fw_o     ( regfile_alu_wdata_fw         )
-
-`ifdef TCDM_ADDR_PRECAL
-      ,
-      .alu_adder_i                ( alu_adder_ex                 )
-`endif
     );
 
 

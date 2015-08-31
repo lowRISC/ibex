@@ -48,11 +48,7 @@ module alu
 );
 
 
-`ifdef TCDM_ADDR_PRECAL
-  assign adder_lsu_o = adder_i;
-`else
   assign adder_lsu_o = operand_a_i + operand_b_i;
-`endif
 
   logic [31:0] operand_a_rev;     // bit reversed signal of operand_a_i
 

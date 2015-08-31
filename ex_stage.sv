@@ -96,11 +96,6 @@ module ex_stage
     // To IF: Jump and branch target and decision
     output logic [31:0]               jump_target_o,
     output logic                      branch_decision_o
-
-`ifdef TCDM_ADDR_PRECAL
-    ,
-    input logic [31:0]                alu_adder_i
-`endif
 );
 
 
@@ -125,19 +120,16 @@ module ex_stage
     if (csr_access_i == 1'b1)
       regfile_alu_wdata_fw_o = csr_rdata_i;
   end
-  // assign regfile_alu_wdata_fw_o    = (mult_en_i == 1'b0) ? alu_result : mult_result;
 
-  //NOTE Igor fix: replaced alu_adder_int with alu_adder_lsu_int --> Now data_addr is calculated with
-  //NOTE a dedicated adder, no carry is considered , just op_a + op_b from id stage
-  assign data_addr_ex_o        = (prepost_useincr_i == 1'b1) ? alu_adder_lsu_int : alu_operand_a_i;
+  assign data_addr_ex_o = (prepost_useincr_i == 1'b1) ? alu_adder_lsu_int : alu_operand_a_i;
 
   // hwloop mux. selects the right data to be sent to the hwloop registers (start/end-address and counter)
   always_comb
   begin : hwloop_start_mux
     case (hwloop_wb_mux_sel_i)
-      1'b0: hwloop_start_data_o  = hwloop_pc_plus4_i;
-      1'b1: hwloop_start_data_o  = alu_result;
-    endcase; // case (hwloop_wb_mux_sel)
+      1'b0: hwloop_start_data_o = hwloop_pc_plus4_i;
+      1'b1: hwloop_start_data_o = alu_result;
+    endcase
   end
 
   // assign alu result to hwloop end data
@@ -146,7 +138,7 @@ module ex_stage
   // assign hwloop mux. selects the right data to be sent to the hwloop registers (start/end-address and counter)
   assign hwloop_cnt_data_o = hwloop_cnt_i;
 
-  // Branch is taken when result == 1'b1
+  // Branch is taken when result[0] == 1'b1
   assign branch_decision_o = alu_result[0];
   assign jump_target_o     = alu_operand_c_i;
 
