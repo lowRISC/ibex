@@ -194,6 +194,11 @@ module compressed_decoder
             if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
           end
 
+          3'b111: begin
+            // c.bgez -> bge rs1', x0, imm
+            instr_o = {{3 {instr_i[12]}}, instr_i[12:10], instr_i[2], 5'b0, 2'b01, instr_i[9:7], 3'b101, instr_i[6:3], instr_i[12], `OPCODE_BRANCH};
+          end
+
           default: begin
             illegal_instr_o = 1'b1;
           end
