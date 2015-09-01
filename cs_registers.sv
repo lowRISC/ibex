@@ -28,7 +28,7 @@
 module cs_registers
 #(
   parameter N_EXT_PERF_COUNTERS = 0
-  )
+)
 (
   // Clock and Reset
   input logic         clk,
@@ -38,7 +38,7 @@ module cs_registers
   input logic   [4:0] core_id_i,
   input logic   [4:0] cluster_id_i,
 
-  // Interface to special purpose registers (SRAM like)
+  // Interface to registers (SRAM like)
   input logic  [11:0] csr_addr_i,
   input logic  [31:0] csr_wdata_i,
   input logic   [1:0] csr_op_i,
@@ -48,11 +48,13 @@ module cs_registers
   input logic  [31:0] curr_pc_if_i,
   input logic  [31:0] curr_pc_id_i,
   input logic         save_pc_if_i,
-  input logic         save_pc_id_i, // TODO: check if both IF/ID pc save is needed
+  input logic         save_pc_id_i,
+
+  output logic  [1:0] irq_enable_o,
   output logic [31:0] epcr_o,
 
   // Performance Counters
-  input  logic        stall_id_i,        // Stall ID stage
+  input  logic        stall_id_i,        // stall ID stage
 
   input  logic        instr_fetch_i,     // instruction fetch
 
@@ -93,71 +95,94 @@ module cs_registers
   logic                          is_pcer;
   logic                          is_pcmr;
 
-  logic is_constant;
-  logic is_register;
-
-  logic [31:0] constant_rdata_int;
-  logic [31:0] register_rdata_int;
-
-  logic is_readonly;
-  logic illegal_address;
-
-  // CSRs and index of CSR to access
-  int csr_index; // TODO: check synthesis result
+  // Generic CSRs
+  int          csr_index;
   logic [31:0] csr [0:`CSR_MAX_IDX];
+  logic [31:0] csr_n [0:`CSR_MAX_IDX];
+
+  // CSR update logic
+  logic [31:0] csr_wdata_int;
+  logic        csr_we_int;
+
+  // Interrupt control signals
+  logic irq_enable, irq_enable_n;
 
 
-  assign is_readonly = (csr_addr_i[11:10] == 2'b11);
-  assign illegal_address = ~is_constant && ~is_register;
+  // read logic
+  always_comb
+  begin
+    csr_rdata_int = 'x;
+
+    case (csr_addr_i)
+      // mstatus: always M-mode, contains IE bit
+      12'h300: csr_rdata_int = {29'b0, 2'b11, irq_enable};
+
+      // mscratch
+      12'h340: csr_rdata_int = csr[`CSR_IDX_MSCRATCH];
+      // mepc: exception program counter
+      12'h341: csr_rdata_int = csr[`CSR_IDX_MEPC];
+
+      // mcpuid: RV32I
+      12'hF00: csr_rdata_int = 32'h00_00_01_00;
+      // mimpid: PULP, anonymous source (no allocated ID yet)
+      12'hF01: csr_rdata_int = 32'h00_00_80_00;
+      // mhartid: unique hardware thread id
+      12'hF10: csr_rdata_int = {22'b0, cluster_id_i, core_id_i};
+    endcase
+  end
+
+
+  // write logic
+  always_comb
+  begin
+    csr_n        = csr;
+    irq_enable_n = irq_enable;
+
+    case (csr_addr_i)
+      // mstatus: always M-mode, contains IE bit
+      12'h300: if (csr_we_int) irq_enable_n = csr_wdata_int[0];
+
+      // mscratch
+      12'h340: if (csr_we_int) csr_n[`CSR_IDX_MSCRATCH] = csr_wdata_int;
+      // mepc: exception program counter
+      12'h341: if (csr_we_int) csr_n[`CSR_IDX_MEPC] = csr_wdata_int;
+    endcase
+  end
+
+
+  // CSR operation logic
+  always_comb
+  begin
+    csr_wdata_int = csr_wdata_i;
+    csr_we_int    = 1'b1;
+
+    unique case (csr_op_i)
+      `CSR_OP_WRITE: csr_wdata_int = csr_wdata_i;
+      `CSR_OP_SET:   csr_wdata_int = csr_wdata_i | csr_rdata_o;
+      `CSR_OP_CLEAR: csr_wdata_int = csr_wdata_i & ~(csr_rdata_o);
+
+      `CSR_OP_NONE: begin
+        csr_wdata_int = csr_wdata_i;
+        csr_we_int    = 1'b0;
+      end
+    endcase
+  end
 
 
   // output mux
   always_comb
   begin
-    csr_rdata_o = 'x;
+    csr_rdata_o = csr_rdata_int;
 
-    if (is_constant == 1'b1)
-      csr_rdata_o = constant_rdata_int;
-    else if (is_register == 1'b1)
-      csr_rdata_o = register_rdata_int;
-    else // must be performance counter
+    // performance counters
+    if (is_pccr || is_pcer || is_pcmr)
       csr_rdata_o = perf_rdata;
   end
 
 
-  // address decoder for constant CSRs
-  always_comb
-  begin
-    constant_rdata_int = '0;
-    is_constant = 1'b1;
-    unique case (csr_addr_i)
-      12'hF00: constant_rdata_int = 32'h00_00_01_00;  // mcpuid: RV32I
-      12'hF01: constant_rdata_int = 32'h00_00_80_00;  // mimpid: PULP3, anonymous source (no allocated ID)
-      12'hF10: constant_rdata_int = {22'b0, cluster_id_i, core_id_i}; // mhartid: unique hardware thread id
-
-      default: is_constant = 1'b0;
-    endcase
-  end
-
-  // address decoder for regular CSRs
-  always_comb
-  begin
-    csr_index    = '0;
-    is_register  = 1'b1;
-    unique case (csr_addr_i)
-      12'h340:       csr_index = `CSR_IDX_MSCRATCH;
-      12'h341:       csr_index = `CSR_IDX_MEPC;
-
-      default: is_register = 1'b0;
-    endcase
-  end
-
-  assign register_rdata_int = csr[csr_index];
-
-
-
   // directly output some registers
-  assign epcr_o = csr[`CSR_IDX_MEPC];
+  assign irq_enable_o = irq_enable;
+  assign epcr_o       = csr[`CSR_IDX_MEPC];
 
 
   // actual registers
@@ -165,23 +190,16 @@ module cs_registers
   begin
     if (rst_n == 1'b0)
     begin
-      csr <= '{default: 32'b0}; // new SV syntax TODO: check synthesis result
+      csr        <= '{default: 32'b0};
+      irq_enable <= 1'b0;
     end
     else
     begin
-      // write CSR through instruction
-      if (is_readonly == 1'b0 && is_pccr == 1'b0) begin
-        unique case (csr_op_i)
-          `CSR_OP_NONE:   ;
-          `CSR_OP_WRITE:  csr[csr_index] <= csr_wdata_i;
-          `CSR_OP_SET:    csr[csr_index] <= csr_wdata_i | register_rdata_int;
-          `CSR_OP_CLEAR:  csr[csr_index] <= csr_wdata_i & ~(register_rdata_int);
-        endcase
-      end
+      // update CSRs
+      csr        <= csr_n;
+      irq_enable <= irq_enable_n;
 
-      // writes from exception controller get priority
-
-      // write exception PC
+      // exception PC writes from exception controller get priority
       if (save_pc_if_i == 1'b1)
         csr[`CSR_IDX_MEPC] <= curr_pc_if_i;
       else if (save_pc_id_i == 1'b1)
@@ -198,7 +216,6 @@ module cs_registers
   // |_|   \___|_|  |_|(_)  \____\___/ \__,_|_| |_|\__\___|_|    //
   //                                                             //
   /////////////////////////////////////////////////////////////////
-
 
   assign PCCR_in[0]  = 1'b1;                           // cycle counter
   assign PCCR_in[1]  = ~stall_id_i;                    // instruction counter

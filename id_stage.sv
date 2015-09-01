@@ -674,7 +674,7 @@ module id_stage
       .irq_enable_i         ( irq_enable_i      ),
       .irq_present_o        ( irq_present       ),
 
-      // SPR
+      // CSR
       .save_pc_if_o         ( save_pc_if_o      ),
       .save_pc_id_o         ( save_pc_id_o      ),
       .save_sr_o            ( save_sr_o         ),

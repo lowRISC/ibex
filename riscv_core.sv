@@ -30,7 +30,7 @@
 
 module riscv_core
 #(
-    parameter N_EXT_PERF_COUNTERS = 0
+  parameter N_EXT_PERF_COUNTERS = 0
 )
 (
   // Clock and Reset
@@ -110,8 +110,8 @@ module riscv_core
   logic        stall_ex;            // Stall EX Stage
   logic        stall_wb;            // Stall write back stage
 
-  logic          core_busy;
-  logic          if_busy;
+  logic        core_busy;
+  logic        if_busy;
 
 
   // Register Data
@@ -559,34 +559,37 @@ module riscv_core
     )
     cs_registers_i
     (
-      .clk                     ( clk                   ),
-      .rst_n                   ( rst_n                 ),
+      .clk                     ( clk            ),
+      .rst_n                   ( rst_n          ),
 
       // Core and Cluster ID from outside
-      .core_id_i               ( core_id_i             ),
-      .cluster_id_i            ( cluster_id_i          ),
+      .core_id_i               ( core_id_i      ),
+      .cluster_id_i            ( cluster_id_i   ),
 
-      // Interface to Special register (SRAM LIKE)
-      .csr_addr_i              ( csr_addr              ),
-      .csr_wdata_i             ( csr_wdata             ),
-      .csr_op_i                ( csr_op                ),
-      .csr_rdata_o             ( csr_rdata             ),
+      // Interface to CSRs (SRAM like)
+      .csr_addr_i              ( csr_addr       ),
+      .csr_wdata_i             ( csr_wdata      ),
+      .csr_op_i                ( csr_op         ),
+      .csr_rdata_o             ( csr_rdata      ),
 
-      .curr_pc_if_i            ( current_pc_if         ), // from IF stage
-      .curr_pc_id_i            ( current_pc_id         ), // from IF stage
-      .save_pc_if_i            ( save_pc_if            ),
-      .save_pc_id_i            ( save_pc_id            ),
-      .epcr_o                  ( epcr                  ),
+      // Control signals for the core
+      .curr_pc_if_i            ( current_pc_if  ),    // from IF stage
+      .curr_pc_id_i            ( current_pc_id  ),    // from IF stage
+      .save_pc_if_i            ( save_pc_if     ),
+      .save_pc_id_i            ( save_pc_id     ),
+
+      .irq_enable_o            ( irq_enable     )
+      .epcr_o                  ( epcr           ),
 
       // performance counter related signals
-      .stall_id_i              ( stall_id         ),
+      .stall_id_i              ( stall_id       ),
 
-      .instr_fetch_i           ( ~instr_ack_int   ),
+      .instr_fetch_i           ( ~instr_ack_int ),
 
-      .jump_i                  ( perf_jump        ),
-      .branch_i                ( perf_branch      ),
-      .ld_stall_i              ( perf_ld_stall    ),
-      .jr_stall_i              ( perf_jr_stall    ),
+      .jump_i                  ( perf_jump      ),
+      .branch_i                ( perf_branch    ),
+      .ld_stall_i              ( perf_ld_stall  ),
+      .jr_stall_i              ( perf_jr_stall  ),
 
       .mem_load_i              ( data_req_o & data_gnt_i & (~data_we_o) ),
       .mem_store_i             ( data_req_o & data_gnt_i & data_we_o    ),
