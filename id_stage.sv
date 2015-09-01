@@ -363,7 +363,7 @@ module id_stage
       `BRANCH_JAL:    jump_target = current_pc_id_i + imm_uj_type;
       `BRANCH_JALR:   jump_target = regfile_data_ra_id + imm_i_type; // cannot forward rs1 as path is too long
       `BRANCH_COND:   jump_target = current_pc_id_i + imm_sb_type;
-      default:        jump_target = '0;
+      default:        jump_target = current_pc_id_i + imm_sb_type; // replicate this as default to avoid another case
     endcase
   end
 
