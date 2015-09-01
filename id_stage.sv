@@ -498,7 +498,7 @@ module id_stage
     .rst_n        ( rst_n              ),
 
     // Read port a
-    .raddr_a_i    ( (dbg_reg_mux_i == 1'b0) ? regfile_addr_ra_id : dbg_reg_addr_i ),
+    .raddr_a_i    ( regfile_addr_ra_id ),
     .rdata_a_o    ( regfile_data_ra_id ),
 
     // Read port b
@@ -506,7 +506,7 @@ module id_stage
     .rdata_b_o    ( regfile_data_rb_id ),
 
     // Read port c
-    .raddr_c_i    ( regfile_addr_rc_id ),
+    .raddr_c_i    ( (dbg_reg_mux_i == 1'b0) ? regfile_addr_rc_id : dbg_reg_addr_i ),
     .rdata_c_o    ( regfile_data_rc_id ),
 
     // Write port a

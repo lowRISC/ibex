@@ -101,8 +101,7 @@ module if_stage
   logic        fetch_req;
   logic [31:0] fetch_rdata;
   logic        fetch_valid;
-  logic [31:0] fetch_addr, fetch_addr_n;
-  logic [31:0] fetch_addr_Q;
+  logic [31:0] fetch_addr_n, fetch_addr_Q, fetch_addr_QQ;
 
   logic [31:0] instr_rdata_int;
 
@@ -117,27 +116,27 @@ module if_stage
   begin
     // default values for regular aligned access
     instr_rdata_int   = fetch_rdata;
-    current_pc_if_o   = {fetch_addr[31:2], 2'b00};
+    current_pc_if_o   = {fetch_addr_Q[31:2], 2'b00};
 
     if (unaligned) begin
       if (crossword) begin
         // cross-word access, regular instruction
         instr_rdata_int   = {fetch_rdata[15:0], data_arr};
-        current_pc_if_o   = {fetch_addr_Q[31:2], 2'b10};
+        current_pc_if_o   = {fetch_addr_QQ[31:2], 2'b10};
       end else begin
         // unaligned compressed instruction
         // don't care about upper half-word, insert good value for
         // optimization
         instr_rdata_int   = {fetch_rdata[15:0], fetch_rdata[31:16]};
-        current_pc_if_o   = {fetch_addr[31:2], 2'b10};
+        current_pc_if_o   = {fetch_addr_Q[31:2], 2'b10};
       end
     end
   end
 
 
   // compressed instruction detection
-  assign is_compressed[0] = fetch_rdata[1:0]   != 2'b11;
-  assign is_compressed[1] = fetch_rdata[17:16] != 2'b11;
+  assign is_compressed[0] = (fetch_rdata[1:0]   != 2'b11);
+  assign is_compressed[1] = (fetch_rdata[17:16] != 2'b11);
 
 
   // exception PC selection mux
@@ -158,7 +157,7 @@ module if_stage
       `PC_BOOT:      fetch_addr_n = {boot_addr_i[31:5], `EXC_OFF_RST};
       `PC_JUMP:      fetch_addr_n = {jump_target_id_i[31:2], 2'b0};
       `PC_BRANCH:    fetch_addr_n = {jump_target_ex_i[31:2], 2'b0};
-      `PC_INCR:      fetch_addr_n = fetch_addr + 32'd4; // incremented PC
+      `PC_INCR:      fetch_addr_n = fetch_addr_Q + 32'd4; // incremented PC
       `PC_EXCEPTION: fetch_addr_n = exc_pc;             // set PC to exception handler
       `PC_ERET:      fetch_addr_n = exception_pc_reg_i; // PC is restored when returning from IRQ/exception
       `PC_HWLOOP:    fetch_addr_n = pc_from_hwloop_i;   // PC is taken from hwloop start addr
@@ -195,16 +194,12 @@ module if_stage
     .valid_o        ( fetch_valid    ),
     .addr_i         ( fetch_addr_n   ),
     .rdata_o        ( fetch_rdata    ),
-    .last_addr_o    ( fetch_addr     ),
 
     .instr_req_o    ( instr_req_o    ),
     .instr_addr_o   ( instr_addr_o   ),
     .instr_gnt_i    ( instr_gnt_i    ),
     .instr_rvalid_i ( instr_rvalid_i ),
-    .instr_rdata_i  ( instr_rdata_i  ),
-
-    .stall_if_i     ( 1'b0           ),
-    .drop_request_i ( 1'b0           )  // TODO: Remove?
+    .instr_rdata_i  ( instr_rdata_i  )
   );
 
 
@@ -403,15 +398,20 @@ module if_stage
 
 
   // store instr_core_if data in local cache
+  // store last address used to fetch an instruction
+  // we also store the address we used before, so
+  // fetch_addr_n -> fetch_addr_Q -> fetch_addr_QQ
   always_ff @(posedge clk, negedge rst_n)
   begin
     if (rst_n == 1'b0) begin
-      data_arr     <= 16'b0;
-      fetch_addr_Q <= 32'b0;
+      data_arr      <= 16'b0;
+      fetch_addr_Q  <= 32'b0;
+      fetch_addr_QQ <= 32'b0;
     end else begin
       if (fetch_req) begin
-        data_arr     <= fetch_rdata[31:16];
-        fetch_addr_Q <= fetch_addr;
+        data_arr      <= fetch_rdata[31:16];
+        fetch_addr_Q  <= fetch_addr_n;
+        fetch_addr_QQ <= fetch_addr_Q;
       end
     end
   end
@@ -421,7 +421,7 @@ module if_stage
                        offset_fsm_cs == VALID_JUMPED_UNALIGNED ||
                        offset_fsm_cs == VALID_ALIGNED          ||
                        offset_fsm_cs == VALID_UNALIGNED_32     ||
-                       offset_fsm_cs == UNALIGNED_16) || instr_req_o;
+                       offset_fsm_cs == UNALIGNED_16)          || instr_req_o;
 
 
   // IF-ID pipeline registers, frozen when the ID stage is stalled
