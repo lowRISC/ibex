@@ -80,26 +80,29 @@ module compressed_decoder
 
             unique case ({instr_i[12:10], instr_i[6:5]})
               // c.xor -> xor rd', rd', rs2'
-              5'b00000: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b100, 2'b01, instr_i[9:7], `OPCODE_OP};
+              5'b00000: instr_o = {7'b000_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b100, 2'b01, instr_i[9:7], `OPCODE_OP};
 
               // c.sll -> sll rd', rd', rs2'
-              5'b00100: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b001, 2'b01, instr_i[9:7], `OPCODE_OP};
+              5'b00100: instr_o = {7'b000_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b001, 2'b01, instr_i[9:7], `OPCODE_OP};
               // c.srl -> srl rd', rd', rs2'
-              5'b00101: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b101, 2'b01, instr_i[9:7], `OPCODE_OP};
+              5'b00101: instr_o = {7'b000_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b101, 2'b01, instr_i[9:7], `OPCODE_OP};
+              // c.sra -> sra rd', rd', rs2'
+              5'b00001: instr_o = {7'b010_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b101, 2'b01, instr_i[9:7], `OPCODE_OP};
               // c.sltu -> sltu rd', rd', rs2'
-              5'b00111: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b011, 2'b01, instr_i[9:7], `OPCODE_OP};
+              5'b00111: instr_o = {7'b000_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b011, 2'b01, instr_i[9:7], `OPCODE_OP};
 
               // c.sllr -> sll rd', rs1', rd'
-              5'b01100: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b001, 2'b01, instr_i[4:2], `OPCODE_OP};
+              5'b01100: instr_o = {7'b000_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b001, 2'b01, instr_i[4:2], `OPCODE_OP};
               // c.srlr -> srl rd', rs1', rd'
-              5'b01101: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b101, 2'b01, instr_i[4:2], `OPCODE_OP};
+              5'b01101: instr_o = {7'b000_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b101, 2'b01, instr_i[4:2], `OPCODE_OP};
               // c.sltur -> sltu rd', rs1', rd'
-              5'b01111: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b011, 2'b01, instr_i[4:2], `OPCODE_OP};
+              5'b01111: instr_o = {7'b000_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b011, 2'b01, instr_i[4:2], `OPCODE_OP};
 
-              // c.sra
               // c.slt -> slt rd', rd', rs2'
-              5'b00110: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b010, 2'b01, instr_i[9:7], `OPCODE_OP};
-              // c.sltr
+              5'b00110: instr_o = {7'b000_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b010, 2'b01, instr_i[9:7], `OPCODE_OP};
+              // c.sltr -> slt rd', rs1', rd'
+              5'b01110: instr_o = {7'b000_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b010, 2'b01, instr_i[4:2], `OPCODE_OP};
+
               default:  illegal_instr_o = 1'b1;
             endcase
           end
