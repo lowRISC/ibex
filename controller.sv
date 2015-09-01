@@ -170,7 +170,6 @@ module controller
   logic        jr_stall;
   logic        trap_stall;
 
-  logic        set_npc;
 `ifdef BRANCH_PREDICTION
   logic        wrong_branch_taken;
 `endif
@@ -1185,11 +1184,21 @@ module controller
 
       DBG_WAIT:
       begin
-        if(dbg_set_npc_i == 1'b1)
-          ctrl_fsm_ns = FIRST_FETCH;
+        halt_if = 1'b1;
+        halt_id = 1'b1;
 
-        if(dbg_stall_i == 1'b0)
+        if(dbg_set_npc_i == 1'b1) begin
+          halt_id      = 1'b0;
+          pc_mux_sel_o = `PC_DBG_NPC;
+          ctrl_fsm_ns  = DBG_WAIT;
+        end
+
+        if(dbg_stall_i == 1'b0) begin
+          halt_if = 1'b0;
+          halt_id = 1'b0;
+
           ctrl_fsm_ns = DECODE;
+        end
       end
 
       FLUSH_EX:
@@ -1296,8 +1305,8 @@ module controller
     // we unstall the if_stage if the debug unit wants to set a new
     // pc, so that the new value gets written into current_pc_if and is
     // used by the instr_core_interface
-    stall_if_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | halt_if | dbg_stall_i | (~pc_valid_i) | (jump_in_id_o == `BRANCH_COND);
-    stall_id_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | halt_id | dbg_stall_i;
+    stall_if_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | halt_if | (~pc_valid_i) | (jump_in_id_o == `BRANCH_COND);
+    stall_id_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | halt_id;
     stall_ex_o = instr_ack_stall | lsu_stall | dbg_stall_i;
     stall_wb_o = lsu_stall | dbg_stall_i;
   end
@@ -1371,22 +1380,6 @@ module controller
     else
     begin
       ctrl_fsm_cs <= ctrl_fsm_ns;
-    end
-  end
-
-  // hold NPC until IF stage has taken over this value
-  always_ff @(posedge clk , negedge rst_n)
-  begin : HOLD_NPC
-    if ( rst_n == 1'b0 )
-    begin
-      set_npc    <= 1'b0;
-    end
-    else
-    begin
-      if (dbg_set_npc_i == 1'b1)
-        set_npc <= 1'b1;
-      else if (stall_if_o == 1'b0)
-        set_npc <= 1'b0;
     end
   end
 

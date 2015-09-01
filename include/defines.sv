@@ -359,6 +359,7 @@ endfunction // prettyPrintInstruction
 `define PC_EXCEPTION     3'b100
 `define PC_ERET          3'b101
 `define PC_HWLOOP        3'b110
+`define PC_DBG_NPC       3'b111
 
 // Exception PC mux selector defines
 `define EXC_PC_NO_INCR   2'b00

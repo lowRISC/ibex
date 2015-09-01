@@ -274,8 +274,8 @@ module riscv_core
       .exc_pc_mux_i        ( exc_pc_mux_id   ),   // selector for exception multiplexer
 
       // from debug unit
-      .dbg_pc_from_npc     ( dbg_npc         ),
-      .dbg_set_npc         ( dbg_set_npc     ),
+      .dbg_npc_i           ( dbg_npc         ),
+      .dbg_set_npc_i       ( dbg_set_npc     ),
 
       // Jump and branch target and decision
       .jump_in_id_i        ( jump_in_id      ),
