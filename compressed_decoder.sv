@@ -76,6 +76,8 @@ module compressed_decoder
           end
 
           3'b011: begin
+            instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b0, 2'b01, instr_i[9:7], `OPCODE_OP};
+
             unique case ({instr_i[12:10], instr_i[6:5]})
               // c.xor -> xor rd', rd', rs2'
               5'b00000: instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b100, 2'b01, instr_i[9:7], `OPCODE_OP};
