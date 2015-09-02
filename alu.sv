@@ -41,8 +41,6 @@ module alu
 
    output logic [31:0]              adder_lsu_o,
    output logic [31:0]              result_o,
-   output logic                     overflow_o,
-   output logic                     carry_o,
    output logic                     flag_o
 );
 
@@ -538,18 +536,11 @@ module alu
     shift_left = 1'b0;
     shift_amt  = operand_b_i;
     result_o   = 'x;
-    carry_o    = 1'b0;
-    overflow_o = 1'b0;
     flag_o     = 1'b0;
 
     unique case (operator_i)
       // Standard Operations
-      `ALU_ADD, `ALU_SUB:
-      begin // Addition defined above
-        result_o   = adder_result[31:0];
-        carry_o    = carry_out[3];
-        overflow_o = (adder_op_a[31] ^ adder_result[31]) & (adder_op_b[31] ^ adder_result[31]); // ++ => - and -- => +
-      end
+      `ALU_ADD, `ALU_SUB:  result_o = adder_result;
       `ALU_AVG, `ALU_AVGU: result_o = result_avg;
       `ALU_AND: result_o = operand_a_i & operand_b_i;
       `ALU_OR:  result_o = operand_a_i | operand_b_i;

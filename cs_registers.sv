@@ -102,6 +102,7 @@ module cs_registers
 
   // CSR update logic
   logic [31:0] csr_wdata_int;
+  logic [31:0] csr_rdata_int;
   logic        csr_we_int;
 
   // Interrupt control signals

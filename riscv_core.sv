@@ -520,8 +520,8 @@ module riscv_core
       .data_type_ex_i        ( data_type_ex            ),
       .data_wdata_ex_i       ( regfile_rb_data_ex      ),
       .data_reg_offset_ex_i  ( data_reg_offset_ex      ),
-
       .data_sign_ext_ex_i    ( data_sign_ext_ex        ),  // sign extension
+
       .data_rdata_ex_o       ( regfile_wdata           ),
       .data_req_ex_i         ( data_req_ex             ),
       .data_addr_ex_i        ( data_addr_ex            ),
@@ -531,13 +531,14 @@ module riscv_core
       .data_misaligned_o     ( data_misaligned         ),
 
       //output to data memory
+      .data_req_o            ( data_req_o              ),
+      .data_addr_o           ( data_addr_o             ),
+      .data_we_o             ( data_we_o               ),
+
       .data_be_o             ( data_be_o               ),
       .data_wdata_o          ( data_wdata_o            ),
       .data_rdata_i          ( data_rdata_i            ),
       .data_rvalid_i         ( data_r_valid_i          ),
-      .data_addr_o           ( data_addr_o             ),
-      .data_we_o             ( data_we_o               ),
-      .data_req_o            ( data_req_o              ),
       .data_gnt_i            ( data_gnt_i              ),
 
       .ex_stall_i            ( stall_ex                )
@@ -578,7 +579,7 @@ module riscv_core
       .save_pc_if_i            ( save_pc_if     ),
       .save_pc_id_i            ( save_pc_id     ),
 
-      .irq_enable_o            ( irq_enable     )
+      .irq_enable_o            ( irq_enable     ),
       .epcr_o                  ( epcr           ),
 
       // performance counter related signals

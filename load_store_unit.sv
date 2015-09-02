@@ -37,10 +37,10 @@ module load_store_unit
     input  logic         data_we_ex_i,         // write enable                      -> from ex stage
     input  logic [1:0]   data_type_ex_i,       // Data type word, halfword, byte    -> from ex stage
     input  logic [31:0]  data_wdata_ex_i,      // data to write to memory           -> from ex stage
-    input  logic         data_sign_ext_ex_i,   // sign extension                    -> from ex stage
     input  logic [1:0]   data_reg_offset_ex_i, // offset inside register for stores -> from ex stage
+    input  logic         data_sign_ext_ex_i,   // sign extension                    -> from ex stage
+
     output logic [31:0]  data_rdata_ex_o,      // requested data                    -> to ex stage
-    output logic [31:0]  lsu_data_reg_o,       // requested data registered         -> to id stage
     input  logic         data_req_ex_i,        // data request                      -> from ex stage
     input  logic [31:0]  data_addr_ex_i,       // data address                      -> from ex stage
     output logic         data_ack_int_o,       // data ack                          -> to controller
@@ -348,9 +348,6 @@ module load_store_unit
 
   // output to register file
   assign data_rdata_ex_o = (latch_rdata == 1'b1) ? data_rdata_ext : rdata_q;
-
-  // registered result of data request
-  assign lsu_data_reg_o = rdata_q;
 
 
   // FSM

@@ -193,9 +193,10 @@ module if_stage
     .rst_n          ( rst_n          ),
 
     .req_i          ( fetch_req      ),
-    .valid_o        ( fetch_valid    ),
     .addr_i         ( fetch_addr_n   ),
+    .valid_o        ( fetch_valid    ),
     .rdata_o        ( fetch_rdata    ),
+    .last_addr_o    ( fetch_addr_Q   ),
 
     .instr_req_o    ( instr_req_o    ),
     .instr_addr_o   ( instr_addr_o   ),
