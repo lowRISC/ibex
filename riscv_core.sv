@@ -229,460 +229,458 @@ module riscv_core
   logic        perf_ld_stall;
 
 
-
   assign core_busy_o = if_busy || core_busy;
 
 
-    //////////////////////////////////////////////////
-    //   ___ _____   ____ _____  _    ____ _____    //
-    //  |_ _|  ___| / ___|_   _|/ \  / ___| ____|   //
-    //   | || |_    \___ \ | | / _ \| |  _|  _|     //
-    //   | ||  _|    ___) || |/ ___ \ |_| | |___    //
-    //  |___|_|     |____/ |_/_/   \_\____|_____|   //
-    //                                              //
-    //////////////////////////////////////////////////
-    if_stage if_stage_i
-    (
-      .clk                 ( clk             ),
-      .rst_n               ( rst_n           ),
-
-      // boot address (trap vector location)
-      .boot_addr_i         ( boot_addr_i     ),
-
-      // instruction request control
-      .req_i               ( instr_req_int   ),
-      .valid_o             ( instr_ack_int   ),
-      .drop_request_i      ( 1'b0 ),
-
-      // instruction cache interface
-      .instr_req_o         ( instr_req_o     ),
-      .instr_addr_o        ( instr_addr_o    ),
-      .instr_gnt_i         ( instr_grant_i   ),
-      .instr_rvalid_i      ( instr_rvalid_i  ),
-      .instr_rdata_i       ( instr_rdata_i   ),
-
-      // outputs to ID stage
-      .instr_rdata_id_o    ( instr_rdata_id  ),   // Output of IF Pipeline stage
-      .current_pc_if_o     ( current_pc_if   ),   // current pc
-      .current_pc_id_o     ( current_pc_id   ),   // current pc
-
-      // Forwrding ports - control signals
-      .force_nop_i         ( force_nop_id    ),   // select incoming instr or NOP
-      .exception_pc_reg_i  ( epcr            ),   // Exception PC register
-      .pc_from_hwloop_i    ( hwlp_targ_addr  ),   // pc from hwloop start address
-      .pc_mux_sel_i        ( pc_mux_sel_id   ),   // sel for pc multiplexer
-      .exc_pc_mux_i        ( exc_pc_mux_id   ),   // selector for exception multiplexer
-
-      // from debug unit
-      .dbg_npc_i           ( dbg_npc         ),
-      .dbg_set_npc_i       ( dbg_set_npc     ),
-
-      // Jump and branch target and decision
-      .jump_in_id_i        ( jump_in_id      ),
-      .jump_in_ex_i        ( jump_in_ex      ),
-      .branch_decision_i   ( branch_decision ),
-      .jump_target_id_i    ( jump_target_id  ),
-      .jump_target_ex_i    ( jump_target_ex  ),
-
-      // pipeline stalls
-      .stall_if_i          ( stall_if        ),
-      .stall_id_i          ( stall_id        ),
-
-      .if_busy_o           ( if_busy         )
-    );
-
-
-    /////////////////////////////////////////////////
-    //   ___ ____    ____ _____  _    ____ _____   //
-    //  |_ _|  _ \  / ___|_   _|/ \  / ___| ____|  //
-    //   | || | | | \___ \ | | / _ \| |  _|  _|    //
-    //   | || |_| |  ___) || |/ ___ \ |_| | |___   //
-    //  |___|____/  |____/ |_/_/   \_\____|_____|  //
-    //                                             //
-    /////////////////////////////////////////////////
-    id_stage id_stage_i
-    (
-      .clk                          ( clk                           ),
-      .rst_n                        ( rst_n                         ),
-
-      // Processor Enable
-      .fetch_enable_i               ( fetch_enable_i                ),
-
-      .jump_in_id_o                 ( jump_in_id                    ),
-      .jump_in_ex_o                 ( jump_in_ex                    ),
-      .branch_decision_i            ( branch_decision               ),
-
-      .jump_target_o                ( jump_target_id                ),
-
-      .core_busy_o                  ( core_busy                     ),
-
-      // Interface to instruction memory
-      .instr_rdata_i                ( instr_rdata_id                ),
-      .instr_req_o                  ( instr_req_int                 ),
-      .instr_gnt_i                  ( instr_grant_i                 ),
-      .instr_ack_i                  ( instr_ack_int                 ),
-
-      .pc_mux_sel_o                 ( pc_mux_sel_id                 ),
-      .exc_pc_mux_o                 ( exc_pc_mux_id                 ),
-      .force_nop_o                  ( force_nop_id                  ),
-
-      .current_pc_if_i              ( current_pc_if                 ),
-      .current_pc_id_i              ( current_pc_id                 ),
-
-      .compressed_instr_o           ( compressed_instr              ),
-
-      // STALLS
-      .stall_if_o                   ( stall_if                      ),
-      .stall_id_o                   ( stall_id                      ),
-      .stall_ex_o                   ( stall_ex                      ),
-      .stall_wb_o                   ( stall_wb                      ),
-
-      // From the Pipeline ID/EX
-      .regfile_rb_data_ex_o         ( regfile_rb_data_ex            ),
-
-      .alu_operand_a_ex_o           ( alu_operand_a_ex              ),
-      .alu_operand_b_ex_o           ( alu_operand_b_ex              ),
-      .alu_operand_c_ex_o           ( alu_operand_c_ex              ),
-      .alu_operator_ex_o            ( alu_operator_ex               ),
-
-      .vector_mode_ex_o             ( vector_mode_ex                ), // from ID to EX stage
-      .alu_cmp_mode_ex_o            ( alu_cmp_mode_ex               ), // from ID to EX stage
-      .alu_vec_ext_ex_o             ( alu_vec_ext_ex                ), // from ID to EX stage
-
-      .mult_en_ex_o                 ( mult_en_ex                    ), // from ID to EX stage
-      .mult_sel_subword_ex_o        ( mult_sel_subword_ex           ), // from ID to EX stage
-      .mult_signed_mode_ex_o        ( mult_signed_mode_ex           ), // from ID to EX stage
-      .mult_mac_en_ex_o             ( mult_mac_en_ex                ), // from ID to EX stage
-
-      .regfile_waddr_ex_o           ( regfile_waddr_ex              ),
-      .regfile_we_ex_o              ( regfile_we_ex                 ),
-
-      .regfile_alu_we_ex_o          ( regfile_alu_we_ex             ),
-      .regfile_alu_waddr_ex_o       ( regfile_alu_waddr_ex          ),
-
-      // CSR ID/EX
-      .csr_access_ex_o              ( csr_access_ex                 ),
-      .csr_op_ex_o                  ( csr_op_ex                     ),
-
-      // hwloop signals
-      .hwloop_we_ex_o               ( hwlp_we_ex                    ),
-      .hwloop_regid_ex_o            ( hwlp_regid_ex                 ),
-      .hwloop_wb_mux_sel_ex_o       ( hwlp_wb_mux_sel_ex            ),
-      .hwloop_cnt_o                 ( hwlp_cnt_ex                   ),
-      .hwloop_dec_cnt_o             ( hwlp_dec_cnt                  ),
-      .hwloop_targ_addr_o           ( hwlp_targ_addr                ),
-
-      .prepost_useincr_ex_o         ( useincr_addr_ex               ),
-      .data_misaligned_i            ( data_misaligned               ),
-
-      .data_we_ex_o                 ( data_we_ex                    ), // to   load store unit
-      .data_type_ex_o               ( data_type_ex                  ), // to   load store unit
-      .data_sign_ext_ex_o           ( data_sign_ext_ex              ), // to   load store unit
-      .data_reg_offset_ex_o         ( data_reg_offset_ex            ), // to   load store unit
-      .data_req_ex_o                ( data_req_ex                   ), // to   load store unit
-      .data_misaligned_ex_o         ( data_misaligned_ex            ), // to   load store unit
-      .data_ack_i                   ( data_ack_int                  ), // from load store unit
-      .data_rvalid_i                ( data_r_valid_i                ),
-
-      // Interrupt Signals
-      .irq_i                        ( irq_i                         ), // incoming interrupts
-      .irq_nm_i                     ( irq_nm_i                      ), // incoming interrupts
-      .irq_enable_i                 ( irq_enable                    ), // global interrupt enable
-      .save_pc_if_o                 ( save_pc_if                    ), // control signal to save pc
-      .save_pc_id_o                 ( save_pc_id                    ), // control signal to save pc
-
-      // from hwloop regs
-      .hwloop_start_addr_i          ( hwlp_start_addr               ),
-      .hwloop_end_addr_i            ( hwlp_end_addr                 ),
-      .hwloop_counter_i             ( hwlp_counter                  ),
-
-      // Debug Unit Signals
-      .dbg_flush_pipe_i             ( dbg_flush_pipe                ),
-      .dbg_st_en_i                  ( dbg_st_en                     ),
-      .dbg_dsr_i                    ( dbg_dsr                       ),
-      .dbg_stall_i                  ( dbg_stall                     ),
-      .dbg_trap_o                   ( dbg_trap                      ),
-      .dbg_reg_mux_i                ( dbg_reg_mux                   ),
-      .dbg_reg_we_i                 ( dbg_reg_we                    ),
-      .dbg_reg_addr_i               ( dbg_reg_addr[4:0]             ),
-      .dbg_reg_wdata_i              ( dbg_reg_wdata                 ),
-      .dbg_reg_rdata_o              ( dbg_reg_rdata                 ),
-      .dbg_set_npc_i                ( dbg_set_npc                   ),
-
-      // Forward Signals
-      .regfile_alu_waddr_fw_i       ( regfile_alu_waddr_fw          ),
-      .regfile_alu_we_fw_i          ( regfile_alu_we_fw             ),
-      .regfile_alu_wdata_fw_i       ( regfile_alu_wdata_fw          ),
-
-      .regfile_waddr_wb_i           ( regfile_waddr_fw_wb_o         ),  // Write address ex-wb pipeline
-      .regfile_we_wb_i              ( regfile_we_wb                 ),  // write enable for the register file
-      .regfile_wdata_wb_i           ( regfile_wdata                 ),  // write data to commit in the register file
-
-      .perf_jump_o                  ( perf_jump                     ),
-      .perf_branch_o                ( perf_branch                   ),
-      .perf_jr_stall_o              ( perf_jr_stall                 ),
-      .perf_ld_stall_o              ( perf_ld_stall                 )
-    );
-
-
-    /////////////////////////////////////////////////////
-    //   _______  __  ____ _____  _    ____ _____      //
-    //  | ____\ \/ / / ___|_   _|/ \  / ___| ____|     //
-    //  |  _|  \  /  \___ \ | | / _ \| |  _|  _|       //
-    //  | |___ /  \   ___) || |/ ___ \ |_| | |___      //
-    //  |_____/_/\_\ |____/ |_/_/   \_\____|_____|     //
-    //                                                 //
-    /////////////////////////////////////////////////////
-    ex_stage  ex_stage_i
-    (
-      // Global signals: Clock and active low asynchronous reset
-      .clk                        ( clk                          ),
-      .rst_n                      ( rst_n                        ),
-
-      // Alu signals from ID stage
-      .alu_operator_i             ( alu_operator_ex              ), // from ID/EX pipe registers
-      .alu_operand_a_i            ( alu_operand_a_ex             ), // from ID/EX pipe registers
-      .alu_operand_b_i            ( alu_operand_b_ex             ), // from ID/EX pipe registers
-      .alu_operand_c_i            ( alu_operand_c_ex             ), // from ID/EX pipe registers
-
-      .vector_mode_i              ( vector_mode_ex               ), // from ID/EX pipe registers
-      .alu_cmp_mode_i             ( alu_cmp_mode_ex              ), // from ID/EX pipe registers
-      .alu_vec_ext_i              ( alu_vec_ext_ex               ), // from ID/EX pipe registers
-
-      // Multipler
-      .mult_en_i                  ( mult_en_ex                   ),
-      .mult_sel_subword_i         ( mult_sel_subword_ex          ),
-      .mult_signed_mode_i         ( mult_signed_mode_ex          ),
-      .mult_mac_en_i              ( mult_mac_en_ex               ),
-
-      // interface with CSRs
-      .csr_access_i               ( csr_access_ex                ),
-      .csr_rdata_i                ( csr_rdata                    ),
-
-      // input from ID stage
-      .stall_wb_i                 ( stall_wb                     ),
-
-      // From ID Stage: Regfile control signals
-      .regfile_waddr_i            ( regfile_waddr_ex             ),
-      .regfile_we_i               ( regfile_we_ex                ),
-
-      .regfile_alu_we_i           ( regfile_alu_we_ex            ),
-      .regfile_alu_waddr_i        ( regfile_alu_waddr_ex         ),
-
-      // From ID stage: hwloop wb reg signals
-      .hwloop_wb_mux_sel_i        ( hwlp_wb_mux_sel_ex           ),
-      .hwloop_pc_plus4_i          ( current_pc_id                ),
-      .hwloop_cnt_i               ( hwlp_cnt_ex                  ),
-
-      //From ID stage.Controller
-      .regfile_rb_data_i          ( regfile_rb_data_ex           ),
-
-      // Output of ex stage pipeline
-      .regfile_waddr_wb_o         ( regfile_waddr_fw_wb_o        ),
-      .regfile_we_wb_o            ( regfile_we_wb                ),
-      .regfile_rb_data_wb_o       ( regfile_rb_data_wb           ),
-
-      // To hwloop regs
-      .hwloop_start_data_o        ( hwlp_start_data_ex           ),
-      .hwloop_end_data_o          ( hwlp_end_data_ex             ),
-      .hwloop_cnt_data_o          ( hwlp_cnt_data_ex             ),
-
-      // To IF: Jump and branch target and decision
-      .jump_target_o              ( jump_target_ex               ),
-      .branch_decision_o          ( branch_decision              ),
-
-      // To ID stage: Forwarding signals
-      .regfile_alu_waddr_fw_o     ( regfile_alu_waddr_fw         ),
-      .regfile_alu_we_fw_o        ( regfile_alu_we_fw            ),
-      .regfile_alu_wdata_fw_o     ( regfile_alu_wdata_fw         )
-    );
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////
-    //    _     ___    _    ____    ____ _____ ___  ____  _____   _   _ _   _ ___ _____   //
-    //   | |   / _ \  / \  |  _ \  / ___|_   _/ _ \|  _ \| ____| | | | | \ | |_ _|_   _|  //
-    //   | |  | | | |/ _ \ | | | | \___ \ | || | | | |_) |  _|   | | | |  \| || |  | |    //
-    //   | |__| |_| / ___ \| |_| |  ___) || || |_| |  _ <| |___  | |_| | |\  || |  | |    //
-    //   |_____\___/_/   \_\____/  |____/ |_| \___/|_| \_\_____|  \___/|_| \_|___| |_|    //
-    //                                                                                    //
-    ////////////////////////////////////////////////////////////////////////////////////////
-    load_store_unit  load_store_unit_i
-    (
-      .clk                   ( clk                    ),
-      .rst_n                 ( rst_n                  ),
-
-      // signal from ex stage
-      .data_we_ex_i          ( data_we_ex              ),
-      .data_type_ex_i        ( data_type_ex            ),
-      .data_wdata_ex_i       ( regfile_rb_data_ex      ),
-      .data_reg_offset_ex_i  ( data_reg_offset_ex      ),
-      .data_sign_ext_ex_i    ( data_sign_ext_ex        ),  // sign extension
-
-      .data_rdata_ex_o       ( regfile_wdata           ),
-      .data_req_ex_i         ( data_req_ex             ),
-      .data_ack_int_o        ( data_ack_int            ),  // ack used in controller to stall
-      .operand_a_ex_i        ( alu_operand_a_ex        ),
-      .operand_b_ex_i        ( alu_operand_b_ex        ),
-      .addr_useincr_ex_i     ( useincr_addr_ex         ),
-
-      .data_misaligned_ex_i  ( data_misaligned_ex      ), // from ID/EX pipeline
-      .data_misaligned_o     ( data_misaligned         ),
-
-      //output to data memory
-      .data_req_o            ( data_req_o              ),
-      .data_addr_o           ( data_addr_o             ),
-      .data_we_o             ( data_we_o               ),
-
-      .data_be_o             ( data_be_o               ),
-      .data_wdata_o          ( data_wdata_o            ),
-      .data_rdata_i          ( data_rdata_i            ),
-      .data_rvalid_i         ( data_r_valid_i          ),
-      .data_gnt_i            ( data_gnt_i              ),
-
-      .ex_stall_i            ( stall_ex                )
-    );
-
-
-    //////////////////////////////////////
-    //        ____ ____  ____           //
-    //       / ___/ ___||  _ \ ___      //
-    //      | |   \___ \| |_) / __|     //
-    //      | |___ ___) |  _ <\__ \     //
-    //       \____|____/|_| \_\___/     //
-    //                                  //
-    //   Control and Status Registers   //
-    //////////////////////////////////////
-    cs_registers
-    #(
-      .N_EXT_PERF_COUNTERS      ( N_EXT_PERF_COUNTERS   )
-    )
-    cs_registers_i
-    (
-      .clk                     ( clk            ),
-      .rst_n                   ( rst_n          ),
-
-      // Core and Cluster ID from outside
-      .core_id_i               ( core_id_i      ),
-      .cluster_id_i            ( cluster_id_i   ),
-
-      // Interface to CSRs (SRAM like)
-      .csr_addr_i              ( csr_addr       ),
-      .csr_wdata_i             ( csr_wdata      ),
-      .csr_op_i                ( csr_op         ),
-      .csr_rdata_o             ( csr_rdata      ),
-
-      // Control signals for the core
-      .curr_pc_if_i            ( current_pc_if  ),    // from IF stage
-      .curr_pc_id_i            ( current_pc_id  ),    // from IF stage
-      .save_pc_if_i            ( save_pc_if     ),
-      .save_pc_id_i            ( save_pc_id     ),
-
-      .irq_enable_o            ( irq_enable     ),
-      .epcr_o                  ( epcr           ),
-
-      // performance counter related signals
-      .stall_id_i              ( stall_id       ),
-
-      .instr_fetch_i           ( ~instr_ack_int ),
-
-      .jump_i                  ( perf_jump      ),
-      .branch_i                ( perf_branch    ),
-      .ld_stall_i              ( perf_ld_stall  ),
-      .jr_stall_i              ( perf_jr_stall  ),
-
-      .mem_load_i              ( data_req_o & data_gnt_i & (~data_we_o) ),
-      .mem_store_i             ( data_req_o & data_gnt_i & data_we_o    ),
-
-      .ext_counters_i          ( ext_perf_counters_i                    )
-    );
-
-    // Mux for CSR access through Debug Unit
-    assign csr_addr      = (dbg_sp_mux == 1'b0) ? alu_operand_b_ex[11:0] : dbg_reg_addr;
-    assign csr_wdata     = (dbg_sp_mux == 1'b0) ? alu_operand_a_ex : dbg_reg_wdata;
-    assign csr_op        = (dbg_sp_mux == 1'b0) ? csr_op_ex
-                                                : (dbg_reg_we == 1'b1 ? `CSR_OP_WRITE : `CSR_OP_NONE);
-    assign dbg_rdata     = (dbg_sp_mux == 1'b0) ? dbg_reg_rdata    : csr_rdata;
-
-
-    //////////////////////////////////////////////
-    //      Hardware Loop Registers             //
-    //////////////////////////////////////////////
-    hwloop_regs hwloop_regs_i
-    (
-      .clk                     ( clk                 ),
-      .rst_n                   ( rst_n               ),
-
-      // from ex stage
-      .hwloop_start_data_i     ( hwlp_start_data     ),
-      .hwloop_end_data_i       ( hwlp_end_data       ),
-      .hwloop_cnt_data_i       ( hwlp_cnt_data       ),
-      .hwloop_we_i             ( hwlp_we             ),
-      .hwloop_regid_i          ( hwlp_regid          ),
-
-      // from controller
-      .stall_id_i              ( stall_id            ),
-
-      // to hwloop controller
-      .hwloop_start_addr_o     ( hwlp_start_addr     ),
-      .hwloop_end_addr_o       ( hwlp_end_addr       ),
-      .hwloop_counter_o        ( hwlp_counter        ),
-
-      // from hwloop controller
-      .hwloop_dec_cnt_i        ( hwlp_dec_cnt        )
-    );
-
-    assign hwlp_start_data = hwlp_start_data_ex;
-    assign hwlp_end_data   = hwlp_end_data_ex;
-    assign hwlp_cnt_data   = hwlp_cnt_data_ex;
-    assign hwlp_regid      = hwlp_regid_ex;
-    assign hwlp_we         = hwlp_we_ex;
-
-
-    /////////////////////////////////////////////////////////////
-    //  ____  _____ ____  _   _  ____   _   _ _   _ ___ _____  //
-    // |  _ \| ____| __ )| | | |/ ___| | | | | \ | |_ _|_   _| //
-    // | | | |  _| |  _ \| | | | |  _  | | | |  \| || |  | |   //
-    // | |_| | |___| |_) | |_| | |_| | | |_| | |\  || |  | |   //
-    // |____/|_____|____/ \___/ \____|  \___/|_| \_|___| |_|   //
-    //                                                         //
-    /////////////////////////////////////////////////////////////
-    debug_unit debug_unit_i
-    (
-      .clk             ( clk             ),
-      .rst_n           ( rst_n           ),
-
-      // Debug Interface
-      .dbginf_stall_i  ( dbginf_stall_i  ),
-      .dbginf_bp_o     ( dbginf_bp_o     ),
-      .dbginf_strobe_i ( dbginf_strobe_i ),
-      .dbginf_ack_o    ( dbginf_ack_o    ),
-      .dbginf_we_i     ( dbginf_we_i     ),
-      .dbginf_addr_i   ( dbginf_addr_i   ),
-      .dbginf_data_i   ( dbginf_data_i   ),
-      .dbginf_data_o   ( dbginf_data_o   ),
-
-      // To/From Core
-      .dbg_st_en_o     ( dbg_st_en       ),
-      .dbg_dsr_o       ( dbg_dsr         ),
-      .stall_core_o    ( dbg_stall       ),
-      .flush_pipe_o    ( dbg_flush_pipe  ),
-      .trap_i          ( dbg_trap        ),
-
-      // register file access
-      .regfile_mux_o   ( dbg_reg_mux     ),
-      .sp_mux_o        ( dbg_sp_mux      ),
-      .regfile_we_o    ( dbg_reg_we      ),
-      .regfile_addr_o  ( dbg_reg_addr    ),
-      .regfile_wdata_o ( dbg_reg_wdata   ),
-      .regfile_rdata_i ( dbg_rdata       ),
-
-      // signals for PPC and NPC
-      .curr_pc_if_i    ( current_pc_if   ), // from IF stage
-      .curr_pc_id_i    ( current_pc_id   ), // from IF stage
-      .npc_o           ( dbg_npc         ), // PC from debug unit
-      .set_npc_o       ( dbg_set_npc     )  // set PC to new value
-    );
-
+  //////////////////////////////////////////////////
+  //   ___ _____   ____ _____  _    ____ _____    //
+  //  |_ _|  ___| / ___|_   _|/ \  / ___| ____|   //
+  //   | || |_    \___ \ | | / _ \| |  _|  _|     //
+  //   | ||  _|    ___) || |/ ___ \ |_| | |___    //
+  //  |___|_|     |____/ |_/_/   \_\____|_____|   //
+  //                                              //
+  //////////////////////////////////////////////////
+  if_stage if_stage_i
+  (
+    .clk                 ( clk             ),
+    .rst_n               ( rst_n           ),
+
+    // boot address (trap vector location)
+    .boot_addr_i         ( boot_addr_i     ),
+
+    // instruction request control
+    .req_i               ( instr_req_int   ),
+    .valid_o             ( instr_ack_int   ),
+    .drop_request_i      ( 1'b0 ),
+
+    // instruction cache interface
+    .instr_req_o         ( instr_req_o     ),
+    .instr_addr_o        ( instr_addr_o    ),
+    .instr_gnt_i         ( instr_grant_i   ),
+    .instr_rvalid_i      ( instr_rvalid_i  ),
+    .instr_rdata_i       ( instr_rdata_i   ),
+
+    // outputs to ID stage
+    .instr_rdata_id_o    ( instr_rdata_id  ),   // Output of IF Pipeline stage
+    .current_pc_if_o     ( current_pc_if   ),   // current pc
+    .current_pc_id_o     ( current_pc_id   ),   // current pc
+
+    // Forwrding ports - control signals
+    .force_nop_i         ( force_nop_id    ),   // select incoming instr or NOP
+    .exception_pc_reg_i  ( epcr            ),   // Exception PC register
+    .pc_from_hwloop_i    ( hwlp_targ_addr  ),   // pc from hwloop start address
+    .pc_mux_sel_i        ( pc_mux_sel_id   ),   // sel for pc multiplexer
+    .exc_pc_mux_i        ( exc_pc_mux_id   ),   // selector for exception multiplexer
+
+    // from debug unit
+    .dbg_npc_i           ( dbg_npc         ),
+    .dbg_set_npc_i       ( dbg_set_npc     ),
+
+    // Jump and branch target and decision
+    .jump_in_id_i        ( jump_in_id      ),
+    .jump_in_ex_i        ( jump_in_ex      ),
+    .branch_decision_i   ( branch_decision ),
+    .jump_target_id_i    ( jump_target_id  ),
+    .jump_target_ex_i    ( jump_target_ex  ),
+
+    // pipeline stalls
+    .stall_if_i          ( stall_if        ),
+    .stall_id_i          ( stall_id        ),
+
+    .if_busy_o           ( if_busy         )
+  );
+
+
+  /////////////////////////////////////////////////
+  //   ___ ____    ____ _____  _    ____ _____   //
+  //  |_ _|  _ \  / ___|_   _|/ \  / ___| ____|  //
+  //   | || | | | \___ \ | | / _ \| |  _|  _|    //
+  //   | || |_| |  ___) || |/ ___ \ |_| | |___   //
+  //  |___|____/  |____/ |_/_/   \_\____|_____|  //
+  //                                             //
+  /////////////////////////////////////////////////
+  id_stage id_stage_i
+  (
+    .clk                          ( clk                           ),
+    .rst_n                        ( rst_n                         ),
+
+    // Processor Enable
+    .fetch_enable_i               ( fetch_enable_i                ),
+
+    .jump_in_id_o                 ( jump_in_id                    ),
+    .jump_in_ex_o                 ( jump_in_ex                    ),
+    .branch_decision_i            ( branch_decision               ),
+
+    .jump_target_o                ( jump_target_id                ),
+
+    .core_busy_o                  ( core_busy                     ),
+
+    // Interface to instruction memory
+    .instr_rdata_i                ( instr_rdata_id                ),
+    .instr_req_o                  ( instr_req_int                 ),
+    .instr_gnt_i                  ( instr_grant_i                 ),
+    .instr_ack_i                  ( instr_ack_int                 ),
+
+    .pc_mux_sel_o                 ( pc_mux_sel_id                 ),
+    .exc_pc_mux_o                 ( exc_pc_mux_id                 ),
+    .force_nop_o                  ( force_nop_id                  ),
+
+    .current_pc_if_i              ( current_pc_if                 ),
+    .current_pc_id_i              ( current_pc_id                 ),
+
+    .compressed_instr_o           ( compressed_instr              ),
+
+    // STALLS
+    .stall_if_o                   ( stall_if                      ),
+    .stall_id_o                   ( stall_id                      ),
+    .stall_ex_o                   ( stall_ex                      ),
+    .stall_wb_o                   ( stall_wb                      ),
+
+    // From the Pipeline ID/EX
+    .regfile_rb_data_ex_o         ( regfile_rb_data_ex            ),
+
+    .alu_operand_a_ex_o           ( alu_operand_a_ex              ),
+    .alu_operand_b_ex_o           ( alu_operand_b_ex              ),
+    .alu_operand_c_ex_o           ( alu_operand_c_ex              ),
+    .alu_operator_ex_o            ( alu_operator_ex               ),
+
+    .vector_mode_ex_o             ( vector_mode_ex                ), // from ID to EX stage
+    .alu_cmp_mode_ex_o            ( alu_cmp_mode_ex               ), // from ID to EX stage
+    .alu_vec_ext_ex_o             ( alu_vec_ext_ex                ), // from ID to EX stage
+
+    .mult_en_ex_o                 ( mult_en_ex                    ), // from ID to EX stage
+    .mult_sel_subword_ex_o        ( mult_sel_subword_ex           ), // from ID to EX stage
+    .mult_signed_mode_ex_o        ( mult_signed_mode_ex           ), // from ID to EX stage
+    .mult_mac_en_ex_o             ( mult_mac_en_ex                ), // from ID to EX stage
+
+    .regfile_waddr_ex_o           ( regfile_waddr_ex              ),
+    .regfile_we_ex_o              ( regfile_we_ex                 ),
+
+    .regfile_alu_we_ex_o          ( regfile_alu_we_ex             ),
+    .regfile_alu_waddr_ex_o       ( regfile_alu_waddr_ex          ),
+
+    // CSR ID/EX
+    .csr_access_ex_o              ( csr_access_ex                 ),
+    .csr_op_ex_o                  ( csr_op_ex                     ),
+
+    // hwloop signals
+    .hwloop_we_ex_o               ( hwlp_we_ex                    ),
+    .hwloop_regid_ex_o            ( hwlp_regid_ex                 ),
+    .hwloop_wb_mux_sel_ex_o       ( hwlp_wb_mux_sel_ex            ),
+    .hwloop_cnt_o                 ( hwlp_cnt_ex                   ),
+    .hwloop_dec_cnt_o             ( hwlp_dec_cnt                  ),
+    .hwloop_targ_addr_o           ( hwlp_targ_addr                ),
+
+    .prepost_useincr_ex_o         ( useincr_addr_ex               ),
+    .data_misaligned_i            ( data_misaligned               ),
+
+    .data_we_ex_o                 ( data_we_ex                    ), // to   load store unit
+    .data_type_ex_o               ( data_type_ex                  ), // to   load store unit
+    .data_sign_ext_ex_o           ( data_sign_ext_ex              ), // to   load store unit
+    .data_reg_offset_ex_o         ( data_reg_offset_ex            ), // to   load store unit
+    .data_req_ex_o                ( data_req_ex                   ), // to   load store unit
+    .data_misaligned_ex_o         ( data_misaligned_ex            ), // to   load store unit
+    .data_ack_i                   ( data_ack_int                  ), // from load store unit
+    .data_rvalid_i                ( data_r_valid_i                ),
+
+    // Interrupt Signals
+    .irq_i                        ( irq_i                         ), // incoming interrupts
+    .irq_nm_i                     ( irq_nm_i                      ), // incoming interrupts
+    .irq_enable_i                 ( irq_enable                    ), // global interrupt enable
+    .save_pc_if_o                 ( save_pc_if                    ), // control signal to save pc
+    .save_pc_id_o                 ( save_pc_id                    ), // control signal to save pc
+
+    // from hwloop regs
+    .hwloop_start_addr_i          ( hwlp_start_addr               ),
+    .hwloop_end_addr_i            ( hwlp_end_addr                 ),
+    .hwloop_counter_i             ( hwlp_counter                  ),
+
+    // Debug Unit Signals
+    .dbg_flush_pipe_i             ( dbg_flush_pipe                ),
+    .dbg_st_en_i                  ( dbg_st_en                     ),
+    .dbg_dsr_i                    ( dbg_dsr                       ),
+    .dbg_stall_i                  ( dbg_stall                     ),
+    .dbg_trap_o                   ( dbg_trap                      ),
+    .dbg_reg_mux_i                ( dbg_reg_mux                   ),
+    .dbg_reg_we_i                 ( dbg_reg_we                    ),
+    .dbg_reg_addr_i               ( dbg_reg_addr[4:0]             ),
+    .dbg_reg_wdata_i              ( dbg_reg_wdata                 ),
+    .dbg_reg_rdata_o              ( dbg_reg_rdata                 ),
+    .dbg_set_npc_i                ( dbg_set_npc                   ),
+
+    // Forward Signals
+    .regfile_alu_waddr_fw_i       ( regfile_alu_waddr_fw          ),
+    .regfile_alu_we_fw_i          ( regfile_alu_we_fw             ),
+    .regfile_alu_wdata_fw_i       ( regfile_alu_wdata_fw          ),
+
+    .regfile_waddr_wb_i           ( regfile_waddr_fw_wb_o         ),  // Write address ex-wb pipeline
+    .regfile_we_wb_i              ( regfile_we_wb                 ),  // write enable for the register file
+    .regfile_wdata_wb_i           ( regfile_wdata                 ),  // write data to commit in the register file
+
+    .perf_jump_o                  ( perf_jump                     ),
+    .perf_branch_o                ( perf_branch                   ),
+    .perf_jr_stall_o              ( perf_jr_stall                 ),
+    .perf_ld_stall_o              ( perf_ld_stall                 )
+  );
+
+
+  /////////////////////////////////////////////////////
+  //   _______  __  ____ _____  _    ____ _____      //
+  //  | ____\ \/ / / ___|_   _|/ \  / ___| ____|     //
+  //  |  _|  \  /  \___ \ | | / _ \| |  _|  _|       //
+  //  | |___ /  \   ___) || |/ ___ \ |_| | |___      //
+  //  |_____/_/\_\ |____/ |_/_/   \_\____|_____|     //
+  //                                                 //
+  /////////////////////////////////////////////////////
+  ex_stage  ex_stage_i
+  (
+    // Global signals: Clock and active low asynchronous reset
+    .clk                        ( clk                          ),
+    .rst_n                      ( rst_n                        ),
+
+    // Alu signals from ID stage
+    .alu_operator_i             ( alu_operator_ex              ), // from ID/EX pipe registers
+    .alu_operand_a_i            ( alu_operand_a_ex             ), // from ID/EX pipe registers
+    .alu_operand_b_i            ( alu_operand_b_ex             ), // from ID/EX pipe registers
+    .alu_operand_c_i            ( alu_operand_c_ex             ), // from ID/EX pipe registers
+
+    .vector_mode_i              ( vector_mode_ex               ), // from ID/EX pipe registers
+    .alu_cmp_mode_i             ( alu_cmp_mode_ex              ), // from ID/EX pipe registers
+    .alu_vec_ext_i              ( alu_vec_ext_ex               ), // from ID/EX pipe registers
+
+    // Multipler
+    .mult_en_i                  ( mult_en_ex                   ),
+    .mult_sel_subword_i         ( mult_sel_subword_ex          ),
+    .mult_signed_mode_i         ( mult_signed_mode_ex          ),
+    .mult_mac_en_i              ( mult_mac_en_ex               ),
+
+    // interface with CSRs
+    .csr_access_i               ( csr_access_ex                ),
+    .csr_rdata_i                ( csr_rdata                    ),
+
+    // input from ID stage
+    .stall_wb_i                 ( stall_wb                     ),
+
+    // From ID Stage: Regfile control signals
+    .regfile_waddr_i            ( regfile_waddr_ex             ),
+    .regfile_we_i               ( regfile_we_ex                ),
+
+    .regfile_alu_we_i           ( regfile_alu_we_ex            ),
+    .regfile_alu_waddr_i        ( regfile_alu_waddr_ex         ),
+
+    // From ID stage: hwloop wb reg signals
+    .hwloop_wb_mux_sel_i        ( hwlp_wb_mux_sel_ex           ),
+    .hwloop_pc_plus4_i          ( current_pc_id                ),
+    .hwloop_cnt_i               ( hwlp_cnt_ex                  ),
+
+    //From ID stage.Controller
+    .regfile_rb_data_i          ( regfile_rb_data_ex           ),
+
+    // Output of ex stage pipeline
+    .regfile_waddr_wb_o         ( regfile_waddr_fw_wb_o        ),
+    .regfile_we_wb_o            ( regfile_we_wb                ),
+    .regfile_rb_data_wb_o       ( regfile_rb_data_wb           ),
+
+    // To hwloop regs
+    .hwloop_start_data_o        ( hwlp_start_data_ex           ),
+    .hwloop_end_data_o          ( hwlp_end_data_ex             ),
+    .hwloop_cnt_data_o          ( hwlp_cnt_data_ex             ),
+
+    // To IF: Jump and branch target and decision
+    .jump_target_o              ( jump_target_ex               ),
+    .branch_decision_o          ( branch_decision              ),
+
+    // To ID stage: Forwarding signals
+    .regfile_alu_waddr_fw_o     ( regfile_alu_waddr_fw         ),
+    .regfile_alu_we_fw_o        ( regfile_alu_we_fw            ),
+    .regfile_alu_wdata_fw_o     ( regfile_alu_wdata_fw         )
+  );
+
+
+  ////////////////////////////////////////////////////////////////////////////////////////
+  //    _     ___    _    ____    ____ _____ ___  ____  _____   _   _ _   _ ___ _____   //
+  //   | |   / _ \  / \  |  _ \  / ___|_   _/ _ \|  _ \| ____| | | | | \ | |_ _|_   _|  //
+  //   | |  | | | |/ _ \ | | | | \___ \ | || | | | |_) |  _|   | | | |  \| || |  | |    //
+  //   | |__| |_| / ___ \| |_| |  ___) || || |_| |  _ <| |___  | |_| | |\  || |  | |    //
+  //   |_____\___/_/   \_\____/  |____/ |_| \___/|_| \_\_____|  \___/|_| \_|___| |_|    //
+  //                                                                                    //
+  ////////////////////////////////////////////////////////////////////////////////////////
+  load_store_unit  load_store_unit_i
+  (
+    .clk                   ( clk                    ),
+    .rst_n                 ( rst_n                  ),
+
+    // signal from ex stage
+    .data_we_ex_i          ( data_we_ex              ),
+    .data_type_ex_i        ( data_type_ex            ),
+    .data_wdata_ex_i       ( regfile_rb_data_ex      ),
+    .data_reg_offset_ex_i  ( data_reg_offset_ex      ),
+    .data_sign_ext_ex_i    ( data_sign_ext_ex        ),  // sign extension
+
+    .data_rdata_ex_o       ( regfile_wdata           ),
+    .data_req_ex_i         ( data_req_ex             ),
+    .data_ack_int_o        ( data_ack_int            ),  // ack used in controller to stall
+    .operand_a_ex_i        ( alu_operand_a_ex        ),
+    .operand_b_ex_i        ( alu_operand_b_ex        ),
+    .addr_useincr_ex_i     ( useincr_addr_ex         ),
+
+    .data_misaligned_ex_i  ( data_misaligned_ex      ), // from ID/EX pipeline
+    .data_misaligned_o     ( data_misaligned         ),
+
+    //output to data memory
+    .data_req_o            ( data_req_o              ),
+    .data_addr_o           ( data_addr_o             ),
+    .data_we_o             ( data_we_o               ),
+
+    .data_be_o             ( data_be_o               ),
+    .data_wdata_o          ( data_wdata_o            ),
+    .data_rdata_i          ( data_rdata_i            ),
+    .data_rvalid_i         ( data_r_valid_i          ),
+    .data_gnt_i            ( data_gnt_i              ),
+
+    .ex_stall_i            ( stall_ex                )
+  );
+
+
+  //////////////////////////////////////
+  //        ____ ____  ____           //
+  //       / ___/ ___||  _ \ ___      //
+  //      | |   \___ \| |_) / __|     //
+  //      | |___ ___) |  _ <\__ \     //
+  //       \____|____/|_| \_\___/     //
+  //                                  //
+  //   Control and Status Registers   //
+  //////////////////////////////////////
+  cs_registers
+  #(
+    .N_EXT_PERF_COUNTERS      ( N_EXT_PERF_COUNTERS   )
+  )
+  cs_registers_i
+  (
+    .clk                     ( clk            ),
+    .rst_n                   ( rst_n          ),
+
+    // Core and Cluster ID from outside
+    .core_id_i               ( core_id_i      ),
+    .cluster_id_i            ( cluster_id_i   ),
+
+    // Interface to CSRs (SRAM like)
+    .csr_addr_i              ( csr_addr       ),
+    .csr_wdata_i             ( csr_wdata      ),
+    .csr_op_i                ( csr_op         ),
+    .csr_rdata_o             ( csr_rdata      ),
+
+    // Control signals for the core
+    .curr_pc_if_i            ( current_pc_if  ),    // from IF stage
+    .curr_pc_id_i            ( current_pc_id  ),    // from IF stage
+    .save_pc_if_i            ( save_pc_if     ),
+    .save_pc_id_i            ( save_pc_id     ),
+
+    .irq_enable_o            ( irq_enable     ),
+    .epcr_o                  ( epcr           ),
+
+    // performance counter related signals
+    .stall_id_i              ( stall_id       ),
+
+    .instr_fetch_i           ( ~instr_ack_int ),
+
+    .jump_i                  ( perf_jump      ),
+    .branch_i                ( perf_branch    ),
+    .ld_stall_i              ( perf_ld_stall  ),
+    .jr_stall_i              ( perf_jr_stall  ),
+
+    .mem_load_i              ( data_req_o & data_gnt_i & (~data_we_o) ),
+    .mem_store_i             ( data_req_o & data_gnt_i & data_we_o    ),
+
+    .ext_counters_i          ( ext_perf_counters_i                    )
+  );
+
+  // Mux for CSR access through Debug Unit
+  assign csr_addr      = (dbg_sp_mux == 1'b0) ? alu_operand_b_ex[11:0] : dbg_reg_addr;
+  assign csr_wdata     = (dbg_sp_mux == 1'b0) ? alu_operand_a_ex : dbg_reg_wdata;
+  assign csr_op        = (dbg_sp_mux == 1'b0) ? csr_op_ex
+                                              : (dbg_reg_we == 1'b1 ? `CSR_OP_WRITE : `CSR_OP_NONE);
+  assign dbg_rdata     = (dbg_sp_mux == 1'b0) ? dbg_reg_rdata    : csr_rdata;
+
+
+  //////////////////////////////////////////////
+  //      Hardware Loop Registers             //
+  //////////////////////////////////////////////
+  hwloop_regs hwloop_regs_i
+  (
+    .clk                     ( clk                 ),
+    .rst_n                   ( rst_n               ),
+
+    // from ex stage
+    .hwloop_start_data_i     ( hwlp_start_data     ),
+    .hwloop_end_data_i       ( hwlp_end_data       ),
+    .hwloop_cnt_data_i       ( hwlp_cnt_data       ),
+    .hwloop_we_i             ( hwlp_we             ),
+    .hwloop_regid_i          ( hwlp_regid          ),
+
+    // from controller
+    .stall_id_i              ( stall_id            ),
+
+    // to hwloop controller
+    .hwloop_start_addr_o     ( hwlp_start_addr     ),
+    .hwloop_end_addr_o       ( hwlp_end_addr       ),
+    .hwloop_counter_o        ( hwlp_counter        ),
+
+    // from hwloop controller
+    .hwloop_dec_cnt_i        ( hwlp_dec_cnt        )
+  );
+
+  assign hwlp_start_data = hwlp_start_data_ex;
+  assign hwlp_end_data   = hwlp_end_data_ex;
+  assign hwlp_cnt_data   = hwlp_cnt_data_ex;
+  assign hwlp_regid      = hwlp_regid_ex;
+  assign hwlp_we         = hwlp_we_ex;
+
+
+  /////////////////////////////////////////////////////////////
+  //  ____  _____ ____  _   _  ____   _   _ _   _ ___ _____  //
+  // |  _ \| ____| __ )| | | |/ ___| | | | | \ | |_ _|_   _| //
+  // | | | |  _| |  _ \| | | | |  _  | | | |  \| || |  | |   //
+  // | |_| | |___| |_) | |_| | |_| | | |_| | |\  || |  | |   //
+  // |____/|_____|____/ \___/ \____|  \___/|_| \_|___| |_|   //
+  //                                                         //
+  /////////////////////////////////////////////////////////////
+  debug_unit debug_unit_i
+  (
+    .clk             ( clk             ),
+    .rst_n           ( rst_n           ),
+
+    // Debug Interface
+    .dbginf_stall_i  ( dbginf_stall_i  ),
+    .dbginf_bp_o     ( dbginf_bp_o     ),
+    .dbginf_strobe_i ( dbginf_strobe_i ),
+    .dbginf_ack_o    ( dbginf_ack_o    ),
+    .dbginf_we_i     ( dbginf_we_i     ),
+    .dbginf_addr_i   ( dbginf_addr_i   ),
+    .dbginf_data_i   ( dbginf_data_i   ),
+    .dbginf_data_o   ( dbginf_data_o   ),
+
+    // To/From Core
+    .dbg_st_en_o     ( dbg_st_en       ),
+    .dbg_dsr_o       ( dbg_dsr         ),
+    .stall_core_o    ( dbg_stall       ),
+    .flush_pipe_o    ( dbg_flush_pipe  ),
+    .trap_i          ( dbg_trap        ),
+
+    // register file access
+    .regfile_mux_o   ( dbg_reg_mux     ),
+    .sp_mux_o        ( dbg_sp_mux      ),
+    .regfile_we_o    ( dbg_reg_we      ),
+    .regfile_addr_o  ( dbg_reg_addr    ),
+    .regfile_wdata_o ( dbg_reg_wdata   ),
+    .regfile_rdata_i ( dbg_rdata       ),
+
+    // signals for PPC and NPC
+    .curr_pc_if_i    ( current_pc_if   ), // from IF stage
+    .curr_pc_id_i    ( current_pc_id   ), // from IF stage
+    .npc_o           ( dbg_npc         ), // PC from debug unit
+    .set_npc_o       ( dbg_set_npc     )  // set PC to new value
+  );
 
 
 `ifndef SYNTHESIS

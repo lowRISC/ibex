@@ -766,7 +766,7 @@ module id_stage
       prepost_useincr_ex_o        <= 1'b0;
 
       csr_access_ex_o             <= 1'b0;
-      csr_op_ex_o                 <= 2'b0;
+      csr_op_ex_o                 <= `CSR_OP_NONE;
 
       data_we_ex_o                <= 1'b0;
       data_type_ex_o              <= 2'b0;
