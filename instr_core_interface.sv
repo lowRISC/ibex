@@ -73,6 +73,7 @@ module instr_core_interface
   end
 
   assign valid_o      = instr_rvalid_i;
+  assign last_addr_o  = addr_Q;
 
   always_comb
   begin

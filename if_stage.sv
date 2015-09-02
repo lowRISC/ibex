@@ -408,12 +408,10 @@ module if_stage
   begin
     if (rst_n == 1'b0) begin
       data_arr      <= 16'b0;
-      fetch_addr_Q  <= 32'b0;
       fetch_addr_QQ <= 32'b0;
     end else begin
       if (fetch_req) begin
         data_arr      <= fetch_rdata[31:16];
-        fetch_addr_Q  <= fetch_addr_n;
         fetch_addr_QQ <= fetch_addr_Q;
       end
     end
