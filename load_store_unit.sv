@@ -42,8 +42,10 @@ module load_store_unit
 
     output logic [31:0]  data_rdata_ex_o,      // requested data                    -> to ex stage
     input  logic         data_req_ex_i,        // data request                      -> from ex stage
-    input  logic [31:0]  data_addr_ex_i,       // data address                      -> from ex stage
     output logic         data_ack_int_o,       // data ack                          -> to controller
+    input  logic [31:0]  operand_a_ex_i,       // operand a from RF for address     -> from ex stage
+    input  logic [31:0]  operand_b_ex_i,       // operand b from RF for address     -> from ex stage
+    input  logic         addr_useincr_ex_i,    // use a + b or just a for address   -> from ex stage
 
     input  logic         data_misaligned_ex_i, // misaligned access in last ld/st   -> from ID/EX pipeline
     output logic         data_misaligned_o,    // misaligned access was detected    -> to controller
@@ -62,6 +64,8 @@ module load_store_unit
      // stall signal
     input  logic         ex_stall_i
 );
+
+  logic [31:0]  data_addr_int;
 
   // registers for data_rdata alignment and sign extension
   logic [1:0]   data_type_q;
@@ -94,21 +98,21 @@ module load_store_unit
       begin // Writing a word
         if (misaligned_st == 1'b0)
         begin // non-misaligned case
-          case (data_addr_ex_i[1:0])
+          case (data_addr_int[1:0])
             2'b00: data_be = 4'b1111;
             2'b01: data_be = 4'b1110;
             2'b10: data_be = 4'b1100;
             2'b11: data_be = 4'b1000;
-          endcase; // case (data_addr_ex_i[1:0])
+          endcase; // case (data_addr_int[1:0])
         end
         else
         begin // misaligned case
-          case (data_addr_ex_i[1:0])
+          case (data_addr_int[1:0])
             2'b00: data_be = 4'b0000; // this is not used, but included for completeness
             2'b01: data_be = 4'b0001;
             2'b10: data_be = 4'b0011;
             2'b11: data_be = 4'b0111;
-          endcase; // case (data_addr_ex_i[1:0])
+          endcase; // case (data_addr_int[1:0])
         end
       end
 
@@ -116,12 +120,12 @@ module load_store_unit
       begin // Writing a half word
         if (misaligned_st == 1'b0)
         begin // non-misaligned case
-          case (data_addr_ex_i[1:0])
+          case (data_addr_int[1:0])
             2'b00: data_be = 4'b0011;
             2'b01: data_be = 4'b0110;
             2'b10: data_be = 4'b1100;
             2'b11: data_be = 4'b1000;
-          endcase; // case (data_addr_ex_i[1:0])
+          endcase; // case (data_addr_int[1:0])
         end
         else
         begin // misaligned case
@@ -131,12 +135,12 @@ module load_store_unit
 
       2'b10,
       2'b11: begin // Writing a byte
-        case (data_addr_ex_i[1:0])
+        case (data_addr_int[1:0])
           2'b00: data_be = 4'b0001;
           2'b01: data_be = 4'b0010;
           2'b10: data_be = 4'b0100;
           2'b11: data_be = 4'b1000;
-        endcase; // case (data_addr_ex_i[1:0])
+        endcase; // case (data_addr_int[1:0])
       end
     endcase; // case (data_type_ex_i)
   end
@@ -144,7 +148,7 @@ module load_store_unit
   // prepare data to be written to the memory
   // we handle misaligned accesses, half word and byte accesses and
   // register offsets here
-  assign wdata_offset = data_addr_ex_i[1:0] - data_reg_offset_ex_i[1:0];
+  assign wdata_offset = data_addr_int[1:0] - data_reg_offset_ex_i[1:0];
   always_comb
   begin
     case (wdata_offset)
@@ -168,7 +172,7 @@ module load_store_unit
     else if (request_entered == 1'b1) // request entered FSM
     begin
       data_type_q     <= data_type_ex_i;
-      rdata_offset_q  <= data_addr_ex_i[1:0];
+      rdata_offset_q  <= data_addr_int[1:0];
       data_sign_ext_q <= data_sign_ext_ex_i;
     end
   end
@@ -355,7 +359,7 @@ module load_store_unit
   begin
     data_req_o         = 1'b0;
     data_we_o          = 1'b0;
-    data_addr_o        = data_addr_ex_i;
+    data_addr_o        = data_addr_int;
     data_wdata_o       = data_wdata;
     data_be_o          = data_be;
     misaligned_st      = data_misaligned_ex_i;
@@ -407,7 +411,7 @@ module load_store_unit
         begin
           NS = PENDING_WO_EX_STALL;
         end
-             else
+        else
         begin
           NS = WAIT_GNT;
         end
@@ -490,16 +494,20 @@ module load_store_unit
       case (data_type_ex_i)
         2'b00: // word
         begin
-          if(data_addr_ex_i[1:0] != 2'b00)
+          if(data_addr_int[1:0] != 2'b00)
             data_misaligned_o = 1'b1;
         end
         2'b01: // half word
         begin
-          if(data_addr_ex_i[1:0] == 2'b11)
+          if(data_addr_int[1:0] == 2'b11)
             data_misaligned_o = 1'b1;
         end
       endcase // case (data_type_ex_i)
     end
   end
+
+
+  // generate address from operands
+  assign data_addr_int = (addr_useincr_ex_i) ? (operand_a_ex_i + operand_b_ex_i) : operand_a_ex_i;
 
 endmodule

@@ -462,8 +462,6 @@ module riscv_core
       // input from ID stage
       .stall_wb_i                 ( stall_wb                     ),
 
-      .prepost_useincr_i          ( useincr_addr_ex              ),
-
       // From ID Stage: Regfile control signals
       .regfile_waddr_i            ( regfile_waddr_ex             ),
       .regfile_we_i               ( regfile_we_ex                ),
@@ -483,8 +481,6 @@ module riscv_core
       .regfile_waddr_wb_o         ( regfile_waddr_fw_wb_o        ),
       .regfile_we_wb_o            ( regfile_we_wb                ),
       .regfile_rb_data_wb_o       ( regfile_rb_data_wb           ),
-
-      .data_addr_ex_o             ( data_addr_ex                 ),
 
       // To hwloop regs
       .hwloop_start_data_o        ( hwlp_start_data_ex           ),
@@ -524,8 +520,10 @@ module riscv_core
 
       .data_rdata_ex_o       ( regfile_wdata           ),
       .data_req_ex_i         ( data_req_ex             ),
-      .data_addr_ex_i        ( data_addr_ex            ),
       .data_ack_int_o        ( data_ack_int            ),  // ack used in controller to stall
+      .operand_a_ex_i        ( alu_operand_a_ex        ),
+      .operand_b_ex_i        ( alu_operand_b_ex        ),
+      .addr_useincr_ex_i     ( useincr_addr_ex         ),
 
       .data_misaligned_ex_i  ( data_misaligned_ex      ), // from ID/EX pipeline
       .data_misaligned_o     ( data_misaligned         ),

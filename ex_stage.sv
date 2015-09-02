@@ -52,15 +52,11 @@ module ex_stage
     input  logic [1:0]                mult_signed_mode_i,
     input  logic                      mult_mac_en_i,
 
-    output logic [31:0]               data_addr_ex_o,
-
     // input from ID stage
     input  logic                      stall_wb_i,
 
     input  logic [4:0]                regfile_alu_waddr_i,
     input  logic                      regfile_alu_we_i,
-
-    input  logic                      prepost_useincr_i,
 
     // directly passed through to WB stage, not used in EX
     input  logic                      regfile_we_i,
@@ -100,8 +96,6 @@ module ex_stage
   logic [31:0] alu_result;
   logic        alu_flag;
 
-  logic [31:0] alu_adder_lsu_int; // to LS unit
-
   logic [31:0] mult_result;
 
 
@@ -118,8 +112,6 @@ module ex_stage
     if (csr_access_i == 1'b1)
       regfile_alu_wdata_fw_o = csr_rdata_i;
   end
-
-  assign data_addr_ex_o = (prepost_useincr_i == 1'b1) ? alu_adder_lsu_int : alu_operand_a_i;
 
   // hwloop mux. selects the right data to be sent to the hwloop registers (start/end-address and counter)
   always_comb
@@ -158,8 +150,6 @@ module ex_stage
    .vector_mode_i ( vector_mode_i       ),
    .cmp_mode_i    ( alu_cmp_mode_i      ),
    .vec_ext_i     ( alu_vec_ext_i       ),
-
-   .adder_lsu_o   ( alu_adder_lsu_int   ),
 
    .result_o      ( alu_result          ),
    .flag_o        ( alu_flag            )

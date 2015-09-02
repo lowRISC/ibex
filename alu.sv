@@ -39,13 +39,10 @@ module alu
    input  logic [1:0]               cmp_mode_i,
    input  logic [1:0]               vec_ext_i,
 
-   output logic [31:0]              adder_lsu_o,
    output logic [31:0]              result_o,
    output logic                     flag_o
 );
 
-
-  assign adder_lsu_o = operand_a_i + operand_b_i;
 
   logic [31:0] operand_a_rev;     // bit reversed signal of operand_a_i
 
