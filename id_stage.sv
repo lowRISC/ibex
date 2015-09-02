@@ -149,8 +149,8 @@ module id_stage
     input  logic [31:0] regfile_alu_wdata_fw_i,
 
     // Performance Counters
-    output logic        perf_jump_o,          // we are executing a jump instruction   (j, jr, jal, jalr)
-    output logic        perf_branch_o,        // we are executing a branch instruction (bf, bnf)
+    output logic        perf_jump_o,          // we are executing a jump instruction
+    output logic        perf_branch_o,        // we are executing a branch instruction
     output logic        perf_jr_stall_o,      // jump-register-hazard
     output logic        perf_ld_stall_o       // load-use-hazard
 );
@@ -181,9 +181,6 @@ module id_stage
   logic        irq_present;
 
   // Signals running between controller and exception controller
-  logic  [1:0] jump_in_ex;        // registered copy of jump_in_id
-  assign jump_in_ex_o = jump_in_ex;
-
   logic        illegal_insn;
   logic        illegal_c_insn;
   logic        trap_insn;
@@ -192,7 +189,7 @@ module id_stage
   logic        clear_isr_running;
   logic        exc_pipe_flush;
 
-
+  // Register file interface
   logic [4:0]  regfile_addr_ra_id;
   logic [4:0]  regfile_addr_rb_id;
   logic [4:0]  regfile_addr_rc_id;
@@ -226,7 +223,7 @@ module id_stage
 
   // Register Write Control
   logic        regfile_we_id;
-  logic [1:0]  regfile_alu_waddr_mux_sel;  // TODO: FixMe -> 1bit
+  logic        regfile_alu_waddr_mux_sel;
 
   // Data Memory Control
   logic        data_we_id;
@@ -302,14 +299,8 @@ module id_stage
 
   // Second Register Write Adress Selection
   // Used for prepost load/store and multiplier
-  always_comb
-  begin : alu_waddr_mux
-    case (regfile_alu_waddr_mux_sel)
-      default: regfile_alu_waddr_id = regfile_addr_ra_id;
-      2'b00:   regfile_alu_waddr_id = regfile_addr_ra_id;
-      2'b01:   regfile_alu_waddr_id = regfile_waddr_id;
-    endcase
-  end
+  assign regfile_alu_waddr_id = regfile_alu_waddr_mux_sel ?
+                                regfile_waddr_id : regfile_addr_ra_id;
 
 
   ///////////////////////////////////////////////////////////////////////////////////////
@@ -682,7 +673,7 @@ module id_stage
       // Controller
       .core_busy_i          ( core_busy_o       ),
       .jump_in_id_i         ( jump_in_id_o      ),
-      .jump_in_ex_i         ( jump_in_ex        ),
+      .jump_in_ex_i         ( jump_in_ex_o        ),
       .stall_id_i           ( stall_id_o        ),
       .illegal_insn_i       ( illegal_insn      ),
       .trap_insn_i          ( trap_insn         ),
@@ -781,7 +772,7 @@ module id_stage
       hwloop_wb_mux_sel_ex_o      <= 1'b0;
       hwloop_cnt_o                <= 32'b0;
 
-      jump_in_ex                  <= 2'b0;
+      jump_in_ex_o                <= 2'b0;
 
     end
     else if ((stall_ex_o == 1'b0) && (data_misaligned_i == 1'b1))
@@ -844,7 +835,7 @@ module id_stage
       hwloop_wb_mux_sel_ex_o      <= hwloop_wb_mux_sel;
       hwloop_cnt_o                <= hwloop_cnt;
 
-      jump_in_ex                  <= jump_in_id_o;
+      jump_in_ex_o                <= jump_in_id_o;
 
     end
   end

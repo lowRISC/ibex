@@ -10,7 +10,7 @@
 // Create Date:    08/08/2014                                                 //
 // Design Name:    hwloop regs                                                //
 // Module Name:    hwloop_regs.sv                                             //
-// Project Name:   OR10N                                                      //
+// Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Hardware loop registers                                    //
@@ -20,8 +20,6 @@
 //                                                                            //
 // Revision:                                                                  //
 // Revision v0.1 - File Created                                               //
-//                                                                            //
-//                                                                            //
 //                                                                            //
 //                                                                            //
 //                                                                            //
@@ -55,9 +53,9 @@ module hwloop_regs
 );
 
 
-  logic [`HWLOOP_REGS-1:0] [31:0]        hwloop_start_regs_q;
-  logic [`HWLOOP_REGS-1:0] [31:0]        hwloop_end_regs_q;
-  logic [`HWLOOP_REGS-1:0] [31:0]        hwloop_counter_regs_q;
+  logic [`HWLOOP_REGS-1:0] [31:0] hwloop_start_regs_q;
+  logic [`HWLOOP_REGS-1:0] [31:0] hwloop_end_regs_q;
+  logic [`HWLOOP_REGS-1:0] [31:0] hwloop_counter_regs_q;
 
   int unsigned i;
 

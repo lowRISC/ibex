@@ -64,7 +64,7 @@ module controller
   output logic        mult_mac_en_o,              // Use the accumulator after multiplication
 
   output logic        regfile_we_o,               // Write Enable to regfile
-  output logic [1:0]  regfile_alu_waddr_mux_sel_o, // Select register write address for ALU/MUL operations
+  output logic        regfile_alu_waddr_mux_sel_o, // Select register write address for ALU/MUL operations
 
   output logic        regfile_alu_we_o,           // Write Enable to regfile 2nd port
 
@@ -163,23 +163,21 @@ module controller
   logic                     trap_insn;
   logic                     deassert_we;
 
-  logic        lsu_stall;
-  logic        misalign_stall;
-  logic        instr_ack_stall;
-  logic        load_stall;
-  logic        jr_stall;
-  logic        trap_stall;
+  logic lsu_stall;
+  logic misalign_stall;
+  logic instr_ack_stall;
+  logic load_stall;
+  logic jr_stall;
+  logic trap_stall;
 
-`ifdef BRANCH_PREDICTION
-  logic        wrong_branch_taken;
-`endif
-  logic        rega_used;
-  logic        regb_used;
-  logic        regc_used;
+  logic rega_used;
+  logic regb_used;
+  logic regc_used;
 
-  logic        halt_if;
-  logic        halt_id;
-  logic        illegal_insn_int;
+  logic halt_if;
+  logic halt_id;
+  logic illegal_insn_int;
+
 
   /////////////////////////////////////////////
   //   ____                     _            //
@@ -189,9 +187,9 @@ module controller
   //  |____/ \___|\___\___/ \__,_|\___|_|    //
   //                                         //
   /////////////////////////////////////////////
+
   always_comb
   begin
-    // Default values
     jump_in_id                  = `BRANCH_NONE;
 
     alu_operator                = `ALU_NOP;
@@ -210,7 +208,7 @@ module controller
 
     regfile_we                  = 1'b0;
     regfile_alu_we              = 1'b0;
-    regfile_alu_waddr_mux_sel_o = 2'b01;
+    regfile_alu_waddr_mux_sel_o = 1'b1;
 
     prepost_useincr_o           = 1'b1;
 
@@ -238,10 +236,6 @@ module controller
     regb_used                   = 1'b0;
     regc_used                   = 1'b0;
 
-`ifdef BRANCH_PREDICTION
-    wrong_branch_taken_o        = 1'b0;
-    take_branch_o               = 1'b0;
-`endif
 
     unique case (instr_rdata_i[6:0])
 
@@ -256,7 +250,6 @@ module controller
 
       `OPCODE_JAL: begin   // Jump and Link
         if (instr_rdata_i ==? `INSTR_JAL) begin
-          // Insert bubbles
           jump_in_id          = `BRANCH_JAL;
           // Calculate and store PC+4
           alu_op_a_mux_sel_o  = `OP_A_CURRPC;
@@ -273,7 +266,6 @@ module controller
 
       `OPCODE_JALR: begin  // Jump and Link Register
         if (instr_rdata_i ==? `INSTR_JALR) begin
-          // Insert bubbles
           jump_in_id          = `BRANCH_JALR;
           // Calculate and store PC+4
           alu_op_a_mux_sel_o  = `OP_A_CURRPC;
@@ -306,7 +298,7 @@ module controller
           default: begin
             illegal_insn_int = 1'b1;
           end
-        endcase // case (instr_rdata_i)
+        endcase
       end
 
 
@@ -321,16 +313,16 @@ module controller
 
       `OPCODE_STORE,
       `OPCODE_STORE_POST: begin
-        data_req            = 1'b1;
-        data_we             = 1'b1;
-        rega_used           = 1'b1;
-        regb_used           = 1'b1;
-        alu_operator        = `ALU_ADD;
+        data_req     = 1'b1;
+        data_we      = 1'b1;
+        rega_used    = 1'b1;
+        regb_used    = 1'b1;
+        alu_operator = `ALU_ADD;
 
         // post-increment setup
         if (instr_rdata_i[6:0] == `OPCODE_STORE_POST) begin
           prepost_useincr_o           = 1'b0;
-          regfile_alu_waddr_mux_sel_o = 2'b00;
+          regfile_alu_waddr_mux_sel_o = 1'b0;
           regfile_alu_we              = 1'b1;
         end
 
@@ -359,20 +351,20 @@ module controller
 
       `OPCODE_LOAD,
       `OPCODE_LOAD_POST: begin
-        data_req                 = 1'b1;
-        regfile_we               = 1'b1;
-        rega_used                = 1'b1;
-        data_type_o              = 2'b00;
+        data_req    = 1'b1;
+        regfile_we  = 1'b1;
+        rega_used   = 1'b1;
+        data_type_o = 2'b00;
 
         // offset from immediate
-        alu_operator             = `ALU_ADD;
-        alu_op_b_mux_sel_o       = `OP_B_IMM;
-        immediate_mux_sel_o      = `IMM_I;
+        alu_operator        = `ALU_ADD;
+        alu_op_b_mux_sel_o  = `OP_B_IMM;
+        immediate_mux_sel_o = `IMM_I;
 
         // post-increment setup
         if (instr_rdata_i[6:0] == `OPCODE_LOAD_POST) begin
           prepost_useincr_o           = 1'b0;
-          regfile_alu_waddr_mux_sel_o = 2'b00;
+          regfile_alu_waddr_mux_sel_o = 1'b0;
           regfile_alu_we              = 1'b1;
         end
 
@@ -509,7 +501,7 @@ module controller
             regfile_alu_we   = 1'b0;
             illegal_insn_int = 1'b1;
           end
-        endcase // unique case (instr_rdata_i)
+        endcase
       end
 
       /*
@@ -523,33 +515,12 @@ module controller
             regfile_alu_we = 1'b1;
 
             casex (instr_rdata_i[3:0])
-              4'b0XXX: begin // Standard Operation
-                alu_operator   = {3'b000, instr_rdata_i[2:0]};
-
-                if ((instr_rdata_i[2:0] ==? 3'b00X) || (instr_rdata_i[2:0] == 3'b010)) begin // l.add, l.addc & l.sub
-                  set_overflow = 1'b1;
-                  set_carry    = 1'b1;
-                end
-              end
-              4'b1000: begin // Shift Operation
-                 alu_operator   = {4'b0010, instr_rdata_i[7:6]};
-              end
               4'b110X: begin // l.ext{b,h,w}{s,z}
                  alu_operator   = {3'b010, instr_rdata_i[7:6], instr_rdata_i[0]};
                  regb_used      = 1'b0; // register b is not used
               end
-              4'b1110: begin // l.cmov
-                 alu_operator   = `ALU_CMOV;
-              end
               4'b1111: begin // l.ff1
                 alu_operator = `ALU_FF1;
-              end
-              default: begin
-                // synopsys translate_off
-                $display("%t: Illegal ALU instruction received.", $time);
-                // synopsys translate_on
-                regfile_alu_we = 1'b0; // disable Write Enable for illegal instruction
-                illegal_insn_int = 1'b1;
               end
             endcase // casex (instr_rdata_i[3:2])
           end
@@ -597,26 +568,6 @@ module controller
                 illegal_insn_int = 1'b1;
               end
             endcase //~case(instr_rdata_i[3:0])
-          end
-
-          2'b11: begin    // Multiplication
-            if ((instr_rdata_i[3:0] == 4'b0110) || (instr_rdata_i[3:0] == 4'b1011))
-            begin // Is multiplication and no division
-              mult_is_running   = 1'b1;
-
-              if ((instr_rdata_i[3:0] == 4'b0110) || (instr_rdata_i[3:0] == 4'b1011)) // l.mul & l.mulu
-              begin
-                regfile_alu_we              = 1'b1;
-                regfile_alu_waddr_mux_sel_o = 2'b01;
-              end
-            end
-            else
-            begin
-              // synopsys translate_off
-              $display("%t: Division instruction received, this is not supported.", $time);
-              // synopsys translate_on
-              illegal_insn_int = 1'b1;
-            end
           end
         endcase; // case (instr_rdata_i[9:8])
       end
