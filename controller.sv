@@ -830,7 +830,8 @@ module controller
 
       `OPCODE_HWLOOP: begin // hardware loop instructions
         unique case (instr_rdata_i[14:12])
-          3'b000: begin // lp.starti set start address
+          3'b000: begin
+            // lp.starti set start address
             hwloop_wb_mux_sel_o = 1'b1;
             hwloop_we_o[0]      = 1'b1;                     // set we for start addr reg
             alu_op_a_mux_sel_o  = `OP_A_CURRPC;
@@ -838,7 +839,8 @@ module controller
             alu_operator        = `ALU_ADD;
             // $display("%t: hwloop start address: %h", $time, instr_rdata_i);
           end
-          3'b001: begin // lp.endi set end address
+          3'b001: begin
+            // lp.endi set end address
             hwloop_wb_mux_sel_o = 1'b1;
             hwloop_we_o[1]      = 1'b1;                     // set we for end addr reg
             alu_op_a_mux_sel_o  = `OP_A_CURRPC;
@@ -846,18 +848,22 @@ module controller
             alu_operator        = `ALU_ADD;
             // $display("%t: hwloop end address: %h", $time, instr_rdata_i);
           end
-          3'b010: begin // lp.count initialize counter from register
+          3'b010: begin
+            // lp.count initialize counter from rs1
             hwloop_cnt_mux_sel_o = 2'b11;
-            hwloop_we_o[2]       = 1'b1;                     // set we for counter reg
+            hwloop_we_o[2]       = 1'b1;
             rega_used            = 1'b1;
             // $display("%t: hwloop counter: %h", $time, instr_rdata_i);
           end
-          3'b011: begin // lp.counti initialize counter from immediate
+          3'b011: begin
+            // lp.counti initialize counter from I-type immediate
             hwloop_cnt_mux_sel_o = 2'b01;
-            hwloop_we_o[2]       = 1'b1;                     // set we for counter reg
+            hwloop_we_o[2]       = 1'b1;
             // $display("%t: hwloop counter imm: %h", $time, instr_rdata_i);
           end
-          3'b100: begin // lp.setup
+          3'b100: begin
+            // lp.setup: initialize counter from rs1, set start address to
+            // next instruction and end address to PC + I-type immediate
             hwloop_wb_mux_sel_o  = 1'b0;
             hwloop_cnt_mux_sel_o = 2'b11;
             hwloop_we_o          = 3'b111;                     // set we for counter/start/end reg
@@ -868,7 +874,10 @@ module controller
             rega_used            = 1'b1;
             // $display("%t: hwloop setup: %h", $time, instr_rdata_i);
           end
-          3'b101: begin // lp.setupi
+          3'b101: begin
+            // lp.setupi: initialize counter from I-type immediate, set start
+            // address to next instruction and end address to PC + shifted
+            // z-type immediate
             hwloop_wb_mux_sel_o  = 1'b0;
             hwloop_cnt_mux_sel_o = 2'b10;
             hwloop_we_o          = 3'b111;                     // set we for counter/start/end reg

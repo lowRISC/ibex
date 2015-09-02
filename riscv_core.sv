@@ -180,7 +180,7 @@ module riscv_core
   logic        save_pc_id;
 
 
-  // hwloop data from ALU
+  // Hardware loop data from ALU
   logic [31:0] hwlp_cnt_ex;        // from id to ex stage (hwloop_regs)
   logic [2:0]  hwlp_we_ex;         // from id to ex stage (hwloop_regs)
   logic [1:0]  hwlp_regid_ex;      // from id to ex stage (hwloop_regs)
@@ -189,14 +189,7 @@ module riscv_core
   logic [31:0] hwlp_end_data_ex;   // hwloop data to write to hwloop_regs
   logic [31:0] hwlp_cnt_data_ex;   // hwloop data to write to hwloop_regs
 
-  // Access to hwloop registers
-  logic [31:0] hwlp_start_data;
-  logic [31:0] hwlp_end_data;
-  logic [31:0] hwlp_cnt_data;
-  logic [2:0]  hwlp_we;
-  logic [1:0]  hwlp_regid;
-
-  // hwloop controller signals
+  // Hardware loop controller signals
   logic [`HWLOOP_REGS-1:0] [31:0] hwlp_start_addr;  // to hwloop controller
   logic [`HWLOOP_REGS-1:0] [31:0] hwlp_end_addr;    // to hwloop controller
   logic [`HWLOOP_REGS-1:0] [31:0] hwlp_counter;     // to hwloop controller
@@ -612,11 +605,11 @@ module riscv_core
     .rst_n                   ( rst_n               ),
 
     // from ex stage
-    .hwloop_start_data_i     ( hwlp_start_data     ),
-    .hwloop_end_data_i       ( hwlp_end_data       ),
-    .hwloop_cnt_data_i       ( hwlp_cnt_data       ),
-    .hwloop_we_i             ( hwlp_we             ),
-    .hwloop_regid_i          ( hwlp_regid          ),
+    .hwloop_start_data_i     ( hwlp_start_data_ex  ),
+    .hwloop_end_data_i       ( hwlp_end_data_ex    ),
+    .hwloop_cnt_data_i       ( hwlp_cnt_data_ex    ),
+    .hwloop_we_i             ( hwlp_we_ex          ),
+    .hwloop_regid_i          ( hwlp_regid_ex       ),
 
     // from controller
     .stall_id_i              ( stall_id            ),
@@ -629,12 +622,6 @@ module riscv_core
     // from hwloop controller
     .hwloop_dec_cnt_i        ( hwlp_dec_cnt        )
   );
-
-  assign hwlp_start_data = hwlp_start_data_ex;
-  assign hwlp_end_data   = hwlp_end_data_ex;
-  assign hwlp_cnt_data   = hwlp_cnt_data_ex;
-  assign hwlp_regid      = hwlp_regid_ex;
-  assign hwlp_we         = hwlp_we_ex;
 
 
   /////////////////////////////////////////////////////////////

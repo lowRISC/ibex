@@ -328,11 +328,10 @@ module id_stage
   always_comb
   begin : hwloop_cnt_mux
     unique case (hwloop_cnt_mux_sel)
-      2'b00:   hwloop_cnt = 32'b0;
-      2'b01:   hwloop_cnt = imm_i_type;
-      2'b10:   hwloop_cnt = 32'b0;
+      2'b00:   hwloop_cnt = imm_i_type;
+      2'b01:   hwloop_cnt = { imm_z_type[30:0], 1'b0 };
       2'b11:   hwloop_cnt = operand_a_fw_id;
-    endcase; // case (hwloop_cnt_mux_sel)
+    endcase;
   end
 
   // hwloop register id
