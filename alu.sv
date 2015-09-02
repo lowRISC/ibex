@@ -438,11 +438,11 @@ module alu
     if((operator_i == `ALU_EXTBS) || ((operator_i == `ALU_EXT) && (vector_mode_i == `VEC_MODE8)))
       result_ext = {{24{ext_byte[7]}}, ext_byte[7:0]};
 
-    // zero extend word
+    // zero extend half word
     if(operator_i == `ALU_EXTHZ)
       result_ext = {16'b0, ext_word[15:0]};
 
-    // sign extend word
+    // sign extend half word
     if((operator_i == `ALU_EXTHS) || ((operator_i == `ALU_EXT) && (vector_mode_i == `VEC_MODE16)))
       result_ext = {{16{ext_word[15]}}, ext_word[15:0]};
   end

@@ -44,8 +44,7 @@ module compressed_decoder
   always_comb
   begin
     illegal_instr_o = 1'b0;
-    is_compressed_o = 1'b1;
-    instr_o         = '0;
+    instr_o         = 'X;
 
     unique case (instr_i[1:0])
       // C0
@@ -125,7 +124,6 @@ module compressed_decoder
               2'b10:  instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b110, 2'b01, instr_i[12:10], `OPCODE_OP};
               // c.and3 -> and rd', rs1', rs2'
               2'b11:  instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b111, 2'b01, instr_i[12:10], `OPCODE_OP};
-              default:  illegal_instr_o = 1'b1;
             endcase
           end
 
@@ -178,7 +176,6 @@ module compressed_decoder
               2'b10:  instr_o = {{9 {instr_i[12]}}, instr_i[12:10], 2'b01, instr_i[9:7], 3'b110, 2'b01, instr_i[4:2], `OPCODE_OPIMM};
               // c.andin -> andi rd', rs1', imm
               2'b11:  instr_o = {{9 {instr_i[12]}}, instr_i[12:10], 2'b01, instr_i[9:7], 3'b111, 2'b01, instr_i[4:2], `OPCODE_OPIMM};
-              default:  illegal_instr_o = 1'b1;
             endcase
             if (instr_i[12:10] == 3'b0) illegal_instr_o = 1'b1;
           end
@@ -270,9 +267,10 @@ module compressed_decoder
       2'b11: begin
         // 32 bit (or more) instruction
         instr_o = instr_i;
-        is_compressed_o = 1'b0;
       end
     endcase
   end
+
+  assign is_compressed_o = (instr_i[1:0] != 2'b11);
 
 endmodule
