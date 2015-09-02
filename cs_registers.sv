@@ -50,7 +50,7 @@ module cs_registers
   input logic         save_pc_if_i,
   input logic         save_pc_id_i,
 
-  output logic  [1:0] irq_enable_o,
+  output logic        irq_enable_o,
   output logic [31:0] epcr_o,
 
   // Performance Counters
