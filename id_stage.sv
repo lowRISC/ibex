@@ -215,6 +215,8 @@ module id_stage
 
   logic [2:0]  immediate_mux_sel;
 
+  logic [1:0]  jump_target_mux_sel;
+
   // Multiplier Control
   logic        mult_en;          // multiplication is used instead of ALU
   logic [1:0]  mult_sel_subword; // Select a subword when doing multiplications
@@ -348,8 +350,8 @@ module id_stage
   //////////////////////////////////////////////////////////////////
 
   always_comb
-  begin
-    unique case (jump_in_id_o)
+  begin : jump_target_mux
+    unique case (jump_target_mux_sel)
       `BRANCH_JAL:    jump_target = current_pc_id_i + imm_uj_type;
       `BRANCH_JALR:   jump_target = regfile_data_ra_id + imm_i_type; // cannot forward rs1 as path is too long
       `BRANCH_COND:   jump_target = current_pc_id_i + imm_sb_type;

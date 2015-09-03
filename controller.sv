@@ -120,6 +120,7 @@ module controller
   output logic [1:0]  operand_c_fw_mux_sel_o,     // regfile rc data selector form ID stage
 
   // Jump target calcuation done decision
+  output logic [1:0]  jump_target_mux_sel_o,      // jump target selection
   input  logic [1:0]  jump_in_ex_i,               // jump is being calculated in ALU
   output logic [1:0]  jump_in_id_o,               // jump is being calculated in ALU
   input  logic        branch_decision_i,
@@ -191,6 +192,7 @@ module controller
   always_comb
   begin
     jump_in_id                  = `BRANCH_NONE;
+    jump_target_mux_sel_o       = `BRANCH_NONE;
 
     alu_operator                = `ALU_NOP;
     alu_op_a_mux_sel_o          = `OP_A_REGA_OR_FWD;
@@ -249,43 +251,44 @@ module controller
       //////////////////////////////////////
 
       `OPCODE_JAL: begin   // Jump and Link
-        if (instr_rdata_i ==? `INSTR_JAL) begin
-          jump_in_id          = `BRANCH_JAL;
-          // Calculate and store PC+4
-          alu_op_a_mux_sel_o  = `OP_A_CURRPC;
-          alu_op_b_mux_sel_o  = `OP_B_IMM;
-          immediate_mux_sel_o = `IMM_PCINCR;
-          alu_operator        = `ALU_ADD;
-          regfile_alu_we      = 1'b1;
-          // Calculate jump target (= PC + UJ imm)
-          alu_op_c_mux_sel_o  = `OP_C_JT;
-        end else begin
-          illegal_insn_int    = 1'b1;
-        end
+        jump_target_mux_sel_o = `BRANCH_JAL;
+        jump_in_id            = `BRANCH_JAL;
+        // Calculate and store PC+4
+        alu_op_a_mux_sel_o  = `OP_A_CURRPC;
+        alu_op_b_mux_sel_o  = `OP_B_IMM;
+        immediate_mux_sel_o = `IMM_PCINCR;
+        alu_operator        = `ALU_ADD;
+        regfile_alu_we      = 1'b1;
+        // Calculate jump target (= PC + UJ imm)
+        alu_op_c_mux_sel_o  = `OP_C_JT;
       end
 
       `OPCODE_JALR: begin  // Jump and Link Register
-        if (instr_rdata_i ==? `INSTR_JALR) begin
-          jump_in_id          = `BRANCH_JALR;
-          // Calculate and store PC+4
-          alu_op_a_mux_sel_o  = `OP_A_CURRPC;
-          alu_op_b_mux_sel_o  = `OP_B_IMM;
-          immediate_mux_sel_o = `IMM_PCINCR;
-          alu_operator        = `ALU_ADD;
-          regfile_alu_we      = 1'b1;
-          // Calculate jump target (= RS1 + I imm)
-          rega_used           = 1'b1;
-          alu_op_c_mux_sel_o  = `OP_C_JT;
-        end else begin
-          illegal_insn_int    = 1'b1;
+        jump_target_mux_sel_o = `BRANCH_JALR;
+        jump_in_id            = `BRANCH_JALR;
+        // Calculate and store PC+4
+        alu_op_a_mux_sel_o  = `OP_A_CURRPC;
+        alu_op_b_mux_sel_o  = `OP_B_IMM;
+        immediate_mux_sel_o = `IMM_PCINCR;
+        alu_operator        = `ALU_ADD;
+        regfile_alu_we      = 1'b1;
+        // Calculate jump target (= RS1 + I imm)
+        rega_used           = 1'b1;
+        alu_op_c_mux_sel_o  = `OP_C_JT;
+
+        if (instr_rdata_i[14:12] != 3'b0) begin
+          jump_in_id       = `BRANCH_NONE;
+          regfile_alu_we   = 1'b0;
+          illegal_insn_int = 1'b0;
         end
       end
 
       `OPCODE_BRANCH: begin // Branch
-        jump_in_id          = `BRANCH_COND;
-        alu_op_c_mux_sel_o  = `OP_C_JT;
-        rega_used           = 1'b1;
-        regb_used           = 1'b1;
+        jump_target_mux_sel_o = `BRANCH_COND;
+        jump_in_id            = `BRANCH_COND;
+        alu_op_c_mux_sel_o    = `OP_C_JT;
+        rega_used             = 1'b1;
+        regb_used             = 1'b1;
 
         unique case (instr_rdata_i[14:12])
           3'b000: alu_operator = `ALU_EQ;
@@ -829,6 +832,8 @@ module controller
       ///////////////////////////////////////////////
 
       `OPCODE_HWLOOP: begin // hardware loop instructions
+        jump_target_mux_sel_o = `BRANCH_JALR; // reuse jump target adder to calculate PC + I imm
+
         unique case (instr_rdata_i[14:12])
           3'b000: begin
             // lp.starti set start address
