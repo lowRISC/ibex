@@ -701,25 +701,50 @@ module id_stage
   //////////////////////////////////////////////////////////////////////////
 
   hwloop_controller hwloop_controller_i
-    (
-     // from ID stage
-     .enable_i                     ( hwloop_enable         ),
-     .current_pc_i                 ( current_pc_if_i       ),
+  (
+    // from ID stage
+    .enable_i                     ( hwloop_enable         ),
 
-     // to ID controller
-     .hwloop_jump_o                ( hwloop_jump           ),
+    .current_pc_i                 ( current_pc_if_i       ),
 
-     // to if stage
-     .hwloop_targ_addr_o           ( hwloop_targ_addr_o    ),
+    // to ID controller
+    .hwloop_jump_o                ( hwloop_jump           ),
 
-     // from hwloop_regs
-     .hwloop_start_addr_i          ( hwloop_start_addr_i   ),
-     .hwloop_end_addr_i            ( hwloop_end_addr_i     ),
-     .hwloop_counter_i             ( hwloop_counter_i      ),
+    // to if stage
+    .hwloop_targ_addr_o           ( hwloop_targ_addr_o    ),
 
-     // to hwloop_regs
-     .hwloop_dec_cnt_o             ( hwloop_dec_cnt_o      )
-     );
+    // from hwloop_regs
+    .hwloop_start_addr_i          ( hwloop_start_addr_i   ),
+    .hwloop_end_addr_i            ( hwloop_end_addr_i     ),
+    .hwloop_counter_i             ( hwloop_counter_i      ),
+
+    // to hwloop_regs
+    .hwloop_dec_cnt_o             ( hwloop_dec_cnt_o      )
+  );
+
+  hwloop_regs hwloop_regs_i
+  (
+    .clk                     ( clk                 ),
+    .rst_n                   ( rst_n               ),
+
+    // from ex stage
+    .hwloop_start_data_i     ( hwlp_start_data_ex  ),
+    .hwloop_end_data_i       ( hwlp_end_data_ex    ),
+    .hwloop_cnt_data_i       ( hwlp_cnt_data_ex    ),
+    .hwloop_we_i             ( hwlp_we_ex          ),
+    .hwloop_regid_i          ( hwlp_regid_ex       ),
+
+    // from controller
+    .stall_id_i              ( stall_id            ),
+
+    // to hwloop controller
+    .hwloop_start_addr_o     ( hwlp_start_addr     ),
+    .hwloop_end_addr_o       ( hwlp_end_addr       ),
+    .hwloop_counter_o        ( hwlp_counter        ),
+
+    // from hwloop controller
+    .hwloop_dec_cnt_i        ( hwlp_dec_cnt        )
+  );
 
 
   /////////////////////////////////////////////////////////////////////////////////

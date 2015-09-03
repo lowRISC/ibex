@@ -461,11 +461,6 @@ module riscv_core
     .regfile_alu_we_i           ( regfile_alu_we_ex            ),
     .regfile_alu_waddr_i        ( regfile_alu_waddr_ex         ),
 
-    // From ID stage: hwloop wb reg signals
-    .hwloop_wb_mux_sel_i        ( hwlp_wb_mux_sel_ex           ),
-    .hwloop_pc_plus4_i          ( current_pc_id                ),
-    .hwloop_cnt_i               ( hwlp_cnt_ex                  ),
-
     //From ID stage.Controller
     .regfile_rb_data_i          ( regfile_rb_data_ex           ),
 
@@ -473,11 +468,6 @@ module riscv_core
     .regfile_waddr_wb_o         ( regfile_waddr_fw_wb_o        ),
     .regfile_we_wb_o            ( regfile_we_wb                ),
     .regfile_rb_data_wb_o       ( regfile_rb_data_wb           ),
-
-    // To hwloop regs
-    .hwloop_start_data_o        ( hwlp_start_data_ex           ),
-    .hwloop_end_data_o          ( hwlp_end_data_ex             ),
-    .hwloop_cnt_data_o          ( hwlp_cnt_data_ex             ),
 
     // To IF: Jump and branch target and decision
     .jump_target_o              ( jump_target_ex               ),
@@ -594,34 +584,6 @@ module riscv_core
   assign csr_op        = (dbg_sp_mux == 1'b0) ? csr_op_ex
                                               : (dbg_reg_we == 1'b1 ? `CSR_OP_WRITE : `CSR_OP_NONE);
   assign dbg_rdata     = (dbg_sp_mux == 1'b0) ? dbg_reg_rdata    : csr_rdata;
-
-
-  //////////////////////////////////////////////
-  //      Hardware Loop Registers             //
-  //////////////////////////////////////////////
-  hwloop_regs hwloop_regs_i
-  (
-    .clk                     ( clk                 ),
-    .rst_n                   ( rst_n               ),
-
-    // from ex stage
-    .hwloop_start_data_i     ( hwlp_start_data_ex  ),
-    .hwloop_end_data_i       ( hwlp_end_data_ex    ),
-    .hwloop_cnt_data_i       ( hwlp_cnt_data_ex    ),
-    .hwloop_we_i             ( hwlp_we_ex          ),
-    .hwloop_regid_i          ( hwlp_regid_ex       ),
-
-    // from controller
-    .stall_id_i              ( stall_id            ),
-
-    // to hwloop controller
-    .hwloop_start_addr_o     ( hwlp_start_addr     ),
-    .hwloop_end_addr_o       ( hwlp_end_addr       ),
-    .hwloop_counter_o        ( hwlp_counter        ),
-
-    // from hwloop controller
-    .hwloop_dec_cnt_i        ( hwlp_dec_cnt        )
-  );
 
 
   /////////////////////////////////////////////////////////////
