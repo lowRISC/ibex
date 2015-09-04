@@ -42,7 +42,7 @@ module instr_core_interface
   input  logic [31:0] instr_rdata_i
 );
 
-  enum logic [1:0] {IDLE, PENDING, WAIT_RVALID, WAIT_GNT } CS, NS;
+  enum logic [1:0] {IDLE, WAIT_RVALID, WAIT_GNT } CS, NS;
 
   logic [31:0] rdata_Q;
 
@@ -61,11 +61,8 @@ module instr_core_interface
     begin
       CS <= NS;
 
-      if (instr_req_o && instr_gnt_i)
-        addr_Q <= instr_addr_o;
-
       if (wait_gnt)
-        addr_Q <= addr_i;
+        addr_Q <= instr_addr_o;
 
       if (instr_rvalid_i)
         rdata_Q <= instr_rdata_i;
@@ -81,6 +78,7 @@ module instr_core_interface
     rdata_o       = instr_rdata_i;
     instr_addr_o  = addr_i;
     wait_gnt      = 1'b0;
+    NS            = CS;
 
     unique case(CS)
       // default state, not waiting for requested data
@@ -88,15 +86,16 @@ module instr_core_interface
       begin
         rdata_o     = rdata_Q;
 
-        NS          = IDLE;
-        instr_req_o = req_i;
+        instr_req_o = 1'b0;
 
         if(req_i) begin
+          instr_req_o = 1'b1;
+
+          wait_gnt = 1'b1;
           if(instr_gnt_i) //~>  granted request
-            NS = PENDING;
+            NS       = WAIT_RVALID;
           else begin //~> got a request but no grant
             NS       = WAIT_GNT;
-            wait_gnt = 1'b1;
           end
         end
       end // case: IDLE
@@ -108,51 +107,34 @@ module instr_core_interface
         instr_req_o  = 1'b1;
 
         if(instr_gnt_i)
-          NS = PENDING;
+          NS = WAIT_RVALID;
         else
-        begin
           NS = WAIT_GNT;
-        end
       end // case: WAIT_GNT
-
-      // we got a grant, so now we wait for the rvalid
-      PENDING:
-      begin
-        if (instr_rvalid_i) begin
-          NS          = IDLE;
-          instr_req_o = req_i;
-
-          if (req_i) begin
-            if (instr_gnt_i) begin
-              NS = PENDING;
-            end else begin
-              NS       = WAIT_GNT;
-              wait_gnt = 1'b1;
-            end
-          end
-        end else begin
-          NS          = WAIT_RVALID;
-          instr_req_o = 1'b0;
-        end
-      end // case: PENDING
 
       // we wait for rvalid, after that we are ready to serve a new request
       WAIT_RVALID :
       begin
-        NS          = WAIT_RVALID;
-        instr_req_o = 1'b0;
 
-        if (instr_rvalid_i) begin
-          NS          = IDLE;
-          instr_req_o = req_i;
+        if (req_i) begin
+          // prepare for next request
+          instr_req_o = 1'b1;
 
-          if (req_i) begin
-            if (instr_gnt_i)
-              NS =  PENDING;
-            else begin
-              NS       = WAIT_GNT;
-              wait_gnt = 1'b1;
+          if (instr_rvalid_i) begin
+            wait_gnt = 1'b1;
+            if (instr_gnt_i) begin
+              NS      = WAIT_RVALID;
+            end else begin
+              NS      = WAIT_GNT;
             end
+          end
+        end else begin
+          // just wait for rvalid and go back to IDLE, no new request
+          // requested
+          instr_req_o = 1'b0;
+
+          if (instr_rvalid_i) begin
+            NS = IDLE;
           end
         end
       end // case: WAIT_RVALID

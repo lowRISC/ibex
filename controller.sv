@@ -925,7 +925,7 @@ module controller
     // note: this is done intentionally before checking RVC decoding, to
     // suppress wrong (and annoying) messages during simulation
     if (illegal_insn_o) begin
-      $warning("Illegal instruction (core %0d) at PC 0x%h:", $time, riscv_core.core_id_i);
+      $warning("%t: Illegal instruction (core %0d) at PC 0x%h:", $time, riscv_core.core_id_i);
       //prettyPrintInstruction(instr_rdata_i, id_stage.current_pc_id_i);
     end
   end
@@ -1152,6 +1152,7 @@ module controller
         end
       end
 
+      // flush the pipeline, insert NOP into EX stage
       FLUSH_EX:
       begin
         halt_if = 1'b1;
@@ -1161,6 +1162,7 @@ module controller
           ctrl_fsm_ns = FLUSH_WB;
       end
 
+      // flush the pipeline, insert NOP into EX and WB stage
       FLUSH_WB:
       begin
         halt_if = 1'b1;
