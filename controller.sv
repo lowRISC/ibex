@@ -137,7 +137,7 @@ module controller
 );
 
   // FSM state encoding
-  enum  logic [3:0] { RESET, SLEEP, FIRST_FETCH, DECODE, BRANCH, BRANCH_DELAY,
+  enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH, DECODE, BRANCH, BRANCH_DELAY,
                       FLUSH_EX, FLUSH_WB,
                       DBG_FLUSH_EX, DBG_FLUSH_WB, DBG_SIGNAL, DBG_WAIT } ctrl_fsm_cs, ctrl_fsm_ns;
 
@@ -958,36 +958,36 @@ module controller
     illegal_insn_o = 1'b0;
 
     unique case (ctrl_fsm_cs)
-      default: begin
-        instr_req_o = 1'b0;
-        ctrl_fsm_ns = RESET;
-      end
-
+      // We were just reset, wait for fetch_enable
       RESET:
       begin
-        // We were just reset and have to copy the boot address from
-        // outside to our PC
         core_busy_o   = 1'b0;
-        instr_req_o   = fetch_enable_i;
-        pc_mux_sel_o  = `PC_BOOT;
+        instr_req_o   = 1'b0;
 
         if (fetch_enable_i == 1'b1)
-          ctrl_fsm_ns = FIRST_FETCH;
+          ctrl_fsm_ns = BOOT_SET;
       end
 
-      // instruction in IF stage is already valid, so just jump to DECODE
-      // instead of FIRST_FETCH
+      // copy boot address to instr fetch address
+      BOOT_SET:
+      begin
+        instr_req_o   = 1'b1;
+        pc_mux_sel_o  = `PC_BOOT;
+
+        ctrl_fsm_ns = FIRST_FETCH;
+      end
+
+      // instruction in if_stage is already valid
       SLEEP:
       begin
         // we begin execution when either fetch_enable is high or an
         // interrupt has arrived
         core_busy_o   = 1'b0;
-        instr_req_o   = fetch_enable_i || irq_present_i;
+        instr_req_o   = 1'b0;
 
         if (fetch_enable_i || irq_present_i)
         begin
-          if (instr_ack_i == 1'b1)
-            ctrl_fsm_ns  = DECODE;
+          ctrl_fsm_ns  = FIRST_FETCH;
         end
       end // case: SLEEP
 
@@ -1178,6 +1178,11 @@ module controller
           if (~stall_id_o)
             ctrl_fsm_ns = DECODE;
         end
+      end
+
+      default: begin
+        instr_req_o = 1'b0;
+        ctrl_fsm_ns = RESET;
       end
     endcase
   end
