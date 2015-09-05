@@ -86,9 +86,11 @@ module controller
   input  logic        data_rvalid_i,              // rvalid from data memory
 
   // hwloop signals
-  output logic [2:0]  hwloop_we_o,                // write enables for hwloop regs
-  output logic        hwloop_wb_mux_sel_o,        // select data to write to hwloop regs
-  output logic [1:0]  hwloop_cnt_mux_sel_o,       // selects hwloop counter input
+  output logic [2:0]  hwloop_we_o,                // write enable for hwloop regs
+  output logic        hwloop_start_mux_sel_o,     // selects hwloop start address input
+  output logic        hwloop_end_mux_sel_o,       // selects hwloop end address input
+  output logic        hwloop_cnt_mux_sel_o,       // selects hwloop counter input
+
   input  logic        hwloop_jump_i,              // modify pc_mux_sel to select the hwloop addr
 
   // Interrupt signals
@@ -192,12 +194,14 @@ module controller
   always_comb
   begin
     jump_in_id                  = `BRANCH_NONE;
-    jump_target_mux_sel_o       = `BRANCH_NONE;
+    jump_target_mux_sel_o       = `JT_JAL;
 
     alu_operator                = `ALU_NOP;
     alu_op_a_mux_sel_o          = `OP_A_REGA_OR_FWD;
     alu_op_b_mux_sel_o          = `OP_B_REGB_OR_FWD;
     alu_op_c_mux_sel_o          = `OP_C_REGC_OR_FWD;
+
+    immediate_mux_sel_o         = `IMM_I;
 
     vector_mode_o               = `VEC_MODE32;
     scalar_replication_o        = 1'b0;
@@ -215,9 +219,9 @@ module controller
     prepost_useincr_o           = 1'b1;
 
     hwloop_we_o                 = 3'b0;
-    hwloop_wb_mux_sel_o         = 1'b0;
-    hwloop_cnt_mux_sel_o        = 2'b00;
-    immediate_mux_sel_o         = `IMM_I;
+    hwloop_start_mux_sel_o      = 1'b0;
+    hwloop_end_mux_sel_o        = 1'b0;
+    hwloop_cnt_mux_sel_o        = 1'b0;
 
     csr_access_o                = 1'b0;
     csr_op                      = `CSR_OP_NONE;
@@ -251,7 +255,7 @@ module controller
       //////////////////////////////////////
 
       `OPCODE_JAL: begin   // Jump and Link
-        jump_target_mux_sel_o = `BRANCH_JAL;
+        jump_target_mux_sel_o = `JT_JAL;
         jump_in_id            = `BRANCH_JAL;
         // Calculate and store PC+4
         alu_op_a_mux_sel_o  = `OP_A_CURRPC;
@@ -264,7 +268,7 @@ module controller
       end
 
       `OPCODE_JALR: begin  // Jump and Link Register
-        jump_target_mux_sel_o = `BRANCH_JALR;
+        jump_target_mux_sel_o = `JT_JALR;
         jump_in_id            = `BRANCH_JALR;
         // Calculate and store PC+4
         alu_op_a_mux_sel_o  = `OP_A_CURRPC;
@@ -284,7 +288,7 @@ module controller
       end
 
       `OPCODE_BRANCH: begin // Branch
-        jump_target_mux_sel_o = `BRANCH_COND;
+        jump_target_mux_sel_o = `JT_COND;
         jump_in_id            = `BRANCH_COND;
         alu_op_c_mux_sel_o    = `OP_C_JT;
         rega_used             = 1'b1;
@@ -831,65 +835,54 @@ module controller
       //                                           //
       ///////////////////////////////////////////////
 
-      `OPCODE_HWLOOP: begin // hardware loop instructions
-        jump_target_mux_sel_o = `BRANCH_JALR; // reuse jump target adder to calculate PC + I imm
+      `OPCODE_HWLOOP: begin
+        jump_target_mux_sel_o = `JT_HWLP; // get PC + I imm from jump target adder
 
         unique case (instr_rdata_i[14:12])
           3'b000: begin
-            // lp.starti set start address
-            hwloop_wb_mux_sel_o = 1'b1;
-            hwloop_we_o[0]      = 1'b1;                     // set we for start addr reg
-            alu_op_a_mux_sel_o  = `OP_A_CURRPC;
-            alu_op_b_mux_sel_o  = `OP_B_IMM;
-            alu_operator        = `ALU_ADD;
+            // lp.starti: set start address to PC + I-type immediate
+            hwloop_we_o[0]         = 1'b1;
+            hwloop_start_mux_sel_o = 1'b0;
             // $display("%t: hwloop start address: %h", $time, instr_rdata_i);
           end
           3'b001: begin
-            // lp.endi set end address
-            hwloop_wb_mux_sel_o = 1'b1;
-            hwloop_we_o[1]      = 1'b1;                     // set we for end addr reg
-            alu_op_a_mux_sel_o  = `OP_A_CURRPC;
-            alu_op_b_mux_sel_o  = `OP_B_IMM;
-            alu_operator        = `ALU_ADD;
+            // lp.endi: set end address to PC + I-type immediate
+            hwloop_we_o[1]       = 1'b1;
+            hwloop_end_mux_sel_o = 1'b0; // jump target
             // $display("%t: hwloop end address: %h", $time, instr_rdata_i);
           end
           3'b010: begin
             // lp.count initialize counter from rs1
-            hwloop_cnt_mux_sel_o = 2'b11;
             hwloop_we_o[2]       = 1'b1;
+            hwloop_cnt_mux_sel_o = 1'b1;
             rega_used            = 1'b1;
             // $display("%t: hwloop counter: %h", $time, instr_rdata_i);
           end
           3'b011: begin
             // lp.counti initialize counter from I-type immediate
-            hwloop_cnt_mux_sel_o = 2'b01;
             hwloop_we_o[2]       = 1'b1;
+            hwloop_cnt_mux_sel_o = 1'b0;
             // $display("%t: hwloop counter imm: %h", $time, instr_rdata_i);
           end
           3'b100: begin
             // lp.setup: initialize counter from rs1, set start address to
             // next instruction and end address to PC + I-type immediate
-            hwloop_wb_mux_sel_o  = 1'b0;
-            hwloop_cnt_mux_sel_o = 2'b11;
-            hwloop_we_o          = 3'b111;                     // set we for counter/start/end reg
-            alu_op_a_mux_sel_o   = `OP_A_CURRPC;
-            alu_op_b_mux_sel_o   = `OP_B_IMM;
-            alu_operator         = `ALU_ADD;
-            // TODO: immediate_mux_sel_o  = `IMM_16Z;
-            rega_used            = 1'b1;
+            hwloop_we_o            = 3'b111;
+            hwloop_start_mux_sel_o = 1'b1;
+            hwloop_end_mux_sel_o   = 1'b0;
+            hwloop_cnt_mux_sel_o   = 1'b1;
+            rega_used              = 1'b1;
             // $display("%t: hwloop setup: %h", $time, instr_rdata_i);
           end
           3'b101: begin
             // lp.setupi: initialize counter from I-type immediate, set start
             // address to next instruction and end address to PC + shifted
             // z-type immediate
-            hwloop_wb_mux_sel_o  = 1'b0;
-            hwloop_cnt_mux_sel_o = 2'b10;
-            hwloop_we_o          = 3'b111;                     // set we for counter/start/end reg
-            alu_op_a_mux_sel_o   = `OP_A_CURRPC;
-            alu_op_b_mux_sel_o   = `OP_B_IMM;
-            alu_operator         = `ALU_ADD;
-            // TODO: immediate_mux_sel_o  = `IMM_8Z;
+            hwloop_we_o            = 3'b111;
+            hwloop_start_mux_sel_o = 1'b1;
+            hwloop_end_mux_sel_o   = 1'b1;
+            hwloop_cnt_mux_sel_o   = 1'b0;
+            illegal_insn_int       = 1'b1; // TODO: PC + z-imm currently not supported
             // $display("%t: hwloop setup imm: %h", $time, instr_rdata_i);
           end
           default: begin
@@ -936,10 +929,9 @@ module controller
   always_ff @(negedge clk)
   begin
     // print warning in case of decoding errors
-    // note: this is done intentionally before checking RVC decoding, to
-    // suppress wrong (and annoying) messages during simulation
     if (illegal_insn_o) begin
-      $warning("Illegal instruction (core %0d) at PC 0x%h:", $time, riscv_core.core_id_i);
+      $display("%t: Illegal instruction (core %0d) at PC 0x%h:", $time, riscv_core.core_id_i,
+               id_stage.current_pc_id_i);
       //prettyPrintInstruction(instr_rdata_i, id_stage.current_pc_id_i);
     end
   end

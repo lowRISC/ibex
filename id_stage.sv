@@ -93,12 +93,7 @@ module id_stage
     output logic        prepost_useincr_ex_o,
     input  logic        data_misaligned_i,
 
-    output logic [2:0]              hwloop_we_ex_o,
-    output logic [1:0]              hwloop_regid_ex_o,
-    output logic                    hwloop_wb_mux_sel_ex_o,
-    output logic [31:0]             hwloop_cnt_o,
-    output logic [`HWLOOP_REGS-1:0] hwloop_dec_cnt_o,
-    output logic [31:0]             hwloop_targ_addr_o,
+    output logic [31:0] hwloop_targ_addr_o,
 
     output logic        csr_access_ex_o,
     output logic [1:0]  csr_op_ex_o,
@@ -119,12 +114,6 @@ module id_stage
     input  logic        irq_enable_i,
     output logic        save_pc_if_o,
     output logic        save_pc_id_o,
-    output logic        save_sr_o,
-
-    // from hwloop regs
-    input  logic [`HWLOOP_REGS-1:0] [31:0] hwloop_start_addr_i,
-    input  logic [`HWLOOP_REGS-1:0] [31:0] hwloop_end_addr_i,
-    input  logic [`HWLOOP_REGS-1:0] [31:0] hwloop_counter_i,
 
     // Debug Unit Signals
     input  logic        dbg_flush_pipe_i,
@@ -237,11 +226,21 @@ module id_stage
   // hwloop signals
   logic [1:0]  hwloop_regid;
   logic [2:0]  hwloop_we;
-  logic        hwloop_wb_mux_sel;
-  logic [1:0]  hwloop_cnt_mux_sel;
-  logic [31:0] hwloop_cnt;
   logic        hwloop_jump;
   logic        hwloop_enable;
+  logic        hwloop_start_mux_sel;
+  logic        hwloop_end_mux_sel;
+  logic        hwloop_cnt_mux_sel;
+
+  logic [31:0] hwloop_start;
+  logic [31:0] hwloop_end;
+  logic [31:0] hwloop_cnt;
+
+  // hwloop reg signals
+  logic [`HWLOOP_REGS-1:0] hwloop_dec_cnt;
+  logic [`HWLOOP_REGS-1:0] [31:0] hwloop_start_addr;
+  logic [`HWLOOP_REGS-1:0] [31:0] hwloop_end_addr;
+  logic [`HWLOOP_REGS-1:0] [31:0] hwloop_counter;
 
   // CSR control
   logic        csr_access;
@@ -326,22 +325,39 @@ module id_stage
   //                                           //
   ///////////////////////////////////////////////
 
-  // hwloop_cnt_mux
+  // hwloop register id
+  assign hwloop_regid = instr[8:7];   // rd contains hwloop register id
+
+  // hwloop start mux
+  always_comb
+  begin
+    unique case (hwloop_start_mux_sel)
+      1'b0: hwloop_start = jump_target;     // for PC + I imm
+      1'b1: hwloop_start = current_pc_if_i; // for next PC
+    endcase
+  end
+
+  // hwloop end mux
+  always_comb
+  begin
+    unique case (hwloop_end_mux_sel)
+      1'b0: hwloop_end = jump_target; // for PC + I imm
+      1'b1: hwloop_end = jump_target; // TODO: PC + (Z imm << 1) for lp.setupi
+    endcase
+  end
+
+  // hwloop cnt mux
   always_comb
   begin : hwloop_cnt_mux
     unique case (hwloop_cnt_mux_sel)
-      2'b00:   hwloop_cnt = imm_i_type;
-      2'b01:   hwloop_cnt = { imm_z_type[30:0], 1'b0 };
-      2'b11:   hwloop_cnt = operand_a_fw_id;
+      1'b0: hwloop_cnt = imm_i_type;
+      1'b1: hwloop_cnt = operand_a_fw_id;
     endcase;
   end
 
-  // hwloop register id
-  assign hwloop_regid = instr[8:7];      // rd contains hwloop register id
-
 
   //////////////////////////////////////////////////////////////////
-  //       _                         _____                    _   //
+  //      _                         _____                    _    //
   //     | |_   _ _ __ ___  _ __   |_   _|_ _ _ __ __ _  ___| |_  //
   //  _  | | | | | '_ ` _ \| '_ \    | |/ _` | '__/ _` |/ _ \ __| //
   // | |_| | |_| | | | | | | |_) |   | | (_| | | | (_| |  __/ |_  //
@@ -352,10 +368,10 @@ module id_stage
   always_comb
   begin : jump_target_mux
     unique case (jump_target_mux_sel)
-      `BRANCH_JAL:    jump_target = current_pc_id_i + imm_uj_type;
-      `BRANCH_JALR:   jump_target = regfile_data_ra_id + imm_i_type; // cannot forward rs1 as path is too long
-      `BRANCH_COND:   jump_target = current_pc_id_i + imm_sb_type;
-      default:        jump_target = current_pc_id_i + imm_sb_type; // replicate this as default to avoid another case
+      `JT_JAL:  jump_target = current_pc_id_i + imm_uj_type;
+      `JT_JALR: jump_target = regfile_data_ra_id + imm_i_type; // cannot forward rs1 as path is too long
+      `JT_COND: jump_target = current_pc_id_i + imm_sb_type;
+      `JT_HWLP: jump_target = current_pc_id_i + imm_i_type;
     endcase
   end
 
@@ -375,11 +391,11 @@ module id_stage
   always_comb
   begin : alu_operand_a_mux
      case (alu_op_a_mux_sel)
-       default:            alu_operand_a = operand_a_fw_id;
        `OP_A_REGA_OR_FWD:  alu_operand_a = operand_a_fw_id;
        `OP_A_CURRPC:       alu_operand_a = current_pc;
        `OP_A_ZIMM:         alu_operand_a = imm_z_type;
        `OP_A_ZERO:         alu_operand_a = 32'b0;
+       default:            alu_operand_a = operand_a_fw_id;
      endcase; // case (alu_op_a_mux_sel)
   end
 
@@ -420,10 +436,10 @@ module id_stage
   always_comb
   begin : alu_operand_b_mux
      case (alu_op_b_mux_sel)
-       default:            operand_b = operand_b_fw_id;
        `OP_B_REGB_OR_FWD:  operand_b = operand_b_fw_id;
        `OP_B_REGC_OR_FWD:  operand_b = alu_operand_c;
        `OP_B_IMM:          operand_b = immediate_b;
+       default:            operand_b = operand_b_fw_id;
      endcase // case (alu_op_b_mux_sel)
   end
 
@@ -578,7 +594,8 @@ module id_stage
 
       // hwloop signals
       .hwloop_we_o                  ( hwloop_we             ),
-      .hwloop_wb_mux_sel_o          ( hwloop_wb_mux_sel     ),
+      .hwloop_start_mux_sel_o       ( hwloop_start_mux_sel  ),
+      .hwloop_end_mux_sel_o         ( hwloop_end_mux_sel    ),
       .hwloop_cnt_mux_sel_o         ( hwloop_cnt_mux_sel    ),
       .hwloop_jump_i                ( hwloop_jump           ),
 
@@ -615,6 +632,7 @@ module id_stage
       .operand_c_fw_mux_sel_o       ( operand_c_fw_mux_sel  ),
 
       // To controller (TODO: Remove when control/decode separated and moved)
+      .jump_target_mux_sel_o        ( jump_target_mux_sel   ),
       .jump_in_ex_i                 ( jump_in_ex_o          ),
 
       .branch_decision_i            ( branch_decision_i     ),
@@ -669,12 +687,11 @@ module id_stage
       // CSR
       .save_pc_if_o         ( save_pc_if_o      ),
       .save_pc_id_o         ( save_pc_id_o      ),
-      .save_sr_o            ( save_sr_o         ),
 
       // Controller
       .core_busy_i          ( core_busy_o       ),
       .jump_in_id_i         ( jump_in_id_o      ),
-      .jump_in_ex_i         ( jump_in_ex_o        ),
+      .jump_in_ex_i         ( jump_in_ex_o      ),
       .stall_id_i           ( stall_id_o        ),
       .illegal_insn_i       ( illegal_insn      ),
       .trap_insn_i          ( trap_insn         ),
@@ -703,23 +720,23 @@ module id_stage
   hwloop_controller hwloop_controller_i
   (
     // from ID stage
-    .enable_i                     ( hwloop_enable         ),
+    .enable_i                ( hwloop_enable       ),
 
-    .current_pc_i                 ( current_pc_if_i       ),
+    .current_pc_i            ( current_pc_if_i     ),
 
-    // to ID controller
-    .hwloop_jump_o                ( hwloop_jump           ),
+    // to controller
+    .hwloop_jump_o           ( hwloop_jump         ),
 
     // to if stage
-    .hwloop_targ_addr_o           ( hwloop_targ_addr_o    ),
+    .hwloop_targ_addr_o      ( hwloop_targ_addr_o  ),
 
     // from hwloop_regs
-    .hwloop_start_addr_i          ( hwloop_start_addr_i   ),
-    .hwloop_end_addr_i            ( hwloop_end_addr_i     ),
-    .hwloop_counter_i             ( hwloop_counter_i      ),
+    .hwloop_start_addr_i     ( hwloop_start_addr   ),
+    .hwloop_end_addr_i       ( hwloop_end_addr     ),
+    .hwloop_counter_i        ( hwloop_counter      ),
 
     // to hwloop_regs
-    .hwloop_dec_cnt_o             ( hwloop_dec_cnt_o      )
+    .hwloop_dec_cnt_o        ( hwloop_dec_cnt      )
   );
 
   hwloop_regs hwloop_regs_i
@@ -727,23 +744,23 @@ module id_stage
     .clk                     ( clk                 ),
     .rst_n                   ( rst_n               ),
 
-    // from ex stage
-    .hwloop_start_data_i     ( hwlp_start_data_ex  ),
-    .hwloop_end_data_i       ( hwlp_end_data_ex    ),
-    .hwloop_cnt_data_i       ( hwlp_cnt_data_ex    ),
-    .hwloop_we_i             ( hwlp_we_ex          ),
-    .hwloop_regid_i          ( hwlp_regid_ex       ),
+    // from ID
+    .hwloop_start_data_i     ( hwloop_start        ),
+    .hwloop_end_data_i       ( hwloop_end          ),
+    .hwloop_cnt_data_i       ( hwloop_cnt          ),
+    .hwloop_we_i             ( hwloop_we           ),
+    .hwloop_regid_i          ( hwloop_regid        ),
 
     // from controller
-    .stall_id_i              ( stall_id            ),
+    .stall_id_i              ( stall_id_o          ),
 
     // to hwloop controller
-    .hwloop_start_addr_o     ( hwlp_start_addr     ),
-    .hwloop_end_addr_o       ( hwlp_end_addr       ),
-    .hwloop_counter_o        ( hwlp_counter        ),
+    .hwloop_start_addr_o     ( hwloop_start_addr   ),
+    .hwloop_end_addr_o       ( hwloop_end_addr     ),
+    .hwloop_counter_o        ( hwloop_counter      ),
 
     // from hwloop controller
-    .hwloop_dec_cnt_i        ( hwlp_dec_cnt        )
+    .hwloop_dec_cnt_i        ( hwloop_dec_cnt      )
   );
 
 
@@ -792,11 +809,6 @@ module id_stage
       data_req_ex_o               <= 1'b0;
 
       data_misaligned_ex_o        <= 1'b0;
-
-      hwloop_we_ex_o              <= 3'b0;
-      hwloop_regid_ex_o           <= 2'b0;
-      hwloop_wb_mux_sel_ex_o      <= 1'b0;
-      hwloop_cnt_o                <= 32'b0;
 
       jump_in_ex_o                <= 2'b0;
 
@@ -856,13 +868,7 @@ module id_stage
 
       data_misaligned_ex_o        <= 1'b0;
 
-      hwloop_we_ex_o              <= hwloop_we;
-      hwloop_regid_ex_o           <= hwloop_regid;
-      hwloop_wb_mux_sel_ex_o      <= hwloop_wb_mux_sel;
-      hwloop_cnt_o                <= hwloop_cnt;
-
       jump_in_ex_o                <= jump_in_id_o;
-
     end
   end
 

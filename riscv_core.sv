@@ -180,21 +180,8 @@ module riscv_core
   logic        save_pc_id;
 
 
-  // Hardware loop data from ALU
-  logic [31:0] hwlp_cnt_ex;        // from id to ex stage (hwloop_regs)
-  logic [2:0]  hwlp_we_ex;         // from id to ex stage (hwloop_regs)
-  logic [1:0]  hwlp_regid_ex;      // from id to ex stage (hwloop_regs)
-  logic        hwlp_wb_mux_sel_ex; // from id to ex stage (hwloop_regs)
-  logic [31:0] hwlp_start_data_ex; // hwloop data to write to hwloop_regs
-  logic [31:0] hwlp_end_data_ex;   // hwloop data to write to hwloop_regs
-  logic [31:0] hwlp_cnt_data_ex;   // hwloop data to write to hwloop_regs
-
   // Hardware loop controller signals
-  logic [`HWLOOP_REGS-1:0] [31:0] hwlp_start_addr;  // to hwloop controller
-  logic [`HWLOOP_REGS-1:0] [31:0] hwlp_end_addr;    // to hwloop controller
-  logic [`HWLOOP_REGS-1:0] [31:0] hwlp_counter;     // to hwloop controller
-  logic [`HWLOOP_REGS-1:0]        hwlp_dec_cnt;     // from hwloop controller to hwloop regs
-  logic [31:0]                    hwlp_targ_addr;   // from hwloop controller to if stage
+  logic [31:0] hwlp_targ_addr;   // from hwloop controller to if stage
 
 
   // Debug Unit
@@ -357,11 +344,6 @@ module riscv_core
     .csr_op_ex_o                  ( csr_op_ex                     ),
 
     // hwloop signals
-    .hwloop_we_ex_o               ( hwlp_we_ex                    ),
-    .hwloop_regid_ex_o            ( hwlp_regid_ex                 ),
-    .hwloop_wb_mux_sel_ex_o       ( hwlp_wb_mux_sel_ex            ),
-    .hwloop_cnt_o                 ( hwlp_cnt_ex                   ),
-    .hwloop_dec_cnt_o             ( hwlp_dec_cnt                  ),
     .hwloop_targ_addr_o           ( hwlp_targ_addr                ),
 
     .prepost_useincr_ex_o         ( useincr_addr_ex               ),
@@ -382,11 +364,6 @@ module riscv_core
     .irq_enable_i                 ( irq_enable                    ), // global interrupt enable
     .save_pc_if_o                 ( save_pc_if                    ), // control signal to save pc
     .save_pc_id_o                 ( save_pc_id                    ), // control signal to save pc
-
-    // from hwloop regs
-    .hwloop_start_addr_i          ( hwlp_start_addr               ),
-    .hwloop_end_addr_i            ( hwlp_end_addr                 ),
-    .hwloop_counter_i             ( hwlp_counter                  ),
 
     // Debug Unit Signals
     .dbg_flush_pipe_i             ( dbg_flush_pipe                ),

@@ -96,7 +96,6 @@ module cs_registers
   logic                          is_pcmr;
 
   // Generic CSRs
-  int          csr_index;
   logic [31:0] csr [0:`CSR_MAX_IDX];
   logic [31:0] csr_n [0:`CSR_MAX_IDX];
 
