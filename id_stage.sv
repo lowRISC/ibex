@@ -390,24 +390,24 @@ module id_stage
   // ALU_Op_a Mux
   always_comb
   begin : alu_operand_a_mux
-     case (alu_op_a_mux_sel)
-       `OP_A_REGA_OR_FWD:  alu_operand_a = operand_a_fw_id;
-       `OP_A_CURRPC:       alu_operand_a = current_pc;
-       `OP_A_ZIMM:         alu_operand_a = imm_z_type;
-       `OP_A_ZERO:         alu_operand_a = 32'b0;
-       default:            alu_operand_a = operand_a_fw_id;
-     endcase; // case (alu_op_a_mux_sel)
+    case (alu_op_a_mux_sel)
+      `OP_A_REGA_OR_FWD:  alu_operand_a = operand_a_fw_id;
+      `OP_A_CURRPC:       alu_operand_a = current_pc;
+      `OP_A_ZIMM:         alu_operand_a = imm_z_type;
+      `OP_A_ZERO:         alu_operand_a = 32'b0;
+      default:            alu_operand_a = operand_a_fw_id;
+    endcase; // case (alu_op_a_mux_sel)
   end
 
   // Operand a forwarding mux
   always_comb
   begin : operand_a_fw_mux
-     case (operand_a_fw_mux_sel)
-       `SEL_FW_EX:    operand_a_fw_id = regfile_alu_wdata_fw_i;
-       `SEL_FW_WB:    operand_a_fw_id = regfile_wdata_wb_i;
-       `SEL_REGFILE:  operand_a_fw_id = regfile_data_ra_id;
-       default:       operand_a_fw_id = regfile_data_ra_id;
-     endcase; // case (operand_a_fw_mux_sel)
+    case (operand_a_fw_mux_sel)
+      `SEL_FW_EX:    operand_a_fw_id = regfile_alu_wdata_fw_i;
+      `SEL_FW_WB:    operand_a_fw_id = regfile_wdata_wb_i;
+      `SEL_REGFILE:  operand_a_fw_id = regfile_data_ra_id;
+      default:       operand_a_fw_id = regfile_data_ra_id;
+    endcase; // case (operand_a_fw_mux_sel)
   end
 
   //////////////////////////////////////////////////////
@@ -422,25 +422,25 @@ module id_stage
   // Immediate Mux for operand B
   always_comb
   begin : immediate_mux
-     unique case (immediate_mux_sel)
-       //`IMM_VEC:    immediate_b = immediate_vec_id;
-       `IMM_I:      immediate_b = imm_i_type;
-       `IMM_S:      immediate_b = imm_s_type;
-       `IMM_U:      immediate_b = imm_u_type;
-       `IMM_PCINCR: immediate_b = compressed_instr_o ? 32'h2 : 32'h4;
-       default:     immediate_b = imm_i_type;
-     endcase; // case (immediate_mux_sel)
+    unique case (immediate_mux_sel)
+      //`IMM_VEC:    immediate_b = immediate_vec_id;
+      `IMM_I:      immediate_b = imm_i_type;
+      `IMM_S:      immediate_b = imm_s_type;
+      `IMM_U:      immediate_b = imm_u_type;
+      `IMM_PCINCR: immediate_b = compressed_instr_o ? 32'h2 : 32'h4;
+      default:     immediate_b = imm_i_type;
+    endcase; // case (immediate_mux_sel)
   end
 
   // ALU_Op_b Mux
   always_comb
   begin : alu_operand_b_mux
-     case (alu_op_b_mux_sel)
-       `OP_B_REGB_OR_FWD:  operand_b = operand_b_fw_id;
-       `OP_B_REGC_OR_FWD:  operand_b = alu_operand_c;
-       `OP_B_IMM:          operand_b = immediate_b;
-       default:            operand_b = operand_b_fw_id;
-     endcase // case (alu_op_b_mux_sel)
+    case (alu_op_b_mux_sel)
+      `OP_B_REGB_OR_FWD:  operand_b = operand_b_fw_id;
+      `OP_B_REGC_OR_FWD:  operand_b = alu_operand_c;
+      `OP_B_IMM:          operand_b = immediate_b;
+      default:            operand_b = operand_b_fw_id;
+    endcase // case (alu_op_b_mux_sel)
   end
 
   // scalar replication for operand B
@@ -453,12 +453,12 @@ module id_stage
   // Operand b forwarding mux
   always_comb
   begin : operand_b_fw_mux
-     case (operand_b_fw_mux_sel)
-       `SEL_FW_EX:    operand_b_fw_id = regfile_alu_wdata_fw_i;
-       `SEL_FW_WB:    operand_b_fw_id = regfile_wdata_wb_i;
-       `SEL_REGFILE:  operand_b_fw_id = regfile_data_rb_id;
-       default:       operand_b_fw_id = regfile_data_rb_id;
-     endcase; // case (operand_b_fw_mux_sel)
+    case (operand_b_fw_mux_sel)
+      `SEL_FW_EX:    operand_b_fw_id = regfile_alu_wdata_fw_i;
+      `SEL_FW_WB:    operand_b_fw_id = regfile_wdata_wb_i;
+      `SEL_REGFILE:  operand_b_fw_id = regfile_data_rb_id;
+      default:       operand_b_fw_id = regfile_data_rb_id;
+    endcase; // case (operand_b_fw_mux_sel)
   end
 
 
@@ -483,12 +483,12 @@ module id_stage
   // Operand c forwarding mux
   always_comb
   begin : operand_c_fw_mux
-     case (operand_c_fw_mux_sel)
-       `SEL_FW_EX:    alu_operand_c = regfile_alu_wdata_fw_i;
-       `SEL_FW_WB:    alu_operand_c = regfile_wdata_wb_i;
-       `SEL_REGFILE:  alu_operand_c = operand_c;
-       default:       alu_operand_c = operand_c;
-     endcase; // case (operand_b_fw_mux_sel)
+    case (operand_c_fw_mux_sel)
+      `SEL_FW_EX:    alu_operand_c = regfile_alu_wdata_fw_i;
+      `SEL_FW_WB:    alu_operand_c = regfile_wdata_wb_i;
+      `SEL_REGFILE:  alu_operand_c = operand_c;
+      default:       alu_operand_c = operand_c;
+    endcase; // case (operand_b_fw_mux_sel)
   end
 
 
@@ -540,117 +540,117 @@ module id_stage
   ////////////////////////////////////////////////////////////////////
   controller controller_i
   (
-      .clk                          ( clk                   ),
-      .rst_n                        ( rst_n                 ),
-      .fetch_enable_i               ( fetch_enable_i        ),
-      .core_busy_o                  ( core_busy_o           ),
+    .clk                          ( clk                   ),
+    .rst_n                        ( rst_n                 ),
+    .fetch_enable_i               ( fetch_enable_i        ),
+    .core_busy_o                  ( core_busy_o           ),
 
-      // Signal from-to PC pipe (instr rdata) and instr mem system (req and ack)
-      .instr_rdata_i                ( instr                 ),
-      .instr_req_o                  ( instr_req_o           ),
-      .instr_gnt_i                  ( instr_gnt_i           ),
-      .instr_ack_i                  ( instr_ack_i           ),
-      .pc_mux_sel_o                 ( pc_mux_sel_int        ),
+    // Signal from-to PC pipe (instr rdata) and instr mem system (req and ack)
+    .instr_rdata_i                ( instr                 ),
+    .instr_req_o                  ( instr_req_o           ),
+    .instr_gnt_i                  ( instr_gnt_i           ),
+    .instr_ack_i                  ( instr_ack_i           ),
+    .pc_mux_sel_o                 ( pc_mux_sel_int        ),
 
-      // Alu signals
-      .alu_operator_o               ( alu_operator          ),
-      .alu_op_a_mux_sel_o           ( alu_op_a_mux_sel      ),
-      .alu_op_b_mux_sel_o           ( alu_op_b_mux_sel      ),
-      .alu_op_c_mux_sel_o           ( alu_op_c_mux_sel      ),
-      .immediate_mux_sel_o          ( immediate_mux_sel     ),
+    // Alu signals
+    .alu_operator_o               ( alu_operator          ),
+    .alu_op_a_mux_sel_o           ( alu_op_a_mux_sel      ),
+    .alu_op_b_mux_sel_o           ( alu_op_b_mux_sel      ),
+    .alu_op_c_mux_sel_o           ( alu_op_c_mux_sel      ),
+    .immediate_mux_sel_o          ( immediate_mux_sel     ),
 
-      .scalar_replication_o         ( scalar_replication    ),
-      .vector_mode_o                ( vector_mode           ),
-      .alu_cmp_mode_o               ( alu_cmp_mode          ),
+    .scalar_replication_o         ( scalar_replication    ),
+    .vector_mode_o                ( vector_mode           ),
+    .alu_cmp_mode_o               ( alu_cmp_mode          ),
 
-      // mult signals
-      .mult_en_o                    ( mult_en               ),
-      .mult_sel_subword_o           ( mult_sel_subword      ),
-      .mult_signed_mode_o           ( mult_signed_mode      ),
-      .mult_mac_en_o                ( mult_mac_en           ),
+    // mult signals
+    .mult_en_o                    ( mult_en               ),
+    .mult_sel_subword_o           ( mult_sel_subword      ),
+    .mult_signed_mode_o           ( mult_signed_mode      ),
+    .mult_mac_en_o                ( mult_mac_en           ),
 
-      // Register file control signals
-      .regfile_we_o                 ( regfile_we_id              ),
+    // Register file control signals
+    .regfile_we_o                 ( regfile_we_id              ),
 
-      .regfile_alu_we_o             ( regfile_alu_we_id          ),
-      .regfile_alu_waddr_mux_sel_o  ( regfile_alu_waddr_mux_sel  ),
+    .regfile_alu_we_o             ( regfile_alu_we_id          ),
+    .regfile_alu_waddr_mux_sel_o  ( regfile_alu_waddr_mux_sel  ),
 
-      .prepost_useincr_o            ( prepost_useincr            ),
-      .data_misaligned_i            ( data_misaligned_i          ),
+    .prepost_useincr_o            ( prepost_useincr            ),
+    .data_misaligned_i            ( data_misaligned_i          ),
 
-      // CSR control signals
-      .csr_access_o                 ( csr_access            ),
-      .csr_op_o                     ( csr_op                ),
+    // CSR control signals
+    .csr_access_o                 ( csr_access            ),
+    .csr_op_o                     ( csr_op                ),
 
-      // Data bus interface
-      .data_we_o                    ( data_we_id            ),
-      .data_type_o                  ( data_type_id          ),
-      .data_sign_extension_o        ( data_sign_ext_id      ),
-      .data_reg_offset_o            ( data_reg_offset_id    ),
-      .data_req_o                   ( data_req_id           ),
-      .data_ack_i                   ( data_ack_i            ),
-      .data_req_ex_i                ( data_req_ex_o         ),
-      .data_rvalid_i                ( data_rvalid_i         ),
+    // Data bus interface
+    .data_we_o                    ( data_we_id            ),
+    .data_type_o                  ( data_type_id          ),
+    .data_sign_extension_o        ( data_sign_ext_id      ),
+    .data_reg_offset_o            ( data_reg_offset_id    ),
+    .data_req_o                   ( data_req_id           ),
+    .data_ack_i                   ( data_ack_i            ),
+    .data_req_ex_i                ( data_req_ex_o         ),
+    .data_rvalid_i                ( data_rvalid_i         ),
 
-      // hwloop signals
-      .hwloop_we_o                  ( hwloop_we             ),
-      .hwloop_start_mux_sel_o       ( hwloop_start_mux_sel  ),
-      .hwloop_end_mux_sel_o         ( hwloop_end_mux_sel    ),
-      .hwloop_cnt_mux_sel_o         ( hwloop_cnt_mux_sel    ),
-      .hwloop_jump_i                ( hwloop_jump           ),
+    // hwloop signals
+    .hwloop_we_o                  ( hwloop_we             ),
+    .hwloop_start_mux_sel_o       ( hwloop_start_mux_sel  ),
+    .hwloop_end_mux_sel_o         ( hwloop_end_mux_sel    ),
+    .hwloop_cnt_mux_sel_o         ( hwloop_cnt_mux_sel    ),
+    .hwloop_jump_i                ( hwloop_jump           ),
 
-      // Interrupt signals
-      .irq_present_i                ( irq_present           ),
+    // Interrupt signals
+    .irq_present_i                ( irq_present           ),
 
-      // Exception Controller Signals
-      .illegal_c_insn_i             ( illegal_c_insn        ),
-      .illegal_insn_o               ( illegal_insn          ),
-      .trap_insn_o                  ( trap_insn             ),
-      .pc_valid_i                   ( pc_valid              ),
-      .clear_isr_running_o          ( clear_isr_running     ),
-      .trap_hit_i                   ( trap_hit              ),
-      .exc_pipe_flush_i             ( exc_pipe_flush        ),
+    // Exception Controller Signals
+    .illegal_c_insn_i             ( illegal_c_insn        ),
+    .illegal_insn_o               ( illegal_insn          ),
+    .trap_insn_o                  ( trap_insn             ),
+    .pc_valid_i                   ( pc_valid              ),
+    .clear_isr_running_o          ( clear_isr_running     ),
+    .trap_hit_i                   ( trap_hit              ),
+    .exc_pipe_flush_i             ( exc_pipe_flush        ),
 
-      // Debug Unit Signals
-      .dbg_stall_i                  ( dbg_stall_i           ),
-      .dbg_set_npc_i                ( dbg_set_npc_i         ),
-      .dbg_trap_o                   ( dbg_trap_o            ),
+    // Debug Unit Signals
+    .dbg_stall_i                  ( dbg_stall_i           ),
+    .dbg_set_npc_i                ( dbg_set_npc_i         ),
+    .dbg_trap_o                   ( dbg_trap_o            ),
 
-      // regfile port 1
-      .regfile_waddr_ex_i           ( regfile_waddr_ex_o    ), // Write address for register file from ex-wb- pipeline registers
-      .regfile_we_ex_i              ( regfile_we_ex_o       ),
-      .regfile_waddr_wb_i           ( regfile_waddr_wb_i    ), // Write address for register file from ex-wb- pipeline registers
-      .regfile_we_wb_i              ( regfile_we_wb_i       ),
+    // regfile port 1
+    .regfile_waddr_ex_i           ( regfile_waddr_ex_o    ), // Write address for register file from ex-wb- pipeline registers
+    .regfile_we_ex_i              ( regfile_we_ex_o       ),
+    .regfile_waddr_wb_i           ( regfile_waddr_wb_i    ), // Write address for register file from ex-wb- pipeline registers
+    .regfile_we_wb_i              ( regfile_we_wb_i       ),
 
-      // regfile port 2
-      .regfile_alu_waddr_fw_i       ( regfile_alu_waddr_fw_i ),
-      .regfile_alu_we_fw_i          ( regfile_alu_we_fw_i    ),
+    // regfile port 2
+    .regfile_alu_waddr_fw_i       ( regfile_alu_waddr_fw_i ),
+    .regfile_alu_we_fw_i          ( regfile_alu_we_fw_i    ),
 
-      // Forwarding signals
-      .operand_a_fw_mux_sel_o       ( operand_a_fw_mux_sel  ),
-      .operand_b_fw_mux_sel_o       ( operand_b_fw_mux_sel  ),
-      .operand_c_fw_mux_sel_o       ( operand_c_fw_mux_sel  ),
+    // Forwarding signals
+    .operand_a_fw_mux_sel_o       ( operand_a_fw_mux_sel  ),
+    .operand_b_fw_mux_sel_o       ( operand_b_fw_mux_sel  ),
+    .operand_c_fw_mux_sel_o       ( operand_c_fw_mux_sel  ),
 
-      // To controller (TODO: Remove when control/decode separated and moved)
-      .jump_target_mux_sel_o        ( jump_target_mux_sel   ),
-      .jump_in_ex_i                 ( jump_in_ex_o          ),
+    // To controller (TODO: Remove when control/decode separated and moved)
+    .jump_target_mux_sel_o        ( jump_target_mux_sel   ),
+    .jump_in_ex_i                 ( jump_in_ex_o          ),
 
-      .branch_decision_i            ( branch_decision_i     ),
+    .branch_decision_i            ( branch_decision_i     ),
 
-      // To exception controller and EX: Jump/Branch indication
-      .jump_in_id_o                 ( jump_in_id_o          ),
+    // To exception controller and EX: Jump/Branch indication
+    .jump_in_id_o                 ( jump_in_id_o          ),
 
-      // Stall signals
-      .stall_if_o                   ( stall_if_o            ),
-      .stall_id_o                   ( stall_id_o            ),
-      .stall_ex_o                   ( stall_ex_o            ),
-      .stall_wb_o                   ( stall_wb_o            ),
+    // Stall signals
+    .stall_if_o                   ( stall_if_o            ),
+    .stall_id_o                   ( stall_id_o            ),
+    .stall_ex_o                   ( stall_ex_o            ),
+    .stall_wb_o                   ( stall_wb_o            ),
 
-      // Performance Counters
-      .perf_jump_o                  ( perf_jump_o           ),
-      .perf_branch_o                ( perf_branch_o         ),
-      .perf_jr_stall_o              ( perf_jr_stall_o       ),
-      .perf_ld_stall_o              ( perf_ld_stall_o       )
+    // Performance Counters
+    .perf_jump_o                  ( perf_jump_o           ),
+    .perf_branch_o                ( perf_branch_o         ),
+    .perf_jr_stall_o              ( perf_jr_stall_o       ),
+    .perf_ld_stall_o              ( perf_ld_stall_o       )
 
     );
 
@@ -665,47 +665,47 @@ module id_stage
 
   exc_controller exc_controller_i
   (
-      .clk                  ( clk               ),
-      .rst_n                ( rst_n             ),
+    .clk                  ( clk               ),
+    .rst_n                ( rst_n             ),
 
-      .fetch_enable_i       ( fetch_enable_i    ),
+    .fetch_enable_i       ( fetch_enable_i    ),
 
-      // to IF stage
-      .exc_pc_sel_o         ( exc_pc_sel        ),
-      .exc_pc_mux_o         ( exc_pc_mux_o      ),
-      .force_nop_o          ( force_nop_exc     ),
+    // to IF stage
+    .exc_pc_sel_o         ( exc_pc_sel        ),
+    .exc_pc_mux_o         ( exc_pc_mux_o      ),
+    .force_nop_o          ( force_nop_exc     ),
 
-      // hwloop signals
-      .hwloop_enable_o      ( hwloop_enable     ),
+    // hwloop signals
+    .hwloop_enable_o      ( hwloop_enable     ),
 
-      // Interrupt signals
-      .irq_i                ( irq_i             ),
-      .irq_nm_i             ( irq_nm_i          ),
-      .irq_enable_i         ( irq_enable_i      ),
-      .irq_present_o        ( irq_present       ),
+    // Interrupt signals
+    .irq_i                ( irq_i             ),
+    .irq_nm_i             ( irq_nm_i          ),
+    .irq_enable_i         ( irq_enable_i      ),
+    .irq_present_o        ( irq_present       ),
 
-      // CSR
-      .save_pc_if_o         ( save_pc_if_o      ),
-      .save_pc_id_o         ( save_pc_id_o      ),
+    // CSR
+    .save_pc_if_o         ( save_pc_if_o      ),
+    .save_pc_id_o         ( save_pc_id_o      ),
 
-      // Controller
-      .core_busy_i          ( core_busy_o       ),
-      .jump_in_id_i         ( jump_in_id_o      ),
-      .jump_in_ex_i         ( jump_in_ex_o      ),
-      .stall_id_i           ( stall_id_o        ),
-      .illegal_insn_i       ( illegal_insn      ),
-      .trap_insn_i          ( trap_insn         ),
-      .drop_instruction_i   ( 1'b0              ),
-      .pc_valid_o           ( pc_valid          ),
-      .clear_isr_running_i  ( clear_isr_running ),
-      .trap_hit_o           ( trap_hit          ),
-      .exc_pipe_flush_o     ( exc_pipe_flush    ),
+    // Controller
+    .core_busy_i          ( core_busy_o       ),
+    .jump_in_id_i         ( jump_in_id_o      ),
+    .jump_in_ex_i         ( jump_in_ex_o      ),
+    .stall_id_i           ( stall_id_o        ),
+    .illegal_insn_i       ( illegal_insn      ),
+    .trap_insn_i          ( trap_insn         ),
+    .drop_instruction_i   ( 1'b0              ),
+    .pc_valid_o           ( pc_valid          ),
+    .clear_isr_running_i  ( clear_isr_running ),
+    .trap_hit_o           ( trap_hit          ),
+    .exc_pipe_flush_o     ( exc_pipe_flush    ),
 
-      // Debug Unit Signals
-      .dbg_flush_pipe_i     ( dbg_flush_pipe_i  ),
-      .dbg_st_en_i          ( dbg_st_en_i       ),
-      .dbg_dsr_i            ( dbg_dsr_i         )
-    );
+    // Debug Unit Signals
+    .dbg_flush_pipe_i     ( dbg_flush_pipe_i  ),
+    .dbg_st_en_i          ( dbg_st_en_i       ),
+    .dbg_dsr_i            ( dbg_dsr_i         )
+  );
 
 
   //////////////////////////////////////////////////////////////////////////
