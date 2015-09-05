@@ -158,8 +158,6 @@ module id_stage
 
   logic [31:0] immediate_b;       // contains the immediate for operand b
 
-  logic [31:0] current_pc;        // PC to be used in ALU (either IF or ID)
-
   logic [31:0] jump_target;       // calculated jump target (-> EX -> IF)
 
   logic        exc_pc_sel;
@@ -297,23 +295,10 @@ module id_stage
   //assign alu_vec_ext = instr[9:8]; TODO
   assign alu_vec_ext = '0;
 
-
   // Second Register Write Adress Selection
   // Used for prepost load/store and multiplier
   assign regfile_alu_waddr_id = regfile_alu_waddr_mux_sel ?
                                 regfile_waddr_id : regfile_addr_ra_id;
-
-
-  ///////////////////////////////////////////////////////////////////////////////////////
-  //  ____                                         ____                  _             //
-  // |  _ \ _ __ ___   __ _ _ __ __ _ _ __ ___    / ___|___  _   _ _ __ | |_ ___ _ __  //
-  // | |_) | '__/ _ \ / _` | '__/ _` | '_ ` _ \  | |   / _ \| | | | '_ \| __/ _ \ '__| //
-  // |  __/| | | (_) | (_| | | | (_| | | | | | | | |__| (_) | |_| | | | | ||  __/ |    //
-  // |_|   |_|  \___/ \__, |_|  \__,_|_| |_| |_|  \____\___/ \__,_|_| |_|\__\___|_|    //
-  //                  |___/                                                            //
-  ///////////////////////////////////////////////////////////////////////////////////////
-
-  assign current_pc = current_pc_id_i;
 
 
   ///////////////////////////////////////////////
@@ -392,7 +377,7 @@ module id_stage
   begin : alu_operand_a_mux
     case (alu_op_a_mux_sel)
       `OP_A_REGA_OR_FWD:  alu_operand_a = operand_a_fw_id;
-      `OP_A_CURRPC:       alu_operand_a = current_pc;
+      `OP_A_CURRPC:       alu_operand_a = current_pc_id_i;
       `OP_A_ZIMM:         alu_operand_a = imm_z_type;
       `OP_A_ZERO:         alu_operand_a = 32'b0;
       default:            alu_operand_a = operand_a_fw_id;
