@@ -62,8 +62,6 @@ module ex_stage
     input  logic                      regfile_we_i,
     input  logic [4:0]                regfile_waddr_i,
 
-    input  logic [31:0]               regfile_rb_data_i,
-
     // CSR access
     input  logic                      csr_access_i,
     input  logic [31:0]               csr_rdata_i,
@@ -71,7 +69,6 @@ module ex_stage
     // Output of EX stage pipeline
     output logic [4:0]                regfile_waddr_wb_o,
     output logic                      regfile_we_wb_o,
-    output logic [31:0]               regfile_rb_data_wb_o,
 
     // Forwarding ports : to ID stage
     output logic  [4:0]               regfile_alu_waddr_fw_o,
@@ -165,7 +162,6 @@ module ex_stage
     begin
       regfile_waddr_wb_o           <= 5'b0_0000;
       regfile_we_wb_o              <= 1'b0;
-      regfile_rb_data_wb_o         <= 32'h0000_0000;
     end
     else
     begin
@@ -173,7 +169,6 @@ module ex_stage
       begin
         regfile_we_wb_o            <= regfile_we_i;
         regfile_waddr_wb_o         <= regfile_waddr_i;
-        regfile_rb_data_wb_o       <= regfile_rb_data_i;
       end
     end
   end

@@ -116,7 +116,6 @@ module riscv_core
 
   // Register Data
   logic [31:0] regfile_rb_data_ex;  // from id stage to load/store unit and ex stage
-  logic [31:0] regfile_rb_data_wb;  // from ex stage to sp register
 
 
   // ALU Control
@@ -165,7 +164,6 @@ module riscv_core
   logic        data_sign_ext_ex;
   logic [1:0]  data_reg_offset_ex;
   logic        data_req_ex;
-  logic [31:0] data_addr_ex;
   logic        data_misaligned_ex;
   logic        data_ack_int;
 
@@ -438,13 +436,9 @@ module riscv_core
     .regfile_alu_we_i           ( regfile_alu_we_ex            ),
     .regfile_alu_waddr_i        ( regfile_alu_waddr_ex         ),
 
-    //From ID stage.Controller
-    .regfile_rb_data_i          ( regfile_rb_data_ex           ),
-
     // Output of ex stage pipeline
     .regfile_waddr_wb_o         ( regfile_waddr_fw_wb_o        ),
     .regfile_we_wb_o            ( regfile_we_wb                ),
-    .regfile_rb_data_wb_o       ( regfile_rb_data_wb           ),
 
     // To IF: Jump and branch target and decision
     .jump_target_o              ( jump_target_ex               ),
