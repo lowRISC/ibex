@@ -94,6 +94,7 @@ module id_stage
     input  logic        data_misaligned_i,
 
     output logic [31:0] hwloop_targ_addr_o,
+    output logic        hwloop_jump_o,
 
     output logic        csr_access_ex_o,
     output logic [1:0]  csr_op_ex_o,
@@ -706,13 +707,10 @@ module id_stage
   (
     // from ID stage
     .enable_i                ( hwloop_enable       ),
-
     .current_pc_i            ( current_pc_if_i     ),
 
-    // to controller
+    // to IF stage/controller
     .hwloop_jump_o           ( hwloop_jump         ),
-
-    // to if stage
     .hwloop_targ_addr_o      ( hwloop_targ_addr_o  ),
 
     // from hwloop_regs
@@ -723,6 +721,8 @@ module id_stage
     // to hwloop_regs
     .hwloop_dec_cnt_o        ( hwloop_dec_cnt      )
   );
+
+  assign hwloop_jump_o = hwloop_jump;
 
   hwloop_regs hwloop_regs_i
   (

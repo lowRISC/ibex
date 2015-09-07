@@ -50,8 +50,11 @@ module hwloop_controller
 
   logic [`HWLOOP_REGS-1:0] pc_is_end_addr;
 
+  // end address detection
+  integer j;
 
-   // generate comparators. check for end address and the loop counter
+
+  // generate comparators. check for end address and the loop counter
   genvar i;
   for (i = 0; i < `HWLOOP_REGS; i++) begin
     assign pc_is_end_addr[i] = (
@@ -65,30 +68,18 @@ module hwloop_controller
   assign hwloop_jump_o = |pc_is_end_addr;
 
 
-  // select corresponding start address and decrement counter. give highest priority to register 0
+  // select corresponding start address and decrement counter
   always_comb
   begin
     hwloop_targ_addr_o = 32'b0;
     hwloop_dec_cnt_o   = '0;
 
-    if (pc_is_end_addr[0]) begin
-      hwloop_targ_addr_o = hwloop_start_addr_i[0];
-      hwloop_dec_cnt_o[0] = 1'b1;
+    for (j = `HWLOOP_REGS-1; j >= 0; j--) begin
+      if (pc_is_end_addr[j]) begin
+        hwloop_targ_addr_o = hwloop_start_addr_i[j];
+        hwloop_dec_cnt_o[j] = 1'b1;
+      end
     end
-    else if (pc_is_end_addr[1]) begin
-      hwloop_targ_addr_o = hwloop_start_addr_i[1];
-      hwloop_dec_cnt_o[1] = 1'b1;
-    end
-/* -----\/----- EXCLUDED -----\/-----
-    else if (pc_is_end_addr[2]) begin
-      hwloop_targ_addr_o = hwloop_start_addr_i[2];
-      hwloop_dec_cnt_o[2] = 1'b1;
-    end
-    else if (pc_is_end_addr[3]) begin
-      hwloop_targ_addr_o = hwloop_start_addr_i[3];
-      hwloop_dec_cnt_o[3] = 1'b1;
-    end
- -----/\----- EXCLUDED -----/\----- */
   end
 
 endmodule

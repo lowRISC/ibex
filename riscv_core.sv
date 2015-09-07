@@ -179,7 +179,8 @@ module riscv_core
 
 
   // Hardware loop controller signals
-  logic [31:0] hwlp_targ_addr;   // from hwloop controller to if stage
+  logic        hwloop_jump;
+  logic [31:0] hwloop_target;   // from hwloop controller to if stage
 
 
   // Debug Unit
@@ -246,9 +247,12 @@ module riscv_core
     // Forwrding ports - control signals
     .force_nop_i         ( force_nop_id    ),   // select incoming instr or NOP
     .exception_pc_reg_i  ( epcr            ),   // Exception PC register
-    .pc_from_hwloop_i    ( hwlp_targ_addr  ),   // pc from hwloop start address
     .pc_mux_sel_i        ( pc_mux_sel_id   ),   // sel for pc multiplexer
     .exc_pc_mux_i        ( exc_pc_mux_id   ),   // selector for exception multiplexer
+
+    // from hwloop controller
+    .hwloop_jump_i       ( hwloop_jump     ),
+    .hwloop_target_i     ( hwloop_target   ),   // pc from hwloop start address
 
     // from debug unit
     .dbg_npc_i           ( dbg_npc         ),
@@ -279,116 +283,117 @@ module riscv_core
   /////////////////////////////////////////////////
   id_stage id_stage_i
   (
-    .clk                          ( clk                           ),
-    .rst_n                        ( rst_n                         ),
+    .clk                          ( clk                  ),
+    .rst_n                        ( rst_n                ),
 
     // Processor Enable
-    .fetch_enable_i               ( fetch_enable_i                ),
+    .fetch_enable_i               ( fetch_enable_i       ),
 
-    .jump_in_id_o                 ( jump_in_id                    ),
-    .jump_in_ex_o                 ( jump_in_ex                    ),
-    .branch_decision_i            ( branch_decision               ),
+    .jump_in_id_o                 ( jump_in_id           ),
+    .jump_in_ex_o                 ( jump_in_ex           ),
+    .branch_decision_i            ( branch_decision      ),
 
-    .jump_target_o                ( jump_target_id                ),
+    .jump_target_o                ( jump_target_id       ),
 
-    .core_busy_o                  ( core_busy                     ),
+    .core_busy_o                  ( core_busy            ),
 
     // Interface to instruction memory
-    .instr_rdata_i                ( instr_rdata_id                ),
-    .instr_req_o                  ( instr_req_int                 ),
-    .instr_gnt_i                  ( instr_grant_i                 ),
-    .instr_ack_i                  ( instr_ack_int                 ),
+    .instr_rdata_i                ( instr_rdata_id       ),
+    .instr_req_o                  ( instr_req_int        ),
+    .instr_gnt_i                  ( instr_grant_i        ),
+    .instr_ack_i                  ( instr_ack_int        ),
 
-    .pc_mux_sel_o                 ( pc_mux_sel_id                 ),
-    .exc_pc_mux_o                 ( exc_pc_mux_id                 ),
-    .force_nop_o                  ( force_nop_id                  ),
+    .pc_mux_sel_o                 ( pc_mux_sel_id        ),
+    .exc_pc_mux_o                 ( exc_pc_mux_id        ),
+    .force_nop_o                  ( force_nop_id         ),
 
-    .current_pc_if_i              ( current_pc_if                 ),
-    .current_pc_id_i              ( current_pc_id                 ),
+    .current_pc_if_i              ( current_pc_if        ),
+    .current_pc_id_i              ( current_pc_id        ),
 
-    .compressed_instr_o           ( compressed_instr              ),
+    .compressed_instr_o           ( compressed_instr     ),
 
     // STALLS
-    .stall_if_o                   ( stall_if                      ),
-    .stall_id_o                   ( stall_id                      ),
-    .stall_ex_o                   ( stall_ex                      ),
-    .stall_wb_o                   ( stall_wb                      ),
+    .stall_if_o                   ( stall_if             ),
+    .stall_id_o                   ( stall_id             ),
+    .stall_ex_o                   ( stall_ex             ),
+    .stall_wb_o                   ( stall_wb             ),
 
     // From the Pipeline ID/EX
-    .regfile_rb_data_ex_o         ( regfile_rb_data_ex            ),
+    .regfile_rb_data_ex_o         ( regfile_rb_data_ex   ),
 
-    .alu_operand_a_ex_o           ( alu_operand_a_ex              ),
-    .alu_operand_b_ex_o           ( alu_operand_b_ex              ),
-    .alu_operand_c_ex_o           ( alu_operand_c_ex              ),
-    .alu_operator_ex_o            ( alu_operator_ex               ),
+    .alu_operand_a_ex_o           ( alu_operand_a_ex     ),
+    .alu_operand_b_ex_o           ( alu_operand_b_ex     ),
+    .alu_operand_c_ex_o           ( alu_operand_c_ex     ),
+    .alu_operator_ex_o            ( alu_operator_ex      ),
 
-    .vector_mode_ex_o             ( vector_mode_ex                ), // from ID to EX stage
-    .alu_cmp_mode_ex_o            ( alu_cmp_mode_ex               ), // from ID to EX stage
-    .alu_vec_ext_ex_o             ( alu_vec_ext_ex                ), // from ID to EX stage
+    .vector_mode_ex_o             ( vector_mode_ex       ), // from ID to EX stage
+    .alu_cmp_mode_ex_o            ( alu_cmp_mode_ex      ), // from ID to EX stage
+    .alu_vec_ext_ex_o             ( alu_vec_ext_ex       ), // from ID to EX stage
 
-    .mult_en_ex_o                 ( mult_en_ex                    ), // from ID to EX stage
-    .mult_sel_subword_ex_o        ( mult_sel_subword_ex           ), // from ID to EX stage
-    .mult_signed_mode_ex_o        ( mult_signed_mode_ex           ), // from ID to EX stage
-    .mult_mac_en_ex_o             ( mult_mac_en_ex                ), // from ID to EX stage
+    .mult_en_ex_o                 ( mult_en_ex           ), // from ID to EX stage
+    .mult_sel_subword_ex_o        ( mult_sel_subword_ex  ), // from ID to EX stage
+    .mult_signed_mode_ex_o        ( mult_signed_mode_ex  ), // from ID to EX stage
+    .mult_mac_en_ex_o             ( mult_mac_en_ex       ), // from ID to EX stage
 
-    .regfile_waddr_ex_o           ( regfile_waddr_ex              ),
-    .regfile_we_ex_o              ( regfile_we_ex                 ),
+    .regfile_waddr_ex_o           ( regfile_waddr_ex     ),
+    .regfile_we_ex_o              ( regfile_we_ex        ),
 
-    .regfile_alu_we_ex_o          ( regfile_alu_we_ex             ),
-    .regfile_alu_waddr_ex_o       ( regfile_alu_waddr_ex          ),
+    .regfile_alu_we_ex_o          ( regfile_alu_we_ex    ),
+    .regfile_alu_waddr_ex_o       ( regfile_alu_waddr_ex ),
 
     // CSR ID/EX
-    .csr_access_ex_o              ( csr_access_ex                 ),
-    .csr_op_ex_o                  ( csr_op_ex                     ),
+    .csr_access_ex_o              ( csr_access_ex        ),
+    .csr_op_ex_o                  ( csr_op_ex            ),
 
     // hwloop signals
-    .hwloop_targ_addr_o           ( hwlp_targ_addr                ),
+    .hwloop_jump_o                ( hwloop_jump          ),
+    .hwloop_targ_addr_o           ( hwloop_target        ),
 
-    .prepost_useincr_ex_o         ( useincr_addr_ex               ),
-    .data_misaligned_i            ( data_misaligned               ),
+    .prepost_useincr_ex_o         ( useincr_addr_ex      ),
+    .data_misaligned_i            ( data_misaligned      ),
 
-    .data_we_ex_o                 ( data_we_ex                    ), // to   load store unit
-    .data_type_ex_o               ( data_type_ex                  ), // to   load store unit
-    .data_sign_ext_ex_o           ( data_sign_ext_ex              ), // to   load store unit
-    .data_reg_offset_ex_o         ( data_reg_offset_ex            ), // to   load store unit
-    .data_req_ex_o                ( data_req_ex                   ), // to   load store unit
-    .data_misaligned_ex_o         ( data_misaligned_ex            ), // to   load store unit
-    .data_ack_i                   ( data_ack_int                  ), // from load store unit
-    .data_rvalid_i                ( data_r_valid_i                ),
+    .data_we_ex_o                 ( data_we_ex           ), // to   load store unit
+    .data_type_ex_o               ( data_type_ex         ), // to   load store unit
+    .data_sign_ext_ex_o           ( data_sign_ext_ex     ), // to   load store unit
+    .data_reg_offset_ex_o         ( data_reg_offset_ex   ), // to   load store unit
+    .data_req_ex_o                ( data_req_ex          ), // to   load store unit
+    .data_misaligned_ex_o         ( data_misaligned_ex   ), // to   load store unit
+    .data_ack_i                   ( data_ack_int         ), // from load store unit
+    .data_rvalid_i                ( data_r_valid_i       ),
 
     // Interrupt Signals
-    .irq_i                        ( irq_i                         ), // incoming interrupts
-    .irq_nm_i                     ( irq_nm_i                      ), // incoming interrupts
-    .irq_enable_i                 ( irq_enable                    ), // global interrupt enable
-    .save_pc_if_o                 ( save_pc_if                    ), // control signal to save pc
-    .save_pc_id_o                 ( save_pc_id                    ), // control signal to save pc
+    .irq_i                        ( irq_i                ), // incoming interrupts
+    .irq_nm_i                     ( irq_nm_i             ), // incoming interrupts
+    .irq_enable_i                 ( irq_enable           ), // global interrupt enable
+    .save_pc_if_o                 ( save_pc_if           ), // control signal to save pc
+    .save_pc_id_o                 ( save_pc_id           ), // control signal to save pc
 
     // Debug Unit Signals
-    .dbg_flush_pipe_i             ( dbg_flush_pipe                ),
-    .dbg_st_en_i                  ( dbg_st_en                     ),
-    .dbg_dsr_i                    ( dbg_dsr                       ),
-    .dbg_stall_i                  ( dbg_stall                     ),
-    .dbg_trap_o                   ( dbg_trap                      ),
-    .dbg_reg_mux_i                ( dbg_reg_mux                   ),
-    .dbg_reg_we_i                 ( dbg_reg_we                    ),
-    .dbg_reg_addr_i               ( dbg_reg_addr[4:0]             ),
-    .dbg_reg_wdata_i              ( dbg_reg_wdata                 ),
-    .dbg_reg_rdata_o              ( dbg_reg_rdata                 ),
-    .dbg_set_npc_i                ( dbg_set_npc                   ),
+    .dbg_flush_pipe_i             ( dbg_flush_pipe       ),
+    .dbg_st_en_i                  ( dbg_st_en            ),
+    .dbg_dsr_i                    ( dbg_dsr              ),
+    .dbg_stall_i                  ( dbg_stall            ),
+    .dbg_trap_o                   ( dbg_trap             ),
+    .dbg_reg_mux_i                ( dbg_reg_mux          ),
+    .dbg_reg_we_i                 ( dbg_reg_we           ),
+    .dbg_reg_addr_i               ( dbg_reg_addr[4:0]    ),
+    .dbg_reg_wdata_i              ( dbg_reg_wdata        ),
+    .dbg_reg_rdata_o              ( dbg_reg_rdata        ),
+    .dbg_set_npc_i                ( dbg_set_npc          ),
 
     // Forward Signals
-    .regfile_alu_waddr_fw_i       ( regfile_alu_waddr_fw          ),
-    .regfile_alu_we_fw_i          ( regfile_alu_we_fw             ),
-    .regfile_alu_wdata_fw_i       ( regfile_alu_wdata_fw          ),
+    .regfile_alu_waddr_fw_i       ( regfile_alu_waddr_fw ),
+    .regfile_alu_we_fw_i          ( regfile_alu_we_fw    ),
+    .regfile_alu_wdata_fw_i       ( regfile_alu_wdata_fw ),
 
-    .regfile_waddr_wb_i           ( regfile_waddr_fw_wb_o         ),  // Write address ex-wb pipeline
-    .regfile_we_wb_i              ( regfile_we_wb                 ),  // write enable for the register file
-    .regfile_wdata_wb_i           ( regfile_wdata                 ),  // write data to commit in the register file
+    .regfile_waddr_wb_i           ( regfile_waddr_fw_wb_o),  // Write address ex-wb pipeline
+    .regfile_we_wb_i              ( regfile_we_wb        ),  // write enable for the register file
+    .regfile_wdata_wb_i           ( regfile_wdata        ),  // write data to commit in the register file
 
-    .perf_jump_o                  ( perf_jump                     ),
-    .perf_branch_o                ( perf_branch                   ),
-    .perf_jr_stall_o              ( perf_jr_stall                 ),
-    .perf_ld_stall_o              ( perf_ld_stall                 )
+    .perf_jump_o                  ( perf_jump            ),
+    .perf_branch_o                ( perf_branch          ),
+    .perf_jr_stall_o              ( perf_jr_stall        ),
+    .perf_ld_stall_o              ( perf_ld_stall        )
   );
 
 

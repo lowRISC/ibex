@@ -1029,6 +1029,11 @@ module controller
             ctrl_fsm_ns = BRANCH_DELAY;
         end
 
+        // handle hwloops
+        if (hwloop_jump_i) begin
+          pc_mux_sel_o = `PC_HWLOOP;
+        end
+
         // handle illegal instructions
         if (illegal_insn_int) begin
           illegal_insn_o = 1'b1;
