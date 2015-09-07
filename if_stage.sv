@@ -61,7 +61,6 @@ module if_stage
     // Forwarding ports - control signals
     input  logic        force_nop_i,           // insert a NOP in the pipe
     input  logic [31:0] exception_pc_reg_i,    // address used to restore PC when the interrupt/exception is served
-    input  logic [31:0] pc_from_hwloop_i,      // pc from hwloop start addr
     input  logic  [2:0] pc_mux_sel_i,          // sel for pc multiplexer
     input  logic  [1:0] exc_pc_mux_i,          // select which exception to execute
 
@@ -71,6 +70,10 @@ module if_stage
     input  logic [31:0] jump_target_id_i,      // jump target address
     input  logic [31:0] jump_target_ex_i,      // jump target address
     input  logic        branch_decision_i,
+
+    // from hwloop controller
+    input  logic        hwloop_jump_i,
+    input  logic [31:0] hwloop_target_i,       // pc from hwloop start addr
 
     // from debug unit
     input  logic [31:0] dbg_npc_i,
@@ -160,7 +163,7 @@ module if_stage
       `PC_INCR:      fetch_addr_n = fetch_addr_Q + 32'd4; // incremented PC
       `PC_EXCEPTION: fetch_addr_n = exc_pc;             // set PC to exception handler
       `PC_ERET:      fetch_addr_n = exception_pc_reg_i; // PC is restored when returning from IRQ/exception
-      `PC_HWLOOP:    fetch_addr_n = pc_from_hwloop_i;   // PC is taken from hwloop start addr
+      `PC_HWLOOP:    fetch_addr_n = hwloop_target_i;    // PC is taken from hwloop start addr
       `PC_DBG_NPC:   fetch_addr_n = dbg_npc_i;          // PC is taken from debug unit
       default:
       begin
@@ -180,7 +183,7 @@ module if_stage
       `PC_JUMP:    unaligned_jump = jump_target_id_i[1];
       `PC_BRANCH:  unaligned_jump = jump_target_ex_i[1];
       `PC_ERET:    unaligned_jump = exception_pc_reg_i[1];
-      `PC_HWLOOP:  unaligned_jump = pc_from_hwloop_i[1];
+      `PC_HWLOOP:  unaligned_jump = hwloop_target_i[1];
       `PC_DBG_NPC: unaligned_jump = dbg_npc_i[1];
     endcase
   end
@@ -389,7 +392,10 @@ module if_stage
             offset_fsm_ns = WAIT_JUMPED_ALIGNED;
         end
 
-      end else if (jump_in_id_i == `BRANCH_JAL || jump_in_id_i == `BRANCH_JALR || dbg_set_npc_i) begin
+      end else if (jump_in_id_i == `BRANCH_JAL || jump_in_id_i == `BRANCH_JALR
+                   || dbg_set_npc_i
+                   || hwloop_jump_i) begin
+        // switch to new PC from ID stage
         fetch_req = 1'b1;
         if (unaligned_jump)
           offset_fsm_ns = WAIT_JUMPED_UNALIGNED;

@@ -341,6 +341,12 @@ endfunction // prettyPrintInstruction
 `define BRANCH_JALR 2'b10
 `define BRANCH_COND 2'b11 // conditional branches
 
+// jump target mux
+`define JT_HWLP 2'b00
+`define JT_JAL  2'b01
+`define JT_JALR 2'b10
+`define JT_COND 2'b11
+
 
 ///////////////////////////////////////////////
 //   ___ _____   ____  _                     //

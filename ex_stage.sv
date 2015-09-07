@@ -62,12 +62,6 @@ module ex_stage
     input  logic                      regfile_we_i,
     input  logic [4:0]                regfile_waddr_i,
 
-    input  logic [31:0]               regfile_rb_data_i,
-
-    input  logic                      hwloop_wb_mux_sel_i,
-    input  logic [31:0]               hwloop_pc_plus4_i,
-    input  logic [31:0]               hwloop_cnt_i,
-
     // CSR access
     input  logic                      csr_access_i,
     input  logic [31:0]               csr_rdata_i,
@@ -75,11 +69,6 @@ module ex_stage
     // Output of EX stage pipeline
     output logic [4:0]                regfile_waddr_wb_o,
     output logic                      regfile_we_wb_o,
-    output logic [31:0]               regfile_rb_data_wb_o,
-
-    output logic [31:0]               hwloop_start_data_o,
-    output logic [31:0]               hwloop_end_data_o,
-    output logic [31:0]               hwloop_cnt_data_o,
 
     // Forwarding ports : to ID stage
     output logic  [4:0]               regfile_alu_waddr_fw_o,
@@ -112,21 +101,6 @@ module ex_stage
     if (csr_access_i == 1'b1)
       regfile_alu_wdata_fw_o = csr_rdata_i;
   end
-
-  // hwloop mux. selects the right data to be sent to the hwloop registers (start/end-address and counter)
-  always_comb
-  begin : hwloop_start_mux
-    case (hwloop_wb_mux_sel_i)
-      1'b0: hwloop_start_data_o = hwloop_pc_plus4_i;
-      1'b1: hwloop_start_data_o = alu_result;
-    endcase
-  end
-
-  // assign alu result to hwloop end data
-  assign hwloop_end_data_o = alu_result;
-
-  // assign hwloop mux. selects the right data to be sent to the hwloop registers (start/end-address and counter)
-  assign hwloop_cnt_data_o = hwloop_cnt_i;
 
   // Branch is taken when result[0] == 1'b1
   assign branch_decision_o = alu_flag;
@@ -188,7 +162,6 @@ module ex_stage
     begin
       regfile_waddr_wb_o           <= 5'b0_0000;
       regfile_we_wb_o              <= 1'b0;
-      regfile_rb_data_wb_o         <= 32'h0000_0000;
     end
     else
     begin
@@ -196,7 +169,6 @@ module ex_stage
       begin
         regfile_we_wb_o            <= regfile_we_i;
         regfile_waddr_wb_o         <= regfile_waddr_i;
-        regfile_rb_data_wb_o       <= regfile_rb_data_i;
       end
     end
   end

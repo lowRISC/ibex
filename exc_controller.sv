@@ -48,7 +48,6 @@ module exc_controller
    // SPR
    output logic        save_pc_if_o,                // saves current_pc_if before entering interrupt routine
    output logic        save_pc_id_o,                // saves current_pc_id before entering interrupt routine
-   output logic        save_sr_o,                   // saves status register
 
    // Controller
    input  logic        core_busy_i,                 // Is the controller currently in the IDLE state?
@@ -146,14 +145,14 @@ module exc_controller
     end
   end
 
-  //////////////////////////////////////////////////////////////////////
-  //   _____                    _   _                ____ _        _  //
-  //  | ____|_  _____ ___ _ __ | |_(_) ___  _ __    / ___| |_ _ __| | //
-  //  |  _| \ \/ / __/ _ \ '_ \| __| |/ _ \| '_ \  | |   | __| '__| | //
-  //  | |___ >  < (_|  __/ |_) | |_| | (_) | | | | | |___| |_| |  | | //
-  //  |_____/_/\_\___\___| .__/ \__|_|\___/|_| |_|  \____|\__|_|  |_| //
-  //                     |_|                                          //
-  //////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////
+  //  _____                    _   _                ____ _        _  //
+  // | ____|_  _____ ___ _ __ | |_(_) ___  _ __    / ___| |_ _ __| | //
+  // |  _| \ \/ / __/ _ \ '_ \| __| |/ _ \| '_ \  | |   | __| '__| | //
+  // | |___ >  < (_|  __/ |_) | |_| | (_) | | | | | |___| |_| |  | | //
+  // |_____/_/\_\___\___| .__/ \__|_|\___/|_| |_|  \____|\__|_|  |_| //
+  //                    |_|                                          //
+  /////////////////////////////////////////////////////////////////////
 
   // exception control FSM
   always_comb begin
@@ -163,7 +162,6 @@ module exc_controller
     clear_exc_reason = 1'b0;
     save_pc_if_o     = 1'b0;
     save_pc_id_o     = 1'b0;
-    save_sr_o        = 1'b0;
     force_nop_o      = 1'b0;
     pc_valid_o       = 1'b1;
     exc_pc_sel_o     = 1'b0;
@@ -184,7 +182,6 @@ module exc_controller
                 force_nop_o      = 1'b1;
                 exc_pc_sel_o     = 1'b1;
                 save_pc_if_o     = 1'b1; // save current PC
-                save_sr_o        = 1'b1; // save Supervision Register
 
                 if (irq_nm_i == 1'b1) // emergency IRQ has higher priority
                   exc_pc_mux_o  = `EXC_PC_IRQ_NM;
@@ -208,7 +205,6 @@ module exc_controller
               exc_pc_sel_o     = 1'b1;
               exc_pc_mux_o     = `EXC_PC_ILLINSN;
               save_pc_id_o     = 1'b1; // save current PC
-              save_sr_o        = 1'b1; // save Supervision Register
 
               exc_running_n    = 1'b1;
               clear_exc_reason = 1'b1;
@@ -224,7 +220,6 @@ module exc_controller
           force_nop_o      = 1'b1;
           exc_pc_sel_o     = 1'b1;
           save_pc_if_o     = 1'b1; // save current PC
-          save_sr_o        = 1'b1; // save Supervision Register
 
           if (irq_nm_i == 1'b1) // emergency IRQ has higher priority
             exc_pc_mux_o  = `EXC_PC_IRQ_NM;
