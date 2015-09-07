@@ -240,7 +240,7 @@ module if_stage
         end
       end
 
-      // aligned 32 bit or 16 bit instruction, we don't know yet
+      // serving aligned 32 bit or 16 bit instruction, we don't know yet
       WAIT_ALIGNED,
       VALID_ALIGNED: begin
         if (fetch_valid || offset_fsm_cs == VALID_ALIGNED) begin
@@ -271,7 +271,8 @@ module if_stage
         end
       end
 
-      // unaligned 16 bit instruction
+      // serving unaligned 16 bit instruction
+      // next instruction will be aligned, either 16 bit or 32 bit
       UNALIGNED_16: begin
         unaligned = 1'b1;
 
@@ -285,7 +286,9 @@ module if_stage
         end
       end
 
-      // unaligned 32 bit instruction
+      // serving unaligned 32 bit instruction
+      // next instruction might be 16 bit unaligned (no need to fetch)
+      // or 32 bit unaligned (need to fetch another word from cache)
       WAIT_UNALIGNED_32,
       VALID_UNALIGNED_32: begin
         unaligned = 1'b1;
@@ -313,6 +316,11 @@ module if_stage
       end
 
       // we did an aligned jump
+      // current instruction is either 16 bit aligned or 32 bit aligned
+      // so next instruction can be one of the following:
+      // - 32 bit aligned (if 32 bit aligned now)
+      // - 16 bit unaligned (if 16 bit aligned now)
+      // - 32 bit unaligned (if 16 bit aligned now)
       WAIT_JUMPED_ALIGNED,
       VALID_JUMPED_ALIGNED: begin
 
@@ -345,6 +353,8 @@ module if_stage
       end
 
       // we did an unaligned jump
+      // current instruction is either 16 bit unaligned (ready to serve) or 32
+      // bit unaligned (still need to get data)
       WAIT_JUMPED_UNALIGNED,
       VALID_JUMPED_UNALIGNED: begin
         unaligned = 1'b1;
