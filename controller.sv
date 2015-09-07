@@ -154,17 +154,23 @@ module controller
   logic reg_d_alu_is_reg_b_id;
   logic reg_d_alu_is_reg_c_id;
 
+  // write enable/request control
+  logic       deassert_we;
+  logic       regfile_we;
+  logic       regfile_alu_we;
+  logic       data_req;
+  logic       data_we;
+  logic [2:0] hwloop_we;
+
+  logic       pipe_flush;
+  logic       trap_insn;
+
+  logic [1:0] jump_in_id;
+
+  // signals to EX stage
   logic [`ALU_OP_WIDTH-1:0] alu_operator;
   logic                     mult_en;
-  logic                     regfile_we;
-  logic                     regfile_alu_we;
-  logic                     data_we;
-  logic                     data_req;
-  logic [1:0]               jump_in_id;
   logic [1:0]               csr_op;
-  logic                     pipe_flush;
-  logic                     trap_insn;
-  logic                     deassert_we;
 
   logic lsu_stall;
   logic misalign_stall;
@@ -218,7 +224,7 @@ module controller
 
     prepost_useincr_o           = 1'b1;
 
-    hwloop_we_o                 = 3'b0;
+    hwloop_we                   = 3'b0;
     hwloop_start_mux_sel_o      = 1'b0;
     hwloop_end_mux_sel_o        = 1'b0;
     hwloop_cnt_mux_sel_o        = 1'b0;
@@ -841,33 +847,33 @@ module controller
         unique case (instr_rdata_i[14:12])
           3'b000: begin
             // lp.starti: set start address to PC + I-type immediate
-            hwloop_we_o[0]         = 1'b1;
+            hwloop_we[0]           = 1'b1;
             hwloop_start_mux_sel_o = 1'b0;
             // $display("%t: hwloop start address: %h", $time, instr_rdata_i);
           end
           3'b001: begin
             // lp.endi: set end address to PC + I-type immediate
-            hwloop_we_o[1]       = 1'b1;
+            hwloop_we[1]         = 1'b1;
             hwloop_end_mux_sel_o = 1'b0; // jump target
             // $display("%t: hwloop end address: %h", $time, instr_rdata_i);
           end
           3'b010: begin
             // lp.count initialize counter from rs1
-            hwloop_we_o[2]       = 1'b1;
+            hwloop_we[2]         = 1'b1;
             hwloop_cnt_mux_sel_o = 1'b1;
             rega_used            = 1'b1;
             // $display("%t: hwloop counter: %h", $time, instr_rdata_i);
           end
           3'b011: begin
             // lp.counti initialize counter from I-type immediate
-            hwloop_we_o[2]       = 1'b1;
+            hwloop_we[2]         = 1'b1;
             hwloop_cnt_mux_sel_o = 1'b0;
             // $display("%t: hwloop counter imm: %h", $time, instr_rdata_i);
           end
           3'b100: begin
             // lp.setup: initialize counter from rs1, set start address to
             // next instruction and end address to PC + I-type immediate
-            hwloop_we_o            = 3'b111;
+            hwloop_we              = 3'b111;
             hwloop_start_mux_sel_o = 1'b1;
             hwloop_end_mux_sel_o   = 1'b0;
             hwloop_cnt_mux_sel_o   = 1'b1;
@@ -878,7 +884,7 @@ module controller
             // lp.setupi: initialize counter from I-type immediate, set start
             // address to next instruction and end address to PC + shifted
             // z-type immediate
-            hwloop_we_o            = 3'b111;
+            hwloop_we              = 3'b111;
             hwloop_start_mux_sel_o = 1'b1;
             hwloop_end_mux_sel_o   = 1'b1;
             hwloop_cnt_mux_sel_o   = 1'b0;
@@ -1261,6 +1267,7 @@ module controller
   assign regfile_alu_we_o  = (deassert_we) ? 1'b0          : regfile_alu_we;
   assign data_we_o         = (deassert_we) ? 1'b0          : data_we;
   assign data_req_o        = (deassert_we) ? 1'b0          : data_req;
+  assign hwloop_we_o       = (deassert_we) ? 3'b0          : hwloop_we;
   assign csr_op_o          = (deassert_we) ? `CSR_OP_NONE  : csr_op;
   assign trap_insn_o       = (deassert_we) ? 1'b0          : trap_insn;
   assign jump_in_id_o      = (deassert_we) ? `BRANCH_NONE  : jump_in_id;
