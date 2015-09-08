@@ -55,6 +55,7 @@ module if_stage
 
     // Output of IF Pipeline stage
     output logic [31:0] instr_rdata_id_o,      // read instruction is sampled and sent to ID stage for decoding
+    output logic        illegal_c_insn_id_o,   // compressed decoder thinks this is an invalid instruction
     output logic [31:0] current_pc_if_o,
     output logic [31:0] current_pc_id_o,
 
@@ -441,20 +442,40 @@ module if_stage
                        offset_fsm_cs == UNALIGNED_16)          || instr_req_o;
 
 
+
+  // compressed instruction decoding, or more precisely compressed instruction
+  // expander
+  //
+  // since it does not matter where we decompress instructions, we do it here
+  // to ease timing closure
+  logic [31:0] instr_decompressed;
+  logic        illegal_c_insn;
+
+  compressed_decoder compressed_decoder_i
+  (
+    .instr_i         ( instr_rdata_int     ),
+    .instr_o         ( instr_decompressed  ),
+    .is_compressed_o (                     ),
+    .illegal_instr_o ( illegal_c_insn      )
+  );
+
+
   // IF-ID pipeline registers, frozen when the ID stage is stalled
   always_ff @(posedge clk, negedge rst_n)
   begin : IF_ID_PIPE_REGISTERS
     if (rst_n == 1'b0)
     begin
-      instr_rdata_id_o   <= '0;
-      current_pc_id_o    <= '0;
+      instr_rdata_id_o    <= '0;
+      illegal_c_insn_id_o <= 1'b0;
+      current_pc_id_o     <= '0;
     end
     else
     begin
       if (~stall_id_i)
       begin : ENABLED_PIPE
-        instr_rdata_id_o <= instr_rdata_int;
-        current_pc_id_o  <= current_pc_if_o;
+        instr_rdata_id_o    <= instr_decompressed;
+        illegal_c_insn_id_o <= illegal_c_insn;
+        current_pc_id_o     <= current_pc_if_o;
       end
     end
   end

@@ -55,10 +55,11 @@ module id_stage
     output logic [31:0] jump_target_o,
 
     // IF and ID stage signals
-    output logic        compressed_instr_o,
     output logic [2:0]  pc_mux_sel_o,
     output logic [1:0]  exc_pc_mux_o,
     output logic        force_nop_o,
+
+    input  logic        illegal_c_insn_i,
 
     input  logic [31:0] current_pc_if_i,
     input  logic [31:0] current_pc_id_i,
@@ -140,6 +141,7 @@ module id_stage
     input  logic [31:0] regfile_alu_wdata_fw_i,
 
     // Performance Counters
+    output logic        perf_compressed_o,    // current instrution is compressed
     output logic        perf_jump_o,          // we are executing a jump instruction
     output logic        perf_branch_o,        // we are executing a branch instruction
     output logic        perf_jr_stall_o,      // jump-register-hazard
@@ -149,6 +151,7 @@ module id_stage
 
   // Compressed instruction decoding
   logic [31:0] instr;
+  logic        is_compressed;
 
   // Immediate decoding and sign extension
   logic [31:0] imm_i_type;
@@ -267,14 +270,10 @@ module id_stage
   assign pc_mux_sel_o = (exc_pc_sel == 1'b1) ? `PC_EXCEPTION : pc_mux_sel_int;
 
 
-  // compressed instruction decoding
-  compressed_decoder compressed_decoder_i (
-    .instr_i         ( instr_rdata_i      ),
-    .instr_o         ( instr              ),
-    .is_compressed_o ( compressed_instr_o ),
-    .illegal_instr_o ( illegal_c_insn     )
-  );
+  assign instr         = instr_rdata_i;
+  assign is_compressed = (instr[1:0] != 2'b11);
 
+  assign perf_compressed_o = is_compressed;
 
   // immediate extraction and sign extension
   assign imm_i_type  = { {20 {instr[31]}}, instr[31:20] };
@@ -414,7 +413,7 @@ module id_stage
       `IMM_I:      immediate_b = imm_i_type;
       `IMM_S:      immediate_b = imm_s_type;
       `IMM_U:      immediate_b = imm_u_type;
-      `IMM_PCINCR: immediate_b = compressed_instr_o ? 32'h2 : 32'h4;
+      `IMM_PCINCR: immediate_b = is_compressed ? 32'h2 : 32'h4;
       default:     immediate_b = imm_i_type;
     endcase; // case (immediate_mux_sel)
   end
@@ -591,7 +590,7 @@ module id_stage
     .irq_present_i                ( irq_present           ),
 
     // Exception Controller Signals
-    .illegal_c_insn_i             ( illegal_c_insn        ),
+    .illegal_c_insn_i             ( illegal_c_insn_i      ),
     .illegal_insn_o               ( illegal_insn          ),
     .trap_insn_o                  ( trap_insn             ),
     .pc_valid_i                   ( pc_valid              ),
