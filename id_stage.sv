@@ -40,6 +40,7 @@ module id_stage
 
     input logic         fetch_enable_i,
     output logic        core_busy_o,
+    output logic        is_decoding_o,
 
     // Interface to instruction memory
     input  logic [31:0] instr_rdata_i,      // comes from pipeline of IF stage
@@ -530,6 +531,7 @@ module id_stage
     .rst_n                        ( rst_n                 ),
     .fetch_enable_i               ( fetch_enable_i        ),
     .core_busy_o                  ( core_busy_o           ),
+    .is_decoding_o                ( is_decoding_o         ),
 
     // Signal from-to PC pipe (instr rdata) and instr mem system (req and ack)
     .instr_rdata_i                ( instr                 ),

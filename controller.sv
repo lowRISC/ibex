@@ -38,6 +38,7 @@ module controller
 
   input  logic        fetch_enable_i,             // Start the decoding
   output logic        core_busy_o,                // Core is busy processing instructions
+  output logic        is_decoding_o,
 
   input  logic [31:0] instr_rdata_i,              // Instruction read from instr memory/cache: (sampled in the if stage)
   output logic        instr_req_o,                // Fetch instruction Request:
@@ -803,7 +804,7 @@ module controller
             begin
               illegal_insn_int = 1'b1;
             end
-          endcase // unique case (instr_rdata_i)
+          endcase
         end
         else
         begin
@@ -956,13 +957,14 @@ module controller
   always_comb
   begin
     // Default values
-    instr_req_o   = 1'b1;
+    instr_req_o    = 1'b1;
 
-    pc_mux_sel_o  = `PC_INCR;
+    pc_mux_sel_o   = `PC_INCR;
 
-    ctrl_fsm_ns   = ctrl_fsm_cs;
+    ctrl_fsm_ns    = ctrl_fsm_cs;
 
-    core_busy_o   = 1'b1;
+    core_busy_o    = 1'b1;
+    is_decoding_o  = 1'b0;
 
     halt_if        = 1'b0;
     halt_id        = 1'b0;
@@ -1019,6 +1021,8 @@ module controller
 
       DECODE:
       begin
+        is_decoding_o = 1'b1;
+
         // handle conditional branches
         if (jump_in_id == `BRANCH_COND) begin
           // handle branch if decision is availble in next cycle

@@ -389,8 +389,7 @@ endfunction // prettyPrintInstruction
 
 // Hardware loop registers
 // Caution: Changing this parameter is not sufficient to increase the number of
-// hwloop registers! There are adjustments needed in hwloop_controller and
-// controller (decoder).
+// hwloop registers! There are adjustments needed in the controller (decoder).
 `define HWLOOP_REGS 2
 
 

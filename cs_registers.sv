@@ -55,6 +55,8 @@ module cs_registers
 
   // Performance Counters
   input  logic        stall_id_i,        // stall ID stage
+  input  logic        is_compressed_i,   // compressed instruction in ID
+  input  logic        is_decoding_i,     // controller is in DECODE state
 
   input  logic        instr_fetch_i,     // instruction fetch
 
@@ -69,7 +71,7 @@ module cs_registers
   input  logic [N_EXT_PERF_COUNTERS-1:0]   ext_counters_i
 );
 
-  localparam N_PERF_COUNTERS = 9 + N_EXT_PERF_COUNTERS;
+  localparam N_PERF_COUNTERS = 10 + N_EXT_PERF_COUNTERS;
 
 `ifdef PULP_FPGA_EMUL
   localparam N_PERF_REGS     = N_PERF_COUNTERS;
@@ -139,7 +141,7 @@ module cs_registers
     irq_enable_n = irq_enable;
 
     case (csr_addr_i)
-      // mstatus: always M-mode, contains IE bit
+      // mstatus: IE bit
       12'h300: if (csr_we_int) irq_enable_n = csr_wdata_int[0];
 
       // mscratch
@@ -218,7 +220,7 @@ module cs_registers
   /////////////////////////////////////////////////////////////////
 
   assign PCCR_in[0]  = 1'b1;                           // cycle counter
-  assign PCCR_in[1]  = ~stall_id_i;                    // instruction counter
+  assign PCCR_in[1]  = ~stall_id_i & is_decoding_i;    // instruction counter
   assign PCCR_in[2]  = ld_stall_i & (~stall_id_q);     // nr of load use hazards
   assign PCCR_in[3]  = jr_stall_i & (~stall_id_q);     // nr of jump register hazards
   assign PCCR_in[4]  = instr_fetch_i;                  // cycles waiting for instruction fetches
@@ -226,6 +228,8 @@ module cs_registers
   assign PCCR_in[6]  = mem_store_i;                    // nr of stores
   assign PCCR_in[7]  = jump_i   & (~stall_id_q);       // nr of jumps (unconditional)
   assign PCCR_in[8]  = branch_i & (~stall_id_q);       // nr of branches (conditional)
+  assign PCCR_in[9]  = ~stall_id_i & is_decoding_i
+                       & is_compressed_i;              // compressed instruction counter
 
   // assign external performance counters
   generate

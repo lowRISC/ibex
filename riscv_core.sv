@@ -89,13 +89,13 @@ module riscv_core
   logic [2:0]    pc_mux_sel_id;     // Mux selector for next PC
   logic [1:0]    exc_pc_mux_id;     // Mux selector for exception PC
 
+  // ID performance counter signals
   logic          compressed_instr;
+  logic          is_decoding;
+
 
   logic          useincr_addr_ex;   // Active when post increment
   logic          data_misaligned;   // Active when post increment
-
-
-  // Forwarding
 
   // Jump and branch target and decision (EX->IF)
   logic [31:0] jump_target_id, jump_target_ex;
@@ -296,6 +296,7 @@ module riscv_core
     .jump_target_o                ( jump_target_id       ),
 
     .core_busy_o                  ( core_busy            ),
+    .is_decoding_o                ( is_decoding          ),
 
     // Interface to instruction memory
     .instr_rdata_i                ( instr_rdata_id       ),
@@ -540,6 +541,8 @@ module riscv_core
 
     // performance counter related signals
     .stall_id_i              ( stall_id       ),
+    .is_compressed_i         ( compressed_instr ),
+    .is_decoding_i           ( is_decoding    ),
 
     .instr_fetch_i           ( ~instr_ack_int ),
 
