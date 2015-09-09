@@ -343,7 +343,7 @@ module instr_core_interface
       // we wait for rvalid, after that we are ready to serve a new request
       WAIT_RVALID: begin
 
-        if (req_i && fifo_addr_ready) begin
+        if ((req_i && fifo_addr_ready) || clear_i) begin
           // prepare for next request
           instr_req_o = 1'b1;
 
@@ -358,38 +358,10 @@ module instr_core_interface
             end
           end else begin
             // we are requested to abort our current request
-            if (clear_i)
-              NS = WAIT_ABORTED;
-          end
-        end else begin
-          // just wait for rvalid and go back to IDLE, no new request
-          // requested
-          instr_req_o = 1'b0;
-
-          if (instr_rvalid_i) begin
-            fifo_rdata_valid = 1'b1;
-            NS = IDLE;
-          end else begin
-            if (clear_i)
-              NS = WAIT_ABORTED;
-          end
-        end
-      end // case: WAIT_RVALID
-
-      // our last request was aborted, but we didn't yet get a rvalid and
-      // there was no new request sent yet
-      WAIT_ABORTED: begin
-        if (req_i && fifo_addr_ready) begin
-          // prepare for next request
-          instr_req_o = 1'b1;
-
-          if (instr_rvalid_i) begin
-            fifo_addr_valid  = 1'b1;
-
-            if (instr_gnt_i) begin
-              NS      = WAIT_RVALID;
-            end else begin
-              NS      = WAIT_GNT;
+            // we didn't get an rvalid yet, so wait for it
+            if (clear_i) begin
+              fifo_addr_valid  = 1'b1;
+              NS               = WAIT_ABORTED;
             end
           end
         end else begin
@@ -398,7 +370,27 @@ module instr_core_interface
           instr_req_o = 1'b0;
 
           if (instr_rvalid_i) begin
-            NS = IDLE;
+            fifo_rdata_valid = 1'b1;
+            NS               = IDLE;
+          end
+        end
+      end // case: WAIT_RVALID
+
+      // our last request was aborted, but we didn't yet get a rvalid and
+      // there was no new request sent yet
+      // we assume that req_i is set to high
+      WAIT_ABORTED: begin
+        // prepare for next request
+        instr_req_o  = 1'b1;
+        instr_addr_o = fifo_last_addr;
+
+        if (instr_rvalid_i) begin
+          // no need to send address, already done in WAIT_RVALID
+
+          if (instr_gnt_i) begin
+            NS      = WAIT_RVALID;
+          end else begin
+            NS      = WAIT_GNT;
           end
         end
       end
