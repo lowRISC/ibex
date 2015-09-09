@@ -54,7 +54,7 @@ module fetch_fifo
     output logic [31:0] out_unaligned_rdata_o
   );
 
-  localparam DEPTH = 2; // must be 2 or greater
+  localparam DEPTH = 3; // must be 2 or greater
 
   // index 0 is used for output
   logic [0:DEPTH-1] [31:0]  addr_n,        addr_int,        addr_Q;
