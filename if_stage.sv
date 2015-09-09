@@ -97,7 +97,7 @@ module if_stage
   logic        unaligned_jump;
 
   // instr_core_interface
-  logic        branch_req;
+  logic        branch_req, branch_req_Q;
   logic [31:0] fetch_addr_n;
 
   logic        fetch_valid;
@@ -212,8 +212,15 @@ module if_stage
   begin
     if (rst_n == 1'b0) begin
       offset_fsm_cs     <= IDLE;
+
+      branch_req_Q      <= 1'b0;
     end else begin
       offset_fsm_cs     <= offset_fsm_ns;
+
+      if (stall_if_i)
+        branch_req_Q    <= branch_req | branch_req_Q;
+      else
+        branch_req_Q    <= 1'b0;
     end
   end
 
@@ -296,9 +303,10 @@ module if_stage
 
 
     // take care of jumps and branches
-    if(~stall_id_i) begin
+    if (branch_req_Q == 1'b0) begin
       if (jump_in_ex_i == `BRANCH_COND) begin
         if (branch_decision_i) begin
+          valid_o = 1'b0;
           // branch taken
           branch_req = 1'b1;
           if (unaligned_jump)
@@ -310,6 +318,8 @@ module if_stage
       end else if (jump_in_id_i == `BRANCH_JAL || jump_in_id_i == `BRANCH_JALR
                    || dbg_set_npc_i
                    || hwloop_jump_i) begin
+        valid_o = 1'b0;
+
         // switch to new PC from ID stage
         branch_req = 1'b1;
         if (unaligned_jump)

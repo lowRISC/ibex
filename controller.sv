@@ -1036,7 +1036,7 @@ module controller
           pc_mux_sel_o = `PC_JUMP;
 
           if (~stall_id_o)
-            ctrl_fsm_ns = BRANCH_DELAY;
+            ctrl_fsm_ns = DECODE;
         end
 
         // handle hwloops
@@ -1076,7 +1076,6 @@ module controller
         // assume branch instruction is in EX
         if (jump_in_ex_i == `BRANCH_COND && ~branch_decision_i) begin
           // not taken
-          pc_mux_sel_o = `PC_INCR;
 
           // if we want to debug, flush the pipeline
           // the current_pc_if will take the value of the next instruction to
@@ -1103,7 +1102,7 @@ module controller
             ctrl_fsm_ns = DBG_FLUSH_EX;
           end else begin
             if (~stall_id_o)
-              ctrl_fsm_ns = BRANCH_DELAY;
+              ctrl_fsm_ns = DECODE;
           end
         end
       end
