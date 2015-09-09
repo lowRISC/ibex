@@ -1,0 +1,107 @@
+% Determines the input encoding.
+\usepackage[%
+ utf8,
+% latin1
+]{inputenc}
+
+% ---------------------------------------------------------------------
+
+% Determines the output encoding.
+\usepackage[T1]{fontenc}
+
+% ---------------------------------------------------------------------
+
+% Determines language settings.
+\usepackage[%
+ english    % You may change this to 'ngerman' in order to write a
+            % german report.
+]{babel}
+
+% Provides stretchable tables.
+\usepackage{tabularx}
+
+% Provides image loading.
+\usepackage{graphicx}
+
+% ---------------------------------------------------------------------
+
+% Provides the algorithm environment
+\usepackage[ruled,%
+            linesnumbered]{algorithm2e}
+
+% ---------------------------------------------------------------------
+
+% Provides simple line spacings.
+\usepackage{setspace}
+
+% ---------------------------------------------------------------------
+
+% Provides colors in LaTeX.
+\usepackage{xcolor}
+
+% ---------------------------------------------------------------------
+
+% Provides nicer tables than the standard tables.
+\usepackage{booktabs}
+
+\usepackage{float}
+\usepackage{listings}
+\usepackage{amsmath}
+
+%\usepackage{caption}
+\usepackage{bytefield}
+
+\usepackage{fullpage}
+
+\usepackage{enumitem}
+
+
+\usepackage{tikz-timing}[2009/05/15]
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%                                                                 %
+%%%%%     Custom Macros                                               %
+%%%%%                                                                 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Create an inline command for shell commands.
+\newcommand{\shell}[1]{\texttt{#1}}
+
+% Create an enviroment for a shell commands.
+\newenvironment{shellenv}%
+{\VerbatimEnvironment%
+ \begin{Sbox}\begin{minipage}{0.97\textwidth}\begin{Verbatim}%
+}%
+{\end{Verbatim}\end{minipage}\end{Sbox}%
+\setlength{\fboxsep}{6pt}\shadowbox{\TheSbox}}%
+
+% Create an inline command for files.
+\newcommand{\file}[1]{\texttt{#1}}
+
+% Create a command for command parameters.
+\newcommand{\parameter}[1]{$<$#1$>$}
+
+\newcommand{\instr}[1]{\texttt{#1}}
+
+
+\definecolor{lightGray}{RGB}{240,240,240}
+
+\lstnewenvironment{instrenv}{\lstset{backgroundcolor=\color{lightGray},frame=single,basicstyle=\ttfamily}}{}
+
+\newcommand{\orion}{\textsc{Or10n}\xspace}
+\newcommand{\riscv}{\mbox{RISC-V}\xspace}
+\newcommand{\rvcore}{\textsc{RI5CY}\xspace}
+\newcommand{\pulpino}{\textsc{PULPino}\xspace}
+\newcommand{\pulp}{\textsc{PULP}\xspace}
+
+\newcommand\signal[1]{{\ttfamily\bfseries #1}}
+
+\newcommand\sprDesc[4]{%
+  \textbf{SPR Address:} \texttt{#1}\\%
+  \textbf{Reset Value:} \texttt{#2}\\%
+  \begin{figure}[H]
+    \centering
+    #4
+    \caption{#3}
+  \end{figure}}
+

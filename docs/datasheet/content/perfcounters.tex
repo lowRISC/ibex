@@ -1,0 +1,132 @@
+\chapter{Performance Counters}
+\label{chap:perf_count}
+
+Performance Counters in \orion are placed inside the Special-Purpose Registers
+and can be accessed with \instr{l.mfspr} and \instr{l.mtspr}.
+Figure~\ref{fig:spr_addr} shows the SPR address format and
+Table~\ref{tab:pc_spr_addr} shows the respective addresses for configuration and
+access to the performance counters.
+
+\begin{table}[H]
+ \caption{PC SPR Addresses}
+ \label{tab:pc_spr_addr}
+ \centering\begin{tabularx}{\textwidth}{@{}ccccX@{}} \toprule
+   \textbf{Group \#} & \textbf{Reg \#} & Reg Name     & Access  & Description\\ \toprule
+                   7 &  0 - 31         & PCCR0-PCCR31 & R/W     & Performance Counters Count Registers \\ \hline
+                   7 &  32             & PCER         & R/W     & Performance Counters Event Register \\ \hline
+                   7 &  33             & PCMR         & R/W     & Performance Counters Mode Register \\ \bottomrule
+  \end{tabularx}
+\end{table}
+
+
+\section{Performance Counters Mode Register (PCMR)}
+
+\sprDesc{0x3821}{0x0000\_0003}{PCMR}{
+  \begin{bytefield}[endianness=big,bitheight=60pt]{32}
+    \bitheader{31,1,0} \\
+    \bitbox{30}{ Unused                            }
+    \bitbox{1}{\rotatebox{90}{\tiny Saturation    }}
+    \bitbox{1}{\rotatebox{90}{\tiny Global Enable }}
+  \end{bytefield}
+}
+
+The \instr{Global Enable} bit controls all performance counters, i.e. if it is set
+to \instr{0}, all performance counters are deactivated.
+After reset, the \instr{Global Enable} bit is set.
+
+The \instr{Saturation} bit controls saturation behaviour of the performance
+counters. If it is set, saturating arithmetic is used.
+After reset, the \instr{Saturation} bit is set.
+
+\section{Performance Counters Event Register (PCER)}
+
+\sprDesc{0x3820}{0x0000\_0000}{PCER}{
+  \begin{bytefield}[endianness=big,bitheight=60pt]{32}
+    \bitheader{31,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0} \\
+    \bitbox{1}{\rotatebox{90}{\tiny (ALL)                 }}
+    \bitbox{14}{ Unused                                   }
+    \bitbox{1}{\rotatebox{90}{\tiny TCDM CONT             }}
+    \bitbox{1}{\rotatebox{90}{\tiny ST\_EXT\_CYC          }}
+    \bitbox{1}{\rotatebox{90}{\tiny LD\_EXT\_CYC          }}
+    \bitbox{1}{\rotatebox{90}{\tiny ST\_EXT               }}
+    \bitbox{1}{\rotatebox{90}{\tiny LD\_EXT               }}
+    \bitbox{1}{\rotatebox{90}{\tiny DELAY\_SLOT           }}
+    \bitbox{1}{\rotatebox{90}{\tiny BRANCH                }}
+    \bitbox{1}{\rotatebox{90}{\tiny JUMP                  }}
+    \bitbox{1}{\rotatebox{90}{\tiny ST                    }}
+    \bitbox{1}{\rotatebox{90}{\tiny LD                    }}
+    \bitbox{1}{\rotatebox{90}{\tiny WBRANCH\_CYC          }}
+    \bitbox{1}{\rotatebox{90}{\tiny WBRANCH               }}
+    \bitbox{1}{\rotatebox{90}{\tiny IMISS                 }}
+    \bitbox{1}{\rotatebox{90}{\tiny JMP\_STALL            }}
+    \bitbox{1}{\rotatebox{90}{\tiny LD\_STALL             }}
+    \bitbox{1}{\rotatebox{90}{\tiny INSTR                 }}
+    \bitbox{1}{\rotatebox{90}{\tiny CYCLES                }}
+  \end{bytefield}
+}
+
+Each bit in the PCER register controls one performance counter. If the bit is
+1, the counter is enabled and starts counting events. If it is 0, the counter
+is disabled and its value won't change.
+
+In the ASIC there is only one counter register, thus all counter events are
+masked by PCER are ORed together, i.e. if one of the enabled event happens,
+the counter will be increased. If multiple non-masked events happen at the same
+time, the counter will only be increased by one.
+
+In the FPGA or Simulation version each event has its own counter and can be
+accesses separately.
+
+
+\section{Performance Counters Counter Registers (PCCR0-31)}
+
+\sprDesc{0x3800 - 0x381F}{0x0000\_0000}{PCCR0-31}{
+  \begin{bytefield}[endianness=big]{32}
+    \bitheader{31,0} \\
+    \bitbox{32}{Unsigned integer counter value}
+  \end{bytefield}
+}
+
+PCCR registers support both saturating and wrap-around arithmetic. This is
+controlled by the \instr{saturation} bit in PCMR.
+
+\begin{table}[H]
+\begin{tabularx}{\textwidth}{@{}llX@{}} \toprule
+  \textbf{Reg Name} & \textbf{Name}       & Description \\ \toprule
+  \textbf{PCCR0}  & \textbf{CYCLES}       & Count the number of cycles the core was running \\ \hline
+  \textbf{PCCR1}  & \textbf{INSTR}        & Count the number of instructions executed \\ \hline
+  \textbf{PCCR2}  & \textbf{LD\_STALL}    & Number of load data hazards \\ \hline
+  \textbf{PCCR3}  & \textbf{JMP\_STALL}   & Number of jump register data hazards \\ \hline
+  \textbf{PCCR4}  & \textbf{IMISS}        & Cycles waiting for instruction fetches. i.e. the number of instructions wasted due to non-ideal caches \\ \hline
+  \textbf{PCCR5}  & \textbf{WBRANCH}      & Number of wrong predicted branches \\ \hline
+  \textbf{PCCR6}  & \textbf{WBRANCH\_CYC} & Cycles wasted due to wrong predicted branches \\ \hline
+  \textbf{PCCR7}  & \textbf{LD}           & Number of memory loads executed. Misaligned accesses are counted twice \\ \hline
+  \textbf{PCCR8}  & \textbf{ST}           & Number of memory stores executed. Misaligned accesses are counted twice \\ \hline
+  \textbf{PCCR9}  & \textbf{JUMP}         & Number of jumps (j, jal, jr, jalr)\\ \hline
+  \textbf{PCCR10} & \textbf{BRANCH}       & Number of branches (bf, bnf), counts taken and not taken branches\\ \hline
+  \textbf{PCCR11} & \textbf{DELAY\_NOP}   & Number of empty (l.nop) delay slots \\ \hline
+  \textbf{PCCR12} & \textbf{LD\_EXT}      & Number of memory loads to EXT executed. Misaligned accesses are counted twice. Every non-TCDM access is considered external \\ \hline
+  \textbf{PCCR13} & \textbf{ST\_EXT}      & Number of memory stores to EXT executed. Misaligned accesses are counted twice. Every non-TCDM access is considered external \\ \hline
+  \textbf{PCCR14} & \textbf{LD\_EXT\_CYC} & Cycles used for memory loads to EXT. Every non-TCDM access is considered external \\ \hline
+  \textbf{PCCR15} & \textbf{ST\_EXT\_CYC} & Cycles used for memory stores to EXT. Every non-TCDM access is considered external \\ \hline
+  \textbf{PCCR16} & \textbf{TCDM\_CONT}   & Cycles wasted due to TCDM/log-interconnect contention \\ \hline
+  \textbf{PCCR31} & \textbf{ALL}          & Special Register, a write to this register will set all counters to the supplied value\\ \bottomrule
+\end{tabularx}
+\end{table}
+
+In the FPGA, RTL simulation and Virtual-Platform there are individual counters
+for each event type, i.e. PCCR0-30 each represent a separate register.
+To save area in the ASIC, there is only one counter and one counter register.
+Accessing PCCR0-30 will access the same counter register in the ASIC.
+Reading/writing from/to PCCR31 in the ASIC will access the same register as
+PCCR0-30.
+
+Figure~\ref{fig:events} shows how events are first masked with the PCER register
+and then ORed together to increase the one performance counter PCCR.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\textwidth]{./figures/events}
+  \caption{Events and PCCR, PCMR and PCER on the ASIC.}
+  \label{fig:events}
+\end{figure}

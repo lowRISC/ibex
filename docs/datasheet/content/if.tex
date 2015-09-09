@@ -1,0 +1,37 @@
+\chapter{Instruction Fetch}
+
+The instruction fetcher of the core is able to supply one instruction to the ID
+stage per cycle if the instruction cache or the instruction memory is able to
+deliver an instruction after one cycle.
+The instruction address must be word-aligned. It is not possible to jump to
+misaligned memory addresses.
+
+Branch prediction is used for branches where the branch decision is not yet
+known, i.e. if the \instr{l.sf*} instruction precedes the \instr{l.bf} or
+\instr{l.bnf} instruction directly.
+Branch prediction assumes that backward branches are never taken and forward
+branches are always taken. If the branch predicition guessed wrong, one fetched
+instruction is wasted.
+
+Table~\ref{tab:instr_signals} describes the signals that are used by to fetch
+instructions.
+
+
+\begin{table}[H]
+ \caption{Instruction Fetch Signals}
+ \label{tab:instr_signals}
+  \begin{tabularx}{\textwidth}{@{}llX@{}} \toprule
+    \textbf{Signal}                & \textbf{Direction} & \textbf{Description} \\ \toprule
+    \signal{instr\_req\_o}         & \textbf{output}    & Request ready, must stay high until \signal{instr\_gnt\_i} is high for one cycle \\ \hline
+    \signal{instr\_addr\_o[31:0]}  & \textbf{output}    & Address \\ \hline
+    \signal{instr\_rdata\_i[31:0]} & \textbf{input}     & Data read from memory \\ \hline
+    \signal{instr\_rvalid\_i}      & \textbf{input}     & \signal{instr\_rdata\_i} is valid now for this cycle. When \signal{instr\_rvalid\_i} is high, another request can be sent. \\ \hline
+    \signal{instr\_gnt\_i}         & \textbf{input}     & The instruction cache accepted the request. The \signal{instr\_addr\_o} may be change in the next cylce. \\ \bottomrule
+  \end{tabularx}
+\end{table}
+
+
+\section{Protocol}
+The protocol used to communicate with the instruction cache or the instruction
+memory is the same as the protocl used by the LSU. See the description of the
+LSU in Section~\ref{sec:lsu_protocol} for details about the protocol.

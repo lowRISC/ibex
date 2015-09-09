@@ -1,0 +1,126 @@
+\chapter{Load-Store-Unit (LSU)}
+
+The LSU of the core takes care of accessing the data memory. Load and stores on
+words (32 bit), half words (16 bit) and bytes (8 bit) are supported.
+
+Table~\ref{tab:lsu_signals} describes the signals that are used by the LSU.
+
+
+\begin{table}[H]
+ \caption{LSU Signals}
+ \label{tab:lsu_signals}
+  \begin{tabularx}{\textwidth}{@{}llX@{}} \toprule
+    \textbf{Signal}               & \textbf{Direction} & \textbf{Description} \\ \toprule
+    \signal{data\_req\_o}         & \textbf{output}    & Request ready, must stay high until \signal{data\_gnt\_i} is high for one cycle \\ \hline
+    \signal{data\_addr\_o[31:0]}  & \textbf{output}    & Address \\ \hline
+    \signal{data\_we\_o}          & \textbf{output}    & Write Enable, high if we want to write, low if we want to read \\ \hline
+    \signal{data\_be\_o[3:0]}     & \textbf{output}    & Byte Enable, is set for the bytes to write/read \\ \hline
+    \signal{data\_wdata\_o[31:0]} & \textbf{output}    & Data to be written to memory \\ \hline
+    \signal{data\_rdata\_i[31:0]} & \textbf{input}     & Data read from memory \\ \hline
+    \signal{data\_rvalid\_i}      & \textbf{input}     & \signal{data\_rdata\_i} is valid. This signal must always be identical to \signal{data\_gnt\_i} delayed by one cycle. \\ \hline
+    \signal{data\_gnt\_i}         & \textbf{input}     & The memory accepted the request and will answer in the next cycle with valid rdata \\ \bottomrule
+  \end{tabularx}
+\end{table}
+
+\section{Misaligned Accesses}
+The LSU is able to perform misaligned accesses, meaning accesses that are not
+aligned on natural word boundaries. However it needs to perform two separate
+word-aligned accesses internally.
+This means that at least two cycles are needed for misaligned loads and stores.
+
+
+\section{Post-Increment Load and Stores}
+
+Post-incrementing load and store instructions perform a load/store operation
+from/to the data memory while at the same time increasing the base address by
+the specified offset.
+Post-incrementing load and stores reduce the number of instructions necessary to
+execute when running in a loop, i.e. the address increment can be embedded in
+the post-increment instructions.
+
+
+\section{Protocol}
+\label{sec:lsu_protocol}
+
+The protocol that is used by the LSU to communicate with a memory works as
+follows:
+The LSU provides a valid address in \signal{data\_addr\_o} and sets
+\signal{data\_req\_o} high. The memory then answers with a \signal{data\_gnt\_i}
+set high as soon as it is ready to serve the request. This may happen in the
+same cycle as the request was sent or any number of cycles later. After a grant
+was received, the address may be changed by the LSU without impact. Also the
+\signal{data\_wdata\_o}, \signal{data\_we\_o} and \signal{data\_be\_o} signals
+may be changed as it is assumed that the memory has already processed that
+information. In the case of a read, the memory answers with a
+\signal{data\_rvalid\_i} set high when \signal{data\_rdata\_i} is valid. This
+may happen one cycle after the grant was received, but may take any number of
+cycles after the grant was received.
+Starting from the cycle when \signal{data\_rvalid\_i} was asserted, another
+request may be sent.
+
+Figure~\ref{fig:lsu_trans_basic}, Figure~\ref{fig:lsu_trans_b2b} and
+Figure~\ref{fig:lsu_trans_slow} show timing diagrams of the protocol.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikztimingtable}
+    [timing/d/background/.style={fill=white},
+     timing/lslope=0.1,
+     xscale=3]
+
+    clk              & 13{C} \\
+    data\_addr\_o    & UUU 4D{Address} UU   UU UU \\
+    data\_wdata\_o   & UUU 4D{WData} UU     UU UU \\
+    data\_req\_o     & LLL HH HH  LL        LL LL \\
+    data\_gnt\_i     & LLL LL HH  LL        LL LL \\
+    data\_rvalid\_i  & LLL LL LL  HH        LL LL \\
+    data\_rdata\_i   & UUU UU UU  2D{RData} UU UU \\
+    data\_we\_o      & UUU 4D{WE} UU        UU UU \\
+    data\_be\_o      & UUU 4D{BE} UU        UU UU \\
+  \end{tikztimingtable}
+  \caption{Basic Memory Transaction}
+  \label{fig:lsu_trans_basic}
+\end{figure}
+
+
+\begin{figure}[H]
+  \centering
+  \begin{tikztimingtable}
+    [timing/d/background/.style={fill=white},
+     timing/lslope=0.1,
+     xscale=3]
+
+    clk              & 13{C} \\
+    data\_addr\_o    & U 2D{Addr1}  2D{Addr2}  UU UU UU UU \\
+    data\_wdata\_o   & U 2D{WData1} 2D{Wdata2} UU UU UU UU \\
+    data\_req\_o     & L HH         HH         LL LL LL LL \\
+    data\_gnt\_i     & L HH         HH         LL LL LL LL \\
+    data\_rvalid\_i  & L LL         HH         HH LL LL LL \\
+    data\_rdata\_i   & U UU         2D{RData1} 2D{RData2} UU UU UU\\
+    data\_we\_o      & U 2D{WE1}    2D{WE2}    UU UU UU UU \\
+    data\_be\_o      & U 2D{BE1}    2D{BE2}    UU UU UU UU \\
+  \end{tikztimingtable}
+  \caption{Back to Back Memory Transaction}
+  \label{fig:lsu_trans_b2b}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \begin{tikztimingtable}
+    [timing/d/background/.style={fill=white},
+     timing/lslope=0.1,
+     xscale=3]
+
+    clk              & 13{C} \\
+    data\_addr\_o    & U 6D{Address} UU   UU        UU \\
+    data\_wdata\_o   & U 6D{WData} UU     UU        UU \\
+    data\_req\_o     & L HH HH HH  LL        LL        LL \\
+    data\_gnt\_i     & LLL LL HH  LL        LL        LL \\
+    data\_rvalid\_i  & LLL LL LL  LL        HH        UU \\
+    data\_rdata\_i   & UUU UU UU  UU        2D{RData} UU \\
+    data\_we\_o      & U 6D{WE}   UU        UU        UU \\
+    data\_be\_o      & U 6D{BE}   UU        UU        UU \\
+  \end{tikztimingtable}
+  \caption{Slow Answer Memory Transaction}
+  \label{fig:lsu_trans_slow}
+\end{figure}

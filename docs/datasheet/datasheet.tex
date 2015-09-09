@@ -1,0 +1,41 @@
+\documentclass[%
+ oneside,      % Use the same margins for odd and even pages (cannot
+               % be used with the 'twoside' option).
+% twoside,      % Use different margins for odd and even pages (cannot
+               % be used with the 'oneside' option).
+ openany,      % Open chapters on odd and even pages.
+ halfparskip,  % Create small spaces for new paragraphs but no indents.
+]{scrbook}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%                                                                 %
+%%%%%     Preamble                                                    %
+%%%%%                                                                 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Load the preamble from another file.
+\input{./preamble/preamble}
+
+
+%%%%% Mandatory title page settings.
+\title{RI5CY: Datasheet}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%                                                                 %
+%%%%%     Document starts here                                        %
+%%%%%                                                                 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\input{./content/overview.tex}
+\input{./content/if.tex}
+\input{./content/lsu.tex}
+\input{./content/mac.tex}
+\input{./content/csr.tex}
+\input{./content/perfcounters.tex}
+
+
+\end{document}
