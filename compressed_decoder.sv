@@ -264,7 +264,8 @@ module compressed_decoder
         endcase
       end
 
-      2'b11: begin
+      // 2'b11:
+      default: begin
         // 32 bit (or more) instruction
         instr_o = instr_i;
       end
