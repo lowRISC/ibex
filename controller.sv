@@ -82,9 +82,10 @@ module controller
   output logic        data_sign_extension_o,      // Sign extension on read data from data memory
   output logic [1:0]  data_reg_offset_o,          // Offset in bytes inside register for stores
   output logic        data_req_o,                 // Request for a transaction to data memory
-  input  logic        data_ack_i,                 // Data memory request-acknowledge
   input  logic        data_req_ex_i,              // Delayed copy of the data_req_o
-  input  logic        data_rvalid_i,              // rvalid from data memory
+
+  input  logic        lsu_ready_ex_i,
+  input  logic        lsu_ready_wb_i,
 
   // hwloop signals
   output logic [2:0]  hwloop_we_o,                // write enable for hwloop regs
@@ -173,7 +174,6 @@ module controller
   logic                     mult_en;
   logic [1:0]               csr_op;
 
-  logic lsu_stall;
   logic misalign_stall;
   logic instr_ack_stall;
   logic load_stall;
@@ -1256,9 +1256,6 @@ module controller
   // Stall because of IF miss
   assign instr_ack_stall = ~instr_ack_i;
 
-  // Stall if TCDM contention has been detected
-  assign lsu_stall = ~data_ack_i;
-
   assign misalign_stall = data_misaligned_i;
 
   assign trap_stall = trap_insn_o;
@@ -1284,10 +1281,10 @@ module controller
     // we unstall the if_stage if the debug unit wants to set a new
     // pc, so that the new value gets written into current_pc_if and is
     // used by the instr_core_interface
-    stall_if_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | halt_if | (~pc_valid_i) | (jump_in_id_o == `BRANCH_COND);
-    stall_id_o = instr_ack_stall | load_stall | jr_stall | lsu_stall | misalign_stall | halt_id;
-    stall_ex_o = instr_ack_stall | lsu_stall | dbg_stall_i;
-    stall_wb_o = lsu_stall | dbg_stall_i;
+    stall_if_o = instr_ack_stall   | load_stall | jr_stall | (~lsu_ready_ex_i) | (~lsu_ready_wb_i) | misalign_stall | halt_if | (~pc_valid_i) | (jump_in_id_o == `BRANCH_COND);
+    stall_id_o = instr_ack_stall   | load_stall | jr_stall | (~lsu_ready_ex_i) | (~lsu_ready_wb_i) | misalign_stall | halt_id;
+    stall_ex_o = instr_ack_stall   | (~lsu_ready_ex_i) | (~lsu_ready_wb_i) | dbg_stall_i;
+    stall_wb_o = (~lsu_ready_wb_i) | dbg_stall_i;
   end
 
 

@@ -166,7 +166,9 @@ module riscv_core
   logic [1:0]  data_reg_offset_ex;
   logic        data_req_ex;
   logic        data_misaligned_ex;
-  logic        data_ack_int;
+
+  logic        lsu_ready_ex;
+  logic        lsu_ready_wb;
 
   // Signals between instruction core interface and pipe (if and id stages)
   logic        instr_req_int;    // Id stage asserts a req to instruction core interface
@@ -361,8 +363,9 @@ module riscv_core
     .data_reg_offset_ex_o         ( data_reg_offset_ex   ), // to   load store unit
     .data_req_ex_o                ( data_req_ex          ), // to   load store unit
     .data_misaligned_ex_o         ( data_misaligned_ex   ), // to   load store unit
-    .data_ack_i                   ( data_ack_int         ), // from load store unit
-    .data_rvalid_i                ( data_r_valid_i       ),
+
+    .lsu_ready_ex_i               ( lsu_ready_ex         ),
+    .lsu_ready_wb_i               ( lsu_ready_wb         ),
 
     // Interrupt Signals
     .irq_i                        ( irq_i                ), // incoming interrupts
@@ -482,7 +485,6 @@ module riscv_core
 
     .data_rdata_ex_o       ( regfile_wdata           ),
     .data_req_ex_i         ( data_req_ex             ),
-    .data_ack_int_o        ( data_ack_int            ),  // ack used in controller to stall
     .operand_a_ex_i        ( alu_operand_a_ex        ),
     .operand_b_ex_i        ( alu_operand_b_ex        ),
     .addr_useincr_ex_i     ( useincr_addr_ex         ),
@@ -492,14 +494,17 @@ module riscv_core
 
     //output to data memory
     .data_req_o            ( data_req_o              ),
+    .data_gnt_i            ( data_gnt_i              ),
+    .data_rvalid_i         ( data_r_valid_i          ),
+
     .data_addr_o           ( data_addr_o             ),
     .data_we_o             ( data_we_o               ),
-
     .data_be_o             ( data_be_o               ),
     .data_wdata_o          ( data_wdata_o            ),
     .data_rdata_i          ( data_rdata_i            ),
-    .data_rvalid_i         ( data_r_valid_i          ),
-    .data_gnt_i            ( data_gnt_i              ),
+
+    .lsu_ready_ex_o        ( lsu_ready_ex            ),
+    .lsu_ready_wb_o        ( lsu_ready_wb            ),
 
     .ex_stall_i            ( stall_ex                )
   );

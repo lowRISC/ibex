@@ -108,8 +108,9 @@ module id_stage
     output logic [1:0]  data_reg_offset_ex_o,
     output logic        data_misaligned_ex_o,
     output logic        data_req_ex_o,
-    input  logic        data_ack_i,      // Grant from data memory
-    input  logic        data_rvalid_i,
+
+    input  logic        lsu_ready_ex_i,
+    input  logic        lsu_ready_wb_i,
 
     // Interrupt signals
     input  logic        irq_i,
@@ -575,9 +576,10 @@ module id_stage
     .data_sign_extension_o        ( data_sign_ext_id      ),
     .data_reg_offset_o            ( data_reg_offset_id    ),
     .data_req_o                   ( data_req_id           ),
-    .data_ack_i                   ( data_ack_i            ),
     .data_req_ex_i                ( data_req_ex_o         ),
-    .data_rvalid_i                ( data_rvalid_i         ),
+
+    .lsu_ready_ex_i               ( lsu_ready_ex_i        ),
+    .lsu_ready_wb_i               ( lsu_ready_wb_i        ),
 
     // hwloop signals
     .hwloop_we_o                  ( hwloop_we             ),
