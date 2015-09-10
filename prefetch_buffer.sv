@@ -2,19 +2,19 @@
 // Company:        IIS @ ETHZ - Federal Institute of Technology               //
 //                 DEI @ UNIBO - University of Bologna                        //
 //                                                                            //
-// Engineer:       Igor Loi - igor.loi@unibo.it                               //
+// Engineer:       Andreas Traber - atraber@iis.ee.ethz.ch                    //
 //                                                                            //
 // Additional contributions by:                                               //
 //                                                                            //
 //                                                                            //
 // Create Date:    06/08/2014                                                 //
 // Design Name:    RISC-V processor core                                      //
-// Module Name:    instr_core_interface.sv                                    //
+// Module Name:    prefetch_buffer.sv                                         //
 // Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
-// Description:    Instruction Fetch interface used to properly handle        //
-//                 cache stalls                                               //
+// Description:    Prefetch Buffer that caches instructions. This cuts overly //
+//                 long critical paths to the instruction cache               //
 //                                                                            //
 // Revision:                                                                  //
 // Revision v0.1 - File Created                                               //
@@ -191,15 +191,15 @@ module fetch_fifo
 
 endmodule
 
-// clear_i deletes everything up to now, i.e. it assumes that addr_i now has
+// branch_i deletes everything up to now, i.e. it assumes that addr_i now has
 // the correct state and uses the current cycle's addr_i to fetch new data
-module instr_core_interface
+module prefetch_buffer
 (
   input  logic        clk,
   input  logic        rst_n,
 
   input  logic        req_i,
-  input  logic        clear_i,
+  input  logic        branch_i,
   input  logic        ready_i,
   input  logic [31:0] addr_i,
 
@@ -215,12 +215,11 @@ module instr_core_interface
   output logic [31:0] instr_addr_o,
   input  logic        instr_gnt_i,
   input  logic        instr_rvalid_i,
-  input  logic [31:0] instr_rdata_i
-);
+  input  logic [31:0] instr_rdata_i,
 
-  // TODO: THERE IS A PROBLEM WIHT REQ_I AND CLEAR_I
-  // i.e. what happens if req_i is low and clear_i is high? the core will miss
-  // the updated address....
+  // Prefetch Buffer Status
+  output logic        busy_o
+);
 
   enum logic [1:0] {IDLE, WAIT_GNT, WAIT_RVALID, WAIT_ABORTED } CS, NS;
 
@@ -233,12 +232,17 @@ module instr_core_interface
   logic        fifo_rdata_valid;
   logic        fifo_rdata_ready;
 
+  //////////////////////////////////////////////////////////////////////////////
+  // prefetch buffer status
+  //////////////////////////////////////////////////////////////////////////////
+
+  assign busy_o = (CS != IDLE) || instr_req_o;
 
   //////////////////////////////////////////////////////////////////////////////
   // address selection and increase
   //////////////////////////////////////////////////////////////////////////////
 
-  assign addr_next = (clear_i) ? addr_i : (fifo_last_addr + 32'd4);
+  assign addr_next = (branch_i) ? addr_i : (fifo_last_addr + 32'd4);
 
 
   //////////////////////////////////////////////////////////////////////////////
@@ -251,7 +255,7 @@ module instr_core_interface
     .clk                   ( clk               ),
     .rst_n                 ( rst_n             ),
 
-    .clear_i               ( clear_i           ),
+    .clear_i               ( branch_i          ),
 
     .in_addr_valid_i       ( fifo_addr_valid   ),
     .in_addr_ready_o       ( fifo_addr_ready   ),
@@ -291,7 +295,7 @@ module instr_core_interface
       begin
         instr_req_o = 1'b0;
 
-        if (req_i && fifo_addr_ready) begin
+        if ((req_i && fifo_addr_ready) || branch_i) begin
           instr_req_o = 1'b1;
 
           fifo_addr_valid = 1'b1;
@@ -307,43 +311,26 @@ module instr_core_interface
       // we sent a request but did not yet get a grant
       WAIT_GNT:
       begin
+        instr_req_o = 1'b1;
 
-        if (clear_i) begin
+        if (branch_i) begin
           instr_addr_o = addr_next;
 
-          if (req_i && fifo_addr_ready) begin
-            instr_req_o = 1'b1;
-
-            fifo_addr_valid = 1'b1;
-
-            if(instr_gnt_i) //~>  granted request
-              NS = WAIT_ABORTED;
-            else begin //~> got a request but no grant
-              NS = WAIT_GNT;
-            end
-          end else begin
-            if(instr_gnt_i) //~>  granted request
-              NS = WAIT_ABORTED;
-            else begin //~> got a request but no grant
-              NS = IDLE;
-            end
-          end
-
+          fifo_addr_valid = 1'b1;
         end else begin
-          instr_req_o  = 1'b1;
           instr_addr_o = fifo_last_addr;
-
-          if(instr_gnt_i)
-            NS = WAIT_RVALID;
-          else
-            NS = WAIT_GNT;
         end
+
+        if(instr_gnt_i)
+          NS = WAIT_RVALID;
+        else
+          NS = WAIT_GNT;
       end // case: WAIT_GNT
 
       // we wait for rvalid, after that we are ready to serve a new request
       WAIT_RVALID: begin
 
-        if ((req_i && fifo_addr_ready) || clear_i) begin
+        if ((req_i && fifo_addr_ready) || branch_i) begin
           // prepare for next request
           instr_req_o = 1'b1;
 
@@ -359,7 +346,7 @@ module instr_core_interface
           end else begin
             // we are requested to abort our current request
             // we didn't get an rvalid yet, so wait for it
-            if (clear_i) begin
+            if (branch_i) begin
               fifo_addr_valid  = 1'b1;
               NS               = WAIT_ABORTED;
             end

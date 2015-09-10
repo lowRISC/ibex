@@ -96,7 +96,8 @@ module if_stage
   logic        unaligned;
   logic        unaligned_jump;
 
-  // instr_core_interface
+  // prefetch buffer related signals
+  logic        prefetch_busy;
   logic        branch_req, branch_req_Q;
   logic [31:0] fetch_addr_n;
 
@@ -151,15 +152,13 @@ module if_stage
       `PC_BOOT:      fetch_addr_n = {boot_addr_i[31:5], `EXC_OFF_RST};
       `PC_JUMP:      fetch_addr_n = {jump_target_id_i[31:2], 2'b0};
       `PC_BRANCH:    fetch_addr_n = {jump_target_ex_i[31:2], 2'b0};
-      // TODO: remove the next entry
-      `PC_INCR:      fetch_addr_n = 'X; // no longer needed, remove!
       `PC_EXCEPTION: fetch_addr_n = exc_pc;             // set PC to exception handler
       `PC_ERET:      fetch_addr_n = exception_pc_reg_i; // PC is restored when returning from IRQ/exception
       `PC_HWLOOP:    fetch_addr_n = hwloop_target_i;    // PC is taken from hwloop start addr
       `PC_DBG_NPC:   fetch_addr_n = dbg_npc_i;          // PC is taken from debug unit
       default:
       begin
-        fetch_addr_n = {boot_addr_i[31:5], `EXC_OFF_RST};
+        fetch_addr_n = 'X;
         // synopsys translate_off
         $display("%t: Illegal pc_mux_sel value (%0d)!", $time, pc_mux_sel_i);
         // synopsys translate_on
@@ -181,14 +180,14 @@ module if_stage
   end
 
 
-  // cache fetch interface
-  instr_core_interface instr_core_if_i
+  // prefetch buffer, caches a fixed number of instructions
+  prefetch_buffer prefetch_buffer_i
   (
     .clk               ( clk                   ),
     .rst_n             ( rst_n                 ),
 
-    .req_i             ( 1'b1                  ),
-    .clear_i           ( branch_req            ),
+    .req_i             ( 1'b1                  ), // TODO: FETCH_ENABLE!
+    .branch_i          ( branch_req            ),
     .addr_i            ( fetch_addr_n          ),
 
     .ready_i           ( fetch_ready           ),
@@ -199,11 +198,15 @@ module if_stage
     .unaligned_valid_o ( fetch_unaligned_valid ),
     .unaligned_rdata_o ( fetch_unaligned_rdata ),
 
+    // goes to instruction memory / instruction cache
     .instr_req_o       ( instr_req_o           ),
     .instr_addr_o      ( instr_addr_o          ),
     .instr_gnt_i       ( instr_gnt_i           ),
     .instr_rvalid_i    ( instr_rvalid_i        ),
-    .instr_rdata_i     ( instr_rdata_i         )
+    .instr_rdata_i     ( instr_rdata_i         ),
+
+    // Prefetch Buffer Status
+    .busy_o            ( prefetch_busy         )
   );
 
 
@@ -303,6 +306,7 @@ module if_stage
 
 
     // take care of jumps and branches
+    // only send one branch request per jump/branch
     if (branch_req_Q == 1'b0) begin
       if (jump_in_ex_i == `BRANCH_COND) begin
         if (branch_decision_i) begin
@@ -331,14 +335,7 @@ module if_stage
   end
 
 
-  assign if_busy_o = 1'b1; // TODO
-  // assign if_busy_o = ~(offset_fsm_cs == IDLE                   ||
-  //                      offset_fsm_cs == VALID_JUMPED_ALIGNED   ||
-  //                      offset_fsm_cs == VALID_JUMPED_UNALIGNED ||
-  //                      offset_fsm_cs == VALID_ALIGNED          ||
-  //                      offset_fsm_cs == VALID_UNALIGNED_32     ||
-  //                      offset_fsm_cs == UNALIGNED_16)          || instr_req_o;
-
+  assign if_busy_o = prefetch_busy;
 
 
   // compressed instruction decoding, or more precisely compressed instruction

@@ -959,7 +959,7 @@ module controller
     // Default values
     instr_req_o    = 1'b1;
 
-    pc_mux_sel_o   = `PC_INCR;
+    pc_mux_sel_o   = `PC_BOOT;
 
     ctrl_fsm_ns    = ctrl_fsm_cs;
 
