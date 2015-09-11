@@ -83,6 +83,7 @@ module riscv_core
 
   // IF/ID signals
   logic [31:0]   instr_rdata_id;    // Instruction sampled inside IF stage
+  logic          is_compressed_id;
   logic          illegal_c_insn_id; // Illegal compressed instruction sent to ID stage
   logic [31:0]   current_pc_if;     // Current Program counter
   logic [31:0]   current_pc_id;     // Current Program counter
@@ -91,7 +92,6 @@ module riscv_core
   logic [1:0]    exc_pc_mux_id;     // Mux selector for exception PC
 
   // ID performance counter signals
-  logic          perf_compressed;
   logic          is_decoding;
 
 
@@ -233,7 +233,6 @@ module riscv_core
     // instruction request control
     .req_i               ( instr_req_int   ),
     .valid_o             ( instr_ack_int   ),
-    .drop_request_i      ( 1'b0 ),
 
     // instruction cache interface
     .instr_req_o         ( instr_req_o     ),
@@ -244,6 +243,7 @@ module riscv_core
 
     // outputs to ID stage
     .instr_rdata_id_o    ( instr_rdata_id    ),   // Output of IF Pipeline stage
+    .is_compressed_id_o  ( is_compressed_id  ),
     .illegal_c_insn_id_o ( illegal_c_insn_id ),
     .current_pc_if_o     ( current_pc_if     ),   // current pc in IF stage
     .current_pc_id_o     ( current_pc_id     ),   // current pc in ID stage
@@ -311,6 +311,7 @@ module riscv_core
     .pc_mux_sel_o                 ( pc_mux_sel_id        ),
     .exc_pc_mux_o                 ( exc_pc_mux_id        ),
 
+    .is_compressed_i              ( is_compressed_id     ),
     .illegal_c_insn_i             ( illegal_c_insn_id    ),
 
     .current_pc_if_i              ( current_pc_if        ),
@@ -395,7 +396,6 @@ module riscv_core
     .regfile_we_wb_i              ( regfile_we_wb        ),  // write enable for the register file
     .regfile_wdata_wb_i           ( regfile_wdata        ),  // write data to commit in the register file
 
-    .perf_compressed_o            ( perf_compressed      ),
     .perf_jump_o                  ( perf_jump            ),
     .perf_branch_o                ( perf_branch          ),
     .perf_jr_stall_o              ( perf_jr_stall        ),
@@ -547,9 +547,9 @@ module riscv_core
     .epcr_o                  ( epcr           ),
 
     // performance counter related signals
-    .stall_id_i              ( stall_id        ),
-    .is_compressed_i         ( perf_compressed ),
-    .is_decoding_i           ( is_decoding     ),
+    .stall_id_i              ( stall_id         ),
+    .is_compressed_i         ( is_compressed_id ),
+    .is_decoding_i           ( is_decoding      ),
 
     .instr_fetch_i           ( ~instr_ack_int ),
 
@@ -653,7 +653,7 @@ module riscv_core
   begin
     // get current PC and instruction
     instr      = id_stage_i.instr[31:0];
-    compressed = id_stage_i.is_compressed;
+    compressed = id_stage_i.is_compressed_i;
     pc         = id_stage_i.current_pc_id_i;
 
     // get register values

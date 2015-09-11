@@ -60,6 +60,7 @@ module id_stage
     output logic [1:0]  exc_pc_mux_o,
 
     input  logic        illegal_c_insn_i,
+    input  logic        is_compressed_i,
 
     input  logic [31:0] current_pc_if_i,
     input  logic [31:0] current_pc_id_i,
@@ -152,7 +153,6 @@ module id_stage
 
   // Compressed instruction decoding
   logic [31:0] instr;
-  logic        is_compressed;
 
   // Immediate decoding and sign extension
   logic [31:0] imm_i_type;
@@ -269,9 +269,6 @@ module id_stage
 
 
   assign instr         = instr_rdata_i;
-  assign is_compressed = (instr[1:0] != 2'b11);
-
-  assign perf_compressed_o = is_compressed;
 
   // immediate extraction and sign extension
   assign imm_i_type  = { {20 {instr[31]}}, instr[31:20] };
@@ -411,7 +408,7 @@ module id_stage
       `IMM_I:      immediate_b = imm_i_type;
       `IMM_S:      immediate_b = imm_s_type;
       `IMM_U:      immediate_b = imm_u_type;
-      `IMM_PCINCR: immediate_b = is_compressed ? 32'h2 : 32'h4;
+      `IMM_PCINCR: immediate_b = is_compressed_i ? 32'h2 : 32'h4;
       default:     immediate_b = imm_i_type;
     endcase; // case (immediate_mux_sel)
   end
