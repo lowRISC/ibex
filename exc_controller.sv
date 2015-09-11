@@ -68,13 +68,10 @@ module exc_controller
 );
 
   // Exception unit state encoding
-  enum  logic [0:0]  { Idle, NopDelayIR }  exc_fsm_cs, exc_fsm_ns;
-  enum  logic [1:0]  { ExcNone, ExcIR, ExcIllegalInsn } exc_reason_p, exc_reason_n, exc_reason;
+  enum  logic [1:0]  { ExcNone, ExcIR, ExcIllegalInsn } exc_reason;
 
   // Registers
   logic       exc_running_p, exc_running_n;
-
-  logic       clear_exc_reason;
 
   // disable hardware loops when nops are inserted or the controller is not active
   assign hwloop_enable_o = (~core_busy_i);
@@ -155,65 +152,21 @@ module exc_controller
 
   // exception control FSM
   always_comb begin
-    exc_fsm_ns       = exc_fsm_cs;
-    exc_reason_n     = exc_reason_p;
     exc_running_n    = exc_running_p;
-    clear_exc_reason = 1'b0;
     save_pc_if_o     = 1'b0;
     save_pc_id_o     = 1'b0;
     pc_valid_o       = 1'b1;
     exc_pc_sel_o     = 1'b0;
     exc_pc_mux_o     = `EXC_PC_NO_INCR;
 
-    if(drop_instruction_i == 1'b0)
-    begin
-      case (exc_fsm_cs)
-        Idle: begin
-          exc_reason_n = exc_reason;
-
-          unique case (exc_reason_n)
-            // an IRQ is present, execute pending delay slots and jump
-            // to the ISR without flushing the pipeline
-            ExcIR: begin
-              if (jump_in_id_i == 2'b00)
-              begin // no delay slot
-                exc_pc_sel_o     = 1'b1;
-                save_pc_if_o     = 1'b1; // save current PC
-
-                if (irq_nm_i == 1'b1) // emergency IRQ has higher priority
-                  exc_pc_mux_o  = `EXC_PC_IRQ_NM;
-                else // irq_i == 1'b1
-                  exc_pc_mux_o  = `EXC_PC_IRQ;
-
-                exc_running_n    = 1'b1;
-                clear_exc_reason = 1'b1;
-                exc_fsm_ns       = Idle;
-              end
-              else // delay slot
-              begin
-                exc_fsm_ns = NopDelayIR;
-              end
-            end
-
-            // Illegal instruction encountered, we directly jump to
-            // the ISR without flushing the pipeline
-            ExcIllegalInsn: begin
-              exc_pc_sel_o     = 1'b1;
-              exc_pc_mux_o     = `EXC_PC_ILLINSN;
-              save_pc_id_o     = 1'b1; // save current PC
-
-              exc_running_n    = 1'b1;
-              clear_exc_reason = 1'b1;
-              exc_fsm_ns       = Idle;
-            end
-            default:; // Nothing
-          endcase
-        end // case: Idle
-
-        // Execute delay slot for IR
-        NopDelayIR:
-        begin
+    unique case (exc_reason)
+      // an IRQ is present, execute pending jump and then go
+      // to the ISR without flushing the pipeline
+      ExcIR: begin
+        if (jump_in_id_i == 2'b00 && jump_in_ex_i == 2'b00)
+        begin // no jump in ID
           exc_pc_sel_o     = 1'b1;
+
           save_pc_if_o     = 1'b1; // save current PC
 
           if (irq_nm_i == 1'b1) // emergency IRQ has higher priority
@@ -222,13 +175,20 @@ module exc_controller
             exc_pc_mux_o  = `EXC_PC_IRQ;
 
           exc_running_n    = 1'b1;
-          clear_exc_reason = 1'b1;
-          exc_fsm_ns       = Idle;
         end
+      end
 
-        default: exc_fsm_ns = Idle;
-      endcase // case (exc_fsm_cs)
-    end
+      // Illegal instruction encountered, we directly jump to
+      // the ISR without flushing the pipeline
+      ExcIllegalInsn: begin
+        exc_pc_sel_o     = 1'b1;
+        exc_pc_mux_o     = `EXC_PC_ILLINSN;
+        save_pc_id_o     = 1'b1; // save current PC
+
+        exc_running_n    = 1'b1;
+      end
+      default:; // Nothing
+    endcase
   end
 
 
@@ -236,15 +196,11 @@ module exc_controller
   begin : UPDATE_REGS
     if ( rst_n == 1'b0 )
     begin
-      exc_fsm_cs     <= Idle;
       exc_running_p  <= 1'b0;
-      exc_reason_p   <= ExcNone;
     end
-    else if (stall_id_i == 1'b0 && drop_instruction_i == 1'b0)
+    else
     begin
-      exc_fsm_cs     <= exc_fsm_ns;
       exc_running_p  <= (clear_isr_running_i == 1'b1) ? 1'b0    : exc_running_n;
-      exc_reason_p   <= (clear_exc_reason == 1'b1)    ? ExcNone : exc_reason_n;
     end
   end
 
@@ -256,7 +212,7 @@ module exc_controller
   begin : EXC_DISPLAY
     if ( rst_n == 1'b1 )
     begin
-      if (exc_reason_n != ExcNone)
+      if (exc_reason != ExcNone)
         $display("%t: Entering exception routine.", $time);
     end
   end
