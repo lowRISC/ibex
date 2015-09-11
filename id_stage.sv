@@ -55,9 +55,9 @@ module id_stage
     output logic [31:0] jump_target_o,
 
     // IF and ID stage signals
+    output logic        pc_set_o,
     output logic [2:0]  pc_mux_sel_o,
     output logic [1:0]  exc_pc_mux_o,
-    output logic        force_nop_o,
 
     input  logic        illegal_c_insn_i,
 
@@ -169,8 +169,6 @@ module id_stage
   logic        exc_pc_sel;
   logic [2:0]  pc_mux_sel_int;    // selects next PC in if stage
 
-  logic        force_nop_exc;
-
   logic        irq_present;
 
   // Signals running between controller and exception controller
@@ -267,8 +265,7 @@ module id_stage
   logic [31:0] operand_c;
 
 
-  assign force_nop_o = force_nop_exc;
-  assign pc_mux_sel_o = (exc_pc_sel == 1'b1) ? `PC_EXCEPTION : pc_mux_sel_int;
+  assign pc_mux_sel_o = pc_mux_sel_int;
 
 
   assign instr         = instr_rdata_i;
@@ -538,6 +535,8 @@ module id_stage
     .instr_req_o                  ( instr_req_o           ),
     .instr_gnt_i                  ( instr_gnt_i           ),
     .instr_ack_i                  ( instr_ack_i           ),
+
+    .pc_set_o                     ( pc_set_o              ),
     .pc_mux_sel_o                 ( pc_mux_sel_int        ),
 
     // Alu signals
@@ -592,6 +591,7 @@ module id_stage
     .irq_present_i                ( irq_present           ),
 
     // Exception Controller Signals
+    .exc_pc_sel_i                 ( exc_pc_sel            ),
     .illegal_c_insn_i             ( illegal_c_insn_i      ),
     .illegal_insn_o               ( illegal_insn          ),
     .trap_insn_o                  ( trap_insn             ),
@@ -662,7 +662,6 @@ module id_stage
     // to IF stage
     .exc_pc_sel_o         ( exc_pc_sel        ),
     .exc_pc_mux_o         ( exc_pc_mux_o      ),
-    .force_nop_o          ( force_nop_exc     ),
 
     // hwloop signals
     .hwloop_enable_o      ( hwloop_enable     ),

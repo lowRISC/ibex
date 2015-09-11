@@ -60,7 +60,7 @@ module if_stage
     output logic [31:0] current_pc_id_o,
 
     // Forwarding ports - control signals
-    input  logic        force_nop_i,           // insert a NOP in the pipe
+    input  logic        pc_set_i,              // set the program counter to a new value
     input  logic [31:0] exception_pc_reg_i,    // address used to restore PC when the interrupt/exception is served
     input  logic  [2:0] pc_mux_sel_i,          // sel for pc multiplexer
     input  logic  [1:0] exc_pc_mux_i,          // select which exception to execute
@@ -78,7 +78,6 @@ module if_stage
 
     // from debug unit
     input  logic [31:0] dbg_npc_i,
-    input  logic        dbg_set_npc_i,
 
     // pipeline stall
     input  logic        stall_if_i,
@@ -320,7 +319,7 @@ module if_stage
         end
 
       end else if (jump_in_id_i == `BRANCH_JAL || jump_in_id_i == `BRANCH_JALR
-                   || dbg_set_npc_i
+                   || pc_set_i
                    || hwloop_jump_i) begin
         valid_o = 1'b0;
 

@@ -34,7 +34,6 @@ module exc_controller
    // to IF stage
    output logic        exc_pc_sel_o,               // influences next PC, if set exception PC is used
    output logic [1:0]  exc_pc_mux_o,               // Selector in the Fetch stage to select the rigth exception PC
-   output logic        force_nop_o,                // Force a Nop (Bubble) in the Fetch stage
 
    // hwloop signals
    output logic        hwloop_enable_o,             // '1' if pc is valid (interrupt related signal)
@@ -78,7 +77,7 @@ module exc_controller
   logic       clear_exc_reason;
 
   // disable hardware loops when nops are inserted or the controller is not active
-  assign hwloop_enable_o = (~force_nop_o) | (~core_busy_i);
+  assign hwloop_enable_o = (~core_busy_i);
 
   /////////////////////////////////////////////
   //   ____                     _            //
@@ -162,7 +161,6 @@ module exc_controller
     clear_exc_reason = 1'b0;
     save_pc_if_o     = 1'b0;
     save_pc_id_o     = 1'b0;
-    force_nop_o      = 1'b0;
     pc_valid_o       = 1'b1;
     exc_pc_sel_o     = 1'b0;
     exc_pc_mux_o     = `EXC_PC_NO_INCR;
@@ -179,7 +177,6 @@ module exc_controller
             ExcIR: begin
               if (jump_in_id_i == 2'b00)
               begin // no delay slot
-                force_nop_o      = 1'b1;
                 exc_pc_sel_o     = 1'b1;
                 save_pc_if_o     = 1'b1; // save current PC
 
@@ -201,7 +198,6 @@ module exc_controller
             // Illegal instruction encountered, we directly jump to
             // the ISR without flushing the pipeline
             ExcIllegalInsn: begin
-              force_nop_o      = 1'b1;
               exc_pc_sel_o     = 1'b1;
               exc_pc_mux_o     = `EXC_PC_ILLINSN;
               save_pc_id_o     = 1'b1; // save current PC
@@ -217,7 +213,6 @@ module exc_controller
         // Execute delay slot for IR
         NopDelayIR:
         begin
-          force_nop_o      = 1'b1;
           exc_pc_sel_o     = 1'b1;
           save_pc_if_o     = 1'b1; // save current PC
 

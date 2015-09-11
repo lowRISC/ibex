@@ -86,7 +86,7 @@ module riscv_core
   logic          illegal_c_insn_id; // Illegal compressed instruction sent to ID stage
   logic [31:0]   current_pc_if;     // Current Program counter
   logic [31:0]   current_pc_id;     // Current Program counter
-  logic          force_nop_id;
+  logic          pc_set;
   logic [2:0]    pc_mux_sel_id;     // Mux selector for next PC
   logic [1:0]    exc_pc_mux_id;     // Mux selector for exception PC
 
@@ -248,8 +248,8 @@ module riscv_core
     .current_pc_if_o     ( current_pc_if     ),   // current pc in IF stage
     .current_pc_id_o     ( current_pc_id     ),   // current pc in ID stage
 
-    // Forwrding ports - control signals
-    .force_nop_i         ( force_nop_id    ),   // select incoming instr or NOP
+    // control signals
+    .pc_set_i            ( pc_set          ),
     .exception_pc_reg_i  ( epcr            ),   // Exception PC register
     .pc_mux_sel_i        ( pc_mux_sel_id   ),   // sel for pc multiplexer
     .exc_pc_mux_i        ( exc_pc_mux_id   ),   // selector for exception multiplexer
@@ -260,7 +260,6 @@ module riscv_core
 
     // from debug unit
     .dbg_npc_i           ( dbg_npc         ),
-    .dbg_set_npc_i       ( dbg_set_npc     ),
 
     // Jump and branch target and decision
     .jump_in_id_i        ( jump_in_id      ),
@@ -308,9 +307,9 @@ module riscv_core
     .instr_gnt_i                  ( instr_grant_i        ),
     .instr_ack_i                  ( instr_ack_int        ),
 
+    .pc_set_o                     ( pc_set               ),
     .pc_mux_sel_o                 ( pc_mux_sel_id        ),
     .exc_pc_mux_o                 ( exc_pc_mux_id        ),
-    .force_nop_o                  ( force_nop_id         ),
 
     .illegal_c_insn_i             ( illegal_c_insn_id    ),
 

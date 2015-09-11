@@ -46,6 +46,7 @@ module controller
   input  logic        instr_ack_i,                // Acknow from instr memory or cache (means that data is available)
 
   output logic [2:0]  pc_mux_sel_o,               // Selector in the Fetch stage to select the rigth PC (normal, jump ...)
+  output logic        pc_set_o,                   // jump to address set by pc_mux_sel
 
   // ALU signals
   output logic [`ALU_OP_WIDTH-1:0] alu_operator_o,             // Operator in the Ex stage for the ALU block
@@ -99,6 +100,7 @@ module controller
   input  logic        irq_present_i,              // there is an IRQ, so if we are sleeping we should wake up now
 
   // Exception Controller Signals
+  input  logic        exc_pc_sel_i,               // exception execution requested
   input  logic        illegal_c_insn_i,           // compressed instruction decode failed
   output logic        illegal_insn_o,             // illegal instruction encountered
   output logic        trap_insn_o,                // trap instruction encountered
@@ -142,7 +144,7 @@ module controller
 );
 
   // FSM state encoding
-  enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH, DECODE, BRANCH, BRANCH_DELAY,
+  enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH, DECODE, BRANCH,
                       FLUSH_EX, FLUSH_WB,
                       DBG_FLUSH_EX, DBG_FLUSH_WB, DBG_SIGNAL, DBG_WAIT } ctrl_fsm_cs, ctrl_fsm_ns;
 
@@ -166,6 +168,7 @@ module controller
 
   logic       pipe_flush;
   logic       trap_insn;
+  logic       eret_insn;
 
   logic [1:0] jump_in_id;
 
@@ -243,6 +246,7 @@ module controller
 
     illegal_insn_int            = 1'b0;
     trap_insn                   = 1'b0;
+    eret_insn                   = 1'b0;
     pipe_flush                  = 1'b0;
 
     rega_used                   = 1'b0;
@@ -789,8 +793,7 @@ module controller
 
             32'h10_00_00_73:  // ERET
             begin
-              // TODO: Handle in controller
-              //pc_mux_sel   = `PC_ERET;
+              eret_insn = 1'b1;
               clear_isr_running_o = 1'b1;
             end
 
@@ -960,6 +963,7 @@ module controller
     instr_req_o    = 1'b1;
 
     pc_mux_sel_o   = `PC_BOOT;
+    pc_set_o       = 1'b0;
 
     ctrl_fsm_ns    = ctrl_fsm_cs;
 
@@ -987,6 +991,7 @@ module controller
       begin
         instr_req_o   = 1'b1;
         pc_mux_sel_o  = `PC_BOOT;
+        pc_set_o      = 1'b1;
 
         ctrl_fsm_ns = FIRST_FETCH;
       end
@@ -1015,8 +1020,10 @@ module controller
 
         // hwloop detected, jump to start address!
         // Attention: This has to be done in the DECODE and the FIRST_FETCH states
-        if (hwloop_jump_i == 1'b1)
+        if (hwloop_jump_i == 1'b1) begin
           pc_mux_sel_o  = `PC_HWLOOP;
+          pc_set_o     = 1'b1;
+        end
       end
 
       DECODE:
@@ -1035,8 +1042,9 @@ module controller
         if (jump_in_id == `BRANCH_JALR || jump_in_id == `BRANCH_JAL) begin
           pc_mux_sel_o = `PC_JUMP;
 
-          if (~stall_id_o)
-            ctrl_fsm_ns = DECODE;
+          // we don't have to change our current state here as the prefetch
+          // buffer is automatically invalidated, thus the next instruction
+          // that is served to the ID stage is the one of the jump target
         end
 
         // handle hwloops
@@ -1047,6 +1055,21 @@ module controller
         // handle illegal instructions
         if (illegal_insn_int) begin
           illegal_insn_o = 1'b1;
+        end
+
+        if (exc_pc_sel_i) begin
+          pc_mux_sel_o   = `PC_EXCEPTION;
+          pc_set_o       = 1'b1;
+
+          // we don't have to change our current state here as the prefetch
+          // buffer is automatically invalidated, thus the next instruction
+          // that is served to the ID stage is the one of the jump to the
+          // exception handler
+        end
+
+        if (eret_insn) begin
+          pc_mux_sel_o  = `PC_ERET;
+          pc_set_o      = 1'b1;
         end
 
         // handle WFI instruction, flush pipeline and (potentially) go to
@@ -1107,25 +1130,6 @@ module controller
         end
       end
 
-      // "delay slot" of jump and branch
-      // inserts a nop by not decoding the instruction
-      BRANCH_DELAY:
-      begin
-        // if we want to debug, flush the pipeline
-        // the current_pc_if will take the value of the next instruction to
-        // be executed (NPC)
-        if (trap_hit_i)
-        begin
-          halt_if = 1'b1;
-          halt_id = 1'b1;
-
-          ctrl_fsm_ns = DBG_FLUSH_EX;
-        end else begin
-          if (~stall_id_o)
-            ctrl_fsm_ns = DECODE;
-        end
-      end
-
       DBG_FLUSH_EX:
       begin
         halt_if = 1'b1;
@@ -1161,6 +1165,7 @@ module controller
         if(dbg_set_npc_i == 1'b1) begin
           halt_id      = 1'b0;
           pc_mux_sel_o = `PC_DBG_NPC;
+          pc_set_o     = 1'b1;
           ctrl_fsm_ns  = DBG_WAIT;
         end
 
