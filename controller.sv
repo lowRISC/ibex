@@ -919,7 +919,7 @@ module controller
       // correct operands are sent to the AGU
       alu_op_a_mux_sel_o  = `OP_A_REGA_OR_FWD;
       alu_op_b_mux_sel_o  = `OP_B_IMM;
-      immediate_mux_sel_o = `IMM_I;   // TODO: FIXME
+      immediate_mux_sel_o = `IMM_PCINCR;
 
       // if prepost increments are used, we do not write back the
       // second address since the first calculated address was
@@ -1338,17 +1338,18 @@ module controller
        operand_c_fw_mux_sel_o = `SEL_FW_EX;
     end
 
-    if (data_misaligned_i == 1'b1)
-    begin
-      operand_a_fw_mux_sel_o  = `SEL_FW_EX;
-      operand_b_fw_mux_sel_o  = `SEL_REGFILE;
-    end
-
     // Make sure x0 is never forwarded
     if (instr_rdata_i[`REG_S1] == 5'b0)
       operand_a_fw_mux_sel_o = `SEL_REGFILE;
     if (instr_rdata_i[`REG_S2] == 5'b0)
       operand_b_fw_mux_sel_o = `SEL_REGFILE;
+
+    // for misaligned memory accesses
+    if (data_misaligned_i == 1'b1)
+    begin
+      operand_a_fw_mux_sel_o  = `SEL_FW_EX;
+      operand_b_fw_mux_sel_o  = `SEL_REGFILE;
+    end
   end
 
   // update registers

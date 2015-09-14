@@ -408,7 +408,7 @@ module id_stage
       `IMM_I:      immediate_b = imm_i_type;
       `IMM_S:      immediate_b = imm_s_type;
       `IMM_U:      immediate_b = imm_u_type;
-      `IMM_PCINCR: immediate_b = is_compressed_i ? 32'h2 : 32'h4;
+      `IMM_PCINCR: immediate_b = (is_compressed_i && (~data_misaligned_i)) ? 32'h2 : 32'h4;
       default:     immediate_b = imm_i_type;
     endcase; // case (immediate_mux_sel)
   end
