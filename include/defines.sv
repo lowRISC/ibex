@@ -195,8 +195,6 @@ endfunction // prettyPrintInstruction
 
 `define ALU_OP_WIDTH 6
 
-// Movhi Operation
-`define ALU_MOVHI 6'b001111
 // Standard Operations
 `define ALU_ADD   6'b000_000
 `define ALU_SUB   6'b000_010

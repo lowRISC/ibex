@@ -544,12 +544,6 @@ module alu
       `ALU_XOR: result_o = operand_a_i ^ operand_b_i;
 
       // Shift Operations
-      `ALU_MOVHI:
-      begin
-        shift_left = 1'b1;
-        shift_amt  = 32'd16;
-        result_o   = shift_left_result;
-      end
       `ALU_SLL:
       begin
         shift_left = 1'b1;
