@@ -45,7 +45,6 @@ module id_stage
     // Interface to instruction memory
     input  logic [31:0] instr_rdata_i,      // comes from pipeline of IF stage
     output logic        instr_req_o,
-    input  logic        instr_gnt_i,
     input  logic        instr_ack_i,
 
     // Jumps and branches
@@ -72,20 +71,10 @@ module id_stage
     output logic        stall_wb_o,
 
     // To the Pipeline ID/EX
-    output logic [31:0]              regfile_rb_data_ex_o,
-    output logic [31:0]              alu_operand_a_ex_o,
-    output logic [31:0]              alu_operand_b_ex_o,
-    output logic [31:0]              alu_operand_c_ex_o,
-    output logic [`ALU_OP_WIDTH-1:0] alu_operator_ex_o,
-
-    output logic [1:0]  vector_mode_ex_o,
-    output logic [1:0]  alu_cmp_mode_ex_o,
-    output logic [1:0]  alu_vec_ext_ex_o,
-
-    output logic        mult_en_ex_o,
-    output logic [1:0]  mult_sel_subword_ex_o,
-    output logic [1:0]  mult_signed_mode_ex_o,
-    output logic        mult_mac_en_ex_o,
+    output logic [31:0] regfile_rb_data_ex_o,
+    output logic [31:0] alu_operand_a_ex_o,
+    output logic [31:0] alu_operand_b_ex_o,
+    output logic [31:0] alu_operand_c_ex_o,
 
     output logic [4:0]  regfile_waddr_ex_o,
     output logic        regfile_we_ex_o,
@@ -93,22 +82,37 @@ module id_stage
     output logic [4:0]  regfile_alu_waddr_ex_o,
     output logic        regfile_alu_we_ex_o,
 
-    output logic        prepost_useincr_ex_o,
-    input  logic        data_misaligned_i,
+    // ALU
+    output logic [`ALU_OP_WIDTH-1:0] alu_operator_ex_o,
 
-    output logic [31:0] hwloop_targ_addr_o,
-    output logic        hwloop_jump_o,
+    output logic [1:0]  vector_mode_ex_o,
+    output logic [1:0]  alu_cmp_mode_ex_o,
+    output logic [1:0]  alu_vec_ext_ex_o,
 
+    // MUL
+    output logic        mult_en_ex_o,
+    output logic [1:0]  mult_sel_subword_ex_o,
+    output logic [1:0]  mult_signed_mode_ex_o,
+    output logic        mult_mac_en_ex_o,
+
+    // CSR ID/EX
     output logic        csr_access_ex_o,
     output logic [1:0]  csr_op_ex_o,
 
+    // hwloop signals
+    output logic [31:0] hwloop_targ_addr_o,
+    output logic        hwloop_jump_o,
+
     // Interface to load store unit
+    output logic        data_req_ex_o,
     output logic        data_we_ex_o,
     output logic [1:0]  data_type_ex_o,
     output logic        data_sign_ext_ex_o,
     output logic [1:0]  data_reg_offset_ex_o,
     output logic        data_misaligned_ex_o,
-    output logic        data_req_ex_o,
+
+    output logic        prepost_useincr_ex_o,
+    input  logic        data_misaligned_i,
 
     input  logic        lsu_ready_ex_i,
     input  logic        lsu_ready_wb_i,
@@ -149,9 +153,22 @@ module id_stage
     output logic        perf_ld_stall_o       // load-use-hazard
 );
 
-
-  // Compressed instruction decoding
   logic [31:0] instr;
+
+  // Decoder/Controller ID stage internal signals
+  logic        deassert_we;
+
+  logic        illegal_insn_dec;
+  logic        trap_insn;
+  logic        eret_insn_dec;
+  logic        pipe_flush_dec;
+
+  logic        rega_used_dec;
+  logic        regb_used_dec;
+  logic        regc_used_dec;
+
+  logic [1:0]  jump_in_dec;
+
 
   // Immediate decoding and sign extension
   logic [31:0] imm_i_type;
@@ -166,14 +183,11 @@ module id_stage
   logic [31:0] jump_target;       // calculated jump target (-> EX -> IF)
 
   logic        exc_pc_sel;
-  logic [2:0]  pc_mux_sel_int;    // selects next PC in if stage
 
   logic        irq_present;
 
   // Signals running between controller and exception controller
   logic        illegal_insn;
-  logic        illegal_c_insn;
-  logic        trap_insn;
   logic        trap_hit;
   logic        pc_valid;
   logic        clear_isr_running;
@@ -262,9 +276,6 @@ module id_stage
   logic [31:0] operand_b;      // before going through the scalar replication mux
   logic [31:0] operand_b_vec;  // scalar replication of operand_b for 8 and 16 bit
   logic [31:0] operand_c;
-
-
-  assign pc_mux_sel_o = pc_mux_sel_int;
 
 
   assign instr         = instr_rdata_i;
@@ -510,6 +521,83 @@ module id_stage
 
   assign dbg_reg_rdata_o = regfile_data_rc_id;
 
+
+  ///////////////////////////////////////////////
+  //  ____  _____ ____ ___  ____  _____ ____   //
+  // |  _ \| ____/ ___/ _ \|  _ \| ____|  _ \  //
+  // | | | |  _|| |  | | | | | | |  _| | |_) | //
+  // | |_| | |__| |__| |_| | |_| | |___|  _ <  //
+  // |____/|_____\____\___/|____/|_____|_| \_\ //
+  //                                           //
+  ///////////////////////////////////////////////
+
+  decoder decoder_i
+  (
+    // controller related signals
+    .deassert_we_i                   ( deassert_we               ),
+    .data_misaligned_i               ( data_misaligned_i         ),
+
+    .illegal_insn_o                  ( illegal_insn_dec          ),
+    .trap_insn_o                     ( trap_insn                 ),
+    .eret_insn_o                     ( eret_insn_dec             ),
+    .pipe_flush_o                    ( pipe_flush_dec            ),
+
+    .rega_used_o                     ( rega_used_dec             ),
+    .regb_used_o                     ( regb_used_dec             ),
+    .regc_used_o                     ( regc_used_dec             ),
+
+
+    // from IF/ID pipeline
+    .instr_rdata_i                   ( instr                     ),
+    .illegal_c_insn_i                ( illegal_c_insn_i          ),
+
+    // ALU signals
+    .alu_operator_o                  ( alu_operator              ),
+    .alu_op_a_mux_sel_o              ( alu_op_a_mux_sel          ),
+    .alu_op_b_mux_sel_o              ( alu_op_b_mux_sel          ),
+    .alu_op_c_mux_sel_o              ( alu_op_c_mux_sel          ),
+    .immediate_mux_sel_o             ( immediate_mux_sel         ),
+
+    .vector_mode_o                   ( vector_mode               ),
+    .scalar_replication_o            ( scalar_replication        ),
+    .alu_cmp_mode_o                  ( alu_cmp_mode              ),
+
+    // MUL signals
+    .mult_en_o                       ( mult_en                   ),
+    .mult_sel_subword_o              ( mult_sel_subword          ),
+    .mult_signed_mode_o              ( mult_signed_mode          ),
+    .mult_mac_en_o                   ( mult_mac_en               ),
+
+    // Register file control signals
+    .regfile_mem_we_o                ( regfile_we_id             ),
+    .regfile_alu_we_o                ( regfile_alu_we_id         ),
+    .regfile_alu_waddr_sel_o         ( regfile_alu_waddr_mux_sel ),
+
+    // CSR control signals
+    .csr_access_o                    ( csr_access                ),
+    .csr_op_o                        ( csr_op                    ),
+
+    // Data bus interface
+    .data_req_o                      ( data_req_id               ),
+    .data_we_o                       ( data_we_id                ),
+    .prepost_useincr_o               ( prepost_useincr           ),
+    .data_type_o                     ( data_type_id              ),
+    .data_sign_extension_o           ( data_sign_ext_id          ),
+    .data_reg_offset_o               ( data_reg_offset_id        ),
+
+    // hwloop signals
+    .hwloop_we_o                     ( hwloop_we                 ),
+    .hwloop_start_mux_sel_o          ( hwloop_start_mux_sel      ),
+    .hwloop_end_mux_sel_o            ( hwloop_end_mux_sel        ),
+    .hwloop_cnt_mux_sel_o            ( hwloop_cnt_mux_sel        ),
+
+    // jump/branches
+    .jump_in_dec_o                   ( jump_in_dec               ),
+    .jump_in_id_o                    ( jump_in_id_o              ),
+    .jump_target_mux_sel_o           ( jump_target_mux_sel       )
+
+  );
+
   ////////////////////////////////////////////////////////////////////
   //    ____ ___  _   _ _____ ____   ___  _     _     _____ ____    //
   //   / ___/ _ \| \ | |_   _|  _ \ / _ \| |   | |   | ____|  _ \   //
@@ -520,122 +608,94 @@ module id_stage
   ////////////////////////////////////////////////////////////////////
   controller controller_i
   (
-    .clk                          ( clk                   ),
-    .rst_n                        ( rst_n                 ),
-    .fetch_enable_i               ( fetch_enable_i        ),
-    .core_busy_o                  ( core_busy_o           ),
-    .is_decoding_o                ( is_decoding_o         ),
+    .clk                            ( clk                    ),
+    .rst_n                          ( rst_n                  ),
 
-    // Signal from-to PC pipe (instr rdata) and instr mem system (req and ack)
-    .instr_rdata_i                ( instr                 ),
-    .instr_req_o                  ( instr_req_o           ),
-    .instr_gnt_i                  ( instr_gnt_i           ),
-    .instr_ack_i                  ( instr_ack_i           ),
+    .fetch_enable_i                 ( fetch_enable_i         ),
+    .core_busy_o                    ( core_busy_o            ),
+    .is_decoding_o                  ( is_decoding_o          ),
 
-    .pc_set_o                     ( pc_set_o              ),
-    .pc_mux_sel_o                 ( pc_mux_sel_int        ),
+    // decoder related signals
+    .deassert_we_o                  ( deassert_we            ),
+    .illegal_insn_i                 ( illegal_insn_dec       ),
+    .trap_insn_i                    ( trap_insn              ),
+    .eret_insn_i                    ( eret_insn_dec          ),
+    .pipe_flush_i                   ( pipe_flush_dec         ),
 
-    // Alu signals
-    .alu_operator_o               ( alu_operator          ),
-    .alu_op_a_mux_sel_o           ( alu_op_a_mux_sel      ),
-    .alu_op_b_mux_sel_o           ( alu_op_b_mux_sel      ),
-    .alu_op_c_mux_sel_o           ( alu_op_c_mux_sel      ),
-    .immediate_mux_sel_o          ( immediate_mux_sel     ),
+    .rega_used_i                    ( rega_used_dec          ),
+    .regb_used_i                    ( regb_used_dec          ),
+    .regc_used_i                    ( regc_used_dec          ),
 
-    .scalar_replication_o         ( scalar_replication    ),
-    .vector_mode_o                ( vector_mode           ),
-    .alu_cmp_mode_o               ( alu_cmp_mode          ),
+    // from IF/ID pipeline
+    .instr_rdata_i                  ( instr                  ),
 
-    // mult signals
-    .mult_en_o                    ( mult_en               ),
-    .mult_sel_subword_o           ( mult_sel_subword      ),
-    .mult_signed_mode_o           ( mult_signed_mode      ),
-    .mult_mac_en_o                ( mult_mac_en           ),
+    // from prefetcher
+    .instr_req_o                    ( instr_req_o            ),
+    .instr_ack_i                    ( instr_ack_i            ),
 
-    // Register file control signals
-    .regfile_we_o                 ( regfile_we_id              ),
+    // to prefetcher
+    .pc_set_o                       ( pc_set_o               ),
+    .pc_mux_sel_o                   ( pc_mux_sel_o           ),
 
-    .regfile_alu_we_o             ( regfile_alu_we_id          ),
-    .regfile_alu_waddr_mux_sel_o  ( regfile_alu_waddr_mux_sel  ),
+    // LSU
+    .data_req_ex_i                  ( data_req_ex_o          ),
+    .data_misaligned_i              ( data_misaligned_i      ),
 
-    .prepost_useincr_o            ( prepost_useincr            ),
-    .data_misaligned_i            ( data_misaligned_i          ),
-
-    // CSR control signals
-    .csr_access_o                 ( csr_access            ),
-    .csr_op_o                     ( csr_op                ),
-
-    // Data bus interface
-    .data_we_o                    ( data_we_id            ),
-    .data_type_o                  ( data_type_id          ),
-    .data_sign_extension_o        ( data_sign_ext_id      ),
-    .data_reg_offset_o            ( data_reg_offset_id    ),
-    .data_req_o                   ( data_req_id           ),
-    .data_req_ex_i                ( data_req_ex_o         ),
-
-    .lsu_ready_ex_i               ( lsu_ready_ex_i        ),
-    .lsu_ready_wb_i               ( lsu_ready_wb_i        ),
+    .lsu_ready_ex_i                 ( lsu_ready_ex_i         ),
+    .lsu_ready_wb_i                 ( lsu_ready_wb_i         ),
 
     // hwloop signals
-    .hwloop_we_o                  ( hwloop_we             ),
-    .hwloop_start_mux_sel_o       ( hwloop_start_mux_sel  ),
-    .hwloop_end_mux_sel_o         ( hwloop_end_mux_sel    ),
-    .hwloop_cnt_mux_sel_o         ( hwloop_cnt_mux_sel    ),
-    .hwloop_jump_i                ( hwloop_jump           ),
+    .hwloop_jump_i                  ( hwloop_jump            ),
+
+    // jump/branch control
+    .jump_in_dec_i                  ( jump_in_dec            ),
+    .jump_in_id_i                   ( jump_in_id_o           ),
+    .jump_in_ex_i                   ( jump_in_ex_o           ),
+
+    .branch_decision_i              ( branch_decision_i      ),
 
     // Interrupt signals
-    .irq_present_i                ( irq_present           ),
+    .irq_present_i                  ( irq_present            ),
 
     // Exception Controller Signals
-    .exc_pc_sel_i                 ( exc_pc_sel            ),
-    .illegal_c_insn_i             ( illegal_c_insn_i      ),
-    .illegal_insn_o               ( illegal_insn          ),
-    .trap_insn_o                  ( trap_insn             ),
-    .pc_valid_i                   ( pc_valid              ),
-    .clear_isr_running_o          ( clear_isr_running     ),
-    .trap_hit_i                   ( trap_hit              ),
-    .exc_pipe_flush_i             ( exc_pipe_flush        ),
+    .exc_pc_sel_i                   ( exc_pc_sel             ),
+    .pc_valid_i                     ( pc_valid               ),
+    .exc_pipe_flush_i               ( exc_pipe_flush         ),
+    .trap_hit_i                     ( trap_hit               ),
+    .illegal_insn_o                 ( illegal_insn           ),
+    .clear_isr_running_o            ( clear_isr_running      ),
 
     // Debug Unit Signals
-    .dbg_stall_i                  ( dbg_stall_i           ),
-    .dbg_set_npc_i                ( dbg_set_npc_i         ),
-    .dbg_trap_o                   ( dbg_trap_o            ),
+    .dbg_stall_i                    ( dbg_stall_i            ),
+    .dbg_set_npc_i                  ( dbg_set_npc_i          ),
+    .dbg_trap_o                     ( dbg_trap_o             ),
 
-    // regfile port 1
-    .regfile_waddr_ex_i           ( regfile_waddr_ex_o    ), // Write address for register file from ex-wb- pipeline registers
-    .regfile_we_ex_i              ( regfile_we_ex_o       ),
-    .regfile_waddr_wb_i           ( regfile_waddr_wb_i    ), // Write address for register file from ex-wb- pipeline registers
-    .regfile_we_wb_i              ( regfile_we_wb_i       ),
+  // Forwarding signals from regfile
+    .regfile_waddr_ex_i             ( regfile_waddr_ex_o     ), // Write address for register file from ex-wb- pipeline registers
+    .regfile_we_ex_i                ( regfile_we_ex_o        ),
+    .regfile_waddr_wb_i             ( regfile_waddr_wb_i     ), // Write address for register file from ex-wb- pipeline registers
+    .regfile_we_wb_i                ( regfile_we_wb_i        ),
 
     // regfile port 2
-    .regfile_alu_waddr_fw_i       ( regfile_alu_waddr_fw_i ),
-    .regfile_alu_we_fw_i          ( regfile_alu_we_fw_i    ),
+    .regfile_alu_waddr_fw_i         ( regfile_alu_waddr_fw_i ),
+    .regfile_alu_we_fw_i            ( regfile_alu_we_fw_i    ),
 
     // Forwarding signals
-    .operand_a_fw_mux_sel_o       ( operand_a_fw_mux_sel  ),
-    .operand_b_fw_mux_sel_o       ( operand_b_fw_mux_sel  ),
-    .operand_c_fw_mux_sel_o       ( operand_c_fw_mux_sel  ),
-
-    // To controller (TODO: Remove when control/decode separated and moved)
-    .jump_target_mux_sel_o        ( jump_target_mux_sel   ),
-    .jump_in_ex_i                 ( jump_in_ex_o          ),
-
-    .branch_decision_i            ( branch_decision_i     ),
-
-    // To exception controller and EX: Jump/Branch indication
-    .jump_in_id_o                 ( jump_in_id_o          ),
+    .operand_a_fw_mux_sel_o         ( operand_a_fw_mux_sel   ),
+    .operand_b_fw_mux_sel_o         ( operand_b_fw_mux_sel   ),
+    .operand_c_fw_mux_sel_o         ( operand_c_fw_mux_sel   ),
 
     // Stall signals
-    .stall_if_o                   ( stall_if_o            ),
-    .stall_id_o                   ( stall_id_o            ),
-    .stall_ex_o                   ( stall_ex_o            ),
-    .stall_wb_o                   ( stall_wb_o            ),
+    .stall_if_o                     ( stall_if_o             ),
+    .stall_id_o                     ( stall_id_o             ),
+    .stall_ex_o                     ( stall_ex_o             ),
+    .stall_wb_o                     ( stall_wb_o             ),
 
     // Performance Counters
-    .perf_jump_o                  ( perf_jump_o           ),
-    .perf_branch_o                ( perf_branch_o         ),
-    .perf_jr_stall_o              ( perf_jr_stall_o       ),
-    .perf_ld_stall_o              ( perf_ld_stall_o       )
+    .perf_jump_o                    ( perf_jump_o            ),
+    .perf_branch_o                  ( perf_branch_o          ),
+    .perf_jr_stall_o                ( perf_jr_stall_o        ),
+    .perf_ld_stall_o                ( perf_ld_stall_o        )
 
     );
 

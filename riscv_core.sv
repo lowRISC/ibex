@@ -43,21 +43,21 @@ module riscv_core
   input  logic [4:0]  cluster_id_i,
 
   // Instruction memory interface
-  output logic [31:0] instr_addr_o,
   output logic        instr_req_o,
-  input  logic [31:0] instr_rdata_i,
-  input  logic        instr_grant_i,
+  input  logic        instr_grant_i, // TODO: rename to instr_gnt_i
   input  logic        instr_rvalid_i,
+  output logic [31:0] instr_addr_o,
+  input  logic [31:0] instr_rdata_i,
 
   // Data memory interface
+  output logic        data_req_o,
+  input  logic        data_gnt_i,
+  input  logic        data_r_valid_i, // TODO: rename to data_rvalid_i
+  output logic        data_we_o,
+  output logic [3:0]  data_be_o,
   output logic [31:0] data_addr_o,
   output logic [31:0] data_wdata_o,
-  output logic        data_we_o,
-  output logic        data_req_o,
-  output logic [3:0]  data_be_o,
   input  logic [31:0] data_rdata_i,
-  input  logic        data_gnt_i,
-  input  logic        data_r_valid_i,
 
   // Interrupt inputs
   input  logic        irq_i,                 // level-triggered IR line
@@ -291,33 +291,31 @@ module riscv_core
 
     // Processor Enable
     .fetch_enable_i               ( fetch_enable_i       ),
-
-    .jump_in_id_o                 ( jump_in_id           ),
-    .jump_in_ex_o                 ( jump_in_ex           ),
-    .branch_decision_i            ( branch_decision      ),
-
-    .jump_target_o                ( jump_target_id       ),
-
     .core_busy_o                  ( core_busy            ),
     .is_decoding_o                ( is_decoding          ),
 
     // Interface to instruction memory
     .instr_rdata_i                ( instr_rdata_id       ),
     .instr_req_o                  ( instr_req_int        ),
-    .instr_gnt_i                  ( instr_grant_i        ),
     .instr_ack_i                  ( instr_ack_int        ),
+
+    // Jumps and branches
+    .jump_in_id_o                 ( jump_in_id           ),
+    .jump_in_ex_o                 ( jump_in_ex           ),
+    .branch_decision_i            ( branch_decision      ),
+    .jump_target_o                ( jump_target_id       ),
 
     .pc_set_o                     ( pc_set               ),
     .pc_mux_sel_o                 ( pc_mux_sel_id        ),
     .exc_pc_mux_o                 ( exc_pc_mux_id        ),
 
-    .is_compressed_i              ( is_compressed_id     ),
     .illegal_c_insn_i             ( illegal_c_insn_id    ),
+    .is_compressed_i              ( is_compressed_id     ),
 
     .current_pc_if_i              ( current_pc_if        ),
     .current_pc_id_i              ( current_pc_id        ),
 
-    // STALLS
+    // Stalls
     .stall_if_o                   ( stall_if             ),
     .stall_id_o                   ( stall_id             ),
     .stall_ex_o                   ( stall_ex             ),
@@ -325,26 +323,28 @@ module riscv_core
 
     // From the Pipeline ID/EX
     .regfile_rb_data_ex_o         ( regfile_rb_data_ex   ),
-
     .alu_operand_a_ex_o           ( alu_operand_a_ex     ),
     .alu_operand_b_ex_o           ( alu_operand_b_ex     ),
     .alu_operand_c_ex_o           ( alu_operand_c_ex     ),
-    .alu_operator_ex_o            ( alu_operator_ex      ),
-
-    .vector_mode_ex_o             ( vector_mode_ex       ), // from ID to EX stage
-    .alu_cmp_mode_ex_o            ( alu_cmp_mode_ex      ), // from ID to EX stage
-    .alu_vec_ext_ex_o             ( alu_vec_ext_ex       ), // from ID to EX stage
-
-    .mult_en_ex_o                 ( mult_en_ex           ), // from ID to EX stage
-    .mult_sel_subword_ex_o        ( mult_sel_subword_ex  ), // from ID to EX stage
-    .mult_signed_mode_ex_o        ( mult_signed_mode_ex  ), // from ID to EX stage
-    .mult_mac_en_ex_o             ( mult_mac_en_ex       ), // from ID to EX stage
 
     .regfile_waddr_ex_o           ( regfile_waddr_ex     ),
     .regfile_we_ex_o              ( regfile_we_ex        ),
 
     .regfile_alu_we_ex_o          ( regfile_alu_we_ex    ),
     .regfile_alu_waddr_ex_o       ( regfile_alu_waddr_ex ),
+
+    // ALU
+    .alu_operator_ex_o            ( alu_operator_ex      ),
+
+    .vector_mode_ex_o             ( vector_mode_ex       ), // from ID to EX stage
+    .alu_cmp_mode_ex_o            ( alu_cmp_mode_ex      ), // from ID to EX stage
+    .alu_vec_ext_ex_o             ( alu_vec_ext_ex       ), // from ID to EX stage
+
+    // MUL
+    .mult_en_ex_o                 ( mult_en_ex           ), // from ID to EX stage
+    .mult_sel_subword_ex_o        ( mult_sel_subword_ex  ), // from ID to EX stage
+    .mult_signed_mode_ex_o        ( mult_signed_mode_ex  ), // from ID to EX stage
+    .mult_mac_en_ex_o             ( mult_mac_en_ex       ), // from ID to EX stage
 
     // CSR ID/EX
     .csr_access_ex_o              ( csr_access_ex        ),
@@ -354,15 +354,16 @@ module riscv_core
     .hwloop_jump_o                ( hwloop_jump          ),
     .hwloop_targ_addr_o           ( hwloop_target        ),
 
-    .prepost_useincr_ex_o         ( useincr_addr_ex      ),
-    .data_misaligned_i            ( data_misaligned      ),
-
+    // LSU
+    .data_req_ex_o                ( data_req_ex          ), // to   load store unit
     .data_we_ex_o                 ( data_we_ex           ), // to   load store unit
     .data_type_ex_o               ( data_type_ex         ), // to   load store unit
     .data_sign_ext_ex_o           ( data_sign_ext_ex     ), // to   load store unit
     .data_reg_offset_ex_o         ( data_reg_offset_ex   ), // to   load store unit
-    .data_req_ex_o                ( data_req_ex          ), // to   load store unit
     .data_misaligned_ex_o         ( data_misaligned_ex   ), // to   load store unit
+
+    .prepost_useincr_ex_o         ( useincr_addr_ex      ),
+    .data_misaligned_i            ( data_misaligned      ),
 
     .lsu_ready_ex_i               ( lsu_ready_ex         ),
     .lsu_ready_wb_i               ( lsu_ready_wb         ),
@@ -388,14 +389,15 @@ module riscv_core
     .dbg_set_npc_i                ( dbg_set_npc          ),
 
     // Forward Signals
-    .regfile_alu_waddr_fw_i       ( regfile_alu_waddr_fw ),
-    .regfile_alu_we_fw_i          ( regfile_alu_we_fw    ),
-    .regfile_alu_wdata_fw_i       ( regfile_alu_wdata_fw ),
-
     .regfile_waddr_wb_i           ( regfile_waddr_fw_wb_o),  // Write address ex-wb pipeline
     .regfile_we_wb_i              ( regfile_we_wb        ),  // write enable for the register file
     .regfile_wdata_wb_i           ( regfile_wdata        ),  // write data to commit in the register file
 
+    .regfile_alu_waddr_fw_i       ( regfile_alu_waddr_fw ),
+    .regfile_alu_we_fw_i          ( regfile_alu_we_fw    ),
+    .regfile_alu_wdata_fw_i       ( regfile_alu_wdata_fw ),
+
+    // Performance Counters
     .perf_jump_o                  ( perf_jump            ),
     .perf_branch_o                ( perf_branch          ),
     .perf_jr_stall_o              ( perf_jr_stall        ),
@@ -664,7 +666,7 @@ module riscv_core
     rs2_value  = id_stage_i.operand_b_fw_id;
 
     // special case for WFI because we don't wait for unstalling there
-    if ((id_stage_i.stall_ex_o == 1'b0 && is_decoding) || id_stage_i.controller_i.pipe_flush)
+    if ((id_stage_i.stall_ex_o == 1'b0 && is_decoding) || id_stage_i.controller_i.pipe_flush_i)
     begin
       mnemonic = "";
       imm = 0;
