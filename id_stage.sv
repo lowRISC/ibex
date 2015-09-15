@@ -189,7 +189,6 @@ module id_stage
   // Signals running between controller and exception controller
   logic        illegal_insn;
   logic        trap_hit;
-  logic        pc_valid;
   logic        clear_isr_running;
   logic        exc_pipe_flush;
 
@@ -659,7 +658,6 @@ module id_stage
 
     // Exception Controller Signals
     .exc_pc_sel_i                   ( exc_pc_sel             ),
-    .pc_valid_i                     ( pc_valid               ),
     .exc_pipe_flush_i               ( exc_pipe_flush         ),
     .trap_hit_i                     ( trap_hit               ),
     .illegal_insn_o                 ( illegal_insn           ),
@@ -740,7 +738,6 @@ module id_stage
     .illegal_insn_i       ( illegal_insn      ),
     .trap_insn_i          ( trap_insn         ),
     .drop_instruction_i   ( 1'b0              ),
-    .pc_valid_o           ( pc_valid          ),
     .clear_isr_running_i  ( clear_isr_running ),
     .trap_hit_o           ( trap_hit          ),
     .exc_pipe_flush_o     ( exc_pipe_flush    ),

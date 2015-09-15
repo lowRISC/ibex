@@ -82,11 +82,6 @@ module mult
   always_comb
   begin
     case(vector_mode_i)
-      default: // VEC_MODE32, VEC_MODE216
-      begin
-        result[31: 0] = mac_int + op_a_sel * op_b_sel;
-      end
-
       `VEC_MODE16:
       begin
         result[15: 0] = mac_int[15: 0] + op_a_sel[15: 0] * op_b_sel[15: 0];
@@ -99,6 +94,11 @@ module mult
         result[15: 8] = mac_int[15: 8] + op_a_sel[15: 8] * op_b_sel[15: 8];
         result[23:16] = mac_int[23:16] + op_a_sel[23:16] * op_b_sel[23:16];
         result[31:24] = mac_int[31:24] + op_a_sel[31:24] * op_b_sel[31:24];
+      end
+
+      default: // VEC_MODE32, VEC_MODE216
+      begin
+        result[31: 0] = mac_int + op_a_sel * op_b_sel;
       end
     endcase; // case (vec_mode_i)
   end

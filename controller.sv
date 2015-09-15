@@ -84,7 +84,6 @@ module controller
   input  logic        irq_present_i,              // there is an IRQ, so if we are sleeping we should wake up now
   // Exception Controller Signals
   input  logic        exc_pc_sel_i,               // exception execution requested
-  input logic         pc_valid_i,                 // is the next_pc currently valid?
   input  logic        exc_pipe_flush_i,           // flush pipeline after exception handling
   input  logic        trap_hit_i,                 // a trap was hit, so we have to flush EX and WB
   output logic        illegal_insn_o,             // illegal instruction encountered
@@ -501,7 +500,7 @@ module controller
     // we unstall the if_stage if the debug unit wants to set a new
     // pc, so that the new value gets written into current_pc_if and is
     // used by the instr_core_interface
-    stall_if_o = instr_ack_stall   | load_stall | jr_stall | (~lsu_ready_ex_i) | (~lsu_ready_wb_i) | misalign_stall | halt_if | (~pc_valid_i) | (jump_in_id_i == `BRANCH_COND);
+    stall_if_o = instr_ack_stall   | load_stall | jr_stall | (~lsu_ready_ex_i) | (~lsu_ready_wb_i) | misalign_stall | halt_if | (jump_in_id_i == `BRANCH_COND);
     stall_id_o = instr_ack_stall   | load_stall | jr_stall | (~lsu_ready_ex_i) | (~lsu_ready_wb_i) | misalign_stall | halt_id;
     stall_ex_o = instr_ack_stall   | (~lsu_ready_ex_i) | (~lsu_ready_wb_i) | dbg_stall_i;
     stall_wb_o = (~lsu_ready_wb_i) | dbg_stall_i;

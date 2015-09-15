@@ -56,7 +56,6 @@ module exc_controller
    input  logic        illegal_insn_i,              // Illegal instruction encountered in ID stage
    input  logic        trap_insn_i,                 // Trap instruction encountered in ID stage
    input  logic        drop_instruction_i,          // If branch prediction went wrong
-   output logic        pc_valid_o,                  // is the PC in the IF stage currently valid?
    input  logic        clear_isr_running_i,         // exit ISR routine
    output logic        exc_pipe_flush_o,            // flush pipeline and go back to sleep
 
@@ -155,7 +154,6 @@ module exc_controller
     exc_running_n    = exc_running_p;
     save_pc_if_o     = 1'b0;
     save_pc_id_o     = 1'b0;
-    pc_valid_o       = 1'b1;
     exc_pc_sel_o     = 1'b0;
     exc_pc_mux_o     = `EXC_PC_NO_INCR;
 

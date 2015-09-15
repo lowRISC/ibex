@@ -85,11 +85,6 @@ module alu
       `ALU_SUB, `ALU_ABS:
       begin
         case (vector_mode_i)
-          default: // VEC_MODE32
-          begin
-            carry_in[0] = 1'b1;
-          end
-
           `VEC_MODE16:
           begin
             carry_in[0] = 1'b1;
@@ -100,17 +95,17 @@ module alu
           begin
             carry_in    = 4'b1111;
           end
+
+          default: // VEC_MODE32
+          begin
+            carry_in[0] = 1'b1;
+          end
         endcase
       end
 
       default:
       begin
         case (vector_mode_i)
-          default: // VEC_MODE32
-          begin
-            carry_in[0] = 1'b0;
-          end
-
           `VEC_MODE16:
           begin
             carry_in[0] = 1'b0;
@@ -120,6 +115,11 @@ module alu
           `VEC_MODE8:
           begin
             carry_in    = 4'b0000;
+          end
+
+          default: // VEC_MODE32
+          begin
+            carry_in[0] = 1'b0;
           end
         endcase
       end
@@ -168,11 +168,6 @@ module alu
   always_comb
   begin
     case(vector_mode_i)
-      default: // VEC_MODE32
-      begin
-        shift_amt_left[31: 0] = shift_amt[31: 0];
-      end
-
       `VEC_MODE16:
       begin
         shift_amt_left[15: 0] = shift_amt[31:16];
@@ -186,6 +181,11 @@ module alu
         shift_amt_left[23:16] = shift_amt[15: 8];
         shift_amt_left[31:24] = shift_amt[ 7: 0];
       end
+
+      default: // VEC_MODE32
+      begin
+        shift_amt_left[31: 0] = shift_amt[31: 0];
+      end
     endcase
   end
 
@@ -197,16 +197,6 @@ module alu
   always_comb
   begin
     case(vector_mode_i)
-      default: // VEC_MODE32
-      begin
-        if(operator_i == `ALU_SRA)
-          shift_result = $unsigned( $signed(shift_op_a)     >>> shift_amt_int[4:0] );
-        else if(operator_i == `ALU_ROR)
-          shift_result = {shift_op_a, shift_op_a} >> shift_amt_int[4:0];
-        else
-          shift_result = shift_op_a               >> shift_amt_int[4:0];
-      end
-
       `VEC_MODE16:
       begin
         if(operator_i == `ALU_SRA)
@@ -237,6 +227,16 @@ module alu
           shift_result[15: 8] = shift_op_a[15: 8]  >> shift_amt_int[10: 8];
           shift_result[ 7: 0] = shift_op_a[ 7: 0]  >> shift_amt_int[ 2: 0];
         end
+      end
+
+      default: // VEC_MODE32
+      begin
+        if(operator_i == `ALU_SRA)
+          shift_result = $unsigned( $signed(shift_op_a)     >>> shift_amt_int[4:0] );
+        else if(operator_i == `ALU_ROR)
+          shift_result = {shift_op_a, shift_op_a} >> shift_amt_int[4:0];
+        else
+          shift_result = shift_op_a               >> shift_amt_int[4:0];
       end
     endcase; // case (vec_mode_i)
   end
@@ -294,9 +294,9 @@ module alu
         (operator_i == `ALU_ABS))
     begin
       case (vector_mode_i)
-        default:     cmp_sign_mode[3:0] = 4'b1000;
         `VEC_MODE16: cmp_sign_mode[3:0] = 4'b1010;
         `VEC_MODE8:  cmp_sign_mode[3:0] = 4'b1111;
+        default:     cmp_sign_mode[3:0] = 4'b1000;
       endcase
     end
   end
@@ -322,8 +322,6 @@ module alu
                                              | (is_equal_vec[1] & (is_greater_vec[0]))))))}};
 
     case(vector_mode_i)
-      default:; // see default assignment
-
       `VEC_MODE16:
       begin
         is_equal[1:0]   = {2{is_equal_vec[0]   & is_equal_vec[1]}};
@@ -337,6 +335,8 @@ module alu
         is_equal[3:0]   = is_equal_vec[3:0];
         is_greater[3:0] = is_greater_vec[3:0];
       end
+
+      default:; // see default assignment
     endcase
   end
 
@@ -550,7 +550,10 @@ module alu
         result_o   = shift_left_result;
       end
 
-      `ALU_SRL, `ALU_SRA, `ALU_ROR: result_o = shift_result;
+      `ALU_SRL, `ALU_SRA, `ALU_ROR: begin
+        shift_left = 1'b0;
+        result_o   = shift_result;
+      end
 
       // Extension Operations
       `ALU_EXTWZ, `ALU_EXTWS: result_o = operand_a_i;
@@ -591,8 +594,6 @@ module alu
       `ALU_FL1: result_o = {26'h0, fl1_result};
       `ALU_CLB: result_o = {26'h0, clb_result};
       `ALU_CNT: result_o = {26'h0, cnt_result};
-
-      `ALU_NOP: ; // Do nothing
 
       default: ;
     endcase //~case(operator_i)
