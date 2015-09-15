@@ -1032,7 +1032,7 @@ module controller
 
         // handle conditional branches
         if (jump_in_id == `BRANCH_COND) begin
-          // handle branch if decision is availble in next cycle
+          // handle branch if decision is available in next cycle
           if (~stall_id_o)
             ctrl_fsm_ns = BRANCH;
         end
@@ -1083,13 +1083,17 @@ module controller
         end
 
         // take care of debug
-        // branches take two cycles, jumps just one
-        // everything else can be done immediately
-        if(trap_hit_i == 1'b1 && stall_ex_o == 1'b0 && jump_in_id == `BRANCH_NONE)
+        // branch conditional will be handled in next state
+        if(trap_hit_i && jump_in_id != `BRANCH_COND)
         begin
+          // halt pipeline immediately
           halt_if = 1'b1;
           halt_id = 1'b1;
-          ctrl_fsm_ns = DBG_FLUSH_EX;
+
+          // make sure the current instruction has been executed
+          // before changing state to non-decode
+          if (~stall_ex_o)
+            ctrl_fsm_ns = DBG_FLUSH_EX;
         end
       end
 
@@ -1130,6 +1134,7 @@ module controller
         end
       end
 
+      // make sure EX stage is flushed
       DBG_FLUSH_EX:
       begin
         halt_if = 1'b1;
@@ -1139,6 +1144,7 @@ module controller
           ctrl_fsm_ns = DBG_FLUSH_WB;
       end
 
+      // make sure WB stage is flushed
       DBG_FLUSH_WB:
       begin
         halt_if = 1'b1;
@@ -1148,15 +1154,19 @@ module controller
           ctrl_fsm_ns = DBG_SIGNAL;
       end
 
+      // now we can signal to the debugger that our pipeline is empty and it
+      // can examine our current state
       DBG_SIGNAL:
       begin
         dbg_trap_o = 1'b1;
-        halt_if = 1'b1;
-        halt_id = 1'b1;
+        halt_if    = 1'b1;
+        halt_id    = 1'b1;
 
         ctrl_fsm_ns = DBG_WAIT;
       end
 
+      // The Debugger is active in this state
+      // we wait until it is done and go back to DECODE
       DBG_WAIT:
       begin
         halt_if = 1'b1;
@@ -1170,9 +1180,8 @@ module controller
         end
 
         if(dbg_stall_i == 1'b0) begin
-          halt_if = 1'b0;
-          halt_id = 1'b0;
-
+          halt_if     = 1'b0;
+          halt_id     = 1'b0;
           ctrl_fsm_ns = DECODE;
         end
       end

@@ -143,7 +143,6 @@ module id_stage
     input  logic [31:0] regfile_alu_wdata_fw_i,
 
     // Performance Counters
-    output logic        perf_compressed_o,    // current instrution is compressed
     output logic        perf_jump_o,          // we are executing a jump instruction
     output logic        perf_branch_o,        // we are executing a branch instruction
     output logic        perf_jr_stall_o,      // jump-register-hazard
@@ -509,7 +508,7 @@ module id_stage
     .we_b_i       ( (dbg_reg_mux_i == 1'b0) ? regfile_alu_we_fw_i    : dbg_reg_we_i    )
   );
 
-  assign dbg_reg_rdata_o = regfile_data_ra_id;
+  assign dbg_reg_rdata_o = regfile_data_rc_id;
 
   ////////////////////////////////////////////////////////////////////
   //    ____ ___  _   _ _____ ____   ___  _     _     _____ ____    //

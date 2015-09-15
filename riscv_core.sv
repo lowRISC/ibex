@@ -664,7 +664,7 @@ module riscv_core
     rs2_value  = id_stage_i.operand_b_fw_id;
 
     // special case for WFI because we don't wait for unstalling there
-    if ((id_stage_i.stall_id_o == 1'b0 && id_stage_i.controller_i.ctrl_fsm_cs == id_stage_i.controller_i.DECODE) || id_stage_i.controller_i.pipe_flush)
+    if ((id_stage_i.stall_ex_o == 1'b0 && is_decoding) || id_stage_i.controller_i.pipe_flush)
     begin
       mnemonic = "";
       imm = 0;

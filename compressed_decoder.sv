@@ -58,7 +58,12 @@ module compressed_decoder
               // c.add -> add rd, rd, rs2
               instr_o = {7'b0, instr_i[6:2], instr_i[11:7], 3'b000, instr_i[11:7], `OPCODE_OP};
             end
-            if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
+            if (instr_i[11:7] == 5'b0) begin
+              if (instr_i[6:2] == 5'b0)
+                instr_o = {32'h00_10_00_73}; // EBREAK
+              else
+                illegal_instr_o = 1'b1;
+            end
           end
 
           3'b001: begin
