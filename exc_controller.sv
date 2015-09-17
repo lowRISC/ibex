@@ -167,10 +167,11 @@ module exc_controller
       // to the ISR without flushing the pipeline
       ExcIR: begin       
 
-        if (((jump_in_id_i == `BRANCH_JALR || jump_in_id_i == `BRANCH_JAL) && new_instr_id_q == 1'b0)) || jump_in_ex_i == `BRANCH_COND)
+        if (((jump_in_id_i == `BRANCH_JALR || jump_in_id_i == `BRANCH_JAL) && new_instr_id_q == 1'b0) || jump_in_ex_i == `BRANCH_COND)
         begin
             //wait one cycle
-            exc_reason_n = ExcIRDeferred; 
+            if (~stall_id_i) 
+              exc_reason_n = ExcIRDeferred; 
         end 
         else //don't wait
         begin
@@ -193,7 +194,26 @@ module exc_controller
       end
       
       ExcIRDeferred : begin
-          //
+
+          
+          
+          // jumps in ex stage already taken
+          if (jump_in_id_i != `BRANCH_NONE)
+            save_pc_id_o = 1'b1;
+          else
+            save_pc_if_o = 1'b1;      
+
+          
+          exc_pc_sel_o     = 1'b1;
+
+          if (irq_nm_i == 1'b1) // emergency IRQ has higher priority
+              exc_pc_mux_o  = `EXC_PC_IRQ_NM;
+            else if (irq_i == 1'b1)
+              exc_pc_mux_o  = `EXC_PC_IRQ;
+            else //irq_timer_cmp_i == 1'b1
+              exc_pc_mux_o  = `EXC_PC_MTIME_CMP;
+            exc_running_n    = 1'b1;
+
       end
 
       // Illegal instruction encountered, we directly jump to
@@ -234,7 +254,7 @@ module exc_controller
   begin : EXC_DISPLAY
     if ( rst_n == 1'b1 )
     begin
-      if (exc_reason != ExcNone)
+      if (exc_pc_sel_o)
         $display("%t: Entering exception routine.", $time);
     end
   end
