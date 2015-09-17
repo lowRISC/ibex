@@ -67,10 +67,11 @@ module exc_controller
 );
 
   // Exception unit state encoding
-  enum  logic [1:0]  { ExcNone, ExcIR, ExcIllegalInsn } exc_reason;
+  enum  logic [1:0]  { ExcNone, ExcIR, ExcIRDeferred, ExcIllegalInsn } exc_reason, exc_reason_q, exc_reason_n;
 
   // Registers
   logic       exc_running_p, exc_running_n;
+  logic       new_instr_id_q;
 
   // disable hardware loops when nops are inserted or the controller is not active
   assign hwloop_enable_o = (~core_busy_i);
@@ -138,6 +139,9 @@ module exc_controller
       else
         exc_reason = ExcIllegalInsn;
     end
+
+    if (exc_reason_q != ExcNone) 
+      exc_reason = exc_reason_q;
   end
 
   /////////////////////////////////////////////////////////////////////
@@ -149,23 +153,29 @@ module exc_controller
   //                    |_|                                          //
   /////////////////////////////////////////////////////////////////////
 
-  // exception control FSM
+
   always_comb begin
     exc_running_n    = exc_running_p;
     save_pc_if_o     = 1'b0;
     save_pc_id_o     = 1'b0;
     exc_pc_sel_o     = 1'b0;
     exc_pc_mux_o     = `EXC_PC_NO_INCR;
+    exc_reason_n     = ExcNone;
 
     unique case (exc_reason)
       // an IRQ is present, execute pending jump and then go
       // to the ISR without flushing the pipeline
-      ExcIR: begin
-        if (jump_in_id_i == 2'b00 && jump_in_ex_i == 2'b00)
-        begin // no jump in ID
+      ExcIR: begin       
+
+        if (((jump_in_id_i == `BRANCH_JALR || jump_in_id_i == `BRANCH_JAL) && new_instr_id_q == 1'b0)) || jump_in_ex_i == `BRANCH_COND)
+        begin
+            //wait one cycle
+            exc_reason_n = ExcIRDeferred; 
+        end 
+        else //don't wait
+        begin
           exc_pc_sel_o     = 1'b1;
 
-          save_pc_if_o     = 1'b1; // save current PC
 
           if (irq_nm_i == 1'b1) // emergency IRQ has higher priority
             exc_pc_mux_o  = `EXC_PC_IRQ_NM;
@@ -173,7 +183,17 @@ module exc_controller
             exc_pc_mux_o  = `EXC_PC_IRQ;
 
           exc_running_n    = 1'b1;
+
+          // jumps in ex stage already taken
+          if (jump_in_id_i != `BRANCH_NONE)
+            save_pc_id_o = 1'b1;
+          else
+            save_pc_if_o = 1'b1;        
         end
+      end
+      
+      ExcIRDeferred : begin
+          //
       end
 
       // Illegal instruction encountered, we directly jump to
@@ -195,10 +215,14 @@ module exc_controller
     if ( rst_n == 1'b0 )
     begin
       exc_running_p  <= 1'b0;
+      new_instr_id_q <= 1'b0;
+      exc_reason_q   <= ExcNone;
     end
     else
     begin
       exc_running_p  <= (clear_isr_running_i == 1'b1) ? 1'b0    : exc_running_n;
+      new_instr_id_q <= ~stall_id_i;
+      exc_reason_q <= exc_reason_n;
     end
   end
 
