@@ -27,7 +27,7 @@
 
 `include "defines.sv"
 
-module decoder
+module riscv_decoder
 (
   // singals running to/from controller
   input  logic        deassert_we_i,              // deassert we, we are stalled or not active

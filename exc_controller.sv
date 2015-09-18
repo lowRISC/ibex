@@ -140,7 +140,7 @@ module exc_controller
         exc_reason = ExcIllegalInsn;
     end
 
-    if (exc_reason_q != ExcNone) 
+    if (exc_reason_q != ExcNone)
       exc_reason = exc_reason_q;
   end
 
@@ -165,14 +165,14 @@ module exc_controller
     unique case (exc_reason)
       // an IRQ is present, execute pending jump and then go
       // to the ISR without flushing the pipeline
-      ExcIR: begin       
+      ExcIR: begin
 
         if (((jump_in_id_i == `BRANCH_JALR || jump_in_id_i == `BRANCH_JAL) && new_instr_id_q == 1'b0) || jump_in_ex_i == `BRANCH_COND)
         begin
             //wait one cycle
-            if (~stall_id_i) 
-              exc_reason_n = ExcIRDeferred; 
-        end 
+            if (~stall_id_i)
+              exc_reason_n = ExcIRDeferred;
+        end
         else //don't wait
         begin
           exc_pc_sel_o     = 1'b1;
@@ -189,29 +189,24 @@ module exc_controller
           if (jump_in_id_i != `BRANCH_NONE)
             save_pc_id_o = 1'b1;
           else
-            save_pc_if_o = 1'b1;        
+            save_pc_if_o = 1'b1;
         end
       end
-      
-      ExcIRDeferred : begin
 
-          
-          
+      ExcIRDeferred : begin
           // jumps in ex stage already taken
           if (jump_in_id_i != `BRANCH_NONE)
             save_pc_id_o = 1'b1;
           else
-            save_pc_if_o = 1'b1;      
+            save_pc_if_o = 1'b1;
 
-          
           exc_pc_sel_o     = 1'b1;
 
           if (irq_nm_i == 1'b1) // emergency IRQ has higher priority
               exc_pc_mux_o  = `EXC_PC_IRQ_NM;
-            else if (irq_i == 1'b1)
+            else // irq_i == 1'b1
               exc_pc_mux_o  = `EXC_PC_IRQ;
-            else //irq_timer_cmp_i == 1'b1
-              exc_pc_mux_o  = `EXC_PC_MTIME_CMP;
+
             exc_running_n    = 1'b1;
 
       end

@@ -530,7 +530,7 @@ module id_stage
   //                                           //
   ///////////////////////////////////////////////
 
-  decoder decoder_i
+  riscv_decoder decoder_i
   (
     // controller related signals
     .deassert_we_i                   ( deassert_we               ),

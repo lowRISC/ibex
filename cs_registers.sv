@@ -52,7 +52,7 @@ module cs_registers
 
   output logic        irq_enable_o,
   output logic [31:0] epcr_o,
-  output logic        timer_cmp_irq_o,
+
   // Performance Counters
   input  logic        stall_id_i,        // stall ID stage
   input  logic        is_compressed_i,   // compressed instruction in ID
@@ -100,9 +100,6 @@ module cs_registers
   // Generic CSRs
   logic [31:0] csr [0:`CSR_MAX_IDX];
   logic [31:0] csr_n [0:`CSR_MAX_IDX];
-  
-  // mtime - cycle count
-  //logic [31:0] csr_mtime_int, csr_mtime;
 
   // CSR update logic
   logic [31:0] csr_wdata_int;
@@ -111,11 +108,11 @@ module cs_registers
 
   // Interrupt control signals
   logic irq_enable, irq_enable_n;
-  
+
 
   ////////////////////////////////////////////
   //   ____ ____  ____    ____              //
-  //  / ___/ ___||  _ \  |  _ \ ___  __ _   // 
+  //  / ___/ ___||  _ \  |  _ \ ___  __ _   //
   // | |   \___ \| |_) | | |_) / _ \/ _` |  //
   // | |___ ___) |  _ <  |  _ <  __/ (_| |  //
   //  \____|____/|_| \_\ |_| \_\___|\__, |  //
@@ -142,15 +139,6 @@ module cs_registers
       12'hF01: csr_rdata_int = 32'h00_00_80_00;
       // mhartid: unique hardware thread id
       12'hF10: csr_rdata_int = {22'b0, cluster_id_i, core_id_i};
-      
-      // Machine trap setup 0x300 - 0x321
-      // mtimecmp - machine wall-clock timer compare value 
-      12'h321: csr_rdata_int = csr[`CSR_IDX_MTIMECMP]; 
-
-      // machine level timers and counters 0x701 - 0x741
-      // mtime - machine wall-clock time (? - actually not really wall clock??)
-      12'h701: csr_rdata_int = csr[`CSR_IDX_MTIME]; 
-      
     endcase
   end
 
@@ -159,9 +147,6 @@ module cs_registers
   always_comb
   begin
     csr_n        = csr;
-    //if timer interrupt occured - reset status unless it is written by the application
-    if (timer_cmp_irq_o == 1'b1) csr_n[`CSR_IDX_MTIME] = 32'b0;
-    
     irq_enable_n = irq_enable;
 
     case (csr_addr_i)
@@ -172,12 +157,6 @@ module cs_registers
       12'h340: if (csr_we_int) csr_n[`CSR_IDX_MSCRATCH] = csr_wdata_int;
       // mepc: exception program counter
       12'h341: if (csr_we_int) csr_n[`CSR_IDX_MEPC] = csr_wdata_int;
-
-      // mtimecmp
-      12'h321: if (csr_we_int) csr_n[`CSR_IDX_MTIMECMP] = csr_wdata_int;
-
-      // mtime
-      12'h701: if (csr_we_int) csr_n[`CSR_IDX_MTIME] = csr_wdata_int;
     endcase
   end
 
@@ -229,8 +208,6 @@ module cs_registers
     begin
       // update CSRs
       csr                 <= csr_n;
-      // increment the timer register (mtime)
-      csr[`CSR_IDX_MTIME] <= csr_n[`CSR_IDX_MTIME] + 1;
 
       irq_enable <= irq_enable_n;
       // exception PC writes from exception controller get priority
@@ -240,31 +217,6 @@ module cs_registers
         csr[`CSR_IDX_MEPC] <= curr_pc_id_i;
     end
   end
- 
-  ////////////////////////////////////////////////
-  //  _____ _             ____                  //
-  // |_   _(_)_ __ ___   / ___|_ __ ___  _ __   //
-  //   | | | | '_ ` _ \ | |   | '_ ` _ \| '_ \  //
-  //   | | | | | | | | || |___| | | | | | |_) | //
-  //   |_| |_|_| |_| |_(_)____|_| |_| |_| .__/  //
-  //                                    |_|     //
-  //                                            //
-  ////////////////////////////////////////////////
-
-  // ommitting timer interrupt status register according to spec 1.7 priv instr.
-  // 32bit comparator
-  always_comb
-  begin
-    if (csr[`CSR_IDX_MTIMECMP] != 32'b0 &&  csr[`CSR_IDX_MTIMECMP] == csr[`CSR_IDX_MTIME])
-    begin
-      timer_cmp_irq_o = 1'b1;
-    end
-    else
-    begin
-      timer_cmp_irq_o = 1'b0;
-    end
-  end
-
 
   /////////////////////////////////////////////////////////////////
   //   ____            __     ____                  _            //
