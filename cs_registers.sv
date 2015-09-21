@@ -54,7 +54,7 @@ module cs_registers
   output logic [31:0] epcr_o,
 
   // Performance Counters
-  input  logic        stall_id_i,        // stall ID stage
+  input  logic        id_valid_i,        // ID stage is done
   input  logic        is_compressed_i,   // compressed instruction in ID
   input  logic        is_decoding_i,     // controller is in DECODE state
 
@@ -82,7 +82,7 @@ module cs_registers
 `endif
 
   // Performance Counter Signals
-  logic                          stall_id_q;
+  logic                          id_valid_q;
   logic [N_PERF_COUNTERS-1:0]    PCCR_in;  // input signals for each counter category
   logic [N_PERF_COUNTERS-1:0]    PCCR_inc, PCCR_inc_q; // should the counter be increased?
 
@@ -227,17 +227,16 @@ module cs_registers
   //                                                             //
   /////////////////////////////////////////////////////////////////
 
-  assign PCCR_in[0]  = 1'b1;                           // cycle counter
-  assign PCCR_in[1]  = ~stall_id_i & is_decoding_i;    // instruction counter
-  assign PCCR_in[2]  = ld_stall_i & (~stall_id_q);     // nr of load use hazards
-  assign PCCR_in[3]  = jr_stall_i & (~stall_id_q);     // nr of jump register hazards
-  assign PCCR_in[4]  = instr_fetch_i;                  // cycles waiting for instruction fetches
-  assign PCCR_in[5]  = mem_load_i;                     // nr of loads
-  assign PCCR_in[6]  = mem_store_i;                    // nr of stores
-  assign PCCR_in[7]  = jump_i   & (~stall_id_q);       // nr of jumps (unconditional)
-  assign PCCR_in[8]  = branch_i & (~stall_id_q);       // nr of branches (conditional)
-  assign PCCR_in[9]  = ~stall_id_i & is_decoding_i
-                       & is_compressed_i;              // compressed instruction counter
+  assign PCCR_in[0]  = 1'b1;                          // cycle counter
+  assign PCCR_in[1]  = id_valid_q & is_decoding_i;    // instruction counter
+  assign PCCR_in[2]  = ld_stall_i & id_valid_q;       // nr of load use hazards
+  assign PCCR_in[3]  = jr_stall_i & id_valid_q;       // nr of jump register hazards
+  assign PCCR_in[4]  = instr_fetch_i;                 // cycles waiting for instruction fetches
+  assign PCCR_in[5]  = mem_load_i;                    // nr of loads
+  assign PCCR_in[6]  = mem_store_i;                   // nr of stores
+  assign PCCR_in[7]  = jump_i     & id_valid_q;       // nr of jumps (unconditional)
+  assign PCCR_in[8]  = branch_i   & id_valid_q;       // nr of branches (conditional)
+  assign PCCR_in[9]  = id_valid_q & is_decoding_i & is_compressed_i;  // compressed instruction counter
 
   // assign external performance counters
   generate
@@ -358,7 +357,7 @@ module cs_registers
   begin
     if (rst_n == 1'b0)
     begin
-      stall_id_q <= 1'b0;
+      id_valid_q <= 1'b0;
 
       PCER_q <= 'h0;
       PCMR_q <= 2'h3;
@@ -371,7 +370,7 @@ module cs_registers
     end
     else
     begin
-      stall_id_q <= stall_id_i;
+      id_valid_q <= id_valid_i;
 
       PCER_q <= PCER_n;
       PCMR_q <= PCMR_n;

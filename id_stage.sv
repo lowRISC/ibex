@@ -65,10 +65,16 @@ module id_stage
     input  logic [31:0] current_pc_id_i,
 
     // Stalls
-    output logic        stall_if_o,
-    output logic        stall_id_o,
-    output logic        stall_ex_o,
-    output logic        stall_wb_o,
+    output logic        halt_if_o,      // controller requests a halt of the IF stage
+
+    output logic        id_ready_o,     // ID stage is ready for the next instruction
+    input  logic        ex_ready_i,     // EX stage is ready for the next instruction
+
+    input  logic        if_ready_i,     // IF stage is done
+    input  logic        if_valid_i,     // IF stage is done
+    output logic        id_valid_o,     // ID stage is done
+    input  logic        ex_valid_i,     // EX stage is done
+    input  logic        wb_valid_i,     // WB stage is done
 
     // To the Pipeline ID/EX
     output logic [31:0] regfile_rb_data_ex_o,
@@ -113,9 +119,6 @@ module id_stage
 
     output logic        prepost_useincr_ex_o,
     input  logic        data_misaligned_i,
-
-    input  logic        lsu_ready_ex_i,
-    input  logic        lsu_ready_wb_i,
 
     // Interrupt signals
     input  logic        irq_i,
@@ -168,6 +171,10 @@ module id_stage
   logic        regc_used_dec;
 
   logic [1:0]  jump_in_dec;
+
+  logic        misaligned_stall;
+  logic        jr_stall;
+  logic        load_stall;
 
 
   // Immediate decoding and sign extension
@@ -617,7 +624,6 @@ module id_stage
     // decoder related signals
     .deassert_we_o                  ( deassert_we            ),
     .illegal_insn_i                 ( illegal_insn_dec       ),
-    .trap_insn_i                    ( trap_insn              ),
     .eret_insn_i                    ( eret_insn_dec          ),
     .pipe_flush_i                   ( pipe_flush_dec         ),
 
@@ -639,9 +645,6 @@ module id_stage
     // LSU
     .data_req_ex_i                  ( data_req_ex_o          ),
     .data_misaligned_i              ( data_misaligned_i      ),
-
-    .lsu_ready_ex_i                 ( lsu_ready_ex_i         ),
-    .lsu_ready_wb_i                 ( lsu_ready_wb_i         ),
 
     // hwloop signals
     .hwloop_jump_i                  ( hwloop_jump            ),
@@ -684,10 +687,17 @@ module id_stage
     .operand_c_fw_mux_sel_o         ( operand_c_fw_mux_sel   ),
 
     // Stall signals
-    .stall_if_o                     ( stall_if_o             ),
-    .stall_id_o                     ( stall_id_o             ),
-    .stall_ex_o                     ( stall_ex_o             ),
-    .stall_wb_o                     ( stall_wb_o             ),
+    .halt_if_o                      ( halt_if_o              ),
+    .halt_id_o                      ( halt_id                ),
+
+    .misaligned_stall_o             ( misaligned_stall       ),
+    .jr_stall_o                     ( jr_stall               ),
+    .load_stall_o                   ( load_stall             ),
+
+    .if_valid_i                     ( if_valid_i             ),
+    .id_valid_i                     ( id_valid_o             ),
+    .ex_valid_i                     ( ex_valid_i             ),
+    .wb_valid_i                     ( wb_valid_i             ),
 
     // Performance Counters
     .perf_jump_o                    ( perf_jump_o            ),
@@ -734,7 +744,7 @@ module id_stage
     .core_busy_i          ( core_busy_o       ),
     .jump_in_id_i         ( jump_in_id_o      ),
     .jump_in_ex_i         ( jump_in_ex_o      ),
-    .stall_id_i           ( stall_id_o        ),
+    .stall_id_i           ( ~id_valid         ),
     .illegal_insn_i       ( illegal_insn      ),
     .trap_insn_i          ( trap_insn         ),
     .drop_instruction_i   ( 1'b0              ),
@@ -792,7 +802,7 @@ module id_stage
     .hwloop_regid_i          ( hwloop_regid        ),
 
     // from controller
-    .stall_id_i              ( stall_id_o          ),
+    .stall_id_i              ( ~id_valid           ),
 
     // to hwloop controller
     .hwloop_start_addr_o     ( hwloop_start_addr   ),
@@ -850,67 +860,91 @@ module id_stage
 
       data_misaligned_ex_o        <= 1'b0;
 
-      jump_in_ex_o                <= 2'b0;
+      jump_in_ex_o                <= `BRANCH_NONE;
 
     end
-    else if ((stall_ex_o == 1'b0) && (data_misaligned_i == 1'b1))
-    begin // misaligned access case, only unstall alu operands
+    else if (data_misaligned_i) begin
+      // misaligned data access case
+      if (ex_ready_i)
+      begin // misaligned access case, only unstall alu operands
 
-      // if we are using post increments, then we have to use the
-      // original value of the register for the second memory access
-      // => keep it stalled
-      if (prepost_useincr_ex_o == 1'b1)
-      begin
-        alu_operand_a_ex_o        <= alu_operand_a;
+        // if we are using post increments, then we have to use the
+        // original value of the register for the second memory access
+        // => keep it stalled
+        if (prepost_useincr_ex_o == 1'b1)
+        begin
+          alu_operand_a_ex_o        <= alu_operand_a;
+        end
+
+        alu_operand_b_ex_o          <= alu_operand_b;
+        regfile_alu_we_ex_o         <= regfile_alu_we_id;
+        prepost_useincr_ex_o        <= prepost_useincr;
+
+        data_misaligned_ex_o        <= 1'b1;
       end
-
-      alu_operand_b_ex_o          <= alu_operand_b;
-      regfile_alu_we_ex_o         <= regfile_alu_we_id;
-      prepost_useincr_ex_o        <= prepost_useincr;
-
-      data_misaligned_ex_o        <= 1'b1;
     end
-    else if ((stall_ex_o == 1'b0) && (data_misaligned_i == 1'b0))
-    begin // unstall the whole pipeline
-      regfile_rb_data_ex_o        <= operand_b_fw_id;
+    else if (~data_misaligned_i) begin
+      if (id_valid_o)
+      begin // unstall the whole pipeline
+        regfile_rb_data_ex_o        <= operand_b_fw_id;
 
-      alu_operator_ex_o           <= alu_operator;
-      alu_operand_a_ex_o          <= alu_operand_a;
-      alu_operand_b_ex_o          <= alu_operand_b;
-      alu_operand_c_ex_o          <= alu_operand_c;
+        alu_operator_ex_o           <= alu_operator;
+        alu_operand_a_ex_o          <= alu_operand_a;
+        alu_operand_b_ex_o          <= alu_operand_b;
+        alu_operand_c_ex_o          <= alu_operand_c;
 
-      vector_mode_ex_o            <= vector_mode;
-      alu_cmp_mode_ex_o           <= alu_cmp_mode;
-      alu_vec_ext_ex_o            <= alu_vec_ext;
+        vector_mode_ex_o            <= vector_mode;
+        alu_cmp_mode_ex_o           <= alu_cmp_mode;
+        alu_vec_ext_ex_o            <= alu_vec_ext;
 
-      mult_en_ex_o                <= mult_en;
-      mult_sel_subword_ex_o       <= mult_sel_subword;
-      mult_signed_mode_ex_o       <= mult_signed_mode;
-      mult_mac_en_ex_o            <= mult_mac_en;
+        mult_en_ex_o                <= mult_en;
+        mult_sel_subword_ex_o       <= mult_sel_subword;
+        mult_signed_mode_ex_o       <= mult_signed_mode;
+        mult_mac_en_ex_o            <= mult_mac_en;
 
 
-      regfile_waddr_ex_o          <= regfile_waddr_id;
-      regfile_we_ex_o             <= regfile_we_id;
+        regfile_waddr_ex_o          <= regfile_waddr_id;
+        regfile_we_ex_o             <= regfile_we_id;
 
-      regfile_alu_waddr_ex_o      <= regfile_alu_waddr_id;
-      regfile_alu_we_ex_o         <= regfile_alu_we_id;
+        regfile_alu_waddr_ex_o      <= regfile_alu_waddr_id;
+        regfile_alu_we_ex_o         <= regfile_alu_we_id;
 
-      prepost_useincr_ex_o        <= prepost_useincr;
+        prepost_useincr_ex_o        <= prepost_useincr;
 
-      csr_access_ex_o             <= csr_access;
-      csr_op_ex_o                 <= csr_op;
+        csr_access_ex_o             <= csr_access;
+        csr_op_ex_o                 <= csr_op;
 
-      data_we_ex_o                <= data_we_id;
-      data_type_ex_o              <= data_type_id;
-      data_sign_ext_ex_o          <= data_sign_ext_id;
-      data_reg_offset_ex_o        <= data_reg_offset_id;
-      data_req_ex_o               <= data_req_id;
+        data_we_ex_o                <= data_we_id;
+        data_type_ex_o              <= data_type_id;
+        data_sign_ext_ex_o          <= data_sign_ext_id;
+        data_reg_offset_ex_o        <= data_reg_offset_id;
+        data_req_ex_o               <= data_req_id;
 
-      data_misaligned_ex_o        <= 1'b0;
+        data_misaligned_ex_o        <= 1'b0;
 
-      jump_in_ex_o                <= jump_in_id_o;
+        jump_in_ex_o                <= jump_in_id_o;
+      end else if(ex_ready_i) begin
+        // EX stage is ready but we don't have a new instruction for it,
+        // so we set all write enables to 0, but unstall the pipe
+
+        regfile_we_ex_o             <= 1'b0;
+
+        regfile_alu_we_ex_o         <= 1'b0;
+
+        csr_op_ex_o                 <= `CSR_OP_NONE;
+
+        data_req_ex_o               <= 1'b0;
+
+        data_misaligned_ex_o        <= 1'b0;
+
+        jump_in_ex_o                <= `BRANCH_NONE;
+      end
     end
   end
 
+
+  // stall control
+  assign id_ready_o = (~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i;
+  assign id_valid_o = (~halt_id) & if_ready_i & id_ready_o;
 
 endmodule

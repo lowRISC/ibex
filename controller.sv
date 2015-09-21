@@ -44,7 +44,6 @@ module controller
   // decoder related signals
   output logic        deassert_we_o,              // deassert write enable for next instruction
   input  logic        illegal_insn_i,             // decoder encountered an invalid instruction
-  input  logic        trap_insn_i,                // decoder encountered a trap instruction
   input  logic        eret_insn_i,                // decoder encountered an eret instruction
   input  logic        pipe_flush_i,               // decoder wants to do a pipe flush
 
@@ -66,9 +65,6 @@ module controller
   // LSU
   input  logic        data_req_ex_i,              // data memory access is currently performed in EX stage
   input  logic        data_misaligned_i,
-
-  input  logic        lsu_ready_ex_i,
-  input  logic        lsu_ready_wb_i,
 
   // hwloop signals
   input  logic        hwloop_jump_i,              // modify pc_mux_sel to select the hwloop addr
@@ -108,10 +104,17 @@ module controller
   output logic [1:0]  operand_c_fw_mux_sel_o,     // regfile rc data selector form ID stage
 
   // stall signals
-  output logic        stall_if_o,                 // Stall IF stage (deassert requests)
-  output logic        stall_id_o,                 // Stall ID stage (and instr and data memory interface) ( ID_STAGE )
-  output logic        stall_ex_o,                 // Stall ex stage                                       ( EX_STAGE )
-  output logic        stall_wb_o,                 // Stall write to register file due contentions      ( WB_STAGE )
+  output logic        halt_if_o,
+  output logic        halt_id_o,
+
+  output logic        misaligned_stall_o,
+  output logic        jr_stall_o,
+  output logic        load_stall_o,
+
+  input  logic        if_valid_i,                 // IF stage is done
+  input  logic        id_valid_i,                 // ID stage is done
+  input  logic        ex_valid_i,                 // EX stage is done
+  input  logic        wb_valid_i,                 // WB stage is done
 
   // Performance Counters
   output logic        perf_jump_o,                // we are executing a jump instruction   (j, jr, jal, jalr)
@@ -135,16 +138,6 @@ module controller
   logic reg_d_alu_is_reg_a_id;
   logic reg_d_alu_is_reg_b_id;
   logic reg_d_alu_is_reg_c_id;
-
-
-  logic misalign_stall;
-  logic instr_ack_stall;
-  logic load_stall;
-  logic jr_stall;
-  logic trap_stall;
-
-  logic halt_if;
-  logic halt_id;
 
 
 `ifndef SYNTHESIS
@@ -185,8 +178,8 @@ module controller
     core_busy_o         = 1'b1;
     is_decoding_o       = 1'b0;
 
-    halt_if             = 1'b0;
-    halt_id             = 1'b0;
+    halt_if_o           = 1'b0;
+    halt_id_o           = 1'b0;
     dbg_trap_o          = 1'b0;
     illegal_insn_o      = 1'b0;
     clear_isr_running_o = 1'b0;
@@ -249,7 +242,7 @@ module controller
         // handle conditional branches
         if (jump_in_dec_i == `BRANCH_COND) begin
           // handle branch if decision is available in next cycle
-          if (~stall_id_o)
+          if (id_valid_i)
             ctrl_fsm_ns = BRANCH;
         end
 
@@ -293,8 +286,8 @@ module controller
         // sleep
         if (pipe_flush_i || exc_pipe_flush_i)
         begin
-          halt_if = 1'b1;
-          halt_id = 1'b1;
+          halt_if_o = 1'b1;
+          halt_id_o = 1'b1;
 
           ctrl_fsm_ns = FLUSH_EX;
         end
@@ -304,13 +297,14 @@ module controller
         if(trap_hit_i && jump_in_dec_i != `BRANCH_COND)
         begin
           // halt pipeline immediately
-          halt_if = 1'b1;
-          halt_id = 1'b1;
+          halt_if_o = 1'b1;
+          halt_id_o = 1'b1;
 
+          // TODO: take a second look at this
           // make sure the current instruction has been executed
           // before changing state to non-decode
-          if (~stall_ex_o)
-            ctrl_fsm_ns = DBG_FLUSH_EX;
+          //if (~stall_ex_o)
+            ctrl_fsm_ns = DBG_SIGNAL;
         end
       end
 
@@ -326,12 +320,12 @@ module controller
           // be executed (NPC)
           if (trap_hit_i)
           begin
-            halt_if = 1'b1;
-            halt_id = 1'b1;
+            halt_if_o = 1'b1;
+            halt_id_o = 1'b1;
 
-            ctrl_fsm_ns = DBG_FLUSH_EX;
+            ctrl_fsm_ns = DBG_SIGNAL;
           end else begin
-            if (~stall_id_o)
+            if (if_valid_i)
               ctrl_fsm_ns = DECODE;
           end
         end else begin
@@ -343,41 +337,41 @@ module controller
           // be executed (NPC)
           if (trap_hit_i)
           begin
-            ctrl_fsm_ns = DBG_FLUSH_EX;
+            ctrl_fsm_ns = DBG_SIGNAL;
           end else begin
-            if (~stall_id_o)
+            if (if_valid_i)
               ctrl_fsm_ns = DECODE;
           end
         end
       end
 
-      // make sure EX stage is flushed
-      DBG_FLUSH_EX:
-      begin
-        halt_if = 1'b1;
-        halt_id = 1'b1;
+      // // make sure EX stage is flushed
+      // DBG_FLUSH_EX:
+      // begin
+      //   halt_if_o = 1'b1;
+      //   halt_id_o = 1'b1;
 
-        if(stall_ex_o == 1'b0)
-          ctrl_fsm_ns = DBG_FLUSH_WB;
-      end
+      //   if(stall_ex_o == 1'b0)
+      //     ctrl_fsm_ns = DBG_FLUSH_WB;
+      // end
 
-      // make sure WB stage is flushed
-      DBG_FLUSH_WB:
-      begin
-        halt_if = 1'b1;
-        halt_id = 1'b1;
+      // // make sure WB stage is flushed
+      // DBG_FLUSH_WB:
+      // begin
+      //   halt_if_o = 1'b1;
+      //   halt_id_o = 1'b1;
 
-        if(stall_ex_o == 1'b0)
-          ctrl_fsm_ns = DBG_SIGNAL;
-      end
+      //   if(stall_ex_o == 1'b0)
+      //     ctrl_fsm_ns = DBG_SIGNAL;
+      // end
 
       // now we can signal to the debugger that our pipeline is empty and it
       // can examine our current state
       DBG_SIGNAL:
       begin
         dbg_trap_o = 1'b1;
-        halt_if    = 1'b1;
-        halt_id    = 1'b1;
+        halt_if_o  = 1'b1;
+        halt_id_o  = 1'b1;
 
         ctrl_fsm_ns = DBG_WAIT;
       end
@@ -386,19 +380,19 @@ module controller
       // we wait until it is done and go back to DECODE
       DBG_WAIT:
       begin
-        halt_if = 1'b1;
-        halt_id = 1'b1;
+        halt_if_o = 1'b1;
+        halt_id_o = 1'b1;
 
         if(dbg_set_npc_i == 1'b1) begin
-          halt_id      = 1'b0;
+          halt_id_o    = 1'b0;
           pc_mux_sel_o = `PC_DBG_NPC;
           pc_set_o     = 1'b1;
           ctrl_fsm_ns  = DBG_WAIT;
         end
 
         if(dbg_stall_i == 1'b0) begin
-          halt_if     = 1'b0;
-          halt_id     = 1'b0;
+          halt_if_o   = 1'b0;
+          halt_id_o   = 1'b0;
           ctrl_fsm_ns = DECODE;
         end
       end
@@ -406,29 +400,29 @@ module controller
       // flush the pipeline, insert NOP into EX stage
       FLUSH_EX:
       begin
-        halt_if = 1'b1;
-        halt_id = 1'b1;
+        halt_if_o = 1'b1;
+        halt_id_o = 1'b1;
 
-        if(~stall_ex_o)
+        if(ex_valid_i)
           ctrl_fsm_ns = FLUSH_WB;
       end
 
       // flush the pipeline, insert NOP into EX and WB stage
       FLUSH_WB:
       begin
-        halt_if = 1'b1;
-        halt_id = 1'b1;
+        halt_if_o = 1'b1;
+        halt_id_o = 1'b1;
 
         if (~fetch_enable_i) begin
           // we are requested to go to sleep
-          if(~stall_wb_o)
+          if(wb_valid_i)
             ctrl_fsm_ns = SLEEP;
         end else begin
           // unstall pipeline and continue operation
-          halt_if     = 1'b0;
-          halt_id     = 1'b0;
+          halt_if_o = 1'b0;
+          halt_id_o = 1'b0;
 
-          if (~stall_id_o)
+          if (id_valid_i)
             ctrl_fsm_ns = DECODE;
         end
       end
@@ -450,8 +444,8 @@ module controller
   /////////////////////////////////////////////////////////////
   always_comb
   begin
-    load_stall  = 1'b0;
-    jr_stall    = 1'b0;
+    load_stall_o  = 1'b0;
+    jr_stall_o    = 1'b0;
     deassert_we_o = 1'b0;
 
     // deassert WE when the core is not decoding instructions
@@ -467,7 +461,7 @@ module controller
         ((reg_d_ex_is_reg_a_id == 1'b1) || (reg_d_ex_is_reg_b_id == 1'b1) || (reg_d_ex_is_reg_c_id == 1'b1)) )
     begin
       deassert_we_o   = 1'b1;
-      load_stall      = 1'b1;
+      load_stall_o    = 1'b1;
     end
 
     // Stall because of jr path
@@ -479,32 +473,13 @@ module controller
          ((regfile_we_ex_i == 1'b1) && (reg_d_ex_is_reg_a_id == 1'b1)) ||
          ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_a_id == 1'b1))) )
     begin
-      jr_stall        = 1'b1;
+      jr_stall_o      = 1'b1;
       deassert_we_o     = 1'b1;
     end
   end
 
-  // Stall because of IF miss
-  assign instr_ack_stall = ~instr_ack_i;
-
-  assign misalign_stall = data_misaligned_i;
-
-  assign trap_stall = trap_insn_i;
-
-
-  ////////////////////////////////////////////////////////////////////////////////////////////
-  // Freeze Unit. This unit controls the pipeline stages                                    //
-  ////////////////////////////////////////////////////////////////////////////////////////////
-  always_comb
-  begin
-    // we unstall the if_stage if the debug unit wants to set a new
-    // pc, so that the new value gets written into current_pc_if and is
-    // used by the instr_core_interface
-    stall_if_o = instr_ack_stall   | load_stall | jr_stall | (~lsu_ready_ex_i) | (~lsu_ready_wb_i) | misalign_stall | halt_if | (jump_in_id_i == `BRANCH_COND);
-    stall_id_o = instr_ack_stall   | load_stall | jr_stall | (~lsu_ready_ex_i) | (~lsu_ready_wb_i) | misalign_stall | halt_id;
-    stall_ex_o = instr_ack_stall   | (~lsu_ready_ex_i) | (~lsu_ready_wb_i) | dbg_stall_i;
-    stall_wb_o = (~lsu_ready_wb_i) | dbg_stall_i;
-  end
+  // stall because of misaligned data access
+  assign misaligned_stall_o = data_misaligned_i;
 
 
   ////////////////////////////////////////////////////////////////////////////////////////////
@@ -582,7 +557,7 @@ module controller
   // Performance Counters
   assign perf_jump_o      = (jump_in_id_i == `BRANCH_JAL || jump_in_id_i == `BRANCH_JALR);
   assign perf_branch_o    = (jump_in_id_i == `BRANCH_COND);
-  assign perf_jr_stall_o  = jr_stall;
-  assign perf_ld_stall_o  = load_stall;
+  assign perf_jr_stall_o  = jr_stall_o;
+  assign perf_ld_stall_o  = load_stall_o;
 
 endmodule // controller

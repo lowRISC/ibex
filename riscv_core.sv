@@ -105,12 +105,6 @@ module riscv_core
   logic        branch_decision;
 
 
-  // Stalling
-  logic        stall_if;            // Stall instruction fetch(deassert request)
-  logic        stall_id;            // Stall PC stage and instr memory and data memo
-  logic        stall_ex;            // Stall EX Stage
-  logic        stall_wb;            // Stall write back stage
-
   logic        core_busy;
   logic        if_busy;
 
@@ -166,6 +160,17 @@ module riscv_core
   logic [1:0]  data_reg_offset_ex;
   logic        data_req_ex;
   logic        data_misaligned_ex;
+
+  // stall control
+  logic        halt_if;
+  logic        if_ready;
+  logic        id_ready;
+  logic        ex_ready;
+
+  logic        if_valid;
+  logic        id_valid;
+  logic        ex_valid;
+  logic        wb_valid;
 
   logic        lsu_ready_ex;
   logic        lsu_ready_wb;
@@ -269,8 +274,10 @@ module riscv_core
     .jump_target_ex_i    ( jump_target_ex  ),
 
     // pipeline stalls
-    .stall_if_i          ( stall_if        ),
-    .stall_id_i          ( stall_id        ),
+    .halt_if_i           ( halt_if         ),
+    .if_ready_o          ( if_ready        ),
+    .id_ready_i          ( id_ready        ),
+    .if_valid_o          ( if_valid        ),
 
     .if_busy_o           ( if_busy         )
   );
@@ -316,10 +323,16 @@ module riscv_core
     .current_pc_id_i              ( current_pc_id        ),
 
     // Stalls
-    .stall_if_o                   ( stall_if             ),
-    .stall_id_o                   ( stall_id             ),
-    .stall_ex_o                   ( stall_ex             ),
-    .stall_wb_o                   ( stall_wb             ),
+    .halt_if_o                    ( halt_if              ),
+
+    .if_ready_i                   ( if_ready             ),
+    .id_ready_o                   ( id_ready             ),
+    .ex_ready_i                   ( ex_ready             ),
+
+    .if_valid_i                   ( if_valid             ),
+    .id_valid_o                   ( id_valid             ),
+    .ex_valid_i                   ( ex_valid             ),
+    .wb_valid_i                   ( wb_valid             ),
 
     // From the Pipeline ID/EX
     .regfile_rb_data_ex_o         ( regfile_rb_data_ex   ),
@@ -364,9 +377,6 @@ module riscv_core
 
     .prepost_useincr_ex_o         ( useincr_addr_ex      ),
     .data_misaligned_i            ( data_misaligned      ),
-
-    .lsu_ready_ex_i               ( lsu_ready_ex         ),
-    .lsu_ready_wb_i               ( lsu_ready_wb         ),
 
     // Interrupt Signals
     .irq_i                        ( irq_i                ), // incoming interrupts
@@ -439,9 +449,6 @@ module riscv_core
     .csr_access_i               ( csr_access_ex                ),
     .csr_rdata_i                ( csr_rdata                    ),
 
-    // input from ID stage
-    .stall_wb_i                 ( stall_wb                     ),
-
     // From ID Stage: Regfile control signals
     .regfile_waddr_i            ( regfile_waddr_ex             ),
     .regfile_we_i               ( regfile_we_ex                ),
@@ -460,7 +467,14 @@ module riscv_core
     // To ID stage: Forwarding signals
     .regfile_alu_waddr_fw_o     ( regfile_alu_waddr_fw         ),
     .regfile_alu_we_fw_o        ( regfile_alu_we_fw            ),
-    .regfile_alu_wdata_fw_o     ( regfile_alu_wdata_fw         )
+    .regfile_alu_wdata_fw_o     ( regfile_alu_wdata_fw         ),
+
+    // stall control
+    .lsu_ready_ex_i             ( lsu_ready_ex                 ),
+
+    .ex_ready_o                 ( ex_ready                     ),
+    .ex_valid_o                 ( ex_valid                     ),
+    .wb_ready_i                 ( lsu_ready_wb                 )
   );
 
 
@@ -474,8 +488,8 @@ module riscv_core
   ////////////////////////////////////////////////////////////////////////////////////////
   load_store_unit  load_store_unit_i
   (
-    .clk                   ( clk                    ),
-    .rst_n                 ( rst_n                  ),
+    .clk                   ( clk                     ),
+    .rst_n                 ( rst_n                   ),
 
     // signal from ex stage
     .data_we_ex_i          ( data_we_ex              ),
@@ -507,9 +521,10 @@ module riscv_core
     .lsu_ready_ex_o        ( lsu_ready_ex            ),
     .lsu_ready_wb_o        ( lsu_ready_wb            ),
 
-    .ex_stall_i            ( stall_ex                )
+    .ex_valid_i            ( ex_valid                )
   );
 
+  assign wb_valid = lsu_ready_wb;
 
   //////////////////////////////////////
   //        ____ ____  ____           //
@@ -549,7 +564,7 @@ module riscv_core
     .epcr_o                  ( epcr           ),
 
     // performance counter related signals
-    .stall_id_i              ( stall_id         ),
+    .id_valid_i              ( id_valid         ),
     .is_compressed_i         ( is_compressed_id ),
     .is_decoding_i           ( is_decoding      ),
 
@@ -666,7 +681,7 @@ module riscv_core
     rs2_value  = id_stage_i.operand_b_fw_id;
 
     // special case for WFI because we don't wait for unstalling there
-    if ((id_stage_i.stall_ex_o == 1'b0 && is_decoding) || id_stage_i.controller_i.pipe_flush_i)
+    if ((id_valid && is_decoding) || id_stage_i.controller_i.pipe_flush_i)
     begin
       mnemonic = "";
       imm = 0;

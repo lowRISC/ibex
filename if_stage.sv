@@ -80,8 +80,10 @@ module if_stage
     input  logic [31:0] dbg_npc_i,
 
     // pipeline stall
-    input  logic        stall_if_i,
-    input  logic        stall_id_i,
+    input  logic        halt_if_i,
+    output logic        if_ready_o,
+    input  logic        id_ready_i,
+    output logic        if_valid_o,
 
     // misc signals
     output logic        if_busy_o              // is the IF stage busy fetching instructions?
@@ -219,10 +221,10 @@ module if_stage
     end else begin
       offset_fsm_cs     <= offset_fsm_ns;
 
-      if (stall_if_i)
-        branch_req_Q    <= branch_req | branch_req_Q;
-      else
+      if (if_valid_o)
         branch_req_Q    <= 1'b0;
+      else
+        branch_req_Q    <= branch_req | branch_req_Q;
     end
   end
 
@@ -252,7 +254,7 @@ module if_stage
         if (fetch_valid) begin
           valid_o = 1'b1; // an instruction is ready for ID stage
 
-          if (req_i && ~stall_if_i) begin
+          if (req_i && if_valid_o) begin
 
             if (~is_compressed[0]) begin
               // 32 bit aligned instruction found
@@ -277,7 +279,7 @@ module if_stage
           if (is_compressed[1]) begin
             valid_o = 1'b1; // an instruction is ready for ID stage
 
-            if (req_i && ~stall_if_i) begin
+            if (req_i && if_valid_o) begin
               // next instruction will be aligned
               fetch_ready   = 1'b1;
               offset_fsm_ns = WAIT_ALIGNED;
@@ -288,7 +290,7 @@ module if_stage
             if (fetch_unaligned_valid) begin
               valid_o = 1'b1; // an instruction is ready for ID stage
 
-              if (req_i && ~stall_if_i) begin
+              if (req_i && if_valid_o) begin
                 // next instruction will be unaligned
                 fetch_ready   = 1'b1;
                 offset_fsm_ns = WAIT_UNALIGNED;
@@ -367,7 +369,7 @@ module if_stage
     end
     else
     begin
-      if (~stall_id_i)
+      if (if_valid_o)
       begin : ENABLED_PIPE
         instr_rdata_id_o      <= instr_decompressed;
         illegal_c_insn_id_o   <= illegal_c_insn;
@@ -376,5 +378,8 @@ module if_stage
       end
     end
   end
+
+  assign if_ready_o = valid_o & id_ready_i;
+  assign if_valid_o = (~halt_if_i) & if_ready_o & (jump_in_id_i != `BRANCH_COND);
 
 endmodule

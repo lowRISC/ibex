@@ -53,8 +53,6 @@ module ex_stage
     input  logic                      mult_mac_en_i,
 
     // input from ID stage
-    input  logic                      stall_wb_i,
-
     input  logic [4:0]                regfile_alu_waddr_i,
     input  logic                      regfile_alu_we_i,
 
@@ -77,7 +75,14 @@ module ex_stage
 
     // To IF: Jump and branch target and decision
     output logic [31:0]               jump_target_o,
-    output logic                      branch_decision_o
+    output logic                      branch_decision_o,
+
+    // Stall Control
+    input  logic                      lsu_ready_ex_i, // EX part of LSU is done
+
+    output logic                      ex_ready_o, // EX stage ready for new data
+    output logic                      ex_valid_o, // EX stage gets new data
+    input  logic                      wb_ready_i  // WB stage ready for new data
 );
 
 
@@ -165,12 +170,19 @@ module ex_stage
     end
     else
     begin
-      if (stall_wb_i == 1'b0)
+      if (ex_valid_o) // wb_ready_i is implied
       begin
         regfile_we_wb_o            <= regfile_we_i;
         regfile_waddr_wb_o         <= regfile_waddr_i;
+      end else if (wb_ready_i) begin
+        // we are ready for a new instruction, but there is none available,
+        // so we just flush the current one out of the pipe
+        regfile_we_wb_o            <= 1'b0;
       end
     end
   end
+
+  assign ex_ready_o = lsu_ready_ex_i & wb_ready_i;
+  assign ex_valid_o = ex_ready_o;
 
 endmodule

@@ -97,7 +97,6 @@ module riscv_decoder
   logic       regfile_mem_we;
   logic       regfile_alu_we;
   logic       data_req;
-  logic       data_we;
   logic [2:0] hwloop_we;
 
   logic       trap_insn;
@@ -155,7 +154,7 @@ module riscv_decoder
     csr_access_o                = 1'b0;
     csr_op                      = `CSR_OP_NONE;
 
-    data_we                     = 1'b0;
+    data_we_o                   = 1'b0;
     data_type_o                 = 2'b00;
     data_sign_extension_o       = 1'b0;
     data_reg_offset_o           = 2'b00;
@@ -249,7 +248,7 @@ module riscv_decoder
       `OPCODE_STORE,
       `OPCODE_STORE_POST: begin
         data_req     = 1'b1;
-        data_we      = 1'b1;
+        data_we_o    = 1'b1;
         rega_used_o  = 1'b1;
         regb_used_o  = 1'b1;
         alu_operator = `ALU_ADD;
@@ -278,7 +277,7 @@ module riscv_decoder
           2'b10: data_type_o = 2'b00; // SW
           default: begin
             data_req       = 1'b0;
-            data_we        = 1'b0;
+            data_we_o      = 1'b0;
             illegal_insn_o = 1'b1;
           end
         endcase
@@ -852,7 +851,6 @@ module riscv_decoder
   assign regfile_mem_we_o  = (deassert_we_i) ? 1'b0          : regfile_mem_we;
   assign regfile_alu_we_o  = (deassert_we_i) ? 1'b0          : regfile_alu_we;
   assign data_req_o        = (deassert_we_i) ? 1'b0          : data_req;
-  assign data_we_o         = (deassert_we_i) ? 1'b0          : data_we; // TODO: is this needed?
   assign alu_operator_o    = (deassert_we_i) ? `ALU_NOP      : alu_operator;
   assign mult_en_o         = (deassert_we_i) ? 1'b0          : mult_en;
   assign hwloop_we_o       = (deassert_we_i) ? 3'b0          : hwloop_we;

@@ -65,7 +65,7 @@ module load_store_unit
     output logic         lsu_ready_ex_o, // LSU ready for new data in EX stage
     output logic         lsu_ready_wb_o, // LSU ready for new data in WB stage
 
-    input  logic         ex_stall_i
+    input  logic         ex_valid_i
 );
 
   logic [31:0]  data_addr_int;
@@ -317,6 +317,7 @@ module load_store_unit
   // output to register file
   assign data_rdata_ex_o = (data_rvalid_i == 1'b1) ? data_rdata_ext : rdata_q;
 
+  // output to data interface
   assign data_addr_o  = data_addr_int;
   assign data_wdata_o = data_wdata;
   assign data_we_o    = data_we_ex_i;
@@ -346,10 +347,10 @@ module load_store_unit
           if(data_gnt_i) begin
             lsu_ready_ex_o = 1'b1;
 
-            if(ex_stall_i)
-              NS = WAIT_RVALID_EX_STALL;
-            else
+            if (ex_valid_i)
               NS = WAIT_RVALID;
+            else
+              NS = WAIT_RVALID_EX_STALL;
           end
         end
       end //~ IDLE
@@ -367,16 +368,18 @@ module load_store_unit
           lsu_ready_wb_o = 1'b1;
         end
 
-        if(data_req_ex_i) begin
+        if (data_req_ex_i) begin
           lsu_ready_ex_o = 1'b0;
 
-          if(data_gnt_i) begin
+          if (data_gnt_i) begin
             lsu_ready_ex_o = 1'b1;
 
-            if(ex_stall_i)
-              NS = WAIT_RVALID_EX_STALL;
-            else
+            if(ex_valid_i)
               NS = WAIT_RVALID;
+            else
+              NS = WAIT_RVALID_EX_STALL;
+          end else begin
+            NS = IDLE;
           end
         end else begin
           // no request, so go to IDLE
@@ -392,19 +395,19 @@ module load_store_unit
         data_req_o = 1'b0;
 
         if (data_rvalid_i) begin
-          if (ex_stall_i) begin
-            // we have to wait until ex_stall is deasserted
-            NS = IDLE_EX_STALL;
-          end else begin
+          if (ex_valid_i) begin
             // we are done and can go back to idle
             // the data is safely stored already
             NS = IDLE;
+          end else begin
+            // we have to wait until ex_stall is deasserted
+            NS = IDLE_EX_STALL;
           end
         end else begin
           // we didn't yet receive the rvalid, so we check the ex_stall
           // signal. If we are no longer stalled we can change to the "normal"
           // WAIT_RVALID state
-          if (~ex_stall_i)
+          if (ex_valid_i)
             NS = WAIT_RVALID;
         end
       end
@@ -412,7 +415,7 @@ module load_store_unit
       IDLE_EX_STALL:
       begin
         // wait for us to be unstalled and then change back to IDLE state
-        if (~ex_stall_i) begin
+        if (ex_valid_i) begin
           NS = IDLE;
         end
       end
