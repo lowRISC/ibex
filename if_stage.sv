@@ -46,7 +46,6 @@ module if_stage
 
     // instruction request control
     input  logic        req_i,
-    output logic        valid_o,
 
     // instruction cache interface
     output logic                   instr_req_o,
@@ -89,7 +88,8 @@ module if_stage
     output logic        if_valid_o,
 
     // misc signals
-    output logic        if_busy_o              // is the IF stage busy fetching instructions?
+    output logic        if_busy_o,             // is the IF stage busy fetching instructions?
+    output logic        perf_imiss_o           // Instruction Fetch Miss
 );
 
   // offset FSM
@@ -99,6 +99,8 @@ module if_stage
   logic  [1:0] is_compressed;
   logic        unaligned;
   logic        unaligned_jump;
+
+  logic        valid;
 
   // prefetch buffer related signals
   logic        prefetch_busy;
@@ -271,7 +273,7 @@ module if_stage
 
     fetch_ready   = 1'b0;
     branch_req    = 1'b0;
-    valid_o       = 1'b0;
+    valid         = 1'b0;
 
     unaligned     = 1'b0;
 
@@ -288,7 +290,7 @@ module if_stage
       // serving aligned 32 bit or 16 bit instruction, we don't know yet
       WAIT_ALIGNED: begin
         if (fetch_valid) begin
-          valid_o = 1'b1; // an instruction is ready for ID stage
+          valid   = 1'b1; // an instruction is ready for ID stage
 
           if (req_i && if_valid_o) begin
 
@@ -313,7 +315,7 @@ module if_stage
 
         if (fetch_valid) begin
           if (is_compressed[1]) begin
-            valid_o = 1'b1; // an instruction is ready for ID stage
+            valid   = 1'b1; // an instruction is ready for ID stage
 
             if (req_i && if_valid_o) begin
               // next instruction will be aligned
@@ -324,7 +326,7 @@ module if_stage
             // not compressed, we are looking at a 32 bit instruction
 
             if (fetch_unaligned_valid) begin
-              valid_o = 1'b1; // an instruction is ready for ID stage
+              valid   = 1'b1; // an instruction is ready for ID stage
 
               if (req_i && if_valid_o) begin
                 // next instruction will be unaligned
@@ -347,7 +349,7 @@ module if_stage
     if (branch_req_Q == 1'b0) begin
       if (jump_in_ex_i == `BRANCH_COND) begin
         if (branch_decision_i) begin
-          valid_o = 1'b0;
+          valid   = 1'b0;
           // branch taken
           branch_req = 1'b1;
           if (unaligned_jump)
@@ -359,7 +361,7 @@ module if_stage
       end else if (jump_in_id_i == `BRANCH_JAL || jump_in_id_i == `BRANCH_JALR
                    || pc_set_i
                    || hwloop_jump_i) begin
-        valid_o = 1'b0;
+        valid   = 1'b0;
 
         // switch to new PC from ID stage
         branch_req = 1'b1;
@@ -373,6 +375,8 @@ module if_stage
 
 
   assign if_busy_o = prefetch_busy;
+
+  assign perf_imiss_o = (~fetch_valid) | branch_req;
 
 
   // compressed instruction decoding, or more precisely compressed instruction
@@ -415,7 +419,7 @@ module if_stage
     end
   end
 
-  assign if_ready_o = valid_o & id_ready_i;
+  assign if_ready_o = valid & id_ready_i;
   assign if_valid_o = (~halt_if_i) & if_ready_o & (jump_in_id_i != `BRANCH_COND);
 
 endmodule

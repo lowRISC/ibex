@@ -65,11 +65,6 @@ module prefetch_L0_buffer
   logic               valid_previous_chunk;
   logic               clear_buffer;
 
-  logic [15:0]        L0_buffer_misaligned;
-
-
-  assign L0_buffer_misaligned[15:0] = previous_chunk;
-
 
   assign busy_o = (CS != EMPTY);
 

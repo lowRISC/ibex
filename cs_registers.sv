@@ -58,8 +58,7 @@ module cs_registers
   input  logic        is_compressed_i,   // compressed instruction in ID
   input  logic        is_decoding_i,     // controller is in DECODE state
 
-  input  logic        instr_fetch_i,     // instruction fetch
-
+  input  logic        imiss_i,           // instruction fetch
   input  logic        jump_i,            // jump instruction seen   (j, jr, jal, jalr)
   input  logic        branch_i,          // branch instruction seen (bf, bnf)
   input  logic        ld_stall_i,        // load use hazard
@@ -228,15 +227,15 @@ module cs_registers
   /////////////////////////////////////////////////////////////////
 
   assign PCCR_in[0]  = 1'b1;                          // cycle counter
-  assign PCCR_in[1]  = id_valid_q & is_decoding_i;    // instruction counter
+  assign PCCR_in[1]  = id_valid_i & is_decoding_i;    // instruction counter
   assign PCCR_in[2]  = ld_stall_i & id_valid_q;       // nr of load use hazards
   assign PCCR_in[3]  = jr_stall_i & id_valid_q;       // nr of jump register hazards
-  assign PCCR_in[4]  = instr_fetch_i;                 // cycles waiting for instruction fetches
+  assign PCCR_in[4]  = imiss_i;                       // cycles waiting for instruction fetches
   assign PCCR_in[5]  = mem_load_i;                    // nr of loads
   assign PCCR_in[6]  = mem_store_i;                   // nr of stores
   assign PCCR_in[7]  = jump_i     & id_valid_q;       // nr of jumps (unconditional)
   assign PCCR_in[8]  = branch_i   & id_valid_q;       // nr of branches (conditional)
-  assign PCCR_in[9]  = id_valid_q & is_decoding_i & is_compressed_i;  // compressed instruction counter
+  assign PCCR_in[9]  = id_valid_i & is_decoding_i & is_compressed_i;  // compressed instruction counter
 
   // assign external performance counters
   generate

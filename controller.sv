@@ -56,7 +56,6 @@ module controller
 
   // from prefetcher
   output logic        instr_req_o,                // Start fetching instructions
-  input  logic        instr_ack_i,                // Acknow from instr memory or cache (means that data is available)
 
   // to prefetcher
   output logic        pc_set_o,                   // jump to address set by pc_mux_sel
@@ -222,7 +221,7 @@ module controller
       FIRST_FETCH:
       begin
         // Stall because of IF miss
-        if ((instr_ack_i == 1'b1) && (dbg_stall_i == 1'b0))
+        if ((id_valid_i == 1'b1) && (dbg_stall_i == 1'b0))
         begin
           ctrl_fsm_ns = DECODE;
         end

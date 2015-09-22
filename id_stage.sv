@@ -45,7 +45,6 @@ module id_stage
     // Interface to instruction memory
     input  logic [31:0] instr_rdata_i,      // comes from pipeline of IF stage
     output logic        instr_req_o,
-    input  logic        instr_ack_i,
 
     // Jumps and branches
     output logic [1:0]  jump_in_id_o,
@@ -636,7 +635,6 @@ module id_stage
 
     // from prefetcher
     .instr_req_o                    ( instr_req_o            ),
-    .instr_ack_i                    ( instr_ack_i            ),
 
     // to prefetcher
     .pc_set_o                       ( pc_set_o               ),

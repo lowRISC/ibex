@@ -178,7 +178,6 @@ module riscv_core
 
   // Signals between instruction core interface and pipe (if and id stages)
   logic        instr_req_int;    // Id stage asserts a req to instruction core interface
-  logic        instr_ack_int;    // instr core interface acks the request now (read data is available)
 
   // Interrupts
   logic        irq_enable;
@@ -211,6 +210,7 @@ module riscv_core
   logic        dbg_set_npc;
 
   // Performance Counters
+  logic        perf_imiss;
   logic        perf_jump;
   logic        perf_branch;
   logic        perf_jr_stall;
@@ -242,7 +242,6 @@ module riscv_core
 
     // instruction request control
     .req_i               ( instr_req_int   ),
-    .valid_o             ( instr_ack_int   ),
 
     // instruction cache interface
     .instr_req_o         ( instr_req_o     ),
@@ -284,7 +283,8 @@ module riscv_core
     .id_ready_i          ( id_ready        ),
     .if_valid_o          ( if_valid        ),
 
-    .if_busy_o           ( if_busy         )
+    .if_busy_o           ( if_busy         ),
+    .perf_imiss_o        ( perf_imiss      )
   );
 
 
@@ -309,7 +309,6 @@ module riscv_core
     // Interface to instruction memory
     .instr_rdata_i                ( instr_rdata_id       ),
     .instr_req_o                  ( instr_req_int        ),
-    .instr_ack_i                  ( instr_ack_int        ),
 
     // Jumps and branches
     .jump_in_id_o                 ( jump_in_id           ),
@@ -573,8 +572,7 @@ module riscv_core
     .is_compressed_i         ( is_compressed_id ),
     .is_decoding_i           ( is_decoding      ),
 
-    .instr_fetch_i           ( ~instr_ack_int ),
-
+    .imiss_i                 ( perf_imiss     ),
     .jump_i                  ( perf_jump      ),
     .branch_i                ( perf_branch    ),
     .ld_stall_i              ( perf_ld_stall  ),
