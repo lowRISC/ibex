@@ -34,6 +34,9 @@
 `include "defines.sv"
 
 module if_stage
+#(
+  parameter RDATA_WIDTH = 32
+)
 (
     input  logic        clk,
     input  logic        rst_n,
@@ -46,11 +49,11 @@ module if_stage
     output logic        valid_o,
 
     // instruction cache interface
-    output logic        instr_req_o,
-    output logic [31:0] instr_addr_o,
-    input  logic        instr_gnt_i,
-    input  logic        instr_rvalid_i,
-    input  logic [31:0] instr_rdata_i,
+    output logic                   instr_req_o,
+    output logic            [31:0] instr_addr_o,
+    input  logic                   instr_gnt_i,
+    input  logic                   instr_rvalid_i,
+    input  logic [RDATA_WIDTH-1:0] instr_rdata_i,
 
     // Output of IF Pipeline stage
     output logic [31:0] instr_rdata_id_o,      // read instruction is sampled and sent to ID stage for decoding
@@ -181,34 +184,67 @@ module if_stage
   end
 
 
-  // prefetch buffer, caches a fixed number of instructions
-  prefetch_buffer prefetch_buffer_i
-  (
-    .clk               ( clk                   ),
-    .rst_n             ( rst_n                 ),
+  generate
+    if (RDATA_WIDTH == 32) begin : prefetch_32
+      // prefetch buffer, caches a fixed number of instructions
+      prefetch_buffer prefetch_buffer_i
+      (
+        .clk               ( clk                   ),
+        .rst_n             ( rst_n                 ),
 
-    .req_i             ( 1'b1                  ), // TODO: FETCH_ENABLE!
-    .branch_i          ( branch_req            ),
-    .addr_i            ( fetch_addr_n          ),
+        .req_i             ( 1'b1                  ), // TODO: FETCH_ENABLE!
+        .branch_i          ( branch_req            ),
+        .addr_i            ( fetch_addr_n          ),
 
-    .ready_i           ( fetch_ready           ),
-    .valid_o           ( fetch_valid           ),
-    .rdata_o           ( fetch_rdata           ),
-    .addr_o            ( fetch_addr            ),
+        .ready_i           ( fetch_ready           ),
+        .valid_o           ( fetch_valid           ),
+        .rdata_o           ( fetch_rdata           ),
+        .addr_o            ( fetch_addr            ),
 
-    .unaligned_valid_o ( fetch_unaligned_valid ),
-    .unaligned_rdata_o ( fetch_unaligned_rdata ),
+        .unaligned_valid_o ( fetch_unaligned_valid ),
+        .unaligned_rdata_o ( fetch_unaligned_rdata ),
 
-    // goes to instruction memory / instruction cache
-    .instr_req_o       ( instr_req_o           ),
-    .instr_addr_o      ( instr_addr_o          ),
-    .instr_gnt_i       ( instr_gnt_i           ),
-    .instr_rvalid_i    ( instr_rvalid_i        ),
-    .instr_rdata_i     ( instr_rdata_i         ),
+        // goes to instruction memory / instruction cache
+        .instr_req_o       ( instr_req_o           ),
+        .instr_addr_o      ( instr_addr_o          ),
+        .instr_gnt_i       ( instr_gnt_i           ),
+        .instr_rvalid_i    ( instr_rvalid_i        ),
+        .instr_rdata_i     ( instr_rdata_i         ),
 
-    // Prefetch Buffer Status
-    .busy_o            ( prefetch_busy         )
-  );
+        // Prefetch Buffer Status
+        .busy_o            ( prefetch_busy         )
+      );
+    end else if (RDATA_WIDTH == 128) begin : prefetch_128
+      // prefetch buffer, caches a fixed number of instructions
+      prefetch_L0_buffer prefetch_buffer_i
+      (
+        .clk               ( clk                   ),
+        .rst_n             ( rst_n                 ),
+
+        .req_i             ( 1'b1                  ), // TODO: FETCH_ENABLE!
+        .branch_i          ( branch_req            ),
+        .addr_i            ( fetch_addr_n          ),
+
+        .ready_i           ( fetch_ready           ),
+        .valid_o           ( fetch_valid           ),
+        .rdata_o           ( fetch_rdata           ),
+        .addr_o            ( fetch_addr            ),
+
+        .unaligned_valid_o ( fetch_unaligned_valid ),
+        .unaligned_rdata_o ( fetch_unaligned_rdata ),
+
+        // goes to instruction memory / instruction cache
+        .instr_req_o       ( instr_req_o           ),
+        .instr_addr_o      ( instr_addr_o          ),
+        .instr_gnt_i       ( instr_gnt_i           ),
+        .instr_rvalid_i    ( instr_rvalid_i        ),
+        .instr_rdata_i     ( instr_rdata_i         ),
+
+        // Prefetch Buffer Status
+        .busy_o            ( prefetch_busy         )
+      );
+    end
+  endgenerate
 
 
   // offset FSM state

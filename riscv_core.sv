@@ -30,7 +30,8 @@
 
 module riscv_core
 #(
-  parameter N_EXT_PERF_COUNTERS = 0
+  parameter N_EXT_PERF_COUNTERS = 0,
+  parameter INSTR_RDATA_WIDTH   = 32
 )
 (
   // Clock and Reset
@@ -43,16 +44,16 @@ module riscv_core
   input  logic [4:0]  cluster_id_i,
 
   // Instruction memory interface
-  output logic        instr_req_o,
-  input  logic        instr_grant_i, // TODO: rename to instr_gnt_i
-  input  logic        instr_rvalid_i,
-  output logic [31:0] instr_addr_o,
-  input  logic [31:0] instr_rdata_i,
+  output logic                         instr_req_o,
+  input  logic                         instr_gnt_i,
+  input  logic                         instr_rvalid_i,
+  output logic                  [31:0] instr_addr_o,
+  input  logic [INSTR_RDATA_WIDTH-1:0] instr_rdata_i,
 
   // Data memory interface
   output logic        data_req_o,
   input  logic        data_gnt_i,
-  input  logic        data_r_valid_i, // TODO: rename to data_rvalid_i
+  input  logic        data_rvalid_i,
   output logic        data_we_o,
   output logic [3:0]  data_be_o,
   output logic [31:0] data_addr_o,
@@ -96,7 +97,7 @@ module riscv_core
 
 
   logic          useincr_addr_ex;   // Active when post increment
-  logic          data_misaligned;   // Active when post increment
+  logic          data_misaligned;
 
   // Jump and branch target and decision (EX->IF)
   logic [31:0] jump_target_id, jump_target_ex;
@@ -227,7 +228,11 @@ module riscv_core
   //  |___|_|     |____/ |_/_/   \_\____|_____|   //
   //                                              //
   //////////////////////////////////////////////////
-  if_stage if_stage_i
+  if_stage
+  #(
+    .RDATA_WIDTH         ( INSTR_RDATA_WIDTH )
+  )
+  if_stage_i
   (
     .clk                 ( clk             ),
     .rst_n               ( rst_n           ),
@@ -242,7 +247,7 @@ module riscv_core
     // instruction cache interface
     .instr_req_o         ( instr_req_o     ),
     .instr_addr_o        ( instr_addr_o    ),
-    .instr_gnt_i         ( instr_grant_i   ),
+    .instr_gnt_i         ( instr_gnt_i     ),
     .instr_rvalid_i      ( instr_rvalid_i  ),
     .instr_rdata_i       ( instr_rdata_i   ),
 
@@ -510,7 +515,7 @@ module riscv_core
     //output to data memory
     .data_req_o            ( data_req_o              ),
     .data_gnt_i            ( data_gnt_i              ),
-    .data_rvalid_i         ( data_r_valid_i          ),
+    .data_rvalid_i         ( data_rvalid_i           ),
 
     .data_addr_o           ( data_addr_o             ),
     .data_we_o             ( data_we_o               ),
