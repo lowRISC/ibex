@@ -101,14 +101,6 @@ module prefetch_L0_buffer
   always_comb
   begin
     valid_o                 = 1'b0;
-
-    case(addr_o[3:2])
-       2'b00: begin unaligned_rdata_o       = {L0_buffer[0][15:0], previous_chunk     };    unaligned_valid_o       = valid_previous_chunk;  end
-       2'b01: begin unaligned_rdata_o       = {L0_buffer[1][15:0], L0_buffer[0][31:16] };   unaligned_valid_o       = valid_o;               end
-       2'b10: begin unaligned_rdata_o       = {L0_buffer[2][15:0], L0_buffer[1][31:16] };   unaligned_valid_o       = valid_o;               end
-       2'b11: begin unaligned_rdata_o       = {L0_buffer[3][15:0], L0_buffer[2][31:16] };   unaligned_valid_o       = valid_o;               end
-    endcase // addr_o
-
     addr_o                  = current_address + (pointer_cs<<2);
     pointer_ns              = pointer_cs;
     instr_req_o             = 1'b0;
@@ -116,6 +108,13 @@ module prefetch_L0_buffer
     update_current_address  = 1'b0;
     rdata_o                 = instr_rdata_i[pointer_cs];
     clear_buffer            = 1'b0;
+
+    case(addr_o[3:2])
+       2'b00: begin unaligned_rdata_o       = {L0_buffer[0][15:0], previous_chunk     };    unaligned_valid_o       = valid_previous_chunk;  end
+       2'b01: begin unaligned_rdata_o       = {L0_buffer[1][15:0], L0_buffer[0][31:16] };   unaligned_valid_o       = valid_o;               end
+       2'b10: begin unaligned_rdata_o       = {L0_buffer[2][15:0], L0_buffer[1][31:16] };   unaligned_valid_o       = valid_o;               end
+       2'b11: begin unaligned_rdata_o       = {L0_buffer[3][15:0], L0_buffer[2][31:16] };   unaligned_valid_o       = valid_o;               end
+    endcase // addr_o
 
 
     case(CS)
@@ -198,12 +197,12 @@ module prefetch_L0_buffer
               begin
                 instr_req_o  = 1'b1; //if the cpu is ready to sample the instruction, then ask for a new instruction
                 instr_addr_o = current_address + 5'h10;
+                pointer_ns = '0;
+                update_current_address = 1'b1;
 
                 if(instr_gnt_i)
                 begin
                   NS = WAIT_RVALID;
-                  pointer_ns = '0;
-                  update_current_address = 1'b1;
                 end
                 else
                 begin
@@ -274,8 +273,6 @@ module prefetch_L0_buffer
               if(instr_gnt_i)
               begin
                 NS = WAIT_RVALID;
-                pointer_ns = '0;
-                update_current_address = 1'b1;
               end
               else
               begin
