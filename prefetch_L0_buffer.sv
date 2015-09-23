@@ -55,15 +55,16 @@ module prefetch_L0_buffer
 );
 
   enum logic [2:0] {EMPTY, VALID_L0, WAIT_GNT, WAIT_RVALID, WAIT_ABORTED } CS, NS;
-  logic [31:0]        current_address;
+  logic [31:0]        current_address, last_address;
   logic [1:0]         pointer_cs, pointer_ns;
   logic               update_current_address;
 
   logic [3:0][31:0]   L0_buffer;
-  logic               valid_L0_buffer;
-  logic [15:0]        previous_chunk;
-  logic               valid_previous_chunk;
+  logic [31:0]        previous_chunk;
   logic               clear_buffer;
+
+  logic               ready_L0;
+  logic               is_prefetch_q, is_prefetch_n;
 
 
   assign busy_o = (CS != EMPTY);
@@ -75,7 +76,9 @@ module prefetch_L0_buffer
     begin
       CS               <= EMPTY;
       current_address  <= '0;
+      last_address     <= '0;
       pointer_cs       <= '0;
+      is_prefetch_q    <= 1'b0;
     end
     else
     begin
@@ -84,12 +87,19 @@ module prefetch_L0_buffer
       if(branch_i)
       begin
         current_address <= {addr_i[31:4],4'b0000};
-        pointer_cs <= addr_i[3:2];
+        pointer_cs      <= addr_i[3:2];
       end
       else
       begin
-        if(update_current_address)
+        if(update_current_address) begin
+          last_address    <= current_address;
           current_address <= current_address + 5'h10; // jump to the next cache line
+        end
+
+        if (ready_i)
+          is_prefetch_q <= 1'b0;
+        else
+          is_prefetch_q <= is_prefetch_n;
 
         pointer_cs <= pointer_ns;
       end
@@ -101,21 +111,12 @@ module prefetch_L0_buffer
   always_comb
   begin
     valid_o                 = 1'b0;
-    addr_o                  = current_address + (pointer_cs<<2);
     pointer_ns              = pointer_cs;
     instr_req_o             = 1'b0;
     instr_addr_o            = (branch_i) ? addr_i : current_address + 5'h10;
     update_current_address  = 1'b0;
-    rdata_o                 = instr_rdata_i[pointer_cs];
     clear_buffer            = 1'b0;
-
-    case(addr_o[3:2])
-       2'b00: begin unaligned_rdata_o = {L0_buffer[0][15:0], previous_chunk      }; unaligned_valid_o = valid_previous_chunk;  end
-       2'b01: begin unaligned_rdata_o = {L0_buffer[1][15:0], L0_buffer[0][31:16] }; unaligned_valid_o = valid_o;               end
-       2'b10: begin unaligned_rdata_o = {L0_buffer[2][15:0], L0_buffer[1][31:16] }; unaligned_valid_o = valid_o;               end
-       2'b11: begin unaligned_rdata_o = {L0_buffer[3][15:0], L0_buffer[2][31:16] }; unaligned_valid_o = valid_o;               end
-    endcase // addr_o
-
+    is_prefetch_n           = is_prefetch_q;
 
     case(CS)
 
@@ -161,48 +162,27 @@ module prefetch_L0_buffer
         begin
           valid_o = instr_rvalid_i;
 
-          case(pointer_cs)
-            2'b00:
-            begin
-              unaligned_rdata_o   = { instr_rdata_i[0][15:0], L0_buffer[3][31:16] };
-              if(valid_L0_buffer)
-                unaligned_valid_o = instr_rvalid_i;
-              else
-                unaligned_valid_o = 1'b0;
-            end
-
-            2'b01: begin unaligned_rdata_o = {instr_rdata_i[1][15:0], instr_rdata_i[0][31:16] }; unaligned_valid_o = instr_rvalid_i;  end
-            2'b10: begin unaligned_rdata_o = {instr_rdata_i[2][15:0], instr_rdata_i[1][31:16] }; unaligned_valid_o = instr_rvalid_i;  end
-            2'b11: begin unaligned_rdata_o = {instr_rdata_i[3][15:0], instr_rdata_i[2][31:16] }; unaligned_valid_o = instr_rvalid_i;  end
-          endcase // pointer_cs
-
           if(instr_rvalid_i)
           begin
 
             if(&pointer_cs) // we are receiving the last packet, then prefetch the next one
             begin
+              is_prefetch_n = 1'b1;
 
-              if(ready_i)
-              begin
-                instr_req_o  = 1'b1; //if the cpu is ready to sample the instruction, then ask for a new instruction
-                instr_addr_o = current_address + 5'h10;
-                pointer_ns = '0;
-                update_current_address = 1'b1;
+              instr_req_o  = 1'b1; //if the cpu is ready to sample the instruction, then ask for a new instruction
+              instr_addr_o = current_address + 5'h10;
+              pointer_ns = '0;
+              update_current_address = 1'b1;
 
-                if(instr_gnt_i)
-                  NS = WAIT_RVALID;
-                else
-                  NS = WAIT_GNT;
-              end
+              if(instr_gnt_i)
+                NS = WAIT_RVALID;
               else
-              begin
-                NS = VALID_L0;
-              end
+                NS = WAIT_GNT;
             end
             else // not the last chunk
             begin
               NS = VALID_L0;
-              if(ready_i)
+              if(ready_L0)
                 pointer_ns = pointer_cs + 1'b1;
               else
                 pointer_ns = pointer_cs;
@@ -218,14 +198,6 @@ module prefetch_L0_buffer
       VALID_L0:
       begin
         valid_o = 1'b1;
-        rdata_o = L0_buffer[pointer_cs];
-        case(pointer_cs)
-          2'b00: begin unaligned_rdata_o = {L0_buffer[0][15:0], previous_chunk      }; unaligned_valid_o = valid_previous_chunk; end
-          2'b01: begin unaligned_rdata_o = {L0_buffer[1][15:0], L0_buffer[0][31:16] }; unaligned_valid_o = 1'b1;                 end
-          2'b10: begin unaligned_rdata_o = {L0_buffer[2][15:0], L0_buffer[1][31:16] }; unaligned_valid_o = 1'b1;                 end
-          2'b11: begin unaligned_rdata_o = {L0_buffer[3][15:0], L0_buffer[2][31:16] }; unaligned_valid_o = 1'b1;                 end
-        endcase // pointer_cs
-
 
         if(branch_i)
         begin
@@ -239,29 +211,27 @@ module prefetch_L0_buffer
         end
         else
         begin
-          if(ready_i)
+          if( &pointer_cs ) // we are dispathing the last packet, therefore prefetch the next cache line
           begin
-            if( &pointer_cs ) // we are dispathing the last packet, therefore prefetch the next cache line
-            begin
-              instr_req_o  = 1'b1;
-              instr_addr_o = current_address + 5'h10;
-              update_current_address = 1'b1;
-              pointer_ns = '0;
+            is_prefetch_n = 1'b1;
+            instr_req_o   = 1'b1;
+            instr_addr_o  = current_address + 5'h10;
+            pointer_ns    = '0;
+            update_current_address = 1'b1;
 
-              if(instr_gnt_i)
-                NS = WAIT_RVALID;
-              else
-                NS = WAIT_GNT;
-            end
+            if(instr_gnt_i)
+              NS = WAIT_RVALID;
             else
-            begin
-              pointer_ns = pointer_cs + 1'b1;
-              NS         = VALID_L0;
-            end
+              NS = WAIT_GNT;
           end
-          else // not ready, stay here!!!!
+          else
           begin
-            NS = VALID_L0;
+            if(ready_L0)
+            begin
+            pointer_ns = pointer_cs + 1'b1;
+            end
+
+            NS         = VALID_L0;
           end
         end
       end //~VALID_L0
@@ -310,7 +280,6 @@ module prefetch_L0_buffer
          end
       end //~WAIT_ABORTED
 
-
       default:
       begin
          NS = EMPTY;
@@ -320,35 +289,88 @@ module prefetch_L0_buffer
   end
 
 
-  always_ff @(posedge clk or negedge rst_n)
+  // rdata mux, either directly use the incoming data or the saved data in
+  // L0/previous_chunk
+  always_comb
   begin
-    if(rst_n == 1'b0)
+    if (is_prefetch_q)
     begin
-      valid_L0_buffer      <= 1'b0;
-      L0_buffer            <= '0;
-      previous_chunk       <= '0;
-      valid_previous_chunk <= 1'b0;
+      rdata_o = previous_chunk;
+      addr_o  = { last_address[31:4], 2'b11, 2'b00 };
     end
     else
     begin
-      if(branch_i || clear_buffer)
-      begin
-        valid_L0_buffer      <= 1'b0;
-        valid_previous_chunk <= 1'b0;
+      if (CS == VALID_L0) begin
+        rdata_o = L0_buffer[pointer_cs];
+        addr_o  = { current_address[31:4], pointer_cs, 2'b00 };
       end
       else
       begin
-        if(instr_rvalid_i)
-        begin
-          L0_buffer       <= instr_rdata_i;
-          valid_L0_buffer <= 1'b1;
+        rdata_o = instr_rdata_i[pointer_cs];
+        addr_o  = { current_address[31:4], pointer_cs, 2'b00 };
+      end
+    end
+  end
 
-          if(valid_L0_buffer )
-          begin
-            valid_previous_chunk <= 1'b1;
-            previous_chunk       <= L0_buffer[3][31:16];
-          end
+  always_comb
+  begin
+    if (CS == VALID_L0) begin
+      case(addr_o[3:2])
+         2'b00: begin unaligned_rdata_o = {L0_buffer[1][15:0], L0_buffer[0][31:16]   }; unaligned_valid_o = 1'b1;          end
+         2'b01: begin unaligned_rdata_o = {L0_buffer[2][15:0], L0_buffer[1][31:16]   }; unaligned_valid_o = 1'b1;          end
+         2'b10: begin unaligned_rdata_o = {L0_buffer[3][15:0], L0_buffer[2][31:16]   }; unaligned_valid_o = 1'b1;          end
+         // this state is only interesting if we have already done a prefetch
+         2'b11: begin
+           if (is_prefetch_q) begin
+             unaligned_rdata_o = { L0_buffer[0][15:0], previous_chunk[31:16] };
+             unaligned_valid_o = 1'b1;
+           end else begin
+             unaligned_rdata_o = { 'X, L0_buffer[3][31:16] };
+             unaligned_valid_o = 1'b0;
+           end
+         end
+      endcase // addr_o
+    end else begin
+      // L0 buffer is not valid, so we can take the data directly from the
+      // icache
+
+      case(addr_o[3:2])
+        2'b00: begin unaligned_rdata_o = {instr_rdata_i[1][15:0], instr_rdata_i[0][31:16] }; unaligned_valid_o = instr_rvalid_i;  end
+        2'b01: begin unaligned_rdata_o = {instr_rdata_i[2][15:0], instr_rdata_i[1][31:16] }; unaligned_valid_o = instr_rvalid_i;  end
+        2'b10: begin unaligned_rdata_o = {instr_rdata_i[3][15:0], instr_rdata_i[2][31:16] }; unaligned_valid_o = instr_rvalid_i;  end
+
+        2'b11:
+        begin
+          unaligned_rdata_o   = { instr_rdata_i[0][15:0], previous_chunk[31:16] };
+          if (is_prefetch_q)
+            unaligned_valid_o = instr_rvalid_i;
+          else
+            unaligned_valid_o = 1'b0;
         end
+      endcase // pointer_cs
+    end
+  end
+
+  assign ready_L0 = (is_prefetch_q) ? 1'b0 : ready_i;
+
+
+  always_ff @(posedge clk or negedge rst_n)
+  begin
+    if(~rst_n)
+    begin
+      L0_buffer            <= '0;
+      previous_chunk       <= '0;
+    end
+    else
+    begin
+      if (instr_rvalid_i)
+      begin
+        L0_buffer       <= instr_rdata_i;
+      end
+
+      if (is_prefetch_n && pointer_cs == 2'b11)
+      begin
+        previous_chunk <= (CS == VALID_L0) ? L0_buffer[3][31:0] : instr_rdata_i[3][31:0];
       end
     end
   end
