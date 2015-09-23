@@ -742,7 +742,7 @@ module id_stage
     .core_busy_i          ( core_busy_o       ),
     .jump_in_id_i         ( jump_in_id_o      ),
     .jump_in_ex_i         ( jump_in_ex_o      ),
-    .stall_id_i           ( ~id_valid         ),
+    .stall_id_i           ( ~id_valid_o       ),
     .illegal_insn_i       ( illegal_insn      ),
     .trap_insn_i          ( trap_insn         ),
     .drop_instruction_i   ( 1'b0              ),
@@ -800,7 +800,7 @@ module id_stage
     .hwloop_regid_i          ( hwloop_regid        ),
 
     // from controller
-    .stall_id_i              ( ~id_valid           ),
+    .stall_id_i              ( ~id_valid_o         ),
 
     // to hwloop controller
     .hwloop_start_addr_o     ( hwloop_start_addr   ),
