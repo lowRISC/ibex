@@ -241,7 +241,9 @@ module cs_registers
   generate
     genvar i;
     for(i = 0; i < N_EXT_PERF_COUNTERS; i++)
+    begin
       assign PCCR_in[N_PERF_COUNTERS - N_EXT_PERF_COUNTERS + i] = ext_counters_i[i];
+    end
   endgenerate
 
   // address decoder for performance counter registers
