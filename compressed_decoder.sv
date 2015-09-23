@@ -76,76 +76,15 @@ module compressed_decoder
 
           end
 
-          //3'b001: begin
-          //  // c.srai -> srai rd, rd, shamt
-          //  instr_o = {2'b01, 5'b0, instr_i[6:2], instr_i[11:7], 3'b101, instr_i[11:7], `OPCODE_OPIMM};
-          //  if (instr_i[12] != 1'b0)   illegal_instr_o = 1'b1;
-          //  if (instr_i[6:2] == 5'b0)  illegal_instr_o = 1'b1;
-          //  if (instr_i[11:7] == 5'b0) illegal_instr_o = 1'b1;
-          //end
-
           3'b010: begin
             // c.sw -> sw rs2', imm(rs1')
             instr_o = {5'b0, instr_i[5], instr_i[12], 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b010, instr_i[11:10], instr_i[6], 2'b00, `OPCODE_STORE};
           end
 
-          //3'b011: begin
-          //  instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b0, 2'b01, instr_i[9:7], `OPCODE_OP};
-
-          //  unique case ({instr_i[12:10], instr_i[6:5]})
-          //    // c.xor -> xor rd', rd', rs2'
-          //    5'b00000: instr_o = {7'b000_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b100, 2'b01, instr_i[9:7], `OPCODE_OP};
-
-          //    // c.sll -> sll rd', rd', rs2'
-          //    5'b00100: instr_o = {7'b000_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b001, 2'b01, instr_i[9:7], `OPCODE_OP};
-          //    // c.srl -> srl rd', rd', rs2'
-          //    5'b00101: instr_o = {7'b000_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b101, 2'b01, instr_i[9:7], `OPCODE_OP};
-          //    // c.sra -> sra rd', rd', rs2'
-          //    5'b00001: instr_o = {7'b010_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b101, 2'b01, instr_i[9:7], `OPCODE_OP};
-          //    // c.sltu -> sltu rd', rd', rs2'
-          //    5'b00111: instr_o = {7'b000_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b011, 2'b01, instr_i[9:7], `OPCODE_OP};
-
-          //    // c.sllr -> sll rd', rs1', rd'
-          //    5'b01100: instr_o = {7'b000_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b001, 2'b01, instr_i[4:2], `OPCODE_OP};
-          //    // c.srlr -> srl rd', rs1', rd'
-          //    5'b01101: instr_o = {7'b000_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b101, 2'b01, instr_i[4:2], `OPCODE_OP};
-          //    // c.sltur -> sltu rd', rs1', rd'
-          //    5'b01111: instr_o = {7'b000_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b011, 2'b01, instr_i[4:2], `OPCODE_OP};
-
-          //    // c.slt -> slt rd', rd', rs2'
-          //    5'b00110: instr_o = {7'b000_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b010, 2'b01, instr_i[9:7], `OPCODE_OP};
-          //    // c.sltr -> slt rd', rs1', rd'
-          //    5'b01110: instr_o = {7'b000_0000, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b010, 2'b01, instr_i[4:2], `OPCODE_OP};
-
-          //    default:  illegal_instr_o = 1'b1;
-          //  endcase
-          //end
-
-          //3'b100: begin
-          //  // c.sub -> sub rd, rd rs2
-          //  instr_o = {2'b01, 5'b0, instr_i[6:2], instr_i[11:7], 3'b000, instr_i[11:7], `OPCODE_OP};
-          //  if (instr_i[12] != 1'b0)   illegal_instr_o = 1'b1;
-          //  if (instr_i[6:2] == 5'b0)  illegal_instr_o = 1'b1;
-          //  if (instr_i[11:7] == 5'b0) illegal_instr_o = 1'b1;
-          //end
-
           3'b100: begin
             // c.addi4spn -> addi rd', x2, imm
             instr_o = {2'b0, instr_i[10:7], instr_i[12:11], instr_i[5], instr_i[6], 2'b00, 5'h02, 3'b000, 2'b01, instr_i[4:2], `OPCODE_OPIMM};
           end
-
-          //3'b101: begin
-          //  unique case (instr_i[6:5])
-          //    // c.add3 -> add rd', rs1', rs2'
-          //    2'b00:  instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b000, 2'b01, instr_i[12:10], `OPCODE_OP};
-          //    // c.sub3 -> sub rd', rs1', rs2'
-          //    2'b01:  instr_o = {2'b01, 5'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b000, 2'b01, instr_i[12:10], `OPCODE_OP};
-          //    // c.or3 -> or rd'1, rs1', rs2'
-          //    2'b10:  instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b110, 2'b01, instr_i[12:10], `OPCODE_OP};
-          //    // c.and3 -> and rd', rs1', rs2'
-          //    2'b11:  instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b111, 2'b01, instr_i[12:10], `OPCODE_OP};
-          //  endcase
-          //end
 
           3'b110: begin
             // c.lw -> lw rd', imm(rs1')
@@ -168,48 +107,16 @@ module compressed_decoder
             if (instr_i[12] == 1'b1 || instr_i[6:2] == 5'b0)  illegal_instr_o = 1'b1;
           end
 
-          //3'b001: begin
-          //  // c.srli -> srli rd, rd, shamt
-          //  instr_o = {7'b0, instr_i[6:2], instr_i[11:7], 3'b101, instr_i[11:7], `OPCODE_OPIMM};
-          //  if (instr_i[12] == 1'b1)   illegal_instr_o = 1'b1;
-          //  if (instr_i[6:2] == 5'b0)  illegal_instr_o = 1'b1;
-          //  if (instr_i[11:7] == 5'b0) illegal_instr_o = 1'b1;
-          //end
-
           3'b010: begin
             // c.swsp -> sw rs2, imm(x2)
             instr_o = {4'b0, instr_i[8:7], instr_i[12], instr_i[6:2], 5'h02, 3'b010, instr_i[11:9], 2'b00, `OPCODE_STORE};
           end
-
-          //3'b011: begin
-          //  // c.bltz -> blt rs1', x0, imm
-          //  instr_o = {{3 {instr_i[12]}}, instr_i[12:10], instr_i[2], 5'b0, 2'b01, instr_i[9:7], 3'b100, instr_i[6:3], instr_i[12], `OPCODE_BRANCH};
-          //end
-
-          //3'b100: begin
-          //  unique case (instr_i[6:5])
-          //    // c.addin -> addi rd', rs1', imm
-          //    2'b00:  instr_o = {{9 {instr_i[12]}}, instr_i[12:10], 2'b01, instr_i[9:7], 3'b000, 2'b01, instr_i[4:2], `OPCODE_OPIMM};
-          //    // c.xorin -> xori rd', rs1', imm
-          //    2'b01:  instr_o = {{9 {instr_i[12]}}, instr_i[12:10], 2'b01, instr_i[9:7], 3'b100, 2'b01, instr_i[4:2], `OPCODE_OPIMM};
-          //    // c.orin -> ori rd', rs1', imm
-          //    2'b10:  instr_o = {{9 {instr_i[12]}}, instr_i[12:10], 2'b01, instr_i[9:7], 3'b110, 2'b01, instr_i[4:2], `OPCODE_OPIMM};
-          //    // c.andin -> andi rd', rs1', imm
-          //    2'b11:  instr_o = {{9 {instr_i[12]}}, instr_i[12:10], 2'b01, instr_i[9:7], 3'b111, 2'b01, instr_i[4:2], `OPCODE_OPIMM};
-          //  endcase
-          //  if (instr_i[12:10] == 3'b0) illegal_instr_o = 1'b1;
-          //end
 
           3'b110: begin
             // c.lwsp -> lw rd, imm(x2)
             instr_o = {4'b0, instr_i[3:2], instr_i[12], instr_i[6:4], 2'b00, 5'h02, 3'b010, instr_i[11:7], `OPCODE_LOAD};
             if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
           end
-
-          //3'b111: begin
-          //  // c.bgez -> bge rs1', x0, imm
-          //  instr_o = {{3 {instr_i[12]}}, instr_i[12:10], instr_i[2], 5'b0, 2'b01, instr_i[9:7], 3'b101, instr_i[6:3], instr_i[12], `OPCODE_BRANCH};
-          //end
 
           default: begin
             illegal_instr_o = 1'b1;
@@ -256,12 +163,6 @@ module compressed_decoder
             // c.nop
             instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], instr_i[11:7], 3'b0, instr_i[11:7], `OPCODE_OPIMM};
           end
-
-          //3'b111: begin
-          //  // c.andi -> andi rd, rd, nzimm
-          //  instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], instr_i[11:7], 3'b111, instr_i[11:7], `OPCODE_OPIMM};
-          //  if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
-          //end
 
           default: begin
             illegal_instr_o = 1'b1;
