@@ -110,15 +110,16 @@ module prefetch_L0_buffer
     clear_buffer            = 1'b0;
 
     case(addr_o[3:2])
-       2'b00: begin unaligned_rdata_o       = {L0_buffer[0][15:0], previous_chunk     };    unaligned_valid_o       = valid_previous_chunk;  end
-       2'b01: begin unaligned_rdata_o       = {L0_buffer[1][15:0], L0_buffer[0][31:16] };   unaligned_valid_o       = valid_o;               end
-       2'b10: begin unaligned_rdata_o       = {L0_buffer[2][15:0], L0_buffer[1][31:16] };   unaligned_valid_o       = valid_o;               end
-       2'b11: begin unaligned_rdata_o       = {L0_buffer[3][15:0], L0_buffer[2][31:16] };   unaligned_valid_o       = valid_o;               end
+       2'b00: begin unaligned_rdata_o = {L0_buffer[0][15:0], previous_chunk      }; unaligned_valid_o = valid_previous_chunk;  end
+       2'b01: begin unaligned_rdata_o = {L0_buffer[1][15:0], L0_buffer[0][31:16] }; unaligned_valid_o = valid_o;               end
+       2'b10: begin unaligned_rdata_o = {L0_buffer[2][15:0], L0_buffer[1][31:16] }; unaligned_valid_o = valid_o;               end
+       2'b11: begin unaligned_rdata_o = {L0_buffer[3][15:0], L0_buffer[2][31:16] }; unaligned_valid_o = valid_o;               end
     endcase // addr_o
 
 
     case(CS)
 
+      // wait for the first branch request before fetching any instructions
       EMPTY:
       begin
         instr_req_o = branch_i;
@@ -126,13 +127,9 @@ module prefetch_L0_buffer
         begin
 
           if(instr_gnt_i)
-          begin
             NS = WAIT_RVALID;
-          end
           else
-          begin
             NS = WAIT_GNT;
-          end
         end
         else
         begin
@@ -150,13 +147,9 @@ module prefetch_L0_buffer
             instr_addr_o = {addr_i[31:4],4'b0000};
 
             if(instr_gnt_i)
-            begin
               NS = WAIT_RVALID;
-            end
             else
-            begin
               NS = WAIT_GNT;
-            end
           end
           else
           begin
@@ -166,25 +159,21 @@ module prefetch_L0_buffer
         end
         else // else (branch_i)
         begin
-          valid_o             = instr_rvalid_i;
+          valid_o = instr_rvalid_i;
 
           case(pointer_cs)
             2'b00:
             begin
-              unaligned_rdata_o   = { instr_rdata_i[0][15:0], L0_buffer[3][31:16]  };
+              unaligned_rdata_o   = { instr_rdata_i[0][15:0], L0_buffer[3][31:16] };
               if(valid_L0_buffer)
-              begin
-                unaligned_valid_o       = instr_rvalid_i;
-              end
+                unaligned_valid_o = instr_rvalid_i;
               else
-              begin
-                unaligned_valid_o       = 1'b0;
-              end
+                unaligned_valid_o = 1'b0;
             end
 
-            2'b01: begin unaligned_rdata_o       = {instr_rdata_i[1][15:0], instr_rdata_i[0][31:16] };   unaligned_valid_o       = instr_rvalid_i;  end
-            2'b10: begin unaligned_rdata_o       = {instr_rdata_i[2][15:0], instr_rdata_i[1][31:16] };   unaligned_valid_o       = instr_rvalid_i;  end
-            2'b11: begin unaligned_rdata_o       = {instr_rdata_i[3][15:0], instr_rdata_i[2][31:16] };   unaligned_valid_o       = instr_rvalid_i;  end
+            2'b01: begin unaligned_rdata_o = {instr_rdata_i[1][15:0], instr_rdata_i[0][31:16] }; unaligned_valid_o = instr_rvalid_i;  end
+            2'b10: begin unaligned_rdata_o = {instr_rdata_i[2][15:0], instr_rdata_i[1][31:16] }; unaligned_valid_o = instr_rvalid_i;  end
+            2'b11: begin unaligned_rdata_o = {instr_rdata_i[3][15:0], instr_rdata_i[2][31:16] }; unaligned_valid_o = instr_rvalid_i;  end
           endcase // pointer_cs
 
           if(instr_rvalid_i)
@@ -201,13 +190,9 @@ module prefetch_L0_buffer
                 update_current_address = 1'b1;
 
                 if(instr_gnt_i)
-                begin
                   NS = WAIT_RVALID;
-                end
                 else
-                begin
                   NS = WAIT_GNT;
-                end
               end
               else
               begin
@@ -218,13 +203,9 @@ module prefetch_L0_buffer
             begin
               NS = VALID_L0;
               if(ready_i)
-              begin
                 pointer_ns = pointer_cs + 1'b1;
-              end
               else
-              begin
                 pointer_ns = pointer_cs;
-              end
             end
           end
           else // still wait instr_rvalid_i
@@ -234,15 +215,15 @@ module prefetch_L0_buffer
         end
       end //~WAIT_RVALID
 
-     VALID_L0:
-     begin
+      VALID_L0:
+      begin
         valid_o = 1'b1;
         rdata_o = L0_buffer[pointer_cs];
         case(pointer_cs)
-          2'b00: begin unaligned_rdata_o       = {L0_buffer[0][15:0], previous_chunk      };   unaligned_valid_o       = valid_previous_chunk;  end
-          2'b01: begin unaligned_rdata_o       = {L0_buffer[1][15:0], L0_buffer[0][31:16] };   unaligned_valid_o       = 1'b1;  end
-          2'b10: begin unaligned_rdata_o       = {L0_buffer[2][15:0], L0_buffer[1][31:16] };   unaligned_valid_o       = 1'b1;  end
-          2'b11: begin unaligned_rdata_o       = {L0_buffer[3][15:0], L0_buffer[2][31:16] };   unaligned_valid_o       = 1'b1;  end
+          2'b00: begin unaligned_rdata_o = {L0_buffer[0][15:0], previous_chunk      }; unaligned_valid_o = valid_previous_chunk; end
+          2'b01: begin unaligned_rdata_o = {L0_buffer[1][15:0], L0_buffer[0][31:16] }; unaligned_valid_o = 1'b1;                 end
+          2'b10: begin unaligned_rdata_o = {L0_buffer[2][15:0], L0_buffer[1][31:16] }; unaligned_valid_o = 1'b1;                 end
+          2'b11: begin unaligned_rdata_o = {L0_buffer[3][15:0], L0_buffer[2][31:16] }; unaligned_valid_o = 1'b1;                 end
         endcase // pointer_cs
 
 
@@ -250,14 +231,11 @@ module prefetch_L0_buffer
         begin
           instr_req_o  = 1'b1;
           instr_addr_o = {addr_i[31:4],4'b0000};
+
           if(instr_gnt_i)
-          begin
             NS = WAIT_RVALID;
-          end
           else
-          begin
             NS = WAIT_GNT;
-          end
         end
         else
         begin
@@ -265,24 +243,20 @@ module prefetch_L0_buffer
           begin
             if( &pointer_cs ) // we are dispathing the last packet, therefore prefetch the next cache line
             begin
-              instr_req_o = 1'b1;
+              instr_req_o  = 1'b1;
               instr_addr_o = current_address + 5'h10;
               update_current_address = 1'b1;
               pointer_ns = '0;
 
               if(instr_gnt_i)
-              begin
                 NS = WAIT_RVALID;
-              end
               else
-              begin
                 NS = WAIT_GNT;
-              end
             end
             else
             begin
               pointer_ns = pointer_cs + 1'b1;
-              NS = VALID_L0;
+              NS         = VALID_L0;
             end
           end
           else // not ready, stay here!!!!
@@ -290,7 +264,7 @@ module prefetch_L0_buffer
             NS = VALID_L0;
           end
         end
-     end //~VALID_L0
+      end //~VALID_L0
 
       WAIT_GNT:
       begin
@@ -300,46 +274,35 @@ module prefetch_L0_buffer
           instr_addr_o = {addr_i[31:4],4'b0000};
 
           if(instr_gnt_i)
-          begin
             NS = WAIT_RVALID;
-          end
           else
-          begin
             NS = WAIT_GNT;
-          end
         end
         else
         begin
-          instr_req_o = 1'b1;
+          instr_req_o  = 1'b1;
           instr_addr_o = current_address; // has been previously updated
 
           if(instr_gnt_i)
-          begin
             NS = WAIT_RVALID;
-          end
           else
-          begin
             NS = WAIT_GNT;
-          end
         end
       end //~WAIT_GNT
 
       WAIT_ABORTED:
       begin
          clear_buffer = 1'b1;
+
          if(instr_rvalid_i)
          begin
            instr_req_o  = 1'b1;
            instr_addr_o = current_address;
 
            if(instr_gnt_i)
-           begin
              NS = WAIT_RVALID;
-           end
            else
-           begin
              NS = WAIT_GNT;
-           end
          end
          else
          begin
