@@ -88,6 +88,7 @@ module prefetch_L0_buffer
       begin
         current_address <= {addr_i[31:4],4'b0000};
         pointer_cs      <= addr_i[3:2];
+        is_prefetch_q   <= 1'b0;
       end
       else
       begin
