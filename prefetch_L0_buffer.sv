@@ -63,6 +63,7 @@ module prefetch_L0_buffer
   logic [31:0]        previous_chunk;
   logic               clear_buffer;
 
+  logic               valid_L0;
   logic               ready_L0;
   logic               is_prefetch_q, is_prefetch_n;
 
@@ -112,6 +113,7 @@ module prefetch_L0_buffer
   always_comb
   begin
     valid_o                 = 1'b0;
+    valid_L0                = 1'b0;
     pointer_ns              = pointer_cs;
     instr_req_o             = 1'b0;
     instr_addr_o            = (branch_i) ? addr_i : current_address + 5'h10;
@@ -198,7 +200,8 @@ module prefetch_L0_buffer
 
       VALID_L0:
       begin
-        valid_o = 1'b1;
+        valid_o  = 1'b1;
+        valid_L0 = 1'b1;
 
         if(branch_i)
         begin
@@ -301,7 +304,7 @@ module prefetch_L0_buffer
     end
     else
     begin
-      if (CS == VALID_L0) begin
+      if (valid_L0) begin
         rdata_o = L0_buffer[pointer_cs];
         addr_o  = { current_address[31:4], pointer_cs, 2'b00 };
       end
@@ -313,20 +316,23 @@ module prefetch_L0_buffer
     end
   end
 
+  // the lower part of unaligned_rdata_o is always the higher part of rdata_o
+  assign unaligned_rdata_o[15:0] = rdata_o[31:16];
+
   always_comb
   begin
-    if (CS == VALID_L0) begin
+    if (valid_L0) begin
       case(addr_o[3:2])
-         2'b00: begin unaligned_rdata_o = {L0_buffer[1][15:0], L0_buffer[0][31:16]   }; unaligned_valid_o = 1'b1;          end
-         2'b01: begin unaligned_rdata_o = {L0_buffer[2][15:0], L0_buffer[1][31:16]   }; unaligned_valid_o = 1'b1;          end
-         2'b10: begin unaligned_rdata_o = {L0_buffer[3][15:0], L0_buffer[2][31:16]   }; unaligned_valid_o = 1'b1;          end
+         2'b00: begin unaligned_rdata_o[31:16] = L0_buffer[1][15:0]; unaligned_valid_o = 1'b1;          end
+         2'b01: begin unaligned_rdata_o[31:16] = L0_buffer[2][15:0]; unaligned_valid_o = 1'b1;          end
+         2'b10: begin unaligned_rdata_o[31:16] = L0_buffer[3][15:0]; unaligned_valid_o = 1'b1;          end
          // this state is only interesting if we have already done a prefetch
          2'b11: begin
+           unaligned_rdata_o[31:16] = L0_buffer[0][15:0];
+
            if (is_prefetch_q) begin
-             unaligned_rdata_o = { L0_buffer[0][15:0], previous_chunk[31:16] };
              unaligned_valid_o = 1'b1;
            end else begin
-             unaligned_rdata_o = { 'X, L0_buffer[3][31:16] };
              unaligned_valid_o = 1'b0;
            end
          end
@@ -336,13 +342,14 @@ module prefetch_L0_buffer
       // icache
 
       case(addr_o[3:2])
-        2'b00: begin unaligned_rdata_o = {instr_rdata_i[1][15:0], instr_rdata_i[0][31:16] }; unaligned_valid_o = instr_rvalid_i;  end
-        2'b01: begin unaligned_rdata_o = {instr_rdata_i[2][15:0], instr_rdata_i[1][31:16] }; unaligned_valid_o = instr_rvalid_i;  end
-        2'b10: begin unaligned_rdata_o = {instr_rdata_i[3][15:0], instr_rdata_i[2][31:16] }; unaligned_valid_o = instr_rvalid_i;  end
+        2'b00: begin unaligned_rdata_o[31:16] = instr_rdata_i[1][15:0]; unaligned_valid_o = instr_rvalid_i;  end
+        2'b01: begin unaligned_rdata_o[31:16] = instr_rdata_i[2][15:0]; unaligned_valid_o = instr_rvalid_i;  end
+        2'b10: begin unaligned_rdata_o[31:16] = instr_rdata_i[3][15:0]; unaligned_valid_o = instr_rvalid_i;  end
 
         2'b11:
         begin
-          unaligned_rdata_o   = { instr_rdata_i[0][15:0], previous_chunk[31:16] };
+          unaligned_rdata_o[31:16] = instr_rdata_i[0][15:0];
+
           if (is_prefetch_q)
             unaligned_valid_o = instr_rvalid_i;
           else
@@ -366,12 +373,14 @@ module prefetch_L0_buffer
     begin
       if (instr_rvalid_i)
       begin
-        L0_buffer       <= instr_rdata_i;
+        L0_buffer <= instr_rdata_i;
       end
 
-      if (is_prefetch_n && pointer_cs == 2'b11)
+      // update previous chunk only when we are doing a prefetch
+      // do this only once per prefetch
+      if (is_prefetch_n && (~is_prefetch_q))
       begin
-        previous_chunk <= (CS == VALID_L0) ? L0_buffer[3][31:0] : instr_rdata_i[3][31:0];
+        previous_chunk <= (valid_L0) ? L0_buffer[3][31:0] : instr_rdata_i[3][31:0];
       end
     end
   end
