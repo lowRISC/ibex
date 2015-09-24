@@ -73,7 +73,7 @@ module prefetch_L0_buffer
 
   always_ff @(posedge clk or negedge rst_n)
   begin
-    if(~rst_n)
+    if (~rst_n)
     begin
       CS               <= EMPTY;
       current_address  <= '0;
@@ -85,7 +85,7 @@ module prefetch_L0_buffer
     begin
       CS <= NS;
 
-      if(branch_i)
+      if (branch_i)
       begin
         current_address <= {addr_i[31:4],4'b0000};
         pointer_cs      <= addr_i[3:2];
@@ -93,7 +93,7 @@ module prefetch_L0_buffer
       end
       else
       begin
-        if(update_current_address) begin
+        if (update_current_address) begin
           last_address    <= current_address;
           current_address <= current_address + 5'h10; // jump to the next cache line
         end
@@ -127,10 +127,11 @@ module prefetch_L0_buffer
       EMPTY:
       begin
         instr_req_o = branch_i;
-        if(branch_i) // make the request to icache
+
+        if (branch_i) // make the request to icache
         begin
 
-          if(instr_gnt_i)
+          if (instr_gnt_i)
             NS = WAIT_RVALID;
           else
             NS = WAIT_GNT;
@@ -143,14 +144,15 @@ module prefetch_L0_buffer
 
       WAIT_RVALID:
       begin
-        if(branch_i) // there is a pending branch
+        if (branch_i) // there is a pending branch
         begin
-          if(instr_rvalid_i)
+          instr_addr_o = {addr_i[31:4],4'b0000};
+
+          if (instr_rvalid_i)
           begin
             instr_req_o  = 1'b1;
-            instr_addr_o = {addr_i[31:4],4'b0000};
 
-            if(instr_gnt_i)
+            if (instr_gnt_i)
               NS = WAIT_RVALID;
             else
               NS = WAIT_GNT;
@@ -165,19 +167,22 @@ module prefetch_L0_buffer
         begin
           valid_o = instr_rvalid_i;
 
-          if(instr_rvalid_i)
+          // prepare address even if we don't need it
+          // this removes the dependency for instr_addr_o on instr_rvalid_i
+          instr_addr_o = current_address + 5'h10;
+
+          if (instr_rvalid_i)
           begin
 
-            if(&pointer_cs) // we are receiving the last packet, then prefetch the next one
+            if (&pointer_cs) // we are receiving the last packet, then prefetch the next one
             begin
               is_prefetch_n = 1'b1;
 
-              instr_req_o  = 1'b1; //if the cpu is ready to sample the instruction, then ask for a new instruction
-              instr_addr_o = current_address + 5'h10;
-              pointer_ns = '0;
+              instr_req_o = 1'b1;
+              pointer_ns  = '0;
               update_current_address = 1'b1;
 
-              if(instr_gnt_i)
+              if (instr_gnt_i)
                 NS = WAIT_RVALID;
               else
                 NS = WAIT_GNT;
@@ -185,7 +190,8 @@ module prefetch_L0_buffer
             else // not the last chunk
             begin
               NS = VALID_L0;
-              if(ready_L0)
+
+              if (ready_L0)
                 pointer_ns = pointer_cs + 1'b1;
               else
                 pointer_ns = pointer_cs;
@@ -203,19 +209,19 @@ module prefetch_L0_buffer
         valid_o  = 1'b1;
         valid_L0 = 1'b1;
 
-        if(branch_i)
+        if (branch_i)
         begin
           instr_req_o  = 1'b1;
           instr_addr_o = {addr_i[31:4],4'b0000};
 
-          if(instr_gnt_i)
+          if (instr_gnt_i)
             NS = WAIT_RVALID;
           else
             NS = WAIT_GNT;
         end
         else
         begin
-          if( &pointer_cs ) // we are dispathing the last packet, therefore prefetch the next cache line
+          if ( &pointer_cs ) // we are dispathing the last packet, therefore prefetch the next cache line
           begin
             is_prefetch_n = 1'b1;
             instr_req_o   = 1'b1;
@@ -223,16 +229,16 @@ module prefetch_L0_buffer
             pointer_ns    = '0;
             update_current_address = 1'b1;
 
-            if(instr_gnt_i)
+            if (instr_gnt_i)
               NS = WAIT_RVALID;
             else
               NS = WAIT_GNT;
           end
           else
           begin
-            if(ready_L0)
+            if (ready_L0)
             begin
-            pointer_ns = pointer_cs + 1'b1;
+              pointer_ns = pointer_cs + 1'b1;
             end
 
             NS         = VALID_L0;
@@ -242,12 +248,12 @@ module prefetch_L0_buffer
 
       WAIT_GNT:
       begin
-        if(branch_i)
+        if (branch_i)
         begin
           instr_req_o  = 1'b1;
           instr_addr_o = {addr_i[31:4],4'b0000};
 
-          if(instr_gnt_i)
+          if (instr_gnt_i)
             NS = WAIT_RVALID;
           else
             NS = WAIT_GNT;
@@ -257,7 +263,7 @@ module prefetch_L0_buffer
           instr_req_o  = 1'b1;
           instr_addr_o = current_address; // has been previously updated
 
-          if(instr_gnt_i)
+          if (instr_gnt_i)
             NS = WAIT_RVALID;
           else
             NS = WAIT_GNT;
@@ -266,22 +272,25 @@ module prefetch_L0_buffer
 
       WAIT_ABORTED:
       begin
-         clear_buffer = 1'b1;
+        clear_buffer = 1'b1;
 
-         if(instr_rvalid_i)
-         begin
-           instr_req_o  = 1'b1;
-           instr_addr_o = current_address;
+        // prepare address even if we don't need it
+        // this removes the dependency for instr_addr_o on instr_rvalid_i
+        instr_addr_o = current_address;
 
-           if(instr_gnt_i)
-             NS = WAIT_RVALID;
-           else
-             NS = WAIT_GNT;
-         end
-         else
-         begin
-           NS = WAIT_ABORTED;
-         end
+        if (instr_rvalid_i)
+        begin
+          instr_req_o  = 1'b1;
+
+          if (instr_gnt_i)
+            NS = WAIT_RVALID;
+          else
+            NS = WAIT_GNT;
+        end
+        else
+        begin
+          NS = WAIT_ABORTED;
+        end
       end //~WAIT_ABORTED
 
       default:
@@ -323,9 +332,9 @@ module prefetch_L0_buffer
   begin
     if (valid_L0) begin
       case(addr_o[3:2])
-         2'b00: begin unaligned_rdata_o[31:16] = L0_buffer[1][15:0]; unaligned_valid_o = 1'b1;          end
-         2'b01: begin unaligned_rdata_o[31:16] = L0_buffer[2][15:0]; unaligned_valid_o = 1'b1;          end
-         2'b10: begin unaligned_rdata_o[31:16] = L0_buffer[3][15:0]; unaligned_valid_o = 1'b1;          end
+         2'b00: begin unaligned_rdata_o[31:16] = L0_buffer[1][15:0]; unaligned_valid_o = 1'b1; end
+         2'b01: begin unaligned_rdata_o[31:16] = L0_buffer[2][15:0]; unaligned_valid_o = 1'b1; end
+         2'b10: begin unaligned_rdata_o[31:16] = L0_buffer[3][15:0]; unaligned_valid_o = 1'b1; end
          // this state is only interesting if we have already done a prefetch
          2'b11: begin
            unaligned_rdata_o[31:16] = L0_buffer[0][15:0];
@@ -342,9 +351,9 @@ module prefetch_L0_buffer
       // icache
 
       case(addr_o[3:2])
-        2'b00: begin unaligned_rdata_o[31:16] = instr_rdata_i[1][15:0]; unaligned_valid_o = instr_rvalid_i;  end
-        2'b01: begin unaligned_rdata_o[31:16] = instr_rdata_i[2][15:0]; unaligned_valid_o = instr_rvalid_i;  end
-        2'b10: begin unaligned_rdata_o[31:16] = instr_rdata_i[3][15:0]; unaligned_valid_o = instr_rvalid_i;  end
+        2'b00: begin unaligned_rdata_o[31:16] = instr_rdata_i[1][15:0]; unaligned_valid_o = instr_rvalid_i; end
+        2'b01: begin unaligned_rdata_o[31:16] = instr_rdata_i[2][15:0]; unaligned_valid_o = instr_rvalid_i; end
+        2'b10: begin unaligned_rdata_o[31:16] = instr_rdata_i[3][15:0]; unaligned_valid_o = instr_rvalid_i; end
 
         2'b11:
         begin
@@ -364,7 +373,7 @@ module prefetch_L0_buffer
 
   always_ff @(posedge clk or negedge rst_n)
   begin
-    if(~rst_n)
+    if (~rst_n)
     begin
       L0_buffer            <= '0;
       previous_chunk       <= '0;
