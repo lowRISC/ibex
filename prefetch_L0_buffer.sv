@@ -68,7 +68,7 @@ module prefetch_L0_buffer
   logic               is_prefetch_q, is_prefetch_n;
 
 
-  assign busy_o = (CS != EMPTY);
+  assign busy_o = (CS != EMPTY && CS != VALID_L0) || instr_req_o;
 
 
   always_ff @(posedge clk or negedge rst_n)

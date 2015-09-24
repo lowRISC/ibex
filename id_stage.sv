@@ -177,6 +177,8 @@ module id_stage
   logic        jr_stall;
   logic        load_stall;
 
+  logic        halt_id;
+
 
   // Immediate decoding and sign extension
   logic [31:0] imm_i_type;
