@@ -92,6 +92,8 @@ module riscv_core
   logic [2:0]    pc_mux_sel_id;     // Mux selector for next PC
   logic [1:0]    exc_pc_mux_id;     // Mux selector for exception PC
 
+  logic          branch_done;       // Branch already done
+
   // ID performance counter signals
   logic          is_decoding;
 
@@ -263,6 +265,8 @@ module riscv_core
     .pc_mux_sel_i        ( pc_mux_sel_id   ),   // sel for pc multiplexer
     .exc_pc_mux_i        ( exc_pc_mux_id   ),   // selector for exception multiplexer
 
+    .branch_done_o       ( branch_done     ),
+
     // from hwloop controller
     .hwloop_jump_i       ( hwloop_jump     ),
     .hwloop_target_i     ( hwloop_target   ),   // pc from hwloop start address
@@ -319,6 +323,8 @@ module riscv_core
     .pc_set_o                     ( pc_set               ),
     .pc_mux_sel_o                 ( pc_mux_sel_id        ),
     .exc_pc_mux_o                 ( exc_pc_mux_id        ),
+
+    .branch_done_i                ( branch_done          ),
 
     .illegal_c_insn_i             ( illegal_c_insn_id    ),
     .is_compressed_i              ( is_compressed_id     ),

@@ -67,6 +67,8 @@ module if_stage
     input  logic  [2:0] pc_mux_sel_i,          // sel for pc multiplexer
     input  logic  [1:0] exc_pc_mux_i,          // select which exception to execute
 
+    output logic        branch_done_o,         // we already performed a branch
+
     // jump and branch target and decision
     input  logic  [1:0] jump_in_id_i,
     input  logic  [1:0] jump_in_ex_i,          // jump in EX -> get PC from jump target (could also be branch)
@@ -421,5 +423,7 @@ module if_stage
 
   assign if_ready_o = valid & id_ready_i;
   assign if_valid_o = (~halt_if_i) & if_ready_o & (jump_in_id_i != `BRANCH_COND);
+
+  assign branch_done_o = branch_req_Q;
 
 endmodule

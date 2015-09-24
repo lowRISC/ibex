@@ -57,6 +57,8 @@ module id_stage
     output logic [2:0]  pc_mux_sel_o,
     output logic [1:0]  exc_pc_mux_o,
 
+    input  logic        branch_done_i,
+
     input  logic        illegal_c_insn_i,
     input  logic        is_compressed_i,
 
@@ -724,6 +726,8 @@ module id_stage
     // to IF stage
     .exc_pc_sel_o         ( exc_pc_sel        ),
     .exc_pc_mux_o         ( exc_pc_mux_o      ),
+
+    .branch_done_i        ( branch_done_i     ),
 
     // hwloop signals
     .hwloop_enable_o      ( hwloop_enable     ),

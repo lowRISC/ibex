@@ -32,8 +32,10 @@ module exc_controller
    input  logic        fetch_enable_i,
 
    // to IF stage
-   output logic        exc_pc_sel_o,               // influences next PC, if set exception PC is used
-   output logic [1:0]  exc_pc_mux_o,               // Selector in the Fetch stage to select the rigth exception PC
+   output logic        exc_pc_sel_o,                // influences next PC, if set exception PC is used
+   output logic [1:0]  exc_pc_mux_o,                // Selector in the Fetch stage to select the rigth exception PC
+
+   input  logic        branch_done_i,               // Did we already perform a branch while waiting for the next instruction?
 
    // hwloop signals
    output logic        hwloop_enable_o,             // '1' if pc is valid (interrupt related signal)
@@ -167,16 +169,15 @@ module exc_controller
       // to the ISR without flushing the pipeline
       ExcIR: begin
 
-        if (((jump_in_id_i == `BRANCH_JALR || jump_in_id_i == `BRANCH_JAL) && new_instr_id_q == 1'b0) || jump_in_ex_i == `BRANCH_COND)
+        if (((jump_in_id_i == `BRANCH_JALR || jump_in_id_i == `BRANCH_JAL) && new_instr_id_q == 1'b0) || jump_in_ex_i == `BRANCH_COND || branch_done_i)
         begin
-            //wait one cycle
+            // wait one cycle
             if (~stall_id_i)
               exc_reason_n = ExcIRDeferred;
         end
         else //don't wait
         begin
           exc_pc_sel_o     = 1'b1;
-
 
           if (irq_nm_i == 1'b1) // emergency IRQ has higher priority
             exc_pc_mux_o  = `EXC_PC_IRQ_NM;
