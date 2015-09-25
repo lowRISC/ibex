@@ -57,6 +57,7 @@
 `define OPCODE_STORE_POST 7'h27
 `define OPCODE_LOAD_POST  7'h07
 `define OPCODE_HWLOOP     7'h6b
+`define OPCODE_PULP_OP    7'h57
 
 
 // instruction masks (for tracer)
@@ -147,6 +148,7 @@
 // Source/Destination register instruction index
 `define REG_S1 19:15
 `define REG_S2 24:20
+`define REG_S3 29:25
 `define REG_D  11:07
 
 

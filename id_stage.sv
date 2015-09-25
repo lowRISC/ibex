@@ -302,7 +302,7 @@ module id_stage
   // source registers
   assign regfile_addr_ra_id = instr[`REG_S1];
   assign regfile_addr_rb_id = instr[`REG_S2];
-  assign regfile_addr_rc_id = instr[`REG_D];
+  assign regfile_addr_rc_id = instr[`REG_S3];
 
   // destination registers
   assign regfile_waddr_id = instr[`REG_D];

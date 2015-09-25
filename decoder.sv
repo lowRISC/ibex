@@ -332,10 +332,10 @@ module riscv_decoder
             default: begin
               data_type_o    = 2'b00;
               // illegal instruction
-              data_req         = 1'b0;
-              regfile_mem_we   = 1'b0;
-              regfile_alu_we   = 1'b0;
-              illegal_insn_o   = 1'b1;
+              data_req       = 1'b0;
+              regfile_mem_we = 1'b0;
+              regfile_alu_we = 1'b0;
+              illegal_insn_o = 1'b1;
             end
           endcase
         end
@@ -343,10 +343,10 @@ module riscv_decoder
         if (instr_rdata_i[14:12] == 3'b011 || instr_rdata_i[14:12] == 3'b110)
         begin
           // LD, LWU -> RV64 only
-          data_req         = 1'b0;
-          regfile_mem_we   = 1'b0;
-          regfile_alu_we   = 1'b0;
-          illegal_insn_o   = 1'b1;
+          data_req       = 1'b0;
+          regfile_mem_we = 1'b0;
+          regfile_alu_we = 1'b0;
+          illegal_insn_o = 1'b1;
         end
       end
 
@@ -438,6 +438,55 @@ module riscv_decoder
         endcase
       end
 
+      `OPCODE_PULP_OP: begin  // PULP specific ALU instructions
+        mult_en        = 1'b1;
+        mult_mac_en_o  = 1'b1;
+
+        regfile_alu_we = 1'b1;
+        rega_used_o    = 1'b1;
+        regb_used_o    = 1'b1;
+
+        case (instr_rdata_i[14:12])
+          3'b000: begin // MAC
+            regc_used_o    = 1'b1;
+
+            mult_en        = 1'b1;
+            mult_mac_en_o  = 1'b1;
+          end
+
+/*
+              4'b1001: begin // l.mac.c
+                mult_use_carry_o = 1'b1;
+                mult_mac_en_o    = 1'b1;
+                regc_used_o      = 1'b1;
+                set_carry        = 1'b1;
+                set_overflow     = 1'b1;
+              end
+
+          2'b01: begin // MAC with subword selection
+            vector_mode_o      = `VEC_MODE216;
+            mult_mac_en_o      = 1'b1;
+            regc_used_o        = 1'b1;
+            mult_sel_subword_o = instr_rdata_i[2:1];
+            mult_signed_mode_o = instr_rdata_i[4:3];
+            mult_use_carry_o   = instr_rdata_i[0];
+            set_carry          = 1'b1;
+            set_overflow       = 1'b1;
+          end
+
+          2'b11: begin // mult with subword selection
+            vector_mode_o      = `VEC_MODE216;
+            mult_sel_subword_o = instr_rdata_i[2:1];
+            mult_signed_mode_o = instr_rdata_i[4:3];
+          end
+*/
+          default: begin
+            regfile_alu_we = 1'b0;
+            illegal_insn_o = 1'b1;
+          end
+        endcase
+      end
+
       /*
 
       `OPCODE_ALU: begin   // Arithmetic Operation
@@ -504,70 +553,6 @@ module riscv_decoder
             endcase //~case(instr_rdata_i[3:0])
           end
         endcase; // case (instr_rdata_i[9:8])
-      end
-
-      `OPCODE_MAC: begin   // MAC instruction
-        mult_is_running    = 1'b1;
-
-        rega_used_o        = 1'b1;
-        regb_used_o        = 1'b1;
-
-        regfile_alu_waddr_sel_o = 2'b01;
-        regfile_alu_we          = 1'b1;
-
-        case (instr_rdata_i[6:5])
-          2'b00: begin // MAC
-            case (instr_rdata_i[3:0])
-              4'b1000: begin // l.mac
-                mult_mac_en_o = 1'b1;
-                regc_used_o   = 1'b1;
-                set_carry     = 1'b1;
-                set_overflow  = 1'b1;
-              end
-
-              4'b1001: begin // l.mac.c
-                mult_use_carry_o = 1'b1;
-                mult_mac_en_o    = 1'b1;
-                regc_used_o      = 1'b1;
-                set_carry        = 1'b1;
-                set_overflow     = 1'b1;
-              end
-
-              default: begin
-                // synopsys translate_off
-                $display("%t: Illegal MAC instruction received.", $time);
-                // synopsys translate_on
-                regfile_alu_we = 1'b0;
-                illegal_insn_o = 1'b1;
-              end
-            endcase // case (instr_rdata_i[3:0])
-          end
-
-          2'b01: begin // MAC with subword selection
-            vector_mode_o      = `VEC_MODE216;
-            mult_mac_en_o      = 1'b1;
-            regc_used_o        = 1'b1;
-            mult_sel_subword_o = instr_rdata_i[2:1];
-            mult_signed_mode_o = instr_rdata_i[4:3];
-            mult_use_carry_o   = instr_rdata_i[0];
-            set_carry          = 1'b1;
-            set_overflow       = 1'b1;
-          end
-
-          2'b11: begin // mult with subword selection
-            vector_mode_o      = `VEC_MODE216;
-            mult_sel_subword_o = instr_rdata_i[2:1];
-            mult_signed_mode_o = instr_rdata_i[4:3];
-          end
-
-          default: begin
-            // synopsys translate_off
-            $display("%t: Illegal MAC instruction received.", $time);
-            // synopsys translate_on
-            regfile_alu_we = 1'b0;
-            illegal_insn_o = 1'b1;
-          end
-        endcase
       end
 
       `OPCODE_VEC: begin // vectorial alu operations
@@ -768,26 +753,22 @@ module riscv_decoder
             // lp.starti: set start address to PC + I-type immediate
             hwloop_we[0]           = 1'b1;
             hwloop_start_mux_sel_o = 1'b0;
-            // $display("%t: hwloop start address: %h", $time, instr_rdata_i);
           end
           3'b001: begin
             // lp.endi: set end address to PC + I-type immediate
             hwloop_we[1]         = 1'b1;
             hwloop_end_mux_sel_o = 1'b0; // jump target
-            // $display("%t: hwloop end address: %h", $time, instr_rdata_i);
           end
           3'b010: begin
             // lp.count initialize counter from rs1
             hwloop_we[2]         = 1'b1;
             hwloop_cnt_mux_sel_o = 1'b1;
             rega_used_o          = 1'b1;
-            // $display("%t: hwloop counter: %h", $time, instr_rdata_i);
           end
           3'b011: begin
             // lp.counti initialize counter from I-type immediate
             hwloop_we[2]         = 1'b1;
             hwloop_cnt_mux_sel_o = 1'b0;
-            // $display("%t: hwloop counter imm: %h", $time, instr_rdata_i);
           end
           3'b100: begin
             // lp.setup: initialize counter from rs1, set start address to
@@ -797,7 +778,6 @@ module riscv_decoder
             hwloop_end_mux_sel_o   = 1'b0;
             hwloop_cnt_mux_sel_o   = 1'b1;
             rega_used_o            = 1'b1;
-            // $display("%t: hwloop setup: %h", $time, instr_rdata_i);
           end
           3'b101: begin
             // lp.setupi: initialize counter from I-type immediate, set start
@@ -808,7 +788,6 @@ module riscv_decoder
             hwloop_end_mux_sel_o   = 1'b1;
             hwloop_cnt_mux_sel_o   = 1'b0;
             illegal_insn_o         = 1'b1; // TODO: PC + z-imm currently not supported
-            // $display("%t: hwloop setup imm: %h", $time, instr_rdata_i);
           end
           default: begin
             illegal_insn_o = 1'b1;
