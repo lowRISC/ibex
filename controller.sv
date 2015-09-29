@@ -481,22 +481,18 @@ module controller
   assign misaligned_stall_o = data_misaligned_i;
 
 
-  ////////////////////////////////////////////////////////////////////////////////////////////
-  // Forwarding control unit. (Forwarding from wb and ex stage to id stage)                 //
-  //  RiscV register encoding:  rs1 is [19:15], rs2 is [24:20], rd is [11:7]                //
-  //  Or10n register encoding:  ra  is [20:16], rb  is [15:11], rd is [25:21]               //
-  ////////////////////////////////////////////////////////////////////////////////////////////
+  // Forwarding control signals
   assign reg_d_ex_is_reg_a_id  = (regfile_waddr_ex_i     == instr_rdata_i[`REG_S1]) && (rega_used_i == 1'b1);
   assign reg_d_ex_is_reg_b_id  = (regfile_waddr_ex_i     == instr_rdata_i[`REG_S2]) && (regb_used_i == 1'b1);
-  assign reg_d_ex_is_reg_c_id  = (regfile_waddr_ex_i     == instr_rdata_i[`REG_D])  && (regc_used_i == 1'b1);
+  assign reg_d_ex_is_reg_c_id  = (regfile_waddr_ex_i     == instr_rdata_i[`REG_S3])  && (regc_used_i == 1'b1);
   assign reg_d_wb_is_reg_a_id  = (regfile_waddr_wb_i     == instr_rdata_i[`REG_S1]) && (rega_used_i == 1'b1);
   assign reg_d_wb_is_reg_b_id  = (regfile_waddr_wb_i     == instr_rdata_i[`REG_S2]) && (regb_used_i == 1'b1);
-  assign reg_d_wb_is_reg_c_id  = (regfile_waddr_wb_i     == instr_rdata_i[`REG_D])  && (regc_used_i == 1'b1);
+  assign reg_d_wb_is_reg_c_id  = (regfile_waddr_wb_i     == instr_rdata_i[`REG_S3])  && (regc_used_i == 1'b1);
   assign reg_d_alu_is_reg_a_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_S1]) && (rega_used_i == 1'b1);
   assign reg_d_alu_is_reg_b_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_S2]) && (regb_used_i == 1'b1);
-  //assign reg_d_alu_is_reg_c_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_RD])  && (regc_used == 1'b1);
-  assign reg_d_alu_is_reg_c_id = 1'b0;
+  assign reg_d_alu_is_reg_c_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_S3])  && (regc_used_i == 1'b1);
 
+  // Forwarding control unit
   always_comb
   begin
     // default assignements
