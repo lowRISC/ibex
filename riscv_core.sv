@@ -648,16 +648,25 @@ module riscv_core
   // Execution trace generation
   // synopsys translate_off
   `ifdef TRACE_EXECUTION
-  integer f;
-  string fn;
+  integer      f;
+  string       fn;
   integer      cycles;
   logic [31:0] instr;
   logic        compressed;
   logic [31:0] pc;
-  logic  [4:0] rd, rs1, rs2;
-  logic [31:0] rs1_value, rs2_value;
+  logic  [4:0] rd, rs1, rs2, rs3;
+  logic [31:0] rs1_value, rs2_value, rs3_value;
   logic [31:0] imm;
-  string mnemonic;
+  string       mnemonic;
+
+  // cycle counter
+  always_ff @(posedge clk, negedge rst_n)
+  begin
+    if (rst_n == 1'b0)
+      cycles = 0;
+    else
+      cycles = cycles + 1;
+  end
 
   // open/close output file for writing
   initial
@@ -688,6 +697,8 @@ module riscv_core
     rs1_value  = id_stage_i.operand_a_fw_id;
     rs2        = instr[`REG_S2];
     rs2_value  = id_stage_i.operand_b_fw_id;
+    rs3        = instr[`REG_S3];
+    rs3_value  = id_stage_i.alu_operand_c;
 
     // special case for WFI because we don't wait for unstalling there
     if ((id_valid && is_decoding) || id_stage_i.controller_i.pipe_flush_i)
@@ -719,15 +730,6 @@ module riscv_core
         `INSTR_BGE:        printSBInstr("BGE");
         `INSTR_BLTU:       printSBInstr("BLTU");
         `INSTR_BGEU:       printSBInstr("BGEU");
-        // LOAD
-        `INSTR_LB:         printILInstr("LB");
-        `INSTR_LBPOST:     printILInstr("LBPOST");
-        `INSTR_LH:         printILInstr("LH");
-        `INSTR_LHPOST:     printILInstr("LHPOST");
-        `INSTR_LW:         printILInstr("LW");
-        `INSTR_LWPOST:     printILInstr("LWPOST");
-        `INSTR_LBU:        printILInstr("LBU");
-        `INSTR_LHU:        printILInstr("LHU");
         // STORE
         `INSTR_SB:         printSInstr("SB");
         `INSTR_SH:         printSInstr("SH");
@@ -776,25 +778,26 @@ module riscv_core
         `INSTR_RDINSTRETH: printRDInstr("RDINSTRETH");
         // RV32M
         `INSTR_MUL:        printRInstr("MUL");
-        /*
         `INSTR_MULH:       printRInstr("MULH");
         `INSTR_MULHSU:     printRInstr("MULHSU");
         `INSTR_MULHU:      printRInstr("MULHU");
-        */
+        `INSTR_DIV:        printRInstr("DIV");
+        `INSTR_DIVU:       printRInstr("DIVU");
+        `INSTR_REM:        printRInstr("REM");
+        `INSTR_REMU:       printRInstr("REMU");
+        // PULP specific
+        `INSTR_MAC:        printR3Instr("MAC");
+        // opcodes with custom decoding
+        {25'b?, `OPCODE_LOAD}:       printLoadInstr();
+        {25'b?, `OPCODE_LOAD_POST}:  printLoadInstr();
+        {25'b?, `OPCODE_STORE}:      printStoreInstr();
+        {25'b?, `OPCODE_STORE_POST}: printStoreInstr();
         default:           printMnemonic("INVALID");
       endcase // unique case (instr)
 
       $fflush(f);
     end
   end // always @ (posedge clk)
-
-  always_ff @(posedge clk, negedge rst_n)
-  begin
-    if (rst_n == 1'b0)
-      cycles = 0;
-    else
-      cycles = cycles + 1;
-  end
 
   function void printMnemonic(input string mnemonic);
     begin
@@ -819,6 +822,14 @@ module riscv_core
     end
   endfunction // printRInstr
 
+  function void printR3Instr(input string mnemonic);
+    begin
+      riscv_core.mnemonic = mnemonic;
+      $fdisplay(f, "%7s\tx%0d, x%0d (0x%h), x%0d (0x%h), x%0d (0x%h)", mnemonic,
+                rd, rs1, rs1_value, rs2, rs2_value, rs3, rs3_value);
+    end
+  endfunction // printRInstr
+
   function void printIInstr(input string mnemonic);
     begin
       riscv_core.mnemonic = mnemonic;
@@ -827,15 +838,6 @@ module riscv_core
                 rd, rs1, rs1_value, imm);
     end
   endfunction // printIInstr
-
-  function void printILInstr(input string mnemonic);
-    begin
-      riscv_core.mnemonic = mnemonic;
-      imm = id_stage_i.imm_i_type;
-      $fdisplay(f, "%7s\tx%0d, x%0d (0x%h), 0x%0h (imm) (-> 0x%h)", mnemonic,
-                rd, rs1, rs1_value, imm, imm+rs1_value);
-    end
-  endfunction // printILInstr
 
   function void printSInstr(input string mnemonic);
     begin
@@ -886,6 +888,96 @@ module riscv_core
     end
   endfunction // printCSRInstr
 
+  function void printLoadInstr();
+    string mnemonic;
+    logic [2:0] size;
+    begin
+      // detect reg-reg load and find size
+      size = instr[14:12];
+      if (instr[14:12] == 3'b111)
+        size = instr[30:28];
+      case (size)
+        3'b000: mnemonic = "LB";
+        3'b001: mnemonic = "LH";
+        3'b010: mnemonic = "LW";
+        3'b100: mnemonic = "LBU";
+        3'b101: mnemonic = "LHU";
+        3'b011,
+        3'b110,
+        3'b111: begin
+          printMnemonic("INVALID");
+          return;
+        end
+      endcase
+
+      // compose mnemonic
+      if (instr[14:12] == 3'b111)
+        mnemonic = {mnemonic, "RR"};
+      if (instr[6:0] == `OPCODE_LOAD_POST)
+        mnemonic = {mnemonic, "POST"};
+      riscv_core.mnemonic = mnemonic;
+
+      if (instr[14:12] != 3'b111) begin
+        // regular load
+        imm = id_stage_i.imm_i_type;
+        if (instr[6:0] != `OPCODE_LOAD_POST)
+          $fdisplay(f, "%7s\tx%0d, x%0d (0x%h), 0x%0h (imm) (-> 0x%h)",
+                    mnemonic, rd, rs1, rs1_value, imm, imm+rs1_value);
+        else
+          $fdisplay(f, "%7s\tx%0d, x%0d! (0x%h), 0x%0h (imm) (-> 0x%h)",
+                    mnemonic, rd, rs1, rs1_value, imm, rs1_value);
+      end else begin
+        // reg-reg load
+        if (instr[6:0] != `OPCODE_LOAD_POST)
+          $fdisplay(f, "%7s\tx%0d, x%0d (0x%h), x%0d (0x%h) (-> 0x%h)", mnemonic,
+                    rd, rs1, rs1_value, rs2, rs2_value, rs1_value+rs2_value);
+        else
+          $fdisplay(f, "%7s\tx%0d, x%0d! (0x%h), x%0d (0x%h) (-> 0x%h)", mnemonic,
+                    rd, rs1, rs1_value, rs2, rs2_value, rs1_value);
+      end
+    end
+  endfunction
+
+  function void printStoreInstr();
+    string mnemonic;
+    begin
+      case (instr[13:12])
+        2'b00:  mnemonic = "SB";
+        2'b01:  mnemonic = "SH";
+        2'b10:  mnemonic = "SW";
+        2'b11: begin
+          printMnemonic("INVALID");
+          return;
+        end
+      endcase
+
+      // compose mnemonic
+      if (instr[14])
+        mnemonic = {mnemonic, "RR"};
+      if (instr[6:0] == `OPCODE_STORE_POST)
+        mnemonic = {mnemonic, "POST"};
+      riscv_core.mnemonic = mnemonic;
+
+      if (instr[14] == 1'b0) begin
+        // regular store
+        imm = id_stage_i.imm_s_type;
+        if (instr[6:0] != `OPCODE_STORE_POST)
+          $fdisplay(f, "%7s\tx%0d (0x%h), x%0d (0x%h), 0x%0h (imm) (-> 0x%h)",
+                    mnemonic, rs1, rs1_value, rs2, rs2_value, imm, imm+rs1_value);
+        else
+          $fdisplay(f, "%7s\tx%0d! (0x%h), x%0d (0x%h), 0x%0h (imm) (-> 0x%h)",
+                    mnemonic, rs1, rs1_value, rs2, rs2_value, imm, rs1_value);
+      end else begin
+        // reg-reg store
+        if (instr[6:0] != `OPCODE_STORE_POST)
+          $fdisplay(f, "%7s\tx%0d (0x%h), x%0d (0x%h), x%0d (0x%h) (-> 0x%h)", mnemonic,
+                    rs1, rs1_value, rs2, rs2_value, rs3, rs3_value, rs1_value+rs3_value);
+        else
+          $fdisplay(f, "%7s\tx%0d! (0x%h), x%0d (0x%h), x%0d (0x%h) (-> 0x%h)", mnemonic,
+                    rs1, rs1_value, rs2, rs2_value, rs3, rs3_value, rs1_value);
+      end
+    end
+  endfunction // printSInstr
   `endif // TRACE_EXECUTION
   // synopsys translate_on
 `endif

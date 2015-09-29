@@ -128,7 +128,6 @@
 
 // RV32M
 `define INSTR_MUL        { 7'b0000001, 10'b?, 3'b000, 5'b?, `OPCODE_OP }
-/* not implemented
 `define INSTR_MULH       { 7'b0000001, 10'b?, 3'b001, 5'b?, `OPCODE_OP }
 `define INSTR_MULHSU     { 7'b0000001, 10'b?, 3'b010, 5'b?, `OPCODE_OP }
 `define INSTR_MULHU      { 7'b0000001, 10'b?, 3'b011, 5'b?, `OPCODE_OP }
@@ -136,14 +135,9 @@
 `define INSTR_DIVU       { 7'b0000001, 10'b?, 3'b101, 5'b?, `OPCODE_OP }
 `define INSTR_REM        { 7'b0000001, 10'b?, 3'b110, 5'b?, `OPCODE_OP }
 `define INSTR_REMU       { 7'b0000001, 10'b?, 3'b111, 5'b?, `OPCODE_OP }
-*/
 
 // PULP custom instructions
-
-// Post-indexed load
-`define INSTR_LBPOST     { 17'b?, 3'b011, 5'b?, `OPCODE_LOAD_POST }
-`define INSTR_LHPOST     { 17'b?, 3'b110, 5'b?, `OPCODE_LOAD_POST }
-`define INSTR_LWPOST     { 17'b?, 3'b111, 5'b?, `OPCODE_LOAD_POST }
+`define INSTR_MAC        { 2'b00, 15'b?, 3'b000, 5'b?, `OPCODE_PULP_OP }
 
 // Source/Destination register instruction index
 `define REG_S1 19:15
