@@ -414,22 +414,48 @@ module riscv_decoder
         rega_used_o    = 1'b1;
         regb_used_o    = 1'b1;
 
+        if (instr_rdata_i[28])
+          regb_used_o  = 1'b0;
+
         unique case ({instr_rdata_i[31:25], instr_rdata_i[14:12]})
+          // RV32I ALU operations
           {7'b000_0000, 3'b000}: alu_operator = `ALU_ADD;   // Add
           {7'b010_0000, 3'b000}: alu_operator = `ALU_SUB;   // Sub
-
           {7'b000_0000, 3'b010}: alu_operator = `ALU_SLTS;  // Set Lower Than
           {7'b000_0000, 3'b011}: alu_operator = `ALU_SLTU;  // Set Lower Than Unsigned
-
           {7'b000_0000, 3'b100}: alu_operator = `ALU_XOR;   // Xor
           {7'b000_0000, 3'b110}: alu_operator = `ALU_OR;    // Or
           {7'b000_0000, 3'b111}: alu_operator = `ALU_AND;   // And
-
           {7'b000_0000, 3'b001}: alu_operator = `ALU_SLL;   // Shift Left Logical
           {7'b000_0000, 3'b101}: alu_operator = `ALU_SRL;   // Shift Right Logical
           {7'b010_0000, 3'b101}: alu_operator = `ALU_SRA;   // Shift Right Arithmetic
 
+          // supported RV32M instructions
           {7'b000_0001, 3'b000}: mult_en      = 1'b1;       // Multiplication
+
+          // PULP specific instructions
+          {7'b000_0010, 3'b000}: alu_operator = `ALU_AVG;   // Average
+          {7'b000_0010, 3'b001}: alu_operator = `ALU_AVGU;  // Average Unsigned
+          {7'b000_0010, 3'b010}: alu_operator = `ALU_SLETS; // Set Lower Equal Than
+          {7'b000_0010, 3'b011}: alu_operator = `ALU_SLETU; // Set Lower Equal Than Unsigned
+          {7'b000_0010, 3'b100}: alu_operator = `ALU_MIN;   // Min
+          {7'b000_0010, 3'b101}: alu_operator = `ALU_MINU;  // Min Unsigned
+          {7'b000_0010, 3'b110}: alu_operator = `ALU_MAX;   // Max
+          {7'b000_0010, 3'b111}: alu_operator = `ALU_MAXU;  // Max Unsigned
+
+          {7'b000_0100, 3'b101}: alu_operator = `ALU_ROR;   // Rotate Right
+
+          // PULP specific instructions using only one source register
+          {7'b000_1000, 3'b000}: alu_operator = `ALU_FF1;   // Find First 1
+          {7'b000_1000, 3'b001}: alu_operator = `ALU_FL1;   // Find Last 1
+          {7'b000_1000, 3'b010}: alu_operator = `ALU_CLB;   // Count Leading Bits
+          {7'b000_1000, 3'b011}: alu_operator = `ALU_CNT;   // Count set bits (popcount)
+          {7'b000_1000, 3'b100}: alu_operator = `ALU_EXTHS; // Sign-extend Half-word
+          {7'b000_1000, 3'b101}: alu_operator = `ALU_EXTHZ; // Zero-extend Half-word
+          {7'b000_1000, 3'b110}: alu_operator = `ALU_EXTBS; // Sign-extend Byte
+          {7'b000_1000, 3'b111}: alu_operator = `ALU_EXTBZ; // Zero-extend Byte
+
+          {7'b000_1010, 3'b000}: alu_operator = `ALU_ABS;   // Absolute
 
           default: begin
             regfile_alu_we = 1'b0;
@@ -438,18 +464,14 @@ module riscv_decoder
         endcase
       end
 
-      `OPCODE_PULP_OP: begin  // PULP specific ALU instructions
-        mult_en        = 1'b1;
-        mult_mac_en    = 1'b1;
-
+      `OPCODE_PULP_OP: begin  // PULP specific ALU instructions with three source operands
         regfile_alu_we = 1'b1;
         rega_used_o    = 1'b1;
         regb_used_o    = 1'b1;
+        regc_used_o    = 1'b1;
 
         case (instr_rdata_i[14:12])
           3'b000: begin // MAC
-            regc_used_o = 1'b1;
-
             mult_en     = 1'b1;
             mult_mac_en = 1'b1;
           end
@@ -458,8 +480,6 @@ module riscv_decoder
           3'b101,
           3'b110,
           3'b111: begin // MAC with subword selection
-            regc_used_o = 1'b1;
-
             vector_mode_o      = `VEC_MODE216;
             mult_sel_subword_o = instr_rdata_i[13:12];
             mult_signed_mode_o = instr_rdata_i[31:30];
@@ -474,184 +494,6 @@ module riscv_decoder
           end
         endcase
       end
-
-      /*
-
-      `OPCODE_ALU: begin   // Arithmetic Operation
-        rega_used_o  = 1'b1;
-        regb_used_o  = 1'b1;
-
-        case (instr_rdata_i[9:8])
-          2'b00: begin    // ALU Operation
-            regfile_alu_we = 1'b1;
-
-            casex (instr_rdata_i[3:0])
-              4'b110X: begin // l.ext{b,h,w}{s,z}
-                 alu_operator   = {3'b010, instr_rdata_i[7:6], instr_rdata_i[0]};
-                 regb_used_o    = 1'b0; // register b is not used
-              end
-              4'b1111: begin // l.ff1
-                alu_operator = `ALU_FF1;
-              end
-            endcase // casex (instr_rdata_i[3:2])
-          end
-
-          2'b01: begin // l.fl1, l.clb, l.cnt
-            regfile_alu_we = 1'b1;
-            regb_used_o    = 1'b0;
-
-            case (instr_rdata_i[3:0])
-              4'b1101: alu_operator = `ALU_CNT;
-              4'b1110: alu_operator = `ALU_CLB;
-              4'b1111: alu_operator = `ALU_FL1;
-
-              default: begin
-                // synopsys translate_off
-                $display("%t: Illegal ALU instruction received.", $time);
-                // synopsys translate_on
-                regfile_alu_we = 1'b0; // disable Write Enable for illegal instruction
-                illegal_insn_o = 1'b1;
-              end
-            endcase //~case(instr_rdata_i[3:0])
-          end
-
-          2'b10: begin // Min, Max, Abs, Avg
-            regfile_alu_we = 1'b1;
-
-            case (instr_rdata_i[3:0])
-              4'b0000: alu_operator = `ALU_MIN;
-              4'b0001: alu_operator = `ALU_MINU;
-              4'b0010: alu_operator = `ALU_MAX;
-              4'b0011: alu_operator = `ALU_MAXU;
-              4'b0100: alu_operator = `ALU_AVG;
-              4'b0101: alu_operator = `ALU_AVGU;
-
-              4'b1000: begin
-                regb_used_o  = 1'b0;
-                alu_operator = `ALU_ABS;
-              end
-
-              default: begin
-                // synopsys translate_off
-                $display("%t: Illegal ALU instruction received.", $time);
-                // synopsys translate_on
-                regfile_alu_we = 1'b0; // disable Write Enable for illegal instruction
-                illegal_insn_o = 1'b1;
-              end
-            endcase //~case(instr_rdata_i[3:0])
-          end
-        endcase; // case (instr_rdata_i[9:8])
-      end
-
-      `OPCODE_VEC: begin // vectorial alu operations
-        rega_used_o    = 1'b1;
-        regfile_alu_we = 1'b1;
-
-        if (instr_rdata_i[0] == 1'b0) // choose vector size
-          vector_mode_o = `VEC_MODE16;
-        else
-          vector_mode_o = `VEC_MODE8;
-
-        if ((instr_rdata_i[7:6] == 2'b01) || (instr_rdata_i[7:6] == 2'b10)) // replicate scalar 2 or 4 times
-          scalar_replication_o = 1'b1;
-
-        if (instr_rdata_i[7:6] == 2'b10) // use immediate as operand b
-        begin
-          alu_op_b_mux_sel_o   = `OP_B_IMM;
-          immediate_mux_sel_o  = `IMM_VEC;
-        end
-        else
-          regb_used_o = 1'b1;
-
-        // now decode the sub opcodes
-        case (instr_rdata_i[5:1])
-          5'b00000: alu_operator = `ALU_ADD;
-          5'b00001: alu_operator = `ALU_SUB;
-          5'b00010: alu_operator = `ALU_AVG;
-          5'b00011: alu_operator = `ALU_MIN;
-          5'b00100: alu_operator = `ALU_MAX;
-          5'b00101: alu_operator = `ALU_SRL;
-          5'b00110: alu_operator = `ALU_SRA;
-          5'b00111: alu_operator = `ALU_SLL;
-
-          5'b01000: begin // lv32.mul
-            regfile_alu_waddr_sel_o = 2'b01;
-            mult_is_running         = 1'b1;
-          end
-
-          5'b01001: alu_operator = `ALU_OR;
-          5'b01010: alu_operator = `ALU_XOR;
-          5'b01011: alu_operator = `ALU_AND;
-
-          5'b01100: begin // lv32.ins
-            alu_operator         = `ALU_INS;
-            scalar_replication_o = 1'b1;
-          end
-
-          5'b10000: begin // lv32.abs
-            regb_used_o  = 1'b0; // abs does not use operand b
-            alu_operator = `ALU_ABS;
-          end
-
-          5'b10001: begin // lv32.ext
-            regb_used_o  = 1'b0;
-            alu_operator = `ALU_EXT;
-          end
-
-          default: begin // unknown instruction encountered
-            regfile_alu_we = 1'b0;
-            illegal_insn_o = 1'b1;
-            // synopsys translate_off
-            $display("%t: Unknown vector opcode 0x%h.", $time, instr_rdata_i[5:1]);
-            // synopsys translate_on
-          end
-        endcase // instr_rdata[5:1]
-      end
-
-      `OPCODE_VCMP: begin // Vectorial comparisons, i.e. lv32.cmp_*, lv32.all_*, lv32.any_*
-        rega_used_o    = 1'b1;
-        regfile_alu_we = 1'b1;
-
-        if (instr_rdata_i[0] == 1'b0) // choose vector size
-          vector_mode_o = `VEC_MODE16;
-        else
-          vector_mode_o = `VEC_MODE8;
-
-        if ((instr_rdata_i[7:6] == 2'b01) || (instr_rdata_i[7:6] == 2'b10)) // replicate scalar 2 or 4 times
-          scalar_replication_o = 1'b1;
-
-        if (instr_rdata_i[7:6] == 2'b10) // use immediate as operand b
-        begin
-          alu_op_b_mux_sel_o   = `OP_B_IMM;
-          immediate_mux_sel_o  = `IMM_VEC;
-        end
-        else
-          regb_used_o = 1'b1;
-
-        // now decode the sub opcodes for the ALU
-        case (instr_rdata_i[3:1])
-          3'b000: alu_operator = `ALU_EQ;
-          3'b001: alu_operator = `ALU_NE;
-          3'b010: alu_operator = `ALU_GTS;
-          3'b011: alu_operator = `ALU_GES;
-          3'b100: alu_operator = `ALU_LTS;
-          3'b101: alu_operator = `ALU_LES;
-
-          default: begin // unknown instruction encountered
-            illegal_insn_o = 1'b1;
-            // synopsys translate_off
-            $display("%t: Unknown vector opcode 0x%h.", $time, instr_rdata_i[5:1]);
-            // synopsys translate_on
-          end
-        endcase //~case(instr_rdata_i[3:1])
-
-        alu_cmp_mode_o = instr_rdata_i[5:4]; // which kind of comparison do we have here, i.e. full, any, all
-
-        if((instr_rdata_i[5:4] == `ALU_CMP_ANY) || (instr_rdata_i[5:4] == `ALU_CMP_ALL))
-          set_flag = 1'b1; // set the flag for lv32.all_* and lv32.any_*
-      end
-
-      */
 
 
       ////////////////////////////////////////////////

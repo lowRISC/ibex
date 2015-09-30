@@ -208,6 +208,8 @@ endfunction // prettyPrintInstruction
 // Set Lower Than Operations
 `define ALU_SLTS  6'b0011_00
 `define ALU_SLTU  6'b0011_01
+`define ALU_SLETS 6'b0011_10
+`define ALU_SLETU 6'b0011_11
 // Extension Operations
 `define ALU_EXTHS 6'b010_000
 `define ALU_EXTWS 6'b010_001

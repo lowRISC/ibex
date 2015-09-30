@@ -284,13 +284,14 @@ module alu
     cmp_sign_mode[3:0] = 4'b0000; // unsigned mode
 
     // signed mode
-    if ((operator_i == `ALU_GTS) ||
-        (operator_i == `ALU_GES) ||
-        (operator_i == `ALU_LTS) ||
-        (operator_i == `ALU_SLTS) ||
-        (operator_i == `ALU_LES) ||
-        (operator_i == `ALU_MAX) ||
-        (operator_i == `ALU_MIN) ||
+    if ((operator_i == `ALU_GTS)   ||
+        (operator_i == `ALU_GES)   ||
+        (operator_i == `ALU_LTS)   ||
+        (operator_i == `ALU_SLTS)  ||
+        (operator_i == `ALU_SLETS) ||
+        (operator_i == `ALU_LES)   ||
+        (operator_i == `ALU_MAX)   ||
+        (operator_i == `ALU_MIN)   ||
         (operator_i == `ALU_ABS))
     begin
       case (vector_mode_i)
@@ -356,6 +357,8 @@ module alu
       `ALU_GES, `ALU_GEU:  cmp_result = is_greater | is_equal;
       `ALU_LTS, `ALU_SLTS,
       `ALU_LTU, `ALU_SLTU: cmp_result = ~(is_greater | is_equal);
+      `ALU_SLETS,
+      `ALU_SLETU,
       `ALU_LES, `ALU_LEU:  cmp_result = ~is_greater;
       default:; // nothing to do
     endcase //~case(operator_i)
@@ -589,6 +592,9 @@ module alu
 
       // Set Lower Than Operations (result = 1, if a < b)
       `ALU_SLTS, `ALU_SLTU: result_o = {31'b0, cmp_result[0]};
+
+      // Set Lower Equal Than Operations (result = 1, if a <= b)
+      `ALU_SLETS, `ALU_SLETU: result_o = {31'b0, cmp_result[0]};
 
       `ALU_FF1: result_o = {26'h0, ff1_result};
       `ALU_FL1: result_o = {26'h0, fl1_result};
