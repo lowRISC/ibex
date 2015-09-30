@@ -272,11 +272,11 @@ module id_stage
   logic [1:0]  operand_c_fw_mux_sel;
   logic [31:0] operand_a_fw_id;
   logic [31:0] operand_b_fw_id;
+  logic [31:0] operand_c_fw_id;
 
   logic [31:0] alu_operand_a;
   logic [31:0] alu_operand_b;
   logic [31:0] alu_operand_c;
-  logic [31:0] operand_c;
 
 
   assign instr         = instr_rdata_i;
@@ -456,8 +456,9 @@ module id_stage
   always_comb
   begin : alu_operand_c_mux
     case (alu_op_c_mux_sel)
-      `OP_C_JT: operand_c = jump_target;
-      default:  operand_c = regfile_data_rc_id;
+      `OP_C_REGC_OR_FWD:  alu_operand_c = operand_c_fw_id;
+      `OP_C_JT:           alu_operand_c = jump_target;
+      default:            alu_operand_c = operand_c_fw_id;
     endcase // case (alu_op_c_mux_sel)
   end
 
@@ -465,11 +466,11 @@ module id_stage
   always_comb
   begin : operand_c_fw_mux
     case (operand_c_fw_mux_sel)
-      `SEL_FW_EX:    alu_operand_c = regfile_alu_wdata_fw_i;
-      `SEL_FW_WB:    alu_operand_c = regfile_wdata_wb_i;
-      `SEL_REGFILE:  alu_operand_c = operand_c;
-      default:       alu_operand_c = operand_c;
-    endcase; // case (operand_b_fw_mux_sel)
+      `SEL_FW_EX:    operand_c_fw_id = regfile_alu_wdata_fw_i;
+      `SEL_FW_WB:    operand_c_fw_id = regfile_wdata_wb_i;
+      `SEL_REGFILE:  operand_c_fw_id = regfile_data_rc_id;
+      default:       operand_c_fw_id = regfile_data_rc_id;
+    endcase; // case (operand_c_fw_mux_sel)
   end
 
 
@@ -879,7 +880,6 @@ module id_stage
         mult_sel_subword_ex_o       <= mult_sel_subword;
         mult_signed_mode_ex_o       <= mult_signed_mode;
         mult_mac_en_ex_o            <= mult_mac_en;
-
 
         regfile_waddr_ex_o          <= regfile_waddr_id;
         regfile_we_ex_o             <= regfile_we_id;
