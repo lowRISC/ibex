@@ -105,8 +105,9 @@ module riscv_decoder
   logic [1:0] jump_in_id;
 
   logic [`ALU_OP_WIDTH-1:0] alu_operator;
-  logic                     mult_en;
-  logic [1:0]               csr_op;
+  logic       mult_en;
+  logic       mult_mac_en;
+  logic [1:0] csr_op;
 
 
   /////////////////////////////////////////////
@@ -137,7 +138,7 @@ module riscv_decoder
     mult_en                     = 1'b0;
     mult_signed_mode_o          = 2'b00;
     mult_sel_subword_o          = 2'b00;
-    mult_mac_en_o               = 1'b0;
+    mult_mac_en                 = 1'b0;
 
     regfile_mem_we              = 1'b0;
     regfile_alu_we              = 1'b0;
@@ -439,7 +440,7 @@ module riscv_decoder
 
       `OPCODE_PULP_OP: begin  // PULP specific ALU instructions
         mult_en        = 1'b1;
-        mult_mac_en_o  = 1'b1;
+        mult_mac_en    = 1'b1;
 
         regfile_alu_we = 1'b1;
         rega_used_o    = 1'b1;
@@ -450,7 +451,7 @@ module riscv_decoder
             regc_used_o    = 1'b1;
 
             mult_en        = 1'b1;
-            mult_mac_en_o  = 1'b1;
+            mult_mac_en    = 1'b1;
           end
 
 /*
@@ -831,6 +832,7 @@ module riscv_decoder
   assign data_req_o        = (deassert_we_i) ? 1'b0          : data_req;
   assign alu_operator_o    = (deassert_we_i) ? `ALU_NOP      : alu_operator;
   assign mult_en_o         = (deassert_we_i) ? 1'b0          : mult_en;
+  assign mult_mac_en_o     = (deassert_we_i) ? 1'b0          : mult_mac_en;
   assign hwloop_we_o       = (deassert_we_i) ? 3'b0          : hwloop_we;
   assign csr_op_o          = (deassert_we_i) ? `CSR_OP_NONE  : csr_op;
   assign jump_in_id_o      = (deassert_we_i) ? `BRANCH_NONE  : jump_in_id;
