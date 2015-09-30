@@ -42,9 +42,7 @@ module ex_stage
     input  logic [31:0]               alu_operand_b_i,
     input  logic [31:0]               alu_operand_c_i,
 
-    input  logic [1:0]                vector_mode_i,
-    input  logic [1:0]                alu_cmp_mode_i,
-    input  logic [1:0]                alu_vec_ext_i,
+    input  logic                      vector_mode_i,
 
     // Multiplier signals
     input  logic                      mult_en_i,

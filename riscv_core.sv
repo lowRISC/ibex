@@ -118,13 +118,10 @@ module riscv_core
 
   // ALU Control
   logic [`ALU_OP_WIDTH-1:0] alu_operator_ex;
-  logic [31:0]              alu_operand_a_ex;
-  logic [31:0]              alu_operand_b_ex;
-  logic [31:0]              alu_operand_c_ex;
-
-  logic [1:0]               vector_mode_ex;
-  logic [1:0]               alu_cmp_mode_ex;
-  logic [1:0]               alu_vec_ext_ex;
+  logic [31:0] alu_operand_a_ex;
+  logic [31:0] alu_operand_b_ex;
+  logic [31:0] alu_operand_c_ex;
+  logic        vector_mode_ex;
 
   // Multiplier Control
   logic        mult_en_ex;
@@ -358,10 +355,7 @@ module riscv_core
 
     // ALU
     .alu_operator_ex_o            ( alu_operator_ex      ),
-
     .vector_mode_ex_o             ( vector_mode_ex       ), // from ID to EX stage
-    .alu_cmp_mode_ex_o            ( alu_cmp_mode_ex      ), // from ID to EX stage
-    .alu_vec_ext_ex_o             ( alu_vec_ext_ex       ), // from ID to EX stage
 
     // MUL
     .mult_en_ex_o                 ( mult_en_ex           ), // from ID to EX stage
@@ -446,8 +440,6 @@ module riscv_core
     .alu_operand_c_i            ( alu_operand_c_ex             ), // from ID/EX pipe registers
 
     .vector_mode_i              ( vector_mode_ex               ), // from ID/EX pipe registers
-    .alu_cmp_mode_i             ( alu_cmp_mode_ex              ), // from ID/EX pipe registers
-    .alu_vec_ext_i              ( alu_vec_ext_ex               ), // from ID/EX pipe registers
 
     // Multipler
     .mult_en_i                  ( mult_en_ex                   ),

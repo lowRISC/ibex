@@ -53,9 +53,7 @@ module riscv_decoder
   output logic [2:0]  immediate_mux_sel_o,     // immediate selection for operand b
   output logic        alu_op_c_mux_sel_o,      // operand c selection: reg value or jump target
 
-  output logic [1:0]  vector_mode_o,           // selects between 32 bit, 16 bit and 8 bit vectorial modes
-  output logic        scalar_replication_o,    // activates scalar_replication for vectorial mode
-  output logic [1:0]  alu_cmp_mode_o,          // selects comparison mode for ALU (i.e. full, any, all)
+  output logic        vector_mode_o,           // selects between 32 bit, 16 bit and 8 bit vectorial modes
 
   // MUL related control signals
   output logic        mult_en_o,               // perform multiplication
@@ -132,8 +130,6 @@ module riscv_decoder
     immediate_mux_sel_o         = `IMM_I;
 
     vector_mode_o               = `VEC_MODE32;
-    scalar_replication_o        = 1'b0;
-    alu_cmp_mode_o              = `ALU_CMP_FULL;
 
     mult_en                     = 1'b0;
     mult_signed_mode_o          = 2'b00;
