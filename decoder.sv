@@ -448,38 +448,26 @@ module riscv_decoder
 
         case (instr_rdata_i[14:12])
           3'b000: begin // MAC
-            regc_used_o    = 1'b1;
+            regc_used_o = 1'b1;
 
-            mult_en        = 1'b1;
-            mult_mac_en    = 1'b1;
+            mult_en     = 1'b1;
+            mult_mac_en = 1'b1;
           end
 
-/*
-              4'b1001: begin // l.mac.c
-                mult_use_carry_o = 1'b1;
-                mult_mac_en_o    = 1'b1;
-                regc_used_o      = 1'b1;
-                set_carry        = 1'b1;
-                set_overflow     = 1'b1;
-              end
+          3'b100,
+          3'b101,
+          3'b110,
+          3'b111: begin // MAC with subword selection
+            regc_used_o = 1'b1;
 
-          2'b01: begin // MAC with subword selection
             vector_mode_o      = `VEC_MODE216;
-            mult_mac_en_o      = 1'b1;
-            regc_used_o        = 1'b1;
-            mult_sel_subword_o = instr_rdata_i[2:1];
-            mult_signed_mode_o = instr_rdata_i[4:3];
-            mult_use_carry_o   = instr_rdata_i[0];
-            set_carry          = 1'b1;
-            set_overflow       = 1'b1;
+            mult_sel_subword_o = instr_rdata_i[13:12];
+            mult_signed_mode_o = instr_rdata_i[31:30];
+
+            mult_en     = 1'b1;
+            mult_mac_en = 1'b1;
           end
 
-          2'b11: begin // mult with subword selection
-            vector_mode_o      = `VEC_MODE216;
-            mult_sel_subword_o = instr_rdata_i[2:1];
-            mult_signed_mode_o = instr_rdata_i[4:3];
-          end
-*/
           default: begin
             regfile_alu_we = 1'b0;
             illegal_insn_o = 1'b1;
