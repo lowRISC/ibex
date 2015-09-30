@@ -349,20 +349,7 @@ module if_stage
     // take care of jumps and branches
     // only send one branch request per jump/branch
     if (branch_req_Q == 1'b0) begin
-      if (jump_in_ex_i == `BRANCH_COND) begin
-        if (branch_decision_i) begin
-          valid   = 1'b0;
-          // branch taken
-          branch_req = 1'b1;
-          if (unaligned_jump)
-            offset_fsm_ns = WAIT_UNALIGNED;
-          else
-            offset_fsm_ns = WAIT_ALIGNED;
-        end
-
-      end else if (jump_in_id_i == `BRANCH_JAL || jump_in_id_i == `BRANCH_JALR
-                   || pc_set_i
-                   || hwloop_jump_i) begin
+      if (pc_set_i) begin
         valid   = 1'b0;
 
         // switch to new PC from ID stage
@@ -422,7 +409,7 @@ module if_stage
   end
 
   assign if_ready_o = valid & id_ready_i;
-  assign if_valid_o = (~halt_if_i) & if_ready_o & (jump_in_id_i != `BRANCH_COND);
+  assign if_valid_o = (~halt_if_i) & if_ready_o;
 
   assign branch_done_o = branch_req_Q;
 

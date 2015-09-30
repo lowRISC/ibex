@@ -124,9 +124,9 @@ module controller
 
   // FSM state encoding
   enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
-                      DECODE, BRANCH,
+                      DECODE, BRANCH_DELAY,
                       FLUSH_EX, FLUSH_WB,
-                      DBG_FLUSH_EX, DBG_FLUSH_WB, DBG_SIGNAL, DBG_WAIT } ctrl_fsm_cs, ctrl_fsm_ns;
+                      DBG_SIGNAL, DBG_WAIT } ctrl_fsm_cs, ctrl_fsm_ns;
 
   logic reg_d_ex_is_reg_a_id;
   logic reg_d_ex_is_reg_b_id;
@@ -238,98 +238,88 @@ module controller
       begin
         is_decoding_o = 1'b1;
 
-        // handle conditional branches
-        if (jump_in_dec_i == `BRANCH_COND) begin
-          // handle branch if decision is available in next cycle
-          if (id_valid_i)
-            ctrl_fsm_ns = BRANCH;
-        end
+        // decode and execute instructions only if the current conditional
+        // branch in the EX stage is either not taken, or there is no
+        // conditional branch in the EX stage
+        if ((jump_in_ex_i == `BRANCH_COND && ~branch_decision_i) ||
+            (jump_in_ex_i != `BRANCH_COND))
+        begin // now analyze the current instruction in the ID stage
 
-        // handle unconditional jumps
-        // we can jump directly since we know the address already
-        if (jump_in_dec_i == `BRANCH_JALR || jump_in_dec_i == `BRANCH_JAL) begin
-          pc_mux_sel_o = `PC_JUMP;
+          // handle unconditional jumps
+          // we can jump directly since we know the address already
+          // we don't need to worry about conditional branches here as they
+          // will be evaluated in the EX stage
+          if (jump_in_dec_i == `BRANCH_JALR || jump_in_dec_i == `BRANCH_JAL) begin
+            pc_mux_sel_o = `PC_JUMP;
 
-          // we don't have to change our current state here as the prefetch
-          // buffer is automatically invalidated, thus the next instruction
-          // that is served to the ID stage is the one of the jump target
-        end
+            // if there is a jr stall, wait for it to be gone
+            if (~jr_stall_o)
+              pc_set_o = 1'b1;
 
-        // handle hwloops
-        if (hwloop_jump_i) begin
-          pc_mux_sel_o = `PC_HWLOOP;
-        end
+            // we don't have to change our current state here as the prefetch
+            // buffer is automatically invalidated, thus the next instruction
+            // that is served to the ID stage is the one of the jump target
+          end
 
-        // handle illegal instructions
-        if (illegal_insn_i) begin
-          illegal_insn_o = 1'b1;
-        end
+          // handle hwloops
+          if (hwloop_jump_i) begin
+            pc_mux_sel_o = `PC_HWLOOP;
+            pc_set_o     = 1'b1;
+          end
 
-        if (exc_pc_sel_i) begin
-          pc_mux_sel_o   = `PC_EXCEPTION;
-          pc_set_o       = 1'b1;
+          // handle illegal instructions
+          if (illegal_insn_i) begin
+            illegal_insn_o = 1'b1;
+          end
 
-          // we don't have to change our current state here as the prefetch
-          // buffer is automatically invalidated, thus the next instruction
-          // that is served to the ID stage is the one of the jump to the
-          // exception handler
-        end
+          if (exc_pc_sel_i) begin
+            pc_mux_sel_o   = `PC_EXCEPTION;
+            pc_set_o       = 1'b1;
 
-        if (eret_insn_i) begin
-          clear_isr_running_o = 1'b1;
-          pc_mux_sel_o        = `PC_ERET;
-          pc_set_o            = 1'b1;
-        end
+            // we don't have to change our current state here as the prefetch
+            // buffer is automatically invalidated, thus the next instruction
+            // that is served to the ID stage is the one of the jump to the
+            // exception handler
+          end
 
-        // handle WFI instruction, flush pipeline and (potentially) go to
-        // sleep
-        if (pipe_flush_i || exc_pipe_flush_i)
-        begin
-          halt_if_o = 1'b1;
-          halt_id_o = 1'b1;
+          if (eret_insn_i) begin
+            clear_isr_running_o = 1'b1;
+            pc_mux_sel_o        = `PC_ERET;
+            pc_set_o            = 1'b1;
+          end
 
-          ctrl_fsm_ns = FLUSH_EX;
-        end
-
-        // take care of debug
-        // branch conditional will be handled in next state
-        if(trap_hit_i && jump_in_dec_i != `BRANCH_COND)
-        begin
-          // halt pipeline immediately
-          halt_if_o = 1'b1;
-          halt_id_o = 1'b1;
-
-          // TODO: take a second look at this
-          // make sure the current instruction has been executed
-          // before changing state to non-decode
-          //if (~stall_ex_o)
-            ctrl_fsm_ns = DBG_SIGNAL;
-        end
-      end
-
-      // handle branches
-      BRANCH:
-      begin
-        // assume branch instruction is in EX
-        if (jump_in_ex_i == `BRANCH_COND && ~branch_decision_i) begin
-          // not taken
-
-          // if we want to debug, flush the pipeline
-          // the current_pc_if will take the value of the next instruction to
-          // be executed (NPC)
-          if (trap_hit_i)
+          // handle WFI instruction, flush pipeline and (potentially) go to
+          // sleep
+          if (pipe_flush_i || exc_pipe_flush_i)
           begin
             halt_if_o = 1'b1;
             halt_id_o = 1'b1;
 
-            ctrl_fsm_ns = DBG_SIGNAL;
-          end else begin
-            if (if_valid_i)
-              ctrl_fsm_ns = DECODE;
+            ctrl_fsm_ns = FLUSH_EX;
           end
-        end else begin
-          // branch taken
-          pc_mux_sel_o = `PC_BRANCH;
+
+          // take care of debug
+          // branch conditional will be handled in next state
+          if(trap_hit_i && jump_in_dec_i != `BRANCH_COND)
+          begin
+            // halt pipeline immediately
+            halt_if_o = 1'b1;
+            halt_id_o = 1'b1;
+
+            // TODO: take a second look at this
+            // make sure the current instruction has been executed
+            // before changing state to non-decode
+            //if (~stall_ex_o)
+              ctrl_fsm_ns = DBG_SIGNAL;
+          end
+        end
+        else
+        begin
+          // there is a branch in the EX stage that is taken
+          pc_mux_sel_o  = `PC_BRANCH;
+          pc_set_o      = 1'b1;
+
+          is_decoding_o = 1'b0; // we are not decoding the current instruction in the ID stage
 
           // if we want to debug, flush the pipeline
           // the current_pc_if will take the value of the next instruction to
@@ -337,32 +327,26 @@ module controller
           if (trap_hit_i)
           begin
             ctrl_fsm_ns = DBG_SIGNAL;
-          end else begin
+          end
+          else
+          begin
             if (if_valid_i)
               ctrl_fsm_ns = DECODE;
+            else // change to special state when the new instruction is not yet ready
+              ctrl_fsm_ns = BRANCH_DELAY;
           end
         end
       end
 
-      // // make sure EX stage is flushed
-      // DBG_FLUSH_EX:
-      // begin
-      //   halt_if_o = 1'b1;
-      //   halt_id_o = 1'b1;
+      // a branch was executed, but the instruction cache was not ready to
+      // serve a new instruction
+      BRANCH_DELAY:
+      begin
+        is_decoding_o = 1'b0;
 
-      //   if(stall_ex_o == 1'b0)
-      //     ctrl_fsm_ns = DBG_FLUSH_WB;
-      // end
-
-      // // make sure WB stage is flushed
-      // DBG_FLUSH_WB:
-      // begin
-      //   halt_if_o = 1'b1;
-      //   halt_id_o = 1'b1;
-
-      //   if(stall_ex_o == 1'b0)
-      //     ctrl_fsm_ns = DBG_SIGNAL;
-      // end
+        if (if_valid_i)
+          ctrl_fsm_ns = DECODE;
+      end
 
       // now we can signal to the debugger that our pipeline is empty and it
       // can examine our current state
@@ -443,12 +427,12 @@ module controller
   /////////////////////////////////////////////////////////////
   always_comb
   begin
-    load_stall_o  = 1'b0;
-    jr_stall_o    = 1'b0;
-    deassert_we_o = 1'b0;
+    load_stall_o   = 1'b0;
+    jr_stall_o     = 1'b0;
+    deassert_we_o  = 1'b0;
 
     // deassert WE when the core is not decoding instructions
-    if (ctrl_fsm_cs != DECODE)
+    if (~is_decoding_o)
       deassert_we_o = 1'b1;
 
     // deassert WE in case of illegal instruction
