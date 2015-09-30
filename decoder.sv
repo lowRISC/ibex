@@ -30,67 +30,66 @@
 module riscv_decoder
 (
   // singals running to/from controller
-  input  logic        deassert_we_i,              // deassert we, we are stalled or not active
-  input  logic        data_misaligned_i,          // misaligned data load/store in progress
+  input  logic        deassert_we_i,           // deassert we, we are stalled or not active
+  input  logic        data_misaligned_i,       // misaligned data load/store in progress
 
-  output logic        illegal_insn_o,             // illegal instruction encountered
-  output logic        trap_insn_o,                // trap instruction encountered
-  output logic        eret_insn_o,                // trap instruction encountered
-  output logic        pipe_flush_o,               // pipeline flush is requested (e.g. WFI instruction)
+  output logic        illegal_insn_o,          // illegal instruction encountered
+  output logic        trap_insn_o,             // trap instruction encountered
+  output logic        eret_insn_o,             // trap instruction encountered
+  output logic        pipe_flush_o,            // pipeline flush is requested
 
-  output logic        rega_used_o,                // register A is used by current instruction
-  output logic        regb_used_o,                // register B is used by current instruction
-  output logic        regc_used_o,                // register C is used by current instruction
-
+  output logic        rega_used_o,             // rs1 is used by current instruction
+  output logic        regb_used_o,             // rs2 is used by current instruction
+  output logic        regc_used_o,             // rs3 is used by current instruction
 
   // from IF/ID pipeline
-  input  logic [31:0] instr_rdata_i,              // Instruction read from instr memory/cache: (sampled in the if stage)
-  input  logic        illegal_c_insn_i,           // compressed instruction decode failed
+  input  logic [31:0] instr_rdata_i,           // instruction read from instr memory/cache
+  input  logic        illegal_c_insn_i,        // compressed instruction decode failed
 
   // ALU signals
-  output logic [`ALU_OP_WIDTH-1:0] alu_operator_o,             // Operator in the EX stage for the ALU block
-  output logic [1:0]               alu_op_a_mux_sel_o,         // Operator a is selected between reg value, PC or immediate
-  output logic [1:0]               alu_op_b_mux_sel_o,         // Operator b is selected between reg value or immediate
-  output logic                     alu_op_c_mux_sel_o,         // Operator c is selected between reg value or PC
-  output logic [2:0]               immediate_mux_sel_o,
+  output logic [`ALU_OP_WIDTH-1:0] alu_operator_o, // ALU operation selection
+  output logic [1:0]  alu_op_a_mux_sel_o,      // operand a selection: reg value, PC, immediate or zero
+  output logic [1:0]  alu_op_b_mux_sel_o,      // operand b selection: reg value or immediate
+  output logic [2:0]  immediate_mux_sel_o,     // immediate selection for operand b
+  output logic        alu_op_c_mux_sel_o,      // operand c selection: reg value or jump target
 
-  output logic [1:0]               vector_mode_o,              // selects between 32 bit, 16 bit and 8 bit vectorial modes
-  output logic                     scalar_replication_o,       // activates scalar_replication for vectorial mode
-  output logic [1:0]               alu_cmp_mode_o,             // selects comparison mode for ALU (i.e. full, any, all)
+  output logic [1:0]  vector_mode_o,           // selects between 32 bit, 16 bit and 8 bit vectorial modes
+  output logic        scalar_replication_o,    // activates scalar_replication for vectorial mode
+  output logic [1:0]  alu_cmp_mode_o,          // selects comparison mode for ALU (i.e. full, any, all)
 
   // MUL related control signals
-  output logic        mult_en_o,                   // Perform a multiplication operation
-  output logic [1:0]  mult_sel_subword_o,          // Select subwords for 16x16 bit of multiplier
-  output logic [1:0]  mult_signed_mode_o,          // Multiplication in signed mode
-  output logic        mult_mac_en_o,               // Use the accumulator after multiplication
+  output logic        mult_en_o,               // perform multiplication
+  output logic        mult_mac_en_o,           // accumulate multiplication result
+  output logic [1:0]  mult_sel_subword_o,      // Select subwords for 16x16 bit of multiplier
+  output logic [1:0]  mult_signed_mode_o,      // Multiplication in signed mode
 
   // register file related signals
-  output logic        regfile_mem_we_o,            // Write Enable to regfile
-  output logic        regfile_alu_we_o,            // Write Enable to regfile 2nd port
-  output logic        regfile_alu_waddr_sel_o,     // Select register write address for ALU/MUL operations
+  output logic        regfile_mem_we_o,        // write enable for regfile
+  output logic        regfile_alu_we_o,        // write enable for 2nd regfile port
+  output logic        regfile_alu_waddr_sel_o, // Select register write address for ALU/MUL operations
 
   // CSR manipulation
-  output logic        csr_access_o,                // perform an access to CSR
-  output logic [1:0]  csr_op_o,                    // operation to perform on CSR
+  output logic        csr_access_o,            // access to CSR
+  output logic [1:0]  csr_op_o,                // operation to perform on CSR
 
   // LD/ST unit signals
-  output logic        data_req_o,                  // Request for a transaction to data memory
-  output logic        data_we_o,                   // Write enable to data memory
-  output logic        prepost_useincr_o,           // When not active bypass the alu result for address calculation = op_a
-  output logic [1:0]  data_type_o,                 // Data type on data memory: byte, half word or word
-  output logic        data_sign_extension_o,       // Sign extension on read data from data memory
-  output logic [1:0]  data_reg_offset_o,           // Offset in bytes inside register for stores
+  output logic        data_req_o,              // start transaction to data memory
+  output logic        data_we_o,               // data memory write enable
+  output logic        prepost_useincr_o,       // when not active bypass the alu result for address calculation
+  output logic [1:0]  data_type_o,             // data type on data memory: byte, half word or word
+  output logic        data_sign_extension_o,   // sign extension on read data from data memory
+  output logic [1:0]  data_reg_offset_o,       // offset in byte inside register for stores
 
   // hwloop signals
-  output logic [2:0]  hwloop_we_o,                 // write enable for hwloop regs
-  output logic        hwloop_start_mux_sel_o,      // selects hwloop start address input
-  output logic        hwloop_end_mux_sel_o,        // selects hwloop end address input
-  output logic        hwloop_cnt_mux_sel_o,        // selects hwloop counter input
+  output logic [2:0]  hwloop_we_o,             // write enable for hwloop regs
+  output logic        hwloop_start_mux_sel_o,  // selects hwloop start address input
+  output logic        hwloop_end_mux_sel_o,    // selects hwloop end address input
+  output logic        hwloop_cnt_mux_sel_o,    // selects hwloop counter input
 
   // jump/branches
-  output logic [1:0]  jump_in_dec_o,               // jump_in_id without deassert
-  output logic [1:0]  jump_in_id_o,                // jump is being calculated in ALU
-  output logic [1:0]  jump_target_mux_sel_o        // jump target selection
+  output logic [1:0]  jump_in_dec_o,           // jump_in_id without deassert
+  output logic [1:0]  jump_in_id_o,            // jump is being calculated in ALU
+  output logic [1:0]  jump_target_mux_sel_o    // jump target selection
 );
 
   // write enable/request control
