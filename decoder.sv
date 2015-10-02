@@ -512,18 +512,18 @@ module riscv_decoder
               // TODO: Handle in controller
             end
 
-            32'h00_10_00_73:  // EBREAK
+            32'h00_10_00_73:  // ebreak
             begin
               // debugger trap
               trap_insn = 1'b1;
             end
 
-            32'h10_00_00_73:  // ERET
+            32'h10_00_00_73:  // eret
             begin
               eret_insn = 1'b1;
             end
 
-            32'h10_20_00_73:  // WFI
+            32'h10_20_00_73:  // wfi
             begin
               // flush pipeline
               pipe_flush = 1'b1;
