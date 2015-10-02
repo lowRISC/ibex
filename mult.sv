@@ -31,16 +31,16 @@
 
 module mult
 (
-   input  logic [1:0]   vector_mode_i,
-   input  logic [1:0]   sel_subword_i,
-   input  logic [1:0]   signed_mode_i,
-   input  logic         mac_en_i,
+  input  logic        mac_en_i,
+  input  logic        vector_mode_i,
+  input  logic [1:0]  sel_subword_i,
+  input  logic [1:0]  signed_mode_i,
 
-   input  logic [31:0]  op_a_i,
-   input  logic [31:0]  op_b_i,
-   input  logic [31:0]  mac_i,
+  input  logic [31:0] op_a_i,
+  input  logic [31:0] op_b_i,
+  input  logic [31:0] mac_i,
 
-   output logic [31:0]  result_o
+  output logic [31:0] result_o
 );
 
   logic [31:0] op_a_sel;
@@ -48,13 +48,13 @@ module mult
   logic [31:0] mac_int;
 
 
-  // this block performs the subword selection and sign extensions
+  // perform subword selection and sign extensions
   always_comb
   begin
     op_a_sel = op_a_i;
     op_b_sel = op_b_i;
 
-    if(vector_mode_i == `VEC_MODE216)
+    if(vector_mode_i)
     begin
       if(sel_subword_i[1] == 1'b1)
         op_a_sel[15:0] = op_a_i[31:16];
@@ -74,5 +74,4 @@ module mult
   assign mac_int  = (mac_en_i == 1'b1) ? mac_i : 32'b0;
   assign result_o = mac_int + op_a_sel * op_b_sel;
 
-endmodule // mult
-
+endmodule

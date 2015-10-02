@@ -84,7 +84,7 @@ module ex_stage
 
 
   logic [31:0] alu_result;
-  logic        alu_flag;
+  logic        alu_cmp_result;
 
   logic [31:0] mult_result;
 
@@ -93,7 +93,7 @@ module ex_stage
   assign regfile_alu_waddr_fw_o = regfile_alu_waddr_i;
 
 
-  // ALU result MUX
+  // EX stage result mux (ALU, MAC unit, CSR)
   always_comb
   begin
     regfile_alu_wdata_fw_o = alu_result;
@@ -107,7 +107,7 @@ module ex_stage
 
 
   // branch handling
-  assign branch_decision_o = alu_flag;
+  assign branch_decision_o = alu_cmp_result;
   assign jump_target_o     = alu_operand_c_i;
 
 
@@ -122,16 +122,12 @@ module ex_stage
 
   alu alu_i
   (
-   .operator_i    ( alu_operator_i      ),
-   .operand_a_i   ( alu_operand_a_i     ),
-   .operand_b_i   ( alu_operand_b_i     ),
+   .operator_i          ( alu_operator_i  ),
+   .operand_a_i         ( alu_operand_a_i ),
+   .operand_b_i         ( alu_operand_b_i ),
 
-   .vector_mode_i ( vector_mode_i       ),
-   .cmp_mode_i    ( alu_cmp_mode_i      ),
-   .vec_ext_i     ( alu_vec_ext_i       ),
-
-   .result_o      ( alu_result          ),
-   .flag_o        ( alu_flag            )
+   .result_o            ( alu_result      ),
+   .comparison_result_o ( alu_cmp_result  )
   );
 
 
