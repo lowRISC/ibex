@@ -425,7 +425,7 @@ module id_stage
   begin : alu_operand_b_mux
     case (alu_op_b_mux_sel)
       `OP_B_REGB_OR_FWD:  alu_operand_b = operand_b_fw_id;
-      `OP_B_REGC_OR_FWD:  alu_operand_b = alu_operand_c;
+      `OP_B_REGC_OR_FWD:  alu_operand_b = operand_c_fw_id;
       `OP_B_IMM:          alu_operand_b = immediate_b;
       default:            alu_operand_b = operand_b_fw_id;
     endcase // case (alu_op_b_mux_sel)
