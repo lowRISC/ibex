@@ -78,7 +78,6 @@ module id_stage
     input  logic        wb_valid_i,     // WB stage is done
 
     // To the Pipeline ID/EX
-    output logic [31:0] regfile_rb_data_ex_o,
     output logic [31:0] alu_operand_a_ex_o,
     output logic [31:0] alu_operand_b_ex_o,
     output logic [31:0] alu_operand_c_ex_o,
@@ -217,7 +216,7 @@ module id_stage
   logic [`ALU_OP_WIDTH-1:0] alu_operator;
   logic [1:0]  alu_op_a_mux_sel;
   logic [1:0]  alu_op_b_mux_sel;
-  logic        alu_op_c_mux_sel;
+  logic [1:0]  alu_op_c_mux_sel;
 
   logic        vector_mode;
 
@@ -457,6 +456,7 @@ module id_stage
   begin : alu_operand_c_mux
     case (alu_op_c_mux_sel)
       `OP_C_REGC_OR_FWD:  alu_operand_c = operand_c_fw_id;
+      `OP_C_REGB_OR_FWD:  alu_operand_c = operand_b_fw_id;
       `OP_C_JT:           alu_operand_c = jump_target;
       default:            alu_operand_c = operand_c_fw_id;
     endcase // case (alu_op_c_mux_sel)
@@ -810,8 +810,6 @@ module id_stage
   begin : ID_EX_PIPE_REGISTERS
     if (rst_n == 1'b0)
     begin
-      regfile_rb_data_ex_o        <= 32'h0000_0000;
-
       alu_operator_ex_o           <= `ALU_NOP;
       alu_operand_a_ex_o          <= 32'h0000_0000;
       alu_operand_b_ex_o          <= 32'h0000_0000;
@@ -868,8 +866,6 @@ module id_stage
     else if (~data_misaligned_i) begin
       if (id_valid_o)
       begin // unstall the whole pipeline
-        regfile_rb_data_ex_o        <= operand_b_fw_id;
-
         alu_operator_ex_o           <= alu_operator;
         alu_operand_a_ex_o          <= alu_operand_a;
         alu_operand_b_ex_o          <= alu_operand_b;

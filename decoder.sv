@@ -50,8 +50,8 @@ module riscv_decoder
   output logic [`ALU_OP_WIDTH-1:0] alu_operator_o, // ALU operation selection
   output logic [1:0]  alu_op_a_mux_sel_o,      // operand a selection: reg value, PC, immediate or zero
   output logic [1:0]  alu_op_b_mux_sel_o,      // operand b selection: reg value or immediate
+  output logic [1:0]  alu_op_c_mux_sel_o,      // operand c selection: reg value or jump target
   output logic [2:0]  immediate_mux_sel_o,     // immediate selection for operand b
-  output logic        alu_op_c_mux_sel_o,      // operand c selection: reg value or jump target
 
   output logic        vector_mode_o,           // selects between 32 bit, 16 bit and 8 bit vectorial modes
 
@@ -129,7 +129,7 @@ module riscv_decoder
 
     immediate_mux_sel_o         = `IMM_I;
 
-    vector_mode_o               = `VEC_MODE32;
+    vector_mode_o               = 1'b0;
 
     mult_en                     = 1'b0;
     mult_signed_mode_o          = 2'b00;
@@ -248,6 +248,9 @@ module riscv_decoder
         rega_used_o  = 1'b1;
         regb_used_o  = 1'b1;
         alu_operator = `ALU_ADD;
+
+        // pass write data through ALU operand c
+        alu_op_c_mux_sel_o = `OP_C_REGB_OR_FWD;
 
         // post-increment setup
         if (instr_rdata_i[6:0] == `OPCODE_STORE_POST) begin
@@ -476,7 +479,7 @@ module riscv_decoder
           3'b101,
           3'b110,
           3'b111: begin // MAC with subword selection
-            vector_mode_o      = `VEC_MODE216;
+            vector_mode_o      = 1'b1;
             mult_sel_subword_o = instr_rdata_i[13:12];
             mult_signed_mode_o = instr_rdata_i[31:30];
 

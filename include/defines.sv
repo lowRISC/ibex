@@ -238,9 +238,6 @@ endfunction // prettyPrintInstruction
 
 `define ALU_ABS   6'b11_1010
 
-`define ALU_INS   6'b11_1101
-`define ALU_EXT   6'b11_1100
-
 `define ALU_CNT   6'b11_0000
 `define ALU_FF1   6'b11_0010
 `define ALU_FL1   6'b11_0011
@@ -252,11 +249,6 @@ endfunction // prettyPrintInstruction
 `define VEC_MODE16  2'b10
 `define VEC_MODE8   2'b11
 `define VEC_MODE216 2'b01
-
-// ALU comparison mode
-`define ALU_CMP_FULL 2'b00
-`define ALU_CMP_ANY  2'b01
-`define ALU_CMP_ALL  2'b10
 
 
 /////////////////////////////////////////////////////////
@@ -328,8 +320,9 @@ endfunction // prettyPrintInstruction
 `define IMM_PCINCR 3'b011
 
 // operand c selection
-`define OP_C_REGC_OR_FWD 1'b0
-`define OP_C_JT          1'b1
+`define OP_C_REGC_OR_FWD 2'b00
+`define OP_C_REGB_OR_FWD 2'b01
+`define OP_C_JT          2'b10
 
 // branch types
 `define BRANCH_NONE 2'b00
