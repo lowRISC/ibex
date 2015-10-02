@@ -586,13 +586,13 @@ module riscv_decoder
             hwloop_end_mux_sel_o = 1'b0; // jump target
           end
           3'b010: begin
-            // lp.count initialize counter from rs1
+            // lp.count: initialize counter from rs1
             hwloop_we[2]         = 1'b1;
             hwloop_cnt_mux_sel_o = 1'b1;
             rega_used_o          = 1'b1;
           end
           3'b011: begin
-            // lp.counti initialize counter from I-type immediate
+            // lp.counti: initialize counter from I-type immediate
             hwloop_we[2]         = 1'b1;
             hwloop_cnt_mux_sel_o = 1'b0;
           end
@@ -604,16 +604,6 @@ module riscv_decoder
             hwloop_end_mux_sel_o   = 1'b0;
             hwloop_cnt_mux_sel_o   = 1'b1;
             rega_used_o            = 1'b1;
-          end
-          3'b101: begin
-            // lp.setupi: initialize counter from I-type immediate, set start
-            // address to next instruction and end address to PC + shifted
-            // z-type immediate
-            hwloop_we              = 3'b111;
-            hwloop_start_mux_sel_o = 1'b1;
-            hwloop_end_mux_sel_o   = 1'b1;
-            hwloop_cnt_mux_sel_o   = 1'b0;
-            illegal_insn_o         = 1'b1; // TODO: PC + z-imm currently not supported
           end
           default: begin
             illegal_insn_o = 1'b1;
