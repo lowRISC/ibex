@@ -61,8 +61,8 @@ module riscv_core
   input  logic [31:0] data_rdata_i,
 
   // Interrupt inputs
-  input  logic        irq_i,                 // level-triggered IR line
-  input  logic        irq_nm_i,              // level-triggered IR line for non-maskable IRQ
+  input  logic        irq_i,          // level-triggered IR line
+  input  logic        irq_nm_i,       // level-triggered IR line for non-maskable IRQ
 
   // Debug Interface
   input  logic        dbginf_stall_i,
@@ -83,23 +83,22 @@ module riscv_core
 
 
   // IF/ID signals
-  logic [31:0]   instr_rdata_id;    // Instruction sampled inside IF stage
-  logic          is_compressed_id;
-  logic          illegal_c_insn_id; // Illegal compressed instruction sent to ID stage
-  logic [31:0]   current_pc_if;     // Current Program counter
-  logic [31:0]   current_pc_id;     // Current Program counter
-  logic          pc_set;
-  logic [2:0]    pc_mux_sel_id;     // Mux selector for next PC
-  logic [1:0]    exc_pc_mux_id;     // Mux selector for exception PC
+  logic [31:0] instr_rdata_id;    // Instruction sampled inside IF stage
+  logic        is_compressed_id;
+  logic        illegal_c_insn_id; // Illegal compressed instruction sent to ID stage
+  logic [31:0] current_pc_if;     // Current Program counter
+  logic [31:0] current_pc_id;     // Current Program counter
+  logic        pc_set;
+  logic [2:0]  pc_mux_sel_id;     // Mux selector for next PC
+  logic [1:0]  exc_pc_mux_id;     // Mux selector for exception PC
 
-  logic          branch_done;       // Branch already done
+  logic        branch_done;       // Branch already done
 
   // ID performance counter signals
-  logic          is_decoding;
+  logic        is_decoding;
 
-
-  logic          useincr_addr_ex;   // Active when post increment
-  logic          data_misaligned;
+  logic        useincr_addr_ex;   // Active when post increment
+  logic        data_misaligned;
 
   // Jump and branch target and decision (EX->IF)
   logic [31:0] jump_target_id, jump_target_ex;
@@ -107,14 +106,12 @@ module riscv_core
   logic  [1:0] jump_in_ex;
   logic        branch_decision;
 
-
   logic        core_busy;
   logic        if_busy;
 
 
   // Register Data
-  logic [31:0] regfile_rb_data_ex;  // from id stage to load/store unit and ex stage
-
+  logic [31:0] regfile_rb_data_ex;  // from id stage to load/store unit
 
   // ALU Control
   logic [`ALU_OP_WIDTH-1:0] alu_operator_ex;
@@ -250,7 +247,7 @@ module riscv_core
     .instr_rdata_i       ( instr_rdata_i   ),
 
     // outputs to ID stage
-    .instr_rdata_id_o    ( instr_rdata_id    ),   // Output of IF Pipeline stage
+    .instr_rdata_id_o    ( instr_rdata_id    ),
     .is_compressed_id_o  ( is_compressed_id  ),
     .illegal_c_insn_id_o ( illegal_c_insn_id ),
     .current_pc_if_o     ( current_pc_if     ),   // current pc in IF stage
@@ -258,7 +255,7 @@ module riscv_core
 
     // control signals
     .pc_set_i            ( pc_set          ),
-    .exception_pc_reg_i  ( epcr            ),   // Exception PC register
+    .exception_pc_reg_i  ( epcr            ),   // exception return address
     .pc_mux_sel_i        ( pc_mux_sel_id   ),   // sel for pc multiplexer
     .exc_pc_mux_i        ( exc_pc_mux_id   ),   // selector for exception multiplexer
 
