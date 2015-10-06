@@ -28,7 +28,7 @@
 
 `include "defines.sv"
 
-module hwloop_regs
+module riscv_hwloop_regs
 (
   input  logic        clk,
   input  logic        rst_n,

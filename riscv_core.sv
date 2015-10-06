@@ -230,7 +230,7 @@ module riscv_core
   //  |___|_|     |____/ |_/_/   \_\____|_____|   //
   //                                              //
   //////////////////////////////////////////////////
-  if_stage
+  riscv_if_stage
   #(
     .RDATA_WIDTH         ( INSTR_RDATA_WIDTH )
   )
@@ -300,7 +300,7 @@ module riscv_core
   //  |___|____/  |____/ |_/_/   \_\____|_____|  //
   //                                             //
   /////////////////////////////////////////////////
-  id_stage id_stage_i
+  riscv_id_stage id_stage_i
   (
     .clk                          ( clk                  ),
     .rst_n                        ( rst_n                ),
@@ -433,7 +433,7 @@ module riscv_core
   //  |_____/_/\_\ |____/ |_/_/   \_\____|_____|     //
   //                                                 //
   /////////////////////////////////////////////////////
-  ex_stage  ex_stage_i
+  riscv_ex_stage  ex_stage_i
   (
     // Global signals: Clock and active low asynchronous reset
     .clk                        ( clk                          ),
@@ -496,7 +496,7 @@ module riscv_core
   //   |_____\___/_/   \_\____/  |____/ |_| \___/|_| \_\_____|  \___/|_| \_|___| |_|    //
   //                                                                                    //
   ////////////////////////////////////////////////////////////////////////////////////////
-  load_store_unit  load_store_unit_i
+  riscv_load_store_unit  load_store_unit_i
   (
     .clk                   ( clk                     ),
     .rst_n                 ( rst_n                   ),
@@ -545,7 +545,7 @@ module riscv_core
   //                                  //
   //   Control and Status Registers   //
   //////////////////////////////////////
-  cs_registers
+  riscv_cs_registers
   #(
     .N_EXT_PERF_COUNTERS      ( N_EXT_PERF_COUNTERS   )
   )
@@ -606,7 +606,7 @@ module riscv_core
   // |____/|_____|____/ \___/ \____|  \___/|_| \_|___| |_|   //
   //                                                         //
   /////////////////////////////////////////////////////////////
-  debug_unit debug_unit_i
+  riscv_debug_unit debug_unit_i
   (
     .clk             ( clk             ),
     .rst_n           ( rst_n           ),

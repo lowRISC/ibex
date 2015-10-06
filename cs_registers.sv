@@ -25,7 +25,7 @@
 `include "defines.sv"
 
 
-module cs_registers
+module riscv_cs_registers
 #(
   parameter N_EXT_PERF_COUNTERS = 0
 )

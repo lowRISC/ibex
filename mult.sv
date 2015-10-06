@@ -32,7 +32,7 @@
 
 `include "defines.sv"
 
-module mult
+module riscv_mult
 (
    input  logic [1:0]   vector_mode_i,
    input  logic [1:0]   sel_subword_i,

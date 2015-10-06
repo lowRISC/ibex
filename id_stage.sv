@@ -33,7 +33,7 @@
 
 `include "defines.sv"
 
-module id_stage
+module riscv_id_stage
 (
     input  logic        clk,
     input  logic        rst_n,
@@ -615,7 +615,7 @@ module id_stage
   //   \____\___/|_| \_| |_| |_| \_\\___/|_____|_____|_____|_| \_\  //
   //                                                                //
   ////////////////////////////////////////////////////////////////////
-  controller controller_i
+  riscv_controller controller_i
   (
     .clk                            ( clk                    ),
     .rst_n                          ( rst_n                  ),
@@ -718,7 +718,7 @@ module id_stage
   //                                                                   //
   ///////////////////////////////////////////////////////////////////////
 
-  exc_controller exc_controller_i
+  riscv_exc_controller exc_controller_i
   (
     .clk                  ( clk               ),
     .rst_n                ( rst_n             ),
@@ -772,7 +772,7 @@ module id_stage
   //                                                                      //
   //////////////////////////////////////////////////////////////////////////
 
-  hwloop_controller hwloop_controller_i
+  riscv_hwloop_controller hwloop_controller_i
   (
     // from ID stage
     .enable_i                ( hwloop_enable       ),
@@ -793,7 +793,7 @@ module id_stage
 
   assign hwloop_jump_o = hwloop_jump;
 
-  hwloop_regs hwloop_regs_i
+  riscv_hwloop_regs hwloop_regs_i
   (
     .clk                     ( clk                 ),
     .rst_n                   ( rst_n               ),

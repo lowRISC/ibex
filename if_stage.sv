@@ -33,7 +33,7 @@
 
 `include "defines.sv"
 
-module if_stage
+module riscv_if_stage
 #(
   parameter RDATA_WIDTH = 32
 )
@@ -191,7 +191,7 @@ module if_stage
   generate
     if (RDATA_WIDTH == 32) begin : prefetch_32
       // prefetch buffer, caches a fixed number of instructions
-      prefetch_buffer prefetch_buffer_i
+      riscv_prefetch_buffer prefetch_buffer_i
       (
         .clk               ( clk                   ),
         .rst_n             ( rst_n                 ),
@@ -220,7 +220,7 @@ module if_stage
       );
     end else if (RDATA_WIDTH == 128) begin : prefetch_128
       // prefetch buffer, caches a fixed number of instructions
-      prefetch_L0_buffer prefetch_buffer_i
+      riscv_prefetch_L0_buffer prefetch_buffer_i
       (
         .clk               ( clk                   ),
         .rst_n             ( rst_n                 ),
@@ -377,7 +377,7 @@ module if_stage
   logic        illegal_c_insn;
   logic        instr_compressed_int;
 
-  compressed_decoder compressed_decoder_i
+  riscv_compressed_decoder compressed_decoder_i
   (
     .instr_i         ( instr_rdata_int      ),
     .instr_o         ( instr_decompressed   ),

@@ -23,7 +23,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module prefetch_L0_buffer
+module riscv_prefetch_L0_buffer
 #(
   parameter                                   RDATA_IN_WIDTH = 128
 )

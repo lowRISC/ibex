@@ -28,7 +28,7 @@
 
 `include "defines.sv"
 
-module hwloop_controller
+module riscv_hwloop_controller
 (
   // from id stage
   input  logic                           enable_i,

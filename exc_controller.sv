@@ -24,7 +24,7 @@
 
 `include "defines.sv"
 
-module exc_controller
+module riscv_exc_controller
 (
    input  logic        clk,
    input  logic        rst_n,

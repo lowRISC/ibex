@@ -32,7 +32,7 @@
 
 `include "defines.sv"
 
-module controller
+module riscv_controller
 (
   input  logic        clk,
   input  logic        rst_n,
@@ -148,7 +148,7 @@ module controller
     // print warning in case of decoding errors
     if (illegal_insn_o) begin
       $display("%t: Illegal instruction (core %0d) at PC 0x%h:", $time, riscv_core.core_id_i,
-               id_stage.current_pc_id_i);
+               riscv_id_stage.current_pc_id_i);
       //prettyPrintInstruction(instr_rdata_i, id_stage.current_pc_id_i);
     end
   end

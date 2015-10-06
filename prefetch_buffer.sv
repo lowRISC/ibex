@@ -26,7 +26,7 @@
 // input port: send address one cycle before the data
 // clear_i clears the FIFO for the following cycle. in_addr_i can be sent in
 // this cycle already
-module fetch_fifo
+module riscv_fetch_fifo
 (
     input  logic        clk,
     input  logic        rst_n,
@@ -193,7 +193,7 @@ endmodule
 
 // branch_i deletes everything up to now, i.e. it assumes that addr_i now has
 // the correct state and uses the current cycle's addr_i to fetch new data
-module prefetch_buffer
+module riscv_prefetch_buffer
 (
   input  logic        clk,
   input  logic        rst_n,
@@ -250,7 +250,7 @@ module prefetch_buffer
   // consumes addresses and rdata
   //////////////////////////////////////////////////////////////////////////////
 
-  fetch_fifo fifo_i
+  riscv_fetch_fifo fifo_i
   (
     .clk                   ( clk               ),
     .rst_n                 ( rst_n             ),

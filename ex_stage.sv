@@ -31,7 +31,7 @@
 `include "defines.sv"
 
 
-module ex_stage
+module riscv_ex_stage
 (
     input  logic                      clk,
     input  logic                      rst_n,
@@ -120,7 +120,7 @@ module ex_stage
   // /_/   \_\_____\___/    //
   //                        //
   ////////////////////////////
-  alu alu_i
+  riscv_alu alu_i
   (
    .operator_i    ( alu_operator_i      ),
    .operand_a_i   ( alu_operand_a_i     ),
@@ -143,7 +143,7 @@ module ex_stage
   // |_|  |_|\___/|_____|_| |___|_|   |_____|___|_____|_| \_\   //
   //                                                            //
   ////////////////////////////////////////////////////////////////
-  mult mult_i
+  riscv_mult mult_i
   (
    .vector_mode_i   ( vector_mode_i        ),
    .sel_subword_i   ( mult_sel_subword_i   ),

@@ -30,7 +30,7 @@
 
 `include "defines.sv"
 
-module debug_unit
+module riscv_debug_unit
 (
   input logic          clk,
   input logic          rst_n,

@@ -29,7 +29,7 @@
 
 `include "defines.sv"
 
-module load_store_unit
+module riscv_load_store_unit
 (
     input  logic         clk,
     input  logic         rst_n,
