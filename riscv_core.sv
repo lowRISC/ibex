@@ -594,6 +594,7 @@ module riscv_core
   // |____/|_____|____/ \___/ \____|  \___/|_| \_|___| |_|   //
   //                                                         //
   /////////////////////////////////////////////////////////////
+
   debug_unit debug_unit_i
   (
     .clk             ( clk             ),
@@ -780,6 +781,7 @@ module riscv_core
         {25'b?, `OPCODE_LOAD_POST}:  printLoadInstr();
         {25'b?, `OPCODE_STORE}:      printStoreInstr();
         {25'b?, `OPCODE_STORE_POST}: printStoreInstr();
+        {25'b?, `OPCODE_HWLOOP}:     printHwloopInstr();
         default:           printMnemonic("INVALID");
       endcase // unique case (instr)
 
@@ -966,6 +968,40 @@ module riscv_core
       end
     end
   endfunction // printSInstr
+
+  function void printHwloopInstr();
+    string mnemonic;
+    begin
+      // set mnemonic
+      case (instr[14:12])
+        3'b000: mnemonic = "LSTARTI";
+        3'b001: mnemonic = "LENDI";
+        3'b010: mnemonic = "LCOUNT";
+        3'b011: mnemonic = "LCOUNTI";
+        3'b100: mnemonic = "LSETUP";
+        3'b111: begin
+          printMnemonic("INVALID");
+          return;
+        end
+      endcase
+      riscv_core.mnemonic = mnemonic;
+
+      // decode and print instruction
+      imm = id_stage_i.imm_i_type;
+      case (instr[14:12])
+        // lp.starti and lp.endi
+        3'b000,
+        3'b001: $fdisplay(f, "%7s\tx%0d, 0x%h (-> 0x%h)", mnemonic, rd, imm, pc+imm);
+        // lp.count
+        3'b010: $fdisplay(f, "%7s\tx%0d, x%0d (0x%h)", mnemonic, rd, rs1, rs1_value);
+        // lp.counti
+        3'b011: $fdisplay(f, "%7s\tx%0d, 0x%h", mnemonic, rd, imm);
+        // lp.setup
+        3'b100: $fdisplay(f, "%7s\tx%0d, x%0d (0x%h), 0x%h (-> 0x%h)", mnemonic,
+                          rd, rs1, rs1_value, imm, pc+imm);
+      endcase
+    end
+  endfunction
   `endif // TRACE_EXECUTION
   // synopsys translate_on
 `endif
