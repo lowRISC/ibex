@@ -40,9 +40,9 @@ module alu
 );
 
 
-  logic [31:0] operand_a_rev;     // bit reversed signal of operand_a_i
+  logic [31:0] operand_a_rev;
 
-  // bit reverse operand_a for left shifts
+  // bit reverse operand_a for left shifts and bit counting
   genvar       k;
   generate
     for(k = 0; k < 32; k++)

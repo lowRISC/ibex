@@ -755,12 +755,6 @@ module riscv_core
         `INSTR_EBREAK:     printMnemonic("EBREAK");
         `INSTR_ERET:       printMnemonic("ERET");
         `INSTR_WFI:        printMnemonic("WFI");
-        `INSTR_RDCYCLE:    printRDInstr("RDCYCLE");
-        `INSTR_RDCYCLEH:   printRDInstr("RDCYCLEH");
-        `INSTR_RDTIME:     printRDInstr("RDTIME");
-        `INSTR_RDTIMEH:    printRDInstr("RDTIMEH");
-        `INSTR_RDINSTRET:  printRDInstr("RDINSTRET");
-        `INSTR_RDINSTRETH: printRDInstr("RDINSTRETH");
         // RV32M
         `INSTR_MUL:        printRInstr("MUL");
         `INSTR_MULH:       printRInstr("MULH");
@@ -841,13 +835,6 @@ module riscv_core
       $fdisplay(f, "%7s\tx%0d, 0x%h (-> 0x%h)", mnemonic, rd, imm, imm+pc);
     end
   endfunction // printUJInstr
-
-  function void printRDInstr(input string mnemonic);
-    begin
-      riscv_core.mnemonic = mnemonic;
-      $fdisplay(f, "%7s\tx%0d", mnemonic, rd);
-    end
-  endfunction // printRDInstr
 
   function void printCSRInstr(input string mnemonic);
     logic [11:0] csr;
@@ -993,7 +980,4 @@ module riscv_core
   // synopsys translate_on
 `endif
 
-
-///////////////////
-endmodule // cpu //
-///////////////////
+endmodule

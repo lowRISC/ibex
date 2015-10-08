@@ -815,7 +815,7 @@ module id_stage
       alu_operand_b_ex_o          <= 32'h0000_0000;
       alu_operand_c_ex_o          <= 32'h0000_0000;
 
-      vector_mode_ex_o            <= `VEC_MODE32;
+      vector_mode_ex_o            <= '0;
 
       mult_en_ex_o                <= 1'b0;
       mult_sel_subword_ex_o       <= 2'b0;
