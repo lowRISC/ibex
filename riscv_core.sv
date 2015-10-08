@@ -719,10 +719,6 @@ module riscv_core
         `INSTR_BGE:        printSBInstr("BGE");
         `INSTR_BLTU:       printSBInstr("BLTU");
         `INSTR_BGEU:       printSBInstr("BGEU");
-        // STORE
-        `INSTR_SB:         printSInstr("SB");
-        `INSTR_SH:         printSInstr("SH");
-        `INSTR_SW:         printSInstr("SW");
         // OPIMM
         `INSTR_ADDI:       printIInstr("ADDI");
         `INSTR_SLTI:       printIInstr("SLTI");
@@ -828,15 +824,6 @@ module riscv_core
                 rd, rs1, rs1_value, imm);
     end
   endfunction // printIInstr
-
-  function void printSInstr(input string mnemonic);
-    begin
-      riscv_core.mnemonic = mnemonic;
-      imm = id_stage_i.imm_s_type;
-      $fdisplay(f, "%7s\tx%0d (0x%h), x%0d (0x%h), 0x%0h (imm) (-> 0x%h)", mnemonic,
-                rs1, rs1_value, rs2, rs2_value, imm, imm+rs1_value);
-    end
-  endfunction // printSInstr
 
   function void printSBInstr(input string mnemonic);
     begin
