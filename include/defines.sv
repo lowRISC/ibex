@@ -146,40 +146,6 @@
 `define REG_D  11:07
 
 
-`ifndef SYNTHESIS
-// synopsys translate_off
-`define TRACE_EXECUTION
-
-function void prettyPrintInstruction(input [31:0] instr, input [31:0] pc);
-  string opcode;
-  begin
-    unique case (instr[6:0])
-      `OPCODE_SYSTEM: opcode = "SYSTEM";
-      `OPCODE_FENCE:  opcode = "FENCE";
-      `OPCODE_OP:     opcode = "OP";
-      `OPCODE_OPIMM:  opcode = "OPIMM";
-      `OPCODE_STORE:  opcode = "STORE";
-      `OPCODE_LOAD:   opcode = "LOAD";
-      `OPCODE_BRANCH: opcode = "BRANCH";
-      `OPCODE_JALR:   opcode = "JALR";
-      `OPCODE_JAL:    opcode = "JAL";
-      `OPCODE_AUIPC:  opcode = "AUIPC";
-      `OPCODE_LUI:    opcode = "LUI";
-      default:        opcode = "Unknown";
-    endcase // unique case (instr[6:0])
-
-    $display("%t: %s Instruction 0x%h at 0x%h.", $time, opcode, instr[31:0], pc[31:0]);
-    $display("%t:   | fct7  | rs2 | rs1 |   | rd  | opc.  |", $time);
-    $display("%t: 0b %b %b %b %b %b %b", $time, instr[31:25], instr[`REG_S2],
-             instr[`REG_S1], instr[14:12], instr[`REG_D], instr[6:0]);
-    $display();
-  end
-endfunction // prettyPrintInstruction
-// synopsys translate_on
-`endif
-
-
-
 //////////////////////////////////////////////////////////////////////////////
 //      _    _    _   _    ___                       _   _                  //
 //     / \  | |  | | | |  / _ \ _ __   ___ _ __ __ _| |_(_) ___  _ __  ___  //
