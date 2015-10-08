@@ -316,7 +316,7 @@ module alu
     shift_amt  = operand_b_i;
     result_o   = 'x;
 
-    unique case (operator_i)
+    case (operator_i)
       // Standard Operations
       `ALU_ADD,
       `ALU_SUB:  result_o = adder_result;
