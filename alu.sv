@@ -536,7 +536,7 @@ module riscv_alu
     shift_left = 1'b0;
     shift_amt  = operand_b_i;
     result_o   = 'x;
-    flag_o     = 1'b0;
+    flag_o     = 1'bx;
 
     unique case (operator_i)
       // Standard Operations

@@ -539,4 +539,9 @@ module riscv_controller
   assign perf_jr_stall_o  = jr_stall_o;
   assign perf_ld_stall_o  = load_stall_o;
 
+
+  // Assertions
+  assert property (
+    @(posedge clk) (pc_mux_sel_o == `PC_BRANCH) |-> (branch_decision_i !== 1'bx) );
+
 endmodule // controller
