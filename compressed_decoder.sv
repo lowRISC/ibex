@@ -83,7 +83,7 @@ module compressed_decoder
           3'b001, 3'b101: begin
             // 001: c.jal -> jal x1, imm
             // 101: c.j   -> jal x0, imm
-            instr_o = {instr_i[12], instr_i[11:7], instr_i[2], instr_i[6:3], {9 {instr_i[12]}}, 4'b0, ~instr_i[15], `OPCODE_JAL};
+            instr_o = {instr_i[12], instr_i[8], instr_i[10:9], instr_i[6], instr_i[7], instr_i[2], instr_i[11], instr_i[5:3], {9 {instr_i[12]}}, 4'b0, ~instr_i[15], `OPCODE_JAL};
           end
 
           3'b010: begin
