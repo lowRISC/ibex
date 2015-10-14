@@ -98,7 +98,7 @@ module compressed_decoder
 
             if (instr_i[11:7] == 5'h02) begin
               // c.addi16sp -> addi x2, x2, nzimm
-              instr_o = {{3 {instr_i[12]}}, instr_i[4:2], instr_i[5], instr_i[6], 4'b0, 5'h02, 3'b000, 5'h02, `OPCODE_OPIMM};
+              instr_o = {{3 {instr_i[12]}}, instr_i[4:3], instr_i[5], instr_i[2], instr_i[6], 4'b0, 5'h02, 3'b000, 5'h02, `OPCODE_OPIMM};
             end
 
             if ({instr_i[12], instr_i[6:2]} == 6'b0) illegal_instr_o = 1'b1;
@@ -176,7 +176,7 @@ module compressed_decoder
           3'b110, 3'b111: begin
             // 0: c.beqz -> beq rs1', x0, imm
             // 1: c.bnez -> bne rs1', x0, imm
-            instr_o = {{3 {instr_i[12]}}, instr_i[12:10], instr_i[2], 5'b0, 2'b01, instr_i[9:7], 2'b00, instr_i[13], instr_i[6:3], instr_i[12], `OPCODE_BRANCH};
+            instr_o = {{4 {instr_i[12]}}, instr_i[6:5], instr_i[2], 5'b0, 2'b01, instr_i[9:7], 2'b00, instr_i[13], instr_i[11:10], instr_i[4:3], instr_i[12], `OPCODE_BRANCH};
           end
 
           default: begin
