@@ -75,6 +75,36 @@ module compressed_decoder
       2'b01: begin
         unique case (instr_i[15:13])
           3'b000: begin
+            // c.addi -> addi rd, rd, nzimm
+            // c.nop
+            instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], instr_i[11:7], 3'b0, instr_i[11:7], `OPCODE_OPIMM};
+          end
+
+          3'b001, 3'b101: begin
+            // 001: c.jal -> jal x1, imm
+            // 101: c.j   -> jal x0, imm
+            instr_o = {instr_i[12], instr_i[11:7], instr_i[2], instr_i[6:3], {9 {instr_i[12]}}, 4'b0, ~instr_i[15], `OPCODE_JAL};
+          end
+
+          3'b010: begin
+            // c.li -> addi rd, x0, nzimm
+            instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], 5'b0, 3'b0, instr_i[11:7], `OPCODE_OPIMM};
+            if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
+          end
+
+          3'b011: begin
+            // c.lui -> lui rd, imm
+            instr_o = {{15 {instr_i[12]}}, instr_i[6:2], instr_i[11:7], `OPCODE_LUI};
+
+            if (instr_i[11:7] == 5'h02) begin
+              // c.addi16sp -> addi x2, x2, nzimm
+              instr_o = {{3 {instr_i[12]}}, instr_i[4:2], instr_i[5], instr_i[6], 4'b0, 5'h02, 3'b000, 5'h02, `OPCODE_OPIMM};
+            end
+
+            if ({instr_i[12], instr_i[6:2]} == 6'b0) illegal_instr_o = 1'b1;
+          end
+
+          3'b100: begin
             unique case (instr_i[11:10])
               2'b00: begin
                 // c.srli -> srli rd, rd, shamt
@@ -143,40 +173,10 @@ module compressed_decoder
             endcase
           end
 
-          3'b001, 3'b101: begin
-            // 001: c.j -> jal x0, imm
-            // 101: c.jal -> jal x1, imm
-            instr_o = {instr_i[12], instr_i[11:7], instr_i[2], instr_i[6:3], {9 {instr_i[12]}}, 4'b0, instr_i[15], `OPCODE_JAL};
-          end
-
-          3'b010, 3'b011: begin
+          3'b110, 3'b111: begin
             // 0: c.beqz -> beq rs1', x0, imm
             // 1: c.bnez -> bne rs1', x0, imm
             instr_o = {{3 {instr_i[12]}}, instr_i[12:10], instr_i[2], 5'b0, 2'b01, instr_i[9:7], 2'b00, instr_i[13], instr_i[6:3], instr_i[12], `OPCODE_BRANCH};
-          end
-
-          3'b100: begin
-            // c.addi -> addi rd, rd, nzimm
-            // c.nop
-            instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], instr_i[11:7], 3'b0, instr_i[11:7], `OPCODE_OPIMM};
-          end
-
-          3'b110: begin
-            // c.li -> addi rd, x0, nzimm
-            instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], 5'b0, 3'b0, instr_i[11:7], `OPCODE_OPIMM};
-            if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
-          end
-
-          3'b111: begin
-            // c.lui -> lui rd, imm
-            instr_o = {{15 {instr_i[12]}}, instr_i[6:2], instr_i[11:7], `OPCODE_LUI};
-
-            if (instr_i[11:7] == 5'h02) begin
-              // c.addi16sp -> addi x2, x2, nzimm
-              instr_o = {{3 {instr_i[12]}}, instr_i[4:2], instr_i[5], instr_i[6], 4'b0, 5'h02, 3'b000, 5'h02, `OPCODE_OPIMM};
-            end
-
-            if ({instr_i[12], instr_i[6:2]} == 6'b0) illegal_instr_o = 1'b1;
           end
 
           default: begin
