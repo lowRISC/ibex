@@ -43,7 +43,7 @@ module riscv_controller
 
   // decoder related signals
   output logic        deassert_we_o,              // deassert write enable for next instruction
-  input  logic        illegal_insn_i,             // decoder encountered an invalid instruction // TODO: Remove?
+  input  logic        illegal_insn_i,             // decoder encountered an invalid instruction
   input  logic        eret_insn_i,                // decoder encountered an eret instruction
   input  logic        pipe_flush_i,               // decoder wants to do a pipe flush
 
@@ -81,6 +81,9 @@ module riscv_controller
 
   // TODO
   input  logic        trap_hit_i,                 // a trap was hit, so we have to flush EX and WB
+
+  output logic        save_pc_if_o,
+  output logic        save_pc_id_o,
 
   // Debug Unit Signals
   input  logic        dbg_stall_i,                // Pipeline stall is requested
@@ -164,21 +167,23 @@ module riscv_controller
   always_comb
   begin
     // Default values
-    instr_req_o         = 1'b1;
+    instr_req_o   = 1'b1;
 
-    exc_ack_o           = 1'b0;
+    exc_ack_o     = 1'b0;
+    save_pc_if_o  = 1'b0;
+    save_pc_id_o  = 1'b0;
 
-    pc_mux_sel_o        = `PC_BOOT;
-    pc_set_o            = 1'b0;
+    pc_mux_sel_o  = `PC_BOOT;
+    pc_set_o      = 1'b0;
 
-    ctrl_fsm_ns         = ctrl_fsm_cs;
+    ctrl_fsm_ns   = ctrl_fsm_cs;
 
-    core_busy_o         = 1'b1;
-    is_decoding_o       = 1'b0;
+    core_busy_o   = 1'b1;
+    is_decoding_o = 1'b0;
 
-    halt_if_o           = 1'b0;
-    halt_id_o           = 1'b0;
-    dbg_trap_o          = 1'b0;
+    halt_if_o     = 1'b0;
+    halt_id_o     = 1'b0;
+    dbg_trap_o    = 1'b0;
 
     unique case (ctrl_fsm_cs)
       // We were just reset, wait for fetch_enable
@@ -271,6 +276,12 @@ module riscv_controller
             pc_mux_sel_o = `PC_EXCEPTION;
             pc_set_o     = 1'b1;
             exc_ack_o    = 1'b1;
+
+            // TODO: Check
+            if (jump_in_dec_i == `BRANCH_JALR || jump_in_dec_i == `BRANCH_JAL)
+              save_pc_if_o = 1'b1;
+            else
+              save_pc_id_o = 1'b1;
 
             // we don't have to change our current state here as the prefetch
             // buffer is automatically invalidated, thus the next instruction

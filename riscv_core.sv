@@ -90,6 +90,7 @@ module riscv_core
   logic        pc_set;
   logic [2:0]  pc_mux_sel_id;     // Mux selector for next PC
   logic [1:0]  exc_pc_mux_id;     // Mux selector for exception PC
+  logic [4:0]  exc_vec_pc_mux_id; // Mux selector for vectorized IR lines
 
   logic        branch_done;       // Branch already done
 
@@ -253,10 +254,11 @@ module riscv_core
     .current_pc_id_o     ( current_pc_id     ),   // current pc in ID stage
 
     // control signals
-    .pc_set_i            ( pc_set          ),
-    .exception_pc_reg_i  ( epcr            ),   // exception return address
-    .pc_mux_sel_i        ( pc_mux_sel_id   ),   // sel for pc multiplexer
-    .exc_pc_mux_i        ( exc_pc_mux_id   ),   // selector for exception multiplexer
+    .pc_set_i            ( pc_set            ),
+    .exception_pc_reg_i  ( epcr              ),   // Exception PC register
+    .pc_mux_sel_i        ( pc_mux_sel_id     ),   // sel for pc multiplexer
+    .exc_pc_mux_i        ( exc_pc_mux_id     ),
+    .exc_vec_pc_mux_i    ( exc_vec_pc_mux_id ),
 
     .branch_done_o       ( branch_done     ),
 
@@ -316,6 +318,7 @@ module riscv_core
     .pc_set_o                     ( pc_set               ),
     .pc_mux_sel_o                 ( pc_mux_sel_id        ),
     .exc_pc_mux_o                 ( exc_pc_mux_id        ),
+    .exc_vec_pc_mux_o             ( exc_vec_pc_mux_id    ),
 
     .branch_done_i                ( branch_done          ),
 

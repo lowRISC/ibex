@@ -35,7 +35,8 @@ module riscv_decoder
 
   output logic        illegal_insn_o,          // illegal instruction encountered
   output logic        trap_insn_o,             // trap instruction encountered
-  output logic        eret_insn_o,             // trap instruction encountered
+  output logic        eret_insn_o,             // return from exception instruction encountered
+  output logic        ecall_insn_o,            // environment call (syscall) instruction encountered
   output logic        pipe_flush_o,            // pipeline flush is requested
 
   output logic        rega_used_o,             // rs1 is used by current instruction
@@ -159,6 +160,7 @@ module riscv_decoder
     illegal_insn_o              = 1'b0;
     trap_insn                   = 1'b0;
     eret_insn                   = 1'b0;
+    ecall_insn_o                = 1'b0;
     pipe_flush                  = 1'b0;
 
     rega_used_o                 = 1'b0;
@@ -512,7 +514,7 @@ module riscv_decoder
             32'h00_00_00_73:  // ECALL
             begin
               // environment (system) call
-              // TODO: Handle in controller
+              ecall_insn_o = 1'b1;
             end
 
             32'h00_10_00_73:  // ebreak

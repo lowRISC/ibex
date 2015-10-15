@@ -122,7 +122,6 @@ module riscv_if_stage
   logic [31:0] instr_rdata_int;
 
   logic [31:0] exc_pc;
-  logic [31:0] irq_pc;
 
 
   // output data and PC mux

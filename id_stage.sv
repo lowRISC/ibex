@@ -124,7 +124,7 @@ module riscv_id_stage
     input  logic        irq_enable_i,
 
     output logic [5:0]  exc_cause_o,
-    input  logic        save_exc_cause_o,
+    output logic        save_exc_cause_o,
 
     output logic        save_pc_if_o,
     output logic        save_pc_id_o,
@@ -166,6 +166,7 @@ module riscv_id_stage
   logic        illegal_insn_dec;
   logic        trap_insn;
   logic        eret_insn_dec;
+  logic        ecall_insn_dec;
   logic        pipe_flush_dec;
 
   logic        rega_used_dec;
@@ -193,15 +194,13 @@ module riscv_id_stage
 
   logic [31:0] jump_target;       // calculated jump target (-> EX -> IF)
 
-  logic        exc_pc_sel;
 
-  logic        irq_present;
 
   // Signals running between controller and exception controller
-  logic        illegal_insn;
+  logic        exc_req, exc_ack;  // handshake
+
   logic        trap_hit;
-  logic        clear_isr_running;
-  logic        exc_pipe_flush;
+  assign trap_hit = 1'b0; // TODO: Fix
 
   // Register file interface
   logic [4:0]  regfile_addr_ra_id;
@@ -248,7 +247,6 @@ module riscv_id_stage
   logic [1:0]  hwloop_regid;
   logic [2:0]  hwloop_we;
   logic        hwloop_jump;
-  logic        hwloop_enable;
   logic        hwloop_start_mux_sel;
   logic        hwloop_end_mux_sel;
   logic        hwloop_cnt_mux_sel;
@@ -535,6 +533,7 @@ module riscv_id_stage
     .illegal_insn_o                  ( illegal_insn_dec          ),
     .trap_insn_o                     ( trap_insn                 ),
     .eret_insn_o                     ( eret_insn_dec             ),
+    .ecall_insn_o                    ( ecall_insn_dec            ),
     .pipe_flush_o                    ( pipe_flush_dec            ),
 
     .rega_used_o                     ( rega_used_dec             ),
@@ -647,6 +646,9 @@ module riscv_id_stage
     .exc_ack_o                      ( exc_ack                ),
     .trap_hit_i                     ( trap_hit               ),
 
+    .save_pc_id_o                   ( save_pc_id_o           ),
+    .save_pc_if_o                   ( save_pc_if_o           ),
+
     // Debug Unit Signals
     .dbg_stall_i                    ( dbg_stall_i            ),
     .dbg_set_npc_i                  ( dbg_set_npc_i          ),
@@ -702,8 +704,8 @@ module riscv_id_stage
     .rst_n                ( rst_n            ),
 
     // to controller
-    .req_o                ( exc_req_o        ),
-    .ack_i                ( exc_ack_i        ),
+    .req_o                ( exc_req          ),
+    .ack_i                ( exc_ack          ),
 
     // to IF stage
     .pc_mux_o             ( exc_pc_mux_o     ),
@@ -713,11 +715,12 @@ module riscv_id_stage
     .irq_i                ( irq_i            ),
     .irq_enable_i         ( irq_enable_i     ),
 
-    .illegal_insn_i       ( illegal_insn     ),
-    .ecall_insn_i         ( ecall_insn       ),
-    .eret_insn_i          ( eret_insn        ),
+    .illegal_insn_i       ( illegal_insn_dec ),
+    .ecall_insn_i         ( ecall_insn_dec   ),
+    .eret_insn_i          ( eret_insn_dec    ),
 
-    .cause_o              ( exc_cause_o      )
+    .cause_o              ( exc_cause_o      ),
+    .save_cause_o         ( save_exc_cause_o )
   );
 
 
@@ -733,7 +736,7 @@ module riscv_id_stage
   riscv_hwloop_controller hwloop_controller_i
   (
     // from ID stage
-    .enable_i                ( hwloop_enable       ),
+    .enable_i                ( 1'b1                ),
     .current_pc_i            ( current_pc_if_i     ),
 
     // to IF stage/controller
