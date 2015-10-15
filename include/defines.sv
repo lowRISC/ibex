@@ -305,23 +305,16 @@
 `define PC_DBG_NPC       3'b111
 
 // Exception PC mux selector defines
-`define EXC_PC_NO_INCR   2'b00
-`define EXC_PC_ILLINSN   2'b01
+`define EXC_PC_ILLINSN   2'b00
+`define EXC_PC_ECALL     2'b01
 `define EXC_PC_IRQ       2'b10
-`define EXC_PC_IRQ_NM    2'b11
 
 // Exceptions offsets
-// target address = {boot_addr[31:5], EXC_OFF} (boot_addr must be 32 BYTE aligned!)
-`define EXC_OFF_RST      5'h10
-`define EXC_OFF_IRQ      5'h00
-`define EXC_OFF_IRQ_NM   5'h04
-`define EXC_OFF_ILLINSN  5'h08
-//      unused           5'h0c
-
-
-// Exception causes
-`define EXC_CAUSE_ECALL  {1'b0, 4'd11};
-`define EXC_CAUSE_EBREAK {1'b0, 4'd03};
+// target address = {boot_addr[31:8], EXC_OFF} (boot_addr must be 32 BYTE aligned!)
+// offset 00 to 7e is used for external interrupts
+`define EXC_OFF_RST      8'h80
+`define EXC_OFF_ILLINSN  8'h84
+`define EXC_OFF_ECALL    8'h88
 
 
 // Hardware loop registers

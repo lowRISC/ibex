@@ -45,13 +45,16 @@ module riscv_cs_registers
   output logic [31:0] csr_rdata_o,
 
   // Interrupts
-  input logic  [31:0] curr_pc_if_i,
-  input logic  [31:0] curr_pc_id_i,
-  input logic         save_pc_if_i,
-  input logic         save_pc_id_i,
-
   output logic        irq_enable_o,
   output logic [31:0] epcr_o,
+
+  input  logic [31:0] curr_pc_if_i,
+  input  logic [31:0] curr_pc_id_i,
+  input  logic        save_pc_if_i,
+  input  logic        save_pc_id_i,
+
+  input  logic [5:0]  exc_cause_i,
+  input  logic        save_exc_cause_i,
 
   // Performance Counters
   input  logic        id_valid_i,        // ID stage is done
@@ -107,6 +110,7 @@ module riscv_cs_registers
 
   // Interrupt control signals
   logic irq_enable, irq_enable_n;
+  logic  [5:0] exc_cause, exc_cause_n;
 
 
   ////////////////////////////////////////////
@@ -131,6 +135,8 @@ module riscv_cs_registers
       12'h340: csr_rdata_int = csr[`CSR_IDX_MSCRATCH];
       // mepc: exception program counter
       12'h341: csr_rdata_int = csr[`CSR_IDX_MEPC];
+      // mcause: exception cause
+      12'h342: csr_rdata_int = {exc_cause[5], 26'b0, exc_cause[4:0]};
 
       // mcpuid: RV32I
       12'hF00: csr_rdata_int = 32'h00_00_01_00;
@@ -147,6 +153,7 @@ module riscv_cs_registers
   begin
     csr_n        = csr;
     irq_enable_n = irq_enable;
+    exc_cause_n  = exc_cause;
 
     case (csr_addr_i)
       // mstatus: IE bit
@@ -156,6 +163,8 @@ module riscv_cs_registers
       12'h340: if (csr_we_int) csr_n[`CSR_IDX_MSCRATCH] = csr_wdata_int;
       // mepc: exception program counter
       12'h341: if (csr_we_int) csr_n[`CSR_IDX_MEPC] = csr_wdata_int;
+      // mcause
+      12'h342: if (csr_we_int) exc_cause_n = {csr_wdata_int[5], csr_wdata_int[4:0]};
     endcase
   end
 
@@ -202,18 +211,23 @@ module riscv_cs_registers
     begin
       csr        <= '{default: 32'b0};
       irq_enable <= 1'b0;
+      exc_cause  <= 6'b0;
     end
     else
     begin
       // update CSRs
-      csr                 <= csr_n;
-
+      csr        <= csr_n;
       irq_enable <= irq_enable_n;
-      // exception PC writes from exception controller get priority
+      exc_cause  <= exc_cause_n;
+
+      // exception controller gets priority over other writes
       if (save_pc_if_i == 1'b1)
         csr[`CSR_IDX_MEPC] <= curr_pc_if_i;
       else if (save_pc_id_i == 1'b1)
         csr[`CSR_IDX_MEPC] <= curr_pc_id_i;
+
+      if (save_exc_cause_i)
+        exc_cause <= exc_cause_i;
     end
   end
 

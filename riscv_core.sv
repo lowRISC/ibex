@@ -61,8 +61,7 @@ module riscv_core
   input  logic [31:0] data_rdata_i,
 
   // Interrupt inputs
-  input  logic        irq_i,          // level-triggered IR line
-  input  logic        irq_nm_i,       // level-triggered IR line for non-maskable IRQ
+  input  logic [31:0] irq_i,                 // level sensitive IR lines
 
   // Debug Interface
   input  logic        dbginf_stall_i,
@@ -175,6 +174,9 @@ module riscv_core
   // Interrupts
   logic        irq_enable;
   logic [31:0] epcr;
+
+  logic [5:0]  exc_cause;
+  logic        save_exc_cause;
   logic        save_pc_if;
   logic        save_pc_id;
 
@@ -377,8 +379,9 @@ module riscv_core
 
     // Interrupt Signals
     .irq_i                        ( irq_i                ), // incoming interrupts
-    .irq_nm_i                     ( irq_nm_i             ), // incoming interrupts
     .irq_enable_i                 ( irq_enable           ), // global interrupt enable
+    .exc_cause_o                  ( exc_cause            ),
+    .save_exc_cause_o             ( save_exc_cause       ),
     .save_pc_if_o                 ( save_pc_if           ), // control signal to save pc
     .save_pc_id_o                 ( save_pc_id           ), // control signal to save pc
 
@@ -552,14 +555,17 @@ module riscv_core
     .csr_op_i                ( csr_op         ),
     .csr_rdata_o             ( csr_rdata      ),
 
-    // Control signals for the core
+    // Interrupt related control signals
+    .irq_enable_o            ( irq_enable     ),
+    .epcr_o                  ( epcr           ),
+
     .curr_pc_if_i            ( current_pc_if  ),    // from IF stage
     .curr_pc_id_i            ( current_pc_id  ),    // from IF stage
     .save_pc_if_i            ( save_pc_if     ),
     .save_pc_id_i            ( save_pc_id     ),
 
-    .irq_enable_o            ( irq_enable     ),
-    .epcr_o                  ( epcr           ),
+    .exc_cause_i             ( exc_cause      ),
+    .save_exc_cause_i        ( save_exc_cause ),
 
     // performance counter related signals
     .id_valid_i              ( id_valid         ),

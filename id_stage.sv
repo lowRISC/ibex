@@ -56,6 +56,7 @@ module riscv_id_stage
     output logic        pc_set_o,
     output logic [2:0]  pc_mux_sel_o,
     output logic [1:0]  exc_pc_mux_o,
+    output logic [4:0]  exc_vec_pc_mux_o,
 
     input  logic        branch_done_i,
 
@@ -119,9 +120,12 @@ module riscv_id_stage
     input  logic        data_misaligned_i,
 
     // Interrupt signals
-    input  logic        irq_i,
-    input  logic        irq_nm_i,
+    input  logic [31:0] irq_i,
     input  logic        irq_enable_i,
+
+    output logic [5:0]  exc_cause_o,
+    input  logic        save_exc_cause_o,
+
     output logic        save_pc_if_o,
     output logic        save_pc_id_o,
 
@@ -638,22 +642,17 @@ module riscv_id_stage
 
     .branch_decision_i              ( branch_decision_i      ),
 
-    // Interrupt signals
-    .irq_present_i                  ( irq_present            ),
-
     // Exception Controller Signals
-    .exc_pc_sel_i                   ( exc_pc_sel             ),
-    .exc_pipe_flush_i               ( exc_pipe_flush         ),
+    .exc_req_i                      ( exc_req                ),
+    .exc_ack_o                      ( exc_ack                ),
     .trap_hit_i                     ( trap_hit               ),
-    .illegal_insn_o                 ( illegal_insn           ),
-    .clear_isr_running_o            ( clear_isr_running      ),
 
     // Debug Unit Signals
     .dbg_stall_i                    ( dbg_stall_i            ),
     .dbg_set_npc_i                  ( dbg_set_npc_i          ),
     .dbg_trap_o                     ( dbg_trap_o             ),
 
-  // Forwarding signals from regfile
+    // Forwarding signals from regfile
     .regfile_waddr_ex_i             ( regfile_waddr_ex_o     ), // Write address for register file from ex-wb- pipeline registers
     .regfile_we_ex_i                ( regfile_we_ex_o        ),
     .regfile_waddr_wb_i             ( regfile_waddr_wb_i     ), // Write address for register file from ex-wb- pipeline registers
@@ -686,8 +685,7 @@ module riscv_id_stage
     .perf_branch_o                  ( perf_branch_o          ),
     .perf_jr_stall_o                ( perf_jr_stall_o        ),
     .perf_ld_stall_o                ( perf_ld_stall_o        )
-
-    );
+  );
 
   ///////////////////////////////////////////////////////////////////////
   //  _____               ____            _             _ _            //
@@ -700,46 +698,26 @@ module riscv_id_stage
 
   riscv_exc_controller exc_controller_i
   (
-    .clk                  ( clk               ),
-    .rst_n                ( rst_n             ),
+    .clk                  ( clk              ),
+    .rst_n                ( rst_n            ),
 
-    .fetch_enable_i       ( fetch_enable_i    ),
+    // to controller
+    .req_o                ( exc_req_o        ),
+    .ack_i                ( exc_ack_i        ),
 
     // to IF stage
-    .exc_pc_sel_o         ( exc_pc_sel        ),
-    .exc_pc_mux_o         ( exc_pc_mux_o      ),
-
-    .branch_done_i        ( branch_done_i     ),
-
-    // hwloop signals
-    .hwloop_enable_o      ( hwloop_enable     ),
+    .pc_mux_o             ( exc_pc_mux_o     ),
+    .vec_pc_mux_o         ( exc_vec_pc_mux_o ),
 
     // Interrupt signals
-    .irq_i                ( irq_i             ),
-    .irq_nm_i             ( irq_nm_i          ),
-    .irq_enable_i         ( irq_enable_i      ),
-    .irq_present_o        ( irq_present       ),
+    .irq_i                ( irq_i            ),
+    .irq_enable_i         ( irq_enable_i     ),
 
-    // CSR
-    .save_pc_if_o         ( save_pc_if_o      ),
-    .save_pc_id_o         ( save_pc_id_o      ),
+    .illegal_insn_i       ( illegal_insn     ),
+    .ecall_insn_i         ( ecall_insn       ),
+    .eret_insn_i          ( eret_insn        ),
 
-    // Controller
-    .core_busy_i          ( core_busy_o       ),
-    .jump_in_id_i         ( jump_in_id_o      ),
-    .jump_in_ex_i         ( jump_in_ex_o      ),
-    .stall_id_i           ( ~id_valid_o       ),
-    .illegal_insn_i       ( illegal_insn      ),
-    .trap_insn_i          ( trap_insn         ),
-    .drop_instruction_i   ( 1'b0              ),
-    .clear_isr_running_i  ( clear_isr_running ),
-    .trap_hit_o           ( trap_hit          ),
-    .exc_pipe_flush_o     ( exc_pipe_flush    ),
-
-    // Debug Unit Signals
-    .dbg_flush_pipe_i     ( dbg_flush_pipe_i  ),
-    .dbg_st_en_i          ( dbg_st_en_i       ),
-    .dbg_dsr_i            ( dbg_dsr_i         )
+    .cause_o              ( exc_cause_o      )
   );
 
 

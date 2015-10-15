@@ -43,7 +43,7 @@ module riscv_controller
 
   // decoder related signals
   output logic        deassert_we_o,              // deassert write enable for next instruction
-  input  logic        illegal_insn_i,             // decoder encountered an invalid instruction
+  input  logic        illegal_insn_i,             // decoder encountered an invalid instruction // TODO: Remove?
   input  logic        eret_insn_i,                // decoder encountered an eret instruction
   input  logic        pipe_flush_i,               // decoder wants to do a pipe flush
 
@@ -75,14 +75,12 @@ module riscv_controller
 
   input  logic        branch_decision_i,          // branch decision is available in EX stage
 
-  // Interrupt signals
-  input  logic        irq_present_i,              // there is an IRQ, so if we are sleeping we should wake up now
   // Exception Controller Signals
-  input  logic        exc_pc_sel_i,               // exception execution requested
-  input  logic        exc_pipe_flush_i,           // flush pipeline after exception handling
+  input  logic        exc_req_i,
+  output logic        exc_ack_o,
+
+  // TODO
   input  logic        trap_hit_i,                 // a trap was hit, so we have to flush EX and WB
-  output logic        illegal_insn_o,             // illegal instruction encountered
-  output logic        clear_isr_running_o,        // an l.rfe instruction was encountered, exit ISR
 
   // Debug Unit Signals
   input  logic        dbg_stall_i,                // Pipeline stall is requested
@@ -146,7 +144,7 @@ module riscv_controller
   always_ff @(negedge clk)
   begin
     // print warning in case of decoding errors
-    if (illegal_insn_o) begin
+    if (illegal_insn_i) begin
       $display("%t: Illegal instruction (core %0d) at PC 0x%h:", $time, riscv_core.core_id_i,
                riscv_id_stage.current_pc_id_i);
     end
@@ -168,6 +166,8 @@ module riscv_controller
     // Default values
     instr_req_o         = 1'b1;
 
+    exc_ack_o           = 1'b0;
+
     pc_mux_sel_o        = `PC_BOOT;
     pc_set_o            = 1'b0;
 
@@ -179,8 +179,6 @@ module riscv_controller
     halt_if_o           = 1'b0;
     halt_id_o           = 1'b0;
     dbg_trap_o          = 1'b0;
-    illegal_insn_o      = 1'b0;
-    clear_isr_running_o = 1'b0;
 
     unique case (ctrl_fsm_cs)
       // We were just reset, wait for fetch_enable
@@ -211,8 +209,9 @@ module riscv_controller
         core_busy_o   = 1'b0;
         instr_req_o   = 1'b0;
 
-        if (fetch_enable_i || irq_present_i)
+        if (fetch_enable_i || exc_req_i)
         begin
+          // TODO: Check if we need to handle IRQs here
           ctrl_fsm_ns  = FIRST_FETCH;
         end
       end // case: SLEEP
@@ -224,6 +223,8 @@ module riscv_controller
         begin
           ctrl_fsm_ns = DECODE;
         end
+
+        // TODO: Check if we need to handle IRQs here
 
         // hwloop detected, jump to start address!
         // Attention: This has to be done in the DECODE and the FIRST_FETCH states
@@ -266,14 +267,10 @@ module riscv_controller
             pc_set_o     = 1'b1;
           end
 
-          // handle illegal instructions
-          if (illegal_insn_i) begin
-            illegal_insn_o = 1'b1;
-          end
-
-          if (exc_pc_sel_i) begin
-            pc_mux_sel_o   = `PC_EXCEPTION;
-            pc_set_o       = 1'b1;
+          if (exc_req_i) begin
+            pc_mux_sel_o = `PC_EXCEPTION;
+            pc_set_o     = 1'b1;
+            exc_ack_o    = 1'b1;
 
             // we don't have to change our current state here as the prefetch
             // buffer is automatically invalidated, thus the next instruction
@@ -282,14 +279,21 @@ module riscv_controller
           end
 
           if (eret_insn_i) begin
-            clear_isr_running_o = 1'b1;
             pc_mux_sel_o        = `PC_ERET;
             pc_set_o            = 1'b1;
+
+            // go back to sleep if core was woken up for this interrupt
+            if (fetch_enable_i == 1'b0) begin
+              halt_if_o = 1'b1;
+              halt_id_o = 1'b1;
+
+              ctrl_fsm_ns = FLUSH_EX;
+            end
           end
 
           // handle WFI instruction, flush pipeline and (potentially) go to
           // sleep
-          if (pipe_flush_i || exc_pipe_flush_i)
+          if (pipe_flush_i)
           begin
             halt_if_o = 1'b1;
             halt_id_o = 1'b1;

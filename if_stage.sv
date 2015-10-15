@@ -65,7 +65,8 @@ module riscv_if_stage
     input  logic        pc_set_i,              // set the program counter to a new value
     input  logic [31:0] exception_pc_reg_i,    // address used to restore PC when the interrupt/exception is served
     input  logic  [2:0] pc_mux_sel_i,          // sel for pc multiplexer
-    input  logic  [1:0] exc_pc_mux_i,          // select which exception to execute
+    input  logic  [1:0] exc_pc_mux_i,          // selects ISR address
+    input  logic  [4:0] exc_vec_pc_mux_i,      // selects ISR address for vectorized interrupt lines
 
     output logic        branch_done_o,         // we already performed a branch
 
@@ -121,6 +122,7 @@ module riscv_if_stage
   logic [31:0] instr_rdata_int;
 
   logic [31:0] exc_pc;
+  logic [31:0] irq_pc;
 
 
   // output data and PC mux
@@ -146,10 +148,10 @@ module riscv_if_stage
   always_comb
   begin : EXC_PC_MUX
     unique case (exc_pc_mux_i)
-      `EXC_PC_ILLINSN: exc_pc = { boot_addr_i[31:5], `EXC_OFF_ILLINSN };
-      `EXC_PC_IRQ:     exc_pc = { boot_addr_i[31:5], `EXC_OFF_IRQ     };
-      `EXC_PC_IRQ_NM:  exc_pc = { boot_addr_i[31:5], `EXC_OFF_IRQ_NM  };
-      default:         exc_pc = { boot_addr_i[31:5], `EXC_OFF_RST     };
+      `EXC_PC_ILLINSN: exc_pc = { boot_addr_i[31:8], `EXC_OFF_ILLINSN };
+      `EXC_PC_ECALL:   exc_pc = { boot_addr_i[31:8], `EXC_OFF_ECALL   };
+      `EXC_PC_IRQ:     exc_pc = { boot_addr_i[31:8], 1'b0, exc_vec_pc_mux_i[4:0], 2'b0 };
+      default:         exc_pc = { boot_addr_i[31:8], `EXC_OFF_ILLINSN };
     endcase
   end
 
@@ -157,7 +159,7 @@ module riscv_if_stage
   always_comb
   begin
     unique case (pc_mux_sel_i)
-      `PC_BOOT:      fetch_addr_n = {boot_addr_i[31:5], `EXC_OFF_RST};
+      `PC_BOOT:      fetch_addr_n = {boot_addr_i[31:8], `EXC_OFF_RST};
       `PC_JUMP:      fetch_addr_n = {jump_target_id_i[31:2], 2'b0};
       `PC_BRANCH:    fetch_addr_n = {jump_target_ex_i[31:2], 2'b0};
       `PC_EXCEPTION: fetch_addr_n = exc_pc;             // set PC to exception handler
