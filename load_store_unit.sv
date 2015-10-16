@@ -360,30 +360,32 @@ module riscv_load_store_unit
       begin
         lsu_ready_wb_o = 1'b0;
 
-        data_req_o = data_req_ex_i;
-
         if (data_rvalid_i) begin
           // we don't have to wait for anything here as we are the only stall
           // source for the WB stage
           lsu_ready_wb_o = 1'b1;
-        end
 
-        if (data_req_ex_i) begin
-          lsu_ready_ex_o = 1'b0;
+          data_req_o = data_req_ex_i;
 
-          if (data_gnt_i) begin
-            lsu_ready_ex_o = 1'b1;
+          if (data_req_ex_i) begin
+            lsu_ready_ex_o = 1'b0;
 
-            if(ex_valid_i)
-              NS = WAIT_RVALID;
-            else
-              NS = WAIT_RVALID_EX_STALL;
+            if (data_gnt_i) begin
+              lsu_ready_ex_o = 1'b1;
+
+              if(ex_valid_i)
+                NS = WAIT_RVALID;
+              else
+                NS = WAIT_RVALID_EX_STALL;
+            end else begin
+              NS = IDLE;
+            end
           end else begin
-            NS = IDLE;
+            if (data_rvalid_i) begin
+              // no request, so go to IDLE
+              NS = IDLE;
+            end
           end
-        end else begin
-          // no request, so go to IDLE
-          NS = IDLE;
         end
       end
 
@@ -422,8 +424,6 @@ module riscv_load_store_unit
 
       default: begin
         NS = IDLE;
-
-        data_req_o = 1'b0;
       end
     endcase
   end
@@ -455,5 +455,20 @@ module riscv_load_store_unit
 
   // generate address from operands
   assign data_addr_int = (addr_useincr_ex_i) ? (operand_a_ex_i + operand_b_ex_i) : operand_a_ex_i;
+
+
+  //////////////////////////////////////////////////////////////////////////////
+  // Assertions
+  //////////////////////////////////////////////////////////////////////////////
+
+  // make sure there is no new request when the old one is not yet completely done
+  // i.e. it should not be possible to get a grant without an rvalid for the
+  // last request
+  assert property (
+    @(posedge clk) ((CS == WAIT_RVALID) && (data_gnt_i == 1'b1)) |-> (data_rvalid_i == 1'b1) );
+
+  // there should be no rvalid when we are in IDLE
+  assert property (
+    @(posedge clk) (CS == IDLE)) |-> (data_rvalid_i == 1'b0) );
 
 endmodule
