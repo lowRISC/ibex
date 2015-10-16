@@ -58,7 +58,7 @@ module riscv_exc_controller
   integer i;
 
 
-  assign req_int = illegal_insn_i | ecall_insn_i | (|irq_i);
+  assign req_int = illegal_insn_i | ecall_insn_i | (irq_enable_i & (|irq_i));
 
 
   // Exception cause and ISR address selection
@@ -69,7 +69,7 @@ module riscv_exc_controller
 
     for (i = 31; i >= 0; i--)
     begin
-      if (irq_i[i]) begin
+      if (irq_enable_i && irq_i[i]) begin
         cause_int[5]   = 1'b1;
         cause_int[4:0] = i;
         pc_mux_int     = `EXC_PC_IRQ;
@@ -117,12 +117,10 @@ module riscv_exc_controller
     unique case (exc_ctrl_cs)
       IDLE:
       begin
-        if (irq_enable_i) begin
-          req_o = req_int;
+        req_o = req_int;
 
-          if (req_int)
-            exc_ctrl_ns = WAIT_CONTROLLER;
-        end
+        if (req_int)
+          exc_ctrl_ns = WAIT_CONTROLLER;
       end
 
       WAIT_CONTROLLER:
