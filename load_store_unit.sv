@@ -469,6 +469,6 @@ module riscv_load_store_unit
 
   // there should be no rvalid when we are in IDLE
   assert property (
-    @(posedge clk) (CS == IDLE)) |-> (data_rvalid_i == 1'b0) );
+    @(posedge clk) (CS == IDLE) |-> (data_rvalid_i == 1'b0) );
 
 endmodule
