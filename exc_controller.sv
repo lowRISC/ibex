@@ -81,9 +81,10 @@ module riscv_exc_controller
       pc_mux_int = `EXC_PC_ECALL;
     end
 
-    if (illegal_insn_i)
+    if (illegal_insn_i) begin
       cause_int  = 6'b0_00010;
       pc_mux_int = `EXC_PC_ILLINSN;
+    end
   end
 
   always_ff @(posedge clk, negedge rst_n)
@@ -116,10 +117,12 @@ module riscv_exc_controller
     unique case (exc_ctrl_cs)
       IDLE:
       begin
-        req_o = req_int;
+        if (irq_enable_i) begin
+          req_o = req_int;
 
-        if (req_int)
-          exc_ctrl_ns = WAIT_CONTROLLER;
+          if (req_int)
+            exc_ctrl_ns = WAIT_CONTROLLER;
+        end
       end
 
       WAIT_CONTROLLER:

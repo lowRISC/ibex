@@ -229,13 +229,24 @@ module riscv_controller
           ctrl_fsm_ns = DECODE;
         end
 
-        // TODO: Check if we need to handle IRQs here
-
         // hwloop detected, jump to start address!
         // Attention: This has to be done in the DECODE and the FIRST_FETCH states
         if (hwloop_jump_i == 1'b1) begin
-          pc_mux_sel_o  = `PC_HWLOOP;
+          pc_mux_sel_o = `PC_HWLOOP;
           pc_set_o     = 1'b1;
+        end
+
+        // handle exceptions
+        if (exc_req_i) begin
+          pc_mux_sel_o = `PC_EXCEPTION;
+          pc_set_o     = 1'b1;
+          exc_ack_o    = 1'b1;
+
+          // TODO: Check
+          if (jump_in_dec_i == `BRANCH_JALR || jump_in_dec_i == `BRANCH_JAL)
+            save_pc_if_o = 1'b1;
+          else
+            save_pc_id_o = 1'b1;
         end
       end
 
