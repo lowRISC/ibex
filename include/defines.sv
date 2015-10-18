@@ -29,6 +29,8 @@
 `ifndef _CORE_DEFINES
 `define _CORE_DEFINES
 
+`define TRACE_EXECUTION
+
 
 ////////////////////////////////////////////////
 //    ___         ____          _             //
@@ -74,16 +76,6 @@
 `define INSTR_BGE        { 17'b?, 3'b101, 5'b?, `OPCODE_BRANCH }
 `define INSTR_BLTU       { 17'b?, 3'b110, 5'b?, `OPCODE_BRANCH }
 `define INSTR_BGEU       { 17'b?, 3'b111, 5'b?, `OPCODE_BRANCH }
-// LOAD
-`define INSTR_LB         { 17'b?, 3'b000, 5'b?, `OPCODE_LOAD }
-`define INSTR_LH         { 17'b?, 3'b001, 5'b?, `OPCODE_LOAD }
-`define INSTR_LW         { 17'b?, 3'b010, 5'b?, `OPCODE_LOAD }
-`define INSTR_LBU        { 17'b?, 3'b100, 5'b?, `OPCODE_LOAD }
-`define INSTR_LHU        { 17'b?, 3'b101, 5'b?, `OPCODE_LOAD }
-// STORE
-`define INSTR_SB         { 17'b?, 3'b000, 5'b?, `OPCODE_STORE }
-`define INSTR_SH         { 17'b?, 3'b001, 5'b?, `OPCODE_STORE }
-`define INSTR_SW         { 17'b?, 3'b010, 5'b?, `OPCODE_STORE }
 // OPIMM
 `define INSTR_ADDI       { 17'b?, 3'b000, 5'b?, `OPCODE_OPIMM }
 `define INSTR_SLTI       { 17'b?, 3'b010, 5'b?, `OPCODE_OPIMM }
@@ -119,12 +111,6 @@
 `define INSTR_EBREAK     { 12'b000000000001, 13'b0, `OPCODE_SYSTEM }
 `define INSTR_ERET       { 12'b000100000000, 13'b0, `OPCODE_SYSTEM }
 `define INSTR_WFI        { 12'b000100000010, 13'b0, `OPCODE_SYSTEM }
-`define INSTR_RDCYCLE    { 5'b11000, 5'b0, 2'b00, 5'b0, 3'b010, 5'b?, `OPCODE_SYSTEM }
-`define INSTR_RDCYCLEH   { 5'b11001, 5'b0, 2'b00, 5'b0, 3'b010, 5'b?, `OPCODE_SYSTEM }
-`define INSTR_RDTIME     { 5'b11000, 5'b0, 2'b01, 5'b0, 3'b010, 5'b?, `OPCODE_SYSTEM }
-`define INSTR_RDTIMEH    { 5'b11001, 5'b0, 2'b01, 5'b0, 3'b010, 5'b?, `OPCODE_SYSTEM }
-`define INSTR_RDINSTRET  { 5'b11000, 5'b0, 2'b10, 5'b0, 3'b010, 5'b?, `OPCODE_SYSTEM }
-`define INSTR_RDINSTRETH { 5'b11001, 5'b0, 2'b10, 5'b0, 3'b010, 5'b?, `OPCODE_SYSTEM }
 
 // RV32M
 `define INSTR_MUL        { 7'b0000001, 10'b?, 3'b000, 5'b?, `OPCODE_OP }
@@ -146,40 +132,6 @@
 `define REG_D  11:07
 
 
-`ifndef SYNTHESIS
-// synopsys translate_off
-`define TRACE_EXECUTION
-
-function void prettyPrintInstruction(input [31:0] instr, input [31:0] pc);
-  string opcode;
-  begin
-    unique case (instr[6:0])
-      `OPCODE_SYSTEM: opcode = "SYSTEM";
-      `OPCODE_FENCE:  opcode = "FENCE";
-      `OPCODE_OP:     opcode = "OP";
-      `OPCODE_OPIMM:  opcode = "OPIMM";
-      `OPCODE_STORE:  opcode = "STORE";
-      `OPCODE_LOAD:   opcode = "LOAD";
-      `OPCODE_BRANCH: opcode = "BRANCH";
-      `OPCODE_JALR:   opcode = "JALR";
-      `OPCODE_JAL:    opcode = "JAL";
-      `OPCODE_AUIPC:  opcode = "AUIPC";
-      `OPCODE_LUI:    opcode = "LUI";
-      default:        opcode = "Unknown";
-    endcase // unique case (instr[6:0])
-
-    $display("%t: %s Instruction 0x%h at 0x%h.", $time, opcode, instr[31:0], pc[31:0]);
-    $display("%t:   | fct7  | rs2 | rs1 |   | rd  | opc.  |", $time);
-    $display("%t: 0b %b %b %b %b %b %b", $time, instr[31:25], instr[`REG_S2],
-             instr[`REG_S1], instr[14:12], instr[`REG_D], instr[6:0]);
-    $display();
-  end
-endfunction // prettyPrintInstruction
-// synopsys translate_on
-`endif
-
-
-
 //////////////////////////////////////////////////////////////////////////////
 //      _    _    _   _    ___                       _   _                  //
 //     / \  | |  | | | |  / _ \ _ __   ___ _ __ __ _| |_(_) ___  _ __  ___  //
@@ -191,35 +143,37 @@ endfunction // prettyPrintInstruction
 
 `define ALU_OP_WIDTH 6
 
-// Standard Operations
+// No operation
+`define ALU_NOP   6'b011111
+
+// Standard arithmetic operations
 `define ALU_ADD   6'b000_000
 `define ALU_SUB   6'b000_010
-`define ALU_AND   6'b000_011
-`define ALU_OR    6'b000_100
 `define ALU_XOR   6'b000_101
+`define ALU_OR    6'b000_100
+`define ALU_AND   6'b000_011
 
-`define ALU_AVG   6'b000_110
-`define ALU_AVGU  6'b000_111
-// Shift Operations
-`define ALU_SLL   6'b0010_00
-`define ALU_SRL   6'b0010_01
-`define ALU_SRA   6'b0010_10
-`define ALU_ROR   6'b0010_11
-// Set Lower Than Operations
+// Set Lower Than operations
 `define ALU_SLTS  6'b0011_00
 `define ALU_SLTU  6'b0011_01
 `define ALU_SLETS 6'b0011_10
 `define ALU_SLETU 6'b0011_11
-// Extension Operations
+
+// Shifts
+`define ALU_SLL   6'b0010_00
+`define ALU_SRL   6'b0010_01
+`define ALU_SRA   6'b0010_10
+`define ALU_ROR   6'b0010_11
+
+// Sign-/zero-extensions
 `define ALU_EXTHS 6'b010_000
 `define ALU_EXTWS 6'b010_001
 `define ALU_EXTBS 6'b010_010
 `define ALU_EXTWZ 6'b010_011
 `define ALU_EXTHZ 6'b010_100
 `define ALU_EXTBZ 6'b010_110
-// No Operation
-`define ALU_NOP   6'b011111
-// Comparison Operations
+
+// Comparisons
 `define ALU_EQ    6'b10_0000
 `define ALU_NE    6'b10_0001
 `define ALU_GTU   6'b10_0010
@@ -231,32 +185,22 @@ endfunction // prettyPrintInstruction
 `define ALU_LTS   6'b10_1100
 `define ALU_LES   6'b10_1101
 
+// Min/max/avg
+`define ALU_AVG   6'b000_110
+`define ALU_AVGU  6'b000_111
 `define ALU_MIN   6'b10_1110
 `define ALU_MINU  6'b11_1110
 `define ALU_MAX   6'b10_1111
 `define ALU_MAXU  6'b11_1111
 
+// Absolute value
 `define ALU_ABS   6'b11_1010
 
-`define ALU_INS   6'b11_1101
-`define ALU_EXT   6'b11_1100
-
+// Bit counting
 `define ALU_CNT   6'b11_0000
 `define ALU_FF1   6'b11_0010
 `define ALU_FL1   6'b11_0011
 `define ALU_CLB   6'b11_0001
-
-
-// Vector Mode
-`define VEC_MODE32  2'b00
-`define VEC_MODE16  2'b10
-`define VEC_MODE8   2'b11
-`define VEC_MODE216 2'b01
-
-// ALU comparison mode
-`define ALU_CMP_FULL 2'b00
-`define ALU_CMP_ANY  2'b01
-`define ALU_CMP_ALL  2'b10
 
 
 /////////////////////////////////////////////////////////
@@ -280,9 +224,6 @@ endfunction // prettyPrintInstruction
 `define CSR_OP_SET   2'b10
 `define CSR_OP_CLEAR 2'b11
 
-
-// SPR for HWLoops
-`define SP_GRP_HWLP          5'h0C
 
 // SPR for debugger, not accessible by CPU
 `define SP_DVR0       16'h3000
@@ -328,8 +269,9 @@ endfunction // prettyPrintInstruction
 `define IMM_PCINCR 3'b011
 
 // operand c selection
-`define OP_C_REGC_OR_FWD 1'b0
-`define OP_C_JT          1'b1
+`define OP_C_REGC_OR_FWD 2'b00
+`define OP_C_REGB_OR_FWD 2'b01
+`define OP_C_JT          2'b10
 
 // branch types
 `define BRANCH_NONE 2'b00
@@ -402,7 +344,5 @@ endfunction // prettyPrintInstruction
 `define DSR_IIE   0
 `define DSR_INTE  1
 
-
-//`define BRANCH_PREDICTION
 
 `endif

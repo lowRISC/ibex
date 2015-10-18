@@ -78,7 +78,6 @@ module riscv_id_stage
     input  logic        wb_valid_i,     // WB stage is done
 
     // To the Pipeline ID/EX
-    output logic [31:0] regfile_rb_data_ex_o,
     output logic [31:0] alu_operand_a_ex_o,
     output logic [31:0] alu_operand_b_ex_o,
     output logic [31:0] alu_operand_c_ex_o,
@@ -92,9 +91,7 @@ module riscv_id_stage
     // ALU
     output logic [`ALU_OP_WIDTH-1:0] alu_operator_ex_o,
 
-    output logic [1:0]  vector_mode_ex_o,
-    output logic [1:0]  alu_cmp_mode_ex_o,
-    output logic [1:0]  alu_vec_ext_ex_o,
+    output logic        vector_mode_ex_o,
 
     // MUL
     output logic        mult_en_ex_o,
@@ -219,15 +216,11 @@ module riscv_id_stage
   logic [`ALU_OP_WIDTH-1:0] alu_operator;
   logic [1:0]  alu_op_a_mux_sel;
   logic [1:0]  alu_op_b_mux_sel;
-  logic        alu_op_c_mux_sel;
-  logic        scalar_replication;
+  logic [1:0]  alu_op_c_mux_sel;
 
-  logic [1:0]  vector_mode;
-  logic [1:0]  alu_cmp_mode;
-  logic [1:0]  alu_vec_ext;
+  logic        vector_mode;
 
   logic [2:0]  immediate_mux_sel;
-
   logic [1:0]  jump_target_mux_sel;
 
   // Multiplier Control
@@ -278,13 +271,11 @@ module riscv_id_stage
   logic [1:0]  operand_c_fw_mux_sel;
   logic [31:0] operand_a_fw_id;
   logic [31:0] operand_b_fw_id;
+  logic [31:0] operand_c_fw_id;
 
   logic [31:0] alu_operand_a;
   logic [31:0] alu_operand_b;
   logic [31:0] alu_operand_c;
-  logic [31:0] operand_b;      // before going through the scalar replication mux
-  logic [31:0] operand_b_vec;  // scalar replication of operand_b for 8 and 16 bit
-  logic [31:0] operand_c;
 
 
   assign instr         = instr_rdata_i;
@@ -306,9 +297,6 @@ module riscv_id_stage
 
   // destination registers
   assign regfile_waddr_id = instr[`REG_D];
-
-  //assign alu_vec_ext = instr[9:8]; TODO
-  assign alu_vec_ext = '0;
 
   // Second Register Write Adress Selection
   // Used for prepost load/store and multiplier
@@ -423,7 +411,6 @@ module riscv_id_stage
   always_comb
   begin : immediate_mux
     unique case (immediate_mux_sel)
-      //`IMM_VEC:    immediate_b = immediate_vec_id;
       `IMM_I:      immediate_b = imm_i_type;
       `IMM_S:      immediate_b = imm_s_type;
       `IMM_U:      immediate_b = imm_u_type;
@@ -436,19 +423,12 @@ module riscv_id_stage
   always_comb
   begin : alu_operand_b_mux
     case (alu_op_b_mux_sel)
-      `OP_B_REGB_OR_FWD:  operand_b = operand_b_fw_id;
-      `OP_B_REGC_OR_FWD:  operand_b = alu_operand_c;
-      `OP_B_IMM:          operand_b = immediate_b;
-      default:            operand_b = operand_b_fw_id;
+      `OP_B_REGB_OR_FWD:  alu_operand_b = operand_b_fw_id;
+      `OP_B_REGC_OR_FWD:  alu_operand_b = operand_c_fw_id;
+      `OP_B_IMM:          alu_operand_b = immediate_b;
+      default:            alu_operand_b = operand_b_fw_id;
     endcase // case (alu_op_b_mux_sel)
   end
-
-  // scalar replication for operand B
-  assign operand_b_vec = (vector_mode == `VEC_MODE8) ? {4{operand_b[7:0]}} : {2{operand_b[15:0]}};
-
-  // choose normal or scalar replicated version of operand b
-  assign alu_operand_b = (scalar_replication == 1'b1) ? operand_b_vec : operand_b;
-
 
   // Operand b forwarding mux
   always_comb
@@ -475,8 +455,10 @@ module riscv_id_stage
   always_comb
   begin : alu_operand_c_mux
     case (alu_op_c_mux_sel)
-      `OP_C_JT: operand_c = jump_target;
-      default:  operand_c = regfile_data_rc_id;
+      `OP_C_REGC_OR_FWD:  alu_operand_c = operand_c_fw_id;
+      `OP_C_REGB_OR_FWD:  alu_operand_c = operand_b_fw_id;
+      `OP_C_JT:           alu_operand_c = jump_target;
+      default:            alu_operand_c = operand_c_fw_id;
     endcase // case (alu_op_c_mux_sel)
   end
 
@@ -484,11 +466,11 @@ module riscv_id_stage
   always_comb
   begin : operand_c_fw_mux
     case (operand_c_fw_mux_sel)
-      `SEL_FW_EX:    alu_operand_c = regfile_alu_wdata_fw_i;
-      `SEL_FW_WB:    alu_operand_c = regfile_wdata_wb_i;
-      `SEL_REGFILE:  alu_operand_c = operand_c;
-      default:       alu_operand_c = operand_c;
-    endcase; // case (operand_b_fw_mux_sel)
+      `SEL_FW_EX:    operand_c_fw_id = regfile_alu_wdata_fw_i;
+      `SEL_FW_WB:    operand_c_fw_id = regfile_wdata_wb_i;
+      `SEL_REGFILE:  operand_c_fw_id = regfile_data_rc_id;
+      default:       operand_c_fw_id = regfile_data_rc_id;
+    endcase; // case (operand_c_fw_mux_sel)
   end
 
 
@@ -555,7 +537,6 @@ module riscv_id_stage
     .regb_used_o                     ( regb_used_dec             ),
     .regc_used_o                     ( regc_used_dec             ),
 
-
     // from IF/ID pipeline
     .instr_rdata_i                   ( instr                     ),
     .illegal_c_insn_i                ( illegal_c_insn_i          ),
@@ -568,8 +549,6 @@ module riscv_id_stage
     .immediate_mux_sel_o             ( immediate_mux_sel         ),
 
     .vector_mode_o                   ( vector_mode               ),
-    .scalar_replication_o            ( scalar_replication        ),
-    .alu_cmp_mode_o                  ( alu_cmp_mode              ),
 
     // MUL signals
     .mult_en_o                       ( mult_en                   ),
@@ -615,6 +594,7 @@ module riscv_id_stage
   //   \____\___/|_| \_| |_| |_| \_\\___/|_____|_____|_____|_| \_\  //
   //                                                                //
   ////////////////////////////////////////////////////////////////////
+
   riscv_controller controller_i
   (
     .clk                            ( clk                    ),
@@ -830,16 +810,12 @@ module riscv_id_stage
   begin : ID_EX_PIPE_REGISTERS
     if (rst_n == 1'b0)
     begin
-      regfile_rb_data_ex_o        <= 32'h0000_0000;
-
       alu_operator_ex_o           <= `ALU_NOP;
       alu_operand_a_ex_o          <= 32'h0000_0000;
       alu_operand_b_ex_o          <= 32'h0000_0000;
       alu_operand_c_ex_o          <= 32'h0000_0000;
 
-      vector_mode_ex_o            <= `VEC_MODE32;
-      alu_cmp_mode_ex_o           <= `ALU_CMP_FULL;
-      alu_vec_ext_ex_o            <= 2'h0;
+      vector_mode_ex_o            <= '0;
 
       mult_en_ex_o                <= 1'b0;
       mult_sel_subword_ex_o       <= 2'b0;
@@ -890,22 +866,17 @@ module riscv_id_stage
     else if (~data_misaligned_i) begin
       if (id_valid_o)
       begin // unstall the whole pipeline
-        regfile_rb_data_ex_o        <= operand_b_fw_id;
-
         alu_operator_ex_o           <= alu_operator;
         alu_operand_a_ex_o          <= alu_operand_a;
         alu_operand_b_ex_o          <= alu_operand_b;
         alu_operand_c_ex_o          <= alu_operand_c;
 
         vector_mode_ex_o            <= vector_mode;
-        alu_cmp_mode_ex_o           <= alu_cmp_mode;
-        alu_vec_ext_ex_o            <= alu_vec_ext;
 
         mult_en_ex_o                <= mult_en;
         mult_sel_subword_ex_o       <= mult_sel_subword;
         mult_signed_mode_ex_o       <= mult_signed_mode;
         mult_mac_en_ex_o            <= mult_mac_en;
-
 
         regfile_waddr_ex_o          <= regfile_waddr_id;
         regfile_we_ex_o             <= regfile_we_id;

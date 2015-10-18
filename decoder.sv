@@ -50,12 +50,10 @@ module riscv_decoder
   output logic [`ALU_OP_WIDTH-1:0] alu_operator_o, // ALU operation selection
   output logic [1:0]  alu_op_a_mux_sel_o,      // operand a selection: reg value, PC, immediate or zero
   output logic [1:0]  alu_op_b_mux_sel_o,      // operand b selection: reg value or immediate
+  output logic [1:0]  alu_op_c_mux_sel_o,      // operand c selection: reg value or jump target
   output logic [2:0]  immediate_mux_sel_o,     // immediate selection for operand b
-  output logic        alu_op_c_mux_sel_o,      // operand c selection: reg value or jump target
 
-  output logic [1:0]  vector_mode_o,           // selects between 32 bit, 16 bit and 8 bit vectorial modes
-  output logic        scalar_replication_o,    // activates scalar_replication for vectorial mode
-  output logic [1:0]  alu_cmp_mode_o,          // selects comparison mode for ALU (i.e. full, any, all)
+  output logic        vector_mode_o,           // selects between 32 bit, 16 bit and 8 bit vectorial modes
 
   // MUL related control signals
   output logic        mult_en_o,               // perform multiplication
@@ -131,9 +129,7 @@ module riscv_decoder
 
     immediate_mux_sel_o         = `IMM_I;
 
-    vector_mode_o               = `VEC_MODE32;
-    scalar_replication_o        = 1'b0;
-    alu_cmp_mode_o              = `ALU_CMP_FULL;
+    vector_mode_o               = 1'b0;
 
     mult_en                     = 1'b0;
     mult_signed_mode_o          = 2'b00;
@@ -252,6 +248,9 @@ module riscv_decoder
         rega_used_o  = 1'b1;
         regb_used_o  = 1'b1;
         alu_operator = `ALU_ADD;
+
+        // pass write data through ALU operand c
+        alu_op_c_mux_sel_o = `OP_C_REGB_OR_FWD;
 
         // post-increment setup
         if (instr_rdata_i[6:0] == `OPCODE_STORE_POST) begin
@@ -480,7 +479,7 @@ module riscv_decoder
           3'b101,
           3'b110,
           3'b111: begin // MAC with subword selection
-            vector_mode_o      = `VEC_MODE216;
+            vector_mode_o      = 1'b1;
             mult_sel_subword_o = instr_rdata_i[13:12];
             mult_signed_mode_o = instr_rdata_i[31:30];
 
@@ -516,18 +515,18 @@ module riscv_decoder
               // TODO: Handle in controller
             end
 
-            32'h00_10_00_73:  // EBREAK
+            32'h00_10_00_73:  // ebreak
             begin
               // debugger trap
               trap_insn = 1'b1;
             end
 
-            32'h10_00_00_73:  // ERET
+            32'h10_00_00_73:  // eret
             begin
               eret_insn = 1'b1;
             end
 
-            32'h10_20_00_73:  // WFI
+            32'h10_20_00_73:  // wfi
             begin
               // flush pipeline
               pipe_flush = 1'b1;
@@ -590,13 +589,13 @@ module riscv_decoder
             hwloop_end_mux_sel_o = 1'b0; // jump target
           end
           3'b010: begin
-            // lp.count initialize counter from rs1
+            // lp.count: initialize counter from rs1
             hwloop_we[2]         = 1'b1;
             hwloop_cnt_mux_sel_o = 1'b1;
             rega_used_o          = 1'b1;
           end
           3'b011: begin
-            // lp.counti initialize counter from I-type immediate
+            // lp.counti: initialize counter from I-type immediate
             hwloop_we[2]         = 1'b1;
             hwloop_cnt_mux_sel_o = 1'b0;
           end
@@ -608,16 +607,6 @@ module riscv_decoder
             hwloop_end_mux_sel_o   = 1'b0;
             hwloop_cnt_mux_sel_o   = 1'b1;
             rega_used_o            = 1'b1;
-          end
-          3'b101: begin
-            // lp.setupi: initialize counter from I-type immediate, set start
-            // address to next instruction and end address to PC + shifted
-            // z-type immediate
-            hwloop_we              = 3'b111;
-            hwloop_start_mux_sel_o = 1'b1;
-            hwloop_end_mux_sel_o   = 1'b1;
-            hwloop_cnt_mux_sel_o   = 1'b0;
-            illegal_insn_o         = 1'b1; // TODO: PC + z-imm currently not supported
           end
           default: begin
             illegal_insn_o = 1'b1;

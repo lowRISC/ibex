@@ -61,8 +61,8 @@ module riscv_core
   input  logic [31:0] data_rdata_i,
 
   // Interrupt inputs
-  input  logic        irq_i,                 // level-triggered IR line
-  input  logic        irq_nm_i,              // level-triggered IR line for non-maskable IRQ
+  input  logic        irq_i,          // level-triggered IR line
+  input  logic        irq_nm_i,       // level-triggered IR line for non-maskable IRQ
 
   // Debug Interface
   input  logic        dbginf_stall_i,
@@ -83,23 +83,22 @@ module riscv_core
 
 
   // IF/ID signals
-  logic [31:0]   instr_rdata_id;    // Instruction sampled inside IF stage
-  logic          is_compressed_id;
-  logic          illegal_c_insn_id; // Illegal compressed instruction sent to ID stage
-  logic [31:0]   current_pc_if;     // Current Program counter
-  logic [31:0]   current_pc_id;     // Current Program counter
-  logic          pc_set;
-  logic [2:0]    pc_mux_sel_id;     // Mux selector for next PC
-  logic [1:0]    exc_pc_mux_id;     // Mux selector for exception PC
+  logic [31:0] instr_rdata_id;    // Instruction sampled inside IF stage
+  logic        is_compressed_id;
+  logic        illegal_c_insn_id; // Illegal compressed instruction sent to ID stage
+  logic [31:0] current_pc_if;     // Current Program counter
+  logic [31:0] current_pc_id;     // Current Program counter
+  logic        pc_set;
+  logic [2:0]  pc_mux_sel_id;     // Mux selector for next PC
+  logic [1:0]  exc_pc_mux_id;     // Mux selector for exception PC
 
-  logic          branch_done;       // Branch already done
+  logic        branch_done;       // Branch already done
 
   // ID performance counter signals
-  logic          is_decoding;
+  logic        is_decoding;
 
-
-  logic          useincr_addr_ex;   // Active when post increment
-  logic          data_misaligned;
+  logic        useincr_addr_ex;   // Active when post increment
+  logic        data_misaligned;
 
   // Jump and branch target and decision (EX->IF)
   logic [31:0] jump_target_id, jump_target_ex;
@@ -107,24 +106,16 @@ module riscv_core
   logic  [1:0] jump_in_ex;
   logic        branch_decision;
 
-
   logic        core_busy;
   logic        if_busy;
 
 
-  // Register Data
-  logic [31:0] regfile_rb_data_ex;  // from id stage to load/store unit and ex stage
-
-
   // ALU Control
   logic [`ALU_OP_WIDTH-1:0] alu_operator_ex;
-  logic [31:0]              alu_operand_a_ex;
-  logic [31:0]              alu_operand_b_ex;
-  logic [31:0]              alu_operand_c_ex;
-
-  logic [1:0]               vector_mode_ex;
-  logic [1:0]               alu_cmp_mode_ex;
-  logic [1:0]               alu_vec_ext_ex;
+  logic [31:0] alu_operand_a_ex;
+  logic [31:0] alu_operand_b_ex;
+  logic [31:0] alu_operand_c_ex;
+  logic        vector_mode_ex;
 
   // Multiplier Control
   logic        mult_en_ex;
@@ -253,7 +244,7 @@ module riscv_core
     .instr_rdata_i       ( instr_rdata_i   ),
 
     // outputs to ID stage
-    .instr_rdata_id_o    ( instr_rdata_id    ),   // Output of IF Pipeline stage
+    .instr_rdata_id_o    ( instr_rdata_id    ),
     .is_compressed_id_o  ( is_compressed_id  ),
     .illegal_c_insn_id_o ( illegal_c_insn_id ),
     .current_pc_if_o     ( current_pc_if     ),   // current pc in IF stage
@@ -261,7 +252,7 @@ module riscv_core
 
     // control signals
     .pc_set_i            ( pc_set          ),
-    .exception_pc_reg_i  ( epcr            ),   // Exception PC register
+    .exception_pc_reg_i  ( epcr            ),   // exception return address
     .pc_mux_sel_i        ( pc_mux_sel_id   ),   // sel for pc multiplexer
     .exc_pc_mux_i        ( exc_pc_mux_id   ),   // selector for exception multiplexer
 
@@ -345,7 +336,6 @@ module riscv_core
     .wb_valid_i                   ( wb_valid             ),
 
     // From the Pipeline ID/EX
-    .regfile_rb_data_ex_o         ( regfile_rb_data_ex   ),
     .alu_operand_a_ex_o           ( alu_operand_a_ex     ),
     .alu_operand_b_ex_o           ( alu_operand_b_ex     ),
     .alu_operand_c_ex_o           ( alu_operand_c_ex     ),
@@ -358,10 +348,7 @@ module riscv_core
 
     // ALU
     .alu_operator_ex_o            ( alu_operator_ex      ),
-
     .vector_mode_ex_o             ( vector_mode_ex       ), // from ID to EX stage
-    .alu_cmp_mode_ex_o            ( alu_cmp_mode_ex      ), // from ID to EX stage
-    .alu_vec_ext_ex_o             ( alu_vec_ext_ex       ), // from ID to EX stage
 
     // MUL
     .mult_en_ex_o                 ( mult_en_ex           ), // from ID to EX stage
@@ -446,8 +433,6 @@ module riscv_core
     .alu_operand_c_i            ( alu_operand_c_ex             ), // from ID/EX pipe registers
 
     .vector_mode_i              ( vector_mode_ex               ), // from ID/EX pipe registers
-    .alu_cmp_mode_i             ( alu_cmp_mode_ex              ), // from ID/EX pipe registers
-    .alu_vec_ext_i              ( alu_vec_ext_ex               ), // from ID/EX pipe registers
 
     // Multipler
     .mult_en_i                  ( mult_en_ex                   ),
@@ -496,45 +481,47 @@ module riscv_core
   //   |_____\___/_/   \_\____/  |____/ |_| \___/|_| \_\_____|  \___/|_| \_|___| |_|    //
   //                                                                                    //
   ////////////////////////////////////////////////////////////////////////////////////////
+
   riscv_load_store_unit  load_store_unit_i
   (
-    .clk                   ( clk                     ),
-    .rst_n                 ( rst_n                   ),
+    .clk                   ( clk                ),
+    .rst_n                 ( rst_n              ),
 
     // signal from ex stage
-    .data_we_ex_i          ( data_we_ex              ),
-    .data_type_ex_i        ( data_type_ex            ),
-    .data_wdata_ex_i       ( regfile_rb_data_ex      ),
-    .data_reg_offset_ex_i  ( data_reg_offset_ex      ),
-    .data_sign_ext_ex_i    ( data_sign_ext_ex        ),  // sign extension
+    .data_we_ex_i          ( data_we_ex         ),
+    .data_type_ex_i        ( data_type_ex       ),
+    .data_wdata_ex_i       ( alu_operand_c_ex   ),
+    .data_reg_offset_ex_i  ( data_reg_offset_ex ),
+    .data_sign_ext_ex_i    ( data_sign_ext_ex   ),  // sign extension
 
-    .data_rdata_ex_o       ( regfile_wdata           ),
-    .data_req_ex_i         ( data_req_ex             ),
-    .operand_a_ex_i        ( alu_operand_a_ex        ),
-    .operand_b_ex_i        ( alu_operand_b_ex        ),
-    .addr_useincr_ex_i     ( useincr_addr_ex         ),
+    .data_rdata_ex_o       ( regfile_wdata      ),
+    .data_req_ex_i         ( data_req_ex        ),
+    .operand_a_ex_i        ( alu_operand_a_ex   ),
+    .operand_b_ex_i        ( alu_operand_b_ex   ),
+    .addr_useincr_ex_i     ( useincr_addr_ex    ),
 
-    .data_misaligned_ex_i  ( data_misaligned_ex      ), // from ID/EX pipeline
-    .data_misaligned_o     ( data_misaligned         ),
+    .data_misaligned_ex_i  ( data_misaligned_ex ), // from ID/EX pipeline
+    .data_misaligned_o     ( data_misaligned    ),
 
     //output to data memory
-    .data_req_o            ( data_req_o              ),
-    .data_gnt_i            ( data_gnt_i              ),
-    .data_rvalid_i         ( data_rvalid_i           ),
+    .data_req_o            ( data_req_o         ),
+    .data_gnt_i            ( data_gnt_i         ),
+    .data_rvalid_i         ( data_rvalid_i      ),
 
-    .data_addr_o           ( data_addr_o             ),
-    .data_we_o             ( data_we_o               ),
-    .data_be_o             ( data_be_o               ),
-    .data_wdata_o          ( data_wdata_o            ),
-    .data_rdata_i          ( data_rdata_i            ),
+    .data_addr_o           ( data_addr_o        ),
+    .data_we_o             ( data_we_o          ),
+    .data_be_o             ( data_be_o          ),
+    .data_wdata_o          ( data_wdata_o       ),
+    .data_rdata_i          ( data_rdata_i       ),
 
-    .lsu_ready_ex_o        ( lsu_ready_ex            ),
-    .lsu_ready_wb_o        ( lsu_ready_wb            ),
+    .lsu_ready_ex_o        ( lsu_ready_ex       ),
+    .lsu_ready_wb_o        ( lsu_ready_wb       ),
 
-    .ex_valid_i            ( ex_valid                )
+    .ex_valid_i            ( ex_valid           )
   );
 
   assign wb_valid = lsu_ready_wb;
+
 
   //////////////////////////////////////
   //        ____ ____  ____           //
@@ -545,6 +532,7 @@ module riscv_core
   //                                  //
   //   Control and Status Registers   //
   //////////////////////////////////////
+
   riscv_cs_registers
   #(
     .N_EXT_PERF_COUNTERS      ( N_EXT_PERF_COUNTERS   )
@@ -606,6 +594,7 @@ module riscv_core
   // |____/|_____|____/ \___/ \____|  \___/|_| \_|___| |_|   //
   //                                                         //
   /////////////////////////////////////////////////////////////
+
   riscv_debug_unit debug_unit_i
   (
     .clk             ( clk             ),
@@ -730,10 +719,6 @@ module riscv_core
         `INSTR_BGE:        printSBInstr("BGE");
         `INSTR_BLTU:       printSBInstr("BLTU");
         `INSTR_BGEU:       printSBInstr("BGEU");
-        // STORE
-        `INSTR_SB:         printSInstr("SB");
-        `INSTR_SH:         printSInstr("SH");
-        `INSTR_SW:         printSInstr("SW");
         // OPIMM
         `INSTR_ADDI:       printIInstr("ADDI");
         `INSTR_SLTI:       printIInstr("SLTI");
@@ -770,12 +755,6 @@ module riscv_core
         `INSTR_EBREAK:     printMnemonic("EBREAK");
         `INSTR_ERET:       printMnemonic("ERET");
         `INSTR_WFI:        printMnemonic("WFI");
-        `INSTR_RDCYCLE:    printRDInstr("RDCYCLE");
-        `INSTR_RDCYCLEH:   printRDInstr("RDCYCLEH");
-        `INSTR_RDTIME:     printRDInstr("RDTIME");
-        `INSTR_RDTIMEH:    printRDInstr("RDTIMEH");
-        `INSTR_RDINSTRET:  printRDInstr("RDINSTRET");
-        `INSTR_RDINSTRETH: printRDInstr("RDINSTRETH");
         // RV32M
         `INSTR_MUL:        printRInstr("MUL");
         `INSTR_MULH:       printRInstr("MULH");
@@ -792,6 +771,7 @@ module riscv_core
         {25'b?, `OPCODE_LOAD_POST}:  printLoadInstr();
         {25'b?, `OPCODE_STORE}:      printStoreInstr();
         {25'b?, `OPCODE_STORE_POST}: printStoreInstr();
+        {25'b?, `OPCODE_HWLOOP}:     printHwloopInstr();
         default:           printMnemonic("INVALID");
       endcase // unique case (instr)
 
@@ -839,15 +819,6 @@ module riscv_core
     end
   endfunction // printIInstr
 
-  function void printSInstr(input string mnemonic);
-    begin
-      riscv_core.mnemonic = mnemonic;
-      imm = id_stage_i.imm_s_type;
-      $fdisplay(f, "%7s\tx%0d (0x%h), x%0d (0x%h), 0x%0h (imm) (-> 0x%h)", mnemonic,
-                rs1, rs1_value, rs2, rs2_value, imm, imm+rs1_value);
-    end
-  endfunction // printSInstr
-
   function void printSBInstr(input string mnemonic);
     begin
       riscv_core.mnemonic = mnemonic;
@@ -864,13 +835,6 @@ module riscv_core
       $fdisplay(f, "%7s\tx%0d, 0x%h (-> 0x%h)", mnemonic, rd, imm, imm+pc);
     end
   endfunction // printUJInstr
-
-  function void printRDInstr(input string mnemonic);
-    begin
-      riscv_core.mnemonic = mnemonic;
-      $fdisplay(f, "%7s\tx%0d", mnemonic, rd);
-    end
-  endfunction // printRDInstr
 
   function void printCSRInstr(input string mnemonic);
     logic [11:0] csr;
@@ -978,11 +942,42 @@ module riscv_core
       end
     end
   endfunction // printSInstr
+
+  function void printHwloopInstr();
+    string mnemonic;
+    begin
+      // set mnemonic
+      case (instr[14:12])
+        3'b000: mnemonic = "LSTARTI";
+        3'b001: mnemonic = "LENDI";
+        3'b010: mnemonic = "LCOUNT";
+        3'b011: mnemonic = "LCOUNTI";
+        3'b100: mnemonic = "LSETUP";
+        3'b111: begin
+          printMnemonic("INVALID");
+          return;
+        end
+      endcase
+      riscv_core.mnemonic = mnemonic;
+
+      // decode and print instruction
+      imm = id_stage_i.imm_i_type;
+      case (instr[14:12])
+        // lp.starti and lp.endi
+        3'b000,
+        3'b001: $fdisplay(f, "%7s\tx%0d, 0x%h (-> 0x%h)", mnemonic, rd, imm, pc+imm);
+        // lp.count
+        3'b010: $fdisplay(f, "%7s\tx%0d, x%0d (0x%h)", mnemonic, rd, rs1, rs1_value);
+        // lp.counti
+        3'b011: $fdisplay(f, "%7s\tx%0d, 0x%h", mnemonic, rd, imm);
+        // lp.setup
+        3'b100: $fdisplay(f, "%7s\tx%0d, x%0d (0x%h), 0x%h (-> 0x%h)", mnemonic,
+                          rd, rs1, rs1_value, imm, pc+imm);
+      endcase
+    end
+  endfunction
   `endif // TRACE_EXECUTION
   // synopsys translate_on
 `endif
 
-
-///////////////////
-endmodule // cpu //
-///////////////////
+endmodule

@@ -149,7 +149,6 @@ module riscv_controller
     if (illegal_insn_o) begin
       $display("%t: Illegal instruction (core %0d) at PC 0x%h:", $time, riscv_core.core_id_i,
                riscv_id_stage.current_pc_id_i);
-      //prettyPrintInstruction(instr_rdata_i, id_stage.current_pc_id_i);
     end
   end
   // synopsys translate_on
