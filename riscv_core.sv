@@ -59,6 +59,7 @@ module riscv_core
   output logic [31:0] data_addr_o,
   output logic [31:0] data_wdata_o,
   input  logic [31:0] data_rdata_i,
+  input  logic        data_err_i,
 
   // Interrupt inputs
   input  logic [31:0] irq_i,                 // level sensitive IR lines
@@ -493,6 +494,18 @@ module riscv_core
     .clk                   ( clk                ),
     .rst_n                 ( rst_n              ),
 
+    //output to data memory
+    .data_req_o            ( data_req_o         ),
+    .data_gnt_i            ( data_gnt_i         ),
+    .data_rvalid_i         ( data_rvalid_i      ),
+    .data_err_i            ( data_err_i         ),
+
+    .data_addr_o           ( data_addr_o        ),
+    .data_we_o             ( data_we_o          ),
+    .data_be_o             ( data_be_o          ),
+    .data_wdata_o          ( data_wdata_o       ),
+    .data_rdata_i          ( data_rdata_i       ),
+
     // signal from ex stage
     .data_we_ex_i          ( data_we_ex         ),
     .data_type_ex_i        ( data_type_ex       ),
@@ -509,17 +522,11 @@ module riscv_core
     .data_misaligned_ex_i  ( data_misaligned_ex ), // from ID/EX pipeline
     .data_misaligned_o     ( data_misaligned    ),
 
-    //output to data memory
-    .data_req_o            ( data_req_o         ),
-    .data_gnt_i            ( data_gnt_i         ),
-    .data_rvalid_i         ( data_rvalid_i      ),
+    // exception signals
+    .load_err_o            ( lsu_load_err       ),
+    .store_err_o           ( lsu_store_err      ),
 
-    .data_addr_o           ( data_addr_o        ),
-    .data_we_o             ( data_we_o          ),
-    .data_be_o             ( data_be_o          ),
-    .data_wdata_o          ( data_wdata_o       ),
-    .data_rdata_i          ( data_rdata_i       ),
-
+    // control signals
     .lsu_ready_ex_o        ( lsu_ready_ex       ),
     .lsu_ready_wb_o        ( lsu_ready_wb       ),
 

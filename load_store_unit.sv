@@ -34,6 +34,18 @@ module riscv_load_store_unit
     input  logic         clk,
     input  logic         rst_n,
 
+    // output to data memory
+    output logic         data_req_o,
+    input  logic         data_gnt_i,
+    input  logic         data_rvalid_i,
+    input  logic         data_err_i,
+
+    output logic [31:0]  data_addr_o,
+    output logic         data_we_o,
+    output logic [3:0]   data_be_o,
+    output logic [31:0]  data_wdata_o,
+    input  logic [31:0]  data_rdata_i,
+
     // signals from ex stage
     input  logic         data_we_ex_i,         // write enable                      -> from ex stage
     input  logic [1:0]   data_type_ex_i,       // Data type word, halfword, byte    -> from ex stage
@@ -50,16 +62,9 @@ module riscv_load_store_unit
     input  logic         data_misaligned_ex_i, // misaligned access in last ld/st   -> from ID/EX pipeline
     output logic         data_misaligned_o,    // misaligned access was detected    -> to controller
 
-    // output to data memory
-    output logic         data_req_o,
-    output logic [31:0]  data_addr_o,
-    output logic         data_we_o,
-
-    output logic [3:0]   data_be_o,
-    output logic [31:0]  data_wdata_o,
-    input  logic [31:0]  data_rdata_i,
-    input  logic         data_rvalid_i,
-    input  logic         data_gnt_i,
+    // exception signals
+    output logic         load_err_o,
+    output logic         store_err_o,
 
     // stall signal
     output logic         lsu_ready_ex_o, // LSU ready for new data in EX stage
@@ -74,6 +79,7 @@ module riscv_load_store_unit
   logic [1:0]   data_type_q;
   logic [1:0]   rdata_offset_q;
   logic         data_sign_ext_q;
+  logic         data_we_q;
 
   logic [1:0]   wdata_offset;   // mux control for data to be written to memory
 
@@ -157,7 +163,7 @@ module riscv_load_store_unit
   end
 
 
-  // FF for rdata
+  // FF for rdata alignment and sign-extension
   always_ff @(posedge clk, negedge rst_n)
   begin
     if(rst_n == 1'b0)
@@ -165,12 +171,14 @@ module riscv_load_store_unit
       data_type_q     <= '0;
       rdata_offset_q  <= '0;
       data_sign_ext_q <= '0;
+      data_we_q       <= 1'b0;
     end
     else if (data_gnt_i == 1'b1) // request was granted, we wait for rvalid and can continue to WB
     begin
       data_type_q     <= data_type_ex_i;
       rdata_offset_q  <= data_addr_int[1:0];
       data_sign_ext_q <= data_sign_ext_ex_i;
+      data_we_q       <= data_we_ex_i;
     end
   end
 
@@ -299,7 +307,7 @@ module riscv_load_store_unit
     begin
       CS            <= NS;
 
-      if(data_rvalid_i)
+      if (data_rvalid_i && (~data_we_q))
       begin
         // if we have detected a misaligned access, and we are
         // currently doing the first part of this access, then
@@ -318,22 +326,25 @@ module riscv_load_store_unit
   assign data_rdata_ex_o = (data_rvalid_i == 1'b1) ? data_rdata_ext : rdata_q;
 
   // output to data interface
-  assign data_addr_o  = data_addr_int;
-  assign data_wdata_o = data_wdata;
-  assign data_we_o    = data_we_ex_i;
-  assign data_be_o    = data_be;
+  assign data_addr_o   = data_addr_int;
+  assign data_wdata_o  = data_wdata;
+  assign data_we_o     = data_we_ex_i;
+  assign data_be_o     = data_be;
 
   assign misaligned_st = data_misaligned_ex_i;
+
+  assign load_err_o    = data_gnt_i && data_err_i && data_we_o;
+  assign store_err_o   = data_gnt_i && data_err_i && data_we_o;
 
   // FSM
   always_comb
   begin
-    NS                 = CS;
+    NS             = CS;
 
-    data_req_o         = 1'b0;
+    data_req_o     = 1'b0;
 
-    lsu_ready_ex_o     = 1'b1;
-    lsu_ready_wb_o     = 1'b1;
+    lsu_ready_ex_o = 1'b1;
+    lsu_ready_wb_o = 1'b1;
 
     case(CS)
       // starts from not active and stays in IDLE until request was granted
@@ -452,7 +463,6 @@ module riscv_load_store_unit
     end
   end
 
-
   // generate address from operands
   assign data_addr_int = (addr_useincr_ex_i) ? (operand_a_ex_i + operand_b_ex_i) : operand_a_ex_i;
 
@@ -470,5 +480,8 @@ module riscv_load_store_unit
   // there should be no rvalid when we are in IDLE
   assert property (
     @(posedge clk) (CS == IDLE) |-> (data_rvalid_i == 1'b0) );
+
+  // assert that errors are only sent at the same time as grant
+  assert property ( @(posedge clk) (data_err_i) |-> (data_gnt_i) );
 
 endmodule

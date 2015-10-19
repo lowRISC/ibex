@@ -715,9 +715,9 @@ module riscv_id_stage
     .irq_i                ( irq_i            ),
     .irq_enable_i         ( irq_enable_i     ),
 
-    .illegal_insn_i       ( id_valid_o & is_decoding_o & illegal_insn_dec ),
-    .ecall_insn_i         ( id_valid_o & is_decoding_o & ecall_insn_dec   ),
-    .eret_insn_i          ( id_valid_o & is_decoding_o & eret_insn_dec    ),
+    .illegal_insn_i       ( is_decoding_o & illegal_insn_dec ),
+    .ecall_insn_i         ( is_decoding_o & ecall_insn_dec   ),
+    .eret_insn_i          ( is_decoding_o & eret_insn_dec    ),
 
     .cause_o              ( exc_cause_o      ),
     .save_cause_o         ( save_exc_cause_o )
