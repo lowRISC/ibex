@@ -307,7 +307,9 @@
 // Exception PC mux selector defines
 `define EXC_PC_ILLINSN   2'b00
 `define EXC_PC_ECALL     2'b01
-`define EXC_PC_IRQ       2'b10
+`define EXC_PC_LOAD      2'b10
+`define EXC_PC_STORE     2'b10
+`define EXC_PC_IRQ       2'b11
 
 // Exceptions offsets
 // target address = {boot_addr[31:8], EXC_OFF} (boot_addr must be 32 BYTE aligned!)
@@ -315,6 +317,7 @@
 `define EXC_OFF_RST      8'h80
 `define EXC_OFF_ILLINSN  8'h84
 `define EXC_OFF_ECALL    8'h88
+`define EXC_OFF_LSUERR   8'h8c
 
 
 // Hardware loop registers

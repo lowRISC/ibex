@@ -129,6 +129,9 @@ module riscv_id_stage
     output logic        save_pc_if_o,
     output logic        save_pc_id_o,
 
+    input  logic        lsu_load_err_i,
+    input  logic        lsu_store_err_i,
+
     // Debug Unit Signals
     input  logic        dbg_flush_pipe_i,
     input  logic        dbg_st_en_i,
@@ -718,6 +721,9 @@ module riscv_id_stage
     .illegal_insn_i       ( is_decoding_o & illegal_insn_dec ),
     .ecall_insn_i         ( is_decoding_o & ecall_insn_dec   ),
     .eret_insn_i          ( is_decoding_o & eret_insn_dec    ),
+
+    .lsu_load_err_i       ( lsu_load_err_i   ),
+    .lsu_store_err_i      ( lsu_store_err_i  ),
 
     .cause_o              ( exc_cause_o      ),
     .save_cause_o         ( save_exc_cause_o )

@@ -216,7 +216,6 @@ module riscv_controller
 
         if (fetch_enable_i || exc_req_i)
         begin
-          // TODO: Check if we need to handle IRQs here
           ctrl_fsm_ns  = FIRST_FETCH;
         end
       end // case: SLEEP
@@ -242,11 +241,9 @@ module riscv_controller
           pc_set_o     = 1'b1;
           exc_ack_o    = 1'b1;
 
-          // TODO: Check
-          if (jump_in_dec_i == `BRANCH_JALR || jump_in_dec_i == `BRANCH_JAL)
-            save_pc_if_o = 1'b1;
-          else
-            save_pc_id_o = 1'b1;
+          // TODO: This assumes that the pipeline is always flushed before
+          //       going to sleep.
+          save_pc_id_o = 1'b1;
         end
       end
 
@@ -289,11 +286,7 @@ module riscv_controller
             pc_set_o     = 1'b1;
             exc_ack_o    = 1'b1;
 
-            // TODO: Check
-            if (jump_in_dec_i == `BRANCH_JALR || jump_in_dec_i == `BRANCH_JAL)
-              save_pc_if_o = 1'b1;
-            else
-              save_pc_id_o = 1'b1;
+            save_pc_id_o = 1'b1;
 
             // we don't have to change our current state here as the prefetch
             // buffer is automatically invalidated, thus the next instruction

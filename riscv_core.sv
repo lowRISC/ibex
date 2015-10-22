@@ -95,6 +95,9 @@ module riscv_core
 
   logic        branch_done;       // Branch already done
 
+  logic        lsu_load_err;
+  logic        lsu_store_err;
+
   // ID performance counter signals
   logic        is_decoding;
 
@@ -133,7 +136,6 @@ module riscv_core
 
   logic [4:0]  regfile_alu_waddr_ex;
   logic        regfile_alu_we_ex;
-
 
   logic [4:0]  regfile_alu_waddr_fw;
   logic        regfile_alu_we_fw;
@@ -388,6 +390,8 @@ module riscv_core
     .save_exc_cause_o             ( save_exc_cause       ),
     .save_pc_if_o                 ( save_pc_if           ), // control signal to save pc
     .save_pc_id_o                 ( save_pc_id           ), // control signal to save pc
+    .lsu_load_err_i               ( lsu_load_err         ),
+    .lsu_store_err_i              ( lsu_store_err        ),
 
     // Debug Unit Signals
     .dbg_flush_pipe_i             ( dbg_flush_pipe       ),

@@ -43,6 +43,9 @@ module riscv_exc_controller
   input  logic        ecall_insn_i,   // ecall instruction encountered
   input  logic        eret_insn_i,    // eret instruction encountered
 
+  input  logic        lsu_load_err_i,
+  input  logic        lsu_store_err_i,
+
   // to CSR
   output logic [5:0]  cause_o,
   output logic        save_cause_o
@@ -58,7 +61,11 @@ module riscv_exc_controller
   integer i;
 
 
-  assign req_int = illegal_insn_i | ecall_insn_i | (irq_enable_i & (|irq_i));
+  assign req_int = illegal_insn_i
+                   | ecall_insn_i
+                   | lsu_load_err_i
+                   | lsu_store_err_i
+                   | (irq_enable_i & (|irq_i));
 
 
   // Exception cause and ISR address selection
@@ -84,6 +91,16 @@ module riscv_exc_controller
     if (illegal_insn_i) begin
       cause_int  = 6'b0_00010;
       pc_mux_int = `EXC_PC_ILLINSN;
+    end
+
+    if (lsu_load_err_i) begin
+      cause_int  = 6'b0_00101;
+      pc_mux_int = `EXC_PC_LOAD;
+    end
+
+    if (lsu_store_err_i) begin
+      cause_int  = 6'b0_00111;
+      pc_mux_int = `EXC_PC_STORE;
     end
   end
 
