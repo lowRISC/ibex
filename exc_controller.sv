@@ -136,8 +136,14 @@ module riscv_exc_controller
       begin
         req_o = req_int;
 
-        if (req_int)
+        if (req_int) begin
           exc_ctrl_ns = WAIT_CONTROLLER;
+
+          if (ack_i) begin
+            save_cause_o = 1'b1;
+            exc_ctrl_ns  = IN_ISR;
+          end
+        end
       end
 
       WAIT_CONTROLLER:
