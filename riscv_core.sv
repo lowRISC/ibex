@@ -83,11 +83,14 @@ module riscv_core
 
 
   // IF/ID signals
+  logic        id_execute;
   logic [31:0] instr_rdata_id;    // Instruction sampled inside IF stage
   logic        is_compressed_id;
   logic        illegal_c_insn_id; // Illegal compressed instruction sent to ID stage
   logic [31:0] current_pc_if;     // Current Program counter
   logic [31:0] current_pc_id;     // Current Program counter
+
+  logic        clear_id_execute;
   logic        pc_set;
   logic [2:0]  pc_mux_sel_id;     // Mux selector for next PC
   logic [1:0]  exc_pc_mux_id;     // Mux selector for exception PC
@@ -244,17 +247,19 @@ module riscv_core
     .instr_rdata_i       ( instr_rdata_i   ),
 
     // outputs to ID stage
+    .id_execute_o        ( id_execute        ),
     .instr_rdata_id_o    ( instr_rdata_id    ),
     .is_compressed_id_o  ( is_compressed_id  ),
     .illegal_c_insn_id_o ( illegal_c_insn_id ),
-    .current_pc_if_o     ( current_pc_if     ),   // current pc in IF stage
-    .current_pc_id_o     ( current_pc_id     ),   // current pc in ID stage
+    .current_pc_if_o     ( current_pc_if     ),
+    .current_pc_id_o     ( current_pc_id     ),
 
     // control signals
-    .pc_set_i            ( pc_set          ),
-    .exception_pc_reg_i  ( epcr            ),   // exception return address
-    .pc_mux_sel_i        ( pc_mux_sel_id   ),   // sel for pc multiplexer
-    .exc_pc_mux_i        ( exc_pc_mux_id   ),   // selector for exception multiplexer
+    .clear_id_execute_i  ( clear_id_execute  ),
+    .pc_set_i            ( pc_set            ),
+    .exception_pc_reg_i  ( epcr              ), // exception return address
+    .pc_mux_sel_i        ( pc_mux_sel_id     ), // sel for pc multiplexer
+    .exc_pc_mux_i        ( exc_pc_mux_id     ), // selector for exception multiplexer
 
     .branch_done_o       ( branch_done     ),
 
@@ -305,12 +310,16 @@ module riscv_core
     .instr_rdata_i                ( instr_rdata_id       ),
     .instr_req_o                  ( instr_req_int        ),
 
+    .id_execute_i                 ( id_execute           ),
+
     // Jumps and branches
     .jump_in_id_o                 ( jump_in_id           ),
     .jump_in_ex_o                 ( jump_in_ex           ),
     .branch_decision_i            ( branch_decision      ),
     .jump_target_o                ( jump_target_id       ),
 
+    // IF and ID control signals
+    .clear_id_execute_o           ( clear_id_execute     ),
     .pc_set_o                     ( pc_set               ),
     .pc_mux_sel_o                 ( pc_mux_sel_id        ),
     .exc_pc_mux_o                 ( exc_pc_mux_id        ),

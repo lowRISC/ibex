@@ -76,7 +76,7 @@ module riscv_exc_controller
   logic       new_instr_id_q;
 
   // disable hardware loops when nops are inserted or the controller is not active
-  assign hwloop_enable_o = (~core_busy_i);
+  assign hwloop_enable_o = 1'b1;
 
   /////////////////////////////////////////////
   //   ____                     _            //

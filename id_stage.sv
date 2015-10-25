@@ -46,6 +46,8 @@ module riscv_id_stage
     input  logic [31:0] instr_rdata_i,      // comes from pipeline of IF stage
     output logic        instr_req_o,
 
+    input  logic        id_execute_i,
+
     // Jumps and branches
     output logic [1:0]  jump_in_id_o,
     output logic [1:0]  jump_in_ex_o,
@@ -53,6 +55,7 @@ module riscv_id_stage
     output logic [31:0] jump_target_o,
 
     // IF and ID stage signals
+    output logic        clear_id_execute_o,
     output logic        pc_set_o,
     output logic [2:0]  pc_mux_sel_o,
     output logic [1:0]  exc_pc_mux_o,
@@ -302,6 +305,14 @@ module riscv_id_stage
   // Used for prepost load/store and multiplier
   assign regfile_alu_waddr_id = regfile_alu_waddr_mux_sel ?
                                 regfile_waddr_id : regfile_addr_ra_id;
+
+
+  // ID execute signal control
+  // This signal is used to detect when an instruction first enters the ID
+  // stage. Based on this hardware loops are decremented and it's also useful
+  // for exceptions, i.e. to suppress the illegal instruction signal during
+  // an if stall of a jump.
+  assign clear_id_execute_o = (~jr_stall) | (|hwloop_end_addr);
 
 
   ///////////////////////////////////////////////
@@ -786,7 +797,7 @@ module riscv_id_stage
     .hwloop_regid_i          ( hwloop_regid        ),
 
     // from controller
-    .stall_id_i              ( ~id_valid_o         ),
+    .stall_id_i              ( id_execute_i        ),
 
     // to hwloop controller
     .hwloop_start_addr_o     ( hwloop_start_addr   ),
