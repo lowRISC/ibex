@@ -167,9 +167,9 @@ module riscv_alu
   end
 
   assign is_equal   = (operand_a_i == operand_b_i);
-  assign is_greater = $signed({operand_a_i[31] & cmp_signed, operand_a_i[30:0]})
+  assign is_greater = $signed({operand_a_i[31] & cmp_signed, operand_a_i[31:0]})
                       >
-                      $signed({operand_b_i[31] & cmp_signed, operand_b_i[30:0]});
+                      $signed({operand_b_i[31] & cmp_signed, operand_b_i[31:0]});
 
   // generate comparison result
   always_comb

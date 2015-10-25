@@ -178,7 +178,7 @@ module riscv_cs_registers
     unique case (csr_op_i)
       `CSR_OP_WRITE: csr_wdata_int = csr_wdata_i;
       `CSR_OP_SET:   csr_wdata_int = csr_wdata_i | csr_rdata_o;
-      `CSR_OP_CLEAR: csr_wdata_int = csr_wdata_i & ~(csr_rdata_o);
+      `CSR_OP_CLEAR: csr_wdata_int = (~csr_wdata_i) & csr_rdata_o;
 
       `CSR_OP_NONE: begin
         csr_wdata_int = csr_wdata_i;
