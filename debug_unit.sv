@@ -64,14 +64,14 @@ module riscv_debug_unit
   output logic [31:0] npc_o,
   output logic        set_npc_o
 
-  );
+);
 
   // registers for debug control
-  logic [1:0]         DSR_DP,  DSR_DN;  // Debug Stop Register: IIE, INTE
-  logic [1:0]         DMR1_DP, DMR1_DN; // only single step trace and branch trace bits
+  logic [1:0] DSR_DP,  DSR_DN;  // Debug Stop Register: IIE, INTE
+  logic [1:0] DMR1_DP, DMR1_DN; // only single step trace and branch trace bits
 
   // BP control FSM
-  enum logic [2:0]   {Idle, Trap, DebugStall, StallCore} BP_State_SN, BP_State_SP;
+  enum logic [2:0] {Idle, Trap, DebugStall, StallCore} BP_State_SN, BP_State_SP;
 
   // ack to debug interface
   assign dbginf_ack_o = dbginf_strobe_i && ((BP_State_SP == StallCore) || (dbginf_addr_i[15:11] == 5'b00110));
@@ -193,8 +193,8 @@ module riscv_debug_unit
         // some other SPR is accessed
         else
         begin
-          sp_mux_o        = 1'b1;
-          regfile_addr_o  = dbginf_addr_i[11:0];
+          sp_mux_o       = 1'b1;
+          regfile_addr_o = dbginf_addr_i[11:0];
 
           if(dbginf_we_i == 1'b1)
             regfile_we_o = 1'b1;
@@ -205,8 +205,8 @@ module riscv_debug_unit
     end
   end
 
-  // normal FF setup
-  always_ff@(posedge clk or negedge rst_n) begin
+  always_ff@(posedge clk, negedge rst_n)
+  begin
     if (~rst_n) begin
       DMR1_DP     <= 2'b0;
       DSR_DP      <= 'b0;
@@ -217,6 +217,6 @@ module riscv_debug_unit
       DSR_DP      <= DSR_DN;
       BP_State_SP <= BP_State_SN;
     end
-  end // always_ff@ (posedge clk or negedge rst_n)
+  end
 
 endmodule // debug_unit

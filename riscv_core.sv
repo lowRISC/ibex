@@ -145,6 +145,7 @@ module riscv_core
   logic        csr_access_ex;
   logic  [1:0] csr_op_ex;
 
+  logic        csr_access;
   logic  [1:0] csr_op;
   logic [11:0] csr_addr;
   logic [31:0] csr_rdata;
@@ -589,11 +590,13 @@ module riscv_core
   );
 
   // Mux for CSR access through Debug Unit
-  assign csr_addr      = (dbg_sp_mux == 1'b0) ? alu_operand_b_ex[11:0] : dbg_reg_addr;
-  assign csr_wdata     = (dbg_sp_mux == 1'b0) ? alu_operand_a_ex : dbg_reg_wdata;
-  assign csr_op        = (dbg_sp_mux == 1'b0) ? csr_op_ex
-                                              : (dbg_reg_we == 1'b1 ? `CSR_OP_WRITE : `CSR_OP_NONE);
-  assign dbg_rdata     = (dbg_sp_mux == 1'b0) ? dbg_reg_rdata    : csr_rdata;
+  assign csr_access = (dbg_sp_mux == 1'b0) ? csr_access_ex : 1'b1;
+  assign csr_addr   = (dbg_sp_mux == 1'b0) ? alu_operand_b_ex[11:0] : dbg_reg_addr;
+  assign csr_wdata  = (dbg_sp_mux == 1'b0) ? alu_operand_a_ex : dbg_reg_wdata;
+  assign csr_op     = (dbg_sp_mux == 1'b0) ? csr_op_ex
+                                           : (dbg_reg_we == 1'b1 ? `CSR_OP_WRITE
+                                                                 : `CSR_OP_NONE );
+  assign dbg_rdata  = (dbg_sp_mux == 1'b0) ? dbg_reg_rdata : csr_rdata;
 
 
   /////////////////////////////////////////////////////////////
