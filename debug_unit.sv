@@ -59,14 +59,17 @@ module riscv_debug_unit
   input  logic [31:0] regfile_rdata_i,
 
   // Signals for PPC & NPC register
-  input logic  [31:0] curr_pc_if_i,
-  input logic  [31:0] curr_pc_id_i,
-  input logic  [31:0] branch_pc_i,
+  input  logic [31:0] curr_pc_if_i,
+  input  logic [31:0] curr_pc_id_i,
+  input  logic [31:0] branch_pc_i,
+
+  input  logic  [1:0] jump_in_ex_i,
+  input  logic        branch_taken_i,
 
   output logic [31:0] npc_o,
   output logic        set_npc_o
-
 );
+
 
   // registers for debug control
   logic [1:0] DSR_DP,  DSR_DN;  // Debug Stop Register: IIE, INTE
@@ -75,8 +78,13 @@ module riscv_debug_unit
   // BP control FSM
   enum logic [2:0] {Idle, Trap, DebugStall, StallCore} BP_State_SN, BP_State_SP;
 
+  // ppc/npc tracking
+  enum logic [1:0] {IFID, IFEX, IDEX} pc_tracking_fsm_cs, pc_tracking_fsm_ns;
+  logic [31:0] ppc_int, npc_int;
+
   // ack to debug interface
   assign dbginf_ack_o = dbginf_strobe_i && ((BP_State_SP == StallCore) || (dbginf_addr_i[15:11] == 5'b00110));
+
 
   always_comb
   begin
@@ -155,11 +163,11 @@ module riscv_debug_unit
           11'd0: begin // NPC
             set_npc_o = dbginf_we_i;
 
-            dbginf_data_o = curr_pc_if_i;
+            dbginf_data_o = npc_int;
           end
 
           11'd1: begin // PPC
-            dbginf_data_o = curr_pc_id_i;
+            dbginf_data_o = ppc_int;
           end
 
           11'd16: begin // SP_DMR1
@@ -207,17 +215,66 @@ module riscv_debug_unit
     end
   end
 
+
+  always_comb
+  begin
+    pc_tracking_fsm_ns = pc_tracking_fsm_cs;
+
+    ppc_int = curr_pc_id_i;
+    npc_int = curr_pc_if_i;
+
+    // PPC/NPC mux
+    unique case (pc_tracking_fsm_cs)
+      IFID: begin
+        ppc_int = curr_pc_id_i;
+        npc_int = curr_pc_if_i;
+      end
+
+      IFEX: begin
+        ppc_int = branch_pc_i;
+        npc_int = curr_pc_if_i;
+      end
+
+      IDEX: begin
+        ppc_int = branch_pc_i;
+        npc_int = curr_pc_id_i;
+
+        if (set_npc_o)
+          pc_tracking_fsm_ns = IFEX;
+      end
+
+      default: begin
+        pc_tracking_fsm_ns = IFID;
+      end
+    endcase
+
+    // set state if trap is encountered
+    if (stall_core_o && (BP_State_SP != StallCore)) begin
+      pc_tracking_fsm_ns = IFID;
+
+      if (jump_in_ex_i == `BRANCH_COND) begin
+        if (branch_taken_i)
+          pc_tracking_fsm_ns = IFEX;
+        else
+          pc_tracking_fsm_ns = IDEX;
+      end
+    end
+  end
+
+
   always_ff@(posedge clk, negedge rst_n)
   begin
-    if (~rst_n) begin
-      DMR1_DP     <= 2'b0;
-      DSR_DP      <= 'b0;
-      BP_State_SP <= Idle;
+    if (rst_n == 1'b0) begin
+      DMR1_DP            <= 2'b0;
+      DSR_DP             <= 'b0;
+      BP_State_SP        <= Idle;
+      pc_tracking_fsm_cs <= IFID;
     end
     else begin
-      DMR1_DP     <= DMR1_DN;
-      DSR_DP      <= DSR_DN;
-      BP_State_SP <= BP_State_SN;
+      DMR1_DP            <= DMR1_DN;
+      DSR_DP             <= DSR_DN;
+      BP_State_SP        <= BP_State_SN;
+      pc_tracking_fsm_cs <= pc_tracking_fsm_ns;
     end
   end
 

@@ -646,6 +646,10 @@ module riscv_core
     .curr_pc_if_i    ( current_pc_if   ), // from IF stage
     .curr_pc_id_i    ( current_pc_id   ), // from IF stage
     .branch_pc_i     ( branch_pc_ex    ), // PC of last executed branch (in EX stage)
+
+    .jump_in_ex_i    ( jump_in_ex      ),
+    .branch_taken_i  ( branch_decision ),
+
     .npc_o           ( dbg_npc         ), // PC from debug unit
     .set_npc_o       ( dbg_set_npc     )  // set PC to new value
   );

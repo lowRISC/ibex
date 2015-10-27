@@ -299,7 +299,7 @@ module riscv_controller
 
           // take care of debug
           // branch conditional will be handled in next state
-          if(trap_hit_i && jump_in_dec_i != `BRANCH_COND)
+          if (trap_hit_i)
           begin
             // halt pipeline immediately
             halt_if_o = 1'b1;
