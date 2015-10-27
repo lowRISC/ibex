@@ -556,6 +556,7 @@ module riscv_core
     .cluster_id_i            ( cluster_id_i   ),
 
     // Interface to CSRs (SRAM like)
+    .csr_access_i            ( csr_acccess_ex ),
     .csr_addr_i              ( csr_addr       ),
     .csr_wdata_i             ( csr_wdata      ),
     .csr_op_i                ( csr_op         ),

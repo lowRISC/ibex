@@ -31,24 +31,25 @@ module riscv_cs_registers
 )
 (
   // Clock and Reset
-  input logic         clk,
-  input logic         rst_n,
+  input  logic        clk,
+  input  logic        rst_n,
 
   // Core and Cluster ID
-  input logic   [4:0] core_id_i,
-  input logic   [4:0] cluster_id_i,
+  input  logic  [4:0] core_id_i,
+  input  logic  [4:0] cluster_id_i,
 
   // Interface to registers (SRAM like)
-  input logic  [11:0] csr_addr_i,
-  input logic  [31:0] csr_wdata_i,
-  input logic   [1:0] csr_op_i,
+  input  logic        csr_access_i,
+  input  logic [11:0] csr_addr_i,
+  input  logic [31:0] csr_wdata_i,
+  input  logic  [1:0] csr_op_i,
   output logic [31:0] csr_rdata_o,
 
   // Interrupts
-  input logic  [31:0] curr_pc_if_i,
-  input logic  [31:0] curr_pc_id_i,
-  input logic         save_pc_if_i,
-  input logic         save_pc_id_i,
+  input  logic [31:0] curr_pc_if_i,
+  input  logic [31:0] curr_pc_id_i,
+  input  logic        save_pc_if_i,
+  input  logic        save_pc_id_i,
 
   output logic        irq_enable_o,
   output logic [31:0] epcr_o,
@@ -256,29 +257,32 @@ module riscv_cs_registers
     pccr_index   = '0;
     perf_rdata   = '0;
 
-    unique case (csr_addr_i)
-      12'h7A0: begin
-        is_pcer = 1'b1;
-        perf_rdata[N_PERF_COUNTERS-1:0] = PCER_q;
-      end
-      12'h7A1: begin
-        is_pcmr = 1'b1;
-        perf_rdata[1:0] = PCMR_q;
-      end
-      12'h79F: begin
-        is_pccr = 1'b1;
-        pccr_all_sel = 1'b1;
-      end
-      default:;
-    endcase
+    // only perform csr access if we actually care about the read data
+    if (csr_access_i) begin
+      unique case (csr_addr_i)
+        12'h7A0: begin
+          is_pcer = 1'b1;
+          perf_rdata[N_PERF_COUNTERS-1:0] = PCER_q;
+        end
+        12'h7A1: begin
+          is_pcmr = 1'b1;
+          perf_rdata[1:0] = PCMR_q;
+        end
+        12'h79F: begin
+          is_pccr = 1'b1;
+          pccr_all_sel = 1'b1;
+        end
+        default:;
+      endcase
 
-    // look for 780 to 79F, Performance Counter Counter Registers
-    if (csr_addr_i[11:5] == 7'b0111100) begin
-      is_pccr     = 1'b1;
+      // look for 780 to 79F, Performance Counter Counter Registers
+      if (csr_addr_i[11:5] == 7'b0111100) begin
+        is_pccr     = 1'b1;
 
-      pccr_index = csr_addr_i[4:0];
+        pccr_index = csr_addr_i[4:0];
 
-      perf_rdata = PCCR_q[csr_addr_i[4:0]];
+        perf_rdata = PCCR_q[csr_addr_i[4:0]];
+      end
     end
   end
 
