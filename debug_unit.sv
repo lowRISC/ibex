@@ -5,6 +5,7 @@
 //                                                                            //
 // Additional contributions by:                                               //
 //                 Andreas Traber - atraber@student.ethz.ch                   //
+//                 Sven Stucki - svstucki@student.ethz.ch                     //
 //                                                                            //
 //                                                                            //
 // Create Date:    11/07/2014                                                 //
@@ -60,6 +61,7 @@ module riscv_debug_unit
   // Signals for PPC & NPC register
   input logic  [31:0] curr_pc_if_i,
   input logic  [31:0] curr_pc_id_i,
+  input logic  [31:0] branch_pc_i,
 
   output logic [31:0] npc_o,
   output logic        set_npc_o
@@ -78,10 +80,10 @@ module riscv_debug_unit
 
   always_comb
   begin
-    BP_State_SN   = BP_State_SP;
-    stall_core_o  = 1'b0;
-    dbginf_bp_o   = 1'b0;
-    flush_pipe_o  = 1'b0;
+    BP_State_SN  = BP_State_SP;
+    stall_core_o = 1'b0;
+    dbginf_bp_o  = 1'b0;
+    flush_pipe_o = 1'b0;
 
     case (BP_State_SP)
       Idle:
@@ -149,7 +151,7 @@ module riscv_debug_unit
       // address decoding, first stage: evaluate higher 5 Bits to detect if debug regs are accessed
       if(dbginf_addr_i[15:11] == 5'b00110) begin
         // second stage: evaluate Bits 10:0 to detect which part of debug registers is accessed
-        casex(dbginf_addr_i[10:0])
+        case (dbginf_addr_i[10:0])
           11'd0: begin // NPC
             set_npc_o = dbginf_we_i;
 

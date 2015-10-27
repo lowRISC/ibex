@@ -113,6 +113,8 @@ module riscv_core
   logic        if_busy;
 
 
+  logic [31:0] branch_pc_ex; // PC of last executed branch
+
   // ALU Control
   logic [`ALU_OP_WIDTH-1:0] alu_operator_ex;
   logic [31:0] alu_operand_a_ex;
@@ -346,6 +348,7 @@ module riscv_core
     .wb_valid_i                   ( wb_valid             ),
 
     // From the Pipeline ID/EX
+    .branch_pc_ex_o               ( branch_pc_ex         ),
     .alu_operand_a_ex_o           ( alu_operand_a_ex     ),
     .alu_operand_b_ex_o           ( alu_operand_b_ex     ),
     .alu_operand_c_ex_o           ( alu_operand_c_ex     ),
@@ -626,13 +629,14 @@ module riscv_core
     // To/From Core
     .dbg_st_en_o     ( dbg_st_en       ),
     .dbg_dsr_o       ( dbg_dsr         ),
+
     .stall_core_o    ( dbg_stall       ),
     .flush_pipe_o    ( dbg_flush_pipe  ),
     .trap_i          ( dbg_trap        ),
 
     // register file access
-    .regfile_mux_o   ( dbg_reg_mux     ),
     .sp_mux_o        ( dbg_sp_mux      ),
+    .regfile_mux_o   ( dbg_reg_mux     ),
     .regfile_we_o    ( dbg_reg_we      ),
     .regfile_addr_o  ( dbg_reg_addr    ),
     .regfile_wdata_o ( dbg_reg_wdata   ),
@@ -641,6 +645,7 @@ module riscv_core
     // signals for PPC and NPC
     .curr_pc_if_i    ( current_pc_if   ), // from IF stage
     .curr_pc_id_i    ( current_pc_id   ), // from IF stage
+    .branch_pc_i     ( branch_pc_ex    ), // PC of last executed branch (in EX stage)
     .npc_o           ( dbg_npc         ), // PC from debug unit
     .set_npc_o       ( dbg_set_npc     )  // set PC to new value
   );

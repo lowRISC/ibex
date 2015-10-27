@@ -80,7 +80,9 @@ module riscv_id_stage
     input  logic        ex_valid_i,     // EX stage is done
     input  logic        wb_valid_i,     // WB stage is done
 
-    // To the Pipeline ID/EX
+    // Pipeline ID/EX
+    output logic [31:0] branch_pc_ex_o,
+
     output logic [31:0] alu_operand_a_ex_o,
     output logic [31:0] alu_operand_b_ex_o,
     output logic [31:0] alu_operand_c_ex_o,
@@ -817,6 +819,18 @@ module riscv_id_stage
   //  |___|____/      |_____/_/\_\ |_|  |___|_|   |_____|_____|___|_| \_|_____|  //
   //                                                                             //
   /////////////////////////////////////////////////////////////////////////////////
+  always_ff @(posedge clk, negedge rst_n)
+  begin
+    if (rst_n == 1'b0)
+    begin
+      branch_pc_ex_o <= '0;
+    end
+    else begin
+      if (jump_in_id_o == `BRANCH_COND && id_valid_o)
+        branch_pc_ex_o <= current_pc_id_i;
+    end
+  end
+
   always_ff @(posedge clk, negedge rst_n)
   begin : ID_EX_PIPE_REGISTERS
     if (rst_n == 1'b0)
