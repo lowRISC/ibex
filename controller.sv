@@ -303,12 +303,11 @@ module riscv_controller
           begin
             // halt pipeline immediately
             halt_if_o = 1'b1;
-            halt_id_o = 1'b1;
 
             // TODO: take a second look at this
             // make sure the current instruction has been executed
             // before changing state to non-decode
-            //if (~stall_ex_o)
+            if (id_valid_i)
               ctrl_fsm_ns = DBG_SIGNAL;
           end
         end
@@ -353,7 +352,6 @@ module riscv_controller
       begin
         dbg_trap_o = 1'b1;
         halt_if_o  = 1'b1;
-        halt_id_o  = 1'b1;
 
         ctrl_fsm_ns = DBG_WAIT;
       end
@@ -363,19 +361,15 @@ module riscv_controller
       DBG_WAIT:
       begin
         halt_if_o = 1'b1;
-        halt_id_o = 1'b1;
 
         if(dbg_set_npc_i == 1'b1) begin
-          halt_id_o    = 1'b0;
           pc_mux_sel_o = `PC_DBG_NPC;
           pc_set_o     = 1'b1;
           ctrl_fsm_ns  = DBG_WAIT;
         end
 
         if(dbg_stall_i == 1'b0) begin
-          halt_if_o   = 1'b0;
-          halt_id_o   = 1'b0;
-          ctrl_fsm_ns = DECODE;
+          ctrl_fsm_ns = BRANCH_DELAY;
         end
       end
 
@@ -383,7 +377,6 @@ module riscv_controller
       FLUSH_EX:
       begin
         halt_if_o = 1'b1;
-        halt_id_o = 1'b1;
 
         if(ex_valid_i)
           ctrl_fsm_ns = FLUSH_WB;
@@ -393,7 +386,6 @@ module riscv_controller
       FLUSH_WB:
       begin
         halt_if_o = 1'b1;
-        halt_id_o = 1'b1;
 
         if (~fetch_enable_i) begin
           // we are requested to go to sleep
@@ -402,7 +394,6 @@ module riscv_controller
         end else begin
           // unstall pipeline and continue operation
           halt_if_o = 1'b0;
-          halt_id_o = 1'b0;
 
           if (id_valid_i)
             ctrl_fsm_ns = DECODE;
