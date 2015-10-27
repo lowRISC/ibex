@@ -8,21 +8,18 @@
 //                                                                            //
 //                                                                            //
 // Create Date:    11/07/2014                                                 //
-// Design Name:    Pipelined OpenRISC Processor                               //
+// Design Name:    RISC-V processor core                                      //
 // Module Name:    debug_unit.sv                                              //
-// Project Name:   OR10N                                                      //
+// Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
-// Description:    Debug Controller for the pipelined processor               //
+// Description:    Debug controller                                           //
 //                                                                            //
 //                                                                            //
 // Revision:                                                                  //
 // Revision v0.1 - File Created                                               //
 // Revision v0.2 - (December 1, 2014) Merge with current OR10N core,          //
 //                 changed port and signal names                              //
-//                                                                            //
-//                                                                            //
-//                                                                            //
 //                                                                            //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
@@ -32,33 +29,33 @@
 
 module riscv_debug_unit
 (
-  input logic          clk,
-  input logic          rst_n,
+  input logic         clk,
+  input logic         rst_n,
 
   // signals to Debug Interface
-  input  logic         dbginf_stall_i,
-  output logic         dbginf_bp_o,
-  input  logic         dbginf_strobe_i,
-  output logic         dbginf_ack_o,
-  input  logic         dbginf_we_i,
-  input  logic [15:0]  dbginf_addr_i,
-  input  logic [31:0]  dbginf_data_i,
-  output logic [31:0]  dbginf_data_o,
+  input  logic        dbginf_stall_i,
+  output logic        dbginf_bp_o,
+  input  logic        dbginf_strobe_i,
+  output logic        dbginf_ack_o,
+  input  logic        dbginf_we_i,
+  input  logic [15:0] dbginf_addr_i,
+  input  logic [31:0] dbginf_data_i,
+  output logic [31:0] dbginf_data_o,
 
   // signals to core
-  output logic         dbg_st_en_o,     // Single-step trace mode enabled
-  output logic [1:0]   dbg_dsr_o,       // debug stop register
+  output logic        dbg_st_en_o,     // Single-step trace mode enabled
+  output logic [1:0]  dbg_dsr_o,       // debug stop register
 
-  output logic         stall_core_o,
-  output logic         flush_pipe_o,
-  input  logic         trap_i,
+  output logic        stall_core_o,
+  output logic        flush_pipe_o,
+  input  logic        trap_i,
 
-  output logic         sp_mux_o,
-  output logic         regfile_mux_o,
-  output logic         regfile_we_o,
-  output logic [11:0]  regfile_addr_o,
-  output logic [31:0]  regfile_wdata_o,
-  input  logic [31:0]  regfile_rdata_i,
+  output logic        sp_mux_o,
+  output logic        regfile_mux_o,
+  output logic        regfile_we_o,
+  output logic [11:0] regfile_addr_o,
+  output logic [31:0] regfile_wdata_o,
+  input  logic [31:0] regfile_rdata_i,
 
   // Signals for PPC & NPC register
   input logic  [31:0] curr_pc_if_i,
