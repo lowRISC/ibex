@@ -124,22 +124,24 @@ module riscv_cs_registers
   begin
     csr_rdata_int = 'x;
 
-    case (csr_addr_i)
-      // mstatus: always M-mode, contains IE bit
-      12'h300: csr_rdata_int = {29'b0, 2'b11, irq_enable};
+    if (csr_access_i) begin
+      case (csr_addr_i)
+        // mstatus: always M-mode, contains IE bit
+        12'h300: csr_rdata_int = {29'b0, 2'b11, irq_enable};
 
-      // mscratch
-      12'h340: csr_rdata_int = csr[`CSR_IDX_MSCRATCH];
-      // mepc: exception program counter
-      12'h341: csr_rdata_int = csr[`CSR_IDX_MEPC];
+        // mscratch
+        12'h340: csr_rdata_int = csr[`CSR_IDX_MSCRATCH];
+        // mepc: exception program counter
+        12'h341: csr_rdata_int = csr[`CSR_IDX_MEPC];
 
-      // mcpuid: RV32I
-      12'hF00: csr_rdata_int = 32'h00_00_01_00;
-      // mimpid: PULP, anonymous source (no allocated ID yet)
-      12'hF01: csr_rdata_int = 32'h00_00_80_00;
-      // mhartid: unique hardware thread id
-      12'hF10: csr_rdata_int = {22'b0, cluster_id_i, core_id_i};
-    endcase
+        // mcpuid: RV32I
+        12'hF00: csr_rdata_int = 32'h00_00_01_00;
+        // mimpid: PULP, anonymous source (no allocated ID yet)
+        12'hF01: csr_rdata_int = 32'h00_00_80_00;
+        // mhartid: unique hardware thread id
+        12'hF10: csr_rdata_int = {22'b0, cluster_id_i, core_id_i};
+      endcase
+    end
   end
 
 
