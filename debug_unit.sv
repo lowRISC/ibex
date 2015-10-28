@@ -176,6 +176,7 @@ module riscv_debug_unit
             else
               dbginf_data_o[`DMR1_ST+1:`DMR1_ST] = DMR1_DP;
           end
+
           11'd20: begin // SP_DSR
             // currently we only handle IIE and INTE
             if(dbginf_we_i == 1'b1)
@@ -183,8 +184,9 @@ module riscv_debug_unit
             else
               dbginf_data_o[7:6] = DSR_DP[1:0];
           end
+
           default: ;
-        endcase // casex [10:0]
+        endcase
       end
       // check if internal registers (GPR or SPR) are accessed
       else if(BP_State_SP == StallCore)

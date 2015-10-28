@@ -60,10 +60,10 @@ module riscv_register_file
 
   cluster_clock_gating CG_WE_GLOBAL
   (
-    .clk_i     ( clk     ),
-    .en_i      ( we_int  ),
-    .test_en_i ( 1'b0    ),
-    .clk_o     ( clk_int )
+    .clk_i     ( clk       ),
+    .en_i      ( we_int    ),
+    .test_en_i ( test_en_i ),
+    .clk_o     ( clk_int   )
   );
 
   //-----------------------------------------------------------------------------
@@ -114,7 +114,7 @@ module riscv_register_file
       (
         .clk_i     ( clk_int                               ),
         .en_i      ( WAddrOneHotxDa[x] | WAddrOneHotxDb[x] ),
-        .test_en_i ( 1'b0                                  ),
+        .test_en_i ( test_en_i                             ),
         .clk_o     ( ClocksxC[x]                           )
       );
     end
