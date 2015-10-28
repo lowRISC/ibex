@@ -5,8 +5,10 @@ module riscv_register_file
 )
 (
   // Clock and Reset
-  input  logic         clk,
-  input  logic         rst_n,
+  input  logic                   clk,
+  input  logic                   rst_n,
+
+  input  logic                   test_en_i,
 
   //Read port R1
   input  logic [ADDR_WIDTH-1:0]  raddr_a_i,
@@ -21,14 +23,14 @@ module riscv_register_file
   output logic [DATA_WIDTH-1:0]  rdata_c_o,
 
   // Write port W1
-  input logic [ADDR_WIDTH-1:0]   waddr_a_i,
-  input logic [DATA_WIDTH-1:0]   wdata_a_i,
-  input logic                    we_a_i,
+  input  logic [ADDR_WIDTH-1:0]   waddr_a_i,
+  input  logic [DATA_WIDTH-1:0]   wdata_a_i,
+  input  logic                    we_a_i,
 
   // Write port W2
-  input logic [ADDR_WIDTH-1:0]   waddr_b_i,
-  input logic [DATA_WIDTH-1:0]   wdata_b_i,
-  input logic                    we_b_i
+  input  logic [ADDR_WIDTH-1:0]   waddr_b_i,
+  input  logic [DATA_WIDTH-1:0]   wdata_b_i,
+  input  logic                    we_b_i
 );
 
   localparam    NUM_WORDS = 2**ADDR_WIDTH;
@@ -58,10 +60,10 @@ module riscv_register_file
 
   cluster_clock_gating CG_WE_GLOBAL
   (
-    .clk_o(clk_int),
-    .en_i(we_int),
-    .test_en_i(1'b0),
-    .clk_i(clk)
+    .clk_i     ( clk     ),
+    .en_i      ( we_int  ),
+    .test_en_i ( 1'b0    ),
+    .clk_o     ( clk_int )
   );
 
   //-----------------------------------------------------------------------------
@@ -110,10 +112,10 @@ module riscv_register_file
     begin : CG_CELL_WORD_ITER
       cluster_clock_gating CG_Inst
       (
-        .clk_o(ClocksxC[x]),
-        .en_i(WAddrOneHotxDa[x] | WAddrOneHotxDb[x]),
-        .test_en_i(1'b0),
-        .clk_i(clk_int)
+        .clk_i     ( clk_int                               ),
+        .en_i      ( WAddrOneHotxDa[x] | WAddrOneHotxDb[x] ),
+        .test_en_i ( 1'b0                                  ),
+        .clk_o     ( ClocksxC[x]                           )
       );
     end
   endgenerate

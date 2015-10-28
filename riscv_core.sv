@@ -38,6 +38,8 @@ module riscv_core
   input  logic        clk,
   input  logic        rst_n,
 
+  input  logic        test_en_i,     // enable all clock gates for testing
+
   // Core ID, Cluster ID and boot address are considered more or less static
   input  logic [31:0] boot_addr_i,
   input  logic [4:0]  core_id_i,
@@ -303,6 +305,8 @@ module riscv_core
   (
     .clk                          ( clk                  ),
     .rst_n                        ( rst_n                ),
+
+    .test_en_i                    ( test_en_i            ),
 
     // Processor Enable
     .fetch_enable_i               ( fetch_enable_i       ),
