@@ -274,6 +274,7 @@ module riscv_core
 
     // from debug unit
     .dbg_npc_i           ( dbg_npc         ),
+    .dbg_set_npc_i       ( dbg_set_npc     ),
 
     // Jump and branch target and decision
     .jump_in_id_i        ( jump_in_id      ),
