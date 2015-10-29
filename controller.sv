@@ -126,7 +126,7 @@ module riscv_controller
   enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
                       DECODE, BRANCH_DELAY,
                       FLUSH_EX, FLUSH_WB,
-                      DBG_SIGNAL, DBG_WAIT } ctrl_fsm_cs, ctrl_fsm_ns;
+                      DBG_WAIT_BRANCH, DBG_SIGNAL, DBG_WAIT } ctrl_fsm_cs, ctrl_fsm_ns;
 
   logic reg_d_ex_is_reg_a_id;
   logic reg_d_ex_is_reg_b_id;
@@ -304,11 +304,14 @@ module riscv_controller
             // halt pipeline immediately
             halt_if_o = 1'b1;
 
-            // TODO: take a second look at this
             // make sure the current instruction has been executed
             // before changing state to non-decode
-            if (id_valid_i)
-              ctrl_fsm_ns = DBG_SIGNAL;
+            if (id_valid_i) begin
+              if (jump_in_id_i == `BRANCH_COND)
+                ctrl_fsm_ns = DBG_WAIT_BRANCH;
+              else
+                ctrl_fsm_ns = DBG_SIGNAL;
+            end
           end
         end
         else
@@ -344,6 +347,20 @@ module riscv_controller
 
         if (if_valid_i)
           ctrl_fsm_ns = DECODE;
+      end
+
+      // a branch was in ID when a debug trap is hit
+      DBG_WAIT_BRANCH:
+      begin
+        halt_if_o = 1'b1;
+
+        if (branch_decision_i) begin
+          // there is a branch in the EX stage that is taken
+          pc_mux_sel_o  = `PC_BRANCH;
+          pc_set_o      = 1'b1;
+        end
+
+        ctrl_fsm_ns = DBG_SIGNAL;
       end
 
       // now we can signal to the debugger that our pipeline is empty and it
