@@ -513,6 +513,7 @@ module riscv_decoder
             begin
               // environment (system) call
               // TODO: Handle in controller
+              illegal_insn_o = 1'b1;
             end
 
             32'h00_10_00_73:  // ebreak
