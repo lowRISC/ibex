@@ -252,10 +252,11 @@ module riscv_id_stage
   logic [2:0]  hwloop_we;
   logic        hwloop_jump;
   logic        hwloop_enable;
+  logic        hwloop_target_mux_sel;
   logic        hwloop_start_mux_sel;
-  logic        hwloop_end_mux_sel;
   logic        hwloop_cnt_mux_sel;
 
+  logic [31:0] hwloop_target;
   logic [31:0] hwloop_start;
   logic [31:0] hwloop_end;
   logic [31:0] hwloop_cnt;
@@ -331,23 +332,26 @@ module riscv_id_stage
   // hwloop register id
   assign hwloop_regid = instr[8:7];   // rd contains hwloop register id
 
+  // hwloop target mux
+  always_comb
+  begin
+    unique case (hwloop_target_mux_sel)
+      1'b0: hwloop_target = current_pc_id_i + imm_i_type;
+      1'b1: hwloop_target = current_pc_id_i + {imm_z_type[30:0], 1'b0};
+    endcase
+  end
+
   // hwloop start mux
   always_comb
   begin
     unique case (hwloop_start_mux_sel)
-      1'b0: hwloop_start = jump_target;     // for PC + I imm
+      1'b0: hwloop_start = hwloop_target;   // for PC + I imm
       1'b1: hwloop_start = current_pc_if_i; // for next PC
     endcase
   end
 
   // hwloop end mux
-  always_comb
-  begin
-    unique case (hwloop_end_mux_sel)
-      1'b0: hwloop_end = jump_target; // for PC + I imm
-      1'b1: hwloop_end = jump_target; // TODO: PC + (Z imm << 1) for lp.setupi
-    endcase
-  end
+  assign hwloop_end = hwloop_target;
 
   // hwloop cnt mux
   always_comb
@@ -372,9 +376,11 @@ module riscv_id_stage
   begin : jump_target_mux
     unique case (jump_target_mux_sel)
       `JT_JAL:  jump_target = current_pc_id_i + imm_uj_type;
-      `JT_JALR: jump_target = regfile_data_ra_id + imm_i_type; // cannot forward rs1 as path is too long
       `JT_COND: jump_target = current_pc_id_i + imm_sb_type;
-      `JT_HWLP: jump_target = current_pc_id_i + imm_i_type;
+
+      // JALR: Cannot forward RS1, since the path is too long
+      `JT_JALR: jump_target = regfile_data_ra_id + imm_i_type;
+      default:  jump_target = regfile_data_ra_id + imm_i_type;
     endcase
   end
 
@@ -592,8 +598,8 @@ module riscv_id_stage
 
     // hwloop signals
     .hwloop_we_o                     ( hwloop_we                 ),
+    .hwloop_target_mux_sel_o         ( hwloop_target_mux_sel     ),
     .hwloop_start_mux_sel_o          ( hwloop_start_mux_sel      ),
-    .hwloop_end_mux_sel_o            ( hwloop_end_mux_sel        ),
     .hwloop_cnt_mux_sel_o            ( hwloop_cnt_mux_sel        ),
 
     // jump/branches
