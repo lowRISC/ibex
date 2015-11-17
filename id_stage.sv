@@ -44,11 +44,11 @@ module riscv_id_stage
     output logic        core_busy_o,
     output logic        is_decoding_o,
 
-    // Interface to instruction memory
+    // Interface to IF stage
+    input  logic        instr_valid_i,
     input  logic [31:0] instr_rdata_i,      // comes from pipeline of IF stage
     output logic        instr_req_o,
 
-    input  logic        id_execute_i,
 
     // Jumps and branches
     output logic [1:0]  jump_in_id_o,
@@ -57,7 +57,7 @@ module riscv_id_stage
     output logic [31:0] jump_target_o,
 
     // IF and ID stage signals
-    output logic        clear_id_execute_o,
+    output logic        clear_instr_valid_o,
     output logic        pc_set_o,
     output logic [2:0]  pc_mux_sel_o,
     output logic [1:0]  exc_pc_mux_o,
@@ -317,12 +317,9 @@ module riscv_id_stage
                                 regfile_waddr_id : regfile_addr_ra_id;
 
 
-  // ID execute signal control
-  // This signal is used to detect when an instruction first enters the ID
-  // stage. Based on this hardware loops are decremented and it's also useful
-  // for exceptions, i.e. to suppress the illegal instruction signal during
-  // an if stall of a jump.
-  assign clear_id_execute_o = (~jr_stall) | (|hwloop_end_addr);
+  // kill instruction in the IF/ID stage by setting the instr_valid_id control
+  // signal to 0 for instructions that are done
+  assign clear_instr_valid_o = id_ready_o;
 
 
   ///////////////////////////////////////////////
@@ -644,6 +641,7 @@ module riscv_id_stage
     .regc_used_i                    ( regc_used_dec          ),
 
     // from IF/ID pipeline
+    .instr_valid_i                  ( instr_valid_i          ),
     .instr_rdata_i                  ( instr                  ),
 
     // from prefetcher
@@ -796,7 +794,7 @@ module riscv_id_stage
     .hwloop_regid_i          ( hwloop_regid        ),
 
     // from controller
-    .stall_id_i              ( id_execute_i        ),
+    .stall_id_i              ( instr_valid_i       ),
 
     // to hwloop controller
     .hwloop_start_addr_o     ( hwloop_start_addr   ),
@@ -942,6 +940,6 @@ module riscv_id_stage
 
   // stall control
   assign id_ready_o = (~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i;
-  assign id_valid_o = (~halt_id) & if_ready_i & id_ready_o;
+  assign id_valid_o = (~halt_id) & id_ready_o;
 
 endmodule

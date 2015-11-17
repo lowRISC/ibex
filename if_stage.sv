@@ -55,7 +55,7 @@ module riscv_if_stage
     input  logic [RDATA_WIDTH-1:0] instr_rdata_i,
 
     // Output of IF Pipeline stage
-    output logic        id_execute_o,          // execute current instruction in ID
+    output logic        instr_valid_id_o,      // instruction in IF/ID pipeline is valid
     output logic [31:0] instr_rdata_id_o,      // read instruction is sampled and sent to ID stage for decoding
     output logic        is_compressed_id_o,    // compressed decoder thinks this is a compressed instruction
     output logic        illegal_c_insn_id_o,   // compressed decoder thinks this is an invalid instruction
@@ -63,7 +63,7 @@ module riscv_if_stage
     output logic [31:0] current_pc_id_o,
 
     // Forwarding ports - control signals
-    input  logic        clear_id_execute_i,    // clear execute bit
+    input  logic        clear_instr_valid_i,   // clear instruction valid bit in IF/ID pipe
     input  logic        pc_set_i,              // set the program counter to a new value
     input  logic [31:0] exception_pc_reg_i,    // address used to restore PC when the interrupt/exception is served
     input  logic  [2:0] pc_mux_sel_i,          // sel for pc multiplexer
@@ -396,7 +396,7 @@ module riscv_if_stage
   begin : IF_ID_PIPE_REGISTERS
     if (rst_n == 1'b0)
     begin
-      id_execute_o          <= 1'b0;
+      instr_valid_id_o      <= 1'b0;
       instr_rdata_id_o      <= '0;
       illegal_c_insn_id_o   <= 1'b0;
       is_compressed_id_o    <= 1'b0;
@@ -404,12 +404,12 @@ module riscv_if_stage
     end
     else
     begin
-      if (clear_id_execute_i)
-        id_execute_o        <= 1'b0;
+      if (clear_instr_valid_i)
+        instr_valid_id_o    <= 1'b0;
 
       if (if_valid_o)
-      begin : ENABLED_PIPE
-        id_execute_o        <= 1'b0;
+      begin
+        instr_valid_id_o    <= 1'b1;
         instr_rdata_id_o    <= instr_decompressed;
         illegal_c_insn_id_o <= illegal_c_insn;
         is_compressed_id_o  <= instr_compressed_int;
