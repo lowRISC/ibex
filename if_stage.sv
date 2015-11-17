@@ -85,6 +85,7 @@ module riscv_if_stage
 
     // from debug unit
     input  logic [31:0] dbg_npc_i,
+    input  logic        dbg_set_npc_i,
 
     // pipeline stall
     input  logic        halt_if_i,
@@ -353,7 +354,7 @@ module riscv_if_stage
 
     // take care of jumps and branches
     // only send one branch request per jump/branch
-    if (branch_req_Q == 1'b0) begin
+    if (dbg_set_npc_i || (branch_req_Q == 1'b0)) begin
       if (pc_set_i) begin
         valid   = 1'b0;
 

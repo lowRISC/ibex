@@ -56,10 +56,10 @@
 `define OPCODE_CUST1      7'h2b
 
 // PULP custom
-`define OPCODE_STORE_POST 7'h27
-`define OPCODE_LOAD_POST  7'h07
-`define OPCODE_HWLOOP     7'h6b
-`define OPCODE_PULP_OP    7'h57
+`define OPCODE_LOAD_POST  7'h0b
+`define OPCODE_STORE_POST 7'h2b
+`define OPCODE_PULP_OP    7'h5b
+`define OPCODE_HWLOOP     7'h7b
 
 
 // instruction masks (for tracer)
@@ -280,7 +280,6 @@
 `define BRANCH_COND 2'b11 // conditional branches
 
 // jump target mux
-`define JT_HWLP 2'b00
 `define JT_JAL  2'b01
 `define JT_JALR 2'b10
 `define JT_COND 2'b11

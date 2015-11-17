@@ -127,7 +127,7 @@ module riscv_controller
   enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
                       DECODE, BRANCH_DELAY,
                       FLUSH_EX, FLUSH_WB,
-                      DBG_SIGNAL, DBG_WAIT } ctrl_fsm_cs, ctrl_fsm_ns;
+                      DBG_WAIT_BRANCH, DBG_SIGNAL, DBG_WAIT } ctrl_fsm_cs, ctrl_fsm_ns;
 
   logic reg_d_ex_is_reg_a_id;
   logic reg_d_ex_is_reg_b_id;
@@ -319,17 +319,19 @@ module riscv_controller
 
           // take care of debug
           // branch conditional will be handled in next state
-          if(trap_hit_i && jump_in_dec_i != `BRANCH_COND)
+          if (trap_hit_i)
           begin
             // halt pipeline immediately
             halt_if_o = 1'b1;
-            halt_id_o = 1'b1;
 
-            // TODO: take a second look at this
             // make sure the current instruction has been executed
             // before changing state to non-decode
-            //if (~stall_ex_o)
-              ctrl_fsm_ns = DBG_SIGNAL;
+            if (id_valid_i) begin
+              if (jump_in_id_i == `BRANCH_COND)
+                ctrl_fsm_ns = DBG_WAIT_BRANCH;
+              else
+                ctrl_fsm_ns = DBG_SIGNAL;
+            end
           end
         end
         else
@@ -367,13 +369,26 @@ module riscv_controller
           ctrl_fsm_ns = DECODE;
       end
 
+      // a branch was in ID when a debug trap is hit
+      DBG_WAIT_BRANCH:
+      begin
+        halt_if_o = 1'b1;
+
+        if (branch_decision_i) begin
+          // there is a branch in the EX stage that is taken
+          pc_mux_sel_o  = `PC_BRANCH;
+          pc_set_o      = 1'b1;
+        end
+
+        ctrl_fsm_ns = DBG_SIGNAL;
+      end
+
       // now we can signal to the debugger that our pipeline is empty and it
       // can examine our current state
       DBG_SIGNAL:
       begin
         dbg_trap_o = 1'b1;
         halt_if_o  = 1'b1;
-        halt_id_o  = 1'b1;
 
         ctrl_fsm_ns = DBG_WAIT;
       end
@@ -383,19 +398,15 @@ module riscv_controller
       DBG_WAIT:
       begin
         halt_if_o = 1'b1;
-        halt_id_o = 1'b1;
 
         if(dbg_set_npc_i == 1'b1) begin
-          halt_id_o    = 1'b0;
           pc_mux_sel_o = `PC_DBG_NPC;
           pc_set_o     = 1'b1;
           ctrl_fsm_ns  = DBG_WAIT;
         end
 
         if(dbg_stall_i == 1'b0) begin
-          halt_if_o   = 1'b0;
-          halt_id_o   = 1'b0;
-          ctrl_fsm_ns = DECODE;
+          ctrl_fsm_ns = BRANCH_DELAY;
         end
       end
 
@@ -403,7 +414,6 @@ module riscv_controller
       FLUSH_EX:
       begin
         halt_if_o = 1'b1;
-        halt_id_o = 1'b1;
 
         if(ex_valid_i)
           ctrl_fsm_ns = FLUSH_WB;
@@ -413,7 +423,6 @@ module riscv_controller
       FLUSH_WB:
       begin
         halt_if_o = 1'b1;
-        halt_id_o = 1'b1;
 
         if (~fetch_enable_i) begin
           // we are requested to go to sleep
@@ -422,7 +431,6 @@ module riscv_controller
         end else begin
           // unstall pipeline and continue operation
           halt_if_o = 1'b0;
-          halt_id_o = 1'b0;
 
           if (id_valid_i)
             ctrl_fsm_ns = DECODE;

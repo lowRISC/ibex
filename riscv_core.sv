@@ -38,6 +38,8 @@ module riscv_core
   input  logic        clk,
   input  logic        rst_n,
 
+  input  logic        test_en_i,     // enable all clock gates for testing
+
   // Core ID, Cluster ID and boot address are considered more or less static
   input  logic [31:0] boot_addr_i,
   input  logic [4:0]  core_id_i,
@@ -117,6 +119,8 @@ module riscv_core
   logic        if_busy;
 
 
+  logic [31:0] branch_pc_ex; // PC of last executed branch
+
   // ALU Control
   logic [`ALU_OP_WIDTH-1:0] alu_operator_ex;
   logic [31:0] alu_operand_a_ex;
@@ -148,6 +152,7 @@ module riscv_core
   logic        csr_access_ex;
   logic  [1:0] csr_op_ex;
 
+  logic        csr_access;
   logic  [1:0] csr_op;
   logic [11:0] csr_addr;
   logic [31:0] csr_rdata;
@@ -276,6 +281,7 @@ module riscv_core
 
     // from debug unit
     .dbg_npc_i           ( dbg_npc         ),
+    .dbg_set_npc_i       ( dbg_set_npc     ),
 
     // Jump and branch target and decision
     .jump_in_id_i        ( jump_in_id      ),
@@ -307,6 +313,8 @@ module riscv_core
   (
     .clk                          ( clk                  ),
     .rst_n                        ( rst_n                ),
+
+    .test_en_i                    ( test_en_i            ),
 
     // Processor Enable
     .fetch_enable_i               ( fetch_enable_i       ),
@@ -353,6 +361,7 @@ module riscv_core
     .wb_valid_i                   ( wb_valid             ),
 
     // From the Pipeline ID/EX
+    .branch_pc_ex_o               ( branch_pc_ex         ),
     .alu_operand_a_ex_o           ( alu_operand_a_ex     ),
     .alu_operand_b_ex_o           ( alu_operand_b_ex     ),
     .alu_operand_c_ex_o           ( alu_operand_c_ex     ),
@@ -573,6 +582,7 @@ module riscv_core
     .cluster_id_i            ( cluster_id_i   ),
 
     // Interface to CSRs (SRAM like)
+    .csr_access_i            ( csr_access_ex  ),
     .csr_addr_i              ( csr_addr       ),
     .csr_wdata_i             ( csr_wdata      ),
     .csr_op_i                ( csr_op         ),
@@ -608,11 +618,13 @@ module riscv_core
   );
 
   // Mux for CSR access through Debug Unit
-  assign csr_addr      = (dbg_sp_mux == 1'b0) ? alu_operand_b_ex[11:0] : dbg_reg_addr;
-  assign csr_wdata     = (dbg_sp_mux == 1'b0) ? alu_operand_a_ex : dbg_reg_wdata;
-  assign csr_op        = (dbg_sp_mux == 1'b0) ? csr_op_ex
-                                              : (dbg_reg_we == 1'b1 ? `CSR_OP_WRITE : `CSR_OP_NONE);
-  assign dbg_rdata     = (dbg_sp_mux == 1'b0) ? dbg_reg_rdata    : csr_rdata;
+  assign csr_access = (dbg_sp_mux == 1'b0) ? csr_access_ex : 1'b1;
+  assign csr_addr   = (dbg_sp_mux == 1'b0) ? alu_operand_b_ex[11:0] : dbg_reg_addr;
+  assign csr_wdata  = (dbg_sp_mux == 1'b0) ? alu_operand_a_ex : dbg_reg_wdata;
+  assign csr_op     = (dbg_sp_mux == 1'b0) ? csr_op_ex
+                                           : (dbg_reg_we == 1'b1 ? `CSR_OP_WRITE
+                                                                 : `CSR_OP_NONE );
+  assign dbg_rdata  = (dbg_sp_mux == 1'b0) ? dbg_reg_rdata : csr_rdata;
 
 
   /////////////////////////////////////////////////////////////
@@ -642,13 +654,14 @@ module riscv_core
     // To/From Core
     .dbg_st_en_o     ( dbg_st_en       ),
     .dbg_dsr_o       ( dbg_dsr         ),
+
     .stall_core_o    ( dbg_stall       ),
     .flush_pipe_o    ( dbg_flush_pipe  ),
     .trap_i          ( dbg_trap        ),
 
     // register file access
-    .regfile_mux_o   ( dbg_reg_mux     ),
     .sp_mux_o        ( dbg_sp_mux      ),
+    .regfile_mux_o   ( dbg_reg_mux     ),
     .regfile_we_o    ( dbg_reg_we      ),
     .regfile_addr_o  ( dbg_reg_addr    ),
     .regfile_wdata_o ( dbg_reg_wdata   ),
@@ -657,6 +670,11 @@ module riscv_core
     // signals for PPC and NPC
     .curr_pc_if_i    ( current_pc_if   ), // from IF stage
     .curr_pc_id_i    ( current_pc_id   ), // from IF stage
+    .branch_pc_i     ( branch_pc_ex    ), // PC of last executed branch (in EX stage)
+
+    .jump_in_ex_i    ( jump_in_ex      ),
+    .branch_taken_i  ( branch_decision ),
+
     .npc_o           ( dbg_npc         ), // PC from debug unit
     .set_npc_o       ( dbg_set_npc     )  // set PC to new value
   );

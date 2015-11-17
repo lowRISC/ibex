@@ -327,11 +327,11 @@ module riscv_alu
       `ALU_XOR:  result_o = operand_a_i ^ operand_b_i;
 
       // Shift Operations
-      `ALU_SLL:  result_o   = shift_left_result;
+      `ALU_SLL:  result_o = shift_left_result;
 
       `ALU_SRL,
       `ALU_SRA,
-      `ALU_ROR:  result_o   = shift_result;
+      `ALU_ROR:  result_o = shift_result;
 
       // Extension Operations
       `ALU_EXTBZ,

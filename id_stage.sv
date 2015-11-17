@@ -38,7 +38,9 @@ module riscv_id_stage
     input  logic        clk,
     input  logic        rst_n,
 
-    input logic         fetch_enable_i,
+    input  logic        test_en_i,
+
+    input  logic        fetch_enable_i,
     output logic        core_busy_o,
     output logic        is_decoding_o,
 
@@ -81,7 +83,9 @@ module riscv_id_stage
     input  logic        ex_valid_i,     // EX stage is done
     input  logic        wb_valid_i,     // WB stage is done
 
-    // To the Pipeline ID/EX
+    // Pipeline ID/EX
+    output logic [31:0] branch_pc_ex_o,
+
     output logic [31:0] alu_operand_a_ex_o,
     output logic [31:0] alu_operand_b_ex_o,
     output logic [31:0] alu_operand_c_ex_o,
@@ -253,10 +257,11 @@ module riscv_id_stage
   logic [1:0]  hwloop_regid;
   logic [2:0]  hwloop_we;
   logic        hwloop_jump;
+  logic        hwloop_target_mux_sel;
   logic        hwloop_start_mux_sel;
-  logic        hwloop_end_mux_sel;
   logic        hwloop_cnt_mux_sel;
 
+  logic [31:0] hwloop_target;
   logic [31:0] hwloop_start;
   logic [31:0] hwloop_end;
   logic [31:0] hwloop_cnt;
@@ -332,23 +337,26 @@ module riscv_id_stage
   // hwloop register id
   assign hwloop_regid = instr[8:7];   // rd contains hwloop register id
 
+  // hwloop target mux
+  always_comb
+  begin
+    unique case (hwloop_target_mux_sel)
+      1'b0: hwloop_target = current_pc_id_i + imm_i_type;
+      1'b1: hwloop_target = current_pc_id_i + {imm_z_type[30:0], 1'b0};
+    endcase
+  end
+
   // hwloop start mux
   always_comb
   begin
     unique case (hwloop_start_mux_sel)
-      1'b0: hwloop_start = jump_target;     // for PC + I imm
+      1'b0: hwloop_start = hwloop_target;   // for PC + I imm
       1'b1: hwloop_start = current_pc_if_i; // for next PC
     endcase
   end
 
   // hwloop end mux
-  always_comb
-  begin
-    unique case (hwloop_end_mux_sel)
-      1'b0: hwloop_end = jump_target; // for PC + I imm
-      1'b1: hwloop_end = jump_target; // TODO: PC + (Z imm << 1) for lp.setupi
-    endcase
-  end
+  assign hwloop_end = hwloop_target;
 
   // hwloop cnt mux
   always_comb
@@ -373,9 +381,11 @@ module riscv_id_stage
   begin : jump_target_mux
     unique case (jump_target_mux_sel)
       `JT_JAL:  jump_target = current_pc_id_i + imm_uj_type;
-      `JT_JALR: jump_target = regfile_data_ra_id + imm_i_type; // cannot forward rs1 as path is too long
       `JT_COND: jump_target = current_pc_id_i + imm_sb_type;
-      `JT_HWLP: jump_target = current_pc_id_i + imm_i_type;
+
+      // JALR: Cannot forward RS1, since the path is too long
+      `JT_JALR: jump_target = regfile_data_ra_id + imm_i_type;
+      default:  jump_target = regfile_data_ra_id + imm_i_type;
     endcase
   end
 
@@ -503,6 +513,8 @@ module riscv_id_stage
     .clk          ( clk                ),
     .rst_n        ( rst_n              ),
 
+    .test_en_i    ( test_en_i          ),
+
     // Read port a
     .raddr_a_i    ( regfile_addr_ra_id ),
     .rdata_a_o    ( regfile_data_ra_id ),
@@ -592,8 +604,8 @@ module riscv_id_stage
 
     // hwloop signals
     .hwloop_we_o                     ( hwloop_we                 ),
+    .hwloop_target_mux_sel_o         ( hwloop_target_mux_sel     ),
     .hwloop_start_mux_sel_o          ( hwloop_start_mux_sel      ),
-    .hwloop_end_mux_sel_o            ( hwloop_end_mux_sel        ),
     .hwloop_cnt_mux_sel_o            ( hwloop_cnt_mux_sel        ),
 
     // jump/branches
@@ -804,6 +816,18 @@ module riscv_id_stage
   //  |___|____/      |_____/_/\_\ |_|  |___|_|   |_____|_____|___|_| \_|_____|  //
   //                                                                             //
   /////////////////////////////////////////////////////////////////////////////////
+  always_ff @(posedge clk, negedge rst_n)
+  begin
+    if (rst_n == 1'b0)
+    begin
+      branch_pc_ex_o <= '0;
+    end
+    else begin
+      if (jump_in_id_o == `BRANCH_COND && id_valid_o)
+        branch_pc_ex_o <= current_pc_id_i;
+    end
+  end
+
   always_ff @(posedge clk, negedge rst_n)
   begin : ID_EX_PIPE_REGISTERS
     if (rst_n == 1'b0)

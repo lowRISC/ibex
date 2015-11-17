@@ -44,7 +44,7 @@ module riscv_compressed_decoder
   always_comb
   begin
     illegal_instr_o = 1'b0;
-    instr_o         = 'X;
+    instr_o         = 'x;
 
     unique case (instr_i[1:0])
       // C0
@@ -126,29 +126,33 @@ module riscv_compressed_decoder
 
               2'b11: begin
                 unique case ({instr_i[12], instr_i[6:5]})
-                  3'b001,
+                  3'b000: begin
+                    // c.sub -> sub rd', rd', rs2'
+                    instr_o = {2'b01, 5'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b000, 2'b01, instr_i[9:7], `OPCODE_OP};
+                  end
+
+                  3'b001: begin
+                    // c.xor -> xor rd', rd', rs2'
+                    instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b100, 2'b01, instr_i[9:7], `OPCODE_OP};
+                  end
+
+                  3'b010: begin
+                    // c.or  -> or  rd', rd', rs2'
+                    instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b110, 2'b01, instr_i[9:7], `OPCODE_OP};
+                  end
+
+                  3'b011: begin
+                    // c.and -> and rd', rd', rs2'
+                    instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b111, 2'b01, instr_i[9:7], `OPCODE_OP};
+                  end
+
                   3'b100,
                   3'b101,
                   3'b110,
                   3'b111: begin
-                    // 001: c.sll -> sll rd', rd', rs2'
-                    // 100: c.xor -> xor rd', rd', rs2'
-                    // 101: c.srl -> srl rd', rd', rs2'
-                    // 110: c.or  -> or  rd', rd', rs2'
-                    // 111: c.and -> and rd', rd', rs2'
-                    instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], instr_i[12], instr_i[6:5], 2'b01, instr_i[9:7], `OPCODE_OP};
-                  end
-
-                  3'b000,
-                  3'b010: begin
-                    // 000: c.addw
-                    // 010: c.subw
+                    // 100: c.subw
+                    // 101: c.addw
                     illegal_instr_o = 1'b1;
-                  end
-
-                  3'b011: begin
-                    // c.sub -> sub rd', rd', rs2'
-                    instr_o = {2'b01, 5'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b000, 2'b01, instr_i[9:7], `OPCODE_OP};
                   end
                 endcase
               end
