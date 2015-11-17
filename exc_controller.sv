@@ -55,8 +55,8 @@ module riscv_exc_controller
   enum logic [1:0] { IDLE, WAIT_CONTROLLER, IN_ISR } exc_ctrl_cs, exc_ctrl_ns;
 
   logic req_int;
-  logic [1:0] pc_mux_int, pc_mux_int_d;
-  logic [5:0] cause_int, cause_int_d;
+  logic [1:0] pc_mux_int, pc_mux_int_q;
+  logic [5:0] cause_int, cause_int_q;
 
   integer i;
 
@@ -72,14 +72,19 @@ module riscv_exc_controller
   always_comb
   begin
     cause_int  = 6'b0;
-    pc_mux_int = 2'b0;
+    pc_mux_int = 'x;
 
-    for (i = 31; i >= 0; i--)
-    begin
-      if (irq_enable_i && irq_i[i]) begin
-        cause_int[5]   = 1'b1;
-        cause_int[4:0] = i;
+    if (irq_enable_i) begin
+      // pc_mux_int is a critical signal, so try to get it as soon as possible
+      if (|irq_i)
         pc_mux_int     = `EXC_PC_IRQ;
+
+      for (i = 31; i >= 0; i--)
+      begin
+        if (irq_i[i]) begin
+          cause_int[5]   = 1'b1;
+          cause_int[4:0] = i;
+        end
       end
     end
 
@@ -107,21 +112,22 @@ module riscv_exc_controller
   always_ff @(posedge clk, negedge rst_n)
   begin
     if (rst_n == 1'b0) begin
-      cause_int_d  <= '0;
-      pc_mux_int_d <= '0;
+      cause_int_q  <= '0;
+      pc_mux_int_q <= '0;
     end else if (exc_ctrl_cs == IDLE && req_int) begin
       // save cause and ISR when new irq request is first sent to controller
-      cause_int_d  <= cause_int;
-      pc_mux_int_d <= pc_mux_int;
+      cause_int_q  <= cause_int;
+      pc_mux_int_q <= pc_mux_int;
     end
   end
 
 
   // Exception cause and mux output (with bypass)
-  assign cause_o      = (exc_ctrl_cs == IDLE && req_int)? cause_int  : cause_int_d;
-  assign pc_mux_o     = (exc_ctrl_cs == IDLE && req_int)? pc_mux_int : pc_mux_int_d;
+  assign cause_o      = (exc_ctrl_cs == IDLE && req_int) ? cause_int  : cause_int_q;
+  assign pc_mux_o     = (exc_ctrl_cs == IDLE && req_int) ? pc_mux_int : pc_mux_int_q;
 
-  assign vec_pc_mux_o = (cause_o[5] == 1'b1)? cause_o[4:0] : 5'b0;
+  // for vectorized IRQ PC mux
+  assign vec_pc_mux_o = cause_o[4:0];
 
 
   // Exception controller FSM
