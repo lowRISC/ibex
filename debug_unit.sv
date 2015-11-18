@@ -72,40 +72,40 @@ module riscv_debug_unit
 
 
   // registers for debug control
-  logic [1:0] DSR_DP,  DSR_DN;  // Debug Stop Register: IIE, INTE
-  logic [1:0] DMR1_DP, DMR1_DN; // only single step trace and branch trace bits
+  logic [1:0] dsr_q,  dsr_n;  // Debug Stop Register: IIE, INTE
+  logic [1:0] dmr1_q, dmr1_n; // only single step trace and branch trace bits
 
   // BP control FSM
-  enum logic [2:0] {Idle, Trap, DebugStall, StallCore} BP_State_SN, BP_State_SP;
+  enum logic [1:0] {Idle, Trap, DebugStall, StallCore} bp_fsm_cs, bp_fsm_ns;
 
   // ppc/npc tracking
   enum logic [1:0] {IFID, IFEX, IDEX} pc_tracking_fsm_cs, pc_tracking_fsm_ns;
   logic [31:0] ppc_int, npc_int;
 
   // ack to debug interface
-  assign dbginf_ack_o = dbginf_strobe_i && ((BP_State_SP == StallCore) || (dbginf_addr_i[15:11] == 5'b00110));
+  assign dbginf_ack_o = dbginf_strobe_i && ((bp_fsm_cs == StallCore) || (dbginf_addr_i[15:11] == 5'b00110));
 
 
   always_comb
   begin
-    BP_State_SN  = BP_State_SP;
+    bp_fsm_ns    = bp_fsm_cs;
     stall_core_o = 1'b0;
     dbginf_bp_o  = 1'b0;
     flush_pipe_o = 1'b0;
 
-    case (BP_State_SP)
+    case (bp_fsm_cs)
       Idle:
       begin
         if(trap_i == 1'b1)
         begin
           dbginf_bp_o  = 1'b1;
           stall_core_o = 1'b1;
-          BP_State_SN  = StallCore;
+          bp_fsm_ns    = StallCore;
         end
         else if(dbginf_stall_i)
         begin
           flush_pipe_o = 1'b1;
-          BP_State_SN  = DebugStall;
+          bp_fsm_ns    = DebugStall;
         end
       end
 
@@ -117,7 +117,7 @@ module riscv_debug_unit
         if(trap_i == 1'b1)
         begin
           stall_core_o = 1'b1;
-          BP_State_SN  = StallCore;
+          bp_fsm_ns    = StallCore;
         end
       end
 
@@ -126,28 +126,28 @@ module riscv_debug_unit
         stall_core_o = 1'b1;
 
         if(~dbginf_stall_i)
-          BP_State_SN = Idle;
+          bp_fsm_ns = Idle;
       end
 
-      default: BP_State_SN = Idle;
-    endcase // case (BP_State_SP)
+      default: bp_fsm_ns = Idle;
+    endcase // case (bp_fsm_cs)
   end
 
 
   // data to GPRs and SPRs
   assign regfile_wdata_o   = dbginf_data_i;
 
-  assign dbg_st_en_o       = DMR1_DP[0];
-  assign dbg_dsr_o         = DSR_DP;
+  assign dbg_st_en_o       = dmr1_q[0];
+  assign dbg_dsr_o         = dsr_q;
 
-  assign npc_o     = dbginf_data_i;
+  assign npc_o             = dbginf_data_i;
 
 
   // address decoding, write and read controller
   always_comb
   begin
-    DMR1_DN            = DMR1_DP;
-    DSR_DN             = DSR_DP;
+    dmr1_n             = dmr1_q;
+    dsr_n              = dsr_q;
     dbginf_data_o      = 32'b0;
     regfile_we_o       = 1'b0;
     regfile_addr_o     = '0;
@@ -172,24 +172,24 @@ module riscv_debug_unit
 
           11'd16: begin // SP_DMR1
             if(dbginf_we_i == 1'b1)
-              DMR1_DN = dbginf_data_i[`DMR1_ST+1:`DMR1_ST];
+              dmr1_n = dbginf_data_i[`DMR1_ST+1:`DMR1_ST];
             else
-              dbginf_data_o[`DMR1_ST+1:`DMR1_ST] = DMR1_DP;
+              dbginf_data_o[`DMR1_ST+1:`DMR1_ST] = dmr1_q;
           end
 
           11'd20: begin // SP_DSR
             // currently we only handle IIE and INTE
             if(dbginf_we_i == 1'b1)
-              DSR_DN = dbginf_data_i[7:6];
+              dsr_n = dbginf_data_i[7:6];
             else
-              dbginf_data_o[7:6] = DSR_DP[1:0];
+              dbginf_data_o[7:6] = dsr_q[1:0];
           end
 
           default: ;
         endcase
       end
       // check if internal registers (GPR or SPR) are accessed
-      else if(BP_State_SP == StallCore)
+      else if(bp_fsm_cs == StallCore)
       begin
         // check if GPRs are accessed
         if(dbginf_addr_i[15:10] == 6'b000001)
@@ -251,7 +251,7 @@ module riscv_debug_unit
     endcase
 
     // set state if trap is encountered
-    if (stall_core_o && (BP_State_SP != StallCore)) begin
+    if (stall_core_o && (bp_fsm_cs != StallCore)) begin
       pc_tracking_fsm_ns = IFID;
 
       if (jump_in_ex_i == `BRANCH_COND) begin
@@ -267,15 +267,15 @@ module riscv_debug_unit
   always_ff@(posedge clk, negedge rst_n)
   begin
     if (rst_n == 1'b0) begin
-      DMR1_DP            <= 2'b0;
-      DSR_DP             <= '0;
-      BP_State_SP        <= Idle;
+      dmr1_q             <= '0;
+      dsr_q              <= '0;
+      bp_fsm_cs          <= Idle;
       pc_tracking_fsm_cs <= IFID;
     end
     else begin
-      DMR1_DP            <= DMR1_DN;
-      DSR_DP             <= DSR_DN;
-      BP_State_SP        <= BP_State_SN;
+      dmr1_q             <= dmr1_n;
+      dsr_q              <= dsr_n;
+      bp_fsm_cs          <= bp_fsm_ns;
       pc_tracking_fsm_cs <= pc_tracking_fsm_ns;
     end
   end

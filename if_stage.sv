@@ -99,8 +99,7 @@ module riscv_if_stage
 );
 
   // offset FSM
-  enum logic[3:0] {WAIT_ALIGNED, WAIT_UNALIGNED,
-                   IDLE } offset_fsm_cs, offset_fsm_ns;
+  enum logic[1:0] {WAIT_ALIGNED, WAIT_UNALIGNED, IDLE } offset_fsm_cs, offset_fsm_ns;
 
   logic  [1:0] is_compressed;
   logic        unaligned;
