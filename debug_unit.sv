@@ -150,7 +150,7 @@ module riscv_debug_unit
     DSR_DN             = DSR_DP;
     dbginf_data_o      = 32'b0;
     regfile_we_o       = 1'b0;
-    regfile_addr_o     = 'h0;
+    regfile_addr_o     = '0;
     regfile_mux_o      = 1'b0;
     sp_mux_o           = 1'b0;
     set_npc_o          = 1'b0;
@@ -268,7 +268,7 @@ module riscv_debug_unit
   begin
     if (rst_n == 1'b0) begin
       DMR1_DP            <= 2'b0;
-      DSR_DP             <= 'b0;
+      DSR_DP             <= '0;
       BP_State_SP        <= Idle;
       pc_tracking_fsm_cs <= IFID;
     end

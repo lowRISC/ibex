@@ -364,9 +364,9 @@ module riscv_cs_registers
     if (is_pcer) begin
       unique case (csr_op_i)
         `CSR_OP_NONE:   ;
-        `CSR_OP_WRITE:  PCER_n = csr_wdata_i[N_PERF_REGS-1:0];
-        `CSR_OP_SET:    PCER_n = csr_wdata_i[N_PERF_REGS-1:0] | PCER_q;
-        `CSR_OP_CLEAR:  PCER_n = csr_wdata_i[N_PERF_REGS-1:0] & ~(PCER_q);
+        `CSR_OP_WRITE:  PCER_n = csr_wdata_i[N_PERF_COUNTERS-1:0];
+        `CSR_OP_SET:    PCER_n = csr_wdata_i[N_PERF_COUNTERS-1:0] | PCER_q;
+        `CSR_OP_CLEAR:  PCER_n = csr_wdata_i[N_PERF_COUNTERS-1:0] & ~(PCER_q);
       endcase
     end
   end
@@ -378,7 +378,7 @@ module riscv_cs_registers
     begin
       id_valid_q <= 1'b0;
 
-      PCER_q <= 'h0;
+      PCER_q <= '0;
       PCMR_q <= 2'h3;
 
       for(int i = 0; i < N_PERF_REGS; i++)
