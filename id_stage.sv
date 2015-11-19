@@ -793,7 +793,7 @@ module riscv_id_stage
     .hwloop_regid_i          ( hwloop_regid        ),
 
     // from controller
-    .stall_id_i              ( instr_valid_i       ),
+    .stall_id_i              ( ~instr_valid_i      ),
 
     // to hwloop controller
     .hwloop_start_addr_o     ( hwloop_start_addr   ),
