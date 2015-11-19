@@ -70,14 +70,9 @@ module riscv_if_stage
     input  logic  [1:0] exc_pc_mux_i,          // selects ISR address
     input  logic  [4:0] exc_vec_pc_mux_i,      // selects ISR address for vectorized interrupt lines
 
-    output logic        branch_done_o,         // we already performed a branch
-
     // jump and branch target and decision
-    input  logic  [1:0] jump_in_id_i,
-    input  logic  [1:0] jump_in_ex_i,          // jump in EX -> get PC from jump target (could also be branch)
     input  logic [31:0] jump_target_id_i,      // jump target address
     input  logic [31:0] jump_target_ex_i,      // jump target address
-    input  logic        branch_decision_i,
 
     // from hwloop controller
     input  logic        hwloop_jump_i,
@@ -420,7 +415,5 @@ module riscv_if_stage
 
   assign if_ready_o = valid & id_ready_i;
   assign if_valid_o = (~halt_if_i) & if_ready_o;
-
-  assign branch_done_o = branch_req_Q;
 
 endmodule

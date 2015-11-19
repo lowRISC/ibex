@@ -51,8 +51,7 @@ module riscv_id_stage
 
 
     // Jumps and branches
-    output logic [1:0]  jump_in_id_o,
-    output logic [1:0]  jump_in_ex_o,
+    output logic        branch_in_ex_o,
     input  logic        branch_decision_i,
     output logic [31:0] jump_target_o,
 
@@ -62,8 +61,6 @@ module riscv_id_stage
     output logic [2:0]  pc_mux_sel_o,
     output logic [1:0]  exc_pc_mux_o,
     output logic [4:0]  exc_vec_pc_mux_o,
-
-    input  logic        branch_done_i,
 
     input  logic        illegal_c_insn_i,
     input  logic        is_compressed_i,
@@ -183,6 +180,8 @@ module riscv_id_stage
   logic        regb_used_dec;
   logic        regc_used_dec;
 
+  logic        branch_taken_ex;
+  logic [1:0]  jump_in_id;
   logic [1:0]  jump_in_dec;
 
   logic        misaligned_stall;
@@ -320,6 +319,8 @@ module riscv_id_stage
   // kill instruction in the IF/ID stage by setting the instr_valid_id control
   // signal to 0 for instructions that are done
   assign clear_instr_valid_o = id_ready_o;
+
+  assign branch_taken_ex = branch_in_ex_o & branch_decision_i;
 
 
   ///////////////////////////////////////////////
@@ -607,7 +608,7 @@ module riscv_id_stage
 
     // jump/branches
     .jump_in_dec_o                   ( jump_in_dec               ),
-    .jump_in_id_o                    ( jump_in_id_o              ),
+    .jump_in_id_o                    ( jump_in_id                ),
     .jump_target_mux_sel_o           ( jump_target_mux_sel       )
 
   );
@@ -659,11 +660,9 @@ module riscv_id_stage
     .hwloop_jump_i                  ( hwloop_jump            ),
 
     // jump/branch control
+    .branch_taken_ex_i              ( branch_taken_ex        ),
+    .jump_in_id_i                   ( jump_in_id             ),
     .jump_in_dec_i                  ( jump_in_dec            ),
-    .jump_in_id_i                   ( jump_in_id_o           ),
-    .jump_in_ex_i                   ( jump_in_ex_o           ),
-
-    .branch_decision_i              ( branch_decision_i      ),
 
     // Exception Controller Signals
     .exc_req_i                      ( exc_req                ),
@@ -821,7 +820,7 @@ module riscv_id_stage
       branch_pc_ex_o <= '0;
     end
     else begin
-      if (jump_in_id_o == `BRANCH_COND && id_valid_o)
+      if (jump_in_id == `BRANCH_COND && id_valid_o)
         branch_pc_ex_o <= current_pc_id_i;
     end
   end
@@ -860,7 +859,7 @@ module riscv_id_stage
 
       data_misaligned_ex_o        <= 1'b0;
 
-      jump_in_ex_o                <= `BRANCH_NONE;
+      branch_in_ex_o              <= 1'b0;
 
     end
     else if (data_misaligned_i) begin
@@ -917,7 +916,7 @@ module riscv_id_stage
 
         data_misaligned_ex_o        <= 1'b0;
 
-        jump_in_ex_o                <= jump_in_id_o;
+        branch_in_ex_o              <= jump_in_id == `BRANCH_COND;
       end else if(ex_ready_i) begin
         // EX stage is ready but we don't have a new instruction for it,
         // so we set all write enables to 0, but unstall the pipe
@@ -932,7 +931,7 @@ module riscv_id_stage
 
         data_misaligned_ex_o        <= 1'b0;
 
-        jump_in_ex_o                <= `BRANCH_NONE;
+        branch_in_ex_o              <= 1'b0;
       end
     end
   end
@@ -941,5 +940,13 @@ module riscv_id_stage
   // stall control
   assign id_ready_o = (~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i;
   assign id_valid_o = (~halt_id) & id_ready_o;
+
+  //----------------------------------------------------------------------------
+  // Assertions
+  //----------------------------------------------------------------------------
+
+  // make sure that branch decision is valid when jumping
+  assert property (
+    @(posedge clk) (branch_in_ex_o) |-> (branch_decision_i !== 1'bx) );
 
 endmodule

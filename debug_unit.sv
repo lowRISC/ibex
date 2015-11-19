@@ -63,7 +63,7 @@ module riscv_debug_unit
   input  logic [31:0] curr_pc_id_i,
   input  logic [31:0] branch_pc_i,
 
-  input  logic  [1:0] jump_in_ex_i,
+  input  logic        branch_in_ex_i,
   input  logic        branch_taken_i,
 
   output logic [31:0] npc_o,
@@ -254,7 +254,7 @@ module riscv_debug_unit
     if (stall_core_o && (bp_fsm_cs != StallCore)) begin
       pc_tracking_fsm_ns = IFID;
 
-      if (jump_in_ex_i == `BRANCH_COND) begin
+      if (branch_in_ex_i) begin
         if (branch_taken_i)
           pc_tracking_fsm_ns = IFEX;
         else

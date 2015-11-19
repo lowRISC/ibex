@@ -98,8 +98,6 @@ module riscv_core
   logic [1:0]  exc_pc_mux_id;     // Mux selector for exception PC
   logic [4:0]  exc_vec_pc_mux_id; // Mux selector for vectorized IR lines
 
-  logic        branch_done;       // Branch already done
-
   logic        lsu_load_err;
   logic        lsu_store_err;
 
@@ -111,8 +109,7 @@ module riscv_core
 
   // Jump and branch target and decision (EX->IF)
   logic [31:0] jump_target_id, jump_target_ex;
-  logic  [1:0] jump_in_id;
-  logic  [1:0] jump_in_ex;
+  logic        branch_in_ex;
   logic        branch_decision;
 
   logic        core_busy;
@@ -273,8 +270,6 @@ module riscv_core
     .exc_pc_mux_i        ( exc_pc_mux_id     ),
     .exc_vec_pc_mux_i    ( exc_vec_pc_mux_id ),
 
-    .branch_done_o       ( branch_done     ),
-
     // from hwloop controller
     .hwloop_jump_i       ( hwloop_jump     ),
     .hwloop_target_i     ( hwloop_target   ),   // pc from hwloop start address
@@ -283,10 +278,7 @@ module riscv_core
     .dbg_npc_i           ( dbg_npc         ),
     .dbg_set_npc_i       ( dbg_set_npc     ),
 
-    // Jump and branch target and decision
-    .jump_in_id_i        ( jump_in_id      ),
-    .jump_in_ex_i        ( jump_in_ex      ),
-    .branch_decision_i   ( branch_decision ),
+    // Jump targets
     .jump_target_id_i    ( jump_target_id  ),
     .jump_target_ex_i    ( jump_target_ex  ),
 
@@ -327,8 +319,7 @@ module riscv_core
     .instr_req_o                  ( instr_req_int        ),
 
     // Jumps and branches
-    .jump_in_id_o                 ( jump_in_id           ),
-    .jump_in_ex_o                 ( jump_in_ex           ),
+    .branch_in_ex_o               ( branch_in_ex         ),
     .branch_decision_i            ( branch_decision      ),
     .jump_target_o                ( jump_target_id       ),
 
@@ -338,8 +329,6 @@ module riscv_core
     .pc_mux_sel_o                 ( pc_mux_sel_id        ),
     .exc_pc_mux_o                 ( exc_pc_mux_id        ),
     .exc_vec_pc_mux_o             ( exc_vec_pc_mux_id    ),
-
-    .branch_done_i                ( branch_done          ),
 
     .illegal_c_insn_i             ( illegal_c_insn_id    ),
     .is_compressed_i              ( is_compressed_id     ),
@@ -671,7 +660,7 @@ module riscv_core
     .curr_pc_id_i    ( current_pc_id   ), // from IF stage
     .branch_pc_i     ( branch_pc_ex    ), // PC of last executed branch (in EX stage)
 
-    .jump_in_ex_i    ( jump_in_ex      ),
+    .branch_in_ex_i  ( branch_in_ex    ),
     .branch_taken_i  ( branch_decision ),
 
     .npc_o           ( dbg_npc         ), // PC from debug unit

@@ -70,11 +70,9 @@ module riscv_controller
   input  logic        hwloop_jump_i,              // modify pc_mux_sel to select the hwloop addr
 
   // jump/branch signals
-  input  logic [1:0]  jump_in_ex_i,               // jump is being calculated in ALU
+  input  logic        branch_taken_ex_i,          // branch taken signal from EX ALU
   input  logic [1:0]  jump_in_id_i,               // jump is being calculated in ALU
   input  logic [1:0]  jump_in_dec_i,              // jump is being calculated in ALU
-
-  input  logic        branch_decision_i,          // branch decision is available in EX stage
 
   // Exception Controller Signals
   input  logic        exc_req_i,
@@ -261,8 +259,7 @@ module riscv_controller
           // decode and execute instructions only if the current conditional
           // branch in the EX stage is either not taken, or there is no
           // conditional branch in the EX stage
-          if ((jump_in_ex_i == `BRANCH_COND && ~branch_decision_i) ||
-              (jump_in_ex_i != `BRANCH_COND))
+          if (~branch_taken_ex_i)
           begin // now analyze the current instruction in the ID stage
             is_decoding_o = 1'b1;
 
@@ -348,7 +345,7 @@ module riscv_controller
         // TODO: make sure this is not done multiple times in a row!!!
         //       maybe with an assertion?
         // handle conditional branches
-        if (jump_in_ex_i == `BRANCH_COND && branch_decision_i) begin
+        if (branch_taken_ex_i) begin
           // there is a branch in the EX stage that is taken
           pc_mux_sel_o  = `PC_BRANCH;
           pc_set_o      = 1'b1;
@@ -370,7 +367,7 @@ module riscv_controller
       begin
         halt_if_o = 1'b1;
 
-        if (branch_decision_i) begin
+        if (branch_taken_ex_i) begin
           // there is a branch in the EX stage that is taken
           pc_mux_sel_o  = `PC_BRANCH;
           pc_set_o      = 1'b1;
@@ -574,10 +571,5 @@ module riscv_controller
   assign perf_branch_o    = (jump_in_id_i == `BRANCH_COND);
   assign perf_jr_stall_o  = jr_stall_o;
   assign perf_ld_stall_o  = load_stall_o;
-
-
-  // Assertions
-  assert property (
-    @(posedge clk) (pc_mux_sel_o == `PC_BRANCH) |-> (branch_decision_i !== 1'bx) );
 
 endmodule // controller
