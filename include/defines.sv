@@ -319,12 +319,6 @@
 `define EXC_OFF_LSUERR   8'h8c
 
 
-// Hardware loop registers
-// Caution: Changing this parameter is not sufficient to increase the number of
-// hwloop registers! There are adjustments needed in the controller (decoder).
-`define HWLOOP_REGS 2
-
-
 // Debug module
 `define N_WP      2     // #Watchpoints
 `define DCR_DP    0

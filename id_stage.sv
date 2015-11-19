@@ -34,6 +34,10 @@
 `include "defines.sv"
 
 module riscv_id_stage
+#(
+  parameter N_HWLP_REGS     = 2,
+  parameter N_HWLP_REG_BITS = $clog2(N_HWLP_REGS)
+)
 (
     input  logic        clk,
     input  logic        rst_n,
@@ -253,23 +257,23 @@ module riscv_id_stage
   logic        data_req_id;
 
   // hwloop signals
-  logic [1:0]  hwloop_regid;
-  logic [2:0]  hwloop_we;
-  logic        hwloop_jump;
-  logic        hwloop_target_mux_sel;
-  logic        hwloop_start_mux_sel;
-  logic        hwloop_cnt_mux_sel;
+  logic [N_HWLP_REG_BITS-1:0]    hwloop_regid;
+  logic                 [2:0]    hwloop_we;
+  logic                          hwloop_jump;
+  logic                          hwloop_target_mux_sel;
+  logic                          hwloop_start_mux_sel;
+  logic                          hwloop_cnt_mux_sel;
 
-  logic [31:0] hwloop_target;
-  logic [31:0] hwloop_start;
-  logic [31:0] hwloop_end;
-  logic [31:0] hwloop_cnt;
+  logic                [31:0]    hwloop_target;
+  logic                [31:0]    hwloop_start;
+  logic                [31:0]    hwloop_end;
+  logic                [31:0]    hwloop_cnt;
 
   // hwloop reg signals
-  logic [`HWLOOP_REGS-1:0] hwloop_dec_cnt;
-  logic [`HWLOOP_REGS-1:0] [31:0] hwloop_start_addr;
-  logic [`HWLOOP_REGS-1:0] [31:0] hwloop_end_addr;
-  logic [`HWLOOP_REGS-1:0] [31:0] hwloop_counter;
+  logic [N_HWLP_REGS-1:0]        hwloop_dec_cnt;
+  logic [N_HWLP_REGS-1:0] [31:0] hwloop_start_addr;
+  logic [N_HWLP_REGS-1:0] [31:0] hwloop_end_addr;
+  logic [N_HWLP_REGS-1:0] [31:0] hwloop_counter;
 
   // CSR control
   logic        csr_access;
@@ -759,49 +763,56 @@ module riscv_id_stage
   //                                                                      //
   //////////////////////////////////////////////////////////////////////////
 
-  riscv_hwloop_controller hwloop_controller_i
+  riscv_hwloop_controller
+  #(
+    .N_REGS ( N_HWLP_REGS )
+  )
+  hwloop_controller_i
   (
     // from ID stage
-    .enable_i                ( 1'b1                ),
-    .current_pc_i            ( current_pc_if_i     ),
+    .current_pc_i          ( current_pc_if_i     ),
 
     // to IF stage/controller
-    .hwloop_jump_o           ( hwloop_jump         ),
-    .hwloop_targ_addr_o      ( hwloop_targ_addr_o  ),
+    .hwlp_jump_o           ( hwloop_jump         ),
+    .hwlp_targ_addr_o      ( hwloop_targ_addr_o  ),
 
     // from hwloop_regs
-    .hwloop_start_addr_i     ( hwloop_start_addr   ),
-    .hwloop_end_addr_i       ( hwloop_end_addr     ),
-    .hwloop_counter_i        ( hwloop_counter      ),
+    .hwlp_start_addr_i     ( hwloop_start_addr   ),
+    .hwlp_end_addr_i       ( hwloop_end_addr     ),
+    .hwlp_counter_i        ( hwloop_counter      ),
 
     // to hwloop_regs
-    .hwloop_dec_cnt_o        ( hwloop_dec_cnt      )
+    .hwlp_dec_cnt_o        ( hwloop_dec_cnt      )
   );
 
   assign hwloop_jump_o = hwloop_jump;
 
-  riscv_hwloop_regs hwloop_regs_i
+  riscv_hwloop_regs
+  #(
+    .N_REGS ( N_HWLP_REGS )
+  )
+  hwloop_regs_i
   (
-    .clk                     ( clk                 ),
-    .rst_n                   ( rst_n               ),
+    .clk                   ( clk                 ),
+    .rst_n                 ( rst_n               ),
 
     // from ID
-    .hwloop_start_data_i     ( hwloop_start        ),
-    .hwloop_end_data_i       ( hwloop_end          ),
-    .hwloop_cnt_data_i       ( hwloop_cnt          ),
-    .hwloop_we_i             ( hwloop_we           ),
-    .hwloop_regid_i          ( hwloop_regid        ),
+    .hwlp_start_data_i     ( hwloop_start        ),
+    .hwlp_end_data_i       ( hwloop_end          ),
+    .hwlp_cnt_data_i       ( hwloop_cnt          ),
+    .hwlp_we_i             ( hwloop_we           ),
+    .hwlp_regid_i          ( hwloop_regid        ),
 
     // from controller
-    .stall_id_i              ( ~instr_valid_i      ),
+    .valid_i               ( instr_valid_i       ),
 
     // to hwloop controller
-    .hwloop_start_addr_o     ( hwloop_start_addr   ),
-    .hwloop_end_addr_o       ( hwloop_end_addr     ),
-    .hwloop_counter_o        ( hwloop_counter      ),
+    .hwlp_start_addr_o     ( hwloop_start_addr   ),
+    .hwlp_end_addr_o       ( hwloop_end_addr     ),
+    .hwlp_counter_o        ( hwloop_counter      ),
 
     // from hwloop controller
-    .hwloop_dec_cnt_i        ( hwloop_dec_cnt      )
+    .hwlp_dec_cnt_i        ( hwloop_dec_cnt      )
   );
 
 
