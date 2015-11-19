@@ -44,11 +44,11 @@ module riscv_debug_unit
   output logic [31:0] dbginf_data_o,
 
   // signals to core
-  output logic        dbg_st_en_o,     // Single-step trace mode enabled
+  output logic        dbg_step_en_o,   // Single-step trace mode enabled
   output logic [1:0]  dbg_dsr_o,       // debug stop register
 
   output logic        stall_core_o,
-  output logic        flush_pipe_o,
+  output logic        stop_req_o,
   input  logic        trap_i,
 
   output logic        sp_mux_o,
@@ -91,7 +91,7 @@ module riscv_debug_unit
     bp_fsm_ns    = bp_fsm_cs;
     stall_core_o = 1'b0;
     dbginf_bp_o  = 1'b0;
-    flush_pipe_o = 1'b0;
+    stop_req_o   = 1'b0;
 
     case (bp_fsm_cs)
       Idle:
@@ -104,7 +104,7 @@ module riscv_debug_unit
         end
         else if(dbginf_stall_i)
         begin
-          flush_pipe_o = 1'b1;
+          stop_req_o   = 1'b1;
           bp_fsm_ns    = DebugStall;
         end
       end
@@ -112,7 +112,7 @@ module riscv_debug_unit
       // A stall from adv dbg unit was seen, flush the pipeline and wait for unstalling
       DebugStall:
       begin
-        flush_pipe_o = 1'b1;
+        stop_req_o   = 1'b1;
 
         if(trap_i == 1'b1)
         begin
@@ -137,7 +137,7 @@ module riscv_debug_unit
   // data to GPRs and SPRs
   assign regfile_wdata_o   = dbginf_data_i;
 
-  assign dbg_st_en_o       = dmr1_q[0];
+  assign dbg_step_en_o     = dmr1_q[0];
   assign dbg_dsr_o         = dsr_q;
 
   assign npc_o             = dbginf_data_i;

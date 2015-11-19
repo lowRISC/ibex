@@ -141,8 +141,8 @@ module riscv_id_stage
     input  logic        lsu_store_err_i,
 
     // Debug Unit Signals
-    input  logic        dbg_flush_pipe_i,
-    input  logic        dbg_st_en_i,
+    input  logic        dbg_stop_req_i,
+    input  logic        dbg_step_en_i,
     input  logic [1:0]  dbg_dsr_i,
     input  logic        dbg_stall_i,
     output logic        dbg_trap_o,
@@ -213,7 +213,6 @@ module riscv_id_stage
   logic        exc_req, exc_ack;  // handshake
 
   logic        trap_hit;
-  assign trap_hit = 1'b0; // TODO: Fix
 
   // Register file interface
   logic [4:0]  regfile_addr_ra_id;
@@ -734,6 +733,8 @@ module riscv_id_stage
     .req_o                ( exc_req          ),
     .ack_i                ( exc_ack          ),
 
+    .trap_hit_o           ( trap_hit         ),
+
     // to IF stage
     .pc_mux_o             ( exc_pc_mux_o     ),
     .vec_pc_mux_o         ( exc_vec_pc_mux_o ),
@@ -742,6 +743,7 @@ module riscv_id_stage
     .irq_i                ( irq_i            ),
     .irq_enable_i         ( irq_enable_i     ),
 
+    .trap_insn_i          ( is_decoding_o & trap_insn        ),
     .illegal_insn_i       ( is_decoding_o & illegal_insn_dec ),
     .ecall_insn_i         ( is_decoding_o & ecall_insn_dec   ),
     .eret_insn_i          ( is_decoding_o & eret_insn_dec    ),
@@ -750,7 +752,12 @@ module riscv_id_stage
     .lsu_store_err_i      ( lsu_store_err_i  ),
 
     .cause_o              ( exc_cause_o      ),
-    .save_cause_o         ( save_exc_cause_o )
+    .save_cause_o         ( save_exc_cause_o ),
+
+    // Debug Signals
+    .dbg_stop_req_i       ( dbg_stop_req_i   ),
+    .dbg_step_en_i        ( dbg_step_en_i    ),
+    .dbg_dsr_i            ( dbg_dsr_i        )
   );
 
 

@@ -197,9 +197,9 @@ module riscv_core
 
   // Debug Unit
   logic        dbg_stall;
-  logic        dbg_flush_pipe;
+  logic        dbg_stop_req;
   logic        dbg_trap;
-  logic        dbg_st_en;       // single-step trace mode enabled
+  logic        dbg_step_en;     // single-step trace mode enabled
   logic [1:0]  dbg_dsr;         // Debug Stop Register
 
   logic        dbg_reg_mux;
@@ -400,8 +400,8 @@ module riscv_core
     .lsu_store_err_i              ( lsu_store_err        ),
 
     // Debug Unit Signals
-    .dbg_flush_pipe_i             ( dbg_flush_pipe       ),
-    .dbg_st_en_i                  ( dbg_st_en            ),
+    .dbg_stop_req_i               ( dbg_stop_req         ),
+    .dbg_step_en_i                ( dbg_step_en          ),
     .dbg_dsr_i                    ( dbg_dsr              ),
     .dbg_stall_i                  ( dbg_stall            ),
     .dbg_trap_o                   ( dbg_trap             ),
@@ -640,11 +640,11 @@ module riscv_core
     .dbginf_data_o   ( dbginf_data_o   ),
 
     // To/From Core
-    .dbg_st_en_o     ( dbg_st_en       ),
+    .dbg_step_en_o   ( dbg_step_en     ),
     .dbg_dsr_o       ( dbg_dsr         ),
 
     .stall_core_o    ( dbg_stall       ),
-    .flush_pipe_o    ( dbg_flush_pipe  ),
+    .stop_req_o      ( dbg_stop_req    ),
     .trap_i          ( dbg_trap        ),
 
     // register file access
