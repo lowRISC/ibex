@@ -62,7 +62,7 @@ module riscv_id_stage
     // IF and ID stage signals
     output logic        clear_instr_valid_o,
     output logic        pc_set_o,
-    output logic [2:0]  pc_mux_sel_o,
+    output logic [2:0]  pc_mux_o,
     output logic [1:0]  exc_pc_mux_o,
     output logic [4:0]  exc_vec_pc_mux_o,
 
@@ -654,7 +654,7 @@ module riscv_id_stage
 
     // to prefetcher
     .pc_set_o                       ( pc_set_o               ),
-    .pc_mux_sel_o                   ( pc_mux_sel_o           ),
+    .pc_mux_o                       ( pc_mux_o               ),
 
     // LSU
     .data_req_ex_i                  ( data_req_ex_o          ),

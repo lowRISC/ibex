@@ -94,7 +94,7 @@ module riscv_core
 
   logic        clear_instr_valid;
   logic        pc_set;
-  logic [2:0]  pc_mux_sel_id;     // Mux selector for next PC
+  logic [2:0]  pc_mux_id;     // Mux selector for next PC
   logic [1:0]  exc_pc_mux_id;     // Mux selector for exception PC
   logic [4:0]  exc_vec_pc_mux_id; // Mux selector for vectorized IR lines
 
@@ -266,7 +266,7 @@ module riscv_core
     .clear_instr_valid_i ( clear_instr_valid ),
     .pc_set_i            ( pc_set            ),
     .exception_pc_reg_i  ( epcr              ), // exception return address
-    .pc_mux_sel_i        ( pc_mux_sel_id     ), // sel for pc multiplexer
+    .pc_mux_i            ( pc_mux_id         ), // sel for pc multiplexer
     .exc_pc_mux_i        ( exc_pc_mux_id     ),
     .exc_vec_pc_mux_i    ( exc_vec_pc_mux_id ),
 
@@ -326,7 +326,7 @@ module riscv_core
     // IF and ID control signals
     .clear_instr_valid_o          ( clear_instr_valid    ),
     .pc_set_o                     ( pc_set               ),
-    .pc_mux_sel_o                 ( pc_mux_sel_id        ),
+    .pc_mux_o                     ( pc_mux_id            ),
     .exc_pc_mux_o                 ( exc_pc_mux_id        ),
     .exc_vec_pc_mux_o             ( exc_vec_pc_mux_id    ),
 

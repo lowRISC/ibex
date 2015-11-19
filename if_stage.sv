@@ -66,7 +66,7 @@ module riscv_if_stage
     input  logic        clear_instr_valid_i,   // clear instruction valid bit in IF/ID pipe
     input  logic        pc_set_i,              // set the program counter to a new value
     input  logic [31:0] exception_pc_reg_i,    // address used to restore PC when the interrupt/exception is served
-    input  logic  [2:0] pc_mux_sel_i,          // sel for pc multiplexer
+    input  logic  [2:0] pc_mux_i,              // sel for pc multiplexer
     input  logic  [1:0] exc_pc_mux_i,          // selects ISR address
     input  logic  [4:0] exc_vec_pc_mux_i,      // selects ISR address for vectorized interrupt lines
 
@@ -125,8 +125,8 @@ module riscv_if_stage
   always_comb
   begin
     // default values for regular aligned access
-    instr_rdata_int   = fetch_rdata;
     current_pc_if_o   = {fetch_addr[31:2], 2'b00};
+    instr_rdata_int   = fetch_rdata;
 
     if (unaligned) begin
       current_pc_if_o   = {fetch_addr[31:2], 2'b10};
@@ -143,20 +143,28 @@ module riscv_if_stage
   // exception PC selection mux
   always_comb
   begin : EXC_PC_MUX
+    exc_pc = 'x;
     unique case (exc_pc_mux_i)
       `EXC_PC_ILLINSN: exc_pc = { boot_addr_i[31:8], `EXC_OFF_ILLINSN };
       `EXC_PC_ECALL:   exc_pc = { boot_addr_i[31:8], `EXC_OFF_ECALL   };
       `EXC_PC_LOAD:    exc_pc = { boot_addr_i[31:8], `EXC_OFF_LSUERR  };
       `EXC_PC_IRQ:     exc_pc = { boot_addr_i[31:8], 1'b0, exc_vec_pc_mux_i[4:0], 2'b0 };
       // TODO: Add case for EXC_PC_STORE as soon as it differs from load
-      default:         exc_pc = { boot_addr_i[31:8], `EXC_OFF_ILLINSN };
+
+      default: begin
+        // synopsys translate_off
+        $display("%t: Illegal exc pc_mux value (%0d)!", $time, exc_pc_mux_i);
+        // synopsys translate_on
+      end
     endcase
   end
 
   // fetch address selection
   always_comb
   begin
-    unique case (pc_mux_sel_i)
+    fetch_addr_n = 'x;
+
+    unique case (pc_mux_i)
       `PC_BOOT:      fetch_addr_n = {boot_addr_i[31:8], `EXC_OFF_RST};
       `PC_JUMP:      fetch_addr_n = {jump_target_id_i[31:2], 2'b0};
       `PC_BRANCH:    fetch_addr_n = {jump_target_ex_i[31:2], 2'b0};
@@ -164,11 +172,10 @@ module riscv_if_stage
       `PC_ERET:      fetch_addr_n = exception_pc_reg_i; // PC is restored when returning from IRQ/exception
       `PC_HWLOOP:    fetch_addr_n = hwloop_target_i;    // PC is taken from hwloop start addr
       `PC_DBG_NPC:   fetch_addr_n = dbg_npc_i;          // PC is taken from debug unit
-      default:
-      begin
-        fetch_addr_n = 'X;
+
+      default: begin
         // synopsys translate_off
-        $display("%t: Illegal pc_mux_sel value (%0d)!", $time, pc_mux_sel_i);
+        $display("%t: Illegal pc_mux_sel value (%0d)!", $time, pc_mux_i);
         // synopsys translate_on
       end
     endcase
@@ -178,7 +185,7 @@ module riscv_if_stage
   begin
     unaligned_jump = 1'b0;
 
-    case (pc_mux_sel_i)
+    case (pc_mux_i)
       `PC_JUMP:    unaligned_jump = jump_target_id_i[1];
       `PC_BRANCH:  unaligned_jump = jump_target_ex_i[1];
       `PC_ERET:    unaligned_jump = exception_pc_reg_i[1];

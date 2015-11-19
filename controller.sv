@@ -59,15 +59,15 @@ module riscv_controller
   output logic        instr_req_o,                // Start fetching instructions
 
   // to prefetcher
-  output logic        pc_set_o,                   // jump to address set by pc_mux_sel
-  output logic [2:0]  pc_mux_sel_o,               // Selector in the Fetch stage to select the rigth PC (normal, jump ...)
+  output logic        pc_set_o,                   // jump to address set by pc_mux
+  output logic [2:0]  pc_mux_o,                   // Selector in the Fetch stage to select the rigth PC (normal, jump ...)
 
   // LSU
   input  logic        data_req_ex_i,              // data memory access is currently performed in EX stage
   input  logic        data_misaligned_i,
 
   // hwloop signals
-  input  logic        hwloop_jump_i,              // modify pc_mux_sel to select the hwloop addr
+  input  logic        hwloop_jump_i,              // modify pc_mux to select the hwloop addr
 
   // jump/branch signals
   input  logic        branch_taken_ex_i,          // branch taken signal from EX ALU
@@ -173,7 +173,7 @@ module riscv_controller
     save_pc_if_o  = 1'b0;
     save_pc_id_o  = 1'b0;
 
-    pc_mux_sel_o  = `PC_BOOT;
+    pc_mux_o      = `PC_BOOT;
     pc_set_o      = 1'b0;
 
     ctrl_fsm_ns   = ctrl_fsm_cs;
@@ -200,7 +200,7 @@ module riscv_controller
       BOOT_SET:
       begin
         instr_req_o   = 1'b1;
-        pc_mux_sel_o  = `PC_BOOT;
+        pc_mux_o      = `PC_BOOT;
         pc_set_o      = 1'b1;
 
         ctrl_fsm_ns = FIRST_FETCH;
@@ -231,13 +231,13 @@ module riscv_controller
         // hwloop detected, jump to start address!
         // Attention: This has to be done in the DECODE and the FIRST_FETCH states
         if (hwloop_jump_i == 1'b1) begin
-          pc_mux_sel_o = `PC_HWLOOP;
+          pc_mux_o     = `PC_HWLOOP;
           pc_set_o     = 1'b1;
         end
 
         // handle exceptions
         if (exc_req_i) begin
-          pc_mux_sel_o = `PC_EXCEPTION;
+          pc_mux_o     = `PC_EXCEPTION;
           pc_set_o     = 1'b1;
           exc_ack_o    = 1'b1;
 
@@ -268,7 +268,7 @@ module riscv_controller
             // we don't need to worry about conditional branches here as they
             // will be evaluated in the EX stage
             if (jump_in_dec_i == `BRANCH_JALR || jump_in_dec_i == `BRANCH_JAL) begin
-              pc_mux_sel_o = `PC_JUMP;
+              pc_mux_o = `PC_JUMP;
 
               // if there is a jr stall, wait for it to be gone
               if (~jr_stall_o)
@@ -281,13 +281,13 @@ module riscv_controller
 
             // handle hwloops
             if (hwloop_jump_i) begin
-              pc_mux_sel_o = `PC_HWLOOP;
-              pc_set_o     = 1'b1;
+              pc_mux_o = `PC_HWLOOP;
+              pc_set_o = 1'b1;
             end
 
             if (eret_insn_i) begin
-              pc_mux_sel_o = `PC_ERET;
-              pc_set_o     = 1'b1;
+              pc_mux_o = `PC_ERET;
+              pc_set_o = 1'b1;
             end
 
             // handle WFI instruction, flush pipeline and (potentially) go to
@@ -309,7 +309,7 @@ module riscv_controller
               begin
                 ctrl_fsm_ns = JUMP_EXC;
               end else begin
-                pc_mux_sel_o  = `PC_EXCEPTION;
+                pc_mux_o      = `PC_EXCEPTION;
                 pc_set_o      = 1'b1;
                 exc_ack_o     = 1'b1;
 
@@ -347,7 +347,7 @@ module riscv_controller
         // handle conditional branches
         if (branch_taken_ex_i) begin
           // there is a branch in the EX stage that is taken
-          pc_mux_sel_o  = `PC_BRANCH;
+          pc_mux_o      = `PC_BRANCH;
           pc_set_o      = 1'b1;
 
           is_decoding_o = 1'b0; // we are not decoding the current instruction in the ID stage
@@ -369,8 +369,8 @@ module riscv_controller
 
         if (branch_taken_ex_i) begin
           // there is a branch in the EX stage that is taken
-          pc_mux_sel_o  = `PC_BRANCH;
-          pc_set_o      = 1'b1;
+          pc_mux_o = `PC_BRANCH;
+          pc_set_o = 1'b1;
         end
 
         ctrl_fsm_ns = DBG_SIGNAL;
@@ -393,7 +393,7 @@ module riscv_controller
         halt_if_o = 1'b1;
 
         if(dbg_set_npc_i == 1'b1) begin
-          pc_mux_sel_o = `PC_DBG_NPC;
+          pc_mux_o     = `PC_DBG_NPC;
           pc_set_o     = 1'b1;
           ctrl_fsm_ns  = DBG_WAIT;
         end
@@ -436,7 +436,7 @@ module riscv_controller
         // we can just save the IF PC, since it propagated through the
         // prefetcher
         save_pc_if_o = 1'b1;
-        pc_mux_sel_o = `PC_EXCEPTION;
+        pc_mux_o     = `PC_EXCEPTION;
         pc_set_o     = 1'b1;
         exc_ack_o    = 1'b1;
 
