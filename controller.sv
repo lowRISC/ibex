@@ -572,4 +572,13 @@ module riscv_controller
   assign perf_jr_stall_o  = jr_stall_o;
   assign perf_ld_stall_o  = load_stall_o;
 
+  //----------------------------------------------------------------------------
+  // Assertions
+  //----------------------------------------------------------------------------
+
+  // make sure that taken branches do not happen back-to-back, as this is not
+  // possible without branch prediction in the IF stage
+  assert property (
+    @(posedge clk) (branch_taken_ex_i) |=> (~branch_taken_ex_i) );
+
 endmodule // controller
