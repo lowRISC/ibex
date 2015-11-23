@@ -104,7 +104,7 @@ module riscv_if_stage
 
   // prefetch buffer related signals
   logic        prefetch_busy;
-  logic        branch_req, branch_req_Q;
+  logic        branch_req;
   logic [31:0] fetch_addr_n;
 
   logic        fetch_valid;
@@ -263,15 +263,8 @@ module riscv_if_stage
   begin
     if (rst_n == 1'b0) begin
       offset_fsm_cs     <= IDLE;
-
-      branch_req_Q      <= 1'b0;
     end else begin
       offset_fsm_cs     <= offset_fsm_ns;
-
-      if (if_valid_o)
-        branch_req_Q    <= 1'b0;
-      else
-        branch_req_Q    <= branch_req | branch_req_Q;
     end
   end
 
@@ -354,18 +347,15 @@ module riscv_if_stage
 
 
     // take care of jumps and branches
-    // only send one branch request per jump/branch
-    if (dbg_set_npc_i || (branch_req_Q == 1'b0)) begin
-      if (pc_set_i) begin
-        valid   = 1'b0;
+    if (pc_set_i) begin
+      valid = 1'b0;
 
-        // switch to new PC from ID stage
-        branch_req = 1'b1;
-        if (unaligned_jump)
-          offset_fsm_ns = WAIT_UNALIGNED;
-        else
-          offset_fsm_ns = WAIT_ALIGNED;
-      end
+      // switch to new PC from ID stage
+      branch_req = 1'b1;
+      if (unaligned_jump)
+        offset_fsm_ns = WAIT_UNALIGNED;
+      else
+        offset_fsm_ns = WAIT_ALIGNED;
     end
   end
 
