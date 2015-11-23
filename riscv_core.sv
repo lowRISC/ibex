@@ -462,11 +462,12 @@ module riscv_core
     .csr_rdata_i                ( csr_rdata                    ),
 
     // From ID Stage: Regfile control signals
+    .branch_in_ex_i             ( branch_in_ex                 ),
+    .regfile_alu_waddr_i        ( regfile_alu_waddr_ex         ),
+    .regfile_alu_we_i           ( regfile_alu_we_ex            ),
+
     .regfile_waddr_i            ( regfile_waddr_ex             ),
     .regfile_we_i               ( regfile_we_ex                ),
-
-    .regfile_alu_we_i           ( regfile_alu_we_ex            ),
-    .regfile_alu_waddr_i        ( regfile_alu_waddr_ex         ),
 
     // Output of ex stage pipeline
     .regfile_waddr_wb_o         ( regfile_waddr_fw_wb_o        ),

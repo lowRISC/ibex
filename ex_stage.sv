@@ -50,6 +50,7 @@ module riscv_ex_stage
   input  logic        mult_mac_en_i,
 
   // input from ID stage
+  input  logic        branch_in_ex_i,
   input  logic [4:0]  regfile_alu_waddr_i,
   input  logic        regfile_alu_we_i,
 
@@ -179,7 +180,7 @@ module riscv_ex_stage
     end
   end
 
-  assign ex_ready_o = lsu_ready_ex_i & wb_ready_i;
+  assign ex_ready_o = (lsu_ready_ex_i & wb_ready_i) | branch_in_ex_i;
   assign ex_valid_o = ex_ready_o;
 
 endmodule
