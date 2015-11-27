@@ -742,8 +742,8 @@ module riscv_core
         // Aliases
         32'h00_00_00_13:   printMnemonic("NOP");
         // Regular opcodes
-        `INSTR_CUSTOM0:    printMnemonic("CUSTOM0");
-        `INSTR_CUSTOM1:    printMnemonic("CUSTOM1");
+        // `INSTR_CUSTOM0:    printMnemonic("CUSTOM0");
+        // `INSTR_CUSTOM1:    printMnemonic("CUSTOM1");
         `INSTR_LUI:        printUInstr("LUI");
         `INSTR_AUIPC:      printUInstr("AUIPC");
         `INSTR_JAL:        printUJInstr("JAL");

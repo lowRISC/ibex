@@ -52,8 +52,10 @@
 `define OPCODE_JAL        7'h6f
 `define OPCODE_AUIPC      7'h17
 `define OPCODE_LUI        7'h37
-`define OPCODE_CUST0      7'h0b
-`define OPCODE_CUST1      7'h2b
+
+// those opcodes are now used for PULP custom instructions
+// `define OPCODE_CUST0      7'h0b
+// `define OPCODE_CUST1      7'h2b
 
 // PULP custom
 `define OPCODE_LOAD_POST  7'h0b
@@ -63,8 +65,8 @@
 
 
 // instruction masks (for tracer)
-`define INSTR_CUSTOM0    { 25'b?, `OPCODE_CUST0 }
-`define INSTR_CUSTOM1    { 25'b?, `OPCODE_CUST1 }
+// `define INSTR_CUSTOM0    { 25'b?, `OPCODE_CUST0 }
+// `define INSTR_CUSTOM1    { 25'b?, `OPCODE_CUST1 }
 `define INSTR_LUI        { 25'b?, `OPCODE_LUI }
 `define INSTR_AUIPC      { 25'b?, `OPCODE_AUIPC }
 `define INSTR_JAL        { 25'b?, `OPCODE_JAL }
