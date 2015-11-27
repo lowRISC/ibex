@@ -73,10 +73,11 @@ module riscv_hwloop_controller
     hwlp_targ_addr_o = 'x;
     hwlp_dec_cnt_o   = '0;
 
-    for (j = N_REGS-1; j >= 0; j--) begin
+    for (j = 0; j < N_REGS; j++) begin
       if (pc_is_end_addr[j]) begin
         hwlp_targ_addr_o  = hwlp_start_addr_i[j];
         hwlp_dec_cnt_o[j] = 1'b1;
+        break;
       end
     end
   end

@@ -115,18 +115,27 @@ module riscv_hwloop_regs
     begin
       hwlp_counter_q <= '{default: 32'b0};
     end
-    else if (hwlp_we_i[2] == 1'b1) // potential contention problem here!
-    begin
-      hwlp_counter_q[hwlp_regid_i] <= hwlp_cnt_data_i;
-    end
     else
     begin
-      for (i = 0; i < N_REGS; i++)
+      if (hwlp_we_i[2] == 1'b1) // potential contention problem here!
       begin
-        if (hwlp_dec_cnt_i[i] && valid_i)
-          hwlp_counter_q[i] <= hwlp_counter_n;
+        hwlp_counter_q[hwlp_regid_i] <= hwlp_cnt_data_i;
+      end else begin
+        for (i = 0; i < N_REGS; i++)
+        begin
+          if (hwlp_dec_cnt_i[i] && valid_i)
+            hwlp_counter_q[i] <= hwlp_counter_n[i];
+        end
       end
     end
   end
+
+  //----------------------------------------------------------------------------
+  // Assertions
+  //----------------------------------------------------------------------------
+
+  // do not decrement more than one counter at once
+  assert property (
+    @(posedge clk) (valid_i) |-> ($countones(hwlp_dec_cnt_i) <= 1) );
 
 endmodule
