@@ -35,19 +35,16 @@ module riscv_register_file
 
   localparam    NUM_WORDS = 2**ADDR_WIDTH;
 
-  logic [DATA_WIDTH-1:0]      MemContentxDP[NUM_WORDS];
+  logic [DATA_WIDTH-1:0]      mem[NUM_WORDS];
 
-  logic [NUM_WORDS-1:1]       WAddrOneHotxDa;
-  logic [NUM_WORDS-1:1]       WAddrOneHotxDb;
-  logic [NUM_WORDS-1:1]       WAddrOneHotxDb_reg;
+  logic [NUM_WORDS-1:1]       waddr_onehot_a;
+  logic [NUM_WORDS-1:1]       waddr_onehot_b, waddr_onehot_b_q;
 
-  logic [NUM_WORDS-1:1]       ClocksxC;
-  logic [DATA_WIDTH-1:0]      WDataIntxDa;
-  logic [DATA_WIDTH-1:0]      WDataIntxDb;
+  logic [NUM_WORDS-1:1]       mem_clocks;
+  logic [DATA_WIDTH-1:0]      wdata_a_q;
+  logic [DATA_WIDTH-1:0]      wdata_b_q;
 
   logic clk_int;
-
-  logic we_int;
 
   int unsigned i;
   int unsigned j;
@@ -56,80 +53,84 @@ module riscv_register_file
   genvar x;
   genvar y;
 
-  assign we_int = we_a_i | we_b_i;
-
-  cluster_clock_gating CG_WE_GLOBAL
-  (
-    .clk_i     ( clk       ),
-    .en_i      ( we_int    ),
-    .test_en_i ( test_en_i ),
-    .clk_o     ( clk_int   )
-  );
-
   //-----------------------------------------------------------------------------
   //-- READ : Read address decoder RAD
   //-----------------------------------------------------------------------------
-  assign rdata_a_o = MemContentxDP[raddr_a_i];
-  assign rdata_b_o = MemContentxDP[raddr_b_i];
-  assign rdata_c_o = MemContentxDP[raddr_c_i];
+  assign rdata_a_o = mem[raddr_a_i];
+  assign rdata_b_o = mem[raddr_b_i];
+  assign rdata_c_o = mem[raddr_c_i];
+
+
+  //-----------------------------------------------------------------------------
+  // WRITE : SAMPLE INPUT DATA
+  //---------------------------------------------------------------------------
+
+  cluster_clock_gating CG_WE_GLOBAL
+  (
+    .clk_i     ( clk             ),
+    .en_i      ( we_a_i | we_b_i ),
+    .test_en_i ( test_en_i       ),
+    .clk_o     ( clk_int         )
+  );
+
+  // use clk_int here, since otherwise we don't want to write anything anyway
+  always_ff @(posedge clk_int, negedge rst_n)
+  begin : sample_waddr
+    if (~rst_n) begin
+      wdata_a_q        <= '0;
+      wdata_b_q        <= '0;
+      waddr_onehot_b_q <= '0;
+    end else begin
+      if(we_a_i)
+        wdata_a_q <= wdata_a_i;
+
+      if(we_b_i)
+        wdata_b_q <= wdata_b_i;
+
+      waddr_onehot_b_q <= waddr_onehot_b;
+    end
+  end
 
   //-----------------------------------------------------------------------------
   //-- WRITE : Write Address Decoder (WAD), combinatorial process
   //-----------------------------------------------------------------------------
-    always_comb
-    begin : p_WADa
-      for(i=1; i<NUM_WORDS; i++)
-      begin : p_WordItera
-        if ( (we_a_i == 1'b1 ) && (waddr_a_i == i) )
-          WAddrOneHotxDa[i] = 1'b1;
-        else
-          WAddrOneHotxDa[i] = 1'b0;
-      end
+  always_comb
+  begin : p_WADa
+    for(i = 1; i < NUM_WORDS; i++)
+    begin : p_WordItera
+      if ( (we_a_i == 1'b1 ) && (waddr_a_i == i) )
+        waddr_onehot_a[i] = 1'b1;
+      else
+        waddr_onehot_a[i] = 1'b0;
     end
+  end
 
-    always_comb
-    begin : p_WADb
-      for(j=1; j<NUM_WORDS; j++)
-      begin : p_WordIterb
-        if ( (we_b_i == 1'b1 ) && (waddr_b_i == j) )
-          WAddrOneHotxDb[j] = 1'b1;
-        else
-          WAddrOneHotxDb[j] = 1'b0;
-      end
+  always_comb
+  begin : p_WADb
+    for(j = 1; j < NUM_WORDS; j++)
+    begin : p_WordIterb
+      if ( (we_b_i == 1'b1 ) && (waddr_b_i == j) )
+        waddr_onehot_b[j] = 1'b1;
+      else
+        waddr_onehot_b[j] = 1'b0;
     end
-
-    always_ff @(posedge clk_int)
-    begin
-      if(we_a_i | we_b_i)
-        WAddrOneHotxDb_reg <= WAddrOneHotxDb;
-    end
+  end
 
   //-----------------------------------------------------------------------------
   //-- WRITE : Clock gating (if integrated clock-gating cells are available)
   //-----------------------------------------------------------------------------
   generate
-    for(x=1; x<NUM_WORDS; x++)
+    for(x = 1; x < NUM_WORDS; x++)
     begin : CG_CELL_WORD_ITER
       cluster_clock_gating CG_Inst
       (
         .clk_i     ( clk_int                               ),
-        .en_i      ( WAddrOneHotxDa[x] | WAddrOneHotxDb[x] ),
+        .en_i      ( waddr_onehot_a[x] | waddr_onehot_b[x] ),
         .test_en_i ( test_en_i                             ),
-        .clk_o     ( ClocksxC[x]                           )
+        .clk_o     ( mem_clocks[x]                         )
       );
     end
   endgenerate
-
-  //-----------------------------------------------------------------------------
-  // WRITE : SAMPLE INPUT DATA
-  //---------------------------------------------------------------------------
-  always_ff @(posedge clk)
-  begin : sample_waddr
-    if(we_a_i)
-      WDataIntxDa <= wdata_a_i;
-    if(we_b_i)
-      WDataIntxDb <= wdata_b_i;
-  end
 
   //-----------------------------------------------------------------------------
   //-- WRITE : Write operation
@@ -143,12 +144,12 @@ module riscv_register_file
   always_latch
   begin : latch_wdata
     // Note: The assignment has to be done inside this process or Modelsim complains about it
-    MemContentxDP[0] = 32'b0;
+    mem[0] = '0;
 
-    for(k=1; k<NUM_WORDS; k++)
+    for(k = 1; k < NUM_WORDS; k++)
     begin : w_WordIter
-      if(ClocksxC[k] == 1'b1)
-        MemContentxDP[k] = WAddrOneHotxDb_reg[k] ? WDataIntxDb : WDataIntxDa;
+      if(mem_clocks[k] == 1'b1)
+        mem[k] = waddr_onehot_b_q[k] ? wdata_b_q : wdata_a_q;
     end
   end
 
