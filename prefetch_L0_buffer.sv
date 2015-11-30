@@ -40,8 +40,7 @@ module riscv_prefetch_L0_buffer
   output logic [31:0]                         rdata_o,
   output logic [31:0]                         addr_o,
 
-  output logic                                unaligned_valid_o,
-  output logic [31:0]                         unaligned_rdata_o,
+  input  logic                                unaligned_i,
 
   // goes to instruction memory / instruction cache
   output logic                                instr_req_o,
@@ -66,6 +65,10 @@ module riscv_prefetch_L0_buffer
   logic               valid_L0;
   logic               ready_L0;
   logic               is_prefetch_q, is_prefetch_n;
+
+  // prepared data for output
+  logic [31:0]        rdata, unaligned_rdata;
+  logic               valid, unaligned_valid;
 
 
   assign busy_o = (CS != EMPTY && CS != VALID_L0) || instr_req_o;
@@ -112,7 +115,7 @@ module riscv_prefetch_L0_buffer
 
   always_comb
   begin
-    valid_o                 = 1'b0;
+    valid                   = 1'b0;
     valid_L0                = 1'b0;
     pointer_ns              = pointer_cs;
     instr_req_o             = 1'b0;
@@ -165,7 +168,7 @@ module riscv_prefetch_L0_buffer
         end
         else // else (branch_i)
         begin
-          valid_o = instr_rvalid_i;
+          valid = instr_rvalid_i;
 
           // prepare address even if we don't need it
           // this removes the dependency for instr_addr_o on instr_rvalid_i
@@ -206,7 +209,7 @@ module riscv_prefetch_L0_buffer
 
       VALID_L0:
       begin
-        valid_o  = 1'b1;
+        valid    = 1'b1;
         valid_L0 = 1'b1;
 
         if (branch_i)
@@ -308,41 +311,41 @@ module riscv_prefetch_L0_buffer
   begin
     if (is_prefetch_q)
     begin
-      rdata_o = previous_chunk;
+      rdata   = previous_chunk;
       addr_o  = { last_address[31:4], 2'b11, 2'b00 };
     end
     else
     begin
       if (valid_L0) begin
-        rdata_o = L0_buffer[pointer_cs];
+        rdata   = L0_buffer[pointer_cs];
         addr_o  = { current_address[31:4], pointer_cs, 2'b00 };
       end
       else
       begin
-        rdata_o = instr_rdata_i[pointer_cs];
+        rdata   = instr_rdata_i[pointer_cs];
         addr_o  = { current_address[31:4], pointer_cs, 2'b00 };
       end
     end
   end
 
-  // the lower part of unaligned_rdata_o is always the higher part of rdata_o
-  assign unaligned_rdata_o[15:0] = rdata_o[31:16];
+  // the lower part of unaligned_rdata is always the higher part of rdata
+  assign unaligned_rdata[15:0] = rdata[31:16];
 
   always_comb
   begin
     if (valid_L0) begin
       case(addr_o[3:2])
-         2'b00: begin unaligned_rdata_o[31:16] = L0_buffer[1][15:0]; unaligned_valid_o = 1'b1; end
-         2'b01: begin unaligned_rdata_o[31:16] = L0_buffer[2][15:0]; unaligned_valid_o = 1'b1; end
-         2'b10: begin unaligned_rdata_o[31:16] = L0_buffer[3][15:0]; unaligned_valid_o = 1'b1; end
+         2'b00: begin unaligned_rdata[31:16] = L0_buffer[1][15:0]; unaligned_valid = 1'b1; end
+         2'b01: begin unaligned_rdata[31:16] = L0_buffer[2][15:0]; unaligned_valid = 1'b1; end
+         2'b10: begin unaligned_rdata[31:16] = L0_buffer[3][15:0]; unaligned_valid = 1'b1; end
          // this state is only interesting if we have already done a prefetch
          2'b11: begin
-           unaligned_rdata_o[31:16] = L0_buffer[0][15:0];
+           unaligned_rdata[31:16] = L0_buffer[0][15:0];
 
            if (is_prefetch_q) begin
-             unaligned_valid_o = 1'b1;
+             unaligned_valid = 1'b1;
            end else begin
-             unaligned_valid_o = 1'b0;
+             unaligned_valid = 1'b0;
            end
          end
       endcase // addr_o
@@ -351,18 +354,18 @@ module riscv_prefetch_L0_buffer
       // icache
 
       case(addr_o[3:2])
-        2'b00: begin unaligned_rdata_o[31:16] = instr_rdata_i[1][15:0]; unaligned_valid_o = instr_rvalid_i; end
-        2'b01: begin unaligned_rdata_o[31:16] = instr_rdata_i[2][15:0]; unaligned_valid_o = instr_rvalid_i; end
-        2'b10: begin unaligned_rdata_o[31:16] = instr_rdata_i[3][15:0]; unaligned_valid_o = instr_rvalid_i; end
+        2'b00: begin unaligned_rdata[31:16] = instr_rdata_i[1][15:0]; unaligned_valid = instr_rvalid_i; end
+        2'b01: begin unaligned_rdata[31:16] = instr_rdata_i[2][15:0]; unaligned_valid = instr_rvalid_i; end
+        2'b10: begin unaligned_rdata[31:16] = instr_rdata_i[3][15:0]; unaligned_valid = instr_rvalid_i; end
 
         2'b11:
         begin
-          unaligned_rdata_o[31:16] = instr_rdata_i[0][15:0];
+          unaligned_rdata[31:16] = instr_rdata_i[0][15:0];
 
           if (is_prefetch_q)
-            unaligned_valid_o = instr_rvalid_i;
+            unaligned_valid = instr_rvalid_i;
           else
-            unaligned_valid_o = 1'b0;
+            unaligned_valid = 1'b0;
         end
       endcase // pointer_cs
     end
@@ -393,5 +396,12 @@ module riscv_prefetch_L0_buffer
       end
     end
   end
+
+  //////////////////////////////////////////////////////////////////////////////
+  // instruction aligner (if unaligned)
+  //////////////////////////////////////////////////////////////////////////////
+
+  assign rdata_o = unaligned_i ? unaligned_rdata : rdata;
+  assign valid_o = unaligned_i ? unaligned_valid : valid;
 
 endmodule // prefetch_L0_buffer

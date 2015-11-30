@@ -111,9 +111,6 @@ module riscv_if_stage
   logic [31:0] fetch_rdata;
   logic [31:0] fetch_addr;
 
-  logic        fetch_unaligned_valid;
-  logic [31:0] fetch_unaligned_rdata;
-
 
   logic [31:0] instr_rdata_int;
 
@@ -129,7 +126,6 @@ module riscv_if_stage
 
     if (unaligned) begin
       current_pc_if_o   = {fetch_addr[31:2], 2'b10};
-      instr_rdata_int   = fetch_unaligned_rdata;
     end
   end
 
@@ -195,13 +191,11 @@ module riscv_if_stage
         .branch_i          ( branch_req                  ),
         .addr_i            ( {fetch_addr_n[31:2], 2'b00} ),
 
+        .unaligned_i       ( unaligned                   ), // is the current address unaligned?
         .ready_i           ( fetch_ready                 ),
         .valid_o           ( fetch_valid                 ),
         .rdata_o           ( fetch_rdata                 ),
         .addr_o            ( fetch_addr                  ),
-
-        .unaligned_valid_o ( fetch_unaligned_valid       ),
-        .unaligned_rdata_o ( fetch_unaligned_rdata       ),
 
         // goes to instruction memory / instruction cache
         .instr_req_o       ( instr_req_o                 ),
@@ -224,13 +218,11 @@ module riscv_if_stage
         .branch_i          ( branch_req                  ),
         .addr_i            ( {fetch_addr_n[31:2], 2'b00} ),
 
+        .unaligned_i       ( unaligned                   ), // is the current address unaligned?
         .ready_i           ( fetch_ready                 ),
         .valid_o           ( fetch_valid                 ),
         .rdata_o           ( fetch_rdata                 ),
         .addr_o            ( fetch_addr                  ),
-
-        .unaligned_valid_o ( fetch_unaligned_valid       ),
-        .unaligned_rdata_o ( fetch_unaligned_rdata       ),
 
         // goes to instruction memory / instruction cache
         .instr_req_o       ( instr_req_o                 ),
@@ -304,26 +296,16 @@ module riscv_if_stage
         unaligned = 1'b1;
 
         if (fetch_valid) begin
-          if (is_compressed[1]) begin
-            valid   = 1'b1; // an instruction is ready for ID stage
+          valid   = 1'b1; // an instruction is ready for ID stage
 
-            if (req_i && if_valid_o) begin
-              // next instruction will be aligned
-              fetch_ready   = 1'b1;
+          if (req_i && if_valid_o) begin
+            // next instruction will be aligned
+            fetch_ready   = 1'b1;
+
+            if (is_compressed[1])
               offset_fsm_ns = WAIT_ALIGNED;
-            end
-          end else begin
-            // not compressed, we are looking at a 32 bit instruction
-
-            if (fetch_unaligned_valid) begin
-              valid   = 1'b1; // an instruction is ready for ID stage
-
-              if (req_i && if_valid_o) begin
-                // next instruction will be unaligned
-                fetch_ready   = 1'b1;
-                offset_fsm_ns = WAIT_UNALIGNED;
-              end
-            end
+            else
+              offset_fsm_ns = WAIT_UNALIGNED;
           end
         end
       end

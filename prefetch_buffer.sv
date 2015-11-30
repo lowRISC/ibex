@@ -198,6 +198,7 @@ module riscv_prefetch_buffer
   input  logic        clk,
   input  logic        rst_n,
 
+  input  logic        unaligned_i,
   input  logic        req_i,
   input  logic        branch_i,
   input  logic        ready_i,
@@ -206,9 +207,6 @@ module riscv_prefetch_buffer
   output logic        valid_o,
   output logic [31:0] rdata_o,
   output logic [31:0] addr_o,
-
-  output logic        unaligned_valid_o,
-  output logic [31:0] unaligned_rdata_o,
 
   // goes to instruction memory / instruction cache
   output logic        instr_req_o,
@@ -231,6 +229,9 @@ module riscv_prefetch_buffer
 
   logic        fifo_rdata_valid;
   logic        fifo_rdata_ready;
+
+  logic [31:0] rdata, unaligned_rdata;
+  logic        valid, unaligned_valid;
 
   //////////////////////////////////////////////////////////////////////////////
   // prefetch buffer status
@@ -266,14 +267,21 @@ module riscv_prefetch_buffer
     .in_rdata_ready_o      ( fifo_rdata_ready  ),
     .in_rdata_i            ( instr_rdata_i     ),
 
-    .out_valid_o           ( valid_o           ),
+    .out_valid_o           ( valid             ),
     .out_ready_i           ( ready_i           ),
-    .out_rdata_o           ( rdata_o           ),
+    .out_rdata_o           ( rdata             ),
     .out_addr_o            ( addr_o            ),
 
-    .out_unaligned_valid_o ( unaligned_valid_o ),
-    .out_unaligned_rdata_o ( unaligned_rdata_o )
+    .out_unaligned_valid_o ( unaligned_valid   ),
+    .out_unaligned_rdata_o ( unaligned_rdata   )
   );
+
+  //////////////////////////////////////////////////////////////////////////////
+  // instruction aligner (if unaligned)
+  //////////////////////////////////////////////////////////////////////////////
+
+  assign rdata_o = unaligned_i ? unaligned_rdata : rdata;
+  assign valid_o = unaligned_i ? unaligned_valid : valid;
 
 
   //////////////////////////////////////////////////////////////////////////////
