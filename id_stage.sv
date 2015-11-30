@@ -953,7 +953,7 @@ module riscv_id_stage
 
 
   // stall control
-  assign id_ready_o = (~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i;
+  assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i);
   assign id_valid_o = (~halt_id) & id_ready_o;
 
   //----------------------------------------------------------------------------

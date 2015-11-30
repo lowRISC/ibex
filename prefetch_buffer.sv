@@ -34,6 +34,8 @@ module riscv_fetch_fifo
     // control signals
     input  logic        clear_i,          // clears the contents of the fifo
 
+    input  logic        unaligned_i,      // is the current output rdata unaligned
+
     // input port
     input  logic        in_addr_valid_i,
     output logic        in_addr_ready_o,
@@ -51,7 +53,9 @@ module riscv_fetch_fifo
     output logic [31:0] out_addr_o,
 
     output logic        out_unaligned_valid_o,
-    output logic [31:0] out_unaligned_rdata_o
+    output logic [31:0] out_unaligned_rdata_o,
+
+    output logic        out_is_unaligned_o
   );
 
   localparam DEPTH = 3; // must be 2 or greater
@@ -61,6 +65,8 @@ module riscv_fetch_fifo
   logic [0:DEPTH-1]         addr_valid_n,  addr_valid_int,  addr_valid_Q;
   logic [0:DEPTH-1] [31:0]  rdata_n,       rdata_int,       rdata_Q;
   logic [0:DEPTH-1]         rdata_valid_n, rdata_valid_int, rdata_valid_Q;
+  logic                     is_unaligned_n, is_unaligned_Q;
+
 
   //////////////////////////////////////////////////////////////////////////////
   // output port
@@ -75,6 +81,8 @@ module riscv_fetch_fifo
   assign out_unaligned_rdata_o = (rdata_valid_Q[1]) ? {rdata_Q[1][15:0], out_rdata_o[31:16]} : {in_rdata_i[15:0], out_rdata_o[31:16]};
   // it is implied that rdata_valid_Q[0] is set
   assign out_unaligned_valid_o = (rdata_valid_Q[1] || (addr_valid_Q[1] && in_rdata_valid_i));
+
+  assign out_is_unaligned_o = is_unaligned_Q;
 
 
 
@@ -146,16 +154,24 @@ module riscv_fetch_fifo
   // move everything by one step
   always_comb
   begin
-    addr_n        = addr_int;
-    addr_valid_n  = addr_valid_int;
-    rdata_n       = rdata_int;
-    rdata_valid_n = rdata_valid_int;
+    addr_n         = addr_int;
+    addr_valid_n   = addr_valid_int;
+    rdata_n        = rdata_int;
+    rdata_valid_n  = rdata_valid_int;
+    is_unaligned_n = is_unaligned_Q;
 
     if (out_ready_i && out_valid_o) begin
-      addr_n        = {addr_int[1:DEPTH-1],       32'b0};
-      addr_valid_n  = {addr_valid_int[1:DEPTH-1],  1'b0};
-      rdata_n       = {rdata_int[1:DEPTH-1],      32'b0};
-      rdata_valid_n = {rdata_valid_int[1:DEPTH-1], 1'b0};
+      addr_n         = {addr_int[1:DEPTH-1],       32'b0};
+      addr_valid_n   = {addr_valid_int[1:DEPTH-1],  1'b0};
+      rdata_n        = {rdata_int[1:DEPTH-1],      32'b0};
+      rdata_valid_n  = {rdata_valid_int[1:DEPTH-1], 1'b0};
+      is_unaligned_n = 1'b0;
+    end else begin
+      if (out_unaligned_valid_o && unaligned_i && (~is_unaligned_Q)) begin
+        // are we unaligned? then assemble the last word from the two halfes
+        rdata_n[0] = out_unaligned_rdata_o;
+        is_unaligned_n = 1'b1;
+      end
     end
   end
 
@@ -167,24 +183,27 @@ module riscv_fetch_fifo
   begin
     if(rst_n == 1'b0)
     begin
-      addr_Q        <= '{default: '0};
-      addr_valid_Q  <= '0;
-      rdata_Q       <= '{default: '0};
-      rdata_valid_Q <= '0;
+      addr_Q         <= '{default: '0};
+      addr_valid_Q   <= '0;
+      rdata_Q        <= '{default: '0};
+      rdata_valid_Q  <= '0;
+      is_unaligned_Q <= 1'b0;
     end
     else
     begin
       // on a clear signal from outside we invalidate the content of the FIFO
       // completely and start from an empty state
       if (clear_i) begin
-        addr_Q[0]     <= in_addr_i;
-        addr_valid_Q  <= {in_addr_valid_i, {DEPTH-1{1'b0}}};
-        rdata_valid_Q <= '0;
+        addr_Q[0]      <= in_addr_i;
+        addr_valid_Q   <= {in_addr_valid_i, {DEPTH-1{1'b0}}};
+        rdata_valid_Q  <= '0;
+        is_unaligned_Q <= 1'b0;
       end else begin
-        addr_Q        <= addr_n;
-        addr_valid_Q  <= addr_valid_n;
-        rdata_Q       <= rdata_n;
-        rdata_valid_Q <= rdata_valid_n;
+        addr_Q         <= addr_n;
+        addr_valid_Q   <= addr_valid_n;
+        rdata_Q        <= rdata_n;
+        rdata_valid_Q  <= rdata_valid_n;
+        is_unaligned_Q <= is_unaligned_n;
       end
     end
   end
@@ -230,8 +249,11 @@ module riscv_prefetch_buffer
   logic        fifo_rdata_valid;
   logic        fifo_rdata_ready;
 
+  logic        fifo_is_unaligned;
+
   logic [31:0] rdata, unaligned_rdata;
   logic        valid, unaligned_valid;
+
 
   //////////////////////////////////////////////////////////////////////////////
   // prefetch buffer status
@@ -258,6 +280,8 @@ module riscv_prefetch_buffer
 
     .clear_i               ( branch_i          ),
 
+    .unaligned_i           ( unaligned_i       ),
+
     .in_addr_valid_i       ( fifo_addr_valid   ),
     .in_addr_ready_o       ( fifo_addr_ready   ),
     .in_addr_i             ( addr_next         ),
@@ -273,15 +297,17 @@ module riscv_prefetch_buffer
     .out_addr_o            ( addr_o            ),
 
     .out_unaligned_valid_o ( unaligned_valid   ),
-    .out_unaligned_rdata_o ( unaligned_rdata   )
+    .out_unaligned_rdata_o ( unaligned_rdata   ),
+
+    .out_is_unaligned_o    ( fifo_is_unaligned )
   );
 
   //////////////////////////////////////////////////////////////////////////////
   // instruction aligner (if unaligned)
   //////////////////////////////////////////////////////////////////////////////
 
-  assign rdata_o = unaligned_i ? unaligned_rdata : rdata;
-  assign valid_o = unaligned_i ? unaligned_valid : valid;
+  assign rdata_o = (unaligned_i && (~fifo_is_unaligned)) ? unaligned_rdata : rdata;
+  assign valid_o = (unaligned_i && (~fifo_is_unaligned)) ? unaligned_valid : valid;
 
 
   //////////////////////////////////////////////////////////////////////////////
