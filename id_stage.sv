@@ -114,7 +114,6 @@ module riscv_id_stage
 
     // hwloop signals
     output logic [31:0] hwloop_targ_addr_o,
-    output logic        hwloop_jump_o,
 
     // Interface to load store unit
     output logic        data_req_ex_o,
@@ -791,8 +790,6 @@ module riscv_id_stage
     // to hwloop_regs
     .hwlp_dec_cnt_o        ( hwloop_dec_cnt      )
   );
-
-  assign hwloop_jump_o = hwloop_jump;
 
   riscv_hwloop_regs
   #(

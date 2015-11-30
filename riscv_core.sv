@@ -191,7 +191,6 @@ module riscv_core
 
 
   // Hardware loop controller signals
-  logic        hwloop_jump;
   logic [31:0] hwloop_target;   // from hwloop controller to if stage
 
 
@@ -271,7 +270,6 @@ module riscv_core
     .exc_vec_pc_mux_i    ( exc_vec_pc_mux_id ),
 
     // from hwloop controller
-    .hwloop_jump_i       ( hwloop_jump     ),
     .hwloop_target_i     ( hwloop_target   ),   // pc from hwloop start address
 
     // from debug unit
@@ -375,7 +373,6 @@ module riscv_core
     .csr_op_ex_o                  ( csr_op_ex            ),
 
     // hwloop signals
-    .hwloop_jump_o                ( hwloop_jump          ),
     .hwloop_targ_addr_o           ( hwloop_target        ),
 
     // LSU

@@ -75,7 +75,6 @@ module riscv_if_stage
     input  logic [31:0] jump_target_ex_i,      // jump target address
 
     // from hwloop controller
-    input  logic        hwloop_jump_i,
     input  logic [31:0] hwloop_target_i,       // pc from hwloop start addr
 
     // from debug unit
@@ -144,6 +143,7 @@ module riscv_if_stage
   always_comb
   begin : EXC_PC_MUX
     exc_pc = 'x;
+
     unique case (exc_pc_mux_i)
       `EXC_PC_ILLINSN: exc_pc = { boot_addr_i[31:8], `EXC_OFF_ILLINSN };
       `EXC_PC_ECALL:   exc_pc = { boot_addr_i[31:8], `EXC_OFF_ECALL   };
@@ -166,8 +166,8 @@ module riscv_if_stage
 
     unique case (pc_mux_i)
       `PC_BOOT:      fetch_addr_n = {boot_addr_i[31:8], `EXC_OFF_RST};
-      `PC_JUMP:      fetch_addr_n = {jump_target_id_i[31:2], 2'b0};
-      `PC_BRANCH:    fetch_addr_n = {jump_target_ex_i[31:2], 2'b0};
+      `PC_JUMP:      fetch_addr_n = jump_target_id_i;
+      `PC_BRANCH:    fetch_addr_n = jump_target_ex_i;
       `PC_EXCEPTION: fetch_addr_n = exc_pc;             // set PC to exception handler
       `PC_ERET:      fetch_addr_n = exception_pc_reg_i; // PC is restored when returning from IRQ/exception
       `PC_HWLOOP:    fetch_addr_n = hwloop_target_i;    // PC is taken from hwloop start addr
@@ -181,78 +181,66 @@ module riscv_if_stage
     endcase
   end
 
-  always_comb
-  begin
-    unaligned_jump = 1'b0;
-
-    case (pc_mux_i)
-      `PC_JUMP:    unaligned_jump = jump_target_id_i[1];
-      `PC_BRANCH:  unaligned_jump = jump_target_ex_i[1];
-      `PC_ERET:    unaligned_jump = exception_pc_reg_i[1];
-      `PC_HWLOOP:  unaligned_jump = hwloop_target_i[1];
-      `PC_DBG_NPC: unaligned_jump = dbg_npc_i[1];
-    endcase
-  end
-
+  assign unaligned_jump = fetch_addr_n[1];
 
   generate
     if (RDATA_WIDTH == 32) begin : prefetch_32
       // prefetch buffer, caches a fixed number of instructions
       riscv_prefetch_buffer prefetch_buffer_i
       (
-        .clk               ( clk                   ),
-        .rst_n             ( rst_n                 ),
+        .clk               ( clk                         ),
+        .rst_n             ( rst_n                       ),
 
-        .req_i             ( 1'b1                  ),
-        .branch_i          ( branch_req            ),
-        .addr_i            ( fetch_addr_n          ),
+        .req_i             ( 1'b1                        ),
+        .branch_i          ( branch_req                  ),
+        .addr_i            ( {fetch_addr_n[31:2], 2'b00} ),
 
-        .ready_i           ( fetch_ready           ),
-        .valid_o           ( fetch_valid           ),
-        .rdata_o           ( fetch_rdata           ),
-        .addr_o            ( fetch_addr            ),
+        .ready_i           ( fetch_ready                 ),
+        .valid_o           ( fetch_valid                 ),
+        .rdata_o           ( fetch_rdata                 ),
+        .addr_o            ( fetch_addr                  ),
 
-        .unaligned_valid_o ( fetch_unaligned_valid ),
-        .unaligned_rdata_o ( fetch_unaligned_rdata ),
+        .unaligned_valid_o ( fetch_unaligned_valid       ),
+        .unaligned_rdata_o ( fetch_unaligned_rdata       ),
 
         // goes to instruction memory / instruction cache
-        .instr_req_o       ( instr_req_o           ),
-        .instr_addr_o      ( instr_addr_o          ),
-        .instr_gnt_i       ( instr_gnt_i           ),
-        .instr_rvalid_i    ( instr_rvalid_i        ),
-        .instr_rdata_i     ( instr_rdata_i         ),
+        .instr_req_o       ( instr_req_o                 ),
+        .instr_addr_o      ( instr_addr_o                ),
+        .instr_gnt_i       ( instr_gnt_i                 ),
+        .instr_rvalid_i    ( instr_rvalid_i              ),
+        .instr_rdata_i     ( instr_rdata_i               ),
 
         // Prefetch Buffer Status
-        .busy_o            ( prefetch_busy         )
+        .busy_o            ( prefetch_busy               )
       );
     end else if (RDATA_WIDTH == 128) begin : prefetch_128
       // prefetch buffer, caches a fixed number of instructions
       riscv_prefetch_L0_buffer prefetch_buffer_i
       (
-        .clk               ( clk                   ),
-        .rst_n             ( rst_n                 ),
+        .clk               ( clk                         ),
+        .rst_n             ( rst_n                       ),
 
-        .req_i             ( 1'b1                  ),
-        .branch_i          ( branch_req            ),
-        .addr_i            ( fetch_addr_n          ),
+        .req_i             ( 1'b1                        ),
+        .branch_i          ( branch_req                  ),
+        .addr_i            ( {fetch_addr_n[31:2], 2'b00} ),
 
-        .ready_i           ( fetch_ready           ),
-        .valid_o           ( fetch_valid           ),
-        .rdata_o           ( fetch_rdata           ),
-        .addr_o            ( fetch_addr            ),
+        .ready_i           ( fetch_ready                 ),
+        .valid_o           ( fetch_valid                 ),
+        .rdata_o           ( fetch_rdata                 ),
+        .addr_o            ( fetch_addr                  ),
 
-        .unaligned_valid_o ( fetch_unaligned_valid ),
-        .unaligned_rdata_o ( fetch_unaligned_rdata ),
+        .unaligned_valid_o ( fetch_unaligned_valid       ),
+        .unaligned_rdata_o ( fetch_unaligned_rdata       ),
 
         // goes to instruction memory / instruction cache
-        .instr_req_o       ( instr_req_o           ),
-        .instr_addr_o      ( instr_addr_o          ),
-        .instr_gnt_i       ( instr_gnt_i           ),
-        .instr_rvalid_i    ( instr_rvalid_i        ),
-        .instr_rdata_i     ( instr_rdata_i         ),
+        .instr_req_o       ( instr_req_o                 ),
+        .instr_addr_o      ( instr_addr_o                ),
+        .instr_gnt_i       ( instr_gnt_i                 ),
+        .instr_rvalid_i    ( instr_rvalid_i              ),
+        .instr_rdata_i     ( instr_rdata_i               ),
 
         // Prefetch Buffer Status
-        .busy_o            ( prefetch_busy         )
+        .busy_o            ( prefetch_busy               )
       );
     end
   endgenerate
