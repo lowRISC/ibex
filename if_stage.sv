@@ -302,7 +302,7 @@ module riscv_if_stage
             // next instruction will be aligned
             fetch_ready   = 1'b1;
 
-            if (is_compressed[1])
+            if (is_compressed[0])
               offset_fsm_ns = WAIT_ALIGNED;
             else
               offset_fsm_ns = WAIT_UNALIGNED;

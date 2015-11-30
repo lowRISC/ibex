@@ -72,7 +72,7 @@ module riscv_fetch_fifo
 
   assign out_valid_o = (rdata_valid_Q[0] || (addr_valid_Q[0] && in_rdata_valid_i));
 
-  assign out_unaligned_rdata_o = (rdata_valid_Q[1]) ? {rdata_Q[1][15:0], rdata_Q[0][31:16]} : {in_rdata_i[15:0], rdata_Q[0][31:16]};
+  assign out_unaligned_rdata_o = (rdata_valid_Q[1]) ? {rdata_Q[1][15:0], out_rdata_o[31:16]} : {in_rdata_i[15:0], out_rdata_o[31:16]};
   // it is implied that rdata_valid_Q[0] is set
   assign out_unaligned_valid_o = (rdata_valid_Q[1] || (addr_valid_Q[1] && in_rdata_valid_i));
 
