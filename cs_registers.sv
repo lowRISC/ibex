@@ -172,6 +172,8 @@ module riscv_cs_registers
     csr_n        = csr;
     irq_enable_n = irq_enable;
     exc_cause_n  = exc_cause;
+    hwlp_we_o    = '0;
+    hwlp_regid_o = '0;
 
     case (csr_addr_i)
       // mstatus: IE bit
@@ -185,12 +187,12 @@ module riscv_cs_registers
       12'h342: if (csr_we_int) exc_cause_n = {csr_wdata_int[5], csr_wdata_int[4:0]};
 
       // hardware loops
-      12'h7B0: if (csr_we_int) begin hwlp_we_o = 2'b00; hwlp_regid_o = 1'b0; end
-      12'h7B1: if (csr_we_int) begin hwlp_we_o = 2'b01; hwlp_regid_o = 1'b0; end
-      12'h7B2: if (csr_we_int) begin hwlp_we_o = 2'b10; hwlp_regid_o = 1'b0; end
-      12'h7B4: if (csr_we_int) begin hwlp_we_o = 2'b00; hwlp_regid_o = 1'b1; end
-      12'h7B5: if (csr_we_int) begin hwlp_we_o = 2'b01; hwlp_regid_o = 1'b1; end
-      12'h7B6: if (csr_we_int) begin hwlp_we_o = 2'b10; hwlp_regid_o = 1'b1; end
+      12'h7B0: if (csr_we_int) begin hwlp_we_o = 3'b001; hwlp_regid_o = 1'b0; end
+      12'h7B1: if (csr_we_int) begin hwlp_we_o = 3'b010; hwlp_regid_o = 1'b0; end
+      12'h7B2: if (csr_we_int) begin hwlp_we_o = 3'b100; hwlp_regid_o = 1'b0; end
+      12'h7B4: if (csr_we_int) begin hwlp_we_o = 3'b001; hwlp_regid_o = 1'b1; end
+      12'h7B5: if (csr_we_int) begin hwlp_we_o = 3'b010; hwlp_regid_o = 1'b1; end
+      12'h7B6: if (csr_we_int) begin hwlp_we_o = 3'b100; hwlp_regid_o = 1'b1; end
     endcase
   end
 
