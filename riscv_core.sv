@@ -83,7 +83,8 @@ module riscv_core
   input  logic [N_EXT_PERF_COUNTERS-1:0] ext_perf_counters_i
 );
 
-  localparam N_HWLP = 2;
+  localparam N_HWLP      = 2;
+  localparam N_HWLP_BITS = $clog2(N_HWLP);
 
 
   // IF/ID signals
@@ -198,6 +199,11 @@ module riscv_core
   logic [N_HWLP-1:0] [31:0] hwlp_end;
   logic [N_HWLP-1:0] [31:0] hwlp_cnt;
 
+  // used to write from CS registers to hardware loop registers
+  logic   [N_HWLP_BITS-1:0] csr_hwlp_regid;
+  logic               [2:0] csr_hwlp_we;
+  logic              [31:0] csr_hwlp_data;
+
 
   // Debug Unit
   logic        dbg_stall;
@@ -277,7 +283,7 @@ module riscv_core
     .exc_pc_mux_i        ( exc_pc_mux_id     ),
     .exc_vec_pc_mux_i    ( exc_vec_pc_mux_id ),
 
-    // from hwloop controller
+    // from hwloop registers
     .hwlp_start_i        ( hwlp_start      ),
     .hwlp_end_i          ( hwlp_end        ),
     .hwlp_cnt_i          ( hwlp_cnt        ),
@@ -392,6 +398,11 @@ module riscv_core
     .hwlp_start_o                 ( hwlp_start           ),
     .hwlp_end_o                   ( hwlp_end             ),
     .hwlp_cnt_o                   ( hwlp_cnt             ),
+
+    // hardware loop signals from CSR
+    .csr_hwlp_regid_i             ( csr_hwlp_regid       ),
+    .csr_hwlp_we_i                ( csr_hwlp_we          ),
+    .csr_hwlp_data_i              ( csr_hwlp_data        ),
 
     // LSU
     .data_req_ex_o                ( data_req_ex          ), // to   load store unit
@@ -600,6 +611,15 @@ module riscv_core
 
     .exc_cause_i             ( exc_cause      ),
     .save_exc_cause_i        ( save_exc_cause ),
+
+    // from hwloop registers
+    .hwlp_start_i            ( hwlp_start     ),
+    .hwlp_end_i              ( hwlp_end       ),
+    .hwlp_cnt_i              ( hwlp_cnt       ),
+
+    .hwlp_regid_o            ( csr_hwlp_regid ),
+    .hwlp_we_o               ( csr_hwlp_we    ),
+    .hwlp_data_o             ( csr_hwlp_data  ),
 
     // performance counter related signals
     .id_valid_i              ( id_valid         ),

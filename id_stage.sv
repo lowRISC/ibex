@@ -119,6 +119,11 @@ module riscv_id_stage
     output logic [N_HWLP-1:0] [31:0] hwlp_end_o,
     output logic [N_HWLP-1:0] [31:0] hwlp_cnt_o,
 
+    // hwloop signals from CS register
+    input  logic   [N_HWLP_BITS-1:0] csr_hwlp_regid_i,
+    input  logic               [2:0] csr_hwlp_we_i,
+    input  logic              [31:0] csr_hwlp_data_i,
+
     // Interface to load store unit
     output logic        data_req_ex_o,
     output logic        data_we_ex_o,
@@ -259,16 +264,16 @@ module riscv_id_stage
   logic        data_req_id;
 
   // hwloop signals
-  logic [N_HWLP_BITS-1:0]   hwloop_regid;
-  logic            [2:0]    hwloop_we;
-  logic                     hwloop_target_mux_sel;
-  logic                     hwloop_start_mux_sel;
-  logic                     hwloop_cnt_mux_sel;
+  logic [N_HWLP_BITS-1:0] hwloop_regid, hwloop_regid_int;
+  logic             [2:0] hwloop_we, hwloop_we_int;
+  logic                   hwloop_target_mux_sel;
+  logic                   hwloop_start_mux_sel;
+  logic                   hwloop_cnt_mux_sel;
 
-  logic           [31:0]    hwloop_target;
-  logic           [31:0]    hwloop_start;
-  logic           [31:0]    hwloop_end;
-  logic           [31:0]    hwloop_cnt;
+  logic            [31:0] hwloop_target;
+  logic            [31:0] hwloop_start, hwloop_start_int;
+  logic            [31:0] hwloop_end;
+  logic            [31:0] hwloop_cnt, hwloop_cnt_int;
 
   // CSR control
   logic        csr_access;
@@ -333,7 +338,7 @@ module riscv_id_stage
   ///////////////////////////////////////////////
 
   // hwloop register id
-  assign hwloop_regid = instr[8:7];   // rd contains hwloop register id
+  assign hwloop_regid_int = instr[8:7];   // rd contains hwloop register id
 
   // hwloop target mux
   always_comb
@@ -348,22 +353,27 @@ module riscv_id_stage
   always_comb
   begin
     unique case (hwloop_start_mux_sel)
-      1'b0: hwloop_start = hwloop_target;   // for PC + I imm
-      1'b1: hwloop_start = current_pc_if_i; // for next PC
+      1'b0: hwloop_start_int = hwloop_target;   // for PC + I imm
+      1'b1: hwloop_start_int = current_pc_if_i; // for next PC
     endcase
   end
 
-  // hwloop end mux
-  assign hwloop_end = hwloop_target;
 
   // hwloop cnt mux
   always_comb
   begin : hwloop_cnt_mux
     unique case (hwloop_cnt_mux_sel)
-      1'b0: hwloop_cnt = imm_iz_type;
-      1'b1: hwloop_cnt = operand_a_fw_id;
+      1'b0: hwloop_cnt_int = imm_iz_type;
+      1'b1: hwloop_cnt_int = operand_a_fw_id;
     endcase;
   end
+
+  // multiplex between access from instructions and access via CSR registers
+  assign hwloop_start = hwloop_we_int[0] ? hwloop_start_int : csr_hwlp_data_i;
+  assign hwloop_end   = hwloop_we_int[1] ? hwloop_target    : csr_hwlp_data_i;
+  assign hwloop_cnt   = hwloop_we_int[2] ? hwloop_cnt_int   : csr_hwlp_data_i;
+  assign hwloop_regid = (|hwloop_we_int) ? hwloop_regid_int : csr_hwlp_regid_i;
+  assign hwloop_we    = (|hwloop_we_int) ? hwloop_we_int    : csr_hwlp_we_i;
 
 
   //////////////////////////////////////////////////////////////////
@@ -601,7 +611,7 @@ module riscv_id_stage
     .data_reg_offset_o               ( data_reg_offset_id        ),
 
     // hwloop signals
-    .hwloop_we_o                     ( hwloop_we                 ),
+    .hwloop_we_o                     ( hwloop_we_int             ),
     .hwloop_target_mux_sel_o         ( hwloop_target_mux_sel     ),
     .hwloop_start_mux_sel_o          ( hwloop_start_mux_sel      ),
     .hwloop_cnt_mux_sel_o            ( hwloop_cnt_mux_sel        ),

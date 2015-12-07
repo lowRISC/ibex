@@ -27,6 +27,8 @@
 
 module riscv_cs_registers
 #(
+  parameter N_HWLP              = 2,
+  parameter N_HWLP_BITS         = $clog2(N_HWLP),
   parameter N_EXT_PERF_COUNTERS = 0
 )
 (
@@ -54,6 +56,15 @@ module riscv_cs_registers
 
   input  logic [5:0]  exc_cause_i,
   input  logic        save_exc_cause_i,
+
+  // Hardware loops
+  input  logic [N_HWLP-1:0] [31:0] hwlp_start_i,
+  input  logic [N_HWLP-1:0] [31:0] hwlp_end_i,
+  input  logic [N_HWLP-1:0] [31:0] hwlp_cnt_i,
+
+  output logic [31:0]              hwlp_data_o,
+  output logic [N_HWLP_BITS-1:0]   hwlp_regid_o,
+  output logic [2:0]               hwlp_we_o,
 
   // Performance Counters
   input  logic        id_valid_i,        // ID stage is done
@@ -143,6 +154,14 @@ module riscv_cs_registers
       12'hF01: csr_rdata_int = 32'h00_00_80_00;
       // mhartid: unique hardware thread id
       12'hF10: csr_rdata_int = {22'b0, cluster_id_i, core_id_i};
+
+      // hardware loops
+      12'h7B0: csr_rdata_int = hwlp_start_i[0];
+      12'h7B1: csr_rdata_int = hwlp_end_i[0];
+      12'h7B2: csr_rdata_int = hwlp_cnt_i[0];
+      12'h7B4: csr_rdata_int = hwlp_start_i[1];
+      12'h7B5: csr_rdata_int = hwlp_end_i[1];
+      12'h7B6: csr_rdata_int = hwlp_cnt_i[1];
     endcase
   end
 
@@ -164,8 +183,18 @@ module riscv_cs_registers
       12'h341: if (csr_we_int) csr_n[`CSR_IDX_MEPC] = csr_wdata_int;
       // mcause
       12'h342: if (csr_we_int) exc_cause_n = {csr_wdata_int[5], csr_wdata_int[4:0]};
+
+      // hardware loops
+      12'h7B0: if (csr_we_int) begin hwlp_we_o = 2'b00; hwlp_regid_o = 1'b0; end
+      12'h7B1: if (csr_we_int) begin hwlp_we_o = 2'b01; hwlp_regid_o = 1'b0; end
+      12'h7B2: if (csr_we_int) begin hwlp_we_o = 2'b10; hwlp_regid_o = 1'b0; end
+      12'h7B4: if (csr_we_int) begin hwlp_we_o = 2'b00; hwlp_regid_o = 1'b1; end
+      12'h7B5: if (csr_we_int) begin hwlp_we_o = 2'b01; hwlp_regid_o = 1'b1; end
+      12'h7B6: if (csr_we_int) begin hwlp_we_o = 2'b10; hwlp_regid_o = 1'b1; end
     endcase
   end
+
+  assign hwlp_data_o = csr_wdata_int;
 
 
   // CSR operation logic
