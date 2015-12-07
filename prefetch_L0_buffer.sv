@@ -122,7 +122,8 @@ module riscv_prefetch_L0_buffer
 
   always_comb
   begin
-    valid_unaligned = 1'b0;
+    valid_unaligned        = 1'b0;
+    rdata_unaligned[31:16] = 'x;
 
     if (valid_L0) begin
       case(addr_o[3:2])
