@@ -614,13 +614,12 @@ module riscv_decoder
           end
 
           3'b101: begin
-            // lp.setupi: initialize counter from rs1, set start address to
+            // lp.setupi: initialize counter from immediate, set start address to
             // next instruction and end address to PC + I-type immediate
             hwloop_we               = 3'b111;
             hwloop_target_mux_sel_o = 1'b1;
             hwloop_start_mux_sel_o  = 1'b1;
-            hwloop_cnt_mux_sel_o    = 1'b1;
-            rega_used_o             = 1'b1;
+            hwloop_cnt_mux_sel_o    = 1'b0;
           end
 
           default: begin

@@ -66,9 +66,6 @@ module riscv_controller
   input  logic        data_req_ex_i,              // data memory access is currently performed in EX stage
   input  logic        data_misaligned_i,
 
-  // hwloop signals
-  input  logic        hwloop_jump_i,              // modify pc_mux to select the hwloop addr
-
   // jump/branch signals
   input  logic        branch_taken_ex_i,          // branch taken signal from EX ALU
   input  logic [1:0]  jump_in_id_i,               // jump is being calculated in ALU
@@ -78,7 +75,6 @@ module riscv_controller
   input  logic        exc_req_i,
   output logic        exc_ack_o,
 
-  // TODO
   input  logic        trap_hit_i,                 // a trap was hit, so we have to flush EX and WB
 
   output logic        save_pc_if_o,
@@ -125,7 +121,6 @@ module riscv_controller
   // FSM state encoding
   enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
                       DECODE,
-                      JUMP_EXC,
                       FLUSH_EX, FLUSH_WB,
                       DBG_WAIT_BRANCH, DBG_SIGNAL, DBG_WAIT } ctrl_fsm_cs, ctrl_fsm_ns;
 
@@ -228,13 +223,6 @@ module riscv_controller
           ctrl_fsm_ns = DECODE;
         end
 
-        // hwloop detected, jump to start address!
-        // Attention: This has to be done in the DECODE and the FIRST_FETCH states
-        if (hwloop_jump_i == 1'b1) begin
-          pc_mux_o     = `PC_HWLOOP;
-          pc_set_o     = 1'b1;
-        end
-
         // handle exceptions
         if (exc_req_i) begin
           pc_mux_o     = `PC_EXCEPTION;
@@ -251,93 +239,74 @@ module riscv_controller
       begin
         is_decoding_o = 1'b0;
 
-        // TODO: integrate this with the next loop, rename branch_decision
-        // into branch_taken and remove the jump_in_ex signal completely,
-        // there is no need to propagate it into the controller
-        if (instr_valid_i) begin
+        // decode and execute instructions only if the current conditional
+        // branch in the EX stage is either not taken, or there is no
+        // conditional branch in the EX stage
+        if (instr_valid_i && (~branch_taken_ex_i))
+        begin // now analyze the current instruction in the ID stage
+          is_decoding_o = 1'b1;
 
-          // decode and execute instructions only if the current conditional
-          // branch in the EX stage is either not taken, or there is no
-          // conditional branch in the EX stage
-          if (~branch_taken_ex_i)
-          begin // now analyze the current instruction in the ID stage
-            is_decoding_o = 1'b1;
+          // handle unconditional jumps
+          // we can jump directly since we know the address already
+          // we don't need to worry about conditional branches here as they
+          // will be evaluated in the EX stage
+          if (jump_in_dec_i == `BRANCH_JALR || jump_in_dec_i == `BRANCH_JAL) begin
+            pc_mux_o = `PC_JUMP;
 
-            // handle unconditional jumps
-            // we can jump directly since we know the address already
-            // we don't need to worry about conditional branches here as they
-            // will be evaluated in the EX stage
-            if (jump_in_dec_i == `BRANCH_JALR || jump_in_dec_i == `BRANCH_JAL) begin
-              pc_mux_o = `PC_JUMP;
+            // if there is a jr stall, wait for it to be gone
+            if (~jr_stall_o)
+              pc_set_o = 1'b1;
 
-              // if there is a jr stall, wait for it to be gone
-              if (~jr_stall_o)
-                pc_set_o = 1'b1;
+            // we don't have to change our current state here as the prefetch
+            // buffer is automatically invalidated, thus the next instruction
+            // that is served to the ID stage is the one of the jump target
+          end else begin
+            // handle exceptions
+            if (exc_req_i) begin
+              pc_mux_o      = `PC_EXCEPTION;
+              pc_set_o      = 1'b1;
+              exc_ack_o     = 1'b1;
+
+              halt_id_o     = 1'b1; // we don't want to propagate this instruction to EX
+              save_pc_id_o  = 1'b1;
 
               // we don't have to change our current state here as the prefetch
               // buffer is automatically invalidated, thus the next instruction
-              // that is served to the ID stage is the one of the jump target
+              // that is served to the ID stage is the one of the jump to the
+              // exception handler
             end
+          end
 
-            // handle hwloops
-            if (hwloop_jump_i) begin
-              pc_mux_o = `PC_HWLOOP;
-              pc_set_o = 1'b1;
-            end
+          if (eret_insn_i) begin
+            pc_mux_o = `PC_ERET;
+            pc_set_o = 1'b1;
+          end
 
-            if (eret_insn_i) begin
-              pc_mux_o = `PC_ERET;
-              pc_set_o = 1'b1;
-            end
+          // handle WFI instruction, flush pipeline and (potentially) go to
+          // sleep
+          // also handles eret when the core should go back to sleep
+          if (pipe_flush_i || (eret_insn_i && (~fetch_enable_i)))
+          begin
+            halt_if_o = 1'b1;
+            halt_id_o = 1'b1;
 
-            // handle WFI instruction, flush pipeline and (potentially) go to
-            // sleep
-            // also handles eret when the core should go back to sleep
-            if (pipe_flush_i || (eret_insn_i && (~fetch_enable_i)))
-            begin
-              halt_if_o = 1'b1;
-              halt_id_o = 1'b1;
+            ctrl_fsm_ns = FLUSH_EX;
+          end
 
-              ctrl_fsm_ns = FLUSH_EX;
-            end
+          // take care of debug
+          // branch conditional will be handled in next state
+          if (trap_hit_i)
+          begin
+            // halt pipeline immediately
+            halt_if_o = 1'b1;
 
-            // handle exceptions
-            if (exc_req_i) begin
-              // to not loose the hwloop, we to into a special state where we
-              // save the new PC
-              if (hwloop_jump_i)
-              begin
-                ctrl_fsm_ns = JUMP_EXC;
-              end else begin
-                pc_mux_o      = `PC_EXCEPTION;
-                pc_set_o      = 1'b1;
-                exc_ack_o     = 1'b1;
-
-                halt_id_o     = 1'b1; // we don't want to propagate this instruction to EX
-                save_pc_id_o  = 1'b1;
-
-                // we don't have to change our current state here as the prefetch
-                // buffer is automatically invalidated, thus the next instruction
-                // that is served to the ID stage is the one of the jump to the
-                // exception handler
-              end
-            end
-
-            // take care of debug
-            // branch conditional will be handled in next state
-            if (trap_hit_i)
-            begin
-              // halt pipeline immediately
-              halt_if_o = 1'b1;
-
-              // make sure the current instruction has been executed
-              // before changing state to non-decode
-              if (id_valid_i) begin
-                if (jump_in_id_i == `BRANCH_COND)
-                  ctrl_fsm_ns = DBG_WAIT_BRANCH;
-                else
-                  ctrl_fsm_ns = DBG_SIGNAL;
-              end
+            // make sure the current instruction has been executed
+            // before changing state to non-decode
+            if (id_valid_i) begin
+              if (jump_in_id_i == `BRANCH_COND)
+                ctrl_fsm_ns = DBG_WAIT_BRANCH;
+              else
+                ctrl_fsm_ns = DBG_SIGNAL;
             end
           end
         end
@@ -428,19 +397,6 @@ module riscv_controller
           if (id_valid_i)
             ctrl_fsm_ns = DECODE;
         end
-      end
-
-      // go to an exception handler after a jump
-      JUMP_EXC:
-      begin
-        // we can just save the IF PC, since it propagated through the
-        // prefetcher
-        save_pc_if_o = 1'b1;
-        pc_mux_o     = `PC_EXCEPTION;
-        pc_set_o     = 1'b1;
-        exc_ack_o    = 1'b1;
-
-        ctrl_fsm_ns  = DECODE;
       end
 
       default: begin
@@ -572,6 +528,7 @@ module riscv_controller
   assign perf_jr_stall_o  = jr_stall_o;
   assign perf_ld_stall_o  = load_stall_o;
 
+
   //----------------------------------------------------------------------------
   // Assertions
   //----------------------------------------------------------------------------
@@ -579,6 +536,6 @@ module riscv_controller
   // make sure that taken branches do not happen back-to-back, as this is not
   // possible without branch prediction in the IF stage
   assert property (
-    @(posedge clk) (branch_taken_ex_i) |=> (~branch_taken_ex_i) );
+    @(posedge clk) (branch_taken_ex_i) |=> (~branch_taken_ex_i) ) else $warning("Two branches back-to-back are taken");
 
 endmodule // controller

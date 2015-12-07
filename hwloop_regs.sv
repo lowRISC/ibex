@@ -117,12 +117,11 @@ module riscv_hwloop_regs
     end
     else
     begin
-      if (hwlp_we_i[2] == 1'b1) // potential contention problem here!
+      for (i = 0; i < N_REGS; i++)
       begin
-        hwlp_counter_q[hwlp_regid_i] <= hwlp_cnt_data_i;
-      end else begin
-        for (i = 0; i < N_REGS; i++)
-        begin
+        if ((hwlp_we_i[2] == 1'b1) && (i == hwlp_regid_i)) begin
+          hwlp_counter_q[i] <= hwlp_cnt_data_i;
+        end else begin
           if (hwlp_dec_cnt_i[i] && valid_i)
             hwlp_counter_q[i] <= hwlp_counter_n[i];
         end

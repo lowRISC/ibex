@@ -83,23 +83,27 @@ module riscv_core
   input  logic [N_EXT_PERF_COUNTERS-1:0] ext_perf_counters_i
 );
 
+  localparam N_HWLP = 2;
+
 
   // IF/ID signals
-  logic        instr_valid_id;
-  logic [31:0] instr_rdata_id;    // Instruction sampled inside IF stage
-  logic        is_compressed_id;
-  logic        illegal_c_insn_id; // Illegal compressed instruction sent to ID stage
-  logic [31:0] current_pc_if;     // Current Program counter
-  logic [31:0] current_pc_id;     // Current Program counter
+  logic              is_hwlp_id;
+  logic [N_HWLP-1:0] hwlp_dec_cnt_id;
+  logic              instr_valid_id;
+  logic [31:0]       instr_rdata_id;    // Instruction sampled inside IF stage
+  logic              is_compressed_id;
+  logic              illegal_c_insn_id; // Illegal compressed instruction sent to ID stage
+  logic [31:0]       current_pc_if;     // Current Program counter
+  logic [31:0]       current_pc_id;     // Current Program counter
 
-  logic        clear_instr_valid;
-  logic        pc_set;
-  logic [2:0]  pc_mux_id;     // Mux selector for next PC
-  logic [1:0]  exc_pc_mux_id;     // Mux selector for exception PC
-  logic [4:0]  exc_vec_pc_mux_id; // Mux selector for vectorized IR lines
+  logic              clear_instr_valid;
+  logic              pc_set;
+  logic [2:0]        pc_mux_id;     // Mux selector for next PC
+  logic [1:0]        exc_pc_mux_id;     // Mux selector for exception PC
+  logic [4:0]        exc_vec_pc_mux_id; // Mux selector for vectorized IR lines
 
-  logic        lsu_load_err;
-  logic        lsu_store_err;
+  logic              lsu_load_err;
+  logic              lsu_store_err;
 
   // ID performance counter signals
   logic        is_decoding;
@@ -191,7 +195,9 @@ module riscv_core
 
 
   // Hardware loop controller signals
-  logic [31:0] hwloop_target;   // from hwloop controller to if stage
+  logic [N_HWLP-1:0] [31:0] hwlp_start;
+  logic [N_HWLP-1:0] [31:0] hwlp_end;
+  logic [N_HWLP-1:0] [31:0] hwlp_cnt;
 
 
   // Debug Unit
@@ -233,6 +239,7 @@ module riscv_core
   //////////////////////////////////////////////////
   riscv_if_stage
   #(
+    .N_HWLP              ( N_HWLP            ),
     .RDATA_WIDTH         ( INSTR_RDATA_WIDTH )
   )
   if_stage_i
@@ -254,6 +261,8 @@ module riscv_core
     .instr_rdata_i       ( instr_rdata_i   ),
 
     // outputs to ID stage
+    .hwlp_dec_cnt_id_o   ( hwlp_dec_cnt_id   ),
+    .is_hwlp_id_o        ( is_hwlp_id        ),
     .instr_valid_id_o    ( instr_valid_id    ),
     .instr_rdata_id_o    ( instr_rdata_id    ),
     .is_compressed_id_o  ( is_compressed_id  ),
@@ -270,7 +279,9 @@ module riscv_core
     .exc_vec_pc_mux_i    ( exc_vec_pc_mux_id ),
 
     // from hwloop controller
-    .hwloop_target_i     ( hwloop_target   ),   // pc from hwloop start address
+    .hwlp_start_i        ( hwlp_start      ),
+    .hwlp_end_i          ( hwlp_end        ),
+    .hwlp_cnt_i          ( hwlp_cnt        ),
 
     // from debug unit
     .dbg_npc_i           ( dbg_npc         ),
@@ -299,7 +310,11 @@ module riscv_core
   //  |___|____/  |____/ |_/_/   \_\____|_____|  //
   //                                             //
   /////////////////////////////////////////////////
-  riscv_id_stage id_stage_i
+  riscv_id_stage
+  #(
+    .N_HWLP                       ( N_HWLP               )
+  )
+  id_stage_i
   (
     .clk                          ( clk                  ),
     .rst_n                        ( rst_n                ),
@@ -312,6 +327,8 @@ module riscv_core
     .is_decoding_o                ( is_decoding          ),
 
     // Interface to instruction memory
+    .hwlp_dec_cnt_i               ( hwlp_dec_cnt_id      ),
+    .is_hwlp_i                    ( is_hwlp_id           ),
     .instr_valid_i                ( instr_valid_id       ),
     .instr_rdata_i                ( instr_rdata_id       ),
     .instr_req_o                  ( instr_req_int        ),
@@ -372,8 +389,10 @@ module riscv_core
     .csr_access_ex_o              ( csr_access_ex        ),
     .csr_op_ex_o                  ( csr_op_ex            ),
 
-    // hwloop signals
-    .hwloop_targ_addr_o           ( hwloop_target        ),
+    // hardware loop signals to IF hwlp controller
+    .hwlp_start_o                 ( hwlp_start           ),
+    .hwlp_end_o                   ( hwlp_end             ),
+    .hwlp_cnt_o                   ( hwlp_cnt             ),
 
     // LSU
     .data_req_ex_o                ( data_req_ex          ), // to   load store unit
@@ -773,6 +792,10 @@ module riscv_core
         `INSTR_SRA:        printRInstr("SRA");
         `INSTR_OR:         printRInstr("OR");
         `INSTR_AND:        printRInstr("AND");
+        `INSTR_EXTHS:      printRInstr("EXTHS");
+        `INSTR_EXTHZ:      printRInstr("EXTHZ");
+        `INSTR_EXTBS:      printRInstr("EXTBS");
+        `INSTR_EXTBZ:      printRInstr("EXTBZ");
         // FENCE
         `INSTR_FENCE:      printMnemonic("FENCE");
         `INSTR_FENCEI:     printMnemonic("FENCEI");
@@ -986,6 +1009,7 @@ module riscv_core
         3'b010: mnemonic = "LCOUNT";
         3'b011: mnemonic = "LCOUNTI";
         3'b100: mnemonic = "LSETUP";
+        3'b101: mnemonic = "LSETUPI";
         3'b111: begin
           printMnemonic("INVALID");
           return;
@@ -994,18 +1018,21 @@ module riscv_core
       riscv_core.mnemonic = mnemonic;
 
       // decode and print instruction
-      imm = id_stage_i.imm_i_type;
+      imm = id_stage_i.imm_iz_type;
       case (instr[14:12])
         // lp.starti and lp.endi
         3'b000,
-        3'b001: $fdisplay(f, "%7s\tx%0d, 0x%h (-> 0x%h)", mnemonic, rd, imm, pc+imm);
+        3'b001: $fdisplay(f, "%7s\tx%0d, 0x%h (-> 0x%h)", mnemonic, rd, imm, pc+(imm<<1));
         // lp.count
         3'b010: $fdisplay(f, "%7s\tx%0d, x%0d (0x%h)", mnemonic, rd, rs1, rs1_value);
         // lp.counti
         3'b011: $fdisplay(f, "%7s\tx%0d, 0x%h", mnemonic, rd, imm);
         // lp.setup
         3'b100: $fdisplay(f, "%7s\tx%0d, x%0d (0x%h), 0x%h (-> 0x%h)", mnemonic,
-                          rd, rs1, rs1_value, imm, pc+imm);
+                          rd, rs1, rs1_value, imm, pc+(imm<<1));
+        // lp.setupi
+        3'b101: $fdisplay(f, "%7s\tx%0d, x%0d (0x%h), 0x%h (-> 0x%h)", mnemonic,
+                          rd, rs1, rs1_value, imm, pc+(id_stage_i.imm_z_type << 1));
       endcase
     end
   endfunction

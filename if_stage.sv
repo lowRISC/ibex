@@ -35,6 +35,7 @@
 
 module riscv_if_stage
 #(
+  parameter N_HWLP      = 2,
   parameter RDATA_WIDTH = 32
 )
 (
@@ -55,12 +56,14 @@ module riscv_if_stage
     input  logic [RDATA_WIDTH-1:0] instr_rdata_i,
 
     // Output of IF Pipeline stage
-    output logic        instr_valid_id_o,      // instruction in IF/ID pipeline is valid
-    output logic [31:0] instr_rdata_id_o,      // read instruction is sampled and sent to ID stage for decoding
-    output logic        is_compressed_id_o,    // compressed decoder thinks this is a compressed instruction
-    output logic        illegal_c_insn_id_o,   // compressed decoder thinks this is an invalid instruction
-    output logic [31:0] current_pc_if_o,
-    output logic [31:0] current_pc_id_o,
+    output logic [N_HWLP-1:0] hwlp_dec_cnt_id_o,     // currently served instruction was the target of a hwlp
+    output logic              is_hwlp_id_o,          // currently served instruction was the target of a hwlp
+    output logic              instr_valid_id_o,      // instruction in IF/ID pipeline is valid
+    output logic       [31:0] instr_rdata_id_o,      // read instruction is sampled and sent to ID stage for decoding
+    output logic              is_compressed_id_o,    // compressed decoder thinks this is a compressed instruction
+    output logic              illegal_c_insn_id_o,   // compressed decoder thinks this is an invalid instruction
+    output logic       [31:0] current_pc_if_o,
+    output logic       [31:0] current_pc_id_o,
 
     // Forwarding ports - control signals
     input  logic        clear_instr_valid_i,   // clear instruction valid bit in IF/ID pipe
@@ -75,7 +78,9 @@ module riscv_if_stage
     input  logic [31:0] jump_target_ex_i,      // jump target address
 
     // from hwloop controller
-    input  logic [31:0] hwloop_target_i,       // pc from hwloop start addr
+    input  logic [N_HWLP-1:0] [31:0] hwlp_start_i,          // hardware loop start addresses
+    input  logic [N_HWLP-1:0] [31:0] hwlp_end_i,            // hardware loop end addresses
+    input  logic [N_HWLP-1:0] [31:0] hwlp_cnt_i,            // hardware loop counters
 
     // from debug unit
     input  logic [31:0] dbg_npc_i,
@@ -93,46 +98,27 @@ module riscv_if_stage
 );
 
   // offset FSM
-  enum logic[1:0] {WAIT_ALIGNED, WAIT_UNALIGNED, IDLE } offset_fsm_cs, offset_fsm_ns;
+  enum logic[0:0] {WAIT, IDLE } offset_fsm_cs, offset_fsm_ns;
 
-  logic  [1:0] is_compressed;
-  logic        unaligned;
-  logic        unaligned_jump;
-
-  logic        valid;
+  logic              valid;
 
   // prefetch buffer related signals
-  logic        prefetch_busy;
-  logic        branch_req;
-  logic [31:0] fetch_addr_n;
+  logic              prefetch_busy;
+  logic              branch_req;
+  logic       [31:0] fetch_addr_n;
 
-  logic        fetch_valid;
-  logic        fetch_ready;
-  logic [31:0] fetch_rdata;
-  logic [31:0] fetch_addr;
+  logic              fetch_valid;
+  logic              fetch_ready;
+  logic       [31:0] fetch_rdata;
+  logic       [31:0] fetch_addr;
+  logic              is_hwlp_id_q, fetch_is_hwlp;
 
+  logic       [31:0] exc_pc;
 
-  logic [31:0] instr_rdata_int;
-
-  logic [31:0] exc_pc;
-
-
-  // output data and PC mux
-  always_comb
-  begin
-    // default values for regular aligned access
-    current_pc_if_o   = {fetch_addr[31:2], 2'b00};
-    instr_rdata_int   = fetch_rdata;
-
-    if (unaligned) begin
-      current_pc_if_o   = {fetch_addr[31:2], 2'b10};
-    end
-  end
-
-
-  // compressed instruction detection
-  assign is_compressed[0] = (fetch_rdata[1:0]   != 2'b11);
-  assign is_compressed[1] = (fetch_rdata[17:16] != 2'b11);
+  // hardware loop related signals
+  logic              hwlp_jump;
+  logic       [31:0] hwlp_target;
+  logic [N_HWLP-1:0] hwlp_dec_cnt, hwlp_dec_cnt_if;
 
 
   // exception PC selection mux
@@ -166,7 +152,6 @@ module riscv_if_stage
       `PC_BRANCH:    fetch_addr_n = jump_target_ex_i;
       `PC_EXCEPTION: fetch_addr_n = exc_pc;             // set PC to exception handler
       `PC_ERET:      fetch_addr_n = exception_pc_reg_i; // PC is restored when returning from IRQ/exception
-      `PC_HWLOOP:    fetch_addr_n = hwloop_target_i;    // PC is taken from hwloop start addr
       `PC_DBG_NPC:   fetch_addr_n = dbg_npc_i;          // PC is taken from debug unit
 
       default: begin
@@ -177,8 +162,6 @@ module riscv_if_stage
     endcase
   end
 
-  assign unaligned_jump = fetch_addr_n[1];
-
   generate
     if (RDATA_WIDTH == 32) begin : prefetch_32
       // prefetch buffer, caches a fixed number of instructions
@@ -188,14 +171,18 @@ module riscv_if_stage
         .rst_n             ( rst_n                       ),
 
         .req_i             ( 1'b1                        ),
-        .branch_i          ( branch_req                  ),
-        .addr_i            ( {fetch_addr_n[31:2], 2'b00} ),
 
-        .unaligned_i       ( unaligned                   ), // is the current address unaligned?
+        .branch_i          ( branch_req                  ),
+        .addr_i            ( fetch_addr_n                ),
+
+        .hwloop_i          ( hwlp_jump                   ),
+        .hwloop_target_i   ( hwlp_target                 ),
+
         .ready_i           ( fetch_ready                 ),
         .valid_o           ( fetch_valid                 ),
         .rdata_o           ( fetch_rdata                 ),
         .addr_o            ( fetch_addr                  ),
+        .is_hwlp_o         ( fetch_is_hwlp               ),
 
         // goes to instruction memory / instruction cache
         .instr_req_o       ( instr_req_o                 ),
@@ -215,14 +202,18 @@ module riscv_if_stage
         .rst_n             ( rst_n                       ),
 
         .req_i             ( 1'b1                        ),
-        .branch_i          ( branch_req                  ),
-        .addr_i            ( {fetch_addr_n[31:2], 2'b00} ),
 
-        .unaligned_i       ( unaligned                   ), // is the current address unaligned?
+        .branch_i          ( branch_req                  ),
+        .addr_i            ( fetch_addr_n                ),
+
+        .hwloop_i          ( hwlp_jump                   ),
+        .hwloop_target_i   ( hwlp_target                 ),
+
         .ready_i           ( fetch_ready                 ),
         .valid_o           ( fetch_valid                 ),
         .rdata_o           ( fetch_rdata                 ),
         .addr_o            ( fetch_addr                  ),
+        .is_hwlp_o         ( fetch_is_hwlp               ),
 
         // goes to instruction memory / instruction cache
         .instr_req_o       ( instr_req_o                 ),
@@ -257,55 +248,24 @@ module riscv_if_stage
     branch_req    = 1'b0;
     valid         = 1'b0;
 
-    unaligned     = 1'b0;
-
     unique case (offset_fsm_cs)
       // no valid instruction data for ID stage
       // assume aligned
       IDLE: begin
         if (req_i) begin
           branch_req    = 1'b1;
-          offset_fsm_ns = WAIT_ALIGNED;
+          offset_fsm_ns = WAIT;
         end
       end
 
       // serving aligned 32 bit or 16 bit instruction, we don't know yet
-      WAIT_ALIGNED: begin
+      WAIT: begin
         if (fetch_valid) begin
           valid   = 1'b1; // an instruction is ready for ID stage
 
           if (req_i && if_valid_o) begin
-
-            if (~is_compressed[0]) begin
-              // 32 bit aligned instruction found
-              fetch_ready   = 1'b1;
-              offset_fsm_ns = WAIT_ALIGNED;
-            end else begin
-              // 16 bit aligned instruction found
-              // next instruction will be unaligned
-              offset_fsm_ns = WAIT_UNALIGNED;
-            end
-          end
-        end
-      end
-
-      // serving unaligned 32 bit instruction
-      // next instruction might be 16 bit unaligned (no need to fetch)
-      // or 32 bit unaligned (need to fetch another word from cache)
-      WAIT_UNALIGNED: begin
-        unaligned = 1'b1;
-
-        if (fetch_valid) begin
-          valid   = 1'b1; // an instruction is ready for ID stage
-
-          if (req_i && if_valid_o) begin
-            // next instruction will be aligned
             fetch_ready   = 1'b1;
-
-            if (is_compressed[0])
-              offset_fsm_ns = WAIT_ALIGNED;
-            else
-              offset_fsm_ns = WAIT_UNALIGNED;
+            offset_fsm_ns = WAIT;
           end
         end
       end
@@ -322,17 +282,38 @@ module riscv_if_stage
 
       // switch to new PC from ID stage
       branch_req = 1'b1;
-      if (unaligned_jump)
-        offset_fsm_ns = WAIT_UNALIGNED;
-      else
-        offset_fsm_ns = WAIT_ALIGNED;
+      offset_fsm_ns = WAIT;
     end
   end
 
+  // Hardware Loops
+  riscv_hwloop_controller
+  #(
+    .N_REGS ( N_HWLP )
+  )
+  hwloop_controller_i
+  (
+    .current_pc_i          ( fetch_addr        ),
 
-  assign if_busy_o = prefetch_busy;
+    .hwlp_jump_o           ( hwlp_jump         ),
+    .hwlp_targ_addr_o      ( hwlp_target       ),
 
-  assign perf_imiss_o = (~fetch_valid) | branch_req;
+    // from hwloop_regs
+    .hwlp_start_addr_i     ( hwlp_start_i      ),
+    .hwlp_end_addr_i       ( hwlp_end_i        ),
+    .hwlp_counter_i        ( hwlp_cnt_i        ),
+
+    // to hwloop_regs
+    .hwlp_dec_cnt_o        ( hwlp_dec_cnt      ),
+    .hwlp_dec_cnt_id_i     ( hwlp_dec_cnt_id_o & {N_HWLP{is_hwlp_id_o}} )
+  );
+
+
+  assign current_pc_if_o = fetch_addr;
+
+  assign if_busy_o       = prefetch_busy;
+
+  assign perf_imiss_o    = (~fetch_valid) | branch_req;
 
 
   // compressed instruction decoding, or more precisely compressed instruction
@@ -346,12 +327,25 @@ module riscv_if_stage
 
   riscv_compressed_decoder compressed_decoder_i
   (
-    .instr_i         ( instr_rdata_int      ),
+    .instr_i         ( fetch_rdata          ),
     .instr_o         ( instr_decompressed   ),
     .is_compressed_o ( instr_compressed_int ),
     .illegal_instr_o ( illegal_c_insn       )
   );
 
+  // prefetch -> IF registers
+  always_ff @(posedge clk, negedge rst_n)
+  begin
+    if (rst_n == 1'b0)
+    begin
+      hwlp_dec_cnt_if <= '0;
+    end
+    else
+    begin
+      if (hwlp_jump)
+        hwlp_dec_cnt_if <= hwlp_dec_cnt;
+    end
+  end
 
   // IF-ID pipeline registers, frozen when the ID stage is stalled
   always_ff @(posedge clk, negedge rst_n)
@@ -363,6 +357,8 @@ module riscv_if_stage
       illegal_c_insn_id_o   <= 1'b0;
       is_compressed_id_o    <= 1'b0;
       current_pc_id_o       <= '0;
+      is_hwlp_id_q          <= 1'b0;
+      hwlp_dec_cnt_id_o     <= '0;
     end
     else
     begin
@@ -376,9 +372,15 @@ module riscv_if_stage
         illegal_c_insn_id_o <= illegal_c_insn;
         is_compressed_id_o  <= instr_compressed_int;
         current_pc_id_o     <= current_pc_if_o;
+        is_hwlp_id_q        <= fetch_is_hwlp;
+
+        if (fetch_is_hwlp)
+          hwlp_dec_cnt_id_o   <= hwlp_dec_cnt_if;
       end
     end
   end
+
+  assign is_hwlp_id_o = is_hwlp_id_q & instr_valid_id_o;
 
   assign if_ready_o = valid & id_ready_i;
   assign if_valid_o = (~halt_if_i) & if_ready_o;

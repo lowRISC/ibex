@@ -35,8 +35,8 @@
 
 module riscv_id_stage
 #(
-  parameter N_HWLP_REGS     = 2,
-  parameter N_HWLP_REG_BITS = $clog2(N_HWLP_REGS)
+  parameter N_HWLP      = 2,
+  parameter N_HWLP_BITS = $clog2(N_HWLP)
 )
 (
     input  logic        clk,
@@ -49,9 +49,11 @@ module riscv_id_stage
     output logic        is_decoding_o,
 
     // Interface to IF stage
-    input  logic        instr_valid_i,
-    input  logic [31:0] instr_rdata_i,      // comes from pipeline of IF stage
-    output logic        instr_req_o,
+    input  logic [N_HWLP-1:0] hwlp_dec_cnt_i,
+    input  logic              is_hwlp_i,
+    input  logic              instr_valid_i,
+    input  logic       [31:0] instr_rdata_i,      // comes from pipeline of IF stage
+    output logic              instr_req_o,
 
 
     // Jumps and branches
@@ -113,7 +115,9 @@ module riscv_id_stage
     output logic [1:0]  csr_op_ex_o,
 
     // hwloop signals
-    output logic [31:0] hwloop_targ_addr_o,
+    output logic [N_HWLP-1:0] [31:0] hwlp_start_o,
+    output logic [N_HWLP-1:0] [31:0] hwlp_end_o,
+    output logic [N_HWLP-1:0] [31:0] hwlp_cnt_o,
 
     // Interface to load store unit
     output logic        data_req_ex_o,
@@ -196,6 +200,7 @@ module riscv_id_stage
 
   // Immediate decoding and sign extension
   logic [31:0] imm_i_type;
+  logic [31:0] imm_iz_type;
   logic [31:0] imm_s_type;
   logic [31:0] imm_sb_type;
   logic [31:0] imm_u_type;
@@ -255,23 +260,16 @@ module riscv_id_stage
   logic        data_req_id;
 
   // hwloop signals
-  logic [N_HWLP_REG_BITS-1:0]    hwloop_regid;
-  logic                 [2:0]    hwloop_we;
-  logic                          hwloop_jump;
-  logic                          hwloop_target_mux_sel;
-  logic                          hwloop_start_mux_sel;
-  logic                          hwloop_cnt_mux_sel;
+  logic [N_HWLP_BITS-1:0]   hwloop_regid;
+  logic            [2:0]    hwloop_we;
+  logic                     hwloop_target_mux_sel;
+  logic                     hwloop_start_mux_sel;
+  logic                     hwloop_cnt_mux_sel;
 
-  logic                [31:0]    hwloop_target;
-  logic                [31:0]    hwloop_start;
-  logic                [31:0]    hwloop_end;
-  logic                [31:0]    hwloop_cnt;
-
-  // hwloop reg signals
-  logic [N_HWLP_REGS-1:0]        hwloop_dec_cnt;
-  logic [N_HWLP_REGS-1:0] [31:0] hwloop_start_addr;
-  logic [N_HWLP_REGS-1:0] [31:0] hwloop_end_addr;
-  logic [N_HWLP_REGS-1:0] [31:0] hwloop_counter;
+  logic           [31:0]    hwloop_target;
+  logic           [31:0]    hwloop_start;
+  logic           [31:0]    hwloop_end;
+  logic           [31:0]    hwloop_cnt;
 
   // CSR control
   logic        csr_access;
@@ -296,6 +294,7 @@ module riscv_id_stage
 
   // immediate extraction and sign extension
   assign imm_i_type  = { {20 {instr[31]}}, instr[31:20] };
+  assign imm_iz_type = {            20'b0, instr[31:20] };
   assign imm_s_type  = { {20 {instr[31]}}, instr[31:25], instr[11:7] };
   assign imm_sb_type = { {19 {instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0 };
   assign imm_u_type  = { instr[31:12], 12'b0 };
@@ -320,7 +319,7 @@ module riscv_id_stage
 
   // kill instruction in the IF/ID stage by setting the instr_valid_id control
   // signal to 0 for instructions that are done
-  assign clear_instr_valid_o = id_ready_o;
+  assign clear_instr_valid_o = id_ready_o | halt_id;
 
   assign branch_taken_ex = branch_in_ex_o & branch_decision_i;
 
@@ -341,7 +340,7 @@ module riscv_id_stage
   always_comb
   begin
     unique case (hwloop_target_mux_sel)
-      1'b0: hwloop_target = current_pc_id_i + imm_i_type;
+      1'b0: hwloop_target = current_pc_id_i + {imm_iz_type[30:0], 1'b0};
       1'b1: hwloop_target = current_pc_id_i + {imm_z_type[30:0], 1'b0};
     endcase
   end
@@ -362,7 +361,7 @@ module riscv_id_stage
   always_comb
   begin : hwloop_cnt_mux
     unique case (hwloop_cnt_mux_sel)
-      1'b0: hwloop_cnt = imm_i_type;
+      1'b0: hwloop_cnt = imm_iz_type;
       1'b1: hwloop_cnt = operand_a_fw_id;
     endcase;
   end
@@ -658,9 +657,6 @@ module riscv_id_stage
     .data_req_ex_i                  ( data_req_ex_o          ),
     .data_misaligned_i              ( data_misaligned_i      ),
 
-    // hwloop signals
-    .hwloop_jump_i                  ( hwloop_jump            ),
-
     // jump/branch control
     .branch_taken_ex_i              ( branch_taken_ex        ),
     .jump_in_id_i                   ( jump_in_id             ),
@@ -769,54 +765,32 @@ module riscv_id_stage
   //                                                                      //
   //////////////////////////////////////////////////////////////////////////
 
-  riscv_hwloop_controller
-  #(
-    .N_REGS ( N_HWLP_REGS )
-  )
-  hwloop_controller_i
-  (
-    // from ID stage
-    .current_pc_i          ( current_pc_if_i     ),
-
-    // to IF stage/controller
-    .hwlp_jump_o           ( hwloop_jump         ),
-    .hwlp_targ_addr_o      ( hwloop_targ_addr_o  ),
-
-    // from hwloop_regs
-    .hwlp_start_addr_i     ( hwloop_start_addr   ),
-    .hwlp_end_addr_i       ( hwloop_end_addr     ),
-    .hwlp_counter_i        ( hwloop_counter      ),
-
-    // to hwloop_regs
-    .hwlp_dec_cnt_o        ( hwloop_dec_cnt      )
-  );
-
   riscv_hwloop_regs
   #(
-    .N_REGS ( N_HWLP_REGS )
+    .N_REGS ( N_HWLP )
   )
   hwloop_regs_i
   (
-    .clk                   ( clk                 ),
-    .rst_n                 ( rst_n               ),
+    .clk                   ( clk                       ),
+    .rst_n                 ( rst_n                     ),
 
     // from ID
-    .hwlp_start_data_i     ( hwloop_start        ),
-    .hwlp_end_data_i       ( hwloop_end          ),
-    .hwlp_cnt_data_i       ( hwloop_cnt          ),
-    .hwlp_we_i             ( hwloop_we           ),
-    .hwlp_regid_i          ( hwloop_regid        ),
+    .hwlp_start_data_i     ( hwloop_start              ),
+    .hwlp_end_data_i       ( hwloop_end                ),
+    .hwlp_cnt_data_i       ( hwloop_cnt                ),
+    .hwlp_we_i             ( hwloop_we                 ),
+    .hwlp_regid_i          ( hwloop_regid              ),
 
     // from controller
-    .valid_i               ( instr_valid_i       ),
+    .valid_i               ( instr_valid_i & is_hwlp_i ),
 
     // to hwloop controller
-    .hwlp_start_addr_o     ( hwloop_start_addr   ),
-    .hwlp_end_addr_o       ( hwloop_end_addr     ),
-    .hwlp_counter_o        ( hwloop_counter      ),
+    .hwlp_start_addr_o     ( hwlp_start_o              ),
+    .hwlp_end_addr_o       ( hwlp_end_o                ),
+    .hwlp_counter_o        ( hwlp_cnt_o                ),
 
     // from hwloop controller
-    .hwlp_dec_cnt_i        ( hwloop_dec_cnt      )
+    .hwlp_dec_cnt_i        ( hwlp_dec_cnt_i            )
   );
 
 
@@ -956,6 +930,7 @@ module riscv_id_stage
   assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i);
   assign id_valid_o = (~halt_id) & id_ready_o;
 
+
   //----------------------------------------------------------------------------
   // Assertions
   //----------------------------------------------------------------------------
@@ -963,5 +938,9 @@ module riscv_id_stage
   // make sure that branch decision is valid when jumping
   assert property (
     @(posedge clk) (branch_in_ex_o) |-> (branch_decision_i !== 1'bx) );
+
+  // the instruction delivered to the ID stage should always be valid
+  assert property (
+    @(posedge clk) (instr_valid_i & (~illegal_c_insn_i)) |-> (!$isunknown(instr_rdata_i)) );
 
 endmodule

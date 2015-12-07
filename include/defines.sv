@@ -99,6 +99,10 @@
 `define INSTR_SRA        { 7'b0100000, 10'b?, 3'b101, 5'b?, `OPCODE_OP }
 `define INSTR_OR         { 7'b0000000, 10'b?, 3'b110, 5'b?, `OPCODE_OP }
 `define INSTR_AND        { 7'b0000000, 10'b?, 3'b111, 5'b?, `OPCODE_OP }
+`define INSTR_EXTHS      { 7'b0001000, 10'b?, 3'b100, 5'b?, `OPCODE_OP } // pulp specific
+`define INSTR_EXTHZ      { 7'b0001000, 10'b?, 3'b101, 5'b?, `OPCODE_OP } // pulp specific
+`define INSTR_EXTBS      { 7'b0001000, 10'b?, 3'b110, 5'b?, `OPCODE_OP } // pulp specific
+`define INSTR_EXTBZ      { 7'b0001000, 10'b?, 3'b111, 5'b?, `OPCODE_OP } // pulp specific
 // FENCE
 `define INSTR_FENCE      { 4'b0, 8'b?, 13'b0, `OPCODE_FENCE }
 `define INSTR_FENCEI     { 17'b0, 3'b001, 5'b0, `OPCODE_FENCE }
@@ -302,7 +306,6 @@
 `define PC_BRANCH        3'b011
 `define PC_EXCEPTION     3'b100
 `define PC_ERET          3'b101
-`define PC_HWLOOP        3'b110
 `define PC_DBG_NPC       3'b111
 
 // Exception PC mux selector defines

@@ -32,9 +32,8 @@ module riscv_fetch_fifo
     input  logic        rst_n,
 
     // control signals
-    input  logic        clear_i,          // clears the contents of the fifo
-
-    input  logic        unaligned_i,      // is the current output rdata unaligned
+    input  logic        branch_i,          // clears the contents of the fifo
+    input  logic        hwloop_i,          // tries to insert an entry above the first one
 
     // input port
     input  logic        in_addr_valid_i,
@@ -51,11 +50,7 @@ module riscv_fetch_fifo
     input  logic        out_ready_i,
     output logic [31:0] out_rdata_o,
     output logic [31:0] out_addr_o,
-
-    output logic        out_unaligned_valid_o,
-    output logic [31:0] out_unaligned_rdata_o,
-
-    output logic        out_is_unaligned_o
+    output logic        out_is_hwlp_o
   );
 
   localparam DEPTH = 3; // must be 2 or greater
@@ -65,25 +60,57 @@ module riscv_fetch_fifo
   logic [0:DEPTH-1]         addr_valid_n,  addr_valid_int,  addr_valid_Q;
   logic [0:DEPTH-1] [31:0]  rdata_n,       rdata_int,       rdata_Q;
   logic [0:DEPTH-1]         rdata_valid_n, rdata_valid_int, rdata_valid_Q;
-  logic                     is_unaligned_n, is_unaligned_Q;
+  logic [0:1      ]         is_hwlp_n,     is_hwlp_int,     is_hwlp_Q;
+
+  logic             [31:0]  rdata, rdata_unaligned;
+  logic                     valid, valid_unaligned;
+
+  logic                     aligned_is_compressed, unaligned_is_compressed;
+
+  logic                     hwlp_inbound;
 
 
   //////////////////////////////////////////////////////////////////////////////
   // output port
   //////////////////////////////////////////////////////////////////////////////
 
-  // output assignments
-  assign out_rdata_o = (rdata_valid_Q[0]) ? rdata_Q[0] : in_rdata_i;
-  assign out_addr_o  = addr_Q[0]; // always output addr directly since we sent it one cycle earlier to the FIFO
 
-  assign out_valid_o = (rdata_valid_Q[0] || (addr_valid_Q[0] && in_rdata_valid_i));
+  assign rdata = (rdata_valid_Q[0]) ? rdata_Q[0] : in_rdata_i;
+  assign valid = (rdata_valid_Q[0] || (addr_valid_Q[0] && in_rdata_valid_i));
 
-  assign out_unaligned_rdata_o = (rdata_valid_Q[1]) ? {rdata_Q[1][15:0], out_rdata_o[31:16]} : {in_rdata_i[15:0], out_rdata_o[31:16]};
+  assign rdata_unaligned = (rdata_valid_Q[1]) ? {rdata_Q[1][15:0], rdata[31:16]} : {in_rdata_i[15:0], rdata[31:16]};
   // it is implied that rdata_valid_Q[0] is set
-  assign out_unaligned_valid_o = (rdata_valid_Q[1] || (addr_valid_Q[1] && in_rdata_valid_i));
+  assign valid_unaligned = (rdata_valid_Q[1] || (addr_valid_Q[1] && in_rdata_valid_i));
 
-  assign out_is_unaligned_o = is_unaligned_Q;
+  assign unaligned_is_compressed = rdata[17:16] != 2'b11;
+  assign aligned_is_compressed   = rdata[1:0] != 2'b11;
 
+  //////////////////////////////////////////////////////////////////////////////
+  // instruction aligner (if unaligned)
+  //////////////////////////////////////////////////////////////////////////////
+
+  always_comb
+  begin
+    // serve the aligned case even though the output address is unaligned when
+    // the next instruction will be from a hardware loop target
+    // in this case the current instruction is already prealigned in element 0
+    if (out_addr_o[1] && (~is_hwlp_Q[1])) begin
+      // unaligned case
+      out_rdata_o = rdata_unaligned;
+
+      if (unaligned_is_compressed)
+        out_valid_o = 1'b1;
+      else
+        out_valid_o = valid_unaligned;
+    end else begin
+      // aligned case
+      out_rdata_o = rdata;
+      out_valid_o = valid;
+    end
+  end
+
+  assign out_addr_o    = addr_Q[0]; // always output addr directly since we sent it one cycle earlier to the FIFO
+  assign out_is_hwlp_o = is_hwlp_Q[0];
 
 
   //////////////////////////////////////////////////////////////////////////////
@@ -91,7 +118,7 @@ module riscv_fetch_fifo
   //////////////////////////////////////////////////////////////////////////////
 
   // we accept addresses as long as our fifo is not full or we are cleared
-  assign in_addr_ready_o = clear_i || (~addr_valid_Q[DEPTH-1]);
+  assign in_addr_ready_o = branch_i || (~addr_valid_Q[DEPTH-1]);
 
   // we accept data as long as our fifo is not full
   // we don't care about clear here as the data will be received one cycle
@@ -111,6 +138,9 @@ module riscv_fetch_fifo
     end
   end
 
+  // accept hwloop input as long as our second entry is not already one
+  assign hwlp_inbound = hwloop_i & (~is_hwlp_Q[1]);
+
   //////////////////////////////////////////////////////////////////////////////
   // FIFO management
   //////////////////////////////////////////////////////////////////////////////
@@ -120,6 +150,7 @@ module riscv_fetch_fifo
   begin
     addr_int        = addr_Q;
     addr_valid_int  = addr_valid_Q;
+    is_hwlp_int     = is_hwlp_Q;
 
     if (in_addr_valid_i && in_addr_ready_o) begin
       for(j = 0; j < DEPTH; j++) begin
@@ -130,6 +161,14 @@ module riscv_fetch_fifo
           break;
         end
       end
+    end
+
+    // on a hardware loop invalidate everything starting from the second entry
+    if (hwlp_inbound) begin
+      addr_int[1]               = in_addr_i;
+      addr_valid_int[1]         = 1'b1;
+      addr_valid_int[2:DEPTH-1] = '0;
+      is_hwlp_int[1]            = 1'b1;
     end
   end
 
@@ -149,28 +188,65 @@ module riscv_fetch_fifo
         end
       end
     end
+
+    // on a hardware loop invalidate everything starting from the second entry
+    if (hwlp_inbound) begin
+      rdata_int[0] = out_rdata_o; // save current output in rdata_int[0], so that we have it available even though we override entry #1
+      rdata_valid_int[1:DEPTH-1] = '0;
+    end
   end
 
   // move everything by one step
   always_comb
   begin
-    addr_n         = addr_int;
-    addr_valid_n   = addr_valid_int;
-    rdata_n        = rdata_int;
-    rdata_valid_n  = rdata_valid_int;
-    is_unaligned_n = is_unaligned_Q;
+    addr_n           = addr_int;
+    addr_valid_n     = addr_valid_int;
+    rdata_n          = rdata_int;
+    rdata_valid_n    = rdata_valid_int;
+    is_hwlp_n        = is_hwlp_int;
 
     if (out_ready_i && out_valid_o) begin
-      addr_n         = {addr_int[1:DEPTH-1],       32'b0};
-      addr_valid_n   = {addr_valid_int[1:DEPTH-1],  1'b0};
-      rdata_n        = {rdata_int[1:DEPTH-1],      32'b0};
-      rdata_valid_n  = {rdata_valid_int[1:DEPTH-1], 1'b0};
-      is_unaligned_n = 1'b0;
-    end else begin
-      if (out_unaligned_valid_o && unaligned_i && (~is_unaligned_Q)) begin
-        // are we unaligned? then assemble the last word from the two halfes
-        rdata_n[0] = out_unaligned_rdata_o;
-        is_unaligned_n = 1'b1;
+
+      // now take care of the addresses
+      if (is_hwlp_int[1]) begin
+        // hardware loop found in second entry
+        addr_n         = {addr_int[1][31:0], addr_int[2:DEPTH-1], 32'b0};
+        addr_valid_n   = {addr_valid_int[1:DEPTH-1],  1'b0};
+        rdata_n        = {rdata_int[1:DEPTH-1],      32'b0};
+        rdata_valid_n  = {rdata_valid_int[1:DEPTH-1], 1'b0};
+        is_hwlp_n      = {is_hwlp_int[1], 1'b0};
+      end else begin
+        if (addr_Q[0][1]) begin
+          // unaligned case
+
+          if (unaligned_is_compressed) begin
+            addr_n         = {{addr_int[1][31:2], 2'b00}, addr_int[2:DEPTH-1], 32'b0};
+          end else begin
+            addr_n         = {{addr_int[1][31:2], 2'b10}, addr_int[2:DEPTH-1], 32'b0};
+          end
+
+          addr_valid_n   = {addr_valid_int[1:DEPTH-1],  1'b0};
+          rdata_n        = {rdata_int[1:DEPTH-1],      32'b0};
+          rdata_valid_n  = {rdata_valid_int[1:DEPTH-1], 1'b0};
+          is_hwlp_n      = {is_hwlp_int[1], 1'b0};
+
+        end else begin
+          // aligned case
+
+          if (aligned_is_compressed) begin
+            // just increase address, do not move to next entry in FIFO
+            addr_n[0]      = {addr_int[0][31:2], 2'b10};
+            is_hwlp_n[0]   = 1'b0; // invalidate hwlp bit for current address
+          end else begin
+            // move to next entry in FIFO
+            addr_n         = {{addr_int[1][31:2], 2'b00}, addr_int[2:DEPTH-1], 32'b0};
+            addr_valid_n   = {addr_valid_int[1:DEPTH-1],  1'b0};
+            rdata_n        = {rdata_int[1:DEPTH-1],      32'b0};
+            rdata_valid_n  = {rdata_valid_int[1:DEPTH-1], 1'b0};
+            is_hwlp_n      = {is_hwlp_int[1], 1'b0};
+          end
+
+        end
       end
     end
   end
@@ -183,27 +259,27 @@ module riscv_fetch_fifo
   begin
     if(rst_n == 1'b0)
     begin
-      addr_Q         <= '{default: '0};
-      addr_valid_Q   <= '0;
-      rdata_Q        <= '{default: '0};
-      rdata_valid_Q  <= '0;
-      is_unaligned_Q <= 1'b0;
+      addr_Q           <= '{default: '0};
+      addr_valid_Q     <= '0;
+      rdata_Q          <= '{default: '0};
+      rdata_valid_Q    <= '0;
+      is_hwlp_Q        <= '0;
     end
     else
     begin
       // on a clear signal from outside we invalidate the content of the FIFO
       // completely and start from an empty state
-      if (clear_i) begin
-        addr_Q[0]      <= in_addr_i;
-        addr_valid_Q   <= {in_addr_valid_i, {DEPTH-1{1'b0}}};
-        rdata_valid_Q  <= '0;
-        is_unaligned_Q <= 1'b0;
+      if (branch_i) begin
+        addr_Q[0]        <= in_addr_i;
+        addr_valid_Q     <= {in_addr_valid_i, {DEPTH-1{1'b0}}};
+        rdata_valid_Q    <= '0;
+        is_hwlp_Q        <= '0;
       end else begin
-        addr_Q         <= addr_n;
-        addr_valid_Q   <= addr_valid_n;
-        rdata_Q        <= rdata_n;
-        rdata_valid_Q  <= rdata_valid_n;
-        is_unaligned_Q <= is_unaligned_n;
+        addr_Q           <= addr_n;
+        addr_valid_Q     <= addr_valid_n;
+        rdata_Q          <= rdata_n;
+        rdata_valid_Q    <= rdata_valid_n;
+        is_hwlp_Q        <= is_hwlp_n;
       end
     end
   end
@@ -217,15 +293,19 @@ module riscv_prefetch_buffer
   input  logic        clk,
   input  logic        rst_n,
 
-  input  logic        unaligned_i,
   input  logic        req_i,
+
   input  logic        branch_i,
-  input  logic        ready_i,
   input  logic [31:0] addr_i,
 
+  input  logic        hwloop_i,
+  input  logic [31:0] hwloop_target_i,
+
+  input  logic        ready_i,
   output logic        valid_o,
   output logic [31:0] rdata_o,
   output logic [31:0] addr_o,
+  output logic        is_hwlp_o, // is set when the currently served data is from a hwloop
 
   // goes to instruction memory / instruction cache
   output logic        instr_req_o,
@@ -249,11 +329,6 @@ module riscv_prefetch_buffer
   logic        fifo_rdata_valid;
   logic        fifo_rdata_ready;
 
-  logic        fifo_is_unaligned;
-
-  logic [31:0] rdata, unaligned_rdata;
-  logic        valid, unaligned_valid;
-
 
   //////////////////////////////////////////////////////////////////////////////
   // prefetch buffer status
@@ -265,7 +340,17 @@ module riscv_prefetch_buffer
   // address selection and increase
   //////////////////////////////////////////////////////////////////////////////
 
-  assign addr_next = (branch_i) ? addr_i : (fifo_last_addr + 32'd4);
+  always_comb
+  begin
+    addr_next = {fifo_last_addr[31:2], 2'b00} + 32'd4;
+
+    if (branch_i) begin
+      addr_next = addr_i;
+    end else begin
+      if (hwloop_i)
+        addr_next = hwloop_target_i;
+    end
+  end
 
 
   //////////////////////////////////////////////////////////////////////////////
@@ -278,9 +363,8 @@ module riscv_prefetch_buffer
     .clk                   ( clk               ),
     .rst_n                 ( rst_n             ),
 
-    .clear_i               ( branch_i          ),
-
-    .unaligned_i           ( unaligned_i       ),
+    .branch_i              ( branch_i          ),
+    .hwloop_i              ( hwloop_i          ),
 
     .in_addr_valid_i       ( fifo_addr_valid   ),
     .in_addr_ready_o       ( fifo_addr_ready   ),
@@ -291,23 +375,12 @@ module riscv_prefetch_buffer
     .in_rdata_ready_o      ( fifo_rdata_ready  ),
     .in_rdata_i            ( instr_rdata_i     ),
 
-    .out_valid_o           ( valid             ),
+    .out_valid_o           ( valid_o           ),
     .out_ready_i           ( ready_i           ),
-    .out_rdata_o           ( rdata             ),
+    .out_rdata_o           ( rdata_o           ),
     .out_addr_o            ( addr_o            ),
-
-    .out_unaligned_valid_o ( unaligned_valid   ),
-    .out_unaligned_rdata_o ( unaligned_rdata   ),
-
-    .out_is_unaligned_o    ( fifo_is_unaligned )
+    .out_is_hwlp_o         ( is_hwlp_o         )
   );
-
-  //////////////////////////////////////////////////////////////////////////////
-  // instruction aligner (if unaligned)
-  //////////////////////////////////////////////////////////////////////////////
-
-  assign rdata_o = (unaligned_i && (~fifo_is_unaligned)) ? unaligned_rdata : rdata;
-  assign valid_o = (unaligned_i && (~fifo_is_unaligned)) ? unaligned_valid : valid;
 
 
   //////////////////////////////////////////////////////////////////////////////
