@@ -321,8 +321,13 @@ module riscv_cs_registers
         is_pccr     = 1'b1;
 
         pccr_index = csr_addr_i[4:0];
-
+`ifndef PULP_FPGA_EMUL
         perf_rdata = PCCR_q[csr_addr_i[4:0]];
+`elsif  SYNTHESIS
+        perf_rdata = PCCR_q[0];
+`else
+        perf_rdata = PCCR_q[csr_addr_i[4:0]];
+`endif
       end
     end
   end
