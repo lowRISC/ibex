@@ -49,9 +49,7 @@ module riscv_cs_registers
   output logic        irq_enable_o,
   output logic [31:0] epcr_o,
 
-  input  logic [31:0] curr_pc_if_i,
   input  logic [31:0] curr_pc_id_i,
-  input  logic        save_pc_if_i,
   input  logic        save_pc_id_i,
 
   input  logic [5:0]  exc_cause_i,
@@ -222,9 +220,7 @@ module riscv_cs_registers
       exc_cause  <= exc_cause_n;
 
       // exception controller gets priority over other writes
-      if (save_pc_if_i == 1'b1)
-        csr[`CSR_IDX_MEPC] <= curr_pc_if_i;
-      else if (save_pc_id_i == 1'b1)
+      if (save_pc_id_i == 1'b1)
         csr[`CSR_IDX_MEPC] <= curr_pc_id_i;
 
       if (save_exc_cause_i)

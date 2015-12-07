@@ -77,7 +77,6 @@ module riscv_controller
 
   input  logic        trap_hit_i,                 // a trap was hit, so we have to flush EX and WB
 
-  output logic        save_pc_if_o,
   output logic        save_pc_id_o,
 
   // Debug Unit Signals
@@ -165,7 +164,6 @@ module riscv_controller
     instr_req_o   = 1'b1;
 
     exc_ack_o     = 1'b0;
-    save_pc_if_o  = 1'b0;
     save_pc_id_o  = 1'b0;
 
     pc_mux_o      = `PC_BOOT;

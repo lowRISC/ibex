@@ -190,7 +190,6 @@ module riscv_core
 
   logic [5:0]  exc_cause;
   logic        save_exc_cause;
-  logic        save_pc_if;
   logic        save_pc_id;
 
 
@@ -410,7 +409,6 @@ module riscv_core
     .irq_enable_i                 ( irq_enable           ), // global interrupt enable
     .exc_cause_o                  ( exc_cause            ),
     .save_exc_cause_o             ( save_exc_cause       ),
-    .save_pc_if_o                 ( save_pc_if           ), // control signal to save pc
     .save_pc_id_o                 ( save_pc_id           ), // control signal to save pc
     .lsu_load_err_i               ( lsu_load_err         ),
     .lsu_store_err_i              ( lsu_store_err        ),
@@ -597,9 +595,7 @@ module riscv_core
     .irq_enable_o            ( irq_enable     ),
     .epcr_o                  ( epcr           ),
 
-    .curr_pc_if_i            ( current_pc_if  ),    // from IF stage
     .curr_pc_id_i            ( current_pc_id  ),    // from IF stage
-    .save_pc_if_i            ( save_pc_if     ),
     .save_pc_id_i            ( save_pc_id     ),
 
     .exc_cause_i             ( exc_cause      ),
