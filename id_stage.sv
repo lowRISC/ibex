@@ -275,6 +275,8 @@ module riscv_id_stage
   logic            [31:0] hwloop_end;
   logic            [31:0] hwloop_cnt, hwloop_cnt_int;
 
+  logic                   hwloop_valid;
+
   // CSR control
   logic        csr_access;
   logic [1:0]  csr_op;
@@ -790,7 +792,7 @@ module riscv_id_stage
     .hwlp_regid_i          ( hwloop_regid              ),
 
     // from controller
-    .valid_i               ( instr_valid_i & is_hwlp_i ),
+    .valid_i               ( hwloop_valid              ),
 
     // to hwloop controller
     .hwlp_start_addr_o     ( hwlp_start_o              ),
@@ -800,6 +802,8 @@ module riscv_id_stage
     // from hwloop controller
     .hwlp_dec_cnt_i        ( hwlp_dec_cnt_i            )
   );
+
+  assign hwloop_valid = instr_valid_i & clear_instr_valid_o & is_hwlp_i;
 
 
   /////////////////////////////////////////////////////////////////////////////////
@@ -949,6 +953,6 @@ module riscv_id_stage
 
   // the instruction delivered to the ID stage should always be valid
   assert property (
-    @(posedge clk) (instr_valid_i & (~illegal_c_insn_i)) |-> (!$isunknown(instr_rdata_i)) );
+    @(posedge clk) (instr_valid_i & (~illegal_c_insn_i)) |-> (!$isunknown(instr_rdata_i)) ) else $display("Instruction is valid, but has at least one X");
 
 endmodule

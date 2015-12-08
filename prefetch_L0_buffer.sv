@@ -142,17 +142,12 @@ module riscv_prefetch_L0_buffer
   begin
     rdata_unaligned[31:16] = 'x;
 
-    if (valid_L0) begin
-      case(addr_o[3:2])
-         2'b00: begin rdata_unaligned[31:16] = rdata_L0[1][15:0]; end
-         2'b01: begin rdata_unaligned[31:16] = rdata_L0[2][15:0]; end
-         2'b10: begin rdata_unaligned[31:16] = rdata_L0[3][15:0]; end
-         // this state is only interesting if we have already done a prefetch
-         2'b11: begin
-           rdata_unaligned[31:16] = rdata_L0[0][15:0];
-         end
-      endcase // addr_o
-    end
+    case(addr_o[3:2])
+       2'b00: begin rdata_unaligned[31:16] = rdata_L0[1][15:0]; end
+       2'b01: begin rdata_unaligned[31:16] = rdata_L0[2][15:0]; end
+       2'b10: begin rdata_unaligned[31:16] = rdata_L0[3][15:0]; end
+       2'b11: begin rdata_unaligned[31:16] = rdata_L0[0][15:0]; end
+    endcase // addr_o
   end
 
 
@@ -176,7 +171,7 @@ module riscv_prefetch_L0_buffer
     addr_int    = addr_o;
 
     // advance address when pipeline is unstalled
-    if (ready_i & (~hwloop_i)) begin
+    if (ready_i) begin
 
       if (addr_o[1]) begin
         // unaligned case
@@ -233,24 +228,29 @@ module riscv_prefetch_L0_buffer
           valid = 1'b1;
 
         if (ready_i) begin
-          if (next_valid) begin
-            if (fetch_gnt) begin
-              save_rdata_last = 1'b1;
-              NS = VALID_GRANTED;
-            end else
-              NS = VALID;
-          end else if (next_is_crossword) begin
-            if (fetch_gnt) begin
-              save_rdata_last = 1'b1;
-              NS = NOT_VALID_CROSS_GRANTED;
-            end else begin
-              NS = NOT_VALID_CROSS;
-            end
+          if (hwloop_i) begin
+            addr_n = addr_o; // keep the old address for now
+            NS = HWLP_WAIT_GNT;
           end else begin
-            if (fetch_gnt)
-              NS = NOT_VALID_GRANTED;
-            else
-              NS = NOT_VALID;
+            if (next_valid) begin
+              if (fetch_gnt) begin
+                save_rdata_last = 1'b1;
+                NS = VALID_GRANTED;
+              end else
+                NS = VALID;
+            end else if (next_is_crossword) begin
+              if (fetch_gnt) begin
+                save_rdata_last = 1'b1;
+                NS = NOT_VALID_CROSS_GRANTED;
+              end else begin
+                NS = NOT_VALID_CROSS;
+              end
+            end else begin
+              if (fetch_gnt)
+                NS = NOT_VALID_GRANTED;
+              else
+                NS = NOT_VALID;
+            end
           end
         end else begin
           if (fetch_valid) begin
@@ -453,9 +453,10 @@ module riscv_prefetch_L0_buffer
             is_hwlp_n = 1'b1;
             addr_n = hwloop_target_i;
             NS = BRANCHED;
-          end
-          else
+          end else begin
+            addr_n = addr_o; // keep the old address for now
             NS = HWLP_WAIT_GNT;
+          end
         end else begin
           if (fetch_gnt) begin
             save_rdata_hwlp = 1'b1;
@@ -515,6 +516,12 @@ module riscv_prefetch_L0_buffer
   // there should never be a ready_i without valid_o
   assert property (
     @(posedge clk) (ready_i) |-> (valid_o) ) else $warning("IF Stage is ready without prefetcher having valid data");
+
+  // never is_crossword while also next_is_crossword
+  assert property (
+    @(posedge clk) (next_is_crossword) |-> (~is_crossword) ) else $warning("Cannot have two crossword accesses back-to-back");
+  assert property (
+    @(posedge clk) (is_crossword) |-> (~next_is_crossword) ) else $warning("Cannot have two crossword accesses back-to-back");
 
 endmodule // prefetch_L0_buffer
 

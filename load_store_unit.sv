@@ -484,4 +484,7 @@ module riscv_load_store_unit
   // assert that errors are only sent at the same time as grant
   assert property ( @(posedge clk) (data_err_i) |-> (data_gnt_i) );
 
+  // assert that the address does not contain X when request is sent
+  assert property ( @(posedge clk) (data_req_o) |-> (!$isunknown(data_addr_o)) );
+
 endmodule
