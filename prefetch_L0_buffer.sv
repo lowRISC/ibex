@@ -58,9 +58,29 @@ module riscv_prefetch_L0_buffer
 
   logic                               busy_L0;
 
-  enum logic [2:0] { REGULAR, PREFETCH, LAST_BRANCH, LAST_BRANCH_WAIT, HWLP_WAIT_LAST, HWLP_FETCHING, HWLP_PREFETCH, HWLP_ABORT } prefetch_CS, prefetch_NS;
-  logic                               do_prefetch;
+  enum logic [3:0] { IDLE, BRANCHED,
+                     HWLP_WAIT_GNT, HWLP_GRANTED, HWLP_FETCH_DONE,
+                     NOT_VALID, NOT_VALID_GRANTED, NOT_VALID_CROSS, NOT_VALID_CROSS_GRANTED,
+                     VALID, VALID_CROSS, VALID_GRANTED, VALID_FETCH_DONE } CS, NS;
+
+  logic                               do_fetch;
+  logic                               do_hwlp, do_hwlp_int;
+  logic                               use_last;
+  logic                               save_rdata_last;
+  logic                               use_hwlp;
+  logic                               save_rdata_hwlp;
+  logic                               valid;
+
+  logic                               hwlp_is_crossword;
+  logic                               is_crossword;
+  logic                               next_is_crossword;
+  logic                               next_valid;
+  logic                               next_upper_compressed;
+  logic                               fetch_possible;
+  logic                               upper_is_compressed;
+
   logic                       [31:0]  addr_q, addr_n, addr_int, addr_aligned_next;
+  logic                               is_hwlp_q, is_hwlp_n;
 
   logic                       [31:0]  rdata_last_q;
 
@@ -68,15 +88,14 @@ module riscv_prefetch_L0_buffer
   logic [RDATA_IN_WIDTH/32-1:0][31:0] rdata_L0;
   logic                        [31:0] addr_L0;
 
+  logic                               fetch_valid;
+  logic                               fetch_gnt;
+
   // prepared data for output
   logic                        [31:0] rdata, rdata_unaligned;
-  logic                               valid, valid_unaligned;
 
   logic                               aligned_is_compressed, unaligned_is_compressed;
-
-  logic                               fetching_hwlp;
-  logic                               hwlp_inhibit;
-  logic                               prefetch_important;
+  logic                               hwlp_aligned_is_compressed, hwlp_unaligned_is_compressed;
 
 
   prefetch_L0_buffer_L0
@@ -88,17 +107,17 @@ module riscv_prefetch_L0_buffer
     .clk                  ( clk                ),
     .rst_n                ( rst_n              ),
 
-    .prefetch_i           ( do_prefetch        ),
-    .prefetch_important_i ( prefetch_important ),
+    .prefetch_i           ( do_fetch           ),
     .prefetch_addr_i      ( addr_aligned_next  ),
 
     .branch_i             ( branch_i           ),
     .branch_addr_i        ( addr_i             ),
 
-    .hwlp_i               ( hwloop_i & (~hwlp_inhibit) ),
+    .hwlp_i               ( do_hwlp | do_hwlp_int ),
     .hwlp_addr_i          ( hwloop_target_i    ),
 
-    .hwlp_fetching_o      ( fetching_hwlp      ),
+    .fetch_gnt_o          ( fetch_gnt          ),
+    .fetch_valid_o        ( fetch_valid        ),
 
     .valid_o              ( valid_L0           ),
     .rdata_o              ( rdata_L0           ),
@@ -114,31 +133,23 @@ module riscv_prefetch_L0_buffer
   );
 
 
-  assign rdata = ((prefetch_CS == PREFETCH) | (prefetch_CS == HWLP_WAIT_LAST) | (prefetch_CS == HWLP_PREFETCH) | (prefetch_CS == LAST_BRANCH_WAIT)) ? rdata_last_q : rdata_L0[addr_o[3:2]];
-  assign valid = ( ((prefetch_CS == PREFETCH) | (prefetch_CS == HWLP_WAIT_LAST) | (prefetch_CS == HWLP_PREFETCH)) | valid_L0) & (prefetch_CS != HWLP_ABORT);
+  assign rdata = (use_last || use_hwlp) ? rdata_last_q : rdata_L0[addr_o[3:2]];
 
   // the lower part of rdata_unaligned is always the higher part of rdata
   assign rdata_unaligned[15:0] = rdata[31:16];
 
   always_comb
   begin
-    valid_unaligned        = 1'b0;
     rdata_unaligned[31:16] = 'x;
 
     if (valid_L0) begin
       case(addr_o[3:2])
-         2'b00: begin rdata_unaligned[31:16] = rdata_L0[1][15:0]; valid_unaligned = 1'b1; end
-         2'b01: begin rdata_unaligned[31:16] = rdata_L0[2][15:0]; valid_unaligned = 1'b1; end
-         2'b10: begin rdata_unaligned[31:16] = rdata_L0[3][15:0]; valid_unaligned = 1'b1; end
+         2'b00: begin rdata_unaligned[31:16] = rdata_L0[1][15:0]; end
+         2'b01: begin rdata_unaligned[31:16] = rdata_L0[2][15:0]; end
+         2'b10: begin rdata_unaligned[31:16] = rdata_L0[3][15:0]; end
          // this state is only interesting if we have already done a prefetch
          2'b11: begin
            rdata_unaligned[31:16] = rdata_L0[0][15:0];
-
-           if ((prefetch_CS == PREFETCH) | (prefetch_CS == HWLP_PREFETCH)) begin
-             valid_unaligned = 1'b1;
-           end else begin
-             valid_unaligned = 1'b0;
-           end
          end
       endcase // addr_o
     end
@@ -147,15 +158,25 @@ module riscv_prefetch_L0_buffer
 
   assign unaligned_is_compressed = rdata[17:16] != 2'b11;
   assign aligned_is_compressed   = rdata[1:0] != 2'b11;
+  assign upper_is_compressed     = rdata_L0[3][17:16] != 2'b11;
+  assign is_crossword            = (addr_o[3:1] == 3'b111) && (~upper_is_compressed);
+  assign next_is_crossword       = ((addr_o[3:1] == 3'b110) && (aligned_is_compressed) && (~upper_is_compressed)) || ((addr_o[3:1] == 3'b101) && (~unaligned_is_compressed) && (~upper_is_compressed));
+  assign next_upper_compressed   = ((addr_o[3:1] == 3'b110) && (aligned_is_compressed) && upper_is_compressed) || ((addr_o[3:1] == 3'b101) && (~unaligned_is_compressed) && upper_is_compressed);
+  assign next_valid              = ((addr_o[3:2] != 2'b11) || next_upper_compressed) && (~next_is_crossword) && valid;
+  assign fetch_possible          = addr_o[3:2] == 2'b11;
 
   assign addr_aligned_next = { addr_o[31:2], 2'b00 } + 32'h4;
+
+  assign hwlp_unaligned_is_compressed = rdata_L0[2][17:16] != 2'b11;
+  assign hwlp_aligned_is_compressed   = rdata_L0[3][1:0] != 2'b11;
+  assign hwlp_is_crossword            = (hwloop_target_i[3:1] == 3'b111) && (~upper_is_compressed);
 
   always_comb
   begin
     addr_int    = addr_o;
 
     // advance address when pipeline is unstalled
-    if (ready_i) begin
+    if (ready_i & (~hwloop_i)) begin
 
       if (addr_o[1]) begin
         // unaligned case
@@ -184,151 +205,266 @@ module riscv_prefetch_L0_buffer
 
   always_comb
   begin
-    do_prefetch = 1'b0;
-    prefetch_NS = prefetch_CS;
-    addr_n      = addr_int;
+    NS              = CS;
+    do_fetch        = 1'b0;
+    do_hwlp         = 1'b0;
+    do_hwlp_int     = 1'b0;
+    use_last        = 1'b0;
+    use_hwlp        = 1'b0;
+    save_rdata_last = 1'b0;
+    save_rdata_hwlp = 1'b0;
+    valid           = 1'b0;
+    addr_n          = addr_int;
+    is_hwlp_n       = is_hwlp_q;
 
-    case (prefetch_CS)
-      REGULAR: begin
-        if (fetching_hwlp) begin
-          if (ready_i) begin
-            addr_n      = hwloop_target_i;
-            prefetch_NS = HWLP_FETCHING;
-          end
-          else
-            prefetch_NS = HWLP_WAIT_LAST;
-        end else if (addr_o[3:2] == 2'b11) begin
-          if ((~addr_o[1]) & aligned_is_compressed & valid)
-            // we are serving a compressed instruction
-            prefetch_NS = PREFETCH;
-          else begin
-            if (ready_i)
-              prefetch_NS = REGULAR;
-            else if (valid_L0)
-              prefetch_NS = PREFETCH;
-          end
-        end
+    if (ready_i)
+      is_hwlp_n = 1'b0;
 
-        // actually only needed when ~branch_i and ~fetching_hwlp not set, but
-        // if we would keep those as conditions, we generate a cominational loop
-        if (addr_o[3:2] == 2'b11)
-          do_prefetch = 1'b1;
+    case (CS)
+      IDLE: begin
+        // wait here for something to happen
       end
 
-      // we are doing a prefetch
-      // we save the last word of the L0 buffer and already preload the L0
-      // buffer with new stuff
-      PREFETCH: begin
-        if (fetching_hwlp) begin
-          if (ready_i) begin
-            addr_n      = hwloop_target_i;
-            prefetch_NS = HWLP_FETCHING;
-          end
-          else
-            prefetch_NS = HWLP_WAIT_LAST;
-        end else if (ready_i) begin
-          if (hwloop_i) begin
-            addr_n      = addr_q;
-            prefetch_NS = HWLP_ABORT;
-          end else begin
-            if ((~addr_o[1]) & aligned_is_compressed)
-              // we are serving a compressed instruction
-              prefetch_NS = PREFETCH;
-            else
-              prefetch_NS = REGULAR;
-          end
-        end
-      end
+      BRANCHED: begin
+        valid    = 1'b0;
+        do_fetch = fetch_possible;
 
-      // we have branched into the last word of the L0 buffer, so we have to
-      // prefetch the next cache line as soon as we got this one
-      LAST_BRANCH: begin
-        do_prefetch = 1'b1;
+        if (fetch_valid && (~is_crossword))
+          valid = 1'b1;
 
-        if (valid_L0) begin
-          if (fetching_hwlp) begin
-            if (ready_i) begin
-              addr_n      = hwloop_target_i;
-              prefetch_NS = HWLP_FETCHING;
-            end
-            else
-              prefetch_NS = HWLP_WAIT_LAST;
-          end
-          else if ( ((~addr_o[1]) & aligned_is_compressed) | (addr_o[1] & (~unaligned_is_compressed)) )
-            // we are serving a compressed instruction or an instruction that
-            // spans two cache lines
-            prefetch_NS = PREFETCH;
-          else if (ready_i)
-            prefetch_NS = REGULAR;
-          else
-            prefetch_NS = LAST_BRANCH_WAIT;
-        end
-      end
-
-      LAST_BRANCH_WAIT: begin
-        if (ready_i)
-          prefetch_NS = REGULAR;
-      end
-
-      // wait for last instruction to be delivered before going to hwloop
-      HWLP_WAIT_LAST: begin
         if (ready_i) begin
-          addr_n = addr_L0; // use address that was saved in L0 buffer
-          prefetch_NS = HWLP_FETCHING;
-        end
-      end
-
-      HWLP_FETCHING: begin
-        if (valid_L0) begin
-          if (addr_o[3:2] == 2'b11) begin
-            do_prefetch = 1'b1;
-
-            if ((~addr_o[1]) & aligned_is_compressed)
-              // we are serving a compressed instruction
-              prefetch_NS = HWLP_PREFETCH;
-            else begin
-              if (ready_i)
-                prefetch_NS = REGULAR;
+          if (next_valid) begin
+            if (fetch_gnt) begin
+              save_rdata_last = 1'b1;
+              NS = VALID_GRANTED;
+            end else
+              NS = VALID;
+          end else if (next_is_crossword) begin
+            if (fetch_gnt) begin
+              save_rdata_last = 1'b1;
+              NS = NOT_VALID_CROSS_GRANTED;
+            end else begin
+              NS = NOT_VALID_CROSS;
+            end
+          end else begin
+            if (fetch_gnt)
+              NS = NOT_VALID_GRANTED;
+            else
+              NS = NOT_VALID;
+          end
+        end else begin
+          if (fetch_valid) begin
+            if (is_crossword) begin
+              save_rdata_last = 1'b1;
+              if (fetch_gnt)
+                NS = NOT_VALID_CROSS_GRANTED;
               else
-                prefetch_NS = HWLP_PREFETCH;
-            end
-          end else begin
-            if (ready_i) begin
-              prefetch_NS = REGULAR;
+                NS = NOT_VALID_CROSS;
+            end else begin
+              if (fetch_gnt) begin
+                save_rdata_last = 1'b1;
+                NS = VALID_GRANTED;
+              end else
+                NS = VALID;
             end
           end
         end
       end
 
-      HWLP_PREFETCH: begin
-        if (ready_i) begin
-          prefetch_NS = REGULAR;
+      NOT_VALID: begin
+        do_fetch = 1'b1;
+
+        if (fetch_gnt)
+          NS = NOT_VALID_GRANTED;
+      end
+
+      NOT_VALID_GRANTED: begin
+        valid   = fetch_valid;
+        do_hwlp = hwloop_i;
+
+        if (fetch_valid)
+          NS = VALID;
+      end
+
+      NOT_VALID_CROSS: begin
+        do_fetch = 1'b1;
+
+        if (fetch_gnt) begin
+          save_rdata_last = 1'b1;
+          NS = NOT_VALID_CROSS_GRANTED;
         end
       end
 
-      HWLP_ABORT: begin
-        if (fetching_hwlp) begin
-          prefetch_NS = HWLP_FETCHING;
-          addr_n      = hwloop_target_i;
+      NOT_VALID_CROSS_GRANTED: begin
+        valid    = fetch_valid;
+        use_last = 1'b1;
+        do_hwlp  = hwloop_i;
+
+        if (fetch_valid) begin
+          if (ready_i)
+            NS = VALID;
+          else
+            NS = VALID_CROSS;
+        end
+      end
+
+      VALID: begin
+        valid    = 1'b1;
+        do_fetch = fetch_possible;
+        do_hwlp  = hwloop_i;
+
+        if (ready_i) begin
+          if (next_is_crossword) begin
+            if (fetch_gnt) begin
+              save_rdata_last = 1'b1;
+              NS = NOT_VALID_CROSS_GRANTED;
+            end else
+              NS = NOT_VALID_CROSS;
+          end else if (~next_valid) begin
+            if (fetch_gnt)
+              NS = NOT_VALID_GRANTED;
+            else
+              NS = NOT_VALID;
+          end else begin
+            if (fetch_gnt) begin
+              if (next_upper_compressed) begin
+                save_rdata_last = 1'b1;
+                NS = VALID_GRANTED;
+              end
+            end
+          end
+        end else begin
+          if (fetch_gnt) begin
+            save_rdata_last = 1'b1;
+            NS = VALID_GRANTED;
+          end
+        end
+      end
+
+      VALID_CROSS: begin
+        valid    = 1'b1;
+        use_last = 1'b1;
+        do_hwlp  = hwloop_i;
+
+        if (ready_i)
+          NS = VALID;
+      end
+
+      VALID_GRANTED: begin
+        valid    = 1'b1;
+        use_last = 1'b1;
+        do_hwlp  = hwloop_i;
+
+        if (ready_i) begin
+          if (fetch_valid) begin
+            if (next_is_crossword)
+              NS = VALID_CROSS;
+            else if(next_upper_compressed)
+              NS = VALID_FETCH_DONE;
+            else
+              NS = VALID;
+          end else begin
+            if (next_is_crossword)
+              NS = NOT_VALID_CROSS_GRANTED;
+            else if (next_upper_compressed)
+              NS = VALID_GRANTED;
+            else
+              NS = NOT_VALID_GRANTED;
+          end
+        end else begin
+          if (fetch_valid)
+            NS = VALID_FETCH_DONE;
+        end
+      end
+
+      VALID_FETCH_DONE: begin
+        valid    = 1'b1;
+        use_last = 1'b1;
+        do_hwlp  = hwloop_i;
+
+        if (ready_i) begin
+          if (next_is_crossword)
+            NS = VALID_CROSS;
+          else if (next_upper_compressed)
+            NS = VALID_FETCH_DONE;
+          else
+            NS = VALID;
+        end
+      end
+
+      HWLP_WAIT_GNT: begin
+        do_hwlp_int = 1'b1;
+
+        if (fetch_gnt) begin
+          is_hwlp_n = 1'b1;
+          addr_n = hwloop_target_i;
+          NS = BRANCHED;
+        end
+      end
+
+      HWLP_GRANTED: begin
+        valid    = 1'b1;
+        use_hwlp = 1'b1;
+
+        if (ready_i) begin
+          if (fetch_valid) begin
+            is_hwlp_n = 1'b1;
+            addr_n = hwloop_target_i;
+
+            if (hwlp_is_crossword) begin
+              NS = NOT_VALID_CROSS;
+            end else begin
+              NS = VALID;
+            end
+          end
+        end else begin
+          if (fetch_valid)
+            NS = HWLP_FETCH_DONE;
+        end
+      end
+
+      HWLP_FETCH_DONE: begin
+        valid    = 1'b1;
+        use_hwlp = 1'b1;
+
+        if (ready_i) begin
+          is_hwlp_n = 1'b1;
+          addr_n = hwloop_target_i;
+
+          if (hwlp_is_crossword) begin
+            NS = NOT_VALID_CROSS;
+          end else begin
+            NS = VALID;
+          end
         end
       end
     endcase
 
     // branches always have priority
     if (branch_i) begin
-      addr_n = addr_i;
-      if (addr_i[3:2] == 2'b11)
-        prefetch_NS = LAST_BRANCH;
-      else
-        prefetch_NS = REGULAR;
+      is_hwlp_n = 1'b0;
+      addr_n    = addr_i;
+      NS        = BRANCHED;
+
+    end else if (hwloop_i) begin
+      if (do_hwlp) begin
+        if (ready_i) begin
+          if (fetch_gnt) begin
+            is_hwlp_n = 1'b1;
+            addr_n = hwloop_target_i;
+            NS = BRANCHED;
+          end
+          else
+            NS = HWLP_WAIT_GNT;
+        end else begin
+          if (fetch_gnt) begin
+            save_rdata_hwlp = 1'b1;
+            NS = HWLP_GRANTED;
+          end
+        end
+      end
     end
   end
-
-  // do not abort an important prefetch for a hardware loop
-  //assign prefetch_important = (((addr_q[3:1] == 3'b111) & (~unaligned_is_compressed)) | (addr_q[3:2] == 2'b00)) & do_prefetch;
-  assign prefetch_important = 1'b0;
-
-  assign hwlp_inhibit = (prefetch_CS == HWLP_WAIT_LAST) | (prefetch_CS == HWLP_FETCHING) | (prefetch_CS == HWLP_PREFETCH);
 
 
   //////////////////////////////////////////////////////////////////////////////
@@ -340,20 +476,21 @@ module riscv_prefetch_L0_buffer
     if (~rst_n)
     begin
       addr_q         <= '0;
-      prefetch_CS    <= REGULAR;
+      is_hwlp_q      <= 1'b0;
+      CS             <= IDLE;
       rdata_last_q   <= '0;
     end
     else
     begin
-      addr_q <= addr_n;
+      addr_q    <= addr_n;
+      is_hwlp_q <= is_hwlp_n;
 
-      prefetch_CS <= prefetch_NS;
+      CS <= NS;
 
-      if (fetching_hwlp)
+      if (save_rdata_hwlp)
         rdata_last_q <= rdata_o;
-      else if (do_prefetch)
+      else if (save_rdata_last)
         rdata_last_q <= rdata;
-
     end
   end
 
@@ -361,12 +498,12 @@ module riscv_prefetch_L0_buffer
   // output ports
   //////////////////////////////////////////////////////////////////////////////
 
-  assign rdata_o = (~addr_o[1] | (prefetch_CS == HWLP_WAIT_LAST)) ? rdata: rdata_unaligned;
-  assign valid_o = (addr_o[1] & (~unaligned_is_compressed)) ? valid_unaligned : valid;
+  assign rdata_o = ((~addr_o[1]) || use_hwlp) ? rdata : rdata_unaligned;
+  assign valid_o = valid & (~branch_i);
 
   assign addr_o = addr_q;
 
-  assign is_hwlp_o = ((prefetch_CS == HWLP_FETCHING) | (prefetch_CS == HWLP_PREFETCH)) & valid_o;
+  assign is_hwlp_o = is_hwlp_q & (~branch_i);
 
   assign busy_o = busy_L0;
 
@@ -391,7 +528,6 @@ module prefetch_L0_buffer_L0
   input  logic                                rst_n,
 
   input  logic                                prefetch_i,
-  input  logic                                prefetch_important_i,
   input  logic [31:0]                         prefetch_addr_i,
 
   input  logic                                branch_i,
@@ -401,7 +537,8 @@ module prefetch_L0_buffer_L0
   input  logic [31:0]                         hwlp_addr_i,
 
 
-  output logic                                hwlp_fetching_o,
+  output logic                                fetch_gnt_o,
+  output logic                                fetch_valid_o,
 
   output logic                                valid_o,
   output logic [RDATA_IN_WIDTH/32-1:0][31:0]  rdata_o,
@@ -423,11 +560,6 @@ module prefetch_L0_buffer_L0
   logic      [31:0]   addr_q, instr_addr_int;
   logic               valid;
 
-  logic               hwlp_pending_n;
-
-
-  // edge detector on hwlp pending
-  assign hwlp_fetching_o  = (~hwlp_pending_n) & (hwlp_i);
 
   //////////////////////////////////////////////////////////////////////////////
   // FSM
@@ -439,7 +571,7 @@ module prefetch_L0_buffer_L0
     valid          = 1'b0;
     instr_req_o    = 1'b0;
     instr_addr_int = 'x;
-    hwlp_pending_n = hwlp_i;
+    fetch_valid_o  = 1'b0;
 
     case(CS)
 
@@ -448,10 +580,8 @@ module prefetch_L0_buffer_L0
       begin
         if (branch_i)
           instr_addr_int = branch_addr_i;
-        else if (hwlp_i & (~prefetch_important_i)) begin
+        else if (hwlp_i)
           instr_addr_int = hwlp_addr_i;
-          hwlp_pending_n = 1'b0;
-        end
         else
           instr_addr_int = prefetch_addr_i;
 
@@ -470,6 +600,8 @@ module prefetch_L0_buffer_L0
       begin
         if (branch_i)
           instr_addr_int = branch_addr_i;
+        else if (hwlp_i)
+          instr_addr_int = hwlp_addr_i;
         else
           instr_addr_int = addr_q;
 
@@ -509,6 +641,7 @@ module prefetch_L0_buffer_L0
         begin
           if (instr_rvalid_i)
           begin
+            fetch_valid_o  = 1'b1;
             instr_req_o    = 1'b1;
 
             if (instr_gnt_i)
@@ -520,30 +653,14 @@ module prefetch_L0_buffer_L0
           end
 
         end
-        else if (hwlp_i)
-        begin
-
-          if (instr_rvalid_i)
-          begin
-            instr_req_o    = 1'b1;
-            hwlp_pending_n = 1'b0;
-
-            if (instr_gnt_i)
-              NS = WAIT_RVALID;
-            else
-              NS = WAIT_GNT;
-          end else begin
-            NS = WAIT_HWLOOP;
-          end
-
-        end
         else
         begin
 
           if (instr_rvalid_i)
           begin
+            fetch_valid_o = 1'b1;
 
-            if (prefetch_i) // we are receiving the last packet, then prefetch the next one
+            if (prefetch_i | hwlp_i) // we are receiving the last packet, then prefetch the next one
             begin
               instr_req_o    = 1'b1;
 
@@ -566,10 +683,8 @@ module prefetch_L0_buffer_L0
 
         if (branch_i)
           instr_addr_int = branch_addr_i;
-        else if (hwlp_i) begin
+        else if (hwlp_i)
           instr_addr_int = hwlp_addr_i;
-          hwlp_pending_n = 1'b0;
-        end
         else
           instr_addr_int = prefetch_addr_i;
 
@@ -604,29 +719,6 @@ module prefetch_L0_buffer_L0
             NS = WAIT_GNT;
         end
       end //~ABORTED_BRANCH
-
-      WAIT_HWLOOP:
-      begin
-        valid = instr_rvalid_i;
-
-        // prepare address even if we don't need it
-        // this removes the dependency for instr_addr_o on instr_rvalid_i
-        if (branch_i)
-          instr_addr_int = branch_addr_i;
-        else
-          instr_addr_int = addr_q;
-
-        if (instr_rvalid_i)
-        begin
-          hwlp_pending_n = 1'b0;
-          instr_req_o    = 1'b1;
-
-          if (instr_gnt_i)
-            NS = WAIT_RVALID;
-          else
-            NS = WAIT_GNT;
-        end
-      end //~ABORTED_HWLOOP
 
       default:
       begin
@@ -675,5 +767,7 @@ module prefetch_L0_buffer_L0
   assign valid_o = valid & (~branch_i);
 
   assign busy_o = (CS != EMPTY) && (CS != VALID_L0) || instr_req_o;
+
+  assign fetch_gnt_o   = instr_gnt_i;
 
 endmodule
