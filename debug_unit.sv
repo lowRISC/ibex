@@ -1,6 +1,14 @@
+// Copyright 2015 ETH Zurich and University of Bologna.
+// Copyright and related rights are licensed under the Solderpad Hardware
+// License, Version 0.51 (the “License”); you may not use this file except in
+// compliance with the License.  You may obtain a copy of the License at
+// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
+// or agreed to in writing, software, hardware and materials distributed under
+// this License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations under the License.
+
 ////////////////////////////////////////////////////////////////////////////////
-// Company:        IIS @ ETHZ - Federal Institute of Technology               //
-//                                                                            //
 // Engineer:       Florian Glaser - glaserf@ethz.ch                           //
 //                                                                            //
 // Additional contributions by:                                               //
@@ -8,25 +16,15 @@
 //                 Sven Stucki - svstucki@student.ethz.ch                     //
 //                                                                            //
 //                                                                            //
-// Create Date:    11/07/2014                                                 //
-// Design Name:    RISC-V processor core                                      //
-// Module Name:    debug_unit.sv                                              //
 // Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Debug controller                                           //
 //                                                                            //
-//                                                                            //
-// Revision:                                                                  //
-// Revision v0.1 - File Created                                               //
-// Revision v0.2 - (December 1, 2014) Merge with current OR10N core,          //
-//                 changed port and signal names                              //
-//                                                                            //
-//                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
 
-`include "defines.sv"
+`include "riscv_defines.sv"
 
 module riscv_debug_unit
 (

@@ -30,7 +30,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "defines.sv"
+`include "riscv_defines.sv"
 
 module riscv_controller
 (

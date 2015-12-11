@@ -1,33 +1,31 @@
+// Copyright 2015 ETH Zurich and University of Bologna.
+// Copyright and related rights are licensed under the Solderpad Hardware
+// License, Version 0.51 (the “License”); you may not use this file except in
+// compliance with the License.  You may obtain a copy of the License at
+// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
+// or agreed to in writing, software, hardware and materials distributed under
+// this License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations under the License.
+
 ////////////////////////////////////////////////////////////////////////////////
-// Company:        IIS @ ETHZ - Federal Institute of Technology               //
-//                 DEI @ UNIBO - University of Bologna                        //
-//                                                                            //
 // Engineer:       Igor Loi - igor.loi@unibo.it                               //
 //                                                                            //
 // Additional contributions by:                                               //
 //                 Andreas Traber - atraber@iis.ee.ethz.ch                    //
 //                                                                            //
 //                                                                            //
-// Create Date:    01/07/2014                                                 //
 // Design Name:    Load Store Unit                                            //
-// Module Name:    load_store_unit.sv                                         //
 // Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Load Store Unit, used to eliminate multiple access during  //
 //                 processor stalls, and to align bytes and halfwords         //
 //                                                                            //
-// Revision:                                                                  //
-// Revision v0.1 - File Created                                               //
-// Revision v0.2 - (August 6th 2014) Added stall stupport when ID stage is    //
-//                 stalled                                                    //
-//                                                                            //
-//                                                                            //
-//                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
 
-`include "defines.sv"
+`include "riscv_defines.sv"
 
 module riscv_load_store_unit
 (

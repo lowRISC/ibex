@@ -1,35 +1,35 @@
+// Copyright 2015 ETH Zurich and University of Bologna.
+// Copyright and related rights are licensed under the Solderpad Hardware
+// License, Version 0.51 (the “License”); you may not use this file except in
+// compliance with the License.  You may obtain a copy of the License at
+// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
+// or agreed to in writing, software, hardware and materials distributed under
+// this License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations under the License.
+
 ////////////////////////////////////////////////////////////////////////////////
-// Company:        IIS @ ETHZ - Federal Institute of Technology               //
-//                                                                            //
-// Engineer:       Sven Stucki - svstucki@student.ethz.ch.ch                  //
+// Engineer:       Sven Stucki - svstucki@student.ethz.ch                     //
 //                                                                            //
 // Additional contributions by:                                               //
 //                                                                            //
 //                                                                            //
-// Create Date:    25/05/2015                                                 //
-// Design Name:    RISC-V processor core                                      //
-// Module Name:    cs_registers.sv                                            //
 // Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Control and Status Registers (CSRs) loosely following the  //
 //                 RiscV draft priviledged instruction set spec (v1.7)        //
 //                                                                            //
-//                                                                            //
-// Revision:                                                                  //
-//                                                                            //
-//                                                                            //
-//                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "defines.sv"
+`include "riscv_defines.sv"
 
 
 module riscv_cs_registers
 #(
-  parameter N_HWLP              = 2,
-  parameter N_HWLP_BITS         = $clog2(N_HWLP),
-  parameter N_EXT_PERF_COUNTERS = 0
+  parameter N_HWLP       = 2,
+  parameter N_HWLP_BITS  = $clog2(N_HWLP),
+  parameter N_EXT_CNT    = 0
 )
 (
   // Clock and Reset
@@ -67,23 +67,23 @@ module riscv_cs_registers
   output logic [2:0]               hwlp_we_o,
 
   // Performance Counters
-  input  logic        id_valid_i,        // ID stage is done
-  input  logic        is_compressed_i,   // compressed instruction in ID
-  input  logic        is_decoding_i,     // controller is in DECODE state
+  input  logic                 id_valid_i,        // ID stage is done
+  input  logic                 is_compressed_i,   // compressed instruction in ID
+  input  logic                 is_decoding_i,     // controller is in DECODE state
 
-  input  logic        imiss_i,           // instruction fetch
-  input  logic        jump_i,            // jump instruction seen   (j, jr, jal, jalr)
-  input  logic        branch_i,          // branch instruction seen (bf, bnf)
-  input  logic        ld_stall_i,        // load use hazard
-  input  logic        jr_stall_i,        // jump register use hazard
+  input  logic                 imiss_i,           // instruction fetch
+  input  logic                 jump_i,            // jump instruction seen   (j, jr, jal, jalr)
+  input  logic                 branch_i,          // branch instruction seen (bf, bnf)
+  input  logic                 ld_stall_i,        // load use hazard
+  input  logic                 jr_stall_i,        // jump register use hazard
 
-  input  logic        mem_load_i,        // load from memory in this cycle
-  input  logic        mem_store_i,       // store to memory in this cycle
+  input  logic                 mem_load_i,        // load from memory in this cycle
+  input  logic                 mem_store_i,       // store to memory in this cycle
 
-  input  logic [N_EXT_PERF_COUNTERS-1:0]   ext_counters_i
+  input  logic [N_EXT_CNT-1:0] ext_counters_i
 );
 
-  localparam N_PERF_COUNTERS = 10 + N_EXT_PERF_COUNTERS;
+  localparam N_PERF_COUNTERS = 10 + N_EXT_CNT;
 
 `ifdef PULP_FPGA_EMUL
   localparam N_PERF_REGS     = N_PERF_COUNTERS;
@@ -282,9 +282,9 @@ module riscv_cs_registers
   // assign external performance counters
   generate
     genvar i;
-    for(i = 0; i < N_EXT_PERF_COUNTERS; i++)
+    for(i = 0; i < N_EXT_CNT; i++)
     begin
-      assign PCCR_in[N_PERF_COUNTERS - N_EXT_PERF_COUNTERS + i] = ext_counters_i[i];
+      assign PCCR_in[N_PERF_COUNTERS - N_EXT_CNT + i] = ext_counters_i[i];
     end
   endgenerate
 

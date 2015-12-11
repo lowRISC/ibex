@@ -1,32 +1,14 @@
-////////////////////////////////////////////////////////////////////////////////
-// Company:        IIS @ ETHZ - Federal Institute of Technology               //
-//                 DEI @ UNIBO - University of Bologna                        //
-//                                                                            //
-// Engineer:       Renzo Andri - andrire@student.ethz.ch                      //
-//                                                                            //
-// Additional contributions by:                                               //
-//                 Igor Loi - igor.loi@unibo.it                               //
-//                 Andreas Traber - atraber@student.ethz.ch                   //
-//                 Sven Stucki - svstucki@student.ethz.ch                     //
-//                                                                            //
-//                                                                            //
-// Create Date:    24/3/2015                                                  //
-// Design Name:    RISCV-V Core                                               //
-// Module Name:    riscv_core.sv                                              //
-// Project Name:   RI5CY                                                      //
-// Language:       SystemVerilog                                              //
-//                                                                            //
-// Description:    Main module of the core                                    //
-//                                                                            //
-//                                                                            //
-// Revision:                                                                  //
-//                                                                            //
-//                                                                            //
-//                                                                            //
-////////////////////////////////////////////////////////////////////////////////
+// Copyright 2015 ETH Zurich and University of Bologna.
+// Copyright and related rights are licensed under the Solderpad Hardware
+// License, Version 0.51 (the “License”); you may not use this file except in
+// compliance with the License.  You may obtain a copy of the License at
+// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
+// or agreed to in writing, software, hardware and materials distributed under
+// this License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR
+// CONDITIONS OF ANY KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations under the License.
 
-`include "defines.sv"
-
+`include "riscv_defines.sv"
 
 module riscv_core
 #(
@@ -584,7 +566,7 @@ module riscv_core
 
   riscv_cs_registers
   #(
-    .N_EXT_PERF_COUNTERS      ( N_EXT_PERF_COUNTERS   )
+    .N_EXT_CNT       ( N_EXT_PERF_COUNTERS   )
   )
   cs_registers_i
   (
