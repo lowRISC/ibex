@@ -11,9 +11,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Engineer:       Michael Gautschi - gautschi@iis.ee.ethz.ch                 //
 //                                                                            //
-// Additional contributions by:                                               //
-//                                                                            //
-//                                                                            //
 // Design Name:    hwloop controller                                          //
 // Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //

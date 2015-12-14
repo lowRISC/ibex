@@ -12,8 +12,9 @@
 // Engineer:       Sven Stucki - svstucki@student.ethz.ch                     //
 //                                                                            //
 // Additional contributions by:                                               //
+//                 Andreas Traber - atraber@iis.ee.ethz.ch                    //
 //                                                                            //
-//                                                                            //
+// Design Name:    Control and Status Registers                               //
 // Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //

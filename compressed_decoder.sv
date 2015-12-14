@@ -11,9 +11,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Engineer:       Sven Stucki - svstucki@student.ethz.ch                     //
 //                                                                            //
-// Additional contributions by:                                               //
-//                                                                            //
-//                                                                            //
 // Design Name:    Compressed instruction decoder                             //
 // Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //

@@ -9,12 +9,12 @@
 // specific language governing permissions and limitations under the License.
 
 ////////////////////////////////////////////////////////////////////////////////
-// Engineer:       Andreas Traber - atraber@iis.ee.ethz.ch                    //
+// Engineer:       Igor Loi - igor.loi@unibo.it                               //
 //                                                                            //
 // Additional contributions by:                                               //
+//                 Andreas Traber - atraber@iis.ee.ethz.ch                    //
 //                                                                            //
-//                                                                            //
-// Design Name:    RISC-V processor core                                      //
+// Design Name:    Prefetcher Buffer for 128 bit memory interface             //
 // Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //

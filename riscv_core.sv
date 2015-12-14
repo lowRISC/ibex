@@ -8,6 +8,23 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
+////////////////////////////////////////////////////////////////////////////////
+// Engineer:       Matthias Baer - baermatt@student.ethz.ch                   //
+//                                                                            //
+// Additional contributions by:                                               //
+//                 Igor Loi - igor.loi@unibo.it                               //
+//                 Andreas Traber - atraber@student.ethz.ch                   //
+//                 Sven Stucki - svstucki@student.ethz.ch                     //
+//                                                                            //
+// Design Name:    Top level module                                           //
+// Project Name:   RI5CY                                                      //
+// Language:       SystemVerilog                                              //
+//                                                                            //
+// Description:    Top level module of the RISC-V core.                       //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
+
 `include "riscv_defines.sv"
 
 module riscv_core

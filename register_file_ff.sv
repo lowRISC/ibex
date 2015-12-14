@@ -8,18 +8,17 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-/******************************************************************************
- *                                                                            *
- *          ERC Multitherman Lab @ DEI - University of Bologna                *
- *                      Viale Pepoli 3/2 - 40136                              *
- *                     Bologna - phone 0512092759                             *
- *                                                                            *
- * Engineer:       Francesco Conti - f.conti@unibo.it                         *
- *                                                                            *
- * Project:        PULP FPGA emulator                                         *
- * Description:    Triple-port behavioral register file                       *
- *                                                                            *
- ******************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+// Engineer:       Francesco Conti - f.conti@unibo.it                         //
+//                                                                            //
+// Design Name:    RISC-V register file                                       //
+// Project Name:   RI5CY                                                      //
+// Language:       SystemVerilog                                              //
+//                                                                            //
+// Description:    Register file with 31x 32 bit wide registers. Register 0   //
+//                 is fixed to 0. This register file is based on flip-flops.  //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
 
 module riscv_register_file
 #(

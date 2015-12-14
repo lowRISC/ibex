@@ -15,7 +15,6 @@
 //                 Igor Loi - igor.loi@unibo.it                               //
 //                 Sven Stucki - svstucki@student.ethz.ch                     //
 //                                                                            //
-//                                                                            //
 // Design Name:    Excecute stage                                             //
 // Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //

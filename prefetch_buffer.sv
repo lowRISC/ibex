@@ -11,10 +11,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Engineer:       Andreas Traber - atraber@iis.ee.ethz.ch                    //
 //                                                                            //
-// Additional contributions by:                                               //
-//                                                                            //
-//                                                                            //
-// Design Name:    RISC-V processor core                                      //
+// Design Name:    Prefetcher Buffer for 32 bit memory interface              //
 // Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //

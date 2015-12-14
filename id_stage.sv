@@ -16,8 +16,7 @@
 //                 Andreas Traber - atraber@student.ethz.ch                   //
 //                 Sven Stucki - svstucki@student.ethz.ch                     //
 //                                                                            //
-//                                                                            //
-// Design Name:    Decode stage                                               //
+// Design Name:    Instruction Decode Stage                                   //
 // Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //

@@ -14,7 +14,6 @@
 // Additional contributions by:                                               //
 //                 Andreas Traber - atraber@iis.ee.ethz.ch                    //
 //                                                                            //
-//                                                                            //
 // Design Name:    Load Store Unit                                            //
 // Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //

@@ -14,7 +14,7 @@
 // Additional contributions by:                                               //
 //                 Sven Stucki - svstucki@student.ethz.ch                     //
 //                                                                            //
-//                                                                            //
+// Design Name:    Exception Controller                                       //
 // Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //

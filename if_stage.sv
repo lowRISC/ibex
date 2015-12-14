@@ -16,8 +16,7 @@
 //                 Andreas Traber - atraber@student.ethz.ch                   //
 //                 Sven Stucki - svstucki@student.ethz.ch                     //
 //                                                                            //
-//                                                                            //
-// Design Name:    RISC-V processor core                                      //
+// Design Name:    Instruction Fetch Stage                                    //
 // Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //

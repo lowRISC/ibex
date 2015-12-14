@@ -8,6 +8,22 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
+////////////////////////////////////////////////////////////////////////////////
+// Engineer:       Antonio Pullini - pullinia@iis.ee.ethz.ch                  //
+//                                                                            //
+// Additional contributions by:                                               //
+//                 Sven Stucki - svstucki@student.ethz.ch                     //
+//                                                                            //
+// Design Name:    RISC-V register file                                       //
+// Project Name:   RI5CY                                                      //
+// Language:       SystemVerilog                                              //
+//                                                                            //
+// Description:    Register file with 31x 32 bit wide registers. Register 0   //
+//                 is fixed to 0. This register file is based on latches and  //
+//                 is thus smaller than the flip-flop based register file.    //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
 module riscv_register_file
 #(
   parameter ADDR_WIDTH    = 5,

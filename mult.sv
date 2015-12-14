@@ -14,8 +14,7 @@
 // Additional contributions by:                                               //
 //                 Andreas Traber - atraber@student.ethz.ch                   //
 //                                                                            //
-//                                                                            //
-// Design Name:    Vectorial Multiplier and MAC                               //
+// Design Name:    Subword multiplier and MAC                                 //
 // Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
