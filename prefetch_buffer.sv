@@ -30,13 +30,15 @@ module riscv_fetch_fifo
 
     // control signals
     input  logic        branch_i,          // clears the contents of the fifo
-    input  logic        hwloop_i,          // tries to insert an entry above the first one
+    input  logic [31:0] addr_i,
+
+    input  logic        hwlp_i,          // tries to insert an entry above the first one
+    input  logic [31:0] hwlp_target_i,
 
     // input port
     input  logic        in_addr_valid_i,
     output logic        in_addr_ready_o,
-    input  logic [31:0] in_addr_i,
-    output logic [31:0] in_last_addr_o,
+    output logic [31:0] in_fetch_addr_o,
 
     input  logic        in_rdata_valid_i,
     output logic        in_rdata_ready_o,
@@ -64,6 +66,7 @@ module riscv_fetch_fifo
 
   logic                     aligned_is_compressed, unaligned_is_compressed;
 
+  logic [31:0]              fifo_last_addr;
   logic                     hwlp_inbound;
 
 
@@ -114,8 +117,9 @@ module riscv_fetch_fifo
   // input port
   //////////////////////////////////////////////////////////////////////////////
 
-  // we accept addresses as long as our fifo is not full or we are cleared
-  assign in_addr_ready_o = branch_i || (~addr_valid_Q[DEPTH-1]);
+  // we accept addresses as long as our fifo is not full or we encounter
+  // a branch or hwloop
+  assign in_addr_ready_o = branch_i || (hwlp_i & (~is_hwlp_Q[1])) || (~addr_valid_Q[DEPTH-1]);
 
   // we accept data as long as our fifo is not full
   // we don't care about clear here as the data will be received one cycle
@@ -127,16 +131,29 @@ module riscv_fetch_fifo
   int i;
   always_comb
   begin
-    in_last_addr_o = addr_Q[0];
+    fifo_last_addr = addr_Q[0];
 
     for(i = 1; i < DEPTH; i++) begin
       if (addr_valid_Q[i])
-        in_last_addr_o = addr_Q[i];
+        fifo_last_addr = addr_Q[i];
     end
   end
 
-  // accept hwloop input as long as our second entry is not already one
-  assign hwlp_inbound = hwloop_i & (~is_hwlp_Q[1]);
+  always_comb
+  begin
+    in_fetch_addr_o = {fifo_last_addr[31:2], 2'b00} + 32'd4;
+
+    if (branch_i) begin
+      in_fetch_addr_o = addr_i;
+    end else begin
+      if (hwlp_i & (~is_hwlp_Q[1]))
+        in_fetch_addr_o = hwlp_target_i;
+    end
+  end
+
+  // accept hwloop input as long as our second entry is not already one and we
+  // are valid, otherwise we might loose a part of an instruction
+  assign hwlp_inbound = hwlp_i & (~is_hwlp_Q[1]) & out_valid_o;
 
   //////////////////////////////////////////////////////////////////////////////
   // FIFO management
@@ -152,7 +169,7 @@ module riscv_fetch_fifo
     if (in_addr_valid_i && in_addr_ready_o) begin
       for(j = 0; j < DEPTH; j++) begin
         if (~addr_valid_Q[j]) begin
-          addr_int[j]       = in_addr_i;
+          addr_int[j]       = in_fetch_addr_o;
           addr_valid_int[j] = 1'b1;
 
           break;
@@ -162,7 +179,7 @@ module riscv_fetch_fifo
 
     // on a hardware loop invalidate everything starting from the second entry
     if (hwlp_inbound) begin
-      addr_int[1]               = in_addr_i;
+      addr_int[1]               = in_fetch_addr_o;
       addr_valid_int[1]         = 1'b1;
       addr_valid_int[2:DEPTH-1] = '0;
       is_hwlp_int[1]            = 1'b1;
@@ -212,7 +229,9 @@ module riscv_fetch_fifo
         rdata_n        = {rdata_int[1:DEPTH-1],      32'b0};
         rdata_valid_n  = {rdata_valid_int[1:DEPTH-1], 1'b0};
         is_hwlp_n      = {is_hwlp_int[1], 1'b0};
+
       end else begin
+        // no hardware loop found
         if (addr_Q[0][1]) begin
           // unaligned case
 
@@ -267,7 +286,7 @@ module riscv_fetch_fifo
       // on a clear signal from outside we invalidate the content of the FIFO
       // completely and start from an empty state
       if (branch_i) begin
-        addr_Q[0]        <= in_addr_i;
+        addr_Q[0]        <= in_fetch_addr_o;
         addr_valid_Q     <= {in_addr_valid_i, {DEPTH-1{1'b0}}};
         rdata_valid_Q    <= '0;
         is_hwlp_Q        <= '0;
@@ -317,11 +336,10 @@ module riscv_prefetch_buffer
 
   enum logic [1:0] {IDLE, WAIT_GNT, WAIT_RVALID, WAIT_ABORTED } CS, NS;
 
-  logic [31:0] addr_next;
+  logic [31:0] fetch_addr;
 
   logic        fifo_addr_valid;
   logic        fifo_addr_ready;
-  logic [31:0] fifo_last_addr;
 
   logic        fifo_rdata_valid;
   logic        fifo_rdata_ready;
@@ -334,23 +352,6 @@ module riscv_prefetch_buffer
   assign busy_o = (CS != IDLE) || instr_req_o;
 
   //////////////////////////////////////////////////////////////////////////////
-  // address selection and increase
-  //////////////////////////////////////////////////////////////////////////////
-
-  always_comb
-  begin
-    addr_next = {fifo_last_addr[31:2], 2'b00} + 32'd4;
-
-    if (branch_i) begin
-      addr_next = addr_i;
-    end else begin
-      if (hwloop_i)
-        addr_next = hwloop_target_i;
-    end
-  end
-
-
-  //////////////////////////////////////////////////////////////////////////////
   // fetch fifo
   // consumes addresses and rdata
   //////////////////////////////////////////////////////////////////////////////
@@ -361,12 +362,14 @@ module riscv_prefetch_buffer
     .rst_n                 ( rst_n             ),
 
     .branch_i              ( branch_i          ),
-    .hwloop_i              ( hwloop_i          ),
+    .addr_i                ( addr_i            ),
+
+    .hwlp_i                ( hwloop_i          ),
+    .hwlp_target_i         ( hwloop_target_i   ),
 
     .in_addr_valid_i       ( fifo_addr_valid   ),
     .in_addr_ready_o       ( fifo_addr_ready   ),
-    .in_addr_i             ( addr_next         ),
-    .in_last_addr_o        ( fifo_last_addr    ),
+    .in_fetch_addr_o       ( fetch_addr        ),
 
     .in_rdata_valid_i      ( fifo_rdata_valid  ),
     .in_rdata_ready_o      ( fifo_rdata_ready  ),
@@ -388,7 +391,7 @@ module riscv_prefetch_buffer
   always_comb
   begin
     instr_req_o      = 1'b0;
-    instr_addr_o     = addr_next;
+    instr_addr_o     = fetch_addr;
     fifo_addr_valid  = 1'b0;
     fifo_rdata_valid = 1'b0;
     NS               = CS;
@@ -418,11 +421,8 @@ module riscv_prefetch_buffer
         instr_req_o = 1'b1;
 
         if (branch_i) begin
-          instr_addr_o = addr_next;
 
           fifo_addr_valid = 1'b1;
-        end else begin
-          instr_addr_o = fifo_last_addr;
         end
 
         if(instr_gnt_i)
@@ -473,7 +473,6 @@ module riscv_prefetch_buffer
       WAIT_ABORTED: begin
         // prepare for next request
         instr_req_o  = 1'b1;
-        instr_addr_o = fifo_last_addr;
 
         if (instr_rvalid_i) begin
           // no need to send address, already done in WAIT_RVALID
