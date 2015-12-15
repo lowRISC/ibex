@@ -25,6 +25,11 @@
 
 `include "riscv_defines.sv"
 
+`ifndef PULP_FPGA_EMUL
+`ifdef SYNTHESIS
+`define ASIC_SYNTHESIS
+`endif
+`endif
 
 module riscv_cs_registers
 #(
@@ -86,9 +91,7 @@ module riscv_cs_registers
 
   localparam N_PERF_COUNTERS = 10 + N_EXT_CNT;
 
-`ifdef PULP_FPGA_EMUL
-  localparam N_PERF_REGS     = N_PERF_COUNTERS;
-`elsif SYNTHESIS
+`ifdef ASIC_SYNTHESIS
   localparam N_PERF_REGS     = 1;
 `else
   localparam N_PERF_REGS     = N_PERF_COUNTERS;
@@ -322,9 +325,7 @@ module riscv_cs_registers
         is_pccr     = 1'b1;
 
         pccr_index = csr_addr_i[4:0];
-`ifndef PULP_FPGA_EMUL
-        perf_rdata = PCCR_q[csr_addr_i[4:0]];
-`elsif  SYNTHESIS
+`ifdef  ASIC_SYNTHESIS
         perf_rdata = PCCR_q[0];
 `else
         perf_rdata = PCCR_q[csr_addr_i[4:0]];
@@ -335,7 +336,7 @@ module riscv_cs_registers
 
 
   // performance counter counter update logic
-`ifdef SYNTHESIS
+`ifdef ASIC_SYNTHESIS
   // for synthesis we just have one performance counter register
   assign PCCR_inc[0] = (|(PCCR_in & PCER_q)) & PCMR_q[0];
 
