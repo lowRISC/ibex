@@ -225,7 +225,6 @@ module riscv_core
   // Performance Counters
   logic        perf_imiss;
   logic        perf_jump;
-  logic        perf_branch;
   logic        perf_jr_stall;
   logic        perf_ld_stall;
 
@@ -248,21 +247,21 @@ module riscv_core
   )
   if_stage_i
   (
-    .clk                 ( clk             ),
-    .rst_n               ( rst_n           ),
+    .clk                 ( clk               ),
+    .rst_n               ( rst_n             ),
 
     // boot address (trap vector location)
-    .boot_addr_i         ( boot_addr_i     ),
+    .boot_addr_i         ( boot_addr_i       ),
 
     // instruction request control
-    .req_i               ( instr_req_int   ),
+    .req_i               ( instr_req_int     ),
 
     // instruction cache interface
-    .instr_req_o         ( instr_req_o     ),
-    .instr_addr_o        ( instr_addr_o    ),
-    .instr_gnt_i         ( instr_gnt_i     ),
-    .instr_rvalid_i      ( instr_rvalid_i  ),
-    .instr_rdata_i       ( instr_rdata_i   ),
+    .instr_req_o         ( instr_req_o       ),
+    .instr_addr_o        ( instr_addr_o      ),
+    .instr_gnt_i         ( instr_gnt_i       ),
+    .instr_rvalid_i      ( instr_rvalid_i    ),
+    .instr_rdata_i       ( instr_rdata_i     ),
 
     // outputs to ID stage
     .hwlp_dec_cnt_id_o   ( hwlp_dec_cnt_id   ),
@@ -283,26 +282,26 @@ module riscv_core
     .exc_vec_pc_mux_i    ( exc_vec_pc_mux_id ),
 
     // from hwloop registers
-    .hwlp_start_i        ( hwlp_start      ),
-    .hwlp_end_i          ( hwlp_end        ),
-    .hwlp_cnt_i          ( hwlp_cnt        ),
+    .hwlp_start_i        ( hwlp_start        ),
+    .hwlp_end_i          ( hwlp_end          ),
+    .hwlp_cnt_i          ( hwlp_cnt          ),
 
     // from debug unit
-    .dbg_npc_i           ( dbg_npc         ),
-    .dbg_set_npc_i       ( dbg_set_npc     ),
+    .dbg_npc_i           ( dbg_npc           ),
+    .dbg_set_npc_i       ( dbg_set_npc       ),
 
     // Jump targets
-    .jump_target_id_i    ( jump_target_id  ),
-    .jump_target_ex_i    ( jump_target_ex  ),
+    .jump_target_id_i    ( jump_target_id    ),
+    .jump_target_ex_i    ( jump_target_ex    ),
 
     // pipeline stalls
-    .halt_if_i           ( halt_if         ),
-    .if_ready_o          ( if_ready        ),
-    .id_ready_i          ( id_ready        ),
-    .if_valid_o          ( if_valid        ),
+    .halt_if_i           ( halt_if           ),
+    .if_ready_o          ( if_ready          ),
+    .id_ready_i          ( id_ready          ),
+    .if_valid_o          ( if_valid          ),
 
-    .if_busy_o           ( if_busy         ),
-    .perf_imiss_o        ( perf_imiss      )
+    .if_busy_o           ( if_busy           ),
+    .perf_imiss_o        ( perf_imiss        )
   );
 
 
@@ -447,7 +446,6 @@ module riscv_core
 
     // Performance Counters
     .perf_jump_o                  ( perf_jump            ),
-    .perf_branch_o                ( perf_branch          ),
     .perf_jr_stall_o              ( perf_jr_stall        ),
     .perf_ld_stall_o              ( perf_ld_stall        )
   );
@@ -587,49 +585,51 @@ module riscv_core
   )
   cs_registers_i
   (
-    .clk                     ( clk            ),
-    .rst_n                   ( rst_n          ),
+    .clk                     ( clk              ),
+    .rst_n                   ( rst_n            ),
 
     // Core and Cluster ID from outside
-    .core_id_i               ( core_id_i      ),
-    .cluster_id_i            ( cluster_id_i   ),
+    .core_id_i               ( core_id_i        ),
+    .cluster_id_i            ( cluster_id_i     ),
 
     // Interface to CSRs (SRAM like)
-    .csr_access_i            ( csr_access_ex  ),
-    .csr_addr_i              ( csr_addr       ),
-    .csr_wdata_i             ( csr_wdata      ),
-    .csr_op_i                ( csr_op         ),
-    .csr_rdata_o             ( csr_rdata      ),
+    .csr_access_i            ( csr_access_ex    ),
+    .csr_addr_i              ( csr_addr         ),
+    .csr_wdata_i             ( csr_wdata        ),
+    .csr_op_i                ( csr_op           ),
+    .csr_rdata_o             ( csr_rdata        ),
 
     // Interrupt related control signals
-    .irq_enable_o            ( irq_enable     ),
-    .epcr_o                  ( epcr           ),
+    .irq_enable_o            ( irq_enable       ),
+    .epcr_o                  ( epcr             ),
 
-    .curr_pc_id_i            ( current_pc_id  ),    // from IF stage
-    .save_pc_id_i            ( save_pc_id     ),
+    .curr_pc_id_i            ( current_pc_id    ),    // from IF stage
+    .save_pc_id_i            ( save_pc_id       ),
 
-    .exc_cause_i             ( exc_cause      ),
-    .save_exc_cause_i        ( save_exc_cause ),
+    .exc_cause_i             ( exc_cause        ),
+    .save_exc_cause_i        ( save_exc_cause   ),
 
     // from hwloop registers
-    .hwlp_start_i            ( hwlp_start     ),
-    .hwlp_end_i              ( hwlp_end       ),
-    .hwlp_cnt_i              ( hwlp_cnt       ),
+    .hwlp_start_i            ( hwlp_start       ),
+    .hwlp_end_i              ( hwlp_end         ),
+    .hwlp_cnt_i              ( hwlp_cnt         ),
 
-    .hwlp_regid_o            ( csr_hwlp_regid ),
-    .hwlp_we_o               ( csr_hwlp_we    ),
-    .hwlp_data_o             ( csr_hwlp_data  ),
+    .hwlp_regid_o            ( csr_hwlp_regid   ),
+    .hwlp_we_o               ( csr_hwlp_we      ),
+    .hwlp_data_o             ( csr_hwlp_data    ),
 
     // performance counter related signals
     .id_valid_i              ( id_valid         ),
     .is_compressed_i         ( is_compressed_id ),
     .is_decoding_i           ( is_decoding      ),
 
-    .imiss_i                 ( perf_imiss     ),
-    .jump_i                  ( perf_jump      ),
-    .branch_i                ( perf_branch    ),
-    .ld_stall_i              ( perf_ld_stall  ),
-    .jr_stall_i              ( perf_jr_stall  ),
+    .imiss_i                 ( perf_imiss       ),
+    .pc_set_i                ( pc_set           ),
+    .jump_i                  ( perf_jump        ),
+    .branch_i                ( branch_in_ex     ),
+    .branch_taken_i          ( branch_decision  ),
+    .ld_stall_i              ( perf_ld_stall    ),
+    .jr_stall_i              ( perf_jr_stall    ),
 
     .mem_load_i              ( data_req_o & data_gnt_i & (~data_we_o) ),
     .mem_store_i             ( data_req_o & data_gnt_i & data_we_o    ),

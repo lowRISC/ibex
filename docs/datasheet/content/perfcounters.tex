@@ -96,20 +96,19 @@ controlled by the \instr{saturation} bit in PCMR.
   \textbf{PCCR0}  & \textbf{CYCLES}       & Count the number of cycles the core was running \\ \hline
   \textbf{PCCR1}  & \textbf{INSTR}        & Count the number of instructions executed \\ \hline
   \textbf{PCCR2}  & \textbf{LD\_STALL}    & Number of load data hazards \\ \hline
-  \textbf{PCCR3}  & \textbf{JMP\_STALL}   & Number of jump register data hazards \\ \hline
+  \textbf{PCCR3}  & \textbf{JR\_STALL}    & Number of jump register data hazards \\ \hline
   \textbf{PCCR4}  & \textbf{IMISS}        & Cycles waiting for instruction fetches. i.e. the number of instructions wasted due to non-ideal caches \\ \hline
-  \textbf{PCCR5}  & \textbf{WBRANCH}      & Number of wrong predicted branches \\ \hline
-  \textbf{PCCR6}  & \textbf{WBRANCH\_CYC} & Cycles wasted due to wrong predicted branches \\ \hline
-  \textbf{PCCR7}  & \textbf{LD}           & Number of memory loads executed. Misaligned accesses are counted twice \\ \hline
-  \textbf{PCCR8}  & \textbf{ST}           & Number of memory stores executed. Misaligned accesses are counted twice \\ \hline
-  \textbf{PCCR9}  & \textbf{JUMP}         & Number of jumps (j, jal, jr, jalr)\\ \hline
-  \textbf{PCCR10} & \textbf{BRANCH}       & Number of branches (bf, bnf), counts taken and not taken branches\\ \hline
-  \textbf{PCCR11} & \textbf{DELAY\_NOP}   & Number of empty (l.nop) delay slots \\ \hline
-  \textbf{PCCR12} & \textbf{LD\_EXT}      & Number of memory loads to EXT executed. Misaligned accesses are counted twice. Every non-TCDM access is considered external \\ \hline
-  \textbf{PCCR13} & \textbf{ST\_EXT}      & Number of memory stores to EXT executed. Misaligned accesses are counted twice. Every non-TCDM access is considered external \\ \hline
-  \textbf{PCCR14} & \textbf{LD\_EXT\_CYC} & Cycles used for memory loads to EXT. Every non-TCDM access is considered external \\ \hline
-  \textbf{PCCR15} & \textbf{ST\_EXT\_CYC} & Cycles used for memory stores to EXT. Every non-TCDM access is considered external \\ \hline
-  \textbf{PCCR16} & \textbf{TCDM\_CONT}   & Cycles wasted due to TCDM/log-interconnect contention \\ \hline
+  \textbf{PCCR5}  & \textbf{LD}           & Number of memory loads executed. Misaligned accesses are counted twice \\ \hline
+  \textbf{PCCR6}  & \textbf{ST}           & Number of memory stores executed. Misaligned accesses are counted twice \\ \hline
+  \textbf{PCCR7}  & \textbf{JUMP}         & Number of jumps (j, jal, jr, jalr)\\ \hline
+  \textbf{PCCR8}  & \textbf{BRANCH}       & Number of branches, counts taken and not taken branches\\ \hline
+  \textbf{PCCR9}  & \textbf{BTAKEN}       & Number of taken branches \\ \hline
+  \textbf{PCCR10} & \textbf{RVC}          & Number of compressed instructions executed \\ \hline
+  \textbf{PCCR11} & \textbf{LD\_EXT}      & Number of memory loads to EXT executed. Misaligned accesses are counted twice. Every non-TCDM access is considered external \\ \hline
+  \textbf{PCCR12} & \textbf{ST\_EXT}      & Number of memory stores to EXT executed. Misaligned accesses are counted twice. Every non-TCDM access is considered external \\ \hline
+  \textbf{PCCR13} & \textbf{LD\_EXT\_CYC} & Cycles used for memory loads to EXT. Every non-TCDM access is considered external \\ \hline
+  \textbf{PCCR14} & \textbf{ST\_EXT\_CYC} & Cycles used for memory stores to EXT. Every non-TCDM access is considered external \\ \hline
+  \textbf{PCCR15} & \textbf{TCDM\_CONT}   & Cycles wasted due to TCDM/log-interconnect contention \\ \hline
   \textbf{PCCR31} & \textbf{ALL}          & Special Register, a write to this register will set all counters to the supplied value\\ \bottomrule
 \end{tabularx}
 \end{table}

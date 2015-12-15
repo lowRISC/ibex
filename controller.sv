@@ -106,7 +106,6 @@ module riscv_controller
 
   // Performance Counters
   output logic        perf_jump_o,                // we are executing a jump instruction   (j, jr, jal, jalr)
-  output logic        perf_branch_o,              // we are executing a branch instruction (bf, bnf)
   output logic        perf_jr_stall_o,            // stall due to jump-register-hazard
   output logic        perf_ld_stall_o             // stall due to load-use-hazard
 );
@@ -516,7 +515,6 @@ module riscv_controller
 
   // Performance Counters
   assign perf_jump_o      = (jump_in_id_i == `BRANCH_JAL || jump_in_id_i == `BRANCH_JALR);
-  assign perf_branch_o    = (jump_in_id_i == `BRANCH_COND);
   assign perf_jr_stall_o  = jr_stall_o;
   assign perf_ld_stall_o  = load_stall_o;
 

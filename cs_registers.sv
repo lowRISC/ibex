@@ -78,8 +78,10 @@ module riscv_cs_registers
   input  logic                 is_decoding_i,     // controller is in DECODE state
 
   input  logic                 imiss_i,           // instruction fetch
+  input  logic                 pc_set_i,          // pc was set to a new value
   input  logic                 jump_i,            // jump instruction seen   (j, jr, jal, jalr)
   input  logic                 branch_i,          // branch instruction seen (bf, bnf)
+  input  logic                 branch_taken_i,    // branch was taken
   input  logic                 ld_stall_i,        // load use hazard
   input  logic                 jr_stall_i,        // jump register use hazard
 
@@ -89,7 +91,7 @@ module riscv_cs_registers
   input  logic [N_EXT_CNT-1:0] ext_counters_i
 );
 
-  localparam N_PERF_COUNTERS = 10 + N_EXT_CNT;
+  localparam N_PERF_COUNTERS = 11 + N_EXT_CNT;
 
 `ifdef ASIC_SYNTHESIS
   localparam N_PERF_REGS     = 1;
@@ -276,12 +278,13 @@ module riscv_cs_registers
   assign PCCR_in[1]  = id_valid_i & is_decoding_i;    // instruction counter
   assign PCCR_in[2]  = ld_stall_i & id_valid_q;       // nr of load use hazards
   assign PCCR_in[3]  = jr_stall_i & id_valid_q;       // nr of jump register hazards
-  assign PCCR_in[4]  = imiss_i;                       // cycles waiting for instruction fetches
+  assign PCCR_in[4]  = imiss_i & (~pc_set_i);         // cycles waiting for instruction fetches, excluding jumps and branches
   assign PCCR_in[5]  = mem_load_i;                    // nr of loads
   assign PCCR_in[6]  = mem_store_i;                   // nr of stores
-  assign PCCR_in[7]  = jump_i     & id_valid_q;       // nr of jumps (unconditional)
-  assign PCCR_in[8]  = branch_i   & id_valid_q;       // nr of branches (conditional)
-  assign PCCR_in[9]  = id_valid_i & is_decoding_i & is_compressed_i;  // compressed instruction counter
+  assign PCCR_in[7]  = jump_i           & id_valid_q; // nr of jumps (unconditional)
+  assign PCCR_in[8]  = branch_i         & id_valid_q; // nr of branches (conditional)
+  assign PCCR_in[9]  = branch_taken_i   & id_valid_q; // nr of taken branches (conditional)
+  assign PCCR_in[10] = id_valid_i & is_decoding_i & is_compressed_i;  // compressed instruction counter
 
   // assign external performance counters
   generate

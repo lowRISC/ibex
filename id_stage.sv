@@ -166,7 +166,6 @@ module riscv_id_stage
 
     // Performance Counters
     output logic        perf_jump_o,          // we are executing a jump instruction
-    output logic        perf_branch_o,        // we are executing a branch instruction
     output logic        perf_jr_stall_o,      // jump-register-hazard
     output logic        perf_ld_stall_o       // load-use-hazard
 );
@@ -710,7 +709,6 @@ module riscv_id_stage
 
     // Performance Counters
     .perf_jump_o                    ( perf_jump_o            ),
-    .perf_branch_o                  ( perf_branch_o          ),
     .perf_jr_stall_o                ( perf_jr_stall_o        ),
     .perf_ld_stall_o                ( perf_ld_stall_o        )
   );
