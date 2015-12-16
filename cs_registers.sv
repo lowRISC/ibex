@@ -281,9 +281,9 @@ module riscv_cs_registers
   assign PCCR_in[4]  = imiss_i & (~pc_set_i);         // cycles waiting for instruction fetches, excluding jumps and branches
   assign PCCR_in[5]  = mem_load_i;                    // nr of loads
   assign PCCR_in[6]  = mem_store_i;                   // nr of stores
-  assign PCCR_in[7]  = jump_i           & id_valid_q; // nr of jumps (unconditional)
-  assign PCCR_in[8]  = branch_i         & id_valid_q; // nr of branches (conditional)
-  assign PCCR_in[9]  = branch_taken_i   & id_valid_q; // nr of taken branches (conditional)
+  assign PCCR_in[7]  = jump_i                     & id_valid_q; // nr of jumps (unconditional)
+  assign PCCR_in[8]  = branch_i                   & id_valid_q; // nr of branches (conditional)
+  assign PCCR_in[9]  = branch_i & branch_taken_i  & id_valid_q; // nr of taken branches (conditional)
   assign PCCR_in[10] = id_valid_i & is_decoding_i & is_compressed_i;  // compressed instruction counter
 
   // assign external performance counters
