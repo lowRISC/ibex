@@ -2,8 +2,8 @@
 
 \rvcore is a 4-stage in-order \riscv CPU. The ISA of \rvcore was extended to
 also support multiple additional instructions including hardware loops,
-post-increment load and store instructions and packed-SIMD instructions that
-were not part of the standard \riscv ISA.
+post-increment load and store instructions and additional ALUinstructions that
+are not part of the standard \riscv ISA.
 
 Figure~\ref{fig:ri5cy_overview} shows a block diagram of the core.
 
@@ -13,3 +13,35 @@ Figure~\ref{fig:ri5cy_overview} shows a block diagram of the core.
   \caption{\rvcore Overview.}
   \label{fig:ri5cy_overview}
 \end{figure}
+
+
+\section{Supported Instruction Set}
+
+\rvcore supports the following instructions:
+
+\begin{itemize}
+  \item Full support for RV32I Base Integer Instruction Set
+  \item Full support for RV32C Standard Extension for Compressed Instructions
+  \item Partial support for RV32M Standard Extension for Integer Multiplication
+    and Division \\
+        Only the \instr{mul} instruction is supported.
+  \item PULP specific extensions \\
+        \begin{itemize}
+          \item Hardware Loops, see Chapter~\ref{chap:hwloop}
+          \item ALU extensions, see Chapter~\ref{chap:aluext}
+          \item Multiply-Accumulate extensions, see Chapter~\ref{chap:mac}
+          \item Post-Incrementing load and stores, see Chapter~\ref{chap:lsu}
+        \end{itemize}
+\end{itemize}
+
+\section{ASIC Synthesis}
+ASIC synthesis is supported for \rvcore. The whole design is completely
+synchronous and uses positive-edge triggered flip-flops, except for the register
+file, where there is an option to use latches instead of flip-flops. See
+Chapter~\ref{chap:rf} for more details about the register file. The core
+occupies an area of about 35~kGE when the latch based register file is used.
+
+\section{FPGA Synthesis}
+FPGA synthesis is supported for \rvcore when the flip-flop based register file
+is used. Since latches are not well supported on FPGAs, it is crucial to select
+the flip-flop based register file.

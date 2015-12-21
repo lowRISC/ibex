@@ -19,9 +19,9 @@ access to the performance counters.
 \end{table}
 
 
-\section{Performance Counters Mode Register (PCMR)}
+\section{Performance Counter Mode Register (PCMR)}
 
-\sprDesc{0x3821}{0x0000\_0003}{PCMR}{
+\csrDesc{0x3821}{0x0000\_0003}{PCMR}{
   \begin{bytefield}[endianness=big,bitheight=60pt]{32}
     \bitheader{31,1,0} \\
     \bitbox{30}{ Unused                            }
@@ -38,9 +38,9 @@ The \instr{Saturation} bit controls saturation behaviour of the performance
 counters. If it is set, saturating arithmetic is used.
 After reset, the \instr{Saturation} bit is set.
 
-\section{Performance Counters Event Register (PCER)}
+\section{Performance Counter Event Register (PCER)}
 
-\sprDesc{0x3820}{0x0000\_0000}{PCER}{
+\csrDesc{0x3820}{0x0000\_0000}{PCER}{
   \begin{bytefield}[endianness=big,bitheight=60pt]{32}
     \bitheader{31,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0} \\
     \bitbox{1}{\rotatebox{90}{\tiny (ALL)                 }}
@@ -78,9 +78,9 @@ In the FPGA or Simulation version each event has its own counter and can be
 accesses separately.
 
 
-\section{Performance Counters Counter Registers (PCCR0-31)}
+\section{Performance Counter Counter Registers (PCCR0-31)}
 
-\sprDesc{0x3800 - 0x381F}{0x0000\_0000}{PCCR0-31}{
+\csrDesc{0x3800 - 0x381F}{0x0000\_0000}{PCCR0-31}{
   \begin{bytefield}[endianness=big]{32}
     \bitheader{31,0} \\
     \bitbox{32}{Unsigned integer counter value}

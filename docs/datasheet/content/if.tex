@@ -1,21 +1,25 @@
 \chapter{Instruction Fetch}
+\label{chap:if}
 
 The instruction fetcher of the core is able to supply one instruction to the ID
 stage per cycle if the instruction cache or the instruction memory is able to
-deliver an instruction after one cycle.
-The instruction address must be word-aligned. It is not possible to jump to
-misaligned memory addresses.
+serve one instruction after one cycle.
+The instruction address must be half-word-aligned. It is not possible to jump to
+instruction addresses that have the LSB bit set.
 
-Branch prediction is used for branches where the branch decision is not yet
-known, i.e. if the \instr{l.sf*} instruction precedes the \instr{l.bf} or
-\instr{l.bnf} instruction directly.
-Branch prediction assumes that backward branches are never taken and forward
-branches are always taken. If the branch predicition guessed wrong, one fetched
-instruction is wasted.
+For optimal performance and timing closure reasons, a prefetcher is used to
+fetch instructions. There are two prefetch flavors available:
+\begin{itemize}
+  \item 32-Bit Word prefetcher. It stores the fetched words in a FIFO with three
+    entries.
+  \item 128-Bit Cache line prefetcher. It stores one 128-bit wide cache line
+    plus 32-bit to allow for cross-cache line misaligned instructions.
+\end{itemize}
 
-Table~\ref{tab:instr_signals} describes the signals that are used by to fetch
-instructions.
-
+Table~\ref{tab:instr_signals} describes the signals that are used to fetch
+instructions. This interface is a simplified version that is used by the
+LSU that is described in Chapter~\ref{chap:lsu}. The difference is that no
+writes are possible and thus it needs less signals.
 
 \begin{table}[H]
  \caption{Instruction Fetch Signals}
@@ -34,4 +38,4 @@ instructions.
 \section{Protocol}
 The protocol used to communicate with the instruction cache or the instruction
 memory is the same as the protocl used by the LSU. See the description of the
-LSU in Section~\ref{sec:lsu_protocol} for details about the protocol.
+LSU in Chapter~\ref{sec:lsu_protocol} for details about the protocol.

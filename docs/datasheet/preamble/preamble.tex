@@ -55,6 +55,8 @@
 
 \usepackage{enumitem}
 
+\usepackage{pdflscape}
+
 
 \usepackage{tikz-timing}[2009/05/15]
 
@@ -96,8 +98,8 @@
 
 \newcommand\signal[1]{{\ttfamily\bfseries #1}}
 
-\newcommand\sprDesc[4]{%
-  \textbf{SPR Address:} \texttt{#1}\\%
+\newcommand\csrDesc[4]{%
+  \textbf{CSR Address:} \texttt{#1}\\%
   \textbf{Reset Value:} \texttt{#2}\\%
   \begin{figure}[H]
     \centering

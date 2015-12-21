@@ -1,4 +1,5 @@
 \chapter{Load-Store-Unit (LSU)}
+\label{chap:lsu}
 
 The LSU of the core takes care of accessing the data memory. Load and stores on
 words (32 bit), half words (16 bit) and bytes (8 bit) are supported.
@@ -12,13 +13,13 @@ Table~\ref{tab:lsu_signals} describes the signals that are used by the LSU.
   \begin{tabularx}{\textwidth}{@{}llX@{}} \toprule
     \textbf{Signal}               & \textbf{Direction} & \textbf{Description} \\ \toprule
     \signal{data\_req\_o}         & \textbf{output}    & Request ready, must stay high until \signal{data\_gnt\_i} is high for one cycle \\ \hline
-    \signal{data\_addr\_o[31:0]}  & \textbf{output}    & Address \\ \hline
-    \signal{data\_we\_o}          & \textbf{output}    & Write Enable, high if we want to write, low if we want to read \\ \hline
-    \signal{data\_be\_o[3:0]}     & \textbf{output}    & Byte Enable, is set for the bytes to write/read \\ \hline
-    \signal{data\_wdata\_o[31:0]} & \textbf{output}    & Data to be written to memory \\ \hline
-    \signal{data\_rdata\_i[31:0]} & \textbf{input}     & Data read from memory \\ \hline
-    \signal{data\_rvalid\_i}      & \textbf{input}     & \signal{data\_rdata\_i} is valid. This signal must always be identical to \signal{data\_gnt\_i} delayed by one cycle. \\ \hline
-    \signal{data\_gnt\_i}         & \textbf{input}     & The memory accepted the request and will answer in the next cycle with valid rdata \\ \bottomrule
+    \signal{data\_addr\_o[31:0]}  & \textbf{output}    & Address, sent together with \signal{data\_req\_o} \\ \hline
+    \signal{data\_we\_o}          & \textbf{output}    & Write Enable, high for writes, low for reads, sent together with \signal{data\_req\_o} \\ \hline
+    \signal{data\_be\_o[3:0]}     & \textbf{output}    & Byte Enable, is set for the bytes to write/read, sent together with \signal{data\_req\_o} \\ \hline
+    \signal{data\_wdata\_o[31:0]} & \textbf{output}    & Data to be written to memory, sent together with \signal{data\_req\_o} \\ \hline
+    \signal{data\_rdata\_i[31:0]} & \textbf{input}     & Data read from memory, valid when \signal{data\_rvalid\_i} is set \\ \hline
+    \signal{data\_rvalid\_i}      & \textbf{input}     & \signal{data\_rdata\_i} is valid. \\ \hline
+    \signal{data\_gnt\_i}         & \textbf{input}     & The memory accepted the request, another request can be sent in the next cycle \\ \bottomrule
   \end{tabularx}
 \end{table}
 
@@ -29,14 +30,18 @@ word-aligned accesses internally.
 This means that at least two cycles are needed for misaligned loads and stores.
 
 
-\section{Post-Increment Load and Stores}
+\section{Post-Incrementing Load and Store Instructions}
 
 Post-incrementing load and store instructions perform a load/store operation
 from/to the data memory while at the same time increasing the base address by
-the specified offset.
+the specified offset. For the memory access the base address without offset is
+used.
+
 Post-incrementing load and stores reduce the number of instructions necessary to
 execute when running in a loop, i.e. the address increment can be embedded in
-the post-increment instructions.
+the post-increment instructions. Coupled with the hardware loop extension a
+significant reduction in the number of instructions necessary to execute small
+loops can be achieved.
 
 
 \section{Protocol}
@@ -44,22 +49,23 @@ the post-increment instructions.
 
 The protocol that is used by the LSU to communicate with a memory works as
 follows:
+
 The LSU provides a valid address in \signal{data\_addr\_o} and sets
 \signal{data\_req\_o} high. The memory then answers with a \signal{data\_gnt\_i}
 set high as soon as it is ready to serve the request. This may happen in the
 same cycle as the request was sent or any number of cycles later. After a grant
-was received, the address may be changed by the LSU without impact. Also the
+was received, the address may be changed in the next cycle by the LSU. Also the
 \signal{data\_wdata\_o}, \signal{data\_we\_o} and \signal{data\_be\_o} signals
-may be changed as it is assumed that the memory has already processed that
-information. In the case of a read, the memory answers with a
+may be changed as it is assumed that the memory has already processed and stored that
+information. After the grant, the memory answers with a
 \signal{data\_rvalid\_i} set high when \signal{data\_rdata\_i} is valid. This
 may happen one cycle after the grant was received, but may take any number of
 cycles after the grant was received.
-Starting from the cycle when \signal{data\_rvalid\_i} was asserted, another
-request may be sent.
+Note that \signal{data\_rvalid\_i} must also be set when a write was performed,
+although the \signal{data\_rdata\_i} has no meaning in this case.
 
 Figure~\ref{fig:lsu_trans_basic}, Figure~\ref{fig:lsu_trans_b2b} and
-Figure~\ref{fig:lsu_trans_slow} show timing diagrams of the protocol.
+Figure~\ref{fig:lsu_trans_slow} show example timing diagrams of the protocol.
 
 \begin{figure}[H]
   \centering

@@ -1,0 +1,34 @@
+\chapter{Register File}
+\label{chap:rf}
+
+\rvcore has 31 $\times$ 32-bit wide registers which form registers \signal{x1} to
+\signal{x31}. Register \signal{x0} is statically bound \signal{0} and can only be
+read and not written, it does not contain any sequential logic.
+
+There are two flavors of register file available:
+
+\begin{enumerate}
+  \item Latch-based
+  \item Flip-flop based
+\end{enumerate}
+
+While the latch-based register file is recommended for ASICs, the flip-flop
+based register file is recommended for FPGA synthesis, although both are
+compatible with either synthesis target.
+Note the flip-flop based register file is significantly larger than the
+latch-based register-file for an ASIC implementation.
+
+\section{Latch-based Register File}
+The latch based register file contains manually instantiated clock gating cells
+to keep the clock inactive when the latches are not written.
+
+It is assumed that there is a clock gating cell for the target technology that
+is wrapped in a module called \signal{cluster\_clock\_gating} and has the following
+ports:
+\begin{itemize}
+  \item \signal{clk\_i}: Clock Input
+  \item \signal{en\_i}: Clock Enable Input
+  \item \signal{test\_en\_i}: Test Enable Input (activates the clock even though
+  \signal{en\_i} is not set)
+  \item \signal{clk\_o}: Gated Clock Output
+\end{itemize}
