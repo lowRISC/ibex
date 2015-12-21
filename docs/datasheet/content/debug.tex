@@ -1,2 +1,89 @@
 \chapter{Debug}
 \label{chap:debug}
+
+\rvcore has full support for software breakpoints (\instr{ebreak}), access to
+general-purpose and control and status registers via a debug port. It is also
+possible to halt the core from the debug port and put it into single-stepping
+mode. Similarly when an interrupt occurs, instead of jumping to the interrupt
+handler the core can trap to an attached debugger.
+
+The debug port uses the following interface:
+
+\begin{table}[H]
+ \caption{Debug Signals}
+ \label{tab:debug_signals}
+  \begin{tabularx}{\textwidth}{@{}llX@{}} \toprule
+    \textbf{Signal}                 & \textbf{Direction} & \textbf{Description} \\ \toprule
+    \signal{dbginf\_strobe\_i}      & \textbf{input}     & Command request \\ \hline
+    \signal{dbginf\_we\_i}          & \textbf{input}     & Write Enable \\ \hline
+    \signal{dbginf\_addr\_i[15:0]}  & \textbf{input}     & Address \\ \hline
+    \signal{dbginf\_data\_i[31:0]}  & \textbf{input}     & Input data \\ \hline
+    \signal{dbginf\_data\_o}        & \textbf{output}    & Output data \\ \hline
+    \signal{dbginf\_ack\_o}         & \textbf{output}    & Command was executed \\ \hline
+    \signal{dbginf\_stall\_i}       & \textbf{input}     & Stall the core \\ \hline
+    \signal{dbginf\_bp\_o}          & \textbf{output}    & Breakpoint hit \\ \bottomrule
+  \end{tabularx}
+\end{table}
+
+This interface is natively supported by the advanced debug bridge that is used
+by \pulp and \pulpino, see also the documentation of this bridge.
+
+
+\section{Debug Address Map}
+
+This debug address map is not optimal and should be changed!
+See the OpenSoC debug project for a proposal for a better address map.
+
+\begin{table}[H]
+ \caption{Control and Status Register Map}
+ \label{tab:debug_map}
+ \centering\begin{tabularx}{\linewidth}{@{}|cc|c|l|X|@{}} \toprule
+   \multicolumn{2}{|c|}{\textbf{Dbginf Addr [15:0]}} & \textbf{Hex} & \textbf{Name} & \textbf{Description} \\ \hline
+   Grp [15:11] & Addr [10:0] & & & \\ \toprule
+   \texttt{0\_0001} & \texttt{000\_000X\_XXXX} & \texttt{0x0800 - 0x081F} & GPR   & General-Purpose Registers \\ \hline
+   \texttt{0\_0110} & \texttt{000\_0000\_0000} & \texttt{0x3000 - 0x3014} & Debug & Debug Registers \\ \hline
+   \texttt{?\_????} & \texttt{XXX\_XXXX\_XXXX} & \texttt{               } & CSR   & Everything else is mapped to CSR \\ \bottomrule
+  \end{tabularx}
+\end{table}
+
+
+\subsection{Debug Register: DMR1}
+
+\textbf{CSR Address:} \texttt{0x3010} \\
+\textbf{Reset Value:} \texttt{0x0000\_0000} \\
+\begin{figure}[H]
+  \centering
+  \begin{bytefield}[endianness=big,bitheight=60pt]{32}
+    \bitheader{31,23,22,0} \\
+    \bitbox{9}{ Unused }
+    \bitbox{1}{\rotatebox{90}{\tiny Single-Stepping    }}
+    \bitbox{22}{ Unused }
+  \end{bytefield}
+  \caption{DMR1}
+\end{figure}
+
+Single-stepping activates single-stepping mode, meaning the core traps to the
+debugger after one instruction has been executed.
+
+\subsection{Debug Register: DSR}
+
+\textbf{CSR Address:} \texttt{0x3014} \\
+\textbf{Reset Value:} \texttt{0x0000\_0000} \\
+\begin{figure}[H]
+  \centering
+  \begin{bytefield}[endianness=big,bitheight=60pt]{32}
+    \bitheader{31,8,7,6,0} \\
+    \bitbox{24}{ Unused }
+    \bitbox{1}{\rotatebox{90}{\tiny INTE   }}
+    \bitbox{1}{\rotatebox{90}{\tiny IIE    }}
+    \bitbox{6}{ Unused }
+  \end{bytefield}
+  \caption{DMR1}
+\end{figure}
+
+\signal{IIE} stands for illegal instruction exception enabled. A value of
+\signal{1} means trap to the debugger when an illegal instruction is
+encountered.
+
+\signal{INTE} stands for interrupt enabled. A value of \signal{1} means trap to
+the debugger when an interrupt is encountered.

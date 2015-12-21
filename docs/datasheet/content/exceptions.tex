@@ -1,4 +1,53 @@
 \chapter{Exceptions and Interrupts}
 \label{chap:exceptions}
 
-\rvcore supports 
+\rvcore supports vectorized interrupts, exceptions on illegal instructions and
+exceptions on load and store instructions to invalid addresses.
+
+
+\begin{table}[H]
+ \caption{Interrupt/exception offset vector table}
+ \label{tab:exc_table}
+ \centering\begin{tabular}{@{}ll@{}} \toprule
+    \textbf{Address} & \textbf{Description} \\ \toprule
+    \signal{0x00} - \signal{0x0000\_007C} & Interrupts 0 - 31 \\ \hline
+    \signal{0x80} & Reset \\ \hline
+    \signal{0x84} & Illegal Instruction \\ \hline
+    \signal{0x88} & \instr{ECALL} instruction executed \\ \hline
+    \signal{0x8C} & LSU error (invalid memory access) \\ \bottomrule
+  \end{tabular}
+\end{table}
+
+The instruction addresses in Table~\ref{tab:exc_table} are considered as an
+offset to the boot address given to the core. Specifically the core jumps to
+address \signal{$\{$boot\_addr[31:8], offset[7:0]$\}$} when encountering an
+exception/interrupt.
+
+
+\section{Interrupts}
+\rvcore uses vectorized interrupts, specifically it provides 32 separate
+interrupt lines. Interrupts can only be enabled/disabled on a global basis and
+not individually. It is assumed that there is an event/interrupt controller
+outside of the core that performs masking and buffering of the interrupt lines.
+The global interrupt enable is done via the CSR register \signal{mstatus}.
+
+\section{Exceptions}
+
+The illegal instruction exception, the load and store invalid memory access
+exceptions and ecall instruction exceptions can not be disabled and are always
+active.
+
+The illegal instruction exception and the load and store invalid memory access
+exceptions are precise exceptions, i.e. the value of \signal{mepc} will be the
+instruction address that caused it.
+
+\section{Handling}
+
+\rvcore does not support nested interrupt/exception handling. Exceptions inside
+interrupt/exception handlers are ignored and thus a user must ensure that such
+a situation does not happen, as otherwise the behaviour is undefined.
+
+Upon executing an \instr{eret} instruction, the core jumps to the program
+counter saved in the CSR register \signal{mepc}. When entering an
+interrupt/exception handler, the core sets \signal{mepc} to the current program
+counter.
