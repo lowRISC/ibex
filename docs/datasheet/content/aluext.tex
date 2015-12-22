@@ -1,2 +1,259 @@
 \chapter{PULP ALU Extensions}
 \label{chap:aluext}
+
+\rvcore supports advanced ALU operations that allow to perform multiple
+instructions that are specified in the base instruction set in one single
+instruction and thus increases efficiency of the core.
+For example those instructions include zero-/sign-extension instructions for
+8-bit and 16-bit operands, simple bit manipulation/counting instructions and
+min/max/avg instructions.
+
+
+\section{Instructions}
+
+\subsection{p.avg rD, rs1, rs2}
+Performs an arithmetic right shift after the addition of rs1 and rs2.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ rs2                               }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 0010}
+    \bitbox[]{5}{ src2 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 000 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 011 0011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = (rs1 + rs2) >> 1}
+
+
+\subsection{p.avgu rD, rs1, rs2}
+Performs a logical right shift after the addition of rs1 and rs2.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ rs2                               }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 0010}
+    \bitbox[]{5}{ src2 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 001 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 011 0011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = (rs1 + rs2) >> 1}
+
+
+\subsection{p.slet rD, rs1, rs2}
+
+Performs an signed smaller than or equal comparison between rs1 and rs2.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ rs2                               }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 0010}
+    \bitbox[]{5}{ src2 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 010 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 011 0011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = (rs1 <= rs2) ? -1 : 0}
+
+
+\subsection{p.sletu rD, rs1, rs2}
+
+Performs an unsigned smaller than or equal comparison between rs1 and rs2.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ rs2                               }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 0010}
+    \bitbox[]{5}{ src2 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 011 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 011 0011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = (rs1 <= rs2) ? -1 : 0}
+
+
+\subsection{p.min rD, rs1, rs2}
+
+Sets rD to the minimum of rs1 and rs2, assuming both are signed 32-bit values.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ rs2                               }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 0010}
+    \bitbox[]{5}{ src2 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 100 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 011 0011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = rs1 < rs2 ? rs1 : rs2}
+
+
+\subsection{p.minu rD, rs1, rs2}
+
+Sets rD to the minimum of rs1 and rs2, assuming both are unsigned 32-bit
+values.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ rs2                               }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 0010}
+    \bitbox[]{5}{ src2 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 101 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 011 0011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = rs1 < rs2 ? rs1 : rs2}
+
+
+\subsection{p.max rD, rs1, rs2}
+
+Sets rD to the maximum of rs1 and rs2, assuming both are signed 32-bit values.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ rs2                               }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 0010}
+    \bitbox[]{5}{ src2 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 110 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 011 0011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = rs1 > rs2 ? rs1 : rs2}
+
+
+\subsection{p.maxu rD, rs1, rs2}
+
+Sets rD to the maximum of rs1 and rs2, assuming both are unsigned 32-bit
+values.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ rs2                               }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 0010}
+    \bitbox[]{5}{ src2 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 111 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 011 0011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = rs1 > rs2 ? rs1 : rs2}
+
+
+\subsection{p.abs rD, rs1}
+
+Computes the absolute value of the signed 32-bit operand rs1.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ 00000                             }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 1010}
+    \bitbox[]{5}{ 00000 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 000 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 011 0011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = rs1 < 0 ? -rs1 : rs1}
+
+
+\subsection{p.ror rD, rs1, rs2}
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ rs2                               }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 0100}
+    \bitbox[]{5}{ src2 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 101 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 011 0011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = RotateRight(rs1, rs2)}
