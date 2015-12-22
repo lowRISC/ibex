@@ -257,3 +257,197 @@ Computes the absolute value of the signed 32-bit operand rs1.
   \end{bytefield}
 \end{center}
 \textbf{Operation:} \texttt{rD = RotateRight(rs1, rs2)}
+
+
+\subsection{p.exths rD, rs1}
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ 00000                             }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 1000}
+    \bitbox[]{5}{ 00000 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 100 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 011 0011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = Sext(rs1[15:0])}
+
+
+\subsection{p.exthz rD, rs1}
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ 00000                             }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 1000}
+    \bitbox[]{5}{ 00000 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 101 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 011 0011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = Zext(rs1[15:0])}
+
+
+\subsection{p.extbs rD, rs1}
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ 00000                             }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 1000}
+    \bitbox[]{5}{ 00000 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 110 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 011 0011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = Sext(rs1[7:0])}
+
+
+\subsection{p.extbz rD, rs1}
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ 00000                             }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 1000}
+    \bitbox[]{5}{ 00000 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 111 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 011 0011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = Zext(rs1[7:0])}
+
+
+\subsection{p.ff1 rD, rs1}
+
+Returns position of first bit that is \texttt{1} starting from LSB, 32 if none.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ 00000                             }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 1000}
+    \bitbox[]{5}{ 00000 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 000 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 011 0011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = FindFirst1(rs1)}
+
+
+\subsection{p.fl1 rD, rs1}
+
+Returns position of first bit that is \texttt{1} starting from MSB, 32 if none.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ 00000                             }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 1000}
+    \bitbox[]{5}{ 00000 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 001 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 011 0011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = FindLast1(rs1)}
+
+
+\subsection{p.clb rD, rs1}
+
+Count leading bits in rs1, i.e. the number of consecutive \texttt{1} or
+\texttt{0} bits from MSB.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ 00000                             }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 1000}
+    \bitbox[]{5}{ 00000 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 010 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 011 0011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = CountLeadingBits(rs1)}
+
+
+\subsection{p.cnt rD, rs1}
+
+Count the number of bits set to \texttt{1} in rs1. This is also known as
+population count.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ 00000                             }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 1000}
+    \bitbox[]{5}{ 00000 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 011 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 011 0011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = PopCount(rs1)}
