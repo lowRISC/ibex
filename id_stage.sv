@@ -906,22 +906,29 @@ module riscv_id_stage
           vector_mode_ex_o            <= vector_mode;
         end
 
-        regfile_waddr_ex_o          <= regfile_waddr_id;
         regfile_we_ex_o             <= regfile_we_id;
+        if (regfile_we_id) begin
+          regfile_waddr_ex_o          <= regfile_waddr_id;
+        end
 
-        regfile_alu_waddr_ex_o      <= regfile_alu_waddr_id;
         regfile_alu_we_ex_o         <= regfile_alu_we_id;
+        if (regfile_alu_we_id) begin
+          regfile_alu_waddr_ex_o      <= regfile_alu_waddr_id;
+        end
 
         prepost_useincr_ex_o        <= prepost_useincr;
 
         csr_access_ex_o             <= csr_access;
         csr_op_ex_o                 <= csr_op;
 
-        data_we_ex_o                <= data_we_id;
-        data_type_ex_o              <= data_type_id;
-        data_sign_ext_ex_o          <= data_sign_ext_id;
-        data_reg_offset_ex_o        <= data_reg_offset_id;
         data_req_ex_o               <= data_req_id;
+        if (data_req_id)
+        begin // only needed for LSU when there is an active request
+          data_we_ex_o                <= data_we_id;
+          data_type_ex_o              <= data_type_id;
+          data_sign_ext_ex_o          <= data_sign_ext_id;
+          data_reg_offset_ex_o        <= data_reg_offset_id;
+        end
 
         data_misaligned_ex_o        <= 1'b0;
 

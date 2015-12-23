@@ -164,7 +164,7 @@ module riscv_ex_stage
   begin : EX_WB_Pipeline_Register
     if (rst_n == 1'b0)
     begin
-      regfile_waddr_wb_o   <= 5'b0_0000;
+      regfile_waddr_wb_o   <= '0;
       regfile_we_wb_o      <= 1'b0;
     end
     else
@@ -172,7 +172,9 @@ module riscv_ex_stage
       if (ex_valid_o) // wb_ready_i is implied
       begin
         regfile_we_wb_o    <= regfile_we_i;
-        regfile_waddr_wb_o <= regfile_waddr_i;
+        if (regfile_we_i) begin
+          regfile_waddr_wb_o <= regfile_waddr_i;
+        end
       end else if (wb_ready_i) begin
         // we are ready for a new instruction, but there is none available,
         // so we just flush the current one out of the pipe
