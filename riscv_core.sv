@@ -134,6 +134,9 @@ module riscv_core
   logic [1:0]  mult_sel_subword_ex;
   logic [1:0]  mult_signed_mode_ex;
   logic        mult_mac_en_ex;
+  logic [31:0] mult_operand_a_ex;
+  logic [31:0] mult_operand_b_ex;
+  logic [31:0] mult_operand_c_ex;
 
   // Register Write Control
   logic [4:0]  regfile_waddr_ex;
@@ -380,13 +383,16 @@ module riscv_core
 
     // ALU
     .alu_operator_ex_o            ( alu_operator_ex      ),
-    .vector_mode_ex_o             ( vector_mode_ex       ), // from ID to EX stage
 
     // MUL
     .mult_en_ex_o                 ( mult_en_ex           ), // from ID to EX stage
     .mult_sel_subword_ex_o        ( mult_sel_subword_ex  ), // from ID to EX stage
     .mult_signed_mode_ex_o        ( mult_signed_mode_ex  ), // from ID to EX stage
     .mult_mac_en_ex_o             ( mult_mac_en_ex       ), // from ID to EX stage
+    .mult_operand_a_ex_o          ( mult_operand_a_ex    ),
+    .mult_operand_b_ex_o          ( mult_operand_b_ex    ),
+    .mult_operand_c_ex_o          ( mult_operand_c_ex    ),
+    .vector_mode_ex_o             ( vector_mode_ex       ), // from ID to EX stage
 
     // CSR ID/EX
     .csr_access_ex_o              ( csr_access_ex        ),
@@ -478,6 +484,9 @@ module riscv_core
     .mult_sel_subword_i         ( mult_sel_subword_ex          ),
     .mult_signed_mode_i         ( mult_signed_mode_ex          ),
     .mult_mac_en_i              ( mult_mac_en_ex               ),
+    .mult_operand_a_i           ( mult_operand_a_ex            ), // from ID/EX pipe registers
+    .mult_operand_b_i           ( mult_operand_b_ex            ), // from ID/EX pipe registers
+    .mult_operand_c_i           ( mult_operand_c_ex            ), // from ID/EX pipe registers
 
     // interface with CSRs
     .csr_access_i               ( csr_access_ex                ),

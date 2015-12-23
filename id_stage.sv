@@ -104,6 +104,9 @@ module riscv_id_stage
     output logic [1:0]  mult_sel_subword_ex_o,
     output logic [1:0]  mult_signed_mode_ex_o,
     output logic        mult_mac_en_ex_o,
+    output logic [31:0] mult_operand_a_ex_o,
+    output logic [31:0] mult_operand_b_ex_o,
+    output logic [31:0] mult_operand_c_ex_o,
 
     // CSR ID/EX
     output logic        csr_access_ex_o,
@@ -824,9 +827,9 @@ module riscv_id_stage
     if (rst_n == 1'b0)
     begin
       alu_operator_ex_o           <= `ALU_NOP;
-      alu_operand_a_ex_o          <= 32'h0000_0000;
-      alu_operand_b_ex_o          <= 32'h0000_0000;
-      alu_operand_c_ex_o          <= 32'h0000_0000;
+      alu_operand_a_ex_o          <= '0;
+      alu_operand_b_ex_o          <= '0;
+      alu_operand_c_ex_o          <= '0;
 
       vector_mode_ex_o            <= '0;
 
@@ -834,6 +837,9 @@ module riscv_id_stage
       mult_sel_subword_ex_o       <= 2'b0;
       mult_signed_mode_ex_o       <= 2'b0;
       mult_mac_en_ex_o            <= 1'b0;
+      mult_operand_a_ex_o         <= '0;
+      mult_operand_b_ex_o         <= '0;
+      mult_operand_c_ex_o         <= '0;
 
       regfile_waddr_ex_o          <= 5'b0;
       regfile_we_ex_o             <= 1'b0;
@@ -879,17 +885,26 @@ module riscv_id_stage
     else if (~data_misaligned_i) begin
       if (id_valid_o)
       begin // unstall the whole pipeline
-        alu_operator_ex_o           <= alu_operator;
-        alu_operand_a_ex_o          <= alu_operand_a;
-        alu_operand_b_ex_o          <= alu_operand_b;
-        alu_operand_c_ex_o          <= alu_operand_c;
-
-        vector_mode_ex_o            <= vector_mode;
+        if (~mult_en)
+        begin // when we are multiplying we don't need the ALU
+          alu_operator_ex_o           <= alu_operator;
+          alu_operand_a_ex_o          <= alu_operand_a;
+          alu_operand_b_ex_o          <= alu_operand_b;
+          alu_operand_c_ex_o          <= alu_operand_c;
+        end
 
         mult_en_ex_o                <= mult_en;
-        mult_sel_subword_ex_o       <= mult_sel_subword;
-        mult_signed_mode_ex_o       <= mult_signed_mode;
-        mult_mac_en_ex_o            <= mult_mac_en;
+        if (mult_en)
+        begin // only change those registers when we actually need to
+          mult_sel_subword_ex_o       <= mult_sel_subword;
+          mult_signed_mode_ex_o       <= mult_signed_mode;
+          mult_mac_en_ex_o            <= mult_mac_en;
+          mult_operand_a_ex_o         <= alu_operand_a;
+          mult_operand_b_ex_o         <= alu_operand_b;
+          mult_operand_c_ex_o         <= alu_operand_c;
+
+          vector_mode_ex_o            <= vector_mode;
+        end
 
         regfile_waddr_ex_o          <= regfile_waddr_id;
         regfile_we_ex_o             <= regfile_we_id;

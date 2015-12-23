@@ -46,6 +46,9 @@ module riscv_ex_stage
   input  logic [1:0]  mult_sel_subword_i,
   input  logic [1:0]  mult_signed_mode_i,
   input  logic        mult_mac_en_i,
+  input  logic [31:0] mult_operand_a_i,
+  input  logic [31:0] mult_operand_b_i,
+  input  logic [31:0] mult_operand_c_i,
 
   // input from ID stage
   input  logic        branch_in_ex_i,
@@ -146,9 +149,9 @@ module riscv_ex_stage
    .signed_mode_i   ( mult_signed_mode_i   ),
    .mac_en_i        ( mult_mac_en_i        ),
 
-   .op_a_i          ( alu_operand_a_i      ),
-   .op_b_i          ( alu_operand_b_i      ),
-   .mac_i           ( alu_operand_c_i      ),
+   .op_a_i          ( mult_operand_a_i      ),
+   .op_b_i          ( mult_operand_b_i      ),
+   .mac_i           ( mult_operand_c_i      ),
 
    .result_o        ( mult_result          )
   );
