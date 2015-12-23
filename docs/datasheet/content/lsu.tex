@@ -30,20 +30,6 @@ word-aligned accesses internally.
 This means that at least two cycles are needed for misaligned loads and stores.
 
 
-\section{Post-Incrementing Load and Store Instructions}
-
-Post-incrementing load and store instructions perform a load/store operation
-from/to the data memory while at the same time increasing the base address by
-the specified offset. For the memory access the base address without offset is
-used.
-
-Post-incrementing load and stores reduce the number of instructions necessary to
-execute when running in a loop, i.e. the address increment can be embedded in
-the post-increment instructions. Coupled with the hardware loop extension a
-significant reduction in the number of instructions necessary to execute small
-loops can be achieved.
-
-
 \section{Protocol}
 \label{sec:lsu_protocol}
 
@@ -130,3 +116,428 @@ Figure~\ref{fig:lsu_trans_slow} show example timing diagrams of the protocol.
   \caption{Slow Answer Memory Transaction}
   \label{fig:lsu_trans_slow}
 \end{figure}
+
+
+\section{Post-Incrementing Load and Store Instructions}
+
+Post-incrementing load and store instructions perform a load/store operation
+from/to the data memory while at the same time increasing the base address by
+the specified offset. For the memory access the base address without offset is
+used.
+
+Post-incrementing load and stores reduce the number of instructions necessary to
+execute when running in a loop, i.e. the address increment can be embedded in
+the post-increment instructions. Coupled with the hardware loop extension a
+significant reduction in the number of instructions necessary to execute small
+loops can be achieved.
+
+A description of the individual instructions that were added can be found below.
+
+
+\subsection{lb rD, imm(rs1!)}
+
+Loads a byte from data memory on the address \texttt{rs1} and saves \texttt{(rs1
++ I)} in register \texttt{rs1} after the load has completed.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{12}{ imm[11:0]                        }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{12}{ imm[11:0] }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 000 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 000 1011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = Sext(mem[rs1]); rs1 += Sext(imm)}
+
+
+\subsection{lh rD, imm(rs1!)}
+
+Loads a half-word from data memory on the address \texttt{rs1} and saves
+\texttt{(rs1 + I)} in register \texttt{rs1} after the load has completed.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{12}{ imm[11:0]                        }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{12}{ imm[11:0] }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 001 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 000 1011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = Sext(mem[rs1]); rs1 += Sext(imm)}
+
+
+\subsection{lw rD, imm(rs1!)}
+
+Loads a word from data memory on the address \texttt{rs1} and saves \texttt{(rs1
++ I)} in register \texttt{rs1} after the load has completed.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{12}{ imm[11:0]                        }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{12}{ imm[11:0] }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 010 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 000 1011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = mem[rs1]; rs1 += Sext(imm)}
+
+
+\subsection{lbu rD, imm(rs1!)}
+
+Loads a byte from data memory on the address \texttt{rs1} and saves \texttt{(rs1
++ I)} in register \texttt{rs1} after the load has completed.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{12}{ imm[11:0]                        }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{12}{ imm[11:0] }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 100 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 000 1011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = Zext(mem[rs1]); rs1 += Sext(imm)}
+
+
+\subsection{lhu rD, imm(rs1!)}
+
+Loads a half-word from data memory on the address \texttt{rs1} and saves
+\texttt{(rs1 + I)} in register \texttt{rs1} after the load has completed.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{12}{ imm[11:0]                        }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{12}{ imm[11:0] }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 101 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 000 1011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = Zext(mem[rs1]); rs1 += Sext(imm)}
+
+
+
+\subsection{lb rD, rs2(rs1!)}
+
+Loads a byte from data memory on the address \texttt{rs1} and saves \texttt{(rs1
++ rs2)} in register \texttt{rs1} after the load has completed.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ rs2                               }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 0000}
+    \bitbox[]{5}{ src2 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 111 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 000 1011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = Sext(mem[rs1]); rs1 += rs2}
+
+
+\subsection{lh rD, rs2(rs1!)}
+
+Loads a half-word from data memory on the address \texttt{rs1} and saves
+\texttt{(rs1 + rs2)} in register \texttt{rs1} after the load has completed.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ rs2                               }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 1000}
+    \bitbox[]{5}{ src2 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 111 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 000 1011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = Sext(mem[rs1]); rs1 += rs2}
+
+
+\subsection{lw rD, rs2(rs1!)}
+
+Loads a word from data memory on the address \texttt{rs1} and saves \texttt{(rs1
++ I)} in register \texttt{rs1} after the load has completed.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ rs2                               }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 001 0000}
+    \bitbox[]{5}{ src2 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 111 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 000 1011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = mem[rs1]; rs1 += rs2}
+
+
+\subsection{lbu rD, rs2(rs1!)}
+
+Loads a byte from data memory on the address \texttt{rs1} and saves \texttt{(rs1
++ rs2)} in register \texttt{rs1} after the load has completed.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ rs2                               }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 010 0000}
+    \bitbox[]{5}{ src2 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 111 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 000 1011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = Zext(mem[rs1]); rs1 += rs2}
+
+
+\subsection{lhu rD, rs2(rs1!)}
+
+Loads a half-word from data memory on the address \texttt{rs1} and saves
+\texttt{(rs1 + rs2)} in register \texttt{rs1} after the load has completed.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ rs2                               }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 010 1000}
+    \bitbox[]{5}{ src2 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 111 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 000 1011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD = Zext(mem[rs1]); rs1 += rs2}
+
+
+
+\subsection{sb rs2, imm(rs1!)}
+
+Store a byte to data memory on the address \texttt{rs1} and saves
+\texttt{(rs1 + imm)} in register \texttt{rs1} after the store has completed.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{12}{ imm[11:0]                        }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{12}{ imm[11:0] }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 000 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 010 1011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{mem[rs1] = rs2[7:0]; rs1 += Sext(imm)}
+
+
+\subsection{sh rs2, imm(rs1!)}
+
+Store a half-word to data memory on the address \texttt{rs1} and saves
+\texttt{(rs1 + imm)} in register \texttt{rs1} after the store has completed.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{12}{ imm[11:0]                        }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{12}{ imm[11:0] }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 001 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 010 1011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{mem[rs1] = rs2[15:0]; rs1 += Sext(imm)}
+
+
+\subsection{sw rs2, imm(rs1!)}
+
+Store a word to data memory on the address \texttt{rs1} and saves
+\texttt{(rs1 + imm)} in register \texttt{rs1} after the store has completed.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{12}{ imm[11:0]                        }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{12}{ imm[11:0] }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 010 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 010 1011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{mem[rs1] = rs2[31:0]; rs1 += Sext(imm)}
+
+
+
+\subsection{sb rs2, rs3(rs1!)}
+
+Store a byte to data memory on the address \texttt{rs1} and saves
+\texttt{(rs1 + rs3)} in register \texttt{rs1} after the store has completed.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{2}{ 00                                }
+    \bitbox{5}{ rs3                               }
+    \bitbox{5}{ rs2                               }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ 00000                             }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{2}{ 00 }
+    \bitbox[]{5}{ src3 }
+    \bitbox[]{5}{ src2 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 100 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 000 1011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{mem[rs1] = rs2[7:0]; rs1 += rs3}
+
+
+\subsection{sh rs2, rs3(rs1!)}
+
+Store a half-word to data memory on the address \texttt{rs1} and saves
+\texttt{(rs1 + rs3)} in register \texttt{rs1} after the store has completed.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{2}{ 00                                }
+    \bitbox{5}{ rs3                               }
+    \bitbox{5}{ rs2                               }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ 00000                             }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{2}{ 00 }
+    \bitbox[]{5}{ src3 }
+    \bitbox[]{5}{ src2 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 101 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 000 1011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{mem[rs1] = rs2[15:0]; rs1 += rs3}
+
+
+\subsection{sw rs2, rs3(rs1!)}
+
+Store a word to data memory on the address \texttt{rs1} and saves
+\texttt{(rs1 + rs3)} in register \texttt{rs1} after the store has completed.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{2}{ 00                                }
+    \bitbox{5}{ rs3                               }
+    \bitbox{5}{ rs2                               }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ 00000                             }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{2}{ 00 }
+    \bitbox[]{5}{ src3 }
+    \bitbox[]{5}{ src2 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 110 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 000 1011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{mem[rs1] = rs2[31:0]; rs1 += rs3}
