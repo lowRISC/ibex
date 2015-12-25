@@ -15,7 +15,6 @@ as possible and avoid any overhead that we do not explicitely need.
    \multicolumn{4}{|c|}{\textbf{CSR Address}} & \textbf{Hex} & \textbf{Name} & \textbf{Access}  & \textbf{Description} \\ \hline
    \textbf{[11:10]} & \textbf{[9:8]} & \textbf{[7:6]} & \textbf{[5:0]} & & & & \\ \toprule
    00 & 11 & 00 & 000000  & 0x300         & MSTATUS  & R/W & Machine Status Register \\ \hline
-   00 & 11 & 01 & 000000  & 0x340         & MSCRATCH & R/W & Scratch Register for machine trap handlers \\ \hline
    00 & 11 & 01 & 000001  & 0x341         & MEPC     & R/W & Machine exception program counter \\ \hline
    00 & 11 & 01 & 000010  & 0x342         & MCAUSE   & R/W & Machine trap cause \\ \hline
    01 & 11 & 00 & 0XXXXX  & 0x780 - 0x79F & PCCRs    & R/W & Performance Counter Counter Registers \\ \hline
@@ -43,14 +42,6 @@ as possible and avoid any overhead that we do not explicitely need.
 
 Note that \signal{PRV[1:0]} is statically \signal{2'b11} and cannot be altered (read-only).
 
-
-\subsection{MSCRATCH}
-\csrDesc{0x340}{0x0000\_0000}{MSRATCH}{
-  \begin{bytefield}[endianness=big]{32}
-    \bitheader{31,0} \\
-    \bitbox{32}{ mscratch                          }
-  \end{bytefield}
-}
 
 \subsection{MEPC}
 \csrDesc{0x341}{0x0000\_0000}{MEPC}{

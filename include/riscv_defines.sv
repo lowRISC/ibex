@@ -215,12 +215,6 @@
 //                           |___/                     //
 /////////////////////////////////////////////////////////
 
-// internal CSR addresses
-`define CSR_IDX_MSCRATCH  0
-`define CSR_IDX_MEPC      1
-
-`define CSR_MAX_IDX       1
-
 // CSR operations
 `define CSR_OP_NONE  2'b00
 `define CSR_OP_WRITE 2'b01

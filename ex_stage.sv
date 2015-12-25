@@ -86,26 +86,19 @@ module riscv_ex_stage
 
 
   logic [31:0] alu_result;
+  logic [31:0] alu_csr_result;
+  logic [31:0] mult_result;
   logic        alu_cmp_result;
 
-  logic [31:0] mult_result;
+
+  // EX stage result mux (ALU, MAC unit, CSR)
+  assign alu_csr_result         = csr_access_i ? csr_rdata_i : alu_result;
+
+  assign regfile_alu_wdata_fw_o = mult_en_i ? mult_result : alu_csr_result;
 
 
   assign regfile_alu_we_fw_o    = regfile_alu_we_i;
   assign regfile_alu_waddr_fw_o = regfile_alu_waddr_i;
-
-
-  // EX stage result mux (ALU, MAC unit, CSR)
-  always_comb
-  begin
-    regfile_alu_wdata_fw_o = alu_result;
-
-    if (mult_en_i == 1'b1)
-      regfile_alu_wdata_fw_o = mult_result;
-
-    if (csr_access_i == 1'b1)
-      regfile_alu_wdata_fw_o = csr_rdata_i;
-  end
 
 
   // branch handling
