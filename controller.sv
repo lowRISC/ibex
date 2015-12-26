@@ -116,6 +116,8 @@ module riscv_controller
                       FLUSH_EX, FLUSH_WB,
                       DBG_WAIT_BRANCH, DBG_SIGNAL, DBG_WAIT } ctrl_fsm_cs, ctrl_fsm_ns;
 
+  logic jump_done, jump_done_q;
+
   logic reg_d_ex_is_reg_a_id;
   logic reg_d_ex_is_reg_b_id;
   logic reg_d_ex_is_reg_c_id;
@@ -161,6 +163,7 @@ module riscv_controller
 
     pc_mux_o      = `PC_BOOT;
     pc_set_o      = 1'b0;
+    jump_done     = jump_done_q;
 
     ctrl_fsm_ns   = ctrl_fsm_cs;
 
@@ -245,8 +248,10 @@ module riscv_controller
             pc_mux_o = `PC_JUMP;
 
             // if there is a jr stall, wait for it to be gone
-            if (~jr_stall_o)
-              pc_set_o = 1'b1;
+            if ((~jr_stall_o) && (~jump_done_q)) begin
+              pc_set_o    = 1'b1;
+              jump_done   = 1'b1;
+            end
 
             // we don't have to change our current state here as the prefetch
             // buffer is automatically invalidated, thus the next instruction
@@ -506,10 +511,14 @@ module riscv_controller
     if ( rst_n == 1'b0 )
     begin
       ctrl_fsm_cs <= RESET;
+      jump_done_q <= 1'b0;
     end
     else
     begin
       ctrl_fsm_cs <= ctrl_fsm_ns;
+
+      // clear when id is valid (no instruction incoming)
+      jump_done_q <= jump_done & (~id_valid_i);
     end
   end
 

@@ -357,8 +357,6 @@ module riscv_if_stage
     end
     else
     begin
-      if (clear_instr_valid_i)
-        instr_valid_id_o    <= 1'b0;
 
       if (if_valid_o)
       begin
@@ -371,7 +369,11 @@ module riscv_if_stage
 
         if (fetch_is_hwlp)
           hwlp_dec_cnt_id_o   <= hwlp_dec_cnt_if;
+
+      end else if (clear_instr_valid_i) begin
+        instr_valid_id_o    <= 1'b0;
       end
+
     end
   end
 
