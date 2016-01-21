@@ -237,6 +237,7 @@ module riscv_id_stage
   logic [1:0]  alu_op_a_mux_sel;
   logic [1:0]  alu_op_b_mux_sel;
   logic [1:0]  alu_op_c_mux_sel;
+  logic [1:0]  regc_mux;
 
   logic        vector_mode;
 
@@ -292,6 +293,17 @@ module riscv_id_stage
   logic [31:0] alu_operand_b;
   logic [31:0] alu_operand_c;
 
+  // Forwarding detection signals
+  logic        reg_d_ex_is_reg_a_i;
+  logic        reg_d_ex_is_reg_b_i;
+  logic        reg_d_ex_is_reg_c_i;
+  logic        reg_d_wb_is_reg_a_i;
+  logic        reg_d_wb_is_reg_b_i;
+  logic        reg_d_wb_is_reg_c_i;
+  logic        reg_d_alu_is_reg_a_i;
+  logic        reg_d_alu_is_reg_b_i;
+  logic        reg_d_alu_is_reg_c_i;
+
 
   assign instr         = instr_rdata_i;
 
@@ -306,18 +318,44 @@ module riscv_id_stage
   // immediate for CSR manipulatin (zero extended)
   assign imm_z_type  = { 27'b0, instr[`REG_S1] };
 
-  // source registers
+  //---------------------------------------------------------------------------
+  // source register selection
+  //---------------------------------------------------------------------------
   assign regfile_addr_ra_id = instr[`REG_S1];
   assign regfile_addr_rb_id = instr[`REG_S2];
-  assign regfile_addr_rc_id = instr[`REG_S3];
 
+  // register C mux
+  always_comb
+  begin
+    unique case (regc_mux)
+      `REGC_ZERO:  regfile_addr_rc_id = '0;
+      `REGC_RD:    regfile_addr_rc_id = instr[`REG_D];
+      `REGC_S3:    regfile_addr_rc_id = instr[`REG_S3];
+      default:     regfile_addr_rc_id = '0;
+    endcase
+  end
+
+  //---------------------------------------------------------------------------
   // destination registers
+  //---------------------------------------------------------------------------
   assign regfile_waddr_id = instr[`REG_D];
 
   // Second Register Write Adress Selection
   // Used for prepost load/store and multiplier
   assign regfile_alu_waddr_id = regfile_alu_waddr_mux_sel ?
                                 regfile_waddr_id : regfile_addr_ra_id;
+
+  // Forwarding control signals
+  assign reg_d_ex_is_reg_a_id  = (regfile_waddr_ex_o     == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
+  assign reg_d_ex_is_reg_b_id  = (regfile_waddr_ex_o     == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
+  assign reg_d_ex_is_reg_c_id  = (regfile_waddr_ex_o     == regfile_addr_rc_id) && (regc_used_dec == 1'b1) && (regfile_addr_rc_id != '0);
+  assign reg_d_wb_is_reg_a_id  = (regfile_waddr_wb_i     == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
+  assign reg_d_wb_is_reg_b_id  = (regfile_waddr_wb_i     == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
+  assign reg_d_wb_is_reg_c_id  = (regfile_waddr_wb_i     == regfile_addr_rc_id) && (regc_used_dec == 1'b1) && (regfile_addr_rc_id != '0);
+  assign reg_d_alu_is_reg_a_id = (regfile_alu_waddr_fw_i == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
+  assign reg_d_alu_is_reg_b_id = (regfile_alu_waddr_fw_i == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
+  assign reg_d_alu_is_reg_c_id = (regfile_alu_waddr_fw_i == regfile_addr_rc_id) && (regc_used_dec == 1'b1) && (regfile_addr_rc_id != '0);
+
 
 
   // kill instruction in the IF/ID stage by setting the instr_valid_id control
@@ -583,6 +621,7 @@ module riscv_id_stage
     .alu_op_b_mux_sel_o              ( alu_op_b_mux_sel          ),
     .alu_op_c_mux_sel_o              ( alu_op_c_mux_sel          ),
     .immediate_mux_sel_o             ( immediate_mux_sel         ),
+    .regc_mux_o                      ( regc_mux                  ),
 
     .vector_mode_o                   ( vector_mode               ),
 
@@ -691,6 +730,17 @@ module riscv_id_stage
     // regfile port 2
     .regfile_alu_waddr_fw_i         ( regfile_alu_waddr_fw_i ),
     .regfile_alu_we_fw_i            ( regfile_alu_we_fw_i    ),
+
+    // Forwarding detection signals
+    .reg_d_ex_is_reg_a_i            ( reg_d_ex_is_reg_a_id   ),
+    .reg_d_ex_is_reg_b_i            ( reg_d_ex_is_reg_b_id   ),
+    .reg_d_ex_is_reg_c_i            ( reg_d_ex_is_reg_c_id   ),
+    .reg_d_wb_is_reg_a_i            ( reg_d_wb_is_reg_a_id   ),
+    .reg_d_wb_is_reg_b_i            ( reg_d_wb_is_reg_b_id   ),
+    .reg_d_wb_is_reg_c_i            ( reg_d_wb_is_reg_c_id   ),
+    .reg_d_alu_is_reg_a_i           ( reg_d_alu_is_reg_a_id  ),
+    .reg_d_alu_is_reg_b_i           ( reg_d_alu_is_reg_b_id  ),
+    .reg_d_alu_is_reg_c_i           ( reg_d_alu_is_reg_c_id  ),
 
     // Forwarding signals
     .operand_a_fw_mux_sel_o         ( operand_a_fw_mux_sel   ),

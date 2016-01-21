@@ -91,6 +91,18 @@ module riscv_controller
   output logic [1:0]  operand_b_fw_mux_sel_o,     // regfile rb data selector form ID stage
   output logic [1:0]  operand_c_fw_mux_sel_o,     // regfile rc data selector form ID stage
 
+  // forwarding detection signals
+  input logic         reg_d_ex_is_reg_a_i,
+  input logic         reg_d_ex_is_reg_b_i,
+  input logic         reg_d_ex_is_reg_c_i,
+  input logic         reg_d_wb_is_reg_a_i,
+  input logic         reg_d_wb_is_reg_b_i,
+  input logic         reg_d_wb_is_reg_c_i,
+  input logic         reg_d_alu_is_reg_a_i,
+  input logic         reg_d_alu_is_reg_b_i,
+  input logic         reg_d_alu_is_reg_c_i,
+
+
   // stall signals
   output logic        halt_if_o,
   output logic        halt_id_o,
@@ -117,16 +129,6 @@ module riscv_controller
                       DBG_WAIT_BRANCH, DBG_SIGNAL, DBG_WAIT } ctrl_fsm_cs, ctrl_fsm_ns;
 
   logic jump_done, jump_done_q;
-
-  logic reg_d_ex_is_reg_a_id;
-  logic reg_d_ex_is_reg_b_id;
-  logic reg_d_ex_is_reg_c_id;
-  logic reg_d_wb_is_reg_a_id;
-  logic reg_d_wb_is_reg_b_id;
-  logic reg_d_wb_is_reg_c_id;
-  logic reg_d_alu_is_reg_a_id;
-  logic reg_d_alu_is_reg_b_id;
-  logic reg_d_alu_is_reg_c_id;
 
 
 `ifndef SYNTHESIS
@@ -426,7 +428,7 @@ module riscv_controller
 
     // Stall because of load operation
     if ((data_req_ex_i == 1'b1) && (regfile_we_ex_i == 1'b1) &&
-        ((reg_d_ex_is_reg_a_id == 1'b1) || (reg_d_ex_is_reg_b_id == 1'b1) || (reg_d_ex_is_reg_c_id == 1'b1)) )
+        ((reg_d_ex_is_reg_a_i == 1'b1) || (reg_d_ex_is_reg_b_i == 1'b1) || (reg_d_ex_is_reg_c_i == 1'b1)) )
     begin
       deassert_we_o   = 1'b1;
       load_stall_o    = 1'b1;
@@ -437,9 +439,9 @@ module riscv_controller
     // we don't care about in which state the ctrl_fsm is as we deassert_we
     // anyway when we are not in DECODE
     if ((jump_in_dec_i == `BRANCH_JALR) &&
-        (((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_a_id == 1'b1)) ||
-         ((regfile_we_ex_i == 1'b1) && (reg_d_ex_is_reg_a_id == 1'b1)) ||
-         ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_a_id == 1'b1))) )
+        (((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_a_i == 1'b1)) ||
+         ((regfile_we_ex_i == 1'b1) && (reg_d_ex_is_reg_a_i == 1'b1)) ||
+         ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1))) )
     begin
       jr_stall_o      = 1'b1;
       deassert_we_o     = 1'b1;
@@ -449,17 +451,6 @@ module riscv_controller
   // stall because of misaligned data access
   assign misaligned_stall_o = data_misaligned_i;
 
-
-  // Forwarding control signals
-  assign reg_d_ex_is_reg_a_id  = (regfile_waddr_ex_i     == instr_rdata_i[`REG_S1]) && (rega_used_i == 1'b1);
-  assign reg_d_ex_is_reg_b_id  = (regfile_waddr_ex_i     == instr_rdata_i[`REG_S2]) && (regb_used_i == 1'b1);
-  assign reg_d_ex_is_reg_c_id  = (regfile_waddr_ex_i     == instr_rdata_i[`REG_S3])  && (regc_used_i == 1'b1);
-  assign reg_d_wb_is_reg_a_id  = (regfile_waddr_wb_i     == instr_rdata_i[`REG_S1]) && (rega_used_i == 1'b1);
-  assign reg_d_wb_is_reg_b_id  = (regfile_waddr_wb_i     == instr_rdata_i[`REG_S2]) && (regb_used_i == 1'b1);
-  assign reg_d_wb_is_reg_c_id  = (regfile_waddr_wb_i     == instr_rdata_i[`REG_S3])  && (regc_used_i == 1'b1);
-  assign reg_d_alu_is_reg_a_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_S1]) && (rega_used_i == 1'b1);
-  assign reg_d_alu_is_reg_b_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_S2]) && (regb_used_i == 1'b1);
-  assign reg_d_alu_is_reg_c_id = (regfile_alu_waddr_fw_i == instr_rdata_i[`REG_S3])  && (regc_used_i == 1'b1);
 
   // Forwarding control unit
   always_comb
@@ -472,30 +463,24 @@ module riscv_controller
     // Forwarding WB -> ID
     if (regfile_we_wb_i == 1'b1)
     begin
-      if (reg_d_wb_is_reg_a_id == 1'b1)
+      if (reg_d_wb_is_reg_a_i == 1'b1)
         operand_a_fw_mux_sel_o = `SEL_FW_WB;
-      if (reg_d_wb_is_reg_b_id == 1'b1)
+      if (reg_d_wb_is_reg_b_i == 1'b1)
         operand_b_fw_mux_sel_o = `SEL_FW_WB;
-      if (reg_d_wb_is_reg_c_id == 1'b1)
+      if (reg_d_wb_is_reg_c_i == 1'b1)
         operand_c_fw_mux_sel_o = `SEL_FW_WB;
     end
 
     // Forwarding EX -> ID
     if (regfile_alu_we_fw_i == 1'b1)
     begin
-     if (reg_d_alu_is_reg_a_id == 1'b1)
+     if (reg_d_alu_is_reg_a_i == 1'b1)
        operand_a_fw_mux_sel_o = `SEL_FW_EX;
-     if (reg_d_alu_is_reg_b_id == 1'b1)
+     if (reg_d_alu_is_reg_b_i == 1'b1)
        operand_b_fw_mux_sel_o = `SEL_FW_EX;
-     if (reg_d_alu_is_reg_c_id == 1'b1)
+     if (reg_d_alu_is_reg_c_i == 1'b1)
        operand_c_fw_mux_sel_o = `SEL_FW_EX;
     end
-
-    // Make sure x0 is never forwarded
-    if (instr_rdata_i[`REG_S1] == 5'b0)
-      operand_a_fw_mux_sel_o = `SEL_REGFILE;
-    if (instr_rdata_i[`REG_S2] == 5'b0)
-      operand_b_fw_mux_sel_o = `SEL_REGFILE;
 
     // for misaligned memory accesses
     if (data_misaligned_i == 1'b1)

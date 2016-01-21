@@ -52,6 +52,7 @@ module riscv_decoder
   output logic [1:0]  alu_op_b_mux_sel_o,      // operand b selection: reg value or immediate
   output logic [1:0]  alu_op_c_mux_sel_o,      // operand c selection: reg value or jump target
   output logic [2:0]  immediate_mux_sel_o,     // immediate selection for operand b
+  output logic [1:0]  regc_mux_o,              // register c selection: S3, RD or 0
 
   output logic        vector_mode_o,           // selects between 32 bit, 16 bit and 8 bit vectorial modes
 
@@ -126,6 +127,7 @@ module riscv_decoder
     alu_op_a_mux_sel_o          = `OP_A_REGA_OR_FWD;
     alu_op_b_mux_sel_o          = `OP_B_REGB_OR_FWD;
     alu_op_c_mux_sel_o          = `OP_C_REGC_OR_FWD;
+    regc_mux_o                  = `REGC_ZERO;
 
     immediate_mux_sel_o         = `IMM_I;
 
@@ -188,7 +190,6 @@ module riscv_decoder
         alu_operator        = `ALU_ADD;
         regfile_alu_we      = 1'b1;
         // Calculate jump target (= PC + UJ imm)
-        alu_op_c_mux_sel_o  = `OP_C_JT;
       end
 
       `OPCODE_JALR: begin  // Jump and Link Register
@@ -202,7 +203,6 @@ module riscv_decoder
         regfile_alu_we      = 1'b1;
         // Calculate jump target (= RS1 + I imm)
         rega_used_o         = 1'b1;
-        alu_op_c_mux_sel_o  = `OP_C_JT;
 
         if (instr_rdata_i[14:12] != 3'b0) begin
           jump_in_id       = `BRANCH_NONE;
@@ -268,6 +268,7 @@ module riscv_decoder
           // offset from register
           regc_used_o        = 1'b1;
           alu_op_b_mux_sel_o = `OP_B_REGC_OR_FWD;
+          regc_mux_o         = `REGC_S3;
         end
 
         // store size
@@ -432,6 +433,12 @@ module riscv_decoder
 
           // supported RV32M instructions
           {7'b000_0001, 3'b000}: mult_en      = 1'b1;       // Multiplication
+          {7'b000_0001, 3'b001}: begin // MAC
+            regc_used_o  = 1'b1;
+            regc_mux_o   = `REGC_RD;
+            mult_en      = 1'b1;
+            mult_mac_en  = 1'b1;
+          end
 
           // PULP specific instructions
           {7'b000_0010, 3'b000}: alu_operator = `ALU_AVG;   // Average
@@ -468,21 +475,22 @@ module riscv_decoder
         regfile_alu_we = 1'b1;
         rega_used_o    = 1'b1;
         regb_used_o    = 1'b1;
-        regc_used_o    = 1'b1;
 
-        case (instr_rdata_i[14:12])
-          3'b000: begin // MAC
-            mult_en     = 1'b1;
-            mult_mac_en = 1'b1;
+        case (instr_rdata_i[13:12])
+          2'b00: begin // multiply with subword selection
+            vector_mode_o      = 1'b1;
+            mult_sel_subword_o = {2{instr_rdata_i[30]}};
+            mult_signed_mode_o = {2{instr_rdata_i[31]}};
+
+            mult_en = 1'b1;
           end
 
-          3'b100,
-          3'b101,
-          3'b110,
-          3'b111: begin // MAC with subword selection
+          2'b01: begin // MAC with subword selection
+            regc_used_o        = 1'b1;
+            regc_mux_o         = `REGC_RD;
             vector_mode_o      = 1'b1;
-            mult_sel_subword_o = instr_rdata_i[13:12];
-            mult_signed_mode_o = instr_rdata_i[31:30];
+            mult_sel_subword_o = {2{instr_rdata_i[30]}};
+            mult_signed_mode_o = {2{instr_rdata_i[31]}};
 
             mult_en     = 1'b1;
             mult_mac_en = 1'b1;
