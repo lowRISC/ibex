@@ -294,15 +294,15 @@ module riscv_id_stage
   logic [31:0] alu_operand_c;
 
   // Forwarding detection signals
-  logic        reg_d_ex_is_reg_a_i;
-  logic        reg_d_ex_is_reg_b_i;
-  logic        reg_d_ex_is_reg_c_i;
-  logic        reg_d_wb_is_reg_a_i;
-  logic        reg_d_wb_is_reg_b_i;
-  logic        reg_d_wb_is_reg_c_i;
-  logic        reg_d_alu_is_reg_a_i;
-  logic        reg_d_alu_is_reg_b_i;
-  logic        reg_d_alu_is_reg_c_i;
+  logic        reg_d_ex_is_reg_a;
+  logic        reg_d_ex_is_reg_b;
+  logic        reg_d_ex_is_reg_c;
+  logic        reg_d_wb_is_reg_a;
+  logic        reg_d_wb_is_reg_b;
+  logic        reg_d_wb_is_reg_c;
+  logic        reg_d_alu_is_reg_a;
+  logic        reg_d_alu_is_reg_b;
+  logic        reg_d_alu_is_reg_c;
 
 
   assign instr         = instr_rdata_i;

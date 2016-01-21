@@ -27,63 +27,115 @@ half-word multiplications.
 
 \section{Instructions}
 
-\subsection{p.mac rD, rs1, rs2}
-Multiply-Accumulate on 32-bit $\times$ 32-bit with a 32-bit result.
+\subsection{p.mul rD, rs1, rs2}
+Multiply on 32-bit $\times$ 32-bit with a 32-bit result.
 
 \begin{center}
   \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
     \bitheader{31,30,29,25,24,20,19,15,14,12,11,7,6,0} \\
-    \bitbox{2}{ 00                                }
-    \bitbox{5}{ rs3                               }
+    \bitbox{7}{ funct7                            }
     \bitbox{5}{ rs2                               }
     \bitbox{5}{ rs1                               }
     \bitbox{3}{ funct3                            }
     \bitbox{5}{ rd                                }
     \bitbox{7}{ opcode                            } \\
 
-    \bitbox[]{2}{ 00     }
-    \bitbox[]{5}{ src3 }
+    \bitbox[]{7}{ 000 0001 }
     \bitbox[]{5}{ src2 }
     \bitbox[]{5}{ src1 }
     \bitbox[]{3}{ 000 }
     \bitbox[]{5}{ dest }
-    \bitbox[]{7}{ 101 1011 }
+    \bitbox[]{7}{ 011 0011 }
   \end{bytefield}
 \end{center}
-\textbf{Operation:} \texttt{rD = rs1 * rs2 + rs3}
+\textbf{Operation:} \texttt{rD = rs1 * rs2}
+
+\subsection{p.mac rD, rs1, rs2}
+Multiply-Accumulate on 32-bit $\times$ 32-bit with a 32-bit result.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,30,29,25,24,20,19,15,14,12,11,7,6,0} \\
+    \bitbox{7}{ funct7                            }
+    \bitbox{5}{ rs2                               }
+    \bitbox{5}{ rs1                               }
+    \bitbox{3}{ funct3                            }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{7}{ 000 0001 }
+    \bitbox[]{5}{ src2 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{3}{ 001 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 011 0011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD += rs1 * rs2}
 
 
-\subsection{p.mac\{.zl,.sl,.zh,.sh\}\{.zl,.sl,.zh,.sh\} rD, rs1, rs2}
+\subsection{p.mul\{s,hhs,u,hhu\} rD, rs1, rs2}
 Multiply-Accumulate on 16-bit $\times$ 16-bit with a 32-bit result. The
 half-word and sign-mode that is used for the multiplication can be selected.
 
 \begin{center}
   \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
-    \bitheader{31,30,29,25,24,20,19,15,14,12,11,7,6,0} \\
-    \bitbox{1}{ S1                                }
-    \bitbox{1}{ S2                                }
-    \bitbox{5}{ rs3                               }
+    \bitheader{31,30,29,25,24,20,19,15,14,13,12,11,7,6,0} \\
+    \bitbox{1}{ S                                 }
+    \bitbox{1}{ P                                 }
+    \bitbox{5}{ imm5                              }
     \bitbox{5}{ rs2                               }
     \bitbox{5}{ rs1                               }
-    \bitbox{1}{ 1                                 }
-    \bitbox{1}{ H1                                }
-    \bitbox{1}{ H2                                }
+    \bitbox{1}{ R                                 }
+    \bitbox{2}{ subop                             }
     \bitbox{5}{ rd                                }
     \bitbox{7}{ opcode                            } \\
 
-    \bitbox[]{1}{ S1     }
-    \bitbox[]{1}{ S2     }
-    \bitbox[]{5}{ unused }
+    \bitbox[]{1}{ S     }
+    \bitbox[]{1}{ P     }
+    \bitbox[]{5}{ 00000 }
     \bitbox[]{5}{ src2 }
     \bitbox[]{5}{ src1 }
     \bitbox[]{1}{ 0 }
-    \bitbox[]{1}{ H1 }
-    \bitbox[]{1}{ H2 }
+    \bitbox[]{2}{ 00 }
     \bitbox[]{5}{ dest }
     \bitbox[]{7}{ 101 1011 }
   \end{bytefield}
 \end{center}
-\textbf{Operation:} \texttt{rD = rs1[H1*16+15:H1*16] * rs2[H2*16+15:H2*16] + rs3}
+\textbf{Operation:} \texttt{rD = rs1[P*16+15:P*16] * rs2[P*16+15:P*16]}
 
-S1 and S2 determine the zero/sign-extension of rs1 and rs2. A value of
-\texttt{1} means sign-extension.
+S determines the zero/sign-extension of rs1 and rs2. A value of \texttt{1} means
+sign-extension.
+
+\subsection{p.mac\{s,hhs,u,hhu\} rD, rs1, rs2}
+Multiply-Accumulate on 16-bit $\times$ 16-bit with a 32-bit result. The
+half-word and sign-mode that is used for the multiplication can be selected.
+
+\begin{center}
+  \begin{bytefield}[endianness=big,bitwidth=1.3em]{32}
+    \bitheader{31,30,29,25,24,20,19,15,14,13,12,11,7,6,0} \\
+    \bitbox{1}{ S                                 }
+    \bitbox{1}{ P                                 }
+    \bitbox{5}{ imm5                              }
+    \bitbox{5}{ rs2                               }
+    \bitbox{5}{ rs1                               }
+    \bitbox{1}{ R                                 }
+    \bitbox{2}{ subop                             }
+    \bitbox{5}{ rd                                }
+    \bitbox{7}{ opcode                            } \\
+
+    \bitbox[]{1}{ S     }
+    \bitbox[]{1}{ P     }
+    \bitbox[]{5}{ 00000 }
+    \bitbox[]{5}{ src2 }
+    \bitbox[]{5}{ src1 }
+    \bitbox[]{1}{ 0 }
+    \bitbox[]{2}{ 01 }
+    \bitbox[]{5}{ dest }
+    \bitbox[]{7}{ 101 1011 }
+  \end{bytefield}
+\end{center}
+\textbf{Operation:} \texttt{rD += rs1[P*16+15:P*16] * rs2[P*16+15:P*16]}
+
+S determines the zero/sign-extension of rs1 and rs2. A value of \texttt{1} means
+sign-extension.

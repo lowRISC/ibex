@@ -838,17 +838,9 @@ module riscv_core
         `INSTR_EBREAK:     printMnemonic("EBREAK");
         `INSTR_ERET:       printMnemonic("ERET");
         `INSTR_WFI:        printMnemonic("WFI");
-        // RV32M
-        `INSTR_MUL:        printRInstr("MUL");
-        `INSTR_MULH:       printRInstr("MULH");
-        `INSTR_MULHSU:     printRInstr("MULHSU");
-        `INSTR_MULHU:      printRInstr("MULHU");
-        `INSTR_DIV:        printRInstr("DIV");
-        `INSTR_DIVU:       printRInstr("DIVU");
-        `INSTR_REM:        printRInstr("REM");
-        `INSTR_REMU:       printRInstr("REMU");
-        // PULP specific
-        `INSTR_MAC:        printR3Instr("MAC");
+        // PULP MULTIPLIER
+        `INSTR_PMUL:       printRInstr("P.MUL");
+        `INSTR_PMAC:       printRInstr("P.MAC");
         // opcodes with custom decoding
         {25'b?, `OPCODE_LOAD}:       printLoadInstr();
         {25'b?, `OPCODE_LOAD_POST}:  printLoadInstr();
