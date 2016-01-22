@@ -39,6 +39,7 @@ module riscv_fetch_fifo
     input  logic        in_addr_valid_i,
     output logic        in_addr_ready_o,
     output logic [31:0] in_fetch_addr_o,
+    input  logic        in_wait_gnt_i,
 
     input  logic        in_rdata_valid_i,
     output logic        in_rdata_ready_o,
@@ -99,7 +100,7 @@ module riscv_fetch_fifo
       out_rdata_o = rdata_unaligned;
 
       if (unaligned_is_compressed)
-        out_valid_o = 1'b1;
+        out_valid_o = valid;
       else
         out_valid_o = valid_unaligned;
     end else begin
@@ -142,6 +143,9 @@ module riscv_fetch_fifo
   always_comb
   begin
     in_fetch_addr_o = {fifo_last_addr[31:2], 2'b00} + 32'd4;
+
+    if (in_wait_gnt_i)
+      in_fetch_addr_o = {fifo_last_addr[31:2], 2'b00};
 
     if (branch_i) begin
       in_fetch_addr_o = addr_i;
@@ -344,6 +348,8 @@ module riscv_prefetch_buffer
   logic        fifo_rdata_valid;
   logic        fifo_rdata_ready;
 
+  logic        wait_gnt;
+
 
   //////////////////////////////////////////////////////////////////////////////
   // prefetch buffer status
@@ -370,6 +376,7 @@ module riscv_prefetch_buffer
     .in_addr_valid_i       ( fifo_addr_valid   ),
     .in_addr_ready_o       ( fifo_addr_ready   ),
     .in_fetch_addr_o       ( fetch_addr        ),
+    .in_wait_gnt_i         ( wait_gnt          ),
 
     .in_rdata_valid_i      ( fifo_rdata_valid  ),
     .in_rdata_ready_o      ( fifo_rdata_ready  ),
@@ -390,6 +397,7 @@ module riscv_prefetch_buffer
 
   always_comb
   begin
+    wait_gnt         = 1'b0;
     instr_req_o      = 1'b0;
     instr_addr_o     = fetch_addr;
     fifo_addr_valid  = 1'b0;
@@ -418,6 +426,7 @@ module riscv_prefetch_buffer
       // we sent a request but did not yet get a grant
       WAIT_GNT:
       begin
+        wait_gnt    = 1'b1;
         instr_req_o = 1'b1;
 
         if (branch_i) begin
