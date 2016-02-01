@@ -26,7 +26,10 @@
 `ifndef _CORE_DEFINES
 `define _CORE_DEFINES
 
+// no traces for synthesis, they are not synthesizable
+`ifndef SYNTHESIS
 `define TRACE_EXECUTION
+`endif
 
 
 ////////////////////////////////////////////////
