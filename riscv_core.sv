@@ -751,7 +751,7 @@ module riscv_core
     .imm_u_type    ( id_stage_i.imm_u_type                ),
     .imm_uj_type   ( id_stage_i.imm_uj_type               ),
     .imm_i_type    ( id_stage_i.imm_i_type                ),
-    .imm_iz_type   ( id_stage_i.imm_iz_type               ),
+    .imm_iz_type   ( id_stage_i.imm_iz_type[11:0]         ),
     .imm_z_type    ( id_stage_i.imm_z_type                ),
     .imm_s_type    ( id_stage_i.imm_s_type                ),
     .imm_sb_type   ( id_stage_i.imm_sb_type               )
