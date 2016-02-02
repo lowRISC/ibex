@@ -31,6 +31,7 @@ module riscv_tracer
   input  logic        rst_n,
 
   input  logic [4:0]  core_id,
+  input  logic [4:0]  cluster_id,
 
   input  logic [31:0] pc,
   input  logic [31:0] instr,
@@ -42,6 +43,22 @@ module riscv_tracer
   input  logic [31:0] rs1_value,
   input  logic [31:0] rs2_value,
   input  logic [31:0] rs3_value,
+
+  input  logic        ex_valid,
+  input  logic [ 4:0] ex_reg_addr,
+  input  logic        ex_reg_we,
+  input  logic [31:0] ex_reg_wdata,
+
+  input  logic        ex_data_req,
+  input  logic        ex_data_gnt,
+  input  logic        ex_data_we,
+  input  logic [31:0] ex_data_addr,
+  input  logic [31:0] ex_data_wdata,
+
+  input  logic        wb_valid,
+  input  logic [ 4:0] wb_reg_addr,
+  input  logic        wb_reg_we,
+  input  logic [31:0] wb_reg_wdata,
 
   input  logic [31:0] imm_u_type,
   input  logic [31:0] imm_uj_type,
@@ -56,13 +73,21 @@ module riscv_tracer
   integer      f;
   string       fn;
   integer      cycles;
-  logic  [4:0] rd, rs1, rs2, rs3;
+  logic [ 4:0] rd, rs1, rs2, rs3;
   logic [31:0] imm;
 
   typedef struct {
-    logic [4: 0] id;
+    logic [ 4:0] addr;
     logic [31:0] value;
   } reg_t;
+
+  typedef struct {
+    logic [31:0] addr;
+    logic        we;
+    logic [ 3:0] be;
+    logic [31:0] wdata;
+    logic [31:0] rdata;
+  } mem_acc_t;
 
   typedef struct {
     time         simtime;
@@ -70,10 +95,13 @@ module riscv_tracer
     logic [31:0] pc;
     logic [31:0] instr;
     string       mnemonic;
-    reg_t        regs[$];
+    reg_t        regs_read[$];
+    reg_t        regs_write[$];
+    mem_acc_t    mem_access[$];
   } instr_trace_t;
 
-  instr_trace_t queue[$];
+  mailbox instr_ex = new (2);
+  mailbox instr_wb = new (2);
 
   // cycle counter
   always_ff @(posedge clk, negedge rst_n)
@@ -87,8 +115,8 @@ module riscv_tracer
   // open/close output file for writing
   initial
   begin
-    #1 // delay needed for valid core_id
-    $sformat(fn, "trace_core_%h.log", core_id);
+    #1 // delay needed for valid core_id and cluster_id
+    $sformat(fn, "trace_core_%h_%h.log", cluster_id, core_id);
     $display("[TRACER] Output filename is: %s", fn);
     f = $fopen(fn, "w");
     $fwrite(f, "%20s\t%6s\t%10s\t%10s\t \t%s\n", "Time", "Cycles", "PC", "Instr", "Mnemonic");
@@ -99,24 +127,61 @@ module riscv_tracer
     $fclose(f);
   end
 
-  // actual tracing
-  always @(negedge clk)
+  // virtual ID/EX pipeline
+  initial
+  begin
+    instr_trace_t trace;
+    mem_acc_t     mem_acc;
+
+    while(1) begin
+      instr_ex.get(trace);
+
+      // wait until we are going to the next stage
+      do begin
+        @(posedge clk);
+
+        // replace register written back
+        foreach(trace.regs_write[i])
+          if ((trace.regs_write[i].addr == ex_reg_addr) && ex_reg_we)
+            trace.regs_write[i].value = ex_reg_wdata;
+
+        // look for data accesses and log them
+        if (ex_data_req && ex_data_gnt) begin
+          mem_acc.addr = ex_data_addr;
+          mem_acc.we   = ex_data_we;
+
+          if (mem_acc.we)
+            mem_acc.wdata = ex_data_wdata;
+          else
+            mem_acc.wdata = 'x;
+
+          trace.mem_access.push_back(mem_acc);
+        end
+      end while (!ex_valid);
+
+      instr_wb.put(trace);
+    end
+  end
+
+  // virtual EX/WB pipeline
+  initial
   begin
     instr_trace_t trace;
 
-    if (queue.size() > 0) begin
-      trace = queue.pop_front();
+    while(1) begin
+      instr_wb.get(trace);
 
-      $fwrite(f, "%t\t%6d\t0x%h\t0x%h\t%-30s", trace.simtime,
-                                            trace.cycles,
-                                            trace.pc,
-                                            trace.instr,
-                                            trace.mnemonic);
+      // wait until we are going to the next stage
+      do begin
+        @(posedge clk);
+      end while (!wb_valid);
 
-      foreach(trace.regs[i])
-        $fwrite(f, "  x%0d =%08x", trace.regs[i].id, trace.regs[i].value);
+      // replace register written back
+      foreach(trace.regs_write[i])
+        if ((trace.regs_write[i].addr == wb_reg_addr) && wb_reg_we)
+          trace.regs_write[i].value = wb_reg_wdata;
 
-      $fwrite(f, "\n");
+      printInstrTrace(trace);
     end
   end
 
@@ -128,18 +193,20 @@ module riscv_tracer
     // special case for WFI because we don't wait for unstalling there
     if ((id_valid && is_decoding) || pipe_flush)
     begin
-      trace.simtime  = $time;
-      trace.cycles   = cycles;
-      trace.pc       = pc;
-      trace.instr    = instr;
-      trace.mnemonic = "sdf";
-      trace.regs     = {};
+      trace.simtime    = $time;
+      trace.cycles     = cycles;
+      trace.pc         = pc;
+      trace.instr      = instr;
+      trace.mnemonic   = "";
+      trace.regs_read  = {};
+      trace.regs_write = {};
+      trace.mem_access = {};
 
       // get register values
-      rd         = instr[`REG_D];
-      rs1        = instr[`REG_S1];
-      rs2        = instr[`REG_S2];
-      rs3        = instr[`REG_S3];
+      rd  = instr[`REG_D];
+      rs1 = instr[`REG_S1];
+      rs2 = instr[`REG_S2];
+      rs3 = instr[`REG_S3];
 
       imm = 0;
 
@@ -211,7 +278,7 @@ module riscv_tracer
         default:           trace.mnemonic = printMnemonic("INVALID");
       endcase // unique case (instr)
 
-      queue.push_back(trace);
+      instr_ex.put(trace);
     end
   end // always @ (posedge clk)
 
@@ -223,39 +290,43 @@ module riscv_tracer
 
   function string printUInstr(input string mnemonic);
     begin
-      return $sformatf("%-10s x%0d, 0x%h", mnemonic, rd, imm_u_type);
+      riscv_tracer.trace.regs_write.push_back({rd, 'x});
+      return $sformatf("%-16s x%0d, 0x%h", mnemonic, rd, imm_u_type[31:12]);
     end
   endfunction // printUInstr
 
   function string printRInstr(input string mnemonic);
     begin
-      riscv_tracer.trace.regs.push_back({rs1, rs1_value});
-      riscv_tracer.trace.regs.push_back({rs2, rs2_value});
-      return $sformatf("%-10s x%0d, x%0d, x%0d", mnemonic,
+      riscv_tracer.trace.regs_read.push_back({rs1, rs1_value});
+      riscv_tracer.trace.regs_read.push_back({rs2, rs2_value});
+      riscv_tracer.trace.regs_write.push_back({rd, 'x});
+      return $sformatf("%-16s x%0d, x%0d, x%0d", mnemonic,
                 rd, rs1, rs2);
     end
   endfunction // printRInstr
 
   function string printIInstr(input string mnemonic);
     begin
-      riscv_tracer.trace.regs.push_back({rs1, rs1_value});
-      return $sformatf("%-10s x%0d, x%0d, 0x%0h", mnemonic,
-                rd, rs1, imm_i_type);
+      riscv_tracer.trace.regs_read.push_back({rs1, rs1_value});
+      riscv_tracer.trace.regs_write.push_back({rd, 'x});
+      return $sformatf("%-16s x%0d, x%0d, %0d", mnemonic,
+                rd, rs1, $signed(imm_i_type));
     end
   endfunction // printIInstr
 
   function string printSBInstr(input string mnemonic);
     begin
-      riscv_tracer.trace.regs.push_back({rs1, rs1_value});
-      riscv_tracer.trace.regs.push_back({rs2, rs2_value});
-      return $sformatf("%-10s x%0d, x%0d, 0x%0h (-> 0x%h)", mnemonic,
-                rs1, rs2, imm_sb_type, imm_sb_type + pc);
+      riscv_tracer.trace.regs_read.push_back({rs1, rs1_value});
+      riscv_tracer.trace.regs_read.push_back({rs2, rs2_value});
+      return $sformatf("%-16s x%0d, x%0d, %0d", mnemonic,
+                rs1, rs2, $signed(imm_sb_type));
     end
   endfunction // printSBInstr
 
   function string printUJInstr(input string mnemonic);
     begin
-      return $sformatf("%-10s x%0d, 0x%h (-> 0x%h)", mnemonic, rd, imm_uj_type, imm_uj_type + pc);
+      riscv_tracer.trace.regs_write.push_back({rd, 'x});
+      return $sformatf("%-16s x%0d, %0d", mnemonic, rd, $signed(imm_uj_type), imm_uj_type + pc);
     end
   endfunction // printUJInstr
 
@@ -264,11 +335,13 @@ module riscv_tracer
     begin
       csr = instr[31:20];
 
+      riscv_tracer.trace.regs_write.push_back({rd, 'x});
+
       if (instr[14] == 1'b0) begin
-        riscv_tracer.trace.regs.push_back({rs1, rs1_value});
-        return $sformatf("%-10s x%0d, 0x%h, x%0d", mnemonic, rd, csr, rs1);
+        riscv_tracer.trace.regs_read.push_back({rs1, rs1_value});
+        return $sformatf("%-16s x%0d, 0x%h, x%0d", mnemonic, rd, csr, rs1);
       end else begin
-        return $sformatf("%-10s x%0d, 0x%h, 0x%h", mnemonic, rd, csr, imm_z_type);
+        return $sformatf("%-16s x%0d, 0x%h, 0x%h", mnemonic, rd, csr, imm_z_type);
       end
     end
   endfunction // printCSRInstr
@@ -295,25 +368,29 @@ module riscv_tracer
         end
       endcase
 
+      riscv_tracer.trace.regs_write.push_back({rd, 'x});
+
       if (instr[14:12] != 3'b111) begin
         // regular load
         if (instr[6:0] != `OPCODE_LOAD_POST) begin
-          str = $sformatf("%-10s x%0d, %0d(x%0d)", mnemonic, rd, imm_s_type, rs1);
-          riscv_tracer.trace.regs.push_back({rs1, rs1_value});
+          riscv_tracer.trace.regs_read.push_back({rs1, rs1_value});
+          str = $sformatf("%-16s x%0d, %0d(x%0d)", mnemonic, rd, $signed(imm_s_type), rs1);
         end else begin
-          str = $sformatf("p.%-8s x%0d, %0d(x%0d!)", mnemonic, rd, imm_s_type, rs1);
-          riscv_tracer.trace.regs.push_back({rs1, rs1_value});
+          riscv_tracer.trace.regs_read.push_back({rs1, rs1_value});
+          riscv_tracer.trace.regs_write.push_back({rs1, 'x});
+          str = $sformatf("p.%-14s x%0d, %0d(x%0d!)", mnemonic, rd, $signed(imm_s_type), rs1);
         end
       end else begin
         // reg-reg load
         if (instr[6:0] != `OPCODE_LOAD_POST) begin
-          str = $sformatf("%-8s x%0d, x%0d(x%0d)", mnemonic, rd, rs2, rs1);
-          riscv_tracer.trace.regs.push_back({rs2, rs2_value});
-          riscv_tracer.trace.regs.push_back({rs1, rs1_value});
+          riscv_tracer.trace.regs_read.push_back({rs2, rs2_value});
+          riscv_tracer.trace.regs_read.push_back({rs1, rs1_value});
+          str = $sformatf("%-14s x%0d, x%0d(x%0d)", mnemonic, rd, rs2, rs1);
         end else begin
-          str = $sformatf("p.%-8s x%0d, x%0d(x%0d!)", mnemonic, rd, rs2, rs1);
-          riscv_tracer.trace.regs.push_back({rs2, rs2_value});
-          riscv_tracer.trace.regs.push_back({rs1, rs1_value});
+          riscv_tracer.trace.regs_read.push_back({rs2, rs2_value});
+          riscv_tracer.trace.regs_read.push_back({rs1, rs1_value});
+          riscv_tracer.trace.regs_write.push_back({rs1, 'x});
+          str = $sformatf("p.%-14s x%0d, x%0d(x%0d!)", mnemonic, rd, rs2, rs1);
         end
       end
 
@@ -337,26 +414,26 @@ module riscv_tracer
       if (instr[14] == 1'b0) begin
         // regular store
         if (instr[6:0] != `OPCODE_STORE_POST) begin
-          str = $sformatf("%-10s x%0d, %0d(x%0d)", mnemonic, rs2, imm_s_type, rs1);
-          riscv_tracer.trace.regs.push_back({rs2, rs2_value});
-          riscv_tracer.trace.regs.push_back({rs1, rs1_value});
+          str = $sformatf("%-16s x%0d, %0d(x%0d)", mnemonic, rs2, $signed(imm_s_type), rs1);
+          riscv_tracer.trace.regs_read.push_back({rs2, rs2_value});
+          riscv_tracer.trace.regs_read.push_back({rs1, rs1_value});
         end else begin
-          str = $sformatf("p.%-8s x%0d, %0d(x%0d!)", mnemonic, rs2, imm_s_type, rs1);
-          riscv_tracer.trace.regs.push_back({rs2, rs2_value});
-          riscv_tracer.trace.regs.push_back({rs1, rs1_value});
+          str = $sformatf("p.%-14s x%0d, %0d(x%0d!)", mnemonic, rs2, $signed(imm_s_type), rs1);
+          riscv_tracer.trace.regs_read.push_back({rs2, rs2_value});
+          riscv_tracer.trace.regs_read.push_back({rs1, rs1_value});
         end
       end else begin
         // reg-reg store
         if (instr[6:0] != `OPCODE_STORE_POST) begin
-          str = $sformatf("p.%-8s x%0d, x%0d(x%0d)", mnemonic, rs2, rs3, rs1);
-          riscv_tracer.trace.regs.push_back({rs2, rs2_value});
-          riscv_tracer.trace.regs.push_back({rs3, rs3_value});
-          riscv_tracer.trace.regs.push_back({rs1, rs1_value});
+          str = $sformatf("p.%-14s x%0d, x%0d(x%0d)", mnemonic, rs2, rs3, rs1);
+          riscv_tracer.trace.regs_read.push_back({rs2, rs2_value});
+          riscv_tracer.trace.regs_read.push_back({rs3, rs3_value});
+          riscv_tracer.trace.regs_read.push_back({rs1, rs1_value});
         end else begin
-          str = $sformatf("p.%-8s x%0d, x%0d(x%0d!)", mnemonic, rs2, rs3, rs1);
-          riscv_tracer.trace.regs.push_back({rs2, rs2_value});
-          riscv_tracer.trace.regs.push_back({rs3, rs3_value});
-          riscv_tracer.trace.regs.push_back({rs1, rs1_value});
+          str = $sformatf("p.%-14s x%0d, x%0d(x%0d!)", mnemonic, rs2, rs3, rs1);
+          riscv_tracer.trace.regs_read.push_back({rs2, rs2_value});
+          riscv_tracer.trace.regs_read.push_back({rs3, rs3_value});
+          riscv_tracer.trace.regs_read.push_back({rs1, rs1_value});
         end
       end
 
@@ -370,12 +447,12 @@ module riscv_tracer
     begin
       // set mnemonic
       case (instr[14:12])
-        3'b000: mnemonic = "LSTARTI";
-        3'b001: mnemonic = "LENDI";
-        3'b010: mnemonic = "LCOUNT";
-        3'b011: mnemonic = "LCOUNTI";
-        3'b100: mnemonic = "LSETUP";
-        3'b101: mnemonic = "LSETUPI";
+        3'b000: mnemonic = "lp.starti";
+        3'b001: mnemonic = "lp.endi";
+        3'b010: mnemonic = "lp.count";
+        3'b011: mnemonic = "lp.counti";
+        3'b100: mnemonic = "lp.setup";
+        3'b101: mnemonic = "lp.setupi";
         3'b111: begin
           return printMnemonic("INVALID");
         end
@@ -385,22 +462,53 @@ module riscv_tracer
       case (instr[14:12])
         // lp.starti and lp.endi
         3'b000,
-        3'b001: str = $sformatf("%-10s x%0d, 0x%h (-> 0x%h)", mnemonic, rd, imm_iz_type, pc + (imm_iz_type << 1));
+        3'b001: str = $sformatf("%-16s x%0d, 0x%h", mnemonic, rd, imm_iz_type);
         // lp.count
-        3'b010: str = $sformatf("%-10s x%0d, x%0d (0x%h)", mnemonic, rd, rs1, rs1_value);
+        3'b010: str = $sformatf("%-16s x%0d, x%0d (0x%h)", mnemonic, rd, rs1, rs1_value);
         // lp.counti
-        3'b011: str = $sformatf("%-10s x%0d, 0x%h", mnemonic, rd, imm_iz_type);
+        3'b011: str = $sformatf("%-16s x%0d, 0x%h", mnemonic, rd, imm_iz_type);
         // lp.setup
-        3'b100: str = $sformatf("%-10s x%0d, x%0d (0x%h), 0x%h (-> 0x%h)", mnemonic,
-                           rd, rs1, rs1_value, imm_iz_type, pc + (imm_iz_type << 1));
+        3'b100: str = $sformatf("%-16s x%0d, x%0d (0x%h), 0x%h", mnemonic,
+                           rd, rs1, rs1_value, imm_iz_type);
         // lp.setupi
-        3'b101: str = $sformatf("%-10s x%0d, x%0d (0x%h), 0x%h (-> 0x%h)", mnemonic,
-                          rd, rs1, rs1_value, imm_iz_type, pc + (imm_z_type << 1));
+        3'b101: str = $sformatf("%-16s %-3s, x%0d (0x%h), 0x%h", mnemonic,
+                          rd, rs1, rs1_value, imm_iz_type);
       endcase
 
       return str;
     end
   endfunction
 
-endmodule
+  function string regAddrToStr(input logic [4:0] addr);
+    begin
+      return $sformatf("x%0d", addr);
+    end
+  endfunction
 
+  function void printInstrTrace(input instr_trace_t trace);
+    mem_acc_t mem_acc;
+    begin
+      $fwrite(f, "%t %15d %h %h %-33s", trace.simtime,
+                                               trace.cycles,
+                                               trace.pc,
+                                               trace.instr,
+                                               trace.mnemonic);
+
+      foreach(trace.regs_write[i])
+        $fwrite(f, " %-3s=%08x", regAddrToStr(trace.regs_write[i].addr), trace.regs_write[i].value);
+
+      // TODO: insert PA here
+      if (trace.mem_access.size() > 0) begin
+        mem_acc = trace.mem_access.pop_front();
+
+        $fwrite(f, " PA =%08x", mem_acc.addr);
+      end
+
+      foreach(trace.regs_read[i])
+        $fwrite(f, " %-3s %08x", regAddrToStr(trace.regs_read[i].addr), trace.regs_read[i].value);
+
+      $fwrite(f, "\n");
+    end
+  endfunction
+
+endmodule
