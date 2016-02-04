@@ -103,6 +103,14 @@
 `define INSTR_EXTHZ      { 7'b0001000, 10'b?, 3'b101, 5'b?, `OPCODE_OP } // pulp specific
 `define INSTR_EXTBS      { 7'b0001000, 10'b?, 3'b110, 5'b?, `OPCODE_OP } // pulp specific
 `define INSTR_EXTBZ      { 7'b0001000, 10'b?, 3'b111, 5'b?, `OPCODE_OP } // pulp specific
+`define INSTR_PAVG       { 7'b0000010, 10'b?, 3'b000, 5'b?, `OPCODE_OP } // pulp specific
+`define INSTR_PAVGU      { 7'b0000010, 10'b?, 3'b001, 5'b?, `OPCODE_OP } // pulp specific
+`define INSTR_PSLET      { 7'b0000010, 10'b?, 3'b010, 5'b?, `OPCODE_OP } // pulp specific
+`define INSTR_PSLETU     { 7'b0000010, 10'b?, 3'b011, 5'b?, `OPCODE_OP } // pulp specific
+`define INSTR_PMIN       { 7'b0000010, 10'b?, 3'b100, 5'b?, `OPCODE_OP } // pulp specific
+`define INSTR_PMINU      { 7'b0000010, 10'b?, 3'b101, 5'b?, `OPCODE_OP } // pulp specific
+`define INSTR_PMAX       { 7'b0000010, 10'b?, 3'b110, 5'b?, `OPCODE_OP } // pulp specific
+`define INSTR_PMAXU      { 7'b0000010, 10'b?, 3'b111, 5'b?, `OPCODE_OP } // pulp specific
 // FENCE
 `define INSTR_FENCE      { 4'b0, 8'b?, 13'b0, `OPCODE_FENCE }
 `define INSTR_FENCEI     { 17'b0, 3'b001, 5'b0, `OPCODE_FENCE }
