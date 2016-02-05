@@ -67,7 +67,6 @@ module riscv_tracer
   input  logic [31:0] imm_z_type,
   input  logic [31:0] imm_s_type,
   input  logic [31:0] imm_sb_type
-
 );
 
   integer      f;

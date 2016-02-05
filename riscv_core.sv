@@ -715,47 +715,82 @@ module riscv_core
 `ifdef TRACE_EXECUTION
   riscv_tracer riscv_tracer_i
   (
-    .clk           ( clk                                  ),
-    .rst_n         ( rst_n                                ),
+    .clk            ( clk                                  ),
+    .rst_n          ( rst_n                                ),
 
-    .core_id       ( core_id_i                            ),
-    .cluster_id    ( cluster_id_i                         ),
+    .core_id        ( core_id_i                            ),
+    .cluster_id     ( cluster_id_i                         ),
 
-    .pc            ( id_stage_i.current_pc_id_i           ),
-    .instr         ( id_stage_i.instr                     ),
-    .compressed    ( id_stage_i.is_compressed_i           ),
-    .id_valid      ( id_stage_i.id_valid_o                ),
-    .is_decoding   ( id_stage_i.is_decoding_o             ),
-    .pipe_flush    ( id_stage_i.controller_i.pipe_flush_i ),
+    .pc             ( id_stage_i.current_pc_id_i           ),
+    .instr          ( id_stage_i.instr                     ),
+    .compressed     ( id_stage_i.is_compressed_i           ),
+    .id_valid       ( id_stage_i.id_valid_o                ),
+    .is_decoding    ( id_stage_i.is_decoding_o             ),
+    .pipe_flush     ( id_stage_i.controller_i.pipe_flush_i ),
 
-    .rs1_value     ( id_stage_i.operand_a_fw_id           ),
-    .rs2_value     ( id_stage_i.operand_b_fw_id           ),
-    .rs3_value     ( id_stage_i.alu_operand_c             ),
+    .rs1_value      ( id_stage_i.operand_a_fw_id           ),
+    .rs2_value      ( id_stage_i.operand_b_fw_id           ),
+    .rs3_value      ( id_stage_i.alu_operand_c             ),
 
-    .ex_valid      ( ex_valid                             ),
-    .ex_reg_addr   ( regfile_alu_waddr_fw                 ),
-    .ex_reg_we     ( regfile_alu_we_fw                    ),
-    .ex_reg_wdata  ( regfile_alu_wdata_fw                 ),
+    .ex_valid       ( ex_valid                             ),
+    .ex_reg_addr    ( regfile_alu_waddr_fw                 ),
+    .ex_reg_we      ( regfile_alu_we_fw                    ),
+    .ex_reg_wdata   ( regfile_alu_wdata_fw                 ),
 
-    .ex_data_addr  ( data_addr_o                          ),
-    .ex_data_req   ( data_req_o                           ),
-    .ex_data_gnt   ( data_gnt_i                           ),
-    .ex_data_we    ( data_we_o                            ),
-    .ex_data_wdata ( data_wdata_o                         ),
+    .ex_data_addr   ( data_addr_o                          ),
+    .ex_data_req    ( data_req_o                           ),
+    .ex_data_gnt    ( data_gnt_i                           ),
+    .ex_data_we     ( data_we_o                            ),
+    .ex_data_wdata  ( data_wdata_o                         ),
 
-    .wb_valid      ( wb_valid                             ),
-    .wb_reg_addr   ( regfile_waddr_fw_wb_o                ),
-    .wb_reg_we     ( regfile_we_wb                        ),
-    .wb_reg_wdata  ( regfile_wdata                        ),
+    .wb_valid       ( wb_valid                             ),
+    .wb_reg_addr    ( regfile_waddr_fw_wb_o                ),
+    .wb_reg_we      ( regfile_we_wb                        ),
+    .wb_reg_wdata   ( regfile_wdata                        ),
 
-    .imm_u_type    ( id_stage_i.imm_u_type                ),
-    .imm_uj_type   ( id_stage_i.imm_uj_type               ),
-    .imm_i_type    ( id_stage_i.imm_i_type                ),
-    .imm_iz_type   ( id_stage_i.imm_iz_type[11:0]         ),
-    .imm_z_type    ( id_stage_i.imm_z_type                ),
-    .imm_s_type    ( id_stage_i.imm_s_type                ),
-    .imm_sb_type   ( id_stage_i.imm_sb_type               )
+    .imm_u_type     ( id_stage_i.imm_u_type                ),
+    .imm_uj_type    ( id_stage_i.imm_uj_type               ),
+    .imm_i_type     ( id_stage_i.imm_i_type                ),
+    .imm_iz_type    ( id_stage_i.imm_iz_type[11:0]         ),
+    .imm_z_type     ( id_stage_i.imm_z_type                ),
+    .imm_s_type     ( id_stage_i.imm_s_type                ),
+    .imm_sb_type    ( id_stage_i.imm_sb_type               )
+  );
 
+  riscv_simchecker riscv_simchecker_i
+  (
+    .clk            ( clk                                  ),
+    .rst_n          ( rst_n                                ),
+
+    .core_id        ( core_id_i                            ),
+    .cluster_id     ( cluster_id_i                         ),
+
+    .pc             ( id_stage_i.current_pc_id_i           ),
+    .instr          ( id_stage_i.instr                     ),
+    .id_valid       ( id_stage_i.id_valid_o                ),
+    .is_decoding    ( id_stage_i.is_decoding_o             ),
+    .pipe_flush     ( id_stage_i.controller_i.pipe_flush_i ),
+
+    .ex_valid       ( ex_valid                             ),
+    .ex_reg_addr    ( regfile_alu_waddr_fw                 ),
+    .ex_reg_we      ( regfile_alu_we_fw                    ),
+    .ex_reg_wdata   ( regfile_alu_wdata_fw                 ),
+
+    .ex_data_addr   ( data_addr_o                          ),
+    .ex_data_req    ( data_req_o                           ),
+    .ex_data_gnt    ( data_gnt_i                           ),
+    .ex_data_we     ( data_we_o                            ),
+    .ex_data_wdata  ( data_wdata_o                         ),
+
+    .lsu_misaligned ( data_misaligned                      ),
+
+    .wb_valid       ( wb_valid                             ),
+    .wb_reg_addr    ( regfile_waddr_fw_wb_o                ),
+    .wb_reg_we      ( regfile_we_wb                        ),
+    .wb_reg_wdata   ( regfile_wdata                        ),
+
+    .wb_data_rvalid ( data_rvalid_i                        ),
+    .wb_data_rdata  ( data_rdata_i                         )
   );
 `endif
 
