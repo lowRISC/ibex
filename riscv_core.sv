@@ -756,7 +756,9 @@ module riscv_core
     .imm_s_type     ( id_stage_i.imm_s_type                ),
     .imm_sb_type    ( id_stage_i.imm_sb_type               )
   );
+`endif
 
+`ifdef SIMCHECKER
   riscv_simchecker riscv_simchecker_i
   (
     .clk            ( clk                                  ),
@@ -772,9 +774,9 @@ module riscv_core
     .pipe_flush     ( id_stage_i.controller_i.pipe_flush_i ),
 
     .ex_valid       ( ex_valid                             ),
-    .ex_reg_addr    ( regfile_alu_waddr_fw                 ),
-    .ex_reg_we      ( regfile_alu_we_fw                    ),
-    .ex_reg_wdata   ( regfile_alu_wdata_fw                 ),
+    .ex_reg_addr    ( id_stage_i.registers_i.waddr_b_i     ),
+    .ex_reg_we      ( id_stage_i.registers_i.we_b_i        ),
+    .ex_reg_wdata   ( id_stage_i.registers_i.wdata_b_i     ),
 
     .ex_data_addr   ( data_addr_o                          ),
     .ex_data_req    ( data_req_o                           ),
@@ -785,9 +787,9 @@ module riscv_core
     .lsu_misaligned ( data_misaligned                      ),
 
     .wb_valid       ( wb_valid                             ),
-    .wb_reg_addr    ( regfile_waddr_fw_wb_o                ),
-    .wb_reg_we      ( regfile_we_wb                        ),
-    .wb_reg_wdata   ( regfile_wdata                        ),
+    .wb_reg_addr    ( id_stage_i.registers_i.waddr_a_i     ),
+    .wb_reg_we      ( id_stage_i.registers_i.we_a_i        ),
+    .wb_reg_wdata   ( id_stage_i.registers_i.wdata_a_i     ),
 
     .wb_data_rvalid ( data_rvalid_i                        ),
     .wb_data_rdata  ( data_rdata_i                         )

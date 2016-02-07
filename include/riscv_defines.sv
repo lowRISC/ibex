@@ -29,6 +29,7 @@
 // no traces for synthesis, they are not synthesizable
 `ifndef SYNTHESIS
 `define TRACE_EXECUTION
+//`define SIMCHECKER
 `endif
 
 
