@@ -544,7 +544,4 @@ module riscv_tracer
     end
   end // always @ (posedge clk)
 
-
-
-
 endmodule

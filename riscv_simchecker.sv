@@ -36,8 +36,12 @@ module riscv_simchecker
   input  logic [4:0]  core_id,
   input  logic [4:0]  cluster_id,
 
+  input  logic [15:0] instr_compressed,
+  input  logic        if_valid,
+
   input  logic [31:0] pc,
   input  logic [31:0] instr,
+  input  logic        is_compressed,
   input  logic        id_valid,
   input  logic        is_decoding,
   input  logic        pipe_flush,
@@ -96,6 +100,8 @@ module riscv_simchecker
 
   mailbox rdata_stack = new (4);
   integer rdata_writes = 0;
+
+  logic [15:0] instr_compressed_id;
 
   mailbox instr_ex = new (2);
   mailbox instr_wb = new (2);
@@ -219,6 +225,12 @@ module riscv_simchecker
     end
   end
 
+  always_ff @(posedge clk)
+  begin
+    if (if_valid)
+      instr_compressed_id <= instr_compressed;
+  end
+
   // log execution
   initial
   begin
@@ -234,7 +246,12 @@ module riscv_simchecker
 
         trace.simtime    = $time;
         trace.pc         = pc;
-        trace.instr      = instr;
+
+        if (is_compressed) begin
+          trace.instr = {instr_compressed_id, instr_compressed_id};
+        end
+        else
+          trace.instr = instr;
 
         instr_ex.put(trace);
       end

@@ -761,38 +761,42 @@ module riscv_core
 `ifdef SIMCHECKER
   riscv_simchecker riscv_simchecker_i
   (
-    .clk            ( clk                                  ),
-    .rst_n          ( rst_n                                ),
+    .clk              ( clk                                  ),
+    .rst_n            ( rst_n                                ),
 
-    .core_id        ( core_id_i                            ),
-    .cluster_id     ( cluster_id_i                         ),
+    .core_id          ( core_id_i                            ),
+    .cluster_id       ( cluster_id_i                         ),
 
-    .pc             ( id_stage_i.current_pc_id_i           ),
-    .instr          ( id_stage_i.instr                     ),
-    .id_valid       ( id_stage_i.id_valid_o                ),
-    .is_decoding    ( id_stage_i.is_decoding_o             ),
-    .pipe_flush     ( id_stage_i.controller_i.pipe_flush_i ),
+    .instr_compressed ( if_stage_i.fetch_rdata[15:0]         ),
+    .if_valid         ( if_valid                             ),
 
-    .ex_valid       ( ex_valid                             ),
-    .ex_reg_addr    ( id_stage_i.registers_i.waddr_b_i     ),
-    .ex_reg_we      ( id_stage_i.registers_i.we_b_i        ),
-    .ex_reg_wdata   ( id_stage_i.registers_i.wdata_b_i     ),
+    .pc               ( id_stage_i.current_pc_id_i           ),
+    .instr            ( id_stage_i.instr                     ),
+    .is_compressed    ( is_compressed_id                     ),
+    .id_valid         ( id_stage_i.id_valid_o                ),
+    .is_decoding      ( id_stage_i.is_decoding_o             ),
+    .pipe_flush       ( id_stage_i.controller_i.pipe_flush_i ),
 
-    .ex_data_addr   ( data_addr_o                          ),
-    .ex_data_req    ( data_req_o                           ),
-    .ex_data_gnt    ( data_gnt_i                           ),
-    .ex_data_we     ( data_we_o                            ),
-    .ex_data_wdata  ( data_wdata_o                         ),
+    .ex_valid         ( ex_valid                             ),
+    .ex_reg_addr      ( id_stage_i.registers_i.waddr_b_i     ),
+    .ex_reg_we        ( id_stage_i.registers_i.we_b_i        ),
+    .ex_reg_wdata     ( id_stage_i.registers_i.wdata_b_i     ),
 
-    .lsu_misaligned ( data_misaligned                      ),
+    .ex_data_addr     ( data_addr_o                          ),
+    .ex_data_req      ( data_req_o                           ),
+    .ex_data_gnt      ( data_gnt_i                           ),
+    .ex_data_we       ( data_we_o                            ),
+    .ex_data_wdata    ( data_wdata_o                         ),
 
-    .wb_valid       ( wb_valid                             ),
-    .wb_reg_addr    ( id_stage_i.registers_i.waddr_a_i     ),
-    .wb_reg_we      ( id_stage_i.registers_i.we_a_i        ),
-    .wb_reg_wdata   ( id_stage_i.registers_i.wdata_a_i     ),
+    .lsu_misaligned   ( data_misaligned                      ),
 
-    .wb_data_rvalid ( data_rvalid_i                        ),
-    .wb_data_rdata  ( data_rdata_i                         )
+    .wb_valid         ( wb_valid                             ),
+    .wb_reg_addr      ( id_stage_i.registers_i.waddr_a_i     ),
+    .wb_reg_we        ( id_stage_i.registers_i.we_a_i        ),
+    .wb_reg_wdata     ( id_stage_i.registers_i.wdata_a_i     ),
+
+    .wb_data_rvalid   ( data_rvalid_i                        ),
+    .wb_data_rdata    ( data_rdata_i                         )
   );
 `endif
 
