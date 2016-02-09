@@ -55,10 +55,11 @@ module riscv_cs_registers
 
   // Interrupts
   output logic        irq_enable_o,
-  output logic [31:0] epcr_o,
+  output logic [31:0] mepc_o,
 
   input  logic [31:0] curr_pc_id_i,
-  input  logic        save_pc_id_i,
+  input  logic        exc_save_i,
+  input  logic        exc_restore_i,
 
   input  logic [5:0]  exc_cause_i,
   input  logic        save_exc_cause_i,
@@ -115,17 +116,16 @@ module riscv_cs_registers
   logic                          is_pcer;
   logic                          is_pcmr;
 
-  // Generic CSRs
-  logic [31:0] mepc_q, mepc_n;
-
   // CSR update logic
   logic [31:0] csr_wdata_int;
   logic [31:0] csr_rdata_int;
   logic        csr_we_int;
 
   // Interrupt control signals
-  logic irq_enable, irq_enable_n;
-  logic  [5:0] exc_cause, exc_cause_n;
+  logic [31:0] mepc_q, mepc_n;
+  logic [ 0:0] mestatus_q, mestatus_n;
+  logic [ 0:0] mstatus_q, mstatus_n;
+  logic [ 5:0] exc_cause, exc_cause_n;
 
 
   ////////////////////////////////////////////
@@ -144,7 +144,7 @@ module riscv_cs_registers
 
     case (csr_addr_i)
       // mstatus: always M-mode, contains IE bit
-      12'h300: csr_rdata_int = {29'b0, 2'b11, irq_enable};
+      12'h300: csr_rdata_int = {29'b0, 2'b11, mstatus_q};
 
       // mepc: exception program counter
       12'h341: csr_rdata_int = mepc_q;
@@ -165,6 +165,8 @@ module riscv_cs_registers
       12'h7B4: csr_rdata_int = hwlp_start_i[1];
       12'h7B5: csr_rdata_int = hwlp_end_i[1];
       12'h7B6: csr_rdata_int = hwlp_cnt_i[1];
+
+      12'h7C0: csr_rdata_int = {29'b0, 2'b11, mestatus_q};
     endcase
   end
 
@@ -173,14 +175,15 @@ module riscv_cs_registers
   always_comb
   begin
     mepc_n       = mepc_q;
-    irq_enable_n = irq_enable;
+    mestatus_n   = mestatus_q;
+    mstatus_n    = mstatus_q;
     exc_cause_n  = exc_cause;
     hwlp_we_o    = '0;
     hwlp_regid_o = '0;
 
     case (csr_addr_i)
       // mstatus: IE bit
-      12'h300: if (csr_we_int) irq_enable_n = csr_wdata_int[0];
+      12'h300: if (csr_we_int) mstatus_n = csr_wdata_int[0];
 
       // mepc: exception program counter
       12'h341: if (csr_we_int) mepc_n = csr_wdata_int;
@@ -194,7 +197,24 @@ module riscv_cs_registers
       12'h7B4: if (csr_we_int) begin hwlp_we_o = 3'b001; hwlp_regid_o = 1'b1; end
       12'h7B5: if (csr_we_int) begin hwlp_we_o = 3'b010; hwlp_regid_o = 1'b1; end
       12'h7B6: if (csr_we_int) begin hwlp_we_o = 3'b100; hwlp_regid_o = 1'b1; end
+
+      // mestatus: machine exception status
+      12'h7C0: if (csr_we_int) mestatus_n = csr_wdata_int[0];
     endcase
+
+    // exception controller gets priority over other writes
+    if (exc_save_i) begin
+      mepc_n     = curr_pc_id_i;
+      mestatus_n = mstatus_q;
+      mstatus_n  = 1'b0;
+    end
+
+    if (save_exc_cause_i)
+      exc_cause_n = exc_cause_i;
+
+    if (exc_restore_i) begin
+      mstatus_n = mestatus_q;
+    end
   end
 
   assign hwlp_data_o = csr_wdata_int;
@@ -231,8 +251,8 @@ module riscv_cs_registers
 
 
   // directly output some registers
-  assign irq_enable_o = irq_enable;
-  assign epcr_o       = mepc_q;
+  assign irq_enable_o = mstatus_q[0];
+  assign mepc_o       = mepc_q;
 
 
   // actual registers
@@ -240,25 +260,20 @@ module riscv_cs_registers
   begin
     if (rst_n == 1'b0)
     begin
-      irq_enable <= 1'b0;
+      mstatus_q  <= '0;
       mepc_q     <= '0;
+      mestatus_q <= '0;
       exc_cause  <= '0;
     end
     else
     begin
       // update CSRs
-      irq_enable <= irq_enable_n;
+      mstatus_q  <= mstatus_n;
 
-      // exception controller gets priority over other writes
-      if (save_pc_id_i == 1'b1)
-        mepc_q <= curr_pc_id_i;
-      else
-        mepc_q <= mepc_n;
+      mepc_q     <= mepc_n;
+      mestatus_q <= mestatus_n;
 
-      if (save_exc_cause_i)
-        exc_cause <= exc_cause_i;
-      else
-        exc_cause <= exc_cause_n;
+      exc_cause  <= exc_cause_n;
     end
   end
 

@@ -190,11 +190,12 @@ module riscv_core
 
   // Interrupts
   logic        irq_enable;
-  logic [31:0] epcr;
+  logic [31:0] mepc;
 
   logic [5:0]  exc_cause;
   logic        save_exc_cause;
-  logic        save_pc_id;
+  logic        exc_save_id;
+  logic        exc_restore_id;
 
 
   // Hardware loop controller signals
@@ -280,7 +281,7 @@ module riscv_core
     // control signals
     .clear_instr_valid_i ( clear_instr_valid ),
     .pc_set_i            ( pc_set            ),
-    .exception_pc_reg_i  ( epcr              ), // exception return address
+    .exception_pc_reg_i  ( mepc              ), // exception return address
     .pc_mux_i            ( pc_mux_id         ), // sel for pc multiplexer
     .exc_pc_mux_i        ( exc_pc_mux_id     ),
     .exc_vec_pc_mux_i    ( exc_vec_pc_mux_id ),
@@ -425,7 +426,8 @@ module riscv_core
     .irq_enable_i                 ( irq_enable           ), // global interrupt enable
     .exc_cause_o                  ( exc_cause            ),
     .save_exc_cause_o             ( save_exc_cause       ),
-    .save_pc_id_o                 ( save_pc_id           ), // control signal to save pc
+    .exc_save_id_o                ( exc_save_id          ), // control signal to save pc
+    .exc_restore_id_o             ( exc_restore_id       ), // control signal to restore pc
     .lsu_load_err_i               ( lsu_load_err         ),
     .lsu_store_err_i              ( lsu_store_err        ),
 
@@ -611,10 +613,11 @@ module riscv_core
 
     // Interrupt related control signals
     .irq_enable_o            ( irq_enable       ),
-    .epcr_o                  ( epcr             ),
+    .mepc_o                  ( mepc             ),
 
     .curr_pc_id_i            ( current_pc_id    ),    // from IF stage
-    .save_pc_id_i            ( save_pc_id       ),
+    .exc_save_i              ( exc_save_id      ),
+    .exc_restore_i           ( exc_restore_id   ),
 
     .exc_cause_i             ( exc_cause        ),
     .save_exc_cause_i        ( save_exc_cause   ),
@@ -775,6 +778,7 @@ module riscv_core
     .is_compressed    ( is_compressed_id                     ),
     .id_valid         ( id_stage_i.id_valid_o                ),
     .is_decoding      ( id_stage_i.is_decoding_o             ),
+    .is_illegal       ( id_stage_i.illegal_insn_dec          ),
     .pipe_flush       ( id_stage_i.controller_i.pipe_flush_i ),
 
     .ex_valid         ( ex_valid                             ),

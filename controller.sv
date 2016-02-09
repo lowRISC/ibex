@@ -71,7 +71,8 @@ module riscv_controller
 
   input  logic        trap_hit_i,                 // a trap was hit, so we have to flush EX and WB
 
-  output logic        save_pc_id_o,
+  output logic        exc_save_id_o,
+  output logic        exc_restore_id_o,
 
   // Debug Unit Signals
   input  logic        dbg_stall_i,                // Pipeline stall is requested
@@ -158,23 +159,24 @@ module riscv_controller
   always_comb
   begin
     // Default values
-    instr_req_o   = 1'b1;
+    instr_req_o      = 1'b1;
 
-    exc_ack_o     = 1'b0;
-    save_pc_id_o  = 1'b0;
+    exc_ack_o        = 1'b0;
+    exc_save_id_o    = 1'b0;
+    exc_restore_id_o = 1'b0;
 
-    pc_mux_o      = `PC_BOOT;
-    pc_set_o      = 1'b0;
-    jump_done     = jump_done_q;
+    pc_mux_o         = `PC_BOOT;
+    pc_set_o         = 1'b0;
+    jump_done        = jump_done_q;
 
-    ctrl_fsm_ns   = ctrl_fsm_cs;
+    ctrl_fsm_ns      = ctrl_fsm_cs;
 
-    core_busy_o   = 1'b1;
-    is_decoding_o = 1'b0;
+    core_busy_o      = 1'b1;
+    is_decoding_o    = 1'b0;
 
-    halt_if_o     = 1'b0;
-    halt_id_o     = 1'b0;
-    dbg_trap_o    = 1'b0;
+    halt_if_o        = 1'b0;
+    halt_id_o        = 1'b0;
+    dbg_trap_o       = 1'b0;
 
     unique case (ctrl_fsm_cs)
       // We were just reset, wait for fetch_enable
@@ -227,7 +229,7 @@ module riscv_controller
 
           // TODO: This assumes that the pipeline is always flushed before
           //       going to sleep.
-          save_pc_id_o = 1'b1;
+          exc_save_id_o = 1'b1;
         end
       end
 
@@ -266,7 +268,7 @@ module riscv_controller
               exc_ack_o     = 1'b1;
 
               halt_id_o     = 1'b1; // we don't want to propagate this instruction to EX
-              save_pc_id_o  = 1'b1;
+              exc_save_id_o = 1'b1;
 
               // we don't have to change our current state here as the prefetch
               // buffer is automatically invalidated, thus the next instruction
@@ -276,8 +278,9 @@ module riscv_controller
           end
 
           if (eret_insn_i) begin
-            pc_mux_o = `PC_ERET;
-            pc_set_o = 1'b1;
+            pc_mux_o         = `PC_ERET;
+            pc_set_o         = 1'b1;
+            exc_restore_id_o = 1'b1;
           end
 
           // handle WFI instruction, flush pipeline and (potentially) go to

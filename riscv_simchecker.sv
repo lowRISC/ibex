@@ -44,6 +44,7 @@ module riscv_simchecker
   input  logic        is_compressed,
   input  logic        id_valid,
   input  logic        is_decoding,
+  input  logic        is_illegal,
   input  logic        pipe_flush,
 
   input  logic        ex_valid,
@@ -239,8 +240,10 @@ module riscv_simchecker
     while(1) begin
       @(negedge clk);
 
-      // special case for WFI because we don't wait for unstalling there
-      if ((id_valid && is_decoding) || pipe_flush)
+      // - special case for WFI because we don't wait for unstalling there
+      // - special case for illegal instructions, since they will not go through
+      //   the pipe
+      if ((id_valid && is_decoding) || pipe_flush || (is_decoding && is_illegal))
       begin
         trace = new ();
 

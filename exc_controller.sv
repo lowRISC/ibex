@@ -64,7 +64,7 @@ module riscv_exc_controller
 );
 
 
-  enum logic [1:0] { IDLE, WAIT_CONTROLLER, IN_ISR } exc_ctrl_cs, exc_ctrl_ns;
+  enum logic [0:0] { IDLE, WAIT_CONTROLLER } exc_ctrl_cs, exc_ctrl_ns;
 
   logic req_int;
   logic [1:0] pc_mux_int, pc_mux_int_q;
@@ -173,7 +173,7 @@ module riscv_exc_controller
 
           if (ack_i) begin
             save_cause_o = 1'b1;
-            exc_ctrl_ns  = IN_ISR;
+            exc_ctrl_ns  = IDLE;
           end
         end
       end
@@ -184,14 +184,8 @@ module riscv_exc_controller
 
         if (ack_i) begin
           save_cause_o = 1'b1;
-          exc_ctrl_ns  = IN_ISR;
+          exc_ctrl_ns  = IDLE;
         end
-      end
-
-      IN_ISR:
-      begin
-        if (eret_insn_i)
-          exc_ctrl_ns = IDLE;
       end
 
       default:
