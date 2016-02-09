@@ -33,6 +33,8 @@ module riscv_simchecker
   input  logic        clk,
   input  logic        rst_n,
 
+  input  logic        fetch_enable,
+  input  logic [31:0] boot_addr,
   input  logic [4:0]  core_id,
   input  logic [4:0]  cluster_id,
 
@@ -110,8 +112,9 @@ module riscv_simchecker
   // simchecker initialization
   initial
   begin
-    #1;
-    dpi_simdata = riscv_checker_init(32'h80, core_id, cluster_id);
+    wait(rst_n == 1'b1);
+    wait(fetch_enable == 1'b1);
+    dpi_simdata = riscv_checker_init(boot_addr, core_id, cluster_id);
   end
 
   // virtual ID/EX pipeline
