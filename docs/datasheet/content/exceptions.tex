@@ -31,6 +31,14 @@ not individually. It is assumed that there is an event/interrupt controller
 outside of the core that performs masking and buffering of the interrupt lines.
 The global interrupt enable is done via the CSR register \signal{MSTATUS}.
 
+If multiple interrupts arrive in the same cycle, the interrupt with the lowest
+number will be executed first. As soon as IRQs are re-enabled, either after an
+\signal{eret} or an explicit enable, the interrupt with lowest number will be
+executed.
+This means that it is important to clear the interrupt line before re-enabling
+interrupts, as otherwise the same interrupt handler could be called over and
+over again.
+
 \section{Exceptions}
 
 The illegal instruction exception, the load and store invalid memory access

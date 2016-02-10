@@ -762,6 +762,9 @@ module riscv_core
 `endif
 
 `ifdef SIMCHECKER
+  logic is_interrupt;
+  assign is_interrupt = (pc_mux_id == `PC_EXCEPTION) && (exc_pc_mux_id == `EXC_PC_IRQ);
+
   riscv_simchecker riscv_simchecker_i
   (
     .clk              ( clk                                  ),
@@ -773,6 +776,7 @@ module riscv_core
     .cluster_id       ( cluster_id_i                         ),
 
     .instr_compressed ( if_stage_i.fetch_rdata[15:0]         ),
+    .pc_set           ( pc_set                               ),
     .if_valid         ( if_valid                             ),
 
     .pc               ( id_stage_i.current_pc_id_i           ),
@@ -781,6 +785,8 @@ module riscv_core
     .id_valid         ( id_stage_i.id_valid_o                ),
     .is_decoding      ( id_stage_i.is_decoding_o             ),
     .is_illegal       ( id_stage_i.illegal_insn_dec          ),
+    .is_interrupt     ( is_interrupt                         ),
+    .irq_no           ( exc_vec_pc_mux_id                    ),
     .pipe_flush       ( id_stage_i.controller_i.pipe_flush_i ),
 
     .ex_valid         ( ex_valid                             ),

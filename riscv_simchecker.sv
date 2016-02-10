@@ -24,6 +24,7 @@
 
 import "DPI-C" function chandle riscv_checker_init(input int boot_addr, input int core_id, input int cluster_id);
 import "DPI-C" function int     riscv_checker_step(input chandle cpu, input logic [31:0] pc, input logic [31:0] instr);
+import "DPI-C" function void    riscv_checker_irq(input chandle cpu, input int irq, input int irq_no);
 import "DPI-C" function void    riscv_checker_mem_access(input chandle cpu, input int we, input logic [31:0] addr, input logic [31:0] data);
 import "DPI-C" function void    riscv_checker_reg_access(input chandle cpu, input logic [31:0] addr, input logic [31:0] data);
 
@@ -40,6 +41,7 @@ module riscv_simchecker
 
   input  logic [15:0] instr_compressed,
   input  logic        if_valid,
+  input  logic        pc_set,
 
   input  logic [31:0] pc,
   input  logic [31:0] instr,
@@ -47,6 +49,8 @@ module riscv_simchecker
   input  logic        id_valid,
   input  logic        is_decoding,
   input  logic        is_illegal,
+  input  logic        is_interrupt,
+  input  logic [4:0]  irq_no,
   input  logic        pipe_flush,
 
   input  logic        ex_valid,
@@ -92,10 +96,13 @@ module riscv_simchecker
     time         simtime;
     logic [31:0] pc;
     logic [31:0] instr;
+    logic        irq;
+    logic [ 4:0] irq_no;
     reg_t        regs_write[$];
     mem_acc_t    mem_access[$];
 
     function new ();
+      irq        = 1'b0;
       regs_write = {};
       mem_access = {};
     endfunction
@@ -105,6 +112,8 @@ module riscv_simchecker
   integer rdata_writes = 0;
 
   logic [15:0] instr_compressed_id;
+  logic        is_irq_if, is_irq_id;
+  logic [ 4:0] irq_no_id, irq_no_if;
 
   mailbox instr_ex = new (2);
   mailbox instr_wb = new (2);
@@ -114,6 +123,7 @@ module riscv_simchecker
   begin
     wait(rst_n == 1'b1);
     wait(fetch_enable == 1'b1);
+
     dpi_simdata = riscv_checker_init(boot_addr, core_id, cluster_id);
   end
 
@@ -212,6 +222,8 @@ module riscv_simchecker
         riscv_checker_reg_access(dpi_simdata, trace.regs_write[i].addr, trace.regs_write[i].value);
       end
 
+      riscv_checker_irq(dpi_simdata, trace.irq, trace.irq_no);
+
       if (riscv_checker_step(dpi_simdata, trace.pc, trace.instr))
         $display("%t: Mismatch between simulator and RTL detected", trace.simtime);
     end
@@ -231,8 +243,19 @@ module riscv_simchecker
 
   always_ff @(posedge clk)
   begin
-    if (if_valid)
+    if (pc_set) begin
+      is_irq_if <= is_interrupt;
+      irq_no_if <= irq_no;
+    end
+  end
+
+  always_ff @(posedge clk)
+  begin
+    if (if_valid) begin
       instr_compressed_id <= instr_compressed;
+      is_irq_id           <= is_irq_if;
+      irq_no_id           <= irq_no_if;
+    end
   end
 
   // log execution
@@ -253,11 +276,15 @@ module riscv_simchecker
         trace.simtime    = $time;
         trace.pc         = pc;
 
-        if (is_compressed) begin
+        if (is_compressed)
           trace.instr = {instr_compressed_id, instr_compressed_id};
-        end
         else
           trace.instr = instr;
+
+        if (is_irq_id) begin
+          trace.irq    = 1'b1;
+          trace.irq_no = irq_no_id;
+        end
 
         instr_ex.put(trace);
       end
