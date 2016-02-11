@@ -13,6 +13,9 @@ the loop body is executed. RI5CY contains two hardware loop register sets, each
 of them can store these three values.
 If the end address of the two hardware loops is identical, loop 0 has higher
 priority and only the loop counter for hardware loop 0 is decremented.
+As soon as the counter of loop 0 reaches 1 at an end address, meaning it is
+decremented to 0 now, loop 1 gets active too. In this case, both counters will
+be decremented and the core jumps to the start of loop 1.
 
 The instructions described below are used to setup the hardware loop registers.
 Note that the minimum loop size is two instructions.
