@@ -19,8 +19,18 @@ riscv:
     mult.sv,
     prefetch_buffer.sv,
     prefetch_L0_buffer.sv,
-    register_file_ff.sv,
-    register_file.sv,
     riscv_core.sv,
     riscv_tracer.sv,
   ]
+riscv_regfile:
+  incdirs: [
+    include,
+    ../../rtl/includes,
+  ]
+  files: [
+    register_file.sv,
+  ]
+  files_xilinx_synth: [
+    register_file_ff.sv,
+  ]
+
