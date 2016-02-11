@@ -30,6 +30,7 @@ module riscv_tracer
   input  logic        clk,
   input  logic        rst_n,
 
+  input  logic        fetch_enable,
   input  logic [4:0]  core_id,
   input  logic [4:0]  cluster_id,
 
@@ -186,7 +187,7 @@ module riscv_tracer
     function void printUInstr(input string mnemonic);
       begin
         regs_write.push_back({rd, 'x});
-        str = $sformatf("%-16s x%0d, 0x%0h000", mnemonic, rd, imm_u_type[31:12]);
+        str = $sformatf("%-16s x%0d, 0x%0h", mnemonic, rd, {imm_u_type[31:12], 12'h000});
       end
     endfunction // printUInstr
 
@@ -374,11 +375,13 @@ module riscv_tracer
   // open/close output file for writing
   initial
   begin
-    #1 // delay needed for valid core_id and cluster_id
+    wait(rst_n == 1'b1);
+    wait(fetch_enable == 1'b1);
     $sformat(fn, "trace_core_%h_%h.log", cluster_id, core_id);
     $display("[TRACER] Output filename is: %s", fn);
     f = $fopen(fn, "w");
-    $fwrite(f, "%20s\t%6s\t%10s\t%10s\t \t%s\n", "Time", "Cycles", "PC", "Instr", "Mnemonic");
+    $fwrite(f, "                Time          Cycles PC       Instr    Mnemonic\n");
+
   end
 
   final
@@ -402,7 +405,7 @@ module riscv_tracer
 
       // wait until we are going to the next stage
       do begin
-        @(posedge clk);
+        @(negedge clk);
 
         // replace register written back
         foreach(trace.regs_write[i])
@@ -437,7 +440,7 @@ module riscv_tracer
 
       // wait until we are going to the next stage
       do begin
-        @(posedge clk);
+        @(negedge clk);
 
         // replace register written back
         foreach(trace.regs_write[i])
@@ -450,7 +453,7 @@ module riscv_tracer
   end
 
   // log execution
-  always @(posedge clk)
+  always @(negedge clk)
   begin
     instr_trace_t trace;
 
@@ -501,10 +504,10 @@ module riscv_tracer
         `INSTR_SRA:        trace.printRInstr("sra");
         `INSTR_OR:         trace.printRInstr("or");
         `INSTR_AND:        trace.printRInstr("and");
-        `INSTR_EXTHS:      trace.printRInstr("exths");
-        `INSTR_EXTHZ:      trace.printRInstr("exthz");
-        `INSTR_EXTBS:      trace.printRInstr("extbs");
-        `INSTR_EXTBZ:      trace.printRInstr("extbz");
+        `INSTR_EXTHS:      trace.printRInstr("p.exths");
+        `INSTR_EXTHZ:      trace.printRInstr("p.exthz");
+        `INSTR_EXTBS:      trace.printRInstr("p.extbs");
+        `INSTR_EXTBZ:      trace.printRInstr("p.extbz");
         `INSTR_PAVG:       trace.printRInstr("p.avg");
         `INSTR_PAVGU:      trace.printRInstr("p.avgu");
         `INSTR_PSLET:      trace.printRInstr("p.slet");

@@ -721,6 +721,7 @@ module riscv_core
     .clk            ( clk                                  ),
     .rst_n          ( rst_n                                ),
 
+    .fetch_enable   ( fetch_enable_i                       ),
     .core_id        ( core_id_i                            ),
     .cluster_id     ( cluster_id_i                         ),
 

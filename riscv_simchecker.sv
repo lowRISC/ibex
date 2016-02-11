@@ -23,7 +23,7 @@
 
 
 import "DPI-C" function chandle riscv_checker_init(input int boot_addr, input int core_id, input int cluster_id);
-import "DPI-C" function int     riscv_checker_step(input chandle cpu, input logic [31:0] pc, input logic [31:0] instr);
+import "DPI-C" function int     riscv_checker_step(input chandle cpu, input longint simtime, input int cycle, input logic [31:0] pc, input logic [31:0] instr);
 import "DPI-C" function void    riscv_checker_irq(input chandle cpu, input int irq, input int irq_no);
 import "DPI-C" function void    riscv_checker_mem_access(input chandle cpu, input int we, input logic [31:0] addr, input logic [31:0] data);
 import "DPI-C" function void    riscv_checker_reg_access(input chandle cpu, input logic [31:0] addr, input logic [31:0] data);
@@ -94,6 +94,7 @@ module riscv_simchecker
 
   class instr_trace_t;
     time         simtime;
+    int          cycles;
     logic [31:0] pc;
     logic [31:0] instr;
     logic        irq;
@@ -110,6 +111,8 @@ module riscv_simchecker
 
   mailbox rdata_stack = new (4);
   integer rdata_writes = 0;
+
+  integer      cycles;
 
   logic [15:0] instr_compressed_id;
   logic        is_irq_if, is_irq_id;
@@ -180,12 +183,6 @@ module riscv_simchecker
         @(negedge clk);
         #1;
 
-        reg_write.addr  = wb_reg_addr;
-        reg_write.value = wb_reg_wdata;
-
-        if (wb_reg_we)
-          trace.regs_write.push_back(reg_write);
-
         // pop rdata from stack when there were pending writes
         while(rdata_stack.num() > 0 && rdata_writes > 0) begin
           rdata_writes--;
@@ -193,6 +190,12 @@ module riscv_simchecker
         end
 
       end while (!wb_valid);
+
+      reg_write.addr  = wb_reg_addr;
+      reg_write.value = wb_reg_wdata;
+
+      if (wb_reg_we)
+        trace.regs_write.push_back(reg_write);
 
       // keep care of rdata
       foreach(trace.mem_access[i]) begin
@@ -224,9 +227,18 @@ module riscv_simchecker
 
       riscv_checker_irq(dpi_simdata, trace.irq, trace.irq_no);
 
-      if (riscv_checker_step(dpi_simdata, trace.pc, trace.instr))
-        $display("%t: Mismatch between simulator and RTL detected", trace.simtime);
+      if (riscv_checker_step(dpi_simdata, trace.simtime, trace.cycles, trace.pc, trace.instr))
+        $display("%t: Cluster %d, Core %d: Mismatch between simulator and RTL detected", trace.simtime, cluster_id, core_id);
     end
+  end
+
+  // cycle counter
+  always_ff @(posedge clk, negedge rst_n)
+  begin
+    if (rst_n == 1'b0)
+      cycles = 0;
+    else
+      cycles = cycles + 1;
   end
 
   // create rdata stack
@@ -246,6 +258,8 @@ module riscv_simchecker
     if (pc_set) begin
       is_irq_if <= is_interrupt;
       irq_no_if <= irq_no;
+    end else if (if_valid) begin
+      is_irq_if <= 1'b0;
     end
   end
 
@@ -274,6 +288,7 @@ module riscv_simchecker
         trace = new ();
 
         trace.simtime    = $time;
+        trace.cycles      = cycles;
         trace.pc         = pc;
 
         if (is_compressed)
