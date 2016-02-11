@@ -55,6 +55,8 @@
 
 \usepackage{enumitem}
 
+\usepackage{tcolorbox}
+
 \usepackage{pdflscape}
 
 
@@ -115,3 +117,10 @@
 \textbf{Operation:} \texttt{#2}%
 }
 
+\newenvironment{boxnote}%
+{%
+  \begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=Note]%
+}%
+{%
+  \end{tcolorbox}%
+}%

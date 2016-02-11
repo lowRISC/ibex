@@ -29,7 +29,15 @@ exception/interrupt.
 interrupt lines. Interrupts can only be enabled/disabled on a global basis and
 not individually. It is assumed that there is an event/interrupt controller
 outside of the core that performs masking and buffering of the interrupt lines.
-The global interrupt enable is done via the CSR register \signal{mstatus}.
+The global interrupt enable is done via the CSR register \signal{MSTATUS}.
+
+If multiple interrupts arrive in the same cycle, the interrupt with the lowest
+number will be executed first. As soon as IRQs are re-enabled, either after an
+\signal{eret} or an explicit enable, the interrupt with lowest number will be
+executed.
+This means that it is important to clear the interrupt line before re-enabling
+interrupts, as otherwise the same interrupt handler could be called over and
+over again.
 
 \section{Exceptions}
 
@@ -38,16 +46,21 @@ exceptions and ecall instruction exceptions can not be disabled and are always
 active.
 
 The illegal instruction exception and the load and store invalid memory access
-exceptions are precise exceptions, i.e. the value of \signal{mepc} will be the
+exceptions are precise exceptions, i.e. the value of \signal{MEPC} will be the
 instruction address that caused it.
 
 \section{Handling}
 
-\rvcore does not support nested interrupt/exception handling. Exceptions inside
-interrupt/exception handlers are ignored and thus a user must ensure that such
-a situation does not happen, as otherwise the behaviour is undefined.
+\rvcore does support nested interrupt/exception handling. Exceptions inside
+interrupt/exception handlers cause another exception, thus exceptions during the
+critical part of your exception handlers, i.e. before having saved the
+\signal{MEPC} and \signal{MESTATUS} registers, will cause those register to be
+overwritten.
+Interrupts during interrupt/exception handlers are disabled by default, but can
+be explicitely enabled if desired.
 
 Upon executing an \instr{eret} instruction, the core jumps to the program
-counter saved in the CSR register \signal{mepc}. When entering an
-interrupt/exception handler, the core sets \signal{mepc} to the current program
-counter.
+counter saved in the CSR register \signal{MEPC} and restores the value of
+register \signal{MESTATUS} to \signal{MSTATUS}. When entering an
+interrupt/exception handler, the core sets \signal{MEPC} to the current program
+counter and saves the current value of \signal{MSTATUS} in \signal{MESTATUS}.

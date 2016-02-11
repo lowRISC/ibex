@@ -140,7 +140,8 @@ module riscv_id_stage
     output logic [5:0]  exc_cause_o,
     output logic        save_exc_cause_o,
 
-    output logic        save_pc_id_o,
+    output logic        exc_save_id_o,
+    output logic        exc_restore_id_o,
 
     input  logic        lsu_load_err_i,
     input  logic        lsu_store_err_i,
@@ -714,7 +715,8 @@ module riscv_id_stage
     .exc_ack_o                      ( exc_ack                ),
     .trap_hit_i                     ( trap_hit               ),
 
-    .save_pc_id_o                   ( save_pc_id_o           ),
+    .exc_save_id_o                  ( exc_save_id_o          ),
+    .exc_restore_id_o               ( exc_restore_id_o       ),
 
     // Debug Unit Signals
     .dbg_stall_i                    ( dbg_stall_i            ),

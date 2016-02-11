@@ -190,11 +190,12 @@ module riscv_core
 
   // Interrupts
   logic        irq_enable;
-  logic [31:0] epcr;
+  logic [31:0] mepc;
 
   logic [5:0]  exc_cause;
   logic        save_exc_cause;
-  logic        save_pc_id;
+  logic        exc_save_id;
+  logic        exc_restore_id;
 
 
   // Hardware loop controller signals
@@ -280,7 +281,7 @@ module riscv_core
     // control signals
     .clear_instr_valid_i ( clear_instr_valid ),
     .pc_set_i            ( pc_set            ),
-    .exception_pc_reg_i  ( epcr              ), // exception return address
+    .exception_pc_reg_i  ( mepc              ), // exception return address
     .pc_mux_i            ( pc_mux_id         ), // sel for pc multiplexer
     .exc_pc_mux_i        ( exc_pc_mux_id     ),
     .exc_vec_pc_mux_i    ( exc_vec_pc_mux_id ),
@@ -425,7 +426,8 @@ module riscv_core
     .irq_enable_i                 ( irq_enable           ), // global interrupt enable
     .exc_cause_o                  ( exc_cause            ),
     .save_exc_cause_o             ( save_exc_cause       ),
-    .save_pc_id_o                 ( save_pc_id           ), // control signal to save pc
+    .exc_save_id_o                ( exc_save_id          ), // control signal to save pc
+    .exc_restore_id_o             ( exc_restore_id       ), // control signal to restore pc
     .lsu_load_err_i               ( lsu_load_err         ),
     .lsu_store_err_i              ( lsu_store_err        ),
 
@@ -611,10 +613,11 @@ module riscv_core
 
     // Interrupt related control signals
     .irq_enable_o            ( irq_enable       ),
-    .epcr_o                  ( epcr             ),
+    .mepc_o                  ( mepc             ),
 
     .curr_pc_id_i            ( current_pc_id    ),    // from IF stage
-    .save_pc_id_i            ( save_pc_id       ),
+    .exc_save_i              ( exc_save_id      ),
+    .exc_restore_i           ( exc_restore_id   ),
 
     .exc_cause_i             ( exc_cause        ),
     .save_exc_cause_i        ( save_exc_cause   ),
@@ -715,47 +718,98 @@ module riscv_core
 `ifdef TRACE_EXECUTION
   riscv_tracer riscv_tracer_i
   (
-    .clk           ( clk                                  ),
-    .rst_n         ( rst_n                                ),
+    .clk            ( clk                                  ),
+    .rst_n          ( rst_n                                ),
 
-    .core_id       ( core_id_i                            ),
-    .cluster_id    ( cluster_id_i                         ),
+    .fetch_enable   ( fetch_enable_i                       ),
+    .core_id        ( core_id_i                            ),
+    .cluster_id     ( cluster_id_i                         ),
 
-    .pc            ( id_stage_i.current_pc_id_i           ),
-    .instr         ( id_stage_i.instr                     ),
-    .compressed    ( id_stage_i.is_compressed_i           ),
-    .id_valid      ( id_stage_i.id_valid_o                ),
-    .is_decoding   ( id_stage_i.is_decoding_o             ),
-    .pipe_flush    ( id_stage_i.controller_i.pipe_flush_i ),
+    .pc             ( id_stage_i.current_pc_id_i           ),
+    .instr          ( id_stage_i.instr                     ),
+    .compressed     ( id_stage_i.is_compressed_i           ),
+    .id_valid       ( id_stage_i.id_valid_o                ),
+    .is_decoding    ( id_stage_i.is_decoding_o             ),
+    .pipe_flush     ( id_stage_i.controller_i.pipe_flush_i ),
 
-    .rs1_value     ( id_stage_i.operand_a_fw_id           ),
-    .rs2_value     ( id_stage_i.operand_b_fw_id           ),
-    .rs3_value     ( id_stage_i.alu_operand_c             ),
+    .rs1_value      ( id_stage_i.operand_a_fw_id           ),
+    .rs2_value      ( id_stage_i.operand_b_fw_id           ),
+    .rs3_value      ( id_stage_i.alu_operand_c             ),
 
-    .ex_valid      ( ex_valid                             ),
-    .ex_reg_addr   ( regfile_alu_waddr_fw                 ),
-    .ex_reg_we     ( regfile_alu_we_fw                    ),
-    .ex_reg_wdata  ( regfile_alu_wdata_fw                 ),
+    .ex_valid       ( ex_valid                             ),
+    .ex_reg_addr    ( regfile_alu_waddr_fw                 ),
+    .ex_reg_we      ( regfile_alu_we_fw                    ),
+    .ex_reg_wdata   ( regfile_alu_wdata_fw                 ),
 
-    .ex_data_addr  ( data_addr_o                          ),
-    .ex_data_req   ( data_req_o                           ),
-    .ex_data_gnt   ( data_gnt_i                           ),
-    .ex_data_we    ( data_we_o                            ),
-    .ex_data_wdata ( data_wdata_o                         ),
+    .ex_data_addr   ( data_addr_o                          ),
+    .ex_data_req    ( data_req_o                           ),
+    .ex_data_gnt    ( data_gnt_i                           ),
+    .ex_data_we     ( data_we_o                            ),
+    .ex_data_wdata  ( data_wdata_o                         ),
 
-    .wb_valid      ( wb_valid                             ),
-    .wb_reg_addr   ( regfile_waddr_fw_wb_o                ),
-    .wb_reg_we     ( regfile_we_wb                        ),
-    .wb_reg_wdata  ( regfile_wdata                        ),
+    .wb_valid       ( wb_valid                             ),
+    .wb_reg_addr    ( regfile_waddr_fw_wb_o                ),
+    .wb_reg_we      ( regfile_we_wb                        ),
+    .wb_reg_wdata   ( regfile_wdata                        ),
 
-    .imm_u_type    ( id_stage_i.imm_u_type                ),
-    .imm_uj_type   ( id_stage_i.imm_uj_type               ),
-    .imm_i_type    ( id_stage_i.imm_i_type                ),
-    .imm_iz_type   ( id_stage_i.imm_iz_type[11:0]         ),
-    .imm_z_type    ( id_stage_i.imm_z_type                ),
-    .imm_s_type    ( id_stage_i.imm_s_type                ),
-    .imm_sb_type   ( id_stage_i.imm_sb_type               )
+    .imm_u_type     ( id_stage_i.imm_u_type                ),
+    .imm_uj_type    ( id_stage_i.imm_uj_type               ),
+    .imm_i_type     ( id_stage_i.imm_i_type                ),
+    .imm_iz_type    ( id_stage_i.imm_iz_type[11:0]         ),
+    .imm_z_type     ( id_stage_i.imm_z_type                ),
+    .imm_s_type     ( id_stage_i.imm_s_type                ),
+    .imm_sb_type    ( id_stage_i.imm_sb_type               )
+  );
+`endif
 
+`ifdef SIMCHECKER
+  logic is_interrupt;
+  assign is_interrupt = (pc_mux_id == `PC_EXCEPTION) && (exc_pc_mux_id == `EXC_PC_IRQ);
+
+  riscv_simchecker riscv_simchecker_i
+  (
+    .clk              ( clk                                  ),
+    .rst_n            ( rst_n                                ),
+
+    .fetch_enable     ( fetch_enable_i                       ),
+    .boot_addr        ( boot_addr_i                          ),
+    .core_id          ( core_id_i                            ),
+    .cluster_id       ( cluster_id_i                         ),
+
+    .instr_compressed ( if_stage_i.fetch_rdata[15:0]         ),
+    .pc_set           ( pc_set                               ),
+    .if_valid         ( if_valid                             ),
+
+    .pc               ( id_stage_i.current_pc_id_i           ),
+    .instr            ( id_stage_i.instr                     ),
+    .is_compressed    ( is_compressed_id                     ),
+    .id_valid         ( id_stage_i.id_valid_o                ),
+    .is_decoding      ( id_stage_i.is_decoding_o             ),
+    .is_illegal       ( id_stage_i.illegal_insn_dec          ),
+    .is_interrupt     ( is_interrupt                         ),
+    .irq_no           ( exc_vec_pc_mux_id                    ),
+    .pipe_flush       ( id_stage_i.controller_i.pipe_flush_i ),
+
+    .ex_valid         ( ex_valid                             ),
+    .ex_reg_addr      ( id_stage_i.registers_i.waddr_b_i     ),
+    .ex_reg_we        ( id_stage_i.registers_i.we_b_i        ),
+    .ex_reg_wdata     ( id_stage_i.registers_i.wdata_b_i     ),
+
+    .ex_data_addr     ( data_addr_o                          ),
+    .ex_data_req      ( data_req_o                           ),
+    .ex_data_gnt      ( data_gnt_i                           ),
+    .ex_data_we       ( data_we_o                            ),
+    .ex_data_wdata    ( data_wdata_o                         ),
+
+    .lsu_misaligned   ( data_misaligned                      ),
+
+    .wb_valid         ( wb_valid                             ),
+    .wb_reg_addr      ( id_stage_i.registers_i.waddr_a_i     ),
+    .wb_reg_we        ( id_stage_i.registers_i.we_a_i        ),
+    .wb_reg_wdata     ( id_stage_i.registers_i.wdata_a_i     ),
+
+    .wb_data_rvalid   ( data_rvalid_i                        ),
+    .wb_data_rdata    ( data_rdata_i                         )
   );
 `endif
 
