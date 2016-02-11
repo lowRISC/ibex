@@ -1,0 +1,36 @@
+riscv:
+  incdirs: [
+    include,
+  ]
+  files: [
+    alu.sv,
+    compressed_decoder.sv,
+    controller.sv,
+    cs_registers.sv,
+    debug_unit.sv,
+    decoder.sv,
+    exc_controller.sv,
+    ex_stage.sv,
+    hwloop_controller.sv,
+    hwloop_regs.sv,
+    id_stage.sv,
+    if_stage.sv,
+    load_store_unit.sv,
+    mult.sv,
+    prefetch_buffer.sv,
+    prefetch_L0_buffer.sv,
+    riscv_core.sv,
+    riscv_tracer.sv,
+  ]
+riscv_regfile:
+  incdirs: [
+    include,
+    ../../rtl/includes,
+  ]
+  files: [
+    register_file.sv,
+  ]
+  files_xilinx_synth: [
+    register_file_ff.sv,
+  ]
+
