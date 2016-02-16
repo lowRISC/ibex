@@ -482,6 +482,7 @@ module riscv_prefetch_buffer
       WAIT_ABORTED: begin
         // prepare for next request
         instr_req_o  = 1'b1;
+        wait_gnt     = 1'b1;
 
         if (instr_rvalid_i) begin
           // no need to send address, already done in WAIT_RVALID
@@ -510,7 +511,7 @@ module riscv_prefetch_buffer
   begin
     if(rst_n == 1'b0)
     begin
-      CS      <= IDLE;
+      CS <= IDLE;
     end
     else
     begin
