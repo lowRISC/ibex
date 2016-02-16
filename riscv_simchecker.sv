@@ -65,6 +65,7 @@ module riscv_simchecker
   input  logic [31:0] ex_data_wdata,
 
   input  logic        lsu_misaligned,
+  input  logic        wb_bypass,
 
   input  logic        wb_valid,
   input  logic [ 4:0] wb_reg_addr,
@@ -99,11 +100,13 @@ module riscv_simchecker
     logic [31:0] instr;
     logic        irq;
     logic [ 4:0] irq_no;
+    logic        wb_bypass;
     reg_t        regs_write[$];
     mem_acc_t    mem_access[$];
 
     function new ();
       irq        = 1'b0;
+      wb_bypass  = 1'b1;
       regs_write = {};
       mem_access = {};
     endfunction
@@ -118,8 +121,8 @@ module riscv_simchecker
   logic        is_irq_if, is_irq_id;
   logic [ 4:0] irq_no_id, irq_no_if;
 
-  mailbox instr_ex = new (2);
-  mailbox instr_wb = new (2);
+  mailbox instr_ex = new (4);
+  mailbox instr_wb = new (4);
 
   // simchecker initialization
   initial
@@ -162,7 +165,9 @@ module riscv_simchecker
 
           trace.mem_access.push_back(mem_acc);
         end
-      end while (!ex_valid || lsu_misaligned);
+      end while ((!ex_valid || lsu_misaligned) && (!wb_bypass));
+
+      trace.wb_bypass = wb_bypass;
 
       instr_wb.put(trace);
     end
@@ -178,38 +183,46 @@ module riscv_simchecker
     while(1) begin
       instr_wb.get(trace);
 
-      // wait until we are going to the next stage
-      do begin
-        @(negedge clk);
-        #1;
+      if (!trace.wb_bypass) begin
+        // wait until we are going to the next stage
+        do begin
+          @(negedge clk);
+          #1;
 
-        // pop rdata from stack when there were pending writes
-        while(rdata_stack.num() > 0 && rdata_writes > 0) begin
-          rdata_writes--;
-          rdata_stack.get(tmp_discard);
-        end
+          // pop rdata from stack when there were pending writes
+          while(rdata_stack.num() > 0 && rdata_writes > 0) begin
+            rdata_writes--;
+            rdata_stack.get(tmp_discard);
+          end
 
-      end while (!wb_valid);
+        end while (!wb_valid);
 
-      reg_write.addr  = wb_reg_addr;
-      reg_write.value = wb_reg_wdata;
+        reg_write.addr  = wb_reg_addr;
+        reg_write.value = wb_reg_wdata;
 
-      if (wb_reg_we)
-        trace.regs_write.push_back(reg_write);
+        if (wb_reg_we)
+          trace.regs_write.push_back(reg_write);
 
-      // keep care of rdata
-      foreach(trace.mem_access[i]) begin
-        if (trace.mem_access[i].we) begin
-          // for writes we don't need to wait for the rdata, so if it has
-          // not appeared yet, we count it and remove it later from out
-          // stack
-          rdata_writes++;
+        // take care of rdata
+        foreach(trace.mem_access[i]) begin
+          if (trace.mem_access[i].we) begin
+            // for writes we don't need to wait for the rdata, so if it has
+            // not appeared yet, we count it and remove it later from out
+            // stack
+            if (rdata_stack.num() > 0)
+              rdata_stack.get(tmp_discard);
+            else
+              rdata_writes++;
 
-        end else begin
-          if (rdata_stack.num() == 0)
-            $warning("rdata stack is empty, but we are waiting for a read");
+          end else begin
+            if (rdata_stack.num() == 0)
+              $warning("rdata stack is empty, but we are waiting for a read");
 
-          rdata_stack.get(trace.mem_access[i].rdata);
+            if (rdata_writes > 0)
+              $warning("rdata_writes is > 0, but we are waiting for a read");
+
+            rdata_stack.get(trace.mem_access[i].rdata);
+          end
         end
       end
 

@@ -176,7 +176,10 @@ module riscv_ex_stage
     end
   end
 
+  // As valid always goes to the right and ready to the left, and we are able
+  // to finish branches without going to the WB stage, ex_valid does not
+  // depend on ex_ready.
   assign ex_ready_o = (lsu_ready_ex_i & wb_ready_i) | branch_in_ex_i;
-  assign ex_valid_o = ex_ready_o;
+  assign ex_valid_o = (lsu_ready_ex_i & wb_ready_i);
 
 endmodule

@@ -747,6 +747,8 @@ module riscv_core
     .ex_data_we     ( data_we_o                            ),
     .ex_data_wdata  ( data_wdata_o                         ),
 
+    .wb_bypass      ( ex_stage_i.branch_in_ex_i            ),
+
     .wb_valid       ( wb_valid                             ),
     .wb_reg_addr    ( regfile_waddr_fw_wb_o                ),
     .wb_reg_we      ( regfile_we_wb                        ),
@@ -801,6 +803,7 @@ module riscv_core
     .ex_data_we       ( data_we_o                            ),
     .ex_data_wdata    ( data_wdata_o                         ),
 
+    .wb_bypass        ( ex_stage_i.branch_in_ex_i            ),
     .lsu_misaligned   ( data_misaligned                      ),
 
     .wb_valid         ( wb_valid                             ),

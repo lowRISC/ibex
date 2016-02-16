@@ -56,6 +56,8 @@ module riscv_tracer
   input  logic [31:0] ex_data_addr,
   input  logic [31:0] ex_data_wdata,
 
+  input  logic        wb_bypass,
+
   input  logic        wb_valid,
   input  logic [ 4:0] wb_reg_addr,
   input  logic        wb_reg_we,
@@ -424,9 +426,12 @@ module riscv_tracer
 
           trace.mem_access.push_back(mem_acc);
         end
-      end while (!ex_valid);
+      end while (!ex_valid && !wb_bypass); // ex branches bypass the WB stage
 
-      instr_wb.put(trace);
+      if (wb_bypass)
+        trace.printInstrTrace();
+      else
+        instr_wb.put(trace);
     end
   end
 
