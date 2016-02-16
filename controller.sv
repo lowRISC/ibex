@@ -279,8 +279,12 @@ module riscv_controller
 
           if (eret_insn_i) begin
             pc_mux_o         = `PC_ERET;
-            pc_set_o         = 1'b1;
             exc_restore_id_o = 1'b1;
+
+            if ((~jump_done_q)) begin
+              pc_set_o    = 1'b1;
+              jump_done   = 1'b1;
+            end
           end
 
           // handle WFI instruction, flush pipeline and (potentially) go to
