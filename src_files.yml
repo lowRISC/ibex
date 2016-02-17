@@ -20,13 +20,12 @@ riscv:
     prefetch_buffer.sv,
     prefetch_L0_buffer.sv,
     riscv_core.sv,
+  ]
+riscv_vip_rtl:
+  files: [
     riscv_tracer.sv,
   ]
 riscv_regfile_rtl:
-  incdirs: [
-    include,
-    ../../rtl/includes,
-  ]
   files: [
     register_file.sv,
   ]
