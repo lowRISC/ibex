@@ -22,7 +22,7 @@ riscv:
     riscv_core.sv,
     riscv_tracer.sv,
   ]
-riscv_regfile:
+riscv_regfile_rtl:
   incdirs: [
     include,
     ../../rtl/includes,
@@ -30,7 +30,8 @@ riscv_regfile:
   files: [
     register_file.sv,
   ]
-  files_xilinx_synth: [
+riscv_regfile_fpga:
+  files: [
     register_file_ff.sv,
   ]
 
