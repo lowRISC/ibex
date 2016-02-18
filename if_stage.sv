@@ -165,7 +165,7 @@ module riscv_if_stage
         .clk               ( clk                         ),
         .rst_n             ( rst_n                       ),
 
-        .req_i             ( 1'b1                        ),
+        .req_i             ( req_i                       ),
 
         .branch_i          ( branch_req                  ),
         .addr_i            ( fetch_addr_n                ),

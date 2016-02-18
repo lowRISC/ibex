@@ -144,15 +144,20 @@ module riscv_fetch_fifo
   begin
     in_fetch_addr_o = {fifo_last_addr[31:2], 2'b00} + 32'd4;
 
-    if (in_wait_gnt_i)
+    if (in_wait_gnt_i) begin
       in_fetch_addr_o = {fifo_last_addr[31:2], 2'b00};
 
-    if (branch_i) begin
-      in_fetch_addr_o = addr_i;
+      if (hwlp_i & (~is_hwlp_Q[1]) & rdata_valid_Q[0])
+        in_fetch_addr_o = hwlp_target_i;
     end else begin
       if (hwlp_i & (~is_hwlp_Q[1]))
         in_fetch_addr_o = hwlp_target_i;
     end
+
+    // branches have priority since the fifo is cleared
+    if (branch_i)
+      in_fetch_addr_o = addr_i;
+
   end
 
   // accept hwloop input as long as our second entry is not already one and we
@@ -430,7 +435,6 @@ module riscv_prefetch_buffer
         instr_req_o = 1'b1;
 
         if (branch_i) begin
-
           fifo_addr_valid = 1'b1;
         end
 
@@ -445,9 +449,9 @@ module riscv_prefetch_buffer
 
         if ((req_i && fifo_addr_ready) || branch_i) begin
           // prepare for next request
-          instr_req_o = 1'b1;
 
           if (instr_rvalid_i) begin
+            instr_req_o      = 1'b1;
             fifo_rdata_valid = 1'b1;
             fifo_addr_valid  = 1'b1;
 
@@ -462,12 +466,12 @@ module riscv_prefetch_buffer
             if (branch_i) begin
               fifo_addr_valid  = 1'b1;
               NS               = WAIT_ABORTED;
+            end else if (hwloop_i & valid_o) begin
+              NS               = WAIT_ABORTED;
             end
           end
         end else begin
           // just wait for rvalid and go back to IDLE, no new request
-          // requested
-          instr_req_o = 1'b0;
 
           if (instr_rvalid_i) begin
             fifo_rdata_valid = 1'b1;
@@ -480,11 +484,10 @@ module riscv_prefetch_buffer
       // there was no new request sent yet
       // we assume that req_i is set to high
       WAIT_ABORTED: begin
-        // prepare for next request
-        instr_req_o  = 1'b1;
-        wait_gnt     = 1'b1;
+        wait_gnt = 1'b1;
 
         if (instr_rvalid_i) begin
+          instr_req_o  = 1'b1;
           // no need to send address, already done in WAIT_RVALID
 
           if (instr_gnt_i) begin
