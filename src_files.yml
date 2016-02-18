@@ -22,14 +22,23 @@ riscv:
     riscv_core.sv,
   ]
 riscv_vip_rtl:
+  incdirs: [
+    include,
+  ]
   files: [
     riscv_tracer.sv,
   ]
 riscv_regfile_rtl:
+  incdirs: [
+    include,
+  ]
   files: [
     register_file.sv,
   ]
 riscv_regfile_fpga:
+  incdirs: [
+    include,
+  ]
   files: [
     register_file_ff.sv,
   ]
