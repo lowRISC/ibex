@@ -14,6 +14,7 @@
 // Additional contributions by:                                               //
 //                 Igor Loi - igor.loi@unibo.it                               //
 //                 Sven Stucki - svstucki@student.ethz.ch                     //
+//                 Andreas Traber - atraber@iis.ee.ethz.ch                    //
 //                                                                            //
 // Design Name:    Excecute stage                                             //
 // Project Name:   RI5CY                                                      //

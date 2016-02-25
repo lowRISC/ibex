@@ -227,6 +227,7 @@ module riscv_decoder
           3'b101: alu_operator_o = `ALU_GES;
           3'b110: alu_operator_o = `ALU_LTU;
           3'b111: alu_operator_o = `ALU_GEU;
+          3'b010: alu_operator_o = `ALU_EQALL;
 
           default: begin
             illegal_insn_o = 1'b1;

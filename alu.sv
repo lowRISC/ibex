@@ -178,7 +178,7 @@ module riscv_alu
   begin
     comparison_result_o = is_equal;
 
-    case (operator_i)
+    unique case (operator_i)
       `ALU_EQ:             comparison_result_o = is_equal;
       `ALU_NE:             comparison_result_o = ~is_equal;
       `ALU_GTS, `ALU_GTU:  comparison_result_o = is_greater;
@@ -188,6 +188,9 @@ module riscv_alu
       `ALU_SLETS,
       `ALU_SLETU,
       `ALU_LES, `ALU_LEU:  comparison_result_o = ~is_greater;
+      `ALU_EQALL:          comparison_result_o = (operand_a_i == 32'hFFFF_FFFF);
+
+      default: ;
     endcase
   end
 

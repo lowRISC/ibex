@@ -93,8 +93,8 @@
 `define ALU_AVG   6'b100010
 `define ALU_AVGU  6'b100011
 
-`define ALU_XOR   6'b001110
-`define ALU_OR    6'b001111
+`define ALU_XOR   6'b011011
+`define ALU_OR    6'b011010
 `define ALU_AND   6'b010101
 
 // Shifts
@@ -133,6 +133,7 @@
 `define ALU_GEU   6'b001011
 `define ALU_EQ    6'b001100
 `define ALU_NE    6'b001101
+`define ALU_EQALL 6'b001110
 
 // Set Lower Than operations
 `define ALU_SLTS  6'b000010
