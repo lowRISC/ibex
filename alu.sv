@@ -30,6 +30,9 @@ module riscv_alu
   input  logic [`ALU_OP_WIDTH-1:0] operator_i,
   input  logic [31:0]              operand_a_i,
   input  logic [31:0]              operand_b_i,
+  input  logic [31:0]              operand_c_i,
+  input  logic [ 4:0]              imm_bmask_a_i,
+  input  logic [ 4:0]              imm_bmask_b_i,
 
   output logic [31:0]              result_o,
   output logic                     comparison_result_o
@@ -102,10 +105,11 @@ module riscv_alu
   logic [31:0] shift_amt;          // amount of shift
   logic [31:0] shift_op_a;         // input of the shifter
   logic [31:0] shift_result;
+  logic [31:0] shift_right_result;
   logic [31:0] shift_left_result;
 
 
-  assign shift_left = (operator_i == `ALU_SLL);
+  assign shift_left = (operator_i == `ALU_SLL) || (operator_i == `ALU_BINS);
 
   // choose the bit reversed or the normal input for shift operand a
   assign shift_op_a = (shift_left == 1'b1) ? operand_a_rev : operand_a_i;
@@ -114,21 +118,23 @@ module riscv_alu
   always_comb
   begin
     if(operator_i == `ALU_SRA)
-      shift_result = $unsigned( $signed(shift_op_a) >>> shift_amt[4:0] );
+      shift_right_result = $unsigned( $signed(shift_op_a) >>> shift_amt[4:0] );
     else if(operator_i == `ALU_ROR)
-      shift_result = {shift_op_a, shift_op_a} >> shift_amt[4:0];
+      shift_right_result = {shift_op_a, shift_op_a} >> shift_amt[4:0];
     else
-      shift_result = shift_op_a               >> shift_amt[4:0];
+      shift_right_result = shift_op_a               >> shift_amt[4:0];
   end
 
-  // bit reverse the shift_result for left shifts
+  // bit reverse the shift_right_result for left shifts
   genvar       j;
   generate
     for(j = 0; j < 32; j++)
     begin
-      assign shift_left_result[j] = shift_result[31-j];
+      assign shift_left_result[j] = shift_right_result[31-j];
     end
   endgenerate
+
+  assign shift_result = shift_left ? shift_left_result : shift_right_result;
 
 
   //////////////////////////////////////////////////////////////////
@@ -298,6 +304,38 @@ module riscv_alu
   assign cnt_result = cnt_l4[0] + cnt_l4[1];
 
 
+  ////////////////////////////////////////////////
+  //  ____  _ _     __  __             _        //
+  // | __ )(_) |_  |  \/  | __ _ _ __ (_)_ __   //
+  // |  _ \| | __| | |\/| |/ _` | '_ \| | '_ \  //
+  // | |_) | | |_  | |  | | (_| | | | | | |_) | //
+  // |____/|_|\__| |_|  |_|\__,_|_| |_|_| .__/  //
+  //                                    |_|     //
+  ////////////////////////////////////////////////
+
+  logic        extract_is_signed;
+  logic        extract_sign;
+  logic [31:0] bmask, bmask_first, bmask_inv;
+  logic [31:0] bextins_and;
+  logic [31:0] bextins_result, bclr_result, bset_result;
+
+
+  // construct bit mask for insert/extract/bclr/bset
+  // bmask looks like this 00..0011..1100..00
+  assign bmask_first = {32'hFFFFFFFE} << imm_bmask_a_i;
+  assign bmask       = (~bmask_first) << imm_bmask_b_i;
+  assign bmask_inv   = ~bmask;
+
+  assign bextins_and = (operator_i == `ALU_BINS) ? operand_c_i : {32{extract_sign}};
+
+  assign extract_is_signed = (operator_i == `ALU_BEXT);
+  assign extract_sign = extract_is_signed & shift_result[imm_bmask_a_i];
+
+  assign bextins_result = (bmask & shift_result) | (bextins_and & bmask_inv);
+
+  assign bclr_result = operand_a_i & bmask_inv;
+  assign bset_result = operand_a_i | bmask;
+
   ////////////////////////////////////////////////////////
   //   ____                 _ _     __  __              //
   //  |  _ \ ___  ___ _   _| | |_  |  \/  |_   ___  __  //
@@ -312,7 +350,7 @@ module riscv_alu
     shift_amt  = operand_b_i;
     result_o   = 'x;
 
-    case (operator_i)
+    unique case (operator_i)
       // Standard Operations
       `ALU_ADD,
       `ALU_SUB:  result_o = adder_result;
@@ -323,11 +361,18 @@ module riscv_alu
       `ALU_XOR:  result_o = operand_a_i ^ operand_b_i;
 
       // Shift Operations
-      `ALU_SLL:  result_o = shift_left_result;
-
+      `ALU_SLL,
       `ALU_SRL,
       `ALU_SRA,
       `ALU_ROR:  result_o = shift_result;
+
+      // bit manipulation instructions
+      `ALU_BINS,
+      `ALU_BEXT,
+      `ALU_BEXTU: result_o = bextins_result;
+
+      `ALU_BCLR:  result_o = bclr_result;
+      `ALU_BSET:  result_o = bset_result;
 
       // Extension Operations
       `ALU_EXTBZ,
@@ -359,6 +404,8 @@ module riscv_alu
       `ALU_FL1: result_o = {26'h0, fl1_result};
       `ALU_CLB: result_o = {26'h0, clb_result};
       `ALU_CNT: result_o = {26'h0, cnt_result};
+
+      default: ; // default case to suppress unique warning
     endcase
   end
 

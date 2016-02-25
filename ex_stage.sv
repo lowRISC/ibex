@@ -38,6 +38,8 @@ module riscv_ex_stage
   input  logic [31:0] alu_operand_a_i,
   input  logic [31:0] alu_operand_b_i,
   input  logic [31:0] alu_operand_c_i,
+  input  logic [ 4:0] imm_bmask_a_i,
+  input  logic [ 4:0] imm_bmask_b_i,
 
   input  logic        vector_mode_i,
 
@@ -120,6 +122,9 @@ module riscv_ex_stage
    .operator_i          ( alu_operator_i  ),
    .operand_a_i         ( alu_operand_a_i ),
    .operand_b_i         ( alu_operand_b_i ),
+   .operand_c_i         ( alu_operand_c_i ),
+   .imm_bmask_a_i       ( imm_bmask_a_i   ),
+   .imm_bmask_b_i       ( imm_bmask_b_i   ),
 
    .result_o            ( alu_result      ),
    .comparison_result_o ( alu_cmp_result  )

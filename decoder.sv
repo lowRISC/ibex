@@ -42,6 +42,8 @@ module riscv_decoder
   output logic        regb_used_o,             // rs2 is used by current instruction
   output logic        regc_used_o,             // rs3 is used by current instruction
 
+  output logic        imm_bmask_needed_o,      // immediate registers for bit manipulation mask is needed
+
   // from IF/ID pipeline
   input  logic [31:0] instr_rdata_i,           // instruction read from instr memory/cache
   input  logic        illegal_c_insn_i,        // compressed instruction decode failed
@@ -103,7 +105,6 @@ module riscv_decoder
 
   logic [1:0] jump_in_id;
 
-  logic [`ALU_OP_WIDTH-1:0] alu_operator;
   logic       mult_en;
   logic       mult_mac_en;
   logic [1:0] csr_op;
@@ -123,7 +124,7 @@ module riscv_decoder
     jump_in_id                  = `BRANCH_NONE;
     jump_target_mux_sel_o       = `JT_JAL;
 
-    alu_operator                = `ALU_NOP;
+    alu_operator_o              = `ALU_SLTU;
     alu_op_a_mux_sel_o          = `OP_A_REGA_OR_FWD;
     alu_op_b_mux_sel_o          = `OP_B_REGB_OR_FWD;
     alu_op_c_mux_sel_o          = `OP_C_REGC_OR_FWD;
@@ -167,6 +168,7 @@ module riscv_decoder
     rega_used_o                 = 1'b0;
     regb_used_o                 = 1'b0;
     regc_used_o                 = 1'b0;
+    imm_bmask_needed_o          = 1'b0;
 
 
     unique case (instr_rdata_i[6:0])
@@ -187,7 +189,7 @@ module riscv_decoder
         alu_op_a_mux_sel_o  = `OP_A_CURRPC;
         alu_op_b_mux_sel_o  = `OP_B_IMM;
         immediate_mux_sel_o = `IMM_PCINCR;
-        alu_operator        = `ALU_ADD;
+        alu_operator_o      = `ALU_ADD;
         regfile_alu_we      = 1'b1;
         // Calculate jump target (= PC + UJ imm)
       end
@@ -199,7 +201,7 @@ module riscv_decoder
         alu_op_a_mux_sel_o  = `OP_A_CURRPC;
         alu_op_b_mux_sel_o  = `OP_B_IMM;
         immediate_mux_sel_o = `IMM_PCINCR;
-        alu_operator        = `ALU_ADD;
+        alu_operator_o      = `ALU_ADD;
         regfile_alu_we      = 1'b1;
         // Calculate jump target (= RS1 + I imm)
         rega_used_o         = 1'b1;
@@ -219,12 +221,12 @@ module riscv_decoder
         regb_used_o           = 1'b1;
 
         unique case (instr_rdata_i[14:12])
-          3'b000: alu_operator = `ALU_EQ;
-          3'b001: alu_operator = `ALU_NE;
-          3'b100: alu_operator = `ALU_LTS;
-          3'b101: alu_operator = `ALU_GES;
-          3'b110: alu_operator = `ALU_LTU;
-          3'b111: alu_operator = `ALU_GEU;
+          3'b000: alu_operator_o = `ALU_EQ;
+          3'b001: alu_operator_o = `ALU_NE;
+          3'b100: alu_operator_o = `ALU_LTS;
+          3'b101: alu_operator_o = `ALU_GES;
+          3'b110: alu_operator_o = `ALU_LTU;
+          3'b111: alu_operator_o = `ALU_GEU;
 
           default: begin
             illegal_insn_o = 1'b1;
@@ -244,11 +246,11 @@ module riscv_decoder
 
       `OPCODE_STORE,
       `OPCODE_STORE_POST: begin
-        data_req     = 1'b1;
-        data_we_o    = 1'b1;
-        rega_used_o  = 1'b1;
-        regb_used_o  = 1'b1;
-        alu_operator = `ALU_ADD;
+        data_req       = 1'b1;
+        data_we_o      = 1'b1;
+        rega_used_o    = 1'b1;
+        regb_used_o    = 1'b1;
+        alu_operator_o = `ALU_ADD;
 
         // pass write data through ALU operand c
         alu_op_c_mux_sel_o = `OP_C_REGB_OR_FWD;
@@ -292,7 +294,7 @@ module riscv_decoder
         data_type_o     = 2'b00;
 
         // offset from immediate
-        alu_operator        = `ALU_ADD;
+        alu_operator_o      = `ALU_ADD;
         alu_op_b_mux_sel_o  = `OP_B_IMM;
         immediate_mux_sel_o = `IMM_I;
 
@@ -365,7 +367,7 @@ module riscv_decoder
         alu_op_a_mux_sel_o  = `OP_A_ZERO;
         alu_op_b_mux_sel_o  = `OP_B_IMM;
         immediate_mux_sel_o = `IMM_U;
-        alu_operator        = `ALU_ADD;
+        alu_operator_o      = `ALU_ADD;
         regfile_alu_we      = 1'b1;
       end
 
@@ -373,35 +375,35 @@ module riscv_decoder
         alu_op_a_mux_sel_o  = `OP_A_CURRPC;
         alu_op_b_mux_sel_o  = `OP_B_IMM;
         immediate_mux_sel_o = `IMM_U;
-        alu_operator        = `ALU_ADD;
+        alu_operator_o      = `ALU_ADD;
         regfile_alu_we      = 1'b1;
       end
 
-      `OPCODE_OPIMM: begin // Reigster-Immediate ALU Operations
+      `OPCODE_OPIMM: begin // Register-Immediate ALU Operations
         alu_op_b_mux_sel_o  = `OP_B_IMM;
         immediate_mux_sel_o = `IMM_I;
         regfile_alu_we      = 1'b1;
         rega_used_o         = 1'b1;
 
         unique case (instr_rdata_i[14:12])
-          3'b000: alu_operator = `ALU_ADD;  // Add Immediate
-          3'b010: alu_operator = `ALU_SLTS; // Set to one if Lower Than Immediate
-          3'b011: alu_operator = `ALU_SLTU; // Set to one if Lower Than Immediate Unsigned
-          3'b100: alu_operator = `ALU_XOR;  // Exclusive Or with Immediate
-          3'b110: alu_operator = `ALU_OR;   // Or with Immediate
-          3'b111: alu_operator = `ALU_AND;  // And with Immediate
+          3'b000: alu_operator_o = `ALU_ADD;  // Add Immediate
+          3'b010: alu_operator_o = `ALU_SLTS; // Set to one if Lower Than Immediate
+          3'b011: alu_operator_o = `ALU_SLTU; // Set to one if Lower Than Immediate Unsigned
+          3'b100: alu_operator_o = `ALU_XOR;  // Exclusive Or with Immediate
+          3'b110: alu_operator_o = `ALU_OR;   // Or with Immediate
+          3'b111: alu_operator_o = `ALU_AND;  // And with Immediate
 
           3'b001: begin
-            alu_operator = `ALU_SLL;  // Shift Left Logical by Immediate
+            alu_operator_o = `ALU_SLL;  // Shift Left Logical by Immediate
             if (instr_rdata_i[31:25] != 7'b0)
               illegal_insn_o = 1'b1;
           end
 
           3'b101: begin
             if (instr_rdata_i[31:25] == 7'b0)
-              alu_operator = `ALU_SRL;  // Shift Right Logical by Immediate
+              alu_operator_o = `ALU_SRL;  // Shift Right Logical by Immediate
             else if (instr_rdata_i[31:25] == 7'b010_0000)
-              alu_operator = `ALU_SRA;  // Shift Right Arithmetically by Immediate
+              alu_operator_o = `ALU_SRA;  // Shift Right Arithmetically by Immediate
             else
               illegal_insn_o = 1'b1;
           end
@@ -413,62 +415,85 @@ module riscv_decoder
       `OPCODE_OP: begin  // Register-Register ALU operation
         regfile_alu_we = 1'b1;
         rega_used_o    = 1'b1;
-        regb_used_o    = 1'b1;
 
-        if (instr_rdata_i[28])
-          regb_used_o  = 1'b0;
+        if (instr_rdata_i[31]) begin
+          // bit-manipulation instructions
+          alu_op_b_mux_sel_o  = `OP_B_IMM;
+          imm_bmask_needed_o  = 1'b1;
 
-        unique case ({instr_rdata_i[31:25], instr_rdata_i[14:12]})
-          // RV32I ALU operations
-          {7'b000_0000, 3'b000}: alu_operator = `ALU_ADD;   // Add
-          {7'b010_0000, 3'b000}: alu_operator = `ALU_SUB;   // Sub
-          {7'b000_0000, 3'b010}: alu_operator = `ALU_SLTS;  // Set Lower Than
-          {7'b000_0000, 3'b011}: alu_operator = `ALU_SLTU;  // Set Lower Than Unsigned
-          {7'b000_0000, 3'b100}: alu_operator = `ALU_XOR;   // Xor
-          {7'b000_0000, 3'b110}: alu_operator = `ALU_OR;    // Or
-          {7'b000_0000, 3'b111}: alu_operator = `ALU_AND;   // And
-          {7'b000_0000, 3'b001}: alu_operator = `ALU_SLL;   // Shift Left Logical
-          {7'b000_0000, 3'b101}: alu_operator = `ALU_SRL;   // Shift Right Logical
-          {7'b010_0000, 3'b101}: alu_operator = `ALU_SRA;   // Shift Right Arithmetic
+          unique case (instr_rdata_i[14:12])
+            3'b000: begin alu_operator_o = `ALU_BEXT;  immediate_mux_sel_o = `IMM_S2; end
+            3'b001: begin alu_operator_o = `ALU_BEXTU; immediate_mux_sel_o = `IMM_S2; end
+            3'b010: begin
+              alu_operator_o      = `ALU_BINS;
+              immediate_mux_sel_o = `IMM_S2;
+              regc_used_o         = 1'b1;
+              regc_mux_o          = `REGC_RD;
+            end
 
-          // supported RV32M instructions
-          {7'b000_0001, 3'b000}: mult_en      = 1'b1;       // Multiplication
-          {7'b000_0001, 3'b001}: begin // MAC
-            regc_used_o  = 1'b1;
-            regc_mux_o   = `REGC_RD;
-            mult_en      = 1'b1;
-            mult_mac_en  = 1'b1;
-          end
+            3'b011: begin alu_operator_o = `ALU_BSET; end
+            3'b100: begin alu_operator_o = `ALU_BCLR; end
 
-          // PULP specific instructions
-          {7'b000_0010, 3'b000}: alu_operator = `ALU_AVG;   // Average
-          {7'b000_0010, 3'b001}: alu_operator = `ALU_AVGU;  // Average Unsigned
-          {7'b000_0010, 3'b010}: alu_operator = `ALU_SLETS; // Set Lower Equal Than
-          {7'b000_0010, 3'b011}: alu_operator = `ALU_SLETU; // Set Lower Equal Than Unsigned
-          {7'b000_0010, 3'b100}: alu_operator = `ALU_MIN;   // Min
-          {7'b000_0010, 3'b101}: alu_operator = `ALU_MINU;  // Min Unsigned
-          {7'b000_0010, 3'b110}: alu_operator = `ALU_MAX;   // Max
-          {7'b000_0010, 3'b111}: alu_operator = `ALU_MAXU;  // Max Unsigned
+            default: illegal_insn_o = 1'b1;
+          endcase
+        end
+        else
+        begin // non bit-manipulation instructions
 
-          {7'b000_0100, 3'b101}: alu_operator = `ALU_ROR;   // Rotate Right
+          if (~instr_rdata_i[28])
+            regb_used_o = 1'b1;
 
-          // PULP specific instructions using only one source register
-          {7'b000_1000, 3'b000}: alu_operator = `ALU_FF1;   // Find First 1
-          {7'b000_1000, 3'b001}: alu_operator = `ALU_FL1;   // Find Last 1
-          {7'b000_1000, 3'b010}: alu_operator = `ALU_CLB;   // Count Leading Bits
-          {7'b000_1000, 3'b011}: alu_operator = `ALU_CNT;   // Count set bits (popcount)
-          {7'b000_1000, 3'b100}: alu_operator = `ALU_EXTHS; // Sign-extend Half-word
-          {7'b000_1000, 3'b101}: alu_operator = `ALU_EXTHZ; // Zero-extend Half-word
-          {7'b000_1000, 3'b110}: alu_operator = `ALU_EXTBS; // Sign-extend Byte
-          {7'b000_1000, 3'b111}: alu_operator = `ALU_EXTBZ; // Zero-extend Byte
+          unique case ({instr_rdata_i[30:25], instr_rdata_i[14:12]})
+            // RV32I ALU operations
+            {6'b00_0000, 3'b000}: alu_operator_o = `ALU_ADD;   // Add
+            {6'b10_0000, 3'b000}: alu_operator_o = `ALU_SUB;   // Sub
+            {6'b00_0000, 3'b010}: alu_operator_o = `ALU_SLTS;  // Set Lower Than
+            {6'b00_0000, 3'b011}: alu_operator_o = `ALU_SLTU;  // Set Lower Than Unsigned
+            {6'b00_0000, 3'b100}: alu_operator_o = `ALU_XOR;   // Xor
+            {6'b00_0000, 3'b110}: alu_operator_o = `ALU_OR;    // Or
+            {6'b00_0000, 3'b111}: alu_operator_o = `ALU_AND;   // And
+            {6'b00_0000, 3'b001}: alu_operator_o = `ALU_SLL;   // Shift Left Logical
+            {6'b00_0000, 3'b101}: alu_operator_o = `ALU_SRL;   // Shift Right Logical
+            {6'b10_0000, 3'b101}: alu_operator_o = `ALU_SRA;   // Shift Right Arithmetic
 
-          {7'b000_1010, 3'b000}: alu_operator = `ALU_ABS;   // Absolute
+            // supported RV32M instructions
+            {6'b00_0001, 3'b000}: mult_en      = 1'b1;       // Multiplication
+            {6'b00_0001, 3'b001}: begin // MAC
+              regc_used_o  = 1'b1;
+              regc_mux_o   = `REGC_RD;
+              mult_en      = 1'b1;
+              mult_mac_en  = 1'b1;
+            end
 
-          default: begin
-            regfile_alu_we = 1'b0;
-            illegal_insn_o = 1'b1;
-          end
-        endcase
+            // PULP specific instructions
+            {6'b00_0010, 3'b000}: alu_operator_o = `ALU_AVG;   // Average
+            {6'b00_0010, 3'b001}: alu_operator_o = `ALU_AVGU;  // Average Unsigned
+            {6'b00_0010, 3'b010}: alu_operator_o = `ALU_SLETS; // Set Lower Equal Than
+            {6'b00_0010, 3'b011}: alu_operator_o = `ALU_SLETU; // Set Lower Equal Than Unsigned
+            {6'b00_0010, 3'b100}: alu_operator_o = `ALU_MIN;   // Min
+            {6'b00_0010, 3'b101}: alu_operator_o = `ALU_MINU;  // Min Unsigned
+            {6'b00_0010, 3'b110}: alu_operator_o = `ALU_MAX;   // Max
+            {6'b00_0010, 3'b111}: alu_operator_o = `ALU_MAXU;  // Max Unsigned
+
+            {6'b00_0100, 3'b101}: alu_operator_o = `ALU_ROR;   // Rotate Right
+
+            // PULP specific instructions using only one source register
+            {6'b00_1000, 3'b000}: alu_operator_o = `ALU_FF1;   // Find First 1
+            {6'b00_1000, 3'b001}: alu_operator_o = `ALU_FL1;   // Find Last 1
+            {6'b00_1000, 3'b010}: alu_operator_o = `ALU_CLB;   // Count Leading Bits
+            {6'b00_1000, 3'b011}: alu_operator_o = `ALU_CNT;   // Count set bits (popcount)
+            {6'b00_1000, 3'b100}: alu_operator_o = `ALU_EXTHS; // Sign-extend Half-word
+            {6'b00_1000, 3'b101}: alu_operator_o = `ALU_EXTHZ; // Zero-extend Half-word
+            {6'b00_1000, 3'b110}: alu_operator_o = `ALU_EXTBS; // Sign-extend Byte
+            {6'b00_1000, 3'b111}: alu_operator_o = `ALU_EXTBZ; // Zero-extend Byte
+
+            {6'b00_1010, 3'b000}: alu_operator_o = `ALU_ABS;   // Absolute
+
+            default: begin
+              illegal_insn_o = 1'b1;
+            end
+          endcase
+        end
       end
 
       `OPCODE_PULP_OP: begin  // PULP specific ALU instructions with three source operands
@@ -658,11 +683,11 @@ module riscv_decoder
       // if prepost increments are used, we do not write back the
       // second address since the first calculated address was
       // the correct one
-      regfile_alu_we  = 1'b0;
+      regfile_alu_we = 1'b0;
 
       // if post increments are used, we must make sure that for
       // the second memory access we do use the adder
-      prepost_useincr_o   = 1'b1;
+      prepost_useincr_o = 1'b1;
     end
   end
 
@@ -670,7 +695,6 @@ module riscv_decoder
   assign regfile_mem_we_o  = (deassert_we_i) ? 1'b0          : regfile_mem_we;
   assign regfile_alu_we_o  = (deassert_we_i) ? 1'b0          : regfile_alu_we;
   assign data_req_o        = (deassert_we_i) ? 1'b0          : data_req;
-  assign alu_operator_o    = (deassert_we_i) ? `ALU_NOP      : alu_operator;
   assign mult_en_o         = (deassert_we_i) ? 1'b0          : mult_en;
   assign mult_mac_en_o     = (deassert_we_i) ? 1'b0          : mult_mac_en;
   assign hwloop_we_o       = (deassert_we_i) ? 3'b0          : hwloop_we;

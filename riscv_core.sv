@@ -127,6 +127,8 @@ module riscv_core
   logic [31:0] alu_operand_a_ex;
   logic [31:0] alu_operand_b_ex;
   logic [31:0] alu_operand_c_ex;
+  logic [ 4:0] imm_bmask_a_ex;
+  logic [ 4:0] imm_bmask_b_ex;
   logic        vector_mode_ex;
 
   // Multiplier Control
@@ -376,6 +378,8 @@ module riscv_core
     .alu_operand_a_ex_o           ( alu_operand_a_ex     ),
     .alu_operand_b_ex_o           ( alu_operand_b_ex     ),
     .alu_operand_c_ex_o           ( alu_operand_c_ex     ),
+    .imm_bmask_a_ex_o             ( imm_bmask_a_ex       ),
+    .imm_bmask_b_ex_o             ( imm_bmask_b_ex       ),
 
     .regfile_waddr_ex_o           ( regfile_waddr_ex     ),
     .regfile_we_ex_o              ( regfile_we_ex        ),
@@ -479,6 +483,8 @@ module riscv_core
     .alu_operand_a_i            ( alu_operand_a_ex             ), // from ID/EX pipe registers
     .alu_operand_b_i            ( alu_operand_b_ex             ), // from ID/EX pipe registers
     .alu_operand_c_i            ( alu_operand_c_ex             ), // from ID/EX pipe registers
+    .imm_bmask_a_i              ( imm_bmask_a_ex               ), // from ID/EX pipe registers
+    .imm_bmask_b_i              ( imm_bmask_b_ex               ), // from ID/EX pipe registers
 
     .vector_mode_i              ( vector_mode_ex               ), // from ID/EX pipe registers
 
@@ -760,7 +766,9 @@ module riscv_core
     .imm_iz_type    ( id_stage_i.imm_iz_type[11:0]         ),
     .imm_z_type     ( id_stage_i.imm_z_type                ),
     .imm_s_type     ( id_stage_i.imm_s_type                ),
-    .imm_sb_type    ( id_stage_i.imm_sb_type               )
+    .imm_sb_type    ( id_stage_i.imm_sb_type               ),
+    .imm_s2_type    ( id_stage_i.imm_s2_type               ),
+    .imm_s3_type    ( id_stage_i.imm_s3_type               )
   );
 `endif
 

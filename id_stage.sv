@@ -87,6 +87,8 @@ module riscv_id_stage
     output logic [31:0] alu_operand_a_ex_o,
     output logic [31:0] alu_operand_b_ex_o,
     output logic [31:0] alu_operand_c_ex_o,
+    output logic [ 4:0] imm_bmask_a_ex_o,
+    output logic [ 4:0] imm_bmask_b_ex_o,
 
     output logic [4:0]  regfile_waddr_ex_o,
     output logic        regfile_we_ex_o,
@@ -188,6 +190,7 @@ module riscv_id_stage
   logic        rega_used_dec;
   logic        regb_used_dec;
   logic        regc_used_dec;
+  logic        imm_bmask_needed_dec;
 
   logic        branch_taken_ex;
   logic [1:0]  jump_in_id;
@@ -208,6 +211,8 @@ module riscv_id_stage
   logic [31:0] imm_u_type;
   logic [31:0] imm_uj_type;
   logic [31:0] imm_z_type;
+  logic [31:0] imm_s2_type;
+  logic [31:0] imm_s3_type;
 
   logic [31:0] immediate_b;       // contains the immediate for operand b
 
@@ -294,6 +299,10 @@ module riscv_id_stage
   logic [31:0] alu_operand_b;
   logic [31:0] alu_operand_c;
 
+  // Immediates for ID
+  logic [ 4:0] imm_bmask_a_id;
+  logic [ 4:0] imm_bmask_b_id;
+
   // Forwarding detection signals
   logic        reg_d_ex_is_reg_a_id;
   logic        reg_d_ex_is_reg_b_id;
@@ -318,6 +327,9 @@ module riscv_id_stage
 
   // immediate for CSR manipulatin (zero extended)
   assign imm_z_type  = { 27'b0, instr[`REG_S1] };
+
+  assign imm_s2_type = { 27'b0, instr[24:20] };
+  assign imm_s3_type = { 27'b0, instr[29:25] };
 
   //---------------------------------------------------------------------------
   // source register selection
@@ -487,6 +499,8 @@ module riscv_id_stage
       `IMM_S:      immediate_b = imm_s_type;
       `IMM_U:      immediate_b = imm_u_type;
       `IMM_PCINCR: immediate_b = (is_compressed_i && (~data_misaligned_i)) ? 32'h2 : 32'h4;
+      `IMM_S2:     immediate_b = imm_s2_type;
+      `IMM_S3:     immediate_b = imm_s3_type;
       default:     immediate_b = imm_i_type;
     endcase; // case (immediate_mux_sel)
   end
@@ -544,6 +558,20 @@ module riscv_id_stage
       default:       operand_c_fw_id = regfile_data_rc_id;
     endcase; // case (operand_c_fw_mux_sel)
   end
+
+
+  ///////////////////////////////////////////////////////////////////////////
+  //  ___                              _ _       _              ___ ____   //
+  // |_ _|_ __ ___  _ __ ___   ___  __| (_) __ _| |_ ___  ___  |_ _|  _ \  //
+  //  | || '_ ` _ \| '_ ` _ \ / _ \/ _` | |/ _` | __/ _ \/ __|  | || | | | //
+  //  | || | | | | | | | | | |  __/ (_| | | (_| | ||  __/\__ \  | || |_| | //
+  // |___|_| |_| |_|_| |_| |_|\___|\__,_|_|\__,_|\__\___||___/ |___|____/  //
+  //                                                                       //
+  ///////////////////////////////////////////////////////////////////////////
+
+  assign imm_bmask_a_id = imm_s3_type[4:0];
+  assign imm_bmask_b_id = ((alu_operator == `ALU_BCLR) || (alu_operator == `ALU_BSET) || (alu_operator == `ALU_BINS)) ?
+                          imm_s2_type[4:0] : 0;
 
 
   /////////////////////////////////////////////////////////
@@ -611,6 +639,8 @@ module riscv_id_stage
     .rega_used_o                     ( rega_used_dec             ),
     .regb_used_o                     ( regb_used_dec             ),
     .regc_used_o                     ( regc_used_dec             ),
+
+    .imm_bmask_needed_o              ( imm_bmask_needed_dec      ),
 
     // from IF/ID pipeline
     .instr_rdata_i                   ( instr                     ),
@@ -878,10 +908,12 @@ module riscv_id_stage
   begin : ID_EX_PIPE_REGISTERS
     if (rst_n == 1'b0)
     begin
-      alu_operator_ex_o           <= `ALU_NOP;
+      alu_operator_ex_o           <= `ALU_SLTU;
       alu_operand_a_ex_o          <= '0;
       alu_operand_b_ex_o          <= '0;
       alu_operand_c_ex_o          <= '0;
+      imm_bmask_a_ex_o            <= '0;
+      imm_bmask_b_ex_o            <= '0;
 
       vector_mode_ex_o            <= '0;
 
@@ -935,37 +967,41 @@ module riscv_id_stage
       end
     end
     else if (~data_misaligned_i) begin
+      // normal pipeline unstall case
+
       if (id_valid_o)
       begin // unstall the whole pipeline
         if (~mult_en)
-        begin // when we are multiplying we don't need the ALU
-          alu_operator_ex_o           <= alu_operator;
-          alu_operand_a_ex_o          <= alu_operand_a;
-          alu_operand_b_ex_o          <= alu_operand_b;
-          alu_operand_c_ex_o          <= alu_operand_c;
+        begin // only change those registers when we actually need to
+          alu_operator_ex_o         <= alu_operator;
+          alu_operand_a_ex_o        <= alu_operand_a;
+          alu_operand_b_ex_o        <= alu_operand_b;
+          alu_operand_c_ex_o        <= alu_operand_c;
+          imm_bmask_a_ex_o          <= imm_bmask_a_id;
+          imm_bmask_b_ex_o          <= imm_bmask_b_id;
         end
 
         mult_en_ex_o                <= mult_en;
         if (mult_en)
-        begin // only change those registers when we actually need to
-          mult_sel_subword_ex_o       <= mult_sel_subword;
-          mult_signed_mode_ex_o       <= mult_signed_mode;
-          mult_mac_en_ex_o            <= mult_mac_en;
-          mult_operand_a_ex_o         <= alu_operand_a;
-          mult_operand_b_ex_o         <= alu_operand_b;
-          mult_operand_c_ex_o         <= alu_operand_c;
+        begin  // when we are multiplying we don't need the ALU
+          mult_sel_subword_ex_o     <= mult_sel_subword;
+          mult_signed_mode_ex_o     <= mult_signed_mode;
+          mult_mac_en_ex_o          <= mult_mac_en;
+          mult_operand_a_ex_o       <= alu_operand_a;
+          mult_operand_b_ex_o       <= alu_operand_b;
+          mult_operand_c_ex_o       <= alu_operand_c;
 
-          vector_mode_ex_o            <= vector_mode;
+          vector_mode_ex_o          <= vector_mode;
         end
 
         regfile_we_ex_o             <= regfile_we_id;
         if (regfile_we_id) begin
-          regfile_waddr_ex_o          <= regfile_waddr_id;
+          regfile_waddr_ex_o        <= regfile_waddr_id;
         end
 
         regfile_alu_we_ex_o         <= regfile_alu_we_id;
         if (regfile_alu_we_id) begin
-          regfile_alu_waddr_ex_o      <= regfile_alu_waddr_id;
+          regfile_alu_waddr_ex_o    <= regfile_alu_waddr_id;
         end
 
         prepost_useincr_ex_o        <= prepost_useincr;
@@ -976,10 +1012,10 @@ module riscv_id_stage
         data_req_ex_o               <= data_req_id;
         if (data_req_id)
         begin // only needed for LSU when there is an active request
-          data_we_ex_o                <= data_we_id;
-          data_type_ex_o              <= data_type_id;
-          data_sign_ext_ex_o          <= data_sign_ext_id;
-          data_reg_offset_ex_o        <= data_reg_offset_id;
+          data_we_ex_o              <= data_we_id;
+          data_type_ex_o            <= data_type_id;
+          data_sign_ext_ex_o        <= data_sign_ext_id;
+          data_reg_offset_ex_o      <= data_reg_offset_id;
         end
 
         data_misaligned_ex_o        <= 1'b0;

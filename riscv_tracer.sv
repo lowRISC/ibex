@@ -22,7 +22,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-`include "riscv_defines.sv"
+`include "riscv_tracer_defines.sv"
 
 module riscv_tracer
 (
@@ -69,7 +69,9 @@ module riscv_tracer
   input  logic [11:0] imm_iz_type,
   input  logic [31:0] imm_z_type,
   input  logic [31:0] imm_s_type,
-  input  logic [31:0] imm_sb_type
+  input  logic [31:0] imm_sb_type,
+  input  logic [31:0] imm_s2_type,
+  input  logic [31:0] imm_s3_type
 );
 
   integer      f;
@@ -223,6 +225,23 @@ module riscv_tracer
         end
       end
     endfunction // printCSRInstr
+
+    function void printBit1Instr(input string mnemonic);
+      begin
+        regs_read.push_back({>> {rs1, rs1_value}});
+        regs_write.push_back({>> {rd, 'x}});
+        str =  $sformatf("%-16s x%0d, x%0d, %0d, %0d", mnemonic, rd, rs1, imm_s3_type, imm_s2_type);
+      end
+    endfunction
+
+    function void printBit2Instr(input string mnemonic);
+      begin
+        regs_read.push_back({>> {rd, rs3_value}});
+        regs_read.push_back({>> {rs1, rs1_value}});
+        regs_write.push_back({>> {rd, 'x}});
+        str =  $sformatf("%-16s x%0d, x%0d, %0d, %0d", mnemonic, rd, rs1, imm_s3_type, imm_s2_type);
+      end
+    endfunction
 
     function void printLoadInstr();
       string mnemonic;
@@ -521,6 +540,11 @@ module riscv_tracer
         `INSTR_PMINU:      trace.printRInstr("p.minu");
         `INSTR_PMAX:       trace.printRInstr("p.max");
         `INSTR_PMAXU:      trace.printRInstr("p.maxu");
+        `INSTR_PBEXT:      trace.printBit1Instr("p.extract");
+        `INSTR_PBEXTU:     trace.printBit1Instr("p.extractu");
+        `INSTR_PBINS:      trace.printBit2Instr("p.insert");
+        `INSTR_PBCLR:      trace.printBit1Instr("p.bclr");
+        `INSTR_PBSET:      trace.printBit1Instr("p.bset");
         // FENCE
         `INSTR_FENCE:      trace.printMnemonic("fence");
         `INSTR_FENCEI:     trace.printMnemonic("fencei");
