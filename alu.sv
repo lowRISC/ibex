@@ -53,19 +53,19 @@ module riscv_alu
   endgenerate
 
 
-  /////////////////////////////////////
-  //      _       _     _            //
-  //     / \   __| | __| | ___ _ __  //
-  //    / _ \ / _` |/ _` |/ _ \ '__| //
-  //   / ___ \ (_| | (_| |  __/ |    //
-  //  /_/   \_\__,_|\__,_|\___|_|    //
-  //                                 //
-  /////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //   ____            _   _ _   _                      _      _       _     _            //
+  //  |  _ \ __ _ _ __| |_(_) |_(_) ___  _ __   ___  __| |    / \   __| | __| | ___ _ __  //
+  //  | |_) / _` | '__| __| | __| |/ _ \| '_ \ / _ \/ _` |   / _ \ / _` |/ _` |/ _ \ '__| //
+  //  |  __/ (_| | |  | |_| | |_| | (_) | | | |  __/ (_| |  / ___ \ (_| | (_| |  __/ |    //
+  //  |_|   \__,_|_|   \__|_|\__|_|\___/|_| |_|\___|\__,_| /_/   \_\__,_|\__,_|\___|_|    //
+  //                                                                                      //
+  //////////////////////////////////////////////////////////////////////////////////////////
 
-  logic        carry_in;
-  logic [31:0] adder_op_a;
-  logic [31:0] adder_op_b;
+  logic [31:0] adder_op_a, adder_op_b;
+  logic [35:0] adder_in_a, adder_in_b;
   logic [31:0] adder_result;
+  logic [35:0] adder_result_expanded;
 
   // prepare operand a
   assign adder_op_a = (operator_i == `ALU_ABS) ? ~operand_a_i : operand_a_i;
@@ -76,15 +76,62 @@ module riscv_alu
   // prepare carry
   always_comb
   begin
-    case (operator_i)
-      `ALU_SUB,
-      `ALU_ABS: carry_in = 1'b1;
-      default:  carry_in = 1'b0;
-    endcase
+    adder_in_a[    0] = 1'b1;
+    adder_in_a[ 8: 1] = adder_op_a[ 7: 0];
+    adder_in_a[    9] = 1'b1;
+    adder_in_a[17:10] = adder_op_a[15: 8];
+    adder_in_a[   18] = 1'b1;
+    adder_in_a[26:19] = adder_op_a[23:16];
+    adder_in_a[   27] = 1'b1;
+    adder_in_a[35:28] = adder_op_a[31:24];
+
+    adder_in_b[    0] = 1'b0;
+    adder_in_b[ 8: 1] = adder_op_b[ 7: 0];
+    adder_in_b[    9] = 1'b0;
+    adder_in_b[17:10] = adder_op_b[15: 8];
+    adder_in_b[   18] = 1'b0;
+    adder_in_b[26:19] = adder_op_b[23:16];
+    adder_in_b[   27] = 1'b0;
+    adder_in_b[35:28] = adder_op_b[31:24];
+
+    if ((operator_i == `ALU_SUB) || (operator_i == `ALU_ABS)) begin
+      // special case for subtractions and absolute number calculations
+      adder_in_b[0] = 1'b1;
+
+      case (vector_mode_i)
+        `VEC_MODE16: begin
+          adder_in_b[18] = 1'b1;
+        end
+
+        `VEC_MODE8: begin
+          adder_in_b[ 9] = 1'b1;
+          adder_in_b[18] = 1'b1;
+          adder_in_b[27] = 1'b1;
+        end
+      endcase
+
+    end else begin
+      // take care of partitioning the adder for the addition case
+      case (vector_mode_i)
+        `VEC_MODE16: begin
+          adder_in_a[18] = 1'b0;
+        end
+
+        `VEC_MODE8: begin
+          adder_in_a[ 9] = 1'b0;
+          adder_in_a[18] = 1'b0;
+          adder_in_a[27] = 1'b0;
+        end
+      endcase
+    end
   end
 
-  // adder
-  assign adder_result = adder_op_a + adder_op_b + {31'b0, carry_in};
+  // actual adder
+  assign adder_result_expanded = adder_in_a + adder_in_b;
+  assign adder_result = {adder_result_expanded[35:28],
+                         adder_result_expanded[26:19],
+                         adder_result_expanded[17:10],
+                         adder_result_expanded[8:1]};
 
 
   // averaging by right shifting of one bit

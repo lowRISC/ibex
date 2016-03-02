@@ -586,7 +586,7 @@ module riscv_decoder
           6'b01000_1: begin alu_operator_o = `ALU_LTU; immediate_mux_sel_o = `IMM_VU; end // pv.cmpltu
           6'b01001_1: begin alu_operator_o = `ALU_LEU; immediate_mux_sel_o = `IMM_VU; end // pv.cmpleu
 
-          default:;
+          default: illegal_insn_o = 1'b1;
         endcase
       end
 
