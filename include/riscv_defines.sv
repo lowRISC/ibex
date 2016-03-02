@@ -62,6 +62,7 @@
 `define OPCODE_LOAD_POST  7'h0b
 `define OPCODE_STORE_POST 7'h2b
 `define OPCODE_PULP_OP    7'h5b
+`define OPCODE_VECOP      7'h53
 `define OPCODE_HWLOOP     7'h7b
 
 
@@ -151,6 +152,12 @@
 `define ALU_MAXU  6'b010011
 
 
+// vector modes
+`define VEC_MODE32 2'b00
+`define VEC_MODE16 2'b10
+`define VEC_MODE8  2'b11
+
+
 /////////////////////////////////////////////////////////
 //    ____ ____    ____            _     _             //
 //   / ___/ ___|  |  _ \ ___  __ _(_)___| |_ ___ _ __  //
@@ -211,6 +218,8 @@
 `define IMM_PCINCR 3'b011
 `define IMM_S2     3'b100
 `define IMM_S3     3'b101
+`define IMM_VS     3'b110
+`define IMM_VU     3'b111
 
 // operand c selection
 `define OP_C_REGC_OR_FWD 2'b00

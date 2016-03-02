@@ -41,17 +41,17 @@ module riscv_ex_stage
   input  logic [31:0] alu_operand_c_i,
   input  logic [ 4:0] imm_bmask_a_i,
   input  logic [ 4:0] imm_bmask_b_i,
-
-  input  logic        vector_mode_i,
+  input  logic [ 1:0] alu_vec_mode_i,
 
   // Multiplier signals
+  input  logic [31:0] mult_operand_a_i,
+  input  logic [31:0] mult_operand_b_i,
+  input  logic [31:0] mult_operand_c_i,
   input  logic        mult_en_i,
   input  logic [1:0]  mult_sel_subword_i,
   input  logic [1:0]  mult_signed_mode_i,
   input  logic        mult_mac_en_i,
-  input  logic [31:0] mult_operand_a_i,
-  input  logic [31:0] mult_operand_b_i,
-  input  logic [31:0] mult_operand_c_i,
+  input  logic        mult_vec_mode_i,
 
   // input from ID stage
   input  logic        branch_in_ex_i,
@@ -124,6 +124,8 @@ module riscv_ex_stage
    .operand_a_i         ( alu_operand_a_i ),
    .operand_b_i         ( alu_operand_b_i ),
    .operand_c_i         ( alu_operand_c_i ),
+
+   .vector_mode_i       ( alu_vec_mode_i  ),
    .imm_bmask_a_i       ( imm_bmask_a_i   ),
    .imm_bmask_b_i       ( imm_bmask_b_i   ),
 
@@ -143,14 +145,14 @@ module riscv_ex_stage
 
   riscv_mult mult_i
   (
-   .vector_mode_i   ( vector_mode_i        ),
+   .vector_mode_i   ( mult_vec_mode_i      ),
    .sel_subword_i   ( mult_sel_subword_i   ),
    .signed_mode_i   ( mult_signed_mode_i   ),
    .mac_en_i        ( mult_mac_en_i        ),
 
-   .op_a_i          ( mult_operand_a_i      ),
-   .op_b_i          ( mult_operand_b_i      ),
-   .mac_i           ( mult_operand_c_i      ),
+   .op_a_i          ( mult_operand_a_i     ),
+   .op_b_i          ( mult_operand_b_i     ),
+   .mac_i           ( mult_operand_c_i     ),
 
    .result_o        ( mult_result          )
   );

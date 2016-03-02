@@ -129,16 +129,17 @@ module riscv_core
   logic [31:0] alu_operand_c_ex;
   logic [ 4:0] imm_bmask_a_ex;
   logic [ 4:0] imm_bmask_b_ex;
-  logic        vector_mode_ex;
+  logic [ 1:0] alu_vec_mode_ex;
 
   // Multiplier Control
+  logic [31:0] mult_operand_a_ex;
+  logic [31:0] mult_operand_b_ex;
+  logic [31:0] mult_operand_c_ex;
   logic        mult_en_ex;
   logic [1:0]  mult_sel_subword_ex;
   logic [1:0]  mult_signed_mode_ex;
   logic        mult_mac_en_ex;
-  logic [31:0] mult_operand_a_ex;
-  logic [31:0] mult_operand_b_ex;
-  logic [31:0] mult_operand_c_ex;
+  logic        mult_vec_mode_ex;
 
   // Register Write Control
   logic [4:0]  regfile_waddr_ex;
@@ -375,11 +376,14 @@ module riscv_core
 
     // From the Pipeline ID/EX
     .branch_pc_ex_o               ( branch_pc_ex         ),
+
+    .alu_operator_ex_o            ( alu_operator_ex      ),
     .alu_operand_a_ex_o           ( alu_operand_a_ex     ),
     .alu_operand_b_ex_o           ( alu_operand_b_ex     ),
     .alu_operand_c_ex_o           ( alu_operand_c_ex     ),
     .imm_bmask_a_ex_o             ( imm_bmask_a_ex       ),
     .imm_bmask_b_ex_o             ( imm_bmask_b_ex       ),
+    .alu_vec_mode_ex_o            ( alu_vec_mode_ex      ),
 
     .regfile_waddr_ex_o           ( regfile_waddr_ex     ),
     .regfile_we_ex_o              ( regfile_we_ex        ),
@@ -387,18 +391,15 @@ module riscv_core
     .regfile_alu_we_ex_o          ( regfile_alu_we_ex    ),
     .regfile_alu_waddr_ex_o       ( regfile_alu_waddr_ex ),
 
-    // ALU
-    .alu_operator_ex_o            ( alu_operator_ex      ),
-
     // MUL
     .mult_en_ex_o                 ( mult_en_ex           ), // from ID to EX stage
     .mult_sel_subword_ex_o        ( mult_sel_subword_ex  ), // from ID to EX stage
     .mult_signed_mode_ex_o        ( mult_signed_mode_ex  ), // from ID to EX stage
     .mult_mac_en_ex_o             ( mult_mac_en_ex       ), // from ID to EX stage
-    .mult_operand_a_ex_o          ( mult_operand_a_ex    ),
-    .mult_operand_b_ex_o          ( mult_operand_b_ex    ),
-    .mult_operand_c_ex_o          ( mult_operand_c_ex    ),
-    .vector_mode_ex_o             ( vector_mode_ex       ), // from ID to EX stage
+    .mult_operand_a_ex_o          ( mult_operand_a_ex    ), // from ID to EX stage
+    .mult_operand_b_ex_o          ( mult_operand_b_ex    ), // from ID to EX stage
+    .mult_operand_c_ex_o          ( mult_operand_c_ex    ), // from ID to EX stage
+    .mult_vec_mode_ex_o           ( mult_vec_mode_ex     ), // from ID to EX stage
 
     // CSR ID/EX
     .csr_access_ex_o              ( csr_access_ex        ),
@@ -485,17 +486,17 @@ module riscv_core
     .alu_operand_c_i            ( alu_operand_c_ex             ), // from ID/EX pipe registers
     .imm_bmask_a_i              ( imm_bmask_a_ex               ), // from ID/EX pipe registers
     .imm_bmask_b_i              ( imm_bmask_b_ex               ), // from ID/EX pipe registers
-
-    .vector_mode_i              ( vector_mode_ex               ), // from ID/EX pipe registers
+    .alu_vec_mode_i             ( alu_vec_mode_ex              ), // from ID/EX pipe registers
 
     // Multipler
-    .mult_en_i                  ( mult_en_ex                   ),
-    .mult_sel_subword_i         ( mult_sel_subword_ex          ),
-    .mult_signed_mode_i         ( mult_signed_mode_ex          ),
-    .mult_mac_en_i              ( mult_mac_en_ex               ),
     .mult_operand_a_i           ( mult_operand_a_ex            ), // from ID/EX pipe registers
     .mult_operand_b_i           ( mult_operand_b_ex            ), // from ID/EX pipe registers
     .mult_operand_c_i           ( mult_operand_c_ex            ), // from ID/EX pipe registers
+    .mult_en_i                  ( mult_en_ex                   ), // from ID/EX pipe registers
+    .mult_sel_subword_i         ( mult_sel_subword_ex          ), // from ID/EX pipe registers
+    .mult_signed_mode_i         ( mult_signed_mode_ex          ), // from ID/EX pipe registers
+    .mult_mac_en_i              ( mult_mac_en_ex               ), // from ID/EX pipe registers
+    .mult_vec_mode_i            ( mult_vec_mode_ex             ), // from ID/EX pipe registers
 
     // interface with CSRs
     .csr_access_i               ( csr_access_ex                ),

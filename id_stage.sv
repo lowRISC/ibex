@@ -89,6 +89,7 @@ module riscv_id_stage
     output logic [31:0] alu_operand_c_ex_o,
     output logic [ 4:0] imm_bmask_a_ex_o,
     output logic [ 4:0] imm_bmask_b_ex_o,
+    output logic [ 1:0] alu_vec_mode_ex_o,
 
     output logic [4:0]  regfile_waddr_ex_o,
     output logic        regfile_we_ex_o,
@@ -99,16 +100,16 @@ module riscv_id_stage
     // ALU
     output logic [`ALU_OP_WIDTH-1:0] alu_operator_ex_o,
 
-    output logic        vector_mode_ex_o,
 
     // MUL
+    output logic [31:0] mult_operand_a_ex_o,
+    output logic [31:0] mult_operand_b_ex_o,
+    output logic [31:0] mult_operand_c_ex_o,
     output logic        mult_en_ex_o,
     output logic [1:0]  mult_sel_subword_ex_o,
     output logic [1:0]  mult_signed_mode_ex_o,
     output logic        mult_mac_en_ex_o,
-    output logic [31:0] mult_operand_a_ex_o,
-    output logic [31:0] mult_operand_b_ex_o,
-    output logic [31:0] mult_operand_c_ex_o,
+    output logic        mult_vec_mode_ex_o,
 
     // CSR ID/EX
     output logic        csr_access_ex_o,
@@ -213,6 +214,8 @@ module riscv_id_stage
   logic [31:0] imm_z_type;
   logic [31:0] imm_s2_type;
   logic [31:0] imm_s3_type;
+  logic [31:0] imm_vs_type;
+  logic [31:0] imm_vu_type;
 
   logic [31:0] immediate_b;       // contains the immediate for operand b
 
@@ -245,8 +248,6 @@ module riscv_id_stage
   logic [1:0]  alu_op_c_mux_sel;
   logic [1:0]  regc_mux;
 
-  logic        vector_mode;
-
   logic [2:0]  immediate_mux_sel;
   logic [1:0]  jump_target_mux_sel;
 
@@ -255,6 +256,7 @@ module riscv_id_stage
   logic [1:0]  mult_sel_subword; // Select a subword when doing multiplications
   logic [1:0]  mult_signed_mode; // Signed mode multiplication at the output of the controller, and before the pipe registers
   logic        mult_mac_en;      // Enables the use of the accumulator
+  logic        mult_vec_mode;
 
   // Register Write Control
   logic        regfile_we_id;
@@ -295,6 +297,8 @@ module riscv_id_stage
   logic [31:0] operand_b_fw_id;
   logic [31:0] operand_c_fw_id;
 
+  logic [31:0] operand_b, operand_b_vec;
+
   logic [31:0] alu_operand_a;
   logic [31:0] alu_operand_b;
   logic [31:0] alu_operand_c;
@@ -302,6 +306,9 @@ module riscv_id_stage
   // Immediates for ID
   logic [ 4:0] imm_bmask_a_id;
   logic [ 4:0] imm_bmask_b_id;
+
+  logic [ 1:0] alu_vec_mode;
+  logic        scalar_replication;
 
   // Forwarding detection signals
   logic        reg_d_ex_is_reg_a_id;
@@ -315,7 +322,7 @@ module riscv_id_stage
   logic        reg_d_alu_is_reg_c_id;
 
 
-  assign instr         = instr_rdata_i;
+  assign instr = instr_rdata_i;
 
   // immediate extraction and sign extension
   assign imm_i_type  = { {20 {instr[31]}}, instr[31:20] };
@@ -330,6 +337,8 @@ module riscv_id_stage
 
   assign imm_s2_type = { 27'b0, instr[24:20] };
   assign imm_s3_type = { 27'b0, instr[29:25] };
+  assign imm_vs_type = { {26 {instr[24]}}, instr[24:20], instr[25] };
+  assign imm_vu_type = { 26'b0, instr[24:20], instr[25] };
 
   //---------------------------------------------------------------------------
   // source register selection
@@ -492,6 +501,8 @@ module riscv_id_stage
   //////////////////////////////////////////////////////
 
   // Immediate Mux for operand B
+  // TODO: check if sign-extension stuff works well here, maybe able to save
+  // some area here
   always_comb
   begin : immediate_mux
     unique case (immediate_mux_sel)
@@ -501,6 +512,8 @@ module riscv_id_stage
       `IMM_PCINCR: immediate_b = (is_compressed_i && (~data_misaligned_i)) ? 32'h2 : 32'h4;
       `IMM_S2:     immediate_b = imm_s2_type;
       `IMM_S3:     immediate_b = imm_s3_type;
+      `IMM_VS:     immediate_b = imm_vs_type;
+      `IMM_VU:     immediate_b = imm_vu_type;
       default:     immediate_b = imm_i_type;
     endcase; // case (immediate_mux_sel)
   end
@@ -509,12 +522,20 @@ module riscv_id_stage
   always_comb
   begin : alu_operand_b_mux
     case (alu_op_b_mux_sel)
-      `OP_B_REGB_OR_FWD:  alu_operand_b = operand_b_fw_id;
-      `OP_B_REGC_OR_FWD:  alu_operand_b = operand_c_fw_id;
-      `OP_B_IMM:          alu_operand_b = immediate_b;
-      default:            alu_operand_b = operand_b_fw_id;
+      `OP_B_REGB_OR_FWD:  operand_b = operand_b_fw_id;
+      `OP_B_REGC_OR_FWD:  operand_b = operand_c_fw_id;
+      `OP_B_IMM:          operand_b = immediate_b;
+      default:            operand_b = operand_b_fw_id;
     endcase // case (alu_op_b_mux_sel)
   end
+
+
+  // scalar replication for operand B
+  assign operand_b_vec = (alu_vec_mode == `VEC_MODE8) ? {4{operand_b[7:0]}} : {2{operand_b[15:0]}};
+
+  // choose normal or scalar replicated version of operand b
+  assign alu_operand_b = (scalar_replication == 1'b1) ? operand_b_vec : operand_b;
+
 
   // Operand b forwarding mux
   always_comb
@@ -651,16 +672,17 @@ module riscv_id_stage
     .alu_op_a_mux_sel_o              ( alu_op_a_mux_sel          ),
     .alu_op_b_mux_sel_o              ( alu_op_b_mux_sel          ),
     .alu_op_c_mux_sel_o              ( alu_op_c_mux_sel          ),
+    .alu_vec_mode_o                  ( alu_vec_mode              ),
+    .scalar_replication_o            ( scalar_replication        ),
     .immediate_mux_sel_o             ( immediate_mux_sel         ),
     .regc_mux_o                      ( regc_mux                  ),
-
-    .vector_mode_o                   ( vector_mode               ),
 
     // MUL signals
     .mult_en_o                       ( mult_en                   ),
     .mult_sel_subword_o              ( mult_sel_subword          ),
     .mult_signed_mode_o              ( mult_signed_mode          ),
     .mult_mac_en_o                   ( mult_mac_en               ),
+    .mult_vec_mode_o                 ( mult_vec_mode             ),
 
     // Register file control signals
     .regfile_mem_we_o                ( regfile_we_id             ),
@@ -914,16 +936,16 @@ module riscv_id_stage
       alu_operand_c_ex_o          <= '0;
       imm_bmask_a_ex_o            <= '0;
       imm_bmask_b_ex_o            <= '0;
+      alu_vec_mode_ex_o           <= '0;
 
-      vector_mode_ex_o            <= '0;
-
+      mult_operand_a_ex_o         <= '0;
+      mult_operand_b_ex_o         <= '0;
+      mult_operand_c_ex_o         <= '0;
       mult_en_ex_o                <= 1'b0;
       mult_sel_subword_ex_o       <= 2'b0;
       mult_signed_mode_ex_o       <= 2'b0;
       mult_mac_en_ex_o            <= 1'b0;
-      mult_operand_a_ex_o         <= '0;
-      mult_operand_b_ex_o         <= '0;
-      mult_operand_c_ex_o         <= '0;
+      mult_vec_mode_ex_o          <= '0;
 
       regfile_waddr_ex_o          <= 5'b0;
       regfile_we_ex_o             <= 1'b0;
@@ -979,6 +1001,7 @@ module riscv_id_stage
           alu_operand_c_ex_o        <= alu_operand_c;
           imm_bmask_a_ex_o          <= imm_bmask_a_id;
           imm_bmask_b_ex_o          <= imm_bmask_b_id;
+          alu_vec_mode_ex_o         <= alu_vec_mode;
         end
 
         mult_en_ex_o                <= mult_en;
@@ -990,8 +1013,7 @@ module riscv_id_stage
           mult_operand_a_ex_o       <= alu_operand_a;
           mult_operand_b_ex_o       <= alu_operand_b;
           mult_operand_c_ex_o       <= alu_operand_c;
-
-          vector_mode_ex_o          <= vector_mode;
+          mult_vec_mode_ex_o        <= mult_vec_mode;
         end
 
         regfile_we_ex_o             <= regfile_we_id;

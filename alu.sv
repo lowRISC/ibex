@@ -31,6 +31,8 @@ module riscv_alu
   input  logic [31:0]              operand_a_i,
   input  logic [31:0]              operand_b_i,
   input  logic [31:0]              operand_c_i,
+
+  input  logic [ 1:0]              vector_mode_i,
   input  logic [ 4:0]              imm_bmask_a_i,
   input  logic [ 4:0]              imm_bmask_b_i,
 
@@ -146,14 +148,17 @@ module riscv_alu
   //                                                              //
   //////////////////////////////////////////////////////////////////
 
-  logic is_equal;
-  logic is_greater;
+  logic [3:0] is_equal;
+  logic [3:0] is_greater;  // handles both signed and unsigned forms
 
-  logic cmp_signed;
+  // 8-bit vector comparisons, basic building blocks
+  logic [3:0] cmp_signed;
+  logic [3:0] is_equal_vec;
+  logic [3:0] is_greater_vec;
 
   always_comb
   begin
-    cmp_signed = 1'b0;
+    cmp_signed = 4'b0;
 
     case (operator_i)
       `ALU_GTS,
@@ -164,37 +169,89 @@ module riscv_alu
       `ALU_SLETS,
       `ALU_MIN,
       `ALU_MAX,
-      `ALU_ABS: cmp_signed = 1'b1;
+      `ALU_ABS: begin
+        case (vector_mode_i)
+          `VEC_MODE8:  cmp_signed[3:0] = 4'b1111;
+          `VEC_MODE16: cmp_signed[3:0] = 4'b1010;
+          default:     cmp_signed[3:0] = 4'b1000;
+        endcase
+      end
     endcase
   end
 
-  assign is_equal   = (operand_a_i == operand_b_i);
-  assign is_greater = $signed({operand_a_i[31] & cmp_signed, operand_a_i[31:0]})
-                      >
-                      $signed({operand_b_i[31] & cmp_signed, operand_b_i[31:0]});
+  // generate vector equal and greater than signals, cmp_signed decides if the
+  // comparison is done signed or unsigned
+  genvar i;
+  generate
+    for(i = 0; i < 4; i++)
+    begin
+      assign is_equal_vec[i]   = (operand_a_i[8*i+7:8*i] == operand_b_i[8*i+7:i*8]);
+      assign is_greater_vec[i] = $signed({operand_a_i[8*i+7] & cmp_signed[i], operand_a_i[8*i+7:8*i]})
+                                  >
+                                 $signed({operand_b_i[8*i+7] & cmp_signed[i], operand_b_i[8*i+7:i*8]});
+    end
+  endgenerate
 
-  // generate comparison result
+  // generate the real equal and greater than signals that take the vector
+  // mode into account
   always_comb
   begin
-    comparison_result_o = is_equal;
+    // 32-bit mode
+    is_equal[3:0]   = {4{is_equal_vec[3] & is_equal_vec[2] & is_equal_vec[1] & is_equal_vec[0]}};
+    is_greater[3:0] = {4{is_greater_vec[3] | (is_equal_vec[3] & (is_greater_vec[2]
+                                            | (is_equal_vec[2] & (is_greater_vec[1]
+                                             | (is_equal_vec[1] & (is_greater_vec[0]))))))}};
+
+    case(vector_mode_i)
+      `VEC_MODE16:
+      begin
+        is_equal[1:0]   = {2{is_equal_vec[0]   & is_equal_vec[1]}};
+        is_equal[3:2]   = {2{is_equal_vec[2]   & is_equal_vec[3]}};
+        is_greater[1:0] = {2{is_greater_vec[1] | (is_equal_vec[1] & is_greater_vec[0])}};
+        is_greater[3:2] = {2{is_greater_vec[3] | (is_equal_vec[3] & is_greater_vec[2])}};
+      end
+
+      `VEC_MODE8:
+      begin
+        is_equal[3:0]   = is_equal_vec[3:0];
+        is_greater[3:0] = is_greater_vec[3:0];
+      end
+
+      default:; // see default assignment
+    endcase
+  end
+
+  logic cmp_eqall;
+
+  assign cmp_eqall = (operand_a_i == 32'hFFFF_FFFF);
+
+  // generate comparison result
+  logic [3:0] cmp_result;
+
+  always_comb
+  begin
+    cmp_result = is_equal;
 
     unique case (operator_i)
-      `ALU_EQ:             comparison_result_o = is_equal;
-      `ALU_NE:             comparison_result_o = ~is_equal;
-      `ALU_GTS, `ALU_GTU:  comparison_result_o = is_greater;
-      `ALU_GES, `ALU_GEU:  comparison_result_o = is_greater | is_equal;
+      `ALU_EQ:             cmp_result = is_equal;
+      `ALU_NE:             cmp_result = ~is_equal;
+      `ALU_GTS, `ALU_GTU:  cmp_result = is_greater;
+      `ALU_GES, `ALU_GEU:  cmp_result = is_greater | is_equal;
       `ALU_LTS, `ALU_SLTS,
-      `ALU_LTU, `ALU_SLTU: comparison_result_o = ~(is_greater | is_equal);
+      `ALU_LTU, `ALU_SLTU: cmp_result = ~(is_greater | is_equal);
       `ALU_SLETS,
       `ALU_SLETU,
-      `ALU_LES, `ALU_LEU:  comparison_result_o = ~is_greater;
-      `ALU_EQALL:          comparison_result_o = (operand_a_i == 32'hFFFF_FFFF);
+      `ALU_LES, `ALU_LEU:  cmp_result = ~is_greater;
+      `ALU_EQALL:          cmp_result = {4{cmp_eqall}};
 
       default: ;
     endcase
   end
 
+  assign comparison_result_o = cmp_result[3];
 
+
+  // min/max/abs handling
   logic [31:0] result_minmax;
   logic        sel_minmax;
   logic [31:0] minmax_b;

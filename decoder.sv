@@ -53,16 +53,17 @@ module riscv_decoder
   output logic [1:0]  alu_op_a_mux_sel_o,      // operand a selection: reg value, PC, immediate or zero
   output logic [1:0]  alu_op_b_mux_sel_o,      // operand b selection: reg value or immediate
   output logic [1:0]  alu_op_c_mux_sel_o,      // operand c selection: reg value or jump target
+  output logic [1:0]  alu_vec_mode_o,          // selects between 32 bit, 16 bit and 8 bit vectorial modes
+  output logic        scalar_replication_o,    // scalar replication enable
   output logic [2:0]  immediate_mux_sel_o,     // immediate selection for operand b
   output logic [1:0]  regc_mux_o,              // register c selection: S3, RD or 0
-
-  output logic        vector_mode_o,           // selects between 32 bit, 16 bit and 8 bit vectorial modes
 
   // MUL related control signals
   output logic        mult_en_o,               // perform multiplication
   output logic        mult_mac_en_o,           // accumulate multiplication result
   output logic [1:0]  mult_sel_subword_o,      // Select subwords for 16x16 bit of multiplier
   output logic [1:0]  mult_signed_mode_o,      // Multiplication in signed mode
+  output logic        mult_vec_mode_o,         // selects between 32 bit and 16 bit modes
 
   // register file related signals
   output logic        regfile_mem_we_o,        // write enable for regfile
@@ -128,16 +129,16 @@ module riscv_decoder
     alu_op_a_mux_sel_o          = `OP_A_REGA_OR_FWD;
     alu_op_b_mux_sel_o          = `OP_B_REGB_OR_FWD;
     alu_op_c_mux_sel_o          = `OP_C_REGC_OR_FWD;
+    alu_vec_mode_o              = `VEC_MODE32;
+    scalar_replication_o        = 1'b0;
     regc_mux_o                  = `REGC_ZERO;
-
     immediate_mux_sel_o         = `IMM_I;
-
-    vector_mode_o               = 1'b0;
 
     mult_en                     = 1'b0;
     mult_signed_mode_o          = 2'b00;
     mult_sel_subword_o          = 2'b00;
     mult_mac_en                 = 1'b0;
+    mult_vec_mode_o             = 1'b0;
 
     regfile_mem_we              = 1'b0;
     regfile_alu_we              = 1'b0;
@@ -504,7 +505,7 @@ module riscv_decoder
 
         case (instr_rdata_i[13:12])
           2'b00: begin // multiply with subword selection
-            vector_mode_o      = 1'b1;
+            mult_vec_mode_o    = 1'b1;
             mult_sel_subword_o = {2{instr_rdata_i[30]}};
             mult_signed_mode_o = {2{instr_rdata_i[31]}};
 
@@ -514,7 +515,7 @@ module riscv_decoder
           2'b01: begin // MAC with subword selection
             regc_used_o        = 1'b1;
             regc_mux_o         = `REGC_RD;
-            vector_mode_o      = 1'b1;
+            mult_vec_mode_o    = 1'b1;
             mult_sel_subword_o = {2{instr_rdata_i[30]}};
             mult_signed_mode_o = {2{instr_rdata_i[31]}};
 
@@ -526,6 +527,66 @@ module riscv_decoder
             regfile_alu_we = 1'b0;
             illegal_insn_o = 1'b1;
           end
+        endcase
+      end
+
+      `OPCODE_VECOP: begin
+        rega_used_o         = 1'b1;
+        immediate_mux_sel_o = `IMM_VS;
+
+        // vector size
+        if (instr_rdata_i[12])
+          alu_vec_mode_o = `VEC_MODE8;
+        else
+          alu_vec_mode_o = `VEC_MODE16;
+
+        // distinguish normal vector, sc and sci modes
+        if (instr_rdata_i[14]) begin
+          scalar_replication_o = 1'b1;
+
+          if (instr_rdata_i[13]) begin
+            // immediate scalar replication, .sci
+            alu_op_b_mux_sel_o = `OP_B_IMM;
+          end else begin
+            // register scalar replication, .sc
+            regb_used_o = 1'b1;
+          end
+        end else begin
+          // normal register use
+          regb_used_o = 1'b1;
+        end
+
+        // now decode the instruction
+        unique case (instr_rdata_i[31:26])
+          6'b00000_0: begin alu_operator_o = `ALU_ADD;  immediate_mux_sel_o = `IMM_VS; end // pv.add
+          6'b00001_0: begin alu_operator_o = `ALU_SUB;  immediate_mux_sel_o = `IMM_VS; end // pv.sub
+          6'b00010_0: begin alu_operator_o = `ALU_AVG;  immediate_mux_sel_o = `IMM_VS; end // pv.avg
+          6'b00011_0: begin alu_operator_o = `ALU_AVGU; immediate_mux_sel_o = `IMM_VU; end // pv.avgu
+          6'b00100_0: begin alu_operator_o = `ALU_MIN;  immediate_mux_sel_o = `IMM_VS; end // pv.min
+          6'b00101_0: begin alu_operator_o = `ALU_MINU; immediate_mux_sel_o = `IMM_VU; end // pv.minu
+          6'b00110_0: begin alu_operator_o = `ALU_MAX;  immediate_mux_sel_o = `IMM_VS; end // pv.max
+          6'b00111_0: begin alu_operator_o = `ALU_MAXU; immediate_mux_sel_o = `IMM_VU; end // pv.maxu
+          6'b01000_0: begin alu_operator_o = `ALU_SRL;  immediate_mux_sel_o = `IMM_VS; end // pv.srl
+          6'b01001_0: begin alu_operator_o = `ALU_SRA;  immediate_mux_sel_o = `IMM_VS; end // pv.sra
+          6'b01010_0: begin alu_operator_o = `ALU_SLL;  immediate_mux_sel_o = `IMM_VS; end // pv.sll
+          6'b01011_0: begin alu_operator_o = `ALU_OR;   immediate_mux_sel_o = `IMM_VS; end // pv.or
+          6'b01100_0: begin alu_operator_o = `ALU_XOR;  immediate_mux_sel_o = `IMM_VS; end // pv.xor
+          6'b01101_0: begin alu_operator_o = `ALU_AND;  immediate_mux_sel_o = `IMM_VS; end // pv.and
+          6'b01110_0: begin alu_operator_o = `ALU_ABS;  immediate_mux_sel_o = `IMM_VS; end // pv.abs
+
+          // comparisons, always have bit 26 set
+          6'b00000_1: begin alu_operator_o = `ALU_EQ;  immediate_mux_sel_o = `IMM_VS; end // pv.cmpeq
+          6'b00001_1: begin alu_operator_o = `ALU_NE;  immediate_mux_sel_o = `IMM_VS; end // pv.cmpne
+          6'b00010_1: begin alu_operator_o = `ALU_GTU; immediate_mux_sel_o = `IMM_VS; end // pv.cmpgt
+          6'b00011_1: begin alu_operator_o = `ALU_GES; immediate_mux_sel_o = `IMM_VS; end // pv.cmpge
+          6'b00100_1: begin alu_operator_o = `ALU_LTU; immediate_mux_sel_o = `IMM_VS; end // pv.cmplt
+          6'b00101_1: begin alu_operator_o = `ALU_LES; immediate_mux_sel_o = `IMM_VS; end // pv.cmple
+          6'b00110_1: begin alu_operator_o = `ALU_GTU; immediate_mux_sel_o = `IMM_VU; end // pv.cmpgtu
+          6'b00111_1: begin alu_operator_o = `ALU_GEU; immediate_mux_sel_o = `IMM_VU; end // pv.cmpgeu
+          6'b01000_1: begin alu_operator_o = `ALU_LTU; immediate_mux_sel_o = `IMM_VU; end // pv.cmpltu
+          6'b01001_1: begin alu_operator_o = `ALU_LEU; immediate_mux_sel_o = `IMM_VU; end // pv.cmpleu
+
+          default:;
         endcase
       end
 
