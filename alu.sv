@@ -300,13 +300,41 @@ module riscv_alu
 
   // min/max/abs handling
   logic [31:0] result_minmax;
-  logic        sel_minmax;
+  logic [ 3:0] sel_minmax;
+  logic        do_min;
   logic [31:0] minmax_b;
 
   assign minmax_b = (operator_i == `ALU_ABS) ? adder_result : operand_b_i;
 
-  assign sel_minmax    = is_greater ^ ((operator_i == `ALU_MIN) || (operator_i == `ALU_MINU));
-  assign result_minmax = sel_minmax ? operand_a_i[31:0] : minmax_b[31:0];
+  assign do_min   = ((operator_i == `ALU_MIN) || (operator_i == `ALU_MINU));
+
+  // the mux now handles: min, max, abs, ins
+  always_comb
+  begin
+    sel_minmax[3:0] = is_greater ^ {4{do_min}};
+
+    // if(operator_i == `ALU_INS)
+    // begin
+    //   if(vector_mode_i == `VEC_MODE16)
+    //   begin
+    //     sel_minmax[1:0] = {2{vec_ext_i[0]}};
+    //     sel_minmax[3:2] = ~{2{vec_ext_i[0]}};
+    //   end
+    //   else // `VEC_MODE8
+    //   begin
+    //     sel_minmax[0] = (vec_ext_i != 2'b00);
+    //     sel_minmax[1] = (vec_ext_i != 2'b01);
+    //     sel_minmax[2] = (vec_ext_i != 2'b10);
+    //     sel_minmax[3] = (vec_ext_i != 2'b11);
+    //   end
+    // end
+  end
+
+  assign result_minmax[31:24] = (sel_minmax[3] == 1'b1) ? operand_a_i[31:24] : minmax_b[31:24];
+  assign result_minmax[23:16] = (sel_minmax[2] == 1'b1) ? operand_a_i[23:16] : minmax_b[23:16];
+  assign result_minmax[15: 8] = (sel_minmax[1] == 1'b1) ? operand_a_i[15: 8] : minmax_b[15: 8];
+  assign result_minmax[ 7: 0] = (sel_minmax[0] == 1'b1) ? operand_a_i[ 7: 0] : minmax_b[ 7: 0];
+
 
 
   //////////////////////////////////////////////////
