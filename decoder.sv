@@ -574,6 +574,27 @@ module riscv_decoder
           6'b01101_0: begin alu_operator_o = `ALU_AND;  immediate_mux_sel_o = `IMM_VS; end // pv.and
           6'b01110_0: begin alu_operator_o = `ALU_ABS;  immediate_mux_sel_o = `IMM_VS; end // pv.abs
 
+          6'b01111_0: begin // pv.extract
+            if (instr_rdata_i[12])
+              alu_operator_o = `ALU_EXTBS;
+            else
+              alu_operator_o = `ALU_EXTHS;
+          end
+
+          6'b10000_0: begin // pv.extractu
+            if (instr_rdata_i[12])
+              alu_operator_o = `ALU_EXTBZ;
+            else
+              alu_operator_o = `ALU_EXTHZ;
+          end
+
+          6'b10001_0: begin // pv.insert
+            alu_operator_o     = `ALU_INS;
+            regc_used_o        = 1'b1;
+            regc_mux_o         = `REGC_RD;
+            alu_op_b_mux_sel_o = `OP_B_REGC_OR_FWD;
+          end
+
           // comparisons, always have bit 26 set
           6'b00000_1: begin alu_operator_o = `ALU_EQ;  immediate_mux_sel_o = `IMM_VS; end // pv.cmpeq
           6'b00001_1: begin alu_operator_o = `ALU_NE;  immediate_mux_sel_o = `IMM_VS; end // pv.cmpne

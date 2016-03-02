@@ -89,6 +89,7 @@ module riscv_id_stage
     output logic [31:0] alu_operand_c_ex_o,
     output logic [ 4:0] imm_bmask_a_ex_o,
     output logic [ 4:0] imm_bmask_b_ex_o,
+    output logic [ 1:0] imm_vec_ext_ex_o,
     output logic [ 1:0] alu_vec_mode_ex_o,
 
     output logic [4:0]  regfile_waddr_ex_o,
@@ -306,6 +307,7 @@ module riscv_id_stage
   // Immediates for ID
   logic [ 4:0] imm_bmask_a_id;
   logic [ 4:0] imm_bmask_b_id;
+  logic [ 1:0] imm_vec_ext_id;
 
   logic [ 1:0] alu_vec_mode;
   logic        scalar_replication;
@@ -594,6 +596,7 @@ module riscv_id_stage
   assign imm_bmask_b_id = ((alu_operator == `ALU_BCLR) || (alu_operator == `ALU_BSET) || (alu_operator == `ALU_BINS)) ?
                           imm_s2_type[4:0] : 0;
 
+  assign imm_vec_ext_id = imm_vu_type[1:0];
 
   /////////////////////////////////////////////////////////
   //  ____  _____ ____ ___ ____ _____ _____ ____  ____   //
@@ -936,6 +939,7 @@ module riscv_id_stage
       alu_operand_c_ex_o          <= '0;
       imm_bmask_a_ex_o            <= '0;
       imm_bmask_b_ex_o            <= '0;
+      imm_vec_ext_ex_o            <= '0;
       alu_vec_mode_ex_o           <= '0;
 
       mult_operand_a_ex_o         <= '0;
@@ -1001,6 +1005,7 @@ module riscv_id_stage
           alu_operand_c_ex_o        <= alu_operand_c;
           imm_bmask_a_ex_o          <= imm_bmask_a_id;
           imm_bmask_b_ex_o          <= imm_bmask_b_id;
+          imm_vec_ext_ex_o          <= imm_vec_ext_id;
           alu_vec_mode_ex_o         <= alu_vec_mode;
         end
 

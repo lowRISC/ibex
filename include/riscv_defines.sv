@@ -145,10 +145,14 @@
 // Absolute value
 `define ALU_ABS   6'b010100
 
+// Insert/extract
+`define ALU_INS   6'b101101
+
 // min/max
 `define ALU_MIN   6'b010000
 `define ALU_MINU  6'b010001
 `define ALU_MAX   6'b010010
+`define ALU_MAXU  6'b010011
 `define ALU_MAXU  6'b010011
 
 

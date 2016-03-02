@@ -35,6 +35,7 @@ module riscv_alu
   input  logic [ 1:0]              vector_mode_i,
   input  logic [ 4:0]              imm_bmask_a_i,
   input  logic [ 4:0]              imm_bmask_b_i,
+  input  logic [ 1:0]              imm_vec_ext_i,
 
   output logic [31:0]              result_o,
   output logic                     comparison_result_o
@@ -379,21 +380,21 @@ module riscv_alu
   begin
     sel_minmax[3:0] = is_greater ^ {4{do_min}};
 
-    // if(operator_i == `ALU_INS)
-    // begin
-    //   if(vector_mode_i == `VEC_MODE16)
-    //   begin
-    //     sel_minmax[1:0] = {2{vec_ext_i[0]}};
-    //     sel_minmax[3:2] = ~{2{vec_ext_i[0]}};
-    //   end
-    //   else // `VEC_MODE8
-    //   begin
-    //     sel_minmax[0] = (vec_ext_i != 2'b00);
-    //     sel_minmax[1] = (vec_ext_i != 2'b01);
-    //     sel_minmax[2] = (vec_ext_i != 2'b10);
-    //     sel_minmax[3] = (vec_ext_i != 2'b11);
-    //   end
-    // end
+    if(operator_i == `ALU_INS)
+    begin
+      if(vector_mode_i == `VEC_MODE16)
+      begin
+        sel_minmax[1:0] = {2{imm_vec_ext_i[0]}};
+        sel_minmax[3:2] = ~{2{imm_vec_ext_i[0]}};
+      end
+      else // `VEC_MODE8
+      begin
+        sel_minmax[0] = (imm_vec_ext_i != 2'b00);
+        sel_minmax[1] = (imm_vec_ext_i != 2'b01);
+        sel_minmax[2] = (imm_vec_ext_i != 2'b10);
+        sel_minmax[3] = (imm_vec_ext_i != 2'b11);
+      end
+    end
   end
 
   assign result_minmax[31:24] = (sel_minmax[3] == 1'b1) ? operand_a_i[31:24] : minmax_b[31:24];
@@ -413,23 +414,47 @@ module riscv_alu
   //////////////////////////////////////////////////
 
   logic [31:0] result_ext;
+  logic [15:0] ext_half;
+
+  always_comb
+  begin
+    case (vector_mode_i)
+      `VEC_MODE16: begin
+        if (imm_vec_ext_i[0])
+          ext_half[15:0] = operand_a_i[31:16];
+        else
+          ext_half[15:0] = operand_a_i[15: 0];
+      end
+
+      `VEC_MODE8: begin
+        case (imm_vec_ext_i[1:0])
+          2'b11: ext_half[7:0] = operand_a_i[31:24];
+          2'b10: ext_half[7:0] = operand_a_i[23:16];
+          2'b01: ext_half[7:0] = operand_a_i[15: 8];
+          2'b00: ext_half[7:0] = operand_a_i[ 7: 0];
+        endcase
+      end
+
+      default: ext_half[15:0] = operand_a_i[15:0];
+    endcase
+  end
 
   always_comb
   begin
     // zero extend byte
-    result_ext = {24'b0, operand_a_i[7:0]};
+    result_ext = {24'b0, ext_half[7:0]};
 
     // sign extend byte
     if (operator_i == `ALU_EXTBS)
-      result_ext = {{24 {operand_a_i[7]}}, operand_a_i[7:0]};
+      result_ext = {{24 {operand_a_i[7]}}, ext_half[7:0]};
 
     // zero extend half word
     if(operator_i == `ALU_EXTHZ)
-      result_ext = {16'b0, operand_a_i[15:0]};
+      result_ext = {16'b0, ext_half[15:0]};
 
     // sign extend half word
     if(operator_i == `ALU_EXTHS)
-      result_ext = {{16 {operand_a_i[15]}}, operand_a_i[15:0]};
+      result_ext = {{16 {operand_a_i[15]}}, ext_half[15:0]};
   end
 
 
@@ -581,10 +606,11 @@ module riscv_alu
       `ALU_EXTHZ,
       `ALU_EXTHS: result_o = result_ext;
 
-      // Min/Max/Abs
+      // Min/Max/Abs/Ins
       `ALU_MIN, `ALU_MINU,
       `ALU_MAX, `ALU_MAXU,
-      `ALU_ABS: result_o = result_minmax;
+      `ALU_ABS,
+      `ALU_INS: result_o = result_minmax;
 
       // Comparison Operations
       `ALU_EQ, `ALU_NE, `ALU_GTU, `ALU_GEU, `ALU_LTU, `ALU_LEU, `ALU_GTS, `ALU_GES, `ALU_LTS, `ALU_LES:

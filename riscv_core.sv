@@ -129,6 +129,7 @@ module riscv_core
   logic [31:0] alu_operand_c_ex;
   logic [ 4:0] imm_bmask_a_ex;
   logic [ 4:0] imm_bmask_b_ex;
+  logic [ 1:0] imm_vec_ext_ex;
   logic [ 1:0] alu_vec_mode_ex;
 
   // Multiplier Control
@@ -383,6 +384,7 @@ module riscv_core
     .alu_operand_c_ex_o           ( alu_operand_c_ex     ),
     .imm_bmask_a_ex_o             ( imm_bmask_a_ex       ),
     .imm_bmask_b_ex_o             ( imm_bmask_b_ex       ),
+    .imm_vec_ext_ex_o             ( imm_vec_ext_ex       ),
     .alu_vec_mode_ex_o            ( alu_vec_mode_ex      ),
 
     .regfile_waddr_ex_o           ( regfile_waddr_ex     ),
@@ -486,6 +488,7 @@ module riscv_core
     .alu_operand_c_i            ( alu_operand_c_ex             ), // from ID/EX pipe registers
     .imm_bmask_a_i              ( imm_bmask_a_ex               ), // from ID/EX pipe registers
     .imm_bmask_b_i              ( imm_bmask_b_ex               ), // from ID/EX pipe registers
+    .imm_vec_ext_i              ( imm_vec_ext_ex               ), // from ID/EX pipe registers
     .alu_vec_mode_i             ( alu_vec_mode_ex              ), // from ID/EX pipe registers
 
     // Multipler
