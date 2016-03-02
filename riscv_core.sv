@@ -93,8 +93,8 @@ module riscv_core
   logic [31:0]       instr_rdata_id;    // Instruction sampled inside IF stage
   logic              is_compressed_id;
   logic              illegal_c_insn_id; // Illegal compressed instruction sent to ID stage
-  logic [31:0]       current_pc_if;     // Current Program counter
-  logic [31:0]       current_pc_id;     // Current Program counter
+  logic [31:0]       pc_if;             // Program counter in IF stage
+  logic [31:0]       pc_id;             // Program counter in ID stage
 
   logic              clear_instr_valid;
   logic              pc_set;
@@ -173,6 +173,8 @@ module riscv_core
   logic        data_sign_ext_ex;
   logic [1:0]  data_reg_offset_ex;
   logic        data_req_ex;
+  logic [31:0] data_pc_ex;
+  logic        data_load_event_ex;
   logic        data_misaligned_ex;
 
   // stall control
@@ -279,8 +281,8 @@ module riscv_core
     .instr_rdata_id_o    ( instr_rdata_id    ),
     .is_compressed_id_o  ( is_compressed_id  ),
     .illegal_c_insn_id_o ( illegal_c_insn_id ),
-    .current_pc_if_o     ( current_pc_if     ),
-    .current_pc_id_o     ( current_pc_id     ),
+    .pc_if_o             ( pc_if             ),
+    .pc_id_o             ( pc_id             ),
 
     // control signals
     .clear_instr_valid_i ( clear_instr_valid ),
@@ -360,8 +362,8 @@ module riscv_core
     .illegal_c_insn_i             ( illegal_c_insn_id    ),
     .is_compressed_i              ( is_compressed_id     ),
 
-    .current_pc_if_i              ( current_pc_if        ),
-    .current_pc_id_i              ( current_pc_id        ),
+    .pc_if_i                      ( pc_if                ),
+    .pc_id_i                      ( pc_id                ),
 
     // Stalls
     .halt_if_o                    ( halt_if              ),
@@ -418,12 +420,15 @@ module riscv_core
     .csr_hwlp_data_i              ( csr_hwlp_data        ),
 
     // LSU
-    .data_req_ex_o                ( data_req_ex          ), // to   load store unit
-    .data_we_ex_o                 ( data_we_ex           ), // to   load store unit
-    .data_type_ex_o               ( data_type_ex         ), // to   load store unit
-    .data_sign_ext_ex_o           ( data_sign_ext_ex     ), // to   load store unit
-    .data_reg_offset_ex_o         ( data_reg_offset_ex   ), // to   load store unit
-    .data_misaligned_ex_o         ( data_misaligned_ex   ), // to   load store unit
+    .data_req_ex_o                ( data_req_ex          ), // to load store unit
+    .data_we_ex_o                 ( data_we_ex           ), // to load store unit
+    .data_type_ex_o               ( data_type_ex         ), // to load store unit
+    .data_sign_ext_ex_o           ( data_sign_ext_ex     ), // to load store unit
+    .data_reg_offset_ex_o         ( data_reg_offset_ex   ), // to load store unit
+    .data_pc_ex_o                 ( data_pc_ex           ), // to load store unit
+    .data_load_event_ex_o         ( data_load_event_ex   ), // to load store unit
+
+    .data_misaligned_ex_o         ( data_misaligned_ex   ), // to load store unit
 
     .prepost_useincr_ex_o         ( useincr_addr_ex      ),
     .data_misaligned_i            ( data_misaligned      ),
@@ -607,52 +612,54 @@ module riscv_core
   )
   cs_registers_i
   (
-    .clk                     ( clk              ),
-    .rst_n                   ( rst_n            ),
+    .clk                     ( clk                ),
+    .rst_n                   ( rst_n              ),
 
     // Core and Cluster ID from outside
-    .core_id_i               ( core_id_i        ),
-    .cluster_id_i            ( cluster_id_i     ),
+    .core_id_i               ( core_id_i          ),
+    .cluster_id_i            ( cluster_id_i       ),
 
     // Interface to CSRs (SRAM like)
-    .csr_access_i            ( csr_access_ex    ),
-    .csr_addr_i              ( csr_addr         ),
-    .csr_wdata_i             ( csr_wdata        ),
-    .csr_op_i                ( csr_op           ),
-    .csr_rdata_o             ( csr_rdata        ),
+    .csr_access_i            ( csr_access_ex      ),
+    .csr_addr_i              ( csr_addr           ),
+    .csr_wdata_i             ( csr_wdata          ),
+    .csr_op_i                ( csr_op             ),
+    .csr_rdata_o             ( csr_rdata          ),
 
     // Interrupt related control signals
-    .irq_enable_o            ( irq_enable       ),
-    .mepc_o                  ( mepc             ),
+    .irq_enable_o            ( irq_enable         ),
+    .mepc_o                  ( mepc               ),
 
-    .curr_pc_id_i            ( current_pc_id    ),    // from IF stage
-    .exc_save_i              ( exc_save_id      ),
-    .exc_restore_i           ( exc_restore_id   ),
+    .curr_pc_id_i            ( pc_id              ), // from IF stage
+    .data_pc_ex_i            ( data_pc_ex         ), // from ID/EX pipeline
+    .data_load_event_ex_i    ( data_load_event_ex ), // from ID/EX pipeline
+    .exc_save_i              ( exc_save_id        ),
+    .exc_restore_i           ( exc_restore_id     ),
 
-    .exc_cause_i             ( exc_cause        ),
-    .save_exc_cause_i        ( save_exc_cause   ),
+    .exc_cause_i             ( exc_cause          ),
+    .save_exc_cause_i        ( save_exc_cause     ),
 
     // from hwloop registers
-    .hwlp_start_i            ( hwlp_start       ),
-    .hwlp_end_i              ( hwlp_end         ),
-    .hwlp_cnt_i              ( hwlp_cnt         ),
+    .hwlp_start_i            ( hwlp_start         ),
+    .hwlp_end_i              ( hwlp_end           ),
+    .hwlp_cnt_i              ( hwlp_cnt           ),
 
-    .hwlp_regid_o            ( csr_hwlp_regid   ),
-    .hwlp_we_o               ( csr_hwlp_we      ),
-    .hwlp_data_o             ( csr_hwlp_data    ),
+    .hwlp_regid_o            ( csr_hwlp_regid     ),
+    .hwlp_we_o               ( csr_hwlp_we        ),
+    .hwlp_data_o             ( csr_hwlp_data      ),
 
     // performance counter related signals
-    .id_valid_i              ( id_valid         ),
-    .is_compressed_i         ( is_compressed_id ),
-    .is_decoding_i           ( is_decoding      ),
+    .id_valid_i              ( id_valid           ),
+    .is_compressed_i         ( is_compressed_id   ),
+    .is_decoding_i           ( is_decoding        ),
 
-    .imiss_i                 ( perf_imiss       ),
-    .pc_set_i                ( pc_set           ),
-    .jump_i                  ( perf_jump        ),
-    .branch_i                ( branch_in_ex     ),
-    .branch_taken_i          ( branch_decision  ),
-    .ld_stall_i              ( perf_ld_stall    ),
-    .jr_stall_i              ( perf_jr_stall    ),
+    .imiss_i                 ( perf_imiss         ),
+    .pc_set_i                ( pc_set             ),
+    .jump_i                  ( perf_jump          ),
+    .branch_i                ( branch_in_ex       ),
+    .branch_taken_i          ( branch_decision    ),
+    .ld_stall_i              ( perf_ld_stall      ),
+    .jr_stall_i              ( perf_jr_stall      ),
 
     .mem_load_i              ( data_req_o & data_gnt_i & (~data_we_o) ),
     .mem_store_i             ( data_req_o & data_gnt_i & data_we_o    ),
@@ -713,8 +720,8 @@ module riscv_core
     .regfile_rdata_i ( dbg_rdata       ),
 
     // signals for PPC and NPC
-    .curr_pc_if_i    ( current_pc_if   ), // from IF stage
-    .curr_pc_id_i    ( current_pc_id   ), // from IF stage
+    .curr_pc_if_i    ( pc_if           ), // from IF stage
+    .curr_pc_id_i    ( pc_id           ), // from IF stage
     .branch_pc_i     ( branch_pc_ex    ), // PC of last executed branch (in EX stage)
 
     .branch_in_ex_i  ( branch_in_ex    ),
@@ -735,7 +742,7 @@ module riscv_core
     .core_id        ( core_id_i                            ),
     .cluster_id     ( cluster_id_i                         ),
 
-    .pc             ( id_stage_i.current_pc_id_i           ),
+    .pc             ( id_stage_i.pc_id_i                   ),
     .instr          ( id_stage_i.instr                     ),
     .compressed     ( id_stage_i.is_compressed_i           ),
     .id_valid       ( id_stage_i.id_valid_o                ),
@@ -794,7 +801,7 @@ module riscv_core
     .pc_set           ( pc_set                               ),
     .if_valid         ( if_valid                             ),
 
-    .pc               ( id_stage_i.current_pc_id_i           ),
+    .pc               ( id_stage_i.pc_id_i                   ),
     .instr            ( id_stage_i.instr                     ),
     .is_compressed    ( is_compressed_id                     ),
     .id_valid         ( id_stage_i.id_valid_o                ),

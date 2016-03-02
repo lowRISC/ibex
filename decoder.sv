@@ -81,6 +81,7 @@ module riscv_decoder
   output logic [1:0]  data_type_o,             // data type on data memory: byte, half word or word
   output logic        data_sign_extension_o,   // sign extension on read data from data memory
   output logic [1:0]  data_reg_offset_o,       // offset in byte inside register for stores
+  output logic        data_load_event_o,       // data request is in the special event range
 
   // hwloop signals
   output logic [2:0]  hwloop_we_o,             // write enable for hwloop regs
@@ -159,6 +160,7 @@ module riscv_decoder
     data_sign_extension_o       = 1'b0;
     data_reg_offset_o           = 2'b00;
     data_req                    = 1'b0;
+    data_load_event_o           = 1'b0;
 
     illegal_insn_o              = 1'b0;
     trap_insn                   = 1'b0;
@@ -345,12 +347,12 @@ module riscv_decoder
           endcase
         end
 
-        if (instr_rdata_i[14:12] == 3'b011 || instr_rdata_i[14:12] == 3'b110)
-        begin
-          // LD, LWU -> RV64 only
-          data_req       = 1'b0;
-          regfile_mem_we = 1'b0;
-          regfile_alu_we = 1'b0;
+        // special p.elw (event load)
+        if (instr_rdata_i[14:12] == 3'b110)
+          data_load_event_o = 1'b1;
+
+        if (instr_rdata_i[14:12] == 3'b011) begin
+          // LD -> RV64 only
           illegal_insn_o = 1'b1;
         end
       end

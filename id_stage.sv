@@ -66,8 +66,8 @@ module riscv_id_stage
     input  logic        illegal_c_insn_i,
     input  logic        is_compressed_i,
 
-    input  logic [31:0] current_pc_if_i,
-    input  logic [31:0] current_pc_id_i,
+    input  logic [31:0] pc_if_i,
+    input  logic [31:0] pc_id_i,
 
     // Stalls
     output logic        halt_if_o,      // controller requests a halt of the IF stage
@@ -132,6 +132,9 @@ module riscv_id_stage
     output logic [1:0]  data_type_ex_o,
     output logic        data_sign_ext_ex_o,
     output logic [1:0]  data_reg_offset_ex_o,
+    output logic [31:0] data_pc_ex_o,
+    output logic        data_load_event_ex_o,
+
     output logic        data_misaligned_ex_o,
 
     output logic        prepost_useincr_ex_o,
@@ -269,6 +272,7 @@ module riscv_id_stage
   logic        data_sign_ext_id;
   logic [1:0]  data_reg_offset_id;
   logic        data_req_id;
+  logic        data_load_event_id;
 
   // hwloop signals
   logic [N_HWLP_BITS-1:0] hwloop_regid, hwloop_regid_int;
@@ -405,8 +409,8 @@ module riscv_id_stage
   always_comb
   begin
     unique case (hwloop_target_mux_sel)
-      1'b0: hwloop_target = current_pc_id_i + {imm_iz_type[30:0], 1'b0};
-      1'b1: hwloop_target = current_pc_id_i + {imm_z_type[30:0], 1'b0};
+      1'b0: hwloop_target = pc_id_i + {imm_iz_type[30:0], 1'b0};
+      1'b1: hwloop_target = pc_id_i + {imm_z_type[30:0], 1'b0};
     endcase
   end
 
@@ -415,7 +419,7 @@ module riscv_id_stage
   begin
     unique case (hwloop_start_mux_sel)
       1'b0: hwloop_start_int = hwloop_target;   // for PC + I imm
-      1'b1: hwloop_start_int = current_pc_if_i; // for next PC
+      1'b1: hwloop_start_int = pc_if_i;         // for next PC
     endcase
   end
 
@@ -449,8 +453,8 @@ module riscv_id_stage
   always_comb
   begin : jump_target_mux
     unique case (jump_target_mux_sel)
-      `JT_JAL:  jump_target = current_pc_id_i + imm_uj_type;
-      `JT_COND: jump_target = current_pc_id_i + imm_sb_type;
+      `JT_JAL:  jump_target = pc_id_i + imm_uj_type;
+      `JT_COND: jump_target = pc_id_i + imm_sb_type;
 
       // JALR: Cannot forward RS1, since the path is too long
       `JT_JALR: jump_target = regfile_data_ra_id + imm_i_type;
@@ -475,7 +479,7 @@ module riscv_id_stage
   begin : alu_operand_a_mux
     case (alu_op_a_mux_sel)
       `OP_A_REGA_OR_FWD:  alu_operand_a = operand_a_fw_id;
-      `OP_A_CURRPC:       alu_operand_a = current_pc_id_i;
+      `OP_A_CURRPC:       alu_operand_a = pc_id_i;
       `OP_A_ZIMM:         alu_operand_a = imm_z_type;
       `OP_A_ZERO:         alu_operand_a = 32'b0;
       default:            alu_operand_a = operand_a_fw_id;
@@ -703,6 +707,7 @@ module riscv_id_stage
     .data_type_o                     ( data_type_id              ),
     .data_sign_extension_o           ( data_sign_ext_id          ),
     .data_reg_offset_o               ( data_reg_offset_id        ),
+    .data_load_event_o               ( data_load_event_id        ),
 
     // hwloop signals
     .hwloop_we_o                     ( hwloop_we_int             ),
@@ -925,7 +930,7 @@ module riscv_id_stage
     end
     else begin
       if (jump_in_id == `BRANCH_COND && id_valid_o)
-        branch_pc_ex_o <= current_pc_id_i;
+        branch_pc_ex_o <= pc_id_i;
     end
   end
 
@@ -966,6 +971,8 @@ module riscv_id_stage
       data_sign_ext_ex_o          <= 1'b0;
       data_reg_offset_ex_o        <= 2'b0;
       data_req_ex_o               <= 1'b0;
+      data_pc_ex_o                <= '0;
+      data_load_event_ex_o        <= 1'b0;
 
       data_misaligned_ex_o        <= 1'b0;
 
@@ -1043,6 +1050,15 @@ module riscv_id_stage
           data_type_ex_o            <= data_type_id;
           data_sign_ext_ex_o        <= data_sign_ext_id;
           data_reg_offset_ex_o      <= data_reg_offset_id;
+
+          if (data_load_event_id) begin
+            data_pc_ex_o            <= pc_id_i;
+            data_load_event_ex_o    <= 1'b1;
+          end else begin
+            data_load_event_ex_o    <= 1'b0;
+          end
+        end else begin
+          data_load_event_ex_o      <= 1'b0;
         end
 
         data_misaligned_ex_o        <= 1'b0;
@@ -1059,6 +1075,7 @@ module riscv_id_stage
         csr_op_ex_o                 <= `CSR_OP_NONE;
 
         data_req_ex_o               <= 1'b0;
+        data_load_event_ex_o        <= 1'b0;
 
         data_misaligned_ex_o        <= 1'b0;
 
