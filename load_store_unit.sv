@@ -67,7 +67,8 @@ module riscv_load_store_unit
     output logic         lsu_ready_ex_o, // LSU ready for new data in EX stage
     output logic         lsu_ready_wb_o, // LSU ready for new data in WB stage
 
-    input  logic         ex_valid_i
+    input  logic         ex_valid_i,
+    output logic         busy_o
 );
 
   logic [31:0]  data_addr_int;
@@ -462,6 +463,8 @@ module riscv_load_store_unit
 
   // generate address from operands
   assign data_addr_int = (addr_useincr_ex_i) ? (operand_a_ex_i + operand_b_ex_i) : operand_a_ex_i;
+
+  assign busy_o = (CS == WAIT_RVALID) || (CS == WAIT_RVALID_EX_STALL) || (CS == IDLE_EX_STALL) || (data_req_o == 1'b1);
 
 
   //////////////////////////////////////////////////////////////////////////////

@@ -118,6 +118,7 @@ module riscv_core
 
   logic        core_busy;
   logic        if_busy;
+  logic        lsu_busy;
 
 
   logic [31:0] branch_pc_ex; // PC of last executed branch
@@ -240,7 +241,9 @@ module riscv_core
   logic        perf_ld_stall;
 
 
-  assign core_busy_o = if_busy || core_busy;
+  // if we are sleeping on a barrier let's just wait on the instruction
+  // interface to finish loading instructions
+  assign core_busy_o = (data_load_event_ex && data_req_o) ? if_busy : (if_busy || core_busy || lsu_busy);
 
 
   //////////////////////////////////////////////////
@@ -590,7 +593,8 @@ module riscv_core
     .lsu_ready_ex_o        ( lsu_ready_ex       ),
     .lsu_ready_wb_o        ( lsu_ready_wb       ),
 
-    .ex_valid_i            ( ex_valid           )
+    .ex_valid_i            ( ex_valid           ),
+    .busy_o                ( lsu_busy           )
   );
 
   assign wb_valid = lsu_ready_wb;
