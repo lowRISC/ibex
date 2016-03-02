@@ -62,7 +62,7 @@
 `define OPCODE_LOAD_POST  7'h0b
 `define OPCODE_STORE_POST 7'h2b
 `define OPCODE_PULP_OP    7'h5b
-`define OPCODE_VECOP      7'h53
+`define OPCODE_VECOP      7'h57
 `define OPCODE_HWLOOP     7'h7b
 
 

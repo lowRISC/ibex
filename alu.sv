@@ -151,27 +151,93 @@ module riscv_alu
   ////////////////////////////////////////
 
   logic        shift_left;         // should we shift left
-  logic [31:0] shift_amt;          // amount of shift
+  logic [31:0] shift_amt_left;     // amount of shift, if to the left
+  logic [31:0] shift_amt;          // amount of shift, to the right
+  logic [31:0] shift_amt_int;      // amount of shift, used for the actual shifters
   logic [31:0] shift_op_a;         // input of the shifter
   logic [31:0] shift_result;
   logic [31:0] shift_right_result;
   logic [31:0] shift_left_result;
 
 
+  // by reversing the bits of the input, we also have to reverse the order of shift amounts
+  always_comb
+  begin
+    case(vector_mode_i)
+      `VEC_MODE16:
+      begin
+        shift_amt_left[15: 0] = shift_amt[31:16];
+        shift_amt_left[31:16] = shift_amt[15: 0];
+      end
+
+      `VEC_MODE8:
+      begin
+        shift_amt_left[ 7: 0] = shift_amt[31:24];
+        shift_amt_left[15: 8] = shift_amt[23:16];
+        shift_amt_left[23:16] = shift_amt[15: 8];
+        shift_amt_left[31:24] = shift_amt[ 7: 0];
+      end
+
+      default: // VEC_MODE32
+      begin
+        shift_amt_left[31: 0] = shift_amt[31: 0];
+      end
+    endcase
+  end
+
   assign shift_left = (operator_i == `ALU_SLL) || (operator_i == `ALU_BINS);
 
   // choose the bit reversed or the normal input for shift operand a
-  assign shift_op_a = (shift_left == 1'b1) ? operand_a_rev : operand_a_i;
+  assign shift_op_a    = (shift_left == 1'b1) ? operand_a_rev : operand_a_i;
+  assign shift_amt_int = (shift_left == 1'b1) ? shift_amt_left : shift_amt;
 
-  // right shifts
+
+  // right shifts, we let the synthesizer optimize this
   always_comb
   begin
-    if(operator_i == `ALU_SRA)
-      shift_right_result = $unsigned( $signed(shift_op_a) >>> shift_amt[4:0] );
-    else if(operator_i == `ALU_ROR)
-      shift_right_result = {shift_op_a, shift_op_a} >> shift_amt[4:0];
-    else
-      shift_right_result = shift_op_a               >> shift_amt[4:0];
+    case(vector_mode_i)
+      `VEC_MODE16:
+      begin
+        if(operator_i == `ALU_SRA)
+        begin
+          shift_right_result[31:16] = $unsigned( $signed(shift_op_a[31:16]) >>> shift_amt_int[19:16] );
+          shift_right_result[15: 0] = $unsigned( $signed(shift_op_a[15: 0]) >>> shift_amt_int[ 3: 0] );
+        end
+        else
+        begin
+          shift_right_result[31:16] = shift_op_a[31:16]  >> shift_amt_int[19:16];
+          shift_right_result[15: 0] = shift_op_a[15: 0]  >> shift_amt_int[ 3: 0];
+        end
+      end
+
+      `VEC_MODE8:
+      begin
+        if(operator_i == `ALU_SRA)
+        begin
+          shift_right_result[31:24] = $unsigned( $signed(shift_op_a[31:24]) >>> shift_amt_int[26:24] );
+          shift_right_result[23:16] = $unsigned( $signed(shift_op_a[23:16]) >>> shift_amt_int[18:16] );
+          shift_right_result[15: 8] = $unsigned( $signed(shift_op_a[15: 8]) >>> shift_amt_int[10: 8] );
+          shift_right_result[ 7: 0] = $unsigned( $signed(shift_op_a[ 7: 0]) >>> shift_amt_int[ 2: 0] );
+        end
+        else
+        begin
+          shift_right_result[31:24] = shift_op_a[31:24]  >> shift_amt_int[26:24];
+          shift_right_result[23:16] = shift_op_a[23:16]  >> shift_amt_int[18:16];
+          shift_right_result[15: 8] = shift_op_a[15: 8]  >> shift_amt_int[10: 8];
+          shift_right_result[ 7: 0] = shift_op_a[ 7: 0]  >> shift_amt_int[ 2: 0];
+        end
+      end
+
+      default: // VEC_MODE32
+      begin
+        if(operator_i == `ALU_SRA)
+          shift_right_result = $unsigned( $signed(shift_op_a) >>> shift_amt_int[4:0] );
+        else if(operator_i == `ALU_ROR)
+          shift_right_result = {shift_op_a, shift_op_a}       >>  shift_amt_int[4:0];
+        else
+          shift_right_result = shift_op_a                     >>  shift_amt_int[4:0];
+      end
+    endcase; // case (vec_mode_i)
   end
 
   // bit reverse the shift_right_result for left shifts
