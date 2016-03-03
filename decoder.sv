@@ -435,8 +435,8 @@ module riscv_decoder
               regc_mux_o          = `REGC_RD;
             end
 
-            3'b011: begin alu_operator_o = `ALU_BSET; end
-            3'b100: begin alu_operator_o = `ALU_BCLR; end
+            3'b011: begin alu_operator_o = `ALU_BCLR; end
+            3'b100: begin alu_operator_o = `ALU_BSET; end
 
             default: illegal_insn_o = 1'b1;
           endcase
