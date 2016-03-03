@@ -27,6 +27,7 @@
 `define INSTR_BGE        { 17'b?, 3'b101, 5'b?, `OPCODE_BRANCH }
 `define INSTR_BLTU       { 17'b?, 3'b110, 5'b?, `OPCODE_BRANCH }
 `define INSTR_BGEU       { 17'b?, 3'b111, 5'b?, `OPCODE_BRANCH }
+`define INSTR_BALL       { 17'b?, 3'b010, 5'b?, `OPCODE_BRANCH }
 // OPIMM
 `define INSTR_ADDI       { 17'b?, 3'b000, 5'b?, `OPCODE_OPIMM }
 `define INSTR_SLTI       { 17'b?, 3'b010, 5'b?, `OPCODE_OPIMM }

@@ -756,6 +756,7 @@ module riscv_core
     .rs1_value      ( id_stage_i.operand_a_fw_id           ),
     .rs2_value      ( id_stage_i.operand_b_fw_id           ),
     .rs3_value      ( id_stage_i.alu_operand_c             ),
+    .rs2_value_vec  ( id_stage_i.alu_operand_b             ),
 
     .ex_valid       ( ex_valid                             ),
     .ex_reg_addr    ( regfile_alu_waddr_fw                 ),
@@ -783,7 +784,9 @@ module riscv_core
     .imm_s_type     ( id_stage_i.imm_s_type                ),
     .imm_sb_type    ( id_stage_i.imm_sb_type               ),
     .imm_s2_type    ( id_stage_i.imm_s2_type               ),
-    .imm_s3_type    ( id_stage_i.imm_s3_type               )
+    .imm_s3_type    ( id_stage_i.imm_s3_type               ),
+    .imm_vs_type    ( id_stage_i.imm_vs_type               ),
+    .imm_vu_type    ( id_stage_i.imm_vu_type               )
   );
 `endif
 
