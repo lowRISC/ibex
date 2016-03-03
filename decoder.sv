@@ -533,6 +533,7 @@ module riscv_decoder
       end
 
       `OPCODE_VECOP: begin
+        regfile_alu_we      = 1'b1;
         rega_used_o         = 1'b1;
         immediate_mux_sel_o = `IMM_VS;
 
