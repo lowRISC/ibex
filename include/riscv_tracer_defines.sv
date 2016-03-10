@@ -83,6 +83,10 @@
 
 // RV32M
 `define INSTR_PMUL       { 7'b0000001, 10'b?, 3'b000, 5'b?, `OPCODE_OP }
+`define INSTR_DIV        { 7'b0000001, 10'b?, 3'b100, 5'b?, `OPCODE_OP }
+`define INSTR_DIVU       { 7'b0000001, 10'b?, 3'b101, 5'b?, `OPCODE_OP }
+`define INSTR_REM        { 7'b0000001, 10'b?, 3'b110, 5'b?, `OPCODE_OP }
+`define INSTR_REMU       { 7'b0000001, 10'b?, 3'b111, 5'b?, `OPCODE_OP }
 `define INSTR_PMAC       { 7'b0000001, 10'b?, 3'b001, 5'b?, `OPCODE_OP }
 
 // PULP custom instructions

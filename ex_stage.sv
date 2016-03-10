@@ -94,6 +94,8 @@ module riscv_ex_stage
   logic [31:0] mult_result;
   logic        alu_cmp_result;
 
+  logic        alu_ready;
+
 
   // EX stage result mux (ALU, MAC unit, CSR)
   assign alu_csr_result         = csr_access_i ? csr_rdata_i : alu_result;
@@ -121,18 +123,24 @@ module riscv_ex_stage
 
   riscv_alu alu_i
   (
-   .operator_i          ( alu_operator_i  ),
-   .operand_a_i         ( alu_operand_a_i ),
-   .operand_b_i         ( alu_operand_b_i ),
-   .operand_c_i         ( alu_operand_c_i ),
+    .clk                 ( clk             ),
+    .rst_n               ( rst_n           ),
 
-   .vector_mode_i       ( alu_vec_mode_i  ),
-   .imm_bmask_a_i       ( imm_bmask_a_i   ),
-   .imm_bmask_b_i       ( imm_bmask_b_i   ),
-   .imm_vec_ext_i       ( imm_vec_ext_i   ),
+    .operator_i          ( alu_operator_i  ),
+    .operand_a_i         ( alu_operand_a_i ),
+    .operand_b_i         ( alu_operand_b_i ),
+    .operand_c_i         ( alu_operand_c_i ),
 
-   .result_o            ( alu_result      ),
-   .comparison_result_o ( alu_cmp_result  )
+    .vector_mode_i       ( alu_vec_mode_i  ),
+    .imm_bmask_a_i       ( imm_bmask_a_i   ),
+    .imm_bmask_b_i       ( imm_bmask_b_i   ),
+    .imm_vec_ext_i       ( imm_vec_ext_i   ),
+
+    .result_o            ( alu_result      ),
+    .comparison_result_o ( alu_cmp_result  ),
+
+    .ready_o             ( alu_ready       ),
+    .ex_ready_i          ( ex_ready_o      )
   );
 
 
@@ -165,7 +173,7 @@ module riscv_ex_stage
   ///////////////////////////////////////
   always_ff @(posedge clk, negedge rst_n)
   begin : EX_WB_Pipeline_Register
-    if (rst_n == 1'b0)
+    if (~rst_n)
     begin
       regfile_waddr_wb_o   <= '0;
       regfile_we_wb_o      <= 1'b0;
@@ -189,7 +197,7 @@ module riscv_ex_stage
   // As valid always goes to the right and ready to the left, and we are able
   // to finish branches without going to the WB stage, ex_valid does not
   // depend on ex_ready.
-  assign ex_ready_o = (lsu_ready_ex_i & wb_ready_i) | branch_in_ex_i;
-  assign ex_valid_o = (lsu_ready_ex_i & wb_ready_i);
+  assign ex_ready_o = (alu_ready & lsu_ready_ex_i & wb_ready_i) | branch_in_ex_i;
+  assign ex_valid_o = (alu_ready & lsu_ready_ex_i & wb_ready_i);
 
 endmodule

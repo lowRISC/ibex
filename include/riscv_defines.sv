@@ -155,6 +155,12 @@
 `define ALU_MAXU  6'b010011
 `define ALU_MAXU  6'b010011
 
+// div/rem
+`define ALU_DIVU  6'b110000 // bit 0 is used for signed mode, bit 1 is used for remdiv
+`define ALU_DIV   6'b110001 // bit 0 is used for signed mode, bit 1 is used for remdiv
+`define ALU_REMU  6'b110010 // bit 0 is used for signed mode, bit 1 is used for remdiv
+`define ALU_REM   6'b110011 // bit 0 is used for signed mode, bit 1 is used for remdiv
+
 
 // vector modes
 `define VEC_MODE32 2'b00
@@ -276,15 +282,7 @@
 
 
 // Debug module
-`define N_WP      2     // #Watchpoints
-`define DCR_DP    0
-`define DCR_CC    3:1
-`define DCR_SC    4
-`define DCR_CT    7:5
-
 `define DMR1_ST   22
-`define DMR2_WGB0 12
-`define DMR2_WBS0 22
 
 `define DSR_IIE   0
 `define DSR_INTE  1

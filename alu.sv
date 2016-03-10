@@ -27,6 +27,9 @@
 
 module riscv_alu
 (
+  input  logic                     clk,
+  input  logic                     rst_n,
+
   input  logic [`ALU_OP_WIDTH-1:0] operator_i,
   input  logic [31:0]              operand_a_i,
   input  logic [31:0]              operand_b_i,
@@ -38,7 +41,10 @@ module riscv_alu
   input  logic [ 1:0]              imm_vec_ext_i,
 
   output logic [31:0]              result_o,
-  output logic                     comparison_result_o
+  output logic                     comparison_result_o,
+
+  output logic                     ready_o,
+  input  logic                     ex_ready_i
 );
 
 
@@ -562,6 +568,47 @@ module riscv_alu
   assign bclr_result = operand_a_i & bmask_inv;
   assign bset_result = operand_a_i | bmask;
 
+  ////////////////////////////////////////////////////
+  //  ____ _____     __     __  ____  _____ __  __  //
+  // |  _ \_ _\ \   / /    / / |  _ \| ____|  \/  | //
+  // | | | | | \ \ / /    / /  | |_) |  _| | |\/| | //
+  // | |_| | |  \ V /    / /   |  _ <| |___| |  | | //
+  // |____/___|  \_/    /_/    |_| \_\_____|_|  |_| //
+  //                                                //
+  ////////////////////////////////////////////////////
+
+  logic [31:0] result_div;
+
+  logic        div_valid;
+  logic        div_ready;
+  logic        div_signed;
+  logic        div_rem_quot;
+
+
+  assign div_valid = (operator_i == `ALU_DIV) || (operator_i == `ALU_DIVU) ||
+                     (operator_i == `ALU_REM) || (operator_i == `ALU_REMU);
+
+  assign div_rem_quot = operator_i[1];
+
+  assign div_signed = operator_i[0];
+
+  riscv_alu_div div_i
+  (
+    .clk         ( clk             ),
+    .rst_n       ( rst_n           ),
+
+    .a_i         ( operand_a_i     ),
+    .b_i         ( operand_b_i     ),
+    .signed_i    ( div_signed      ),
+    .rem_quot_i  ( div_rem_quot    ),
+
+    .result_o    ( result_div      ),
+
+    .div_valid_i ( div_valid       ),
+    .div_ready_o ( div_ready       ),
+    .ex_ready_i  ( ex_ready_i      )
+  );
+
   ////////////////////////////////////////////////////////
   //   ____                 _ _     __  __              //
   //  |  _ \ ___  ___ _   _| | |_  |  \/  |_   ___  __  //
@@ -632,9 +679,14 @@ module riscv_alu
       `ALU_CLB: result_o = {26'h0, clb_result};
       `ALU_CNT: result_o = {26'h0, cnt_result};
 
+      // Division Unit Commands
+      `ALU_DIV, `ALU_DIVU,
+      `ALU_REM, `ALU_REMU: result_o = result_div;
+
       default: ; // default case to suppress unique warning
     endcase
   end
 
-endmodule
+  assign ready_o = div_ready;
 
+endmodule

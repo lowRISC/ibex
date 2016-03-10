@@ -655,6 +655,10 @@ module riscv_tracer
         // PULP MULTIPLIER
         `INSTR_PMUL:       trace.printRInstr("p.mul");
         `INSTR_PMAC:       trace.printR3Instr("p.mac");
+        `INSTR_DIV:        trace.printRInstr("div");
+        `INSTR_DIVU:       trace.printRInstr("divu");
+        `INSTR_REM:        trace.printRInstr("rem");
+        `INSTR_REMU:       trace.printRInstr("remu");
         // opcodes with custom decoding
         {25'b?, `OPCODE_LOAD}:       trace.printLoadInstr();
         {25'b?, `OPCODE_LOAD_POST}:  trace.printLoadInstr();
