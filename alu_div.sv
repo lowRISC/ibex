@@ -61,7 +61,6 @@ module riscv_alu_div
   logic [32:0] a_neg;
 
   logic [32:0] b_abs;
-  logic [32:0] b_neg;
 
   logic [32:0] sub_val;
 
@@ -80,8 +79,7 @@ module riscv_alu_div
     .in_i     ( b_i      ),
     .signed_i ( signed_i ),
 
-    .abs_o    ( b_abs    ),
-    .neg_o    ( b_neg    )
+    .abs_o    ( b_abs    )
   );
 
   riscv_alu_abs_neg a_abs_neg_i
@@ -89,8 +87,7 @@ module riscv_alu_div
     .in_i     ( a_i      ),
     .signed_i ( signed_i ),
 
-    .abs_o    ( a_abs    ),
-    .neg_o    ( a_neg    )
+    .abs_o    ( a_abs    )
   );
 
   always_comb
@@ -119,12 +116,7 @@ module riscv_alu_div
         is_active   = 1'b1;
 
         if (counter_q == 0) begin
-          div_ready_o = 1'b1;
-
-          if (ex_ready_i)
-            NS = IDLE;
-          else
-            NS = DIV_DONE;
+          NS = DIV_DONE;
         end
       end
 
@@ -152,7 +144,7 @@ module riscv_alu_div
     sub_val = '0;
 
     if (geq_b) begin
-      sub_val     = b_neg;
+      sub_val     = b_abs;
       quotient_n = {quotient_q[30:0], 1'b1};
     end
   end
@@ -160,7 +152,7 @@ module riscv_alu_div
   always_comb
   begin
     // add (or actually subtract) and shift left by one
-    remainder_int[63:32] =  remainder_q[63:31] + sub_val;
+    remainder_int[63:32] =  remainder_q[63:31] - sub_val;
     remainder_int[31: 0] = {remainder_q[30:0], 1'b0};
   end
 
@@ -194,8 +186,8 @@ module riscv_alu_div
   // output assignments
   //----------------------------------------------------------------------------
 
-  assign quotient_out  = (CS == DIV) ? quotient_n  : quotient_q;
-  assign remainder_out = (CS == DIV) ? remainder_n[63:32] : remainder_q[63:32];
+  assign quotient_out  = quotient_q;
+  assign remainder_out = remainder_q[63:32];
   assign result_int    = rem_quot_i ? remainder_out : quotient_out;
   assign result_negate = rem_quot_i ? rem_negate    : quot_negate;
 
