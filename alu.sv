@@ -49,15 +49,29 @@ module riscv_alu
 
 
   logic [31:0] operand_a_rev;
+  logic [31:0] operand_a_neg;
+  logic [31:0] operand_a_neg_rev;
+
+  assign operand_a_neg = ~operand_a_i;
 
   // bit reverse operand_a for left shifts and bit counting
-  genvar       k;
   generate
+    genvar k;
     for(k = 0; k < 32; k++)
     begin
       assign operand_a_rev[k] = operand_a_i[31-k];
     end
   endgenerate
+
+  // bit reverse operand_a_neg for left shifts and bit counting
+  generate
+    genvar m;
+    for(m = 0; m < 32; m++)
+    begin
+      assign operand_a_neg_rev[m] = operand_a_neg[31-m];
+    end
+  endgenerate
+
 
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -75,7 +89,7 @@ module riscv_alu
   logic [35:0] adder_result_expanded;
 
   // prepare operand a
-  assign adder_op_a = (operator_i == `ALU_ABS) ? ~operand_a_i : operand_a_i;
+  assign adder_op_a = (operator_i == `ALU_ABS) ? operand_a_neg : operand_a_i;
 
   // prepare operand b
   assign adder_op_b = (operator_i == `ALU_SUB) ? ~operand_b_i : operand_b_i;
@@ -192,7 +206,9 @@ module riscv_alu
     endcase
   end
 
-  assign shift_left = (operator_i == `ALU_SLL) || (operator_i == `ALU_BINS);
+  // `ALU_FL1 and `ALU_CBL are used for the bit counting ops later
+  assign shift_left = (operator_i == `ALU_SLL) || (operator_i == `ALU_BINS) ||
+                      (operator_i == `ALU_FL1) || (operator_i == `ALU_CLB);
 
   // choose the bit reversed or the normal input for shift operand a
   assign shift_op_a    = (shift_left == 1'b1) ? operand_a_rev : operand_a_i;
@@ -474,66 +490,61 @@ module riscv_alu
   /////////////////////////////////////////////////////////////////////
 
   logic [31:0] ff_input;   // either op_a_i or its bit reversed version
+  logic [5:0]  cnt_result; // population count
   logic [5:0]  clb_result; // count leading bits
   logic [5:0]  ff1_result; // holds the index of the first '1'
+  logic        ff_no_one;  // if no ones are found
   logic [5:0]  fl1_result; // holds the index of the last '1'
-  logic        ff_cmp;     // compare value for ff1 and fl1
-  integer q;
+  logic [5:0]  bitop_result; // result of all bitop operations muxed together
 
-  assign ff_input  = (operator_i == `ALU_FF1) ? operand_a_i : operand_a_rev;
-  assign ff_cmp    = (operator_i == `ALU_CLB) ? ~operand_a_i[31] : 1'b1;
+  alu_popcnt alu_popcnt_i
+  (
+    .in_i        ( operand_a_i ),
+    .result_o    ( cnt_result  )
+  );
 
   always_comb
   begin
-    ff1_result = 6'd0;
+    ff_input = 'x;
 
-    for(q = 1; q < 33; q++)
-    begin
-      if(ff_input[q - 1] == ff_cmp)
-      begin
-        ff1_result = q;
-        break;
+    case (operator_i)
+      `ALU_FF1: ff_input = operand_a_i;
+      `ALU_FL1: ff_input = operand_a_rev;
+      `ALU_CLB: begin
+        if (operand_a_i[31])
+          ff_input = operand_a_neg_rev;
+        else
+          ff_input = operand_a_rev;
       end
-    end
+    endcase
   end
 
+  alu_ff alu_ff_i
+  (
+    .in_i        ( ff_input   ),
+    .first_one_o ( ff1_result ),
+    .no_ones_o   ( ff_no_one  )
+  );
+
   // special case if ff1_res is 0 (no 1 found), then we keep the 0
-  assign fl1_result = (ff1_result == 6'd0) ? 6'd0 : (6'd33 - ff1_result);
-  assign clb_result = (ff1_result == 6'd0) ? 6'd0 : (ff1_result - 6'd2);
+  // this is done in the result mux
+  assign fl1_result = 6'd33 - ff1_result;
+  assign clb_result = ff1_result - 6'd2;
 
-  // count the number of '1's in a word
-  logic [5:0]  cnt_result;
-  logic [1:0]  cnt_l1[16];
-  logic [2:0]  cnt_l2[8];
-  logic [3:0]  cnt_l3[4];
-  logic [4:0]  cnt_l4[2];
+  always_comb
+  begin
+    bitop_result = 'x;
+    case (operator_i)
+      `ALU_FF1: bitop_result = ff1_result;
+      `ALU_FL1: bitop_result = fl1_result;
+      `ALU_CLB: bitop_result = clb_result;
+      `ALU_CNT: bitop_result = cnt_result;
+      default:;
+    endcase
 
-  genvar      l, m, n, p;
-  generate for(l = 0; l < 16; l++)
-    begin
-      assign cnt_l1[l] = operand_a_i[2*l] + operand_a_i[2*l + 1];
-    end
-  endgenerate
-
-  generate for(m = 0; m < 8; m++)
-    begin
-      assign cnt_l2[m] = cnt_l1[2*m] + cnt_l1[2*m + 1];
-    end
-  endgenerate
-
-  generate for(n = 0; n < 4; n++)
-    begin
-      assign cnt_l3[n] = cnt_l2[2*n] + cnt_l2[2*n + 1];
-    end
-  endgenerate
-
-  generate for(p = 0; p < 2; p++)
-    begin
-      assign cnt_l4[p] = cnt_l3[2*p] + cnt_l3[2*p + 1];
-    end
-  endgenerate
-
-  assign cnt_result = cnt_l4[0] + cnt_l4[1];
+    if (ff_no_one)
+      bitop_result = '0;
+  end
 
 
   ////////////////////////////////////////////////
@@ -674,10 +685,7 @@ module riscv_alu
       // Set Lower Equal Than Operations (result = 1, if a <= b)
       `ALU_SLETS, `ALU_SLETU: result_o = {31'b0, comparison_result_o};
 
-      `ALU_FF1: result_o = {26'h0, ff1_result};
-      `ALU_FL1: result_o = {26'h0, fl1_result};
-      `ALU_CLB: result_o = {26'h0, clb_result};
-      `ALU_CNT: result_o = {26'h0, cnt_result};
+      `ALU_FF1, `ALU_FL1, `ALU_CLB, `ALU_CNT: result_o = {26'h0, bitop_result};
 
       // Division Unit Commands
       `ALU_DIV, `ALU_DIVU,
@@ -688,5 +696,121 @@ module riscv_alu
   end
 
   assign ready_o = div_ready;
+
+endmodule
+
+module alu_ff
+#(
+  parameter LEN = 32
+)
+(
+  input  logic [LEN-1:0]         in_i,
+
+  output logic [$clog2(LEN):0]   first_one_o,
+  output logic                   no_ones_o
+);
+
+  localparam NUM_LEVELS = $clog2(LEN);
+
+  logic [LEN-1:0] [NUM_LEVELS:0]             index_lut;
+  logic [2**NUM_LEVELS-1:0]                  sel_nodes;
+  logic [2**NUM_LEVELS-1:0] [NUM_LEVELS:0]   index_nodes;
+
+
+  //////////////////////////////////////////////////////////////////////////////
+  // generate tree structure
+  //////////////////////////////////////////////////////////////////////////////
+
+  generate
+    genvar j;
+    for (j = 0; j < LEN; j++) begin
+      assign index_lut[j] = $unsigned(j + 1);
+    end
+  endgenerate
+
+  generate
+    genvar k;
+    genvar l;
+    genvar level;
+    for (level = 0; level < NUM_LEVELS; level++) begin
+    //------------------------------------------------------------
+    if (level < NUM_LEVELS-1) begin
+      for (l = 0; l < 2**level; l++) begin
+        assign sel_nodes[2**level-1+l]   = sel_nodes[2**(level+1)-1+l*2] | sel_nodes[2**(level+1)-1+l*2+1];
+        assign index_nodes[2**level-1+l] = (sel_nodes[2**(level+1)-1+l*2] == 1'b1) ?
+                                           index_nodes[2**(level+1)-1+l*2] : index_nodes[2**(level+1)-1+l*2+1];
+      end
+    end
+    //------------------------------------------------------------
+    if (level == NUM_LEVELS-1) begin
+      for (k = 0; k < 2**level; k++) begin
+        // if two successive indices are still in the vector...
+        if (k * 2 < LEN) begin
+          assign sel_nodes[2**level-1+k]   = in_i[k*2] | in_i[k*2+1];
+          assign index_nodes[2**level-1+k] = (in_i[k*2] == 1'b1) ? index_lut[k*2] : index_lut[k*2+1];
+        end
+        // if only the first index is still in the vector...
+        if (k * 2 == LEN) begin
+          assign sel_nodes[2**level-1+k]   = in_i[k*2];
+          assign index_nodes[2**level-1+k] = index_lut[k*2];
+        end
+        // if index is out of range
+        if (k * 2 > LEN) begin
+          assign sel_nodes[2**level-1+k]   = 1'b0;
+          assign index_nodes[2**level-1+k] = '0;
+        end
+      end
+    end
+    //------------------------------------------------------------
+    end
+  endgenerate
+
+  //////////////////////////////////////////////////////////////////////////////
+  // connect output
+  //////////////////////////////////////////////////////////////////////////////
+
+  assign first_one_o = index_nodes[0];
+  assign no_ones_o   = ~sel_nodes[0];
+
+endmodule
+
+// count the number of '1's in a word
+module alu_popcnt
+(
+  input  logic [31:0]  in_i,
+  output logic [5: 0]  result_o
+);
+
+  logic [1:0]  cnt_l1[16];
+  logic [2:0]  cnt_l2[8];
+  logic [3:0]  cnt_l3[4];
+  logic [4:0]  cnt_l4[2];
+
+  genvar      l, m, n, p;
+  generate for(l = 0; l < 16; l++)
+    begin
+      assign cnt_l1[l] = in_i[2*l] + in_i[2*l + 1];
+    end
+  endgenerate
+
+  generate for(m = 0; m < 8; m++)
+    begin
+      assign cnt_l2[m] = cnt_l1[2*m] + cnt_l1[2*m + 1];
+    end
+  endgenerate
+
+  generate for(n = 0; n < 4; n++)
+    begin
+      assign cnt_l3[n] = cnt_l2[2*n] + cnt_l2[2*n + 1];
+    end
+  endgenerate
+
+  generate for(p = 0; p < 2; p++)
+    begin
+      assign cnt_l4[p] = cnt_l3[2*p] + cnt_l3[2*p + 1];
+    end
+  endgenerate
+
+  assign result_o = cnt_l4[0] + cnt_l4[1];
 
 endmodule
