@@ -55,7 +55,7 @@ module riscv_decoder
   output logic [1:0]  alu_op_c_mux_sel_o,      // operand c selection: reg value or jump target
   output logic [1:0]  alu_vec_mode_o,          // selects between 32 bit, 16 bit and 8 bit vectorial modes
   output logic        scalar_replication_o,    // scalar replication enable
-  output logic [2:0]  immediate_mux_sel_o,     // immediate selection for operand b
+  output logic [3:0]  immediate_mux_sel_o,     // immediate selection for operand b
   output logic [1:0]  regc_mux_o,              // register c selection: S3, RD or 0
 
   // MUL related control signals
@@ -608,6 +608,32 @@ module riscv_decoder
             regc_used_o        = 1'b1;
             regc_mux_o         = `REGC_RD;
             alu_op_b_mux_sel_o = `OP_B_REGC_OR_FWD;
+          end
+
+          // shuffle/pack
+          6'b11000_0: begin // pv.shuffle
+            alu_operator_o       = `ALU_SHUF;
+            immediate_mux_sel_o  = `IMM_SHUF;
+            regb_used_o          = 1'b1;
+            scalar_replication_o = 1'b0;
+          end
+          6'b11001_0: begin // pv.shuffle2
+            alu_operator_o       = `ALU_SHUF2;
+            regb_used_o          = 1'b1;
+            regc_used_o          = 1'b1;
+            scalar_replication_o = 1'b0;
+          end
+          6'b11010_0: begin // pv.packlo
+            alu_operator_o = `ALU_PCKLO;
+            regb_used_o    = 1'b1;
+          end
+          6'b11011_0: begin // pv.packhi
+            alu_operator_o = `ALU_PCKHI;
+            regb_used_o    = 1'b1;
+          end
+          6'b11100_0: begin // pv.pack
+            alu_operator_o = `ALU_PCKLO;
+            regb_used_o    = 1'b1;
           end
 
           // comparisons, always have bit 26 set

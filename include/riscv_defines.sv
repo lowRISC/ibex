@@ -29,7 +29,7 @@
 // no traces for synthesis, they are not synthesizable
 `ifndef SYNTHESIS
 `define TRACE_EXECUTION
-//`define SIMCHECKER
+`define SIMCHECKER
 `endif
 
 
@@ -161,6 +161,11 @@
 `define ALU_REMU  6'b110010 // bit 0 is used for signed mode, bit 1 is used for remdiv
 `define ALU_REM   6'b110011 // bit 0 is used for signed mode, bit 1 is used for remdiv
 
+`define ALU_SHUF  6'b111010
+`define ALU_SHUF2 6'b111011
+`define ALU_PCKLO 6'b111000
+`define ALU_PCKHI 6'b111001
+
 
 // vector modes
 `define VEC_MODE32 2'b00
@@ -222,14 +227,15 @@
 `define OP_B_IMM         2'b10
 
 // operand b immediate selection
-`define IMM_I      3'b000
-`define IMM_S      3'b001
-`define IMM_U      3'b010
-`define IMM_PCINCR 3'b011
-`define IMM_S2     3'b100
-`define IMM_S3     3'b101
-`define IMM_VS     3'b110
-`define IMM_VU     3'b111
+`define IMM_I      4'b0000
+`define IMM_S      4'b0001
+`define IMM_U      4'b0010
+`define IMM_PCINCR 4'b0011
+`define IMM_S2     4'b0100
+`define IMM_S3     4'b0101
+`define IMM_VS     4'b0110
+`define IMM_VU     4'b0111
+`define IMM_SHUF   4'b1000
 
 // operand c selection
 `define OP_C_REGC_OR_FWD 2'b00

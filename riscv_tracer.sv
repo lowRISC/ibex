@@ -419,6 +419,13 @@ module riscv_tracer
           6'b100000: begin mnemonic = "pv.extractu"; str_imm = $sformatf("0x%0d", imm_vu_type); end
           6'b100010: begin mnemonic = "pv.insert";   str_imm = $sformatf("0x%0d", imm_vs_type); end
 
+          // shuffle/pack
+          6'b110000: begin mnemonic = "pv.shuffle";  str_imm = $sformatf("N/A"); end
+          6'b110010: begin mnemonic = "pv.shuffle2"; end
+          6'b110100: begin mnemonic = "pv.pack";     end
+          6'b110110: begin mnemonic = "pv.packhi";   end
+          6'b111000: begin mnemonic = "pv.packlo";   end
+
           // comparisons
           6'b000001: begin mnemonic = "pv.cmpeq";    str_imm = $sformatf("0x%0d", imm_vs_type); end
           6'b000011: begin mnemonic = "pv.cmpne";    str_imm = $sformatf("0x%0d", imm_vs_type); end

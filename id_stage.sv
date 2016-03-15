@@ -220,6 +220,7 @@ module riscv_id_stage
   logic [31:0] imm_s3_type;
   logic [31:0] imm_vs_type;
   logic [31:0] imm_vu_type;
+  logic [31:0] imm_shuffle_type;
 
   logic [31:0] immediate_b;       // contains the immediate for operand b
 
@@ -252,7 +253,7 @@ module riscv_id_stage
   logic [1:0]  alu_op_c_mux_sel;
   logic [1:0]  regc_mux;
 
-  logic [2:0]  immediate_mux_sel;
+  logic [3:0]  immediate_mux_sel;
   logic [1:0]  jump_target_mux_sel;
 
   // Multiplier Control
@@ -345,6 +346,9 @@ module riscv_id_stage
   assign imm_s3_type = { 27'b0, instr[29:25] };
   assign imm_vs_type = { {26 {instr[24]}}, instr[24:20], instr[25] };
   assign imm_vu_type = { 26'b0, instr[24:20], instr[25] };
+
+  // same format as rS2 for shuffle needs, expands immediate
+  assign imm_shuffle_type = {6'b0, instr[28:27], 6'b0, instr[24:23], 6'b0, instr[22:21], 6'b0, instr[20], instr[25]};
 
   //---------------------------------------------------------------------------
   // source register selection
@@ -520,6 +524,7 @@ module riscv_id_stage
       `IMM_S3:     immediate_b = imm_s3_type;
       `IMM_VS:     immediate_b = imm_vs_type;
       `IMM_VU:     immediate_b = imm_vu_type;
+      `IMM_SHUF:   immediate_b = imm_shuffle_type;
       default:     immediate_b = imm_i_type;
     endcase; // case (immediate_mux_sel)
   end
