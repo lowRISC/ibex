@@ -55,7 +55,8 @@ module riscv_decoder
   output logic [1:0]  alu_op_c_mux_sel_o,      // operand c selection: reg value or jump target
   output logic [1:0]  alu_vec_mode_o,          // selects between 32 bit, 16 bit and 8 bit vectorial modes
   output logic        scalar_replication_o,    // scalar replication enable
-  output logic [3:0]  immediate_mux_sel_o,     // immediate selection for operand b
+  output logic [0:0]  imm_a_mux_sel_o,         // immediate selection for operand a
+  output logic [3:0]  imm_b_mux_sel_o,         // immediate selection for operand b
   output logic [1:0]  regc_mux_o,              // register c selection: S3, RD or 0
 
   // MUL related control signals
@@ -133,7 +134,8 @@ module riscv_decoder
     alu_vec_mode_o              = `VEC_MODE32;
     scalar_replication_o        = 1'b0;
     regc_mux_o                  = `REGC_ZERO;
-    immediate_mux_sel_o         = `IMM_I;
+    imm_a_mux_sel_o             = `IMMA_ZERO;
+    imm_b_mux_sel_o             = `IMMB_I;
 
     mult_en                     = 1'b0;
     mult_signed_mode_o          = 2'b00;
@@ -191,7 +193,7 @@ module riscv_decoder
         // Calculate and store PC+4
         alu_op_a_mux_sel_o  = `OP_A_CURRPC;
         alu_op_b_mux_sel_o  = `OP_B_IMM;
-        immediate_mux_sel_o = `IMM_PCINCR;
+        imm_b_mux_sel_o     = `IMMB_PCINCR;
         alu_operator_o      = `ALU_ADD;
         regfile_alu_we      = 1'b1;
         // Calculate jump target (= PC + UJ imm)
@@ -203,7 +205,7 @@ module riscv_decoder
         // Calculate and store PC+4
         alu_op_a_mux_sel_o  = `OP_A_CURRPC;
         alu_op_b_mux_sel_o  = `OP_B_IMM;
-        immediate_mux_sel_o = `IMM_PCINCR;
+        imm_b_mux_sel_o     = `IMMB_PCINCR;
         alu_operator_o      = `ALU_ADD;
         regfile_alu_we      = 1'b1;
         // Calculate jump target (= RS1 + I imm)
@@ -268,7 +270,7 @@ module riscv_decoder
 
         if (instr_rdata_i[14] == 1'b0) begin
           // offset from immediate
-          immediate_mux_sel_o = `IMM_S;
+          imm_b_mux_sel_o     = `IMMB_S;
           alu_op_b_mux_sel_o  = `OP_B_IMM;
         end else begin
           // offset from register
@@ -300,7 +302,7 @@ module riscv_decoder
         // offset from immediate
         alu_operator_o      = `ALU_ADD;
         alu_op_b_mux_sel_o  = `OP_B_IMM;
-        immediate_mux_sel_o = `IMM_I;
+        imm_b_mux_sel_o     = `IMMB_I;
 
         // post-increment setup
         if (instr_rdata_i[6:0] == `OPCODE_LOAD_POST) begin
@@ -368,9 +370,10 @@ module riscv_decoder
       //////////////////////////
 
       `OPCODE_LUI: begin  // Load Upper Immediate
-        alu_op_a_mux_sel_o  = `OP_A_ZERO;
+        alu_op_a_mux_sel_o  = `OP_A_IMM;
         alu_op_b_mux_sel_o  = `OP_B_IMM;
-        immediate_mux_sel_o = `IMM_U;
+        imm_a_mux_sel_o     = `IMMA_ZERO;
+        imm_b_mux_sel_o     = `IMMB_U;
         alu_operator_o      = `ALU_ADD;
         regfile_alu_we      = 1'b1;
       end
@@ -378,14 +381,14 @@ module riscv_decoder
       `OPCODE_AUIPC: begin  // Add Upper Immediate to PC
         alu_op_a_mux_sel_o  = `OP_A_CURRPC;
         alu_op_b_mux_sel_o  = `OP_B_IMM;
-        immediate_mux_sel_o = `IMM_U;
+        imm_b_mux_sel_o     = `IMMB_U;
         alu_operator_o      = `ALU_ADD;
         regfile_alu_we      = 1'b1;
       end
 
       `OPCODE_OPIMM: begin // Register-Immediate ALU Operations
         alu_op_b_mux_sel_o  = `OP_B_IMM;
-        immediate_mux_sel_o = `IMM_I;
+        imm_b_mux_sel_o     = `IMMB_I;
         regfile_alu_we      = 1'b1;
         rega_used_o         = 1'b1;
 
@@ -426,11 +429,11 @@ module riscv_decoder
           imm_bmask_needed_o  = 1'b1;
 
           unique case (instr_rdata_i[14:12])
-            3'b000: begin alu_operator_o = `ALU_BEXT;  immediate_mux_sel_o = `IMM_S2; end
-            3'b001: begin alu_operator_o = `ALU_BEXTU; immediate_mux_sel_o = `IMM_S2; end
+            3'b000: begin alu_operator_o = `ALU_BEXT;  imm_b_mux_sel_o = `IMMB_S2; end
+            3'b001: begin alu_operator_o = `ALU_BEXTU; imm_b_mux_sel_o = `IMMB_S2; end
             3'b010: begin
               alu_operator_o      = `ALU_BINS;
-              immediate_mux_sel_o = `IMM_S2;
+              imm_b_mux_sel_o     = `IMMB_S2;
               regc_used_o         = 1'b1;
               regc_mux_o          = `REGC_RD;
             end
@@ -469,15 +472,39 @@ module riscv_decoder
               mult_mac_en  = 1'b1;
             end
             {6'b00_0001, 3'b100}: begin // div
-              alu_operator_o = `ALU_DIV;
+              alu_op_a_mux_sel_o = `OP_A_REGB_OR_FWD;
+              alu_op_b_mux_sel_o = `OP_B_REGC_OR_FWD;
+              regc_mux_o         = `REGC_S1;
+              regc_used_o        = 1'b1;
+              regb_used_o        = 1'b1;
+              rega_used_o        = 1'b0;
+              alu_operator_o     = `ALU_DIV;
             end
             {6'b00_0001, 3'b101}: begin // divu
+              alu_op_a_mux_sel_o = `OP_A_REGB_OR_FWD;
+              alu_op_b_mux_sel_o = `OP_B_REGC_OR_FWD;
+              regc_mux_o         = `REGC_S1;
+              regc_used_o        = 1'b1;
+              regb_used_o        = 1'b1;
+              rega_used_o        = 1'b0;
               alu_operator_o = `ALU_DIVU;
             end
             {6'b00_0001, 3'b110}: begin // rem
+              alu_op_a_mux_sel_o = `OP_A_REGB_OR_FWD;
+              alu_op_b_mux_sel_o = `OP_B_REGC_OR_FWD;
+              regc_mux_o         = `REGC_S1;
+              regc_used_o        = 1'b1;
+              regb_used_o        = 1'b1;
+              rega_used_o        = 1'b0;
               alu_operator_o = `ALU_REM;
             end
             {6'b00_0001, 3'b111}: begin // remu
+              alu_op_a_mux_sel_o = `OP_A_REGB_OR_FWD;
+              alu_op_b_mux_sel_o = `OP_B_REGC_OR_FWD;
+              regc_mux_o         = `REGC_S1;
+              regc_used_o        = 1'b1;
+              regb_used_o        = 1'b1;
+              rega_used_o        = 1'b0;
               alu_operator_o = `ALU_REMU;
             end
 
@@ -547,7 +574,7 @@ module riscv_decoder
       `OPCODE_VECOP: begin
         regfile_alu_we      = 1'b1;
         rega_used_o         = 1'b1;
-        immediate_mux_sel_o = `IMM_VS;
+        imm_b_mux_sel_o     = `IMMB_VS;
 
         // vector size
         if (instr_rdata_i[12])
@@ -573,21 +600,21 @@ module riscv_decoder
 
         // now decode the instruction
         unique case (instr_rdata_i[31:26])
-          6'b00000_0: begin alu_operator_o = `ALU_ADD;  immediate_mux_sel_o = `IMM_VS; end // pv.add
-          6'b00001_0: begin alu_operator_o = `ALU_SUB;  immediate_mux_sel_o = `IMM_VS; end // pv.sub
-          6'b00010_0: begin alu_operator_o = `ALU_AVG;  immediate_mux_sel_o = `IMM_VS; end // pv.avg
-          6'b00011_0: begin alu_operator_o = `ALU_AVGU; immediate_mux_sel_o = `IMM_VU; end // pv.avgu
-          6'b00100_0: begin alu_operator_o = `ALU_MIN;  immediate_mux_sel_o = `IMM_VS; end // pv.min
-          6'b00101_0: begin alu_operator_o = `ALU_MINU; immediate_mux_sel_o = `IMM_VU; end // pv.minu
-          6'b00110_0: begin alu_operator_o = `ALU_MAX;  immediate_mux_sel_o = `IMM_VS; end // pv.max
-          6'b00111_0: begin alu_operator_o = `ALU_MAXU; immediate_mux_sel_o = `IMM_VU; end // pv.maxu
-          6'b01000_0: begin alu_operator_o = `ALU_SRL;  immediate_mux_sel_o = `IMM_VS; end // pv.srl
-          6'b01001_0: begin alu_operator_o = `ALU_SRA;  immediate_mux_sel_o = `IMM_VS; end // pv.sra
-          6'b01010_0: begin alu_operator_o = `ALU_SLL;  immediate_mux_sel_o = `IMM_VS; end // pv.sll
-          6'b01011_0: begin alu_operator_o = `ALU_OR;   immediate_mux_sel_o = `IMM_VS; end // pv.or
-          6'b01100_0: begin alu_operator_o = `ALU_XOR;  immediate_mux_sel_o = `IMM_VS; end // pv.xor
-          6'b01101_0: begin alu_operator_o = `ALU_AND;  immediate_mux_sel_o = `IMM_VS; end // pv.and
-          6'b01110_0: begin alu_operator_o = `ALU_ABS;  immediate_mux_sel_o = `IMM_VS; end // pv.abs
+          6'b00000_0: begin alu_operator_o = `ALU_ADD;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.add
+          6'b00001_0: begin alu_operator_o = `ALU_SUB;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.sub
+          6'b00010_0: begin alu_operator_o = `ALU_AVG;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.avg
+          6'b00011_0: begin alu_operator_o = `ALU_AVGU; imm_b_mux_sel_o     = `IMMB_VU; end // pv.avgu
+          6'b00100_0: begin alu_operator_o = `ALU_MIN;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.min
+          6'b00101_0: begin alu_operator_o = `ALU_MINU; imm_b_mux_sel_o     = `IMMB_VU; end // pv.minu
+          6'b00110_0: begin alu_operator_o = `ALU_MAX;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.max
+          6'b00111_0: begin alu_operator_o = `ALU_MAXU; imm_b_mux_sel_o     = `IMMB_VU; end // pv.maxu
+          6'b01000_0: begin alu_operator_o = `ALU_SRL;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.srl
+          6'b01001_0: begin alu_operator_o = `ALU_SRA;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.sra
+          6'b01010_0: begin alu_operator_o = `ALU_SLL;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.sll
+          6'b01011_0: begin alu_operator_o = `ALU_OR;   imm_b_mux_sel_o     = `IMMB_VS; end // pv.or
+          6'b01100_0: begin alu_operator_o = `ALU_XOR;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.xor
+          6'b01101_0: begin alu_operator_o = `ALU_AND;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.and
+          6'b01110_0: begin alu_operator_o = `ALU_ABS;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.abs
 
           6'b01111_0: begin // pv.extract
             if (instr_rdata_i[12])
@@ -613,7 +640,7 @@ module riscv_decoder
           // shuffle/pack
           6'b11000_0: begin // pv.shuffle
             alu_operator_o       = `ALU_SHUF;
-            immediate_mux_sel_o  = `IMM_SHUF;
+            imm_b_mux_sel_o      = `IMMB_SHUF;
             regb_used_o          = 1'b1;
             scalar_replication_o = 1'b0;
           end
@@ -637,16 +664,16 @@ module riscv_decoder
           end
 
           // comparisons, always have bit 26 set
-          6'b00000_1: begin alu_operator_o = `ALU_EQ;  immediate_mux_sel_o = `IMM_VS; end // pv.cmpeq
-          6'b00001_1: begin alu_operator_o = `ALU_NE;  immediate_mux_sel_o = `IMM_VS; end // pv.cmpne
-          6'b00010_1: begin alu_operator_o = `ALU_GTU; immediate_mux_sel_o = `IMM_VS; end // pv.cmpgt
-          6'b00011_1: begin alu_operator_o = `ALU_GES; immediate_mux_sel_o = `IMM_VS; end // pv.cmpge
-          6'b00100_1: begin alu_operator_o = `ALU_LTU; immediate_mux_sel_o = `IMM_VS; end // pv.cmplt
-          6'b00101_1: begin alu_operator_o = `ALU_LES; immediate_mux_sel_o = `IMM_VS; end // pv.cmple
-          6'b00110_1: begin alu_operator_o = `ALU_GTU; immediate_mux_sel_o = `IMM_VU; end // pv.cmpgtu
-          6'b00111_1: begin alu_operator_o = `ALU_GEU; immediate_mux_sel_o = `IMM_VU; end // pv.cmpgeu
-          6'b01000_1: begin alu_operator_o = `ALU_LTU; immediate_mux_sel_o = `IMM_VU; end // pv.cmpltu
-          6'b01001_1: begin alu_operator_o = `ALU_LEU; immediate_mux_sel_o = `IMM_VU; end // pv.cmpleu
+          6'b00000_1: begin alu_operator_o = `ALU_EQ;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.cmpeq
+          6'b00001_1: begin alu_operator_o = `ALU_NE;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.cmpne
+          6'b00010_1: begin alu_operator_o = `ALU_GTU; imm_b_mux_sel_o     = `IMMB_VS; end // pv.cmpgt
+          6'b00011_1: begin alu_operator_o = `ALU_GES; imm_b_mux_sel_o     = `IMMB_VS; end // pv.cmpge
+          6'b00100_1: begin alu_operator_o = `ALU_LTU; imm_b_mux_sel_o     = `IMMB_VS; end // pv.cmplt
+          6'b00101_1: begin alu_operator_o = `ALU_LES; imm_b_mux_sel_o     = `IMMB_VS; end // pv.cmple
+          6'b00110_1: begin alu_operator_o = `ALU_GTU; imm_b_mux_sel_o     = `IMMB_VU; end // pv.cmpgtu
+          6'b00111_1: begin alu_operator_o = `ALU_GEU; imm_b_mux_sel_o     = `IMMB_VU; end // pv.cmpgeu
+          6'b01000_1: begin alu_operator_o = `ALU_LTU; imm_b_mux_sel_o     = `IMMB_VU; end // pv.cmpltu
+          6'b01001_1: begin alu_operator_o = `ALU_LEU; imm_b_mux_sel_o     = `IMMB_VU; end // pv.cmpleu
 
           default: illegal_insn_o = 1'b1;
         endcase
@@ -702,11 +729,12 @@ module riscv_decoder
           csr_access_o        = 1'b1;
           regfile_alu_we      = 1'b1;
           alu_op_b_mux_sel_o  = `OP_B_IMM;
-          immediate_mux_sel_o = `IMM_I;    // CSR address is encoded in I imm
+          imm_a_mux_sel_o     = `IMMA_Z;
+          imm_b_mux_sel_o     = `IMMB_I;    // CSR address is encoded in I imm
 
           if (instr_rdata_i[14] == 1'b1) begin
             // rs1 field is used as immediate
-            alu_op_a_mux_sel_o = `OP_A_ZIMM;
+            alu_op_a_mux_sel_o = `OP_A_IMM;
           end else begin
             rega_used_o        = 1'b1;
             alu_op_a_mux_sel_o = `OP_A_REGA_OR_FWD;
@@ -802,7 +830,7 @@ module riscv_decoder
       // correct operands are sent to the AGU
       alu_op_a_mux_sel_o  = `OP_A_REGA_OR_FWD;
       alu_op_b_mux_sel_o  = `OP_B_IMM;
-      immediate_mux_sel_o = `IMM_PCINCR;
+      imm_b_mux_sel_o     = `IMMB_PCINCR;
 
       // if prepost increments are used, we do not write back the
       // second address since the first calculated address was

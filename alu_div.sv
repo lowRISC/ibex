@@ -1,197 +1,214 @@
 // Copyright 2016 ETH Zurich and University of Bologna.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 0.51 (the “License”); you may not use this file except in
-// compliance with the License. You may obtain a copy of the License at
+// compliance with the License.  You may obtain a copy of the License at
 // http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
 // or agreed to in writing, software, hardware and materials distributed under
 // this License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-// this module produces both the absolute (positive) value and the negative
-// value for any input. Both signed and unsigned numbers are supported
-module riscv_alu_abs_neg
-(
-  input  logic [31:0]  in_i,      // can be either signed or unsigned
-  input  logic         signed_i,
-
-  output logic [32:0]  abs_o,     // needs to be 33 bits wide to allow for -(-2**31)
-  output logic [32:0]  neg_o      // needs to be 33 bits wide to allow for -(2**32-1)
-);
-
-  logic [32:0] in_neg;
-
-  assign in_neg = -{(signed_i & in_i[31]), in_i};
-
-  assign abs_o = (signed_i & in_i[31]) ? in_neg : {1'b0, in_i};
-  assign neg_o = (signed_i & in_i[31]) ? {1'b1, in_i} : in_neg;
-
-endmodule
-
+///////////////////////////////////////////////////////////////////////////////
+// File       : Simple Serial Divider
+// Ver        : 1.0
+// Date       : 15.03.2016
+///////////////////////////////////////////////////////////////////////////////
+//
+// Description: this is a simple serial divider for signed integers (int32).
+//
+///////////////////////////////////////////////////////////////////////////////
+//
+// Authors    : Michael Schaffner (schaffner@iis.ee.ethz.ch)
+//              Andreas Traber    (traber@iis.ee.ethz.ch)
+//
+///////////////////////////////////////////////////////////////////////////////
 
 module riscv_alu_div
+#(
+   parameter C_WIDTH     = 32,
+   parameter C_LOG_WIDTH = 6
+)
 (
-  input  logic         clk,
-  input  logic         rst_n,
-
-  input  logic [31:0]  a_i,          // can be either signed or unsigned
-  input  logic [31:0]  b_i,          // can be either signed or unsigned
-  input  logic         signed_i,
-  input  logic         rem_quot_i,   // 1 for rem, 0 for div
-
-  output logic [31:0]  result_o,
-
-  // handshake
-  input  logic         div_valid_i,      // valid data available for division
-  output logic         div_ready_o,      // set when done or idle
-
-  input  logic         ex_ready_i        // if we have to wait for next stage
-);
-
-  enum  logic [1:0] { IDLE, DIV, DIV_DONE } CS, NS;
-
-  logic [31:0] quotient_q, quotient_n;
-  logic [63:0] remainder_q, remainder_n, remainder_int;
-
-  logic [31:0] remainder_out;
-  logic [31:0] quotient_out;
-  logic [31:0] result_int;
-
-  logic [32:0] a_abs;
-  logic [32:0] a_neg;
-
-  logic [32:0] b_abs;
-
-  logic [32:0] sub_val;
-
-  logic        a_is_neg;
-  logic        b_is_neg;
-  logic        result_negate;
-  logic        quot_negate;
-  logic        rem_negate;
-  logic        geq_b;
-  logic        load_r;
-  logic        is_active;
-  logic [4:0]  counter_q, counter_n;
-
-  riscv_alu_abs_neg b_abs_neg_i
-  (
-    .in_i     ( b_i      ),
-    .signed_i ( signed_i ),
-
-    .abs_o    ( b_abs    )
+    input  logic                    Clk_CI,
+    input  logic                    Rst_RBI,
+    // input IF
+    input  logic [C_WIDTH-1:0]      OpA_DI,
+    input  logic [C_WIDTH-1:0]      OpB_DI,
+    input  logic [C_LOG_WIDTH-1:0]  OpBShift_DI,
+    input  logic                    OpBIsZero_SI,
+    //
+    input  logic                    OpBSign_SI, // gate this to 0 in case of unsigned ops
+    input  logic [1:0]              OpCode_SI,  // 0: udiv, 2: urem, 1: div, 3: rem
+    // handshake
+    input  logic                    InVld_SI,
+    // output IF
+    input  logic                    OutRdy_SI,
+    output logic                    OutVld_SO,
+    output logic [C_WIDTH-1:0]      Res_DO
   );
 
-  riscv_alu_abs_neg a_abs_neg_i
-  (
-    .in_i     ( a_i      ),
-    .signed_i ( signed_i ),
+  ///////////////////////////////////////////////////////////////////////////////
+  // signal declarations
+  ///////////////////////////////////////////////////////////////////////////////
 
-    .abs_o    ( a_abs    )
-  );
+  logic [C_WIDTH-1:0] ResReg_DP, ResReg_DN;
+  logic [C_WIDTH-1:0] AReg_DP, AReg_DN;
+  logic [C_WIDTH-1:0] BReg_DP, BReg_DN;
+
+  logic RemSel_SN, RemSel_SP;
+  logic CompInv_SN, CompInv_SP;
+  logic ResInv_SN, ResInv_SP;
+
+  logic [C_WIDTH-1:0] AddMux_D;
+  logic [C_WIDTH-1:0] AddOut_D;
+  logic [C_WIDTH-1:0] AddTmp_D;
+  logic [C_WIDTH-1:0] BMux_D;
+  logic [C_WIDTH-1:0] OutMux_D;
+
+  logic [C_LOG_WIDTH-1:0] Cnt_DP, Cnt_DN;
+  logic CntZero_S;
+
+  logic ARegEn_S, BRegEn_S, ResRegEn_S, ABComp_S, PmSel_S, LoadEn_S;
+
+  enum logic [1:0] {IDLE, DIVIDE, FINISH} State_SN, State_SP;
+
+
+  ///////////////////////////////////////////////////////////////////////////////
+  // datapath
+  ///////////////////////////////////////////////////////////////////////////////
+
+  assign PmSel_S     = LoadEn_S & ~(OpCode_SI[0] & (OpA_DI[$high(OpA_DI)] ^ OpBSign_SI));
+
+  // muxes
+  assign AddMux_D    = (LoadEn_S) ? OpA_DI  : BReg_DP;
+
+  // attention: logical shift in case of negative operand B!
+  assign BMux_D      = (LoadEn_S) ? OpB_DI : {CompInv_SP, (BReg_DP[$high(BReg_DP):1])};
+
+  assign OutMux_D    = (RemSel_SP) ? AReg_DP : {<<{ResReg_DP}};
+
+  // invert if necessary
+  assign Res_DO      = (ResInv_SP) ? -$signed(OutMux_D) : OutMux_D;
+
+  // main comparator
+  assign ABComp_S    = ((AReg_DP == BReg_DP) | ((AReg_DP > BReg_DP) ^ CompInv_SP)) & ((|AReg_DP) | OpBIsZero_SI);
+
+  // main adder
+  assign AddTmp_D    = (LoadEn_S) ? 0 : AReg_DP;
+  assign AddOut_D    = (PmSel_S)  ? AddTmp_D + AddMux_D : AddTmp_D - $signed(AddMux_D);
+
+  ///////////////////////////////////////////////////////////////////////////////
+  // counter
+  ///////////////////////////////////////////////////////////////////////////////
+
+  assign Cnt_DN      = (LoadEn_S)   ? OpBShift_DI :
+                       (~CntZero_S) ? Cnt_DP - 1  : Cnt_DP;
+
+  assign CntZero_S   = ~(|Cnt_DP);
+
+  ///////////////////////////////////////////////////////////////////////////////
+  // FSM
+  ///////////////////////////////////////////////////////////////////////////////
 
   always_comb
-  begin
-    NS          = CS;
-    div_ready_o = 1'b1;
-    load_r      = 1'b0;
-    is_active   = 1'b0;
-    counter_n   = counter_q - 1;
+  begin : p_fsm
+    // default
+    State_SN       = State_SP;
 
-    case (CS)
+    OutVld_SO      = 1'b0;
+
+    LoadEn_S       = 1'b0;
+
+    ARegEn_S       = 1'b0;
+    BRegEn_S       = 1'b0;
+    ResRegEn_S     = 1'b0;
+
+    case (State_SP)
+      /////////////////////////////////
       IDLE: begin
-        div_ready_o = 1'b1;
+        OutVld_SO    = 1'b1;
 
-        if (div_valid_i) begin
-          div_ready_o = 1'b0;
-          NS          = DIV;
-          load_r      = 1'b1;
-          is_active   = 1'b1;
-          counter_n   = 31;
+        if(InVld_SI) begin
+          OutVld_SO  = 1'b0;
+          ARegEn_S   = 1'b1;
+          BRegEn_S   = 1'b1;
+          LoadEn_S   = 1'b1;
+          State_SN   = DIVIDE;
         end
       end
+      /////////////////////////////////
+      DIVIDE: begin
 
-      DIV: begin
-        div_ready_o = 1'b0;
-        is_active   = 1'b1;
+        ARegEn_S     = ABComp_S;
+        BRegEn_S     = 1'b1;
+        ResRegEn_S   = 1'b1;
 
-        if (counter_q == 0) begin
-          NS = DIV_DONE;
+        // calculation finished
+        // one more divide cycle (32nd divide cycle)
+        if (CntZero_S) begin
+          State_SN   = FINISH;
         end
       end
+      /////////////////////////////////
+      FINISH: begin
+        OutVld_SO = 1'b1;
 
-      // if the next stage was stalled when we finished
-      DIV_DONE: begin
-        div_ready_o = 1'b1;
-
-        if (ex_ready_i)
-          NS = IDLE;
+        if(OutRdy_SI) begin
+          State_SN  = IDLE;
+        end
       end
+      /////////////////////////////////
+      default : /* default */ ;
+      /////////////////////////////////
     endcase
   end
 
-  assign a_is_neg = a_i[31];
-  assign b_is_neg = b_i[31];
 
-  assign quot_negate = ((a_is_neg ^ b_is_neg) && signed_i && (b_i != 0));
-  assign rem_negate  =   a_is_neg             && signed_i;
+  ///////////////////////////////////////////////////////////////////////////////
+  // regs
+  ///////////////////////////////////////////////////////////////////////////////
 
-  assign geq_b = (remainder_q[63:31] >= b_abs);
+  // get flags
+  assign RemSel_SN  = (LoadEn_S) ? OpCode_SI[1] : RemSel_SP;
+  assign CompInv_SN = (LoadEn_S) ? OpBSign_SI   : CompInv_SP;
+  assign ResInv_SN  = (LoadEn_S) ? (~OpBIsZero_SI | OpCode_SI[1]) & OpCode_SI[0] & (OpA_DI[$high(OpA_DI)] ^ OpBSign_SI) : ResInv_SP;
 
-  always_comb
-  begin
-    quotient_n = {quotient_q[30:0], 1'b0};
-    sub_val = '0;
+  assign AReg_DN   = (ARegEn_S)   ? AddOut_D : AReg_DP;
+  assign BReg_DN   = (BRegEn_S)   ? BMux_D   : BReg_DP;
+  assign ResReg_DN = (LoadEn_S)   ? '0       :
+                     (ResRegEn_S) ? {ABComp_S, ResReg_DP[$high(ResReg_DP):1]} : ResReg_DP;
 
-    if (geq_b) begin
-      sub_val     = b_abs;
-      quotient_n = {quotient_q[30:0], 1'b1};
-    end
-  end
-
-  always_comb
-  begin
-    // add (or actually subtract) and shift left by one
-    remainder_int[63:32] =  remainder_q[63:31] - sub_val;
-    remainder_int[31: 0] = {remainder_q[30:0], 1'b0};
-  end
-
-  assign remainder_n = load_r ? {31'b0, a_abs} : remainder_int;
-
-
-  //----------------------------------------------------------------------------
-  // registers
-  //----------------------------------------------------------------------------
-
-  always_ff @(posedge clk, negedge rst_n)
-  begin
-    if (~rst_n) begin
-      quotient_q  <= '0;
-      remainder_q <= '0;
-      counter_q   <= 0;
-      CS          <= IDLE;
+  always_ff @(posedge Clk_CI or negedge Rst_RBI) begin : p_regs
+    if(~Rst_RBI) begin
+       State_SP   <= IDLE;
+       AReg_DP    <= '0;
+       BReg_DP    <= '0;
+       ResReg_DP  <= '0;
+       Cnt_DP     <= '0;
+       RemSel_SP  <= 1'b0;
+       CompInv_SP <= 1'b0;
+       ResInv_SP  <= 1'b0;
     end else begin
-      // only toggle when there is an active request
-      if (is_active) begin
-        quotient_q  <= quotient_n;
-        remainder_q <= remainder_n;
-        counter_q   <= counter_n;
-      end
-      CS <= NS;
+       State_SP   <= State_SN;
+       AReg_DP    <= AReg_DN;
+       BReg_DP    <= BReg_DN;
+       ResReg_DP  <= ResReg_DN;
+       Cnt_DP     <= Cnt_DN;
+       RemSel_SP  <= RemSel_SN;
+       CompInv_SP <= CompInv_SN;
+       ResInv_SP  <= ResInv_SN;
     end
   end
 
+  ///////////////////////////////////////////////////////////////////////////////
+  // assertions
+  ///////////////////////////////////////////////////////////////////////////////
 
-  //----------------------------------------------------------------------------
-  // output assignments
-  //----------------------------------------------------------------------------
+`ifndef SYNTHESIS
+  initial
+  begin : p_assertions
+    assert (C_LOG_WIDTH == $clog2(C_WIDTH+1)) else $error("C_LOG_WIDTH must be $clog2(C_WIDTH+1)");
+  end
+`endif
 
-  assign quotient_out  = quotient_q;
-  assign remainder_out = remainder_q[63:32];
-  assign result_int    = rem_quot_i ? remainder_out : quotient_out;
-  assign result_negate = rem_quot_i ? rem_negate    : quot_negate;
-
-
-  assign result_o = result_negate ? -result_int : result_int;
-
-endmodule
+endmodule // serDiv

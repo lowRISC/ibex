@@ -29,7 +29,7 @@
 // no traces for synthesis, they are not synthesizable
 `ifndef SYNTHESIS
 `define TRACE_EXECUTION
-`define SIMCHECKER
+//`define SIMCHECKER
 `endif
 
 
@@ -76,6 +76,7 @@
 `define REGC_ZERO  2'b00
 `define REGC_RD    2'b01
 `define REGC_S3    2'b10
+`define REGC_S1    2'b11
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -218,24 +219,28 @@
 // operand a selection
 `define OP_A_REGA_OR_FWD 2'b00
 `define OP_A_CURRPC      2'b01
-`define OP_A_ZIMM        2'b10
-`define OP_A_ZERO        2'b11
+`define OP_A_IMM         2'b10
+`define OP_A_REGB_OR_FWD 2'b11
+
+// immediate b selection
+`define IMMA_Z      1'b0
+`define IMMA_ZERO   1'b1
 
 // operand b selection
 `define OP_B_REGB_OR_FWD 2'b00
 `define OP_B_REGC_OR_FWD 2'b01
 `define OP_B_IMM         2'b10
 
-// operand b immediate selection
-`define IMM_I      4'b0000
-`define IMM_S      4'b0001
-`define IMM_U      4'b0010
-`define IMM_PCINCR 4'b0011
-`define IMM_S2     4'b0100
-`define IMM_S3     4'b0101
-`define IMM_VS     4'b0110
-`define IMM_VU     4'b0111
-`define IMM_SHUF   4'b1000
+// immediate b selection
+`define IMMB_I      4'b0000
+`define IMMB_S      4'b0001
+`define IMMB_U      4'b0010
+`define IMMB_PCINCR 4'b0011
+`define IMMB_S2     4'b0100
+`define IMMB_S3     4'b0101
+`define IMMB_VS     4'b0110
+`define IMMB_VU     4'b0111
+`define IMMB_SHUF   4'b1000
 
 // operand c selection
 `define OP_C_REGC_OR_FWD 2'b00

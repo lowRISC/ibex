@@ -222,7 +222,8 @@ module riscv_id_stage
   logic [31:0] imm_vu_type;
   logic [31:0] imm_shuffle_type;
 
-  logic [31:0] immediate_b;       // contains the immediate for operand b
+  logic [31:0] imm_a;       // contains the immediate for operand b
+  logic [31:0] imm_b;       // contains the immediate for operand b
 
   logic [31:0] jump_target;       // calculated jump target (-> EX -> IF)
 
@@ -253,7 +254,8 @@ module riscv_id_stage
   logic [1:0]  alu_op_c_mux_sel;
   logic [1:0]  regc_mux;
 
-  logic [3:0]  immediate_mux_sel;
+  logic [0:0]  imm_a_mux_sel;
+  logic [3:0]  imm_b_mux_sel;
   logic [1:0]  jump_target_mux_sel;
 
   // Multiplier Control
@@ -363,6 +365,7 @@ module riscv_id_stage
       `REGC_ZERO:  regfile_addr_rc_id = '0;
       `REGC_RD:    regfile_addr_rc_id = instr[`REG_D];
       `REGC_S3:    regfile_addr_rc_id = instr[`REG_S3];
+      `REGC_S1:    regfile_addr_rc_id = instr[`REG_S1];
       default:     regfile_addr_rc_id = '0;
     endcase
   end
@@ -483,11 +486,20 @@ module riscv_id_stage
   begin : alu_operand_a_mux
     case (alu_op_a_mux_sel)
       `OP_A_REGA_OR_FWD:  alu_operand_a = operand_a_fw_id;
+      `OP_A_REGB_OR_FWD:  alu_operand_a = operand_b_fw_id;
       `OP_A_CURRPC:       alu_operand_a = pc_id_i;
-      `OP_A_ZIMM:         alu_operand_a = imm_z_type;
-      `OP_A_ZERO:         alu_operand_a = 32'b0;
+      `OP_A_IMM:          alu_operand_a = imm_a;
       default:            alu_operand_a = operand_a_fw_id;
     endcase; // case (alu_op_a_mux_sel)
+  end
+
+  always_comb
+  begin : immediate_a_mux
+    unique case (imm_a_mux_sel)
+      `IMMA_Z:      imm_a = imm_z_type;
+      `IMMA_ZERO:   imm_a = '0;
+      default:      imm_a = '0;
+    endcase
   end
 
   // Operand a forwarding mux
@@ -514,19 +526,19 @@ module riscv_id_stage
   // TODO: check if sign-extension stuff works well here, maybe able to save
   // some area here
   always_comb
-  begin : immediate_mux
-    unique case (immediate_mux_sel)
-      `IMM_I:      immediate_b = imm_i_type;
-      `IMM_S:      immediate_b = imm_s_type;
-      `IMM_U:      immediate_b = imm_u_type;
-      `IMM_PCINCR: immediate_b = (is_compressed_i && (~data_misaligned_i)) ? 32'h2 : 32'h4;
-      `IMM_S2:     immediate_b = imm_s2_type;
-      `IMM_S3:     immediate_b = imm_s3_type;
-      `IMM_VS:     immediate_b = imm_vs_type;
-      `IMM_VU:     immediate_b = imm_vu_type;
-      `IMM_SHUF:   immediate_b = imm_shuffle_type;
-      default:     immediate_b = imm_i_type;
-    endcase; // case (immediate_mux_sel)
+  begin : immediate_b_mux
+    unique case (imm_b_mux_sel)
+      `IMMB_I:      imm_b = imm_i_type;
+      `IMMB_S:      imm_b = imm_s_type;
+      `IMMB_U:      imm_b = imm_u_type;
+      `IMMB_PCINCR: imm_b = (is_compressed_i && (~data_misaligned_i)) ? 32'h2 : 32'h4;
+      `IMMB_S2:     imm_b = imm_s2_type;
+      `IMMB_S3:     imm_b = imm_s3_type;
+      `IMMB_VS:     imm_b = imm_vs_type;
+      `IMMB_VU:     imm_b = imm_vu_type;
+      `IMMB_SHUF:   imm_b = imm_shuffle_type;
+      default:      imm_b = imm_i_type;
+    endcase
   end
 
   // ALU_Op_b Mux
@@ -535,7 +547,7 @@ module riscv_id_stage
     case (alu_op_b_mux_sel)
       `OP_B_REGB_OR_FWD:  operand_b = operand_b_fw_id;
       `OP_B_REGC_OR_FWD:  operand_b = operand_c_fw_id;
-      `OP_B_IMM:          operand_b = immediate_b;
+      `OP_B_IMM:          operand_b = imm_b;
       default:            operand_b = operand_b_fw_id;
     endcase // case (alu_op_b_mux_sel)
   end
@@ -686,7 +698,8 @@ module riscv_id_stage
     .alu_op_c_mux_sel_o              ( alu_op_c_mux_sel          ),
     .alu_vec_mode_o                  ( alu_vec_mode              ),
     .scalar_replication_o            ( scalar_replication        ),
-    .immediate_mux_sel_o             ( immediate_mux_sel         ),
+    .imm_a_mux_sel_o                 ( imm_a_mux_sel             ),
+    .imm_b_mux_sel_o                 ( imm_b_mux_sel             ),
     .regc_mux_o                      ( regc_mux                  ),
 
     // MUL signals

@@ -72,7 +72,13 @@ module riscv_alu
     end
   endgenerate
 
+  logic [31:0] operand_b_neg;
 
+  assign operand_b_neg = ~operand_b_i;
+
+
+  logic [5:0] div_shift;
+  logic       div_valid;
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //   ____            _   _ _   _                      _      _       _     _            //
@@ -92,7 +98,7 @@ module riscv_alu
   assign adder_op_a = (operator_i == `ALU_ABS) ? operand_a_neg : operand_a_i;
 
   // prepare operand b
-  assign adder_op_b = (operator_i == `ALU_SUB) ? ~operand_b_i : operand_b_i;
+  assign adder_op_b = (operator_i == `ALU_SUB) ? operand_b_neg : operand_b_i;
 
   // prepare carry
   always_comb
@@ -180,6 +186,8 @@ module riscv_alu
   logic [31:0] shift_right_result;
   logic [31:0] shift_left_result;
 
+  // shifter is also used for preparing operand for divison
+  assign shift_amt = div_valid ? div_shift : operand_b_i;
 
   // by reversing the bits of the input, we also have to reverse the order of shift amounts
   always_comb
@@ -208,7 +216,9 @@ module riscv_alu
 
   // `ALU_FL1 and `ALU_CBL are used for the bit counting ops later
   assign shift_left = (operator_i == `ALU_SLL) || (operator_i == `ALU_BINS) ||
-                      (operator_i == `ALU_FL1) || (operator_i == `ALU_CLB);
+                      (operator_i == `ALU_FL1) || (operator_i == `ALU_CLB) ||
+                      (operator_i == `ALU_DIV) || (operator_i == `ALU_DIVU) ||
+                      (operator_i == `ALU_REM) || (operator_i == `ALU_REMU);
 
   // choose the bit reversed or the normal input for shift operand a
   assign shift_op_a    = (shift_left == 1'b1) ? operand_a_rev : operand_a_i;
@@ -643,7 +653,8 @@ module riscv_alu
 
   logic [31:0] ff_input;   // either op_a_i or its bit reversed version
   logic [5:0]  cnt_result; // population count
-  logic [5:0]  clb_result; // count leading bits
+  logic [5:0]  clb_result;  // count leading bits
+  logic [5:0]  clbu_result; // count leading bits
   logic [5:0]  ff1_result; // holds the index of the first '1'
   logic        ff_no_one;  // if no ones are found
   logic [5:0]  fl1_result; // holds the index of the last '1'
@@ -661,7 +672,13 @@ module riscv_alu
 
     case (operator_i)
       `ALU_FF1: ff_input = operand_a_i;
+
+      `ALU_DIVU,
+      `ALU_REMU,
       `ALU_FL1: ff_input = operand_a_rev;
+
+      `ALU_DIV,
+      `ALU_REM,
       `ALU_CLB: begin
         if (operand_a_i[31])
           ff_input = operand_a_neg_rev;
@@ -680,8 +697,9 @@ module riscv_alu
 
   // special case if ff1_res is 0 (no 1 found), then we keep the 0
   // this is done in the result mux
-  assign fl1_result = 6'd33 - ff1_result;
-  assign clb_result = ff1_result - 6'd2;
+  assign fl1_result  = 6'd33 - ff1_result;
+  assign clb_result  = ff1_result - 6'd2;
+  assign clbu_result = ff1_result - 6'd1; // unsigned case, count one less
 
   always_comb
   begin
@@ -742,34 +760,45 @@ module riscv_alu
 
   logic [31:0] result_div;
 
-  logic        div_valid;
   logic        div_ready;
   logic        div_signed;
-  logic        div_rem_quot;
+  logic        div_op_a_signed;
+  logic        div_op_b_signed;
+  logic [5:0]  div_shift_int;
 
+  assign div_signed = operator_i[0];
+
+  assign div_op_a_signed = operand_a_i[31] & div_signed;
+  assign div_op_b_signed = operand_b_i[31] & div_signed;
+
+  assign div_shift_int = (ff_no_one) ? 6'd31 : clb_result;
+  assign div_shift = div_shift_int + (div_op_a_signed ? 6'd0 : 6'd1);
 
   assign div_valid = (operator_i == `ALU_DIV) || (operator_i == `ALU_DIVU) ||
                      (operator_i == `ALU_REM) || (operator_i == `ALU_REMU);
 
-  assign div_rem_quot = operator_i[1];
 
-  assign div_signed = operator_i[0];
-
+  // inputs A and B are swapped
   riscv_alu_div div_i
   (
-    .clk         ( clk             ),
-    .rst_n       ( rst_n           ),
+    .Clk_CI       ( clk               ),
+    .Rst_RBI      ( rst_n             ),
 
-    .a_i         ( operand_a_i     ),
-    .b_i         ( operand_b_i     ),
-    .signed_i    ( div_signed      ),
-    .rem_quot_i  ( div_rem_quot    ),
+    // input IF
+    .OpA_DI       ( operand_b_i       ),
+    .OpB_DI       ( shift_left_result ),
+    .OpBShift_DI  ( div_shift         ),
+    .OpBIsZero_SI ( (cnt_result == 0) ),
 
-    .result_o    ( result_div      ),
+    .OpBSign_SI   ( div_op_a_signed   ),
+    .OpCode_SI    ( operator_i[1:0]   ),
 
-    .div_valid_i ( div_valid       ),
-    .div_ready_o ( div_ready       ),
-    .ex_ready_i  ( ex_ready_i      )
+    .Res_DO       ( result_div        ),
+
+    // Hand-Shake
+    .InVld_SI    ( div_valid         ),
+    .OutRdy_SI   ( ex_ready_i        ),
+    .OutVld_SO   ( div_ready         )
   );
 
   ////////////////////////////////////////////////////////
@@ -783,7 +812,6 @@ module riscv_alu
 
   always_comb
   begin
-    shift_amt  = operand_b_i;
     result_o   = 'x;
 
     unique case (operator_i)
