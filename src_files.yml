@@ -4,6 +4,7 @@ riscv:
   ]
   files: [
     alu.sv,
+    alu_div.sv,
     compressed_decoder.sv,
     controller.sv,
     cs_registers.sv,
