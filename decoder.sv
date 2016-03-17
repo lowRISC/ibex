@@ -648,19 +648,24 @@ module riscv_decoder
             alu_operator_o       = `ALU_SHUF2;
             regb_used_o          = 1'b1;
             regc_used_o          = 1'b1;
+            regc_mux_o           = `REGC_RD;
             scalar_replication_o = 1'b0;
           end
-          6'b11010_0: begin // pv.packlo
+          6'b11010_0: begin // pv.pack
             alu_operator_o = `ALU_PCKLO;
             regb_used_o    = 1'b1;
           end
           6'b11011_0: begin // pv.packhi
             alu_operator_o = `ALU_PCKHI;
             regb_used_o    = 1'b1;
+            regc_used_o    = 1'b1;
+            regc_mux_o     = `REGC_RD;
           end
-          6'b11100_0: begin // pv.pack
+          6'b11100_0: begin // pv.packlo
             alu_operator_o = `ALU_PCKLO;
             regb_used_o    = 1'b1;
+            regc_used_o    = 1'b1;
+            regc_mux_o     = `REGC_RD;
           end
 
           // comparisons, always have bit 26 set

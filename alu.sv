@@ -523,17 +523,18 @@ module riscv_alu
         shuffle_regc_sel = 1'b0;
 
         if (vector_mode_i == `VEC_MODE8) begin
-          shuffle_through     = 4'b1100;
-          shuffle_reg_sel     = 4'b0001;
+          shuffle_through = 4'b0011;
+          shuffle_reg_sel = 4'b0001;
         end else begin
-          shuffle_reg_sel     = 4'b0011;
+          shuffle_reg_sel = 4'b0011;
         end
       end
 
       `ALU_PCKHI: begin
         shuffle_regc_sel = 1'b0;
 
-        shuffle_reg_sel     = 4'b0100;
+        shuffle_reg_sel = 4'b0100;
+        shuffle_through = 4'b1100;
       end
 
       `ALU_SHUF2: begin
@@ -542,7 +543,7 @@ module riscv_alu
             shuffle_reg_sel[3] = operand_b_i[26];
             shuffle_reg_sel[2] = operand_b_i[18];
             shuffle_reg_sel[1] = operand_b_i[10];
-            shuffle_reg_sel[0] = operand_b_i[ 0];
+            shuffle_reg_sel[0] = operand_b_i[ 2];
           end
 
           `VEC_MODE16: begin
@@ -561,7 +562,6 @@ module riscv_alu
     unique case (operator_i)
       `ALU_PCKLO,
       `ALU_PCKHI: begin
-        shuffle_regc_sel = 1'b0;
 
         case (vector_mode_i)
           `VEC_MODE8: begin
@@ -619,17 +619,17 @@ module riscv_alu
                                 (shuffle_byte_sel[0][0] ? operand_a_i[15: 8] : operand_a_i[ 7: 0]);
 
   assign shuffle_rd[31:24] = shuffle_byte_sel[3][1] ?
-                                (shuffle_byte_sel[3][0] ? operand_c_i[31:24] : operand_c_i[23:16]) :
-                                (shuffle_byte_sel[3][0] ? operand_c_i[15: 8] : operand_c_i[ 7: 0]);
+                                (shuffle_byte_sel[3][0] ? shuffle_op_c[31:24] : shuffle_op_c[23:16]) :
+                                (shuffle_byte_sel[3][0] ? shuffle_op_c[15: 8] : shuffle_op_c[ 7: 0]);
   assign shuffle_rd[23:16] = shuffle_byte_sel[2][1] ?
-                                (shuffle_byte_sel[2][0] ? operand_c_i[31:24] : operand_c_i[23:16]) :
-                                (shuffle_byte_sel[2][0] ? operand_c_i[15: 8] : operand_c_i[ 7: 0]);
+                                (shuffle_byte_sel[2][0] ? shuffle_op_c[31:24] : shuffle_op_c[23:16]) :
+                                (shuffle_byte_sel[2][0] ? shuffle_op_c[15: 8] : shuffle_op_c[ 7: 0]);
   assign shuffle_rd[15: 8] = shuffle_byte_sel[1][1] ?
-                                (shuffle_byte_sel[1][0] ? operand_c_i[31:24] : operand_c_i[23:16]) :
-                                (shuffle_byte_sel[1][0] ? operand_c_i[15: 8] : operand_c_i[ 7: 0]);
+                                (shuffle_byte_sel[1][0] ? shuffle_op_c[31:24] : shuffle_op_c[23:16]) :
+                                (shuffle_byte_sel[1][0] ? shuffle_op_c[15: 8] : shuffle_op_c[ 7: 0]);
   assign shuffle_rd[ 7: 0] = shuffle_byte_sel[0][1] ?
-                                (shuffle_byte_sel[0][0] ? operand_c_i[31:24] : operand_c_i[23:16]) :
-                                (shuffle_byte_sel[0][0] ? operand_c_i[15: 8] : operand_c_i[ 7: 0]);
+                                (shuffle_byte_sel[0][0] ? shuffle_op_c[31:24] : shuffle_op_c[23:16]) :
+                                (shuffle_byte_sel[0][0] ? shuffle_op_c[15: 8] : shuffle_op_c[ 7: 0]);
 
   assign shuffle_result[31:24] = shuffle_reg_sel[3] ? shuffle_rd[31:24] : shuffle_rs1[31:24];
   assign shuffle_result[23:16] = shuffle_reg_sel[2] ? shuffle_rd[23:16] : shuffle_rs1[23:16];
