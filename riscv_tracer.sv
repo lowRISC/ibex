@@ -74,7 +74,8 @@ module riscv_tracer
   input  logic [31:0] imm_s2_type,
   input  logic [31:0] imm_s3_type,
   input  logic [31:0] imm_vs_type,
-  input  logic [31:0] imm_vu_type
+  input  logic [31:0] imm_vu_type,
+  input  logic [ 4:0] imm_clip_type
 );
 
   integer      f;
@@ -165,6 +166,14 @@ module riscv_tracer
       end
     endfunction // printRInstr
 
+    function void printR1Instr(input string mnemonic);
+      begin
+        regs_read.push_back({>> {rs1, rs1_value}});
+        regs_write.push_back({>> {rd, 'x}});
+        str = $sformatf("%-16s x%0d, x%0d", mnemonic, rd, rs1);
+      end
+    endfunction // printRInstr
+
     function void printR3Instr(input string mnemonic);
       begin
         regs_read.push_back({>> {rd, rs3_value}});
@@ -172,6 +181,14 @@ module riscv_tracer
         regs_read.push_back({>> {rs2, rs2_value}});
         regs_write.push_back({>> {rd, 'x}});
         str = $sformatf("%-16s x%0d, x%0d, x%0d", mnemonic, rd, rs1, rs2);
+      end
+    endfunction // printRInstr
+
+    function void printClipInstr(input string mnemonic);
+      begin
+        regs_read.push_back({>> {rs1, rs1_value}});
+        regs_write.push_back({>> {rd, 'x}});
+        str = $sformatf("%-16s x%0d, x%0d, %0d", mnemonic, rd, rs1, $unsigned(imm_clip_type));
       end
     endfunction // printRInstr
 
@@ -639,6 +656,9 @@ module riscv_tracer
         `INSTR_PMINU:      trace.printRInstr("p.minu");
         `INSTR_PMAX:       trace.printRInstr("p.max");
         `INSTR_PMAXU:      trace.printRInstr("p.maxu");
+        `INSTR_PABS:       trace.printR1Instr("p.abs");
+        `INSTR_PCLIP:      trace.printClipInstr("p.clip");
+        `INSTR_PCLIPU:     trace.printClipInstr("p.clipu");
         `INSTR_PBEXT:      trace.printBit1Instr("p.extract");
         `INSTR_PBEXTU:     trace.printBit1Instr("p.extractu");
         `INSTR_PBINS:      trace.printBit2Instr("p.insert");

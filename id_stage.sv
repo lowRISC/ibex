@@ -221,6 +221,7 @@ module riscv_id_stage
   logic [31:0] imm_vs_type;
   logic [31:0] imm_vu_type;
   logic [31:0] imm_shuffle_type;
+  logic [31:0] imm_clip_type;
 
   logic [31:0] imm_a;       // contains the immediate for operand b
   logic [31:0] imm_b;       // contains the immediate for operand b
@@ -351,6 +352,12 @@ module riscv_id_stage
 
   // same format as rS2 for shuffle needs, expands immediate
   assign imm_shuffle_type = {6'b0, instr[28:27], 6'b0, instr[24:23], 6'b0, instr[22:21], 6'b0, instr[20], instr[25]};
+
+  // clipping immediate, uses a small barrel shifter to pre-process the
+  // immediate and an adder to subtract 1
+  // The end result is a mask that has 1's set in the lower part
+  // TODO: check if this can be shared with the bit-manipulation unit
+  assign imm_clip_type    = (32'h1 << instr[24:20]) - 1;
 
   //---------------------------------------------------------------------------
   // source register selection
@@ -537,6 +544,7 @@ module riscv_id_stage
       `IMMB_VS:     imm_b = imm_vs_type;
       `IMMB_VU:     imm_b = imm_vu_type;
       `IMMB_SHUF:   imm_b = imm_shuffle_type;
+      `IMMB_CLIP:   imm_b = imm_clip_type;
       default:      imm_b = imm_i_type;
     endcase
   end

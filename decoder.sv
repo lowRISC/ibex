@@ -530,7 +530,19 @@ module riscv_decoder
             {6'b00_1000, 3'b110}: alu_operator_o = `ALU_EXTBS; // Sign-extend Byte
             {6'b00_1000, 3'b111}: alu_operator_o = `ALU_EXTBZ; // Zero-extend Byte
 
-            {6'b00_1010, 3'b000}: alu_operator_o = `ALU_ABS;   // Absolute
+            {6'b00_1010, 3'b000}: alu_operator_o = `ALU_ABS;   // p.abs
+
+            {6'b00_1010, 3'b001}: begin // p.clip
+              alu_operator_o     = `ALU_CLIP;
+              alu_op_b_mux_sel_o = `OP_A_IMM;
+              imm_b_mux_sel_o    = `IMMB_CLIP;
+            end
+
+            {6'b00_1010, 3'b010}: begin // p.clipu
+              alu_operator_o     = `ALU_CLIPU;
+              alu_op_b_mux_sel_o = `OP_A_IMM;
+              imm_b_mux_sel_o    = `IMMB_CLIP;
+            end
 
             default: begin
               illegal_insn_o = 1'b1;

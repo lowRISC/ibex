@@ -405,7 +405,8 @@ module riscv_alu
 
   assign minmax_b = (operator_i == `ALU_ABS) ? adder_result : operand_b_i;
 
-  assign do_min   = ((operator_i == `ALU_MIN) || (operator_i == `ALU_MINU));
+  assign do_min   = (operator_i == `ALU_MIN)  || (operator_i == `ALU_MINU) ||
+                    (operator_i == `ALU_CLIP) || (operator_i == `ALU_CLIPU);
 
   // the mux now handles: min, max, abs, ins
   always_comb
@@ -434,6 +435,16 @@ module riscv_alu
   assign result_minmax[15: 8] = (sel_minmax[1] == 1'b1) ? operand_a_i[15: 8] : minmax_b[15: 8];
   assign result_minmax[ 7: 0] = (sel_minmax[0] == 1'b1) ? operand_a_i[ 7: 0] : minmax_b[ 7: 0];
 
+
+  // clip
+  logic [31:0] clip_result;        // result of clip and clip
+  logic        clip_is_lower_neg;  // only signed comparison; used for clip
+  logic        clip_is_lower_u;    // only signed comparison; used for clipu, checks for negative number
+
+  assign clip_is_lower_neg = $signed(operand_a_i) < $signed(operand_b_neg);
+  assign clip_is_lower_u   = (operator_i == `ALU_CLIPU) && operand_a_i[31];
+
+  assign clip_result       = clip_is_lower_u ? '0 : (clip_is_lower_neg ? operand_b_neg : result_minmax);
 
 
   //////////////////////////////////////////////////
@@ -849,6 +860,8 @@ module riscv_alu
       `ALU_MAX, `ALU_MAXU,
       `ALU_ABS,
       `ALU_INS: result_o = result_minmax;
+
+      `ALU_CLIP, `ALU_CLIPU: result_o = clip_result;
 
       // Comparison Operations
       `ALU_EQ, `ALU_NE, `ALU_GTU, `ALU_GEU, `ALU_LTU, `ALU_LEU, `ALU_GTS, `ALU_GES, `ALU_LTS, `ALU_LES:

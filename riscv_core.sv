@@ -786,7 +786,8 @@ module riscv_core
     .imm_s2_type    ( id_stage_i.imm_s2_type               ),
     .imm_s3_type    ( id_stage_i.imm_s3_type               ),
     .imm_vs_type    ( id_stage_i.imm_vs_type               ),
-    .imm_vu_type    ( id_stage_i.imm_vu_type               )
+    .imm_vu_type    ( id_stage_i.imm_vu_type               ),
+    .imm_clip_type  ( id_stage_i.instr_rdata_i[11:7]       )
   );
 `endif
 

@@ -113,16 +113,16 @@
 `define ALU_BSET  6'b101100
 
 // Bit counting
-`define ALU_FF1   6'b010110
-`define ALU_FL1   6'b010111
+`define ALU_FF1   6'b011110
+`define ALU_FL1   6'b011111
 `define ALU_CNT   6'b011000
 `define ALU_CLB   6'b011001
 
 // Sign-/zero-extensions
-`define ALU_EXTHS 6'b011100
-`define ALU_EXTHZ 6'b011101
-`define ALU_EXTBS 6'b011110
-`define ALU_EXTBZ 6'b011111
+`define ALU_EXTHS 6'b111100
+`define ALU_EXTHZ 6'b111101
+`define ALU_EXTBS 6'b111110
+`define ALU_EXTBZ 6'b111111
 
 // Comparisons
 `define ALU_LTS   6'b000000
@@ -145,6 +145,8 @@
 
 // Absolute value
 `define ALU_ABS   6'b010100
+`define ALU_CLIP  6'b010110
+`define ALU_CLIPU 6'b010111
 
 // Insert/extract
 `define ALU_INS   6'b101101
@@ -153,7 +155,6 @@
 `define ALU_MIN   6'b010000
 `define ALU_MINU  6'b010001
 `define ALU_MAX   6'b010010
-`define ALU_MAXU  6'b010011
 `define ALU_MAXU  6'b010011
 
 // div/rem
@@ -241,6 +242,7 @@
 `define IMMB_VS     4'b0110
 `define IMMB_VU     4'b0111
 `define IMMB_SHUF   4'b1000
+`define IMMB_CLIP   4'b1001
 
 // operand c selection
 `define OP_C_REGC_OR_FWD 2'b00
