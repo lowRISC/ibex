@@ -125,7 +125,7 @@ module riscv_tracer
     function void printInstrTrace();
       mem_acc_t mem_acc;
       begin
-        $fwrite(f, "%t %15d %h %h %-33s", simtime,
+        $fwrite(f, "%t %15d %h %h %-36s", simtime,
                                           cycles,
                                           pc,
                                           instr,
@@ -166,13 +166,22 @@ module riscv_tracer
       end
     endfunction // printRInstr
 
+    function void printAddNInstr(input string mnemonic);
+      begin
+        regs_read.push_back({>> {rs1, rs1_value}});
+        regs_read.push_back({>> {rs2, rs2_value}});
+        regs_write.push_back({>> {rd, 'x}});
+        str = $sformatf("%-16s x%0d, x%0d, x%0d, 0x%0d", mnemonic, rd, rs1, rs2, $unsigned(imm_s3_type[4:0]));
+      end
+    endfunction // printAddNInstr
+
     function void printR1Instr(input string mnemonic);
       begin
         regs_read.push_back({>> {rs1, rs1_value}});
         regs_write.push_back({>> {rd, 'x}});
         str = $sformatf("%-16s x%0d, x%0d", mnemonic, rd, rs1);
       end
-    endfunction // printRInstr
+    endfunction // printR1Instr
 
     function void printR3Instr(input string mnemonic);
       begin
@@ -182,7 +191,7 @@ module riscv_tracer
         regs_write.push_back({>> {rd, 'x}});
         str = $sformatf("%-16s x%0d, x%0d, x%0d", mnemonic, rd, rs1, rs2);
       end
-    endfunction // printRInstr
+    endfunction // printR3Instr
 
     function void printClipInstr(input string mnemonic);
       begin
@@ -415,6 +424,22 @@ module riscv_tracer
       string str_sci;
       string str_imm;
       begin
+
+        // always read rs1 and write rd
+        regs_read.push_back({>> {rs1, rs1_value}});
+        regs_write.push_back({>> {rd, 'x}});
+
+        case (instr[14:13])
+          2'b00: str_sci = "";
+          2'b10: str_sci = ".sc";
+          2'b11: str_sci = ".sci";
+        endcase
+
+        if (instr[12])
+          str_hb = ".b";
+        else
+          str_hb = ".h";
+
         // set mnemonic
         case (instr[31:26])
           6'b000000: begin mnemonic = "pv.add";      str_imm = $sformatf("0x%0d", imm_vs_type); end
@@ -432,8 +457,8 @@ module riscv_tracer
           6'b011000: begin mnemonic = "pv.xor";      str_imm = $sformatf("0x%0d", imm_vs_type); end
           6'b011010: begin mnemonic = "pv.and";      str_imm = $sformatf("0x%0d", imm_vs_type); end
           6'b011100: begin mnemonic = "pv.abs";      str_imm = $sformatf("0x%0d", imm_vs_type); end
-          6'b011110: begin mnemonic = "pv.extract";  str_imm = $sformatf("0x%0d", imm_vs_type); end
-          6'b100000: begin mnemonic = "pv.extractu"; str_imm = $sformatf("0x%0d", imm_vu_type); end
+          6'b011110: begin mnemonic = "pv.extract";  str_imm = $sformatf("0x%0d", imm_vs_type); str_sci = ""; end
+          6'b100000: begin mnemonic = "pv.extractu"; str_imm = $sformatf("0x%0d", imm_vu_type); str_sci = ""; end
           6'b100010: begin mnemonic = "pv.insert";   str_imm = $sformatf("0x%0d", imm_vs_type); end
 
           // shuffle/pack
@@ -461,33 +486,15 @@ module riscv_tracer
           end
         endcase
 
-        // always read rs1 and write rd
-        regs_read.push_back({>> {rs1, rs1_value}});
-        regs_write.push_back({>> {rd, 'x}});
-
-        case (instr[14:13])
-          2'b00: begin
-            str_sci = "";
-            str_args = $sformatf("x%0d, x%0d, x%0d", rd, rs1, rs2);
-            regs_read.push_back({>> {rs2, rs2_value}});
-          end
-
-          2'b10: begin
-            str_sci = ".sc";
-            str_args = $sformatf("x%0d, x%0d, x%0d", rd, rs1, rs2);
-            regs_read.push_back({>> {rs2, rs2_value_vec}});
-          end
-
-          2'b11: begin
-            str_sci = ".sci";
-            str_args = $sformatf("x%0d, x%0d, %s", rd, rs1, str_imm);
-          end
-        endcase
-
-        if (instr[12])
-          str_hb = ".b";
-        else
-          str_hb = ".h";
+        if (str_sci == "") begin
+          regs_read.push_back({>> {rs2, rs2_value}});
+          str_args = $sformatf("x%0d, x%0d, x%0d", rd, rs1, rs2);
+        end else if (str_sci == ".sc") begin
+          regs_read.push_back({>> {rs2, rs2_value_vec}});
+          str_args = $sformatf("x%0d, x%0d, x%0d", rd, rs1, rs2);
+        end else if (str_sci == ".sci") begin
+          str_args = $sformatf("x%0d, x%0d, %s", rd, rs1, str_imm);
+        end
 
         str_asm = $sformatf("%s%s%s", mnemonic, str_sci, str_hb);
 
@@ -650,6 +657,14 @@ module riscv_tracer
         `INSTR_EXTBZ:      trace.printRInstr("p.extbz");
         `INSTR_PAVG:       trace.printRInstr("p.avg");
         `INSTR_PAVGU:      trace.printRInstr("p.avgu");
+        `INSTR_PADDN:      trace.printAddNInstr("p.addN");
+        `INSTR_PADDUN:     trace.printAddNInstr("p.adduN");
+        `INSTR_PADDRN:     trace.printAddNInstr("p.addRN");
+        `INSTR_PADDURN:    trace.printAddNInstr("p.adduRN");
+        `INSTR_PSUBN:      trace.printAddNInstr("p.subN");
+        `INSTR_PSUBUN:     trace.printAddNInstr("p.subuN");
+        `INSTR_PSUBRN:     trace.printAddNInstr("p.subRN");
+        `INSTR_PSUBURN:    trace.printAddNInstr("p.subuRN");
         `INSTR_PSLET:      trace.printRInstr("p.slet");
         `INSTR_PSLETU:     trace.printRInstr("p.sletu");
         `INSTR_PMIN:       trace.printRInstr("p.min");

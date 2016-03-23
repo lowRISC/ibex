@@ -29,7 +29,7 @@
 // no traces for synthesis, they are not synthesizable
 `ifndef SYNTHESIS
 `define TRACE_EXECUTION
-//`define SIMCHECKER
+`define SIMCHECKER
 `endif
 
 
@@ -90,13 +90,17 @@
 
 `define ALU_OP_WIDTH 6
 
-`define ALU_ADD   6'b100000
-`define ALU_SUB   6'b100001
-`define ALU_AVG   6'b100010
-`define ALU_AVGU  6'b100011
+`define ALU_ADD   6'b011000
+`define ALU_SUB   6'b011001
+`define ALU_ADDU  6'b011010
+`define ALU_SUBU  6'b011011
+`define ALU_ADDR  6'b011100
+`define ALU_SUBR  6'b011101
+`define ALU_ADDUR 6'b011110
+`define ALU_SUBUR 6'b011111
 
-`define ALU_XOR   6'b011011
-`define ALU_OR    6'b011010
+`define ALU_XOR   6'b101111
+`define ALU_OR    6'b101110
 `define ALU_AND   6'b010101
 
 // Shifts
@@ -113,10 +117,10 @@
 `define ALU_BSET  6'b101100
 
 // Bit counting
-`define ALU_FF1   6'b011110
-`define ALU_FL1   6'b011111
-`define ALU_CNT   6'b011000
-`define ALU_CLB   6'b011001
+`define ALU_FF1   6'b110110
+`define ALU_FL1   6'b110111
+`define ALU_CNT   6'b110100
+`define ALU_CLB   6'b110101
 
 // Sign-/zero-extensions
 `define ALU_EXTHS 6'b111100
@@ -243,6 +247,15 @@
 `define IMMB_VU     4'b0111
 `define IMMB_SHUF   4'b1000
 `define IMMB_CLIP   4'b1001
+
+// bit mask selection
+`define BMASK_A_ZERO 1'b0
+`define BMASK_A_S3   1'b1
+
+`define BMASK_B_S2   2'b00
+`define BMASK_B_S3   2'b01
+`define BMASK_B_ZERO 2'b10
+`define BMASK_B_ONE  2'b11
 
 // operand c selection
 `define OP_C_REGC_OR_FWD 2'b00

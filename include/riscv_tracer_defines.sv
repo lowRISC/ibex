@@ -55,6 +55,14 @@
 `define INSTR_EXTBZ      { 7'b0001000, 10'b?, 3'b111, 5'b?, `OPCODE_OP } // pulp specific
 `define INSTR_PAVG       { 7'b0000010, 10'b?, 3'b000, 5'b?, `OPCODE_OP } // pulp specific
 `define INSTR_PAVGU      { 7'b0000010, 10'b?, 3'b001, 5'b?, `OPCODE_OP } // pulp specific
+`define INSTR_PADDN      { 2'b00,      15'b?, 3'b010, 5'b?, `OPCODE_PULP_OP } // pulp specific
+`define INSTR_PADDUN     { 2'b10,      15'b?, 3'b010, 5'b?, `OPCODE_PULP_OP } // pulp specific
+`define INSTR_PADDRN     { 2'b00,      15'b?, 3'b110, 5'b?, `OPCODE_PULP_OP } // pulp specific
+`define INSTR_PADDURN    { 2'b10,      15'b?, 3'b110, 5'b?, `OPCODE_PULP_OP } // pulp specific
+`define INSTR_PSUBN      { 2'b00,      15'b?, 3'b011, 5'b?, `OPCODE_PULP_OP } // pulp specific
+`define INSTR_PSUBUN     { 2'b10,      15'b?, 3'b011, 5'b?, `OPCODE_PULP_OP } // pulp specific
+`define INSTR_PSUBRN     { 2'b00,      15'b?, 3'b111, 5'b?, `OPCODE_PULP_OP } // pulp specific
+`define INSTR_PSUBURN    { 2'b10,      15'b?, 3'b111, 5'b?, `OPCODE_PULP_OP } // pulp specific
 `define INSTR_PABS       { 7'b0001010, 10'b?, 3'b000, 5'b?, `OPCODE_OP } // pulp specific
 `define INSTR_PCLIP      { 7'b0001010, 10'b?, 3'b001, 5'b?, `OPCODE_OP } // pulp specific
 `define INSTR_PCLIPU     { 7'b0001010, 10'b?, 3'b010, 5'b?, `OPCODE_OP } // pulp specific

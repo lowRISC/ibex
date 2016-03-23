@@ -87,8 +87,8 @@ module riscv_id_stage
     output logic [31:0] alu_operand_a_ex_o,
     output logic [31:0] alu_operand_b_ex_o,
     output logic [31:0] alu_operand_c_ex_o,
-    output logic [ 4:0] imm_bmask_a_ex_o,
-    output logic [ 4:0] imm_bmask_b_ex_o,
+    output logic [ 4:0] bmask_a_ex_o,
+    output logic [ 4:0] bmask_b_ex_o,
     output logic [ 1:0] imm_vec_ext_ex_o,
     output logic [ 1:0] alu_vec_mode_ex_o,
 
@@ -195,7 +195,7 @@ module riscv_id_stage
   logic        rega_used_dec;
   logic        regb_used_dec;
   logic        regc_used_dec;
-  logic        imm_bmask_needed_dec;
+  logic        bmask_needed_dec;
 
   logic        branch_taken_ex;
   logic [1:0]  jump_in_id;
@@ -313,8 +313,11 @@ module riscv_id_stage
   logic [31:0] alu_operand_c;
 
   // Immediates for ID
-  logic [ 4:0] imm_bmask_a_id;
-  logic [ 4:0] imm_bmask_b_id;
+  logic [0:0]  bmask_a_mux;
+  logic [1:0]  bmask_b_mux;
+
+  logic [ 4:0] bmask_a_id;
+  logic [ 4:0] bmask_b_id;
   logic [ 1:0] imm_vec_ext_id;
 
   logic [ 1:0] alu_vec_mode;
@@ -621,9 +624,24 @@ module riscv_id_stage
   //                                                                       //
   ///////////////////////////////////////////////////////////////////////////
 
-  assign imm_bmask_a_id = imm_s3_type[4:0];
-  assign imm_bmask_b_id = ((alu_operator == `ALU_BCLR) || (alu_operator == `ALU_BSET) || (alu_operator == `ALU_BINS)) ?
-                          imm_s2_type[4:0] : 0;
+  always_comb
+  begin
+    unique case (bmask_a_mux)
+      `BMASK_A_ZERO: bmask_a_id = '0;
+      `BMASK_A_S3:   bmask_a_id = imm_s3_type[4:0];
+      default:       bmask_a_id = '0;
+    endcase
+  end
+  always_comb
+  begin
+    unique case (bmask_b_mux)
+      `BMASK_B_ZERO: bmask_b_id = '0;
+      `BMASK_B_ONE:  bmask_b_id = 5'd1;
+      `BMASK_B_S2:   bmask_b_id = imm_s2_type[4:0];
+      `BMASK_B_S3:   bmask_b_id = imm_s3_type[4:0];
+      default:       bmask_b_id = '0;
+    endcase
+  end
 
   assign imm_vec_ext_id = imm_vu_type[1:0];
 
@@ -693,7 +711,9 @@ module riscv_id_stage
     .regb_used_o                     ( regb_used_dec             ),
     .regc_used_o                     ( regc_used_dec             ),
 
-    .imm_bmask_needed_o              ( imm_bmask_needed_dec      ),
+    .bmask_needed_o                  ( bmask_needed_dec          ),
+    .bmask_a_mux_o                   ( bmask_a_mux               ),
+    .bmask_b_mux_o                   ( bmask_b_mux               ),
 
     // from IF/ID pipeline
     .instr_rdata_i                   ( instr                     ),
@@ -968,8 +988,8 @@ module riscv_id_stage
       alu_operand_a_ex_o          <= '0;
       alu_operand_b_ex_o          <= '0;
       alu_operand_c_ex_o          <= '0;
-      imm_bmask_a_ex_o            <= '0;
-      imm_bmask_b_ex_o            <= '0;
+      bmask_a_ex_o                <= '0;
+      bmask_b_ex_o                <= '0;
       imm_vec_ext_ex_o            <= '0;
       alu_vec_mode_ex_o           <= '0;
 
@@ -1036,8 +1056,8 @@ module riscv_id_stage
           alu_operand_a_ex_o        <= alu_operand_a;
           alu_operand_b_ex_o        <= alu_operand_b;
           alu_operand_c_ex_o        <= alu_operand_c;
-          imm_bmask_a_ex_o          <= imm_bmask_a_id;
-          imm_bmask_b_ex_o          <= imm_bmask_b_id;
+          bmask_a_ex_o              <= bmask_a_id;
+          bmask_b_ex_o              <= bmask_b_id;
           imm_vec_ext_ex_o          <= imm_vec_ext_id;
           alu_vec_mode_ex_o         <= alu_vec_mode;
         end

@@ -28,6 +28,7 @@ riscv_vip_rtl:
   ]
   files: [
     riscv_tracer.sv,
+    riscv_simchecker.sv,
   ]
 riscv_regfile_rtl:
   incdirs: [

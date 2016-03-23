@@ -36,8 +36,8 @@ module riscv_alu
   input  logic [31:0]              operand_c_i,
 
   input  logic [ 1:0]              vector_mode_i,
-  input  logic [ 4:0]              imm_bmask_a_i,
-  input  logic [ 4:0]              imm_bmask_b_i,
+  input  logic [ 4:0]              bmask_a_i,
+  input  logic [ 4:0]              bmask_b_i,
   input  logic [ 1:0]              imm_vec_ext_i,
 
   output logic [31:0]              result_o,
@@ -77,8 +77,9 @@ module riscv_alu
   assign operand_b_neg = ~operand_b_i;
 
 
-  logic [5:0] div_shift;
-  logic       div_valid;
+  logic [5:0]  div_shift;
+  logic        div_valid;
+  logic [31:0] bmask;
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //   ____            _   _ _   _                      _      _       _     _            //
@@ -94,11 +95,14 @@ module riscv_alu
   logic [31:0] adder_result;
   logic [35:0] adder_result_expanded;
 
+  assign adder_op_b_negate = (operator_i == `ALU_SUB) || (operator_i == `ALU_SUBR) ||
+                             (operator_i == `ALU_SUBU) || (operator_i == `ALU_SUBR);
+
   // prepare operand a
   assign adder_op_a = (operator_i == `ALU_ABS) ? operand_a_neg : operand_a_i;
 
   // prepare operand b
-  assign adder_op_b = (operator_i == `ALU_SUB) ? operand_b_neg : operand_b_i;
+  assign adder_op_b = adder_op_b_negate ? operand_b_neg : operand_b_i;
 
   // prepare carry
   always_comb
@@ -121,7 +125,7 @@ module riscv_alu
     adder_in_b[   27] = 1'b0;
     adder_in_b[35:28] = adder_op_b[31:24];
 
-    if ((operator_i == `ALU_SUB) || (operator_i == `ALU_ABS)) begin
+    if (adder_op_b_negate || (operator_i == `ALU_ABS)) begin
       // special case for subtractions and absolute number calculations
       adder_in_b[0] = 1'b1;
 
@@ -161,11 +165,14 @@ module riscv_alu
                          adder_result_expanded[8:1]};
 
 
-  // averaging by right shifting of one bit
-  logic [31:0] result_avg;
+  // normalization stage
+  logic [31:0] adder_round_value;
+  logic [31:0] adder_round_result;
 
-  assign result_avg[30:0] = adder_result[31:1];
-  assign result_avg[31]   = (operator_i == `ALU_AVGU) ? 1'b0 : adder_result[31];
+  assign adder_round_value  = ((operator_i == `ALU_ADDR) || (operator_i == `ALU_SUBR) ||
+                               (operator_i == `ALU_ADDUR) || (operator_i == `ALU_SUBUR)) ?
+                                {1'b0, bmask[31:1]} : '0;
+  assign adder_round_result = adder_result + adder_round_value;
 
 
   ////////////////////////////////////////
@@ -181,6 +188,7 @@ module riscv_alu
   logic [31:0] shift_amt_left;     // amount of shift, if to the left
   logic [31:0] shift_amt;          // amount of shift, to the right
   logic [31:0] shift_amt_int;      // amount of shift, used for the actual shifters
+  logic [31:0] shift_amt_norm;     // amount of shift, used for normalization
   logic [31:0] shift_op_a;         // input of the shifter
   logic [31:0] shift_result;
   logic [31:0] shift_right_result;
@@ -220,9 +228,22 @@ module riscv_alu
                       (operator_i == `ALU_DIV) || (operator_i == `ALU_DIVU) ||
                       (operator_i == `ALU_REM) || (operator_i == `ALU_REMU);
 
+  assign shift_use_round = (operator_i == `ALU_ADD)   || (operator_i == `ALU_SUB)   ||
+                           (operator_i == `ALU_ADDR)  || (operator_i == `ALU_SUBR)  ||
+                           (operator_i == `ALU_ADDU)  || (operator_i == `ALU_SUBU)  ||
+                           (operator_i == `ALU_ADDUR) || (operator_i == `ALU_SUBUR);
+
+  assign shift_arithmetic = (operator_i == `ALU_SRA)  ||
+                            (operator_i == `ALU_ADD)  || (operator_i == `ALU_SUB)  ||
+                            (operator_i == `ALU_ADDR) || (operator_i == `ALU_SUBR);
+
   // choose the bit reversed or the normal input for shift operand a
-  assign shift_op_a    = (shift_left == 1'b1) ? operand_a_rev : operand_a_i;
-  assign shift_amt_int = (shift_left == 1'b1) ? shift_amt_left : shift_amt;
+  assign shift_op_a    = shift_left ? operand_a_rev :
+                          (shift_use_round ? adder_round_result : operand_a_i);
+  assign shift_amt_int = shift_use_round ? shift_amt_norm :
+                          (shift_left ? shift_amt_left : shift_amt);
+
+  assign shift_amt_norm = {4{3'b000, bmask_b_i}};
 
 
   // right shifts, we let the synthesizer optimize this
@@ -231,7 +252,7 @@ module riscv_alu
     case(vector_mode_i)
       `VEC_MODE16:
       begin
-        if(operator_i == `ALU_SRA)
+        if(shift_arithmetic)
         begin
           shift_right_result[31:16] = $unsigned( $signed(shift_op_a[31:16]) >>> shift_amt_int[19:16] );
           shift_right_result[15: 0] = $unsigned( $signed(shift_op_a[15: 0]) >>> shift_amt_int[ 3: 0] );
@@ -245,7 +266,7 @@ module riscv_alu
 
       `VEC_MODE8:
       begin
-        if(operator_i == `ALU_SRA)
+        if(shift_arithmetic)
         begin
           shift_right_result[31:24] = $unsigned( $signed(shift_op_a[31:24]) >>> shift_amt_int[26:24] );
           shift_right_result[23:16] = $unsigned( $signed(shift_op_a[23:16]) >>> shift_amt_int[18:16] );
@@ -263,7 +284,7 @@ module riscv_alu
 
       default: // VEC_MODE32
       begin
-        if(operator_i == `ALU_SRA)
+        if(shift_arithmetic)
           shift_right_result = $unsigned( $signed(shift_op_a) >>> shift_amt_int[4:0] );
         else if(operator_i == `ALU_ROR)
           shift_right_result = {shift_op_a, shift_op_a}       >>  shift_amt_int[4:0];
@@ -461,6 +482,8 @@ module riscv_alu
 
   always_comb
   begin
+    ext_half = 'x;
+
     case (vector_mode_i)
       `VEC_MODE16: begin
         if (imm_vec_ext_i[0])
@@ -490,7 +513,7 @@ module riscv_alu
 
     // sign extend byte
     if (operator_i == `ALU_EXTBS)
-      result_ext = {{24 {operand_a_i[7]}}, ext_half[7:0]};
+      result_ext = {{24 {ext_half[7]}}, ext_half[7:0]};
 
     // zero extend half word
     if(operator_i == `ALU_EXTHZ)
@@ -498,7 +521,7 @@ module riscv_alu
 
     // sign extend half word
     if(operator_i == `ALU_EXTHS)
-      result_ext = {{16 {operand_a_i[15]}}, ext_half[15:0]};
+      result_ext = {{16 {ext_half[15]}}, ext_half[15:0]};
   end
 
 
@@ -739,21 +762,21 @@ module riscv_alu
 
   logic        extract_is_signed;
   logic        extract_sign;
-  logic [31:0] bmask, bmask_first, bmask_inv;
+  logic [31:0] bmask_first, bmask_inv;
   logic [31:0] bextins_and;
   logic [31:0] bextins_result, bclr_result, bset_result;
 
 
   // construct bit mask for insert/extract/bclr/bset
   // bmask looks like this 00..0011..1100..00
-  assign bmask_first = {32'hFFFFFFFE} << imm_bmask_a_i;
-  assign bmask       = (~bmask_first) << imm_bmask_b_i;
+  assign bmask_first = {32'hFFFFFFFE} << bmask_a_i;
+  assign bmask       = (~bmask_first) << bmask_b_i;
   assign bmask_inv   = ~bmask;
 
   assign bextins_and = (operator_i == `ALU_BINS) ? operand_c_i : {32{extract_sign}};
 
   assign extract_is_signed = (operator_i == `ALU_BEXT);
-  assign extract_sign = extract_is_signed & shift_result[imm_bmask_a_i];
+  assign extract_sign = extract_is_signed & shift_result[bmask_a_i];
 
   assign bextins_result = (bmask & shift_result) | (bextins_and & bmask_inv);
 
@@ -827,18 +850,15 @@ module riscv_alu
 
     unique case (operator_i)
       // Standard Operations
-      `ALU_ADD,
-      `ALU_SUB:  result_o = adder_result;
-      `ALU_AVG,
-      `ALU_AVGU: result_o = result_avg;
       `ALU_AND:  result_o = operand_a_i & operand_b_i;
       `ALU_OR:   result_o = operand_a_i | operand_b_i;
       `ALU_XOR:  result_o = operand_a_i ^ operand_b_i;
 
       // Shift Operations
+      `ALU_ADD, `ALU_ADDR, `ALU_ADDU, `ALU_ADDUR,
+      `ALU_SUB, `ALU_SUBR, `ALU_SUBU, `ALU_SUBUR,
       `ALU_SLL,
-      `ALU_SRL,
-      `ALU_SRA,
+      `ALU_SRL, `ALU_SRA,
       `ALU_ROR:  result_o = shift_result;
 
       // bit manipulation instructions
@@ -850,10 +870,11 @@ module riscv_alu
       `ALU_BSET:  result_o = bset_result;
 
       // Extension Operations
-      `ALU_EXTBZ,
-      `ALU_EXTBS,
-      `ALU_EXTHZ,
-      `ALU_EXTHS: result_o = result_ext;
+      `ALU_EXTBZ, `ALU_EXTBS,
+      `ALU_EXTHZ, `ALU_EXTHS: result_o = result_ext;
+
+      // pack and shuffle operations
+      `ALU_SHUF, `ALU_SHUF2, `ALU_PCKLO, `ALU_PCKHI: result_o = pack_result;
 
       // Min/Max/Abs/Ins
       `ALU_MIN, `ALU_MINU,
@@ -883,8 +904,6 @@ module riscv_alu
       // Division Unit Commands
       `ALU_DIV, `ALU_DIVU,
       `ALU_REM, `ALU_REMU: result_o = result_div;
-
-      `ALU_SHUF, `ALU_SHUF2, `ALU_PCKLO, `ALU_PCKHI: result_o = pack_result;
 
       default: ; // default case to suppress unique warning
     endcase

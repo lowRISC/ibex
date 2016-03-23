@@ -382,4 +382,12 @@ module riscv_if_stage
   assign if_ready_o = valid & id_ready_i;
   assign if_valid_o = (~halt_if_i) & if_ready_o;
 
+  //----------------------------------------------------------------------------
+  // Assertions
+  //----------------------------------------------------------------------------
+
+  // there should never be a grant when there is no request
+  assert property (
+    @(posedge clk) (instr_gnt_i) |-> (instr_req_o) );
+
 endmodule

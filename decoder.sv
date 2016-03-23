@@ -42,7 +42,9 @@ module riscv_decoder
   output logic        regb_used_o,             // rs2 is used by current instruction
   output logic        regc_used_o,             // rs3 is used by current instruction
 
-  output logic        imm_bmask_needed_o,      // immediate registers for bit manipulation mask is needed
+  output logic        bmask_needed_o,          // registers for bit manipulation mask is needed
+  output logic [ 0:0] bmask_a_mux_o,           // bit manipulation mask a mux
+  output logic [ 1:0] bmask_b_mux_o,           // bit manipulation mask a mux
 
   // from IF/ID pipeline
   input  logic [31:0] instr_rdata_i,           // instruction read from instr memory/cache
@@ -173,7 +175,9 @@ module riscv_decoder
     rega_used_o                 = 1'b0;
     regb_used_o                 = 1'b0;
     regc_used_o                 = 1'b0;
-    imm_bmask_needed_o          = 1'b0;
+    bmask_needed_o              = 1'b1; // TODO: only use when necessary
+    bmask_a_mux_o               = `BMASK_A_ZERO;
+    bmask_b_mux_o               = `BMASK_B_ZERO;
 
 
     unique case (instr_rdata_i[6:0])
@@ -426,11 +430,22 @@ module riscv_decoder
         if (instr_rdata_i[31]) begin
           // bit-manipulation instructions
           alu_op_b_mux_sel_o  = `OP_B_IMM;
-          imm_bmask_needed_o  = 1'b1;
+          bmask_needed_o      = 1'b1;
+          bmask_a_mux_o       = `BMASK_A_S3;
+          bmask_b_mux_o       = `BMASK_B_S2;
 
           unique case (instr_rdata_i[14:12])
-            3'b000: begin alu_operator_o = `ALU_BEXT;  imm_b_mux_sel_o = `IMMB_S2; end
-            3'b001: begin alu_operator_o = `ALU_BEXTU; imm_b_mux_sel_o = `IMMB_S2; end
+            3'b000: begin
+              alu_operator_o  = `ALU_BEXT;
+              imm_b_mux_sel_o = `IMMB_S2;
+              bmask_b_mux_o   = `BMASK_B_ZERO;
+            end
+            3'b001: begin
+              alu_operator_o  = `ALU_BEXTU;
+              imm_b_mux_sel_o = `IMMB_S2;
+              bmask_b_mux_o   = `BMASK_B_ZERO;
+            end
+
             3'b010: begin
               alu_operator_o      = `ALU_BINS;
               imm_b_mux_sel_o     = `IMMB_S2;
@@ -509,8 +524,8 @@ module riscv_decoder
             end
 
             // PULP specific instructions
-            {6'b00_0010, 3'b000}: alu_operator_o = `ALU_AVG;   // Average
-            {6'b00_0010, 3'b001}: alu_operator_o = `ALU_AVGU;  // Average Unsigned
+            {6'b00_0010, 3'b000}: begin alu_operator_o = `ALU_ADD;  bmask_b_mux_o = `BMASK_B_ONE; end // Average
+            {6'b00_0010, 3'b001}: begin alu_operator_o = `ALU_ADDU; bmask_b_mux_o = `BMASK_B_ONE; end // Average Unsigned
             {6'b00_0010, 3'b010}: alu_operator_o = `ALU_SLETS; // Set Lower Equal Than
             {6'b00_0010, 3'b011}: alu_operator_o = `ALU_SLETU; // Set Lower Equal Than Unsigned
             {6'b00_0010, 3'b100}: alu_operator_o = `ALU_MIN;   // Min
@@ -576,6 +591,34 @@ module riscv_decoder
             mult_mac_en = 1'b1;
           end
 
+          2'b10: begin // add with normalization and rounding
+            // decide between using unsigned and rounding, and combinations
+            // thereof
+            case ({instr_rdata_i[31],instr_rdata_i[14]})
+              2'b00: alu_operator_o = `ALU_ADD;
+              2'b01: alu_operator_o = `ALU_ADDR;
+              2'b10: alu_operator_o = `ALU_ADDU;
+              2'b11: alu_operator_o = `ALU_ADDUR;
+            endcase
+
+            bmask_a_mux_o = `BMASK_A_ZERO;
+            bmask_b_mux_o = `BMASK_B_S3;
+          end
+
+          2'b11: begin // sub with normalization and rounding
+            // decide between using unsigned and rounding, and combinations
+            // thereof
+            case ({instr_rdata_i[31],instr_rdata_i[14]})
+              2'b00: alu_operator_o = `ALU_SUB;
+              2'b01: alu_operator_o = `ALU_SUBR;
+              2'b10: alu_operator_o = `ALU_SUBU;
+              2'b11: alu_operator_o = `ALU_SUBUR;
+            endcase
+
+            bmask_a_mux_o = `BMASK_A_ZERO;
+            bmask_b_mux_o = `BMASK_B_S3;
+          end
+
           default: begin
             regfile_alu_we = 1'b0;
             illegal_insn_o = 1'b1;
@@ -612,21 +655,21 @@ module riscv_decoder
 
         // now decode the instruction
         unique case (instr_rdata_i[31:26])
-          6'b00000_0: begin alu_operator_o = `ALU_ADD;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.add
-          6'b00001_0: begin alu_operator_o = `ALU_SUB;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.sub
-          6'b00010_0: begin alu_operator_o = `ALU_AVG;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.avg
-          6'b00011_0: begin alu_operator_o = `ALU_AVGU; imm_b_mux_sel_o     = `IMMB_VU; end // pv.avgu
-          6'b00100_0: begin alu_operator_o = `ALU_MIN;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.min
-          6'b00101_0: begin alu_operator_o = `ALU_MINU; imm_b_mux_sel_o     = `IMMB_VU; end // pv.minu
-          6'b00110_0: begin alu_operator_o = `ALU_MAX;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.max
-          6'b00111_0: begin alu_operator_o = `ALU_MAXU; imm_b_mux_sel_o     = `IMMB_VU; end // pv.maxu
-          6'b01000_0: begin alu_operator_o = `ALU_SRL;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.srl
-          6'b01001_0: begin alu_operator_o = `ALU_SRA;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.sra
-          6'b01010_0: begin alu_operator_o = `ALU_SLL;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.sll
-          6'b01011_0: begin alu_operator_o = `ALU_OR;   imm_b_mux_sel_o     = `IMMB_VS; end // pv.or
-          6'b01100_0: begin alu_operator_o = `ALU_XOR;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.xor
-          6'b01101_0: begin alu_operator_o = `ALU_AND;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.and
-          6'b01110_0: begin alu_operator_o = `ALU_ABS;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.abs
+          6'b00000_0: begin alu_operator_o = `ALU_ADD;  imm_b_mux_sel_o = `IMMB_VS; end // pv.add
+          6'b00001_0: begin alu_operator_o = `ALU_SUB;  imm_b_mux_sel_o = `IMMB_VS; end // pv.sub
+          6'b00010_0: begin alu_operator_o = `ALU_ADD;  imm_b_mux_sel_o = `IMMB_VS; bmask_b_mux_o = `BMASK_B_ONE; end // pv.avg
+          6'b00011_0: begin alu_operator_o = `ALU_ADDU; imm_b_mux_sel_o = `IMMB_VU; bmask_b_mux_o = `BMASK_B_ONE; end // pv.avgu
+          6'b00100_0: begin alu_operator_o = `ALU_MIN;  imm_b_mux_sel_o = `IMMB_VS; end // pv.min
+          6'b00101_0: begin alu_operator_o = `ALU_MINU; imm_b_mux_sel_o = `IMMB_VU; end // pv.minu
+          6'b00110_0: begin alu_operator_o = `ALU_MAX;  imm_b_mux_sel_o = `IMMB_VS; end // pv.max
+          6'b00111_0: begin alu_operator_o = `ALU_MAXU; imm_b_mux_sel_o = `IMMB_VU; end // pv.maxu
+          6'b01000_0: begin alu_operator_o = `ALU_SRL;  imm_b_mux_sel_o = `IMMB_VS; end // pv.srl
+          6'b01001_0: begin alu_operator_o = `ALU_SRA;  imm_b_mux_sel_o = `IMMB_VS; end // pv.sra
+          6'b01010_0: begin alu_operator_o = `ALU_SLL;  imm_b_mux_sel_o = `IMMB_VS; end // pv.sll
+          6'b01011_0: begin alu_operator_o = `ALU_OR;   imm_b_mux_sel_o = `IMMB_VS; end // pv.or
+          6'b01100_0: begin alu_operator_o = `ALU_XOR;  imm_b_mux_sel_o = `IMMB_VS; end // pv.xor
+          6'b01101_0: begin alu_operator_o = `ALU_AND;  imm_b_mux_sel_o = `IMMB_VS; end // pv.and
+          6'b01110_0: begin alu_operator_o = `ALU_ABS;  imm_b_mux_sel_o = `IMMB_VS; end // pv.abs
 
           6'b01111_0: begin // pv.extract
             if (instr_rdata_i[12])
