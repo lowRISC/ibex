@@ -29,7 +29,7 @@
 // no traces for synthesis, they are not synthesizable
 `ifndef SYNTHESIS
 `define TRACE_EXECUTION
-//`define SIMCHECKER
+`define SIMCHECKER
 `endif
 
 
@@ -173,6 +173,13 @@
 `define ALU_PCKHI 6'b111001
 
 
+`define MUL_MAC32 3'b000
+`define MUL_MSU32 3'b001
+`define MUL_I     3'b010
+`define MUL_IR    3'b011
+`define MUL_DOT8  3'b100
+`define MUL_DOT16 3'b101
+
 // vector modes
 `define VEC_MODE32 2'b00
 `define VEC_MODE16 2'b10
@@ -256,6 +263,10 @@
 `define BMASK_B_S3   2'b01
 `define BMASK_B_ZERO 2'b10
 `define BMASK_B_ONE  2'b11
+
+// multiplication immediates
+`define MIMM_ZERO    1'b0
+`define MIMM_S3      1'b1
 
 // operand c selection
 `define OP_C_REGC_OR_FWD 2'b00

@@ -103,14 +103,19 @@ module riscv_id_stage
 
 
     // MUL
+    output logic [ 2:0] mult_operator_ex_o,
     output logic [31:0] mult_operand_a_ex_o,
     output logic [31:0] mult_operand_b_ex_o,
     output logic [31:0] mult_operand_c_ex_o,
     output logic        mult_en_ex_o,
-    output logic [1:0]  mult_sel_subword_ex_o,
-    output logic [1:0]  mult_signed_mode_ex_o,
-    output logic        mult_mac_en_ex_o,
-    output logic        mult_vec_mode_ex_o,
+    output logic        mult_sel_subword_ex_o,
+    output logic        mult_signed_mode_ex_o,
+    output logic [ 4:0] mult_imm_ex_o,
+
+    output logic [31:0] mult_dot_op_a_ex_o,
+    output logic [31:0] mult_dot_op_b_ex_o,
+    output logic [31:0] mult_dot_op_c_ex_o,
+    output logic [ 1:0] mult_dot_signed_ex_o,
 
     // CSR ID/EX
     output logic        csr_access_ex_o,
@@ -260,11 +265,13 @@ module riscv_id_stage
   logic [1:0]  jump_target_mux_sel;
 
   // Multiplier Control
+  logic [2:0]  mult_operator;    // multiplication operation selection
   logic        mult_en;          // multiplication is used instead of ALU
-  logic [1:0]  mult_sel_subword; // Select a subword when doing multiplications
-  logic [1:0]  mult_signed_mode; // Signed mode multiplication at the output of the controller, and before the pipe registers
-  logic        mult_mac_en;      // Enables the use of the accumulator
-  logic        mult_vec_mode;
+  logic        mult_int_en;      // use integer multiplier
+  logic        mult_sel_subword; // Select a subword when doing multiplications
+  logic        mult_signed_mode; // Signed mode multiplication at the output of the controller, and before the pipe registers
+  logic        mult_dot_en;      // use dot product
+  logic [1:0]  mult_dot_signed;  // Signed mode dot products (can be mixed types)
 
   // Register Write Control
   logic        regfile_we_id;
@@ -315,10 +322,12 @@ module riscv_id_stage
   // Immediates for ID
   logic [0:0]  bmask_a_mux;
   logic [1:0]  bmask_b_mux;
+  logic [0:0]  mult_imm_mux;
 
   logic [ 4:0] bmask_a_id;
   logic [ 4:0] bmask_b_id;
   logic [ 1:0] imm_vec_ext_id;
+  logic [ 4:0] mult_imm_id;
 
   logic [ 1:0] alu_vec_mode;
   logic        scalar_replication;
@@ -409,6 +418,8 @@ module riscv_id_stage
 
   assign branch_taken_ex = branch_in_ex_o & branch_decision_i;
 
+
+  assign mult_en = mult_int_en | mult_dot_en;
 
   ///////////////////////////////////////////////
   //  _   ___        ___     ___   ___  ____   //
@@ -645,6 +656,16 @@ module riscv_id_stage
 
   assign imm_vec_ext_id = imm_vu_type[1:0];
 
+
+  always_comb
+  begin
+    unique case (mult_imm_mux)
+      `MIMM_ZERO: mult_imm_id = '0;
+      `MIMM_S3:   mult_imm_id = imm_s3_type[4:0];
+      default:    mult_imm_id = '0;
+    endcase
+  end
+
   /////////////////////////////////////////////////////////
   //  ____  _____ ____ ___ ____ _____ _____ ____  ____   //
   // |  _ \| ____/ ___|_ _/ ___|_   _| ____|  _ \/ ___|  //
@@ -731,11 +752,13 @@ module riscv_id_stage
     .regc_mux_o                      ( regc_mux                  ),
 
     // MUL signals
-    .mult_en_o                       ( mult_en                   ),
+    .mult_operator_o                 ( mult_operator             ),
+    .mult_int_en_o                   ( mult_int_en               ),
     .mult_sel_subword_o              ( mult_sel_subword          ),
     .mult_signed_mode_o              ( mult_signed_mode          ),
-    .mult_mac_en_o                   ( mult_mac_en               ),
-    .mult_vec_mode_o                 ( mult_vec_mode             ),
+    .mult_imm_mux_o                  ( mult_imm_mux              ),
+    .mult_dot_en_o                   ( mult_dot_en               ),
+    .mult_dot_signed_o               ( mult_dot_signed           ),
 
     // Register file control signals
     .regfile_mem_we_o                ( regfile_we_id             ),
@@ -993,14 +1016,19 @@ module riscv_id_stage
       imm_vec_ext_ex_o            <= '0;
       alu_vec_mode_ex_o           <= '0;
 
+      mult_operator_ex_o          <= '0;
       mult_operand_a_ex_o         <= '0;
       mult_operand_b_ex_o         <= '0;
       mult_operand_c_ex_o         <= '0;
       mult_en_ex_o                <= 1'b0;
-      mult_sel_subword_ex_o       <= 2'b0;
-      mult_signed_mode_ex_o       <= 2'b0;
-      mult_mac_en_ex_o            <= 1'b0;
-      mult_vec_mode_ex_o          <= '0;
+      mult_sel_subword_ex_o       <= 1'b0;
+      mult_signed_mode_ex_o       <= 1'b0;
+      mult_imm_ex_o               <= '0;
+
+      mult_dot_op_a_ex_o          <= '0;
+      mult_dot_op_b_ex_o          <= '0;
+      mult_dot_op_c_ex_o          <= '0;
+      mult_dot_signed_ex_o        <= '0;
 
       regfile_waddr_ex_o          <= 5'b0;
       regfile_we_ex_o             <= 1'b0;
@@ -1063,15 +1091,21 @@ module riscv_id_stage
         end
 
         mult_en_ex_o                <= mult_en;
-        if (mult_en)
-        begin  // when we are multiplying we don't need the ALU
+        if (mult_int_en) begin  // when we are multiplying we don't need the ALU
+          mult_operator_ex_o        <= mult_operator;
           mult_sel_subword_ex_o     <= mult_sel_subword;
           mult_signed_mode_ex_o     <= mult_signed_mode;
-          mult_mac_en_ex_o          <= mult_mac_en;
           mult_operand_a_ex_o       <= alu_operand_a;
           mult_operand_b_ex_o       <= alu_operand_b;
           mult_operand_c_ex_o       <= alu_operand_c;
-          mult_vec_mode_ex_o        <= mult_vec_mode;
+          mult_imm_ex_o             <= mult_imm_id;
+        end
+        if (mult_dot_en) begin
+          mult_operator_ex_o        <= mult_operator;
+          mult_dot_signed_ex_o      <= mult_dot_signed;
+          mult_dot_op_a_ex_o        <= alu_operand_a;
+          mult_dot_op_b_ex_o        <= alu_operand_b;
+          mult_dot_op_c_ex_o        <= alu_operand_c;
         end
 
         regfile_we_ex_o             <= regfile_we_id;

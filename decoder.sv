@@ -62,11 +62,13 @@ module riscv_decoder
   output logic [1:0]  regc_mux_o,              // register c selection: S3, RD or 0
 
   // MUL related control signals
-  output logic        mult_en_o,               // perform multiplication
-  output logic        mult_mac_en_o,           // accumulate multiplication result
-  output logic [1:0]  mult_sel_subword_o,      // Select subwords for 16x16 bit of multiplier
-  output logic [1:0]  mult_signed_mode_o,      // Multiplication in signed mode
-  output logic        mult_vec_mode_o,         // selects between 32 bit and 16 bit modes
+  output logic [2:0]  mult_operator_o,         // Multiplication operation selection
+  output logic        mult_int_en_o,           // perform integer multiplication
+  output logic        mult_dot_en_o,           // perform dot multiplication
+  output logic [0:0]  mult_imm_mux_o,          // Multiplication immediate mux selector
+  output logic        mult_sel_subword_o,      // Select subwords for 16x16 bit of multiplier
+  output logic        mult_signed_mode_o,      // Multiplication in signed mode
+  output logic [1:0]  mult_dot_signed_o,       // Dot product in signed mode
 
   // register file related signals
   output logic        regfile_mem_we_o,        // write enable for regfile
@@ -110,8 +112,6 @@ module riscv_decoder
 
   logic [1:0] jump_in_id;
 
-  logic       mult_en;
-  logic       mult_mac_en;
   logic [1:0] csr_op;
 
 
@@ -139,11 +139,13 @@ module riscv_decoder
     imm_a_mux_sel_o             = `IMMA_ZERO;
     imm_b_mux_sel_o             = `IMMB_I;
 
-    mult_en                     = 1'b0;
-    mult_signed_mode_o          = 2'b00;
-    mult_sel_subword_o          = 2'b00;
-    mult_mac_en                 = 1'b0;
-    mult_vec_mode_o             = 1'b0;
+    mult_operator_o             = `MUL_I;
+    mult_int_en_o               = 1'b0;
+    mult_dot_en_o               = 1'b0;
+    mult_imm_mux_o              = `MIMM_ZERO;
+    mult_signed_mode_o          = 1'b0;
+    mult_sel_subword_o          = 1'b0;
+    mult_dot_signed_o           = 2'b00;
 
     regfile_mem_we              = 1'b0;
     regfile_alu_we              = 1'b0;
@@ -479,12 +481,22 @@ module riscv_decoder
             {6'b10_0000, 3'b101}: alu_operator_o = `ALU_SRA;   // Shift Right Arithmetic
 
             // supported RV32M instructions
-            {6'b00_0001, 3'b000}: mult_en = 1'b1;       // Multiplication
-            {6'b00_0001, 3'b001}: begin // MAC
-              regc_used_o  = 1'b1;
-              regc_mux_o   = `REGC_RD;
-              mult_en      = 1'b1;
-              mult_mac_en  = 1'b1;
+            {6'b00_0001, 3'b000}: begin // p.mul
+              mult_int_en_o   = 1'b1;
+              mult_operator_o = `MUL_MAC32;
+              regc_mux_o      = `REGC_ZERO;
+            end
+            {6'b00_0001, 3'b001}: begin // p.mac
+              regc_used_o     = 1'b1;
+              regc_mux_o      = `REGC_RD;
+              mult_int_en_o   = 1'b1;
+              mult_operator_o = `MUL_MAC32;
+            end
+            {6'b00_0001, 3'b010}: begin // p.msu
+              regc_used_o     = 1'b1;
+              regc_mux_o      = `REGC_RD;
+              mult_int_en_o   = 1'b1;
+              mult_operator_o = `MUL_MSU32;
             end
             {6'b00_0001, 3'b100}: begin // div
               alu_op_a_mux_sel_o = `OP_A_REGB_OR_FWD;
@@ -573,22 +585,32 @@ module riscv_decoder
 
         case (instr_rdata_i[13:12])
           2'b00: begin // multiply with subword selection
-            mult_vec_mode_o    = 1'b1;
-            mult_sel_subword_o = {2{instr_rdata_i[30]}};
-            mult_signed_mode_o = {2{instr_rdata_i[31]}};
+            mult_sel_subword_o = instr_rdata_i[30];
+            mult_signed_mode_o = instr_rdata_i[31];
 
-            mult_en = 1'b1;
+            mult_imm_mux_o = `MIMM_S3;
+            regc_mux_o     = `REGC_ZERO;
+            mult_int_en_o  = 1'b1;
+
+            if (instr_rdata_i[14])
+              mult_operator_o = `MUL_IR;
+            else
+              mult_operator_o = `MUL_I;
           end
 
           2'b01: begin // MAC with subword selection
-            regc_used_o        = 1'b1;
-            regc_mux_o         = `REGC_RD;
-            mult_vec_mode_o    = 1'b1;
-            mult_sel_subword_o = {2{instr_rdata_i[30]}};
-            mult_signed_mode_o = {2{instr_rdata_i[31]}};
+            mult_sel_subword_o = instr_rdata_i[30];
+            mult_signed_mode_o = instr_rdata_i[31];
 
-            mult_en     = 1'b1;
-            mult_mac_en = 1'b1;
+            regc_used_o     = 1'b1;
+            regc_mux_o      = `REGC_RD;
+            mult_imm_mux_o  = `MIMM_S3;
+            mult_int_en_o   = 1'b1;
+
+            if (instr_rdata_i[14])
+              mult_operator_o = `MUL_IR;
+            else
+              mult_operator_o = `MUL_I;
           end
 
           2'b10: begin // add with normalization and rounding
@@ -632,10 +654,13 @@ module riscv_decoder
         imm_b_mux_sel_o     = `IMMB_VS;
 
         // vector size
-        if (instr_rdata_i[12])
-          alu_vec_mode_o = `VEC_MODE8;
-        else
+        if (instr_rdata_i[12]) begin
+          alu_vec_mode_o  = `VEC_MODE8;
+          mult_operator_o = `MUL_DOT8;
+        end else begin
           alu_vec_mode_o = `VEC_MODE16;
+          mult_operator_o = `MUL_DOT16;
+        end
 
         // distinguish normal vector, sc and sci modes
         if (instr_rdata_i[14]) begin
@@ -721,6 +746,37 @@ module riscv_decoder
             regb_used_o    = 1'b1;
             regc_used_o    = 1'b1;
             regc_mux_o     = `REGC_RD;
+          end
+
+          6'b10010_0: begin // pv.dotsp
+            mult_dot_en_o     = 1'b1;
+            mult_dot_signed_o = 2'b11;
+          end
+          6'b10011_0: begin // pv.dotup
+            mult_dot_en_o     = 1'b1;
+            mult_dot_signed_o = 2'b00;
+          end
+          6'b10100_0: begin // pv.dotusp
+            mult_dot_en_o     = 1'b1;
+            mult_dot_signed_o = 2'b01;
+          end
+          6'b10101_0: begin // pv.sdotsp
+            mult_dot_en_o     = 1'b1;
+            mult_dot_signed_o = 2'b11;
+            regc_used_o       = 1'b1;
+            regc_mux_o        = `REGC_RD;
+          end
+          6'b10110_0: begin // pv.sdotup
+            mult_dot_en_o     = 1'b1;
+            mult_dot_signed_o = 2'b00;
+            regc_used_o       = 1'b1;
+            regc_mux_o        = `REGC_RD;
+          end
+          6'b10111_0: begin // pv.sdotusp
+            mult_dot_en_o     = 1'b1;
+            mult_dot_signed_o = 2'b01;
+            regc_used_o       = 1'b1;
+            regc_mux_o        = `REGC_RD;
           end
 
           // comparisons, always have bit 26 set
@@ -907,8 +963,6 @@ module riscv_decoder
   assign regfile_mem_we_o  = (deassert_we_i) ? 1'b0          : regfile_mem_we;
   assign regfile_alu_we_o  = (deassert_we_i) ? 1'b0          : regfile_alu_we;
   assign data_req_o        = (deassert_we_i) ? 1'b0          : data_req;
-  assign mult_en_o         = (deassert_we_i) ? 1'b0          : mult_en;
-  assign mult_mac_en_o     = (deassert_we_i) ? 1'b0          : mult_mac_en;
   assign hwloop_we_o       = (deassert_we_i) ? 3'b0          : hwloop_we;
   assign csr_op_o          = (deassert_we_i) ? `CSR_OP_NONE  : csr_op;
   assign jump_in_id_o      = (deassert_we_i) ? `BRANCH_NONE  : jump_in_id;

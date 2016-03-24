@@ -416,6 +416,49 @@ module riscv_tracer
       end
     endfunction
 
+    function void printMulInstr();
+      string mnemonic;
+      string str_suf;
+      string str_imm;
+      string str_asm;
+      begin
+
+        // always read rs1 and rs2 and write rd
+        regs_read.push_back({>> {rs1, rs1_value}});
+        regs_read.push_back({>> {rs2, rs2_value}});
+        regs_write.push_back({>> {rd, 'x}});
+
+        if (instr[12])
+          regs_read.push_back({>> {rd, rs3_value}});
+
+        case ({instr[31:30], instr[14]})
+          3'b000: str_suf = "u";
+          3'b001: str_suf = "uR";
+          3'b010: str_suf = "hhu";
+          3'b011: str_suf = "hhuR";
+          3'b100: str_suf = "s";
+          3'b101: str_suf = "sR";
+          3'b110: str_suf = "hhs";
+          3'b111: str_suf = "hhsR";
+        endcase
+
+        if (instr[12])
+          mnemonic = "p.mac";
+        else
+          mnemonic = "p.mul";
+
+        if (imm_s3_type[4:0] != 5'b00000)
+          str_asm = $sformatf("%s%sN", mnemonic, str_suf);
+        else
+          str_asm = $sformatf("%s%s", mnemonic, str_suf);
+
+        if (instr[29:25] != 5'b00000)
+          str = $sformatf("%-16s x%0d, x%0d, x%0d, %0d", str_asm, rd, rs1, rs2, $unsigned(imm_s3_type[4:0]));
+        else
+          str = $sformatf("%-16s x%0d, x%0d, x%0d", str_asm, rd, rs1, rs2);
+      end
+    endfunction
+
     function void printVecInstr();
       string mnemonic;
       string str_asm;
@@ -708,6 +751,7 @@ module riscv_tracer
         {25'b?, `OPCODE_STORE_POST}: trace.printStoreInstr();
         {25'b?, `OPCODE_HWLOOP}:     trace.printHwloopInstr();
         {25'b?, `OPCODE_VECOP}:      trace.printVecInstr();
+        `INSTR_PMULRN:               trace.printMulInstr();
         default:           trace.printMnemonic("INVALID");
       endcase // unique case (instr)
 
