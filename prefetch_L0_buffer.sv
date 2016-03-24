@@ -59,7 +59,7 @@ module riscv_prefetch_L0_buffer
   logic                               busy_L0;
 
   enum logic [3:0] { IDLE, BRANCHED,
-                     HWLP_WAIT_GNT, HWLP_GRANTED, HWLP_FETCH_DONE,
+                     HWLP_WAIT_GNT, HWLP_GRANTED, HWLP_GRANTED_WAIT, HWLP_FETCH_DONE,
                      NOT_VALID, NOT_VALID_GRANTED, NOT_VALID_CROSS, NOT_VALID_CROSS_GRANTED,
                      VALID, VALID_CROSS, VALID_GRANTED, VALID_FETCH_DONE } CS, NS;
 
@@ -407,19 +407,36 @@ module riscv_prefetch_L0_buffer
         use_hwlp = 1'b1;
 
         if (ready_i) begin
+          addr_n = hwloop_target_i;
+
           if (fetch_valid) begin
             is_hwlp_n = 1'b1;
-            addr_n = hwloop_target_i;
 
             if (hwlp_is_crossword) begin
               NS = NOT_VALID_CROSS;
             end else begin
               NS = VALID;
             end
+          end else begin
+            NS = HWLP_GRANTED_WAIT;
           end
         end else begin
           if (fetch_valid)
             NS = HWLP_FETCH_DONE;
+        end
+      end
+
+      HWLP_GRANTED_WAIT: begin
+        use_hwlp = 1'b1;
+
+        if (fetch_valid) begin
+          is_hwlp_n = 1'b1;
+
+          if (hwlp_is_crossword) begin
+            NS = NOT_VALID_CROSS;
+          end else begin
+            NS = VALID;
+          end
         end
       end
 
