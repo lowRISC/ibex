@@ -109,7 +109,7 @@ module riscv_exc_controller
       begin
         if (irq_i[i]) begin
           cause_int[5]   = 1'b1;
-          cause_int[4:0] = i;
+          cause_int[4:0] = $unsigned(i);
         end
       end
     end

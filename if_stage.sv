@@ -128,11 +128,7 @@ module riscv_if_stage
       `EXC_PC_IRQ:     exc_pc = { boot_addr_i[31:8], 1'b0, exc_vec_pc_mux_i[4:0], 2'b0 };
       // TODO: Add case for EXC_PC_STORE as soon as it differs from load
 
-      default: begin
-        // synopsys translate_off
-        $display("%t: Illegal exc pc_mux value (%0d)!", $time, exc_pc_mux_i);
-        // synopsys translate_on
-      end
+      default:;
     endcase
   end
 
@@ -149,11 +145,7 @@ module riscv_if_stage
       `PC_ERET:      fetch_addr_n = exception_pc_reg_i; // PC is restored when returning from IRQ/exception
       `PC_DBG_NPC:   fetch_addr_n = dbg_npc_i;          // PC is taken from debug unit
 
-      default: begin
-        // synopsys translate_off
-        $display("%t: Illegal pc_mux_sel value (%0d)!", $time, pc_mux_i);
-        // synopsys translate_on
-      end
+      default:;
     endcase
   end
 

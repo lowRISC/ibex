@@ -90,6 +90,7 @@ module riscv_alu
   //                                                                                      //
   //////////////////////////////////////////////////////////////////////////////////////////
 
+  logic        adder_op_b_negate;
   logic [31:0] adder_op_a, adder_op_b;
   logic [35:0] adder_in_a, adder_in_b;
   logic [31:0] adder_result;
@@ -185,6 +186,9 @@ module riscv_alu
   ////////////////////////////////////////
 
   logic        shift_left;         // should we shift left
+  logic        shift_use_round;
+  logic        shift_arithmetic;
+
   logic [31:0] shift_amt_left;     // amount of shift, if to the left
   logic [31:0] shift_amt;          // amount of shift, to the right
   logic [31:0] shift_amt_int;      // amount of shift, used for the actual shifters
