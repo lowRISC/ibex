@@ -59,7 +59,7 @@ module riscv_mult
 
   logic [16:0] short_op_a;
   logic [16:0] short_op_b;
-  logic [31:0] short_mac;
+  logic [33:0] short_mac;
   logic [31:0] short_round, short_round_tmp;
   logic [31:0] short_result;
 
@@ -108,7 +108,7 @@ module riscv_mult
 
   logic [1:0][16:0] dot_short_op_a;
   logic [1:0][16:0] dot_short_op_b;
-  logic [1:0][31:0] dot_short_mul;
+  logic [1:0][33:0] dot_short_mul;
   logic [31:0]      dot_short_result;
 
 
@@ -127,7 +127,9 @@ module riscv_mult
   assign dot_char_mul[2]  = $signed(dot_char_op_a[2]) * $signed(dot_char_op_b[2]);
   assign dot_char_mul[3]  = $signed(dot_char_op_a[3]) * $signed(dot_char_op_b[3]);
 
-  assign dot_char_result  = $signed(dot_char_mul[0]) + $signed(dot_char_mul[1]) + $signed(dot_char_mul[2]) + $signed(dot_char_mul[3]) + $signed(dot_op_c_i);
+  assign dot_char_result  = $signed(dot_char_mul[0]) + $signed(dot_char_mul[1]) +
+                            $signed(dot_char_mul[2]) + $signed(dot_char_mul[3]) +
+                            $signed(dot_op_c_i);
 
 
   assign dot_short_op_a[0] = {dot_signed_i[1] & dot_op_a_i[15], dot_op_a_i[15: 0]};
@@ -139,7 +141,7 @@ module riscv_mult
   assign dot_short_mul[0]  = $signed(dot_short_op_a[0]) * $signed(dot_short_op_b[0]);
   assign dot_short_mul[1]  = $signed(dot_short_op_a[1]) * $signed(dot_short_op_b[1]);
 
-  assign dot_short_result  = $signed(dot_short_mul[0]) + $signed(dot_short_mul[1]) + $signed(dot_op_c_i);
+  assign dot_short_result  = $signed(dot_short_mul[0][31:0]) + $signed(dot_short_mul[1][31:0]) + $signed(dot_op_c_i);
 
 
   ////////////////////////////////////////////////////////

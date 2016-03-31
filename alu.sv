@@ -331,7 +331,7 @@ module riscv_alu
   begin
     cmp_signed = 4'b0;
 
-    case (operator_i)
+    unique case (operator_i)
       `ALU_GTS,
       `ALU_GES,
       `ALU_LTS,
@@ -347,6 +347,8 @@ module riscv_alu
           default:     cmp_signed[3:0] = 4'b1000;
         endcase
       end
+
+      default:;
     endcase
   end
 
@@ -576,7 +578,7 @@ module riscv_alu
       end
 
       `ALU_SHUF2: begin
-        case (vector_mode_i)
+        unique case (vector_mode_i)
           `VEC_MODE8: begin
             shuffle_reg_sel[3] = operand_b_i[26];
             shuffle_reg_sel[2] = operand_b_i[18];
@@ -590,6 +592,8 @@ module riscv_alu
             shuffle_reg_sel[1] = operand_b_i[ 1];
             shuffle_reg_sel[0] = operand_b_i[ 1];
           end
+
+          default:;
         endcase
       end
 
@@ -601,7 +605,7 @@ module riscv_alu
       `ALU_PCKLO,
       `ALU_PCKHI: begin
 
-        case (vector_mode_i)
+        unique case (vector_mode_i)
           `VEC_MODE8: begin
             shuffle_byte_sel[3] = 2'b00;
             shuffle_byte_sel[2] = 2'b00;
@@ -615,12 +619,14 @@ module riscv_alu
             shuffle_byte_sel[1] = 2'b01;
             shuffle_byte_sel[0] = 2'b00;
           end
+
+          default:;
         endcase
       end
 
       `ALU_SHUF2,
       `ALU_SHUF: begin
-        case (vector_mode_i)
+        unique case (vector_mode_i)
           `VEC_MODE8: begin
             shuffle_byte_sel[3] = operand_b_i[25:24];
             shuffle_byte_sel[2] = operand_b_i[17:16];
@@ -634,6 +640,8 @@ module riscv_alu
             shuffle_byte_sel[1] = {operand_b_i[ 0], 1'b1};
             shuffle_byte_sel[0] = {operand_b_i[ 0], 1'b0};
           end
+
+          default:;
         endcase
       end
 
@@ -999,36 +1007,36 @@ module alu_popcnt
   output logic [5: 0]  result_o
 );
 
-  logic [1:0]  cnt_l1[16];
-  logic [2:0]  cnt_l2[8];
-  logic [3:0]  cnt_l3[4];
-  logic [4:0]  cnt_l4[2];
+  logic [15:0][1:0] cnt_l1;
+  logic [ 7:0][2:0] cnt_l2;
+  logic [ 3:0][3:0] cnt_l3;
+  logic [ 1:0][4:0] cnt_l4;
 
   genvar      l, m, n, p;
   generate for(l = 0; l < 16; l++)
     begin
-      assign cnt_l1[l] = in_i[2*l] + in_i[2*l + 1];
+      assign cnt_l1[l] = {1'b0, in_i[2*l]} + {1'b0, in_i[2*l + 1]};
     end
   endgenerate
 
   generate for(m = 0; m < 8; m++)
     begin
-      assign cnt_l2[m] = cnt_l1[2*m] + cnt_l1[2*m + 1];
+      assign cnt_l2[m] = {1'b0, cnt_l1[2*m]} + {1'b0, cnt_l1[2*m + 1]};
     end
   endgenerate
 
   generate for(n = 0; n < 4; n++)
     begin
-      assign cnt_l3[n] = cnt_l2[2*n] + cnt_l2[2*n + 1];
+      assign cnt_l3[n] = {1'b0, cnt_l2[2*n]} + {1'b0, cnt_l2[2*n + 1]};
     end
   endgenerate
 
   generate for(p = 0; p < 2; p++)
     begin
-      assign cnt_l4[p] = cnt_l3[2*p] + cnt_l3[2*p + 1];
+      assign cnt_l4[p] = {1'b0, cnt_l3[2*p]} + {1'b0, cnt_l3[2*p + 1]};
     end
   endgenerate
 
-  assign result_o = cnt_l4[0] + cnt_l4[1];
+  assign result_o = {1'b0, cnt_l4[0]} + {1'b0, cnt_l4[1]};
 
 endmodule

@@ -431,7 +431,7 @@ module riscv_id_stage
   ///////////////////////////////////////////////
 
   // hwloop register id
-  assign hwloop_regid_int = instr[8:7];   // rd contains hwloop register id
+  assign hwloop_regid_int = instr[7];   // rd contains hwloop register id
 
   // hwloop target mux
   always_comb
