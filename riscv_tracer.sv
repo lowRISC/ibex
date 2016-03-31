@@ -294,8 +294,8 @@ module riscv_tracer
           3'b010: mnemonic = "lw";
           3'b100: mnemonic = "lbu";
           3'b101: mnemonic = "lhu";
+          3'b110: mnemonic = "p.elw";
           3'b011,
-          3'b110,
           3'b111: begin
             printMnemonic("INVALID");
             return;
