@@ -546,8 +546,8 @@ module riscv_tracer
     endfunction
   endclass
 
-  mailbox instr_ex = new (2);
-  mailbox instr_wb = new (2);
+  mailbox #(instr_trace_t) instr_ex = new ();
+  mailbox #(instr_trace_t) instr_wb = new ();
 
   // cycle counter
   always_ff @(posedge clk, negedge rst_n)
@@ -612,10 +612,7 @@ module riscv_tracer
         end
       end while (!ex_valid && !wb_bypass); // ex branches bypass the WB stage
 
-      if (wb_bypass)
-        trace.printInstrTrace();
-      else
-        instr_wb.put(trace);
+      instr_wb.put(trace);
     end
   end
 
