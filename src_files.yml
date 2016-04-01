@@ -23,6 +23,9 @@ riscv:
     riscv_core.sv,
   ]
 riscv_vip_rtl:
+  targets: [
+    rtl,
+  ]
   incdirs: [
     include,
   ]
@@ -31,6 +34,9 @@ riscv_vip_rtl:
     riscv_simchecker.sv,
   ]
 riscv_regfile_rtl:
+  targets: [
+    rtl,
+  ]
   incdirs: [
     include,
   ]
@@ -38,6 +44,9 @@ riscv_regfile_rtl:
     register_file.sv,
   ]
 riscv_regfile_fpga:
+  targets: [
+    xilinx,
+  ]
   incdirs: [
     include,
   ]
