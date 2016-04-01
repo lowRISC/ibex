@@ -115,7 +115,6 @@ module riscv_compressed_decoder
                 instr_o = {1'b0, instr_i[10], 5'b0, instr_i[6:2], 2'b01, instr_i[9:7], 3'b101, 2'b01, instr_i[9:7], `OPCODE_OPIMM};
                 if (instr_i[12] == 1'b1)  illegal_instr_o = 1'b1;
                 if (instr_i[6:2] == 5'b0) illegal_instr_o = 1'b1;
-                if (instr_i[9:7] == 5'b0) illegal_instr_o = 1'b1;
               end
 
               2'b10: begin

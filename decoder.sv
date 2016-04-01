@@ -345,11 +345,6 @@ module riscv_decoder
             7'b0101_000: data_type_o = 2'b01; // LH, LHU
             7'b0010_000: data_type_o = 2'b00; // LW
             default: begin
-              data_type_o    = 2'b00;
-              // illegal instruction
-              data_req       = 1'b0;
-              regfile_mem_we = 1'b0;
-              regfile_alu_we = 1'b0;
               illegal_insn_o = 1'b1;
             end
           endcase
