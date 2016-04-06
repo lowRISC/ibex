@@ -52,6 +52,7 @@ module riscv_alu_div
   ///////////////////////////////////////////////////////////////////////////////
 
   logic [C_WIDTH-1:0] ResReg_DP, ResReg_DN;
+  logic [C_WIDTH-1:0] ResReg_DP_rev;
   logic [C_WIDTH-1:0] AReg_DP, AReg_DN;
   logic [C_WIDTH-1:0] BReg_DP, BReg_DN;
 
@@ -85,7 +86,8 @@ module riscv_alu_div
   // attention: logical shift in case of negative operand B!
   assign BMux_D      = (LoadEn_S) ? OpB_DI : {CompInv_SP, (BReg_DP[$high(BReg_DP):1])};
 
-  assign OutMux_D    = (RemSel_SP) ? AReg_DP : {<<{ResReg_DP}};
+  assign ResReg_DP_rev = {<<{ResReg_DP}};
+  assign OutMux_D    = (RemSel_SP) ? AReg_DP : ResReg_DP_rev;
 
   // invert if necessary
   assign Res_DO      = (ResInv_SP) ? -$signed(OutMux_D) : OutMux_D;
