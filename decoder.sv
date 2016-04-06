@@ -547,10 +547,10 @@ module riscv_decoder
             {6'b00_1000, 3'b001}: alu_operator_o = `ALU_FL1;   // Find Last 1
             {6'b00_1000, 3'b010}: alu_operator_o = `ALU_CLB;   // Count Leading Bits
             {6'b00_1000, 3'b011}: alu_operator_o = `ALU_CNT;   // Count set bits (popcount)
-            {6'b00_1000, 3'b100}: alu_operator_o = `ALU_EXTHS; // Sign-extend Half-word
-            {6'b00_1000, 3'b101}: alu_operator_o = `ALU_EXTHZ; // Zero-extend Half-word
-            {6'b00_1000, 3'b110}: alu_operator_o = `ALU_EXTBS; // Sign-extend Byte
-            {6'b00_1000, 3'b111}: alu_operator_o = `ALU_EXTBZ; // Zero-extend Byte
+            {6'b00_1000, 3'b100}: begin alu_operator_o = `ALU_EXTS; alu_vec_mode_o = `VEC_MODE16; end // Sign-extend Half-word
+            {6'b00_1000, 3'b101}: begin alu_operator_o = `ALU_EXT;  alu_vec_mode_o = `VEC_MODE16; end // Zero-extend Half-word
+            {6'b00_1000, 3'b110}: begin alu_operator_o = `ALU_EXTS; alu_vec_mode_o = `VEC_MODE8;  end // Sign-extend Byte
+            {6'b00_1000, 3'b111}: begin alu_operator_o = `ALU_EXT;  alu_vec_mode_o = `VEC_MODE8;  end // Zero-extend Byte
 
             {6'b00_1010, 3'b000}: alu_operator_o = `ALU_ABS;   // p.abs
 
@@ -692,17 +692,11 @@ module riscv_decoder
           6'b01110_0: begin alu_operator_o = `ALU_ABS;  imm_b_mux_sel_o = `IMMB_VS; end // pv.abs
 
           6'b01111_0: begin // pv.extract
-            if (instr_rdata_i[12])
-              alu_operator_o = `ALU_EXTBS;
-            else
-              alu_operator_o = `ALU_EXTHS;
+            alu_operator_o = `ALU_EXTS;
           end
 
           6'b10000_0: begin // pv.extractu
-            if (instr_rdata_i[12])
-              alu_operator_o = `ALU_EXTBZ;
-            else
-              alu_operator_o = `ALU_EXTHZ;
+            alu_operator_o = `ALU_EXT;
           end
 
           6'b10001_0: begin // pv.insert

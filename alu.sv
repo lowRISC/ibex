@@ -473,64 +473,6 @@ module riscv_alu
 
   assign clip_result       = clip_is_lower_u ? '0 : (clip_is_lower_neg ? operand_b_neg : result_minmax);
 
-
-  //////////////////////////////////////////////////
-  //  _____      _                 _              //
-  // | ____|_  _| |_ ___ _ __  ___(_) ___  _ __   //
-  // |  _| \ \/ / __/ _ \ '_ \/ __| |/ _ \| '_ \  //
-  // | |___ >  <| ||  __/ | | \__ \ | (_) | | | | //
-  // |_____/_/\_\\__\___|_| |_|___/_|\___/|_| |_| //
-  //                                              //
-  //////////////////////////////////////////////////
-
-  logic [31:0] result_ext;
-  logic [15:0] ext_half;
-
-  always_comb
-  begin
-    ext_half = 'x;
-
-    case (vector_mode_i)
-      `VEC_MODE16: begin
-        if (imm_vec_ext_i[0])
-          ext_half[15:0] = operand_a_i[31:16];
-        else
-          ext_half[15:0] = operand_a_i[15: 0];
-      end
-
-      `VEC_MODE8: begin
-        case (imm_vec_ext_i[1:0])
-          2'b11: ext_half[7:0] = operand_a_i[31:24];
-          2'b10: ext_half[7:0] = operand_a_i[23:16];
-          2'b01: ext_half[7:0] = operand_a_i[15: 8];
-          2'b00: ext_half[7:0] = operand_a_i[ 7: 0];
-        endcase
-      end
-
-      default: ext_half[15:0] = operand_a_i[15:0];
-    endcase
-  end
-
-  // TODO: look into merging this with shuffle/pack
-  always_comb
-  begin
-    // zero extend byte
-    result_ext = {24'b0, ext_half[7:0]};
-
-    // sign extend byte
-    if (operator_i == `ALU_EXTBS)
-      result_ext = {{24 {ext_half[7]}}, ext_half[7:0]};
-
-    // zero extend half word
-    if(operator_i == `ALU_EXTHZ)
-      result_ext = {16'b0, ext_half[15:0]};
-
-    // sign extend half word
-    if(operator_i == `ALU_EXTHS)
-      result_ext = {{16 {ext_half[15]}}, ext_half[15:0]};
-  end
-
-
   //////////////////////////////////////////////////
   //  ____  _   _ _   _ _____ _____ _     _____   //
   // / ___|| | | | | | |  ___|  ___| |   | ____|  //
@@ -540,27 +482,39 @@ module riscv_alu
   //                                              //
   //////////////////////////////////////////////////
 
-  logic [3:0][1:0] shuffle_byte_sel; // select byte in register: 31:24, 23:16, 15:8, 7:0
-  logic [3:0]      shuffle_reg_sel;  // select register: rD/rS2 or rS1
-  logic            shuffle_regc_sel; // select register rD or rS2 for next stage
-  logic [ 3:0]     shuffle_through;
+  logic [ 3: 0][1:0] shuffle_byte_sel; // select byte in register: 31:24, 23:16, 15:8, 7:0
+  logic [ 3: 0]      shuffle_reg_sel;  // select register: rD/rS2 or rS1
+  logic [ 1: 0]      shuffle_reg1_sel; // select register rD or rS2 for next stage
+  logic [ 3: 0]      shuffle_through;
 
-  logic [31:0]     shuffle_rs1, shuffle_rd;
-  logic [31:0]     shuffle_op_c;
-  logic [31:0]     shuffle_result;
-  logic [31:0]     pack_result;
+  logic [31: 0]      shuffle_r1, shuffle_r0;
+  logic [31: 0]      shuffle_r1_in, shuffle_r0_in;
+  logic [31: 0]      shuffle_result;
+  logic [31: 0]      pack_result;
 
 
   always_comb
   begin
-    shuffle_byte_sel = 'x;
     shuffle_reg_sel  = '0;
-    shuffle_regc_sel = 1'b1;
+    shuffle_reg1_sel = 2'b01;
     shuffle_through  = '1;
 
     unique case(operator_i)
+      `ALU_EXT, `ALU_EXTS: begin
+        if (operator_i == `ALU_EXTS)
+          shuffle_reg1_sel = 2'b11;
+
+        if (vector_mode_i == `VEC_MODE8) begin
+          shuffle_reg_sel[3:1] = 3'b111;
+          shuffle_reg_sel[0]   = 1'b0;
+        end else begin
+          shuffle_reg_sel[3:2] = 2'b11;
+          shuffle_reg_sel[1:0] = 2'b00;
+        end
+      end
+
       `ALU_PCKLO: begin
-        shuffle_regc_sel = 1'b0;
+        shuffle_reg1_sel = 2'b00;
 
         if (vector_mode_i == `VEC_MODE8) begin
           shuffle_through = 4'b0011;
@@ -571,7 +525,7 @@ module riscv_alu
       end
 
       `ALU_PCKHI: begin
-        shuffle_regc_sel = 1'b0;
+        shuffle_reg1_sel = 2'b00;
 
         shuffle_reg_sel = 4'b0100;
         shuffle_through = 4'b1100;
@@ -599,12 +553,37 @@ module riscv_alu
 
       default:;
     endcase
+  end
+
+  always_comb
+  begin
+    shuffle_byte_sel = 'x;
 
     // byte selector
     unique case (operator_i)
+      `ALU_EXTS,
+      `ALU_EXT: begin
+        unique case (vector_mode_i)
+          `VEC_MODE8: begin
+            shuffle_byte_sel[3] = imm_vec_ext_i[1:0];
+            shuffle_byte_sel[2] = imm_vec_ext_i[1:0];
+            shuffle_byte_sel[1] = imm_vec_ext_i[1:0];
+            shuffle_byte_sel[0] = imm_vec_ext_i[1:0];
+          end
+
+          `VEC_MODE16: begin
+            shuffle_byte_sel[3] = {imm_vec_ext_i[0], 1'b1};
+            shuffle_byte_sel[2] = {imm_vec_ext_i[0], 1'b1};
+            shuffle_byte_sel[1] = {imm_vec_ext_i[0], 1'b1};
+            shuffle_byte_sel[0] = {imm_vec_ext_i[0], 1'b0};
+          end
+
+          default:;
+        endcase
+      end
+
       `ALU_PCKLO,
       `ALU_PCKHI: begin
-
         unique case (vector_mode_i)
           `VEC_MODE8: begin
             shuffle_byte_sel[3] = 2'b00;
@@ -649,38 +628,42 @@ module riscv_alu
     endcase
   end
 
-  assign shuffle_op_c = shuffle_regc_sel ? operand_c_i : operand_b_i;
+  assign shuffle_r0_in = operand_a_i;
 
-  assign shuffle_rs1[31:24] = shuffle_byte_sel[3][1] ?
-                                (shuffle_byte_sel[3][0] ? operand_a_i[31:24] : operand_a_i[23:16]) :
-                                (shuffle_byte_sel[3][0] ? operand_a_i[15: 8] : operand_a_i[ 7: 0]);
-  assign shuffle_rs1[23:16] = shuffle_byte_sel[2][1] ?
-                                (shuffle_byte_sel[2][0] ? operand_a_i[31:24] : operand_a_i[23:16]) :
-                                (shuffle_byte_sel[2][0] ? operand_a_i[15: 8] : operand_a_i[ 7: 0]);
-  assign shuffle_rs1[15: 8] = shuffle_byte_sel[1][1] ?
-                                (shuffle_byte_sel[1][0] ? operand_a_i[31:24] : operand_a_i[23:16]) :
-                                (shuffle_byte_sel[1][0] ? operand_a_i[15: 8] : operand_a_i[ 7: 0]);
-  assign shuffle_rs1[ 7: 0] = shuffle_byte_sel[0][1] ?
-                                (shuffle_byte_sel[0][0] ? operand_a_i[31:24] : operand_a_i[23:16]) :
-                                (shuffle_byte_sel[0][0] ? operand_a_i[15: 8] : operand_a_i[ 7: 0]);
+  assign shuffle_r1_in = shuffle_reg1_sel[1] ?
+                                 {{8{operand_a_i[31]}}, {8{operand_a_i[23]}}, {8{operand_a_i[15]}}, {8{operand_a_i[7]}}} :
+                                 (shuffle_reg1_sel[0] ? operand_c_i : operand_b_i);
 
-  assign shuffle_rd[31:24] = shuffle_byte_sel[3][1] ?
-                                (shuffle_byte_sel[3][0] ? shuffle_op_c[31:24] : shuffle_op_c[23:16]) :
-                                (shuffle_byte_sel[3][0] ? shuffle_op_c[15: 8] : shuffle_op_c[ 7: 0]);
-  assign shuffle_rd[23:16] = shuffle_byte_sel[2][1] ?
-                                (shuffle_byte_sel[2][0] ? shuffle_op_c[31:24] : shuffle_op_c[23:16]) :
-                                (shuffle_byte_sel[2][0] ? shuffle_op_c[15: 8] : shuffle_op_c[ 7: 0]);
-  assign shuffle_rd[15: 8] = shuffle_byte_sel[1][1] ?
-                                (shuffle_byte_sel[1][0] ? shuffle_op_c[31:24] : shuffle_op_c[23:16]) :
-                                (shuffle_byte_sel[1][0] ? shuffle_op_c[15: 8] : shuffle_op_c[ 7: 0]);
-  assign shuffle_rd[ 7: 0] = shuffle_byte_sel[0][1] ?
-                                (shuffle_byte_sel[0][0] ? shuffle_op_c[31:24] : shuffle_op_c[23:16]) :
-                                (shuffle_byte_sel[0][0] ? shuffle_op_c[15: 8] : shuffle_op_c[ 7: 0]);
+  assign shuffle_r0[31:24] = shuffle_byte_sel[3][1] ?
+                              (shuffle_byte_sel[3][0] ? shuffle_r0_in[31:24] : shuffle_r0_in[23:16]) :
+                              (shuffle_byte_sel[3][0] ? shuffle_r0_in[15: 8] : shuffle_r0_in[ 7: 0]);
+  assign shuffle_r0[23:16] = shuffle_byte_sel[2][1] ?
+                              (shuffle_byte_sel[2][0] ? shuffle_r0_in[31:24] : shuffle_r0_in[23:16]) :
+                              (shuffle_byte_sel[2][0] ? shuffle_r0_in[15: 8] : shuffle_r0_in[ 7: 0]);
+  assign shuffle_r0[15: 8] = shuffle_byte_sel[1][1] ?
+                              (shuffle_byte_sel[1][0] ? shuffle_r0_in[31:24] : shuffle_r0_in[23:16]) :
+                              (shuffle_byte_sel[1][0] ? shuffle_r0_in[15: 8] : shuffle_r0_in[ 7: 0]);
+  assign shuffle_r0[ 7: 0] = shuffle_byte_sel[0][1] ?
+                              (shuffle_byte_sel[0][0] ? shuffle_r0_in[31:24] : shuffle_r0_in[23:16]) :
+                              (shuffle_byte_sel[0][0] ? shuffle_r0_in[15: 8] : shuffle_r0_in[ 7: 0]);
 
-  assign shuffle_result[31:24] = shuffle_reg_sel[3] ? shuffle_rd[31:24] : shuffle_rs1[31:24];
-  assign shuffle_result[23:16] = shuffle_reg_sel[2] ? shuffle_rd[23:16] : shuffle_rs1[23:16];
-  assign shuffle_result[15: 8] = shuffle_reg_sel[1] ? shuffle_rd[15: 8] : shuffle_rs1[15: 8];
-  assign shuffle_result[ 7: 0] = shuffle_reg_sel[0] ? shuffle_rd[ 7: 0] : shuffle_rs1[ 7: 0];
+  assign shuffle_r1[31:24] = shuffle_byte_sel[3][1] ?
+                              (shuffle_byte_sel[3][0] ? shuffle_r1_in[31:24] : shuffle_r1_in[23:16]) :
+                              (shuffle_byte_sel[3][0] ? shuffle_r1_in[15: 8] : shuffle_r1_in[ 7: 0]);
+  assign shuffle_r1[23:16] = shuffle_byte_sel[2][1] ?
+                              (shuffle_byte_sel[2][0] ? shuffle_r1_in[31:24] : shuffle_r1_in[23:16]) :
+                              (shuffle_byte_sel[2][0] ? shuffle_r1_in[15: 8] : shuffle_r1_in[ 7: 0]);
+  assign shuffle_r1[15: 8] = shuffle_byte_sel[1][1] ?
+                              (shuffle_byte_sel[1][0] ? shuffle_r1_in[31:24] : shuffle_r1_in[23:16]) :
+                              (shuffle_byte_sel[1][0] ? shuffle_r1_in[15: 8] : shuffle_r1_in[ 7: 0]);
+  assign shuffle_r1[ 7: 0] = shuffle_byte_sel[0][1] ?
+                              (shuffle_byte_sel[0][0] ? shuffle_r1_in[31:24] : shuffle_r1_in[23:16]) :
+                              (shuffle_byte_sel[0][0] ? shuffle_r1_in[15: 8] : shuffle_r1_in[ 7: 0]);
+
+  assign shuffle_result[31:24] = shuffle_reg_sel[3] ? shuffle_r1[31:24] : shuffle_r0[31:24];
+  assign shuffle_result[23:16] = shuffle_reg_sel[2] ? shuffle_r1[23:16] : shuffle_r0[23:16];
+  assign shuffle_result[15: 8] = shuffle_reg_sel[1] ? shuffle_r1[15: 8] : shuffle_r0[15: 8];
+  assign shuffle_result[ 7: 0] = shuffle_reg_sel[0] ? shuffle_r1[ 7: 0] : shuffle_r0[ 7: 0];
 
   assign pack_result[31:24] = shuffle_through[3] ? shuffle_result[31:24] : operand_c_i[31:24];
   assign pack_result[23:16] = shuffle_through[2] ? shuffle_result[23:16] : operand_c_i[23:16];
@@ -881,12 +864,10 @@ module riscv_alu
       `ALU_BCLR:  result_o = bclr_result;
       `ALU_BSET:  result_o = bset_result;
 
-      // Extension Operations
-      `ALU_EXTBZ, `ALU_EXTBS,
-      `ALU_EXTHZ, `ALU_EXTHS: result_o = result_ext;
-
       // pack and shuffle operations
-      `ALU_SHUF, `ALU_SHUF2, `ALU_PCKLO, `ALU_PCKHI: result_o = pack_result;
+      `ALU_SHUF,  `ALU_SHUF2,
+      `ALU_PCKLO, `ALU_PCKHI,
+      `ALU_EXT,   `ALU_EXTS: result_o = pack_result;
 
       // Min/Max/Abs/Ins
       `ALU_MIN, `ALU_MINU,
@@ -897,18 +878,12 @@ module riscv_alu
       `ALU_CLIP, `ALU_CLIPU: result_o = clip_result;
 
       // Comparison Operations
-      `ALU_EQ, `ALU_NE, `ALU_GTU, `ALU_GEU, `ALU_LTU, `ALU_LEU, `ALU_GTS, `ALU_GES, `ALU_LTS, `ALU_LES:
-      begin
-        // TODO: Check which comparison operations are actually used
-        //       Probably it's just slts/stlu/slets/sletu plus what is needed
-        //       for branching after the flag is removed
-        result_o = {31'b0, comparison_result_o};
-      end
-
-      // Set Lower Than Operations (result = 1, if a < b)
-      `ALU_SLTS, `ALU_SLTU: result_o = {31'b0, comparison_result_o};
-
-      // Set Lower Equal Than Operations (result = 1, if a <= b)
+      `ALU_EQ,    `ALU_NE,
+      `ALU_GTU,   `ALU_GEU,
+      `ALU_LTU,   `ALU_LEU,
+      `ALU_GTS,   `ALU_GES,
+      `ALU_LTS,   `ALU_LES,
+      `ALU_SLTS,  `ALU_SLTU,
       `ALU_SLETS, `ALU_SLETU: result_o = {31'b0, comparison_result_o};
 
       `ALU_FF1, `ALU_FL1, `ALU_CLB, `ALU_CNT: result_o = {26'h0, bitop_result};

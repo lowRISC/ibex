@@ -123,10 +123,8 @@
 `define ALU_CLB   6'b110101
 
 // Sign-/zero-extensions
-`define ALU_EXTHS 6'b111100
-`define ALU_EXTHZ 6'b111101
-`define ALU_EXTBS 6'b111110
-`define ALU_EXTBZ 6'b111111
+`define ALU_EXTS  6'b111110
+`define ALU_EXT   6'b111111
 
 // Comparisons
 `define ALU_LTS   6'b000000
@@ -234,7 +232,7 @@
 `define OP_A_IMM         2'b10
 `define OP_A_REGB_OR_FWD 2'b11
 
-// immediate b selection
+// immediate a selection
 `define IMMA_Z      1'b0
 `define IMMA_ZERO   1'b1
 
