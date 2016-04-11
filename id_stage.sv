@@ -436,7 +436,7 @@ module riscv_id_stage
   // hwloop target mux
   always_comb
   begin
-    unique case (hwloop_target_mux_sel)
+    case (hwloop_target_mux_sel)
       1'b0: hwloop_target = pc_id_i + {imm_iz_type[30:0], 1'b0};
       1'b1: hwloop_target = pc_id_i + {imm_z_type[30:0], 1'b0};
     endcase
@@ -445,7 +445,7 @@ module riscv_id_stage
   // hwloop start mux
   always_comb
   begin
-    unique case (hwloop_start_mux_sel)
+    case (hwloop_start_mux_sel)
       1'b0: hwloop_start_int = hwloop_target;   // for PC + I imm
       1'b1: hwloop_start_int = pc_if_i;         // for next PC
     endcase
@@ -455,7 +455,7 @@ module riscv_id_stage
   // hwloop cnt mux
   always_comb
   begin : hwloop_cnt_mux
-    unique case (hwloop_cnt_mux_sel)
+    case (hwloop_cnt_mux_sel)
       1'b0: hwloop_cnt_int = imm_iz_type;
       1'b1: hwloop_cnt_int = operand_a_fw_id;
     endcase;

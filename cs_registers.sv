@@ -237,6 +237,8 @@ module riscv_cs_registers
         csr_wdata_int = csr_wdata_i;
         csr_we_int    = 1'b0;
       end
+
+      default:;
     endcase
   end
 
