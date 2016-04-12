@@ -825,9 +825,9 @@ module riscv_alu
     .Res_DO       ( result_div        ),
 
     // Hand-Shake
-    .InVld_SI    ( div_valid         ),
-    .OutRdy_SI   ( ex_ready_i        ),
-    .OutVld_SO   ( div_ready         )
+    .InVld_SI     ( div_valid         ),
+    .OutRdy_SI    ( ex_ready_i        ),
+    .OutVld_SO    ( div_ready         )
   );
 
   ////////////////////////////////////////////////////////
