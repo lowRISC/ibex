@@ -177,6 +177,7 @@
 `define MUL_IR    3'b011
 `define MUL_DOT8  3'b100
 `define MUL_DOT16 3'b101
+`define MUL_H     3'b110
 
 // vector modes
 `define VEC_MODE32 2'b00

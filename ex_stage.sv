@@ -100,6 +100,7 @@ module riscv_ex_stage
   logic        alu_cmp_result;
 
   logic        alu_ready;
+  logic        mult_ready;
 
 
   // EX stage result mux (ALU, MAC unit, CSR)
@@ -160,22 +161,29 @@ module riscv_ex_stage
 
   riscv_mult mult_i
   (
-   .operator_i      ( mult_operator_i      ),
+    .clk             ( clk                  ),
+    .rst_n           ( rst_n                ),
 
-   .short_subword_i ( mult_sel_subword_i   ),
-   .short_signed_i  ( mult_signed_mode_i   ),
+    .enable_i        ( mult_en_i            ),
+    .operator_i      ( mult_operator_i      ),
 
-   .op_a_i          ( mult_operand_a_i     ),
-   .op_b_i          ( mult_operand_b_i     ),
-   .op_c_i          ( mult_operand_c_i     ),
-   .imm_i           ( mult_imm_i           ),
+    .short_subword_i ( mult_sel_subword_i   ),
+    .short_signed_i  ( mult_signed_mode_i   ),
 
-   .dot_op_a_i      ( mult_dot_op_a_i      ),
-   .dot_op_b_i      ( mult_dot_op_b_i      ),
-   .dot_op_c_i      ( mult_dot_op_c_i      ),
-   .dot_signed_i    ( mult_dot_signed_i    ),
+    .op_a_i          ( mult_operand_a_i     ),
+    .op_b_i          ( mult_operand_b_i     ),
+    .op_c_i          ( mult_operand_c_i     ),
+    .imm_i           ( mult_imm_i           ),
 
-   .result_o        ( mult_result          )
+    .dot_op_a_i      ( mult_dot_op_a_i      ),
+    .dot_op_b_i      ( mult_dot_op_b_i      ),
+    .dot_op_c_i      ( mult_dot_op_c_i      ),
+    .dot_signed_i    ( mult_dot_signed_i    ),
+
+    .result_o        ( mult_result          ),
+
+    .ready_o         ( mult_ready           ),
+    .ex_ready_i      ( ex_ready_o           )
   );
 
 
@@ -208,7 +216,7 @@ module riscv_ex_stage
   // As valid always goes to the right and ready to the left, and we are able
   // to finish branches without going to the WB stage, ex_valid does not
   // depend on ex_ready.
-  assign ex_ready_o = (alu_ready & lsu_ready_ex_i & wb_ready_i) | branch_in_ex_i;
-  assign ex_valid_o = (alu_ready & lsu_ready_ex_i & wb_ready_i);
+  assign ex_ready_o = (alu_ready & mult_ready & lsu_ready_ex_i & wb_ready_i) | branch_in_ex_i;
+  assign ex_valid_o = (alu_ready & mult_ready & lsu_ready_ex_i & wb_ready_i);
 
 endmodule
