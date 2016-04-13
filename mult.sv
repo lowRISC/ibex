@@ -126,7 +126,8 @@ module riscv_mult
 
     case (mulh_CS)
       IDLE: begin
-        mulh_ready       = 1'b1;
+        mulh_active = 1'b0;
+        mulh_ready  = 1'b1;
 
         if (((operator_i == `MUL_H) || (operator_i == `MUL_HSU)) && enable_i) begin
           mulh_ready  = 1'b0;
