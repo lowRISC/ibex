@@ -31,6 +31,7 @@ module riscv_decoder
   // singals running to/from controller
   input  logic        deassert_we_i,           // deassert we, we are stalled or not active
   input  logic        data_misaligned_i,       // misaligned data load/store in progress
+  input  logic        mult_multicycle_i,       // multiplier taking multiple cycles, using op c as storage
 
   output logic        illegal_insn_o,          // illegal instruction encountered
   output logic        trap_insn_o,             // trap instruction encountered
@@ -480,6 +481,20 @@ module riscv_decoder
               mult_int_en_o   = 1'b1;
               mult_operator_o = `MUL_MAC32;
               regc_mux_o      = `REGC_ZERO;
+            end
+            //{6'b00_0001, 3'b001}: begin // mulh
+            //  regc_used_o        = 1'b1;
+            //  regc_mux_o         = `REGC_ZERO;
+            //  mult_signed_mode_o = 1'b1;
+            //  mult_int_en_o      = 1'b1;
+            //  mult_operator_o    = `MUL_H;
+            end
+            {6'b00_0001, 3'b011}: begin // mulhu
+              regc_used_o        = 1'b1;
+              regc_mux_o         = `REGC_ZERO;
+              mult_signed_mode_o = 1'b0;
+              mult_int_en_o      = 1'b1;
+              mult_operator_o    = `MUL_H;
             end
             {6'b00_0001, 3'b001}: begin // p.mac
               regc_used_o     = 1'b1;
@@ -945,6 +960,8 @@ module riscv_decoder
       // if post increments are used, we must make sure that for
       // the second memory access we do use the adder
       prepost_useincr_o = 1'b1;
+    end else if (mult_multicycle_i) begin
+      alu_op_c_mux_sel_o = `OP_C_REGC_OR_FWD;
     end
   end
 

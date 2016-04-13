@@ -59,6 +59,8 @@ module riscv_ex_stage
   input  logic [31:0] mult_dot_op_c_i,
   input  logic [ 1:0] mult_dot_signed_i,
 
+  output logic        mult_multicycle_o,
+
   // input from ID stage
   input  logic        branch_in_ex_i,
   input  logic [4:0]  regfile_alu_waddr_i,
@@ -182,6 +184,7 @@ module riscv_ex_stage
 
     .result_o        ( mult_result          ),
 
+    .multicycle_o    ( mult_multicycle_o    ),
     .ready_o         ( mult_ready           ),
     .ex_ready_i      ( ex_ready_o           )
   );

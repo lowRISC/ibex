@@ -111,6 +111,8 @@ module riscv_core
   logic        useincr_addr_ex;   // Active when post increment
   logic        data_misaligned;
 
+  logic        mult_multicycle;
+
   // Jump and branch target and decision (EX->IF)
   logic [31:0] jump_target_id, jump_target_ex;
   logic        branch_in_ex;
@@ -477,6 +479,9 @@ module riscv_core
     .regfile_alu_we_fw_i          ( regfile_alu_we_fw    ),
     .regfile_alu_wdata_fw_i       ( regfile_alu_wdata_fw ),
 
+    // from ALU
+    .mult_multicycle_i            ( mult_multicycle      ),
+
     // Performance Counters
     .perf_jump_o                  ( perf_jump            ),
     .perf_jr_stall_o              ( perf_jr_stall        ),
@@ -521,6 +526,8 @@ module riscv_core
     .mult_dot_op_b_i            ( mult_dot_op_b_ex             ), // from ID/EX pipe registers
     .mult_dot_op_c_i            ( mult_dot_op_c_ex             ), // from ID/EX pipe registers
     .mult_dot_signed_i          ( mult_dot_signed_ex           ), // from ID/EX pipe registers
+
+    .mult_multicycle_o          ( mult_multicycle              ), // to ID/EX pipe registers
 
     // interface with CSRs
     .csr_access_i               ( csr_access_ex                ),

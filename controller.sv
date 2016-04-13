@@ -60,6 +60,9 @@ module riscv_controller
   input  logic        data_req_ex_i,              // data memory access is currently performed in EX stage
   input  logic        data_misaligned_i,
 
+  // from ALU
+  input  logic        mult_multicycle_i,          // multiplier is taken multiple cycles and uses op c as storage
+
   // jump/branch signals
   input  logic        branch_taken_ex_i,          // branch taken signal from EX ALU
   input  logic [1:0]  jump_in_id_i,               // jump is being calculated in ALU
@@ -490,10 +493,12 @@ module riscv_controller
     end
 
     // for misaligned memory accesses
-    if (data_misaligned_i == 1'b1)
+    if (data_misaligned_i)
     begin
       operand_a_fw_mux_sel_o  = `SEL_FW_EX;
       operand_b_fw_mux_sel_o  = `SEL_REGFILE;
+    end else if (mult_multicycle_i) begin
+      operand_c_fw_mux_sel_o  = `SEL_FW_EX;
     end
   end
 

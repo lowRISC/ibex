@@ -180,6 +180,9 @@ module riscv_id_stage
     input  logic        regfile_alu_we_fw_i,
     input  logic [31:0] regfile_alu_wdata_fw_i,
 
+    // from ALU
+    input  logic        mult_multicycle_i,    // when we need multiple cycles in the multiplier and use op c as storage
+
     // Performance Counters
     output logic        perf_jump_o,          // we are executing a jump instruction
     output logic        perf_jr_stall_o,      // jump-register-hazard
@@ -721,6 +724,7 @@ module riscv_id_stage
     // controller related signals
     .deassert_we_i                   ( deassert_we               ),
     .data_misaligned_i               ( data_misaligned_i         ),
+    .mult_multicycle_i               ( mult_multicycle_i         ),
 
     .illegal_insn_o                  ( illegal_insn_dec          ),
     .trap_insn_o                     ( trap_insn                 ),
@@ -833,6 +837,9 @@ module riscv_id_stage
     // LSU
     .data_req_ex_i                  ( data_req_ex_o          ),
     .data_misaligned_i              ( data_misaligned_i      ),
+
+    // ALU
+    .mult_multicycle_i              ( mult_multicycle_i      ),
 
     // jump/branch control
     .branch_taken_ex_i              ( branch_taken_ex        ),
@@ -1072,8 +1079,10 @@ module riscv_id_stage
 
         data_misaligned_ex_o        <= 1'b1;
       end
+    end else if (mult_multicycle_i) begin
+      mult_operand_c_ex_o <= alu_operand_c;
     end
-    else if (~data_misaligned_i) begin
+    else begin
       // normal pipeline unstall case
 
       if (id_valid_o)
