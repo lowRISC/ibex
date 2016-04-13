@@ -35,7 +35,7 @@ module riscv_mult
 
   // integer and short multiplier
   input  logic        short_subword_i,
-  input  logic        short_signed_i,
+  input  logic [ 1:0] short_signed_i,
 
   input  logic [31:0] op_a_i,
   input  logic [31:0] op_b_i,
@@ -109,9 +109,9 @@ module riscv_mult
   // choose between normal short multiplication operation and mulh operation
   assign short_imm         = mulh_active ? mulh_imm         : imm_i;
   assign short_subword     = mulh_active ? mulh_subword     : {2{short_subword_i}};
-  assign short_signed      = mulh_active ? mulh_signed      : {2{short_signed_i}};
-  assign short_shift_arith = mulh_active ? mulh_shift_arith : short_signed_i;
-  assign short_shift_ext   = mulh_active ? 1'b1             : short_signed_i;
+  assign short_signed      = mulh_active ? mulh_signed      : short_signed_i;
+  assign short_shift_arith = mulh_active ? mulh_shift_arith : short_signed_i[0];
+  assign short_shift_ext   = mulh_active ? 1'b1             : short_signed_i[0];
 
   always_comb
   begin
@@ -129,7 +129,7 @@ module riscv_mult
         mulh_active = 1'b0;
         mulh_ready  = 1'b1;
 
-        if (((operator_i == `MUL_H) || (operator_i == `MUL_HSU)) && enable_i) begin
+        if ((operator_i == `MUL_H) && enable_i) begin
           mulh_ready  = 1'b0;
           mulh_NS     = STEP0;
         end
@@ -144,10 +144,7 @@ module riscv_mult
       end
 
       STEP1: begin
-        if (operator_i == `MUL_HSU)
-          mulh_signed = 2'b01;
-        else
-          mulh_signed = {1'b0, short_signed_i};
+        mulh_signed  = {1'b0, short_signed_i[0]};
 
         mulh_subword = 2'b01;
         mulh_save    = 1'b1;
@@ -155,23 +152,17 @@ module riscv_mult
       end
 
       STEP2: begin
-        if (operator_i == `MUL_HSU)
-          mulh_signed = 2'b00;
-        else
-          mulh_signed = {short_signed_i, 1'b0};
+        mulh_signed      = {short_signed_i[1], 1'b0};
 
         mulh_subword     = 2'b10;
-        mulh_shift_arith = short_signed_i;
+        mulh_shift_arith = short_signed_i[0];
         mulh_imm         = 5'd16;
         mulh_save        = 1'b1;
         mulh_NS          = FINISH;
       end
 
       FINISH: begin
-        if (operator_i == `MUL_HSU)
-          mulh_signed = 2'b01;
-        else
-          mulh_signed = {2{short_signed_i}};
+        mulh_signed = short_signed_i;
 
         mulh_subword = 2'b11;
         mulh_ready   = 1'b1;
@@ -279,7 +270,7 @@ module riscv_mult
     unique case (operator_i)
       `MUL_MAC32, `MUL_MSU32: result_o = int_result[31:0];
 
-      `MUL_I, `MUL_IR, `MUL_H, `MUL_HSU: result_o = short_result[31:0];
+      `MUL_I, `MUL_IR, `MUL_H: result_o = short_result[31:0];
 
       `MUL_DOT8:  result_o = dot_char_result[31:0];
       `MUL_DOT16: result_o = dot_short_result[31:0];
@@ -297,19 +288,19 @@ module riscv_mult
 
   // check multiplication result for mulh
   assert property (
-    @(posedge clk) ((mulh_CS == FINISH) && (operator_i == `MUL_H) && (short_signed_i == 1'b1))
+    @(posedge clk) ((mulh_CS == FINISH) && (operator_i == `MUL_H) && (short_signed_i == 2'b11))
     |->
     (result_o == (($signed({{32{op_a_i[31]}}, op_a_i}) * $signed({{32{op_b_i[31]}}, op_b_i})) >>> 32) ) );
 
   // check multiplication result for mulhsu
   assert property (
-    @(posedge clk) ((mulh_CS == FINISH) && (operator_i == `MUL_HSU))
+    @(posedge clk) ((mulh_CS == FINISH) && (operator_i == `MUL_H) && (short_signed_i == 2'b01))
     |->
     (result_o == (($signed({{32{op_a_i[31]}}, op_a_i}) * {32'b0, op_b_i}) >> 32) ) );
 
   // check multiplication result for mulhu
   assert property (
-    @(posedge clk) ((mulh_CS == FINISH) && (operator_i == `MUL_H) && (short_signed_i == 1'b0))
+    @(posedge clk) ((mulh_CS == FINISH) && (operator_i == `MUL_H) && (short_signed_i == 2'b00))
     |->
     (result_o == (({32'b0, op_a_i} * {32'b0, op_b_i}) >> 32) ) );
 endmodule

@@ -142,7 +142,7 @@ module riscv_core
   logic [31:0] mult_operand_c_ex;
   logic        mult_en_ex;
   logic        mult_sel_subword_ex;
-  logic        mult_signed_mode_ex;
+  logic [ 1:0] mult_signed_mode_ex;
   logic [ 4:0] mult_imm_ex;
   logic [31:0] mult_dot_op_a_ex;
   logic [31:0] mult_dot_op_b_ex;

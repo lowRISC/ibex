@@ -109,7 +109,7 @@ module riscv_id_stage
     output logic [31:0] mult_operand_c_ex_o,
     output logic        mult_en_ex_o,
     output logic        mult_sel_subword_ex_o,
-    output logic        mult_signed_mode_ex_o,
+    output logic [ 1:0] mult_signed_mode_ex_o,
     output logic [ 4:0] mult_imm_ex_o,
 
     output logic [31:0] mult_dot_op_a_ex_o,
@@ -272,7 +272,7 @@ module riscv_id_stage
   logic        mult_en;          // multiplication is used instead of ALU
   logic        mult_int_en;      // use integer multiplier
   logic        mult_sel_subword; // Select a subword when doing multiplications
-  logic        mult_signed_mode; // Signed mode multiplication at the output of the controller, and before the pipe registers
+  logic [1:0]  mult_signed_mode; // Signed mode multiplication at the output of the controller, and before the pipe registers
   logic        mult_dot_en;      // use dot product
   logic [1:0]  mult_dot_signed;  // Signed mode dot products (can be mixed types)
 
@@ -1029,7 +1029,7 @@ module riscv_id_stage
       mult_operand_c_ex_o         <= '0;
       mult_en_ex_o                <= 1'b0;
       mult_sel_subword_ex_o       <= 1'b0;
-      mult_signed_mode_ex_o       <= 1'b0;
+      mult_signed_mode_ex_o       <= 2'b00;
       mult_imm_ex_o               <= '0;
 
       mult_dot_op_a_ex_o          <= '0;

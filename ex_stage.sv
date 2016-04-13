@@ -51,7 +51,7 @@ module riscv_ex_stage
   input  logic [31:0] mult_operand_c_i,
   input  logic        mult_en_i,
   input  logic        mult_sel_subword_i,
-  input  logic        mult_signed_mode_i,
+  input  logic [ 1:0] mult_signed_mode_i,
   input  logic [ 4:0] mult_imm_i,
 
   input  logic [31:0] mult_dot_op_a_i,

@@ -68,7 +68,7 @@ module riscv_decoder
   output logic        mult_dot_en_o,           // perform dot multiplication
   output logic [0:0]  mult_imm_mux_o,          // Multiplication immediate mux selector
   output logic        mult_sel_subword_o,      // Select subwords for 16x16 bit of multiplier
-  output logic        mult_signed_mode_o,      // Multiplication in signed mode
+  output logic [1:0]  mult_signed_mode_o,      // Multiplication in signed mode
   output logic [1:0]  mult_dot_signed_o,       // Dot product in signed mode
 
   // register file related signals
@@ -144,7 +144,7 @@ module riscv_decoder
     mult_int_en_o               = 1'b0;
     mult_dot_en_o               = 1'b0;
     mult_imm_mux_o              = `MIMM_ZERO;
-    mult_signed_mode_o          = 1'b0;
+    mult_signed_mode_o          = 2'b00;
     mult_sel_subword_o          = 1'b0;
     mult_dot_signed_o           = 2'b00;
 
@@ -486,21 +486,21 @@ module riscv_decoder
             //{6'b00_0001, 3'b001}: begin // mulh
             //  regc_used_o        = 1'b1;
             //  regc_mux_o         = `REGC_ZERO;
-            //  mult_signed_mode_o = 1'b1;
+            //  mult_signed_mode_o = 2'b11;
             //  mult_int_en_o      = 1'b1;
             //  mult_operator_o    = `MUL_H;
             //end
             //{6'b00_0001, 3'b010}: begin // mulhsu
             //  regc_used_o        = 1'b1;
             //  regc_mux_o         = `REGC_ZERO;
-            //  mult_signed_mode_o = 1'b1;
+            //  mult_signed_mode_o = 2'b01;
             //  mult_int_en_o      = 1'b1;
-            //  mult_operator_o    = `MUL_HSU;
+            //  mult_operator_o    = `MUL_H;
             //end
             {6'b00_0001, 3'b011}: begin // mulhu
               regc_used_o        = 1'b1;
               regc_mux_o         = `REGC_ZERO;
-              mult_signed_mode_o = 1'b0;
+              mult_signed_mode_o = 2'b00;
               mult_int_en_o      = 1'b1;
               mult_operator_o    = `MUL_H;
             end
@@ -604,7 +604,7 @@ module riscv_decoder
         case (instr_rdata_i[13:12])
           2'b00: begin // multiply with subword selection
             mult_sel_subword_o = instr_rdata_i[30];
-            mult_signed_mode_o = instr_rdata_i[31];
+            mult_signed_mode_o = {2{instr_rdata_i[31]}};
 
             mult_imm_mux_o = `MIMM_S3;
             regc_mux_o     = `REGC_ZERO;
@@ -618,7 +618,7 @@ module riscv_decoder
 
           2'b01: begin // MAC with subword selection
             mult_sel_subword_o = instr_rdata_i[30];
-            mult_signed_mode_o = instr_rdata_i[31];
+            mult_signed_mode_o = {2{instr_rdata_i[31]}};
 
             regc_used_o     = 1'b1;
             regc_mux_o      = `REGC_RD;
