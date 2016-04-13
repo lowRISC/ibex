@@ -477,18 +477,26 @@ module riscv_decoder
             {6'b10_0000, 3'b101}: alu_operator_o = `ALU_SRA;   // Shift Right Arithmetic
 
             // supported RV32M instructions
-            {6'b00_0001, 3'b000}: begin // p.mul
+            {6'b00_0001, 3'b000}: begin // mul
               mult_int_en_o   = 1'b1;
               mult_operator_o = `MUL_MAC32;
               regc_mux_o      = `REGC_ZERO;
             end
+            // commented since they currently clash with p.mac and p.msu
             //{6'b00_0001, 3'b001}: begin // mulh
             //  regc_used_o        = 1'b1;
             //  regc_mux_o         = `REGC_ZERO;
             //  mult_signed_mode_o = 1'b1;
             //  mult_int_en_o      = 1'b1;
             //  mult_operator_o    = `MUL_H;
-            end
+            //end
+            //{6'b00_0001, 3'b010}: begin // mulhsu
+            //  regc_used_o        = 1'b1;
+            //  regc_mux_o         = `REGC_ZERO;
+            //  mult_signed_mode_o = 1'b1;
+            //  mult_int_en_o      = 1'b1;
+            //  mult_operator_o    = `MUL_HSU;
+            //end
             {6'b00_0001, 3'b011}: begin // mulhu
               regc_used_o        = 1'b1;
               regc_mux_o         = `REGC_ZERO;
