@@ -114,7 +114,7 @@ module riscv_exc_controller
       end
     end
 
-    if (ecall_insn_i) begin
+    if (ecall_insn_i & (~dbg_settings_i[`DBG_SETS_ECALL])) begin
       cause_int  = 6'b0_01000;
       pc_mux_int = `EXC_PC_ECALL;
     end

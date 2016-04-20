@@ -130,7 +130,7 @@ module riscv_debug_unit
           // CSR access
           if (state_q == FIRST) begin
             // only grant in second cycle, address and data have been latched by then
-            debug_gnt_o = 1'b1; // grant it even when invalid access to not block
+            debug_gnt_o = 1'b0;
             state_n     = SECOND;
 
             if (debug_halted_o) begin
@@ -138,6 +138,7 @@ module riscv_debug_unit
               csr_req_n = 1'b1;
             end
           end else begin
+            debug_gnt_o = 1'b1; // grant it even when invalid access to not block
             state_n     = FIRST;
             csr_we_o    = 1'b1;
           end
@@ -198,7 +199,7 @@ module riscv_debug_unit
               end
             end
 
-            default:;
+            default: debug_gnt_o = 1'b1; // grant it even when invalid access to not block
           endcase
         end
       end else begin
@@ -240,7 +241,7 @@ module riscv_debug_unit
               end
             end
 
-            default:;
+            default: debug_gnt_o = 1'b1; // grant it even when invalid access to not block
           endcase
         end
       end
@@ -463,7 +464,7 @@ module riscv_debug_unit
       if (debug_req_i) begin
         addr_q  <= debug_addr_i;
         wdata_q <= debug_wdata_i;
-        state_q <= FIRST;
+        state_q <= state_n;
       end
 
       if (debug_req_i | debug_rvalid_o) begin
