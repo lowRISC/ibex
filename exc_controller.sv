@@ -34,7 +34,7 @@ module riscv_exc_controller
   output logic        req_o,
   input  logic        ack_i,
 
-  output logic        trap_hit_o,
+  output logic        trap_o,
 
   // to IF stage
   output logic  [1:0] pc_mux_o,       // selects target PC for exception
@@ -45,7 +45,7 @@ module riscv_exc_controller
   input  logic        irq_enable_i,   // interrupt enable bit from CSR
 
   // from decoder
-  input  logic        trap_insn_i,    // trap instruction encountered (EBREAK)
+  input  logic        ebrk_insn_i,    // ebrk instruction encountered (EBREAK)
   input  logic        illegal_insn_i, // illegal instruction encountered
   input  logic        ecall_insn_i,   // ecall instruction encountered
   input  logic        eret_insn_i,    // eret instruction encountered
@@ -58,9 +58,7 @@ module riscv_exc_controller
   output logic        save_cause_o,
 
   // from debug unit
-  input logic         dbg_stop_req_i,
-  input logic         dbg_step_en_i,
-  input logic  [1:0]  dbg_dsr_i
+  input  logic [`DBG_SETS_W-1:0] dbg_settings_i
 );
 
 
@@ -80,18 +78,20 @@ module riscv_exc_controller
   // - illegal instruction exception and IIE bit is set
   // - IRQ and INTE bit is set and no exception is currently running
   // - Debuger requests halt
-  assign trap_hit_o = trap_insn_i
-                      | dbg_stop_req_i
-                      | dbg_step_en_i
-                      | (illegal_insn_i          & dbg_dsr_i[`DSR_IIE])
-                      | (irq_enable_i & (|irq_i) & dbg_dsr_i[`DSR_INTE]);
+  assign trap_o =       (dbg_settings_i[`DBG_SETS_SSTE])
+                      | (ecall_insn_i            & dbg_settings_i[`DBG_SETS_ECALL])
+                      | (lsu_load_err_i          & dbg_settings_i[`DBG_SETS_ELSU])
+                      | (lsu_store_err_i         & dbg_settings_i[`DBG_SETS_ELSU])
+                      | (ebrk_insn_i             & dbg_settings_i[`DBG_SETS_EBRK])
+                      | (illegal_insn_i          & dbg_settings_i[`DBG_SETS_EILL])
+                      | (irq_enable_i & (|irq_i) & dbg_settings_i[`DBG_SETS_IRQ]);
 
   // request for exception/interrupt
-  assign req_int = ecall_insn_i
-                   | lsu_load_err_i
-                   | lsu_store_err_i
-                   | (illegal_insn_i          & (~dbg_dsr_i[`DSR_IIE]))
-                   | (irq_enable_i & (|irq_i) & (~dbg_dsr_i[`DSR_INTE]));
+  assign req_int =   (ecall_insn_i            & (~dbg_settings_i[`DBG_SETS_ECALL]))
+                   | (lsu_load_err_i          & (~dbg_settings_i[`DBG_SETS_ELSU]))
+                   | (lsu_store_err_i         & (~dbg_settings_i[`DBG_SETS_ELSU]))
+                   | (illegal_insn_i          & (~dbg_settings_i[`DBG_SETS_EILL]))
+                   | (irq_enable_i & (|irq_i) & (~dbg_settings_i[`DBG_SETS_IRQ]));
 
 
   // Exception cause and ISR address selection
@@ -100,10 +100,10 @@ module riscv_exc_controller
     cause_int  = 6'b0;
     pc_mux_int = 'x;
 
-    if (irq_enable_i & (~dbg_dsr_i[`DSR_INTE])) begin
+    if (irq_enable_i & (~dbg_settings_i[`DBG_SETS_IRQ])) begin
       // pc_mux_int is a critical signal, so try to get it as soon as possible
       if (|irq_i)
-        pc_mux_int     = `EXC_PC_IRQ;
+        pc_mux_int = `EXC_PC_IRQ;
 
       for (i = 31; i >= 0; i--)
       begin
@@ -119,17 +119,17 @@ module riscv_exc_controller
       pc_mux_int = `EXC_PC_ECALL;
     end
 
-    if (illegal_insn_i & (~dbg_dsr_i[`DSR_IIE])) begin
+    if (illegal_insn_i & (~dbg_settings_i[`DBG_SETS_EILL])) begin
       cause_int  = 6'b0_00010;
       pc_mux_int = `EXC_PC_ILLINSN;
     end
 
-    if (lsu_load_err_i) begin
+    if (lsu_load_err_i & (~dbg_settings_i[`DBG_SETS_ELSU])) begin
       cause_int  = 6'b0_00101;
       pc_mux_int = `EXC_PC_LOAD;
     end
 
-    if (lsu_store_err_i) begin
+    if (lsu_store_err_i & (~dbg_settings_i[`DBG_SETS_ELSU])) begin
       cause_int  = 6'b0_00111;
       pc_mux_int = `EXC_PC_STORE;
     end

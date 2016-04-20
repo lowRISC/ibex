@@ -34,9 +34,10 @@ module riscv_core
 )
 (
   // Clock and Reset
-  input  logic        clk,
-  input  logic        rst_n,
+  input  logic        clk_i,
+  input  logic        rst_ni,
 
+  input  logic        clock_en_i,    // enable clock, otherwise it is gated
   input  logic        test_en_i,     // enable all clock gates for testing
 
   // Core ID, Cluster ID and boot address are considered more or less static
@@ -66,14 +67,15 @@ module riscv_core
   input  logic [31:0] irq_i,                 // level sensitive IR lines
 
   // Debug Interface
-  input  logic        dbginf_stall_i,
-  output logic        dbginf_bp_o,
-  input  logic        dbginf_strobe_i,
-  output logic        dbginf_ack_o,
-  input  logic        dbginf_we_i,
-  input  logic [15:0] dbginf_addr_i,
-  input  logic [31:0] dbginf_data_i,
-  output logic [31:0] dbginf_data_o,
+  input  logic        debug_req_i,
+  output logic        debug_gnt_o,
+  output logic        debug_rvalid_o,
+  input  logic [14:0] debug_addr_i,
+  input  logic        debug_we_i,
+  input  logic [31:0] debug_wdata_i,
+  output logic [31:0] debug_rdata_o,
+  output logic        debug_halted_o,
+  input  logic        debug_halt_i,
 
   // CPU Control Signals
   input  logic        fetch_enable_i,
@@ -84,7 +86,6 @@ module riscv_core
 
   localparam N_HWLP      = 2;
   localparam N_HWLP_BITS = $clog2(N_HWLP);
-
 
   // IF/ID signals
   logic              is_hwlp_id;
@@ -223,22 +224,30 @@ module riscv_core
 
 
   // Debug Unit
+  logic [`DBG_SETS_W-1:0] dbg_settings;
+  logic        dbg_req;
+  logic        dbg_ack;
   logic        dbg_stall;
-  logic        dbg_stop_req;
   logic        dbg_trap;
-  logic        dbg_step_en;     // single-step trace mode enabled
-  logic [1:0]  dbg_dsr;         // Debug Stop Register
 
-  logic        dbg_reg_mux;
-  logic        dbg_sp_mux;
-  logic        dbg_reg_we;
-  logic [11:0] dbg_reg_addr;
-  logic [31:0] dbg_reg_wdata;
+  // Debug GPR Read Access
+  logic        dbg_reg_rreq;
+  logic [ 4:0] dbg_reg_raddr;
   logic [31:0] dbg_reg_rdata;
-  logic [31:0] dbg_rdata;
 
-  logic [31:0] dbg_npc;
-  logic        dbg_set_npc;
+  // Debug GPR Write Access
+  logic        dbg_reg_wreq;
+  logic [ 4:0] dbg_reg_waddr;
+  logic [31:0] dbg_reg_wdata;
+
+  // Debug CSR Access
+  logic        dbg_csr_req;
+  logic [11:0] dbg_csr_addr;
+  logic        dbg_csr_we;
+  logic [31:0] dbg_csr_wdata;
+
+  logic [31:0] dbg_jump_addr;
+  logic        dbg_jump_req;
 
   // Performance Counters
   logic        perf_imiss;
@@ -246,11 +255,24 @@ module riscv_core
   logic        perf_jr_stall;
   logic        perf_ld_stall;
 
+  logic        clk;
+
 
   // if we are sleeping on a barrier let's just wait on the instruction
   // interface to finish loading instructions
   assign core_busy_o = (data_load_event_ex && data_req_o) ? if_busy : (if_busy || core_busy || lsu_busy);
 
+
+  // main clock gate of the core
+  // generates all clocks except the one for the debug unit which is
+  // independent
+  cluster_clock_gating core_clock_gate_i
+  (
+    .clk_i     ( clk_i           ),
+    .en_i      ( clock_en_i      ),
+    .test_en_i ( test_en_i       ),
+    .clk_o     ( clk             )
+  );
 
   //////////////////////////////////////////////////
   //   ___ _____   ____ _____  _    ____ _____    //
@@ -268,7 +290,7 @@ module riscv_core
   if_stage_i
   (
     .clk                 ( clk               ),
-    .rst_n               ( rst_n             ),
+    .rst_n               ( rst_ni            ),
 
     // boot address (trap vector location)
     .boot_addr_i         ( boot_addr_i       ),
@@ -307,8 +329,8 @@ module riscv_core
     .hwlp_cnt_i          ( hwlp_cnt          ),
 
     // from debug unit
-    .dbg_npc_i           ( dbg_npc           ),
-    .dbg_set_npc_i       ( dbg_set_npc       ),
+    .dbg_jump_addr_i     ( dbg_jump_addr     ),
+    .dbg_jump_req_i      ( dbg_jump_req      ),
 
     // Jump targets
     .jump_target_id_i    ( jump_target_id    ),
@@ -340,7 +362,7 @@ module riscv_core
   id_stage_i
   (
     .clk                          ( clk                  ),
-    .rst_n                        ( rst_n                ),
+    .rst_n                        ( rst_ni               ),
 
     .test_en_i                    ( test_en_i            ),
 
@@ -458,17 +480,21 @@ module riscv_core
     .lsu_store_err_i              ( lsu_store_err        ),
 
     // Debug Unit Signals
-    .dbg_stop_req_i               ( dbg_stop_req         ),
-    .dbg_step_en_i                ( dbg_step_en          ),
-    .dbg_dsr_i                    ( dbg_dsr              ),
+    .dbg_settings_i               ( dbg_settings         ),
+    .dbg_req_i                    ( dbg_req              ),
+    .dbg_ack_o                    ( dbg_ack              ),
     .dbg_stall_i                  ( dbg_stall            ),
     .dbg_trap_o                   ( dbg_trap             ),
-    .dbg_reg_mux_i                ( dbg_reg_mux          ),
-    .dbg_reg_we_i                 ( dbg_reg_we           ),
-    .dbg_reg_addr_i               ( dbg_reg_addr[4:0]    ),
-    .dbg_reg_wdata_i              ( dbg_reg_wdata        ),
+
+    .dbg_reg_rreq_i               ( dbg_reg_rreq         ),
+    .dbg_reg_raddr_i              ( dbg_reg_raddr        ),
     .dbg_reg_rdata_o              ( dbg_reg_rdata        ),
-    .dbg_set_npc_i                ( dbg_set_npc          ),
+
+    .dbg_reg_wreq_i               ( dbg_reg_wreq         ),
+    .dbg_reg_waddr_i              ( dbg_reg_waddr        ),
+    .dbg_reg_wdata_i              ( dbg_reg_wdata        ),
+
+    .dbg_jump_req_i               ( dbg_jump_req         ),
 
     // Forward Signals
     .regfile_waddr_wb_i           ( regfile_waddr_fw_wb_o),  // Write address ex-wb pipeline
@@ -501,7 +527,7 @@ module riscv_core
   (
     // Global signals: Clock and active low asynchronous reset
     .clk                        ( clk                          ),
-    .rst_n                      ( rst_n                        ),
+    .rst_n                      ( rst_ni                       ),
 
     // Alu signals from ID stage
     .alu_operator_i             ( alu_operator_ex              ), // from ID/EX pipe registers
@@ -575,7 +601,7 @@ module riscv_core
   riscv_load_store_unit  load_store_unit_i
   (
     .clk                   ( clk                ),
-    .rst_n                 ( rst_n              ),
+    .rst_n                 ( rst_ni             ),
 
     //output to data memory
     .data_req_o            ( data_req_o         ),
@@ -637,14 +663,14 @@ module riscv_core
   cs_registers_i
   (
     .clk                     ( clk                ),
-    .rst_n                   ( rst_n              ),
+    .rst_n                   ( rst_ni             ),
 
     // Core and Cluster ID from outside
     .core_id_i               ( core_id_i          ),
     .cluster_id_i            ( cluster_id_i       ),
 
     // Interface to CSRs (SRAM like)
-    .csr_access_i            ( csr_access_ex      ),
+    .csr_access_i            ( csr_access         ),
     .csr_addr_i              ( csr_addr           ),
     .csr_wdata_i             ( csr_wdata          ),
     .csr_op_i                ( csr_op             ),
@@ -692,14 +718,12 @@ module riscv_core
   );
 
   // Mux for CSR access through Debug Unit
-  assign csr_access   = (dbg_sp_mux == 1'b0) ? csr_access_ex : 1'b1;
-  assign csr_addr     = (dbg_sp_mux == 1'b0) ? csr_addr_int     : dbg_reg_addr;
-  assign csr_wdata    = (dbg_sp_mux == 1'b0) ? alu_operand_a_ex : dbg_reg_wdata;
-  assign csr_op       = (dbg_sp_mux == 1'b0) ? csr_op_ex
-                                             : (dbg_reg_we == 1'b1 ? `CSR_OP_WRITE
-                                                                   : `CSR_OP_NONE );
-  assign dbg_rdata    = (dbg_sp_mux == 1'b0) ? dbg_reg_rdata : csr_rdata;
-
+  assign csr_access   = (dbg_csr_req == 1'b0) ? csr_access_ex : 1'b1;
+  assign csr_addr     = (dbg_csr_req == 1'b0) ? csr_addr_int     : dbg_csr_addr;
+  assign csr_wdata    = (dbg_csr_req == 1'b0) ? alu_operand_a_ex : dbg_csr_wdata;
+  assign csr_op       = (dbg_csr_req == 1'b0) ? csr_op_ex
+                                              : (dbg_csr_we == 1'b1 ? `CSR_OP_WRITE
+                                                                    : `CSR_OP_NONE );
   assign csr_addr_int = csr_access_ex ? alu_operand_b_ex[11:0] : '0;
 
 
@@ -714,34 +738,43 @@ module riscv_core
 
   riscv_debug_unit debug_unit_i
   (
-    .clk             ( clk             ),
-    .rst_n           ( rst_n           ),
+    .clk             ( clk_i           ), // always-running clock for debug
+    .rst_n           ( rst_ni          ),
 
     // Debug Interface
-    .dbginf_stall_i  ( dbginf_stall_i  ),
-    .dbginf_bp_o     ( dbginf_bp_o     ),
-    .dbginf_strobe_i ( dbginf_strobe_i ),
-    .dbginf_ack_o    ( dbginf_ack_o    ),
-    .dbginf_we_i     ( dbginf_we_i     ),
-    .dbginf_addr_i   ( dbginf_addr_i   ),
-    .dbginf_data_i   ( dbginf_data_i   ),
-    .dbginf_data_o   ( dbginf_data_o   ),
+    .debug_req_i     ( debug_req_i     ),
+    .debug_gnt_o     ( debug_gnt_o     ),
+    .debug_rvalid_o  ( debug_rvalid_o  ),
+    .debug_addr_i    ( debug_addr_i    ),
+    .debug_we_i      ( debug_we_i      ),
+    .debug_wdata_i   ( debug_wdata_i   ),
+    .debug_rdata_o   ( debug_rdata_o   ),
+    .debug_halt_i    ( debug_halt_i    ),
+    .debug_halted_o  ( debug_halted_o  ),
 
     // To/From Core
-    .dbg_step_en_o   ( dbg_step_en     ),
-    .dbg_dsr_o       ( dbg_dsr         ),
-
-    .stall_core_o    ( dbg_stall       ),
-    .stop_req_o      ( dbg_stop_req    ),
+    .settings_o      ( dbg_settings    ),
+    .stall_o         ( dbg_stall       ),
+    .dbg_req_o       ( dbg_req         ),
+    .dbg_ack_i       ( dbg_ack         ),
     .trap_i          ( dbg_trap        ),
 
-    // register file access
-    .sp_mux_o        ( dbg_sp_mux      ),
-    .regfile_mux_o   ( dbg_reg_mux     ),
-    .regfile_we_o    ( dbg_reg_we      ),
-    .regfile_addr_o  ( dbg_reg_addr    ),
+    // register file read port
+    .regfile_rreq_o  ( dbg_reg_rreq    ),
+    .regfile_raddr_o ( dbg_reg_raddr   ),
+    .regfile_rdata_i ( dbg_reg_rdata   ),
+
+    // register file write port
+    .regfile_wreq_o  ( dbg_reg_wreq    ),
+    .regfile_waddr_o ( dbg_reg_waddr   ),
     .regfile_wdata_o ( dbg_reg_wdata   ),
-    .regfile_rdata_i ( dbg_rdata       ),
+
+    // CSR read/write port
+    .csr_req_o       ( dbg_csr_req     ),
+    .csr_addr_o      ( dbg_csr_addr    ),
+    .csr_we_o        ( dbg_csr_we      ),
+    .csr_wdata_o     ( dbg_csr_wdata   ),
+    .csr_rdata_i     ( csr_rdata       ),
 
     // signals for PPC and NPC
     .curr_pc_if_i    ( pc_if           ), // from IF stage
@@ -751,16 +784,16 @@ module riscv_core
     .branch_in_ex_i  ( branch_in_ex    ),
     .branch_taken_i  ( branch_decision ),
 
-    .npc_o           ( dbg_npc         ), // PC from debug unit
-    .set_npc_o       ( dbg_set_npc     )  // set PC to new value
+    .jump_addr_o     ( dbg_jump_addr   ), // PC from debug unit
+    .jump_req_o      ( dbg_jump_req    )  // set PC to new value
   );
 
 
 `ifdef TRACE_EXECUTION
   riscv_tracer riscv_tracer_i
   (
-    .clk            ( clk                                  ),
-    .rst_n          ( rst_n                                ),
+    .clk            ( clk_i                                ), // always-running clock for tracing
+    .rst_n          ( rst_ni                               ),
 
     .fetch_enable   ( fetch_enable_i                       ),
     .core_id        ( core_id_i                            ),
@@ -817,8 +850,8 @@ module riscv_core
 
   riscv_simchecker riscv_simchecker_i
   (
-    .clk              ( clk                                  ),
-    .rst_n            ( rst_n                                ),
+    .clk              ( clk_i                                ), // always-running clock for tracing
+    .rst_n            ( rst_ni                               ),
 
     .fetch_enable     ( fetch_enable_i                       ),
     .boot_addr        ( boot_addr_i                          ),

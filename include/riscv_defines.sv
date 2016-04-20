@@ -318,10 +318,14 @@
 
 
 // Debug module
-`define DMR1_ST   22
+`define DBG_SETS_W 6
 
-`define DSR_IIE   0
-`define DSR_INTE  1
+`define DBG_SETS_IRQ     5
+`define DBG_SETS_ECALL   4
+`define DBG_SETS_EILL    3
+`define DBG_SETS_ELSU    2
+`define DBG_SETS_EBRK    1
+`define DBG_SETS_SSTE    0
 
 
 `endif

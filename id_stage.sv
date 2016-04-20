@@ -159,17 +159,21 @@ module riscv_id_stage
     input  logic        lsu_store_err_i,
 
     // Debug Unit Signals
-    input  logic        dbg_stop_req_i,
-    input  logic        dbg_step_en_i,
-    input  logic [1:0]  dbg_dsr_i,
+    input  logic [`DBG_SETS_W-1:0] dbg_settings_i,
+    input  logic        dbg_req_i,
+    output logic        dbg_ack_o,
     input  logic        dbg_stall_i,
     output logic        dbg_trap_o,
-    input  logic        dbg_reg_mux_i,
-    input  logic        dbg_reg_we_i,
-    input  logic [4:0]  dbg_reg_addr_i,
-    input  logic [31:0] dbg_reg_wdata_i,
+
+    input  logic        dbg_reg_rreq_i,
+    input  logic [ 4:0] dbg_reg_raddr_i,
     output logic [31:0] dbg_reg_rdata_o,
-    input  logic        dbg_set_npc_i,
+
+    input  logic        dbg_reg_wreq_i,
+    input  logic [ 4:0] dbg_reg_waddr_i,
+    input  logic [31:0] dbg_reg_wdata_i,
+
+    input  logic        dbg_jump_req_i,
 
     // Forward Signals
     input  logic [4:0]  regfile_waddr_wb_i,
@@ -195,7 +199,7 @@ module riscv_id_stage
   logic        deassert_we;
 
   logic        illegal_insn_dec;
-  logic        trap_insn;
+  logic        ebrk_insn;
   logic        eret_insn_dec;
   logic        ecall_insn_dec;
   logic        pipe_flush_dec;
@@ -240,8 +244,6 @@ module riscv_id_stage
 
   // Signals running between controller and exception controller
   logic        exc_req, exc_ack;  // handshake
-
-  logic        trap_hit;
 
   // Register file interface
   logic [4:0]  regfile_addr_ra_id;
@@ -693,7 +695,7 @@ module riscv_id_stage
     .rdata_b_o    ( regfile_data_rb_id ),
 
     // Read port c
-    .raddr_c_i    ( (dbg_reg_mux_i == 1'b0) ? regfile_addr_rc_id : dbg_reg_addr_i ),
+    .raddr_c_i    ( (dbg_reg_rreq_i == 1'b0) ? regfile_addr_rc_id : dbg_reg_raddr_i ),
     .rdata_c_o    ( regfile_data_rc_id ),
 
     // Write port a
@@ -702,9 +704,9 @@ module riscv_id_stage
     .we_a_i       ( regfile_we_wb_i    ),
 
     // Write port b
-    .waddr_b_i    ( (dbg_reg_mux_i == 1'b0) ? regfile_alu_waddr_fw_i : dbg_reg_addr_i  ),
-    .wdata_b_i    ( (dbg_reg_mux_i == 1'b0) ? regfile_alu_wdata_fw_i : dbg_reg_wdata_i ),
-    .we_b_i       ( (dbg_reg_mux_i == 1'b0) ? regfile_alu_we_fw_i    : dbg_reg_we_i    )
+    .waddr_b_i    ( (dbg_reg_wreq_i == 1'b0) ? regfile_alu_waddr_fw_i : dbg_reg_waddr_i  ),
+    .wdata_b_i    ( (dbg_reg_wreq_i == 1'b0) ? regfile_alu_wdata_fw_i : dbg_reg_wdata_i ),
+    .we_b_i       ( (dbg_reg_wreq_i == 1'b0) ? regfile_alu_we_fw_i    : 1'b1            )
   );
 
   assign dbg_reg_rdata_o = regfile_data_rc_id;
@@ -727,7 +729,7 @@ module riscv_id_stage
     .mult_multicycle_i               ( mult_multicycle_i         ),
 
     .illegal_insn_o                  ( illegal_insn_dec          ),
-    .trap_insn_o                     ( trap_insn                 ),
+    .ebrk_insn_o                     ( ebrk_insn                 ),
     .eret_insn_o                     ( eret_insn_dec             ),
     .ecall_insn_o                    ( ecall_insn_dec            ),
     .pipe_flush_o                    ( pipe_flush_dec            ),
@@ -849,15 +851,15 @@ module riscv_id_stage
     // Exception Controller Signals
     .exc_req_i                      ( exc_req                ),
     .exc_ack_o                      ( exc_ack                ),
-    .trap_hit_i                     ( trap_hit               ),
 
     .exc_save_id_o                  ( exc_save_id_o          ),
     .exc_restore_id_o               ( exc_restore_id_o       ),
 
     // Debug Unit Signals
+    .dbg_req_i                      ( dbg_req_i              ),
+    .dbg_ack_o                      ( dbg_ack_o              ),
     .dbg_stall_i                    ( dbg_stall_i            ),
-    .dbg_set_npc_i                  ( dbg_set_npc_i          ),
-    .dbg_trap_o                     ( dbg_trap_o             ),
+    .dbg_jump_req_i                 ( dbg_jump_req_i         ),
 
     // Forwarding signals from regfile
     .regfile_waddr_ex_i             ( regfile_waddr_ex_o     ), // Write address for register file from ex-wb- pipeline registers
@@ -922,7 +924,7 @@ module riscv_id_stage
     .req_o                ( exc_req          ),
     .ack_i                ( exc_ack          ),
 
-    .trap_hit_o           ( trap_hit         ),
+    .trap_o               ( dbg_trap_o       ),
 
     // to IF stage
     .pc_mux_o             ( exc_pc_mux_o     ),
@@ -932,7 +934,7 @@ module riscv_id_stage
     .irq_i                ( irq_i            ),
     .irq_enable_i         ( irq_enable_i     ),
 
-    .trap_insn_i          ( is_decoding_o & trap_insn        ),
+    .ebrk_insn_i          ( is_decoding_o & ebrk_insn        ),
     .illegal_insn_i       ( is_decoding_o & illegal_insn_dec ),
     .ecall_insn_i         ( is_decoding_o & ecall_insn_dec   ),
     .eret_insn_i          ( is_decoding_o & eret_insn_dec    ),
@@ -943,10 +945,7 @@ module riscv_id_stage
     .cause_o              ( exc_cause_o      ),
     .save_cause_o         ( save_exc_cause_o ),
 
-    // Debug Signals
-    .dbg_stop_req_i       ( dbg_stop_req_i   ),
-    .dbg_step_en_i        ( dbg_step_en_i    ),
-    .dbg_dsr_i            ( dbg_dsr_i        )
+    .dbg_settings_i       ( dbg_settings_i   )
   );
 
 

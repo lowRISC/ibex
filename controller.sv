@@ -72,15 +72,15 @@ module riscv_controller
   input  logic        exc_req_i,
   output logic        exc_ack_o,
 
-  input  logic        trap_hit_i,                 // a trap was hit, so we have to flush EX and WB
-
   output logic        exc_save_id_o,
   output logic        exc_restore_id_o,
 
-  // Debug Unit Signals
+  // Debug Signals
+  input  logic        dbg_req_i,                  // a trap was hit, so we have to flush EX and WB
+  output logic        dbg_ack_o,                  // we stopped and give control to debug now
+
   input  logic        dbg_stall_i,                // Pipeline stall is requested
-  input  logic        dbg_set_npc_i,              // Change PC to value from debug unit
-  output logic        dbg_trap_o,                 // trap hit, inform debug unit
+  input  logic        dbg_jump_req_i,             // Change PC to value from debug unit
 
   // Forwarding signals from regfile
   input  logic [4:0]  regfile_waddr_ex_i,         // FW: write address from EX stage
@@ -179,7 +179,7 @@ module riscv_controller
 
     halt_if_o        = 1'b0;
     halt_id_o        = 1'b0;
-    dbg_trap_o       = 1'b0;
+    dbg_ack_o        = 1'b0;
 
     unique case (ctrl_fsm_cs)
       // We were just reset, wait for fetch_enable
@@ -303,7 +303,7 @@ module riscv_controller
 
           // take care of debug
           // branch conditional will be handled in next state
-          if (trap_hit_i)
+          if (dbg_req_i)
           begin
             // halt pipeline immediately
             halt_if_o = 1'b1;
@@ -332,7 +332,7 @@ module riscv_controller
           // if we want to debug, flush the pipeline
           // the current_pc_if will take the value of the next instruction to
           // be executed (NPC)
-          if (trap_hit_i)
+          if (dbg_req_i)
           begin
             ctrl_fsm_ns = DBG_SIGNAL;
           end
@@ -357,7 +357,7 @@ module riscv_controller
       // can examine our current state
       DBG_SIGNAL:
       begin
-        dbg_trap_o = 1'b1;
+        dbg_ack_o  = 1'b1;
         halt_if_o  = 1'b1;
 
         ctrl_fsm_ns = DBG_WAIT;
@@ -369,13 +369,13 @@ module riscv_controller
       begin
         halt_if_o = 1'b1;
 
-        if(dbg_set_npc_i == 1'b1) begin
+        if (dbg_jump_req_i) begin
           pc_mux_o     = `PC_DBG_NPC;
           pc_set_o     = 1'b1;
           ctrl_fsm_ns  = DBG_WAIT;
         end
 
-        if(dbg_stall_i == 1'b0) begin
+        if (dbg_stall_i == 1'b0) begin
           ctrl_fsm_ns = DECODE;
         end
       end
@@ -385,7 +385,7 @@ module riscv_controller
       begin
         halt_if_o = 1'b1;
 
-        if(ex_valid_i)
+        if (ex_valid_i)
           ctrl_fsm_ns = FLUSH_WB;
       end
 

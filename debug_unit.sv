@@ -1,7 +1,7 @@
-// Copyright 2015 ETH Zurich and University of Bologna.
+// Copyright 2016 ETH Zurich and University of Bologna.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 0.51 (the “License”); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
+// compliance with the License. You may obtain a copy of the License at
 // http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
 // or agreed to in writing, software, hardware and materials distributed under
 // this License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR
@@ -9,11 +9,7 @@
 // specific language governing permissions and limitations under the License.
 
 ////////////////////////////////////////////////////////////////////////////////
-// Engineer:       Florian Glaser - glaserf@ethz.ch                           //
-//                                                                            //
-// Additional contributions by:                                               //
-//                 Andreas Traber - atraber@student.ethz.ch                   //
-//                 Sven Stucki - svstucki@student.ethz.ch                     //
+// Engineer:       Andreas Traber - atraber@iis.ee.ethz.ch                    //
 //                                                                            //
 // Design Name:    Debug Unit                                                 //
 // Project Name:   RI5CY                                                      //
@@ -31,30 +27,41 @@ module riscv_debug_unit
   input logic         clk,
   input logic         rst_n,
 
-  // signals to Debug Interface
-  input  logic        dbginf_stall_i,
-  output logic        dbginf_bp_o,
-  input  logic        dbginf_strobe_i,
-  output logic        dbginf_ack_o,
-  input  logic        dbginf_we_i,
-  input  logic [15:0] dbginf_addr_i,
-  input  logic [31:0] dbginf_data_i,
-  output logic [31:0] dbginf_data_o,
+  // Debug Interface
+  input  logic        debug_req_i,
+  output logic        debug_gnt_o,
+  output logic        debug_rvalid_o,
+  input  logic [14:0] debug_addr_i,
+  input  logic        debug_we_i,
+  input  logic [31:0] debug_wdata_i,
+  output logic [31:0] debug_rdata_o,
+  output logic        debug_halted_o,
+  input  logic        debug_halt_i,
 
   // signals to core
-  output logic        dbg_step_en_o,   // Single-step trace mode enabled
-  output logic [1:0]  dbg_dsr_o,       // debug stop register
+  output logic [`DBG_SETS_W-1:0] settings_o,
 
-  output logic        stall_core_o,
-  output logic        stop_req_o,
-  input  logic        trap_i,
+  input  logic        trap_i,  // trap found, need to stop the core now
+  output logic        stall_o, // after we got control, we control the stall signal
+  output logic        dbg_req_o,
+  input  logic        dbg_ack_i,
 
-  output logic        sp_mux_o,
-  output logic        regfile_mux_o,
-  output logic        regfile_we_o,
-  output logic [11:0] regfile_addr_o,
-  output logic [31:0] regfile_wdata_o,
+  // register file read port
+  output logic        regfile_rreq_o,
+  output logic [ 4:0] regfile_raddr_o,
   input  logic [31:0] regfile_rdata_i,
+
+  // register file write port
+  output logic        regfile_wreq_o,
+  output logic [ 4:0] regfile_waddr_o,
+  output logic [31:0] regfile_wdata_o,
+
+  // CSR read/write port
+  output logic        csr_req_o,
+  output logic [11:0] csr_addr_o,
+  output logic        csr_we_o,
+  output logic [31:0] csr_wdata_o,
+  input  logic [31:0] csr_rdata_i,
 
   // Signals for PPC & NPC register
   input  logic [31:0] curr_pc_if_i,
@@ -64,158 +71,328 @@ module riscv_debug_unit
   input  logic        branch_in_ex_i,
   input  logic        branch_taken_i,
 
-  output logic [31:0] npc_o,
-  output logic        set_npc_o
+  output logic        jump_req_o,
+  output logic [31:0] jump_addr_o
 );
 
+  enum logic [2:0] {RD_NONE, RD_CSR, RD_GPR, RD_DBGA, RD_DBGS} rdata_sel_q, rdata_sel_n;
 
-  // registers for debug control
-  logic [1:0] dsr_q,  dsr_n;  // Debug Stop Register: IIE, INTE
-  logic [1:0] dmr1_q, dmr1_n; // only single step trace and branch trace bits
+  enum logic [0:0] {FIRST, SECOND} state_q, state_n;
 
-  // BP control FSM
-  enum logic [1:0] {Idle, Trap, DebugStall, StallCore} bp_fsm_cs, bp_fsm_ns;
+  logic [`DBG_SETS_W-1:0] settings_q, settings_n;
+
+  // for timing critical register file access we need to keep those in FFs
+  logic [14:0] addr_q;
+  logic [31:0] wdata_q; // mainly for jumps
+  logic        regfile_rreq_q, regfile_rreq_n;
+  logic        jump_req_q, jump_req_n;
+
+  // not timing critical
+  logic        csr_req_q, csr_req_n;
+  logic        regfile_wreq;
+
+
+  enum logic [1:0] {RUNNING, HALT_REQ, HALT} stall_cs, stall_ns;
+  logic [31:0] dbg_rdata;
+  logic        dbg_resume;
+  logic        dbg_halt;
+
 
   // ppc/npc tracking
   enum logic [1:0] {IFID, IFEX, IDEX} pc_tracking_fsm_cs, pc_tracking_fsm_ns;
   logic [31:0] ppc_int, npc_int;
 
-  // ack to debug interface
-  assign dbginf_ack_o = dbginf_strobe_i && ((bp_fsm_cs == StallCore) || (dbginf_addr_i[15:11] == 5'b00110));
-
-
-  always_comb
-  begin
-    bp_fsm_ns    = bp_fsm_cs;
-    stall_core_o = 1'b0;
-    dbginf_bp_o  = 1'b0;
-    stop_req_o   = 1'b0;
-
-    case (bp_fsm_cs)
-      Idle:
-      begin
-        if(trap_i == 1'b1)
-        begin
-          dbginf_bp_o  = 1'b1;
-          stall_core_o = 1'b1;
-          bp_fsm_ns    = StallCore;
-        end
-        else if(dbginf_stall_i)
-        begin
-          stop_req_o   = 1'b1;
-          bp_fsm_ns    = DebugStall;
-        end
-      end
-
-      // A stall from adv dbg unit was seen, flush the pipeline and wait for unstalling
-      DebugStall:
-      begin
-        stop_req_o   = 1'b1;
-
-        if(trap_i == 1'b1)
-        begin
-          stall_core_o = 1'b1;
-          bp_fsm_ns    = StallCore;
-        end
-      end
-
-      StallCore:
-      begin
-        stall_core_o = 1'b1;
-
-        if(~dbginf_stall_i)
-          bp_fsm_ns = Idle;
-      end
-
-      default: bp_fsm_ns = Idle;
-    endcase // case (bp_fsm_cs)
-  end
-
-
-  // data to GPRs and SPRs
-  assign regfile_wdata_o   = dbginf_data_i;
-
-  assign dbg_step_en_o     = dmr1_q[0];
-  assign dbg_dsr_o         = dsr_q;
-
-  assign npc_o             = dbginf_data_i;
-
 
   // address decoding, write and read controller
   always_comb
   begin
-    dmr1_n             = dmr1_q;
-    dsr_n              = dsr_q;
-    dbginf_data_o      = 32'b0;
-    regfile_we_o       = 1'b0;
-    regfile_addr_o     = '0;
-    regfile_mux_o      = 1'b0;
-    sp_mux_o           = 1'b0;
-    set_npc_o          = 1'b0;
+    rdata_sel_n    = RD_NONE;
+    state_n        = FIRST;
 
-    if(dbginf_strobe_i == 1'b1) begin
-      // address decoding, first stage: evaluate higher 5 Bits to detect if debug regs are accessed
-      if(dbginf_addr_i[15:11] == 5'b00110) begin
-        // second stage: evaluate Bits 10:0 to detect which part of debug registers is accessed
-        case (dbginf_addr_i[10:0])
-          11'd0: begin // NPC
-            set_npc_o = dbginf_we_i;
+    debug_gnt_o    = 1'b0;
 
-            dbginf_data_o = npc_int;
+    regfile_rreq_n = 1'b0;
+    regfile_wreq   = 1'b0;
+    csr_req_n      = 1'b0;
+    csr_we_o       = 1'b0;
+    jump_req_n     = 1'b0;
+
+    dbg_resume     = 1'b0;
+    dbg_halt       = 1'b0;
+    settings_n     = settings_q;
+
+    if (debug_req_i) begin
+      if (debug_we_i) begin
+        //----------------------------------------------------------------------------
+        // write access
+        //----------------------------------------------------------------------------
+        if (debug_addr_i[14]) begin
+          // CSR access
+          if (state_q == FIRST) begin
+            // only grant in second cycle, address and data have been latched by then
+            debug_gnt_o = 1'b1; // grant it even when invalid access to not block
+            state_n     = SECOND;
+
+            if (debug_halted_o) begin
+              // access to internal registers are only allowed when the core is halted
+              csr_req_n = 1'b1;
+            end
+          end else begin
+            state_n     = FIRST;
+            csr_we_o    = 1'b1;
           end
+        end else begin
+          // non-CSR access
+          unique case (debug_addr_i[13:8])
+            6'b00_0000: begin // Debug Registers, always accessible
+              debug_gnt_o = 1'b1;
 
-          11'd1: begin // PPC
-            dbginf_data_o = ppc_int;
-          end
+              unique case (debug_addr_i[6:2])
+                5'b0_0000: begin // DBG_CTRL
+                  // RESUME takes precedence over HALT
+                  if (debug_wdata_i[31]) begin
+                    // RESUME set
+                    if (debug_halted_o) begin
+                      dbg_resume = 1'b1;
+                    end
+                  end else if (debug_wdata_i[16]) begin
+                    // HALT set
+                    if (~debug_halted_o) begin
+                      // not halt, so STOP
+                      dbg_halt = 1'b1;
+                    end
+                  end
+                  settings_n[`DBG_SETS_SSTE] = debug_wdata_i[0];
+                end
+                5'b0_0001: begin // DBG_HIT
+                  if (debug_wdata_i[0]) begin
+                    // TODO: clear SSTH sticky bit
+                  end
+                end
+                5'b0_0010: begin // DBG_IE
+                  settings_n[`DBG_SETS_ECALL] = debug_wdata_i[11];
+                  settings_n[`DBG_SETS_ELSU]  = debug_wdata_i[7] | debug_wdata_i[5];
+                  settings_n[`DBG_SETS_EBRK]  = debug_wdata_i[3];
+                  settings_n[`DBG_SETS_EILL]  = debug_wdata_i[2];
+                end
+                default:;
+              endcase
+            end
 
-          11'd16: begin // SP_DMR1
-            if(dbginf_we_i == 1'b1)
-              dmr1_n = dbginf_data_i[`DMR1_ST+1:`DMR1_ST];
-            else
-              dbginf_data_o[`DMR1_ST+1:`DMR1_ST] = dmr1_q;
-          end
+            6'b01_0010: begin // Debug Registers, only accessible when in debug
+              debug_gnt_o = 1'b1; // grant it even when invalid access to not block
 
-          11'd20: begin // SP_DSR
-            // currently we only handle IIE and INTE
-            if(dbginf_we_i == 1'b1)
-              dsr_n = dbginf_data_i[7:6];
-            else
-              dbginf_data_o[7:6] = dsr_q[1:0];
-          end
+              if (debug_halted_o) begin
+                unique case (debug_addr_i[6:2])
+                  5'b0_0001: jump_req_n = 1'b1; // DNPC
+                  default:;
+                endcase
+              end
+            end
 
-          default: ;
-        endcase
-      end
-      // check if internal registers (GPR or SPR) are accessed
-      else if(bp_fsm_cs == StallCore)
-      begin
-        // check if GPRs are accessed
-        if(dbginf_addr_i[15:10] == 6'b000001)
-        begin
-          regfile_mux_o       = 1'b1;
-          regfile_addr_o[4:0] = dbginf_addr_i[4:0];
+            6'b01_0000: begin // General-Purpose Registers
+              debug_gnt_o = 1'b1; // grant it even when invalid access to not block
 
-          if(dbginf_we_i == 1'b1)
-            regfile_we_o  = 1'b1;
-          else
-            dbginf_data_o = regfile_rdata_i;
+              if (debug_halted_o) begin
+                regfile_wreq = 1'b1;
+              end
+            end
+
+            default:;
+          endcase
         end
-        // some other SPR is accessed
-        else
-        begin
-          sp_mux_o       = 1'b1;
-          regfile_addr_o = dbginf_addr_i[11:0];
+      end else begin
+        //----------------------------------------------------------------------------
+        // read access
+        //----------------------------------------------------------------------------
+        if (debug_addr_i[14]) begin
+          debug_gnt_o = 1'b1; // grant it even when invalid access to not block
 
-          if(dbginf_we_i == 1'b1)
-            regfile_we_o = 1'b1;
-          else
-            dbginf_data_o = regfile_rdata_i;
+          // CSR access
+          if (debug_halted_o) begin
+            // access to internal registers are only allowed when the core is halted
+            csr_req_n   = 1'b1;
+            rdata_sel_n = RD_CSR;
+          end
+        end else begin
+          // non-CSR access
+          unique case (debug_addr_i[13:8])
+            6'b00_0000: begin // Debug Registers, always accessible
+              debug_gnt_o = 1'b1;
+
+              rdata_sel_n = RD_DBGA;
+            end
+
+            6'b01_0010: begin // Debug Registers, only accessible when in debug
+              debug_gnt_o = 1'b1; // grant it even when invalid access to not block
+
+              if (debug_halted_o) begin
+                rdata_sel_n = RD_DBGS;
+              end
+            end
+
+            6'b01_0000: begin // General-Purpose Registers
+              debug_gnt_o = 1'b1; // grant it even when invalid access to not block
+
+              if (debug_halted_o) begin
+                regfile_rreq_n = 1'b1;
+                rdata_sel_n    = RD_GPR;
+              end
+            end
+
+            default:;
+          endcase
         end
       end
     end
   end
 
+  //----------------------------------------------------------------------------
+  // debug register read access
+  //
+  // Since those are combinational, we can do it in the cycle where we set
+  // rvalid. The address has been latched into addr_q
+  //----------------------------------------------------------------------------
+  always_comb
+  begin
+    dbg_rdata = '0;
 
+    case (rdata_sel_q)
+      RD_DBGA: begin
+        unique case (addr_q[6:2])
+          5'h00: dbg_rdata[31:0] = {31'b0, settings_q[`DBG_SETS_SSTE]}; // DBG_CTRL
+          5'h01: dbg_rdata[31:0] = {15'b0, debug_halted_o, 16'b0};      // DBG_HIT, TODO: SSTH is missing
+          5'h02: begin // DBG_IE
+            dbg_rdata[31:16] = '0;
+            dbg_rdata[15:12] = '0;
+            dbg_rdata[11]    = settings_q[`DBG_SETS_ECALL];
+            dbg_rdata[10: 8] = '0;
+            dbg_rdata[ 7]    = settings_q[`DBG_SETS_ELSU];
+            dbg_rdata[ 6]    = 1'b0;
+            dbg_rdata[ 5]    = settings_q[`DBG_SETS_ELSU];
+            dbg_rdata[ 4]    = 1'b0;
+            dbg_rdata[ 3]    = settings_q[`DBG_SETS_EBRK];
+            dbg_rdata[ 2]    = settings_q[`DBG_SETS_EILL];
+            dbg_rdata[ 1: 0] = '0;
+          end
+          5'h03: dbg_rdata = '1; // DBG_CAUSE. TODO: maybe take from exc controller directly?
+          5'h10: dbg_rdata = '0; // DBG_BPCTRL0
+          5'h12: dbg_rdata = '0; // DBG_BPCTRL1
+          5'h14: dbg_rdata = '0; // DBG_BPCTRL2
+          5'h16: dbg_rdata = '0; // DBG_BPCTRL3
+          5'h18: dbg_rdata = '0; // DBG_BPCTRL4
+          5'h1A: dbg_rdata = '0; // DBG_BPCTRL5
+          5'h1C: dbg_rdata = '0; // DBG_BPCTRL6
+          5'h1E: dbg_rdata = '0; // DBG_BPCTRL7
+          default:;
+        endcase
+      end
+
+      RD_DBGS: begin
+        unique case (debug_addr_i[2:2])
+          1'b0: dbg_rdata = npc_int; // DBG_NPC
+          1'b1: dbg_rdata = ppc_int; // DBG_PPC
+          default:;
+        endcase
+      end
+
+      default:;
+    endcase
+  end
+
+  //----------------------------------------------------------------------------
+  // read data mux
+  //----------------------------------------------------------------------------
+  always_comb
+  begin
+    debug_rdata_o = '0;
+
+    case (rdata_sel_q)
+      RD_CSR:  debug_rdata_o = csr_rdata_i;
+      RD_GPR:  debug_rdata_o = regfile_rdata_i;
+      RD_DBGA: debug_rdata_o = dbg_rdata;
+      RD_DBGS: debug_rdata_o = dbg_rdata;
+    endcase
+  end
+
+  //----------------------------------------------------------------------------
+  // rvalid generation
+  //----------------------------------------------------------------------------
+  always_ff @(posedge clk, negedge rst_n)
+  begin
+    if (~rst_n) begin
+      debug_rvalid_o <= 1'b0;
+    end else begin
+      debug_rvalid_o <= debug_gnt_o; // always give the rvalid one cycle after gnt
+    end
+  end
+
+  //----------------------------------------------------------------------------
+  // stall control
+  //----------------------------------------------------------------------------
+  always_comb
+  begin
+    stall_ns       = stall_cs;
+    dbg_req_o      = 1'b0;
+    stall_o        = 1'b0;
+    debug_halted_o = 1'b0;
+
+    case (stall_cs)
+      RUNNING: begin
+        if (dbg_halt)
+          stall_ns = HALT_REQ;
+      end
+
+      HALT_REQ: begin
+        dbg_req_o = 1'b1;
+
+        if (dbg_ack_i) // TODO: check if we need to set stall already
+          stall_ns = HALT;
+
+        if (dbg_resume)
+          stall_ns = RUNNING;
+      end
+
+      HALT: begin
+        stall_o        = 1'b1;
+        debug_halted_o = 1'b1;
+
+        if (dbg_resume)
+          stall_ns = RUNNING;
+      end
+    endcase
+
+    // if a trap is found, halt immediately
+    if (trap_i) begin
+      dbg_req_o = 1'b1;
+      stall_ns  = HALT;
+    end
+  end
+
+  always_ff @(posedge clk, negedge rst_n)
+  begin
+    if (~rst_n) begin
+      stall_cs <= RUNNING;
+    end else begin
+      stall_cs <= stall_ns;
+    end
+  end
+
+  //----------------------------------------------------------------------------
+  // rvalid generation
+  //----------------------------------------------------------------------------
+  always_ff @(posedge clk, negedge rst_n)
+  begin
+    if (~rst_n) begin
+      debug_rvalid_o <= 1'b0;
+    end else begin
+      debug_rvalid_o <= debug_gnt_o; // always give the rvalid one cycle after gnt
+    end
+  end
+
+  //----------------------------------------------------------------------------
+  // NPC/PPC selection
+  //----------------------------------------------------------------------------
   always_comb
   begin
     pc_tracking_fsm_ns = pc_tracking_fsm_cs;
@@ -239,7 +416,7 @@ module riscv_debug_unit
         ppc_int = branch_pc_i;
         npc_int = curr_pc_id_i;
 
-        if (set_npc_o)
+        if (jump_req_o)
           pc_tracking_fsm_ns = IFEX;
       end
 
@@ -249,7 +426,7 @@ module riscv_debug_unit
     endcase
 
     // set state if trap is encountered
-    if (stall_core_o && (bp_fsm_cs != StallCore)) begin
+    if (dbg_ack_i) begin
       pc_tracking_fsm_ns = IFID;
 
       if (branch_in_ex_i) begin
@@ -262,20 +439,74 @@ module riscv_debug_unit
   end
 
 
-  always_ff@(posedge clk, negedge rst_n)
+  always_ff @(posedge clk, negedge rst_n)
   begin
-    if (rst_n == 1'b0) begin
-      dmr1_q             <= '0;
-      dsr_q              <= '0;
-      bp_fsm_cs          <= Idle;
+    if (~rst_n) begin
       pc_tracking_fsm_cs <= IFID;
-    end
-    else begin
-      dmr1_q             <= dmr1_n;
-      dsr_q              <= dsr_n;
-      bp_fsm_cs          <= bp_fsm_ns;
+
+      addr_q             <= '0;
+      wdata_q            <= '0;
+      state_q            <= FIRST;
+      rdata_sel_q        <= RD_NONE;
+      regfile_rreq_q     <= 1'b0;
+      csr_req_q          <= 1'b0;
+      jump_req_q         <= 1'b0;
+
+      settings_q         <= 1'b0;
+    end else begin
       pc_tracking_fsm_cs <= pc_tracking_fsm_ns;
+
+      // settings
+      settings_q         <= settings_n;
+
+      // for the actual interface
+      if (debug_req_i) begin
+        addr_q  <= debug_addr_i;
+        wdata_q <= debug_wdata_i;
+        state_q <= FIRST;
+      end
+
+      if (debug_req_i | debug_rvalid_o) begin
+        // wait for either req or rvalid to set those FFs
+        // This makes sure that they are only triggered once when there is
+        // only one request, and the FFs can be properly clock gated otherwise
+        regfile_rreq_q <= regfile_rreq_n;
+        csr_req_q      <= csr_req_n;
+        jump_req_q     <= jump_req_n;
+        rdata_sel_q    <= rdata_sel_n;
+      end
     end
   end
+
+  assign regfile_rreq_o  = regfile_rreq_q;
+  assign regfile_raddr_o = addr_q[6:2];
+
+  assign regfile_wreq_o  = regfile_wreq;
+  assign regfile_waddr_o = debug_addr_i[6:2];
+  assign regfile_wdata_o = debug_wdata_i;
+
+  assign csr_req_o       = csr_req_q;
+  assign csr_addr_o      = addr_q[13:2];
+  assign csr_wdata_o     = wdata_q;
+
+  assign jump_req_o      = jump_req_q;
+  assign jump_addr_o     = wdata_q;
+
+  assign settings_o      = settings_q;
+
+  //----------------------------------------------------------------------------
+  // Assertions
+  //----------------------------------------------------------------------------
+
+  // check that no registers are accessed when we are not in debug mode
+  assert property (
+    @(posedge clk) (debug_req_i) |-> ((debug_halted_o == 1'b1) ||
+                                      ((debug_addr_i[14] != 1'b1) &&
+                                       (debug_addr_i[13:7] != 5'b0_1001)  &&
+                                       (debug_addr_i[13:7] != 5'b0_1000)) ) );
+
+  // check that all accesses are word-aligned
+  assert property (
+    @(posedge clk) (debug_req_i) |-> (debug_addr_i[1:0] == 2'b00) );
 
 endmodule // debug_unit
