@@ -327,5 +327,7 @@
 `define DBG_SETS_EBRK    1
 `define DBG_SETS_SSTE    0
 
+`define DBG_CAUSE_HALT   6'h1F
+
 
 `endif

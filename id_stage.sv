@@ -895,8 +895,9 @@ module riscv_id_stage
     .jr_stall_o                     ( jr_stall               ),
     .load_stall_o                   ( load_stall             ),
 
+    .id_ready_i                     ( id_ready_o             ),
+
     .if_valid_i                     ( if_valid_i             ),
-    .id_valid_i                     ( id_valid_o             ),
     .ex_valid_i                     ( ex_valid_i             ),
     .wb_valid_i                     ( wb_valid_i             ),
 

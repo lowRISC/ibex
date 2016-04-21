@@ -87,11 +87,11 @@ module riscv_exc_controller
                       | (irq_enable_i & (|irq_i) & dbg_settings_i[`DBG_SETS_IRQ]);
 
   // request for exception/interrupt
-  assign req_int =   (ecall_insn_i            & (~dbg_settings_i[`DBG_SETS_ECALL]))
-                   | (lsu_load_err_i          & (~dbg_settings_i[`DBG_SETS_ELSU]))
-                   | (lsu_store_err_i         & (~dbg_settings_i[`DBG_SETS_ELSU]))
-                   | (illegal_insn_i          & (~dbg_settings_i[`DBG_SETS_EILL]))
-                   | (irq_enable_i & (|irq_i) & (~dbg_settings_i[`DBG_SETS_IRQ]));
+  assign req_int =   ecall_insn_i
+                   | lsu_load_err_i
+                   | lsu_store_err_i
+                   | illegal_insn_i
+                   | (irq_enable_i & (|irq_i));
 
 
   // Exception cause and ISR address selection
@@ -100,7 +100,7 @@ module riscv_exc_controller
     cause_int  = 6'b0;
     pc_mux_int = 'x;
 
-    if (irq_enable_i & (~dbg_settings_i[`DBG_SETS_IRQ])) begin
+    if (irq_enable_i) begin
       // pc_mux_int is a critical signal, so try to get it as soon as possible
       if (|irq_i)
         pc_mux_int = `EXC_PC_IRQ;
@@ -114,22 +114,26 @@ module riscv_exc_controller
       end
     end
 
-    if (ecall_insn_i & (~dbg_settings_i[`DBG_SETS_ECALL])) begin
-      cause_int  = 6'b0_01000;
+    if (ebrk_insn_i) begin
+      cause_int  = 6'b0_00011;
+    end
+
+    if (ecall_insn_i) begin
+      cause_int  = 6'b0_01011;
       pc_mux_int = `EXC_PC_ECALL;
     end
 
-    if (illegal_insn_i & (~dbg_settings_i[`DBG_SETS_EILL])) begin
+    if (illegal_insn_i) begin
       cause_int  = 6'b0_00010;
       pc_mux_int = `EXC_PC_ILLINSN;
     end
 
-    if (lsu_load_err_i & (~dbg_settings_i[`DBG_SETS_ELSU])) begin
+    if (lsu_load_err_i) begin
       cause_int  = 6'b0_00101;
       pc_mux_int = `EXC_PC_LOAD;
     end
 
-    if (lsu_store_err_i & (~dbg_settings_i[`DBG_SETS_ELSU])) begin
+    if (lsu_store_err_i) begin
       cause_int  = 6'b0_00111;
       pc_mux_int = `EXC_PC_STORE;
     end
@@ -149,7 +153,7 @@ module riscv_exc_controller
 
 
   // Exception cause and mux output (with bypass)
-  assign cause_o      = (exc_ctrl_cs == IDLE && req_int) ? cause_int  : cause_int_q;
+  assign cause_o      = ((exc_ctrl_cs == IDLE && req_int) || ebrk_insn_i) ? cause_int  : cause_int_q;
   assign pc_mux_o     = (exc_ctrl_cs == IDLE && req_int) ? pc_mux_int : pc_mux_int_q;
 
   // for vectorized IRQ PC mux

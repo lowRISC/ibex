@@ -115,8 +115,9 @@ module riscv_controller
   output logic        jr_stall_o,
   output logic        load_stall_o,
 
+  input  logic        id_ready_i,                 // ID stage is ready
+
   input  logic        if_valid_i,                 // IF stage is done
-  input  logic        id_valid_i,                 // ID stage is done
   input  logic        ex_valid_i,                 // EX stage is done
   input  logic        wb_valid_i,                 // WB stage is done
 
@@ -219,7 +220,7 @@ module riscv_controller
       FIRST_FETCH:
       begin
         // Stall because of IF miss
-        if ((id_valid_i == 1'b1) && (dbg_stall_i == 1'b0))
+        if ((id_ready_i == 1'b1) && (dbg_stall_i == 1'b0))
         begin
           ctrl_fsm_ns = DECODE;
         end
@@ -310,7 +311,7 @@ module riscv_controller
 
             // make sure the current instruction has been executed
             // before changing state to non-decode
-            if (id_valid_i) begin
+            if (id_ready_i) begin
               if (jump_in_id_i == `BRANCH_COND)
                 ctrl_fsm_ns = DBG_WAIT_BRANCH;
               else
@@ -402,7 +403,7 @@ module riscv_controller
           // unstall pipeline and continue operation
           halt_if_o = 1'b0;
 
-          if (id_valid_i)
+          if (id_ready_i)
             ctrl_fsm_ns = DECODE;
         end
       end
@@ -515,7 +516,7 @@ module riscv_controller
       ctrl_fsm_cs <= ctrl_fsm_ns;
 
       // clear when id is valid (no instruction incoming)
-      jump_done_q <= jump_done & (~id_valid_i);
+      jump_done_q <= jump_done & (~id_ready_i);
     end
   end
 

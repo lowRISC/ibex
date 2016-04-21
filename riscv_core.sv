@@ -754,10 +754,11 @@ module riscv_core
 
     // To/From Core
     .settings_o      ( dbg_settings    ),
+    .trap_i          ( dbg_trap        ),
+    .exc_cause_i     ( exc_cause       ),
     .stall_o         ( dbg_stall       ),
     .dbg_req_o       ( dbg_req         ),
     .dbg_ack_i       ( dbg_ack         ),
-    .trap_i          ( dbg_trap        ),
 
     // register file read port
     .regfile_rreq_o  ( dbg_reg_rreq    ),

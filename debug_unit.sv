@@ -41,8 +41,9 @@ module riscv_debug_unit
   // signals to core
   output logic [`DBG_SETS_W-1:0] settings_o,
 
-  input  logic        trap_i,  // trap found, need to stop the core now
-  output logic        stall_o, // after we got control, we control the stall signal
+  input  logic        trap_i,      // trap found, need to stop the core now
+  input  logic [5:0]  exc_cause_i, // if it was a trap, then the exception controller knows more
+  output logic        stall_o,     // after we got control, we control the stall signal
   output logic        dbg_req_o,
   input  logic        dbg_ack_i,
 
@@ -96,6 +97,8 @@ module riscv_debug_unit
   logic [31:0] dbg_rdata;
   logic        dbg_resume;
   logic        dbg_halt;
+  logic [5:0]  dbg_cause_q, dbg_cause_n;
+  logic        dbg_ssth_q,  dbg_ssth_n;
 
 
   // ppc/npc tracking
@@ -150,19 +153,19 @@ module riscv_debug_unit
 
               unique case (debug_addr_i[6:2])
                 5'b0_0000: begin // DBG_CTRL
-                  // RESUME takes precedence over HALT
-                  if (debug_wdata_i[31]) begin
-                    // RESUME set
-                    if (debug_halted_o) begin
-                      dbg_resume = 1'b1;
-                    end
-                  end else if (debug_wdata_i[16]) begin
+                  if (debug_wdata_i[16]) begin
                     // HALT set
                     if (~debug_halted_o) begin
                       // not halt, so STOP
                       dbg_halt = 1'b1;
                     end
+                  end else begin
+                    // RESUME set
+                    if (debug_halted_o) begin
+                      dbg_resume = 1'b1;
+                    end
                   end
+
                   settings_n[`DBG_SETS_SSTE] = debug_wdata_i[0];
                 end
                 5'b0_0001: begin // DBG_HIT
@@ -185,7 +188,7 @@ module riscv_debug_unit
 
               if (debug_halted_o) begin
                 unique case (debug_addr_i[6:2])
-                  5'b0_0001: jump_req_n = 1'b1; // DNPC
+                  5'b0_0000: jump_req_n = 1'b1; // DNPC
                   default:;
                 endcase
               end
@@ -261,8 +264,8 @@ module riscv_debug_unit
     case (rdata_sel_q)
       RD_DBGA: begin
         unique case (addr_q[6:2])
-          5'h00: dbg_rdata[31:0] = {31'b0, settings_q[`DBG_SETS_SSTE]}; // DBG_CTRL
-          5'h01: dbg_rdata[31:0] = {15'b0, debug_halted_o, 16'b0};      // DBG_HIT, TODO: SSTH is missing
+          5'h00: dbg_rdata[31:0] = {15'b0, debug_halted_o, 15'b0, settings_q[`DBG_SETS_SSTE]}; // DBG_CTRL
+          5'h01: dbg_rdata[31:0] = {31'b0, dbg_ssth_q}; // DBG_HIT
           5'h02: begin // DBG_IE
             dbg_rdata[31:16] = '0;
             dbg_rdata[15:12] = '0;
@@ -276,7 +279,7 @@ module riscv_debug_unit
             dbg_rdata[ 2]    = settings_q[`DBG_SETS_EILL];
             dbg_rdata[ 1: 0] = '0;
           end
-          5'h03: dbg_rdata = '1; // DBG_CAUSE. TODO: maybe take from exc controller directly?
+          5'h03: dbg_rdata = {dbg_cause_q[5], 26'b0, dbg_cause_q[4:0]}; // DBG_CAUSE
           5'h10: dbg_rdata = '0; // DBG_BPCTRL0
           5'h12: dbg_rdata = '0; // DBG_BPCTRL1
           5'h14: dbg_rdata = '0; // DBG_BPCTRL2
@@ -337,17 +340,32 @@ module riscv_debug_unit
     dbg_req_o      = 1'b0;
     stall_o        = 1'b0;
     debug_halted_o = 1'b0;
+    dbg_cause_n    = dbg_cause_q;
+    dbg_ssth_n     = dbg_ssth_q;
 
     case (stall_cs)
       RUNNING: begin
-        if (dbg_halt)
-          stall_ns = HALT_REQ;
+        dbg_ssth_n = 1'b0;
+
+        if (dbg_halt | trap_i) begin
+          dbg_req_o   = 1'b1;
+          stall_ns    = HALT_REQ;
+
+          if (trap_i) begin
+            if (settings_q[`DBG_SETS_SSTE])
+              dbg_ssth_n = 1'b1;
+
+            dbg_cause_n = exc_cause_i;
+          end else begin
+            dbg_cause_n = `DBG_CAUSE_HALT;
+          end
+        end
       end
 
       HALT_REQ: begin
         dbg_req_o = 1'b1;
 
-        if (dbg_ack_i) // TODO: check if we need to set stall already
+        if (dbg_ack_i)
           stall_ns = HALT;
 
         if (dbg_resume)
@@ -363,19 +381,18 @@ module riscv_debug_unit
       end
     endcase
 
-    // if a trap is found, halt immediately
-    if (trap_i) begin
-      dbg_req_o = 1'b1;
-      stall_ns  = HALT;
-    end
   end
 
   always_ff @(posedge clk, negedge rst_n)
   begin
     if (~rst_n) begin
-      stall_cs <= RUNNING;
+      stall_cs    <= RUNNING;
+      dbg_cause_q <= `DBG_CAUSE_HALT;
+      dbg_ssth_q  <= 1'b0;
     end else begin
-      stall_cs <= stall_ns;
+      stall_cs    <= stall_ns;
+      dbg_cause_q <= dbg_cause_n;
+      dbg_ssth_q  <= dbg_ssth_n;
     end
   end
 
