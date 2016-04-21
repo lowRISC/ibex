@@ -42,8 +42,8 @@ module riscv_simchecker
 
   input  logic        fetch_enable,
   input  logic [31:0] boot_addr,
-  input  logic [4:0]  core_id,
-  input  logic [4:0]  cluster_id,
+  input  logic [3:0]  core_id,
+  input  logic [5:0]  cluster_id,
 
   input  logic [15:0] instr_compressed,
   input  logic        if_valid,
