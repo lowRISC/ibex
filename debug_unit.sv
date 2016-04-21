@@ -397,18 +397,6 @@ module riscv_debug_unit
   end
 
   //----------------------------------------------------------------------------
-  // rvalid generation
-  //----------------------------------------------------------------------------
-  always_ff @(posedge clk, negedge rst_n)
-  begin
-    if (~rst_n) begin
-      debug_rvalid_o <= 1'b0;
-    end else begin
-      debug_rvalid_o <= debug_gnt_o; // always give the rvalid one cycle after gnt
-    end
-  end
-
-  //----------------------------------------------------------------------------
   // NPC/PPC selection
   //----------------------------------------------------------------------------
   always_comb

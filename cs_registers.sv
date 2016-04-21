@@ -43,8 +43,8 @@ module riscv_cs_registers
   input  logic        rst_n,
 
   // Core and Cluster ID
-  input  logic  [4:0] core_id_i,
-  input  logic  [4:0] cluster_id_i,
+  input  logic  [3:0] core_id_i,
+  input  logic  [5:0] cluster_id_i,
 
   // Interface to registers (SRAM like)
   input  logic        csr_access_i,
@@ -158,7 +158,7 @@ module riscv_cs_registers
       // mimpid: PULP, anonymous source (no allocated ID yet)
       12'hF01: csr_rdata_int = 32'h00_00_80_00;
       // mhartid: unique hardware thread id
-      12'hF10: csr_rdata_int = {22'b0, cluster_id_i, core_id_i};
+      12'hF10: csr_rdata_int = {21'b0, cluster_id_i[5:0], 1'b0, core_id_i[3:0]};
 
       // hardware loops
       12'h7B0: csr_rdata_int = hwlp_start_i[0];

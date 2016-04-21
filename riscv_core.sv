@@ -42,8 +42,8 @@ module riscv_core
 
   // Core ID, Cluster ID and boot address are considered more or less static
   input  logic [31:0] boot_addr_i,
-  input  logic [4:0]  core_id_i,
-  input  logic [4:0]  cluster_id_i,
+  input  logic [ 3:0]  core_id_i,
+  input  logic [ 5:0]  cluster_id_i,
 
   // Instruction memory interface
   output logic                         instr_req_o,
