@@ -160,7 +160,7 @@ module riscv_if_stage
         .req_i             ( req_i                       ),
 
         .branch_i          ( branch_req                  ),
-        .addr_i            ( fetch_addr_n                ),
+        .addr_i            ( {fetch_addr_n[31:1], 1'b0}  ),
 
         .hwloop_i          ( hwlp_jump                   ),
         .hwloop_target_i   ( hwlp_target                 ),
@@ -191,7 +191,7 @@ module riscv_if_stage
         .req_i             ( 1'b1                        ),
 
         .branch_i          ( branch_req                  ),
-        .addr_i            ( fetch_addr_n                ),
+        .addr_i            ( {fetch_addr_n[31:1], 1'b0}  ),
 
         .hwloop_i          ( hwlp_jump                   ),
         .hwloop_target_i   ( hwlp_target                 ),
@@ -381,5 +381,9 @@ module riscv_if_stage
   // there should never be a grant when there is no request
   assert property (
     @(posedge clk) (instr_gnt_i) |-> (instr_req_o) );
+
+  // make sure LSB of fetch_addr_n is always 0
+  assert property (
+    @(posedge clk) (req_i) |-> (~fetch_addr_n[0]) );
 
 endmodule
