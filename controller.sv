@@ -359,7 +359,7 @@ module riscv_controller
       begin
         dbg_ack_o  = 1'b1;
         halt_if_o  = 1'b1;
-        
+
         ctrl_fsm_ns = DBG_WAIT;
       end
 
@@ -367,7 +367,7 @@ module riscv_controller
       begin
         dbg_ack_o  = 1'b1;
         halt_if_o  = 1'b1;
-        
+
         ctrl_fsm_ns = DBG_WAIT_SLEEP;
       end
 
@@ -418,19 +418,19 @@ module riscv_controller
       FLUSH_WB:
       begin
         halt_if_o = 1'b1;
-        
+
         if(fetch_enable_i) begin
           if (dbg_req_i) begin
             ctrl_fsm_ns = DBG_SIGNAL;
           end else begin
-          	ctrl_fsm_ns = DECODE;
-          	halt_if_o   = 1'b0;
+            ctrl_fsm_ns = DECODE;
+            halt_if_o   = 1'b0;
           end
         end else begin
           if (dbg_req_i) begin
             ctrl_fsm_ns = DBG_SIGNAL_SLEEP;
           end else begin
-          	ctrl_fsm_ns = SLEEP;
+            ctrl_fsm_ns = SLEEP;
           end
         end
       end
