@@ -131,7 +131,7 @@ module riscv_controller
   enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
                       DECODE,
                       FLUSH_EX, FLUSH_WB,
-                      DBG_WAIT_BRANCH, DBG_SIGNAL, DBG_WAIT } ctrl_fsm_cs, ctrl_fsm_ns;
+                      DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
 
   logic jump_done, jump_done_q;
 
@@ -301,11 +301,10 @@ module riscv_controller
 
             ctrl_fsm_ns = FLUSH_EX;
           end
-
-          // take care of debug
-          // branch conditional will be handled in next state
-          if (dbg_req_i)
+          else if (dbg_req_i)
           begin
+            // take care of debug
+            // branch conditional will be handled in next state
             // halt pipeline immediately
             halt_if_o = 1'b1;
 
@@ -360,8 +359,33 @@ module riscv_controller
       begin
         dbg_ack_o  = 1'b1;
         halt_if_o  = 1'b1;
-
+        
         ctrl_fsm_ns = DBG_WAIT;
+      end
+
+      DBG_SIGNAL_SLEEP:
+      begin
+        dbg_ack_o  = 1'b1;
+        halt_if_o  = 1'b1;
+        
+        ctrl_fsm_ns = DBG_WAIT_SLEEP;
+      end
+
+      // The Debugger is active in this state
+      // we wait until it is done and go back to SLEEP
+      DBG_WAIT_SLEEP:
+      begin
+        halt_if_o = 1'b1;
+
+        if (dbg_jump_req_i) begin
+          pc_mux_o     = `PC_DBG_NPC;
+          pc_set_o     = 1'b1;
+          ctrl_fsm_ns  = DBG_WAIT;
+        end
+
+        if (dbg_stall_i == 1'b0) begin
+          ctrl_fsm_ns = SLEEP;
+        end
       end
 
       // The Debugger is active in this state
@@ -394,17 +418,20 @@ module riscv_controller
       FLUSH_WB:
       begin
         halt_if_o = 1'b1;
-
-        if (~fetch_enable_i) begin
-          // we are requested to go to sleep
-          if(wb_valid_i)
-            ctrl_fsm_ns = SLEEP;
+        
+        if(fetch_enable_i) begin
+          if (dbg_req_i) begin
+            ctrl_fsm_ns = DBG_SIGNAL;
+          end else begin
+          	ctrl_fsm_ns = DECODE;
+          	halt_if_o   = 1'b0;
+          end
         end else begin
-          // unstall pipeline and continue operation
-          halt_if_o = 1'b0;
-
-          if (id_ready_i)
-            ctrl_fsm_ns = DECODE;
+          if (dbg_req_i) begin
+            ctrl_fsm_ns = DBG_SIGNAL_SLEEP;
+          end else begin
+          	ctrl_fsm_ns = SLEEP;
+          end
         end
       end
 
