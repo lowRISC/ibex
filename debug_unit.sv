@@ -100,6 +100,8 @@ module riscv_debug_unit
   logic [5:0]  dbg_cause_q, dbg_cause_n;
   logic        dbg_ssth_q,  dbg_ssth_n;
 
+  logic        ssth_clear;
+
 
   // ppc/npc tracking
   enum logic [1:0] {IFID, IFEX, IDEX} pc_tracking_fsm_cs, pc_tracking_fsm_ns;
@@ -123,6 +125,8 @@ module riscv_debug_unit
     dbg_resume     = 1'b0;
     dbg_halt       = 1'b0;
     settings_n     = settings_q;
+
+    ssth_clear     = 1'b0;
 
     if (debug_req_i) begin
       if (debug_we_i) begin
@@ -169,9 +173,7 @@ module riscv_debug_unit
                   settings_n[`DBG_SETS_SSTE] = debug_wdata_i[0];
                 end
                 5'b0_0001: begin // DBG_HIT
-                  if (debug_wdata_i[0]) begin
-                    // TODO: clear SSTH sticky bit
-                  end
+                  ssth_clear = debug_wdata_i[0];
                 end
                 5'b0_0010: begin // DBG_IE
                   settings_n[`DBG_SETS_ECALL] = debug_wdata_i[11];
@@ -381,6 +383,8 @@ module riscv_debug_unit
       end
     endcase
 
+    if (ssth_clear)
+      dbg_ssth_n = 1'b0;
   end
 
   always_ff @(posedge clk, negedge rst_n)

@@ -32,7 +32,7 @@ module riscv_controller
   input  logic        rst_n,
 
   input  logic        fetch_enable_i,             // Start the decoding
-  output logic        core_busy_o,                // Core is busy processing instructions
+  output logic        ctrl_busy_o,                // Core is busy processing instructions
   output logic        is_decoding_o,              // Core is in decoding state
 
   // decoder related signals
@@ -175,7 +175,7 @@ module riscv_controller
 
     ctrl_fsm_ns      = ctrl_fsm_cs;
 
-    core_busy_o      = 1'b1;
+    ctrl_busy_o      = 1'b1;
     is_decoding_o    = 1'b0;
 
     halt_if_o        = 1'b0;
@@ -186,7 +186,7 @@ module riscv_controller
       // We were just reset, wait for fetch_enable
       RESET:
       begin
-        core_busy_o   = 1'b0;
+        ctrl_busy_o   = 1'b0;
         instr_req_o   = 1'b0;
 
         if (fetch_enable_i == 1'b1)
@@ -208,14 +208,27 @@ module riscv_controller
       begin
         // we begin execution when either fetch_enable is high or an
         // interrupt has arrived
-        core_busy_o   = 1'b0;
+        ctrl_busy_o   = 1'b0;
         instr_req_o   = 1'b0;
+        halt_if_o = 1'b1;
+        halt_id_o = 1'b1;
 
-        if (fetch_enable_i || exc_req_i)
-        begin
-          ctrl_fsm_ns  = FIRST_FETCH;
+        if (dbg_req_i) begin
+          // debug request, now we need to check if we should stay sleeping or
+          // go to normal processing later
+          if (fetch_enable_i || exc_req_i)
+            ctrl_fsm_ns = DBG_SIGNAL;
+          else
+            ctrl_fsm_ns = DBG_SIGNAL_SLEEP;
+
+        end else begin
+          // no debug request incoming, normal execution flow
+          if (fetch_enable_i || exc_req_i)
+          begin
+            ctrl_fsm_ns  = FIRST_FETCH;
+          end
         end
-      end // case: SLEEP
+      end
 
       FIRST_FETCH:
       begin
@@ -409,6 +422,7 @@ module riscv_controller
       FLUSH_EX:
       begin
         halt_if_o = 1'b1;
+        halt_id_o = 1'b1;
 
         if (ex_valid_i)
           ctrl_fsm_ns = FLUSH_WB;
@@ -418,6 +432,7 @@ module riscv_controller
       FLUSH_WB:
       begin
         halt_if_o = 1'b1;
+        halt_id_o = 1'b1;
 
         if(fetch_enable_i) begin
           if (dbg_req_i) begin

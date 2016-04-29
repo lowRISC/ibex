@@ -119,7 +119,7 @@ module riscv_core
   logic        branch_in_ex;
   logic        branch_decision;
 
-  logic        core_busy;
+  logic        ctrl_busy;
   logic        if_busy;
   logic        lsu_busy;
 
@@ -255,12 +255,28 @@ module riscv_core
   logic        perf_jr_stall;
   logic        perf_ld_stall;
 
+
+  //////////////////////////////////////////////////////////////////////////////////////////////
+  //   ____ _            _      __  __                                                   _    //
+  //  / ___| | ___   ___| | __ |  \/  | __ _ _ __   __ _  __ _  ___ _ __ ___   ___ _ __ | |_  //
+  // | |   | |/ _ \ / __| |/ / | |\/| |/ _` | '_ \ / _` |/ _` |/ _ \ '_ ` _ \ / _ \ '_ \| __| //
+  // | |___| | (_) | (__|   <  | |  | | (_| | | | | (_| | (_| |  __/ | | | | |  __/ | | | |_  //
+  //  \____|_|\___/ \___|_|\_\ |_|  |_|\__,_|_| |_|\__,_|\__, |\___|_| |_| |_|\___|_| |_|\__| //
+  //                                                     |___/                                //
+  //////////////////////////////////////////////////////////////////////////////////////////////
+
   logic        clk;
 
+  logic        clock_en;
+  logic        dbg_busy;
 
   // if we are sleeping on a barrier let's just wait on the instruction
   // interface to finish loading instructions
-  assign core_busy_o = (data_load_event_ex && data_req_o) ? if_busy : (if_busy || core_busy || lsu_busy);
+  assign core_busy_o = (data_load_event_ex & data_req_o) ? if_busy : (if_busy | ctrl_busy | lsu_busy);
+
+  assign dbg_busy = dbg_req | dbg_csr_req | dbg_jump_req | dbg_reg_wreq;
+
+  assign clock_en = clock_en_i | core_busy_o | dbg_busy;
 
 
   // main clock gate of the core
@@ -269,7 +285,7 @@ module riscv_core
   cluster_clock_gating core_clock_gate_i
   (
     .clk_i     ( clk_i           ),
-    .en_i      ( clock_en_i      ),
+    .en_i      ( clock_en        ),
     .test_en_i ( test_en_i       ),
     .clk_o     ( clk             )
   );
@@ -368,7 +384,7 @@ module riscv_core
 
     // Processor Enable
     .fetch_enable_i               ( fetch_enable_i       ),
-    .core_busy_o                  ( core_busy            ),
+    .ctrl_busy_o                  ( ctrl_busy            ),
     .is_decoding_o                ( is_decoding          ),
 
     // Interface to instruction memory

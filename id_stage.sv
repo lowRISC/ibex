@@ -40,7 +40,7 @@ module riscv_id_stage
     input  logic        test_en_i,
 
     input  logic        fetch_enable_i,
-    output logic        core_busy_o,
+    output logic        ctrl_busy_o,
     output logic        is_decoding_o,
 
     // Interface to IF stage
@@ -812,7 +812,7 @@ module riscv_id_stage
     .rst_n                          ( rst_n                  ),
 
     .fetch_enable_i                 ( fetch_enable_i         ),
-    .core_busy_o                    ( core_busy_o            ),
+    .ctrl_busy_o                    ( ctrl_busy_o            ),
     .is_decoding_o                  ( is_decoding_o          ),
 
     // decoder related signals
