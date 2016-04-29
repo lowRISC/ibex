@@ -185,7 +185,7 @@ module riscv_debug_unit
               endcase
             end
 
-            6'b01_0010: begin // Debug Registers, only accessible when in debug
+            6'b10_0000: begin // Debug Registers, only accessible when in debug
               debug_gnt_o = 1'b1; // grant it even when invalid access to not block
 
               if (debug_halted_o) begin
@@ -196,7 +196,7 @@ module riscv_debug_unit
               end
             end
 
-            6'b01_0000: begin // General-Purpose Registers
+            6'b00_0100: begin // General-Purpose Registers
               debug_gnt_o = 1'b1; // grant it even when invalid access to not block
 
               if (debug_halted_o) begin
@@ -229,7 +229,7 @@ module riscv_debug_unit
               rdata_sel_n = RD_DBGA;
             end
 
-            6'b01_0010: begin // Debug Registers, only accessible when in debug
+            6'b10_0000: begin // Debug Registers, only accessible when in debug
               debug_gnt_o = 1'b1; // grant it even when invalid access to not block
 
               if (debug_halted_o) begin
@@ -237,7 +237,7 @@ module riscv_debug_unit
               end
             end
 
-            6'b01_0000: begin // General-Purpose Registers
+            6'b00_0100: begin // General-Purpose Registers
               debug_gnt_o = 1'b1; // grant it even when invalid access to not block
 
               if (debug_halted_o) begin
