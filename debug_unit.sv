@@ -347,7 +347,7 @@ module riscv_debug_unit
       RUNNING: begin
         dbg_ssth_n = 1'b0;
 
-        if (dbg_halt | trap_i) begin
+        if (dbg_halt | debug_halt_i | trap_i) begin
           dbg_req_o   = 1'b1;
           stall_ns    = HALT_REQ;
 
@@ -509,7 +509,8 @@ module riscv_debug_unit
     @(posedge clk) (debug_req_i) |-> ((debug_halted_o == 1'b1) ||
                                       ((debug_addr_i[14] != 1'b1) &&
                                        (debug_addr_i[13:7] != 5'b0_1001)  &&
-                                       (debug_addr_i[13:7] != 5'b0_1000)) ) );
+                                       (debug_addr_i[13:7] != 5'b0_1000)) ) )
+    else $warning("Trying to access internal debug registers while core is not stalled");
 
   // check that all accesses are word-aligned
   assert property (
