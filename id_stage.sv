@@ -82,7 +82,7 @@ module riscv_id_stage
     input  logic        wb_valid_i,     // WB stage is done
 
     // Pipeline ID/EX
-    output logic [31:0] branch_pc_ex_o,
+    output logic [31:0] pc_ex_o,
 
     output logic [31:0] alu_operand_a_ex_o,
     output logic [31:0] alu_operand_b_ex_o,
@@ -137,7 +137,6 @@ module riscv_id_stage
     output logic [1:0]  data_type_ex_o,
     output logic        data_sign_ext_ex_o,
     output logic [1:0]  data_reg_offset_ex_o,
-    output logic [31:0] data_pc_ex_o,
     output logic        data_load_event_ex_o,
 
     output logic        data_misaligned_ex_o,
@@ -839,6 +838,7 @@ module riscv_id_stage
     // LSU
     .data_req_ex_i                  ( data_req_ex_o          ),
     .data_misaligned_i              ( data_misaligned_i      ),
+    .data_load_event_i              ( data_load_event_ex_o   ),
 
     // ALU
     .mult_multicycle_i              ( mult_multicycle_i      ),
@@ -998,17 +998,6 @@ module riscv_id_stage
   //  |___|____/      |_____/_/\_\ |_|  |___|_|   |_____|_____|___|_| \_|_____|  //
   //                                                                             //
   /////////////////////////////////////////////////////////////////////////////////
-  always_ff @(posedge clk, negedge rst_n)
-  begin
-    if (rst_n == 1'b0)
-    begin
-      branch_pc_ex_o <= '0;
-    end
-    else begin
-      if (jump_in_id == `BRANCH_COND && id_valid_o)
-        branch_pc_ex_o <= pc_id_i;
-    end
-  end
 
   always_ff @(posedge clk, negedge rst_n)
   begin : ID_EX_PIPE_REGISTERS
@@ -1052,10 +1041,11 @@ module riscv_id_stage
       data_sign_ext_ex_o          <= 1'b0;
       data_reg_offset_ex_o        <= 2'b0;
       data_req_ex_o               <= 1'b0;
-      data_pc_ex_o                <= '0;
       data_load_event_ex_o        <= 1'b0;
 
       data_misaligned_ex_o        <= 1'b0;
+
+      pc_ex_o                     <= '0;
 
       branch_in_ex_o              <= 1'b0;
 
@@ -1139,18 +1129,16 @@ module riscv_id_stage
           data_type_ex_o            <= data_type_id;
           data_sign_ext_ex_o        <= data_sign_ext_id;
           data_reg_offset_ex_o      <= data_reg_offset_id;
-
-          if (data_load_event_id) begin
-            data_pc_ex_o            <= pc_id_i;
-            data_load_event_ex_o    <= 1'b1;
-          end else begin
-            data_load_event_ex_o    <= 1'b0;
-          end
+          data_load_event_ex_o      <= data_load_event_id;;
         end else begin
           data_load_event_ex_o      <= 1'b0;
         end
 
         data_misaligned_ex_o        <= 1'b0;
+
+        if ((jump_in_id == `BRANCH_COND) || data_load_event_id) begin
+          pc_ex_o                   <= pc_id_i;
+        end
 
         branch_in_ex_o              <= jump_in_id == `BRANCH_COND;
       end else if(ex_ready_i) begin

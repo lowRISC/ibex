@@ -59,6 +59,7 @@ module riscv_controller
   // LSU
   input  logic        data_req_ex_i,              // data memory access is currently performed in EX stage
   input  logic        data_misaligned_i,
+  input  logic        data_load_event_i,
 
   // from ALU
   input  logic        mult_multicycle_i,          // multiplier is taken multiple cycles and uses op c as storage
@@ -328,6 +329,13 @@ module riscv_controller
                 ctrl_fsm_ns = DBG_WAIT_BRANCH;
               else
                 ctrl_fsm_ns = DBG_SIGNAL;
+            end else if (data_load_event_i) begin
+              // special case for p.elw
+              // If there was a load event (which means p.elw), we go to debug
+              // even though we are still blocked
+              // we don't have to distuinguish between branch and non-branch,
+              // since the p.elw sits in the EX stage
+              ctrl_fsm_ns = DBG_SIGNAL;
             end
           end
         end

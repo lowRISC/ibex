@@ -65,9 +65,11 @@ module riscv_debug_unit
   input  logic [31:0] csr_rdata_i,
 
   // Signals for PPC & NPC register
-  input  logic [31:0] curr_pc_if_i,
-  input  logic [31:0] curr_pc_id_i,
-  input  logic [31:0] branch_pc_i,
+  input  logic [31:0] pc_if_i,
+  input  logic [31:0] pc_id_i,
+  input  logic [31:0] pc_ex_i,
+
+  input  logic        data_load_event_i,
 
   input  logic        branch_in_ex_i,
   input  logic        branch_taken_i,
@@ -407,24 +409,24 @@ module riscv_debug_unit
   begin
     pc_tracking_fsm_ns = pc_tracking_fsm_cs;
 
-    ppc_int = curr_pc_id_i;
-    npc_int = curr_pc_if_i;
+    ppc_int = pc_id_i;
+    npc_int = pc_if_i;
 
     // PPC/NPC mux
     unique case (pc_tracking_fsm_cs)
       IFID: begin
-        ppc_int = curr_pc_id_i;
-        npc_int = curr_pc_if_i;
+        ppc_int = pc_id_i;
+        npc_int = pc_if_i;
       end
 
       IFEX: begin
-        ppc_int = branch_pc_i;
-        npc_int = curr_pc_if_i;
+        ppc_int = pc_ex_i;
+        npc_int = pc_if_i;
       end
 
       IDEX: begin
-        ppc_int = branch_pc_i;
-        npc_int = curr_pc_id_i;
+        ppc_int = pc_ex_i;
+        npc_int = pc_id_i;
 
         if (jump_req_o)
           pc_tracking_fsm_ns = IFEX;
@@ -444,6 +446,9 @@ module riscv_debug_unit
           pc_tracking_fsm_ns = IFEX;
         else
           pc_tracking_fsm_ns = IDEX;
+      end else if (data_load_event_i) begin
+        // for p.elw
+        pc_tracking_fsm_ns = IDEX;
       end
     end
   end

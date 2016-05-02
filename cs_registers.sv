@@ -57,8 +57,8 @@ module riscv_cs_registers
   output logic        irq_enable_o,
   output logic [31:0] mepc_o,
 
-  input  logic [31:0] curr_pc_id_i,
-  input  logic [31:0] data_pc_ex_i,
+  input  logic [31:0] pc_id_i,
+  input  logic [31:0] pc_ex_i,
   input  logic        data_load_event_ex_i,
   input  logic        exc_save_i,
   input  logic        exc_restore_i,
@@ -206,7 +206,7 @@ module riscv_cs_registers
 
     // exception controller gets priority over other writes
     if (exc_save_i) begin
-      mepc_n     = data_load_event_ex_i ? data_pc_ex_i : curr_pc_id_i; // save EX PC if special event load
+      mepc_n     = data_load_event_ex_i ? pc_ex_i : pc_id_i; // save EX PC if special event load
       mestatus_n = mstatus_q;
       mstatus_n  = 1'b0;
     end

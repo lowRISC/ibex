@@ -124,7 +124,7 @@ module riscv_core
   logic        lsu_busy;
 
 
-  logic [31:0] branch_pc_ex; // PC of last executed branch
+  logic [31:0] pc_ex; // PC of last executed branch or p.elw
 
   // ALU Control
   logic [`ALU_OP_WIDTH-1:0] alu_operator_ex;
@@ -425,7 +425,7 @@ module riscv_core
     .wb_valid_i                   ( wb_valid             ),
 
     // From the Pipeline ID/EX
-    .branch_pc_ex_o               ( branch_pc_ex         ),
+    .pc_ex_o                      ( pc_ex                ),
 
     .alu_operator_ex_o            ( alu_operator_ex      ),
     .alu_operand_a_ex_o           ( alu_operand_a_ex     ),
@@ -477,7 +477,6 @@ module riscv_core
     .data_type_ex_o               ( data_type_ex         ), // to load store unit
     .data_sign_ext_ex_o           ( data_sign_ext_ex     ), // to load store unit
     .data_reg_offset_ex_o         ( data_reg_offset_ex   ), // to load store unit
-    .data_pc_ex_o                 ( data_pc_ex           ), // to load store unit
     .data_load_event_ex_o         ( data_load_event_ex   ), // to load store unit
 
     .data_misaligned_ex_o         ( data_misaligned_ex   ), // to load store unit
@@ -696,8 +695,8 @@ module riscv_core
     .irq_enable_o            ( irq_enable         ),
     .mepc_o                  ( mepc               ),
 
-    .curr_pc_id_i            ( pc_id              ), // from IF stage
-    .data_pc_ex_i            ( data_pc_ex         ), // from ID/EX pipeline
+    .pc_id_i                 ( pc_id              ), // from IF stage
+    .pc_ex_i                 ( pc_ex              ), // from ID/EX pipeline
     .data_load_event_ex_i    ( data_load_event_ex ), // from ID/EX pipeline
     .exc_save_i              ( exc_save_id        ),
     .exc_restore_i           ( exc_restore_id     ),
@@ -754,55 +753,57 @@ module riscv_core
 
   riscv_debug_unit debug_unit_i
   (
-    .clk             ( clk_i           ), // always-running clock for debug
-    .rst_n           ( rst_ni          ),
+    .clk               ( clk_i              ), // always-running clock for debug
+    .rst_n             ( rst_ni             ),
 
     // Debug Interface
-    .debug_req_i     ( debug_req_i     ),
-    .debug_gnt_o     ( debug_gnt_o     ),
-    .debug_rvalid_o  ( debug_rvalid_o  ),
-    .debug_addr_i    ( debug_addr_i    ),
-    .debug_we_i      ( debug_we_i      ),
-    .debug_wdata_i   ( debug_wdata_i   ),
-    .debug_rdata_o   ( debug_rdata_o   ),
-    .debug_halt_i    ( debug_halt_i    ),
-    .debug_halted_o  ( debug_halted_o  ),
+    .debug_req_i       ( debug_req_i        ),
+    .debug_gnt_o       ( debug_gnt_o        ),
+    .debug_rvalid_o    ( debug_rvalid_o     ),
+    .debug_addr_i      ( debug_addr_i       ),
+    .debug_we_i        ( debug_we_i         ),
+    .debug_wdata_i     ( debug_wdata_i      ),
+    .debug_rdata_o     ( debug_rdata_o      ),
+    .debug_halt_i      ( debug_halt_i       ),
+    .debug_halted_o    ( debug_halted_o     ),
 
     // To/From Core
-    .settings_o      ( dbg_settings    ),
-    .trap_i          ( dbg_trap        ),
-    .exc_cause_i     ( exc_cause       ),
-    .stall_o         ( dbg_stall       ),
-    .dbg_req_o       ( dbg_req         ),
-    .dbg_ack_i       ( dbg_ack         ),
+    .settings_o        ( dbg_settings       ),
+    .trap_i            ( dbg_trap           ),
+    .exc_cause_i       ( exc_cause          ),
+    .stall_o           ( dbg_stall          ),
+    .dbg_req_o         ( dbg_req            ),
+    .dbg_ack_i         ( dbg_ack            ),
 
     // register file read port
-    .regfile_rreq_o  ( dbg_reg_rreq    ),
-    .regfile_raddr_o ( dbg_reg_raddr   ),
-    .regfile_rdata_i ( dbg_reg_rdata   ),
+    .regfile_rreq_o    ( dbg_reg_rreq       ),
+    .regfile_raddr_o   ( dbg_reg_raddr      ),
+    .regfile_rdata_i   ( dbg_reg_rdata      ),
 
     // register file write port
-    .regfile_wreq_o  ( dbg_reg_wreq    ),
-    .regfile_waddr_o ( dbg_reg_waddr   ),
-    .regfile_wdata_o ( dbg_reg_wdata   ),
+    .regfile_wreq_o    ( dbg_reg_wreq       ),
+    .regfile_waddr_o   ( dbg_reg_waddr      ),
+    .regfile_wdata_o   ( dbg_reg_wdata      ),
 
     // CSR read/write port
-    .csr_req_o       ( dbg_csr_req     ),
-    .csr_addr_o      ( dbg_csr_addr    ),
-    .csr_we_o        ( dbg_csr_we      ),
-    .csr_wdata_o     ( dbg_csr_wdata   ),
-    .csr_rdata_i     ( csr_rdata       ),
+    .csr_req_o         ( dbg_csr_req        ),
+    .csr_addr_o        ( dbg_csr_addr       ),
+    .csr_we_o          ( dbg_csr_we         ),
+    .csr_wdata_o       ( dbg_csr_wdata      ),
+    .csr_rdata_i       ( csr_rdata          ),
 
     // signals for PPC and NPC
-    .curr_pc_if_i    ( pc_if           ), // from IF stage
-    .curr_pc_id_i    ( pc_id           ), // from IF stage
-    .branch_pc_i     ( branch_pc_ex    ), // PC of last executed branch (in EX stage)
+    .pc_if_i           ( pc_if              ), // from IF stage
+    .pc_id_i           ( pc_id              ), // from IF stage
+    .pc_ex_i           ( pc_ex              ), // PC of last executed branch (in EX stage) or p.elw
 
-    .branch_in_ex_i  ( branch_in_ex    ),
-    .branch_taken_i  ( branch_decision ),
+    .data_load_event_i ( data_load_event_ex ),
 
-    .jump_addr_o     ( dbg_jump_addr   ), // PC from debug unit
-    .jump_req_o      ( dbg_jump_req    )  // set PC to new value
+    .branch_in_ex_i    ( branch_in_ex       ),
+    .branch_taken_i    ( branch_decision    ),
+
+    .jump_addr_o       ( dbg_jump_addr      ), // PC from debug unit
+    .jump_req_o        ( dbg_jump_req       )  // set PC to new value
   );
 
 
