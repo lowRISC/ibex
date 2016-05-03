@@ -70,6 +70,8 @@ module riscv_debug_unit
   input  logic [31:0] pc_ex_i,
 
   input  logic        data_load_event_i,
+  input  logic        instr_valid_id_i,
+
 
   input  logic        branch_in_ex_i,
   input  logic        branch_taken_i,
@@ -297,7 +299,7 @@ module riscv_debug_unit
       end
 
       RD_DBGS: begin
-        unique case (debug_addr_i[2:2])
+        unique case (addr_q[2:2])
           1'b0: dbg_rdata = npc_int; // DBG_NPC
           1'b1: dbg_rdata = ppc_int; // DBG_PPC
           default:;
@@ -380,8 +382,10 @@ module riscv_debug_unit
         stall_o        = 1'b1;
         debug_halted_o = 1'b1;
 
-        if (dbg_resume)
+        if (dbg_resume) begin
           stall_ns = RUNNING;
+          stall_o  = 1'b0;
+        end
       end
     endcase
 
@@ -448,7 +452,7 @@ module riscv_debug_unit
           pc_tracking_fsm_ns = IDEX;
       end else if (data_load_event_i) begin
         // for p.elw
-        pc_tracking_fsm_ns = IDEX;
+        pc_tracking_fsm_ns = instr_valid_id_i ? IDEX : IFEX;
       end
     end
   end

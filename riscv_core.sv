@@ -274,7 +274,7 @@ module riscv_core
   // interface to finish loading instructions
   assign core_busy_o = (data_load_event_ex & data_req_o) ? if_busy : (if_busy | ctrl_busy | lsu_busy);
 
-  assign dbg_busy = dbg_req | dbg_csr_req | dbg_jump_req | dbg_reg_wreq;
+  assign dbg_busy = dbg_req | dbg_csr_req | dbg_jump_req | dbg_reg_wreq | debug_req_i;
 
   assign clock_en = clock_en_i | core_busy_o | dbg_busy;
 
@@ -798,6 +798,7 @@ module riscv_core
     .pc_ex_i           ( pc_ex              ), // PC of last executed branch (in EX stage) or p.elw
 
     .data_load_event_i ( data_load_event_ex ),
+    .instr_valid_id_i  ( instr_valid_id     ),
 
     .branch_in_ex_i    ( branch_in_ex       ),
     .branch_taken_i    ( branch_decision    ),
