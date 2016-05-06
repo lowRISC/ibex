@@ -270,6 +270,8 @@ module riscv_core
   logic        clock_en;
   logic        dbg_busy;
 
+  logic        sleeping;
+
   // if we are sleeping on a barrier let's just wait on the instruction
   // interface to finish loading instructions
   assign core_busy_o = (data_load_event_ex & data_req_o) ? if_busy : (if_busy | ctrl_busy | lsu_busy);
@@ -277,6 +279,8 @@ module riscv_core
   assign dbg_busy = dbg_req | dbg_csr_req | dbg_jump_req | dbg_reg_wreq | debug_req_i;
 
   assign clock_en = clock_en_i | core_busy_o | dbg_busy;
+
+  assign sleeping = (~fetch_enable_i) & (~core_busy_o);
 
 
   // main clock gate of the core
@@ -799,6 +803,8 @@ module riscv_core
 
     .data_load_event_i ( data_load_event_ex ),
     .instr_valid_id_i  ( instr_valid_id     ),
+
+    .sleeping_i        ( sleeping           ),
 
     .branch_in_ex_i    ( branch_in_ex       ),
     .branch_taken_i    ( branch_decision    ),

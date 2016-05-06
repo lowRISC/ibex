@@ -72,6 +72,7 @@ module riscv_debug_unit
   input  logic        data_load_event_i,
   input  logic        instr_valid_id_i,
 
+  input  logic        sleeping_i,
 
   input  logic        branch_in_ex_i,
   input  logic        branch_taken_i,
@@ -269,7 +270,7 @@ module riscv_debug_unit
       RD_DBGA: begin
         unique case (addr_q[6:2])
           5'h00: dbg_rdata[31:0] = {15'b0, debug_halted_o, 15'b0, settings_q[`DBG_SETS_SSTE]}; // DBG_CTRL
-          5'h01: dbg_rdata[31:0] = {31'b0, dbg_ssth_q}; // DBG_HIT
+          5'h01: dbg_rdata[31:0] = {15'b0, sleeping_i, 15'b0, dbg_ssth_q}; // DBG_HIT
           5'h02: begin // DBG_IE
             dbg_rdata[31:16] = '0;
             dbg_rdata[15:12] = '0;
