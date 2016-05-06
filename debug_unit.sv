@@ -452,7 +452,10 @@ module riscv_debug_unit
           pc_tracking_fsm_ns = IDEX;
       end else if (data_load_event_i) begin
         // for p.elw
-        pc_tracking_fsm_ns = instr_valid_id_i ? IDEX : IFEX;
+        if (instr_valid_id_i)
+           pc_tracking_fsm_ns = IDEX;
+        else
+           pc_tracking_fsm_ns = IFEX;
       end
     end
   end
