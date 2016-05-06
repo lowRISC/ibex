@@ -153,8 +153,8 @@ module riscv_cs_registers
       // mcause: exception cause
       12'h342: csr_rdata_int = {exc_cause[5], 26'b0, exc_cause[4:0]};
 
-      // mcpuid: RV32I
-      12'hF00: csr_rdata_int = 32'h00_00_01_00;
+      // mcpuid: RV32IM and X
+      12'hF00: csr_rdata_int = 32'h00_80_11_00;
       // mimpid: PULP, anonymous source (no allocated ID yet)
       12'hF01: csr_rdata_int = 32'h00_00_80_00;
       // mhartid: unique hardware thread id

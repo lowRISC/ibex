@@ -236,9 +236,7 @@ module riscv_debug_unit
             6'b10_0000: begin // Debug Registers, only accessible when in debug
               debug_gnt_o = 1'b1; // grant it even when invalid access to not block
 
-              if (debug_halted_o) begin
-                rdata_sel_n = RD_DBGS;
-              end
+              rdata_sel_n = RD_DBGS;
             end
 
             6'b00_0100: begin // General-Purpose Registers

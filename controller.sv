@@ -192,6 +192,11 @@ module riscv_controller
 
         if (fetch_enable_i == 1'b1)
           ctrl_fsm_ns = BOOT_SET;
+        else if (dbg_req_i) begin
+          // just go to debug even when we did not yet get a fetch enable
+          // this means that the NPC will not be set yet
+          ctrl_fsm_ns = DBG_SIGNAL;
+        end
       end
 
       // copy boot address to instr fetch address
