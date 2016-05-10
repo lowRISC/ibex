@@ -387,7 +387,6 @@ module riscv_id_stage
     unique case (regc_mux)
       `REGC_ZERO:  regfile_addr_rc_id = '0;
       `REGC_RD:    regfile_addr_rc_id = instr[`REG_D];
-      `REGC_S3:    regfile_addr_rc_id = instr[`REG_S3];
       `REGC_S1:    regfile_addr_rc_id = instr[`REG_S1];
       default:     regfile_addr_rc_id = '0;
     endcase
@@ -1173,7 +1172,7 @@ module riscv_id_stage
 
   // make sure that branch decision is valid when jumping
   assert property (
-    @(posedge clk) (branch_in_ex_o) |-> (branch_decision_i !== 1'bx) );
+    @(posedge clk) (branch_in_ex_o) |-> (branch_decision_i !== 1'bx) ) else $display("Branch decision is X");
 
   // the instruction delivered to the ID stage should always be valid
   assert property (

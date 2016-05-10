@@ -75,10 +75,9 @@
 `define REG_D  11:07
 
 
-`define REGC_ZERO  2'b00
+`define REGC_S1    2'b10
 `define REGC_RD    2'b01
-`define REGC_S3    2'b10
-`define REGC_S1    2'b11
+`define REGC_ZERO  2'b11
 
 
 //////////////////////////////////////////////////////////////////////////////

@@ -283,7 +283,7 @@ module riscv_decoder
           // offset from register
           regc_used_o        = 1'b1;
           alu_op_b_mux_sel_o = `OP_B_REGC_OR_FWD;
-          regc_mux_o         = `REGC_S3;
+          regc_mux_o         = `REGC_RD;
         end
 
         // store size
@@ -482,39 +482,26 @@ module riscv_decoder
               mult_operator_o = `MUL_MAC32;
               regc_mux_o      = `REGC_ZERO;
             end
-            // commented since they currently clash with p.mac and p.msu
-            //{6'b00_0001, 3'b001}: begin // mulh
-            //  regc_used_o        = 1'b1;
-            //  regc_mux_o         = `REGC_ZERO;
-            //  mult_signed_mode_o = 2'b11;
-            //  mult_int_en_o      = 1'b1;
-            //  mult_operator_o    = `MUL_H;
-            //end
-            //{6'b00_0001, 3'b010}: begin // mulhsu
-            //  regc_used_o        = 1'b1;
-            //  regc_mux_o         = `REGC_ZERO;
-            //  mult_signed_mode_o = 2'b01;
-            //  mult_int_en_o      = 1'b1;
-            //  mult_operator_o    = `MUL_H;
-            //end
+            {6'b00_0001, 3'b001}: begin // mulh
+              regc_used_o        = 1'b1;
+              regc_mux_o         = `REGC_ZERO;
+              mult_signed_mode_o = 2'b11;
+              mult_int_en_o      = 1'b1;
+              mult_operator_o    = `MUL_H;
+            end
+            {6'b00_0001, 3'b010}: begin // mulhsu
+              regc_used_o        = 1'b1;
+              regc_mux_o         = `REGC_ZERO;
+              mult_signed_mode_o = 2'b01;
+              mult_int_en_o      = 1'b1;
+              mult_operator_o    = `MUL_H;
+            end
             {6'b00_0001, 3'b011}: begin // mulhu
               regc_used_o        = 1'b1;
               regc_mux_o         = `REGC_ZERO;
               mult_signed_mode_o = 2'b00;
               mult_int_en_o      = 1'b1;
               mult_operator_o    = `MUL_H;
-            end
-            {6'b00_0001, 3'b001}: begin // p.mac
-              regc_used_o     = 1'b1;
-              regc_mux_o      = `REGC_RD;
-              mult_int_en_o   = 1'b1;
-              mult_operator_o = `MUL_MAC32;
-            end
-            {6'b00_0001, 3'b010}: begin // p.msu
-              regc_used_o     = 1'b1;
-              regc_mux_o      = `REGC_RD;
-              mult_int_en_o   = 1'b1;
-              mult_operator_o = `MUL_MSU32;
             end
             {6'b00_0001, 3'b100}: begin // div
               alu_op_a_mux_sel_o = `OP_A_REGB_OR_FWD;
@@ -554,8 +541,19 @@ module riscv_decoder
             end
 
             // PULP specific instructions
-            {6'b00_0010, 3'b000}: begin alu_operator_o = `ALU_ADD;  bmask_b_mux_o = `BMASK_B_ONE; end // Average
-            {6'b00_0010, 3'b001}: begin alu_operator_o = `ALU_ADDU; bmask_b_mux_o = `BMASK_B_ONE; end // Average Unsigned
+            {6'b10_0001, 3'b000}: begin // p.mac
+              regc_used_o     = 1'b1;
+              regc_mux_o      = `REGC_RD;
+              mult_int_en_o   = 1'b1;
+              mult_operator_o = `MUL_MAC32;
+            end
+            {6'b10_0001, 3'b001}: begin // p.msu
+              regc_used_o     = 1'b1;
+              regc_mux_o      = `REGC_RD;
+              mult_int_en_o   = 1'b1;
+              mult_operator_o = `MUL_MSU32;
+            end
+
             {6'b00_0010, 3'b010}: alu_operator_o = `ALU_SLETS; // Set Lower Equal Than
             {6'b00_0010, 3'b011}: alu_operator_o = `ALU_SLETU; // Set Lower Equal Than Unsigned
             {6'b00_0010, 3'b100}: alu_operator_o = `ALU_MIN;   // Min
@@ -575,7 +573,7 @@ module riscv_decoder
             {6'b00_1000, 3'b110}: begin alu_operator_o = `ALU_EXTS; alu_vec_mode_o = `VEC_MODE8;  end // Sign-extend Byte
             {6'b00_1000, 3'b111}: begin alu_operator_o = `ALU_EXT;  alu_vec_mode_o = `VEC_MODE8;  end // Zero-extend Byte
 
-            {6'b00_1010, 3'b000}: alu_operator_o = `ALU_ABS;   // p.abs
+            {6'b00_0010, 3'b000}: alu_operator_o = `ALU_ABS;   // p.abs
 
             {6'b00_1010, 3'b001}: begin // p.clip
               alu_operator_o     = `ALU_CLIP;
@@ -714,21 +712,6 @@ module riscv_decoder
           6'b01101_0: begin alu_operator_o = `ALU_AND;  imm_b_mux_sel_o = `IMMB_VS; end // pv.and
           6'b01110_0: begin alu_operator_o = `ALU_ABS;  imm_b_mux_sel_o = `IMMB_VS; end // pv.abs
 
-          6'b01111_0: begin // pv.extract
-            alu_operator_o = `ALU_EXTS;
-          end
-
-          6'b10000_0: begin // pv.extractu
-            alu_operator_o = `ALU_EXT;
-          end
-
-          6'b10001_0: begin // pv.insert
-            alu_operator_o     = `ALU_INS;
-            regc_used_o        = 1'b1;
-            regc_mux_o         = `REGC_RD;
-            alu_op_b_mux_sel_o = `OP_B_REGC_OR_FWD;
-          end
-
           // shuffle/pack
           6'b11000_0: begin // pv.shuffle
             alu_operator_o       = `ALU_SHUF;
@@ -760,33 +743,48 @@ module riscv_decoder
             regc_mux_o     = `REGC_RD;
           end
 
-          6'b10010_0: begin // pv.dotsp
-            mult_dot_en_o     = 1'b1;
-            mult_dot_signed_o = 2'b11;
+          6'b01111_0: begin // pv.extract
+            alu_operator_o = `ALU_EXTS;
           end
-          6'b10011_0: begin // pv.dotup
+
+          6'b10010_0: begin // pv.extractu
+            alu_operator_o = `ALU_EXT;
+          end
+
+          6'b10110_0: begin // pv.insert
+            alu_operator_o     = `ALU_INS;
+            regc_used_o        = 1'b1;
+            regc_mux_o         = `REGC_RD;
+            alu_op_b_mux_sel_o = `OP_B_REGC_OR_FWD;
+          end
+
+          6'b10000_0: begin // pv.dotup
             mult_dot_en_o     = 1'b1;
             mult_dot_signed_o = 2'b00;
           end
-          6'b10100_0: begin // pv.dotusp
+          6'b10001_0: begin // pv.dotusp
             mult_dot_en_o     = 1'b1;
             mult_dot_signed_o = 2'b01;
           end
-          6'b10101_0: begin // pv.sdotsp
+          6'b10011_0: begin // pv.dotsp
             mult_dot_en_o     = 1'b1;
             mult_dot_signed_o = 2'b11;
-            regc_used_o       = 1'b1;
-            regc_mux_o        = `REGC_RD;
           end
-          6'b10110_0: begin // pv.sdotup
+          6'b10100_0: begin // pv.sdotup
             mult_dot_en_o     = 1'b1;
             mult_dot_signed_o = 2'b00;
             regc_used_o       = 1'b1;
             regc_mux_o        = `REGC_RD;
           end
-          6'b10111_0: begin // pv.sdotusp
+          6'b10101_0: begin // pv.sdotusp
             mult_dot_en_o     = 1'b1;
             mult_dot_signed_o = 2'b01;
+            regc_used_o       = 1'b1;
+            regc_mux_o        = `REGC_RD;
+          end
+          6'b10111_0: begin // pv.sdotsp
+            mult_dot_en_o     = 1'b1;
+            mult_dot_signed_o = 2'b11;
             regc_used_o       = 1'b1;
             regc_mux_o        = `REGC_RD;
           end
