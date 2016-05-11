@@ -208,6 +208,7 @@ module riscv_core
 
   logic [5:0]  exc_cause;
   logic        save_exc_cause;
+  logic        exc_save_if;
   logic        exc_save_id;
   logic        exc_restore_id;
 
@@ -493,6 +494,7 @@ module riscv_core
     .irq_enable_i                 ( irq_enable           ), // global interrupt enable
     .exc_cause_o                  ( exc_cause            ),
     .save_exc_cause_o             ( save_exc_cause       ),
+    .exc_save_if_o                ( exc_save_if          ), // control signal to save pc
     .exc_save_id_o                ( exc_save_id          ), // control signal to save pc
     .exc_restore_id_o             ( exc_restore_id       ), // control signal to restore pc
     .lsu_load_err_i               ( lsu_load_err         ),
@@ -699,10 +701,12 @@ module riscv_core
     .irq_enable_o            ( irq_enable         ),
     .mepc_o                  ( mepc               ),
 
+    .pc_if_i                 ( pc_if              ),
     .pc_id_i                 ( pc_id              ), // from IF stage
     .pc_ex_i                 ( pc_ex              ), // from ID/EX pipeline
     .data_load_event_ex_i    ( data_load_event_ex ), // from ID/EX pipeline
-    .exc_save_i              ( exc_save_id        ),
+    .exc_save_if_i           ( exc_save_if        ),
+    .exc_save_id_i           ( exc_save_id        ),
     .exc_restore_i           ( exc_restore_id     ),
 
     .exc_cause_i             ( exc_cause          ),

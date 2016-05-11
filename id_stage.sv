@@ -151,6 +151,7 @@ module riscv_id_stage
     output logic [5:0]  exc_cause_o,
     output logic        save_exc_cause_o,
 
+    output logic        exc_save_if_o,
     output logic        exc_save_id_o,
     output logic        exc_restore_id_o,
 
@@ -851,6 +852,7 @@ module riscv_id_stage
     .exc_req_i                      ( exc_req                ),
     .exc_ack_o                      ( exc_ack                ),
 
+    .exc_save_if_o                  ( exc_save_if_o          ),
     .exc_save_id_o                  ( exc_save_id_o          ),
     .exc_restore_id_o               ( exc_restore_id_o       ),
 

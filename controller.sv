@@ -73,6 +73,7 @@ module riscv_controller
   input  logic        exc_req_i,
   output logic        exc_ack_o,
 
+  output logic        exc_save_if_o,
   output logic        exc_save_id_o,
   output logic        exc_restore_id_o,
 
@@ -167,6 +168,7 @@ module riscv_controller
     instr_req_o      = 1'b1;
 
     exc_ack_o        = 1'b0;
+    exc_save_if_o    = 1'b0;
     exc_save_id_o    = 1'b0;
     exc_restore_id_o = 1'b0;
 
@@ -252,7 +254,7 @@ module riscv_controller
 
           // TODO: This assumes that the pipeline is always flushed before
           //       going to sleep.
-          exc_save_id_o = 1'b1;
+          exc_save_if_o = 1'b1;
         end
       end
 
