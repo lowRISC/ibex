@@ -35,8 +35,10 @@ module riscv_debug_unit
   input  logic        debug_we_i,
   input  logic [31:0] debug_wdata_i,
   output logic [31:0] debug_rdata_o,
+
   output logic        debug_halted_o,
   input  logic        debug_halt_i,
+  input  logic        debug_resume_i,
 
   // signals to core
   output logic [`DBG_SETS_W-1:0] settings_o,
@@ -373,7 +375,7 @@ module riscv_debug_unit
         if (dbg_ack_i)
           stall_ns = HALT;
 
-        if (dbg_resume)
+        if (dbg_resume | debug_resume_i)
           stall_ns = RUNNING;
       end
 
@@ -381,7 +383,7 @@ module riscv_debug_unit
         stall_o        = 1'b1;
         debug_halted_o = 1'b1;
 
-        if (dbg_resume) begin
+        if (dbg_resume | debug_resume_i) begin
           stall_ns = RUNNING;
           stall_o  = 1'b0;
         end

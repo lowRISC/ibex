@@ -42,8 +42,8 @@ module riscv_core
 
   // Core ID, Cluster ID and boot address are considered more or less static
   input  logic [31:0] boot_addr_i,
-  input  logic [ 3:0]  core_id_i,
-  input  logic [ 5:0]  cluster_id_i,
+  input  logic [ 3:0] core_id_i,
+  input  logic [ 5:0] cluster_id_i,
 
   // Instruction memory interface
   output logic                         instr_req_o,
@@ -76,6 +76,7 @@ module riscv_core
   output logic [31:0] debug_rdata_o,
   output logic        debug_halted_o,
   input  logic        debug_halt_i,
+  input  logic        debug_resume_i,
 
   // CPU Control Signals
   input  logic        fetch_enable_i,
@@ -773,6 +774,7 @@ module riscv_core
     .debug_wdata_i     ( debug_wdata_i      ),
     .debug_rdata_o     ( debug_rdata_o      ),
     .debug_halt_i      ( debug_halt_i       ),
+    .debug_resume_i    ( debug_resume_i     ),
     .debug_halted_o    ( debug_halted_o     ),
 
     // To/From Core
