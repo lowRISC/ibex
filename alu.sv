@@ -682,11 +682,10 @@ module riscv_alu
 
   logic [31:0] ff_input;   // either op_a_i or its bit reversed version
   logic [5:0]  cnt_result; // population count
-  logic [5:0]  clb_result;  // count leading bits
-  logic [5:0]  clbu_result; // count leading bits
-  logic [5:0]  ff1_result; // holds the index of the first '1'
+  logic [5:0]  clb_result; // count leading bits
+  logic [4:0]  ff1_result; // holds the index of the first '1'
   logic        ff_no_one;  // if no ones are found
-  logic [5:0]  fl1_result; // holds the index of the last '1'
+  logic [4:0]  fl1_result; // holds the index of the last '1'
   logic [5:0]  bitop_result; // result of all bitop operations muxed together
 
   alu_popcnt alu_popcnt_i
@@ -726,23 +725,19 @@ module riscv_alu
 
   // special case if ff1_res is 0 (no 1 found), then we keep the 0
   // this is done in the result mux
-  assign fl1_result  = 6'd33 - ff1_result;
-  assign clb_result  = ff1_result - 6'd2;
-  assign clbu_result = ff1_result - 6'd1; // unsigned case, count one less
+  assign fl1_result  = 5'd31 - ff1_result;
+  assign clb_result  = ff1_result - 5'd1;
 
   always_comb
   begin
     bitop_result = 'x;
     case (operator_i)
-      `ALU_FF1: bitop_result = ff1_result;
-      `ALU_FL1: bitop_result = fl1_result;
-      `ALU_CLB: bitop_result = clb_result;
+      `ALU_FF1: bitop_result = ff_no_one ? 6'd32 : {1'b0, ff1_result};
+      `ALU_FL1: bitop_result = ff_no_one ? 6'd32 : {1'b0, fl1_result};
+      `ALU_CLB: bitop_result = ff_no_one ? 6'd0  : clb_result;
       `ALU_CNT: bitop_result = cnt_result;
       default:;
     endcase
-
-    if (ff_no_one)
-      bitop_result = '0;
   end
 
 
@@ -800,7 +795,7 @@ module riscv_alu
   assign div_op_a_signed = operand_a_i[31] & div_signed;
   assign div_op_b_signed = operand_b_i[31] & div_signed;
 
-  assign div_shift_int = (ff_no_one) ? 6'd31 : clb_result;
+  assign div_shift_int = ff_no_one ? 6'd31 : clb_result;
   assign div_shift = div_shift_int + (div_op_a_signed ? 6'd0 : 6'd1);
 
   assign div_valid = (operator_i == `ALU_DIV) || (operator_i == `ALU_DIVU) ||
@@ -907,15 +902,15 @@ module alu_ff
 (
   input  logic [LEN-1:0]         in_i,
 
-  output logic [$clog2(LEN):0]   first_one_o,
+  output logic [$clog2(LEN)-1:0] first_one_o,
   output logic                   no_ones_o
 );
 
   localparam NUM_LEVELS = $clog2(LEN);
 
-  logic [LEN-1:0] [NUM_LEVELS:0]             index_lut;
+  logic [LEN-1:0] [NUM_LEVELS-1:0]           index_lut;
   logic [2**NUM_LEVELS-1:0]                  sel_nodes;
-  logic [2**NUM_LEVELS-1:0] [NUM_LEVELS:0]   index_nodes;
+  logic [2**NUM_LEVELS-1:0] [NUM_LEVELS-1:0] index_nodes;
 
 
   //////////////////////////////////////////////////////////////////////////////
@@ -925,7 +920,7 @@ module alu_ff
   generate
     genvar j;
     for (j = 0; j < LEN; j++) begin
-      assign index_lut[j] = $unsigned(j + 1);
+      assign index_lut[j] = $unsigned(j);
     end
   endgenerate
 
