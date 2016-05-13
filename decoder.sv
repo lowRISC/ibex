@@ -713,7 +713,10 @@ module riscv_decoder
           6'b01110_0: begin alu_operator_o = `ALU_ABS;  imm_b_mux_sel_o = `IMMB_VS; end // pv.abs
 
           // shuffle/pack
-          6'b11000_0: begin // pv.shuffle
+          6'b11101_0,       // pv.shuffleI1
+          6'b11110_0,       // pv.shuffleI2
+          6'b11111_0,       // pv.shuffleI3
+          6'b11000_0: begin // pv.shuffle, pv.shuffleI0
             alu_operator_o       = `ALU_SHUF;
             imm_b_mux_sel_o      = `IMMB_SHUF;
             regb_used_o          = 1'b1;
