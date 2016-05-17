@@ -734,8 +734,17 @@ module riscv_alu
     case (operator_i)
       `ALU_FF1: bitop_result = ff_no_one ? 6'd32 : {1'b0, ff1_result};
       `ALU_FL1: bitop_result = ff_no_one ? 6'd32 : {1'b0, fl1_result};
-      `ALU_CLB: bitop_result = ff_no_one ? 6'd0  : clb_result;
       `ALU_CNT: bitop_result = cnt_result;
+      `ALU_CLB: begin
+        if (ff_no_one) begin
+          if (operand_a_i[31])
+            bitop_result = 6'd31;
+          else
+            bitop_result = '0;
+        end else begin
+          bitop_result = clb_result;
+        end
+      end
       default:;
     endcase
   end
@@ -881,7 +890,7 @@ module riscv_alu
       `ALU_SLTS,  `ALU_SLTU,
       `ALU_SLETS, `ALU_SLETU: result_o = {31'b0, comparison_result_o};
 
-      `ALU_FF1, `ALU_FL1, `ALU_CLB, `ALU_CNT: result_o = {26'h0, bitop_result};
+      `ALU_FF1, `ALU_FL1, `ALU_CLB, `ALU_CNT: result_o = {26'h0, bitop_result[5:0]};
 
       // Division Unit Commands
       `ALU_DIV, `ALU_DIVU,
