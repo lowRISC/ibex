@@ -435,27 +435,7 @@ module riscv_alu
   assign do_min   = (operator_i == `ALU_MIN)  || (operator_i == `ALU_MINU) ||
                     (operator_i == `ALU_CLIP) || (operator_i == `ALU_CLIPU);
 
-  // the mux now handles: min, max, abs, ins
-  always_comb
-  begin
-    sel_minmax[3:0] = is_greater ^ {4{do_min}};
-
-    if(operator_i == `ALU_INS)
-    begin
-      if(vector_mode_i == `VEC_MODE16)
-      begin
-        sel_minmax[1:0] = {2{imm_vec_ext_i[0]}};
-        sel_minmax[3:2] = ~{2{imm_vec_ext_i[0]}};
-      end
-      else // `VEC_MODE8
-      begin
-        sel_minmax[0] = (imm_vec_ext_i != 2'b00);
-        sel_minmax[1] = (imm_vec_ext_i != 2'b01);
-        sel_minmax[2] = (imm_vec_ext_i != 2'b10);
-        sel_minmax[3] = (imm_vec_ext_i != 2'b11);
-      end
-    end
-  end
+  assign sel_minmax[3:0]      = is_greater ^ {4{do_min}};
 
   assign result_minmax[31:24] = (sel_minmax[3] == 1'b1) ? operand_a_i[31:24] : minmax_b[31:24];
   assign result_minmax[23:16] = (sel_minmax[2] == 1'b1) ? operand_a_i[23:16] : minmax_b[23:16];
@@ -485,6 +465,7 @@ module riscv_alu
   logic [ 3: 0][1:0] shuffle_byte_sel; // select byte in register: 31:24, 23:16, 15:8, 7:0
   logic [ 3: 0]      shuffle_reg_sel;  // select register: rD/rS2 or rS1
   logic [ 1: 0]      shuffle_reg1_sel; // select register rD or rS2 for next stage
+  logic [ 1: 0]      shuffle_reg0_sel;
   logic [ 3: 0]      shuffle_through;
 
   logic [31: 0]      shuffle_r1, shuffle_r0;
@@ -497,6 +478,7 @@ module riscv_alu
   begin
     shuffle_reg_sel  = '0;
     shuffle_reg1_sel = 2'b01;
+    shuffle_reg0_sel = 2'b10;
     shuffle_through  = '1;
 
     unique case(operator_i)
@@ -546,7 +528,37 @@ module riscv_alu
             shuffle_reg_sel[1] = operand_b_i[ 1];
             shuffle_reg_sel[0] = operand_b_i[ 1];
           end
+          default:;
+        endcase
+      end
 
+      `ALU_INS: begin
+        unique case (vector_mode_i)
+          `VEC_MODE8: begin
+            shuffle_reg0_sel = 2'b00;
+            unique case (imm_vec_ext_i)
+              2'b00: begin
+                shuffle_reg_sel[3:0] = 4'b1110;
+              end
+              2'b01: begin
+                shuffle_reg_sel[3:0] = 4'b1101;
+              end
+              2'b10: begin
+                shuffle_reg_sel[3:0] = 4'b1011;
+              end
+              2'b11: begin
+                shuffle_reg_sel[3:0] = 4'b0111;
+              end
+              default:;
+            endcase
+          end
+          `VEC_MODE16: begin
+            shuffle_reg0_sel = 2'b01;
+            shuffle_reg_sel[3] = ~imm_vec_ext_i[ 0];
+            shuffle_reg_sel[2] = ~imm_vec_ext_i[ 0];
+            shuffle_reg_sel[1] =  imm_vec_ext_i[ 0];
+            shuffle_reg_sel[0] =  imm_vec_ext_i[ 0];
+          end
           default:;
         endcase
       end
@@ -619,16 +631,24 @@ module riscv_alu
             shuffle_byte_sel[1] = {operand_b_i[ 0], 1'b1};
             shuffle_byte_sel[0] = {operand_b_i[ 0], 1'b0};
           end
-
           default:;
         endcase
+      end
+
+      `ALU_INS: begin
+        shuffle_byte_sel[3] = 2'b11;
+        shuffle_byte_sel[2] = 2'b10;
+        shuffle_byte_sel[1] = 2'b01;
+        shuffle_byte_sel[0] = 2'b00;
       end
 
       default:;
     endcase
   end
 
-  assign shuffle_r0_in = operand_a_i;
+  assign shuffle_r0_in = shuffle_reg0_sel[1] ?
+                          operand_a_i :
+                          (shuffle_reg0_sel[0] ? {2{operand_a_i[15:0]}} : {4{operand_a_i[7:0]}});
 
   assign shuffle_r1_in = shuffle_reg1_sel[1] ?
                                  {{8{operand_a_i[31]}}, {8{operand_a_i[23]}}, {8{operand_a_i[15]}}, {8{operand_a_i[7]}}} :
@@ -871,13 +891,13 @@ module riscv_alu
       // pack and shuffle operations
       `ALU_SHUF,  `ALU_SHUF2,
       `ALU_PCKLO, `ALU_PCKHI,
-      `ALU_EXT,   `ALU_EXTS: result_o = pack_result;
+      `ALU_EXT,   `ALU_EXTS,
+      `ALU_INS: result_o = pack_result;
 
       // Min/Max/Abs/Ins
       `ALU_MIN, `ALU_MINU,
       `ALU_MAX, `ALU_MAXU,
-      `ALU_ABS,
-      `ALU_INS: result_o = result_minmax;
+      `ALU_ABS: result_o = result_minmax;
 
       `ALU_CLIP, `ALU_CLIPU: result_o = clip_result;
 
