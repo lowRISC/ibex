@@ -562,7 +562,7 @@ module riscv_id_stage
       `IMMB_VS:     imm_b = imm_vs_type;
       `IMMB_VU:     imm_b = imm_vu_type;
       `IMMB_SHUF:   imm_b = imm_shuffle_type;
-      `IMMB_CLIP:   imm_b = imm_clip_type;
+      `IMMB_CLIP:   imm_b = {1'b0, imm_clip_type[31:1]};
       default:      imm_b = imm_i_type;
     endcase
   end

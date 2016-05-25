@@ -340,7 +340,9 @@ module riscv_alu
       `ALU_SLETS,
       `ALU_MIN,
       `ALU_MAX,
-      `ALU_ABS: begin
+      `ALU_ABS,
+      `ALU_CLIP,
+      `ALU_CLIPU: begin
         case (vector_mode_i)
           `VEC_MODE8:  cmp_signed[3:0] = 4'b1111;
           `VEC_MODE16: cmp_signed[3:0] = 4'b1010;
