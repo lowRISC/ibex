@@ -908,7 +908,12 @@ module riscv_alu
       `ALU_GTU,   `ALU_GEU,
       `ALU_LTU,   `ALU_LEU,
       `ALU_GTS,   `ALU_GES,
-      `ALU_LTS,   `ALU_LES,
+      `ALU_LTS,   `ALU_LES: begin
+          result_o[31:24] = {8{cmp_result[3]}};
+          result_o[23:16] = {8{cmp_result[2]}};
+          result_o[15: 8] = {8{cmp_result[1]}};
+          result_o[ 7: 0] = {8{cmp_result[0]}};
+       end
       `ALU_SLTS,  `ALU_SLTU,
       `ALU_SLETS, `ALU_SLETU: result_o = {31'b0, comparison_result_o};
 
