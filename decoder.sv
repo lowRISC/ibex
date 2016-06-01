@@ -795,9 +795,9 @@ module riscv_decoder
           // comparisons, always have bit 26 set
           6'b00000_1: begin alu_operator_o = `ALU_EQ;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.cmpeq
           6'b00001_1: begin alu_operator_o = `ALU_NE;  imm_b_mux_sel_o     = `IMMB_VS; end // pv.cmpne
-          6'b00010_1: begin alu_operator_o = `ALU_GTU; imm_b_mux_sel_o     = `IMMB_VS; end // pv.cmpgt
+          6'b00010_1: begin alu_operator_o = `ALU_GTS; imm_b_mux_sel_o     = `IMMB_VS; end // pv.cmpgt
           6'b00011_1: begin alu_operator_o = `ALU_GES; imm_b_mux_sel_o     = `IMMB_VS; end // pv.cmpge
-          6'b00100_1: begin alu_operator_o = `ALU_LTU; imm_b_mux_sel_o     = `IMMB_VS; end // pv.cmplt
+          6'b00100_1: begin alu_operator_o = `ALU_LTS; imm_b_mux_sel_o     = `IMMB_VS; end // pv.cmplt
           6'b00101_1: begin alu_operator_o = `ALU_LES; imm_b_mux_sel_o     = `IMMB_VS; end // pv.cmple
           6'b00110_1: begin alu_operator_o = `ALU_GTU; imm_b_mux_sel_o     = `IMMB_VU; end // pv.cmpgtu
           6'b00111_1: begin alu_operator_o = `ALU_GEU; imm_b_mux_sel_o     = `IMMB_VU; end // pv.cmpgeu
