@@ -22,7 +22,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "riscv_defines.sv"
+import riscv_defines::*;
 
 
 module riscv_mult
@@ -60,7 +60,7 @@ module riscv_mult
   ///////////////////////////////////////////////////////////////
   //  ___ _  _ _____ ___ ___ ___ ___   __  __ _   _ _  _____   //
   // |_ _| \| |_   _| __/ __| __| _ \ |  \/  | | | | ||_   _|  //
-  //  | || .` | | | | _| (_ | _||   / | |\/| | |_| | |__| |    //
+  //  | || . | | | | _| (_ | _||   / | |\/| | |_| | |__| |    //
   // |___|_|\_| |_| |___\___|___|_|_\ |_|  |_|\___/|____|_|    //
   //                                                           //
   ///////////////////////////////////////////////////////////////
@@ -90,7 +90,7 @@ module riscv_mult
 
   // prepare the rounding value
   assign short_round_tmp = (32'h00000001) << imm_i;
-  assign short_round = (operator_i == `MUL_IR) ? {1'b0, short_round_tmp[31:1]} : '0;
+  assign short_round = (operator_i == MUL_IR) ? {1'b0, short_round_tmp[31:1]} : '0;
 
   // perform subword selection and sign extensions
   assign short_op_a[15:0] = short_subword[0] ? op_a_i[31:16] : op_a_i[15:0];
@@ -129,7 +129,7 @@ module riscv_mult
         mulh_active = 1'b0;
         mulh_ready  = 1'b1;
 
-        if ((operator_i == `MUL_H) && enable_i) begin
+        if ((operator_i == MUL_H) && enable_i) begin
           mulh_ready  = 1'b0;
           mulh_NS     = STEP0;
         end
@@ -196,7 +196,7 @@ module riscv_mult
 
   logic        int_is_msu;
 
-  assign int_is_msu = (operator_i == `MUL_MSU32); // TODO: think about using a separate signal here, could prevent some switching
+  assign int_is_msu = (operator_i == MUL_MSU32); // TODO: think about using a separate signal here, could prevent some switching
 
   assign int_op_a_msu = op_a_i ^ {32{int_is_msu}};
   assign int_op_b_msu = op_b_i & {32{int_is_msu}};
@@ -268,12 +268,12 @@ module riscv_mult
     result_o   = 'x;
 
     unique case (operator_i)
-      `MUL_MAC32, `MUL_MSU32: result_o = int_result[31:0];
+      MUL_MAC32, MUL_MSU32: result_o = int_result[31:0];
 
-      `MUL_I, `MUL_IR, `MUL_H: result_o = short_result[31:0];
+      MUL_I, MUL_IR, MUL_H: result_o = short_result[31:0];
 
-      `MUL_DOT8:  result_o = dot_char_result[31:0];
-      `MUL_DOT16: result_o = dot_short_result[31:0];
+      MUL_DOT8:  result_o = dot_char_result[31:0];
+      MUL_DOT16: result_o = dot_short_result[31:0];
 
       default: ; // default case to suppress unique warning
     endcase
@@ -288,19 +288,19 @@ module riscv_mult
 
   // check multiplication result for mulh
   assert property (
-    @(posedge clk) ((mulh_CS == FINISH) && (operator_i == `MUL_H) && (short_signed_i == 2'b11))
+    @(posedge clk) ((mulh_CS == FINISH) && (operator_i == MUL_H) && (short_signed_i == 2'b11))
     |->
     (result_o == (($signed({{32{op_a_i[31]}}, op_a_i}) * $signed({{32{op_b_i[31]}}, op_b_i})) >>> 32) ) );
 
   // check multiplication result for mulhsu
   assert property (
-    @(posedge clk) ((mulh_CS == FINISH) && (operator_i == `MUL_H) && (short_signed_i == 2'b01))
+    @(posedge clk) ((mulh_CS == FINISH) && (operator_i == MUL_H) && (short_signed_i == 2'b01))
     |->
     (result_o == (($signed({{32{op_a_i[31]}}, op_a_i}) * {32'b0, op_b_i}) >> 32) ) );
 
   // check multiplication result for mulhu
   assert property (
-    @(posedge clk) ((mulh_CS == FINISH) && (operator_i == `MUL_H) && (short_signed_i == 2'b00))
+    @(posedge clk) ((mulh_CS == FINISH) && (operator_i == MUL_H) && (short_signed_i == 2'b00))
     |->
     (result_o == (({32'b0, op_a_i} * {32'b0, op_b_i}) >> 32) ) );
 endmodule

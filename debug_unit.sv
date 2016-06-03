@@ -20,7 +20,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-`include "riscv_defines.sv"
+import riscv_defines::*;
 
 module riscv_debug_unit
 (
@@ -41,7 +41,7 @@ module riscv_debug_unit
   input  logic        debug_resume_i,
 
   // signals to core
-  output logic [`DBG_SETS_W-1:0] settings_o,
+  output logic [DBG_SETS_W-1:0] settings_o,
 
   input  logic        trap_i,      // trap found, need to stop the core now
   input  logic [5:0]  exc_cause_i, // if it was a trap, then the exception controller knows more
@@ -87,7 +87,7 @@ module riscv_debug_unit
 
   enum logic [0:0] {FIRST, SECOND} state_q, state_n;
 
-  logic [`DBG_SETS_W-1:0] settings_q, settings_n;
+  logic [DBG_SETS_W-1:0] settings_q, settings_n;
 
   // for timing critical register file access we need to keep those in FFs
   logic [14:0] addr_q;
@@ -177,16 +177,16 @@ module riscv_debug_unit
                     end
                   end
 
-                  settings_n[`DBG_SETS_SSTE] = debug_wdata_i[0];
+                  settings_n[DBG_SETS_SSTE] = debug_wdata_i[0];
                 end
                 5'b0_0001: begin // DBG_HIT
                   ssth_clear = debug_wdata_i[0];
                 end
                 5'b0_0010: begin // DBG_IE
-                  settings_n[`DBG_SETS_ECALL] = debug_wdata_i[11];
-                  settings_n[`DBG_SETS_ELSU]  = debug_wdata_i[7] | debug_wdata_i[5];
-                  settings_n[`DBG_SETS_EBRK]  = debug_wdata_i[3];
-                  settings_n[`DBG_SETS_EILL]  = debug_wdata_i[2];
+                  settings_n[DBG_SETS_ECALL] = debug_wdata_i[11];
+                  settings_n[DBG_SETS_ELSU]  = debug_wdata_i[7] | debug_wdata_i[5];
+                  settings_n[DBG_SETS_EBRK]  = debug_wdata_i[3];
+                  settings_n[DBG_SETS_EILL]  = debug_wdata_i[2];
                 end
                 default:;
               endcase
@@ -271,19 +271,19 @@ module riscv_debug_unit
     case (rdata_sel_q)
       RD_DBGA: begin
         unique case (addr_q[6:2])
-          5'h00: dbg_rdata[31:0] = {15'b0, debug_halted_o, 15'b0, settings_q[`DBG_SETS_SSTE]}; // DBG_CTRL
+          5'h00: dbg_rdata[31:0] = {15'b0, debug_halted_o, 15'b0, settings_q[DBG_SETS_SSTE]}; // DBG_CTRL
           5'h01: dbg_rdata[31:0] = {15'b0, sleeping_i, 15'b0, dbg_ssth_q}; // DBG_HIT
           5'h02: begin // DBG_IE
             dbg_rdata[31:16] = '0;
             dbg_rdata[15:12] = '0;
-            dbg_rdata[11]    = settings_q[`DBG_SETS_ECALL];
+            dbg_rdata[11]    = settings_q[DBG_SETS_ECALL];
             dbg_rdata[10: 8] = '0;
-            dbg_rdata[ 7]    = settings_q[`DBG_SETS_ELSU];
+            dbg_rdata[ 7]    = settings_q[DBG_SETS_ELSU];
             dbg_rdata[ 6]    = 1'b0;
-            dbg_rdata[ 5]    = settings_q[`DBG_SETS_ELSU];
+            dbg_rdata[ 5]    = settings_q[DBG_SETS_ELSU];
             dbg_rdata[ 4]    = 1'b0;
-            dbg_rdata[ 3]    = settings_q[`DBG_SETS_EBRK];
-            dbg_rdata[ 2]    = settings_q[`DBG_SETS_EILL];
+            dbg_rdata[ 3]    = settings_q[DBG_SETS_EBRK];
+            dbg_rdata[ 2]    = settings_q[DBG_SETS_EILL];
             dbg_rdata[ 1: 0] = '0;
           end
           5'h03: dbg_rdata = {dbg_cause_q[5], 26'b0, dbg_cause_q[4:0]}; // DBG_CAUSE
@@ -359,12 +359,12 @@ module riscv_debug_unit
           stall_ns    = HALT_REQ;
 
           if (trap_i) begin
-            if (settings_q[`DBG_SETS_SSTE])
+            if (settings_q[DBG_SETS_SSTE])
               dbg_ssth_n = 1'b1;
 
             dbg_cause_n = exc_cause_i;
           end else begin
-            dbg_cause_n = `DBG_CAUSE_HALT;
+            dbg_cause_n = DBG_CAUSE_HALT;
           end
         end
       end
@@ -398,7 +398,7 @@ module riscv_debug_unit
   begin
     if (~rst_n) begin
       stall_cs    <= RUNNING;
-      dbg_cause_q <= `DBG_CAUSE_HALT;
+      dbg_cause_q <= DBG_CAUSE_HALT;
       dbg_ssth_q  <= 1'b0;
     end else begin
       stall_cs    <= stall_ns;

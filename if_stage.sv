@@ -26,7 +26,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-`include "riscv_defines.sv"
+import riscv_defines::*;
 
 module riscv_if_stage
 #(
@@ -122,10 +122,10 @@ module riscv_if_stage
     exc_pc = 'x;
 
     unique case (exc_pc_mux_i)
-      `EXC_PC_ILLINSN: exc_pc = { boot_addr_i[31:8], `EXC_OFF_ILLINSN };
-      `EXC_PC_ECALL:   exc_pc = { boot_addr_i[31:8], `EXC_OFF_ECALL   };
-      `EXC_PC_LOAD:    exc_pc = { boot_addr_i[31:8], `EXC_OFF_LSUERR  };
-      `EXC_PC_IRQ:     exc_pc = { boot_addr_i[31:8], 1'b0, exc_vec_pc_mux_i[4:0], 2'b0 };
+      EXC_PC_ILLINSN: exc_pc = { boot_addr_i[31:8], EXC_OFF_ILLINSN };
+      EXC_PC_ECALL:   exc_pc = { boot_addr_i[31:8], EXC_OFF_ECALL   };
+      EXC_PC_LOAD:    exc_pc = { boot_addr_i[31:8], EXC_OFF_LSUERR  };
+      EXC_PC_IRQ:     exc_pc = { boot_addr_i[31:8], 1'b0, exc_vec_pc_mux_i[4:0], 2'b0 };
       // TODO: Add case for EXC_PC_STORE as soon as it differs from load
 
       default:;
@@ -138,12 +138,12 @@ module riscv_if_stage
     fetch_addr_n = 'x;
 
     unique case (pc_mux_i)
-      `PC_BOOT:      fetch_addr_n = {boot_addr_i[31:8], `EXC_OFF_RST};
-      `PC_JUMP:      fetch_addr_n = jump_target_id_i;
-      `PC_BRANCH:    fetch_addr_n = jump_target_ex_i;
-      `PC_EXCEPTION: fetch_addr_n = exc_pc;             // set PC to exception handler
-      `PC_ERET:      fetch_addr_n = exception_pc_reg_i; // PC is restored when returning from IRQ/exception
-      `PC_DBG_NPC:   fetch_addr_n = dbg_jump_addr_i;    // PC is taken from debug unit
+      PC_BOOT:      fetch_addr_n = {boot_addr_i[31:8], EXC_OFF_RST};
+      PC_JUMP:      fetch_addr_n = jump_target_id_i;
+      PC_BRANCH:    fetch_addr_n = jump_target_ex_i;
+      PC_EXCEPTION: fetch_addr_n = exc_pc;             // set PC to exception handler
+      PC_ERET:      fetch_addr_n = exception_pc_reg_i; // PC is restored when returning from IRQ/exception
+      PC_DBG_NPC:   fetch_addr_n = dbg_jump_addr_i;    // PC is taken from debug unit
 
       default:;
     endcase

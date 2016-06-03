@@ -24,7 +24,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "riscv_defines.sv"
+import riscv_defines::*;
 
 module riscv_controller
 (
@@ -172,7 +172,7 @@ module riscv_controller
     exc_save_id_o    = 1'b0;
     exc_restore_id_o = 1'b0;
 
-    pc_mux_o         = `PC_BOOT;
+    pc_mux_o         = PC_BOOT;
     pc_set_o         = 1'b0;
     jump_done        = jump_done_q;
 
@@ -205,7 +205,7 @@ module riscv_controller
       BOOT_SET:
       begin
         instr_req_o   = 1'b1;
-        pc_mux_o      = `PC_BOOT;
+        pc_mux_o      = PC_BOOT;
         pc_set_o      = 1'b1;
 
         ctrl_fsm_ns = FIRST_FETCH;
@@ -248,7 +248,7 @@ module riscv_controller
 
         // handle exceptions
         if (exc_req_i) begin
-          pc_mux_o     = `PC_EXCEPTION;
+          pc_mux_o     = PC_EXCEPTION;
           pc_set_o     = 1'b1;
           exc_ack_o    = 1'b1;
 
@@ -273,8 +273,8 @@ module riscv_controller
           // we can jump directly since we know the address already
           // we don't need to worry about conditional branches here as they
           // will be evaluated in the EX stage
-          if (jump_in_dec_i == `BRANCH_JALR || jump_in_dec_i == `BRANCH_JAL) begin
-            pc_mux_o = `PC_JUMP;
+          if (jump_in_dec_i == BRANCH_JALR || jump_in_dec_i == BRANCH_JAL) begin
+            pc_mux_o = PC_JUMP;
 
             // if there is a jr stall, wait for it to be gone
             if ((~jr_stall_o) && (~jump_done_q)) begin
@@ -288,7 +288,7 @@ module riscv_controller
           end else begin
             // handle exceptions
             if (exc_req_i) begin
-              pc_mux_o      = `PC_EXCEPTION;
+              pc_mux_o      = PC_EXCEPTION;
               pc_set_o      = 1'b1;
               exc_ack_o     = 1'b1;
 
@@ -303,7 +303,7 @@ module riscv_controller
           end
 
           if (eret_insn_i) begin
-            pc_mux_o         = `PC_ERET;
+            pc_mux_o         = PC_ERET;
             exc_restore_id_o = 1'b1;
 
             if ((~jump_done_q)) begin
@@ -332,7 +332,7 @@ module riscv_controller
             // make sure the current instruction has been executed
             // before changing state to non-decode
             if (id_ready_i) begin
-              if (jump_in_id_i == `BRANCH_COND)
+              if (jump_in_id_i == BRANCH_COND)
                 ctrl_fsm_ns = DBG_WAIT_BRANCH;
               else
                 ctrl_fsm_ns = DBG_SIGNAL;
@@ -352,7 +352,7 @@ module riscv_controller
         // handle conditional branches
         if (branch_taken_ex_i) begin
           // there is a branch in the EX stage that is taken
-          pc_mux_o      = `PC_BRANCH;
+          pc_mux_o      = PC_BRANCH;
           pc_set_o      = 1'b1;
 
           is_decoding_o = 1'b0; // we are not decoding the current instruction in the ID stage
@@ -374,7 +374,7 @@ module riscv_controller
 
         if (branch_taken_ex_i) begin
           // there is a branch in the EX stage that is taken
-          pc_mux_o = `PC_BRANCH;
+          pc_mux_o = PC_BRANCH;
           pc_set_o = 1'b1;
         end
 
@@ -406,7 +406,7 @@ module riscv_controller
         halt_if_o = 1'b1;
 
         if (dbg_jump_req_i) begin
-          pc_mux_o     = `PC_DBG_NPC;
+          pc_mux_o     = PC_DBG_NPC;
           pc_set_o     = 1'b1;
           ctrl_fsm_ns  = DBG_WAIT;
         end
@@ -423,7 +423,7 @@ module riscv_controller
         halt_if_o = 1'b1;
 
         if (dbg_jump_req_i) begin
-          pc_mux_o     = `PC_DBG_NPC;
+          pc_mux_o     = PC_DBG_NPC;
           pc_set_o     = 1'b1;
           ctrl_fsm_ns  = DBG_WAIT;
         end
@@ -475,7 +475,7 @@ module riscv_controller
   /////////////////////////////////////////////////////////////
   //  ____  _        _ _    ____            _             _  //
   // / ___|| |_ __ _| | |  / ___|___  _ __ | |_ _ __ ___ | | //
-  // \___ \| __/ _` | | | | |   / _ \| '_ \| __| '__/ _ \| | //
+  // \___ \| __/ _ `| | | | |   / _ \| '_ \| __| '__/ _ \| | //
   //  ___) | || (_| | | | | |__| (_) | | | | |_| | | (_) | | //
   // |____/ \__\__,_|_|_|  \____\___/|_| |_|\__|_|  \___/|_| //
   //                                                         //
@@ -506,7 +506,7 @@ module riscv_controller
     // - always stall if a result is to be forwarded to the PC
     // we don't care about in which state the ctrl_fsm is as we deassert_we
     // anyway when we are not in DECODE
-    if ((jump_in_dec_i == `BRANCH_JALR) &&
+    if ((jump_in_dec_i == BRANCH_JALR) &&
         (((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_a_i == 1'b1)) ||
          ((regfile_we_ex_i == 1'b1) && (reg_d_ex_is_reg_a_i == 1'b1)) ||
          ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1))) )
@@ -524,39 +524,39 @@ module riscv_controller
   always_comb
   begin
     // default assignements
-    operand_a_fw_mux_sel_o = `SEL_REGFILE;
-    operand_b_fw_mux_sel_o = `SEL_REGFILE;
-    operand_c_fw_mux_sel_o = `SEL_REGFILE;
+    operand_a_fw_mux_sel_o = SEL_REGFILE;
+    operand_b_fw_mux_sel_o = SEL_REGFILE;
+    operand_c_fw_mux_sel_o = SEL_REGFILE;
 
     // Forwarding WB -> ID
     if (regfile_we_wb_i == 1'b1)
     begin
       if (reg_d_wb_is_reg_a_i == 1'b1)
-        operand_a_fw_mux_sel_o = `SEL_FW_WB;
+        operand_a_fw_mux_sel_o = SEL_FW_WB;
       if (reg_d_wb_is_reg_b_i == 1'b1)
-        operand_b_fw_mux_sel_o = `SEL_FW_WB;
+        operand_b_fw_mux_sel_o = SEL_FW_WB;
       if (reg_d_wb_is_reg_c_i == 1'b1)
-        operand_c_fw_mux_sel_o = `SEL_FW_WB;
+        operand_c_fw_mux_sel_o = SEL_FW_WB;
     end
 
     // Forwarding EX -> ID
     if (regfile_alu_we_fw_i == 1'b1)
     begin
      if (reg_d_alu_is_reg_a_i == 1'b1)
-       operand_a_fw_mux_sel_o = `SEL_FW_EX;
+       operand_a_fw_mux_sel_o = SEL_FW_EX;
      if (reg_d_alu_is_reg_b_i == 1'b1)
-       operand_b_fw_mux_sel_o = `SEL_FW_EX;
+       operand_b_fw_mux_sel_o = SEL_FW_EX;
      if (reg_d_alu_is_reg_c_i == 1'b1)
-       operand_c_fw_mux_sel_o = `SEL_FW_EX;
+       operand_c_fw_mux_sel_o = SEL_FW_EX;
     end
 
     // for misaligned memory accesses
     if (data_misaligned_i)
     begin
-      operand_a_fw_mux_sel_o  = `SEL_FW_EX;
-      operand_b_fw_mux_sel_o  = `SEL_REGFILE;
+      operand_a_fw_mux_sel_o  = SEL_FW_EX;
+      operand_b_fw_mux_sel_o  = SEL_REGFILE;
     end else if (mult_multicycle_i) begin
-      operand_c_fw_mux_sel_o  = `SEL_FW_EX;
+      operand_c_fw_mux_sel_o  = SEL_FW_EX;
     end
   end
 
@@ -578,7 +578,7 @@ module riscv_controller
   end
 
   // Performance Counters
-  assign perf_jump_o      = (jump_in_id_i == `BRANCH_JAL || jump_in_id_i == `BRANCH_JALR);
+  assign perf_jump_o      = (jump_in_id_i == BRANCH_JAL || jump_in_id_i == BRANCH_JALR);
   assign perf_jr_stall_o  = jr_stall_o;
   assign perf_ld_stall_o  = load_stall_o;
 

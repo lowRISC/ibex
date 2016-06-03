@@ -22,8 +22,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "riscv_defines.sv"
-
+import riscv_defines::*;
 
 module riscv_exc_controller
 (
@@ -58,7 +57,7 @@ module riscv_exc_controller
   output logic        save_cause_o,
 
   // from debug unit
-  input  logic [`DBG_SETS_W-1:0] dbg_settings_i
+  input  logic [DBG_SETS_W-1:0] dbg_settings_i
 );
 
 
@@ -78,13 +77,13 @@ module riscv_exc_controller
   // - illegal instruction exception and IIE bit is set
   // - IRQ and INTE bit is set and no exception is currently running
   // - Debuger requests halt
-  assign trap_o =       (dbg_settings_i[`DBG_SETS_SSTE])
-                      | (ecall_insn_i            & dbg_settings_i[`DBG_SETS_ECALL])
-                      | (lsu_load_err_i          & dbg_settings_i[`DBG_SETS_ELSU])
-                      | (lsu_store_err_i         & dbg_settings_i[`DBG_SETS_ELSU])
-                      | (ebrk_insn_i             & dbg_settings_i[`DBG_SETS_EBRK])
-                      | (illegal_insn_i          & dbg_settings_i[`DBG_SETS_EILL])
-                      | (irq_enable_i & (|irq_i) & dbg_settings_i[`DBG_SETS_IRQ]);
+  assign trap_o =       (dbg_settings_i[DBG_SETS_SSTE])
+                      | (ecall_insn_i            & dbg_settings_i[DBG_SETS_ECALL])
+                      | (lsu_load_err_i          & dbg_settings_i[DBG_SETS_ELSU])
+                      | (lsu_store_err_i         & dbg_settings_i[DBG_SETS_ELSU])
+                      | (ebrk_insn_i             & dbg_settings_i[DBG_SETS_EBRK])
+                      | (illegal_insn_i          & dbg_settings_i[DBG_SETS_EILL])
+                      | (irq_enable_i & (|irq_i) & dbg_settings_i[DBG_SETS_IRQ]);
 
   // request for exception/interrupt
   assign req_int =   ecall_insn_i
@@ -103,7 +102,7 @@ module riscv_exc_controller
     if (irq_enable_i) begin
       // pc_mux_int is a critical signal, so try to get it as soon as possible
       if (|irq_i)
-        pc_mux_int = `EXC_PC_IRQ;
+        pc_mux_int = EXC_PC_IRQ;
 
       for (i = 31; i >= 0; i--)
       begin
@@ -120,22 +119,22 @@ module riscv_exc_controller
 
     if (ecall_insn_i) begin
       cause_int  = 6'b0_01011;
-      pc_mux_int = `EXC_PC_ECALL;
+      pc_mux_int = EXC_PC_ECALL;
     end
 
     if (illegal_insn_i) begin
       cause_int  = 6'b0_00010;
-      pc_mux_int = `EXC_PC_ILLINSN;
+      pc_mux_int = EXC_PC_ILLINSN;
     end
 
     if (lsu_load_err_i) begin
       cause_int  = 6'b0_00101;
-      pc_mux_int = `EXC_PC_LOAD;
+      pc_mux_int = EXC_PC_LOAD;
     end
 
     if (lsu_store_err_i) begin
       cause_int  = 6'b0_00111;
-      pc_mux_int = `EXC_PC_STORE;
+      pc_mux_int = EXC_PC_STORE;
     end
   end
 
