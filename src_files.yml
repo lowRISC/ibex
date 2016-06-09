@@ -24,7 +24,10 @@ riscv:
   ]
 riscv_vip_rtl:
   targets: [
-    rtl,
+    all,
+  ]
+  flags: [
+    skip_synthesis
   ]
   incdirs: [
     include,
@@ -35,7 +38,9 @@ riscv_vip_rtl:
   ]
 riscv_regfile_rtl:
   targets: [
-    rtl,
+    umc65,
+    gf28,
+    st28fdsoi,
   ]
   incdirs: [
     include,
