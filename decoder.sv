@@ -221,7 +221,7 @@ module riscv_decoder
         if (instr_rdata_i[14:12] != 3'b0) begin
           jump_in_id       = `BRANCH_NONE;
           regfile_alu_we   = 1'b0;
-          illegal_insn_o   = 1'b0;
+          illegal_insn_o   = 1'b1;
         end
       end
 
