@@ -3,6 +3,8 @@ riscv:
     include,
   ]
   files: [
+    include/riscv_defines.sv,
+    include/riscv_tracer_defines.sv,
     alu.sv,
     alu_div.sv,
     compressed_decoder.sv,

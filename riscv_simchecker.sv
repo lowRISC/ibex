@@ -22,7 +22,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-`include "riscv_defines.sv"
+import riscv_defines::*;
 
 // do not import anything if the simchecker is not used
 // this gets rid of warnings during simulation

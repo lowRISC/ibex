@@ -23,12 +23,12 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "riscv_defines.sv"
+import riscv_defines::*;
 
 `ifndef PULP_FPGA_EMUL
-`ifdef SYNTHESIS
-`define ASIC_SYNTHESIS
-`endif
+ `ifdef SYNTHESIS
+  `define ASIC_SYNTHESIS
+ `endif
 `endif
 
 module riscv_cs_registers
@@ -135,7 +135,7 @@ module riscv_cs_registers
   ////////////////////////////////////////////
   //   ____ ____  ____    ____              //
   //  / ___/ ___||  _ \  |  _ \ ___  __ _   //
-  // | |   \___ \| |_) | | |_) / _ \/ _` |  //
+  // | |   \___ \| |_) | | |_) / _ \/ _` |  //   
   // | |___ ___) |  _ <  |  _ <  __/ (_| |  //
   //  \____|____/|_| \_\ |_| \_\___|\__, |  //
   //                                |___/   //
@@ -239,11 +239,11 @@ module riscv_cs_registers
     csr_we_int    = 1'b1;
 
     unique case (csr_op_i)
-      `CSR_OP_WRITE: csr_wdata_int = csr_wdata_i;
-      `CSR_OP_SET:   csr_wdata_int = csr_wdata_i | csr_rdata_o;
-      `CSR_OP_CLEAR: csr_wdata_int = (~csr_wdata_i) & csr_rdata_o;
+      CSR_OP_WRITE: csr_wdata_int = csr_wdata_i;
+      CSR_OP_SET:   csr_wdata_int = csr_wdata_i | csr_rdata_o;
+      CSR_OP_CLEAR: csr_wdata_int = (~csr_wdata_i) & csr_rdata_o;
 
-      `CSR_OP_NONE: begin
+      CSR_OP_NONE: begin
         csr_wdata_int = csr_wdata_i;
         csr_we_int    = 1'b0;
       end
@@ -378,10 +378,10 @@ module riscv_cs_registers
 
     if (is_pccr == 1'b1) begin
       unique case (csr_op_i)
-        `CSR_OP_NONE:   ;
-        `CSR_OP_WRITE:  PCCR_n[0] = csr_wdata_i;
-        `CSR_OP_SET:    PCCR_n[0] = csr_wdata_i | PCCR_q[0];
-        `CSR_OP_CLEAR:  PCCR_n[0] = csr_wdata_i & ~(PCCR_q[0]);
+        CSR_OP_NONE:   ;
+        CSR_OP_WRITE:  PCCR_n[0] = csr_wdata_i;
+        CSR_OP_SET:    PCCR_n[0] = csr_wdata_i | PCCR_q[0];
+        CSR_OP_CLEAR:  PCCR_n[0] = csr_wdata_i & ~(PCCR_q[0]);
       endcase
     end
   end
@@ -399,10 +399,10 @@ module riscv_cs_registers
 
       if (is_pccr == 1'b1 && (pccr_all_sel == 1'b1 || pccr_index == i)) begin
         unique case (csr_op_i)
-          `CSR_OP_NONE:   ;
-          `CSR_OP_WRITE:  PCCR_n[i] = csr_wdata_i;
-          `CSR_OP_SET:    PCCR_n[i] = csr_wdata_i | PCCR_q[i];
-          `CSR_OP_CLEAR:  PCCR_n[i] = csr_wdata_i & ~(PCCR_q[i]);
+          CSR_OP_NONE:   ;
+          CSR_OP_WRITE:  PCCR_n[i] = csr_wdata_i;
+          CSR_OP_SET:    PCCR_n[i] = csr_wdata_i | PCCR_q[i];
+          CSR_OP_CLEAR:  PCCR_n[i] = csr_wdata_i & ~(PCCR_q[i]);
         endcase
       end
     end
@@ -417,19 +417,19 @@ module riscv_cs_registers
 
     if (is_pcmr) begin
       unique case (csr_op_i)
-        `CSR_OP_NONE:   ;
-        `CSR_OP_WRITE:  PCMR_n = csr_wdata_i[1:0];
-        `CSR_OP_SET:    PCMR_n = csr_wdata_i[1:0] | PCMR_q;
-        `CSR_OP_CLEAR:  PCMR_n = csr_wdata_i[1:0] & ~(PCMR_q);
+        CSR_OP_NONE:   ;
+        CSR_OP_WRITE:  PCMR_n = csr_wdata_i[1:0];
+        CSR_OP_SET:    PCMR_n = csr_wdata_i[1:0] | PCMR_q;
+        CSR_OP_CLEAR:  PCMR_n = csr_wdata_i[1:0] & ~(PCMR_q);
       endcase
     end
 
     if (is_pcer) begin
       unique case (csr_op_i)
-        `CSR_OP_NONE:   ;
-        `CSR_OP_WRITE:  PCER_n = csr_wdata_i[N_PERF_COUNTERS-1:0];
-        `CSR_OP_SET:    PCER_n = csr_wdata_i[N_PERF_COUNTERS-1:0] | PCER_q;
-        `CSR_OP_CLEAR:  PCER_n = csr_wdata_i[N_PERF_COUNTERS-1:0] & ~(PCER_q);
+        CSR_OP_NONE:   ;
+        CSR_OP_WRITE:  PCER_n = csr_wdata_i[N_PERF_COUNTERS-1:0];
+        CSR_OP_SET:    PCER_n = csr_wdata_i[N_PERF_COUNTERS-1:0] | PCER_q;
+        CSR_OP_CLEAR:  PCER_n = csr_wdata_i[N_PERF_COUNTERS-1:0] & ~(PCER_q);
       endcase
     end
   end
