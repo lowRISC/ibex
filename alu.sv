@@ -518,17 +518,17 @@ module riscv_alu
       ALU_SHUF2: begin
         unique case (vector_mode_i)
           VEC_MODE8: begin
-            shuffle_reg_sel[3] = operand_b_i[26];
-            shuffle_reg_sel[2] = operand_b_i[18];
-            shuffle_reg_sel[1] = operand_b_i[10];
-            shuffle_reg_sel[0] = operand_b_i[ 2];
+            shuffle_reg_sel[3] = ~operand_b_i[26];
+            shuffle_reg_sel[2] = ~operand_b_i[18];
+            shuffle_reg_sel[1] = ~operand_b_i[10];
+            shuffle_reg_sel[0] = ~operand_b_i[ 2];
           end
 
           VEC_MODE16: begin
-            shuffle_reg_sel[3] = operand_b_i[17];
-            shuffle_reg_sel[2] = operand_b_i[17];
-            shuffle_reg_sel[1] = operand_b_i[ 1];
-            shuffle_reg_sel[0] = operand_b_i[ 1];
+            shuffle_reg_sel[3] = ~operand_b_i[17];
+            shuffle_reg_sel[2] = ~operand_b_i[17];
+            shuffle_reg_sel[1] = ~operand_b_i[ 1];
+            shuffle_reg_sel[0] = ~operand_b_i[ 1];
           end
           default:;
         endcase
