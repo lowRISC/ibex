@@ -22,7 +22,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-`include "riscv_tracer_defines.sv"
+import riscv_defines::*;
+import riscv_tracer_defines::*;
+
+// Source/Destination register instruction index
+`define REG_S1 19:15
+`define REG_S2 24:20
+`define REG_S3 29:25
+`define REG_D  11:07
 
 module riscv_tracer
 (
@@ -306,7 +313,7 @@ module riscv_tracer
 
         if (instr[14:12] != 3'b111) begin
           // regular load
-          if (instr[6:0] != `OPCODE_LOAD_POST) begin
+          if (instr[6:0] != OPCODE_LOAD_POST) begin
             regs_read.push_back('{rs1, rs1_value});
             str = $sformatf("%-16s x%0d, %0d(x%0d)", mnemonic, rd, $signed(imm_i_type), rs1);
           end else begin
@@ -316,7 +323,7 @@ module riscv_tracer
           end
         end else begin
           // reg-reg load
-          if (instr[6:0] != `OPCODE_LOAD_POST) begin
+          if (instr[6:0] != OPCODE_LOAD_POST) begin
             regs_read.push_back('{rs2, rs2_value});
             regs_read.push_back('{rs1, rs1_value});
             str = $sformatf("%-16s x%0d, x%0d(x%0d)", mnemonic, rd, rs2, rs1);
@@ -346,7 +353,7 @@ module riscv_tracer
 
         if (instr[14] == 1'b0) begin
           // regular store
-          if (instr[6:0] != `OPCODE_STORE_POST) begin
+          if (instr[6:0] != OPCODE_STORE_POST) begin
             regs_read.push_back('{rs2, rs2_value});
             regs_read.push_back('{rs1, rs1_value});
             str = $sformatf("%-16s x%0d, %0d(x%0d)", mnemonic, rs2, $signed(imm_s_type), rs1);
@@ -358,7 +365,7 @@ module riscv_tracer
           end
         end else begin
           // reg-reg store
-          if (instr[6:0] != `OPCODE_STORE_POST) begin
+          if (instr[6:0] != OPCODE_STORE_POST) begin
             regs_read.push_back('{rs2, rs2_value});
             regs_read.push_back('{rs3, rs3_value});
             regs_read.push_back('{rs1, rs1_value});
@@ -658,97 +665,97 @@ module riscv_tracer
         // Aliases
         32'h00_00_00_13:   trace.printMnemonic("nop");
         // Regular opcodes
-        `INSTR_LUI:        trace.printUInstr("lui");
-        `INSTR_AUIPC:      trace.printUInstr("auipc");
-        `INSTR_JAL:        trace.printUJInstr("jal");
-        `INSTR_JALR:       trace.printIInstr("jalr");
+        INSTR_LUI:        trace.printUInstr("lui");
+        INSTR_AUIPC:      trace.printUInstr("auipc");
+        INSTR_JAL:        trace.printUJInstr("jal");
+        INSTR_JALR:       trace.printIInstr("jalr");
         // BRANCH
-        `INSTR_BEQ:        trace.printSBInstr("beq");
-        `INSTR_BNE:        trace.printSBInstr("bne");
-        `INSTR_BLT:        trace.printSBInstr("blt");
-        `INSTR_BGE:        trace.printSBInstr("bge");
-        `INSTR_BLTU:       trace.printSBInstr("bltu");
-        `INSTR_BGEU:       trace.printSBInstr("bgeu");
-        `INSTR_BALL:       trace.printSBallInstr("pv.ball");
+        INSTR_BEQ:        trace.printSBInstr("beq");
+        INSTR_BNE:        trace.printSBInstr("bne");
+        INSTR_BLT:        trace.printSBInstr("blt");
+        INSTR_BGE:        trace.printSBInstr("bge");
+        INSTR_BLTU:       trace.printSBInstr("bltu");
+        INSTR_BGEU:       trace.printSBInstr("bgeu");
+        INSTR_BALL:       trace.printSBallInstr("pv.ball");
         // OPIMM
-        `INSTR_ADDI:       trace.printIInstr("addi");
-        `INSTR_SLTI:       trace.printIInstr("slti");
-        `INSTR_SLTIU:      trace.printIInstr("sltiu");
-        `INSTR_XORI:       trace.printIInstr("xori");
-        `INSTR_ORI:        trace.printIInstr("ori");
-        `INSTR_ANDI:       trace.printIInstr("andi");
-        `INSTR_SLLI:       trace.printIuInstr("slli");
-        `INSTR_SRLI:       trace.printIuInstr("srli");
-        `INSTR_SRAI:       trace.printIuInstr("srai");
+        INSTR_ADDI:       trace.printIInstr("addi");
+        INSTR_SLTI:       trace.printIInstr("slti");
+        INSTR_SLTIU:      trace.printIInstr("sltiu");
+        INSTR_XORI:       trace.printIInstr("xori");
+        INSTR_ORI:        trace.printIInstr("ori");
+        INSTR_ANDI:       trace.printIInstr("andi");
+        INSTR_SLLI:       trace.printIuInstr("slli");
+        INSTR_SRLI:       trace.printIuInstr("srli");
+        INSTR_SRAI:       trace.printIuInstr("srai");
         // OP
-        `INSTR_ADD:        trace.printRInstr("add");
-        `INSTR_SUB:        trace.printRInstr("sub");
-        `INSTR_SLL:        trace.printRInstr("sll");
-        `INSTR_SLT:        trace.printRInstr("slt");
-        `INSTR_SLTU:       trace.printRInstr("sltu");
-        `INSTR_XOR:        trace.printRInstr("xor");
-        `INSTR_SRL:        trace.printRInstr("srl");
-        `INSTR_SRA:        trace.printRInstr("sra");
-        `INSTR_OR:         trace.printRInstr("or");
-        `INSTR_AND:        trace.printRInstr("and");
-        `INSTR_EXTHS:      trace.printRInstr("p.exths");
-        `INSTR_EXTHZ:      trace.printRInstr("p.exthz");
-        `INSTR_EXTBS:      trace.printRInstr("p.extbs");
-        `INSTR_EXTBZ:      trace.printRInstr("p.extbz");
-        `INSTR_PAVG:       trace.printRInstr("p.avg");
-        `INSTR_PAVGU:      trace.printRInstr("p.avgu");
-        `INSTR_PADDN:      trace.printAddNInstr("p.addN");
-        `INSTR_PADDUN:     trace.printAddNInstr("p.adduN");
-        `INSTR_PADDRN:     trace.printAddNInstr("p.addRN");
-        `INSTR_PADDURN:    trace.printAddNInstr("p.adduRN");
-        `INSTR_PSUBN:      trace.printAddNInstr("p.subN");
-        `INSTR_PSUBUN:     trace.printAddNInstr("p.subuN");
-        `INSTR_PSUBRN:     trace.printAddNInstr("p.subRN");
-        `INSTR_PSUBURN:    trace.printAddNInstr("p.subuRN");
-        `INSTR_PSLET:      trace.printRInstr("p.slet");
-        `INSTR_PSLETU:     trace.printRInstr("p.sletu");
-        `INSTR_PMIN:       trace.printRInstr("p.min");
-        `INSTR_PMINU:      trace.printRInstr("p.minu");
-        `INSTR_PMAX:       trace.printRInstr("p.max");
-        `INSTR_PMAXU:      trace.printRInstr("p.maxu");
-        `INSTR_PABS:       trace.printR1Instr("p.abs");
-        `INSTR_PCLIP:      trace.printClipInstr("p.clip");
-        `INSTR_PCLIPU:     trace.printClipInstr("p.clipu");
-        `INSTR_PBEXT:      trace.printBit1Instr("p.extract");
-        `INSTR_PBEXTU:     trace.printBit1Instr("p.extractu");
-        `INSTR_PBINS:      trace.printBit2Instr("p.insert");
-        `INSTR_PBCLR:      trace.printBit1Instr("p.bclr");
-        `INSTR_PBSET:      trace.printBit1Instr("p.bset");
+        INSTR_ADD:        trace.printRInstr("add");
+        INSTR_SUB:        trace.printRInstr("sub");
+        INSTR_SLL:        trace.printRInstr("sll");
+        INSTR_SLT:        trace.printRInstr("slt");
+        INSTR_SLTU:       trace.printRInstr("sltu");
+        INSTR_XOR:        trace.printRInstr("xor");
+        INSTR_SRL:        trace.printRInstr("srl");
+        INSTR_SRA:        trace.printRInstr("sra");
+        INSTR_OR:         trace.printRInstr("or");
+        INSTR_AND:        trace.printRInstr("and");
+        INSTR_EXTHS:      trace.printRInstr("p.exths");
+        INSTR_EXTHZ:      trace.printRInstr("p.exthz");
+        INSTR_EXTBS:      trace.printRInstr("p.extbs");
+        INSTR_EXTBZ:      trace.printRInstr("p.extbz");
+        INSTR_PAVG:       trace.printRInstr("p.avg");
+        INSTR_PAVGU:      trace.printRInstr("p.avgu");
+        INSTR_PADDN:      trace.printAddNInstr("p.addN");
+        INSTR_PADDUN:     trace.printAddNInstr("p.adduN");
+        INSTR_PADDRN:     trace.printAddNInstr("p.addRN");
+        INSTR_PADDURN:    trace.printAddNInstr("p.adduRN");
+        INSTR_PSUBN:      trace.printAddNInstr("p.subN");
+        INSTR_PSUBUN:     trace.printAddNInstr("p.subuN");
+        INSTR_PSUBRN:     trace.printAddNInstr("p.subRN");
+        INSTR_PSUBURN:    trace.printAddNInstr("p.subuRN");
+        INSTR_PSLET:      trace.printRInstr("p.slet");
+        INSTR_PSLETU:     trace.printRInstr("p.sletu");
+        INSTR_PMIN:       trace.printRInstr("p.min");
+        INSTR_PMINU:      trace.printRInstr("p.minu");
+        INSTR_PMAX:       trace.printRInstr("p.max");
+        INSTR_PMAXU:      trace.printRInstr("p.maxu");
+        INSTR_PABS:       trace.printR1Instr("p.abs");
+        INSTR_PCLIP:      trace.printClipInstr("p.clip");
+        INSTR_PCLIPU:     trace.printClipInstr("p.clipu");
+        INSTR_PBEXT:      trace.printBit1Instr("p.extract");
+        INSTR_PBEXTU:     trace.printBit1Instr("p.extractu");
+        INSTR_PBINS:      trace.printBit2Instr("p.insert");
+        INSTR_PBCLR:      trace.printBit1Instr("p.bclr");
+        INSTR_PBSET:      trace.printBit1Instr("p.bset");
         // FENCE
-        `INSTR_FENCE:      trace.printMnemonic("fence");
-        `INSTR_FENCEI:     trace.printMnemonic("fencei");
+        INSTR_FENCE:      trace.printMnemonic("fence");
+        INSTR_FENCEI:     trace.printMnemonic("fencei");
         // SYSTEM (CSR manipulation)
-        `INSTR_CSRRW:      trace.printCSRInstr("csrrw");
-        `INSTR_CSRRS:      trace.printCSRInstr("csrrs");
-        `INSTR_CSRRC:      trace.printCSRInstr("csrrc");
-        `INSTR_CSRRWI:     trace.printCSRInstr("csrrwi");
-        `INSTR_CSRRSI:     trace.printCSRInstr("csrrsi");
-        `INSTR_CSRRCI:     trace.printCSRInstr("csrrci");
+        INSTR_CSRRW:      trace.printCSRInstr("csrrw");
+        INSTR_CSRRS:      trace.printCSRInstr("csrrs");
+        INSTR_CSRRC:      trace.printCSRInstr("csrrc");
+        INSTR_CSRRWI:     trace.printCSRInstr("csrrwi");
+        INSTR_CSRRSI:     trace.printCSRInstr("csrrsi");
+        INSTR_CSRRCI:     trace.printCSRInstr("csrrci");
         // SYSTEM (others)
-        `INSTR_ECALL:      trace.printMnemonic("ecall");
-        `INSTR_EBREAK:     trace.printMnemonic("ebreak");
-        `INSTR_ERET:       trace.printMnemonic("eret");
-        `INSTR_WFI:        trace.printMnemonic("wfi");
+        INSTR_ECALL:      trace.printMnemonic("ecall");
+        INSTR_EBREAK:     trace.printMnemonic("ebreak");
+        INSTR_ERET:       trace.printMnemonic("eret");
+        INSTR_WFI:        trace.printMnemonic("wfi");
         // PULP MULTIPLIER
-        `INSTR_PMUL:       trace.printRInstr("p.mul");
-        `INSTR_PMAC:       trace.printR3Instr("p.mac");
-        `INSTR_DIV:        trace.printRInstr("div");
-        `INSTR_DIVU:       trace.printRInstr("divu");
-        `INSTR_REM:        trace.printRInstr("rem");
-        `INSTR_REMU:       trace.printRInstr("remu");
+        INSTR_PMUL:       trace.printRInstr("p.mul");
+        INSTR_PMAC:       trace.printR3Instr("p.mac");
+        INSTR_DIV:        trace.printRInstr("div");
+        INSTR_DIVU:       trace.printRInstr("divu");
+        INSTR_REM:        trace.printRInstr("rem");
+        INSTR_REMU:       trace.printRInstr("remu");
         // opcodes with custom decoding
-        {25'b?, `OPCODE_LOAD}:       trace.printLoadInstr();
-        {25'b?, `OPCODE_LOAD_POST}:  trace.printLoadInstr();
-        {25'b?, `OPCODE_STORE}:      trace.printStoreInstr();
-        {25'b?, `OPCODE_STORE_POST}: trace.printStoreInstr();
-        {25'b?, `OPCODE_HWLOOP}:     trace.printHwloopInstr();
-        {25'b?, `OPCODE_VECOP}:      trace.printVecInstr();
-        `INSTR_PMULRN:               trace.printMulInstr();
+        {25'b?, OPCODE_LOAD}:       trace.printLoadInstr();
+        {25'b?, OPCODE_LOAD_POST}:  trace.printLoadInstr();
+        {25'b?, OPCODE_STORE}:      trace.printStoreInstr();
+        {25'b?, OPCODE_STORE_POST}: trace.printStoreInstr();
+        {25'b?, OPCODE_HWLOOP}:     trace.printHwloopInstr();
+        {25'b?, OPCODE_VECOP}:      trace.printVecInstr();
+        INSTR_PMULRN:               trace.printMulInstr();
         default:           trace.printMnemonic("INVALID");
       endcase // unique case (instr)
 

@@ -22,9 +22,6 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-
-`include "riscv_defines.sv"
-
 module riscv_hwloop_controller
 #(
   parameter N_REGS = 2

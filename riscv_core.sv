@@ -24,8 +24,9 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+`include "riscv_config.sv"
 
-`include "riscv_defines.sv"
+import riscv_defines::*;
 
 module riscv_core
 #(
@@ -128,7 +129,7 @@ module riscv_core
   logic [31:0] pc_ex; // PC of last executed branch or p.elw
 
   // ALU Control
-  logic [`ALU_OP_WIDTH-1:0] alu_operator_ex;
+  logic [ALU_OP_WIDTH-1:0] alu_operator_ex;
   logic [31:0] alu_operand_a_ex;
   logic [31:0] alu_operand_b_ex;
   logic [31:0] alu_operand_c_ex;
@@ -226,7 +227,7 @@ module riscv_core
 
 
   // Debug Unit
-  logic [`DBG_SETS_W-1:0] dbg_settings;
+  logic [DBG_SETS_W-1:0] dbg_settings;
   logic        dbg_req;
   logic        dbg_ack;
   logic        dbg_stall;
@@ -746,8 +747,8 @@ module riscv_core
   assign csr_addr     = (dbg_csr_req == 1'b0) ? csr_addr_int     : dbg_csr_addr;
   assign csr_wdata    = (dbg_csr_req == 1'b0) ? alu_operand_a_ex : dbg_csr_wdata;
   assign csr_op       = (dbg_csr_req == 1'b0) ? csr_op_ex
-                                              : (dbg_csr_we == 1'b1 ? `CSR_OP_WRITE
-                                                                    : `CSR_OP_NONE );
+                                              : (dbg_csr_we == 1'b1 ? CSR_OP_WRITE
+                                                                    : CSR_OP_NONE );
   assign csr_addr_int = csr_access_ex ? alu_operand_b_ex[11:0] : '0;
 
 
@@ -877,7 +878,7 @@ module riscv_core
 
 `ifdef SIMCHECKER
   logic is_interrupt;
-  assign is_interrupt = (pc_mux_id == `PC_EXCEPTION) && (exc_pc_mux_id == `EXC_PC_IRQ);
+  assign is_interrupt = (pc_mux_id == PC_EXCEPTION) && (exc_pc_mux_id == EXC_PC_IRQ);
 
   riscv_simchecker riscv_simchecker_i
   (

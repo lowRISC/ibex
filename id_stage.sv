@@ -26,7 +26,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-`include "riscv_defines.sv"
+import riscv_defines::*;
+
+// Source/Destination register instruction index
+`define REG_S1 19:15
+`define REG_S2 24:20
+`define REG_S3 29:25
+`define REG_D  11:07
 
 module riscv_id_stage
 #(
@@ -99,7 +105,7 @@ module riscv_id_stage
     output logic        regfile_alu_we_ex_o,
 
     // ALU
-    output logic [`ALU_OP_WIDTH-1:0] alu_operator_ex_o,
+    output logic [ALU_OP_WIDTH-1:0] alu_operator_ex_o,
 
 
     // MUL
@@ -159,7 +165,7 @@ module riscv_id_stage
     input  logic        lsu_store_err_i,
 
     // Debug Unit Signals
-    input  logic [`DBG_SETS_W-1:0] dbg_settings_i,
+    input  logic [DBG_SETS_W-1:0] dbg_settings_i,
     input  logic        dbg_req_i,
     output logic        dbg_ack_o,
     input  logic        dbg_stall_i,
@@ -259,7 +265,7 @@ module riscv_id_stage
   logic [31:0] regfile_data_rc_id;
 
   // ALU Control
-  logic [`ALU_OP_WIDTH-1:0] alu_operator;
+  logic [ALU_OP_WIDTH-1:0] alu_operator;
   logic [1:0]  alu_op_a_mux_sel;
   logic [1:0]  alu_op_b_mux_sel;
   logic [1:0]  alu_op_c_mux_sel;
@@ -386,9 +392,9 @@ module riscv_id_stage
   always_comb
   begin
     unique case (regc_mux)
-      `REGC_ZERO:  regfile_addr_rc_id = '0;
-      `REGC_RD:    regfile_addr_rc_id = instr[`REG_D];
-      `REGC_S1:    regfile_addr_rc_id = instr[`REG_S1];
+      REGC_ZERO:  regfile_addr_rc_id = '0;
+      REGC_RD:    regfile_addr_rc_id = instr[`REG_D];
+      REGC_S1:    regfile_addr_rc_id = instr[`REG_S1];
       default:     regfile_addr_rc_id = '0;
     endcase
   end
@@ -485,11 +491,11 @@ module riscv_id_stage
   always_comb
   begin : jump_target_mux
     unique case (jump_target_mux_sel)
-      `JT_JAL:  jump_target = pc_id_i + imm_uj_type;
-      `JT_COND: jump_target = pc_id_i + imm_sb_type;
+      JT_JAL:  jump_target = pc_id_i + imm_uj_type;
+      JT_COND: jump_target = pc_id_i + imm_sb_type;
 
       // JALR: Cannot forward RS1, since the path is too long
-      `JT_JALR: jump_target = regfile_data_ra_id + imm_i_type;
+      JT_JALR: jump_target = regfile_data_ra_id + imm_i_type;
       default:  jump_target = regfile_data_ra_id + imm_i_type;
     endcase
   end
@@ -510,10 +516,10 @@ module riscv_id_stage
   always_comb
   begin : alu_operand_a_mux
     case (alu_op_a_mux_sel)
-      `OP_A_REGA_OR_FWD:  alu_operand_a = operand_a_fw_id;
-      `OP_A_REGB_OR_FWD:  alu_operand_a = operand_b_fw_id;
-      `OP_A_CURRPC:       alu_operand_a = pc_id_i;
-      `OP_A_IMM:          alu_operand_a = imm_a;
+      OP_A_REGA_OR_FWD:  alu_operand_a = operand_a_fw_id;
+      OP_A_REGB_OR_FWD:  alu_operand_a = operand_b_fw_id;
+      OP_A_CURRPC:       alu_operand_a = pc_id_i;
+      OP_A_IMM:          alu_operand_a = imm_a;
       default:            alu_operand_a = operand_a_fw_id;
     endcase; // case (alu_op_a_mux_sel)
   end
@@ -521,8 +527,8 @@ module riscv_id_stage
   always_comb
   begin : immediate_a_mux
     unique case (imm_a_mux_sel)
-      `IMMA_Z:      imm_a = imm_z_type;
-      `IMMA_ZERO:   imm_a = '0;
+      IMMA_Z:      imm_a = imm_z_type;
+      IMMA_ZERO:   imm_a = '0;
       default:      imm_a = '0;
     endcase
   end
@@ -531,9 +537,9 @@ module riscv_id_stage
   always_comb
   begin : operand_a_fw_mux
     case (operand_a_fw_mux_sel)
-      `SEL_FW_EX:    operand_a_fw_id = regfile_alu_wdata_fw_i;
-      `SEL_FW_WB:    operand_a_fw_id = regfile_wdata_wb_i;
-      `SEL_REGFILE:  operand_a_fw_id = regfile_data_ra_id;
+      SEL_FW_EX:    operand_a_fw_id = regfile_alu_wdata_fw_i;
+      SEL_FW_WB:    operand_a_fw_id = regfile_wdata_wb_i;
+      SEL_REGFILE:  operand_a_fw_id = regfile_data_ra_id;
       default:       operand_a_fw_id = regfile_data_ra_id;
     endcase; // case (operand_a_fw_mux_sel)
   end
@@ -553,16 +559,16 @@ module riscv_id_stage
   always_comb
   begin : immediate_b_mux
     unique case (imm_b_mux_sel)
-      `IMMB_I:      imm_b = imm_i_type;
-      `IMMB_S:      imm_b = imm_s_type;
-      `IMMB_U:      imm_b = imm_u_type;
-      `IMMB_PCINCR: imm_b = (is_compressed_i && (~data_misaligned_i)) ? 32'h2 : 32'h4;
-      `IMMB_S2:     imm_b = imm_s2_type;
-      `IMMB_S3:     imm_b = imm_s3_type;
-      `IMMB_VS:     imm_b = imm_vs_type;
-      `IMMB_VU:     imm_b = imm_vu_type;
-      `IMMB_SHUF:   imm_b = imm_shuffle_type;
-      `IMMB_CLIP:   imm_b = {1'b0, imm_clip_type[31:1]};
+      IMMB_I:      imm_b = imm_i_type;
+      IMMB_S:      imm_b = imm_s_type;
+      IMMB_U:      imm_b = imm_u_type;
+      IMMB_PCINCR: imm_b = (is_compressed_i && (~data_misaligned_i)) ? 32'h2 : 32'h4;
+      IMMB_S2:     imm_b = imm_s2_type;
+      IMMB_S3:     imm_b = imm_s3_type;
+      IMMB_VS:     imm_b = imm_vs_type;
+      IMMB_VU:     imm_b = imm_vu_type;
+      IMMB_SHUF:   imm_b = imm_shuffle_type;
+      IMMB_CLIP:   imm_b = {1'b0, imm_clip_type[31:1]};
       default:      imm_b = imm_i_type;
     endcase
   end
@@ -571,16 +577,16 @@ module riscv_id_stage
   always_comb
   begin : alu_operand_b_mux
     case (alu_op_b_mux_sel)
-      `OP_B_REGB_OR_FWD:  operand_b = operand_b_fw_id;
-      `OP_B_REGC_OR_FWD:  operand_b = operand_c_fw_id;
-      `OP_B_IMM:          operand_b = imm_b;
+      OP_B_REGB_OR_FWD:  operand_b = operand_b_fw_id;
+      OP_B_REGC_OR_FWD:  operand_b = operand_c_fw_id;
+      OP_B_IMM:          operand_b = imm_b;
       default:            operand_b = operand_b_fw_id;
     endcase // case (alu_op_b_mux_sel)
   end
 
 
   // scalar replication for operand B
-  assign operand_b_vec = (alu_vec_mode == `VEC_MODE8) ? {4{operand_b[7:0]}} : {2{operand_b[15:0]}};
+  assign operand_b_vec = (alu_vec_mode == VEC_MODE8) ? {4{operand_b[7:0]}} : {2{operand_b[15:0]}};
 
   // choose normal or scalar replicated version of operand b
   assign alu_operand_b = (scalar_replication == 1'b1) ? operand_b_vec : operand_b;
@@ -590,9 +596,9 @@ module riscv_id_stage
   always_comb
   begin : operand_b_fw_mux
     case (operand_b_fw_mux_sel)
-      `SEL_FW_EX:    operand_b_fw_id = regfile_alu_wdata_fw_i;
-      `SEL_FW_WB:    operand_b_fw_id = regfile_wdata_wb_i;
-      `SEL_REGFILE:  operand_b_fw_id = regfile_data_rb_id;
+      SEL_FW_EX:    operand_b_fw_id = regfile_alu_wdata_fw_i;
+      SEL_FW_WB:    operand_b_fw_id = regfile_wdata_wb_i;
+      SEL_REGFILE:  operand_b_fw_id = regfile_data_rb_id;
       default:       operand_b_fw_id = regfile_data_rb_id;
     endcase; // case (operand_b_fw_mux_sel)
   end
@@ -611,9 +617,9 @@ module riscv_id_stage
   always_comb
   begin : alu_operand_c_mux
     case (alu_op_c_mux_sel)
-      `OP_C_REGC_OR_FWD:  alu_operand_c = operand_c_fw_id;
-      `OP_C_REGB_OR_FWD:  alu_operand_c = operand_b_fw_id;
-      `OP_C_JT:           alu_operand_c = jump_target;
+      OP_C_REGC_OR_FWD:  alu_operand_c = operand_c_fw_id;
+      OP_C_REGB_OR_FWD:  alu_operand_c = operand_b_fw_id;
+      OP_C_JT:           alu_operand_c = jump_target;
       default:            alu_operand_c = operand_c_fw_id;
     endcase // case (alu_op_c_mux_sel)
   end
@@ -622,9 +628,9 @@ module riscv_id_stage
   always_comb
   begin : operand_c_fw_mux
     case (operand_c_fw_mux_sel)
-      `SEL_FW_EX:    operand_c_fw_id = regfile_alu_wdata_fw_i;
-      `SEL_FW_WB:    operand_c_fw_id = regfile_wdata_wb_i;
-      `SEL_REGFILE:  operand_c_fw_id = regfile_data_rc_id;
+      SEL_FW_EX:    operand_c_fw_id = regfile_alu_wdata_fw_i;
+      SEL_FW_WB:    operand_c_fw_id = regfile_wdata_wb_i;
+      SEL_REGFILE:  operand_c_fw_id = regfile_data_rc_id;
       default:       operand_c_fw_id = regfile_data_rc_id;
     endcase; // case (operand_c_fw_mux_sel)
   end
@@ -642,18 +648,18 @@ module riscv_id_stage
   always_comb
   begin
     unique case (bmask_a_mux)
-      `BMASK_A_ZERO: bmask_a_id = '0;
-      `BMASK_A_S3:   bmask_a_id = imm_s3_type[4:0];
+      BMASK_A_ZERO: bmask_a_id = '0;
+      BMASK_A_S3:   bmask_a_id = imm_s3_type[4:0];
       default:       bmask_a_id = '0;
     endcase
   end
   always_comb
   begin
     unique case (bmask_b_mux)
-      `BMASK_B_ZERO: bmask_b_id = '0;
-      `BMASK_B_ONE:  bmask_b_id = 5'd1;
-      `BMASK_B_S2:   bmask_b_id = imm_s2_type[4:0];
-      `BMASK_B_S3:   bmask_b_id = imm_s3_type[4:0];
+      BMASK_B_ZERO: bmask_b_id = '0;
+      BMASK_B_ONE:  bmask_b_id = 5'd1;
+      BMASK_B_S2:   bmask_b_id = imm_s2_type[4:0];
+      BMASK_B_S3:   bmask_b_id = imm_s3_type[4:0];
       default:       bmask_b_id = '0;
     endcase
   end
@@ -664,8 +670,8 @@ module riscv_id_stage
   always_comb
   begin
     unique case (mult_imm_mux)
-      `MIMM_ZERO: mult_imm_id = '0;
-      `MIMM_S3:   mult_imm_id = imm_s3_type[4:0];
+      MIMM_ZERO: mult_imm_id = '0;
+      MIMM_S3:   mult_imm_id = imm_s3_type[4:0];
       default:    mult_imm_id = '0;
     endcase
   end
@@ -1004,7 +1010,7 @@ module riscv_id_stage
   begin : ID_EX_PIPE_REGISTERS
     if (rst_n == 1'b0)
     begin
-      alu_operator_ex_o           <= `ALU_SLTU;
+      alu_operator_ex_o           <= ALU_SLTU;
       alu_operand_a_ex_o          <= '0;
       alu_operand_b_ex_o          <= '0;
       alu_operand_c_ex_o          <= '0;
@@ -1035,7 +1041,7 @@ module riscv_id_stage
       prepost_useincr_ex_o        <= 1'b0;
 
       csr_access_ex_o             <= 1'b0;
-      csr_op_ex_o                 <= `CSR_OP_NONE;
+      csr_op_ex_o                 <= CSR_OP_NONE;
 
       data_we_ex_o                <= 1'b0;
       data_type_ex_o              <= 2'b0;
@@ -1137,11 +1143,11 @@ module riscv_id_stage
 
         data_misaligned_ex_o        <= 1'b0;
 
-        if ((jump_in_id == `BRANCH_COND) || data_load_event_id) begin
+        if ((jump_in_id == BRANCH_COND) || data_load_event_id) begin
           pc_ex_o                   <= pc_id_i;
         end
 
-        branch_in_ex_o              <= jump_in_id == `BRANCH_COND;
+        branch_in_ex_o              <= jump_in_id == BRANCH_COND;
       end else if(ex_ready_i) begin
         // EX stage is ready but we don't have a new instruction for it,
         // so we set all write enables to 0, but unstall the pipe
@@ -1150,7 +1156,7 @@ module riscv_id_stage
 
         regfile_alu_we_ex_o         <= 1'b0;
 
-        csr_op_ex_o                 <= `CSR_OP_NONE;
+        csr_op_ex_o                 <= CSR_OP_NONE;
 
         data_req_ex_o               <= 1'b0;
         data_load_event_ex_o        <= 1'b0;
