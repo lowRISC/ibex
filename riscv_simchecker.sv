@@ -21,7 +21,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "include/riscv_config.sv"
+`include "riscv_config.sv"
 
 import riscv_defines::*;
 

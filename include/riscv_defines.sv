@@ -25,17 +25,6 @@
 
 package riscv_defines;
 
-
-
-// no traces for synthesis, they are not synthesizable
-`ifndef SYNTHESIS
-`ifndef PULP_FPGA_EMUL
-`define TRACE_EXECUTION
-`endif
-//`define SIMCHECKER
-`endif
-
-
 ////////////////////////////////////////////////
 //    ___         ____          _             //
 //   / _ \ _ __  / ___|___   __| | ___  ___   //
