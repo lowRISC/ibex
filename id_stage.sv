@@ -238,6 +238,8 @@ module riscv_id_stage
   logic [31:0] imm_s3_type;
   logic [31:0] imm_vs_type;
   logic [31:0] imm_vu_type;
+  logic [31:0] imm_shuffleb_type;
+  logic [31:0] imm_shuffleh_type;
   logic [31:0] imm_shuffle_type;
   logic [31:0] imm_clip_type;
 
@@ -374,7 +376,8 @@ module riscv_id_stage
   assign imm_vu_type = { 26'b0, instr[24:20], instr[25] };
 
   // same format as rS2 for shuffle needs, expands immediate
-  assign imm_shuffle_type = {6'b0, instr[28:27], 6'b0, instr[24:23], 6'b0, instr[22:21], 6'b0, instr[20], instr[25]};
+  assign imm_shuffleb_type = {6'b0, instr[28:27], 6'b0, instr[24:23], 6'b0, instr[22:21], 6'b0, instr[20], instr[25]};
+  assign imm_shuffleh_type = {15'h0, instr[20], 15'h0, instr[25]};
 
   // clipping immediate, uses a small barrel shifter to pre-process the
   // immediate and an adder to subtract 1
@@ -580,13 +583,22 @@ module riscv_id_stage
       OP_B_REGB_OR_FWD:  operand_b = operand_b_fw_id;
       OP_B_REGC_OR_FWD:  operand_b = operand_c_fw_id;
       OP_B_IMM:          operand_b = imm_b;
-      default:            operand_b = operand_b_fw_id;
+      default:           operand_b = operand_b_fw_id;
     endcase // case (alu_op_b_mux_sel)
   end
 
 
-  // scalar replication for operand B
-  assign operand_b_vec = (alu_vec_mode == VEC_MODE8) ? {4{operand_b[7:0]}} : {2{operand_b[15:0]}};
+  // scalar replication for operand B and shuffle type
+  always_comb
+  begin
+    if (alu_vec_mode == VEC_MODE8) begin
+      operand_b_vec    = {4{operand_b[7:0]}};
+      imm_shuffle_type = imm_shuffleb_type;
+    end else begin
+      operand_b_vec    = {2{operand_b[15:0]}};
+      imm_shuffle_type = imm_shuffleh_type;
+    end
+  end
 
   // choose normal or scalar replicated version of operand b
   assign alu_operand_b = (scalar_replication == 1'b1) ? operand_b_vec : operand_b;
