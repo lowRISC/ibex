@@ -120,7 +120,6 @@ parameter ALU_GES   = 6'b001010;
 parameter ALU_GEU   = 6'b001011;
 parameter ALU_EQ    = 6'b001100;
 parameter ALU_NE    = 6'b001101;
-parameter ALU_EQALL = 6'b001110;
 
 // Set Lower Than operations
 parameter ALU_SLTS  = 6'b000010;
@@ -236,6 +235,7 @@ parameter IMMB_VS     = 4'b0110;
 parameter IMMB_VU     = 4'b0111;
 parameter IMMB_SHUF   = 4'b1000;
 parameter IMMB_CLIP   = 4'b1001;
+parameter IMMB_BI     = 4'b1011;
 
 // bit mask selection
 parameter BMASK_A_ZERO = 1'b0;

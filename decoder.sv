@@ -239,8 +239,18 @@ module riscv_decoder
           3'b101: alu_operator_o = ALU_GES;
           3'b110: alu_operator_o = ALU_LTU;
           3'b111: alu_operator_o = ALU_GEU;
-          3'b010: alu_operator_o = ALU_EQALL;
-
+          3'b010: begin
+            alu_operator_o      = ALU_EQ;
+            regb_used_o         = 1'b0;
+            alu_op_b_mux_sel_o  = OP_B_IMM;
+            imm_b_mux_sel_o     = IMMB_BI;
+          end
+          3'b011: begin
+            alu_operator_o      = ALU_NE;
+            regb_used_o         = 1'b0;
+            alu_op_b_mux_sel_o  = OP_B_IMM;
+            imm_b_mux_sel_o     = IMMB_BI;
+          end
           default: begin
             illegal_insn_o = 1'b1;
           end

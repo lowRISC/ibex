@@ -396,10 +396,6 @@ module riscv_alu
     endcase
   end
 
-  logic cmp_eqall;
-
-  assign cmp_eqall = (operand_a_i == 32'hFFFF_FFFF);
-
   // generate comparison result
   logic [3:0] cmp_result;
 
@@ -417,7 +413,6 @@ module riscv_alu
       ALU_SLETS,
       ALU_SLETU,
       ALU_LES, ALU_LEU:  cmp_result = ~is_greater;
-      ALU_EQALL:         cmp_result = {4{cmp_eqall}};
 
       default: ;
     endcase

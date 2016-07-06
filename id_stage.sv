@@ -235,6 +235,7 @@ module riscv_id_stage
   logic [31:0] imm_uj_type;
   logic [31:0] imm_z_type;
   logic [31:0] imm_s2_type;
+  logic [31:0] imm_bi_type;
   logic [31:0] imm_s3_type;
   logic [31:0] imm_vs_type;
   logic [31:0] imm_vu_type;
@@ -371,6 +372,7 @@ module riscv_id_stage
   assign imm_z_type  = { 27'b0, instr[`REG_S1] };
 
   assign imm_s2_type = { 27'b0, instr[24:20] };
+  assign imm_bi_type = { {27{instr[24]}}, instr[24:20] };
   assign imm_s3_type = { 27'b0, instr[29:25] };
   assign imm_vs_type = { {26 {instr[24]}}, instr[24:20], instr[25] };
   assign imm_vu_type = { 26'b0, instr[24:20], instr[25] };
@@ -567,6 +569,7 @@ module riscv_id_stage
       IMMB_U:      imm_b = imm_u_type;
       IMMB_PCINCR: imm_b = (is_compressed_i && (~data_misaligned_i)) ? 32'h2 : 32'h4;
       IMMB_S2:     imm_b = imm_s2_type;
+      IMMB_BI:     imm_b = imm_bi_type;
       IMMB_S3:     imm_b = imm_s3_type;
       IMMB_VS:     imm_b = imm_vs_type;
       IMMB_VU:     imm_b = imm_vu_type;
