@@ -79,7 +79,7 @@ module riscv_prefetch_L0_buffer
   logic                               fetch_possible;
   logic                               upper_is_compressed;
 
-  logic                       [31:0]  addr_q, addr_n, addr_int, addr_aligned_next;
+  logic                       [31:0]  addr_q, addr_n, addr_int, addr_aligned_next, addr_real_next;
   logic                               is_hwlp_q, is_hwlp_n;
 
   logic                       [31:0]  rdata_last_q;
@@ -108,7 +108,7 @@ module riscv_prefetch_L0_buffer
     .rst_n                ( rst_n              ),
 
     .prefetch_i           ( do_fetch           ),
-    .prefetch_addr_i      ( addr_aligned_next  ),
+    .prefetch_addr_i      ( addr_real_next   ), //addr_aligned_next
 
     .branch_i             ( branch_i           ),
     .branch_addr_i        ( addr_i             ),
@@ -158,9 +158,12 @@ module riscv_prefetch_L0_buffer
   assign next_is_crossword       = ((addr_o[3:1] == 3'b110) && (aligned_is_compressed) && (~upper_is_compressed)) || ((addr_o[3:1] == 3'b101) && (~unaligned_is_compressed) && (~upper_is_compressed));
   assign next_upper_compressed   = ((addr_o[3:1] == 3'b110) && (aligned_is_compressed) && upper_is_compressed) || ((addr_o[3:1] == 3'b101) && (~unaligned_is_compressed) && upper_is_compressed);
   assign next_valid              = ((addr_o[3:2] != 2'b11) || next_upper_compressed) && (~next_is_crossword) && valid;
-  assign fetch_possible          = addr_o[3:2] == 2'b11;
+
+  //addr_o[3:2] == 2'b11;// ((addr_o[3:1] == 3'b101) & (~upper_is_compressed)) | addr_o[3:2] == 2'b11; //  
+  assign fetch_possible          =  (addr_o[3:2] == 2'b11 );
 
   assign addr_aligned_next = { addr_o[31:2], 2'b00 } + 32'h4;
+  assign addr_real_next    = (next_is_crossword) ? { addr_o[31:4], 4'b0000 } + 32'h16 : { addr_o[31:2], 2'b00 } + 32'h4;
 
   assign hwlp_unaligned_is_compressed = rdata_L0[2][17:16] != 2'b11;
   assign hwlp_aligned_is_compressed   = rdata_L0[3][1:0] != 2'b11;
@@ -286,21 +289,25 @@ module riscv_prefetch_L0_buffer
           NS = VALID;
       end
 
-      NOT_VALID_CROSS: begin
+      NOT_VALID_CROSS: 
+      begin
         do_fetch = 1'b1;
 
-        if (fetch_gnt) begin
+        if (fetch_gnt)
+        begin
           save_rdata_last = 1'b1;
           NS = NOT_VALID_CROSS_GRANTED;
         end
       end
 
-      NOT_VALID_CROSS_GRANTED: begin
+      NOT_VALID_CROSS_GRANTED:
+      begin
         valid    = fetch_valid;
         use_last = 1'b1;
         do_hwlp  = hwloop_i;
 
-        if (fetch_valid) begin
+        if (fetch_valid) 
+        begin
           if (ready_i)
             NS = VALID;
           else
@@ -309,36 +316,54 @@ module riscv_prefetch_L0_buffer
       end
 
       VALID: begin
-        valid    = 1'b1;
-        do_fetch = fetch_possible;
-        do_hwlp  = hwloop_i;
+         valid    = 1'b1;
+         do_fetch = fetch_possible;  // fetch_possible  =  addr_o[3:2] == 2'b11;//
+         do_hwlp  = hwloop_i;
 
-        if (ready_i) begin
-          if (next_is_crossword) begin
-            if (fetch_gnt) begin
-              save_rdata_last = 1'b1;
-              NS = NOT_VALID_CROSS_GRANTED;
-            end else
-              NS = NOT_VALID_CROSS;
-          end else if (~next_valid) begin
-            if (fetch_gnt)
-              NS = NOT_VALID_GRANTED;
-            else
-              NS = NOT_VALID;
-          end else begin
-            if (fetch_gnt) begin
-              if (next_upper_compressed) begin
-                save_rdata_last = 1'b1;
-                NS = VALID_GRANTED;
-              end
-            end
-          end
-        end else begin
-          if (fetch_gnt) begin
-            save_rdata_last = 1'b1;
-            NS = VALID_GRANTED;
-          end
-        end
+         if (ready_i)
+         begin
+            if (next_is_crossword)
+            begin
+               do_fetch = 1'b1;
+               
+               if (fetch_gnt)
+               begin
+                  save_rdata_last = 1'b1;
+                  NS = NOT_VALID_CROSS_GRANTED;
+               end
+               else // not fetching
+               begin
+                  NS = NOT_VALID_CROSS;
+               end
+            end 
+            else // Next is not crossword
+               if (~next_valid) 
+               begin
+                  if (fetch_gnt)
+                     NS = NOT_VALID_GRANTED;
+                  else
+                     NS = NOT_VALID;
+               end
+               else // Next is valid
+               begin
+                  if (fetch_gnt)
+                  begin
+                     if (next_upper_compressed)
+                     begin
+                        save_rdata_last = 1'b1;
+                        NS = VALID_GRANTED;
+                     end
+                  end
+               end
+         end 
+         else // NOT ready
+         begin
+            if (fetch_gnt) 
+               begin
+                  save_rdata_last = 1'b1;
+                  NS = VALID_GRANTED;
+               end
+         end
       end
 
       VALID_CROSS: begin
@@ -507,8 +532,18 @@ module riscv_prefetch_L0_buffer
 
       if (save_rdata_hwlp)
         rdata_last_q <= rdata_o;
-      else if (save_rdata_last)
-        rdata_last_q <= rdata;
+      else if(save_rdata_last)
+           begin
+              //rdata_last_q <= rdata_L0[3];
+              if(ready_i)
+              begin
+                   rdata_last_q <= rdata_L0[3];//rdata;
+              end
+              else
+              begin
+                   rdata_last_q <= rdata;//rdata;
+              end
+           end
     end
   end
 
@@ -795,3 +830,6 @@ module prefetch_L0_buffer_L0
   assign fetch_gnt_o   = instr_gnt_i;
 
 endmodule
+
+
+
