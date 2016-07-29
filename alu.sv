@@ -126,7 +126,7 @@ module riscv_alu
     adder_in_b[   27] = 1'b0;
     adder_in_b[35:28] = adder_op_b[31:24];
 
-    if (adder_op_b_negate || (operator_i == ALU_ABS)) begin
+    if (adder_op_b_negate || (operator_i == ALU_ABS || operator_i == ALU_CLIP)) begin
       // special case for subtractions and absolute number calculations
       adder_in_b[0] = 1'b1;
 
@@ -426,7 +426,7 @@ module riscv_alu
   logic        clip_is_lower_neg;  // only signed comparison; used for clip
   logic        clip_is_lower_u;    // only signed comparison; used for clipu, checks for negative number
 
-  assign clip_is_lower_neg = $signed(operand_a_i) < $signed(operand_b_neg);
+  assign clip_is_lower_neg = adder_result[31];
   assign clip_is_lower_u   = (operator_i == ALU_CLIPU) && operand_a_i[31];
 
   assign clip_result       = clip_is_lower_u ? '0 : (clip_is_lower_neg ? operand_b_neg : result_minmax);

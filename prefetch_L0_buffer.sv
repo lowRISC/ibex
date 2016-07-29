@@ -159,7 +159,7 @@ module riscv_prefetch_L0_buffer
   assign next_upper_compressed   = ((addr_o[3:1] == 3'b110) && (aligned_is_compressed) && upper_is_compressed) || ((addr_o[3:1] == 3'b101) && (~unaligned_is_compressed) && upper_is_compressed);
   assign next_valid              = ((addr_o[3:2] != 2'b11) || next_upper_compressed) && (~next_is_crossword) && valid;
 
-  //addr_o[3:2] == 2'b11;// ((addr_o[3:1] == 3'b101) & (~upper_is_compressed)) | addr_o[3:2] == 2'b11; //  
+  //addr_o[3:2] == 2'b11;// ((addr_o[3:1] == 3'b101) & (~upper_is_compressed)) | addr_o[3:2] == 2'b11; //
   assign fetch_possible          =  (addr_o[3:2] == 2'b11 );
 
   assign addr_aligned_next = { addr_o[31:2], 2'b00 } + 32'h4;
@@ -289,7 +289,7 @@ module riscv_prefetch_L0_buffer
           NS = VALID;
       end
 
-      NOT_VALID_CROSS: 
+      NOT_VALID_CROSS:
       begin
         do_fetch = 1'b1;
 
@@ -306,7 +306,7 @@ module riscv_prefetch_L0_buffer
         use_last = 1'b1;
         do_hwlp  = hwloop_i;
 
-        if (fetch_valid) 
+        if (fetch_valid)
         begin
           if (ready_i)
             NS = VALID;
@@ -325,7 +325,7 @@ module riscv_prefetch_L0_buffer
             if (next_is_crossword)
             begin
                do_fetch = 1'b1;
-               
+
                if (fetch_gnt)
                begin
                   save_rdata_last = 1'b1;
@@ -335,9 +335,9 @@ module riscv_prefetch_L0_buffer
                begin
                   NS = NOT_VALID_CROSS;
                end
-            end 
+            end
             else // Next is not crossword
-               if (~next_valid) 
+               if (~next_valid)
                begin
                   if (fetch_gnt)
                      NS = NOT_VALID_GRANTED;
@@ -355,10 +355,10 @@ module riscv_prefetch_L0_buffer
                      end
                   end
                end
-         end 
+         end
          else // NOT ready
          begin
-            if (fetch_gnt) 
+            if (fetch_gnt)
                begin
                   save_rdata_last = 1'b1;
                   NS = VALID_GRANTED;
@@ -830,6 +830,3 @@ module prefetch_L0_buffer_L0
   assign fetch_gnt_o   = instr_gnt_i;
 
 endmodule
-
-
-
