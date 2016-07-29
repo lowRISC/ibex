@@ -251,49 +251,30 @@ module riscv_alu
 
 
   // right shifts, we let the synthesizer optimize this
+  logic [63:0] shift_op_a_32;
+
+  assign shift_op_a_32 = (operator_i == ALU_ROR) ? {shift_op_a, shift_op_a} : $signed({ {32{shift_arithmetic & shift_op_a[31]}}, shift_op_a});
+
   always_comb
   begin
     case(vector_mode_i)
       VEC_MODE16:
       begin
-        if(shift_arithmetic)
-        begin
-          shift_right_result[31:16] = $unsigned( $signed(shift_op_a[31:16]) >>> shift_amt_int[19:16] );
-          shift_right_result[15: 0] = $unsigned( $signed(shift_op_a[15: 0]) >>> shift_amt_int[ 3: 0] );
-        end
-        else
-        begin
-          shift_right_result[31:16] = shift_op_a[31:16]  >> shift_amt_int[19:16];
-          shift_right_result[15: 0] = shift_op_a[15: 0]  >> shift_amt_int[ 3: 0];
-        end
+          shift_right_result[31:16] = $signed( {shift_arithmetic & shift_op_a[31], shift_op_a[31:16] }) >>> shift_amt_int[19:16];
+          shift_right_result[15: 0] = $signed( {shift_arithmetic & shift_op_a[15], shift_op_a[15: 0] }) >>> shift_amt_int[ 3: 0];
       end
 
       VEC_MODE8:
       begin
-        if(shift_arithmetic)
-        begin
-          shift_right_result[31:24] = $unsigned( $signed(shift_op_a[31:24]) >>> shift_amt_int[26:24] );
-          shift_right_result[23:16] = $unsigned( $signed(shift_op_a[23:16]) >>> shift_amt_int[18:16] );
-          shift_right_result[15: 8] = $unsigned( $signed(shift_op_a[15: 8]) >>> shift_amt_int[10: 8] );
-          shift_right_result[ 7: 0] = $unsigned( $signed(shift_op_a[ 7: 0]) >>> shift_amt_int[ 2: 0] );
-        end
-        else
-        begin
-          shift_right_result[31:24] = shift_op_a[31:24]  >> shift_amt_int[26:24];
-          shift_right_result[23:16] = shift_op_a[23:16]  >> shift_amt_int[18:16];
-          shift_right_result[15: 8] = shift_op_a[15: 8]  >> shift_amt_int[10: 8];
-          shift_right_result[ 7: 0] = shift_op_a[ 7: 0]  >> shift_amt_int[ 2: 0];
-        end
+          shift_right_result[31:24] = $signed( {shift_arithmetic & shift_op_a[31], shift_op_a[31:24] }) >>> shift_amt_int[26:24];
+          shift_right_result[23:16] = $signed( {shift_arithmetic & shift_op_a[23], shift_op_a[23:16] }) >>> shift_amt_int[18:16];
+          shift_right_result[15: 8] = $signed( {shift_arithmetic & shift_op_a[15], shift_op_a[15: 8] }) >>> shift_amt_int[10: 8];
+          shift_right_result[ 7: 0] = $signed( {shift_arithmetic & shift_op_a[ 7], shift_op_a[ 7: 0] }) >>> shift_amt_int[ 2: 0];
       end
 
       default: // VEC_MODE32
       begin
-        if(shift_arithmetic)
-          shift_right_result = $unsigned( $signed(shift_op_a) >>> shift_amt_int[4:0] );
-        else if(operator_i == ALU_ROR)
-          shift_right_result = {shift_op_a, shift_op_a}       >>  shift_amt_int[4:0];
-        else
-          shift_right_result = shift_op_a                     >>  shift_amt_int[4:0];
+          shift_right_result = shift_op_a_32 >> shift_amt_int[4:0];
       end
     endcase; // case (vec_mode_i)
   end
