@@ -409,7 +409,7 @@ module riscv_id_stage
   //---------------------------------------------------------------------------
   assign regfile_waddr_id = instr[`REG_D];
 
-  // Second Register Write Adress Selection
+  // Second Register Write Address Selection
   // Used for prepost load/store and multiplier
   assign regfile_alu_waddr_id = regfile_alu_waddr_mux_sel ?
                                 regfile_waddr_id : regfile_addr_ra_id;
