@@ -198,7 +198,7 @@ module riscv_alu
   logic [31:0] shift_right_result;
   logic [31:0] shift_left_result;
 
-  // shifter is also used for preparing operand for divison
+  // shifter is also used for preparing operand for division
   assign shift_amt = div_valid ? div_shift : operand_b_i;
 
   // by reversing the bits of the input, we also have to reverse the order of shift amounts

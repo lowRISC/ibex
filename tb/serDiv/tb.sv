@@ -28,7 +28,7 @@ module tb;
   time C_CLK_HI               = 5ns;     // set clock high time
   time C_CLK_LO               = 5ns;     // set clock low time
   time C_APPL_DEL             = 2ns;     // set stimuli application delay
-  time C_ACQ_DEL              = 8ns;     // set response aquisition delay
+  time C_ACQ_DEL              = 8ns;     // set response acquisition delay
 
   parameter C_WIDTH           = 32;
   parameter C_LOG_WIDTH       = 6;

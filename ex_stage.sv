@@ -16,7 +16,7 @@
 //                 Sven Stucki - svstucki@student.ethz.ch                     //
 //                 Andreas Traber - atraber@iis.ee.ethz.ch                    //
 //                                                                            //
-// Design Name:    Excecute stage                                             //
+// Design Name:    Execute stage                                             //
 // Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
