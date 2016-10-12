@@ -210,19 +210,22 @@ parameter SEL_FW_EX        = 2'b01;
 parameter SEL_FW_WB        = 2'b10;
 
 // operand a selection
-parameter OP_A_REGA_OR_FWD = 2'b00;
-parameter OP_A_CURRPC      = 2'b01;
-parameter OP_A_IMM         = 2'b10;
-parameter OP_A_REGB_OR_FWD = 2'b11;
+parameter OP_A_REGA_OR_FWD = 3'b000;
+parameter OP_A_CURRPC      = 3'b001;
+parameter OP_A_IMM         = 3'b010;
+parameter OP_A_REGB_OR_FWD = 3'b011;
+parameter OP_A_REGC_OR_FWD = 3'b100;
 
 // immediate a selection
 parameter IMMA_Z      = 1'b0;
 parameter IMMA_ZERO   = 1'b1;
 
 // operand b selection
-parameter OP_B_REGB_OR_FWD = 2'b00;
-parameter OP_B_REGC_OR_FWD = 2'b01;
-parameter OP_B_IMM         = 2'b10;
+parameter OP_B_REGB_OR_FWD = 3'b000;
+parameter OP_B_REGC_OR_FWD = 3'b001;
+parameter OP_B_IMM         = 3'b010;
+parameter OP_B_REGA_OR_FWD = 3'b011;
+parameter OP_B_BMASK       = 3'b100;
 
 // immediate b selection
 parameter IMMB_I      = 4'b0000;
@@ -245,6 +248,12 @@ parameter BMASK_B_S2   = 2'b00;
 parameter BMASK_B_S3   = 2'b01;
 parameter BMASK_B_ZERO = 2'b10;
 parameter BMASK_B_ONE  = 2'b11;
+
+parameter BMASK_A_REG  = 1'b0;
+parameter BMASK_A_IMM  = 1'b1;
+parameter BMASK_B_REG  = 1'b0;
+parameter BMASK_B_IMM  = 1'b1;
+
 
 // multiplication immediates
 parameter MIMM_ZERO    = 1'b0;

@@ -97,7 +97,7 @@ module riscv_alu
   logic [35:0] adder_result_expanded;
 
   assign adder_op_b_negate = (operator_i == ALU_SUB) || (operator_i == ALU_SUBR) ||
-                             (operator_i == ALU_SUBU) || (operator_i == ALU_SUBR);
+                             (operator_i == ALU_SUBU) || (operator_i == ALU_SUBUR);
 
   // prepare operand a
   assign adder_op_a = (operator_i == ALU_ABS) ? operand_a_neg : operand_a_i;
@@ -429,8 +429,8 @@ module riscv_alu
   assign clip_is_lower_neg = adder_result[31];
   assign clip_is_lower_u   = (operator_i == ALU_CLIPU) && operand_a_i[31];
 
-  assign clip_result       = clip_is_lower_u ? '0 : (clip_is_lower_neg ? operand_b_neg : result_minmax);
-
+  //assign clip_result       = clip_is_lower_u ? '0 : (clip_is_lower_neg ? operand_b_neg : result_minmax);
+  assign clip_result       = is_greater ? result_minmax: (clip_is_lower_u ? '0 : (clip_is_lower_neg ? operand_b_neg : result_minmax));
   //////////////////////////////////////////////////
   //  ____  _   _ _   _ _____ _____ _     _____   //
   // / ___|| | | | | | |  ___|  ___| |   | ____|  //
