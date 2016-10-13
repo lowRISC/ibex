@@ -159,6 +159,7 @@ module riscv_id_stage
 
     output logic        exc_save_if_o,
     output logic        exc_save_id_o,
+    output logic        exc_save_takenbranch_o,
     output logic        exc_restore_id_o,
 
     input  logic        lsu_load_err_i,
@@ -252,7 +253,7 @@ module riscv_id_stage
 
 
   // Signals running between controller and exception controller
-  logic        exc_req, exc_ack;  // handshake
+  logic        exc_req, ext_req, exc_ack;  // handshake
 
   // Register file interface
   logic [4:0]  regfile_addr_ra_id;
@@ -897,10 +898,12 @@ module riscv_id_stage
 
     // Exception Controller Signals
     .exc_req_i                      ( exc_req                ),
+    .ext_req_i                      ( ext_req                ),
     .exc_ack_o                      ( exc_ack                ),
 
     .exc_save_if_o                  ( exc_save_if_o          ),
     .exc_save_id_o                  ( exc_save_id_o          ),
+    .exc_save_takenbranch_o         ( exc_save_takenbranch_o ),
     .exc_restore_id_o               ( exc_restore_id_o       ),
 
     // Debug Unit Signals
@@ -971,6 +974,7 @@ module riscv_id_stage
 
     // to controller
     .req_o                ( exc_req          ),
+    .ext_req_o            ( ext_req          ),
     .ack_i                ( exc_ack          ),
 
     .trap_o               ( dbg_trap_o       ),
@@ -1177,7 +1181,7 @@ module riscv_id_stage
           data_type_ex_o            <= data_type_id;
           data_sign_ext_ex_o        <= data_sign_ext_id;
           data_reg_offset_ex_o      <= data_reg_offset_id;
-          data_load_event_ex_o      <= data_load_event_id;;
+          data_load_event_ex_o      <= data_load_event_id;
         end else begin
           data_load_event_ex_o      <= 1'b0;
         end

@@ -31,6 +31,7 @@ module riscv_exc_controller
 
   // handshake signals to controller
   output logic        req_o,
+  output logic        ext_req_o,
   input  logic        ack_i,
 
   output logic        trap_o,
@@ -63,7 +64,7 @@ module riscv_exc_controller
 
   enum logic [0:0] { IDLE, WAIT_CONTROLLER } exc_ctrl_cs, exc_ctrl_ns;
 
-  logic req_int;
+  logic req_int, ext_req_int;
   logic [1:0] pc_mux_int, pc_mux_int_q;
   logic [5:0] cause_int, cause_int_q;
 
@@ -85,12 +86,14 @@ module riscv_exc_controller
                       | (illegal_insn_i          & dbg_settings_i[DBG_SETS_EILL])
                       | (irq_enable_i & (|irq_i) & dbg_settings_i[DBG_SETS_IRQ]);
 
-  // request for exception/interrupt
-  assign req_int =   ecall_insn_i
+// request for exception/interrupt
+assign req_int =   ecall_insn_i
                    | lsu_load_err_i
                    | lsu_store_err_i
                    | illegal_insn_i
                    | (irq_enable_i & (|irq_i));
+
+assign ext_req_int = irq_enable_i & (|irq_i);
 
 
   // Exception cause and ISR address selection
@@ -164,13 +167,14 @@ module riscv_exc_controller
   begin
     exc_ctrl_ns  = exc_ctrl_cs;
     req_o        = 1'b0;
+    ext_req_o    = 1'b0;
     save_cause_o = 1'b0;
 
     unique case (exc_ctrl_cs)
       IDLE:
       begin
-        req_o = req_int;
-
+        req_o     = req_int;
+        ext_req_o = ext_req_int;
         if (req_int) begin
           exc_ctrl_ns = WAIT_CONTROLLER;
 
@@ -183,8 +187,8 @@ module riscv_exc_controller
 
       WAIT_CONTROLLER:
       begin
-        req_o = 1'b1;
-
+        req_o     = 1'b1;
+        ext_req_o = 1'b1;
         if (ack_i) begin
           save_cause_o = 1'b1;
           exc_ctrl_ns  = IDLE;

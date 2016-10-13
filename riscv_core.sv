@@ -212,6 +212,7 @@ module riscv_core
   logic        save_exc_cause;
   logic        exc_save_if;
   logic        exc_save_id;
+  logic        exc_save_takenbranch_ex;
   logic        exc_restore_id;
 
 
@@ -498,6 +499,7 @@ module riscv_core
     .save_exc_cause_o             ( save_exc_cause       ),
     .exc_save_if_o                ( exc_save_if          ), // control signal to save pc
     .exc_save_id_o                ( exc_save_id          ), // control signal to save pc
+    .exc_save_takenbranch_o    ( exc_save_takenbranch_ex ), // control signal to save target taken branch
     .exc_restore_id_o             ( exc_restore_id       ), // control signal to restore pc
     .lsu_load_err_i               ( lsu_load_err         ),
     .lsu_store_err_i              ( lsu_store_err        ),
@@ -706,9 +708,11 @@ module riscv_core
     .pc_if_i                 ( pc_if              ),
     .pc_id_i                 ( pc_id              ), // from IF stage
     .pc_ex_i                 ( pc_ex              ), // from ID/EX pipeline
+    .branch_target_i         ( jump_target_ex     ), // from ID/EX pipeline
     .data_load_event_ex_i    ( data_load_event_ex ), // from ID/EX pipeline
     .exc_save_if_i           ( exc_save_if        ),
     .exc_save_id_i           ( exc_save_id        ),
+    .exc_save_takenbranch_i ( exc_save_takenbranch_ex ),
     .exc_restore_i           ( exc_restore_id     ),
 
     .exc_cause_i             ( exc_cause          ),

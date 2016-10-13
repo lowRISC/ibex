@@ -71,10 +71,12 @@ module riscv_controller
 
   // Exception Controller Signals
   input  logic        exc_req_i,
+  input  logic        ext_req_i,
   output logic        exc_ack_o,
 
   output logic        exc_save_if_o,
   output logic        exc_save_id_o,
+  output logic        exc_save_takenbranch_o,
   output logic        exc_restore_id_o,
 
   // Debug Signals
@@ -170,6 +172,7 @@ module riscv_controller
     exc_ack_o        = 1'b0;
     exc_save_if_o    = 1'b0;
     exc_save_id_o    = 1'b0;
+    exc_save_takenbranch_o = 1'b0;
     exc_restore_id_o = 1'b0;
 
     pc_mux_o         = PC_BOOT;
@@ -347,6 +350,20 @@ module riscv_controller
           end
         end
 
+        if (~instr_valid_i && (~branch_taken_ex_i)) begin
+            if (ext_req_i) begin
+              pc_mux_o      = PC_EXCEPTION;
+              pc_set_o      = 1'b1;
+              exc_ack_o     = 1'b1;
+              halt_id_o     = 1'b1; // we don't want to propagate this instruction to EX
+              exc_save_if_o = 1'b1;
+              // we don't have to change our current state here as the prefetch
+              // buffer is automatically invalidated, thus the next instruction
+              // that is served to the ID stage is the one of the jump to the
+              // exception handler
+            end
+        end
+
         // TODO: make sure this is not done multiple times in a row!!!
         //       maybe with an assertion?
         // handle conditional branches
@@ -360,6 +377,17 @@ module riscv_controller
           // if we want to debug, flush the pipeline
           // the current_pc_if will take the value of the next instruction to
           // be executed (NPC)
+          if (ext_req_i) begin
+            pc_mux_o      = PC_EXCEPTION;
+            pc_set_o      = 1'b1;
+            exc_ack_o     = 1'b1;
+            halt_id_o     = 1'b1; // we don't want to propagate this instruction to EX
+            exc_save_takenbranch_o = 1'b1;
+            // we don't have to change our current state here as the prefetch
+            // buffer is automatically invalidated, thus the next instruction
+            // that is served to the ID stage is the one of the jump to the
+            // exception handler
+          end
           if (dbg_req_i)
           begin
             ctrl_fsm_ns = DBG_SIGNAL;
@@ -591,5 +619,7 @@ module riscv_controller
   // possible without branch prediction in the IF stage
   assert property (
     @(posedge clk) (branch_taken_ex_i) |=> (~branch_taken_ex_i) ) else $warning("Two branches back-to-back are taken");
+  assert property (
+    @(posedge clk) (~(dbg_req_i & ext_req_i)) ) else $warning("Both dbg_req_i and ext_req_i are active");
 
 endmodule // controller
