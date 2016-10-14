@@ -329,7 +329,7 @@ module riscv_load_store_unit
 
   assign misaligned_st = data_misaligned_ex_i;
 
-  assign load_err_o    = data_gnt_i && data_err_i && data_we_o;
+  assign load_err_o    = data_gnt_i && data_err_i && ~data_we_o;
   assign store_err_o   = data_gnt_i && data_err_i && data_we_o;
 
   // FSM
