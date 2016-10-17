@@ -24,6 +24,8 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+`include "riscv_config.sv"
+
 import riscv_defines::*;
 
 module riscv_controller
@@ -61,8 +63,11 @@ module riscv_controller
   input  logic        data_misaligned_i,
   input  logic        data_load_event_i,
 
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
   // from ALU
   input  logic        mult_multicycle_i,          // multiplier is taken multiple cycles and uses op c as storage
+  `ifndef
 
   // jump/branch signals
   input  logic        branch_taken_ex_i,          // branch taken signal from EX ALU
@@ -555,9 +560,13 @@ module riscv_controller
     begin
       operand_a_fw_mux_sel_o  = SEL_FW_EX;
       operand_b_fw_mux_sel_o  = SEL_REGFILE;
-    end else if (mult_multicycle_i) begin
+    end
+    // CONFIG_REGION: MUL_SUPPORT
+    `ifdef MUL_SUPPORT 
+    else if (mult_multicycle_i) begin
       operand_c_fw_mux_sel_o  = SEL_FW_EX;
     end
+    `endif
   end
 
   // update registers

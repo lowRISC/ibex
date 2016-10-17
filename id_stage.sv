@@ -25,6 +25,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+`include "riscv_config.sv"
 
 import riscv_defines::*;
 
@@ -108,6 +109,8 @@ module riscv_id_stage
     output logic [ALU_OP_WIDTH-1:0] alu_operator_ex_o,
 
 
+    // CONFIG_REGION: MUL_SUPPORT
+    `ifdef MUL_SUPPORT
     // MUL
     output logic [ 2:0] mult_operator_ex_o,
     output logic [31:0] mult_operand_a_ex_o,
@@ -122,6 +125,8 @@ module riscv_id_stage
     output logic [31:0] mult_dot_op_b_ex_o,
     output logic [31:0] mult_dot_op_c_ex_o,
     output logic [ 1:0] mult_dot_signed_ex_o,
+    `endif // MUL_SUPPORT
+
 
     // CSR ID/EX
     output logic        csr_access_ex_o,
@@ -190,8 +195,11 @@ module riscv_id_stage
     input  logic        regfile_alu_we_fw_i,
     input  logic [31:0] regfile_alu_wdata_fw_i,
 
+    // CONFIG_REGION: MUL_SUPPORT
+    `ifdef MUL_SUPPORT
     // from ALU
     input  logic        mult_multicycle_i,    // when we need multiple cycles in the multiplier and use op c as storage
+    `endif // MUL_SUPPORT
 
     // Performance Counters
     output logic        perf_jump_o,          // we are executing a jump instruction
@@ -278,6 +286,8 @@ module riscv_id_stage
   logic [3:0]  imm_b_mux_sel;
   logic [1:0]  jump_target_mux_sel;
 
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
   // Multiplier Control
   logic [2:0]  mult_operator;    // multiplication operation selection
   logic        mult_en;          // multiplication is used instead of ALU
@@ -286,6 +296,7 @@ module riscv_id_stage
   logic [1:0]  mult_signed_mode; // Signed mode multiplication at the output of the controller, and before the pipe registers
   logic        mult_dot_en;      // use dot product
   logic [1:0]  mult_dot_signed;  // Signed mode dot products (can be mixed types)
+  `endif // MUL_SUPPORT
 
   // Register Write Control
   logic        regfile_we_id;
@@ -336,12 +347,18 @@ module riscv_id_stage
   // Immediates for ID
   logic [0:0]  bmask_a_mux;
   logic [1:0]  bmask_b_mux;
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
   logic [0:0]  mult_imm_mux;
+  `endif // MUL_SUPPORT
 
   logic [ 4:0] bmask_a_id;
   logic [ 4:0] bmask_b_id;
   logic [ 1:0] imm_vec_ext_id;
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
   logic [ 4:0] mult_imm_id;
+  `endif // MUL_SUPPORT
 
   logic [ 1:0] alu_vec_mode;
   logic        scalar_replication;
@@ -433,8 +450,10 @@ module riscv_id_stage
 
   assign branch_taken_ex = branch_in_ex_o & branch_decision_i;
 
-
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
   assign mult_en = mult_int_en | mult_dot_en;
+  `endif // MUL_SUPPORT
 
   ///////////////////////////////////////////////
   //  _   ___        ___     ___   ___  ____   //
@@ -682,6 +701,8 @@ module riscv_id_stage
   assign imm_vec_ext_id = imm_vu_type[1:0];
 
 
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
   always_comb
   begin
     unique case (mult_imm_mux)
@@ -690,6 +711,7 @@ module riscv_id_stage
       default:    mult_imm_id = '0;
     endcase
   end
+  `endif // MUL_SUPPORT
 
   /////////////////////////////////////////////////////////
   //  ____  _____ ____ ___ ____ _____ _____ ____  ____   //
@@ -746,7 +768,11 @@ module riscv_id_stage
     // controller related signals
     .deassert_we_i                   ( deassert_we               ),
     .data_misaligned_i               ( data_misaligned_i         ),
+
+    // CONFIG_REGION: MUL_SUPPORT
+    `ifdef MUL_SUPPORT
     .mult_multicycle_i               ( mult_multicycle_i         ),
+    `endif // MUL_SUPPORT
 
     .illegal_insn_o                  ( illegal_insn_dec          ),
     .ebrk_insn_o                     ( ebrk_insn                 ),
@@ -777,6 +803,8 @@ module riscv_id_stage
     .imm_b_mux_sel_o                 ( imm_b_mux_sel             ),
     .regc_mux_o                      ( regc_mux                  ),
 
+    // CONFIG_REGION: MUL_SUPPORT
+    `ifdef MUL_SUPPORT
     // MUL signals
     .mult_operator_o                 ( mult_operator             ),
     .mult_int_en_o                   ( mult_int_en               ),
@@ -785,6 +813,7 @@ module riscv_id_stage
     .mult_imm_mux_o                  ( mult_imm_mux              ),
     .mult_dot_en_o                   ( mult_dot_en               ),
     .mult_dot_signed_o               ( mult_dot_signed           ),
+    `endif // MUL_SUPPORT
 
     // Register file control signals
     .regfile_mem_we_o                ( regfile_we_id             ),
@@ -861,8 +890,11 @@ module riscv_id_stage
     .data_misaligned_i              ( data_misaligned_i      ),
     .data_load_event_i              ( data_load_event_ex_o   ),
 
+    // CONFIG_REGION: MUL_SUPPORT
+    `ifdef MUL_SUPPORT
     // ALU
     .mult_multicycle_i              ( mult_multicycle_i      ),
+    `endif // MUL_SUPPORT
 
     // jump/branch control
     .branch_taken_ex_i              ( branch_taken_ex        ),
@@ -1034,6 +1066,8 @@ module riscv_id_stage
       imm_vec_ext_ex_o            <= '0;
       alu_vec_mode_ex_o           <= '0;
 
+      // CONFIG_REGION: MUL_SUPPORT
+      `ifdef MUL_SUPPORT
       mult_operator_ex_o          <= '0;
       mult_operand_a_ex_o         <= '0;
       mult_operand_b_ex_o         <= '0;
@@ -1047,6 +1081,7 @@ module riscv_id_stage
       mult_dot_op_b_ex_o          <= '0;
       mult_dot_op_c_ex_o          <= '0;
       mult_dot_signed_ex_o        <= '0;
+      `endif // MUL_SUPPORT
 
       regfile_waddr_ex_o          <= 5'b0;
       regfile_we_ex_o             <= 1'b0;
@@ -1091,15 +1126,24 @@ module riscv_id_stage
 
         data_misaligned_ex_o        <= 1'b1;
       end
-    end else if (mult_multicycle_i) begin
+    end
+    // CONFIG_REGION: MUL_SUPPORT
+    `ifdef MUL_SUPPORT
+    else if (mult_multicycle_i) begin
       mult_operand_c_ex_o <= alu_operand_c;
     end
+    `endif // MUL_SUPPORT
     else begin
       // normal pipeline unstall case
 
       if (id_valid_o)
       begin // unstall the whole pipeline
+        // CONFIG_REGION: MUL_SUPPORT
+        `ifdef MUL_SUPPORT
         if (~mult_en)
+        `else
+        if (1'b1)
+        `endif // MUL_SUPPORT
         begin // only change those registers when we actually need to
           alu_operator_ex_o         <= alu_operator;
           alu_operand_a_ex_o        <= alu_operand_a;
@@ -1111,6 +1155,8 @@ module riscv_id_stage
           alu_vec_mode_ex_o         <= alu_vec_mode;
         end
 
+        // CONFIG_REGION: MUL_SUPPORT
+        `ifdef MUL_SUPPORT
         mult_en_ex_o                <= mult_en;
         if (mult_int_en) begin  // when we are multiplying we don't need the ALU
           mult_operator_ex_o        <= mult_operator;
@@ -1128,6 +1174,7 @@ module riscv_id_stage
           mult_dot_op_b_ex_o        <= alu_operand_b;
           mult_dot_op_c_ex_o        <= alu_operand_c;
         end
+        `endif // MUL_SUPPORT
 
         regfile_we_ex_o             <= regfile_we_id;
         if (regfile_we_id) begin

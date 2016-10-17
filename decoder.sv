@@ -24,6 +24,8 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+`include "riscv_config.sv"
+
 import riscv_defines::*;
 
 module riscv_decoder
@@ -31,7 +33,10 @@ module riscv_decoder
   // singals running to/from controller
   input  logic        deassert_we_i,           // deassert we, we are stalled or not active
   input  logic        data_misaligned_i,       // misaligned data load/store in progress
+  `ifdef MUL_SUPPORT
+  // MUL related control signals 
   input  logic        mult_multicycle_i,       // multiplier taking multiple cycles, using op c as storage
+  `endif // MUL_SUPPORT
 
   output logic        illegal_insn_o,          // illegal instruction encountered
   output logic        ebrk_insn_o,             // trap instruction encountered
