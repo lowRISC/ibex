@@ -30,7 +30,7 @@ module riscv_alu
   input  logic                     clk,
   input  logic                     rst_n,
 
-  input  logic [ALU_OP_WIDTH-1:0] operator_i,
+  input  logic [ALU_OP_WIDTH-1:0]  operator_i,
   input  logic [31:0]              operand_a_i,
   input  logic [31:0]              operand_b_i,
   input  logic [31:0]              operand_c_i,
