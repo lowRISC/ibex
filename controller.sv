@@ -67,7 +67,7 @@ module riscv_controller
   `ifdef MUL_SUPPORT
   // from ALU
   input  logic        mult_multicycle_i,          // multiplier is taken multiple cycles and uses op c as storage
-  `ifndef
+  `endif // MUL_SUPPORT
 
   // jump/branch signals
   input  logic        branch_taken_ex_i,          // branch taken signal from EX ALU
