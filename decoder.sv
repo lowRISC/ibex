@@ -62,7 +62,9 @@ module riscv_decoder
   output logic [3:0]  imm_b_mux_sel_o,         // immediate selection for operand b
   output logic [1:0]  regc_mux_o,              // register c selection: S3, RD or 0
 
-  // MUL related control signals
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
+  // MUL related control signals  
   output logic [2:0]  mult_operator_o,         // Multiplication operation selection
   output logic        mult_int_en_o,           // perform integer multiplication
   output logic        mult_dot_en_o,           // perform dot multiplication
@@ -70,6 +72,7 @@ module riscv_decoder
   output logic        mult_sel_subword_o,      // Select subwords for 16x16 bit of multiplier
   output logic [1:0]  mult_signed_mode_o,      // Multiplication in signed mode
   output logic [1:0]  mult_dot_signed_o,       // Dot product in signed mode
+  `endif // MUL_SUPPORT
 
   // register file related signals
   output logic        regfile_mem_we_o,        // write enable for regfile
@@ -140,6 +143,8 @@ module riscv_decoder
     imm_a_mux_sel_o             = IMMA_ZERO;
     imm_b_mux_sel_o             = IMMB_I;
 
+    // CONFIG_REGION: MUL_SUPPORT
+    `ifdef MUL_SUPPORT
     mult_operator_o             = MUL_I;
     mult_int_en_o               = 1'b0;
     mult_dot_en_o               = 1'b0;
@@ -147,6 +152,7 @@ module riscv_decoder
     mult_signed_mode_o          = 2'b00;
     mult_sel_subword_o          = 1'b0;
     mult_dot_signed_o           = 2'b00;
+    `endif // MUL_SUPPORT
 
     regfile_mem_we              = 1'b0;
     regfile_alu_we              = 1'b0;
@@ -486,6 +492,9 @@ module riscv_decoder
             {6'b00_0000, 3'b101}: alu_operator_o = ALU_SRL;   // Shift Right Logical
             {6'b10_0000, 3'b101}: alu_operator_o = ALU_SRA;   // Shift Right Arithmetic
 
+
+            // CONFIG_REGION: MUL_SUPPORT
+            `ifdef MUL_SUPPORT
             // supported RV32M instructions
             {6'b00_0001, 3'b000}: begin // mul
               mult_int_en_o   = 1'b1;
@@ -563,6 +572,7 @@ module riscv_decoder
               mult_int_en_o   = 1'b1;
               mult_operator_o = MUL_MSU32;
             end
+            `endif // MUL_SUPPORT
 
             {6'b00_0010, 3'b010}: alu_operator_o = ALU_SLETS; // Set Lower Equal Than
             {6'b00_0010, 3'b011}: alu_operator_o = ALU_SLETU; // Set Lower Equal Than Unsigned
@@ -610,6 +620,8 @@ module riscv_decoder
         regb_used_o    = 1'b1;
 
         case (instr_rdata_i[13:12])
+          // CONFIG_REGION: MUL_SUPPORT
+          `ifdef MUL_SUPPORT
           2'b00: begin // multiply with subword selection
             mult_sel_subword_o = instr_rdata_i[30];
             mult_signed_mode_o = {2{instr_rdata_i[31]}};
@@ -638,6 +650,7 @@ module riscv_decoder
             else
               mult_operator_o = MUL_I;
           end
+          `endif // MUL_SUPPORT
 
           2'b10: begin // add with normalization and rounding
             // decide between using unsigned and rounding, and combinations
@@ -674,6 +687,7 @@ module riscv_decoder
         endcase
       end
 
+
       OPCODE_VECOP: begin
         regfile_alu_we      = 1'b1;
         rega_used_o         = 1'b1;
@@ -682,10 +696,16 @@ module riscv_decoder
         // vector size
         if (instr_rdata_i[12]) begin
           alu_vec_mode_o  = VEC_MODE8;
+          // CONFIG_REGION: MUL_SUPPORT
+          `ifdef MUL_SUPPORT
           mult_operator_o = MUL_DOT8;
+          `endif // MUL_SUPPORT
         end else begin
           alu_vec_mode_o = VEC_MODE16;
+          // CONFIG_REGION: MUL_SUPPORT
+          `ifdef MUL_SUPPORT
           mult_operator_o = MUL_DOT16;
+          `endif // MUL_SUPPORT
         end
 
         // distinguish normal vector, sc and sci modes
@@ -771,6 +791,8 @@ module riscv_decoder
             alu_op_b_mux_sel_o = OP_B_REGC_OR_FWD;
           end
 
+          // CONFIG_REGION: MUL_SUPPORT
+          `ifdef MUL_SUPPORT
           6'b10000_0: begin // pv.dotup
             mult_dot_en_o     = 1'b1;
             mult_dot_signed_o = 2'b00;
@@ -801,6 +823,7 @@ module riscv_decoder
             regc_used_o       = 1'b1;
             regc_mux_o        = REGC_RD;
           end
+          `endif // MUL_SUPPORT
 
           // comparisons, always have bit 26 set
           6'b00000_1: begin alu_operator_o = ALU_EQ;  imm_b_mux_sel_o     = IMMB_VS; end // pv.cmpeq

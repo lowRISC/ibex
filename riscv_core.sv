@@ -114,7 +114,10 @@ module riscv_core
   logic        useincr_addr_ex;   // Active when post increment
   logic        data_misaligned;
 
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
   logic        mult_multicycle;
+  `endif // MUL_SUPPORT
 
   // Jump and branch target and decision (EX->IF)
   logic [31:0] jump_target_id, jump_target_ex;
@@ -138,6 +141,8 @@ module riscv_core
   logic [ 1:0] imm_vec_ext_ex;
   logic [ 1:0] alu_vec_mode_ex;
 
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
   // Multiplier Control
   logic [ 2:0] mult_operator_ex;
   logic [31:0] mult_operand_a_ex;
@@ -151,6 +156,7 @@ module riscv_core
   logic [31:0] mult_dot_op_b_ex;
   logic [31:0] mult_dot_op_c_ex;
   logic [ 1:0] mult_dot_signed_ex;
+  `endif // MUL_SUPPORT
 
   // Register Write Control
   logic [4:0]  regfile_waddr_ex;
@@ -449,6 +455,8 @@ module riscv_core
     .regfile_alu_we_ex_o          ( regfile_alu_we_ex    ),
     .regfile_alu_waddr_ex_o       ( regfile_alu_waddr_ex ),
 
+    // CONFIG_REGION: MUL_SUPPORT
+    `ifdef MUL_SUPPORT
     // MUL
     .mult_operator_ex_o           ( mult_operator_ex     ), // from ID to EX stage
     .mult_en_ex_o                 ( mult_en_ex           ), // from ID to EX stage
@@ -463,6 +471,7 @@ module riscv_core
     .mult_dot_op_b_ex_o           ( mult_dot_op_b_ex     ), // from ID to EX stage
     .mult_dot_op_c_ex_o           ( mult_dot_op_c_ex     ), // from ID to EX stage
     .mult_dot_signed_ex_o         ( mult_dot_signed_ex   ), // from ID to EX stage
+    `endif // MUL_SUPPORT
 
     // CSR ID/EX
     .csr_access_ex_o              ( csr_access_ex        ),
@@ -528,8 +537,11 @@ module riscv_core
     .regfile_alu_we_fw_i          ( regfile_alu_we_fw    ),
     .regfile_alu_wdata_fw_i       ( regfile_alu_wdata_fw ),
 
+    // CONFIG_REGION: MUL_SUPPORT
+    `ifdef MUL_SUPPORT
     // from ALU
     .mult_multicycle_i            ( mult_multicycle      ),
+    `endif // MUL_SUPPORT
 
     // Performance Counters
     .perf_jump_o                  ( perf_jump            ),
@@ -562,6 +574,9 @@ module riscv_core
     .imm_vec_ext_i              ( imm_vec_ext_ex               ), // from ID/EX pipe registers
     .alu_vec_mode_i             ( alu_vec_mode_ex              ), // from ID/EX pipe registers
 
+
+    // CONFIG_REGION: MUL_SUPPORT
+    `ifdef MUL_SUPPORT
     // Multipler
     .mult_operator_i            ( mult_operator_ex             ), // from ID/EX pipe registers
     .mult_operand_a_i           ( mult_operand_a_ex            ), // from ID/EX pipe registers
@@ -577,6 +592,7 @@ module riscv_core
     .mult_dot_signed_i          ( mult_dot_signed_ex           ), // from ID/EX pipe registers
 
     .mult_multicycle_o          ( mult_multicycle              ), // to ID/EX pipe registers
+    `endif // MUL_SUPPORT
 
     // interface with CSRs
     .csr_access_i               ( csr_access_ex                ),

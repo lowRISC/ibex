@@ -26,6 +26,8 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+`include "riscv_config.sv"
+
 import riscv_defines::*;
 
 
@@ -44,6 +46,9 @@ module riscv_ex_stage
   input  logic [ 1:0] imm_vec_ext_i,
   input  logic [ 1:0] alu_vec_mode_i,
 
+
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
   // Multiplier signals
   input  logic [ 2:0] mult_operator_i,
   input  logic [31:0] mult_operand_a_i,
@@ -60,6 +65,7 @@ module riscv_ex_stage
   input  logic [ 1:0] mult_dot_signed_i,
 
   output logic        mult_multicycle_o,
+  `endif // MUL_SUPPORT
 
   // input from ID stage
   input  logic        branch_in_ex_i,
@@ -98,17 +104,28 @@ module riscv_ex_stage
 
   logic [31:0] alu_result;
   logic [31:0] alu_csr_result;
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
   logic [31:0] mult_result;
+  `endif // MUL_SUPPORT
   logic        alu_cmp_result;
 
   logic        alu_ready;
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
   logic        mult_ready;
+  `endif // MUL_SUPPORT
 
 
   // EX stage result mux (ALU, MAC unit, CSR)
   assign alu_csr_result         = csr_access_i ? csr_rdata_i : alu_result;
 
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
   assign regfile_alu_wdata_fw_o = mult_en_i ? mult_result : alu_csr_result;
+  `else
+  assign regfile_alu_wdata_fw_o = alu_csr_result;
+  `endif // MUL_SUPPORT
 
 
   assign regfile_alu_we_fw_o    = regfile_alu_we_i;
@@ -161,6 +178,8 @@ module riscv_ex_stage
   //                                                            //
   ////////////////////////////////////////////////////////////////
 
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
   riscv_mult mult_i
   (
     .clk             ( clk                  ),
@@ -188,6 +207,7 @@ module riscv_ex_stage
     .ready_o         ( mult_ready           ),
     .ex_ready_i      ( ex_ready_o           )
   );
+  `endif
 
 
   ///////////////////////////////////////
@@ -219,7 +239,14 @@ module riscv_ex_stage
   // As valid always goes to the right and ready to the left, and we are able
   // to finish branches without going to the WB stage, ex_valid does not
   // depend on ex_ready.
+
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
   assign ex_ready_o = (alu_ready & mult_ready & lsu_ready_ex_i & wb_ready_i) | branch_in_ex_i;
   assign ex_valid_o = (alu_ready & mult_ready & lsu_ready_ex_i & wb_ready_i);
+  `else
+  assign ex_ready_o = (alu_ready & lsu_ready_ex_i & wb_ready_i) | branch_in_ex_i;
+  assign ex_valid_o = (alu_ready & lsu_ready_ex_i & wb_ready_i);
+  `endif
 
 endmodule

@@ -28,3 +28,10 @@
 `endif
 //`define SIMCHECKER
 `endif
+
+
+// littleRISCV configuration. Decomment to enable.
+
+// CONFIG: MUL_SUPPORT
+// will enable RISCV32M support for multiplication, division, MAC operations. Uses a lot of multiplications
+//`define MUL_SUPPORT
