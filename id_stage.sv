@@ -96,8 +96,11 @@ module riscv_id_stage
     output logic [31:0] alu_operand_c_ex_o,
     output logic [ 4:0] bmask_a_ex_o,
     output logic [ 4:0] bmask_b_ex_o,
+    // CONFIG_REGION: VEC_SUPPORT
+    `ifdef VEC_SUPPORT
     output logic [ 1:0] imm_vec_ext_ex_o,
     output logic [ 1:0] alu_vec_mode_ex_o,
+    `endif // VEC_SUPPORT
 
     output logic [4:0]  regfile_waddr_ex_o,
     output logic        regfile_we_ex_o,
@@ -338,7 +341,11 @@ module riscv_id_stage
   logic [31:0] operand_b_fw_id;
   logic [31:0] operand_c_fw_id;
 
-  logic [31:0] operand_b, operand_b_vec;
+  logic [31:0] operand_b;
+  // CONFIG_REGION: VEC_SUPPORT
+  `ifdef VEC_SUPPORT
+  logic [31:0] operand_b_vec;
+  `endif // VEC_SUPPORT
 
   logic [31:0] alu_operand_a;
   logic [31:0] alu_operand_b;
@@ -354,13 +361,19 @@ module riscv_id_stage
 
   logic [ 4:0] bmask_a_id;
   logic [ 4:0] bmask_b_id;
+  // CONFIG_REGION: VEC_SUPPORT
+  `ifdef VEC_SUPPORT
   logic [ 1:0] imm_vec_ext_id;
+  `endif // VEC_SUPPORT
   // CONFIG_REGION: MUL_SUPPORT
   `ifdef MUL_SUPPORT
   logic [ 4:0] mult_imm_id;
   `endif // MUL_SUPPORT
 
+  // CONFIG_REGION: VEC_SUPPORT
+  `ifdef VEC_SUPPORT
   logic [ 1:0] alu_vec_mode;
+  `endif // VEC_SUPPORT
   logic        scalar_replication;
 
   // Forwarding detection signals
@@ -613,17 +626,28 @@ module riscv_id_stage
   // scalar replication for operand B and shuffle type
   always_comb
   begin
+    // CONFIG_REGION: VEC_SUPPORT
+    `ifdef VEC_SUPPORT
     if (alu_vec_mode == VEC_MODE8) begin
       operand_b_vec    = {4{operand_b[7:0]}};
       imm_shuffle_type = imm_shuffleb_type;
-    end else begin
+    end 
+    else begin
       operand_b_vec    = {2{operand_b[15:0]}};
       imm_shuffle_type = imm_shuffleh_type;
     end
+    `else
+    imm_shuffle_type = imm_shuffleh_type;
+    `endif // VEC_SUPPORT
   end
 
+  // CONFIG_REGION: VEC_SUPPORT
+  `ifdef VEC_SUPPORT
   // choose normal or scalar replicated version of operand b
   assign alu_operand_b = (scalar_replication == 1'b1) ? operand_b_vec : operand_b;
+  `else
+  assign alu_operand_b = operand_b;
+  `endif // VEC_SUPPORT
 
 
   // Operand b forwarding mux
@@ -698,8 +722,10 @@ module riscv_id_stage
     endcase
   end
 
+  // CONFIG_REGION: VEC_SUPPORT
+  `ifdef VEC_SUPPORT
   assign imm_vec_ext_id = imm_vu_type[1:0];
-
+  `endif // VEC_SUPPORT
 
   // CONFIG_REGION: MUL_SUPPORT
   `ifdef MUL_SUPPORT
@@ -797,7 +823,10 @@ module riscv_id_stage
     .alu_op_a_mux_sel_o              ( alu_op_a_mux_sel          ),
     .alu_op_b_mux_sel_o              ( alu_op_b_mux_sel          ),
     .alu_op_c_mux_sel_o              ( alu_op_c_mux_sel          ),
+    // CONFIG_REGION: VEC_SUPPORT
+    `ifdef VEC_SUPPORT
     .alu_vec_mode_o                  ( alu_vec_mode              ),
+    `endif // VEC_SUPPORT
     .scalar_replication_o            ( scalar_replication        ),
     .imm_a_mux_sel_o                 ( imm_a_mux_sel             ),
     .imm_b_mux_sel_o                 ( imm_b_mux_sel             ),
@@ -1063,8 +1092,11 @@ module riscv_id_stage
       alu_operand_c_ex_o          <= '0;
       bmask_a_ex_o                <= '0;
       bmask_b_ex_o                <= '0;
+      // CONFIG_REGION: VEC_SUPPORT
+      `ifdef VEC_SUPPORT
       imm_vec_ext_ex_o            <= '0;
       alu_vec_mode_ex_o           <= '0;
+      `endif // VEC_SUPPORT
 
       // CONFIG_REGION: MUL_SUPPORT
       `ifdef MUL_SUPPORT
@@ -1151,8 +1183,11 @@ module riscv_id_stage
           alu_operand_c_ex_o        <= alu_operand_c;
           bmask_a_ex_o              <= bmask_a_id;
           bmask_b_ex_o              <= bmask_b_id;
+          // CONFIG_REGION: VEC_SUPPORT
+          `ifdef VEC_SUPPORT
           imm_vec_ext_ex_o          <= imm_vec_ext_id;
           alu_vec_mode_ex_o         <= alu_vec_mode;
+          `endif // VEC_SUPPORT
         end
 
         // CONFIG_REGION: MUL_SUPPORT

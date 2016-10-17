@@ -138,8 +138,11 @@ module riscv_core
   logic [31:0] alu_operand_c_ex;
   logic [ 4:0] bmask_a_ex;
   logic [ 4:0] bmask_b_ex;
+  // CONFIG_REGION: VEC_SUPPORT
+  `ifdef VEC_SUPPORT
   logic [ 1:0] imm_vec_ext_ex;
   logic [ 1:0] alu_vec_mode_ex;
+  `endif // VEC_SUPPORT
 
   // CONFIG_REGION: MUL_SUPPORT
   `ifdef MUL_SUPPORT
@@ -446,8 +449,12 @@ module riscv_core
     .alu_operand_c_ex_o           ( alu_operand_c_ex     ),
     .bmask_a_ex_o                 ( bmask_a_ex           ),
     .bmask_b_ex_o                 ( bmask_b_ex           ),
+
+    // CONFIG_REGION: VEC_SUPPORT
+    `ifdef VEC_SUPPORT
     .imm_vec_ext_ex_o             ( imm_vec_ext_ex       ),
     .alu_vec_mode_ex_o            ( alu_vec_mode_ex      ),
+    `endif // VEC_SUPPORT
 
     .regfile_waddr_ex_o           ( regfile_waddr_ex     ),
     .regfile_we_ex_o              ( regfile_we_ex        ),
@@ -571,8 +578,11 @@ module riscv_core
     .alu_operand_c_i            ( alu_operand_c_ex             ), // from ID/EX pipe registers
     .bmask_a_i                  ( bmask_a_ex                   ), // from ID/EX pipe registers
     .bmask_b_i                  ( bmask_b_ex                   ), // from ID/EX pipe registers
+    // CONFIG_REGION: VEC_SUPPORT
+    `ifdef VEC_SUPPORT
     .imm_vec_ext_i              ( imm_vec_ext_ex               ), // from ID/EX pipe registers
     .alu_vec_mode_i             ( alu_vec_mode_ex              ), // from ID/EX pipe registers
+    `endif // VEC_SUPPORT
 
 
     // CONFIG_REGION: MUL_SUPPORT

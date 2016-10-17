@@ -43,9 +43,11 @@ module riscv_ex_stage
   input  logic [31:0] alu_operand_c_i,
   input  logic [ 4:0] bmask_a_i,
   input  logic [ 4:0] bmask_b_i,
+  // CONFIG_REGION: VEC_SUPPORT
+  `ifdef VEC_SUPPORT
   input  logic [ 1:0] imm_vec_ext_i,
   input  logic [ 1:0] alu_vec_mode_i,
-
+  `endif // VEC_SUPPORT
 
   // CONFIG_REGION: MUL_SUPPORT
   `ifdef MUL_SUPPORT
@@ -156,10 +158,16 @@ module riscv_ex_stage
     .operand_b_i         ( alu_operand_b_i ),
     .operand_c_i         ( alu_operand_c_i ),
 
+    // CONFIG_REGION: VEC_SUPPORT
+    `ifdef VEC_SUPPORT
     .vector_mode_i       ( alu_vec_mode_i  ),
+    `endif // VEC_SUPPORT
     .bmask_a_i           ( bmask_a_i       ),
     .bmask_b_i           ( bmask_b_i       ),
+    // CONFIG_REGION: VEC_SUPPORT
+    `ifdef VEC_SUPPORT
     .imm_vec_ext_i       ( imm_vec_ext_i   ),
+    `endif // VEC_SUPPORT
 
     .result_o            ( alu_result      ),
     .comparison_result_o ( alu_cmp_result  ),

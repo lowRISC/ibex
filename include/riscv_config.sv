@@ -35,3 +35,7 @@
 // CONFIG: MUL_SUPPORT
 // will enable RISCV32M support for multiplication, division, MAC operations. Uses a lot of multiplications
 //`define MUL_SUPPORT
+
+// CONFIG: VEC_SUPPORT
+// will enable RISCV32V support for vector operations.
+//`define VEC_SUPPORT

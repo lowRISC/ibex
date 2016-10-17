@@ -61,7 +61,10 @@ module riscv_decoder
   output logic [1:0]  alu_op_a_mux_sel_o,      // operand a selection: reg value, PC, immediate or zero
   output logic [1:0]  alu_op_b_mux_sel_o,      // operand b selection: reg value or immediate
   output logic [1:0]  alu_op_c_mux_sel_o,      // operand c selection: reg value or jump target
+  // CONFIG_REGION: VEC_SUPPORT
+  `ifdef VEC_SUPPORT
   output logic [1:0]  alu_vec_mode_o,          // selects between 32 bit, 16 bit and 8 bit vectorial modes
+  `endif // VEC_SUPPORT
   output logic        scalar_replication_o,    // scalar replication enable
   output logic [0:0]  imm_a_mux_sel_o,         // immediate selection for operand a
   output logic [3:0]  imm_b_mux_sel_o,         // immediate selection for operand b
@@ -142,7 +145,10 @@ module riscv_decoder
     alu_op_a_mux_sel_o          = OP_A_REGA_OR_FWD;
     alu_op_b_mux_sel_o          = OP_B_REGB_OR_FWD;
     alu_op_c_mux_sel_o          = OP_C_REGC_OR_FWD;
+    // CONFIG_REGION: VEC_SUPPORT
+    `ifdef VEC_SUPPORT
     alu_vec_mode_o              = VEC_MODE32;
+    `endif // VEC_SUPPORT
     scalar_replication_o        = 1'b0;
     regc_mux_o                  = REGC_ZERO;
     imm_a_mux_sel_o             = IMMA_ZERO;
@@ -593,11 +599,13 @@ module riscv_decoder
             {6'b00_1000, 3'b001}: alu_operator_o = ALU_FL1;   // Find Last 1
             {6'b00_1000, 3'b010}: alu_operator_o = ALU_CLB;   // Count Leading Bits
             {6'b00_1000, 3'b011}: alu_operator_o = ALU_CNT;   // Count set bits (popcount)
+            // CONFIG_REGION: VEC_SUPPORT
+            `ifdef VEC_SUPPORT
             {6'b00_1000, 3'b100}: begin alu_operator_o = ALU_EXTS; alu_vec_mode_o = VEC_MODE16; end // Sign-extend Half-word
             {6'b00_1000, 3'b101}: begin alu_operator_o = ALU_EXT;  alu_vec_mode_o = VEC_MODE16; end // Zero-extend Half-word
             {6'b00_1000, 3'b110}: begin alu_operator_o = ALU_EXTS; alu_vec_mode_o = VEC_MODE8;  end // Sign-extend Byte
             {6'b00_1000, 3'b111}: begin alu_operator_o = ALU_EXT;  alu_vec_mode_o = VEC_MODE8;  end // Zero-extend Byte
-
+            `endif // VEC_SUPPORT
             {6'b00_0010, 3'b000}: alu_operator_o = ALU_ABS;   // p.abs
 
             {6'b00_1010, 3'b001}: begin // p.clip
@@ -692,7 +700,8 @@ module riscv_decoder
         endcase
       end
 
-
+      // CONFIG_REGION: VEC_SUPPORT
+      `ifdef VEC_SUPPORT
       OPCODE_VECOP: begin
         regfile_alu_we      = 1'b1;
         rega_used_o         = 1'b1;
@@ -845,6 +854,7 @@ module riscv_decoder
           default: illegal_insn_o = 1'b1;
         endcase
       end
+      `endif // VEC_SUPPORT
 
 
       ////////////////////////////////////////////////

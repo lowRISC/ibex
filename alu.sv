@@ -35,10 +35,15 @@ module riscv_alu
   input  logic [31:0]              operand_b_i,
   input  logic [31:0]              operand_c_i,
 
+  // CONFIG_REGION: VEC_SUPPORT
+  `ifdef VEC_SUPPORT
   input  logic [ 1:0]              vector_mode_i,
+  `endif // VEC_SUPPORT
   input  logic [ 4:0]              bmask_a_i,
   input  logic [ 4:0]              bmask_b_i,
+  `ifdef VEC_SUPPORT
   input  logic [ 1:0]              imm_vec_ext_i,
+  `endif // VEC_SUPPORT 
 
   output logic [31:0]              result_o,
   output logic                     comparison_result_o,
@@ -76,10 +81,13 @@ module riscv_alu
 
   assign operand_b_neg = ~operand_b_i;
 
-
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
   logic [5:0]  div_shift;
   logic        div_valid;
+  `endif // MUL_SUPPORT
   logic [31:0] bmask;
+
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //   ____            _   _ _   _                      _      _       _     _            //
@@ -130,6 +138,8 @@ module riscv_alu
       // special case for subtractions and absolute number calculations
       adder_in_b[0] = 1'b1;
 
+      // CONFIG_REGION: VEC_SUPPORT
+      `ifdef VEC_SUPPORT
       case (vector_mode_i)
         VEC_MODE16: begin
           adder_in_b[18] = 1'b1;
@@ -141,8 +151,11 @@ module riscv_alu
           adder_in_b[27] = 1'b1;
         end
       endcase
+      `endif // VEC_SUPPORT
 
     end else begin
+      // CONFIG_REGION: VEC_SUPPORT
+      `ifdef VEC_SUPPORT
       // take care of partitioning the adder for the addition case
       case (vector_mode_i)
         VEC_MODE16: begin
@@ -155,6 +168,7 @@ module riscv_alu
           adder_in_a[27] = 1'b0;
         end
       endcase
+      `endif // VEC_SUPPORT
     end
   end
 
@@ -198,12 +212,19 @@ module riscv_alu
   logic [31:0] shift_right_result;
   logic [31:0] shift_left_result;
 
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
   // shifter is also used for preparing operand for division
   assign shift_amt = div_valid ? div_shift : operand_b_i;
+  `else
+  assign shift_amt = operand_b_i;
+  `endif // MUL_SUPPORT
 
   // by reversing the bits of the input, we also have to reverse the order of shift amounts
   always_comb
   begin
+    // CONFIG_REGION: VEC_SUPPORT
+    `ifdef VEC_SUPPORT
     case(vector_mode_i)
       VEC_MODE16:
       begin
@@ -224,6 +245,11 @@ module riscv_alu
         shift_amt_left[31: 0] = shift_amt[31: 0];
       end
     endcase
+    `else
+    begin
+      shift_amt_left[31: 0] = shift_amt[31: 0];
+    end
+    `endif // VEC_SUPPORT
   end
 
   // ALU_FL1 and ALU_CBL are used for the bit counting ops later
@@ -257,6 +283,8 @@ module riscv_alu
 
   always_comb
   begin
+    // CONFIG_REGION: VEC_SUPPORT
+    `ifdef VEC_SUPPORT
     case(vector_mode_i)
       VEC_MODE16:
       begin
@@ -277,6 +305,11 @@ module riscv_alu
           shift_right_result = shift_op_a_32 >> shift_amt_int[4:0];
       end
     endcase; // case (vec_mode_i)
+    `else
+    begin
+        shift_right_result = shift_op_a_32 >> shift_amt_int[4:0];
+    end
+    `endif // VEC_SUPPORT
   end
 
   // bit reverse the shift_right_result for left shifts
@@ -324,11 +357,16 @@ module riscv_alu
       ALU_ABS,
       ALU_CLIP,
       ALU_CLIPU: begin
+      // CONFIG_REGION: VEC_SUPPORT
+        `ifdef VEC_SUPPORT
         case (vector_mode_i)
           VEC_MODE8:  cmp_signed[3:0] = 4'b1111;
           VEC_MODE16: cmp_signed[3:0] = 4'b1010;
           default:     cmp_signed[3:0] = 4'b1000;
         endcase
+        `else
+        cmp_signed[3:0] = 4'b1000;
+        `endif // VEC_SUPPORT
       end
 
       default:;
@@ -358,6 +396,8 @@ module riscv_alu
                                             | (is_equal_vec[2] & (is_greater_vec[1]
                                              | (is_equal_vec[1] & (is_greater_vec[0]))))))}};
 
+    // CONFIG_REGION: VEC_SUPPORT
+    `ifdef VEC_SUPPORT
     case(vector_mode_i)
       VEC_MODE16:
       begin
@@ -375,6 +415,7 @@ module riscv_alu
 
       default:; // see default assignment
     endcase
+    `endif
   end
 
   // generate comparison result
@@ -463,7 +504,8 @@ module riscv_alu
       ALU_EXT, ALU_EXTS: begin
         if (operator_i == ALU_EXTS)
           shuffle_reg1_sel = 2'b11;
-
+        // CONFIG_REGION: VEC_SUPPORT
+        `ifdef VEC_SUPPORT
         if (vector_mode_i == VEC_MODE8) begin
           shuffle_reg_sel[3:1] = 3'b111;
           shuffle_reg_sel[0]   = 1'b0;
@@ -471,17 +513,25 @@ module riscv_alu
           shuffle_reg_sel[3:2] = 2'b11;
           shuffle_reg_sel[1:0] = 2'b00;
         end
+        `else
+        shuffle_reg_sel[3:2] = 2'b11;
+        shuffle_reg_sel[1:0] = 2'b00;
+        `endif // VEC_SUPPORT
       end
 
       ALU_PCKLO: begin
         shuffle_reg1_sel = 2'b00;
-
+        // CONFIG_REGION: VEC_SUPPORT
+        `ifdef VEC_SUPPORT
         if (vector_mode_i == VEC_MODE8) begin
           shuffle_through = 4'b0011;
           shuffle_reg_sel = 4'b0001;
         end else begin
           shuffle_reg_sel = 4'b0011;
         end
+        `else
+          shuffle_reg_sel = 4'b0011;
+        `endif // VEC_SUPPORT
       end
 
       ALU_PCKHI: begin
@@ -491,6 +541,8 @@ module riscv_alu
         shuffle_through = 4'b1100;
       end
 
+      // CONFIG_REGION: VEC_SUPPORT
+      `ifdef VEC_SUPPORT
       ALU_SHUF2: begin
         unique case (vector_mode_i)
           VEC_MODE8: begin
@@ -540,6 +592,7 @@ module riscv_alu
           default:;
         endcase
       end
+      `endif // VEC_SUPPORT
 
       default:;
     endcase
@@ -551,6 +604,8 @@ module riscv_alu
 
     // byte selector
     unique case (operator_i)
+      // CONFIG_REGION: VEC_SUPPORT
+      `ifdef VEC_SUPPORT
       ALU_EXTS,
       ALU_EXT: begin
         unique case (vector_mode_i)
@@ -612,6 +667,7 @@ module riscv_alu
           default:;
         endcase
       end
+      `endif // VEC_SUPPORT
 
       ALU_INS: begin
         shuffle_byte_sel[3] = 2'b11;
@@ -789,6 +845,9 @@ module riscv_alu
   //                                                //
   ////////////////////////////////////////////////////
 
+
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
   logic [31:0] result_div;
 
   logic        div_ready;
@@ -807,6 +866,7 @@ module riscv_alu
 
   assign div_valid = (operator_i == ALU_DIV) || (operator_i == ALU_DIVU) ||
                      (operator_i == ALU_REM) || (operator_i == ALU_REMU);
+
 
 
   // inputs A and B are swapped
@@ -831,6 +891,8 @@ module riscv_alu
     .OutRdy_SI    ( ex_ready_i        ),
     .OutVld_SO    ( div_ready         )
   );
+
+  `endif // MUL_SUPPORT
 
   ////////////////////////////////////////////////////////
   //   ____                 _ _     __  __              //
@@ -895,15 +957,24 @@ module riscv_alu
 
       ALU_FF1, ALU_FL1, ALU_CLB, ALU_CNT: result_o = {26'h0, bitop_result[5:0]};
 
+      // CONFIG_REGION: MUL_SUPPORT
+      `ifdef MUL_SUPPORT
       // Division Unit Commands
       ALU_DIV, ALU_DIVU,
       ALU_REM, ALU_REMU: result_o = result_div;
+      `endif // MUL_SUPPORT
 
       default: ; // default case to suppress unique warning
     endcase
   end
 
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
   assign ready_o = div_ready;
+  `else
+  assign ready_o = 1'b1;
+  `endif // MUL_SUPPORT
+
 
 endmodule
 
