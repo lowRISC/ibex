@@ -1009,9 +1009,13 @@ module riscv_decoder
       prepost_useincr_o = 1'b1;
       // we do not want to replicate operand_b
       scalar_replication_o = 1'b0;
-    end else if (mult_multicycle_i) begin
+    end
+    // CONFIG_REGION: MUL_SUPPORT
+    `ifdef MUL_SUPPORT
+    else if (mult_multicycle_i) begin
       alu_op_c_mux_sel_o = OP_C_REGC_OR_FWD;
     end
+    `endif // MUL_SUPPORT
   end
 
   // deassert we signals (in case of stalls)
