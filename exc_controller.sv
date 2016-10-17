@@ -88,12 +88,12 @@ module riscv_exc_controller
 
 // request for exception/interrupt
 assign req_int =   ecall_insn_i
-                   | lsu_load_err_i
-                   | lsu_store_err_i
                    | illegal_insn_i
-                   | (irq_enable_i & (|irq_i));
+                   | ext_req_int;
 
-assign ext_req_int = irq_enable_i & (|irq_i);
+assign ext_req_int =   lsu_load_err_i
+                       | lsu_store_err_i
+                       | irq_enable_i & (|irq_i);
 
 
   // Exception cause and ISR address selection
