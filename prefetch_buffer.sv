@@ -49,10 +49,13 @@ module riscv_fetch_fifo
     output logic [31:0] out_rdata_o,
     output logic [31:0] out_addr_o,
 
-    output logic        out_valid_stored_o, // same as out_valid_o, except that if something is incoming now it is not included. This signal is available immediately as it comes directly out of FFs
     // CONFIG_REGION: HWL_SUPPORT
     `ifdef HWL_SUPPORT
+    output logic        out_valid_stored_o, // same as out_valid_o, except that if something is incoming now it is not included. This signal is available immediately as it comes directly out of FFs
+    
     output logic        out_is_hwlp_o
+    `else 
+    output logic        out_valid_stored_o // same as out_valid_o, except that if something is incoming now it is not included. This signal is available immediately as it comes directly out of FFs
     `endif // HWL_SUPPORT
   );
 
@@ -237,13 +240,11 @@ module riscv_fetch_fifo
       `ifdef HWL_SUPPORT
       is_hwlp_n = {is_hwlp_int[1], 1'b0};
 
-
       if (is_hwlp_int[1]) begin
         addr_n[0] = addr_int[1][31:0];
         rdata_n   = {rdata_int[1:DEPTH-1], 32'b0};
         valid_n   = {valid_int[1:DEPTH-1], 1'b0};
       end else begin
-      `endif // HWL_SUPPORT
       `else
       begin
       `endif // HWL_SUPPORT
@@ -421,10 +422,13 @@ module riscv_prefetch_buffer
     .out_rdata_o           ( rdata_o           ),
     .out_addr_o            ( addr_o            ),
 
-    .out_valid_stored_o    ( valid_stored      ),
     // CONFIG_REGION: HWL_SUPPORT
     `ifdef HWL_SUPPORT
+    .out_valid_stored_o    ( valid_stored      ),
+
     .out_is_hwlp_o         ( is_hwlp_o         )
+    `else 
+    .out_valid_stored_o    ( valid_stored      )
     `endif // HWL_SUPPORT
   );
 
