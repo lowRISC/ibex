@@ -545,7 +545,12 @@ module riscv_prefetch_buffer
           instr_addr_o = hwloop_target_i;
         `endif // HWL_SUPPORT
 
+        // CONFIG_REGION: HWL_SUPPORT
+        `ifdef HWL_SUPPORT
         if (req_i & (fifo_ready | branch_i | (hwlp_masked & valid_stored))) begin
+        `else 
+        if (req_i & (fifo_ready | branch_i )) begin
+        `endif // HWL_SUPPORT
           instr_req_o = 1'b1;
           addr_valid  = 1'b1;
 
