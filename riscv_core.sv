@@ -322,8 +322,8 @@ module riscv_core
     // CONFIG_REGION: HWL_SUPPORT
     `ifdef HWL_SUPPORT
     .N_HWLP              ( N_HWLP            ),
-    .RDATA_WIDTH         ( INSTR_RDATA_WIDTH )
     `endif // HWL_SUPPORT
+    .RDATA_WIDTH         ( INSTR_RDATA_WIDTH )
   )
   if_stage_i
   (

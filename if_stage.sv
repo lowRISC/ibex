@@ -31,8 +31,10 @@ import riscv_defines::*;
     module riscv_if_stage #(
       // CONFIG_REGION: HWL_SUPPORT
       `ifdef HWL_SUPPORT
+      parameter N_HWLP      = 2,
+      `endif
       parameter RDATA_WIDTH = 32
-      `endif // HWL_SUPPORT
+
 ) (
       input  logic        clk,
       input  logic        rst_n,
