@@ -39,3 +39,7 @@
 // CONFIG: VEC_SUPPORT
 // will enable RISCV32V support for vector operations.
 //`define VEC_SUPPORT
+
+// CONFIG: HWL_SUPPORT
+// will enable hardware loop support.
+//`define VEC_SUPPORT

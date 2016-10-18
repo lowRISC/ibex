@@ -37,8 +37,11 @@ module riscv_fetch_fifo
     input  logic        in_valid_i,
     output logic        in_ready_o,
 
+    // CONFIG_REGION: HWL_SUPPORT
+    `ifdef HWL_SUPPORT
     input  logic        in_replace2_i, // replaces second entry if there is one: "to be served after this instr"
     input  logic        in_is_hwlp_i,
+    `endif // HWL_LOOP
 
     // output port
     output logic        out_valid_o,
@@ -47,7 +50,10 @@ module riscv_fetch_fifo
     output logic [31:0] out_addr_o,
 
     output logic        out_valid_stored_o, // same as out_valid_o, except that if something is incoming now it is not included. This signal is available immediately as it comes directly out of FFs
+    // CONFIG_REGION: HWL_SUPPORT
+    `ifdef HWL_SUPPORT
     output logic        out_is_hwlp_o
+    `endif // HWL_SUPPORT
   );
 
   localparam DEPTH = 4; // must be 3 or greater
@@ -56,7 +62,10 @@ module riscv_fetch_fifo
   logic [0:DEPTH-1] [31:0]  addr_n,    addr_int,    addr_Q;
   logic [0:DEPTH-1] [31:0]  rdata_n,   rdata_int,   rdata_Q;
   logic [0:DEPTH-1]         valid_n,   valid_int,   valid_Q;
+  // CONFIG_REGION: HWL_SUPPORT
+  `ifdef HWL_SUPPORT
   logic [0:1      ]         is_hwlp_n, is_hwlp_int, is_hwlp_Q;
+  `endif // HWL_SUPPORT
 
   logic             [31:0]  addr_next;
   logic             [31:0]  rdata, rdata_unaligned;
@@ -71,7 +80,12 @@ module riscv_fetch_fifo
 
 
   assign rdata = (valid_Q[0]) ? rdata_Q[0] : in_rdata_i;
+  // CONFIG_REGION: HWL_SUPPORT
+  `ifdef HWL_SUPPORT
   assign valid = valid_Q[0] || in_valid_i || is_hwlp_Q[1];
+  `else 
+  assign valid = valid_Q[0] || in_valid_i;
+  `endif // HWL_SUPPORT
 
   assign rdata_unaligned = (valid_Q[1]) ? {rdata_Q[1][15:0], rdata[31:16]} : {in_rdata_i[15:0], rdata[31:16]};
   // it is implied that rdata_valid_Q[0] is set
@@ -91,7 +105,12 @@ module riscv_fetch_fifo
     // serve the aligned case even though the output address is unaligned when
     // the next instruction will be from a hardware loop target
     // in this case the current instruction is already prealigned in element 0
+    // CONFIG_REGION: HWL_SUPPORT
+    `ifdef HWL_SUPPORT
     if (out_addr_o[1] && (~is_hwlp_Q[1])) begin
+    `else
+    if (out_addr_o[1]) begin
+    `endif // HWL_SUPPORT
       // unaligned case
       out_rdata_o = rdata_unaligned;
 
@@ -107,14 +126,22 @@ module riscv_fetch_fifo
   end
 
   assign out_addr_o    = (valid_Q[0]) ? addr_Q[0] : in_addr_i;
+  // CONFIG_REGION: HWL_SUPPORT
+  `ifdef HWL_SUPPORT
   assign out_is_hwlp_o = (valid_Q[0]) ? is_hwlp_Q[0] : in_is_hwlp_i;
+  `endif // HWL_SUPPORT
 
   // this valid signal must not depend on signals from outside!
   always_comb
   begin
     out_valid_stored_o = 1'b1;
 
+    // CONFIG_REGION: HWL_SUPPORT
+    `ifdef HWL_SUPPORT
     if (out_addr_o[1] && (~is_hwlp_Q[1])) begin
+    `else 
+    if (out_addr_o[1]) begin
+    `endif // HWL_SUPPORT
       if (unaligned_is_compressed_st)
         out_valid_stored_o = 1'b1;
       else
@@ -145,7 +172,11 @@ module riscv_fetch_fifo
     addr_int    = addr_Q;
     rdata_int   = rdata_Q;
     valid_int   = valid_Q;
+    
+    // CONFIG_REGION: HWL_SUPPORT
+    `ifdef HWL_SUPPORT
     is_hwlp_int = is_hwlp_Q;
+    `endif // HWL_SUPPORT
 
     if (in_valid_i) begin
       for(j = 0; j < DEPTH; j++) begin
@@ -158,6 +189,8 @@ module riscv_fetch_fifo
         end
       end
 
+      // CONFIG_REGION: HWL_SUPPORT
+      `ifdef HWL_SUPPORT
       // replace 2nd entry
       if (in_replace2_i) begin
         if (valid_Q[0]) begin
@@ -170,12 +203,19 @@ module riscv_fetch_fifo
           valid_int[1]         = 1'b1;
           valid_int[2:DEPTH-1] = '0;
 
+          // CONFIG_REGION: HWL_SUPPORT
+          `ifdef HWL_SUPPORT
           // hardware loop incoming?
           is_hwlp_int[1] = in_is_hwlp_i;
+          `endif // HWL_SUPPORT
         end else begin
+          // CONFIG_REGION: HWL_SUPPORT
+          `ifdef HWL_SUPPORT
           is_hwlp_int[0] = in_is_hwlp_i;
+          `endif // HWL_SUPPORT
         end
       end
+      `endif // HWL_SUPPORT
     end
   end
 
@@ -187,16 +227,26 @@ module riscv_fetch_fifo
     addr_n     = addr_int;
     rdata_n    = rdata_int;
     valid_n    = valid_int;
+    // CONFIG_REGION: HWL_SUPPORT
+    `ifdef HWL_SUPPORT
     is_hwlp_n  = is_hwlp_int;
+    `endif // HWL_SUPPORT
 
     if (out_ready_i && out_valid_o) begin
+      // CONFIG_REGION: HWL_SUPPORT
+      `ifdef HWL_SUPPORT
       is_hwlp_n = {is_hwlp_int[1], 1'b0};
+
 
       if (is_hwlp_int[1]) begin
         addr_n[0] = addr_int[1][31:0];
         rdata_n   = {rdata_int[1:DEPTH-1], 32'b0};
         valid_n   = {valid_int[1:DEPTH-1], 1'b0};
       end else begin
+      `endif // HWL_SUPPORT
+      `else
+      begin
+      `endif // HWL_SUPPORT
         if (addr_int[0][1]) begin
           // unaligned case
           if (unaligned_is_compressed) begin
@@ -208,7 +258,7 @@ module riscv_fetch_fifo
           rdata_n  = {rdata_int[1:DEPTH-1], 32'b0};
           valid_n  = {valid_int[1:DEPTH-1], 1'b0};
         end else begin
-          // aligned case
+        
           if (aligned_is_compressed) begin
             // just increase address, do not move to next entry in FIFO
             addr_n[0] = {addr_int[0][31:2], 2'b10};
@@ -234,7 +284,10 @@ module riscv_fetch_fifo
       addr_Q    <= '{default: '0};
       rdata_Q   <= '{default: '0};
       valid_Q   <= '0;
+      // CONFIG_REGION: HWL_SUPPORT
+      `ifdef HWL_SUPPORT
       is_hwlp_Q <= '0;
+      `endif // HWL_SUPPORT
     end
     else
     begin
@@ -242,12 +295,18 @@ module riscv_fetch_fifo
       // completely and start from an empty state
       if (clear_i) begin
         valid_Q    <= '0;
+        // CONFIG_REGION: HWL_SUPPORT
+        `ifdef HWL_SUPPORT
         is_hwlp_Q  <= '0;
+        `endif // HWL_SUPPORT
       end else begin
         addr_Q    <= addr_n;
         rdata_Q   <= rdata_n;
         valid_Q   <= valid_n;
+        // CONFIG_REGION: HWL_SUPPORT
+        `ifdef HWL_SUPPORT
         is_hwlp_Q <= is_hwlp_n;
+        `endif // HWL_SUPPORT
       end
     end
   end
@@ -273,14 +332,21 @@ module riscv_prefetch_buffer
   input  logic        branch_i,
   input  logic [31:0] addr_i,
 
+  // CONFIG_REGION: HWL_SUPPORT
+  `ifdef HWL_SUPPORT
   input  logic        hwloop_i,
   input  logic [31:0] hwloop_target_i,
+  `endif // HWL_SUPPORT
 
   input  logic        ready_i,
   output logic        valid_o,
   output logic [31:0] rdata_o,
   output logic [31:0] addr_o,
+
+  // CONFIG_REGION: HWL_SUPPORT
+  `ifdef HWL_SUPPORT
   output logic        is_hwlp_o, // is set when the currently served data is from a hwloop
+  `endif // HWL_SUPPORT
 
   // goes to instruction memory / instruction cache
   output logic        instr_req_o,
@@ -294,19 +360,31 @@ module riscv_prefetch_buffer
 );
 
   enum logic [1:0] {IDLE, WAIT_GNT, WAIT_RVALID, WAIT_ABORTED } CS, NS;
+  // CONFIG_REGION: HWL_SUPPORT
+  `ifdef HWL_SUPPORT
   enum logic [1:0] {HWLP_NONE, HWLP_IN, HWLP_FETCHING, HWLP_DONE } hwlp_CS, hwlp_NS;
+  `endif // HWL_SUPPORT
 
   logic [31:0] instr_addr_q, fetch_addr;
+  // CONFIG_REGION: HWL_SUPPORT
+  `ifdef HWL_SUPPORT
   logic        fetch_is_hwlp;
+  `endif // HWL_SUPPORT
   logic        addr_valid;
 
   logic        fifo_valid;
   logic        fifo_ready;
   logic        fifo_clear;
+  // CONFIG_REGION: HWL_SUPPORT
+  `ifdef HWL_SUPPORT
   logic        fifo_hwlp;
+  `endif // HWL_SUPPORT
 
   logic        valid_stored;
+  // CONFIG_REGION: HWL_SUPPORT
+  `ifdef HWL_SUPPORT
   logic        hwlp_masked;
+  `endif // HWL_SUPPORT
 
 
   //////////////////////////////////////////////////////////////////////////////
@@ -332,8 +410,11 @@ module riscv_prefetch_buffer
     .in_valid_i            ( fifo_valid        ),
     .in_ready_o            ( fifo_ready        ),
 
+    // CONFIG_REGION: HWL_SUPPORT
+    `ifdef HWL_SUPPORT
     .in_replace2_i         ( fifo_hwlp         ),
     .in_is_hwlp_i          ( fifo_hwlp         ),
+    `endif // HWL_SUPPORT
 
     .out_valid_o           ( valid_o           ),
     .out_ready_i           ( ready_i           ),
@@ -341,7 +422,10 @@ module riscv_prefetch_buffer
     .out_addr_o            ( addr_o            ),
 
     .out_valid_stored_o    ( valid_stored      ),
+    // CONFIG_REGION: HWL_SUPPORT
+    `ifdef HWL_SUPPORT
     .out_is_hwlp_o         ( is_hwlp_o         )
+    `endif // HWL_SUPPORT
   );
 
 
@@ -353,6 +437,8 @@ module riscv_prefetch_buffer
 
   always_comb
   begin
+    // CONFIG_REGION: HWL_SUPPORT
+    `ifdef HWL_SUPPORT
     hwlp_NS     = hwlp_CS;
     fifo_hwlp   = 1'b0;
     hwlp_masked = 1'b0;
@@ -412,6 +498,9 @@ module riscv_prefetch_buffer
       hwlp_NS    = HWLP_NONE;
       fifo_clear = 1'b1;
     end
+    `else 
+    fifo_clear = branch_i;
+    `endif // HWL_SUPPORT
   end
 
   //////////////////////////////////////////////////////////////////////////////
@@ -425,7 +514,10 @@ module riscv_prefetch_buffer
     instr_addr_o  = fetch_addr;
     fifo_valid    = 1'b0;
     addr_valid    = 1'b0;
+    // CONFIG_REGION: HWL_SUPPORT
+    `ifdef HWL_SUPPORT
     fetch_is_hwlp = 1'b0;
+    `endif // HWL_SUPPORT
     NS            = CS;
 
     unique case(CS)
@@ -437,16 +529,22 @@ module riscv_prefetch_buffer
 
         if (branch_i)
           instr_addr_o = addr_i;
+        // CONFIG_REGION: HWL_SUPPORT
+        `ifdef HWL_SUPPORT
         else if(hwlp_masked & valid_stored)
           instr_addr_o = hwloop_target_i;
+        `endif // HWL_SUPPORT
 
         if (req_i & (fifo_ready | branch_i | (hwlp_masked & valid_stored))) begin
           instr_req_o = 1'b1;
           addr_valid  = 1'b1;
 
+          // CONFIG_REGION: HWL_SUPPORT
+          `ifdef HWL_SUPPORT
           if (hwlp_masked & valid_stored) begin
             fetch_is_hwlp = 1'b1;
           end
+          `endif // HWL_SUPPORT
 
           if(instr_gnt_i) //~>  granted request
             NS = WAIT_RVALID;
@@ -465,11 +563,15 @@ module riscv_prefetch_buffer
         if (branch_i) begin
           instr_addr_o = addr_i;
           addr_valid   = 1'b1;
-        end else if (hwlp_masked & valid_stored) begin
+        end 
+        // CONFIG_REGION: HWL_SUPPORT
+        `ifdef HWL_SUPPORT
+        else if (hwlp_masked & valid_stored) begin
           instr_addr_o  = hwloop_target_i;
           addr_valid    = 1'b1;
           fetch_is_hwlp = 1'b1;
         end
+        `endif // HWL_SUPPORT
 
         if(instr_gnt_i)
           NS = WAIT_RVALID;
@@ -483,10 +585,19 @@ module riscv_prefetch_buffer
 
         if (branch_i)
           instr_addr_o  = addr_i;
+
+        // CONFIG_REGION: HWL_SUPPORT
+        `ifdef HWL_SUPPORT
         else if (hwlp_masked)
           instr_addr_o  = hwloop_target_i;
+        `endif // HWL_SUPPORT
 
+        // CONFIG_REGION: HWL_SUPPORT
+        `ifdef HWL_SUPPORT
         if (req_i & (fifo_ready | branch_i | hwlp_masked)) begin
+        `else
+        if (req_i & (fifo_ready | branch_i)) begin
+        `endif // HWL_SUPPORT
           // prepare for next request
 
           if (instr_rvalid_i) begin
@@ -494,9 +605,12 @@ module riscv_prefetch_buffer
             fifo_valid  = 1'b1;
             addr_valid  = 1'b1;
 
+            // CONFIG_REGION: HWL_SUPPORT
+            `ifdef HWL_SUPPORT
             if (hwlp_masked) begin
               fetch_is_hwlp = 1'b1;
             end
+            `endif // HWL_SUPPORT
 
             if (instr_gnt_i) begin
               NS = WAIT_RVALID;
@@ -509,11 +623,15 @@ module riscv_prefetch_buffer
             if (branch_i) begin
               addr_valid = 1'b1;
               NS         = WAIT_ABORTED;
-            end else if (hwlp_masked & valid_o) begin
+            end 
+            // CONFIG_REGION: HWL_SUPPORT
+            `ifdef HWL_SUPPORT
+            else if (hwlp_masked & valid_o) begin
               addr_valid    = 1'b1;
               fetch_is_hwlp = 1'b1;
               NS            = WAIT_ABORTED;
             end
+            `endif // HWL_SUPPORT
           end
         end else begin
           // just wait for rvalid and go back to IDLE, no new request
@@ -565,13 +683,19 @@ module riscv_prefetch_buffer
     if(rst_n == 1'b0)
     begin
       CS              <= IDLE;
+      // CONFIG_REGION: HWL_SUPPORT
+      `ifdef HWL_SUPPORT
       hwlp_CS         <= HWLP_NONE;
+      `endif // HWL_SUPPORT
       instr_addr_q    <= '0;
     end
     else
     begin
       CS              <= NS;
+      // CONFIG_REGION: HWL_SUPPORT
+      `ifdef HWL_SUPPORT
       hwlp_CS         <= hwlp_NS;
+      `endif // HWL_SUPPORT
 
       if (addr_valid) begin
         instr_addr_q    <= instr_addr_o;

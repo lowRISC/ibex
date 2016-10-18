@@ -100,11 +100,14 @@ module riscv_decoder
   output logic [1:0]  data_reg_offset_o,       // offset in byte inside register for stores
   output logic        data_load_event_o,       // data request is in the special event range
 
+  // CONFIG_REGION: HWL_SUPPORT
+  `ifdef HWL_SUPPORT
   // hwloop signals
   output logic [2:0]  hwloop_we_o,             // write enable for hwloop regs
   output logic        hwloop_target_mux_sel_o, // selects immediate for hwloop target
   output logic        hwloop_start_mux_sel_o,  // selects hwloop start address input
   output logic        hwloop_cnt_mux_sel_o,    // selects hwloop counter input
+  `endif // HWL_SUPPORT
 
   // jump/branches
   output logic [1:0]  jump_in_dec_o,           // jump_in_id without deassert
@@ -116,7 +119,10 @@ module riscv_decoder
   logic       regfile_mem_we;
   logic       regfile_alu_we;
   logic       data_req;
+  // CONFIG_REGION: HWL_SUPPORT
+  `ifdef HWL_SUPPORT
   logic [2:0] hwloop_we;
+  `endif // HWL_SUPPORT
 
   logic       ebrk_insn;
   logic       eret_insn;
@@ -171,10 +177,13 @@ module riscv_decoder
 
     prepost_useincr_o           = 1'b1;
 
+    // CONFIG_REGION: HWL_SUPPORT
+    `ifdef HWL_SUPPORT
     hwloop_we                   = 3'b0;
     hwloop_target_mux_sel_o     = 1'b0;
     hwloop_start_mux_sel_o      = 1'b0;
     hwloop_cnt_mux_sel_o        = 1'b0;
+    `endif // HWL_SUPPORT
 
     csr_access_o                = 1'b0;
     csr_op                      = CSR_OP_NONE;
@@ -937,6 +946,8 @@ module riscv_decoder
       //                                           //
       ///////////////////////////////////////////////
 
+      // CONFIG_REGION: HWL_SUPPORT
+      `ifdef HWL_SUPPORT
       OPCODE_HWLOOP: begin
         hwloop_target_mux_sel_o = 1'b0;
 
@@ -988,6 +999,7 @@ module riscv_decoder
           end
         endcase
       end
+      `endif // HWL_SUPPORT
 
       default: begin
         illegal_insn_o = 1'b1;
@@ -1032,7 +1044,10 @@ module riscv_decoder
   assign regfile_mem_we_o  = (deassert_we_i) ? 1'b0          : regfile_mem_we;
   assign regfile_alu_we_o  = (deassert_we_i) ? 1'b0          : regfile_alu_we;
   assign data_req_o        = (deassert_we_i) ? 1'b0          : data_req;
+  // CONFIG_REGION: HWL_SUPPORT
+  `ifdef HWL_SUPPORT
   assign hwloop_we_o       = (deassert_we_i) ? 3'b0          : hwloop_we;
+  `endif // HWL_SUPPORT
   assign csr_op_o          = (deassert_we_i) ? CSR_OP_NONE  : csr_op;
   assign jump_in_id_o      = (deassert_we_i) ? BRANCH_NONE  : jump_in_id;
   assign ebrk_insn_o       = (deassert_we_i) ? 1'b0          : ebrk_insn;
