@@ -316,9 +316,15 @@ module riscv_fetch_fifo
   // Assertions
   //----------------------------------------------------------------------------
 
+  // CONFIG_REGION: HWL_SUPPORT
+  `ifdef HWL_SUPPORT
   // check for FIFO overflows
   assert property (
     @(posedge clk) (in_valid_i) |-> ((valid_Q[DEPTH-1] == 1'b0) || (clear_i == 1'b1) || (in_replace2_i == 1'b1)) );
+  `else 
+  assert property (
+    @(posedge clk) (in_valid_i) |-> ((valid_Q[DEPTH-1] == 1'b0) || (clear_i == 1'b1) );
+  `endif
 
 endmodule
 
