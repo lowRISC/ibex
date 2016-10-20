@@ -42,4 +42,16 @@
 
 // CONFIG: HWL_SUPPORT
 // will enable hardware loop support.
-//`define VEC_SUPPORT
+//`define HWL_SUPPORT
+
+// CONFIG: BIT_SUPPORT
+// will enable bit manipulation and counting support.
+//`define BIT_SUPPORT
+
+
+// Dependent definitions
+
+// use simplified ALU
+`ifndef MUL_SUPPORT && VEC_SUPPORT && BIT_SUPPORT
+`define SIMPLE_ALU
+`endif

@@ -148,6 +148,25 @@ module riscv_ex_stage
   //                        //
   ////////////////////////////
 
+  `ifdef SIMPLE_ALU
+
+  riscv_alu_simplified alu_i
+  (
+    .clk                 ( clk             ),
+    .rst_n               ( rst_n           ),
+
+    .operator_i          ( alu_operator_i  ),
+    .operand_a_i         ( alu_operand_a_i ),
+    .operand_b_i         ( alu_operand_b_i ),
+
+    .result_o            ( alu_result      ),
+    .comparison_result_o ( alu_cmp_result  )
+  );
+
+  assign alu_ready = 1'b1; // As there is no divider, ALU always takes only one cycle
+
+  `else 
+
   riscv_alu alu_i
   (
     .clk                 ( clk             ),
@@ -175,6 +194,8 @@ module riscv_ex_stage
     .ready_o             ( alu_ready       ),
     .ex_ready_i          ( ex_ready_o      )
   );
+
+  `endif
 
 
   ////////////////////////////////////////////////////////////////
