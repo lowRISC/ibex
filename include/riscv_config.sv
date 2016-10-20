@@ -59,8 +59,20 @@
 
 // Dependent definitions
 
+
+`ifndef MUL_SUPPORT
+`ifndef VEC_SUPPORT
+`ifndef BIT_SUPPORT
+`ifndef PREPOST_SUPPORT
+`ifndef MATH_SPECIAL_SUPPORT
+
 // use simplified ALU
-`ifndef MUL_SUPPORT && VEC_SUPPORT && BIT_SUPPORT && PREPOST_SUPPORT && MATH_SPECIAL_SUPPORT
 `define SIMPLE_ALU
+// reduce register file to 1w2r
 `define SMALL_REGISTER_FILE
+
+`endif
+`endif
+`endif
+`endif
 `endif
