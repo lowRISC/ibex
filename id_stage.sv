@@ -85,8 +85,11 @@ module riscv_id_stage #(
   output logic [31:0] alu_operand_a_ex_o,
   output logic [31:0] alu_operand_b_ex_o,
   output logic [31:0] alu_operand_c_ex_o,
+  // CONFIG_REGION: BIT_SUPPORT
+  `ifdef BIT_SUPPORT
   output logic [ 4:0] bmask_a_ex_o,
   output logic [ 4:0] bmask_b_ex_o,
+  `endif // BIT_SUPPORT
   // CONFIG_REGION: VEC_SUPPORT
   `ifdef VEC_SUPPORT
   output logic [ 1:0] imm_vec_ext_ex_o,
@@ -193,7 +196,10 @@ module riscv_id_stage #(
   logic        rega_used_dec;
   logic        regb_used_dec;
   logic        regc_used_dec;
+  // CONFIG_REGION: BIT_SUPPORT
+  `ifdef BIT_SUPPORT
   logic        bmask_needed_dec;
+  `endif // BIT_SUPPORT
 
   logic        branch_taken_ex;
   logic [1:0]  jump_in_id;
@@ -219,10 +225,13 @@ module riscv_id_stage #(
   logic [31:0] imm_s3_type;
   logic [31:0] imm_vs_type;
   logic [31:0] imm_vu_type;
+  // CONFIG_REGION: BIT_SUPPORT
+  `ifdef MATH_SPECIAL_SUPPORT
   logic [31:0] imm_shuffleb_type;
   logic [31:0] imm_shuffleh_type;
   logic [31:0] imm_shuffle_type;
   logic [31:0] imm_clip_type;
+  `endif // MATH_SPECIAL_SUPPORT
 
   logic [31:0] imm_a;       // contains the immediate for operand b
   logic [31:0] imm_b;       // contains the immediate for operand b
@@ -323,15 +332,21 @@ module riscv_id_stage #(
   logic [31:0] alu_operand_c;
 
   // Immediates for ID
+  // CONFIG_REGION: BIT_SUPPORT
+  `ifdef BIT_SUPPORT
   logic [0:0]  bmask_a_mux;
   logic [1:0]  bmask_b_mux;
+  `endif // BIT_SUPPORT
   // CONFIG_REGION: MUL_SUPPORT
   `ifdef MUL_SUPPORT
     logic [0:0]  mult_imm_mux;
   `endif // MUL_SUPPORT
-
+  // CONFIG_REGION: BIT_SUPPORT
+  `ifdef BIT_SUPPORT
   logic [ 4:0] bmask_a_id;
   logic [ 4:0] bmask_b_id;
+  `endif // BIT_SUPPORT
+
   // CONFIG_REGION: VEC_SUPPORT
   `ifdef VEC_SUPPORT
     logic [ 1:0] imm_vec_ext_id;
@@ -378,15 +393,21 @@ module riscv_id_stage #(
   assign imm_vs_type = { {26 {instr[24]}}, instr[24:20], instr[25] };
   assign imm_vu_type = { 26'b0, instr[24:20], instr[25] };
 
+  // CONFIG_REGION: MATH_SPECIAL_SUPPORT
+  `ifdef MATH_SPECIAL_SUPPORT
   // same format as rS2 for shuffle needs, expands immediate
   assign imm_shuffleb_type = {6'b0, instr[28:27], 6'b0, instr[24:23], 6'b0, instr[22:21], 6'b0, instr[20], instr[25]};
   assign imm_shuffleh_type = {15'h0, instr[20], 15'h0, instr[25]};
+  `endif // MATH_SPECIAL_SUPPORT
 
+  // CONFIG_REGION: MATH_SPECIAL_SUPPORT
+  `ifdef MATH_SPECIAL_SUPPORT
   // clipping immediate, uses a small barrel shifter to pre-process the
   // immediate and an adder to subtract 1
   // The end result is a mask that has 1's set in the lower part
   // TODO: check if this can be shared with the bit-manipulation unit
   assign imm_clip_type = (32'h1 << instr[24:20]) - 1;
+  `endif // MATH_SPECIAL_SUPPORT
 
   //---------------------------------------------------------------------------
   // source register selection
@@ -578,8 +599,11 @@ module riscv_id_stage #(
         IMMB_S3:     imm_b = imm_s3_type;
         IMMB_VS:     imm_b = imm_vs_type;
         IMMB_VU:     imm_b = imm_vu_type;
+        // CONFIG_REGION: MATH_SPECIAL_SUPPORT
+        `ifdef MATH_SPECIAL_SUPPORT
         IMMB_SHUF:   imm_b = imm_shuffle_type;
         IMMB_CLIP:   imm_b = {1'b0, imm_clip_type[31:1]};
+        `endif // MATH_SPECIAL_SUPPORT
         default:      imm_b = imm_i_type;
       endcase
     end
@@ -603,14 +627,23 @@ module riscv_id_stage #(
       `ifdef VEC_SUPPORT
         if (alu_vec_mode == VEC_MODE8) begin
           operand_b_vec    = {4{operand_b[7:0]}};
+          // CONFIG_REGION: MATH_SPECIAL_SUPPORT
+          `ifdef MATH_SPECIAL_SUPPORT
           imm_shuffle_type = imm_shuffleb_type;
+          `endif // MATH_SPECIAL_SUPPORT
         end
         else begin
           operand_b_vec    = {2{operand_b[15:0]}};
+          // CONFIG_REGION: MATH_SPECIAL_SUPPORT
+          `ifdef MATH_SPECIAL_SUPPORT
           imm_shuffle_type = imm_shuffleh_type;
+          `endif // MATH_SPECIAL_SUPPORT
         end
       `else
+        // CONFIG_REGION: MATH_SPECIAL_SUPPORT
+        `ifdef MATH_SPECIAL_SUPPORT       
         imm_shuffle_type = imm_shuffleh_type;
+        `endif // MATH_SPECIAL_SUPPORT
       `endif // VEC_SUPPORT
     end
 
@@ -676,6 +709,8 @@ module riscv_id_stage #(
   //                                                                       //
   ///////////////////////////////////////////////////////////////////////////
 
+  // CONFIG_REGION: BIT_SUPPORT
+  `ifdef BIT_SUPPORT
   always_comb
     begin
       unique case (bmask_a_mux)
@@ -694,6 +729,7 @@ module riscv_id_stage #(
         default:       bmask_b_id = '0;
       endcase
     end
+  `endif // BIT_SUPPORT
 
   // CONFIG_REGION: VEC_SUPPORT
   `ifdef VEC_SUPPORT
@@ -783,9 +819,12 @@ module riscv_id_stage #(
       .regb_used_o                     ( regb_used_dec             ),
       .regc_used_o                     ( regc_used_dec             ),
 
+      // CONFIG_REGION: BIT_SUPPORT
+      `ifdef BIT_SUPPORT
       .bmask_needed_o                  ( bmask_needed_dec          ),
       .bmask_a_mux_o                   ( bmask_a_mux               ),
       .bmask_b_mux_o                   ( bmask_b_mux               ),
+      `endif // BIT_SUPPORT
 
       // from IF/ID pipeline
       .instr_rdata_i                   ( instr                     ),
@@ -1068,8 +1107,11 @@ module riscv_id_stage #(
           alu_operand_a_ex_o          <= '0;
           alu_operand_b_ex_o          <= '0;
           alu_operand_c_ex_o          <= '0;
+          // CONFIG_REGION: BIT_SUPPORT
+          `ifdef BIT_SUPPORT
           bmask_a_ex_o                <= '0;
           bmask_b_ex_o                <= '0;
+          `endif // BIT_SUPPORT
           // CONFIG_REGION: VEC_SUPPORT
           `ifdef VEC_SUPPORT
             imm_vec_ext_ex_o            <= '0;
@@ -1159,8 +1201,11 @@ module riscv_id_stage #(
               alu_operand_a_ex_o        <= alu_operand_a;
               alu_operand_b_ex_o        <= alu_operand_b;
               alu_operand_c_ex_o        <= alu_operand_c;
+              // CONFIG_REGION: BIT_SUPPORT
+              `ifdef BIT_SUPPORT
               bmask_a_ex_o              <= bmask_a_id;
               bmask_b_ex_o              <= bmask_b_id;
+              `endif // BIT_SUPPORT
               // CONFIG_REGION: VEC_SUPPORT
               `ifdef VEC_SUPPORT
                 imm_vec_ext_ex_o          <= imm_vec_ext_id;

@@ -33,6 +33,7 @@ module riscv_decoder
   // singals running to/from controller
   input  logic        deassert_we_i,           // deassert we, we are stalled or not active
   input  logic        data_misaligned_i,       // misaligned data load/store in progress
+  // CONFIG_REGION: MUL_SUPPORT
   `ifdef MUL_SUPPORT
   // MUL related control signals 
   input  logic        mult_multicycle_i,       // multiplier taking multiple cycles, using op c as storage
@@ -48,9 +49,12 @@ module riscv_decoder
   output logic        regb_used_o,             // rs2 is used by current instruction
   output logic        regc_used_o,             // rs3 is used by current instruction
 
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef BIT_SUPPORT
   output logic        bmask_needed_o,          // registers for bit manipulation mask is needed
   output logic [ 0:0] bmask_a_mux_o,           // bit manipulation mask a mux
   output logic [ 1:0] bmask_b_mux_o,           // bit manipulation mask a mux
+  `endif // BIT_SUPPORT
 
   // from IF/ID pipeline
   input  logic [31:0] instr_rdata_i,           // instruction read from instr memory/cache
@@ -204,9 +208,14 @@ module riscv_decoder
     rega_used_o                 = 1'b0;
     regb_used_o                 = 1'b0;
     regc_used_o                 = 1'b0;
+
+
+    // CONFIG_REGION: MUL_SUPPORT
+    `ifdef BIT_SUPPORT
     bmask_needed_o              = 1'b1; // TODO: only use when necessary
     bmask_a_mux_o               = BMASK_A_ZERO;
     bmask_b_mux_o               = BMASK_B_ZERO;
+    `endif // BIT_SUPPORT
 
 
     unique case (instr_rdata_i[6:0])
@@ -462,6 +471,8 @@ module riscv_decoder
         rega_used_o    = 1'b1;
 
         if (instr_rdata_i[31]) begin
+          // CONFIG_REGION: BIT_SUPPORT
+          `ifdef BIT_SUPPORT
           // bit-manipulation instructions
           alu_op_b_mux_sel_o  = OP_B_IMM;
           bmask_needed_o      = 1'b1;
@@ -492,6 +503,9 @@ module riscv_decoder
 
             default: illegal_insn_o = 1'b1;
           endcase
+          `else 
+          illegal_insn_o = 1'b1;
+          `endif // BIT_SUPPORT
         end
         else
         begin // non bit-manipulation instructions
@@ -603,11 +617,15 @@ module riscv_decoder
 
             {6'b00_0100, 3'b101}: alu_operator_o = ALU_ROR;   // Rotate Right
 
+            // CONFIG_REGION: BIT_SUPPORT
+            `ifdef BIT_SUPPORT
             // PULP specific instructions using only one source register
             {6'b00_1000, 3'b000}: alu_operator_o = ALU_FF1;   // Find First 1
             {6'b00_1000, 3'b001}: alu_operator_o = ALU_FL1;   // Find Last 1
             {6'b00_1000, 3'b010}: alu_operator_o = ALU_CLB;   // Count Leading Bits
             {6'b00_1000, 3'b011}: alu_operator_o = ALU_CNT;   // Count set bits (popcount)
+            `endif // BIT_SUPPORT
+
             // CONFIG_REGION: VEC_SUPPORT
             `ifdef VEC_SUPPORT
             {6'b00_1000, 3'b100}: begin alu_operator_o = ALU_EXTS; alu_vec_mode_o = VEC_MODE16; end // Sign-extend Half-word
@@ -615,6 +633,9 @@ module riscv_decoder
             {6'b00_1000, 3'b110}: begin alu_operator_o = ALU_EXTS; alu_vec_mode_o = VEC_MODE8;  end // Sign-extend Byte
             {6'b00_1000, 3'b111}: begin alu_operator_o = ALU_EXT;  alu_vec_mode_o = VEC_MODE8;  end // Zero-extend Byte
             `endif // VEC_SUPPORT
+
+            // CONFIG_REGION: MATH_SPECIAL_SUPPORT
+            `ifdef MATH_SPECIAL_SUPPORT
             {6'b00_0010, 3'b000}: alu_operator_o = ALU_ABS;   // p.abs
 
             {6'b00_1010, 3'b001}: begin // p.clip
@@ -628,6 +649,7 @@ module riscv_decoder
               alu_op_b_mux_sel_o = OP_A_IMM;
               imm_b_mux_sel_o    = IMMB_CLIP;
             end
+            `endif // MATH_SPECIAL_SUPPORT
 
             default: begin
               illegal_insn_o = 1'b1;
@@ -674,6 +696,8 @@ module riscv_decoder
           end
           `endif // MUL_SUPPORT
 
+          // CONFIG_REGION: MATH_SPECIAL_SUPPORT
+          `ifdef MATH_SPECIAL_SUPPORT
           2'b10: begin // add with normalization and rounding
             // decide between using unsigned and rounding, and combinations
             // thereof
@@ -701,6 +725,7 @@ module riscv_decoder
             bmask_a_mux_o = BMASK_A_ZERO;
             bmask_b_mux_o = BMASK_B_S3;
           end
+          `endif // MATH_SPECIAL_SUPPORT
 
           default: begin
             regfile_alu_we = 1'b0;
@@ -751,20 +776,28 @@ module riscv_decoder
         unique case (instr_rdata_i[31:26])
           6'b00000_0: begin alu_operator_o = ALU_ADD;  imm_b_mux_sel_o = IMMB_VS; end // pv.add
           6'b00001_0: begin alu_operator_o = ALU_SUB;  imm_b_mux_sel_o = IMMB_VS; end // pv.sub
+          // CONFIG_REGION: MATH_SPECIAL_SUPPORT
+          `ifdef MATH_SPECIAL_SUPPORT
           6'b00010_0: begin alu_operator_o = ALU_ADD;  imm_b_mux_sel_o = IMMB_VS; bmask_b_mux_o = BMASK_B_ONE; end // pv.avg
           6'b00011_0: begin alu_operator_o = ALU_ADDU; imm_b_mux_sel_o = IMMB_VU; bmask_b_mux_o = BMASK_B_ONE; end // pv.avgu
           6'b00100_0: begin alu_operator_o = ALU_MIN;  imm_b_mux_sel_o = IMMB_VS; end // pv.min
           6'b00101_0: begin alu_operator_o = ALU_MINU; imm_b_mux_sel_o = IMMB_VU; end // pv.minu
           6'b00110_0: begin alu_operator_o = ALU_MAX;  imm_b_mux_sel_o = IMMB_VS; end // pv.max
           6'b00111_0: begin alu_operator_o = ALU_MAXU; imm_b_mux_sel_o = IMMB_VU; end // pv.maxu
+          `endif // MATH_SPECIAL_SUPPORT
           6'b01000_0: begin alu_operator_o = ALU_SRL;  imm_b_mux_sel_o = IMMB_VS; end // pv.srl
           6'b01001_0: begin alu_operator_o = ALU_SRA;  imm_b_mux_sel_o = IMMB_VS; end // pv.sra
           6'b01010_0: begin alu_operator_o = ALU_SLL;  imm_b_mux_sel_o = IMMB_VS; end // pv.sll
           6'b01011_0: begin alu_operator_o = ALU_OR;   imm_b_mux_sel_o = IMMB_VS; end // pv.or
           6'b01100_0: begin alu_operator_o = ALU_XOR;  imm_b_mux_sel_o = IMMB_VS; end // pv.xor
           6'b01101_0: begin alu_operator_o = ALU_AND;  imm_b_mux_sel_o = IMMB_VS; end // pv.and
+          // CONFIG_REGION: MATH_SPECIAL_SUPPORT
+          `ifdef MATH_SPECIAL_SUPPORT
           6'b01110_0: begin alu_operator_o = ALU_ABS;  imm_b_mux_sel_o = IMMB_VS; end // pv.abs
+          `endif // MATH_SPECIAL_SUPPORT
 
+          // CONFIG_REGION: MATH_SPECIAL_SUPPORT
+          `ifdef MATH_SPECIAL_SUPPORT
           // shuffle/pack
           6'b11101_0,       // pv.shuffleI1
           6'b11110_0,       // pv.shuffleI2
@@ -813,6 +846,7 @@ module riscv_decoder
             regc_mux_o         = REGC_RD;
             alu_op_b_mux_sel_o = OP_B_REGC_OR_FWD;
           end
+          `endif // MATH_SPECIAL_SUPPORT
 
           // CONFIG_REGION: MUL_SUPPORT
           `ifdef MUL_SUPPORT

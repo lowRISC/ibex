@@ -48,10 +48,19 @@
 // will enable bit manipulation and counting support.
 //`define BIT_SUPPORT
 
+// CONFIG: PREPOST_SUPPORT
+// will enable pre/post increment load/store support support.
+//`define PREPOST_SUPPORT
+
+// CONFIG: MATH_SPECIAL_SUPPORT
+// will enable clip, min and max operations support.
+//`define MATH_SPECIAL_SUPPORT
+
 
 // Dependent definitions
 
 // use simplified ALU
-`ifndef MUL_SUPPORT && VEC_SUPPORT && BIT_SUPPORT
+`ifndef MUL_SUPPORT && VEC_SUPPORT && BIT_SUPPORT && PREPOST_SUPPORT && MATH_SPECIAL_SUPPORT
 `define SIMPLE_ALU
+`define SMALL_REGISTER_FILE
 `endif
