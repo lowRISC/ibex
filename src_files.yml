@@ -6,6 +6,7 @@ riscv:
     include/riscv_defines.sv,
     include/riscv_tracer_defines.sv,
     alu.sv,
+    alu_simplified.sv,
     alu_div.sv,
     compressed_decoder.sv,
     controller.sv,
