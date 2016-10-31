@@ -237,13 +237,12 @@ module riscv_alu_simplified
 
       // Adder Operations
       ALU_ADD, ALU_ADDR, ALU_ADDU, ALU_ADDUR,
-      ALU_SUB, ALU_SUBR, ALU_SUBU, ALU_SUBUR,
-      result_o = adder_result;
+      ALU_SUB, ALU_SUBR, ALU_SUBU, ALU_SUBUR: result_o = adder_result;
 
       // Shift Operations
       ALU_SLL,
       ALU_SRL, ALU_SRA,
-      ALU_ROR:  result_o = shift_result;
+      ALU_ROR: result_o = shift_result;
 
       // Comparison Operations
       ALU_EQ,    ALU_NE,
