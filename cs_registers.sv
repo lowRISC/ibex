@@ -63,9 +63,11 @@ module riscv_cs_registers
   input  logic [31:0] pc_if_i,
   input  logic [31:0] pc_id_i,
   input  logic [31:0] pc_ex_i,
+  input  logic [31:0] branch_target_i,
   input  logic        data_load_event_ex_i,
   input  logic        exc_save_if_i,
   input  logic        exc_save_id_i,
+  input  logic        exc_save_takenbranch_i,
   input  logic        exc_restore_i,
 
   input  logic [5:0]  exc_cause_i,
@@ -222,12 +224,14 @@ module riscv_cs_registers
     endcase
 
     // exception controller gets priority over other writes
-    if (exc_save_if_i || exc_save_id_i) begin
+    if (exc_save_if_i || exc_save_id_i || exc_save_takenbranch_i) begin
       mestatus_n = mstatus_q;
       mstatus_n  = 1'b0;
 
       if (data_load_event_ex_i) begin
         mepc_n = pc_ex_i;
+      end else if (exc_save_takenbranch_i) begin
+        mepc_n = branch_target_i;
       end else begin
         if (exc_save_if_i)
           mepc_n = pc_if_i;
@@ -482,5 +486,8 @@ module riscv_cs_registers
 
     end
   end
+
+  assert property (
+    @(posedge clk) (~(exc_save_takenbranch_i & data_load_event_ex_i)) ) else $display("Both exc_save_takenbranch_i and data_load_event_ex_i are active");
 
 endmodule

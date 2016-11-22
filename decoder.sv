@@ -53,7 +53,9 @@ module riscv_decoder
   `ifdef BIT_SUPPORT
   output logic        bmask_needed_o,          // registers for bit manipulation mask is needed
   output logic [ 0:0] bmask_a_mux_o,           // bit manipulation mask a mux
-  output logic [ 1:0] bmask_b_mux_o,           // bit manipulation mask a mux
+  output logic [ 1:0] bmask_b_mux_o,           // bit manipulation mask b mux
+  output logic        alu_bmask_a_mux_sel_o,   // bit manipulation mask a mux (reg or imm)
+  output logic        alu_bmask_b_mux_sel_o,   // bit manipulation mask b mux (reg or imm)
   `endif // BIT_SUPPORT
 
   // from IF/ID pipeline
@@ -62,8 +64,8 @@ module riscv_decoder
 
   // ALU signals
   output logic [ALU_OP_WIDTH-1:0] alu_operator_o, // ALU operation selection
-  output logic [1:0]  alu_op_a_mux_sel_o,      // operand a selection: reg value, PC, immediate or zero
-  output logic [1:0]  alu_op_b_mux_sel_o,      // operand b selection: reg value or immediate
+  output logic [2:0]  alu_op_a_mux_sel_o,      // operand a selection: reg value, PC, immediate or zero
+  output logic [2:0]  alu_op_b_mux_sel_o,      // operand b selection: reg value or immediate
   output logic [1:0]  alu_op_c_mux_sel_o,      // operand c selection: reg value or jump target
   // CONFIG_REGION: VEC_SUPPORT
   `ifdef VEC_SUPPORT
@@ -135,6 +137,8 @@ module riscv_decoder
   logic [1:0] jump_in_id;
 
   logic [1:0] csr_op;
+
+  logic davide;
 
 
   /////////////////////////////////////////////
@@ -215,6 +219,9 @@ module riscv_decoder
     bmask_needed_o              = 1'b1; // TODO: only use when necessary
     bmask_a_mux_o               = BMASK_A_ZERO;
     bmask_b_mux_o               = BMASK_B_ZERO;
+    alu_bmask_a_mux_sel_o       = BMASK_A_IMM;
+    alu_bmask_b_mux_sel_o       = BMASK_B_IMM;
+    davide = '0;
     `endif // BIT_SUPPORT
 
 
@@ -474,21 +481,33 @@ module riscv_decoder
           // CONFIG_REGION: BIT_SUPPORT
           `ifdef BIT_SUPPORT
           // bit-manipulation instructions
-          alu_op_b_mux_sel_o  = OP_B_IMM;
           bmask_needed_o      = 1'b1;
           bmask_a_mux_o       = BMASK_A_S3;
           bmask_b_mux_o       = BMASK_B_S2;
+          alu_op_b_mux_sel_o  = OP_B_IMM;
 
           unique case (instr_rdata_i[14:12])
             3'b000: begin
               alu_operator_o  = ALU_BEXT;
               imm_b_mux_sel_o = IMMB_S2;
               bmask_b_mux_o   = BMASK_B_ZERO;
+              if (~instr_rdata_i[30]) begin
+                //register variant
+                alu_op_b_mux_sel_o     = OP_B_BMASK;
+                alu_bmask_a_mux_sel_o  = BMASK_A_REG;
+                regb_used_o            = 1'b1;
+              end
             end
             3'b001: begin
               alu_operator_o  = ALU_BEXTU;
               imm_b_mux_sel_o = IMMB_S2;
               bmask_b_mux_o   = BMASK_B_ZERO;
+              if (~instr_rdata_i[30]) begin
+                //register variant
+                alu_op_b_mux_sel_o     = OP_B_BMASK;
+                alu_bmask_a_mux_sel_o  = BMASK_A_REG;
+                regb_used_o            = 1'b1;
+              end
             end
 
             3'b010: begin
@@ -496,10 +515,35 @@ module riscv_decoder
               imm_b_mux_sel_o     = IMMB_S2;
               regc_used_o         = 1'b1;
               regc_mux_o          = REGC_RD;
+              if (~instr_rdata_i[30]) begin
+                //register variant
+                alu_op_b_mux_sel_o     = OP_B_BMASK;
+                alu_bmask_a_mux_sel_o  = BMASK_A_REG;
+                alu_bmask_b_mux_sel_o  = BMASK_B_REG;
+                regb_used_o            = 1'b1;
+              end
             end
 
-            3'b011: begin alu_operator_o = ALU_BCLR; end
-            3'b100: begin alu_operator_o = ALU_BSET; end
+            3'b011: begin
+              alu_operator_o = ALU_BCLR;
+              if (~instr_rdata_i[30]) begin
+                //register variant
+                regb_used_o            = 1'b1;
+                alu_bmask_a_mux_sel_o  = BMASK_A_REG;
+                alu_bmask_b_mux_sel_o  = BMASK_B_REG;
+              end
+            end
+
+            3'b100: begin
+              alu_operator_o = ALU_BSET;
+              davide = 1'b1;
+              if (~instr_rdata_i[30]) begin
+                //register variant
+                regb_used_o            = 1'b1;
+                alu_bmask_a_mux_sel_o  = BMASK_A_REG;
+                alu_bmask_b_mux_sel_o  = BMASK_B_REG;
+              end
+            end
 
             default: illegal_insn_o = 1'b1;
           endcase
@@ -640,16 +684,26 @@ module riscv_decoder
 
             {6'b00_1010, 3'b001}: begin // p.clip
               alu_operator_o     = ALU_CLIP;
-              alu_op_b_mux_sel_o = OP_A_IMM;
+              alu_op_b_mux_sel_o = OP_B_IMM;
               imm_b_mux_sel_o    = IMMB_CLIP;
             end
 
             {6'b00_1010, 3'b010}: begin // p.clipu
               alu_operator_o     = ALU_CLIPU;
-              alu_op_b_mux_sel_o = OP_A_IMM;
+              alu_op_b_mux_sel_o = OP_B_IMM;
               imm_b_mux_sel_o    = IMMB_CLIP;
             end
             `endif // MATH_SPECIAL_SUPPORT
+
+            {6'b00_1010, 3'b101}: begin // p.clipr
+              alu_operator_o     = ALU_CLIP;
+              regb_used_o        = 1'b1;
+            end
+
+            {6'b00_1010, 3'b110}: begin // p.clipur
+              alu_operator_o     = ALU_CLIPU;
+              regb_used_o        = 1'b1;
+            end
 
             default: begin
               illegal_insn_o = 1'b1;
@@ -710,6 +764,15 @@ module riscv_decoder
 
             bmask_a_mux_o = BMASK_A_ZERO;
             bmask_b_mux_o = BMASK_B_S3;
+
+            if (instr_rdata_i[30]) begin
+              //register variant
+              regc_mux_o             = REGC_RD;
+              alu_bmask_b_mux_sel_o  = BMASK_B_REG;
+              alu_op_a_mux_sel_o     = OP_A_REGC_OR_FWD;
+              alu_op_b_mux_sel_o     = OP_B_REGA_OR_FWD;
+            end
+
           end
 
           2'b11: begin // sub with normalization and rounding
@@ -724,6 +787,15 @@ module riscv_decoder
 
             bmask_a_mux_o = BMASK_A_ZERO;
             bmask_b_mux_o = BMASK_B_S3;
+
+            if (instr_rdata_i[30]) begin
+              //register variant
+              regc_mux_o             = REGC_RD;
+              alu_bmask_b_mux_sel_o  = BMASK_B_REG;
+              alu_op_a_mux_sel_o     = OP_A_REGC_OR_FWD;
+              alu_op_b_mux_sel_o     = OP_B_REGA_OR_FWD;
+            end
+
           end
           `endif // MATH_SPECIAL_SUPPORT
 

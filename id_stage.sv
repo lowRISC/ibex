@@ -41,145 +41,186 @@ module riscv_id_stage #(
   parameter N_HWLP      = 2,
   parameter N_HWLP_BITS = $clog2(N_HWLP)
   `endif // HWL_SUPPORT
-) (
-  input  logic        clk,
-  input  logic        rst_n,
-  input  logic        test_en_i,
-  input  logic        fetch_enable_i,
-  output logic        ctrl_busy_o,
-  output logic        is_decoding_o,
-  // Interface to IF stage
-  // CONFIG_REGION: HWL_SUPPORT
-  `ifdef HWL_SUPPORT
-  input  logic [N_HWLP-1:0] hwlp_dec_cnt_i,
-  input  logic              is_hwlp_i,
-  `endif // HWL_SUPPORT
-  input  logic              instr_valid_i,
-  input  logic       [31:0] instr_rdata_i,      // comes from pipeline of IF stage
-  output logic              instr_req_o,
-  // Jumps and branches
-  output logic        branch_in_ex_o,
-  input  logic        branch_decision_i,
-  output logic [31:0] jump_target_o,
-  // IF and ID stage signals
-  output logic        clear_instr_valid_o,
-  output logic        pc_set_o,
-  output logic [2:0]  pc_mux_o,
-  output logic [1:0]  exc_pc_mux_o,
-  output logic [4:0]  exc_vec_pc_mux_o,
-  input  logic        illegal_c_insn_i,
-  input  logic        is_compressed_i,
-  input  logic [31:0] pc_if_i,
-  input  logic [31:0] pc_id_i,
-  // Stalls
-  output logic        halt_if_o,      // controller requests a halt of the IF stage
-  output logic        id_ready_o,     // ID stage is ready for the next instruction
-  input  logic        ex_ready_i,     // EX stage is ready for the next instruction
-  input  logic        if_ready_i,     // IF stage is done
-  input  logic        if_valid_i,     // IF stage is done
-  output logic        id_valid_o,     // ID stage is done
-  input  logic        ex_valid_i,     // EX stage is done
-  input  logic        wb_valid_i,     // WB stage is done
-  // Pipeline ID/EX
-  output logic [31:0] pc_ex_o,
-  output logic [31:0] alu_operand_a_ex_o,
-  output logic [31:0] alu_operand_b_ex_o,
-  output logic [31:0] alu_operand_c_ex_o,
-  // CONFIG_REGION: BIT_SUPPORT
-  `ifdef BIT_SUPPORT
-  output logic [ 4:0] bmask_a_ex_o,
-  output logic [ 4:0] bmask_b_ex_o,
-  `endif // BIT_SUPPORT
-  // CONFIG_REGION: VEC_SUPPORT
-  `ifdef VEC_SUPPORT
-  output logic [ 1:0] imm_vec_ext_ex_o,
-  output logic [ 1:0] alu_vec_mode_ex_o,
-  `endif // VEC_SUPPORT
-  output logic [4:0]  regfile_waddr_ex_o,
-  output logic        regfile_we_ex_o,
-  output logic [4:0]  regfile_alu_waddr_ex_o,
-  output logic        regfile_alu_we_ex_o,
-  // ALU
-  output logic [ALU_OP_WIDTH-1:0] alu_operator_ex_o,
-  // CONFIG_REGION: MUL_SUPPORT
-  `ifdef MUL_SUPPORT
-  // MUL
-  output logic [ 2:0] mult_operator_ex_o,
-  output logic [31:0] mult_operand_a_ex_o,
-  output logic [31:0] mult_operand_b_ex_o,
-  output logic [31:0] mult_operand_c_ex_o,
-  output logic        mult_en_ex_o,
-  output logic        mult_sel_subword_ex_o,
-  output logic [ 1:0] mult_signed_mode_ex_o,
-  output logic [ 4:0] mult_imm_ex_o,
-  output logic [31:0] mult_dot_op_a_ex_o,
-  output logic [31:0] mult_dot_op_b_ex_o,
-  output logic [31:0] mult_dot_op_c_ex_o,
-  output logic [ 1:0] mult_dot_signed_ex_o,
-  `endif // MUL_SUPPORT
-  // CSR ID/EX
-  output logic        csr_access_ex_o,
-  output logic [1:0]  csr_op_ex_o,
-  // CONFIG_REGION: HWL_SUPPORT
-  `ifdef HWL_SUPPORT
-  // hwloop signals
-  output logic [N_HWLP-1:0] [31:0] hwlp_start_o,
-  output logic [N_HWLP-1:0] [31:0] hwlp_end_o,
-  output logic [N_HWLP-1:0] [31:0] hwlp_cnt_o,
-  // hwloop signals from CS register
-  input  logic   [N_HWLP_BITS-1:0] csr_hwlp_regid_i,
-  input  logic               [2:0] csr_hwlp_we_i,
-  input  logic              [31:0] csr_hwlp_data_i,
-  `endif // HWL_SUPPORT
-  // Interface to load store unit
-  output logic        data_req_ex_o,
-  output logic        data_we_ex_o,
-  output logic [1:0]  data_type_ex_o,
-  output logic        data_sign_ext_ex_o,
-  output logic [1:0]  data_reg_offset_ex_o,
-  output logic        data_load_event_ex_o,
-  output logic        data_misaligned_ex_o,
-  output logic        prepost_useincr_ex_o,
-  input  logic        data_misaligned_i,
-  // Interrupt signals
-  input  logic [31:0] irq_i,
-  input  logic        irq_enable_i,
-  output logic [5:0]  exc_cause_o,
-  output logic        save_exc_cause_o,
-  output logic        exc_save_if_o,
-  output logic        exc_save_id_o,
-  output logic        exc_restore_id_o,
-  input  logic        lsu_load_err_i,
-  input  logic        lsu_store_err_i,
-  // Debug Unit Signals
-  input  logic [DBG_SETS_W-1:0] dbg_settings_i,
-  input  logic        dbg_req_i,
-  output logic        dbg_ack_o,
-  input  logic        dbg_stall_i,
-  output logic        dbg_trap_o,
-  input  logic        dbg_reg_rreq_i,
-  input  logic [ 4:0] dbg_reg_raddr_i,
-  output logic [31:0] dbg_reg_rdata_o,
-  input  logic        dbg_reg_wreq_i,
-  input  logic [ 4:0] dbg_reg_waddr_i,
-  input  logic [31:0] dbg_reg_wdata_i,
-  input  logic        dbg_jump_req_i,
-  // Forward Signals
-  input  logic [4:0]  regfile_waddr_wb_i,
-  input  logic        regfile_we_wb_i,
-  input  logic [31:0] regfile_wdata_wb_i, // From wb_stage: selects data from data memory, ex_stage result and sp rdata
-  input  logic [4:0]  regfile_alu_waddr_fw_i,
-  input  logic        regfile_alu_we_fw_i,
-  input  logic [31:0] regfile_alu_wdata_fw_i,
-  // CONFIG_REGION: MUL_SUPPORT
-  `ifdef MUL_SUPPORT
-  // from ALU
-  input  logic        mult_multicycle_i,    // when we need multiple cycles in the multiplier and use op c as storage
-  `endif // MUL_SUPPORT
-  // Performance Counters
-  output logic        perf_jump_o,          // we are executing a jump instruction
-  output logic        perf_jr_stall_o,      // jump-register-hazard
-  output logic        perf_ld_stall_o       // load-use-hazard
+)
+(
+    input  logic        clk,
+    input  logic        rst_n,
+
+    input  logic        test_en_i,
+
+    input  logic        fetch_enable_i,
+    output logic        ctrl_busy_o,
+    output logic        is_decoding_o,
+
+    // Interface to IF stage
+    // CONFIG_REGION: HWL_SUPPORT
+  	`ifdef HWL_SUPPORT
+    input  logic [N_HWLP-1:0] hwlp_dec_cnt_i,
+    input  logic              is_hwlp_i,
+    `endif // HWL_SUPPORT
+    input  logic              instr_valid_i,
+    input  logic       [31:0] instr_rdata_i,      // comes from pipeline of IF stage
+    output logic              instr_req_o,
+
+
+    // Jumps and branches
+    output logic        branch_in_ex_o,
+    input  logic        branch_decision_i,
+    output logic [31:0] jump_target_o,
+
+    // IF and ID stage signals
+    output logic        clear_instr_valid_o,
+    output logic        pc_set_o,
+    output logic [2:0]  pc_mux_o,
+    output logic [1:0]  exc_pc_mux_o,
+    output logic [4:0]  exc_vec_pc_mux_o,
+
+    input  logic        illegal_c_insn_i,
+    input  logic        is_compressed_i,
+
+    input  logic [31:0] pc_if_i,
+    input  logic [31:0] pc_id_i,
+
+    // Stalls
+    output logic        halt_if_o,      // controller requests a halt of the IF stage
+
+    output logic        id_ready_o,     // ID stage is ready for the next instruction
+    input  logic        ex_ready_i,     // EX stage is ready for the next instruction
+
+    input  logic        if_ready_i,     // IF stage is done
+    input  logic        if_valid_i,     // IF stage is done
+    output logic        id_valid_o,     // ID stage is done
+    input  logic        ex_valid_i,     // EX stage is done
+    input  logic        wb_valid_i,     // WB stage is done
+
+    // Pipeline ID/EX
+    output logic [31:0] pc_ex_o,
+
+    output logic [31:0] alu_operand_a_ex_o,
+    output logic [31:0] alu_operand_b_ex_o,
+    output logic [31:0] alu_operand_c_ex_o,
+    // CONFIG_REGION: BIT_SUPPORT
+  	`ifdef BIT_SUPPORT
+    output logic [ 4:0] bmask_a_ex_o,
+    output logic [ 4:0] bmask_b_ex_o,
+    `endif // BIT_SUPPORT
+
+     // CONFIG_REGION: VEC_SUPPORT
+  	`ifdef VEC_SUPPORT
+    output logic [ 1:0] imm_vec_ext_ex_o,
+    output logic [ 1:0] alu_vec_mode_ex_o,
+    `endif // VEC_SUPPORT
+
+    output logic [4:0]  regfile_waddr_ex_o,
+    output logic        regfile_we_ex_o,
+
+    output logic [4:0]  regfile_alu_waddr_ex_o,
+    output logic        regfile_alu_we_ex_o,
+
+    // ALU
+    output logic [ALU_OP_WIDTH-1:0] alu_operator_ex_o,
+
+
+    // CONFIG_REGION: MUL_SUPPORT
+  	`ifdef MUL_SUPPORT
+    // MUL
+    output logic [ 2:0] mult_operator_ex_o,
+    output logic [31:0] mult_operand_a_ex_o,
+    output logic [31:0] mult_operand_b_ex_o,
+    output logic [31:0] mult_operand_c_ex_o,
+    output logic        mult_en_ex_o,
+    output logic        mult_sel_subword_ex_o,
+    output logic [ 1:0] mult_signed_mode_ex_o,
+    output logic [ 4:0] mult_imm_ex_o,
+
+    output logic [31:0] mult_dot_op_a_ex_o,
+    output logic [31:0] mult_dot_op_b_ex_o,
+    output logic [31:0] mult_dot_op_c_ex_o,
+    output logic [ 1:0] mult_dot_signed_ex_o,
+    `endif // MUL_SUPPORT
+
+
+    // CSR ID/EX
+    output logic        csr_access_ex_o,
+    output logic [1:0]  csr_op_ex_o,
+
+    // CONFIG_REGION: HWL_SUPPORT
+  	`ifdef HWL_SUPPORT
+    // hwloop signals
+    output logic [N_HWLP-1:0] [31:0] hwlp_start_o,
+    output logic [N_HWLP-1:0] [31:0] hwlp_end_o,
+    output logic [N_HWLP-1:0] [31:0] hwlp_cnt_o,
+
+    // hwloop signals from CS register
+    input  logic   [N_HWLP_BITS-1:0] csr_hwlp_regid_i,
+    input  logic               [2:0] csr_hwlp_we_i,
+    input  logic              [31:0] csr_hwlp_data_i,
+    `endif // HWL_SUPPORT
+
+    // Interface to load store unit
+    output logic        data_req_ex_o,
+    output logic        data_we_ex_o,
+    output logic [1:0]  data_type_ex_o,
+    output logic        data_sign_ext_ex_o,
+    output logic [1:0]  data_reg_offset_ex_o,
+    output logic        data_load_event_ex_o,
+
+    output logic        data_misaligned_ex_o,
+
+    output logic        prepost_useincr_ex_o,
+    input  logic        data_misaligned_i,
+
+    // Interrupt signals
+    input  logic [31:0] irq_i,
+    input  logic        irq_enable_i,
+
+    output logic [5:0]  exc_cause_o,
+    output logic        save_exc_cause_o,
+
+    output logic        exc_save_if_o,
+    output logic        exc_save_id_o,
+    output logic        exc_save_takenbranch_o,
+    output logic        exc_restore_id_o,
+
+    input  logic        lsu_load_err_i,
+    input  logic        lsu_store_err_i,
+
+    // Debug Unit Signals
+    input  logic [DBG_SETS_W-1:0] dbg_settings_i,
+    input  logic        dbg_req_i,
+    output logic        dbg_ack_o,
+    input  logic        dbg_stall_i,
+    output logic        dbg_trap_o,
+
+    input  logic        dbg_reg_rreq_i,
+    input  logic [ 4:0] dbg_reg_raddr_i,
+    output logic [31:0] dbg_reg_rdata_o,
+
+    input  logic        dbg_reg_wreq_i,
+    input  logic [ 4:0] dbg_reg_waddr_i,
+    input  logic [31:0] dbg_reg_wdata_i,
+
+    input  logic        dbg_jump_req_i,
+
+    // Forward Signals
+    input  logic [4:0]  regfile_waddr_wb_i,
+    input  logic        regfile_we_wb_i,
+    input  logic [31:0] regfile_wdata_wb_i, // From wb_stage: selects data from data memory, ex_stage result and sp rdata
+
+    input  logic [4:0]  regfile_alu_waddr_fw_i,
+    input  logic        regfile_alu_we_fw_i,
+    input  logic [31:0] regfile_alu_wdata_fw_i,
+
+    // from ALU
+    // CONFIG_REGION: MUL_SUPPORT
+  	`ifdef MUL_SUPPORT
+    input  logic        mult_multicycle_i,    // when we need multiple cycles in the multiplier and use op c as storage
+    `endif // MUL_SUPPORT
+
+    // Performance Counters
+    output logic        perf_jump_o,          // we are executing a jump instruction
+    output logic        perf_jr_stall_o,      // jump-register-hazard
+    output logic        perf_ld_stall_o       // load-use-hazard
 );
 
   logic [31:0] instr;
@@ -240,7 +281,7 @@ module riscv_id_stage #(
 
 
   // Signals running between controller and exception controller
-  logic        exc_req, exc_ack;  // handshake
+  logic        exc_req, ext_req, exc_ack;  // handshake
 
   // Register file interface
   logic [4:0]  regfile_addr_ra_id;
@@ -257,8 +298,8 @@ module riscv_id_stage #(
 
   // ALU Control
   logic [ALU_OP_WIDTH-1:0] alu_operator;
-  logic [1:0]  alu_op_a_mux_sel;
-  logic [1:0]  alu_op_b_mux_sel;
+  logic [2:0]  alu_op_a_mux_sel;
+  logic [2:0]  alu_op_b_mux_sel;
   logic [1:0]  alu_op_c_mux_sel;
   logic [1:0]  regc_mux;
 
@@ -336,6 +377,7 @@ module riscv_id_stage #(
   `ifdef BIT_SUPPORT
   logic [0:0]  bmask_a_mux;
   logic [1:0]  bmask_b_mux;
+<<<<<<< HEAD
   `endif // BIT_SUPPORT
   // CONFIG_REGION: MUL_SUPPORT
   `ifdef MUL_SUPPORT
@@ -343,6 +385,14 @@ module riscv_id_stage #(
   `endif // MUL_SUPPORT
   // CONFIG_REGION: BIT_SUPPORT
   `ifdef BIT_SUPPORT
+=======
+  logic        alu_bmask_a_mux_sel;
+  logic        alu_bmask_b_mux_sel;
+  logic [0:0]  mult_imm_mux;
+
+  logic [ 4:0] bmask_a_id_imm;
+  logic [ 4:0] bmask_b_id_imm;
+>>>>>>> riscv/master
   logic [ 4:0] bmask_a_id;
   logic [ 4:0] bmask_b_id;
   `endif // BIT_SUPPORT
@@ -545,6 +595,7 @@ module riscv_id_stage #(
 
   // ALU_Op_a Mux
   always_comb
+<<<<<<< HEAD
     begin : alu_operand_a_mux
       case (alu_op_a_mux_sel)
         OP_A_REGA_OR_FWD:  alu_operand_a = operand_a_fw_id;
@@ -554,6 +605,18 @@ module riscv_id_stage #(
         default:            alu_operand_a = operand_a_fw_id;
       endcase; // case (alu_op_a_mux_sel)
     end
+=======
+  begin : alu_operand_a_mux
+    case (alu_op_a_mux_sel)
+      OP_A_REGA_OR_FWD:  alu_operand_a = operand_a_fw_id;
+      OP_A_REGB_OR_FWD:  alu_operand_a = operand_b_fw_id;
+      OP_A_REGC_OR_FWD:  alu_operand_a = operand_c_fw_id;
+      OP_A_CURRPC:       alu_operand_a = pc_id_i;
+      OP_A_IMM:          alu_operand_a = imm_a;
+      default:            alu_operand_a = operand_a_fw_id;
+    endcase; // case (alu_op_a_mux_sel)
+  end
+>>>>>>> riscv/master
 
   always_comb
     begin : immediate_a_mux
@@ -610,6 +673,7 @@ module riscv_id_stage #(
 
   // ALU_Op_b Mux
   always_comb
+<<<<<<< HEAD
     begin : alu_operand_b_mux
       case (alu_op_b_mux_sel)
         OP_B_REGB_OR_FWD:  operand_b = operand_b_fw_id;
@@ -618,6 +682,18 @@ module riscv_id_stage #(
         default:           operand_b = operand_b_fw_id;
       endcase // case (alu_op_b_mux_sel)
     end
+=======
+  begin : alu_operand_b_mux
+    case (alu_op_b_mux_sel)
+      OP_B_REGA_OR_FWD:  operand_b = operand_a_fw_id;
+      OP_B_REGB_OR_FWD:  operand_b = operand_b_fw_id;
+      OP_B_REGC_OR_FWD:  operand_b = operand_c_fw_id;
+      OP_B_IMM:          operand_b = imm_b;
+      OP_B_BMASK:        operand_b = $unsigned(operand_b_fw_id[4:0]);
+      default:           operand_b = operand_b_fw_id;
+    endcase // case (alu_op_b_mux_sel)
+  end
+>>>>>>> riscv/master
 
 
   // scalar replication for operand B and shuffle type
@@ -712,6 +788,7 @@ module riscv_id_stage #(
   // CONFIG_REGION: BIT_SUPPORT
   `ifdef BIT_SUPPORT
   always_comb
+<<<<<<< HEAD
     begin
       unique case (bmask_a_mux)
         BMASK_A_ZERO: bmask_a_id = '0;
@@ -719,6 +796,46 @@ module riscv_id_stage #(
         default:       bmask_a_id = '0;
       endcase
     end
+=======
+  begin
+    unique case (bmask_a_mux)
+      BMASK_A_ZERO: bmask_a_id_imm = '0;
+      BMASK_A_S3:   bmask_a_id_imm = imm_s3_type[4:0];
+      default:      bmask_a_id_imm = '0;
+    endcase
+  end
+  always_comb
+  begin
+    unique case (bmask_b_mux)
+      BMASK_B_ZERO: bmask_b_id_imm = '0;
+      BMASK_B_ONE:  bmask_b_id_imm = 5'd1;
+      BMASK_B_S2:   bmask_b_id_imm = imm_s2_type[4:0];
+      BMASK_B_S3:   bmask_b_id_imm = imm_s3_type[4:0];
+      default:      bmask_b_id_imm = '0;
+    endcase
+  end
+
+  always_comb
+  begin
+    unique case (alu_bmask_a_mux_sel)
+      BMASK_A_IMM: bmask_a_id = bmask_a_id_imm;
+      BMASK_A_REG: bmask_a_id = operand_b_fw_id[9:5];
+      default:     bmask_a_id = bmask_a_id_imm;
+    endcase
+  end
+  always_comb
+  begin
+    unique case (alu_bmask_b_mux_sel)
+      BMASK_B_IMM: bmask_b_id = bmask_b_id_imm;
+      BMASK_B_REG: bmask_b_id = operand_b_fw_id[4:0];
+      default:     bmask_b_id = bmask_b_id_imm;
+    endcase
+  end
+
+  assign imm_vec_ext_id = imm_vu_type[1:0];
+
+
+>>>>>>> riscv/master
   always_comb
     begin
       unique case (bmask_b_mux)
@@ -799,6 +916,7 @@ module riscv_id_stage #(
   ///////////////////////////////////////////////
 
   riscv_decoder decoder_i
+<<<<<<< HEAD
     (
       // controller related signals
       .deassert_we_i                   ( deassert_we               ),
@@ -889,6 +1007,84 @@ module riscv_id_stage #(
       .jump_target_mux_sel_o           ( jump_target_mux_sel       )
 
     );
+=======
+  (
+    // controller related signals
+    .deassert_we_i                   ( deassert_we               ),
+    .data_misaligned_i               ( data_misaligned_i         ),
+    .mult_multicycle_i               ( mult_multicycle_i         ),
+
+    .illegal_insn_o                  ( illegal_insn_dec          ),
+    .ebrk_insn_o                     ( ebrk_insn                 ),
+    .eret_insn_o                     ( eret_insn_dec             ),
+    .ecall_insn_o                    ( ecall_insn_dec            ),
+    .pipe_flush_o                    ( pipe_flush_dec            ),
+
+    .rega_used_o                     ( rega_used_dec             ),
+    .regb_used_o                     ( regb_used_dec             ),
+    .regc_used_o                     ( regc_used_dec             ),
+
+    .bmask_needed_o                  ( bmask_needed_dec          ),
+    .bmask_a_mux_o                   ( bmask_a_mux               ),
+    .bmask_b_mux_o                   ( bmask_b_mux               ),
+    .alu_bmask_a_mux_sel_o           ( alu_bmask_a_mux_sel       ),
+    .alu_bmask_b_mux_sel_o           ( alu_bmask_b_mux_sel       ),
+
+    // from IF/ID pipeline
+    .instr_rdata_i                   ( instr                     ),
+    .illegal_c_insn_i                ( illegal_c_insn_i          ),
+
+    // ALU signals
+    .alu_operator_o                  ( alu_operator              ),
+    .alu_op_a_mux_sel_o              ( alu_op_a_mux_sel          ),
+    .alu_op_b_mux_sel_o              ( alu_op_b_mux_sel          ),
+    .alu_op_c_mux_sel_o              ( alu_op_c_mux_sel          ),
+    .alu_vec_mode_o                  ( alu_vec_mode              ),
+    .scalar_replication_o            ( scalar_replication        ),
+    .imm_a_mux_sel_o                 ( imm_a_mux_sel             ),
+    .imm_b_mux_sel_o                 ( imm_b_mux_sel             ),
+    .regc_mux_o                      ( regc_mux                  ),
+
+    // MUL signals
+    .mult_operator_o                 ( mult_operator             ),
+    .mult_int_en_o                   ( mult_int_en               ),
+    .mult_sel_subword_o              ( mult_sel_subword          ),
+    .mult_signed_mode_o              ( mult_signed_mode          ),
+    .mult_imm_mux_o                  ( mult_imm_mux              ),
+    .mult_dot_en_o                   ( mult_dot_en               ),
+    .mult_dot_signed_o               ( mult_dot_signed           ),
+
+    // Register file control signals
+    .regfile_mem_we_o                ( regfile_we_id             ),
+    .regfile_alu_we_o                ( regfile_alu_we_id         ),
+    .regfile_alu_waddr_sel_o         ( regfile_alu_waddr_mux_sel ),
+
+    // CSR control signals
+    .csr_access_o                    ( csr_access                ),
+    .csr_op_o                        ( csr_op                    ),
+
+    // Data bus interface
+    .data_req_o                      ( data_req_id               ),
+    .data_we_o                       ( data_we_id                ),
+    .prepost_useincr_o               ( prepost_useincr           ),
+    .data_type_o                     ( data_type_id              ),
+    .data_sign_extension_o           ( data_sign_ext_id          ),
+    .data_reg_offset_o               ( data_reg_offset_id        ),
+    .data_load_event_o               ( data_load_event_id        ),
+
+    // hwloop signals
+    .hwloop_we_o                     ( hwloop_we_int             ),
+    .hwloop_target_mux_sel_o         ( hwloop_target_mux_sel     ),
+    .hwloop_start_mux_sel_o          ( hwloop_start_mux_sel      ),
+    .hwloop_cnt_mux_sel_o            ( hwloop_cnt_mux_sel        ),
+
+    // jump/branches
+    .jump_in_dec_o                   ( jump_in_dec               ),
+    .jump_in_id_o                    ( jump_in_id                ),
+    .jump_target_mux_sel_o           ( jump_target_mux_sel       )
+
+  );
+>>>>>>> riscv/master
 
   ////////////////////////////////////////////////////////////////////
   //    ____ ___  _   _ _____ ____   ___  _     _     _____ ____    //
@@ -900,6 +1096,7 @@ module riscv_id_stage #(
   ////////////////////////////////////////////////////////////////////
 
   riscv_controller controller_i
+<<<<<<< HEAD
     (
       .clk                            ( clk                    ),
       .rst_n                          ( rst_n                  ),
@@ -1004,6 +1201,111 @@ module riscv_id_stage #(
       .perf_jr_stall_o                ( perf_jr_stall_o        ),
       .perf_ld_stall_o                ( perf_ld_stall_o        )
     );
+=======
+  (
+    .clk                            ( clk                    ),
+    .rst_n                          ( rst_n                  ),
+
+    .fetch_enable_i                 ( fetch_enable_i         ),
+    .ctrl_busy_o                    ( ctrl_busy_o            ),
+    .is_decoding_o                  ( is_decoding_o          ),
+
+    // decoder related signals
+    .deassert_we_o                  ( deassert_we            ),
+    .illegal_insn_i                 ( illegal_insn_dec       ),
+    .eret_insn_i                    ( eret_insn_dec          ),
+    .pipe_flush_i                   ( pipe_flush_dec         ),
+
+    .rega_used_i                    ( rega_used_dec          ),
+    .regb_used_i                    ( regb_used_dec          ),
+    .regc_used_i                    ( regc_used_dec          ),
+
+    // from IF/ID pipeline
+    .instr_valid_i                  ( instr_valid_i          ),
+    .instr_rdata_i                  ( instr                  ),
+
+    // from prefetcher
+    .instr_req_o                    ( instr_req_o            ),
+
+    // to prefetcher
+    .pc_set_o                       ( pc_set_o               ),
+    .pc_mux_o                       ( pc_mux_o               ),
+
+    // LSU
+    .data_req_ex_i                  ( data_req_ex_o          ),
+    .data_misaligned_i              ( data_misaligned_i      ),
+    .data_load_event_i              ( data_load_event_ex_o   ),
+
+    // ALU
+    .mult_multicycle_i              ( mult_multicycle_i      ),
+
+    // jump/branch control
+    .branch_taken_ex_i              ( branch_taken_ex        ),
+    .jump_in_id_i                   ( jump_in_id             ),
+    .jump_in_dec_i                  ( jump_in_dec            ),
+
+    // Exception Controller Signals
+    .exc_req_i                      ( exc_req                ),
+    .ext_req_i                      ( ext_req                ),
+    .exc_ack_o                      ( exc_ack                ),
+
+    .exc_save_if_o                  ( exc_save_if_o          ),
+    .exc_save_id_o                  ( exc_save_id_o          ),
+    .exc_save_takenbranch_o         ( exc_save_takenbranch_o ),
+    .exc_restore_id_o               ( exc_restore_id_o       ),
+
+    // Debug Unit Signals
+    .dbg_req_i                      ( dbg_req_i              ),
+    .dbg_ack_o                      ( dbg_ack_o              ),
+    .dbg_stall_i                    ( dbg_stall_i            ),
+    .dbg_jump_req_i                 ( dbg_jump_req_i         ),
+
+    // Forwarding signals from regfile
+    .regfile_waddr_ex_i             ( regfile_waddr_ex_o     ), // Write address for register file from ex-wb- pipeline registers
+    .regfile_we_ex_i                ( regfile_we_ex_o        ),
+    .regfile_waddr_wb_i             ( regfile_waddr_wb_i     ), // Write address for register file from ex-wb- pipeline registers
+    .regfile_we_wb_i                ( regfile_we_wb_i        ),
+
+    // regfile port 2
+    .regfile_alu_waddr_fw_i         ( regfile_alu_waddr_fw_i ),
+    .regfile_alu_we_fw_i            ( regfile_alu_we_fw_i    ),
+
+    // Forwarding detection signals
+    .reg_d_ex_is_reg_a_i            ( reg_d_ex_is_reg_a_id   ),
+    .reg_d_ex_is_reg_b_i            ( reg_d_ex_is_reg_b_id   ),
+    .reg_d_ex_is_reg_c_i            ( reg_d_ex_is_reg_c_id   ),
+    .reg_d_wb_is_reg_a_i            ( reg_d_wb_is_reg_a_id   ),
+    .reg_d_wb_is_reg_b_i            ( reg_d_wb_is_reg_b_id   ),
+    .reg_d_wb_is_reg_c_i            ( reg_d_wb_is_reg_c_id   ),
+    .reg_d_alu_is_reg_a_i           ( reg_d_alu_is_reg_a_id  ),
+    .reg_d_alu_is_reg_b_i           ( reg_d_alu_is_reg_b_id  ),
+    .reg_d_alu_is_reg_c_i           ( reg_d_alu_is_reg_c_id  ),
+
+    // Forwarding signals
+    .operand_a_fw_mux_sel_o         ( operand_a_fw_mux_sel   ),
+    .operand_b_fw_mux_sel_o         ( operand_b_fw_mux_sel   ),
+    .operand_c_fw_mux_sel_o         ( operand_c_fw_mux_sel   ),
+
+    // Stall signals
+    .halt_if_o                      ( halt_if_o              ),
+    .halt_id_o                      ( halt_id                ),
+
+    .misaligned_stall_o             ( misaligned_stall       ),
+    .jr_stall_o                     ( jr_stall               ),
+    .load_stall_o                   ( load_stall             ),
+
+    .id_ready_i                     ( id_ready_o             ),
+
+    .if_valid_i                     ( if_valid_i             ),
+    .ex_valid_i                     ( ex_valid_i             ),
+    .wb_valid_i                     ( wb_valid_i             ),
+
+    // Performance Counters
+    .perf_jump_o                    ( perf_jump_o            ),
+    .perf_jr_stall_o                ( perf_jr_stall_o        ),
+    .perf_ld_stall_o                ( perf_ld_stall_o        )
+  );
+>>>>>>> riscv/master
 
   ///////////////////////////////////////////////////////////////////////
   //  _____               ____            _             _ _            //
@@ -1019,9 +1321,16 @@ module riscv_id_stage #(
       .clk                  ( clk              ),
       .rst_n                ( rst_n            ),
 
+<<<<<<< HEAD
       // to controller
       .req_o                ( exc_req          ),
       .ack_i                ( exc_ack          ),
+=======
+    // to controller
+    .req_o                ( exc_req          ),
+    .ext_req_o            ( ext_req          ),
+    .ack_i                ( exc_ack          ),
+>>>>>>> riscv/master
 
       .trap_o               ( dbg_trap_o       ),
 
@@ -1159,6 +1468,7 @@ module riscv_id_stage #(
           branch_in_ex_o              <= 1'b0;
 
         end
+<<<<<<< HEAD
       else if (data_misaligned_i) begin
         // misaligned data access case
         if (ex_ready_i)
@@ -1183,6 +1493,52 @@ module riscv_id_stage #(
       `ifdef MUL_SUPPORT
         else if (mult_multicycle_i) begin
           mult_operand_c_ex_o <= alu_operand_c;
+=======
+
+        mult_en_ex_o                <= mult_en;
+        if (mult_int_en) begin  // when we are multiplying we don't need the ALU
+          mult_operator_ex_o        <= mult_operator;
+          mult_sel_subword_ex_o     <= mult_sel_subword;
+          mult_signed_mode_ex_o     <= mult_signed_mode;
+          mult_operand_a_ex_o       <= alu_operand_a;
+          mult_operand_b_ex_o       <= alu_operand_b;
+          mult_operand_c_ex_o       <= alu_operand_c;
+          mult_imm_ex_o             <= mult_imm_id;
+        end
+        if (mult_dot_en) begin
+          mult_operator_ex_o        <= mult_operator;
+          mult_dot_signed_ex_o      <= mult_dot_signed;
+          mult_dot_op_a_ex_o        <= alu_operand_a;
+          mult_dot_op_b_ex_o        <= alu_operand_b;
+          mult_dot_op_c_ex_o        <= alu_operand_c;
+        end
+
+        regfile_we_ex_o             <= regfile_we_id;
+        if (regfile_we_id) begin
+          regfile_waddr_ex_o        <= regfile_waddr_id;
+        end
+
+        regfile_alu_we_ex_o         <= regfile_alu_we_id;
+        if (regfile_alu_we_id) begin
+          regfile_alu_waddr_ex_o    <= regfile_alu_waddr_id;
+        end
+
+        prepost_useincr_ex_o        <= prepost_useincr;
+
+        csr_access_ex_o             <= csr_access;
+        csr_op_ex_o                 <= csr_op;
+
+        data_req_ex_o               <= data_req_id;
+        if (data_req_id)
+        begin // only needed for LSU when there is an active request
+          data_we_ex_o              <= data_we_id;
+          data_type_ex_o            <= data_type_id;
+          data_sign_ext_ex_o        <= data_sign_ext_id;
+          data_reg_offset_ex_o      <= data_reg_offset_id;
+          data_load_event_ex_o      <= data_load_event_id;
+        end else begin
+          data_load_event_ex_o      <= 1'b0;
+>>>>>>> riscv/master
         end
       `endif // MUL_SUPPORT
       else begin
