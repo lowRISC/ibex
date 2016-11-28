@@ -25,17 +25,18 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+`include "riscv_config.sv"
 
 import riscv_defines::*;
 
-    module riscv_if_stage #(
-      // CONFIG_REGION: HWL_SUPPORT
-      `ifdef HWL_SUPPORT
-      parameter N_HWLP      = 2,
-      `endif
-      parameter RDATA_WIDTH = 32
-
-) (
+module riscv_if_stage #(
+  // CONFIG_REGION: HWL_SUPPORT
+  `ifdef HWL_SUPPORT
+  parameter N_HWLP      = 2,
+  `endif
+  parameter RDATA_WIDTH = 32
+)
+(
       input  logic        clk,
       input  logic        rst_n,
       // the boot address is used to calculate the exception offsets

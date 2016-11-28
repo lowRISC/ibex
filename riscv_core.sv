@@ -774,7 +774,7 @@ module riscv_core
     .exc_cause_i             ( exc_cause          ),
     .save_exc_cause_i        ( save_exc_cause     ),
 
-        // CONFIG_REGION: HWL_SUPPORT
+    // CONFIG_REGION: HWL_SUPPORT
     `ifdef HWL_SUPPORT
     // from hwloop registers
     .hwlp_start_i            ( hwlp_start         ),

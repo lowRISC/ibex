@@ -23,6 +23,9 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+
+`include "riscv_config.sv"
+
 module riscv_prefetch_L0_buffer
 #(
   parameter                                   RDATA_IN_WIDTH = 128

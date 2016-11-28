@@ -377,22 +377,19 @@ module riscv_id_stage #(
   `ifdef BIT_SUPPORT
   logic [0:0]  bmask_a_mux;
   logic [1:0]  bmask_b_mux;
-<<<<<<< HEAD
+  logic        alu_bmask_a_mux_sel;
+  logic        alu_bmask_b_mux_sel;
   `endif // BIT_SUPPORT
+  
   // CONFIG_REGION: MUL_SUPPORT
   `ifdef MUL_SUPPORT
     logic [0:0]  mult_imm_mux;
   `endif // MUL_SUPPORT
+  
   // CONFIG_REGION: BIT_SUPPORT
   `ifdef BIT_SUPPORT
-=======
-  logic        alu_bmask_a_mux_sel;
-  logic        alu_bmask_b_mux_sel;
-  logic [0:0]  mult_imm_mux;
-
   logic [ 4:0] bmask_a_id_imm;
   logic [ 4:0] bmask_b_id_imm;
->>>>>>> riscv/master
   logic [ 4:0] bmask_a_id;
   logic [ 4:0] bmask_b_id;
   `endif // BIT_SUPPORT
