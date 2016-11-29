@@ -429,7 +429,6 @@ module riscv_alu
   assign clip_is_lower_neg = adder_result[31];
   assign clip_is_lower_u   = (operator_i == ALU_CLIPU) && operand_a_i[31];
 
-  //assign clip_result       = clip_is_lower_u ? '0 : (clip_is_lower_neg ? operand_b_neg : result_minmax);
   assign clip_result       = is_greater ? result_minmax: (clip_is_lower_u ? '0 : (clip_is_lower_neg ? operand_b_neg : result_minmax));
   //////////////////////////////////////////////////
   //  ____  _   _ _   _ _____ _____ _     _____   //
