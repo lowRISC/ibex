@@ -49,7 +49,7 @@ module riscv_decoder
   output logic        regb_used_o,             // rs2 is used by current instruction
   output logic        regc_used_o,             // rs3 is used by current instruction
 
-  // CONFIG_REGION: MUL_SUPPORT
+  // CONFIG_REGION: BIT_SUPPORT
   `ifdef BIT_SUPPORT
   output logic        bmask_needed_o,          // registers for bit manipulation mask is needed
   output logic [ 0:0] bmask_a_mux_o,           // bit manipulation mask a mux
@@ -214,7 +214,7 @@ module riscv_decoder
     regc_used_o                 = 1'b0;
 
 
-    // CONFIG_REGION: MUL_SUPPORT
+    // CONFIG_REGION: BIT_SUPPORT
     `ifdef BIT_SUPPORT
     bmask_needed_o              = 1'b1; // TODO: only use when necessary
     bmask_a_mux_o               = BMASK_A_ZERO;
@@ -616,7 +616,7 @@ module riscv_decoder
               regc_used_o        = 1'b1;
               regb_used_o        = 1'b1;
               rega_used_o        = 1'b0;
-              alu_operator_o = ALU_DIVU;
+              alu_operator_o     = ALU_DIVU;
             end
             {6'b00_0001, 3'b110}: begin // rem
               alu_op_a_mux_sel_o = OP_A_REGB_OR_FWD;
@@ -625,7 +625,7 @@ module riscv_decoder
               regc_used_o        = 1'b1;
               regb_used_o        = 1'b1;
               rega_used_o        = 1'b0;
-              alu_operator_o = ALU_REM;
+              alu_operator_o     = ALU_REM;
             end
             {6'b00_0001, 3'b111}: begin // remu
               alu_op_a_mux_sel_o = OP_A_REGB_OR_FWD;
@@ -634,7 +634,7 @@ module riscv_decoder
               regc_used_o        = 1'b1;
               regb_used_o        = 1'b1;
               rega_used_o        = 1'b0;
-              alu_operator_o = ALU_REMU;
+              alu_operator_o     = ALU_REMU;
             end
 
             // PULP specific instructions
