@@ -13,6 +13,8 @@
 //                                                                            //
 // Additional contributions by:                                               //
 //                                                                            //
+//                 Markus Wegmann - markus.wegmann@technokrat.ch              //
+//                                                                            //
 // Design Name:    RISC-V config file                                         //
 // Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
@@ -69,7 +71,7 @@
 // use simplified ALU
 `define SIMPLE_ALU
 // reduce register file to 1w2r
-`define SMALL_REGISTER_FILE
+`define TWO_PORT_REG_FILE
 
 `endif
 `endif
