@@ -1260,6 +1260,9 @@ always_ff @(posedge clk, negedge rst_n)
         // CONFIG_REGION: MUL_SUPPORT
         `ifdef MUL_SUPPORT
         if (~mult_en)
+        `else
+        if (1'b1)
+        `endif // MUL_SUPPORT
         begin // only change those registers when we actually need to
           alu_operator_ex_o         <= alu_operator;
           alu_operand_a_ex_o        <= alu_operand_a;
@@ -1278,7 +1281,11 @@ always_ff @(posedge clk, negedge rst_n)
           alu_vec_mode_ex_o         <= alu_vec_mode;
           `endif // VEC_SUPPORT
         end
-        
+
+
+
+        // CONFIG_REGION: MUL_SUPPORT
+        `ifdef MUL_SUPPORT
         mult_en_ex_o                <= mult_en;
         if (mult_int_en) begin  // when we are multiplying we don't need the ALU
           mult_operator_ex_o        <= mult_operator;
