@@ -70,8 +70,8 @@ module riscv_decoder
   // CONFIG_REGION: VEC_SUPPORT
   `ifdef VEC_SUPPORT
   output logic [1:0]  alu_vec_mode_o,          // selects between 32 bit, 16 bit and 8 bit vectorial modes
-  `endif // VEC_SUPPORT
   output logic        scalar_replication_o,    // scalar replication enable
+  `endif // VEC_SUPPORT
   output logic [0:0]  imm_a_mux_sel_o,         // immediate selection for operand a
   output logic [3:0]  imm_b_mux_sel_o,         // immediate selection for operand b
   output logic [1:0]  regc_mux_o,              // register c selection: S3, RD or 0
@@ -100,7 +100,10 @@ module riscv_decoder
   // LD/ST unit signals
   output logic        data_req_o,              // start transaction to data memory
   output logic        data_we_o,               // data memory write enable
+  // CONFIG_REGION: PREPOST_SUPPORT
+  `ifdef PREPOST_SUPPORT
   output logic        prepost_useincr_o,       // when not active bypass the alu result for address calculation
+  `endif // PREPOST_SUPPORT
   output logic [1:0]  data_type_o,             // data type on data memory: byte, half word or word
   output logic        data_sign_extension_o,   // sign extension on read data from data memory
   output logic [1:0]  data_reg_offset_o,       // offset in byte inside register for stores
@@ -162,8 +165,8 @@ module riscv_decoder
     // CONFIG_REGION: VEC_SUPPORT
     `ifdef VEC_SUPPORT
     alu_vec_mode_o              = VEC_MODE32;
-    `endif // VEC_SUPPORT
     scalar_replication_o        = 1'b0;
+    `endif // VEC_SUPPORT
     regc_mux_o                  = REGC_ZERO;
     imm_a_mux_sel_o             = IMMA_ZERO;
     imm_b_mux_sel_o             = IMMB_I;
@@ -183,7 +186,10 @@ module riscv_decoder
     regfile_alu_we              = 1'b0;
     regfile_alu_waddr_sel_o     = 1'b1;
 
+    // CONFIG_REGION: PREPOST_SUPPORT
+    `ifdef PREPOST_SUPPORT
     prepost_useincr_o           = 1'b1;
+    `endif // PREPOST_SUPPORT
 
     // CONFIG_REGION: HWL_SUPPORT
     `ifdef HWL_SUPPORT
@@ -322,7 +328,10 @@ module riscv_decoder
 
         // post-increment setup
         if (instr_rdata_i[6:0] == OPCODE_STORE_POST) begin
+          // CONFIG_REGION: PREPOST_SUPPORT
+          `ifdef PREPOST_SUPPORT
           prepost_useincr_o       = 1'b0;
+          `endif // PREPOST_SUPPORT
           regfile_alu_waddr_sel_o = 1'b0;
           regfile_alu_we          = 1'b1;
         end
@@ -365,7 +374,10 @@ module riscv_decoder
 
         // post-increment setup
         if (instr_rdata_i[6:0] == OPCODE_LOAD_POST) begin
+          // CONFIG_REGION: PREPOST_SUPPORT
+          `ifdef PREPOST_SUPPORT
           prepost_useincr_o       = 1'b0;
+          `endif // PREPOST_SUPPORT
           regfile_alu_waddr_sel_o = 1'b0;
           regfile_alu_we          = 1'b1;
         end
@@ -878,14 +890,20 @@ module riscv_decoder
             alu_operator_o       = ALU_SHUF;
             imm_b_mux_sel_o      = IMMB_SHUF;
             regb_used_o          = 1'b1;
+            // CONFIG_REGION: VEC_SUPPORT
+            `ifdef VEC_SUPPORT
             scalar_replication_o = 1'b0;
+            `endif // VEC_SUPPORT
           end
           6'b11001_0: begin // pv.shuffle2
             alu_operator_o       = ALU_SHUF2;
             regb_used_o          = 1'b1;
             regc_used_o          = 1'b1;
             regc_mux_o           = REGC_RD;
+            // CONFIG_REGION: VEC_SUPPORT
+            `ifdef VEC_SUPPORT
             scalar_replication_o = 1'b0;
+            `endif // VEC_SUPPORT
           end
           6'b11010_0: begin // pv.pack
             alu_operator_o = ALU_PCKLO;
@@ -1132,11 +1150,18 @@ module riscv_decoder
       // the correct one
       regfile_alu_we = 1'b0;
 
+      // CONFIG_REGION: PREPOST_SUPPORT
+      `ifdef PREPOST_SUPPORT
       // if post increments are used, we must make sure that for
       // the second memory access we do use the adder
       prepost_useincr_o = 1'b1;
+      `endif // PREPOST_SUPPORT
+
+      // CONFIG_REGION: VEC_SUPPORT
+      `ifdef VEC_SUPPORT
       // we do not want to replicate operand_b
       scalar_replication_o = 1'b0;
+      `endif // VEC_SUPPORT
     end
     // CONFIG_REGION: MUL_SUPPORT
     `ifdef MUL_SUPPORT

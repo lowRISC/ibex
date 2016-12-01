@@ -167,7 +167,11 @@ module riscv_id_stage #(
 
     output logic        data_misaligned_ex_o,
 
+    // CONFIG_REGION: PREPOST_SUPPORT
+    `ifdef PREPOST_SUPPORT
     output logic        prepost_useincr_ex_o,
+    `endif // PREPOST_SUPPORT
+
     input  logic        data_misaligned_i,
 
     // Interrupt signals
@@ -352,7 +356,10 @@ module riscv_id_stage #(
   logic        csr_access;
   logic [1:0]  csr_op;
 
+  // CONFIG_REGION: PREPOST_SUPPORT
+  `ifdef PREPOST_SUPPORT
   logic        prepost_useincr;
+  `endif // PREPOST_SUPPORT
 
   // Forwarding
   logic [1:0]  operand_a_fw_mux_sel;
@@ -396,18 +403,18 @@ module riscv_id_stage #(
 
   // CONFIG_REGION: VEC_SUPPORT
   `ifdef VEC_SUPPORT
-    logic [ 1:0] imm_vec_ext_id;
+  logic [ 1:0] imm_vec_ext_id;
   `endif // VEC_SUPPORT
   // CONFIG_REGION: MUL_SUPPORT
   `ifdef MUL_SUPPORT
-    logic [ 4:0] mult_imm_id;
+  logic [ 4:0] mult_imm_id;
   `endif // MUL_SUPPORT
 
   // CONFIG_REGION: VEC_SUPPORT
   `ifdef VEC_SUPPORT
-    logic [ 1:0] alu_vec_mode;
-  `endif // VEC_SUPPORT
+  logic [ 1:0] alu_vec_mode;
   logic        scalar_replication;
+  `endif // VEC_SUPPORT
 
   // Forwarding detection signals
   logic        reg_d_ex_is_reg_a_id;
@@ -910,8 +917,8 @@ module riscv_id_stage #(
     // CONFIG_REGION: VEC_SUPPORT
     `ifdef VEC_SUPPORT
     .alu_vec_mode_o                  ( alu_vec_mode              ),
-    `endif // VEC_SUPPORT
     .scalar_replication_o            ( scalar_replication        ),
+    `endif // VEC_SUPPORT
     .imm_a_mux_sel_o                 ( imm_a_mux_sel             ),
     .imm_b_mux_sel_o                 ( imm_b_mux_sel             ),
     .regc_mux_o                      ( regc_mux                  ),
@@ -940,7 +947,10 @@ module riscv_id_stage #(
     // Data bus interface
     .data_req_o                      ( data_req_id               ),
     .data_we_o                       ( data_we_id                ),
+    // CONFIG_REGION: PREPOST_SUPPORT
+    `ifdef PREPOST_SUPPORT
     .prepost_useincr_o               ( prepost_useincr           ),
+    `endif // PREPOST_SUPPORT
     .data_type_o                     ( data_type_id              ),
     .data_sign_extension_o           ( data_sign_ext_id          ),
     .data_reg_offset_o               ( data_reg_offset_id        ),
@@ -1216,7 +1226,10 @@ always_ff @(posedge clk, negedge rst_n)
       regfile_we_ex_o             <= 1'b0;
       regfile_alu_waddr_ex_o      <= 5'b0;
       regfile_alu_we_ex_o         <= 1'b0;
+      // CONFIG_REGION: PREPOST_SUPPORT
+      `ifdef PREPOST_SUPPORT
       prepost_useincr_ex_o        <= 1'b0;
+      `endif // PREPOST_SUPPORT
       csr_access_ex_o             <= 1'b0;
       csr_op_ex_o                 <= CSR_OP_NONE;
       data_we_ex_o                <= 1'b0;
@@ -1236,13 +1249,20 @@ always_ff @(posedge clk, negedge rst_n)
         // if we are using post increments, then we have to use the
         // original value of the register for the second memory access
         // => keep it stalled
+
+        // CONFIG_REGION: PREPOST_SUPPORT
+        `ifdef PREPOST_SUPPORT
         if (prepost_useincr_ex_o == 1'b1)
         begin
           alu_operand_a_ex_o        <= alu_operand_a;
         end
+        `endif // PREPOST_SUPPORT
         alu_operand_b_ex_o          <= alu_operand_b;
         regfile_alu_we_ex_o         <= regfile_alu_we_id;
+        // CONFIG_REGION: PREPOST_SUPPORT
+        `ifdef PREPOST_SUPPORT
         prepost_useincr_ex_o        <= prepost_useincr;
+        `endif // PREPOST_SUPPORT
         data_misaligned_ex_o        <= 1'b1;
       end
     end 
@@ -1313,7 +1333,10 @@ always_ff @(posedge clk, negedge rst_n)
         if (regfile_alu_we_id) begin
           regfile_alu_waddr_ex_o    <= regfile_alu_waddr_id;
         end
+        // CONFIG_REGION: PREPOST_SUPPORT
+        `ifdef PREPOST_SUPPORT
         prepost_useincr_ex_o        <= prepost_useincr;
+        `endif // PREPOST_SUPPORT
         csr_access_ex_o             <= csr_access;
         csr_op_ex_o                 <= csr_op;
         data_req_ex_o               <= data_req_id;

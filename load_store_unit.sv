@@ -23,6 +23,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+`include "riscv_config.sv"
 
 module riscv_load_store_unit
 (
@@ -52,7 +53,11 @@ module riscv_load_store_unit
     input  logic         data_req_ex_i,        // data request                      -> from ex stage
     input  logic [31:0]  operand_a_ex_i,       // operand a from RF for address     -> from ex stage
     input  logic [31:0]  operand_b_ex_i,       // operand b from RF for address     -> from ex stage
+    
+    // CONFIG_REGION: PREPOST_SUPPORT
+    `ifdef PREPOST_SUPPORT
     input  logic         addr_useincr_ex_i,    // use a + b or just a for address   -> from ex stage
+    `endif // PREPOST_SUPPORT
 
     input  logic         data_misaligned_ex_i, // misaligned access in last ld/st   -> from ID/EX pipeline
     output logic         data_misaligned_o,    // misaligned access was detected    -> to controller
@@ -460,7 +465,12 @@ module riscv_load_store_unit
   end
 
   // generate address from operands
+  // CONFIG_REGION: PREPOST_SUPPORT
+  `ifdef PREPOST_SUPPORT
   assign data_addr_int = (addr_useincr_ex_i) ? (operand_a_ex_i + operand_b_ex_i) : operand_a_ex_i;
+  `else 
+  assign data_addr_int = operand_a_ex_i;
+  `endif // PREPOST_SUPPORT
 
   assign busy_o = (CS == WAIT_RVALID) || (CS == WAIT_RVALID_EX_STALL) || (CS == IDLE_EX_STALL) || (data_req_o == 1'b1);
 

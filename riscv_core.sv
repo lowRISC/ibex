@@ -111,7 +111,11 @@ module riscv_core
   // ID performance counter signals
   logic        is_decoding;
 
+  // CONFIG_REGION: PREPOST_SUPPORT
+  `ifdef PREPOST_SUPPORT
   logic        useincr_addr_ex;   // Active when post increment
+  `endif // PREPOST_SUPPORT
+  
   logic        data_misaligned;
 
   // CONFIG_REGION: MUL_SUPPORT
@@ -532,7 +536,11 @@ module riscv_core
 
     .data_misaligned_ex_o         ( data_misaligned_ex   ), // to load store unit
 
+    // CONFIG_REGION: PREPOST_SUPPORT
+    `ifdef PREPOST_SUPPORT
     .prepost_useincr_ex_o         ( useincr_addr_ex      ),
+    `endif // PREPOST_SUPPORT
+
     .data_misaligned_i            ( data_misaligned      ),
 
     // Interrupt Signals
@@ -707,7 +715,11 @@ module riscv_core
     .data_req_ex_i         ( data_req_ex        ),
     .operand_a_ex_i        ( alu_operand_a_ex   ),
     .operand_b_ex_i        ( alu_operand_b_ex   ),
+
+    // CONFIG_REGION: PREPOST_SUPPORT
+    `ifdef PREPOST_SUPPORT
     .addr_useincr_ex_i     ( useincr_addr_ex    ),
+    `endif // PREPOST_SUPPORT
 
     .data_misaligned_ex_i  ( data_misaligned_ex ), // from ID/EX pipeline
     .data_misaligned_o     ( data_misaligned    ),
