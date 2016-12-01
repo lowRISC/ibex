@@ -90,8 +90,11 @@ module riscv_core
   localparam N_HWLP_BITS = $clog2(N_HWLP);
 
   // IF/ID signals
+  // CONFIG_REGION: HWL_SUPPORT
+  `ifdef HWL_SUPPORT
   logic              is_hwlp_id;
   logic [N_HWLP-1:0] hwlp_dec_cnt_id;
+  `endif // HWL_SUPPORT
   logic              instr_valid_id;
   logic [31:0]       instr_rdata_id;    // Instruction sampled inside IF stage
   logic              is_compressed_id;
