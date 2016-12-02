@@ -326,15 +326,15 @@ module riscv_decoder
         // pass write data through ALU operand c
         alu_op_c_mux_sel_o = OP_C_REGB_OR_FWD;
 
+        // CONFIG_REGION: PREPOST_SUPPORT
+        `ifdef PREPOST_SUPPORT
         // post-increment setup
         if (instr_rdata_i[6:0] == OPCODE_STORE_POST) begin
-          // CONFIG_REGION: PREPOST_SUPPORT
-          `ifdef PREPOST_SUPPORT
           prepost_useincr_o       = 1'b0;
-          `endif // PREPOST_SUPPORT
           regfile_alu_waddr_sel_o = 1'b0;
           regfile_alu_we          = 1'b1;
         end
+        `endif // PREPOST_SUPPORT
 
         if (instr_rdata_i[14] == 1'b0) begin
           // offset from immediate
@@ -372,15 +372,15 @@ module riscv_decoder
         alu_op_b_mux_sel_o  = OP_B_IMM;
         imm_b_mux_sel_o     = IMMB_I;
 
+        // CONFIG_REGION: PREPOST_SUPPORT
+        `ifdef PREPOST_SUPPORT
         // post-increment setup
         if (instr_rdata_i[6:0] == OPCODE_LOAD_POST) begin
-          // CONFIG_REGION: PREPOST_SUPPORT
-          `ifdef PREPOST_SUPPORT
           prepost_useincr_o       = 1'b0;
-          `endif // PREPOST_SUPPORT
           regfile_alu_waddr_sel_o = 1'b0;
           regfile_alu_we          = 1'b1;
         end
+        `endif // PREPOST_SUPPORT
 
         // sign/zero extension
         data_sign_extension_o = ~instr_rdata_i[14];

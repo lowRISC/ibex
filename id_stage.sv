@@ -1256,6 +1256,8 @@ always_ff @(posedge clk, negedge rst_n)
         begin
           alu_operand_a_ex_o        <= alu_operand_a;
         end
+        `else
+        alu_operand_a_ex_o        <= alu_operand_a;
         `endif // PREPOST_SUPPORT
         alu_operand_b_ex_o          <= alu_operand_b;
         regfile_alu_we_ex_o         <= regfile_alu_we_id;
