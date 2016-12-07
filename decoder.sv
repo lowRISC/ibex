@@ -141,9 +141,6 @@ module riscv_decoder
 
   logic [1:0] csr_op;
 
-  logic davide;
-
-
   /////////////////////////////////////////////
   //   ____                     _            //
   //  |  _ \  ___  ___ ___   __| | ___ _ __  //
@@ -227,9 +224,7 @@ module riscv_decoder
     bmask_b_mux_o               = BMASK_B_ZERO;
     alu_bmask_a_mux_sel_o       = BMASK_A_IMM;
     alu_bmask_b_mux_sel_o       = BMASK_B_IMM;
-    davide = '0;
     `endif // BIT_SUPPORT
-
 
     unique case (instr_rdata_i[6:0])
 
@@ -548,7 +543,6 @@ module riscv_decoder
 
             3'b100: begin
               alu_operator_o = ALU_BSET;
-              davide = 1'b1;
               if (~instr_rdata_i[30]) begin
                 //register variant
                 regb_used_o            = 1'b1;
