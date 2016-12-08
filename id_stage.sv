@@ -270,7 +270,7 @@ module riscv_id_stage #(
   logic [31:0] imm_s3_type;
   logic [31:0] imm_vs_type;
   logic [31:0] imm_vu_type;
-  // CONFIG_REGION: BIT_SUPPORT
+  // CONFIG_REGION: MATH_SPECIAL_SUPPORT
   `ifdef MATH_SPECIAL_SUPPORT
   logic [31:0] imm_shuffleb_type;
   logic [31:0] imm_shuffleh_type;

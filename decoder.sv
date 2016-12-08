@@ -699,7 +699,6 @@ module riscv_decoder
               alu_op_b_mux_sel_o = OP_B_IMM;
               imm_b_mux_sel_o    = IMMB_CLIP;
             end
-            `endif // MATH_SPECIAL_SUPPORT
 
             {6'b00_1010, 3'b101}: begin // p.clipr
               alu_operator_o     = ALU_CLIP;
@@ -710,6 +709,7 @@ module riscv_decoder
               alu_operator_o     = ALU_CLIPU;
               regb_used_o        = 1'b1;
             end
+            `endif // MATH_SPECIAL_SUPPORT
 
             default: begin
               illegal_insn_o = 1'b1;
@@ -758,6 +758,9 @@ module riscv_decoder
 
           // CONFIG_REGION: MATH_SPECIAL_SUPPORT
           `ifdef MATH_SPECIAL_SUPPORT
+          // CONFIG_REGION: BIT_SUPPORT
+          `ifdef BIT_SUPPORT
+
           2'b10: begin // add with normalization and rounding
             // decide between using unsigned and rounding, and combinations
             // thereof
@@ -803,6 +806,7 @@ module riscv_decoder
             end
 
           end
+          `endif // BIT_SUPPORT
           `endif // MATH_SPECIAL_SUPPORT
 
           default: begin
