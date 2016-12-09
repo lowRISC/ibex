@@ -938,6 +938,8 @@ module riscv_alu
       ALU_SRL, ALU_SRA,
       ALU_ROR:  result_o = shift_result;
 
+      // CONFIG_REGION: BIT_SUPPORT
+      `ifdef BIT_SUPPORT
       // bit manipulation instructions
       ALU_BINS,
       ALU_BEXT,
@@ -945,7 +947,8 @@ module riscv_alu
 
       ALU_BCLR:  result_o = bclr_result;
       ALU_BSET:  result_o = bset_result;
-
+      `endif // BIT_SUPPORT
+      
       // pack and shuffle operations
       ALU_SHUF,  ALU_SHUF2,
       ALU_PCKLO, ALU_PCKHI,
