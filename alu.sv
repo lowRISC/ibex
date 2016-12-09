@@ -197,7 +197,9 @@ module riscv_alu
   assign adder_round_value  = ((operator_i == ALU_ADDR) || (operator_i == ALU_SUBR) ||
                                (operator_i == ALU_ADDUR) || (operator_i == ALU_SUBUR)) ?
                                 {1'b0, bmask[31:1]} : '0;
+  assign adder_round_result = adder_result + adder_round_value;
   `else
+  assign adder_round_value  = '0;
   assign adder_round_result = adder_result;
   `endif // BIT_SUPPORT
 
@@ -293,7 +295,7 @@ module riscv_alu
   assign shift_amt_norm = '0;
   `endif // BIT_SUPPORT
 
-  // right shifts, we let the synthesizero ptimize this
+  // right shifts, we let the synthesizer optimize this
   logic [63:0] shift_op_a_32;
 
   assign shift_op_a_32 = (operator_i == ALU_ROR) ? {shift_op_a, shift_op_a} : $signed({ {32{shift_arithmetic & shift_op_a[31]}}, shift_op_a});
@@ -496,6 +498,9 @@ module riscv_alu
   // |____/|_| |_|\___/|_|   |_|   |_____|_____|  //
   //                                              //
   //////////////////////////////////////////////////
+
+  // CONFIG_REGION: MATH_SPECIAL_SUPPORT
+  `ifdef MATH_SPECIAL_SUPPORT
 
   logic [ 3: 0][1:0] shuffle_byte_sel; // select byte in register: 31:24, 23:16, 15:8, 7:0
   logic [ 3: 0]      shuffle_reg_sel;  // select register: rD/rS2 or rS1
@@ -740,6 +745,8 @@ module riscv_alu
   assign pack_result[15: 8] = shuffle_through[1] ? shuffle_result[15: 8] : operand_c_i[15: 8];
   assign pack_result[ 7: 0] = shuffle_through[0] ? shuffle_result[ 7: 0] : operand_c_i[ 7: 0];
 
+  `endif // MATH_SPECIAL_SUPPORT
+
 
   /////////////////////////////////////////////////////////////////////
   //   ____  _ _      ____                  _      ___               //
@@ -749,6 +756,9 @@ module riscv_alu
   //  |____/|_|\__|  \____\___/ \__,_|_| |_|\__|  \___/| .__/|___(_) //
   //                                                   |_|           //
   /////////////////////////////////////////////////////////////////////
+
+  // CONFIG_REGION: MATH_SPECIAL_SUPPORT
+  `ifdef MATH_SPECIAL_SUPPORT
 
   logic [31:0] ff_input;   // either op_a_i or its bit reversed version
   logic [5:0]  cnt_result; // population count
@@ -818,6 +828,8 @@ module riscv_alu
       default:;
     endcase
   end
+
+  `endif // MATH_SPECIAL_SUPPORT
 
 
   ////////////////////////////////////////////////
@@ -948,19 +960,22 @@ module riscv_alu
       ALU_BCLR:  result_o = bclr_result;
       ALU_BSET:  result_o = bset_result;
       `endif // BIT_SUPPORT
-      
+
+      // CONFIG_REGION: MATH_SPECIAL_SUPPORT
+      `ifdef MATH_SPECIAL_SUPPORT      
       // pack and shuffle operations
       ALU_SHUF,  ALU_SHUF2,
       ALU_PCKLO, ALU_PCKHI,
       ALU_EXT,   ALU_EXTS,
       ALU_INS: result_o = pack_result;
-
+       
       // Min/Max/Abs/Ins
       ALU_MIN, ALU_MINU,
       ALU_MAX, ALU_MAXU,
       ALU_ABS: result_o = result_minmax;
 
       ALU_CLIP, ALU_CLIPU: result_o = clip_result;
+      `endif // MATH_SPECIAL_SUPPORT
 
       // Comparison Operations
       ALU_EQ,    ALU_NE,
