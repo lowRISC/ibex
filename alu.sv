@@ -41,8 +41,11 @@ module riscv_alu
   `ifdef VEC_SUPPORT
   input  logic [ 1:0]              vector_mode_i,
   `endif // VEC_SUPPORT
+  // CONFIG_REGION: BIT_SUPPORT
+  `ifdef BIT_SUPPORT
   input  logic [ 4:0]              bmask_a_i,
   input  logic [ 4:0]              bmask_b_i,
+  `endif // BIT_SUPPORT
   `ifdef VEC_SUPPORT
   input  logic [ 1:0]              imm_vec_ext_i,
   `endif // VEC_SUPPORT 
@@ -88,8 +91,11 @@ module riscv_alu
   logic [5:0]  div_shift;
   logic        div_valid;
   `endif // MUL_SUPPORT
-  logic [31:0] bmask;
 
+  // CONFIG_REGION: BIT_SUPPORT
+  `ifdef BIT_SUPPORT
+  logic [31:0] bmask;
+  `endif // BIT_SUPPORT
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //   ____            _   _ _   _                      _      _       _     _            //
@@ -186,11 +192,14 @@ module riscv_alu
   logic [31:0] adder_round_value;
   logic [31:0] adder_round_result;
 
+  // CONFIG_REGION: BIT_SUPPORT
+  `ifdef BIT_SUPPORT
   assign adder_round_value  = ((operator_i == ALU_ADDR) || (operator_i == ALU_SUBR) ||
                                (operator_i == ALU_ADDUR) || (operator_i == ALU_SUBUR)) ?
                                 {1'b0, bmask[31:1]} : '0;
-  assign adder_round_result = adder_result + adder_round_value;
-
+  `else
+  assign adder_round_result = adder_result;
+  `endif // BIT_SUPPORT
 
   ////////////////////////////////////////
   //  ____  _   _ ___ _____ _____       //
@@ -272,13 +281,19 @@ module riscv_alu
   // choose the bit reversed or the normal input for shift operand a
   assign shift_op_a    = shift_left ? operand_a_rev :
                           (shift_use_round ? adder_round_result : operand_a_i);
+
+
   assign shift_amt_int = shift_use_round ? shift_amt_norm :
                           (shift_left ? shift_amt_left : shift_amt);
 
+   // CONFIG_REGION: BIT_SUPPORT
+  `ifdef BIT_SUPPORT
   assign shift_amt_norm = {4{3'b000, bmask_b_i}};
+  `else
+  assign shift_amt_norm = '0;
+  `endif // BIT_SUPPORT
 
-
-  // right shifts, we let the synthesizer optimize this
+  // right shifts, we let the synthesizero ptimize this
   logic [63:0] shift_op_a_32;
 
   assign shift_op_a_32 = (operator_i == ALU_ROR) ? {shift_op_a, shift_op_a} : $signed({ {32{shift_arithmetic & shift_op_a[31]}}, shift_op_a});
@@ -814,12 +829,13 @@ module riscv_alu
   //                                    |_|     //
   ////////////////////////////////////////////////
 
+  // CONFIG_REGION: BIT_SUPPORT
+  `ifdef BIT_SUPPORT
   logic        extract_is_signed;
   logic        extract_sign;
   logic [31:0] bmask_first, bmask_inv;
   logic [31:0] bextins_and;
   logic [31:0] bextins_result, bclr_result, bset_result;
-
 
   // construct bit mask for insert/extract/bclr/bset
   // bmask looks like this 00..0011..1100..00
@@ -836,6 +852,7 @@ module riscv_alu
 
   assign bclr_result = operand_a_i & bmask_inv;
   assign bset_result = operand_a_i | bmask;
+  `endif // BIT_SUPPORT
 
   ////////////////////////////////////////////////////
   //  ____ _____     __     __  ____  _____ __  __  //
@@ -956,7 +973,10 @@ module riscv_alu
       ALU_SLTS,  ALU_SLTU,
       ALU_SLETS, ALU_SLETU: result_o = {31'b0, comparison_result_o};
 
+      // CONFIG_REGION: BIT_SUPPORT
+      `ifdef BIT_SUPPORT
       ALU_FF1, ALU_FL1, ALU_CLB, ALU_CNT: result_o = {26'h0, bitop_result[5:0]};
+      `endif // BIT_SUPPORT
 
       // CONFIG_REGION: MUL_SUPPORT
       `ifdef MUL_SUPPORT
