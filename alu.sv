@@ -991,10 +991,10 @@ module riscv_alu
       ALU_SLTS,  ALU_SLTU,
       ALU_SLETS, ALU_SLETU: result_o = {31'b0, comparison_result_o};
 
-      // CONFIG_REGION: BIT_SUPPORT
-      `ifdef BIT_SUPPORT
+      // CONFIG_REGION: MATH_SPECIAL_SUPPORT
+      `ifdef MATH_SPECIAL_SUPPORT
       ALU_FF1, ALU_FL1, ALU_CLB, ALU_CNT: result_o = {26'h0, bitop_result[5:0]};
-      `endif // BIT_SUPPORT
+      `endif // MATH_SPECIAL_SUPPORT
 
       // CONFIG_REGION: MUL_SUPPORT
       `ifdef MUL_SUPPORT
