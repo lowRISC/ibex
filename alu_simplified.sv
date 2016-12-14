@@ -35,8 +35,13 @@ module riscv_alu_simplified
   input  logic [31:0]              operand_a_i,
   input  logic [31:0]              operand_b_i,
 
+  // CONFIG_REGION: LSU_ADDER_SUPPORT
+  `ifndef LSU_ADDER_SUPPORT
+  output logic [31:0]              adder_result_o,
+  `endif // LSU_ADDER_SUPPORT
+
   output logic [31:0]              result_o,
-  output logic                     comparison_result_o
+  output logic                     comparison_result_o,
 );
 
 
@@ -93,7 +98,11 @@ module riscv_alu_simplified
 
   // actual adder
   assign adder_result = adder_in_a + adder_in_b;
-
+  
+  // CONFIG_REGION: LSU_ADDER_SUPPORT
+  `ifndef LSU_ADDER_SUPPORT
+  assign adder_result_o = adder_result;
+  `endif // LSU_ADDER_SUPPORT
 
   ////////////////////////////////////////
   //  ____  _   _ ___ _____ _____       //

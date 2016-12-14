@@ -143,6 +143,12 @@ module riscv_core
   logic [31:0] alu_operand_a_ex;
   logic [31:0] alu_operand_b_ex;
   logic [31:0] alu_operand_c_ex;
+
+  // CONFIG_REGION: LSU_ADDER_SUPPORT
+  `ifndef LSU_ADDER_SUPPORT
+  logic [31:0] alu_adder_result_ex; // Used to forward computed address to LSU
+  `endif // LSU_ADDER_SUPPORT
+
   // CONFIG_REGION: BIT_SUPPORT
   `ifdef BIT_SUPPORT
   logic [ 4:0] bmask_a_ex;
@@ -627,7 +633,6 @@ module riscv_core
     .alu_vec_mode_i             ( alu_vec_mode_ex              ), // from ID/EX pipe registers
     `endif // VEC_SUPPORT
 
-
     // CONFIG_REGION: MUL_SUPPORT
     `ifdef MUL_SUPPORT
     // Multipler
@@ -646,6 +651,11 @@ module riscv_core
 
     .mult_multicycle_o          ( mult_multicycle              ), // to ID/EX pipe registers
     `endif // MUL_SUPPORT
+
+    // CONFIG_REGION: LSU_ADDER_SUPPORT
+    `ifndef LSU_ADDER_SUPPORT
+    .alu_adder_result_ex_o      ( alu_adder_result_ex          ), // from ALU to LSU
+    `endif // LSU_ADDER_SUPPORT
 
     // interface with CSRs
     .csr_access_i               ( csr_access_ex                ),
@@ -716,8 +726,14 @@ module riscv_core
 
     .data_rdata_ex_o       ( regfile_wdata      ),
     .data_req_ex_i         ( data_req_ex        ),
+
+    // CONFIG_REGION: LSU_ADDER_SUPPORT
+    `ifdef LSU_ADDER_SUPPORT
     .operand_a_ex_i        ( alu_operand_a_ex   ),
     .operand_b_ex_i        ( alu_operand_b_ex   ),
+    `else 
+    .adder_result_ex_i     ( alu_adder_result_ex),
+    `endif // LSU_ADDER_SUPPORT
 
     // CONFIG_REGION: PREPOST_SUPPORT
     `ifdef PREPOST_SUPPORT

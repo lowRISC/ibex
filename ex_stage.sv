@@ -72,6 +72,11 @@ module riscv_ex_stage
   output logic        mult_multicycle_o,
   `endif // MUL_SUPPORT
 
+  // CONFIG_REGION: LSU_ADDER_SUPPORT
+  `ifndef LSU_ADDER_SUPPORT
+  output logic [31:0] alu_adder_result_ex_o;
+  `endif // LSU_ADDER_SUPPORT
+
   // input from ID stage
   input  logic        branch_in_ex_i,
   input  logic [4:0]  regfile_alu_waddr_i,
@@ -162,6 +167,11 @@ module riscv_ex_stage
     .operand_a_i         ( alu_operand_a_i ),
     .operand_b_i         ( alu_operand_b_i ),
 
+    // CONFIG_REGION: LSU_ADDER_SUPPORT
+    `ifndef LSU_ADDER_SUPPORT
+    .adder_result_o      (alu_adder_result_ex_o ),
+    `endif // LSU_ADDER_SUPPORT
+
     .result_o            ( alu_result      ),
     .comparison_result_o ( alu_cmp_result  )
   );
@@ -172,33 +182,38 @@ module riscv_ex_stage
 
   riscv_alu alu_i
   (
-    .clk                 ( clk             ),
-    .rst_n               ( rst_n           ),
+    .clk                 ( clk                  ),
+    .rst_n               ( rst_n                ),
 
-    .operator_i          ( alu_operator_i  ),
-    .operand_a_i         ( alu_operand_a_i ),
-    .operand_b_i         ( alu_operand_b_i ),
-    .operand_c_i         ( alu_operand_c_i ),
+    .operator_i          ( alu_operator_i       ),
+    .operand_a_i         ( alu_operand_a_i      ),
+    .operand_b_i         ( alu_operand_b_i      ),
+    .operand_c_i         ( alu_operand_c_i      ),
 
     // CONFIG_REGION: VEC_SUPPORT
     `ifdef VEC_SUPPORT
-    .vector_mode_i       ( alu_vec_mode_i  ),
+    .vector_mode_i       ( alu_vec_mode_i       ),
     `endif // VEC_SUPPORT
     // CONFIG_REGION: BIT_SUPPORT
     `ifdef BIT_SUPPORT
-    .bmask_a_i           ( bmask_a_i       ),
-    .bmask_b_i           ( bmask_b_i       ),
+    .bmask_a_i           ( bmask_a_i            ),
+    .bmask_b_i           ( bmask_b_i            ),
     `endif // BIT_SUPPORT
     // CONFIG_REGION: VEC_SUPPORT
     `ifdef VEC_SUPPORT
-    .imm_vec_ext_i       ( imm_vec_ext_i   ),
+    .imm_vec_ext_i       ( imm_vec_ext_i        ),
     `endif // VEC_SUPPORT
 
-    .result_o            ( alu_result      ),
-    .comparison_result_o ( alu_cmp_result  ),
+    // CONFIG_REGION: LSU_ADDER_SUPPORT
+    `ifndef LSU_ADDER_SUPPORT
+    .adder_result_o      (alu_adder_result_ex_o ),
+    `endif // LSU_ADDER_SUPPORT
 
-    .ready_o             ( alu_ready       ),
-    .ex_ready_i          ( ex_ready_o      )
+    .result_o            ( alu_result           ),
+    .comparison_result_o ( alu_cmp_result       ),
+
+    .ready_o             ( alu_ready            ),
+    .ex_ready_i          ( ex_ready_o           )
   );
 
   `endif

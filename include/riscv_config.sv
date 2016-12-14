@@ -50,9 +50,17 @@
 // will enable bit manipulation and counting support.
 //`define BIT_SUPPORT
 
+// CONFIG: LSU_ADDER_SUPPORT
+// will enable an additional adder in the LSU for better timings.
+//`define LSU_ADDER_SUPPORT
+
+`ifdef LSU_ADDER_SUPPORT
+
 // CONFIG: PREPOST_SUPPORT
 // will enable pre/post increment load/store support support.
 //`define PREPOST_SUPPORT
+
+`endif // LSU_ADDER_SUPPORT
 
 // CONFIG: MATH_SPECIAL_SUPPORT
 // will enable clip, min and max operations support.
@@ -61,10 +69,10 @@
 
 // Dependent definitions
 
-
 `ifndef MUL_SUPPORT
 `ifndef VEC_SUPPORT
 `ifndef BIT_SUPPORT
+`ifndef LSU_ADDER_SUPPORT
 `ifndef PREPOST_SUPPORT
 `ifndef MATH_SPECIAL_SUPPORT
 
@@ -73,6 +81,7 @@
 // reduce register file to 1w2r
 `define TWO_PORT_REG_FILE
 
+`endif
 `endif
 `endif
 `endif

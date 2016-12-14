@@ -50,6 +50,11 @@ module riscv_alu
   input  logic [ 1:0]              imm_vec_ext_i,
   `endif // VEC_SUPPORT 
 
+  // CONFIG_REGION: LSU_ADDER_SUPPORT
+  `ifndef LSU_ADDER_SUPPORT
+  output logic [31:0]              adder_result_o,
+  `endif // LSU_ADDER_SUPPORT
+
   output logic [31:0]              result_o,
   output logic                     comparison_result_o,
 
@@ -202,6 +207,11 @@ module riscv_alu
   assign adder_round_value  = '0;
   assign adder_round_result = adder_result;
   `endif // BIT_SUPPORT
+
+  // CONFIG_REGION: LSU_ADDER_SUPPORT
+  `ifndef LSU_ADDER_SUPPORT
+  assign adder_result_o = adder_result;
+  `endif // LSU_ADDER_SUPPORT
 
   ////////////////////////////////////////
   //  ____  _   _ ___ _____ _____       //

@@ -51,9 +51,15 @@ module riscv_load_store_unit
 
     output logic [31:0]  data_rdata_ex_o,      // requested data                    -> to ex stage
     input  logic         data_req_ex_i,        // data request                      -> from ex stage
+
+    // CONFIG_REGION: LSU_ADDER_SUPPORT
+    `ifdef LSU_ADDER_SUPPORT
     input  logic [31:0]  operand_a_ex_i,       // operand a from RF for address     -> from ex stage
     input  logic [31:0]  operand_b_ex_i,       // operand b from RF for address     -> from ex stage
-    
+    `else 
+    input  logic [31:0]  adder_result_ex_i,
+    `endif // LSU_ADDER_SUPPORT
+
     // CONFIG_REGION: PREPOST_SUPPORT
     `ifdef PREPOST_SUPPORT
     input  logic         addr_useincr_ex_i,    // use a + b or just a for address   -> from ex stage
@@ -464,6 +470,9 @@ module riscv_load_store_unit
     end
   end
 
+  // CONFIG_REGION: LSU_ADDER_SUPPORT
+  `ifdef LSU_ADDER_SUPPORT
+
   // generate address from operands
   // CONFIG_REGION: PREPOST_SUPPORT
   `ifdef PREPOST_SUPPORT
@@ -473,6 +482,12 @@ module riscv_load_store_unit
   `endif // PREPOST_SUPPORT
 
   assign busy_o = (CS == WAIT_RVALID) || (CS == WAIT_RVALID_EX_STALL) || (CS == IDLE_EX_STALL) || (data_req_o == 1'b1);
+
+  `else // LSU_ADDER_SUPPORT
+
+   assign data_addr_int = adder_result_ex_i;
+
+  `endif // LSU_ADDER_SUPPORT
 
 
   //////////////////////////////////////////////////////////////////////////////
