@@ -74,7 +74,7 @@ module riscv_ex_stage
 
   // CONFIG_REGION: LSU_ADDER_SUPPORT
   `ifndef LSU_ADDER_SUPPORT
-  output logic [31:0] alu_adder_result_ex_o;
+  output logic [31:0] alu_adder_result_ex_o,
   `endif // LSU_ADDER_SUPPORT
 
   // input from ID stage

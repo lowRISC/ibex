@@ -24,6 +24,8 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+`include "riscv_config.sv"
+
 import riscv_defines::*;
 
 module riscv_alu_simplified
@@ -41,7 +43,7 @@ module riscv_alu_simplified
   `endif // LSU_ADDER_SUPPORT
 
   output logic [31:0]              result_o,
-  output logic                     comparison_result_o,
+  output logic                     comparison_result_o
 );
 
 
