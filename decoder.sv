@@ -69,10 +69,7 @@ module riscv_decoder
   output logic [ALU_OP_WIDTH-1:0] alu_operator_o, // ALU operation selection
   output logic [2:0]  alu_op_a_mux_sel_o,      // operand a selection: reg value, PC, immediate or zero
   output logic [2:0]  alu_op_b_mux_sel_o,      // operand b selection: reg value or immediate
-  // CONFIG_REGION: THREE_PORT_REG_FILE
-  `ifdef THREE_PORT_REG_FILE
   output logic [1:0]  alu_op_c_mux_sel_o,      // operand c selection: reg value or jump target
-  `endif // THREE_PORT_REG_FILE
 
   // CONFIG_REGION: VEC_SUPPORT
   `ifdef VEC_SUPPORT
@@ -168,16 +165,17 @@ module riscv_decoder
     alu_operator_o              = ALU_SLTU;
     alu_op_a_mux_sel_o          = OP_A_REGA_OR_FWD;
     alu_op_b_mux_sel_o          = OP_B_REGB_OR_FWD;
-    // CONFIG_REGION: THREE_PORT_REG_FILE
-    `ifdef THREE_PORT_REG_FILE
     alu_op_c_mux_sel_o          = OP_C_REGC_OR_FWD;
-    `endif // THREE_PORT_REG_FILE
+
     // CONFIG_REGION: VEC_SUPPORT
     `ifdef VEC_SUPPORT
     alu_vec_mode_o              = VEC_MODE32;
     scalar_replication_o        = 1'b0;
     `endif // VEC_SUPPORT
+    // CONFIG_REGION: THREE_PORT_REG_FILE
+    `ifdef THREE_PORT_REG_FILE
     regc_mux_o                  = REGC_ZERO;
+    `endif // THREE_PORT_REG_FILE
     imm_a_mux_sel_o             = IMMA_ZERO;
     imm_b_mux_sel_o             = IMMB_I;
 
@@ -287,10 +285,8 @@ module riscv_decoder
       OPCODE_BRANCH: begin // Branch
         jump_target_mux_sel_o = JT_COND;
         jump_in_id            = BRANCH_COND;
-        // CONFIG_REGION: THREE_PORT_REG_FILE
-        `ifdef THREE_PORT_REG_FILE
         alu_op_c_mux_sel_o    = OP_C_JT;
-        `endif // THREE_PORT_REG_FILE
+
         rega_used_o           = 1'b1;
         regb_used_o           = 1'b1;
 

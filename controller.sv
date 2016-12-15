@@ -545,8 +545,14 @@ module riscv_controller
       deassert_we_o = 1'b1;
 
     // Stall because of load operation
+    // CONFIG_REGION: THREE_PORT_REG_FILE
+    `ifdef THREE_PORT_REG_FILE
     if ((data_req_ex_i == 1'b1) && (regfile_we_ex_i == 1'b1) &&
         ((reg_d_ex_is_reg_a_i == 1'b1) || (reg_d_ex_is_reg_b_i == 1'b1) || (reg_d_ex_is_reg_c_i == 1'b1)) )
+    `else
+	if ((data_req_ex_i == 1'b1) && (regfile_we_ex_i == 1'b1) &&
+        ((reg_d_ex_is_reg_a_i == 1'b1) || (reg_d_ex_is_reg_b_i == 1'b1)) )
+	`endif // THREE_PORT_REG_FILE
     begin
       deassert_we_o   = 1'b1;
       load_stall_o    = 1'b1;
