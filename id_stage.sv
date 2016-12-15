@@ -98,7 +98,8 @@ module riscv_id_stage #(
 
     output logic [31:0] alu_operand_a_ex_o,
     output logic [31:0] alu_operand_b_ex_o,
-    output logic [31:0] alu_operand_c_ex_o,
+    output logic [31:0] alu_operand_c_ex_o, // Still needed if 2r1w reg file used
+
     // CONFIG_REGION: BIT_SUPPORT
   	`ifdef BIT_SUPPORT
     output logic [ 4:0] bmask_a_ex_o,
@@ -240,7 +241,10 @@ module riscv_id_stage #(
 
   logic        rega_used_dec;
   logic        regb_used_dec;
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   logic        regc_used_dec;
+  `endif // THREE_PORT_REG_FILE
   // CONFIG_REGION: BIT_SUPPORT
   `ifdef BIT_SUPPORT
   logic        bmask_needed_dec;
@@ -290,7 +294,10 @@ module riscv_id_stage #(
   // Register file interface
   logic [4:0]  regfile_addr_ra_id;
   logic [4:0]  regfile_addr_rb_id;
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   logic [4:0]  regfile_addr_rc_id;
+  `endif // THREE_PORT_REG_FILE
 
   logic [4:0]  regfile_waddr_id;
   logic [4:0]  regfile_alu_waddr_id;
@@ -298,14 +305,20 @@ module riscv_id_stage #(
 
   logic [31:0] regfile_data_ra_id;
   logic [31:0] regfile_data_rb_id;
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   logic [31:0] regfile_data_rc_id;
+  `endif // THREE_PORT_REG_FILE
 
   // ALU Control
   logic [ALU_OP_WIDTH-1:0] alu_operator;
   logic [2:0]  alu_op_a_mux_sel;
   logic [2:0]  alu_op_b_mux_sel;
   logic [1:0]  alu_op_c_mux_sel;
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   logic [1:0]  regc_mux;
+  `endif // THREE_PORT_REG_FILE
 
   logic [0:0]  imm_a_mux_sel;
   logic [3:0]  imm_b_mux_sel;
@@ -364,11 +377,17 @@ module riscv_id_stage #(
   // Forwarding
   logic [1:0]  operand_a_fw_mux_sel;
   logic [1:0]  operand_b_fw_mux_sel;
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   logic [1:0]  operand_c_fw_mux_sel;
+  `endif // THREE_PORT_REG_FILE
   logic [31:0] operand_a_fw_id;
   logic [31:0] operand_b_fw_id;
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   logic [31:0] operand_c_fw_id;
-
+  `endif // THREE_PORT_REG_FILE
+  
   logic [31:0] operand_b;
   // CONFIG_REGION: VEC_SUPPORT
   `ifdef VEC_SUPPORT
@@ -377,7 +396,7 @@ module riscv_id_stage #(
 
   logic [31:0] alu_operand_a;
   logic [31:0] alu_operand_b;
-  logic [31:0] alu_operand_c;
+  logic [31:0] alu_operand_c; // Still needed if 2r1w reg file used
 
   // Immediates for ID
   // CONFIG_REGION: BIT_SUPPORT
@@ -417,6 +436,8 @@ module riscv_id_stage #(
   `endif // VEC_SUPPORT
 
   // Forwarding detection signals
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   logic        reg_d_ex_is_reg_a_id;
   logic        reg_d_ex_is_reg_b_id;
   logic        reg_d_ex_is_reg_c_id;
@@ -426,6 +447,14 @@ module riscv_id_stage #(
   logic        reg_d_alu_is_reg_a_id;
   logic        reg_d_alu_is_reg_b_id;
   logic        reg_d_alu_is_reg_c_id;
+  `else 
+  logic        reg_d_ex_is_reg_a_id;
+  logic        reg_d_ex_is_reg_b_id;
+  logic        reg_d_wb_is_reg_a_id;
+  logic        reg_d_wb_is_reg_b_id;
+  logic        reg_d_alu_is_reg_a_id;
+  logic        reg_d_alu_is_reg_b_id;
+  `endif // THREE_PORT_REG_FILE
 
 
   assign instr = instr_rdata_i;
@@ -469,6 +498,8 @@ module riscv_id_stage #(
   assign regfile_addr_ra_id = instr[`REG_S1];
   assign regfile_addr_rb_id = instr[`REG_S2];
 
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   // register C mux
   always_comb
     begin
@@ -479,18 +510,26 @@ module riscv_id_stage #(
         default:     regfile_addr_rc_id = '0;
       endcase
     end
+  `endif // THREE_PORT_REG_FILE
 
   //---------------------------------------------------------------------------
   // destination registers
   //---------------------------------------------------------------------------
   assign regfile_waddr_id = instr[`REG_D];
 
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
+  
   // Second Register Write Address Selection
   // Used for prepost load/store and multiplier
   assign regfile_alu_waddr_id = regfile_alu_waddr_mux_sel ?
     regfile_waddr_id : regfile_addr_ra_id;
+  
+  `endif // THREE_PORT_REG_FILE
 
   // Forwarding control signals
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   assign reg_d_ex_is_reg_a_id  = (regfile_waddr_ex_o     == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
   assign reg_d_ex_is_reg_b_id  = (regfile_waddr_ex_o     == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
   assign reg_d_ex_is_reg_c_id  = (regfile_waddr_ex_o     == regfile_addr_rc_id) && (regc_used_dec == 1'b1) && (regfile_addr_rc_id != '0);
@@ -500,6 +539,14 @@ module riscv_id_stage #(
   assign reg_d_alu_is_reg_a_id = (regfile_alu_waddr_fw_i == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
   assign reg_d_alu_is_reg_b_id = (regfile_alu_waddr_fw_i == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
   assign reg_d_alu_is_reg_c_id = (regfile_alu_waddr_fw_i == regfile_addr_rc_id) && (regc_used_dec == 1'b1) && (regfile_addr_rc_id != '0);
+  `else // THREE_PORT_REG_FILE
+  assign reg_d_ex_is_reg_a_id  = (regfile_waddr_ex_o     == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
+  assign reg_d_ex_is_reg_b_id  = (regfile_waddr_ex_o     == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
+  assign reg_d_wb_is_reg_a_id  = (regfile_waddr_wb_i     == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
+  assign reg_d_wb_is_reg_b_id  = (regfile_waddr_wb_i     == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
+  assign reg_d_alu_is_reg_a_id = (regfile_alu_waddr_fw_i == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
+  assign reg_d_alu_is_reg_b_id = (regfile_alu_waddr_fw_i == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
+  `endif // THREE_PORT_REG_FILE
 
 
 
@@ -595,15 +642,18 @@ module riscv_id_stage #(
   // | |_| | |_) |  __/ | | (_| | | | | (_| |  / ___ \  //
   //  \___/| .__/ \___|_|  \__,_|_| |_|\__,_| /_/   \_\ //
   //       |_|                                          //
-  ////////////////////////////////////////////////////////
-
+  ///////////////////////////////////////////////////////
+/
   // ALU_Op_a Mux
   always_comb
   begin : alu_operand_a_mux
     case (alu_op_a_mux_sel)
       OP_A_REGA_OR_FWD:  alu_operand_a = operand_a_fw_id;
       OP_A_REGB_OR_FWD:  alu_operand_a = operand_b_fw_id;
+      // CONFIG_REGION: THREE_PORT_REG_FILE
+      `ifdef THREE_PORT_REG_FILE
       OP_A_REGC_OR_FWD:  alu_operand_a = operand_c_fw_id;
+      `endif // THREE_PORT_REG_FILE
       OP_A_CURRPC:       alu_operand_a = pc_id_i;
       OP_A_IMM:          alu_operand_a = imm_a;
       default:           alu_operand_a = operand_a_fw_id;
@@ -669,7 +719,10 @@ module riscv_id_stage #(
       case (alu_op_b_mux_sel)
         OP_B_REGA_OR_FWD:  operand_b = operand_a_fw_id;
         OP_B_REGB_OR_FWD:  operand_b = operand_b_fw_id;
+        // CONFIG_REGION: THREE_PORT_REG_FILE
+        `ifdef THREE_PORT_REG_FILE
         OP_B_REGC_OR_FWD:  operand_b = operand_c_fw_id;
+        `endif // THREE_PORT_REG_FILE
         OP_B_IMM:          operand_b = imm_b;
         OP_B_BMASK:        operand_b = $unsigned(operand_b_fw_id[4:0]);
         default:           operand_b = operand_b_fw_id;
@@ -734,6 +787,8 @@ module riscv_id_stage #(
   //       |_|                                        //
   //////////////////////////////////////////////////////
 
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   // ALU OP C Mux
   always_comb
     begin : alu_operand_c_mux
@@ -755,6 +810,19 @@ module riscv_id_stage #(
         default:       operand_c_fw_id = regfile_data_rc_id;
       endcase; // case (operand_c_fw_mux_sel)
     end
+
+  `else
+  // ALU OP C Mux
+  always_comb
+    begin : alu_operand_c_mux
+      case (alu_op_c_mux_sel)
+        OP_C_REGB_OR_FWD:  alu_operand_c = operand_b_fw_id;
+        OP_C_JT:           alu_operand_c = jump_target;
+        default:            alu_operand_c = operand_b_fw_id;
+      endcase // case (alu_op_c_mux_sel)
+    end
+
+  `endif // THREE_PORT_REG_FILE
 
 
   ///////////////////////////////////////////////////////////////////////////
@@ -845,6 +913,8 @@ module riscv_id_stage #(
         .raddr_a_i    ( regfile_addr_ra_id ),
         .rdata_a_o    ( regfile_data_ra_id ),
 
+        // CONFIG_REGION: THREE_PORT_REG_FILE
+        `ifdef THREE_PORT_REG_FILE
         // Read port b
         .raddr_b_i    ( regfile_addr_rb_id ),
         .rdata_b_o    ( regfile_data_rb_id ),
@@ -852,19 +922,38 @@ module riscv_id_stage #(
         // Read port c
         .raddr_c_i    ( (dbg_reg_rreq_i == 1'b0) ? regfile_addr_rc_id : dbg_reg_raddr_i ),
         .rdata_c_o    ( regfile_data_rc_id ),
+        `else 
+        .raddr_b_i    ( (dbg_reg_rreq_i == 1'b0) ? regfile_addr_rb_id : dbg_reg_raddr_i ),
+        .rdata_b_o    ( regfile_data_rb_id ),
+        `endif // THREE_PORT_REG_FILE
 
+
+        // CONFIG_REGION: THREE_PORT_REG_FILE
+        `ifdef THREE_PORT_REG_FILE
         // Write port a
         .waddr_a_i    ( regfile_waddr_wb_i ),
         .wdata_a_i    ( regfile_wdata_wb_i ),
         .we_a_i       ( regfile_we_wb_i    ),
 
         // Write port b
-        .waddr_b_i    ( (dbg_reg_wreq_i == 1'b0) ? regfile_alu_waddr_fw_i : dbg_reg_waddr_i  ),
+        .waddr_b_i    ( (dbg_reg_wreq_i == 1'b0) ? regfile_alu_waddr_fw_i : dbg_reg_waddr_i ),
         .wdata_b_i    ( (dbg_reg_wreq_i == 1'b0) ? regfile_alu_wdata_fw_i : dbg_reg_wdata_i ),
         .we_b_i       ( (dbg_reg_wreq_i == 1'b0) ? regfile_alu_we_fw_i    : 1'b1            )
+
+        `else
+        // Write port a (multiplex between ALU and LSU)
+        .waddr_a_i    ( (dbg_reg_wreq_i == 1'b0) ? ( (regfile_alu_we_fw_i == 1'b1) ? regfile_alu_waddr_fw_i : regfile_waddr_wb_i) : dbg_reg_waddr_i    ),
+        .wdata_a_i    ( (dbg_reg_wreq_i == 1'b0) ? ( (regfile_alu_we_fw_i == 1'b1) ? regfile_alu_wdata_fw_i : regfile_wdata_wb_i) : dbg_reg_wdata_i    ),
+        .we_a_i       ( (dbg_reg_wreq_i == 1'b0) ? (regfile_alu_we_fw_i | regfile_we_wb_i) : 1'b1                                                      )
+        `endif // THREE_PORT_REG_FILE
       );
 
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   assign dbg_reg_rdata_o = regfile_data_rc_id;
+  `else 
+  assign dbg_reg_rdata_o = regfile_data_rb_id;
+  `endif // THREE_PORT_REG_FILE
 
 
   ///////////////////////////////////////////////
@@ -894,7 +983,10 @@ module riscv_id_stage #(
 
     .rega_used_o                     ( rega_used_dec             ),
     .regb_used_o                     ( regb_used_dec             ),
+    // CONFIG_REGION: THREE_PORT_REG_FILE
+    `ifdef THREE_PORT_REG_FILE
     .regc_used_o                     ( regc_used_dec             ),
+    `endif // THREE_PORT_REG_FILE
 
     // CONFIG_REGION: BIT_SUPPORT
     `ifdef BIT_SUPPORT
@@ -914,6 +1006,7 @@ module riscv_id_stage #(
     .alu_op_a_mux_sel_o              ( alu_op_a_mux_sel          ),
     .alu_op_b_mux_sel_o              ( alu_op_b_mux_sel          ),
     .alu_op_c_mux_sel_o              ( alu_op_c_mux_sel          ),
+
     // CONFIG_REGION: VEC_SUPPORT
     `ifdef VEC_SUPPORT
     .alu_vec_mode_o                  ( alu_vec_mode              ),
@@ -921,7 +1014,10 @@ module riscv_id_stage #(
     `endif // VEC_SUPPORT
     .imm_a_mux_sel_o                 ( imm_a_mux_sel             ),
     .imm_b_mux_sel_o                 ( imm_b_mux_sel             ),
+    // CONFIG_REGION: THREE_PORT_REG_FILE
+    `ifdef THREE_PORT_REG_FILE
     .regc_mux_o                      ( regc_mux                  ),
+    `endif // THREE_PORT_REG_FILE
 
     // CONFIG_REGION: MUL_SUPPORT
     `ifdef MUL_SUPPORT
@@ -999,7 +1095,10 @@ module riscv_id_stage #(
 
     .rega_used_i                    ( rega_used_dec          ),
     .regb_used_i                    ( regb_used_dec          ),
+    // CONFIG_REGION: THREE_PORT_REG_FILE
+    `ifdef THREE_PORT_REG_FILE
     .regc_used_i                    ( regc_used_dec          ),
+    `endif // THREE_PORT_REG_FILE
 
     // from IF/ID pipeline
     .instr_valid_i                  ( instr_valid_i          ),
@@ -1050,11 +1149,13 @@ module riscv_id_stage #(
     .regfile_waddr_wb_i             ( regfile_waddr_wb_i     ), // Write address for register file from ex-wb- pipeline registers
     .regfile_we_wb_i                ( regfile_we_wb_i        ),
 
-    // regfile port 2
+    // regfile port 2 (or multiplexer signal in case of a 2r1w)
     .regfile_alu_waddr_fw_i         ( regfile_alu_waddr_fw_i ),
     .regfile_alu_we_fw_i            ( regfile_alu_we_fw_i    ),
 
     // Forwarding detection signals
+    // CONFIG_REGION: THREE_PORT_REG_FILE
+    `ifdef THREE_PORT_REG_FILE
     .reg_d_ex_is_reg_a_i            ( reg_d_ex_is_reg_a_id   ),
     .reg_d_ex_is_reg_b_i            ( reg_d_ex_is_reg_b_id   ),
     .reg_d_ex_is_reg_c_i            ( reg_d_ex_is_reg_c_id   ),
@@ -1064,11 +1165,21 @@ module riscv_id_stage #(
     .reg_d_alu_is_reg_a_i           ( reg_d_alu_is_reg_a_id  ),
     .reg_d_alu_is_reg_b_i           ( reg_d_alu_is_reg_b_id  ),
     .reg_d_alu_is_reg_c_i           ( reg_d_alu_is_reg_c_id  ),
+    `else
+    .reg_d_ex_is_reg_a_i            ( reg_d_ex_is_reg_a_id   ),
+    .reg_d_ex_is_reg_b_i            ( reg_d_ex_is_reg_b_id   ),
+    .reg_d_wb_is_reg_a_i            ( reg_d_wb_is_reg_a_id   ),
+    .reg_d_wb_is_reg_b_i            ( reg_d_wb_is_reg_b_id   ),
+    `endif // THREE_PORT_REG_FILE
+
 
     // Forwarding signals
     .operand_a_fw_mux_sel_o         ( operand_a_fw_mux_sel   ),
     .operand_b_fw_mux_sel_o         ( operand_b_fw_mux_sel   ),
+    // CONFIG_REGION: THREE_PORT_REG_FILE
+    `ifdef THREE_PORT_REG_FILE
     .operand_c_fw_mux_sel_o         ( operand_c_fw_mux_sel   ),
+    `endif // THREE_PORT_REG_FILE
 
     // Stall signals
     .halt_if_o                      ( halt_if_o              ),
@@ -1192,7 +1303,7 @@ always_ff @(posedge clk, negedge rst_n)
       alu_operator_ex_o           <= ALU_SLTU;
       alu_operand_a_ex_o          <= '0;
       alu_operand_b_ex_o          <= '0;
-      alu_operand_c_ex_o          <= '0;
+      alu_operand_c_ex_o          <= '0; // Still needed for jump target if 2r1w reg file used
       
       // CONFIG_REGION: BIT_SUPPORT
       `ifdef BIT_SUPPORT

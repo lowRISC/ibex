@@ -45,7 +45,10 @@ module riscv_controller
 
   input  logic        rega_used_i,                // register A is used
   input  logic        regb_used_i,                // register B is used
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   input  logic        regc_used_i,                // register C is used
+  `endif // THREE_PORT_REG_FILE
 
   // from IF/ID pipeline
   input  logic        instr_valid_i,              // instruction coming from IF/ID pipeline is valid
@@ -96,15 +99,21 @@ module riscv_controller
   input  logic        regfile_we_ex_i,            // FW: write enable from  EX stage
   input  logic [4:0]  regfile_waddr_wb_i,         // FW: write address from WB stage
   input  logic        regfile_we_wb_i,            // FW: write enable from  WB stage
+
   input  logic [4:0]  regfile_alu_waddr_fw_i,     // FW: ALU/MUL write address from EX stage
   input  logic        regfile_alu_we_fw_i,        // FW: ALU/MUL write enable from  EX stage
 
   // forwarding signals
   output logic [1:0]  operand_a_fw_mux_sel_o,     // regfile ra data selector form ID stage
   output logic [1:0]  operand_b_fw_mux_sel_o,     // regfile rb data selector form ID stage
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   output logic [1:0]  operand_c_fw_mux_sel_o,     // regfile rc data selector form ID stage
+  `endif // THREE_PORT_REG_FILE
 
   // forwarding detection signals
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   input logic         reg_d_ex_is_reg_a_i,
   input logic         reg_d_ex_is_reg_b_i,
   input logic         reg_d_ex_is_reg_c_i,
@@ -114,6 +123,14 @@ module riscv_controller
   input logic         reg_d_alu_is_reg_a_i,
   input logic         reg_d_alu_is_reg_b_i,
   input logic         reg_d_alu_is_reg_c_i,
+  `else 
+  input logic         reg_d_ex_is_reg_a_i,
+  input logic         reg_d_ex_is_reg_b_i,
+  input logic         reg_d_wb_is_reg_a_i,
+  input logic         reg_d_wb_is_reg_b_i,
+  input logic         reg_d_alu_is_reg_a_i,
+  input logic         reg_d_alu_is_reg_b_i,
+  `endif // THREE_PORT_REG_FILE
 
 
   // stall signals
@@ -559,7 +576,10 @@ module riscv_controller
     // default assignements
     operand_a_fw_mux_sel_o = SEL_REGFILE;
     operand_b_fw_mux_sel_o = SEL_REGFILE;
+    // CONFIG_REGION: THREE_PORT_REG_FILE
+    `ifdef THREE_PORT_REG_FILE
     operand_c_fw_mux_sel_o = SEL_REGFILE;
+    `endif // THREE_PORT_REG_FILE
 
     // Forwarding WB -> ID
     if (regfile_we_wb_i == 1'b1)
@@ -568,19 +588,25 @@ module riscv_controller
         operand_a_fw_mux_sel_o = SEL_FW_WB;
       if (reg_d_wb_is_reg_b_i == 1'b1)
         operand_b_fw_mux_sel_o = SEL_FW_WB;
+      // CONFIG_REGION: THREE_PORT_REG_FILE
+      `ifdef THREE_PORT_REG_FILE
       if (reg_d_wb_is_reg_c_i == 1'b1)
         operand_c_fw_mux_sel_o = SEL_FW_WB;
+      `endif // THREE_PORT_REG_FILE
     end
 
     // Forwarding EX -> ID
     if (regfile_alu_we_fw_i == 1'b1)
     begin
-     if (reg_d_alu_is_reg_a_i == 1'b1)
-       operand_a_fw_mux_sel_o = SEL_FW_EX;
-     if (reg_d_alu_is_reg_b_i == 1'b1)
-       operand_b_fw_mux_sel_o = SEL_FW_EX;
-     if (reg_d_alu_is_reg_c_i == 1'b1)
-       operand_c_fw_mux_sel_o = SEL_FW_EX;
+      if (reg_d_alu_is_reg_a_i == 1'b1)
+        operand_a_fw_mux_sel_o = SEL_FW_EX;
+      if (reg_d_alu_is_reg_b_i == 1'b1)
+        operand_b_fw_mux_sel_o = SEL_FW_EX;
+      // CONFIG_REGION: THREE_PORT_REG_FILE
+      `ifdef THREE_PORT_REG_FILE
+      if (reg_d_alu_is_reg_c_i == 1'b1)
+        operand_c_fw_mux_sel_o = SEL_FW_EX;
+      `endif // THREE_PORT_REG_FILE
     end
 
     // for misaligned memory accesses

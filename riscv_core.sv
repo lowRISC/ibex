@@ -481,7 +481,8 @@ module riscv_core
     .alu_operator_ex_o            ( alu_operator_ex      ),
     .alu_operand_a_ex_o           ( alu_operand_a_ex     ),
     .alu_operand_b_ex_o           ( alu_operand_b_ex     ),
-    .alu_operand_c_ex_o           ( alu_operand_c_ex     ),
+    .alu_operand_c_ex_o           ( alu_operand_c_ex     ), // Still needed if 2r1w reg file used
+
     // CONFIG_REGION: BIT_SUPPORT
     `ifdef BIT_SUPPORT
     .bmask_a_ex_o                 ( bmask_a_ex           ),

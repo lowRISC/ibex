@@ -24,6 +24,8 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+`include "riscv_config.sv"
+
 module riscv_register_file
 #(
   parameter ADDR_WIDTH    = 5,
@@ -44,19 +46,27 @@ module riscv_register_file
   input  logic [ADDR_WIDTH-1:0]  raddr_b_i,
   output logic [DATA_WIDTH-1:0]  rdata_b_o,
 
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   //Read port R3
   input  logic [ADDR_WIDTH-1:0]  raddr_c_i,
   output logic [DATA_WIDTH-1:0]  rdata_c_o,
+  `endif // THREE_PORT_REG_FILE
 
   // Write port W1
   input  logic [ADDR_WIDTH-1:0]   waddr_a_i,
   input  logic [DATA_WIDTH-1:0]   wdata_a_i,
-  input  logic                    we_a_i,
+  input  logic                    we_a_i
 
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
+  ,
+  
   // Write port W2
   input  logic [ADDR_WIDTH-1:0]   waddr_b_i,
   input  logic [DATA_WIDTH-1:0]   wdata_b_i,
   input  logic                    we_b_i
+  `endif // THREE_PORT_REG_FILE
 );
 
   localparam    NUM_WORDS = 2**ADDR_WIDTH;
@@ -64,11 +74,17 @@ module riscv_register_file
   logic [DATA_WIDTH-1:0]      mem[NUM_WORDS];
 
   logic [NUM_WORDS-1:1]       waddr_onehot_a;
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   logic [NUM_WORDS-1:1]       waddr_onehot_b, waddr_onehot_b_q;
+  `endif // THREE_PORT_REG_FILE
 
   logic [NUM_WORDS-1:1]       mem_clocks;
   logic [DATA_WIDTH-1:0]      wdata_a_q;
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   logic [DATA_WIDTH-1:0]      wdata_b_q;
+  `endif // THREE_PORT_REG_FILE
 
   logic clk_int;
 
@@ -77,15 +93,16 @@ module riscv_register_file
   int unsigned k;
 
   genvar x;
-  genvar y;
 
   //-----------------------------------------------------------------------------
   //-- READ : Read address decoder RAD
   //-----------------------------------------------------------------------------
   assign rdata_a_o = mem[raddr_a_i];
   assign rdata_b_o = mem[raddr_b_i];
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   assign rdata_c_o = mem[raddr_c_i];
-
+  `endif // THREE_PORT_REG_FILE
 
   //-----------------------------------------------------------------------------
   // WRITE : SAMPLE INPUT DATA
@@ -94,7 +111,12 @@ module riscv_register_file
   cluster_clock_gating CG_WE_GLOBAL
   (
     .clk_i     ( clk             ),
+    // CONFIG_REGION: THREE_PORT_REG_FILE
+    `ifdef THREE_PORT_REG_FILE
     .en_i      ( we_a_i | we_b_i ),
+    `else 
+    .en_i      ( we_a_i          ),
+    `endif // THREE_PORT_REG_FILE
     .test_en_i ( test_en_i       ),
     .clk_o     ( clk_int         )
   );
@@ -104,16 +126,21 @@ module riscv_register_file
   begin : sample_waddr
     if (~rst_n) begin
       wdata_a_q        <= '0;
+      // CONFIG_REGION: THREE_PORT_REG_FILE
+      `ifdef THREE_PORT_REG_FILE
       wdata_b_q        <= '0;
       waddr_onehot_b_q <= '0;
+      `endif // THREE_PORT_REG_FILE
     end else begin
       if(we_a_i)
         wdata_a_q <= wdata_a_i;
-
+      // CONFIG_REGION: THREE_PORT_REG_FILE
+      `ifdef THREE_PORT_REG_FILE
       if(we_b_i)
         wdata_b_q <= wdata_b_i;
 
       waddr_onehot_b_q <= waddr_onehot_b;
+      `endif // THREE_PORT_REG_FILE
     end
   end
 
@@ -131,6 +158,8 @@ module riscv_register_file
     end
   end
 
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   always_comb
   begin : p_WADb
     for(j = 1; j < NUM_WORDS; j++)
@@ -141,6 +170,7 @@ module riscv_register_file
         waddr_onehot_b[j] = 1'b0;
     end
   end
+  `endif // THREE_PORT_REG_FILE
 
   //-----------------------------------------------------------------------------
   //-- WRITE : Clock gating (if integrated clock-gating cells are available)
@@ -151,7 +181,12 @@ module riscv_register_file
       cluster_clock_gating CG_Inst
       (
         .clk_i     ( clk_int                               ),
+        // CONFIG_REGION: THREE_PORT_REG_FILE
+        `ifdef THREE_PORT_REG_FILE
         .en_i      ( waddr_onehot_a[x] | waddr_onehot_b[x] ),
+        `else 
+        .en_i      ( waddr_onehot_a[x]                     ),
+        `endif // THREE_PORT_REG_FILE
         .test_en_i ( test_en_i                             ),
         .clk_o     ( mem_clocks[x]                         )
       );
@@ -175,7 +210,12 @@ module riscv_register_file
     for(k = 1; k < NUM_WORDS; k++)
     begin : w_WordIter
       if(mem_clocks[k] == 1'b1)
+        // CONFIG_REGION: THREE_PORT_REG_FILE
+        `ifdef THREE_PORT_REG_FILE
         mem[k] = waddr_onehot_b_q[k] ? wdata_b_q : wdata_a_q;
+        `else 
+        mem[k] = wdata_a_q;
+        `endif // THREE_PORT_REG_FILE
     end
   end
 

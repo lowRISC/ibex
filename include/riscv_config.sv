@@ -69,6 +69,10 @@
 
 // Dependent definitions
 
+// enables 3r2w reg file (rather than 2r1w)
+//`define THREE_PORT_REG_FILE
+
+
 `ifndef MUL_SUPPORT
 `ifndef VEC_SUPPORT
 `ifndef BIT_SUPPORT
@@ -78,8 +82,6 @@
 
 // use simplified ALU
 `define SIMPLE_ALU
-// reduce register file to 1w2r
-`define TWO_PORT_REG_FILE
 
 `endif
 `endif

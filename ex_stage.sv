@@ -156,6 +156,7 @@ module riscv_ex_stage
   //                        //
   ////////////////////////////
 
+  // CONFIG_REGION: SIMPLE_ALU
   `ifdef SIMPLE_ALU
 
   riscv_alu_simplified alu_i
@@ -178,7 +179,7 @@ module riscv_ex_stage
 
   assign alu_ready = 1'b1; // As there is no divider, ALU always takes only one cycle
 
-  `else 
+  `else // SIMPLE_ALU
 
   riscv_alu alu_i
   (
@@ -216,7 +217,7 @@ module riscv_ex_stage
     .ex_ready_i          ( ex_ready_o           )
   );
 
-  `endif
+  `endif // SIMPLE_ALU
 
 
   ////////////////////////////////////////////////////////////////
