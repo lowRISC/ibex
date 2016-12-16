@@ -73,7 +73,7 @@ module riscv_alu_simplified
 
   logic [31:0] operand_b_neg;
 
-  assign operand_b_neg = ~operand_b_i + '1;
+  assign operand_b_neg = (~operand_b_i) + 32'h0001;
 
 
   /////////////////////////////////////
