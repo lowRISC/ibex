@@ -1172,6 +1172,8 @@ module riscv_id_stage #(
     .reg_d_ex_is_reg_b_i            ( reg_d_ex_is_reg_b_id   ),
     .reg_d_wb_is_reg_a_i            ( reg_d_wb_is_reg_a_id   ),
     .reg_d_wb_is_reg_b_i            ( reg_d_wb_is_reg_b_id   ),
+    .reg_d_alu_is_reg_a_i           ( reg_d_alu_is_reg_a_id  ),
+    .reg_d_alu_is_reg_b_i           ( reg_d_alu_is_reg_b_id  ),
     `endif // THREE_PORT_REG_FILE
 
 
