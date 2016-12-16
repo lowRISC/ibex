@@ -516,15 +516,17 @@ module riscv_id_stage #(
   // destination registers
   //---------------------------------------------------------------------------
   assign regfile_waddr_id = instr[`REG_D];
-
+  
   // CONFIG_REGION: THREE_PORT_REG_FILE
   `ifdef THREE_PORT_REG_FILE
-  
   // Second Register Write Address Selection
   // Used for prepost load/store and multiplier
+
   assign regfile_alu_waddr_id = regfile_alu_waddr_mux_sel ?
     regfile_waddr_id : regfile_addr_ra_id;
-  
+
+  `else 
+  assign regfile_alu_waddr_id = regfile_waddr_id;
   `endif // THREE_PORT_REG_FILE
 
   // Forwarding control signals
