@@ -481,13 +481,14 @@ module riscv_load_store_unit
   assign data_addr_int = (operand_a_ex_i + operand_b_ex_i);
   `endif // PREPOST_SUPPORT
 
-  assign busy_o = (CS == WAIT_RVALID) || (CS == WAIT_RVALID_EX_STALL) || (CS == IDLE_EX_STALL) || (data_req_o == 1'b1);
 
   `else // LSU_ADDER_SUPPORT
 
-   assign data_addr_int = adder_result_ex_i;
+  assign data_addr_int = adder_result_ex_i;
 
   `endif // LSU_ADDER_SUPPORT
+
+  assign busy_o = (CS == WAIT_RVALID) || (CS == WAIT_RVALID_EX_STALL) || (CS == IDLE_EX_STALL) || (data_req_o == 1'b1);
 
 
   //////////////////////////////////////////////////////////////////////////////
