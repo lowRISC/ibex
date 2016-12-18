@@ -111,6 +111,11 @@ module riscv_ex_stage
   input  logic        wb_ready_i  // WB stage ready for new data
 );
 
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
+  logic regfile_we_conflict; // Tests for a conflict when WB and EX want to write to a register at the same cycle.
+  assign regfile_we_conflict = regfile_we_wb_o && regfile_alu_we_fw_o;
+  `endif // THREE_PORT_REG_FILE
 
   logic [31:0] alu_result;
   logic [31:0] alu_csr_result;
@@ -125,7 +130,6 @@ module riscv_ex_stage
   `ifdef MUL_SUPPORT
   logic        mult_ready;
   `endif // MUL_SUPPORT
-
 
   // EX stage result mux (ALU, MAC unit, CSR)
   assign alu_csr_result         = csr_access_i ? csr_rdata_i : alu_result;
@@ -296,8 +300,16 @@ module riscv_ex_stage
   assign ex_ready_o = (alu_ready & mult_ready & lsu_ready_ex_i & wb_ready_i) | branch_in_ex_i;
   assign ex_valid_o = (alu_ready & mult_ready & lsu_ready_ex_i & wb_ready_i);
   `else
+
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   assign ex_ready_o = (alu_ready & lsu_ready_ex_i & wb_ready_i) | branch_in_ex_i;
   assign ex_valid_o = (alu_ready & lsu_ready_ex_i & wb_ready_i);
+  `else // THREE_PORT_REG_FILE
+  assign ex_ready_o = (alu_ready & lsu_ready_ex_i & wb_ready_i & regfile_we_conflict) | branch_in_ex_i;
+  assign ex_valid_o = (alu_ready & lsu_ready_ex_i & wb_ready_i);
+  `endif // THREE_PORT_REG_FILE
+
   `endif
 
 endmodule
