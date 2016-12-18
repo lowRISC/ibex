@@ -112,7 +112,7 @@ module riscv_ex_stage
 );
 
   // CONFIG_REGION: THREE_PORT_REG_FILE
-  `ifdef THREE_PORT_REG_FILE
+  `ifndef THREE_PORT_REG_FILE
   logic regfile_we_conflict; // Tests for a conflict when WB and EX want to write to a register at the same cycle.
   assign regfile_we_conflict = regfile_we_wb_o && regfile_alu_we_fw_o;
   `endif // THREE_PORT_REG_FILE
