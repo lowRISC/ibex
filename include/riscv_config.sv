@@ -80,8 +80,14 @@
 `ifndef PREPOST_SUPPORT
 `ifndef MATH_SPECIAL_SUPPORT
 
-// use simplified ALU
+// CONFIG: SIMPLE_ALU
+// will enable simplified ALU for less gates. It does not support vectors, shuffling, nor bit operations.
 `define SIMPLE_ALU
+
+// CONFIG: SMALL_IF
+// will disable large FIFO in IF stage and use a more simple one.
+`define SMALL_IF
+
 
 `endif
 `endif

@@ -154,6 +154,41 @@ module riscv_if_stage #(
           endcase
         end
 
+        // CONFIG_REGION: SMALL_IF
+        `ifdef SMALL_IF
+          // prefetch buffer, caches a fixed number of instructions
+            riscv_prefetch_buffer_small prefetch_buffer_i
+              (
+                .clk               ( clk                         ),
+                .rst_n             ( rst_n                       ),
+
+                .req_i             ( req_i                       ),
+
+                .branch_i          ( branch_req                  ),
+                .addr_i            ( {fetch_addr_n[31:1], 1'b0}  ),
+
+                // CONFIG_REGION: HWL_SUPPORT
+                `ifdef HWL_SUPPORT
+                .hwloop_i          ( hwlp_jump                   ),
+                .hwloop_target_i   ( hwlp_target                 ),
+                `endif // HWL_SUPPORT
+
+                .ready_i           ( fetch_ready                 ),
+                .valid_o           ( fetch_valid                 ),
+                .rdata_o           ( fetch_rdata                 ),
+                .addr_o            ( fetch_addr                  ),
+
+                // goes to instruction memory / instruction cache
+                .instr_req_o       ( instr_req_o                 ),
+                .instr_addr_o      ( instr_addr_o                ),
+                .instr_gnt_i       ( instr_gnt_i                 ),
+                .instr_rvalid_i    ( instr_rvalid_i              ),
+                .instr_rdata_i     ( instr_rdata_i               ),
+
+                // Prefetch Buffer Status
+                .busy_o            ( prefetch_busy               )
+              );
+        `else // SMALL_IF
         generate
           if (RDATA_WIDTH == 32) begin : prefetch_32
             // prefetch buffer, caches a fixed number of instructions
@@ -231,6 +266,7 @@ module riscv_if_stage #(
               );
           end
         endgenerate
+        `endif // SMALL_IF
 
 
         // offset FSM state
