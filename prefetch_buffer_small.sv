@@ -164,7 +164,7 @@ module riscv_prefetch_buffer_small
             last_instr_addr_n = addr_selected;
 
             instr_req_o = 1'b1;
-            instr_addr_o = {addr_selected[31:0], 2'b00};
+            instr_addr_o = {addr_selected[31:2], 2'b00};
 
             if (instr_gnt_i)
               NS = WAIT_RVALID;
@@ -264,7 +264,6 @@ module riscv_prefetch_buffer_small
 
               else begin // Instruction is overlapping
                 last_addr_misaligned_n = 1'b1;
-                last_instr_addr_n = addr_selected;
                 
                 instr_req_o = 1'b1;
                 instr_addr_o = {addr_selected[31:2] + 30'h1, 2'b00};
