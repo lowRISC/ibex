@@ -89,12 +89,12 @@ module riscv_prefetch_buffer_small
   always_comb
   begin
     unique case (instruction_format)
-      UNKNOWN_ALIGNED:    addr_next = last_instr_addr_n;
-      FULL_INSTR_ALIGNED: addr_next = last_instr_addr_n + 32'h4;
-      C_INSTR_ALIGNED:    addr_next = last_instr_addr_n + 32'h2;
-      C_INSTR_IN_REG:     addr_next = last_instr_addr_n + 32'h2;
-      PART_INSTR_IN_REG:  addr_next = last_instr_addr_n + 32'h4;
-      default:            addr_next = last_instr_addr_n;
+      UNKNOWN_ALIGNED:    addr_next = last_instr_addr_Q;
+      FULL_INSTR_ALIGNED: addr_next = last_instr_addr_Q + 32'h4;
+      C_INSTR_ALIGNED:    addr_next = last_instr_addr_Q + 32'h2;
+      C_INSTR_IN_REG:     addr_next = last_instr_addr_Q + 32'h2;
+      PART_INSTR_IN_REG:  addr_next = last_instr_addr_Q + 32'h4;
+      default:            addr_next = last_instr_addr_Q;
     endcase
   end
 
