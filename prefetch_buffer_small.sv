@@ -298,7 +298,8 @@ module riscv_prefetch_buffer
 
       default: NS = IDLE;
 
-    end
+
+    endcase;
   end
 
 
