@@ -25,7 +25,7 @@
 
 
 
-module riscv_prefetch_buffer
+module riscv_prefetch_buffer_small
 (
   input  logic        clk,
   input  logic        rst_n,
