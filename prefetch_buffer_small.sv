@@ -66,7 +66,7 @@ module riscv_prefetch_buffer_small
   logic [31:0]  addr_selected; // The next address selected to be used
 
   logic instr_is_compressed; // Shows if current instruction fetch is compressed
-  logic instr_is_misaligned;
+  logic addr_is_misaligned;
   logic instr_part_in_fifo; // Indicates if address (mod 4) is already fetched.
   logic instr_part_in_fifo_is_compressed;
 
@@ -121,7 +121,7 @@ module riscv_prefetch_buffer_small
     last_addr_valid_n = last_addr_valid_Q;
     last_addr_misaligned_n = last_addr_misaligned_Q;
 
-    valid_o = 0'b0;
+    valid_o = 1'b0;
     instr_req_o = 1'b0;
     instr_addr_o = 32'b0;
 
