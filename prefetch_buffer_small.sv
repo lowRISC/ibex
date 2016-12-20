@@ -125,7 +125,7 @@ module riscv_prefetch_buffer_small
 
     valid_o = 1'b0;
     instr_req_o = 1'b0;
-    instr_addr_o = 32'b0;
+    instr_addr_o = last_instr_addr_Q;
 
     addr_selected = addr_next;
     addr_o = last_instr_addr_Q;
