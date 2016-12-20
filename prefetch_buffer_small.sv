@@ -144,11 +144,9 @@ module riscv_prefetch_buffer_small
 
           // Check if we already buffered a complete compressed instruction in register
           if (instr_part_in_fifo && instr_part_in_fifo_is_compressed) begin
-            if (ready_i) begin
-              instruction_format = C_INSTR_IN_REG;
-              addr_o = addr_selected;
-              valid_o = 1'b1;
-            end
+            instruction_format = C_INSTR_IN_REG;
+            addr_o = addr_selected;
+            valid_o = 1'b1;
             NS = IDLE;
           end
          
@@ -212,12 +210,14 @@ module riscv_prefetch_buffer_small
           NS = WAIT_RVALID;
 
           // Wait for valid data from instruction memory and proceed only if a new instruction is wanted.
-          if (instr_rvalid_i && ready_i) begin
+          if (instr_rvalid_i) begin
 
-            // Regs
-            last_instr_rdata_n = instr_rdata_i[31:16];
-            last_addr_valid_n = 1'b1;
-            last_addr_misaligned_n = 1'b0;
+            if (ready_i) begin // Do not alter registers if ID is not ready
+              // Regs
+              last_instr_rdata_n = instr_rdata_i[31:16];
+              last_addr_valid_n = 1'b1;
+              last_addr_misaligned_n = 1'b0;
+            end
 
 
             // If our last access to the instruction memory was fetching the first part, we now have fetched the second part and can output it
@@ -226,7 +226,8 @@ module riscv_prefetch_buffer_small
               addr_o = last_instr_addr_Q - 32'h2;
               valid_o = 1'b1;
 
-              NS = IDLE; // Can go to IDLE as there is still information to process (and we do not want an unneccessary access if next instruction should be compressed)
+              if (ready_i) // Do not change state if ID is not ready
+                NS = IDLE; // Can go to IDLE as there is still information to process (and we do not want an unneccessary access if next instruction should be compressed)
             end
 
             // If our wanted instruction address is aligned, we have fetched all parts needed.
@@ -235,7 +236,8 @@ module riscv_prefetch_buffer_small
                 instruction_format = C_INSTR_ALIGNED;
                 addr_o = last_instr_addr_Q;
                 valid_o = 1'b1;
-                NS = IDLE; // Can go to IDLE as there is still information to process (and we do not want an unneccessary access if next instruction should be compressed as well)
+                if (ready_i) // Do not change state if ID is not ready
+                  NS = IDLE; // Can go to IDLE as there is still information to process (and we do not want an unneccessary access if next instruction should be compressed as well)
               end
 
               else begin // If full instruction
@@ -243,14 +245,16 @@ module riscv_prefetch_buffer_small
                 addr_o = last_instr_addr_Q;
                 valid_o = 1'b1;
 
-                instr_req_o = 1'b1;
-                last_instr_addr_n = addr_selected;
-                instr_addr_o = addr_selected;
+                if (ready_i) begin // Do not change state if ID is not ready
+                  instr_req_o = 1'b1;
+                  last_instr_addr_n = addr_selected;
+                  instr_addr_o = addr_selected;
 
-                if (instr_gnt_i)
-                  NS = WAIT_RVALID;
-                else
-                  NS = WAIT_GNT;
+                  if (instr_gnt_i)
+                    NS = WAIT_RVALID;
+                  else
+                    NS = WAIT_GNT;
+                end
               end
             end
             
@@ -261,17 +265,22 @@ module riscv_prefetch_buffer_small
                 addr_o = last_instr_addr_Q;
                 valid_o = 1'b1;
                 
-                instr_req_o = 1'b1;
-                last_instr_addr_n = addr_selected;
-                instr_addr_o = addr_selected;
+                if (ready_i) begin // Do not change state if ID is not ready
+                  instr_req_o = 1'b1;
+                  last_instr_addr_n = addr_selected;
+                  instr_addr_o = addr_selected;
 
-                if (instr_gnt_i)
-                  NS = WAIT_RVALID;
-                else
-                  NS = WAIT_GNT;
+                  if (instr_gnt_i)
+                    NS = WAIT_RVALID;
+                  else
+                    NS = WAIT_GNT;
+                end
               end
 
               else begin // If we a have a full instruction which is overlapping two words in memory
+                // Even if ~ready_i, we can proceed to fetch second half of a full instruction
+                last_instr_rdata_n = instr_rdata_i[31:16];
+                last_addr_valid_n = 1'b1;
                 last_addr_misaligned_n = 1'b1;
                 
                 instr_req_o = 1'b1;
