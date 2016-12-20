@@ -24,6 +24,7 @@
 `include "riscv_config.sv"
 
 
+
 module riscv_prefetch_buffer
 (
   input  logic        clk,
@@ -57,7 +58,7 @@ module riscv_prefetch_buffer
   logic [15:0]  last_instr_rdata_Q, last_instr_rdata_n; // A 16 bit register to store one compressed instruction or half full instruction for next fetch
   logic [31:0]  last_instr_addr_Q, last_instr_addr_n; // The adress from the last fetch
   logic         last_addr_valid_Q, last_addr_valid_n; // Content of registers is valid
-  logic         last_addr_misaligned_Q, last_addr_misaligned_n // Indicates whether we need to fetch the second part of an misaligned full instruction
+  logic         last_addr_misaligned_Q, last_addr_misaligned_n; // Indicates whether we need to fetch the second part of an misaligned full instruction
 
 
   /// Combinational signals
@@ -79,6 +80,7 @@ module riscv_prefetch_buffer
   assign instr_part_in_fifo_is_compressed = (last_instr_rdata_Q[1:0] != 2'b11);
 
 
+  // TODO: Remove UNKNOWN_ALIGNED value
   enum logic [2:0] {UNKNOWN_ALIGNED, FULL_INSTR_ALIGNED, C_INSTR_ALIGNED, C_INSTR_IN_REG, PART_INSTR_IN_REG} instruction_format;
 
 
@@ -103,8 +105,8 @@ module riscv_prefetch_buffer
       UNKNOWN_ALIGNED:    rdata_o = 32'h0000;
       FULL_INSTR_ALIGNED: rdata_o = instr_rdata_i;
       C_INSTR_ALIGNED:    rdata_o = {16'h0000, instr_rdata_i[15:0]}
-      C_INSTR_IN_REG:     rdata_o = {16'h0000, last_instr_rdata};
-      PART_INSTR_IN_REG:  rdata_o = {instr_rdata_i[15:0], last_instr_rdata};
+      C_INSTR_IN_REG:     rdata_o = {16'h0000, last_instr_rdata_Q};
+      PART_INSTR_IN_REG:  rdata_o = {instr_rdata_i[15:0], last_instr_rdata_Q};
       default:            rdata_o = 32'h0000;
     endcase
   end
@@ -117,7 +119,7 @@ module riscv_prefetch_buffer
     last_instr_rdata_n = last_instr_rdata_Q; // Throw away lower part to keep instruction register at 16 bit
     last_instr_addr_n = last_instr_addr_Q;
     last_addr_valid_n = last_addr_valid_Q;
-    last_addr_full_misaligned_n = last_addr_full_misaligned_Q;
+    last_addr_misaligned_n = last_addr_misaligned_Q;
 
     valid_o = 0'b0;
     instr_req_o = 1'b0;
@@ -130,7 +132,7 @@ module riscv_prefetch_buffer
 
     unique case (CS)
       IDLE: begin
-        last_addr_full_misaligned_n = 1'b0;
+        last_addr_misaligned_n = 1'b0;
 
         if (req_i) begin
 
@@ -146,46 +148,42 @@ module riscv_prefetch_buffer
             NS = IDLE;
 
           end else if (instr_part_in_fifo && ~instr_part_in_fifo_is_compressed) begin
-            last_addr_full_misaligned_n = 1'b1;
+            last_addr_misaligned_n = 1'b1;
             last_instr_addr_n = addr_selected;
             
             instr_req_o = 1'b1;
             instr_addr_o = {addr_selected[31:2] + 30'h1, 2'b00};
 
-            if (instr_gnt_i) begin
+            if (instr_gnt_i)
               NS = WAIT_RVALID;
-            end else
+            else
               NS = WAIT_GNT;
-            end
           end
-
-          end else begin
-
+          
+          else begin
             last_instr_addr_n = addr_selected;
 
             instr_req_o = 1'b1;
             instr_addr_o = {addr_selected[31:0], 2'b00};
 
-            if (instr_gnt_i) begin
+            if (instr_gnt_i)
               NS = WAIT_RVALID;
-            end else
+            else
               NS = WAIT_GNT;
-            end
           end
         end
       end
 
 
       WAIT_GNT: begin
-        if (last_addr_full_misaligned_Q) begin
+        if (last_addr_misaligned_Q) begin
           instr_req_o = 1'b1;
           instr_addr_o = {last_instr_addr_Q[31:2] + 30'h1, 2'b00};
 
-          if (instr_gnt_i) begin
+          if (instr_gnt_i)
               NS = WAIT_RVALID;
-          end else
+          else
               NS = WAIT_GNT;
-          end
         end 
 
         else begin
@@ -210,11 +208,11 @@ module riscv_prefetch_buffer
             // Regs
             last_instr_rdata_n = instr_rdata_i;
             last_addr_valid_n = 1'b1;
-            last_addr_full_misaligned_n = 1'b0;
+            last_addr_misaligned_n = 1'b0;
 
 
             // Output
-            if (last_addr_full_misaligned_Q) begin
+            if (last_addr_misaligned_Q) begin
 
               instruction_format = PART_INSTR_IN_REG;
               addr_o = last_instr_addr_Q - 32'h2;
@@ -265,7 +263,7 @@ module riscv_prefetch_buffer
               end
 
               else begin // Instruction is overlapping
-                last_addr_full_misaligned_n = 1'b1;
+                last_addr_misaligned_n = 1'b1;
                 last_instr_addr_n = addr_selected;
                 
                 instr_req_o = 1'b1;
@@ -318,7 +316,7 @@ module riscv_prefetch_buffer
       last_instr_rdata_Q  <= 32'h0000;
       last_instr_addr_Q   <= 32'h0000;
       last_addr_valid_Q   <= 1'b0;
-      last_addr_full_misaligned_Q <= 1'b0;
+      last_addr_misaligned_Q <= 1'b0;
     end  
     else begin
       CS                  <= NS;
@@ -326,7 +324,7 @@ module riscv_prefetch_buffer
       last_instr_rdata_Q  <= last_instr_rdata_n;
       last_instr_addr_Q   <= last_instr_addr_n;
       last_addr_valid_Q   <= last_addr_valid_n;
-      last_addr_full_misaligned_Q <= last_addr_full_misaligned_n;
+      last_addr_misaligned_Q <= last_addr_misaligned_n;
     end
   end
 
