@@ -221,7 +221,7 @@ module riscv_prefetch_buffer
               NS = IDLE; // Can go to IDLE as there is still information to process (and we do not want an unneccessary access if next instruction should be compressed)
             end
 
-            else if (last_instr_addr_Q[1] == 1'b0) // If last address is aligned
+            else if (last_instr_addr_Q[1] == 1'b0) begin // If last address is aligned
               if (instr_rdata_i[1:0] != 2'b11) begin // If compressed
                 instruction_format = C_INSTR_ALIGNED;
                 addr_o = last_instr_addr_Q;
