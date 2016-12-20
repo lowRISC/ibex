@@ -22,6 +22,7 @@ riscv:
     load_store_unit.sv,
     mult.sv,
     prefetch_buffer.sv,
+    prefetch_buffer_small.sv,
     prefetch_L0_buffer.sv,
     riscv_core.sv,
   ]
