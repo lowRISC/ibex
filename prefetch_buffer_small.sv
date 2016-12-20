@@ -104,7 +104,7 @@ module riscv_prefetch_buffer
     unique case (instruction_format)
       UNKNOWN_ALIGNED:    rdata_o = 32'h0000;
       FULL_INSTR_ALIGNED: rdata_o = instr_rdata_i;
-      C_INSTR_ALIGNED:    rdata_o = {16'h0000, instr_rdata_i[15:0]}
+      C_INSTR_ALIGNED:    rdata_o = {16'h0000, instr_rdata_i[15:0]};
       C_INSTR_IN_REG:     rdata_o = {16'h0000, last_instr_rdata_Q};
       PART_INSTR_IN_REG:  rdata_o = {instr_rdata_i[15:0], last_instr_rdata_Q};
       default:            rdata_o = 32'h0000;
@@ -313,7 +313,7 @@ module riscv_prefetch_buffer
     begin
       CS                  <= IDLE;
 
-      last_instr_rdata_Q  <= 32'h0000;
+      last_instr_rdata_Q  <= 16'h00;
       last_instr_addr_Q   <= 32'h0000;
       last_addr_valid_Q   <= 1'b0;
       last_addr_misaligned_Q <= 1'b0;
