@@ -30,6 +30,7 @@ module riscv_prefetch_buffer_small
   input  logic        clk,
   input  logic        rst_n,
 
+  // ID interface
   input  logic        req_i,
 
   input  logic        branch_i,
@@ -53,7 +54,7 @@ module riscv_prefetch_buffer_small
   
 
   /// Regs
-  enum logic [1:0] {IDLE, WAIT_GNT, WAIT_RVALID, WAIT_ABORTED } CS, NS;
+  enum logic [1:0] {IDLE, WAIT_GNT, WAIT_RVALID, WAIT_ABORTED } CS, NS; // Will handle the steps for the memory interface
 
   logic [15:0]  last_instr_rdata_Q, last_instr_rdata_n; // A 16 bit register to store one compressed instruction or half full instruction for next fetch
   logic [31:0]  last_instr_addr_Q, last_instr_addr_n; // The adress from the last fetch
@@ -112,6 +113,7 @@ module riscv_prefetch_buffer_small
   end
 
 
+  // TODO: Decouple instruction memory FSM and mux logic
   always_comb
   begin
     NS = CS;
@@ -134,20 +136,24 @@ module riscv_prefetch_buffer_small
       IDLE: begin
         last_addr_misaligned_n = 1'b0;
 
-        if (req_i) begin
+        if (req_i) begin // Only proceed if ID wants to have new instructions
 
-          if (branch_i)
+          if (branch_i) // If we have a branch condition, load from the new address
             addr_selected = addr_i;
 
 
-          // Check if already buffered
+          // Check if we already buffered a complete compressed instruction in register
           if (instr_part_in_fifo && instr_part_in_fifo_is_compressed) begin
-            instruction_format = C_INSTR_IN_REG;
-            addr_o = addr_selected;
-            valid_o = 1'b1;
+            if (ready_i) begin
+              instruction_format = C_INSTR_IN_REG;
+              addr_o = addr_selected;
+              valid_o = 1'b1;
+            end
             NS = IDLE;
-
-          end else if (instr_part_in_fifo && ~instr_part_in_fifo_is_compressed) begin
+          end
+         
+          // Check if we already buffered one misaligned half of an overlaping instruction
+          else if (instr_part_in_fifo && ~instr_part_in_fifo_is_compressed) begin
             last_addr_misaligned_n = 1'b1;
             last_instr_addr_n = addr_selected;
             
@@ -160,6 +166,7 @@ module riscv_prefetch_buffer_small
               NS = WAIT_GNT;
           end
           
+          // Else we have to fully fetch all instruction parts (aligned or misaligned)
           else begin
             last_instr_addr_n = addr_selected;
 
@@ -175,6 +182,7 @@ module riscv_prefetch_buffer_small
       end
 
 
+      // Wait for grant of instruction memory
       WAIT_GNT: begin
         if (last_addr_misaligned_Q) begin
           instr_req_o = 1'b1;
@@ -203,17 +211,17 @@ module riscv_prefetch_buffer_small
           
           NS = WAIT_RVALID;
 
-          if (instr_rvalid_i) begin
+          // Wait for valid data from instruction memory and proceed only if a new instruction is wanted.
+          if (instr_rvalid_i && ready_i) begin
 
             // Regs
-            last_instr_rdata_n = instr_rdata_i;
+            last_instr_rdata_n = instr_rdata_i[31:16];
             last_addr_valid_n = 1'b1;
             last_addr_misaligned_n = 1'b0;
 
 
-            // Output
+            // If our last access to the instruction memory was fetching the first part, we now have fetched the second part and can output it
             if (last_addr_misaligned_Q) begin
-
               instruction_format = PART_INSTR_IN_REG;
               addr_o = last_instr_addr_Q - 32'h2;
               valid_o = 1'b1;
@@ -221,15 +229,16 @@ module riscv_prefetch_buffer_small
               NS = IDLE; // Can go to IDLE as there is still information to process (and we do not want an unneccessary access if next instruction should be compressed)
             end
 
-            else if (last_instr_addr_Q[1] == 1'b0) begin // If last address is aligned
-              if (instr_rdata_i[1:0] != 2'b11) begin // If compressed
+            // If our wanted instruction address is aligned, we have fetched all parts needed.
+            else if (last_instr_addr_Q[1] == 1'b0) begin 
+              if (instr_rdata_i[1:0] != 2'b11) begin // If compressed instruction
                 instruction_format = C_INSTR_ALIGNED;
                 addr_o = last_instr_addr_Q;
                 valid_o = 1'b1;
                 NS = IDLE; // Can go to IDLE as there is still information to process (and we do not want an unneccessary access if next instruction should be compressed as well)
               end
 
-              else begin
+              else begin // If full instruction
                 instruction_format = FULL_INSTR_ALIGNED;
                 addr_o = last_instr_addr_Q;
                 valid_o = 1'b1;
@@ -245,8 +254,8 @@ module riscv_prefetch_buffer_small
               end
             end
             
-            else begin // If last address is misaligned
-              if (instr_rdata_i[1:0] != 2'b11) begin // If compressed
+            else begin // If wanted instruction address is misaligned
+              if (instr_rdata_i[1:0] != 2'b11) begin // If compressed instruction
               
                 instruction_format = C_INSTR_IN_REG;
                 addr_o = last_instr_addr_Q;
@@ -262,7 +271,7 @@ module riscv_prefetch_buffer_small
                   NS = WAIT_GNT;
               end
 
-              else begin // Instruction is overlapping
+              else begin // If we a have a full instruction which is overlapping two words in memory
                 last_addr_misaligned_n = 1'b1;
                 
                 instr_req_o = 1'b1;
@@ -303,6 +312,7 @@ module riscv_prefetch_buffer_small
       end
 
 
+      // Wait for rvalid to finish latest access accordingly
       WAIT_ABORTED: begin
         if (instr_rvalid_i) begin
           if (req_i) begin
