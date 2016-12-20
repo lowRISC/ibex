@@ -277,11 +277,26 @@ module riscv_prefetch_buffer_small
           end
         end 
 
-        else begin
+        else begin // if branch_i
           last_addr_valid_n = 1'b0;
+          if (instr_rvalid_i) begin
+            if (req_i) begin
+              
+              addr_selected = addr_i;
 
-          if (instr_rvalid_i)
-            NS = IDLE;
+              last_instr_addr_n = addr_selected;
+
+              instr_req_o = 1'b1;
+              instr_addr_o = {addr_selected[31:2], 2'b00};
+
+              if (instr_gnt_i)
+                NS = WAIT_RVALID;
+              else
+                NS = WAIT_GNT;
+            end
+            else
+              NS = IDLE;
+          end
           else
             NS = WAIT_ABORTED;
         end
@@ -289,8 +304,24 @@ module riscv_prefetch_buffer_small
 
 
       WAIT_ABORTED: begin
-        if (instr_rvalid_i)
-          NS = IDLE;
+        if (instr_rvalid_i) begin
+          if (req_i) begin
+            
+            addr_selected = addr_i;
+
+            last_instr_addr_n = addr_selected;
+
+            instr_req_o = 1'b1;
+            instr_addr_o = {addr_selected[31:2], 2'b00};
+
+            if (instr_gnt_i)
+              NS = WAIT_RVALID;
+            else
+              NS = WAIT_GNT;
+          end
+          else
+            NS = IDLE;
+        end
         else
           NS = WAIT_ABORTED;
       end
