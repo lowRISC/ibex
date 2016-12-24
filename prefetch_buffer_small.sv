@@ -115,7 +115,7 @@ module riscv_prefetch_buffer_small
     unique case (instruction_format )
       FULL_INSTR_ALIGNED:             rdata_o = instr_rdata_i;
       C_INSTR_ALIGNED:                rdata_o = {16'hxxxx, instr_rdata_i[15:0]};
-      C_INSTR_IN_REG_OR_FIRST_FETCH:  data_o = {16'hxxxx, last_fetch_rdata_Q};
+      C_INSTR_IN_REG_OR_FIRST_FETCH:  rdata_o = {16'hxxxx, last_fetch_rdata_Q};
       INSTR_IN_REG:                   rdata_o = {instr_rdata_i[15:0], last_fetch_rdata_Q};
       default:                        rdata_o = instr_rdata_i;
     endcase
@@ -135,7 +135,7 @@ module riscv_prefetch_buffer_small
 
     valid_o = 1'b0;
     instr_req_o = 1'b0;
-    instr_addr_o = fetch_addr_Q;
+    instr_addr_o = {fetch_addr_Q[31:2], 2'b00};
     addr_mux = fetch_addr_Q;
     addr_o = fetch_addr_Q;
 
@@ -161,9 +161,8 @@ module riscv_prefetch_buffer_small
               fetch_addr_n = addr_mux;
               valid_o = 1'b1;
 
-              if (ready_i) begin // Do not change state if ID is not ready
+              if (ready_i) // Do not change state if ID is not ready
                 NS = IDLE;
-              end
             end
 
             // Else we already buffered one misaligned half of an overlaping instruction
@@ -182,7 +181,6 @@ module riscv_prefetch_buffer_small
                 NS = WAIT_RVALID;
               else
                 NS = WAIT_GNT;
-              end
             end
           end
           
