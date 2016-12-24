@@ -74,13 +74,13 @@ module riscv_prefetch_buffer_small
   logic addr_is_misaligned;
   logic instr_is_in_regs; // Indicates if address mod 4 is already fetched. 
   //                         It is implicitely assumed that the fetch is consecutive to the last fetch to spare a comparator.
-  //                         In the other case we devalidate the cache.
+  //                         In the other case we devalidate the cache which we check.
   logic instr_in_regs_is_compressed;
 
   assign busy_o = (CS != IDLE) || instr_req_o;
 
   assign instr_is_compressed = (instr_rdata_i[1:0] != 2'b11); // Check if instruction is not a 32 bit instruction and therefore compressed
-  assign addr_is_misaligned = (addr_mux[1] == 1'b1); // Check if address is misaligned
+  assign addr_is_misaligned = (fetch_addr_Q == 1'b1); // Check if address is misaligned
 
   assign instr_is_in_regs = ( last_fetch_valid_Q && addr_is_misaligned );
   assign instr_in_regs_is_compressed = (last_fetch_rdata_Q[1:0] != 2'b11);
