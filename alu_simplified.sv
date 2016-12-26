@@ -89,8 +89,7 @@ module riscv_alu_simplified
   logic [31:0] adder_in_a, adder_in_b;
   logic [31:0] adder_result;
 
-  assign adder_op_b_negate = (operator_i == ALU_SUB) || (operator_i == ALU_SUBR) ||
-                             (operator_i == ALU_SUBU) || (operator_i == ALU_SUBR);
+  assign adder_op_b_negate = (operator_i == ALU_SUB);
 
   // prepare operand a
   assign adder_in_a = operand_a_i;
@@ -138,9 +137,7 @@ module riscv_alu_simplified
   // right shifts, we let the synthesizer optimize this
   logic [63:0] shift_op_a_32;
 
-  assign shift_op_a_32 = (operator_i == ALU_ROR) ? 
-  								{shift_op_a, shift_op_a} :
-  								$signed({ {32{shift_arithmetic & shift_op_a[31]}}, shift_op_a});
+  assign shift_op_a_32 = $signed({ {32{shift_arithmetic & shift_op_a[31]}}, shift_op_a});
 
   always_comb
   begin
@@ -182,19 +179,13 @@ module riscv_alu_simplified
       ALU_LTS,
       ALU_LES,
       ALU_SLTS,
-      ALU_SLETS,
-      ALU_MIN,
-      ALU_MAX,
-      ALU_ABS,
-      ALU_CLIP,
-      ALU_CLIPU: begin
+      ALU_SLETS: begin
         cmp_signed = 1'b1;
       end
 
       default:;
     endcase
   end
-
 
       assign is_equal = (operand_a_i == operand_b_i);
       assign is_greater = 	$signed({operand_a_i[7] & cmp_signed, operand_a_i})
@@ -248,12 +239,11 @@ module riscv_alu_simplified
 
       // Adder Operations
       ALU_ADD, ALU_ADDR, ALU_ADDU, ALU_ADDUR,
-      ALU_SUB, ALU_SUBR, ALU_SUBU, ALU_SUBUR: result_o = adder_result;
+      ALU_SUB: result_o = adder_result;
 
       // Shift Operations
       ALU_SLL,
-      ALU_SRL, ALU_SRA,
-      ALU_ROR: result_o = shift_result;
+      ALU_SRL, ALU_SRA: result_o = shift_result;
 
       // Comparison Operations
       ALU_EQ,    ALU_NE,

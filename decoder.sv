@@ -686,12 +686,19 @@ module riscv_decoder
 
             {6'b00_0010, 3'b010}: alu_operator_o = ALU_SLETS; // Set Lower Equal Than
             {6'b00_0010, 3'b011}: alu_operator_o = ALU_SLETU; // Set Lower Equal Than Unsigned
+
+            // CONFIG_REGION: MATH_SPECIAL_SUPPORT
+            `ifdef MATH_SPECIAL_SUPPORT
             {6'b00_0010, 3'b100}: alu_operator_o = ALU_MIN;   // Min
             {6'b00_0010, 3'b101}: alu_operator_o = ALU_MINU;  // Min Unsigned
             {6'b00_0010, 3'b110}: alu_operator_o = ALU_MAX;   // Max
             {6'b00_0010, 3'b111}: alu_operator_o = ALU_MAXU;  // Max Unsigned
+            `endif // MATH_SPECIAL_SUPPORT
 
+            // CONFIG_REGION: MATH_SPECIAL_SUPPORT
+            `ifdef MATH_SPECIAL_SUPPORT
             {6'b00_0100, 3'b101}: alu_operator_o = ALU_ROR;   // Rotate Right
+            `endif // MATH_SPECIAL_SUPPORT
 
             // CONFIG_REGION: BIT_SUPPORT
             `ifdef BIT_SUPPORT
