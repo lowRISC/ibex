@@ -28,12 +28,7 @@
 
 module riscv_register_file
 #(
-  // CONFIG_REGION: RV32E
-  `ifdef RV32E
-  parameter ADDR_WIDTH    = 4,
-  `else
   parameter ADDR_WIDTH    = 5,
-  `endif // RV32E
   parameter DATA_WIDTH    = 32
 )
 (
@@ -74,7 +69,12 @@ module riscv_register_file
   `endif // THREE_PORT_REG_FILE
 );
 
+  // CONFIG_REGION: RV32E
+  `ifdef RV32E
   localparam    NUM_WORDS = 2**ADDR_WIDTH;
+  `else
+  localparam    NUM_WORDS = 16;
+  `endif // CONFIG_REGION: RV32E
 
   logic [DATA_WIDTH-1:0]      mem[NUM_WORDS];
 
