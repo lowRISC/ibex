@@ -89,7 +89,21 @@ module riscv_alu_simplified
   logic [31:0] adder_in_a, adder_in_b;
   logic [31:0] adder_result;
 
-  assign adder_op_b_negate = (operator_i == ALU_SUB);
+  always_comb
+  begin
+      ALU_SUB,
+
+      ALU_GTS,
+      ALU_GES,
+      ALU_LTS,
+      ALU_LES,
+      ALU_SLTS,
+      ALU_SLETS: adder_op_b_negate = 1'b1;
+
+      default: adder_op_b_negate = 1'b0;
+
+  end
+  
 
   // prepare operand a
   assign adder_in_a = operand_a_i;
@@ -166,7 +180,7 @@ module riscv_alu_simplified
   //////////////////////////////////////////////////////////////////
 
   logic is_equal;
-  logic is_greater;  // handles both signed and unsigned forms
+  logic is_greater_equal;  // handles both signed and unsigned forms
   logic cmp_signed;
 
   always_comb
@@ -187,10 +201,31 @@ module riscv_alu_simplified
     endcase
   end
 
-      assign is_equal = (operand_a_i == operand_b_i);
-      assign is_greater = 	$signed({operand_a_i[7] & cmp_signed, operand_a_i})
-                                  >
-                        	$signed({operand_b_i[7] & cmp_signed, operand_b_i});
+  assign is_equal = (adder_result == 32'b0);
+  
+
+  // Is greater equal
+  always_comb
+  begin
+    if (operand_a_i[31] xor operand_b_i[31])
+      is_greater_equal = (adder_result[31] == 0);
+    else
+      is_greater_equal = operand_a_i[31] xor (~cmp_signed);
+  end
+
+  // GTE unsigned: 
+  // (a[31] == 1 && b[31] == 1) => adder_result[31] == 0
+  // (a[31] == 0 && b[31] == 0) => adder_result[31] == 0
+  // (a[31] == 1 && b[31] == 0) => 1
+  // (a[31] == 0 && b[31] == 1) => 0
+
+  // GTE signed:
+  // (a[31] == 1 && b[31] == 1) => adder_result[31] == 0
+  // (a[31] == 0 && b[31] == 0) => adder_result[31] == 0
+  // (a[31] == 1 && b[31] == 0) => 0
+  // (a[31] == 0 && b[31] == 1) => 1
+
+
 
   // generate comparison result
   logic cmp_result;
@@ -201,14 +236,14 @@ module riscv_alu_simplified
 
     unique case (operator_i)
       ALU_EQ:            cmp_result = is_equal;
-      ALU_NE:            cmp_result = ~is_equal;
-      ALU_GTS, ALU_GTU:  cmp_result = is_greater;
-      ALU_GES, ALU_GEU:  cmp_result = is_greater | is_equal;
+      ALU_NE:            cmp_result = (~is_equal);
+      ALU_GTS, ALU_GTU:  cmp_result = is_greater_equal && (~is_equal);
+      ALU_GES, ALU_GEU:  cmp_result = is_greater_equal;
       ALU_LTS, ALU_SLTS,
-      ALU_LTU, ALU_SLTU: cmp_result = ~(is_greater | is_equal);
+      ALU_LTU, ALU_SLTU: cmp_result = (~is_greater_equal);
       ALU_SLETS,
       ALU_SLETU,
-      ALU_LES, ALU_LEU:  cmp_result = ~is_greater;
+      ALU_LES, ALU_LEU:  cmp_result = (~is_greater_equal) || is_equal;
 
       default: ;
     endcase
