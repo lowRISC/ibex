@@ -91,6 +91,9 @@ module riscv_alu_simplified
 
   always_comb
   begin
+    adder_op_b_negate = 1'b0;
+
+    unique case (operator_i)
       ALU_SUB,
 
       ALU_GTS,
@@ -100,8 +103,8 @@ module riscv_alu_simplified
       ALU_SLTS,
       ALU_SLETS: adder_op_b_negate = 1'b1;
 
-      default: adder_op_b_negate = 1'b0;
-
+      default: ;
+    endcase
   end
   
 
@@ -207,10 +210,10 @@ module riscv_alu_simplified
   // Is greater equal
   always_comb
   begin
-    if (operand_a_i[31] xor operand_b_i[31])
+    if (operand_a_i[31] ^ operand_b_i[31])
       is_greater_equal = (adder_result[31] == 0);
     else
-      is_greater_equal = operand_a_i[31] xor (~cmp_signed);
+      is_greater_equal = operand_a_i[31] ^ (~cmp_signed);
   end
 
   // GTE unsigned: 
