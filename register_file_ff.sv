@@ -67,9 +67,9 @@ module riscv_register_file
 
   // CONFIG_REGION: RV32E
   `ifdef RV32E
-  localparam    NUM_WORDS = 2**ADDR_WIDTH;
-  `else
   localparam    NUM_WORDS = 16;
+  `else
+  localparam    NUM_WORDS = 2**ADDR_WIDTH;
   `endif // CONFIG_REGION: RV32E
   
 
