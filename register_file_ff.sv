@@ -24,13 +24,13 @@
 
 module riscv_register_file
 #(
-    parameter ADDR_WIDTH    = 5,
-    // CONFIG_REGION: RV32E
-    `ifdef RV32E
-    parameter DATA_WIDTH    = 16
-    `else
-    parameter DATA_WIDTH    = 32
-    `endif // RV32E
+  // CONFIG_REGION: RV32E
+  `ifdef RV32E
+  parameter ADDR_WIDTH    = 4,
+  `else
+  parameter ADDR_WIDTH    = 5,
+  `endif // RV32E
+  parameter DATA_WIDTH    = 32
 )
 (
     // Clock and Reset
