@@ -50,6 +50,10 @@
 // will enable bit manipulation and counting support.
 //`define BIT_SUPPORT
 
+// CONFIG: JUMP_IN_ID_SUPPORT
+// will enable jump capability in ID stage.
+//`define JUMP_IN_ID_SUPPORT
+
 // CONFIG: LSU_ADDER_SUPPORT
 // will enable an additional adder in the LSU for better timings.
 //`define LSU_ADDER_SUPPORT
@@ -87,6 +91,10 @@
 // CONFIG: SMALL_IF
 // will disable large FIFO in IF stage and use a more simple one.
 `define SMALL_IF
+
+// CONFIG: RV32E
+// will reduce the register file to 16 words
+`define RV32E
 
 
 `endif
