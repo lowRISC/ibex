@@ -19,8 +19,16 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+`inclue "riscv_config.sv"
 
 import riscv_defines::*;
+
+// CONFIG_REGION: RV32E
+`ifdef RV32E
+`define REG_ADDR_WIDTH 4
+`else
+`define REG_ADDR_WIDTH 5
+`endif // RV32E
 
 module riscv_debug_unit
 (
@@ -51,12 +59,12 @@ module riscv_debug_unit
 
   // register file read port
   output logic        regfile_rreq_o,
-  output logic [ 4:0] regfile_raddr_o,
+  output logic [(REG_ADDR_WIDTH-1):0] regfile_raddr_o,
   input  logic [31:0] regfile_rdata_i,
 
   // register file write port
   output logic        regfile_wreq_o,
-  output logic [ 4:0] regfile_waddr_o,
+  output logic [(REG_ADDR_WIDTH-1):0] regfile_waddr_o,
   output logic [31:0] regfile_wdata_o,
 
   // CSR read/write port
