@@ -74,7 +74,7 @@ module riscv_tracer
   input  logic [31:0] rs2_value_vec,
 
   input  logic        ex_valid,
-  input  logic [ 4:0] ex_reg_addr,
+  input  logic [(REG_ADDR_WIDTH-1):0] ex_reg_addr,
   input  logic        ex_reg_we,
   input  logic [31:0] ex_reg_wdata,
 
@@ -87,7 +87,7 @@ module riscv_tracer
   input  logic        wb_bypass,
 
   input  logic        wb_valid,
-  input  logic [ 4:0] wb_reg_addr,
+  input  logic [(REG_ADDR_WIDTH-1):0] wb_reg_addr,
   input  logic        wb_reg_we,
   input  logic [31:0] wb_reg_wdata,
 
@@ -111,7 +111,7 @@ module riscv_tracer
   logic [ 4:0] rd, rs1, rs2, rs3;
 
   typedef struct {
-    logic [ 4:0] addr;
+    logic [(REG_ADDR_WIDTH-1):0] addr;
     logic [31:0] value;
   } reg_t;
 
@@ -140,7 +140,7 @@ module riscv_tracer
       mem_access = {};
     endfunction
 
-    function string regAddrToStr(input logic [4:0] addr);
+    function string regAddrToStr(input logic [(REG_ADDR_WIDTH-1):0] addr);
       begin
         if (addr < 10)
           return $sformatf(" x%0d", addr);

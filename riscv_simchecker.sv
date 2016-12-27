@@ -36,6 +36,14 @@ import "DPI-C" function void    riscv_checker_reg_access(input chandle cpu, inpu
 `endif
 
 module riscv_simchecker
+#(
+    // CONFIG_REGION: RV32E
+    `ifdef RV32E
+    parameter REG_ADDR_WIDTH      = 4
+    `else
+    parameter REG_ADDR_WIDTH      = 5
+    `endif // RV32E
+)
 (
   // Clock and Reset
   input  logic        clk,
@@ -61,7 +69,7 @@ module riscv_simchecker
   input  logic        pipe_flush,
 
   input  logic        ex_valid,
-  input  logic [ 4:0] ex_reg_addr,
+  input  logic [(REG_ADDR_WIDTH-1):0] ex_reg_addr,
   input  logic        ex_reg_we,
   input  logic [31:0] ex_reg_wdata,
 
@@ -75,7 +83,7 @@ module riscv_simchecker
   input  logic        wb_bypass,
 
   input  logic        wb_valid,
-  input  logic [ 4:0] wb_reg_addr,
+  input  logic [(REG_ADDR_WIDTH-1):0] wb_reg_addr,
   input  logic        wb_reg_we,
   input  logic [31:0] wb_reg_wdata,
 
@@ -89,7 +97,7 @@ module riscv_simchecker
 
   // SV-only stuff
   typedef struct {
-    logic [ 4:0] addr;
+    logic [(REG_ADDR_WIDTH-1):0] addr;
     logic [31:0] value;
   } reg_t;
 
