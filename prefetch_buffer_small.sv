@@ -317,7 +317,6 @@ module riscv_prefetch_buffer_small
                // Fix bug by going doing a new request, but loosing some cycles.
                // TODO: Fix the bug in instruction memory controller.
             NS = WAIT_GNT;
-          end
         end 
 
         else begin // if branch_i
