@@ -28,6 +28,13 @@
 
 import riscv_defines::*;
 
+// CONFIG_REGION: RV32E
+`ifdef RV32E
+`define REG_ADDR_WIDTH 4
+`else
+`define REG_ADDR_WIDTH 5
+`endif // RV32E
+
 module riscv_core
 #(
   parameter N_EXT_PERF_COUNTERS = 0,
@@ -178,16 +185,16 @@ module riscv_core
   `endif // MUL_SUPPORT
 
   // Register Write Control
-  logic [4:0]  regfile_waddr_ex;
+  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_ex;
   logic        regfile_we_ex;
-  logic [4:0]  regfile_waddr_fw_wb_o;        // From WB to ID
+  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_fw_wb_o;        // From WB to ID
   logic        regfile_we_wb;
   logic [31:0] regfile_wdata;
 
-  logic [4:0]  regfile_alu_waddr_ex;
+  logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_ex;
   logic        regfile_alu_we_ex;
 
-  logic [4:0]  regfile_alu_waddr_fw;
+  logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_fw;
   logic        regfile_alu_we_fw;
   logic [31:0] regfile_alu_wdata_fw;
 
@@ -264,12 +271,12 @@ module riscv_core
 
   // Debug GPR Read Access
   logic        dbg_reg_rreq;
-  logic [ 4:0] dbg_reg_raddr;
+  logic [(REG_ADDR_WIDTH-1):0] dbg_reg_raddr;
   logic [31:0] dbg_reg_rdata;
 
   // Debug GPR Write Access
   logic        dbg_reg_wreq;
-  logic [ 4:0] dbg_reg_waddr;
+  logic [(REG_ADDR_WIDTH-1):0] dbg_reg_waddr;
   logic [31:0] dbg_reg_wdata;
 
   // Debug CSR Access

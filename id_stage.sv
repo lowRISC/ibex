@@ -29,11 +29,24 @@
 
 import riscv_defines::*;
 
+
+// CONFIG_REGION: RV32E
+`ifdef RV32E
+`define REG_ADDR_WIDTH 4
+// Source/Destination register instruction index
+`define REG_S1 18:15
+`define REG_S2 23:20
+`define REG_S3 28:25
+`define REG_D  10:07
+`else
+`define REG_ADDR_WIDTH 5
 // Source/Destination register instruction index
 `define REG_S1 19:15
 `define REG_S2 24:20
 `define REG_S3 29:25
 `define REG_D  11:07
+`endif // RV32E
+
 
 module riscv_id_stage #(
   // CONFIG_REGION: HWL_SUPPORT
@@ -112,10 +125,10 @@ module riscv_id_stage #(
     output logic [ 1:0] alu_vec_mode_ex_o,
     `endif // VEC_SUPPORT
 
-    output logic [4:0]  regfile_waddr_ex_o,
+    output logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_ex_o,
     output logic        regfile_we_ex_o,
 
-    output logic [4:0]  regfile_alu_waddr_ex_o,
+    output logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_ex_o,
     output logic        regfile_alu_we_ex_o,
 
     // ALU
@@ -198,21 +211,21 @@ module riscv_id_stage #(
     output logic        dbg_trap_o,
 
     input  logic        dbg_reg_rreq_i,
-    input  logic [ 4:0] dbg_reg_raddr_i,
+    input  logic [(REG_ADDR_WIDTH-1):0] dbg_reg_raddr_i,
     output logic [31:0] dbg_reg_rdata_o,
 
     input  logic        dbg_reg_wreq_i,
-    input  logic [ 4:0] dbg_reg_waddr_i,
+    input  logic [(REG_ADDR_WIDTH-1):0] dbg_reg_waddr_i,
     input  logic [31:0] dbg_reg_wdata_i,
 
     input  logic        dbg_jump_req_i,
 
     // Forward Signals
-    input  logic [4:0]  regfile_waddr_wb_i,
+    input  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_wb_i,
     input  logic        regfile_we_wb_i,
     input  logic [31:0] regfile_wdata_wb_i, // From wb_stage: selects data from data memory, ex_stage result and sp rdata
 
-    input  logic [4:0]  regfile_alu_waddr_fw_i,
+    input  logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_fw_i,
     input  logic        regfile_alu_we_fw_i,
     input  logic [31:0] regfile_alu_wdata_fw_i,
 
@@ -292,15 +305,15 @@ module riscv_id_stage #(
   logic        exc_req, ext_req, exc_ack;  // handshake
 
   // Register file interface
-  logic [4:0]  regfile_addr_ra_id;
-  logic [4:0]  regfile_addr_rb_id;
+  logic [(REG_ADDR_WIDTH-1):0]  regfile_addr_ra_id;
+  logic [(REG_ADDR_WIDTH-1):0]  regfile_addr_rb_id;
   // CONFIG_REGION: THREE_PORT_REG_FILE
   `ifdef THREE_PORT_REG_FILE
-  logic [4:0]  regfile_addr_rc_id;
+  logic [(REG_ADDR_WIDTH-1):0]  regfile_addr_rc_id;
   `endif // THREE_PORT_REG_FILE
 
-  logic [4:0]  regfile_waddr_id;
-  logic [4:0]  regfile_alu_waddr_id;
+  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_id;
+  logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_id;
   logic        regfile_alu_we_id;
 
   logic [31:0] regfile_data_ra_id;

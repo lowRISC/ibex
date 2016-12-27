@@ -28,6 +28,13 @@
 
 import riscv_defines::*;
 
+// CONFIG_REGION: RV32E
+`ifdef RV32E
+`define REG_ADDR_WIDTH 4
+`else
+`define REG_ADDR_WIDTH 5
+`endif // RV32E
+
 module riscv_controller
 (
   input  logic        clk,
@@ -95,12 +102,12 @@ module riscv_controller
   input  logic        dbg_jump_req_i,             // Change PC to value from debug unit
 
   // Forwarding signals from regfile
-  input  logic [4:0]  regfile_waddr_ex_i,         // FW: write address from EX stage
+  input  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_ex_i,         // FW: write address from EX stage
   input  logic        regfile_we_ex_i,            // FW: write enable from  EX stage
-  input  logic [4:0]  regfile_waddr_wb_i,         // FW: write address from WB stage
+  input  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_wb_i,         // FW: write address from WB stage
   input  logic        regfile_we_wb_i,            // FW: write enable from  WB stage
 
-  input  logic [4:0]  regfile_alu_waddr_fw_i,     // FW: ALU/MUL write address from EX stage
+  input  logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_fw_i,     // FW: ALU/MUL write address from EX stage
   input  logic        regfile_alu_we_fw_i,        // FW: ALU/MUL write enable from  EX stage
 
   // forwarding signals

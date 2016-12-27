@@ -30,6 +30,12 @@
 
 import riscv_defines::*;
 
+// CONFIG_REGION: RV32E
+`ifdef RV32E
+`define REG_ADDR_WIDTH 4
+`else
+`define REG_ADDR_WIDTH 5
+`endif // RV32E
 
 module riscv_ex_stage
 (
@@ -79,23 +85,23 @@ module riscv_ex_stage
 
   // input from ID stage
   input  logic        branch_in_ex_i,
-  input  logic [4:0]  regfile_alu_waddr_i,
+  input  logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_i,
   input  logic        regfile_alu_we_i,
 
   // directly passed through to WB stage, not used in EX
   input  logic        regfile_we_i,
-  input  logic [4:0]  regfile_waddr_i,
+  input  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_i,
 
   // CSR access
   input  logic        csr_access_i,
   input  logic [31:0] csr_rdata_i,
 
   // Output of EX stage pipeline
-  output logic [4:0]  regfile_waddr_wb_o,
+  output logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_wb_o,
   output logic        regfile_we_wb_o,
 
   // Forwarding ports : to ID stage
-  output logic  [4:0] regfile_alu_waddr_fw_o,
+  output logic  [(REG_ADDR_WIDTH-1):0] regfile_alu_waddr_fw_o,
   output logic        regfile_alu_we_fw_o,
   output logic [31:0] regfile_alu_wdata_fw_o,    // forward to RF and ID/EX pipe, ALU & MUL
 
