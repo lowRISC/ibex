@@ -32,14 +32,12 @@ import riscv_defines::*;
 
 // CONFIG_REGION: RV32E
 `ifdef RV32E
-`define REG_ADDR_WIDTH 4
 // Source/Destination register instruction index
 `define REG_S1 18:15
 `define REG_S2 23:20
 `define REG_S3 28:25
 `define REG_D  10:07
 `else
-`define REG_ADDR_WIDTH 5
 // Source/Destination register instruction index
 `define REG_S1 19:15
 `define REG_S2 24:20
@@ -48,7 +46,15 @@ import riscv_defines::*;
 `endif // RV32E
 
 
-module riscv_id_stage #(
+module riscv_id_stage
+#(
+  // CONFIG_REGION: RV32E
+  `ifdef RV32E
+  parameter REG_ADDR_WIDTH      = 4,
+  `else
+  parameter REG_ADDR_WIDTH      = 5,
+  `endif // RV32E
+
   // CONFIG_REGION: HWL_SUPPORT
   `ifdef HWL_SUPPORT
   parameter N_HWLP      = 2,

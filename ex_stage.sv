@@ -30,14 +30,15 @@
 
 import riscv_defines::*;
 
-// CONFIG_REGION: RV32E
-`ifdef RV32E
-`define REG_ADDR_WIDTH 4
-`else
-`define REG_ADDR_WIDTH 5
-`endif // RV32E
-
 module riscv_ex_stage
+#(
+    // CONFIG_REGION: RV32E
+    `ifdef RV32E
+    parameter REG_ADDR_WIDTH      = 4
+    `else
+    parameter REG_ADDR_WIDTH      = 5
+    `endif // RV32E
+)
 (
   input  logic        clk,
   input  logic        rst_n,

@@ -36,6 +36,14 @@ import riscv_defines::*;
 `endif // RV32E
 
 module riscv_controller
+#(
+  // CONFIG_REGION: RV32E
+  `ifdef RV32E
+  parameter REG_ADDR_WIDTH      = 4
+  `else
+  parameter REG_ADDR_WIDTH      = 5
+  `endif // RV32E
+)
 (
   input  logic        clk,
   input  logic        rst_n,

@@ -28,17 +28,16 @@
 
 import riscv_defines::*;
 
-// CONFIG_REGION: RV32E
-`ifdef RV32E
-`define REG_ADDR_WIDTH 4
-`else
-`define REG_ADDR_WIDTH 5
-`endif // RV32E
-
 module riscv_core
 #(
   parameter N_EXT_PERF_COUNTERS = 0,
-  parameter INSTR_RDATA_WIDTH   = 32
+  parameter INSTR_RDATA_WIDTH   = 32,
+  // CONFIG_REGION: RV32E
+  `ifdef RV32E
+  parameter REG_ADDR_WIDTH      = 4
+  `else
+  parameter REG_ADDR_WIDTH      = 5
+  `endif // RV32E
 )
 (
   // Clock and Reset
