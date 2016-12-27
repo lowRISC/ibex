@@ -312,6 +312,12 @@ module riscv_prefetch_buffer_small
               end
             end
           end
+          else // (instr_rvalid_i): Hotfix to cope with bug in instruction memory interface, which is does not maintained output for more than
+               // one cycle after a successful grant. If we now have a stall in the upper pipeline we get stuck in state WAIT_RVALID. 
+               // Fix bug by going doing a new request, but loosing some cycles.
+               // TODO: Fix the bug in instruction memory controller.
+            NS = WAIT_GNT;
+          end
         end 
 
         else begin // if branch_i
