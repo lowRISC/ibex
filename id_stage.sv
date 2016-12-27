@@ -50,13 +50,14 @@ module riscv_id_stage
 #(
   // CONFIG_REGION: RV32E
   `ifdef RV32E
-  parameter REG_ADDR_WIDTH      = 4,
+  parameter REG_ADDR_WIDTH      = 4
   `else
-  parameter REG_ADDR_WIDTH      = 5,
+  parameter REG_ADDR_WIDTH      = 5
   `endif // RV32E
 
   // CONFIG_REGION: HWL_SUPPORT
   `ifdef HWL_SUPPORT
+  ,
   parameter N_HWLP      = 2,
   parameter N_HWLP_BITS = $clog2(N_HWLP)
   `endif // HWL_SUPPORT
