@@ -213,7 +213,7 @@ module riscv_alu_simplified
   // Is greater equal
   always_comb
   begin
-    if ((operand_a_i[31] ^ operand_b_i[31] == 0)
+    if ((operand_a_i[31] ^ operand_b_i[31]) == 0)
       is_greater_equal = (adder_result[31] == 0);
     else
       is_greater_equal = operand_a_i[31] ^ (~cmp_signed);
