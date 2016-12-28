@@ -211,8 +211,28 @@ module riscv_prefetch_buffer_small
           else
               NS = WAIT_GNT;
         end
-        else
-          NS = WAIT_ABORTED;
+        else begin // if branch_i
+          last_fetch_valid_n = 1'b0;
+          if (instr_rvalid_i) begin
+            if (req_i) begin
+              
+              addr_mux = addr_i;
+              fetch_addr_n = addr_mux;
+
+              instr_req_o = 1'b1;
+              instr_addr_o = {addr_mux[31:2], 2'b00};
+
+              if (instr_gnt_i)
+                NS = WAIT_RVALID;
+              else
+                NS = WAIT_GNT;
+            end
+            else
+              NS = IDLE;
+          end
+          else
+            NS = WAIT_ABORTED;
+        end
       end
 
 
