@@ -202,13 +202,17 @@ module riscv_prefetch_buffer_small
 
       // Wait for grant of instruction memory
       WAIT_GNT: begin
-        instr_req_o = 1'b1;
-        instr_addr_o = {fetch_addr_Q[31:2], 2'b00};
+        if (~branch_i) begin
+          instr_req_o = 1'b1;
+          instr_addr_o = {fetch_addr_Q[31:2], 2'b00};
 
-        if (instr_gnt_i)
-            NS = WAIT_RVALID;
+          if (instr_gnt_i)
+              NS = WAIT_RVALID;
+          else
+              NS = WAIT_GNT;
+        end
         else
-            NS = WAIT_GNT;
+          NS = WAIT_ABORTED;
       end
 
 
