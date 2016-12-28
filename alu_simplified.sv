@@ -94,14 +94,17 @@ module riscv_alu_simplified
     adder_op_b_negate = 1'b0;
 
     unique case (operator_i)
+      // Adder OPs
       ALU_SUB,
 
-      ALU_GTS,
-      ALU_GES,
-      ALU_LTS,
-      ALU_LES,
-      ALU_SLTS,
-      ALU_SLETS: adder_op_b_negate = 1'b1;
+      // Comparator OPs
+      ALU_EQ,    ALU_NE,
+      ALU_GTU,   ALU_GEU,
+      ALU_LTU,   ALU_LEU,
+      ALU_GTS,   ALU_GES,
+      ALU_LTS,   ALU_LES,
+      ALU_SLTS,  ALU_SLTU,
+      ALU_SLETS, ALU_SLETU: adder_op_b_negate = 1'b1;
 
       default: ;
     endcase
