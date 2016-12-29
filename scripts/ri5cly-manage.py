@@ -15,7 +15,7 @@ def main():
     parser = argparse.ArgumentParser(description="Can overwrite config and export clean version of littleRISCV")
     parser.add_argument('-i', dest="new_riscv_config", metavar='.../new_riscv_config.sv',
                         help='path to a new config file to overwrite littleRISCV config')
-    parser.add_argument('-o', dest='build_folder_path', metavar='.../build_folder_path',
+    parser.add_argument('-o', dest='export_folder_path', metavar='.../export_folder_path',
                         help='path to a folder to export clean version of littleRISCV without preprocessor switches')
     parser.add_argument('-z', dest='zip', action='store_true',
                         help='zip the export into a tar.gz')
@@ -27,8 +27,8 @@ def main():
         overwriteConfig(args["new_riscv_config.sv"], littleRISCV_path)
         action_taken = True
 
-    if args.build_folder_path is not None:
-        exportCleanVersion(args.build_folder_path, littleRISCV_path, zip=args.zip)
+    if args.export_folder_path is not None:
+        exportCleanVersion(args.export_folder_path, littleRISCV_path, zip=args.zip)
         action_taken = True
 
     if action_taken == False:
