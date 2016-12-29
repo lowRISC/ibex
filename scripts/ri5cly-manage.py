@@ -234,7 +234,8 @@ def synthesizeAll(littleRISCV_path):
     if not os.path.exists(os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")):
         print("littleRISCV repository not contained in Imperio/Pulpino project! Canceling.")
 
-    os.mkdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/"))
+    if not os.path.isdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/")):
+        os.mkdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/"))
 
     for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/example_configs")):
         overwriteConfig(os.path.abspath(littleRISCV_path + "/scripts/example_configs/" + filename), littleRISCV_path)
