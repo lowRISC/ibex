@@ -79,7 +79,7 @@ def main():
 
 
 def overwriteConfig(new_config_path, littleRISCV_path):
-    print("Overwriting current config (include/riscv_config.sv) with new one.")
+    print("Overwriting current config (include/riscv_config.sv) with new one ({})".format(new_config_path))
     shutil.move(os.path.abspath(littleRISCV_path + "/include/riscv_config.sv"), os.path.abspath(littleRISCV_path + "/include/riscv_config.sv.bak")) # Backup
     shutil.copy(os.path.abspath(new_config_path), os.path.abspath(littleRISCV_path + "/include/riscv_config.sv")) # Copy new config to littleRISCV
 
