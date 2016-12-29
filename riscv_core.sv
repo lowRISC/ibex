@@ -97,11 +97,11 @@ module riscv_core
   localparam N_HWLP_BITS = $clog2(N_HWLP);
 
   // IF/ID signals
-  // CONFIG_REGION: HWL_SUPPORT
-  `ifdef HWL_SUPPORT
+  // CONFIG_REGION: HWLP_SUPPORT
+  `ifdef HWLP_SUPPORT
   logic              is_hwlp_id;
   logic [N_HWLP-1:0] hwlp_dec_cnt_id;
-  `endif // HWL_SUPPORT
+  `endif // HWLP_SUPPORT
   logic              instr_valid_id;
   logic [31:0]       instr_rdata_id;    // Instruction sampled inside IF stage
   logic              is_compressed_id;
@@ -248,8 +248,8 @@ module riscv_core
   logic        exc_restore_id;
 
 
-  // CONFIG_REGION: HWL_SUPPORT
-  `ifdef HWL_SUPPORT
+  // CONFIG_REGION: HWLP_SUPPORT
+  `ifdef HWLP_SUPPORT
   // Hardware loop controller signals
   logic [N_HWLP-1:0] [31:0] hwlp_start;
   logic [N_HWLP-1:0] [31:0] hwlp_end;
@@ -259,7 +259,7 @@ module riscv_core
   logic   [N_HWLP_BITS-1:0] csr_hwlp_regid;
   logic               [2:0] csr_hwlp_we;
   logic              [31:0] csr_hwlp_data;
-  `endif // HWL_SUPPORT
+  `endif // HWLP_SUPPORT
 
 
   // Debug Unit
@@ -343,10 +343,10 @@ module riscv_core
   //////////////////////////////////////////////////
   riscv_if_stage
   #(
-    // CONFIG_REGION: HWL_SUPPORT
-    `ifdef HWL_SUPPORT
+    // CONFIG_REGION: HWLP_SUPPORT
+    `ifdef HWLP_SUPPORT
     .N_HWLP              ( N_HWLP            ),
-    `endif // HWL_SUPPORT
+    `endif // HWLP_SUPPORT
     .RDATA_WIDTH         ( INSTR_RDATA_WIDTH )
   )
   if_stage_i
@@ -368,11 +368,11 @@ module riscv_core
     .instr_rdata_i       ( instr_rdata_i     ),
 
     // outputs to ID stage
-    // CONFIG_REGION: HWL_SUPPORT
-    `ifdef HWL_SUPPORT
+    // CONFIG_REGION: HWLP_SUPPORT
+    `ifdef HWLP_SUPPORT
     .hwlp_dec_cnt_id_o   ( hwlp_dec_cnt_id   ),
     .is_hwlp_id_o        ( is_hwlp_id        ),
-    `endif // HWL_SUPPORT
+    `endif // HWLP_SUPPORT
     .instr_valid_id_o    ( instr_valid_id    ),
     .instr_rdata_id_o    ( instr_rdata_id    ),
     .is_compressed_id_o  ( is_compressed_id  ),
@@ -388,13 +388,13 @@ module riscv_core
     .exc_pc_mux_i        ( exc_pc_mux_id     ),
     .exc_vec_pc_mux_i    ( exc_vec_pc_mux_id ),
 
-    // CONFIG_REGION: HWL_SUPPORT
-    `ifdef HWL_SUPPORT
+    // CONFIG_REGION: HWLP_SUPPORT
+    `ifdef HWLP_SUPPORT
     // from hwloop registers
     .hwlp_start_i        ( hwlp_start        ),
     .hwlp_end_i          ( hwlp_end          ),
     .hwlp_cnt_i          ( hwlp_cnt          ),
-    `endif // HWL_SUPPORT
+    `endif // HWLP_SUPPORT
 
     // from debug unit
     .dbg_jump_addr_i     ( dbg_jump_addr     ),
@@ -425,10 +425,10 @@ module riscv_core
   /////////////////////////////////////////////////
   riscv_id_stage
   #(
-    // CONFIG_REGION: HWL_SUPPORT
-    `ifdef HWL_SUPPORT
+    // CONFIG_REGION: HWLP_SUPPORT
+    `ifdef HWLP_SUPPORT
     .N_HWLP                       ( N_HWLP               )
-    `endif // HWL_SUPPORT
+    `endif // HWLP_SUPPORT
   )
   id_stage_i
   (
@@ -443,11 +443,11 @@ module riscv_core
     .is_decoding_o                ( is_decoding          ),
 
     // Interface to instruction memory
-    // CONFIG_REGION: HWL_SUPPORT
-    `ifdef HWL_SUPPORT
+    // CONFIG_REGION: HWLP_SUPPORT
+    `ifdef HWLP_SUPPORT
     .hwlp_dec_cnt_i               ( hwlp_dec_cnt_id      ),
     .is_hwlp_i                    ( is_hwlp_id           ),
-    `endif // HWL_SUPPORT
+    `endif // HWLP_SUPPORT
     .instr_valid_i                ( instr_valid_id       ),
     .instr_rdata_i                ( instr_rdata_id       ),
     .instr_req_o                  ( instr_req_int        ),
@@ -530,8 +530,8 @@ module riscv_core
     .csr_access_ex_o              ( csr_access_ex        ),
     .csr_op_ex_o                  ( csr_op_ex            ),
 
-    // CONFIG_REGION: HWL_SUPPORT
-    `ifdef HWL_SUPPORT
+    // CONFIG_REGION: HWLP_SUPPORT
+    `ifdef HWLP_SUPPORT
     // hardware loop signals to IF hwlp controller
     .hwlp_start_o                 ( hwlp_start           ),
     .hwlp_end_o                   ( hwlp_end             ),
@@ -541,7 +541,7 @@ module riscv_core
     .csr_hwlp_regid_i             ( csr_hwlp_regid       ),
     .csr_hwlp_we_i                ( csr_hwlp_we          ),
     .csr_hwlp_data_i              ( csr_hwlp_data        ),
-    `endif // HWL_SUPPORT
+    `endif // HWLP_SUPPORT
 
     // LSU
     .data_req_ex_o                ( data_req_ex          ), // to load store unit
@@ -813,8 +813,8 @@ module riscv_core
     .exc_cause_i             ( exc_cause          ),
     .save_exc_cause_i        ( save_exc_cause     ),
 
-    // CONFIG_REGION: HWL_SUPPORT
-    `ifdef HWL_SUPPORT
+    // CONFIG_REGION: HWLP_SUPPORT
+    `ifdef HWLP_SUPPORT
     // from hwloop registers
     .hwlp_start_i            ( hwlp_start         ),
     .hwlp_end_i              ( hwlp_end           ),
@@ -823,7 +823,7 @@ module riscv_core
     .hwlp_regid_o            ( csr_hwlp_regid     ),
     .hwlp_we_o               ( csr_hwlp_we        ),
     .hwlp_data_o             ( csr_hwlp_data      ),
-    `endif // HWL_SUPPORT
+    `endif // HWLP_SUPPORT
 
     // performance counter related signals
     .id_valid_i              ( id_valid           ),

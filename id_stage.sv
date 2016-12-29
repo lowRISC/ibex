@@ -55,12 +55,12 @@ module riscv_id_stage
   parameter REG_ADDR_WIDTH      = 5
   `endif // RV32E
 
-  // CONFIG_REGION: HWL_SUPPORT
-  `ifdef HWL_SUPPORT
+  // CONFIG_REGION: HWLP_SUPPORT
+  `ifdef HWLP_SUPPORT
   ,
   parameter N_HWLP      = 2,
   parameter N_HWLP_BITS = $clog2(N_HWLP)
-  `endif // HWL_SUPPORT
+  `endif // HWLP_SUPPORT
 )
 (
     input  logic        clk,
@@ -73,11 +73,11 @@ module riscv_id_stage
     output logic        is_decoding_o,
 
     // Interface to IF stage
-    // CONFIG_REGION: HWL_SUPPORT
-  	`ifdef HWL_SUPPORT
+    // CONFIG_REGION: HWLP_SUPPORT
+  	`ifdef HWLP_SUPPORT
     input  logic [N_HWLP-1:0] hwlp_dec_cnt_i,
     input  logic              is_hwlp_i,
-    `endif // HWL_SUPPORT
+    `endif // HWLP_SUPPORT
     input  logic              instr_valid_i,
     input  logic       [31:0] instr_rdata_i,      // comes from pipeline of IF stage
     output logic              instr_req_o,
@@ -163,8 +163,8 @@ module riscv_id_stage
     output logic        csr_access_ex_o,
     output logic [1:0]  csr_op_ex_o,
 
-    // CONFIG_REGION: HWL_SUPPORT
-  	`ifdef HWL_SUPPORT
+    // CONFIG_REGION: HWLP_SUPPORT
+  	`ifdef HWLP_SUPPORT
     // hwloop signals
     output logic [N_HWLP-1:0] [31:0] hwlp_start_o,
     output logic [N_HWLP-1:0] [31:0] hwlp_end_o,
@@ -174,7 +174,7 @@ module riscv_id_stage
     input  logic   [N_HWLP_BITS-1:0] csr_hwlp_regid_i,
     input  logic               [2:0] csr_hwlp_we_i,
     input  logic              [31:0] csr_hwlp_data_i,
-    `endif // HWL_SUPPORT
+    `endif // HWLP_SUPPORT
 
     // Interface to load store unit
     output logic        data_req_ex_o,
@@ -366,8 +366,8 @@ module riscv_id_stage
   logic        data_req_id;
   logic        data_load_event_id;
 
-  // CONFIG_REGION: HWL_SUPPORT
-  `ifdef HWL_SUPPORT
+  // CONFIG_REGION: HWLP_SUPPORT
+  `ifdef HWLP_SUPPORT
     // hwloop signals
     logic [N_HWLP_BITS-1:0] hwloop_regid, hwloop_regid_int;
     logic             [2:0] hwloop_we, hwloop_we_int;
@@ -381,7 +381,7 @@ module riscv_id_stage
     logic            [31:0] hwloop_cnt, hwloop_cnt_int;
 
     logic                   hwloop_valid;
-  `endif // HWL_SUPPORT
+  `endif // HWLP_SUPPORT
 
   // CSR control
   logic        csr_access;
@@ -582,8 +582,8 @@ module riscv_id_stage
   `endif // MUL_SUPPORT
 
 
-  // CONFIG_REGION: HWL_SUPPORT
-  `ifdef HWL_SUPPORT
+  // CONFIG_REGION: HWLP_SUPPORT
+  `ifdef HWLP_SUPPORT
 
   ///////////////////////////////////////////////
   //  _   ___        ___     ___   ___  ____   //
@@ -632,7 +632,7 @@ module riscv_id_stage
       assign hwloop_cnt   = hwloop_we_int[2] ? hwloop_cnt_int   : csr_hwlp_data_i;
       assign hwloop_regid = (|hwloop_we_int) ? hwloop_regid_int : csr_hwlp_regid_i;
       assign hwloop_we    = (|hwloop_we_int) ? hwloop_we_int    : csr_hwlp_we_i;
-    `endif // HWL_SUPPORT
+    `endif // HWLP_SUPPORT
 
     //////////////////////////////////////////////////////////////////
     //      _                         _____                    _    //
@@ -1076,14 +1076,14 @@ module riscv_id_stage
     .data_load_event_o               ( data_load_event_id        ),
 
 
-    // CONFIG_REGION: HWL_SUPPORT
-    `ifdef HWL_SUPPORT
+    // CONFIG_REGION: HWLP_SUPPORT
+    `ifdef HWLP_SUPPORT
     // hwloop signals
     .hwloop_we_o                     ( hwloop_we_int             ),
     .hwloop_target_mux_sel_o         ( hwloop_target_mux_sel     ),
     .hwloop_start_mux_sel_o          ( hwloop_start_mux_sel      ),
     .hwloop_cnt_mux_sel_o            ( hwloop_cnt_mux_sel        ),
-    `endif // HWL_SUPPORT
+    `endif // HWLP_SUPPORT
 
     // jump/branches
     .jump_in_dec_o                   ( jump_in_dec               ),
@@ -1279,8 +1279,8 @@ module riscv_id_stage
   //                                                                      //
   //////////////////////////////////////////////////////////////////////////
 
-  // CONFIG_REGION: HWL_SUPPORT
-  `ifdef HWL_SUPPORT
+  // CONFIG_REGION: HWLP_SUPPORT
+  `ifdef HWLP_SUPPORT
     riscv_hwloop_regs
       #(
         .N_REGS ( N_HWLP )
@@ -1310,7 +1310,7 @@ module riscv_id_stage
         );
 
     assign hwloop_valid = instr_valid_i & clear_instr_valid_o & is_hwlp_i;
-  `endif // HWL_SUPPORT
+  `endif // HWLP_SUPPORT
 
   /////////////////////////////////////////////////////////////////////////////////
   //   ___ ____        _______  __  ____ ___ ____  _____ _     ___ _   _ _____   //

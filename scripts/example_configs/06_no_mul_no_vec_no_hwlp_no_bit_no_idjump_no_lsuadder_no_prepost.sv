@@ -76,14 +76,14 @@
 
 // CONFIG: MATH_SPECIAL_SUPPORT
 // will enable clip, min and max operations support.
-//`define MATH_SPECIAL_SUPPORT
+`define MATH_SPECIAL_SUPPORT
 
 
 // Dependent definitions
 
 // CONFIG: THREE_PORT_REG_FILE
 // enables 3r2w reg file (rather than 2r1w)
-//`define THREE_PORT_REG_FILE
+`define THREE_PORT_REG_FILE
 
 
 `ifndef MUL_SUPPORT
@@ -95,15 +95,15 @@
 
 // CONFIG: SIMPLE_ALU
 // will enable simplified ALU for less gates. It does not support vectors, shuffling, nor bit operations.
-`define SIMPLE_ALU
+//`define SIMPLE_ALU
 
 // CONFIG: SMALL_IF
 // will disable large FIFO in IF stage and use a more simple one.
-`define SMALL_IF
+//`define SMALL_IF
 
 // CONFIG: RV32E
 // will reduce the register file to 16 words
-`define RV32E
+//`define RV32E
 
 `endif
 `endif

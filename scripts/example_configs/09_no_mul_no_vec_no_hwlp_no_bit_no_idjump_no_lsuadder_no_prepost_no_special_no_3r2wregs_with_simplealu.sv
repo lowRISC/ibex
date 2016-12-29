@@ -99,11 +99,11 @@
 
 // CONFIG: SMALL_IF
 // will disable large FIFO in IF stage and use a more simple one.
-`define SMALL_IF
+//`define SMALL_IF
 
 // CONFIG: RV32E
 // will reduce the register file to 16 words
-`define RV32E
+//`define RV32E
 
 `endif
 `endif
