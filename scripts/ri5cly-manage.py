@@ -236,7 +236,7 @@ def exportCleanVersion(build_path, littleRISCV_path, zip=False):
         shutil.rmtree(os.path.abspath(build_path), ignore_errors=True)
 
 
-def synthesize(littleRISCV_path):
+def synthesizeAll(littleRISCV_path):
     if not os.path.exists(os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")):
         print("littleRISCV repository not contained in Imperio/Pulpino project! Canceling.")
 
