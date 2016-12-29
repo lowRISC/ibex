@@ -1,2 +1,4 @@
 build/
 .idea/
+synthesis_results/
+gmon.out

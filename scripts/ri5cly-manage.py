@@ -71,9 +71,10 @@ def main():
 
     if args.synthesize == True:
         synthesize(littleRISCV_path)
+        report(littleRISCV_path)
         action_taken = True
 
-    if args.report == True:
+    elif args.report == True:
         report(littleRISCV_path)
         action_taken = True
 
@@ -284,7 +285,7 @@ def report(littleRISCV_path):
     print("Config\t\tArea")
 
     area = os.popen("cat " + os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/custom/reports/imperio_*_area* | grep 'pulpino_i/core_region_i/RISCV_CORE' ")).read()
-    area_pattern = re.compile("^pulpino_i/core_region_i/RISCV_CORE\s+(\d*)\s+.*$")
+    area_pattern = re.compile("pulpino_i/core_region_i/RISCV_CORE\s*(\d+\.?\d*)\s*.*")
     m = area_pattern.match(area)
     area = m.group(1)
     area = float(area)
@@ -295,15 +296,17 @@ def report(littleRISCV_path):
 def reportAll(littleRISCV_path):
     print("Config\t\tArea")
 
-    for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/example_configs")):
-        area = os.popen("cat " + os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/" + filename + "/reports/imperio_*_area* | grep 'pulpino_i/core_region_i/RISCV_CORE' ")).read()
-        area_pattern = re.compile("^pulpino_i/core_region_i/RISCV_CORE\s+(\d*)\s+.*$")
+    for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results")):
+        process = os.popen("cat " + os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/" + filename + "/reports/imperio_*_area* | grep 'pulpino_i/core_region_i/RISCV_CORE' "))
+        area = process.read()
+        process.close()
+        area_pattern = re.compile("pulpino_i/core_region_i/RISCV_CORE\s*(\d+\.?\d*)\s*.*")
         m = area_pattern.match(area)
         area = m.group(1)
         area = float(area)
         area /= 1.44 * 1000.0
 
-        print("{}\t\t\t\t\t\t\t{}".format(filename,area))
+        print("{}\t\t{}".format(filename,area))
 
 
 
