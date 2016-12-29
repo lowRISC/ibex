@@ -15,6 +15,7 @@
 //                 Matthias Baer - baermatt@student.ethz.ch                   //
 //                 Igor Loi - igor.loi@unibo.it                               //
 //                 Sven Stucki - svstucki@student.ethz.ch                     //
+//                 Markus Wegmann - markus.wegmann@technokrat.ch              //
 //                                                                            //
 // Design Name:    Decoder                                                    //
 // Project Name:   RI5CY                                                      //

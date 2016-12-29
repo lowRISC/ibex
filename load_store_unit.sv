@@ -13,6 +13,7 @@
 //                                                                            //
 // Additional contributions by:                                               //
 //                 Andreas Traber - atraber@iis.ee.ethz.ch                    //
+//                 Markus Wegmann - markus.wegmann@technokrat.ch              //
 //                                                                            //
 // Design Name:    Load Store Unit                                            //
 // Project Name:   RI5CY                                                      //

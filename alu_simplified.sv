@@ -11,9 +11,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Engineer:       Markus Wegmann - markus.wegmann@technokrat.ch              //
 //                                                                            //
-// Additional contributions by:                                               //
-//                 ... - ...                                                  //
-//                                                                            //
 // Design Name:    ALU                                                        //
 // Project Name:   littleRISCV                                                //
 // Language:       SystemVerilog                                              //

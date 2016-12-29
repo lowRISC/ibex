@@ -13,6 +13,7 @@
 //                                                                            //
 // Additional contributions by:                                               //
 //                 Sven Stucki - svstucki@student.ethz.ch                     //
+//                 Markus Wegmann - markus.wegmann@technokrat.ch              //
 //                                                                            //
 // Design Name:    RISC-V register file                                       //
 // Project Name:   RI5CY                                                      //

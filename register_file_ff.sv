@@ -11,6 +11,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Engineer:       Francesco Conti - f.conti@unibo.it                         //
 //                                                                            //
+// Additional contributions by:                                               //
+//                 Markus Wegmann - markus.wegmann@technokrat.ch              //
+//                                                                            //
 // Design Name:    RISC-V register file                                       //
 // Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //

@@ -24,7 +24,6 @@
 `include "riscv_config.sv"
 
 
-
 module riscv_prefetch_buffer_small
 (
   input  logic        clk,

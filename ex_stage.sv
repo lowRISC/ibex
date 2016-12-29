@@ -15,8 +15,9 @@
 //                 Igor Loi - igor.loi@unibo.it                               //
 //                 Sven Stucki - svstucki@student.ethz.ch                     //
 //                 Andreas Traber - atraber@iis.ee.ethz.ch                    //
+//                 Markus Wegmann - markus.wegmann@technokrat.ch              //
 //                                                                            //
-// Design Name:    Execute stage                                             //
+// Design Name:    Execute stage                                              //
 // Project Name:   RI5CY                                                      //
 // Language:       SystemVerilog                                              //
 //                                                                            //
