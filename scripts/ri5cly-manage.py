@@ -78,10 +78,10 @@ def main():
         action_taken = True
 
     if args.synthesize_all == True:
+        synthesizeAll(littleRISCV_path)
         reportAll(littleRISCV_path)
         action_taken = True
     elif args.report_all == True:
-        synthesizeAll(littleRISCV_path)
         reportAll(littleRISCV_path)
         action_taken = True
 
