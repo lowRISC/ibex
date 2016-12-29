@@ -56,7 +56,7 @@ def main():
     action_taken = False
 
     if args.new_riscv_config is not None:
-        overwriteConfig(args["new_riscv_config.sv"], littleRISCV_path)
+        overwriteConfig(args.new_riscv_config, littleRISCV_path)
         action_taken = True
 
     if args.export_folder_path is not None:
@@ -237,7 +237,7 @@ def synthesizeAll(littleRISCV_path):
     os.mkdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/"))
 
     for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/example_configs")):
-        overwriteConfig(os.path.abspath(littleRISCV_path + "/scripts/example_configs/" + filename))
+        overwriteConfig(os.path.abspath(littleRISCV_path + "/scripts/example_configs/" + filename), littleRISCV_path)
         p = subprocess.Popen(["start_synopsys_synth.py"], cwd=os.path.abspath(littleRISCV_path+"/../../../synopsys/"))
         p.wait()
 
