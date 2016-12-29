@@ -51,8 +51,12 @@ def main():
                         help='zip the export into a tar.gz')
     parser.add_argument('--synthesize', dest='synthesize', action='store_true',
                         help='will synthesize the current or new configuration')
+    parser.add_argument('--report', dest='report', action='store_true',
+                        help='will report custom synthesized design')
     parser.add_argument('--synthesize_all', dest='synthesize_all', action='store_true',
                         help='will synthesize all sample configs in the scripts/example_configs folder with Synopsys')
+    parser.add_argument('--report_all', dest='report_all', action='store_true',
+                        help='will report all sample configs which have been synthesized')
     args = parser.parse_args()
 
     action_taken = False
@@ -69,8 +73,16 @@ def main():
         synthesize(littleRISCV_path)
         action_taken = True
 
+    if args.report == True:
+        report(littleRISCV_path)
+        action_taken = True
+
     if args.synthesize_all == True:
+        reportAll(littleRISCV_path)
+        action_taken = True
+    elif args.report_all == True:
         synthesizeAll(littleRISCV_path)
+        reportAll(littleRISCV_path)
         action_taken = True
 
     if action_taken == False:
@@ -244,7 +256,7 @@ def synthesizeAll(littleRISCV_path):
         os.mkdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/"))
 
     for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/example_configs")):
-        print("Synthsizing {}".format(filename))
+        print("Synthesizing {}".format(filename))
         overwriteConfig(os.path.abspath(littleRISCV_path + "/scripts/example_configs/" + filename), littleRISCV_path)
         p = subprocess.Popen([os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")], cwd=os.path.abspath(littleRISCV_path+"/../../../synopsys/"))
         p.wait()
@@ -267,6 +279,31 @@ def synthesize(littleRISCV_path):
     shutil.copytree(os.path.abspath(littleRISCV_path + "/../../../synopsys"), os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/custom"))
 
     print("Synthesized Imperio! Results are in little-riscv/scripts/synthesis_results/cusom. Bye.")
+
+def report(littleRISCV_path):
+    print("Config\t\tArea")
+
+    area = os.system("cat " + os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/custom/reports/imperio_*_area* | grep 'pulpino_i/core_region_i/RISCV_CORE' ")).read()
+    area_pattern = re.compile("^pulpino_i/core_region_i/RISCV_CORE\s+(\d*)\s+.*$")
+    m = area_pattern.match(area)
+    area = m.group(1)
+    area = float(area)
+    area /= 1.44 * 1000.0
+
+    print("{}\t\t\t\t\t\t\t{}".format("custom",area))
+
+def reportAll(littleRISCV_path):
+    print("Config\t\tArea")
+
+    for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/example_configs")):
+        area = os.system("cat " + os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/" + filename + "/reports/imperio_*_area* | grep 'pulpino_i/core_region_i/RISCV_CORE' ")).read()
+        area_pattern = re.compile("^pulpino_i/core_region_i/RISCV_CORE\s+(\d*)\s+.*$")
+        m = area_pattern.match(area)
+        area = m.group(1)
+        area = float(area)
+        area /= 1.44 * 1000.0
+
+        print("{}\t\t\t\t\t\t\t{}".format(filename,area))
 
 
 
