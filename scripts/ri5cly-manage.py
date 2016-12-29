@@ -283,7 +283,7 @@ def synthesize(littleRISCV_path):
 def report(littleRISCV_path):
     print("Config\t\tArea")
 
-    area = os.system("cat " + os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/custom/reports/imperio_*_area* | grep 'pulpino_i/core_region_i/RISCV_CORE' ")).read()
+    area = os.popen("cat " + os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/custom/reports/imperio_*_area* | grep 'pulpino_i/core_region_i/RISCV_CORE' ")).read()
     area_pattern = re.compile("^pulpino_i/core_region_i/RISCV_CORE\s+(\d*)\s+.*$")
     m = area_pattern.match(area)
     area = m.group(1)
@@ -296,7 +296,7 @@ def reportAll(littleRISCV_path):
     print("Config\t\tArea")
 
     for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/example_configs")):
-        area = os.system("cat " + os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/" + filename + "/reports/imperio_*_area* | grep 'pulpino_i/core_region_i/RISCV_CORE' ")).read()
+        area = os.popen("cat " + os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/" + filename + "/reports/imperio_*_area* | grep 'pulpino_i/core_region_i/RISCV_CORE' ")).read()
         area_pattern = re.compile("^pulpino_i/core_region_i/RISCV_CORE\s+(\d*)\s+.*$")
         m = area_pattern.match(area)
         area = m.group(1)
