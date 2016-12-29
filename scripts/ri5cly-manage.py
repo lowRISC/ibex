@@ -244,12 +244,13 @@ def synthesizeAll(littleRISCV_path):
         os.mkdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/"))
 
     for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/example_configs")):
+        print("Synthsizing {}".format(filename))
         overwriteConfig(os.path.abspath(littleRISCV_path + "/scripts/example_configs/" + filename), littleRISCV_path)
         p = subprocess.Popen([os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")], cwd=os.path.abspath(littleRISCV_path+"/../../../synopsys/"))
         p.wait()
 
         shutil.copytree(os.path.abspath(littleRISCV_path + "/../../../synopsys"), os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/" + filename))
-        print("Synthesized: {}".format(filename))
+        print("Synthesized {}".format(filename))
 
     print("Synthesized all configurations! Bye.")
 
