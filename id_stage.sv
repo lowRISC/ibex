@@ -82,7 +82,6 @@ module riscv_id_stage
     input  logic       [31:0] instr_rdata_i,      // comes from pipeline of IF stage
     output logic              instr_req_o,
 
-
     // Jumps and branches
     output logic        branch_in_ex_o,
     input  logic        branch_decision_i,
@@ -126,7 +125,7 @@ module riscv_id_stage
     output logic [ 4:0] bmask_b_ex_o,
     `endif // BIT_SUPPORT
 
-     // CONFIG_REGION: VEC_SUPPORT
+    // CONFIG_REGION: VEC_SUPPORT
   	`ifdef VEC_SUPPORT
     output logic [ 1:0] imm_vec_ext_ex_o,
     output logic [ 1:0] alu_vec_mode_ex_o,
@@ -140,7 +139,6 @@ module riscv_id_stage
 
     // ALU
     output logic [ALU_OP_WIDTH-1:0] alu_operator_ex_o,
-
 
     // CONFIG_REGION: MUL_SUPPORT
   	`ifdef MUL_SUPPORT
@@ -583,6 +581,10 @@ module riscv_id_stage
     assign mult_en = mult_int_en | mult_dot_en;
   `endif // MUL_SUPPORT
 
+
+  // CONFIG_REGION: HWL_SUPPORT
+  `ifdef HWL_SUPPORT
+
   ///////////////////////////////////////////////
   //  _   ___        ___     ___   ___  ____   //
   // | | | \ \      / / |   / _ \ / _ \|  _ \  //
@@ -592,8 +594,7 @@ module riscv_id_stage
   //                                           //
   ///////////////////////////////////////////////
 
-  // CONFIG_REGION: HWL_SUPPORT
-  `ifdef HWL_SUPPORT
+
     // hwloop register id
     assign hwloop_regid_int = instr[7];   // rd contains hwloop register id
 
@@ -914,7 +915,7 @@ module riscv_id_stage
           default:    mult_imm_id = '0;
         endcase
       end
-    `endif // MUL_SUPPORT
+  `endif // MUL_SUPPORT
 
     /////////////////////////////////////////////////////////
     //  ____  _____ ____ ___ ____ _____ _____ ____  ____   //

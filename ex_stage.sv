@@ -231,6 +231,9 @@ module riscv_ex_stage
   `endif // SIMPLE_ALU
 
 
+  // CONFIG_REGION: MUL_SUPPORT
+  `ifdef MUL_SUPPORT
+  
   ////////////////////////////////////////////////////////////////
   //  __  __ _   _ _   _____ ___ ____  _     ___ _____ ____     //
   // |  \/  | | | | | |_   _|_ _|  _ \| |   |_ _| ____|  _ \    //
@@ -240,8 +243,7 @@ module riscv_ex_stage
   //                                                            //
   ////////////////////////////////////////////////////////////////
 
-  // CONFIG_REGION: MUL_SUPPORT
-  `ifdef MUL_SUPPORT
+
   riscv_mult mult_i
   (
     .clk             ( clk                  ),

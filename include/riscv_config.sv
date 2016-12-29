@@ -32,7 +32,15 @@
 `endif
 
 
-// littleRISCV configuration. Decomment to enable.
+// littleRISCV configuration. 
+
+// Decomment to enable.
+
+// The format should be strictly followed so the ri5cly-manage tool can parse the configuration
+// A CONFIG section declares a config definition, a CONFIG_REGION enables the tool to remove disabled code
+// for export. See the ri5cly-manage.py tool help and source code in the /scripts folder for more information.
+
+
 
 // CONFIG: MUL_SUPPORT
 // will enable RISCV32M support for multiplication, division, MAC operations. Uses a lot of multiplications
@@ -73,6 +81,7 @@
 
 // Dependent definitions
 
+// CONFIG: THREE_PORT_REG_FILE
 // enables 3r2w reg file (rather than 2r1w)
 //`define THREE_PORT_REG_FILE
 
@@ -95,7 +104,6 @@
 // CONFIG: RV32E
 // will reduce the register file to 16 words
 `define RV32E
-
 
 `endif
 `endif

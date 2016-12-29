@@ -602,7 +602,6 @@ module riscv_decoder
             {6'b00_0000, 3'b101}: alu_operator_o = ALU_SRL;   // Shift Right Logical
             {6'b10_0000, 3'b101}: alu_operator_o = ALU_SRA;   // Shift Right Arithmetic
 
-
             // CONFIG_REGION: MUL_SUPPORT
             `ifdef MUL_SUPPORT
             // supported RV32M instructions
@@ -1096,6 +1095,9 @@ module riscv_decoder
       end
 
 
+      // CONFIG_REGION: HWL_SUPPORT
+      `ifdef HWL_SUPPORT
+
       ///////////////////////////////////////////////
       //  _   ___        ___     ___   ___  ____   //
       // | | | \ \      / / |   / _ \ / _ \|  _ \  //
@@ -1105,8 +1107,7 @@ module riscv_decoder
       //                                           //
       ///////////////////////////////////////////////
 
-      // CONFIG_REGION: HWL_SUPPORT
-      `ifdef HWL_SUPPORT
+
       OPCODE_HWLOOP: begin
         hwloop_target_mux_sel_o = 1'b0;
 
