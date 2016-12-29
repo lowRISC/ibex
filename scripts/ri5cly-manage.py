@@ -29,6 +29,7 @@ import shutil
 import argparse
 import re
 import zipfile
+import subprocess
 
 def zipdir(path, ziph):
     # ziph is zipfile handle
@@ -48,6 +49,8 @@ def main():
                         help='path to a folder to export clean version of littleRISCV without preprocessor switches')
     parser.add_argument('-z', dest='zip', action='store_true',
                         help='zip the export into a tar.gz')
+    parser.add_argument('--synthesize_all', dest='synthesize_all', action='store_true',
+                        help='will synthesize all sample configs in the scripts/example_configs folder with Synopsys')
     args = parser.parse_args()
 
     action_taken = False
@@ -58,6 +61,10 @@ def main():
 
     if args.export_folder_path is not None:
         exportCleanVersion(args.export_folder_path, littleRISCV_path, zip=args.zip)
+        action_taken = True
+
+    if args.synthesize_all == True:
+        synthesizeAll(littleRISCV_path)
         action_taken = True
 
     if action_taken == False:
@@ -221,6 +228,25 @@ def exportCleanVersion(build_path, littleRISCV_path, zip=False):
         zipdir(os.path.abspath(build_path), zipf)
         zipf.close()
         shutil.rmtree(os.path.abspath(build_path), ignore_errors=True)
+
+
+def synthesizeAll(littleRISCV_path):
+    if not os.path.exists(os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")):
+        print("littleRISCV repository not contained in Imperio/Pulpino project! Canceling.")
+
+    os.mkdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/"))
+
+    for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/example_configs")):
+        overwriteConfig(os.path.abspath(littleRISCV_path + "/scripts/example_configs/" + filename))
+        p = subprocess.Popen(["start_synopsys_synth.py"], cwd=os.path.abspath(littleRISCV_path+"/../../../synopsys/"))
+        p.wait()
+
+        shutil.copytree(os.path.abspath(littleRISCV_path + "/../../../synopsys"), os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/" + filename))
+        print("Synthesized: {}".format(filename))
+
+    print("Synthesized all configurations! Bye.")
+
+
 
 
 if __name__ == "__main__":
