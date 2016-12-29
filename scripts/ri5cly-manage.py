@@ -262,6 +262,7 @@ def synthesizeAll(littleRISCV_path):
         p = subprocess.Popen([os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")], cwd=os.path.abspath(littleRISCV_path+"/../../../synopsys/"))
         p.wait()
 
+        shutil.rmtree(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/" + filename), ignore_errors=True)
         shutil.copytree(os.path.abspath(littleRISCV_path + "/../../../synopsys"), os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/" + filename))
         print("Synthesized {}".format(filename))
 
@@ -277,6 +278,7 @@ def synthesize(littleRISCV_path):
     p = subprocess.Popen([os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")], cwd=os.path.abspath(littleRISCV_path+"/../../../synopsys/"))
     p.wait()
 
+    shutil.rmtree(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/custom"), ignore_errors=True)
     shutil.copytree(os.path.abspath(littleRISCV_path + "/../../../synopsys"), os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/custom"))
 
     print("Synthesized Imperio! Results are in little-riscv/scripts/synthesis_results/cusom. Bye.")
