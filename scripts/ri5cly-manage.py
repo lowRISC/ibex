@@ -49,6 +49,8 @@ def main():
                         help='path to a folder to export clean version of littleRISCV without preprocessor switches')
     parser.add_argument('-z', dest='zip', action='store_true',
                         help='zip the export into a tar.gz')
+    parser.add_argument('--synthesize', dest='synthesize', action='store_true',
+                        help='will synthesize the current or new configuration')
     parser.add_argument('--synthesize_all', dest='synthesize_all', action='store_true',
                         help='will synthesize all sample configs in the scripts/example_configs folder with Synopsys')
     args = parser.parse_args()
@@ -61,6 +63,10 @@ def main():
 
     if args.export_folder_path is not None:
         exportCleanVersion(args.export_folder_path, littleRISCV_path, zip=args.zip)
+        action_taken = True
+
+    if args.synthesize == True:
+        synthesize(littleRISCV_path)
         action_taken = True
 
     if args.synthesize_all == True:
@@ -230,7 +236,7 @@ def exportCleanVersion(build_path, littleRISCV_path, zip=False):
         shutil.rmtree(os.path.abspath(build_path), ignore_errors=True)
 
 
-def synthesizeAll(littleRISCV_path):
+def synthesize(littleRISCV_path):
     if not os.path.exists(os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")):
         print("littleRISCV repository not contained in Imperio/Pulpino project! Canceling.")
 
@@ -239,13 +245,27 @@ def synthesizeAll(littleRISCV_path):
 
     for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/example_configs")):
         overwriteConfig(os.path.abspath(littleRISCV_path + "/scripts/example_configs/" + filename), littleRISCV_path)
-        p = subprocess.Popen(["start_synopsys_synth.py"], cwd=os.path.abspath(littleRISCV_path+"/../../../synopsys/"))
+        p = subprocess.Popen([os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")], cwd=os.path.abspath(littleRISCV_path+"/../../../synopsys/"))
         p.wait()
 
         shutil.copytree(os.path.abspath(littleRISCV_path + "/../../../synopsys"), os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/" + filename))
         print("Synthesized: {}".format(filename))
 
     print("Synthesized all configurations! Bye.")
+
+def synthesize(littleRISCV_path):
+    if not os.path.exists(os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")):
+        print("littleRISCV repository not contained in Imperio/Pulpino project! Canceling.")
+
+    if not os.path.isdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/")):
+        os.mkdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/"))
+
+    p = subprocess.Popen([os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")], cwd=os.path.abspath(littleRISCV_path+"/../../../synopsys/"))
+    p.wait()
+
+    shutil.copytree(os.path.abspath(littleRISCV_path + "/../../../synopsys"), os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/custom"))
+
+    print("Synthesized Imperio! Results are in little-riscv/scripts/synthesis_results/cusom. Bye.")
 
 
 
