@@ -127,7 +127,7 @@ module riscv_prefetch_buffer_small
     NS = CS;
 
     fetch_addr_n = fetch_addr_Q;
-    last_fetch_addr_n = last_fetch_rdata_Q;
+    last_fetch_addr_n = last_fetch_addr_Q;
     last_fetch_rdata_n = last_fetch_rdata_Q;
     last_fetch_valid_n = last_fetch_valid_Q;
     last_addr_misaligned_n = last_addr_misaligned_Q;
