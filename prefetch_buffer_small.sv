@@ -286,7 +286,7 @@ module riscv_prefetch_buffer_small
                 addr_o = fetch_addr_Q;
                 valid_o = 1'b1;
 
-                instr_addr_o = addr_mux;
+                instr_addr_o = {addr_mux[31:2], 2'b00};
 
                 if (ready_i) begin // Do not change state if ID is not ready
                   instr_req_o = 1'b1;
@@ -353,6 +353,8 @@ module riscv_prefetch_buffer_small
 
         else begin // if branch_i
           last_fetch_valid_n = 1'b0;
+          last_addr_misaligned_n = 1'b0;
+          
           if (instr_rvalid_i) begin
             if (req_i) begin
               
