@@ -24,7 +24,7 @@ PULP and PULPino.
 
 ## Configuration
 
-The core can be configured to ones need by disabling non-needed capabilities in `/include/riscv_config.sv`. You can find some example configurations in `/scripts/example_configs/`.
+The core can be configured by enabling and disabling capabilities in `/include/riscv_config.sv`. You can find some example configurations in `/scripts/example_configs/`.
 
 To overwrite, test, synthesize, and generate a clean version of all these configurations use the tool `scripts/ri5cly-manage.py`.
 
