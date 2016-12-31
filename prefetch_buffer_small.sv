@@ -159,11 +159,13 @@ module riscv_prefetch_buffer_small
             if (instr_in_regs_is_compressed) begin
               instruction_format = C_INSTR_IN_REG_OR_FIRST_FETCH;
               addr_o = fetch_addr_Q;
-              fetch_addr_n = addr_mux;
+              addr_mux = addr_pc_next;
               valid_o = 1'b1;
 
-              if (ready_i) // Do not change state if ID is not ready
+              if (ready_i) begin // Do not change state if ID is not ready
+                fetch_addr_n = addr_mux;
                 NS = IDLE;
+              end
             end
 
             // Else we already buffered one misaligned half of an overlaping instruction
@@ -171,8 +173,8 @@ module riscv_prefetch_buffer_small
             else begin
               instruction_format = C_INSTR_IN_REG_OR_FIRST_FETCH; 
               last_addr_misaligned_n = 1'b1;
-              
               last_fetch_addr_n = fetch_addr_Q; // Save address to restore it when we need to output instruction address
+              addr_mux = addr_pc_next;
               fetch_addr_n = addr_mux;
               
               instr_req_o = 1'b1;
@@ -321,6 +323,8 @@ module riscv_prefetch_buffer_small
 
               else begin // Else we a have a full 32-bit instruction which is overlapping two words in memory
                 // Even if ~ready_i, we can proceed to fetch second half of a full instruction, as we do not output new data to IF
+                instruction_format = 
+
                 last_fetch_rdata_n = instr_rdata_i[31:16];
                 last_fetch_valid_n = 1'b1;
                 last_addr_misaligned_n = 1'b1;
@@ -328,7 +332,7 @@ module riscv_prefetch_buffer_small
                 last_fetch_addr_n = fetch_addr_Q; // Save address to restore it when we need to output instruction address
                 
                 instr_req_o = 1'b1;
-                instr_addr_o = {addr_mux[31:2] + 30'h1, 2'b00};
+                instr_addr_o = {addr_mux[31:2], 2'b00};
 
                 if (instr_gnt_i)
                   NS = WAIT_RVALID;
