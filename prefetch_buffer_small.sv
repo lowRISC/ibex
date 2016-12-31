@@ -86,11 +86,11 @@ module riscv_prefetch_buffer_small
 
 
 
-  enum logic [1:0] {FULL_INSTR_ALIGNED, C_INSTR_ALIGNED, C_INSTR_IN_REG_OR_FIRST_FETCH, INSTR_IN_REG} instruction_format;
+  enum logic [1:0] {FULL_INSTR_ALIGNED, C_INSTR_DIRECT, C_INSTR_IN_REG_OR_FIRST_FETCH, INSTR_IN_REG} instruction_format;
   //                        upper lower
   // FULL_INSTR_ALIGNED:  [ iiii, iiii] from mem
-  // C_INSTR_ALIGNED:     [ xxxx, iiii] from mem
-  // C_INSTR_ALIGNED:     [ iiii, xxxx] from mem
+  // C_INSTR_DIRECT:      [ xxxx, iiii] from mem
+  // C_INSTR_IN_REG:      [ iiii, xxxx] from reg
   // INSTR_IN_REG:        [ iiii, xxxx] 1st part in reg
   //                      [ xxxx, iiii] 2nd part from mem
 
@@ -101,7 +101,7 @@ module riscv_prefetch_buffer_small
   begin
     unique case (instruction_format)
       FULL_INSTR_ALIGNED:             addr_pc_next = fetch_addr_Q + 32'h4;
-      C_INSTR_ALIGNED:                addr_pc_next = fetch_addr_Q + 32'h2;
+      C_INSTR_DIRECT:                 addr_pc_next = fetch_addr_Q + 32'h2;
       C_INSTR_IN_REG_OR_FIRST_FETCH:  addr_pc_next = fetch_addr_Q + 32'h2;
       INSTR_IN_REG:                   addr_pc_next = fetch_addr_Q + 32'h4;
       default:                        addr_pc_next = fetch_addr_Q + 32'h4;
@@ -113,8 +113,8 @@ module riscv_prefetch_buffer_small
   begin
     unique case (instruction_format )
       FULL_INSTR_ALIGNED:             rdata_o = instr_rdata_i;
-      C_INSTR_ALIGNED:                rdata_o = {16'hxxxx, instr_rdata_i[15:0]};
-      C_INSTR_IN_REG_OR_FIRST_FETCH:  rdata_o = {16'hxxxx, last_fetch_rdata_Q};
+      C_INSTR_DIRECT:                 rdata_o = {16'h0000, instr_rdata_i[15:0]};
+      C_INSTR_IN_REG_OR_FIRST_FETCH:  rdata_o = {16'h0000, last_fetch_rdata_Q};
       INSTR_IN_REG:                   rdata_o = {instr_rdata_i[15:0], last_fetch_rdata_Q};
       default:                        rdata_o = instr_rdata_i;
     endcase
@@ -268,7 +268,7 @@ module riscv_prefetch_buffer_small
             // If our wanted instruction address is aligned, we have fetched all parts needed.
             else if (fetch_addr_Q[1] == 1'b0) begin 
               if (instr_rdata_i[1:0] != 2'b11) begin // If compressed instruction
-                instruction_format = C_INSTR_ALIGNED;
+                instruction_format = C_INSTR_DIRECT;
                 addr_o = fetch_addr_Q;
                 valid_o = 1'b1;
 
@@ -301,7 +301,7 @@ module riscv_prefetch_buffer_small
             else begin // If wanted instruction address is misaligned
               if (instr_rdata_i[1:0] != 2'b11) begin // If compressed instruction
               
-                instruction_format = C_INSTR_IN_REG_OR_FIRST_FETCH;
+                instruction_format = C_INSTR_DIRECT;
                 addr_o = fetch_addr_Q;
                 valid_o = 1'b1;
                 
