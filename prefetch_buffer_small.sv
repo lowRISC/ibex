@@ -312,7 +312,7 @@ module riscv_prefetch_buffer_small
                 if (ready_i) begin // Do not change state if ID is not ready
                   instr_req_o = 1'b1;
                   fetch_addr_n = addr_mux;
-                  instr_addr_o = addr_mux;
+                  instr_addr_o = {addr_mux[31:2], 2'b00};
 
                   if (instr_gnt_i)
                     NS = WAIT_RVALID;
@@ -325,11 +325,12 @@ module riscv_prefetch_buffer_small
                 // Even if ~ready_i, we can proceed to fetch second half of a full instruction, as we do not output new data to IF
                 instruction_format = C_INSTR_IN_REG_OR_FIRST_FETCH;
 
+                fetch_addr_n = addr_mux;
                 last_fetch_rdata_n = instr_rdata_i[31:16];
                 last_fetch_valid_n = 1'b1;
                 last_addr_misaligned_n = 1'b1;
-
                 last_fetch_addr_n = fetch_addr_Q; // Save address to restore it when we need to output instruction address
+
                 
                 instr_req_o = 1'b1;
                 instr_addr_o = {addr_mux[31:2], 2'b00};
