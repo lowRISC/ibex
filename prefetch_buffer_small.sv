@@ -114,9 +114,9 @@ module riscv_prefetch_buffer_small
   begin
     unique case (instruction_format )
       FULL_INSTR_ALIGNED:             rdata_o = instr_rdata_i;
-      C_INSTR_ALIGNED_DIRECT:         rdata_o = {16'h0000, instr_rdata_i[15:0]};
-      C_INSTR_MISALIGNED_DIRECT:      rdata_o = {16'h0000, instr_rdata_i[31:16]};
-      C_INSTR_IN_REG_OR_FIRST_FETCH:  rdata_o = {16'h0000, last_fetch_rdata_Q};
+      C_INSTR_ALIGNED_DIRECT:         rdata_o = {16'hxxxx, instr_rdata_i[15:0]};
+      C_INSTR_MISALIGNED_DIRECT:      rdata_o = {16'hxxxx, instr_rdata_i[31:16]};
+      C_INSTR_IN_REG_OR_FIRST_FETCH:  rdata_o = {16'hxxxx, last_fetch_rdata_Q};
       INSTR_IN_REG:                   rdata_o = {instr_rdata_i[15:0], last_fetch_rdata_Q};
       default:                        rdata_o = instr_rdata_i;
     endcase
