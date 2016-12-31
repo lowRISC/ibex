@@ -323,7 +323,7 @@ module riscv_prefetch_buffer_small
 
               else begin // Else we a have a full 32-bit instruction which is overlapping two words in memory
                 // Even if ~ready_i, we can proceed to fetch second half of a full instruction, as we do not output new data to IF
-                instruction_format = 
+                instruction_format = C_INSTR_IN_REG_OR_FIRST_FETCH;
 
                 last_fetch_rdata_n = instr_rdata_i[31:16];
                 last_fetch_valid_n = 1'b1;
