@@ -299,7 +299,7 @@ module riscv_prefetch_buffer_small
             end
             
             else begin // If wanted instruction address is misaligned
-              if (instr_rdata_i[1:0] != 2'b11) begin // If compressed instruction
+              if (instr_rdata_i[17:16] != 2'b11) begin // If compressed instruction
               
                 instruction_format = C_INSTR_DIRECT;
                 addr_o = fetch_addr_Q;
