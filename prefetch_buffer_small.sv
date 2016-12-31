@@ -104,7 +104,7 @@ module riscv_prefetch_buffer_small
       C_INSTR_ALIGNED_DIRECT:         addr_pc_next = fetch_addr_Q + 32'h2;
       C_INSTR_MISALIGNED_DIRECT:      addr_pc_next = fetch_addr_Q + 32'h2;
       C_INSTR_IN_REG_OR_FIRST_FETCH:  addr_pc_next = fetch_addr_Q + 32'h2;
-      INSTR_IN_REG:                   addr_pc_next = fetch_addr_Q + 32'h4;
+      INSTR_IN_REG:                   addr_pc_next = fetch_addr_Q + 32'h2;
       default:                        addr_pc_next = fetch_addr_Q + 32'h4;
     endcase
   end
