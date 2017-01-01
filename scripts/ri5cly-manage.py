@@ -77,6 +77,8 @@ def main():
                         help='will report all sample configs which have been synthesized')
     parser.add_argument('--test_all', dest='test_all', action='store_true',
                         help='will run some basic RTL simulations test, like helloworld on all sample configs in the scripts/example_configs folder')
+    parser.add_argument('--setup_file', dest='setup_file', metavar='.../new_setup.tcl',
+                        help='will overwrite setup script in Synopsys (imperio/synopsys/scripts/setup/setup.tcl) with given file')
     args = parser.parse_args()
 
     action_taken = False
@@ -112,6 +114,10 @@ def main():
 
     if args.test == True:
         test(littleRISCV_path)
+        action_taken = True
+
+    if args.setup_file is not None
+        synopsysSetSetupScript(littleRISCV_path)
         action_taken = True
 
     if action_taken == False:
@@ -322,6 +328,15 @@ def synthesizeAll(littleRISCV_path):
 
     restoreConfig()
     print("Synthesized all configurations! Bye.")
+
+
+def synopsysSetSetupScript(littleRISCV_path, setup_file):
+    if not os.path.exists(os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")):
+        print("littleRISCV repository not contained in Imperio/Pulpino project! Canceling.")
+        return
+    print("Changing setup script in Synopsys (imperio/synopsys/scripts/setup/setup.tcl) to given setup file.")
+    shutil.mv(os.path.abspath(setup_file), os.path.abspath(littleRISCV_path + "../../../synopsys/scripts/setup/setup.tcl"))
+
 
 def synthesize(littleRISCV_path):
     if not os.path.exists(os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")):
