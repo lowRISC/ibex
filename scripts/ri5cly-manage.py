@@ -24,6 +24,10 @@
 ################################################################################
 
 
+import sys
+if sys.version_info[0] < 3:
+    raise "Must be using Python 3"
+
 import os
 import shutil
 import argparse
@@ -54,7 +58,7 @@ def main():
     littleRISCV_path = os.path.abspath(os.path.dirname(os.path.realpath(__file__)) + "/..")  # Path to littleRISCV folder
     print(littleRISCV_path)
 
-    parser = argparse.ArgumentParser(description="Can overwrite config and export clean version of littleRISCV")
+    parser = argparse.ArgumentParser(description="ri5cly-manage.py can overwrite the config and export a clean version of littleRISCV core.")
     parser.add_argument('-i', dest="new_riscv_config", metavar='.../new_riscv_config.sv',
                         help='path to a new config file to overwrite littleRISCV config')
     parser.add_argument('-o', dest='export_folder_path', metavar='.../export_folder_path',
@@ -65,14 +69,14 @@ def main():
                         help='will synthesize the current or new configuration')
     parser.add_argument('--report', dest='report', action='store_true',
                         help='will report custom synthesized design')
+    parser.add_argument('--test', dest='test', action='store_true',
+                        help='will run some basic RTL simulations test, like helloworld')
     parser.add_argument('--synthesize_all', dest='synthesize_all', action='store_true',
                         help='will synthesize all sample configs in the scripts/example_configs folder with Synopsys')
     parser.add_argument('--report_all', dest='report_all', action='store_true',
                         help='will report all sample configs which have been synthesized')
     parser.add_argument('--test_all', dest='test_all', action='store_true',
                         help='will run some basic RTL simulations test, like helloworld on all sample configs in the scripts/example_configs folder')
-    parser.add_argument('--test', dest='test', action='store_true',
-                        help='will run some basic RTL simulations test, like helloworld')
     args = parser.parse_args()
 
     action_taken = False
