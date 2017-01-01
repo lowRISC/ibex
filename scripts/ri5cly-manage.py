@@ -24,6 +24,10 @@
 ################################################################################
 
 
+import sys
+if sys.version_info[0] < 3:
+    raise "Must be using Python 3"
+
 import os
 import shutil
 import argparse
@@ -54,7 +58,7 @@ def main():
     littleRISCV_path = os.path.abspath(os.path.dirname(os.path.realpath(__file__)) + "/..")  # Path to littleRISCV folder
     print(littleRISCV_path)
 
-    parser = argparse.ArgumentParser(description="Can overwrite config and export clean version of littleRISCV")
+    parser = argparse.ArgumentParser(description="ri5cly-manage.py can overwrite the config and export a clean version of littleRISCV core.")
     parser.add_argument('-i', dest="new_riscv_config", metavar='.../new_riscv_config.sv',
                         help='path to a new config file to overwrite littleRISCV config')
     parser.add_argument('-o', dest='export_folder_path', metavar='.../export_folder_path',
