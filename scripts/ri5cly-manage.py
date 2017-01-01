@@ -357,9 +357,12 @@ def report_specific(config_name, littleRISCV_path):
     process.close()
     area_pattern = re.compile("pulpino_i/core_region_i/RISCV_CORE\s*(\d+\.?\d*)\s*.*")
     m = area_pattern.match(area)
-    area = m.group(1)
-    area = float(area)
-    area /= 1.44 * 1000.0 # 1k GE (gate equivalent)
+    if m is not None:   
+        area = m.group(1)
+        area = float(area)
+        area /= 1.44 * 1000.0 # 1k GE (gate equivalent)
+    else:
+        area = "undefined"
 
     clock_p = re.compile("^.*_(\d+)$")
     m = clock_p.match(config_name)
@@ -372,8 +375,11 @@ def report_specific(config_name, littleRISCV_path):
     return "{}\t\t{}".format(config_name,area,clock)
 
 def report(littleRISCV_path):
+    if not os.path.exists(os.path.abspath(littleRISCV_path+"/scripts/synthesis_results/custom*")):
+        print("No synthesized version found called (/scripts/synthesis_results/custom*)")
+        return
     print("Config\t\tArea (kGE)\t\tFrequency (MHz)")
-    print(report_specific("custom", littleRISCV_path))
+    print(report_specific("custom*", littleRISCV_path))
     
 
 def reportAll(littleRISCV_path):
