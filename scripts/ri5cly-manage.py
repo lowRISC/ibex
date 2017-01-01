@@ -65,14 +65,14 @@ def main():
                         help='will synthesize the current or new configuration')
     parser.add_argument('--report', dest='report', action='store_true',
                         help='will report custom synthesized design')
+    parser.add_argument('--test', dest='test', action='store_true',
+                        help='will run some basic RTL simulations test, like helloworld')
     parser.add_argument('--synthesize_all', dest='synthesize_all', action='store_true',
                         help='will synthesize all sample configs in the scripts/example_configs folder with Synopsys')
     parser.add_argument('--report_all', dest='report_all', action='store_true',
                         help='will report all sample configs which have been synthesized')
     parser.add_argument('--test_all', dest='test_all', action='store_true',
                         help='will run some basic RTL simulations test, like helloworld on all sample configs in the scripts/example_configs folder')
-    parser.add_argument('--test', dest='test', action='store_true',
-                        help='will run some basic RTL simulations test, like helloworld')
     args = parser.parse_args()
 
     action_taken = False
@@ -126,7 +126,7 @@ def restoreConfig(new_config_path, littleRISCV_path):
 def overwriteConfig(new_config_path, littleRISCV_path, backup=True):
     print("Overwriting current config (include/riscv_config.sv) with new one ({})".format(new_config_path))
     if backup:
-        backupConfig(new_config_path, littleRISCV_path):
+        backupConfig(new_config_path, littleRISCV_path)
     shutil.copy(os.path.abspath(new_config_path), os.path.abspath(littleRISCV_path + "/include/riscv_config.sv")) # Copy new config to littleRISCV
 
 
