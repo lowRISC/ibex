@@ -62,10 +62,6 @@
 // will enable clip, min and max operations support.
 `define MATH_SPECIAL_SUPPORT
 
-// CONFIG: JUMP_IN_ID_SUPPORT
-// will enable jump capability in ID stage.
-`define JUMP_IN_ID_SUPPORT
-
 // CONFIG: LSU_ADDER_SUPPORT
 // will enable an additional adder in the LSU for better timings.
 `define LSU_ADDER_SUPPORT

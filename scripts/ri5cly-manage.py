@@ -31,6 +31,18 @@ import re
 import zipfile
 import subprocess
 
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
 def zipdir(path, ziph):
     # ziph is zipfile handle
     for root, dirs, files in os.walk(path):
@@ -57,6 +69,10 @@ def main():
                         help='will synthesize all sample configs in the scripts/example_configs folder with Synopsys')
     parser.add_argument('--report_all', dest='report_all', action='store_true',
                         help='will report all sample configs which have been synthesized')
+    parser.add_argument('--test_all', dest='test_all', action='store_true',
+                        help='will run some basic RTL simulations test, like helloworld on all sample configs in the scripts/example_configs folder')
+    parser.add_argument('--test', dest='test', action='store_true',
+                        help='will run some basic RTL simulations test, like helloworld')
     args = parser.parse_args()
 
     action_taken = False
@@ -86,14 +102,31 @@ def main():
         reportAll(littleRISCV_path)
         action_taken = True
 
+    if args.test_all == True:
+        testAll(littleRISCV_path)
+        action_taken = True
+
+    if args.test == True:
+        test(littleRISCV_path)
+        action_taken = True
+
     if action_taken == False:
         print("No action taken. Please see the help below for more information:")
         parser.print_help()
 
 
-def overwriteConfig(new_config_path, littleRISCV_path):
+def backupConfig(new_config_path, littleRISCV_path):
+    print("Backing up current config (include/riscv_config.sv) to (include/riscv_config.sv.bak)".format(new_config_path))
+    shutil.copy(os.path.abspath(littleRISCV_path + "/include/riscv_config.sv"), os.path.abspath(littleRISCV_path + "/include/riscv_config.sv.bak")) # Backup
+
+def restoreConfig(new_config_path, littleRISCV_path):
+    print("Restoring backup config (include/riscv_config.sv.bak).")
+    shutil.copy(os.path.abspath(littleRISCV_path + "/include/riscv_config.sv"), os.path.abspath(littleRISCV_path + "/include/riscv_config.sv.bak")) # Backup
+    
+def overwriteConfig(new_config_path, littleRISCV_path, backup=True):
     print("Overwriting current config (include/riscv_config.sv) with new one ({})".format(new_config_path))
-    shutil.move(os.path.abspath(littleRISCV_path + "/include/riscv_config.sv"), os.path.abspath(littleRISCV_path + "/include/riscv_config.sv.bak")) # Backup
+    if backup:
+        backupConfig(new_config_path, littleRISCV_path):
     shutil.copy(os.path.abspath(new_config_path), os.path.abspath(littleRISCV_path + "/include/riscv_config.sv")) # Copy new config to littleRISCV
 
 
@@ -252,20 +285,38 @@ def exportCleanVersion(build_path, littleRISCV_path, zip=False):
 def synthesizeAll(littleRISCV_path):
     if not os.path.exists(os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")):
         print("littleRISCV repository not contained in Imperio/Pulpino project! Canceling.")
+        return
 
     if not os.path.isdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/")):
         os.mkdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/"))
 
+    backupConfig()
+
+    print("Synthsizing all configs in (/scripts/example_configs/).")
+
     for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/example_configs")):
         print("Synthesizing {}".format(filename))
-        overwriteConfig(os.path.abspath(littleRISCV_path + "/scripts/example_configs/" + filename), littleRISCV_path)
+        overwriteConfig(os.path.abspath(littleRISCV_path + "/scripts/example_configs/" + filename), littleRISCV_path, backup=False)
         p = subprocess.Popen([os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")], cwd=os.path.abspath(littleRISCV_path+"/../../../synopsys/"))
         p.wait()
 
-        shutil.rmtree(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/" + filename), ignore_errors=True)
-        shutil.copytree(os.path.abspath(littleRISCV_path + "/../../../synopsys"), os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/" + filename))
-        print("Synthesized {}".format(filename))
+        # Get clock of synopsys setup configuration
+        with open(os.path.abspath(littleRISCV_path+"/../../../synopsys/scripts/setup/setup.tcl"), encoding="utf8") as f:
+            content = f.readlines()
 
+        clock_p = re.compile("^set\sCLOCK_SLOW\s(\d+);\.*$")
+        m = clock_p.match()
+
+        if m is not None:
+            clock = str(m.group(1))
+        else:
+            clock = "undefined"
+
+        shutil.rmtree(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/" + filename + "_{}".format(clock)), ignore_errors=True)
+        shutil.copytree(os.path.abspath(littleRISCV_path + "/../../../synopsys"), os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/" + filename + "_{}".format(clock)))
+        print("Synthesized {}".format(filename + "_{}".format(clock)))
+
+    restoreConfig()
     print("Synthesized all configurations! Bye.")
 
 def synthesize(littleRISCV_path):
@@ -278,37 +329,81 @@ def synthesize(littleRISCV_path):
     p = subprocess.Popen([os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")], cwd=os.path.abspath(littleRISCV_path+"/../../../synopsys/"))
     p.wait()
 
-    shutil.rmtree(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/custom"), ignore_errors=True)
-    shutil.copytree(os.path.abspath(littleRISCV_path + "/../../../synopsys"), os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/custom"))
+    # Get clock of synopsys setup configuration
+        with open(os.path.abspath(littleRISCV_path+"/../../../synopsys/scripts/setup/setup.tcl"), encoding="utf8") as f:
+            content = f.readlines()
 
-    print("Synthesized Imperio! Results are in little-riscv/scripts/synthesis_results/cusom. Bye.")
+        clock_p = re.compile("^set\sCLOCK_SLOW\s(\d+);\.*$")
+        m = clock_p.match()
 
-def report(littleRISCV_path):
-    print("Config\t\tArea")
+        if m is not None:
+            clock = str(m.group(1))
+        else:
+            clock = "undefined"
 
-    area = os.popen("cat " + os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/custom/reports/imperio_*_area* | grep 'pulpino_i/core_region_i/RISCV_CORE' ")).read()
+    shutil.rmtree(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/custom" + "_{}".format(clock)), ignore_errors=True)
+    shutil.copytree(os.path.abspath(littleRISCV_path + "/../../../synopsys"), os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/custom" + "_{}".format(clock)))
+
+    print("Synthesized Imperio! Results are in little-riscv/scripts/synthesis_results/custom_{}. Bye.".format(clock))
+
+
+def report_specific(config_name, littleRISCV_path):
+    process = os.popen("cat " + os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/" + config_name + "/reports/imperio_*_area* | grep 'pulpino_i/core_region_i/RISCV_CORE' "))
+    area = process.read()
+    process.close()
     area_pattern = re.compile("pulpino_i/core_region_i/RISCV_CORE\s*(\d+\.?\d*)\s*.*")
     m = area_pattern.match(area)
     area = m.group(1)
     area = float(area)
-    area /= 1.44 * 1000.0
+    area /= 1.44 * 1000.0 # 1k GE (gate equivalent)
 
-    print("{}\t\t\t\t\t\t\t{}".format("custom",area))
+    clock_p = re.compile("^.*_(\d+)$")
+    m = clock_p.match(config_name)
+
+    if m is not None:
+        clock = m.group(1)
+    else
+        clock = "undefined"
+
+    return "{}\t\t{}".format(config_name,area,clock)
+
+def report(littleRISCV_path):
+    print("Config\t\tArea (kGE)\t\tFrequency (MHz)")
+    print(report_specific("custom", littleRISCV_path))
+    
 
 def reportAll(littleRISCV_path):
-    print("Config\t\tArea")
+    print("Config\t\tArea (kGE)\t\tFrequency (MHz)")
+    for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results")):
+        print(report_specific(filename, littleRISCV_path))
+
+def testAll(littleRISCV_path):
+    backupConfig()
 
     for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results")):
-        process = os.popen("cat " + os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/" + filename + "/reports/imperio_*_area* | grep 'pulpino_i/core_region_i/RISCV_CORE' "))
-        area = process.read()
-        process.close()
-        area_pattern = re.compile("pulpino_i/core_region_i/RISCV_CORE\s*(\d+\.?\d*)\s*.*")
-        m = area_pattern.match(area)
-        area = m.group(1)
-        area = float(area)
-        area /= 1.44 * 1000.0
+        print("Testing RTL of {}".format(filename))
+        overwriteConfig(os.path.abspath(littleRISCV_path + "/scripts/example_configs/" + filename), littleRISCV_path, backup=False)
+        test(littleRISCV_path)
 
-        print("{}\t\t{}".format(filename,area))
+    restoreConfig()
+    print("Tested all configurations! Bye.")
+
+
+
+def test(littleRISCV_path):
+    if not os.path.exists(os.path.abspath(littleRISCV_path+"/../../sw/build")):
+        print("littleRISCV repository not contained in Imperio/Pulpino project, or you did not generate make files with CMake in pulpino/sw/build. Canceling.")
+        return
+
+    print("Testing current configuration.")
+    print("Compiling design")
+    p = subprocess.Popen(["make vcompile"], cwd=os.path.abspath(littleRISCV_path+"/../../sw/build"))
+    p.wait()
+    print("Running helloworld")
+    p = subprocess.Popen(["make helloworld.vsimc"], cwd=os.path.abspath(littleRISCV_path+"/../../sw/build"))
+    p.wait()
+
+    print("Testing finished.")
 
 
 
