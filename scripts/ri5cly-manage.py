@@ -372,7 +372,7 @@ def report_specific(config_name, littleRISCV_path):
     else:
         clock = "undefined"
 
-    return "{}\t\t{}".format(config_name,area,clock)
+    return "{}\t\t{}\t\t{}".format(config_name,area,clock)
 
 def report(littleRISCV_path):
     if not os.path.exists(os.path.abspath(littleRISCV_path+"/scripts/synthesis_results/custom*")):
