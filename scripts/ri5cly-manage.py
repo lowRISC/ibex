@@ -126,7 +126,7 @@ def restoreConfig(new_config_path, littleRISCV_path):
 def overwriteConfig(new_config_path, littleRISCV_path, backup=True):
     print("Overwriting current config (include/riscv_config.sv) with new one ({})".format(new_config_path))
     if backup:
-        backupConfig(new_config_path, littleRISCV_path):
+        backupConfig(new_config_path, littleRISCV_path)
     shutil.copy(os.path.abspath(new_config_path), os.path.abspath(littleRISCV_path + "/include/riscv_config.sv")) # Copy new config to littleRISCV
 
 
@@ -330,16 +330,16 @@ def synthesize(littleRISCV_path):
     p.wait()
 
     # Get clock of synopsys setup configuration
-        with open(os.path.abspath(littleRISCV_path+"/../../../synopsys/scripts/setup/setup.tcl"), encoding="utf8") as f:
-            content = f.readlines()
+    with open(os.path.abspath(littleRISCV_path+"/../../../synopsys/scripts/setup/setup.tcl"), encoding="utf8") as f:
+        content = f.readlines()
 
-        clock_p = re.compile("^set\sCLOCK_SLOW\s(\d+);\.*$")
-        m = clock_p.match()
+    clock_p = re.compile("^set\sCLOCK_SLOW\s(\d+);\.*$")
+    m = clock_p.match()
 
-        if m is not None:
-            clock = str(m.group(1))
-        else:
-            clock = "undefined"
+    if m is not None:
+        clock = str(m.group(1))
+    else:
+        clock = "undefined"
 
     shutil.rmtree(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/custom" + "_{}".format(clock)), ignore_errors=True)
     shutil.copytree(os.path.abspath(littleRISCV_path + "/../../../synopsys"), os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/custom" + "_{}".format(clock)))
@@ -362,7 +362,7 @@ def report_specific(config_name, littleRISCV_path):
 
     if m is not None:
         clock = m.group(1)
-    else
+    else:
         clock = "undefined"
 
     return "{}\t\t{}".format(config_name,area,clock)
