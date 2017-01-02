@@ -72,7 +72,10 @@ module riscv_controller
 
   // LSU
   input  logic        data_req_ex_i,              // data memory access is currently performed in EX stage
+  // CONFIG_REGION: ONLY_ALIGNED
+  `ifndef ONLY_ALIGNED
   input  logic        data_misaligned_i,
+  `endif // ONLY_ALIGNED
   input  logic        data_load_event_i,
 
   // CONFIG_REGION: MUL_SUPPORT
@@ -146,7 +149,10 @@ module riscv_controller
   output logic        halt_if_o,
   output logic        halt_id_o,
 
+  // CONFIG_REGION: ONLY_ALIGNED
+  `ifndef ONLY_ALIGNED
   output logic        misaligned_stall_o,
+  `endif // ONLY_ALIGNED
   output logic        jr_stall_o,
   output logic        load_stall_o,
 
@@ -581,8 +587,11 @@ module riscv_controller
     end
   end
 
+  // CONFIG_REGION: ONLY_ALIGNED
+  `ifndef ONLY_ALIGNED
   // stall because of misaligned data access
   assign misaligned_stall_o = data_misaligned_i;
+  `endif // ONLY_ALIGNED
 
 
   // Forwarding control unit
@@ -624,12 +633,15 @@ module riscv_controller
       `endif // THREE_PORT_REG_FILE
     end
 
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     // for misaligned memory accesses
     if (data_misaligned_i)
     begin
       operand_a_fw_mux_sel_o  = SEL_FW_EX;
       operand_b_fw_mux_sel_o  = SEL_REGFILE;
     end
+    `endif // ONLY_ALIGNED
     // CONFIG_REGION: MUL_SUPPORT
     `ifdef MUL_SUPPORT 
     else if (mult_multicycle_i) begin

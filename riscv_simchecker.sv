@@ -79,7 +79,10 @@ module riscv_simchecker
   input  logic [31:0] ex_data_addr,
   input  logic [31:0] ex_data_wdata,
 
+  // CONFIG_REGION: ONLY_ALIGNED
+  `ifndef ONLY_ALIGNED
   input  logic        lsu_misaligned,
+  `endif // ONLY_ALIGNED
   input  logic        wb_bypass,
 
   input  logic        wb_valid,
@@ -181,7 +184,12 @@ module riscv_simchecker
 
           trace.mem_access.push_back(mem_acc);
         end
+      // CONFIG_REGION: ONLY_ALIGNED
+      `ifndef ONLY_ALIGNED
       end while ((!ex_valid || lsu_misaligned) && (!wb_bypass));
+      `else 
+      end while ((!ex_valid) && (!wb_bypass));
+      `endif // ONLY_ALIGNED
 
       trace.wb_bypass = wb_bypass;
 

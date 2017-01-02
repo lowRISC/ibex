@@ -126,7 +126,10 @@ module riscv_core
   logic        useincr_addr_ex;   // Active when post increment
   `endif // PREPOST_SUPPORT
   
+  // CONFIG_REGION: ONLY_ALIGNED
+  `ifndef ONLY_ALIGNED
   logic        data_misaligned;
+  `endif // ONLY_ALIGNED
 
   // CONFIG_REGION: MUL_SUPPORT
   `ifdef MUL_SUPPORT
@@ -217,7 +220,10 @@ module riscv_core
   logic        data_req_ex;
   logic [31:0] data_pc_ex;
   logic        data_load_event_ex;
+  // CONFIG_REGION: ONLY_ALIGNED
+  `ifndef ONLY_ALIGNED
   logic        data_misaligned_ex;
+  `endif // ONLY_ALIGNED
 
   // stall control
   logic        halt_if;
@@ -551,14 +557,20 @@ module riscv_core
     .data_reg_offset_ex_o         ( data_reg_offset_ex   ), // to load store unit
     .data_load_event_ex_o         ( data_load_event_ex   ), // to load store unit
 
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     .data_misaligned_ex_o         ( data_misaligned_ex   ), // to load store unit
+    `endif // ONLY_ALIGNED
 
     // CONFIG_REGION: PREPOST_SUPPORT
     `ifdef PREPOST_SUPPORT
     .prepost_useincr_ex_o         ( useincr_addr_ex      ),
     `endif // PREPOST_SUPPORT
 
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     .data_misaligned_i            ( data_misaligned      ),
+    `endif // ONLY_ALIGNED
 
     // Interrupt Signals
     .irq_i                        ( irq_i                ), // incoming interrupts
@@ -748,8 +760,11 @@ module riscv_core
     .addr_useincr_ex_i     ( useincr_addr_ex    ),
     `endif // PREPOST_SUPPORT
 
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     .data_misaligned_ex_i  ( data_misaligned_ex ), // from ID/EX pipeline
     .data_misaligned_o     ( data_misaligned    ),
+    `endif // ONLY_ALIGNED
 
     // exception signals
     .load_err_o            ( lsu_load_err       ),
@@ -1018,7 +1033,10 @@ module riscv_core
     .ex_data_wdata    ( data_wdata_o                         ),
 
     .wb_bypass        ( ex_stage_i.branch_in_ex_i            ),
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     .lsu_misaligned   ( data_misaligned                      ),
+    `endif // ONLY_ALIGNED
 
     .wb_valid         ( wb_valid                             ),
     .wb_reg_addr      ( id_stage_i.registers_i.waddr_a_i     ),

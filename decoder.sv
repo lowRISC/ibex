@@ -33,7 +33,10 @@ module riscv_decoder
 (
   // singals running to/from controller
   input  logic        deassert_we_i,           // deassert we, we are stalled or not active
+  // CONFIG_REGION: ONLY_ALIGNED
+  `ifndef ONLY_ALIGNED
   input  logic        data_misaligned_i,       // misaligned data load/store in progress
+  `endif // ONLY_ALIGNED
   // CONFIG_REGION: MUL_SUPPORT
   `ifdef MUL_SUPPORT
   // MUL related control signals 
@@ -1172,6 +1175,8 @@ module riscv_decoder
       illegal_insn_o = 1'b1;
     end
 
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     // misaligned access was detected by the LSU
     // TODO: this section should eventually be moved out of the decoder
     if (data_misaligned_i == 1'b1)
@@ -1200,6 +1205,7 @@ module riscv_decoder
       scalar_replication_o = 1'b0;
       `endif // VEC_SUPPORT
     end
+    `endif // ONLY_ALIGNED
     // CONFIG_REGION: MUL_SUPPORT
     `ifdef MUL_SUPPORT
     else if (mult_multicycle_i) begin

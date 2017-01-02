@@ -66,8 +66,12 @@ module riscv_load_store_unit
     input  logic         addr_useincr_ex_i,    // use a + b or just a for address   -> from ex stage
     `endif // PREPOST_SUPPORT
 
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     input  logic         data_misaligned_ex_i, // misaligned access in last ld/st   -> from ID/EX pipeline
     output logic         data_misaligned_o,    // misaligned access was detected    -> to controller
+    `endif // ONLY_ALIGNED
+
 
     // exception signals
     output logic         load_err_o,
@@ -94,8 +98,10 @@ module riscv_load_store_unit
   logic [3:0]   data_be;
   logic [31:0]  data_wdata;
 
+  // CONFIG_REGION: ONLY_ALIGNED
+  `ifndef ONLY_ALIGNED
   logic         misaligned_st;   // high if we are currently performing the second part of a misaligned store
-
+  `endif // ONLY_ALIGNED
 
   enum logic [1:0]  { IDLE, WAIT_RVALID, WAIT_RVALID_EX_STALL, IDLE_EX_STALL } CS, NS;
 
@@ -107,6 +113,8 @@ module riscv_load_store_unit
     case (data_type_ex_i) // Data type 00 Word, 01 Half word, 11,10 byte
       2'b00:
       begin // Writing a word
+        // CONFIG_REGION: ONLY_ALIGNED
+        `ifndef ONLY_ALIGNED
         if (misaligned_st == 1'b0)
         begin // non-misaligned case
           case (data_addr_int[1:0])
@@ -125,10 +133,15 @@ module riscv_load_store_unit
             2'b11: data_be = 4'b0111;
           endcase; // case (data_addr_int[1:0])
         end
+        `else
+        data_be = 4'b1111;
+        `endif // ONLY_ALIGNED
       end
 
       2'b01:
       begin // Writing a half word
+        // CONFIG_REGION: ONLY_ALIGNED
+        `ifndef ONLY_ALIGNED
         if (misaligned_st == 1'b0)
         begin // non-misaligned case
           case (data_addr_int[1:0])
@@ -142,6 +155,12 @@ module riscv_load_store_unit
         begin // misaligned case
           data_be = 4'b0001;
         end
+        `else 
+        case (data_addr_int[1])
+            1'b0: data_be = 4'b0011;
+            1'b1: data_be = 4'b1100;
+        endcase; // case (data_addr_int[1])
+        `endif // ONLY_ALIGNED
       end
 
       2'b10,
@@ -209,17 +228,25 @@ module riscv_load_store_unit
   // take care of misaligned words
   always_comb
   begin
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     case (rdata_offset_q)
       2'b00: rdata_w_ext = data_rdata_i[31:0];
       2'b01: rdata_w_ext = {data_rdata_i[ 7:0], rdata_q[31:8]};
       2'b10: rdata_w_ext = {data_rdata_i[15:0], rdata_q[31:16]};
       2'b11: rdata_w_ext = {data_rdata_i[23:0], rdata_q[31:24]};
     endcase
+    `else 
+    rdata_w_ext = data_rdata_i[31:0];
+    `endif // ONLY_ALIGNED
+    endcase
   end
 
   // sign extension for half words
   always_comb
   begin
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     case (rdata_offset_q)
       2'b00:
       begin
@@ -253,6 +280,24 @@ module riscv_load_store_unit
           rdata_h_ext = {{16{data_rdata_i[7]}}, data_rdata_i[7:0], rdata_q[31:24]};
       end
     endcase // case (rdata_offset_q)
+    `else 
+    case (rdata_offset_q[1])
+      1'b0:
+      begin
+        if (data_sign_ext_q == 1'b0)
+          rdata_h_ext = {16'h0000, data_rdata_i[15:0]};
+        else
+          rdata_h_ext = {{16{data_rdata_i[15]}}, data_rdata_i[15:0]};
+      end
+
+      1'b1:
+      begin
+        if (data_sign_ext_q == 1'b0)
+          rdata_h_ext = {16'h0000, data_rdata_i[31:16]};
+        else
+          rdata_h_ext = {{16{data_rdata_i[31]}}, data_rdata_i[31:16]};
+      end
+    `endif // ONLY_ALIGNED
   end
 
   // sign extension for bytes
@@ -322,10 +367,16 @@ module riscv_load_store_unit
         // store the data coming from memory in rdata_q.
         // In all other cases, rdata_q gets the value that we are
         // writing to the register file
+
+        // CONFIG_REGION: ONLY_ALIGNED
+        `ifndef ONLY_ALIGNED
         if ((data_misaligned_ex_i == 1'b1) || (data_misaligned_o == 1'b1))
           rdata_q  <= data_rdata_i;
         else
           rdata_q  <= data_rdata_ext;
+        `else 
+        rdata_q  <= data_rdata_ext;
+        `endif // ONLY_ALIGNED
       end
     end
   end
@@ -339,7 +390,10 @@ module riscv_load_store_unit
   assign data_we_o     = data_we_ex_i;
   assign data_be_o     = data_be;
 
+  // CONFIG_REGION: ONLY_ALIGNED
+  `ifndef ONLY_ALIGNED
   assign misaligned_st = data_misaligned_ex_i;
+  `endif // ONLY_ALIGNED
 
   assign load_err_o    = data_gnt_i && data_err_i && ~data_we_o;
   assign store_err_o   = data_gnt_i && data_err_i && data_we_o;
@@ -447,6 +501,8 @@ module riscv_load_store_unit
     endcase
   end
 
+  // CONFIG_REGION: ONLY_ALIGNED
+  `ifndef ONLY_ALIGNED
   // check for misaligned accesses that need a second memory access
   // If one is detected, this is signaled with data_misaligned_o to
   // the controller which selectively stalls the pipeline
@@ -470,6 +526,7 @@ module riscv_load_store_unit
       endcase // case (data_type_ex_i)
     end
   end
+  `endif // ONLY_ALIGNED
 
   // CONFIG_REGION: LSU_ADDER_SUPPORT
   `ifdef LSU_ADDER_SUPPORT

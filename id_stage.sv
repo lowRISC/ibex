@@ -184,14 +184,21 @@ module riscv_id_stage
     output logic [1:0]  data_reg_offset_ex_o,
     output logic        data_load_event_ex_o,
 
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     output logic        data_misaligned_ex_o,
+    `endif // ONLY_ALIGNED
 
     // CONFIG_REGION: PREPOST_SUPPORT
     `ifdef PREPOST_SUPPORT
     output logic        prepost_useincr_ex_o,
     `endif // PREPOST_SUPPORT
 
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     input  logic        data_misaligned_i,
+    `endif // ONLY_ALIGNED
+
 
     // Interrupt signals
     input  logic [31:0] irq_i,
@@ -721,7 +728,13 @@ module riscv_id_stage
         IMMB_I:      imm_b = imm_i_type;
         IMMB_S:      imm_b = imm_s_type;
         IMMB_U:      imm_b = imm_u_type;
+        // CONFIG_REGION: ONLY_ALIGNED
+        `ifndef ONLY_ALIGNED
         IMMB_PCINCR: imm_b = (is_compressed_i && (~data_misaligned_i)) ? 32'h2 : 32'h4;
+        `else 
+        IMMB_PCINCR: imm_b = (is_compressed_i) ? 32'h2 : 32'h4;
+        `endif // ONLY_ALIGNED
+
         IMMB_S2:     imm_b = imm_s2_type;
         IMMB_BI:     imm_b = imm_bi_type;
         IMMB_S3:     imm_b = imm_s3_type;
@@ -992,7 +1005,10 @@ module riscv_id_stage
   (
     // controller related signals
     .deassert_we_i                   ( deassert_we               ),
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     .data_misaligned_i               ( data_misaligned_i         ),
+    `endif // ONLY_ALIGNED
     // CONFIG_REGION: MUL_SUPPORT
     `ifdef MUL_SUPPORT
     .mult_multicycle_i               ( mult_multicycle_i         ),
@@ -1136,7 +1152,10 @@ module riscv_id_stage
 
     // LSU
     .data_req_ex_i                  ( data_req_ex_o          ),
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     .data_misaligned_i              ( data_misaligned_i      ),
+    `endif // ONLY_ALIGNED
     .data_load_event_i              ( data_load_event_ex_o   ),
 
     // ALU
@@ -1210,7 +1229,10 @@ module riscv_id_stage
     .halt_if_o                      ( halt_if_o              ),
     .halt_id_o                      ( halt_id                ),
 
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     .misaligned_stall_o             ( misaligned_stall       ),
+    `endif // ONLY_ALIGNED
     .jr_stall_o                     ( jr_stall               ),
     .load_stall_o                   ( load_stall             ),
 
@@ -1374,10 +1396,15 @@ always_ff @(posedge clk, negedge rst_n)
       data_reg_offset_ex_o        <= 2'b0;
       data_req_ex_o               <= 1'b0;
       data_load_event_ex_o        <= 1'b0;
+      // CONFIG_REGION: ONLY_ALIGNED
+      `ifndef ONLY_ALIGNED
       data_misaligned_ex_o        <= 1'b0;
+      `endif // ONLY_ALIGNED
       pc_ex_o                     <= '0;
       branch_in_ex_o              <= 1'b0;
     end
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     else if (data_misaligned_i) begin
       // misaligned data access case
       if (ex_ready_i)
@@ -1403,7 +1430,8 @@ always_ff @(posedge clk, negedge rst_n)
         `endif // PREPOST_SUPPORT
         data_misaligned_ex_o        <= 1'b1;
       end
-    end 
+    end
+    `endif // ONLY_ALIGNED
     // CONFIG_REGION: MUL_SUPPORT
     `ifdef MUL_SUPPORT
     else if (mult_multicycle_i) begin
@@ -1488,7 +1516,10 @@ always_ff @(posedge clk, negedge rst_n)
         end else begin
           data_load_event_ex_o      <= 1'b0;
         end
+        // CONFIG_REGION: ONLY_ALIGNED
+        `ifndef ONLY_ALIGNED
         data_misaligned_ex_o        <= 1'b0;
+        `endif // ONLY_ALIGNED
         if ((jump_in_id == BRANCH_COND) || data_load_event_id) begin
           pc_ex_o                   <= pc_id_i;
         end
@@ -1501,7 +1532,10 @@ always_ff @(posedge clk, negedge rst_n)
         csr_op_ex_o                 <= CSR_OP_NONE;
         data_req_ex_o               <= 1'b0;
         data_load_event_ex_o        <= 1'b0;
+        // CONFIG_REGION: ONLY_ALIGNED
+        `ifndef ONLY_ALIGNED
         data_misaligned_ex_o        <= 1'b0;
+        `endif // ONLY_ALIGNED
         branch_in_ex_o              <= 1'b0;
       end
     end
@@ -1510,7 +1544,12 @@ always_ff @(posedge clk, negedge rst_n)
 
 
   // stall control
+  // CONFIG_REGION: ONLY_ALIGNED
+  `ifndef ONLY_ALIGNED
   assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i);
+  `else 
+  assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i);
+  `endif // ONLY_ALIGNED
   assign id_valid_o = (~halt_id) & id_ready_o;
 
 
