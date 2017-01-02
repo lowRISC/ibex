@@ -109,7 +109,6 @@ module riscv_prefetch_buffer_only_aligned
     NS = CS;
 
     fetch_addr_n = fetch_addr_Q;
-    fetch_rdata_n = fetch_rdata_Q;
     fetch_valid_n = fetch_valid_Q;
 
     valid_o = 1'b0;
