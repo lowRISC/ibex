@@ -60,26 +60,26 @@
 
 // CONFIG: LSU_ADDER_SUPPORT
 // will enable an additional adder in the LSU for better timings.
-`define LSU_ADDER_SUPPORT
+//`define LSU_ADDER_SUPPORT
 
 `ifdef LSU_ADDER_SUPPORT
 
 // CONFIG: PREPOST_SUPPORT
 // will enable pre/post increment load/store support support.
-`define PREPOST_SUPPORT
+//`define PREPOST_SUPPORT
 
 `endif // LSU_ADDER_SUPPORT
 
 // CONFIG: MATH_SPECIAL_SUPPORT
 // will enable clip, min and max operations support.
-`define MATH_SPECIAL_SUPPORT
+//`define MATH_SPECIAL_SUPPORT
 
 
 // Dependent definitions
 
 // CONFIG: THREE_PORT_REG_FILE
 // enables 3r2w reg file (rather than 2r1w)
-`define THREE_PORT_REG_FILE
+//`define THREE_PORT_REG_FILE
 
 
 `ifndef MUL_SUPPORT

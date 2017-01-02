@@ -60,7 +60,7 @@ module riscv_prefetch_buffer_small
   logic [15:0]  last_fetch_rdata_Q, last_fetch_rdata_n; // A 16 bit register to store one compressed instruction or half of a full instruction for next fetch
   logic [31:0]  current_fetch_rdata_Q, current_fetch_rdata_n; // A 32 bit register to store full instruction when valid fetch was stalled. Reduces memory accesses
 
-  logic         last_fetch_valid_Q, last_fetch_valid_n; // Fetch was stalled so we need instruction word in register
+  logic         last_fetch_valid_Q, last_fetch_valid_n; // 16 bit instruction (part) in register of last fetch is valid
   logic         last_addr_misaligned_Q, last_addr_misaligned_n; // Indicates whether we need to fetch the second part of an misaligned full instruction
   logic         fetch_stalled_Q, fetch_stalled_n; // Current fetch is stalled and we need to store full 32 bit instruction to memory to reduce memory accesses
 
