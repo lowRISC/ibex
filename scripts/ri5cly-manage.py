@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/bin/env python3
 
 
 # Copyright 2016 ETH Zurich and University of Bologna.
