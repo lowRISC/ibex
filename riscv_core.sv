@@ -216,7 +216,10 @@ module riscv_core
   logic        data_we_ex;
   logic [1:0]  data_type_ex;
   logic        data_sign_ext_ex;
+  // CONFIG_REGION: ONLY_ALIGNED
+  `ifndef ONLY_ALIGNED
   logic [1:0]  data_reg_offset_ex;
+  `endif // ONLY_ALIGNED
   logic        data_req_ex;
   logic [31:0] data_pc_ex;
   logic        data_load_event_ex;
@@ -554,7 +557,10 @@ module riscv_core
     .data_we_ex_o                 ( data_we_ex           ), // to load store unit
     .data_type_ex_o               ( data_type_ex         ), // to load store unit
     .data_sign_ext_ex_o           ( data_sign_ext_ex     ), // to load store unit
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     .data_reg_offset_ex_o         ( data_reg_offset_ex   ), // to load store unit
+    `endif // ONLY_ALIGNED
     .data_load_event_ex_o         ( data_load_event_ex   ), // to load store unit
 
     // CONFIG_REGION: ONLY_ALIGNED
@@ -741,7 +747,10 @@ module riscv_core
     .data_we_ex_i          ( data_we_ex         ),
     .data_type_ex_i        ( data_type_ex       ),
     .data_wdata_ex_i       ( alu_operand_c_ex   ),
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     .data_reg_offset_ex_i  ( data_reg_offset_ex ),
+    `endif // ONLY_ALIGNED
     .data_sign_ext_ex_i    ( data_sign_ext_ex   ),  // sign extension
 
     .data_rdata_ex_o       ( regfile_wdata      ),

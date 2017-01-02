@@ -47,7 +47,10 @@ module riscv_load_store_unit
     input  logic         data_we_ex_i,         // write enable                      -> from ex stage
     input  logic [1:0]   data_type_ex_i,       // Data type word, halfword, byte    -> from ex stage
     input  logic [31:0]  data_wdata_ex_i,      // data to write to memory           -> from ex stage
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     input  logic [1:0]   data_reg_offset_ex_i, // offset inside register for stores -> from ex stage
+    `endif // ONLY_ALIGNED
     input  logic         data_sign_ext_ex_i,   // sign extension                    -> from ex stage
 
     output logic [31:0]  data_rdata_ex_o,      // requested data                    -> to ex stage
@@ -178,7 +181,12 @@ module riscv_load_store_unit
   // prepare data to be written to the memory
   // we handle misaligned accesses, half word and byte accesses and
   // register offsets here
+  // CONFIG_REGION: ONLY_ALIGNED
+  `ifndef ONLY_ALIGNED
   assign wdata_offset = data_addr_int[1:0] - data_reg_offset_ex_i[1:0];
+  `else 
+  assign wdata_offset = data_addr_int[1:0];
+  `endif // ONLY_ALIGNED
   always_comb
   begin
     case (wdata_offset)

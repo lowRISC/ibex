@@ -117,7 +117,10 @@ module riscv_decoder
   `endif // PREPOST_SUPPORT
   output logic [1:0]  data_type_o,             // data type on data memory: byte, half word or word
   output logic        data_sign_extension_o,   // sign extension on read data from data memory
+  // CONFIG_REGION: ONLY_ALIGNED
+  `ifndef ONLY_ALIGNED
   output logic [1:0]  data_reg_offset_o,       // offset in byte inside register for stores
+  `endif // ONLY_ALIGNED
   output logic        data_load_event_o,       // data request is in the special event range
 
   // CONFIG_REGION: HWLP_SUPPORT
@@ -217,7 +220,10 @@ module riscv_decoder
     data_we_o                   = 1'b0;
     data_type_o                 = 2'b00;
     data_sign_extension_o       = 1'b0;
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     data_reg_offset_o           = 2'b00;
+    `endif // ONLY_ALIGNED
     data_req                    = 1'b0;
     data_load_event_o           = 1'b0;
 

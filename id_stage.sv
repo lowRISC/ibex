@@ -181,7 +181,10 @@ module riscv_id_stage
     output logic        data_we_ex_o,
     output logic [1:0]  data_type_ex_o,
     output logic        data_sign_ext_ex_o,
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     output logic [1:0]  data_reg_offset_ex_o,
+    `endif // ONLY_ALIGNED
     output logic        data_load_event_ex_o,
 
     // CONFIG_REGION: ONLY_ALIGNED
@@ -369,7 +372,10 @@ module riscv_id_stage
   logic        data_we_id;
   logic [1:0]  data_type_id;
   logic        data_sign_ext_id;
+  // CONFIG_REGION: ONLY_ALIGNED
+  `ifndef ONLY_ALIGNED
   logic [1:0]  data_reg_offset_id;
+  `endif // ONLY_ALIGNED
   logic        data_req_id;
   logic        data_load_event_id;
 
@@ -1088,7 +1094,10 @@ module riscv_id_stage
     `endif // PREPOST_SUPPORT
     .data_type_o                     ( data_type_id              ),
     .data_sign_extension_o           ( data_sign_ext_id          ),
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
     .data_reg_offset_o               ( data_reg_offset_id        ),
+    `endif // ONLY_ALIGNED
     .data_load_event_o               ( data_load_event_id        ),
 
 
@@ -1393,7 +1402,10 @@ always_ff @(posedge clk, negedge rst_n)
       data_we_ex_o                <= 1'b0;
       data_type_ex_o              <= 2'b0;
       data_sign_ext_ex_o          <= 1'b0;
+      // CONFIG_REGION: ONLY_ALIGNED
+      `ifndef ONLY_ALIGNED
       data_reg_offset_ex_o        <= 2'b0;
+      `endif // ONLY_ALIGNED
       data_req_ex_o               <= 1'b0;
       data_load_event_ex_o        <= 1'b0;
       // CONFIG_REGION: ONLY_ALIGNED
@@ -1511,7 +1523,10 @@ always_ff @(posedge clk, negedge rst_n)
           data_we_ex_o              <= data_we_id;
           data_type_ex_o            <= data_type_id;
           data_sign_ext_ex_o        <= data_sign_ext_id;
+          // CONFIG_REGION: ONLY_ALIGNED
+          `ifndef ONLY_ALIGNED
           data_reg_offset_ex_o      <= data_reg_offset_id;
+          `endif // ONLY_ALIGNED
           data_load_event_ex_o      <= data_load_event_id;
         end else begin
           data_load_event_ex_o      <= 1'b0;
