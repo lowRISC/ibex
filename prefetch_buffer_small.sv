@@ -58,8 +58,12 @@ module riscv_prefetch_buffer_small
 
   logic [31:0]  fetch_addr_Q, fetch_addr_n; // The adress from the current fetch
   logic [15:0]  last_fetch_rdata_Q, last_fetch_rdata_n; // A 16 bit register to store one compressed instruction or half of a full instruction for next fetch
+  logic [31:0]  current_fetch_rdata_Q, current_fetch_rdata_n; // A 32 bit register to store full instruction when valid fetch was stalled. Reduces memory accesses
   logic         last_fetch_valid_Q, last_fetch_valid_n; // Content of registers is valid
+
+  logic         last_fetch_valid_Q, last_fetch_valid__n; // Fetch was stalled so we need instruction word in register
   logic         last_addr_misaligned_Q, last_addr_misaligned_n; // Indicates whether we need to fetch the second part of an misaligned full instruction
+  logic         fetch_stalled_Q, fetch_stalled_n; // Current fetch is stalled and we need to store full 32 bit instruction to memory to reduce memory accesses
 
   logic [31:0]  last_fetch_addr_Q, last_fetch_addr_n; // The adress from the last fetch
 
@@ -69,21 +73,13 @@ module riscv_prefetch_buffer_small
   logic [31:0]  addr_pc_next; // Calculate the next adress (adder as process counter)
   logic [31:0]  addr_mux; // The next address mux to be used
 
-  logic instr_is_compressed; // Shows if current instruction fetch is compressed
+  logic [31:0]  instr_mux;
+
   logic addr_is_misaligned;
   logic instr_is_in_regs; // Indicates if address mod 4 is already fetched. 
   //                         It is implicitely assumed that the fetch is consecutive to the last fetch to spare a comparator.
   //                         In the other case we devalidate the cache which we check.
   logic instr_in_regs_is_compressed;
-
-  assign busy_o = (CS != IDLE) || instr_req_o;
-
-  assign instr_is_compressed = (instr_rdata_i[1:0] != 2'b11); // Check if instruction is not a 32 bit instruction and therefore compressed
-  assign addr_is_misaligned = (fetch_addr_Q[1] == 1'b1); // Check if address is misaligned
-
-  assign instr_is_in_regs = ( last_fetch_valid_Q && addr_is_misaligned );
-  assign instr_in_regs_is_compressed = (last_fetch_rdata_Q[1:0] != 2'b11);
-
 
 
   enum logic [2:0] {FULL_INSTR_ALIGNED, C_INSTR_ALIGNED_DIRECT, C_INSTR_MISALIGNED_DIRECT, C_INSTR_IN_REG_OR_FIRST_FETCH, INSTR_IN_REG} instruction_format;
@@ -95,6 +91,14 @@ module riscv_prefetch_buffer_small
   //                      [ xxxx, iiii] 2nd part from mem
 
 
+  assign busy_o = (CS != IDLE) || instr_req_o;
+
+  assign addr_is_misaligned = (fetch_addr_Q[1] == 1'b1); // Check if address is misaligned
+
+  assign instr_is_in_regs = ( last_fetch_valid_Q && addr_is_misaligned);
+  assign instr_in_regs_is_compressed = (last_fetch_rdata_Q[1:0] != 2'b11); // Upper half is compressed instruction
+
+  assign instr_mux = last_fetch_stalled_Q ? current_fetch_rdata_Q : instr_rdata_i;
 
   // Calculate next address. This is the actual PC of littleRISCV. Will use same adder instance for all cases
   always_comb
@@ -113,12 +117,12 @@ module riscv_prefetch_buffer_small
   always_comb
   begin
     unique case (instruction_format )
-      FULL_INSTR_ALIGNED:             rdata_o = instr_rdata_i;
-      C_INSTR_ALIGNED_DIRECT:         rdata_o = {16'hxxxx, instr_rdata_i[15:0]};
-      C_INSTR_MISALIGNED_DIRECT:      rdata_o = {16'hxxxx, instr_rdata_i[31:16]};
+      FULL_INSTR_ALIGNED:             rdata_o = instr_mux;
+      C_INSTR_ALIGNED_DIRECT:         rdata_o = {16'hxxxx, instr_mux[15:0]};
+      C_INSTR_MISALIGNED_DIRECT:      rdata_o = {16'hxxxx, instr_mux[31:16]};
       C_INSTR_IN_REG_OR_FIRST_FETCH:  rdata_o = {16'hxxxx, last_fetch_rdata_Q};
-      INSTR_IN_REG:                   rdata_o = {instr_rdata_i[15:0], last_fetch_rdata_Q};
-      default:                        rdata_o = instr_rdata_i;
+      INSTR_IN_REG:                   rdata_o = {instr_mux[15:0], last_fetch_rdata_Q};
+      default:                        rdata_o = instr_mux;
     endcase
   end
 
@@ -133,6 +137,7 @@ module riscv_prefetch_buffer_small
     last_fetch_rdata_n = last_fetch_rdata_Q;
     last_fetch_valid_n = last_fetch_valid_Q;
     last_addr_misaligned_n = last_addr_misaligned_Q;
+    fetch_stalled_n = fetch_stalled_Q;
 
     valid_o = 1'b0;
     instr_req_o = 1'b0;
@@ -146,6 +151,7 @@ module riscv_prefetch_buffer_small
     unique case (CS)
       IDLE: begin
         last_addr_misaligned_n = 1'b0;
+        fetch_stalled_n = 1'b0;
 
         if (branch_i) begin // If we have a branch condition, fetch from the new address
           last_fetch_valid_n = 1'b0;
@@ -244,15 +250,19 @@ module riscv_prefetch_buffer_small
           
           NS = WAIT_RVALID;
 
-          // Wait for valid data from instruction memory and proceed only if a new instruction is wanted.
-          if (instr_rvalid_i) begin
+          // Wait for valid data from instruction memory and proceed only if a new instruction is wanted OR if we were stalled.
+          if (instr_rvalid_i | fetch_stalled_Q) begin
+            
 
             if (ready_i) begin // Do not alter registers if ID is not ready
               // Regs
-              last_fetch_rdata_n = instr_rdata_i[31:16];
+              last_fetch_rdata_n = instr_mux[31:16];
               last_fetch_valid_n = 1'b1;
               last_addr_misaligned_n = 1'b0;
+              fetch_stalled_n = 1'b0;
             end
+            else
+              fetch_stalled_n = 1'b1; // Stall fetch
 
             addr_mux = addr_pc_next;
 
@@ -271,7 +281,7 @@ module riscv_prefetch_buffer_small
 
             // If our wanted instruction address is aligned, we have fetched all parts needed.
             else if (fetch_addr_Q[1] == 1'b0) begin 
-              if (instr_rdata_i[1:0] != 2'b11) begin // If compressed instruction
+              if (instr_mux[1:0] != 2'b11) begin // If compressed instruction
                 instruction_format = C_INSTR_ALIGNED_DIRECT;
                 addr_o = fetch_addr_Q;
                 valid_o = 1'b1;
@@ -303,7 +313,7 @@ module riscv_prefetch_buffer_small
             end
             
             else begin // If wanted instruction address is misaligned
-              if (instr_rdata_i[17:16] != 2'b11) begin // If compressed instruction
+              if (instr_mux[17:16] != 2'b11) begin // If compressed instruction
               
                 instruction_format = C_INSTR_MISALIGNED_DIRECT;
                 addr_o = fetch_addr_Q;
@@ -326,9 +336,10 @@ module riscv_prefetch_buffer_small
                 instruction_format = C_INSTR_IN_REG_OR_FIRST_FETCH;
 
                 fetch_addr_n = addr_mux;
-                last_fetch_rdata_n = instr_rdata_i[31:16];
+                last_fetch_rdata_n = instr_mux[31:16];
                 last_fetch_valid_n = 1'b1;
                 last_addr_misaligned_n = 1'b1;
+                fetch_stalled_n = 1'b0;
                 last_fetch_addr_n = fetch_addr_Q; // Save address to restore it when we need to output instruction address
 
                 
@@ -343,22 +354,14 @@ module riscv_prefetch_buffer_small
             end
           end
           else begin
-            // (instr_rvalid_i): Hotfix to cope with bug in instruction memory interface, which is does not maintained output for more than
-            // one cycle after a successful grant. If we now have a stall in the upper pipeline we get stuck in state WAIT_RVALID. 
-            // Fix bug by going doing a new request, but loosing some cycles, and having additional memory requests.
-            // TODO: Fix the bug in instruction memory controller.
-            instr_req_o = 1'b1;
-            instr_addr_o = {fetch_addr_Q[31:2], 2'b00};
-            if (instr_gnt_i)
-              NS = WAIT_RVALID;
-            else
-              NS = WAIT_GNT;
+            if (fetch_stalled_Q)
           end
         end 
 
         else begin // if branch_i
           last_fetch_valid_n = 1'b0;
           last_addr_misaligned_n = 1'b0;
+          fetch_stalled_n = 1'b0;
           
           if (instr_rvalid_i) begin
             if (req_i) begin
@@ -427,9 +430,12 @@ module riscv_prefetch_buffer_small
 
       fetch_addr_Q            <= 32'h0000;
       last_fetch_addr_Q       <= 32'h0000;
+      current_fetch_rdata_Q   <= 32'h0000;
       last_fetch_rdata_Q      <= 16'h00;
       last_fetch_valid_Q      <= 1'b0;
       last_addr_misaligned_Q  <= 1'b0;
+      fetch_stalled_Q         <= 1'b0;
+
     end  
     else begin
       CS                      <= NS;
@@ -439,6 +445,7 @@ module riscv_prefetch_buffer_small
       last_fetch_rdata_Q      <= last_fetch_rdata_n;
       last_fetch_valid_Q      <= last_fetch_valid_n;
       last_addr_misaligned_Q  <= last_addr_misaligned_n;
+      fetch_stalled_Q         <= fetch_stalled_n;
     end
   end
 
