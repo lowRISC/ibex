@@ -389,10 +389,10 @@ def report_specific(config_name, littleRISCV_path):
     else:
         clock = "undefined"
 
-    return "{}\t\t{}\t\t{}".format(config_name,area,clock)
+    return "{},{},{}".format(config_name,area,clock)
 
 def report(littleRISCV_path):
-    print("Config\t\tArea (kGE)\t\tFrequency (MHz)")
+    print("Config,Area (kGE),Frequency (MHz)")
 
     for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results")):
         custom_p = re.compile("^custom.*$")
@@ -402,14 +402,14 @@ def report(littleRISCV_path):
     
 
 def reportAll(littleRISCV_path):
-    print("Config\t\tArea (kGE)\t\tFrequency (MHz)")
+    print("Config,Area (kGE),Frequency (MHz)")
     for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results")):
         print(report_specific(filename, littleRISCV_path))
 
 def testAll(littleRISCV_path):
     backupConfig(littleRISCV_path)
 
-    for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results")):
+    for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/example_configs")):
         print("Testing RTL of {}".format(filename))
         overwriteConfig(os.path.abspath(littleRISCV_path + "/scripts/example_configs/" + filename), littleRISCV_path, backup=False)
         test(littleRISCV_path)
@@ -426,12 +426,14 @@ def test(littleRISCV_path):
 
     print("Testing current configuration.")
     print("Compiling design")
-    p = subprocess.Popen(["make vcompile"], cwd=os.path.abspath(littleRISCV_path+"/../../sw/build"))
+    p = subprocess.Popen(["make", "vcompile"], cwd=os.path.abspath(littleRISCV_path+"/../../sw/build"))
     p.wait()
     print("Running helloworld")
-    p = subprocess.Popen(["make helloworld.vsimc"], cwd=os.path.abspath(littleRISCV_path+"/../../sw/build"))
+    p = subprocess.Popen(["make", "helloworld.vsimc"], cwd=os.path.abspath(littleRISCV_path+"/../../sw/build"))
     p.wait()
-
+    print("Running compressed")
+    p = subprocess.Popen(["make", "compressed.vsimc"], cwd=os.path.abspath(littleRISCV_path+"/../../sw/build"))
+    p.wait()
     print("Testing finished.")
 
 
