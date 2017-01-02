@@ -437,6 +437,7 @@ module riscv_prefetch_buffer_small
 
       fetch_addr_Q            <= fetch_addr_n;
       last_fetch_addr_Q       <= last_fetch_addr_n;
+      current_fetch_rdata_Q   <= current_fetch_rdata_n;
       last_fetch_rdata_Q      <= last_fetch_rdata_n;
       last_fetch_valid_Q      <= last_fetch_valid_n;
       last_addr_misaligned_Q  <= last_addr_misaligned_n;
