@@ -156,8 +156,11 @@ module riscv_if_stage #(
 
         // CONFIG_REGION: SMALL_IF
         `ifdef SMALL_IF
+
+        // CONFIG_REGION: ONLY_ALIGNED
+        `ifdef ONLY_ALIGNED
           // prefetch buffer, caches a fixed number of instructions
-            riscv_prefetch_buffer_small prefetch_buffer_i
+            riscv_prefetch_buffer_only_aligned prefetch_buffer_i
               (
                 .clk               ( clk                         ),
                 .rst_n             ( rst_n                       ),
@@ -166,12 +169,6 @@ module riscv_if_stage #(
 
                 .branch_i          ( branch_req                  ),
                 .addr_i            ( {fetch_addr_n[31:1], 1'b0}  ),
-
-                // CONFIG_REGION: HWLP_SUPPORT
-                `ifdef HWLP_SUPPORT
-                .hwloop_i          ( hwlp_jump                   ),
-                .hwloop_target_i   ( hwlp_target                 ),
-                `endif // HWLP_SUPPORT
 
                 .ready_i           ( fetch_ready                 ),
                 .valid_o           ( fetch_valid                 ),
@@ -188,6 +185,35 @@ module riscv_if_stage #(
                 // Prefetch Buffer Status
                 .busy_o            ( prefetch_busy               )
               );
+        `else 
+            // prefetch buffer, caches a fixed number of instructions
+            riscv_prefetch_buffer_small prefetch_buffer_i
+              (
+                .clk               ( clk                         ),
+                .rst_n             ( rst_n                       ),
+
+                .req_i             ( req_i                       ),
+
+                .branch_i          ( branch_req                  ),
+                .addr_i            ( {fetch_addr_n[31:1], 1'b0}  ),
+
+                .ready_i           ( fetch_ready                 ),
+                .valid_o           ( fetch_valid                 ),
+                .rdata_o           ( fetch_rdata                 ),
+                .addr_o            ( fetch_addr                  ),
+
+                // goes to instruction memory / instruction cache
+                .instr_req_o       ( instr_req_o                 ),
+                .instr_addr_o      ( instr_addr_o                ),
+                .instr_gnt_i       ( instr_gnt_i                 ),
+                .instr_rvalid_i    ( instr_rvalid_i              ),
+                .instr_rdata_i     ( instr_rdata_i               ),
+
+                // Prefetch Buffer Status
+                .busy_o            ( prefetch_busy               )
+              );
+        `endif // ONLY_ALIGNED
+
         `else // SMALL_IF
         generate
           if (RDATA_WIDTH == 32) begin : prefetch_32

@@ -23,6 +23,7 @@ riscv:
     mult.sv,
     prefetch_buffer.sv,
     prefetch_buffer_small.sv,
+    prefetch_buffer_only_aligned.sv,
     prefetch_L0_buffer.sv,
     riscv_core.sv,
   ]
