@@ -317,12 +317,14 @@ def synthesizeAll(littleRISCV_path):
         p = subprocess.Popen([os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")], cwd=os.path.abspath(littleRISCV_path+"/../../../synopsys/"))
         p.wait()
 
+        content = ""
+
         # Get clock of synopsys setup configuration
         with open(os.path.abspath(littleRISCV_path+"/../../../synopsys/scripts/setup/setup.tcl"), encoding="utf8") as f:
-            content = f.readlines()
+            content = f.read()
 
-        clock_p = re.compile("^set\sCLOCK_SLOW\s(\d+\.?\d*);\.*$")
-        m = clock_p.match()
+        clock_p = re.compile("set\sCLOCK_SLOW\s(\d+\.?\d*);")
+        m = clock_p.match(content)
 
         if m is not None:
             clock = m.group(1)
@@ -349,12 +351,14 @@ def synthesize(littleRISCV_path):
     p = subprocess.Popen([os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")], cwd=os.path.abspath(littleRISCV_path+"/../../../synopsys/"))
     p.wait()
 
+    content = ""
+
     # Get clock of synopsys setup configuration
     with open(os.path.abspath(littleRISCV_path+"/../../../synopsys/scripts/setup/setup.tcl"), encoding="utf8") as f:
-        content = f.readlines()
+        content = f.read()
 
-    clock_p = re.compile("^set\sCLOCK_SLOW\s(\d+\.?\d*);\.*$")
-    m = clock_p.match()
+    clock_p = re.compile("set\sCLOCK_SLOW\s(\d+\.?\d*);")
+    m = clock_p.match(content)
 
     if m is not None:
         clock = str(m.group(1))
