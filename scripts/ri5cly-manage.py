@@ -77,7 +77,7 @@ def main():
                         help='will report all sample configs which have been synthesized')
     parser.add_argument('--test_all', dest='test_all', action='store_true',
                         help='will run some basic RTL simulations test, like helloworld on all sample configs in the scripts/example_configs folder')
-    parser.add_argument('--setup_file', dest='setup_file', metavar='.../new_setup.tcl',
+    parser.add_argument('--setup_script', dest='setup_script', metavar='.../new_setup.tcl',
                         help='will overwrite setup script in Synopsys (imperio/synopsys/scripts/setup/setup.tcl) with given file')
     args = parser.parse_args()
 
@@ -116,8 +116,8 @@ def main():
         test(littleRISCV_path)
         action_taken = True
 
-    if args.setup_file is not None
-        synopsysSetSetupScript(littleRISCV_path)
+    if args.setup_script is not None:
+        synopsysSetSetupScript(args.setup_script, littleRISCV_path)
         action_taken = True
 
     if action_taken == False:
@@ -125,18 +125,18 @@ def main():
         parser.print_help()
 
 
-def backupConfig(new_config_path, littleRISCV_path):
-    print("Backing up current config (include/riscv_config.sv) to (include/riscv_config.sv.bak)".format(new_config_path))
+def backupConfig(littleRISCV_path):
+    print("Backing up current config (include/riscv_config.sv) to (include/riscv_config.sv.bak)")
     shutil.copy(os.path.abspath(littleRISCV_path + "/include/riscv_config.sv"), os.path.abspath(littleRISCV_path + "/include/riscv_config.sv.bak")) # Backup
 
-def restoreConfig(new_config_path, littleRISCV_path):
-    print("Restoring backup config (include/riscv_config.sv.bak).")
+def restoreConfig(littleRISCV_path):
+    print("Restoring backup config from (include/riscv_config.sv.bak).")
     shutil.copy(os.path.abspath(littleRISCV_path + "/include/riscv_config.sv"), os.path.abspath(littleRISCV_path + "/include/riscv_config.sv.bak")) # Backup
     
 def overwriteConfig(new_config_path, littleRISCV_path, backup=True):
     print("Overwriting current config (include/riscv_config.sv) with new one ({})".format(new_config_path))
     if backup:
-        backupConfig(new_config_path, littleRISCV_path)
+        backupConfig(littleRISCV_path)
     shutil.copy(os.path.abspath(new_config_path), os.path.abspath(littleRISCV_path + "/include/riscv_config.sv")) # Copy new config to littleRISCV
 
 
@@ -291,6 +291,13 @@ def exportCleanVersion(build_path, littleRISCV_path, zip=False):
         zipf.close()
         shutil.rmtree(os.path.abspath(build_path), ignore_errors=True)
 
+def synopsysSetSetupScript(setup_script, littleRISCV_path):
+    if not os.path.exists(os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys.py")):
+        print("littleRISCV repository not contained in Imperio/Pulpino project! Canceling.")
+        return
+    print("Changing setup script in Synopsys (imperio/synopsys/scripts/setup/setup.tcl) to given setup file.")
+    shutil.copy(os.path.abspath(setup_script), os.path.abspath(littleRISCV_path + "/../../../synopsys/scripts/setup/setup.tcl"))
+
 
 def synthesizeAll(littleRISCV_path):
     if not os.path.exists(os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")):
@@ -300,7 +307,7 @@ def synthesizeAll(littleRISCV_path):
     if not os.path.isdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/")):
         os.mkdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/"))
 
-    backupConfig()
+    backupConfig(littleRISCV_path)
 
     print("Synthsizing all configs in (/scripts/example_configs/).")
 
@@ -314,11 +321,11 @@ def synthesizeAll(littleRISCV_path):
         with open(os.path.abspath(littleRISCV_path+"/../../../synopsys/scripts/setup/setup.tcl"), encoding="utf8") as f:
             content = f.readlines()
 
-        clock_p = re.compile("^set\sCLOCK_SLOW\s(\d+);\.*$")
+        clock_p = re.compile("^set\sCLOCK_SLOW\s(\d+\.?\d*);\.*$")
         m = clock_p.match()
 
         if m is not None:
-            clock = str(m.group(1))
+            clock = m.group(1)
         else:
             clock = "undefined"
 
@@ -326,16 +333,10 @@ def synthesizeAll(littleRISCV_path):
         shutil.copytree(os.path.abspath(littleRISCV_path + "/../../../synopsys"), os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/" + filename + "_{}".format(clock)))
         print("Synthesized {}".format(filename + "_{}".format(clock)))
 
-    restoreConfig()
+    restoreConfig(littleRISCV_path)
     print("Synthesized all configurations! Bye.")
 
 
-def synopsysSetSetupScript(littleRISCV_path, setup_file):
-    if not os.path.exists(os.path.abspath(littleRISCV_path+"/../../../synopsys/start_synopsys_synth.py")):
-        print("littleRISCV repository not contained in Imperio/Pulpino project! Canceling.")
-        return
-    print("Changing setup script in Synopsys (imperio/synopsys/scripts/setup/setup.tcl) to given setup file.")
-    shutil.mv(os.path.abspath(setup_file), os.path.abspath(littleRISCV_path + "../../../synopsys/scripts/setup/setup.tcl"))
 
 
 def synthesize(littleRISCV_path):
@@ -352,7 +353,7 @@ def synthesize(littleRISCV_path):
     with open(os.path.abspath(littleRISCV_path+"/../../../synopsys/scripts/setup/setup.tcl"), encoding="utf8") as f:
         content = f.readlines()
 
-    clock_p = re.compile("^set\sCLOCK_SLOW\s(\d+);\.*$")
+    clock_p = re.compile("^set\sCLOCK_SLOW\s(\d+\.?\d*);\.*$")
     m = clock_p.match()
 
     if m is not None:
@@ -379,22 +380,25 @@ def report_specific(config_name, littleRISCV_path):
     else:
         area = "undefined"
 
-    clock_p = re.compile("^.*_(\d+)$")
+    clock_p = re.compile("^.*_(\d+\.?\d*)$")
     m = clock_p.match(config_name)
 
     if m is not None:
-        clock = m.group(1)
+        clock = float(m.group(1))
+        clock = 1000/clock # [MHz]
     else:
         clock = "undefined"
 
     return "{}\t\t{}\t\t{}".format(config_name,area,clock)
 
 def report(littleRISCV_path):
-    if not os.path.exists(os.path.abspath(littleRISCV_path+"/scripts/synthesis_results/custom*")):
-        print("No synthesized version found called (/scripts/synthesis_results/custom*)")
-        return
     print("Config\t\tArea (kGE)\t\tFrequency (MHz)")
-    print(report_specific("custom*", littleRISCV_path))
+
+    for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results")):
+        custom_p = re.compile("^custom.*$")
+        m = custom_p.match(filename)
+        if m is not None:
+            print(report_specific(filename, littleRISCV_path))
     
 
 def reportAll(littleRISCV_path):
@@ -403,14 +407,14 @@ def reportAll(littleRISCV_path):
         print(report_specific(filename, littleRISCV_path))
 
 def testAll(littleRISCV_path):
-    backupConfig()
+    backupConfig(littleRISCV_path)
 
     for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results")):
         print("Testing RTL of {}".format(filename))
         overwriteConfig(os.path.abspath(littleRISCV_path + "/scripts/example_configs/" + filename), littleRISCV_path, backup=False)
         test(littleRISCV_path)
 
-    restoreConfig()
+    restoreConfig(littleRISCV_path)
     print("Tested all configurations! Bye.")
 
 
