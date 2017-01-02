@@ -97,7 +97,7 @@ module riscv_prefetch_buffer_small
   assign instr_is_in_regs = ( last_fetch_valid_Q && addr_is_misaligned);
   assign instr_in_regs_is_compressed = (last_fetch_rdata_Q[1:0] != 2'b11); // Upper half is compressed instruction
 
-  assign instr_mux = last_fetch_stalled_Q ? current_fetch_rdata_Q : instr_rdata_i;
+  assign instr_mux = fetch_stalled_Q ? current_fetch_rdata_Q : instr_rdata_i;
 
   // Calculate next address. This is the actual PC of littleRISCV. Will use same adder instance for all cases
   always_comb
