@@ -372,7 +372,18 @@ def synthesize(littleRISCV_path):
 
 
 def report_specific(config_name, littleRISCV_path):
-    process = os.popen("cat " + os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/" + config_name + "/reports/imperio_*_area* | grep 'pulpino_i/core_region_i/RISCV_CORE' "))
+    clock_p = re.compile("^.*_(\d+\.?\d*)$")
+    m = clock_p.match(config_name)
+
+    if m is not None:
+        period = m.group(1)
+        clock = float(m.group(1))
+        clock = 1000/clock # [MHz]
+    else:
+        period = "*"
+        clock = "undefined"
+
+    process = os.popen("cat " + os.path.abspath(littleRISCV_path + "/scripts/synthesis_results/" + config_name + "/reports/imperio_" + period +"_area.rpt | grep 'pulpino_i/core_region_i/RISCV_CORE' "))
     area = process.read()
     process.close()
     area_pattern = re.compile("pulpino_i/core_region_i/RISCV_CORE\s*(\d+\.?\d*)\s*.*")
@@ -383,15 +394,6 @@ def report_specific(config_name, littleRISCV_path):
         area /= 1.44 * 1000.0 # 1k GE (gate equivalent)
     else:
         area = "undefined"
-
-    clock_p = re.compile("^.*_(\d+\.?\d*)$")
-    m = clock_p.match(config_name)
-
-    if m is not None:
-        clock = float(m.group(1))
-        clock = 1000/clock # [MHz]
-    else:
-        clock = "undefined"
 
     return "{},{},{}".format(config_name,area,clock)
 
@@ -432,6 +434,7 @@ def test(littleRISCV_path):
     print("Compiling design")
     p = subprocess.Popen(["make", "vcompile"], cwd=os.path.abspath(littleRISCV_path+"/../../sw/build"))
     p.wait()
+
     print("Running helloworld")
     p = subprocess.Popen(["make", "helloworld.vsimc"], cwd=os.path.abspath(littleRISCV_path+"/../../sw/build"))
     p.wait()
