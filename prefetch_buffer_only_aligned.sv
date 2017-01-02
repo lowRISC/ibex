@@ -249,7 +249,7 @@ module riscv_prefetch_buffer_only_aligned
             end
             
             else begin // If wanted instruction address is misaligned
-                instruction_format = C_INSTR_MISALIGNED_DIRECT;
+                instruction_format = C_INSTR_MISALIGNED;
                 addr_o = fetch_addr_Q;
                 valid_o = 1'b1;
                 
