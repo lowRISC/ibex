@@ -239,7 +239,6 @@ module riscv_load_store_unit
     `else 
     rdata_w_ext = data_rdata_i[31:0];
     `endif // ONLY_ALIGNED
-    endcase
   end
 
   // sign extension for half words
@@ -297,6 +296,7 @@ module riscv_load_store_unit
         else
           rdata_h_ext = {{16{data_rdata_i[31]}}, data_rdata_i[31:16]};
       end
+    endcase // case (rdata_offset_q[1])
     `endif // ONLY_ALIGNED
   end
 
