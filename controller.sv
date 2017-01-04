@@ -145,8 +145,6 @@ module riscv_controller
   `else 
   input logic         reg_d_ex_is_reg_a_i,
   input logic         reg_d_ex_is_reg_b_i,
-  input logic         reg_d_wb_is_reg_a_i,
-  input logic         reg_d_wb_is_reg_b_i,
   input logic         reg_d_alu_is_reg_a_i,
   input logic         reg_d_alu_is_reg_b_i,
   `endif // THREE_PORT_REG_FILE

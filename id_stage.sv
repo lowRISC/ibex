@@ -566,7 +566,7 @@ module riscv_id_stage
         REGC_ZERO:  regfile_addr_rc_id = '0;
         REGC_RD:    regfile_addr_rc_id = instr[`REG_D];
         REGC_S1:    regfile_addr_rc_id = instr[`REG_S1];
-        default:     regfile_addr_rc_id = '0;
+        default:    regfile_addr_rc_id = '0;
       endcase
     end
   `endif // THREE_PORT_REG_FILE
@@ -1564,7 +1564,7 @@ always_ff @(posedge clk, negedge rst_n)
           regfile_alu_waddr_ex_o    <= regfile_alu_waddr_id;
         end
         `else 
-        if (regfile_we_id & regfile_alu_we_id) begin
+        if (regfile_we_id | regfile_alu_we_id) begin
           regfile_alu_waddr_ex_o    <= regfile_alu_waddr_id;
         end
         `endif // THREE_PORT_REG_FILE
