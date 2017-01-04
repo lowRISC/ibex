@@ -1246,9 +1246,9 @@ module riscv_decoder
   logic regb_is_illegal;
   logic waddr_is_illegal;
 
-  assign rega_is_illegal = instr[19] & ((alu_op_a_mux_sel == OP_A_REGA_OR_FWD) || (alu_op_a_mux_sel == OP_A_REGB_OR_FWD));
-  assign regb_is_illegal = instr[24] & ((alu_op_b_mux_sel == OP_B_REGA_OR_FWD) || (alu_op_b_mux_sel == OP_B_REGB_OR_FWD));
-  assign waddr_is_illegal = instr[11] & (regfile_alu_we_id);
+  assign rega_is_illegal = instr[19] & ((alu_op_a_mux_sel_o == OP_A_REGA_OR_FWD) || (alu_op_a_mux_sel_o == OP_A_REGB_OR_FWD));
+  assign regb_is_illegal = instr[24] & ((alu_op_b_mux_sel_o == OP_B_REGA_OR_FWD) || (alu_op_b_mux_sel_o == OP_B_REGB_OR_FWD));
+  assign waddr_is_illegal = instr[11] & (regfile_alu_we);
 
   assign illegal_reg_addr = rega_is_illegal | regb_is_illegal | waddr_is_illegal;
   `endif // RV32E
