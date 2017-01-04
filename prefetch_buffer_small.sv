@@ -61,7 +61,7 @@ module riscv_prefetch_buffer_small
   logic [31:0]  current_fetch_rdata_Q, current_fetch_rdata_n; // A 32 bit register to store full instruction when valid fetch was stalled. Reduces memory accesses
 
   logic         last_fetch_valid_Q, last_fetch_valid_n; // 16 bit instruction (part) in register of last fetch is valid
-  logic         last_addr_misaligned_Q, last_addr_misaligned_n; // Indicates whether we need to fetch the second part of an misaligned full instruction
+  logic         is_second_fetch_Q, is_second_fetch_n; // Indicates whether we need to fetch the second part of an misaligned full instruction
   logic         fetch_stalled_Q, fetch_stalled_n; // Current fetch is stalled and we need to store full 32 bit instruction to memory to reduce memory accesses
 
   logic [31:0]  last_fetch_addr_Q, last_fetch_addr_n; // The adress from the last fetch
@@ -136,7 +136,7 @@ module riscv_prefetch_buffer_small
     last_fetch_addr_n = last_fetch_addr_Q;
     last_fetch_rdata_n = last_fetch_rdata_Q;
     last_fetch_valid_n = last_fetch_valid_Q;
-    last_addr_misaligned_n = last_addr_misaligned_Q;
+    is_second_fetch_n = is_second_fetch_Q;
     fetch_stalled_n = fetch_stalled_Q;
 
     valid_o = 1'b0;
@@ -150,7 +150,7 @@ module riscv_prefetch_buffer_small
 
     unique case (CS)
       IDLE: begin
-        last_addr_misaligned_n = 1'b0;
+        is_second_fetch_n = 1'b0;
         fetch_stalled_n = 1'b0;
 
         if (branch_i) begin // If we have a branch condition, fetch from the new address
@@ -178,7 +178,7 @@ module riscv_prefetch_buffer_small
             // We need to fetch the other part in the next cycle
             else begin
               instruction_format = C_INSTR_IN_REG_OR_FIRST_FETCH; 
-              last_addr_misaligned_n = 1'b1;
+              is_second_fetch_n = 1'b1;
               last_fetch_addr_n = fetch_addr_Q; // Save address to restore it when we need to output instruction address
               addr_mux = addr_pc_next;
               fetch_addr_n = addr_mux;
@@ -258,7 +258,7 @@ module riscv_prefetch_buffer_small
               // Regs
               last_fetch_rdata_n = instr_mux[31:16];
               last_fetch_valid_n = 1'b1;
-              last_addr_misaligned_n = 1'b0;
+              is_second_fetch_n = 1'b0;
               fetch_stalled_n = 1'b0;
             end
             else
@@ -267,7 +267,7 @@ module riscv_prefetch_buffer_small
             addr_mux = addr_pc_next;
 
             // If our last access to the instruction memory was fetching the first part, we now have fetched the second part and can output it
-            if (last_addr_misaligned_Q) begin
+            if (is_second_fetch_Q) begin
               instruction_format = INSTR_IN_REG;
               addr_o = last_fetch_addr_Q;
               valid_o = 1'b1;
@@ -338,7 +338,7 @@ module riscv_prefetch_buffer_small
                 fetch_addr_n = addr_mux;
                 last_fetch_rdata_n = instr_mux[31:16];
                 last_fetch_valid_n = 1'b1;
-                last_addr_misaligned_n = 1'b1;
+                is_second_fetch_n = 1'b1;
                 fetch_stalled_n = 1'b0;
                 last_fetch_addr_n = fetch_addr_Q; // Save address to restore it when we need to output instruction address
 
@@ -357,7 +357,7 @@ module riscv_prefetch_buffer_small
 
         else begin // if branch_i
           last_fetch_valid_n = 1'b0;
-          last_addr_misaligned_n = 1'b0;
+          is_second_fetch_n = 1'b0;
           fetch_stalled_n = 1'b0;
           
           if (instr_rvalid_i) begin
@@ -429,7 +429,7 @@ module riscv_prefetch_buffer_small
       current_fetch_rdata_Q   <= 32'h0000;
       last_fetch_rdata_Q      <= 16'h00;
       last_fetch_valid_Q      <= 1'b0;
-      last_addr_misaligned_Q  <= 1'b0;
+      is_second_fetch_Q  <= 1'b0;
       fetch_stalled_Q         <= 1'b0;
 
     end  
@@ -441,7 +441,7 @@ module riscv_prefetch_buffer_small
       current_fetch_rdata_Q   <= current_fetch_rdata_n;
       last_fetch_rdata_Q      <= last_fetch_rdata_n;
       last_fetch_valid_Q      <= last_fetch_valid_n;
-      last_addr_misaligned_Q  <= last_addr_misaligned_n;
+      is_second_fetch_Q  <= is_second_fetch_n;
       fetch_stalled_Q         <= fetch_stalled_n;
     end
   end
