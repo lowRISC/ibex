@@ -113,10 +113,7 @@ module riscv_controller
   input  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_ex_i,         // FW: write address from EX stage
   `endif // THREE_PORT_REG_FILE
   input  logic        regfile_we_ex_i,            // FW: write enable from  EX stage
-  // CONFIG_REGION: THREE_PORT_REG_FILE
-  `ifdef THREE_PORT_REG_FILE
   input  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_wb_i,         // FW: write address from WB stage
-  `endif // THREE_PORT_REG_FILE
   input  logic        regfile_we_wb_i,            // FW: write enable from  WB stage
 
   input  logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_fw_i,     // FW: ALU/MUL write address from EX stage
