@@ -143,8 +143,8 @@ module riscv_controller
   input logic         reg_d_alu_is_reg_b_i,
   input logic         reg_d_alu_is_reg_c_i,
   `else 
-  input logic         reg_d_ex_is_reg_a_i,
-  input logic         reg_d_ex_is_reg_b_i,
+  input logic         reg_d_wb_is_reg_a_i,
+  input logic         reg_d_wb_is_reg_b_i,
   input logic         reg_d_alu_is_reg_a_i,
   input logic         reg_d_alu_is_reg_b_i,
   `endif // THREE_PORT_REG_FILE
@@ -591,7 +591,7 @@ module riscv_controller
          ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1))) )
     `else
     if ((jump_in_dec_i == BRANCH_JALR) &&
-        (((regfile_we_wb_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1)) ||
+        (((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_a_i == 1'b1)) ||
          ((regfile_we_ex_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1)) ||
          ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1))) )
     `endif // THREE_PORT_REG_FILE
@@ -635,9 +635,9 @@ module riscv_controller
     `else 
     if (regfile_we_wb_i == 1'b1)
     begin
-      if (reg_d_alu_is_reg_a_i == 1'b1)
+      if (reg_d_wb_is_reg_a_i == 1'b1)
         operand_a_fw_mux_sel_o = SEL_FW_WB;
-      if (reg_d_alu_is_reg_b_i == 1'b1)
+      if (reg_d_wb_is_reg_b_i == 1'b1)
         operand_b_fw_mux_sel_o = SEL_FW_WB;
     end
     `endif // THREE_PORT_REG_FILE
