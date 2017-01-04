@@ -119,9 +119,6 @@ module riscv_controller
   input  logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_fw_i,     // FW: ALU/MUL write address from EX stage
   input  logic        regfile_alu_we_fw_i,        // FW: ALU/MUL write enable from  EX stage
 
-
-  `endif // THREE_PORT_REG_FILE
-
   // forwarding signals
   output logic [1:0]  operand_a_fw_mux_sel_o,     // regfile ra data selector form ID stage
   output logic [1:0]  operand_b_fw_mux_sel_o,     // regfile rb data selector form ID stage
@@ -619,7 +616,7 @@ module riscv_controller
     // CONFIG_REGION: THREE_PORT_REG_FILE
     `ifdef THREE_PORT_REG_FILE
     operand_c_fw_mux_sel_o = SEL_REGFILE;
-    `endif // THREE_PORT_REG_FILE
+    `endif // THREE_PORT_REG_FILE:
 
     // Forwarding WB -> ID
 
@@ -641,8 +638,6 @@ module riscv_controller
         operand_a_fw_mux_sel_o = SEL_FW_WB;
       if (reg_d_alu_is_reg_b_i == 1'b1)
         operand_b_fw_mux_sel_o = SEL_FW_WB;
-      if (reg_d_alu_is_reg_c_i == 1'b1)
-        operand_c_fw_mux_sel_o = SEL_FW_WB;
     end
     `endif // THREE_PORT_REG_FILE
 
