@@ -514,7 +514,10 @@ module riscv_core
     .alu_vec_mode_ex_o            ( alu_vec_mode_ex      ),
     `endif // VEC_SUPPORT
 
+    // CONFIG_REGION: THREE_PORT_REG_FILE
+    `ifdef THREE_PORT_REG_FILE
     .regfile_waddr_ex_o           ( regfile_waddr_ex     ),
+    `endif // THREE_PORT_REG_FILE
     .regfile_we_ex_o              ( regfile_we_ex        ),
 
     .regfile_alu_we_ex_o          ( regfile_alu_we_ex    ),

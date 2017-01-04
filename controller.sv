@@ -108,7 +108,10 @@ module riscv_controller
 
   // Forwarding signals from regfile
 
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   input  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_ex_i,         // FW: write address from EX stage
+  `endif // THREE_PORT_REG_FILE
   input  logic        regfile_we_ex_i,            // FW: write enable from  EX stage
   // CONFIG_REGION: THREE_PORT_REG_FILE
   `ifdef THREE_PORT_REG_FILE
@@ -569,9 +572,9 @@ module riscv_controller
     if ((data_req_ex_i == 1'b1) && (regfile_we_ex_i == 1'b1) &&
         ((reg_d_ex_is_reg_a_i == 1'b1) || (reg_d_ex_is_reg_b_i == 1'b1) || (reg_d_ex_is_reg_c_i == 1'b1)) )
     `else
-	if ((data_req_ex_i == 1'b1) && (regfile_we_ex_i == 1'b1) &&
-        ((reg_d_ex_is_reg_a_i == 1'b1) || (reg_d_ex_is_reg_b_i == 1'b1)) )
-	`endif // THREE_PORT_REG_FILE
+	  if ((data_req_ex_i == 1'b1) && (regfile_we_ex_i == 1'b1) &&
+        ((reg_d_alu_is_reg_a_i == 1'b1) || (reg_d_alu_is_reg_b_i == 1'b1)) )
+	  `endif // THREE_PORT_REG_FILE
     begin
       deassert_we_o   = 1'b1;
       load_stall_o    = 1'b1;
@@ -591,7 +594,7 @@ module riscv_controller
     `else
     if ((jump_in_dec_i == BRANCH_JALR) &&
         (((regfile_we_wb_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1)) ||
-         ((regfile_we_ex_i == 1'b1) && (reg_d_ex_is_reg_a_i == 1'b1)) ||
+         ((regfile_we_ex_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1)) ||
          ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1))) )
     `endif // THREE_PORT_REG_FILE
     begin

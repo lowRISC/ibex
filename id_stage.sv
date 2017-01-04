@@ -1234,9 +1234,12 @@ module riscv_id_stage
     // CONFIG_REGION: THREE_PORT_REG_FILE
     `ifdef THREE_PORT_REG_FILE
     .regfile_waddr_ex_i             ( regfile_waddr_ex_o     ), // Write address for register file from ex-wb- pipeline registers
-    .regfile_we_ex_i                ( regfile_we_ex_o        ),
     `endif // THREE_PORT_REG_FILE
+    .regfile_we_ex_i                ( regfile_we_ex_o        ),
+    // CONFIG_REGION: THREE_PORT_REG_FILE
+    `ifdef THREE_PORT_REG_FILE
     .regfile_waddr_wb_i             ( regfile_waddr_wb_i     ), // Write address for register file from ex-wb- pipeline registers
+    `endif // THREE_PORT_REG_FILE
     .regfile_we_wb_i                ( regfile_we_wb_i        ),
 
     // regfile port 2 (or multiplexer signal in case of a 2r1w)
