@@ -101,6 +101,10 @@
 // will reduce the register file to 16 words
 `define RV32E
 
+// CONFIG: ONLY_ALIGNED
+// will only allow aligned memory accesses and therefore overlapping mustn't occur
+//`define ONLY_ALIGNED
+
 `endif
 `endif
 `endif
