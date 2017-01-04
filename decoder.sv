@@ -158,6 +158,11 @@ module riscv_decoder
 
   logic [1:0] csr_op;
 
+  // CONFIG_REGION: RV32E
+  `ifdef RV32E
+  logic illegal_reg_addr;
+  `endif // RV32E
+
   /////////////////////////////////////////////
   //   ____                     _            //
   //  |  _ \  ___  ___ ___   __| | ___ _ __  //
@@ -1186,6 +1191,12 @@ module riscv_decoder
     if (illegal_c_insn_i) begin
       illegal_insn_o = 1'b1;
     end
+    // CONFIG_REGION: RV32E
+    `ifdef RV32E
+    else if (illegal_reg_addr) begin
+      illegal_insn_o = 1'b1;
+    end
+    `endif // RV32E
 
     // CONFIG_REGION: ONLY_ALIGNED
     `ifndef ONLY_ALIGNED
@@ -1225,6 +1236,24 @@ module riscv_decoder
     end
     `endif // MUL_SUPPORT
   end
+
+
+
+  // CONFIG_REGION: RV32E
+  `ifdef RV32E
+  // Check for illegal register address (there are only 16 registers in RV32E)
+  logic rega_is_illegal;
+  logic regb_is_illegal;
+  logic waddr_is_illegal;
+
+  assign rega_is_illegal = instr[19] & ((alu_op_a_mux_sel == OP_A_REGA_OR_FWD) || (alu_op_a_mux_sel == OP_A_REGB_OR_FWD));
+  assign regb_is_illegal = instr[24] & ((alu_op_b_mux_sel == OP_B_REGA_OR_FWD) || (alu_op_b_mux_sel == OP_B_REGB_OR_FWD));
+  assign waddr_is_illegal = instr[11] & (regfile_alu_we_id);
+
+  assign illegal_reg_addr = rega_is_illegal | regb_is_illegal | waddr_is_illegal;
+  `endif // RV32E
+
+
 
   // deassert we signals (in case of stalls)
 
