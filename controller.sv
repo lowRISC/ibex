@@ -107,13 +107,20 @@ module riscv_controller
   input  logic        dbg_jump_req_i,             // Change PC to value from debug unit
 
   // Forwarding signals from regfile
+
   input  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_ex_i,         // FW: write address from EX stage
   input  logic        regfile_we_ex_i,            // FW: write enable from  EX stage
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   input  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_wb_i,         // FW: write address from WB stage
+  `endif // THREE_PORT_REG_FILE
   input  logic        regfile_we_wb_i,            // FW: write enable from  WB stage
 
   input  logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_fw_i,     // FW: ALU/MUL write address from EX stage
   input  logic        regfile_alu_we_fw_i,        // FW: ALU/MUL write enable from  EX stage
+
+
+  `endif // THREE_PORT_REG_FILE
 
   // forwarding signals
   output logic [1:0]  operand_a_fw_mux_sel_o,     // regfile ra data selector form ID stage
@@ -577,10 +584,19 @@ module riscv_controller
     // - always stall if a result is to be forwarded to the PC
     // we don't care about in which state the ctrl_fsm is as we deassert_we
     // anyway when we are not in DECODE
+    
+    // CONFIG_REGION: THREE_PORT_REG_FILE
+    `ifdef THREE_PORT_REG_FILE
     if ((jump_in_dec_i == BRANCH_JALR) &&
         (((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_a_i == 1'b1)) ||
          ((regfile_we_ex_i == 1'b1) && (reg_d_ex_is_reg_a_i == 1'b1)) ||
          ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1))) )
+    `else
+    if ((jump_in_dec_i == BRANCH_JALR) &&
+        (((regfile_we_wb_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1)) ||
+         ((regfile_we_ex_i == 1'b1) && (reg_d_ex_is_reg_a_i == 1'b1)) ||
+         ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1))) )
+    `endif // THREE_PORT_REG_FILE
     begin
       jr_stall_o      = 1'b1;
       deassert_we_o     = 1'b1;
@@ -606,18 +622,29 @@ module riscv_controller
     `endif // THREE_PORT_REG_FILE
 
     // Forwarding WB -> ID
+
+    // CONFIG_REGION: THREE_PORT_REG_FILE
+    `ifdef THREE_PORT_REG_FILE
     if (regfile_we_wb_i == 1'b1)
     begin
       if (reg_d_wb_is_reg_a_i == 1'b1)
         operand_a_fw_mux_sel_o = SEL_FW_WB;
       if (reg_d_wb_is_reg_b_i == 1'b1)
         operand_b_fw_mux_sel_o = SEL_FW_WB;
-      // CONFIG_REGION: THREE_PORT_REG_FILE
-      `ifdef THREE_PORT_REG_FILE
       if (reg_d_wb_is_reg_c_i == 1'b1)
         operand_c_fw_mux_sel_o = SEL_FW_WB;
-      `endif // THREE_PORT_REG_FILE
     end
+    `else 
+    if (regfile_we_wb_i == 1'b1)
+    begin
+      if (reg_d_alu_is_reg_a_i == 1'b1)
+        operand_a_fw_mux_sel_o = SEL_FW_WB;
+      if (reg_d_alu_is_reg_b_i == 1'b1)
+        operand_b_fw_mux_sel_o = SEL_FW_WB;
+      if (reg_d_alu_is_reg_c_i == 1'b1)
+        operand_c_fw_mux_sel_o = SEL_FW_WB;
+    end
+    `endif // THREE_PORT_REG_FILE
 
     // Forwarding EX -> ID
     if (regfile_alu_we_fw_i == 1'b1)

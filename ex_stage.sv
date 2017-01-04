@@ -92,14 +92,20 @@ module riscv_ex_stage
 
   // directly passed through to WB stage, not used in EX
   input  logic        regfile_we_i,
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   input  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_i,
+  `endif // THREE_PORT_REG_FILE
 
   // CSR access
   input  logic        csr_access_i,
   input  logic [31:0] csr_rdata_i,
 
   // Output of EX stage pipeline
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   output logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_wb_o,
+  `endif // THREE_PORT_REG_FILE
   output logic        regfile_we_wb_o,
 
   // Forwarding ports : to ID stage

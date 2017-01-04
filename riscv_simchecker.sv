@@ -86,7 +86,10 @@ module riscv_simchecker
   input  logic        wb_bypass,
 
   input  logic        wb_valid,
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   input  logic [(REG_ADDR_WIDTH-1):0] wb_reg_addr,
+  `endif // THREE_PORT_REG_FILE
   input  logic        wb_reg_we,
   input  logic [31:0] wb_reg_wdata,
 
@@ -221,7 +224,12 @@ module riscv_simchecker
 
         end while (!wb_valid);
 
+        // CONFIG_REGION: THREE_PORT_REG_FILE
+        `ifdef THREE_PORT_REG_FILE
         reg_write.addr  = wb_reg_addr;
+        `else 
+        reg_write.addr  = ex_reg_addr;
+        `endif // THREE_PORT_REG_FILE
         reg_write.value = wb_reg_wdata;
 
         if (wb_reg_we)

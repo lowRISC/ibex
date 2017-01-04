@@ -102,7 +102,10 @@ module riscv_decoder
   // register file related signals
   output logic        regfile_mem_we_o,        // write enable for regfile
   output logic        regfile_alu_we_o,        // write enable for 2nd regfile port
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   output logic        regfile_alu_waddr_sel_o, // Select register write address for ALU/MUL operations
+  `endif // THREE_PORT_REG_FILE
 
   // CSR manipulation
   output logic        csr_access_o,            // access to CSR
@@ -199,7 +202,10 @@ module riscv_decoder
 
     regfile_mem_we              = 1'b0;
     regfile_alu_we              = 1'b0;
+    // CONFIG_REGION: THREE_PORT_REG_FILE
+    `ifdef THREE_PORT_REG_FILE
     regfile_alu_waddr_sel_o     = 1'b1;
+    `endif // THREE_PORT_REG_FILE
 
     // CONFIG_REGION: PREPOST_SUPPORT
     `ifdef PREPOST_SUPPORT
@@ -1221,6 +1227,7 @@ module riscv_decoder
   end
 
   // deassert we signals (in case of stalls)
+
   assign regfile_mem_we_o  = (deassert_we_i) ? 1'b0          : regfile_mem_we;
   assign regfile_alu_we_o  = (deassert_we_i) ? 1'b0          : regfile_alu_we;
   assign data_req_o        = (deassert_we_i) ? 1'b0          : data_req;

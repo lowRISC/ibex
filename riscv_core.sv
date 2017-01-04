@@ -190,7 +190,10 @@ module riscv_core
   // Register Write Control
   logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_ex;
   logic        regfile_we_ex;
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef THREE_PORT_REG_FILE
   logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_fw_wb_o;        // From WB to ID
+  `endif // THREE_PORT_REG_FILE
   logic        regfile_we_wb;
   logic [31:0] regfile_wdata;
 
@@ -608,7 +611,10 @@ module riscv_core
     .dbg_jump_req_i               ( dbg_jump_req         ),
 
     // Forward Signals
+    // CONFIG_REGION: THREE_PORT_REG_FILE
+    `ifdef THREE_PORT_REG_FILE
     .regfile_waddr_wb_i           ( regfile_waddr_fw_wb_o),  // Write address ex-wb pipeline
+    `endif // THREE_PORT_REG_FILE
     .regfile_we_wb_i              ( regfile_we_wb        ),  // write enable for the register file
     .regfile_wdata_wb_i           ( regfile_wdata        ),  // write data to commit in the register file
 
@@ -692,11 +698,17 @@ module riscv_core
     .regfile_alu_waddr_i        ( regfile_alu_waddr_ex         ),
     .regfile_alu_we_i           ( regfile_alu_we_ex            ),
 
+    // CONFIG_REGION: THREE_PORT_REG_FILE
+    `ifdef THREE_PORT_REG_FILE
     .regfile_waddr_i            ( regfile_waddr_ex             ),
+    `endif // THREE_PORT_REG_FILE
     .regfile_we_i               ( regfile_we_ex                ),
 
     // Output of ex stage pipeline
+    // CONFIG_REGION: THREE_PORT_REG_FILE
+    `ifdef THREE_PORT_REG_FILE
     .regfile_waddr_wb_o         ( regfile_waddr_fw_wb_o        ),
+    `endif // THREE_PORT_REG_FILE
     .regfile_we_wb_o            ( regfile_we_wb                ),
 
     // To IF: Jump and branch target and decision
@@ -983,7 +995,10 @@ module riscv_core
     .wb_bypass      ( ex_stage_i.branch_in_ex_i            ),
 
     .wb_valid       ( wb_valid                             ),
+    // CONFIG_REGION: THREE_PORT_REG_FILE
+    `ifdef THREE_PORT_REG_FILE
     .wb_reg_addr    ( regfile_waddr_fw_wb_o                ),
+    `endif // THREE_PORT_REG_FILE
     .wb_reg_we      ( regfile_we_wb                        ),
     .wb_reg_wdata   ( regfile_wdata                        ),
 
