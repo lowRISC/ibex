@@ -327,6 +327,11 @@ module riscv_id_stage
   logic [(REG_ADDR_WIDTH-1):0]  regfile_addr_rc_id;
   `endif // THREE_PORT_REG_FILE
 
+  // CONFIG_REGION: RV32E
+  `ifdef RV32E
+  logic illegal_reg_addr;
+  `endif // RV32E
+
   logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_id;
   logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_id;
   logic        regfile_alu_we_id;
@@ -528,6 +533,17 @@ module riscv_id_stage
   //---------------------------------------------------------------------------
   assign regfile_addr_ra_id = instr[`REG_S1];
   assign regfile_addr_rb_id = instr[`REG_S2];
+
+
+  // CONFIG_REGION: RV32E
+  `ifdef RV32E
+  // Check for illegal register address (there are only 16 registers in RV32E)
+  logic rega_is_illegal;
+  logic regb_is_illegal;
+  assign rega_is_illegal = instr[19] & (alu_op_a_mux_sel == OP_A_REGA_OR_FWD || alu_op_a_mux_sel == OP_A_REGB_OR_FWD);
+  assign regb_is_illegal = instr[24] & (alu_op_b_mux_sel == OP_B_REGA_OR_FWD || alu_op_b_mux_sel == OP_B_REGB_OR_FWD);
+  assign illegal_reg_addr = rega_is_illegal | regb_is_illegal;
+  `endif // RV32E
 
   // CONFIG_REGION: THREE_PORT_REG_FILE
   `ifdef THREE_PORT_REG_FILE
@@ -1137,7 +1153,13 @@ module riscv_id_stage
 
     // decoder related signals
     .deassert_we_o                  ( deassert_we            ),
+
+    // CONFIG_REGION: RV32E
+    `ifdef RV32E
+    .illegal_insn_i                 ( illegal_insn_dec | illegal_reg_addr ),
+    `else
     .illegal_insn_i                 ( illegal_insn_dec       ),
+    `endif // RV32E
     .eret_insn_i                    ( eret_insn_dec          ),
     .pipe_flush_i                   ( pipe_flush_dec         ),
 
@@ -1287,7 +1309,12 @@ module riscv_id_stage
     .irq_enable_i         ( irq_enable_i     ),
 
     .ebrk_insn_i          ( is_decoding_o & ebrk_insn        ),
+    // CONFIG_REGION: RV32E
+    `ifdef RV32E
+    .illegal_insn_i       ( is_decoding_o & (illegal_insn_dec | illegal_reg_addr) ),
+    `else
     .illegal_insn_i       ( is_decoding_o & illegal_insn_dec ),
+    `endif // RV32E
     .ecall_insn_i         ( is_decoding_o & ecall_insn_dec   ),
     .eret_insn_i          ( is_decoding_o & eret_insn_dec    ),
 
