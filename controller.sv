@@ -468,8 +468,6 @@ module riscv_controller
         pc_set_o = 1'b1;
         jump_done   = 1'b1;
 
-        halt_id_o     = 1'b1; // we don't want to propagate the jump instruction again to EX
-
         ctrl_fsm_ns = DECODE;
       end
 
