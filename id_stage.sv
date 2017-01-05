@@ -874,7 +874,7 @@ module riscv_id_stage
       case (alu_op_c_mux_sel)
         OP_C_REGB_OR_FWD:  alu_operand_c = operand_b_fw_id;
         OP_C_JT:           alu_operand_c = jump_target;
-        default:            alu_operand_c = '0;
+        default:           alu_operand_c = operand_b_fw_id;
       endcase // case (alu_op_c_mux_sel)
     end
 

@@ -344,6 +344,8 @@ module riscv_controller
 
             `else 
 
+            is_decoding_o = 1'b0; // we are not decoding the current instruction in the ID stage
+
             // if there is a jr stall, wait for it to be gone
             if ((~jr_stall_o) && (~jump_done_q)) begin
               halt_if_o = 1'b1;
