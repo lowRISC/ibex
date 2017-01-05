@@ -251,7 +251,7 @@ module riscv_core
   logic        lsu_ready_wb;
 
   // CONFIG_REGION: JUMP_IN_ID
-  `ifdef JUMP_IN_ID
+  `ifndef JUMP_IN_ID
   logic fetch_valid;
   `endif
 
@@ -435,7 +435,7 @@ module riscv_core
     .id_ready_i          ( id_ready          ),
     .if_valid_o          ( if_valid          ),
     // CONFIG_REGION: JUMP_IN_ID
-    `ifdef JUMP_IN_ID
+    `ifndef JUMP_IN_ID
     .fetch_valid_o       ( fetch_valid       ),
     `endif
 
@@ -515,7 +515,7 @@ module riscv_core
     .wb_valid_i                   ( wb_valid             ),
 
     // CONFIG_REGION: JUMP_IN_ID
-    `ifdef JUMP_IN_ID
+    `ifndef JUMP_IN_ID
     .fetch_valid_i                ( fetch_valid          ),
     `endif
 

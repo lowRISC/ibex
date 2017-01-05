@@ -165,7 +165,7 @@ module riscv_controller
   input  logic        wb_valid_i,                 // WB stage is done
 
   // CONFIG_REGION: JUMP_IN_ID
-  `ifdef JUMP_IN_ID
+  `ifndef JUMP_IN_ID
   input  logic        fetch_valid_i,         // intended for jump in EX to see whether it is safe so go back to decode state
   `endif
 

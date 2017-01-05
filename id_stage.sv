@@ -116,7 +116,7 @@ module riscv_id_stage
     input  logic        wb_valid_i,     // WB stage is done
 
     // CONFIG_REGION: JUMP_IN_ID
-    `ifdef JUMP_IN_ID
+    `ifndef JUMP_IN_ID
     input  logic        fetch_valid_i,         // intended for jump in EX to see whether it is safe so go back to decode state
     `endif
 
@@ -1274,7 +1274,7 @@ module riscv_id_stage
     .wb_valid_i                     ( wb_valid_i             ),
 
     // CONFIG_REGION: JUMP_IN_ID
-    `ifdef JUMP_IN_ID
+    `ifndef JUMP_IN_ID
     .fetch_valid_i                  ( fetch_valid_i          ),
     `endif
 

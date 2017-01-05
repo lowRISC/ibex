@@ -91,7 +91,7 @@ module riscv_if_stage #(
       input  logic        id_ready_i,
       output logic        if_valid_o,
       // CONFIG_REGION: JUMP_IN_ID
-      `ifdef JUMP_IN_ID
+      `ifndef JUMP_IN_ID
       output logic        fetch_valid_o,         // intended for jump in EX to see whether it is safe so go back to decode state
       `endif
       // misc signals
@@ -486,7 +486,7 @@ module riscv_if_stage #(
         assign if_valid_o = (~halt_if_i) & if_ready_o;
 
         // CONFIG_REGION: JUMP_IN_ID
-        `ifdef JUMP_IN_ID
+        `ifndef JUMP_IN_ID
         assign fetch_valid_o = fetch_valid;
         `endif
 
