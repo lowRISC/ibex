@@ -349,10 +349,16 @@ module riscv_controller
 
             `else 
 
-            // if there is a jr stall, wait for it to be gone
-            if ((~jr_stall_o) && (~jump_done_q)) begin
+            if (id_ready_i) begin
+              // if there is a jr stall, wait for it to be gone
+              if ((~jr_stall_o) && (~jump_done_q)) begin
+                halt_if_o = 1'b1;
+                ctrl_fsm_ns = WAIT_JUMP;
+              end
+            end
+            else begin
               halt_if_o = 1'b1;
-              ctrl_fsm_ns = WAIT_JUMP;
+              halt_id_o = 1'b1;
             end
 
             `endif
