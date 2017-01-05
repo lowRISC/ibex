@@ -79,6 +79,8 @@ def main():
                         help='will run some basic RTL simulations test, like helloworld on all sample configs in the scripts/example_configs folder')
     parser.add_argument('--setup_script', dest='setup_script', metavar='.../new_setup.tcl',
                         help='will overwrite setup script in Synopsys (imperio/synopsys/scripts/setup/setup.tcl) with given file')
+    parser.add_argument('--vsim', dest='vsim_test',
+                        help='will start ModelSim for the given test')
     args = parser.parse_args()
 
     action_taken = False
@@ -118,6 +120,10 @@ def main():
 
     if args.setup_script is not None:
         synopsysSetSetupScript(args.setup_script, littleRISCV_path)
+        action_taken = True
+
+    if args.vsim_test is not None:
+        vsimTest(args.vsim_test, littleRISCV_path)
         action_taken = True
 
     if action_taken == False:
@@ -442,6 +448,18 @@ def test(littleRISCV_path):
     p = subprocess.Popen(["make", "compressed.vsimc"], cwd=os.path.abspath(littleRISCV_path+"/../../sw/build"))
     p.wait()
     print("Testing finished.")
+
+def vsimTest(vsim_test, littleRISCV_path):
+    if not os.path.exists(os.path.abspath(littleRISCV_path+"/../../sw/build")):
+        print("littleRISCV repository not contained in Imperio/Pulpino project, or you did not generate make files with CMake in pulpino/sw/build. Canceling.")
+        return
+
+    print("Opening VSIM test")
+
+    print("Running helloworld")
+    p = subprocess.Popen(["make", vsim_test + ".vsim"], cwd=os.path.abspath(littleRISCV_path+"/../../sw/build"))
+    p.wait()
+    print("ModelSim was quit.")
 
 
 
