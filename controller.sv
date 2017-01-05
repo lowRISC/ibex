@@ -489,6 +489,7 @@ module riscv_controller
         if (fetch_valid_i) begin
           jump_done   = 1'b1;  
           ctrl_fsm_ns = DECODE;
+        end
       end
 
       `endif // JUMP_IN_ID
