@@ -115,6 +115,11 @@ module riscv_id_stage
     input  logic        ex_valid_i,     // EX stage is done
     input  logic        wb_valid_i,     // WB stage is done
 
+    // CONFIG_REGION: JUMP_IN_ID
+    `ifdef JUMP_IN_ID
+    input  logic        fetch_valid_i,         // intended for jump in EX to see whether it is safe so go back to decode state
+    `endif
+
     // Pipeline ID/EX
     output logic [31:0] pc_ex_o,
 
@@ -1267,6 +1272,11 @@ module riscv_id_stage
     .if_valid_i                     ( if_valid_i             ),
     .ex_valid_i                     ( ex_valid_i             ),
     .wb_valid_i                     ( wb_valid_i             ),
+
+    // CONFIG_REGION: JUMP_IN_ID
+    `ifdef JUMP_IN_ID
+    .fetch_valid_i                  ( fetch_valid_i          ),
+    `endif
 
     // Performance Counters
     .perf_jump_o                    ( perf_jump_o            ),

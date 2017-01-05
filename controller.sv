@@ -164,6 +164,11 @@ module riscv_controller
   input  logic        ex_valid_i,                 // EX stage is done
   input  logic        wb_valid_i,                 // WB stage is done
 
+  // CONFIG_REGION: JUMP_IN_ID
+  `ifdef JUMP_IN_ID
+  input  logic        fetch_valid_i,         // intended for jump in EX to see whether it is safe so go back to decode state
+  `endif
+
   // Performance Counters
   output logic        perf_jump_o,                // we are executing a jump instruction   (j, jr, jal, jalr)
   output logic        perf_jr_stall_o,            // stall due to jump-register-hazard
@@ -472,9 +477,9 @@ module riscv_controller
       begin
         pc_mux_o = PC_JUMP;
         pc_set_o = 1'b1;
-        jump_done   = 1'b1;
+        jump_done   = 1'b1;        
 
-        if (if_valid_i)
+        if (fetch_valid_i)
           ctrl_fsm_ns = DECODE;
       end
 
