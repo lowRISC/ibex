@@ -75,6 +75,11 @@
 //`define MATH_SPECIAL_SUPPORT
 
 
+// CONFIG: JUMP_IN_ID
+// will enable direct jump in ID. Might increase critical path of jump target.
+//`define JUMP_IN_ID
+
+
 // Dependent definitions
 
 // CONFIG: THREE_PORT_REG_FILE

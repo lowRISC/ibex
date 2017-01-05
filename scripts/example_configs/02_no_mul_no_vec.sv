@@ -58,10 +58,6 @@
 // will enable bit manipulation and counting support.
 `define BIT_SUPPORT
 
-// CONFIG: MATH_SPECIAL_SUPPORT
-// will enable clip, min and max operations support.
-`define MATH_SPECIAL_SUPPORT
-
 // CONFIG: JUMP_IN_ID_SUPPORT
 // will enable jump capability in ID stage.
 `define JUMP_IN_ID_SUPPORT
@@ -77,6 +73,14 @@
 `define PREPOST_SUPPORT
 
 `endif // LSU_ADDER_SUPPORT
+
+// CONFIG: MATH_SPECIAL_SUPPORT
+// will enable clip, min and max operations support.
+`define MATH_SPECIAL_SUPPORT
+
+// CONFIG: JUMP_IN_ID
+// will enable direct jump in ID. Might increase critical path of jump target.
+`define JUMP_IN_ID
 
 
 // Dependent definitions

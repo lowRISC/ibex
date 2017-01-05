@@ -1,3 +1,4 @@
+set NUM_CORES 16;
 set CLOCK_SLOW 3; # 333 MHz
 set DESIGN_NAME imperio_${CLOCK_SLOW}
 
