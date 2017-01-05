@@ -53,7 +53,7 @@ module riscv_prefetch_buffer_small
   
 
   /// Regs
-  enum logic [1:0] {IDLE, WAIT_GNT, WAIT_RVALID, WAIT_ABORTED } CS, NS; // Will handle the steps for the memory interface
+  enum logic [1:0] {IDLE, WAIT_GNT, WAIT_RVALID } CS, NS; // Will handle the steps for the memory interface
 
 
   logic [31:0]  fetch_addr_Q, fetch_addr_n; // The adress from the current fetch
@@ -222,25 +222,21 @@ module riscv_prefetch_buffer_small
         end
         else begin // if branch_i
           last_fetch_valid_n = 1'b0;
-          if (instr_rvalid_i) begin
-            if (req_i) begin
-              
-              addr_mux = addr_i;
-              fetch_addr_n = addr_mux;
+          if (req_i) begin
+            
+            addr_mux = addr_i;
+            fetch_addr_n = addr_mux;
 
-              instr_req_o = 1'b1;
-              instr_addr_o = {addr_mux[31:2], 2'b00};
+            instr_req_o = 1'b1;
+            instr_addr_o = {addr_mux[31:2], 2'b00};
 
-              if (instr_gnt_i)
-                NS = WAIT_RVALID;
-              else
-                NS = WAIT_GNT;
-            end
+            if (instr_gnt_i)
+              NS = WAIT_RVALID;
             else
-              NS = IDLE;
+              NS = WAIT_GNT;
           end
           else
-            NS = WAIT_ABORTED;
+            NS = IDLE;
         end
       end
 
@@ -360,36 +356,9 @@ module riscv_prefetch_buffer_small
           is_second_fetch_n = 1'b0;
           fetch_stalled_n = 1'b0;
           
-          if (instr_rvalid_i) begin
-            if (req_i) begin
-              
-              addr_mux = addr_i;
-              fetch_addr_n = addr_mux;
-
-              instr_req_o = 1'b1;
-              instr_addr_o = {addr_mux[31:2], 2'b00};
-
-              if (instr_gnt_i)
-                NS = WAIT_RVALID;
-              else
-                NS = WAIT_GNT;
-            end
-            else
-              NS = IDLE;
-          end
-          else
-            NS = WAIT_ABORTED;
-        end
-      end
-
-
-      // Wait for rvalid to finish latest access accordingly
-      WAIT_ABORTED: begin
-        if (instr_rvalid_i) begin
           if (req_i) begin
             
             addr_mux = addr_i;
-
             fetch_addr_n = addr_mux;
 
             instr_req_o = 1'b1;
@@ -402,9 +371,6 @@ module riscv_prefetch_buffer_small
           end
           else
             NS = IDLE;
-        end
-        else begin
-          NS = WAIT_ABORTED;
         end
       end
 
