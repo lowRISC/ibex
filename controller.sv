@@ -613,7 +613,7 @@ module riscv_controller
     deassert_we_o  = 1'b0;
 
     // deassert WE when the core is not decoding instructions
-    if (~is_decoding_o & ~(ctrl_fsm_cs == WAIT_JUMP))
+    if (~is_decoding_o)
       deassert_we_o = 1'b1;
 
     // deassert WE in case of illegal instruction
