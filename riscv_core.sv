@@ -250,11 +250,6 @@ module riscv_core
   logic        lsu_ready_ex;
   logic        lsu_ready_wb;
 
-  // CONFIG_REGION: JUMP_IN_ID
-  `ifndef JUMP_IN_ID
-  logic fetch_valid;
-  `endif
-
   // Signals between instruction core interface and pipe (if and id stages)
   logic        instr_req_int;    // Id stage asserts a req to instruction core interface
 
@@ -434,10 +429,6 @@ module riscv_core
     .if_ready_o          ( if_ready          ),
     .id_ready_i          ( id_ready          ),
     .if_valid_o          ( if_valid          ),
-    // CONFIG_REGION: JUMP_IN_ID
-    `ifndef JUMP_IN_ID
-    .fetch_valid_o       ( fetch_valid       ),
-    `endif
 
     .if_busy_o           ( if_busy           ),
     .perf_imiss_o        ( perf_imiss        )
@@ -513,11 +504,6 @@ module riscv_core
     .id_valid_o                   ( id_valid             ),
     .ex_valid_i                   ( ex_valid             ),
     .wb_valid_i                   ( wb_valid             ),
-
-    // CONFIG_REGION: JUMP_IN_ID
-    `ifndef JUMP_IN_ID
-    .fetch_valid_i                ( fetch_valid          ),
-    `endif
 
     // From the Pipeline ID/EX
     .pc_ex_o                      ( pc_ex                ),
