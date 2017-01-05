@@ -187,7 +187,7 @@ module riscv_controller
   `else 
 
   enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
-                      DECODE, WAIT_JUMP,
+                      DECODE, WAIT_JUMP_EX, WAIT_JUMP_FETCH,
                       FLUSH_EX, FLUSH_WB,
                       DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
 
@@ -353,7 +353,7 @@ module riscv_controller
               // if there is a jr stall, wait for it to be gone
               if ((~jr_stall_o) && (~jump_done_q)) begin
                 halt_if_o = 1'b1;
-                ctrl_fsm_ns = WAIT_JUMP;
+                ctrl_fsm_ns = WAIT_JUMP_EX;
               end
             end
             else begin
@@ -472,14 +472,22 @@ module riscv_controller
       // CONFIG_REGION: JUMP_IN_ID
       `ifndef JUMP_IN_ID
 
-      // a jump was in ID
-      WAIT_JUMP:
+      // a jump was in ID and now has to be applied to IF from EX
+      WAIT_JUMP_EX:
       begin
         pc_mux_o = PC_JUMP;
         pc_set_o = 1'b1;
-        jump_done   = 1'b1;        
 
-        if (fetch_valid_i)
+        halt_id_o = 1'b1;  
+
+        ctrl_fsm_ns = WAIT_JUMP_FETCH;
+      end
+
+      // wait for a valid fetch
+      WAIT_JUMP_FETCH:
+      begin
+        if (fetch_valid_i) begin
+          jump_done   = 1'b1;  
           ctrl_fsm_ns = DECODE;
       end
 
