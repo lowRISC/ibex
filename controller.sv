@@ -327,7 +327,12 @@ module riscv_controller
           // we can jump directly since we know the address already
           // we don't need to worry about conditional branches here as they
           // will be evaluated in the EX stage
+          // CONFIG_REGION: JUMP_IN_ID
+          `ifdef JUMP_IN_ID
           if (jump_in_dec_i == BRANCH_JALR || jump_in_dec_i == BRANCH_JAL) begin
+          `else 
+          if (jump_in_id_i == BRANCH_JALR || jump_in_id_i == BRANCH_JAL) begin
+          `endif
             // CONFIG_REGION: JUMP_IN_ID
             `ifdef JUMP_IN_ID
             pc_mux_o = PC_JUMP;
@@ -593,7 +598,7 @@ module riscv_controller
     deassert_we_o  = 1'b0;
 
     // deassert WE when the core is not decoding instructions
-    if (~is_decoding_o)
+    if (~is_decoding_o & ~(ctrl_fsm_cs == WAIT_JUMP))
       deassert_we_o = 1'b1;
 
     // deassert WE in case of illegal instruction
