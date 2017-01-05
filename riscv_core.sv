@@ -137,7 +137,12 @@ module riscv_core
   `endif // MUL_SUPPORT
 
   // Jump and branch target and decision (EX->IF)
+  // CONFIG_REGION: JUMP_IN_ID
+  `ifdef JUMP_IN_ID
   logic [31:0] jump_target_id, jump_target_ex;
+  `else 
+  logic [31:0] jump_target_ex;
+  `endif
   logic        branch_in_ex;
   logic        branch_decision;
 
@@ -413,7 +418,10 @@ module riscv_core
     .dbg_jump_req_i      ( dbg_jump_req      ),
 
     // Jump targets
+    // CONFIG_REGION: JUMP_IN_ID
+    `ifdef JUMP_IN_ID
     .jump_target_id_i    ( jump_target_id    ),
+    `endif // JUMP_IN_ID
     .jump_target_ex_i    ( jump_target_ex    ),
 
     // pipeline stalls
@@ -467,7 +475,10 @@ module riscv_core
     // Jumps and branches
     .branch_in_ex_o               ( branch_in_ex         ),
     .branch_decision_i            ( branch_decision      ),
+    // CONFIG_REGION: JUMP_IN_ID
+    `ifdef JUMP_IN_ID
     .jump_target_o                ( jump_target_id       ),
+    `endif
 
     // IF and ID control signals
     .clear_instr_valid_o          ( clear_instr_valid    ),

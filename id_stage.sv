@@ -85,7 +85,10 @@ module riscv_id_stage
     // Jumps and branches
     output logic        branch_in_ex_o,
     input  logic        branch_decision_i,
+    // CONFIG_REGION: JUMP_IN_ID
+    `ifdef JUMP_IN_ID
     output logic [31:0] jump_target_o,
+    `endif // JUMP_IN_ID
 
     // IF and ID stage signals
     output logic        clear_instr_valid_o,
@@ -677,8 +680,10 @@ module riscv_id_stage
       endcase
     end
 
+  // CONFIG_REGION: JUMP_IN_ID
+  `ifdef JUMP_IN_ID
   assign jump_target_o = jump_target;
-
+  `endif // JUMP_IN_ID
 
   ////////////////////////////////////////////////////////
   //   ___                                 _      _     //
@@ -1561,10 +1566,20 @@ always_ff @(posedge clk, negedge rst_n)
         `ifndef ONLY_ALIGNED
         data_misaligned_ex_o        <= 1'b0;
         `endif // ONLY_ALIGNED
+
+        // CONFIG_REGION: JUMP_IN_ID
+        `ifdef JUMP_IN_ID
         if ((jump_in_id == BRANCH_COND) || data_load_event_id) begin
           pc_ex_o                   <= pc_id_i;
         end
         branch_in_ex_o              <= jump_in_id == BRANCH_COND;
+        `else 
+        if ((jump_in_id == BRANCH_COND) || (jump_in_id == BRANCH_JAL) || (jump_in_id == BRANCH_JALR) || data_load_event_id) begin
+          pc_ex_o                   <= pc_id_i;
+        end
+        branch_in_ex_o              <= (jump_in_id == BRANCH_COND) || (jump_in_id == BRANCH_JAL) || (jump_in_id == BRANCH_JALR);
+        `endif
+        
       end else if(ex_ready_i) begin
         // EX stage is ready but we don't have a new instruction for it,
         // so we set all write enables to 0, but unstall the pipe

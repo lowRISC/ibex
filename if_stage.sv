@@ -69,7 +69,11 @@ module riscv_if_stage #(
       input  logic  [1:0] exc_pc_mux_i,          // selects ISR address
       input  logic  [4:0] exc_vec_pc_mux_i,      // selects ISR address for vectorized interrupt lines
       // jump and branch target and decision
+
+      // CONFIG_REGION: JUMP_IN_ID
+      `ifdef JUMP_IN_ID
       input  logic [31:0] jump_target_id_i,      // jump target address
+      `endif
       input  logic [31:0] jump_target_ex_i,      // jump target address
       // from hwloop controller
       // CONFIG_REGION: HWLP_SUPPORT
@@ -144,7 +148,12 @@ module riscv_if_stage #(
 
           unique case (pc_mux_i)
             PC_BOOT:      fetch_addr_n = {boot_addr_i[31:8], EXC_OFF_RST};
+            // CONFIG_REGION: JUMP_IN_ID
+            `ifdef JUMP_IN_ID
             PC_JUMP:      fetch_addr_n = jump_target_id_i;
+            `else
+            PC_JUMP:      fetch_addr_n = jump_target_ex_i;
+            `endif // JUMP_IN_ID
             PC_BRANCH:    fetch_addr_n = jump_target_ex_i;
             PC_EXCEPTION: fetch_addr_n = exc_pc;             // set PC to exception handler
             PC_ERET:      fetch_addr_n = exception_pc_reg_i; // PC is restored when returning from IRQ/exception

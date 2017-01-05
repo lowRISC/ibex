@@ -171,10 +171,22 @@ module riscv_controller
 );
 
   // FSM state encoding
+  // CONFIG_REGION: JUMP_IN_ID
+  `ifdef JUMP_IN_ID
+
   enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
                       DECODE,
                       FLUSH_EX, FLUSH_WB,
                       DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
+
+  `else 
+
+  enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
+                      DECODE, WAIT_JUMP,
+                      FLUSH_EX, FLUSH_WB,
+                      DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
+
+  `endif
 
   logic jump_done, jump_done_q;
 
@@ -316,6 +328,8 @@ module riscv_controller
           // we don't need to worry about conditional branches here as they
           // will be evaluated in the EX stage
           if (jump_in_dec_i == BRANCH_JALR || jump_in_dec_i == BRANCH_JAL) begin
+            // CONFIG_REGION: JUMP_IN_ID
+            `ifdef JUMP_IN_ID
             pc_mux_o = PC_JUMP;
 
             // if there is a jr stall, wait for it to be gone
@@ -327,6 +341,16 @@ module riscv_controller
             // we don't have to change our current state here as the prefetch
             // buffer is automatically invalidated, thus the next instruction
             // that is served to the ID stage is the one of the jump target
+
+            `else 
+
+            // if there is a jr stall, wait for it to be gone
+            if ((~jr_stall_o) && (~jump_done_q)) begin
+              halt_if_o = 1'b1;
+              ctrl_fsm_ns = WAIT_JUMP;
+            end
+
+            `endif
           end else begin
             // handle exceptions
             if (exc_req_i) begin
@@ -433,6 +457,21 @@ module riscv_controller
           end
         end
       end
+
+      // CONFIG_REGION: JUMP_IN_ID
+      `ifndef JUMP_IN_ID
+
+      // a jump was in ID
+      WAIT_JUMP:
+      begin
+        pc_mux_o = PC_JUMP;
+        pc_set_o = 1'b1;
+        jump_done   = 1'b1;
+
+        ctrl_fsm_ns = DECODE;
+      end
+
+      `endif // JUMP_IN_ID
 
       // a branch was in ID when a debug trap is hit
       DBG_WAIT_BRANCH:

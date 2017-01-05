@@ -281,6 +281,11 @@ module riscv_decoder
         imm_b_mux_sel_o     = IMMB_PCINCR;
         alu_operator_o      = ALU_ADD;
         regfile_alu_we      = 1'b1;
+
+        // CONFIG_REGION: JUMP_IN_ID
+        `ifndef JUMP_IN_ID
+        alu_op_c_mux_sel_o  = OP_C_JT; // Pipeline to EX
+        `endif
         // Calculate jump target (= PC + UJ imm)
       end
 
@@ -301,6 +306,11 @@ module riscv_decoder
           regfile_alu_we   = 1'b0;
           illegal_insn_o   = 1'b1;
         end
+
+        // CONFIG_REGION: JUMP_IN_ID
+        `ifndef JUMP_IN_ID
+        alu_op_c_mux_sel_o  = OP_C_JT; // Pipeline to EX
+        `endif
       end
 
       OPCODE_BRANCH: begin // Branch
