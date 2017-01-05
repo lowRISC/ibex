@@ -347,18 +347,11 @@ module riscv_controller
             // buffer is automatically invalidated, thus the next instruction
             // that is served to the ID stage is the one of the jump target
 
-            `else 
+            `else
 
-            if (id_ready_i) begin
-              // if there is a jr stall, wait for it to be gone
-              if ((~jr_stall_o) && (~jump_done_q)) begin
-                halt_if_o = 1'b1;
-                ctrl_fsm_ns = WAIT_JUMP_EX;
-              end
-            end
-            else begin
-              halt_if_o = 1'b1;
-              halt_id_o = 1'b1;
+            // if there is a jr stall, wait for it to be gone
+            if ((~jr_stall_o) && (~jump_done_q)) begin
+              ctrl_fsm_ns = WAIT_JUMP_EX;
             end
 
             `endif
@@ -478,15 +471,13 @@ module riscv_controller
         pc_mux_o = PC_JUMP;
         pc_set_o = 1'b1;
 
-        halt_id_o = 1'b1;  
-
         ctrl_fsm_ns = WAIT_JUMP_FETCH;
       end
 
       // wait for a valid fetch
       WAIT_JUMP_FETCH:
       begin
-        if (fetch_valid_i) begin
+        if (id_ready_i) begin
           jump_done   = 1'b1;  
           ctrl_fsm_ns = DECODE;
         end
