@@ -164,6 +164,11 @@ module riscv_id_stage
     output logic [ 1:0] mult_dot_signed_ex_o,
     `endif // MUL_SUPPORT
 
+    // CONFIG_REGION: SPLITTED_ADDER
+    `ifdef  SPLITTED_ADDER
+    output logic        alu_req_ex_o,
+    `endif
+
 
     // CSR ID/EX
     output logic        csr_access_ex_o,
@@ -1434,6 +1439,10 @@ always_ff @(posedge clk, negedge rst_n)
       `endif // ONLY_ALIGNED
       pc_ex_o                     <= '0;
       branch_in_ex_o              <= 1'b0;
+      // CONFIG_REGION: SPLITTED_ADDER
+      `ifdef  SPLITTED_ADDER
+      alu_req_ex_o                <= 1'b0;
+      `endif
     end
     // CONFIG_REGION: ONLY_ALIGNED
     `ifndef ONLY_ALIGNED
@@ -1461,15 +1470,21 @@ always_ff @(posedge clk, negedge rst_n)
         prepost_useincr_ex_o        <= prepost_useincr;
         `endif // PREPOST_SUPPORT
         data_misaligned_ex_o        <= 1'b1;
+        // CONFIG_REGION: SPLITTED_ADDER
+        `ifdef  SPLITTED_ADDER
+        alu_req_ex_o                <= 1'b0;
+        `endif
       end
     end
     `endif // ONLY_ALIGNED
+
     // CONFIG_REGION: MUL_SUPPORT
     `ifdef MUL_SUPPORT
     else if (mult_multicycle_i) begin
       mult_operand_c_ex_o <= alu_operand_c;
     end
     `endif // MUL_SUPPORT
+
     else begin
       // normal pipeline unstall case
       if (id_valid_o)
@@ -1579,6 +1594,11 @@ always_ff @(posedge clk, negedge rst_n)
         end
         branch_in_ex_o              <= (jump_in_id == BRANCH_COND) || (jump_in_id == BRANCH_JAL) || (jump_in_id == BRANCH_JALR);
         `endif
+
+        // CONFIG_REGION: SPLITTED_ADDER
+        `ifdef  SPLITTED_ADDER
+        alu_req_ex_o                <= 1'b1;
+        `endif
         
       end else if(ex_ready_i) begin
         // EX stage is ready but we don't have a new instruction for it,
@@ -1593,6 +1613,9 @@ always_ff @(posedge clk, negedge rst_n)
         data_misaligned_ex_o        <= 1'b0;
         `endif // ONLY_ALIGNED
         branch_in_ex_o              <= 1'b0;
+      end
+      else begin
+        alu_req_ex_o                <= 1'b0; // We cannot deliver new data to ALU (running or not running)
       end
     end
   end

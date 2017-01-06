@@ -97,6 +97,11 @@ module riscv_ex_stage
   input  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_i,
   `endif // THREE_PORT_REG_FILE
 
+  // CONFIG_REGION: SPLITTED_ADDER
+  `ifdef  SPLITTED_ADDER
+  input logic        alu_req_ex_i,
+  `endif
+
   // CSR access
   input  logic        csr_access_i,
   input  logic [31:0] csr_rdata_i,
@@ -117,6 +122,10 @@ module riscv_ex_stage
   // Stall Control
   input  logic        lsu_ready_ex_i, // EX part of LSU is done
 
+  // CONFIG_REGION: SPLITTED_ADDER
+  `ifdef  SPLITTED_ADDER
+  output logic        alu_ready_o,
+  `endif
   output logic        ex_ready_o, // EX stage ready for new data
   output logic        ex_valid_o, // EX stage gets new data
   input  logic        wb_ready_i  // WB stage ready for new data
@@ -186,9 +195,11 @@ module riscv_ex_stage
     .operand_a_i         ( alu_operand_a_i ),
     .operand_b_i         ( alu_operand_b_i ),
 
+    .req_i               ( alu_req_ex_i    ),
+
     // CONFIG_REGION: LSU_ADDER_SUPPORT
     `ifndef LSU_ADDER_SUPPORT
-    .adder_result_o      (alu_adder_result_ex_o ),
+    .adder_result_o      ( alu_adder_result_ex_o ),
     `endif // LSU_ADDER_SUPPORT
 
     .ready_o             ( alu_ready       ),
@@ -355,6 +366,9 @@ module riscv_ex_stage
   assign ex_valid_o = (alu_ready & lsu_ready_ex_i & wb_ready_i);
   `endif // THREE_PORT_REG_FILE
 
+  // CONFIG_REGION: THREE_PORT_REG_FILE
+  `ifdef SPLITTED_ADDER
+  assign alu_ready_o = alu_ready;
   `endif
 
 endmodule

@@ -250,6 +250,11 @@ module riscv_core
   logic        lsu_ready_ex;
   logic        lsu_ready_wb;
 
+  // CONFIG_REGION: SPLITTED_ADDER
+  `ifdef  SPLITTED_ADDER
+  logic        alu_ready;
+  `endif
+
   // Signals between instruction core interface and pipe (if and id stages)
   logic        instr_req_int;    // Id stage asserts a req to instruction core interface
 
@@ -731,6 +736,11 @@ module riscv_core
     // stall control
     .lsu_ready_ex_i             ( lsu_ready_ex                 ),
 
+    // CONFIG_REGION: SPLITTED_ADDER
+    `ifdef  SPLITTED_ADDER
+    .alu_ready_o                ( alu_ready                    ),
+    `endif
+
     .ex_ready_o                 ( ex_ready                     ),
     .ex_valid_o                 ( ex_valid                     ),
     .wb_ready_i                 ( lsu_ready_wb                 )
@@ -802,6 +812,11 @@ module riscv_core
     // control signals
     .lsu_ready_ex_o        ( lsu_ready_ex       ),
     .lsu_ready_wb_o        ( lsu_ready_wb       ),
+
+    // CONFIG_REGION: SPLITTED_ADDER
+    `ifdef  SPLITTED_ADDER
+    .alu_ready_i           ( alu_ready          ),
+    `endif
 
     .ex_valid_i            ( ex_valid           ),
     .busy_o                ( lsu_busy           )

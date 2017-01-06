@@ -84,6 +84,11 @@ module riscv_load_store_unit
     output logic         lsu_ready_ex_o, // LSU ready for new data in EX stage
     output logic         lsu_ready_wb_o, // LSU ready for new data in WB stage
 
+    // CONFIG_REGION: SPLITTED_ADDER
+    `ifdef  SPLITTED_ADDER
+    input logic          alu_ready_i,
+    `endif
+
     input  logic         ex_valid_i,
     output logic         busy_o
 );
@@ -422,7 +427,12 @@ module riscv_load_store_unit
       begin
         data_req_o = data_req_ex_i;
 
+        // CONFIG_REGION: SPLITTED_ADDER
+        `ifdef  SPLITTED_ADDER
+        if(data_req_ex_i & alu_ready_i) begin
+        `else 
         if(data_req_ex_i) begin
+        `endif
           lsu_ready_ex_o = 1'b0;
 
           if(data_gnt_i) begin
@@ -446,6 +456,13 @@ module riscv_load_store_unit
           // source for the WB stage
           lsu_ready_wb_o = 1'b1;
 
+          // CONFIG_REGION: SPLITTED_ADDER
+          `ifdef  SPLITTED_ADDER
+  
+          // ALU cannot already have finished it's next computatiom and is therefore not ready
+          NS = IDLE;
+
+          `else
           data_req_o = data_req_ex_i;
 
           if (data_req_ex_i) begin
@@ -467,6 +484,7 @@ module riscv_load_store_unit
               NS = IDLE;
             end
           end
+          `endif
         end
       end
 

@@ -33,6 +33,10 @@ module riscv_alu_simplified_splitted
   input  logic [ALU_OP_WIDTH-1:0]  operator_i,
   input  logic [31:0]              operand_a_i,
   input  logic [31:0]              operand_b_i,
+  // CONFIG_REGION: SPLITTED_ADDER
+  `ifdef SPLITTED_ADDER
+  input  logic                     req_i,
+  `endif
 
   // CONFIG_REGION: LSU_ADDER_SUPPORT
   `ifndef LSU_ADDER_SUPPORT
@@ -46,8 +50,6 @@ module riscv_alu_simplified_splitted
   output logic [31:0]              result_o,
   output logic                     comparison_result_o
 );
-
-  logic        finished_Q, finished_n;
 
   logic [31:0] operand_a_rev;
   logic [31:0] operand_a_neg;
@@ -88,7 +90,8 @@ module riscv_alu_simplified_splitted
   /////////////////////////////////////
 
   logic        adder_op_b_negate; 
-  logic [31:0] adder_in_a, adder_in_b;
+  logic [16:0] adder_in_a, adder_in_b;
+  logic [16:0] adder_partial_result_Q, adder_partial_result_n;
   logic [31:0] adder_result;
 
   always_comb
@@ -112,15 +115,26 @@ module riscv_alu_simplified_splitted
     endcase
   end
   
-
-  // prepare operand a
-  assign adder_in_a = operand_a_i;
-
-  // prepare operand b
-  assign adder_in_b = adder_op_b_negate ? operand_b_neg : operand_b_i;
+  always_comb
+  begin
+    if (req_i)
+    begin
+      // prepare operand a
+      adder_in_a = {0'b0, operand_a_i[15:0]};
+      // prepare operand b
+      adder_in_b = adder_op_b_negate ? {0'b0, operand_b_neg[15:0]} : {0'b0, operand_b_i[15:0]};
+    end else begin
+      // prepare operand a
+      adder_in_a = {0'b1, operand_a_i[31:16]};
+      // prepare operand b
+      adder_in_b = adder_op_b_negate ? {0'b0, operand_b_neg[31:16]} : {0'b0, operand_b_i[31:16]};
+    end
+  end
 
   // actual adder
-  assign adder_result = adder_in_a + adder_in_b;
+  assign adder_partial_result_n = adder_in_a + adder_in_b + {16'b0, adder_partial_result_Q[16]};
+
+  assign adder_result = {adder_partial_result_n[15:0], adder_partial_result_Q[15:0]};
   
   // CONFIG_REGION: LSU_ADDER_SUPPORT
   `ifndef LSU_ADDER_SUPPORT
@@ -302,12 +316,14 @@ module riscv_alu_simplified_splitted
   end
 
 
+  assign ready_o = ~(req_i); // If there is a new request we execute first step
 
-  always_ff @(posedge clk or negedge rst_n) begin : proc_
+
+  always_ff @(posedge clk or negedge rst_n) begin
     if(~rst_n) begin
-      finished_Q <= 0;
+      adder_partial_result_Q <= 0;
     end else begin
-      finished_Q <= finished_n;
+      adder_partial_result_Q <= adder_partial_result_n;
     end
   end
 
