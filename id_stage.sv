@@ -169,7 +169,6 @@ module riscv_id_stage
     output logic        alu_req_ex_o,
     `endif
 
-
     // CSR ID/EX
     output logic        csr_access_ex_o,
     output logic [1:0]  csr_op_ex_o,
@@ -1472,7 +1471,7 @@ always_ff @(posedge clk, negedge rst_n)
         data_misaligned_ex_o        <= 1'b1;
         // CONFIG_REGION: SPLITTED_ADDER
         `ifdef  SPLITTED_ADDER
-        alu_req_ex_o                <= 1'b0;
+        alu_req_ex_o                <= 1'b1;
         `endif
       end
     end
@@ -1614,9 +1613,11 @@ always_ff @(posedge clk, negedge rst_n)
         `endif // ONLY_ALIGNED
         branch_in_ex_o              <= 1'b0;
       end
+      `ifdef SPLITTED_ADDER
       else begin
         alu_req_ex_o                <= 1'b0; // We cannot deliver new data to ALU (running or not running)
       end
+      `endif
     end
   end
 
