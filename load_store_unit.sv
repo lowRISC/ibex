@@ -425,14 +425,13 @@ module riscv_load_store_unit
       // starts from not active and stays in IDLE until request was granted
       IDLE:
       begin
-        data_req_o = data_req_ex_i;
-
         // CONFIG_REGION: SPLITTED_ADDER
         `ifdef  SPLITTED_ADDER
         if(data_req_ex_i & alu_ready_i) begin
         `else 
         if(data_req_ex_i) begin
         `endif
+          data_req_o = data_req_ex_i;
           lsu_ready_ex_o = 1'b0;
 
           if(data_gnt_i) begin
@@ -458,14 +457,11 @@ module riscv_load_store_unit
 
           // CONFIG_REGION: SPLITTED_ADDER
           `ifdef  SPLITTED_ADDER
-  
-          // ALU cannot already have finished it's next computatiom and is therefore not ready
-          NS = IDLE;
-
-          `else
-          data_req_o = data_req_ex_i;
-
+          if (data_req_ex_i & alu_ready_i) begin
+          `else 
           if (data_req_ex_i) begin
+          `endif
+            data_req_o = data_req_ex_i;
             lsu_ready_ex_o = 1'b0;
 
             if (data_gnt_i) begin
@@ -479,12 +475,9 @@ module riscv_load_store_unit
               NS = IDLE;
             end
           end else begin
-            if (data_rvalid_i) begin
               // no request, so go to IDLE
               NS = IDLE;
-            end
           end
-          `endif
         end
       end
 
