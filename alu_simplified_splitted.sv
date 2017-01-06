@@ -126,7 +126,7 @@ module riscv_alu_simplified_splitted
   end
 
   // actual adder
-  assign adder_partial_result_n = adder_in_a + adder_in_b + {16'b0, adder_partial_result_Q[16]};
+  assign adder_partial_result_n = adder_in_a + adder_in_b + ( req_i ? 17'b0 : {16'b0, adder_partial_result_Q[16]});
 
   assign adder_result = {adder_partial_result_n[15:0], adder_partial_result_Q[15:0]};
   
