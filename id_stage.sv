@@ -1614,7 +1614,7 @@ always_ff @(posedge clk, negedge rst_n)
     if(~rst_n) begin
       alu_req_ex_o <= 0;
     end else begin
-      alu_req_ex_o <= id_valid_o;
+      alu_req_ex_o <= id_valid_o & ~deassert_we;
     end
   end
   `endif

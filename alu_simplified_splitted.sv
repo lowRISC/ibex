@@ -33,20 +33,14 @@ module riscv_alu_simplified_splitted
   input  logic [ALU_OP_WIDTH-1:0]  operator_i,
   input  logic [31:0]              operand_a_i,
   input  logic [31:0]              operand_b_i,
-  // CONFIG_REGION: SPLITTED_ADDER
-  `ifdef SPLITTED_ADDER
   input  logic                     req_i,
-  `endif
 
   // CONFIG_REGION: LSU_ADDER_SUPPORT
   `ifndef LSU_ADDER_SUPPORT
   output logic [31:0]              adder_result_o,
   `endif // LSU_ADDER_SUPPORT
 
-  // CONFIG_REGION: SPLITTED_ADDER
-  `ifdef SPLITTED_ADDER
   output logic                     ready_o,
-  `endif
   output logic [31:0]              result_o,
   output logic                     comparison_result_o
 );
