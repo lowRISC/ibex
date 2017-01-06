@@ -1438,10 +1438,6 @@ always_ff @(posedge clk, negedge rst_n)
       `endif // ONLY_ALIGNED
       pc_ex_o                     <= '0;
       branch_in_ex_o              <= 1'b0;
-      // CONFIG_REGION: SPLITTED_ADDER
-      `ifdef  SPLITTED_ADDER
-      alu_req_ex_o                <= 1'b0;
-      `endif
     end
     // CONFIG_REGION: ONLY_ALIGNED
     `ifndef ONLY_ALIGNED
