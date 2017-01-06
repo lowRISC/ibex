@@ -317,7 +317,8 @@ module riscv_alu_simplified_splitted
     if(~rst_n) begin
       adder_partial_result_Q <= 0;
     end else begin
-      adder_partial_result_Q <= adder_partial_result_n;
+      if (req_i)
+        adder_partial_result_Q <= adder_partial_result_n;
     end
   end
 
