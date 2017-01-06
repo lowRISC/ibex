@@ -465,11 +465,24 @@ module riscv_controller
       // a jump was in ID and now has to be applied to IF from EX
       WAIT_JUMP_EX:
       begin
+        // CONFIG_REGION: SPLITTED_ADDER
+        `ifdef SPLITTED_ADDER
+        if (ex_valid_i) begin
+          pc_mux_o = PC_JUMP;
+          pc_set_o = 1'b1;
+          jump_done   = 1'b1;
+
+          ctrl_fsm_ns = DECODE;
+        end
+        else
+          halt_if_o = 1'b1;
+        `else 
         pc_mux_o = PC_JUMP;
         pc_set_o = 1'b1;
         jump_done   = 1'b1;
 
         ctrl_fsm_ns = DECODE;
+        `endif
       end
 
       `endif // JUMP_IN_ID
