@@ -171,8 +171,33 @@ module riscv_ex_stage
   //                        //
   ////////////////////////////
 
+
   // CONFIG_REGION: SIMPLE_ALU
   `ifdef SIMPLE_ALU
+  // CONFIG_REGION: SPLITTED
+  `ifdef SPLITTED_ADDER
+
+  riscv_alu_simplified_splitted alu_i
+  (
+    .clk                 ( clk             ),
+    .rst_n               ( rst_n           ),
+
+    .operator_i          ( alu_operator_i  ),
+    .operand_a_i         ( alu_operand_a_i ),
+    .operand_b_i         ( alu_operand_b_i ),
+
+    // CONFIG_REGION: LSU_ADDER_SUPPORT
+    `ifndef LSU_ADDER_SUPPORT
+    .adder_result_o      (alu_adder_result_ex_o ),
+    `endif // LSU_ADDER_SUPPORT
+
+    .ready_o             ( alu_ready       ),
+    .result_o            ( alu_result      ),
+    .comparison_result_o ( alu_cmp_result  )
+  );
+
+  assign alu_ready = 1'b1; // As there is no divider, ALU always takes only one cycle
+  `else
 
   riscv_alu_simplified alu_i
   (
@@ -193,6 +218,8 @@ module riscv_ex_stage
   );
 
   assign alu_ready = 1'b1; // As there is no divider, ALU always takes only one cycle
+
+  `end // SPLITTED_ADDER
 
   `else // SIMPLE_ALU
 
