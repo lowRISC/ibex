@@ -365,6 +365,7 @@ module riscv_ex_stage
   assign ex_ready_o = (alu_ready & lsu_ready_ex_i & wb_ready_i & ~regfile_we_conflict) | branch_in_ex_i;
   assign ex_valid_o = (alu_ready & lsu_ready_ex_i & wb_ready_i);
   `endif // THREE_PORT_REG_FILE
+  `endif // MUL_SUPPORT
 
   // CONFIG_REGION: THREE_PORT_REG_FILE
   `ifdef SPLITTED_ADDER
