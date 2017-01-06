@@ -207,7 +207,6 @@ module riscv_ex_stage
     .comparison_result_o ( alu_cmp_result  )
   );
 
-  assign alu_ready = 1'b1; // As there is no divider, ALU always takes only one cycle
   `else
 
   riscv_alu_simplified alu_i
