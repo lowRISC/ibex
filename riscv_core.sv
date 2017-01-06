@@ -161,7 +161,7 @@ module riscv_core
 
   // CONFIG_REGION: SPLITTED_ADDER
   `ifdef  SPLITTED_ADDER
-  logic        alu_req_ex,
+  logic        alu_req_ex;
   `endif
 
   // CONFIG_REGION: LSU_ADDER_SUPPORT
