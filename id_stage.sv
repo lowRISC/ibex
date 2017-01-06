@@ -1614,7 +1614,7 @@ always_ff @(posedge clk, negedge rst_n)
     if(~rst_n) begin
       alu_req_ex_o <= 0;
     end else begin
-      alu_req_ex_o <= (~halt_id & ex_ready_i);
+      alu_req_ex_o <= valid_id;
     end
   end
   `endif
