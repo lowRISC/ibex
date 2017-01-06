@@ -1578,13 +1578,12 @@ always_ff @(posedge clk, negedge rst_n)
         if ((jump_in_id == BRANCH_COND) || data_load_event_id) begin
           pc_ex_o                   <= pc_id_i;
         end
-        branch_in_ex_o              <= jump_in_id == BRANCH_COND;
         `else 
         if ((jump_in_id == BRANCH_COND) || (jump_in_id == BRANCH_JAL) || (jump_in_id == BRANCH_JALR) || data_load_event_id) begin
           pc_ex_o                   <= pc_id_i;
         end
-        branch_in_ex_o              <= (jump_in_id == BRANCH_COND) || (jump_in_id == BRANCH_JAL) || (jump_in_id == BRANCH_JALR);
         `endif
+        branch_in_ex_o              <= jump_in_id == BRANCH_COND;
         
       end else if(ex_ready_i) begin
         // EX stage is ready but we don't have a new instruction for it,

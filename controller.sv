@@ -319,7 +319,12 @@ module riscv_controller
         // decode and execute instructions only if the current conditional
         // branch in the EX stage is either not taken, or there is no
         // conditional branch in the EX stage
+        // CONFIG_REGION: SPLITTED_ADDER
+        `ifdef SPLITTED_ADDER
+        if (instr_valid_i && (~branch_taken_ex_i) && ex_valid_i)
+        `else 
         if (instr_valid_i && (~branch_taken_ex_i))
+        `endif
         begin // now analyze the current instruction in the ID stage
           is_decoding_o = 1'b1;
 
@@ -431,7 +436,12 @@ module riscv_controller
         // TODO: make sure this is not done multiple times in a row!!!
         //       maybe with an assertion?
         // handle conditional branches
+        // CONFIG_REGION: SPLITTED_ADDER
+        `ifdef SPLITTED_ADDER
+        if (branch_taken_ex_i & ex_valid_i) begin
+        `else
         if (branch_taken_ex_i) begin
+        `endif
           // there is a branch in the EX stage that is taken
           pc_mux_o      = PC_BRANCH;
           pc_set_o      = 1'b1;
