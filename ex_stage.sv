@@ -230,7 +230,7 @@ module riscv_ex_stage
 
   assign alu_ready = 1'b1; // As there is no divider, ALU always takes only one cycle
 
-  `end // SPLITTED_ADDER
+  `endif // SPLITTED_ADDER
 
   `else // SIMPLE_ALU
 
