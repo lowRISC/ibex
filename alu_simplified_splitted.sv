@@ -120,14 +120,14 @@ module riscv_alu_simplified_splitted
     if (req_i)
     begin
       // prepare operand a
-      adder_in_a = {0'b0, operand_a_i[15:0]};
+      adder_in_a = {1'b0, operand_a_i[15:0]};
       // prepare operand b
-      adder_in_b = adder_op_b_negate ? {0'b0, operand_b_neg[15:0]} : {0'b0, operand_b_i[15:0]};
+      adder_in_b = adder_op_b_negate ? {1'b0, operand_b_neg[15:0]} : {1'b0, operand_b_i[15:0]};
     end else begin
       // prepare operand a
-      adder_in_a = {0'b1, operand_a_i[31:16]};
+      adder_in_a = {1'b1, operand_a_i[31:16]};
       // prepare operand b
-      adder_in_b = adder_op_b_negate ? {0'b0, operand_b_neg[31:16]} : {0'b0, operand_b_i[31:16]};
+      adder_in_b = adder_op_b_negate ? {1'b0, operand_b_neg[31:16]} : {1'b0, operand_b_i[31:16]};
     end
   end
 
