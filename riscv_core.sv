@@ -159,6 +159,11 @@ module riscv_core
   logic [31:0] alu_operand_b_ex;
   logic [31:0] alu_operand_c_ex;
 
+  // CONFIG_REGION: SPLITTED_ADDER
+  `ifdef  SPLITTED_ADDER
+  logic        alu_req_ex,
+  `endif
+
   // CONFIG_REGION: LSU_ADDER_SUPPORT
   `ifndef LSU_ADDER_SUPPORT
   logic [31:0] alu_adder_result_ex; // Used to forward computed address to LSU
@@ -517,6 +522,10 @@ module riscv_core
     .alu_operand_a_ex_o           ( alu_operand_a_ex     ),
     .alu_operand_b_ex_o           ( alu_operand_b_ex     ),
     .alu_operand_c_ex_o           ( alu_operand_c_ex     ), // Still needed if 2r1w reg file used
+    // CONFIG_REGION: SPLITTED_ADDER
+    `ifdef  SPLITTED_ADDER
+    .alu_req_ex_o                 ( alu_req_ex           ),
+    `endif
 
     // CONFIG_REGION: BIT_SUPPORT
     `ifdef BIT_SUPPORT
@@ -670,6 +679,11 @@ module riscv_core
     .alu_operand_a_i            ( alu_operand_a_ex             ), // from ID/EX pipe registers
     .alu_operand_b_i            ( alu_operand_b_ex             ), // from ID/EX pipe registers
     .alu_operand_c_i            ( alu_operand_c_ex             ), // from ID/EX pipe registers
+    // CONFIG_REGION: SPLITTED_ADDER
+    `ifdef  SPLITTED_ADDER
+    .alu_req_ex_i               ( alu_req_ex                   ),
+    `endif
+
     // CONFIG_REGION: BIT_SUPPORT
     `ifdef BIT_SUPPORT
     .bmask_a_i                  ( bmask_a_ex                   ), // from ID/EX pipe registers

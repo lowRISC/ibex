@@ -1469,10 +1469,6 @@ always_ff @(posedge clk, negedge rst_n)
         prepost_useincr_ex_o        <= prepost_useincr;
         `endif // PREPOST_SUPPORT
         data_misaligned_ex_o        <= 1'b1;
-        // CONFIG_REGION: SPLITTED_ADDER
-        `ifdef  SPLITTED_ADDER
-        alu_req_ex_o                <= 1'b1;
-        `endif
       end
     end
     `endif // ONLY_ALIGNED
@@ -1593,11 +1589,6 @@ always_ff @(posedge clk, negedge rst_n)
         end
         branch_in_ex_o              <= (jump_in_id == BRANCH_COND) || (jump_in_id == BRANCH_JAL) || (jump_in_id == BRANCH_JALR);
         `endif
-
-        // CONFIG_REGION: SPLITTED_ADDER
-        `ifdef  SPLITTED_ADDER
-        alu_req_ex_o                <= 1'b1;
-        `endif
         
       end else if(ex_ready_i) begin
         // EX stage is ready but we don't have a new instruction for it,
@@ -1613,14 +1604,20 @@ always_ff @(posedge clk, negedge rst_n)
         `endif // ONLY_ALIGNED
         branch_in_ex_o              <= 1'b0;
       end
-      `ifdef SPLITTED_ADDER
-      else begin
-        alu_req_ex_o                <= 1'b0; // We cannot deliver new data to ALU (running or not running)
-      end
-      `endif
     end
   end
 
+  // CONFIG_REGION: SPLITTED_ADDER
+  `ifdef  SPLITTED_ADDER
+  
+  always_ff @(posedge clk or negedge rst_n) begin
+    if(~rst_n) begin
+      alu_req_ex_o <= 0;
+    end else begin
+      alu_req_ex_o <= (~halt_id & ex_ready_i);
+    end
+  end
+  `endif
 
 
   // stall control

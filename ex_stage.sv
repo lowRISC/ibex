@@ -99,7 +99,7 @@ module riscv_ex_stage
 
   // CONFIG_REGION: SPLITTED_ADDER
   `ifdef  SPLITTED_ADDER
-  input logic        alu_req_ex_i,
+  input logic         alu_req_ex_i,
   `endif
 
   // CSR access
