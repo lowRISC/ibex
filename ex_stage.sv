@@ -361,8 +361,14 @@ module riscv_ex_stage
   assign ex_ready_o = (alu_ready & lsu_ready_ex_i & wb_ready_i) | branch_in_ex_i;
   assign ex_valid_o = (alu_ready & lsu_ready_ex_i & wb_ready_i);
   `else // THREE_PORT_REG_FILE
+  // CONFIG_REGION: SPLITTED_ADDER
+  `ifdef SPLITTED_ADDER
+  assign ex_ready_o = (alu_ready & lsu_ready_ex_i & wb_ready_i & ~regfile_we_conflict);
+  assign ex_valid_o = (alu_ready & lsu_ready_ex_i & wb_ready_i);
+  `else
   assign ex_ready_o = (alu_ready & lsu_ready_ex_i & wb_ready_i & ~regfile_we_conflict) | branch_in_ex_i;
   assign ex_valid_o = (alu_ready & lsu_ready_ex_i & wb_ready_i);
+  `endif // SPLITTED_ADDER
   `endif // THREE_PORT_REG_FILE
   `endif // MUL_SUPPORT
 
