@@ -388,7 +388,7 @@ module riscv_load_store_unit
       `ifndef ONLY_ALIGNED
       // CONFIG_REGION: MERGE_ID_EX
       `ifdef MERGE_ID_EX
-      if (alu_ready_i)
+      if (ex_valid_i)
         data_misaligned_o <= data_misaligned;
         misaligned_addr_o <= data_addr_int;
       `endif
