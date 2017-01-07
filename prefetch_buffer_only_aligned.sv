@@ -315,6 +315,6 @@ module riscv_prefetch_buffer_only_aligned
 
   // make sure that if we have misaligned access it is a compressed instruction
   assert property (
-    @(posedge clk) (valid_o) |-> (~illegal_fetch_o) else $warning("Misaligned access to instruction memory was illegal as instruction is not compressed!");
+    @(posedge clk) (valid_o) |-> (~illegal_fetch_o)) else $warning("Misaligned access to instruction memory was illegal as instruction is not compressed!");
 
 endmodule
