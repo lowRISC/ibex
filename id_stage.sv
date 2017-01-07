@@ -1363,6 +1363,9 @@ module riscv_id_stage
   );
 
 
+  // CONFIG_REGION: HWLP_SUPPORT
+  `ifdef HWLP_SUPPORT
+
   //////////////////////////////////////////////////////////////////////////
   //          ____ ___  _   _ _____ ____   ___  _     _     _____ ____    //
   //         / ___/ _ \| \ | |_   _|  _ \ / _ \| |   | |   | ____|  _ \   //
@@ -1372,41 +1375,39 @@ module riscv_id_stage
   //                                                                      //
   //////////////////////////////////////////////////////////////////////////
 
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-    riscv_hwloop_regs
-      #(
-        .N_REGS ( N_HWLP )
-      )
-      hwloop_regs_i
-        (
-          .clk                   ( clk                       ),
-          .rst_n                 ( rst_n                     ),
+  riscv_hwloop_regs
+  #(
+    .N_REGS ( N_HWLP )
+  )
+  hwloop_regs_i
+  (
+    .clk                   ( clk                       ),
+    .rst_n                 ( rst_n                     ),
 
-          // from ID
-          .hwlp_start_data_i     ( hwloop_start              ),
-          .hwlp_end_data_i       ( hwloop_end                ),
-          .hwlp_cnt_data_i       ( hwloop_cnt                ),
-          .hwlp_we_i             ( hwloop_we                 ),
-          .hwlp_regid_i          ( hwloop_regid              ),
+    // from ID
+    .hwlp_start_data_i     ( hwloop_start              ),
+    .hwlp_end_data_i       ( hwloop_end                ),
+    .hwlp_cnt_data_i       ( hwloop_cnt                ),
+    .hwlp_we_i             ( hwloop_we                 ),
+    .hwlp_regid_i          ( hwloop_regid              ),
 
-          // from controller
-          .valid_i               ( hwloop_valid              ),
+    // from controller
+    .valid_i               ( hwloop_valid              ),
 
-          // to hwloop controller
-          .hwlp_start_addr_o     ( hwlp_start_o              ),
-          .hwlp_end_addr_o       ( hwlp_end_o                ),
-          .hwlp_counter_o        ( hwlp_cnt_o                ),
+    // to hwloop controller
+    .hwlp_start_addr_o     ( hwlp_start_o              ),
+    .hwlp_end_addr_o       ( hwlp_end_o                ),
+    .hwlp_counter_o        ( hwlp_cnt_o                ),
 
-          // from hwloop controller
-          .hwlp_dec_cnt_i        ( hwlp_dec_cnt_i            )
-        );
+    // from hwloop controller
+    .hwlp_dec_cnt_i        ( hwlp_dec_cnt_i            )
+  );
 
-    assign hwloop_valid = instr_valid_i & clear_instr_valid_o & is_hwlp_i;
+  assign hwloop_valid = instr_valid_i & clear_instr_valid_o & is_hwlp_i;
   `endif // HWLP_SUPPORT
 
-// CONFIG_REGION: MERGE_ID_EX
-`ifndef MERGE_ID_EX
+  // CONFIG_REGION: MERGE_ID_EX
+  `ifndef MERGE_ID_EX
 
   /////////////////////////////////////////////////////////////////////////////////
   //   ___ ____        _______  __  ____ ___ ____  _____ _     ___ _   _ _____   //
