@@ -150,8 +150,10 @@ module riscv_core
   logic        if_busy;
   logic        lsu_busy;
 
-
+  // CONFIG_REGION: MERGE_ID_EX
+  `ifndef MERGE_ID_EX
   logic [31:0] pc_ex; // PC of last executed branch or p.elw
+  `endif
 
   // ALU Control
   logic [ALU_OP_WIDTH-1:0] alu_operator_ex;
@@ -516,7 +518,10 @@ module riscv_core
     .wb_valid_i                   ( wb_valid             ),
 
     // From the Pipeline ID/EX
+    // CONFIG_REGION: MERGE_ID_EX
+    `ifndef MERGE_ID_EX
     .pc_ex_o                      ( pc_ex                ),
+    `endif
 
     .alu_operator_ex_o            ( alu_operator_ex      ),
     .alu_operand_a_ex_o           ( alu_operand_a_ex     ),
@@ -875,7 +880,10 @@ module riscv_core
 
     .pc_if_i                 ( pc_if              ),
     .pc_id_i                 ( pc_id              ), // from IF stage
+    // CONFIG_REGION: MERGE_ID_EX
+    `ifndef MERGE_ID_EX
     .pc_ex_i                 ( pc_ex              ), // from ID/EX pipeline
+    `endif
     .branch_target_i         ( jump_target_ex     ), // from ID/EX pipeline
     .data_load_event_ex_i    ( data_load_event_ex ), // from ID/EX pipeline
     .exc_save_if_i           ( exc_save_if        ),
@@ -981,7 +989,10 @@ module riscv_core
     // signals for PPC and NPC
     .pc_if_i           ( pc_if              ), // from IF stage
     .pc_id_i           ( pc_id              ), // from IF stage
+    // CONFIG_REGION: MERGE_ID_EX
+    `ifndef MERGE_ID_EX
     .pc_ex_i           ( pc_ex              ), // PC of last executed branch (in EX stage) or p.elw
+    `endif
 
     .data_load_event_i ( data_load_event_ex ),
     .instr_valid_id_i  ( instr_valid_id     ),

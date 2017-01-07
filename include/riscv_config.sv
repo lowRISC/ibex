@@ -107,7 +107,7 @@
 
 // CONFIG: ONLY_ALIGNED
 // will only allow aligned memory accesses and therefore overlapping mustn't occur
-//`define ONLY_ALIGNED
+`define ONLY_ALIGNED
 
 // CONFIG: SPLITTED_ADDER
 // will split ALU Adder in half and use two cycles to add operands
