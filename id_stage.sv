@@ -1695,19 +1695,20 @@ module riscv_id_stage
 
     csr_access_ex_o             = 1'b0;
     csr_op_ex_o                 = CSR_OP_NONE;
-    data_we_ex_o              = data_we_id;
-    data_type_ex_o            = data_type_id;
-    data_sign_ext_ex_o        = data_sign_ext_id;
+    data_we_ex_o                = data_we_id;
+    data_type_ex_o              = data_type_id;
+    data_sign_ext_ex_o          = data_sign_ext_id;
+
     // CONFIG_REGION: ONLY_ALIGNED
     `ifndef ONLY_ALIGNED
     data_reg_offset_ex_o        = 2'b0;
     `endif // ONLY_ALIGNED
 
       
-    alu_operator_ex_o         = alu_operator;
-    alu_operand_a_ex_o        = alu_operand_a;
-    alu_operand_b_ex_o        = alu_operand_b;
-    alu_operand_c_ex_o        = alu_operand_c;
+    alu_operator_ex_o           = alu_operator;
+    alu_operand_a_ex_o          = alu_operand_a;
+    alu_operand_b_ex_o          = alu_operand_b;
+    alu_operand_c_ex_o          = alu_operand_c;
 
     regfile_we_ex_o             = regfile_we_id;
     regfile_alu_we_ex_o         = regfile_alu_we_id;
@@ -1728,7 +1729,7 @@ module riscv_id_stage
     data_misaligned_ex_o        = 1'b0;
     `endif // ONLY_ALIGNED
 
-    pc_ex_o                   = pc_id_i;
+    pc_ex_o                     =  pc_id_i;
 
     branch_in_ex_o              = (jump_in_id == BRANCH_COND);
   end
