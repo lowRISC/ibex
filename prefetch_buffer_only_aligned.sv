@@ -135,7 +135,7 @@ module riscv_prefetch_buffer_only_aligned
             addr_mux = addr_pc_next;
             valid_o = 1'b1;
 
-            illegal_fetch_o = (last_fetch_rdata_Q[1:0] == 2'b11); // Instruction is not compressed
+            illegal_fetch_o = (fetch_rdata_Q[1:0] == 2'b11); // Instruction is not compressed
 
             if (ready_i) begin // Do not change state if ID is not ready
               fetch_addr_n = addr_mux;
@@ -249,7 +249,7 @@ module riscv_prefetch_buffer_only_aligned
                 addr_o = fetch_addr_Q;
                 valid_o = 1'b1;
 
-                illegal_fetch_o = (last_fetch_rdata_Q[1:0] == 2'b11); // Instruction is not compressed
+                illegal_fetch_o = (instr_rdata_i[1:0] == 2'b11); // Instruction is not compressed
                 
                 if (ready_i) begin // Do not change state if ID is not ready
                   instr_req_o = 1'b1;
