@@ -1731,21 +1731,6 @@ module riscv_id_stage
     pc_ex_o                   = pc_id_i;
 
     branch_in_ex_o              = (jump_in_id == BRANCH_COND);
-    
-    // Deassert the write if there is still something calculating
-    if(~ex_ready_i) begin
-      // Deassert the 
-      regfile_we_ex_o             = 1'b0;
-      regfile_alu_we_ex_o         = 1'b0;
-      csr_op_ex_o                 = CSR_OP_NONE;
-      data_req_ex_o               = 1'b0;
-      data_load_event_ex_o        = 1'b0;
-      // CONFIG_REGION: ONLY_ALIGNED
-      `ifndef ONLY_ALIGNED
-      data_misaligned_ex_o        = 1'b0;
-      `endif // ONLY_ALIGNED
-      branch_in_ex_o              = 1'b0;
-    end
   end
 
   `endif // MERGE_ID_EX
