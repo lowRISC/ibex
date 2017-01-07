@@ -404,19 +404,19 @@ module riscv_id_stage
 
   // CONFIG_REGION: HWLP_SUPPORT
   `ifdef HWLP_SUPPORT
-    // hwloop signals
-    logic [N_HWLP_BITS-1:0] hwloop_regid, hwloop_regid_int;
-    logic             [2:0] hwloop_we, hwloop_we_int;
-    logic                   hwloop_target_mux_sel;
-    logic                   hwloop_start_mux_sel;
-    logic                   hwloop_cnt_mux_sel;
+  // hwloop signals
+  logic [N_HWLP_BITS-1:0] hwloop_regid, hwloop_regid_int;
+  logic             [2:0] hwloop_we, hwloop_we_int;
+  logic                   hwloop_target_mux_sel;
+  logic                   hwloop_start_mux_sel;
+  logic                   hwloop_cnt_mux_sel;
 
-    logic            [31:0] hwloop_target;
-    logic            [31:0] hwloop_start, hwloop_start_int;
-    logic            [31:0] hwloop_end;
-    logic            [31:0] hwloop_cnt, hwloop_cnt_int;
+  logic            [31:0] hwloop_target;
+  logic            [31:0] hwloop_start, hwloop_start_int;
+  logic            [31:0] hwloop_end;
+  logic            [31:0] hwloop_cnt, hwloop_cnt_int;
 
-    logic                   hwloop_valid;
+  logic                   hwloop_valid;
   `endif // HWLP_SUPPORT
 
   // CSR control
