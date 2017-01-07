@@ -410,7 +410,7 @@ module riscv_controller
             halt_if_o = 1'b1;
             halt_id_o = 1'b1;
 
-            ctrl_fsm_ns = FLUSH_EX;
+            ctrl_fsm_ns = FLUSH_WB;
           end
           else if (dbg_req_i)
           begin
@@ -422,16 +422,12 @@ module riscv_controller
             // make sure the current instruction has been executed
             // before changing state to non-decode
             if (id_ready_i) begin
-              if (jump_in_id_i == BRANCH_COND)
-                ctrl_fsm_ns = DBG_WAIT_BRANCH;
-              else
-                ctrl_fsm_ns = DBG_SIGNAL;
-            end else if (data_load_event_i) begin
-              // special case for p.elw
-              // If there was a load event (which means p.elw), we go to debug
-              // even though we are still blocked
-              // we don't have to distuinguish between branch and non-branch,
-              // since the p.elw sits in the EX stage
+              if ((jump_in_id_i == BRANCH_COND) & branch_taken_ex_i)
+              begin
+                pc_mux_o = PC_BRANCH;
+                pc_set_o = 1'b1;
+              end
+
               ctrl_fsm_ns = DBG_SIGNAL;
             end
           end
@@ -647,6 +643,8 @@ module riscv_controller
 
       `endif // JUMP_IN_ID
 
+      // CONFIG_REGION: MERGE_ID_EX
+      `ifdef MERGE_ID_EX
       // a branch was in ID when a debug trap is hit
       DBG_WAIT_BRANCH:
       begin
@@ -660,6 +658,7 @@ module riscv_controller
 
         ctrl_fsm_ns = DBG_SIGNAL;
       end
+      `endif
 
       // now we can signal to the debugger that our pipeline is empty and it
       // can examine our current state
@@ -713,6 +712,8 @@ module riscv_controller
         end
       end
 
+      // CONFIG_REGION: MERGE_ID_EX
+      `ifdef MERGE_ID_EX
       // flush the pipeline, insert NOP into EX stage
       FLUSH_EX:
       begin
@@ -722,6 +723,7 @@ module riscv_controller
         if (ex_valid_i)
           ctrl_fsm_ns = FLUSH_WB;
       end
+      `endif
 
       // flush the pipeline, insert NOP into EX and WB stage
       FLUSH_WB:
