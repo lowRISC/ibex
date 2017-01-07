@@ -333,7 +333,7 @@ module riscv_controller
           is_decoding_o = 1'b1;
 
           // handle conditional branches
-          if (branch_taken_ex_i) begin
+          if (branch_taken_ex_i & id_ready_i) begin
             // there is a branch in the EX stage that is taken
             pc_mux_o      = PC_BRANCH;
             pc_set_o      = 1'b1;
@@ -362,14 +362,11 @@ module riscv_controller
           // we can jump directly since we know the address already
           // we don't need to worry about conditional branches here as they
           // will be evaluated in the EX stage
-          else if (jump_in_dec_i == BRANCH_JALR || jump_in_dec_i == BRANCH_JAL) begin
+          else if ((jump_in_dec_i == BRANCH_JALR || jump_in_dec_i == BRANCH_JAL) & id_ready_i) begin
             pc_mux_o = PC_JUMP;
 
-            // if there is a jr stall, wait for it to be gone
-            if ((~jr_stall_o) && (~jump_done_q)) begin
-              pc_set_o    = 1'b1;
-              jump_done   = 1'b1;
-            end
+            pc_set_o    = 1'b1;
+            jump_done   = 1'b1;
 
             // we don't have to change our current state here as the prefetch
             // buffer is automatically invalidated, thus the next instruction
@@ -422,7 +419,7 @@ module riscv_controller
             // make sure the current instruction has been executed
             // before changing state to non-decode
             if (id_ready_i) begin
-              if ((jump_in_id_i == BRANCH_COND) & branch_taken_ex_i)
+              if ((jump_in_id_i == BRANCH_COND) & branch_taken_ex_i & id_ready_i)
               begin
                 pc_mux_o = PC_BRANCH;
                 pc_set_o = 1'b1;
@@ -451,7 +448,7 @@ module riscv_controller
 
         
         
-        `else 
+        `else // MERGE_ID_EX
 
         // decode and execute instructions only if the current conditional
         // branch in the EX stage is either not taken, or there is no
@@ -612,7 +609,7 @@ module riscv_controller
           end
         end
 
-        `endif // MERGE_EX_ID
+        `endif // MERGE_ID_EX
       end
 
       // CONFIG_REGION: JUMP_IN_ID
@@ -809,22 +806,23 @@ module riscv_controller
         (((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_a_i == 1'b1)) ||
          ((regfile_we_ex_i == 1'b1) && (reg_d_ex_is_reg_a_i == 1'b1)) ||
          ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1))) )
+    begin
+      jr_stall_o        = 1'b1;
+      deassert_we_o     = 1'b1;
+    end
     `else
     // CONFIG_REGION: MERGE_ID_EX
-    `ifdef MERGE_ID_EX
-    if ((jump_in_dec_i == BRANCH_JALR) &&
-        ((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_a_i == 1'b1)))
-    `else
+    `ifndef MERGE_ID_EX
     if ((jump_in_dec_i == BRANCH_JALR) &&
         (((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_a_i == 1'b1)) ||
          ((regfile_we_ex_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1)) ||
          ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1))) )
-    `endif // MERGE_ID_EX
-    `endif // THREE_PORT_REG_FILE
     begin
-      jr_stall_o      = 1'b1;
+      jr_stall_o        = 1'b1;
       deassert_we_o     = 1'b1;
     end
+    `endif // MERGE_ID_EX
+    `endif // THREE_PORT_REG_FILE
   end
 
   // CONFIG_REGION: ONLY_ALIGNED
@@ -858,7 +856,9 @@ module riscv_controller
       if (reg_d_wb_is_reg_c_i == 1'b1)
         operand_c_fw_mux_sel_o = SEL_FW_WB;
     end
-    `else 
+    `else
+    // CONFIG_REGION: MERGE_ID_EX
+    `ifndef MERGE_ID_EX
     if (regfile_we_wb_i == 1'b1)
     begin
       if (reg_d_wb_is_reg_a_i == 1'b1)
@@ -866,6 +866,7 @@ module riscv_controller
       if (reg_d_wb_is_reg_b_i == 1'b1)
         operand_b_fw_mux_sel_o = SEL_FW_WB;
     end
+    `endif
     `endif // THREE_PORT_REG_FILE
 
     // Forwarding EX -> ID

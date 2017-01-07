@@ -520,6 +520,13 @@ module riscv_id_stage
   `endif // THREE_PORT_REG_FILE
 
 
+  // CONFIG_REGION: MERGE_ID_EX
+  `ifdef MERGE_ID_EX
+  logic  [31:0]  reg_buffer_s1_Q, reg_buffer_s2_Q;
+  logic          { WAIT_WRITE_BACK, COMPUTING } buffering_regs_Q, buffering_regs_n;
+  `endif // MERGE_ID_EX
+
+
   assign instr = instr_rdata_i;
 
   // immediate extraction and sign extension
@@ -703,9 +710,16 @@ module riscv_id_stage
       JT_JAL:  jump_target = pc_id_i + imm_uj_type;
       JT_COND: jump_target = pc_id_i + imm_sb_type;
 
+      // CONFIG_REGION: MERGE_ID_EX
+      `ifdef MERGE_ID_EX
+      // JALR: Cannot forward RS1, since the path is too long
+      JT_JALR: jump_target = reg_buffer_s1_Q + imm_i_type;
+      default:  jump_target = reg_buffer_s1_Q + imm_i_type;
+      `else
       // JALR: Cannot forward RS1, since the path is too long
       JT_JALR: jump_target = regfile_data_ra_id + imm_i_type;
       default:  jump_target = regfile_data_ra_id + imm_i_type;
+      `endif
     endcase
   end
   `endif
@@ -762,9 +776,15 @@ module riscv_id_stage
         SEL_FW_EX:    operand_a_fw_id = misaligned_addr_i;
         `endif
         `endif
+        // CONFIG_REGION: MERGE_ID_EX
+        `ifdef MERGE_ID_EX
+        SEL_REGFILE:  operand_a_fw_id = reg_buffer_s1_Q;
+        default:       operand_a_fw_id =  reg_buffer_s1_Q;
+        `else
         SEL_FW_WB:    operand_a_fw_id = regfile_wdata_wb_i;
         SEL_REGFILE:  operand_a_fw_id = regfile_data_ra_id;
         default:       operand_a_fw_id = regfile_data_ra_id;
+        `endif
       endcase; // case (operand_a_fw_mux_sel)
     end
 
@@ -876,9 +896,15 @@ module riscv_id_stage
         `ifndef MERGE_ID_EX
         SEL_FW_EX:    operand_b_fw_id = regfile_alu_wdata_fw_i;
         `endif // MERGE_ID_EX
+        // CONFIG_REGION: MERGE_ID_EX
+        `ifdef MERGE_ID_EX
+        SEL_REGFILE:  operand_b_fw_id = reg_buffer_s2_Q;
+        default:       operand_b_fw_id = reg_buffer_s2_Q;
+        `else
         SEL_FW_WB:    operand_b_fw_id = regfile_wdata_wb_i;
         SEL_REGFILE:  operand_b_fw_id = regfile_data_rb_id;
         default:       operand_b_fw_id = regfile_data_rb_id;
+        `endif
       endcase; // case (operand_b_fw_mux_sel)
     end
 
@@ -909,10 +935,7 @@ module riscv_id_stage
   always_comb
     begin : operand_c_fw_mux
       case (operand_c_fw_mux_sel)
-        // CONFIG_REGION: MERGE_ID_EX
-        `ifndef MERGE_ID_EX
         SEL_FW_EX:    operand_c_fw_id = regfile_alu_wdata_fw_i;
-        `endif
         SEL_FW_WB:    operand_c_fw_id = regfile_wdata_wb_i;
         SEL_REGFILE:  operand_c_fw_id = regfile_data_rc_id;
         default:       operand_c_fw_id = regfile_data_rc_id;
@@ -1742,15 +1765,68 @@ module riscv_id_stage
     branch_in_ex_o              = (jump_in_id == BRANCH_COND);
   end
 
+
+
+
+  // CONFIG_REGION: MERGE_ID_EX
+  `ifdef MERGE_ID_EX
+  logic[31:0]  reg_buffer_s1_Q, reg_buffer_s2_Q;
+  logic        buffering_regs_Q;
+  `endif // MERGE_ID_EX
+
+  always_ff @(posedge clk or negedge rst_n) begin
+    if(~rst_n) begin
+      reg_buffer_s1_Q <= 32'b0;
+      reg_buffer_s2_Q <= 32'b0;
+      buffering_regs_Q <= {COMPUTING};
+    end else begin
+      if ((buffering_regs_Q == WAIT_WRITE_BACK) && (buffering_regs_n == COMPUTING))
+        reg_buffer_s1_Q <= regfile_data_ra_id;
+        reg_buffer_s2_Q <= regfile_data_rb_id;
+    end
+  end
+
+  always_comb
+  begin
+    buffering_regs_n = buffering_regs_Q;
+
+    case (buffering_regs_Q)
+      WAIT_WRITE_BACK: begin
+        if (~regfile_we_wb_i)
+          buffering_regs_n = COMPUTING;
+      end
+
+      COMPUTING: begin
+        if (id_ready_o)
+          buffering_regs_n = WAIT_WRITE_BACK;
+          // TODO: Introduce shortcut sinc we know that no write back is pending and that there won't be a next writeback
+      end
+      default : /* default */;
+    endcase
+
+  end
+
+
+
   `endif // MERGE_ID_EX
 
 
   // stall control
   // CONFIG_REGION: ONLY_ALIGNED
   `ifndef ONLY_ALIGNED
+  // CONFIG_REGION: MERGE_ID_EX
+  `ifdef MERGE_ID_EX
+  assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i & (buffering_regs_Q == COMPUTING));
+  `else
   assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i);
+  `endif // MERGE_ID_EX
   `else 
+  // CONFIG_REGION: MERGE_ID_EX
+  `ifdef MERGE_ID_EX
+  assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i & (buffering_regs_Q == COMPUTING));
+  `else
   assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i);
+  `endif // MERGE_ID_EX
   `endif // ONLY_ALIGNED
   assign id_valid_o = (~halt_id) & id_ready_o;
 
