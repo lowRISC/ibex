@@ -776,7 +776,6 @@ module riscv_id_stage
         IMMB_S3:     imm_b = imm_s3_type;
         IMMB_VS:     imm_b = imm_vs_type;
         IMMB_VU:     imm_b = imm_vu_type;
-        IMMB_SB
         // CONFIG_REGION: MATH_SPECIAL_SUPPORT
         `ifdef MATH_SPECIAL_SUPPORT
         IMMB_SHUF:   imm_b = imm_shuffle_type;
@@ -784,7 +783,7 @@ module riscv_id_stage
         `endif // MATH_SPECIAL_SUPPORT
         // CONFIG_REGION: NO_JUMP_ADDER
         `ifdef NO_JUMP_ADDER
-        IMMB_UJ:     imm_b = imm_uj_type
+        IMMB_UJ:     imm_b = imm_uj_type;
         IMMB_SB:     imm_b = imm_sb_type;
         `endif
         default:     imm_b = imm_i_type;
