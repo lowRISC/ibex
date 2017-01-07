@@ -1704,66 +1704,47 @@ module riscv_id_stage
     `endif // ONLY_ALIGNED
 
       
+    alu_operator_ex_o         = alu_operator;
+    alu_operand_a_ex_o        = alu_operand_a;
+    alu_operand_b_ex_o        = alu_operand_b;
+    alu_operand_c_ex_o        = alu_operand_c;
+
+    regfile_we_ex_o             = regfile_we_id;
+    regfile_alu_we_ex_o         = regfile_alu_we_id;
+
+    csr_access_ex_o             = csr_access;
+    csr_op_ex_o                 = csr_op;
+    data_req_ex_o               = data_req_id;
+
+
     // CONFIG_REGION: ONLY_ALIGNED
     `ifndef ONLY_ALIGNED
-    if (data_misaligned_i) begin
-      // misaligned data access case
-      if (ex_ready_i)
-      begin
-        alu_operand_a_ex_o          = alu_operand_a;
-        alu_operand_b_ex_o          = alu_operand_b;
-        regfile_alu_we_ex_o         = regfile_alu_we_id;
-        data_misaligned_ex_o        = 1'b1;
-      end
-    end
-    else begin
-    `else // ONLY_ALIGNED
-    begin
+    data_reg_offset_ex_o      = data_reg_offset_id;
     `endif // ONLY_ALIGNED
-      // normal pipeline unstall case
-        alu_operator_ex_o         = alu_operator;
-        alu_operand_a_ex_o        = alu_operand_a;
-        alu_operand_b_ex_o        = alu_operand_b;
-        alu_operand_c_ex_o        = alu_operand_c;
+    data_load_event_ex_o      = (data_req_id ? data_load_event_id : 1'b0);
 
-        regfile_we_ex_o             = regfile_we_id;
-        regfile_alu_we_ex_o         = regfile_alu_we_id;
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
+    data_misaligned_ex_o        = 1'b0;
+    `endif // ONLY_ALIGNED
 
-        csr_access_ex_o             = csr_access;
-        csr_op_ex_o                 = csr_op;
-        data_req_ex_o               = data_req_id;
+    pc_ex_o                   = pc_id_i;
 
-
-        // CONFIG_REGION: ONLY_ALIGNED
-        `ifndef ONLY_ALIGNED
-        data_reg_offset_ex_o      = data_reg_offset_id;
-        `endif // ONLY_ALIGNED
-        data_load_event_ex_o      = (data_req_id ? data_load_event_id : 1'b0);
-
-        // CONFIG_REGION: ONLY_ALIGNED
-        `ifndef ONLY_ALIGNED
-        data_misaligned_ex_o        = 1'b0;
-        `endif // ONLY_ALIGNED
-
-        pc_ex_o                   = pc_id_i;
-
-        branch_in_ex_o              = (jump_in_id == BRANCH_COND);
-        
-        // Deassert the write if there is still something calculating
-        if(~ex_ready_i) begin
-          // Deassert the 
-          regfile_we_ex_o             = 1'b0;
-          regfile_alu_we_ex_o         = 1'b0;
-          csr_op_ex_o                 = CSR_OP_NONE;
-          data_req_ex_o               = 1'b0;
-          data_load_event_ex_o        = 1'b0;
-          // CONFIG_REGION: ONLY_ALIGNED
-          `ifndef ONLY_ALIGNED
-          data_misaligned_ex_o        = 1'b0;
-          `endif // ONLY_ALIGNED
-          branch_in_ex_o              = 1'b0;
-        end
-      end
+    branch_in_ex_o              = (jump_in_id == BRANCH_COND);
+    
+    // Deassert the write if there is still something calculating
+    if(~ex_ready_i) begin
+      // Deassert the 
+      regfile_we_ex_o             = 1'b0;
+      regfile_alu_we_ex_o         = 1'b0;
+      csr_op_ex_o                 = CSR_OP_NONE;
+      data_req_ex_o               = 1'b0;
+      data_load_event_ex_o        = 1'b0;
+      // CONFIG_REGION: ONLY_ALIGNED
+      `ifndef ONLY_ALIGNED
+      data_misaligned_ex_o        = 1'b0;
+      `endif // ONLY_ALIGNED
+      branch_in_ex_o              = 1'b0;
     end
   end
 
