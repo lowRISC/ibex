@@ -109,6 +109,8 @@ module riscv_load_store_unit
   // CONFIG_REGION: ONLY_ALIGNED
   `ifndef ONLY_ALIGNED
   logic         misaligned_st;   // high if we are currently performing the second part of a misaligned store
+  `else 
+  logic         data_misaligned;
   `endif // ONLY_ALIGNED
 
   enum logic [1:0]  { IDLE, WAIT_RVALID, WAIT_RVALID_EX_STALL, IDLE_EX_STALL } CS, NS;
@@ -368,10 +370,24 @@ module riscv_load_store_unit
     begin
       CS            <= IDLE;
       rdata_q       <= '0;
+      // CONFIG_REGION: ONLY_ALIGNED
+      `ifndef ONLY_ALIGNED
+      // CONFIG_REGION: MERGE_ID_EX
+      `ifdef MERGE_ID_EX
+      data_misaligned_o <= '0;
+      `endif
+      `endif
     end
     else
     begin
       CS            <= NS;
+      // CONFIG_REGION: ONLY_ALIGNED
+      `ifndef ONLY_ALIGNED
+      // CONFIG_REGION: MERGE_ID_EX
+      `ifdef MERGE_ID_EX
+      data_misaligned_o <= data_misaligned;
+      `endif
+      `endif
 
       if (data_rvalid_i && (~data_we_q))
       begin
@@ -383,7 +399,7 @@ module riscv_load_store_unit
 
         // CONFIG_REGION: ONLY_ALIGNED
         `ifndef ONLY_ALIGNED
-        if ((data_misaligned_ex_i == 1'b1) || (data_misaligned_o == 1'b1))
+        if ((data_misaligned_ex_i == 1'b1) || (data_misaligned == 1'b1))
           rdata_q  <= data_rdata_i;
         else
           rdata_q  <= data_rdata_ext;
@@ -527,7 +543,7 @@ module riscv_load_store_unit
   // the controller which selectively stalls the pipeline
   always_comb
   begin
-    data_misaligned_o = 1'b0;
+    data_misaligned = 1'b0;
 
     if((data_req_ex_i == 1'b1) && (data_misaligned_ex_i == 1'b0))
     begin
@@ -535,16 +551,22 @@ module riscv_load_store_unit
         2'b00: // word
         begin
           if(data_addr_int[1:0] != 2'b00)
-            data_misaligned_o = 1'b1;
+            data_misaligned = 1'b1;
         end
         2'b01: // half word
         begin
           if(data_addr_int[1:0] == 2'b11)
-            data_misaligned_o = 1'b1;
+            data_misaligned = 1'b1;
         end
       endcase // case (data_type_ex_i)
     end
   end
+
+  // CONFIG_REGION: MERGE_ID_EX
+  `ifdef MERGE_ID_EX
+  assign data_misaligned_o = data_misaligned;
+  `endif
+
   `endif // ONLY_ALIGNED
 
   // CONFIG_REGION: LSU_ADDER_SUPPORT

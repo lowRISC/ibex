@@ -139,11 +139,17 @@ module riscv_controller
   input logic         reg_d_alu_is_reg_a_i,
   input logic         reg_d_alu_is_reg_b_i,
   input logic         reg_d_alu_is_reg_c_i,
-  `else 
+  `else
+  // CONFIG_REGION: MERGE_ID_EX
+  `ifdef MERGE_ID_EX
+  input logic         reg_d_wb_is_reg_a_i,
+  input logic         reg_d_wb_is_reg_b_i,
+  `else
   input logic         reg_d_wb_is_reg_a_i,
   input logic         reg_d_wb_is_reg_b_i,
   input logic         reg_d_alu_is_reg_a_i,
   input logic         reg_d_alu_is_reg_b_i,
+  `endif // MERGE_ID_EX
   `endif // THREE_PORT_REG_FILE
 
 
@@ -634,14 +640,22 @@ module riscv_controller
     `ifdef THREE_PORT_REG_FILE
     if ((data_req_ex_i == 1'b1) && (regfile_we_ex_i == 1'b1) &&
         ((reg_d_ex_is_reg_a_i == 1'b1) || (reg_d_ex_is_reg_b_i == 1'b1) || (reg_d_ex_is_reg_c_i == 1'b1)) )
-    `else
-	  if ((data_req_ex_i == 1'b1) && (regfile_we_ex_i == 1'b1) &&
-        ((reg_d_alu_is_reg_a_i == 1'b1) || (reg_d_alu_is_reg_b_i == 1'b1)) )
-	  `endif // THREE_PORT_REG_FILE
     begin
       deassert_we_o   = 1'b1;
       load_stall_o    = 1'b1;
     end
+    `else
+    // CONFIG_REGION: MERGE_ID_EX
+    `ifndef MERGE_ID_EX
+	  if ((data_req_ex_i == 1'b1) && (regfile_we_ex_i == 1'b1) &&
+        ((reg_d_alu_is_reg_a_i == 1'b1) || (reg_d_alu_is_reg_b_i == 1'b1)) )
+    begin
+      deassert_we_o   = 1'b1;
+      load_stall_o    = 1'b1;
+    end
+    `endif // MERGE_ID_EX
+	  `endif // THREE_PORT_REG_FILE
+
 
     // Stall because of jr path
     // - always stall if a result is to be forwarded to the PC
@@ -655,10 +669,16 @@ module riscv_controller
          ((regfile_we_ex_i == 1'b1) && (reg_d_ex_is_reg_a_i == 1'b1)) ||
          ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1))) )
     `else
+    // CONFIG_REGION: MERGE_ID_EX
+    `ifdef MERGE_ID_EX
+    if ((jump_in_dec_i == BRANCH_JALR) &&
+        ((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_a_i == 1'b1)))
+    `else
     if ((jump_in_dec_i == BRANCH_JALR) &&
         (((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_a_i == 1'b1)) ||
          ((regfile_we_ex_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1)) ||
          ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1))) )
+    `endif // MERGE_ID_EX
     `endif // THREE_PORT_REG_FILE
     begin
       jr_stall_o      = 1'b1;
@@ -708,6 +728,8 @@ module riscv_controller
     `endif // THREE_PORT_REG_FILE
 
     // Forwarding EX -> ID
+    // CONFIG_REGION: MERGE_ID_EX
+    `ifndef MERGE_ID_EX
     if (regfile_alu_we_fw_i == 1'b1)
     begin
       if (reg_d_alu_is_reg_a_i == 1'b1)
@@ -720,6 +742,7 @@ module riscv_controller
         operand_c_fw_mux_sel_o = SEL_FW_EX;
       `endif // THREE_PORT_REG_FILE
     end
+    `endif // MERGE_ID_EX
 
     // CONFIG_REGION: ONLY_ALIGNED
     `ifndef ONLY_ALIGNED

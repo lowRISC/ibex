@@ -64,7 +64,11 @@ module riscv_cs_registers
 
   input  logic [31:0] pc_if_i,
   input  logic [31:0] pc_id_i,
+
+  // CONFIG_REGION: MERGE_ID_EX
+  `ifndef MERGE_ID_EX
   input  logic [31:0] pc_ex_i,
+  `endif
   input  logic [31:0] branch_target_i,
   input  logic        data_load_event_ex_i,
   input  logic        exc_save_if_i,
@@ -231,7 +235,12 @@ module riscv_cs_registers
       mstatus_n  = 1'b0;
 
       if (data_load_event_ex_i) begin
+        // CONFIG_REGION: MERGE_ID_EX
+        `ifdef MERGE_ID_EX
         mepc_n = pc_ex_i;
+        `else 
+        mepc_n = pc_id_i;
+        `endif
       end else if (exc_save_takenbranch_i) begin
         mepc_n = branch_target_i;
       end else begin

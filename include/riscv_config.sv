@@ -126,7 +126,7 @@
 `ifndef NO_JUMP_ADDER
 `ifdef 	JUMP_IN_ID
 // CONFIG: MERGE_ID_EX
-// will merge the ID and EX stage
+// will merge/fuse the ID and EX stage
 `define MERGE_ID_EX
 
 `endif

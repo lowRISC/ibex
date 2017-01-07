@@ -250,6 +250,7 @@ module riscv_id_stage
     input  logic        regfile_we_wb_i,
     input  logic [31:0] regfile_wdata_wb_i, // From wb_stage: selects data from data memory, ex_stage result and sp rdata
 
+
     input  logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_fw_i,
     input  logic        regfile_alu_we_fw_i,
     input  logic [31:0] regfile_alu_wdata_fw_i,
@@ -502,10 +503,16 @@ module riscv_id_stage
   logic        reg_d_alu_is_reg_b_id;
   logic        reg_d_alu_is_reg_c_id;
   `else 
+  // CONFIG_REGION: MERGE_ID_EX
+  `ifdef MERGE_ID_EX
+  logic        reg_d_wb_is_reg_a_id;
+  logic        reg_d_wb_is_reg_b_id;
+  `else
   logic        reg_d_wb_is_reg_a_id;
   logic        reg_d_wb_is_reg_b_id;
   logic        reg_d_alu_is_reg_a_id;
   logic        reg_d_alu_is_reg_b_id;
+  `endif // MERGE_ID_EX
   `endif // THREE_PORT_REG_FILE
 
 
@@ -597,10 +604,16 @@ module riscv_id_stage
   assign reg_d_alu_is_reg_b_id = (regfile_alu_waddr_fw_i == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
   assign reg_d_alu_is_reg_c_id = (regfile_alu_waddr_fw_i == regfile_addr_rc_id) && (regc_used_dec == 1'b1) && (regfile_addr_rc_id != '0);
   `else // THREE_PORT_REG_FILE
+  // CONFIG_REGION: MERGE_ID_EX
+  `ifdef MERGE_ID_EX
+  assign reg_d_wb_is_reg_a_id  = (regfile_waddr_wb_i     == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
+  assign reg_d_wb_is_reg_b_id  = (regfile_waddr_wb_i     == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
+  `else
   assign reg_d_wb_is_reg_a_id  = (regfile_waddr_wb_i     == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
   assign reg_d_wb_is_reg_b_id  = (regfile_waddr_wb_i     == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
   assign reg_d_alu_is_reg_a_id = (regfile_alu_waddr_fw_i == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
   assign reg_d_alu_is_reg_b_id = (regfile_alu_waddr_fw_i == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
+  `endif // MERGE_ID_EX
   `endif // THREE_PORT_REG_FILE
 
 
@@ -1262,10 +1275,16 @@ module riscv_id_stage
     .reg_d_alu_is_reg_b_i           ( reg_d_alu_is_reg_b_id  ),
     .reg_d_alu_is_reg_c_i           ( reg_d_alu_is_reg_c_id  ),
     `else
+    // CONFIG_REGION: MERGE_ID_EX
+    `ifdef MERGE_ID_EX
+    .reg_d_wb_is_reg_a_i            ( reg_d_wb_is_reg_a_id   ),
+    .reg_d_wb_is_reg_b_i            ( reg_d_wb_is_reg_b_id   ),    
+    `else
     .reg_d_wb_is_reg_a_i            ( reg_d_wb_is_reg_a_id   ),
     .reg_d_wb_is_reg_b_i            ( reg_d_wb_is_reg_b_id   ),    
     .reg_d_alu_is_reg_a_i           ( reg_d_alu_is_reg_a_id  ),
     .reg_d_alu_is_reg_b_i           ( reg_d_alu_is_reg_b_id  ),
+    `endif // MERGE_ID_EX
     `endif // THREE_PORT_REG_FILE
 
 
@@ -1386,6 +1405,9 @@ module riscv_id_stage
     assign hwloop_valid = instr_valid_i & clear_instr_valid_o & is_hwlp_i;
   `endif // HWLP_SUPPORT
 
+// CONFIG_REGION: MERGE_ID_EX
+`ifndef MERGE_ID_EX
+
   /////////////////////////////////////////////////////////////////////////////////
   //   ___ ____        _______  __  ____ ___ ____  _____ _     ___ _   _ _____   //
   //  |_ _|  _ \      | ____\ \/ / |  _ \_ _|  _ \| ____| |   |_ _| \ | | ____|  //
@@ -1395,7 +1417,8 @@ module riscv_id_stage
   //                                                                             //
   /////////////////////////////////////////////////////////////////////////////////
 
-always_ff @(posedge clk, negedge rst_n)
+
+  always_ff @(posedge clk, negedge rst_n)
   begin : ID_EX_PIPE_REGISTERS
     if (rst_n == 1'b0)
     begin
@@ -1635,6 +1658,126 @@ always_ff @(posedge clk, negedge rst_n)
     end
   end
   `endif
+
+  `else // MERGE_ID_EX
+
+  /////////////////////////////////////
+  //   ___ ____        _______  __   //
+  //  |_ _|  _ \      | ____\ \/ /   //
+  //   | || | | |_____|  _|  \  /    // - merging network
+  //   | || |_| |_____| |___ /  \    //
+  //  |___|____/      |_____/_/\_\   //
+  //                                 //
+  /////////////////////////////////////
+
+
+  always_comb
+  begin
+      alu_operator_ex_o           = ALU_SLTU;
+      alu_operand_a_ex_o          = '0;
+      alu_operand_b_ex_o          = '0;
+      alu_operand_c_ex_o          = '0; // Still needed for jump target if 2r1w reg file used
+
+      regfile_we_ex_o             = 1'b0;  
+      regfile_alu_waddr_ex_o      = 5'b0;
+      regfile_alu_we_ex_o         = 1'b0;
+  
+      csr_access_ex_o             = 1'b0;
+      csr_op_ex_o                 = CSR_OP_NONE;
+      data_we_ex_o                = 1'b0;
+      data_type_ex_o              = 2'b0;
+      data_sign_ext_ex_o          = 1'b0;
+      // CONFIG_REGION: ONLY_ALIGNED
+      `ifndef ONLY_ALIGNED
+      data_reg_offset_ex_o        = 2'b0;
+      `endif // ONLY_ALIGNED
+      data_req_ex_o               = 1'b0;
+      data_load_event_ex_o        = 1'b0;
+      // CONFIG_REGION: ONLY_ALIGNED
+      `ifndef ONLY_ALIGNED
+      data_misaligned_ex_o        = 1'b0;
+      `endif // ONLY_ALIGNED
+      pc_ex_o                     = '0;
+      branch_in_ex_o              = 1'b0;
+    end
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
+    if (data_misaligned_i) begin
+      // misaligned data access case
+      if (ex_ready_i)
+      begin
+        alu_operand_a_ex_o          = alu_operand_a;
+        alu_operand_b_ex_o          = alu_operand_b;
+        regfile_alu_we_ex_o         = regfile_alu_we_id;
+        data_misaligned_ex_o        = 1'b1;
+      end
+    end
+    else begin
+    `else // ONLY_ALIGNED
+    begin
+    `endif // ONLY_ALIGNED
+      // normal pipeline unstall case
+      if (id_valid_o)
+      begin // unstall the whole pipeline
+
+        alu_operator_ex_o         = alu_operator;
+        alu_operand_a_ex_o        = alu_operand_a;
+        alu_operand_b_ex_o        = alu_operand_b;
+        alu_operand_c_ex_o        = alu_operand_c;
+
+        regfile_we_ex_o             = regfile_we_id;
+        regfile_alu_we_ex_o         = regfile_alu_we_id;
+
+        
+        if (regfile_we_id | regfile_alu_we_id) begin
+          regfile_alu_waddr_ex_o    = regfile_alu_waddr_id;
+        end
+
+        csr_access_ex_o             = csr_access;
+        csr_op_ex_o                 = csr_op;
+        data_req_ex_o               = data_req_id;
+        if (data_req_id)
+        begin // only needed for LSU when there is an active request
+          data_we_ex_o              = data_we_id;
+          data_type_ex_o            = data_type_id;
+          data_sign_ext_ex_o        = data_sign_ext_id;
+          // CONFIG_REGION: ONLY_ALIGNED
+          `ifndef ONLY_ALIGNED
+          data_reg_offset_ex_o      = data_reg_offset_id;
+          `endif // ONLY_ALIGNED
+          data_load_event_ex_o      = data_load_event_id;
+        end else begin
+          data_load_event_ex_o      = 1'b0;
+        end
+        // CONFIG_REGION: ONLY_ALIGNED
+        `ifndef ONLY_ALIGNED
+        data_misaligned_ex_o        = 1'b0;
+        `endif // ONLY_ALIGNED
+
+        
+        if ((jump_in_id == BRANCH_COND) || data_load_event_id) begin
+          pc_ex_o                   = pc_id_i;
+        end
+        branch_in_ex_o              = (jump_in_id == BRANCH_COND);
+        
+      end else if(ex_ready_i) begin
+        // EX stage is ready but we don't have a new instruction for it,
+        // so we set all write enables to 0, but unstall the pipe
+        regfile_we_ex_o             = 1'b0;
+        regfile_alu_we_ex_o         = 1'b0;
+        csr_op_ex_o                 = CSR_OP_NONE;
+        data_req_ex_o               = 1'b0;
+        data_load_event_ex_o        = 1'b0;
+        // CONFIG_REGION: ONLY_ALIGNED
+        `ifndef ONLY_ALIGNED
+        data_misaligned_ex_o        = 1'b0;
+        `endif // ONLY_ALIGNED
+        branch_in_ex_o              = 1'b0;
+      end
+    end
+  end
+
+  `endif // MERGE_ID_EX
 
 
   // stall control
