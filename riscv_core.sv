@@ -129,6 +129,10 @@ module riscv_core
   // CONFIG_REGION: ONLY_ALIGNED
   `ifndef ONLY_ALIGNED
   logic        data_misaligned;
+  // CONFIG_REGION: MERGE_ID_EX
+  `ifdef MERGE_ID_EX
+  logic        misaligned_addr;
+  `endif
   `endif // ONLY_ALIGNED
 
   // CONFIG_REGION: MUL_SUPPORT
@@ -612,6 +616,10 @@ module riscv_core
     // CONFIG_REGION: ONLY_ALIGNED
     `ifndef ONLY_ALIGNED
     .data_misaligned_i            ( data_misaligned      ),
+    // CONFIG_REGION: MERGE_ID_EX
+    `ifdef MERGE_ID_EX
+    .misaligned_addr_i,           ( misaligned_addr      ),
+    `endif
     `endif // ONLY_ALIGNED
 
     // Interrupt Signals
@@ -822,6 +830,10 @@ module riscv_core
     `ifndef ONLY_ALIGNED
     .data_misaligned_ex_i  ( data_misaligned_ex ), // from ID/EX pipeline
     .data_misaligned_o     ( data_misaligned    ),
+    // CONFIG_REGION: MERGE_ID_EX
+    `ifdef MERGE_ID_EX
+    .misaligned_addr_o     ( misaligned_addr    ),
+    `endif
     `endif // ONLY_ALIGNED
 
     // exception signals

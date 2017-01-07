@@ -210,6 +210,10 @@ module riscv_id_stage
     // CONFIG_REGION: ONLY_ALIGNED
     `ifndef ONLY_ALIGNED
     input  logic        data_misaligned_i,
+    // CONFIG_REGION: MERGE_ID_EX
+    `ifdef MERGE_ID_EX
+    input  logic        misaligned_addr_i,
+    `endif
     `endif // ONLY_ALIGNED
 
 
@@ -752,6 +756,11 @@ module riscv_id_stage
         // CONFIG_REGION: MERGE_ID_EX
         `ifndef MERGE_ID_EX
         SEL_FW_EX:    operand_a_fw_id = regfile_alu_wdata_fw_i;
+        `else 
+        // CONFIG_REGION: ONLY_ALIGNED
+        `ifndef ONLY_ALIGNED
+        SEL_FW_EX:    operand_a_fw_id = misaligned_addr_i;
+        `endif
         `endif
         SEL_FW_WB:    operand_a_fw_id = regfile_wdata_wb_i;
         SEL_REGFILE:  operand_a_fw_id = regfile_data_ra_id;
@@ -1726,11 +1735,10 @@ module riscv_id_stage
 
     // CONFIG_REGION: ONLY_ALIGNED
     `ifndef ONLY_ALIGNED
-    data_misaligned_ex_o        = 1'b0;
+    data_misaligned_ex_o    = data_misaligned_i;
     `endif // ONLY_ALIGNED
 
-    pc_ex_o                     =  pc_id_i;
-
+    pc_ex_o                     = pc_id_i;
     branch_in_ex_o              = (jump_in_id == BRANCH_COND);
   end
 
