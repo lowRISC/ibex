@@ -746,12 +746,25 @@ module riscv_controller
 
     // CONFIG_REGION: ONLY_ALIGNED
     `ifndef ONLY_ALIGNED
+    // CONFIG_REGION: MERGE_ID_EX
+    `ifdef MERGE_ID_EX
+
+    // for misaligned memory accesses
+    if (data_misaligned_i)
+    begin
+      operand_a_fw_mux_sel_o  = SEL_MISALIGNED;
+      operand_b_fw_mux_sel_o  = SEL_REGFILE;
+    end
+
+    `else 
     // for misaligned memory accesses
     if (data_misaligned_i)
     begin
       operand_a_fw_mux_sel_o  = SEL_FW_EX;
       operand_b_fw_mux_sel_o  = SEL_REGFILE;
     end
+
+    `endif // MERGE_ID_EX
     `endif // ONLY_ALIGNED
     // CONFIG_REGION: MUL_SUPPORT
     `ifdef MUL_SUPPORT 
