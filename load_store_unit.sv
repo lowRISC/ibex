@@ -109,7 +109,6 @@ module riscv_load_store_unit
   // CONFIG_REGION: ONLY_ALIGNED
   `ifndef ONLY_ALIGNED
   logic         misaligned_st;   // high if we are currently performing the second part of a misaligned store
-  `else 
   logic         data_misaligned;
   `endif // ONLY_ALIGNED
 
