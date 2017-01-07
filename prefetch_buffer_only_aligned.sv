@@ -48,6 +48,7 @@ module riscv_prefetch_buffer_only_aligned
   input  logic        instr_rvalid_i,
 
   // Prefetch Buffer Status
+  output logic        illegal_fetch_o,
   output logic        busy_o
 );
   
@@ -100,8 +101,6 @@ module riscv_prefetch_buffer_only_aligned
     endcase
   end
 
-
-
   always_comb
   begin
     NS = CS;
@@ -116,6 +115,8 @@ module riscv_prefetch_buffer_only_aligned
     addr_o = fetch_addr_Q;
 
     instruction_format = FULL_INSTR_ALIGNED;
+
+    illegal_fetch_o = 0;
 
     unique case (CS)
       IDLE: begin
@@ -133,6 +134,8 @@ module riscv_prefetch_buffer_only_aligned
             addr_o = fetch_addr_Q;
             addr_mux = addr_pc_next;
             valid_o = 1'b1;
+
+            illegal_fetch_o = (last_fetch_rdata_Q[1:0] == 2'b11); // Instruction is not compressed
 
             if (ready_i) begin // Do not change state if ID is not ready
               fetch_addr_n = addr_mux;
@@ -245,6 +248,8 @@ module riscv_prefetch_buffer_only_aligned
                 instruction_format = C_INSTR_MISALIGNED;
                 addr_o = fetch_addr_Q;
                 valid_o = 1'b1;
+
+                illegal_fetch_o = (last_fetch_rdata_Q[1:0] == 2'b11); // Instruction is not compressed
                 
                 if (ready_i) begin // Do not change state if ID is not ready
                   instr_req_o = 1'b1;
@@ -307,5 +312,9 @@ module riscv_prefetch_buffer_only_aligned
       fetch_valid_Q           <= fetch_valid_n;
     end
   end
+
+  // make sure that if we have misaligned access it is a compressed instruction
+  assert property (
+    @(posedge clk) (valid_o) |-> (~illegal_fetch_o) else $warning("Misaligned access to instruction memory was illegal as instruction is not compressed!");
 
 endmodule

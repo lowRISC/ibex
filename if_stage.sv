@@ -117,6 +117,10 @@ module riscv_if_stage #(
       `ifdef HWLP_SUPPORT
       logic              is_hwlp_id_q, fetch_is_hwlp;
       `endif // HWLP_SUPPORT
+      // CONFIG_REGION: ONLY_ALIGNED
+      `ifdef ONLY_ALIGNED
+      logic              illegal_fetch;
+      `endif
 
       logic       [31:0] exc_pc;
 
@@ -196,6 +200,7 @@ module riscv_if_stage #(
                 .instr_rdata_i     ( instr_rdata_i               ),
 
                 // Prefetch Buffer Status
+                .illegal_fetch_o   ( illegal_fetch               ),
                 .busy_o            ( prefetch_busy               )
               );
         `else 
@@ -459,7 +464,12 @@ module riscv_if_stage #(
                 begin
                   instr_valid_id_o    <= 1'b1;
                   instr_rdata_id_o    <= instr_decompressed;
+                  // CONFIG_REGION: ONLY_ALIGNED
+                  `ifdef ONLY_ALIGNED
+                  illegal_c_insn_id_o <= illegal_c_insn | illegal_fetch;
+                  `else
                   illegal_c_insn_id_o <= illegal_c_insn;
+                  `endif
                   is_compressed_id_o  <= instr_compressed_int;
                   pc_id_o             <= pc_if_o;
                   // CONFIG_REGION: HWLP_SUPPORT
