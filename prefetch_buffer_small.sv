@@ -407,7 +407,7 @@ module riscv_prefetch_buffer_small
       current_fetch_rdata_Q   <= 32'h0000;
       last_fetch_rdata_Q      <= 16'h00;
       last_fetch_valid_Q      <= 1'b0;
-      is_second_fetch_Q  <= 1'b0;
+      is_second_fetch_Q       <= 1'b0;
       fetch_stalled_Q         <= 1'b0;
 
     end  
@@ -419,7 +419,7 @@ module riscv_prefetch_buffer_small
       current_fetch_rdata_Q   <= current_fetch_rdata_n;
       last_fetch_rdata_Q      <= last_fetch_rdata_n;
       last_fetch_valid_Q      <= last_fetch_valid_n;
-      is_second_fetch_Q  <= is_second_fetch_n;
+      is_second_fetch_Q       <= is_second_fetch_n;
       fetch_stalled_Q         <= fetch_stalled_n;
     end
   end
