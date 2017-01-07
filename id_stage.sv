@@ -523,7 +523,7 @@ module riscv_id_stage
   // CONFIG_REGION: MERGE_ID_EX
   `ifdef MERGE_ID_EX
   logic  [31:0]  reg_buffer_s1_Q, reg_buffer_s2_Q;
-  logic          { WAIT_WRITE_BACK, COMPUTING } buffering_regs_Q, buffering_regs_n;
+  enum logic  [  { WAIT_WRITE_BACK, COMPUTING } buffering_regs_Q, buffering_regs_n;
   `endif // MERGE_ID_EX
 
 
@@ -1766,13 +1766,6 @@ module riscv_id_stage
   end
 
 
-
-
-  // CONFIG_REGION: MERGE_ID_EX
-  `ifdef MERGE_ID_EX
-  logic[31:0]  reg_buffer_s1_Q, reg_buffer_s2_Q;
-  logic        buffering_regs_Q;
-  `endif // MERGE_ID_EX
 
   always_ff @(posedge clk or negedge rst_n) begin
     if(~rst_n) begin
