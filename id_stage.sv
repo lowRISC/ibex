@@ -367,7 +367,7 @@ module riscv_id_stage
   logic [0:0]  imm_a_mux_sel;
   logic [3:0]  imm_b_mux_sel;
   // CONFIG_REGION: NO_JUMP_ADDER
-  `if NO_JUMP_ADDER
+  `ifdef NO_JUMP_ADDER
   logic [1:0]  jump_target_mux_sel;
   `endif
 
