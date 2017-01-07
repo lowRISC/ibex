@@ -618,7 +618,7 @@ module riscv_core
     .data_misaligned_i            ( data_misaligned      ),
     // CONFIG_REGION: MERGE_ID_EX
     `ifdef MERGE_ID_EX
-    .misaligned_addr_i,           ( misaligned_addr      ),
+    .misaligned_addr_i            ( misaligned_addr      ),
     `endif
     `endif // ONLY_ALIGNED
 
