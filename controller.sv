@@ -433,14 +433,19 @@ module riscv_controller
             end
         end
 
-        // TODO: make sure this is not done multiple times in a row!!!
+        // TODO: make sure this is not done multiple times in a row (RI5CY)!!!
         //       maybe with an assertion?
         // handle conditional branches
         // CONFIG_REGION: SPLITTED_ADDER
         `ifdef SPLITTED_ADDER
         if (branch_taken_ex_i & ex_valid_i) begin
         `else
+        // CONFIG_REGION: NO_JUMP_ADDER
+        `ifdef NO_JUMP_ADDER
+        if (branch_taken_ex_i & ex_valid_i) begin
+        `else
         if (branch_taken_ex_i) begin
+        `endif
         `endif
           // there is a branch in the EX stage that is taken
           pc_mux_o      = PC_BRANCH;

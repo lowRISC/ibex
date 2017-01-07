@@ -323,7 +323,10 @@ module riscv_id_stage
   logic [31:0] imm_a;       // contains the immediate for operand b
   logic [31:0] imm_b;       // contains the immediate for operand b
 
+  // CONFIG_REGION: NO_JUMP_ADDER
+  `ifdef NO_JUMP_ADDER
   logic [31:0] jump_target;       // calculated jump target (-> EX -> IF)
+  `endif
 
 
   // Signals running between controller and exception controller
@@ -363,7 +366,10 @@ module riscv_id_stage
 
   logic [0:0]  imm_a_mux_sel;
   logic [3:0]  imm_b_mux_sel;
+  // CONFIG_REGION: NO_JUMP_ADDER
+  `if NO_JUMP_ADDER
   logic [1:0]  jump_target_mux_sel;
+  `endif
 
   // CONFIG_REGION: MUL_SUPPORT
   `ifdef MUL_SUPPORT
@@ -623,66 +629,69 @@ module riscv_id_stage
   //                                           //
   ///////////////////////////////////////////////
 
+  // hwloop register id
+  assign hwloop_regid_int = instr[7];   // rd contains hwloop register id
 
-    // hwloop register id
-    assign hwloop_regid_int = instr[7];   // rd contains hwloop register id
-
-    // hwloop target mux
-    always_comb
-      begin
-        case (hwloop_target_mux_sel)
-          1'b0: hwloop_target = pc_id_i + {imm_iz_type[30:0], 1'b0};
-          1'b1: hwloop_target = pc_id_i + {imm_z_type[30:0], 1'b0};
-        endcase
-      end
-
-      // hwloop start mux
-      always_comb
-      begin
-        case (hwloop_start_mux_sel)
-          1'b0: hwloop_start_int = hwloop_target;   // for PC + I imm
-          1'b1: hwloop_start_int = pc_if_i;         // for next PC
-        endcase
-      end
-
-
-      // hwloop cnt mux
-      always_comb
-      begin : hwloop_cnt_mux
-        case (hwloop_cnt_mux_sel)
-          1'b0: hwloop_cnt_int = imm_iz_type;
-          1'b1: hwloop_cnt_int = operand_a_fw_id;
-        endcase;
-      end
-
-      // multiplex between access from instructions and access via CSR registers
-      assign hwloop_start = hwloop_we_int[0] ? hwloop_start_int : csr_hwlp_data_i;
-      assign hwloop_end   = hwloop_we_int[1] ? hwloop_target    : csr_hwlp_data_i;
-      assign hwloop_cnt   = hwloop_we_int[2] ? hwloop_cnt_int   : csr_hwlp_data_i;
-      assign hwloop_regid = (|hwloop_we_int) ? hwloop_regid_int : csr_hwlp_regid_i;
-      assign hwloop_we    = (|hwloop_we_int) ? hwloop_we_int    : csr_hwlp_we_i;
-    `endif // HWLP_SUPPORT
-
-    //////////////////////////////////////////////////////////////////
-    //      _                         _____                    _    //
-    //     | |_   _ _ __ ___  _ __   |_   _|_ _ _ __ __ _  ___| |_  //
-    //  _  | | | | | '_ ` _ \| '_ \    | |/ _` | '__/ _` |/ _ \ __| //
-    // | |_| | |_| | | | | | | |_) |   | | (_| | | | (_| |  __/ |_  //
-    //  \___/ \__,_|_| |_| |_| .__/    |_|\__,_|_|  \__, |\___|\__| //
-    //                       |_|                    |___/           //
-    //////////////////////////////////////////////////////////////////
-
-    always_comb
-    begin : jump_target_mux
-      unique case (jump_target_mux_sel)
-        JT_JAL:  jump_target = pc_id_i + imm_uj_type;
-        JT_COND: jump_target = pc_id_i + imm_sb_type;
-
-        // JALR: Cannot forward RS1, since the path is too long
-        JT_JALR: jump_target = regfile_data_ra_id + imm_i_type;
-        default:  jump_target = regfile_data_ra_id + imm_i_type;
+  // hwloop target mux
+  always_comb
+    begin
+      case (hwloop_target_mux_sel)
+        1'b0: hwloop_target = pc_id_i + {imm_iz_type[30:0], 1'b0};
+        1'b1: hwloop_target = pc_id_i + {imm_z_type[30:0], 1'b0};
       endcase
     end
+
+  // hwloop start mux
+  always_comb
+  begin
+    case (hwloop_start_mux_sel)
+      1'b0: hwloop_start_int = hwloop_target;   // for PC + I imm
+      1'b1: hwloop_start_int = pc_if_i;         // for next PC
+    endcase
+  end
+
+
+  // hwloop cnt mux
+  always_comb
+  begin : hwloop_cnt_mux
+    case (hwloop_cnt_mux_sel)
+      1'b0: hwloop_cnt_int = imm_iz_type;
+      1'b1: hwloop_cnt_int = operand_a_fw_id;
+    endcase;
+  end
+
+  // multiplex between access from instructions and access via CSR registers
+  assign hwloop_start = hwloop_we_int[0] ? hwloop_start_int : csr_hwlp_data_i;
+  assign hwloop_end   = hwloop_we_int[1] ? hwloop_target    : csr_hwlp_data_i;
+  assign hwloop_cnt   = hwloop_we_int[2] ? hwloop_cnt_int   : csr_hwlp_data_i;
+  assign hwloop_regid = (|hwloop_we_int) ? hwloop_regid_int : csr_hwlp_regid_i;
+  assign hwloop_we    = (|hwloop_we_int) ? hwloop_we_int    : csr_hwlp_we_i;
+  `endif // HWLP_SUPPORT
+
+
+  //////////////////////////////////////////////////////////////////
+  //      _                         _____                    _    //
+  //     | |_   _ _ __ ___  _ __   |_   _|_ _ _ __ __ _  ___| |_  //
+  //  _  | | | | | '_ ` _ \| '_ \    | |/ _` | '__/ _` |/ _ \ __| //
+  // | |_| | |_| | | | | | | |_) |   | | (_| | | | (_| |  __/ |_  //
+  //  \___/ \__,_|_| |_| |_| .__/    |_|\__,_|_|  \__, |\___|\__| //
+  //                       |_|                    |___/           //
+  //////////////////////////////////////////////////////////////////
+
+  // CONFIG_REGION: NO_JUMP_ADDER
+  `ifndef NO_JUMP_ADDER
+  always_comb
+  begin : jump_target_mux
+    unique case (jump_target_mux_sel)
+      JT_JAL:  jump_target = pc_id_i + imm_uj_type;
+      JT_COND: jump_target = pc_id_i + imm_sb_type;
+
+      // JALR: Cannot forward RS1, since the path is too long
+      JT_JALR: jump_target = regfile_data_ra_id + imm_i_type;
+      default:  jump_target = regfile_data_ra_id + imm_i_type;
+    endcase
+  end
+  `endif
 
   // CONFIG_REGION: JUMP_IN_ID
   `ifdef JUMP_IN_ID
@@ -752,24 +761,33 @@ module riscv_id_stage
         IMMB_I:      imm_b = imm_i_type;
         IMMB_S:      imm_b = imm_s_type;
         IMMB_U:      imm_b = imm_u_type;
+        // CONFIG_REGION: NO_JUMP_ADDER
+        `ifndef NO_JUMP_ADDER
         // CONFIG_REGION: ONLY_ALIGNED
         `ifndef ONLY_ALIGNED
         IMMB_PCINCR: imm_b = (is_compressed_i && (~data_misaligned_i)) ? 32'h2 : 32'h4;
         `else 
         IMMB_PCINCR: imm_b = (is_compressed_i) ? 32'h2 : 32'h4;
         `endif // ONLY_ALIGNED
+        `endif // NO_JUMP_ADDER
 
         IMMB_S2:     imm_b = imm_s2_type;
         IMMB_BI:     imm_b = imm_bi_type;
         IMMB_S3:     imm_b = imm_s3_type;
         IMMB_VS:     imm_b = imm_vs_type;
         IMMB_VU:     imm_b = imm_vu_type;
+        IMMB_SB
         // CONFIG_REGION: MATH_SPECIAL_SUPPORT
         `ifdef MATH_SPECIAL_SUPPORT
         IMMB_SHUF:   imm_b = imm_shuffle_type;
         IMMB_CLIP:   imm_b = {1'b0, imm_clip_type[31:1]};
         `endif // MATH_SPECIAL_SUPPORT
-        default:      imm_b = imm_i_type;
+        // CONFIG_REGION: NO_JUMP_ADDER
+        `ifdef NO_JUMP_ADDER
+        IMMB_UJ:     imm_b = imm_uj_type
+        IMMB_SB:     imm_b = imm_sb_type;
+        `endif
+        default:     imm_b = imm_i_type;
       endcase
     end
 
@@ -856,7 +874,7 @@ module riscv_id_stage
         OP_C_REGC_OR_FWD:  alu_operand_c = operand_c_fw_id;
         OP_C_REGB_OR_FWD:  alu_operand_c = operand_b_fw_id;
         OP_C_JT:           alu_operand_c = jump_target;
-        default:            alu_operand_c = operand_c_fw_id;
+        default:           alu_operand_c = operand_c_fw_id;
       endcase // case (alu_op_c_mux_sel)
     end
 
@@ -877,7 +895,12 @@ module riscv_id_stage
     begin : alu_operand_c_mux
       case (alu_op_c_mux_sel)
         OP_C_REGB_OR_FWD:  alu_operand_c = operand_b_fw_id;
+        // CONFIG_REGION: NO_JUMP_ADDER
+        `ifdef NO_JUMP_ADDER
+        OP_C_JT:           alu_operand_c = pc_if_i; // this is the return address
+        `else
         OP_C_JT:           alu_operand_c = jump_target;
+        `endif
         default:           alu_operand_c = operand_b_fw_id;
       endcase // case (alu_op_c_mux_sel)
     end

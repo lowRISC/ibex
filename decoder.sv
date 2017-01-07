@@ -273,6 +273,20 @@ module riscv_decoder
       //////////////////////////////////////
 
       OPCODE_JAL: begin   // Jump and Link
+        // CONFIG_REGION: NO_JUMP_ADDER
+        `ifdef NO_JUMP_ADDER
+        jump_in_id            = BRANCH_JAL;
+        // Calculate and store PC+4
+        alu_op_a_mux_sel_o  = OP_A_CURRPC;
+        alu_op_b_mux_sel_o  = OP_B_IMM;
+        imm_b_mux_sel_o     = IMMB_UJ;
+        alu_operator_o      = ALU_ADD;
+        regfile_alu_we      = 1'b1;
+
+        alu_op_c_mux_sel_o  = OP_C_JT; // Pipeline return address to EX
+
+        `else // NO_JUMP_ADDER
+
         jump_target_mux_sel_o = JT_JAL;
         jump_in_id            = BRANCH_JAL;
         // Calculate and store PC+4
@@ -286,10 +300,31 @@ module riscv_decoder
         `ifndef JUMP_IN_ID
         alu_op_c_mux_sel_o  = OP_C_JT; // Pipeline to EX
         `endif
-        // Calculate jump target (= PC + UJ imm)
+        `endif
       end
 
       OPCODE_JALR: begin  // Jump and Link Register
+        // CONFIG_REGION: NO_JUMP_ADDER
+        `ifdef NO_JUMP_ADDER
+        jump_in_id            = BRANCH_JALR;
+        // Calculate and store PC+4
+        alu_op_a_mux_sel_o  = OP_A_CURRPC;
+        alu_op_b_mux_sel_o  = OP_B_REGA_OR_FWD;
+        imm_b_mux_sel_o     = IMMB_SB;
+        alu_operator_o      = ALU_ADD;
+        regfile_alu_we      = 1'b1;
+        rega_used_o         = 1'b1;
+
+        if (instr_rdata_i[14:12] != 3'b0) begin
+          jump_in_id       = BRANCH_NONE;
+          regfile_alu_we   = 1'b0;
+          illegal_insn_o   = 1'b1;
+        end
+
+        alu_op_c_mux_sel_o  = OP_C_JT; // Pipeline return address to EX
+
+        `else // NO_JUMP_ADDER
+
         jump_target_mux_sel_o = JT_JALR;
         jump_in_id            = BRANCH_JALR;
         // Calculate and store PC+4
@@ -311,9 +346,15 @@ module riscv_decoder
         `ifndef JUMP_IN_ID
         alu_op_c_mux_sel_o  = OP_C_JT; // Pipeline to EX
         `endif
+        `endif
       end
 
       OPCODE_BRANCH: begin // Branch
+        // CONFIG_REGION: NO_JUMP_ADDER
+        `ifdef NO_JUMP_ADDER
+        illegal_insn_o = 1'b1;
+        
+        `else
         jump_target_mux_sel_o = JT_COND;
         jump_in_id            = BRANCH_COND;
         alu_op_c_mux_sel_o    = OP_C_JT;
@@ -344,6 +385,7 @@ module riscv_decoder
             illegal_insn_o = 1'b1;
           end
         endcase
+        `endif // NO_JUMP_ADDER
       end
 
 
@@ -1274,8 +1316,8 @@ module riscv_decoder
   `ifdef HWLP_SUPPORT
   assign hwloop_we_o       = (deassert_we_i) ? 3'b0          : hwloop_we;
   `endif // HWLP_SUPPORT
-  assign csr_op_o          = (deassert_we_i) ? CSR_OP_NONE  : csr_op;
-  assign jump_in_id_o      = (deassert_we_i) ? BRANCH_NONE  : jump_in_id;
+  assign csr_op_o          = (deassert_we_i) ? CSR_OP_NONE   : csr_op;
+  assign jump_in_id_o      = (deassert_we_i) ? BRANCH_NONE   : jump_in_id;
   assign ebrk_insn_o       = (deassert_we_i) ? 1'b0          : ebrk_insn;
   assign eret_insn_o       = (deassert_we_i) ? 1'b0          : eret_insn;  // TODO: do not deassert?
   assign pipe_flush_o      = (deassert_we_i) ? 1'b0          : pipe_flush; // TODO: do not deassert?

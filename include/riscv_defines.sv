@@ -239,6 +239,8 @@ parameter IMMB_VU     = 4'b0111;
 parameter IMMB_SHUF   = 4'b1000;
 parameter IMMB_CLIP   = 4'b1001;
 parameter IMMB_BI     = 4'b1011;
+parameter IMMB_UJ	  = 4'b1100;
+parameter IMMB_SB	  = 4'b1101;
 
 // bit mask selection
 parameter BMASK_A_ZERO = 1'b0;
