@@ -1771,7 +1771,7 @@ module riscv_id_stage
     if(~rst_n) begin
       reg_buffer_s1_Q <= 32'b0;
       reg_buffer_s2_Q <= 32'b0;
-      buffering_regs_Q <= {COMPUTING};
+      buffering_regs_Q <= COMPUTING;
     end else begin
       if ((buffering_regs_Q == WAIT_WRITE_BACK) && (buffering_regs_n == COMPUTING))
         reg_buffer_s1_Q <= regfile_data_ra_id;
