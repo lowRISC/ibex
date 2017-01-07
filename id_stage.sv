@@ -1071,6 +1071,10 @@ module riscv_id_stage
 
   riscv_decoder decoder_i
   (
+    // CONFIG_REGION: RV32E
+    `ifdef RV32E
+    .clk                             ( clk                       ),
+    `endif
     // controller related signals
     .deassert_we_i                   ( deassert_we               ),
     // CONFIG_REGION: ONLY_ALIGNED

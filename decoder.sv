@@ -31,6 +31,10 @@ import riscv_defines::*;
 
 module riscv_decoder
 (
+  // CONFIG_REGION: RV32E
+  `ifdef RV32E
+  input  logic        clk,
+  `endif
   // singals running to/from controller
   input  logic        deassert_we_i,           // deassert we, we are stalled or not active
   // CONFIG_REGION: ONLY_ALIGNED
@@ -1324,4 +1328,10 @@ module riscv_decoder
 
   assign jump_in_dec_o     = jump_in_id;
 
+  // CONFIG_REGION: RV32E
+  `ifdef RV32E
+  // the instruction delivered to the ID stage should always be valid
+  assert property (
+    @(posedge clk) (illegal_insn_o) |-> (~illegal_reg_addr) ) else $warning("Register address in instruction is out of bounds (RV32E)!!!");
+  `endif
 endmodule // controller
