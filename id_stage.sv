@@ -1674,33 +1674,33 @@ module riscv_id_stage
 
   always_comb
   begin
-      alu_operator_ex_o           = ALU_SLTU;
-      alu_operand_a_ex_o          = '0;
-      alu_operand_b_ex_o          = '0;
-      alu_operand_c_ex_o          = '0; // Still needed for jump target if 2r1w reg file used
+    alu_operator_ex_o           = ALU_SLTU;
+    alu_operand_a_ex_o          = '0;
+    alu_operand_b_ex_o          = '0;
+    alu_operand_c_ex_o          = '0; // Still needed for jump target if 2r1w reg file used
 
-      regfile_we_ex_o             = 1'b0;  
-      regfile_alu_waddr_ex_o      = 5'b0;
-      regfile_alu_we_ex_o         = 1'b0;
-  
-      csr_access_ex_o             = 1'b0;
-      csr_op_ex_o                 = CSR_OP_NONE;
-      data_we_ex_o                = 1'b0;
-      data_type_ex_o              = 2'b0;
-      data_sign_ext_ex_o          = 1'b0;
-      // CONFIG_REGION: ONLY_ALIGNED
-      `ifndef ONLY_ALIGNED
-      data_reg_offset_ex_o        = 2'b0;
-      `endif // ONLY_ALIGNED
-      data_req_ex_o               = 1'b0;
-      data_load_event_ex_o        = 1'b0;
-      // CONFIG_REGION: ONLY_ALIGNED
-      `ifndef ONLY_ALIGNED
-      data_misaligned_ex_o        = 1'b0;
-      `endif // ONLY_ALIGNED
-      pc_ex_o                     = '0;
-      branch_in_ex_o              = 1'b0;
-    end
+    regfile_we_ex_o             = 1'b0;  
+    regfile_alu_waddr_ex_o      = 5'b0;
+    regfile_alu_we_ex_o         = 1'b0;
+
+    csr_access_ex_o             = 1'b0;
+    csr_op_ex_o                 = CSR_OP_NONE;
+    data_we_ex_o                = 1'b0;
+    data_type_ex_o              = 2'b0;
+    data_sign_ext_ex_o          = 1'b0;
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
+    data_reg_offset_ex_o        = 2'b0;
+    `endif // ONLY_ALIGNED
+    data_req_ex_o               = 1'b0;
+    data_load_event_ex_o        = 1'b0;
+    // CONFIG_REGION: ONLY_ALIGNED
+    `ifndef ONLY_ALIGNED
+    data_misaligned_ex_o        = 1'b0;
+    `endif // ONLY_ALIGNED
+    pc_ex_o                     = '0;
+    branch_in_ex_o              = 1'b0;
+      
     // CONFIG_REGION: ONLY_ALIGNED
     `ifndef ONLY_ALIGNED
     if (data_misaligned_i) begin
