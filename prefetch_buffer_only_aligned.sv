@@ -68,7 +68,6 @@ module riscv_prefetch_buffer_only_aligned
 
   logic addr_is_misaligned;
   logic instr_is_in_regs;
-  logic instr_in_regs_is_compressed;
 
   enum logic [1:0] {FULL_INSTR_ALIGNED, C_INSTR_ALIGNED, C_INSTR_MISALIGNED} instruction_format;
 
