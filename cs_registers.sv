@@ -237,9 +237,9 @@ module riscv_cs_registers
       if (data_load_event_ex_i) begin
         // CONFIG_REGION: MERGE_ID_EX
         `ifdef MERGE_ID_EX
-        mepc_n = pc_ex_i;
-        `else 
         mepc_n = pc_id_i;
+        `else 
+        mepc_n = pc_ex_i;
         `endif
       end else if (exc_save_takenbranch_i) begin
         mepc_n = branch_target_i;
