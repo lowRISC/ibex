@@ -562,7 +562,7 @@ module riscv_load_store_unit
   end
 
   // CONFIG_REGION: MERGE_ID_EX
-  `ifdef MERGE_ID_EX
+  `ifndef MERGE_ID_EX
   assign data_misaligned_o = data_misaligned;
   `endif
 
