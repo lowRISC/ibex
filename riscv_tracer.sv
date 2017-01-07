@@ -616,10 +616,13 @@ module riscv_tracer
     while(1) begin
       instr_ex.get(trace);
 
+      // CONFIG_REGION MERGE_ID_EX
+      `ifndef MERGE_ID_EX
       // wait until we are going to the next stage
       do begin
         @(negedge clk);
-
+      `endif
+      
         // replace register written back
         foreach(trace.regs_write[i])
           if ((trace.regs_write[i].addr == ex_reg_addr) && ex_reg_we)
@@ -637,7 +640,10 @@ module riscv_tracer
 
           trace.mem_access.push_back(mem_acc);
         end
+      // CONFIG_REGION MERGE_ID_EX
+      `ifndef MERGE_ID_EX
       end while (!ex_valid && !wb_bypass); // ex branches bypass the WB stage
+      `endif
 
       instr_wb.put(trace);
     end
