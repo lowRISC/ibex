@@ -213,6 +213,12 @@ module riscv_prefetch_buffer_small
       WAIT_GNT: begin
         instr_req_o = 1'b1;
         instr_addr_o = {fetch_addr_Q[31:2], 2'b00};
+
+        // CONFIG_REGION: NO_JUMP_ADDER
+        `ifdef NO_JUMP_ADDER
+        if (is_second_fetch_n)
+          addr_o = last_fetch_addr_Q;
+        `endif
         
         if (~branch_i) begin
           if (instr_gnt_i)
@@ -242,6 +248,12 @@ module riscv_prefetch_buffer_small
 
 
       WAIT_RVALID: begin
+        // CONFIG_REGION: NO_JUMP_ADDER
+        `ifdef NO_JUMP_ADDER
+        if (is_second_fetch_n)
+          addr_o = last_fetch_addr_Q;
+        `endif
+
         if (~branch_i) begin
           
           NS = WAIT_RVALID;

@@ -113,6 +113,16 @@
 // will split ALU Adder in half and use two cycles to add operands
 `define SPLITTED_ADDER
 
+
+`ifdef SMALL_IF
+`ifndef JUMP_IN_ID
+// CONFIG: NO_JUMP_ADDER
+// will use ALU adder to calculate target and return address from prefetcher
+`define NO_JUMP_ADDER
+
+`endif
+`endif
+
 `endif
 `endif
 `endif

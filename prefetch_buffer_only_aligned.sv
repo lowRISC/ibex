@@ -74,9 +74,7 @@ module riscv_prefetch_buffer_only_aligned
 
   assign busy_o = (CS != IDLE) || instr_req_o;
   assign addr_is_misaligned = (fetch_addr_Q[1] == 1'b1); // Check if address is misaligned
-
   assign instr_is_in_regs = (fetch_valid_Q && addr_is_misaligned);
-
   assign instr_mux = fetch_valid_Q ? fetch_rdata_Q : instr_rdata_i;
   assign fetch_rdata_n = instr_mux;
 
