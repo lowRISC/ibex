@@ -1813,16 +1813,16 @@ module riscv_id_stage
   `ifndef ONLY_ALIGNED
   // CONFIG_REGION: MERGE_ID_EX
   `ifdef MERGE_ID_EX
-  assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i & ((buffering_regs_Q != WAIT_WRITE_BACK)) && instr_valid_i);
+  assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i & ((buffering_regs_Q != WAIT_WRITE_BACK) | ~instr_valid_i));
   `else
   assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i);
   `endif
   `else
   // CONFIG_REGION: MERGE_ID_EX
   `ifdef MERGE_ID_EX
-  assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i & ((buffering_regs_Q != WAIT_WRITE_BACK)) && instr_valid_i);
+  assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i & ((buffering_regs_Q != WAIT_WRITE_BACK) | ~instr_valid_i));
   `else 
-  assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i & ((buffering_regs_Q != WAIT_WRITE_BACK)) && instr_valid_i);
+  assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i);
   `endif
   `endif // ONLY_ALIGNED
   
