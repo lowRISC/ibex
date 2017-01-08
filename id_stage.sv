@@ -1793,14 +1793,14 @@ module riscv_id_stage
 
     case (buffering_regs_Q)
       WAIT_WRITE_BACK: begin
-      if (~regfile_we_wb_i & instr_valid_i)
+        if (~regfile_we_wb_i & instr_valid_i)
           buffering_regs_n = COMPUTING;
       end
 
       COMPUTING: begin
-      if (id_ready_o)
-        buffering_regs_n = WAIT_WRITE_BACK;
-        // TODO: Introduce shortcut sinc we know that no write back is pending and that there won't be a next writeback
+        if (id_ready_o)
+          buffering_regs_n = WAIT_WRITE_BACK;
+          // TODO: Introduce shortcut sinc we know that no write back is pending and that there won't be a next writeback
       end
       default : /* default */;
     endcase
