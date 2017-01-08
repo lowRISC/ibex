@@ -1773,7 +1773,7 @@ module riscv_id_stage
       reg_buffer_s2_Q <= 32'b0;
       buffering_regs_Q <= WAIT_WRITE_BACK;
     end else begin
-      if ((buffering_regs_Q == WAIT_WRITE_BACK) && (buffering_regs_n == COMPUTING)) // TODO: Move to combinational process
+      if ((buffering_regs_Q == WAIT_WRITE_BACK && (buffering_regs_n == COMPUTING))) // TODO: Move to combinational process
       begin
         reg_buffer_s1_Q <= regfile_data_ra_id;
         reg_buffer_s2_Q <= regfile_data_rb_id;
@@ -1789,14 +1789,14 @@ module riscv_id_stage
 
     case (buffering_regs_Q)
       WAIT_WRITE_BACK: begin
-        if (~regfile_we_wb_i & instr_valid_i)
+      if (~regfile_we_wb_i & instr_valid_i)
           buffering_regs_n = COMPUTING;
       end
 
       COMPUTING: begin
-        if (id_valid_o)
-          buffering_regs_n = WAIT_WRITE_BACK;
-          // TODO: Introduce shortcut sinc we know that no write back is pending and that there won't be a next writeback
+      if (id_ready_o)
+        buffering_regs_n = WAIT_WRITE_BACK;
+        // TODO: Introduce shortcut sinc we know that no write back is pending and that there won't be a next writeback
       end
       default : /* default */;
     endcase
@@ -1813,20 +1813,21 @@ module riscv_id_stage
   `ifndef ONLY_ALIGNED
   // CONFIG_REGION: MERGE_ID_EX
   `ifdef MERGE_ID_EX
-  assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i & (buffering_regs_Q == COMPUTING));
+  assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i & ((buffering_regs_Q != WAIT_WRITE_BACK)) && instr_valid_i);
   `else
   assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i);
-  `endif // MERGE_ID_EX
-  `else 
+  `endif
+  `else
   // CONFIG_REGION: MERGE_ID_EX
   `ifdef MERGE_ID_EX
-  assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i & (buffering_regs_Q == COMPUTING));
-  `else
-  assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i);
-  `endif // MERGE_ID_EX
+  assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i & ((buffering_regs_Q != WAIT_WRITE_BACK)) && instr_valid_i);
+  `else 
+  assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i & ((buffering_regs_Q != WAIT_WRITE_BACK)) && instr_valid_i);
+  `endif
   `endif // ONLY_ALIGNED
-  assign id_valid_o = (~halt_id) & id_ready_o;
+  
 
+  assign id_valid_o = (~halt_id) & id_ready_o;
 
   //----------------------------------------------------------------------------
   // Assertions
