@@ -1771,7 +1771,7 @@ module riscv_id_stage
     if(~rst_n) begin
       reg_buffer_s1_Q <= 32'b0;
       reg_buffer_s2_Q <= 32'b0;
-      buffering_regs_Q <= COMPUTING;
+      buffering_regs_Q <= WAIT_WRITE_BACK;
     end else begin
       if ((buffering_regs_Q == WAIT_WRITE_BACK) && (buffering_regs_n == COMPUTING)) // TODO: Move to combinational process
       begin
@@ -1789,12 +1789,12 @@ module riscv_id_stage
 
     case (buffering_regs_Q)
       WAIT_WRITE_BACK: begin
-        if (~regfile_we_wb_i)
+        if (~regfile_we_wb_i & instr_valid_i)
           buffering_regs_n = COMPUTING;
       end
 
       COMPUTING: begin
-        if (id_ready_o)
+        if (id_valid_o)
           buffering_regs_n = WAIT_WRITE_BACK;
           // TODO: Introduce shortcut sinc we know that no write back is pending and that there won't be a next writeback
       end
