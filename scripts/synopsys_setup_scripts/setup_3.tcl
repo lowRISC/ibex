@@ -5,7 +5,7 @@ set DESIGN_NAME imperio_${CLOCK_SLOW}
 set USE_CORNER     "SLOW"   ;# "SLOW | NOMINAL"
 set USE_CORE       "LITTLE_RISCV"  ;# "RISCV | OR10N | LITTLE_RISCV"
 set RI5CY_LATCH_RF "TRUE"   ;# "TRUE | FALSE"
-set UNGROUP_CORE   "TRUE"  ;# "TRUE | FALSE"
+set UNGROUP_CORE   "FALSE"  ;# "TRUE | FALSE"
 
 set ASIC_PATH  ../rtl
 set RTL_PATH   ../pulpino/rtl
