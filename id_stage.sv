@@ -1773,9 +1773,13 @@ module riscv_id_stage
       reg_buffer_s2_Q <= 32'b0;
       buffering_regs_Q <= COMPUTING;
     end else begin
-      if ((buffering_regs_Q == WAIT_WRITE_BACK) && (buffering_regs_n == COMPUTING))
+      if ((buffering_regs_Q == WAIT_WRITE_BACK) && (buffering_regs_n == COMPUTING)) // TODO: Move to combinational process
+      begin
         reg_buffer_s1_Q <= regfile_data_ra_id;
         reg_buffer_s2_Q <= regfile_data_rb_id;
+      end
+
+      buffering_regs_Q <= buffering_regs_n;
     end
   end
 
