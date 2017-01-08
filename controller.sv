@@ -931,10 +931,13 @@ module riscv_controller
   // Assertions
   //----------------------------------------------------------------------------
 
+  // CONFIG_REGION: MERGE_ID_EX
+  `ifdef MERGE_ID_EX
   // make sure that taken branches do not happen back-to-back, as this is not
   // possible without branch prediction in the IF stage
   assert property (
     @(posedge clk) (branch_taken_ex_i) |=> (~branch_taken_ex_i) ) else $warning("Two branches back-to-back are taken");
+  `endif // MERGE_ID_EX
   assert property (
     @(posedge clk) (~(dbg_req_i & ext_req_i)) ) else $warning("Both dbg_req_i and ext_req_i are active");
 

@@ -864,6 +864,10 @@ module riscv_core
     `endif
 
     .ex_valid_i            ( ex_valid           ),
+    // CONFIG_REGION: MERGE_ID_EX
+    `ifdef MERGE_ID_EX
+    .id_wait_i             ( id_wait            ),
+    `endif
     .busy_o                ( lsu_busy           )
   );
 
