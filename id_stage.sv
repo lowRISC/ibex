@@ -297,7 +297,11 @@ module riscv_id_stage
   logic [1:0]  jump_in_id;
   logic [1:0]  jump_in_dec;
 
+
+  // CONFIG_REGION: MERGE_ID_EX
+  `ifndef ONLY_ALIGNED
   logic        misaligned_stall;
+  `endif
   logic        jr_stall;
   logic        load_stall;
 
