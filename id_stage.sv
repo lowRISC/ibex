@@ -117,7 +117,7 @@ module riscv_id_stage
 
     // CONFIG_REGION: MERGE_ID_EX
     `ifdef MERGE_ID_EX
-    output logic        id_wait_o,
+    output logic        id_wait_o,      // We did not yet buffer the register ports
     `endif
 
     // Pipeline ID/EX
@@ -531,8 +531,9 @@ module riscv_id_stage
 
   // CONFIG_REGION: MERGE_ID_EX
   `ifdef MERGE_ID_EX
-  logic  [31:0]  reg_buffer_s1_Q, reg_buffer_s2_Q;
-  enum logic   { WAIT_WRITE_BACK, COMPUTING } buffering_regs_Q, buffering_regs_n;
+  // As we have a latched register file, we need to buffer the register ports to prevent a time loop over the ALU
+  logic  [31:0]  reg_buffer_a_Q, reg_buffer_b_Q;
+  enum logic   { WAIT_WRITE_BACK, COMPUTING } buffer_fsm_Q, buffer_fsm_n;
   `endif // MERGE_ID_EX
 
 
@@ -722,8 +723,8 @@ module riscv_id_stage
       // CONFIG_REGION: MERGE_ID_EX
       `ifdef MERGE_ID_EX
       // JALR: Cannot forward RS1, since the path is too long
-      JT_JALR: jump_target = reg_buffer_s1_Q + imm_i_type;
-      default:  jump_target = reg_buffer_s1_Q + imm_i_type;
+      JT_JALR: jump_target = reg_buffer_a_Q + imm_i_type;
+      default:  jump_target = reg_buffer_a_Q + imm_i_type;
       `else
       // JALR: Cannot forward RS1, since the path is too long
       JT_JALR: jump_target = regfile_data_ra_id + imm_i_type;
@@ -787,8 +788,8 @@ module riscv_id_stage
         `endif
         // CONFIG_REGION: MERGE_ID_EX
         `ifdef MERGE_ID_EX
-        SEL_REGFILE:  operand_a_fw_id = reg_buffer_s1_Q;
-        default:       operand_a_fw_id =  reg_buffer_s1_Q;
+        SEL_REGFILE:  operand_a_fw_id = reg_buffer_a_Q;
+        default:       operand_a_fw_id =  reg_buffer_a_Q;
         `else
         SEL_FW_WB:    operand_a_fw_id = regfile_wdata_wb_i;
         SEL_REGFILE:  operand_a_fw_id = regfile_data_ra_id;
@@ -907,8 +908,8 @@ module riscv_id_stage
         `endif // MERGE_ID_EX
         // CONFIG_REGION: MERGE_ID_EX
         `ifdef MERGE_ID_EX
-        SEL_REGFILE:  operand_b_fw_id = reg_buffer_s2_Q;
-        default:       operand_b_fw_id = reg_buffer_s2_Q;
+        SEL_REGFILE:  operand_b_fw_id = reg_buffer_b_Q;
+        default:       operand_b_fw_id = reg_buffer_b_Q;
         `else
         SEL_FW_WB:    operand_b_fw_id = regfile_wdata_wb_i;
         SEL_REGFILE:  operand_b_fw_id = regfile_data_rb_id;
@@ -1778,41 +1779,40 @@ module riscv_id_stage
 
   always_ff @(posedge clk or negedge rst_n) begin
     if(~rst_n) begin
-      reg_buffer_s1_Q <= 32'b0;
-      reg_buffer_s2_Q <= 32'b0;
-      buffering_regs_Q <= WAIT_WRITE_BACK;
+      reg_buffer_a_Q <= 32'b0;
+      reg_buffer_b_Q <= 32'b0;
+      buffer_fsm_Q <= WAIT_WRITE_BACK;
     end else begin
-      if ((buffering_regs_Q == WAIT_WRITE_BACK && (buffering_regs_n == COMPUTING))) // TODO: Move to combinational process
+      if ((buffer_fsm_Q == WAIT_WRITE_BACK && (buffer_fsm_n == COMPUTING))) // TODO: Move to combinational process
       begin
-        reg_buffer_s1_Q <= regfile_data_ra_id;
-        reg_buffer_s2_Q <= regfile_data_rb_id;
+        reg_buffer_a_Q <= regfile_data_ra_id;
+        reg_buffer_b_Q <= regfile_data_rb_id;
       end
 
-      buffering_regs_Q <= buffering_regs_n;
+      buffer_fsm_Q <= buffer_fsm_n;
     end
   end
 
   always_comb
   begin
-    buffering_regs_n = buffering_regs_Q;
+    buffer_fsm_n = buffer_fsm_Q;
 
-    case (buffering_regs_Q)
+    case (buffer_fsm_Q)
       WAIT_WRITE_BACK: begin
         if (~regfile_we_wb_i & instr_valid_i)
-          buffering_regs_n = COMPUTING;
+          buffer_fsm_n = COMPUTING;
       end
 
       COMPUTING: begin
         if (id_ready_o)
-          buffering_regs_n = WAIT_WRITE_BACK;
-          // TODO: Introduce shortcut sinc we know that no write back is pending and that there won't be a next writeback
+          buffer_fsm_n = WAIT_WRITE_BACK;
       end
       default : /* default */;
     endcase
 
   end
 
-  assign id_wait_o = (buffering_regs_Q == WAIT_WRITE_BACK);
+  assign id_wait_o = (buffer_fsm_Q == WAIT_WRITE_BACK);
 
   `endif // MERGE_ID_EX
 
