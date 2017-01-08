@@ -93,6 +93,7 @@ module riscv_load_store_unit
     `endif
 
     input  logic         ex_valid_i,
+
     output logic         busy_o
 );
 

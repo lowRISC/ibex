@@ -261,6 +261,11 @@ module riscv_core
   logic        lsu_ready_ex;
   logic        lsu_ready_wb;
 
+    // CONFIG_REGION: MERGE_ID_EX
+  `ifdef MERGE_ID_EX
+  logic        id_wait;
+  `endif
+
   // CONFIG_REGION: SPLITTED_ADDER
   `ifdef  SPLITTED_ADDER
   logic        alu_ready;
@@ -521,6 +526,11 @@ module riscv_core
     .ex_valid_i                   ( ex_valid             ),
     .wb_valid_i                   ( wb_valid             ),
 
+    // CONFIG_REGION: MERGE_ID_EX
+    `ifdef MERGE_ID_EX
+    .id_wait_o                    ( id_wait              ),
+    `endif
+
     // From the Pipeline ID/EX
     // CONFIG_REGION: MERGE_ID_EX
     `ifndef MERGE_ID_EX
@@ -764,8 +774,12 @@ module riscv_core
     .lsu_ready_ex_i             ( lsu_ready_ex                 ),
 
     // CONFIG_REGION: SPLITTED_ADDER
-    `ifdef  SPLITTED_ADDER
+    `ifdef SPLITTED_ADDER
     .alu_ready_o                ( alu_ready                    ),
+    `endif
+    // CONFIG_REGION: MERGE_ID_EX
+    `ifdef MERGE_ID_EX
+    .id_wait_i                  ( id_wait                      ),
     `endif
 
     .ex_ready_o                 ( ex_ready                     ),

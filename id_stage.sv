@@ -115,6 +115,11 @@ module riscv_id_stage
     input  logic        ex_valid_i,     // EX stage is done
     input  logic        wb_valid_i,     // WB stage is done
 
+    // CONFIG_REGION: MERGE_ID_EX
+    `ifdef MERGE_ID_EX
+    output logic        id_wait_o,
+    `endif
+
     // Pipeline ID/EX
     output logic [31:0] pc_ex_o,
 
@@ -1807,7 +1812,7 @@ module riscv_id_stage
 
   end
 
-
+  assign id_wait_o = (buffering_regs_Q == WAIT_WRITE_BACK);
 
   `endif // MERGE_ID_EX
 
@@ -1817,14 +1822,14 @@ module riscv_id_stage
   `ifndef ONLY_ALIGNED
   // CONFIG_REGION: MERGE_ID_EX
   `ifdef MERGE_ID_EX
-  assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i & ((buffering_regs_Q != WAIT_WRITE_BACK) | ~instr_valid_i));
+  assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i & (~id_wait_o | ~instr_valid_i));
   `else
   assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i);
   `endif
   `else
   // CONFIG_REGION: MERGE_ID_EX
   `ifdef MERGE_ID_EX
-  assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i & ((buffering_regs_Q != WAIT_WRITE_BACK) | ~instr_valid_i));
+  assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i & (~id_wait_o | ~instr_valid_i));
   `else 
   assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i);
   `endif
