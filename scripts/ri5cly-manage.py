@@ -364,7 +364,7 @@ def synthesize(littleRISCV_path):
         content = f.read()
 
     clock_p = re.compile("set\sCLOCK_SLOW\s(\d+\.?\d*);")
-    m = clock_p.match(content)
+    m = clock_p.search(content)
 
     if m is not None:
         clock = str(m.group(1))

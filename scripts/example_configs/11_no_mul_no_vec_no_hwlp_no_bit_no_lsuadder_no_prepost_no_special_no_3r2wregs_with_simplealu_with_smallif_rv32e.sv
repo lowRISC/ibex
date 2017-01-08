@@ -74,9 +74,10 @@
 // will enable clip, min and max operations support.
 //`define MATH_SPECIAL_SUPPORT
 
+
 // CONFIG: JUMP_IN_ID
 // will enable direct jump in ID. Might increase critical path of jump target.
-`define JUMP_IN_ID
+//`define JUMP_IN_ID
 
 
 // Dependent definitions
@@ -95,15 +96,15 @@
 
 // CONFIG: SIMPLE_ALU
 // will enable simplified ALU for less gates. It does not support vectors, shuffling, nor bit operations.
-//`define SIMPLE_ALU
+`define SIMPLE_ALU
 
 // CONFIG: SMALL_IF
 // will disable large FIFO in IF stage and use a more simple one.
-//`define SMALL_IF
+`define SMALL_IF
 
 // CONFIG: RV32E
 // will reduce the register file to 16 words
-//`define RV32E
+`define RV32E
 
 // CONFIG: ONLY_ALIGNED
 // will only allow aligned memory accesses and therefore overlapping mustn't occur

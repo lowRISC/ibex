@@ -105,6 +105,33 @@
 // will reduce the register file to 16 words
 //`define RV32E
 
+// CONFIG: ONLY_ALIGNED
+// will only allow aligned memory accesses and therefore overlapping mustn't occur
+//`define ONLY_ALIGNED
+
+// CONFIG: SPLITTED_ADDER
+// will split ALU Adder in half and use two cycles to add operands
+//`define SPLITTED_ADDER
+
+`ifdef SMALL_IF
+`ifndef JUMP_IN_ID
+// CONFIG: NO_JUMP_ADDER
+// (NOT IMPLEMENTED!!!) will use ALU adder to calculate target and return address from prefetcher
+//`define NO_JUMP_ADDER
+`endif
+`endif
+
+
+`ifndef SPLITTED_ADDER
+`ifndef NO_JUMP_ADDER
+`ifdef 	JUMP_IN_ID
+// CONFIG: MERGE_ID_EX
+// will merge/fuse the ID and EX stage
+//`define MERGE_ID_EX
+`endif
+`endif
+`endif
+
 `endif
 `endif
 `endif
