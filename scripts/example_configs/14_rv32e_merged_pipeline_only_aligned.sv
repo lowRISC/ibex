@@ -75,7 +75,7 @@
 
 // CONFIG: JUMP_IN_ID
 // will enable direct jump in ID. Might increase critical path of jump target.
-//`define JUMP_IN_ID
+`define JUMP_IN_ID
 
 
 // Dependent definitions

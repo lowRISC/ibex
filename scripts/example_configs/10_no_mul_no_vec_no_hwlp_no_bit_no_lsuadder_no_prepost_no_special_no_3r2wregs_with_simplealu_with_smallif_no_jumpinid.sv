@@ -103,7 +103,7 @@
 
 // CONFIG: RV32E
 // will reduce the register file to 16 words
-`define RV32E
+//`define RV32E
 
 // CONFIG: ONLY_ALIGNED
 // will only allow aligned memory accesses and therefore overlapping mustn't occur

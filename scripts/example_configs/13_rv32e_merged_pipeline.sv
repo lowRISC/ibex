@@ -76,7 +76,7 @@
 
 // CONFIG: JUMP_IN_ID
 // will enable direct jump in ID. Might increase critical path of jump target.
-//`define JUMP_IN_ID
+`define JUMP_IN_ID
 
 
 // Dependent definitions
@@ -127,7 +127,7 @@
 `ifdef 	JUMP_IN_ID
 // CONFIG: MERGE_ID_EX
 // will merge/fuse the ID and EX stage
-//`define MERGE_ID_EX
+`define MERGE_ID_EX
 `endif
 `endif
 `endif
