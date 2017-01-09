@@ -261,11 +261,6 @@ module riscv_core
   logic        lsu_ready_ex;
   logic        lsu_ready_wb;
 
-    // CONFIG_REGION: MERGE_ID_EX
-  `ifdef MERGE_ID_EX
-  logic        id_wait;
-  `endif
-
   // CONFIG_REGION: SPLITTED_ADDER
   `ifdef  SPLITTED_ADDER
   logic        alu_ready;
@@ -776,10 +771,6 @@ module riscv_core
     // CONFIG_REGION: SPLITTED_ADDER
     `ifdef SPLITTED_ADDER
     .alu_ready_o                ( alu_ready                    ),
-    `endif
-    // CONFIG_REGION: MERGE_ID_EX
-    `ifdef MERGE_ID_EX
-    .id_wait_i                  ( id_wait                      ),
     `endif
 
     .ex_ready_o                 ( ex_ready                     ),

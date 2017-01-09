@@ -857,8 +857,6 @@ module riscv_controller
         operand_c_fw_mux_sel_o = SEL_FW_WB;
     end
     `else
-    // CONFIG_REGION: MERGE_ID_EX
-    `ifndef MERGE_ID_EX
     if (regfile_we_wb_i == 1'b1)
     begin
       if (reg_d_wb_is_reg_a_i == 1'b1)
@@ -866,7 +864,6 @@ module riscv_controller
       if (reg_d_wb_is_reg_b_i == 1'b1)
         operand_b_fw_mux_sel_o = SEL_FW_WB;
     end
-    `endif
     `endif // THREE_PORT_REG_FILE
 
     // Forwarding EX -> ID
@@ -888,12 +885,22 @@ module riscv_controller
 
     // CONFIG_REGION: ONLY_ALIGNED
     `ifndef ONLY_ALIGNED
+    // CONFIG_REGION: MERGE_ID_EX
+    `ifdef MERGE_ID_EX
+    // for misaligned memory accesses
+    if (data_misaligned_i)
+    begin
+      operand_a_fw_mux_sel_o  = SEL_MISALIGNED;
+      operand_b_fw_mux_sel_o  = SEL_REGFILE;
+    end
+    `else
     // for misaligned memory accesses
     if (data_misaligned_i)
     begin
       operand_a_fw_mux_sel_o  = SEL_FW_EX;
       operand_b_fw_mux_sel_o  = SEL_REGFILE;
     end
+    `endif
     `endif // ONLY_ALIGNED
     
     // CONFIG_REGION: MUL_SUPPORT
@@ -931,13 +938,13 @@ module riscv_controller
   // Assertions
   //----------------------------------------------------------------------------
 
-  // CONFIG_REGION: MERGE_ID_EX
-  `ifdef MERGE_ID_EX
+  // CONFIG_REGION: NO_JUMP_ADDER
+  `ifndef NO_JUMP_ADDER
   // make sure that taken branches do not happen back-to-back, as this is not
   // possible without branch prediction in the IF stage
   assert property (
     @(posedge clk) (branch_taken_ex_i) |=> (~branch_taken_ex_i) ) else $warning("Two branches back-to-back are taken");
-  `endif // MERGE_ID_EX
+  `endif // NO_JUMP_ADDER
   assert property (
     @(posedge clk) (~(dbg_req_i & ext_req_i)) ) else $warning("Both dbg_req_i and ext_req_i are active");
 

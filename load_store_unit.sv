@@ -93,10 +93,6 @@ module riscv_load_store_unit
     `endif
 
     input  logic         ex_valid_i,
-    // CONFIG_REGION: MERGE_ID_EX
-    `ifdef MERGE_ID_EX
-    input  logic         id_wait_i,
-    `endif
 
     output logic         busy_o
 );
@@ -455,12 +451,7 @@ module riscv_load_store_unit
           `ifdef  SPLITTED_ADDER
           if (data_req_ex_i & alu_ready_i) begin
           `else 
-          // CONFIG_REGION: MERGE_ID_EX
-          `ifdef MERGE_ID_EX
-          if (data_req_ex_i & ~id_wait_i) begin
-          `else
           if (data_req_ex_i) begin
-          `endif
           `endif
           data_req_o = data_req_ex_i;
           lsu_ready_ex_o = 1'b0;
@@ -490,12 +481,7 @@ module riscv_load_store_unit
           `ifdef  SPLITTED_ADDER
           if (data_req_ex_i & alu_ready_i) begin
           `else 
-          // CONFIG_REGION: MERGE_ID_EX
-          `ifdef MERGE_ID_EX
-          if (data_req_ex_i & ~id_wait_i) begin
-          `else
           if (data_req_ex_i) begin
-          `endif
           `endif
             data_req_o = data_req_ex_i;
             lsu_ready_ex_o = 1'b0;

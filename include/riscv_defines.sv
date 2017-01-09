@@ -208,6 +208,7 @@ parameter SP_DSR_MSB = 8'h04;
 parameter SEL_REGFILE      = 2'b00;
 parameter SEL_FW_EX        = 2'b01;
 parameter SEL_FW_WB        = 2'b10;
+parameter SEL_MISALIGNED   = 2'b11;
 
 // operand a selection
 parameter OP_A_REGA_OR_FWD = 3'b000;

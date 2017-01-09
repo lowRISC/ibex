@@ -115,11 +115,6 @@ module riscv_id_stage
     input  logic        ex_valid_i,     // EX stage is done
     input  logic        wb_valid_i,     // WB stage is done
 
-    // CONFIG_REGION: MERGE_ID_EX
-    `ifdef MERGE_ID_EX
-    output logic        id_wait_o,      // We did not yet buffer the register ports
-    `endif
-
     // Pipeline ID/EX
     output logic [31:0] pc_ex_o,
 
@@ -528,15 +523,6 @@ module riscv_id_stage
   `endif // MERGE_ID_EX
   `endif // THREE_PORT_REG_FILE
 
-
-  // CONFIG_REGION: MERGE_ID_EX
-  `ifdef MERGE_ID_EX
-  // As we have a latched register file, we need to buffer the register ports to prevent a time loop over the ALU
-  logic  [31:0]  reg_buffer_a_Q, reg_buffer_b_Q;
-  enum logic   { WAIT_WRITE_BACK, COMPUTING } buffer_fsm_Q, buffer_fsm_n;
-  `endif // MERGE_ID_EX
-
-
   assign instr = instr_rdata_i;
 
   // immediate extraction and sign extension
@@ -719,17 +705,9 @@ module riscv_id_stage
     unique case (jump_target_mux_sel)
       JT_JAL:  jump_target = pc_id_i + imm_uj_type;
       JT_COND: jump_target = pc_id_i + imm_sb_type;
-
-      // CONFIG_REGION: MERGE_ID_EX
-      `ifdef MERGE_ID_EX
-      // JALR: Cannot forward RS1, since the path is too long
-      JT_JALR: jump_target = reg_buffer_a_Q + imm_i_type;
-      default:  jump_target = reg_buffer_a_Q + imm_i_type;
-      `else
       // JALR: Cannot forward RS1, since the path is too long
       JT_JALR: jump_target = regfile_data_ra_id + imm_i_type;
       default:  jump_target = regfile_data_ra_id + imm_i_type;
-      `endif
     endcase
   end
   `endif
@@ -777,24 +755,14 @@ module riscv_id_stage
   always_comb
     begin : operand_a_fw_mux
       case (operand_a_fw_mux_sel)
-        // CONFIG_REGION: MERGE_ID_EX
-        `ifndef MERGE_ID_EX
         SEL_FW_EX:    operand_a_fw_id = regfile_alu_wdata_fw_i;
-        `else 
         // CONFIG_REGION: ONLY_ALIGNED
         `ifndef ONLY_ALIGNED
-        SEL_FW_EX:    operand_a_fw_id = misaligned_addr_i;
+        SEL_MISALIGNED:    operand_a_fw_id = misaligned_addr_i;
         `endif
-        `endif
-        // CONFIG_REGION: MERGE_ID_EX
-        `ifdef MERGE_ID_EX
-        SEL_REGFILE:  operand_a_fw_id = reg_buffer_a_Q;
-        default:       operand_a_fw_id =  reg_buffer_a_Q;
-        `else
         SEL_FW_WB:    operand_a_fw_id = regfile_wdata_wb_i;
         SEL_REGFILE:  operand_a_fw_id = regfile_data_ra_id;
         default:       operand_a_fw_id = regfile_data_ra_id;
-        `endif
       endcase; // case (operand_a_fw_mux_sel)
     end
 
@@ -906,15 +874,9 @@ module riscv_id_stage
         `ifndef MERGE_ID_EX
         SEL_FW_EX:    operand_b_fw_id = regfile_alu_wdata_fw_i;
         `endif // MERGE_ID_EX
-        // CONFIG_REGION: MERGE_ID_EX
-        `ifdef MERGE_ID_EX
-        SEL_REGFILE:  operand_b_fw_id = reg_buffer_b_Q;
-        default:       operand_b_fw_id = reg_buffer_b_Q;
-        `else
         SEL_FW_WB:    operand_b_fw_id = regfile_wdata_wb_i;
         SEL_REGFILE:  operand_b_fw_id = regfile_data_rb_id;
         default:       operand_b_fw_id = regfile_data_rb_id;
-        `endif
       endcase; // case (operand_b_fw_mux_sel)
     end
 
@@ -1776,44 +1738,6 @@ module riscv_id_stage
   end
 
 
-
-  always_ff @(posedge clk or negedge rst_n) begin
-    if(~rst_n) begin
-      reg_buffer_a_Q <= 32'b0;
-      reg_buffer_b_Q <= 32'b0;
-      buffer_fsm_Q <= WAIT_WRITE_BACK;
-    end else begin
-      if ((buffer_fsm_Q == WAIT_WRITE_BACK && (buffer_fsm_n == COMPUTING))) // TODO: Move to combinational process
-      begin
-        reg_buffer_a_Q <= regfile_data_ra_id;
-        reg_buffer_b_Q <= regfile_data_rb_id;
-      end
-
-      buffer_fsm_Q <= buffer_fsm_n;
-    end
-  end
-
-  always_comb
-  begin
-    buffer_fsm_n = buffer_fsm_Q;
-
-    case (buffer_fsm_Q)
-      WAIT_WRITE_BACK: begin
-        if (~regfile_we_wb_i & instr_valid_i)
-          buffer_fsm_n = COMPUTING;
-      end
-
-      COMPUTING: begin
-        if (id_ready_o)
-          buffer_fsm_n = WAIT_WRITE_BACK;
-      end
-      default : /* default */;
-    endcase
-
-  end
-
-  assign id_wait_o = (buffer_fsm_Q == WAIT_WRITE_BACK);
-
   `endif // MERGE_ID_EX
 
 
@@ -1822,14 +1746,14 @@ module riscv_id_stage
   `ifndef ONLY_ALIGNED
   // CONFIG_REGION: MERGE_ID_EX
   `ifdef MERGE_ID_EX
-  assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i & (~id_wait_o | ~instr_valid_i));
+  assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i);
   `else
   assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i);
   `endif
   `else
   // CONFIG_REGION: MERGE_ID_EX
   `ifdef MERGE_ID_EX
-  assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i & (~id_wait_o | ~instr_valid_i));
+  assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i);
   `else 
   assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i);
   `endif
