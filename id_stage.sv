@@ -1748,19 +1748,18 @@ module riscv_id_stage
     alu_operand_b_ex_o          = alu_operand_b;
     alu_operand_c_ex_o          = alu_operand_c;
 
-    regfile_we_ex_o             = (regfile_we_id & ~halt_id);
-    regfile_alu_we_ex_o         = (regfile_alu_we_id  & ~halt_id);
+    regfile_we_ex_o             = (regfile_we_id & (~halt_id));
+    regfile_alu_we_ex_o         = (regfile_alu_we_id  & (~halt_id));
 
-    csr_access_ex_o             = (csr_access  & ~halt_id);
+    csr_access_ex_o             = csr_access;
     csr_op_ex_o                 = csr_op;
-    data_req_ex_o               = (data_req_id & ~halt_id);
-
+    data_req_ex_o               = data_req_id;
 
     // CONFIG_REGION: ONLY_ALIGNED
     `ifndef ONLY_ALIGNED
     data_reg_offset_ex_o      = data_reg_offset_id;
     `endif // ONLY_ALIGNED
-    data_load_event_ex_o      = ((data_req_id & ~halt_id) ? data_load_event_id : 1'b0);
+    data_load_event_ex_o      = ((data_req_id & (~halt_id)) ? data_load_event_id : 1'b0);
 
     // CONFIG_REGION: ONLY_ALIGNED
     `ifndef ONLY_ALIGNED
@@ -1768,7 +1767,7 @@ module riscv_id_stage
     `endif // ONLY_ALIGNED
 
     pc_ex_o                     = pc_id_i;
-    branch_in_ex_o              = (jump_in_dec == BRANCH_COND);
+    branch_in_ex_o              = (jump_in_id == BRANCH_COND);
     // CONFIG_REGION: NO_JUMP_ADDER
     `ifdef NO_JUMP_ADDER
     jal_in_ex_o                = ((jump_in_id == BRANCH_JALR) || (jump_in_id == BRANCH_JAL));
@@ -1781,7 +1780,7 @@ module riscv_id_stage
 
   // stall control
   // CONFIG_REGION: ONLY_ALIGNED
-  `ifndef ONLY_ALIGNED
+  `ifdef ONLY_ALIGNED
   assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i);
   `else
   assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i);

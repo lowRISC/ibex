@@ -354,6 +354,7 @@ module riscv_controller
             // CONFIG_REGION: NO_JUMP_ADDER
             `ifdef NO_JUMP_ADDER
             halt_if_o = 1'b1;
+            halt_id_o = 1'b1;
             ctrl_fsm_ns = WAIT_BRANCH_EX;
             `else
             // there is a branch in the EX stage that is taken
@@ -443,18 +444,26 @@ module riscv_controller
             // make sure the current instruction has been executed
             // before changing state to non-decode
             if (id_ready_i) begin
-              if ((jump_in_id_i == BRANCH_COND) & branch_taken_ex_i & id_ready_i)
+              // CONFIG_REGION: NO_JUMP_ADDER
+              `ifdef NO_JUMP_ADDER
+              if ((jump_in_id_i == BRANCH_COND) & branch_taken_ex_i)
               begin
-                // CONFIG_REGION: NO_JUMP_ADDER
-                `ifdef NO_JUMP_ADDER
+
                   ctrl_fsm_ns = WAIT_BRANCH_EX;
-                `else
-                  pc_mux_o = PC_BRANCH;
-                  pc_set_o = 1'b1;
-                `endif
+
+              end
+              else
+                ctrl_fsm_ns = DBG_SIGNAL;
+
+              `else
+              if ((jump_in_id_i == BRANCH_COND) & branch_taken_ex_i)
+              begin
+                pc_mux_o = PC_BRANCH;
+                pc_set_o = 1'b1;
               end
 
               ctrl_fsm_ns = DBG_SIGNAL;
+              `endif
             end
           end
         end
