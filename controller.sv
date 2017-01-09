@@ -163,6 +163,10 @@ module riscv_controller
   `endif // ONLY_ALIGNED
   output logic        jr_stall_o,
   output logic        load_stall_o,
+  // CONFIG_REGION: NO_JUMP_ADDER
+  `ifdef NO_JUMP_ADDER
+  output logic        branch_stall_o,
+  `endif
 
   input  logic        id_ready_i,                 // ID stage is ready
 
@@ -180,18 +184,25 @@ module riscv_controller
   // CONFIG_REGION: JUMP_IN_ID
   `ifdef JUMP_IN_ID
 
+  // CONFIG_REGION: NO_JUMP_ADDER
+  `ifdef NO_JUMP_ADDER
+  enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
+                      DECODE, WAIT_BRANCH_EX
+                      FLUSH_EX, FLUSH_WB,
+                      DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
+
+  `else
   enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
                       DECODE,
                       FLUSH_EX, FLUSH_WB,
                       DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
+  `endif
 
   `else 
-
   enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
                       DECODE, WAIT_JUMP_EX,
                       FLUSH_EX, FLUSH_WB,
                       DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
-
   `endif
 
   logic jump_done, jump_done_q;
@@ -244,6 +255,12 @@ module riscv_controller
     halt_if_o        = 1'b0;
     halt_id_o        = 1'b0;
     dbg_ack_o        = 1'b0;
+
+    // CONFIG_REGION: NO_JUMP_ADDER
+    `ifdef NO_JUMP_ADDER
+    branch_stall_o   = 1'b0,
+    `endif
+
 
     unique case (ctrl_fsm_cs)
       // We were just reset, wait for fetch_enable
@@ -334,9 +351,16 @@ module riscv_controller
 
           // handle conditional branches
           if (branch_taken_ex_i & id_ready_i) begin
+            // CONFIG_REGION: NO_JUMP_ADDER
+            `ifdef NO_JUMP_ADDER
+            halt_if_o = 1'b1;
+
+            if (id_ready_i)
+              ctrl_fsm = WAIT_BRANCH_EX;
+            `else
             // there is a branch in the EX stage that is taken
-            pc_mux_o      = PC_BRANCH;
-            pc_set_o      = 1'b1;
+            pc_mux_o = PC_BRANCH;
+            pc_set_o = 1'b1;
 
             // if we want to debug, flush the pipeline
             // the current_pc_if will take the value of the next instruction to
@@ -352,10 +376,12 @@ module riscv_controller
               // that is served to the ID stage is the one of the jump to the
               // exception handler
             end
+
             if (dbg_req_i)
             begin
               ctrl_fsm_ns = DBG_SIGNAL;
             end
+            `endif
           end
 
           // handle unconditional jumps
@@ -575,12 +601,7 @@ module riscv_controller
         `ifdef SPLITTED_ADDER
         if (branch_taken_ex_i & ex_valid_i) begin
         `else
-        // CONFIG_REGION: NO_JUMP_ADDER
-        `ifdef NO_JUMP_ADDER
-        if (branch_taken_ex_i & ex_valid_i) begin
-        `else
         if (branch_taken_ex_i) begin
-        `endif
         `endif
           // there is a branch in the EX stage that is taken
           pc_mux_o      = PC_BRANCH;
@@ -642,6 +663,43 @@ module riscv_controller
 
       // CONFIG_REGION: MERGE_ID_EX
       `ifdef MERGE_ID_EX
+      `ifdef NO_JUMP_ADDER
+      WAIT_BRANCH_EX:
+      begin
+        // there is a branch in the EX stage that is taken
+        branch_stall_o = 1'b1;
+        halt_if_o = 1'b1;
+        if (id_ready_i)
+        begin
+          pc_mux_o = PC_BRANCH;
+          pc_set_o = 1'b1;
+          ctrl_fsm_cs = DECODE;
+          halt_if_o = 1'b0;
+
+          // if we want to debug, flush the pipeline
+          // the current_pc_if will take the value of the next instruction to
+          // be executed (NPC)
+          if (ext_req_i) begin
+            pc_mux_o      = PC_EXCEPTION;
+            pc_set_o      = 1'b1;
+            exc_ack_o     = 1'b1;
+            halt_id_o     = 1'b1; // we don't want to propagate this instruction to EX
+            exc_save_takenbranch_o = 1'b1;
+            // we don't have to change our current state here as the prefetch
+            // buffer is automatically invalidated, thus the next instruction
+            // that is served to the ID stage is the one of the jump to the
+            // exception handler
+          end
+
+          if (dbg_req_i)
+          begin
+            ctrl_fsm_ns = DBG_SIGNAL;
+          end
+        end
+      end
+      `endif // NO_JUMP_ADDER
+
+      `else
       // a branch was in ID when a debug trap is hit
       DBG_WAIT_BRANCH:
       begin

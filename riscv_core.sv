@@ -143,7 +143,12 @@ module riscv_core
   // Jump and branch target and decision (EX->IF)
   // CONFIG_REGION: JUMP_IN_ID
   `ifdef JUMP_IN_ID
+  // CONFIG_REGION: NO_JUMP_ADDER
+  `ifndef NO_JUMP_ADDER
   logic [31:0] jump_target_id, jump_target_ex;
+  `else
+  logic [31:0] jump_target_ex;
+  `endif
   `else 
   logic [31:0] jump_target_ex;
   `endif
@@ -164,6 +169,10 @@ module riscv_core
   logic [31:0] alu_operand_a_ex;
   logic [31:0] alu_operand_b_ex;
   logic [31:0] alu_operand_c_ex;
+  // CONFIG_REGION: NO_JUMP_ADDER
+  `ifdef NO_JUMP_ADDER
+  logic        jump_in_ex;
+    `endif
 
   // CONFIG_REGION: SPLITTED_ADDER
   `ifdef  SPLITTED_ADDER
@@ -436,7 +445,10 @@ module riscv_core
     // Jump targets
     // CONFIG_REGION: JUMP_IN_ID
     `ifdef JUMP_IN_ID
+    // CONFIG_REGION: NO_JUMP_ADDER
+    `ifndef NO_JUMP_ADDER
     .jump_target_id_i    ( jump_target_id    ),
+    `endif
     `endif // JUMP_IN_ID
     .jump_target_ex_i    ( jump_target_ex    ),
 
@@ -493,7 +505,10 @@ module riscv_core
     .branch_decision_i            ( branch_decision      ),
     // CONFIG_REGION: JUMP_IN_ID
     `ifdef JUMP_IN_ID
+    // CONFIG_REGION: NO_JUMP_ADDER
+    `ifndef NO_JUMP_ADDER
     .jump_target_o                ( jump_target_id       ),
+    `endif
     `endif
 
     // IF and ID control signals
@@ -539,6 +554,11 @@ module riscv_core
     // CONFIG_REGION: SPLITTED_ADDER
     `ifdef  SPLITTED_ADDER
     .alu_req_ex_o                 ( alu_req_ex           ),
+    `endif
+
+    // CONFIG_REGION: NO_JUMP_ADDER
+    `ifdef NO_JUMP_ADDER
+    .jump_in_ex_o                 ( jump_in_ex           ),
     `endif
 
     // CONFIG_REGION: BIT_SUPPORT
@@ -745,6 +765,10 @@ module riscv_core
     .branch_in_ex_i             ( branch_in_ex                 ),
     .regfile_alu_waddr_i        ( regfile_alu_waddr_ex         ),
     .regfile_alu_we_i           ( regfile_alu_we_ex            ),
+    // CONFIG_REGION: NO_JUMP_ADDER
+    `ifdef NO_JUMP_ADDER
+    .jump_in_ex_i               ( jump_in_ex                   ),
+    `endif
 
     // CONFIG_REGION: THREE_PORT_REG_FILE
     `ifdef THREE_PORT_REG_FILE

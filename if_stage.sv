@@ -72,7 +72,10 @@ module riscv_if_stage #(
 
       // CONFIG_REGION: JUMP_IN_ID
       `ifdef JUMP_IN_ID
+      // CONFIG_REGION: NO_JUMP_ADDER
+      `ifndef NO_JUMP_ADDER
       input  logic [31:0] jump_target_id_i,      // jump target address
+      `endif
       `endif
       input  logic [31:0] jump_target_ex_i,      // jump target address
       // from hwloop controller
@@ -90,10 +93,6 @@ module riscv_if_stage #(
       output logic        if_ready_o,
       input  logic        id_ready_i,
       output logic        if_valid_o,
-      // CONFIG_REGION: JUMP_IN_ID
-      `ifndef JUMP_IN_ID
-      output logic        fetch_valid_o,         // intended for jump in EX to see whether it is safe so go back to decode state
-      `endif
       // misc signals
       output logic        if_busy_o,             // is the IF stage busy fetching instructions?
       output logic        perf_imiss_o           // Instruction Fetch Miss
@@ -158,7 +157,12 @@ module riscv_if_stage #(
             PC_BOOT:      fetch_addr_n = {boot_addr_i[31:8], EXC_OFF_RST};
             // CONFIG_REGION: JUMP_IN_ID
             `ifdef JUMP_IN_ID
+            // CONFIG_REGION: NO_JUMP_ADDER
+            `ifndef NO_JUMP_ADDER
             PC_JUMP:      fetch_addr_n = jump_target_id_i;
+            `else
+            PC_JUMP:      fetch_addr_n = jump_target_ex_i;
+            `endif
             `else
             PC_JUMP:      fetch_addr_n = jump_target_ex_i;
             `endif // JUMP_IN_ID
@@ -494,11 +498,6 @@ module riscv_if_stage #(
 
         assign if_ready_o = valid & id_ready_i;
         assign if_valid_o = (~halt_if_i) & if_ready_o;
-
-        // CONFIG_REGION: JUMP_IN_ID
-        `ifndef JUMP_IN_ID
-        assign fetch_valid_o = fetch_valid;
-        `endif
 
         //----------------------------------------------------------------------------
         // Assertions

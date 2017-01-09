@@ -41,6 +41,10 @@ module riscv_decoder
   `ifndef ONLY_ALIGNED
   input  logic        data_misaligned_i,       // misaligned data load/store in progress
   `endif // ONLY_ALIGNED
+  // CONFIG_REGION: NO_JUMP_ADDER
+  `ifdef NO_JUMP_ADDER
+  input  logic        branch_stall_i,
+  `endif
   // CONFIG_REGION: MUL_SUPPORT
   `ifdef MUL_SUPPORT
   // MUL related control signals 
@@ -76,7 +80,7 @@ module riscv_decoder
   // ALU signals
   output logic [ALU_OP_WIDTH-1:0] alu_operator_o, // ALU operation selection
   output logic [2:0]  alu_op_a_mux_sel_o,      // operand a selection: reg value, PC, immediate or zero
-  output logic [2:0]  alu_op_b_mux_sel_o,      // operand b selection: reg value or immediate
+  output logic [2:0]  alu_op_b_mux_sel_o,      // oNOperand b selection: reg value or immediate
   output logic [1:0]  alu_op_c_mux_sel_o,      // operand c selection: reg value or jump target
 
   // CONFIG_REGION: VEC_SUPPORT
@@ -280,14 +284,14 @@ module riscv_decoder
         // CONFIG_REGION: NO_JUMP_ADDER
         `ifdef NO_JUMP_ADDER
         jump_in_id            = BRANCH_JAL;
-        // Calculate and store PC+4
+        // Calculate jump target in EX
         alu_op_a_mux_sel_o  = OP_A_CURRPC;
         alu_op_b_mux_sel_o  = OP_B_IMM;
         imm_b_mux_sel_o     = IMMB_UJ;
         alu_operator_o      = ALU_ADD;
         regfile_alu_we      = 1'b1;
 
-        alu_op_c_mux_sel_o  = OP_C_JT; // Pipeline return address to EX
+        alu_op_c_mux_sel_o  = OP_C_RA; // Pipeline return address to EX
 
         `else // NO_JUMP_ADDER
 
@@ -311,7 +315,7 @@ module riscv_decoder
         // CONFIG_REGION: NO_JUMP_ADDER
         `ifdef NO_JUMP_ADDER
         jump_in_id            = BRANCH_JALR;
-        // Calculate and store PC+4
+        // Calculate jump target in EX
         alu_op_a_mux_sel_o  = OP_A_CURRPC;
         alu_op_b_mux_sel_o  = OP_B_REGA_OR_FWD;
         imm_b_mux_sel_o     = IMMB_SB;
@@ -325,7 +329,7 @@ module riscv_decoder
           illegal_insn_o   = 1'b1;
         end
 
-        alu_op_c_mux_sel_o  = OP_C_JT; // Pipeline return address to EX
+        alu_op_c_mux_sel_o  = OP_C_RA; // Pipeline return address to EX
 
         `else // NO_JUMP_ADDER
 
@@ -356,7 +360,46 @@ module riscv_decoder
       OPCODE_BRANCH: begin // Branch
         // CONFIG_REGION: NO_JUMP_ADDER
         `ifdef NO_JUMP_ADDER
-        illegal_insn_o = 1'b1;
+        jump_in_id            = BRANCH_COND;
+
+        rega_used_o           = 1'b1;
+        regb_used_o           = 1'b1;
+
+        if (~branch_stall_i)
+        begin
+          unique case (instr_rdata_i[14:12])
+            3'b000: alu_operator_o = ALU_EQ;
+            3'b001: alu_operator_o = ALU_NE;
+            3'b100: alu_operator_o = ALU_LTS;
+            3'b101: alu_operator_o = ALU_GES;
+            3'b110: alu_operator_o = ALU_LTU;
+            3'b111: alu_operator_o = ALU_GEU;
+            3'b010: begin
+              alu_operator_o      = ALU_EQ;
+              regb_used_o         = 1'b0;
+              alu_op_b_mux_sel_o  = OP_B_IMM;
+              imm_b_mux_sel_o     = IMMB_BI;
+            end
+            3'b011: begin
+              alu_operator_o      = ALU_NE;
+              regb_used_o         = 1'b0;
+              alu_op_b_mux_sel_o  = OP_B_IMM;
+              imm_b_mux_sel_o     = IMMB_BI;
+            end
+            default: begin
+              illegal_insn_o = 1'b1;
+            end
+          endcase
+        end
+        else begin
+          // Calculate jump target in EX
+          alu_op_a_mux_sel_o  = OP_A_CURRPC;
+          alu_op_b_mux_sel_o  = OP_B_REGA_OR_FWD;
+          imm_b_mux_sel_o     = IMMB_SB;
+          alu_operator_o      = ALU_ADD;
+          regfile_alu_we      = 1'b0;
+          rega_used_o         = 1'b1;
+        end
         
         `else
         jump_target_mux_sel_o = JT_COND;

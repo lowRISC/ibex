@@ -75,7 +75,7 @@
 //`define MATH_SPECIAL_SUPPORT
 
 // CONFIG: JUMP_IN_ID
-// will enable direct jump in ID. Might increase critical path of jump target.
+// will enable direct jump in ID. Might increase critical path of jump target
 `define JUMP_IN_ID
 
 
@@ -113,22 +113,19 @@
 // will split ALU Adder in half and use two cycles to add operands
 //`define SPLITTED_ADDER
 
-`ifdef SMALL_IF
-`ifndef JUMP_IN_ID
-// CONFIG: NO_JUMP_ADDER
-// (NOT IMPLEMENTED!!!) will use ALU adder to calculate target and return address from prefetcher
-//`define NO_JUMP_ADDER
-`endif
-`endif
-
 
 `ifndef SPLITTED_ADDER
-`ifndef NO_JUMP_ADDER
 `ifdef 	JUMP_IN_ID
 // CONFIG: MERGE_ID_EX
 // will merge/fuse the ID and EX stage
 `define MERGE_ID_EX
+
+`ifdef SMALL_IF
+// CONFIG: NO_JUMP_ADDER
+// will use ALU adder to calculate target and get return address from prefetcher
+`define NO_JUMP_ADDER
 `endif
+
 `endif
 `endif
 

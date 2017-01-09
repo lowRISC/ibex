@@ -266,6 +266,7 @@ parameter MIMM_S3      = 1'b1;
 parameter OP_C_REGC_OR_FWD = 2'b00;
 parameter OP_C_REGB_OR_FWD = 2'b01;
 parameter OP_C_JT          = 2'b10;
+parameter OP_C_RA		   = 2'b10; // same as OP_C_JT
 
 // branch types
 parameter BRANCH_NONE = 2'b00;

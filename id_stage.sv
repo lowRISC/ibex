@@ -87,7 +87,10 @@ module riscv_id_stage
     input  logic        branch_decision_i,
     // CONFIG_REGION: JUMP_IN_ID
     `ifdef JUMP_IN_ID
+    // CONFIG_REGION: NO_JUMP_ADDER
+    `ifndef NO_JUMP_ADDER
     output logic [31:0] jump_target_o,
+    `endif
     `endif // JUMP_IN_ID
 
     // IF and ID stage signals
@@ -121,6 +124,11 @@ module riscv_id_stage
     output logic [31:0] alu_operand_a_ex_o,
     output logic [31:0] alu_operand_b_ex_o,
     output logic [31:0] alu_operand_c_ex_o, // Still needed if 2r1w reg file used
+
+    // CONFIG_REGION: NO_JUMP_ADDER
+    `ifdef NO_JUMP_ADDER
+    output logic        jump_in_ex_o, // Select operand C as return address to save in regfile
+    `endif
 
     // CONFIG_REGION: BIT_SUPPORT
   	`ifdef BIT_SUPPORT
@@ -216,7 +224,6 @@ module riscv_id_stage
     `endif
     `endif // ONLY_ALIGNED
 
-
     // Interrupt signals
     input  logic [31:0] irq_i,
     input  logic        irq_enable_i,
@@ -302,6 +309,10 @@ module riscv_id_stage
   `ifndef ONLY_ALIGNED
   logic        misaligned_stall;
   `endif
+  // CONFIG_REGION: NO_JUMP_ADDER
+  `ifdef NO_JUMP_ADDER
+  logic        branch_stall;
+  `endif
   logic        jr_stall;
   logic        load_stall;
 
@@ -334,9 +345,11 @@ module riscv_id_stage
 
   // CONFIG_REGION: NO_JUMP_ADDER
   `ifndef NO_JUMP_ADDER
+  // CONFIG_REGION: NO_JUMP_ADDER
+  `ifndef NO_JUMP_ADDER
   logic [31:0] jump_target;       // calculated jump target (-> EX -> IF)
   `endif
-
+  `endif
 
   // Signals running between controller and exception controller
   logic        exc_req, ext_req, exc_ack;  // handshake
@@ -377,7 +390,10 @@ module riscv_id_stage
   logic [3:0]  imm_b_mux_sel;
   // CONFIG_REGION: NO_JUMP_ADDER
   `ifndef NO_JUMP_ADDER
+  // CONFIG_REGION: NO_JUMP_ADDER
+  `ifndef NO_JUMP_ADDER
   logic [1:0]  jump_target_mux_sel;
+  `endif
   `endif
 
   // CONFIG_REGION: MUL_SUPPORT
@@ -714,7 +730,10 @@ module riscv_id_stage
 
   // CONFIG_REGION: JUMP_IN_ID
   `ifdef JUMP_IN_ID
+  // CONFIG_REGION: NO_JUMP_ADDER
+  `ifndef NO_JUMP_ADDER
   assign jump_target_o = jump_target;
+  `endif
   `endif // JUMP_IN_ID
 
   ////////////////////////////////////////////////////////
@@ -1087,6 +1106,10 @@ module riscv_id_stage
     `ifndef ONLY_ALIGNED
     .data_misaligned_i               ( data_misaligned_i         ),
     `endif // ONLY_ALIGNED
+    // CONFIG_REGION: NO_JUMP_ADDER
+    `ifdef NO_JUMP_ADDER
+    .branch_stall_i                  ( branch_stall              ),
+    `endif
     // CONFIG_REGION: MUL_SUPPORT
     `ifdef MUL_SUPPORT
     .mult_multicycle_i               ( mult_multicycle_i         ),
@@ -1323,6 +1346,10 @@ module riscv_id_stage
     `ifndef ONLY_ALIGNED
     .misaligned_stall_o             ( misaligned_stall       ),
     `endif // ONLY_ALIGNED
+    // CONFIG_REGION: NO_JUMP_ADDER
+    `ifdef NO_JUMP_ADDER
+    .branch_stall_o                 ( branch_stall           ),
+    `endif
     .jr_stall_o                     ( jr_stall               ),
     .load_stall_o                   ( load_stall             ),
 

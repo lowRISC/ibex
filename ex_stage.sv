@@ -89,6 +89,10 @@ module riscv_ex_stage
   input  logic        branch_in_ex_i,
   input  logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_i,
   input  logic        regfile_alu_we_i,
+  // CONFIG_REGION: NO_JUMP_ADDER
+  `ifdef NO_JUMP_ADDER
+  input  logic        jump_in_ex_i;
+  `endif
 
   // directly passed through to WB stage, not used in EX
   input  logic        regfile_we_i,
@@ -126,10 +130,7 @@ module riscv_ex_stage
   `ifdef  SPLITTED_ADDER
   output logic        alu_ready_o,
   `endif
-  // CONFIG_REGION: MERGE_ID_EX
-  `ifdef MERGE_ID_EX
-  input  logic        id_wait_i,
-  `endif
+
 
   output logic        ex_ready_o, // EX stage ready for new data
   output logic        ex_valid_o, // EX stage gets new data
@@ -163,7 +164,12 @@ module riscv_ex_stage
   `ifdef MUL_SUPPORT
   assign regfile_alu_wdata_fw_o = mult_en_i ? mult_result : alu_csr_result;
   `else
+  // CONFIG_REGION
+  `ifdef NO_JUMP_ADDER
+  assign regfile_alu_wdata_fw_o = jump_in_ex_i ? operand_c_i : alu_csr_result; // Select return address
+  `else
   assign regfile_alu_wdata_fw_o = alu_csr_result;
+  `endif
   `endif // MUL_SUPPORT
 
 
@@ -173,7 +179,13 @@ module riscv_ex_stage
 
   // branch handling
   assign branch_decision_o = alu_cmp_result;
+  // CONFIG_REGION: NO_JUMP_ADDER
+  `ifdef NO_JUMP_ADDER
+  assign jump_target_o     = adder_result_o;
+  `else 
   assign jump_target_o     = alu_operand_c_i;
+  `endif
+ 
 
 
   ////////////////////////////
