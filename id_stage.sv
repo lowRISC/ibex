@@ -774,11 +774,12 @@ module riscv_id_stage
   always_comb
     begin : operand_a_fw_mux
       case (operand_a_fw_mux_sel)
+        // CONFIG_REGION: MERGE_ID_EX
+        `ifndef MERGE_ID_EX
         SEL_FW_EX:    operand_a_fw_id = regfile_alu_wdata_fw_i;
+        `else
         // CONFIG_REGION: ONLY_ALIGNED
         `ifndef ONLY_ALIGNED
-        // CONFIG_REGION: MERGE_ID_EX
-        `ifdef MERGE_ID_EX
         SEL_MISALIGNED:    operand_a_fw_id = misaligned_addr_i;
         `endif
         `endif

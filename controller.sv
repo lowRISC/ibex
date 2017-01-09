@@ -447,8 +447,13 @@ module riscv_controller
             if (id_ready_i) begin
               if ((jump_in_id_i == BRANCH_COND) & branch_taken_ex_i & id_ready_i)
               begin
-                pc_mux_o = PC_BRANCH;
-                pc_set_o = 1'b1;
+                // CONFIG_REGION: NO_JUMP_ADDER
+                `ifdef NO_JUMP_ADDER
+                  ctrl_fsm_ns = WAIT_BRANCH_EX;
+                `else
+                  pc_mux_o = PC_BRANCH;
+                  pc_set_o = 1'b1;
+                `endif
               end
 
               ctrl_fsm_ns = DBG_SIGNAL;
@@ -669,6 +674,7 @@ module riscv_controller
       begin
         // there is a branch in the EX stage that is taken
         branch_stall_o = 1'b1;
+        is_decoding_o = 1'b1;
         halt_if_o = 1'b1;
         if (id_ready_i)
         begin
@@ -963,7 +969,7 @@ module riscv_controller
     `endif // ONLY_ALIGNED
     
     // CONFIG_REGION: MUL_SUPPORT
-    `ifdef MUL_SUPPORT 
+    `ifdef MUL_SUPPORT
     else if (mult_multicycle_i) begin
       operand_c_fw_mux_sel_o  = SEL_FW_EX;
     end
