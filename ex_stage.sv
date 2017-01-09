@@ -166,7 +166,7 @@ module riscv_ex_stage
   `else
   // CONFIG_REGION
   `ifdef NO_JUMP_ADDER
-  assign regfile_alu_wdata_fw_o = jump_in_ex_i ? operand_c_i : alu_csr_result; // Select return address
+  assign regfile_alu_wdata_fw_o = jump_in_ex_i ? alu_operand_c_i : alu_csr_result; // Select return address
   `else
   assign regfile_alu_wdata_fw_o = alu_csr_result;
   `endif
@@ -181,7 +181,7 @@ module riscv_ex_stage
   assign branch_decision_o = alu_cmp_result;
   // CONFIG_REGION: NO_JUMP_ADDER
   `ifdef NO_JUMP_ADDER
-  assign jump_target_o     = adder_result_o;
+  assign jump_target_o     = alu_adder_result_ex_o;
   `else 
   assign jump_target_o     = alu_operand_c_i;
   `endif
