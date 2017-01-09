@@ -663,6 +663,7 @@ module riscv_controller
 
       // CONFIG_REGION: MERGE_ID_EX
       `ifdef MERGE_ID_EX
+      // CONFIG_REGION: NO_JUMP_ADDER
       `ifdef NO_JUMP_ADDER
       WAIT_BRANCH_EX:
       begin

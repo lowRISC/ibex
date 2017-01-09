@@ -1174,6 +1174,7 @@ module riscv_id_stage
     // Register file control signals
     .regfile_mem_we_o                ( regfile_we_id             ),
     .regfile_alu_we_o                ( regfile_alu_we_id         ),
+    // CONFIG_REGION: THREE_PORT_REG_FILE
     `ifdef THREE_PORT_REG_FILE
     .regfile_alu_waddr_sel_o         ( regfile_alu_waddr_mux_sel ),
     `endif // THREE_PORT_REG_FILE

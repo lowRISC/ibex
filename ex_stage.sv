@@ -164,7 +164,7 @@ module riscv_ex_stage
   `ifdef MUL_SUPPORT
   assign regfile_alu_wdata_fw_o = mult_en_i ? mult_result : alu_csr_result;
   `else
-  // CONFIG_REGION
+  // CONFIG_REGION: NO_JUMP_ADDER
   `ifdef NO_JUMP_ADDER
   assign regfile_alu_wdata_fw_o = jal_in_ex_i ? alu_operand_c_i : alu_csr_result; // Select return address
   `else

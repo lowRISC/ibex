@@ -46,6 +46,7 @@ module riscv_alu
   input  logic [ 4:0]              bmask_a_i,
   input  logic [ 4:0]              bmask_b_i,
   `endif // BIT_SUPPORT
+  // CONFIG_REGION: VEC_SUPPORT
   `ifdef VEC_SUPPORT
   input  logic [ 1:0]              imm_vec_ext_i,
   `endif // VEC_SUPPORT 
