@@ -145,8 +145,12 @@ module riscv_decoder
 
   // jump/branches
   output logic [1:0]  jump_in_dec_o,           // jump_in_id without deassert
-  output logic [1:0]  jump_in_id_o,            // jump is being calculated in ALU
+  output logic [1:0]  jump_in_id_o            // jump is being calculated in ALU
+  // CONFIG_REGION: NO_JUMP_ADDER
+  `ifdef NO_JUMP_ADDER
+  ,
   output logic [1:0]  jump_target_mux_sel_o    // jump target selection
+  `endif
 );
 
   // write enable/request control
@@ -183,7 +187,10 @@ module riscv_decoder
   always_comb
   begin
     jump_in_id                  = BRANCH_NONE;
+    // CONFIG_REGION: NO_JUMP_ADDER
+    `ifdef NO_JUMP_ADDER
     jump_target_mux_sel_o       = JT_JAL;
+    `endif
 
     alu_operator_o              = ALU_SLTU;
     alu_op_a_mux_sel_o          = OP_A_REGA_OR_FWD;
@@ -401,7 +408,7 @@ module riscv_decoder
           rega_used_o         = 1'b1;
         end
         
-        `else
+        `else // NO_JUMP_ADDER
         jump_target_mux_sel_o = JT_COND;
         jump_in_id            = BRANCH_COND;
         alu_op_c_mux_sel_o    = OP_C_JT;

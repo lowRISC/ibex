@@ -171,7 +171,7 @@ module riscv_core
   logic [31:0] alu_operand_c_ex;
   // CONFIG_REGION: NO_JUMP_ADDER
   `ifdef NO_JUMP_ADDER
-  logic        jump_in_ex;
+  logic        jal_in_ex;
     `endif
 
   // CONFIG_REGION: SPLITTED_ADDER
@@ -536,11 +536,6 @@ module riscv_core
     .ex_valid_i                   ( ex_valid             ),
     .wb_valid_i                   ( wb_valid             ),
 
-    // CONFIG_REGION: MERGE_ID_EX
-    `ifdef MERGE_ID_EX
-    .id_wait_o                    ( id_wait              ),
-    `endif
-
     // From the Pipeline ID/EX
     // CONFIG_REGION: MERGE_ID_EX
     `ifndef MERGE_ID_EX
@@ -558,7 +553,7 @@ module riscv_core
 
     // CONFIG_REGION: NO_JUMP_ADDER
     `ifdef NO_JUMP_ADDER
-    .jump_in_ex_o                 ( jump_in_ex           ),
+    .jal_in_ex_o                 ( jal_in_ex           ),
     `endif
 
     // CONFIG_REGION: BIT_SUPPORT
@@ -767,7 +762,7 @@ module riscv_core
     .regfile_alu_we_i           ( regfile_alu_we_ex            ),
     // CONFIG_REGION: NO_JUMP_ADDER
     `ifdef NO_JUMP_ADDER
-    .jump_in_ex_i               ( jump_in_ex                   ),
+    .jal_in_ex_i               ( jal_in_ex                   ),
     `endif
 
     // CONFIG_REGION: THREE_PORT_REG_FILE
@@ -879,10 +874,6 @@ module riscv_core
     `endif
 
     .ex_valid_i            ( ex_valid           ),
-    // CONFIG_REGION: MERGE_ID_EX
-    `ifdef MERGE_ID_EX
-    .id_wait_i             ( id_wait            ),
-    `endif
     .busy_o                ( lsu_busy           )
   );
 

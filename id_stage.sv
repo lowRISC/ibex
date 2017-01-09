@@ -127,7 +127,7 @@ module riscv_id_stage
 
     // CONFIG_REGION: NO_JUMP_ADDER
     `ifdef NO_JUMP_ADDER
-    output logic        jump_in_ex_o, // Select operand C as return address to save in regfile
+    output logic        jal_in_ex_o, // Select operand C as return address to save in regfile
     `endif
 
     // CONFIG_REGION: BIT_SUPPORT
@@ -1209,9 +1209,12 @@ module riscv_id_stage
 
     // jump/branches
     .jump_in_dec_o                   ( jump_in_dec               ),
-    .jump_in_id_o                    ( jump_in_id                ),
+    .jump_in_id_o                    ( jump_in_id                )
+    // CONFIG_REGION: NO_JUMP_ADDER
+    `ifdef NO_JUMP_ADDER
+    ,
     .jump_target_mux_sel_o           ( jump_target_mux_sel       )
-
+    `endif
   );
 
   ////////////////////////////////////////////////////////////////////
@@ -1764,6 +1767,10 @@ module riscv_id_stage
 
     pc_ex_o                     = pc_id_i;
     branch_in_ex_o              = (jump_in_id == BRANCH_COND);
+    // CONFIG_REGION: NO_JUMP_ADDER
+    `ifdef NO_JUMP_ADDER
+    jal_in_ex_o                = ((jump_in_id == BRANCH_JALR) || (jump_in_id == BRANCH_JAL));
+    `endif
   end
 
 
