@@ -1211,7 +1211,7 @@ module riscv_id_stage
     .jump_in_dec_o                   ( jump_in_dec               ),
     .jump_in_id_o                    ( jump_in_id                )
     // CONFIG_REGION: NO_JUMP_ADDER
-    `ifdef NO_JUMP_ADDER
+    `ifndef NO_JUMP_ADDER
     ,
     .jump_target_mux_sel_o           ( jump_target_mux_sel       )
     `endif

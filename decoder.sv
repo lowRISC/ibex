@@ -147,7 +147,7 @@ module riscv_decoder
   output logic [1:0]  jump_in_dec_o,           // jump_in_id without deassert
   output logic [1:0]  jump_in_id_o            // jump is being calculated in ALU
   // CONFIG_REGION: NO_JUMP_ADDER
-  `ifdef NO_JUMP_ADDER
+  `ifndef NO_JUMP_ADDER
   ,
   output logic [1:0]  jump_target_mux_sel_o    // jump target selection
   `endif
@@ -188,7 +188,7 @@ module riscv_decoder
   begin
     jump_in_id                  = BRANCH_NONE;
     // CONFIG_REGION: NO_JUMP_ADDER
-    `ifdef NO_JUMP_ADDER
+    `ifndef NO_JUMP_ADDER
     jump_target_mux_sel_o       = JT_JAL;
     `endif
 
