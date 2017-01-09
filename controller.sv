@@ -187,7 +187,7 @@ module riscv_controller
   // CONFIG_REGION: NO_JUMP_ADDER
   `ifdef NO_JUMP_ADDER
   enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
-                      DECODE, WAIT_BRANCH_EX,
+                      DECODE, BRANCH_2ND_STAGE,
                       FLUSH_WB,
                       DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
 
@@ -355,7 +355,7 @@ module riscv_controller
             `ifdef NO_JUMP_ADDER
             halt_if_o = 1'b1;
             halt_id_o = 1'b1;
-            ctrl_fsm_ns = WAIT_BRANCH_EX;
+            ctrl_fsm_ns = BRANCH_2ND_STAGE;
             `else
             // there is a branch in the EX stage that is taken
             pc_mux_o = PC_BRANCH;
@@ -449,7 +449,7 @@ module riscv_controller
               if ((jump_in_id_i == BRANCH_COND) & branch_taken_ex_i)
               begin
 
-                  ctrl_fsm_ns = WAIT_BRANCH_EX;
+                  ctrl_fsm_ns = BRANCH_2ND_STAGE;
 
               end
               else
@@ -677,37 +677,34 @@ module riscv_controller
       `ifdef MERGE_ID_EX
       // CONFIG_REGION: NO_JUMP_ADDER
       `ifdef NO_JUMP_ADDER
-      WAIT_BRANCH_EX:
+      BRANCH_2ND_STAGE:
       begin
         // there is a branch in the EX stage that is taken
         branch_2nd_stage_o = 1'b1;
+        pc_mux_o = PC_BRANCH;
+        pc_set_o = 1'b1;
+        ctrl_fsm_ns = DECODE;
         halt_if_o = 1'b1;
-        if (id_ready_i)
+        halt_id_o = 1'b1;
+
+        // if we want to debug, flush the pipeline
+        // the current_pc_if will take the value of the next instruction to
+        // be executed (NPC)
+        if (ext_req_i) begin
+          pc_mux_o      = PC_EXCEPTION;
+          pc_set_o      = 1'b1;
+          exc_ack_o     = 1'b1;
+          halt_id_o     = 1'b1; // we don't want to propagate this instruction to EX
+          exc_save_takenbranch_o = 1'b1;
+          // we don't have to change our current state here as the prefetch
+          // buffer is automatically invalidated, thus the next instruction
+          // that is served to the ID stage is the one of the jump to the
+          // exception handler
+        end
+
+        if (dbg_req_i)
         begin
-          pc_mux_o = PC_BRANCH;
-          pc_set_o = 1'b1;
-          ctrl_fsm_ns = DECODE;
-          halt_if_o = 1'b0;
-
-          // if we want to debug, flush the pipeline
-          // the current_pc_if will take the value of the next instruction to
-          // be executed (NPC)
-          if (ext_req_i) begin
-            pc_mux_o      = PC_EXCEPTION;
-            pc_set_o      = 1'b1;
-            exc_ack_o     = 1'b1;
-            halt_id_o     = 1'b1; // we don't want to propagate this instruction to EX
-            exc_save_takenbranch_o = 1'b1;
-            // we don't have to change our current state here as the prefetch
-            // buffer is automatically invalidated, thus the next instruction
-            // that is served to the ID stage is the one of the jump to the
-            // exception handler
-          end
-
-          if (dbg_req_i)
-          begin
-            ctrl_fsm_ns = DBG_SIGNAL;
-          end
+          ctrl_fsm_ns = DBG_SIGNAL;
         end
       end
       `endif // NO_JUMP_ADDER
