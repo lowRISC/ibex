@@ -893,8 +893,7 @@ module riscv_controller
       deassert_we_o     = 1'b1;
     end
     `else 
-    if ((jump_in_dec_i == BRANCH_JALR) &&
-        ((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_a_i == 1'b1))
+    if ((jump_in_dec_i == BRANCH_JALR) && (regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_a_i == 1'b1))
     begin
       jr_stall_o        = 1'b1;
       deassert_we_o     = 1'b1;
