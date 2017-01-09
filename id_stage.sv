@@ -1768,7 +1768,7 @@ module riscv_id_stage
     `endif // ONLY_ALIGNED
 
     pc_ex_o                     = pc_id_i;
-    branch_in_ex_o              = (jump_in_id == BRANCH_COND);
+    branch_in_ex_o              = (jump_in_dec == BRANCH_COND);
     // CONFIG_REGION: NO_JUMP_ADDER
     `ifdef NO_JUMP_ADDER
     jal_in_ex_o                = ((jump_in_id == BRANCH_JALR) || (jump_in_id == BRANCH_JAL));

@@ -188,7 +188,7 @@ module riscv_controller
   `ifdef NO_JUMP_ADDER
   enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
                       DECODE, WAIT_BRANCH_EX,
-                      FLUSH_EX, FLUSH_WB,
+                      FLUSH_WB,
                       DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
 
   `else
@@ -354,9 +354,7 @@ module riscv_controller
             // CONFIG_REGION: NO_JUMP_ADDER
             `ifdef NO_JUMP_ADDER
             halt_if_o = 1'b1;
-
-            if (id_ready_i)
-              ctrl_fsm_ns = WAIT_BRANCH_EX;
+            ctrl_fsm_ns = WAIT_BRANCH_EX;
             `else
             // there is a branch in the EX stage that is taken
             pc_mux_o = PC_BRANCH;
@@ -369,7 +367,7 @@ module riscv_controller
               pc_mux_o      = PC_EXCEPTION;
               pc_set_o      = 1'b1;
               exc_ack_o     = 1'b1;
-              halt_id_o     = 1'b1; // we don't want to propagate this instruction to EX
+              //halt_id_o     = 1'b1; // we don't want to propagate this instruction to EX
               exc_save_takenbranch_o = 1'b1;
               // we don't have to change our current state here as the prefetch
               // buffer is automatically invalidated, thus the next instruction
@@ -775,7 +773,7 @@ module riscv_controller
       end
 
       // CONFIG_REGION: MERGE_ID_EX
-      `ifdef MERGE_ID_EX
+      `ifndef MERGE_ID_EX
       // flush the pipeline, insert NOP into EX stage
       FLUSH_EX:
       begin
