@@ -356,7 +356,7 @@ module riscv_controller
             halt_if_o = 1'b1;
 
             if (id_ready_i)
-              ctrl_fsm = WAIT_BRANCH_EX;
+              ctrl_fsm_ns = WAIT_BRANCH_EX;
             `else
             // there is a branch in the EX stage that is taken
             pc_mux_o = PC_BRANCH;
