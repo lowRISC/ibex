@@ -1047,12 +1047,11 @@ module riscv_id_stage
         .waddr_b_i    ( (dbg_reg_wreq_i == 1'b0) ? regfile_alu_waddr_fw_i : dbg_reg_waddr_i ),
         .wdata_b_i    ( (dbg_reg_wreq_i == 1'b0) ? regfile_alu_wdata_fw_i : dbg_reg_wdata_i ),
         .we_b_i       ( (dbg_reg_wreq_i == 1'b0) ? regfile_alu_we_fw_i    : 1'b1            )
-
         `else
         // Write port a (multiplex between ALU and LSU). Conflict is resolved by stalling in EX.
         .waddr_a_i    ( (dbg_reg_wreq_i == 1'b0) ? ( (regfile_we_wb_i == 1'b1) ? regfile_waddr_wb_i : regfile_alu_waddr_fw_i) : dbg_reg_waddr_i ),
-        .wdata_a_i    ( (dbg_reg_wreq_i == 1'b0) ? ( (regfile_we_wb_i == 1'b1) ? regfile_wdata_wb_i : regfile_alu_wdata_fw_i) : dbg_reg_wdata_i  ),
-        .we_a_i       ( (dbg_reg_wreq_i == 1'b0) ? (regfile_we_wb_i || regfile_alu_we_fw_i) : 1'b1                                               )
+        .wdata_a_i    ( (dbg_reg_wreq_i == 1'b0) ? ( (regfile_we_wb_i == 1'b1) ? regfile_wdata_wb_i : regfile_alu_wdata_fw_i) : dbg_reg_wdata_i ),
+        .we_a_i       ( (dbg_reg_wreq_i == 1'b0) ? (regfile_we_wb_i || regfile_alu_we_fw_i) : 1'b1                                              )
         `endif // THREE_PORT_REG_FILE
       );
 
@@ -1699,7 +1698,7 @@ module riscv_id_stage
 
     csr_access_ex_o             = 1'b0;
     csr_op_ex_o                 = CSR_OP_NONE;
-    data_we_ex_o                = data_we_id;
+    data_we_ex_o                = (data_we_id & ~halt_id);
     data_type_ex_o              = data_type_id;
     data_sign_ext_ex_o          = data_sign_ext_id;
 
@@ -1714,23 +1713,23 @@ module riscv_id_stage
     alu_operand_b_ex_o          = alu_operand_b;
     alu_operand_c_ex_o          = alu_operand_c;
 
-    regfile_we_ex_o             = regfile_we_id;
-    regfile_alu_we_ex_o         = regfile_alu_we_id;
+    regfile_we_ex_o             = (regfile_we_id & ~halt_id);
+    regfile_alu_we_ex_o         = (regfile_alu_we_id  & ~halt_id);
 
-    csr_access_ex_o             = csr_access;
+    csr_access_ex_o             = (csr_access  & ~halt_id);
     csr_op_ex_o                 = csr_op;
-    data_req_ex_o               = data_req_id;
+    data_req_ex_o               = (data_req_id & ~halt_id);
 
 
     // CONFIG_REGION: ONLY_ALIGNED
     `ifndef ONLY_ALIGNED
     data_reg_offset_ex_o      = data_reg_offset_id;
     `endif // ONLY_ALIGNED
-    data_load_event_ex_o      = (data_req_id ? data_load_event_id : 1'b0);
+    data_load_event_ex_o      = ((data_req_id & ~halt_id) ? data_load_event_id : 1'b0);
 
     // CONFIG_REGION: ONLY_ALIGNED
     `ifndef ONLY_ALIGNED
-    data_misaligned_ex_o    = data_misaligned_i;
+    data_misaligned_ex_o      = data_misaligned_i;
     `endif // ONLY_ALIGNED
 
     pc_ex_o                     = pc_id_i;
@@ -1744,19 +1743,9 @@ module riscv_id_stage
   // stall control
   // CONFIG_REGION: ONLY_ALIGNED
   `ifndef ONLY_ALIGNED
-  // CONFIG_REGION: MERGE_ID_EX
-  `ifdef MERGE_ID_EX
   assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i);
   `else
-  assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i);
-  `endif
-  `else
-  // CONFIG_REGION: MERGE_ID_EX
-  `ifdef MERGE_ID_EX
   assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i);
-  `else 
-  assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i);
-  `endif
   `endif // ONLY_ALIGNED
   
 

@@ -371,14 +371,8 @@ module riscv_ex_stage
   assign ex_ready_o = (alu_ready & lsu_ready_ex_i & wb_ready_i & ~regfile_we_conflict);
   assign ex_valid_o = (alu_ready & lsu_ready_ex_i & wb_ready_i);
   `else
-  // CONFIG_REGION: MERGE_ID_EX
-  `ifdef MERGE_ID_EX
-  assign ex_ready_o = (alu_ready & lsu_ready_ex_i & wb_ready_i & ~regfile_we_conflict) | branch_in_ex_i;
-  assign ex_valid_o = (alu_ready & lsu_ready_ex_i & wb_ready_i & ~id_wait_i);
-  `else
   assign ex_ready_o = (alu_ready & lsu_ready_ex_i & wb_ready_i & ~regfile_we_conflict) | branch_in_ex_i;
   assign ex_valid_o = (alu_ready & lsu_ready_ex_i & wb_ready_i);
-  `endif
   `endif // SPLITTED_ADDER
   `endif // THREE_PORT_REG_FILE
   `endif // MUL_SUPPORT
