@@ -1781,9 +1781,9 @@ module riscv_id_stage
   // stall control
   // CONFIG_REGION: ONLY_ALIGNED
   `ifdef ONLY_ALIGNED
-  assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i);
-  `else
   assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i);
+  `else
+  assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i);
   `endif // ONLY_ALIGNED
   
 
