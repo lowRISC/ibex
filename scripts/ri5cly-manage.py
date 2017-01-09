@@ -206,6 +206,7 @@ def processSystemVerilog(filename, folderpath, definitions):
         content = f.readlines()
 
     nesting_counter = 0  # If we enter a not-enabled section, keep track when we leave the section again
+    level_counter = 0
     is_else_true = False # at first occurence of missing declarations
 
     while len(content) > 0:
@@ -215,6 +216,7 @@ def processSystemVerilog(filename, folderpath, definitions):
         config_pattern = re.compile("^\s*//.*CONFIG_REGION:\s(\w*)$")  # Test for config region declaration
         m = config_pattern.match(line)
         if m is not None:
+            level_counter += 1
             is_codeline = False
             line = content.pop(0)
 
@@ -248,7 +250,8 @@ def processSystemVerilog(filename, folderpath, definitions):
         else_pattern = re.compile("^\s*`else.*$")  # Check if we have an else
         m = else_pattern.match(line)
         if m is not None:
-            is_codeline = False
+            if level_counter > 0:
+            	is_codeline = False
             if nesting_counter == 1 and is_else_true:
                 nesting_counter -= 1
             if (not is_else_true) and nesting_counter == 0:
@@ -257,7 +260,9 @@ def processSystemVerilog(filename, folderpath, definitions):
         endif_pattern = re.compile("^\s*`endif.*$")  # Check if we have an endif
         m = endif_pattern.match(line)
         if m is not None:
-            is_codeline = False
+            if level_counter > 0:
+                is_codeline = False
+                level_counter -= 1
             nesting_counter -= 1
             if nesting_counter < 0:
                 nesting_counter = 0
