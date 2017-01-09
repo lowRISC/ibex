@@ -673,7 +673,7 @@ module riscv_controller
         begin
           pc_mux_o = PC_BRANCH;
           pc_set_o = 1'b1;
-          ctrl_fsm_cs = DECODE;
+          ctrl_fsm_ns = DECODE;
           halt_if_o = 1'b0;
 
           // if we want to debug, flush the pipeline
