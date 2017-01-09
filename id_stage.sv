@@ -311,7 +311,7 @@ module riscv_id_stage
   `endif
   // CONFIG_REGION: NO_JUMP_ADDER
   `ifdef NO_JUMP_ADDER
-  logic        branch_stall;
+  logic        branch_calc_jump_target;
   `endif
   logic        jr_stall;
   logic        load_stall;
@@ -945,7 +945,7 @@ module riscv_id_stage
         OP_C_REGB_OR_FWD:  alu_operand_c = operand_b_fw_id;
         // CONFIG_REGION: NO_JUMP_ADDER
         `ifdef NO_JUMP_ADDER
-        OP_C_JT:           alu_operand_c = pc_if_i; // this is the return address
+        OP_C_RA:           alu_operand_c = pc_if_i; // this is the return address
         `else
         OP_C_JT:           alu_operand_c = jump_target;
         `endif
@@ -1109,7 +1109,7 @@ module riscv_id_stage
     `endif // ONLY_ALIGNED
     // CONFIG_REGION: NO_JUMP_ADDER
     `ifdef NO_JUMP_ADDER
-    .branch_stall_i                  ( branch_stall              ),
+    .branch_calc_jump_target_i       ( branch_calc_jump_target   ),
     `endif
     // CONFIG_REGION: MUL_SUPPORT
     `ifdef MUL_SUPPORT
@@ -1353,7 +1353,7 @@ module riscv_id_stage
     `endif // ONLY_ALIGNED
     // CONFIG_REGION: NO_JUMP_ADDER
     `ifdef NO_JUMP_ADDER
-    .branch_stall_o                 ( branch_stall           ),
+    .branch_calc_jump_target_o                 ( branch_calc_jump_target           ),
     `endif
     .jr_stall_o                     ( jr_stall               ),
     .load_stall_o                   ( load_stall             ),

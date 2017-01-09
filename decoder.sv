@@ -290,7 +290,7 @@ module riscv_decoder
       OPCODE_JAL: begin   // Jump and Link
         // CONFIG_REGION: NO_JUMP_ADDER
         `ifdef NO_JUMP_ADDER
-        jump_in_id            = BRANCH_JAL;
+        jump_in_id          = BRANCH_JAL;
         // Calculate jump target in EX
         alu_op_a_mux_sel_o  = OP_A_CURRPC;
         alu_op_b_mux_sel_o  = OP_B_IMM;
@@ -321,7 +321,7 @@ module riscv_decoder
       OPCODE_JALR: begin  // Jump and Link Register
         // CONFIG_REGION: NO_JUMP_ADDER
         `ifdef NO_JUMP_ADDER
-        jump_in_id            = BRANCH_JALR;
+        jump_in_id          = BRANCH_JALR;
         // Calculate jump target in EX
         alu_op_a_mux_sel_o  = OP_A_CURRPC;
         alu_op_b_mux_sel_o  = OP_B_REGA_OR_FWD;
