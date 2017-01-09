@@ -41,38 +41,37 @@
 // for export. See the ri5cly-manage.py tool help and source code in the /scripts folder for more information.
 
 
-
 // CONFIG: MUL_SUPPORT
 // will enable RISCV32M support for multiplication, division, MAC operations. Uses a lot of multiplications
 //`define MUL_SUPPORT
 
 // CONFIG: VEC_SUPPORT
 // will enable RISCV32V support for vector operations.
-`define VEC_SUPPORT
+//`define VEC_SUPPORT
 
 // CONFIG: HWLP_SUPPORT
 // will enable hardware loop support.
-`define HWLP_SUPPORT
+//`define HWLP_SUPPORT
 
 // CONFIG: BIT_SUPPORT
 // will enable bit manipulation and counting support.
-`define BIT_SUPPORT
+//`define BIT_SUPPORT
 
 // CONFIG: LSU_ADDER_SUPPORT
 // will enable an additional adder in the LSU for better timings.
-`define LSU_ADDER_SUPPORT
+//`define LSU_ADDER_SUPPORT
 
 `ifdef LSU_ADDER_SUPPORT
 
 // CONFIG: PREPOST_SUPPORT
 // will enable pre/post increment load/store support support.
-`define PREPOST_SUPPORT
+//`define PREPOST_SUPPORT
 
 `endif // LSU_ADDER_SUPPORT
 
 // CONFIG: MATH_SPECIAL_SUPPORT
 // will enable clip, min and max operations support.
-`define MATH_SPECIAL_SUPPORT
+//`define MATH_SPECIAL_SUPPORT
 
 // CONFIG: JUMP_IN_ID
 // will enable direct jump in ID. Might increase critical path of jump target.
@@ -83,7 +82,7 @@
 
 // CONFIG: THREE_PORT_REG_FILE
 // enables 3r2w reg file (rather than 2r1w)
-`define THREE_PORT_REG_FILE
+//`define THREE_PORT_REG_FILE
 
 
 `ifndef MUL_SUPPORT
@@ -95,19 +94,19 @@
 
 // CONFIG: SIMPLE_ALU
 // will enable simplified ALU for less gates. It does not support vectors, shuffling, nor bit operations.
-//`define SIMPLE_ALU
+`define SIMPLE_ALU
 
 // CONFIG: SMALL_IF
 // will disable large FIFO in IF stage and use a more simple one.
-//`define SMALL_IF
+`define SMALL_IF
 
 // CONFIG: RV32E
 // will reduce the register file to 16 words
-//`define RV32E
+`define RV32E
 
 // CONFIG: ONLY_ALIGNED
 // will only allow aligned memory accesses and therefore overlapping mustn't occur
-//`define ONLY_ALIGNED
+`define ONLY_ALIGNED
 
 // CONFIG: SPLITTED_ADDER
 // will split ALU Adder in half and use two cycles to add operands
@@ -123,7 +122,7 @@
 `ifdef MERGE_ID_EX
 // CONFIG: NO_JUMP_ADDER
 // will use ALU adder to calculate target and get return address from prefetcher
-//`define NO_JUMP_ADDER
+`define NO_JUMP_ADDER
 `endif
 `endif
 
