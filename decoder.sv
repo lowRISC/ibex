@@ -323,8 +323,8 @@ module riscv_decoder
         `ifdef NO_JUMP_ADDER
         jump_in_id          = BRANCH_JALR;
         // Calculate jump target in EX
-        alu_op_a_mux_sel_o  = OP_A_CURRPC;
-        alu_op_b_mux_sel_o  = OP_B_REGA_OR_FWD;
+        alu_op_a_mux_sel_o  = OP_A_REGA_OR_FWD;
+        alu_op_b_mux_sel_o  = OP_B_ZERO;
         imm_b_mux_sel_o     = IMMB_SB;
         alu_operator_o      = ALU_ADD;
         regfile_alu_we      = 1'b1;

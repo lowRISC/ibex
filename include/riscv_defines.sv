@@ -227,6 +227,7 @@ parameter OP_B_REGC_OR_FWD = 3'b001;
 parameter OP_B_IMM         = 3'b010;
 parameter OP_B_REGA_OR_FWD = 3'b011;
 parameter OP_B_BMASK       = 3'b100;
+parameter OP_B_ZERO        = 3'b101;
 
 // immediate b selection
 parameter IMMB_I      = 4'b0000;

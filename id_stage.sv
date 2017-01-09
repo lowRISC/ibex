@@ -848,6 +848,10 @@ module riscv_id_stage
         `endif // THREE_PORT_REG_FILE
         OP_B_IMM:          operand_b = imm_b;
         OP_B_BMASK:        operand_b = $unsigned(operand_b_fw_id[4:0]);
+        // CONFIG_REGION: NO_JUMP_ADDER
+        `ifdef NO_JUMP_ADDER
+        OP_B_ZERO:         operand_b = '0;
+        `endif
         default:           operand_b = operand_b_fw_id;
       endcase // case (alu_op_b_mux_sel)
   	end
