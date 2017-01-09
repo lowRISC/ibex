@@ -187,7 +187,7 @@ module riscv_controller
   // CONFIG_REGION: NO_JUMP_ADDER
   `ifdef NO_JUMP_ADDER
   enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
-                      DECODE, WAIT_BRANCH_EX
+                      DECODE, WAIT_BRANCH_EX,
                       FLUSH_EX, FLUSH_WB,
                       DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
 
@@ -258,7 +258,7 @@ module riscv_controller
 
     // CONFIG_REGION: NO_JUMP_ADDER
     `ifdef NO_JUMP_ADDER
-    branch_stall_o   = 1'b0,
+    branch_stall_o   = 1'b0;
     `endif
 
 
