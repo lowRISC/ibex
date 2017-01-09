@@ -758,7 +758,10 @@ module riscv_id_stage
         SEL_FW_EX:    operand_a_fw_id = regfile_alu_wdata_fw_i;
         // CONFIG_REGION: ONLY_ALIGNED
         `ifndef ONLY_ALIGNED
+        // CONFIG_REGION: MERGE_ID_EX
+        `ifdef MERGE_ID_EX
         SEL_MISALIGNED:    operand_a_fw_id = misaligned_addr_i;
+        `endif
         `endif
         SEL_FW_WB:    operand_a_fw_id = regfile_wdata_wb_i;
         SEL_REGFILE:  operand_a_fw_id = regfile_data_ra_id;
