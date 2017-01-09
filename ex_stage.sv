@@ -91,7 +91,7 @@ module riscv_ex_stage
   input  logic        regfile_alu_we_i,
   // CONFIG_REGION: NO_JUMP_ADDER
   `ifdef NO_JUMP_ADDER
-  input  logic        jump_in_ex_i;
+  input  logic        jump_in_ex_i,
   `endif
 
   // directly passed through to WB stage, not used in EX
