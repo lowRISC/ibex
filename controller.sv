@@ -165,7 +165,7 @@ module riscv_controller
   output logic        load_stall_o,
   // CONFIG_REGION: NO_JUMP_ADDER
   `ifdef NO_JUMP_ADDER
-  output logic        branch_calc_jump_target_o,
+  output logic        branch_2nd_stage_o,
   `endif
 
   input  logic        id_ready_i,                 // ID stage is ready
@@ -258,7 +258,7 @@ module riscv_controller
 
     // CONFIG_REGION: NO_JUMP_ADDER
     `ifdef NO_JUMP_ADDER
-    branch_calc_jump_target_o   = 1'b0;
+    branch_2nd_stage_o   = 1'b0;
     `endif
 
 
@@ -680,7 +680,7 @@ module riscv_controller
       WAIT_BRANCH_EX:
       begin
         // there is a branch in the EX stage that is taken
-        branch_calc_jump_target_o = 1'b1;
+        branch_2nd_stage_o = 1'b1;
         halt_if_o = 1'b1;
         if (id_ready_i)
         begin

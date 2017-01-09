@@ -43,7 +43,7 @@ module riscv_decoder
   `endif // ONLY_ALIGNED
   // CONFIG_REGION: NO_JUMP_ADDER
   `ifdef NO_JUMP_ADDER
-  input  logic        branch_stall_i,
+  input  logic        branch_2nd_stage_i,
   `endif
   // CONFIG_REGION: MUL_SUPPORT
   `ifdef MUL_SUPPORT
@@ -372,7 +372,7 @@ module riscv_decoder
         rega_used_o           = 1'b1;
         regb_used_o           = 1'b1;
 
-        if (~branch_stall_i)
+        if (~branch_2nd_stage_i)
         begin
           unique case (instr_rdata_i[14:12])
             3'b000: alu_operator_o = ALU_EQ;

@@ -311,7 +311,7 @@ module riscv_id_stage
   `endif
   // CONFIG_REGION: NO_JUMP_ADDER
   `ifdef NO_JUMP_ADDER
-  logic        branch_calc_jump_target;
+  logic        branch_2nd_stage;
   `endif
   logic        jr_stall;
   logic        load_stall;
@@ -1109,7 +1109,7 @@ module riscv_id_stage
     `endif // ONLY_ALIGNED
     // CONFIG_REGION: NO_JUMP_ADDER
     `ifdef NO_JUMP_ADDER
-    .branch_calc_jump_target_i       ( branch_calc_jump_target   ),
+    .branch_2nd_stage_i       ( branch_2nd_stage   ),
     `endif
     // CONFIG_REGION: MUL_SUPPORT
     `ifdef MUL_SUPPORT
@@ -1353,7 +1353,7 @@ module riscv_id_stage
     `endif // ONLY_ALIGNED
     // CONFIG_REGION: NO_JUMP_ADDER
     `ifdef NO_JUMP_ADDER
-    .branch_calc_jump_target_o                 ( branch_calc_jump_target           ),
+    .branch_2nd_stage_o      ( branch_2nd_stage),
     `endif
     .jr_stall_o                     ( jr_stall               ),
     .load_stall_o                   ( load_stall             ),
