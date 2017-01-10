@@ -119,12 +119,10 @@
 // will merge/fuse the ID and EX stage
 //`define MERGE_ID_EX
 
-`ifdef SMALL_IF
 `ifdef MERGE_ID_EX
 // CONFIG: NO_JUMP_ADDER
 // will use ALU adder to calculate target and get return address from prefetcher
 //`define NO_JUMP_ADDER
-`endif
 `endif
 
 `endif

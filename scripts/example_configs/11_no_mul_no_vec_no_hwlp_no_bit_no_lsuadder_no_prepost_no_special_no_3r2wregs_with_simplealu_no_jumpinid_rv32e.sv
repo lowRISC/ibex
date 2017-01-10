@@ -77,7 +77,7 @@
 
 // CONFIG: JUMP_IN_ID
 // will enable direct jump in ID. Might increase critical path of jump target.
-`define JUMP_IN_ID
+//`define JUMP_IN_ID
 
 
 // Dependent definitions
@@ -100,7 +100,7 @@
 
 // CONFIG: SMALL_IF
 // will disable large FIFO in IF stage and use a more simple one.
-`define SMALL_IF
+//`define SMALL_IF
 
 // CONFIG: RV32E
 // will reduce the register file to 16 words
@@ -112,7 +112,7 @@
 
 // CONFIG: SPLITTED_ADDER
 // will split ALU Adder in half and use two cycles to add operands
-`define SPLITTED_ADDER
+//`define SPLITTED_ADDER
 
 `ifndef SPLITTED_ADDER
 `ifdef 	JUMP_IN_ID
@@ -130,7 +130,6 @@
 
 `endif
 `endif
-
 
 `endif
 `endif
