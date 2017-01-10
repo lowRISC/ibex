@@ -124,6 +124,12 @@
 //`define NO_JUMP_ADDER
 `endif
 
+`ifdef MERGE_ID_EX
+// CONFIG: NO_JUMP_ADDER
+// will use ALU adder to calculate target and get return address from prefetcher
+`define NO_JUMP_ADDER
+`endif
+
 `endif
 `endif
 
