@@ -406,10 +406,18 @@ def report_specific(config_name, littleRISCV_path):
     else:
         area = "undefined"
 
-    return "{},{},{}".format(config_name,area,clock)
+    number_p = re.compile("^(\d+)_.*$")
+    m = number_p.match(config_name)
+
+    if m is not None:
+        config_number = m.group(1)
+    else:
+        config_number = ""
+
+    return "{},{},{},{}".format(config_name,config_number,area,clock)
 
 def report(littleRISCV_path):
-    print("Config,Area (kGE),Frequency (MHz)")
+    print("Config,Config Nr.,Area (kGE),Frequency (MHz)")
 
     for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results")):
         custom_p = re.compile("^custom.*$")
@@ -419,7 +427,7 @@ def report(littleRISCV_path):
     
 
 def reportAll(littleRISCV_path):
-    print("Config,Area (kGE),Frequency (MHz)")
+    print("Config,Config Nr.,Area (kGE),Frequency (MHz)")
     for filename in os.listdir(os.path.abspath(littleRISCV_path + "/scripts/synthesis_results")):
         print(report_specific(filename, littleRISCV_path))
 
