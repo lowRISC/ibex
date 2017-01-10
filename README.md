@@ -1,6 +1,6 @@
 # **LITTLE**riscv: RISC-V Core
 
-**LITTLE**riscv is a smaller 4-stage RISC-V core. It is a more configurable version of the RI5CY core, which started its life as a
+**LITTLE**riscv is a smaller 3-or-4-stage RISC-V core. It is a more configurable version of the RI5CY core, which started its life as a
 fork of the OR10N CPU core (OpenRISC ISA).
 
 **LITTLE**riscv fully implements the RV32I instruction set, the multiply instruction from RV32M, RV32C and many custom instruction set extensions that improve its performance for signal processing applications.
