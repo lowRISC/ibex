@@ -354,7 +354,7 @@ module riscv_controller
             // CONFIG_REGION: NO_JUMP_ADDER
             `ifdef NO_JUMP_ADDER
             halt_if_o = 1'b1;
-            halt_id_o = 1'b1;
+            //halt_id_o = 1'b1;
             ctrl_fsm_ns = BRANCH_2ND_STAGE;
             `else
             // there is a branch in the EX stage that is taken
@@ -368,7 +368,7 @@ module riscv_controller
               pc_mux_o      = PC_EXCEPTION;
               pc_set_o      = 1'b1;
               exc_ack_o     = 1'b1;
-              //halt_id_o     = 1'b1; // we don't want to propagate this instruction to EX
+
               exc_save_takenbranch_o = 1'b1;
               // we don't have to change our current state here as the prefetch
               // buffer is automatically invalidated, thus the next instruction
@@ -404,7 +404,6 @@ module riscv_controller
               pc_set_o      = 1'b1;
               exc_ack_o     = 1'b1;
 
-              halt_id_o     = 1'b1; // we don't want to propagate this instruction to EX
               exc_save_id_o = 1'b1;
 
               // we don't have to change our current state here as the prefetch

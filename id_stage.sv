@@ -1113,7 +1113,7 @@ module riscv_id_stage
     `endif // ONLY_ALIGNED
     // CONFIG_REGION: NO_JUMP_ADDER
     `ifdef NO_JUMP_ADDER
-    .branch_2nd_stage_i       ( branch_2nd_stage   ),
+    .branch_2nd_stage_i              ( branch_2nd_stage          ),
     `endif
     // CONFIG_REGION: MUL_SUPPORT
     `ifdef MUL_SUPPORT
