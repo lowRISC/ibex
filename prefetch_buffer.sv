@@ -62,7 +62,7 @@ module riscv_fetch_fifo
     `endif // HWLP_SUPPORT
   );
 
-  localparam DEPTH = 4; // must be 3 or greater
+  localparam DEPTH = 3; // must be 3 or greater
 
   // index 0 is used for output
   logic [0:DEPTH-1] [31:0]  addr_n,    addr_int,    addr_Q;
