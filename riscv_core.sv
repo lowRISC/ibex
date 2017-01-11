@@ -530,6 +530,10 @@ module riscv_core
     .if_ready_i                   ( if_ready             ),
     .id_ready_o                   ( id_ready             ),
     .ex_ready_i                   ( ex_ready             ),
+    // CONFIG_REGION: MERGE_ID_EX
+    `ifdef MERGE_ID_EX
+    .wb_ready_i                   ( lsu_ready_wb         ),
+    `endif // MERGE_ID_EX
 
     .if_valid_i                   ( if_valid             ),
     .id_valid_o                   ( id_valid             ),

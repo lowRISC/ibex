@@ -111,6 +111,10 @@ module riscv_id_stage
 
     output logic        id_ready_o,     // ID stage is ready for the next instruction
     input  logic        ex_ready_i,     // EX stage is ready for the next instruction
+    // CONFIG_REGION: MERGE_ID_EX
+    `ifdef MERGE_ID_EX
+    input  logic        wb_ready_i,
+    `endif // MERGE_ID_EX
 
     input  logic        if_ready_i,     // IF stage is done
     input  logic        if_valid_i,     // IF stage is done
@@ -1737,7 +1741,7 @@ module riscv_id_stage
 
     csr_access_ex_o             = 1'b0;
     csr_op_ex_o                 = CSR_OP_NONE;
-    data_we_ex_o                = (data_we_id & ~halt_id);
+    data_we_ex_o                = (data_we_id & (~halt_id) &  wb_ready_i);
     data_type_ex_o              = data_type_id;
     data_sign_ext_ex_o          = data_sign_ext_id;
 
@@ -1752,8 +1756,8 @@ module riscv_id_stage
     alu_operand_b_ex_o          = alu_operand_b;
     alu_operand_c_ex_o          = alu_operand_c;
 
-    regfile_we_ex_o             = (regfile_we_id & (~halt_id));
-    regfile_alu_we_ex_o         = (regfile_alu_we_id  & (~halt_id));
+    regfile_we_ex_o             = (regfile_we_id & (~halt_id) & wb_ready_i);
+    regfile_alu_we_ex_o         = (regfile_alu_we_id  & (~halt_id) & wb_ready_i);
 
     csr_access_ex_o             = csr_access;
     csr_op_ex_o                 = csr_op;
@@ -1763,7 +1767,7 @@ module riscv_id_stage
     `ifndef ONLY_ALIGNED
     data_reg_offset_ex_o      = data_reg_offset_id;
     `endif // ONLY_ALIGNED
-    data_load_event_ex_o      = ((data_req_id & (~halt_id)) ? data_load_event_id : 1'b0);
+    data_load_event_ex_o      = ((data_req_id & (~halt_id) & wb_ready_i) ? data_load_event_id : 1'b0);
 
     // CONFIG_REGION: ONLY_ALIGNED
     `ifndef ONLY_ALIGNED
