@@ -1688,7 +1688,7 @@ module riscv_id_stage
           pc_ex_o                   <= pc_id_i;
         end
         `endif
-        branch_in_ex_o              <= jump_in_dec == BRANCH_COND;
+        branch_in_ex_o              <= jump_in_id == BRANCH_COND;
         
       end else if(ex_ready_i) begin
         // EX stage is ready but we don't have a new instruction for it,
@@ -1775,7 +1775,7 @@ module riscv_id_stage
     `endif // ONLY_ALIGNED
 
     pc_ex_o                     = pc_id_i;
-    branch_in_ex_o              = (jump_in_id == BRANCH_COND);
+    branch_in_ex_o              = (jump_in_dec == BRANCH_COND);
     // CONFIG_REGION: NO_JUMP_ADDER
     `ifdef NO_JUMP_ADDER
     jal_in_ex_o                = ((jump_in_id == BRANCH_JALR) || (jump_in_id == BRANCH_JAL));
