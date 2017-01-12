@@ -649,7 +649,12 @@ module riscv_id_stage
   // signal to 0 for instructions that are done
   assign clear_instr_valid_o = id_ready_o | halt_id;
 
+  // CONFIG_REGION: NO_JUMP_ADDER
+  `ifdef NO_JUMP_ADDER
+  assign branch_taken_ex = branch_in_ex_o & (branch_decision_i | branch_2nd_stage);
+  `else 
   assign branch_taken_ex = branch_in_ex_o & branch_decision_i;
+  `endif
 
   // CONFIG_REGION: MUL_SUPPORT
   `ifdef MUL_SUPPORT
