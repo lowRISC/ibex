@@ -360,6 +360,7 @@ module riscv_controller
             // if we want to debug, flush the pipeline
             // the current_pc_if will take the value of the next instruction to
             // be executed (NPC)
+            /*
             if (ext_req_i) begin
               pc_mux_o      = PC_EXCEPTION;
               pc_set_o      = 1'b1;
@@ -372,6 +373,7 @@ module riscv_controller
               // that is served to the ID stage is the one of the jump to the
               // exception handler
             end
+            */
 
             `else
             // there is a branch in the EX stage that is taken
