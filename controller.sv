@@ -420,7 +420,7 @@ module riscv_controller
 
             end else begin
               // handle exceptions
-              if (exc_req_i) begin
+              if (exc_req_i & id_ready_i) begin
                 pc_mux_o      = PC_EXCEPTION;
                 pc_set_o      = 1'b1;
                 exc_ack_o     = 1'b1;

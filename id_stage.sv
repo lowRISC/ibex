@@ -224,7 +224,7 @@ module riscv_id_stage
     input  logic        data_misaligned_i,
     // CONFIG_REGION: MERGE_ID_EX
     `ifdef MERGE_ID_EX
-    input  logic        misaligned_addr_i,
+    input  logic [31:0] misaligned_addr_i,
     `endif
     `endif // ONLY_ALIGNED
 
@@ -816,15 +816,12 @@ module riscv_id_stage
         IMMB_I:      imm_b = imm_i_type;
         IMMB_S:      imm_b = imm_s_type;
         IMMB_U:      imm_b = imm_u_type;
-        // CONFIG_REGION: NO_JUMP_ADDER
-        `ifndef NO_JUMP_ADDER
         // CONFIG_REGION: ONLY_ALIGNED
         `ifndef ONLY_ALIGNED
         IMMB_PCINCR: imm_b = (is_compressed_i && (~data_misaligned_i)) ? 32'h2 : 32'h4;
         `else 
         IMMB_PCINCR: imm_b = (is_compressed_i) ? 32'h2 : 32'h4;
         `endif // ONLY_ALIGNED
-        `endif // NO_JUMP_ADDER
 
         IMMB_S2:     imm_b = imm_s2_type;
         IMMB_BI:     imm_b = imm_bi_type;

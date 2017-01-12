@@ -75,7 +75,7 @@ module riscv_load_store_unit
     output logic         data_misaligned_o,    // misaligned access was detected    -> to controller
     // CONFIG_REGION: MERGE_ID_EX
     `ifdef MERGE_ID_EX
-    output logic         misaligned_addr_o,
+    output logic [31:0]  misaligned_addr_o,
     `endif
     `endif // ONLY_ALIGNED
 

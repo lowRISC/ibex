@@ -131,7 +131,7 @@ module riscv_core
   logic        data_misaligned;
   // CONFIG_REGION: MERGE_ID_EX
   `ifdef MERGE_ID_EX
-  logic        misaligned_addr;
+  logic [31:0] misaligned_addr;
   `endif
   `endif // ONLY_ALIGNED
 
