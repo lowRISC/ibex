@@ -356,6 +356,23 @@ module riscv_controller
             halt_if_o = 1'b1;
             //halt_id_o = 1'b1;
             ctrl_fsm_ns = BRANCH_2ND_STAGE;
+
+            // if we want to debug, flush the pipeline
+            // the current_pc_if will take the value of the next instruction to
+            // be executed (NPC)
+            if (ext_req_i) begin
+              pc_mux_o      = PC_EXCEPTION;
+              pc_set_o      = 1'b1;
+              exc_ack_o     = 1'b1;
+              halt_if_o     = 1'b0;
+
+              exc_save_id_o = 1'b1;
+              // we don't have to change our current state here as the prefetch
+              // buffer is automatically invalidated, thus the next instruction
+              // that is served to the ID stage is the one of the jump to the
+              // exception handler
+            end
+
             `else
             // there is a branch in the EX stage that is taken
             pc_mux_o = PC_BRANCH;
@@ -445,26 +462,7 @@ module riscv_controller
               // make sure the current instruction has been executed
               // before changing state to non-decode
               if (id_ready_i) begin
-                // CONFIG_REGION: NO_JUMP_ADDER
-                `ifdef NO_JUMP_ADDER
-                if ((jump_in_id_i == BRANCH_COND) & branch_taken_ex_i)
-                begin
-
-                    ctrl_fsm_ns = BRANCH_2ND_STAGE;
-
-                end
-                else
-                  ctrl_fsm_ns = DBG_SIGNAL;
-
-                `else
-                if ((jump_in_id_i == BRANCH_COND) & branch_taken_ex_i)
-                begin
-                  pc_mux_o = PC_BRANCH;
-                  pc_set_o = 1'b1;
-                end
-
                 ctrl_fsm_ns = DBG_SIGNAL;
-                `endif
               end
             end
           end
