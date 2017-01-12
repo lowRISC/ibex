@@ -350,7 +350,7 @@ module riscv_controller
           is_decoding_o = 1'b1;
 
           // handle conditional branches
-          if (branch_taken_ex_i & id_ready_i) begin
+          if ((jump_in_dec_i == BRANCH_COND) & branch_taken_ex_i & id_ready_i) begin
             // CONFIG_REGION: NO_JUMP_ADDER
             `ifdef NO_JUMP_ADDER
             halt_if_o = 1'b1;
