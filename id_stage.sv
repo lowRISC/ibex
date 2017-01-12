@@ -1688,7 +1688,7 @@ module riscv_id_stage
           pc_ex_o                   <= pc_id_i;
         end
         `endif
-        branch_in_ex_o              <= jump_in_id == BRANCH_COND;
+        branch_in_ex_o              <= jump_in_dec == BRANCH_COND;
         
       end else if(ex_ready_i) begin
         // EX stage is ready but we don't have a new instruction for it,
