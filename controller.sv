@@ -408,7 +408,7 @@ module riscv_controller
             // we can jump directly since we know the address already
             // we don't need to worry about conditional branches here as they
             // will be evaluated in the EX stage
-            else if ((jump_in_dec_i == BRANCH_JALR || jump_in_dec_i == BRANCH_JAL) & id_ready_i) begin
+            if ((jump_in_dec_i == BRANCH_JALR || jump_in_dec_i == BRANCH_JAL) & id_ready_i) begin
               pc_mux_o = PC_JUMP;
 
               pc_set_o    = 1'b1;
