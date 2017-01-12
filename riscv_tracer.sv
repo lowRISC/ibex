@@ -27,30 +27,16 @@ import riscv_defines::*;
 import riscv_tracer_defines::*;
 
 
-// CONFIG_REGION: RV32E
-`ifdef RV32E
-// Source/Destination register instruction index
-`define REG_S1 18:15
-`define REG_S2 23:20
-`define REG_S3 28:25
-`define REG_D  10:07
-`else
 // Source/Destination register instruction index
 `define REG_S1 19:15
 `define REG_S2 24:20
 `define REG_S3 29:25
 `define REG_D  11:07
-`endif // RV32E
 
 
 module riscv_tracer
 #(
-    // CONFIG_REGION: RV32E
-    `ifdef RV32E
-    parameter REG_ADDR_WIDTH      = 4
-    `else
     parameter REG_ADDR_WIDTH      = 5
-    `endif // RV32E
 )
 (
   // Clock and Reset
@@ -616,12 +602,6 @@ module riscv_tracer
     while(1) begin
       instr_ex.get(trace);
 
-      // CONFIG_REGION: MERGE_ID_EX
-      `ifndef MERGE_ID_EX
-      // wait until we are going to the next stage
-      do begin
-        @(negedge clk);
-      `endif
       
         // replace register written back
         foreach(trace.regs_write[i])
@@ -640,10 +620,6 @@ module riscv_tracer
 
           trace.mem_access.push_back(mem_acc);
         end
-      // CONFIG_REGION: MERGE_ID_EX
-      `ifndef MERGE_ID_EX
-      end while (!ex_valid && !wb_bypass); // ex branches bypass the WB stage
-      `endif
 
       instr_wb.put(trace);
     end

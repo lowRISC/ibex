@@ -27,12 +27,7 @@
 
 module riscv_register_file
 #(
-  // CONFIG_REGION: RV32E
-  `ifdef RV32E
-  parameter ADDR_WIDTH    = 4,
-  `else
   parameter ADDR_WIDTH    = 5,
-  `endif // CONFIG_REGION: RV32E
   parameter DATA_WIDTH    = 32
 )
 (
@@ -50,37 +45,18 @@ module riscv_register_file
     input  logic [ADDR_WIDTH-1:0]  raddr_b_i,
     output logic [DATA_WIDTH-1:0]  rdata_b_o,
 
-    // CONFIG_REGION: THREE_PORT_REG_FILE
-    `ifdef THREE_PORT_REG_FILE
-    //Read port R3
-    input  logic [ADDR_WIDTH-1:0]  raddr_c_i,
-    output logic [DATA_WIDTH-1:0]  rdata_c_o,
-    `endif // THREE_PORT_REG_FILE
 
     // Write port W1
     input logic [ADDR_WIDTH-1:0]   waddr_a_i,
     input logic [DATA_WIDTH-1:0]   wdata_a_i,
     input logic                    we_a_i
 
-    // CONFIG_REGION: THREE_PORT_REG_FILE
-    `ifdef THREE_PORT_REG_FILE
-    ,
-
-    // Write port W2
-    input logic [ADDR_WIDTH-1:0]   waddr_b_i,
-    input logic [DATA_WIDTH-1:0]   wdata_b_i,
-    input logic                    we_b_i
-    `endif // THREE_PORT_REG_FILE
 );
 
   localparam    NUM_WORDS = 2**ADDR_WIDTH;
 
   logic [NUM_WORDS-1:0][DATA_WIDTH-1:0] rf_reg;
   logic [NUM_WORDS-1:0]                 we_a_dec;
-  // CONFIG_REGION: THREE_PORT_REG_FILE
-  `ifdef THREE_PORT_REG_FILE
-  logic [NUM_WORDS-1:0]                 we_b_dec;
-  `endif // THREE_PORT_REG_FILE
 
   always_comb
   begin : we_a_decoder
@@ -92,18 +68,6 @@ module riscv_register_file
     end
   end
 
-  // CONFIG_REGION: THREE_PORT_REG_FILE
-  `ifdef THREE_PORT_REG_FILE
-  always_comb
-  begin : we_b_decoder
-    for (int i=0; i<NUM_WORDS; i++) begin
-      if (waddr_b_i == i)
-        we_b_dec[i] = we_b_i;
-      else
-        we_b_dec[i] = 1'b0;
-    end
-  end
-  `endif // THREE_PORT_REG_FILE
 
   genvar i;
   generate
@@ -117,15 +81,7 @@ module riscv_register_file
         if (rst_n==1'b0) begin
           rf_reg[i] <= 'b0;
         end else begin
-          // CONFIG_REGION: THREE_PORT_REG_FILE
-          `ifdef THREE_PORT_REG_FILE
-          if(we_b_dec[i] == 1'b1)
-            rf_reg[i] <= wdata_b_i;
-          else if(we_a_dec[i] == 1'b1)
-            rf_reg[i] <= wdata_a_i;
-          `else 
           rf_reg[i] <= wdata_a_i;
-          `endif // THREE_PORT_REG_FILE
         end
       end
 
@@ -138,9 +94,5 @@ module riscv_register_file
 
   assign rdata_a_o = rf_reg[raddr_a_i];
   assign rdata_b_o = rf_reg[raddr_b_i];
-  // CONFIG_REGION: THREE_PORT_REG_FILE
-  `ifdef THREE_PORT_REG_FILE
-  assign rdata_c_o = rf_reg[raddr_c_i];
-  `endif // THREE_PORT_REG_FILE
 
 endmodule

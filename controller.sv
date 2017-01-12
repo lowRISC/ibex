@@ -31,12 +31,7 @@ import riscv_defines::*;
 
 module riscv_controller
 #(
-  // CONFIG_REGION: RV32E
-  `ifdef RV32E
-  parameter REG_ADDR_WIDTH      = 4
-  `else
   parameter REG_ADDR_WIDTH      = 5
-  `endif // RV32E
 )
 (
   input  logic        clk,
@@ -54,10 +49,6 @@ module riscv_controller
 
   input  logic        rega_used_i,                // register A is used
   input  logic        regb_used_i,                // register B is used
-  // CONFIG_REGION: THREE_PORT_REG_FILE
-  `ifdef THREE_PORT_REG_FILE
-  input  logic        regc_used_i,                // register C is used
-  `endif // THREE_PORT_REG_FILE
 
   // from IF/ID pipeline
   input  logic        instr_valid_i,              // instruction coming from IF/ID pipeline is valid
@@ -72,17 +63,9 @@ module riscv_controller
 
   // LSU
   input  logic        data_req_ex_i,              // data memory access is currently performed in EX stage
-  // CONFIG_REGION: ONLY_ALIGNED
-  `ifndef ONLY_ALIGNED
   input  logic        data_misaligned_i,
-  `endif // ONLY_ALIGNED
   input  logic        data_load_event_i,
 
-  // CONFIG_REGION: MUL_SUPPORT
-  `ifdef MUL_SUPPORT
-  // from ALU
-  input  logic        mult_multicycle_i,          // multiplier is taken multiple cycles and uses op c as storage
-  `endif // MUL_SUPPORT
 
   // jump/branch signals
   input  logic        branch_taken_ex_i,          // branch taken signal from EX ALU
@@ -108,10 +91,6 @@ module riscv_controller
 
   // Forwarding signals from regfile
 
-  // CONFIG_REGION: THREE_PORT_REG_FILE
-  `ifdef THREE_PORT_REG_FILE
-  input  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_ex_i,         // FW: write address from EX stage
-  `endif // THREE_PORT_REG_FILE
   input  logic        regfile_we_ex_i,            // FW: write enable from  EX stage
   input  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_wb_i,         // FW: write address from WB stage
   input  logic        regfile_we_wb_i,            // FW: write enable from  WB stage
@@ -122,51 +101,20 @@ module riscv_controller
   // forwarding signals
   output logic [1:0]  operand_a_fw_mux_sel_o,     // regfile ra data selector form ID stage
   output logic [1:0]  operand_b_fw_mux_sel_o,     // regfile rb data selector form ID stage
-  // CONFIG_REGION: THREE_PORT_REG_FILE
-  `ifdef THREE_PORT_REG_FILE
-  output logic [1:0]  operand_c_fw_mux_sel_o,     // regfile rc data selector form ID stage
-  `endif // THREE_PORT_REG_FILE
 
   // forwarding detection signals
-  // CONFIG_REGION: THREE_PORT_REG_FILE
-  `ifdef THREE_PORT_REG_FILE
-  input logic         reg_d_ex_is_reg_a_i,
-  input logic         reg_d_ex_is_reg_b_i,
-  input logic         reg_d_ex_is_reg_c_i,
   input logic         reg_d_wb_is_reg_a_i,
   input logic         reg_d_wb_is_reg_b_i,
-  input logic         reg_d_wb_is_reg_c_i,
-  input logic         reg_d_alu_is_reg_a_i,
-  input logic         reg_d_alu_is_reg_b_i,
-  input logic         reg_d_alu_is_reg_c_i,
-  `else
-  // CONFIG_REGION: MERGE_ID_EX
-  `ifdef MERGE_ID_EX
-  input logic         reg_d_wb_is_reg_a_i,
-  input logic         reg_d_wb_is_reg_b_i,
-  `else
-  input logic         reg_d_wb_is_reg_a_i,
-  input logic         reg_d_wb_is_reg_b_i,
-  input logic         reg_d_alu_is_reg_a_i,
-  input logic         reg_d_alu_is_reg_b_i,
-  `endif // MERGE_ID_EX
-  `endif // THREE_PORT_REG_FILE
 
 
   // stall signals
   output logic        halt_if_o,
   output logic        halt_id_o,
 
-  // CONFIG_REGION: ONLY_ALIGNED
-  `ifndef ONLY_ALIGNED
   output logic        misaligned_stall_o,
-  `endif // ONLY_ALIGNED
   output logic        jr_stall_o,
   output logic        load_stall_o,
-  // CONFIG_REGION: NO_JUMP_ADDER
-  `ifdef NO_JUMP_ADDER
   output logic        branch_2nd_stage_o,
-  `endif
 
   input  logic        id_ready_i,                 // ID stage is ready
 
@@ -181,29 +129,13 @@ module riscv_controller
 );
 
   // FSM state encoding
-  // CONFIG_REGION: JUMP_IN_ID
-  `ifdef JUMP_IN_ID
 
-  // CONFIG_REGION: NO_JUMP_ADDER
-  `ifdef NO_JUMP_ADDER
   enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
                       DECODE, BRANCH_2ND_STAGE,
                       FLUSH_WB,
                       DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
 
-  `else
-  enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
-                      DECODE,
-                      FLUSH_EX, FLUSH_WB,
-                      DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
-  `endif
 
-  `else 
-  enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
-                      DECODE, WAIT_JUMP_EX,
-                      FLUSH_EX, FLUSH_WB,
-                      DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
-  `endif
 
   logic jump_done, jump_done_q;
 
@@ -256,10 +188,7 @@ module riscv_controller
     halt_id_o        = 1'b0;
     dbg_ack_o        = 1'b0;
 
-    // CONFIG_REGION: NO_JUMP_ADDER
-    `ifdef NO_JUMP_ADDER
     branch_2nd_stage_o   = 1'b0;
-    `endif
 
 
     unique case (ctrl_fsm_cs)
@@ -339,8 +268,6 @@ module riscv_controller
       begin
         is_decoding_o = 1'b0;
 
-        // CONFIG_REGION: MERGE_ID_EX
-        `ifdef MERGE_ID_EX
         // decode and execute instructions only if the current conditional
         // branch in the EX stage is either not taken, or there is no
         // conditional branch in the EX stage
@@ -351,8 +278,6 @@ module riscv_controller
 
           // handle conditional branches
           if ((jump_in_dec_i == BRANCH_COND) & branch_taken_ex_i & id_ready_i) begin
-            // CONFIG_REGION: NO_JUMP_ADDER
-            `ifdef NO_JUMP_ADDER
             halt_if_o = 1'b1;
             //halt_id_o = 1'b1;
             ctrl_fsm_ns = BRANCH_2ND_STAGE;
@@ -375,31 +300,6 @@ module riscv_controller
             end
             */
 
-            `else
-            // there is a branch in the EX stage that is taken
-            pc_mux_o = PC_BRANCH;
-            pc_set_o = 1'b1;
-
-            // if we want to debug, flush the pipeline
-            // the current_pc_if will take the value of the next instruction to
-            // be executed (NPC)
-            if (ext_req_i) begin
-              pc_mux_o      = PC_EXCEPTION;
-              pc_set_o      = 1'b1;
-              exc_ack_o     = 1'b1;
-
-              exc_save_takenbranch_o = 1'b1;
-              // we don't have to change our current state here as the prefetch
-              // buffer is automatically invalidated, thus the next instruction
-              // that is served to the ID stage is the one of the jump to the
-              // exception handler
-            end
-
-            if (dbg_req_i)
-            begin
-              ctrl_fsm_ns = DBG_SIGNAL;
-            end
-            `endif
           end
 
           else begin
@@ -487,195 +387,9 @@ module riscv_controller
 
         
         
-        `else // MERGE_ID_EX
-
-        // decode and execute instructions only if the current conditional
-        // branch in the EX stage is either not taken, or there is no
-        // conditional branch in the EX stage
-        // CONFIG_REGION: SPLITTED_ADDER
-        `ifdef SPLITTED_ADDER
-        if (instr_valid_i && (~branch_taken_ex_i) && ex_valid_i)
-        `else
-        if (instr_valid_i && (~branch_taken_ex_i))
-        `endif
-        begin // now analyze the current instruction in the ID stage
-          is_decoding_o = 1'b1;
-
-          // handle unconditional jumps
-          // we can jump directly since we know the address already
-          // we don't need to worry about conditional branches here as they
-          // will be evaluated in the EX stage
-          if (jump_in_dec_i == BRANCH_JALR || jump_in_dec_i == BRANCH_JAL) begin
-            // CONFIG_REGION: JUMP_IN_ID
-            `ifdef JUMP_IN_ID
-            pc_mux_o = PC_JUMP;
-
-            // if there is a jr stall, wait for it to be gone
-            if ((~jr_stall_o) && (~jump_done_q)) begin
-              pc_set_o    = 1'b1;
-              jump_done   = 1'b1;
-            end
-
-            // we don't have to change our current state here as the prefetch
-            // buffer is automatically invalidated, thus the next instruction
-            // that is served to the ID stage is the one of the jump target
-
-            `else
-
-            halt_if_o = 1'b1;
-
-            // if there is a jr stall, wait for it to be gone
-            if (id_ready_i && (~jr_stall_o) && (~jump_done_q)) begin
-              ctrl_fsm_ns = WAIT_JUMP_EX;
-            end
-
-            `endif
-          end else begin
-            // handle exceptions
-            if (exc_req_i) begin
-              pc_mux_o      = PC_EXCEPTION;
-              pc_set_o      = 1'b1;
-              exc_ack_o     = 1'b1;
-              exc_save_id_o = 1'b1;
-
-              // we don't have to change our current state here as the prefetch
-              // buffer is automatically invalidated, thus the next instruction
-              // that is served to the ID stage is the one of the jump to the
-              // exception handler
-            end
-          end
-
-          if (eret_insn_i) begin
-            pc_mux_o         = PC_ERET;
-            exc_restore_id_o = 1'b1;
-
-            if ((~jump_done_q)) begin
-              pc_set_o    = 1'b1;
-              jump_done   = 1'b1;
-            end
-          end
-
-          // handle WFI instruction, flush pipeline and (potentially) go to
-          // sleep
-          // also handles eret when the core should go back to sleep
-          if (pipe_flush_i || (eret_insn_i && (~fetch_enable_i)))
-          begin
-            halt_if_o = 1'b1;
-            halt_id_o = 1'b1;
-
-            ctrl_fsm_ns = FLUSH_EX;
-          end
-          else if (dbg_req_i)
-          begin
-            // take care of debug
-            // branch conditional will be handled in next state
-            // halt pipeline immediately
-            halt_if_o = 1'b1;
-
-            // make sure the current instruction has been executed
-            // before changing state to non-decode
-            if (id_ready_i) begin
-              if (jump_in_id_i == BRANCH_COND)
-                ctrl_fsm_ns = DBG_WAIT_BRANCH;
-              else
-                ctrl_fsm_ns = DBG_SIGNAL;
-            end else if (data_load_event_i) begin
-              // special case for p.elw
-              // If there was a load event (which means p.elw), we go to debug
-              // even though we are still blocked
-              // we don't have to distuinguish between branch and non-branch,
-              // since the p.elw sits in the EX stage
-              ctrl_fsm_ns = DBG_SIGNAL;
-            end
-          end
-        end
-
-        if (~instr_valid_i && (~branch_taken_ex_i))
-        begin
-            if (ext_req_i) begin
-              pc_mux_o      = PC_EXCEPTION;
-              pc_set_o      = 1'b1;
-              exc_ack_o     = 1'b1;
-              halt_id_o     = 1'b1; // we don't want to propagate this instruction to EX
-              exc_save_if_o = 1'b1;
-              // we don't have to change our current state here as the prefetch
-              // buffer is automatically invalidated, thus the next instruction
-              // that is served to the ID stage is the one of the jump to the
-              // exception handler
-            end
-        end
-
-        // TODO: make sure this is not done multiple times in a row (RI5CY)!!!
-        //       maybe with an assertion?
-        // handle conditional branches
-        // CONFIG_REGION: SPLITTED_ADDER
-        `ifdef SPLITTED_ADDER
-        if (branch_taken_ex_i & ex_valid_i) begin
-        `else
-        if (branch_taken_ex_i) begin
-        `endif
-          // there is a branch in the EX stage that is taken
-          pc_mux_o      = PC_BRANCH;
-          pc_set_o      = 1'b1;
-
-
-          is_decoding_o = 1'b0; // we are not decoding the current instruction in the ID stage
-
-          // if we want to debug, flush the pipeline
-          // the current_pc_if will take the value of the next instruction to
-          // be executed (NPC)
-          if (ext_req_i) begin
-            pc_mux_o      = PC_EXCEPTION;
-            pc_set_o      = 1'b1;
-            exc_ack_o     = 1'b1;
-            halt_id_o     = 1'b1; // we don't want to propagate this instruction to EX
-            exc_save_takenbranch_o = 1'b1;
-            // we don't have to change our current state here as the prefetch
-            // buffer is automatically invalidated, thus the next instruction
-            // that is served to the ID stage is the one of the jump to the
-            // exception handler
-          end
-          if (dbg_req_i)
-          begin
-            ctrl_fsm_ns = DBG_SIGNAL;
-          end
-        end
-
-        `endif // MERGE_ID_EX
       end
 
-      // CONFIG_REGION: JUMP_IN_ID
-      `ifndef JUMP_IN_ID
 
-      // a jump was in ID and now has to be applied to IF from EX
-      WAIT_JUMP_EX:
-      begin
-        // CONFIG_REGION: SPLITTED_ADDER
-        `ifdef SPLITTED_ADDER
-        if (ex_valid_i) begin
-          pc_mux_o = PC_JUMP;
-          pc_set_o = 1'b1;
-          jump_done   = 1'b1;
-
-          ctrl_fsm_ns = DECODE;
-        end
-        else
-          halt_if_o = 1'b1;
-        `else 
-        pc_mux_o = PC_JUMP;
-        pc_set_o = 1'b1;
-        jump_done   = 1'b1;
-
-        ctrl_fsm_ns = DECODE;
-        `endif
-      end
-
-      `endif // JUMP_IN_ID
-
-      // CONFIG_REGION: MERGE_ID_EX
-      `ifdef MERGE_ID_EX
-      // CONFIG_REGION: NO_JUMP_ADDER
-      `ifdef NO_JUMP_ADDER
       BRANCH_2ND_STAGE:
       begin
         // there is a branch in the EX stage that is taken
@@ -706,23 +420,7 @@ module riscv_controller
           ctrl_fsm_ns = DBG_SIGNAL;
         end
       end
-      `endif // NO_JUMP_ADDER
 
-      `else
-      // a branch was in ID when a debug trap is hit
-      DBG_WAIT_BRANCH:
-      begin
-        halt_if_o = 1'b1;
-
-        if (branch_taken_ex_i) begin
-          // there is a branch in the EX stage that is taken
-          pc_mux_o = PC_BRANCH;
-          pc_set_o = 1'b1;
-        end
-
-        ctrl_fsm_ns = DBG_SIGNAL;
-      end
-      `endif
 
       // now we can signal to the debugger that our pipeline is empty and it
       // can examine our current state
@@ -776,18 +474,6 @@ module riscv_controller
         end
       end
 
-      // CONFIG_REGION: MERGE_ID_EX
-      `ifndef MERGE_ID_EX
-      // flush the pipeline, insert NOP into EX stage
-      FLUSH_EX:
-      begin
-        halt_if_o = 1'b1;
-        halt_id_o = 1'b1;
-
-        if (ex_valid_i)
-          ctrl_fsm_ns = FLUSH_WB;
-      end
-      `endif
 
       // flush the pipeline, insert NOP into EX and WB stage
       FLUSH_WB:
@@ -841,25 +527,6 @@ module riscv_controller
       deassert_we_o = 1'b1;
 
     // Stall because of load operation
-    // CONFIG_REGION: THREE_PORT_REG_FILE
-    `ifdef THREE_PORT_REG_FILE
-    if ((data_req_ex_i == 1'b1) && (regfile_we_ex_i == 1'b1) &&
-        ((reg_d_ex_is_reg_a_i == 1'b1) || (reg_d_ex_is_reg_b_i == 1'b1) || (reg_d_ex_is_reg_c_i == 1'b1)) )
-    begin
-      deassert_we_o   = 1'b1;
-      load_stall_o    = 1'b1;
-    end
-    `else
-    // CONFIG_REGION: MERGE_ID_EX
-    `ifndef MERGE_ID_EX
-	  if ((data_req_ex_i == 1'b1) && (regfile_we_ex_i == 1'b1) &&
-        ((reg_d_alu_is_reg_a_i == 1'b1) || (reg_d_alu_is_reg_b_i == 1'b1)) )
-    begin
-      deassert_we_o   = 1'b1;
-      load_stall_o    = 1'b1;
-    end
-    `endif // MERGE_ID_EX
-	  `endif // THREE_PORT_REG_FILE
 
 
     // Stall because of jr path
@@ -867,42 +534,15 @@ module riscv_controller
     // we don't care about in which state the ctrl_fsm is as we deassert_we
     // anyway when we are not in DECODE
     
-    // CONFIG_REGION: THREE_PORT_REG_FILE
-    `ifdef THREE_PORT_REG_FILE
-    if ((jump_in_dec_i == BRANCH_JALR) &&
-        (((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_a_i == 1'b1)) ||
-         ((regfile_we_ex_i == 1'b1) && (reg_d_ex_is_reg_a_i == 1'b1)) ||
-         ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1))) )
-    begin
-      jr_stall_o        = 1'b1;
-      deassert_we_o     = 1'b1;
-    end
-    `else
-    // CONFIG_REGION: MERGE_ID_EX
-    `ifndef MERGE_ID_EX
-    if ((jump_in_dec_i == BRANCH_JALR) &&
-        (((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_a_i == 1'b1)) ||
-         ((regfile_we_ex_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1)) ||
-         ((regfile_alu_we_fw_i == 1'b1) && (reg_d_alu_is_reg_a_i == 1'b1))) )
-    begin
-      jr_stall_o        = 1'b1;
-      deassert_we_o     = 1'b1;
-    end
-    `else 
     if ((jump_in_dec_i == BRANCH_JALR) && (regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_a_i == 1'b1))
     begin
       jr_stall_o        = 1'b1;
       deassert_we_o     = 1'b1;
     end
-    `endif
-    `endif // THREE_PORT_REG_FILE
   end
 
-  // CONFIG_REGION: ONLY_ALIGNED
-  `ifndef ONLY_ALIGNED
   // stall because of misaligned data access
   assign misaligned_stall_o = data_misaligned_i;
-  `endif // ONLY_ALIGNED
 
 
   // Forwarding control unit
@@ -911,25 +551,9 @@ module riscv_controller
     // default assignements
     operand_a_fw_mux_sel_o = SEL_REGFILE;
     operand_b_fw_mux_sel_o = SEL_REGFILE;
-    // CONFIG_REGION: THREE_PORT_REG_FILE
-    `ifdef THREE_PORT_REG_FILE
-    operand_c_fw_mux_sel_o = SEL_REGFILE;
-    `endif // THREE_PORT_REG_FILE:
 
     // Forwarding WB -> ID
 
-    // CONFIG_REGION: THREE_PORT_REG_FILE
-    `ifdef THREE_PORT_REG_FILE
-    if (regfile_we_wb_i == 1'b1)
-    begin
-      if (reg_d_wb_is_reg_a_i == 1'b1)
-        operand_a_fw_mux_sel_o = SEL_FW_WB;
-      if (reg_d_wb_is_reg_b_i == 1'b1)
-        operand_b_fw_mux_sel_o = SEL_FW_WB;
-      if (reg_d_wb_is_reg_c_i == 1'b1)
-        operand_c_fw_mux_sel_o = SEL_FW_WB;
-    end
-    `else
     if (regfile_we_wb_i == 1'b1)
     begin
       if (reg_d_wb_is_reg_a_i == 1'b1)
@@ -937,51 +561,16 @@ module riscv_controller
       if (reg_d_wb_is_reg_b_i == 1'b1)
         operand_b_fw_mux_sel_o = SEL_FW_WB;
     end
-    `endif // THREE_PORT_REG_FILE
 
     // Forwarding EX -> ID
-    // CONFIG_REGION: MERGE_ID_EX
-    `ifndef MERGE_ID_EX
-    if (regfile_alu_we_fw_i == 1'b1)
-    begin
-      if (reg_d_alu_is_reg_a_i == 1'b1)
-        operand_a_fw_mux_sel_o = SEL_FW_EX;
-      if (reg_d_alu_is_reg_b_i == 1'b1)
-        operand_b_fw_mux_sel_o = SEL_FW_EX;
-      // CONFIG_REGION: THREE_PORT_REG_FILE
-      `ifdef THREE_PORT_REG_FILE
-      if (reg_d_alu_is_reg_c_i == 1'b1)
-        operand_c_fw_mux_sel_o = SEL_FW_EX;
-      `endif // THREE_PORT_REG_FILE
-    end
-    `endif // MERGE_ID_EX
 
-    // CONFIG_REGION: ONLY_ALIGNED
-    `ifndef ONLY_ALIGNED
-    // CONFIG_REGION: MERGE_ID_EX
-    `ifdef MERGE_ID_EX
     // for misaligned memory accesses
     if (data_misaligned_i)
     begin
       operand_a_fw_mux_sel_o  = SEL_MISALIGNED;
       operand_b_fw_mux_sel_o  = SEL_REGFILE;
     end
-    `else
-    // for misaligned memory accesses
-    if (data_misaligned_i)
-    begin
-      operand_a_fw_mux_sel_o  = SEL_FW_EX;
-      operand_b_fw_mux_sel_o  = SEL_REGFILE;
-    end
-    `endif
-    `endif // ONLY_ALIGNED
     
-    // CONFIG_REGION: MUL_SUPPORT
-    `ifdef MUL_SUPPORT
-    else if (mult_multicycle_i) begin
-      operand_c_fw_mux_sel_o  = SEL_FW_EX;
-    end
-    `endif
   end
 
   // update registers
@@ -1011,13 +600,6 @@ module riscv_controller
   // Assertions
   //----------------------------------------------------------------------------
 
-  // CONFIG_REGION: NO_JUMP_ADDER
-  `ifndef NO_JUMP_ADDER
-  // make sure that taken branches do not happen back-to-back, as this is not
-  // possible without branch prediction in the IF stage
-  assert property (
-    @(posedge clk) (branch_taken_ex_i) |=> (~branch_taken_ex_i) ) else $warning("Two branches back-to-back are taken");
-  `endif // NO_JUMP_ADDER
   assert property (
     @(posedge clk) (~(dbg_req_i & ext_req_i)) ) else $warning("Both dbg_req_i and ext_req_i are active");
 

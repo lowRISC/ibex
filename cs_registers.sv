@@ -35,11 +35,6 @@ import riscv_defines::*;
 
 module riscv_cs_registers
 #(
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  parameter N_HWLP       = 2,
-  parameter N_HWLP_BITS  = $clog2(N_HWLP),
-  `endif // HWLP_SUPPORT
   parameter N_EXT_CNT    = 0
 )
 (
@@ -65,10 +60,6 @@ module riscv_cs_registers
   input  logic [31:0] pc_if_i,
   input  logic [31:0] pc_id_i,
 
-  // CONFIG_REGION: MERGE_ID_EX
-  `ifndef MERGE_ID_EX
-  input  logic [31:0] pc_ex_i,
-  `endif
   input  logic [31:0] branch_target_i,
   input  logic        data_load_event_ex_i,
   input  logic        exc_save_if_i,
@@ -79,17 +70,6 @@ module riscv_cs_registers
   input  logic [5:0]  exc_cause_i,
   input  logic        save_exc_cause_i,
 
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  // Hardware loops
-  input  logic [N_HWLP-1:0] [31:0] hwlp_start_i,
-  input  logic [N_HWLP-1:0] [31:0] hwlp_end_i,
-  input  logic [N_HWLP-1:0] [31:0] hwlp_cnt_i,
-
-  output logic [31:0]              hwlp_data_o,
-  output logic [N_HWLP_BITS-1:0]   hwlp_regid_o,
-  output logic [2:0]               hwlp_we_o,
-  `endif // HWLP_SUPPORT
 
   // Performance Counters
   input  logic                 id_valid_i,        // ID stage is done
@@ -176,16 +156,6 @@ module riscv_cs_registers
       // mhartid: unique hardware thread id
       12'hF10: csr_rdata_int = {21'b0, cluster_id_i[5:0], 1'b0, core_id_i[3:0]};
 
-      // CONFIG_REGION: HWLP_SUPPORT
-      `ifdef HWLP_SUPPORT
-      // hardware loops
-      12'h7B0: csr_rdata_int = hwlp_start_i[0];
-      12'h7B1: csr_rdata_int = hwlp_end_i[0];
-      12'h7B2: csr_rdata_int = hwlp_cnt_i[0];
-      12'h7B4: csr_rdata_int = hwlp_start_i[1];
-      12'h7B5: csr_rdata_int = hwlp_end_i[1];
-      12'h7B6: csr_rdata_int = hwlp_cnt_i[1];
-      `endif // HWLP_SUPPORT
 
       12'h7C0: csr_rdata_int = {29'b0, 2'b11, mestatus_q};
     endcase
@@ -199,11 +169,6 @@ module riscv_cs_registers
     mestatus_n   = mestatus_q;
     mstatus_n    = mstatus_q;
     exc_cause_n  = exc_cause;
-    // CONFIG_REGION: HWLP_SUPPORT
-    `ifdef HWLP_SUPPORT
-    hwlp_we_o    = '0;
-    hwlp_regid_o = '0;
-    `endif // HWLP_SUPPORT
 
     case (csr_addr_i)
       // mstatus: IE bit
@@ -214,16 +179,6 @@ module riscv_cs_registers
       // mcause
       12'h342: if (csr_we_int) exc_cause_n = {csr_wdata_int[5], csr_wdata_int[4:0]};
 
-      // CONFIG_REGION: HWLP_SUPPORT
-      `ifdef HWLP_SUPPORT
-      // hardware loops
-      12'h7B0: if (csr_we_int) begin hwlp_we_o = 3'b001; hwlp_regid_o = 1'b0; end
-      12'h7B1: if (csr_we_int) begin hwlp_we_o = 3'b010; hwlp_regid_o = 1'b0; end
-      12'h7B2: if (csr_we_int) begin hwlp_we_o = 3'b100; hwlp_regid_o = 1'b0; end
-      12'h7B4: if (csr_we_int) begin hwlp_we_o = 3'b001; hwlp_regid_o = 1'b1; end
-      12'h7B5: if (csr_we_int) begin hwlp_we_o = 3'b010; hwlp_regid_o = 1'b1; end
-      12'h7B6: if (csr_we_int) begin hwlp_we_o = 3'b100; hwlp_regid_o = 1'b1; end
-      `endif // HWLP_SUPPORT
 
       // mestatus: machine exception status
       12'h7C0: if (csr_we_int) mestatus_n = csr_wdata_int[0];
@@ -235,12 +190,7 @@ module riscv_cs_registers
       mstatus_n  = 1'b0;
 
       if (data_load_event_ex_i) begin
-        // CONFIG_REGION: MERGE_ID_EX
-        `ifdef MERGE_ID_EX
         mepc_n = pc_id_i;
-        `else 
-        mepc_n = pc_ex_i;
-        `endif
       end else if (exc_save_takenbranch_i) begin
         mepc_n = branch_target_i;
       end else begin
@@ -259,10 +209,6 @@ module riscv_cs_registers
     end
   end
 
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  assign hwlp_data_o = csr_wdata_int;
-  `endif // HWLP_SUPPORT
 
   // CSR operation logic
   always_comb

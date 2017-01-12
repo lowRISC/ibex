@@ -33,12 +33,7 @@ module riscv_core
 #(
   parameter N_EXT_PERF_COUNTERS = 0,
   parameter INSTR_RDATA_WIDTH   = 32,
-  // CONFIG_REGION: RV32E
-  `ifdef RV32E
-  parameter REG_ADDR_WIDTH      = 4
-  `else
   parameter REG_ADDR_WIDTH      = 5
-  `endif // RV32E
 )
 (
   // Clock and Reset
@@ -97,11 +92,6 @@ module riscv_core
   localparam N_HWLP_BITS = $clog2(N_HWLP);
 
   // IF/ID signals
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  logic              is_hwlp_id;
-  logic [N_HWLP-1:0] hwlp_dec_cnt_id;
-  `endif // HWLP_SUPPORT
   logic              instr_valid_id;
   logic [31:0]       instr_rdata_id;    // Instruction sampled inside IF stage
   logic              is_compressed_id;
@@ -121,38 +111,15 @@ module riscv_core
   // ID performance counter signals
   logic        is_decoding;
 
-  // CONFIG_REGION: PREPOST_SUPPORT
-  `ifdef PREPOST_SUPPORT
-  logic        useincr_addr_ex;   // Active when post increment
-  `endif // PREPOST_SUPPORT
   
-  // CONFIG_REGION: ONLY_ALIGNED
-  `ifndef ONLY_ALIGNED
   logic        data_misaligned;
-  // CONFIG_REGION: MERGE_ID_EX
-  `ifdef MERGE_ID_EX
   logic [31:0] misaligned_addr;
   logic first_cycle_misaligned;
-  `endif
-  `endif // ONLY_ALIGNED
 
-  // CONFIG_REGION: MUL_SUPPORT
-  `ifdef MUL_SUPPORT
-  logic        mult_multicycle;
-  `endif // MUL_SUPPORT
 
   // Jump and branch target and decision (EX->IF)
-  // CONFIG_REGION: JUMP_IN_ID
-  `ifdef JUMP_IN_ID
-  // CONFIG_REGION: NO_JUMP_ADDER
-  `ifndef NO_JUMP_ADDER
-  logic [31:0] jump_target_id, jump_target_ex;
-  `else
   logic [31:0] jump_target_ex;
-  `endif
-  `else 
   logic [31:0] jump_target_ex;
-  `endif
   logic        branch_in_ex;
   logic        branch_decision;
 
@@ -160,64 +127,21 @@ module riscv_core
   logic        if_busy;
   logic        lsu_busy;
 
-  // CONFIG_REGION: MERGE_ID_EX
-  `ifndef MERGE_ID_EX
-  logic [31:0] pc_ex; // PC of last executed branch or p.elw
-  `endif
 
   // ALU Control
   logic [ALU_OP_WIDTH-1:0] alu_operator_ex;
   logic [31:0] alu_operand_a_ex;
   logic [31:0] alu_operand_b_ex;
   logic [31:0] alu_operand_c_ex;
-  // CONFIG_REGION: NO_JUMP_ADDER
-  `ifdef NO_JUMP_ADDER
   logic        jal_in_ex;
-    `endif
 
-  // CONFIG_REGION: SPLITTED_ADDER
-  `ifdef  SPLITTED_ADDER
   logic        alu_req_ex;
-  `endif
 
-  // CONFIG_REGION: LSU_ADDER_SUPPORT
-  `ifndef LSU_ADDER_SUPPORT
   logic [31:0] alu_adder_result_ex; // Used to forward computed address to LSU
-  `endif // LSU_ADDER_SUPPORT
 
-  // CONFIG_REGION: BIT_SUPPORT
-  `ifdef BIT_SUPPORT
-  logic [ 4:0] bmask_a_ex;
-  logic [ 4:0] bmask_b_ex;
-  `endif // BIT_SUPPORT
-  // CONFIG_REGION: VEC_SUPPORT
-  `ifdef VEC_SUPPORT
-  logic [ 1:0] imm_vec_ext_ex;
-  logic [ 1:0] alu_vec_mode_ex;
-  `endif // VEC_SUPPORT
 
-  // CONFIG_REGION: MUL_SUPPORT
-  `ifdef MUL_SUPPORT
-  // Multiplier Control
-  logic [ 2:0] mult_operator_ex;
-  logic [31:0] mult_operand_a_ex;
-  logic [31:0] mult_operand_b_ex;
-  logic [31:0] mult_operand_c_ex;
-  logic        mult_en_ex;
-  logic        mult_sel_subword_ex;
-  logic [ 1:0] mult_signed_mode_ex;
-  logic [ 4:0] mult_imm_ex;
-  logic [31:0] mult_dot_op_a_ex;
-  logic [31:0] mult_dot_op_b_ex;
-  logic [31:0] mult_dot_op_c_ex;
-  logic [ 1:0] mult_dot_signed_ex;
-  `endif // MUL_SUPPORT
 
   // Register Write Control
-  // CONFIG_REGION: THREE_PORT_REG_FILE
-  `ifdef THREE_PORT_REG_FILE
-  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_ex;
-  `endif // THREE_PORT_REG_FILE
   logic        regfile_we_ex;
   logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_fw_wb_o;        // From WB to ID
   logic        regfile_we_wb;
@@ -245,17 +169,11 @@ module riscv_core
   logic        data_we_ex;
   logic [1:0]  data_type_ex;
   logic        data_sign_ext_ex;
-  // CONFIG_REGION: ONLY_ALIGNED
-  `ifndef ONLY_ALIGNED
   logic [1:0]  data_reg_offset_ex;
-  `endif // ONLY_ALIGNED
   logic        data_req_ex;
   logic [31:0] data_pc_ex;
   logic        data_load_event_ex;
-  // CONFIG_REGION: ONLY_ALIGNED
-  `ifndef ONLY_ALIGNED
   logic        data_misaligned_ex;
-  `endif // ONLY_ALIGNED
 
   // stall control
   logic        halt_if;
@@ -271,10 +189,7 @@ module riscv_core
   logic        lsu_ready_ex;
   logic        lsu_ready_wb;
 
-  // CONFIG_REGION: SPLITTED_ADDER
-  `ifdef  SPLITTED_ADDER
   logic        alu_ready;
-  `endif
 
   // Signals between instruction core interface and pipe (if and id stages)
   logic        instr_req_int;    // Id stage asserts a req to instruction core interface
@@ -291,18 +206,6 @@ module riscv_core
   logic        exc_restore_id;
 
 
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  // Hardware loop controller signals
-  logic [N_HWLP-1:0] [31:0] hwlp_start;
-  logic [N_HWLP-1:0] [31:0] hwlp_end;
-  logic [N_HWLP-1:0] [31:0] hwlp_cnt;
-
-  // used to write from CS registers to hardware loop registers
-  logic   [N_HWLP_BITS-1:0] csr_hwlp_regid;
-  logic               [2:0] csr_hwlp_we;
-  logic              [31:0] csr_hwlp_data;
-  `endif // HWLP_SUPPORT
 
 
   // Debug Unit
@@ -386,10 +289,6 @@ module riscv_core
   //////////////////////////////////////////////////
   riscv_if_stage
   #(
-    // CONFIG_REGION: HWLP_SUPPORT
-    `ifdef HWLP_SUPPORT
-    .N_HWLP              ( N_HWLP            ),
-    `endif // HWLP_SUPPORT
     .RDATA_WIDTH         ( INSTR_RDATA_WIDTH )
   )
   if_stage_i
@@ -411,11 +310,6 @@ module riscv_core
     .instr_rdata_i       ( instr_rdata_i     ),
 
     // outputs to ID stage
-    // CONFIG_REGION: HWLP_SUPPORT
-    `ifdef HWLP_SUPPORT
-    .hwlp_dec_cnt_id_o   ( hwlp_dec_cnt_id   ),
-    .is_hwlp_id_o        ( is_hwlp_id        ),
-    `endif // HWLP_SUPPORT
     .instr_valid_id_o    ( instr_valid_id    ),
     .instr_rdata_id_o    ( instr_rdata_id    ),
     .is_compressed_id_o  ( is_compressed_id  ),
@@ -431,26 +325,12 @@ module riscv_core
     .exc_pc_mux_i        ( exc_pc_mux_id     ),
     .exc_vec_pc_mux_i    ( exc_vec_pc_mux_id ),
 
-    // CONFIG_REGION: HWLP_SUPPORT
-    `ifdef HWLP_SUPPORT
-    // from hwloop registers
-    .hwlp_start_i        ( hwlp_start        ),
-    .hwlp_end_i          ( hwlp_end          ),
-    .hwlp_cnt_i          ( hwlp_cnt          ),
-    `endif // HWLP_SUPPORT
 
     // from debug unit
     .dbg_jump_addr_i     ( dbg_jump_addr     ),
     .dbg_jump_req_i      ( dbg_jump_req      ),
 
     // Jump targets
-    // CONFIG_REGION: JUMP_IN_ID
-    `ifdef JUMP_IN_ID
-    // CONFIG_REGION: NO_JUMP_ADDER
-    `ifndef NO_JUMP_ADDER
-    .jump_target_id_i    ( jump_target_id    ),
-    `endif
-    `endif // JUMP_IN_ID
     .jump_target_ex_i    ( jump_target_ex    ),
 
     // pipeline stalls
@@ -474,10 +354,6 @@ module riscv_core
   /////////////////////////////////////////////////
   riscv_id_stage
   #(
-    // CONFIG_REGION: HWLP_SUPPORT
-    `ifdef HWLP_SUPPORT
-    .N_HWLP                       ( N_HWLP               )
-    `endif // HWLP_SUPPORT
   )
   id_stage_i
   (
@@ -492,11 +368,6 @@ module riscv_core
     .is_decoding_o                ( is_decoding          ),
 
     // Interface to instruction memory
-    // CONFIG_REGION: HWLP_SUPPORT
-    `ifdef HWLP_SUPPORT
-    .hwlp_dec_cnt_i               ( hwlp_dec_cnt_id      ),
-    .is_hwlp_i                    ( is_hwlp_id           ),
-    `endif // HWLP_SUPPORT
     .instr_valid_i                ( instr_valid_id       ),
     .instr_rdata_i                ( instr_rdata_id       ),
     .instr_req_o                  ( instr_req_int        ),
@@ -504,13 +375,6 @@ module riscv_core
     // Jumps and branches
     .branch_in_ex_o               ( branch_in_ex         ),
     .branch_decision_i            ( branch_decision      ),
-    // CONFIG_REGION: JUMP_IN_ID
-    `ifdef JUMP_IN_ID
-    // CONFIG_REGION: NO_JUMP_ADDER
-    `ifndef NO_JUMP_ADDER
-    .jump_target_o                ( jump_target_id       ),
-    `endif
-    `endif
 
     // IF and ID control signals
     .clear_instr_valid_o          ( clear_instr_valid    ),
@@ -531,10 +395,7 @@ module riscv_core
     .if_ready_i                   ( if_ready             ),
     .id_ready_o                   ( id_ready             ),
     .ex_ready_i                   ( ex_ready             ),
-    // CONFIG_REGION: MERGE_ID_EX
-    `ifdef MERGE_ID_EX
     .wb_ready_i                   ( lsu_ready_wb         ),
-    `endif // MERGE_ID_EX
 
     .if_valid_i                   ( if_valid             ),
     .id_valid_o                   ( id_valid             ),
@@ -542,111 +403,42 @@ module riscv_core
     .wb_valid_i                   ( wb_valid             ),
 
     // From the Pipeline ID/EX
-    // CONFIG_REGION: MERGE_ID_EX
-    `ifndef MERGE_ID_EX
-    .pc_ex_o                      ( pc_ex                ),
-    `endif
 
     .alu_operator_ex_o            ( alu_operator_ex      ),
     .alu_operand_a_ex_o           ( alu_operand_a_ex     ),
     .alu_operand_b_ex_o           ( alu_operand_b_ex     ),
     .alu_operand_c_ex_o           ( alu_operand_c_ex     ), // Still needed if 2r1w reg file used
-    // CONFIG_REGION: SPLITTED_ADDER
-    `ifdef  SPLITTED_ADDER
     .alu_req_ex_o                 ( alu_req_ex           ),
-    `endif
 
-    // CONFIG_REGION: NO_JUMP_ADDER
-    `ifdef NO_JUMP_ADDER
     .jal_in_ex_o                 ( jal_in_ex           ),
-    `endif
 
-    // CONFIG_REGION: BIT_SUPPORT
-    `ifdef BIT_SUPPORT
-    .bmask_a_ex_o                 ( bmask_a_ex           ),
-    .bmask_b_ex_o                 ( bmask_b_ex           ),
-    `endif // BIT_SUPPORT
 
-    // CONFIG_REGION: VEC_SUPPORT
-    `ifdef VEC_SUPPORT
-    .imm_vec_ext_ex_o             ( imm_vec_ext_ex       ),
-    .alu_vec_mode_ex_o            ( alu_vec_mode_ex      ),
-    `endif // VEC_SUPPORT
 
-    // CONFIG_REGION: THREE_PORT_REG_FILE
-    `ifdef THREE_PORT_REG_FILE
-    .regfile_waddr_ex_o           ( regfile_waddr_ex     ),
-    `endif // THREE_PORT_REG_FILE
     .regfile_we_ex_o              ( regfile_we_ex        ),
 
     .regfile_alu_we_ex_o          ( regfile_alu_we_ex    ),
     .regfile_alu_waddr_ex_o       ( regfile_alu_waddr_ex ),
 
-    // CONFIG_REGION: MUL_SUPPORT
-    `ifdef MUL_SUPPORT
-    // MUL
-    .mult_operator_ex_o           ( mult_operator_ex     ), // from ID to EX stage
-    .mult_en_ex_o                 ( mult_en_ex           ), // from ID to EX stage
-    .mult_sel_subword_ex_o        ( mult_sel_subword_ex  ), // from ID to EX stage
-    .mult_signed_mode_ex_o        ( mult_signed_mode_ex  ), // from ID to EX stage
-    .mult_operand_a_ex_o          ( mult_operand_a_ex    ), // from ID to EX stage
-    .mult_operand_b_ex_o          ( mult_operand_b_ex    ), // from ID to EX stage
-    .mult_operand_c_ex_o          ( mult_operand_c_ex    ), // from ID to EX stage
-    .mult_imm_ex_o                ( mult_imm_ex          ), // from ID to EX stage
-
-    .mult_dot_op_a_ex_o           ( mult_dot_op_a_ex     ), // from ID to EX stage
-    .mult_dot_op_b_ex_o           ( mult_dot_op_b_ex     ), // from ID to EX stage
-    .mult_dot_op_c_ex_o           ( mult_dot_op_c_ex     ), // from ID to EX stage
-    .mult_dot_signed_ex_o         ( mult_dot_signed_ex   ), // from ID to EX stage
-    `endif // MUL_SUPPORT
 
     // CSR ID/EX
     .csr_access_ex_o              ( csr_access_ex        ),
     .csr_op_ex_o                  ( csr_op_ex            ),
 
-    // CONFIG_REGION: HWLP_SUPPORT
-    `ifdef HWLP_SUPPORT
-    // hardware loop signals to IF hwlp controller
-    .hwlp_start_o                 ( hwlp_start           ),
-    .hwlp_end_o                   ( hwlp_end             ),
-    .hwlp_cnt_o                   ( hwlp_cnt             ),
-
-    // hardware loop signals from CSR
-    .csr_hwlp_regid_i             ( csr_hwlp_regid       ),
-    .csr_hwlp_we_i                ( csr_hwlp_we          ),
-    .csr_hwlp_data_i              ( csr_hwlp_data        ),
-    `endif // HWLP_SUPPORT
 
     // LSU
     .data_req_ex_o                ( data_req_ex          ), // to load store unit
     .data_we_ex_o                 ( data_we_ex           ), // to load store unit
     .data_type_ex_o               ( data_type_ex         ), // to load store unit
     .data_sign_ext_ex_o           ( data_sign_ext_ex     ), // to load store unit
-    // CONFIG_REGION: ONLY_ALIGNED
-    `ifndef ONLY_ALIGNED
     .data_reg_offset_ex_o         ( data_reg_offset_ex   ), // to load store unit
-    `endif // ONLY_ALIGNED
     .data_load_event_ex_o         ( data_load_event_ex   ), // to load store unit
 
-    // CONFIG_REGION: ONLY_ALIGNED
-    `ifndef ONLY_ALIGNED
     .data_misaligned_ex_o         ( data_misaligned_ex   ), // to load store unit
-    `endif // ONLY_ALIGNED
 
-    // CONFIG_REGION: PREPOST_SUPPORT
-    `ifdef PREPOST_SUPPORT
-    .prepost_useincr_ex_o         ( useincr_addr_ex      ),
-    `endif // PREPOST_SUPPORT
 
-    // CONFIG_REGION: ONLY_ALIGNED
-    `ifndef ONLY_ALIGNED
     .data_misaligned_i            ( data_misaligned      ),
-    // CONFIG_REGION: MERGE_ID_EX
-    `ifdef MERGE_ID_EX
     .misaligned_addr_i            ( misaligned_addr      ),
     .first_cycle_misaligned_i     ( first_cycle_misaligned),
-    `endif
-    `endif // ONLY_ALIGNED
 
     // Interrupt Signals
     .irq_i                        ( irq_i                ), // incoming interrupts
@@ -686,11 +478,6 @@ module riscv_core
     .regfile_alu_we_fw_i          ( regfile_alu_we_fw    ),
     .regfile_alu_wdata_fw_i       ( regfile_alu_wdata_fw ),
 
-    // CONFIG_REGION: MUL_SUPPORT
-    `ifdef MUL_SUPPORT
-    // from ALU
-    .mult_multicycle_i            ( mult_multicycle      ),
-    `endif // MUL_SUPPORT
 
     // Performance Counters
     .perf_jump_o                  ( perf_jump            ),
@@ -718,45 +505,11 @@ module riscv_core
     .alu_operand_a_i            ( alu_operand_a_ex             ), // from ID/EX pipe registers
     .alu_operand_b_i            ( alu_operand_b_ex             ), // from ID/EX pipe registers
     .alu_operand_c_i            ( alu_operand_c_ex             ), // from ID/EX pipe registers
-    // CONFIG_REGION: SPLITTED_ADDER
-    `ifdef  SPLITTED_ADDER
     .alu_req_ex_i               ( alu_req_ex                   ),
-    `endif
 
-    // CONFIG_REGION: BIT_SUPPORT
-    `ifdef BIT_SUPPORT
-    .bmask_a_i                  ( bmask_a_ex                   ), // from ID/EX pipe registers
-    .bmask_b_i                  ( bmask_b_ex                   ), // from ID/EX pipe registers
-    `endif // BIT_SUPPORT
-    // CONFIG_REGION: VEC_SUPPORT
-    `ifdef VEC_SUPPORT
-    .imm_vec_ext_i              ( imm_vec_ext_ex               ), // from ID/EX pipe registers
-    .alu_vec_mode_i             ( alu_vec_mode_ex              ), // from ID/EX pipe registers
-    `endif // VEC_SUPPORT
 
-    // CONFIG_REGION: MUL_SUPPORT
-    `ifdef MUL_SUPPORT
-    // Multipler
-    .mult_operator_i            ( mult_operator_ex             ), // from ID/EX pipe registers
-    .mult_operand_a_i           ( mult_operand_a_ex            ), // from ID/EX pipe registers
-    .mult_operand_b_i           ( mult_operand_b_ex            ), // from ID/EX pipe registers
-    .mult_operand_c_i           ( mult_operand_c_ex            ), // from ID/EX pipe registers
-    .mult_en_i                  ( mult_en_ex                   ), // from ID/EX pipe registers
-    .mult_sel_subword_i         ( mult_sel_subword_ex          ), // from ID/EX pipe registers
-    .mult_signed_mode_i         ( mult_signed_mode_ex          ), // from ID/EX pipe registers
-    .mult_imm_i                 ( mult_imm_ex                  ), // from ID/EX pipe registers
-    .mult_dot_op_a_i            ( mult_dot_op_a_ex             ), // from ID/EX pipe registers
-    .mult_dot_op_b_i            ( mult_dot_op_b_ex             ), // from ID/EX pipe registers
-    .mult_dot_op_c_i            ( mult_dot_op_c_ex             ), // from ID/EX pipe registers
-    .mult_dot_signed_i          ( mult_dot_signed_ex           ), // from ID/EX pipe registers
 
-    .mult_multicycle_o          ( mult_multicycle              ), // to ID/EX pipe registers
-    `endif // MUL_SUPPORT
-
-    // CONFIG_REGION: LSU_ADDER_SUPPORT
-    `ifndef LSU_ADDER_SUPPORT
     .alu_adder_result_ex_o      ( alu_adder_result_ex          ), // from ALU to LSU
-    `endif // LSU_ADDER_SUPPORT
 
     // interface with CSRs
     .csr_access_i               ( csr_access_ex                ),
@@ -766,15 +519,8 @@ module riscv_core
     .branch_in_ex_i             ( branch_in_ex                 ),
     .regfile_alu_waddr_i        ( regfile_alu_waddr_ex         ),
     .regfile_alu_we_i           ( regfile_alu_we_ex            ),
-    // CONFIG_REGION: NO_JUMP_ADDER
-    `ifdef NO_JUMP_ADDER
     .jal_in_ex_i               ( jal_in_ex                   ),
-    `endif
 
-    // CONFIG_REGION: THREE_PORT_REG_FILE
-    `ifdef THREE_PORT_REG_FILE
-    .regfile_waddr_i            ( regfile_waddr_ex             ),
-    `endif // THREE_PORT_REG_FILE
     .regfile_we_i               ( regfile_we_ex                ),
 
     // Output of ex stage pipeline
@@ -793,10 +539,6 @@ module riscv_core
     // stall control
     .lsu_ready_ex_i             ( lsu_ready_ex                 ),
 
-    // CONFIG_REGION: SPLITTED_ADDER
-    `ifdef SPLITTED_ADDER
-    .alu_ready_o                ( alu_ready                    ),
-    `endif
 
     .ex_ready_o                 ( ex_ready                     ),
     .ex_valid_o                 ( ex_valid                     ),
@@ -834,38 +576,19 @@ module riscv_core
     .data_we_ex_i          ( data_we_ex         ),
     .data_type_ex_i        ( data_type_ex       ),
     .data_wdata_ex_i       ( alu_operand_c_ex   ),
-    // CONFIG_REGION: ONLY_ALIGNED
-    `ifndef ONLY_ALIGNED
     .data_reg_offset_ex_i  ( data_reg_offset_ex ),
-    `endif // ONLY_ALIGNED
     .data_sign_ext_ex_i    ( data_sign_ext_ex   ),  // sign extension
 
     .data_rdata_ex_o       ( regfile_wdata      ),
     .data_req_ex_i         ( data_req_ex        ),
 
-    // CONFIG_REGION: LSU_ADDER_SUPPORT
-    `ifdef LSU_ADDER_SUPPORT
-    .operand_a_ex_i        ( alu_operand_a_ex   ),
-    .operand_b_ex_i        ( alu_operand_b_ex   ),
-    `else 
     .adder_result_ex_i     ( alu_adder_result_ex),
-    `endif // LSU_ADDER_SUPPORT
 
-    // CONFIG_REGION: PREPOST_SUPPORT
-    `ifdef PREPOST_SUPPORT
-    .addr_useincr_ex_i     ( useincr_addr_ex    ),
-    `endif // PREPOST_SUPPORT
 
-    // CONFIG_REGION: ONLY_ALIGNED
-    `ifndef ONLY_ALIGNED
     .data_misaligned_ex_i  ( data_misaligned_ex ), // from ID/EX pipeline
     .data_misaligned_o     ( data_misaligned    ),
-    // CONFIG_REGION: MERGE_ID_EX
-    `ifdef MERGE_ID_EX
     .misaligned_addr_o     ( misaligned_addr    ),
     .first_cycle_misaligned_o( first_cycle_misaligned),
-    `endif
-    `endif // ONLY_ALIGNED
 
     // exception signals
     .load_err_o            ( lsu_load_err       ),
@@ -875,10 +598,7 @@ module riscv_core
     .lsu_ready_ex_o        ( lsu_ready_ex       ),
     .lsu_ready_wb_o        ( lsu_ready_wb       ),
 
-    // CONFIG_REGION: SPLITTED_ADDER
-    `ifdef  SPLITTED_ADDER
     .alu_ready_i           ( alu_ready          ),
-    `endif
 
     .ex_valid_i            ( ex_valid           ),
     .busy_o                ( lsu_busy           )
@@ -923,10 +643,6 @@ module riscv_core
 
     .pc_if_i                 ( pc_if              ),
     .pc_id_i                 ( pc_id              ), // from IF stage
-    // CONFIG_REGION: MERGE_ID_EX
-    `ifndef MERGE_ID_EX
-    .pc_ex_i                 ( pc_ex              ), // from ID/EX pipeline
-    `endif
     .branch_target_i         ( jump_target_ex     ), // from ID/EX pipeline
     .data_load_event_ex_i    ( data_load_event_ex ), // from ID/EX pipeline
     .exc_save_if_i           ( exc_save_if        ),
@@ -937,17 +653,6 @@ module riscv_core
     .exc_cause_i             ( exc_cause          ),
     .save_exc_cause_i        ( save_exc_cause     ),
 
-    // CONFIG_REGION: HWLP_SUPPORT
-    `ifdef HWLP_SUPPORT
-    // from hwloop registers
-    .hwlp_start_i            ( hwlp_start         ),
-    .hwlp_end_i              ( hwlp_end           ),
-    .hwlp_cnt_i              ( hwlp_cnt           ),
-
-    .hwlp_regid_o            ( csr_hwlp_regid     ),
-    .hwlp_we_o               ( csr_hwlp_we        ),
-    .hwlp_data_o             ( csr_hwlp_data      ),
-    `endif // HWLP_SUPPORT
 
     // performance counter related signals
     .id_valid_i              ( id_valid           ),
@@ -1032,10 +737,6 @@ module riscv_core
     // signals for PPC and NPC
     .pc_if_i           ( pc_if              ), // from IF stage
     .pc_id_i           ( pc_id              ), // from IF stage
-    // CONFIG_REGION: MERGE_ID_EX
-    `ifndef MERGE_ID_EX
-    .pc_ex_i           ( pc_ex              ), // PC of last executed branch (in EX stage) or p.elw
-    `endif
 
     .data_load_event_i ( data_load_event_ex ),
     .instr_valid_id_i  ( instr_valid_id     ),
@@ -1145,10 +846,7 @@ module riscv_core
     .ex_data_wdata    ( data_wdata_o                         ),
 
     .wb_bypass        ( ex_stage_i.branch_in_ex_i            ),
-    // CONFIG_REGION: ONLY_ALIGNED
-    `ifndef ONLY_ALIGNED
     .lsu_misaligned   ( data_misaligned                      ),
-    `endif // ONLY_ALIGNED
 
     .wb_valid         ( wb_valid                             ),
     .wb_reg_addr      ( id_stage_i.registers_i.waddr_a_i     ),

@@ -30,10 +30,6 @@
 import riscv_defines::*;
 
 module riscv_if_stage #(
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  parameter N_HWLP      = 2,
-  `endif
   parameter RDATA_WIDTH = 32
 )
 (
@@ -50,11 +46,6 @@ module riscv_if_stage #(
       input  logic                   instr_rvalid_i,
       input  logic [RDATA_WIDTH-1:0] instr_rdata_i,
       // Output of IF Pipeline stage
-      // CONFIG_REGION: HWLP_SUPPORT
-      `ifdef HWLP_SUPPORT
-      output logic [N_HWLP-1:0] hwlp_dec_cnt_id_o,     // currently served instruction was the target of a hwlp
-      output logic              is_hwlp_id_o,          // currently served instruction was the target of a hwlp
-      `endif // HWLP_SUPPORT
       output logic              instr_valid_id_o,      // instruction in IF/ID pipeline is valid
       output logic       [31:0] instr_rdata_id_o,      // read instruction is sampled and sent to ID stage for decoding
       output logic              is_compressed_id_o,    // compressed decoder thinks this is a compressed instruction
@@ -70,21 +61,8 @@ module riscv_if_stage #(
       input  logic  [4:0] exc_vec_pc_mux_i,      // selects ISR address for vectorized interrupt lines
       // jump and branch target and decision
 
-      // CONFIG_REGION: JUMP_IN_ID
-      `ifdef JUMP_IN_ID
-      // CONFIG_REGION: NO_JUMP_ADDER
-      `ifndef NO_JUMP_ADDER
-      input  logic [31:0] jump_target_id_i,      // jump target address
-      `endif
-      `endif
       input  logic [31:0] jump_target_ex_i,      // jump target address
       // from hwloop controller
-      // CONFIG_REGION: HWLP_SUPPORT
-      `ifdef HWLP_SUPPORT
-      input  logic [N_HWLP-1:0] [31:0] hwlp_start_i,          // hardware loop start addresses
-      input  logic [N_HWLP-1:0] [31:0] hwlp_end_i,            // hardware loop end addresses
-      input  logic [N_HWLP-1:0] [31:0] hwlp_cnt_i,            // hardware loop counters
-      `endif // HWLP_SUPPORT
       // from debug unit
       input  logic [31:0] dbg_jump_addr_i,
       input  logic        dbg_jump_req_i,
@@ -112,24 +90,13 @@ module riscv_if_stage #(
       logic              fetch_ready;
       logic       [31:0] fetch_rdata;
       logic       [31:0] fetch_addr;
-      // CONFIG_REGION: HWLP_SUPPORT
-      `ifdef HWLP_SUPPORT
-      logic              is_hwlp_id_q, fetch_is_hwlp;
-      `endif // HWLP_SUPPORT
-      // CONFIG_REGION: ONLY_ALIGNED
-      `ifdef ONLY_ALIGNED
-      logic              illegal_fetch;
-      `endif
 
       logic       [31:0] exc_pc;
 
-      // CONFIG_REGION: HWLP_SUPPORT
-      `ifdef HWLP_SUPPORT      
       // hardware loop related signals
       logic              hwlp_jump;
       logic       [31:0] hwlp_target;
       logic [N_HWLP-1:0] hwlp_dec_cnt, hwlp_dec_cnt_if;
-      `endif // HWLP_SUPPORT
 
 
       // exception PC selection mux
@@ -155,17 +122,8 @@ module riscv_if_stage #(
 
           unique case (pc_mux_i)
             PC_BOOT:      fetch_addr_n = {boot_addr_i[31:8], EXC_OFF_RST};
-            // CONFIG_REGION: JUMP_IN_ID
-            `ifdef JUMP_IN_ID
-            // CONFIG_REGION: NO_JUMP_ADDER
-            `ifndef NO_JUMP_ADDER
-            PC_JUMP:      fetch_addr_n = jump_target_id_i;
-            `else
             PC_JUMP:      fetch_addr_n = jump_target_ex_i;
-            `endif
-            `else
             PC_JUMP:      fetch_addr_n = jump_target_ex_i;
-            `endif // JUMP_IN_ID
             PC_BRANCH:    fetch_addr_n = jump_target_ex_i;
             PC_EXCEPTION: fetch_addr_n = exc_pc;             // set PC to exception handler
             PC_ERET:      fetch_addr_n = exception_pc_reg_i; // PC is restored when returning from IRQ/exception
@@ -176,67 +134,7 @@ module riscv_if_stage #(
         end
 
 
-        // CONFIG_REGION: ONLY_ALIGNED
-        `ifdef ONLY_ALIGNED
-        // prefetch buffer, caches a fixed number of instructions
-        riscv_prefetch_buffer_only_aligned prefetch_buffer_i
-        (
-          .clk               ( clk                         ),
-          .rst_n             ( rst_n                       ),
 
-          .req_i             ( req_i                       ),
-
-          .branch_i          ( branch_req                  ),
-          .addr_i            ( {fetch_addr_n[31:1], 1'b0}  ),
-
-          .ready_i           ( fetch_ready                 ),
-          .valid_o           ( fetch_valid                 ),
-          .rdata_o           ( fetch_rdata                 ),
-          .addr_o            ( fetch_addr                  ),
-
-          // goes to instruction memory / instruction cache
-          .instr_req_o       ( instr_req_o                 ),
-          .instr_addr_o      ( instr_addr_o                ),
-          .instr_gnt_i       ( instr_gnt_i                 ),
-          .instr_rvalid_i    ( instr_rvalid_i              ),
-          .instr_rdata_i     ( instr_rdata_i               ),
-
-          // Prefetch Buffer Status
-          .illegal_fetch_o   ( illegal_fetch               ),
-          .busy_o            ( prefetch_busy               )
-        );
-        `else 
-
-        // CONFIG_REGION: SMALL_IF
-        `ifdef SMALL_IF
-        // prefetch buffer, caches a fixed number of instructions
-        riscv_prefetch_buffer_small prefetch_buffer_i
-        (
-          .clk               ( clk                         ),
-          .rst_n             ( rst_n                       ),
-
-          .req_i             ( req_i                       ),
-
-          .branch_i          ( branch_req                  ),
-          .addr_i            ( {fetch_addr_n[31:1], 1'b0}  ),
-
-          .ready_i           ( fetch_ready                 ),
-          .valid_o           ( fetch_valid                 ),
-          .rdata_o           ( fetch_rdata                 ),
-          .addr_o            ( fetch_addr                  ),
-
-          // goes to instruction memory / instruction cache
-          .instr_req_o       ( instr_req_o                 ),
-          .instr_addr_o      ( instr_addr_o                ),
-          .instr_gnt_i       ( instr_gnt_i                 ),
-          .instr_rvalid_i    ( instr_rvalid_i              ),
-          .instr_rdata_i     ( instr_rdata_i               ),
-
-          // Prefetch Buffer Status
-          .busy_o            ( prefetch_busy               )
-        );
-
-        `else // SMALL_IF
 
         generate
           if (RDATA_WIDTH == 32) begin : prefetch_32
@@ -251,20 +149,11 @@ module riscv_if_stage #(
                 .branch_i          ( branch_req                  ),
                 .addr_i            ( {fetch_addr_n[31:1], 1'b0}  ),
 
-                // CONFIG_REGION: HWLP_SUPPORT
-                `ifdef HWLP_SUPPORT
-                .hwloop_i          ( hwlp_jump                   ),
-                .hwloop_target_i   ( hwlp_target                 ),
-                `endif // HWLP_SUPPORT
 
                 .ready_i           ( fetch_ready                 ),
                 .valid_o           ( fetch_valid                 ),
                 .rdata_o           ( fetch_rdata                 ),
                 .addr_o            ( fetch_addr                  ),
-                // CONFIG_REGION: HWLP_SUPPORT
-                `ifdef HWLP_SUPPORT
-                .is_hwlp_o         ( fetch_is_hwlp               ),
-                `endif // HWLP_SUPPORT
 
                 // goes to instruction memory / instruction cache
                 .instr_req_o       ( instr_req_o                 ),
@@ -288,20 +177,11 @@ module riscv_if_stage #(
                 .branch_i          ( branch_req                  ),
                 .addr_i            ( {fetch_addr_n[31:1], 1'b0}  ),
 
-                // CONFIG_REGION: HWLP_SUPPORT
-                `ifdef HWLP_SUPPORT
-                .hwloop_i          ( hwlp_jump                   ),
-                .hwloop_target_i   ( hwlp_target                 ),
-                `endif // HWLP_SUPPORT
 
                 .ready_i           ( fetch_ready                 ),
                 .valid_o           ( fetch_valid                 ),
                 .rdata_o           ( fetch_rdata                 ),
                 .addr_o            ( fetch_addr                  ),
-                // CONFIG_REGION: HWLP_SUPPORT
-                `ifdef HWLP_SUPPORT
-                .is_hwlp_o         ( fetch_is_hwlp               ),
-                `endif // HWLP_SUPPORT
 
                 // goes to instruction memory / instruction cache
                 .instr_req_o       ( instr_req_o                 ),
@@ -315,8 +195,6 @@ module riscv_if_stage #(
               );
           end
         endgenerate
-        `endif // SMALL_IF
-        `endif // ONLY_ALIGNED
 
 
         // offset FSM state
@@ -376,30 +254,6 @@ module riscv_if_stage #(
           end
         end
 
-        // CONFIG_REGION: HWLP_SUPPORT
-        `ifdef HWLP_SUPPORT
-        // Hardware Loops
-        riscv_hwloop_controller
-        #(
-          .N_REGS ( N_HWLP )
-        )
-        hwloop_controller_i
-          (
-            .current_pc_i          ( fetch_addr        ),
-
-            .hwlp_jump_o           ( hwlp_jump         ),
-            .hwlp_targ_addr_o      ( hwlp_target       ),
-
-            // from hwloop_regs
-            .hwlp_start_addr_i     ( hwlp_start_i      ),
-            .hwlp_end_addr_i       ( hwlp_end_i        ),
-            .hwlp_counter_i        ( hwlp_cnt_i        ),
-
-            // to hwloop_regs
-            .hwlp_dec_cnt_o        ( hwlp_dec_cnt      ),
-            .hwlp_dec_cnt_id_i     ( hwlp_dec_cnt_id_o & {N_HWLP{is_hwlp_id_o}} )
-          );
-          `endif // HWLP_SUPPORT
 
 
 
@@ -432,18 +286,9 @@ module riscv_if_stage #(
         begin
           if (rst_n == 1'b0)
             begin
-              // CONFIG_REGION: HWLP_SUPPORT
-              `ifdef HWLP_SUPPORT
-              hwlp_dec_cnt_if <= '0;
-              `endif // HWLP_SUPPORT
             end
           else
             begin
-              // CONFIG_REGION: HWLP_SUPPORT
-              `ifdef HWLP_SUPPORT
-              if (hwlp_jump)
-                hwlp_dec_cnt_if <= hwlp_dec_cnt;
-              `endif // HWLP_SUPPORT
             end
         end
 
@@ -457,11 +302,6 @@ module riscv_if_stage #(
               illegal_c_insn_id_o   <= 1'b0;
               is_compressed_id_o    <= 1'b0;
               pc_id_o               <= '0;
-              // CONFIG_REGION: HWLP_SUPPORT
-              `ifdef HWLP_SUPPORT
-              is_hwlp_id_q          <= 1'b0;
-              hwlp_dec_cnt_id_o     <= '0;
-              `endif // HWLP_SUPPORT
             end
           else
             begin
@@ -470,21 +310,9 @@ module riscv_if_stage #(
                 begin
                   instr_valid_id_o    <= 1'b1;
                   instr_rdata_id_o    <= instr_decompressed;
-                  // CONFIG_REGION: ONLY_ALIGNED
-                  `ifdef ONLY_ALIGNED
-                  illegal_c_insn_id_o <= illegal_c_insn | illegal_fetch;
-                  `else
                   illegal_c_insn_id_o <= illegal_c_insn;
-                  `endif
                   is_compressed_id_o  <= instr_compressed_int;
                   pc_id_o             <= pc_if_o;
-                  // CONFIG_REGION: HWLP_SUPPORT
-                  `ifdef HWLP_SUPPORT
-                  is_hwlp_id_q        <= fetch_is_hwlp;
-
-                  if (fetch_is_hwlp)
-                    hwlp_dec_cnt_id_o   <= hwlp_dec_cnt_if;
-                  `endif // HWLP_SUPPORT
 
                 end else if (clear_instr_valid_i) begin
                 instr_valid_id_o    <= 1'b0;
@@ -493,10 +321,6 @@ module riscv_if_stage #(
             end
         end
 
-        // CONFIG_REGION: HWLP_SUPPORT
-        `ifdef HWLP_SUPPORT
-        assign is_hwlp_id_o = is_hwlp_id_q & instr_valid_id_o;
-        `endif // HWLP_SUPPORT
 
         assign if_ready_o = valid & id_ready_i;
         assign if_valid_o = (~halt_if_i) & if_ready_o;

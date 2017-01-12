@@ -25,12 +25,7 @@ import riscv_defines::*;
 
 module riscv_debug_unit
 #(
-    // CONFIG_REGION: RV32E
-    `ifdef RV32E
-    parameter REG_ADDR_WIDTH      = 4
-    `else
     parameter REG_ADDR_WIDTH      = 5
-    `endif // RV32E
 )
 (
   input logic         clk,
@@ -78,10 +73,6 @@ module riscv_debug_unit
   // Signals for PPC & NPC register
   input  logic [31:0] pc_if_i,
   input  logic [31:0] pc_id_i,
-  // CONFIG_REGION: MERGE_ID_EX
-  `ifndef MERGE_ID_EX
-  input  logic [31:0] pc_ex_i,
-  `endif
 
   input  logic        data_load_event_i,
   input  logic        instr_valid_id_i,
@@ -437,25 +428,13 @@ module riscv_debug_unit
       end
 
       IFEX: begin
-        // CONFIG_REGION: MERGE_ID_EX
-        `ifndef MERGE_ID_EX
-        ppc_int = pc_ex_i;
-        npc_int = pc_id_i;
-        `else
         ppc_int = pc_id_i;
         npc_int = pc_if_i;
-        `endif
       end
 
       IDEX: begin
-        // CONFIG_REGION: MERGE_ID_EX
-        `ifndef MERGE_ID_EX
-        ppc_int = pc_ex_i;
-        npc_int = pc_id_i;
-        `else
         ppc_int = pc_id_i;
         npc_int = pc_if_i;
-        `endif
         
 
         if (jump_req_o)

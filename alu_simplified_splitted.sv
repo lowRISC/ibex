@@ -35,10 +35,7 @@ module riscv_alu_simplified_splitted
   input  logic [31:0]              operand_b_i,
   input  logic                     req_i,
 
-  // CONFIG_REGION: LSU_ADDER_SUPPORT
-  `ifndef LSU_ADDER_SUPPORT
   output logic [31:0]              adder_result_o,
-  `endif // LSU_ADDER_SUPPORT
 
   output logic                     ready_o,
   output logic [31:0]              result_o,
@@ -130,10 +127,7 @@ module riscv_alu_simplified_splitted
 
   assign adder_result = {adder_partial_result_n[15:0], adder_partial_result_Q[15:0]};
   
-  // CONFIG_REGION: LSU_ADDER_SUPPORT
-  `ifndef LSU_ADDER_SUPPORT
   assign adder_result_o = adder_result;
-  `endif // LSU_ADDER_SUPPORT
 
   ////////////////////////////////////////
   //  ____  _   _ ___ _____ _____       //

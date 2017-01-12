@@ -31,25 +31,10 @@ import riscv_defines::*;
 
 module riscv_decoder
 (
-  // CONFIG_REGION: RV32E
-  `ifdef RV32E
-  input  logic        clk,
-  `endif
   // singals running to/from controller
   input  logic        deassert_we_i,           // deassert we, we are stalled or not active
-  // CONFIG_REGION: ONLY_ALIGNED
-  `ifndef ONLY_ALIGNED
   input  logic        data_misaligned_i,       // misaligned data load/store in progress
-  `endif // ONLY_ALIGNED
-  // CONFIG_REGION: NO_JUMP_ADDER
-  `ifdef NO_JUMP_ADDER
   input  logic        branch_2nd_stage_i,
-  `endif
-  // CONFIG_REGION: MUL_SUPPORT
-  `ifdef MUL_SUPPORT
-  // MUL related control signals 
-  input  logic        mult_multicycle_i,       // multiplier taking multiple cycles, using op c as storage
-  `endif // MUL_SUPPORT
 
   output logic        illegal_insn_o,          // illegal instruction encountered
   output logic        ebrk_insn_o,             // trap instruction encountered
@@ -59,19 +44,7 @@ module riscv_decoder
 
   output logic        rega_used_o,             // rs1 is used by current instruction
   output logic        regb_used_o,             // rs2 is used by current instruction
-  // CONFIG_REGION: THREE_PORT_REG_FILE
-  `ifdef THREE_PORT_REG_FILE
-  output logic        regc_used_o,             // rs3 is used by current instruction
-  `endif // THREE_PORT_REG_FILE
 
-  // CONFIG_REGION: BIT_SUPPORT
-  `ifdef BIT_SUPPORT
-  output logic        bmask_needed_o,          // registers for bit manipulation mask is needed
-  output logic [ 0:0] bmask_a_mux_o,           // bit manipulation mask a mux
-  output logic [ 1:0] bmask_b_mux_o,           // bit manipulation mask b mux
-  output logic        alu_bmask_a_mux_sel_o,   // bit manipulation mask a mux (reg or imm)
-  output logic        alu_bmask_b_mux_sel_o,   // bit manipulation mask b mux (reg or imm)
-  `endif // BIT_SUPPORT
 
   // from IF/ID pipeline
   input  logic [31:0] instr_rdata_i,           // instruction read from instr memory/cache
@@ -83,37 +56,13 @@ module riscv_decoder
   output logic [2:0]  alu_op_b_mux_sel_o,      // oNOperand b selection: reg value or immediate
   output logic [1:0]  alu_op_c_mux_sel_o,      // operand c selection: reg value or jump target
 
-  // CONFIG_REGION: VEC_SUPPORT
-  `ifdef VEC_SUPPORT
-  output logic [1:0]  alu_vec_mode_o,          // selects between 32 bit, 16 bit and 8 bit vectorial modes
-  output logic        scalar_replication_o,    // scalar replication enable
-  `endif // VEC_SUPPORT
   output logic [0:0]  imm_a_mux_sel_o,         // immediate selection for operand a
   output logic [3:0]  imm_b_mux_sel_o,         // immediate selection for operand b
-  // CONFIG_REGION: THREE_PORT_REG_FILE
-  `ifdef THREE_PORT_REG_FILE
-  output logic [1:0]  regc_mux_o,              // register c selection: S3, RD or 0
-  `endif // THREE_PORT_REG_FILE
 
-  // CONFIG_REGION: MUL_SUPPORT
-  `ifdef MUL_SUPPORT
-  // MUL related control signals  
-  output logic [2:0]  mult_operator_o,         // Multiplication operation selection
-  output logic        mult_int_en_o,           // perform integer multiplication
-  output logic        mult_dot_en_o,           // perform dot multiplication
-  output logic [0:0]  mult_imm_mux_o,          // Multiplication immediate mux selector
-  output logic        mult_sel_subword_o,      // Select subwords for 16x16 bit of multiplier
-  output logic [1:0]  mult_signed_mode_o,      // Multiplication in signed mode
-  output logic [1:0]  mult_dot_signed_o,       // Dot product in signed mode
-  `endif // MUL_SUPPORT
 
   // register file related signals
   output logic        regfile_mem_we_o,        // write enable for regfile
   output logic        regfile_alu_we_o,        // write enable for 2nd regfile port
-  // CONFIG_REGION: THREE_PORT_REG_FILE
-  `ifdef THREE_PORT_REG_FILE
-  output logic        regfile_alu_waddr_sel_o, // Select register write address for ALU/MUL operations
-  `endif // THREE_PORT_REG_FILE
 
   // CSR manipulation
   output logic        csr_access_o,            // access to CSR
@@ -122,45 +71,21 @@ module riscv_decoder
   // LD/ST unit signals
   output logic        data_req_o,              // start transaction to data memory
   output logic        data_we_o,               // data memory write enable
-  // CONFIG_REGION: PREPOST_SUPPORT
-  `ifdef PREPOST_SUPPORT
-  output logic        prepost_useincr_o,       // when not active bypass the alu result for address calculation
-  `endif // PREPOST_SUPPORT
   output logic [1:0]  data_type_o,             // data type on data memory: byte, half word or word
   output logic        data_sign_extension_o,   // sign extension on read data from data memory
-  // CONFIG_REGION: ONLY_ALIGNED
-  `ifndef ONLY_ALIGNED
   output logic [1:0]  data_reg_offset_o,       // offset in byte inside register for stores
-  `endif // ONLY_ALIGNED
   output logic        data_load_event_o,       // data request is in the special event range
 
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  // hwloop signals
-  output logic [2:0]  hwloop_we_o,             // write enable for hwloop regs
-  output logic        hwloop_target_mux_sel_o, // selects immediate for hwloop target
-  output logic        hwloop_start_mux_sel_o,  // selects hwloop start address input
-  output logic        hwloop_cnt_mux_sel_o,    // selects hwloop counter input
-  `endif // HWLP_SUPPORT
 
   // jump/branches
   output logic [1:0]  jump_in_dec_o,           // jump_in_id without deassert
   output logic [1:0]  jump_in_id_o            // jump is being calculated in ALU
-  // CONFIG_REGION: NO_JUMP_ADDER
-  `ifndef NO_JUMP_ADDER
-  ,
-  output logic [1:0]  jump_target_mux_sel_o    // jump target selection
-  `endif
 );
 
   // write enable/request control
   logic       regfile_mem_we;
   logic       regfile_alu_we;
   logic       data_req;
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  logic [2:0] hwloop_we;
-  `endif // HWLP_SUPPORT
 
   logic       ebrk_insn;
   logic       eret_insn;
@@ -170,10 +95,6 @@ module riscv_decoder
 
   logic [1:0] csr_op;
 
-  // CONFIG_REGION: RV32E
-  `ifdef RV32E
-  logic illegal_reg_addr;
-  `endif // RV32E
 
   /////////////////////////////////////////////
   //   ____                     _            //
@@ -187,58 +108,20 @@ module riscv_decoder
   always_comb
   begin
     jump_in_id                  = BRANCH_NONE;
-    // CONFIG_REGION: NO_JUMP_ADDER
-    `ifndef NO_JUMP_ADDER
-    jump_target_mux_sel_o       = JT_JAL;
-    `endif
 
     alu_operator_o              = ALU_SLTU;
     alu_op_a_mux_sel_o          = OP_A_REGA_OR_FWD;
     alu_op_b_mux_sel_o          = OP_B_REGB_OR_FWD;
     alu_op_c_mux_sel_o          = OP_C_REGC_OR_FWD;
 
-    // CONFIG_REGION: VEC_SUPPORT
-    `ifdef VEC_SUPPORT
-    alu_vec_mode_o              = VEC_MODE32;
-    scalar_replication_o        = 1'b0;
-    `endif // VEC_SUPPORT
-    // CONFIG_REGION: THREE_PORT_REG_FILE
-    `ifdef THREE_PORT_REG_FILE
-    regc_mux_o                  = REGC_ZERO;
-    `endif // THREE_PORT_REG_FILE
     imm_a_mux_sel_o             = IMMA_ZERO;
     imm_b_mux_sel_o             = IMMB_I;
 
-    // CONFIG_REGION: MUL_SUPPORT
-    `ifdef MUL_SUPPORT
-    mult_operator_o             = MUL_I;
-    mult_int_en_o               = 1'b0;
-    mult_dot_en_o               = 1'b0;
-    mult_imm_mux_o              = MIMM_ZERO;
-    mult_signed_mode_o          = 2'b00;
-    mult_sel_subword_o          = 1'b0;
-    mult_dot_signed_o           = 2'b00;
-    `endif // MUL_SUPPORT
 
     regfile_mem_we              = 1'b0;
     regfile_alu_we              = 1'b0;
-    // CONFIG_REGION: THREE_PORT_REG_FILE
-    `ifdef THREE_PORT_REG_FILE
-    regfile_alu_waddr_sel_o     = 1'b1;
-    `endif // THREE_PORT_REG_FILE
 
-    // CONFIG_REGION: PREPOST_SUPPORT
-    `ifdef PREPOST_SUPPORT
-    prepost_useincr_o           = 1'b1;
-    `endif // PREPOST_SUPPORT
 
-    // CONFIG_REGION: HWLP_SUPPORT
-    `ifdef HWLP_SUPPORT
-    hwloop_we                   = 3'b0;
-    hwloop_target_mux_sel_o     = 1'b0;
-    hwloop_start_mux_sel_o      = 1'b0;
-    hwloop_cnt_mux_sel_o        = 1'b0;
-    `endif // HWLP_SUPPORT
 
     csr_access_o                = 1'b0;
     csr_op                      = CSR_OP_NONE;
@@ -246,10 +129,7 @@ module riscv_decoder
     data_we_o                   = 1'b0;
     data_type_o                 = 2'b00;
     data_sign_extension_o       = 1'b0;
-    // CONFIG_REGION: ONLY_ALIGNED
-    `ifndef ONLY_ALIGNED
     data_reg_offset_o           = 2'b00;
-    `endif // ONLY_ALIGNED
     data_req                    = 1'b0;
     data_load_event_o           = 1'b0;
 
@@ -261,20 +141,8 @@ module riscv_decoder
 
     rega_used_o                 = 1'b0;
     regb_used_o                 = 1'b0;
-    // CONFIG_REGION: THREE_PORT_REG_FILE
-    `ifdef THREE_PORT_REG_FILE
-    regc_used_o                 = 1'b0;
-    `endif // THREE_PORT_REG_FILE
 
 
-    // CONFIG_REGION: BIT_SUPPORT
-    `ifdef BIT_SUPPORT
-    bmask_needed_o              = 1'b1; // TODO: only use when necessary
-    bmask_a_mux_o               = BMASK_A_ZERO;
-    bmask_b_mux_o               = BMASK_B_ZERO;
-    alu_bmask_a_mux_sel_o       = BMASK_A_IMM;
-    alu_bmask_b_mux_sel_o       = BMASK_B_IMM;
-    `endif // BIT_SUPPORT
 
     unique case (instr_rdata_i[6:0])
 
@@ -288,8 +156,6 @@ module riscv_decoder
       //////////////////////////////////////
 
       OPCODE_JAL: begin   // Jump and Link
-        // CONFIG_REGION: NO_JUMP_ADDER
-        `ifdef NO_JUMP_ADDER
         jump_in_id          = BRANCH_JAL;
         // Calculate jump target in EX
         alu_op_a_mux_sel_o  = OP_A_CURRPC;
@@ -300,27 +166,9 @@ module riscv_decoder
 
         alu_op_c_mux_sel_o  = OP_C_RA; // Pipeline return address to EX
 
-        `else // NO_JUMP_ADDER
-
-        jump_target_mux_sel_o = JT_JAL;
-        jump_in_id            = BRANCH_JAL;
-        // Calculate and store PC+4
-        alu_op_a_mux_sel_o  = OP_A_CURRPC;
-        alu_op_b_mux_sel_o  = OP_B_IMM;
-        imm_b_mux_sel_o     = IMMB_PCINCR;
-        alu_operator_o      = ALU_ADD;
-        regfile_alu_we      = 1'b1;
-
-        // CONFIG_REGION: JUMP_IN_ID
-        `ifndef JUMP_IN_ID
-        alu_op_c_mux_sel_o  = OP_C_JT; // Pipeline to EX
-        `endif
-        `endif
       end
 
       OPCODE_JALR: begin  // Jump and Link Register
-        // CONFIG_REGION: NO_JUMP_ADDER
-        `ifdef NO_JUMP_ADDER
         jump_in_id          = BRANCH_JALR;
         // Calculate jump target in EX
         alu_op_a_mux_sel_o  = OP_A_REGA_OR_FWD;
@@ -338,35 +186,9 @@ module riscv_decoder
 
         alu_op_c_mux_sel_o  = OP_C_RA; // Pipeline return address to EX
 
-        `else // NO_JUMP_ADDER
-
-        jump_target_mux_sel_o = JT_JALR;
-        jump_in_id            = BRANCH_JALR;
-        // Calculate and store PC+4
-        alu_op_a_mux_sel_o  = OP_A_CURRPC;
-        alu_op_b_mux_sel_o  = OP_B_IMM;
-        imm_b_mux_sel_o     = IMMB_PCINCR;
-        alu_operator_o      = ALU_ADD;
-        regfile_alu_we      = 1'b1;
-        // Calculate jump target (= RS1 + I imm)
-        rega_used_o         = 1'b1;
-
-        if (instr_rdata_i[14:12] != 3'b0) begin
-          jump_in_id       = BRANCH_NONE;
-          regfile_alu_we   = 1'b0;
-          illegal_insn_o   = 1'b1;
-        end
-
-        // CONFIG_REGION: JUMP_IN_ID
-        `ifndef JUMP_IN_ID
-        alu_op_c_mux_sel_o  = OP_C_JT; // Pipeline to EX
-        `endif
-        `endif
       end
 
       OPCODE_BRANCH: begin // Branch
-        // CONFIG_REGION: NO_JUMP_ADDER
-        `ifdef NO_JUMP_ADDER
         jump_in_id            = BRANCH_COND;
 
         rega_used_o           = 1'b1;
@@ -408,38 +230,6 @@ module riscv_decoder
           rega_used_o         = 1'b1;
         end
         
-        `else // NO_JUMP_ADDER
-        jump_target_mux_sel_o = JT_COND;
-        jump_in_id            = BRANCH_COND;
-        alu_op_c_mux_sel_o    = OP_C_JT;
-
-        rega_used_o           = 1'b1;
-        regb_used_o           = 1'b1;
-
-        unique case (instr_rdata_i[14:12])
-          3'b000: alu_operator_o = ALU_EQ;
-          3'b001: alu_operator_o = ALU_NE;
-          3'b100: alu_operator_o = ALU_LTS;
-          3'b101: alu_operator_o = ALU_GES;
-          3'b110: alu_operator_o = ALU_LTU;
-          3'b111: alu_operator_o = ALU_GEU;
-          3'b010: begin
-            alu_operator_o      = ALU_EQ;
-            regb_used_o         = 1'b0;
-            alu_op_b_mux_sel_o  = OP_B_IMM;
-            imm_b_mux_sel_o     = IMMB_BI;
-          end
-          3'b011: begin
-            alu_operator_o      = ALU_NE;
-            regb_used_o         = 1'b0;
-            alu_op_b_mux_sel_o  = OP_B_IMM;
-            imm_b_mux_sel_o     = IMMB_BI;
-          end
-          default: begin
-            illegal_insn_o = 1'b1;
-          end
-        endcase
-        `endif // NO_JUMP_ADDER
       end
 
 
@@ -463,37 +253,18 @@ module riscv_decoder
         // pass write data through ALU operand c
         alu_op_c_mux_sel_o = OP_C_REGB_OR_FWD;
 
-        // CONFIG_REGION: PREPOST_SUPPORT
-        `ifdef PREPOST_SUPPORT
-        // post-increment setup
-        if (instr_rdata_i[6:0] == OPCODE_STORE_POST) begin
-          prepost_useincr_o       = 1'b0;
-          regfile_alu_waddr_sel_o = 1'b0;
-          regfile_alu_we          = 1'b1;
-        end
-        `endif // PREPOST_SUPPORT
 
         if (instr_rdata_i[14] == 1'b0) begin
           // offset from immediate
           imm_b_mux_sel_o     = IMMB_S;
           alu_op_b_mux_sel_o  = OP_B_IMM;
         end
-        // CONFIG_REGION: THREE_PORT_REG_FILE
-        `ifdef THREE_PORT_REG_FILE
-        else begin
-          // offset from register
-          regc_used_o        = 1'b1;
-          alu_op_b_mux_sel_o = OP_B_REGC_OR_FWD;
-          regc_mux_o         = REGC_RD;
-        end
-        `else
         // Register offset is illegal since no register c available
         else begin
           data_req       = 1'b0;
           data_we_o      = 1'b0;
           illegal_insn_o = 1'b1;
         end
-        `endif // THREE_PORT_REG_FILE
 
         // store size
         unique case (instr_rdata_i[13:12])
@@ -520,15 +291,6 @@ module riscv_decoder
         alu_op_b_mux_sel_o  = OP_B_IMM;
         imm_b_mux_sel_o     = IMMB_I;
 
-        // CONFIG_REGION: PREPOST_SUPPORT
-        `ifdef PREPOST_SUPPORT
-        // post-increment setup
-        if (instr_rdata_i[6:0] == OPCODE_LOAD_POST) begin
-          prepost_useincr_o       = 1'b0;
-          regfile_alu_waddr_sel_o = 1'b0;
-          regfile_alu_we          = 1'b1;
-        end
-        `endif // PREPOST_SUPPORT
 
         // sign/zero extension
         data_sign_extension_o = ~instr_rdata_i[14];
@@ -638,77 +400,7 @@ module riscv_decoder
         rega_used_o    = 1'b1;
 
         if (instr_rdata_i[31]) begin
-          // CONFIG_REGION: BIT_SUPPORT
-          `ifdef BIT_SUPPORT
-          // bit-manipulation instructions
-          bmask_needed_o      = 1'b1;
-          bmask_a_mux_o       = BMASK_A_S3;
-          bmask_b_mux_o       = BMASK_B_S2;
-          alu_op_b_mux_sel_o  = OP_B_IMM;
-
-          unique case (instr_rdata_i[14:12])
-            3'b000: begin
-              alu_operator_o  = ALU_BEXT;
-              imm_b_mux_sel_o = IMMB_S2;
-              bmask_b_mux_o   = BMASK_B_ZERO;
-              if (~instr_rdata_i[30]) begin
-                //register variant
-                alu_op_b_mux_sel_o     = OP_B_BMASK;
-                alu_bmask_a_mux_sel_o  = BMASK_A_REG;
-                regb_used_o            = 1'b1;
-              end
-            end
-            3'b001: begin
-              alu_operator_o  = ALU_BEXTU;
-              imm_b_mux_sel_o = IMMB_S2;
-              bmask_b_mux_o   = BMASK_B_ZERO;
-              if (~instr_rdata_i[30]) begin
-                //register variant
-                alu_op_b_mux_sel_o     = OP_B_BMASK;
-                alu_bmask_a_mux_sel_o  = BMASK_A_REG;
-                regb_used_o            = 1'b1;
-              end
-            end
-
-            3'b010: begin
-              alu_operator_o      = ALU_BINS;
-              imm_b_mux_sel_o     = IMMB_S2;
-              regc_used_o         = 1'b1;
-              regc_mux_o          = REGC_RD;
-              if (~instr_rdata_i[30]) begin
-                //register variant
-                alu_op_b_mux_sel_o     = OP_B_BMASK;
-                alu_bmask_a_mux_sel_o  = BMASK_A_REG;
-                alu_bmask_b_mux_sel_o  = BMASK_B_REG;
-                regb_used_o            = 1'b1;
-              end
-            end
-
-            3'b011: begin
-              alu_operator_o = ALU_BCLR;
-              if (~instr_rdata_i[30]) begin
-                //register variant
-                regb_used_o            = 1'b1;
-                alu_bmask_a_mux_sel_o  = BMASK_A_REG;
-                alu_bmask_b_mux_sel_o  = BMASK_B_REG;
-              end
-            end
-
-            3'b100: begin
-              alu_operator_o = ALU_BSET;
-              if (~instr_rdata_i[30]) begin
-                //register variant
-                regb_used_o            = 1'b1;
-                alu_bmask_a_mux_sel_o  = BMASK_A_REG;
-                alu_bmask_b_mux_sel_o  = BMASK_B_REG;
-              end
-            end
-
-            default: illegal_insn_o = 1'b1;
-          endcase
-          `else 
           illegal_insn_o = 1'b1;
-          `endif // BIT_SUPPORT
         end
         else
         begin // non bit-manipulation instructions
@@ -729,146 +421,14 @@ module riscv_decoder
             {6'b00_0000, 3'b101}: alu_operator_o = ALU_SRL;   // Shift Right Logical
             {6'b10_0000, 3'b101}: alu_operator_o = ALU_SRA;   // Shift Right Arithmetic
 
-            // CONFIG_REGION: MUL_SUPPORT
-            `ifdef MUL_SUPPORT
-            // supported RV32M instructions
-            {6'b00_0001, 3'b000}: begin // mul
-              mult_int_en_o   = 1'b1;
-              mult_operator_o = MUL_MAC32;
-              regc_mux_o      = REGC_ZERO;
-            end
-            {6'b00_0001, 3'b001}: begin // mulh
-              regc_used_o        = 1'b1;
-              regc_mux_o         = REGC_ZERO;
-              mult_signed_mode_o = 2'b11;
-              mult_int_en_o      = 1'b1;
-              mult_operator_o    = MUL_H;
-            end
-            {6'b00_0001, 3'b010}: begin // mulhsu
-              regc_used_o        = 1'b1;
-              regc_mux_o         = REGC_ZERO;
-              mult_signed_mode_o = 2'b01;
-              mult_int_en_o      = 1'b1;
-              mult_operator_o    = MUL_H;
-            end
-            {6'b00_0001, 3'b011}: begin // mulhu
-              regc_used_o        = 1'b1;
-              regc_mux_o         = REGC_ZERO;
-              mult_signed_mode_o = 2'b00;
-              mult_int_en_o      = 1'b1;
-              mult_operator_o    = MUL_H;
-            end
-            {6'b00_0001, 3'b100}: begin // div
-              alu_op_a_mux_sel_o = OP_A_REGB_OR_FWD;
-              alu_op_b_mux_sel_o = OP_B_REGC_OR_FWD;
-              regc_mux_o         = REGC_S1;
-              regc_used_o        = 1'b1;
-              regb_used_o        = 1'b1;
-              rega_used_o        = 1'b0;
-              alu_operator_o     = ALU_DIV;
-            end
-            {6'b00_0001, 3'b101}: begin // divu
-              alu_op_a_mux_sel_o = OP_A_REGB_OR_FWD;
-              alu_op_b_mux_sel_o = OP_B_REGC_OR_FWD;
-              regc_mux_o         = REGC_S1;
-              regc_used_o        = 1'b1;
-              regb_used_o        = 1'b1;
-              rega_used_o        = 1'b0;
-              alu_operator_o     = ALU_DIVU;
-            end
-            {6'b00_0001, 3'b110}: begin // rem
-              alu_op_a_mux_sel_o = OP_A_REGB_OR_FWD;
-              alu_op_b_mux_sel_o = OP_B_REGC_OR_FWD;
-              regc_mux_o         = REGC_S1;
-              regc_used_o        = 1'b1;
-              regb_used_o        = 1'b1;
-              rega_used_o        = 1'b0;
-              alu_operator_o     = ALU_REM;
-            end
-            {6'b00_0001, 3'b111}: begin // remu
-              alu_op_a_mux_sel_o = OP_A_REGB_OR_FWD;
-              alu_op_b_mux_sel_o = OP_B_REGC_OR_FWD;
-              regc_mux_o         = REGC_S1;
-              regc_used_o        = 1'b1;
-              regb_used_o        = 1'b1;
-              rega_used_o        = 1'b0;
-              alu_operator_o     = ALU_REMU;
-            end
-
-            // PULP specific instructions
-            {6'b10_0001, 3'b000}: begin // p.mac
-              regc_used_o     = 1'b1;
-              regc_mux_o      = REGC_RD;
-              mult_int_en_o   = 1'b1;
-              mult_operator_o = MUL_MAC32;
-            end
-            {6'b10_0001, 3'b001}: begin // p.msu
-              regc_used_o     = 1'b1;
-              regc_mux_o      = REGC_RD;
-              mult_int_en_o   = 1'b1;
-              mult_operator_o = MUL_MSU32;
-            end
-            `endif // MUL_SUPPORT
 
             {6'b00_0010, 3'b010}: alu_operator_o = ALU_SLETS; // Set Lower Equal Than
             {6'b00_0010, 3'b011}: alu_operator_o = ALU_SLETU; // Set Lower Equal Than Unsigned
 
-            // CONFIG_REGION: MATH_SPECIAL_SUPPORT
-            `ifdef MATH_SPECIAL_SUPPORT
-            {6'b00_0010, 3'b100}: alu_operator_o = ALU_MIN;   // Min
-            {6'b00_0010, 3'b101}: alu_operator_o = ALU_MINU;  // Min Unsigned
-            {6'b00_0010, 3'b110}: alu_operator_o = ALU_MAX;   // Max
-            {6'b00_0010, 3'b111}: alu_operator_o = ALU_MAXU;  // Max Unsigned
-            `endif // MATH_SPECIAL_SUPPORT
 
-            // CONFIG_REGION: MATH_SPECIAL_SUPPORT
-            `ifdef MATH_SPECIAL_SUPPORT
-            {6'b00_0100, 3'b101}: alu_operator_o = ALU_ROR;   // Rotate Right
-            `endif // MATH_SPECIAL_SUPPORT
 
-            // CONFIG_REGION: BIT_SUPPORT
-            `ifdef BIT_SUPPORT
-            // PULP specific instructions using only one source register
-            {6'b00_1000, 3'b000}: alu_operator_o = ALU_FF1;   // Find First 1
-            {6'b00_1000, 3'b001}: alu_operator_o = ALU_FL1;   // Find Last 1
-            {6'b00_1000, 3'b010}: alu_operator_o = ALU_CLB;   // Count Leading Bits
-            {6'b00_1000, 3'b011}: alu_operator_o = ALU_CNT;   // Count set bits (popcount)
-            `endif // BIT_SUPPORT
 
-            // CONFIG_REGION: VEC_SUPPORT
-            `ifdef VEC_SUPPORT
-            {6'b00_1000, 3'b100}: begin alu_operator_o = ALU_EXTS; alu_vec_mode_o = VEC_MODE16; end // Sign-extend Half-word
-            {6'b00_1000, 3'b101}: begin alu_operator_o = ALU_EXT;  alu_vec_mode_o = VEC_MODE16; end // Zero-extend Half-word
-            {6'b00_1000, 3'b110}: begin alu_operator_o = ALU_EXTS; alu_vec_mode_o = VEC_MODE8;  end // Sign-extend Byte
-            {6'b00_1000, 3'b111}: begin alu_operator_o = ALU_EXT;  alu_vec_mode_o = VEC_MODE8;  end // Zero-extend Byte
-            `endif // VEC_SUPPORT
 
-            // CONFIG_REGION: MATH_SPECIAL_SUPPORT
-            `ifdef MATH_SPECIAL_SUPPORT
-            {6'b00_0010, 3'b000}: alu_operator_o = ALU_ABS;   // p.abs
-
-            {6'b00_1010, 3'b001}: begin // p.clip
-              alu_operator_o     = ALU_CLIP;
-              alu_op_b_mux_sel_o = OP_B_IMM;
-              imm_b_mux_sel_o    = IMMB_CLIP;
-            end
-
-            {6'b00_1010, 3'b010}: begin // p.clipu
-              alu_operator_o     = ALU_CLIPU;
-              alu_op_b_mux_sel_o = OP_B_IMM;
-              imm_b_mux_sel_o    = IMMB_CLIP;
-            end
-
-            {6'b00_1010, 3'b101}: begin // p.clipr
-              alu_operator_o     = ALU_CLIP;
-              regb_used_o        = 1'b1;
-            end
-
-            {6'b00_1010, 3'b110}: begin // p.clipur
-              alu_operator_o     = ALU_CLIPU;
-              regb_used_o        = 1'b1;
-            end
-            `endif // MATH_SPECIAL_SUPPORT
 
             default: begin
               illegal_insn_o = 1'b1;
@@ -877,278 +437,7 @@ module riscv_decoder
         end
       end
 
-      // CONFIG_REGION: THREE_PORT_REG_FILE
-      `ifdef THREE_PORT_REG_FILE
 
-      OPCODE_PULP_OP: begin  // PULP specific ALU instructions with three source operands
-        regfile_alu_we = 1'b1;
-        rega_used_o    = 1'b1;
-        regb_used_o    = 1'b1;
-
-        case (instr_rdata_i[13:12])
-          // CONFIG_REGION: MUL_SUPPORT
-          `ifdef MUL_SUPPORT
-          2'b00: begin // multiply with subword selection
-            mult_sel_subword_o = instr_rdata_i[30];
-            mult_signed_mode_o = {2{instr_rdata_i[31]}};
-
-            mult_imm_mux_o = MIMM_S3;
-            regc_mux_o     = REGC_ZERO;
-            mult_int_en_o  = 1'b1;
-
-            if (instr_rdata_i[14])
-              mult_operator_o = MUL_IR;
-            else
-              mult_operator_o = MUL_I;
-          end
-
-          2'b01: begin // MAC with subword selection
-            mult_sel_subword_o = instr_rdata_i[30];
-            mult_signed_mode_o = {2{instr_rdata_i[31]}};
-
-            regc_used_o     = 1'b1;
-            regc_mux_o      = REGC_RD;
-            mult_imm_mux_o  = MIMM_S3;
-            mult_int_en_o   = 1'b1;
-
-            if (instr_rdata_i[14])
-              mult_operator_o = MUL_IR;
-            else
-              mult_operator_o = MUL_I;
-          end
-          `endif // MUL_SUPPORT
-
-          // CONFIG_REGION: MATH_SPECIAL_SUPPORT
-          `ifdef MATH_SPECIAL_SUPPORT
-          // CONFIG_REGION: BIT_SUPPORT
-          `ifdef BIT_SUPPORT
-
-          2'b10: begin // add with normalization and rounding
-            // decide between using unsigned and rounding, and combinations
-            // thereof
-            case ({instr_rdata_i[31],instr_rdata_i[14]})
-              2'b00: alu_operator_o = ALU_ADD;
-              2'b01: alu_operator_o = ALU_ADDR;
-              2'b10: alu_operator_o = ALU_ADDU;
-              2'b11: alu_operator_o = ALU_ADDUR;
-            endcase
-
-            bmask_a_mux_o = BMASK_A_ZERO;
-            bmask_b_mux_o = BMASK_B_S3;
-
-            if (instr_rdata_i[30]) begin
-              //register variant
-              regc_mux_o             = REGC_RD;
-              alu_bmask_b_mux_sel_o  = BMASK_B_REG;
-              alu_op_a_mux_sel_o     = OP_A_REGC_OR_FWD;
-              alu_op_b_mux_sel_o     = OP_B_REGA_OR_FWD;
-            end
-
-          end
-
-          2'b11: begin // sub with normalization and rounding
-            // decide between using unsigned and rounding, and combinations
-            // thereof
-            case ({instr_rdata_i[31],instr_rdata_i[14]})
-              2'b00: alu_operator_o = ALU_SUB;
-              2'b01: alu_operator_o = ALU_SUBR;
-              2'b10: alu_operator_o = ALU_SUBU;
-              2'b11: alu_operator_o = ALU_SUBUR;
-            endcase
-
-            bmask_a_mux_o = BMASK_A_ZERO;
-            bmask_b_mux_o = BMASK_B_S3;
-
-            if (instr_rdata_i[30]) begin
-              //register variant
-              regc_mux_o             = REGC_RD;
-              alu_bmask_b_mux_sel_o  = BMASK_B_REG;
-              alu_op_a_mux_sel_o     = OP_A_REGC_OR_FWD;
-              alu_op_b_mux_sel_o     = OP_B_REGA_OR_FWD;
-            end
-
-          end
-          `endif // BIT_SUPPORT
-          `endif // MATH_SPECIAL_SUPPORT
-
-          default: begin
-            regfile_alu_we = 1'b0;
-            illegal_insn_o = 1'b1;
-          end
-        endcase
-      end
-      `endif // THREE_PORT_REG_FILE
-
-      // CONFIG_REGION: VEC_SUPPORT
-      `ifdef VEC_SUPPORT
-      OPCODE_VECOP: begin
-        regfile_alu_we      = 1'b1;
-        rega_used_o         = 1'b1;
-        imm_b_mux_sel_o     = IMMB_VS;
-
-        // vector size
-        if (instr_rdata_i[12]) begin
-          alu_vec_mode_o  = VEC_MODE8;
-          // CONFIG_REGION: MUL_SUPPORT
-          `ifdef MUL_SUPPORT
-          mult_operator_o = MUL_DOT8;
-          `endif // MUL_SUPPORT
-        end else begin
-          alu_vec_mode_o = VEC_MODE16;
-          // CONFIG_REGION: MUL_SUPPORT
-          `ifdef MUL_SUPPORT
-          mult_operator_o = MUL_DOT16;
-          `endif // MUL_SUPPORT
-        end
-
-        // distinguish normal vector, sc and sci modes
-        if (instr_rdata_i[14]) begin
-          scalar_replication_o = 1'b1;
-
-          if (instr_rdata_i[13]) begin
-            // immediate scalar replication, .sci
-            alu_op_b_mux_sel_o = OP_B_IMM;
-          end else begin
-            // register scalar replication, .sc
-            regb_used_o = 1'b1;
-          end
-        end else begin
-          // normal register use
-          regb_used_o = 1'b1;
-        end
-
-        // now decode the instruction
-        unique case (instr_rdata_i[31:26])
-          6'b00000_0: begin alu_operator_o = ALU_ADD;  imm_b_mux_sel_o = IMMB_VS; end // pv.add
-          6'b00001_0: begin alu_operator_o = ALU_SUB;  imm_b_mux_sel_o = IMMB_VS; end // pv.sub
-          // CONFIG_REGION: MATH_SPECIAL_SUPPORT
-          `ifdef MATH_SPECIAL_SUPPORT
-          6'b00010_0: begin alu_operator_o = ALU_ADD;  imm_b_mux_sel_o = IMMB_VS; bmask_b_mux_o = BMASK_B_ONE; end // pv.avg
-          6'b00011_0: begin alu_operator_o = ALU_ADDU; imm_b_mux_sel_o = IMMB_VU; bmask_b_mux_o = BMASK_B_ONE; end // pv.avgu
-          6'b00100_0: begin alu_operator_o = ALU_MIN;  imm_b_mux_sel_o = IMMB_VS; end // pv.min
-          6'b00101_0: begin alu_operator_o = ALU_MINU; imm_b_mux_sel_o = IMMB_VU; end // pv.minu
-          6'b00110_0: begin alu_operator_o = ALU_MAX;  imm_b_mux_sel_o = IMMB_VS; end // pv.max
-          6'b00111_0: begin alu_operator_o = ALU_MAXU; imm_b_mux_sel_o = IMMB_VU; end // pv.maxu
-          `endif // MATH_SPECIAL_SUPPORT
-          6'b01000_0: begin alu_operator_o = ALU_SRL;  imm_b_mux_sel_o = IMMB_VS; end // pv.srl
-          6'b01001_0: begin alu_operator_o = ALU_SRA;  imm_b_mux_sel_o = IMMB_VS; end // pv.sra
-          6'b01010_0: begin alu_operator_o = ALU_SLL;  imm_b_mux_sel_o = IMMB_VS; end // pv.sll
-          6'b01011_0: begin alu_operator_o = ALU_OR;   imm_b_mux_sel_o = IMMB_VS; end // pv.or
-          6'b01100_0: begin alu_operator_o = ALU_XOR;  imm_b_mux_sel_o = IMMB_VS; end // pv.xor
-          6'b01101_0: begin alu_operator_o = ALU_AND;  imm_b_mux_sel_o = IMMB_VS; end // pv.and
-          // CONFIG_REGION: MATH_SPECIAL_SUPPORT
-          `ifdef MATH_SPECIAL_SUPPORT
-          6'b01110_0: begin alu_operator_o = ALU_ABS;  imm_b_mux_sel_o = IMMB_VS; end // pv.abs
-          `endif // MATH_SPECIAL_SUPPORT
-
-          // CONFIG_REGION: MATH_SPECIAL_SUPPORT
-          `ifdef MATH_SPECIAL_SUPPORT
-          // shuffle/pack
-          6'b11101_0,       // pv.shuffleI1
-          6'b11110_0,       // pv.shuffleI2
-          6'b11111_0,       // pv.shuffleI3
-          6'b11000_0: begin // pv.shuffle, pv.shuffleI0
-            alu_operator_o       = ALU_SHUF;
-            imm_b_mux_sel_o      = IMMB_SHUF;
-            regb_used_o          = 1'b1;
-            // CONFIG_REGION: VEC_SUPPORT
-            `ifdef VEC_SUPPORT
-            scalar_replication_o = 1'b0;
-            `endif // VEC_SUPPORT
-          end
-          6'b11001_0: begin // pv.shuffle2
-            alu_operator_o       = ALU_SHUF2;
-            regb_used_o          = 1'b1;
-            regc_used_o          = 1'b1;
-            regc_mux_o           = REGC_RD;
-            // CONFIG_REGION: VEC_SUPPORT
-            `ifdef VEC_SUPPORT
-            scalar_replication_o = 1'b0;
-            `endif // VEC_SUPPORT
-          end
-          6'b11010_0: begin // pv.pack
-            alu_operator_o = ALU_PCKLO;
-            regb_used_o    = 1'b1;
-          end
-          6'b11011_0: begin // pv.packhi
-            alu_operator_o = ALU_PCKHI;
-            regb_used_o    = 1'b1;
-            regc_used_o    = 1'b1;
-            regc_mux_o     = REGC_RD;
-          end
-          6'b11100_0: begin // pv.packlo
-            alu_operator_o = ALU_PCKLO;
-            regb_used_o    = 1'b1;
-            regc_used_o    = 1'b1;
-            regc_mux_o     = REGC_RD;
-          end
-
-          6'b01111_0: begin // pv.extract
-            alu_operator_o = ALU_EXTS;
-          end
-
-          6'b10010_0: begin // pv.extractu
-            alu_operator_o = ALU_EXT;
-          end
-
-          6'b10110_0: begin // pv.insert
-            alu_operator_o     = ALU_INS;
-            regc_used_o        = 1'b1;
-            regc_mux_o         = REGC_RD;
-            alu_op_b_mux_sel_o = OP_B_REGC_OR_FWD;
-          end
-          `endif // MATH_SPECIAL_SUPPORT
-
-          // CONFIG_REGION: MUL_SUPPORT
-          `ifdef MUL_SUPPORT
-          6'b10000_0: begin // pv.dotup
-            mult_dot_en_o     = 1'b1;
-            mult_dot_signed_o = 2'b00;
-          end
-          6'b10001_0: begin // pv.dotusp
-            mult_dot_en_o     = 1'b1;
-            mult_dot_signed_o = 2'b01;
-          end
-          6'b10011_0: begin // pv.dotsp
-            mult_dot_en_o     = 1'b1;
-            mult_dot_signed_o = 2'b11;
-          end
-          6'b10100_0: begin // pv.sdotup
-            mult_dot_en_o     = 1'b1;
-            mult_dot_signed_o = 2'b00;
-            regc_used_o       = 1'b1;
-            regc_mux_o        = REGC_RD;
-          end
-          6'b10101_0: begin // pv.sdotusp
-            mult_dot_en_o     = 1'b1;
-            mult_dot_signed_o = 2'b01;
-            regc_used_o       = 1'b1;
-            regc_mux_o        = REGC_RD;
-          end
-          6'b10111_0: begin // pv.sdotsp
-            mult_dot_en_o     = 1'b1;
-            mult_dot_signed_o = 2'b11;
-            regc_used_o       = 1'b1;
-            regc_mux_o        = REGC_RD;
-          end
-          `endif // MUL_SUPPORT
-
-          // comparisons, always have bit 26 set
-          6'b00000_1: begin alu_operator_o = ALU_EQ;  imm_b_mux_sel_o     = IMMB_VS; end // pv.cmpeq
-          6'b00001_1: begin alu_operator_o = ALU_NE;  imm_b_mux_sel_o     = IMMB_VS; end // pv.cmpne
-          6'b00010_1: begin alu_operator_o = ALU_GTS; imm_b_mux_sel_o     = IMMB_VS; end // pv.cmpgt
-          6'b00011_1: begin alu_operator_o = ALU_GES; imm_b_mux_sel_o     = IMMB_VS; end // pv.cmpge
-          6'b00100_1: begin alu_operator_o = ALU_LTS; imm_b_mux_sel_o     = IMMB_VS; end // pv.cmplt
-          6'b00101_1: begin alu_operator_o = ALU_LES; imm_b_mux_sel_o     = IMMB_VS; end // pv.cmple
-          6'b00110_1: begin alu_operator_o = ALU_GTU; imm_b_mux_sel_o     = IMMB_VU; end // pv.cmpgtu
-          6'b00111_1: begin alu_operator_o = ALU_GEU; imm_b_mux_sel_o     = IMMB_VU; end // pv.cmpgeu
-          6'b01000_1: begin alu_operator_o = ALU_LTU; imm_b_mux_sel_o     = IMMB_VU; end // pv.cmpltu
-          6'b01001_1: begin alu_operator_o = ALU_LEU; imm_b_mux_sel_o     = IMMB_VU; end // pv.cmpleu
-
-          default: illegal_insn_o = 1'b1;
-        endcase
-      end
-      `endif // VEC_SUPPORT
 
 
       ////////////////////////////////////////////////
@@ -1222,71 +511,6 @@ module riscv_decoder
       end
 
 
-      // CONFIG_REGION: HWLP_SUPPORT
-      `ifdef HWLP_SUPPORT
-
-      ///////////////////////////////////////////////
-      //  _   ___        ___     ___   ___  ____   //
-      // | | | \ \      / / |   / _ \ / _ \|  _ \  //
-      // | |_| |\ \ /\ / /| |  | | | | | | | |_) | //
-      // |  _  | \ V  V / | |__| |_| | |_| |  __/  //
-      // |_| |_|  \_/\_/  |_____\___/ \___/|_|     //
-      //                                           //
-      ///////////////////////////////////////////////
-
-
-      OPCODE_HWLOOP: begin
-        hwloop_target_mux_sel_o = 1'b0;
-
-        unique case (instr_rdata_i[14:12])
-          3'b000: begin
-            // lp.starti: set start address to PC + I-type immediate
-            hwloop_we[0]           = 1'b1;
-            hwloop_start_mux_sel_o = 1'b0;
-          end
-
-          3'b001: begin
-            // lp.endi: set end address to PC + I-type immediate
-            hwloop_we[1]         = 1'b1;
-          end
-
-          3'b010: begin
-            // lp.count: initialize counter from rs1
-            hwloop_we[2]         = 1'b1;
-            hwloop_cnt_mux_sel_o = 1'b1;
-            rega_used_o          = 1'b1;
-          end
-
-          3'b011: begin
-            // lp.counti: initialize counter from I-type immediate
-            hwloop_we[2]         = 1'b1;
-            hwloop_cnt_mux_sel_o = 1'b0;
-          end
-
-          3'b100: begin
-            // lp.setup: initialize counter from rs1, set start address to
-            // next instruction and end address to PC + I-type immediate
-            hwloop_we              = 3'b111;
-            hwloop_start_mux_sel_o = 1'b1;
-            hwloop_cnt_mux_sel_o   = 1'b1;
-            rega_used_o            = 1'b1;
-          end
-
-          3'b101: begin
-            // lp.setupi: initialize counter from immediate, set start address to
-            // next instruction and end address to PC + I-type immediate
-            hwloop_we               = 3'b111;
-            hwloop_target_mux_sel_o = 1'b1;
-            hwloop_start_mux_sel_o  = 1'b1;
-            hwloop_cnt_mux_sel_o    = 1'b0;
-          end
-
-          default: begin
-            illegal_insn_o = 1'b1;
-          end
-        endcase
-      end
-      `endif // HWLP_SUPPORT
 
       default: begin
         illegal_insn_o = 1'b1;
@@ -1297,15 +521,7 @@ module riscv_decoder
     if (illegal_c_insn_i) begin
       illegal_insn_o = 1'b1;
     end
-    // CONFIG_REGION: RV32E
-    `ifdef RV32E
-    else if (illegal_reg_addr) begin
-      illegal_insn_o = 1'b1;
-    end
-    `endif // RV32E
 
-    // CONFIG_REGION: ONLY_ALIGNED
-    `ifndef ONLY_ALIGNED
     // misaligned access was detected by the LSU
     // TODO: this section should eventually be moved out of the decoder
     if (data_misaligned_i == 1'b1)
@@ -1321,43 +537,12 @@ module riscv_decoder
       // the correct one
       regfile_alu_we = 1'b0;
 
-      // CONFIG_REGION: PREPOST_SUPPORT
-      `ifdef PREPOST_SUPPORT
-      // if post increments are used, we must make sure that for
-      // the second memory access we do use the adder
-      prepost_useincr_o = 1'b1;
-      `endif // PREPOST_SUPPORT
 
-      // CONFIG_REGION: VEC_SUPPORT
-      `ifdef VEC_SUPPORT
-      // we do not want to replicate operand_b
-      scalar_replication_o = 1'b0;
-      `endif // VEC_SUPPORT
     end
-    `endif // ONLY_ALIGNED
-    // CONFIG_REGION: MUL_SUPPORT
-    `ifdef MUL_SUPPORT
-    else if (mult_multicycle_i) begin
-      alu_op_c_mux_sel_o = OP_C_REGC_OR_FWD;
-    end
-    `endif // MUL_SUPPORT
   end
 
 
 
-  // CONFIG_REGION: RV32E
-  `ifdef RV32E
-  // Check for illegal register address (there are only 16 registers in RV32E)
-  logic rega_is_illegal;
-  logic regb_is_illegal;
-  logic waddr_is_illegal;
-
-  assign rega_is_illegal = instr_rdata_i[19] & ((alu_op_a_mux_sel_o == OP_A_REGA_OR_FWD) || (alu_op_a_mux_sel_o == OP_A_REGB_OR_FWD));
-  assign regb_is_illegal = instr_rdata_i[24] & ((alu_op_b_mux_sel_o == OP_B_REGA_OR_FWD) || (alu_op_b_mux_sel_o == OP_B_REGB_OR_FWD));
-  assign waddr_is_illegal = instr_rdata_i[11] & (regfile_alu_we);
-
-  assign illegal_reg_addr = rega_is_illegal | regb_is_illegal | waddr_is_illegal;
-  `endif // RV32E
 
 
 
@@ -1366,10 +551,6 @@ module riscv_decoder
   assign regfile_mem_we_o  = (deassert_we_i) ? 1'b0          : regfile_mem_we;
   assign regfile_alu_we_o  = (deassert_we_i) ? 1'b0          : regfile_alu_we;
   assign data_req_o        = (deassert_we_i) ? 1'b0          : data_req;
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  assign hwloop_we_o       = (deassert_we_i) ? 3'b0          : hwloop_we;
-  `endif // HWLP_SUPPORT
   assign csr_op_o          = (deassert_we_i) ? CSR_OP_NONE   : csr_op;
   assign jump_in_id_o      = (deassert_we_i) ? BRANCH_NONE   : jump_in_id;
   assign ebrk_insn_o       = (deassert_we_i) ? 1'b0          : ebrk_insn;
@@ -1378,10 +559,4 @@ module riscv_decoder
 
   assign jump_in_dec_o     = jump_in_id;
 
-  // CONFIG_REGION: RV32E
-  `ifdef RV32E
-  // the instruction delivered to the ID stage should always be valid
-  assert property (
-    @(posedge clk) (illegal_insn_o) |-> (~illegal_reg_addr) ) else $warning("Register address in instruction is out of bounds (RV32E)!!!");
-  `endif
 endmodule // controller

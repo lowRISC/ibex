@@ -39,20 +39,11 @@ module riscv_prefetch_L0_buffer
   input  logic                                branch_i,
   input  logic [31:0]                         addr_i,
 
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  input  logic                                hwloop_i,
-  input  logic [31:0]                         hwloop_target_i,
-  `endif // HWLP_SUPPORT
 
   input  logic                                ready_i,
   output logic                                valid_o,
   output logic [31:0]                         rdata_o,
   output logic [31:0]                         addr_o,
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  output logic                                is_hwlp_o, // is set when the currently served data is from a hwloop
-  `endif // HWLP_SUPPORT
 
   // goes to instruction memory / instruction cache
   output logic                                instr_req_o,
@@ -67,36 +58,15 @@ module riscv_prefetch_L0_buffer
 
   logic                               busy_L0;
 
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  enum logic [3:0] { IDLE, BRANCHED,
-                     HWLP_WAIT_GNT, HWLP_GRANTED, HWLP_GRANTED_WAIT, HWLP_FETCH_DONE,
-                     NOT_VALID, NOT_VALID_GRANTED, NOT_VALID_CROSS, NOT_VALID_CROSS_GRANTED,
-                     VALID, VALID_CROSS, VALID_GRANTED, VALID_FETCH_DONE } CS, NS;
-  `else 
   enum logic [3:0] { IDLE, BRANCHED,
                      NOT_VALID, NOT_VALID_GRANTED, NOT_VALID_CROSS, NOT_VALID_CROSS_GRANTED,
                      VALID, VALID_CROSS, VALID_GRANTED, VALID_FETCH_DONE } CS, NS;
-  `endif // HWLP_SUPPORT
 
   logic                               do_fetch;
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  logic                               do_hwlp, do_hwlp_int;
-  `endif // HWLP_SUPPORT
   logic                               use_last;
   logic                               save_rdata_last;
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  logic                               use_hwlp;
-  logic                               save_rdata_hwlp;
-  `endif // HWLP_SUPPORT
   logic                               valid;
 
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  logic                               hwlp_is_crossword;
-  `endif // HWLP_SUPPORT
   logic                               is_crossword;
   logic                               next_is_crossword;
   logic                               next_valid;
@@ -105,10 +75,6 @@ module riscv_prefetch_L0_buffer
   logic                               upper_is_compressed;
 
   logic                       [31:0]  addr_q, addr_n, addr_int, addr_aligned_next, addr_real_next;
-    // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  logic                               is_hwlp_q, is_hwlp_n;
-  `endif // HWLP_SUPPORT
 
   logic                       [31:0]  rdata_last_q;
 
@@ -123,10 +89,6 @@ module riscv_prefetch_L0_buffer
   logic                        [31:0] rdata, rdata_unaligned;
 
   logic                               aligned_is_compressed, unaligned_is_compressed;
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  logic                               hwlp_aligned_is_compressed, hwlp_unaligned_is_compressed;
-  `endif // HWLP_SUPPORT
 
 
   prefetch_L0_buffer_L0
@@ -144,11 +106,6 @@ module riscv_prefetch_L0_buffer
     .branch_i             ( branch_i           ),
     .branch_addr_i        ( addr_i             ),
 
-    // CONFIG_REGION: HWLP_SUPPORT
-    `ifdef HWLP_SUPPORT
-    .hwlp_i               ( do_hwlp | do_hwlp_int ),
-    .hwlp_addr_i          ( hwloop_target_i    ),
-    `endif // HWLP_SUPPORT
 
     .fetch_gnt_o          ( fetch_gnt          ),
     .fetch_valid_o        ( fetch_valid        ),
@@ -167,12 +124,7 @@ module riscv_prefetch_L0_buffer
   );
 
 
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  assign rdata = (use_last || use_hwlp) ? rdata_last_q : rdata_L0[addr_o[3:2]];
-  `else 
   assign rdata = use_last ? rdata_last_q : rdata_L0[addr_o[3:2]];
-  `endif // HWLP_SUPPORT
 
   // the lower part of rdata_unaligned is always the higher part of rdata
   assign rdata_unaligned[15:0] = rdata[31:16];
@@ -204,12 +156,6 @@ module riscv_prefetch_L0_buffer
   assign addr_aligned_next = { addr_o[31:2], 2'b00 } + 32'h4;
   assign addr_real_next    = (next_is_crossword) ? { addr_o[31:4], 4'b0000 } + 32'h16 : { addr_o[31:2], 2'b00 } + 32'h4;
 
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  assign hwlp_unaligned_is_compressed = rdata_L0[2][17:16] != 2'b11;
-  assign hwlp_aligned_is_compressed   = rdata_L0[3][1:0] != 2'b11;
-  assign hwlp_is_crossword            = (hwloop_target_i[3:1] == 3'b111) && (~upper_is_compressed);
-  `endif // HWLP_SUPPORT
 
   always_comb
   begin
@@ -247,30 +193,10 @@ module riscv_prefetch_L0_buffer
   begin
     NS              = CS;
     do_fetch        = 1'b0;
-    // CONFIG_REGION: HWLP_SUPPORT
-    `ifdef HWLP_SUPPORT
-    do_hwlp         = 1'b0;
-    do_hwlp_int     = 1'b0;
-    `endif // HWLP_SUPPORT
     use_last        = 1'b0;
-    // CONFIG_REGION: HWLP_SUPPORT
-    `ifdef HWLP_SUPPORT
-    use_hwlp        = 1'b0;
-    `endif // HWLP_SUPPORT
     save_rdata_last = 1'b0;
-    // CONFIG_REGION: HWLP_SUPPORT
-    `ifdef HWLP_SUPPORT
-    save_rdata_hwlp = 1'b0;
-    `endif // HWLP_SUPPORT
     valid           = 1'b0;
     addr_n          = addr_int;
-    // CONFIG_REGION: HWLP_SUPPORT
-    `ifdef HWLP_SUPPORT
-    is_hwlp_n       = is_hwlp_q;
-
-    if (ready_i)
-      is_hwlp_n = 1'b0;
-    `endif // HWLP_SUPPORT
 
     case (CS)
       IDLE: begin
@@ -285,16 +211,7 @@ module riscv_prefetch_L0_buffer
           valid = 1'b1;
 
         if (ready_i) begin
-          // CONFIG_REGION: HWLP_SUPPORT
-          `ifdef HWLP_SUPPORT
-          if (hwloop_i) begin
-            addr_n = addr_o; // keep the old address for now
-            NS = HWLP_WAIT_GNT;
-          end
-          else begin
-          `else
           begin
-          `endif // HWLP_SUPPORT 
 
             if (next_valid) begin
               if (fetch_gnt) begin
@@ -344,10 +261,6 @@ module riscv_prefetch_L0_buffer
 
       NOT_VALID_GRANTED: begin
         valid   = fetch_valid;
-        // CONFIG_REGION: HWLP_SUPPORT
-        `ifdef HWLP_SUPPORT
-        do_hwlp = hwloop_i;
-        `endif // HWLP_SUPPORT
 
         if (fetch_valid)
           NS = VALID;
@@ -368,10 +281,6 @@ module riscv_prefetch_L0_buffer
       begin
         valid    = fetch_valid;
         use_last = 1'b1;
-        // CONFIG_REGION: HWLP_SUPPORT
-        `ifdef HWLP_SUPPORT
-        do_hwlp  = hwloop_i;
-        `endif // HWLP_SUPPORT
 
         if (fetch_valid)
         begin
@@ -385,10 +294,6 @@ module riscv_prefetch_L0_buffer
       VALID: begin
         valid    = 1'b1;
         do_fetch = fetch_possible;  // fetch_possible  =  addr_o[3:2] == 2'b11;//
-        // CONFIG_REGION: HWLP_SUPPORT
-        `ifdef HWLP_SUPPORT
-        do_hwlp  = hwloop_i;
-        `endif // HWLP_SUPPORT
 
         if (ready_i)
         begin
@@ -439,10 +344,6 @@ module riscv_prefetch_L0_buffer
       VALID_CROSS: begin
         valid    = 1'b1;
         use_last = 1'b1;
-        // CONFIG_REGION: HWLP_SUPPORT
-        `ifdef HWLP_SUPPORT
-        do_hwlp  = hwloop_i;
-        `endif // HWLP_SUPPORT
 
         if (ready_i)
           NS = VALID;
@@ -451,10 +352,6 @@ module riscv_prefetch_L0_buffer
       VALID_GRANTED: begin
         valid    = 1'b1;
         use_last = 1'b1;
-        // CONFIG_REGION: HWLP_SUPPORT
-        `ifdef HWLP_SUPPORT
-        do_hwlp  = hwloop_i;
-        `endif // HWLP_SUPPORT
 
 
         if (ready_i) begin
@@ -482,10 +379,6 @@ module riscv_prefetch_L0_buffer
       VALID_FETCH_DONE: begin
         valid    = 1'b1;
         use_last = 1'b1;
-        // CONFIG_REGION: HWLP_SUPPORT
-        `ifdef HWLP_SUPPORT
-        do_hwlp  = hwloop_i;
-        `endif // HWLP_SUPPORT
 
         if (ready_i) begin
           if (next_is_crossword)
@@ -497,106 +390,14 @@ module riscv_prefetch_L0_buffer
         end
       end
 
-      // CONFIG_REGION: HWLP_SUPPORT
-      `ifdef HWLP_SUPPORT
-      HWLP_WAIT_GNT: begin
-        do_hwlp_int = 1'b1;
-
-        if (fetch_gnt) begin
-          is_hwlp_n = 1'b1;
-          addr_n = hwloop_target_i;
-          NS = BRANCHED;
-        end
-      end
-
-      HWLP_GRANTED: begin
-        valid    = 1'b1;
-        use_hwlp = 1'b1;
-
-        if (ready_i) begin
-          addr_n = hwloop_target_i;
-
-          if (fetch_valid) begin
-            is_hwlp_n = 1'b1;
-
-            if (hwlp_is_crossword) begin
-              NS = NOT_VALID_CROSS;
-            end else begin
-              NS = VALID;
-            end
-          end else begin
-            NS = HWLP_GRANTED_WAIT;
-          end
-        end else begin
-          if (fetch_valid)
-            NS = HWLP_FETCH_DONE;
-        end
-      end
-
-      HWLP_GRANTED_WAIT: begin
-        use_hwlp = 1'b1;
-
-        if (fetch_valid) begin
-          is_hwlp_n = 1'b1;
-
-          if (hwlp_is_crossword) begin
-            NS = NOT_VALID_CROSS;
-          end else begin
-            NS = VALID;
-          end
-        end
-      end
-
-      HWLP_FETCH_DONE: begin
-        valid    = 1'b1;
-        use_hwlp = 1'b1;
-
-        if (ready_i) begin
-          is_hwlp_n = 1'b1;
-          addr_n = hwloop_target_i;
-
-          if (hwlp_is_crossword) begin
-            NS = NOT_VALID_CROSS;
-          end else begin
-            NS = VALID;
-          end
-        end
-      end
-      `endif // HWLP_SUPPORT
     endcase
 
     // branches always have priority
     if (branch_i) begin
-      // CONFIG_REGION: HWLP_SUPPORT
-      `ifdef HWLP_SUPPORT
-      is_hwlp_n = 1'b0;
-      `endif // HWLP_SUPPORT
       addr_n    = addr_i;
       NS        = BRANCHED;
 
     end 
-    // CONFIG_REGION: HWLP_SUPPORT
-    `ifdef HWLP_SUPPORT
-    else if (hwloop_i) begin
-      if (do_hwlp) begin
-        if (ready_i) begin
-          if (fetch_gnt) begin
-            is_hwlp_n = 1'b1;
-            addr_n = hwloop_target_i;
-            NS = BRANCHED;
-          end else begin
-            addr_n = addr_o; // keep the old address for now
-            NS = HWLP_WAIT_GNT;
-          end
-        end else begin
-          if (fetch_gnt) begin
-            save_rdata_hwlp = 1'b1;
-            NS = HWLP_GRANTED;
-          end
-        end
-      end
-    end
-    `endif // HWLP_SUPPORT
   end
 
 
@@ -609,31 +410,16 @@ module riscv_prefetch_L0_buffer
     if (~rst_n)
     begin
       addr_q         <= '0;
-      // CONFIG_REGION: HWLP_SUPPORT
-      `ifdef HWLP_SUPPORT
-      is_hwlp_q      <= 1'b0;
-      `endif // HWLP_SUPPORT
       CS             <= IDLE;
       rdata_last_q   <= '0;
     end
     else
     begin
       addr_q    <= addr_n;
-      // CONFIG_REGION: HWLP_SUPPORT
-      `ifdef HWLP_SUPPORT
-      is_hwlp_q <= is_hwlp_n;
-      `endif // HWLP_SUPPORT
 
       CS <= NS;
 
-      // CONFIG_REGION: HWLP_SUPPORT
-      `ifdef HWLP_SUPPORT
-      if (save_rdata_hwlp)
-        rdata_last_q <= rdata_o;
-      else if(save_rdata_last)
-      `else 
       if(save_rdata_last)
-      `endif // HWLP_SUPPORT
            begin
               //rdata_last_q <= rdata_L0[3];
               if(ready_i)
@@ -653,21 +439,12 @@ module riscv_prefetch_L0_buffer
   //////////////////////////////////////////////////////////////////////////////
 
 
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  assign rdata_o = ((~addr_o[1]) || use_hwlp) ? rdata : rdata_unaligned;
-  `else 
   assign rdata_o = (~addr_o[1]) ? rdata : rdata_unaligned;
-  `endif // HWLP_SUPPORT
 
   assign valid_o = valid & (~branch_i);
 
   assign addr_o = addr_q;
 
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  assign is_hwlp_o = is_hwlp_q & (~branch_i);
-  `endif // HWLP_SUPPORT
 
   assign busy_o = busy_L0;
 
@@ -703,11 +480,6 @@ module prefetch_L0_buffer_L0
   input  logic                                branch_i,
   input  logic [31:0]                         branch_addr_i,
 
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  input  logic                                hwlp_i,
-  input  logic [31:0]                         hwlp_addr_i,
-  `endif // HWLP_SUPPORT
 
   output logic                                fetch_gnt_o,
   output logic                                fetch_valid_o,
@@ -726,12 +498,7 @@ module prefetch_L0_buffer_L0
   output logic                                busy_o
 );
 
-  // CONFIG_REGION: HWLP_SUPPORT
-  `ifdef HWLP_SUPPORT
-  enum logic [2:0] { EMPTY, VALID_L0, WAIT_GNT, WAIT_RVALID, ABORTED_BRANCH, WAIT_HWLOOP } CS, NS;
-  `else
   enum logic [2:0] { EMPTY, VALID_L0, WAIT_GNT, WAIT_RVALID, ABORTED_BRANCH} CS, NS;
-  `endif // HWLP_SUPPORT
 
   logic [3:0][31:0]   L0_buffer;
   logic      [31:0]   addr_q, instr_addr_int;
@@ -757,20 +524,10 @@ module prefetch_L0_buffer_L0
       begin
         if (branch_i)
           instr_addr_int = branch_addr_i;
-        // CONFIG_REGION: HWLP_SUPPORT
-        `ifdef HWLP_SUPPORT
-        else if (hwlp_i)
-          instr_addr_int = hwlp_addr_i;
-        `endif // HWLP_SUPPORT
         else
           instr_addr_int = prefetch_addr_i;
 
-        // CONFIG_REGION: HWLP_SUPPORT
-        `ifdef HWLP_SUPPORT
-        if (branch_i | hwlp_i | prefetch_i) // make the request to icache
-        `else 
         if (branch_i | prefetch_i) // make the request to icache
-        `endif // HWLP_SUPPORT
         begin
           instr_req_o    = 1'b1;
 
@@ -785,11 +542,6 @@ module prefetch_L0_buffer_L0
       begin
         if (branch_i)
           instr_addr_int = branch_addr_i;
-        // CONFIG_REGION: HWLP_SUPPORT
-        `ifdef HWLP_SUPPORT
-        else if (hwlp_i)
-          instr_addr_int = hwlp_addr_i;
-        `endif // HWLP_SUPPORT
         else
           instr_addr_int = addr_q;
 
@@ -821,11 +573,6 @@ module prefetch_L0_buffer_L0
         if (branch_i)
           instr_addr_int = branch_addr_i;
 
-        // CONFIG_REGION: HWLP_SUPPORT
-        `ifdef HWLP_SUPPORT
-        else if (hwlp_i)
-          instr_addr_int = hwlp_addr_i;
-        `endif // HWLP_SUPPORT
         else
           instr_addr_int = prefetch_addr_i;
 
@@ -852,12 +599,7 @@ module prefetch_L0_buffer_L0
           begin
             fetch_valid_o = 1'b1;
 
-            // CONFIG_REGION: HWLP_SUPPORT
-            `ifdef HWLP_SUPPORT
-            if (prefetch_i | hwlp_i) // we are receiving the last packet, then prefetch the next one
-            `else 
             if (prefetch_i) // we are receiving the last packet, then prefetch the next one
-            `endif // HWLP_SUPPORT
             begin
               instr_req_o    = 1'b1;
 
@@ -880,20 +622,10 @@ module prefetch_L0_buffer_L0
 
         if (branch_i)
           instr_addr_int = branch_addr_i;
-        // CONFIG_REGION: HWLP_SUPPORT
-        `ifdef HWLP_SUPPORT
-        else if (hwlp_i)
-          instr_addr_int = hwlp_addr_i;
-        `endif // HWLP_SUPPORT
         else
           instr_addr_int = prefetch_addr_i;
 
-        // CONFIG_REGION: HWLP_SUPPORT
-        `ifdef HWLP_SUPPORT
-        if (branch_i | hwlp_i | prefetch_i)
-        `else 
         if (branch_i | prefetch_i)
-        `endif // HWLP_SUPPORT
         begin
           instr_req_o    = 1'b1;
 
@@ -954,12 +686,7 @@ module prefetch_L0_buffer_L0
         L0_buffer <= instr_rdata_i;
       end
 
-      // CONFIG_REGION: HWLP_SUPPORT
-      `ifdef HWLP_SUPPORT
-      if (branch_i | hwlp_i | prefetch_i)
-      `else 
       if (branch_i | prefetch_i)
-      `endif // HWLP_SUPPORT
         addr_q <= instr_addr_int;
     end
   end

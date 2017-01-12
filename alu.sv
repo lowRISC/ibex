@@ -37,24 +37,8 @@ module riscv_alu
   input  logic [31:0]              operand_b_i,
   input  logic [31:0]              operand_c_i,
 
-  // CONFIG_REGION: VEC_SUPPORT
-  `ifdef VEC_SUPPORT
-  input  logic [ 1:0]              vector_mode_i,
-  `endif // VEC_SUPPORT
-  // CONFIG_REGION: BIT_SUPPORT
-  `ifdef BIT_SUPPORT
-  input  logic [ 4:0]              bmask_a_i,
-  input  logic [ 4:0]              bmask_b_i,
-  `endif // BIT_SUPPORT
-  // CONFIG_REGION: VEC_SUPPORT
-  `ifdef VEC_SUPPORT
-  input  logic [ 1:0]              imm_vec_ext_i,
-  `endif // VEC_SUPPORT 
 
-  // CONFIG_REGION: LSU_ADDER_SUPPORT
-  `ifndef LSU_ADDER_SUPPORT
   output logic [31:0]              adder_result_o,
-  `endif // LSU_ADDER_SUPPORT
 
   output logic [31:0]              result_o,
   output logic                     comparison_result_o,
@@ -92,16 +76,7 @@ module riscv_alu
 
   assign operand_b_neg = ~operand_b_i;
 
-  // CONFIG_REGION: MUL_SUPPORT
-  `ifdef MUL_SUPPORT
-  logic [5:0]  div_shift;
-  logic        div_valid;
-  `endif // MUL_SUPPORT
 
-  // CONFIG_REGION: BIT_SUPPORT
-  `ifdef BIT_SUPPORT
-  logic [31:0] bmask;
-  `endif // BIT_SUPPORT
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //   ____            _   _ _   _                      _      _       _     _            //
@@ -152,37 +127,8 @@ module riscv_alu
       // special case for subtractions and absolute number calculations
       adder_in_b[0] = 1'b1;
 
-      // CONFIG_REGION: VEC_SUPPORT
-      `ifdef VEC_SUPPORT
-      case (vector_mode_i)
-        VEC_MODE16: begin
-          adder_in_b[18] = 1'b1;
-        end
-
-        VEC_MODE8: begin
-          adder_in_b[ 9] = 1'b1;
-          adder_in_b[18] = 1'b1;
-          adder_in_b[27] = 1'b1;
-        end
-      endcase
-      `endif // VEC_SUPPORT
 
     end else begin
-      // CONFIG_REGION: VEC_SUPPORT
-      `ifdef VEC_SUPPORT
-      // take care of partitioning the adder for the addition case
-      case (vector_mode_i)
-        VEC_MODE16: begin
-          adder_in_a[18] = 1'b0;
-        end
-
-        VEC_MODE8: begin
-          adder_in_a[ 9] = 1'b0;
-          adder_in_a[18] = 1'b0;
-          adder_in_a[27] = 1'b0;
-        end
-      endcase
-      `endif // VEC_SUPPORT
     end
   end
 
@@ -198,21 +144,10 @@ module riscv_alu
   logic [31:0] adder_round_value;
   logic [31:0] adder_round_result;
 
-  // CONFIG_REGION: BIT_SUPPORT
-  `ifdef BIT_SUPPORT
-  assign adder_round_value  = ((operator_i == ALU_ADDR) || (operator_i == ALU_SUBR) ||
-                               (operator_i == ALU_ADDUR) || (operator_i == ALU_SUBUR)) ?
-                                {1'b0, bmask[31:1]} : '0;
-  assign adder_round_result = adder_result + adder_round_value;
-  `else
   assign adder_round_value  = '0;
   assign adder_round_result = adder_result;
-  `endif // BIT_SUPPORT
 
-  // CONFIG_REGION: LSU_ADDER_SUPPORT
-  `ifndef LSU_ADDER_SUPPORT
   assign adder_result_o = adder_result;
-  `endif // LSU_ADDER_SUPPORT
 
   ////////////////////////////////////////
   //  ____  _   _ ___ _____ _____       //
@@ -236,44 +171,14 @@ module riscv_alu
   logic [31:0] shift_right_result;
   logic [31:0] shift_left_result;
 
-  // CONFIG_REGION: MUL_SUPPORT
-  `ifdef MUL_SUPPORT
-  // shifter is also used for preparing operand for division
-  assign shift_amt = div_valid ? div_shift : operand_b_i;
-  `else
   assign shift_amt = operand_b_i;
-  `endif // MUL_SUPPORT
 
   // by reversing the bits of the input, we also have to reverse the order of shift amounts
   always_comb
   begin
-    // CONFIG_REGION: VEC_SUPPORT
-    `ifdef VEC_SUPPORT
-    case(vector_mode_i)
-      VEC_MODE16:
-      begin
-        shift_amt_left[15: 0] = shift_amt[31:16];
-        shift_amt_left[31:16] = shift_amt[15: 0];
-      end
-
-      VEC_MODE8:
-      begin
-        shift_amt_left[ 7: 0] = shift_amt[31:24];
-        shift_amt_left[15: 8] = shift_amt[23:16];
-        shift_amt_left[23:16] = shift_amt[15: 8];
-        shift_amt_left[31:24] = shift_amt[ 7: 0];
-      end
-
-      default: // VEC_MODE32
-      begin
-        shift_amt_left[31: 0] = shift_amt[31: 0];
-      end
-    endcase
-    `else
     begin
       shift_amt_left[31: 0] = shift_amt[31: 0];
     end
-    `endif // VEC_SUPPORT
   end
 
   // ALU_FL1 and ALU_CBL are used for the bit counting ops later
@@ -299,12 +204,7 @@ module riscv_alu
   assign shift_amt_int = shift_use_round ? shift_amt_norm :
                           (shift_left ? shift_amt_left : shift_amt);
 
-   // CONFIG_REGION: BIT_SUPPORT
-  `ifdef BIT_SUPPORT
-  assign shift_amt_norm = {4{3'b000, bmask_b_i}};
-  `else
   assign shift_amt_norm = '0;
-  `endif // BIT_SUPPORT
 
   // right shifts, we let the synthesizer optimize this
   logic [63:0] shift_op_a_32;
@@ -313,33 +213,9 @@ module riscv_alu
 
   always_comb
   begin
-    // CONFIG_REGION: VEC_SUPPORT
-    `ifdef VEC_SUPPORT
-    case(vector_mode_i)
-      VEC_MODE16:
-      begin
-          shift_right_result[31:16] = $signed( {shift_arithmetic & shift_op_a[31], shift_op_a[31:16] }) >>> shift_amt_int[19:16];
-          shift_right_result[15: 0] = $signed( {shift_arithmetic & shift_op_a[15], shift_op_a[15: 0] }) >>> shift_amt_int[ 3: 0];
-      end
-
-      VEC_MODE8:
-      begin
-          shift_right_result[31:24] = $signed( {shift_arithmetic & shift_op_a[31], shift_op_a[31:24] }) >>> shift_amt_int[26:24];
-          shift_right_result[23:16] = $signed( {shift_arithmetic & shift_op_a[23], shift_op_a[23:16] }) >>> shift_amt_int[18:16];
-          shift_right_result[15: 8] = $signed( {shift_arithmetic & shift_op_a[15], shift_op_a[15: 8] }) >>> shift_amt_int[10: 8];
-          shift_right_result[ 7: 0] = $signed( {shift_arithmetic & shift_op_a[ 7], shift_op_a[ 7: 0] }) >>> shift_amt_int[ 2: 0];
-      end
-
-      default: // VEC_MODE32
-      begin
-          shift_right_result = shift_op_a_32 >> shift_amt_int[4:0];
-      end
-    endcase; // case (vec_mode_i)
-    `else
     begin
         shift_right_result = shift_op_a_32 >> shift_amt_int[4:0];
     end
-    `endif // VEC_SUPPORT
   end
 
   // bit reverse the shift_right_result for left shifts
@@ -387,16 +263,7 @@ module riscv_alu
       ALU_ABS,
       ALU_CLIP,
       ALU_CLIPU: begin
-      // CONFIG_REGION: VEC_SUPPORT
-        `ifdef VEC_SUPPORT
-        case (vector_mode_i)
-          VEC_MODE8:  cmp_signed[3:0] = 4'b1111;
-          VEC_MODE16: cmp_signed[3:0] = 4'b1010;
-          default:     cmp_signed[3:0] = 4'b1000;
-        endcase
-        `else
         cmp_signed[3:0] = 4'b1000;
-        `endif // VEC_SUPPORT
       end
 
       default:;
@@ -426,26 +293,6 @@ module riscv_alu
                                             | (is_equal_vec[2] & (is_greater_vec[1]
                                              | (is_equal_vec[1] & (is_greater_vec[0]))))))}};
 
-    // CONFIG_REGION: VEC_SUPPORT
-    `ifdef VEC_SUPPORT
-    case(vector_mode_i)
-      VEC_MODE16:
-      begin
-        is_equal[1:0]   = {2{is_equal_vec[0]   & is_equal_vec[1]}};
-        is_equal[3:2]   = {2{is_equal_vec[2]   & is_equal_vec[3]}};
-        is_greater[1:0] = {2{is_greater_vec[1] | (is_equal_vec[1] & is_greater_vec[0])}};
-        is_greater[3:2] = {2{is_greater_vec[3] | (is_equal_vec[3] & is_greater_vec[2])}};
-      end
-
-      VEC_MODE8:
-      begin
-        is_equal[3:0]   = is_equal_vec[3:0];
-        is_greater[3:0] = is_greater_vec[3:0];
-      end
-
-      default:; // see default assignment
-    endcase
-    `endif
   end
 
   // generate comparison result
@@ -510,253 +357,6 @@ module riscv_alu
   //                                              //
   //////////////////////////////////////////////////
 
-  // CONFIG_REGION: MATH_SPECIAL_SUPPORT
-  `ifdef MATH_SPECIAL_SUPPORT
-
-  logic [ 3: 0][1:0] shuffle_byte_sel; // select byte in register: 31:24, 23:16, 15:8, 7:0
-  logic [ 3: 0]      shuffle_reg_sel;  // select register: rD/rS2 or rS1
-  logic [ 1: 0]      shuffle_reg1_sel; // select register rD or rS2 for next stage
-  logic [ 1: 0]      shuffle_reg0_sel;
-  logic [ 3: 0]      shuffle_through;
-
-  logic [31: 0]      shuffle_r1, shuffle_r0;
-  logic [31: 0]      shuffle_r1_in, shuffle_r0_in;
-  logic [31: 0]      shuffle_result;
-  logic [31: 0]      pack_result;
-
-
-  always_comb
-  begin
-    shuffle_reg_sel  = '0;
-    shuffle_reg1_sel = 2'b01;
-    shuffle_reg0_sel = 2'b10;
-    shuffle_through  = '1;
-
-    unique case(operator_i)
-      ALU_EXT, ALU_EXTS: begin
-        if (operator_i == ALU_EXTS)
-          shuffle_reg1_sel = 2'b11;
-        // CONFIG_REGION: VEC_SUPPORT
-        `ifdef VEC_SUPPORT
-        if (vector_mode_i == VEC_MODE8) begin
-          shuffle_reg_sel[3:1] = 3'b111;
-          shuffle_reg_sel[0]   = 1'b0;
-        end else begin
-          shuffle_reg_sel[3:2] = 2'b11;
-          shuffle_reg_sel[1:0] = 2'b00;
-        end
-        `else
-        shuffle_reg_sel[3:2] = 2'b11;
-        shuffle_reg_sel[1:0] = 2'b00;
-        `endif // VEC_SUPPORT
-      end
-
-      ALU_PCKLO: begin
-        shuffle_reg1_sel = 2'b00;
-        // CONFIG_REGION: VEC_SUPPORT
-        `ifdef VEC_SUPPORT
-        if (vector_mode_i == VEC_MODE8) begin
-          shuffle_through = 4'b0011;
-          shuffle_reg_sel = 4'b0001;
-        end else begin
-          shuffle_reg_sel = 4'b0011;
-        end
-        `else
-          shuffle_reg_sel = 4'b0011;
-        `endif // VEC_SUPPORT
-      end
-
-      ALU_PCKHI: begin
-        shuffle_reg1_sel = 2'b00;
-
-        shuffle_reg_sel = 4'b0100;
-        shuffle_through = 4'b1100;
-      end
-
-      // CONFIG_REGION: VEC_SUPPORT
-      `ifdef VEC_SUPPORT
-      ALU_SHUF2: begin
-        unique case (vector_mode_i)
-          VEC_MODE8: begin
-            shuffle_reg_sel[3] = ~operand_b_i[26];
-            shuffle_reg_sel[2] = ~operand_b_i[18];
-            shuffle_reg_sel[1] = ~operand_b_i[10];
-            shuffle_reg_sel[0] = ~operand_b_i[ 2];
-          end
-
-          VEC_MODE16: begin
-            shuffle_reg_sel[3] = ~operand_b_i[17];
-            shuffle_reg_sel[2] = ~operand_b_i[17];
-            shuffle_reg_sel[1] = ~operand_b_i[ 1];
-            shuffle_reg_sel[0] = ~operand_b_i[ 1];
-          end
-          default:;
-        endcase
-      end
-
-      ALU_INS: begin
-        unique case (vector_mode_i)
-          VEC_MODE8: begin
-            shuffle_reg0_sel = 2'b00;
-            unique case (imm_vec_ext_i)
-              2'b00: begin
-                shuffle_reg_sel[3:0] = 4'b1110;
-              end
-              2'b01: begin
-                shuffle_reg_sel[3:0] = 4'b1101;
-              end
-              2'b10: begin
-                shuffle_reg_sel[3:0] = 4'b1011;
-              end
-              2'b11: begin
-                shuffle_reg_sel[3:0] = 4'b0111;
-              end
-              default:;
-            endcase
-          end
-          VEC_MODE16: begin
-            shuffle_reg0_sel = 2'b01;
-            shuffle_reg_sel[3] = ~imm_vec_ext_i[ 0];
-            shuffle_reg_sel[2] = ~imm_vec_ext_i[ 0];
-            shuffle_reg_sel[1] =  imm_vec_ext_i[ 0];
-            shuffle_reg_sel[0] =  imm_vec_ext_i[ 0];
-          end
-          default:;
-        endcase
-      end
-      `endif // VEC_SUPPORT
-
-      default:;
-    endcase
-  end
-
-  always_comb
-  begin
-    shuffle_byte_sel = 'x;
-
-    // byte selector
-    unique case (operator_i)
-      // CONFIG_REGION: VEC_SUPPORT
-      `ifdef VEC_SUPPORT
-      ALU_EXTS,
-      ALU_EXT: begin
-        unique case (vector_mode_i)
-          VEC_MODE8: begin
-            shuffle_byte_sel[3] = imm_vec_ext_i[1:0];
-            shuffle_byte_sel[2] = imm_vec_ext_i[1:0];
-            shuffle_byte_sel[1] = imm_vec_ext_i[1:0];
-            shuffle_byte_sel[0] = imm_vec_ext_i[1:0];
-          end
-
-          VEC_MODE16: begin
-            shuffle_byte_sel[3] = {imm_vec_ext_i[0], 1'b1};
-            shuffle_byte_sel[2] = {imm_vec_ext_i[0], 1'b1};
-            shuffle_byte_sel[1] = {imm_vec_ext_i[0], 1'b1};
-            shuffle_byte_sel[0] = {imm_vec_ext_i[0], 1'b0};
-          end
-
-          default:;
-        endcase
-      end
-
-      ALU_PCKLO,
-      ALU_PCKHI: begin
-        unique case (vector_mode_i)
-          VEC_MODE8: begin
-            shuffle_byte_sel[3] = 2'b00;
-            shuffle_byte_sel[2] = 2'b00;
-            shuffle_byte_sel[1] = 2'b00;
-            shuffle_byte_sel[0] = 2'b00;
-          end
-
-          VEC_MODE16: begin
-            shuffle_byte_sel[3] = 2'b01;
-            shuffle_byte_sel[2] = 2'b00;
-            shuffle_byte_sel[1] = 2'b01;
-            shuffle_byte_sel[0] = 2'b00;
-          end
-
-          default:;
-        endcase
-      end
-
-      ALU_SHUF2,
-      ALU_SHUF: begin
-        unique case (vector_mode_i)
-          VEC_MODE8: begin
-            shuffle_byte_sel[3] = operand_b_i[25:24];
-            shuffle_byte_sel[2] = operand_b_i[17:16];
-            shuffle_byte_sel[1] = operand_b_i[ 9: 8];
-            shuffle_byte_sel[0] = operand_b_i[ 1: 0];
-          end
-
-          VEC_MODE16: begin
-            shuffle_byte_sel[3] = {operand_b_i[16], 1'b1};
-            shuffle_byte_sel[2] = {operand_b_i[16], 1'b0};
-            shuffle_byte_sel[1] = {operand_b_i[ 0], 1'b1};
-            shuffle_byte_sel[0] = {operand_b_i[ 0], 1'b0};
-          end
-          default:;
-        endcase
-      end
-      `endif // VEC_SUPPORT
-
-      ALU_INS: begin
-        shuffle_byte_sel[3] = 2'b11;
-        shuffle_byte_sel[2] = 2'b10;
-        shuffle_byte_sel[1] = 2'b01;
-        shuffle_byte_sel[0] = 2'b00;
-      end
-
-      default:;
-    endcase
-  end
-
-  assign shuffle_r0_in = shuffle_reg0_sel[1] ?
-                          operand_a_i :
-                          (shuffle_reg0_sel[0] ? {2{operand_a_i[15:0]}} : {4{operand_a_i[7:0]}});
-
-  assign shuffle_r1_in = shuffle_reg1_sel[1] ?
-                                 {{8{operand_a_i[31]}}, {8{operand_a_i[23]}}, {8{operand_a_i[15]}}, {8{operand_a_i[7]}}} :
-                                 (shuffle_reg1_sel[0] ? operand_c_i : operand_b_i);
-
-  assign shuffle_r0[31:24] = shuffle_byte_sel[3][1] ?
-                              (shuffle_byte_sel[3][0] ? shuffle_r0_in[31:24] : shuffle_r0_in[23:16]) :
-                              (shuffle_byte_sel[3][0] ? shuffle_r0_in[15: 8] : shuffle_r0_in[ 7: 0]);
-  assign shuffle_r0[23:16] = shuffle_byte_sel[2][1] ?
-                              (shuffle_byte_sel[2][0] ? shuffle_r0_in[31:24] : shuffle_r0_in[23:16]) :
-                              (shuffle_byte_sel[2][0] ? shuffle_r0_in[15: 8] : shuffle_r0_in[ 7: 0]);
-  assign shuffle_r0[15: 8] = shuffle_byte_sel[1][1] ?
-                              (shuffle_byte_sel[1][0] ? shuffle_r0_in[31:24] : shuffle_r0_in[23:16]) :
-                              (shuffle_byte_sel[1][0] ? shuffle_r0_in[15: 8] : shuffle_r0_in[ 7: 0]);
-  assign shuffle_r0[ 7: 0] = shuffle_byte_sel[0][1] ?
-                              (shuffle_byte_sel[0][0] ? shuffle_r0_in[31:24] : shuffle_r0_in[23:16]) :
-                              (shuffle_byte_sel[0][0] ? shuffle_r0_in[15: 8] : shuffle_r0_in[ 7: 0]);
-
-  assign shuffle_r1[31:24] = shuffle_byte_sel[3][1] ?
-                              (shuffle_byte_sel[3][0] ? shuffle_r1_in[31:24] : shuffle_r1_in[23:16]) :
-                              (shuffle_byte_sel[3][0] ? shuffle_r1_in[15: 8] : shuffle_r1_in[ 7: 0]);
-  assign shuffle_r1[23:16] = shuffle_byte_sel[2][1] ?
-                              (shuffle_byte_sel[2][0] ? shuffle_r1_in[31:24] : shuffle_r1_in[23:16]) :
-                              (shuffle_byte_sel[2][0] ? shuffle_r1_in[15: 8] : shuffle_r1_in[ 7: 0]);
-  assign shuffle_r1[15: 8] = shuffle_byte_sel[1][1] ?
-                              (shuffle_byte_sel[1][0] ? shuffle_r1_in[31:24] : shuffle_r1_in[23:16]) :
-                              (shuffle_byte_sel[1][0] ? shuffle_r1_in[15: 8] : shuffle_r1_in[ 7: 0]);
-  assign shuffle_r1[ 7: 0] = shuffle_byte_sel[0][1] ?
-                              (shuffle_byte_sel[0][0] ? shuffle_r1_in[31:24] : shuffle_r1_in[23:16]) :
-                              (shuffle_byte_sel[0][0] ? shuffle_r1_in[15: 8] : shuffle_r1_in[ 7: 0]);
-
-  assign shuffle_result[31:24] = shuffle_reg_sel[3] ? shuffle_r1[31:24] : shuffle_r0[31:24];
-  assign shuffle_result[23:16] = shuffle_reg_sel[2] ? shuffle_r1[23:16] : shuffle_r0[23:16];
-  assign shuffle_result[15: 8] = shuffle_reg_sel[1] ? shuffle_r1[15: 8] : shuffle_r0[15: 8];
-  assign shuffle_result[ 7: 0] = shuffle_reg_sel[0] ? shuffle_r1[ 7: 0] : shuffle_r0[ 7: 0];
-
-  assign pack_result[31:24] = shuffle_through[3] ? shuffle_result[31:24] : operand_c_i[31:24];
-  assign pack_result[23:16] = shuffle_through[2] ? shuffle_result[23:16] : operand_c_i[23:16];
-  assign pack_result[15: 8] = shuffle_through[1] ? shuffle_result[15: 8] : operand_c_i[15: 8];
-  assign pack_result[ 7: 0] = shuffle_through[0] ? shuffle_result[ 7: 0] : operand_c_i[ 7: 0];
-
-  `endif // MATH_SPECIAL_SUPPORT
 
 
   /////////////////////////////////////////////////////////////////////
@@ -768,79 +368,6 @@ module riscv_alu
   //                                                   |_|           //
   /////////////////////////////////////////////////////////////////////
 
-  // CONFIG_REGION: MATH_SPECIAL_SUPPORT
-  `ifdef MATH_SPECIAL_SUPPORT
-
-  logic [31:0] ff_input;   // either op_a_i or its bit reversed version
-  logic [5:0]  cnt_result; // population count
-  logic [5:0]  clb_result; // count leading bits
-  logic [4:0]  ff1_result; // holds the index of the first '1'
-  logic        ff_no_one;  // if no ones are found
-  logic [4:0]  fl1_result; // holds the index of the last '1'
-  logic [5:0]  bitop_result; // result of all bitop operations muxed together
-
-  alu_popcnt alu_popcnt_i
-  (
-    .in_i        ( operand_a_i ),
-    .result_o    ( cnt_result  )
-  );
-
-  always_comb
-  begin
-    ff_input = 'x;
-
-    case (operator_i)
-      ALU_FF1: ff_input = operand_a_i;
-
-      ALU_DIVU,
-      ALU_REMU,
-      ALU_FL1: ff_input = operand_a_rev;
-
-      ALU_DIV,
-      ALU_REM,
-      ALU_CLB: begin
-        if (operand_a_i[31])
-          ff_input = operand_a_neg_rev;
-        else
-          ff_input = operand_a_rev;
-      end
-    endcase
-  end
-
-  alu_ff alu_ff_i
-  (
-    .in_i        ( ff_input   ),
-    .first_one_o ( ff1_result ),
-    .no_ones_o   ( ff_no_one  )
-  );
-
-  // special case if ff1_res is 0 (no 1 found), then we keep the 0
-  // this is done in the result mux
-  assign fl1_result  = 5'd31 - ff1_result;
-  assign clb_result  = ff1_result - 5'd1;
-
-  always_comb
-  begin
-    bitop_result = 'x;
-    case (operator_i)
-      ALU_FF1: bitop_result = ff_no_one ? 6'd32 : {1'b0, ff1_result};
-      ALU_FL1: bitop_result = ff_no_one ? 6'd32 : {1'b0, fl1_result};
-      ALU_CNT: bitop_result = cnt_result;
-      ALU_CLB: begin
-        if (ff_no_one) begin
-          if (operand_a_i[31])
-            bitop_result = 6'd31;
-          else
-            bitop_result = '0;
-        end else begin
-          bitop_result = clb_result;
-        end
-      end
-      default:;
-    endcase
-  end
-
-  `endif // MATH_SPECIAL_SUPPORT
 
 
   ////////////////////////////////////////////////
@@ -852,30 +379,6 @@ module riscv_alu
   //                                    |_|     //
   ////////////////////////////////////////////////
 
-  // CONFIG_REGION: BIT_SUPPORT
-  `ifdef BIT_SUPPORT
-  logic        extract_is_signed;
-  logic        extract_sign;
-  logic [31:0] bmask_first, bmask_inv;
-  logic [31:0] bextins_and;
-  logic [31:0] bextins_result, bclr_result, bset_result;
-
-  // construct bit mask for insert/extract/bclr/bset
-  // bmask looks like this 00..0011..1100..00
-  assign bmask_first = {32'hFFFFFFFE} << bmask_a_i;
-  assign bmask       = (~bmask_first) << bmask_b_i;
-  assign bmask_inv   = ~bmask;
-
-  assign bextins_and = (operator_i == ALU_BINS) ? operand_c_i : {32{extract_sign}};
-
-  assign extract_is_signed = (operator_i == ALU_BEXT);
-  assign extract_sign = extract_is_signed & shift_result[bmask_a_i];
-
-  assign bextins_result = (bmask & shift_result) | (bextins_and & bmask_inv);
-
-  assign bclr_result = operand_a_i & bmask_inv;
-  assign bset_result = operand_a_i | bmask;
-  `endif // BIT_SUPPORT
 
   ////////////////////////////////////////////////////
   //  ____ _____     __     __  ____  _____ __  __  //
@@ -887,53 +390,6 @@ module riscv_alu
   ////////////////////////////////////////////////////
 
 
-  // CONFIG_REGION: MUL_SUPPORT
-  `ifdef MUL_SUPPORT
-  logic [31:0] result_div;
-
-  logic        div_ready;
-  logic        div_signed;
-  logic        div_op_a_signed;
-  logic        div_op_b_signed;
-  logic [5:0]  div_shift_int;
-
-  assign div_signed = operator_i[0];
-
-  assign div_op_a_signed = operand_a_i[31] & div_signed;
-  assign div_op_b_signed = operand_b_i[31] & div_signed;
-
-  assign div_shift_int = ff_no_one ? 6'd31 : clb_result;
-  assign div_shift = div_shift_int + (div_op_a_signed ? 6'd0 : 6'd1);
-
-  assign div_valid = (operator_i == ALU_DIV) || (operator_i == ALU_DIVU) ||
-                     (operator_i == ALU_REM) || (operator_i == ALU_REMU);
-
-
-
-  // inputs A and B are swapped
-  riscv_alu_div div_i
-  (
-    .Clk_CI       ( clk               ),
-    .Rst_RBI      ( rst_n             ),
-
-    // input IF
-    .OpA_DI       ( operand_b_i       ),
-    .OpB_DI       ( shift_left_result ),
-    .OpBShift_DI  ( div_shift         ),
-    .OpBIsZero_SI ( (cnt_result == 0) ),
-
-    .OpBSign_SI   ( div_op_a_signed   ),
-    .OpCode_SI    ( operator_i[1:0]   ),
-
-    .Res_DO       ( result_div        ),
-
-    // Hand-Shake
-    .InVld_SI     ( div_valid         ),
-    .OutRdy_SI    ( ex_ready_i        ),
-    .OutVld_SO    ( div_ready         )
-  );
-
-  `endif // MUL_SUPPORT
 
   ////////////////////////////////////////////////////////
   //   ____                 _ _     __  __              //
@@ -961,19 +417,7 @@ module riscv_alu
       ALU_SRL, ALU_SRA,
       ALU_ROR:  result_o = shift_result;
 
-      // CONFIG_REGION: BIT_SUPPORT
-      `ifdef BIT_SUPPORT
-      // bit manipulation instructions
-      ALU_BINS,
-      ALU_BEXT,
-      ALU_BEXTU: result_o = bextins_result;
 
-      ALU_BCLR:  result_o = bclr_result;
-      ALU_BSET:  result_o = bset_result;
-      `endif // BIT_SUPPORT
-
-      // CONFIG_REGION: MATH_SPECIAL_SUPPORT
-      `ifdef MATH_SPECIAL_SUPPORT      
       // pack and shuffle operations
       ALU_SHUF,  ALU_SHUF2,
       ALU_PCKLO, ALU_PCKHI,
@@ -986,7 +430,6 @@ module riscv_alu
       ALU_ABS: result_o = result_minmax;
 
       ALU_CLIP, ALU_CLIPU: result_o = clip_result;
-      `endif // MATH_SPECIAL_SUPPORT
 
       // Comparison Operations
       ALU_EQ,    ALU_NE,
@@ -1002,28 +445,13 @@ module riscv_alu
       ALU_SLTS,  ALU_SLTU,
       ALU_SLETS, ALU_SLETU: result_o = {31'b0, comparison_result_o};
 
-      // CONFIG_REGION: MATH_SPECIAL_SUPPORT
-      `ifdef MATH_SPECIAL_SUPPORT
-      ALU_FF1, ALU_FL1, ALU_CLB, ALU_CNT: result_o = {26'h0, bitop_result[5:0]};
-      `endif // MATH_SPECIAL_SUPPORT
 
-      // CONFIG_REGION: MUL_SUPPORT
-      `ifdef MUL_SUPPORT
-      // Division Unit Commands
-      ALU_DIV, ALU_DIVU,
-      ALU_REM, ALU_REMU: result_o = result_div;
-      `endif // MUL_SUPPORT
 
       default: ; // default case to suppress unique warning
     endcase
   end
 
-  // CONFIG_REGION: MUL_SUPPORT
-  `ifdef MUL_SUPPORT
-  assign ready_o = div_ready;
-  `else
   assign ready_o = 1'b1;
-  `endif // MUL_SUPPORT
 
 
 endmodule
