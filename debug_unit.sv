@@ -443,7 +443,7 @@ module riscv_debug_unit
         npc_int = pc_id_i;
         `else
         ppc_int = pc_id_i;
-        npc_int = pc_id_i;
+        npc_int = pc_if_i;
         `endif
       end
 
@@ -454,7 +454,7 @@ module riscv_debug_unit
         npc_int = pc_id_i;
         `else
         ppc_int = pc_id_i;
-        npc_int = pc_id_i;
+        npc_int = pc_if_i;
         `endif
         
 

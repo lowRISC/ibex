@@ -383,86 +383,89 @@ module riscv_controller
             `endif
           end
 
-          // handle unconditional jumps
-          // we can jump directly since we know the address already
-          // we don't need to worry about conditional branches here as they
-          // will be evaluated in the EX stage
-          else if ((jump_in_dec_i == BRANCH_JALR || jump_in_dec_i == BRANCH_JAL) & id_ready_i) begin
-            pc_mux_o = PC_JUMP;
+          else begin
 
-            pc_set_o    = 1'b1;
-            jump_done   = 1'b1;
+            // handle unconditional jumps
+            // we can jump directly since we know the address already
+            // we don't need to worry about conditional branches here as they
+            // will be evaluated in the EX stage
+            else if ((jump_in_dec_i == BRANCH_JALR || jump_in_dec_i == BRANCH_JAL) & id_ready_i) begin
+              pc_mux_o = PC_JUMP;
 
-            // we don't have to change our current state here as the prefetch
-            // buffer is automatically invalidated, thus the next instruction
-            // that is served to the ID stage is the one of the jump target
-
-          end else begin
-            // handle exceptions
-            if (exc_req_i) begin
-              pc_mux_o      = PC_EXCEPTION;
-              pc_set_o      = 1'b1;
-              exc_ack_o     = 1'b1;
-
-              exc_save_if_o = 1'b1;
+              pc_set_o    = 1'b1;
+              jump_done   = 1'b1;
 
               // we don't have to change our current state here as the prefetch
               // buffer is automatically invalidated, thus the next instruction
-              // that is served to the ID stage is the one of the jump to the
-              // exception handler
-            end
-          end
+              // that is served to the ID stage is the one of the jump target
 
-          if (eret_insn_i) begin
-            pc_mux_o         = PC_ERET;
-            exc_restore_id_o = 1'b1;
+            end else begin
+              // handle exceptions
+              if (exc_req_i) begin
+                pc_mux_o      = PC_EXCEPTION;
+                pc_set_o      = 1'b1;
+                exc_ack_o     = 1'b1;
 
-            if ((~jump_done_q)) begin
-              pc_set_o    = 1'b1;
-              jump_done   = 1'b1;
-            end
-          end
+                exc_save_if_o = 1'b1;
 
-          // handle WFI instruction, flush pipeline and (potentially) go to
-          // sleep
-          // also handles eret when the core should go back to sleep
-          if (pipe_flush_i || (eret_insn_i && (~fetch_enable_i)))
-          begin
-            halt_if_o = 1'b1;
-            halt_id_o = 1'b1;
-
-            ctrl_fsm_ns = FLUSH_WB;
-          end
-          else if (dbg_req_i)
-          begin
-            // take care of debug
-            // branch conditional will be handled in next state
-            // halt pipeline immediately
-            halt_if_o = 1'b1;
-
-            // make sure the current instruction has been executed
-            // before changing state to non-decode
-            if (id_ready_i) begin
-              // CONFIG_REGION: NO_JUMP_ADDER
-              `ifdef NO_JUMP_ADDER
-              if ((jump_in_id_i == BRANCH_COND) & branch_taken_ex_i)
-              begin
-
-                  ctrl_fsm_ns = BRANCH_2ND_STAGE;
-
+                // we don't have to change our current state here as the prefetch
+                // buffer is automatically invalidated, thus the next instruction
+                // that is served to the ID stage is the one of the jump to the
+                // exception handler
               end
-              else
+            end
+
+            if (eret_insn_i) begin
+              pc_mux_o         = PC_ERET;
+              exc_restore_id_o = 1'b1;
+
+              if ((~jump_done_q)) begin
+                pc_set_o    = 1'b1;
+                jump_done   = 1'b1;
+              end
+            end
+
+            // handle WFI instruction, flush pipeline and (potentially) go to
+            // sleep
+            // also handles eret when the core should go back to sleep
+            if (pipe_flush_i || (eret_insn_i && (~fetch_enable_i)))
+            begin
+              halt_if_o = 1'b1;
+              halt_id_o = 1'b1;
+
+              ctrl_fsm_ns = FLUSH_WB;
+            end
+            else if (dbg_req_i)
+            begin
+              // take care of debug
+              // branch conditional will be handled in next state
+              // halt pipeline immediately
+              halt_if_o = 1'b1;
+
+              // make sure the current instruction has been executed
+              // before changing state to non-decode
+              if (id_ready_i) begin
+                // CONFIG_REGION: NO_JUMP_ADDER
+                `ifdef NO_JUMP_ADDER
+                if ((jump_in_id_i == BRANCH_COND) & branch_taken_ex_i)
+                begin
+
+                    ctrl_fsm_ns = BRANCH_2ND_STAGE;
+
+                end
+                else
+                  ctrl_fsm_ns = DBG_SIGNAL;
+
+                `else
+                if ((jump_in_id_i == BRANCH_COND) & branch_taken_ex_i)
+                begin
+                  pc_mux_o = PC_BRANCH;
+                  pc_set_o = 1'b1;
+                end
+
                 ctrl_fsm_ns = DBG_SIGNAL;
-
-              `else
-              if ((jump_in_id_i == BRANCH_COND) & branch_taken_ex_i)
-              begin
-                pc_mux_o = PC_BRANCH;
-                pc_set_o = 1'b1;
+                `endif
               end
-
-              ctrl_fsm_ns = DBG_SIGNAL;
-              `endif
             end
           end
         end
