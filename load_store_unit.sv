@@ -75,6 +75,7 @@ module riscv_load_store_unit
     output logic         data_misaligned_o,    // misaligned access was detected    -> to controller
     // CONFIG_REGION: MERGE_ID_EX
     `ifdef MERGE_ID_EX
+    output logic         first_cycle_misaligned_o,
     output logic [31:0]  misaligned_addr_o,
     `endif
     `endif // ONLY_ALIGNED
@@ -428,7 +429,14 @@ module riscv_load_store_unit
   // CONFIG_REGION: ONLY_ALIGNED
   `ifndef ONLY_ALIGNED
   assign misaligned_st = data_misaligned_ex_i;
+
+  // CONFIG_REGION: MERGE_ID_EX
+  `ifdef MERGE_ID_EX
+  assign first_cycle_misaligned_o = data_misaligned; // Directly forward signal to 
+  `endif
   `endif // ONLY_ALIGNED
+
+
 
   assign load_err_o    = data_gnt_i && data_err_i && ~data_we_o;
   assign store_err_o   = data_gnt_i && data_err_i && data_we_o;

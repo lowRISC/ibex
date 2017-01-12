@@ -225,6 +225,7 @@ module riscv_id_stage
     // CONFIG_REGION: MERGE_ID_EX
     `ifdef MERGE_ID_EX
     input  logic [31:0] misaligned_addr_i,
+    input  logic        first_cycle_misaligned_i,
     `endif
     `endif // ONLY_ALIGNED
 
@@ -1790,11 +1791,20 @@ module riscv_id_stage
 
   // stall control
   // CONFIG_REGION: ONLY_ALIGNED
+  // CONFIG_REGION: MERGE_ID_EX
+  `ifdef MERGE_ID_EX
+  `ifdef ONLY_ALIGNED
+  assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i);
+  `else
+  assign id_ready_o = ((~misaligned_stall & first_cycle_misaligned_i) & (~jr_stall) & (~load_stall) & ex_ready_i);
+  `endif // ONLY_ALIGNED
+  `else 
   `ifdef ONLY_ALIGNED
   assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i);
   `else
   assign id_ready_o = ((~misaligned_stall) & (~jr_stall) & (~load_stall) & ex_ready_i);
   `endif // ONLY_ALIGNED
+  `endif
   
 
   assign id_valid_o = (~halt_id) & id_ready_o;

@@ -132,6 +132,7 @@ module riscv_core
   // CONFIG_REGION: MERGE_ID_EX
   `ifdef MERGE_ID_EX
   logic [31:0] misaligned_addr;
+  logic first_cycle_misaligned;
   `endif
   `endif // ONLY_ALIGNED
 
@@ -643,6 +644,7 @@ module riscv_core
     // CONFIG_REGION: MERGE_ID_EX
     `ifdef MERGE_ID_EX
     .misaligned_addr_i            ( misaligned_addr      ),
+    .first_cycle_misaligned_i     ( first_cycle_misaligned),
     `endif
     `endif // ONLY_ALIGNED
 
@@ -861,6 +863,7 @@ module riscv_core
     // CONFIG_REGION: MERGE_ID_EX
     `ifdef MERGE_ID_EX
     .misaligned_addr_o     ( misaligned_addr    ),
+    .first_cycle_misaligned( first_cycle_misaligned),
     `endif
     `endif // ONLY_ALIGNED
 
