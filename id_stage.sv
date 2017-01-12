@@ -1796,7 +1796,7 @@ module riscv_id_stage
   `ifdef ONLY_ALIGNED
   assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i);
   `else
-  assign id_ready_o = ((~misaligned_stall & first_cycle_misaligned_i) & (~jr_stall) & (~load_stall) & ex_ready_i);
+  assign id_ready_o = ((~first_cycle_misaligned_i) & (~jr_stall) & (~load_stall) & ex_ready_i);
   `endif // ONLY_ALIGNED
   `else 
   `ifdef ONLY_ALIGNED

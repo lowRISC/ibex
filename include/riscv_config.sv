@@ -58,6 +58,14 @@
 // will enable bit manipulation and counting support.
 //`define BIT_SUPPORT
 
+// CONFIG: MATH_SPECIAL_SUPPORT
+// will enable clip, min and max operations support.
+//`define MATH_SPECIAL_SUPPORT
+
+// CONFIG: JUMP_IN_ID
+// will enable direct jump in ID. Might increase critical path of jump target.
+`define JUMP_IN_ID
+
 // CONFIG: LSU_ADDER_SUPPORT
 // will enable an additional adder in the LSU for better timings.
 //`define LSU_ADDER_SUPPORT
@@ -69,14 +77,6 @@
 //`define PREPOST_SUPPORT
 
 `endif // LSU_ADDER_SUPPORT
-
-// CONFIG: MATH_SPECIAL_SUPPORT
-// will enable clip, min and max operations support.
-//`define MATH_SPECIAL_SUPPORT
-
-// CONFIG: JUMP_IN_ID
-// will enable direct jump in ID. Might increase critical path of jump target
-`define JUMP_IN_ID
 
 
 // Dependent definitions
@@ -103,16 +103,15 @@
 
 // CONFIG: RV32E
 // will reduce the register file to 16 words
-`define RV32E
+//`define RV32E
 
 // CONFIG: ONLY_ALIGNED
 // will only allow aligned memory accesses and therefore overlapping mustn't occur
-`define ONLY_ALIGNED
+//`define ONLY_ALIGNED
 
 // CONFIG: SPLITTED_ADDER
 // will split ALU Adder in half and use two cycles to add operands
 //`define SPLITTED_ADDER
-
 
 `ifndef SPLITTED_ADDER
 `ifdef 	JUMP_IN_ID
