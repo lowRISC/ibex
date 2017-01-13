@@ -107,7 +107,6 @@ module riscv_id_stage
     output logic [ALU_OP_WIDTH-1:0] alu_operator_ex_o,
 
 
-    output logic        alu_req_ex_o,
 
     // CSR ID/EX
     output logic        csr_access_ex_o,
@@ -339,14 +338,6 @@ module riscv_id_stage
 
 
 
-  //////////////////////////////////////////////////////////////////
-  //      _                         _____                    _    //
-  //     | |_   _ _ __ ___  _ __   |_   _|_ _ _ __ __ _  ___| |_  //
-  //  _  | | | | | '_ ` _ \| '_ \    | |/ _` | '__/ _` |/ _ \ __| //
-  // | |_| | |_| | | | | | | |_) |   | | (_| | | | (_| |  __/ |_  //
-  //  \___/ \__,_|_| |_| |_| .__/    |_|\__,_|_|  \__, |\___|\__| //
-  //                       |_|                    |___/           //
-  //////////////////////////////////////////////////////////////////
 
 
 
@@ -390,6 +381,7 @@ module riscv_id_stage
         default:       operand_a_fw_id = regfile_data_ra_id;
       endcase; // case (operand_a_fw_mux_sel)
     end
+
 
   //////////////////////////////////////////////////////
   //   ___                                 _   ____   //
@@ -439,7 +431,6 @@ module riscv_id_stage
   // scalar replication for operand B and shuffle type
   always_comb
     begin
-        imm_shuffle_type = imm_shuffleh_type;
     end
 
     assign alu_operand_b = operand_b;
@@ -490,34 +481,36 @@ module riscv_id_stage
 
 
 
-    /////////////////////////////////////////////////////////
-    //  ____  _____ ____ ___ ____ _____ _____ ____  ____   //
-    // |  _ \| ____/ ___|_ _/ ___|_   _| ____|  _ \/ ___|  //
-    // | |_) |  _|| |  _ | |\___ \ | | |  _| | |_) \___ \  //
-    // |  _ <| |__| |_| || | ___) || | | |___|  _ < ___) | //
-    // |_| \_\_____\____|___|____/ |_| |_____|_| \_\____/  //
-    //                                                     //
-    /////////////////////////////////////////////////////////
-    riscv_register_file  registers_i
-      (
-        .clk          ( clk                ),
-        .rst_n        ( rst_n              ),
 
-        .test_en_i    ( test_en_i          ),
+  /////////////////////////////////////////////////////////
+  //  ____  _____ ____ ___ ____ _____ _____ ____  ____   //
+  // |  _ \| ____/ ___|_ _/ ___|_   _| ____|  _ \/ ___|  //
+  // | |_) |  _|| |  _ | |\___ \ | | |  _| | |_) \___ \  //
+  // |  _ <| |__| |_| || | ___) || | | |___|  _ < ___) | //
+  // |_| \_\_____\____|___|____/ |_| |_____|_| \_\____/  //
+  //                                                     //
+  /////////////////////////////////////////////////////////
 
-        // Read port a
-        .raddr_a_i    ( regfile_addr_ra_id ),
-        .rdata_a_o    ( regfile_data_ra_id ),
+  riscv_register_file  registers_i
+  (
+    .clk          ( clk                ),
+    .rst_n        ( rst_n              ),
 
-        .raddr_b_i    ( (dbg_reg_rreq_i == 1'b0) ? regfile_addr_rb_id : dbg_reg_raddr_i ),
-        .rdata_b_o    ( regfile_data_rb_id ),
+    .test_en_i    ( test_en_i          ),
+
+    // Read port a
+    .raddr_a_i    ( regfile_addr_ra_id ),
+    .rdata_a_o    ( regfile_data_ra_id ),
+
+    .raddr_b_i    ( (dbg_reg_rreq_i == 1'b0) ? regfile_addr_rb_id : dbg_reg_raddr_i ),
+    .rdata_b_o    ( regfile_data_rb_id ),
 
 
-        // Write port a (multiplex between ALU and LSU). Conflict is resolved by stalling in EX.
-        .waddr_a_i    ( (dbg_reg_wreq_i == 1'b0) ? ( (regfile_we_wb_i == 1'b1) ? regfile_waddr_wb_i : regfile_alu_waddr_fw_i) : dbg_reg_waddr_i ),
-        .wdata_a_i    ( (dbg_reg_wreq_i == 1'b0) ? ( (regfile_we_wb_i == 1'b1) ? regfile_wdata_wb_i : regfile_alu_wdata_fw_i) : dbg_reg_wdata_i ),
-        .we_a_i       ( (dbg_reg_wreq_i == 1'b0) ? (regfile_we_wb_i || regfile_alu_we_fw_i) : 1'b1                                              )
-      );
+    // Write port a (multiplex between ALU and LSU). Conflict is resolved by stalling in EX.
+    .waddr_a_i    ( (dbg_reg_wreq_i == 1'b0) ? ( (regfile_we_wb_i == 1'b1) ? regfile_waddr_wb_i : regfile_alu_waddr_fw_i) : dbg_reg_waddr_i ),
+    .wdata_a_i    ( (dbg_reg_wreq_i == 1'b0) ? ( (regfile_we_wb_i == 1'b1) ? regfile_wdata_wb_i : regfile_alu_wdata_fw_i) : dbg_reg_wdata_i ),
+    .we_a_i       ( (dbg_reg_wreq_i == 1'b0) ? (regfile_we_wb_i || regfile_alu_we_fw_i) : 1'b1                                              )
+  );
 
   assign dbg_reg_rdata_o = regfile_data_rb_id;
 
@@ -736,7 +729,6 @@ module riscv_id_stage
 
 
 
-
   /////////////////////////////////////
   //   ___ ____        _______  __   //
   //  |_ _|  _ \      | ____\ \/ /   //
@@ -787,14 +779,8 @@ module riscv_id_stage
   end
 
 
-
-
   // stall control
-  `ifdef MERGE_ID_EX
-  `ifdef ONLY_ALIGNED
-  assign id_ready_o = ((~jr_stall) & (~load_stall) & ex_ready_i);
-  `endif // ONLY_ALIGNED
-  `endif
+  assign id_ready_o = ((~first_cycle_misaligned_i) & (~jr_stall) & (~load_stall) & ex_ready_i);
   
 
   assign id_valid_o = (~halt_id) & id_ready_o;

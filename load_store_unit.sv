@@ -69,7 +69,6 @@ module riscv_load_store_unit
     output logic         lsu_ready_ex_o, // LSU ready for new data in EX stage
     output logic         lsu_ready_wb_o, // LSU ready for new data in WB stage
 
-    input logic          alu_ready_i,
 
     input  logic         ex_valid_i,
 
@@ -363,7 +362,7 @@ module riscv_load_store_unit
       // starts from not active and stays in IDLE until request was granted
       IDLE:
       begin
-          if (data_req_ex_i & alu_ready_i) begin
+          if (data_req_ex_i) begin
           data_req_o = data_req_ex_i;
           lsu_ready_ex_o = 1'b0;
 
@@ -388,7 +387,7 @@ module riscv_load_store_unit
           // source for the WB stage
           lsu_ready_wb_o = 1'b1;
 
-          if (data_req_ex_i & alu_ready_i) begin
+          if (data_req_ex_i) begin
             data_req_o = data_req_ex_i;
             lsu_ready_ex_o = 1'b0;
 

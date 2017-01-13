@@ -93,10 +93,6 @@ module riscv_if_stage #(
 
       logic       [31:0] exc_pc;
 
-      // hardware loop related signals
-      logic              hwlp_jump;
-      logic       [31:0] hwlp_target;
-      logic [N_HWLP-1:0] hwlp_dec_cnt, hwlp_dec_cnt_if;
 
 
       // exception PC selection mux
@@ -122,7 +118,6 @@ module riscv_if_stage #(
 
           unique case (pc_mux_i)
             PC_BOOT:      fetch_addr_n = {boot_addr_i[31:8], EXC_OFF_RST};
-            PC_JUMP:      fetch_addr_n = jump_target_ex_i;
             PC_JUMP:      fetch_addr_n = jump_target_ex_i;
             PC_BRANCH:    fetch_addr_n = jump_target_ex_i;
             PC_EXCEPTION: fetch_addr_n = exc_pc;             // set PC to exception handler

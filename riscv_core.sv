@@ -119,7 +119,6 @@ module riscv_core
 
   // Jump and branch target and decision (EX->IF)
   logic [31:0] jump_target_ex;
-  logic [31:0] jump_target_ex;
   logic        branch_in_ex;
   logic        branch_decision;
 
@@ -135,7 +134,6 @@ module riscv_core
   logic [31:0] alu_operand_c_ex;
   logic        jal_in_ex;
 
-  logic        alu_req_ex;
 
   logic [31:0] alu_adder_result_ex; // Used to forward computed address to LSU
 
@@ -189,7 +187,6 @@ module riscv_core
   logic        lsu_ready_ex;
   logic        lsu_ready_wb;
 
-  logic        alu_ready;
 
   // Signals between instruction core interface and pipe (if and id stages)
   logic        instr_req_int;    // Id stage asserts a req to instruction core interface
@@ -408,7 +405,6 @@ module riscv_core
     .alu_operand_a_ex_o           ( alu_operand_a_ex     ),
     .alu_operand_b_ex_o           ( alu_operand_b_ex     ),
     .alu_operand_c_ex_o           ( alu_operand_c_ex     ), // Still needed if 2r1w reg file used
-    .alu_req_ex_o                 ( alu_req_ex           ),
 
     .jal_in_ex_o                 ( jal_in_ex           ),
 
@@ -505,7 +501,6 @@ module riscv_core
     .alu_operand_a_i            ( alu_operand_a_ex             ), // from ID/EX pipe registers
     .alu_operand_b_i            ( alu_operand_b_ex             ), // from ID/EX pipe registers
     .alu_operand_c_i            ( alu_operand_c_ex             ), // from ID/EX pipe registers
-    .alu_req_ex_i               ( alu_req_ex                   ),
 
 
 
@@ -598,7 +593,6 @@ module riscv_core
     .lsu_ready_ex_o        ( lsu_ready_ex       ),
     .lsu_ready_wb_o        ( lsu_ready_wb       ),
 
-    .alu_ready_i           ( alu_ready          ),
 
     .ex_valid_i            ( ex_valid           ),
     .busy_o                ( lsu_busy           )

@@ -57,7 +57,6 @@ module riscv_ex_stage
   // directly passed through to WB stage, not used in EX
   input  logic        regfile_we_i,
 
-  input logic         alu_req_ex_i,
 
   // CSR access
   input  logic        csr_access_i,
@@ -79,7 +78,6 @@ module riscv_ex_stage
   // Stall Control
   input  logic        lsu_ready_ex_i, // EX part of LSU is done
 
-  output logic        alu_ready_o,
 
 
   output logic        ex_ready_o, // EX stage ready for new data
