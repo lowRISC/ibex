@@ -207,7 +207,7 @@ module riscv_alu_simplified
     if ((operand_a_i[31] ^ operand_b_i[31]) == 0)
       is_greater_equal = (adder_result[31] == 0);
     else
-      is_greater_equal = operand_a_i[31] ^ (~cmp_signed);
+      is_greater_equal = operand_a_i[31] ^ (cmp_signed);
   end
 
   // GTE unsigned: 
