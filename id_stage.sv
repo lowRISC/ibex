@@ -741,14 +741,9 @@ module riscv_id_stage
 
   always_comb
   begin
-    alu_operator_ex_o           = ALU_SLTU;
-    alu_operand_c_ex_o          = '0; // Still needed for jump target if 2r1w reg file used
 
-    regfile_we_ex_o             = 1'b0;  
     regfile_alu_waddr_ex_o      = regfile_alu_waddr_id;
 
-    csr_access_ex_o             = 1'b0;
-    csr_op_ex_o                 = CSR_OP_NONE;
     data_we_ex_o                = (data_we_id & (~halt_id) &  wb_ready_i);
     data_type_ex_o              = data_type_id;
     data_sign_ext_ex_o          = data_sign_ext_id;
@@ -765,17 +760,17 @@ module riscv_id_stage
     regfile_alu_we_ex_o         = (regfile_alu_we_id  & (~halt_id) & wb_ready_i);
 
     csr_access_ex_o             = csr_access;
-    csr_op_ex_o                 = csr_op;
+    csr_op_ex_o                 = id_ready_o ? csr_op : CSR_OP_NONE;
     data_req_ex_o               = data_req_id;
 
-    data_reg_offset_ex_o      = data_reg_offset_id;
-    data_load_event_ex_o      = ((data_req_id & (~halt_id) & wb_ready_i) ? data_load_event_id : 1'b0);
+    data_reg_offset_ex_o        = data_reg_offset_id;
+    data_load_event_ex_o        = ((data_req_id & (~halt_id) & wb_ready_i) ? data_load_event_id : 1'b0);
 
-    data_misaligned_ex_o      = data_misaligned_i;
+    data_misaligned_ex_o        = data_misaligned_i;
 
     pc_ex_o                     = pc_id_i;
     branch_in_ex_o              = (jump_in_dec == BRANCH_COND);
-    jal_in_ex_o                = ((jump_in_id == BRANCH_JALR) || (jump_in_id == BRANCH_JAL));
+    jal_in_ex_o                 = ((jump_in_id == BRANCH_JALR) || (jump_in_id == BRANCH_JAL));
   end
 
 
