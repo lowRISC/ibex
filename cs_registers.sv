@@ -122,9 +122,9 @@ module riscv_cs_registers
   // Interrupt control signals
   logic [31:0] mepc_q, mepc_n;
   logic [ 0:0] mestatus_q, mestatus_n;
-  logic [ 0:0] mstatus_q, mstatus_n;
-  logic [ 5:0] exc_cause, exc_cause_n;
-
+  logic [ 1:0] mstatus_q, mstatus_n;
+  logic [ 5:0] exc_cause_q, exc_cause_n;
+  logic mie,mpie;
 
   ////////////////////////////////////////////
   //   ____ ____  ____    ____              //
@@ -135,29 +135,32 @@ module riscv_cs_registers
   //                                |___/   //
   ////////////////////////////////////////////
 
+  assign mie  = mstatus_q[0];
+  assign mpie = mstatus_q[1];
+
   // read logic
   always_comb
   begin
     csr_rdata_int = 'x;
 
     case (csr_addr_i)
+
       // mstatus: always M-mode, contains IE bit
-      12'h300: csr_rdata_int = {29'b0, 2'b11, mstatus_q};
+      12'h300: csr_rdata_int = {24'b0, mpie, 3'h0, mie, 3'h0};
+
+      //misa: should be RV32I
+      12'h301: csr_rdata_int = 32'h0;
 
       // mepc: exception program counter
       12'h341: csr_rdata_int = mepc_q;
       // mcause: exception cause
-      12'h342: csr_rdata_int = {exc_cause[5], 26'b0, exc_cause[4:0]};
+      12'h342: csr_rdata_int = {exc_cause_q[5], 26'b0, exc_cause_q[4:0]};
 
-      // mcpuid: RV32IM and X
-      12'hF00: csr_rdata_int = 32'h00_80_11_00;
       // mimpid: PULP, anonymous source (no allocated ID yet)
-      12'hF01: csr_rdata_int = 32'h00_00_80_00;
+      12'hF13: csr_rdata_int = 32'h00_00_80_00;
       // mhartid: unique hardware thread id
-      12'hF10: csr_rdata_int = {21'b0, cluster_id_i[5:0], 1'b0, core_id_i[3:0]};
+      12'hF14: csr_rdata_int = {21'b0, cluster_id_i[5:0], 1'b0, core_id_i[3:0]};
 
-
-      12'h7C0: csr_rdata_int = {29'b0, 2'b11, mestatus_q};
     endcase
   end
 
@@ -168,26 +171,26 @@ module riscv_cs_registers
     mepc_n       = mepc_q;
     mestatus_n   = mestatus_q;
     mstatus_n    = mstatus_q;
-    exc_cause_n  = exc_cause;
+    exc_cause_n  = exc_cause_q;
 
     case (csr_addr_i)
       // mstatus: IE bit
-      12'h300: if (csr_we_int) mstatus_n = csr_wdata_int[0];
+      //12'h300: if (csr_we_int) mstatus_n = {24'b0, csr_wdata_int[7], 3'h0, csr_wdata_int[3], 3'h0};
+      12'h300: if (csr_we_int) mstatus_n = {csr_wdata_int[7], csr_wdata_int[3]};
 
       // mepc: exception program counter
       12'h341: if (csr_we_int) mepc_n = csr_wdata_int;
       // mcause
-      12'h342: if (csr_we_int) exc_cause_n = {csr_wdata_int[5], csr_wdata_int[4:0]};
+      12'h342: if (csr_we_int) exc_cause_n = {csr_wdata_int[31], csr_wdata_int[4:0]};
 
 
       // mestatus: machine exception status
-      12'h7C0: if (csr_we_int) mestatus_n = csr_wdata_int[0];
+      // 12'h7C0: if (csr_we_int) mestatus_n = csr_wdata_int[0];
     endcase
 
     // exception controller gets priority over other writes
     if (exc_save_if_i || exc_save_id_i || exc_save_takenbranch_i) begin
-      mestatus_n = mstatus_q;
-      mstatus_n  = 1'b0;
+      mstatus_n  = {mie,1'b0};
 
       if (data_load_event_ex_i) begin
         mepc_n = pc_id_i;
@@ -205,7 +208,7 @@ module riscv_cs_registers
       exc_cause_n = exc_cause_i;
 
     if (exc_restore_i) begin
-      mstatus_n = mestatus_q;
+      mstatus_n = {mstatus_q[1],mstatus_q[1]};
     end
   end
 
@@ -243,7 +246,7 @@ module riscv_cs_registers
 
 
   // directly output some registers
-  assign irq_enable_o = mstatus_q[0];
+  assign irq_enable_o = mie;
   assign mepc_o       = mepc_q;
 
 
@@ -255,7 +258,7 @@ module riscv_cs_registers
       mstatus_q  <= '0;
       mepc_q     <= '0;
       mestatus_q <= '0;
-      exc_cause  <= '0;
+      exc_cause_q <= '0;
     end
     else
     begin
@@ -265,7 +268,7 @@ module riscv_cs_registers
       mepc_q     <= mepc_n;
       mestatus_q <= mestatus_n;
 
-      exc_cause  <= exc_cause_n;
+      exc_cause_q <= exc_cause_n;
     end
   end
 

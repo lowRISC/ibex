@@ -453,25 +453,25 @@ module riscv_decoder
         if (instr_rdata_i[14:12] == 3'b000)
         begin
           // non CSR related SYSTEM instructions
-          unique case (instr_rdata_i[31:0])
-            32'h00_00_00_73:  // ECALL
+          unique case (instr_rdata_i[31:20])
+            12'h000:  // ECALL
             begin
               // environment (system) call
               ecall_insn_o = 1'b1;
             end
 
-            32'h00_10_00_73:  // ebreak
+            12'h001:  // ebreak
             begin
               // debugger trap
               ebrk_insn = 1'b1;
             end
 
-            32'h10_00_00_73:  // eret
+            12'h302:  // mret
             begin
               eret_insn = 1'b1;
             end
 
-            32'h10_20_00_73:  // wfi
+            12'h105:  // wfi
             begin
               // flush pipeline
               pipe_flush = 1'b1;
