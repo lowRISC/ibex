@@ -146,13 +146,13 @@ module riscv_alu_simplified
   assign shift_op_a    = shift_left ? operand_a_rev : operand_a_i;
 
   // right shifts, we let the synthesizer optimize this
-  logic [63:0] shift_op_a_32;
+  logic [32:0] shift_op_a_32;
 
-  assign shift_op_a_32 = $signed({ {32{shift_arithmetic & shift_op_a[31]}}, shift_op_a});
+  assign shift_op_a_32 = { shift_arithmetic & shift_op_a[31], shift_op_a};
 
   always_comb
   begin
-  	shift_right_result = shift_op_a_32 >> shift_amt[4:0];
+    shift_right_result = $signed(shift_op_a_32) >>> shift_amt[4:0];
   end
 
   // bit reverse the shift_right_result for left shifts
@@ -270,8 +270,7 @@ module riscv_alu_simplified
       ALU_XOR:  result_o = operand_a_i ^ operand_b_i;
 
       // Adder Operations
-      ALU_ADD, ALU_ADDR, ALU_ADDU, ALU_ADDUR,
-      ALU_SUB: result_o = adder_result;
+      ALU_ADD, ALU_SUB: result_o = adder_result;
 
       // Shift Operations
       ALU_SLL,
