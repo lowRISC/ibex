@@ -68,6 +68,7 @@ module riscv_core
 
   // Interrupt inputs
   input  logic [31:0] irq_i,                 // level sensitive IR lines
+  output logic        irq_ack_o,             // irq ack
 
   // Debug Interface
   input  logic        debug_req_i,
@@ -439,6 +440,7 @@ module riscv_core
     // Interrupt Signals
     .irq_i                        ( irq_i                ), // incoming interrupts
     .irq_enable_i                 ( irq_enable           ), // global interrupt enable
+    .irq_ack_o                    ( irq_ack_o            ),
     .exc_cause_o                  ( exc_cause            ),
     .save_exc_cause_o             ( save_exc_cause       ),
     .exc_save_if_o                ( exc_save_if          ), // control signal to save pc

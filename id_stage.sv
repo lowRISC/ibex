@@ -131,6 +131,7 @@ module riscv_id_stage
     // Interrupt signals
     input  logic [31:0] irq_i,
     input  logic        irq_enable_i,
+    output logic        irq_ack_o,
 
     output logic [5:0]  exc_cause_o,
     output logic        save_exc_cause_o,
@@ -691,6 +692,8 @@ module riscv_id_stage
   // |_____/_/\_\___(_)  \____\___/|_| |_|\__|_|  \___/|_|_|\___|_|    //
   //                                                                   //
   ///////////////////////////////////////////////////////////////////////
+
+  assign irq_ack_o = exc_ack;
 
   riscv_exc_controller exc_controller_i
   (

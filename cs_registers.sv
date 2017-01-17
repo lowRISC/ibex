@@ -183,9 +183,6 @@ module riscv_cs_registers
       // mcause
       12'h342: if (csr_we_int) exc_cause_n = {csr_wdata_int[31], csr_wdata_int[4:0]};
 
-
-      // mestatus: machine exception status
-      // 12'h7C0: if (csr_we_int) mestatus_n = csr_wdata_int[0];
     endcase
 
     // exception controller gets priority over other writes
