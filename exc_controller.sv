@@ -38,10 +38,10 @@ module riscv_exc_controller
 
   // to IF stage
   output logic  [1:0] pc_mux_o,       // selects target PC for exception
-  output logic  [4:0] vec_pc_mux_o,   // selects interrupt handler for vectorized interrupts
 
   // interrupt lines
-  input  logic [31:0] irq_i,          // level-triggered interrupt inputs
+  input  logic        irq_i,          // level-triggered interrupt inputs
+  input  logic  [4:0] irq_id_i,       // interrupt id [0,1,....31]
   input  logic        irq_enable_i,   // interrupt enable bit from CSR
 
   // from decoder
@@ -84,7 +84,7 @@ module riscv_exc_controller
                       | (lsu_store_err_i         & dbg_settings_i[DBG_SETS_ELSU])
                       | (ebrk_insn_i             & dbg_settings_i[DBG_SETS_EBRK])
                       | (illegal_insn_i          & dbg_settings_i[DBG_SETS_EILL])
-                      | (irq_enable_i & (|irq_i) & dbg_settings_i[DBG_SETS_IRQ]);
+                      | (irq_enable_i & irq_i & dbg_settings_i[DBG_SETS_IRQ]);
 
 // request for exception/interrupt
 assign req_int =   ecall_insn_i
@@ -93,7 +93,7 @@ assign req_int =   ecall_insn_i
 
 assign ext_req_int =   lsu_load_err_i
                        | lsu_store_err_i
-                       | irq_enable_i & (|irq_i);
+                       | irq_enable_i & irq_i;
 
 
   // Exception cause and ISR address selection
@@ -102,18 +102,10 @@ assign ext_req_int =   lsu_load_err_i
     cause_int  = 6'b0;
     pc_mux_int = 'x;
 
-    if (irq_enable_i) begin
+    if (irq_enable_i & irq_i) begin
       // pc_mux_int is a critical signal, so try to get it as soon as possible
-      if (|irq_i)
-        pc_mux_int = EXC_PC_IRQ;
-
-      for (i = 31; i >= 0; i--)
-      begin
-        if (irq_i[i]) begin
-          cause_int[5]   = 1'b1;
-          cause_int[4:0] = $unsigned(i);
-        end
-      end
+      pc_mux_int = EXC_PC_IRQ;
+      cause_int = {1'b1,irq_id_i};
     end
 
     if (ebrk_insn_i) begin
@@ -157,10 +149,6 @@ assign ext_req_int =   lsu_load_err_i
   // Exception cause and mux output (with bypass)
   assign cause_o      = ((exc_ctrl_cs == IDLE && req_int) || ebrk_insn_i) ? cause_int  : cause_int_q;
   assign pc_mux_o     = (exc_ctrl_cs == IDLE && req_int) ? pc_mux_int : pc_mux_int_q;
-
-  // for vectorized IRQ PC mux
-  assign vec_pc_mux_o = cause_o[4:0];
-
 
   // Exception controller FSM
   always_comb

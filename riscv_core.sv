@@ -67,7 +67,8 @@ module riscv_core
   input  logic        data_err_i,
 
   // Interrupt inputs
-  input  logic [31:0] irq_i,                 // level sensitive IR lines
+  input  logic        irq_i,                 // level sensitive IR lines
+  input  logic [4:0]  irq_id_i,
   output logic        irq_ack_o,             // irq ack
 
   // Debug Interface
@@ -104,7 +105,6 @@ module riscv_core
   logic              pc_set;
   logic [2:0]        pc_mux_id;     // Mux selector for next PC
   logic [1:0]        exc_pc_mux_id;     // Mux selector for exception PC
-  logic [4:0]        exc_vec_pc_mux_id; // Mux selector for vectorized IR lines
 
   logic              lsu_load_err;
   logic              lsu_store_err;
@@ -321,7 +321,7 @@ module riscv_core
     .exception_pc_reg_i  ( mepc              ), // exception return address
     .pc_mux_i            ( pc_mux_id         ), // sel for pc multiplexer
     .exc_pc_mux_i        ( exc_pc_mux_id     ),
-    .exc_vec_pc_mux_i    ( exc_vec_pc_mux_id ),
+    .exc_vec_pc_mux_i    ( irq_id_i          ),
 
 
     // from debug unit
@@ -379,7 +379,6 @@ module riscv_core
     .pc_set_o                     ( pc_set               ),
     .pc_mux_o                     ( pc_mux_id            ),
     .exc_pc_mux_o                 ( exc_pc_mux_id        ),
-    .exc_vec_pc_mux_o             ( exc_vec_pc_mux_id    ),
 
     .illegal_c_insn_i             ( illegal_c_insn_id    ),
     .is_compressed_i              ( is_compressed_id     ),
@@ -439,8 +438,10 @@ module riscv_core
 
     // Interrupt Signals
     .irq_i                        ( irq_i                ), // incoming interrupts
+    .irq_id_i                     ( irq_id_i             ),
     .irq_enable_i                 ( irq_enable           ), // global interrupt enable
     .irq_ack_o                    ( irq_ack_o            ),
+
     .exc_cause_o                  ( exc_cause            ),
     .save_exc_cause_o             ( save_exc_cause       ),
     .exc_save_if_o                ( exc_save_if          ), // control signal to save pc
@@ -827,7 +828,7 @@ module riscv_core
     .is_decoding      ( id_stage_i.is_decoding_o             ),
     .is_illegal       ( id_stage_i.illegal_insn_dec          ),
     .is_interrupt     ( is_interrupt                         ),
-    .irq_no           ( exc_vec_pc_mux_id                    ),
+    .irq_no           ( irq_id_i                             ),
     .pipe_flush       ( id_stage_i.controller_i.pipe_flush_i ),
 
     .ex_valid         ( ex_valid                             ),

@@ -129,7 +129,8 @@ module riscv_id_stage
     input  logic        first_cycle_misaligned_i,
 
     // Interrupt signals
-    input  logic [31:0] irq_i,
+    input  logic        irq_i,
+    input  logic [4:0]  irq_id_i,
     input  logic        irq_enable_i,
     output logic        irq_ack_o,
 
@@ -709,10 +710,10 @@ module riscv_id_stage
 
     // to IF stage
     .pc_mux_o             ( exc_pc_mux_o     ),
-    .vec_pc_mux_o         ( exc_vec_pc_mux_o ),
 
     // Interrupt signals
     .irq_i                ( irq_i            ),
+    .irq_id_i             ( irq_id_i         ),
     .irq_enable_i         ( irq_enable_i     ),
 
     .ebrk_insn_i          ( is_decoding_o & ebrk_insn        ),
