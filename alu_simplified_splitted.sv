@@ -25,7 +25,7 @@
 
 import riscv_defines::*;
 
-module riscv_alu_simplified_splitted
+module littleriscv_alu_simplified_splitted
 (
   input  logic                     clk,
   input  logic                     rst_n,

@@ -29,7 +29,7 @@
 
 import riscv_defines::*;
 
-module riscv_if_stage #(
+module littleriscv_if_stage #(
   parameter RDATA_WIDTH = 32
 )
 (
@@ -134,7 +134,7 @@ module riscv_if_stage #(
         generate
           if (RDATA_WIDTH == 32) begin : prefetch_32
             // prefetch buffer, caches a fixed number of instructions
-            riscv_prefetch_buffer prefetch_buffer_i
+            littleriscv_prefetch_buffer prefetch_buffer_i
               (
                 .clk               ( clk                         ),
                 .rst_n             ( rst_n                       ),
@@ -162,7 +162,7 @@ module riscv_if_stage #(
               );
           end else if (RDATA_WIDTH == 128) begin : prefetch_128
             // prefetch buffer, caches a fixed number of instructions
-            riscv_prefetch_L0_buffer prefetch_buffer_i
+            littleriscv_prefetch_L0_buffer prefetch_buffer_i
               (
                 .clk               ( clk                         ),
                 .rst_n             ( rst_n                       ),
@@ -268,7 +268,7 @@ module riscv_if_stage #(
         logic        illegal_c_insn;
         logic        instr_compressed_int;
 
-        riscv_compressed_decoder compressed_decoder_i
+        littleriscv_compressed_decoder compressed_decoder_i
           (
             .instr_i         ( fetch_rdata          ),
             .instr_o         ( instr_decompressed   ),

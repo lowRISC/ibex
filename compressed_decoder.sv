@@ -23,7 +23,7 @@
 
 import riscv_defines::*;
 
-module riscv_compressed_decoder
+module littleriscv_compressed_decoder
 (
   input  logic [31:0] instr_i,
   output logic [31:0] instr_o,

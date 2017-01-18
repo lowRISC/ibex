@@ -26,7 +26,7 @@
 
 `include "riscv_config.sv"
 
-module riscv_prefetch_L0_buffer
+module littleriscv_prefetch_L0_buffer
 #(
   parameter                                   RDATA_IN_WIDTH = 128
 )
@@ -91,7 +91,7 @@ module riscv_prefetch_L0_buffer
   logic                               aligned_is_compressed, unaligned_is_compressed;
 
 
-  prefetch_L0_buffer_L0
+  littleprefetch_L0_buffer_L0
   #(
     .RDATA_IN_WIDTH ( RDATA_IN_WIDTH )
   )
@@ -466,7 +466,7 @@ module riscv_prefetch_L0_buffer
 endmodule // prefetch_L0_buffer
 
 
-module prefetch_L0_buffer_L0
+module littleprefetch_L0_buffer_L0
 #(
   parameter                                   RDATA_IN_WIDTH = 128
 )

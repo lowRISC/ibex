@@ -29,7 +29,7 @@
 
 import riscv_defines::*;
 
-module riscv_decoder
+module littleriscv_decoder
 (
   // singals running to/from controller
   input  logic        deassert_we_i,           // deassert we, we are stalled or not active

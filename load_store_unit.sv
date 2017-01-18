@@ -26,7 +26,7 @@
 
 `include "riscv_config.sv"
 
-module riscv_load_store_unit
+module littleriscv_load_store_unit
 (
     input  logic         clk,
     input  logic         rst_n,

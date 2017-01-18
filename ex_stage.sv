@@ -31,7 +31,7 @@
 
 import riscv_defines::*;
 
-module riscv_ex_stage
+module littleriscv_ex_stage
 #(
     parameter REG_ADDR_WIDTH      = 5
 )
@@ -121,7 +121,7 @@ module riscv_ex_stage
 
 
 
-  riscv_alu_simplified alu_i
+  littleriscv_alu_simplified alu_i
   (
     .clk                 ( clk             ),
     .rst_n               ( rst_n           ),

@@ -34,7 +34,7 @@ import riscv_tracer_defines::*;
 `define REG_D  11:07
 
 
-module riscv_tracer
+module littleriscv_tracer
 #(
     parameter REG_ADDR_WIDTH      = 5
 )

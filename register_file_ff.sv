@@ -25,7 +25,7 @@
 
 `include "riscv_config.sv"
 
-module riscv_register_file
+module littleriscv_register_file
 #(
   parameter ADDR_WIDTH    = 5,
   parameter DATA_WIDTH    = 32

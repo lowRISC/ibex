@@ -23,7 +23,7 @@
 
 import riscv_defines::*;
 
-module riscv_debug_unit
+module littleriscv_debug_unit
 #(
     parameter REG_ADDR_WIDTH      = 5
 )

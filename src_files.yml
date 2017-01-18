@@ -1,4 +1,4 @@
-riscv:
+littleriscv:
   incdirs: [
     include,
   ]
@@ -26,9 +26,9 @@ riscv:
     prefetch_buffer_small.sv,
     prefetch_buffer_only_aligned.sv,
     prefetch_L0_buffer.sv,
-    riscv_core.sv,
+    littleriscv_core.sv,
   ]
-riscv_vip_rtl:
+littleriscv_vip_rtl:
   targets: [
     rtl,
   ]
@@ -36,10 +36,12 @@ riscv_vip_rtl:
     include,
   ]
   files: [
+    include/riscv_defines.sv,
+    include/riscv_tracer_defines.sv,
     riscv_tracer.sv,
     riscv_simchecker.sv,
   ]
-riscv_regfile_rtl:
+littleriscv_regfile_rtl:
   targets: [
     rtl,
   ]
@@ -49,7 +51,7 @@ riscv_regfile_rtl:
   files: [
     register_file.sv,
   ]
-riscv_regfile_fpga:
+littleriscv_regfile_fpga:
   targets: [
     xilinx,
   ]

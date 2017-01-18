@@ -24,7 +24,7 @@
 `include "riscv_config.sv"
 
 
-module riscv_prefetch_buffer_only_aligned
+module littleriscv_prefetch_buffer_only_aligned
 (
   input  logic        clk,
   input  logic        rst_n,

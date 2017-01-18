@@ -35,7 +35,7 @@ import "DPI-C" function void    riscv_checker_mem_access(input chandle cpu, inpu
 import "DPI-C" function void    riscv_checker_reg_access(input chandle cpu, input logic [31:0] addr, input logic [31:0] data);
 `endif
 
-module riscv_simchecker
+module littleriscv_simchecker
 #(
     parameter REG_ADDR_WIDTH      = 5
 )

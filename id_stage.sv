@@ -37,7 +37,7 @@ import riscv_defines::*;
 `define REG_D  11:07
 
 
-module riscv_id_stage
+module littleriscv_id_stage
 #(
   parameter REG_ADDR_WIDTH      = 5
 
@@ -493,7 +493,7 @@ module riscv_id_stage
   //                                                     //
   /////////////////////////////////////////////////////////
 
-  riscv_register_file  registers_i
+  littleriscv_register_file  registers_i
   (
     .clk          ( clk                ),
     .rst_n        ( rst_n              ),
@@ -526,7 +526,7 @@ module riscv_id_stage
   //                                           //
   ///////////////////////////////////////////////
 
-  riscv_decoder decoder_i
+  littleriscv_decoder decoder_i
   (
     // controller related signals
     .deassert_we_i                   ( deassert_we               ),
@@ -589,7 +589,7 @@ module riscv_id_stage
   //                                                                //
   ////////////////////////////////////////////////////////////////////
 
-  riscv_controller controller_i
+  littleriscv_controller controller_i
   (
     .clk                            ( clk                    ),
     .rst_n                          ( rst_n                  ),
@@ -696,7 +696,7 @@ module riscv_id_stage
 
   assign irq_ack_o = exc_ack;
 
-  riscv_exc_controller exc_controller_i
+  littleriscv_exc_controller exc_controller_i
   (
     .clk                  ( clk              ),
     .rst_n                ( rst_n            ),
@@ -754,7 +754,6 @@ module riscv_id_stage
 
     data_reg_offset_ex_o        = 2'b0;
 
-      
     alu_operator_ex_o           = alu_operator;
     alu_operand_a_ex_o          = alu_operand_a;
     alu_operand_b_ex_o          = alu_operand_b;

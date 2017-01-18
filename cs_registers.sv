@@ -33,7 +33,7 @@ import riscv_defines::*;
  `endif
 `endif
 
-module riscv_cs_registers
+module littleriscv_cs_registers
 #(
   parameter N_EXT_CNT    = 0
 )

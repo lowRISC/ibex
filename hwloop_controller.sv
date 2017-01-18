@@ -22,7 +22,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module riscv_hwloop_controller
+module littleriscv_hwloop_controller
 #(
   parameter N_REGS = 2
 )

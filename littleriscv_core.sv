@@ -29,7 +29,7 @@
 
 import riscv_defines::*;
 
-module riscv_core
+module littleriscv_core
 #(
   parameter N_EXT_PERF_COUNTERS = 0,
   parameter INSTR_RDATA_WIDTH   = 32,
@@ -44,9 +44,9 @@ module riscv_core
   input  logic        test_en_i,     // enable all clock gates for testing
 
   // Core ID, Cluster ID and boot address are considered more or less static
-  input  logic [31:0] boot_addr_i,
   input  logic [ 3:0] core_id_i,
   input  logic [ 5:0] cluster_id_i,
+  input  logic [31:0] boot_addr_i,
 
   // Instruction memory interface
   output logic                         instr_req_o,
@@ -285,7 +285,7 @@ module riscv_core
   //  |___|_|     |____/ |_/_/   \_\____|_____|   //
   //                                              //
   //////////////////////////////////////////////////
-  riscv_if_stage
+  littleriscv_if_stage
   #(
     .RDATA_WIDTH         ( INSTR_RDATA_WIDTH )
   )
@@ -350,7 +350,7 @@ module riscv_core
   //  |___|____/  |____/ |_/_/   \_\____|_____|  //
   //                                             //
   /////////////////////////////////////////////////
-  riscv_id_stage
+  littleriscv_id_stage
   #(
   )
   id_stage_i
@@ -493,7 +493,7 @@ module riscv_core
   //  |_____/_/\_\ |____/ |_/_/   \_\____|_____|     //
   //                                                 //
   /////////////////////////////////////////////////////
-  riscv_ex_stage  ex_stage_i
+  littleriscv_ex_stage  ex_stage_i
   (
     // Global signals: Clock and active low asynchronous reset
     .clk                        ( clk                          ),
@@ -553,7 +553,7 @@ module riscv_core
   //                                                                                    //
   ////////////////////////////////////////////////////////////////////////////////////////
 
-  riscv_load_store_unit  load_store_unit_i
+  littleriscv_load_store_unit  load_store_unit_i
   (
     .clk                   ( clk                ),
     .rst_n                 ( rst_ni             ),
@@ -614,7 +614,7 @@ module riscv_core
   //   Control and Status Registers   //
   //////////////////////////////////////
 
-  riscv_cs_registers
+  littleriscv_cs_registers
   #(
     .N_EXT_CNT       ( N_EXT_PERF_COUNTERS   )
   )
@@ -689,7 +689,7 @@ module riscv_core
   //                                                         //
   /////////////////////////////////////////////////////////////
 
-  riscv_debug_unit debug_unit_i
+  littleriscv_debug_unit debug_unit_i
   (
     .clk               ( clk_i              ), // always-running clock for debug
     .rst_n             ( rst_ni             ),
@@ -749,7 +749,7 @@ module riscv_core
 
 
 `ifdef TRACE_EXECUTION
-  riscv_tracer riscv_tracer_i
+  littleriscv_tracer riscv_tracer_i
   (
     .clk            ( clk_i                                ), // always-running clock for tracing
     .rst_n          ( rst_ni                               ),
@@ -807,7 +807,7 @@ module riscv_core
   logic is_interrupt;
   assign is_interrupt = (pc_mux_id == PC_EXCEPTION) && (exc_pc_mux_id == EXC_PC_IRQ);
 
-  riscv_simchecker riscv_simchecker_i
+  littleriscv_simchecker riscv_simchecker_i
   (
     .clk              ( clk_i                                ), // always-running clock for tracing
     .rst_n            ( rst_ni                               ),

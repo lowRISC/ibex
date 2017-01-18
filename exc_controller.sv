@@ -24,7 +24,7 @@
 
 import riscv_defines::*;
 
-module riscv_exc_controller
+module littleriscv_exc_controller
 (
   input  logic        clk,
   input  logic        rst_n,
