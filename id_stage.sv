@@ -669,7 +669,7 @@ module littleriscv_id_stage
     .halt_id_o                      ( halt_id                ),
 
     .misaligned_stall_o             ( misaligned_stall       ),
-    .branch_2nd_stage_o      ( branch_2nd_stage),
+    .branch_2nd_stage_o             ( branch_2nd_stage),
     .jr_stall_o                     ( jr_stall               ),
     .load_stall_o                   ( load_stall             ),
 

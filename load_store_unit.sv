@@ -310,10 +310,10 @@ module littleriscv_load_store_unit
     else
     begin
       CS            <= NS;
-      if (ex_valid_i)
+      if (ex_valid_i) begin
         data_misaligned_o <= data_misaligned;
         misaligned_addr_o <= data_addr_int;
-
+      end
       if (data_rvalid_i && (~data_we_q))
       begin
         // if we have detected a misaligned access, and we are

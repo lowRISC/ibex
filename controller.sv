@@ -325,7 +325,8 @@ module littleriscv_controller
                 pc_set_o      = 1'b1;
                 exc_ack_o     = 1'b1;
 
-                exc_save_if_o = 1'b1;
+                halt_id_o     = 1'b1;
+                exc_save_id_o = 1'b1;
 
                 // we don't have to change our current state here as the prefetch
                 // buffer is automatically invalidated, thus the next instruction

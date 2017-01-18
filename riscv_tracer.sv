@@ -741,7 +741,7 @@ module littleriscv_tracer
         // SYSTEM (others)
         INSTR_ECALL:      trace.printMnemonic("ecall");
         INSTR_EBREAK:     trace.printMnemonic("ebreak");
-        INSTR_ERET:       trace.printMnemonic("eret");
+        INSTR_ERET:       trace.printMnemonic("mret");
         INSTR_WFI:        trace.printMnemonic("wfi");
         // PULP MULTIPLIER
         INSTR_PMUL:       trace.printRInstr("p.mul");

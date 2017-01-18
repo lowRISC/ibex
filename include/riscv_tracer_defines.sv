@@ -88,8 +88,8 @@ parameter INSTR_CSRRSI   =  { 17'b?, 3'b110, 5'b?, OPCODE_SYSTEM };
 parameter INSTR_CSRRCI   =  { 17'b?, 3'b111, 5'b?, OPCODE_SYSTEM };
 parameter INSTR_ECALL    =  { 12'b000000000000, 13'b0, OPCODE_SYSTEM };
 parameter INSTR_EBREAK   =  { 12'b000000000001, 13'b0, OPCODE_SYSTEM };
-parameter INSTR_ERET     =  { 12'b000100000000, 13'b0, OPCODE_SYSTEM };
-parameter INSTR_WFI      =  { 12'b000100000010, 13'b0, OPCODE_SYSTEM };
+parameter INSTR_ERET     =  { 12'b001100000010, 13'b0, OPCODE_SYSTEM };
+parameter INSTR_WFI      =  { 12'b000100000101, 13'b0, OPCODE_SYSTEM };
 
 // RV32M
 parameter INSTR_PMUL     =  { 7'b0000001, 10'b?, 3'b000, 5'b?, OPCODE_OP };
