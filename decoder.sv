@@ -242,8 +242,7 @@ module littleriscv_decoder
       //                              //
       //////////////////////////////////
 
-      OPCODE_STORE,
-      OPCODE_STORE_POST: begin
+      OPCODE_STORE: begin
         data_req       = 1'b1;
         data_we_o      = 1'b1;
         rega_used_o    = 1'b1;
@@ -279,8 +278,7 @@ module littleriscv_decoder
         endcase
       end
 
-      OPCODE_LOAD,
-      OPCODE_LOAD_POST: begin
+      OPCODE_LOAD: begin
         data_req        = 1'b1;
         regfile_mem_we  = 1'b1;
         rega_used_o     = 1'b1;
