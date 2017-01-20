@@ -754,7 +754,7 @@ module littleriscv_core
     .rs3_value      ( id_stage_i.alu_operand_c             ),
     .rs2_value_vec  ( id_stage_i.alu_operand_b             ),
 
-    .ex_valid       (                           ),
+    .ex_valid       (                                      ),
     .ex_reg_addr    ( regfile_alu_waddr_fw                 ),
     .ex_reg_we      ( regfile_alu_we_fw                    ),
     .ex_reg_wdata   ( regfile_alu_wdata_fw                 ),
@@ -767,7 +767,7 @@ module littleriscv_core
 
     .wb_bypass      ( ex_stage_i.branch_in_ex_i            ),
 
-    .wb_valid       ( wb_valid                             ),
+    .wb_valid       ( data_valid_lsu                       ),
     .wb_reg_addr    (                 ),
     .wb_reg_we      (                         ),
     .wb_reg_wdata   ( regfile_wdata                        ),

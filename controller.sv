@@ -254,7 +254,7 @@ module littleriscv_controller
           pc_mux_o     = PC_EXCEPTION;
           pc_set_o     = 1'b1;
           exc_ack_o    = 1'b1;
-          irq_ack_o    = ext_req;
+          irq_ack_o    = ext_req_i;
           // TODO: This assumes that the pipeline is always flushed before
           //       going to sleep.
           exc_save_if_o = 1'b1;
@@ -311,7 +311,6 @@ module littleriscv_controller
                   exc_ack_o     = 1'b1;
                   irq_ack_o     = 1'b1;
                   exc_save_if_o = 1'b1;
-                end
               end
             end
 
@@ -497,12 +496,13 @@ module littleriscv_controller
     // - always stall if a result is to be forwarded to the PC
     // we don't care about in which state the ctrl_fsm is as we deassert_we
     // anyway when we are not in DECODE
-    
+/*
     if ((jump_in_dec_i == BRANCH_JALR) && (regfile_we_wb_o == 1'b1) && (reg_d_wb_is_reg_a_i == 1'b1))
     begin
       jr_stall_o        = 1'b1;
       deassert_we_o     = 1'b1;
     end
+*/
   end
 
   // Forwarding control unit
@@ -513,7 +513,7 @@ module littleriscv_controller
     operand_b_fw_mux_sel_o = SEL_REGFILE;
 
     // Forwarding WB -> ID
-
+/*
     if (regfile_we_wb_o == 1'b1)
     begin
       if (reg_d_wb_is_reg_a_i == 1'b1)
@@ -521,7 +521,7 @@ module littleriscv_controller
       if (reg_d_wb_is_reg_b_i == 1'b1)
         operand_b_fw_mux_sel_o = SEL_FW_WB;
     end
-
+*/
     // Forwarding EX -> ID
 
     // for misaligned memory accesses
