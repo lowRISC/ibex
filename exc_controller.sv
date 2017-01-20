@@ -62,7 +62,7 @@ module littleriscv_exc_controller
 );
 
 
-  enum logic [0:0] { IDLE, WAIT_CONTROLLER } exc_ctrl_cs, exc_ctrl_ns;
+  enum logic [1:0] { IDLE, WAIT_CONTROLLER_INT, WAIT_CONTROLLER_EXT } exc_ctrl_cs, exc_ctrl_ns;
 
   logic req_int, int_req_int, ext_req_int;
   logic [1:0] pc_mux_int, pc_mux_int_q;
@@ -163,19 +163,38 @@ assign req_int = int_req_int | ext_req_int;
       begin
         int_req_o = int_req_int;
         ext_req_o = ext_req_int;
-        if (req_int) begin
-          exc_ctrl_ns = WAIT_CONTROLLER;
+        if (int_req_int) begin
+          exc_ctrl_ns = WAIT_CONTROLLER_INT;
 
           if (ack_i) begin
             save_cause_o = 1'b1;
             exc_ctrl_ns  = IDLE;
           end
+        end else begin
+          if (ext_req_o) begin
+            exc_ctrl_ns = WAIT_CONTROLLER_EXT;
+
+            if (ack_i) begin
+              save_cause_o = 1'b1;
+              exc_ctrl_ns  = IDLE;
+            end
+          end
         end
       end
 
-      WAIT_CONTROLLER:
+      WAIT_CONTROLLER_INT:
       begin
         int_req_o = 1'b1;
+        ext_req_o = 1'b0;
+        if (ack_i) begin
+          save_cause_o = 1'b1;
+          exc_ctrl_ns  = IDLE;
+        end
+      end
+
+      WAIT_CONTROLLER_EXT:
+      begin
+        int_req_o = 1'b0;
         ext_req_o = 1'b1;
         if (ack_i) begin
           save_cause_o = 1'b1;
