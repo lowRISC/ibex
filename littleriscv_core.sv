@@ -756,7 +756,7 @@ module littleriscv_core
 
     .ex_valid       (                                      ),
     .ex_reg_addr    ( regfile_alu_waddr_fw                 ),
-    .ex_reg_we      ( regfile_alu_we_fw                    ),
+    .ex_reg_we      ( id_stage_i.registers_i.we_a_i        ),
     .ex_reg_wdata   ( regfile_alu_wdata_fw                 ),
 
     .ex_data_addr   ( data_addr_o                          ),
@@ -817,9 +817,10 @@ module littleriscv_core
 
     .ex_valid         (                              ),
     .ex_reg_addr      ( id_stage_i.registers_i.waddr_b_i     ),
-    .ex_reg_we        ( id_stage_i.registers_i.we_b_i        ),
+    .ex_reg_we        ( id_stage_i.registers_i.we_a_i        ),
     .ex_reg_wdata     ( id_stage_i.registers_i.wdata_b_i     ),
 
+    .data_valid_lsu   ( data_valid_lsu                       )
     .ex_data_addr     ( data_addr_o                          ),
     .ex_data_req      ( data_req_o                           ),
     .ex_data_gnt      ( data_gnt_i                           ),

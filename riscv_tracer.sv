@@ -63,7 +63,7 @@ module littleriscv_tracer
   input  logic [(REG_ADDR_WIDTH-1):0] ex_reg_addr,
   input  logic        ex_reg_we,
   input  logic [31:0] ex_reg_wdata,
-
+  input  logic        data_valid_lsu,
   input  logic        ex_data_req,
   input  logic        ex_data_gnt,
   input  logic        ex_data_we,
@@ -593,67 +593,13 @@ module littleriscv_tracer
   assign rs2 = instr[`REG_S2];
   assign rs3 = instr[`REG_S3];
 
-  // virtual ID/EX pipeline
-  initial
-  begin
-    instr_trace_t trace;
-    mem_acc_t     mem_acc;
-
-    while(1) begin
-      instr_ex.get(trace);
-
-      
-        // replace register written back
-        foreach(trace.regs_write[i])
-          if ((trace.regs_write[i].addr == ex_reg_addr) && ex_reg_we)
-            trace.regs_write[i].value = ex_reg_wdata;
-
-        // look for data accesses and log them
-        if (ex_data_req && ex_data_gnt) begin
-          mem_acc.addr = ex_data_addr;
-          mem_acc.we   = ex_data_we;
-
-          if (mem_acc.we)
-            mem_acc.wdata = ex_data_wdata;
-          else
-            mem_acc.wdata = 'x;
-
-          trace.mem_access.push_back(mem_acc);
-        end
-
-      instr_wb.put(trace);
-    end
-  end
-
-  // virtual EX/WB pipeline
-  initial
-  begin
-    instr_trace_t trace;
-
-    while(1) begin
-      instr_wb.get(trace);
-
-      // wait until we are going to the next stage
-      do begin
-        @(negedge clk);
-
-        // replace register written back
-        foreach(trace.regs_write[i])
-          if ((trace.regs_write[i].addr == wb_reg_addr) && wb_reg_we)
-            trace.regs_write[i].value = wb_reg_wdata;
-      end while (!wb_valid);
-
-      trace.printInstrTrace();
-    end
-  end
-
   // log execution
   always @(negedge clk)
   begin
     instr_trace_t trace;
-
+    mem_acc_t     mem_acc;
     // special case for WFI because we don't wait for unstalling there
-    if ((id_valid && is_decoding) || pipe_flush)
+    if ((id_valid && is_decoding ) || pipe_flush || (ex_data_req && is_decoding))
     begin
       trace = new ();
 
@@ -678,7 +624,6 @@ module littleriscv_tracer
         INSTR_BGE:        trace.printSBInstr("bge");
         INSTR_BLTU:       trace.printSBInstr("bltu");
         INSTR_BGEU:       trace.printSBInstr("bgeu");
-        INSTR_BALL:       trace.printSBallInstr("pv.ball");
         // OPIMM
         INSTR_ADDI:       trace.printIInstr("addi");
         INSTR_SLTI:       trace.printIInstr("slti");
@@ -761,7 +706,33 @@ module littleriscv_tracer
         default:           trace.printMnemonic("INVALID");
       endcase // unique case (instr)
 
-      instr_ex.put(trace);
+     // replace register written back
+        foreach(trace.regs_write[i]) begin
+         //$display("A: %x (%x) V: %x --%x\n",trace.regs_write[i].addr, ex_reg_addr, ex_reg_wdata,ex_reg_we);
+         if ((trace.regs_write[i].addr == ex_reg_addr) && ex_reg_we)
+            trace.regs_write[i].value = ex_reg_wdata;
+        end
+        // look for data accesses and log them
+        if (ex_data_req && ex_data_gnt) begin
+          mem_acc.addr = ex_data_addr;
+          mem_acc.we   = ex_data_we;
+
+          if (mem_acc.we)
+            mem_acc.wdata = ex_data_wdata;
+          else
+            mem_acc.wdata = 'x;
+
+          trace.mem_access.push_back(mem_acc);
+          //we wait until the the data instruction ends
+          do @(negedge clk);
+          while (!data_valid_lsu);
+          if (~mem_acc.we)
+            //load operations
+            foreach(trace.regs_write[i])
+                trace.regs_write[i].value = wb_reg_wdata;
+        end
+     trace.printInstrTrace();
+
     end
   end // always @ (posedge clk)
 
