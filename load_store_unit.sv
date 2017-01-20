@@ -55,8 +55,6 @@ module littleriscv_load_store_unit
 
     input  logic [31:0]  adder_result_ex_i,
 
-
-    input  logic         data_misaligned_ex_i, // misaligned access in last ld/st   -> from ID/EX pipeline
     output logic         data_misaligned_o,    // misaligned access was detected    -> to controller
     output logic         first_cycle_misaligned_o,
     output logic [31:0]  misaligned_addr_o,
@@ -68,9 +66,7 @@ module littleriscv_load_store_unit
     // stall signal
     output logic         lsu_ready_ex_o, // LSU ready for new data in EX stage
     output logic         lsu_ready_wb_o, // LSU ready for new data in WB stage
-
-
-    input  logic         ex_valid_i,
+    output logic         data_valid_o,
 
     output logic         busy_o
 );
@@ -89,9 +85,10 @@ module littleriscv_load_store_unit
   logic [31:0]  data_wdata;
 
   logic         misaligned_st;   // high if we are currently performing the second part of a misaligned store
-  logic         data_misaligned;
+  logic         data_misaligned, data_misaligned_q;
+  logic         increase_address;
 
-  enum logic [1:0]  { IDLE, WAIT_RVALID, WAIT_RVALID_EX_STALL, IDLE_EX_STALL } CS, NS;
+  enum logic [2:0]  { IDLE, WAIT_GNT_MIS, WAIT_RVALID_MIS, WAIT_GNT, WAIT_RVALID } CS, NS;
 
   logic [31:0]  rdata_q;
 
@@ -304,15 +301,17 @@ module littleriscv_load_store_unit
     begin
       CS            <= IDLE;
       rdata_q       <= '0;
-      data_misaligned_o <= '0;
+      data_misaligned_q <= '0;
       misaligned_addr_o <= 32'b0;
     end
     else
     begin
       CS            <= NS;
-      if (ex_valid_i) begin
-        data_misaligned_o <= data_misaligned;
-        misaligned_addr_o <= data_addr_int;
+      if (lsu_ready_ex_o) begin
+        data_misaligned_q <= data_misaligned;
+        if(increase_address) begin
+          misaligned_addr_o <= data_addr_int;
+        end
       end
       if (data_rvalid_i && (~data_we_q))
       begin
@@ -322,7 +321,7 @@ module littleriscv_load_store_unit
         // In all other cases, rdata_q gets the value that we are
         // writing to the register file
 
-        if ((data_misaligned_ex_i == 1'b1) || (data_misaligned == 1'b1))
+        if ((data_misaligned_q == 1'b1) || (data_misaligned == 1'b1))
           rdata_q  <= data_rdata_i;
         else
           rdata_q  <= data_rdata_ext;
@@ -339,9 +338,9 @@ module littleriscv_load_store_unit
   assign data_we_o     = data_we_ex_i;
   assign data_be_o     = data_be;
 
-  assign misaligned_st = data_misaligned_ex_i;
+  assign misaligned_st = data_misaligned_q;
 
-  assign first_cycle_misaligned_o = data_misaligned; // Directly forward signal to 
+//  assign first_cycle_misaligned_o = data_misaligned; // Directly forward signal to 
 
 
 
@@ -355,91 +354,96 @@ module littleriscv_load_store_unit
 
     data_req_o     = 1'b0;
 
-    lsu_ready_ex_o = 1'b1;
-    lsu_ready_wb_o = 1'b1;
+    lsu_ready_ex_o   = 1'b0;
+    lsu_ready_wb_o   = 1'b0;
+    data_valid_o     = 1'b0;
+    increase_address = 1'b0;
+    data_misaligned_o = 1'b0;
 
     case(CS)
       // starts from not active and stays in IDLE until request was granted
       IDLE:
       begin
-          if (data_req_ex_i) begin
-          data_req_o = data_req_ex_i;
-          lsu_ready_ex_o = 1'b0;
-
-          if(data_gnt_i) begin
-            lsu_ready_ex_o = 1'b1;
-
-            if (ex_valid_i)
-              NS = WAIT_RVALID;
-            else
-              NS = WAIT_RVALID_EX_STALL;
-          end
+        if (data_req_ex_i) begin
+            data_req_o     = data_req_ex_i;
+            if(data_gnt_i) begin
+              lsu_ready_ex_o   = 1'b1;
+              increase_address = data_misaligned;
+              NS = data_misaligned ? WAIT_RVALID_MIS : WAIT_RVALID;
+            end
+            else begin
+              NS = data_misaligned ? WAIT_GNT_MIS    : WAIT_GNT;
+            end
         end
       end //~ IDLE
 
+      WAIT_GNT_MIS:
+      begin
+        data_req_o = 1'b1;
+        if(data_gnt_i) begin
+          lsu_ready_ex_o = 1'b1;
+          increase_address = data_misaligned;
+          NS = WAIT_RVALID_MIS;
+        end
+      end //~ WAIT_GNT_MIS
+
       // wait for rvalid in WB stage and send a new request if there is any
+      WAIT_RVALID_MIS:
+      begin
+        //increase_address goes down, we already have the proper address
+        increase_address  = 1'b0;
+        //tell the controller to update the address
+        data_misaligned_o = 1'b1;
+        data_req_o        = 1'b1; //maybe better if controller handles this
+
+        if(data_rvalid_i) begin
+           //if first part rvalid is received
+           if(data_gnt_i) begin
+              //second grant is received
+              NS             = WAIT_RVALID;
+              lsu_ready_ex_o = 1'b1;
+              //in this stage we already received the first valid but no the second one
+              //it differes from WAIT_RVALID_MIS because we do not send other requests
+            end
+            else begin
+              //second grant is NOT received, but first rvalid yes
+              //lsu_ready_ex_o is 0 so data_misaligned_q stays high in WAIT_GNT
+              //increase address stays the same as well
+              NS              = WAIT_GNT; //  [1]
+            end
+        end
+        else begin
+          //if first part rvalid is NOT received
+          //the second grand is not received either by protocol. 
+          //stay here
+          NS                 = WAIT_RVALID_MIS;
+        end
+      end
+
+      WAIT_GNT:
+      begin
+        data_misaligned_o = data_misaligned_q;
+        //useful in case [1]
+        data_req_o        = 1'b1;
+        if(data_gnt_i) begin
+          lsu_ready_ex_o = 1'b1;
+          NS = WAIT_RVALID;
+        end
+      end //~ WAIT_GNT
+
       WAIT_RVALID:
       begin
-        lsu_ready_wb_o = 1'b0;
+        data_req_o        = 1'b0;
 
-        if (data_rvalid_i) begin
-          // we don't have to wait for anything here as we are the only stall
-          // source for the WB stage
-          lsu_ready_wb_o = 1'b1;
-
-          if (data_req_ex_i) begin
-            data_req_o = data_req_ex_i;
-            lsu_ready_ex_o = 1'b0;
-
-            if (data_gnt_i) begin
-              lsu_ready_ex_o = 1'b1;
-
-              if(ex_valid_i)
-                NS = WAIT_RVALID;
-              else
-                NS = WAIT_RVALID_EX_STALL;
-            end else begin
-              NS = IDLE;
-            end
-          end else begin
-              // no request, so go to IDLE
-              NS = IDLE;
-          end
+        if(data_rvalid_i) begin
+          data_valid_o = 1'b1;
+          NS           = IDLE;
         end
-      end
-
-      // wait for rvalid while still in EX stage
-      // we end up here when there was an EX stall, so in this cycle we just
-      // wait and don't send new requests
-      WAIT_RVALID_EX_STALL:
-      begin
-        data_req_o = 1'b0;
-
-        if (data_rvalid_i) begin
-          if (ex_valid_i) begin
-            // we are done and can go back to idle
-            // the data is safely stored already
-            NS = IDLE;
-          end else begin
-            // we have to wait until ex_stall is deasserted
-            NS = IDLE_EX_STALL;
-          end
-        end else begin
-          // we didn't yet receive the rvalid, so we check the ex_stall
-          // signal. If we are no longer stalled we can change to the "normal"
-          // WAIT_RVALID state
-          if (ex_valid_i)
-            NS = WAIT_RVALID;
+        else begin
+          NS           = WAIT_RVALID;
         end
-      end
+      end //~ WAIT_RVALID
 
-      IDLE_EX_STALL:
-      begin
-        // wait for us to be unstalled and then change back to IDLE state
-        if (ex_valid_i) begin
-          NS = IDLE;
-        end
-      end
 
       default: begin
         NS = IDLE;
@@ -454,7 +458,7 @@ module littleriscv_load_store_unit
   begin
     data_misaligned = 1'b0;
 
-    if((data_req_ex_i == 1'b1) && (data_misaligned_ex_i == 1'b0))
+    if((data_req_ex_i == 1'b1) && (data_misaligned_q == 1'b0))
     begin
       case (data_type_ex_i)
         2'b00: // word
@@ -471,14 +475,9 @@ module littleriscv_load_store_unit
     end
   end
 
-
-
-
   assign data_addr_int = adder_result_ex_i;
 
-
-  assign busy_o = (CS == WAIT_RVALID) || (CS == WAIT_RVALID_EX_STALL) || (CS == IDLE_EX_STALL) || (data_req_o == 1'b1);
-
+  assign busy_o = (CS == WAIT_RVALID) || (data_req_o == 1'b1);
 
   //////////////////////////////////////////////////////////////////////////////
   // Assertions

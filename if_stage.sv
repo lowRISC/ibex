@@ -276,17 +276,6 @@ module littleriscv_if_stage #(
             .illegal_instr_o ( illegal_c_insn       )
           );
 
-        // prefetch -> IF registers
-        always_ff @(posedge clk, negedge rst_n)
-        begin
-          if (rst_n == 1'b0)
-            begin
-            end
-          else
-            begin
-            end
-        end
-
         // IF-ID pipeline registers, frozen when the ID stage is stalled
         always_ff @(posedge clk, negedge rst_n)
         begin : IF_ID_PIPE_REGISTERS
@@ -302,14 +291,13 @@ module littleriscv_if_stage #(
             begin
 
               if (if_valid_o)
-                begin
+              begin
                   instr_valid_id_o    <= 1'b1;
                   instr_rdata_id_o    <= instr_decompressed;
                   illegal_c_insn_id_o <= illegal_c_insn;
                   is_compressed_id_o  <= instr_compressed_int;
                   pc_id_o             <= pc_if_o;
-
-                end else if (clear_instr_valid_i) begin
+              end else if (clear_instr_valid_i) begin
                 instr_valid_id_o    <= 1'b0;
               end
 

@@ -178,16 +178,14 @@ module littleriscv_core
   logic        halt_if;
   logic        if_ready;
   logic        id_ready;
-  logic        ex_ready;
 
   logic        if_valid;
   logic        id_valid;
-  logic        ex_valid;
   logic        wb_valid;
 
   logic        lsu_ready_ex;
   logic        lsu_ready_wb;
-
+  logic        data_valid_lsu;
 
   // Signals between instruction core interface and pipe (if and id stages)
   logic        instr_req_int;    // Id stage asserts a req to instruction core interface
@@ -391,12 +389,12 @@ module littleriscv_core
 
     .if_ready_i                   ( if_ready             ),
     .id_ready_o                   ( id_ready             ),
-    .ex_ready_i                   ( ex_ready             ),
+    .data_valid_lsu_i             ( data_valid_lsu       ),
     .wb_ready_i                   ( lsu_ready_wb         ),
+    .lsu_ready_ex_i               ( lsu_ready_ex         ),
 
     .if_valid_i                   ( if_valid             ),
     .id_valid_o                   ( id_valid             ),
-    .ex_valid_i                   ( ex_valid             ),
     .wb_valid_i                   ( wb_valid             ),
 
     // From the Pipeline ID/EX
@@ -407,8 +405,6 @@ module littleriscv_core
     .alu_operand_c_ex_o           ( alu_operand_c_ex     ), // Still needed if 2r1w reg file used
 
     .jal_in_ex_o                 ( jal_in_ex           ),
-
-
 
     .regfile_we_ex_o              ( regfile_we_ex        ),
 
@@ -428,9 +424,6 @@ module littleriscv_core
     .data_sign_ext_ex_o           ( data_sign_ext_ex     ), // to load store unit
     .data_reg_offset_ex_o         ( data_reg_offset_ex   ), // to load store unit
     .data_load_event_ex_o         ( data_load_event_ex   ), // to load store unit
-
-    .data_misaligned_ex_o         ( data_misaligned_ex   ), // to load store unit
-
 
     .data_misaligned_i            ( data_misaligned      ),
     .misaligned_addr_i            ( misaligned_addr      ),
@@ -469,8 +462,8 @@ module littleriscv_core
     .dbg_jump_req_i               ( dbg_jump_req         ),
 
     // Forward Signals
-    .regfile_waddr_wb_i           ( regfile_waddr_fw_wb_o),  // Write address ex-wb pipeline
-    .regfile_we_wb_i              ( regfile_we_wb        ),  // write enable for the register file
+    //.regfile_waddr_wb_i           ( ),  // Write address ex-wb pipeline
+    //.regfile_we_wb_i              (         ),  // write enable for the register file
     .regfile_wdata_wb_i           ( regfile_wdata        ),  // write data to commit in the register file
 
     .regfile_alu_waddr_fw_i       ( regfile_alu_waddr_fw ),
@@ -522,8 +515,8 @@ module littleriscv_core
     .regfile_we_i               ( regfile_we_ex                ),
 
     // Output of ex stage pipeline
-    .regfile_waddr_wb_o         ( regfile_waddr_fw_wb_o        ),
-    .regfile_we_wb_o            ( regfile_we_wb                ),
+    .regfile_waddr_wb_o         (         ),
+    .regfile_we_wb_o            (                 ),
 
     // To IF: Jump and branch target and decision
     .jump_target_o              ( jump_target_ex               ),
@@ -532,15 +525,11 @@ module littleriscv_core
     // To ID stage: Forwarding signals
     .regfile_alu_waddr_fw_o     ( regfile_alu_waddr_fw         ),
     .regfile_alu_we_fw_o        ( regfile_alu_we_fw            ),
-    .regfile_alu_wdata_fw_o     ( regfile_alu_wdata_fw         ),
+    .regfile_alu_wdata_fw_o     ( regfile_alu_wdata_fw         )
 
     // stall control
-    .lsu_ready_ex_i             ( lsu_ready_ex                 ),
-
-
-    .ex_ready_o                 ( ex_ready                     ),
-    .ex_valid_o                 ( ex_valid                     ),
-    .wb_ready_i                 ( lsu_ready_wb                 )
+    //.lsu_ready_ex_i             ( lsu_ready_ex                 ),
+    //.wb_ready_i                 ( lsu_ready_wb                 )
   );
 
 
@@ -582,27 +571,22 @@ module littleriscv_core
 
     .adder_result_ex_i     ( alu_adder_result_ex),
 
-
-    .data_misaligned_ex_i  ( data_misaligned_ex ), // from ID/EX pipeline
     .data_misaligned_o     ( data_misaligned    ),
-    .misaligned_addr_o     ( misaligned_addr    ),
     .first_cycle_misaligned_o( first_cycle_misaligned),
+    .misaligned_addr_o     ( misaligned_addr    ),
 
     // exception signals
     .load_err_o            ( lsu_load_err       ),
     .store_err_o           ( lsu_store_err      ),
 
     // control signals
+    .data_valid_o          ( data_valid_lsu     ),
     .lsu_ready_ex_o        ( lsu_ready_ex       ),
     .lsu_ready_wb_o        ( lsu_ready_wb       ),
-
-
-    .ex_valid_i            ( ex_valid           ),
     .busy_o                ( lsu_busy           )
   );
 
   assign wb_valid = lsu_ready_wb;
-
 
   //////////////////////////////////////
   //        ____ ____  ____           //
@@ -770,7 +754,7 @@ module littleriscv_core
     .rs3_value      ( id_stage_i.alu_operand_c             ),
     .rs2_value_vec  ( id_stage_i.alu_operand_b             ),
 
-    .ex_valid       ( ex_valid                             ),
+    .ex_valid       (                           ),
     .ex_reg_addr    ( regfile_alu_waddr_fw                 ),
     .ex_reg_we      ( regfile_alu_we_fw                    ),
     .ex_reg_wdata   ( regfile_alu_wdata_fw                 ),
@@ -784,8 +768,8 @@ module littleriscv_core
     .wb_bypass      ( ex_stage_i.branch_in_ex_i            ),
 
     .wb_valid       ( wb_valid                             ),
-    .wb_reg_addr    ( regfile_waddr_fw_wb_o                ),
-    .wb_reg_we      ( regfile_we_wb                        ),
+    .wb_reg_addr    (                 ),
+    .wb_reg_we      (                         ),
     .wb_reg_wdata   ( regfile_wdata                        ),
 
     .imm_u_type     ( id_stage_i.imm_u_type                ),
@@ -831,7 +815,7 @@ module littleriscv_core
     .irq_no           ( irq_id_i                             ),
     .pipe_flush       ( id_stage_i.controller_i.pipe_flush_i ),
 
-    .ex_valid         ( ex_valid                             ),
+    .ex_valid         (                              ),
     .ex_reg_addr      ( id_stage_i.registers_i.waddr_b_i     ),
     .ex_reg_we        ( id_stage_i.registers_i.we_b_i        ),
     .ex_reg_wdata     ( id_stage_i.registers_i.wdata_b_i     ),

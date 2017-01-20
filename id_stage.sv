@@ -40,7 +40,6 @@ import riscv_defines::*;
 module littleriscv_id_stage
 #(
   parameter REG_ADDR_WIDTH      = 5
-
 )
 (
     input  logic        clk,
@@ -78,13 +77,13 @@ module littleriscv_id_stage
     output logic        halt_if_o,      // controller requests a halt of the IF stage
 
     output logic        id_ready_o,     // ID stage is ready for the next instruction
-    input  logic        ex_ready_i,     // EX stage is ready for the next instruction
+    input  logic        data_valid_lsu_i,
     input  logic        wb_ready_i,
+    input  logic        lsu_ready_ex_i,
 
     input  logic        if_ready_i,     // IF stage is done
     input  logic        if_valid_i,     // IF stage is done
     output logic        id_valid_o,     // ID stage is done
-    input  logic        ex_valid_i,     // EX stage is done
     input  logic        wb_valid_i,     // WB stage is done
 
     // Pipeline ID/EX
@@ -120,9 +119,6 @@ module littleriscv_id_stage
     output logic        data_sign_ext_ex_o,
     output logic [1:0]  data_reg_offset_ex_o,
     output logic        data_load_event_ex_o,
-
-    output logic        data_misaligned_ex_o,
-
 
     input  logic        data_misaligned_i,
     input  logic [31:0] misaligned_addr_i,
@@ -163,8 +159,8 @@ module littleriscv_id_stage
     input  logic        dbg_jump_req_i,
 
     // Forward Signals
-    input  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_wb_i,
-    input  logic        regfile_we_wb_i,
+    //input  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_wb_i,
+    //input  logic        regfile_we_wb_i,
     input  logic [31:0] regfile_wdata_wb_i, // From wb_stage: selects data from data memory, ex_stage result and sp rdata
 
 
@@ -190,7 +186,6 @@ module littleriscv_id_stage
   logic        eret_insn_dec;
   logic        ecall_insn_dec;
   logic        pipe_flush_dec;
-
   logic        rega_used_dec;
   logic        regb_used_dec;
 
@@ -198,14 +193,14 @@ module littleriscv_id_stage
   logic [1:0]  jump_in_id;
   logic [1:0]  jump_in_dec;
 
-
-  logic        misaligned_stall;
   logic        branch_2nd_stage;
   logic        jr_stall;
   logic        load_stall;
 
   logic        halt_id;
 
+  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_wb;
+  logic        regfile_we, regfile_we_q;
 
   // Immediate decoding and sign extension
   logic [31:0] imm_i_type;
@@ -226,7 +221,7 @@ module littleriscv_id_stage
 
 
   // Signals running between controller and exception controller
-  logic        exc_req, ext_req, exc_ack;  // handshake
+  logic        int_req, ext_req, exc_ack;  // handshake
 
   // Register file interface
   logic [(REG_ADDR_WIDTH-1):0]  regfile_addr_ra_id;
@@ -249,7 +244,8 @@ module littleriscv_id_stage
 
 
   // Register Write Control
-  logic        regfile_we_id;
+  logic        regfile_mem_we_id;
+  logic        select_data_lsu;
 
   // Data Memory Control
   logic        data_we_id;
@@ -258,7 +254,7 @@ module littleriscv_id_stage
   logic [1:0]  data_reg_offset_id;
   logic        data_req_id;
   logic        data_load_event_id;
-
+  logic        data_misaligned_fsm;
 
   // CSR control
   logic        csr_access;
@@ -325,8 +321,10 @@ module littleriscv_id_stage
   assign regfile_alu_waddr_id = instr[`REG_D];
 
   // Forwarding control signals
-  assign reg_d_wb_is_reg_a_id  = (regfile_waddr_wb_i     == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
-  assign reg_d_wb_is_reg_b_id  = (regfile_waddr_wb_i     == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
+  //assign reg_d_wb_is_reg_a_id  = (regfile_waddr_wb_i     == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
+  //assign reg_d_wb_is_reg_b_id  = (regfile_waddr_wb_i     == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
+  assign reg_d_wb_is_reg_a_id  = (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
+  assign reg_d_wb_is_reg_b_id  = (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
 
 
 
@@ -335,13 +333,6 @@ module littleriscv_id_stage
   assign clear_instr_valid_o = id_ready_o | halt_id;
 
   assign branch_taken_ex = branch_in_ex_o & (branch_decision_i | branch_2nd_stage);
-
-
-
-
-
-
-
 
   ////////////////////////////////////////////////////////
   //   ___                                 _      _     //
@@ -469,21 +460,6 @@ module littleriscv_id_stage
     end
 
 
-
-  ///////////////////////////////////////////////////////////////////////////
-  //  ___                              _ _       _              ___ ____   //
-  // |_ _|_ __ ___  _ __ ___   ___  __| (_) __ _| |_ ___  ___  |_ _|  _ \  //
-  //  | || '_ ` _ \| '_ ` _ \ / _ \/ _` | |/ _` | __/ _ \/ __|  | || | | | //
-  //  | || | | | | | | | | | |  __/ (_| | | (_| | ||  __/\__ \  | || |_| | //
-  // |___|_| |_| |_|_| |_| |_|\___|\__,_|_|\__,_|\__\___||___/ |___|____/  //
-  //                                                                       //
-  ///////////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
   /////////////////////////////////////////////////////////
   //  ____  _____ ____ ___ ____ _____ _____ ____  ____   //
   // |  _ \| ____/ ___|_ _/ ___|_   _| ____|  _ \/ ___|  //
@@ -509,9 +485,12 @@ module littleriscv_id_stage
 
 
     // Write port a (multiplex between ALU and LSU). Conflict is resolved by stalling in EX.
-    .waddr_a_i    ( (dbg_reg_wreq_i == 1'b0) ? ( (regfile_we_wb_i == 1'b1) ? regfile_waddr_wb_i : regfile_alu_waddr_fw_i) : dbg_reg_waddr_i ),
-    .wdata_a_i    ( (dbg_reg_wreq_i == 1'b0) ? ( (regfile_we_wb_i == 1'b1) ? regfile_wdata_wb_i : regfile_alu_wdata_fw_i) : dbg_reg_wdata_i ),
-    .we_a_i       ( (dbg_reg_wreq_i == 1'b0) ? (regfile_we_wb_i || regfile_alu_we_fw_i) : 1'b1                                              )
+    //.waddr_a_i    ( (dbg_reg_wreq_i == 1'b0) ? ( (regfile_we_wb_i == 1'b1) ? regfile_waddr_wb_i : regfile_alu_waddr_fw_i) : dbg_reg_waddr_i ),
+    //.wdata_a_i    ( (dbg_reg_wreq_i == 1'b0) ? ( (regfile_we_wb_i == 1'b1) ? regfile_wdata_wb_i : regfile_alu_wdata_fw_i) : dbg_reg_wdata_i ),
+    .waddr_a_i    ( (dbg_reg_wreq_i == 1'b0) ? regfile_alu_waddr_fw_i : dbg_reg_waddr_i ),
+//    .wdata_a_i    ( (dbg_reg_wreq_i == 1'b0) ? regfile_alu_wdata_fw_i : dbg_reg_wdata_i ),
+    .wdata_a_i    ( (dbg_reg_wreq_i == 1'b0) ? ( select_data_lsu ? regfile_wdata_wb_i : regfile_alu_wdata_fw_i ) : dbg_reg_wdata_i ),
+    .we_a_i       ( (dbg_reg_wreq_i == 1'b0) ? regfile_we  : 1'b1                       )
   );
 
   assign dbg_reg_rdata_o = regfile_data_rb_id;
@@ -558,7 +537,7 @@ module littleriscv_id_stage
 
 
     // Register file control signals
-    .regfile_mem_we_o                ( regfile_we_id             ),
+    .regfile_mem_we_o                ( regfile_mem_we_id         ),
     .regfile_alu_we_o                ( regfile_alu_we_id         ),
 
     // CSR control signals
@@ -603,7 +582,6 @@ module littleriscv_id_stage
     .illegal_insn_i                 ( illegal_insn_dec       ),
     .eret_insn_i                    ( eret_insn_dec          ),
     .pipe_flush_i                   ( pipe_flush_dec         ),
-
     .rega_used_i                    ( rega_used_dec          ),
     .regb_used_i                    ( regb_used_dec          ),
 
@@ -620,10 +598,8 @@ module littleriscv_id_stage
 
     // LSU
     .data_req_ex_i                  ( data_req_ex_o          ),
-    .data_misaligned_i              ( data_misaligned_i      ),
+    .data_misaligned_fsm_i          ( data_misaligned_fsm    ),
     .data_load_event_i              ( data_load_event_ex_o   ),
-
-    // ALU
 
     // jump/branch control
     .branch_taken_ex_i              ( branch_taken_ex        ),
@@ -631,10 +607,10 @@ module littleriscv_id_stage
     .jump_in_dec_i                  ( jump_in_dec            ),
 
     // Exception Controller Signals
-    .exc_req_i                      ( exc_req                ),
+    .int_req_i                      ( int_req                ),
     .ext_req_i                      ( ext_req                ),
     .exc_ack_o                      ( exc_ack                ),
-
+    .irq_ack_o                      ( irq_ack_o              ),
     .exc_save_if_o                  ( exc_save_if_o          ),
     .exc_save_id_o                  ( exc_save_id_o          ),
     .exc_save_takenbranch_o         ( exc_save_takenbranch_o ),
@@ -648,8 +624,9 @@ module littleriscv_id_stage
 
     // Forwarding signals from regfile
     .regfile_we_ex_i                ( regfile_we_ex_o        ),
-    .regfile_waddr_wb_i             ( regfile_waddr_wb_i     ), // Write address for register file from ex-wb- pipeline registers
-    .regfile_we_wb_i                ( regfile_we_wb_i        ),
+    //.regfile_waddr_wb_i             ( regfile_waddr_wb_i     ), // Write address for register file from ex-wb- pipeline registers
+    .regfile_waddr_wb_i             (      ), // Write address for register file from ex-wb- pipeline registers
+    //.regfile_we_wb_i                ( regfile_we_wb_i        ),
 
     // regfile port 2 (or multiplexer signal in case of a 2r1w)
     .regfile_alu_waddr_fw_i         ( regfile_alu_waddr_fw_i ),
@@ -668,15 +645,12 @@ module littleriscv_id_stage
     .halt_if_o                      ( halt_if_o              ),
     .halt_id_o                      ( halt_id                ),
 
-    .misaligned_stall_o             ( misaligned_stall       ),
-    .branch_2nd_stage_o             ( branch_2nd_stage),
+    .branch_2nd_stage_o             ( branch_2nd_stage       ),
     .jr_stall_o                     ( jr_stall               ),
-    .load_stall_o                   ( load_stall             ),
 
     .id_ready_i                     ( id_ready_o             ),
 
     .if_valid_i                     ( if_valid_i             ),
-    .ex_valid_i                     ( ex_valid_i             ),
     .wb_valid_i                     ( wb_valid_i             ),
 
     // Performance Counters
@@ -694,15 +668,13 @@ module littleriscv_id_stage
   //                                                                   //
   ///////////////////////////////////////////////////////////////////////
 
-  assign irq_ack_o = exc_ack;
-
   littleriscv_exc_controller exc_controller_i
   (
     .clk                  ( clk              ),
     .rst_n                ( rst_n            ),
 
     // to controller
-    .req_o                ( exc_req          ),
+    .int_req_o            ( int_req          ),
     .ext_req_o            ( ext_req          ),
     .ack_i                ( exc_ack          ),
 
@@ -742,13 +714,13 @@ module littleriscv_id_stage
   //                                 //
   /////////////////////////////////////
 
-
   always_comb
   begin
 
     regfile_alu_waddr_ex_o      = regfile_alu_waddr_id;
 
-    data_we_ex_o                = (data_we_id & (~halt_id) &  wb_ready_i);
+//    data_we_ex_o                = (data_we_id & (~halt_id) &  wb_ready_i);
+    data_we_ex_o                = data_we_id;
     data_type_ex_o              = data_type_id;
     data_sign_ext_ex_o          = data_sign_ext_id;
 
@@ -759,7 +731,7 @@ module littleriscv_id_stage
     alu_operand_b_ex_o          = alu_operand_b;
     alu_operand_c_ex_o          = alu_operand_c;
 
-    regfile_we_ex_o             = (regfile_we_id & (~halt_id) & wb_ready_i);
+    regfile_we_ex_o             = (regfile_mem_we_id & (~halt_id) & wb_ready_i);
     regfile_alu_we_ex_o         = (regfile_alu_we_id  & (~halt_id) & wb_ready_i);
 
     csr_access_ex_o             = csr_access;
@@ -769,19 +741,73 @@ module littleriscv_id_stage
     data_reg_offset_ex_o        = data_reg_offset_id;
     data_load_event_ex_o        = ((data_req_id & (~halt_id) & wb_ready_i) ? data_load_event_id : 1'b0);
 
-    data_misaligned_ex_o        = data_misaligned_i;
-
     pc_ex_o                     = pc_id_i;
     branch_in_ex_o              = (jump_in_dec == BRANCH_COND);
     jal_in_ex_o                 = ((jump_in_id == BRANCH_JALR) || (jump_in_id == BRANCH_JAL));
   end
 
+  enum logic { IDLE, WAIT_LSU } id_wb_fsm_cs, id_wb_fsm_ns;
+
+  ///////////////////////////////////////
+  // ID-EX/WB Pipeline Register        //
+  ///////////////////////////////////////
+  always_ff @(posedge clk, negedge rst_n)
+  begin : EX_WB_Pipeline_Register
+    if (~rst_n)
+    begin
+      regfile_we_q    <= 1'b0;
+      id_wb_fsm_cs    <= IDLE;
+    end
+    else begin
+      regfile_we_q    <= regfile_mem_we_id & load_stall;
+      id_wb_fsm_cs    <= id_wb_fsm_ns;
+    end
+  end
+
+  ///////////////////////////////////////
+  // ID-EX/WB FMS                      //
+  ///////////////////////////////////////
+
+  always_comb
+  begin
+    id_wb_fsm_ns    = id_wb_fsm_cs;
+    regfile_we      = regfile_alu_we_id & (~halt_id);
+    load_stall      = 1'b0;
+    select_data_lsu = 1'b0;
+
+    unique case (id_wb_fsm_cs)
+
+      IDLE:
+      begin
+        if(data_req_ex_o) begin
+          //LSU operation
+          regfile_we    = 1'b0;
+          id_wb_fsm_ns  = WAIT_LSU;
+          load_stall    = 1'b1;
+        end
+      end
+
+      WAIT_LSU:
+      begin
+        if(data_valid_lsu_i) begin
+          //LSU operation
+          regfile_we    = regfile_we_q;
+          id_wb_fsm_ns  = IDLE;
+          load_stall    = 1'b0;
+          select_data_lsu = 1'b1;
+        end
+        else
+          load_stall    = 1'b1;
+      end
+    endcase
+  end
 
   // stall control
-  assign id_ready_o = ((~first_cycle_misaligned_i) & (~jr_stall) & (~load_stall) & ex_ready_i);
+  assign id_ready_o = (~jr_stall) & (~load_stall);
   
 
   assign id_valid_o = (~halt_id) & id_ready_o;
+
 
   //----------------------------------------------------------------------------
   // Assertions

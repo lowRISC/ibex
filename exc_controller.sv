@@ -30,7 +30,7 @@ module littleriscv_exc_controller
   input  logic        rst_n,
 
   // handshake signals to controller
-  output logic        req_o,
+  output logic        int_req_o,
   output logic        ext_req_o,
   input  logic        ack_i,
 
@@ -64,7 +64,7 @@ module littleriscv_exc_controller
 
   enum logic [0:0] { IDLE, WAIT_CONTROLLER } exc_ctrl_cs, exc_ctrl_ns;
 
-  logic req_int, ext_req_int;
+  logic req_int, int_req_int, ext_req_int;
   logic [1:0] pc_mux_int, pc_mux_int_q;
   logic [5:0] cause_int, cause_int_q;
 
@@ -87,14 +87,14 @@ module littleriscv_exc_controller
                       | (irq_enable_i & irq_i & dbg_settings_i[DBG_SETS_IRQ]);
 
 // request for exception/interrupt
-assign req_int =   ecall_insn_i
-                   | illegal_insn_i
-                   | ext_req_int;
+assign int_req_int =   ecall_insn_i
+                   | illegal_insn_i;
 
 assign ext_req_int =   lsu_load_err_i
                        | lsu_store_err_i
                        | irq_enable_i & irq_i;
 
+assign req_int = int_req_int | ext_req_int;
 
   // Exception cause and ISR address selection
   always_comb
@@ -154,14 +154,14 @@ assign ext_req_int =   lsu_load_err_i
   always_comb
   begin
     exc_ctrl_ns  = exc_ctrl_cs;
-    req_o        = 1'b0;
+    int_req_o    = 1'b0;
     ext_req_o    = 1'b0;
     save_cause_o = 1'b0;
 
     unique case (exc_ctrl_cs)
       IDLE:
       begin
-        req_o     = req_int;
+        int_req_o = int_req_int;
         ext_req_o = ext_req_int;
         if (req_int) begin
           exc_ctrl_ns = WAIT_CONTROLLER;
@@ -175,7 +175,7 @@ assign ext_req_int =   lsu_load_err_i
 
       WAIT_CONTROLLER:
       begin
-        req_o     = 1'b1;
+        int_req_o = 1'b1;
         ext_req_o = 1'b1;
         if (ack_i) begin
           save_cause_o = 1'b1;
@@ -204,7 +204,7 @@ assign ext_req_int =   lsu_load_err_i
   // evaluate at falling edge to avoid duplicates during glitches
   always_ff @(negedge clk)
   begin
-    if (rst_n && req_o && ack_i)
+    if (rst_n && (int_req_o | ext_req_o) && ack_i)
       $display("%t: Entering exception routine.", $time);
   end
   // synopsys translate_on

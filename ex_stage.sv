@@ -73,20 +73,12 @@ module littleriscv_ex_stage
 
   // To IF: Jump and branch target and decision
   output logic [31:0] jump_target_o,
-  output logic        branch_decision_o,
-
-  // Stall Control
-  input  logic        lsu_ready_ex_i, // EX part of LSU is done
-
-
-
-  output logic        ex_ready_o, // EX stage ready for new data
-  output logic        ex_valid_o, // EX stage gets new data
-  input  logic        wb_ready_i  // WB stage ready for new data
+  output logic        branch_decision_o
 );
 
   logic regfile_we_conflict; // Tests for a conflict when WB and EX want to write to a register at the same cycle.
-  assign regfile_we_conflict = regfile_we_wb_o && regfile_alu_we_fw_o;
+//  assign regfile_we_conflict = regfile_we_wb_o && regfile_alu_we_fw_o;
+  assign regfile_we_conflict = 1'b0;
 
   logic [31:0] alu_result;
   logic [31:0] alu_csr_result;
@@ -135,47 +127,6 @@ module littleriscv_ex_stage
     .result_o            ( alu_result      ),
     .comparison_result_o ( alu_cmp_result  )
   );
-
-  assign alu_ready = 1'b1; // As there is no divider, ALU always takes only one cycle
-
-
-
-
-
-
-  ///////////////////////////////////////
-  // EX/WB Pipeline Register           //
-  ///////////////////////////////////////
-  always_ff @(posedge clk, negedge rst_n)
-  begin : EX_WB_Pipeline_Register
-    if (~rst_n)
-    begin
-      regfile_waddr_wb_o   <= '0;
-      regfile_we_wb_o      <= 1'b0;
-    end
-    else
-    begin
-      if (ex_valid_o) // wb_ready_i is implied
-      begin
-        regfile_we_wb_o    <= regfile_we_i;
-        if (regfile_we_i) begin
-          regfile_waddr_wb_o <= regfile_alu_waddr_i;
-        end
-      end else if (wb_ready_i) begin
-        // we are ready for a new instruction, but there is none available,
-        // so we just flush the current one out of the pipe
-        regfile_we_wb_o    <= 1'b0;
-      end
-    end
-  end
-
-  // As valid always goes to the right and ready to the left, and we are able
-  // to finish branches without going to the WB stage, ex_valid does not
-  // depend on ex_ready.
-
-
-  assign ex_ready_o = (alu_ready & lsu_ready_ex_i & wb_ready_i & ~regfile_we_conflict) | branch_in_ex_i;
-  assign ex_valid_o = (alu_ready & lsu_ready_ex_i & wb_ready_i);
 
 
 endmodule

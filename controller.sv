@@ -46,7 +46,6 @@ module littleriscv_controller
   input  logic        illegal_insn_i,             // decoder encountered an invalid instruction
   input  logic        eret_insn_i,                // decoder encountered an eret instruction
   input  logic        pipe_flush_i,               // decoder wants to do a pipe flush
-
   input  logic        rega_used_i,                // register A is used
   input  logic        regb_used_i,                // register B is used
 
@@ -63,9 +62,8 @@ module littleriscv_controller
 
   // LSU
   input  logic        data_req_ex_i,              // data memory access is currently performed in EX stage
-  input  logic        data_misaligned_i,
+  input  logic        data_misaligned_fsm_i,
   input  logic        data_load_event_i,
-
 
   // jump/branch signals
   input  logic        branch_taken_ex_i,          // branch taken signal from EX ALU
@@ -73,10 +71,10 @@ module littleriscv_controller
   input  logic [1:0]  jump_in_dec_i,              // jump is being calculated in ALU
 
   // Exception Controller Signals
-  input  logic        exc_req_i,
+  input  logic        int_req_i,
   input  logic        ext_req_i,
   output logic        exc_ack_o,
-
+  output logic        irq_ack_o,
   output logic        exc_save_if_o,
   output logic        exc_save_id_o,
   output logic        exc_save_takenbranch_o,
@@ -93,7 +91,6 @@ module littleriscv_controller
 
   input  logic        regfile_we_ex_i,            // FW: write enable from  EX stage
   input  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_wb_i,         // FW: write address from WB stage
-  input  logic        regfile_we_wb_i,            // FW: write enable from  WB stage
 
   input  logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_fw_i,     // FW: ALU/MUL write address from EX stage
   input  logic        regfile_alu_we_fw_i,        // FW: ALU/MUL write enable from  EX stage
@@ -113,15 +110,13 @@ module littleriscv_controller
 
   output logic        misaligned_stall_o,
   output logic        jr_stall_o,
-  output logic        load_stall_o,
+  input  logic        load_stall_i,
   output logic        branch_2nd_stage_o,
 
   input  logic        id_ready_i,                 // ID stage is ready
 
   input  logic        if_valid_i,                 // IF stage is done
-  input  logic        ex_valid_i,                 // EX stage is done
   input  logic        wb_valid_i,                 // WB stage is done
-  
   // Performance Counters
   output logic        perf_jump_o,                // we are executing a jump instruction   (j, jr, jal, jalr)
   output logic        perf_jr_stall_o,            // stall due to jump-register-hazard
@@ -138,7 +133,7 @@ module littleriscv_controller
 
 
   logic jump_done, jump_done_q;
-
+  logic exc_req;
 
 `ifndef SYNTHESIS
   // synopsys translate_off
@@ -164,6 +159,8 @@ module littleriscv_controller
   //  \____\___/|_| \_\_____|  \____\___/|_| \_| |_| |_| \_\\___/|_____|_____|_____|_| \_\  //
   //                                                                                        //
   ////////////////////////////////////////////////////////////////////////////////////////////
+
+  assign exc_req = int_req_i | ext_req_i;
   always_comb
   begin
     // Default values
@@ -188,8 +185,8 @@ module littleriscv_controller
     halt_id_o        = 1'b0;
     dbg_ack_o        = 1'b0;
 
-    branch_2nd_stage_o   = 1'b0;
-
+    branch_2nd_stage_o = 1'b0;
+    irq_ack_o        = 1'b0;
 
     unique case (ctrl_fsm_cs)
       // We were just reset, wait for fetch_enable
@@ -230,14 +227,14 @@ module littleriscv_controller
         if (dbg_req_i) begin
           // debug request, now we need to check if we should stay sleeping or
           // go to normal processing later
-          if (fetch_enable_i || exc_req_i)
+          if (fetch_enable_i || exc_req)
             ctrl_fsm_ns = DBG_SIGNAL;
           else
             ctrl_fsm_ns = DBG_SIGNAL_SLEEP;
 
         end else begin
           // no debug request incoming, normal execution flow
-          if (fetch_enable_i || exc_req_i)
+          if (fetch_enable_i || exc_req)
           begin
             ctrl_fsm_ns  = FIRST_FETCH;
           end
@@ -253,11 +250,11 @@ module littleriscv_controller
         end
 
         // handle exceptions
-        if (exc_req_i) begin
+        if (exc_req) begin
           pc_mux_o     = PC_EXCEPTION;
           pc_set_o     = 1'b1;
           exc_ack_o    = 1'b1;
-
+          irq_ack_o    = ext_req;
           // TODO: This assumes that the pipeline is always flushed before
           //       going to sleep.
           exc_save_if_o = 1'b1;
@@ -281,25 +278,6 @@ module littleriscv_controller
             halt_if_o = 1'b1;
             //halt_id_o = 1'b1;
             ctrl_fsm_ns = BRANCH_2ND_STAGE;
-
-            // if we want to debug, flush the pipeline
-            // the current_pc_if will take the value of the next instruction to
-            // be executed (NPC)
-            /*
-            if (ext_req_i) begin
-              pc_mux_o      = PC_EXCEPTION;
-              pc_set_o      = 1'b1;
-              exc_ack_o     = 1'b1;
-              halt_if_o     = 1'b0;
-
-              exc_save_id_o = 1'b1;
-              // we don't have to change our current state here as the prefetch
-              // buffer is automatically invalidated, thus the next instruction
-              // that is served to the ID stage is the one of the jump to the
-              // exception handler
-            end
-            */
-
           end
 
           else begin
@@ -314,24 +292,26 @@ module littleriscv_controller
               pc_set_o    = 1'b1;
               jump_done   = 1'b1;
 
-              // we don't have to change our current state here as the prefetch
-              // buffer is automatically invalidated, thus the next instruction
-              // that is served to the ID stage is the one of the jump target
-
             end else begin
-              // handle exceptions
-              if (exc_req_i & id_ready_i) begin
+                //ecall or illegal
+              if (int_req_i) begin
+                //fix this during loads
                 pc_mux_o      = PC_EXCEPTION;
                 pc_set_o      = 1'b1;
                 exc_ack_o     = 1'b1;
-
-                halt_id_o     = 1'b1;
                 exc_save_id_o = 1'b1;
 
                 // we don't have to change our current state here as the prefetch
                 // buffer is automatically invalidated, thus the next instruction
                 // that is served to the ID stage is the one of the jump to the
                 // exception handler
+              end else if (ext_req_i) begin
+                  pc_mux_o      = PC_EXCEPTION;
+                  pc_set_o      = 1'b1;
+                  exc_ack_o     = 1'b1;
+                  irq_ack_o     = 1'b1;
+                  exc_save_if_o = 1'b1;
+                end
               end
             end
 
@@ -379,6 +359,7 @@ module littleriscv_controller
               pc_set_o      = 1'b1;
               exc_ack_o     = 1'b1;
               exc_save_if_o = 1'b1;
+              irq_ack_o     = 1'b1;
               // we don't have to change our current state here as the prefetch
               // buffer is automatically invalidated, thus the next instruction
               // that is served to the ID stage is the one of the jump to the
@@ -386,8 +367,6 @@ module littleriscv_controller
             end
         end
 
-        
-        
       end
 
 
@@ -399,22 +378,6 @@ module littleriscv_controller
         pc_set_o = 1'b1;
         ctrl_fsm_ns = DECODE;
         halt_if_o = 1'b1;
-        halt_id_o = 1'b1;
-
-        // if we want to debug, flush the pipeline
-        // the current_pc_if will take the value of the next instruction to
-        // be executed (NPC)
-        if (ext_req_i) begin
-          pc_mux_o      = PC_EXCEPTION;
-          pc_set_o      = 1'b1;
-          exc_ack_o     = 1'b1;
-          halt_id_o     = 1'b1; // we don't want to propagate this instruction to EX
-          exc_save_takenbranch_o = 1'b1;
-          // we don't have to change our current state here as the prefetch
-          // buffer is automatically invalidated, thus the next instruction
-          // that is served to the ID stage is the one of the jump to the
-          // exception handler
-        end
 
         if (dbg_req_i)
         begin
@@ -515,7 +478,7 @@ module littleriscv_controller
   /////////////////////////////////////////////////////////////
   always_comb
   begin
-    load_stall_o   = 1'b0;
+
     jr_stall_o     = 1'b0;
     deassert_we_o  = 1'b0;
 
@@ -535,16 +498,12 @@ module littleriscv_controller
     // we don't care about in which state the ctrl_fsm is as we deassert_we
     // anyway when we are not in DECODE
     
-    if ((jump_in_dec_i == BRANCH_JALR) && (regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_a_i == 1'b1))
+    if ((jump_in_dec_i == BRANCH_JALR) && (regfile_we_wb_o == 1'b1) && (reg_d_wb_is_reg_a_i == 1'b1))
     begin
       jr_stall_o        = 1'b1;
       deassert_we_o     = 1'b1;
     end
   end
-
-  // stall because of misaligned data access
-  assign misaligned_stall_o = data_misaligned_i;
-
 
   // Forwarding control unit
   always_comb
@@ -555,7 +514,7 @@ module littleriscv_controller
 
     // Forwarding WB -> ID
 
-    if (regfile_we_wb_i == 1'b1)
+    if (regfile_we_wb_o == 1'b1)
     begin
       if (reg_d_wb_is_reg_a_i == 1'b1)
         operand_a_fw_mux_sel_o = SEL_FW_WB;
@@ -566,7 +525,7 @@ module littleriscv_controller
     // Forwarding EX -> ID
 
     // for misaligned memory accesses
-    if (data_misaligned_i)
+    if (data_misaligned_fsm_i)
     begin
       operand_a_fw_mux_sel_o  = SEL_MISALIGNED;
       operand_b_fw_mux_sel_o  = SEL_REGFILE;
@@ -594,7 +553,7 @@ module littleriscv_controller
   // Performance Counters
   assign perf_jump_o      = (jump_in_id_i == BRANCH_JAL || jump_in_id_i == BRANCH_JALR);
   assign perf_jr_stall_o  = jr_stall_o;
-  assign perf_ld_stall_o  = load_stall_o;
+  assign perf_ld_stall_o  = load_stall_i;
 
 
   //----------------------------------------------------------------------------
