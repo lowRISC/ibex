@@ -62,7 +62,7 @@ module littleriscv_controller
 
   // LSU
   input  logic        data_req_ex_i,              // data memory access is currently performed in EX stage
-  input  logic        data_misaligned_fsm_i,
+  input  logic        data_misaligned_i,
   input  logic        data_load_event_i,
 
   // jump/branch signals
@@ -525,7 +525,7 @@ module littleriscv_controller
     // Forwarding EX -> ID
 
     // for misaligned memory accesses
-    if (data_misaligned_fsm_i)
+    if (data_misaligned_i)
     begin
       operand_a_fw_mux_sel_o  = SEL_MISALIGNED;
       operand_b_fw_mux_sel_o  = SEL_REGFILE;

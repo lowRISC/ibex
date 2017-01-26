@@ -344,8 +344,8 @@ module littleriscv_load_store_unit
 
 
 
-  assign load_err_o    = data_gnt_i && data_err_i && ~data_we_o;
-  assign store_err_o   = data_gnt_i && data_err_i && data_we_o;
+  assign load_err_o    = 1'b0;
+  assign store_err_o   = 1'b0;
 
   // FSM
   always_comb

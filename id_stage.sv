@@ -254,7 +254,6 @@ module littleriscv_id_stage
   logic [1:0]  data_reg_offset_id;
   logic        data_req_id;
   logic        data_load_event_id;
-  logic        data_misaligned_fsm;
 
   // CSR control
   logic        csr_access;
@@ -364,17 +363,16 @@ module littleriscv_id_stage
       endcase
     end
 
+
   // Operand a forwarding mux
   always_comb
     begin : operand_a_fw_mux
       case (operand_a_fw_mux_sel)
         SEL_MISALIGNED:    operand_a_fw_id = misaligned_addr_i;
-        SEL_FW_WB:    operand_a_fw_id = regfile_wdata_wb_i;
-        SEL_REGFILE:  operand_a_fw_id = regfile_data_ra_id;
-        default:       operand_a_fw_id = regfile_data_ra_id;
+        SEL_REGFILE:       operand_a_fw_id = regfile_data_ra_id;
+        default:           operand_a_fw_id = regfile_data_ra_id;
       endcase; // case (operand_a_fw_mux_sel)
     end
-
 
   //////////////////////////////////////////////////////
   //   ___                                 _   ____   //
@@ -428,7 +426,7 @@ module littleriscv_id_stage
 
     assign alu_operand_b = operand_b;
 
-
+/*
   // Operand b forwarding mux
   always_comb
     begin : operand_b_fw_mux
@@ -438,7 +436,9 @@ module littleriscv_id_stage
         default:       operand_b_fw_id = regfile_data_rb_id;
       endcase; // case (operand_b_fw_mux_sel)
     end
+*/
 
+assign operand_b_fw_id = regfile_data_rb_id;
 
   //////////////////////////////////////////////////////
   //   ___                                 _    ____  //
@@ -598,7 +598,7 @@ module littleriscv_id_stage
 
     // LSU
     .data_req_ex_i                  ( data_req_ex_o          ),
-    .data_misaligned_fsm_i          ( data_misaligned_fsm    ),
+    .data_misaligned_i              ( data_misaligned_i      ),
     .data_load_event_i              ( data_load_event_ex_o   ),
 
     // jump/branch control
