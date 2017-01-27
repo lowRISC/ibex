@@ -247,6 +247,7 @@ module littleriscv_controller
 
       DECODE:
       begin
+        //TODO: define interrupt during sw/lw
         is_decoding_o = 1'b0;
 
         // decode and execute instructions only if the current conditional

@@ -712,7 +712,14 @@ module littleriscv_tracer
             trace.regs_write[i].value = ex_reg_wdata;
         end
         // look for data accesses and log them
-        if (ex_data_req && ex_data_gnt) begin
+        if (ex_data_req) begin
+
+          if(~ex_data_gnt) begin
+            //we wait until the the gnt comes
+            do @(negedge clk);
+            while (!ex_data_gnt);
+          end
+
           mem_acc.addr = ex_data_addr;
           mem_acc.we   = ex_data_we;
 
@@ -720,15 +727,15 @@ module littleriscv_tracer
             mem_acc.wdata = ex_data_wdata;
           else
             mem_acc.wdata = 'x;
-
-          trace.mem_access.push_back(mem_acc);
           //we wait until the the data instruction ends
           do @(negedge clk);
           while (!data_valid_lsu);
+
           if (~mem_acc.we)
             //load operations
             foreach(trace.regs_write[i])
                 trace.regs_write[i].value = wb_reg_wdata;
+          trace.mem_access.push_back(mem_acc);
         end
      trace.printInstrTrace();
 

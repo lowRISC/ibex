@@ -687,7 +687,7 @@ module littleriscv_core
     .ex_reg_addr    ( id_stage_i.regfile_waddr_mux         ),
     .ex_reg_we      ( id_stage_i.regfile_we_mux            ),
     .ex_reg_wdata   ( id_stage_i.regfile_wdata_mux         ),
-
+    .data_valid_lsu ( data_valid_lsu                       ),
     .ex_data_addr   ( data_addr_o                          ),
     .ex_data_req    ( data_req_o                           ),
     .ex_data_gnt    ( data_gnt_i                           ),
@@ -697,9 +697,9 @@ module littleriscv_core
 
     .wb_bypass      ( branch_in_ex_o                       ),
 
-    .wb_valid       ( data_valid_lsu                       ),
-    .wb_reg_addr    (                 ),
-    .wb_reg_we      (                         ),
+    .wb_valid       (                                      ),
+    .wb_reg_addr    (                                      ),
+    .wb_reg_we      (                                      ),
     .wb_reg_wdata   ( regfile_wdata_lsu                    ),
 
     .imm_u_type     ( id_stage_i.imm_u_type                ),
@@ -750,7 +750,6 @@ module littleriscv_core
     .ex_reg_we        ( id_stage_i.registers_i.we_a_i        ),
     .ex_reg_wdata     ( id_stage_i.registers_i.wdata_b_i     ),
 
-    .data_valid_lsu   ( data_valid_lsu                       )
     .ex_data_addr     ( data_addr_o                          ),
     .ex_data_req      ( data_req_o                           ),
     .ex_data_gnt      ( data_gnt_i                           ),

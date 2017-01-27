@@ -664,7 +664,7 @@ module littleriscv_id_stage
     data_req_ex_o               = data_req_id;
 
     data_reg_offset_ex_o        = data_reg_offset_id;
-    data_load_event_ex_o        = ((data_req_id & (~halt_id) & wb_ready_i) ? data_load_event_id : 1'b0);
+    data_load_event_ex_o        = ((data_req_id & (~halt_id)) ? data_load_event_id : 1'b0);
 
     branch_in_ex_o              = (jump_in_dec == BRANCH_COND);
   end
