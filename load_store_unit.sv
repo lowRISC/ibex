@@ -56,7 +56,6 @@ module littleriscv_load_store_unit
     input  logic [31:0]  adder_result_ex_i,
 
     output logic         data_misaligned_o,    // misaligned access was detected    -> to controller
-    output logic         first_cycle_misaligned_o,
     output logic [31:0]  misaligned_addr_o,
 
     // exception signals
@@ -339,10 +338,6 @@ module littleriscv_load_store_unit
   assign data_be_o     = data_be;
 
   assign misaligned_st = data_misaligned_q;
-
-//  assign first_cycle_misaligned_o = data_misaligned; // Directly forward signal to 
-
-
 
   assign load_err_o    = 1'b0;
   assign store_err_o   = 1'b0;

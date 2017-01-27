@@ -708,7 +708,6 @@ module littleriscv_tracer
 
      // replace register written back
         foreach(trace.regs_write[i]) begin
-         //$display("A: %x (%x) V: %x --%x\n",trace.regs_write[i].addr, ex_reg_addr, ex_reg_wdata,ex_reg_we);
          if ((trace.regs_write[i].addr == ex_reg_addr) && ex_reg_we)
             trace.regs_write[i].value = ex_reg_wdata;
         end

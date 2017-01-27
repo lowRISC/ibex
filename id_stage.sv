@@ -65,7 +65,6 @@ module littleriscv_id_stage
     output logic        pc_set_o,
     output logic [2:0]  pc_mux_o,
     output logic [1:0]  exc_pc_mux_o,
-    output logic [4:0]  exc_vec_pc_mux_o,
 
     input  logic        illegal_c_insn_i,
     input  logic        is_compressed_i,
@@ -76,41 +75,25 @@ module littleriscv_id_stage
     // Stalls
     output logic        halt_if_o,      // controller requests a halt of the IF stage
 
+    input  logic        if_ready_i,     // IF stage is done
     output logic        id_ready_o,     // ID stage is ready for the next instruction
+    input  logic        lsu_ready_ex_i,
     input  logic        data_valid_lsu_i,
     input  logic        wb_ready_i,
-    input  logic        lsu_ready_ex_i,
 
-    input  logic        if_ready_i,     // IF stage is done
     input  logic        if_valid_i,     // IF stage is done
     output logic        id_valid_o,     // ID stage is done
     input  logic        wb_valid_i,     // WB stage is done
 
-    // Pipeline ID/EX
-    output logic [31:0] pc_ex_o,
-
+    // ALU
+    output logic [ALU_OP_WIDTH-1:0] alu_operator_ex_o,
     output logic [31:0] alu_operand_a_ex_o,
     output logic [31:0] alu_operand_b_ex_o,
     output logic [31:0] alu_operand_c_ex_o, // Still needed if 2r1w reg file used
 
-    output logic        jal_in_ex_o, // Select operand C as return address to save in regfile
-
-
-
-    output logic        regfile_we_ex_o,
-
-    output logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_ex_o,
-    output logic        regfile_alu_we_ex_o,
-
-    // ALU
-    output logic [ALU_OP_WIDTH-1:0] alu_operator_ex_o,
-
-
-
-    // CSR ID/EX
+    // CSR ID
     output logic        csr_access_ex_o,
     output logic [1:0]  csr_op_ex_o,
-
 
     // Interface to load store unit
     output logic        data_req_ex_o,
@@ -122,7 +105,6 @@ module littleriscv_id_stage
 
     input  logic        data_misaligned_i,
     input  logic [31:0] misaligned_addr_i,
-    input  logic        first_cycle_misaligned_i,
 
     // Interrupt signals
     input  logic        irq_i,
@@ -158,17 +140,10 @@ module littleriscv_id_stage
 
     input  logic        dbg_jump_req_i,
 
-    // Forward Signals
-    //input  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_wb_i,
-    //input  logic        regfile_we_wb_i,
-    input  logic [31:0] regfile_wdata_wb_i, // From wb_stage: selects data from data memory, ex_stage result and sp rdata
-
-
-    input  logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_fw_i,
-    input  logic        regfile_alu_we_fw_i,
-    input  logic [31:0] regfile_alu_wdata_fw_i,
-
-    // from ALU
+    // Write back signal
+    input  logic [31:0] regfile_wdata_wb_i,
+    input  logic [31:0] regfile_wdata_ex_i,
+    input  logic [31:0] csr_rdata_i,
 
     // Performance Counters
     output logic        perf_jump_o,          // we are executing a jump instruction
@@ -198,9 +173,10 @@ module littleriscv_id_stage
   logic        load_stall;
 
   logic        halt_id;
-
-  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_wb;
+  //FSM signals to write back multi cycles instructions
   logic        regfile_we, regfile_we_q;
+  logic        select_data_lsu;
+
 
   // Immediate decoding and sign extension
   logic [31:0] imm_i_type;
@@ -245,7 +221,6 @@ module littleriscv_id_stage
 
   // Register Write Control
   logic        regfile_mem_we_id;
-  logic        select_data_lsu;
 
   // Data Memory Control
   logic        data_we_id;
@@ -259,29 +234,17 @@ module littleriscv_id_stage
   logic        csr_access;
   logic [1:0]  csr_op;
 
-
   // Forwarding
   logic [1:0]  operand_a_fw_mux_sel;
-  logic [1:0]  operand_b_fw_mux_sel;
-  
+
   logic [31:0] operand_a_fw_id;
   logic [31:0] operand_b_fw_id;
-  
+
   logic [31:0] operand_b;
 
   logic [31:0] alu_operand_a;
   logic [31:0] alu_operand_b;
   logic [31:0] alu_operand_c; // Still needed if 2r1w reg file used
-
-  // Immediates for ID
-  
-  
-
-
-
-  // Forwarding detection signals
-  logic        reg_d_wb_is_reg_a_id;
-  logic        reg_d_wb_is_reg_b_id;
 
   assign instr = instr_rdata_i;
 
@@ -302,30 +265,16 @@ module littleriscv_id_stage
   assign imm_vs_type = { {26 {instr[24]}}, instr[24:20], instr[25] };
   assign imm_vu_type = { 26'b0, instr[24:20], instr[25] };
 
-
-
   //---------------------------------------------------------------------------
   // source register selection
   //---------------------------------------------------------------------------
   assign regfile_addr_ra_id = instr[`REG_S1];
   assign regfile_addr_rb_id = instr[`REG_S2];
 
-
-
   //---------------------------------------------------------------------------
   // destination registers
   //---------------------------------------------------------------------------
-
-  
   assign regfile_alu_waddr_id = instr[`REG_D];
-
-  // Forwarding control signals
-  //assign reg_d_wb_is_reg_a_id  = (regfile_waddr_wb_i     == regfile_addr_ra_id) && (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
-  //assign reg_d_wb_is_reg_b_id  = (regfile_waddr_wb_i     == regfile_addr_rb_id) && (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
-  assign reg_d_wb_is_reg_a_id  = (rega_used_dec == 1'b1) && (regfile_addr_ra_id != '0);
-  assign reg_d_wb_is_reg_b_id  = (regb_used_dec == 1'b1) && (regfile_addr_rb_id != '0);
-
-
 
   // kill instruction in the IF/ID stage by setting the instr_valid_id control
   // signal to 0 for instructions that are done
@@ -347,7 +296,7 @@ module littleriscv_id_stage
   begin : alu_operand_a_mux
     case (alu_op_a_mux_sel)
       OP_A_REGA_OR_FWD:  alu_operand_a = operand_a_fw_id;
-      OP_A_REGB_OR_FWD:  alu_operand_a = operand_b_fw_id;
+      //OP_A_REGB_OR_FWD:  alu_operand_a = regfile_data_rb_id;
       OP_A_CURRPC:       alu_operand_a = pc_id_i;
       OP_A_IMM:          alu_operand_a = imm_a;
       default:           alu_operand_a = operand_a_fw_id;
@@ -359,20 +308,20 @@ module littleriscv_id_stage
       unique case (imm_a_mux_sel)
         IMMA_Z:      imm_a = imm_z_type;
         IMMA_ZERO:   imm_a = '0;
-        default:      imm_a = '0;
+        default:     imm_a = '0;
       endcase
     end
 
+ // Operand a forwarding mux used with LSU instructions
+ always_comb
+   begin : operand_a_fw_mux
+     case (operand_a_fw_mux_sel)
+       SEL_MISALIGNED:    operand_a_fw_id = misaligned_addr_i;
+       SEL_REGFILE:       operand_a_fw_id = regfile_data_ra_id;
+       default:           operand_a_fw_id = regfile_data_ra_id;
+     endcase; // case (operand_a_fw_mux_sel)
+   end
 
-  // Operand a forwarding mux
-  always_comb
-    begin : operand_a_fw_mux
-      case (operand_a_fw_mux_sel)
-        SEL_MISALIGNED:    operand_a_fw_id = misaligned_addr_i;
-        SEL_REGFILE:       operand_a_fw_id = regfile_data_ra_id;
-        default:           operand_a_fw_id = regfile_data_ra_id;
-      endcase; // case (operand_a_fw_mux_sel)
-    end
 
   //////////////////////////////////////////////////////
   //   ___                                 _   ____   //
@@ -384,8 +333,6 @@ module littleriscv_id_stage
   //////////////////////////////////////////////////////
 
   // Immediate Mux for operand B
-  // TODO: check if sign-extension stuff works well here, maybe able to save
-  // some area here
   always_comb
     begin : immediate_b_mux
       unique case (imm_b_mux_sel)
@@ -393,7 +340,6 @@ module littleriscv_id_stage
         IMMB_S:      imm_b = imm_s_type;
         IMMB_U:      imm_b = imm_u_type;
         IMMB_PCINCR: imm_b = (is_compressed_i && (~data_misaligned_i)) ? 32'h2 : 32'h4;
-
         IMMB_S2:     imm_b = imm_s2_type;
         IMMB_BI:     imm_b = imm_bi_type;
         IMMB_S3:     imm_b = imm_s3_type;
@@ -407,38 +353,18 @@ module littleriscv_id_stage
 
   // ALU_Op_b Mux
   always_comb
-  	begin : alu_operand_b_mux
+    begin : alu_operand_b_mux
       case (alu_op_b_mux_sel)
-        OP_B_REGA_OR_FWD:  operand_b = operand_a_fw_id;
-        OP_B_REGB_OR_FWD:  operand_b = operand_b_fw_id;
+        //OP_B_REGA_OR_FWD:  operand_b = regfile_data_ra_id;
+        OP_B_REGB_OR_FWD:  operand_b = regfile_data_rb_id;
         OP_B_IMM:          operand_b = imm_b;
-        OP_B_BMASK:        operand_b = $unsigned(operand_b_fw_id[4:0]);
         OP_B_ZERO:         operand_b = '0;
-        default:           operand_b = operand_b_fw_id;
+        default:           operand_b = regfile_data_rb_id;
       endcase // case (alu_op_b_mux_sel)
-  	end
-
-
-  // scalar replication for operand B and shuffle type
-  always_comb
-    begin
     end
 
-    assign alu_operand_b = operand_b;
-
-/*
-  // Operand b forwarding mux
-  always_comb
-    begin : operand_b_fw_mux
-      case (operand_b_fw_mux_sel)
-        SEL_FW_WB:    operand_b_fw_id = regfile_wdata_wb_i;
-        SEL_REGFILE:  operand_b_fw_id = regfile_data_rb_id;
-        default:       operand_b_fw_id = regfile_data_rb_id;
-      endcase; // case (operand_b_fw_mux_sel)
-    end
-*/
-
-assign operand_b_fw_id = regfile_data_rb_id;
+  assign alu_operand_b   = operand_b;
+  assign operand_b_fw_id = operand_b;
 
   //////////////////////////////////////////////////////
   //   ___                                 _    ____  //
@@ -449,16 +375,18 @@ assign operand_b_fw_id = regfile_data_rb_id;
   //       |_|                                        //
   //////////////////////////////////////////////////////
 
-  // ALU OP C Mux
+  // ALU OP C Mux, jump or store. TODO: Change it
+/*
   always_comb
     begin : alu_operand_c_mux
       case (alu_op_c_mux_sel)
-        OP_C_REGB_OR_FWD:  alu_operand_c = operand_b_fw_id;
+        OP_C_REGB_OR_FWD:  alu_operand_c = regfile_data_rb_id;
         OP_C_RA:           alu_operand_c = pc_if_i; // this is the return address
-        default:           alu_operand_c = operand_b_fw_id;
+        default:           alu_operand_c = regfile_data_rb_id;
       endcase // case (alu_op_c_mux_sel)
     end
-
+*/
+  assign alu_operand_c = regfile_data_rb_id;
 
   /////////////////////////////////////////////////////////
   //  ____  _____ ____ ___ ____ _____ _____ ____  ____   //
@@ -468,6 +396,34 @@ assign operand_b_fw_id = regfile_data_rb_id;
   // |_| \_\_____\____|___|____/ |_| |_____|_| \_\____/  //
   //                                                     //
   /////////////////////////////////////////////////////////
+
+  logic [31:0] regfile_wdata_mux;
+  logic        regfile_we_mux;
+  logic  [4:0] regfile_waddr_mux;
+  //TODO: add assertion
+  // Register File mux
+  always_comb
+  begin
+    if(dbg_reg_wreq_i) begin
+      regfile_wdata_mux   = dbg_reg_wdata_i;
+      regfile_waddr_mux   = dbg_reg_waddr_i;
+      regfile_we_mux      = 1'b1;
+    end else begin
+      regfile_we_mux      = regfile_we;
+      regfile_waddr_mux   = regfile_alu_waddr_id;
+      if (select_data_lsu)
+        regfile_wdata_mux = regfile_wdata_wb_i;
+      else
+        if (csr_access)
+          regfile_wdata_mux = csr_rdata_i;
+        else
+        //TODO: modify this
+        if ((jump_in_id == BRANCH_JALR) || (jump_in_id == BRANCH_JAL))
+          regfile_wdata_mux   = pc_if_i;
+        else
+          regfile_wdata_mux   = regfile_wdata_ex_i;
+    end
+  end
 
   littleriscv_register_file  registers_i
   (
@@ -479,18 +435,13 @@ assign operand_b_fw_id = regfile_data_rb_id;
     // Read port a
     .raddr_a_i    ( regfile_addr_ra_id ),
     .rdata_a_o    ( regfile_data_ra_id ),
-
+    // Read port b
     .raddr_b_i    ( (dbg_reg_rreq_i == 1'b0) ? regfile_addr_rb_id : dbg_reg_raddr_i ),
     .rdata_b_o    ( regfile_data_rb_id ),
-
-
-    // Write port a (multiplex between ALU and LSU). Conflict is resolved by stalling in EX.
-    //.waddr_a_i    ( (dbg_reg_wreq_i == 1'b0) ? ( (regfile_we_wb_i == 1'b1) ? regfile_waddr_wb_i : regfile_alu_waddr_fw_i) : dbg_reg_waddr_i ),
-    //.wdata_a_i    ( (dbg_reg_wreq_i == 1'b0) ? ( (regfile_we_wb_i == 1'b1) ? regfile_wdata_wb_i : regfile_alu_wdata_fw_i) : dbg_reg_wdata_i ),
-    .waddr_a_i    ( (dbg_reg_wreq_i == 1'b0) ? regfile_alu_waddr_fw_i : dbg_reg_waddr_i ),
-//    .wdata_a_i    ( (dbg_reg_wreq_i == 1'b0) ? regfile_alu_wdata_fw_i : dbg_reg_wdata_i ),
-    .wdata_a_i    ( (dbg_reg_wreq_i == 1'b0) ? ( select_data_lsu ? regfile_wdata_wb_i : regfile_alu_wdata_fw_i ) : dbg_reg_wdata_i ),
-    .we_a_i       ( (dbg_reg_wreq_i == 1'b0) ? regfile_we  : 1'b1                       )
+    // write port
+    .waddr_a_i    ( regfile_waddr_mux ),
+    .wdata_a_i    ( regfile_wdata_mux ),
+    .we_a_i       ( regfile_we_mux    )
   );
 
   assign dbg_reg_rdata_o = regfile_data_rb_id;
@@ -552,8 +503,6 @@ assign operand_b_fw_id = regfile_data_rb_id;
     .data_reg_offset_o               ( data_reg_offset_id        ),
     .data_load_event_o               ( data_load_event_id        ),
 
-
-
     // jump/branches
     .jump_in_dec_o                   ( jump_in_dec               ),
     .jump_in_id_o                    ( jump_in_id                )
@@ -582,8 +531,6 @@ assign operand_b_fw_id = regfile_data_rb_id;
     .illegal_insn_i                 ( illegal_insn_dec       ),
     .eret_insn_i                    ( eret_insn_dec          ),
     .pipe_flush_i                   ( pipe_flush_dec         ),
-    .rega_used_i                    ( rega_used_dec          ),
-    .regb_used_i                    ( regb_used_dec          ),
 
     // from IF/ID pipeline
     .instr_valid_i                  ( instr_valid_i          ),
@@ -622,24 +569,8 @@ assign operand_b_fw_id = regfile_data_rb_id;
     .dbg_stall_i                    ( dbg_stall_i            ),
     .dbg_jump_req_i                 ( dbg_jump_req_i         ),
 
-    // Forwarding signals from regfile
-    .regfile_we_ex_i                ( regfile_we_ex_o        ),
-    //.regfile_waddr_wb_i             ( regfile_waddr_wb_i     ), // Write address for register file from ex-wb- pipeline registers
-    .regfile_waddr_wb_i             (      ), // Write address for register file from ex-wb- pipeline registers
-    //.regfile_we_wb_i                ( regfile_we_wb_i        ),
-
-    // regfile port 2 (or multiplexer signal in case of a 2r1w)
-    .regfile_alu_waddr_fw_i         ( regfile_alu_waddr_fw_i ),
-    .regfile_alu_we_fw_i            ( regfile_alu_we_fw_i    ),
-
-    // Forwarding detection signals
-    .reg_d_wb_is_reg_a_i            ( reg_d_wb_is_reg_a_id   ),
-    .reg_d_wb_is_reg_b_i            ( reg_d_wb_is_reg_b_id   ),    
-
-
     // Forwarding signals
     .operand_a_fw_mux_sel_o         ( operand_a_fw_mux_sel   ),
-    .operand_b_fw_mux_sel_o         ( operand_b_fw_mux_sel   ),
 
     // Stall signals
     .halt_if_o                      ( halt_if_o              ),
@@ -704,7 +635,6 @@ assign operand_b_fw_id = regfile_data_rb_id;
 
 
 
-
   /////////////////////////////////////
   //   ___ ____        _______  __   //
   //  |_ _|  _ \      | ____\ \/ /   //
@@ -717,9 +647,6 @@ assign operand_b_fw_id = regfile_data_rb_id;
   always_comb
   begin
 
-    regfile_alu_waddr_ex_o      = regfile_alu_waddr_id;
-
-//    data_we_ex_o                = (data_we_id & (~halt_id) &  wb_ready_i);
     data_we_ex_o                = data_we_id;
     data_type_ex_o              = data_type_id;
     data_sign_ext_ex_o          = data_sign_ext_id;
@@ -731,19 +658,15 @@ assign operand_b_fw_id = regfile_data_rb_id;
     alu_operand_b_ex_o          = alu_operand_b;
     alu_operand_c_ex_o          = alu_operand_c;
 
-    regfile_we_ex_o             = (regfile_mem_we_id & (~halt_id) & wb_ready_i);
-    regfile_alu_we_ex_o         = (regfile_alu_we_id  & (~halt_id) & wb_ready_i);
-
     csr_access_ex_o             = csr_access;
     csr_op_ex_o                 = id_ready_o ? csr_op : CSR_OP_NONE;
+
     data_req_ex_o               = data_req_id;
 
     data_reg_offset_ex_o        = data_reg_offset_id;
     data_load_event_ex_o        = ((data_req_id & (~halt_id) & wb_ready_i) ? data_load_event_id : 1'b0);
 
-    pc_ex_o                     = pc_id_i;
     branch_in_ex_o              = (jump_in_dec == BRANCH_COND);
-    jal_in_ex_o                 = ((jump_in_id == BRANCH_JALR) || (jump_in_id == BRANCH_JAL));
   end
 
   enum logic { IDLE, WAIT_LSU } id_wb_fsm_cs, id_wb_fsm_ns;
@@ -779,6 +702,7 @@ assign operand_b_fw_id = regfile_data_rb_id;
 
       IDLE:
       begin
+	    //if instr not valid, deassert and so it is 0
         if(data_req_ex_o) begin
           //LSU operation
           regfile_we    = 1'b0;
@@ -805,7 +729,6 @@ assign operand_b_fw_id = regfile_data_rb_id;
   // stall control
   assign id_ready_o = (~jr_stall) & (~load_stall);
   
-
   assign id_valid_o = (~halt_id) & id_ready_o;
 
 

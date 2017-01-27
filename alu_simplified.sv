@@ -27,9 +27,6 @@ import riscv_defines::*;
 
 module littleriscv_alu_simplified
 (
-  input  logic                     clk,
-  input  logic                     rst_n,
-
   input  logic [ALU_OP_WIDTH-1:0]  operator_i,
   input  logic [31:0]              operand_a_i,
   input  logic [31:0]              operand_b_i,
@@ -42,10 +39,8 @@ module littleriscv_alu_simplified
 
 
   logic [31:0] operand_a_rev;
-  logic [31:0] operand_a_neg;
-  logic [31:0] operand_a_neg_rev;
+  logic [32:0] operand_b_neg;
 
-  assign operand_a_neg = ~operand_a_i;
 
   // bit reverse operand_a for left shifts and bit counting
   generate
@@ -55,19 +50,6 @@ module littleriscv_alu_simplified
       assign operand_a_rev[k] = operand_a_i[31-k];
     end
   endgenerate 
-
-  // bit reverse operand_a_neg for left shifts and bit counting
-  generate
-    genvar m;
-    for(m = 0; m < 32; m++)
-    begin
-      assign operand_a_neg_rev[m] = operand_a_neg[31-m];
-    end
-  endgenerate
-
-  logic [31:0] operand_b_neg;
-
-  assign operand_b_neg = (~operand_b_i) + 32'h0001;
 
 
   /////////////////////////////////////
@@ -80,7 +62,8 @@ module littleriscv_alu_simplified
   /////////////////////////////////////
 
   logic        adder_op_b_negate; 
-  logic [31:0] adder_in_a, adder_in_b;
+  logic [32:0] adder_in_a, adder_in_b;
+  logic [33:0] adder_result_ext;
   logic [31:0] adder_result;
 
   always_comb
@@ -106,13 +89,16 @@ module littleriscv_alu_simplified
   
 
   // prepare operand a
-  assign adder_in_a = operand_a_i;
+  assign adder_in_a = {operand_a_i,1'b1};
 
   // prepare operand b
-  assign adder_in_b = adder_op_b_negate ? operand_b_neg : operand_b_i;
+  assign adder_in_b    = {operand_b_i,1'b0};
+  assign operand_b_neg = adder_in_b ^ {33{adder_op_b_negate}};
 
   // actual adder
-  assign adder_result = adder_in_a + adder_in_b;
+  assign adder_result_ext = $signed(adder_in_a) + $signed(operand_b_neg);
+
+  assign adder_result = adder_result_ext[32:1];
   
   assign adder_result_o = adder_result;
 

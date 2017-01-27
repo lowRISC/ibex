@@ -46,8 +46,6 @@ module littleriscv_controller
   input  logic        illegal_insn_i,             // decoder encountered an invalid instruction
   input  logic        eret_insn_i,                // decoder encountered an eret instruction
   input  logic        pipe_flush_i,               // decoder wants to do a pipe flush
-  input  logic        rega_used_i,                // register A is used
-  input  logic        regb_used_i,                // register B is used
 
   // from IF/ID pipeline
   input  logic        instr_valid_i,              // instruction coming from IF/ID pipeline is valid
@@ -87,22 +85,8 @@ module littleriscv_controller
   input  logic        dbg_stall_i,                // Pipeline stall is requested
   input  logic        dbg_jump_req_i,             // Change PC to value from debug unit
 
-  // Forwarding signals from regfile
-
-  input  logic        regfile_we_ex_i,            // FW: write enable from  EX stage
-  input  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_wb_i,         // FW: write address from WB stage
-
-  input  logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_fw_i,     // FW: ALU/MUL write address from EX stage
-  input  logic        regfile_alu_we_fw_i,        // FW: ALU/MUL write enable from  EX stage
-
   // forwarding signals
   output logic [1:0]  operand_a_fw_mux_sel_o,     // regfile ra data selector form ID stage
-  output logic [1:0]  operand_b_fw_mux_sel_o,     // regfile rb data selector form ID stage
-
-  // forwarding detection signals
-  input logic         reg_d_wb_is_reg_a_i,
-  input logic         reg_d_wb_is_reg_b_i,
-
 
   // stall signals
   output logic        halt_if_o,
@@ -275,11 +259,9 @@ module littleriscv_controller
 
           // handle conditional branches
           if ((jump_in_dec_i == BRANCH_COND) & branch_taken_ex_i & id_ready_i) begin
-            halt_if_o = 1'b1;
-            //halt_id_o = 1'b1;
+            halt_if_o   = 1'b1;
             ctrl_fsm_ns = BRANCH_2ND_STAGE;
           end
-
           else begin
 
             // handle unconditional jumps
@@ -496,42 +478,10 @@ module littleriscv_controller
     // - always stall if a result is to be forwarded to the PC
     // we don't care about in which state the ctrl_fsm is as we deassert_we
     // anyway when we are not in DECODE
-/*
-    if ((jump_in_dec_i == BRANCH_JALR) && (regfile_we_wb_o == 1'b1) && (reg_d_wb_is_reg_a_i == 1'b1))
-    begin
-      jr_stall_o        = 1'b1;
-      deassert_we_o     = 1'b1;
-    end
-*/
   end
 
   // Forwarding control unit
-  always_comb
-  begin
-    // default assignements
-    operand_a_fw_mux_sel_o = SEL_REGFILE;
-    operand_b_fw_mux_sel_o = SEL_REGFILE;
-
-    // Forwarding WB -> ID
-/*
-    if (regfile_we_wb_o == 1'b1)
-    begin
-      if (reg_d_wb_is_reg_a_i == 1'b1)
-        operand_a_fw_mux_sel_o = SEL_FW_WB;
-      if (reg_d_wb_is_reg_b_i == 1'b1)
-        operand_b_fw_mux_sel_o = SEL_FW_WB;
-    end
-*/
-    // Forwarding EX -> ID
-
-    // for misaligned memory accesses
-    if (data_misaligned_i)
-    begin
-      operand_a_fw_mux_sel_o  = SEL_MISALIGNED;
-      operand_b_fw_mux_sel_o  = SEL_REGFILE;
-    end
-    
-  end
+  assign operand_a_fw_mux_sel_o = data_misaligned_i ? SEL_MISALIGNED : SEL_REGFILE;
 
   // update registers
   always_ff @(posedge clk , negedge rst_n)

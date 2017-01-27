@@ -115,8 +115,6 @@ module littleriscv_core
   
   logic        data_misaligned;
   logic [31:0] misaligned_addr;
-  logic first_cycle_misaligned;
-
 
   // Jump and branch target and decision (EX->IF)
   logic [31:0] jump_target_ex;
@@ -133,25 +131,9 @@ module littleriscv_core
   logic [31:0] alu_operand_a_ex;
   logic [31:0] alu_operand_b_ex;
   logic [31:0] alu_operand_c_ex;
-  logic        jal_in_ex;
-
 
   logic [31:0] alu_adder_result_ex; // Used to forward computed address to LSU
-
-
-
-  // Register Write Control
-  logic        regfile_we_ex;
-  logic [(REG_ADDR_WIDTH-1):0]  regfile_waddr_fw_wb_o;        // From WB to ID
-  logic        regfile_we_wb;
-  logic [31:0] regfile_wdata;
-
-  logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_ex;
-  logic        regfile_alu_we_ex;
-
-  logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_fw;
-  logic        regfile_alu_we_fw;
-  logic [31:0] regfile_alu_wdata_fw;
+  logic [31:0] regfile_wdata_ex;
 
   // CSR control
   logic        csr_access_ex;
@@ -173,6 +155,8 @@ module littleriscv_core
   logic [31:0] data_pc_ex;
   logic        data_load_event_ex;
   logic        data_misaligned_ex;
+  logic [31:0] regfile_wdata_lsu;
+
 
   // stall control
   logic        halt_if;
@@ -389,33 +373,24 @@ module littleriscv_core
 
     .if_ready_i                   ( if_ready             ),
     .id_ready_o                   ( id_ready             ),
+    .lsu_ready_ex_i               ( lsu_ready_ex         ),
     .data_valid_lsu_i             ( data_valid_lsu       ),
     .wb_ready_i                   ( lsu_ready_wb         ),
-    .lsu_ready_ex_i               ( lsu_ready_ex         ),
 
     .if_valid_i                   ( if_valid             ),
     .id_valid_o                   ( id_valid             ),
     .wb_valid_i                   ( wb_valid             ),
 
-    // From the Pipeline ID/EX
-
     .alu_operator_ex_o            ( alu_operator_ex      ),
     .alu_operand_a_ex_o           ( alu_operand_a_ex     ),
     .alu_operand_b_ex_o           ( alu_operand_b_ex     ),
-    .alu_operand_c_ex_o           ( alu_operand_c_ex     ), // Still needed if 2r1w reg file used
-
-    .jal_in_ex_o                 ( jal_in_ex           ),
-
-    .regfile_we_ex_o              ( regfile_we_ex        ),
-
-    .regfile_alu_we_ex_o          ( regfile_alu_we_ex    ),
-    .regfile_alu_waddr_ex_o       ( regfile_alu_waddr_ex ),
-
+     //used in LSU for store instructions
+     //TODO: change name
+    .alu_operand_c_ex_o           ( alu_operand_c_ex     ),
 
     // CSR ID/EX
     .csr_access_ex_o              ( csr_access_ex        ),
     .csr_op_ex_o                  ( csr_op_ex            ),
-
 
     // LSU
     .data_req_ex_o                ( data_req_ex          ), // to load store unit
@@ -427,7 +402,6 @@ module littleriscv_core
 
     .data_misaligned_i            ( data_misaligned      ),
     .misaligned_addr_i            ( misaligned_addr      ),
-    .first_cycle_misaligned_i     ( first_cycle_misaligned),
 
     // Interrupt Signals
     .irq_i                        ( irq_i                ), // incoming interrupts
@@ -461,15 +435,10 @@ module littleriscv_core
 
     .dbg_jump_req_i               ( dbg_jump_req         ),
 
-    // Forward Signals
-    //.regfile_waddr_wb_i           ( ),  // Write address ex-wb pipeline
-    //.regfile_we_wb_i              (         ),  // write enable for the register file
-    .regfile_wdata_wb_i           ( regfile_wdata        ),  // write data to commit in the register file
-
-    .regfile_alu_waddr_fw_i       ( regfile_alu_waddr_fw ),
-    .regfile_alu_we_fw_i          ( regfile_alu_we_fw    ),
-    .regfile_alu_wdata_fw_i       ( regfile_alu_wdata_fw ),
-
+    // write data to commit in the register file
+    .regfile_wdata_wb_i           ( regfile_wdata_lsu    ),
+    .regfile_wdata_ex_i           ( regfile_wdata_ex     ),
+    .csr_rdata_i                  ( csr_rdata            ),
 
     // Performance Counters
     .perf_jump_o                  ( perf_jump            ),
@@ -478,60 +447,21 @@ module littleriscv_core
   );
 
 
-  /////////////////////////////////////////////////////
-  //   _______  __  ____ _____  _    ____ _____      //
-  //  | ____\ \/ / / ___|_   _|/ \  / ___| ____|     //
-  //  |  _|  \  /  \___ \ | | / _ \| |  _|  _|       //
-  //  | |___ /  \   ___) || |/ ___ \ |_| | |___      //
-  //  |_____/_/\_\ |____/ |_/_/   \_\____|_____|     //
-  //                                                 //
-  /////////////////////////////////////////////////////
-  littleriscv_ex_stage  ex_stage_i
+  littleriscv_ex_block ex_block_i
   (
-    // Global signals: Clock and active low asynchronous reset
-    .clk                        ( clk                          ),
-    .rst_n                      ( rst_ni                       ),
-
     // Alu signals from ID stage
+	//TODO: hot encoding
     .alu_operator_i             ( alu_operator_ex              ), // from ID/EX pipe registers
     .alu_operand_a_i            ( alu_operand_a_ex             ), // from ID/EX pipe registers
     .alu_operand_b_i            ( alu_operand_b_ex             ), // from ID/EX pipe registers
-    .alu_operand_c_i            ( alu_operand_c_ex             ), // from ID/EX pipe registers
-
-
 
     .alu_adder_result_ex_o      ( alu_adder_result_ex          ), // from ALU to LSU
-
-    // interface with CSRs
-    .csr_access_i               ( csr_access_ex                ),
-    .csr_rdata_i                ( csr_rdata                    ),
-
-    // From ID Stage: Regfile control signals
-    .branch_in_ex_i             ( branch_in_ex                 ),
-    .regfile_alu_waddr_i        ( regfile_alu_waddr_ex         ),
-    .regfile_alu_we_i           ( regfile_alu_we_ex            ),
-    .jal_in_ex_i               ( jal_in_ex                   ),
-
-    .regfile_we_i               ( regfile_we_ex                ),
-
-    // Output of ex stage pipeline
-    .regfile_waddr_wb_o         (         ),
-    .regfile_we_wb_o            (                 ),
+    .regfile_wdata_ex_o         ( regfile_wdata_ex             ),
 
     // To IF: Jump and branch target and decision
     .jump_target_o              ( jump_target_ex               ),
-    .branch_decision_o          ( branch_decision              ),
-
-    // To ID stage: Forwarding signals
-    .regfile_alu_waddr_fw_o     ( regfile_alu_waddr_fw         ),
-    .regfile_alu_we_fw_o        ( regfile_alu_we_fw            ),
-    .regfile_alu_wdata_fw_o     ( regfile_alu_wdata_fw         )
-
-    // stall control
-    //.lsu_ready_ex_i             ( lsu_ready_ex                 ),
-    //.wb_ready_i                 ( lsu_ready_wb                 )
+    .branch_decision_o          ( branch_decision              )
   );
-
 
   ////////////////////////////////////////////////////////////////////////////////////////
   //    _     ___    _    ____    ____ _____ ___  ____  _____   _   _ _   _ ___ _____   //
@@ -566,13 +496,12 @@ module littleriscv_core
     .data_reg_offset_ex_i  ( data_reg_offset_ex ),
     .data_sign_ext_ex_i    ( data_sign_ext_ex   ),  // sign extension
 
-    .data_rdata_ex_o       ( regfile_wdata      ),
+    .data_rdata_ex_o       ( regfile_wdata_lsu  ),
     .data_req_ex_i         ( data_req_ex        ),
 
     .adder_result_ex_i     ( alu_adder_result_ex),
 
     .data_misaligned_o     ( data_misaligned    ),
-    .first_cycle_misaligned_o( first_cycle_misaligned),
     .misaligned_addr_o     ( misaligned_addr    ),
 
     // exception signals
@@ -755,22 +684,23 @@ module littleriscv_core
     .rs2_value_vec  ( id_stage_i.alu_operand_b             ),
 
     .ex_valid       (                                      ),
-    .ex_reg_addr    ( regfile_alu_waddr_fw                 ),
-    .ex_reg_we      ( id_stage_i.registers_i.we_a_i        ),
-    .ex_reg_wdata   ( regfile_alu_wdata_fw                 ),
+    .ex_reg_addr    ( id_stage_i.regfile_waddr_mux         ),
+    .ex_reg_we      ( id_stage_i.regfile_we_mux            ),
+    .ex_reg_wdata   ( id_stage_i.regfile_wdata_mux         ),
 
     .ex_data_addr   ( data_addr_o                          ),
     .ex_data_req    ( data_req_o                           ),
     .ex_data_gnt    ( data_gnt_i                           ),
     .ex_data_we     ( data_we_o                            ),
+    // use id_stage_i.regfile_wdata_mux
     .ex_data_wdata  ( data_wdata_o                         ),
 
-    .wb_bypass      ( ex_stage_i.branch_in_ex_i            ),
+    .wb_bypass      ( branch_in_ex_o                       ),
 
     .wb_valid       ( data_valid_lsu                       ),
     .wb_reg_addr    (                 ),
     .wb_reg_we      (                         ),
-    .wb_reg_wdata   ( regfile_wdata                        ),
+    .wb_reg_wdata   ( regfile_wdata_lsu                    ),
 
     .imm_u_type     ( id_stage_i.imm_u_type                ),
     .imm_uj_type    ( id_stage_i.imm_uj_type               ),
@@ -827,7 +757,7 @@ module littleriscv_core
     .ex_data_we       ( data_we_o                            ),
     .ex_data_wdata    ( data_wdata_o                         ),
 
-    .wb_bypass        ( ex_stage_i.branch_in_ex_i            ),
+    .wb_bypass        ( ex_block_i.branch_in_ex_i            ),
     .lsu_misaligned   ( data_misaligned                      ),
 
     .wb_valid         ( wb_valid                             ),
