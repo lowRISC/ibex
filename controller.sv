@@ -247,7 +247,6 @@ module littleriscv_controller
 
       DECODE:
       begin
-        //TODO: define interrupt during sw/lw
         is_decoding_o = 1'b0;
 
         // decode and execute instructions only if the current conditional
@@ -259,9 +258,9 @@ module littleriscv_controller
           is_decoding_o = 1'b1;
 
           // handle conditional branches
-          if ((jump_in_dec_i == BRANCH_COND) & branch_taken_ex_i & id_ready_i) begin
-            halt_if_o   = 1'b1;
-            ctrl_fsm_ns = BRANCH_2ND_STAGE;
+          if ((jump_in_dec_i == BRANCH_COND) & id_ready_i) begin
+            halt_if_o   = branch_taken_ex_i;
+            ctrl_fsm_ns = branch_taken_ex_i ? BRANCH_2ND_STAGE : DECODE;
           end
           else begin
 
@@ -278,16 +277,11 @@ module littleriscv_controller
             end else begin
                 //ecall or illegal
               if (int_req_i) begin
-                //fix this during loads
                 pc_mux_o      = PC_EXCEPTION;
                 pc_set_o      = 1'b1;
                 exc_ack_o     = 1'b1;
                 exc_save_id_o = 1'b1;
 
-                // we don't have to change our current state here as the prefetch
-                // buffer is automatically invalidated, thus the next instruction
-                // that is served to the ID stage is the one of the jump to the
-                // exception handler
               end else if (ext_req_i) begin
                   pc_mux_o      = PC_EXCEPTION;
                   pc_set_o      = 1'b1;

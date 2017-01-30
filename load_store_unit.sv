@@ -390,13 +390,13 @@ module littleriscv_load_store_unit
         //tell the controller to update the address
         data_misaligned_o = 1'b1;
         data_req_o        = 1'b1; //maybe better if controller handles this
+        lsu_ready_ex_o    = data_gnt_i;
 
         if(data_rvalid_i) begin
            //if first part rvalid is received
            if(data_gnt_i) begin
               //second grant is received
               NS             = WAIT_RVALID;
-              lsu_ready_ex_o = 1'b1;
               //in this stage we already received the first valid but no the second one
               //it differes from WAIT_RVALID_MIS because we do not send other requests
             end
