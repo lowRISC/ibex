@@ -31,6 +31,7 @@
 //`define SIMCHECKER
 `endif
 
+//`define CHECK_MISALIGNED
 
 // littleRISCV configuration. 
 

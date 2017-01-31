@@ -740,6 +740,11 @@ module littleriscv_id_stage
   assert property (
     @(posedge clk) (branch_in_ex_o) |-> (branch_decision_i !== 1'bx) ) else $display("Branch decision is X");
 
+`ifdef CHECK_MISALIGNED
+  assert property (
+    @(posedge clk) (~data_misaligned_i) ) else $display("Misaligned memory access at %x",pc_id_i);
+`endif
+
   // the instruction delivered to the ID stage should always be valid
   assert property (
     @(posedge clk) (instr_valid_i & (~illegal_c_insn_i)) |-> (!$isunknown(instr_rdata_i)) ) else $display("Instruction is valid, but has at least one X");
