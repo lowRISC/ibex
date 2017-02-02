@@ -157,7 +157,7 @@ module littleriscv_cs_registers
       12'h342: csr_rdata_int = {exc_cause_q[5], 26'b0, exc_cause_q[4:0]};
 
       // mimpid: PULP, anonymous source (no allocated ID yet)
-      12'hF13: csr_rdata_int = 32'h00_00_80_00;
+      12'hF13: csr_rdata_int = 32'h0;
       // mhartid: unique hardware thread id
       12'hF14: csr_rdata_int = {21'b0, cluster_id_i[5:0], 1'b0, core_id_i[3:0]};
 
