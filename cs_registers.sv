@@ -121,7 +121,6 @@ module littleriscv_cs_registers
 
   // Interrupt control signals
   logic [31:0] mepc_q, mepc_n;
-  logic [ 0:0] mestatus_q, mestatus_n;
   logic [ 1:0] mstatus_q, mstatus_n;
   logic [ 5:0] exc_cause_q, exc_cause_n;
   logic mie,mpie;
@@ -169,7 +168,6 @@ module littleriscv_cs_registers
   always_comb
   begin
     mepc_n       = mepc_q;
-    mestatus_n   = mestatus_q;
     mstatus_n    = mstatus_q;
     exc_cause_n  = exc_cause_q;
 
@@ -254,17 +252,13 @@ module littleriscv_cs_registers
     begin
       mstatus_q  <= '0;
       mepc_q     <= '0;
-      mestatus_q <= '0;
       exc_cause_q <= '0;
     end
     else
     begin
       // update CSRs
       mstatus_q  <= mstatus_n;
-
       mepc_q     <= mepc_n;
-      mestatus_q <= mestatus_n;
-
       exc_cause_q <= exc_cause_n;
     end
   end
