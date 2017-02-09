@@ -360,7 +360,7 @@ module littleriscv_tracer
         if (instr[14] == 1'b0) begin
           // regular store
           if (instr[6:0] != OPCODE_STORE_POST) begin
-            regs_read.push_back('{rs2, rs2_value});
+            regs_read.push_back('{rs2, rs3_value});
             regs_read.push_back('{rs1, rs1_value});
             str = $sformatf("%-16s x%0d, %0d(x%0d)", mnemonic, rs2, $signed(imm_s_type), rs1);
           end else begin
