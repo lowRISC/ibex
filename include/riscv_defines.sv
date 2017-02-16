@@ -16,14 +16,14 @@
 //                                                                            //
 //                                                                            //
 // Design Name:    RISC-V processor core                                      //
-// Project Name:   RI5CY                                                      //
+// Project Name:   zero-riscy                                                 //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Defines for various constants used by the processor core.  //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-package riscv_defines;
+package zeroriscy_defines;
 
 ////////////////////////////////////////////////
 //    ___         ____          _             //

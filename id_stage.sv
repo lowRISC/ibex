@@ -1,4 +1,4 @@
-// Copyright 2015 ETH Zurich and University of Bologna.
+// Copyright 2017 ETH Zurich and University of Bologna.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 0.51 (the “License”); you may not use this file except in
 // compliance with the License.  You may obtain a copy of the License at
@@ -15,9 +15,10 @@
 //                 Igor Loi - igor.loi@unibo.it                               //
 //                 Andreas Traber - atraber@student.ethz.ch                   //
 //                 Sven Stucki - svstucki@student.ethz.ch                     //
+//                 Davide Schiavone - pschiavo@iis.ee.ethz.ch                 //
 //                                                                            //
 // Design Name:    Instruction Decode Stage                                   //
-// Project Name:   RI5CY                                                      //
+// Project Name:   zero-riscy                                                 //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Decode stage of the core. It decodes the instructions      //
@@ -27,7 +28,7 @@
 
 `include "riscv_config.sv"
 
-import riscv_defines::*;
+import zeroriscy_defines::*;
 
 
 // Source/Destination register instruction index
@@ -37,7 +38,7 @@ import riscv_defines::*;
 `define REG_D  11:07
 
 
-module littleriscv_id_stage
+module zeroriscy_id_stage
 #(
   parameter REG_ADDR_WIDTH      = 5
 )
@@ -425,7 +426,7 @@ module littleriscv_id_stage
     end
   end
 
-  littleriscv_register_file  registers_i
+  zeroriscy_register_file  registers_i
   (
     .clk          ( clk                ),
     .rst_n        ( rst_n              ),
@@ -456,7 +457,7 @@ module littleriscv_id_stage
   //                                           //
   ///////////////////////////////////////////////
 
-  littleriscv_decoder decoder_i
+  zeroriscy_decoder decoder_i
   (
     // controller related signals
     .deassert_we_i                   ( deassert_we               ),
@@ -517,7 +518,7 @@ module littleriscv_id_stage
   //                                                                //
   ////////////////////////////////////////////////////////////////////
 
-  littleriscv_controller controller_i
+  zeroriscy_controller controller_i
   (
     .clk                            ( clk                    ),
     .rst_n                          ( rst_n                  ),
@@ -599,7 +600,7 @@ module littleriscv_id_stage
   //                                                                   //
   ///////////////////////////////////////////////////////////////////////
 
-  littleriscv_exc_controller exc_controller_i
+  zeroriscy_exc_controller exc_controller_i
   (
     .clk                  ( clk              ),
     .rst_n                ( rst_n            ),

@@ -1,4 +1,4 @@
-// Copyright 2015 ETH Zurich and University of Bologna.
+// Copyright 2017 ETH Zurich and University of Bologna.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 0.51 (the “License”); you may not use this file except in
 // compliance with the License.  You may obtain a copy of the License at
@@ -13,19 +13,20 @@
 //                                                                            //
 // Additional contributions by:                                               //
 //                 Andreas Traber - atraber@iis.ee.ethz.ch                    //
+//                 Davide Schiavone - pschiavo@iis.ee.ethz.ch                 //
 //                                                                            //
 // Design Name:    Control and Status Registers                               //
-// Project Name:   RI5CY                                                      //
+// Project Name:   zero-riscy                                                 //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Control and Status Registers (CSRs) loosely following the  //
-//                 RiscV draft priviledged instruction set spec (v1.7)        //
+//                 RiscV draft priviledged instruction set spec (v1.9)        //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
 `include "riscv_config.sv"
 
-import riscv_defines::*;
+import zeroriscy_defines::*;
 
 `ifndef PULP_FPGA_EMUL
  `ifdef SYNTHESIS
@@ -33,7 +34,7 @@ import riscv_defines::*;
  `endif
 `endif
 
-module littleriscv_cs_registers
+module zeroriscy_cs_registers
 #(
   parameter N_EXT_CNT    = 0
 )

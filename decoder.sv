@@ -1,4 +1,4 @@
-// Copyright 2015 ETH Zurich and University of Bologna.
+// Copyright 2017 ETH Zurich and University of Bologna.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 0.51 (the “License”); you may not use this file except in
 // compliance with the License.  You may obtain a copy of the License at
@@ -15,10 +15,11 @@
 //                 Matthias Baer - baermatt@student.ethz.ch                   //
 //                 Igor Loi - igor.loi@unibo.it                               //
 //                 Sven Stucki - svstucki@student.ethz.ch                     //
+//                 Davide Schiavone - pschiavo@iis.ee.ethz.ch                 //
 //                 Markus Wegmann - markus.wegmann@technokrat.ch              //
 //                                                                            //
 // Design Name:    Decoder                                                    //
-// Project Name:   RI5CY                                                      //
+// Project Name:   zero-riscy                                                 //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Decoder                                                    //
@@ -27,9 +28,9 @@
 
 `include "riscv_config.sv"
 
-import riscv_defines::*;
+import zeroriscy_defines::*;
 
-module littleriscv_decoder
+module zeroriscy_decoder
 (
   // singals running to/from controller
   input  logic        deassert_we_i,           // deassert we, we are stalled or not active

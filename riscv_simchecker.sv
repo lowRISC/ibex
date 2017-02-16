@@ -14,7 +14,7 @@
 // Additional contributions by:                                               //
 //                                                                            //
 // Design Name:    RISC-V Tracer                                              //
-// Project Name:   RI5CY                                                      //
+// Project Name:   zero-riscy                                                 //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Compares the executed instructions with a golden model     //
@@ -35,7 +35,7 @@ import "DPI-C" function void    riscv_checker_mem_access(input chandle cpu, inpu
 import "DPI-C" function void    riscv_checker_reg_access(input chandle cpu, input logic [31:0] addr, input logic [31:0] data);
 `endif
 
-module littleriscv_simchecker
+module zeroriscy_simchecker
 #(
     parameter REG_ADDR_WIDTH      = 5
 )

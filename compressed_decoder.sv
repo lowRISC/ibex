@@ -1,4 +1,4 @@
-// Copyright 2015 ETH Zurich and University of Bologna.
+// Copyright 2017 ETH Zurich and University of Bologna.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 0.51 (the “License”); you may not use this file except in
 // compliance with the License.  You may obtain a copy of the License at
@@ -12,7 +12,7 @@
 // Engineer:       Sven Stucki - svstucki@student.ethz.ch                     //
 //                                                                            //
 // Design Name:    Compressed instruction decoder                             //
-// Project Name:   RI5CY                                                      //
+// Project Name:   zero-riscy                                                 //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Decodes RISC-V compressed instructions into their RV32     //
@@ -21,9 +21,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-import riscv_defines::*;
+import zeroriscy_defines::*;
 
-module littleriscv_compressed_decoder
+module zeroriscy_compressed_decoder
 (
   input  logic [31:0] instr_i,
   output logic [31:0] instr_o,

@@ -9,8 +9,8 @@
 // specific language governing permissions and limitations under the License.
 
 
-package riscv_tracer_defines;
-import riscv_defines::*;
+package zeroriscy_tracer_defines;
+import zeroriscy_defines::*;
 
 // instruction masks (for tracer)
 // parameter INSTR_CUSTOM0   = { 25'b?, OPCODE_CUST0 };

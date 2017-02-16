@@ -1,4 +1,4 @@
-// Copyright 2015 ETH Zurich and University of Bologna.
+// Copyright 2017 ETH Zurich and University of Bologna.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 0.51 (the “License”); you may not use this file except in
 // compliance with the License.  You may obtain a copy of the License at
@@ -16,18 +16,18 @@
 //                 Markus Wegmann - markus.wegmann@technokrat.ch              //
 //                                                                            //
 // Design Name:    RISC-V register file                                       //
-// Project Name:   RI5CY                                                      //
+// Project Name:   zero-riscy                                                 //
 // Language:       SystemVerilog                                              //
 //                                                                            //
-// Description:    Register file with 31x 32 bit wide registers. Register 0   //
-//                 is fixed to 0. This register file is based on latches and  //
-//                 is thus smaller than the flip-flop based register file.    //
+// Description:    Register file with 31 or 15x 32 bit wide registers.        //
+//                 Register 0 is fixed to 0. This register file is based on   //
+//                 latches and is thus smaller than the flip-flop based RF.   //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
 `include "riscv_config.sv"
 
-module littleriscv_register_file
+module zeroriscy_register_file
 #(
   parameter ADDR_WIDTH    = 5,
   parameter DATA_WIDTH    = 32

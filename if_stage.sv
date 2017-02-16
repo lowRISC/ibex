@@ -1,4 +1,4 @@
-// Copyright 2015 ETH Zurich and University of Bologna.
+// Copyright 2017 ETH Zurich and University of Bologna.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 0.51 (the “License”); you may not use this file except in
 // compliance with the License.  You may obtain a copy of the License at
@@ -17,7 +17,7 @@
 //                 Sven Stucki - svstucki@student.ethz.ch                     //
 //                                                                            //
 // Design Name:    Instruction Fetch Stage                                    //
-// Project Name:   RI5CY                                                      //
+// Project Name:   zero-riscy                                                 //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Instruction fetch unit: Selection of the next PC, and      //
@@ -29,7 +29,7 @@
 
 import riscv_defines::*;
 
-module littleriscv_if_stage #(
+module zeroriscy_if_stage #(
   parameter RDATA_WIDTH = 32
 )
 (
@@ -134,7 +134,7 @@ module littleriscv_if_stage #(
         generate
           if (RDATA_WIDTH == 32) begin : prefetch_32
             // prefetch buffer, caches a fixed number of instructions
-            littleriscv_prefetch_buffer prefetch_buffer_i
+            zeroriscy_prefetch_buffer prefetch_buffer_i
               (
                 .clk               ( clk                         ),
                 .rst_n             ( rst_n                       ),
@@ -162,7 +162,7 @@ module littleriscv_if_stage #(
               );
           end else if (RDATA_WIDTH == 128) begin : prefetch_128
             // prefetch buffer, caches a fixed number of instructions
-            littleriscv_prefetch_L0_buffer prefetch_buffer_i
+            zeroriscy_prefetch_L0_buffer prefetch_buffer_i
               (
                 .clk               ( clk                         ),
                 .rst_n             ( rst_n                       ),

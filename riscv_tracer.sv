@@ -1,4 +1,4 @@
-// Copyright 2015 ETH Zurich and University of Bologna.
+// Copyright 2017 ETH Zurich and University of Bologna.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 0.51 (the “License”); you may not use this file except in
 // compliance with the License.  You may obtain a copy of the License at
@@ -14,7 +14,7 @@
 // Additional contributions by:                                               //
 //                                                                            //
 // Design Name:    RISC-V Tracer                                              //
-// Project Name:   RI5CY                                                      //
+// Project Name:   zero-riscy                                                 //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Traces the executed instructions                           //
@@ -23,8 +23,8 @@
 
 `include "riscv_config.sv"
 
-import riscv_defines::*;
-import riscv_tracer_defines::*;
+import zeroriscy_defines::*;
+import zeroriscy_tracer_defines::*;
 
 
 // Source/Destination register instruction index
@@ -34,7 +34,7 @@ import riscv_tracer_defines::*;
 `define REG_D  11:07
 
 
-module littleriscv_tracer
+module zeroriscy_tracer
 #(
     parameter REG_ADDR_WIDTH      = 5
 )

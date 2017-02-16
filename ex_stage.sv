@@ -1,4 +1,4 @@
-// Copyright 2015 ETH Zurich and University of Bologna.
+// Copyright 2017 ETH Zurich and University of Bologna.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 0.51 (the “License”); you may not use this file except in
 // compliance with the License.  You may obtain a copy of the License at
@@ -16,12 +16,13 @@
 //                 Sven Stucki - svstucki@student.ethz.ch                     //
 //                 Andreas Traber - atraber@iis.ee.ethz.ch                    //
 //                 Markus Wegmann - markus.wegmann@technokrat.ch              //
+//                 Davide Schiavone - pschiavo@iis.ee.ethz.ch                 //
 //                                                                            //
 // Design Name:    Execute stage                                              //
-// Project Name:   RI5CY                                                      //
+// Project Name:   zero-riscy                                                 //
 // Language:       SystemVerilog                                              //
 //                                                                            //
-// Description:    Execution stage: Hosts ALU and MAC unit                    //
+// Description:    Execution block: Hosts ALU and MUL unit                    //
 //                 ALU: computes additions/subtractions/comparisons           //
 //                 MAC:                                                       //
 //                                                                            //
@@ -29,9 +30,9 @@
 
 `include "riscv_config.sv"
 
-import riscv_defines::*;
+import zeroriscy_defines::*;
 
-module littleriscv_ex_block
+module zeroriscy_ex_block
 (
   // ALU signals from ID stage
   input  logic [ALU_OP_WIDTH-1:0] alu_operator_i,
@@ -65,7 +66,7 @@ module littleriscv_ex_block
   //                        //
   ////////////////////////////
 
-  littleriscv_alu_simplified alu_i
+  zeroriscy_alu alu_i
   (
     .operator_i          ( alu_operator_i       ),
     .operand_a_i         ( alu_operand_a_i      ),

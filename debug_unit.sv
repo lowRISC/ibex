@@ -1,4 +1,4 @@
-// Copyright 2016 ETH Zurich and University of Bologna.
+// Copyright 2017 ETH Zurich and University of Bologna.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 0.51 (the “License”); you may not use this file except in
 // compliance with the License. You may obtain a copy of the License at
@@ -11,8 +11,11 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Engineer:       Andreas Traber - atraber@iis.ee.ethz.ch                    //
 //                                                                            //
+// Additional contributions by:                                               //
+//                 Davide Schiavone - pschiavo@iis.ee.ethz.ch                 //
+//                                                                            //
 // Design Name:    Debug Unit                                                 //
-// Project Name:   RI5CY                                                      //
+// Project Name:   zero-riscy                                                 //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Debug controller                                           //
@@ -21,9 +24,9 @@
 
 `include "riscv_config.sv"
 
-import riscv_defines::*;
+import zeroriscy_defines::*;
 
-module littleriscv_debug_unit
+module zeroriscy_debug_unit
 #(
     parameter REG_ADDR_WIDTH      = 5
 )

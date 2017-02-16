@@ -15,7 +15,7 @@
 //                 Andreas Traber - atraber@iis.ee.ethz.ch                    //
 //                                                                            //
 // Design Name:    Prefetcher Buffer for 128 bit memory interface             //
-// Project Name:   RI5CY                                                      //
+// Project Name:   zero-riscy                                                 //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Prefetch Buffer that caches instructions. This cuts overly //
@@ -26,7 +26,7 @@
 
 `include "riscv_config.sv"
 
-module littleriscv_prefetch_L0_buffer
+module zeroriscy_prefetch_L0_buffer
 #(
   parameter                                   RDATA_IN_WIDTH = 128
 )
@@ -91,7 +91,7 @@ module littleriscv_prefetch_L0_buffer
   logic                               aligned_is_compressed, unaligned_is_compressed;
 
 
-  littleprefetch_L0_buffer_L0
+  zeroriscy_L0_buffer_L0
   #(
     .RDATA_IN_WIDTH ( RDATA_IN_WIDTH )
   )
@@ -466,7 +466,7 @@ module littleriscv_prefetch_L0_buffer
 endmodule // prefetch_L0_buffer
 
 
-module littleprefetch_L0_buffer_L0
+module zeroriscy_L0_buffer_L0
 #(
   parameter                                   RDATA_IN_WIDTH = 128
 )

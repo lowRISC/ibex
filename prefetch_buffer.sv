@@ -12,7 +12,7 @@
 // Engineer:       Andreas Traber - atraber@iis.ee.ethz.ch                    //
 //                                                                            //
 // Design Name:    Prefetcher Buffer for 32 bit memory interface              //
-// Project Name:   RI5CY                                                      //
+// Project Name:   zero-riscy                                                 //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Prefetch Buffer that caches instructions. This cuts overly //
