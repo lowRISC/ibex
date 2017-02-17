@@ -21,9 +21,9 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "riscv_config.sv"
+`include "zeroriscy_config.sv"
 
-import riscv_defines::*;
+import zeroriscy_defines::*;
 
 // do not import anything if the simchecker is not used
 // this gets rid of warnings during simulation

@@ -21,12 +21,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-`include "riscv_config.sv"
+`include "zeroriscy_config.sv"
 
 // input port: send address one cycle before the data
 // clear_i clears the FIFO for the following cycle. in_addr_i can be sent in
 // this cycle already
-module littleriscv_fetch_fifo
+module zeroriscy_fetch_fifo
 (
     input  logic        clk,
     input  logic        rst_n,
@@ -232,7 +232,7 @@ module littleriscv_fetch_fifo
 endmodule
 
 
-module littleriscv_prefetch_buffer
+module zeroriscy_prefetch_buffer
 (
   input  logic        clk,
   input  logic        rst_n,
@@ -283,7 +283,7 @@ module littleriscv_prefetch_buffer
   // consumes addresses and rdata
   //////////////////////////////////////////////////////////////////////////////
 
-  littleriscv_fetch_fifo fifo_i
+  zeroriscy_fetch_fifo fifo_i
   (
     .clk                   ( clk               ),
     .rst_n                 ( rst_n             ),

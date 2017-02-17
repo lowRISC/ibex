@@ -25,9 +25,9 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "riscv_config.sv"
+`include "zeroriscy_config.sv"
 
-import riscv_defines::*;
+import zeroriscy_defines::*;
 
 module zeroriscy_if_stage #(
   parameter RDATA_WIDTH = 32
@@ -268,7 +268,7 @@ module zeroriscy_if_stage #(
         logic        illegal_c_insn;
         logic        instr_compressed_int;
 
-        littleriscv_compressed_decoder compressed_decoder_i
+        zeroriscy_compressed_decoder compressed_decoder_i
           (
             .instr_i         ( fetch_rdata          ),
             .instr_o         ( instr_decompressed   ),

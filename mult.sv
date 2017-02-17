@@ -22,10 +22,10 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-import riscv_defines::*;
+import zeroriscy_defines::*;
 
 
-module littleriscv_mult
+module zeroriscy_mult
 (
   input  logic        clk,
   input  logic        rst_n,

@@ -1,14 +1,11 @@
-littleriscv:
+zeroriscy:
   incdirs: [
     include,
   ]
   files: [
-    include/riscv_defines.sv,
-    include/riscv_tracer_defines.sv,
+    include/zeroriscy_defines.sv,
+    include/zeroriscy_tracer_defines.sv,
     alu.sv,
-    alu_simplified.sv,
-    alu_simplified_splitted.sv,
-    alu_div.sv,
     compressed_decoder.sv,
     controller.sv,
     cs_registers.sv,
@@ -16,19 +13,15 @@ littleriscv:
     decoder.sv,
     exc_controller.sv,
     ex_stage.sv,
-    hwloop_controller.sv,
-    hwloop_regs.sv,
     id_stage.sv,
     if_stage.sv,
     load_store_unit.sv,
     mult.sv,
     prefetch_buffer.sv,
-    prefetch_buffer_small.sv,
-    prefetch_buffer_only_aligned.sv,
     prefetch_L0_buffer.sv,
-    littleriscv_core.sv,
+    zeroriscy_core.sv,
   ]
-littleriscv_vip_rtl:
+zeroriscy_vip_rtl:
   targets: [
     rtl,
   ]
@@ -36,12 +29,11 @@ littleriscv_vip_rtl:
     include,
   ]
   files: [
-    include/riscv_defines.sv,
-    include/riscv_tracer_defines.sv,
-    riscv_tracer.sv,
-    riscv_simchecker.sv,
+    include/zeroriscy_defines.sv,
+    include/zeroriscy_tracer_defines.sv,
+    zeroriscy_tracer.sv,
   ]
-littleriscv_regfile_rtl:
+zeroriscy_regfile_rtl:
   targets: [
     rtl,
   ]
@@ -51,7 +43,7 @@ littleriscv_regfile_rtl:
   files: [
     register_file.sv,
   ]
-littleriscv_regfile_fpga:
+zeroriscy_regfile_fpga:
   targets: [
     xilinx,
   ]

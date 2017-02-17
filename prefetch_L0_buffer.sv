@@ -24,7 +24,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-`include "riscv_config.sv"
+`include "zeroriscy_config.sv"
 
 module zeroriscy_prefetch_L0_buffer
 #(

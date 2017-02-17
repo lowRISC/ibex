@@ -26,7 +26,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "riscv_config.sv"
+`include "zeroriscy_config.sv"
 
 import zeroriscy_defines::*;
 
@@ -118,11 +118,8 @@ module zeroriscy_decoder
     imm_a_mux_sel_o             = IMMA_ZERO;
     imm_b_mux_sel_o             = IMMB_I;
 
-
     regfile_mem_we              = 1'b0;
     regfile_alu_we              = 1'b0;
-
-
 
     csr_access_o                = 1'b0;
     csr_op                      = CSR_OP_NONE;
@@ -419,15 +416,8 @@ module zeroriscy_decoder
             {6'b00_0000, 3'b001}: alu_operator_o = ALU_SLL;   // Shift Left Logical
             {6'b00_0000, 3'b101}: alu_operator_o = ALU_SRL;   // Shift Right Logical
             {6'b10_0000, 3'b101}: alu_operator_o = ALU_SRA;   // Shift Right Arithmetic
-
-
             {6'b00_0010, 3'b010}: alu_operator_o = ALU_SLETS; // Set Lower Equal Than
             {6'b00_0010, 3'b011}: alu_operator_o = ALU_SLETU; // Set Lower Equal Than Unsigned
-
-
-
-
-
 
             default: begin
               illegal_insn_o = 1'b1;
@@ -508,9 +498,6 @@ module zeroriscy_decoder
         end
 
       end
-
-
-
       default: begin
         illegal_insn_o = 1'b1;
       end
@@ -535,7 +522,6 @@ module zeroriscy_decoder
       // second address since the first calculated address was
       // the correct one
       regfile_alu_we = 1'b0;
-
 
     end
   end

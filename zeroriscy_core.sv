@@ -26,7 +26,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "riscv_config.sv"
+`include "zeroriscy_config.sv"
 
 import zeroriscy_defines::*;
 
@@ -268,7 +268,7 @@ module zeroriscy_core
   //  |___|_|     |____/ |_/_/   \_\____|_____|   //
   //                                              //
   //////////////////////////////////////////////////
-  littleriscv_if_stage
+  zeroriscy_if_stage
   #(
     .RDATA_WIDTH         ( INSTR_RDATA_WIDTH )
   )
@@ -333,7 +333,7 @@ module zeroriscy_core
   //  |___|____/  |____/ |_/_/   \_\____|_____|  //
   //                                             //
   /////////////////////////////////////////////////
-  littleriscv_id_stage
+  zeroriscy_id_stage
   #(
   )
   id_stage_i
@@ -448,7 +448,7 @@ module zeroriscy_core
   );
 
 
-  littleriscv_ex_block ex_block_i
+  zeroriscy_ex_block ex_block_i
   (
     // Alu signals from ID stage
 	//TODO: hot encoding
@@ -473,7 +473,7 @@ module zeroriscy_core
   //                                                                                    //
   ////////////////////////////////////////////////////////////////////////////////////////
 
-  littleriscv_load_store_unit  load_store_unit_i
+  zeroriscy_load_store_unit  load_store_unit_i
   (
     .clk                   ( clk                ),
     .rst_n                 ( rst_ni             ),
@@ -528,7 +528,7 @@ module zeroriscy_core
   //   Control and Status Registers   //
   //////////////////////////////////////
 
-  littleriscv_cs_registers
+  zeroriscy_cs_registers
   #(
     .N_EXT_CNT       ( N_EXT_PERF_COUNTERS   )
   )
@@ -603,7 +603,7 @@ module zeroriscy_core
   //                                                         //
   /////////////////////////////////////////////////////////////
 
-  littleriscv_debug_unit debug_unit_i
+  zeroriscy_debug_unit debug_unit_i
   (
     .clk               ( clk_i              ), // always-running clock for debug
     .rst_n             ( rst_ni             ),
@@ -663,7 +663,7 @@ module zeroriscy_core
 
 
 `ifdef TRACE_EXECUTION
-  littleriscv_tracer riscv_tracer_i
+  zeroriscy_tracer zeroriscy_tracer_i
   (
     .clk            ( clk_i                                ), // always-running clock for tracing
     .rst_n          ( rst_ni                               ),
@@ -722,7 +722,7 @@ module zeroriscy_core
   logic is_interrupt;
   assign is_interrupt = (pc_mux_id == PC_EXCEPTION) && (exc_pc_mux_id == EXC_PC_IRQ);
 
-  littleriscv_simchecker riscv_simchecker_i
+  zeroriscy_simchecker zeroriscy_simchecker_i
   (
     .clk              ( clk_i                                ), // always-running clock for tracing
     .rst_n            ( rst_ni                               ),

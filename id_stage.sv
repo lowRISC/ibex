@@ -26,7 +26,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "riscv_config.sv"
+`include "zeroriscy_config.sv"
 
 import zeroriscy_defines::*;
 
