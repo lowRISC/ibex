@@ -665,7 +665,6 @@ module zeroriscy_core
     // signals for PPC and NPC
     .pc_if_i           ( pc_if              ), // from IF stage
     .pc_id_i           ( pc_id              ), // from ID stage
-    .pc_branch_i       ( jump_target_ex     ),
     .data_load_event_i ( data_load_event_ex ),
     .instr_valid_id_i  ( instr_valid_id     ),
 
@@ -732,58 +731,6 @@ module zeroriscy_core
     .imm_vs_type    ( id_stage_i.imm_vs_type               ),
     .imm_vu_type    ( id_stage_i.imm_vu_type               ),
     .imm_clip_type  ( id_stage_i.instr_rdata_i[11:7]       )
-  );
-`endif
-
-`ifdef SIMCHECKER
-  logic is_interrupt;
-  assign is_interrupt = (pc_mux_id == PC_EXCEPTION) && (exc_pc_mux_id == EXC_PC_IRQ);
-
-  zeroriscy_simchecker zeroriscy_simchecker_i
-  (
-    .clk              ( clk_i                                ), // always-running clock for tracing
-    .rst_n            ( rst_ni                               ),
-
-    .fetch_enable     ( fetch_enable_i                       ),
-    .boot_addr        ( boot_addr_i                          ),
-    .core_id          ( core_id_i                            ),
-    .cluster_id       ( cluster_id_i                         ),
-
-    .instr_compressed ( if_stage_i.fetch_rdata[15:0]         ),
-    .pc_set           ( pc_set                               ),
-    .if_valid         ( if_valid                             ),
-
-    .pc               ( id_stage_i.pc_id_i                   ),
-    .instr            ( id_stage_i.instr                     ),
-    .is_compressed    ( is_compressed_id                     ),
-    .id_valid         ( id_stage_i.id_valid_o                ),
-    .is_decoding      ( id_stage_i.is_decoding_o             ),
-    .is_illegal       ( id_stage_i.illegal_insn_dec          ),
-    .is_interrupt     ( is_interrupt                         ),
-    .irq_no           ( irq_id_i                             ),
-    .pipe_flush       ( id_stage_i.controller_i.pipe_flush_i ),
-
-    .ex_valid         (                              ),
-    .ex_reg_addr      ( id_stage_i.registers_i.waddr_b_i     ),
-    .ex_reg_we        ( id_stage_i.registers_i.we_a_i        ),
-    .ex_reg_wdata     ( id_stage_i.registers_i.wdata_b_i     ),
-
-    .ex_data_addr     ( data_addr_o                          ),
-    .ex_data_req      ( data_req_o                           ),
-    .ex_data_gnt      ( data_gnt_i                           ),
-    .ex_data_we       ( data_we_o                            ),
-    .ex_data_wdata    ( data_wdata_o                         ),
-
-    .wb_bypass        ( ex_block_i.branch_in_ex_i            ),
-    .lsu_misaligned   ( data_misaligned                      ),
-
-    .wb_valid         ( wb_valid                             ),
-    .wb_reg_addr      ( id_stage_i.registers_i.waddr_a_i     ),
-    .wb_reg_we        ( id_stage_i.registers_i.we_a_i        ),
-    .wb_reg_wdata     ( id_stage_i.registers_i.wdata_a_i     ),
-
-    .wb_data_rvalid   ( data_rvalid_i                        ),
-    .wb_data_rdata    ( data_rdata_i                         )
   );
 `endif
 

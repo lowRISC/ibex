@@ -82,9 +82,6 @@ module zeroriscy_debug_unit
 
   input  logic        sleeping_i,
 
-  input  logic        branch_in_ex_i,
-  input  logic        branch_taken_i,
-
   output logic        jump_req_o,
   output logic [31:0] jump_addr_o
 );
