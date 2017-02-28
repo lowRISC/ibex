@@ -171,6 +171,7 @@ module zeroriscy_id_stage
 
   logic        branch_taken_ex;
   logic        branch_in_id;
+  logic        branch_in_id_q;
   logic        branch_set;
   logic [1:0]  jump_in_id;
   logic [1:0]  jump_in_dec;
@@ -687,9 +688,11 @@ module zeroriscy_id_stage
     if (~rst_n)
     begin
       id_wb_fsm_cs    <= IDLE;
+      branch_in_id_q  <= 1'b0;
     end
     else begin
       id_wb_fsm_cs    <= id_wb_fsm_ns;
+      branch_in_id_q  <= branch_in_id;
     end
   end
 
@@ -740,12 +743,12 @@ module zeroriscy_id_stage
 
       WAIT_MULTICYCLE:
       begin
+        branch_set      = branch_in_id_q;
         if(ex_ready_i) begin
           regfile_we     = regfile_we_id;
           id_wb_fsm_ns   = IDLE;
           load_stall     = 1'b0;
           mult_stall     = 1'b0;
-          branch_set      = branch_in_id;
           select_data_rf = data_req_id ? RF_LSU : RF_EX;
         end else begin
           regfile_we     = 1'b0;

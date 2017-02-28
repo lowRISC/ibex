@@ -670,9 +670,6 @@ module zeroriscy_core
 
     .sleeping_i        ( sleeping           ),
 
-    .branch_in_ex_i    ( branch_in_ex       ),
-    .branch_taken_i    ( branch_decision    ),
-
     .jump_addr_o       ( dbg_jump_addr      ), // PC from debug unit
     .jump_req_o        ( dbg_jump_req       )  // set PC to new value
   );
