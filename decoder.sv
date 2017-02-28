@@ -421,6 +421,31 @@ module zeroriscy_decoder
             {6'b00_0000, 3'b101}: alu_operator_o = ALU_SRL;   // Shift Right Logical
             {6'b10_0000, 3'b101}: alu_operator_o = ALU_SRA;   // Shift Right Arithmetic
 
+            // supported RV32M instructions
+            {6'b00_0001, 3'b000}: begin // mul
+                //alu_operator_o     = ALU_ADD;
+                mult_operator_o    = MUL_L;
+                mult_int_en        = 1'b1;
+                mult_signed_mode_o = 2'b00;
+            end
+            {6'b00_0001, 3'b001}: begin // mulh
+                //alu_operator_o     = ALU_ADD;
+                mult_operator_o    = MUL_H;
+                mult_int_en        = 1'b1;
+                mult_signed_mode_o = 2'b11;
+            end
+            {6'b00_0001, 3'b010}: begin // mulhsu
+                //alu_operator_o     = ALU_ADD;
+                mult_operator_o    = MUL_H;
+                mult_int_en        = 1'b1;
+                mult_signed_mode_o = 2'b01;
+            end
+            {6'b00_0001, 3'b011}: begin // mulhu
+                //alu_operator_o     = ALU_ADD;
+                mult_operator_o    = MUL_H;
+                mult_int_en        = 1'b1;
+                mult_signed_mode_o = 2'b00;
+            end
             default: begin
               illegal_insn_o = 1'b1;
             end
@@ -535,6 +560,7 @@ module zeroriscy_decoder
 
   // deassert we signals (in case of stalls)
   assign regfile_we_o      = (deassert_we_i) ? 1'b0          : regfile_we;
+  assign mult_int_en_o     = (deassert_we_i) ? 1'b0          : mult_int_en;
   assign data_req_o        = (deassert_we_i) ? 1'b0          : data_req;
   assign csr_op_o          = (deassert_we_i) ? CSR_OP_NONE   : csr_op;
   assign jump_in_id_o      = (deassert_we_i) ? BRANCH_NONE   : jump_in_id;

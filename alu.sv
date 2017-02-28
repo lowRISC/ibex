@@ -33,6 +33,7 @@ module zeroriscy_alu
   input  logic [ALU_OP_WIDTH-1:0]  operator_i,
   input  logic [31:0]              operand_a_i,
   input  logic [31:0]              operand_b_i,
+  input  logic                     carry_in_i,
 
   output logic [31:0]              adder_result_o,
 
@@ -89,13 +90,12 @@ module zeroriscy_alu
       default: ;
     endcase
   end
-  
 
   // prepare operand a
   assign adder_in_a = {operand_a_i,1'b1};
 
   // prepare operand b
-  assign adder_in_b    = {operand_b_i,1'b0};
+  assign adder_in_b    = {operand_b_i,carry_in_i};
   assign operand_b_neg = adder_in_b ^ {33{adder_op_b_negate}};
 
   // actual adder

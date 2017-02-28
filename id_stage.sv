@@ -90,6 +90,13 @@ module zeroriscy_id_stage
     output logic [31:0] alu_operand_b_ex_o,
     output logic [31:0] alu_operand_c_ex_o, // Still needed if 2r1w reg file used
 
+    // MUL
+    output logic        mult_en_ex_o,
+    output logic        mult_operator_ex_o,
+    output logic  [1:0] mult_signed_mode_ex_o,
+    output logic [31:0] mult_operand_a_ex_o,
+    output logic [31:0] mult_operand_b_ex_o,
+
     // CSR ID
     output logic        csr_access_ex_o,
     output logic [1:0]  csr_op_ex_o,
@@ -170,6 +177,7 @@ module zeroriscy_id_stage
   logic        branch_2nd_stage;
   logic        jr_stall;
   logic        load_stall;
+  logic        mult_stall;
 
   logic        halt_id;
   //FSM signals to write back multi cycles instructions
@@ -215,6 +223,11 @@ module zeroriscy_id_stage
 
   logic [0:0]  imm_a_mux_sel;
   logic [3:0]  imm_b_mux_sel;
+
+  // Multiplier Control
+  logic        mult_int_en;      // use integer multiplier
+  logic        mult_operator;
+  logic [1:0]  mult_signed_mode;
 
   // Data Memory Control
   logic        data_we_id;
@@ -480,6 +493,9 @@ module zeroriscy_id_stage
     .imm_a_mux_sel_o                 ( imm_a_mux_sel             ),
     .imm_b_mux_sel_o                 ( imm_b_mux_sel             ),
 
+    .mult_int_en_o                   ( mult_int_en               ),
+    .mult_operator_o                 ( mult_operator             ),
+    .mult_signed_mode_o              ( mult_signed_mode          ),
     // Register file control signals
     .regfile_we_o                    ( regfile_we_id             ),
 
@@ -654,6 +670,12 @@ module zeroriscy_id_stage
 
   assign branch_in_ex_o              = (jump_in_dec == BRANCH_COND);
 
+  assign mult_en_ex_o                = mult_int_en;
+  assign mult_operator_ex_o          = mult_operator;
+  assign mult_signed_mode_ex_o       = mult_signed_mode;
+  assign mult_operand_a_ex_o         = regfile_data_ra_id;
+  assign mult_operand_b_ex_o         = regfile_data_rb_id;
+
   enum logic { IDLE, WAIT_MULTICYCLE } id_wb_fsm_cs, id_wb_fsm_ns;
 
   ///////////////////////////////////////
@@ -681,18 +703,29 @@ module zeroriscy_id_stage
     id_wb_fsm_ns    = id_wb_fsm_cs;
     regfile_we      = regfile_we_id     & (~halt_id);
     load_stall      = 1'b0;
+    mult_stall      = 1'b0;
     select_data_rf  = RF_EX;
 
     unique case (id_wb_fsm_cs)
 
       IDLE:
       begin
-        if(data_req_id) begin
+        //if instr not valid, deassert and so it is 0, is it true with MUL?
+        unique case (1'b1)
+          data_req_id: begin
             //LSU operation
             regfile_we    = 1'b0;
             id_wb_fsm_ns  = WAIT_MULTICYCLE;
             load_stall    = 1'b1;
-        end
+          end
+          mult_int_en: begin
+            //MUL operation
+            regfile_we    = 1'b0;
+            id_wb_fsm_ns  = WAIT_MULTICYCLE;
+            mult_stall    = 1'b1;
+          end
+          default:;
+        endcase
       end
 
       WAIT_MULTICYCLE:
@@ -701,10 +734,17 @@ module zeroriscy_id_stage
           regfile_we     = regfile_we_id;
           id_wb_fsm_ns   = IDLE;
           load_stall     = 1'b0;
+          mult_stall     = 1'b0;
           select_data_rf = data_req_id ? RF_LSU : RF_EX;
         end else begin
           regfile_we     = 1'b0;
-          load_stall    = 1'b1;
+          unique case (1'b1)
+            data_req_id:
+              load_stall    = 1'b1;
+            mult_int_en:
+              mult_stall    = 1'b1;
+            default:;
+          endcase
         end
       end
 
@@ -712,8 +752,35 @@ module zeroriscy_id_stage
     endcase
   end
 
+/*
+        if(data_valid_lsu_i) begin
+          //LSU operation
+          regfile_we    = regfile_we_q;
+          id_wb_fsm_ns  = IDLE;
+          load_stall    = 1'b0;
+          select_data_lsu = 1'b1;
+        end
+        else
+          load_stall    = data_req_id;
+        if(mult_int_en) begin
+          if(ex_ready_i) begin
+          //MUL operation
+            regfile_we    = regfile_we_id    ;
+            id_wb_fsm_ns  = IDLE;
+            mult_stall    = 1'b0;
+          end
+          else begin
+            mult_stall      = mult_int_en;
+            regfile_we      = 1'b0;
+          end
+        end
+     end
+
+    endcase
+  end
+*/
   // stall control
-  assign id_ready_o = (~jr_stall) & (~load_stall);
+  assign id_ready_o = (~jr_stall) & (~load_stall) & (~mult_stall);
   
   assign id_valid_o = (~halt_id) & id_ready_o;
 
@@ -734,5 +801,9 @@ module zeroriscy_id_stage
   // the instruction delivered to the ID stage should always be valid
   assert property (
     @(posedge clk) (instr_valid_i & (~illegal_c_insn_i)) |-> (!$isunknown(instr_rdata_i)) ) else $display("Instruction is valid, but has at least one X");
+
+  // make sure multicycles enable signals are unique
+  assert property (
+    @(posedge clk) ~(data_req_ex_o & mult_int_en )) else $display("Multicycles enable signals are not unique");
 
 endmodule
