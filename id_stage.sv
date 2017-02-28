@@ -116,7 +116,6 @@ module zeroriscy_id_stage
 
     output logic        exc_save_if_o,
     output logic        exc_save_id_o,
-    output logic        exc_save_takenbranch_o,
     output logic        exc_restore_id_o,
 
     input  logic        lsu_load_err_i,
@@ -164,12 +163,14 @@ module zeroriscy_id_stage
   logic        regb_used_dec;
 
   logic        branch_taken_ex;
+  logic        branch_in_id;
+  logic        branch_set;
   logic [1:0]  jump_in_id;
   logic [1:0]  jump_in_dec;
 
-  logic        branch_2nd_stage;
-  logic        jr_stall;
+  logic        instr_multicyle;
   logic        load_stall;
+  logic        branch_stall;
 
   logic        halt_id;
   //FSM signals to write back multi cycles instructions
@@ -274,7 +275,7 @@ module zeroriscy_id_stage
   // signal to 0 for instructions that are done
   assign clear_instr_valid_o = id_ready_o | halt_id;
 
-  assign branch_taken_ex = branch_in_ex_o & (branch_decision_i | branch_2nd_stage);
+ assign branch_taken_ex = branch_in_id & branch_decision_i;
 
   ////////////////////////////////////////////////////////
   //   ___                                 _      _     //
@@ -455,7 +456,7 @@ module zeroriscy_id_stage
     // controller related signals
     .deassert_we_i                   ( deassert_we               ),
     .data_misaligned_i               ( data_misaligned_i         ),
-    .branch_2nd_stage_i              ( branch_2nd_stage          ),
+    .branch_set_i                    ( branch_set                ),
 
     .illegal_insn_o                  ( illegal_insn_dec          ),
     .ebrk_insn_o                     ( ebrk_insn                 ),
@@ -497,7 +498,8 @@ module zeroriscy_id_stage
 
     // jump/branches
     .jump_in_dec_o                   ( jump_in_dec               ),
-    .jump_in_id_o                    ( jump_in_id                )
+    .jump_in_id_o                    ( jump_in_id                ),
+    .branch_in_id_o                  ( branch_in_id              )
   );
 
   ////////////////////////////////////////////////////////////////////
@@ -541,10 +543,13 @@ module zeroriscy_id_stage
     .data_load_event_i              ( data_load_event_ex_o   ),
 
     // jump/branch control
+    .branch_in_id_i                 ( branch_in_id           ),
     .branch_taken_ex_i              ( branch_taken_ex        ),
+    .branch_set_i                   ( branch_set             ),
     .jump_in_id_i                   ( jump_in_id             ),
     .jump_in_dec_i                  ( jump_in_dec            ),
 
+    .instr_multicyle_i              ( instr_multicyle        ),
     // Exception Controller Signals
     .int_req_i                      ( int_req                ),
     .ext_req_i                      ( ext_req                ),
@@ -552,7 +557,6 @@ module zeroriscy_id_stage
     .irq_ack_o                      ( irq_ack_o              ),
     .exc_save_if_o                  ( exc_save_if_o          ),
     .exc_save_id_o                  ( exc_save_id_o          ),
-    .exc_save_takenbranch_o         ( exc_save_takenbranch_o ),
     .exc_restore_id_o               ( exc_restore_id_o       ),
 
     // Debug Unit Signals
@@ -567,9 +571,6 @@ module zeroriscy_id_stage
     // Stall signals
     .halt_if_o                      ( halt_if_o              ),
     .halt_id_o                      ( halt_id                ),
-
-    .branch_2nd_stage_o             ( branch_2nd_stage       ),
-    .jr_stall_o                     ( jr_stall               ),
 
     .id_ready_i                     ( id_ready_o             ),
 
@@ -652,7 +653,7 @@ module zeroriscy_id_stage
   assign data_reg_offset_ex_o        = data_reg_offset_id;
   assign data_load_event_ex_o        = ((data_req_id & (~halt_id)) ? data_load_event_id : 1'b0);
 
-  assign branch_in_ex_o              = (jump_in_dec == BRANCH_COND);
+  assign branch_in_ex_o              = branch_in_id;
 
   enum logic { IDLE, WAIT_MULTICYCLE } id_wb_fsm_cs, id_wb_fsm_ns;
 
@@ -663,11 +664,9 @@ module zeroriscy_id_stage
   begin : EX_WB_Pipeline_Register
     if (~rst_n)
     begin
-      //regfile_we_q    <= 1'b0;
       id_wb_fsm_cs    <= IDLE;
     end
     else begin
-      //regfile_we_q    <= regfile_mem_we_id & load_stall;
       id_wb_fsm_cs    <= id_wb_fsm_ns;
     end
   end
@@ -679,32 +678,47 @@ module zeroriscy_id_stage
   always_comb
   begin
     id_wb_fsm_ns    = id_wb_fsm_cs;
-    regfile_we      = regfile_we_id     & (~halt_id);
+    regfile_we      = regfile_we_id & (~halt_id);
     load_stall      = 1'b0;
+    branch_stall    = 1'b0;
     select_data_rf  = RF_EX;
+    instr_multicyle = 1'b0;
+    branch_set      = 1'b0;
 
     unique case (id_wb_fsm_cs)
 
       IDLE:
       begin
-        if(data_req_id) begin
+        unique case (1'b1)
+          data_req_id: begin
             //LSU operation
-            regfile_we    = 1'b0;
-            id_wb_fsm_ns  = WAIT_MULTICYCLE;
-            load_stall    = 1'b1;
-        end
+            regfile_we      = 1'b0;
+            id_wb_fsm_ns    = WAIT_MULTICYCLE;
+            load_stall      = 1'b1;
+            instr_multicyle = 1'b1;
+          end
+          branch_in_id: begin
+            //Cond Branch operation
+            id_wb_fsm_ns    = branch_decision_i ? WAIT_MULTICYCLE : IDLE;
+            branch_stall    = branch_decision_i;
+            instr_multicyle = branch_decision_i;
+          end
+          default:;
+        endcase
       end
 
       WAIT_MULTICYCLE:
       begin
         if(ex_ready_i) begin
-          regfile_we     = regfile_we_id;
-          id_wb_fsm_ns   = IDLE;
-          load_stall     = 1'b0;
-          select_data_rf = data_req_id ? RF_LSU : RF_EX;
+          regfile_we      = regfile_we_id;
+          id_wb_fsm_ns    = IDLE;
+          load_stall      = 1'b0;
+          select_data_rf  = data_req_id ? RF_LSU : RF_EX;
+          branch_set      = branch_in_id;
         end else begin
-          regfile_we     = 1'b0;
-          load_stall    = 1'b1;
+          instr_multicyle = 1'b1;
+          regfile_we      = 1'b0;
+          load_stall      = 1'b1;
         end
       end
 
@@ -713,7 +727,7 @@ module zeroriscy_id_stage
   end
 
   // stall control
-  assign id_ready_o = (~jr_stall) & (~load_stall);
+  assign id_ready_o = (~load_stall) & (~branch_stall);
   
   assign id_valid_o = (~halt_id) & id_ready_o;
 

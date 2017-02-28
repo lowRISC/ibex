@@ -35,7 +35,7 @@ module zeroriscy_decoder
   // singals running to/from controller
   input  logic        deassert_we_i,           // deassert we, we are stalled or not active
   input  logic        data_misaligned_i,       // misaligned data load/store in progress
-  input  logic        branch_2nd_stage_i,
+  input  logic        branch_set_i,
 
   output logic        illegal_insn_o,          // illegal instruction encountered
   output logic        ebrk_insn_o,             // trap instruction encountered
@@ -82,7 +82,8 @@ module zeroriscy_decoder
 
   // jump/branches
   output logic [1:0]  jump_in_dec_o,           // jump_in_id without deassert
-  output logic [1:0]  jump_in_id_o            // jump is being calculated in ALU
+  output logic [1:0]  jump_in_id_o,            // jump is being calculated in ALU
+  output logic        branch_in_id_o
 );
 
   // write enable/request control
@@ -94,6 +95,7 @@ module zeroriscy_decoder
   logic       pipe_flush;
 
   logic       mult_int_en;
+  logic       branch_in_id;
   logic [1:0] jump_in_id;
 
   logic [1:0] csr_op;
@@ -111,7 +113,7 @@ module zeroriscy_decoder
   always_comb
   begin
     jump_in_id                  = BRANCH_NONE;
-
+    branch_in_id                = 1'b0;
     alu_operator_o              = ALU_SLTU;
     alu_op_a_mux_sel_o          = OP_A_REGA_OR_FWD;
     alu_op_b_mux_sel_o          = OP_B_REGB_OR_FWD;
@@ -195,8 +197,9 @@ module zeroriscy_decoder
 
         rega_used_o           = 1'b1;
         regb_used_o           = 1'b1;
+        branch_in_id          = 1'b1;
 
-        if (~branch_2nd_stage_i)
+        if (~branch_set_i)
         begin
           unique case (instr_rdata_i[14:12])
             3'b000: alu_operator_o = ALU_EQ;
@@ -205,18 +208,6 @@ module zeroriscy_decoder
             3'b101: alu_operator_o = ALU_GES;
             3'b110: alu_operator_o = ALU_LTU;
             3'b111: alu_operator_o = ALU_GEU;
-            3'b010: begin
-              alu_operator_o      = ALU_EQ;
-              regb_used_o         = 1'b0;
-              alu_op_b_mux_sel_o  = OP_B_IMM;
-              imm_b_mux_sel_o     = IMMB_BI;
-            end
-            3'b011: begin
-              alu_operator_o      = ALU_NE;
-              regb_used_o         = 1'b0;
-              alu_op_b_mux_sel_o  = OP_B_IMM;
-              imm_b_mux_sel_o     = IMMB_BI;
-            end
             default: begin
               illegal_insn_o = 1'b1;
             end
@@ -538,6 +529,7 @@ module zeroriscy_decoder
   assign data_req_o        = (deassert_we_i) ? 1'b0          : data_req;
   assign csr_op_o          = (deassert_we_i) ? CSR_OP_NONE   : csr_op;
   assign jump_in_id_o      = (deassert_we_i) ? BRANCH_NONE   : jump_in_id;
+  assign branch_in_id_o    = (deassert_we_i) ? 1'b0          : branch_in_id;
   assign ebrk_insn_o       = (deassert_we_i) ? 1'b0          : ebrk_insn;
   assign eret_insn_o       = (deassert_we_i) ? 1'b0          : eret_insn;  // TODO: do not deassert?
   assign pipe_flush_o      = (deassert_we_i) ? 1'b0          : pipe_flush; // TODO: do not deassert?

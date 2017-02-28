@@ -309,7 +309,6 @@ module zeroriscy_core
 
     // from debug unit
     .dbg_jump_addr_i     ( dbg_jump_addr     ),
-    .dbg_jump_req_i      ( dbg_jump_req      ),
 
     // Jump targets
     .jump_target_ex_i    ( jump_target_ex    ),
@@ -411,7 +410,6 @@ module zeroriscy_core
     .save_exc_cause_o             ( save_exc_cause       ),
     .exc_save_if_o                ( exc_save_if          ), // control signal to save pc
     .exc_save_id_o                ( exc_save_id          ), // control signal to save pc
-    .exc_save_takenbranch_o    ( exc_save_takenbranch_ex ), // control signal to save target taken branch
     .exc_restore_id_o             ( exc_restore_id       ), // control signal to restore pc
     .lsu_load_err_i               ( lsu_load_err         ),
     .lsu_store_err_i              ( lsu_store_err        ),
@@ -558,7 +556,6 @@ module zeroriscy_core
     .data_load_event_ex_i    ( data_load_event_ex ), // from ID/EX pipeline
     .exc_save_if_i           ( exc_save_if        ),
     .exc_save_id_i           ( exc_save_id        ),
-    .exc_save_takenbranch_i ( exc_save_takenbranch_ex ),
     .exc_restore_i           ( exc_restore_id     ),
 
     .exc_cause_i             ( exc_cause          ),
@@ -647,8 +644,8 @@ module zeroriscy_core
 
     // signals for PPC and NPC
     .pc_if_i           ( pc_if              ), // from IF stage
-    .pc_id_i           ( pc_id              ), // from IF stage
-
+    .pc_id_i           ( pc_id              ), // from ID stage
+    .pc_branch_i       ( jump_target_ex     ),
     .data_load_event_i ( data_load_event_ex ),
     .instr_valid_id_i  ( instr_valid_id     ),
 

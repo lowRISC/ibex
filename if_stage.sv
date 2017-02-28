@@ -65,7 +65,6 @@ module zeroriscy_if_stage #(
       // from hwloop controller
       // from debug unit
       input  logic [31:0] dbg_jump_addr_i,
-      input  logic        dbg_jump_req_i,
       // pipeline stall
       input  logic        halt_if_i,
       output logic        if_ready_o,
