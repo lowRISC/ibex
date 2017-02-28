@@ -96,7 +96,6 @@ module zeroriscy_controller
   output logic        halt_if_o,
   output logic        halt_id_o,
 
-  output logic        misaligned_stall_o,
   input  logic        load_stall_i,
 
   input  logic        id_ready_i,                 // ID stage is ready
