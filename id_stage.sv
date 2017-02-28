@@ -78,13 +78,11 @@ module zeroriscy_id_stage
 
     input  logic        if_ready_i,     // IF stage is done
     output logic        id_ready_o,     // ID stage is ready for the next instruction
-    input  logic        lsu_ready_ex_i,
-    input  logic        data_valid_lsu_i,
-    input  logic        wb_ready_i,
+
+    input  logic        ex_ready_i,
 
     input  logic        if_valid_i,     // IF stage is done
     output logic        id_valid_o,     // ID stage is done
-    input  logic        wb_valid_i,     // WB stage is done
 
     // ALU
     output logic [ALU_OP_WIDTH-1:0] alu_operator_ex_o,
@@ -142,7 +140,7 @@ module zeroriscy_id_stage
     input  logic        dbg_jump_req_i,
 
     // Write back signal
-    input  logic [31:0] regfile_wdata_wb_i,
+    input  logic [31:0] regfile_wdata_lsu_i,
     input  logic [31:0] regfile_wdata_ex_i,
     input  logic [31:0] csr_rdata_i,
 
@@ -176,8 +174,7 @@ module zeroriscy_id_stage
   logic        halt_id;
   //FSM signals to write back multi cycles instructions
   logic        regfile_we, regfile_we_q;
-  logic        select_data_lsu;
-
+  enum logic {RF_LSU, RF_EX} select_data_rf;
 
   // Immediate decoding and sign extension
   logic [31:0] imm_i_type;
@@ -205,7 +202,7 @@ module zeroriscy_id_stage
   logic [(REG_ADDR_WIDTH-1):0]  regfile_addr_rb_id;
 
   logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_id;
-  logic        regfile_alu_we_id;
+  logic                         regfile_we_id;
 
   logic [31:0] regfile_data_ra_id;
   logic [31:0] regfile_data_rb_id;
@@ -218,10 +215,6 @@ module zeroriscy_id_stage
 
   logic [0:0]  imm_a_mux_sel;
   logic [3:0]  imm_b_mux_sel;
-
-
-  // Register Write Control
-  logic        regfile_mem_we_id;
 
   // Data Memory Control
   logic        data_we_id;
@@ -412,8 +405,8 @@ module zeroriscy_id_stage
     end else begin
       regfile_we_mux      = regfile_we;
       regfile_waddr_mux   = regfile_alu_waddr_id;
-      if (select_data_lsu)
-        regfile_wdata_mux = regfile_wdata_wb_i;
+      if (select_data_rf == RF_LSU)
+        regfile_wdata_mux = regfile_wdata_lsu_i;
       else
         if (csr_access)
           regfile_wdata_mux = csr_rdata_i;
@@ -487,10 +480,8 @@ module zeroriscy_id_stage
     .imm_a_mux_sel_o                 ( imm_a_mux_sel             ),
     .imm_b_mux_sel_o                 ( imm_b_mux_sel             ),
 
-
     // Register file control signals
-    .regfile_mem_we_o                ( regfile_mem_we_id         ),
-    .regfile_alu_we_o                ( regfile_alu_we_id         ),
+    .regfile_we_o                    ( regfile_we_id             ),
 
     // CSR control signals
     .csr_access_o                    ( csr_access                ),
@@ -583,7 +574,6 @@ module zeroriscy_id_stage
     .id_ready_i                     ( id_ready_o             ),
 
     .if_valid_i                     ( if_valid_i             ),
-    .wb_valid_i                     ( wb_valid_i             ),
 
     // Performance Counters
     .perf_jump_o                    ( perf_jump_o            ),
@@ -645,32 +635,26 @@ module zeroriscy_id_stage
   //                                 //
   /////////////////////////////////////
 
-  always_comb
-  begin
+  assign data_we_ex_o                = data_we_id;
+  assign data_type_ex_o              = data_type_id;
+  assign data_sign_ext_ex_o          = data_sign_ext_id;
 
-    data_we_ex_o                = data_we_id;
-    data_type_ex_o              = data_type_id;
-    data_sign_ext_ex_o          = data_sign_ext_id;
+  assign alu_operator_ex_o           = alu_operator;
+  assign alu_operand_a_ex_o          = alu_operand_a;
+  assign alu_operand_b_ex_o          = alu_operand_b;
+  assign alu_operand_c_ex_o          = alu_operand_c;
 
-    data_reg_offset_ex_o        = 2'b0;
+  assign csr_access_ex_o             = csr_access;
+  assign csr_op_ex_o                 = id_ready_o ? csr_op : CSR_OP_NONE;
 
-    alu_operator_ex_o           = alu_operator;
-    alu_operand_a_ex_o          = alu_operand_a;
-    alu_operand_b_ex_o          = alu_operand_b;
-    alu_operand_c_ex_o          = alu_operand_c;
+  assign data_req_ex_o               = data_req_id;
 
-    csr_access_ex_o             = csr_access;
-    csr_op_ex_o                 = id_ready_o ? csr_op : CSR_OP_NONE;
+  assign data_reg_offset_ex_o        = data_reg_offset_id;
+  assign data_load_event_ex_o        = ((data_req_id & (~halt_id)) ? data_load_event_id : 1'b0);
 
-    data_req_ex_o               = data_req_id;
+  assign branch_in_ex_o              = (jump_in_dec == BRANCH_COND);
 
-    data_reg_offset_ex_o        = data_reg_offset_id;
-    data_load_event_ex_o        = ((data_req_id & (~halt_id)) ? data_load_event_id : 1'b0);
-
-    branch_in_ex_o              = (jump_in_dec == BRANCH_COND);
-  end
-
-  enum logic { IDLE, WAIT_LSU } id_wb_fsm_cs, id_wb_fsm_ns;
+  enum logic { IDLE, WAIT_MULTICYCLE } id_wb_fsm_cs, id_wb_fsm_ns;
 
   ///////////////////////////////////////
   // ID-EX/WB Pipeline Register        //
@@ -679,11 +663,11 @@ module zeroriscy_id_stage
   begin : EX_WB_Pipeline_Register
     if (~rst_n)
     begin
-      regfile_we_q    <= 1'b0;
+      //regfile_we_q    <= 1'b0;
       id_wb_fsm_cs    <= IDLE;
     end
     else begin
-      regfile_we_q    <= regfile_mem_we_id & load_stall;
+      //regfile_we_q    <= regfile_mem_we_id & load_stall;
       id_wb_fsm_cs    <= id_wb_fsm_ns;
     end
   end
@@ -695,35 +679,36 @@ module zeroriscy_id_stage
   always_comb
   begin
     id_wb_fsm_ns    = id_wb_fsm_cs;
-    regfile_we      = regfile_alu_we_id & (~halt_id);
+    regfile_we      = regfile_we_id     & (~halt_id);
     load_stall      = 1'b0;
-    select_data_lsu = 1'b0;
+    select_data_rf  = RF_EX;
 
     unique case (id_wb_fsm_cs)
 
       IDLE:
       begin
-	    //if instr not valid, deassert and so it is 0
-        if(data_req_ex_o) begin
-          //LSU operation
-          regfile_we    = 1'b0;
-          id_wb_fsm_ns  = WAIT_LSU;
+        if(data_req_id) begin
+            //LSU operation
+            regfile_we    = 1'b0;
+            id_wb_fsm_ns  = WAIT_MULTICYCLE;
+            load_stall    = 1'b1;
+        end
+      end
+
+      WAIT_MULTICYCLE:
+      begin
+        if(ex_ready_i) begin
+          regfile_we     = regfile_we_id;
+          id_wb_fsm_ns   = IDLE;
+          load_stall     = 1'b0;
+          select_data_rf = data_req_id ? RF_LSU : RF_EX;
+        end else begin
+          regfile_we     = 1'b0;
           load_stall    = 1'b1;
         end
       end
 
-      WAIT_LSU:
-      begin
-        if(data_valid_lsu_i) begin
-          //LSU operation
-          regfile_we    = regfile_we_q;
-          id_wb_fsm_ns  = IDLE;
-          load_stall    = 1'b0;
-          select_data_lsu = 1'b1;
-        end
-        else
-          load_stall    = 1'b1;
-      end
+      default:;
     endcase
   end
 

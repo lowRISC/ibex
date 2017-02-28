@@ -64,8 +64,7 @@ module zeroriscy_load_store_unit
     output logic         store_err_o,
 
     // stall signal
-    output logic         lsu_ready_ex_o, // LSU ready for new data in EX stage
-    output logic         lsu_ready_wb_o, // LSU ready for new data in WB stage
+    output logic         lsu_update_addr_o, // LSU ready for new data in EX stage
     output logic         data_valid_o,
 
     output logic         busy_o
@@ -307,7 +306,7 @@ module zeroriscy_load_store_unit
     else
     begin
       CS            <= NS;
-      if (lsu_ready_ex_o) begin
+      if (lsu_update_addr_o) begin
         data_misaligned_q <= data_misaligned;
         if(increase_address) begin
           misaligned_addr_o <= data_addr_int;
@@ -350,8 +349,8 @@ module zeroriscy_load_store_unit
 
     data_req_o     = 1'b0;
 
-    lsu_ready_ex_o   = 1'b0;
-    lsu_ready_wb_o   = 1'b0;
+    lsu_update_addr_o   = 1'b0;
+
     data_valid_o     = 1'b0;
     increase_address = 1'b0;
     data_misaligned_o = 1'b0;
@@ -363,7 +362,7 @@ module zeroriscy_load_store_unit
         if (data_req_ex_i) begin
             data_req_o     = data_req_ex_i;
             if(data_gnt_i) begin
-              lsu_ready_ex_o   = 1'b1;
+              lsu_update_addr_o   = 1'b1;
               increase_address = data_misaligned;
               NS = data_misaligned ? WAIT_RVALID_MIS : WAIT_RVALID;
             end
@@ -377,8 +376,8 @@ module zeroriscy_load_store_unit
       begin
         data_req_o = 1'b1;
         if(data_gnt_i) begin
-          lsu_ready_ex_o = 1'b1;
-          increase_address = data_misaligned;
+          lsu_update_addr_o = 1'b1;
+          increase_address  = data_misaligned;
           NS = WAIT_RVALID_MIS;
         end
       end //~ WAIT_GNT_MIS
@@ -391,7 +390,7 @@ module zeroriscy_load_store_unit
         //tell the controller to update the address
         data_misaligned_o = 1'b1;
         data_req_o        = 1'b1; //maybe better if controller handles this
-        lsu_ready_ex_o    = data_gnt_i;
+        lsu_update_addr_o = data_gnt_i;
 
         if(data_rvalid_i) begin
            //if first part rvalid is received
@@ -403,7 +402,7 @@ module zeroriscy_load_store_unit
             end
             else begin
               //second grant is NOT received, but first rvalid yes
-              //lsu_ready_ex_o is 0 so data_misaligned_q stays high in WAIT_GNT
+              //lsu_update_addr_o is 0 so data_misaligned_q stays high in WAIT_GNT
               //increase address stays the same as well
               NS              = WAIT_GNT; //  [1]
             end
@@ -422,7 +421,7 @@ module zeroriscy_load_store_unit
         //useful in case [1]
         data_req_o        = 1'b1;
         if(data_gnt_i) begin
-          lsu_ready_ex_o = 1'b1;
+          lsu_update_addr_o = 1'b1;
           NS = WAIT_RVALID;
         end
       end //~ WAIT_GNT

@@ -101,7 +101,6 @@ module zeroriscy_controller
   input  logic        id_ready_i,                 // ID stage is ready
 
   input  logic        if_valid_i,                 // IF stage is done
-  input  logic        wb_valid_i,                 // WB stage is done
   // Performance Counters
   output logic        perf_jump_o,                // we are executing a jump instruction   (j, jr, jal, jalr)
   output logic        perf_jr_stall_o,            // stall due to jump-register-hazard

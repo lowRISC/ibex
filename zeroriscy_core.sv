@@ -163,13 +163,13 @@ module zeroriscy_core
   logic        halt_if;
   logic        if_ready;
   logic        id_ready;
+  logic        ex_ready;
 
   logic        if_valid;
   logic        id_valid;
   logic        wb_valid;
 
   logic        lsu_ready_ex;
-  logic        lsu_ready_wb;
   logic        data_valid_lsu;
 
   // Signals between instruction core interface and pipe (if and id stages)
@@ -374,13 +374,10 @@ module zeroriscy_core
 
     .if_ready_i                   ( if_ready             ),
     .id_ready_o                   ( id_ready             ),
-    .lsu_ready_ex_i               ( lsu_ready_ex         ),
-    .data_valid_lsu_i             ( data_valid_lsu       ),
-    .wb_ready_i                   ( lsu_ready_wb         ),
+    .ex_ready_i                   ( ex_ready             ),
 
     .if_valid_i                   ( if_valid             ),
     .id_valid_o                   ( id_valid             ),
-    .wb_valid_i                   ( wb_valid             ),
 
     .alu_operator_ex_o            ( alu_operator_ex      ),
     .alu_operand_a_ex_o           ( alu_operand_a_ex     ),
@@ -437,7 +434,7 @@ module zeroriscy_core
     .dbg_jump_req_i               ( dbg_jump_req         ),
 
     // write data to commit in the register file
-    .regfile_wdata_wb_i           ( regfile_wdata_lsu    ),
+    .regfile_wdata_lsu_i          ( regfile_wdata_lsu    ),
     .regfile_wdata_ex_i           ( regfile_wdata_ex     ),
     .csr_rdata_i                  ( csr_rdata            ),
 
@@ -450,18 +447,23 @@ module zeroriscy_core
 
   zeroriscy_ex_block ex_block_i
   (
-    // Alu signals from ID stage
-	//TODO: hot encoding
-    .alu_operator_i             ( alu_operator_ex              ), // from ID/EX pipe registers
-    .alu_operand_a_i            ( alu_operand_a_ex             ), // from ID/EX pipe registers
-    .alu_operand_b_i            ( alu_operand_b_ex             ), // from ID/EX pipe registers
 
-    .alu_adder_result_ex_o      ( alu_adder_result_ex          ), // from ALU to LSU
-    .regfile_wdata_ex_o         ( regfile_wdata_ex             ),
+    .alu_operator_i             ( alu_operator_ex       ),
+
+    .alu_operand_a_i            ( alu_operand_a_ex      ),
+    .alu_operand_b_i            ( alu_operand_b_ex      ),
+
+    .alu_adder_result_ex_o      ( alu_adder_result_ex   ), // from ALU to LSU
+    .regfile_wdata_ex_o         ( regfile_wdata_ex      ),
 
     // To IF: Jump and branch target and decision
-    .jump_target_o              ( jump_target_ex               ),
-    .branch_decision_o          ( branch_decision              )
+    .jump_target_o              ( jump_target_ex        ),
+    .branch_decision_o          ( branch_decision       ),
+
+    .lsu_en_i                   ( data_req_ex           ),
+    .lsu_ready_ex_i             ( data_valid_lsu        ),
+    .ex_ready_o                 ( ex_ready              )
+
   );
 
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -511,12 +513,10 @@ module zeroriscy_core
 
     // control signals
     .data_valid_o          ( data_valid_lsu     ),
-    .lsu_ready_ex_o        ( lsu_ready_ex       ),
-    .lsu_ready_wb_o        ( lsu_ready_wb       ),
+    .lsu_update_addr_o     (                    ),
     .busy_o                ( lsu_busy           )
   );
 
-  assign wb_valid = lsu_ready_wb;
 
   //////////////////////////////////////
   //        ____ ____  ____           //

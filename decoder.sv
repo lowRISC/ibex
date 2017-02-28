@@ -60,10 +60,12 @@ module zeroriscy_decoder
   output logic [0:0]  imm_a_mux_sel_o,         // immediate selection for operand a
   output logic [3:0]  imm_b_mux_sel_o,         // immediate selection for operand b
 
-
+  // MUL related control signals
+  output logic        mult_int_en_o,           // perform integer multiplication
+  output logic        mult_operator_o,
+  output logic [1:0]  mult_signed_mode_o,
   // register file related signals
-  output logic        regfile_mem_we_o,        // write enable for regfile
-  output logic        regfile_alu_we_o,        // write enable for 2nd regfile port
+  output logic        regfile_we_o,            // write enable for regfile
 
   // CSR manipulation
   output logic        csr_access_o,            // access to CSR
@@ -84,14 +86,14 @@ module zeroriscy_decoder
 );
 
   // write enable/request control
-  logic       regfile_mem_we;
-  logic       regfile_alu_we;
+  logic       regfile_we;
   logic       data_req;
 
   logic       ebrk_insn;
   logic       eret_insn;
   logic       pipe_flush;
 
+  logic       mult_int_en;
   logic [1:0] jump_in_id;
 
   logic [1:0] csr_op;
@@ -118,8 +120,11 @@ module zeroriscy_decoder
     imm_a_mux_sel_o             = IMMA_ZERO;
     imm_b_mux_sel_o             = IMMB_I;
 
-    regfile_mem_we              = 1'b0;
-    regfile_alu_we              = 1'b0;
+    mult_int_en                 = 1'b0;
+    mult_operator_o             = MUL_L;
+    mult_signed_mode_o          = 2'b00;
+
+    regfile_we                  = 1'b0;
 
     csr_access_o                = 1'b0;
     csr_op                      = CSR_OP_NONE;
@@ -141,7 +146,6 @@ module zeroriscy_decoder
     regb_used_o                 = 1'b0;
 
 
-
     unique case (instr_rdata_i[6:0])
 
       //////////////////////////////////////
@@ -160,7 +164,7 @@ module zeroriscy_decoder
         alu_op_b_mux_sel_o  = OP_B_IMM;
         imm_b_mux_sel_o     = IMMB_UJ;
         alu_operator_o      = ALU_ADD;
-        regfile_alu_we      = 1'b1;
+        regfile_we          = 1'b1;
 
         alu_op_c_mux_sel_o  = OP_C_RA; // Pipeline return address to EX
 
@@ -173,12 +177,12 @@ module zeroriscy_decoder
         alu_op_b_mux_sel_o  = OP_B_ZERO;
         imm_b_mux_sel_o     = IMMB_SB;
         alu_operator_o      = ALU_ADD;
-        regfile_alu_we      = 1'b1;
+        regfile_we          = 1'b1;
         rega_used_o         = 1'b1;
 
         if (instr_rdata_i[14:12] != 3'b0) begin
           jump_in_id       = BRANCH_NONE;
-          regfile_alu_we   = 1'b0;
+          regfile_we       = 1'b0;
           illegal_insn_o   = 1'b1;
         end
 
@@ -224,7 +228,7 @@ module zeroriscy_decoder
           alu_op_b_mux_sel_o  = OP_B_IMM;
           imm_b_mux_sel_o     = IMMB_SB;
           alu_operator_o      = ALU_ADD;
-          regfile_alu_we      = 1'b0;
+          regfile_we          = 1'b0;
           rega_used_o         = 1'b1;
         end
         
@@ -278,7 +282,7 @@ module zeroriscy_decoder
 
       OPCODE_LOAD: begin
         data_req        = 1'b1;
-        regfile_mem_we  = 1'b1;
+        regfile_we      = 1'b1;
         rega_used_o     = 1'b1;
         data_type_o     = 2'b00;
 
@@ -347,7 +351,7 @@ module zeroriscy_decoder
         imm_a_mux_sel_o     = IMMA_ZERO;
         imm_b_mux_sel_o     = IMMB_U;
         alu_operator_o      = ALU_ADD;
-        regfile_alu_we      = 1'b1;
+        regfile_we          = 1'b1;
       end
 
       OPCODE_AUIPC: begin  // Add Upper Immediate to PC
@@ -355,13 +359,13 @@ module zeroriscy_decoder
         alu_op_b_mux_sel_o  = OP_B_IMM;
         imm_b_mux_sel_o     = IMMB_U;
         alu_operator_o      = ALU_ADD;
-        regfile_alu_we      = 1'b1;
+        regfile_we          = 1'b1;
       end
 
       OPCODE_OPIMM: begin // Register-Immediate ALU Operations
         alu_op_b_mux_sel_o  = OP_B_IMM;
         imm_b_mux_sel_o     = IMMB_I;
-        regfile_alu_we      = 1'b1;
+        regfile_we          = 1'b1;
         rega_used_o         = 1'b1;
 
         unique case (instr_rdata_i[14:12])
@@ -392,7 +396,7 @@ module zeroriscy_decoder
       end
 
       OPCODE_OP: begin  // Register-Register ALU operation
-        regfile_alu_we = 1'b1;
+        regfile_we     = 1'b1;
         rega_used_o    = 1'b1;
 
         if (instr_rdata_i[31]) begin
@@ -416,8 +420,6 @@ module zeroriscy_decoder
             {6'b00_0000, 3'b001}: alu_operator_o = ALU_SLL;   // Shift Left Logical
             {6'b00_0000, 3'b101}: alu_operator_o = ALU_SRL;   // Shift Right Logical
             {6'b10_0000, 3'b101}: alu_operator_o = ALU_SRA;   // Shift Right Arithmetic
-            {6'b00_0010, 3'b010}: alu_operator_o = ALU_SLETS; // Set Lower Equal Than
-            {6'b00_0010, 3'b011}: alu_operator_o = ALU_SLETU; // Set Lower Equal Than Unsigned
 
             default: begin
               illegal_insn_o = 1'b1;
@@ -476,7 +478,7 @@ module zeroriscy_decoder
         begin
           // instruction to read/modify CSR
           csr_access_o        = 1'b1;
-          regfile_alu_we      = 1'b1;
+          regfile_we          = 1'b1;
           alu_op_b_mux_sel_o  = OP_B_IMM;
           imm_a_mux_sel_o     = IMMA_Z;
           imm_b_mux_sel_o     = IMMB_I;    // CSR address is encoded in I imm
@@ -521,7 +523,7 @@ module zeroriscy_decoder
       // if prepost increments are used, we do not write back the
       // second address since the first calculated address was
       // the correct one
-      regfile_alu_we = 1'b0;
+      regfile_we = 1'b0;
 
     end
   end
@@ -532,9 +534,7 @@ module zeroriscy_decoder
 
 
   // deassert we signals (in case of stalls)
-
-  assign regfile_mem_we_o  = (deassert_we_i) ? 1'b0          : regfile_mem_we;
-  assign regfile_alu_we_o  = (deassert_we_i) ? 1'b0          : regfile_alu_we;
+  assign regfile_we_o      = (deassert_we_i) ? 1'b0          : regfile_we;
   assign data_req_o        = (deassert_we_i) ? 1'b0          : data_req;
   assign csr_op_o          = (deassert_we_i) ? CSR_OP_NONE   : csr_op;
   assign jump_in_id_o      = (deassert_we_i) ? BRANCH_NONE   : jump_in_id;
