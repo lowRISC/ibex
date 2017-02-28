@@ -117,7 +117,6 @@ module zeroriscy_debug_unit
 
 
   // ppc/npc tracking
-  enum logic [1:0] {IFID, IFEX, IDEX} pc_tracking_fsm_cs, pc_tracking_fsm_ns;
   logic [31:0] ppc_int, npc_int;
 
 
@@ -416,63 +415,13 @@ module zeroriscy_debug_unit
   //----------------------------------------------------------------------------
   // NPC/PPC selection
   //----------------------------------------------------------------------------
-  always_comb
-  begin
-    pc_tracking_fsm_ns = pc_tracking_fsm_cs;
 
-    ppc_int = pc_id_i;
-    npc_int = pc_if_i;
-
-    // PPC/NPC mux
-    unique case (pc_tracking_fsm_cs)
-      IFID: begin
-        ppc_int = pc_id_i;
-        npc_int = pc_if_i;
-      end
-
-      IFEX: begin
-        ppc_int = pc_id_i;
-        npc_int = pc_if_i;
-      end
-
-      IDEX: begin
-        ppc_int = pc_id_i;
-        npc_int = pc_if_i;
-        
-
-        if (jump_req_o)
-          pc_tracking_fsm_ns = IFEX;
-      end
-
-      default: begin
-        pc_tracking_fsm_ns = IFID;
-      end
-    endcase
-
-    // set state if trap is encountered
-    if (dbg_ack_i) begin
-      pc_tracking_fsm_ns = IFID;
-
-      if (branch_in_ex_i) begin
-        if (branch_taken_i)
-          pc_tracking_fsm_ns = IFEX;
-        else
-          pc_tracking_fsm_ns = IDEX;
-      end else if (data_load_event_i) begin
-        // for p.elw
-        if (instr_valid_id_i)
-           pc_tracking_fsm_ns = IDEX;
-        else
-           pc_tracking_fsm_ns = IFEX;
-      end
-    end
-  end
-
+  assign ppc_int = pc_id_i;
+  assign npc_int = pc_if_i;
 
   always_ff @(posedge clk, negedge rst_n)
   begin
     if (~rst_n) begin
-      pc_tracking_fsm_cs <= IFID;
 
       addr_q             <= '0;
       wdata_q            <= '0;
@@ -484,7 +433,6 @@ module zeroriscy_debug_unit
 
       settings_q         <= 1'b0;
     end else begin
-      pc_tracking_fsm_cs <= pc_tracking_fsm_ns;
 
       // settings
       settings_q         <= settings_n;

@@ -65,9 +65,13 @@ module zeroriscy_controller
   input  logic        data_load_event_i,
 
   // jump/branch signals
-  input  logic        branch_taken_ex_i,          // branch taken signal from EX ALU
+  input  logic        branch_in_id_i,             // branch in id
+  input  logic        branch_taken_ex_i,          // branch taken signal
+  input  logic        branch_set_i,               // branch taken set signal
   input  logic [1:0]  jump_in_id_i,               // jump is being calculated in ALU
   input  logic [1:0]  jump_in_dec_i,              // jump is being calculated in ALU
+
+  input  logic        instr_multicyle_i,          // multicycle instructions active
 
   // Exception Controller Signals
   input  logic        int_req_i,
@@ -76,7 +80,6 @@ module zeroriscy_controller
   output logic        irq_ack_o,
   output logic        exc_save_if_o,
   output logic        exc_save_id_o,
-  output logic        exc_save_takenbranch_o,
   output logic        exc_restore_id_o,
 
   // Debug Signals
@@ -94,9 +97,7 @@ module zeroriscy_controller
   output logic        halt_id_o,
 
   output logic        misaligned_stall_o,
-  output logic        jr_stall_o,
   input  logic        load_stall_i,
-  output logic        branch_2nd_stage_o,
 
   input  logic        id_ready_i,                 // ID stage is ready
 
@@ -110,13 +111,13 @@ module zeroriscy_controller
   // FSM state encoding
 
   enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
-                      DECODE, BRANCH_2ND_STAGE,
+                      DECODE,
                       FLUSH_WB,
                       DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
 
 
 
-  logic jump_done, jump_done_q;
+  logic jump_in_dec;
   logic exc_req;
 
 `ifndef SYNTHESIS
@@ -153,12 +154,10 @@ module zeroriscy_controller
     exc_ack_o        = 1'b0;
     exc_save_if_o    = 1'b0;
     exc_save_id_o    = 1'b0;
-    exc_save_takenbranch_o = 1'b0;
     exc_restore_id_o = 1'b0;
 
     pc_mux_o         = PC_BOOT;
     pc_set_o         = 1'b0;
-    jump_done        = jump_done_q;
 
     ctrl_fsm_ns      = ctrl_fsm_cs;
 
@@ -169,8 +168,8 @@ module zeroriscy_controller
     halt_id_o        = 1'b0;
     dbg_ack_o        = 1'b0;
 
-    branch_2nd_stage_o = 1'b0;
     irq_ack_o        = 1'b0;
+    jump_in_dec      = jump_in_dec_i == BRANCH_JALR || jump_in_dec_i == BRANCH_JAL;
 
     unique case (ctrl_fsm_cs)
       // We were just reset, wait for fetch_enable
@@ -249,118 +248,86 @@ module zeroriscy_controller
       begin
         is_decoding_o = 1'b0;
 
-        // decode and execute instructions only if the current conditional
-        // branch in the EX stage is either not taken, or there is no
-        // conditional branch in the EX stage
-        
-        if (instr_valid_i)
-        begin // now analyze the current instruction in the ID stage
-          is_decoding_o = 1'b1;
+          // decode and execute instructions only if the current conditional
+          // branch in the EX stage is either not taken, or there is no
+          // conditional branch in the EX stage
+          if (instr_valid_i)
+          begin // now analyze the current instruction in the ID stage
+            is_decoding_o = 1'b1;
 
-          // handle conditional branches
-          if ((jump_in_dec_i == BRANCH_COND) & id_ready_i) begin
-            halt_if_o   = branch_taken_ex_i;
-            ctrl_fsm_ns = branch_taken_ex_i ? BRANCH_2ND_STAGE : DECODE;
+
+            unique case (1'b1)
+
+              branch_set_i: begin
+                pc_mux_o          = PC_JUMP;
+                pc_set_o          = 1'b1;
+                if (dbg_req_i)
+                  ctrl_fsm_ns = DBG_SIGNAL;
+              end
+              jump_in_dec: begin
+                pc_mux_o          = PC_JUMP;
+                pc_set_o          = 1'b1;
+                if (dbg_req_i)
+                  ctrl_fsm_ns = DBG_SIGNAL;
+              end
+              int_req_i: begin
+                pc_mux_o          = PC_EXCEPTION;
+                pc_set_o          = 1'b1;
+                exc_ack_o         = 1'b1;
+                exc_save_id_o     = 1'b1;
+                if (dbg_req_i)
+                  ctrl_fsm_ns = DBG_SIGNAL;
+              end
+              eret_insn_i: begin
+                pc_mux_o         = PC_ERET;
+                pc_set_o         = 1'b1;
+                exc_restore_id_o = 1'b1;
+                if (dbg_req_i)
+                  ctrl_fsm_ns = DBG_SIGNAL;
+              end
+              default: begin
+
+                if (ext_req_i & ~instr_multicyle_i & ~branch_in_id_i) begin
+                    pc_mux_o      = PC_EXCEPTION;
+                    pc_set_o      = 1'b1;
+                    exc_ack_o     = 1'b1;
+                    irq_ack_o     = 1'b1;
+                    exc_save_if_o = 1'b1;
+                end
+                // handle WFI instruction, flush pipeline and (potentially) go to
+                // sleep
+                // also handles eret when the core should go back to sleep
+                else if (pipe_flush_i || (eret_insn_i && (~fetch_enable_i))) begin
+                  halt_if_o = 1'b1;
+                  halt_id_o = 1'b1;
+                  ctrl_fsm_ns = FLUSH_WB;
+                end
+                else if (dbg_req_i & ~branch_taken_ex_i)
+                begin
+                  halt_if_o = 1'b1;
+                  if (id_ready_i) begin
+                    ctrl_fsm_ns = DBG_SIGNAL;
+                  end
+                end
+              end
+            endcase
           end
-          else begin
 
-            // handle unconditional jumps
-            // we can jump directly since we know the address already
-            // we don't need to worry about conditional branches here as they
-            // will be evaluated in the EX stage
-            if ((jump_in_dec_i == BRANCH_JALR || jump_in_dec_i == BRANCH_JAL) & id_ready_i) begin
-              pc_mux_o = PC_JUMP;
-
-              pc_set_o    = 1'b1;
-              jump_done   = 1'b1;
-
-            end else begin
-                //ecall or illegal
-              if (int_req_i) begin
+          else if (~instr_valid_i)
+          begin
+              if (ext_req_i) begin
                 pc_mux_o      = PC_EXCEPTION;
                 pc_set_o      = 1'b1;
                 exc_ack_o     = 1'b1;
-                exc_save_id_o = 1'b1;
-
-              end else if (ext_req_i) begin
-                  pc_mux_o      = PC_EXCEPTION;
-                  pc_set_o      = 1'b1;
-                  exc_ack_o     = 1'b1;
-                  irq_ack_o     = 1'b1;
-                  exc_save_if_o = 1'b1;
+                exc_save_if_o = 1'b1;
+                irq_ack_o     = 1'b1;
+                // we don't have to change our current state here as the prefetch
+                // buffer is automatically invalidated, thus the next instruction
+                // that is served to the ID stage is the one of the jump to the
+                // exception handler
               end
-            end
-
-            if (eret_insn_i) begin
-              pc_mux_o         = PC_ERET;
-              exc_restore_id_o = 1'b1;
-
-              if ((~jump_done_q)) begin
-                pc_set_o    = 1'b1;
-                jump_done   = 1'b1;
-              end
-            end
-
-            // handle WFI instruction, flush pipeline and (potentially) go to
-            // sleep
-            // also handles eret when the core should go back to sleep
-            if (pipe_flush_i || (eret_insn_i && (~fetch_enable_i)))
-            begin
-              halt_if_o = 1'b1;
-              halt_id_o = 1'b1;
-
-              ctrl_fsm_ns = FLUSH_WB;
-            end
-            else if (dbg_req_i)
-            begin
-              // take care of debug
-              // branch conditional will be handled in next state
-              // halt pipeline immediately
-              halt_if_o = 1'b1;
-
-              // make sure the current instruction has been executed
-              // before changing state to non-decode
-              if (id_ready_i) begin
-                ctrl_fsm_ns = DBG_SIGNAL;
-              end
-            end
           end
-        end
-
-
-        else if (~instr_valid_i)
-        begin
-            if (ext_req_i) begin
-              pc_mux_o      = PC_EXCEPTION;
-              pc_set_o      = 1'b1;
-              exc_ack_o     = 1'b1;
-              exc_save_if_o = 1'b1;
-              irq_ack_o     = 1'b1;
-              // we don't have to change our current state here as the prefetch
-              // buffer is automatically invalidated, thus the next instruction
-              // that is served to the ID stage is the one of the jump to the
-              // exception handler
-            end
-        end
-
       end
-
-
-      BRANCH_2ND_STAGE:
-      begin
-        // there is a branch in the EX stage that is taken
-        branch_2nd_stage_o = 1'b1;
-        pc_mux_o = PC_BRANCH;
-        pc_set_o = 1'b1;
-        ctrl_fsm_ns = DECODE;
-        halt_if_o = 1'b1;
-
-        if (dbg_req_i)
-        begin
-          ctrl_fsm_ns = DBG_SIGNAL;
-        end
-      end
-
 
       // now we can signal to the debugger that our pipeline is empty and it
       // can examine our current state
@@ -455,7 +422,6 @@ module zeroriscy_controller
   always_comb
   begin
 
-    jr_stall_o     = 1'b0;
     deassert_we_o  = 1'b0;
 
     // deassert WE when the core is not decoding instructions
@@ -465,14 +431,6 @@ module zeroriscy_controller
     // deassert WE in case of illegal instruction
     if (illegal_insn_i)
       deassert_we_o = 1'b1;
-
-    // Stall because of load operation
-
-
-    // Stall because of jr path
-    // - always stall if a result is to be forwarded to the PC
-    // we don't care about in which state the ctrl_fsm is as we deassert_we
-    // anyway when we are not in DECODE
   end
 
   // Forwarding control unit
@@ -484,20 +442,19 @@ module zeroriscy_controller
     if ( rst_n == 1'b0 )
     begin
       ctrl_fsm_cs <= RESET;
-      jump_done_q <= 1'b0;
+      //jump_done_q <= 1'b0;
     end
     else
     begin
       ctrl_fsm_cs <= ctrl_fsm_ns;
-
       // clear when id is valid (no instruction incoming)
-      jump_done_q <= jump_done & (~id_ready_i);
+      //jump_done_q <= jump_done & (~id_ready_i);
     end
   end
 
   // Performance Counters
   assign perf_jump_o      = (jump_in_id_i == BRANCH_JAL || jump_in_id_i == BRANCH_JALR);
-  assign perf_jr_stall_o  = jr_stall_o;
+  assign perf_jr_stall_o  = 1'b0;
   assign perf_ld_stall_o  = load_stall_i;
 
 
