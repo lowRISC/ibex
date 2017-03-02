@@ -88,7 +88,6 @@ module zeroriscy_id_stage
     output logic [ALU_OP_WIDTH-1:0] alu_operator_ex_o,
     output logic [31:0] alu_operand_a_ex_o,
     output logic [31:0] alu_operand_b_ex_o,
-    output logic [31:0] alu_operand_c_ex_o, // Still needed if 2r1w reg file used
 
     // CSR ID
     output logic        csr_access_ex_o,
@@ -101,6 +100,7 @@ module zeroriscy_id_stage
     output logic        data_sign_ext_ex_o,
     output logic [1:0]  data_reg_offset_ex_o,
     output logic        data_load_event_ex_o,
+    output logic [31:0] data_wdata_ex_o,
 
     input  logic        data_misaligned_i,
     input  logic [31:0] misaligned_addr_i,
@@ -240,7 +240,6 @@ module zeroriscy_id_stage
 
   logic [31:0] alu_operand_a;
   logic [31:0] alu_operand_b;
-  logic [31:0] alu_operand_c; // Still needed if 2r1w reg file used
 
   assign instr = instr_rdata_i;
 
@@ -361,28 +360,6 @@ module zeroriscy_id_stage
 
   assign alu_operand_b   = operand_b;
   assign operand_b_fw_id = operand_b;
-
-  //////////////////////////////////////////////////////
-  //   ___                                 _    ____  //
-  //  / _ \ _ __   ___ _ __ __ _ _ __   __| |  / ___| //
-  // | | | | '_ \ / _ \ '__/ _` | '_ \ / _` | | |     //
-  // | |_| | |_) |  __/ | | (_| | | | | (_| | | |___  //
-  //  \___/| .__/ \___|_|  \__,_|_| |_|\__,_|  \____| //
-  //       |_|                                        //
-  //////////////////////////////////////////////////////
-
-  // ALU OP C Mux, jump or store. TODO: Change it
-/*
-  always_comb
-    begin : alu_operand_c_mux
-      case (alu_op_c_mux_sel)
-        OP_C_REGB_OR_FWD:  alu_operand_c = regfile_data_rb_id;
-        OP_C_RA:           alu_operand_c = pc_if_i; // this is the return address
-        default:           alu_operand_c = regfile_data_rb_id;
-      endcase // case (alu_op_c_mux_sel)
-    end
-*/
-  assign alu_operand_c = regfile_data_rb_id;
 
   /////////////////////////////////////////////////////////
   //  ____  _____ ____ ___ ____ _____ _____ ____  ____   //
@@ -640,19 +617,17 @@ module zeroriscy_id_stage
   assign data_we_ex_o                = data_we_id;
   assign data_type_ex_o              = data_type_id;
   assign data_sign_ext_ex_o          = data_sign_ext_id;
+  assign data_wdata_ex_o             = regfile_data_rb_id;
+  assign data_req_ex_o               = data_req_id;
+  assign data_reg_offset_ex_o        = data_reg_offset_id;
+  assign data_load_event_ex_o        = ((data_req_id & (~halt_id)) ? data_load_event_id : 1'b0);
 
   assign alu_operator_ex_o           = alu_operator;
   assign alu_operand_a_ex_o          = alu_operand_a;
   assign alu_operand_b_ex_o          = alu_operand_b;
-  assign alu_operand_c_ex_o          = alu_operand_c;
 
   assign csr_access_ex_o             = csr_access;
   assign csr_op_ex_o                 = id_ready_o ? csr_op : CSR_OP_NONE;
-
-  assign data_req_ex_o               = data_req_id;
-
-  assign data_reg_offset_ex_o        = data_reg_offset_id;
-  assign data_load_event_ex_o        = ((data_req_id & (~halt_id)) ? data_load_event_id : 1'b0);
 
   assign branch_in_ex_o              = branch_in_id;
 

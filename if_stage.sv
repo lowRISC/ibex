@@ -118,7 +118,6 @@ module zeroriscy_if_stage #(
           unique case (pc_mux_i)
             PC_BOOT:      fetch_addr_n = {boot_addr_i[31:8], EXC_OFF_RST};
             PC_JUMP:      fetch_addr_n = jump_target_ex_i;
-            PC_BRANCH:    fetch_addr_n = jump_target_ex_i;
             PC_EXCEPTION: fetch_addr_n = exc_pc;             // set PC to exception handler
             PC_ERET:      fetch_addr_n = exception_pc_reg_i; // PC is restored when returning from IRQ/exception
             PC_DBG_NPC:   fetch_addr_n = dbg_jump_addr_i;    // PC is taken from debug unit

@@ -288,7 +288,6 @@ parameter JT_COND = 2'b11;
 // PC mux selector defines
 parameter PC_BOOT          = 3'b000;
 parameter PC_JUMP          = 3'b010;
-parameter PC_BRANCH        = 3'b011;
 parameter PC_EXCEPTION     = 3'b100;
 parameter PC_ERET          = 3'b101;
 parameter PC_DBG_NPC       = 3'b111;
