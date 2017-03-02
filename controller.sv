@@ -110,11 +110,8 @@ module zeroriscy_controller
   // FSM state encoding
 
   enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
-                      DECODE,
-                      FLUSH_WB,
+                      DECODE, FLUSH,
                       DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
-
-
 
   logic jump_in_dec;
   logic exc_req;
@@ -278,10 +275,15 @@ module zeroriscy_controller
                   ctrl_fsm_ns = DBG_SIGNAL;
               end
               eret_insn_i: begin
+                //handles eret when the core should go back to sleep
                 pc_mux_o         = PC_ERET;
                 pc_set_o         = 1'b1;
                 exc_restore_id_o = 1'b1;
-                if (dbg_req_i)
+                if(~fetch_enable_i) begin
+                  halt_if_o = 1'b1;
+                  halt_id_o = 1'b1;
+                  ctrl_fsm_ns = FLUSH;
+                end else if (dbg_req_i)
                   ctrl_fsm_ns = DBG_SIGNAL;
               end
               default: begin
@@ -294,12 +296,11 @@ module zeroriscy_controller
                     exc_save_if_o = 1'b1;
                 end
                 // handle WFI instruction, flush pipeline and (potentially) go to
-                // sleep
-                // also handles eret when the core should go back to sleep
-                else if (pipe_flush_i || (eret_insn_i && (~fetch_enable_i))) begin
+                // sleep TODO: put it in unique case
+                else if (pipe_flush_i) begin
                   halt_if_o = 1'b1;
                   halt_id_o = 1'b1;
-                  ctrl_fsm_ns = FLUSH_WB;
+                  ctrl_fsm_ns = FLUSH;
                 end
                 else if (dbg_req_i & ~branch_taken_ex_i)
                 begin
@@ -381,8 +382,8 @@ module zeroriscy_controller
       end
 
 
-      // flush the pipeline, insert NOP into EX and WB stage
-      FLUSH_WB:
+      // flush the pipeline, insert NOP
+      FLUSH:
       begin
         halt_if_o = 1'b1;
         halt_id_o = 1'b1;
