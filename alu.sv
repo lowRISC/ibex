@@ -250,7 +250,7 @@ module zeroriscy_alu
 
   always_comb
   begin
-    result_o   = 'x;
+    result_o   = '0;
 
     unique case (operator_i)
       // Standard Operations

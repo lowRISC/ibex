@@ -97,7 +97,7 @@ module zeroriscy_if_stage #(
       // exception PC selection mux
       always_comb
         begin : EXC_PC_MUX
-          exc_pc = 'x;
+          exc_pc = '0;
 
           unique case (exc_pc_mux_i)
             EXC_PC_ILLINSN: exc_pc = { boot_addr_i[31:8], EXC_OFF_ILLINSN };
@@ -113,7 +113,7 @@ module zeroriscy_if_stage #(
         // fetch address selection
         always_comb
         begin
-          fetch_addr_n = 'x;
+          fetch_addr_n = '0;
 
           unique case (pc_mux_i)
             PC_BOOT:      fetch_addr_n = {boot_addr_i[31:8], EXC_OFF_RST};
@@ -126,68 +126,32 @@ module zeroriscy_if_stage #(
           endcase
         end
 
+        // prefetch buffer, caches a fixed number of instructions
+        zeroriscy_prefetch_buffer prefetch_buffer_i
+          (
+            .clk               ( clk                         ),
+            .rst_n             ( rst_n                       ),
 
+            .req_i             ( req_i                       ),
 
+            .branch_i          ( branch_req                  ),
+            .addr_i            ( {fetch_addr_n[31:1], 1'b0}  ),
 
-        generate
-          if (RDATA_WIDTH == 32) begin : prefetch_32
-            // prefetch buffer, caches a fixed number of instructions
-            zeroriscy_prefetch_buffer prefetch_buffer_i
-              (
-                .clk               ( clk                         ),
-                .rst_n             ( rst_n                       ),
+            .ready_i           ( fetch_ready                 ),
+            .valid_o           ( fetch_valid                 ),
+            .rdata_o           ( fetch_rdata                 ),
+            .addr_o            ( fetch_addr                  ),
 
-                .req_i             ( req_i                       ),
+            // goes to instruction memory / instruction cache
+            .instr_req_o       ( instr_req_o                 ),
+            .instr_addr_o      ( instr_addr_o                ),
+            .instr_gnt_i       ( instr_gnt_i                 ),
+            .instr_rvalid_i    ( instr_rvalid_i              ),
+            .instr_rdata_i     ( instr_rdata_i               ),
 
-                .branch_i          ( branch_req                  ),
-                .addr_i            ( {fetch_addr_n[31:1], 1'b0}  ),
-
-
-                .ready_i           ( fetch_ready                 ),
-                .valid_o           ( fetch_valid                 ),
-                .rdata_o           ( fetch_rdata                 ),
-                .addr_o            ( fetch_addr                  ),
-
-                // goes to instruction memory / instruction cache
-                .instr_req_o       ( instr_req_o                 ),
-                .instr_addr_o      ( instr_addr_o                ),
-                .instr_gnt_i       ( instr_gnt_i                 ),
-                .instr_rvalid_i    ( instr_rvalid_i              ),
-                .instr_rdata_i     ( instr_rdata_i               ),
-
-                // Prefetch Buffer Status
-                .busy_o            ( prefetch_busy               )
-              );
-          end else if (RDATA_WIDTH == 128) begin : prefetch_128
-            // prefetch buffer, caches a fixed number of instructions
-            zeroriscy_prefetch_L0_buffer prefetch_buffer_i
-              (
-                .clk               ( clk                         ),
-                .rst_n             ( rst_n                       ),
-
-                .req_i             ( 1'b1                        ),
-
-                .branch_i          ( branch_req                  ),
-                .addr_i            ( {fetch_addr_n[31:1], 1'b0}  ),
-
-
-                .ready_i           ( fetch_ready                 ),
-                .valid_o           ( fetch_valid                 ),
-                .rdata_o           ( fetch_rdata                 ),
-                .addr_o            ( fetch_addr                  ),
-
-                // goes to instruction memory / instruction cache
-                .instr_req_o       ( instr_req_o                 ),
-                .instr_addr_o      ( instr_addr_o                ),
-                .instr_gnt_i       ( instr_gnt_i                 ),
-                .instr_rvalid_i    ( instr_rvalid_i              ),
-                .instr_rdata_i     ( instr_rdata_i               ),
-
-                // Prefetch Buffer Status
-                .busy_o            ( prefetch_busy               )
-              );
-          end
-        endgenerate
+            // Prefetch Buffer Status
+            .busy_o            ( prefetch_busy               )
+          );
 
 
         // offset FSM state

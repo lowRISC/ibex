@@ -100,7 +100,7 @@ assign req_int = int_req_int | ext_req_int;
   always_comb
   begin
     cause_int  = 6'b0;
-    pc_mux_int = 'x;
+    pc_mux_int = '0;
 
     if (irq_enable_i & irq_i) begin
       // pc_mux_int is a critical signal, so try to get it as soon as possible

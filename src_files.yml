@@ -17,7 +17,6 @@ zeroriscy:
     if_stage.sv,
     load_store_unit.sv,
     prefetch_buffer.sv,
-    prefetch_L0_buffer.sv,
     zeroriscy_core.sv,
   ]
 zeroriscy_vip_rtl:
