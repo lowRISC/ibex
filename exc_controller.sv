@@ -49,10 +49,6 @@ module zeroriscy_exc_controller
   input  logic        ebrk_insn_i,    // ebrk instruction encountered (EBREAK)
   input  logic        illegal_insn_i, // illegal instruction encountered
   input  logic        ecall_insn_i,   // ecall instruction encountered
-  input  logic        eret_insn_i,    // eret instruction encountered
-
-  input  logic        lsu_load_err_i,
-  input  logic        lsu_store_err_i,
 
   // to CSR
   output logic [5:0]  cause_o,
@@ -81,17 +77,14 @@ module zeroriscy_exc_controller
   // - Debuger requests halt
   assign trap_o =       (dbg_settings_i[DBG_SETS_SSTE])
                       | (ecall_insn_i            & dbg_settings_i[DBG_SETS_ECALL])
-                      | (lsu_load_err_i          & dbg_settings_i[DBG_SETS_ELSU])
-                      | (lsu_store_err_i         & dbg_settings_i[DBG_SETS_ELSU])
                       | (ebrk_insn_i             & dbg_settings_i[DBG_SETS_EBRK])
                       | (illegal_insn_i          & dbg_settings_i[DBG_SETS_EILL])
                       | (irq_enable_i & irq_i & dbg_settings_i[DBG_SETS_IRQ]);
 
 // request for exception/interrupt
 assign int_req_int =   ecall_insn_i
-                   | illegal_insn_i
-                   | lsu_load_err_i
-                   | lsu_store_err_i;
+                   | illegal_insn_i;
+
 assign ext_req_int = irq_enable_i & irq_i;
 
 assign req_int = int_req_int | ext_req_int;
@@ -121,7 +114,7 @@ assign req_int = int_req_int | ext_req_int;
       cause_int  = 6'b0_00010;
       pc_mux_int = EXC_PC_ILLINSN;
     end
-
+/*
     if (lsu_load_err_i) begin
       cause_int  = 6'b0_00101;
       pc_mux_int = EXC_PC_LOAD;
@@ -131,6 +124,7 @@ assign req_int = int_req_int | ext_req_int;
       cause_int  = 6'b0_00111;
       pc_mux_int = EXC_PC_STORE;
     end
+*/
   end
 
   always_ff @(posedge clk, negedge rst_n)
