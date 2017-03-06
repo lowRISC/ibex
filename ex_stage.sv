@@ -64,53 +64,25 @@ module zeroriscy_ex_block
   output logic                    ex_ready_o      // EX stage gets new data
 );
 
-  localparam MULT_TYPE = 5;
-  localparam ADD_TYPE  = 0; //0 shared
+  localparam MULT_TYPE = 0; //0 is SLOW
 
   logic [31:0] alu_result, mult_result, pp_acc;
 
-  logic [31:0] alu_operand_a_sel, alu_operand_b_sel;
   logic [32:0] mult_alu_operand_a_sel, mult_alu_operand_b_sel, mult_alu_operand_a, mult_alu_operand_b;
   logic [33:0] alu_adder_result_ext;
   logic        alu_cmp_result;
-  logic        mult_ready, do_sub, mult_en_sel;
-  logic        carry_out_mul, carry_out_mul_sel;
-  logic [ALU_OP_WIDTH-1:0] alu_operator_sel;
+  logic        mult_ready, mult_en_sel;
 
-  assign alu_operator_sel = alu_operator_i;
+  assign mult_en_sel            = MULT_TYPE == 0 ? mult_en_i : 1'b0;
+  assign mult_alu_operand_a_sel = MULT_TYPE == 0 ? mult_alu_operand_a : alu_operand_a_i;
+  assign mult_alu_operand_b_sel = MULT_TYPE == 0 ? mult_alu_operand_b : alu_operand_b_i;
 
-  assign mult_en_sel            = MULT_TYPE == 5 ? mult_en_i : 1'b0;
-  assign mult_alu_operand_a_sel = MULT_TYPE == 5 ? mult_alu_operand_a : alu_operand_a_i;
-  assign mult_alu_operand_b_sel = MULT_TYPE == 5 ? mult_alu_operand_b : alu_operand_b_i;
-
-
-if(ADD_TYPE == 0)
-  if(MULT_TYPE >= 8)
-    assign regfile_wdata_ex_o = mult_en_i ? alu_adder_result_ex_o : alu_result;
-  else
-    assign regfile_wdata_ex_o = mult_en_i ? mult_result : alu_result;
-else
   assign regfile_wdata_ex_o = mult_en_i ? mult_result : alu_result;
 
   // branch handling
   assign branch_decision_o  = alu_cmp_result;
   assign jump_target_o      = alu_adder_result_ex_o;
 
-if(MULT_TYPE < 8) begin
-  if(MULT_TYPE != 4 && MULT_TYPE != 5) begin
-    assign carry_out_mul_sel = carry_out_mul;
-    assign alu_operand_a_sel = mult_en_i ? mult_alu_operand_a : alu_operand_a_i;
-    assign alu_operand_b_sel = mult_en_i ? mult_alu_operand_b : alu_operand_b_i;
-  end else begin
-    assign carry_out_mul_sel = 1'b0;
-    assign alu_operand_a_sel = alu_operand_a_i;
-    assign alu_operand_b_sel = alu_operand_b_i;
-  end
-end else begin
-  assign carry_out_mul_sel = 1'b0;
-  assign alu_operand_a_sel = mult_en_i ? mult_result : alu_operand_a_i;
-  assign alu_operand_b_sel = mult_en_i ? pp_acc : alu_operand_b_i;
-end
   ////////////////////////////
   //     _    _    _   _    //
   //    / \  | |  | | | |   //
@@ -120,190 +92,23 @@ end
   //                        //
   ////////////////////////////
 
-if(ADD_TYPE == 0) begin : alu_i
   zeroriscy_alu alu_i
   (
-    .operator_i          ( alu_operator_sel     ),
-    .operand_a_i         ( alu_operand_a_sel    ),
-    .operand_b_i         ( alu_operand_b_sel    ),
+    .operator_i          ( alu_operator_i         ),
+    .operand_a_i         ( alu_operand_a_i        ),
+    .operand_b_i         ( alu_operand_b_i        ),
     .mult_operand_a_i    ( mult_alu_operand_a_sel ),
     .mult_operand_b_i    ( mult_alu_operand_b_sel ),
-    .carry_in_i          ( carry_out_mul_sel    ),
-    .mult_en_i           ( mult_en_sel          ),
-    .adder_result_o      (alu_adder_result_ex_o ),
-    .adder_result_ext_o  ( alu_adder_result_ext ),
-    .result_o            ( alu_result           ),
-    .comparison_result_o ( alu_cmp_result       )
+    .mult_en_i           ( mult_en_sel            ),
+    .adder_result_o      ( alu_adder_result_ex_o  ),
+    .adder_result_ext_o  ( alu_adder_result_ext   ),
+    .result_o            ( alu_result             ),
+    .comparison_result_o ( alu_cmp_result         )
   );
-end else begin : alu_i
-  zeroriscy_alu alu_i
-  (
-    .operator_i          ( alu_operator_sel     ),
-    .operand_a_i         ( alu_operand_a_i      ),
-    .operand_b_i         ( alu_operand_b_i      ),
-    .mult_operand_a_i    ( mult_alu_operand_a_sel ),
-    .mult_operand_b_i    ( mult_alu_operand_b_sel ),
-    .carry_in_i          ( carry_out_mul_sel    ),
-    .mult_en_i           ( mult_en_sel          ),
-    .adder_result_o      (alu_adder_result_ex_o ),
-    .adder_result_ext_o  ( alu_adder_result_ext ),
-    .result_o            ( alu_result           ),
-    .comparison_result_o ( alu_cmp_result       )
-  );
-end
 
-  if (MULT_TYPE == 8) begin : mult_i
-    zeroriscy_mult
-    #(
-      .ADD_TYPE(ADD_TYPE)
-     )
-    mult_i
+  if (MULT_TYPE == 0) begin : mult_slow
+    zeroriscy_mult_slow mult_i
     (
-     .clk           ( clk              ),
-     .rst_n         ( rst_n            ),
-     .mult_en_i     ( mult_en_i        ),
-     .op_a_i        ( mult_operand_a_i ),
-     .op_b_i        ( mult_operand_b_i ),
-     .op_acc_i      ( alu_adder_result_ex_o ),
-     .ready_o       ( mult_ready       ),
-     .pp_acc_o      ( pp_acc           ),
-     .mult_result_o ( mult_result      )
-    );
-  end
-  else if (MULT_TYPE == 32) begin : mult_32_i
-    zeroriscy_mult32
-    #(
-      .ADD_TYPE(ADD_TYPE)
-     )
-     mult_i
-     (
-     .clk           ( clk              ),
-     .rst_n         ( rst_n            ),
-     .mult_en_i     ( mult_en_i        ),
-     .op_a_i        ( mult_operand_a_i ),
-     .op_b_i        ( mult_operand_b_i ),
-     .op_acc_i      ( alu_adder_result_ex_o ),
-     .ready_o       ( mult_ready       ),
-     .pp_acc_o      ( pp_acc           ),
-     .mult_result_o ( mult_result      )
-    );
-  end
-  else if (MULT_TYPE == 33) begin : mult_33_i
-    zeroriscy_mult33
-    #(
-      .ADD_TYPE(ADD_TYPE)
-     )
-     mult_i
-     (
-     .clk           ( clk              ),
-     .rst_n         ( rst_n            ),
-     .mult_en_i     ( mult_en_i        ),
-     .op_a_i        ( mult_operand_a_i ),
-     .op_b_i        ( mult_operand_b_i ),
-     .op_acc_i      ( alu_adder_result_ex_o ),
-     .ready_o       ( mult_ready       ),
-     .pp_acc_o      ( pp_acc           ),
-     .mult_result_o ( mult_result      )
-    );
-  end
-  else if (MULT_TYPE == 16) begin : mult_16_i
-    zeroriscy_mult16
-    #(
-      .ADD_TYPE(ADD_TYPE)
-     )
-     mult_i
-     (
-     .clk           ( clk              ),
-     .rst_n         ( rst_n            ),
-     .mult_en_i     ( mult_en_i        ),
-     .op_a_i        ( mult_operand_a_i ),
-     .op_b_i        ( mult_operand_b_i ),
-     .op_acc_i      ( alu_adder_result_ex_o ),
-     .ready_o       ( mult_ready       ),
-     .pp_acc_o      ( pp_acc           ),
-     .mult_result_o ( mult_result      )
-    );
-  end
-  else if (MULT_TYPE == 0) begin : mult_h_i
-    zeroriscy_mult_h
-    #(
-      .ADD_TYPE(ADD_TYPE)
-     )
-     mult_i
-     (
-     .clk             ( clk                   ),
-     .rst_n           ( rst_n                 ),
-     .mult_en_i       ( mult_en_i             ),
-     .operator_i      ( mult_operator_i       ),
-     .signed_mode_i   ( mult_signed_mode_i    ),
-     .op_a_i          ( mult_operand_a_i      ),
-     .op_b_i          ( mult_operand_b_i      ),
-     .alu_adder_i     ( alu_adder_result_ex_o ),
-     .ready_o         ( mult_ready            ),
-     .carry_out_mul_o ( carry_out_mul         ),
-     .alu_operand_a_o ( mult_alu_operand_a    ),
-     .alu_operand_b_o ( mult_alu_operand_b    ),
-     .mult_result_o   ( mult_result           )
-    );
-  end
-  else if (MULT_TYPE == 1) begin : mult_hq_i
-    zeroriscy_mult_hq
-    #(
-      .ADD_TYPE(ADD_TYPE)
-     )
-     mult_i
-     (
-     .clk             ( clk                   ),
-     .rst_n           ( rst_n                 ),
-     .mult_en_i       ( mult_en_i             ),
-     .operator_i      ( mult_operator_i       ),
-     .signed_mode_i   ( mult_signed_mode_i    ),
-     .op_a_i          ( mult_operand_a_i      ),
-     .op_b_i          ( mult_operand_b_i      ),
-     .alu_adder_i     ( alu_adder_result_ex_o ),
-     .ready_o         ( mult_ready            ),
-     .carry_out_mul_o ( carry_out_mul         ),
-     .alu_operand_a_o ( mult_alu_operand_a    ),
-     .alu_operand_b_o ( mult_alu_operand_b    ),
-     .mult_result_o   ( mult_result           )
-    );
-  end
-  else if (MULT_TYPE == 2) begin : mult_33_hq_i
-    zeroriscy_mult33_hq mult_i
-     (
-     .clk             ( clk                   ),
-     .rst_n           ( rst_n                 ),
-     .mult_en_i       ( mult_en_i             ),
-     .operator_i      ( mult_operator_i       ),
-     .signed_mode_i   ( mult_signed_mode_i    ),
-     .op_a_i          ( mult_operand_a_i      ),
-     .op_b_i          ( mult_operand_b_i      ),
-     .alu_adder_i     ( alu_adder_result_ex_o ),
-     .do_sub_o        ( do_sub                ),
-     .ready_o         ( mult_ready            ),
-     .carry_out_mul_o ( carry_out_mul         ),
-     .alu_operand_a_o ( mult_alu_operand_a    ),
-     .alu_operand_b_o ( mult_alu_operand_b    ),
-     .mult_result_o   ( mult_result           )
-    );
-  end
-  else if (MULT_TYPE == 4) begin : mult_16_hq_i
-    zeroriscy_mult16_hq mult_i
-     (
-     .clk             ( clk                   ),
-     .rst_n           ( rst_n                 ),
-     .mult_en_i       ( mult_en_i             ),
-     .operator_i      ( mult_operator_i       ),
-     .signed_mode_i   ( mult_signed_mode_i    ),
-     .op_a_i          ( mult_operand_a_i      ),
-     .op_b_i          ( mult_operand_b_i      ),
-     .ready_o         ( mult_ready            ),
-     .mult_result_o   ( mult_result           )
-    );
-  end
-  else if (MULT_TYPE == 5) begin : mult_BW33_hq_i
-    zeroriscy_multBW33_hq mult_i
-     (
      .clk             ( clk                   ),
      .rst_n           ( rst_n                 ),
      .mult_en_i       ( mult_en_i             ),
@@ -315,6 +120,19 @@ end
      .ready_o         ( mult_ready            ),
      .alu_operand_a_o ( mult_alu_operand_a    ),
      .alu_operand_b_o ( mult_alu_operand_b    ),
+     .mult_result_o   ( mult_result           )
+    );
+  end else begin: mult_fast
+    zeroriscy_mult_fast mult_i
+     (
+     .clk             ( clk                   ),
+     .rst_n           ( rst_n                 ),
+     .mult_en_i       ( mult_en_i             ),
+     .operator_i      ( mult_operator_i       ),
+     .signed_mode_i   ( mult_signed_mode_i    ),
+     .op_a_i          ( mult_operand_a_i      ),
+     .op_b_i          ( mult_operand_b_i      ),
+     .ready_o         ( mult_ready            ),
      .mult_result_o   ( mult_result           )
     );
   end

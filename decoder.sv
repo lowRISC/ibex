@@ -422,6 +422,18 @@ module zeroriscy_decoder
                 mult_int_en        = 1'b1;
                 mult_signed_mode_o = 2'b00;
             end
+            {6'b00_0001, 3'b100}: begin // div
+              alu_operator_o     = ALU_DIV;
+            end
+            {6'b00_0001, 3'b101}: begin // divu
+              alu_operator_o     = ALU_DIVU;
+            end
+            {6'b00_0001, 3'b110}: begin // rem
+              alu_operator_o     = ALU_REM;
+            end
+            {6'b00_0001, 3'b111}: begin // remu
+              alu_operator_o     = ALU_REMU;
+            end
             default: begin
               illegal_insn_o = 1'b1;
             end

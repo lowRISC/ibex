@@ -27,7 +27,7 @@ import zeroriscy_defines::*;
 `define OP_L 15:0
 `define OP_H 31:16
 
-module zeroriscy_mult16_hq
+module zeroriscy_mult_fast
 (
   input  logic        clk,
   input  logic        rst_n,

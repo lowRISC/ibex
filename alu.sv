@@ -37,7 +37,6 @@ module zeroriscy_alu
   input  logic [32:0]              mult_operand_a_i,
   input  logic [32:0]              mult_operand_b_i,
 
-  input  logic                     carry_in_i,
   input  logic                     mult_en_i,
 
   output logic [31:0]              adder_result_o,
@@ -98,7 +97,7 @@ module zeroriscy_alu
   assign adder_in_a = mult_en_i ? mult_operand_a_i : {operand_a_i,1'b1};
 
   // prepare operand b
-  assign adder_in_b    = {operand_b_i,carry_in_i};
+  assign adder_in_b    = {operand_b_i,1'b0};
   assign operand_b_neg = mult_en_i ? mult_operand_b_i : adder_in_b ^ {33{adder_op_b_negate}};
 
   // actual adder

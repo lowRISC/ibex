@@ -25,7 +25,7 @@
 import zeroriscy_defines::*;
 
 
-module zeroriscy_multBW33_hq
+module zeroriscy_mult_slow
 (
   input  logic        clk,
   input  logic        rst_n,
@@ -102,7 +102,7 @@ module zeroriscy_multBW33_hq
                 MULT_IDLE: begin
                     op_a_shift_q   <= operator_i == MUL_H ? op_a_ext : op_a_ext << 1;
                     op_b_shift_q   <= op_b_ext >> 1;
-                    mult_state_q   <= 5'd1;
+                    mult_state_q   <= 5'd31;
                     accum_window_q <= operator_i == MUL_H ? { 1'b1, ~(op_a_ext[32] & op_b_i[0]),  op_a_ext[31:1] & {31{op_b_i[0]}}  } : {  ~(op_a_ext[32] & op_b_i[0]),  op_a_ext[31:0] & {32{op_b_i[0]}}  };
                     curr_state_q   <= MULT_COMP;
                 end
@@ -110,9 +110,9 @@ module zeroriscy_multBW33_hq
                     if(operator_i == MUL_L)
                       op_a_shift_q <= op_a_shift_q << 1;
                     op_b_shift_q   <= op_b_shift_q >> 1;
-                    mult_state_q   <= mult_state_q + 1;
+                    mult_state_q   <= mult_state_q - 1;
                     accum_window_q <= operator_i == MUL_H ? res_adder_h : res_adder_l;
-                    if(mult_state_q == 5'd31)
+                    if(mult_state_q == 5'd1)
                       //if(operator_i == MUL_H)
                         curr_state_q <= MULT_LASTPP;
                       //else
