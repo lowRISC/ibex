@@ -254,27 +254,6 @@ parameter BMASK_B_REG  = 1'b0;
 parameter BMASK_B_IMM  = 1'b1;
 
 
-// multiplication immediates
-parameter MIMM_ZERO    = 1'b0;
-parameter MIMM_S3      = 1'b1;
-
-// operand c selection
-parameter OP_C_REGC_OR_FWD = 2'b00;
-parameter OP_C_REGB_OR_FWD = 2'b01;
-parameter OP_C_JT          = 2'b10;
-parameter OP_C_RA		   = 2'b10; // same as OP_C_JT
-
-// branch types
-parameter BRANCH_NONE = 2'b00;
-parameter BRANCH_JAL  = 2'b01;
-parameter BRANCH_JALR = 2'b10;
-parameter BRANCH_COND = 2'b11; // conditional branches
-
-// jump target mux
-parameter JT_JAL  = 2'b01;
-parameter JT_JALR = 2'b10;
-parameter JT_COND = 2'b11;
-
 
 ///////////////////////////////////////////////
 //   ___ _____   ____  _                     //
@@ -288,7 +267,6 @@ parameter JT_COND = 2'b11;
 // PC mux selector defines
 parameter PC_BOOT          = 3'b000;
 parameter PC_JUMP          = 3'b010;
-parameter PC_BRANCH        = 3'b011;
 parameter PC_EXCEPTION     = 3'b100;
 parameter PC_ERET          = 3'b101;
 parameter PC_DBG_NPC       = 3'b111;

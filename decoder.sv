@@ -36,16 +36,12 @@ module zeroriscy_decoder
   input  logic        deassert_we_i,           // deassert we, we are stalled or not active
   input  logic        data_misaligned_i,       // misaligned data load/store in progress
   input  logic        branch_set_i,
-
+  input  logic        jump_set_i,
   output logic        illegal_insn_o,          // illegal instruction encountered
   output logic        ebrk_insn_o,             // trap instruction encountered
-  output logic        eret_insn_o,             // return from exception instruction encountered
+  output logic        mret_insn_o,             // return from exception instruction encountered
   output logic        ecall_insn_o,            // environment call (syscall) instruction encountered
   output logic        pipe_flush_o,            // pipeline flush is requested
-
-  output logic        rega_used_o,             // rs1 is used by current instruction
-  output logic        regb_used_o,             // rs2 is used by current instruction
-
 
   // from IF/ID pipeline
   input  logic [31:0] instr_rdata_i,           // instruction read from instr memory/cache
@@ -55,7 +51,6 @@ module zeroriscy_decoder
   output logic [ALU_OP_WIDTH-1:0] alu_operator_o, // ALU operation selection
   output logic [2:0]  alu_op_a_mux_sel_o,      // operand a selection: reg value, PC, immediate or zero
   output logic [2:0]  alu_op_b_mux_sel_o,      // oNOperand b selection: reg value or immediate
-  output logic [1:0]  alu_op_c_mux_sel_o,      // operand c selection: reg value or jump target
 
   output logic [0:0]  imm_a_mux_sel_o,         // immediate selection for operand a
   output logic [3:0]  imm_b_mux_sel_o,         // immediate selection for operand b
@@ -81,8 +76,7 @@ module zeroriscy_decoder
 
 
   // jump/branches
-  output logic [1:0]  jump_in_dec_o,           // jump_in_id without deassert
-  output logic [1:0]  jump_in_id_o,            // jump is being calculated in ALU
+  output logic        jump_in_id_o,            // jump is being calculated in ALU
   output logic        branch_in_id_o
 );
 
@@ -91,12 +85,12 @@ module zeroriscy_decoder
   logic       data_req;
 
   logic       ebrk_insn;
-  logic       eret_insn;
+  logic       mret_insn;
   logic       pipe_flush;
 
   logic       mult_int_en;
   logic       branch_in_id;
-  logic [1:0] jump_in_id;
+  logic       jump_in_id;
 
   logic [1:0] csr_op;
 
@@ -112,12 +106,11 @@ module zeroriscy_decoder
 
   always_comb
   begin
-    jump_in_id                  = BRANCH_NONE;
+    jump_in_id                  = 1'b0;
     branch_in_id                = 1'b0;
     alu_operator_o              = ALU_SLTU;
     alu_op_a_mux_sel_o          = OP_A_REGA_OR_FWD;
     alu_op_b_mux_sel_o          = OP_B_REGB_OR_FWD;
-    alu_op_c_mux_sel_o          = OP_C_REGC_OR_FWD;
 
     imm_a_mux_sel_o             = IMMA_ZERO;
     imm_b_mux_sel_o             = IMMB_I;
@@ -140,13 +133,9 @@ module zeroriscy_decoder
 
     illegal_insn_o              = 1'b0;
     ebrk_insn                   = 1'b0;
-    eret_insn                   = 1'b0;
+    mret_insn                   = 1'b0;
     ecall_insn_o                = 1'b0;
     pipe_flush                  = 1'b0;
-
-    rega_used_o                 = 1'b0;
-    regb_used_o                 = 1'b0;
-
 
     unique case (instr_rdata_i[6:0])
 
@@ -160,43 +149,51 @@ module zeroriscy_decoder
       //////////////////////////////////////
 
       OPCODE_JAL: begin   // Jump and Link
-        jump_in_id          = BRANCH_JAL;
-        // Calculate jump target in EX
-        alu_op_a_mux_sel_o  = OP_A_CURRPC;
-        alu_op_b_mux_sel_o  = OP_B_IMM;
-        imm_b_mux_sel_o     = IMMB_UJ;
-        alu_operator_o      = ALU_ADD;
-        regfile_we          = 1'b1;
-
-        alu_op_c_mux_sel_o  = OP_C_RA; // Pipeline return address to EX
-
+        jump_in_id            = 1'b1;
+        if(jump_set_i) begin
+          // Calculate jump target
+          alu_op_a_mux_sel_o  = OP_A_CURRPC;
+          alu_op_b_mux_sel_o  = OP_B_IMM;
+          imm_b_mux_sel_o     = IMMB_UJ;
+          alu_operator_o      = ALU_ADD;
+          regfile_we          = 1'b0;
+        end else begin
+          // Calculate and store PC+4
+          alu_op_a_mux_sel_o  = OP_A_CURRPC;
+          alu_op_b_mux_sel_o  = OP_B_IMM;
+          imm_b_mux_sel_o     = IMMB_PCINCR;
+          alu_operator_o      = ALU_ADD;
+          regfile_we          = 1'b1;
+        end
       end
 
       OPCODE_JALR: begin  // Jump and Link Register
-        jump_in_id          = BRANCH_JALR;
-        // Calculate jump target in EX
-        alu_op_a_mux_sel_o  = OP_A_REGA_OR_FWD;
-        alu_op_b_mux_sel_o  = OP_B_ZERO;
-        imm_b_mux_sel_o     = IMMB_SB;
-        alu_operator_o      = ALU_ADD;
-        regfile_we          = 1'b1;
-        rega_used_o         = 1'b1;
-
+        jump_in_id            = 1'b1;
+        if(jump_set_i) begin
+          // Calculate jump target
+          alu_op_a_mux_sel_o  = OP_A_REGA_OR_FWD;
+          alu_op_b_mux_sel_o  = OP_B_IMM;
+          imm_b_mux_sel_o     = IMMB_I;
+          alu_operator_o      = ALU_ADD;
+          regfile_we          = 1'b0;
+        end else begin
+          // Calculate and store PC+4
+          alu_op_a_mux_sel_o  = OP_A_CURRPC;
+          alu_op_b_mux_sel_o  = OP_B_IMM;
+          imm_b_mux_sel_o     = IMMB_PCINCR;
+          alu_operator_o      = ALU_ADD;
+          regfile_we          = 1'b1;
+        end
         if (instr_rdata_i[14:12] != 3'b0) begin
-          jump_in_id       = BRANCH_NONE;
+          jump_in_id       = 1'b0;
           regfile_we       = 1'b0;
           illegal_insn_o   = 1'b1;
         end
 
-        alu_op_c_mux_sel_o  = OP_C_RA; // Pipeline return address to EX
-
       end
 
       OPCODE_BRANCH: begin // Branch
-        jump_in_id            = BRANCH_COND;
 
-        rega_used_o           = 1'b1;
-        regb_used_o           = 1'b1;
         branch_in_id          = 1'b1;
 
         if (~branch_set_i)
@@ -220,7 +217,6 @@ module zeroriscy_decoder
           imm_b_mux_sel_o     = IMMB_SB;
           alu_operator_o      = ALU_ADD;
           regfile_we          = 1'b0;
-          rega_used_o         = 1'b1;
         end
         
       end
@@ -238,13 +234,7 @@ module zeroriscy_decoder
       OPCODE_STORE: begin
         data_req       = 1'b1;
         data_we_o      = 1'b1;
-        rega_used_o    = 1'b1;
-        regb_used_o    = 1'b1;
         alu_operator_o = ALU_ADD;
-
-        // pass write data through ALU operand c
-        alu_op_c_mux_sel_o = OP_C_REGB_OR_FWD;
-
 
         if (instr_rdata_i[14] == 1'b0) begin
           // offset from immediate
@@ -274,7 +264,6 @@ module zeroriscy_decoder
       OPCODE_LOAD: begin
         data_req        = 1'b1;
         regfile_we      = 1'b1;
-        rega_used_o     = 1'b1;
         data_type_o     = 2'b00;
 
         // offset from immediate
@@ -297,7 +286,6 @@ module zeroriscy_decoder
         // reg-reg load (different encoding)
         if (instr_rdata_i[14:12] == 3'b111) begin
           // offset from RS2
-          regb_used_o        = 1'b1;
           alu_op_b_mux_sel_o = OP_B_REGB_OR_FWD;
 
           // sign/zero extension
@@ -357,7 +345,6 @@ module zeroriscy_decoder
         alu_op_b_mux_sel_o  = OP_B_IMM;
         imm_b_mux_sel_o     = IMMB_I;
         regfile_we          = 1'b1;
-        rega_used_o         = 1'b1;
 
         unique case (instr_rdata_i[14:12])
           3'b000: alu_operator_o = ALU_ADD;  // Add Immediate
@@ -388,7 +375,6 @@ module zeroriscy_decoder
 
       OPCODE_OP: begin  // Register-Register ALU operation
         regfile_we     = 1'b1;
-        rega_used_o    = 1'b1;
 
         if (instr_rdata_i[31]) begin
           illegal_insn_o = 1'b1;
@@ -397,7 +383,6 @@ module zeroriscy_decoder
         begin // non bit-manipulation instructions
 
           if (~instr_rdata_i[28])
-            regb_used_o = 1'b1;
 
           unique case ({instr_rdata_i[30:25], instr_rdata_i[14:12]})
             // RV32I ALU operations
@@ -414,25 +399,25 @@ module zeroriscy_decoder
 
             // supported RV32M instructions
             {6'b00_0001, 3'b000}: begin // mul
-                //alu_operator_o     = ALU_ADD;
+                alu_operator_o     = ALU_ADD;
                 mult_operator_o    = MUL_L;
                 mult_int_en        = 1'b1;
                 mult_signed_mode_o = 2'b00;
             end
             {6'b00_0001, 3'b001}: begin // mulh
-                //alu_operator_o     = ALU_ADD;
+                alu_operator_o     = ALU_ADD;
                 mult_operator_o    = MUL_H;
                 mult_int_en        = 1'b1;
                 mult_signed_mode_o = 2'b11;
             end
             {6'b00_0001, 3'b010}: begin // mulhsu
-                //alu_operator_o     = ALU_ADD;
+                alu_operator_o     = ALU_ADD;
                 mult_operator_o    = MUL_H;
                 mult_int_en        = 1'b1;
                 mult_signed_mode_o = 2'b01;
             end
             {6'b00_0001, 3'b011}: begin // mulhu
-                //alu_operator_o     = ALU_ADD;
+                alu_operator_o     = ALU_ADD;
                 mult_operator_o    = MUL_H;
                 mult_int_en        = 1'b1;
                 mult_signed_mode_o = 2'b00;
@@ -475,7 +460,7 @@ module zeroriscy_decoder
 
             12'h302:  // mret
             begin
-              eret_insn = 1'b1;
+              mret_insn = 1'b1;
             end
 
             12'h105:  // wfi
@@ -503,7 +488,6 @@ module zeroriscy_decoder
             // rs1 field is used as immediate
             alu_op_a_mux_sel_o = OP_A_IMM;
           end else begin
-            rega_used_o        = 1'b1;
             alu_op_a_mux_sel_o = OP_A_REGA_OR_FWD;
           end
 
@@ -554,12 +538,10 @@ module zeroriscy_decoder
   assign mult_int_en_o     = (deassert_we_i) ? 1'b0          : mult_int_en;
   assign data_req_o        = (deassert_we_i) ? 1'b0          : data_req;
   assign csr_op_o          = (deassert_we_i) ? CSR_OP_NONE   : csr_op;
-  assign jump_in_id_o      = (deassert_we_i) ? BRANCH_NONE   : jump_in_id;
+  assign jump_in_id_o      = (deassert_we_i) ? 1'b0          : jump_in_id;
   assign branch_in_id_o    = (deassert_we_i) ? 1'b0          : branch_in_id;
   assign ebrk_insn_o       = (deassert_we_i) ? 1'b0          : ebrk_insn;
-  assign eret_insn_o       = (deassert_we_i) ? 1'b0          : eret_insn;  // TODO: do not deassert?
+  assign mret_insn_o       = (deassert_we_i) ? 1'b0          : mret_insn;  // TODO: do not deassert?
   assign pipe_flush_o      = (deassert_we_i) ? 1'b0          : pipe_flush; // TODO: do not deassert?
-
-  assign jump_in_dec_o     = jump_in_id;
 
 endmodule // controller

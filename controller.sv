@@ -45,7 +45,7 @@ module zeroriscy_controller
   // decoder related signals
   output logic        deassert_we_o,              // deassert write enable for next instruction
   input  logic        illegal_insn_i,             // decoder encountered an invalid instruction
-  input  logic        eret_insn_i,                // decoder encountered an eret instruction
+  input  logic        mret_insn_i,                // decoder encountered an eret instruction
   input  logic        pipe_flush_i,               // decoder wants to do a pipe flush
 
   // from IF/ID pipeline
@@ -68,8 +68,8 @@ module zeroriscy_controller
   input  logic        branch_in_id_i,             // branch in id
   input  logic        branch_taken_ex_i,          // branch taken signal
   input  logic        branch_set_i,               // branch taken set signal
-  input  logic [1:0]  jump_in_id_i,               // jump is being calculated in ALU
-  input  logic [1:0]  jump_in_dec_i,              // jump is being calculated in ALU
+  input  logic        jump_set_i,                 // jump taken set signal
+  input  logic        jump_in_id_i,               // jump is being calculated in ALU
 
   input  logic        instr_multicyle_i,          // multicycle instructions active
 
@@ -96,25 +96,25 @@ module zeroriscy_controller
   output logic        halt_if_o,
   output logic        halt_id_o,
 
+  input  logic        jump_stall_i,
   input  logic        load_stall_i,
+  input  logic        branch_stall_i,
 
   input  logic        id_ready_i,                 // ID stage is ready
 
   input  logic        if_valid_i,                 // IF stage is done
   // Performance Counters
   output logic        perf_jump_o,                // we are executing a jump instruction   (j, jr, jal, jalr)
-  output logic        perf_jr_stall_o,            // stall due to jump-register-hazard
-  output logic        perf_ld_stall_o             // stall due to load-use-hazard
+  output logic        perf_jr_stall_o,            // stall due to jump instruction
+  output logic        perf_br_stall_o,            // stall due to branch instruction
+  output logic        perf_ld_stall_o             // stall due to load instruction
 );
 
   // FSM state encoding
 
   enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
-                      DECODE,
-                      FLUSH_WB,
+                      DECODE, FLUSH,
                       DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
-
-
 
   logic jump_in_dec;
   logic exc_req;
@@ -168,7 +168,6 @@ module zeroriscy_controller
     dbg_ack_o        = 1'b0;
 
     irq_ack_o        = 1'b0;
-    jump_in_dec      = jump_in_dec_i == BRANCH_JALR || jump_in_dec_i == BRANCH_JAL;
 
     unique case (ctrl_fsm_cs)
       // We were just reset, wait for fetch_enable
@@ -263,7 +262,7 @@ module zeroriscy_controller
                 if (dbg_req_i)
                   ctrl_fsm_ns = DBG_SIGNAL;
               end
-              jump_in_dec: begin
+              jump_set_i: begin
                 pc_mux_o          = PC_JUMP;
                 pc_set_o          = 1'b1;
                 if (dbg_req_i)
@@ -277,11 +276,16 @@ module zeroriscy_controller
                 if (dbg_req_i)
                   ctrl_fsm_ns = DBG_SIGNAL;
               end
-              eret_insn_i: begin
+              mret_insn_i: begin
+                //handles eret when the core should go back to sleep
                 pc_mux_o         = PC_ERET;
                 pc_set_o         = 1'b1;
                 exc_restore_id_o = 1'b1;
-                if (dbg_req_i)
+                if(~fetch_enable_i) begin
+                  halt_if_o = 1'b1;
+                  halt_id_o = 1'b1;
+                  ctrl_fsm_ns = FLUSH;
+                end else if (dbg_req_i)
                   ctrl_fsm_ns = DBG_SIGNAL;
               end
               default: begin
@@ -294,12 +298,11 @@ module zeroriscy_controller
                     exc_save_if_o = 1'b1;
                 end
                 // handle WFI instruction, flush pipeline and (potentially) go to
-                // sleep
-                // also handles eret when the core should go back to sleep
-                else if (pipe_flush_i || (eret_insn_i && (~fetch_enable_i))) begin
+                // sleep TODO: put it in unique case
+                else if (pipe_flush_i) begin
                   halt_if_o = 1'b1;
                   halt_id_o = 1'b1;
-                  ctrl_fsm_ns = FLUSH_WB;
+                  ctrl_fsm_ns = FLUSH;
                 end
                 else if (dbg_req_i & ~branch_taken_ex_i)
                 begin
@@ -381,8 +384,8 @@ module zeroriscy_controller
       end
 
 
-      // flush the pipeline, insert NOP into EX and WB stage
-      FLUSH_WB:
+      // flush the pipeline, insert NOP
+      FLUSH:
       begin
         halt_if_o = 1'b1;
         halt_id_o = 1'b1;
@@ -452,8 +455,9 @@ module zeroriscy_controller
   end
 
   // Performance Counters
-  assign perf_jump_o      = (jump_in_id_i == BRANCH_JAL || jump_in_id_i == BRANCH_JALR);
-  assign perf_jr_stall_o  = 1'b0;
+  assign perf_jump_o      = jump_in_id_i;
+  assign perf_jr_stall_o  = jump_stall_i;
+  assign perf_br_stall_o  = branch_stall_i;
   assign perf_ld_stall_o  = load_stall_i;
 
 

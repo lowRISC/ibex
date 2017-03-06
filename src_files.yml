@@ -24,8 +24,8 @@ zeroriscy:
     mult_16_hq.sv,
     mult_hq.sv,
     mult_33_hq.sv,
+    mult_BW33_hq.sv,
     prefetch_buffer.sv,
-    prefetch_L0_buffer.sv,
     zeroriscy_core.sv,
   ]
 zeroriscy_vip_rtl:

@@ -131,9 +131,6 @@ module zeroriscy_core
   logic [ALU_OP_WIDTH-1:0] alu_operator_ex;
   logic [31:0] alu_operand_a_ex;
   logic [31:0] alu_operand_b_ex;
-  logic [31:0] mult_operand_a_ex;
-  logic [31:0] mult_operand_b_ex;
-  logic [31:0] alu_operand_c_ex;
 
   logic [31:0] alu_adder_result_ex; // Used to forward computed address to LSU
   logic [31:0] regfile_wdata_ex;
@@ -142,6 +139,8 @@ module zeroriscy_core
   logic        mult_en_ex;
   logic        mult_operator_ex;
   logic [1:0]  mult_signed_mode_ex;
+  logic [31:0] mult_operand_a_ex;
+  logic [31:0] mult_operand_b_ex;
 
   // CSR control
   logic        csr_access_ex;
@@ -160,7 +159,7 @@ module zeroriscy_core
   logic        data_sign_ext_ex;
   logic [1:0]  data_reg_offset_ex;
   logic        data_req_ex;
-  logic [31:0] data_pc_ex;
+  logic [31:0] data_wdata_ex;
   logic        data_load_event_ex;
   logic        data_misaligned_ex;
   logic [31:0] regfile_wdata_lsu;
@@ -388,9 +387,7 @@ module zeroriscy_core
     .alu_operator_ex_o            ( alu_operator_ex      ),
     .alu_operand_a_ex_o           ( alu_operand_a_ex     ),
     .alu_operand_b_ex_o           ( alu_operand_b_ex     ),
-     //used in LSU for store instructions
-     //TODO: change name
-    .alu_operand_c_ex_o           ( alu_operand_c_ex     ),
+
     .mult_en_ex_o                 ( mult_en_ex           ),
     .mult_operator_ex_o           ( mult_operator_ex     ),
     .mult_signed_mode_ex_o        ( mult_signed_mode_ex  ),
@@ -408,6 +405,7 @@ module zeroriscy_core
     .data_sign_ext_ex_o           ( data_sign_ext_ex     ), // to load store unit
     .data_reg_offset_ex_o         ( data_reg_offset_ex   ), // to load store unit
     .data_load_event_ex_o         ( data_load_event_ex   ), // to load store unit
+    .data_wdata_ex_o              ( data_wdata_ex        ), // to load store unit
 
     .data_misaligned_i            ( data_misaligned      ),
     .misaligned_addr_i            ( misaligned_addr      ),
@@ -513,7 +511,7 @@ module zeroriscy_core
     // signal from ex stage
     .data_we_ex_i          ( data_we_ex         ),
     .data_type_ex_i        ( data_type_ex       ),
-    .data_wdata_ex_i       ( alu_operand_c_ex   ),
+    .data_wdata_ex_i       ( data_wdata_ex      ),
     .data_reg_offset_ex_i  ( data_reg_offset_ex ),
     .data_sign_ext_ex_i    ( data_sign_ext_ex   ),  // sign extension
 
@@ -694,7 +692,7 @@ module zeroriscy_core
 
     .rs1_value      ( id_stage_i.operand_a_fw_id           ),
     .rs2_value      ( id_stage_i.operand_b_fw_id           ),
-    .rs3_value      ( id_stage_i.alu_operand_c             ),
+    .rs3_value      ( data_wdata_ex                        ),
     .rs2_value_vec  ( id_stage_i.alu_operand_b             ),
 
     .ex_valid       (                                      ),

@@ -43,7 +43,7 @@ module zeroriscy_compressed_decoder
   always_comb
   begin
     illegal_instr_o = 1'b0;
-    instr_o         = 'x;
+    instr_o         = '0;
 
     unique case (instr_i[1:0])
       // C0

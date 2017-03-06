@@ -64,17 +64,25 @@ module zeroriscy_ex_block
   output logic                    ex_ready_o      // EX stage gets new data
 );
 
-  localparam MULT_TYPE = 4;
+  localparam MULT_TYPE = 5;
   localparam ADD_TYPE  = 0; //0 shared
 
-  logic [31:0] alu_result, mult_result, pp_acc, mult_alu_operand_a, mult_alu_operand_b;
+  logic [31:0] alu_result, mult_result, pp_acc;
+
   logic [31:0] alu_operand_a_sel, alu_operand_b_sel;
+  logic [32:0] mult_alu_operand_a_sel, mult_alu_operand_b_sel, mult_alu_operand_a, mult_alu_operand_b;
+  logic [33:0] alu_adder_result_ext;
   logic        alu_cmp_result;
-  logic        mult_ready, do_sub;
+  logic        mult_ready, do_sub, mult_en_sel;
   logic        carry_out_mul, carry_out_mul_sel;
   logic [ALU_OP_WIDTH-1:0] alu_operator_sel;
 
   assign alu_operator_sel = alu_operator_i;
+
+  assign mult_en_sel            = MULT_TYPE == 5 ? mult_en_i : 1'b0;
+  assign mult_alu_operand_a_sel = MULT_TYPE == 5 ? mult_alu_operand_a : alu_operand_a_i;
+  assign mult_alu_operand_b_sel = MULT_TYPE == 5 ? mult_alu_operand_b : alu_operand_b_i;
+
 
 if(ADD_TYPE == 0)
   if(MULT_TYPE >= 8)
@@ -89,7 +97,7 @@ else
   assign jump_target_o      = alu_adder_result_ex_o;
 
 if(MULT_TYPE < 8) begin
-  if(MULT_TYPE != 4) begin
+  if(MULT_TYPE != 4 && MULT_TYPE != 5) begin
     assign carry_out_mul_sel = carry_out_mul;
     assign alu_operand_a_sel = mult_en_i ? mult_alu_operand_a : alu_operand_a_i;
     assign alu_operand_b_sel = mult_en_i ? mult_alu_operand_b : alu_operand_b_i;
@@ -118,8 +126,12 @@ if(ADD_TYPE == 0) begin : alu_i
     .operator_i          ( alu_operator_sel     ),
     .operand_a_i         ( alu_operand_a_sel    ),
     .operand_b_i         ( alu_operand_b_sel    ),
+    .mult_operand_a_i    ( mult_alu_operand_a_sel ),
+    .mult_operand_b_i    ( mult_alu_operand_b_sel ),
     .carry_in_i          ( carry_out_mul_sel    ),
+    .mult_en_i           ( mult_en_sel          ),
     .adder_result_o      (alu_adder_result_ex_o ),
+    .adder_result_ext_o  ( alu_adder_result_ext ),
     .result_o            ( alu_result           ),
     .comparison_result_o ( alu_cmp_result       )
   );
@@ -129,8 +141,12 @@ end else begin : alu_i
     .operator_i          ( alu_operator_sel     ),
     .operand_a_i         ( alu_operand_a_i      ),
     .operand_b_i         ( alu_operand_b_i      ),
+    .mult_operand_a_i    ( mult_alu_operand_a_sel ),
+    .mult_operand_b_i    ( mult_alu_operand_b_sel ),
     .carry_in_i          ( carry_out_mul_sel    ),
+    .mult_en_i           ( mult_en_sel          ),
     .adder_result_o      (alu_adder_result_ex_o ),
+    .adder_result_ext_o  ( alu_adder_result_ext ),
     .result_o            ( alu_result           ),
     .comparison_result_o ( alu_cmp_result       )
   );
@@ -282,6 +298,23 @@ end
      .op_a_i          ( mult_operand_a_i      ),
      .op_b_i          ( mult_operand_b_i      ),
      .ready_o         ( mult_ready            ),
+     .mult_result_o   ( mult_result           )
+    );
+  end
+  else if (MULT_TYPE == 5) begin : mult_BW33_hq_i
+    zeroriscy_multBW33_hq mult_i
+     (
+     .clk             ( clk                   ),
+     .rst_n           ( rst_n                 ),
+     .mult_en_i       ( mult_en_i             ),
+     .operator_i      ( mult_operator_i       ),
+     .signed_mode_i   ( mult_signed_mode_i    ),
+     .op_a_i          ( mult_operand_a_i      ),
+     .op_b_i          ( mult_operand_b_i      ),
+     .alu_adder_ext_i ( alu_adder_result_ext  ),
+     .ready_o         ( mult_ready            ),
+     .alu_operand_a_o ( mult_alu_operand_a    ),
+     .alu_operand_b_o ( mult_alu_operand_b    ),
      .mult_result_o   ( mult_result           )
     );
   end

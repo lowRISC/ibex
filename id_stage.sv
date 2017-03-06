@@ -88,7 +88,6 @@ module zeroriscy_id_stage
     output logic [ALU_OP_WIDTH-1:0] alu_operator_ex_o,
     output logic [31:0] alu_operand_a_ex_o,
     output logic [31:0] alu_operand_b_ex_o,
-    output logic [31:0] alu_operand_c_ex_o, // Still needed if 2r1w reg file used
 
     // MUL
     output logic        mult_en_ex_o,
@@ -108,6 +107,7 @@ module zeroriscy_id_stage
     output logic        data_sign_ext_ex_o,
     output logic [1:0]  data_reg_offset_ex_o,
     output logic        data_load_event_ex_o,
+    output logic [31:0] data_wdata_ex_o,
 
     input  logic        data_misaligned_i,
     input  logic [31:0] misaligned_addr_i,
@@ -163,23 +163,22 @@ module zeroriscy_id_stage
 
   logic        illegal_insn_dec;
   logic        ebrk_insn;
-  logic        eret_insn_dec;
+  logic        mret_insn_dec;
   logic        ecall_insn_dec;
   logic        pipe_flush_dec;
-  logic        rega_used_dec;
-  logic        regb_used_dec;
 
   logic        branch_taken_ex;
   logic        branch_in_id;
   logic        branch_in_id_q;
   logic        branch_set;
-  logic [1:0]  jump_in_id;
-  logic [1:0]  jump_in_dec;
+  logic        jump_set;
+  logic        jump_in_id;
 
   logic        instr_multicyle;
   logic        load_stall;
   logic        mult_stall;
   logic        branch_stall;
+  logic        jump_stall;
 
   logic        halt_id;
   //FSM signals to write back multi cycles instructions
@@ -253,7 +252,6 @@ module zeroriscy_id_stage
 
   logic [31:0] alu_operand_a;
   logic [31:0] alu_operand_b;
-  logic [31:0] alu_operand_c; // Still needed if 2r1w reg file used
 
   assign instr = instr_rdata_i;
 
@@ -305,7 +303,6 @@ module zeroriscy_id_stage
   begin : alu_operand_a_mux
     case (alu_op_a_mux_sel)
       OP_A_REGA_OR_FWD:  alu_operand_a = operand_a_fw_id;
-      //OP_A_REGB_OR_FWD:  alu_operand_a = regfile_data_rb_id;
       OP_A_CURRPC:       alu_operand_a = pc_id_i;
       OP_A_IMM:          alu_operand_a = imm_a;
       default:           alu_operand_a = operand_a_fw_id;
@@ -364,38 +361,14 @@ module zeroriscy_id_stage
   always_comb
     begin : alu_operand_b_mux
       case (alu_op_b_mux_sel)
-        //OP_B_REGA_OR_FWD:  operand_b = regfile_data_ra_id;
         OP_B_REGB_OR_FWD:  operand_b = regfile_data_rb_id;
         OP_B_IMM:          operand_b = imm_b;
-        OP_B_ZERO:         operand_b = '0;
         default:           operand_b = regfile_data_rb_id;
       endcase // case (alu_op_b_mux_sel)
     end
 
   assign alu_operand_b   = operand_b;
   assign operand_b_fw_id = operand_b;
-
-  //////////////////////////////////////////////////////
-  //   ___                                 _    ____  //
-  //  / _ \ _ __   ___ _ __ __ _ _ __   __| |  / ___| //
-  // | | | | '_ \ / _ \ '__/ _` | '_ \ / _` | | |     //
-  // | |_| | |_) |  __/ | | (_| | | | | (_| | | |___  //
-  //  \___/| .__/ \___|_|  \__,_|_| |_|\__,_|  \____| //
-  //       |_|                                        //
-  //////////////////////////////////////////////////////
-
-  // ALU OP C Mux, jump or store. TODO: Change it
-/*
-  always_comb
-    begin : alu_operand_c_mux
-      case (alu_op_c_mux_sel)
-        OP_C_REGB_OR_FWD:  alu_operand_c = regfile_data_rb_id;
-        OP_C_RA:           alu_operand_c = pc_if_i; // this is the return address
-        default:           alu_operand_c = regfile_data_rb_id;
-      endcase // case (alu_op_c_mux_sel)
-    end
-*/
-  assign alu_operand_c = regfile_data_rb_id;
 
   /////////////////////////////////////////////////////////
   //  ____  _____ ____ ___ ____ _____ _____ ____  ____   //
@@ -426,11 +399,7 @@ module zeroriscy_id_stage
         if (csr_access)
           regfile_wdata_mux = csr_rdata_i;
         else
-        //TODO: modify this
-        if ((jump_in_id == BRANCH_JALR) || (jump_in_id == BRANCH_JAL))
-          regfile_wdata_mux   = pc_if_i;
-        else
-          regfile_wdata_mux   = regfile_wdata_ex_i;
+          regfile_wdata_mux = regfile_wdata_ex_i;
     end
   end
 
@@ -471,16 +440,13 @@ module zeroriscy_id_stage
     .deassert_we_i                   ( deassert_we               ),
     .data_misaligned_i               ( data_misaligned_i         ),
     .branch_set_i                    ( branch_set                ),
+    .jump_set_i                      ( jump_set                  ),
 
     .illegal_insn_o                  ( illegal_insn_dec          ),
     .ebrk_insn_o                     ( ebrk_insn                 ),
-    .eret_insn_o                     ( eret_insn_dec             ),
+    .mret_insn_o                     ( mret_insn_dec             ),
     .ecall_insn_o                    ( ecall_insn_dec            ),
     .pipe_flush_o                    ( pipe_flush_dec            ),
-
-    .rega_used_o                     ( rega_used_dec             ),
-    .regb_used_o                     ( regb_used_dec             ),
-
 
     // from IF/ID pipeline
     .instr_rdata_i                   ( instr                     ),
@@ -490,7 +456,6 @@ module zeroriscy_id_stage
     .alu_operator_o                  ( alu_operator              ),
     .alu_op_a_mux_sel_o              ( alu_op_a_mux_sel          ),
     .alu_op_b_mux_sel_o              ( alu_op_b_mux_sel          ),
-    .alu_op_c_mux_sel_o              ( alu_op_c_mux_sel          ),
 
     .imm_a_mux_sel_o                 ( imm_a_mux_sel             ),
     .imm_b_mux_sel_o                 ( imm_b_mux_sel             ),
@@ -514,7 +479,6 @@ module zeroriscy_id_stage
     .data_load_event_o               ( data_load_event_id        ),
 
     // jump/branches
-    .jump_in_dec_o                   ( jump_in_dec               ),
     .jump_in_id_o                    ( jump_in_id                ),
     .branch_in_id_o                  ( branch_in_id              )
   );
@@ -540,7 +504,7 @@ module zeroriscy_id_stage
     // decoder related signals
     .deassert_we_o                  ( deassert_we            ),
     .illegal_insn_i                 ( illegal_insn_dec       ),
-    .eret_insn_i                    ( eret_insn_dec          ),
+    .mret_insn_i                    ( mret_insn_dec          ),
     .pipe_flush_i                   ( pipe_flush_dec         ),
 
     // from IF/ID pipeline
@@ -563,8 +527,8 @@ module zeroriscy_id_stage
     .branch_in_id_i                 ( branch_in_id           ),
     .branch_taken_ex_i              ( branch_taken_ex        ),
     .branch_set_i                   ( branch_set             ),
+    .jump_set_i                     ( jump_set               ),
     .jump_in_id_i                   ( jump_in_id             ),
-    .jump_in_dec_i                  ( jump_in_dec            ),
 
     .instr_multicyle_i              ( instr_multicyle        ),
     // Exception Controller Signals
@@ -589,6 +553,10 @@ module zeroriscy_id_stage
     .halt_if_o                      ( halt_if_o              ),
     .halt_id_o                      ( halt_id                ),
 
+    .jump_stall_i                   ( jump_stall             ),
+    .branch_stall_i                 ( branch_stall           ),
+    .load_stall_i                   ( load_stall             ),
+
     .id_ready_i                     ( id_ready_o             ),
 
     .if_valid_i                     ( if_valid_i             ),
@@ -596,6 +564,7 @@ module zeroriscy_id_stage
     // Performance Counters
     .perf_jump_o                    ( perf_jump_o            ),
     .perf_jr_stall_o                ( perf_jr_stall_o        ),
+    .perf_br_stall_o                (                        ),
     .perf_ld_stall_o                ( perf_ld_stall_o        )
   );
 
@@ -631,10 +600,6 @@ module zeroriscy_id_stage
     .ebrk_insn_i          ( is_decoding_o & ebrk_insn        ),
     .illegal_insn_i       ( is_decoding_o & illegal_insn_dec ),
     .ecall_insn_i         ( is_decoding_o & ecall_insn_dec   ),
-    .eret_insn_i          ( is_decoding_o & eret_insn_dec    ),
-
-    .lsu_load_err_i       ( lsu_load_err_i   ),
-    .lsu_store_err_i      ( lsu_store_err_i  ),
 
     .cause_o              ( exc_cause_o      ),
     .save_cause_o         ( save_exc_cause_o ),
@@ -656,19 +621,17 @@ module zeroriscy_id_stage
   assign data_we_ex_o                = data_we_id;
   assign data_type_ex_o              = data_type_id;
   assign data_sign_ext_ex_o          = data_sign_ext_id;
+  assign data_wdata_ex_o             = regfile_data_rb_id;
+  assign data_req_ex_o               = data_req_id;
+  assign data_reg_offset_ex_o        = data_reg_offset_id;
+  assign data_load_event_ex_o        = ((data_req_id & (~halt_id)) ? data_load_event_id : 1'b0);
 
   assign alu_operator_ex_o           = alu_operator;
   assign alu_operand_a_ex_o          = alu_operand_a;
   assign alu_operand_b_ex_o          = alu_operand_b;
-  assign alu_operand_c_ex_o          = alu_operand_c;
 
   assign csr_access_ex_o             = csr_access;
   assign csr_op_ex_o                 = id_ready_o ? csr_op : CSR_OP_NONE;
-
-  assign data_req_ex_o               = data_req_id;
-
-  assign data_reg_offset_ex_o        = data_reg_offset_id;
-  assign data_load_event_ex_o        = ((data_req_id & (~halt_id)) ? data_load_event_id : 1'b0);
 
   assign branch_in_ex_o              = branch_in_id;
 
@@ -706,16 +669,17 @@ module zeroriscy_id_stage
     regfile_we      = regfile_we_id & (~halt_id);
     load_stall      = 1'b0;
     mult_stall      = 1'b0;
+    jump_stall      = 1'b0;
     branch_stall    = 1'b0;
     select_data_rf  = RF_EX;
     instr_multicyle = 1'b0;
     branch_set      = 1'b0;
+    jump_set        = 1'b0;
 
     unique case (id_wb_fsm_cs)
 
       IDLE:
       begin
-
         unique case (1'b1)
           data_req_id: begin
             //LSU operation
@@ -736,6 +700,14 @@ module zeroriscy_id_stage
             id_wb_fsm_ns    = WAIT_MULTICYCLE;
             mult_stall      = 1'b1;
             instr_multicyle = 1'b1;
+          end
+          jump_in_id: begin
+            //UnCond Branch operation
+            regfile_we      = 1'b0;
+            id_wb_fsm_ns    = WAIT_MULTICYCLE;
+            jump_stall      = 1'b1;
+            instr_multicyle = 1'b1;
+            jump_set        = 1'b1;
           end
           default:;
         endcase
@@ -767,7 +739,8 @@ module zeroriscy_id_stage
     endcase
   end
 
-  assign id_ready_o = (~load_stall) & (~branch_stall) & (~mult_stall);
+  // stall control
+  assign id_ready_o = (~load_stall) & (~branch_stall) & (~jump_stall) & (~mult_stall);
   
   assign id_valid_o = (~halt_id) & id_ready_o;
 

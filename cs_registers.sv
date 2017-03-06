@@ -140,23 +140,18 @@ module zeroriscy_cs_registers
   // read logic
   always_comb
   begin
-    csr_rdata_int = 'x;
+    csr_rdata_int = '0;
 
     case (csr_addr_i)
 
       // mstatus: always M-mode, contains IE bit
-      12'h300: csr_rdata_int = {24'b0, mpie, 3'h0, mie, 3'h0};
-
-      //misa: should be RV32I
-      12'h301: csr_rdata_int = 32'h0;
+      12'h300: csr_rdata_int = {19'b0, 2'b11, 3'b0, mpie, 3'h0, mie, 3'h0};
 
       // mepc: exception program counter
       12'h341: csr_rdata_int = mepc_q;
       // mcause: exception cause
       12'h342: csr_rdata_int = {exc_cause_q[5], 26'b0, exc_cause_q[4:0]};
 
-      // mimpid: PULP, anonymous source (no allocated ID yet)
-      12'hF13: csr_rdata_int = 32'h0;
       // mhartid: unique hardware thread id
       12'hF14: csr_rdata_int = {21'b0, cluster_id_i[5:0], 1'b0, core_id_i[3:0]};
 
@@ -173,7 +168,6 @@ module zeroriscy_cs_registers
 
     case (csr_addr_i)
       // mstatus: IE bit
-      //12'h300: if (csr_we_int) mstatus_n = {24'b0, csr_wdata_int[7], 3'h0, csr_wdata_int[3], 3'h0};
       12'h300: if (csr_we_int) mstatus_n = {csr_wdata_int[7], csr_wdata_int[3]};
 
       // mepc: exception program counter
