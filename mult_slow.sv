@@ -54,15 +54,15 @@ module zeroriscy_mult_slow
   logic [32:0] op_b_shift_q;
   logic [32:0] op_a_shift_q;
   logic [32:0] op_a_ext, op_b_ext;
+  logic [32:0] one_shift;
   logic [32:0] op_a_bw_pp, op_a_bw_last_pp;
   logic [31:0] b_0;
   logic        sign_a, sign_b;
   logic [32:0] next_reminder, next_quotient;
   logic [32:0] op_remainder;
-  logic [31:0] op_denominator_q;
   logic [31:0] op_numerator_q;
   logic        is_greater_equal;
-  logic        div_change_sign;
+  logic        div_change_sign, rem_change_sign;
 
 
    //(accum_window_q + op_a_shift_q)
@@ -88,39 +88,7 @@ module zeroriscy_mult_slow
         else
           alu_operand_b_o   = op_a_bw_pp;
       end
-
-      REM: begin
-        unique case(curr_state_q)
-          MULT_IDLE: begin
-            //0 - B = 0 iff B == 0
-            alu_operand_a_o     = {32'h0  , 1'b1};
-            alu_operand_b_o     = {~op_b_i, 1'b1};
-          end
-          ABS_A: begin
-            //ABS(A) = 0 - A
-            alu_operand_a_o     = {32'h0  , 1'b1};
-            alu_operand_b_o     = {~op_a_i, 1'b1};
-          end
-          ABS_B: begin
-            //ABS(B) = 0 - B
-            alu_operand_a_o     = {32'h0  , 1'b1};
-            alu_operand_b_o     = {~op_b_i, 1'b1};
-          end
-          CHANGE_SIGN: begin
-            //ABS(Quotient) = 0 - Quotient
-            alu_operand_a_o     = {32'h0  , 1'b1};
-            alu_operand_b_o     = {~accum_window_q[31:0], 1'b1};
-          end
-          default: begin
-            //Reminder
-            alu_operand_a_o     = {accum_window_q[31:0], 1'b1}; //it contains the reminder
-            alu_operand_b_o     = {~op_denominator_q, 1'b1}; //denominator negated + 1 to do -denominator
-          end
-        endcase
-      end
-
       default: begin
-        //mult_result_o           = op_a_shift_q[31:0]; //it contains the quotient
         unique case(curr_state_q)
           MULT_IDLE: begin
             //0 - B = 0 iff B == 0
@@ -140,13 +108,12 @@ module zeroriscy_mult_slow
           CHANGE_SIGN: begin
             //ABS(Quotient) = 0 - Quotient
             alu_operand_a_o     = {32'h0  , 1'b1};
-//            alu_operand_b_o     = {~op_a_shift_q[31:0], 1'b1};
             alu_operand_b_o     = {~accum_window_q[31:0], 1'b1};
           end
           default: begin
             //Division
             alu_operand_a_o     = {accum_window_q[31:0], 1'b1}; //it contains the reminder
-            alu_operand_b_o     = {~op_denominator_q, 1'b1}; //denominator negated + 1 to do -denominator
+            alu_operand_b_o     = {~op_b_shift_q[31:0], 1'b1}; //denominator negated + 1 to do -denominator
           end
         endcase
       end
@@ -165,15 +132,16 @@ module zeroriscy_mult_slow
 
   always_comb
   begin
-    if ((accum_window_q[31] ^ op_denominator_q[31]) == 0)
+    if ((accum_window_q[31] ^ op_b_shift_q[31]) == 0)
       is_greater_equal = (res_adder_h[31] == 0);
     else
       is_greater_equal = accum_window_q[31];
   end
 
+  assign one_shift     = {32'b0, 1'b1} << mult_state_q;
 
   assign next_reminder = is_greater_equal ? res_adder_h                   : op_remainder;
-  assign next_quotient = is_greater_equal ? op_a_shift_q | op_b_shift_q   : op_a_shift_q;
+  assign next_quotient = is_greater_equal ? op_a_shift_q | one_shift      : op_a_shift_q;
 
   assign b_0             = {32{op_b_shift_q[0]}};
 
@@ -193,6 +161,7 @@ module zeroriscy_mult_slow
 
   assign mult_state_n     = mult_state_q - 1;
   assign div_change_sign  = sign_a ^ sign_b;
+  assign rem_change_sign  = sign_a;
 
   always_ff @(posedge clk or negedge rst_n) begin : proc_mult_state_q
     if(~rst_n) begin
@@ -201,7 +170,6 @@ module zeroriscy_mult_slow
       op_b_shift_q     <= '0;
       op_a_shift_q     <= '0;
       curr_state_q     <= MULT_IDLE;
-      op_denominator_q <= '0;
       op_numerator_q   <= '0;
     end else begin
       if(mult_en_i) begin
@@ -212,11 +180,13 @@ module zeroriscy_mult_slow
                       MUL_L: begin
                         op_a_shift_q   <= op_a_ext << 1;
                         accum_window_q <= {  ~(op_a_ext[32] & op_b_i[0]),  op_a_ext[31:0] & {32{op_b_i[0]}}  };
+                        op_b_shift_q   <= op_b_ext >> 1;
                         curr_state_q   <= MULT_COMP;
                       end
                       MUL_H: begin
                         op_a_shift_q   <= op_a_ext;
                         accum_window_q <= { 1'b1, ~(op_a_ext[32] & op_b_i[0]),  op_a_ext[31:1] & {31{op_b_i[0]}}  };
+                        op_b_shift_q   <= op_b_ext >> 1;
                         curr_state_q   <= MULT_COMP;
                       end
                       DIV: begin
@@ -236,8 +206,6 @@ module zeroriscy_mult_slow
                         curr_state_q   <= equal_to_zero ? MULT_FINISH : ABS_A;
                       end
                     endcase
-
-                    op_b_shift_q <= (operator_i == DIV || operator_i == REM) ? {1'b0, 1'b1, 31'b0} : op_b_ext >> 1;
                     mult_state_q   <= 5'd31;
                 end
 
@@ -253,23 +221,24 @@ module zeroriscy_mult_slow
                     //reminder
                     accum_window_q   <= { 32'h0, op_numerator_q[31]};
                     //B abs value
-                    op_denominator_q <= sign_b ? alu_adder_i : op_b_i;
+                    op_b_shift_q     <= sign_b ? alu_adder_i : op_b_i;
                     curr_state_q     <= MULT_COMP;
                 end
 
                 MULT_COMP: begin
 
-                    op_b_shift_q   <= op_b_shift_q >> 1;
                     mult_state_q   <= mult_state_n;
 
                     unique case(operator_i)
                       MUL_L: begin
                         accum_window_q <= res_adder_l;
                         op_a_shift_q   <= op_a_shift_q << 1;
+                        op_b_shift_q   <= op_b_shift_q >> 1;
                       end
                       MUL_H: begin
                         accum_window_q <= res_adder_h;
                         op_a_shift_q   <= op_a_shift_q;
+                        op_b_shift_q   <= op_b_shift_q >> 1;
                       end
                       default: begin
                         accum_window_q <= {next_reminder[31:0], op_numerator_q[mult_state_n]};
@@ -296,15 +265,12 @@ module zeroriscy_mult_slow
                       end
                       DIV: begin
                         //this time we save the quotient in accum_window_q since we do not need anymore the reminder
-//                        accum_window_q <= {1'b0, next_reminder[31:0]};
-//                        op_a_shift_q   <= next_quotient;
                         accum_window_q <= next_quotient;
                         curr_state_q   <= CHANGE_SIGN;
                       end
                       default: begin
-                        accum_window_q <= {1'b0, next_reminder[31:0]};
                         //this time we do not save the quotient anymore since we need only the reminder
-//                        op_a_shift_q   <= next_quotient;
+                        accum_window_q <= {1'b0, next_reminder[31:0]};
                         curr_state_q   <= CHANGE_SIGN;
                       end
                     endcase
@@ -312,9 +278,11 @@ module zeroriscy_mult_slow
 
                 CHANGE_SIGN: begin
                     curr_state_q   <= MULT_FINISH;
-                    //op_a_shift_q   <= (div_change_sign) ? alu_adder_i : op_a_shift_q;
-                    accum_window_q <= (div_change_sign) ? alu_adder_i : accum_window_q;
-                end
+                    if(operator_i == DIV)
+                      accum_window_q <= (div_change_sign) ? alu_adder_i : accum_window_q;
+                    else
+                      accum_window_q <= (rem_change_sign) ? alu_adder_i : accum_window_q;
+               end
 
                 MULT_FINISH: begin
                     curr_state_q <= MULT_IDLE;
