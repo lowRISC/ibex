@@ -40,7 +40,7 @@ module zeroriscy_ex_block
 
   // ALU signals from ID stage
   input  logic [ALU_OP_WIDTH-1:0] alu_operator_i,
-  input  logic                    mult_operator_i,
+  input  logic [1:0]              mult_operator_i,
   input  logic                    mult_en_i,
 
   input  logic [31:0]             alu_operand_a_i,
@@ -66,11 +66,11 @@ module zeroriscy_ex_block
 
   localparam MULT_TYPE = 0; //0 is SLOW
 
-  logic [31:0] alu_result, mult_result, pp_acc;
+  logic [31:0] alu_result, mult_result;
 
   logic [32:0] mult_alu_operand_a_sel, mult_alu_operand_b_sel, mult_alu_operand_a, mult_alu_operand_b;
   logic [33:0] alu_adder_result_ext;
-  logic        alu_cmp_result;
+  logic        alu_cmp_result, alu_is_equal_result;
   logic        mult_ready, mult_en_sel;
 
   assign mult_en_sel            = MULT_TYPE == 0 ? mult_en_i : 1'b0;
@@ -103,7 +103,8 @@ module zeroriscy_ex_block
     .adder_result_o      ( alu_adder_result_ex_o  ),
     .adder_result_ext_o  ( alu_adder_result_ext   ),
     .result_o            ( alu_result             ),
-    .comparison_result_o ( alu_cmp_result         )
+    .comparison_result_o ( alu_cmp_result         ),
+    .is_equal_result_o   ( alu_is_equal_result    )
   );
 
   if (MULT_TYPE == 0) begin : mult_slow
@@ -117,6 +118,8 @@ module zeroriscy_ex_block
      .op_a_i          ( mult_operand_a_i      ),
      .op_b_i          ( mult_operand_b_i      ),
      .alu_adder_ext_i ( alu_adder_result_ext  ),
+     .alu_adder_i     ( alu_adder_result_ex_o ),
+     .equal_to_zero   ( alu_is_equal_result   ),
      .ready_o         ( mult_ready            ),
      .alu_operand_a_o ( mult_alu_operand_a    ),
      .alu_operand_b_o ( mult_alu_operand_b    ),

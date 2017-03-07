@@ -137,7 +137,7 @@ module zeroriscy_core
 
   // Multiplier Control
   logic        mult_en_ex;
-  logic        mult_operator_ex;
+  logic [1:0]  mult_operator_ex;
   logic [1:0]  mult_signed_mode_ex;
   logic [31:0] mult_operand_a_ex;
   logic [31:0] mult_operand_b_ex;

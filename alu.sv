@@ -43,7 +43,8 @@ module zeroriscy_alu
   output logic [33:0]              adder_result_ext_o,
 
   output logic [31:0]              result_o,
-  output logic                     comparison_result_o
+  output logic                     comparison_result_o,
+  output logic                     is_equal_result_o
 );
 
   logic [31:0] operand_a_rev;
@@ -190,6 +191,7 @@ module zeroriscy_alu
   end
 
   assign is_equal = (adder_result == 32'b0);
+  assign is_equal_result_o = is_equal;
   
 
   // Is greater equal

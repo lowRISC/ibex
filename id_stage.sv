@@ -91,7 +91,7 @@ module zeroriscy_id_stage
 
     // MUL
     output logic        mult_en_ex_o,
-    output logic        mult_operator_ex_o,
+    output logic  [1:0] mult_operator_ex_o,
     output logic  [1:0] mult_signed_mode_ex_o,
     output logic [31:0] mult_operand_a_ex_o,
     output logic [31:0] mult_operand_b_ex_o,
@@ -227,7 +227,7 @@ module zeroriscy_id_stage
 
   // Multiplier Control
   logic        mult_int_en;      // use integer multiplier
-  logic        mult_operator;
+  logic [1:0]  mult_operator;
   logic [1:0]  mult_signed_mode;
 
   // Data Memory Control

@@ -57,7 +57,7 @@ module zeroriscy_decoder
 
   // MUL related control signals
   output logic        mult_int_en_o,           // perform integer multiplication
-  output logic        mult_operator_o,
+  output logic [1:0]  mult_operator_o,
   output logic [1:0]  mult_signed_mode_o,
   // register file related signals
   output logic        regfile_we_o,            // write enable for regfile
@@ -423,16 +423,28 @@ module zeroriscy_decoder
                 mult_signed_mode_o = 2'b00;
             end
             {6'b00_0001, 3'b100}: begin // div
-              alu_operator_o     = ALU_DIV;
+              alu_operator_o     = ALU_ADD;
+              mult_operator_o    = DIV;
+              mult_int_en        = 1'b1;
+              mult_signed_mode_o = 2'b11;
             end
             {6'b00_0001, 3'b101}: begin // divu
-              alu_operator_o     = ALU_DIVU;
+              alu_operator_o     = ALU_ADD;
+              mult_operator_o    = DIV;
+              mult_int_en        = 1'b1;
+              mult_signed_mode_o = 2'b00;
             end
             {6'b00_0001, 3'b110}: begin // rem
-              alu_operator_o     = ALU_REM;
+              alu_operator_o     = ALU_ADD;
+              mult_operator_o    = REM;
+              mult_int_en        = 1'b1;
+              mult_signed_mode_o = 2'b11;
             end
             {6'b00_0001, 3'b111}: begin // remu
-              alu_operator_o     = ALU_REMU;
+              alu_operator_o     = ALU_ADD;
+              mult_operator_o    = REM;
+              mult_int_en        = 1'b1;
+              mult_signed_mode_o = 2'b00;
             end
             default: begin
               illegal_insn_o = 1'b1;
