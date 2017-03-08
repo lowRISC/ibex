@@ -136,11 +136,11 @@ module zeroriscy_core
   logic [31:0] regfile_wdata_ex;
 
   // Multiplier Control
-  logic        mult_en_ex;
-  logic [1:0]  mult_operator_ex;
-  logic [1:0]  mult_signed_mode_ex;
-  logic [31:0] mult_operand_a_ex;
-  logic [31:0] mult_operand_b_ex;
+  logic        multdiv_en_ex;
+  logic [1:0]  multdiv_operator_ex;
+  logic [1:0]  multdiv_signed_mode_ex;
+  logic [31:0] multdiv_operand_a_ex;
+  logic [31:0] multdiv_operand_b_ex;
 
   // CSR control
   logic        csr_access_ex;
@@ -388,11 +388,11 @@ module zeroriscy_core
     .alu_operand_a_ex_o           ( alu_operand_a_ex     ),
     .alu_operand_b_ex_o           ( alu_operand_b_ex     ),
 
-    .mult_en_ex_o                 ( mult_en_ex           ),
-    .mult_operator_ex_o           ( mult_operator_ex     ),
-    .mult_signed_mode_ex_o        ( mult_signed_mode_ex  ),
-    .mult_operand_a_ex_o          ( mult_operand_a_ex    ),
-    .mult_operand_b_ex_o          ( mult_operand_b_ex    ),
+    .multdiv_en_ex_o              ( multdiv_en_ex          ),
+    .multdiv_operator_ex_o        ( multdiv_operator_ex    ),
+    .multdiv_signed_mode_ex_o     ( multdiv_signed_mode_ex ),
+    .multdiv_operand_a_ex_o       ( multdiv_operand_a_ex   ),
+    .multdiv_operand_b_ex_o       ( multdiv_operand_b_ex   ),
 
     // CSR ID/EX
     .csr_access_ex_o              ( csr_access_ex        ),
@@ -460,15 +460,15 @@ module zeroriscy_core
     // Alu signals from ID stage
     //TODO: hot encoding
     .alu_operator_i             ( alu_operator_ex       ),
-    .mult_operator_i            ( mult_operator_ex      ),
+    .multdiv_operator_i         ( multdiv_operator_ex   ),
     .alu_operand_a_i            ( alu_operand_a_ex      ),
     .alu_operand_b_i            ( alu_operand_b_ex      ),
 
     // Multipler
-    .mult_en_i                  ( mult_en_ex            ),
-    .mult_signed_mode_i         ( mult_signed_mode_ex   ),
-    .mult_operand_a_i           ( mult_operand_a_ex     ),
-    .mult_operand_b_i           ( mult_operand_b_ex     ),
+    .multdiv_en_i               ( multdiv_en_ex         ),
+    .multdiv_signed_mode_i      ( multdiv_signed_mode_ex),
+    .multdiv_operand_a_i        ( multdiv_operand_a_ex  ),
+    .multdiv_operand_b_i        ( multdiv_operand_b_ex  ),
     .alu_adder_result_ex_o      ( alu_adder_result_ex   ), // from ALU to LSU
     .regfile_wdata_ex_o         ( regfile_wdata_ex      ),
 

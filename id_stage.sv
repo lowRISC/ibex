@@ -90,11 +90,11 @@ module zeroriscy_id_stage
     output logic [31:0] alu_operand_b_ex_o,
 
     // MUL
-    output logic        mult_en_ex_o,
-    output logic  [1:0] mult_operator_ex_o,
-    output logic  [1:0] mult_signed_mode_ex_o,
-    output logic [31:0] mult_operand_a_ex_o,
-    output logic [31:0] mult_operand_b_ex_o,
+    output logic        multdiv_en_ex_o,
+    output logic  [1:0] multdiv_operator_ex_o,
+    output logic  [1:0] multdiv_signed_mode_ex_o,
+    output logic [31:0] multdiv_operand_a_ex_o,
+    output logic [31:0] multdiv_operand_b_ex_o,
 
     // CSR ID
     output logic        csr_access_ex_o,
@@ -176,7 +176,7 @@ module zeroriscy_id_stage
 
   logic        instr_multicyle;
   logic        load_stall;
-  logic        mult_stall;
+  logic        multdiv_stall;
   logic        branch_stall;
   logic        jump_stall;
 
@@ -226,9 +226,9 @@ module zeroriscy_id_stage
   logic [3:0]  imm_b_mux_sel;
 
   // Multiplier Control
-  logic        mult_int_en;      // use integer multiplier
-  logic [1:0]  mult_operator;
-  logic [1:0]  mult_signed_mode;
+  logic        multdiv_int_en;      // use integer multiplier
+  logic [1:0]  multdiv_operator;
+  logic [1:0]  multdiv_signed_mode;
 
   // Data Memory Control
   logic        data_we_id;
@@ -460,9 +460,9 @@ module zeroriscy_id_stage
     .imm_a_mux_sel_o                 ( imm_a_mux_sel             ),
     .imm_b_mux_sel_o                 ( imm_b_mux_sel             ),
 
-    .mult_int_en_o                   ( mult_int_en               ),
-    .mult_operator_o                 ( mult_operator             ),
-    .mult_signed_mode_o              ( mult_signed_mode          ),
+    .multdiv_int_en_o                ( multdiv_int_en            ),
+    .multdiv_operator_o              ( multdiv_operator          ),
+    .multdiv_signed_mode_o           ( multdiv_signed_mode       ),
     // Register file control signals
     .regfile_we_o                    ( regfile_we_id             ),
 
@@ -635,11 +635,11 @@ module zeroriscy_id_stage
 
   assign branch_in_ex_o              = branch_in_id;
 
-  assign mult_en_ex_o                = mult_int_en;
-  assign mult_operator_ex_o          = mult_operator;
-  assign mult_signed_mode_ex_o       = mult_signed_mode;
-  assign mult_operand_a_ex_o         = regfile_data_ra_id;
-  assign mult_operand_b_ex_o         = regfile_data_rb_id;
+  assign multdiv_en_ex_o             = multdiv_int_en;
+  assign multdiv_operator_ex_o       = multdiv_operator;
+  assign multdiv_signed_mode_ex_o    = multdiv_signed_mode;
+  assign multdiv_operand_a_ex_o      = regfile_data_ra_id;
+  assign multdiv_operand_b_ex_o      = regfile_data_rb_id;
 
   enum logic { IDLE, WAIT_MULTICYCLE } id_wb_fsm_cs, id_wb_fsm_ns;
 
@@ -668,7 +668,7 @@ module zeroriscy_id_stage
     id_wb_fsm_ns    = id_wb_fsm_cs;
     regfile_we      = regfile_we_id & (~halt_id);
     load_stall      = 1'b0;
-    mult_stall      = 1'b0;
+    multdiv_stall   = 1'b0;
     jump_stall      = 1'b0;
     branch_stall    = 1'b0;
     select_data_rf  = RF_EX;
@@ -694,11 +694,11 @@ module zeroriscy_id_stage
             branch_stall    = branch_decision_i;
             instr_multicyle = branch_decision_i;
           end
-          mult_int_en: begin
+          multdiv_int_en: begin
             //MUL operation
             regfile_we      = 1'b0;
             id_wb_fsm_ns    = WAIT_MULTICYCLE;
-            mult_stall      = 1'b1;
+            multdiv_stall   = 1'b1;
             instr_multicyle = 1'b1;
           end
           jump_in_id: begin
@@ -720,7 +720,7 @@ module zeroriscy_id_stage
           regfile_we     = regfile_we_id;
           id_wb_fsm_ns   = IDLE;
           load_stall     = 1'b0;
-          mult_stall     = 1'b0;
+          multdiv_stall  = 1'b0;
           select_data_rf = data_req_id ? RF_LSU : RF_EX;
         end else begin
           regfile_we     = 1'b0;
@@ -728,8 +728,8 @@ module zeroriscy_id_stage
           unique case (1'b1)
             data_req_id:
               load_stall    = 1'b1;
-            mult_int_en:
-              mult_stall    = 1'b1;
+            multdiv_int_en:
+              multdiv_stall = 1'b1;
             default:;
           endcase
         end
@@ -740,7 +740,7 @@ module zeroriscy_id_stage
   end
 
   // stall control
-  assign id_ready_o = (~load_stall) & (~branch_stall) & (~jump_stall) & (~mult_stall);
+  assign id_ready_o = (~load_stall) & (~branch_stall) & (~jump_stall) & (~multdiv_stall);
   
   assign id_valid_o = (~halt_id) & id_ready_o;
 
@@ -764,6 +764,6 @@ module zeroriscy_id_stage
 
   // make sure multicycles enable signals are unique
   assert property (
-    @(posedge clk) ~(data_req_ex_o & mult_int_en )) else $display("Multicycles enable signals are not unique");
+    @(posedge clk) ~(data_req_ex_o & multdiv_int_en )) else $display("Multicycles enable signals are not unique");
 
 endmodule

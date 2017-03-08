@@ -34,10 +34,10 @@ module zeroriscy_alu
   input  logic [31:0]              operand_a_i,
   input  logic [31:0]              operand_b_i,
 
-  input  logic [32:0]              mult_operand_a_i,
-  input  logic [32:0]              mult_operand_b_i,
+  input  logic [32:0]              multdiv_operand_a_i,
+  input  logic [32:0]              multdiv_operand_b_i,
 
-  input  logic                     mult_en_i,
+  input  logic                     multdiv_en_i,
 
   output logic [31:0]              adder_result_o,
   output logic [33:0]              adder_result_ext_o,
@@ -95,14 +95,14 @@ module zeroriscy_alu
   end
 
   // prepare operand a
-  assign adder_in_a = mult_en_i ? mult_operand_a_i : {operand_a_i,1'b1};
+  assign adder_in_a    = multdiv_en_i ? multdiv_operand_a_i : {operand_a_i,1'b1};
 
   // prepare operand b
-  assign adder_in_b    = {operand_b_i,1'b0};
-  assign operand_b_neg = mult_en_i ? mult_operand_b_i : adder_in_b ^ {33{adder_op_b_negate}};
+  assign operand_b_neg = {operand_b_i,1'b0} ^ {33{adder_op_b_negate}};
+  assign adder_in_b    = multdiv_en_i ? multdiv_operand_b_i : operand_b_neg ;
 
   // actual adder
-  assign adder_result_ext_o = $unsigned(adder_in_a) + $unsigned(operand_b_neg);
+  assign adder_result_ext_o = $unsigned(adder_in_a) + $unsigned(adder_in_b);
 
   assign adder_result       = adder_result_ext_o[32:1];
   

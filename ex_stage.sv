@@ -40,15 +40,15 @@ module zeroriscy_ex_block
 
   // ALU signals from ID stage
   input  logic [ALU_OP_WIDTH-1:0] alu_operator_i,
-  input  logic [1:0]              mult_operator_i,
-  input  logic                    mult_en_i,
+  input  logic [1:0]              multdiv_operator_i,
+  input  logic                    multdiv_en_i,
 
   input  logic [31:0]             alu_operand_a_i,
   input  logic [31:0]             alu_operand_b_i,
 
-  input  logic  [1:0]             mult_signed_mode_i,
-  input  logic [31:0]             mult_operand_a_i,
-  input  logic [31:0]             mult_operand_b_i,
+  input  logic  [1:0]             multdiv_signed_mode_i,
+  input  logic [31:0]             multdiv_operand_a_i,
+  input  logic [31:0]             multdiv_operand_b_i,
 
   output logic [31:0]             alu_adder_result_ex_o,
   output logic [31:0]             regfile_wdata_ex_o,
@@ -66,18 +66,18 @@ module zeroriscy_ex_block
 
   localparam MULT_TYPE = 0; //0 is SLOW
 
-  logic [31:0] alu_result, mult_result;
+  logic [31:0] alu_result, multdiv_result;
 
-  logic [32:0] mult_alu_operand_a_sel, mult_alu_operand_b_sel, mult_alu_operand_a, mult_alu_operand_b;
+  logic [32:0] multdiv_alu_operand_a_sel, multdiv_alu_operand_b_sel, multdiv_alu_operand_a, multdiv_alu_operand_b;
   logic [33:0] alu_adder_result_ext;
   logic        alu_cmp_result, alu_is_equal_result;
-  logic        mult_ready, mult_en_sel;
+  logic        multdiv_ready, multdiv_en_sel;
 
-  assign mult_en_sel            = MULT_TYPE == 0 ? mult_en_i : 1'b0;
-  assign mult_alu_operand_a_sel = MULT_TYPE == 0 ? mult_alu_operand_a : alu_operand_a_i;
-  assign mult_alu_operand_b_sel = MULT_TYPE == 0 ? mult_alu_operand_b : alu_operand_b_i;
+  assign multdiv_en_sel            = MULT_TYPE == 0 ? multdiv_en_i          : 1'b0;
+  assign multdiv_alu_operand_a_sel = MULT_TYPE == 0 ? multdiv_alu_operand_a : alu_operand_a_i;
+  assign multdiv_alu_operand_b_sel = MULT_TYPE == 0 ? multdiv_alu_operand_b : alu_operand_b_i;
 
-  assign regfile_wdata_ex_o = mult_en_i ? mult_result : alu_result;
+  assign regfile_wdata_ex_o = multdiv_en_i ? multdiv_result : alu_result;
 
   // branch handling
   assign branch_decision_o  = alu_cmp_result;
@@ -94,57 +94,57 @@ module zeroriscy_ex_block
 
   zeroriscy_alu alu_i
   (
-    .operator_i          ( alu_operator_i         ),
-    .operand_a_i         ( alu_operand_a_i        ),
-    .operand_b_i         ( alu_operand_b_i        ),
-    .mult_operand_a_i    ( mult_alu_operand_a_sel ),
-    .mult_operand_b_i    ( mult_alu_operand_b_sel ),
-    .mult_en_i           ( mult_en_sel            ),
-    .adder_result_o      ( alu_adder_result_ex_o  ),
-    .adder_result_ext_o  ( alu_adder_result_ext   ),
-    .result_o            ( alu_result             ),
-    .comparison_result_o ( alu_cmp_result         ),
-    .is_equal_result_o   ( alu_is_equal_result    )
+    .operator_i          ( alu_operator_i            ),
+    .operand_a_i         ( alu_operand_a_i           ),
+    .operand_b_i         ( alu_operand_b_i           ),
+    .multdiv_operand_a_i ( multdiv_alu_operand_a_sel ),
+    .multdiv_operand_b_i ( multdiv_alu_operand_b_sel ),
+    .multdiv_en_i        ( multdiv_en_sel            ),
+    .adder_result_o      ( alu_adder_result_ex_o     ),
+    .adder_result_ext_o  ( alu_adder_result_ext      ),
+    .result_o            ( alu_result                ),
+    .comparison_result_o ( alu_cmp_result            ),
+    .is_equal_result_o   ( alu_is_equal_result       )
   );
 
-  if (MULT_TYPE == 0) begin : mult_slow
-    zeroriscy_mult_slow mult_i
+  if (MULT_TYPE == 0) begin : multdiv_slow
+    zeroriscy_multdiv_slow multdiv_i
     (
-     .clk             ( clk                   ),
-     .rst_n           ( rst_n                 ),
-     .mult_en_i       ( mult_en_i             ),
-     .operator_i      ( mult_operator_i       ),
-     .signed_mode_i   ( mult_signed_mode_i    ),
-     .op_a_i          ( mult_operand_a_i      ),
-     .op_b_i          ( mult_operand_b_i      ),
-     .alu_adder_ext_i ( alu_adder_result_ext  ),
-     .alu_adder_i     ( alu_adder_result_ex_o ),
-     .equal_to_zero   ( alu_is_equal_result   ),
-     .ready_o         ( mult_ready            ),
-     .alu_operand_a_o ( mult_alu_operand_a    ),
-     .alu_operand_b_o ( mult_alu_operand_b    ),
-     .mult_result_o   ( mult_result           )
+     .clk                ( clk                   ),
+     .rst_n              ( rst_n                 ),
+     .multdiv_en_i       ( multdiv_en_i          ),
+     .operator_i         ( multdiv_operator_i    ),
+     .signed_mode_i      ( multdiv_signed_mode_i ),
+     .op_a_i             ( multdiv_operand_a_i   ),
+     .op_b_i             ( multdiv_operand_b_i   ),
+     .alu_adder_ext_i    ( alu_adder_result_ext  ),
+     .alu_adder_i        ( alu_adder_result_ex_o ),
+     .equal_to_zero      ( alu_is_equal_result   ),
+     .ready_o            ( multdiv_ready         ),
+     .alu_operand_a_o    ( multdiv_alu_operand_a ),
+     .alu_operand_b_o    ( multdiv_alu_operand_b ),
+     .multdiv_result_o   ( multdiv_result        )
     );
   end else begin: mult_fast
     zeroriscy_mult_fast mult_i
      (
-     .clk             ( clk                   ),
-     .rst_n           ( rst_n                 ),
-     .mult_en_i       ( mult_en_i             ),
-     .operator_i      ( mult_operator_i       ),
-     .signed_mode_i   ( mult_signed_mode_i    ),
-     .op_a_i          ( mult_operand_a_i      ),
-     .op_b_i          ( mult_operand_b_i      ),
-     .ready_o         ( mult_ready            ),
-     .mult_result_o   ( mult_result           )
+     .clk                ( clk                   ),
+     .rst_n              ( rst_n                 ),
+     .multdiv_en_i       ( multdiv_en_i          ),
+     .operator_i         ( multdiv_operator_i    ),
+     .signed_mode_i      ( multdiv_signed_mode_i ),
+     .op_a_i             ( multdiv_operand_a_i   ),
+     .op_b_i             ( multdiv_operand_b_i   ),
+     .ready_o            ( multdiv_ready         ),
+     .multdiv_result_o   ( multdiv_result        )
     );
   end
 
   always_comb
   begin
       unique case (1'b1)
-        mult_en_i:
-          ex_ready_o = mult_ready;
+        multdiv_en_i:
+          ex_ready_o = multdiv_ready;
         lsu_en_i:
           ex_ready_o = lsu_ready_ex_i;
         default:

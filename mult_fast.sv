@@ -102,10 +102,10 @@ module zeroriscy_mult_fast
           //result of AL*BL (in mac_res_q) always unsigned with no carry, so carries_q always 00
           accum     = {18'b0,mac_res_q[31:16]};
           unique case(operator_i)
-            MUL_L: begin
+            MD_OP_MULL: begin
               mac_res_n = {2'b0,mac_res[`OP_L],mac_res_q[`OP_L]};
             end
-            MUL_H: begin
+            MD_OP_MULH: begin
               mac_res_n = mac_res;
             end
           endcase
@@ -120,12 +120,12 @@ module zeroriscy_mult_fast
           sign_a    = signed_mode_i[0] & op_a_i[31];
           sign_b    = 1'b0;
           unique case(operator_i)
-            MUL_L: begin
+            MD_OP_MULL: begin
               accum        = {18'b0,mac_res_q[31:16]};
               mac_res_n    = {2'b0,mac_res[15:0],mac_res_q[15:0]};
               mult_state_n = FINISH;
             end
-            MUL_H: begin
+            MD_OP_MULH: begin
               accum        = mac_res_q;
               mac_res_n    = mac_res;
               mult_state_n = AHBH;
@@ -134,7 +134,7 @@ module zeroriscy_mult_fast
         end
 
         AHBH: begin
-        //only MUL_H here
+        //only MD_OP_MULH here
           //ah*bh
           mult_op_a = op_a_i[`OP_H];
           mult_op_b = op_b_i[`OP_H];

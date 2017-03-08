@@ -16,7 +16,7 @@ zeroriscy:
     id_stage.sv,
     if_stage.sv,
     load_store_unit.sv,
-    mult_slow.sv,
+    multdiv_slow.sv,
     mult_fast.sv,
     prefetch_buffer.sv,
     zeroriscy_core.sv,

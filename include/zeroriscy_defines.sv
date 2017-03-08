@@ -153,10 +153,10 @@ parameter ALU_PCKLO = 6'b111000;
 parameter ALU_PCKHI = 6'b111001;
 
 
-parameter MUL_L     = 2'b00;
-parameter MUL_H     = 2'b01;
-parameter DIV       = 2'b10;
-parameter REM       = 2'b11;
+parameter MD_OP_MULL  = 2'b00;
+parameter MD_OP_MULH  = 2'b01;
+parameter MD_OP_DIV   = 2'b10;
+parameter MD_OP_REM   = 2'b11;
 
 // vector modes
 parameter VEC_MODE32 = 2'b00;

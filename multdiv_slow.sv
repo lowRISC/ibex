@@ -43,7 +43,7 @@ module zeroriscy_multdiv_slow
   output logic        ready_o
 );
 
-  logic [ 4:0] mult_state_q, mult_state_n;
+  logic [ 4:0] multdiv_state_q, multdiv_state_n;
   enum logic [2:0] { MD_IDLE, MD_ABS_A, MD_ABS_B, MD_COMP, MD_LAST, MD_CHANGE_SIGN, MD_FINISH } curr_state_q;
 
   logic [32:0] accum_window_q;
@@ -126,7 +126,7 @@ module zeroriscy_multdiv_slow
      The adder in the ALU computes alu_operand_a_o + alu_operand_b_o which means
      Reminder - Divisor. If Reminder - Divisor >= 0, is_greater_equal is equal to 1,
      the next Reminder is Reminder - Divisor contained in res_adder_h and the
-     Quotient mult_state_q-th bit is set to 1 using the shift register op_b_shift_q.
+     Quotient multdiv_state_q-th bit is set to 1 using the shift register op_b_shift_q.
      The
   */
 
@@ -138,7 +138,7 @@ module zeroriscy_multdiv_slow
       is_greater_equal = accum_window_q[31];
   end
 
-  assign one_shift     = {32'b0, 1'b1} << mult_state_q;
+  assign one_shift     = {32'b0, 1'b1} << multdiv_state_q;
 
   assign next_reminder = is_greater_equal ? res_adder_h                   : op_remainder;
   assign next_quotient = is_greater_equal ? op_a_shift_q | one_shift      : op_a_shift_q;
@@ -159,13 +159,13 @@ module zeroriscy_multdiv_slow
   //division
   assign op_remainder = accum_window_q[32:0];
 
-  assign mult_state_n     = mult_state_q - 1;
+  assign multdiv_state_n     = multdiv_state_q - 1;
   assign div_change_sign  = sign_a ^ sign_b;
   assign rem_change_sign  = sign_a;
 
-  always_ff @(posedge clk or negedge rst_n) begin : proc_mult_state_q
+  always_ff @(posedge clk or negedge rst_n) begin : proc_multdiv_state_q
     if(~rst_n) begin
-      mult_state_q     <= '0;
+      multdiv_state_q     <= '0;
       accum_window_q   <= '0;
       op_b_shift_q     <= '0;
       op_a_shift_q     <= '0;
@@ -202,7 +202,7 @@ module zeroriscy_multdiv_slow
                         curr_state_q   <= equal_to_zero ? MD_FINISH : MD_ABS_A;
                       end
                     endcase
-                    mult_state_q   <= 5'd31;
+                    multdiv_state_q   <= 5'd31;
                 end
 
                 MD_ABS_A: begin
@@ -223,7 +223,7 @@ module zeroriscy_multdiv_slow
 
                 MD_COMP: begin
 
-                    mult_state_q   <= mult_state_n;
+                    multdiv_state_q   <= multdiv_state_n;
 
                     unique case(operator_i)
                       MD_OP_MULL: begin
@@ -237,12 +237,12 @@ module zeroriscy_multdiv_slow
                         op_b_shift_q   <= op_b_shift_q >> 1;
                       end
                       default: begin
-                        accum_window_q <= {next_reminder[31:0], op_numerator_q[mult_state_n]};
+                        accum_window_q <= {next_reminder[31:0], op_numerator_q[multdiv_state_n]};
                         op_a_shift_q   <= next_quotient;
                       end
                     endcase
 
-                    if(mult_state_q == 5'd1)
+                    if(multdiv_state_q == 5'd1)
                         curr_state_q <= MD_LAST;
                     else
                         curr_state_q <= MD_COMP;
