@@ -688,14 +688,15 @@ module zeroriscy_core
     .compressed     ( id_stage_i.is_compressed_i           ),
     .id_valid       ( id_stage_i.id_valid_o                ),
     .is_decoding    ( id_stage_i.is_decoding_o             ),
+    .is_branch      ( id_stage_i.branch_in_id              ),
+    .branch_taken   ( id_stage_i.branch_set                ),
     .pipe_flush     ( id_stage_i.controller_i.pipe_flush_i ),
 
     .rs1_value      ( id_stage_i.operand_a_fw_id           ),
     .rs2_value      ( id_stage_i.operand_b_fw_id           ),
-    .rs3_value      ( data_wdata_ex                        ),
-    .rs2_value_vec  ( id_stage_i.alu_operand_b             ),
 
-    .ex_valid       (                                      ),
+    .lsu_value      ( data_wdata_ex                        ),
+
     .ex_reg_addr    ( id_stage_i.regfile_waddr_mux         ),
     .ex_reg_we      ( id_stage_i.regfile_we_mux            ),
     .ex_reg_wdata   ( id_stage_i.regfile_wdata_mux         ),
@@ -704,15 +705,10 @@ module zeroriscy_core
     .ex_data_req    ( data_req_o                           ),
     .ex_data_gnt    ( data_gnt_i                           ),
     .ex_data_we     ( data_we_o                            ),
-    // use id_stage_i.regfile_wdata_mux
+
     .ex_data_wdata  ( data_wdata_o                         ),
 
-    .wb_bypass      ( branch_in_ex_o                       ),
-
-    .wb_valid       (                                      ),
-    .wb_reg_addr    (                                      ),
-    .wb_reg_we      (                                      ),
-    .wb_reg_wdata   ( regfile_wdata_lsu                    ),
+    .lsu_reg_wdata  ( regfile_wdata_lsu                    ),
 
     .imm_u_type     ( id_stage_i.imm_u_type                ),
     .imm_uj_type    ( id_stage_i.imm_uj_type               ),
@@ -720,12 +716,7 @@ module zeroriscy_core
     .imm_iz_type    ( id_stage_i.imm_iz_type[11:0]         ),
     .imm_z_type     ( id_stage_i.imm_z_type                ),
     .imm_s_type     ( id_stage_i.imm_s_type                ),
-    .imm_sb_type    ( id_stage_i.imm_sb_type               ),
-    .imm_s2_type    ( id_stage_i.imm_s2_type               ),
-    .imm_s3_type    ( id_stage_i.imm_s3_type               ),
-    .imm_vs_type    ( id_stage_i.imm_vs_type               ),
-    .imm_vu_type    ( id_stage_i.imm_vu_type               ),
-    .imm_clip_type  ( id_stage_i.instr_rdata_i[11:7]       )
+    .imm_sb_type    ( id_stage_i.imm_sb_type               )
   );
 `endif
 

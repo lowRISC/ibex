@@ -368,7 +368,7 @@ module zeroriscy_id_stage
     end
 
   assign alu_operand_b   = operand_b;
-  assign operand_b_fw_id = operand_b;
+  assign operand_b_fw_id = regfile_data_rb_id;
 
   /////////////////////////////////////////////////////////
   //  ____  _____ ____ ___ ____ _____ _____ ____  ____   //
