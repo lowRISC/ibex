@@ -29,7 +29,7 @@
 
 module zeroriscy_register_file
 #(
-  parameter ADDR_WIDTH    = 5,
+  parameter RV32E         = 0,
   parameter DATA_WIDTH    = 32
 )
 (
@@ -40,22 +40,24 @@ module zeroriscy_register_file
   input  logic                   test_en_i,
 
   //Read port R1
-  input  logic [ADDR_WIDTH-1:0]  raddr_a_i,
+  input  logic [4:0]             raddr_a_i,
   output logic [DATA_WIDTH-1:0]  rdata_a_o,
 
   //Read port R2
-  input  logic [ADDR_WIDTH-1:0]  raddr_b_i,
+  input  logic [4:0]             raddr_b_i,
   output logic [DATA_WIDTH-1:0]  rdata_b_o,
 
 
   // Write port W1
-  input  logic [ADDR_WIDTH-1:0]   waddr_a_i,
+  input  logic [4:0]              waddr_a_i,
   input  logic [DATA_WIDTH-1:0]   wdata_a_i,
   input  logic                    we_a_i
 
 );
 
-  localparam    NUM_WORDS = 2**ADDR_WIDTH;
+
+  localparam    ADDR_WIDTH = RV32E ? 4 : 5;;
+  localparam    NUM_WORDS  = 2**ADDR_WIDTH;
 
   logic [DATA_WIDTH-1:0]      mem[NUM_WORDS];
 
@@ -63,6 +65,15 @@ module zeroriscy_register_file
 
   logic [NUM_WORDS-1:1]       mem_clocks;
   logic [DATA_WIDTH-1:0]      wdata_a_q;
+
+
+  // Write port W1
+  logic [ADDR_WIDTH-1:0]     raddr_a_int, raddr_b_int, waddr_a_int;
+
+  assign raddr_a_int = raddr_a_i[ADDR_WIDTH-1:0];
+  assign raddr_b_int = raddr_b_i[ADDR_WIDTH-1:0];
+  assign waddr_a_int = waddr_a_i[ADDR_WIDTH-1:0];
+
 
   logic clk_int;
 
@@ -75,8 +86,8 @@ module zeroriscy_register_file
   //-----------------------------------------------------------------------------
   //-- READ : Read address decoder RAD
   //-----------------------------------------------------------------------------
-  assign rdata_a_o = mem[raddr_a_i];
-  assign rdata_b_o = mem[raddr_b_i];
+  assign rdata_a_o = mem[raddr_a_int];
+  assign rdata_b_o = mem[raddr_b_int];
 
   //-----------------------------------------------------------------------------
   // WRITE : SAMPLE INPUT DATA
@@ -108,7 +119,7 @@ module zeroriscy_register_file
   begin : p_WADa
     for(i = 1; i < NUM_WORDS; i++)
     begin : p_WordItera
-      if ( (we_a_i == 1'b1 ) && (waddr_a_i == i) )
+      if ( (we_a_i == 1'b1 ) && (waddr_a_int == i) )
         waddr_onehot_a[i] = 1'b1;
       else
         waddr_onehot_a[i] = 1'b0;
@@ -153,5 +164,10 @@ module zeroriscy_register_file
     end
   end
 
+if(RV32E) begin
+  // make sure no reg x16...x31 are accessed
+  assert property (
+    @(posedge clk) ~(raddr_a_i[4] | raddr_b_i[4] | waddr_a_int[4])) else $display("Access to x16....x31 registers!");
+end
 
 endmodule

@@ -55,8 +55,9 @@ module zeroriscy_decoder
   output logic [0:0]  imm_a_mux_sel_o,         // immediate selection for operand a
   output logic [3:0]  imm_b_mux_sel_o,         // immediate selection for operand b
 
-  // MUL related control signals
-  output logic        multdiv_int_en_o,        // perform integer multiplication
+  // MUL, DIV related control signals
+  output logic        mult_int_en_o,          // perform integer multiplication
+  output logic        div_int_en_o,           // perform integer division or reminder
   output logic [1:0]  multdiv_operator_o,
   output logic [1:0]  multdiv_signed_mode_o,
   // register file related signals
@@ -88,7 +89,8 @@ module zeroriscy_decoder
   logic       mret_insn;
   logic       pipe_flush;
 
-  logic       multdiv_int_en;
+  logic       mult_int_en;
+  logic       div_int_en;
   logic       branch_in_id;
   logic       jump_in_id;
 
@@ -115,7 +117,8 @@ module zeroriscy_decoder
     imm_a_mux_sel_o             = IMMA_ZERO;
     imm_b_mux_sel_o             = IMMB_I;
 
-    multdiv_int_en              = 1'b0;
+    mult_int_en                 = 1'b0;
+    div_int_en                  = 1'b0;
     multdiv_operator_o          = MD_OP_MULL;
     multdiv_signed_mode_o       = 2'b00;
 
@@ -401,49 +404,49 @@ module zeroriscy_decoder
             {6'b00_0001, 3'b000}: begin // mul
                 alu_operator_o        = ALU_ADD;
                 multdiv_operator_o    = MD_OP_MULL;
-                multdiv_int_en        = 1'b1;
+                mult_int_en           = 1'b1;
                 multdiv_signed_mode_o = 2'b00;
             end
             {6'b00_0001, 3'b001}: begin // mulh
                 alu_operator_o        = ALU_ADD;
                 multdiv_operator_o    = MD_OP_MULH;
-                multdiv_int_en        = 1'b1;
+                mult_int_en           = 1'b1;
                 multdiv_signed_mode_o = 2'b11;
             end
             {6'b00_0001, 3'b010}: begin // mulhsu
                 alu_operator_o        = ALU_ADD;
                 multdiv_operator_o    = MD_OP_MULH;
-                multdiv_int_en        = 1'b1;
+                mult_int_en           = 1'b1;
                 multdiv_signed_mode_o = 2'b01;
             end
             {6'b00_0001, 3'b011}: begin // mulhu
                 alu_operator_o        = ALU_ADD;
                 multdiv_operator_o    = MD_OP_MULH;
-                multdiv_int_en        = 1'b1;
+                mult_int_en           = 1'b1;
                 multdiv_signed_mode_o = 2'b00;
             end
             {6'b00_0001, 3'b100}: begin // div
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_DIV;
-              multdiv_int_en        = 1'b1;
+              div_int_en            = 1'b1;
               multdiv_signed_mode_o = 2'b11;
             end
             {6'b00_0001, 3'b101}: begin // divu
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_DIV;
-              multdiv_int_en        = 1'b1;
+              div_int_en            = 1'b1;
               multdiv_signed_mode_o = 2'b00;
             end
             {6'b00_0001, 3'b110}: begin // rem
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_REM;
-              multdiv_int_en        = 1'b1;
+              div_int_en            = 1'b1;
               multdiv_signed_mode_o = 2'b11;
             end
             {6'b00_0001, 3'b111}: begin // remu
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_REM;
-              multdiv_int_en        = 1'b1;
+              div_int_en            = 1'b1;
               multdiv_signed_mode_o = 2'b00;
             end
             default: begin
@@ -559,7 +562,8 @@ module zeroriscy_decoder
 
   // deassert we signals (in case of stalls)
   assign regfile_we_o      = (deassert_we_i) ? 1'b0          : regfile_we;
-  assign multdiv_int_en_o  = (deassert_we_i) ? 1'b0          : multdiv_int_en;
+  assign mult_int_en_o     = (deassert_we_i) ? 1'b0          : mult_int_en;
+  assign div_int_en_o      = (deassert_we_i) ? 1'b0          : div_int_en;
   assign data_req_o        = (deassert_we_i) ? 1'b0          : data_req;
   assign csr_op_o          = (deassert_we_i) ? CSR_OP_NONE   : csr_op;
   assign jump_in_id_o      = (deassert_we_i) ? 1'b0          : jump_in_id;

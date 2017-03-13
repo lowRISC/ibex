@@ -106,7 +106,7 @@ module zeroriscy_multdiv_slow
             alu_operand_b_o     = {~op_b_i, 1'b1};
           end
           MD_CHANGE_SIGN: begin
-            //ABS(Quotient) = 0 - Quotient
+            //ABS(Quotient) = 0 - Quotient (or Reminder)
             alu_operand_a_o     = {32'h0  , 1'b1};
             alu_operand_b_o     = {~accum_window_q[31:0], 1'b1};
           end
@@ -274,10 +274,12 @@ module zeroriscy_multdiv_slow
 
                 MD_CHANGE_SIGN: begin
                     curr_state_q   <= MD_FINISH;
-                    if(operator_i == MD_OP_DIV)
-                      accum_window_q <= (div_change_sign) ? alu_adder_i : accum_window_q;
-                    else
-                      accum_window_q <= (rem_change_sign) ? alu_adder_i : accum_window_q;
+                    unique case(operator_i)
+                      MD_OP_DIV:
+                        accum_window_q <= (div_change_sign) ? alu_adder_i : accum_window_q;
+                      default:
+                        accum_window_q <= (rem_change_sign) ? alu_adder_i : accum_window_q;
+                    endcase
                end
 
                 MD_FINISH: begin

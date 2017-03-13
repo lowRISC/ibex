@@ -41,7 +41,8 @@ module zeroriscy_ex_block
   // ALU signals from ID stage
   input  logic [ALU_OP_WIDTH-1:0] alu_operator_i,
   input  logic [1:0]              multdiv_operator_i,
-  input  logic                    multdiv_en_i,
+  input  logic                    mult_en_i,
+  input  logic                    div_en_i,
 
   input  logic [31:0]             alu_operand_a_i,
   input  logic [31:0]             alu_operand_b_i,
@@ -68,16 +69,16 @@ module zeroriscy_ex_block
 
   logic [31:0] alu_result, multdiv_result;
 
-  logic [32:0] multdiv_alu_operand_a_sel, multdiv_alu_operand_b_sel, multdiv_alu_operand_a, multdiv_alu_operand_b;
+  logic [32:0] multdiv_alu_operand_b, multdiv_alu_operand_a;
   logic [33:0] alu_adder_result_ext;
   logic        alu_cmp_result, alu_is_equal_result;
   logic        multdiv_ready, multdiv_en_sel;
+  logic        multdiv_en;
 
-  assign multdiv_en_sel            = MULT_TYPE == 0 ? multdiv_en_i          : 1'b0;
-  assign multdiv_alu_operand_a_sel = MULT_TYPE == 0 ? multdiv_alu_operand_a : alu_operand_a_i;
-  assign multdiv_alu_operand_b_sel = MULT_TYPE == 0 ? multdiv_alu_operand_b : alu_operand_b_i;
+  assign multdiv_en_sel     = MULT_TYPE == 0 ? mult_en_i | div_en_i : div_en_i;
 
-  assign regfile_wdata_ex_o = multdiv_en_i ? multdiv_result : alu_result;
+  assign multdiv_en         = mult_en_i | div_en_i;
+  assign regfile_wdata_ex_o = multdiv_en ? multdiv_result : alu_result;
 
   // branch handling
   assign branch_decision_o  = alu_cmp_result;
@@ -97,8 +98,8 @@ module zeroriscy_ex_block
     .operator_i          ( alu_operator_i            ),
     .operand_a_i         ( alu_operand_a_i           ),
     .operand_b_i         ( alu_operand_b_i           ),
-    .multdiv_operand_a_i ( multdiv_alu_operand_a_sel ),
-    .multdiv_operand_b_i ( multdiv_alu_operand_b_sel ),
+    .multdiv_operand_a_i ( multdiv_alu_operand_a     ),
+    .multdiv_operand_b_i ( multdiv_alu_operand_b     ),
     .multdiv_en_i        ( multdiv_en_sel            ),
     .adder_result_o      ( alu_adder_result_ex_o     ),
     .adder_result_ext_o  ( alu_adder_result_ext      ),
@@ -112,7 +113,7 @@ module zeroriscy_ex_block
     (
      .clk                ( clk                   ),
      .rst_n              ( rst_n                 ),
-     .multdiv_en_i       ( multdiv_en_i          ),
+     .multdiv_en_i       ( multdiv_en            ),
      .operator_i         ( multdiv_operator_i    ),
      .signed_mode_i      ( multdiv_signed_mode_i ),
      .op_a_i             ( multdiv_operand_a_i   ),
@@ -125,16 +126,22 @@ module zeroriscy_ex_block
      .alu_operand_b_o    ( multdiv_alu_operand_b ),
      .multdiv_result_o   ( multdiv_result        )
     );
-  end else begin: mult_fast
-    zeroriscy_mult_fast mult_i
+  end else begin: multdiv_fast
+    zeroriscy_multdiv_fast multdiv_i
      (
      .clk                ( clk                   ),
      .rst_n              ( rst_n                 ),
-     .multdiv_en_i       ( multdiv_en_i          ),
+     .mult_en_i          ( mult_en_i             ),
+     .div_en_i           ( div_en_i              ),
      .operator_i         ( multdiv_operator_i    ),
      .signed_mode_i      ( multdiv_signed_mode_i ),
      .op_a_i             ( multdiv_operand_a_i   ),
      .op_b_i             ( multdiv_operand_b_i   ),
+     .alu_operand_a_o    ( multdiv_alu_operand_a ),
+     .alu_operand_b_o    ( multdiv_alu_operand_b ),
+     .alu_adder_ext_i    ( alu_adder_result_ext  ),
+     .alu_adder_i        ( alu_adder_result_ex_o ),
+     .equal_to_zero      ( alu_is_equal_result   ),
      .ready_o            ( multdiv_ready         ),
      .multdiv_result_o   ( multdiv_result        )
     );
@@ -143,7 +150,7 @@ module zeroriscy_ex_block
   always_comb
   begin
       unique case (1'b1)
-        multdiv_en_i:
+        multdiv_en:
           ex_ready_o = multdiv_ready;
         lsu_en_i:
           ex_ready_o = lsu_ready_ex_i;

@@ -34,7 +34,7 @@ module zeroriscy_core
 #(
   parameter N_EXT_PERF_COUNTERS = 0,
   parameter INSTR_RDATA_WIDTH   = 32,
-  parameter REG_ADDR_WIDTH      = 5
+  parameter RV32E               = 0
 )
 (
   // Clock and Reset
@@ -136,7 +136,8 @@ module zeroriscy_core
   logic [31:0] regfile_wdata_ex;
 
   // Multiplier Control
-  logic        multdiv_en_ex;
+  logic        mult_en_ex;
+  logic        div_en_ex;
   logic [1:0]  multdiv_operator_ex;
   logic [1:0]  multdiv_signed_mode_ex;
   logic [31:0] multdiv_operand_a_ex;
@@ -204,12 +205,12 @@ module zeroriscy_core
 
   // Debug GPR Read Access
   logic        dbg_reg_rreq;
-  logic [(REG_ADDR_WIDTH-1):0] dbg_reg_raddr;
+  logic [4:0]  dbg_reg_raddr;
   logic [31:0] dbg_reg_rdata;
 
   // Debug GPR Write Access
   logic        dbg_reg_wreq;
-  logic [(REG_ADDR_WIDTH-1):0] dbg_reg_waddr;
+  logic [4:0]  dbg_reg_waddr;
   logic [31:0] dbg_reg_wdata;
 
   // Debug CSR Access
@@ -340,6 +341,7 @@ module zeroriscy_core
   /////////////////////////////////////////////////
   zeroriscy_id_stage
   #(
+    .RV32E(RV32E)
   )
   id_stage_i
   (
@@ -388,7 +390,8 @@ module zeroriscy_core
     .alu_operand_a_ex_o           ( alu_operand_a_ex     ),
     .alu_operand_b_ex_o           ( alu_operand_b_ex     ),
 
-    .multdiv_en_ex_o              ( multdiv_en_ex          ),
+    .mult_en_ex_o                 ( mult_en_ex             ),
+    .div_en_ex_o                  ( div_en_ex              ),
     .multdiv_operator_ex_o        ( multdiv_operator_ex    ),
     .multdiv_signed_mode_ex_o     ( multdiv_signed_mode_ex ),
     .multdiv_operand_a_ex_o       ( multdiv_operand_a_ex   ),
@@ -465,7 +468,8 @@ module zeroriscy_core
     .alu_operand_b_i            ( alu_operand_b_ex      ),
 
     // Multipler
-    .multdiv_en_i               ( multdiv_en_ex         ),
+    .mult_en_i                  ( mult_en_ex            ),
+    .div_en_i                   ( div_en_ex             ),
     .multdiv_signed_mode_i      ( multdiv_signed_mode_ex),
     .multdiv_operand_a_i        ( multdiv_operand_a_ex  ),
     .multdiv_operand_b_i        ( multdiv_operand_b_ex  ),

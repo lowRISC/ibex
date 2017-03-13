@@ -34,13 +34,12 @@ import zeroriscy_defines::*;
 // Source/Destination register instruction index
 `define REG_S1 19:15
 `define REG_S2 24:20
-`define REG_S3 29:25
 `define REG_D  11:07
 
 
 module zeroriscy_id_stage
 #(
-  parameter REG_ADDR_WIDTH      = 5
+  parameter RV32E      = 0
 )
 (
     input  logic        clk,
@@ -89,8 +88,9 @@ module zeroriscy_id_stage
     output logic [31:0] alu_operand_a_ex_o,
     output logic [31:0] alu_operand_b_ex_o,
 
-    // MUL
-    output logic        multdiv_en_ex_o,
+    // MUL, DIV
+    output logic        mult_en_ex_o,
+    output logic        div_en_ex_o,
     output logic  [1:0] multdiv_operator_ex_o,
     output logic  [1:0] multdiv_signed_mode_ex_o,
     output logic [31:0] multdiv_operand_a_ex_o,
@@ -136,11 +136,11 @@ module zeroriscy_id_stage
     output logic        dbg_trap_o,
 
     input  logic        dbg_reg_rreq_i,
-    input  logic [(REG_ADDR_WIDTH-1):0] dbg_reg_raddr_i,
+    input  logic [4:0] dbg_reg_raddr_i,
     output logic [31:0] dbg_reg_rdata_o,
 
     input  logic        dbg_reg_wreq_i,
-    input  logic [(REG_ADDR_WIDTH-1):0] dbg_reg_waddr_i,
+    input  logic [4:0] dbg_reg_waddr_i,
     input  logic [31:0] dbg_reg_wdata_i,
 
     input  logic        dbg_jump_req_i,
@@ -162,6 +162,7 @@ module zeroriscy_id_stage
   logic        deassert_we;
 
   logic        illegal_insn_dec;
+  logic        illegal_reg_rv32e;
   logic        ebrk_insn;
   logic        mret_insn_dec;
   logic        ecall_insn_dec;
@@ -207,10 +208,10 @@ module zeroriscy_id_stage
   logic        int_req, ext_req, exc_ack;  // handshake
 
   // Register file interface
-  logic [(REG_ADDR_WIDTH-1):0]  regfile_addr_ra_id;
-  logic [(REG_ADDR_WIDTH-1):0]  regfile_addr_rb_id;
+  logic [4:0]  regfile_addr_ra_id;
+  logic [4:0]  regfile_addr_rb_id;
 
-  logic [(REG_ADDR_WIDTH-1):0]  regfile_alu_waddr_id;
+  logic [4:0]  regfile_alu_waddr_id;
   logic                         regfile_we_id;
 
   logic [31:0] regfile_data_ra_id;
@@ -226,7 +227,9 @@ module zeroriscy_id_stage
   logic [3:0]  imm_b_mux_sel;
 
   // Multiplier Control
-  logic        multdiv_int_en;      // use integer multiplier
+  logic        mult_int_en;      // use integer multiplier
+  logic        div_int_en;      // use integer division or reminder
+  logic        multdiv_int_en;
   logic [1:0]  multdiv_operator;
   logic [1:0]  multdiv_signed_mode;
 
@@ -283,11 +286,19 @@ module zeroriscy_id_stage
   //---------------------------------------------------------------------------
   assign regfile_alu_waddr_id = instr[`REG_D];
 
+if(RV32E)
+  assign illegal_reg_rv32e = (regfile_addr_ra_id[4] | regfile_addr_rb_id[4] | regfile_alu_waddr_id[4]);
+else
+  assign illegal_reg_rv32e = 1'b0;
+
   // kill instruction in the IF/ID stage by setting the instr_valid_id control
   // signal to 0 for instructions that are done
   assign clear_instr_valid_o = id_ready_o | halt_id;
 
  assign branch_taken_ex = branch_in_id & branch_decision_i;
+
+
+
 
   ////////////////////////////////////////////////////////
   //   ___                                 _      _     //
@@ -403,7 +414,11 @@ module zeroriscy_id_stage
     end
   end
 
-  zeroriscy_register_file  registers_i
+  zeroriscy_register_file
+  #(
+    .RV32E(RV32E)
+  )
+  registers_i
   (
     .clk          ( clk                ),
     .rst_n        ( rst_n              ),
@@ -424,6 +439,7 @@ module zeroriscy_id_stage
 
   assign dbg_reg_rdata_o = regfile_data_rb_id;
 
+  assign multdiv_int_en  = mult_int_en | div_int_en;
 
   ///////////////////////////////////////////////
   //  ____  _____ ____ ___  ____  _____ ____   //
@@ -460,7 +476,8 @@ module zeroriscy_id_stage
     .imm_a_mux_sel_o                 ( imm_a_mux_sel             ),
     .imm_b_mux_sel_o                 ( imm_b_mux_sel             ),
 
-    .multdiv_int_en_o                ( multdiv_int_en            ),
+    .mult_int_en_o                   ( mult_int_en               ),
+    .div_int_en_o                    ( div_int_en                ),
     .multdiv_operator_o              ( multdiv_operator          ),
     .multdiv_signed_mode_o           ( multdiv_signed_mode       ),
     // Register file control signals
@@ -503,7 +520,7 @@ module zeroriscy_id_stage
 
     // decoder related signals
     .deassert_we_o                  ( deassert_we            ),
-    .illegal_insn_i                 ( illegal_insn_dec       ),
+    .illegal_insn_i                 ( illegal_insn_dec | illegal_reg_rv32e ),
     .mret_insn_i                    ( mret_insn_dec          ),
     .pipe_flush_i                   ( pipe_flush_dec         ),
 
@@ -635,7 +652,9 @@ module zeroriscy_id_stage
 
   assign branch_in_ex_o              = branch_in_id;
 
-  assign multdiv_en_ex_o             = multdiv_int_en;
+  assign mult_en_ex_o                = mult_int_en;
+  assign div_en_ex_o                 = div_int_en;
+
   assign multdiv_operator_ex_o       = multdiv_operator;
   assign multdiv_signed_mode_ex_o    = multdiv_signed_mode;
   assign multdiv_operand_a_ex_o      = regfile_data_ra_id;
@@ -695,7 +714,7 @@ module zeroriscy_id_stage
             instr_multicyle = branch_decision_i;
           end
           multdiv_int_en: begin
-            //MUL operation
+            //MUL or DIV operation
             regfile_we      = 1'b0;
             id_wb_fsm_ns    = WAIT_MULTICYCLE;
             multdiv_stall   = 1'b1;

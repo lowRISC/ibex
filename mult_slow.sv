@@ -143,7 +143,7 @@ module zeroriscy_multdiv_slow
   assign next_reminder = is_greater_equal ? res_adder_h                   : op_remainder;
   assign next_quotient = is_greater_equal ? op_a_shift_q | one_shift      : op_a_shift_q;
 
-  assign b_0             = {32{op_b_shift_q[0]}};
+  assign b_0           = {32{op_b_shift_q[0]}};
 
   //build the partial product
   assign op_a_bw_pp       = { ~(op_a_shift_q[32] & op_b_shift_q[0]), op_a_shift_q[31:0] & b_0 };
