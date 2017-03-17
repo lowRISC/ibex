@@ -31,6 +31,9 @@
 import zeroriscy_defines::*;
 
 module zeroriscy_decoder
+#(
+  parameter RV32M      = 1
+)
 (
   // singals running to/from controller
   input  logic        deassert_we_i,           // deassert we, we are stalled or not active
@@ -406,48 +409,56 @@ module zeroriscy_decoder
                 multdiv_operator_o    = MD_OP_MULL;
                 mult_int_en           = 1'b1;
                 multdiv_signed_mode_o = 2'b00;
+                illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b001}: begin // mulh
                 alu_operator_o        = ALU_ADD;
                 multdiv_operator_o    = MD_OP_MULH;
                 mult_int_en           = 1'b1;
                 multdiv_signed_mode_o = 2'b11;
+                illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b010}: begin // mulhsu
                 alu_operator_o        = ALU_ADD;
                 multdiv_operator_o    = MD_OP_MULH;
                 mult_int_en           = 1'b1;
                 multdiv_signed_mode_o = 2'b01;
+                illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b011}: begin // mulhu
                 alu_operator_o        = ALU_ADD;
                 multdiv_operator_o    = MD_OP_MULH;
                 mult_int_en           = 1'b1;
                 multdiv_signed_mode_o = 2'b00;
+                illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b100}: begin // div
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_DIV;
               div_int_en            = 1'b1;
               multdiv_signed_mode_o = 2'b11;
+              illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b101}: begin // divu
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_DIV;
               div_int_en            = 1'b1;
               multdiv_signed_mode_o = 2'b00;
+              illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b110}: begin // rem
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_REM;
               div_int_en            = 1'b1;
               multdiv_signed_mode_o = 2'b11;
+              illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b111}: begin // remu
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_REM;
               div_int_en            = 1'b1;
               multdiv_signed_mode_o = 2'b00;
+              illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
             end
             default: begin
               illegal_insn_o = 1'b1;
@@ -562,8 +573,8 @@ module zeroriscy_decoder
 
   // deassert we signals (in case of stalls)
   assign regfile_we_o      = (deassert_we_i) ? 1'b0          : regfile_we;
-  assign mult_int_en_o     = (deassert_we_i) ? 1'b0          : mult_int_en;
-  assign div_int_en_o      = (deassert_we_i) ? 1'b0          : div_int_en;
+  assign mult_int_en_o     = RV32M ? ((deassert_we_i) ? 1'b0 : mult_int_en) : 1'b0;
+  assign div_int_en_o      = RV32M ? ((deassert_we_i) ? 1'b0 : div_int_en ) : 1'b0;
   assign data_req_o        = (deassert_we_i) ? 1'b0          : data_req;
   assign csr_op_o          = (deassert_we_i) ? CSR_OP_NONE   : csr_op;
   assign jump_in_id_o      = (deassert_we_i) ? 1'b0          : jump_in_id;

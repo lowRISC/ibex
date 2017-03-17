@@ -164,10 +164,5 @@ module zeroriscy_register_file
     end
   end
 
-if(RV32E) begin
-  // make sure no reg x16...x31 are accessed
-  assert property (
-    @(posedge clk) ~(raddr_a_i[4] | raddr_b_i[4] | waddr_a_int[4])) else $display("Access to x16....x31 registers!");
-end
 
 endmodule

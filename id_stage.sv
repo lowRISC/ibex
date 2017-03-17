@@ -39,6 +39,7 @@ import zeroriscy_defines::*;
 
 module zeroriscy_id_stage
 #(
+  parameter RV32M      = 1,
   parameter RV32E      = 0
 )
 (
@@ -286,9 +287,9 @@ module zeroriscy_id_stage
   //---------------------------------------------------------------------------
   assign regfile_alu_waddr_id = instr[`REG_D];
 
-if(RV32E)
-  assign illegal_reg_rv32e = (regfile_addr_ra_id[4] | regfile_addr_rb_id[4] | regfile_alu_waddr_id[4]);
-else
+//if(RV32E)
+//  assign illegal_reg_rv32e = (regfile_addr_ra_id[4] | regfile_addr_rb_id[4] | regfile_alu_waddr_id[4]);
+//else
   assign illegal_reg_rv32e = 1'b0;
 
   // kill instruction in the IF/ID stage by setting the instr_valid_id control
@@ -296,9 +297,6 @@ else
   assign clear_instr_valid_o = id_ready_o | halt_id;
 
  assign branch_taken_ex = branch_in_id & branch_decision_i;
-
-
-
 
   ////////////////////////////////////////////////////////
   //   ___                                 _      _     //
@@ -450,7 +448,11 @@ else
   //                                           //
   ///////////////////////////////////////////////
 
-  zeroriscy_decoder decoder_i
+  zeroriscy_decoder
+  #(
+      .RV32M(RV32M)
+  )
+  decoder_i
   (
     // controller related signals
     .deassert_we_i                   ( deassert_we               ),
@@ -629,7 +631,7 @@ else
   /////////////////////////////////////
   //   ___ ____        _______  __   //
   //  |_ _|  _ \      | ____\ \/ /   //
-  //   | || | | |_____|  _|  \  /    // - merging network
+  //   | || | | |_____|  _|  \  /    //
   //   | || |_| |_____| |___ /  \    //
   //  |___|____/      |_____/_/\_\   //
   //                                 //
@@ -784,5 +786,9 @@ else
   // make sure multicycles enable signals are unique
   assert property (
     @(posedge clk) ~(data_req_ex_o & multdiv_int_en )) else $display("Multicycles enable signals are not unique");
-
+/*
+  // make sure no reg x16...x31 are accessed if RV32E is active
+  assert property (
+    @(posedge clk) ~(illegal_reg_rv32e)) else $display("Access to x16....x31 registers at time %t", $time);
+*/
 endmodule

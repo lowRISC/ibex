@@ -33,6 +33,9 @@
 import zeroriscy_defines::*;
 
 module zeroriscy_ex_block
+#(
+  parameter RV32M      = 1
+)
 (
 
   input  logic        clk,
@@ -65,7 +68,7 @@ module zeroriscy_ex_block
   output logic                    ex_ready_o      // EX stage gets new data
 );
 
-  localparam MULT_TYPE = 0; //0 is SLOW
+  localparam MULT_TYPE = 1; //0 is SLOW
 
   logic [31:0] alu_result, multdiv_result;
 
@@ -75,9 +78,20 @@ module zeroriscy_ex_block
   logic        multdiv_ready, multdiv_en_sel;
   logic        multdiv_en;
 
-  assign multdiv_en_sel     = MULT_TYPE == 0 ? mult_en_i | div_en_i : div_en_i;
+/*
+  The multdiv_i output is never selected if RV32M=0
+  At synthesis time, all the combinational and sequential logic
+  from the multdiv_i module are eliminated
+*/
 
+if (RV32M) begin
+  assign multdiv_en_sel     = MULT_TYPE == 0 ? mult_en_i | div_en_i : div_en_i;
   assign multdiv_en         = mult_en_i | div_en_i;
+end else begin
+  assign multdiv_en_sel     = 1'b0;
+  assign multdiv_en         = 1'b0;
+end
+
   assign regfile_wdata_ex_o = multdiv_en ? multdiv_result : alu_result;
 
   // branch handling

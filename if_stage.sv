@@ -29,9 +29,7 @@
 
 import zeroriscy_defines::*;
 
-module zeroriscy_if_stage #(
-  parameter RDATA_WIDTH = 32
-)
+module zeroriscy_if_stage
 (
       input  logic        clk,
       input  logic        rst_n,
@@ -44,7 +42,7 @@ module zeroriscy_if_stage #(
       output logic            [31:0] instr_addr_o,
       input  logic                   instr_gnt_i,
       input  logic                   instr_rvalid_i,
-      input  logic [RDATA_WIDTH-1:0] instr_rdata_i,
+      input  logic            [31:0] instr_rdata_i,
       // Output of IF Pipeline stage
       output logic              instr_valid_id_o,      // instruction in IF/ID pipeline is valid
       output logic       [31:0] instr_rdata_id_o,      // read instruction is sampled and sent to ID stage for decoding

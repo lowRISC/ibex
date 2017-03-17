@@ -33,8 +33,8 @@ import zeroriscy_defines::*;
 module zeroriscy_core
 #(
   parameter N_EXT_PERF_COUNTERS = 0,
-  parameter INSTR_RDATA_WIDTH   = 32,
-  parameter RV32E               = 0
+  parameter RV32E               = 0,
+  parameter RV32M               = 1
 )
 (
   // Clock and Reset
@@ -54,7 +54,7 @@ module zeroriscy_core
   input  logic                         instr_gnt_i,
   input  logic                         instr_rvalid_i,
   output logic                  [31:0] instr_addr_o,
-  input  logic [INSTR_RDATA_WIDTH-1:0] instr_rdata_i,
+  input  logic                  [31:0] instr_rdata_i,
 
   // Data memory interface
   output logic        data_req_o,
@@ -154,7 +154,7 @@ module zeroriscy_core
   logic [31:0] csr_rdata;
   logic [31:0] csr_wdata;
 
-  // Data Memory Control:  From ID stage (id-ex pipe) <--> load store unit
+  // Data Memory Control
   logic        data_we_ex;
   logic [1:0]  data_type_ex;
   logic        data_sign_ext_ex;
@@ -192,9 +192,6 @@ module zeroriscy_core
   logic        exc_save_id;
   logic        exc_save_takenbranch_ex;
   logic        exc_restore_id;
-
-
-
 
   // Debug Unit
   logic [DBG_SETS_W-1:0] dbg_settings;
@@ -275,11 +272,7 @@ module zeroriscy_core
   //  |___|_|     |____/ |_/_/   \_\____|_____|   //
   //                                              //
   //////////////////////////////////////////////////
-  zeroriscy_if_stage
-  #(
-    .RDATA_WIDTH         ( INSTR_RDATA_WIDTH )
-  )
-  if_stage_i
+  zeroriscy_if_stage if_stage_i
   (
     .clk                 ( clk               ),
     .rst_n               ( rst_ni            ),
@@ -341,7 +334,8 @@ module zeroriscy_core
   /////////////////////////////////////////////////
   zeroriscy_id_stage
   #(
-    .RV32E(RV32E)
+    .RV32E(RV32E),
+    .RV32M(RV32M)
   )
   id_stage_i
   (
@@ -456,7 +450,13 @@ module zeroriscy_core
   );
 
 
-  zeroriscy_ex_block ex_block_i
+  zeroriscy_ex_block
+  #(
+    //change the localparam MULT_TYPE to 0 or 1
+    //if you want a SLOW or FAST multiplier
+    .RV32M(RV32M)
+  )
+  ex_block_i
   (
     .clk                        ( clk                   ),
     .rst_n                      ( rst_ni                ),
@@ -517,7 +517,7 @@ module zeroriscy_core
     .data_type_ex_i        ( data_type_ex       ),
     .data_wdata_ex_i       ( data_wdata_ex      ),
     .data_reg_offset_ex_i  ( data_reg_offset_ex ),
-    .data_sign_ext_ex_i    ( data_sign_ext_ex   ),  // sign extension
+    .data_sign_ext_ex_i    ( data_sign_ext_ex   ),
 
     .data_rdata_ex_o       ( regfile_wdata_lsu  ),
     .data_req_ex_i         ( data_req_ex        ),
