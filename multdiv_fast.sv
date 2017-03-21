@@ -1,4 +1,4 @@
-// Copyright 2015 ETH Zurich and University of Bologna.
+// Copyright 2017 ETH Zurich and University of Bologna.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 0.51 (the “License”); you may not use this file except in
 // compliance with the License.  You may obtain a copy of the License at
@@ -9,16 +9,14 @@
 // specific language governing permissions and limitations under the License.
 
 ////////////////////////////////////////////////////////////////////////////////
-// Engineer:       Matthias Baer - baermatt@student.ethz.ch                   //
+// Engineer:       Davide Schiavone - pschiavo@iis.ee.ethz.ch                 //
 //                                                                            //
-// Additional contributions by:                                               //
-//                 Andreas Traber - atraber@student.ethz.ch                   //
 //                                                                            //
-// Design Name:    Subword multiplier and MAC                                 //
-// Project Name:   RI5CY                                                      //
+// Design Name:    Fast Multiplier and Division                               //
+// Project Name:   zero-riscy                                                 //
 // Language:       SystemVerilog                                              //
 //                                                                            //
-// Description:    Advanced MAC unit for PULP.                                //
+// Description:    16x16 kernel multiplier and Long Division                  //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 

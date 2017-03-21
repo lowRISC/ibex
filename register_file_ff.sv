@@ -28,33 +28,34 @@
 
 module zeroriscy_register_file
 #(
-  parameter ADDR_WIDTH    = 5,
+  parameter RV32E         = 0,
   parameter DATA_WIDTH    = 32
 )
 (
-    // Clock and Reset
-    input  logic         clk,
-    input  logic         rst_n,
+  // Clock and Reset
+  input  logic                   clk,
+  input  logic                   rst_n,
 
-    input  logic                   test_en_i,
+  input  logic                   test_en_i,
 
-    //Read port R1
-    input  logic [ADDR_WIDTH-1:0]  raddr_a_i,
-    output logic [DATA_WIDTH-1:0]  rdata_a_o,
+  //Read port R1
+  input  logic [4:0]             raddr_a_i,
+  output logic [DATA_WIDTH-1:0]  rdata_a_o,
 
-    //Read port R2
-    input  logic [ADDR_WIDTH-1:0]  raddr_b_i,
-    output logic [DATA_WIDTH-1:0]  rdata_b_o,
+  //Read port R2
+  input  logic [4:0]             raddr_b_i,
+  output logic [DATA_WIDTH-1:0]  rdata_b_o,
 
 
-    // Write port W1
-    input logic [ADDR_WIDTH-1:0]   waddr_a_i,
-    input logic [DATA_WIDTH-1:0]   wdata_a_i,
-    input logic                    we_a_i
+  // Write port W1
+  input  logic [4:0]              waddr_a_i,
+  input  logic [DATA_WIDTH-1:0]   wdata_a_i,
+  input  logic                    we_a_i
 
 );
 
-  localparam    NUM_WORDS = 2**ADDR_WIDTH;
+  localparam    ADDR_WIDTH = RV32E ? 4 : 5;;
+  localparam    NUM_WORDS  = 2**ADDR_WIDTH;
 
   logic [NUM_WORDS-1:0][DATA_WIDTH-1:0] rf_reg;
   logic [NUM_WORDS-1:0]                 we_a_dec;

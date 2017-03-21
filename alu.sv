@@ -19,8 +19,6 @@
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Arithmetic logic unit of the pipelined processor.          //
-//                 Reduced in area and ISA (RV32I) for small area             //
-//                 and power consumption. Based on ALU by Matthias Baer.      //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 

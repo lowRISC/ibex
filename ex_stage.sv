@@ -22,9 +22,7 @@
 // Project Name:   zero-riscy                                                 //
 // Language:       SystemVerilog                                              //
 //                                                                            //
-// Description:    Execution block: Hosts ALU and MUL unit                    //
-//                 ALU: computes additions/subtractions/comparisons           //
-//                 MAC:                                                       //
+// Description:    Execution block: Hosts ALU and MUL/DIV unit                //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
