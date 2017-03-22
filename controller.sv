@@ -464,8 +464,8 @@ module zeroriscy_controller
   //----------------------------------------------------------------------------
   // Assertions
   //----------------------------------------------------------------------------
-
+`ifndef VERILATOR
   assert property (
     @(posedge clk) (~(dbg_req_i & ext_req_i)) ) else $warning("Both dbg_req_i and ext_req_i are active");
-
+`endif
 endmodule // controller

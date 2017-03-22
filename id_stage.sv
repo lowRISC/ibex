@@ -769,7 +769,7 @@ module zeroriscy_id_stage
   //----------------------------------------------------------------------------
   // Assertions
   //----------------------------------------------------------------------------
-
+`ifndef VERILATOR
   // make sure that branch decision is valid when jumping
   assert property (
     @(posedge clk) (branch_in_ex_o) |-> (branch_decision_i !== 1'bx) ) else $display("Branch decision is X");
@@ -786,9 +786,7 @@ module zeroriscy_id_stage
   // make sure multicycles enable signals are unique
   assert property (
     @(posedge clk) ~(data_req_ex_o & multdiv_int_en )) else $display("Multicycles enable signals are not unique");
-/*
-  // make sure no reg x16...x31 are accessed if RV32E is active
-  assert property (
-    @(posedge clk) ~(illegal_reg_rv32e)) else $display("Access to x16....x31 registers at time %t", $time);
-*/
+
+`endif
+
 endmodule

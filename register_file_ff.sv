@@ -83,7 +83,8 @@ module zeroriscy_register_file
         if (rst_n==1'b0) begin
           rf_reg[i] <= 'b0;
         end else begin
-          rf_reg[i] <= wdata_a_i;
+          if (we_a_dec[i])
+            rf_reg[i] <= wdata_a_i;
         end
       end
 

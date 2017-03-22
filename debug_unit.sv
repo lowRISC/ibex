@@ -472,7 +472,7 @@ module zeroriscy_debug_unit
   //----------------------------------------------------------------------------
   // Assertions
   //----------------------------------------------------------------------------
-
+`ifndef VERILATOR
   // check that no registers are accessed when we are not in debug mode
   assert property (
     @(posedge clk) (debug_req_i) |-> ((debug_halted_o == 1'b1) ||
@@ -484,5 +484,5 @@ module zeroriscy_debug_unit
   // check that all accesses are word-aligned
   assert property (
     @(posedge clk) (debug_req_i) |-> (debug_addr_i[1:0] == 2'b00) );
-
+`endif
 endmodule // debug_unit

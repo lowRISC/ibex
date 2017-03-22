@@ -477,7 +477,7 @@ module zeroriscy_load_store_unit
   //////////////////////////////////////////////////////////////////////////////
   // Assertions
   //////////////////////////////////////////////////////////////////////////////
-
+`ifndef VERILATOR
   // make sure there is no new request when the old one is not yet completely done
   // i.e. it should not be possible to get a grant without an rvalid for the
   // last request
@@ -493,5 +493,5 @@ module zeroriscy_load_store_unit
 
   // assert that the address does not contain X when request is sent
   assert property ( @(posedge clk) (data_req_o) |-> (!$isunknown(data_addr_o)) );
-
+`endif
 endmodule
