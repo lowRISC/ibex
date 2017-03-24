@@ -250,12 +250,13 @@ module zeroriscy_multdiv_fast
   assign ready_o  = (mult_state_q == FINISH) | (divcurr_state_q == MD_FINISH);
   always_comb
   begin : mult_fsm
-      mult_op_a = op_a_i[`OP_L];
-      mult_op_b = op_b_i[`OP_L];
-      sign_a    = 1'b0;
-      sign_b    = 1'b0;
-      accum     = mac_res_q;
-      mac_res_n = mac_res;
+      mult_op_a    = op_a_i[`OP_L];
+      mult_op_b    = op_b_i[`OP_L];
+      sign_a       = 1'b0;
+      sign_b       = 1'b0;
+      accum        = mac_res_q;
+      mac_res_n    = mac_res;
+      mult_state_n = mult_state_q;
 
       unique case (mult_state_q)
 
