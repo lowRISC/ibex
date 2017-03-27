@@ -77,12 +77,10 @@ module zeroriscy_id_stage
     // Stalls
     output logic        halt_if_o,      // controller requests a halt of the IF stage
 
-    input  logic        if_ready_i,     // IF stage is done
     output logic        id_ready_o,     // ID stage is ready for the next instruction
 
     input  logic        ex_ready_i,
 
-    input  logic        if_valid_i,     // IF stage is done
     output logic        id_valid_o,     // ID stage is done
 
     // ALU
@@ -638,7 +636,7 @@ module zeroriscy_id_stage
   assign data_wdata_ex_o             = regfile_data_rb_id;
   assign data_req_ex_o               = data_req_id;
   assign data_reg_offset_ex_o        = data_reg_offset_id;
-  assign data_load_event_ex_o        = ((data_req_id & (~halt_id)) ? data_load_event_id : 1'b0);
+  assign data_load_event_ex_o        = data_load_event_id;
 
   assign alu_operator_ex_o           = alu_operator;
   assign alu_operand_a_ex_o          = alu_operand_a;

@@ -170,11 +170,9 @@ module zeroriscy_core
 
   // stall control
   logic        halt_if;
-  logic        if_ready;
   logic        id_ready;
   logic        ex_ready;
 
-  logic        if_valid;
   logic        id_valid;
   logic        wb_valid;
 
@@ -317,9 +315,7 @@ module zeroriscy_core
 
     // pipeline stalls
     .halt_if_i           ( halt_if           ),
-    .if_ready_o          ( if_ready          ),
     .id_ready_i          ( id_ready          ),
-    .if_valid_o          ( if_valid          ),
 
     .if_busy_o           ( if_busy           ),
     .perf_imiss_o        ( perf_imiss        )
@@ -374,11 +370,9 @@ module zeroriscy_core
     // Stalls
     .halt_if_o                    ( halt_if              ),
 
-    .if_ready_i                   ( if_ready             ),
     .id_ready_o                   ( id_ready             ),
     .ex_ready_i                   ( ex_ready             ),
 
-    .if_valid_i                   ( if_valid             ),
     .id_valid_o                   ( id_valid             ),
 
     .alu_operator_ex_o            ( alu_operator_ex      ),

@@ -67,9 +67,9 @@ module zeroriscy_if_stage
       input  logic [31:0] dbg_jump_addr_i,
       // pipeline stall
       input  logic        halt_if_i,
-      output logic        if_ready_o,
+
       input  logic        id_ready_i,
-      output logic        if_valid_o,
+
       // misc signals
       output logic        if_busy_o,             // is the IF stage busy fetching instructions?
       output logic        perf_imiss_o           // Instruction Fetch Miss
@@ -79,7 +79,7 @@ module zeroriscy_if_stage
       enum logic[0:0] {WAIT, IDLE } offset_fsm_cs, offset_fsm_ns;
 
       logic              valid;
-
+      logic             if_ready, if_valid;
       // prefetch buffer related signals
       logic              prefetch_busy;
       logic              branch_req;
@@ -188,7 +188,7 @@ module zeroriscy_if_stage
               if (fetch_valid) begin
                 valid   = 1'b1; // an instruction is ready for ID stage
 
-                if (req_i && if_valid_o) begin
+                if (req_i && if_valid) begin
                   fetch_ready   = 1'b1;
                   offset_fsm_ns = WAIT;
                 end
@@ -252,7 +252,7 @@ module zeroriscy_if_stage
           else
             begin
 
-              if (if_valid_o)
+              if (if_valid)
               begin
                   instr_valid_id_o    <= 1'b1;
                   instr_rdata_id_o    <= instr_decompressed;
@@ -267,8 +267,8 @@ module zeroriscy_if_stage
         end
 
 
-        assign if_ready_o = valid & id_ready_i;
-        assign if_valid_o = (~halt_if_i) & if_ready_o;
+        assign if_ready = valid & id_ready_i;
+        assign if_valid = (~halt_if_i) & if_ready;
 
         //----------------------------------------------------------------------------
         // Assertions

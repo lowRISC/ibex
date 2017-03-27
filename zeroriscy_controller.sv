@@ -212,7 +212,7 @@ module zeroriscy_controller
 
         end else begin
           // no debug request incoming, normal execution flow
-          if (fetch_enable_i || exc_req)
+          if (fetch_enable_i || ext_req_i)
           begin
             ctrl_fsm_ns  = FIRST_FETCH;
           end
@@ -228,7 +228,7 @@ module zeroriscy_controller
         end
 
         // handle exceptions
-        if (exc_req) begin
+        if (ext_req_i) begin
           pc_mux_o     = PC_EXCEPTION;
           pc_set_o     = 1'b1;
           exc_ack_o    = 1'b1;
@@ -249,7 +249,6 @@ module zeroriscy_controller
           if (instr_valid_i)
           begin // now analyze the current instruction in the ID stage
             is_decoding_o = 1'b1;
-
 
             unique case (1'b1)
 
