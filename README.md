@@ -1,6 +1,6 @@
 # **zero-riscy**: RISC-V Core
 
-**zero-riscy** is a small 3-stage RISC-V core derived from RI5CY.
+**zero-riscy** is a small 2-stage RISC-V core derived from RI5CY.
 
 **zero-riscy** fully implements the RV32IMC instruction set and a minimal set of RISCV privileged v1.9 specifications.
 
