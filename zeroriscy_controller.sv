@@ -1,14 +1,16 @@
-// Copyright 2017 ETH Zurich and University of Bologna.
-// Copyright and related rights are licensed under the Solderpad Hardware
-// License, Version 0.51 (the “License”); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
-// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
-// or agreed to in writing, software, hardware and materials distributed under
-// this License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
-
 ////////////////////////////////////////////////////////////////////////////////
+// Copyright (C) 2017 ETH Zurich, University of Bologna                       //
+// All rights reserved.                                                       //
+//                                                                            //
+// This code is under development and not yet released to the public.         //
+// Until it is released, the code is under the copyright of ETH Zurich        //
+// and the University of Bologna, and may contain unpublished work.           //
+// Any reuse/redistribution should only be under explicit permission.         //
+//                                                                            //
+// Bug fixes and contributions will eventually be released under the          //
+// SolderPad open hardware license and under the copyright of ETH Zurich      //
+// and the University of Bologna.                                             //
+//                                                                            //
 // Engineer:       Matthias Baer - baermatt@student.ethz.ch                   //
 //                                                                            //
 // Additional contributions by:                                               //
@@ -50,7 +52,6 @@ module zeroriscy_controller
 
   // from IF/ID pipeline
   input  logic        instr_valid_i,              // instruction coming from IF/ID pipeline is valid
-  input  logic [31:0] instr_rdata_i,              // Instruction read from instr memory/cache: (sampled in the if stage)
 
   // from prefetcher
   output logic        instr_req_o,                // Start fetching instructions
@@ -60,9 +61,7 @@ module zeroriscy_controller
   output logic [2:0]  pc_mux_o,                   // Selector in the Fetch stage to select the rigth PC (normal, jump ...)
 
   // LSU
-  input  logic        data_req_ex_i,              // data memory access is currently performed in EX stage
   input  logic        data_misaligned_i,
-  input  logic        data_load_event_i,
 
   // jump/branch signals
   input  logic        branch_in_id_i,             // branch in id
@@ -102,7 +101,6 @@ module zeroriscy_controller
 
   input  logic        id_ready_i,                 // ID stage is ready
 
-  input  logic        if_valid_i,                 // IF stage is done
   // Performance Counters
   output logic        perf_jump_o,                // we are executing a jump instruction   (j, jr, jal, jalr)
   output logic        perf_jr_stall_o,            // stall due to jump instruction
@@ -116,7 +114,6 @@ module zeroriscy_controller
                       DECODE, FLUSH,
                       DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
 
-  logic jump_in_dec;
   logic exc_req;
 
 `ifndef SYNTHESIS
@@ -269,33 +266,21 @@ module zeroriscy_controller
                   ctrl_fsm_ns = DBG_SIGNAL;
               end
               int_req_i: begin
-                pc_mux_o          = PC_EXCEPTION;
-                pc_set_o          = 1'b1;
-                exc_ack_o         = 1'b1;
-                exc_save_id_o     = 1'b1;
-                if (dbg_req_i)
-                  ctrl_fsm_ns = DBG_SIGNAL;
+                ctrl_fsm_ns = FLUSH;
+                halt_if_o = 1'b1;
+                halt_id_o = 1'b1;
               end
               mret_insn_i: begin
-                //handles eret when the core should go back to sleep
-                pc_mux_o         = PC_ERET;
-                pc_set_o         = 1'b1;
-                exc_restore_id_o = 1'b1;
-                if(~fetch_enable_i) begin
-                  halt_if_o = 1'b1;
-                  halt_id_o = 1'b1;
-                  ctrl_fsm_ns = FLUSH;
-                end else if (dbg_req_i)
-                  ctrl_fsm_ns = DBG_SIGNAL;
+                ctrl_fsm_ns = FLUSH;
+                halt_if_o = 1'b1;
+                halt_id_o = 1'b1;
               end
               default: begin
 
                 if (ext_req_i & ~instr_multicyle_i & ~branch_in_id_i) begin
-                    pc_mux_o      = PC_EXCEPTION;
-                    pc_set_o      = 1'b1;
-                    exc_ack_o     = 1'b1;
-                    irq_ack_o     = 1'b1;
-                    exc_save_if_o = 1'b1;
+                    ctrl_fsm_ns = FLUSH;
+                    halt_if_o = 1'b1;
+                    halt_id_o = 1'b1;
                 end
                 // handle WFI instruction, flush pipeline and (potentially) go to
                 // sleep TODO: put it in unique case
@@ -393,11 +378,48 @@ module zeroriscy_controller
         if(fetch_enable_i) begin
           if (dbg_req_i) begin
             ctrl_fsm_ns = DBG_SIGNAL;
+            if(int_req_i) begin
+              //exceptions
+              pc_mux_o      = PC_EXCEPTION;
+              pc_set_o      = 1'b1;
+              exc_ack_o     = 1'b1;
+              exc_save_id_o = 1'b1;
+            end
           end else begin
             ctrl_fsm_ns = DECODE;
-            halt_if_o   = 1'b0;
+            unique case (1'b1)
+              int_req_i: begin
+                pc_mux_o          = PC_EXCEPTION;
+                pc_set_o          = 1'b1;
+                exc_ack_o         = 1'b1;
+                exc_save_id_o     = 1'b1;
+              end
+              mret_insn_i: begin
+                pc_mux_o         = PC_ERET;
+                pc_set_o         = 1'b1;
+                exc_restore_id_o = 1'b1;
+              end
+              ext_req_i: begin
+                pc_mux_o          = PC_EXCEPTION;
+                pc_set_o          = 1'b1;
+                exc_ack_o         = 1'b1;
+                //the instruction in id has been already executed
+                exc_save_if_o     = 1'b1;
+                irq_ack_o     = 1'b1;
+              end
+              default: begin
+                halt_if_o   = 1'b0;
+              end
+            endcase
           end
-        end else begin
+        end else begin //~fetch_enable_i
+          //mRET goes back to sleep
+          if(mret_insn_i) begin
+            //in order to restore the xPIE in xIE
+            exc_restore_id_o = 1'b1;
+            pc_mux_o         = PC_ERET;
+            pc_set_o         = 1'b1;
+          end
           if (dbg_req_i) begin
             ctrl_fsm_ns = DBG_SIGNAL_SLEEP;
           end else begin

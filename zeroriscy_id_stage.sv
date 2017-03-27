@@ -1,14 +1,16 @@
-// Copyright 2017 ETH Zurich and University of Bologna.
-// Copyright and related rights are licensed under the Solderpad Hardware
-// License, Version 0.51 (the “License”); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
-// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
-// or agreed to in writing, software, hardware and materials distributed under
-// this License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
-
 ////////////////////////////////////////////////////////////////////////////////
+// Copyright (C) 2017 ETH Zurich, University of Bologna                       //
+// All rights reserved.                                                       //
+//                                                                            //
+// This code is under development and not yet released to the public.         //
+// Until it is released, the code is under the copyright of ETH Zurich        //
+// and the University of Bologna, and may contain unpublished work.           //
+// Any reuse/redistribution should only be under explicit permission.         //
+//                                                                            //
+// Bug fixes and contributions will eventually be released under the          //
+// SolderPad open hardware license and under the copyright of ETH Zurich      //
+// and the University of Bologna.                                             //
+//                                                                            //
 // Engineer:       Renzo Andri - andrire@student.ethz.ch                      //
 //                                                                            //
 // Additional contributions by:                                               //
@@ -70,7 +72,6 @@ module zeroriscy_id_stage
     input  logic        illegal_c_insn_i,
     input  logic        is_compressed_i,
 
-    input  logic [31:0] pc_if_i,
     input  logic [31:0] pc_id_i,
 
     // Stalls
@@ -184,7 +185,7 @@ module zeroriscy_id_stage
 
   logic        halt_id;
   //FSM signals to write back multi cycles instructions
-  logic        regfile_we, regfile_we_q;
+  logic        regfile_we;
   enum logic {RF_LSU, RF_EX} select_data_rf;
 
   // Immediate decoding and sign extension
@@ -222,7 +223,6 @@ module zeroriscy_id_stage
   logic [ALU_OP_WIDTH-1:0] alu_operator;
   logic [2:0]  alu_op_a_mux_sel;
   logic [2:0]  alu_op_b_mux_sel;
-  logic [1:0]  alu_op_c_mux_sel;
 
   logic [0:0]  imm_a_mux_sel;
   logic [3:0]  imm_b_mux_sel;
@@ -528,7 +528,6 @@ module zeroriscy_id_stage
 
     // from IF/ID pipeline
     .instr_valid_i                  ( instr_valid_i          ),
-    .instr_rdata_i                  ( instr                  ),
 
     // from prefetcher
     .instr_req_o                    ( instr_req_o            ),
@@ -538,9 +537,7 @@ module zeroriscy_id_stage
     .pc_mux_o                       ( pc_mux_o               ),
 
     // LSU
-    .data_req_ex_i                  ( data_req_ex_o          ),
     .data_misaligned_i              ( data_misaligned_i      ),
-    .data_load_event_i              ( data_load_event_ex_o   ),
 
     // jump/branch control
     .branch_in_id_i                 ( branch_in_id           ),
@@ -577,8 +574,6 @@ module zeroriscy_id_stage
     .load_stall_i                   ( load_stall             ),
 
     .id_ready_i                     ( id_ready_o             ),
-
-    .if_valid_i                     ( if_valid_i             ),
 
     // Performance Counters
     .perf_jump_o                    ( perf_jump_o            ),
@@ -744,7 +739,7 @@ module zeroriscy_id_stage
           multdiv_stall  = 1'b0;
           select_data_rf = data_req_id ? RF_LSU : RF_EX;
         end else begin
-          regfile_we     = 1'b0;
+          regfile_we      = 1'b0;
           instr_multicyle = 1'b1;
           unique case (1'b1)
             data_req_id:

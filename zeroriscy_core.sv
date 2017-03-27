@@ -1,14 +1,16 @@
-// Copyright 2017 ETH Zurich and University of Bologna.
-// Copyright and related rights are licensed under the Solderpad Hardware
-// License, Version 0.51 (the “License”); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
-// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
-// or agreed to in writing, software, hardware and materials distributed under
-// this License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
-
 ////////////////////////////////////////////////////////////////////////////////
+// Copyright (C) 2017 ETH Zurich, University of Bologna                       //
+// All rights reserved.                                                       //
+//                                                                            //
+// This code is under development and not yet released to the public.         //
+// Until it is released, the code is under the copyright of ETH Zurich        //
+// and the University of Bologna, and may contain unpublished work.           //
+// Any reuse/redistribution should only be under explicit permission.         //
+//                                                                            //
+// Bug fixes and contributions will eventually be released under the          //
+// SolderPad open hardware license and under the copyright of ETH Zurich      //
+// and the University of Bologna.                                             //
+//                                                                            //
 // Engineer:       Matthias Baer - baermatt@student.ethz.ch                   //
 //                                                                            //
 // Additional contributions by:                                               //
@@ -367,7 +369,6 @@ module zeroriscy_core
     .illegal_c_insn_i             ( illegal_c_insn_id    ),
     .is_compressed_i              ( is_compressed_id     ),
 
-    .pc_if_i                      ( pc_if                ),
     .pc_id_i                      ( pc_id                ),
 
     // Stalls
@@ -573,9 +574,8 @@ module zeroriscy_core
     .mepc_o                  ( mepc               ),
 
     .pc_if_i                 ( pc_if              ),
-    .pc_id_i                 ( pc_id              ), // from IF stage
-    .branch_target_i         ( jump_target_ex     ), // from ID/EX pipeline
-    .data_load_event_ex_i    ( data_load_event_ex ), // from ID/EX pipeline
+    .pc_id_i                 ( pc_id              ),
+    .data_load_event_ex_i    ( data_load_event_ex ),
     .exc_save_if_i           ( exc_save_if        ),
     .exc_save_id_i           ( exc_save_id        ),
     .exc_restore_i           ( exc_restore_id     ),
@@ -667,7 +667,6 @@ module zeroriscy_core
     // signals for PPC and NPC
     .pc_if_i           ( pc_if              ), // from IF stage
     .pc_id_i           ( pc_id              ), // from ID stage
-    .data_load_event_i ( data_load_event_ex ),
     .instr_valid_id_i  ( instr_valid_id     ),
 
     .sleeping_i        ( sleeping           ),

@@ -5,20 +5,21 @@ zeroriscy:
   files: [
     include/zeroriscy_defines.sv,
     include/zeroriscy_tracer_defines.sv,
-    alu.sv,
-    compressed_decoder.sv,
-    controller.sv,
-    cs_registers.sv,
-    debug_unit.sv,
-    decoder.sv,
-    exc_controller.sv,
-    ex_stage.sv,
-    id_stage.sv,
-    if_stage.sv,
-    load_store_unit.sv,
-    multdiv_slow.sv,
-    multdiv_fast.sv,
-    prefetch_buffer.sv,
+    zeroriscy_alu.sv,
+    zeroriscy_compressed_decoder.sv,
+    zeroriscy_controller.sv,
+    zeroriscy_cs_registers.sv,
+    zeroriscy_debug_unit.sv,
+    zeroriscy_decoder.sv,
+    zeroriscy_exc_controller.sv,
+    zeroriscy_ex_stage.sv,
+    zeroriscy_id_stage.sv,
+    zeroriscy_if_stage.sv,
+    zeroriscy_load_store_unit.sv,
+    zeroriscy_multdiv_slow.sv,
+    zeroriscy_multdiv_fast.sv,
+    zeroriscy_prefetch_buffer.sv,
+    zeroriscy_fetch_fifo.sv,
     zeroriscy_core.sv,
   ]
 zeroriscy_vip_rtl:
@@ -41,7 +42,7 @@ zeroriscy_regfile_rtl:
     include,
   ]
   files: [
-    register_file.sv,
+    zeroriscy_register_file.sv,
   ]
 zeroriscy_regfile_fpga:
   targets: [
@@ -51,6 +52,6 @@ zeroriscy_regfile_fpga:
     include,
   ]
   files: [
-    register_file_ff.sv,
+    zeroriscy_register_file_ff.sv,
   ]
 

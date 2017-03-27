@@ -1,14 +1,16 @@
-// Copyright 2017 ETH Zurich and University of Bologna.
-// Copyright and related rights are licensed under the Solderpad Hardware
-// License, Version 0.51 (the “License”); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
-// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
-// or agreed to in writing, software, hardware and materials distributed under
-// this License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
-
 ////////////////////////////////////////////////////////////////////////////////
+// Copyright (C) 2017 ETH Zurich, University of Bologna                       //
+// All rights reserved.                                                       //
+//                                                                            //
+// This code is under development and not yet released to the public.         //
+// Until it is released, the code is under the copyright of ETH Zurich        //
+// and the University of Bologna, and may contain unpublished work.           //
+// Any reuse/redistribution should only be under explicit permission.         //
+//                                                                            //
+// Bug fixes and contributions will eventually be released under the          //
+// SolderPad open hardware license and under the copyright of ETH Zurich      //
+// and the University of Bologna.                                             //
+//                                                                            //
 // Engineer:       Andreas Traber - atraber@student.ethz.ch                   //
 //                                                                            //
 // Additional contributions by:                                               //
@@ -64,9 +66,6 @@ module zeroriscy_exc_controller
   logic req_int, int_req_int, ext_req_int;
   logic [1:0] pc_mux_int, pc_mux_int_q;
   logic [5:0] cause_int, cause_int_q;
-
-  integer i;
-
 
   // a trap towards the debug unit is generated when one of the
   // following conditions are true:

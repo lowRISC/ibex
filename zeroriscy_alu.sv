@@ -1,14 +1,16 @@
-// Copyright 2017 ETH Zurich and University of Bologna.
-// Copyright and related rights are licensed under the Solderpad Hardware
-// License, Version 0.51 (the “License”); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
-// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
-// or agreed to in writing, software, hardware and materials distributed under
-// this License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
-
 ////////////////////////////////////////////////////////////////////////////////
+// Copyright (C) 2017 ETH Zurich, University of Bologna                       //
+// All rights reserved.                                                       //
+//                                                                            //
+// This code is under development and not yet released to the public.         //
+// Until it is released, the code is under the copyright of ETH Zurich        //
+// and the University of Bologna, and may contain unpublished work.           //
+// Any reuse/redistribution should only be under explicit permission.         //
+//                                                                            //
+// Bug fixes and contributions will eventually be released under the          //
+// SolderPad open hardware license and under the copyright of ETH Zurich      //
+// and the University of Bologna.                                             //
+//                                                                            //
 // Engineer:       Markus Wegmann - markus.wegmann@technokrat.ch              //
 //                                                                            //
 // Additional contributions by:                                               //
@@ -140,10 +142,7 @@ module zeroriscy_alu
 
   assign shift_op_a_32 = { shift_arithmetic & shift_op_a[31], shift_op_a};
 
-  always_comb
-  begin
-    shift_right_result = $signed(shift_op_a_32) >>> shift_amt[4:0];
-  end
+  assign shift_right_result = $signed(shift_op_a_32) >>> shift_amt[4:0];
 
   // bit reverse the shift_right_result for left shifts
   genvar       j;

@@ -1,14 +1,16 @@
-// Copyright 2017 ETH Zurich and University of Bologna.
-// Copyright and related rights are licensed under the Solderpad Hardware
-// License, Version 0.51 (the “License”); you may not use this file except in
-// compliance with the License.  You may obtain a copy of the License at
-// http://solderpad.org/licenses/SHL-0.51. Unless required by applicable law
-// or agreed to in writing, software, hardware and materials distributed under
-// this License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR
-// CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
-
 ////////////////////////////////////////////////////////////////////////////////
+// Copyright (C) 2017 ETH Zurich, University of Bologna                       //
+// All rights reserved.                                                       //
+//                                                                            //
+// This code is under development and not yet released to the public.         //
+// Until it is released, the code is under the copyright of ETH Zurich        //
+// and the University of Bologna, and may contain unpublished work.           //
+// Any reuse/redistribution should only be under explicit permission.         //
+//                                                                            //
+// Bug fixes and contributions will eventually be released under the          //
+// SolderPad open hardware license and under the copyright of ETH Zurich      //
+// and the University of Bologna.                                             //
+//                                                                            //
 // Engineer        Andreas Traber - atraber@iis.ee.ethz.ch                    //
 //                                                                            //
 // Additional contributions by:                                               //
@@ -89,7 +91,6 @@ module zeroriscy_decoder
   logic       data_req;
 
   logic       ebrk_insn;
-  logic       mret_insn;
   logic       pipe_flush;
 
   logic       mult_int_en;
@@ -139,7 +140,7 @@ module zeroriscy_decoder
 
     illegal_insn_o              = 1'b0;
     ebrk_insn                   = 1'b0;
-    mret_insn                   = 1'b0;
+    mret_insn_o                 = 1'b0;
     ecall_insn_o                = 1'b0;
     pipe_flush                  = 1'b0;
 
@@ -498,7 +499,7 @@ module zeroriscy_decoder
 
             12'h302:  // mret
             begin
-              mret_insn = 1'b1;
+              mret_insn_o = 1'b1;
             end
 
             12'h105:  // wfi
@@ -580,7 +581,6 @@ module zeroriscy_decoder
   assign jump_in_id_o      = (deassert_we_i) ? 1'b0          : jump_in_id;
   assign branch_in_id_o    = (deassert_we_i) ? 1'b0          : branch_in_id;
   assign ebrk_insn_o       = (deassert_we_i) ? 1'b0          : ebrk_insn;
-  assign mret_insn_o       = (deassert_we_i) ? 1'b0          : mret_insn;  // TODO: do not deassert?
-  assign pipe_flush_o      = (deassert_we_i) ? 1'b0          : pipe_flush; // TODO: do not deassert?
+  assign pipe_flush_o      = (deassert_we_i) ? 1'b0          : pipe_flush;
 
 endmodule // controller
