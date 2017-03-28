@@ -170,9 +170,11 @@ module zeroriscy_id_stage
 
   logic        branch_taken_ex;
   logic        branch_in_id;
-  logic        branch_in_id_q;
-  logic        branch_set;
+  logic        branch_set_n;
+  logic        branch_set_q;
+  logic        branch_mux_dec;
   logic        jump_set;
+  logic        jump_mux_dec;
   logic        jump_in_id;
 
   logic        instr_multicyle;
@@ -212,7 +214,7 @@ module zeroriscy_id_stage
   logic [4:0]  regfile_addr_rb_id;
 
   logic [4:0]  regfile_alu_waddr_id;
-  logic                         regfile_we_id;
+  logic        regfile_we_id;
 
   logic [31:0] regfile_data_ra_id;
   logic [31:0] regfile_data_rb_id;
@@ -455,8 +457,8 @@ module zeroriscy_id_stage
     // controller related signals
     .deassert_we_i                   ( deassert_we               ),
     .data_misaligned_i               ( data_misaligned_i         ),
-    .branch_set_i                    ( branch_set                ),
-    .jump_set_i                      ( jump_set                  ),
+    .branch_mux_i                    ( branch_mux_dec            ),
+    .jump_mux_i                      ( jump_mux_dec              ),
 
     .illegal_insn_o                  ( illegal_insn_dec          ),
     .ebrk_insn_o                     ( ebrk_insn                 ),
@@ -540,7 +542,7 @@ module zeroriscy_id_stage
     // jump/branch control
     .branch_in_id_i                 ( branch_in_id           ),
     .branch_taken_ex_i              ( branch_taken_ex        ),
-    .branch_set_i                   ( branch_set             ),
+    .branch_set_i                   ( branch_set_q           ),
     .jump_set_i                     ( jump_set               ),
     .jump_in_id_i                   ( jump_in_id             ),
 
@@ -664,12 +666,12 @@ module zeroriscy_id_stage
   begin : EX_WB_Pipeline_Register
     if (~rst_n)
     begin
-      id_wb_fsm_cs    <= IDLE;
-      branch_in_id_q  <= 1'b0;
+      id_wb_fsm_cs  <= IDLE;
+      branch_set_q  <= 1'b0;
     end
     else begin
-      id_wb_fsm_cs    <= id_wb_fsm_ns;
-      branch_in_id_q  <= branch_in_id;
+      id_wb_fsm_cs  <= id_wb_fsm_ns;
+      branch_set_q  <= branch_set_n;
     end
   end
 
@@ -687,13 +689,17 @@ module zeroriscy_id_stage
     branch_stall    = 1'b0;
     select_data_rf  = RF_EX;
     instr_multicyle = 1'b0;
-    branch_set      = 1'b0;
+    branch_set_n    = 1'b0;
+    branch_mux_dec  = 1'b0;
     jump_set        = 1'b0;
+    jump_mux_dec    = 1'b0;
 
     unique case (id_wb_fsm_cs)
 
       IDLE:
       begin
+        jump_mux_dec   = 1'b1;
+        branch_mux_dec = 1'b1;
         unique case (1'b1)
           data_req_id: begin
             //LSU operation
@@ -707,6 +713,7 @@ module zeroriscy_id_stage
             id_wb_fsm_ns    = branch_decision_i ? WAIT_MULTICYCLE : IDLE;
             branch_stall    = branch_decision_i;
             instr_multicyle = branch_decision_i;
+            branch_set_n    = branch_decision_i;
           end
           multdiv_int_en: begin
             //MUL or DIV operation
@@ -729,7 +736,6 @@ module zeroriscy_id_stage
 
       WAIT_MULTICYCLE:
       begin
-        branch_set      = branch_in_id_q;
         if(ex_ready_i) begin
           regfile_we     = regfile_we_id;
           id_wb_fsm_ns   = IDLE;

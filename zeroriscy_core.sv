@@ -686,7 +686,7 @@ module zeroriscy_core
     .id_valid       ( id_stage_i.id_valid_o                ),
     .is_decoding    ( id_stage_i.is_decoding_o             ),
     .is_branch      ( id_stage_i.branch_in_id              ),
-    .branch_taken   ( id_stage_i.branch_set                ),
+    .branch_taken   ( id_stage_i.branch_set_q              ),
     .pipe_flush     ( id_stage_i.controller_i.pipe_flush_i ),
 
     .rs1_value      ( id_stage_i.operand_a_fw_id           ),

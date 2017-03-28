@@ -40,8 +40,8 @@ module zeroriscy_decoder
   // singals running to/from controller
   input  logic        deassert_we_i,           // deassert we, we are stalled or not active
   input  logic        data_misaligned_i,       // misaligned data load/store in progress
-  input  logic        branch_set_i,
-  input  logic        jump_set_i,
+  input  logic        branch_mux_i,
+  input  logic        jump_mux_i,
   output logic        illegal_insn_o,          // illegal instruction encountered
   output logic        ebrk_insn_o,             // trap instruction encountered
   output logic        mret_insn_o,             // return from exception instruction encountered
@@ -157,7 +157,7 @@ module zeroriscy_decoder
 
       OPCODE_JAL: begin   // Jump and Link
         jump_in_id            = 1'b1;
-        if(jump_set_i) begin
+        if(jump_mux_i) begin
           // Calculate jump target
           alu_op_a_mux_sel_o  = OP_A_CURRPC;
           alu_op_b_mux_sel_o  = OP_B_IMM;
@@ -176,7 +176,7 @@ module zeroriscy_decoder
 
       OPCODE_JALR: begin  // Jump and Link Register
         jump_in_id            = 1'b1;
-        if(jump_set_i) begin
+        if(jump_mux_i) begin
           // Calculate jump target
           alu_op_a_mux_sel_o  = OP_A_REGA_OR_FWD;
           alu_op_b_mux_sel_o  = OP_B_IMM;
@@ -203,7 +203,7 @@ module zeroriscy_decoder
 
         branch_in_id          = 1'b1;
 
-        if (~branch_set_i)
+        if (branch_mux_i)
         begin
           unique case (instr_rdata_i[14:12])
             3'b000: alu_operator_o = ALU_EQ;
