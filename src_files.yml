@@ -12,7 +12,7 @@ zeroriscy:
     zeroriscy_debug_unit.sv,
     zeroriscy_decoder.sv,
     zeroriscy_exc_controller.sv,
-    zeroriscy_ex_stage.sv,
+    zeroriscy_ex_block.sv,
     zeroriscy_id_stage.sv,
     zeroriscy_if_stage.sv,
     zeroriscy_load_store_unit.sv,

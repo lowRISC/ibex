@@ -49,6 +49,7 @@ module zeroriscy_controller
   input  logic        illegal_insn_i,             // decoder encountered an invalid instruction
   input  logic        mret_insn_i,                // decoder encountered an eret instruction
   input  logic        pipe_flush_i,               // decoder wants to do a pipe flush
+  input  logic        ebrk_insn_i,                // decoder encountered an ebreak instruction
 
   // from IF/ID pipeline
   input  logic        instr_valid_i,              // instruction coming from IF/ID pipeline is valid
@@ -111,7 +112,7 @@ module zeroriscy_controller
   // FSM state encoding
 
   enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
-                      DECODE, FLUSH,
+                      DECODE, FLUSH, IRQ_TAKEN,
                       DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
 
   logic exc_req;
@@ -227,15 +228,12 @@ module zeroriscy_controller
           ctrl_fsm_ns = DECODE;
         end
 
-        // handle exceptions
         if (ext_req_i) begin
-          pc_mux_o     = PC_EXCEPTION;
-          pc_set_o     = 1'b1;
-          exc_ack_o    = 1'b1;
-          irq_ack_o    = ext_req_i;
-          // TODO: This assumes that the pipeline is always flushed before
-          //       going to sleep.
-          exc_save_if_o = 1'b1;
+          // This assumes that the pipeline is always flushed before
+          // going to sleep.
+          ctrl_fsm_ns = IRQ_TAKEN;
+          halt_if_o   = 1'b1;
+          halt_id_o   = 1'b1;
         end
       end
 
@@ -266,51 +264,52 @@ module zeroriscy_controller
               end
               int_req_i: begin
                 ctrl_fsm_ns = FLUSH;
-                halt_if_o = 1'b1;
-                halt_id_o = 1'b1;
+                halt_if_o   = 1'b1;
+                halt_id_o   = 1'b1;
               end
               mret_insn_i: begin
                 ctrl_fsm_ns = FLUSH;
-                halt_if_o = 1'b1;
-                halt_id_o = 1'b1;
+                halt_if_o   = 1'b1;
+                halt_id_o   = 1'b1;
+              end
+              pipe_flush_i: begin
+                // handle WFI instruction, flush pipeline and (potentially) go to
+                // sleep
+                ctrl_fsm_ns = FLUSH;
+                halt_if_o   = 1'b1;
+                halt_id_o   = 1'b1;
+              end
+              ebrk_insn_i: begin
+                ctrl_fsm_ns = FLUSH;
+                halt_if_o   = 1'b1;
+                halt_id_o   = 1'b1;
               end
               default: begin
 
-                if (ext_req_i & ~instr_multicyle_i & ~branch_in_id_i) begin
-                    ctrl_fsm_ns = FLUSH;
+                unique case (1'b1)
+                  ext_req_i & ~instr_multicyle_i & ~branch_in_id_i: begin
+                    ctrl_fsm_ns = IRQ_TAKEN;
                     halt_if_o = 1'b1;
                     halt_id_o = 1'b1;
-                end
-                // handle WFI instruction, flush pipeline and (potentially) go to
-                // sleep TODO: put it in unique case
-                else if (pipe_flush_i) begin
-                  halt_if_o = 1'b1;
-                  halt_id_o = 1'b1;
-                  ctrl_fsm_ns = FLUSH;
-                end
-                else if (dbg_req_i & ~branch_taken_ex_i)
-                begin
-                  halt_if_o = 1'b1;
-                  if (id_ready_i) begin
-                    ctrl_fsm_ns = DBG_SIGNAL;
                   end
-                end
+                  dbg_req_i & ~branch_taken_ex_i: begin
+                    halt_if_o = 1'b1;
+                    if (id_ready_i) begin
+                      ctrl_fsm_ns = DBG_SIGNAL;
+                    end
+                  end
+                  default:;
+                endcase
               end
             endcase
           end
 
-          else if (~instr_valid_i)
+          else //~instr_valid_i
           begin
               if (ext_req_i) begin
-                pc_mux_o      = PC_EXCEPTION;
-                pc_set_o      = 1'b1;
-                exc_ack_o     = 1'b1;
-                exc_save_if_o = 1'b1;
-                irq_ack_o     = 1'b1;
-                // we don't have to change our current state here as the prefetch
-                // buffer is automatically invalidated, thus the next instruction
-                // that is served to the ID stage is the one of the jump to the
-                // exception handler
+                ctrl_fsm_ns = IRQ_TAKEN;
+                halt_if_o   = 1'b1;
+                halt_id_o   = 1'b1;
               end
           end
       end
@@ -375,17 +374,7 @@ module zeroriscy_controller
         halt_id_o = 1'b1;
 
         if(fetch_enable_i) begin
-          if (dbg_req_i) begin
-            ctrl_fsm_ns = DBG_SIGNAL;
-            if(int_req_i) begin
-              //exceptions
-              pc_mux_o      = PC_EXCEPTION;
-              pc_set_o      = 1'b1;
-              exc_ack_o     = 1'b1;
-              exc_save_id_o = 1'b1;
-            end
-          end else begin
-            ctrl_fsm_ns = DECODE;
+            ctrl_fsm_ns = dbg_req_i ? DBG_SIGNAL : DECODE;
             unique case (1'b1)
               int_req_i: begin
                 pc_mux_o          = PC_EXCEPTION;
@@ -398,33 +387,31 @@ module zeroriscy_controller
                 pc_set_o         = 1'b1;
                 exc_restore_id_o = 1'b1;
               end
-              ext_req_i: begin
-                pc_mux_o          = PC_EXCEPTION;
-                pc_set_o          = 1'b1;
-                exc_ack_o         = 1'b1;
-                //the instruction in id has been already executed
-                exc_save_if_o     = 1'b1;
-                irq_ack_o     = 1'b1;
-              end
               default: begin
-                halt_if_o   = 1'b0;
+                halt_if_o = dbg_req_i;
               end
             endcase
-          end
+          //end
         end else begin //~fetch_enable_i
           //mRET goes back to sleep
-          if(mret_insn_i) begin
-            //in order to restore the xPIE in xIE
-            exc_restore_id_o = 1'b1;
-            pc_mux_o         = PC_ERET;
-            pc_set_o         = 1'b1;
+          if (mret_insn_i) begin
+              pc_mux_o         = PC_ERET;
+              pc_set_o         = 1'b1;
+              exc_restore_id_o = 1'b1;
           end
-          if (dbg_req_i) begin
-            ctrl_fsm_ns = DBG_SIGNAL_SLEEP;
-          end else begin
-            ctrl_fsm_ns = SLEEP;
-          end
+          ctrl_fsm_ns      = dbg_req_i ? DBG_SIGNAL_SLEEP : SLEEP;
         end
+      end
+
+      IRQ_TAKEN:
+      begin
+        pc_mux_o          = PC_EXCEPTION;
+        pc_set_o          = 1'b1;
+        exc_ack_o         = 1'b1;
+        //the instruction in id has been already executed or it was not valid
+        exc_save_if_o     = 1'b1;
+        irq_ack_o         = 1'b1;
+        ctrl_fsm_ns       = DECODE;
       end
 
       default: begin

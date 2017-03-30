@@ -304,7 +304,7 @@ module zeroriscy_core
     .exception_pc_reg_i  ( mepc              ), // exception return address
     .pc_mux_i            ( pc_mux_id         ), // sel for pc multiplexer
     .exc_pc_mux_i        ( exc_pc_mux_id     ),
-    .exc_vec_pc_mux_i    ( irq_id_i          ),
+    .exc_vec_pc_mux_i    ( exc_cause[4:0]    ),
 
 
     // from debug unit

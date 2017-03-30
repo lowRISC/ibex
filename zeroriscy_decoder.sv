@@ -90,9 +90,6 @@ module zeroriscy_decoder
   logic       regfile_we;
   logic       data_req;
 
-  logic       ebrk_insn;
-  logic       pipe_flush;
-
   logic       mult_int_en;
   logic       div_int_en;
   logic       branch_in_id;
@@ -139,10 +136,10 @@ module zeroriscy_decoder
     data_load_event_o           = 1'b0;
 
     illegal_insn_o              = 1'b0;
-    ebrk_insn                   = 1'b0;
+    ebrk_insn_o                 = 1'b0;
     mret_insn_o                 = 1'b0;
     ecall_insn_o                = 1'b0;
-    pipe_flush                  = 1'b0;
+    pipe_flush_o                = 1'b0;
 
     unique case (instr_rdata_i[6:0])
 
@@ -494,7 +491,7 @@ module zeroriscy_decoder
             12'h001:  // ebreak
             begin
               // debugger trap
-              ebrk_insn = 1'b1;
+              ebrk_insn_o = 1'b1;
             end
 
             12'h302:  // mret
@@ -505,7 +502,7 @@ module zeroriscy_decoder
             12'h105:  // wfi
             begin
               // flush pipeline
-              pipe_flush = 1'b1;
+              pipe_flush_o = 1'b1;
             end
 
             default:
@@ -580,7 +577,5 @@ module zeroriscy_decoder
   assign csr_op_o          = (deassert_we_i) ? CSR_OP_NONE   : csr_op;
   assign jump_in_id_o      = (deassert_we_i) ? 1'b0          : jump_in_id;
   assign branch_in_id_o    = (deassert_we_i) ? 1'b0          : branch_in_id;
-  assign ebrk_insn_o       = (deassert_we_i) ? 1'b0          : ebrk_insn;
-  assign pipe_flush_o      = (deassert_we_i) ? 1'b0          : pipe_flush;
 
 endmodule // controller

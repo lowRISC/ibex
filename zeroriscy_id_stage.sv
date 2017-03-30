@@ -525,6 +525,7 @@ module zeroriscy_id_stage
     .illegal_insn_i                 ( illegal_insn_dec | illegal_reg_rv32e ),
     .mret_insn_i                    ( mret_insn_dec          ),
     .pipe_flush_i                   ( pipe_flush_dec         ),
+    .ebrk_insn_i                    ( ebrk_insn              ),
 
     // from IF/ID pipeline
     .instr_valid_i                  ( instr_valid_i          ),
@@ -600,9 +601,9 @@ module zeroriscy_id_stage
     .int_req_o            ( int_req          ),
     .ext_req_o            ( ext_req          ),
     .ack_i                ( exc_ack          ),
+    .ctr_decoding_i       ( is_decoding_o    ),
 
     .trap_o               ( dbg_trap_o       ),
-
     // to IF stage
     .pc_mux_o             ( exc_pc_mux_o     ),
 
@@ -611,9 +612,9 @@ module zeroriscy_id_stage
     .irq_id_i             ( irq_id_i         ),
     .irq_enable_i         ( irq_enable_i     ),
 
-    .ebrk_insn_i          ( is_decoding_o & ebrk_insn        ),
-    .illegal_insn_i       ( is_decoding_o & illegal_insn_dec ),
-    .ecall_insn_i         ( is_decoding_o & ecall_insn_dec   ),
+    .ebrk_insn_i          ( ebrk_insn        ),
+    .illegal_insn_i       ( illegal_insn_dec ),
+    .ecall_insn_i         ( ecall_insn_dec   ),
 
     .cause_o              ( exc_cause_o      ),
     .save_cause_o         ( save_exc_cause_o ),
@@ -645,7 +646,7 @@ module zeroriscy_id_stage
   assign alu_operand_b_ex_o          = alu_operand_b;
 
   assign csr_access_ex_o             = csr_access;
-  assign csr_op_ex_o                 = id_ready_o ? csr_op : CSR_OP_NONE;
+  assign csr_op_ex_o                 = csr_op;
 
   assign branch_in_ex_o              = branch_in_id;
 
@@ -682,7 +683,7 @@ module zeroriscy_id_stage
   always_comb
   begin
     id_wb_fsm_ns    = id_wb_fsm_cs;
-    regfile_we      = regfile_we_id & (~halt_id);
+    regfile_we      = regfile_we_id;
     load_stall      = 1'b0;
     multdiv_stall   = 1'b0;
     jump_stall      = 1'b0;

@@ -102,10 +102,8 @@ module zeroriscy_if_stage
           unique case (exc_pc_mux_i)
             EXC_PC_ILLINSN: exc_pc = { boot_addr_i[31:8], EXC_OFF_ILLINSN };
             EXC_PC_ECALL:   exc_pc = { boot_addr_i[31:8], EXC_OFF_ECALL   };
-            EXC_PC_LOAD:    exc_pc = { boot_addr_i[31:8], EXC_OFF_LSUERR  };
             EXC_PC_IRQ:     exc_pc = { boot_addr_i[31:8], 1'b0, exc_vec_pc_mux_i[4:0], 2'b0 };
-            // TODO: Add case for EXC_PC_STORE as soon as it differs from load
-
+            // TODO: Add case for EXC_PC_STORE and EXC_PC_LOAD as soon as they are supported
             default:;
           endcase
         end
