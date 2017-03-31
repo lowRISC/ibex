@@ -370,36 +370,37 @@ module zeroriscy_controller
       // flush the pipeline, insert NOP
       FLUSH:
       begin
-        halt_if_o = 1'b1;
+
+        halt_if_o = fetch_enable_i ? dbg_req_i : 1'b1;
         halt_id_o = 1'b1;
 
-        if(fetch_enable_i) begin
-            ctrl_fsm_ns = dbg_req_i ? DBG_SIGNAL : DECODE;
-            unique case (1'b1)
-              int_req_i: begin
-                pc_mux_o          = PC_EXCEPTION;
-                pc_set_o          = 1'b1;
-                exc_ack_o         = 1'b1;
-                exc_save_id_o     = 1'b1;
-              end
-              mret_insn_i: begin
-                pc_mux_o         = PC_ERET;
-                pc_set_o         = 1'b1;
-                exc_restore_id_o = 1'b1;
-              end
-              default: begin
-                halt_if_o = dbg_req_i;
-              end
-            endcase
-          //end
-        end else begin //~fetch_enable_i
-          //mRET goes back to sleep
-          if (mret_insn_i) begin
-              pc_mux_o         = PC_ERET;
-              pc_set_o         = 1'b1;
-              exc_restore_id_o = 1'b1;
+        ctrl_fsm_ns = dbg_req_i ? DBG_SIGNAL : DECODE;
+
+        unique case (1'b1)
+          int_req_i: begin
+            pc_mux_o          = PC_EXCEPTION;
+            pc_set_o          = 1'b1;
+            exc_ack_o         = 1'b1;
+            exc_save_id_o     = 1'b1;
           end
-          ctrl_fsm_ns      = dbg_req_i ? DBG_SIGNAL_SLEEP : SLEEP;
+          mret_insn_i: begin
+            pc_mux_o         = PC_ERET;
+            pc_set_o         = 1'b1;
+            exc_restore_id_o = 1'b1;
+          end
+          default:;
+        endcase
+
+        if(fetch_enable_i) begin
+          if(dbg_req_i)
+            ctrl_fsm_ns = DBG_SIGNAL;
+          else
+            ctrl_fsm_ns = DECODE;
+        end else begin
+          if(dbg_req_i)
+            ctrl_fsm_ns = DBG_SIGNAL_SLEEP;
+          else
+            ctrl_fsm_ns = SLEEP;
         end
       end
 
