@@ -65,7 +65,7 @@ module zeroriscy_exc_controller
 
   enum logic [1:0] { IDLE, WAIT_CONTROLLER_INT, WAIT_CONTROLLER_EXT, WAIT_CONTROLLER_DBG } exc_ctrl_cs, exc_ctrl_ns;
 
-  logic req_int, int_req_int, ext_req_int;
+  logic int_req_int, ext_req_int;
   logic [1:0] pc_mux_int, pc_mux_int_q;
   logic [5:0] cause_int, cause_int_q;
   logic trap_int;
@@ -89,44 +89,36 @@ module zeroriscy_exc_controller
 
   assign ext_req_int = irq_enable_i & irq_i;
 
-  assign req_int = int_req_int | ext_req_int;
-
   // Exception cause and ISR address selection
   always_comb
   begin
     cause_int  = 6'b0;
     pc_mux_int = '0;
 
-    if (irq_enable_i & irq_i) begin
-      // pc_mux_int is a critical signal, so try to get it as soon as possible
-      pc_mux_int = EXC_PC_IRQ;
-      cause_int = {1'b1,irq_id_i};
-    end
+    unique case(1'b1)
 
-    if (ebrk_insn_i) begin
-      cause_int  = 6'b0_00011;
-    end
+      ebrk_insn_i:
+        cause_int  = 6'b0_00011;
 
-    if (ecall_insn_i) begin
-      cause_int  = 6'b0_01011;
-      pc_mux_int = EXC_PC_ECALL;
-    end
+      ecall_insn_i: begin
+        cause_int  = 6'b0_01011;
+        pc_mux_int = EXC_PC_ECALL;
+      end
 
-    if (illegal_insn_i) begin
-      cause_int  = 6'b0_00010;
-      pc_mux_int = EXC_PC_ILLINSN;
-    end
-/*
-    if (lsu_load_err_i) begin
-      cause_int  = 6'b0_00101;
-      pc_mux_int = EXC_PC_LOAD;
-    end
+      illegal_insn_i: begin
+        cause_int  = 6'b0_00010;
+        pc_mux_int = EXC_PC_ILLINSN;
+      end
 
-    if (lsu_store_err_i) begin
-      cause_int  = 6'b0_00111;
-      pc_mux_int = EXC_PC_STORE;
-    end
-*/
+      default: begin
+        //exceptions have priority over interrupts
+        if (irq_enable_i & irq_i) begin
+          // pc_mux_int is a critical signal, so try to get it as soon as possible
+          pc_mux_int = EXC_PC_IRQ;
+          cause_int = {1'b1,irq_id_i};
+        end
+      end
+    endcase
   end
 
   always_ff @(posedge clk, negedge rst_n)
@@ -143,8 +135,6 @@ module zeroriscy_exc_controller
 
 
   // Exception cause and mux output (with bypass)
-//  assign cause_o      = ((exc_ctrl_cs == IDLE && req_int) || ebrk_insn_i) ? cause_int  : cause_int_q;
-//  assign pc_mux_o     = (exc_ctrl_cs == IDLE && req_int) ? pc_mux_int : pc_mux_int_q;
   assign cause_o      = cause_int_q;
   assign pc_mux_o     = pc_mux_int_q;
 

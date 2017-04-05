@@ -42,6 +42,7 @@ module zeroriscy_controller
 
   input  logic        fetch_enable_i,             // Start the decoding
   output logic        ctrl_busy_o,                // Core is busy processing instructions
+  output logic        first_fetch_o,              // Core is at the FIRST FETCH stage
   output logic        is_decoding_o,              // Core is in decoding state
 
   // decoder related signals
@@ -111,11 +112,9 @@ module zeroriscy_controller
 
   // FSM state encoding
 
-  enum  logic [3:0] { RESET, BOOT_SET, SLEEP, FIRST_FETCH,
+  enum  logic [3:0] { RESET, BOOT_SET, WAIT_SLEEP, SLEEP, FIRST_FETCH,
                       DECODE, FLUSH, IRQ_TAKEN,
                       DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
-
-  logic exc_req;
 
 `ifndef SYNTHESIS
   // synopsys translate_off
@@ -142,7 +141,7 @@ module zeroriscy_controller
   //                                                                                        //
   ////////////////////////////////////////////////////////////////////////////////////////////
 
-  assign exc_req = int_req_i | ext_req_i;
+
   always_comb
   begin
     // Default values
@@ -166,6 +165,7 @@ module zeroriscy_controller
     dbg_ack_o        = 1'b0;
 
     irq_ack_o        = 1'b0;
+    first_fetch_o    = 1'b0;
 
     unique case (ctrl_fsm_cs)
       // We were just reset, wait for fetch_enable
@@ -193,6 +193,15 @@ module zeroriscy_controller
         ctrl_fsm_ns = FIRST_FETCH;
       end
 
+      WAIT_SLEEP:
+      begin
+        ctrl_busy_o   = 1'b0;
+        instr_req_o   = 1'b0;
+        halt_if_o     = 1'b1;
+        halt_id_o     = 1'b1;
+        ctrl_fsm_ns   = SLEEP;
+      end
+
       // instruction in if_stage is already valid
       SLEEP:
       begin
@@ -200,13 +209,13 @@ module zeroriscy_controller
         // interrupt has arrived
         ctrl_busy_o   = 1'b0;
         instr_req_o   = 1'b0;
-        halt_if_o = 1'b1;
-        halt_id_o = 1'b1;
+        halt_if_o     = 1'b1;
+        halt_id_o     = 1'b1;
 
         if (dbg_req_i) begin
           // debug request, now we need to check if we should stay sleeping or
           // go to normal processing later
-          if (fetch_enable_i || exc_req)
+          if (fetch_enable_i || ext_req_i)
             ctrl_fsm_ns = DBG_SIGNAL;
           else
             ctrl_fsm_ns = DBG_SIGNAL_SLEEP;
@@ -222,6 +231,7 @@ module zeroriscy_controller
 
       FIRST_FETCH:
       begin
+        first_fetch_o = 1'b1;
         // Stall because of IF miss
         if ((id_ready_i == 1'b1) && (dbg_stall_i == 1'b0))
         begin
@@ -400,7 +410,7 @@ module zeroriscy_controller
           if(dbg_req_i)
             ctrl_fsm_ns = DBG_SIGNAL_SLEEP;
           else
-            ctrl_fsm_ns = SLEEP;
+            ctrl_fsm_ns = WAIT_SLEEP;
         end
       end
 

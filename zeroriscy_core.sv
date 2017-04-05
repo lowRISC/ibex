@@ -225,6 +225,8 @@ module zeroriscy_core
   logic        perf_jr_stall;
   logic        perf_ld_stall;
 
+  //core busy signals
+  logic        core_ctrl_firstfetch, core_busy_int, core_busy_q;
 
   //////////////////////////////////////////////////////////////////////////////////////////////
   //   ____ _            _      __  __                                                   _    //
@@ -244,13 +246,24 @@ module zeroriscy_core
 
   // if we are sleeping on a barrier let's just wait on the instruction
   // interface to finish loading instructions
-  assign core_busy_o = (data_load_event_ex & data_req_o) ? if_busy : (if_busy | ctrl_busy | lsu_busy);
+  assign core_busy_int = (data_load_event_ex & data_req_o) ? if_busy : (if_busy | ctrl_busy | lsu_busy);
 
-  assign dbg_busy = dbg_req | dbg_csr_req | dbg_jump_req | dbg_reg_wreq | debug_req_i;
+  always_ff @(posedge clk, negedge rst_ni)
+  begin
+    if (rst_ni == 1'b0) begin
+      core_busy_q <= 1'b0;
+    end else begin
+      core_busy_q <= core_busy_int;
+    end
+  end
 
-  assign clock_en = clock_en_i | core_busy_o | dbg_busy;
+  assign core_busy_o = core_ctrl_firstfetch ? 1'b1 : core_busy_q;
 
-  assign sleeping = (~fetch_enable_i) & (~core_busy_o);
+  assign dbg_busy    = dbg_req | dbg_csr_req | dbg_jump_req | dbg_reg_wreq | debug_req_i;
+
+  assign clock_en    = clock_en_i | core_busy_o | dbg_busy;
+
+  assign sleeping    = (~fetch_enable_i) & (~core_busy_o);
 
 
   // main clock gate of the core
@@ -345,6 +358,7 @@ module zeroriscy_core
     // Processor Enable
     .fetch_enable_i               ( fetch_enable_i       ),
     .ctrl_busy_o                  ( ctrl_busy            ),
+    .core_ctrl_firstfetch_o       ( core_ctrl_firstfetch ),
     .is_decoding_o                ( is_decoding          ),
 
     // Interface to instruction memory
