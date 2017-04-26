@@ -71,6 +71,7 @@ module zeroriscy_decoder
   // CSR manipulation
   output logic        csr_access_o,            // access to CSR
   output logic [1:0]  csr_op_o,                // operation to perform on CSR
+  output logic        csr_status_o,            // access to xstatus CSR
 
   // LD/ST unit signals
   output logic        data_req_o,              // start transaction to data memory
@@ -96,7 +97,7 @@ module zeroriscy_decoder
   logic       jump_in_id;
 
   logic [1:0] csr_op;
-
+  logic       csr_illegal;
 
   /////////////////////////////////////////////
   //   ____                     _            //
@@ -126,6 +127,8 @@ module zeroriscy_decoder
     regfile_we                  = 1'b0;
 
     csr_access_o                = 1'b0;
+    csr_status_o                = 1'b0;
+    csr_illegal                 = 1'b0;
     csr_op                      = CSR_OP_NONE;
 
     data_we_o                   = 1'b0;
@@ -531,8 +534,16 @@ module zeroriscy_decoder
             2'b01:   csr_op   = CSR_OP_WRITE;
             2'b10:   csr_op   = CSR_OP_SET;
             2'b11:   csr_op   = CSR_OP_CLEAR;
-            default: illegal_insn_o = 1'b1;
+            default: csr_illegal = 1'b1;
           endcase
+
+          if(~csr_illegal)
+            if (instr_rdata_i[31:20] == 12'h300)
+              //access to mstatus
+              csr_status_o = 1'b1;
+
+          illegal_insn_o = csr_illegal;
+
         end
 
       end

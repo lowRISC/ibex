@@ -68,7 +68,7 @@ module zeroriscy_ex_block
   output logic                    ex_ready_o      // EX stage gets new data
 );
 
-  localparam MULT_TYPE = 0; //0 is SLOW
+  localparam MULT_TYPE = 1; //0 is SLOW
 
   logic [31:0] alu_result, multdiv_result;
 
@@ -121,6 +121,15 @@ end
     .comparison_result_o ( alu_cmp_result            ),
     .is_equal_result_o   ( alu_is_equal_result       )
   );
+
+  ////////////////////////////////////////////////////////////////
+  //  __  __ _   _ _   _____ ___ ____  _     ___ _____ ____     //
+  // |  \/  | | | | | |_   _|_ _|  _ \| |   |_ _| ____|  _ \    //
+  // | |\/| | | | | |   | |  | || |_) | |    | ||  _| | |_) |   //
+  // | |  | | |_| | |___| |  | ||  __/| |___ | || |___|  _ <    //
+  // |_|  |_|\___/|_____|_| |___|_|   |_____|___|_____|_| \_\   //
+  //                                                            //
+  ////////////////////////////////////////////////////////////////
 
   if (MULT_TYPE == 0) begin : multdiv_slow
     zeroriscy_multdiv_slow multdiv_i

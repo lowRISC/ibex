@@ -11,7 +11,7 @@ zeroriscy:
     zeroriscy_cs_registers.sv,
     zeroriscy_debug_unit.sv,
     zeroriscy_decoder.sv,
-    zeroriscy_exc_controller.sv,
+    zeroriscy_int_controller.sv,
     zeroriscy_ex_block.sv,
     zeroriscy_id_stage.sv,
     zeroriscy_if_stage.sv,

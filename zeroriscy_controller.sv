@@ -47,10 +47,13 @@ module zeroriscy_controller
 
   // decoder related signals
   output logic        deassert_we_o,              // deassert write enable for next instruction
+
   input  logic        illegal_insn_i,             // decoder encountered an invalid instruction
-  input  logic        mret_insn_i,                // decoder encountered an eret instruction
+  input  logic        ecall_insn_i,               // ecall encountered an mret instruction
+  input  logic        mret_insn_i,                // decoder encountered an mret instruction
   input  logic        pipe_flush_i,               // decoder wants to do a pipe flush
   input  logic        ebrk_insn_i,                // decoder encountered an ebreak instruction
+  input  logic        csr_status_i,              // decoder encountered an csr status instruction
 
   // from IF/ID pipeline
   input  logic        instr_valid_i,              // instruction coming from IF/ID pipeline is valid
@@ -61,6 +64,7 @@ module zeroriscy_controller
   // to prefetcher
   output logic        pc_set_o,                   // jump to address set by pc_mux
   output logic [2:0]  pc_mux_o,                   // Selector in the Fetch stage to select the rigth PC (normal, jump ...)
+  output logic [1:0]  exc_pc_mux_o,               // Selects target PC for exception
 
   // LSU
   input  logic        data_misaligned_i,
@@ -74,14 +78,23 @@ module zeroriscy_controller
 
   input  logic        instr_multicyle_i,          // multicycle instructions active
 
-  // Exception Controller Signals
-  input  logic        int_req_i,
-  input  logic        ext_req_i,
-  output logic        exc_ack_o,
+
+  // Interrupt Controller Signals
+  input  logic        irq_req_ctrl_i,
+  input  logic [4:0]  irq_id_ctrl_i,
+  input  logic        m_IE_i,                     // interrupt enable bit from CSR (M mode)
+
   output logic        irq_ack_o,
-  output logic        exc_save_if_o,
-  output logic        exc_save_id_o,
-  output logic        exc_restore_id_o,
+
+  output logic [5:0]  exc_cause_o,
+  output logic        exc_ack_o,
+  output logic        exc_kill_o,
+
+  output logic        csr_save_if_o,
+  output logic        csr_save_id_o,
+  output logic [5:0]  csr_cause_o,
+  output logic        csr_restore_mret_id_o,
+  output logic        csr_save_cause_o,
 
   // Debug Signals
   input  logic        dbg_req_i,                  // a trap was hit, so we have to flush EX and WB
@@ -89,6 +102,9 @@ module zeroriscy_controller
 
   input  logic        dbg_stall_i,                // Pipeline stall is requested
   input  logic        dbg_jump_req_i,             // Change PC to value from debug unit
+
+  input  logic [DBG_SETS_W-1:0] dbg_settings_i,
+  output logic        dbg_trap_o,
 
   // forwarding signals
   output logic [1:0]  operand_a_fw_mux_sel_o,     // regfile ra data selector form ID stage
@@ -111,10 +127,11 @@ module zeroriscy_controller
 );
 
   // FSM state encoding
-
   enum  logic [3:0] { RESET, BOOT_SET, WAIT_SLEEP, SLEEP, FIRST_FETCH,
                       DECODE, FLUSH, IRQ_TAKEN,
                       DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
+
+  logic irq_enable_int;
 
 `ifndef SYNTHESIS
   // synopsys translate_off
@@ -145,27 +162,45 @@ module zeroriscy_controller
   always_comb
   begin
     // Default values
-    instr_req_o      = 1'b1;
+    instr_req_o            = 1'b1;
 
-    exc_ack_o        = 1'b0;
-    exc_save_if_o    = 1'b0;
-    exc_save_id_o    = 1'b0;
-    exc_restore_id_o = 1'b0;
+    exc_ack_o              = 1'b0;
+    exc_kill_o             = 1'b0;
 
-    pc_mux_o         = PC_BOOT;
-    pc_set_o         = 1'b0;
+    csr_save_if_o          = 1'b0;
+    csr_save_id_o          = 1'b0;
+    csr_restore_mret_id_o  = 1'b0;
+    csr_save_cause_o       = 1'b0;
 
-    ctrl_fsm_ns      = ctrl_fsm_cs;
+    exc_cause_o            = '0;
+    exc_pc_mux_o           = EXC_PC_IRQ;
 
-    ctrl_busy_o      = 1'b1;
-    is_decoding_o    = 1'b0;
+    csr_cause_o            = '0;
 
-    halt_if_o        = 1'b0;
-    halt_id_o        = 1'b0;
-    dbg_ack_o        = 1'b0;
+    pc_mux_o               = PC_BOOT;
+    pc_set_o               = 1'b0;
 
-    irq_ack_o        = 1'b0;
-    first_fetch_o    = 1'b0;
+    ctrl_fsm_ns            = ctrl_fsm_cs;
+
+    ctrl_busy_o            = 1'b1;
+    is_decoding_o          = 1'b0;
+    first_fetch_o          = 1'b0;
+
+    halt_if_o              = 1'b0;
+    halt_id_o              = 1'b0;
+    dbg_ack_o              = 1'b0;
+    irq_ack_o              = 1'b0;
+
+    irq_enable_int         = m_IE_i;
+
+    // a trap towards the debug unit is generated when one of the
+    // following conditions are true:
+    // - ebreak instruction encountered
+    // - single-stepping mode enabled
+    // - illegal instruction exception and IIE bit is set
+    // - IRQ and INTE bit is set and no exception is currently running
+    // - Debuger requests halt
+    dbg_trap_o             = 1'b0;
 
     unique case (ctrl_fsm_cs)
       // We were just reset, wait for fetch_enable
@@ -211,18 +246,19 @@ module zeroriscy_controller
         instr_req_o   = 1'b0;
         halt_if_o     = 1'b1;
         halt_id_o     = 1'b1;
+        dbg_trap_o    = dbg_settings_i[DBG_SETS_SSTE];
 
         if (dbg_req_i) begin
           // debug request, now we need to check if we should stay sleeping or
           // go to normal processing later
-          if (fetch_enable_i || ext_req_i)
+          if (fetch_enable_i || irq_req_ctrl_i)
             ctrl_fsm_ns = DBG_SIGNAL;
           else
             ctrl_fsm_ns = DBG_SIGNAL_SLEEP;
 
         end else begin
           // no debug request incoming, normal execution flow
-          if (fetch_enable_i || ext_req_i)
+          if (fetch_enable_i || irq_req_ctrl_i)
           begin
             ctrl_fsm_ns  = FIRST_FETCH;
           end
@@ -238,7 +274,7 @@ module zeroriscy_controller
           ctrl_fsm_ns = DECODE;
         end
 
-        if (ext_req_i) begin
+        if (irq_req_ctrl_i & irq_enable_int) begin
           // This assumes that the pipeline is always flushed before
           // going to sleep.
           ctrl_fsm_ns = IRQ_TAKEN;
@@ -263,44 +299,30 @@ module zeroriscy_controller
               branch_set_i: begin
                 pc_mux_o          = PC_JUMP;
                 pc_set_o          = 1'b1;
+                dbg_trap_o        = dbg_settings_i[DBG_SETS_SSTE];
                 if (dbg_req_i)
                   ctrl_fsm_ns = DBG_SIGNAL;
               end
               jump_set_i: begin
                 pc_mux_o          = PC_JUMP;
                 pc_set_o          = 1'b1;
+                dbg_trap_o        = dbg_settings_i[DBG_SETS_SSTE];
                 if (dbg_req_i)
                   ctrl_fsm_ns = DBG_SIGNAL;
               end
-              int_req_i: begin
-                ctrl_fsm_ns = FLUSH;
-                halt_if_o   = 1'b1;
-                halt_id_o   = 1'b1;
-              end
-              mret_insn_i: begin
-                ctrl_fsm_ns = FLUSH;
-                halt_if_o   = 1'b1;
-                halt_id_o   = 1'b1;
-              end
-              pipe_flush_i: begin
-                // handle WFI instruction, flush pipeline and (potentially) go to
-                // sleep
-                ctrl_fsm_ns = FLUSH;
-                halt_if_o   = 1'b1;
-                halt_id_o   = 1'b1;
-              end
-              ebrk_insn_i: begin
+              mret_insn_i | ecall_insn_i | pipe_flush_i | ebrk_insn_i | illegal_insn_i | csr_status_i: begin
                 ctrl_fsm_ns = FLUSH;
                 halt_if_o   = 1'b1;
                 halt_id_o   = 1'b1;
               end
               default: begin
+                dbg_trap_o = dbg_settings_i[DBG_SETS_SSTE];
 
                 unique case (1'b1)
-                  ext_req_i & ~instr_multicyle_i & ~branch_in_id_i: begin
+                  irq_req_ctrl_i & irq_enable_int & ~instr_multicyle_i & ~branch_in_id_i: begin
                     ctrl_fsm_ns = IRQ_TAKEN;
-                    halt_if_o = 1'b1;
-                    halt_id_o = 1'b1;
+                    halt_if_o   = 1'b1;
+                    halt_id_o   = 1'b1;
                   end
                   dbg_req_i & ~branch_taken_ex_i: begin
                     halt_if_o = 1'b1;
@@ -308,15 +330,15 @@ module zeroriscy_controller
                       ctrl_fsm_ns = DBG_SIGNAL;
                     end
                   end
-                  default:;
+                  default:
+                    exc_kill_o    = irq_req_ctrl_i & ~instr_multicyle_i & ~branch_in_id_i ? 1'b1 : 1'b0;
                 endcase
               end
             endcase
           end
-
           else //~instr_valid_i
           begin
-              if (ext_req_i) begin
+              if (irq_req_ctrl_i & irq_enable_int) begin
                 ctrl_fsm_ns = IRQ_TAKEN;
                 halt_if_o   = 1'b1;
                 halt_id_o   = 1'b1;
@@ -376,6 +398,24 @@ module zeroriscy_controller
         end
       end
 
+      IRQ_TAKEN:
+      begin
+        pc_mux_o          = PC_EXCEPTION;
+        pc_set_o          = 1'b1;
+
+        exc_pc_mux_o      = EXC_PC_IRQ;
+        exc_cause_o       = {1'b0,irq_id_ctrl_i};
+
+        csr_save_cause_o  = 1'b1;
+        csr_cause_o       = {1'b1,irq_id_ctrl_i};
+
+        csr_save_if_o     = 1'b1;
+
+        irq_ack_o         = 1'b1;
+        exc_ack_o         = 1'b1;
+
+        ctrl_fsm_ns       = DECODE;
+      end
 
       // flush the pipeline, insert NOP
       FLUSH:
@@ -386,17 +426,45 @@ module zeroriscy_controller
 
         ctrl_fsm_ns = dbg_req_i ? DBG_SIGNAL : DECODE;
 
-        unique case (1'b1)
-          int_req_i: begin
-            pc_mux_o          = PC_EXCEPTION;
-            pc_set_o          = 1'b1;
-            exc_ack_o         = 1'b1;
-            exc_save_id_o     = 1'b1;
+        unique case(1'b1)
+          ecall_insn_i: begin
+              //ecall
+              pc_mux_o              = PC_EXCEPTION;
+              pc_set_o              = 1'b1;
+              csr_save_id_o         = 1'b1;
+              csr_save_cause_o      = 1'b1;
+              exc_pc_mux_o          = EXC_PC_ECALL;
+              exc_cause_o           = EXC_CAUSE_ECALL_MMODE;
+              csr_cause_o           = EXC_CAUSE_ECALL_MMODE;
+              dbg_trap_o            = dbg_settings_i[DBG_SETS_ECALL] | dbg_settings_i[DBG_SETS_SSTE];
+          end
+          illegal_insn_i: begin
+              //exceptions
+              pc_mux_o              = PC_EXCEPTION;
+              pc_set_o              = 1'b1;
+              csr_save_id_o         = 1'b1;
+              csr_save_cause_o      = 1'b1;
+              exc_pc_mux_o          = EXC_PC_ILLINSN;
+              exc_cause_o           = EXC_CAUSE_ILLEGAL_INSN;
+              csr_cause_o           = EXC_CAUSE_ILLEGAL_INSN;
+              dbg_trap_o            = dbg_settings_i[DBG_SETS_EILL] | dbg_settings_i[DBG_SETS_SSTE];
           end
           mret_insn_i: begin
-            pc_mux_o         = PC_ERET;
-            pc_set_o         = 1'b1;
-            exc_restore_id_o = 1'b1;
+              //mret
+              pc_mux_o              = PC_ERET;
+              pc_set_o              = 1'b1;
+              csr_restore_mret_id_o = 1'b1;
+              dbg_trap_o            = dbg_settings_i[DBG_SETS_SSTE];
+          end
+          ebrk_insn_i: begin
+              dbg_trap_o    = dbg_settings_i[DBG_SETS_EBRK] | dbg_settings_i[DBG_SETS_SSTE];;
+              exc_cause_o   = EXC_CAUSE_BREAKPOINT;
+          end
+          csr_status_i: begin
+              dbg_trap_o    = dbg_settings_i[DBG_SETS_SSTE];
+          end
+          pipe_flush_i: begin
+              dbg_trap_o    = dbg_settings_i[DBG_SETS_SSTE];
           end
           default:;
         endcase
@@ -412,17 +480,6 @@ module zeroriscy_controller
           else
             ctrl_fsm_ns = WAIT_SLEEP;
         end
-      end
-
-      IRQ_TAKEN:
-      begin
-        pc_mux_o          = PC_EXCEPTION;
-        pc_set_o          = 1'b1;
-        exc_ack_o         = 1'b1;
-        //the instruction in id has been already executed or it was not valid
-        exc_save_if_o     = 1'b1;
-        irq_ack_o         = 1'b1;
-        ctrl_fsm_ns       = DECODE;
       end
 
       default: begin
@@ -485,6 +542,6 @@ module zeroriscy_controller
   //----------------------------------------------------------------------------
 `ifndef VERILATOR
   assert property (
-    @(posedge clk) (~(dbg_req_i & ext_req_i)) ) else $warning("Both dbg_req_i and ext_req_i are active");
+    @(posedge clk) (~(dbg_req_i & irq_req_ctrl_i)) ) else $warning("Both dbg_req_i and irq_req_ctrl_i are active");
 `endif
 endmodule // controller

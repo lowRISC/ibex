@@ -49,6 +49,9 @@ module zeroriscy_cs_registers
   input  logic  [3:0] core_id_i,
   input  logic  [5:0] cluster_id_i,
 
+  // Used for boot address
+  input  logic [23:0] boot_addr_i,
+
   // Interface to registers (SRAM like)
   input  logic        csr_access_i,
   input  logic [11:0] csr_addr_i,
@@ -57,19 +60,18 @@ module zeroriscy_cs_registers
   output logic [31:0] csr_rdata_o,
 
   // Interrupts
-  output logic        irq_enable_o,
+  output logic        m_irq_enable_o,
   output logic [31:0] mepc_o,
 
   input  logic [31:0] pc_if_i,
   input  logic [31:0] pc_id_i,
 
-  input  logic        data_load_event_ex_i,
-  input  logic        exc_save_if_i,
-  input  logic        exc_save_id_i,
-  input  logic        exc_restore_i,
+  input  logic        csr_save_if_i,
+  input  logic        csr_save_id_i,
+  input  logic        csr_restore_mret_i,
 
-  input  logic [5:0]  exc_cause_i,
-  input  logic        save_exc_cause_i,
+  input  logic [5:0]  csr_cause_i,
+  input  logic        csr_save_cause_i,
 
 
   // Performance Counters
@@ -99,6 +101,29 @@ module zeroriscy_cs_registers
   localparam N_PERF_REGS     = N_PERF_COUNTERS;
 `endif
 
+  `define MSTATUS_UIE_BITS        0
+  `define MSTATUS_SIE_BITS        1
+  `define MSTATUS_MIE_BITS        3
+  `define MSTATUS_UPIE_BITS       4
+  `define MSTATUS_SPIE_BITS       5
+  `define MSTATUS_MPIE_BITS       7
+  `define MSTATUS_SPP_BITS        8
+  `define MSTATUS_MPP_BITS    12:11
+
+  typedef struct packed {
+    //logic uie;       - unimplemented, hardwired to '0
+    // logic sie;      - unimplemented, hardwired to '0
+    // logic hie;      - unimplemented, hardwired to '0
+    logic mie;
+    //logic upie;     - unimplemented, hardwired to '0
+    // logic spie;     - unimplemented, hardwired to '0
+    // logic hpie;     - unimplemented, hardwired to '0
+    logic mpie;
+    // logic spp;      - unimplemented, hardwired to '0
+    // logic[1:0] hpp; - unimplemented, hardwired to '0
+    PrivLvl_t mpp;
+  } Status_t;
+
   // Performance Counter Signals
   logic                          id_valid_q;
   logic [N_PERF_COUNTERS-1:0]    PCCR_in;  // input signals for each counter category
@@ -122,9 +147,8 @@ module zeroriscy_cs_registers
 
   // Interrupt control signals
   logic [31:0] mepc_q, mepc_n;
-  logic [ 1:0] mstatus_q, mstatus_n;
-  logic [ 5:0] exc_cause_q, exc_cause_n;
-  logic mie,mpie;
+  logic [ 5:0] mcause_q, mcause_n;
+  Status_t mstatus_q, mstatus_n;
 
   ////////////////////////////////////////////
   //   ____ ____  ____    ____              //
@@ -135,9 +159,6 @@ module zeroriscy_cs_registers
   //                                |___/   //
   ////////////////////////////////////////////
 
-  assign mie  = mstatus_q[0];
-  assign mpie = mstatus_q[1];
-
   // read logic
   always_comb
   begin
@@ -146,12 +167,23 @@ module zeroriscy_cs_registers
     case (csr_addr_i)
 
       // mstatus: always M-mode, contains IE bit
-      12'h300: csr_rdata_int = {19'b0, 2'b11, 3'b0, mpie, 3'h0, mie, 3'h0};
-
+      12'h300: csr_rdata_int = {19'b0, mstatus_q.mpp, 3'b0, mstatus_q.mpie, 3'h0, mstatus_q.mie, 3'h0};
+      // mstatus
+      12'h300: csr_rdata_int = {
+                                  19'b0,
+                                  mstatus_q.mpp,
+                                  3'b0,
+                                  mstatus_q.mpie,
+                                  3'h0,
+                                  mstatus_q.mie,
+                                  3'h0
+                                };
+      // mtvec: machine trap-handler base address
+      12'h305: csr_rdata_int = {boot_addr_i, 8'h0};
       // mepc: exception program counter
       12'h341: csr_rdata_int = mepc_q;
       // mcause: exception cause
-      12'h342: csr_rdata_int = {exc_cause_q[5], 26'b0, exc_cause_q[4:0]};
+      12'h342: csr_rdata_int = {mcause_q[5], 26'b0, mcause_q[4:0]};
 
       // mhartid: unique hardware thread id
       12'hF14: csr_rdata_int = {21'b0, cluster_id_i[5:0], 1'b0, core_id_i[3:0]};
@@ -165,39 +197,49 @@ module zeroriscy_cs_registers
   begin
     mepc_n       = mepc_q;
     mstatus_n    = mstatus_q;
-    exc_cause_n  = exc_cause_q;
+    mcause_n     = mcause_q;
 
     case (csr_addr_i)
       // mstatus: IE bit
-      12'h300: if (csr_we_int) mstatus_n = {csr_wdata_int[7], csr_wdata_int[3]};
-
+      12'h300: if (csr_we_int) begin
+          mstatus_n = '{
+          mie:  csr_wdata_int[`MSTATUS_MIE_BITS],
+          mpie: csr_wdata_int[`MSTATUS_MPIE_BITS],
+          mpp:  PrivLvl_t'(PRIV_LVL_M)
+        };
+      end
       // mepc: exception program counter
       12'h341: if (csr_we_int) mepc_n = csr_wdata_int;
       // mcause
-      12'h342: if (csr_we_int) exc_cause_n = {csr_wdata_int[31], csr_wdata_int[4:0]};
+      12'h342: if (csr_we_int) mcause_n = {csr_wdata_int[31], csr_wdata_int[4:0]};
 
     endcase
 
     // exception controller gets priority over other writes
-    if (exc_save_if_i || exc_save_id_i) begin
-      mstatus_n  = {mie,1'b0};
+    unique case (1'b1)
 
-      if (data_load_event_ex_i) begin
-        mepc_n = pc_id_i;
-      end else begin
-        if (exc_save_if_i)
-          mepc_n = pc_if_i;
-        else
-          mepc_n = pc_id_i;
-      end
-    end
+      csr_save_cause_i: begin
+        unique case (1'b1)
+          csr_save_if_i:
+            mepc_n = pc_if_i;
+          csr_save_id_i:
+            mepc_n = pc_id_i;
+          default:;
+        endcase
+        mstatus_n.mpie = mstatus_q.mie;
+        mstatus_n.mie  = 1'b0;
+        mcause_n       = csr_cause_i;
+      end //csr_save_cause_i
 
-    if (save_exc_cause_i)
-      exc_cause_n = exc_cause_i;
+      csr_restore_mret_i: begin //MRET
+        mstatus_n.mie  = mstatus_q.mpie;
+        mstatus_n.mpie = 1'b1;
+      end //csr_restore_mret_i
 
-    if (exc_restore_i) begin
-      mstatus_n = {mstatus_q[1],mstatus_q[1]};
-    end
+      default:;
+
+    endcase
+
   end
 
 
@@ -234,8 +276,8 @@ module zeroriscy_cs_registers
 
 
   // directly output some registers
-  assign irq_enable_o = mie;
-  assign mepc_o       = mepc_q;
+  assign m_irq_enable_o  = mstatus_q.mie;
+  assign mepc_o          = mepc_q;
 
 
   // actual registers
@@ -243,16 +285,24 @@ module zeroriscy_cs_registers
   begin
     if (rst_n == 1'b0)
     begin
-      mstatus_q  <= '0;
+      mstatus_q  <= '{
+              mie:  1'b0,
+              mpie: 1'b0,
+              mpp:  PRIV_LVL_M
+            };
       mepc_q     <= '0;
-      exc_cause_q <= '0;
+      mcause_q   <= '0;
     end
     else
     begin
       // update CSRs
-      mstatus_q  <= mstatus_n;
+        mstatus_q  <= '{
+                mie:  mstatus_n.mie,
+                mpie: mstatus_n.mpie,
+                mpp:  PRIV_LVL_M
+              };
       mepc_q     <= mepc_n;
-      exc_cause_q <= exc_cause_n;
+      mcause_q   <= mcause_n;
     end
   end
 

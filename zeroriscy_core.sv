@@ -108,6 +108,7 @@ module zeroriscy_core
   logic              pc_set;
   logic [2:0]        pc_mux_id;     // Mux selector for next PC
   logic [1:0]        exc_pc_mux_id;     // Mux selector for exception PC
+  logic [5:0]        exc_cause;
 
   logic              lsu_load_err;
   logic              lsu_store_err;
@@ -115,7 +116,6 @@ module zeroriscy_core
   // ID performance counter signals
   logic        is_decoding;
 
-  
   logic        data_misaligned;
   logic [31:0] misaligned_addr;
 
@@ -127,7 +127,6 @@ module zeroriscy_core
   logic        ctrl_busy;
   logic        if_busy;
   logic        lsu_busy;
-
 
   // ALU Control
   logic [ALU_OP_WIDTH-1:0] alu_operator_ex;
@@ -167,7 +166,6 @@ module zeroriscy_core
   logic        data_misaligned_ex;
   logic [31:0] regfile_wdata_lsu;
 
-
   // stall control
   logic        halt_if;
   logic        id_ready;
@@ -183,15 +181,15 @@ module zeroriscy_core
   logic        instr_req_int;    // Id stage asserts a req to instruction core interface
 
   // Interrupts
-  logic        irq_enable;
+  logic        m_irq_enable;
   logic [31:0] mepc;
 
-  logic [5:0]  exc_cause;
-  logic        save_exc_cause;
-  logic        exc_save_if;
-  logic        exc_save_id;
-  logic        exc_save_takenbranch_ex;
-  logic        exc_restore_id;
+  logic        csr_save_cause;
+  logic        csr_save_if;
+  logic        csr_save_id;
+  logic [5:0]  csr_cause;
+  logic        csr_restore_mret_id;
+  logic        csr_restore_uret_id;
 
   // Debug Unit
   logic [DBG_SETS_W-1:0] dbg_settings;
@@ -375,6 +373,7 @@ module zeroriscy_core
     .pc_set_o                     ( pc_set               ),
     .pc_mux_o                     ( pc_mux_id            ),
     .exc_pc_mux_o                 ( exc_pc_mux_id        ),
+    .exc_cause_o                  ( exc_cause            ),
 
     .illegal_c_insn_i             ( illegal_c_insn_id    ),
     .is_compressed_i              ( is_compressed_id     ),
@@ -403,6 +402,11 @@ module zeroriscy_core
     // CSR ID/EX
     .csr_access_ex_o              ( csr_access_ex        ),
     .csr_op_ex_o                  ( csr_op_ex            ),
+    .csr_cause_o                  ( csr_cause            ),
+    .csr_save_if_o                ( csr_save_if          ), // control signal to save pc
+    .csr_save_id_o                ( csr_save_id          ), // control signal to save pc
+    .csr_restore_mret_id_o        ( csr_restore_mret_id  ), // control signal to restore pc
+    .csr_save_cause_o             ( csr_save_cause       ),
 
     // LSU
     .data_req_ex_o                ( data_req_ex          ), // to load store unit
@@ -419,14 +423,9 @@ module zeroriscy_core
     // Interrupt Signals
     .irq_i                        ( irq_i                ), // incoming interrupts
     .irq_id_i                     ( irq_id_i             ),
-    .irq_enable_i                 ( irq_enable           ), // global interrupt enable
+    .m_irq_enable_i               ( m_irq_enable         ),
     .irq_ack_o                    ( irq_ack_o            ),
 
-    .exc_cause_o                  ( exc_cause            ),
-    .save_exc_cause_o             ( save_exc_cause       ),
-    .exc_save_if_o                ( exc_save_if          ), // control signal to save pc
-    .exc_save_id_o                ( exc_save_id          ), // control signal to save pc
-    .exc_restore_id_o             ( exc_restore_id       ), // control signal to restore pc
     .lsu_load_err_i               ( lsu_load_err         ),
     .lsu_store_err_i              ( lsu_store_err        ),
 
@@ -492,7 +491,6 @@ module zeroriscy_core
     .lsu_en_i                   ( data_req_ex           ),
     .lsu_ready_ex_i             ( data_valid_lsu        ),
     .ex_ready_o                 ( ex_ready              )
-
   );
 
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -569,7 +567,8 @@ module zeroriscy_core
     // Core and Cluster ID from outside
     .core_id_i               ( core_id_i          ),
     .cluster_id_i            ( cluster_id_i       ),
-
+    // boot address
+    .boot_addr_i             ( boot_addr_i[31:8]  ),
     // Interface to CSRs (SRAM like)
     .csr_access_i            ( csr_access         ),
     .csr_addr_i              ( csr_addr           ),
@@ -578,18 +577,17 @@ module zeroriscy_core
     .csr_rdata_o             ( csr_rdata          ),
 
     // Interrupt related control signals
-    .irq_enable_o            ( irq_enable         ),
+    .m_irq_enable_o          ( m_irq_enable       ),
     .mepc_o                  ( mepc               ),
 
     .pc_if_i                 ( pc_if              ),
     .pc_id_i                 ( pc_id              ),
-    .data_load_event_ex_i    ( data_load_event_ex ),
-    .exc_save_if_i           ( exc_save_if        ),
-    .exc_save_id_i           ( exc_save_id        ),
-    .exc_restore_i           ( exc_restore_id     ),
 
-    .exc_cause_i             ( exc_cause          ),
-    .save_exc_cause_i        ( save_exc_cause     ),
+    .csr_save_if_i           ( csr_save_if        ),
+    .csr_save_id_i           ( csr_save_id        ),
+    .csr_restore_mret_i      ( csr_restore_mret_id ),
+    .csr_cause_i             ( csr_cause          ),
+    .csr_save_cause_i        ( csr_save_cause     ),
 
 
     // performance counter related signals

@@ -191,6 +191,13 @@ parameter SP_DCR_MSB = 8'h01;
 parameter SP_DMR_MSB = 8'h02;
 parameter SP_DSR_MSB = 8'h04;
 
+// Privileged mode
+typedef enum logic[1:0] {
+  PRIV_LVL_M = 2'b11,
+  PRIV_LVL_H = 2'b10,
+  PRIV_LVL_S = 2'b01,
+  PRIV_LVL_U = 2'b00
+} PrivLvl_t;
 
 ///////////////////////////////////////////////
 //   ___ ____    ____  _                     //
@@ -279,6 +286,11 @@ parameter EXC_PC_ECALL     = 2'b01;
 parameter EXC_PC_LOAD      = 2'b10;
 parameter EXC_PC_STORE     = 2'b10;
 parameter EXC_PC_IRQ       = 2'b11;
+
+// Exception Cause
+parameter EXC_CAUSE_ILLEGAL_INSN = 6'h02;
+parameter EXC_CAUSE_BREAKPOINT   = 6'h03;
+parameter EXC_CAUSE_ECALL_MMODE  = 6'h0B;
 
 // Exceptions offsets
 // target address = {boot_addr[31:8], EXC_OFF} (boot_addr must be 32 BYTE aligned!)

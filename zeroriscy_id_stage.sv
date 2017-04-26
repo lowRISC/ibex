@@ -77,11 +77,8 @@ module zeroriscy_id_stage
 
     // Stalls
     output logic        halt_if_o,      // controller requests a halt of the IF stage
-
     output logic        id_ready_o,     // ID stage is ready for the next instruction
-
     input  logic        ex_ready_i,
-
     output logic        id_valid_o,     // ID stage is done
 
     // ALU
@@ -97,9 +94,14 @@ module zeroriscy_id_stage
     output logic [31:0] multdiv_operand_a_ex_o,
     output logic [31:0] multdiv_operand_b_ex_o,
 
-    // CSR ID
+    // CSR
     output logic        csr_access_ex_o,
     output logic [1:0]  csr_op_ex_o,
+    output logic [5:0]  csr_cause_o,
+    output logic        csr_save_if_o,
+    output logic        csr_save_id_o,
+    output logic        csr_restore_mret_id_o,
+    output logic        csr_save_cause_o,
 
     // Interface to load store unit
     output logic        data_req_ex_o,
@@ -116,15 +118,9 @@ module zeroriscy_id_stage
     // Interrupt signals
     input  logic        irq_i,
     input  logic [4:0]  irq_id_i,
-    input  logic        irq_enable_i,
+    input  logic        m_irq_enable_i,
     output logic        irq_ack_o,
-
     output logic [5:0]  exc_cause_o,
-    output logic        save_exc_cause_o,
-
-    output logic        exc_save_if_o,
-    output logic        exc_save_id_o,
-    output logic        exc_restore_id_o,
 
     input  logic        lsu_load_err_i,
     input  logic        lsu_store_err_i,
@@ -137,11 +133,11 @@ module zeroriscy_id_stage
     output logic        dbg_trap_o,
 
     input  logic        dbg_reg_rreq_i,
-    input  logic [4:0] dbg_reg_raddr_i,
+    input  logic [4:0]  dbg_reg_raddr_i,
     output logic [31:0] dbg_reg_rdata_o,
 
     input  logic        dbg_reg_wreq_i,
-    input  logic [4:0] dbg_reg_waddr_i,
+    input  logic [4:0]  dbg_reg_waddr_i,
     input  logic [31:0] dbg_reg_wdata_i,
 
     input  logic        dbg_jump_req_i,
@@ -208,7 +204,9 @@ module zeroriscy_id_stage
 
 
   // Signals running between controller and exception controller
-  logic        int_req, ext_req, exc_ack;  // handshake
+  logic       irq_req_ctrl;
+  logic [4:0] irq_id_ctrl;
+  logic       exc_ack, exc_kill;// handshake
 
   // Register file interface
   logic [4:0]  regfile_addr_ra_id;
@@ -246,6 +244,7 @@ module zeroriscy_id_stage
   // CSR control
   logic        csr_access;
   logic [1:0]  csr_op;
+  logic        csr_status;
 
   // Forwarding
   logic [1:0]  operand_a_fw_mux_sel;
@@ -489,6 +488,7 @@ module zeroriscy_id_stage
     // CSR control signals
     .csr_access_o                    ( csr_access                ),
     .csr_op_o                        ( csr_op                    ),
+    .csr_status_o                    ( csr_status                ),
 
     // Data bus interface
     .data_req_o                      ( data_req_id               ),
@@ -525,9 +525,11 @@ module zeroriscy_id_stage
     // decoder related signals
     .deassert_we_o                  ( deassert_we            ),
     .illegal_insn_i                 ( illegal_insn_dec | illegal_reg_rv32e ),
+    .ecall_insn_i                   ( ecall_insn_dec         ),
     .mret_insn_i                    ( mret_insn_dec          ),
     .pipe_flush_i                   ( pipe_flush_dec         ),
     .ebrk_insn_i                    ( ebrk_insn              ),
+    .csr_status_i                   ( csr_status             ),
 
     // from IF/ID pipeline
     .instr_valid_i                  ( instr_valid_i          ),
@@ -538,6 +540,8 @@ module zeroriscy_id_stage
     // to prefetcher
     .pc_set_o                       ( pc_set_o               ),
     .pc_mux_o                       ( pc_mux_o               ),
+    .exc_pc_mux_o                   ( exc_pc_mux_o           ),
+    .exc_cause_o                    ( exc_cause_o            ),
 
     // LSU
     .data_misaligned_i              ( data_misaligned_i      ),
@@ -550,20 +554,31 @@ module zeroriscy_id_stage
     .jump_in_id_i                   ( jump_in_id             ),
 
     .instr_multicyle_i              ( instr_multicyle        ),
-    // Exception Controller Signals
-    .int_req_i                      ( int_req                ),
-    .ext_req_i                      ( ext_req                ),
-    .exc_ack_o                      ( exc_ack                ),
+
+    // Interrupt Controller Signals
+    .irq_req_ctrl_i                 ( irq_req_ctrl           ),
+    .irq_id_ctrl_i                  ( irq_id_ctrl            ),
+    .m_IE_i                         ( m_irq_enable_i         ),
+
     .irq_ack_o                      ( irq_ack_o              ),
-    .exc_save_if_o                  ( exc_save_if_o          ),
-    .exc_save_id_o                  ( exc_save_id_o          ),
-    .exc_restore_id_o               ( exc_restore_id_o       ),
+
+    .exc_ack_o                      ( exc_ack                ),
+    .exc_kill_o                     ( exc_kill               ),
+
+    // CSR Controller Signals
+    .csr_save_cause_o               ( csr_save_cause_o       ),
+    .csr_cause_o                    ( csr_cause_o            ),
+    .csr_save_if_o                  ( csr_save_if_o          ),
+    .csr_save_id_o                  ( csr_save_id_o          ),
+    .csr_restore_mret_id_o          ( csr_restore_mret_id_o  ),
 
     // Debug Unit Signals
     .dbg_req_i                      ( dbg_req_i              ),
     .dbg_ack_o                      ( dbg_ack_o              ),
     .dbg_stall_i                    ( dbg_stall_i            ),
     .dbg_jump_req_i                 ( dbg_jump_req_i         ),
+    .dbg_settings_i                 ( dbg_settings_i         ),
+    .dbg_trap_o                     ( dbg_trap_o             ),
 
     // Forwarding signals
     .operand_a_fw_mux_sel_o         ( operand_a_fw_mux_sel   ),
@@ -585,46 +600,34 @@ module zeroriscy_id_stage
     .perf_ld_stall_o                ( perf_ld_stall_o        )
   );
 
-  ///////////////////////////////////////////////////////////////////////
-  //  _____               ____            _             _ _            //
-  // | ____|_  _____     / ___|___  _ __ | |_ _ __ ___ | | | ___ _ __  //
-  // |  _| \ \/ / __|   | |   / _ \| '_ \| __| '__/ _ \| | |/ _ \ '__| //
-  // | |___ >  < (__ _  | |__| (_) | | | | |_| | | (_) | | |  __/ |    //
-  // |_____/_/\_\___(_)  \____\___/|_| |_|\__|_|  \___/|_|_|\___|_|    //
-  //                                                                   //
-  ///////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+//  _____      _       _____             _             _ _            //
+// |_   _|    | |     /  __ \           | |           | | |           //
+//   | | _ __ | |_    | /  \/ ___  _ __ | |_ _ __ ___ | | | ___ _ __  //
+//   | || '_ \| __|   | |    / _ \| '_ \| __| '__/ _ \| | |/ _ \ '__| //
+//  _| || | | | |_ _  | \__/\ (_) | | | | |_| | | (_) | | |  __/ |    //
+//  \___/_| |_|\__(_)  \____/\___/|_| |_|\__|_|  \___/|_|_|\___|_|    //
+//                                                                    //
+////////////////////////////////////////////////////////////////////////
 
-  zeroriscy_exc_controller exc_controller_i
+  zeroriscy_int_controller int_controller_i
   (
-    .clk                  ( clk              ),
-    .rst_n                ( rst_n            ),
+    .clk                  ( clk                ),
+    .rst_n                ( rst_n              ),
 
     // to controller
-    .int_req_o            ( int_req          ),
-    .ext_req_o            ( ext_req          ),
-    .ack_i                ( exc_ack          ),
-    .ctr_decoding_i       ( is_decoding_o    ),
+    .irq_req_ctrl_o       ( irq_req_ctrl       ),
+    .irq_id_ctrl_o        ( irq_id_ctrl        ),
 
-    .trap_o               ( dbg_trap_o       ),
-    // to IF stage
-    .pc_mux_o             ( exc_pc_mux_o     ),
+    .ctrl_ack_i           ( exc_ack            ),
+    .ctrl_kill_i          ( exc_kill           ),
 
     // Interrupt signals
-    .irq_i                ( irq_i            ),
-    .irq_id_i             ( irq_id_i         ),
-    .irq_enable_i         ( irq_enable_i     ),
+    .irq_i                ( irq_i              ),
+    .irq_id_i             ( irq_id_i           ),
 
-    .ebrk_insn_i          ( ebrk_insn        ),
-    .illegal_insn_i       ( illegal_insn_dec ),
-    .ecall_insn_i         ( ecall_insn_dec   ),
-
-    .cause_o              ( exc_cause_o      ),
-    .save_cause_o         ( save_exc_cause_o ),
-
-    .dbg_settings_i       ( dbg_settings_i   )
+    .m_IE_i               ( m_irq_enable_i     )
   );
-
-
 
   /////////////////////////////////////
   //   ___ ____        _______  __   //
