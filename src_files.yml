@@ -37,6 +37,7 @@ zeroriscy_vip_rtl:
 zeroriscy_regfile_rtl:
   targets: [
     rtl,
+    tsmc55,
   ]
   incdirs: [
     include,
