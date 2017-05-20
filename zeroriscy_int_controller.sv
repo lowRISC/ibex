@@ -98,11 +98,12 @@ module zeroriscy_int_controller
 `ifndef SYNTHESIS
   // synopsys translate_off
   // evaluate at falling edge to avoid duplicates during glitches
-  always_ff @(negedge clk)
-  begin
-    if (rst_n && exc_ctrl_cs == IRQ_DONE)
-      $display("%t: Entering interrupt service routine. [%m]", $time);
-  end
+  // Removed this message as it pollutes too much the output and makes tests fail
+  //always_ff @(negedge clk)
+  //begin
+  //  if (rst_n && exc_ctrl_cs == IRQ_DONE)
+  //    $display("%t: Entering interrupt service routine. [%m]", $time);
+  //end
   // synopsys translate_on
 `endif
 

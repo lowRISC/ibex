@@ -777,7 +777,7 @@ module zeroriscy_id_stage
 `ifndef VERILATOR
   // make sure that branch decision is valid when jumping
   assert property (
-    @(posedge clk) (branch_in_ex_o) |-> (branch_decision_i !== 1'bx) ) else $display("Branch decision is X");
+    @(posedge clk) (branch_decision_i !== 1'bx || branch_in_id == 1'b0) ) else begin $display("Branch decision is X"); $stop; end;
 
 `ifdef CHECK_MISALIGNED
   assert property (
