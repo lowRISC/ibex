@@ -333,11 +333,6 @@ module zeroriscy_multdiv_fast
 
         end
 
-        FINISH: begin
-          mult_state_n = ALBL;
-          //ready_o must not be a timing critical signal
-        end
-
         default:;
       endcase // mult_state_q
   end
