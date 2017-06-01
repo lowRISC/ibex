@@ -73,6 +73,7 @@ module zeroriscy_core
   input  logic        irq_i,                 // level sensitive IR lines
   input  logic [4:0]  irq_id_i,
   output logic        irq_ack_o,             // irq ack
+  output logic [4:0]  irq_id_o,
 
   // Debug Interface
   input  logic        debug_req_i,
@@ -425,6 +426,7 @@ module zeroriscy_core
     .irq_id_i                     ( irq_id_i             ),
     .m_irq_enable_i               ( m_irq_enable         ),
     .irq_ack_o                    ( irq_ack_o            ),
+    .irq_id_o                     ( irq_id_o             ),
 
     .lsu_load_err_i               ( lsu_load_err         ),
     .lsu_store_err_i              ( lsu_store_err        ),

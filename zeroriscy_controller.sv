@@ -85,6 +85,7 @@ module zeroriscy_controller
   input  logic        m_IE_i,                     // interrupt enable bit from CSR (M mode)
 
   output logic        irq_ack_o,
+  output logic [4:0]  irq_id_o,
 
   output logic [5:0]  exc_cause_o,
   output logic        exc_ack_o,
@@ -190,7 +191,7 @@ module zeroriscy_controller
     halt_id_o              = 1'b0;
     dbg_ack_o              = 1'b0;
     irq_ack_o              = 1'b0;
-
+    irq_id_o               = irq_id_ctrl_i;
     irq_enable_int         = m_IE_i;
 
     // a trap towards the debug unit is generated when one of the

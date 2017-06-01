@@ -120,6 +120,7 @@ module zeroriscy_id_stage
     input  logic [4:0]  irq_id_i,
     input  logic        m_irq_enable_i,
     output logic        irq_ack_o,
+    output logic [4:0]  irq_id_o,
     output logic [5:0]  exc_cause_o,
 
     input  logic        lsu_load_err_i,
@@ -561,6 +562,7 @@ module zeroriscy_id_stage
     .m_IE_i                         ( m_irq_enable_i         ),
 
     .irq_ack_o                      ( irq_ack_o              ),
+    .irq_id_o                       ( irq_id_o               ),
 
     .exc_ack_o                      ( exc_ack                ),
     .exc_kill_o                     ( exc_kill               ),
