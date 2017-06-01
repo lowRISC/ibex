@@ -49,7 +49,7 @@ module zeroriscy_multdiv_fast
 );
 
   logic [ 4:0] div_counter_q, div_counter_n;
-  enum logic [2:0] {ALBL, ALBH, AHBL, AHBH, FINISH } mult_state_q, mult_state_n;
+  enum logic [1:0] {ALBL, ALBH, AHBL, AHBH } mult_state_q, mult_state_n;
   enum logic [2:0] { MD_IDLE, MD_ABS_A, MD_ABS_B, MD_COMP, MD_LAST, MD_CHANGE_SIGN, MD_FINISH } divcurr_state_q, divcurr_state_n;
 
   logic [34:0] mac_res_ext;
@@ -71,6 +71,7 @@ module zeroriscy_multdiv_fast
   logic [31:0] op_quotient_n;
   logic [32:0] next_reminder, next_quotient;
   logic [32:0] res_adder_h;
+  logic        mult_is_ready;
 
   always_ff @(posedge clk or negedge rst_n) begin : proc_mult_state_q
     if(~rst_n) begin
@@ -109,7 +110,7 @@ module zeroriscy_multdiv_fast
 
   assign signed_mult    = (signed_mode_i != 2'b00);
 
-  assign multdiv_result_o = mac_res_q[31:0];
+  assign multdiv_result_o = div_en_i ? mac_res_q[31:0] : mac_res_n[31:0];
 
   assign mac_res_ext = $signed({sign_a, mult_op_a})*$signed({sign_b, mult_op_b}) + $signed(accum);
   assign mac_res     = mac_res_ext[33:0];
@@ -249,7 +250,7 @@ module zeroriscy_multdiv_fast
       endcase // divcurr_state_q
   end
 
-  assign ready_o  = (mult_state_q == FINISH) | (divcurr_state_q == MD_FINISH);
+  assign ready_o  = mult_is_ready | (divcurr_state_q == MD_FINISH);
   always_comb
   begin : mult_fsm
       mult_op_a    = op_a_i[`OP_L];
@@ -259,6 +260,7 @@ module zeroriscy_multdiv_fast
       accum        = mac_res_q;
       mac_res_n    = mac_res;
       mult_state_n = mult_state_q;
+      mult_is_ready = 1'b0;
 
       unique case (mult_state_q)
 
@@ -304,7 +306,8 @@ module zeroriscy_multdiv_fast
             MD_OP_MULL: begin
               accum        = {18'b0,mac_res_q[31:16]};
               mac_res_n    = {2'b0,mac_res[15:0],mac_res_q[15:0]};
-              mult_state_n = FINISH;
+              mult_is_ready = 1'b1;
+              mult_state_n = ALBL;
             end
             default: begin
               accum        = mac_res_q;
@@ -325,12 +328,9 @@ module zeroriscy_multdiv_fast
           accum[33:18]  = {18{signed_mult & mac_res_q[33]}};
           //result of AH*BL is not signed only if signed_mode_i == 2'b00
           mac_res_n    = mac_res;
-          mult_state_n = FINISH;
-        end
-
-        FINISH: begin
           mult_state_n = ALBL;
-          //ready_o must not be a timing critical signal
+          mult_is_ready = 1'b1;
+
         end
 
         default:;

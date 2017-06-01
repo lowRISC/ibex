@@ -167,8 +167,6 @@ module zeroriscy_cs_registers
     case (csr_addr_i)
 
       // mstatus: always M-mode, contains IE bit
-      12'h300: csr_rdata_int = {19'b0, mstatus_q.mpp, 3'b0, mstatus_q.mpie, 3'h0, mstatus_q.mie, 3'h0};
-      // mstatus
       12'h300: csr_rdata_int = {
                                   19'b0,
                                   mstatus_q.mpp,
@@ -317,8 +315,6 @@ module zeroriscy_cs_registers
 
   assign PCCR_in[0]  = 1'b1;                          // cycle counter
   assign PCCR_in[1]  = id_valid_i & is_decoding_i;    // instruction counter
-  assign PCCR_in[2]  = ld_stall_i & id_valid_q;       // nr of load use hazards
-  assign PCCR_in[3]  = jr_stall_i & id_valid_q;       // nr of jump register hazards
   assign PCCR_in[4]  = imiss_i & (~pc_set_i);         // cycles waiting for instruction fetches, excluding jumps and branches
   assign PCCR_in[5]  = mem_load_i;                    // nr of loads
   assign PCCR_in[6]  = mem_store_i;                   // nr of stores
