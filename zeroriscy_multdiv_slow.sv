@@ -29,7 +29,8 @@ module zeroriscy_multdiv_slow
 (
   input  logic        clk,
   input  logic        rst_n,
-  input  logic        multdiv_en_i,
+  input  logic        mult_en_i,
+  input  logic        div_en_i,
   input  logic  [1:0] operator_i,
   input  logic  [1:0] signed_mode_i,
   input  logic [31:0] op_a_i,
@@ -76,7 +77,7 @@ module zeroriscy_multdiv_slow
   begin
 
     alu_operand_a_o   = accum_window_q;
-    multdiv_result_o  = accum_window_q[31:0];
+    multdiv_result_o  = div_en_i ? accum_window_q[31:0] : res_adder_l;
 
     unique case(operator_i)
 
@@ -174,7 +175,7 @@ module zeroriscy_multdiv_slow
       curr_state_q     <= MD_IDLE;
       op_numerator_q   <= '0;
     end else begin
-      if(multdiv_en_i) begin
+      if(mult_en_i | div_en_i) begin
             unique case(curr_state_q)
 
                 MD_IDLE: begin
@@ -255,11 +256,11 @@ module zeroriscy_multdiv_slow
                     unique case(operator_i)
                       MD_OP_MULL: begin
                         accum_window_q <= res_adder_l;
-                        curr_state_q   <= MD_FINISH;
+                        curr_state_q   <= MD_IDLE;
                       end
                       MD_OP_MULH: begin
                         accum_window_q <= res_adder_l;
-                        curr_state_q   <= MD_FINISH;
+                        curr_state_q   <= MD_IDLE;
                       end
                       MD_OP_DIV: begin
                         //this time we save the quotient in accum_window_q since we do not need anymore the reminder
@@ -295,7 +296,7 @@ module zeroriscy_multdiv_slow
   end
 
 
-  assign ready_o       = curr_state_q == MD_FINISH;
+  assign ready_o       = (curr_state_q == MD_FINISH) | (curr_state_q == MD_LAST & (operator_i == MD_OP_MULL | operator_i == MD_OP_MULH));
 
 
 endmodule // zeroriscy_mult
