@@ -68,7 +68,7 @@ module zeroriscy_ex_block
   output logic                    ex_ready_o      // EX stage gets new data
 );
 
-  localparam MULT_TYPE = 0; //0 is SLOW
+  localparam MULT_TYPE = 1; //0 is SLOW
 
   logic [31:0] alu_result, multdiv_result;
 

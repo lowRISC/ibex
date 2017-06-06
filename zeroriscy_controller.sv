@@ -74,7 +74,6 @@ module zeroriscy_controller
   input  logic        branch_taken_ex_i,          // branch taken signal
   input  logic        branch_set_i,               // branch taken set signal
   input  logic        jump_set_i,                 // jump taken set signal
-  input  logic        jump_in_id_i,               // jump is being calculated in ALU
 
   input  logic        instr_multicyle_i,          // multicycle instructions active
 
@@ -114,17 +113,11 @@ module zeroriscy_controller
   output logic        halt_if_o,
   output logic        halt_id_o,
 
-  input  logic        jump_stall_i,
-  input  logic        load_stall_i,
-  input  logic        branch_stall_i,
-
   input  logic        id_ready_i,                 // ID stage is ready
 
   // Performance Counters
   output logic        perf_jump_o,                // we are executing a jump instruction   (j, jr, jal, jalr)
-  output logic        perf_jr_stall_o,            // stall due to jump instruction
-  output logic        perf_br_stall_o,            // stall due to branch instruction
-  output logic        perf_ld_stall_o             // stall due to load instruction
+  output logic        perf_tbranch_o             // we are executing a taken branch instruction
 );
 
   // FSM state encoding
@@ -202,6 +195,9 @@ module zeroriscy_controller
     // - IRQ and INTE bit is set and no exception is currently running
     // - Debuger requests halt
     dbg_trap_o             = 1'b0;
+
+    perf_tbranch_o         = 1'b0;
+    perf_jump_o            = 1'b0;
 
     unique case (ctrl_fsm_cs)
       // We were just reset, wait for fetch_enable
@@ -300,6 +296,7 @@ module zeroriscy_controller
               branch_set_i: begin
                 pc_mux_o          = PC_JUMP;
                 pc_set_o          = 1'b1;
+                perf_tbranch_o    = 1'b1;
                 dbg_trap_o        = dbg_settings_i[DBG_SETS_SSTE];
                 if (dbg_req_i)
                   ctrl_fsm_ns = DBG_SIGNAL;
@@ -307,6 +304,7 @@ module zeroriscy_controller
               jump_set_i: begin
                 pc_mux_o          = PC_JUMP;
                 pc_set_o          = 1'b1;
+                perf_jump_o       = 1'b1;
                 dbg_trap_o        = dbg_settings_i[DBG_SETS_SSTE];
                 if (dbg_req_i)
                   ctrl_fsm_ns = DBG_SIGNAL;
@@ -530,12 +528,6 @@ module zeroriscy_controller
       //jump_done_q <= jump_done & (~id_ready_i);
     end
   end
-
-  // Performance Counters
-  assign perf_jump_o      = jump_in_id_i;
-  assign perf_jr_stall_o  = jump_stall_i;
-  assign perf_br_stall_o  = branch_stall_i;
-  assign perf_ld_stall_o  = load_stall_i;
 
 
   //----------------------------------------------------------------------------

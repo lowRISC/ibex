@@ -59,17 +59,15 @@ module zeroriscy_if_stage
       input  logic  [2:0] pc_mux_i,              // sel for pc multiplexer
       input  logic  [1:0] exc_pc_mux_i,          // selects ISR address
       input  logic  [4:0] exc_vec_pc_mux_i,      // selects ISR address for vectorized interrupt lines
-      // jump and branch target and decision
 
+      // jump and branch target and decision
       input  logic [31:0] jump_target_ex_i,      // jump target address
-      // from hwloop controller
       // from debug unit
       input  logic [31:0] dbg_jump_addr_i,
       // pipeline stall
       input  logic        halt_if_i,
-
       input  logic        id_ready_i,
-
+      output logic        if_valid_o,
       // misc signals
       output logic        if_busy_o,             // is the IF stage busy fetching instructions?
       output logic        perf_imiss_o           // Instruction Fetch Miss
@@ -79,7 +77,7 @@ module zeroriscy_if_stage
       enum logic[0:0] {WAIT, IDLE } offset_fsm_cs, offset_fsm_ns;
 
       logic              valid;
-      logic             if_ready, if_valid;
+      logic              if_ready;
       // prefetch buffer related signals
       logic              prefetch_busy;
       logic              branch_req;
@@ -186,7 +184,7 @@ module zeroriscy_if_stage
               if (fetch_valid) begin
                 valid   = 1'b1; // an instruction is ready for ID stage
 
-                if (req_i && if_valid) begin
+                if (req_i && if_valid_o) begin
                   fetch_ready   = 1'b1;
                   offset_fsm_ns = WAIT;
                 end
@@ -250,7 +248,7 @@ module zeroriscy_if_stage
           else
             begin
 
-              if (if_valid)
+              if (if_valid_o)
               begin
                   instr_valid_id_o    <= 1'b1;
                   instr_rdata_id_o    <= instr_decompressed;
@@ -266,7 +264,7 @@ module zeroriscy_if_stage
 
 
         assign if_ready = valid & id_ready_i;
-        assign if_valid = (~halt_if_i) & if_ready;
+        assign if_valid_o = (~halt_if_i) & if_ready;
 
         //----------------------------------------------------------------------------
         // Assertions

@@ -75,6 +75,7 @@ module zeroriscy_cs_registers
 
 
   // Performance Counters
+  input  logic                 if_valid_i,        // IF stage gives a new instruction
   input  logic                 id_valid_i,        // ID stage is done
   input  logic                 is_compressed_i,   // compressed instruction in ID
   input  logic                 is_decoding_i,     // controller is in DECODE state
@@ -84,12 +85,8 @@ module zeroriscy_cs_registers
   input  logic                 jump_i,            // jump instruction seen   (j, jr, jal, jalr)
   input  logic                 branch_i,          // branch instruction seen (bf, bnf)
   input  logic                 branch_taken_i,    // branch was taken
-  input  logic                 ld_stall_i,        // load use hazard
-  input  logic                 jr_stall_i,        // jump register use hazard
-
   input  logic                 mem_load_i,        // load from memory in this cycle
   input  logic                 mem_store_i,       // store to memory in this cycle
-
   input  logic [N_EXT_CNT-1:0] ext_counters_i
 );
 
@@ -314,14 +311,16 @@ module zeroriscy_cs_registers
   /////////////////////////////////////////////////////////////////
 
   assign PCCR_in[0]  = 1'b1;                          // cycle counter
-  assign PCCR_in[1]  = id_valid_i & is_decoding_i;    // instruction counter
+  assign PCCR_in[1]  = if_valid_i;                    // instruction counter
+  assign PCCR_in[2]  = 1'b0;                          // Reserved
+  assign PCCR_in[3]  = 1'b0;                          // Reserved
   assign PCCR_in[4]  = imiss_i & (~pc_set_i);         // cycles waiting for instruction fetches, excluding jumps and branches
   assign PCCR_in[5]  = mem_load_i;                    // nr of loads
   assign PCCR_in[6]  = mem_store_i;                   // nr of stores
-  assign PCCR_in[7]  = jump_i                     & id_valid_q; // nr of jumps (unconditional)
-  assign PCCR_in[8]  = branch_i                   & id_valid_q; // nr of branches (conditional)
-  assign PCCR_in[9]  = branch_i & branch_taken_i  & id_valid_q; // nr of taken branches (conditional)
-  assign PCCR_in[10] = id_valid_i & is_decoding_i & is_compressed_i;  // compressed instruction counter
+  assign PCCR_in[7]  = jump_i;                        // nr of jumps (unconditional)
+  assign PCCR_in[8]  = branch_i;                      // nr of branches (conditional)
+  assign PCCR_in[9]  = branch_taken_i;                // nr of taken branches (conditional)
+  assign PCCR_in[10] = id_valid_i & is_decoding_i & is_compressed_i; // compressed instruction counter
 
   // assign external performance counters
   generate
@@ -347,7 +346,7 @@ module zeroriscy_cs_registers
       unique case (csr_addr_i)
         12'h7A0: begin
           is_pcer = 1'b1;
-          perf_rdata[N_PERF_COUNTERS-1:0] = PCER_q;
+          perf_rdata[15:0] = PCER_q;
         end
         12'h7A1: begin
           is_pcmr = 1'b1;

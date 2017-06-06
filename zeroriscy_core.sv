@@ -221,8 +221,8 @@ module zeroriscy_core
   // Performance Counters
   logic        perf_imiss;
   logic        perf_jump;
-  logic        perf_jr_stall;
-  logic        perf_ld_stall;
+  logic        perf_branch;
+  logic        perf_tbranch;
 
   //core busy signals
   logic        core_ctrl_firstfetch, core_busy_int, core_busy_q;
@@ -328,6 +328,7 @@ module zeroriscy_core
     // pipeline stalls
     .halt_if_i           ( halt_if           ),
     .id_ready_i          ( id_ready          ),
+    .if_valid_o          ( if_valid          ),
 
     .if_busy_o           ( if_busy           ),
     .perf_imiss_o        ( perf_imiss        )
@@ -455,8 +456,9 @@ module zeroriscy_core
 
     // Performance Counters
     .perf_jump_o                  ( perf_jump            ),
-    .perf_jr_stall_o              ( perf_jr_stall        ),
-    .perf_ld_stall_o              ( perf_ld_stall        )
+    .perf_branch_o                ( perf_branch          ),
+    .perf_tbranch_o               ( perf_tbranch         )
+
   );
 
 
@@ -593,6 +595,7 @@ module zeroriscy_core
 
 
     // performance counter related signals
+    .if_valid_i              ( if_valid           ),
     .id_valid_i              ( id_valid           ),
     .is_compressed_i         ( is_compressed_id   ),
     .is_decoding_i           ( is_decoding        ),
@@ -600,11 +603,8 @@ module zeroriscy_core
     .imiss_i                 ( perf_imiss         ),
     .pc_set_i                ( pc_set             ),
     .jump_i                  ( perf_jump          ),
-    .branch_i                ( branch_in_ex       ),
-    .branch_taken_i          ( branch_decision    ),
-    .ld_stall_i              ( perf_ld_stall      ),
-    .jr_stall_i              ( perf_jr_stall      ),
-
+    .branch_i                ( perf_branch        ),
+    .branch_taken_i          ( perf_tbranch       ),
     .mem_load_i              ( data_req_o & data_gnt_i & (~data_we_o) ),
     .mem_store_i             ( data_req_o & data_gnt_i & data_we_o    ),
 

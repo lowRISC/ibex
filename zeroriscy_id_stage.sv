@@ -150,8 +150,8 @@ module zeroriscy_id_stage
 
     // Performance Counters
     output logic        perf_jump_o,          // we are executing a jump instruction
-    output logic        perf_jr_stall_o,      // jump-register-hazard
-    output logic        perf_ld_stall_o       // load-use-hazard
+    output logic        perf_branch_o,        // we are executing a branch instruction
+    output logic        perf_tbranch_o        // we are executing a taken branch instruction
 );
 
   logic [31:0] instr;
@@ -552,7 +552,6 @@ module zeroriscy_id_stage
     .branch_taken_ex_i              ( branch_taken_ex        ),
     .branch_set_i                   ( branch_set_q           ),
     .jump_set_i                     ( jump_set               ),
-    .jump_in_id_i                   ( jump_in_id             ),
 
     .instr_multicyle_i              ( instr_multicyle        ),
 
@@ -589,17 +588,11 @@ module zeroriscy_id_stage
     .halt_if_o                      ( halt_if_o              ),
     .halt_id_o                      ( halt_id                ),
 
-    .jump_stall_i                   ( jump_stall             ),
-    .branch_stall_i                 ( branch_stall           ),
-    .load_stall_i                   ( load_stall             ),
-
     .id_ready_i                     ( id_ready_o             ),
 
     // Performance Counters
     .perf_jump_o                    ( perf_jump_o            ),
-    .perf_jr_stall_o                ( perf_jr_stall_o        ),
-    .perf_br_stall_o                (                        ),
-    .perf_ld_stall_o                ( perf_ld_stall_o        )
+    .perf_tbranch_o                 ( perf_tbranch_o         )
   );
 
 ////////////////////////////////////////////////////////////////////////
@@ -701,6 +694,7 @@ module zeroriscy_id_stage
     branch_mux_dec  = 1'b0;
     jump_set        = 1'b0;
     jump_mux_dec    = 1'b0;
+    perf_branch_o   = 1'b0;
 
     unique case (id_wb_fsm_cs)
 
@@ -722,6 +716,7 @@ module zeroriscy_id_stage
             branch_stall    = branch_decision_i;
             instr_multicyle = branch_decision_i;
             branch_set_n    = branch_decision_i;
+            perf_branch_o   = 1'b1;
           end
           multdiv_int_en: begin
             //MUL or DIV operation
