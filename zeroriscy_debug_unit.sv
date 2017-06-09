@@ -326,6 +326,7 @@ module zeroriscy_debug_unit
       RD_GPR:  debug_rdata_o = regfile_rdata_i;
       RD_DBGA: debug_rdata_o = dbg_rdata;
       RD_DBGS: debug_rdata_o = dbg_rdata;
+		default: ;
     endcase
   end
 

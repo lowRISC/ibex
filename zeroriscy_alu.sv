@@ -54,7 +54,7 @@ module zeroriscy_alu
   generate
     genvar k;
     for(k = 0; k < 32; k++)
-    begin
+    begin : g_revloop
       assign operand_a_rev[k] = operand_a_i[31-k];
     end
   endgenerate 
@@ -148,7 +148,7 @@ module zeroriscy_alu
   genvar       j;
   generate
     for(j = 0; j < 32; j++)
-    begin
+    begin : g_resrevloop
       assign shift_left_result[j] = shift_right_result[31-j];
     end
   endgenerate

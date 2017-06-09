@@ -83,7 +83,7 @@ module zeroriscy_ex_block
   At synthesis time, all the combinational and sequential logic
   from the multdiv_i module are eliminated
 */
-
+generate
 if (RV32M) begin
   assign multdiv_en_sel     = MULT_TYPE == 0 ? mult_en_i | div_en_i : div_en_i;
   assign multdiv_en         = mult_en_i | div_en_i;
@@ -91,6 +91,7 @@ end else begin
   assign multdiv_en_sel     = 1'b0;
   assign multdiv_en         = 1'b0;
 end
+endgenerate
 
   assign regfile_wdata_ex_o = multdiv_en ? multdiv_result : alu_result;
 
@@ -131,6 +132,7 @@ end
   //                                                            //
   ////////////////////////////////////////////////////////////////
 
+  generate
   if (MULT_TYPE == 0) begin : multdiv_slow
     zeroriscy_multdiv_slow multdiv_i
     (
@@ -170,6 +172,7 @@ end
      .multdiv_result_o   ( multdiv_result        )
     );
   end
+  endgenerate
 
   always_comb
   begin

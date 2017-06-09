@@ -136,10 +136,11 @@ module zeroriscy_fetch_fifo
   // FIFO management
   //////////////////////////////////////////////////////////////////////////////
 
-  int j;
   always_comb
   begin
-    addr_int    = addr_Q;
+    int j;
+	 
+	 addr_int    = addr_Q;
     rdata_int   = rdata_Q;
     valid_int   = valid_Q;
     

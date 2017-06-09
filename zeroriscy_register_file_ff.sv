@@ -56,7 +56,7 @@ module zeroriscy_register_file
 
 );
 
-  localparam    ADDR_WIDTH = RV32E ? 4 : 5;;
+  localparam    ADDR_WIDTH = RV32E ? 4 : 5;
   localparam    NUM_WORDS  = 2**ADDR_WIDTH;
 
   logic [NUM_WORDS-1:0][DATA_WIDTH-1:0] rf_reg;
