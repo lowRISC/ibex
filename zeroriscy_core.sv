@@ -683,7 +683,7 @@ module zeroriscy_core
     .jump_req_o        ( dbg_jump_req       )  // set PC to new value
   );
 
-
+`ifndef VERILATOR
 `ifdef TRACE_EXECUTION
   zeroriscy_tracer zeroriscy_tracer_i
   (
@@ -730,5 +730,5 @@ module zeroriscy_core
     .imm_sb_type    ( id_stage_i.imm_sb_type               )
   );
 `endif
-
+`endif
 endmodule

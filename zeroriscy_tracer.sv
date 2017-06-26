@@ -24,6 +24,9 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+`ifndef VERILATOR
+
+
 `include "zeroriscy_config.sv"
 
 import zeroriscy_defines::*;
@@ -439,3 +442,4 @@ module zeroriscy_tracer
   end // always @ (posedge clk)
 
 endmodule
+`endif
