@@ -159,8 +159,7 @@ module zeroriscy_cs_registers
   // read logic
   always_comb
   begin
-    csr_rdata_int = '0;
-
+	 csr_rdata_int = '0;
     case (csr_addr_i)
 
       // mstatus: always M-mode, contains IE bit
@@ -182,7 +181,8 @@ module zeroriscy_cs_registers
 
       // mhartid: unique hardware thread id
       12'hF14: csr_rdata_int = {21'b0, cluster_id_i[5:0], 1'b0, core_id_i[3:0]};
-
+		
+		default: ;
     endcase
   end
 
@@ -207,7 +207,7 @@ module zeroriscy_cs_registers
       12'h341: if (csr_we_int) mepc_n = csr_wdata_int;
       // mcause
       12'h342: if (csr_we_int) mcause_n = {csr_wdata_int[31], csr_wdata_int[4:0]};
-
+		default: ;
     endcase
 
     // exception controller gets priority over other writes
@@ -325,8 +325,8 @@ module zeroriscy_cs_registers
   // assign external performance counters
   generate
     genvar i;
-    for(i = 0; i < N_EXT_CNT; i++)
-    begin
+    for (i = 0; i < N_EXT_CNT; i++) 
+    begin : g_extcounters
       assign PCCR_in[N_PERF_COUNTERS - N_EXT_CNT + i] = ext_counters_i[i];
     end
   endgenerate

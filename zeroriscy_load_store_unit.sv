@@ -468,6 +468,7 @@ module zeroriscy_load_store_unit
           if(data_addr_int[1:0] == 2'b11)
             data_misaligned = 1'b1;
         end
+		  default: ;
       endcase // case (data_type_ex_i)
     end
   end

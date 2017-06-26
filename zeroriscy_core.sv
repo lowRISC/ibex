@@ -172,6 +172,7 @@ module zeroriscy_core
   logic        id_ready;
   logic        ex_ready;
 
+  logic        if_valid;
   logic        id_valid;
   logic        wb_valid;
 
