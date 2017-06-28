@@ -203,7 +203,6 @@ module zeroriscy_controller
       // We were just reset, wait for fetch_enable
       RESET:
       begin
-        ctrl_busy_o   = 1'b0;
         instr_req_o   = 1'b0;
 
         if (fetch_enable_i == 1'b1)
@@ -237,7 +236,7 @@ module zeroriscy_controller
       // instruction in if_stage is already valid
       SLEEP:
       begin
-        // we begin execution when either fetch_enable is high or an
+        // we begin execution when an
         // interrupt has arrived
         ctrl_busy_o   = 1'b0;
         instr_req_o   = 1'b0;
@@ -248,14 +247,14 @@ module zeroriscy_controller
         if (dbg_req_i) begin
           // debug request, now we need to check if we should stay sleeping or
           // go to normal processing later
-          if (fetch_enable_i || irq_req_ctrl_i)
+          if (irq_req_ctrl_i)
             ctrl_fsm_ns = DBG_SIGNAL;
           else
             ctrl_fsm_ns = DBG_SIGNAL_SLEEP;
 
         end else begin
           // no debug request incoming, normal execution flow
-          if (fetch_enable_i || irq_req_ctrl_i)
+          if (irq_req_ctrl_i)
           begin
             ctrl_fsm_ns  = FIRST_FETCH;
           end
@@ -420,7 +419,7 @@ module zeroriscy_controller
       FLUSH:
       begin
 
-        halt_if_o = fetch_enable_i ? dbg_req_i : 1'b1;
+        halt_if_o = ~pipe_flush_i ? dbg_req_i : 1'b1;
         halt_id_o = 1'b1;
 
         ctrl_fsm_ns = dbg_req_i ? DBG_SIGNAL : DECODE;
@@ -468,7 +467,7 @@ module zeroriscy_controller
           default:;
         endcase
 
-        if(fetch_enable_i) begin
+        if(~pipe_flush_i) begin
           if(dbg_req_i)
             ctrl_fsm_ns = DBG_SIGNAL;
           else

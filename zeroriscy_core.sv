@@ -89,7 +89,6 @@ module zeroriscy_core
 
   // CPU Control Signals
   input  logic        fetch_enable_i,
-  output logic        core_busy_o,
 
   input  logic [N_EXT_PERF_COUNTERS-1:0] ext_perf_counters_i
 );
@@ -128,6 +127,9 @@ module zeroriscy_core
   logic        ctrl_busy;
   logic        if_busy;
   logic        lsu_busy;
+  //core busy signals
+  logic        core_busy;
+  logic        core_ctrl_firstfetch, core_busy_int, core_busy_q;
 
   // ALU Control
   logic [ALU_OP_WIDTH-1:0] alu_operator_ex;
@@ -163,7 +165,6 @@ module zeroriscy_core
   logic [1:0]  data_reg_offset_ex;
   logic        data_req_ex;
   logic [31:0] data_wdata_ex;
-  logic        data_load_event_ex;
   logic        data_misaligned_ex;
   logic [31:0] regfile_wdata_lsu;
 
@@ -225,8 +226,6 @@ module zeroriscy_core
   logic        perf_branch;
   logic        perf_tbranch;
 
-  //core busy signals
-  logic        core_ctrl_firstfetch, core_busy_int, core_busy_q;
 
   //////////////////////////////////////////////////////////////////////////////////////////////
   //   ____ _            _      __  __                                                   _    //
@@ -246,9 +245,9 @@ module zeroriscy_core
 
   // if we are sleeping on a barrier let's just wait on the instruction
   // interface to finish loading instructions
-  assign core_busy_int = (data_load_event_ex & data_req_o) ? if_busy : (if_busy | ctrl_busy | lsu_busy);
+  assign core_busy_int = if_busy | ctrl_busy | lsu_busy;
 
-  always_ff @(posedge clk, negedge rst_ni)
+  always_ff @(posedge clk_i, negedge rst_ni)
   begin
     if (rst_ni == 1'b0) begin
       core_busy_q <= 1'b0;
@@ -257,13 +256,13 @@ module zeroriscy_core
     end
   end
 
-  assign core_busy_o = core_ctrl_firstfetch ? 1'b1 : core_busy_q;
+  assign core_busy   = core_ctrl_firstfetch ? 1'b1 : core_busy_q;
 
   assign dbg_busy    = dbg_req | dbg_csr_req | dbg_jump_req | dbg_reg_wreq | debug_req_i;
 
-  assign clock_en    = clock_en_i | core_busy_o | dbg_busy;
+  assign clock_en    = core_busy | dbg_busy | (irq_i & m_irq_enable);
 
-  assign sleeping    = (~fetch_enable_i) & (~core_busy_o);
+  assign sleeping    = (~core_busy);
 
 
   // main clock gate of the core
@@ -417,7 +416,6 @@ module zeroriscy_core
     .data_type_ex_o               ( data_type_ex         ), // to load store unit
     .data_sign_ext_ex_o           ( data_sign_ext_ex     ), // to load store unit
     .data_reg_offset_ex_o         ( data_reg_offset_ex   ), // to load store unit
-    .data_load_event_ex_o         ( data_load_event_ex   ), // to load store unit
     .data_wdata_ex_o              ( data_wdata_ex        ), // to load store unit
 
     .data_misaligned_i            ( data_misaligned      ),

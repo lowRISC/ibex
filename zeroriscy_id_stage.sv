@@ -109,7 +109,6 @@ module zeroriscy_id_stage
     output logic [1:0]  data_type_ex_o,
     output logic        data_sign_ext_ex_o,
     output logic [1:0]  data_reg_offset_ex_o,
-    output logic        data_load_event_ex_o,
     output logic [31:0] data_wdata_ex_o,
 
     input  logic        data_misaligned_i,
@@ -240,7 +239,6 @@ module zeroriscy_id_stage
   logic        data_sign_ext_id;
   logic [1:0]  data_reg_offset_id;
   logic        data_req_id;
-  logic        data_load_event_id;
 
   // CSR control
   logic        csr_access;
@@ -497,7 +495,6 @@ module zeroriscy_id_stage
     .data_type_o                     ( data_type_id              ),
     .data_sign_extension_o           ( data_sign_ext_id          ),
     .data_reg_offset_o               ( data_reg_offset_id        ),
-    .data_load_event_o               ( data_load_event_id        ),
 
     // jump/branches
     .jump_in_id_o                    ( jump_in_id                ),
@@ -639,7 +636,6 @@ module zeroriscy_id_stage
   assign data_wdata_ex_o             = regfile_data_rb_id;
   assign data_req_ex_o               = data_req_id;
   assign data_reg_offset_ex_o        = data_reg_offset_id;
-  assign data_load_event_ex_o        = data_load_event_id;
 
   assign alu_operator_ex_o           = alu_operator;
   assign alu_operand_a_ex_o          = alu_operand_a;

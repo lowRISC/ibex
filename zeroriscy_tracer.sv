@@ -331,7 +331,7 @@ module zeroriscy_tracer
     instr_trace_t trace;
     mem_acc_t     mem_acc;
     // special case for WFI because we don't wait for unstalling there
-    if ((id_valid && is_decoding) || pipe_flush || (ex_data_req && is_decoding))
+    if ((id_valid || pipe_flush || ex_data_req) && is_decoding)
     begin
       trace = new ();
 

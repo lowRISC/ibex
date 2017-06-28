@@ -79,8 +79,6 @@ module zeroriscy_decoder
   output logic [1:0]  data_type_o,             // data type on data memory: byte, half word or word
   output logic        data_sign_extension_o,   // sign extension on read data from data memory
   output logic [1:0]  data_reg_offset_o,       // offset in byte inside register for stores
-  output logic        data_load_event_o,       // data request is in the special event range
-
 
   // jump/branches
   output logic        jump_in_id_o,            // jump is being calculated in ALU
@@ -136,7 +134,6 @@ module zeroriscy_decoder
     data_sign_extension_o       = 1'b0;
     data_reg_offset_o           = 2'b00;
     data_req                    = 1'b0;
-    data_load_event_o           = 1'b0;
 
     illegal_insn_o              = 1'b0;
     ebrk_insn_o                 = 1'b0;
@@ -310,10 +307,6 @@ module zeroriscy_decoder
             end
           endcase
         end
-
-        // special p.elw (event load)
-        if (instr_rdata_i[14:12] == 3'b110)
-          data_load_event_o = 1'b1;
 
         if (instr_rdata_i[14:12] == 3'b011) begin
           // LD -> RV64 only

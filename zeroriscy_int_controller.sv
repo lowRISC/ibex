@@ -45,7 +45,7 @@ module zeroriscy_int_controller
   input  logic        m_IE_i          // interrupt enable bit from CSR (M mode)
 );
 
-  enum logic [1:0] { IDLE, IRQ_PENDING, IRQ_DONE} exc_ctrl_cs, exc_ctrl_ns;
+  enum logic [1:0] { IDLE, IRQ_PENDING, IRQ_DONE} exc_ctrl_cs;
 
   logic irq_enable_ext;
   logic [4:0] irq_id_q;
