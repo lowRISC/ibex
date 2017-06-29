@@ -77,7 +77,8 @@ module zeroriscy_controller
 
   input  logic        instr_multicyle_i,          // multicycle instructions active
 
-
+  // External Interrupt Req Signals, used to wake up from wfi even if the interrupt is not taken
+  input  logic        irq_i,
   // Interrupt Controller Signals
   input  logic        irq_req_ctrl_i,
   input  logic [4:0]  irq_id_ctrl_i,
@@ -254,7 +255,11 @@ module zeroriscy_controller
 
         end else begin
           // no debug request incoming, normal execution flow
-          ctrl_fsm_ns  = FIRST_FETCH;
+          // here transparent interrupts are checked to wake up from wfi
+          if (irq_i)
+          begin
+            ctrl_fsm_ns  = FIRST_FETCH;
+          end
         end
       end
 

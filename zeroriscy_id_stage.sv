@@ -552,6 +552,7 @@ module zeroriscy_id_stage
 
     .instr_multicyle_i              ( instr_multicyle        ),
 
+    .irq_i                          ( irq_i                  ),
     // Interrupt Controller Signals
     .irq_req_ctrl_i                 ( irq_req_ctrl           ),
     .irq_id_ctrl_i                  ( irq_id_ctrl            ),
