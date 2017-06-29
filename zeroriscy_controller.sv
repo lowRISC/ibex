@@ -416,7 +416,7 @@ module zeroriscy_controller
       FLUSH:
       begin
 
-        halt_if_o = ~pipe_flush_i ? dbg_req_i : 1'b1;
+        halt_if_o = 1'b1;
         halt_id_o = 1'b1;
 
         ctrl_fsm_ns = dbg_req_i ? DBG_SIGNAL : DECODE;
