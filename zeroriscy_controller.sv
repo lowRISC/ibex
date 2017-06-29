@@ -254,10 +254,7 @@ module zeroriscy_controller
 
         end else begin
           // no debug request incoming, normal execution flow
-          if (irq_req_ctrl_i)
-          begin
-            ctrl_fsm_ns  = FIRST_FETCH;
-          end
+          ctrl_fsm_ns  = FIRST_FETCH;
         end
       end
 

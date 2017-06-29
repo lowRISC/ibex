@@ -260,7 +260,7 @@ module zeroriscy_core
 
   assign dbg_busy    = dbg_req | dbg_csr_req | dbg_jump_req | dbg_reg_wreq | debug_req_i;
 
-  assign clock_en    = core_busy | dbg_busy | (irq_i & m_irq_enable);
+  assign clock_en    = core_busy | dbg_busy | irq_i;
 
   assign sleeping    = (~core_busy);
 
