@@ -292,9 +292,8 @@ module zeroriscy_controller
           begin // now analyze the current instruction in the ID stage
             is_decoding_o = 1'b1;
 
-            unique case (1'b1)
-
-              branch_set_i: begin
+              if (branch_set_i & ~jump_set_i & ~(mret_insn_i | ecall_insn_i | pipe_flush_i | ebrk_insn_i | illegal_insn_i | csr_status_i))
+              begin
                 pc_mux_o          = PC_JUMP;
                 pc_set_o          = 1'b1;
                 perf_tbranch_o    = 1'b1;
@@ -302,7 +301,8 @@ module zeroriscy_controller
                 if (dbg_req_i)
                   ctrl_fsm_ns = DBG_SIGNAL;
               end
-              jump_set_i: begin
+              else if (~branch_set_i & jump_set_i & ~(mret_insn_i | ecall_insn_i | pipe_flush_i | ebrk_insn_i | illegal_insn_i | csr_status_i))
+              begin
                 pc_mux_o          = PC_JUMP;
                 pc_set_o          = 1'b1;
                 perf_jump_o       = 1'b1;
@@ -310,31 +310,32 @@ module zeroriscy_controller
                 if (dbg_req_i)
                   ctrl_fsm_ns = DBG_SIGNAL;
               end
-              mret_insn_i | ecall_insn_i | pipe_flush_i | ebrk_insn_i | illegal_insn_i | csr_status_i: begin
+              else if (~branch_set_i & ~jump_set_i & (mret_insn_i | ecall_insn_i | pipe_flush_i | ebrk_insn_i | illegal_insn_i | csr_status_i))
+              begin
                 ctrl_fsm_ns = FLUSH;
                 halt_if_o   = 1'b1;
                 halt_id_o   = 1'b1;
               end
-              default: begin
+              else
+              begin
                 dbg_trap_o = dbg_settings_i[DBG_SETS_SSTE];
 
-                unique case (1'b1)
-                  irq_req_ctrl_i & irq_enable_int & ~instr_multicyle_i & ~branch_in_id_i: begin
+                if ((irq_req_ctrl_i & irq_enable_int & ~instr_multicyle_i & ~branch_in_id_i) & ~(dbg_req_i & ~branch_taken_ex_i))
+                begin
                     ctrl_fsm_ns = IRQ_TAKEN;
                     halt_if_o   = 1'b1;
                     halt_id_o   = 1'b1;
-                  end
-                  dbg_req_i & ~branch_taken_ex_i: begin
+                end
+                else if (~(irq_req_ctrl_i & irq_enable_int & ~instr_multicyle_i & ~branch_in_id_i) & (dbg_req_i & ~branch_taken_ex_i))
+                begin
                     halt_if_o = 1'b1;
                     if (id_ready_i) begin
                       ctrl_fsm_ns = DBG_SIGNAL;
                     end
-                  end
-                  default:
+                end
+                else
                     exc_kill_o    = irq_req_ctrl_i & ~instr_multicyle_i & ~branch_in_id_i ? 1'b1 : 1'b0;
-                endcase
               end
-            endcase
           end
           else //~instr_valid_i
           begin
