@@ -248,9 +248,6 @@ module zeroriscy_controller
         if (dbg_req_i) begin
           // debug request, now we need to check if we should stay sleeping or
           // go to normal processing later
-          if (irq_req_ctrl_i)
-            ctrl_fsm_ns = DBG_SIGNAL;
-          else
             ctrl_fsm_ns = DBG_SIGNAL_SLEEP;
 
         end else begin
@@ -362,7 +359,7 @@ module zeroriscy_controller
         dbg_ack_o  = 1'b1;
         halt_if_o  = 1'b1;
 
-        ctrl_fsm_ns = DBG_WAIT_SLEEP;
+        ctrl_fsm_ns = DBG_WAIT;
       end
 
       // The Debugger is active in this state
@@ -458,7 +455,7 @@ module zeroriscy_controller
               dbg_trap_o            = dbg_settings_i[DBG_SETS_SSTE];
           end
           ebrk_insn_i: begin
-              dbg_trap_o    = dbg_settings_i[DBG_SETS_EBRK] | dbg_settings_i[DBG_SETS_SSTE];;
+              dbg_trap_o    = 1'b1;//dbg_settings_i[DBG_SETS_EBRK] | dbg_settings_i[DBG_SETS_SSTE];;
               exc_cause_o   = EXC_CAUSE_BREAKPOINT;
           end
           csr_status_i: begin
