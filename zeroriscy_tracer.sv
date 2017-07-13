@@ -61,7 +61,10 @@ module zeroriscy_tracer
   input  logic        is_branch,
   input  logic        branch_taken,
   input  logic        pipe_flush,
-
+  input  logic        mret_insn,
+  input  logic        ecall_insn,
+  input  logic        ebrk_insn,
+  input  logic        csr_status,
   input  logic [31:0] rs1_value,
   input  logic [31:0] rs2_value,
   input  logic [31:0] lsu_value,
@@ -331,7 +334,7 @@ module zeroriscy_tracer
     instr_trace_t trace;
     mem_acc_t     mem_acc;
     // special case for WFI because we don't wait for unstalling there
-    if ((id_valid || pipe_flush || ex_data_req) && is_decoding)
+    if ( (id_valid || mret_insn || ecall_insn || pipe_flush || ebrk_insn || csr_status || ex_data_req) && is_decoding)
     begin
       trace = new ();
 
@@ -377,10 +380,6 @@ module zeroriscy_tracer
         INSTR_SRA:        trace.printRInstr("sra");
         INSTR_OR:         trace.printRInstr("or");
         INSTR_AND:        trace.printRInstr("and");
-        INSTR_EXTHS:      trace.printRInstr("p.exths");
-        INSTR_EXTHZ:      trace.printRInstr("p.exthz");
-        INSTR_EXTBS:      trace.printRInstr("p.extbs");
-        INSTR_EXTBZ:      trace.printRInstr("p.extbz");
         // SYSTEM (CSR manipulation)
         INSTR_CSRRW:      trace.printCSRInstr("csrrw");
         INSTR_CSRRS:      trace.printCSRInstr("csrrs");
@@ -391,21 +390,23 @@ module zeroriscy_tracer
         // SYSTEM (others)
         INSTR_ECALL:      trace.printMnemonic("ecall");
         INSTR_EBREAK:     trace.printMnemonic("ebreak");
-        INSTR_ERET:       trace.printMnemonic("mret");
+        INSTR_MRET:       trace.printMnemonic("mret");
         INSTR_WFI:        trace.printMnemonic("wfi");
-        // PULP MULTIPLIER
+        // RV32M
         INSTR_PMUL:       trace.printRInstr("mul");
+        INSTR_PMUH:       trace.printRInstr("mulh");
+        INSTR_PMULHSU:    trace.printRInstr("mulhsu");
+        INSTR_PMULHU:     trace.printRInstr("mulhu");
         INSTR_DIV:        trace.printRInstr("div");
         INSTR_DIVU:       trace.printRInstr("divu");
         INSTR_REM:        trace.printRInstr("rem");
         INSTR_REMU:       trace.printRInstr("remu");
-        // opcodes with custom decoding
         {25'b?, OPCODE_LOAD}:       trace.printLoadInstr();
         {25'b?, OPCODE_STORE}:      trace.printStoreInstr();
         default:           trace.printMnemonic("INVALID");
       endcase // unique case (instr)
 
-     // replace register written back
+        // replace register written back
         foreach(trace.regs_write[i]) begin
          if ((trace.regs_write[i].addr == ex_reg_addr) && ex_reg_we)
             trace.regs_write[i].value = ex_reg_wdata;

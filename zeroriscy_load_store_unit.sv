@@ -391,11 +391,12 @@ module zeroriscy_load_store_unit
         increase_address  = 1'b0;
         //tell the controller to update the address
         data_misaligned_o = 1'b1;
-        data_req_o        = 1'b1; //maybe better if controller handles this
+        data_req_o        = 1'b0;
         lsu_update_addr_o = data_gnt_i;
 
         if(data_rvalid_i) begin
            //if first part rvalid is received
+           data_req_o        = 1'b1;
            if(data_gnt_i) begin
               //second grant is received
               NS             = WAIT_RVALID;

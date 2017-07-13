@@ -701,7 +701,10 @@ module zeroriscy_core
     .is_branch      ( id_stage_i.branch_in_id              ),
     .branch_taken   ( id_stage_i.branch_set_q              ),
     .pipe_flush     ( id_stage_i.controller_i.pipe_flush_i ),
-
+    .mret_insn      ( id_stage_i.controller_i.mret_insn_i  ),
+    .ecall_insn     ( id_stage_i.controller_i.ecall_insn_i ),
+    .ebrk_insn      ( id_stage_i.controller_i.ebrk_insn_i  ),
+    .csr_status     ( id_stage_i.controller_i.csr_status_i ),
     .rs1_value      ( id_stage_i.operand_a_fw_id           ),
     .rs2_value      ( id_stage_i.operand_b_fw_id           ),
 
