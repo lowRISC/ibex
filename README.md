@@ -1,17 +1,18 @@
-# **zero-riscy**: RISC-V Core
+# zero-riscy: RISC-V Core
 
-**zero-riscy** is a small 2-stage RISC-V core derived from RI5CY.
+*zero-riscy** is a small 2-stage RISC-V core derived from RI5CY.
 
-**zero-riscy** fully implements the RV32IMC instruction set and a minimal set of RISCV privileged v1.9 specifications.
+**zero-riscy** fully implements the RV32IMC instruction set and a minimal 
+set of RISCV privileged specifications.
+**zero-riscy** can be configured to be very small by disabling the RV32M extensions
+and by activating the RV32E extensios. This configuration is called **micro-riscy**
 
-In particular, **zero-riscy** supports the following machine-level CSR addresses: mhartid, mepc, mcause and the MIE/MPIE fields of the mstatus.
+The core was developed as part of the [PULP platform](http://pulp.ethz.ch/) for
+energy-efficient computing and is currently used as the control core for
+PULP and PULPino.
 
-**zero-riscy** supports debug. The debug unit has been ported from RI5CY and it has the same specifications reported in http://www.pulp-platform.org/wp-content/uploads/2017/02/ri5cy_user_manual.pdf at page 26.
+## Documentation
 
-**zero-riscy** can be configured to be very small by disabling the RV32M extensions and by activating the RV32E extensios.
-
-Roadmap for future features includes:
-
-Supports for performance counters.
-
+A datasheet that explains the most important features of the core can be found
+in  the `zeroriscy-doc` repository.
 
