@@ -122,7 +122,7 @@ module zeroriscy_controller
   // FSM state encoding
   enum  logic [3:0] { RESET, BOOT_SET, WAIT_SLEEP, SLEEP, FIRST_FETCH,
                       DECODE, FLUSH, IRQ_TAKEN,
-                      DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH, DBG_WAIT_SLEEP } ctrl_fsm_cs, ctrl_fsm_ns;
+                      DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH } ctrl_fsm_cs, ctrl_fsm_ns;
 
   logic irq_enable_int;
 
@@ -358,23 +358,6 @@ module zeroriscy_controller
         halt_if_o  = 1'b1;
 
         ctrl_fsm_ns = DBG_WAIT;
-      end
-
-      // The Debugger is active in this state
-      // we wait until it is done and go back to SLEEP
-      DBG_WAIT_SLEEP:
-      begin
-        halt_if_o = 1'b1;
-
-        if (dbg_jump_req_i) begin
-          pc_mux_o     = PC_DBG_NPC;
-          pc_set_o     = 1'b1;
-          ctrl_fsm_ns  = DBG_WAIT;
-        end
-
-        if (dbg_stall_i == 1'b0) begin
-          ctrl_fsm_ns = SLEEP;
-        end
       end
 
       // The Debugger is active in this state
