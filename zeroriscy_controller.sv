@@ -475,7 +475,7 @@ module zeroriscy_controller
           if(dbg_req_i)
             ctrl_fsm_ns = DBG_SIGNAL_SLEEP;
           else
-            ctrl_fsm_ns = WAIT_SLEEP;
+            ctrl_fsm_ns = (mret_insn_i | pipe_flush_i) ? WAIT_SLEEP : DECODE;
         end
       end
 
