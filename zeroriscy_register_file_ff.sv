@@ -58,6 +58,7 @@ module zeroriscy_register_file
   localparam    NUM_WORDS  = 2**ADDR_WIDTH;
 
   logic [NUM_WORDS-1:0][DATA_WIDTH-1:0] rf_reg;
+  logic [NUM_WORDS-1:0][DATA_WIDTH-1:0] rf_reg_tmp;
   logic [NUM_WORDS-1:0]                 we_a_dec;
 
   always_comb
@@ -81,10 +82,10 @@ module zeroriscy_register_file
       always_ff @(posedge clk, negedge rst_n)
       begin : register_write_behavioral
         if (rst_n==1'b0) begin
-          rf_reg[i] <= 'b0;
+          rf_reg_tmp[i] <= 'b0;
         end else begin
           if (we_a_dec[i])
-            rf_reg[i] <= wdata_a_i;
+            rf_reg_tmp[i] <= wdata_a_i;
         end
       end
 
@@ -92,6 +93,7 @@ module zeroriscy_register_file
 
     // R0 is nil
     assign rf_reg[0] = '0;
+    assign rf_reg[NUM_WORDS-1:1] = rf_reg_tmp[NUM_WORDS-1:1];
 
   endgenerate
 
