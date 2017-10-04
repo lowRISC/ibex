@@ -50,9 +50,9 @@ module zeroriscy_fetch_fifo
   localparam DEPTH = 3; // must be 3 or greater
 
   // index 0 is used for output
-  logic [0:DEPTH-1] [31:0]  addr_n,    addr_int,    addr_Q;
-  logic [0:DEPTH-1] [31:0]  rdata_n,   rdata_int,   rdata_Q;
-  logic [0:DEPTH-1]         valid_n,   valid_int,   valid_Q;
+  logic [DEPTH-1:0] [31:0]  addr_n,    addr_int,    addr_Q;
+  logic [DEPTH-1:0] [31:0]  rdata_n,   rdata_int,   rdata_Q;
+  logic [DEPTH-1:0]         valid_n,   valid_int,   valid_Q;
 
   logic             [31:0]  addr_next;
   logic             [31:0]  rdata, rdata_unaligned;
@@ -137,11 +137,11 @@ module zeroriscy_fetch_fifo
   always_comb
   begin
     int j;
-	 
+
 	 addr_int    = addr_Q;
     rdata_int   = rdata_Q;
     valid_int   = valid_Q;
-    
+
 
     if (in_valid_i) begin
       for(j = 0; j < DEPTH; j++) begin
@@ -176,18 +176,18 @@ module zeroriscy_fetch_fifo
             addr_n[0] = {addr_next[31:2], 2'b10};
           end
 
-          rdata_n  = {rdata_int[1:DEPTH-1], 32'b0};
-          valid_n  = {valid_int[1:DEPTH-1], 1'b0};
+          rdata_n  = {rdata_int[DEPTH-1:1], 32'b0};
+          valid_n  = {valid_int[DEPTH-1:1], 1'b0};
         end else begin
-        
+
           if (aligned_is_compressed) begin
             // just increase address, do not move to next entry in FIFO
             addr_n[0] = {addr_int[0][31:2], 2'b10};
           end else begin
             // move to next entry in FIFO
             addr_n[0] = {addr_next[31:2], 2'b00};
-            rdata_n   = {rdata_int[1:DEPTH-1], 32'b0};
-            valid_n   = {valid_int[1:DEPTH-1], 1'b0};
+            rdata_n   = {rdata_int[DEPTH-1:1], 32'b0};
+            valid_n   = {valid_int[DEPTH-1:1], 1'b0};
           end
         end
       end
