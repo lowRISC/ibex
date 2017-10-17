@@ -176,8 +176,8 @@ module zeroriscy_fetch_fifo
             addr_n[0] = {addr_next[31:2], 2'b10};
           end
 
-          rdata_n  = {rdata_int[DEPTH-1:1], 32'b0};
-          valid_n  = {valid_int[DEPTH-1:1], 1'b0};
+          rdata_n  = {32'b0, rdata_int[DEPTH-1:1]};
+          valid_n  = {1'b0,  valid_int[DEPTH-1:1]};
         end else begin
 
           if (aligned_is_compressed) begin
@@ -186,8 +186,8 @@ module zeroriscy_fetch_fifo
           end else begin
             // move to next entry in FIFO
             addr_n[0] = {addr_next[31:2], 2'b00};
-            rdata_n   = {rdata_int[DEPTH-1:1], 32'b0};
-            valid_n   = {valid_int[DEPTH-1:1], 1'b0};
+            rdata_n   = {32'b0, rdata_int[DEPTH-1:1]};
+            valid_n   = {1'b0,  valid_int[DEPTH-1:1]};
           end
         end
       end
