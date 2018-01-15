@@ -1,4 +1,4 @@
-// Copyright 2017 ETH Zurich and University of Bologna.
+// Copyright 2018 ETH Zurich and University of Bologna.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 0.51 (the “License”); you may not use this file except in
 // compliance with the License.  You may obtain a copy of the License at
@@ -149,7 +149,7 @@ module zeroriscy_prefetch_buffer
         if (branch_i) begin
           instr_addr_o = addr_i;
           addr_valid   = 1'b1;
-        end 
+        end
 
         if(instr_gnt_i)
           NS = WAIT_RVALID;
@@ -185,7 +185,7 @@ module zeroriscy_prefetch_buffer
             if (branch_i) begin
               addr_valid = 1'b1;
               NS         = WAIT_ABORTED;
-            end 
+            end
           end
         end else begin
           // just wait for rvalid and go back to IDLE, no new request

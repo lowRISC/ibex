@@ -1,4 +1,4 @@
-// Copyright 2017 ETH Zurich and University of Bologna.
+// Copyright 2018 ETH Zurich and University of Bologna.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 0.51 (the “License”); you may not use this file except in
 // compliance with the License.  You may obtain a copy of the License at
@@ -56,7 +56,7 @@ module zeroriscy_alu
     begin : g_revloop
       assign operand_a_rev[k] = operand_a_i[31-k];
     end
-  endgenerate 
+  endgenerate
 
 
   /////////////////////////////////////
@@ -68,7 +68,7 @@ module zeroriscy_alu
   //                                 //
   /////////////////////////////////////
 
-  logic        adder_op_b_negate; 
+  logic        adder_op_b_negate;
   logic [32:0] adder_in_a, adder_in_b;
   logic [31:0] adder_result;
 
@@ -104,7 +104,7 @@ module zeroriscy_alu
   assign adder_result_ext_o = $unsigned(adder_in_a) + $unsigned(adder_in_b);
 
   assign adder_result       = adder_result_ext_o[32:1];
-  
+
   assign adder_result_o     = adder_result;
 
   ////////////////////////////////////////
@@ -188,7 +188,7 @@ module zeroriscy_alu
 
   assign is_equal = (adder_result == 32'b0);
   assign is_equal_result_o = is_equal;
-  
+
 
   // Is greater equal
   always_comb
@@ -199,7 +199,7 @@ module zeroriscy_alu
       is_greater_equal = operand_a_i[31] ^ (cmp_signed);
   end
 
-  // GTE unsigned: 
+  // GTE unsigned:
   // (a[31] == 1 && b[31] == 1) => adder_result[31] == 0
   // (a[31] == 0 && b[31] == 0) => adder_result[31] == 0
   // (a[31] == 1 && b[31] == 0) => 1
@@ -277,5 +277,5 @@ module zeroriscy_alu
       default: ; // default case to suppress unique warning
     endcase
   end
-  
+
 endmodule

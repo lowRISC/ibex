@@ -1,4 +1,4 @@
-// Copyright 2017 ETH Zurich and University of Bologna.
+// Copyright 2018 ETH Zurich and University of Bologna.
 // Copyright and related rights are licensed under the Solderpad Hardware
 // License, Version 0.51 (the “License”); you may not use this file except in
 // compliance with the License.  You may obtain a copy of the License at
@@ -148,7 +148,7 @@ module zeroriscy_cs_registers
   ////////////////////////////////////////////
   //   ____ ____  ____    ____              //
   //  / ___/ ___||  _ \  |  _ \ ___  __ _   //
-  // | |   \___ \| |_) | | |_) / _ \/ _` |  //   
+  // | |   \___ \| |_) | | |_) / _ \/ _` |  //
   // | |___ ___) |  _ <  |  _ <  __/ (_| |  //
   //  \____|____/|_| \_\ |_| \_\___|\__, |  //
   //                                |___/   //
@@ -179,7 +179,7 @@ module zeroriscy_cs_registers
 
       // mhartid: unique hardware thread id
       12'hF14: csr_rdata_int = {21'b0, cluster_id_i[5:0], 1'b0, core_id_i[3:0]};
-		
+
 		default: ;
     endcase
   end
@@ -323,7 +323,7 @@ module zeroriscy_cs_registers
   // assign external performance counters
   generate
     genvar i;
-    for (i = 0; i < N_EXT_CNT; i++) 
+    for (i = 0; i < N_EXT_CNT; i++)
     begin : g_extcounters
       assign PCCR_in[N_PERF_COUNTERS - N_EXT_CNT + i] = ext_counters_i[i];
     end
