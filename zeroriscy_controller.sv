@@ -304,8 +304,6 @@ module zeroriscy_controller
                 pc_set_o          = 1'b1;
                 perf_jump_o       = 1'b1;
                 dbg_trap_o        = dbg_settings_i[DBG_SETS_SSTE];
-                if (dbg_req_i)
-                  ctrl_fsm_ns = DBG_SIGNAL;
               end
               mret_insn_i | ecall_insn_i | pipe_flush_i | ebrk_insn_i | illegal_insn_i | csr_status_i: begin
                 ctrl_fsm_ns = FLUSH;
