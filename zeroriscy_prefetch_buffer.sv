@@ -151,7 +151,7 @@ module zeroriscy_prefetch_buffer
           addr_valid   = 1'b1;
         end
 
-        if(instr_gnt_i)
+        if(instr_gnt_i & ~branch_i)
           NS = WAIT_RVALID;
         else
           NS = WAIT_GNT;
