@@ -5,7 +5,7 @@
 **zero-riscy** fully implements the RV32IMC instruction set and a minimal
 set of RISCV privileged specifications.
 **zero-riscy** can be configured to be very small by disabling the RV32M extensions
-and by activating the RV32E extensios. This configuration is called **micro-riscy**
+and by activating the RV32E extensions. This configuration is called **micro-riscy**
 
 The core was developed as part of the [PULP platform](http://pulp.ethz.ch/) for
 energy-efficient computing and is currently used as the control core for
