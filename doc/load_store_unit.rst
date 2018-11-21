@@ -51,17 +51,63 @@ The LSU provides a valid address in ``data_addr_o`` and sets ``data_req_o`` high
 
 :numref:`timing1`, :numref:`timing2` and :numref:`timing3` show example-timing diagrams of the protocol.
 
-.. figure:: images/timing1.png
+.. wavedrom::
    :name: timing1
+   :caption: Basic Memory Transaction
 
-   Basic Memory Transaction
+   {"signal":
+     [
+       {"name": "clk", "wave": "p......"},
+       {"name": "data_addr_o", "wave": "x=.xxxx", "data": ["Address"]},
+       {"name": "data_wdata_o", "wave": "x=.xxxx", "data": ["WData"]},
+       {"name": "data_req_o", "wave": "01.0..."},
+       {"name": "data_gnt_i", "wave": "0.10..."}, 
+       {"name": "data_rvalid_i", "wave": "0..10.."},
+       {"name": "data_wdata_o", "wave": "xxx=xxx", "data": ["RData"]},
+       {"name": "data_we_o", "wave": "x=.xxxx", "data": ["WE"]},
+       {"name": "data_be_o", "wave": "x=.xxxx", "data": ["BE"]}
+     ],
+     "config": { "hscale": 2 }
+    }
 
-.. figure:: images/timing2.png
+   
+.. wavedrom::
    :name: timing2
+   :caption: Back-to-back Memory Transaction
 
-   Back-to-back Memory Transaction
+   {"signal":
+     [
+       {"name": "clk", "wave": "p......"},
+       {"name": "data_addr_o", "wave": "x==xxxx", "data": ["Addr1", "Addr2"]},
+       {"name": "data_wdata_o", "wave": "x==xxxx", "data": ["WData1", "Wdata2"]},
+       {"name": "data_req_o", "wave": "01.0..."},
+       {"name": "data_gnt_i", "wave": "01.0..."}, 
+       {"name": "data_rvalid_i", "wave": "0.1.0.."},
+       {"name": "data_wdata_o", "wave": "xx==xxx", "data": ["RData1", "RData2"]},
+       {"name": "data_we_o", "wave": "x==xxxx", "data": ["WE1", "WE2"]},
+       {"name": "data_be_o", "wave": "x==xxxx", "data": ["BE1", "BE2"]}
+     ],
+     "config": { "hscale": 2 }
+   }
 
-.. figure:: images/timing3.png
+   
+.. wavedrom::
    :name: timing3
+   :caption: Slow Response Memory Transaction
 
-   Slow Response Memory Transaction
+   {"signal":
+     [
+       {"name": "clk", "wave": "p......"},
+       {"name": "data_addr_o", "wave": "x=..xxx", "data": ["Address"]},
+       {"name": "data_wdata_o", "wave": "x=..xxx", "data": ["WData"]},
+       {"name": "data_req_o", "wave": "01..0.."},
+       {"name": "data_gnt_i", "wave": "0..10.."}, 
+       {"name": "data_rvalid_i", "wave": "0....10"},
+       {"name": "data_wdata_o", "wave": "xxxxx=x", "data": ["RData"]},
+       {"name": "data_we_o", "wave": "x=..xxx", "data": ["WE"]},
+       {"name": "data_be_o", "wave": "x=..xxx", "data": ["BE"]}
+     ],
+     "config": { "hscale": 2 }
+   }
+
+
