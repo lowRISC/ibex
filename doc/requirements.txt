@@ -1,4 +1,4 @@
 setuptools_scm
-sphinx
+sphinx>=1.8
 sphinx_rtd_theme
 git+https://github.com/wallento/sphinx-wavedrom
