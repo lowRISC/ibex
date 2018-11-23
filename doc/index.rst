@@ -11,6 +11,7 @@ ZERO-RISCY: User Manual
    :caption: Contents:
 
    introduction
+   integration
    instruction_fetch
    load_store_unit
    register_file
