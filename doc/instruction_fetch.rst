@@ -35,3 +35,27 @@ Protocol
 --------
 
 The protocol used to communicate with the instruction cache or the instruction memory is the same as the protocol used by the LSU. See the description of the LSU in :ref:`LSU Protocol<lsu-protocol>` for details about the protocol.
+
+.. caution::
+
+   The instruction fetch interface differs from the LSU interface in that the address can change
+   while the request is valid. This is because it can update the instructions to fetch when a
+   branch occurs. As depicted in :numref:`if_timing_difference` care has to be taken when
+   working with the address. The data returned must of course match the address during the grant
+   cycle.
+
+   .. wavedrom::
+      :name: if_timing_difference
+      :caption: Memory transaction with wait states
+
+      {"signal":
+        [
+          {"name": "clk", "wave": "p......"},
+          {"name": "data_addr_o", "wave": "x===xxx", "data": ["Address", "Address", "Address"]},
+          {"name": "data_req_o", "wave": "01..0.."},
+          {"name": "data_gnt_i", "wave": "0..10.."}, 
+          {"name": "data_rvalid_i", "wave": "0....10"},
+          {"name": "data_rdata_i", "wave": "xxxxx=x", "data": ["RData"]}
+        ],
+        "config": { "hscale": 2 }
+      }
