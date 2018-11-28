@@ -16,14 +16,14 @@
 //                                                                            //
 //                                                                            //
 // Design Name:    RISC-V processor core                                      //
-// Project Name:   zero-riscy                                                 //
+// Project Name:   ibex                                                 //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Defines for various constants used by the processor core.  //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-package zeroriscy_defines;
+package ibex_defines;
 
 ////////////////////////////////////////////////
 //    ___         ____          _             //

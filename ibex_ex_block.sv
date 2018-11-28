@@ -19,18 +19,18 @@
 //                 Davide Schiavone - pschiavo@iis.ee.ethz.ch                 //
 //                                                                            //
 // Design Name:    Execute stage                                              //
-// Project Name:   zero-riscy                                                 //
+// Project Name:   ibex                                                       //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Execution block: Hosts ALU and MUL/DIV unit                //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "zeroriscy_config.sv"
+`include "ibex_config.sv"
 
-import zeroriscy_defines::*;
+import ibex_defines::*;
 
-module zeroriscy_ex_block
+module ibex_ex_block
 #(
   parameter RV32M      = 1
 )
@@ -106,7 +106,7 @@ endgenerate
   //                        //
   ////////////////////////////
 
-  zeroriscy_alu alu_i
+  ibex_alu alu_i
   (
     .operator_i          ( alu_operator_i            ),
     .operand_a_i         ( alu_operand_a_i           ),
@@ -132,7 +132,7 @@ endgenerate
 
   generate
   if (MULT_TYPE == 0) begin : multdiv_slow
-    zeroriscy_multdiv_slow multdiv_i
+    ibex_multdiv_slow multdiv_i
     (
      .clk                ( clk                   ),
      .rst_n              ( rst_n                 ),
@@ -151,7 +151,7 @@ endgenerate
      .multdiv_result_o   ( multdiv_result        )
     );
   end else begin: multdiv_fast
-    zeroriscy_multdiv_fast multdiv_i
+    ibex_multdiv_fast multdiv_i
      (
      .clk                ( clk                   ),
      .rst_n              ( rst_n                 ),

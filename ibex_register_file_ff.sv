@@ -15,7 +15,7 @@
 //                 Markus Wegmann - markus.wegmann@technokrat.ch              //
 //                                                                            //
 // Design Name:    RISC-V register file                                       //
-// Project Name:   zero-riscy                                                 //
+// Project Name:   ibex                                                       //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Register file with 31 or 15x 32 bit wide registers.        //
@@ -24,9 +24,9 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "zeroriscy_config.sv"
+`include "ibex_config.sv"
 
-module zeroriscy_register_file
+module ibex_register_file
 #(
   parameter RV32E         = 0,
   parameter DATA_WIDTH    = 32

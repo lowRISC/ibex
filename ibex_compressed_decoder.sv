@@ -13,7 +13,7 @@
 // Engineer:       Sven Stucki - svstucki@student.ethz.ch                     //
 //                                                                            //
 // Design Name:    Compressed instruction decoder                             //
-// Project Name:   zero-riscy                                                 //
+// Project Name:   ibex                                                       //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Decodes RISC-V compressed instructions into their RV32     //
@@ -22,9 +22,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-import zeroriscy_defines::*;
+import ibex_defines::*;
 
-module zeroriscy_compressed_decoder
+module ibex_compressed_decoder
 (
   input  logic [31:0] instr_i,
   output logic [31:0] instr_o,

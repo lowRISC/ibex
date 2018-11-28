@@ -16,7 +16,7 @@
 //                 Davide Schiavone - pschiavo@iis.ee.ethz.ch                 //
 //                                                                            //
 // Design Name:    Control and Status Registers                               //
-// Project Name:   zero-riscy                                                 //
+// Project Name:   ibex                                                       //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Control and Status Registers (CSRs) loosely following the  //
@@ -24,9 +24,9 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "zeroriscy_config.sv"
+`include "ibex_config.sv"
 
-import zeroriscy_defines::*;
+import ibex_defines::*;
 
 `ifndef PULP_FPGA_EMUL
  `ifdef SYNTHESIS
@@ -34,7 +34,7 @@ import zeroriscy_defines::*;
  `endif
 `endif
 
-module zeroriscy_cs_registers
+module ibex_cs_registers
 #(
   parameter N_EXT_CNT    = 0
 )

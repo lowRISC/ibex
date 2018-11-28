@@ -8,8 +8,8 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
 
-package zeroriscy_tracer_defines;
-import zeroriscy_defines::*;
+package ibex_tracer_defines;
+import ibex_defines::*;
 
 // instruction masks (for tracer)
 // parameter INSTR_CUSTOM0   = { 25'b?, OPCODE_CUST0 };

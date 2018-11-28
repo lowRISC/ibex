@@ -13,17 +13,17 @@
 //                                                                            //
 //                                                                            //
 // Design Name:    Slow Multiplier and Division                               //
-// Project Name:   zero-riscy                                                 //
+// Project Name:   ibex                                                       //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Baugh-Wooley multiplier and Long Division                  //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-import zeroriscy_defines::*;
+import ibex_defines::*;
 
 
-module zeroriscy_multdiv_slow
+module ibex_multdiv_slow
 (
   input  logic        clk,
   input  logic        rst_n,
@@ -297,4 +297,4 @@ module zeroriscy_multdiv_slow
   assign ready_o       = (curr_state_q == MD_FINISH) | (curr_state_q == MD_LAST & (operator_i == MD_OP_MULL | operator_i == MD_OP_MULH));
 
 
-endmodule // zeroriscy_mult
+endmodule // ibex_mult

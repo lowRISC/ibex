@@ -19,18 +19,18 @@
 //                 Davide Schiavone - pschiavo@iis.ee.ethz.ch                 //
 //                                                                            //
 // Design Name:    Top level module                                           //
-// Project Name:   zero-riscy                                                 //
+// Project Name:   ibex                                                       //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Top level module of the RISC-V core.                       //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "zeroriscy_config.sv"
+`include "ibex_config.sv"
 
-import zeroriscy_defines::*;
+import ibex_defines::*;
 
-module zeroriscy_core
+module ibex_core
 #(
   parameter N_EXT_PERF_COUNTERS = 0,
   parameter RV32E               = 0,
@@ -266,7 +266,7 @@ module zeroriscy_core
   // main clock gate of the core
   // generates all clocks except the one for the debug unit which is
   // independent
-  cluster_clock_gating core_clock_gate_i
+  clock_gating core_clock_gate_i
   (
     .clk_i     ( clk_i           ),
     .en_i      ( clock_en        ),
@@ -282,7 +282,7 @@ module zeroriscy_core
   //  |___|_|     |____/ |_/_/   \_\____|_____|   //
   //                                              //
   //////////////////////////////////////////////////
-  zeroriscy_if_stage if_stage_i
+  ibex_if_stage if_stage_i
   (
     .clk                 ( clk               ),
     .rst_n               ( rst_ni            ),
@@ -341,7 +341,7 @@ module zeroriscy_core
   //  |___|____/  |____/ |_/_/   \_\____|_____|  //
   //                                             //
   /////////////////////////////////////////////////
-  zeroriscy_id_stage
+  ibex_id_stage
   #(
     .RV32E(RV32E),
     .RV32M(RV32M)
@@ -459,7 +459,7 @@ module zeroriscy_core
   );
 
 
-  zeroriscy_ex_block
+  ibex_ex_block
   #(
     //change the localparam MULT_TYPE to 0 or 1
     //if you want a SLOW or FAST multiplier
@@ -503,7 +503,7 @@ module zeroriscy_core
   //                                                                                    //
   ////////////////////////////////////////////////////////////////////////////////////////
 
-  zeroriscy_load_store_unit  load_store_unit_i
+  ibex_load_store_unit  load_store_unit_i
   (
     .clk                   ( clk                ),
     .rst_n                 ( rst_ni             ),
@@ -556,7 +556,7 @@ module zeroriscy_core
   //   Control and Status Registers   //
   //////////////////////////////////////
 
-  zeroriscy_cs_registers
+  ibex_cs_registers
   #(
     .N_EXT_CNT       ( N_EXT_PERF_COUNTERS   )
   )
@@ -627,7 +627,7 @@ module zeroriscy_core
   //                                                         //
   /////////////////////////////////////////////////////////////
 
-  zeroriscy_debug_unit debug_unit_i
+  ibex_debug_unit debug_unit_i
   (
     .clk               ( clk_i              ), // always-running clock for debug
     .rst_n             ( rst_ni             ),
@@ -682,7 +682,7 @@ module zeroriscy_core
 
 `ifndef VERILATOR
 `ifdef TRACE_EXECUTION
-  zeroriscy_tracer zeroriscy_tracer_i
+  ibex_tracer ibex_tracer_i
   (
     .clk            ( clk_i                                ), // always-running clock for tracing
     .rst_n          ( rst_ni                               ),

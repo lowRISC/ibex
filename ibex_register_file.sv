@@ -16,7 +16,7 @@
 //                 Markus Wegmann - markus.wegmann@technokrat.ch              //
 //                                                                            //
 // Design Name:    RISC-V register file                                       //
-// Project Name:   zero-riscy                                                 //
+// Project Name:   ibex                                                       //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Register file with 31 or 15x 32 bit wide registers.        //
@@ -25,9 +25,9 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "zeroriscy_config.sv"
+`include "ibex_config.sv"
 
-module zeroriscy_register_file
+module ibex_register_file
 #(
   parameter RV32E         = 0,
   parameter DATA_WIDTH    = 32
@@ -93,7 +93,7 @@ module zeroriscy_register_file
   // WRITE : SAMPLE INPUT DATA
   //---------------------------------------------------------------------------
 
-  cluster_clock_gating CG_WE_GLOBAL
+  clock_gating CG_WE_GLOBAL
   (
     .clk_i     ( clk             ),
     .en_i      ( we_a_i          ),
@@ -133,7 +133,7 @@ module zeroriscy_register_file
   generate
     for(x = 1; x < NUM_WORDS; x++)
     begin : CG_CELL_WORD_ITER
-      cluster_clock_gating CG_Inst
+      clock_gating CG_Inst
       (
         .clk_i     ( clk_int                               ),
         .en_i      ( waddr_onehot_a[x]                     ),

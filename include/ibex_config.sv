@@ -16,7 +16,7 @@
 //                 Davide Schiavone - pschiavo@iis.ee.ethz.ch                 //
 //                                                                            //
 // Design Name:    RISC-V config file                                         //
-// Project Name:   zero-riscy                                                 //
+// Project Name:   ibex                                                 //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Configure optional simulation modules                      //

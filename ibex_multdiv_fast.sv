@@ -13,19 +13,19 @@
 //                                                                            //
 //                                                                            //
 // Design Name:    Fast Multiplier and Division                               //
-// Project Name:   zero-riscy                                                 //
+// Project Name:   ibex                                                       //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    16x16 kernel multiplier and Long Division                  //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-import zeroriscy_defines::*;
+import ibex_defines::*;
 
 `define OP_L 15:0
 `define OP_H 31:16
 
-module zeroriscy_multdiv_fast
+module ibex_multdiv_fast
 (
   input  logic        clk,
   input  logic        rst_n,
@@ -336,4 +336,4 @@ module zeroriscy_multdiv_fast
   end
 
 
-endmodule // zeroriscy_mult
+endmodule // ibex_mult

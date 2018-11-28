@@ -17,7 +17,7 @@
 //                 Sven Stucki - svstucki@student.ethz.ch                     //
 //                                                                            //
 // Design Name:    Instruction Fetch Stage                                    //
-// Project Name:   zero-riscy                                                 //
+// Project Name:   ibex                                                       //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Instruction fetch unit: Selection of the next PC, and      //
@@ -25,11 +25,11 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "zeroriscy_config.sv"
+`include "ibex_config.sv"
 
-import zeroriscy_defines::*;
+import ibex_defines::*;
 
-module zeroriscy_if_stage
+module ibex_if_stage
 (
       input  logic        clk,
       input  logic        rst_n,
@@ -121,7 +121,7 @@ module zeroriscy_if_stage
         end
 
         // prefetch buffer, caches a fixed number of instructions
-        zeroriscy_prefetch_buffer prefetch_buffer_i
+        ibex_prefetch_buffer prefetch_buffer_i
           (
             .clk               ( clk                         ),
             .rst_n             ( rst_n                       ),
@@ -224,7 +224,7 @@ module zeroriscy_if_stage
         logic        illegal_c_insn;
         logic        instr_compressed_int;
 
-        zeroriscy_compressed_decoder compressed_decoder_i
+        ibex_compressed_decoder compressed_decoder_i
           (
             .instr_i         ( fetch_rdata          ),
             .instr_o         ( instr_decompressed   ),

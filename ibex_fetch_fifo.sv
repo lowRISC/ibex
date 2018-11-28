@@ -12,18 +12,18 @@
 // Engineer:       Andreas Traber - atraber@iis.ee.ethz.ch                    //
 //                                                                            //
 // Design Name:    Fetch Fifo for 32 bit memory interface                     //
-// Project Name:   zero-riscy                                                 //
+// Project Name:   ibex                                                       //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Fetch fifo                                                 //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "zeroriscy_config.sv"
+`include "ibex_config.sv"
 
 // input port: send address one cycle before the data
 // clear_i clears the FIFO for the following cycle. in_addr_i can be sent in
 // this cycle already
-module zeroriscy_fetch_fifo
+module ibex_fetch_fifo
 (
     input  logic        clk,
     input  logic        rst_n,

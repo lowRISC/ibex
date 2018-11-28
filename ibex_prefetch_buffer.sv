@@ -12,7 +12,7 @@
 // Engineer:       Andreas Traber - atraber@iis.ee.ethz.ch                    //
 //                                                                            //
 // Design Name:    Prefetcher Buffer for 32 bit memory interface              //
-// Project Name:   zero-riscy                                                 //
+// Project Name:   ibex                                                       //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Prefetch Buffer that caches instructions. This cuts overly //
@@ -20,7 +20,7 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-module zeroriscy_prefetch_buffer
+module ibex_prefetch_buffer
 (
   input  logic        clk,
   input  logic        rst_n,
@@ -71,7 +71,7 @@ module zeroriscy_prefetch_buffer
   // consumes addresses and rdata
   //////////////////////////////////////////////////////////////////////////////
 
-  zeroriscy_fetch_fifo fifo_i
+  ibex_fetch_fifo fifo_i
   (
     .clk                   ( clk               ),
     .rst_n                 ( rst_n             ),

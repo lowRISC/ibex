@@ -18,19 +18,19 @@
 //                 Davide Schiavone - pschiavo@iis.ee.ethz.ch                 //
 //                                                                            //
 // Design Name:    Main controller                                            //
-// Project Name:   zero-riscy                                                 //
+// Project Name:   ibex                                                       //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Main CPU controller of the processor                       //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "zeroriscy_config.sv"
+`include "ibex_config.sv"
 
-import zeroriscy_defines::*;
+import ibex_defines::*;
 
 
-module zeroriscy_controller
+module ibex_controller
 #(
   parameter REG_ADDR_WIDTH      = 5
 )
@@ -134,8 +134,8 @@ module zeroriscy_controller
   begin
     // print warning in case of decoding errors
     if (is_decoding_o && illegal_insn_i) begin
-      $display("%t: Illegal instruction (core %0d) at PC 0x%h:", $time, zeroriscy_core.core_id_i,
-               zeroriscy_id_stage.pc_id_i);
+      $display("%t: Illegal instruction (core %0d) at PC 0x%h:", $time, ibex_core.core_id_i,
+               ibex_id_stage.pc_id_i);
     end
   end
   // synopsys translate_on

@@ -15,7 +15,7 @@
 //                 Davide Schiavone - pschiavo@iis.ee.ethz.ch                 //
 //                                                                            //
 // Design Name:    RISC-V Tracer                                              //
-// Project Name:   zero-riscy                                                 //
+// Project Name:   ibex                                                       //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Traces the executed instructions                           //
@@ -25,10 +25,10 @@
 `ifndef VERILATOR
 
 
-`include "zeroriscy_config.sv"
+`include "ibex_config.sv"
 
-import zeroriscy_defines::*;
-import zeroriscy_tracer_defines::*;
+import ibex_defines::*;
+import ibex_tracer_defines::*;
 
 
 // Source/Destination register instruction index
@@ -38,7 +38,7 @@ import zeroriscy_tracer_defines::*;
 `define REG_D  11:07
 
 
-module zeroriscy_tracer
+module ibex_tracer
 #(
     parameter REG_ADDR_WIDTH      = 5
 )

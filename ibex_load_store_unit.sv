@@ -17,7 +17,7 @@
 //                 Davide Schiavone - pschiavo@iis.ee.ethz.ch                 //
 //                                                                            //
 // Design Name:    Load Store Unit                                            //
-// Project Name:   zero-riscy                                                 //
+// Project Name:   ibex                                                       //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Load Store Unit, used to eliminate multiple access during  //
@@ -25,9 +25,9 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "zeroriscy_config.sv"
+`include "ibex_config.sv"
 
-module zeroriscy_load_store_unit
+module ibex_load_store_unit
 (
     input  logic         clk,
     input  logic         rst_n,

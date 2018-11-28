@@ -18,7 +18,7 @@
 //                 Davide Schiavone - pschiavo@iis.ee.ethz.ch                 //
 //                                                                            //
 // Design Name:    Instruction Decode Stage                                   //
-// Project Name:   zero-riscy                                                 //
+// Project Name:   ibex                                                       //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Decode stage of the core. It decodes the instructions      //
@@ -26,9 +26,9 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "zeroriscy_config.sv"
+`include "ibex_config.sv"
 
-import zeroriscy_defines::*;
+import ibex_defines::*;
 
 
 // Source/Destination register instruction index
@@ -37,7 +37,7 @@ import zeroriscy_defines::*;
 `define REG_D  11:07
 
 
-module zeroriscy_id_stage
+module ibex_id_stage
 #(
   parameter RV32M      = 1,
   parameter RV32E      = 0
@@ -409,7 +409,7 @@ module zeroriscy_id_stage
     end
   end
 
-  zeroriscy_register_file
+  ibex_register_file
   #(
     .RV32E(RV32E)
   )
@@ -445,7 +445,7 @@ module zeroriscy_id_stage
   //                                           //
   ///////////////////////////////////////////////
 
-  zeroriscy_decoder
+  ibex_decoder
   #(
       .RV32M(RV32M)
   )
@@ -508,7 +508,7 @@ module zeroriscy_id_stage
   //                                                                //
   ////////////////////////////////////////////////////////////////////
 
-  zeroriscy_controller controller_i
+  ibex_controller controller_i
   (
     .clk                            ( clk                    ),
     .rst_n                          ( rst_n                  ),
@@ -601,7 +601,7 @@ module zeroriscy_id_stage
 //                                                                    //
 ////////////////////////////////////////////////////////////////////////
 
-  zeroriscy_int_controller int_controller_i
+  ibex_int_controller int_controller_i
   (
     .clk                  ( clk                ),
     .rst_n                ( rst_n              ),

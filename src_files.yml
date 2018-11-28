@@ -1,28 +1,28 @@
-zeroriscy:
+ibex:
   incdirs: [
     include,
   ]
   files: [
-    include/zeroriscy_defines.sv,
-    include/zeroriscy_tracer_defines.sv,
-    zeroriscy_alu.sv,
-    zeroriscy_compressed_decoder.sv,
-    zeroriscy_controller.sv,
-    zeroriscy_cs_registers.sv,
-    zeroriscy_debug_unit.sv,
-    zeroriscy_decoder.sv,
-    zeroriscy_int_controller.sv,
-    zeroriscy_ex_block.sv,
-    zeroriscy_id_stage.sv,
-    zeroriscy_if_stage.sv,
-    zeroriscy_load_store_unit.sv,
-    zeroriscy_multdiv_slow.sv,
-    zeroriscy_multdiv_fast.sv,
-    zeroriscy_prefetch_buffer.sv,
-    zeroriscy_fetch_fifo.sv,
-    zeroriscy_core.sv,
+    include/ibex_defines.sv,
+    include/ibex_tracer_defines.sv,
+    ibex_alu.sv,
+    ibex_compressed_decoder.sv,
+    ibex_controller.sv,
+    ibex_cs_registers.sv,
+    ibex_debug_unit.sv,
+    ibex_decoder.sv,
+    ibex_int_controller.sv,
+    ibex_ex_block.sv,
+    ibex_id_stage.sv,
+    ibex_if_stage.sv,
+    ibex_load_store_unit.sv,
+    ibex_multdiv_slow.sv,
+    ibex_multdiv_fast.sv,
+    ibex_prefetch_buffer.sv,
+    ibex_fetch_fifo.sv,
+    ibex_core.sv,
   ]
-zeroriscy_vip_rtl:
+ibex_vip_rtl:
   targets: [
     rtl,
   ]
@@ -30,11 +30,11 @@ zeroriscy_vip_rtl:
     include,
   ]
   files: [
-    include/zeroriscy_defines.sv,
-    include/zeroriscy_tracer_defines.sv,
-    zeroriscy_tracer.sv,
+    include/ibex_defines.sv,
+    include/ibex_tracer_defines.sv,
+    ibex_tracer.sv,
   ]
-zeroriscy_regfile_rtl:
+ibex_regfile_rtl:
   targets: [
     rtl,
     tsmc55,
@@ -44,9 +44,9 @@ zeroriscy_regfile_rtl:
     include,
   ]
   files: [
-    zeroriscy_register_file.sv,
+    ibex_register_file.sv,
   ]
-zeroriscy_regfile_fpga:
+ibex_regfile_fpga:
   targets: [
     xilinx,
   ]
@@ -54,6 +54,6 @@ zeroriscy_regfile_fpga:
     include,
   ]
   files: [
-    zeroriscy_register_file_ff.sv,
+    ibex_register_file_ff.sv,
   ]
 

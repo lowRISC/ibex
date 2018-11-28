@@ -14,16 +14,16 @@
 // Additional contributions by:                                               //
 //                                                                            //
 // Design Name:    Interrupt Controller                                       //
-// Project Name:   zero-riscy                                                 //
+// Project Name:   ibex                                                       //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Interrupt Controller of the pipelined processor            //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-import zeroriscy_defines::*;
+import ibex_defines::*;
 
-module zeroriscy_int_controller
+module ibex_int_controller
 (
   input  logic        clk,
   input  logic        rst_n,
