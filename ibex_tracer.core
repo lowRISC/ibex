@@ -1,0 +1,19 @@
+CAPI=2:
+# Copyright lowRISC contributors.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+name: "lowrisc:ibex:tracer:0.1"
+description: "core_ibex_tracer"
+filesets:
+  files_rtl:
+    depend:
+      - lowrisc:ibex:ibex
+    files:
+      - rtl/include/ibex_tracer_defines.sv
+      - rtl/ibex_tracer.sv
+    file_type: systemVerilogSource
+
+targets:
+  default:
+    filesets:
+      - files_rtl

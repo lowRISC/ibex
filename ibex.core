@@ -1,0 +1,38 @@
+CAPI=2:
+# Copyright lowRISC contributors.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+name: "lowrisc:ibex:ibex:0.1"
+description: "CPU core with 2 stage pipeline implementing the RV32IMC_Zicsr ISA"
+filesets:
+  files_rtl:
+    files:
+      - rtl/include/ibex_defines.sv
+      - rtl/include/ibex_tracer_defines.sv
+      - rtl/ibex_alu.sv
+      - rtl/ibex_compressed_decoder.sv
+      - rtl/ibex_controller.sv
+      - rtl/ibex_cs_registers.sv
+      - rtl/ibex_debug_unit.sv
+      - rtl/ibex_decoder.sv
+      - rtl/ibex_ex_block.sv
+      - rtl/ibex_fetch_fifo.sv
+      - rtl/ibex_id_stage.sv
+      - rtl/ibex_if_stage.sv
+      - rtl/ibex_int_controller.sv
+      - rtl/ibex_load_store_unit.sv
+      - rtl/ibex_multdiv_fast.sv
+      - rtl/ibex_multdiv_slow.sv
+      - rtl/ibex_prefetch_buffer.sv
+      # XXX: Figure out the best way to switch these two implementations
+      # dynamically on the target.
+#      - rtl/ibex_register_file.sv # ASIC
+      - rtl/ibex_register_file_ff.sv # FPGA
+      - rtl/ibex_core.sv
+      - rtl/include/ibex_config.sv: { is_include_file: true }
+    file_type: systemVerilogSource
+
+targets:
+  default:
+    filesets:
+      - files_rtl
