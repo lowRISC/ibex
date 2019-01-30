@@ -16,33 +16,30 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-import ibex_defines::*;
-
 /**
  * Compressed instruction decoder
  *
  * Decodes RISC-V compressed instructions into their RV32 equivalent.
  * This module is fully combinatorial.
  */
-module ibex_compressed_decoder
-(
-  input  logic [31:0] instr_i,
-  output logic [31:0] instr_o,
-  output logic        is_compressed_o,
-  output logic        illegal_instr_o
+module ibex_compressed_decoder (
+    input  logic [31:0] instr_i,
+    output logic [31:0] instr_o,
+    output logic        is_compressed_o,
+    output logic        illegal_instr_o
 );
+  import ibex_defines::*;
 
-  //////////////////////////////////////////////////////////////////////////////////////////////////////
-  //   ____                                                 _   ____                     _            //
-  //  / ___|___  _ __ ___  _ __  _ __ ___  ___ ___  ___  __| | |  _ \  ___  ___ ___   __| | ___ _ __  //
-  // | |   / _ \| '_ ` _ \| '_ \| '__/ _ \/ __/ __|/ _ \/ _` | | | | |/ _ \/ __/ _ \ / _` |/ _ \ '__| //
-  // | |__| (_) | | | | | | |_) | | |  __/\__ \__ \  __/ (_| | | |_| |  __/ (_| (_) | (_| |  __/ |    //
-  //  \____\___/|_| |_| |_| .__/|_|  \___||___/___/\___|\__,_| |____/ \___|\___\___/ \__,_|\___|_|    //
-  //                      |_|                                                                         //
-  //////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  //   ____                             __         _   ____                     _            //
+  //  / ___|___  _ __ ___  _ __  _ __  /_/ ___  __| | |  _ \  ___  ___ ___   __| | ___ _ __  //
+  // | |   / _ \| '_ ` _ \| '_ \| '__///  / __|/ _` | | | | |/ _ \/ __/ _ \ / _` |/ _ \ '__| //
+  // | |__| (_) | | | | | | |_) | |       \__ \ (_| | | |_| |  __/ (_| (_) | (_| |  __/ |    //
+  //  \____\___/|_| |_| |_| .__/|_|       |___/\__,_| |____/ \___|\___\___/ \__,_|\___|_|    //
+  //                      |_|                                                                //
+  /////////////////////////////////////////////////////////////////////////////////////////////
 
-  always_comb
-  begin
+  always_comb begin
     illegal_instr_o = 1'b0;
     instr_o         = '0;
 
@@ -52,18 +49,22 @@ module ibex_compressed_decoder
         unique case (instr_i[15:13])
           3'b000: begin
             // c.addi4spn -> addi rd', x2, imm
-            instr_o = {2'b0, instr_i[10:7], instr_i[12:11], instr_i[5], instr_i[6], 2'b00, 5'h02, 3'b000, 2'b01, instr_i[4:2], OPCODE_OPIMM};
+            instr_o = {2'b0, instr_i[10:7], instr_i[12:11], instr_i[5],
+                       instr_i[6], 2'b00, 5'h02, 3'b000, 2'b01, instr_i[4:2], OPCODE_OPIMM};
             if (instr_i[12:5] == 8'b0)  illegal_instr_o = 1'b1;
           end
 
           3'b010: begin
             // c.lw -> lw rd', imm(rs1')
-            instr_o = {5'b0, instr_i[5], instr_i[12:10], instr_i[6], 2'b00, 2'b01, instr_i[9:7], 3'b010, 2'b01, instr_i[4:2], OPCODE_LOAD};
+            instr_o = {5'b0, instr_i[5], instr_i[12:10], instr_i[6],
+                       2'b00, 2'b01, instr_i[9:7], 3'b010, 2'b01, instr_i[4:2], OPCODE_LOAD};
           end
 
           3'b110: begin
             // c.sw -> sw rs2', imm(rs1')
-            instr_o = {5'b0, instr_i[5], instr_i[12], 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b010, instr_i[11:10], instr_i[6], 2'b00, OPCODE_STORE};
+            instr_o = {5'b0, instr_i[5], instr_i[12], 2'b01, instr_i[4:2],
+                       2'b01, instr_i[9:7], 3'b010, instr_i[11:10], instr_i[6],
+                       2'b00, OPCODE_STORE};
           end
 
           default: begin
@@ -78,18 +79,22 @@ module ibex_compressed_decoder
           3'b000: begin
             // c.addi -> addi rd, rd, nzimm
             // c.nop
-            instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], instr_i[11:7], 3'b0, instr_i[11:7], OPCODE_OPIMM};
+            instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2],
+                       instr_i[11:7], 3'b0, instr_i[11:7], OPCODE_OPIMM};
           end
 
           3'b001, 3'b101: begin
             // 001: c.jal -> jal x1, imm
             // 101: c.j   -> jal x0, imm
-            instr_o = {instr_i[12], instr_i[8], instr_i[10:9], instr_i[6], instr_i[7], instr_i[2], instr_i[11], instr_i[5:3], {9 {instr_i[12]}}, 4'b0, ~instr_i[15], OPCODE_JAL};
+            instr_o = {instr_i[12], instr_i[8], instr_i[10:9], instr_i[6],
+                       instr_i[7], instr_i[2], instr_i[11], instr_i[5:3],
+                       {9 {instr_i[12]}}, 4'b0, ~instr_i[15], OPCODE_JAL};
           end
 
           3'b010: begin
             // c.li -> addi rd, x0, nzimm
-            instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], 5'b0, 3'b0, instr_i[11:7], OPCODE_OPIMM};
+            instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], 5'b0,
+                       3'b0, instr_i[11:7], OPCODE_OPIMM};
             if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
           end
 
@@ -99,7 +104,8 @@ module ibex_compressed_decoder
 
             if (instr_i[11:7] == 5'h02) begin
               // c.addi16sp -> addi x2, x2, nzimm
-              instr_o = {{3 {instr_i[12]}}, instr_i[4:3], instr_i[5], instr_i[2], instr_i[6], 4'b0, 5'h02, 3'b000, 5'h02, OPCODE_OPIMM};
+              instr_o = {{3 {instr_i[12]}}, instr_i[4:3], instr_i[5], instr_i[2],
+                         instr_i[6], 4'b0, 5'h02, 3'b000, 5'h02, OPCODE_OPIMM};
             end else if (instr_i[11:7] == 5'b0) begin
               illegal_instr_o = 1'b1;
             end
@@ -113,36 +119,42 @@ module ibex_compressed_decoder
               2'b01: begin
                 // 00: c.srli -> srli rd, rd, shamt
                 // 01: c.srai -> srai rd, rd, shamt
-                instr_o = {1'b0, instr_i[10], 5'b0, instr_i[6:2], 2'b01, instr_i[9:7], 3'b101, 2'b01, instr_i[9:7], OPCODE_OPIMM};
+                instr_o = {1'b0, instr_i[10], 5'b0, instr_i[6:2], 2'b01, instr_i[9:7],
+                           3'b101, 2'b01, instr_i[9:7], OPCODE_OPIMM};
                 if (instr_i[12] == 1'b1)  illegal_instr_o = 1'b1;
                 if (instr_i[6:2] == 5'b0) illegal_instr_o = 1'b1;
               end
 
               2'b10: begin
                 // c.andi -> andi rd, rd, imm
-                instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], 2'b01, instr_i[9:7], 3'b111, 2'b01, instr_i[9:7], OPCODE_OPIMM};
+                instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], 2'b01, instr_i[9:7],
+                           3'b111, 2'b01, instr_i[9:7], OPCODE_OPIMM};
               end
 
               2'b11: begin
                 unique case ({instr_i[12], instr_i[6:5]})
                   3'b000: begin
                     // c.sub -> sub rd', rd', rs2'
-                    instr_o = {2'b01, 5'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b000, 2'b01, instr_i[9:7], OPCODE_OP};
+                    instr_o = {2'b01, 5'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7],
+                               3'b000, 2'b01, instr_i[9:7], OPCODE_OP};
                   end
 
                   3'b001: begin
                     // c.xor -> xor rd', rd', rs2'
-                    instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b100, 2'b01, instr_i[9:7], OPCODE_OP};
+                    instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b100,
+                               2'b01, instr_i[9:7], OPCODE_OP};
                   end
 
                   3'b010: begin
                     // c.or  -> or  rd', rd', rs2'
-                    instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b110, 2'b01, instr_i[9:7], OPCODE_OP};
+                    instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b110,
+                               2'b01, instr_i[9:7], OPCODE_OP};
                   end
 
                   3'b011: begin
                     // c.and -> and rd', rd', rs2'
-                    instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b111, 2'b01, instr_i[9:7], OPCODE_OP};
+                    instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b111,
+                               2'b01, instr_i[9:7], OPCODE_OP};
                   end
 
                   3'b100,
@@ -161,11 +173,13 @@ module ibex_compressed_decoder
           3'b110, 3'b111: begin
             // 0: c.beqz -> beq rs1', x0, imm
             // 1: c.bnez -> bne rs1', x0, imm
-            instr_o = {{4 {instr_i[12]}}, instr_i[6:5], instr_i[2], 5'b0, 2'b01, instr_i[9:7], 2'b00, instr_i[13], instr_i[11:10], instr_i[4:3], instr_i[12], OPCODE_BRANCH};
+            instr_o = {{4 {instr_i[12]}}, instr_i[6:5], instr_i[2], 5'b0, 2'b01,
+                       instr_i[9:7], 2'b00, instr_i[13], instr_i[11:10], instr_i[4:3],
+                       instr_i[12], OPCODE_BRANCH};
           end
 
           default: begin
-            illegal_instr_o = 1'b1;
+            // illegal_instr_o = 1'b1;         // not reachable, dead code, commenting out
           end
         endcase
       end
@@ -182,7 +196,8 @@ module ibex_compressed_decoder
 
           3'b010: begin
             // c.lwsp -> lw rd, imm(x2)
-            instr_o = {4'b0, instr_i[3:2], instr_i[12], instr_i[6:4], 2'b00, 5'h02, 3'b010, instr_i[11:7], OPCODE_LOAD};
+            instr_o = {4'b0, instr_i[3:2], instr_i[12], instr_i[6:4], 2'b00, 5'h02,
+                       3'b010, instr_i[11:7], OPCODE_LOAD};
             if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
           end
 
@@ -202,8 +217,7 @@ module ibex_compressed_decoder
               if (instr_i[11:7] == 5'b0) begin
                 // c.ebreak -> ebreak
                 instr_o = {32'h00_10_00_73};
-                if (instr_i[6:2] != 5'b0)
-                  illegal_instr_o = 1'b1;
+                if (instr_i[6:2] != 5'b0) illegal_instr_o = 1'b1;
               end else if (instr_i[6:2] == 5'b0) begin
                 // c.jalr -> jalr x1, rs1, 0
                 instr_o = {12'b0, instr_i[11:7], 3'b000, 5'b00001, OPCODE_JALR};
@@ -213,7 +227,8 @@ module ibex_compressed_decoder
 
           3'b110: begin
             // c.swsp -> sw rs2, imm(x2)
-            instr_o = {4'b0, instr_i[8:7], instr_i[12], instr_i[6:2], 5'h02, 3'b010, instr_i[11:9], 2'b00, OPCODE_STORE};
+            instr_o = {4'b0, instr_i[8:7], instr_i[12], instr_i[6:2], 5'h02, 3'b010,
+                       instr_i[11:9], 2'b00, OPCODE_STORE};
           end
 
           default: begin

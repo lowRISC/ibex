@@ -28,8 +28,7 @@
  * Load Store Unit, used to eliminate multiple access during processor stalls,
  * and to align bytes and halfwords.
  */
-module ibex_load_store_unit
-(
+module ibex_load_store_unit (
     input  logic         clk,
     input  logic         rst_n,
 
@@ -84,103 +83,94 @@ module ibex_load_store_unit
   logic [3:0]   data_be;
   logic [31:0]  data_wdata;
 
-  logic         misaligned_st;   // high if we are currently performing the second part of a misaligned store
+  logic         misaligned_st;   // high if we are currently performing the second part
+                                 // of a misaligned store
   logic         data_misaligned, data_misaligned_q;
   logic         increase_address;
 
-  enum logic [2:0]  { IDLE, WAIT_GNT_MIS, WAIT_RVALID_MIS, WAIT_GNT, WAIT_RVALID } CS, NS;
+  typedef enum logic [2:0]  {
+    IDLE, WAIT_GNT_MIS, WAIT_RVALID_MIS, WAIT_GNT, WAIT_RVALID
+  } ls_fsm_e;
+
+  ls_fsm_e CS, NS;
 
   logic [31:0]  rdata_q;
 
   ///////////////////////////////// BE generation ////////////////////////////////
-  always_comb
-  begin
+  always_comb begin
     case (data_type_ex_i) // Data type 00 Word, 01 Half word, 11,10 byte
-      2'b00:
-      begin // Writing a word
-        if (misaligned_st == 1'b0)
-        begin // non-misaligned case
-          case (data_addr_int[1:0])
+      2'b00: begin // Writing a word
+        if (!misaligned_st) begin // non-misaligned case
+          unique case (data_addr_int[1:0])
             2'b00: data_be = 4'b1111;
             2'b01: data_be = 4'b1110;
             2'b10: data_be = 4'b1100;
             2'b11: data_be = 4'b1000;
-          endcase; // case (data_addr_int[1:0])
-        end
-        else
-        begin // misaligned case
-          case (data_addr_int[1:0])
+          endcase // case (data_addr_int[1:0])
+        end else begin // misaligned case
+          unique case (data_addr_int[1:0])
             2'b00: data_be = 4'b0000; // this is not used, but included for completeness
             2'b01: data_be = 4'b0001;
             2'b10: data_be = 4'b0011;
             2'b11: data_be = 4'b0111;
-          endcase; // case (data_addr_int[1:0])
+          endcase // case (data_addr_int[1:0])
         end
       end
 
-      2'b01:
-      begin // Writing a half word
-        if (misaligned_st == 1'b0)
-        begin // non-misaligned case
-          case (data_addr_int[1:0])
+      2'b01: begin // Writing a half word
+        if (!misaligned_st) begin // non-misaligned case
+          unique case (data_addr_int[1:0])
             2'b00: data_be = 4'b0011;
             2'b01: data_be = 4'b0110;
             2'b10: data_be = 4'b1100;
             2'b11: data_be = 4'b1000;
-          endcase; // case (data_addr_int[1:0])
-        end
-        else
-        begin // misaligned case
+          endcase // case (data_addr_int[1:0])
+        end else begin // misaligned case
           data_be = 4'b0001;
         end
       end
 
       2'b10,
       2'b11: begin // Writing a byte
-        case (data_addr_int[1:0])
+        unique case (data_addr_int[1:0])
           2'b00: data_be = 4'b0001;
           2'b01: data_be = 4'b0010;
           2'b10: data_be = 4'b0100;
           2'b11: data_be = 4'b1000;
-        endcase; // case (data_addr_int[1:0])
+        endcase // case (data_addr_int[1:0])
       end
-    endcase; // case (data_type_ex_i)
+    endcase // case (data_type_ex_i)
   end
 
   // prepare data to be written to the memory
   // we handle misaligned accesses, half word and byte accesses and
   // register offsets here
   assign wdata_offset = data_addr_int[1:0] - data_reg_offset_ex_i[1:0];
-  always_comb
-  begin
-    case (wdata_offset)
+  always_comb begin
+    unique case (wdata_offset)
       2'b00: data_wdata = data_wdata_ex_i[31:0];
       2'b01: data_wdata = {data_wdata_ex_i[23:0], data_wdata_ex_i[31:24]};
       2'b10: data_wdata = {data_wdata_ex_i[15:0], data_wdata_ex_i[31:16]};
       2'b11: data_wdata = {data_wdata_ex_i[ 7:0], data_wdata_ex_i[31: 8]};
-    endcase; // case (wdata_offset)
+    endcase // case (wdata_offset)
   end
 
 
   // FF for rdata alignment and sign-extension
-  always_ff @(posedge clk, negedge rst_n)
-  begin
-    if(rst_n == 1'b0)
-    begin
-      data_type_q     <= '0;
-      rdata_offset_q  <= '0;
-      data_sign_ext_q <= '0;
+  always_ff @(posedge clk, negedge rst_n) begin
+    if (!rst_n) begin
+      data_type_q     <= 2'h0;
+      rdata_offset_q  <= 2'h0;
+      data_sign_ext_q <= 1'b0;
       data_we_q       <= 1'b0;
-    end
-    else if (data_gnt_i == 1'b1) // request was granted, we wait for rvalid and can continue to WB
-    begin
+    end else if (data_gnt_i) begin
+      // request was granted, we wait for rvalid and can continue to WB
       data_type_q     <= data_type_ex_i;
       rdata_offset_q  <= data_addr_int[1:0];
       data_sign_ext_q <= data_sign_ext_ex_i;
       data_we_q       <= data_we_ex_i;
     end
   end
-
 
   ////////////////////////////////////////////////////////////////////////
   //  ____  _               _____      _                 _              //
@@ -198,8 +188,7 @@ module ibex_load_store_unit
   logic [31:0] rdata_b_ext; // sign extension for bytes
 
   // take care of misaligned words
-  always_comb
-  begin
+  always_comb begin
     case (rdata_offset_q)
       2'b00: rdata_w_ext = data_rdata_i[31:0];
       2'b01: rdata_w_ext = {data_rdata_i[ 7:0], rdata_q[31:8]};
@@ -209,83 +198,81 @@ module ibex_load_store_unit
   end
 
   // sign extension for half words
-  always_comb
-  begin
+  always_comb begin
     case (rdata_offset_q)
-      2'b00:
-      begin
-        if (data_sign_ext_q == 1'b0)
+      2'b00: begin
+        if (!data_sign_ext_q) begin
           rdata_h_ext = {16'h0000, data_rdata_i[15:0]};
-        else
+        end else begin
           rdata_h_ext = {{16{data_rdata_i[15]}}, data_rdata_i[15:0]};
+        end
       end
 
-      2'b01:
-      begin
-        if (data_sign_ext_q == 1'b0)
+      2'b01: begin
+        if (!data_sign_ext_q) begin
           rdata_h_ext = {16'h0000, data_rdata_i[23:8]};
-        else
+        end else begin
           rdata_h_ext = {{16{data_rdata_i[23]}}, data_rdata_i[23:8]};
+        end
       end
 
-      2'b10:
-      begin
-        if (data_sign_ext_q == 1'b0)
+      2'b10: begin
+        if (!data_sign_ext_q) begin
           rdata_h_ext = {16'h0000, data_rdata_i[31:16]};
-        else
+        end else begin
           rdata_h_ext = {{16{data_rdata_i[31]}}, data_rdata_i[31:16]};
+        end
       end
 
-      2'b11:
-      begin
-        if (data_sign_ext_q == 1'b0)
+      2'b11: begin
+        if (!data_sign_ext_q) begin
           rdata_h_ext = {16'h0000, data_rdata_i[7:0], rdata_q[31:24]};
-        else
+        end else begin
           rdata_h_ext = {{16{data_rdata_i[7]}}, data_rdata_i[7:0], rdata_q[31:24]};
+        end
       end
     endcase // case (rdata_offset_q)
   end
 
   // sign extension for bytes
-  always_comb
-  begin
+  always_comb begin
     case (rdata_offset_q)
-      2'b00:
-      begin
-        if (data_sign_ext_q == 1'b0)
+      2'b00: begin
+        if (!data_sign_ext_q) begin
           rdata_b_ext = {24'h00_0000, data_rdata_i[7:0]};
-        else
+        end else begin
           rdata_b_ext = {{24{data_rdata_i[7]}}, data_rdata_i[7:0]};
+        end
       end
 
       2'b01: begin
-        if (data_sign_ext_q == 1'b0)
+        if (!data_sign_ext_q) begin
           rdata_b_ext = {24'h00_0000, data_rdata_i[15:8]};
-        else
+        end else begin
           rdata_b_ext = {{24{data_rdata_i[15]}}, data_rdata_i[15:8]};
+        end
       end
 
-      2'b10:
-      begin
-        if (data_sign_ext_q == 1'b0)
+      2'b10: begin
+        if (!data_sign_ext_q) begin
           rdata_b_ext = {24'h00_0000, data_rdata_i[23:16]};
-        else
+        end else begin
           rdata_b_ext = {{24{data_rdata_i[23]}}, data_rdata_i[23:16]};
+        end
       end
 
-      2'b11:
-      begin
-        if (data_sign_ext_q == 1'b0)
+      2'b11: begin
+        if (!data_sign_ext_q) begin
           rdata_b_ext = {24'h00_0000, data_rdata_i[31:24]};
-        else
+        end else begin
           rdata_b_ext = {{24{data_rdata_i[31]}}, data_rdata_i[31:24]};
+        end
       end
     endcase // case (rdata_offset_q)
   end
 
   // select word, half word or byte sign extended version
-  always_comb
-  begin
+  always_comb begin
     case (data_type_q)
       2'b00:       data_rdata_ext = rdata_w_ext;
       2'b01:       data_rdata_ext = rdata_h_ext;
@@ -295,42 +282,38 @@ module ibex_load_store_unit
 
 
 
-  always_ff @(posedge clk, negedge rst_n)
-  begin
-    if(rst_n == 1'b0)
-    begin
+  always_ff @(posedge clk, negedge rst_n) begin
+    if (!rst_n) begin
       CS            <= IDLE;
       rdata_q       <= '0;
       data_misaligned_q <= '0;
       misaligned_addr_o <= 32'b0;
-    end
-    else
-    begin
+    end else begin
       CS            <= NS;
       if (lsu_update_addr_o) begin
         data_misaligned_q <= data_misaligned;
-        if(increase_address) begin
+        if (increase_address) begin
           misaligned_addr_o <= data_addr_int;
         end
       end
-      if (data_rvalid_i && (~data_we_q))
-      begin
+      if (data_rvalid_i && !data_we_q) begin
         // if we have detected a misaligned access, and we are
         // currently doing the first part of this access, then
         // store the data coming from memory in rdata_q.
         // In all other cases, rdata_q gets the value that we are
         // writing to the register file
 
-        if ((data_misaligned_q == 1'b1) || (data_misaligned == 1'b1))
+        if (data_misaligned_q || data_misaligned) begin
           rdata_q  <= data_rdata_i;
-        else
+        end else begin
           rdata_q  <= data_rdata_ext;
+        end
       end
     end
   end
 
   // output to register file
-  assign data_rdata_ex_o = (data_rvalid_i == 1'b1) ? data_rdata_ext : rdata_q;
+  assign data_rdata_ex_o = data_rvalid_i ? data_rdata_ext : rdata_q;
 
   // output to data interface
   assign data_addr_o   = data_addr_int;
@@ -344,8 +327,7 @@ module ibex_load_store_unit
   assign store_err_o   = 1'b0;
 
   // FSM
-  always_comb
-  begin
+  always_comb begin
     NS             = CS;
 
     data_req_o     = 1'b0;
@@ -358,34 +340,30 @@ module ibex_load_store_unit
 
     case(CS)
       // starts from not active and stays in IDLE until request was granted
-      IDLE:
-      begin
+      IDLE: begin
         if (data_req_ex_i) begin
-            data_req_o     = data_req_ex_i;
-            if(data_gnt_i) begin
-              lsu_update_addr_o   = 1'b1;
-              increase_address = data_misaligned;
-              NS = data_misaligned ? WAIT_RVALID_MIS : WAIT_RVALID;
-            end
-            else begin
-              NS = data_misaligned ? WAIT_GNT_MIS    : WAIT_GNT;
-            end
+          data_req_o     = data_req_ex_i;
+          if (data_gnt_i) begin
+            lsu_update_addr_o   = 1'b1;
+            increase_address = data_misaligned;
+            NS = data_misaligned ? WAIT_RVALID_MIS : WAIT_RVALID;
+          end else begin
+            NS = data_misaligned ? WAIT_GNT_MIS    : WAIT_GNT;
+          end
         end
-      end //~ IDLE
+      end // IDLE
 
-      WAIT_GNT_MIS:
-      begin
+      WAIT_GNT_MIS: begin
         data_req_o = 1'b1;
-        if(data_gnt_i) begin
+        if (data_gnt_i) begin
           lsu_update_addr_o = 1'b1;
           increase_address  = data_misaligned;
           NS = WAIT_RVALID_MIS;
         end
-      end //~ WAIT_GNT_MIS
+      end // WAIT_GNT_MIS
 
       // wait for rvalid in WB stage and send a new request if there is any
-      WAIT_RVALID_MIS:
-      begin
+      WAIT_RVALID_MIS: begin
         //increase_address goes down, we already have the proper address
         increase_address  = 1'b0;
         //tell the controller to update the address
@@ -393,23 +371,21 @@ module ibex_load_store_unit
         data_req_o        = 1'b0;
         lsu_update_addr_o = data_gnt_i;
 
-        if(data_rvalid_i) begin
-           //if first part rvalid is received
-           data_req_o        = 1'b1;
-           if(data_gnt_i) begin
-              //second grant is received
-              NS             = WAIT_RVALID;
-              //in this stage we already received the first valid but no the second one
-              //it differes from WAIT_RVALID_MIS because we do not send other requests
-            end
-            else begin
-              //second grant is NOT received, but first rvalid yes
-              //lsu_update_addr_o is 0 so data_misaligned_q stays high in WAIT_GNT
-              //increase address stays the same as well
-              NS              = WAIT_GNT; //  [1]
-            end
-        end
-        else begin
+        if (data_rvalid_i) begin
+          //if first part rvalid is received
+          data_req_o        = 1'b1;
+          if (data_gnt_i) begin
+            //second grant is received
+            NS             = WAIT_RVALID;
+            //in this stage we already received the first valid but no the second one
+            //it differes from WAIT_RVALID_MIS because we do not send other requests
+          end else begin
+            //second grant is NOT received, but first rvalid yes
+            //lsu_update_addr_o is 0 so data_misaligned_q stays high in WAIT_GNT
+            //increase address stays the same as well
+            NS              = WAIT_GNT; //  [1]
+          end
+        end else begin
           //if first part rvalid is NOT received
           //the second grand is not received either by protocol.
           //stay here
@@ -417,26 +393,23 @@ module ibex_load_store_unit
         end
       end
 
-      WAIT_GNT:
-      begin
+      WAIT_GNT: begin
         data_misaligned_o = data_misaligned_q;
         //useful in case [1]
         data_req_o        = 1'b1;
-        if(data_gnt_i) begin
+        if (data_gnt_i) begin
           lsu_update_addr_o = 1'b1;
           NS = WAIT_RVALID;
         end
       end //~ WAIT_GNT
 
-      WAIT_RVALID:
-      begin
+      WAIT_RVALID: begin
         data_req_o        = 1'b0;
 
-        if(data_rvalid_i) begin
+        if (data_rvalid_i) begin
           data_valid_o = 1'b1;
           NS           = IDLE;
-        end
-        else begin
+        end else begin
           NS           = WAIT_RVALID;
         end
       end //~ WAIT_RVALID
@@ -451,31 +424,29 @@ module ibex_load_store_unit
   // check for misaligned accesses that need a second memory access
   // If one is detected, this is signaled with data_misaligned_o to
   // the controller which selectively stalls the pipeline
-  always_comb
-  begin
+  always_comb begin
     data_misaligned = 1'b0;
 
-    if((data_req_ex_i == 1'b1) && (data_misaligned_q == 1'b0))
-    begin
+    if (data_req_ex_i && !data_misaligned_q) begin
       case (data_type_ex_i)
-        2'b00: // word
-        begin
-          if(data_addr_int[1:0] != 2'b00)
+        2'b00: begin // word
+          if (data_addr_int[1:0] != 2'b00) begin
             data_misaligned = 1'b1;
+          end
         end
-        2'b01: // half word
-        begin
-          if(data_addr_int[1:0] == 2'b11)
+        2'b01: begin // half word
+          if (data_addr_int[1:0] == 2'b11) begin
             data_misaligned = 1'b1;
+          end
         end
-		  default: ;
+      default: ;
       endcase // case (data_type_ex_i)
     end
   end
 
   assign data_addr_int = adder_result_ex_i;
 
-  assign busy_o = (CS == WAIT_RVALID) || (data_req_o == 1'b1);
+  assign busy_o = (CS == WAIT_RVALID) | (data_req_o == 1'b1);
 
   //////////////////////////////////////////////////////////////////////////////
   // Assertions

@@ -19,70 +19,68 @@
 
 `include "ibex_config.sv"
 
-import ibex_defines::*;
+module ibex_debug_unit #(parameter REG_ADDR_WIDTH = 5) (
+    input logic         clk,
+    input logic         rst_n,
 
-module ibex_debug_unit
-#(
-    parameter REG_ADDR_WIDTH      = 5
-)
-(
-  input logic         clk,
-  input logic         rst_n,
+    // Debug Interface
+    input  logic        debug_req_i,
+    output logic        debug_gnt_o,
+    output logic        debug_rvalid_o,
+    input  logic [14:0] debug_addr_i,
+    input  logic        debug_we_i,
+    input  logic [31:0] debug_wdata_i,
+    output logic [31:0] debug_rdata_o,
 
-  // Debug Interface
-  input  logic        debug_req_i,
-  output logic        debug_gnt_o,
-  output logic        debug_rvalid_o,
-  input  logic [14:0] debug_addr_i,
-  input  logic        debug_we_i,
-  input  logic [31:0] debug_wdata_i,
-  output logic [31:0] debug_rdata_o,
+    output logic        debug_halted_o,
+    input  logic        debug_halt_i,
+    input  logic        debug_resume_i,
 
-  output logic        debug_halted_o,
-  input  logic        debug_halt_i,
-  input  logic        debug_resume_i,
+    // signals to core
+    output logic [DBG_SETS_W-1:0] settings_o,
 
-  // signals to core
-  output logic [DBG_SETS_W-1:0] settings_o,
+    input  logic        trap_i,      // trap found, need to stop the core now
+    input  logic [5:0]  exc_cause_i, // if it was a trap, then the exception controller knows more
+    output logic        stall_o,     // after we got control, we control the stall signal
+    output logic        dbg_req_o,
+    input  logic        dbg_ack_i,
 
-  input  logic        trap_i,      // trap found, need to stop the core now
-  input  logic [5:0]  exc_cause_i, // if it was a trap, then the exception controller knows more
-  output logic        stall_o,     // after we got control, we control the stall signal
-  output logic        dbg_req_o,
-  input  logic        dbg_ack_i,
+    // register file read port
+    output logic        regfile_rreq_o,
+    output logic [REG_ADDR_WIDTH-1:0] regfile_raddr_o,
+    input  logic [31:0] regfile_rdata_i,
 
-  // register file read port
-  output logic        regfile_rreq_o,
-  output logic [(REG_ADDR_WIDTH-1):0] regfile_raddr_o,
-  input  logic [31:0] regfile_rdata_i,
+    // register file write port
+    output logic        regfile_wreq_o,
+    output logic [REG_ADDR_WIDTH-1:0] regfile_waddr_o,
+    output logic [31:0] regfile_wdata_o,
 
-  // register file write port
-  output logic        regfile_wreq_o,
-  output logic [(REG_ADDR_WIDTH-1):0] regfile_waddr_o,
-  output logic [31:0] regfile_wdata_o,
+    // CSR read/write port
+    output logic        csr_req_o,
+    output logic [11:0] csr_addr_o,
+    output logic        csr_we_o,
+    output logic [31:0] csr_wdata_o,
+    input  logic [31:0] csr_rdata_i,
 
-  // CSR read/write port
-  output logic        csr_req_o,
-  output logic [11:0] csr_addr_o,
-  output logic        csr_we_o,
-  output logic [31:0] csr_wdata_o,
-  input  logic [31:0] csr_rdata_i,
+    // Signals for PPC & NPC register
+    input  logic [31:0] pc_if_i,
+    input  logic [31:0] pc_id_i,
 
-  // Signals for PPC & NPC register
-  input  logic [31:0] pc_if_i,
-  input  logic [31:0] pc_id_i,
+    input  logic        sleeping_i,
 
-  input  logic        instr_valid_id_i,
-
-  input  logic        sleeping_i,
-
-  output logic        jump_req_o,
-  output logic [31:0] jump_addr_o
+    output logic        jump_req_o,
+    output logic [31:0] jump_addr_o
 );
 
-  enum logic [2:0] {RD_NONE, RD_CSR, RD_GPR, RD_DBGA, RD_DBGS} rdata_sel_q, rdata_sel_n;
+  import ibex_defines::*;
 
-  enum logic [0:0] {FIRST, SECOND} state_q, state_n;
+  typedef enum logic [2:0] {RD_NONE, RD_CSR, RD_GPR, RD_DBGA, RD_DBGS} rdata_sel_e;
+
+  rdata_sel_e rdata_sel_q, rdata_sel_n;
+
+  typedef enum logic [0:0] {FIRST, SECOND} dbg_fsm_e;
+
+  dbg_fsm_e state_q, state_n;
 
   logic [DBG_SETS_W-1:0] settings_q, settings_n;
 
@@ -96,8 +94,10 @@ module ibex_debug_unit
   logic        csr_req_q, csr_req_n;
   logic        regfile_wreq;
 
+  typedef enum logic [1:0] {RUNNING, HALT_REQ, HALT} stall_fsm_e;
 
-  enum logic [1:0] {RUNNING, HALT_REQ, HALT} stall_cs, stall_ns;
+  stall_fsm_e stall_cs, stall_ns;
+
   logic [31:0] dbg_rdata;
   logic        dbg_resume;
   logic        dbg_halt;
@@ -112,8 +112,7 @@ module ibex_debug_unit
 
 
   // address decoding, write and read controller
-  always_comb
-  begin
+  always_comb begin
     rdata_sel_n    = RD_NONE;
     state_n        = FIRST;
 
@@ -162,15 +161,13 @@ module ibex_debug_unit
                 5'b0_0000: begin // DBG_CTRL
                   if (debug_wdata_i[16]) begin
                     // HALT set
-                    if (~debug_halted_o) begin
+                    if (!debug_halted_o) begin
                       // not halt, so STOP
                       dbg_halt = 1'b1;
                     end
-                  end else begin
+                  end else if (debug_halted_o) begin
                     // RESUME set
-                    if (debug_halted_o) begin
-                      dbg_resume = 1'b1;
-                    end
+                    dbg_resume = 1'b1;
                   end
 
                   settings_n[DBG_SETS_SSTE] = debug_wdata_i[0];
@@ -192,10 +189,9 @@ module ibex_debug_unit
               debug_gnt_o = 1'b1; // grant it even when invalid access to not block
 
               if (debug_halted_o) begin
-                unique case (debug_addr_i[6:2])
-                  5'b0_0000: jump_req_n = 1'b1; // DNPC
-                  default:;
-                endcase
+                if (debug_addr_i[6:2] == 5'b0_0000) begin
+                  jump_req_n = 1'b1; // DNPC
+                end
               end
             end
 
@@ -260,14 +256,14 @@ module ibex_debug_unit
   // Since those are combinational, we can do it in the cycle where we set
   // rvalid. The address has been latched into addr_q
   //----------------------------------------------------------------------------
-  always_comb
-  begin
+  always_comb begin
     dbg_rdata = '0;
 
     case (rdata_sel_q)
       RD_DBGA: begin
         unique case (addr_q[6:2])
-          5'h00: dbg_rdata[31:0] = {15'b0, debug_halted_o, 15'b0, settings_q[DBG_SETS_SSTE]}; // DBG_CTRL
+          // DBG_CTRL
+          5'h00: dbg_rdata[31:0] = {15'b0, debug_halted_o, 15'b0, settings_q[DBG_SETS_SSTE]};
           5'h01: dbg_rdata[31:0] = {15'b0, sleeping_i, 15'b0, dbg_ssth_q}; // DBG_HIT
           5'h02: begin // DBG_IE
             dbg_rdata[31:16] = '0;
@@ -310,8 +306,7 @@ module ibex_debug_unit
   //----------------------------------------------------------------------------
   // read data mux
   //----------------------------------------------------------------------------
-  always_comb
-  begin
+  always_comb begin
     debug_rdata_o = '0;
 
     case (rdata_sel_q)
@@ -319,16 +314,15 @@ module ibex_debug_unit
       RD_GPR:  debug_rdata_o = regfile_rdata_i;
       RD_DBGA: debug_rdata_o = dbg_rdata;
       RD_DBGS: debug_rdata_o = dbg_rdata;
-		default: ;
+    default: ;
     endcase
   end
 
   //----------------------------------------------------------------------------
   // rvalid generation
   //----------------------------------------------------------------------------
-  always_ff @(posedge clk, negedge rst_n)
-  begin
-    if (~rst_n) begin
+  always_ff @(posedge clk, negedge rst_n) begin
+    if (!rst_n) begin
       debug_rvalid_o <= 1'b0;
     end else begin
       debug_rvalid_o <= debug_gnt_o; // always give the rvalid one cycle after gnt
@@ -338,8 +332,7 @@ module ibex_debug_unit
   //----------------------------------------------------------------------------
   // stall control
   //----------------------------------------------------------------------------
-  always_comb
-  begin
+  always_comb begin
     stall_ns       = stall_cs;
     dbg_req_o      = 1'b0;
     stall_o        = 1'b0;
@@ -347,17 +340,18 @@ module ibex_debug_unit
     dbg_cause_n    = dbg_cause_q;
     dbg_ssth_n     = dbg_ssth_q;
 
-    case (stall_cs)
+    unique case (stall_cs)
       RUNNING: begin
         dbg_ssth_n = 1'b0;
 
-        if (dbg_halt | debug_halt_i | trap_i) begin
+        if (dbg_halt || debug_halt_i || trap_i) begin
           dbg_req_o   = 1'b1;
           stall_ns    = HALT_REQ;
 
           if (trap_i) begin
-            if (settings_q[DBG_SETS_SSTE])
+            if (settings_q[DBG_SETS_SSTE]) begin
               dbg_ssth_n = 1'b1;
+            end
 
             dbg_cause_n = exc_cause_i;
           end else begin
@@ -369,31 +363,30 @@ module ibex_debug_unit
       HALT_REQ: begin
         dbg_req_o = 1'b1;
 
-        if (dbg_ack_i)
-          stall_ns = HALT;
-
-        if (dbg_resume | debug_resume_i)
-          stall_ns = RUNNING;
+        if (dbg_ack_i)                    stall_ns = HALT;
+        if (dbg_resume || debug_resume_i) stall_ns = RUNNING;
       end
 
       HALT: begin
         stall_o        = 1'b1;
         debug_halted_o = 1'b1;
 
-        if (dbg_resume | debug_resume_i) begin
+        if (dbg_resume || debug_resume_i) begin
           stall_ns = RUNNING;
           stall_o  = 1'b0;
         end
       end
+
+      default:;
     endcase
 
-    if (ssth_clear)
+    if (ssth_clear) begin
       dbg_ssth_n = 1'b0;
+    end
   end
 
-  always_ff @(posedge clk, negedge rst_n)
-  begin
-    if (~rst_n) begin
+  always_ff @(posedge clk, negedge rst_n) begin
+    if (!rst_n) begin
       stall_cs    <= RUNNING;
       dbg_cause_q <= DBG_CAUSE_HALT;
       dbg_ssth_q  <= 1'b0;
@@ -411,10 +404,8 @@ module ibex_debug_unit
   assign ppc_int = pc_id_i;
   assign npc_int = pc_if_i;
 
-  always_ff @(posedge clk, negedge rst_n)
-  begin
-    if (~rst_n) begin
-
+  always_ff @(posedge clk, negedge rst_n) begin
+    if (!rst_n) begin
       addr_q             <= '0;
       wdata_q            <= '0;
       state_q            <= FIRST;
@@ -425,7 +416,6 @@ module ibex_debug_unit
 
       settings_q         <= 1'b0;
     end else begin
-
       // settings
       settings_q         <= settings_n;
 
@@ -436,7 +426,7 @@ module ibex_debug_unit
         state_q <= state_n;
       end
 
-      if (debug_req_i | debug_rvalid_o) begin
+      if (debug_req_i || debug_rvalid_o) begin
         // wait for either req or rvalid to set those FFs
         // This makes sure that they are only triggered once when there is
         // only one request, and the FFs can be properly clock gated otherwise

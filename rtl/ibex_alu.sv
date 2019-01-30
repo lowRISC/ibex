@@ -20,42 +20,35 @@
 
 `include "ibex_config.sv"
 
-import ibex_defines::*;
-
 /**
  * Arithmetic logic unit
  */
-module ibex_alu
-(
-  input  logic [ALU_OP_WIDTH-1:0]  operator_i,
-  input  logic [31:0]              operand_a_i,
-  input  logic [31:0]              operand_b_i,
+module ibex_alu (
+    input  logic [ibex_defines::ALU_OP_WIDTH-1:0] operator_i,
+    input  logic [31:0]                           operand_a_i,
+    input  logic [31:0]                           operand_b_i,
 
-  input  logic [32:0]              multdiv_operand_a_i,
-  input  logic [32:0]              multdiv_operand_b_i,
+    input  logic [32:0]                           multdiv_operand_a_i,
+    input  logic [32:0]                           multdiv_operand_b_i,
 
-  input  logic                     multdiv_en_i,
+    input  logic                                  multdiv_en_i,
 
-  output logic [31:0]              adder_result_o,
-  output logic [33:0]              adder_result_ext_o,
+    output logic [31:0]                           adder_result_o,
+    output logic [33:0]                           adder_result_ext_o,
 
-  output logic [31:0]              result_o,
-  output logic                     comparison_result_o,
-  output logic                     is_equal_result_o
+    output logic [31:0]                           result_o,
+    output logic                                  comparison_result_o,
+    output logic                                  is_equal_result_o
 );
+  import ibex_defines::*;
 
   logic [31:0] operand_a_rev;
   logic [32:0] operand_b_neg;
 
   // bit reverse operand_a for left shifts and bit counting
-  generate
-    genvar k;
-    for(k = 0; k < 32; k++)
-    begin : g_revloop
-      assign operand_a_rev[k] = operand_a_i[31-k];
-    end
-  endgenerate
-
+  for (genvar k = 0; k < 32; k++) begin : gen_revloop
+    assign operand_a_rev[k] = operand_a_i[31-k];
+  end
 
   /////////////////////////////////////
   //      _       _     _            //
@@ -70,8 +63,7 @@ module ibex_alu
   logic [32:0] adder_in_a, adder_in_b;
   logic [31:0] adder_result;
 
-  always_comb
-  begin
+  always_comb begin
     adder_op_b_negate = 1'b0;
 
     unique case (operator_i)
@@ -117,15 +109,13 @@ module ibex_alu
   logic        shift_left;         // should we shift left
   logic        shift_arithmetic;
 
-  logic [31:0] shift_amt;          // amount of shift, to the right
+  logic  [4:0] shift_amt;          // amount of shift, to the right
   logic [31:0] shift_op_a;         // input of the shifter
   logic [31:0] shift_result;
   logic [31:0] shift_right_result;
   logic [31:0] shift_left_result;
 
-
-  assign shift_amt = operand_b_i;
-
+  assign shift_amt = operand_b_i[4:0];
 
   assign shift_left = (operator_i == ALU_SLL);
 
@@ -137,21 +127,16 @@ module ibex_alu
   // right shifts, we let the synthesizer optimize this
   logic [32:0] shift_op_a_32;
 
-  assign shift_op_a_32 = { shift_arithmetic & shift_op_a[31], shift_op_a};
+  assign shift_op_a_32 = {shift_arithmetic & shift_op_a[31], shift_op_a};
 
-  assign shift_right_result = $signed(shift_op_a_32) >>> shift_amt[4:0];
+  assign shift_right_result = $unsigned($signed(shift_op_a_32) >>> shift_amt[4:0]);
 
   // bit reverse the shift_right_result for left shifts
-  genvar       j;
-  generate
-    for(j = 0; j < 32; j++)
-    begin : g_resrevloop
-      assign shift_left_result[j] = shift_right_result[31-j];
-    end
-  endgenerate
+  for (genvar j = 0; j < 32; j++) begin : gen_resrevloop
+    assign shift_left_result[j] = shift_right_result[31-j];
+  end
 
   assign shift_result = shift_left ? shift_left_result : shift_right_result;
-
 
   //////////////////////////////////////////////////////////////////
   //   ____ ___  __  __ ____   _    ____  ___ ____   ___  _   _   //
@@ -166,8 +151,7 @@ module ibex_alu
   logic is_greater_equal;  // handles both signed and unsigned forms
   logic cmp_signed;
 
-  always_comb
-  begin
+  always_comb begin
     cmp_signed = 1'b0;
 
     unique case (operator_i)
@@ -189,12 +173,12 @@ module ibex_alu
 
 
   // Is greater equal
-  always_comb
-  begin
-    if ((operand_a_i[31] ^ operand_b_i[31]) == 0)
-      is_greater_equal = (adder_result[31] == 0);
-    else
+  always_comb begin
+    if ((operand_a_i[31] ^ operand_b_i[31]) == 1'b0) begin
+      is_greater_equal = (adder_result[31] == 1'b0);
+    end else begin
       is_greater_equal = operand_a_i[31] ^ (cmp_signed);
+    end
   end
 
   // GTE unsigned:
@@ -214,20 +198,19 @@ module ibex_alu
   // generate comparison result
   logic cmp_result;
 
-  always_comb
-  begin
+  always_comb begin
     cmp_result = is_equal;
 
     unique case (operator_i)
-      ALU_EQ:            cmp_result = is_equal;
-      ALU_NE:            cmp_result = (~is_equal);
-      ALU_GTS, ALU_GTU:  cmp_result = is_greater_equal && (~is_equal);
+      ALU_EQ:            cmp_result =  is_equal;
+      ALU_NE:            cmp_result = ~is_equal;
+      ALU_GTS, ALU_GTU:  cmp_result = is_greater_equal & ~is_equal;
       ALU_GES, ALU_GEU:  cmp_result = is_greater_equal;
       ALU_LTS, ALU_SLTS,
-      ALU_LTU, ALU_SLTU: cmp_result = (~is_greater_equal);
+      ALU_LTU, ALU_SLTU: cmp_result = ~is_greater_equal;
       ALU_SLETS,
       ALU_SLETU,
-      ALU_LES, ALU_LEU:  cmp_result = (~is_greater_equal) || is_equal;
+      ALU_LES, ALU_LEU:  cmp_result = ~is_greater_equal | is_equal;
 
       default: ;
     endcase
@@ -246,8 +229,7 @@ module ibex_alu
   //                                                    //
   ////////////////////////////////////////////////////////
 
-  always_comb
-  begin
+  always_comb begin
     result_o   = '0;
 
     unique case (operator_i)
@@ -270,7 +252,7 @@ module ibex_alu
       ALU_GTS,   ALU_GES,
       ALU_LTS,   ALU_LES,
       ALU_SLTS,  ALU_SLTU,
-      ALU_SLETS, ALU_SLETU: result_o = cmp_result;
+      ALU_SLETS, ALU_SLETU: result_o = {31'h0,cmp_result};
 
       default: ; // default case to suppress unique warning
     endcase
