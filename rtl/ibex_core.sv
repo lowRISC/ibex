@@ -27,9 +27,11 @@
  * Top level module of the ibex RISC-V core
  */
 module ibex_core #(
-    parameter N_EXT_PERF_COUNTERS = 1,
-    parameter bit RV32E           = 0,
-    parameter bit RV32M           = 1
+    parameter N_EXT_PERF_COUNTERS  = 1,
+    parameter bit RV32E            = 0,
+    parameter bit RV32M            = 1,
+    parameter DM_HALT_ADDRESS      = 32'h1A110800,
+    parameter DM_EXCEPTION_ADDRESS = 32'h1A110808
 ) (
     // Clock and Reset
     input  logic        clk_i,
@@ -69,15 +71,6 @@ module ibex_core #(
 
     // Debug Interface
     input  logic        debug_req_i,
-    output logic        debug_gnt_o,
-    output logic        debug_rvalid_o,
-    input  logic [14:0] debug_addr_i,
-    input  logic        debug_we_i,
-    input  logic [31:0] debug_wdata_i,
-    output logic [31:0] debug_rdata_o,
-    output logic        debug_halted_o,
-    input  logic        debug_halt_i,
-    input  logic        debug_resume_i,
 
     // CPU Control Signals
     input  logic        fetch_enable_i,
@@ -98,7 +91,7 @@ module ibex_core #(
   logic              clear_instr_valid;
   logic              pc_set;
   logic [2:0]        pc_mux_id;     // Mux selector for next PC
-  logic [1:0]        exc_pc_mux_id;     // Mux selector for exception PC
+  logic [2:0]        exc_pc_mux_id;     // Mux selector for exception PC
   logic [5:0]        exc_cause;
 
   logic              lsu_load_err;
@@ -172,39 +165,14 @@ module ibex_core #(
 
   // Interrupts
   logic        m_irq_enable;
-  logic [31:0] mepc;
+  logic [31:0] mepc, depc;
 
   logic        csr_save_cause;
   logic        csr_save_if;
   logic        csr_save_id;
   logic [5:0]  csr_cause;
   logic        csr_restore_mret_id;
-
-  // Debug Unit
-  logic [DBG_SETS_W-1:0] dbg_settings;
-  logic        dbg_req;
-  logic        dbg_ack;
-  logic        dbg_stall;
-  logic        dbg_trap;
-
-  // Debug GPR Read Access
-  logic        dbg_reg_rreq;
-  logic [4:0]  dbg_reg_raddr;
-  logic [31:0] dbg_reg_rdata;
-
-  // Debug GPR Write Access
-  logic        dbg_reg_wreq;
-  logic [4:0]  dbg_reg_waddr;
-  logic [31:0] dbg_reg_wdata;
-
-  // Debug CSR Access
-  logic        dbg_csr_req;
-  logic [11:0] dbg_csr_addr;
-  logic        dbg_csr_we;
-  logic [31:0] dbg_csr_wdata;
-
-  logic [31:0] dbg_jump_addr;
-  logic        dbg_jump_req;
+  logic        csr_restore_dret_id;
 
   // Performance Counters
   logic        perf_imiss;
@@ -225,7 +193,6 @@ module ibex_core #(
   logic        clk;
 
   logic        clock_en;
-  logic        dbg_busy;
 
   logic        sleeping;
 
@@ -243,9 +210,7 @@ module ibex_core #(
 
   assign core_busy   = core_ctrl_firstfetch ? 1'b1 : core_busy_q;
 
-  assign dbg_busy    = dbg_req | dbg_csr_req | dbg_jump_req | dbg_reg_wreq | debug_req_i;
-
-  assign clock_en    = core_busy | dbg_busy | irq_i;
+  assign clock_en    = core_busy | irq_i;
 
   assign sleeping    = (~core_busy);
 
@@ -268,7 +233,10 @@ module ibex_core #(
   //  |___|_|     |____/ |_/_/   \_\____|_____|   //
   //                                              //
   //////////////////////////////////////////////////
-  ibex_if_stage if_stage_i (
+  ibex_if_stage #(
+      .DM_HALT_ADDRESS      ( DM_HALT_ADDRESS      ),
+      .DM_EXCEPTION_ADDRESS ( DM_EXCEPTION_ADDRESS )
+  ) if_stage_i (
       .clk                 ( clk               ),
       .rst_n               ( rst_ni            ),
 
@@ -297,13 +265,10 @@ module ibex_core #(
       .clear_instr_valid_i ( clear_instr_valid ),
       .pc_set_i            ( pc_set            ),
       .exception_pc_reg_i  ( mepc              ), // exception return address
+      .depc_i              ( depc              ), // debug return address
       .pc_mux_i            ( pc_mux_id         ), // sel for pc multiplexer
       .exc_pc_mux_i        ( exc_pc_mux_id     ),
       .exc_vec_pc_mux_i    ( exc_cause[4:0]    ),
-
-
-      // from debug unit
-      .dbg_jump_addr_i     ( dbg_jump_addr     ),
 
       // Jump targets
       .jump_target_ex_i    ( jump_target_ex    ),
@@ -387,6 +352,7 @@ module ibex_core #(
       .csr_save_if_o                ( csr_save_if          ), // control signal to save pc
       .csr_save_id_o                ( csr_save_id          ), // control signal to save pc
       .csr_restore_mret_id_o        ( csr_restore_mret_id  ), // control signal to restore pc
+      .csr_restore_dret_id_o        ( csr_restore_dret_id  ), // control signal to restore pc
       .csr_save_cause_o             ( csr_save_cause       ),
 
       // LSU
@@ -410,22 +376,8 @@ module ibex_core #(
       .lsu_load_err_i               ( lsu_load_err         ),
       .lsu_store_err_i              ( lsu_store_err        ),
 
-      // Debug Unit Signals
-      .dbg_settings_i               ( dbg_settings         ),
-      .dbg_req_i                    ( dbg_req              ),
-      .dbg_ack_o                    ( dbg_ack              ),
-      .dbg_stall_i                  ( dbg_stall            ),
-      .dbg_trap_o                   ( dbg_trap             ),
-
-      .dbg_reg_rreq_i               ( dbg_reg_rreq         ),
-      .dbg_reg_raddr_i              ( dbg_reg_raddr        ),
-      .dbg_reg_rdata_o              ( dbg_reg_rdata        ),
-
-      .dbg_reg_wreq_i               ( dbg_reg_wreq         ),
-      .dbg_reg_waddr_i              ( dbg_reg_waddr        ),
-      .dbg_reg_wdata_i              ( dbg_reg_wdata        ),
-
-      .dbg_jump_req_i               ( dbg_jump_req         ),
+      // Debug Signal
+      .debug_req_i                  ( debug_req_i          ),
 
       // write data to commit in the register file
       .regfile_wdata_lsu_i          ( regfile_wdata_lsu    ),
@@ -556,6 +508,7 @@ module ibex_core #(
       // Interrupt related control signals
       .m_irq_enable_o          ( m_irq_enable       ),
       .mepc_o                  ( mepc               ),
+      .depc_o                  ( depc               ),
 
       .pc_if_i                 ( pc_if              ),
       .pc_id_i                 ( pc_id              ),
@@ -563,6 +516,7 @@ module ibex_core #(
       .csr_save_if_i           ( csr_save_if        ),
       .csr_save_id_i           ( csr_save_id        ),
       .csr_restore_mret_i      ( csr_restore_mret_id ),
+      .csr_restore_dret_i      ( csr_restore_dret_id ),
       .csr_cause_i             ( csr_cause          ),
       .csr_save_cause_i        ( csr_save_cause     ),
 
@@ -584,75 +538,15 @@ module ibex_core #(
       .ext_counters_i          ( ext_perf_counters_i                    )
   );
 
-  // Mux for CSR access through Debug Unit
-  assign csr_access   = (dbg_csr_req == 1'b0) ? csr_access_ex : 1'b1;
-  assign csr_addr     = (dbg_csr_req == 1'b0) ? csr_addr_int     : dbg_csr_addr;
-  assign csr_wdata    = (dbg_csr_req == 1'b0) ? alu_operand_a_ex : dbg_csr_wdata;
-  assign csr_op       = (dbg_csr_req == 1'b0) ? csr_op_ex
-                                              : (dbg_csr_we == 1'b1 ? CSR_OP_WRITE
-                                                                    : CSR_OP_NONE );
+
+  //  CSR access
+  assign csr_access   =  csr_access_ex;
+  assign csr_addr     =  csr_addr_int;
+  assign csr_wdata    =  alu_operand_a_ex;
+  assign csr_op       =  csr_op_ex;
+
   assign csr_addr_int = csr_access_ex ? alu_operand_b_ex[11:0] : '0;
 
-
-  /////////////////////////////////////////////////////////////
-  //  ____  _____ ____  _   _  ____   _   _ _   _ ___ _____  //
-  // |  _ \| ____| __ )| | | |/ ___| | | | | \ | |_ _|_   _| //
-  // | | | |  _| |  _ \| | | | |  _  | | | |  \| || |  | |   //
-  // | |_| | |___| |_) | |_| | |_| | | |_| | |\  || |  | |   //
-  // |____/|_____|____/ \___/ \____|  \___/|_| \_|___| |_|   //
-  //                                                         //
-  /////////////////////////////////////////////////////////////
-
-  ibex_debug_unit debug_unit_i (
-      .clk               ( clk_i              ), // always-running clock for debug
-      .rst_n             ( rst_ni             ),
-
-      // Debug Interface
-      .debug_req_i       ( debug_req_i        ),
-      .debug_gnt_o       ( debug_gnt_o        ),
-      .debug_rvalid_o    ( debug_rvalid_o     ),
-      .debug_addr_i      ( debug_addr_i       ),
-      .debug_we_i        ( debug_we_i         ),
-      .debug_wdata_i     ( debug_wdata_i      ),
-      .debug_rdata_o     ( debug_rdata_o      ),
-      .debug_halt_i      ( debug_halt_i       ),
-      .debug_resume_i    ( debug_resume_i     ),
-      .debug_halted_o    ( debug_halted_o     ),
-
-      // To/From Core
-      .settings_o        ( dbg_settings       ),
-      .trap_i            ( dbg_trap           ),
-      .exc_cause_i       ( exc_cause          ),
-      .stall_o           ( dbg_stall          ),
-      .dbg_req_o         ( dbg_req            ),
-      .dbg_ack_i         ( dbg_ack            ),
-
-      // register file read port
-      .regfile_rreq_o    ( dbg_reg_rreq       ),
-      .regfile_raddr_o   ( dbg_reg_raddr      ),
-      .regfile_rdata_i   ( dbg_reg_rdata      ),
-
-      // register file write port
-      .regfile_wreq_o    ( dbg_reg_wreq       ),
-      .regfile_waddr_o   ( dbg_reg_waddr      ),
-      .regfile_wdata_o   ( dbg_reg_wdata      ),
-
-      // CSR read/write port
-      .csr_req_o         ( dbg_csr_req        ),
-      .csr_addr_o        ( dbg_csr_addr       ),
-      .csr_we_o          ( dbg_csr_we         ),
-      .csr_wdata_o       ( dbg_csr_wdata      ),
-      .csr_rdata_i       ( csr_rdata          ),
-
-      // signals for PPC and NPC
-      .pc_if_i           ( pc_if              ), // from IF stage
-      .pc_id_i           ( pc_id              ), // from ID stage
-
-      .sleeping_i        ( sleeping           ),
-
-      .jump_addr_o       ( dbg_jump_addr      ), // PC from debug unit
-      .jump_req_o        ( dbg_jump_req       )  // set PC to new value
-  );
 
 `ifndef VERILATOR
 `ifdef TRACE_EXECUTION
@@ -673,6 +567,7 @@ module ibex_core #(
       .branch_taken   ( id_stage_i.branch_set_q              ),
       .pipe_flush     ( id_stage_i.controller_i.pipe_flush_i ),
       .mret_insn      ( id_stage_i.controller_i.mret_insn_i  ),
+      .dret_insn      ( id_stage_i.controller_i.dret_insn_i  ),
       .ecall_insn     ( id_stage_i.controller_i.ecall_insn_i ),
       .ebrk_insn      ( id_stage_i.controller_i.ebrk_insn_i  ),
       .csr_status     ( id_stage_i.controller_i.csr_status_i ),

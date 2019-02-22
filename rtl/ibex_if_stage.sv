@@ -28,7 +28,10 @@
  * Instruction fetch unit: Selection of the next PC, and buffering (sampling) of
  * the read instruction.
  */
-module ibex_if_stage (
+module ibex_if_stage #(
+    parameter DM_HALT_ADDRESS      = 32'h1A110800,
+    parameter DM_EXCEPTION_ADDRESS = 32'h1A110808
+) (
     input  logic        clk,
     input  logic        rst_n,
     // the boot address is used to calculate the exception offsets
@@ -56,15 +59,15 @@ module ibex_if_stage (
     input  logic        pc_set_i,              // set the program counter to a new value
     input  logic [31:0] exception_pc_reg_i,    // address used to restore PC when the
                                                // interrupt/exception is served
+    input  logic [31:0] depc_i,                // address used to restore PC when the debug is served
     input  logic  [2:0] pc_mux_i,              // sel for pc multiplexer
-    input  logic  [1:0] exc_pc_mux_i,          // selects ISR address
+    input  logic  [2:0] exc_pc_mux_i,          // selects ISR address
     input  logic  [4:0] exc_vec_pc_mux_i,      // selects ISR address for vectorized
                                                // interrupt lines
 
     // jump and branch target and decision
     input  logic [31:0] jump_target_ex_i,      // jump target address
-    // from debug unit
-    input  logic [31:0] dbg_jump_addr_i,
+
     // pipeline stall
     input  logic        halt_if_i,
     input  logic        id_ready_i,
@@ -99,6 +102,8 @@ module ibex_if_stage (
       EXC_PC_ILLINSN: exc_pc = { boot_addr_i[31:8], EXC_OFF_ILLINSN };
       EXC_PC_ECALL:   exc_pc = { boot_addr_i[31:8], EXC_OFF_ECALL   };
       EXC_PC_IRQ:     exc_pc = { boot_addr_i[31:8], 1'b0, exc_vec_pc_mux_i[4:0], 2'b0 };
+      EXC_PC_DBD:     exc_pc = { DM_HALT_ADDRESS };
+      EXC_PC_DBGEXC:  exc_pc = { DM_EXCEPTION_ADDRESS };
       // TODO: Add case for EXC_PC_STORE and EXC_PC_LOAD as soon as they are supported
       default:;
     endcase
@@ -114,7 +119,7 @@ module ibex_if_stage (
       PC_EXCEPTION: fetch_addr_n = exc_pc;             // set PC to exception handler
       PC_ERET:      fetch_addr_n = exception_pc_reg_i; // PC is restored when returning
                                                        // from IRQ/exception
-      PC_DBG_NPC:   fetch_addr_n = dbg_jump_addr_i;    // PC is taken from debug unit
+      PC_DRET:      fetch_addr_n = depc_i;
 
       default:;
     endcase

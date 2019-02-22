@@ -40,6 +40,7 @@ module ibex_controller (
     input  logic        illegal_insn_i,             // decoder encountered an invalid instruction
     input  logic        ecall_insn_i,               // ecall encountered an mret instruction
     input  logic        mret_insn_i,                // decoder encountered an mret instruction
+    input  logic        dret_insn_i,                // decoder encountered an dret instruction
     input  logic        pipe_flush_i,               // decoder wants to do a pipe flush
     input  logic        ebrk_insn_i,                // decoder encountered an ebreak instruction
     input  logic        csr_status_i,               // decoder encountered an csr status instruction
@@ -55,7 +56,7 @@ module ibex_controller (
     output logic        pc_set_o,                   // jump to address set by pc_mux
     output logic [2:0]  pc_mux_o,                   // Selector in the Fetch stage to select the
                                                     // right PC (normal, jump ...)
-    output logic [1:0]  exc_pc_mux_o,               // Selects target PC for exception
+    output logic [2:0]  exc_pc_mux_o,               // Selects target PC for exception
 
     // LSU
     input  logic        data_misaligned_i,
@@ -82,21 +83,15 @@ module ibex_controller (
     output logic        exc_ack_o,
     output logic        exc_kill_o,
 
+    // Debug Signal
+    input  logic        debug_req_i,
+
     output logic        csr_save_if_o,
     output logic        csr_save_id_o,
     output logic [5:0]  csr_cause_o,
     output logic        csr_restore_mret_id_o,
+    output logic        csr_restore_dret_id_o,
     output logic        csr_save_cause_o,
-
-    // Debug Signals
-    input  logic        dbg_req_i,                // a trap was hit, so we have to flush EX and WB
-    output logic        dbg_ack_o,                // we stopped and give control to debug now
-
-    input  logic        dbg_stall_i,              // Pipeline stall is requested
-    input  logic        dbg_jump_req_i,           // Change PC to value from debug unit
-
-    input  logic [DBG_SETS_W-1:0] dbg_settings_i,
-    output logic        dbg_trap_o,
 
     // forwarding signals
     output logic [1:0]  operand_a_fw_mux_sel_o,   // regfile ra data selector form ID stage
@@ -117,12 +112,14 @@ module ibex_controller (
   // FSM state encoding
   typedef enum logic [3:0] {
     RESET, BOOT_SET, WAIT_SLEEP, SLEEP, FIRST_FETCH, DECODE, FLUSH,
-    IRQ_TAKEN, DBG_SIGNAL, DBG_SIGNAL_SLEEP, DBG_WAIT, DBG_WAIT_BRANCH
+    IRQ_TAKEN, DBG_TAKEN
   } ctrl_fsm_e;
 
   ctrl_fsm_e ctrl_fsm_cs, ctrl_fsm_ns;
 
   logic irq_enable_int;
+
+  logic debug_mode_q, debug_mode_n;
 
 `ifndef SYNTHESIS
   // synopsys translate_off
@@ -159,6 +156,9 @@ module ibex_controller (
     csr_save_if_o          = 1'b0;
     csr_save_id_o          = 1'b0;
     csr_restore_mret_id_o  = 1'b0;
+
+    csr_restore_dret_id_o  = 1'b0;
+
     csr_save_cause_o       = 1'b0;
 
     exc_cause_o            = '0;
@@ -177,19 +177,11 @@ module ibex_controller (
 
     halt_if_o              = 1'b0;
     halt_id_o              = 1'b0;
-    dbg_ack_o              = 1'b0;
     irq_ack_o              = 1'b0;
     irq_id_o               = irq_id_ctrl_i;
     irq_enable_int         = m_IE_i;
 
-    // a trap towards the debug unit is generated when one of the
-    // following conditions are true:
-    // - ebreak instruction encountered
-    // - single-stepping mode enabled
-    // - illegal instruction exception and IIE bit is set
-    // - IRQ and INTE bit is set and no exception is currently running
-    // - Debuger requests halt
-    dbg_trap_o             = 1'b0;
+    debug_mode_n           = debug_mode_q;
 
     perf_tbranch_o         = 1'b0;
     perf_jump_o            = 1'b0;
@@ -198,13 +190,13 @@ module ibex_controller (
       // We were just reset, wait for fetch_enable
       RESET: begin
         instr_req_o   = 1'b0;
-
+        pc_mux_o      = PC_BOOT;
+        pc_set_o      = 1'b1;
         if (fetch_enable_i) begin
           ctrl_fsm_ns = BOOT_SET;
-        end else if (dbg_req_i) begin
-          // just go to debug even when we did not yet get a fetch enable
-          // this means that the NPC will not be set yet
-          ctrl_fsm_ns = DBG_SIGNAL;
+        end else if (debug_req_i && !debug_mode_q) begin
+          ctrl_fsm_ns  = DBG_TAKEN;
+          debug_mode_n = 1'b1;
         end
       end
 
@@ -233,29 +225,22 @@ module ibex_controller (
         instr_req_o   = 1'b0;
         halt_if_o     = 1'b1;
         halt_id_o     = 1'b1;
-        dbg_trap_o    = dbg_settings_i[DBG_SETS_SSTE];
 
-        if (dbg_req_i) begin
-          // debug request, now we need to check if we should stay sleeping or
-          // go to normal processing later
-          ctrl_fsm_ns = DBG_SIGNAL_SLEEP;
-
-        end else begin
-          // no debug request incoming, normal execution flow
-          // here transparent interrupts are checked to wake up from wfi
-          if (irq_i) begin
-            ctrl_fsm_ns  = FIRST_FETCH;
-          end
+        // normal execution flow
+        if (irq_i || (debug_req_i && !debug_mode_q)) begin
+          ctrl_fsm_ns  = FIRST_FETCH;
+          debug_mode_n = 1'b1;
         end
       end
 
       FIRST_FETCH: begin
         first_fetch_o = 1'b1;
         // Stall because of IF miss
-        if (id_ready_i && !dbg_stall_i) begin
+        if (id_ready_i) begin
           ctrl_fsm_ns = DECODE;
         end
 
+        // handle interrupts
         if (irq_req_ctrl_i && irq_enable_int) begin
           // This assumes that the pipeline is always flushed before
           // going to sleep.
@@ -263,98 +248,69 @@ module ibex_controller (
           halt_if_o   = 1'b1;
           halt_id_o   = 1'b1;
         end
+
+        // enter debug mode
+        if (debug_req_i && !debug_mode_q) begin
+          debug_mode_n = 1'b1;
+
+          ctrl_fsm_ns  = DBG_TAKEN;
+          halt_if_o    = 1'b1;
+          halt_id_o    = 1'b1;
+        end
       end
 
       DECODE: begin
         is_decoding_o = 1'b0;
 
-        // decode and execute instructions only if the current conditional
-        // branch in the EX stage is either not taken, or there is no
-        // conditional branch in the EX stage
-        if (instr_valid_i) begin // now analyze the current instruction in the ID stage
-          is_decoding_o = 1'b1;
+        /*
+         * TODO: What should happen on
+         * instr_valid_i && (instr_multicyle_i || branch_in_id_i)?
+         * Let the instruction finish executing before serving debug or
+         * interrupt requests?
+         */
 
-          if (branch_set_i && !jump_set_i &&
-              !(mret_insn_i || ecall_insn_i || pipe_flush_i || ebrk_insn_i ||
-                illegal_insn_i || csr_status_i)) begin
-            pc_mux_o          = PC_JUMP;
-            pc_set_o          = 1'b1;
-            perf_tbranch_o    = 1'b1;
-            dbg_trap_o        = dbg_settings_i[DBG_SETS_SSTE];
-            if (dbg_req_i) begin
-              ctrl_fsm_ns = DBG_SIGNAL;
-            end
-          end else if (!branch_set_i && jump_set_i &&
-                       !(mret_insn_i || ecall_insn_i   || pipe_flush_i ||
-                         ebrk_insn_i || illegal_insn_i || csr_status_i)) begin
-            pc_mux_o    = PC_JUMP;
-            pc_set_o    = 1'b1;
-            perf_jump_o = 1'b1;
-            dbg_trap_o  = dbg_settings_i[DBG_SETS_SSTE];
-          end else if (!branch_set_i && !jump_set_i &&
-                       (mret_insn_i || ecall_insn_i   || pipe_flush_i ||
-                        ebrk_insn_i || illegal_insn_i || csr_status_i)) begin
-            ctrl_fsm_ns = FLUSH;
-            halt_if_o   = 1'b1;
-            halt_id_o   = 1'b1;
-          end else begin
-            dbg_trap_o = dbg_settings_i[DBG_SETS_SSTE];
-
-            if (irq_req_ctrl_i && irq_enable_int && !instr_multicyle_i && !branch_in_id_i &&
-                !(dbg_req_i && !branch_taken_ex_i)) begin
-              ctrl_fsm_ns = IRQ_TAKEN;
-              halt_if_o   = 1'b1;
-              halt_id_o   = 1'b1;
-            end else if (!(irq_req_ctrl_i && irq_enable_int &&
-                           !instr_multicyle_i && !branch_in_id_i) &&
-                         (dbg_req_i && !branch_taken_ex_i)) begin
-              halt_if_o = 1'b1;
-              if (id_ready_i) begin
-                ctrl_fsm_ns = DBG_SIGNAL;
-              end
-            end else begin
-              exc_kill_o    = irq_req_ctrl_i & ~instr_multicyle_i & ~branch_in_id_i;
-            end
+        unique case (1'b1)
+          debug_req_i && !debug_mode_q: begin
+            // Enter debug mode from external request
+            halt_if_o     = 1'b1;
+            halt_id_o     = 1'b1;
+            ctrl_fsm_ns   = DBG_TAKEN;
+            debug_mode_n  = 1'b1;
           end
-        end else begin // !instr_valid_i
-          if (irq_req_ctrl_i && irq_enable_int) begin
+
+          irq_req_ctrl_i && irq_enable_int: begin
+            // Serve an interrupt
             ctrl_fsm_ns = IRQ_TAKEN;
             halt_if_o   = 1'b1;
             halt_id_o   = 1'b1;
           end
-        end
-      end
 
-      // now we can signal to the debugger that our pipeline is empty and it
-      // can examine our current state
-      DBG_SIGNAL: begin
-        dbg_ack_o  = 1'b1;
-        halt_if_o  = 1'b1;
+          default: begin
+            exc_kill_o    = irq_req_ctrl_i & ~instr_multicyle_i & ~branch_in_id_i;
 
-        ctrl_fsm_ns = DBG_WAIT;
-      end
+            if (instr_valid_i) begin
+              // analyze the current instruction in the ID stage
+              is_decoding_o = 1'b1;
 
-      DBG_SIGNAL_SLEEP: begin
-        dbg_ack_o  = 1'b1;
-        halt_if_o  = 1'b1;
+              unique case (1'b1)
+                branch_set_i || jump_set_i: begin
+                  pc_mux_o       = PC_JUMP;
+                  pc_set_o       = 1'b1;
 
-        ctrl_fsm_ns = DBG_WAIT;
-      end
+                  perf_tbranch_o = branch_set_i;
+                  perf_jump_o    = jump_set_i;
+                end
 
-      // The Debugger is active in this state
-      // we wait until it is done and go back to DECODE
-      DBG_WAIT: begin
-        halt_if_o = 1'b1;
-
-        if (dbg_jump_req_i) begin
-          pc_mux_o     = PC_DBG_NPC;
-          pc_set_o     = 1'b1;
-          ctrl_fsm_ns  = DBG_WAIT;
-        end
-
-        if (!dbg_stall_i) begin
-          ctrl_fsm_ns = DECODE;
-        end
+                mret_insn_i || dret_insn_i || ecall_insn_i || pipe_flush_i ||
+                ebrk_insn_i || illegal_insn_i || csr_status_i: begin
+                  ctrl_fsm_ns = FLUSH;
+                  halt_if_o   = 1'b1;
+                  halt_id_o   = 1'b1;
+                end
+              endcase
+            end
+          end
+        endcase
       end
 
       IRQ_TAKEN: begin
@@ -375,13 +331,35 @@ module ibex_controller (
         ctrl_fsm_ns       = DECODE;
       end
 
+      DBG_TAKEN: begin
+        pc_mux_o          = PC_EXCEPTION;
+        pc_set_o          = 1'b1;
+
+        exc_pc_mux_o      = EXC_PC_DBD;
+        // XXX: most likely wrong
+        exc_cause_o       = {1'b0,irq_id_ctrl_i};
+
+        csr_save_cause_o  = ebrk_insn_i ? 1'b0: 1'b1;
+        //csr_cause_o       = {1'b1,irq_id_ctrl_i};
+
+        csr_save_if_o     = 1'b1;
+
+        exc_ack_o         = 1'b1;
+
+        ctrl_fsm_ns       = DECODE;
+      end
+
       // flush the pipeline, insert NOP
       FLUSH: begin
 
         halt_if_o = 1'b1;
         halt_id_o = 1'b1;
 
-        ctrl_fsm_ns = dbg_req_i ? DBG_SIGNAL : DECODE;
+        if (!pipe_flush_i) begin
+          ctrl_fsm_ns = DECODE;
+        end else begin
+          ctrl_fsm_ns = WAIT_SLEEP;
+        end
 
         unique case(1'b1)
           ecall_insn_i: begin
@@ -393,8 +371,6 @@ module ibex_controller (
             exc_pc_mux_o          = EXC_PC_ECALL;
             exc_cause_o           = EXC_CAUSE_ECALL_MMODE;
             csr_cause_o           = EXC_CAUSE_ECALL_MMODE;
-            dbg_trap_o            = dbg_settings_i[DBG_SETS_ECALL] |
-                                    dbg_settings_i[DBG_SETS_SSTE];
           end
           illegal_insn_i: begin
             //exceptions
@@ -402,46 +378,44 @@ module ibex_controller (
             pc_set_o              = 1'b1;
             csr_save_id_o         = 1'b1;
             csr_save_cause_o      = 1'b1;
-            exc_pc_mux_o          = EXC_PC_ILLINSN;
+            if (debug_mode_q) begin
+              exc_pc_mux_o          = EXC_PC_DBGEXC;
+            end else begin
+              exc_pc_mux_o          = EXC_PC_ILLINSN;
+            end
             exc_cause_o           = EXC_CAUSE_ILLEGAL_INSN;
             csr_cause_o           = EXC_CAUSE_ILLEGAL_INSN;
-            dbg_trap_o            = dbg_settings_i[DBG_SETS_EILL] |
-                                    dbg_settings_i[DBG_SETS_SSTE];
           end
           mret_insn_i: begin
             //mret
             pc_mux_o              = PC_ERET;
             pc_set_o              = 1'b1;
             csr_restore_mret_id_o = 1'b1;
-            dbg_trap_o            = dbg_settings_i[DBG_SETS_SSTE];
+          end
+          dret_insn_i: begin
+            //dret
+            pc_mux_o              = PC_DRET;
+            pc_set_o              = 1'b1;
+            debug_mode_n          = 1'b0;
+            csr_restore_dret_id_o = 1'b1;
           end
           ebrk_insn_i: begin
-            dbg_trap_o    = 1'b1; // dbg_settings_i[DBG_SETS_EBRK] |
-                                  // dbg_settings_i[DBG_SETS_SSTE];
-            exc_cause_o   = EXC_CAUSE_BREAKPOINT;
-          end
-          csr_status_i: begin
-            dbg_trap_o    = dbg_settings_i[DBG_SETS_SSTE];
-          end
-          pipe_flush_i: begin
-            dbg_trap_o    = dbg_settings_i[DBG_SETS_SSTE];
+            //ebreak
+            if (debug_mode_q) begin
+              /*
+               * ebreak in debug mode re-enters debug mode
+               *
+               * "The only exception is ebreak. When that is executed in Debug
+               * Mode, it halts the hart again but without updating dpc or
+               * dcsr." [RISC-V Debug Specification v0.13.1, p. 41]
+               */
+              ctrl_fsm_ns = DBG_TAKEN;
+            end else begin
+              ctrl_fsm_ns = DECODE;
+            end
           end
           default:;
         endcase
-
-        if (!pipe_flush_i) begin
-          if (dbg_req_i) begin
-            ctrl_fsm_ns = DBG_SIGNAL;
-          end else begin
-            ctrl_fsm_ns = DECODE;
-          end
-        end else begin
-          if (dbg_req_i) begin
-            ctrl_fsm_ns = DBG_SIGNAL_SLEEP;
-          end else begin
-            ctrl_fsm_ns = WAIT_SLEEP;
-          end
-        end
       end
 
       default: begin
@@ -472,20 +446,12 @@ module ibex_controller (
     if (!rst_n) begin
       ctrl_fsm_cs <= RESET;
       //jump_done_q <= 1'b0;
+      debug_mode_q   <= 1'b0;
     end else begin
       ctrl_fsm_cs <= ctrl_fsm_ns;
       // clear when id is valid (no instruction incoming)
       //jump_done_q <= jump_done & (~id_ready_i);
+      debug_mode_q   <=  debug_mode_n; //1'b0;
     end
   end
-
-
-  //----------------------------------------------------------------------------
-  // Assertions
-  //----------------------------------------------------------------------------
-`ifndef VERILATOR
-  assert property (
-    @(posedge clk) (!(dbg_req_i && irq_req_ctrl_i)) ) else
-      $warning("Both dbg_req_i and irq_req_ctrl_i are active");
-`endif
 endmodule // controller

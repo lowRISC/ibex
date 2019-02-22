@@ -276,14 +276,16 @@ parameter PC_BOOT          = 3'b000;
 parameter PC_JUMP          = 3'b010;
 parameter PC_EXCEPTION     = 3'b100;
 parameter PC_ERET          = 3'b101;
-parameter PC_DBG_NPC       = 3'b111;
+parameter PC_DRET          = 3'b111;
 
 // Exception PC mux selector defines
-parameter EXC_PC_ILLINSN   = 2'b00;
-parameter EXC_PC_ECALL     = 2'b01;
-parameter EXC_PC_LOAD      = 2'b10;
-parameter EXC_PC_STORE     = 2'b10;
-parameter EXC_PC_IRQ       = 2'b11;
+parameter EXC_PC_ILLINSN   = 3'b000;
+parameter EXC_PC_ECALL     = 3'b001;
+parameter EXC_PC_LOAD      = 3'b010;
+parameter EXC_PC_STORE     = 3'b010;
+parameter EXC_PC_IRQ       = 3'b011;
+parameter EXC_PC_DBD       = 3'b100;
+parameter EXC_PC_DBGEXC    = 3'b101; // Exception while in debug mode
 
 // Exception Cause
 parameter EXC_CAUSE_ILLEGAL_INSN = 6'h02;
@@ -313,4 +315,8 @@ parameter DBG_CAUSE_HALT   = 6'h1F;
 
 // CSRs
 parameter CSR_MISA           = 12'h301;
+parameter CSR_DCSR           = 12'h7b0;
+parameter CSR_DPC            = 12'h7b1;
+parameter CSR_DSCRATCH0      = 12'h7b2; // optional
+parameter CSR_DSCRATCH1      = 12'h7b3; // optional
 endpackage

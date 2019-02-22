@@ -37,6 +37,7 @@ module ibex_decoder #(
     output logic        illegal_insn_o,          // illegal instruction encountered
     output logic        ebrk_insn_o,             // trap instruction encountered
     output logic        mret_insn_o,             // return from exception instruction encountered
+    output logic        dret_insn_o,             // return from debug (M)
     output logic        ecall_insn_o,            // environment call (syscall)
                                                  // instruction encountered
     output logic        pipe_flush_o,            // pipeline flush is requested
@@ -134,6 +135,7 @@ module ibex_decoder #(
     illegal_insn_o              = 1'b0;
     ebrk_insn_o                 = 1'b0;
     mret_insn_o                 = 1'b0;
+    dret_insn_o                 = 1'b0;
     ecall_insn_o                = 1'b0;
     pipe_flush_o                = 1'b0;
 
@@ -481,6 +483,9 @@ module ibex_decoder #(
 
             12'h302:  // mret
               mret_insn_o = 1'b1;
+
+            12'h7b2:  // dret
+              dret_insn_o = 1'b1;
 
             12'h105:  // wfi
               // flush pipeline

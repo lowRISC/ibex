@@ -60,7 +60,7 @@ module ibex_id_stage #(
     output logic        clear_instr_valid_o,
     output logic        pc_set_o,
     output logic [2:0]  pc_mux_o,
-    output logic [1:0]  exc_pc_mux_o,
+    output logic [2:0]  exc_pc_mux_o,
 
     input  logic        illegal_c_insn_i,
     input  logic        is_compressed_i,
@@ -93,6 +93,7 @@ module ibex_id_stage #(
     output logic        csr_save_if_o,
     output logic        csr_save_id_o,
     output logic        csr_restore_mret_id_o,
+    output logic        csr_restore_dret_id_o,
     output logic        csr_save_cause_o,
 
     // Interface to load store unit
@@ -117,22 +118,8 @@ module ibex_id_stage #(
     input  logic        lsu_load_err_i,
     input  logic        lsu_store_err_i,
 
-    // Debug Unit Signals
-    input  logic [DBG_SETS_W-1:0] dbg_settings_i,
-    input  logic        dbg_req_i,
-    output logic        dbg_ack_o,
-    input  logic        dbg_stall_i,
-    output logic        dbg_trap_o,
-
-    input  logic        dbg_reg_rreq_i,
-    input  logic [4:0]  dbg_reg_raddr_i,
-    output logic [31:0] dbg_reg_rdata_o,
-
-    input  logic        dbg_reg_wreq_i,
-    input  logic [4:0]  dbg_reg_waddr_i,
-    input  logic [31:0] dbg_reg_wdata_i,
-
-    input  logic        dbg_jump_req_i,
+    // Debug Signal
+    input  logic        debug_req_i,
 
     // Write back signal
     input  logic [31:0] regfile_wdata_lsu_i,
@@ -156,6 +143,7 @@ module ibex_id_stage #(
   logic        illegal_reg_rv32e;
   logic        ebrk_insn;
   logic        mret_insn_dec;
+  logic        dret_insn_dec;
   logic        ecall_insn_dec;
   logic        pipe_flush_dec;
 
@@ -380,20 +368,14 @@ module ibex_id_stage #(
   //TODO: add assertion
   // Register File mux
   always_comb begin
-    if (dbg_reg_wreq_i) begin
-      regfile_wdata_mux   = dbg_reg_wdata_i;
-      regfile_waddr_mux   = dbg_reg_waddr_i;
-      regfile_we_mux      = 1'b1;
+    regfile_we_mux      = regfile_we;
+    regfile_waddr_mux   = regfile_alu_waddr_id;
+    if (select_data_rf == RF_LSU) begin
+      regfile_wdata_mux = regfile_wdata_lsu_i;
+    end else if (csr_access) begin
+      regfile_wdata_mux = csr_rdata_i;
     end else begin
-      regfile_we_mux      = regfile_we;
-      regfile_waddr_mux   = regfile_alu_waddr_id;
-      if (select_data_rf == RF_LSU) begin
-        regfile_wdata_mux = regfile_wdata_lsu_i;
-      end else if (csr_access) begin
-        regfile_wdata_mux = csr_rdata_i;
-      end else begin
-        regfile_wdata_mux = regfile_wdata_ex_i;
-      end
+      regfile_wdata_mux = regfile_wdata_ex_i;
     end
   end
 
@@ -407,15 +389,13 @@ module ibex_id_stage #(
       .raddr_a_i    ( regfile_addr_ra_id ),
       .rdata_a_o    ( regfile_data_ra_id ),
       // Read port b
-      .raddr_b_i    ( (dbg_reg_rreq_i == 1'b0) ? regfile_addr_rb_id : dbg_reg_raddr_i ),
+      .raddr_b_i    ( regfile_addr_rb_id ),
       .rdata_b_o    ( regfile_data_rb_id ),
       // write port
       .waddr_a_i    ( regfile_waddr_mux ),
       .wdata_a_i    ( regfile_wdata_mux ),
       .we_a_i       ( regfile_we_mux    )
   );
-
-  assign dbg_reg_rdata_o = regfile_data_rb_id;
 
   assign multdiv_int_en  = mult_int_en | div_int_en;
 
@@ -438,6 +418,7 @@ module ibex_id_stage #(
       .illegal_insn_o                  ( illegal_insn_dec          ),
       .ebrk_insn_o                     ( ebrk_insn                 ),
       .mret_insn_o                     ( mret_insn_dec             ),
+      .dret_insn_o                     ( dret_insn_dec             ),
       .ecall_insn_o                    ( ecall_insn_dec            ),
       .pipe_flush_o                    ( pipe_flush_dec            ),
 
@@ -500,6 +481,7 @@ module ibex_id_stage #(
       .illegal_insn_i                 ( illegal_insn_dec | illegal_reg_rv32e ),
       .ecall_insn_i                   ( ecall_insn_dec         ),
       .mret_insn_i                    ( mret_insn_dec          ),
+      .dret_insn_i                    ( dret_insn_dec          ),
       .pipe_flush_i                   ( pipe_flush_dec         ),
       .ebrk_insn_i                    ( ebrk_insn              ),
       .csr_status_i                   ( csr_status             ),
@@ -545,14 +527,10 @@ module ibex_id_stage #(
       .csr_save_if_o                  ( csr_save_if_o          ),
       .csr_save_id_o                  ( csr_save_id_o          ),
       .csr_restore_mret_id_o          ( csr_restore_mret_id_o  ),
+      .csr_restore_dret_id_o          ( csr_restore_dret_id_o  ),
 
-      // Debug Unit Signals
-      .dbg_req_i                      ( dbg_req_i              ),
-      .dbg_ack_o                      ( dbg_ack_o              ),
-      .dbg_stall_i                    ( dbg_stall_i            ),
-      .dbg_jump_req_i                 ( dbg_jump_req_i         ),
-      .dbg_settings_i                 ( dbg_settings_i         ),
-      .dbg_trap_o                     ( dbg_trap_o             ),
+      // Debug Signal
+      .debug_req_i                    ( debug_req_i            ),
 
       // Forwarding signals
       .operand_a_fw_mux_sel_o         ( operand_a_fw_mux_sel   ),

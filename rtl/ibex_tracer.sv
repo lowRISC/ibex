@@ -55,6 +55,7 @@ module ibex_tracer #(
     input  logic        branch_taken,
     input  logic        pipe_flush,
     input  logic        mret_insn,
+    input  logic        dret_insn,
     input  logic        ecall_insn,
     input  logic        ebrk_insn,
     input  logic        csr_status,
@@ -327,7 +328,7 @@ module ibex_tracer #(
     instr_trace_t trace;
     mem_acc_t     mem_acc;
     // special case for WFI because we don't wait for unstalling there
-    if ( (id_valid || mret_insn || ecall_insn || pipe_flush || ebrk_insn ||
+    if ( (id_valid || mret_insn || ecall_insn || pipe_flush || ebrk_insn || dret_insn ||
           csr_status || ex_data_req) && is_decoding) begin
       trace = new ();
 
@@ -384,6 +385,7 @@ module ibex_tracer #(
         INSTR_ECALL:      trace.printMnemonic("ecall");
         INSTR_EBREAK:     trace.printMnemonic("ebreak");
         INSTR_MRET:       trace.printMnemonic("mret");
+        INSTR_DRET:       trace.printMnemonic("dret");
         INSTR_WFI:        trace.printMnemonic("wfi");
         // RV32M
         INSTR_PMUL:       trace.printRInstr("mul");

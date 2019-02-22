@@ -58,6 +58,7 @@ module ibex_cs_registers #(
     // Interrupts
     output logic        m_irq_enable_o,
     output logic [31:0] mepc_o,
+    output logic [31:0] depc_o,
 
     input  logic [31:0] pc_if_i,
     input  logic [31:0] pc_id_i,
@@ -65,6 +66,7 @@ module ibex_cs_registers #(
     input  logic        csr_save_if_i,
     input  logic        csr_save_id_i,
     input  logic        csr_restore_mret_i,
+    input  logic        csr_restore_dret_i,
 
     input  logic [5:0]  csr_cause_i,
     input  logic        csr_save_cause_i,
@@ -157,6 +159,10 @@ module ibex_cs_registers #(
 
   // Interrupt control signals
   logic [31:0] mepc_q, mepc_n;
+  logic [31:0] dcsr_q, dcsr_n;
+  logic [31:0] depc_q, depc_n;
+  logic [31:0] dscratch0_q, dscratch0_n;
+  logic [31:0] dscratch1_q, dscratch1_n;
   logic [ 5:0] mcause_q, mcause_n;
   Status_t mstatus_q, mstatus_n;
 
@@ -196,6 +202,11 @@ module ibex_cs_registers #(
 
       // misa
       CSR_MISA: csr_rdata_int = MISA_VALUE;
+
+      CSR_DCSR: csr_rdata_int = dcsr_q;
+      CSR_DPC: csr_rdata_int = depc_q;
+      CSR_DSCRATCH0: csr_rdata_int = dscratch0_q;
+      CSR_DSCRATCH1: csr_rdata_int = dscratch1_q;
       default: ;
     endcase
   end
@@ -204,6 +215,10 @@ module ibex_cs_registers #(
   // write logic
   always_comb begin
     mepc_n       = mepc_q;
+    depc_n       = depc_q;
+    dcsr_n       = dcsr_q;
+    dscratch0_n  = dscratch0_q;
+    dscratch1_n  = dscratch1_q;
     mstatus_n    = mstatus_q;
     mcause_n     = mcause_q;
 
@@ -220,6 +235,35 @@ module ibex_cs_registers #(
       12'h341: if (csr_we_int) mepc_n = csr_wdata_int;
       // mcause
       12'h342: if (csr_we_int) mcause_n = {csr_wdata_int[31], csr_wdata_int[4:0]};
+
+      CSR_DCSR:
+        if (csr_we_int)
+        begin
+          dcsr_n = csr_wdata_int;
+          //31:28 xdebuger. =4 -> debug is implemented
+          dcsr_n[31:28]=4'h4;
+          //privilege level: 0-> U;1-> S; 3->M.
+          dcsr_n[1:0]=2'd3;
+          //currently not supported:
+          dcsr_n[3]=1'b0;   //nmip
+          dcsr_n[9]=1'b0;   //stopcount
+          dcsr_n[10]=1'b0;  //stoptime
+        end
+      CSR_DPC:
+        if (csr_we_int)
+        begin
+          depc_n = csr_wdata_int;
+        end
+      CSR_DSCRATCH0:
+        if (csr_we_int)
+        begin
+          dscratch0_n = csr_wdata_int;
+        end
+      CSR_DSCRATCH1:
+        if (csr_we_int)
+        begin
+          dscratch1_n = csr_wdata_int;
+        end
       default: ;
     endcase
 
@@ -228,10 +272,14 @@ module ibex_cs_registers #(
 
       csr_save_cause_i: begin
         unique case (1'b1)
-          csr_save_if_i:
+          csr_save_if_i: begin
             mepc_n = pc_if_i;
-          csr_save_id_i:
+            depc_n = pc_if_i;
+          end
+          csr_save_id_i: begin
             mepc_n = pc_id_i;
+            depc_n = pc_id_i;
+          end
           default:;
         endcase
         mstatus_n.mpie = mstatus_q.mie;
@@ -243,6 +291,11 @@ module ibex_cs_registers #(
         mstatus_n.mie  = mstatus_q.mpie;
         mstatus_n.mpie = 1'b1;
       end //csr_restore_mret_i
+
+      csr_restore_dret_i: begin //DRET
+        mstatus_n.mie  = mstatus_q.mpie;
+        mstatus_n.mpie = 1'b1;
+      end //csr_restore_dret_i
 
       default:;
     endcase
@@ -272,6 +325,7 @@ module ibex_cs_registers #(
   // directly output some registers
   assign m_irq_enable_o  = mstatus_q.mie;
   assign mepc_o          = mepc_q;
+  assign depc_o          = depc_q;
 
   // actual registers
   always_ff @(posedge clk, negedge rst_n) begin
@@ -283,6 +337,11 @@ module ibex_cs_registers #(
             };
       mepc_q     <= '0;
       mcause_q   <= '0;
+
+      depc_q      <= '0;
+      dcsr_q      <= '0;
+      dscratch0_q <= '0;
+      dscratch1_q <= '0;
     end else begin
       // update CSRs
       mstatus_q  <= '{
@@ -292,6 +351,11 @@ module ibex_cs_registers #(
               };
       mepc_q     <= mepc_n;
       mcause_q   <= mcause_n;
+
+      depc_q     <= depc_n    ;
+      dcsr_q     <= dcsr_n    ;
+      dscratch0_q<= dscratch0_n;
+      dscratch1_q<= dscratch1_n;
     end
   end
 
