@@ -534,7 +534,9 @@ module ibex_core #(
   //////////////////////////////////////
 
   ibex_cs_registers #(
-      .N_EXT_CNT       ( N_EXT_PERF_COUNTERS   )
+      .N_EXT_CNT       ( N_EXT_PERF_COUNTERS   ),
+      .RV32E           ( RV32E                 ),
+      .RV32M           ( RV32M                 )
   ) cs_registers_i (
       .clk                     ( clk                ),
       .rst_n                   ( rst_ni             ),

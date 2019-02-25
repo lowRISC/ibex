@@ -311,4 +311,6 @@ parameter DBG_SETS_SSTE   = 0;
 
 parameter DBG_CAUSE_HALT   = 6'h1F;
 
+// CSRs
+parameter CSR_MISA           = 12'h301;
 endpackage
