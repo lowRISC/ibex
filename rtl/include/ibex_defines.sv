@@ -33,7 +33,7 @@ package ibex_defines;
 ////////////////////////////////////////////////
 
 parameter OPCODE_SYSTEM    = 7'h73;
-parameter OPCODE_FENCE     = 7'h0f;
+parameter OPCODE_MISC_MEM  = 7'h0f;
 parameter OPCODE_OP        = 7'h33;
 parameter OPCODE_OPIMM     = 7'h13;
 parameter OPCODE_STORE     = 7'h23;

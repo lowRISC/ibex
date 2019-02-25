@@ -452,6 +452,21 @@ module ibex_decoder #(
       //                                            //
       ////////////////////////////////////////////////
 
+      OPCODE_MISC_MEM: begin
+        // For now, treat the fence (funct3 == 000) instruction as a nop.
+        // This may not be correct in a system with caches and should be
+        // revisited.
+        // fence.i (funct3 == 001) was moved to a separate Zifencei extension
+        // in the RISC-V ISA spec proposed for ratification, so we treat it as
+        // an illegal instruction.
+        if (instr_rdata_i[14:12] == 3'b000) begin
+          alu_operator_o = ALU_ADD; // nop
+          regfile_we     = 1'b0;
+        end else begin
+          illegal_insn_o = 1'b1;
+        end
+      end
+
       OPCODE_SYSTEM: begin
         if (instr_rdata_i[14:12] == 3'b000) begin
           // non CSR related SYSTEM instructions
