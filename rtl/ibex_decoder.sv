@@ -27,7 +27,7 @@
  * Instruction decoder
  */
 module ibex_decoder #(
-    parameter RV32M      = 1
+    parameter bit RV32M  = 1
 ) (
     // singals running to/from controller
     input  logic        deassert_we_i,           // deassert we, we are stalled or not active

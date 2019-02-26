@@ -28,8 +28,8 @@
  */
 module ibex_core #(
     parameter N_EXT_PERF_COUNTERS = 1,
-    parameter RV32E               = 0,
-    parameter RV32M               = 1
+    parameter bit RV32E           = 0,
+    parameter bit RV32M           = 1
 ) (
     // Clock and Reset
     input  logic        clk_i,

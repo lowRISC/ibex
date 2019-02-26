@@ -28,7 +28,7 @@
  * This register file is based on flip flops.
  */
 module ibex_register_file #(
-    parameter RV32E         = 0,
+    parameter bit RV32E     = 0,
     parameter DATA_WIDTH    = 32
 ) (
     // Clock and Reset

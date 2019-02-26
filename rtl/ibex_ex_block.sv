@@ -29,7 +29,7 @@
  * Execution block: Hosts ALU and MUL/DIV unit
  */
 module ibex_ex_block #(
-    parameter RV32M      = 1
+    parameter bit RV32M  = 1
 ) (
     input  logic        clk,
     input  logic        rst_n,
