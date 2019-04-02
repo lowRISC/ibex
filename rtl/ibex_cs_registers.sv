@@ -363,7 +363,10 @@ module ibex_cs_registers #(
       mcause_q   <= '0;
 
       depc_q      <= '0;
-      dcsr_q      <= '0;
+      dcsr_q      <= '{
+        prv:     PRIV_LVL_M,
+        default: '0
+      };
       dscratch0_q <= '0;
       dscratch1_q <= '0;
     end else begin
