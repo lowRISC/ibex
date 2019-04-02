@@ -136,6 +136,25 @@ module ibex_cs_registers #(
     PrivLvl_t mpp;
   } Status_t;
 
+  typedef struct packed {
+      Xdebugver_t   xdebugver;
+      logic [11:0]  zero2;
+      logic         ebreakm;
+      logic         zero1;
+      logic         ebreaks;
+      logic         ebreaku;
+      logic         stepie;
+      logic         stopcount;
+      logic         stoptime;
+      logic [2:0]   cause;
+      logic         zero0;
+      logic         mprven;
+      logic         nmip;
+      logic         step;
+      PrivLvl_t     prv;
+  } Dcsr_t;
+
+
   // Performance Counter Signals
   logic [N_PERF_COUNTERS-1:0]    PCCR_in;  // input signals for each counter category
   logic [N_PERF_COUNTERS-1:0]    PCCR_inc, PCCR_inc_q; // should the counter be increased?
@@ -159,7 +178,7 @@ module ibex_cs_registers #(
 
   // Interrupt control signals
   logic [31:0] mepc_q, mepc_n;
-  logic [31:0] dcsr_q, dcsr_n;
+  Dcsr_t       dcsr_q, dcsr_n;
   logic [31:0] depc_q, depc_n;
   logic [31:0] dscratch0_q, dscratch0_n;
   logic [31:0] dscratch1_q, dscratch1_n;
@@ -240,14 +259,19 @@ module ibex_cs_registers #(
         if (csr_we_int)
         begin
           dcsr_n = csr_wdata_int;
-          //31:28 xdebuger. =4 -> debug is implemented
-          dcsr_n[31:28]=4'h4;
-          //privilege level: 0-> U;1-> S; 3->M.
-          dcsr_n[1:0]=2'd3;
-          //currently not supported:
-          dcsr_n[3]=1'b0;   //nmip
-          dcsr_n[9]=1'b0;   //stopcount
-          dcsr_n[10]=1'b0;  //stoptime
+          dcsr_n.xdebugver = XDEBUGVER_STD;
+          dcsr_n.prv = PRIV_LVL_M; // only M-mode is supported
+
+          // currently not supported:
+          dcsr_n.nmip = 1'b0;
+          dcsr_n.mprven = 1'b0;
+          dcsr_n.stopcount = 1'b0;
+          dcsr_n.stoptime = 1'b0;
+
+          // forced to be zero
+          dcsr_n.zero0 = 1'b0;
+          dcsr_n.zero1 = 1'b0;
+          dcsr_n.zero2 = 12'h0;
         end
       CSR_DPC:
         if (csr_we_int)

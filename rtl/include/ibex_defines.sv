@@ -197,6 +197,13 @@ typedef enum logic[1:0] {
   PRIV_LVL_U = 2'b00
 } PrivLvl_t;
 
+// Constants for the dcsr.xdebugver fields
+typedef enum logic[3:0] {
+   XDEBUGVER_NO  = 4'd0, // no external debug support
+   XDEBUGVER_STD = 4'd4, // external debug according to RISC-V debug spec
+   XDEBUGVER_NONSTD = 4'd15 // debug not conforming to RISC-V debug spec
+} Xdebugver_t;
+
 ///////////////////////////////////////////////
 //   ___ ____    ____  _                     //
 //  |_ _|  _ \  / ___|| |_ __ _  __ _  ___   //
