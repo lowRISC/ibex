@@ -98,6 +98,9 @@ module ibex_if_stage #(
   always_comb begin : EXC_PC_MUX
     exc_pc = '0;
 
+    // TODO: The behavior below follows an outdated (pre-1.10) RISC-V Privileged
+    // Spec to implement a "free-form" vectored trap handler.
+    // We need to update this code and crt0.S to follow the new mtvec spec.
     unique case (exc_pc_mux_i)
       EXC_PC_ILLINSN: exc_pc = { boot_addr_i[31:8], EXC_OFF_ILLINSN };
       EXC_PC_ECALL:   exc_pc = { boot_addr_i[31:8], EXC_OFF_ECALL   };

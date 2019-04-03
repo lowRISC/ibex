@@ -302,11 +302,14 @@ parameter EXC_CAUSE_ECALL_MMODE  = 6'h0B;
 // Exceptions offsets
 // target address = {boot_addr[31:8], EXC_OFF} (boot_addr must be 32 BYTE aligned!)
 // offset 00 to 7e is used for external interrupts
+
+// TODO: The behavior below follows an outdated (pre-1.10) RISC-V Privileged
+// Spec to implement a "free-form" vectored trap handler.
+// We need to update this code and crt0.S to follow the new mtvec spec.
 parameter EXC_OFF_RST      = 8'h80;
 parameter EXC_OFF_ILLINSN  = 8'h84;
 parameter EXC_OFF_ECALL    = 8'h88;
 parameter EXC_OFF_LSUERR   = 8'h8c;
-
 
 // Debug module
 parameter DBG_SETS_W = 6;
