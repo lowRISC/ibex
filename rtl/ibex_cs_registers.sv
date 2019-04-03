@@ -58,7 +58,13 @@ module ibex_cs_registers #(
     // Interrupts
     output logic        m_irq_enable_o,
     output logic [31:0] mepc_o,
+
+    // debug
+    input  logic  [2:0] debug_cause_i,
+    input  logic        debug_csr_save_i,
     output logic [31:0] depc_o,
+    output logic        debug_single_step_o,
+    output logic        debug_ebreakm_o,
 
     input  logic [31:0] pc_if_i,
     input  logic [31:0] pc_id_i,
@@ -184,6 +190,7 @@ module ibex_cs_registers #(
   logic [31:0] dscratch1_q, dscratch1_n;
   logic [ 5:0] mcause_q, mcause_n;
   Status_t mstatus_q, mstatus_n;
+  logic [31:0] exception_pc;
 
   ////////////////////////////////////////////
   //   ____ ____  ____    ____              //
@@ -240,6 +247,7 @@ module ibex_cs_registers #(
     dscratch1_n  = dscratch1_q;
     mstatus_n    = mstatus_q;
     mcause_n     = mcause_q;
+    exception_pc = pc_id_i;
 
     case (csr_addr_i)
       // mstatus: IE bit
@@ -274,7 +282,8 @@ module ibex_cs_registers #(
           dcsr_n.zero2 = 12'h0;
         end
       CSR_DPC:
-        if (csr_we_int)
+        // Only valid PC addresses are allowed (half-word aligned with C ext.)
+        if (csr_we_int && csr_wdata_int[0] == 1'b0)
         begin
           depc_n = csr_wdata_int;
         end
@@ -297,18 +306,27 @@ module ibex_cs_registers #(
       csr_save_cause_i: begin
         unique case (1'b1)
           csr_save_if_i: begin
-            mepc_n = pc_if_i;
-            depc_n = pc_if_i;
+            exception_pc = pc_if_i;
           end
           csr_save_id_i: begin
-            mepc_n = pc_id_i;
-            depc_n = pc_id_i;
+            exception_pc = pc_id_i;
           end
           default:;
         endcase
-        mstatus_n.mpie = mstatus_q.mie;
-        mstatus_n.mie  = 1'b0;
-        mcause_n       = csr_cause_i;
+
+        if (debug_csr_save_i) begin
+          // all interrupts are masked, don't update cause, epc, tval dpc and
+          // mpstatus
+          dcsr_n.prv   = PRIV_LVL_M;
+          dcsr_n.cause = debug_cause_i;
+          depc_n       = exception_pc;
+        end else begin
+          mstatus_n.mpie = mstatus_q.mie;
+          mstatus_n.mie  = 1'b0;
+          mstatus_n.mpp  = PRIV_LVL_M;
+          mepc_n = exception_pc;
+          mcause_n       = csr_cause_i;
+        end
       end //csr_save_cause_i
 
       csr_restore_mret_i: begin //MRET
@@ -350,6 +368,9 @@ module ibex_cs_registers #(
   assign m_irq_enable_o  = mstatus_q.mie;
   assign mepc_o          = mepc_q;
   assign depc_o          = depc_q;
+
+  assign debug_single_step_o  = dcsr_q.step;
+  assign debug_ebreakm_o      = dcsr_q.ebreakm;
 
   // actual registers
   always_ff @(posedge clk, negedge rst_n) begin

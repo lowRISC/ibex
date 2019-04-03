@@ -286,13 +286,14 @@ parameter PC_ERET          = 3'b101;
 parameter PC_DRET          = 3'b111;
 
 // Exception PC mux selector defines
-parameter EXC_PC_ILLINSN   = 3'b000;
-parameter EXC_PC_ECALL     = 3'b001;
-parameter EXC_PC_LOAD      = 3'b010;
-parameter EXC_PC_STORE     = 3'b010;
-parameter EXC_PC_IRQ       = 3'b011;
-parameter EXC_PC_DBD       = 3'b100;
-parameter EXC_PC_DBGEXC    = 3'b101; // Exception while in debug mode
+parameter EXC_PC_ILLINSN    = 3'b000;
+parameter EXC_PC_ECALL      = 3'b001;
+parameter EXC_PC_LOAD       = 3'b010;
+parameter EXC_PC_STORE      = 3'b010;
+parameter EXC_PC_IRQ        = 3'b011;
+parameter EXC_PC_DBD        = 3'b100;
+parameter EXC_PC_DBGEXC     = 3'b101; // Exception while in debug mode
+parameter EXC_PC_BREAKPOINT = 3'b110;
 
 // Exception Cause
 parameter EXC_CAUSE_ILLEGAL_INSN = 6'h02;
@@ -306,10 +307,18 @@ parameter EXC_CAUSE_ECALL_MMODE  = 6'h0B;
 // TODO: The behavior below follows an outdated (pre-1.10) RISC-V Privileged
 // Spec to implement a "free-form" vectored trap handler.
 // We need to update this code and crt0.S to follow the new mtvec spec.
-parameter EXC_OFF_RST      = 8'h80;
-parameter EXC_OFF_ILLINSN  = 8'h84;
-parameter EXC_OFF_ECALL    = 8'h88;
-parameter EXC_OFF_LSUERR   = 8'h8c;
+parameter EXC_OFF_RST        = 8'h80;
+parameter EXC_OFF_ILLINSN    = 8'h84;
+parameter EXC_OFF_ECALL      = 8'h88;
+parameter EXC_OFF_LSUERR     = 8'h8c;
+parameter EXC_OFF_BREAKPOINT = 8'h90;
+
+// Debug Cause
+parameter DBG_CAUSE_EBREAK     = 3'h1;
+parameter DBG_CAUSE_TRIGGER    = 3'h2;
+parameter DBG_CAUSE_HALTREQ    = 3'h3;
+parameter DBG_CAUSE_STEP       = 3'h4;
+parameter DBG_CAUSE_RSTHALTREQ = 3'h5;
 
 // Debug module
 parameter DBG_SETS_W = 6;
@@ -324,6 +333,7 @@ parameter DBG_SETS_SSTE   = 0;
 parameter DBG_CAUSE_HALT   = 6'h1F;
 
 // CSRs
+parameter CSR_MSTATUS        = 12'h300;
 parameter CSR_MISA           = 12'h301;
 parameter CSR_DCSR           = 12'h7b0;
 parameter CSR_DPC            = 12'h7b1;

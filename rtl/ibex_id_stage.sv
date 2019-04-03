@@ -119,7 +119,12 @@ module ibex_id_stage #(
     input  logic        lsu_store_err_i,
 
     // Debug Signal
+    output logic        debug_mode_o,
+    output logic [2:0]  debug_cause_o,
+    output logic        debug_csr_save_o,
     input  logic        debug_req_i,
+    input  logic        debug_single_step_i,
+    input  logic        debug_ebreakm_i,
 
     // Write back signal
     input  logic [31:0] regfile_wdata_lsu_i,
@@ -530,7 +535,13 @@ module ibex_id_stage #(
       .csr_restore_dret_id_o          ( csr_restore_dret_id_o  ),
 
       // Debug Signal
+      .debug_mode_o                   ( debug_mode_o           ),
+      .debug_cause_o                  ( debug_cause_o          ),
+      .debug_csr_save_o               ( debug_csr_save_o       ),
       .debug_req_i                    ( debug_req_i            ),
+      .debug_single_step_i            ( debug_single_step_i    ),
+      .debug_ebreakm_i                ( debug_ebreakm_i        ),
+
 
       // Forwarding signals
       .operand_a_fw_mux_sel_o         ( operand_a_fw_mux_sel   ),

@@ -517,8 +517,12 @@ module ibex_decoder #(
           endcase
 
           if (!csr_illegal) begin
-            if (instr_rdata_i[31:20] == 12'h300) begin
-              //access to mstatus
+            // flush pipeline on access to mstatus or debug CSRs
+            if (instr_rdata_i[31:20] == CSR_MSTATUS ||
+                instr_rdata_i[31:20] == CSR_DCSR ||
+                instr_rdata_i[31:20] == CSR_DPC ||
+                instr_rdata_i[31:20] == CSR_DSCRATCH0 ||
+                instr_rdata_i[31:20] == CSR_DSCRATCH1) begin
               csr_status_o = 1'b1;
             end
           end

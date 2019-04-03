@@ -174,6 +174,13 @@ module ibex_core #(
   logic        csr_restore_mret_id;
   logic        csr_restore_dret_id;
 
+  // debug mode and dcsr configuration
+  logic        debug_mode;
+  logic [2:0]  debug_cause;
+  logic        debug_csr_save;
+  logic        debug_single_step;
+  logic        debug_ebreakm;
+
   // Performance Counters
   logic        perf_imiss;
   logic        perf_jump;
@@ -377,7 +384,12 @@ module ibex_core #(
       .lsu_store_err_i              ( lsu_store_err        ),
 
       // Debug Signal
+      .debug_mode_o                 ( debug_mode           ),
+      .debug_cause_o                ( debug_cause          ),
+      .debug_csr_save_o             ( debug_csr_save       ),
       .debug_req_i                  ( debug_req_i          ),
+      .debug_single_step_i          ( debug_single_step    ),
+      .debug_ebreakm_i              ( debug_ebreakm        ),
 
       // write data to commit in the register file
       .regfile_wdata_lsu_i          ( regfile_wdata_lsu    ),
@@ -508,7 +520,13 @@ module ibex_core #(
       // Interrupt related control signals
       .m_irq_enable_o          ( m_irq_enable       ),
       .mepc_o                  ( mepc               ),
+
+      // debug
+      .debug_cause_i           ( debug_cause        ),
+      .debug_csr_save_i        ( debug_csr_save     ),
       .depc_o                  ( depc               ),
+      .debug_single_step_o     ( debug_single_step  ),
+      .debug_ebreakm_o         ( debug_ebreakm      ),
 
       .pc_if_i                 ( pc_if              ),
       .pc_id_i                 ( pc_id              ),
