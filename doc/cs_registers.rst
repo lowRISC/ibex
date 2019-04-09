@@ -3,7 +3,7 @@
 Control and Status Registers
 ============================
 
-ZERO-RISCY does not implement all control and status registers specified in the RISC-V privileged specifications, but is limited to the registers that were needed for the PULP system. The reason for this is that we wanted to keep the footprint of the core as low as possible and avoid any overhead that we do not explicitly need.
+Ibex does not implement all control and status registers specified in the RISC-V privileged specifications, but is limited to the registers that were needed for the PULP system. The reason for this is that we wanted to keep the footprint of the core as low as possible and avoid any overhead that we do not explicitly need.
 
 .. tabularcolumns:: |p{1cm}|p{.6cm}|p{.6cm}|p{1cm}|p{1cm}|p{1.5cm}|p{1.2cm}|p{6cm}|
 

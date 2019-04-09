@@ -53,7 +53,7 @@ The protocol used to communicate with the instruction cache or the instruction m
           {"name": "clk", "wave": "p......"},
           {"name": "data_addr_o", "wave": "x===xxx", "data": ["Address", "Address", "Address"]},
           {"name": "data_req_o", "wave": "01..0.."},
-          {"name": "data_gnt_i", "wave": "0..10.."}, 
+          {"name": "data_gnt_i", "wave": "0..10.."},
           {"name": "data_rvalid_i", "wave": "0....10"},
           {"name": "data_rdata_i", "wave": "xxxxx=x", "data": ["RData"]}
         ],

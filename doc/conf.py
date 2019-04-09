@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# zero-riscy documentation build configuration file, created by
+# ibex documentation build configuration file, created by
 # sphinx-quickstart on Thu Nov  8 15:42:18 2018.
 #
 # This file is execfile()d with the current directory set to its
@@ -48,9 +48,9 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'ZERO-RISCY'
-copyright = u'2017-2018, ETH Zurich and University of Bologna'
-author = u'Pasquale Davide Schiavone'
+project = u'Ibex'
+copyright = u'2017-2018, ETH Zurich and University of Bologna, 2018-present lowRISC'
+author = u'lowRISC contributors'
 
 from setuptools_scm import get_version
 release = get_version(root='..', relative_to=__file__)
@@ -97,7 +97,7 @@ html_theme = 'sphinx_rtd_theme'
 html_theme_options = {
 }
 
-html_logo = 'images/pulp.png'
+html_logo = ''
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -107,7 +107,7 @@ html_logo = 'images/pulp.png'
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'zero-riscydoc'
+htmlhelp_basename = 'ibexdoc'
 
 
 
@@ -135,18 +135,18 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'zero-riscy.tex', u'ZERO-RISCY Documentation',
-     u'ETH Zurich and University of Bologna', 'manual'),
+    (master_doc, 'ibex.tex', u'Ibex Documentation',
+     u'lowRISC', 'manual'),
 ]
 
-latex_logo = 'images/pulp_title.png'
+latex_logo = ''
 
 # -- Options for manual page output ---------------------------------------
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'zero-riscy', u'zero-riscy Documentation',
+    (master_doc, 'ibex', u'Ibex Documentation',
      [author], 1)
 ]
 
@@ -157,7 +157,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'zero-riscy', u'zero-riscy Documentation',
-     author, 'zero-riscy', 'One line description of project.',
+    (master_doc, 'ibex', u'Ibex Documentation',
+     author, 'ibex', 'Ibex RV32 CPU core',
      'Miscellaneous'),
 ]

@@ -1,14 +1,14 @@
 Core Integration
 ================
 
-The main module is named ``zeroriscy_core`` and can be found in ``zeroriscy_core.sv``. In the following the instantiation template is given and the parameters and interfaces are described.
+The main module is named ``ibex_core`` and can be found in ``ibex_core.sv``. In the following the instantiation template is given and the parameters and interfaces are described.
 
 Instantiation Template
 ----------------------
 
 .. code-block:: verilog
 
-  zeroriscy_core
+  ibex_core
    #(.N_EXT_PERF_COUNTERS (0),
      .RV32E (0),
      .RV32M (1))
@@ -16,7 +16,6 @@ Instantiation Template
     (// Clock and reset
      .clk_i (),
      .rst_ni (),
-     .clock_en_i (),
      .test_en_i (),
 
      // Configuration
@@ -92,9 +91,6 @@ Interfaces
 +-------------------------+-------------------------+-----+----------------------------------------+
 | ``rst_ni``              | 1                       | in  |Active-low synchronous reset            |
 +-------------------------+-------------------------+-----+----------------------------------------+
-| ``clock_en_i``          | 1                       | in  | Clock gating input                     |
-|                         |                         |     | (0: clock gated, 1: clock running)     |
-+-------------------------+-------------------------+-----+----------------------------------------+
 | ``test_en_i``           | 1                       | in  | Test input, enables clock              |
 +-------------------------+-------------------------+-----+----------------------------------------+
 | ``core_id_i``           | 4                       | in  | Core id, usually static, can be read   |
@@ -116,6 +112,3 @@ Interfaces
 +-------------------------+-------------------------+-----+----------------------------------------+
 | ``ext_perf_counters_i`` | ``N_EXT_PERF_COUNTERS`` | in  | External performance counter           |
 +-------------------------+-------------------------+-----+----------------------------------------+
-
-
-

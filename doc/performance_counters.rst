@@ -3,7 +3,7 @@
 Performance Counters
 ====================
 
-Performance Counters in ZERO-RISCY are placed inside the Control and Status Registers and can be accessed with csrr and csrw instructions.
+Performance Counters in Ibex are placed inside the Control and Status Registers and can be accessed with csrr and csrw instructions.
 
 
 Performance Counter Mode Register (PCMR)

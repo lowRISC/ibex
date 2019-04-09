@@ -3,7 +3,7 @@
 Register File
 =============
 
-ZERO-RISCY has 31 or 15 32-bit wide registers depending if the RV32E extension is enabled. Register x0 is statically bound to 0 and can only be read, it does not contain any sequential logic.
+Ibex has 31 or 15 32-bit wide registers depending if the RV32E extension is enabled. Register x0 is statically bound to 0 and can only be read, it does not contain any sequential logic.
 
 There are two flavors of register file available:
 
@@ -17,7 +17,7 @@ Latch-based Register File
 
 The latch based register file contains manually instantiated clock gating cells to keep the clock inactive when the latches are not written.
 
-It is assumed that there is a clock gating cell for the target technology that is wrapped in a module called ``cluster_clock_gating`` and has the following ports:
+It is assumed that there is a clock gating cell for the target technology that is wrapped in a module called ``prim_clock_gating`` and has the following ports:
 
 * ``clk_i``: Clock Input
 * ``en_i``: Clock Enable Input

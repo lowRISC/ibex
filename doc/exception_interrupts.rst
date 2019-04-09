@@ -3,7 +3,7 @@
 Exceptions and Interrupts
 =========================
 
-ZERO-RISCY supports interrupts, exceptions on illegal instructions.
+Ibex supports interrupts, exceptions on illegal instructions.
 
 +------------+-----------------------------+
 | Address    | Description                 |
@@ -38,6 +38,6 @@ The illegal instruction exception and ecall instruction exceptions cannot be dis
 Handling
 --------
 
-ZERO-RISCY does support nested interrupt/exception handling. Exceptions inside interrupt/exception handlers cause another exception, thus exceptions during the critical part of your exception handlers, i.e. before having saved the MEPC and MESTATUS registers, will cause those register to be overwritten. Interrupts during interrupt/exception handlers are disabled by default, but can be explicitly enabled if desired.
+Ibex does support nested interrupt/exception handling. Exceptions inside interrupt/exception handlers cause another exception, thus exceptions during the critical part of your exception handlers, i.e. before having saved the MEPC and MESTATUS registers, will cause those register to be overwritten. Interrupts during interrupt/exception handlers are disabled by default, but can be explicitly enabled if desired.
 
 Upon executing an mret instruction, the core jumps to the program counter saved in the CSR register MEPC and restores the MPIE value of the register MSTATUS to IE. When entering an interrupt/exception handler, the core sets MEPC to the current program counter and saves the current value of MIE in MPIE of the MSTATUS register.
