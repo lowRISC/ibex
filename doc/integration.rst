@@ -11,7 +11,9 @@ Instantiation Template
   ibex_core
    #(.N_EXT_PERF_COUNTERS (0),
      .RV32E (0),
-     .RV32M (1))
+     .RV32M (1),
+     .DM_HALT_ADDRESS(32'h1A110800),
+     .DM_EXCEPTION_ADDRESS(32'h1A110808))
   u_core
     (// Clock and reset
      .clk_i (),
@@ -49,15 +51,6 @@ Instantiation Template
 
      // Debug Interface
      .debug_req_i (),
-     .debug_gnt_o (),
-     .debug_rvalid_o (),
-     .debug_addr_i (),
-     .debug_we_i (),
-     .debug_wdata_i (),
-     .debug_rdata_o (),
-     .debug_halted_o (),
-     .debug_halt_i (),
-     .debug_resume_i (),
 
      // Special control signal
      .fetch_enable_i (),
@@ -69,17 +62,21 @@ Instantiation Template
 Parameters
 ----------
 
-+-------------------------+-------------+---------+------------------------------------------------+
-| Name                    | Type/Range  | Default | Description                                    |
-+=========================+=============+=========+================================================+
-| ``N_EXT_PERF_COUNTERS`` | int (0..21) | 0       | Number of external performance counters        |
-+-------------------------+-------------+---------+------------------------------------------------+
-| ``RV32E``               | int (0..1)  | 0       | RV32E mode enable (16 integer registers only)  |
-+-------------------------+-------------+---------+------------------------------------------------+
-| ``RV32M``               | int (0..1)  | 1       | M(ultiply) extension enable                    |
-+-------------------------+-------------+---------+------------------------------------------------+
++--------------------------+-------------+------------+-----------------------------------------------------------------+
+| Name                     | Type/Range  | Default    | Description                                                     |
++==========================+=============+============+=================================================================+
+| ``N_EXT_PERF_COUNTERS``  | int (0..21) | 0          | Number of external performance counters                         |
++--------------------------+-------------+------------+-----------------------------------------------------------------+
+| ``RV32E``                | bit         | 0          | RV32E mode enable (16 integer registers only)                   |
++--------------------------+-------------+------------+-----------------------------------------------------------------+
+| ``RV32M``                | bit         | 1          | M(ultiply) extension enable                                     |
++-------------------------+--------------+------------+-----------------------------------------------------------------+
+| ``DM_HALT_ADDRESS``      | int         | 0x1A110800 | Address to jump to when entering debug mode                     |
++-------------------------+---------------------------------------------------------------------------------------------+
+| ``DM_EXCEPTION_ADDRESS`` | int         | 0x1A110808 | Address to jump to when an exception occurs while in debug mode |
++--------------------------+--------------------------------------------------------------------------------------------+
 
-    
+
 Interfaces
 ----------
 
