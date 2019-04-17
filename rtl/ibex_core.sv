@@ -216,7 +216,7 @@ module ibex_core #(
 
   assign core_busy   = core_ctrl_firstfetch ? 1'b1 : core_busy_q;
 
-  assign clock_en    = core_busy | irq_i;
+  assign clock_en    = core_busy | irq_i | debug_req_i;
 
   assign sleeping    = (~core_busy);
 
