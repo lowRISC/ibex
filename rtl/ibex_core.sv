@@ -37,7 +37,6 @@ module ibex_core #(
     input  logic        clk_i,
     input  logic        rst_ni,
 
-    input  logic        clock_en_i,    // enable clock, otherwise it is gated
     input  logic        test_en_i,     // enable all clock gates for testing
 
     // Core ID, Cluster ID and boot address are considered more or less static
