@@ -1,18 +1,25 @@
-# ibex: RISC-V Core
+# Ibex: RISC-V Core
 
-**ibex** is a small 2-stage RISC-V core derived from RI5CY.
+Ibex is a small 32 bit RISC-V core with a 2-stage pipeline.
 
-**ibex** fully implements the RV32IMC instruction set and a minimal
-set of RISCV privileged specifications.
-**ibex** can be configured to be very small by disabling the RV32M extensions
-and by activating the RV32E extensions. This configuration is called **micro-riscy**
+Ibex fully implements the RV32IMC instruction set and a small set of RISC-V
+privileged specifications. Ibex can be configured to be very small by disabling
+the RV32M extensions and by activating the RV32E extensions.
 
-The core was developed as part of the [PULP platform](http://pulp.ethz.ch/) for
-energy-efficient computing and is currently used as the control core for
-PULP and PULPino.
+This core was initially developed as part of the 
+[PULP platform](http://pulp.ethz.ch/) under the name "Zero-riscy", and has
+been contributed to [lowRISC](https://www.lowrisc.org) who maintains it and
+develops it further.
+
+Ibex is under active development, with further code cleanups, feature
+additions, and test and verification planned for the future.
 
 ## Documentation
 
 A datasheet that explains the most important features of the core can be found
 in the doc folder.
 
+## License
+
+Unless otherwise noted, everything in this repository is covered by the Apache
+License, Version 2.0 (see LICENSE for full text).
