@@ -34,3 +34,14 @@ Outline
 -------
 
 This document summarizes all the functionality of the Ibex core in more detail. First, the instruction and data interfaces are explained in :ref:`instruction-fetch` and :ref:`load-store-unit`. :ref:`register-file` explains the register file. Control and status registers are explained in :ref:`cs-registers` and Chapter :ref:`performance-counters` gives an overview of all performance counters. Chapter :ref:`exceptions-interrupts` deals with exceptions and interrupts, and finally Chapter :ref:`debug-unit` summarizes the accessible debug registers.
+
+History
+-------
+
+Ibex development started in 2015 under the name "ZERO-RISCY" as part of the [PULP platform](http://pulp.ethz.ch/) for
+energy-efficient computing.
+Much of the code was developed by simplifying the RV32 CPU core "RI5CY" to show how small a RISC-V CPU core could be.
+To make it even smaller, support for the ``E`` exension was added under the code name "MICRO-RISCY".
+Within PULP the core is used as the control core for PULP and PULPino.
+
+In December 2018 lowRISC took over the development of ZERO-RISCY and renamed it to Ibex.
