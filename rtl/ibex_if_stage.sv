@@ -244,9 +244,9 @@ module ibex_if_stage #(
   assign if_ready = valid & id_ready_i;
   assign if_valid_o = ~halt_if_i & if_ready;
 
-  //----------------------------------------------------------------------------
-  // Assertions
-  //----------------------------------------------------------------------------
+  ////////////////
+  // Assertions //
+  ////////////////
 `ifndef VERILATOR
   // there should never be a grant when there is no request
   assert property (

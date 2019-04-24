@@ -96,7 +96,9 @@ module ibex_load_store_unit (
 
   logic [31:0]  rdata_q;
 
-  ///////////////////////////////// BE generation ////////////////////////////////
+  ///////////////////
+  // BE generation //
+  ///////////////////
   always_comb begin
     case (data_type_ex_i) // Data type 00 Word, 01 Half word, 11,10 byte
       2'b00: begin // Writing a word
@@ -172,14 +174,9 @@ module ibex_load_store_unit (
     end
   end
 
-  ////////////////////////////////////////////////////////////////////////
-  //  ____  _               _____      _                 _              //
-  // / ___|(_) __ _ _ __   | ____|_  _| |_ ___ _ __  ___(_) ___  _ __   //
-  // \___ \| |/ _` | '_ \  |  _| \ \/ / __/ _ \ '_ \/ __| |/ _ \| '_ \  //
-  //  ___) | | (_| | | | | | |___ >  <| ||  __/ | | \__ \ | (_) | | | | //
-  // |____/|_|\__, |_| |_| |_____/_/\_\\__\___|_| |_|___/_|\___/|_| |_| //
-  //          |___/                                                     //
-  ////////////////////////////////////////////////////////////////////////
+  ////////////////////
+  // Sign extension //
+  ////////////////////
 
   logic [31:0] data_rdata_ext;
 
@@ -448,9 +445,9 @@ module ibex_load_store_unit (
 
   assign busy_o = (CS == WAIT_RVALID) | (data_req_o == 1'b1);
 
-  //////////////////////////////////////////////////////////////////////////////
-  // Assertions
-  //////////////////////////////////////////////////////////////////////////////
+  ////////////////
+  // Assertions //
+  ////////////////
 `ifndef VERILATOR
   // make sure there is no new request when the old one is not yet completely done
   // i.e. it should not be possible to get a grant without an rvalid for the

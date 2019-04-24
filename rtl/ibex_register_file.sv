@@ -75,15 +75,15 @@ module ibex_register_file #(
 
   logic clk_int;
 
-  //-----------------------------------------------------------------------------
-  //-- READ : Read address decoder RAD
-  //-----------------------------------------------------------------------------
+  //////////////////////////////////////
+  // READ: Read address decoder (RAD) //
+  //////////////////////////////////////
   assign rdata_a_o = mem[raddr_a_int];
   assign rdata_b_o = mem[raddr_b_int];
 
-  //-----------------------------------------------------------------------------
-  // WRITE : SAMPLE INPUT DATA
-  //---------------------------------------------------------------------------
+  ///////////////////////////////
+  // WRITE: SAMPLE INPUT DATA //
+  ///////////////////////////////
 
   prim_clock_gating CG_WE_GLOBAL (
       .clk_i     ( clk             ),
@@ -103,9 +103,9 @@ module ibex_register_file #(
     end
   end
 
-  //-----------------------------------------------------------------------------
-  //-- WRITE : Write Address Decoder (WAD), combinatorial process
-  //-----------------------------------------------------------------------------
+  ///////////////////////////////////////////////////////////////
+  // WRITE: Write Address Decoder (WAD), combinatorial process //
+  ///////////////////////////////////////////////////////////////
   always_comb begin : p_WADa
     for (int i = 1; i < NUM_WORDS; i++) begin : p_WordItera
       if (we_a_i && (waddr_a_int == i)) begin
@@ -117,9 +117,9 @@ module ibex_register_file #(
   end
 
 
-  //-----------------------------------------------------------------------------
-  //-- WRITE : Clock gating (if integrated clock-gating cells are available)
-  //-----------------------------------------------------------------------------
+  //////////////////////////////////////////////////////////////////////////
+  // WRITE: Clock gating (if integrated clock-gating cells are available) //
+  //////////////////////////////////////////////////////////////////////////
   for (genvar x = 1; x < NUM_WORDS; x++) begin : gen_CG_CELL_WORD_ITER
     prim_clock_gating CG_Inst (
         .clk_i     ( clk_int           ),
@@ -129,14 +129,14 @@ module ibex_register_file #(
     );
   end
 
-  //-----------------------------------------------------------------------------
-  //-- WRITE : Write operation
-  //-----------------------------------------------------------------------------
-  //-- Generate M = WORDS sequential processes, each of which describes one
-  //-- word of the memory. The processes are synchronized with the clocks
-  //-- ClocksxC(i), i = 0, 1, ..., M-1
-  //-- Use active low, i.e. transparent on low latches as storage elements
-  //-- Data is sampled on rising clock edge
+  ////////////////////////////
+  // WRITE: Write operation //
+  ////////////////////////////
+  // Generate M = WORDS sequential processes, each of which describes one
+  // word of the memory. The processes are synchronized with the clocks
+  // ClocksxC(i), i = 0, 1, ..., M-1
+  // Use active low, i.e. transparent on low latches as storage elements
+  // Data is sampled on rising clock edge
 
   always_latch begin : latch_wdata
     // Note: The assignment has to be done inside this process or Modelsim complains about it

@@ -61,9 +61,9 @@ module ibex_fetch_fifo (
   logic                     aligned_is_compressed, unaligned_is_compressed;
   logic                     unaligned_is_compressed_st;
 
-  //////////////////////////////////////////////////////////////////////////////
-  // output port
-  //////////////////////////////////////////////////////////////////////////////
+  /////////////////
+  // Output port //
+  /////////////////
 
 
   assign rdata = valid_Q[0] ? rdata_Q[0] : in_rdata_i;
@@ -78,9 +78,9 @@ module ibex_fetch_fifo (
   assign aligned_is_compressed      = rdata[ 1: 0] != 2'b11;
   assign unaligned_is_compressed_st = rdata_Q[0][17:16] != 2'b11;
 
-  //////////////////////////////////////////////////////////////////////////////
-  // instruction aligner (if unaligned)
-  //////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////
+  // Instruction aligner (if unaligned) //
+  ////////////////////////////////////////
 
   always_comb begin
     // serve the aligned case even though the output address is unaligned when
@@ -120,18 +120,18 @@ module ibex_fetch_fifo (
   end
 
 
-  //////////////////////////////////////////////////////////////////////////////
-  // input port
-  //////////////////////////////////////////////////////////////////////////////
+  ////////////////
+  // input port //
+  ////////////////
 
   // we accept data as long as our fifo is not full
   // we don't care about clear here as the data will be received one cycle
   // later anyway
   assign in_ready_o = ~valid_Q[DEPTH-2];
 
-  //////////////////////////////////////////////////////////////////////////////
-  // FIFO management
-  //////////////////////////////////////////////////////////////////////////////
+  /////////////////////
+  // FIFO management //
+  /////////////////////
 
   always_comb begin
     addr_int    = addr_Q;
@@ -180,9 +180,9 @@ module ibex_fetch_fifo (
     end
   end
 
-  //////////////////////////////////////////////////////////////////////////////
-  // registers
-  //////////////////////////////////////////////////////////////////////////////
+  ///////////////
+  // registers //
+  ///////////////
 
   always_ff @(posedge clk, negedge rst_n) begin
     if (!rst_n) begin
@@ -202,9 +202,9 @@ module ibex_fetch_fifo (
     end
   end
 
-  //----------------------------------------------------------------------------
-  // Assertions
-  //----------------------------------------------------------------------------
+  ////////////////
+  // Assertions //
+  ////////////////
 `ifndef VERILATOR
   assert property (
     @(posedge clk) (in_valid_i) |-> ((valid_Q[DEPTH-1] == 1'b0) || (clear_i == 1'b1)) );
