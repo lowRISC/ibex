@@ -401,43 +401,49 @@ module ibex_tracer #(
         default:           trace.printMnemonic("INVALID");
       endcase // unique case (instr)
 
-        // replace register written back
-        foreach(trace.regs_write[i]) begin
-          if ((trace.regs_write[i].addr == ex_reg_addr) && ex_reg_we) begin
-            trace.regs_write[i].value = ex_reg_wdata;
-          end
+      // replace register written back
+      foreach(trace.regs_write[i]) begin
+        if ((trace.regs_write[i].addr == ex_reg_addr) && ex_reg_we) begin
+          trace.regs_write[i].value = ex_reg_wdata;
         end
-        // look for data accesses and log them
-        if (ex_data_req) begin
+      end
+      // look for data accesses and log them
+      if (ex_data_req) begin
 
-          if (!ex_data_gnt) begin
-            //we wait until the the gnt comes
-            do @(negedge clk);
-            while (!ex_data_gnt);
-          end
-
-          mem_acc.addr = ex_data_addr;
-          mem_acc.we   = ex_data_we;
-
-          if (mem_acc.we) begin
-            mem_acc.wdata = ex_data_wdata;
-          end else begin
-            mem_acc.wdata = 'x;
-          end
-          //we wait until the the data instruction ends
+        if (!ex_data_gnt) begin
+          //we wait until the the gnt comes
           do @(negedge clk);
-            while (!data_valid_lsu);
-
-          if (!mem_acc.we) begin
-            //load operations
-            foreach(trace.regs_write[i])
-              trace.regs_write[i].value = lsu_reg_wdata;
-          end
-          trace.mem_access.push_back(mem_acc);
+          while (!ex_data_gnt);
         end
-     trace.printInstrTrace();
+
+        mem_acc.addr = ex_data_addr;
+        mem_acc.we   = ex_data_we;
+
+        if (mem_acc.we) begin
+          mem_acc.wdata = ex_data_wdata;
+        end else begin
+          mem_acc.wdata = 'x;
+        end
+        //we wait until the the data instruction ends
+        do @(negedge clk);
+          while (!data_valid_lsu);
+
+        if (!mem_acc.we) begin
+          //load operations
+          foreach(trace.regs_write[i])
+            trace.regs_write[i].value = lsu_reg_wdata;
+        end
+        trace.mem_access.push_back(mem_acc);
+      end
+      trace.printInstrTrace();
     end
   end // always @ (posedge clk)
 
 endmodule
+
+`undef REG_S1
+`undef REG_S2
+`undef REG_S3
+`undef REG_D
+
 `endif
