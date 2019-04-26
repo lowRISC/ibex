@@ -32,7 +32,9 @@ import ibex_tracer_defines::*;
 `define REG_S3 29:25
 `define REG_D  11:07
 
-
+/**
+ * Traces the executed instructions
+ */
 module ibex_tracer
 #(
     parameter REG_ADDR_WIDTH      = 5

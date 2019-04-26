@@ -24,7 +24,9 @@
 
 import ibex_defines::*;
 
-
+/**
+ * Main CPU controller of the processor
+ */
 module ibex_controller
 #(
   parameter REG_ADDR_WIDTH      = 5

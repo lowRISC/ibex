@@ -15,9 +15,13 @@
 
 `include "ibex_config.sv"
 
-// input port: send address one cycle before the data
-// clear_i clears the FIFO for the following cycle. in_addr_i can be sent in
-// this cycle already
+/**
+ * Fetch Fifo for 32 bit memory interface
+ *
+ * input port: send address one cycle before the data
+ * clear_i clears the FIFO for the following cycle. in_addr_i can be sent in
+ * this cycle already.
+ */
 module ibex_fetch_fifo
 (
     input  logic        clk,

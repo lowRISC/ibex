@@ -24,6 +24,12 @@
 
 import ibex_defines::*;
 
+/**
+ * Instruction Fetch Stage
+ *
+ * Instruction fetch unit: Selection of the next PC, and buffering (sampling) of
+ * the read instruction.
+ */
 module ibex_if_stage
 (
       input  logic        clk,

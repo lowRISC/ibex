@@ -29,6 +29,12 @@ import ibex_defines::*;
  `endif
 `endif
 
+/**
+ * Control and Status Registers
+ *
+ * Control and Status Registers (CSRs) loosely following the RiscV draft
+ * priviledged instruction set spec (v1.9)
+ */
 module ibex_cs_registers
 #(
   parameter N_EXT_CNT    = 0

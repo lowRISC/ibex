@@ -22,6 +22,12 @@
 
 `include "ibex_config.sv"
 
+/**
+ * Load Store Unit
+ *
+ * Load Store Unit, used to eliminate multiple access during processor stalls,
+ * and to align bytes and halfwords.
+ */
 module ibex_load_store_unit
 (
     input  logic         clk,

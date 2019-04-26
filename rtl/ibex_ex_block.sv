@@ -25,6 +25,11 @@
 
 import ibex_defines::*;
 
+/**
+ * Execution stage
+ *
+ * Execution block: Hosts ALU and MUL/DIV unit
+ */
 module ibex_ex_block
 #(
   parameter RV32M      = 1

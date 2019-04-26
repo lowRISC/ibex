@@ -31,7 +31,12 @@ import ibex_defines::*;
 `define REG_S2 24:20
 `define REG_D  11:07
 
-
+/**
+ * Instruction Decode Stage
+ *
+ * Decode stage of the core. It decodes the instructions and hosts the register
+ * file.
+ */
 module ibex_id_stage
 #(
   parameter RV32M      = 1,

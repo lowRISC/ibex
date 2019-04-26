@@ -25,6 +25,9 @@
 
 import ibex_defines::*;
 
+/**
+ * Top level module of the ibex RISC-V core
+ */
 module ibex_core
 #(
   parameter N_EXT_PERF_COUNTERS = 0,

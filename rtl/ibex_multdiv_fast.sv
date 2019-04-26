@@ -20,6 +20,11 @@ import ibex_defines::*;
 `define OP_L 15:0
 `define OP_H 31:16
 
+/**
+ * Fast Multiplier and Division
+ *
+ * 16x16 kernel multiplier and Long Division
+ */
 module ibex_multdiv_fast
 (
   input  logic        clk,

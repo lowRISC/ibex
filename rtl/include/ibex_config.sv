@@ -17,6 +17,7 @@
 // Description:    Configure optional simulation modules                      //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
+// Configure optional simulation modules
 
 // no traces for synthesis, they are not synthesizable
 `ifndef SYNTHESIS

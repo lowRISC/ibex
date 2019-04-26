@@ -25,6 +25,9 @@
 
 import ibex_defines::*;
 
+/**
+ * Instruction decoder
+ */
 module ibex_decoder
 #(
   parameter RV32M      = 1

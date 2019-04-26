@@ -16,9 +16,14 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-
 import ibex_defines::*;
 
+/**
+ * Compressed instruction decoder
+ *
+ * Decodes RISC-V compressed instructions into their RV32 equivalent.
+ * This module is fully combinatorial.
+ */
 module ibex_compressed_decoder
 (
   input  logic [31:0] instr_i,

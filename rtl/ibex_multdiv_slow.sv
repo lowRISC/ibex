@@ -17,7 +17,11 @@
 
 import ibex_defines::*;
 
-
+/**
+ * Slow Multiplier and Division
+ *
+ * Baugh-Wooley multiplier and Long Division
+ */
 module ibex_multdiv_slow
 (
   input  logic        clk,

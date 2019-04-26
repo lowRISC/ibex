@@ -22,6 +22,9 @@
 
 import ibex_defines::*;
 
+/**
+ * Arithmetic logic unit
+ */
 module ibex_alu
 (
   input  logic [ALU_OP_WIDTH-1:0]  operator_i,

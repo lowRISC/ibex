@@ -21,6 +21,12 @@
 
 `include "ibex_config.sv"
 
+/**
+ * RISC-V register file
+ *
+ * Register file with 31 or 15x 32 bit wide registers. Register 0 is fixed to 0.
+ * This register file is based on flip flops.
+ */
 module ibex_register_file
 #(
   parameter RV32E         = 0,

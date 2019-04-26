@@ -18,6 +18,9 @@
 
 import ibex_defines::*;
 
+/**
+ * Interrupt Controller
+ */
 module ibex_int_controller
 (
   input  logic        clk,
