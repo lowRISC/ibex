@@ -187,8 +187,8 @@ module ibex_decoder #(
           unique case (instr_rdata_i[14:12])
             3'b000:  alu_operator_o = ALU_EQ;
             3'b001:  alu_operator_o = ALU_NE;
-            3'b100:  alu_operator_o = ALU_LTS;
-            3'b101:  alu_operator_o = ALU_GES;
+            3'b100:  alu_operator_o = ALU_LT;
+            3'b101:  alu_operator_o = ALU_GE;
             3'b110:  alu_operator_o = ALU_LTU;
             3'b111:  alu_operator_o = ALU_GEU;
             default: illegal_insn_o = 1'b1;
@@ -314,7 +314,7 @@ module ibex_decoder #(
 
         unique case (instr_rdata_i[14:12])
           3'b000: alu_operator_o = ALU_ADD;  // Add Immediate
-          3'b010: alu_operator_o = ALU_SLTS; // Set to one if Lower Than Immediate
+          3'b010: alu_operator_o = ALU_SLT;  // Set to one if Lower Than Immediate
           3'b011: alu_operator_o = ALU_SLTU; // Set to one if Lower Than Immediate Unsigned
           3'b100: alu_operator_o = ALU_XOR;  // Exclusive Or with Immediate
           3'b110: alu_operator_o = ALU_OR;   // Or with Immediate
@@ -350,7 +350,7 @@ module ibex_decoder #(
             // RV32I ALU operations
             {6'b00_0000, 3'b000}: alu_operator_o = ALU_ADD;   // Add
             {6'b10_0000, 3'b000}: alu_operator_o = ALU_SUB;   // Sub
-            {6'b00_0000, 3'b010}: alu_operator_o = ALU_SLTS;  // Set Lower Than
+            {6'b00_0000, 3'b010}: alu_operator_o = ALU_SLT;   // Set Lower Than
             {6'b00_0000, 3'b011}: alu_operator_o = ALU_SLTU;  // Set Lower Than Unsigned
             {6'b00_0000, 3'b100}: alu_operator_o = ALU_XOR;   // Xor
             {6'b00_0000, 3'b110}: alu_operator_o = ALU_OR;    // Or

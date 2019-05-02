@@ -64,13 +64,13 @@ module ibex_alu (
       ALU_SUB,
 
       // Comparator OPs
-      ALU_EQ,    ALU_NE,
-      ALU_GTU,   ALU_GEU,
-      ALU_LTU,   ALU_LEU,
-      ALU_GTS,   ALU_GES,
-      ALU_LTS,   ALU_LES,
-      ALU_SLTS,  ALU_SLTU,
-      ALU_SLETS, ALU_SLETU: adder_op_b_negate = 1'b1;
+      ALU_EQ,   ALU_NE,
+      ALU_GTU,  ALU_GEU,
+      ALU_LTU,  ALU_LEU,
+      ALU_GT,   ALU_GE,
+      ALU_LT,   ALU_LE,
+      ALU_SLT,  ALU_SLTU,
+      ALU_SLET, ALU_SLETU: adder_op_b_negate = 1'b1;
 
       default: ;
     endcase
@@ -138,12 +138,12 @@ module ibex_alu (
     cmp_signed = 1'b0;
 
     unique case (operator_i)
-      ALU_GTS,
-      ALU_GES,
-      ALU_LTS,
-      ALU_LES,
-      ALU_SLTS,
-      ALU_SLETS: begin
+      ALU_GT,
+      ALU_GE,
+      ALU_LT,
+      ALU_LE,
+      ALU_SLT,
+      ALU_SLET: begin
         cmp_signed = 1'b1;
       end
 
@@ -187,13 +187,13 @@ module ibex_alu (
     unique case (operator_i)
       ALU_EQ:            cmp_result =  is_equal;
       ALU_NE:            cmp_result = ~is_equal;
-      ALU_GTS, ALU_GTU:  cmp_result = is_greater_equal & ~is_equal;
-      ALU_GES, ALU_GEU:  cmp_result = is_greater_equal;
-      ALU_LTS, ALU_SLTS,
+      ALU_GT,  ALU_GTU:  cmp_result = is_greater_equal & ~is_equal;
+      ALU_GE,  ALU_GEU:  cmp_result = is_greater_equal;
+      ALU_LT,  ALU_SLT,
       ALU_LTU, ALU_SLTU: cmp_result = ~is_greater_equal;
-      ALU_SLETS,
+      ALU_SLET,
       ALU_SLETU,
-      ALU_LES, ALU_LEU:  cmp_result = ~is_greater_equal | is_equal;
+      ALU_LE,  ALU_LEU:  cmp_result = ~is_greater_equal | is_equal;
 
       default: ;
     endcase
@@ -224,13 +224,13 @@ module ibex_alu (
       ALU_SRL, ALU_SRA: result_o = shift_result;
 
       // Comparison Operations
-      ALU_EQ,    ALU_NE,
-      ALU_GTU,   ALU_GEU,
-      ALU_LTU,   ALU_LEU,
-      ALU_GTS,   ALU_GES,
-      ALU_LTS,   ALU_LES,
-      ALU_SLTS,  ALU_SLTU,
-      ALU_SLETS, ALU_SLETU: result_o = {31'h0,cmp_result};
+      ALU_EQ,   ALU_NE,
+      ALU_GTU,  ALU_GEU,
+      ALU_LTU,  ALU_LEU,
+      ALU_GT,   ALU_GE,
+      ALU_LT,   ALU_LE,
+      ALU_SLT,  ALU_SLTU,
+      ALU_SLET, ALU_SLETU: result_o = {31'h0,cmp_result};
 
       default: ; // default case to suppress unique warning
     endcase

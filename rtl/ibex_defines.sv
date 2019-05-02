@@ -83,21 +83,21 @@ parameter ALU_EXTS  = 6'b111110;
 parameter ALU_EXT   = 6'b111111;
 
 // Comparisons
-parameter ALU_LTS   = 6'b000000;
+parameter ALU_LT    = 6'b000000;
 parameter ALU_LTU   = 6'b000001;
-parameter ALU_LES   = 6'b000100;
+parameter ALU_LE    = 6'b000100;
 parameter ALU_LEU   = 6'b000101;
-parameter ALU_GTS   = 6'b001000;
+parameter ALU_GT    = 6'b001000;
 parameter ALU_GTU   = 6'b001001;
-parameter ALU_GES   = 6'b001010;
+parameter ALU_GE    = 6'b001010;
 parameter ALU_GEU   = 6'b001011;
 parameter ALU_EQ    = 6'b001100;
 parameter ALU_NE    = 6'b001101;
 
 // Set Lower Than operations
-parameter ALU_SLTS  = 6'b000010;
+parameter ALU_SLT   = 6'b000010;
 parameter ALU_SLTU  = 6'b000011;
-parameter ALU_SLETS = 6'b000110;
+parameter ALU_SLET  = 6'b000110;
 parameter ALU_SLETU = 6'b000111;
 
 // Absolute value
