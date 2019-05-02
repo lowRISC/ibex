@@ -39,20 +39,6 @@ parameter OPCODE_JAL       = 7'h6f;
 parameter OPCODE_AUIPC     = 7'h17;
 parameter OPCODE_LUI       = 7'h37;
 
-// those opcodes are now used for PULP custom instructions
-// parameter OPCODE_CUST0     = 7'h0b
-// parameter OPCODE_CUST1     = 7'h2b
-
-// PULP custom
-parameter OPCODE_LOAD_POST  = 7'h0b;
-parameter OPCODE_STORE_POST = 7'h2b;
-parameter OPCODE_PULP_OP    = 7'h5b;
-parameter OPCODE_VECOP      = 7'h57;
-parameter OPCODE_HWLOOP     = 7'h7b;
-
-parameter REGC_S1   = 2'b10;
-parameter REGC_RD   = 2'b01;
-parameter REGC_ZERO = 2'b11;
 
 ////////////////////
 // ALU operations //
