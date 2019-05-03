@@ -6,7 +6,7 @@ Ibex fully implements the RV32IMC instruction set and a small set of RISC-V
 privileged specifications. Ibex can be configured to be very small by disabling
 the RV32M extensions and by activating the RV32E extensions.
 
-This core was initially developed as part of the 
+This core was initially developed as part of the
 [PULP platform](http://pulp.ethz.ch/) under the name "Zero-riscy", and has
 been contributed to [lowRISC](https://www.lowrisc.org) who maintains it and
 develops it further.
@@ -16,8 +16,9 @@ additions, and test and verification planned for the future.
 
 ## Documentation
 
-A datasheet that explains the most important features of the core can be found
-in the doc folder.
+The Ibex documentation can be [read online at ReadTheDocs](https://ibex-core.readthedocs.io/en/latest/).
+It is also contained in the `doc` folder of this repository.
+We highly appreciate pull requests on the documentation if you find anything wrong or outdated!
 
 ## License
 
