@@ -20,8 +20,6 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "ibex_config.sv"
-
 /**
  * Main CPU controller of the processor
  */

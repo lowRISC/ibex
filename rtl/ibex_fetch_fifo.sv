@@ -13,8 +13,6 @@
 // Description:    Fetch fifo                                                 //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "ibex_config.sv"
-
 /**
  * Fetch Fifo for 32 bit memory interface
  *

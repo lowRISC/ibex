@@ -1,10 +1,9 @@
 ibex:
   incdirs: [
-    include,
   ]
   files: [
-    include/ibex_defines.sv,
-    include/ibex_tracer_defines.sv,
+    ibex_defines.sv,
+    ibex_tracer_defines.sv,
     ibex_alu.sv,
     ibex_compressed_decoder.sv,
     ibex_controller.sv,
@@ -27,11 +26,10 @@ ibex_vip_rtl:
     rtl,
   ]
   incdirs: [
-    include,
   ]
   files: [
-    include/ibex_defines.sv,
-    include/ibex_tracer_defines.sv,
+    ibex_defines.sv,
+    ibex_tracer_defines.sv,
     ibex_tracer.sv,
   ]
 ibex_regfile_rtl:
@@ -41,7 +39,6 @@ ibex_regfile_rtl:
     gf22
   ]
   incdirs: [
-    include,
   ]
   files: [
     ibex_register_file.sv,
@@ -51,7 +48,6 @@ ibex_regfile_fpga:
     xilinx,
   ]
   incdirs: [
-    include,
   ]
   files: [
     ibex_register_file_ff.sv,

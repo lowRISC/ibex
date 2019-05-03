@@ -21,8 +21,6 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "ibex_config.sv"
-
 // Source/Destination register instruction index
 `define REG_S1 19:15
 `define REG_S2 24:20
