@@ -11,7 +11,7 @@
 //                                                                            //
 //                                                                            //
 // Design Name:    RISC-V processor core                                      //
-// Project Name:   ibex                                                 //
+// Project Name:   ibex                                                       //
 // Language:       SystemVerilog                                              //
 //                                                                            //
 // Description:    Defines for various constants used by the processor core.  //
@@ -46,9 +46,11 @@ parameter OPCODE_LUI       = 7'h37;
 
 parameter ALU_OP_WIDTH = 6;
 
+// Arithmetics
 parameter ALU_ADD   = 6'b011000;
 parameter ALU_SUB   = 6'b011001;
 
+// Logics
 parameter ALU_XOR   = 6'b101111;
 parameter ALU_OR    = 6'b101110;
 parameter ALU_AND   = 6'b010101;
@@ -76,6 +78,7 @@ parameter ALU_SLTU  = 6'b000011;
 parameter ALU_SLET  = 6'b000110;
 parameter ALU_SLETU = 6'b000111;
 
+// Multiplier/divider
 parameter MD_OP_MULL  = 2'b00;
 parameter MD_OP_MULH  = 2'b01;
 parameter MD_OP_DIV   = 2'b10;
@@ -106,6 +109,7 @@ typedef enum logic[3:0] {
    XDEBUGVER_STD = 4'd4, // external debug according to RISC-V debug spec
    XDEBUGVER_NONSTD = 4'd15 // debug not conforming to RISC-V debug spec
 } Xdebugver_t;
+
 
 //////////////
 // ID stage //
