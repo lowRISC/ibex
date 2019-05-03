@@ -19,9 +19,6 @@
 
 `ifndef VERILATOR
 
-
-`include "ibex_config.sv"
-
 import ibex_defines::*;
 import ibex_tracer_defines::*;
 

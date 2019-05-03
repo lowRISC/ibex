@@ -19,14 +19,6 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "ibex_config.sv"
-
-`ifndef PULP_FPGA_EMUL
- `ifdef SYNTHESIS
-  `define ASIC_SYNTHESIS
- `endif
-`endif
-
 /**
  * Control and Status Registers
  *

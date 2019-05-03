@@ -1,5 +1,5 @@
-include/ibex_defines.sv
-include/ibex_tracer_defines.sv
+ibex_defines.sv
+ibex_tracer_defines.sv
 ibex_alu.sv
 ibex_compressed_decoder.sv
 ibex_controller.sv

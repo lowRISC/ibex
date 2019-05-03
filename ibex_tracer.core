@@ -9,7 +9,7 @@ filesets:
     depend:
       - lowrisc:ibex:ibex
     files:
-      - rtl/include/ibex_tracer_defines.sv
+      - rtl/ibex_tracer_defines.sv
       - rtl/ibex_tracer.sv
     file_type: systemVerilogSource
 

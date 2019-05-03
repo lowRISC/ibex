@@ -21,8 +21,6 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`include "ibex_config.sv"
-
 /**
  * Top level module of the ibex RISC-V core
  */
