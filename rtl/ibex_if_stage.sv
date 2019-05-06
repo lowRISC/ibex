@@ -30,49 +30,49 @@ module ibex_if_stage #(
     parameter DM_HALT_ADDRESS      = 32'h1A110800,
     parameter DM_EXCEPTION_ADDRESS = 32'h1A110808
 ) (
-    input  logic        clk,
-    input  logic        rst_n,
+    input  logic                      clk,
+    input  logic                      rst_n,
     // the boot address is used to calculate the exception offsets
-    input  logic [31:0] boot_addr_i,
+    input  logic [31:0]               boot_addr_i,
     // instruction request control
-    input  logic        req_i,
+    input  logic                      req_i,
     // instruction cache interface
-    output logic        instr_req_o,
-    output logic [31:0] instr_addr_o,
-    input  logic        instr_gnt_i,
-    input  logic        instr_rvalid_i,
-    input  logic [31:0] instr_rdata_i,
+    output logic                      instr_req_o,
+    output logic [31:0]               instr_addr_o,
+    input  logic                      instr_gnt_i,
+    input  logic                      instr_rvalid_i,
+    input  logic [31:0]               instr_rdata_i,
     // Output of IF Pipeline stage
-    output logic        instr_valid_id_o,      // instruction in IF/ID pipeline is valid
-    output logic [31:0] instr_rdata_id_o,      // read instruction is sampled and sent
-                                               // to ID stage for decoding
-    output logic        is_compressed_id_o,    // compressed decoder thinks this is a
-                                               // compressed instruction
-    output logic        illegal_c_insn_id_o,   // compressed decoder thinks this is an
-                                               // invalid instruction
-    output logic [31:0] pc_if_o,
-    output logic [31:0] pc_id_o,
+    output logic                      instr_valid_id_o,      // instruction in IF/ID pipeline is valid
+    output logic [31:0]               instr_rdata_id_o,      // read instruction is sampled and sent
+                                                             // to ID stage for decoding
+    output logic                      is_compressed_id_o,    // compressed decoder thinks this is a
+                                                             // compressed instruction
+    output logic                      illegal_c_insn_id_o,   // compressed decoder thinks this is an
+                                                             // invalid instruction
+    output logic [31:0]               pc_if_o,
+    output logic [31:0]               pc_id_o,
     // Forwarding ports - control signals
-    input  logic        clear_instr_valid_i,   // clear instruction valid bit in IF/ID pipe
-    input  logic        pc_set_i,              // set the program counter to a new value
-    input  logic [31:0] exception_pc_reg_i,    // address used to restore PC when the
-                                               // interrupt/exception is served
-    input  logic [31:0] depc_i,                // address used to restore PC when the debug is served
-    input  logic  [2:0] pc_mux_i,              // sel for pc multiplexer
-    input  logic  [2:0] exc_pc_mux_i,          // selects ISR address
-    input  logic  [4:0] exc_vec_pc_mux_i,      // selects ISR address for vectorized
-                                               // interrupt lines
+    input  logic                      clear_instr_valid_i,   // clear instruction valid bit in IF/ID pipe
+    input  logic                      pc_set_i,              // set the program counter to a new value
+    input  logic [31:0]               exception_pc_reg_i,    // address used to restore PC when the
+                                                             // interrupt/exception is served
+    input  logic [31:0]               depc_i,                // address used to restore PC when the debug is served
+    input  ibex_defines::pc_sel_e     pc_mux_i,              // sel for pc multiplexer
+    input  ibex_defines::exc_pc_sel_e exc_pc_mux_i,          // selects ISR address
+    input  logic  [4:0]               exc_vec_pc_mux_i,      // selects ISR address for vectorized
+                                                             // interrupt lines
 
     // jump and branch target and decision
-    input  logic [31:0] jump_target_ex_i,      // jump target address
+    input  logic [31:0]               jump_target_ex_i,      // jump target address
 
     // pipeline stall
-    input  logic        halt_if_i,
-    input  logic        id_ready_i,
-    output logic        if_valid_o,
+    input  logic                      halt_if_i,
+    input  logic                      id_ready_i,
+    output logic                      if_valid_o,
     // misc signals
-    output logic        if_busy_o,             // is the IF stage busy fetching instructions?
-    output logic        perf_imiss_o           // Instruction Fetch Miss
+    output logic                      if_busy_o,             // is the IF stage busy fetching instructions?
+    output logic                      perf_imiss_o           // Instruction Fetch Miss
 );
 
   import ibex_defines::*;
@@ -100,9 +100,9 @@ module ibex_if_stage #(
     // Spec to implement a "free-form" vectored trap handler.
     // We need to update this code and crt0.S to follow the new mtvec spec.
     unique case (exc_pc_mux_i)
-      EXC_PC_ILLINSN:    exc_pc = { boot_addr_i[31:8], EXC_OFF_ILLINSN };
-      EXC_PC_ECALL:      exc_pc = { boot_addr_i[31:8], EXC_OFF_ECALL };
-      EXC_PC_BREAKPOINT: exc_pc = { boot_addr_i[31:8], EXC_OFF_BREAKPOINT };
+      EXC_PC_ILLINSN:    exc_pc = { boot_addr_i[31:8], {EXC_OFF_ILLINSN} };
+      EXC_PC_ECALL:      exc_pc = { boot_addr_i[31:8], {EXC_OFF_ECALL} };
+      EXC_PC_BREAKPOINT: exc_pc = { boot_addr_i[31:8], {EXC_OFF_BREAKPOINT} };
       EXC_PC_IRQ:        exc_pc = { boot_addr_i[31:8], 1'b0, exc_vec_pc_mux_i[4:0], 2'b0 };
       EXC_PC_DBD:        exc_pc = { DM_HALT_ADDRESS };
       EXC_PC_DBGEXC:     exc_pc = { DM_EXCEPTION_ADDRESS };
@@ -116,7 +116,7 @@ module ibex_if_stage #(
     fetch_addr_n = '0;
 
     unique case (pc_mux_i)
-      PC_BOOT:      fetch_addr_n = {boot_addr_i[31:8], EXC_OFF_RST};
+      PC_BOOT:      fetch_addr_n = {boot_addr_i[31:8], {EXC_OFF_RST}};
       PC_JUMP:      fetch_addr_n = jump_target_ex_i;
       PC_EXCEPTION: fetch_addr_n = exc_pc;             // set PC to exception handler
       PC_ERET:      fetch_addr_n = exception_pc_reg_i; // PC is restored when returning

@@ -78,21 +78,21 @@ module ibex_core #(
   import ibex_defines::*;
 
   // IF/ID signals
-  logic              instr_valid_id;
-  logic [31:0]       instr_rdata_id;    // Instruction sampled inside IF stage
-  logic              is_compressed_id;
-  logic              illegal_c_insn_id; // Illegal compressed instruction sent to ID stage
-  logic [31:0]       pc_if;             // Program counter in IF stage
-  logic [31:0]       pc_id;             // Program counter in ID stage
+  logic        instr_valid_id;
+  logic [31:0] instr_rdata_id;    // Instruction sampled inside IF stage
+  logic        is_compressed_id;
+  logic        illegal_c_insn_id; // Illegal compressed instruction sent to ID stage
+  logic [31:0] pc_if;             // Program counter in IF stage
+  logic [31:0] pc_id;             // Program counter in ID stage
 
-  logic              clear_instr_valid;
-  logic              pc_set;
-  logic [2:0]        pc_mux_id;     // Mux selector for next PC
-  logic [2:0]        exc_pc_mux_id;     // Mux selector for exception PC
-  logic [5:0]        exc_cause;
+  logic        clear_instr_valid;
+  logic        pc_set;
+  pc_sel_e     pc_mux_id;         // Mux selector for next PC
+  exc_pc_sel_e exc_pc_mux_id;     // Mux selector for exception PC
+  exc_cause_e  exc_cause;
 
-  logic              lsu_load_err;
-  logic              lsu_store_err;
+  logic        lsu_load_err;
+  logic        lsu_store_err;
 
   // ID performance counter signals
   logic        is_decoding;
@@ -112,7 +112,7 @@ module ibex_core #(
   logic        core_ctrl_firstfetch, core_busy_int, core_busy_q;
 
   // ALU Control
-  logic [ALU_OP_WIDTH-1:0] alu_operator_ex;
+  alu_op_e     alu_operator_ex;
   logic [31:0] alu_operand_a_ex;
   logic [31:0] alu_operand_b_ex;
 
@@ -122,7 +122,7 @@ module ibex_core #(
   // Multiplier Control
   logic        mult_en_ex;
   logic        div_en_ex;
-  logic [1:0]  multdiv_operator_ex;
+  md_op_e      multdiv_operator_ex;
   logic [1:0]  multdiv_signed_mode_ex;
   logic [31:0] multdiv_operand_a_ex;
   logic [31:0] multdiv_operand_b_ex;
@@ -133,8 +133,7 @@ module ibex_core #(
 
   logic        csr_access;
   logic  [1:0] csr_op;
-  logic [11:0] csr_addr;
-  logic [11:0] csr_addr_int;
+  csr_num_e    csr_addr;
   logic [31:0] csr_rdata;
   logic [31:0] csr_wdata;
 
@@ -167,13 +166,13 @@ module ibex_core #(
   logic        csr_save_cause;
   logic        csr_save_if;
   logic        csr_save_id;
-  logic [5:0]  csr_cause;
+  exc_cause_e  csr_cause;
   logic        csr_restore_mret_id;
   logic        csr_restore_dret_id;
 
   // debug mode and dcsr configuration
   logic        debug_mode;
-  logic [2:0]  debug_cause;
+  dbg_cause_e  debug_cause;
   logic        debug_csr_save;
   logic        debug_single_step;
   logic        debug_ebreakm;
@@ -531,12 +530,11 @@ module ibex_core #(
 
 
   //  CSR access
-  assign csr_access   =  csr_access_ex;
-  assign csr_addr     =  csr_addr_int;
-  assign csr_wdata    =  alu_operand_a_ex;
-  assign csr_op       =  csr_op_ex;
+  assign csr_access =  csr_access_ex;
+  assign csr_wdata  =  alu_operand_a_ex;
+  assign csr_op     =  csr_op_ex;
 
-  assign csr_addr_int = csr_access_ex ? alu_operand_b_ex[11:0] : '0;
+  assign csr_addr   = csr_num_e'(csr_access_ex ? alu_operand_b_ex[11:0] : '0);
 
 
 `ifndef VERILATOR

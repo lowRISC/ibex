@@ -36,103 +36,103 @@ module ibex_id_stage #(
     parameter bit RV32M  = 1,
     parameter bit RV32E  = 0
 ) (
-    input  logic        clk,
-    input  logic        rst_n,
+    input  logic                      clk,
+    input  logic                      rst_n,
 
-    input  logic        test_en_i,
+    input  logic                      test_en_i,
 
-    input  logic        fetch_enable_i,
-    output logic        ctrl_busy_o,
-    output logic        core_ctrl_firstfetch_o,
-    output logic        is_decoding_o,
+    input  logic                      fetch_enable_i,
+    output logic                      ctrl_busy_o,
+    output logic                      core_ctrl_firstfetch_o,
+    output logic                      is_decoding_o,
 
     // Interface to IF stage
-    input  logic              instr_valid_i,
-    input  logic       [31:0] instr_rdata_i,      // comes from pipeline of IF stage
-    output logic              instr_req_o,
+    input  logic                      instr_valid_i,
+    input  logic [31:0]               instr_rdata_i, // comes from pipeline of IF stage
+    output logic                      instr_req_o,
 
     // Jumps and branches
-    input  logic        branch_decision_i,
+    input  logic                      branch_decision_i,
 
     // IF and ID stage signals
-    output logic        clear_instr_valid_o,
-    output logic        pc_set_o,
-    output logic [2:0]  pc_mux_o,
-    output logic [2:0]  exc_pc_mux_o,
+    output logic                      clear_instr_valid_o,
+    output logic                      pc_set_o,
+    output ibex_defines::pc_sel_e     pc_mux_o,
+    output ibex_defines::exc_pc_sel_e exc_pc_mux_o,
 
-    input  logic        illegal_c_insn_i,
-    input  logic        is_compressed_i,
+    input  logic                      illegal_c_insn_i,
+    input  logic                      is_compressed_i,
 
-    input  logic [31:0] pc_id_i,
+    input  logic [31:0]               pc_id_i,
 
     // Stalls
-    output logic        halt_if_o,      // controller requests a halt of the IF stage
-    output logic        id_ready_o,     // ID stage is ready for the next instruction
-    input  logic        ex_ready_i,
-    output logic        id_valid_o,     // ID stage is done
+    output logic                      halt_if_o,  // controller requests a halt of the IF stage
+    output logic                      id_ready_o, // ID stage is ready for the next instruction
+    input  logic                      ex_ready_i,
+    output logic                      id_valid_o, // ID stage is done
 
     // ALU
-    output logic [ibex_defines::ALU_OP_WIDTH-1:0] alu_operator_ex_o,
-    output logic [31:0]                           alu_operand_a_ex_o,
-    output logic [31:0]                           alu_operand_b_ex_o,
+    output ibex_defines::alu_op_e     alu_operator_ex_o,
+    output logic [31:0]               alu_operand_a_ex_o,
+    output logic [31:0]               alu_operand_b_ex_o,
 
     // MUL, DIV
-    output logic        mult_en_ex_o,
-    output logic        div_en_ex_o,
-    output logic  [1:0] multdiv_operator_ex_o,
-    output logic  [1:0] multdiv_signed_mode_ex_o,
-    output logic [31:0] multdiv_operand_a_ex_o,
-    output logic [31:0] multdiv_operand_b_ex_o,
+    output logic                      mult_en_ex_o,
+    output logic                      div_en_ex_o,
+    output ibex_defines::md_op_e      multdiv_operator_ex_o,
+    output logic  [1:0]               multdiv_signed_mode_ex_o,
+    output logic [31:0]               multdiv_operand_a_ex_o,
+    output logic [31:0]               multdiv_operand_b_ex_o,
 
     // CSR
-    output logic        csr_access_ex_o,
-    output logic [1:0]  csr_op_ex_o,
-    output logic [5:0]  csr_cause_o,
-    output logic        csr_save_if_o,
-    output logic        csr_save_id_o,
-    output logic        csr_restore_mret_id_o,
-    output logic        csr_restore_dret_id_o,
-    output logic        csr_save_cause_o,
+    output logic                      csr_access_ex_o,
+    output logic [1:0]                csr_op_ex_o,
+    output ibex_defines::exc_cause_e  csr_cause_o,
+    output logic                      csr_save_if_o,
+    output logic                      csr_save_id_o,
+    output logic                      csr_restore_mret_id_o,
+    output logic                      csr_restore_dret_id_o,
+    output logic                      csr_save_cause_o,
 
     // Interface to load store unit
-    output logic        data_req_ex_o,
-    output logic        data_we_ex_o,
-    output logic [1:0]  data_type_ex_o,
-    output logic        data_sign_ext_ex_o,
-    output logic [1:0]  data_reg_offset_ex_o,
-    output logic [31:0] data_wdata_ex_o,
+    output logic                      data_req_ex_o,
+    output logic                      data_we_ex_o,
+    output logic [1:0]                data_type_ex_o,
+    output logic                      data_sign_ext_ex_o,
+    output logic [1:0]                data_reg_offset_ex_o,
+    output logic [31:0]               data_wdata_ex_o,
 
-    input  logic        data_misaligned_i,
-    input  logic [31:0] misaligned_addr_i,
+    input  logic                      data_misaligned_i,
+    input  logic [31:0]               misaligned_addr_i,
 
     // Interrupt signals
-    input  logic        irq_i,
-    input  logic [4:0]  irq_id_i,
-    input  logic        m_irq_enable_i,
-    output logic        irq_ack_o,
-    output logic [4:0]  irq_id_o,
-    output logic [5:0]  exc_cause_o,
+    input  logic                      irq_i,
+    input  logic [4:0]                irq_id_i,
+    input  logic                      m_irq_enable_i,
+    output logic                      irq_ack_o,
+    output logic [4:0]                irq_id_o,
+    output ibex_defines::exc_cause_e  exc_cause_o,
 
-    input  logic        lsu_load_err_i,
-    input  logic        lsu_store_err_i,
+    input  logic                      lsu_load_err_i,
+    input  logic                      lsu_store_err_i,
 
     // Debug Signal
-    output logic        debug_mode_o,
-    output logic [2:0]  debug_cause_o,
-    output logic        debug_csr_save_o,
-    input  logic        debug_req_i,
-    input  logic        debug_single_step_i,
-    input  logic        debug_ebreakm_i,
+    output logic                      debug_mode_o,
+    output ibex_defines::dbg_cause_e  debug_cause_o,
+    output logic                      debug_csr_save_o,
+    input  logic                      debug_req_i,
+    input  logic                      debug_single_step_i,
+    input  logic                      debug_ebreakm_i,
 
     // Write back signal
-    input  logic [31:0] regfile_wdata_lsu_i,
-    input  logic [31:0] regfile_wdata_ex_i,
-    input  logic [31:0] csr_rdata_i,
+    input  logic [31:0]               regfile_wdata_lsu_i,
+    input  logic [31:0]               regfile_wdata_ex_i,
+    input  logic [31:0]               csr_rdata_i,
 
     // Performance Counters
-    output logic        perf_jump_o,          // we are executing a jump instruction
-    output logic        perf_branch_o,        // we are executing a branch instruction
-    output logic        perf_tbranch_o        // we are executing a taken branch instruction
+    output logic                      perf_jump_o,    // we are executing a jump instruction
+    output logic                      perf_branch_o,  // we are executing a branch instruction
+    output logic                      perf_tbranch_o  // we are executing a taken branch instruction
 );
 
   import ibex_defines::*;
@@ -205,18 +205,18 @@ module ibex_id_stage #(
   logic [31:0] regfile_data_rb_id;
 
   // ALU Control
-  logic [ALU_OP_WIDTH-1:0] alu_operator;
-  logic [2:0]  alu_op_a_mux_sel;
-  logic [2:0]  alu_op_b_mux_sel;
+  alu_op_e     alu_operator;
+  op_a_sel_e   alu_op_a_mux_sel;
+  op_b_sel_e   alu_op_b_mux_sel;
 
-  logic [0:0]  imm_a_mux_sel;
-  logic [3:0]  imm_b_mux_sel;
+  imm_a_sel_e  imm_a_mux_sel;
+  imm_b_sel_e  imm_b_mux_sel;
 
   // Multiplier Control
   logic        mult_int_en;      // use integer multiplier
   logic        div_int_en;      // use integer division or reminder
   logic        multdiv_int_en;
-  logic [1:0]  multdiv_operator;
+  md_op_e      multdiv_operator;
   logic [1:0]  multdiv_signed_mode;
 
   // Data Memory Control
@@ -232,7 +232,7 @@ module ibex_id_stage #(
   logic        csr_status;
 
   // Forwarding
-  logic [1:0]  operand_a_fw_mux_sel;
+  op_fw_sel_e  operand_a_fw_mux_sel;
 
   logic [31:0] operand_a_fw_id;
   logic [31:0] operand_b_fw_id;
@@ -299,7 +299,7 @@ module ibex_id_stage #(
     endcase // case (alu_op_a_mux_sel)
   end
 
-  assign imm_a = (imm_a_mux_sel == IMMA_Z) ? imm_z_type : '0;
+  assign imm_a = (imm_a_mux_sel == IMM_A_Z) ? imm_z_type : '0;
 
   // Operand a forwarding mux used with LSU instructions
   always_comb begin : operand_a_fw_mux

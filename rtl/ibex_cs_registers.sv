@@ -31,59 +31,59 @@ module ibex_cs_registers #(
     parameter bit RV32M = 0
 ) (
     // Clock and Reset
-    input  logic        clk,
-    input  logic        rst_n,
+    input  logic                     clk,
+    input  logic                     rst_n,
 
     // Core and Cluster ID
-    input  logic  [3:0] core_id_i,
-    input  logic  [5:0] cluster_id_i,
+    input  logic  [3:0]              core_id_i,
+    input  logic  [5:0]              cluster_id_i,
 
-    input  logic [31:0] boot_addr_i,
+    input  logic [31:0]              boot_addr_i,
 
     // Interface to registers (SRAM like)
-    input  logic        csr_access_i,
-    input  logic [11:0] csr_addr_i,
-    input  logic [31:0] csr_wdata_i,
-    input  logic  [1:0] csr_op_i,
-    output logic [31:0] csr_rdata_o,
+    input  logic                     csr_access_i,
+    input  ibex_defines::csr_num_e   csr_addr_i,
+    input  logic [31:0]              csr_wdata_i,
+    input  ibex_defines::csr_op_e    csr_op_i,
+    output logic [31:0]              csr_rdata_o,
 
     // Interrupts
-    output logic        m_irq_enable_o,
-    output logic [31:0] mepc_o,
+    output logic                     m_irq_enable_o,
+    output logic [31:0]              mepc_o,
 
     // debug
-    input  logic  [2:0] debug_cause_i,
-    input  logic        debug_csr_save_i,
-    output logic [31:0] depc_o,
-    output logic        debug_single_step_o,
-    output logic        debug_ebreakm_o,
+    input  ibex_defines::dbg_cause_e debug_cause_i,
+    input  logic                     debug_csr_save_i,
+    output logic [31:0]              depc_o,
+    output logic                     debug_single_step_o,
+    output logic                     debug_ebreakm_o,
 
-    input  logic [31:0] pc_if_i,
-    input  logic [31:0] pc_id_i,
+    input  logic [31:0]              pc_if_i,
+    input  logic [31:0]              pc_id_i,
 
-    input  logic        csr_save_if_i,
-    input  logic        csr_save_id_i,
-    input  logic        csr_restore_mret_i,
-    input  logic        csr_restore_dret_i,
+    input  logic                     csr_save_if_i,
+    input  logic                     csr_save_id_i,
+    input  logic                     csr_restore_mret_i,
+    input  logic                     csr_restore_dret_i,
 
-    input  logic [5:0]  csr_cause_i,
-    input  logic        csr_save_cause_i,
+    input  ibex_defines::exc_cause_e csr_cause_i,
+    input  logic                     csr_save_cause_i,
 
 
     // Performance Counters
-    input  logic                 if_valid_i,        // IF stage gives a new instruction
-    input  logic                 id_valid_i,        // ID stage is done
-    input  logic                 is_compressed_i,   // compressed instruction in ID
-    input  logic                 is_decoding_i,     // controller is in DECODE state
+    input  logic                     if_valid_i,        // IF stage gives a new instruction
+    input  logic                     id_valid_i,        // ID stage is done
+    input  logic                     is_compressed_i,   // compressed instruction in ID
+    input  logic                     is_decoding_i,     // controller is in DECODE state
 
-    input  logic                 imiss_i,           // instruction fetch
-    input  logic                 pc_set_i,          // pc was set to a new value
-    input  logic                 jump_i,            // jump instruction seen   (j, jr, jal, jalr)
-    input  logic                 branch_i,          // branch instruction seen (bf, bnf)
-    input  logic                 branch_taken_i,    // branch was taken
-    input  logic                 mem_load_i,        // load from memory in this cycle
-    input  logic                 mem_store_i,       // store to memory in this cycle
-    input  logic [N_EXT_CNT-1:0] ext_counters_i
+    input  logic                     imiss_i,           // instruction fetch
+    input  logic                     pc_set_i,          // pc was set to a new value
+    input  logic                     jump_i,            // jump instruction seen   (j, jr, jal, jalr)
+    input  logic                     branch_i,          // branch instruction seen (bf, bnf)
+    input  logic                     branch_taken_i,    // branch was taken
+    input  logic                     mem_load_i,        // load from memory in this cycle
+    input  logic                     mem_store_i,       // store to memory in this cycle
+    input  logic [N_EXT_CNT-1:0]     ext_counters_i
 );
   import ibex_defines::*;
 
@@ -131,11 +131,11 @@ module ibex_cs_registers #(
     logic mpie;
     // logic spp;      - unimplemented, hardwired to '0
     // logic[1:0] hpp; - unimplemented, hardwired to '0
-    PrivLvl_t mpp;
+    priv_lvl_e mpp;
   } Status_t;
 
   typedef struct packed {
-      Xdebugver_t   xdebugver;
+      x_debug_ver_e xdebugver;
       logic [11:0]  zero2;
       logic         ebreakm;
       logic         zero1;
@@ -144,12 +144,12 @@ module ibex_cs_registers #(
       logic         stepie;
       logic         stopcount;
       logic         stoptime;
-      logic [2:0]   cause;
+      dbg_cause_e   cause;
       logic         zero0;
       logic         mprven;
       logic         nmip;
       logic         step;
-      PrivLvl_t     prv;
+      priv_lvl_e    prv;
   } Dcsr_t;
 
 
@@ -194,7 +194,7 @@ module ibex_cs_registers #(
     case (csr_addr_i)
 
       // mstatus: always M-mode, contains IE bit
-      12'h300: csr_rdata_int = {
+      CSR_MSTATUS: csr_rdata_int = {
                                   19'b0,
                                   mstatus_q.mpp,
                                   3'b0,
@@ -204,14 +204,14 @@ module ibex_cs_registers #(
                                   3'h0
                                 };
       // mtvec: machine trap-handler base address
-      12'h305: csr_rdata_int = {boot_addr_i[31:8], 8'h0};
+      CSR_MTVEC: csr_rdata_int = {boot_addr_i[31:8], 8'h0};
       // mepc: exception program counter
-      12'h341: csr_rdata_int = mepc_q;
+      CSR_MEPC: csr_rdata_int = mepc_q;
       // mcause: exception cause
-      12'h342: csr_rdata_int = {mcause_q[5], 26'b0, mcause_q[4:0]};
+      CSR_MCAUSE: csr_rdata_int = {mcause_q[5], 26'b0, mcause_q[4:0]};
 
       // mhartid: unique hardware thread id
-      12'hF14: csr_rdata_int = {21'b0, cluster_id_i[5:0], 1'b0, core_id_i[3:0]};
+      CSR_MHARTID: csr_rdata_int = {21'b0, cluster_id_i[5:0], 1'b0, core_id_i[3:0]};
 
       // misa
       CSR_MISA: csr_rdata_int = MISA_VALUE;
@@ -238,17 +238,17 @@ module ibex_cs_registers #(
 
     case (csr_addr_i)
       // mstatus: IE bit
-      12'h300: if (csr_we_int) begin
+      CSR_MSTATUS: if (csr_we_int) begin
         mstatus_n = '{
           mie:  csr_wdata_int[`MSTATUS_MIE_BITS],
           mpie: csr_wdata_int[`MSTATUS_MPIE_BITS],
-          mpp:  PrivLvl_t'(PRIV_LVL_M)
+          mpp:  priv_lvl_e'(PRIV_LVL_M)
         };
       end
       // mepc: exception program counter
-      12'h341: if (csr_we_int) mepc_n = csr_wdata_int;
+      CSR_MEPC: if (csr_we_int) mepc_n = csr_wdata_int;
       // mcause
-      12'h342: if (csr_we_int) mcause_n = {csr_wdata_int[31], csr_wdata_int[4:0]};
+      CSR_MCAUSE: if (csr_we_int) mcause_n = {csr_wdata_int[31], csr_wdata_int[4:0]};
 
       CSR_DCSR:
         if (csr_we_int)
@@ -428,15 +428,15 @@ module ibex_cs_registers #(
     // only perform csr access if we actually care about the read data
     if (csr_access_i) begin
       unique case (csr_addr_i)
-        12'h7A0: begin
+        CSR_TSELECT: begin
           is_pcer = 1'b1;
           perf_rdata[N_PERF_COUNTERS-1:0] = PCER_q;
         end
-        12'h7A1: begin
+        CSR_TDATA1: begin
           is_pcmr = 1'b1;
           perf_rdata[1:0] = PCMR_q;
         end
-        12'h79F: begin
+        CSR_PCCR31: begin
           is_pccr = 1'b1;
           pccr_all_sel = 1'b1;
         end
@@ -444,14 +444,14 @@ module ibex_cs_registers #(
       endcase
 
       // look for 780 to 79F, Performance Counter Counter Registers
-      if (csr_addr_i[11:5] == 7'b0111100) begin
+      if ({csr_addr_i[11:5]} == 7'b0111100) begin
         is_pccr     = 1'b1;
 
-        pccr_index = csr_addr_i[4:0];
+        pccr_index = {csr_addr_i[4:0]};
 `ifdef  ASIC_SYNTHESIS
         perf_rdata = PCCR_q[0];
 `else
-        perf_rdata = csr_addr_i[4:0] < N_PERF_COUNTERS ? PCCR_q[csr_addr_i[4:0]] : '0;
+        perf_rdata = {csr_addr_i[4:0]} < N_PERF_COUNTERS ? PCCR_q[{csr_addr_i[4:0]}] : '0;
 `endif
       end
     end

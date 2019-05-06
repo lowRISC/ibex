@@ -28,55 +28,55 @@ module ibex_decoder #(
     parameter bit RV32M  = 1
 ) (
     // singals running to/from controller
-    input  logic        deassert_we_i,           // deassert we, we are stalled or not active
-    input  logic        data_misaligned_i,       // misaligned data load/store in progress
-    input  logic        branch_mux_i,
-    input  logic        jump_mux_i,
-    output logic        illegal_insn_o,          // illegal instruction encountered
-    output logic        ebrk_insn_o,             // trap instruction encountered
-    output logic        mret_insn_o,             // return from exception instruction encountered
-    output logic        dret_insn_o,             // return from debug (M)
-    output logic        ecall_insn_o,            // environment call (syscall)
-                                                 // instruction encountered
-    output logic        pipe_flush_o,            // pipeline flush is requested
+    input  logic                     deassert_we_i,         // deassert we, we are stalled or not active
+    input  logic                     data_misaligned_i,     // misaligned data load/store in progress
+    input  logic                     branch_mux_i,
+    input  logic                     jump_mux_i,
+    output logic                     illegal_insn_o,        // illegal instruction encountered
+    output logic                     ebrk_insn_o,           // trap instruction encountered
+    output logic                     mret_insn_o,           // return from exception instruction encountered
+    output logic                     dret_insn_o,           // return from debug (M)
+    output logic                     ecall_insn_o,          // environment call (syscall)
+                                                            // instruction encountered
+    output logic                     pipe_flush_o,          // pipeline flush is requested
 
     // from IF/ID pipeline
-    input  logic [31:0] instr_rdata_i,           // instruction read from instr memory/cache
-    input  logic        illegal_c_insn_i,        // compressed instruction decode failed
+    input  logic [31:0]              instr_rdata_i,         // instruction read from instr memory/cache
+    input  logic                     illegal_c_insn_i,      // compressed instruction decode failed
 
     // ALU signals
-    output logic [ibex_defines::ALU_OP_WIDTH-1:0] alu_operator_o, // ALU operation selection
-    output logic [2:0]  alu_op_a_mux_sel_o,      // operand a selection: reg value, PC,
-                                                 // immediate or zero
-    output logic [2:0]  alu_op_b_mux_sel_o,      // operand b selection: reg value or immediate
+    output ibex_defines::alu_op_e    alu_operator_o,        // ALU operation selection
+    output ibex_defines::op_a_sel_e  alu_op_a_mux_sel_o,    // operand a selection: reg value, PC,
+                                                            // immediate or zero
+    output ibex_defines::op_b_sel_e  alu_op_b_mux_sel_o,    // operand b selection: reg value or immediate
 
-    output logic [0:0]  imm_a_mux_sel_o,         // immediate selection for operand a
-    output logic [3:0]  imm_b_mux_sel_o,         // immediate selection for operand b
+    output ibex_defines::imm_a_sel_e imm_a_mux_sel_o,       // immediate selection for operand a
+    output ibex_defines::imm_b_sel_e imm_b_mux_sel_o,       // immediate selection for operand b
 
     // MUL, DIV related control signals
-    output logic        mult_int_en_o,          // perform integer multiplication
-    output logic        div_int_en_o,           // perform integer division or reminder
-    output logic [1:0]  multdiv_operator_o,
-    output logic [1:0]  multdiv_signed_mode_o,
+    output logic                     mult_int_en_o,         // perform integer multiplication
+    output logic                     div_int_en_o,          // perform integer division or reminder
+    output ibex_defines::md_op_e     multdiv_operator_o,
+    output logic [1:0]               multdiv_signed_mode_o,
     // register file related signals
-    output logic        regfile_we_o,            // write enable for regfile
+    output logic                     regfile_we_o,          // write enable for regfile
 
     // CSR manipulation
-    output logic        csr_access_o,            // access to CSR
-    output logic [1:0]  csr_op_o,                // operation to perform on CSR
-    output logic        csr_status_o,            // access to xstatus CSR
+    output logic                     csr_access_o,          // access to CSR
+    output ibex_defines::csr_op_e    csr_op_o,              // operation to perform on CSR
+    output logic                     csr_status_o,          // access to xstatus CSR
 
     // LD/ST unit signals
-    output logic        data_req_o,              // start transaction to data memory
-    output logic        data_we_o,               // data memory write enable
-    output logic [1:0]  data_type_o,             // data type on data memory: byte,
-                                                 // half word or word
-    output logic        data_sign_extension_o,   // sign extension on read data from data memory
-    output logic [1:0]  data_reg_offset_o,       // offset in byte inside register for stores
+    output logic                     data_req_o,            // start transaction to data memory
+    output logic                     data_we_o,             // data memory write enable
+    output logic [1:0]               data_type_o,           // data type on data memory: byte,
+                                                            // half word or word
+    output logic                     data_sign_extension_o, // sign extension on read data from data memory
+    output logic [1:0]               data_reg_offset_o,     // offset in byte inside register for stores
 
     // jump/branches
-    output logic        jump_in_id_o,            // jump is being calculated in ALU
-    output logic        branch_in_id_o
+    output logic                     jump_in_id_o,          // jump is being calculated in ALU
+    output logic                     branch_in_id_o
 );
 
   import ibex_defines::*;
@@ -90,7 +90,7 @@ module ibex_decoder #(
   logic       branch_in_id;
   logic       jump_in_id;
 
-  logic [1:0] csr_op;
+  csr_op_e    csr_op;
   logic       csr_illegal;
 
   /////////////
@@ -104,7 +104,7 @@ module ibex_decoder #(
     alu_op_a_mux_sel_o          = OP_A_REGA_OR_FWD;
     alu_op_b_mux_sel_o          = OP_B_REGB_OR_FWD;
 
-    imm_a_mux_sel_o             = IMMA_ZERO;
+    imm_a_mux_sel_o             = IMM_A_ZERO;
     imm_b_mux_sel_o             = IMMB_I;
 
     mult_int_en                 = 1'b0;
@@ -132,7 +132,7 @@ module ibex_decoder #(
     ecall_insn_o                = 1'b0;
     pipe_flush_o                = 1'b0;
 
-    unique case (instr_rdata_i[6:0])
+    unique case (opcode_e'(instr_rdata_i[6:0]))
 
       ///////////
       // Jumps //
@@ -293,7 +293,7 @@ module ibex_decoder #(
       OPCODE_LUI: begin  // Load Upper Immediate
         alu_op_a_mux_sel_o  = OP_A_IMM;
         alu_op_b_mux_sel_o  = OP_B_IMM;
-        imm_a_mux_sel_o     = IMMA_ZERO;
+        imm_a_mux_sel_o     = IMM_A_ZERO;
         imm_b_mux_sel_o     = IMMB_U;
         alu_operator_o      = ALU_ADD;
         regfile_we          = 1'b1;
@@ -427,7 +427,7 @@ module ibex_decoder #(
       // Special //
       /////////////
 
-      OPCODE_MISC_MEM: begin
+      OPCODE_FENCE: begin
         // For now, treat the fence (funct3 == 000) instruction as a nop.
         // This may not be correct in a system with caches and should be
         // revisited.
@@ -472,7 +472,7 @@ module ibex_decoder #(
           csr_access_o        = 1'b1;
           regfile_we          = 1'b1;
           alu_op_b_mux_sel_o  = OP_B_IMM;
-          imm_a_mux_sel_o     = IMMA_Z;
+          imm_a_mux_sel_o     = IMM_A_Z;
           imm_b_mux_sel_o     = IMMB_I;    // CSR address is encoded in I imm
 
           if (instr_rdata_i[14]) begin
@@ -491,11 +491,11 @@ module ibex_decoder #(
 
           if (!csr_illegal) begin
             // flush pipeline on access to mstatus or debug CSRs
-            if (instr_rdata_i[31:20] == CSR_MSTATUS ||
-                instr_rdata_i[31:20] == CSR_DCSR ||
-                instr_rdata_i[31:20] == CSR_DPC ||
-                instr_rdata_i[31:20] == CSR_DSCRATCH0 ||
-                instr_rdata_i[31:20] == CSR_DSCRATCH1) begin
+            if (csr_num_e'(instr_rdata_i[31:20]) == CSR_MSTATUS   ||
+                csr_num_e'(instr_rdata_i[31:20]) == CSR_DCSR      ||
+                csr_num_e'(instr_rdata_i[31:20]) == CSR_DPC       ||
+                csr_num_e'(instr_rdata_i[31:20]) == CSR_DSCRATCH0 ||
+                csr_num_e'(instr_rdata_i[31:20]) == CSR_DSCRATCH1) begin
               csr_status_o = 1'b1;
             end
           end
