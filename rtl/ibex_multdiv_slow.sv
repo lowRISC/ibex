@@ -21,23 +21,23 @@
  * Baugh-Wooley multiplier and Long Division
  */
 module ibex_multdiv_slow (
-    input  logic        clk,
-    input  logic        rst_n,
-    input  logic        mult_en_i,
-    input  logic        div_en_i,
-    input  logic  [1:0] operator_i,
-    input  logic  [1:0] signed_mode_i,
-    input  logic [31:0] op_a_i,
-    input  logic [31:0] op_b_i,
-    input  logic [33:0] alu_adder_ext_i,
-    input  logic [31:0] alu_adder_i,
-    input  logic        equal_to_zero,
+    input  logic                 clk,
+    input  logic                 rst_n,
+    input  logic                 mult_en_i,
+    input  logic                 div_en_i,
+    input  ibex_defines::md_op_e operator_i,
+    input  logic  [1:0]          signed_mode_i,
+    input  logic [31:0]          op_a_i,
+    input  logic [31:0]          op_b_i,
+    input  logic [33:0]          alu_adder_ext_i,
+    input  logic [31:0]          alu_adder_i,
+    input  logic                 equal_to_zero,
 
-    output logic [32:0] alu_operand_a_o,
-    output logic [32:0] alu_operand_b_o,
-    output logic [31:0] multdiv_result_o,
+    output logic [32:0]          alu_operand_a_o,
+    output logic [32:0]          alu_operand_b_o,
+    output logic [31:0]          multdiv_result_o,
 
-    output logic        ready_o
+    output logic                 ready_o
 );
 
   import ibex_defines::*;

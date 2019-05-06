@@ -393,8 +393,8 @@ module ibex_tracer #(
         INSTR_DIVU:       trace.printRInstr("divu");
         INSTR_REM:        trace.printRInstr("rem");
         INSTR_REMU:       trace.printRInstr("remu");
-        {25'b?, OPCODE_LOAD}:       trace.printLoadInstr();
-        {25'b?, OPCODE_STORE}:      trace.printStoreInstr();
+        {25'b?, {OPCODE_LOAD}}:     trace.printLoadInstr();
+        {25'b?, {OPCODE_STORE}}:    trace.printStoreInstr();
         default:           trace.printMnemonic("INVALID");
       endcase // unique case (instr)
 

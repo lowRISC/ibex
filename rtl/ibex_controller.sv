@@ -24,91 +24,91 @@
  * Main CPU controller of the processor
  */
 module ibex_controller (
-    input  logic        clk,
-    input  logic        rst_n,
+    input  logic                      clk,
+    input  logic                      rst_n,
 
-    input  logic        fetch_enable_i,             // Start the decoding
-    output logic        ctrl_busy_o,                // Core is busy processing instructions
-    output logic        first_fetch_o,              // Core is at the FIRST FETCH stage
-    output logic        is_decoding_o,              // Core is in decoding state
+    input  logic                      fetch_enable_i,        // Start the decoding
+    output logic                      ctrl_busy_o,           // Core is busy processing instructions
+    output logic                      first_fetch_o,         // Core is at the FIRST FETCH stage
+    output logic                      is_decoding_o,         // Core is in decoding state
 
     // decoder related signals
-    output logic        deassert_we_o,              // deassert write enable for next instruction
+    output logic                      deassert_we_o,         // deassert write enable for next instruction
 
-    input  logic        illegal_insn_i,             // decoder encountered an invalid instruction
-    input  logic        ecall_insn_i,               // ecall encountered an mret instruction
-    input  logic        mret_insn_i,                // decoder encountered an mret instruction
-    input  logic        dret_insn_i,                // decoder encountered an dret instruction
-    input  logic        pipe_flush_i,               // decoder wants to do a pipe flush
-    input  logic        ebrk_insn_i,                // decoder encountered an ebreak instruction
-    input  logic        csr_status_i,               // decoder encountered an csr status instruction
+    input  logic                      illegal_insn_i,        // decoder encountered an invalid instruction
+    input  logic                      ecall_insn_i,          // ecall encountered an mret instruction
+    input  logic                      mret_insn_i,           // decoder encountered an mret instruction
+    input  logic                      dret_insn_i,           // decoder encountered an dret instruction
+    input  logic                      pipe_flush_i,          // decoder wants to do a pipe flush
+    input  logic                      ebrk_insn_i,           // decoder encountered an ebreak instruction
+    input  logic                      csr_status_i,          // decoder encountered an csr status instruction
 
     // from IF/ID pipeline
-    input  logic        instr_valid_i,              // instruction coming from IF/ID pipeline is
-                                                    // valid
+    input  logic                      instr_valid_i,         // instruction coming from IF/ID pipeline is
+                                                             // valid
 
     // from prefetcher
-    output logic        instr_req_o,                // Start fetching instructions
+    output logic                      instr_req_o,           // Start fetching instructions
 
     // to prefetcher
-    output logic        pc_set_o,                   // jump to address set by pc_mux
-    output logic [2:0]  pc_mux_o,                   // Selector in the Fetch stage to select the
-                                                    // right PC (normal, jump ...)
-    output logic [2:0]  exc_pc_mux_o,               // Selects target PC for exception
+    output logic                      pc_set_o,              // jump to address set by pc_mux
+    output ibex_defines::pc_sel_e     pc_mux_o,              // Selector in the Fetch stage to select the
+                                                             // right PC (normal, jump ...)
+    output ibex_defines::exc_pc_sel_e exc_pc_mux_o,          // Selects target PC for exception
 
     // LSU
-    input  logic        data_misaligned_i,
+    input  logic                      data_misaligned_i,
 
     // jump/branch signals
-    input  logic        branch_in_id_i,             // branch in id
-    input  logic        branch_taken_ex_i,          // branch taken signal
-    input  logic        branch_set_i,               // branch taken set signal
-    input  logic        jump_set_i,                 // jump taken set signal
+    input  logic                      branch_in_id_i,        // branch in id
+    input  logic                      branch_taken_ex_i,     // branch taken signal
+    input  logic                      branch_set_i,          // branch taken set signal
+    input  logic                      jump_set_i,            // jump taken set signal
 
-    input  logic        instr_multicyle_i,          // multicycle instructions active
+    input  logic                      instr_multicyle_i,     // multicycle instructions active
 
     // External Interrupt Req Signals, used to wake up from wfi even if the interrupt is not taken
-    input  logic        irq_i,
+    input  logic                      irq_i,
     // Interrupt Controller Signals
-    input  logic        irq_req_ctrl_i,
-    input  logic [4:0]  irq_id_ctrl_i,
-    input  logic        m_IE_i,                     // interrupt enable bit from CSR (M mode)
+    input  logic                      irq_req_ctrl_i,
+    input  logic [4:0]                irq_id_ctrl_i,
+    input  logic                      m_IE_i,                // interrupt enable bit from CSR (M mode)
 
-    output logic        irq_ack_o,
-    output logic [4:0]  irq_id_o,
+    output logic                      irq_ack_o,
+    output logic [4:0]                irq_id_o,
 
-    output logic [5:0]  exc_cause_o,
-    output logic        exc_ack_o,
-    output logic        exc_kill_o,
+    output ibex_defines::exc_cause_e  exc_cause_o,
+    output logic                      exc_ack_o,
+    output logic                      exc_kill_o,
 
     // Debug Signal
-    input  logic        debug_req_i,
-    output logic        debug_mode_o,
-    output logic [2:0]  debug_cause_o,
-    output logic        debug_csr_save_o,
-    input  logic        debug_single_step_i,
-    input  logic        debug_ebreakm_i,
+    input  logic                      debug_req_i,
+    output logic                      debug_mode_o,
+    output ibex_defines::dbg_cause_e  debug_cause_o,
+    output logic                      debug_csr_save_o,
+    input  logic                      debug_single_step_i,
+    input  logic                      debug_ebreakm_i,
 
-    output logic        csr_save_if_o,
-    output logic        csr_save_id_o,
-    output logic [5:0]  csr_cause_o,
-    output logic        csr_restore_mret_id_o,
-    output logic        csr_restore_dret_id_o,
-    output logic        csr_save_cause_o,
+    output logic                      csr_save_if_o,
+    output logic                      csr_save_id_o,
+    output ibex_defines::exc_cause_e  csr_cause_o,
+    output logic                      csr_restore_mret_id_o,
+    output logic                      csr_restore_dret_id_o,
+    output logic                      csr_save_cause_o,
 
     // forwarding signals
-    output logic [1:0]  operand_a_fw_mux_sel_o,   // regfile ra data selector form ID stage
+    output ibex_defines::op_fw_sel_e  operand_a_fw_mux_sel_o, // regfile ra data selector form ID stage
 
     // stall signals
-    output logic        halt_if_o,
-    output logic        halt_id_o,
+    output logic                      halt_if_o,
+    output logic                      halt_id_o,
 
-    input  logic        id_ready_i,               // ID stage is ready
+    input  logic                      id_ready_i,             // ID stage is ready
 
     // Performance Counters
-    output logic        perf_jump_o,              // we are executing a jump instruction
-                                                  // (j, jr, jal, jalr)
-    output logic        perf_tbranch_o            // we are executing a taken branch instruction
+    output logic                      perf_jump_o,            // we are executing a jump instruction
+                                                              // (j, jr, jal, jalr)
+    output logic                      perf_tbranch_o          // we are executing a taken branch instruction
 );
   import ibex_defines::*;
 

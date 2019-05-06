@@ -33,30 +33,30 @@ module ibex_ex_block #(
     input  logic        rst_n,
 
     // ALU signals from ID stage
-    input  logic [ibex_defines::ALU_OP_WIDTH-1:0] alu_operator_i,
-    input  logic [1:0]                            multdiv_operator_i,
-    input  logic                                  mult_en_i,
-    input  logic                                  div_en_i,
+    input  ibex_defines::alu_op_e alu_operator_i,
+    input  ibex_defines::md_op_e  multdiv_operator_i,
+    input  logic                  mult_en_i,
+    input  logic                  div_en_i,
 
-    input  logic [31:0]                           alu_operand_a_i,
-    input  logic [31:0]                           alu_operand_b_i,
+    input  logic [31:0]           alu_operand_a_i,
+    input  logic [31:0]           alu_operand_b_i,
 
-    input  logic  [1:0]                           multdiv_signed_mode_i,
-    input  logic [31:0]                           multdiv_operand_a_i,
-    input  logic [31:0]                           multdiv_operand_b_i,
+    input  logic  [1:0]           multdiv_signed_mode_i,
+    input  logic [31:0]           multdiv_operand_a_i,
+    input  logic [31:0]           multdiv_operand_b_i,
 
-    output logic [31:0]                           alu_adder_result_ex_o,
-    output logic [31:0]                           regfile_wdata_ex_o,
+    output logic [31:0]           alu_adder_result_ex_o,
+    output logic [31:0]           regfile_wdata_ex_o,
 
     // To IF: Jump and branch target and decision
-    output logic [31:0]                           jump_target_o,
-    output logic                                  branch_decision_o,
+    output logic [31:0]           jump_target_o,
+    output logic                  branch_decision_o,
 
-    input  logic                                  lsu_en_i,
+    input  logic                  lsu_en_i,
 
     // Stall Control
-    input  logic                                  lsu_ready_ex_i, // LSU is done
-    output logic                                  ex_ready_o      // EX stage gets new data
+    input  logic                  lsu_ready_ex_i, // LSU is done
+    output logic                  ex_ready_o      // EX stage gets new data
 );
 
   import ibex_defines::*;
