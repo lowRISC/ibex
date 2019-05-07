@@ -105,7 +105,7 @@ module ibex_decoder #(
     alu_op_b_mux_sel_o          = OP_B_REGB_OR_FWD;
 
     imm_a_mux_sel_o             = IMM_A_ZERO;
-    imm_b_mux_sel_o             = IMMB_I;
+    imm_b_mux_sel_o             = IMM_B_I;
 
     mult_int_en                 = 1'b0;
     div_int_en                  = 1'b0;
@@ -144,14 +144,14 @@ module ibex_decoder #(
           // Calculate jump target
           alu_op_a_mux_sel_o  = OP_A_CURRPC;
           alu_op_b_mux_sel_o  = OP_B_IMM;
-          imm_b_mux_sel_o     = IMMB_UJ;
+          imm_b_mux_sel_o     = IMM_B_J;
           alu_operator_o      = ALU_ADD;
           regfile_we          = 1'b0;
         end else begin
           // Calculate and store PC+4
           alu_op_a_mux_sel_o  = OP_A_CURRPC;
           alu_op_b_mux_sel_o  = OP_B_IMM;
-          imm_b_mux_sel_o     = IMMB_PCINCR;
+          imm_b_mux_sel_o     = IMM_B_PCINCR;
           alu_operator_o      = ALU_ADD;
           regfile_we          = 1'b1;
         end
@@ -163,14 +163,14 @@ module ibex_decoder #(
           // Calculate jump target
           alu_op_a_mux_sel_o  = OP_A_REGA_OR_FWD;
           alu_op_b_mux_sel_o  = OP_B_IMM;
-          imm_b_mux_sel_o     = IMMB_I;
+          imm_b_mux_sel_o     = IMM_B_I;
           alu_operator_o      = ALU_ADD;
           regfile_we          = 1'b0;
         end else begin
           // Calculate and store PC+4
           alu_op_a_mux_sel_o  = OP_A_CURRPC;
           alu_op_b_mux_sel_o  = OP_B_IMM;
-          imm_b_mux_sel_o     = IMMB_PCINCR;
+          imm_b_mux_sel_o     = IMM_B_PCINCR;
           alu_operator_o      = ALU_ADD;
           regfile_we          = 1'b1;
         end
@@ -197,7 +197,7 @@ module ibex_decoder #(
           // Calculate jump target in EX
           alu_op_a_mux_sel_o  = OP_A_CURRPC;
           alu_op_b_mux_sel_o  = OP_B_IMM;
-          imm_b_mux_sel_o     = IMMB_SB;
+          imm_b_mux_sel_o     = IMM_B_B;
           alu_operator_o      = ALU_ADD;
           regfile_we          = 1'b0;
         end
@@ -215,7 +215,7 @@ module ibex_decoder #(
 
         if (!instr_rdata_i[14]) begin
           // offset from immediate
-          imm_b_mux_sel_o     = IMMB_S;
+          imm_b_mux_sel_o     = IMM_B_S;
           alu_op_b_mux_sel_o  = OP_B_IMM;
         end else begin
           // Register offset is illegal since no register c available
@@ -245,7 +245,7 @@ module ibex_decoder #(
         // offset from immediate
         alu_operator_o      = ALU_ADD;
         alu_op_b_mux_sel_o  = OP_B_IMM;
-        imm_b_mux_sel_o     = IMMB_I;
+        imm_b_mux_sel_o     = IMM_B_I;
 
         // sign/zero extension
         data_sign_extension_o = ~instr_rdata_i[14];
@@ -294,7 +294,7 @@ module ibex_decoder #(
         alu_op_a_mux_sel_o  = OP_A_IMM;
         alu_op_b_mux_sel_o  = OP_B_IMM;
         imm_a_mux_sel_o     = IMM_A_ZERO;
-        imm_b_mux_sel_o     = IMMB_U;
+        imm_b_mux_sel_o     = IMM_B_U;
         alu_operator_o      = ALU_ADD;
         regfile_we          = 1'b1;
       end
@@ -302,14 +302,14 @@ module ibex_decoder #(
       OPCODE_AUIPC: begin  // Add Upper Immediate to PC
         alu_op_a_mux_sel_o  = OP_A_CURRPC;
         alu_op_b_mux_sel_o  = OP_B_IMM;
-        imm_b_mux_sel_o     = IMMB_U;
+        imm_b_mux_sel_o     = IMM_B_U;
         alu_operator_o      = ALU_ADD;
         regfile_we          = 1'b1;
       end
 
       OPCODE_OPIMM: begin // Register-Immediate ALU Operations
         alu_op_b_mux_sel_o  = OP_B_IMM;
-        imm_b_mux_sel_o     = IMMB_I;
+        imm_b_mux_sel_o     = IMM_B_I;
         regfile_we          = 1'b1;
 
         unique case (instr_rdata_i[14:12])
@@ -473,7 +473,7 @@ module ibex_decoder #(
           regfile_we          = 1'b1;
           alu_op_b_mux_sel_o  = OP_B_IMM;
           imm_a_mux_sel_o     = IMM_A_Z;
-          imm_b_mux_sel_o     = IMMB_I;    // CSR address is encoded in I imm
+          imm_b_mux_sel_o     = IMM_B_I;  // CSR address is encoded in I imm
 
           if (instr_rdata_i[14]) begin
             // rs1 field is used as immediate
@@ -522,7 +522,7 @@ module ibex_decoder #(
       // correct operands are sent to the AGU
       alu_op_a_mux_sel_o  = OP_A_REGA_OR_FWD;
       alu_op_b_mux_sel_o  = OP_B_IMM;
-      imm_b_mux_sel_o     = IMMB_PCINCR;
+      imm_b_mux_sel_o     = IMM_B_PCINCR;
 
       // if prepost increments are used, we do not write back the
       // second address since the first calculated address was

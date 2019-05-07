@@ -149,12 +149,12 @@ typedef enum logic {
 
 // Immediate b selection
 typedef enum logic [2:0] {
-  IMMB_I,
-  IMMB_S,
-  IMMB_U,
-  IMMB_PCINCR,
-  IMMB_UJ,
-  IMMB_SB
+  IMM_B_I,
+  IMM_B_S,
+  IMM_B_B,
+  IMM_B_U,
+  IMM_B_J,
+  IMM_B_PCINCR
 } imm_b_sel_e;
 
 

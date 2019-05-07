@@ -175,10 +175,10 @@ module ibex_id_stage #(
   // Immediate decoding and sign extension
   logic [31:0] imm_i_type;
   logic [31:0] imm_s_type;
-  logic [31:0] imm_sb_type;
+  logic [31:0] imm_b_type;
   logic [31:0] imm_u_type;
-  logic [31:0] imm_uj_type;
-  logic [31:0] imm_z_type;
+  logic [31:0] imm_j_type;
+  logic [31:0] zimm_rs1_type;
 
   logic [31:0] imm_a;       // contains the immediate for operand b
   logic [31:0] imm_b;       // contains the immediate for operand b
@@ -239,14 +239,14 @@ module ibex_id_stage #(
   assign instr = instr_rdata_i;
 
   // immediate extraction and sign extension
-  assign imm_i_type  = { {20 {instr[31]}}, instr[31:20] };
-  assign imm_s_type  = { {20 {instr[31]}}, instr[31:25], instr[11:7] };
-  assign imm_sb_type = { {19 {instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0 };
-  assign imm_u_type  = { instr[31:12], 12'b0 };
-  assign imm_uj_type = { {12 {instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0 };
+  assign imm_i_type = { {20 {instr[31]}}, instr[31:20] };
+  assign imm_s_type = { {20 {instr[31]}}, instr[31:25], instr[11:7] };
+  assign imm_b_type = { {19 {instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0 };
+  assign imm_u_type = { instr[31:12], 12'b0 };
+  assign imm_j_type = { {12 {instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0 };
 
   // immediate for CSR manipulatin (zero extended)
-  assign imm_z_type = { 27'b0, instr[`REG_S1] };
+  assign zimm_rs1_type = { 27'b0, instr[`REG_S1] };
 
 
   ///////////////////////////////
@@ -287,7 +287,7 @@ module ibex_id_stage #(
     endcase // case (alu_op_a_mux_sel)
   end
 
-  assign imm_a = (imm_a_mux_sel == IMM_A_Z) ? imm_z_type : '0;
+  assign imm_a = (imm_a_mux_sel == IMM_A_Z) ? zimm_rs1_type : '0;
 
   // Operand a forwarding mux used with LSU instructions
   always_comb begin : operand_a_fw_mux
@@ -306,13 +306,13 @@ module ibex_id_stage #(
   // Immediate Mux for operand B
   always_comb begin : immediate_b_mux
     unique case (imm_b_mux_sel)
-      IMMB_I:      imm_b = imm_i_type;
-      IMMB_S:      imm_b = imm_s_type;
-      IMMB_U:      imm_b = imm_u_type;
-      IMMB_PCINCR: imm_b = (is_compressed_i && !data_misaligned_i) ? 32'h2 : 32'h4;
-      IMMB_UJ:     imm_b = imm_uj_type;
-      IMMB_SB:     imm_b = imm_sb_type;
-      default:     imm_b = imm_i_type;
+      IMM_B_I:      imm_b = imm_i_type;
+      IMM_B_S:      imm_b = imm_s_type;
+      IMM_B_B:      imm_b = imm_b_type;
+      IMM_B_U:      imm_b = imm_u_type;
+      IMM_B_J:      imm_b = imm_j_type;
+      IMM_B_PCINCR: imm_b = (is_compressed_i && !data_misaligned_i) ? 32'h2 : 32'h4;
+      default:      imm_b = imm_i_type;
     endcase
   end
 

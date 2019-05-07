@@ -36,48 +36,48 @@ module ibex_tracer #(
     parameter REG_ADDR_WIDTH      = 5
 ) (
     // Clock and Reset
-    input  logic        clk,
-    input  logic        rst_n,
+    input  logic                        clk,
+    input  logic                        rst_n,
 
-    input  logic        fetch_enable,
-    input  logic [3:0]  core_id,
-    input  logic [5:0]  cluster_id,
+    input  logic                        fetch_enable,
+    input  logic [3:0]                  core_id,
+    input  logic [5:0]                  cluster_id,
 
-    input  logic [31:0] pc,
-    input  logic [31:0] instr,
-    input  logic        compressed,
-    input  logic        id_valid,
-    input  logic        is_decoding,
-    input  logic        is_branch,
-    input  logic        branch_taken,
-    input  logic        pipe_flush,
-    input  logic        mret_insn,
-    input  logic        dret_insn,
-    input  logic        ecall_insn,
-    input  logic        ebrk_insn,
-    input  logic        csr_status,
-    input  logic [31:0] rs1_value,
-    input  logic [31:0] rs2_value,
-    input  logic [31:0] lsu_value,
+    input  logic [31:0]                 pc,
+    input  logic [31:0]                 instr,
+    input  logic                        compressed,
+    input  logic                        id_valid,
+    input  logic                        is_decoding,
+    input  logic                        is_branch,
+    input  logic                        branch_taken,
+    input  logic                        pipe_flush,
+    input  logic                        mret_insn,
+    input  logic                        dret_insn,
+    input  logic                        ecall_insn,
+    input  logic                        ebrk_insn,
+    input  logic                        csr_status,
+    input  logic [31:0]                 rs1_value,
+    input  logic [31:0]                 rs2_value,
+    input  logic [31:0]                 lsu_value,
 
     input  logic [(REG_ADDR_WIDTH-1):0] ex_reg_addr,
-    input  logic        ex_reg_we,
-    input  logic [31:0] ex_reg_wdata,
-    input  logic        data_valid_lsu,
-    input  logic        ex_data_req,
-    input  logic        ex_data_gnt,
-    input  logic        ex_data_we,
-    input  logic [31:0] ex_data_addr,
-    input  logic [31:0] ex_data_wdata,
+    input  logic                        ex_reg_we,
+    input  logic [31:0]                 ex_reg_wdata,
+    input  logic                        data_valid_lsu,
+    input  logic                        ex_data_req,
+    input  logic                        ex_data_gnt,
+    input  logic                        ex_data_we,
+    input  logic [31:0]                 ex_data_addr,
+    input  logic [31:0]                 ex_data_wdata,
 
-    input  logic [31:0] lsu_reg_wdata,
+    input  logic [31:0]                 lsu_reg_wdata,
 
-    input  logic [31:0] imm_u_type,
-    input  logic [31:0] imm_uj_type,
-    input  logic [31:0] imm_i_type,
-    input  logic [31:0] imm_z_type,
-    input  logic [31:0] imm_s_type,
-    input  logic [31:0] imm_sb_type
+    input  logic [31:0]                 imm_i_type,
+    input  logic [31:0]                 imm_s_type,
+    input  logic [31:0]                 imm_b_type,
+    input  logic [31:0]                 imm_u_type,
+    input  logic [31:0]                 imm_j_type,
+    input  logic [31:0]                 zimm_rs1_type
 );
 
   integer      f;
@@ -197,7 +197,7 @@ module ibex_tracer #(
     function void printUJInstr(input string mnemonic);
       begin
         regs_write.push_back('{rd, 'x});
-        str =  $sformatf("%-16s x%0d, %0d", mnemonic, rd, $signed(imm_uj_type));
+        str =  $sformatf("%-16s x%0d, %0d", mnemonic, rd, $signed(imm_j_type));
       end
     endfunction // printUJInstr
 
@@ -205,7 +205,7 @@ module ibex_tracer #(
       begin
         regs_read.push_back('{rs1, rs1_value});
         regs_read.push_back('{rs2, rs2_value});
-        str =  $sformatf("%-16s x%0d, x%0d, %0d", mnemonic, rs1, rs2, $signed(imm_sb_type));
+        str =  $sformatf("%-16s x%0d, x%0d, %0d", mnemonic, rs1, rs2, $signed(imm_b_type));
       end
     endfunction // printSBInstr
 
@@ -220,7 +220,7 @@ module ibex_tracer #(
           regs_read.push_back('{rs1, rs1_value});
           str = $sformatf("%-16s x%0d, x%0d, 0x%h", mnemonic, rd, rs1, csr);
         end else begin
-          str = $sformatf("%-16s x%0d, 0x%h, 0x%h", mnemonic, rd, imm_z_type, csr);
+          str = $sformatf("%-16s x%0d, 0x%h, 0x%h", mnemonic, rd, zimm_rs1_type, csr);
         end
       end
     endfunction // printCSRInstr
