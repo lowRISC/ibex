@@ -174,17 +174,11 @@ module ibex_id_stage #(
 
   // Immediate decoding and sign extension
   logic [31:0] imm_i_type;
-  logic [31:0] imm_iz_type;
   logic [31:0] imm_s_type;
   logic [31:0] imm_sb_type;
   logic [31:0] imm_u_type;
   logic [31:0] imm_uj_type;
   logic [31:0] imm_z_type;
-  logic [31:0] imm_s2_type;
-  logic [31:0] imm_bi_type;
-  logic [31:0] imm_s3_type;
-  logic [31:0] imm_vs_type;
-  logic [31:0] imm_vu_type;
 
   logic [31:0] imm_a;       // contains the immediate for operand b
   logic [31:0] imm_b;       // contains the immediate for operand b
@@ -246,7 +240,6 @@ module ibex_id_stage #(
 
   // immediate extraction and sign extension
   assign imm_i_type  = { {20 {instr[31]}}, instr[31:20] };
-  assign imm_iz_type = {            20'b0, instr[31:20] };
   assign imm_s_type  = { {20 {instr[31]}}, instr[31:25], instr[11:7] };
   assign imm_sb_type = { {19 {instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0 };
   assign imm_u_type  = { instr[31:12], 12'b0 };
@@ -255,11 +248,6 @@ module ibex_id_stage #(
   // immediate for CSR manipulatin (zero extended)
   assign imm_z_type = { 27'b0, instr[`REG_S1] };
 
-  assign imm_s2_type = { 27'b0, instr[24:20] };
-  assign imm_bi_type = { {27{instr[24]}}, instr[24:20] };
-  assign imm_s3_type = { 27'b0, instr[29:25] };
-  assign imm_vs_type = { {26 {instr[24]}}, instr[24:20], instr[25] };
-  assign imm_vu_type = { 26'b0, instr[24:20], instr[25] };
 
   ///////////////////////////////
   // Source register selection //
@@ -322,11 +310,6 @@ module ibex_id_stage #(
       IMMB_S:      imm_b = imm_s_type;
       IMMB_U:      imm_b = imm_u_type;
       IMMB_PCINCR: imm_b = (is_compressed_i && !data_misaligned_i) ? 32'h2 : 32'h4;
-      IMMB_S2:     imm_b = imm_s2_type;
-      IMMB_BI:     imm_b = imm_bi_type;
-      IMMB_S3:     imm_b = imm_s3_type;
-      IMMB_VS:     imm_b = imm_vs_type;
-      IMMB_VU:     imm_b = imm_vu_type;
       IMMB_UJ:     imm_b = imm_uj_type;
       IMMB_SB:     imm_b = imm_sb_type;
       default:     imm_b = imm_i_type;
