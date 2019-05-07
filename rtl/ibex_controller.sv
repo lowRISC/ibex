@@ -285,22 +285,18 @@ module ibex_controller (
               // analyze the current instruction in the ID stage
               is_decoding_o = 1'b1;
 
-              unique case (1'b1)
-                branch_set_i || jump_set_i: begin
-                  pc_mux_o       = PC_JUMP;
-                  pc_set_o       = 1'b1;
+              if (branch_set_i || jump_set_i) begin
+                pc_mux_o       = PC_JUMP;
+                pc_set_o       = 1'b1;
 
-                  perf_tbranch_o = branch_set_i;
-                  perf_jump_o    = jump_set_i;
-                end
-
-                mret_insn_i || dret_insn_i || ecall_insn_i || pipe_flush_i ||
-                ebrk_insn_i || illegal_insn_i || csr_status_i: begin
-                  ctrl_fsm_ns = FLUSH;
-                  halt_if_o   = 1'b1;
-                  halt_id_o   = 1'b1;
-                end
-              endcase
+                perf_tbranch_o = branch_set_i;
+                perf_jump_o    = jump_set_i;
+              end else if (mret_insn_i || dret_insn_i || ecall_insn_i || pipe_flush_i ||
+                           ebrk_insn_i || illegal_insn_i || csr_status_i) begin
+                ctrl_fsm_ns = FLUSH;
+                halt_if_o   = 1'b1;
+                halt_id_o   = 1'b1;
+              end
             end
           end
         endcase
