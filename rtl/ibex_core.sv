@@ -578,12 +578,12 @@ module ibex_core #(
 
       .lsu_reg_wdata  ( regfile_wdata_lsu                    ),
 
-      .imm_u_type     ( id_stage_i.imm_u_type                ),
-      .imm_uj_type    ( id_stage_i.imm_uj_type               ),
       .imm_i_type     ( id_stage_i.imm_i_type                ),
-      .imm_z_type     ( id_stage_i.imm_z_type                ),
       .imm_s_type     ( id_stage_i.imm_s_type                ),
-      .imm_sb_type    ( id_stage_i.imm_sb_type               )
+      .imm_b_type     ( id_stage_i.imm_b_type                ),
+      .imm_u_type     ( id_stage_i.imm_u_type                ),
+      .imm_j_type     ( id_stage_i.imm_j_type                ),
+      .zimm_rs1_type  ( id_stage_i.zimm_rs1_type             )
   );
 `endif
 `endif
