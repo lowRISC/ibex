@@ -312,10 +312,10 @@ module ibex_controller (
         pc_set_o          = 1'b1;
 
         exc_pc_mux_o      = EXC_PC_IRQ;
-        exc_cause_o       = {1'b0,irq_id_ctrl_i};
+        exc_cause_o       = exc_cause_e'({1'b0, irq_id_ctrl_i});
 
         csr_save_cause_o  = 1'b1;
-        csr_cause_o       = {1'b1,irq_id_ctrl_i};
+        csr_cause_o       = exc_cause_e'({1'b1, irq_id_ctrl_i});
 
         csr_save_if_o     = 1'b1;
 
