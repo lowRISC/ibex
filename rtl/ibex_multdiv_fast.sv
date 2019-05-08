@@ -56,7 +56,8 @@ module ibex_multdiv_fast (
   } div_fsm_e;
   div_fsm_e divcurr_state_q, divcurr_state_n;
 
-  logic [34:0] mac_res_ext;
+  logic signed [34:0] mac_res_ext;
+
   logic [33:0] mac_res_q, mac_res_n, mac_res, op_reminder_n;
   logic [15:0] mult_op_a;
   logic [15:0] mult_op_b;

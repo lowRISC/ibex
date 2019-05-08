@@ -117,7 +117,9 @@ module ibex_alu (
 
   assign shift_op_a_32 = {shift_arithmetic & shift_op_a[31], shift_op_a};
 
-  assign shift_right_result = $unsigned($signed(shift_op_a_32) >>> shift_amt[4:0]);
+  logic signed [32:0] shift_right_result_signed;
+  assign shift_right_result_signed = $signed(shift_op_a_32) >>> shift_amt[4:0];
+  assign shift_right_result        = shift_right_result_signed[31:0];
 
   // bit reverse the shift_right_result for left shifts
   for (genvar j = 0; j < 32; j++) begin : gen_resrevloop
