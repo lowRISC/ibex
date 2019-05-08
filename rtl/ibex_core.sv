@@ -171,7 +171,6 @@ module ibex_core #(
   logic        csr_restore_dret_id;
 
   // debug mode and dcsr configuration
-  logic        debug_mode;
   dbg_cause_e  debug_cause;
   logic        debug_csr_save;
   logic        debug_single_step;
@@ -192,8 +191,6 @@ module ibex_core #(
 
   logic        clock_en;
 
-  logic        sleeping;
-
   // if we are sleeping on a barrier let's just wait on the instruction
   // interface to finish loading instructions
   assign core_busy_int = if_busy | ctrl_busy | lsu_busy;
@@ -209,9 +206,6 @@ module ibex_core #(
   assign core_busy   = core_ctrl_firstfetch ? 1'b1 : core_busy_q;
 
   assign clock_en    = core_busy | irq_i | debug_req_i;
-
-  assign sleeping    = (~core_busy);
-
 
   // main clock gate of the core
   // generates all clocks except the one for the debug unit which is
@@ -367,7 +361,6 @@ module ibex_core #(
       .lsu_store_err_i              ( lsu_store_err        ),
 
       // Debug Signal
-      .debug_mode_o                 ( debug_mode           ),
       .debug_cause_o                ( debug_cause          ),
       .debug_csr_save_o             ( debug_csr_save       ),
       .debug_req_i                  ( debug_req_i          ),

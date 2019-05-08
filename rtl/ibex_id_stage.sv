@@ -117,7 +117,6 @@ module ibex_id_stage #(
     input  logic                      lsu_store_err_i,
 
     // Debug Signal
-    output logic                      debug_mode_o,
     output ibex_defines::dbg_cause_e  debug_cause_o,
     output logic                      debug_csr_save_o,
     input  logic                      debug_req_i,
@@ -150,7 +149,6 @@ module ibex_id_stage #(
   logic        ecall_insn_dec;
   logic        pipe_flush_dec;
 
-  logic        branch_taken_ex;
   logic        branch_in_id;
   logic        branch_set_n;
   logic        branch_set_q;
@@ -229,7 +227,6 @@ module ibex_id_stage #(
   op_fw_sel_e  operand_a_fw_mux_sel;
 
   logic [31:0] operand_a_fw_id;
-  logic [31:0] operand_b_fw_id;
 
   logic [31:0] operand_b;
 
@@ -270,8 +267,6 @@ module ibex_id_stage #(
   // kill instruction in the IF/ID stage by setting the instr_valid_id control
   // signal to 0 for instructions that are done
   assign clear_instr_valid_o = id_ready_o | halt_id;
-
-  assign branch_taken_ex = branch_in_id & branch_decision_i;
 
   ///////////////
   // Operand A //
@@ -326,7 +321,6 @@ module ibex_id_stage #(
   end
 
   assign alu_operand_b   = operand_b;
-  assign operand_b_fw_id = regfile_data_rb_id;
 
   ///////////////
   // Registers //
@@ -464,7 +458,6 @@ module ibex_id_stage #(
 
       // jump/branch control
       .branch_in_id_i                 ( branch_in_id           ),
-      .branch_taken_ex_i              ( branch_taken_ex        ),
       .branch_set_i                   ( branch_set_q           ),
       .jump_set_i                     ( jump_set               ),
 
@@ -491,13 +484,11 @@ module ibex_id_stage #(
       .csr_restore_dret_id_o          ( csr_restore_dret_id_o  ),
 
       // Debug Signal
-      .debug_mode_o                   ( debug_mode_o           ),
       .debug_cause_o                  ( debug_cause_o          ),
       .debug_csr_save_o               ( debug_csr_save_o       ),
       .debug_req_i                    ( debug_req_i            ),
       .debug_single_step_i            ( debug_single_step_i    ),
       .debug_ebreakm_i                ( debug_ebreakm_i        ),
-
 
       // Forwarding signals
       .operand_a_fw_mux_sel_o         ( operand_a_fw_mux_sel   ),

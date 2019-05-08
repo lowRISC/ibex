@@ -61,7 +61,6 @@ module ibex_controller (
 
     // jump/branch signals
     input  logic                      branch_in_id_i,        // branch in id
-    input  logic                      branch_taken_ex_i,     // branch taken signal
     input  logic                      branch_set_i,          // branch taken set signal
     input  logic                      jump_set_i,            // jump taken set signal
 
@@ -83,7 +82,6 @@ module ibex_controller (
 
     // Debug Signal
     input  logic                      debug_req_i,
-    output logic                      debug_mode_o,
     output ibex_defines::dbg_cause_e  debug_cause_o,
     output logic                      debug_csr_save_o,
     input  logic                      debug_single_step_i,
@@ -513,6 +511,4 @@ module ibex_controller (
     end
   end
 
-  // debug mode
-  assign debug_mode_o = debug_mode_q;
 endmodule // controller
