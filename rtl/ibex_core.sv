@@ -89,7 +89,7 @@ module ibex_core #(
   logic        pc_set;
   pc_sel_e     pc_mux_id;         // Mux selector for next PC
   exc_pc_sel_e exc_pc_mux_id;     // Mux selector for exception PC
-  exc_cause_e  exc_cause;
+  exc_cause_e  exc_cause;         // Exception cause + IRQ ID for vectorized interrupt lines
 
   logic        lsu_load_err;
   logic        lsu_store_err;
@@ -256,7 +256,7 @@ module ibex_core #(
       .depc_i              ( depc              ), // debug return address
       .pc_mux_i            ( pc_mux_id         ), // sel for pc multiplexer
       .exc_pc_mux_i        ( exc_pc_mux_id     ),
-      .exc_vec_pc_mux_i    ( exc_cause[4:0]    ),
+      .exc_vec_pc_mux_i    ( exc_cause         ),
 
       // Jump targets
       .jump_target_ex_i    ( jump_target_ex    ),

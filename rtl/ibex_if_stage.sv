@@ -60,7 +60,7 @@ module ibex_if_stage #(
     input  logic [31:0]               depc_i,                // address used to restore PC when the debug is served
     input  ibex_defines::pc_sel_e     pc_mux_i,              // sel for pc multiplexer
     input  ibex_defines::exc_pc_sel_e exc_pc_mux_i,          // selects ISR address
-    input  logic  [4:0]               exc_vec_pc_mux_i,      // selects ISR address for vectorized
+    input  ibex_defines::exc_cause_e  exc_vec_pc_mux_i,      // selects ISR address for vectorized
                                                              // interrupt lines
 
     // jump and branch target and decision
@@ -103,7 +103,7 @@ module ibex_if_stage #(
       EXC_PC_ILLINSN:    exc_pc = { boot_addr_i[31:8], {EXC_OFF_ILLINSN} };
       EXC_PC_ECALL:      exc_pc = { boot_addr_i[31:8], {EXC_OFF_ECALL} };
       EXC_PC_BREAKPOINT: exc_pc = { boot_addr_i[31:8], {EXC_OFF_BREAKPOINT} };
-      EXC_PC_IRQ:        exc_pc = { boot_addr_i[31:8], 1'b0, exc_vec_pc_mux_i[4:0], 2'b0 };
+      EXC_PC_IRQ:        exc_pc = { boot_addr_i[31:8], {exc_vec_pc_mux_i}, 2'b0 };
       EXC_PC_DBD:        exc_pc = { DM_HALT_ADDRESS };
       EXC_PC_DBGEXC:     exc_pc = { DM_EXCEPTION_ADDRESS };
       // TODO: Add case for EXC_PC_STORE and EXC_PC_LOAD as soon as they are supported
