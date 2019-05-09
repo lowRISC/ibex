@@ -32,8 +32,8 @@ module ibex_register_file #(
     parameter DATA_WIDTH    = 32
 ) (
     // Clock and Reset
-    input  logic                   clk,
-    input  logic                   rst_n,
+    input  logic                   clk_i,
+    input  logic                   rst_ni,
 
     input  logic                   test_en_i,
 
@@ -84,15 +84,15 @@ module ibex_register_file #(
   ///////////////////////////////
 
   prim_clock_gating CG_WE_GLOBAL (
-      .clk_i     ( clk             ),
+      .clk_i     ( clk_i           ),
       .en_i      ( we_a_i          ),
       .test_en_i ( test_en_i       ),
       .clk_o     ( clk_int         )
   );
 
   // use clk_int here, since otherwise we don't want to write anything anyway
-  always_ff @(posedge clk_int, negedge rst_n) begin : sample_waddr
-    if (!rst_n) begin
+  always_ff @(posedge clk_int, negedge rst_ni) begin : sample_waddr
+    if (!rst_ni) begin
       wdata_a_q   <= '0;
     end else begin
       if (we_a_i) begin

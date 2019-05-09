@@ -24,8 +24,8 @@
  * 16x16 kernel multiplier and Long Division
  */
 module ibex_multdiv_fast (
-    input  logic                 clk,
-    input  logic                 rst_n,
+    input  logic                 clk_i,
+    input  logic                 rst_ni,
     input  logic                 mult_en_i,
     input  logic                 div_en_i,
     input  ibex_defines::md_op_e operator_i,
@@ -79,8 +79,8 @@ module ibex_multdiv_fast (
   logic [32:0] res_adder_h;
   logic        mult_is_ready;
 
-  always_ff @(posedge clk or negedge rst_n) begin : proc_mult_state_q
-    if (!rst_n) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin : proc_mult_state_q
+    if (!rst_ni) begin
       mult_state_q      <= ALBL;
       mac_res_q         <= '0;
       div_counter_q     <= '0;

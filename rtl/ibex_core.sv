@@ -181,6 +181,8 @@ module ibex_core #(
   logic        perf_jump;
   logic        perf_branch;
   logic        perf_tbranch;
+  logic        perf_load;
+  logic        perf_store;
 
 
   //////////////////////
@@ -225,8 +227,8 @@ module ibex_core #(
       .DM_HALT_ADDRESS      ( DM_HALT_ADDRESS      ),
       .DM_EXCEPTION_ADDRESS ( DM_EXCEPTION_ADDRESS )
   ) if_stage_i (
-      .clk                 ( clk               ),
-      .rst_n               ( rst_ni            ),
+      .clk_i               ( clk               ),
+      .rst_ni              ( rst_ni            ),
 
       // boot address (trap vector location)
       .boot_addr_i         ( boot_addr_i       ),
@@ -279,8 +281,8 @@ module ibex_core #(
       .RV32E(RV32E),
       .RV32M(RV32M)
   ) id_stage_i (
-      .clk                          ( clk                  ),
-      .rst_n                        ( rst_ni               ),
+      .clk_i                        ( clk                  ),
+      .rst_ni                       ( rst_ni               ),
 
       .test_en_i                    ( test_en_i            ),
 
@@ -385,8 +387,8 @@ module ibex_core #(
       //if you want a SLOW or FAST multiplier
       .RV32M(RV32M)
   ) ex_block_i (
-      .clk                        ( clk                   ),
-      .rst_n                      ( rst_ni                ),
+      .clk_i                      ( clk                   ),
+      .rst_ni                     ( rst_ni                ),
       // Alu signals from ID stage
       //TODO: hot encoding
       .alu_operator_i             ( alu_operator_ex       ),
@@ -417,8 +419,8 @@ module ibex_core #(
   /////////////////////
 
   ibex_load_store_unit  load_store_unit_i (
-      .clk                   ( clk                ),
-      .rst_n                 ( rst_ni             ),
+      .clk_i                 ( clk                ),
+      .rst_ni                ( rst_ni             ),
 
       //output to data memory
       .data_req_o            ( data_req_o         ),
@@ -462,121 +464,120 @@ module ibex_core #(
   // CSRs (Control and Status Registers) //
   /////////////////////////////////////////
 
+  assign csr_access = csr_access_ex;
+  assign csr_wdata  = alu_operand_a_ex;
+  assign csr_op     = csr_op_ex;
+  assign csr_addr   = csr_num_e'(csr_access_ex ? alu_operand_b_ex[11:0] : 12'b0);
+
+  assign perf_load  = data_req_o & data_gnt_i & (~data_we_o);
+  assign perf_store = data_req_o & data_gnt_i & data_we_o;
+
   ibex_cs_registers #(
       .N_EXT_CNT       ( N_EXT_PERF_COUNTERS   ),
       .RV32E           ( RV32E                 ),
       .RV32M           ( RV32M                 )
   ) cs_registers_i (
-      .clk                     ( clk                ),
-      .rst_n                   ( rst_ni             ),
+      .clk_i                   ( clk                 ),
+      .rst_ni                  ( rst_ni              ),
 
       // Core and Cluster ID from outside
-      .core_id_i               ( core_id_i          ),
-      .cluster_id_i            ( cluster_id_i       ),
+      .core_id_i               ( core_id_i           ),
+      .cluster_id_i            ( cluster_id_i        ),
       // boot address
-      .boot_addr_i             ( boot_addr_i        ),
+      .boot_addr_i             ( boot_addr_i         ),
       // Interface to CSRs (SRAM like)
-      .csr_access_i            ( csr_access         ),
-      .csr_addr_i              ( csr_addr           ),
-      .csr_wdata_i             ( csr_wdata          ),
-      .csr_op_i                ( csr_op             ),
-      .csr_rdata_o             ( csr_rdata          ),
+      .csr_access_i            ( csr_access          ),
+      .csr_addr_i              ( csr_addr            ),
+      .csr_wdata_i             ( csr_wdata           ),
+      .csr_op_i                ( csr_op              ),
+      .csr_rdata_o             ( csr_rdata           ),
 
       // Interrupt related control signals
-      .m_irq_enable_o          ( m_irq_enable       ),
-      .mepc_o                  ( mepc               ),
+      .m_irq_enable_o          ( m_irq_enable        ),
+      .mepc_o                  ( mepc                ),
 
       // debug
-      .debug_cause_i           ( debug_cause        ),
-      .debug_csr_save_i        ( debug_csr_save     ),
-      .depc_o                  ( depc               ),
-      .debug_single_step_o     ( debug_single_step  ),
-      .debug_ebreakm_o         ( debug_ebreakm      ),
+      .debug_cause_i           ( debug_cause         ),
+      .debug_csr_save_i        ( debug_csr_save      ),
+      .depc_o                  ( depc                ),
+      .debug_single_step_o     ( debug_single_step   ),
+      .debug_ebreakm_o         ( debug_ebreakm       ),
 
-      .pc_if_i                 ( pc_if              ),
-      .pc_id_i                 ( pc_id              ),
+      .pc_if_i                 ( pc_if               ),
+      .pc_id_i                 ( pc_id               ),
 
-      .csr_save_if_i           ( csr_save_if        ),
-      .csr_save_id_i           ( csr_save_id        ),
+      .csr_save_if_i           ( csr_save_if         ),
+      .csr_save_id_i           ( csr_save_id         ),
       .csr_restore_mret_i      ( csr_restore_mret_id ),
       .csr_restore_dret_i      ( csr_restore_dret_id ),
-      .csr_cause_i             ( csr_cause          ),
-      .csr_save_cause_i        ( csr_save_cause     ),
+      .csr_cause_i             ( csr_cause           ),
+      .csr_save_cause_i        ( csr_save_cause      ),
 
 
       // performance counter related signals
-      .if_valid_i              ( if_valid           ),
-      .id_valid_i              ( id_valid           ),
-      .is_compressed_i         ( is_compressed_id   ),
-      .is_decoding_i           ( is_decoding        ),
+      .if_valid_i              ( if_valid            ),
+      .id_valid_i              ( id_valid            ),
+      .is_compressed_i         ( is_compressed_id    ),
+      .is_decoding_i           ( is_decoding         ),
 
-      .imiss_i                 ( perf_imiss         ),
-      .pc_set_i                ( pc_set             ),
-      .jump_i                  ( perf_jump          ),
-      .branch_i                ( perf_branch        ),
-      .branch_taken_i          ( perf_tbranch       ),
-      .mem_load_i              ( data_req_o & data_gnt_i & (~data_we_o) ),
-      .mem_store_i             ( data_req_o & data_gnt_i & data_we_o    ),
+      .imiss_i                 ( perf_imiss          ),
+      .pc_set_i                ( pc_set              ),
+      .jump_i                  ( perf_jump           ),
+      .branch_i                ( perf_branch         ),
+      .branch_taken_i          ( perf_tbranch        ),
+      .mem_load_i              ( perf_load           ),
+      .mem_store_i             ( perf_store          ),
 
-      .ext_counters_i          ( ext_perf_counters_i                    )
+      .ext_counters_i          ( ext_perf_counters_i )
   );
-
-
-  //  CSR access
-  assign csr_access =  csr_access_ex;
-  assign csr_wdata  =  alu_operand_a_ex;
-  assign csr_op     =  csr_op_ex;
-
-  assign csr_addr   = csr_num_e'(csr_access_ex ? alu_operand_b_ex[11:0] : 12'b0);
-
 
 `ifndef VERILATOR
 `ifdef TRACE_EXECUTION
   ibex_tracer ibex_tracer_i (
-      .clk            ( clk_i                                ), // always-running clock for tracing
-      .rst_n          ( rst_ni                               ),
+      .clk_i            ( clk_i                                ), // always-running clock for tracing
+      .rst_ni           ( rst_ni                               ),
 
-      .fetch_enable   ( fetch_enable_i                       ),
-      .core_id        ( core_id_i                            ),
-      .cluster_id     ( cluster_id_i                         ),
+      .fetch_enable_i   ( fetch_enable_i                       ),
+      .core_id_i        ( core_id_i                            ),
+      .cluster_id_i     ( cluster_id_i                         ),
 
-      .pc             ( id_stage_i.pc_id_i                   ),
-      .instr          ( id_stage_i.instr                     ),
-      .compressed     ( id_stage_i.is_compressed_i           ),
-      .id_valid       ( id_stage_i.id_valid_o                ),
-      .is_decoding    ( id_stage_i.is_decoding_o             ),
-      .is_branch      ( id_stage_i.branch_in_id              ),
-      .branch_taken   ( id_stage_i.branch_set_q              ),
-      .pipe_flush     ( id_stage_i.controller_i.pipe_flush_i ),
-      .mret_insn      ( id_stage_i.controller_i.mret_insn_i  ),
-      .dret_insn      ( id_stage_i.controller_i.dret_insn_i  ),
-      .ecall_insn     ( id_stage_i.controller_i.ecall_insn_i ),
-      .ebrk_insn      ( id_stage_i.controller_i.ebrk_insn_i  ),
-      .csr_status     ( id_stage_i.controller_i.csr_status_i ),
-      .rs1_value      ( id_stage_i.operand_a_fw_id           ),
-      .rs2_value      ( id_stage_i.operand_b_fw_id           ),
+      .pc_i             ( id_stage_i.pc_id_i                   ),
+      .instr_i          ( id_stage_i.instr                     ),
+      .compressed_i     ( id_stage_i.is_compressed_i           ),
+      .id_valid_i       ( id_stage_i.id_valid_o                ),
+      .is_decoding_i    ( id_stage_i.is_decoding_o             ),
+      .is_branch_i      ( id_stage_i.branch_in_id              ),
+      .branch_taken_i   ( id_stage_i.branch_set_q              ),
+      .pipe_flush_i     ( id_stage_i.controller_i.pipe_flush_i ),
+      .mret_insn_i      ( id_stage_i.controller_i.mret_insn_i  ),
+      .dret_insn_i      ( id_stage_i.controller_i.dret_insn_i  ),
+      .ecall_insn_i     ( id_stage_i.controller_i.ecall_insn_i ),
+      .ebrk_insn_i      ( id_stage_i.controller_i.ebrk_insn_i  ),
+      .csr_status_i     ( id_stage_i.controller_i.csr_status_i ),
+      .rs1_value_i      ( id_stage_i.operand_a_fw_id           ),
+      .rs2_value_i      ( id_stage_i.operand_b_fw_id           ),
 
-      .lsu_value      ( data_wdata_ex                        ),
+      .lsu_value_i      ( data_wdata_ex                        ),
 
-      .ex_reg_addr    ( id_stage_i.regfile_waddr_mux         ),
-      .ex_reg_we      ( id_stage_i.regfile_we_mux            ),
-      .ex_reg_wdata   ( id_stage_i.regfile_wdata_mux         ),
-      .data_valid_lsu ( data_valid_lsu                       ),
-      .ex_data_addr   ( data_addr_o                          ),
-      .ex_data_req    ( data_req_o                           ),
-      .ex_data_gnt    ( data_gnt_i                           ),
-      .ex_data_we     ( data_we_o                            ),
+      .ex_reg_addr_i    ( id_stage_i.regfile_waddr_mux         ),
+      .ex_reg_we_i      ( id_stage_i.regfile_we_mux            ),
+      .ex_reg_wdata_i   ( id_stage_i.regfile_wdata_mux         ),
+      .data_valid_lsu_i ( data_valid_lsu                       ),
+      .ex_data_addr_i   ( data_addr_o                          ),
+      .ex_data_req_i    ( data_req_o                           ),
+      .ex_data_gnt_i    ( data_gnt_i                           ),
+      .ex_data_we_i     ( data_we_o                            ),
 
-      .ex_data_wdata  ( data_wdata_o                         ),
+      .ex_data_wdata_i  ( data_wdata_o                         ),
 
-      .lsu_reg_wdata  ( regfile_wdata_lsu                    ),
+      .lsu_reg_wdata_i  ( regfile_wdata_lsu                    ),
 
-      .imm_i_type     ( id_stage_i.imm_i_type                ),
-      .imm_s_type     ( id_stage_i.imm_s_type                ),
-      .imm_b_type     ( id_stage_i.imm_b_type                ),
-      .imm_u_type     ( id_stage_i.imm_u_type                ),
-      .imm_j_type     ( id_stage_i.imm_j_type                ),
-      .zimm_rs1_type  ( id_stage_i.zimm_rs1_type             )
+      .imm_i_type_i     ( id_stage_i.imm_i_type                ),
+      .imm_s_type_i     ( id_stage_i.imm_s_type                ),
+      .imm_b_type_i     ( id_stage_i.imm_b_type                ),
+      .imm_u_type_i     ( id_stage_i.imm_u_type                ),
+      .imm_j_type_i     ( id_stage_i.imm_j_type                ),
+      .zimm_rs1_type_i  ( id_stage_i.zimm_rs1_type             )
   );
 `endif
 `endif

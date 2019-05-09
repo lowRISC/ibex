@@ -29,8 +29,8 @@
 module ibex_ex_block #(
     parameter bit RV32M  = 1
 ) (
-    input  logic        clk,
-    input  logic        rst_n,
+    input  logic                  clk_i,
+    input  logic                  rst_ni,
 
     // ALU signals from ID stage
     input  ibex_defines::alu_op_e alu_operator_i,
@@ -114,8 +114,8 @@ module ibex_ex_block #(
 
   if (!MULT_TYPE) begin : gen_multdiv_slow
     ibex_multdiv_slow multdiv_i (
-        .clk                ( clk                   ),
-        .rst_n              ( rst_n                 ),
+        .clk_i              ( clk_i                 ),
+        .rst_ni             ( rst_ni                ),
         .mult_en_i          ( mult_en_i             ),
         .div_en_i           ( div_en_i              ),
         .operator_i         ( multdiv_operator_i    ),
@@ -132,8 +132,8 @@ module ibex_ex_block #(
     );
   end else begin: gen_multdiv_fast
     ibex_multdiv_fast multdiv_i (
-        .clk                ( clk                   ),
-        .rst_n              ( rst_n                 ),
+        .clk_i              ( clk_i                 ),
+        .rst_ni             ( rst_ni                ),
         .mult_en_i          ( mult_en_i             ),
         .div_en_i           ( div_en_i              ),
         .operator_i         ( multdiv_operator_i    ),

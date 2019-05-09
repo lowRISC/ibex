@@ -36,48 +36,48 @@ module ibex_tracer #(
     parameter REG_ADDR_WIDTH      = 5
 ) (
     // Clock and Reset
-    input  logic                        clk,
-    input  logic                        rst_n,
+    input  logic                        clk_i,
+    input  logic                        rst_ni,
 
-    input  logic                        fetch_enable,
-    input  logic [3:0]                  core_id,
-    input  logic [5:0]                  cluster_id,
+    input  logic                        fetch_enable_i,
+    input  logic [3:0]                  core_id_i,
+    input  logic [5:0]                  cluster_id_i,
 
-    input  logic [31:0]                 pc,
-    input  logic [31:0]                 instr,
-    input  logic                        compressed,
-    input  logic                        id_valid,
-    input  logic                        is_decoding,
-    input  logic                        is_branch,
-    input  logic                        branch_taken,
-    input  logic                        pipe_flush,
-    input  logic                        mret_insn,
-    input  logic                        dret_insn,
-    input  logic                        ecall_insn,
-    input  logic                        ebrk_insn,
-    input  logic                        csr_status,
-    input  logic [31:0]                 rs1_value,
-    input  logic [31:0]                 rs2_value,
-    input  logic [31:0]                 lsu_value,
+    input  logic [31:0]                 pc_i,
+    input  logic [31:0]                 instr_i,
+    input  logic                        compressed_i,
+    input  logic                        id_valid_i,
+    input  logic                        is_decoding_i,
+    input  logic                        is_branch_i,
+    input  logic                        branch_taken_i,
+    input  logic                        pipe_flush_i,
+    input  logic                        mret_insn_i,
+    input  logic                        dret_insn_i,
+    input  logic                        ecall_insn_i,
+    input  logic                        ebrk_insn_i,
+    input  logic                        csr_status_i,
+    input  logic [31:0]                 rs1_value_i,
+    input  logic [31:0]                 rs2_value_i,
+    input  logic [31:0]                 lsu_value_i,
 
-    input  logic [(REG_ADDR_WIDTH-1):0] ex_reg_addr,
-    input  logic                        ex_reg_we,
-    input  logic [31:0]                 ex_reg_wdata,
-    input  logic                        data_valid_lsu,
-    input  logic                        ex_data_req,
-    input  logic                        ex_data_gnt,
-    input  logic                        ex_data_we,
-    input  logic [31:0]                 ex_data_addr,
-    input  logic [31:0]                 ex_data_wdata,
+    input  logic [(REG_ADDR_WIDTH-1):0] ex_reg_addr_i,
+    input  logic                        ex_reg_we_i,
+    input  logic [31:0]                 ex_reg_wdata_i,
+    input  logic                        data_valid_lsu_i,
+    input  logic                        ex_data_req_i,
+    input  logic                        ex_data_gnt_i,
+    input  logic                        ex_data_we_i,
+    input  logic [31:0]                 ex_data_addr_i,
+    input  logic [31:0]                 ex_data_wdata_i,
 
-    input  logic [31:0]                 lsu_reg_wdata,
+    input  logic [31:0]                 lsu_reg_wdata_i,
 
-    input  logic [31:0]                 imm_i_type,
-    input  logic [31:0]                 imm_s_type,
-    input  logic [31:0]                 imm_b_type,
-    input  logic [31:0]                 imm_u_type,
-    input  logic [31:0]                 imm_j_type,
-    input  logic [31:0]                 zimm_rs1_type
+    input  logic [31:0]                 imm_i_type_i,
+    input  logic [31:0]                 imm_s_type_i,
+    input  logic [31:0]                 imm_b_type_i,
+    input  logic [31:0]                 imm_u_type_i,
+    input  logic [31:0]                 imm_j_type_i,
+    input  logic [31:0]                 zimm_rs1_type_i
 );
 
   integer      f;
@@ -130,8 +130,8 @@ module ibex_tracer #(
       begin
         $fwrite(f, "%t %15d %h %h %-36s", simtime,
                                           cycles,
-                                          pc,
-                                          instr,
+                                          pc_i,
+                                          instr_i,
                                           str);
 
         foreach(regs_write[i]) begin
@@ -164,8 +164,8 @@ module ibex_tracer #(
 
     function void printRInstr(input string mnemonic);
       begin
-        regs_read.push_back('{rs1, rs1_value});
-        regs_read.push_back('{rs2, rs2_value});
+        regs_read.push_back('{rs1, rs1_value_i});
+        regs_read.push_back('{rs2, rs2_value_i});
         regs_write.push_back('{rd, 'x});
         str = $sformatf("%-16s x%0d, x%0d, x%0d", mnemonic, rd, rs1, rs2);
       end
@@ -173,54 +173,54 @@ module ibex_tracer #(
 
     function void printIInstr(input string mnemonic);
       begin
-        regs_read.push_back('{rs1, rs1_value});
+        regs_read.push_back('{rs1, rs1_value_i});
         regs_write.push_back('{rd, 'x});
-        str = $sformatf("%-16s x%0d, x%0d, %0d", mnemonic, rd, rs1, $signed(imm_i_type));
+        str = $sformatf("%-16s x%0d, x%0d, %0d", mnemonic, rd, rs1, $signed(imm_i_type_i));
       end
     endfunction // printIInstr
 
     function void printIuInstr(input string mnemonic);
       begin
-        regs_read.push_back('{rs1, rs1_value});
+        regs_read.push_back('{rs1, rs1_value_i});
         regs_write.push_back('{rd, 'x});
-        str = $sformatf("%-16s x%0d, x%0d, 0x%0x", mnemonic, rd, rs1, imm_i_type);
+        str = $sformatf("%-16s x%0d, x%0d, 0x%0x", mnemonic, rd, rs1, imm_i_type_i);
       end
     endfunction // printIuInstr
 
     function void printUInstr(input string mnemonic);
       begin
         regs_write.push_back('{rd, 'x});
-        str = $sformatf("%-16s x%0d, 0x%0h", mnemonic, rd, {imm_u_type[31:12], 12'h000});
+        str = $sformatf("%-16s x%0d, 0x%0h", mnemonic, rd, {imm_u_type_i[31:12], 12'h000});
       end
     endfunction // printUInstr
 
     function void printUJInstr(input string mnemonic);
       begin
         regs_write.push_back('{rd, 'x});
-        str =  $sformatf("%-16s x%0d, %0d", mnemonic, rd, $signed(imm_j_type));
+        str =  $sformatf("%-16s x%0d, %0d", mnemonic, rd, $signed(imm_j_type_i));
       end
     endfunction // printUJInstr
 
     function void printSBInstr(input string mnemonic);
       begin
-        regs_read.push_back('{rs1, rs1_value});
-        regs_read.push_back('{rs2, rs2_value});
-        str =  $sformatf("%-16s x%0d, x%0d, %0d", mnemonic, rs1, rs2, $signed(imm_b_type));
+        regs_read.push_back('{rs1, rs1_value_i});
+        regs_read.push_back('{rs2, rs2_value_i});
+        str =  $sformatf("%-16s x%0d, x%0d, %0d", mnemonic, rs1, rs2, $signed(imm_b_type_i));
       end
     endfunction // printSBInstr
 
     function void printCSRInstr(input string mnemonic);
       logic [11:0] csr;
       begin
-        csr = instr[31:20];
+        csr = instr_i[31:20];
 
         regs_write.push_back('{rd, 'x});
 
-        if (!instr[14]) begin
-          regs_read.push_back('{rs1, rs1_value});
+        if (!instr_i[14]) begin
+          regs_read.push_back('{rs1, rs1_value_i});
           str = $sformatf("%-16s x%0d, x%0d, 0x%h", mnemonic, rd, rs1, csr);
         end else begin
-          str = $sformatf("%-16s x%0d, 0x%h, 0x%h", mnemonic, rd, zimm_rs1_type, csr);
+          str = $sformatf("%-16s x%0d, 0x%h, 0x%h", mnemonic, rd, zimm_rs1_type_i, csr);
         end
       end
     endfunction // printCSRInstr
@@ -230,9 +230,9 @@ module ibex_tracer #(
       logic [2:0] size;
       begin
         // detect reg-reg load and find size
-        size = instr[14:12];
-        if (instr[14:12] == 3'b111) begin
-          size = instr[30:28];
+        size = instr_i[14:12];
+        if (instr_i[14:12] == 3'b111) begin
+          size = instr_i[30:28];
         end
 
         case (size)
@@ -251,10 +251,10 @@ module ibex_tracer #(
 
         regs_write.push_back('{rd, 'x});
 
-        if (instr[14:12] != 3'b111) begin
+        if (instr_i[14:12] != 3'b111) begin
           // regular load
-            regs_read.push_back('{rs1, rs1_value});
-            str = $sformatf("%-16s x%0d, %0d(x%0d)", mnemonic, rd, $signed(imm_i_type), rs1);
+            regs_read.push_back('{rs1, rs1_value_i});
+            str = $sformatf("%-16s x%0d, %0d(x%0d)", mnemonic, rd, $signed(imm_i_type_i), rs1);
         end else begin
             printMnemonic("INVALID");
         end
@@ -265,7 +265,7 @@ module ibex_tracer #(
       string mnemonic;
       begin
 
-        case (instr[13:12])
+        case (instr_i[13:12])
           2'b00:  mnemonic = "sb";
           2'b01:  mnemonic = "sh";
           2'b10:  mnemonic = "sw";
@@ -275,11 +275,11 @@ module ibex_tracer #(
           end
         endcase
 
-        if (!instr[14]) begin
+        if (!instr_i[14]) begin
           // regular store
-            regs_read.push_back('{rs2, rs2_value});
-            regs_read.push_back('{rs1, rs1_value});
-            str = $sformatf("%-16s x%0d, %0d(x%0d)", mnemonic, rs2, $signed(imm_s_type), rs1);
+            regs_read.push_back('{rs2, rs2_value_i});
+            regs_read.push_back('{rs1, rs1_value_i});
+            str = $sformatf("%-16s x%0d, %0d(x%0d)", mnemonic, rs2, $signed(imm_s_type_i), rs1);
         end else begin
             printMnemonic("INVALID");
         end
@@ -292,8 +292,8 @@ module ibex_tracer #(
   mailbox #(instr_trace_t) instr_wb = new ();
 
   // cycle counter
-  always_ff @(posedge clk, negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_i, negedge rst_ni) begin
+    if (!rst_ni) begin
       cycles = 0;
     end else begin
       cycles = cycles + 1;
@@ -302,9 +302,9 @@ module ibex_tracer #(
 
   // open/close output file for writing
   initial begin
-    wait(rst_n == 1'b1);
-    wait(fetch_enable == 1'b1);
-    $sformat(fn, "trace_core_%h_%h.log", cluster_id, core_id);
+    wait(rst_ni == 1'b1);
+    wait(fetch_enable_i == 1'b1);
+    $sformat(fn, "trace_core_%h_%h.log", cluster_id_i, core_id_i);
     $display("[TRACER] Output filename is: %s", fn);
     f = $fopen(fn, "w");
     $fwrite(f, "                Time          Cycles PC       Instr    Mnemonic\n");
@@ -314,27 +314,27 @@ module ibex_tracer #(
     $fclose(f);
   end
 
-  assign rd  = instr[`REG_D];
-  assign rs1 = instr[`REG_S1];
-  assign rs2 = instr[`REG_S2];
-  assign rs3 = instr[`REG_S3];
+  assign rd  = instr_i[`REG_D];
+  assign rs1 = instr_i[`REG_S1];
+  assign rs2 = instr_i[`REG_S2];
+  assign rs3 = instr_i[`REG_S3];
 
   // log execution
-  always @(negedge clk) begin
+  always @(negedge clk_i) begin
     instr_trace_t trace;
     mem_acc_t     mem_acc;
     // special case for WFI because we don't wait for unstalling there
-    if ( (id_valid || mret_insn || ecall_insn || pipe_flush || ebrk_insn || dret_insn ||
-          csr_status || ex_data_req) && is_decoding) begin
+    if ( (id_valid_i || mret_insn_i || ecall_insn_i || pipe_flush_i || ebrk_insn_i || dret_insn_i ||
+          csr_status_i || ex_data_req_i) && is_decoding_i) begin
       trace = new ();
 
       trace.simtime    = $time;
       trace.cycles     = cycles;
-      trace.pc         = pc;
-      trace.instr      = instr;
+      trace.pc         = pc_i;
+      trace.instr      = instr_i;
 
       // use casex instead of case inside due to ModelSim bug
-      casex (instr)
+      casex (instr_i)
         // Aliases
         32'h00_00_00_13:   trace.printMnemonic("nop");
         // Regular opcodes
@@ -395,45 +395,45 @@ module ibex_tracer #(
         {25'b?, {OPCODE_LOAD}}:     trace.printLoadInstr();
         {25'b?, {OPCODE_STORE}}:    trace.printStoreInstr();
         default:           trace.printMnemonic("INVALID");
-      endcase // unique case (instr)
+      endcase // unique case (instr_i)
 
       // replace register written back
       foreach(trace.regs_write[i]) begin
-        if ((trace.regs_write[i].addr == ex_reg_addr) && ex_reg_we) begin
-          trace.regs_write[i].value = ex_reg_wdata;
+        if ((trace.regs_write[i].addr == ex_reg_addr_i) && ex_reg_we_i) begin
+          trace.regs_write[i].value = ex_reg_wdata_i;
         end
       end
       // look for data accesses and log them
-      if (ex_data_req) begin
+      if (ex_data_req_i) begin
 
-        if (!ex_data_gnt) begin
+        if (!ex_data_gnt_i) begin
           //we wait until the the gnt comes
-          do @(negedge clk);
-          while (!ex_data_gnt);
+          do @(negedge clk_i);
+          while (!ex_data_gnt_i);
         end
 
-        mem_acc.addr = ex_data_addr;
-        mem_acc.we   = ex_data_we;
+        mem_acc.addr = ex_data_addr_i;
+        mem_acc.we   = ex_data_we_i;
 
         if (mem_acc.we) begin
-          mem_acc.wdata = ex_data_wdata;
+          mem_acc.wdata = ex_data_wdata_i;
         end else begin
           mem_acc.wdata = 'x;
         end
         //we wait until the the data instruction ends
-        do @(negedge clk);
-          while (!data_valid_lsu);
+        do @(negedge clk_i);
+          while (!data_valid_lsu_i);
 
         if (!mem_acc.we) begin
           //load operations
           foreach(trace.regs_write[i])
-            trace.regs_write[i].value = lsu_reg_wdata;
+            trace.regs_write[i].value = lsu_reg_wdata_i;
         end
         trace.mem_access.push_back(mem_acc);
       end
       trace.printInstrTrace();
     end
-  end // always @ (posedge clk)
+  end // always @ (posedge clk_i)
 
 endmodule
 

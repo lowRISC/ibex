@@ -30,8 +30,8 @@ module ibex_if_stage #(
     parameter DM_HALT_ADDRESS      = 32'h1A110800,
     parameter DM_EXCEPTION_ADDRESS = 32'h1A110808
 ) (
-    input  logic                      clk,
-    input  logic                      rst_n,
+    input  logic                      clk_i,
+    input  logic                      rst_ni,
     // the boot address is used to calculate the exception offsets
     input  logic [31:0]               boot_addr_i,
     // instruction request control
@@ -129,8 +129,8 @@ module ibex_if_stage #(
 
   // prefetch buffer, caches a fixed number of instructions
   ibex_prefetch_buffer prefetch_buffer_i (
-      .clk               ( clk                         ),
-      .rst_n             ( rst_n                       ),
+      .clk_i             ( clk_i                       ),
+      .rst_ni            ( rst_ni                      ),
 
       .req_i             ( req_i                       ),
 
@@ -155,8 +155,8 @@ module ibex_if_stage #(
 
 
   // offset initialization state
-  always_ff @(posedge clk, negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_i, negedge rst_ni) begin
+    if (!rst_ni) begin
       offset_in_init_q <= 1'b1;
     end else begin
       offset_in_init_q <= offset_in_init_d;
@@ -219,8 +219,8 @@ module ibex_if_stage #(
   );
 
   // IF-ID pipeline registers, frozen when the ID stage is stalled
-  always_ff @(posedge clk, negedge rst_n) begin : IF_ID_PIPE_REGISTERS
-    if (!rst_n) begin
+  always_ff @(posedge clk_i, negedge rst_ni) begin : IF_ID_PIPE_REGISTERS
+    if (!rst_ni) begin
       instr_valid_id_o      <= 1'b0;
       instr_rdata_id_o      <= '0;
       illegal_c_insn_id_o   <= 1'b0;
@@ -248,12 +248,12 @@ module ibex_if_stage #(
 `ifndef VERILATOR
   // the boot address needs to be aligned to 256 bytes
   assert property (
-    @(posedge clk) (boot_addr_i[7:0] == 8'h00) )
+    @(posedge clk_i) (boot_addr_i[7:0] == 8'h00) )
   else $error("The provided boot address is not aligned to 256 bytes");
 
   // there should never be a grant when there is no request
   assert property (
-    @(posedge clk) (instr_gnt_i) |-> (instr_req_o) )
+    @(posedge clk_i) (instr_gnt_i) |-> (instr_req_o) )
   else $warning("There was a grant without a request");
 `endif
 

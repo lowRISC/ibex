@@ -21,8 +21,8 @@
  * paths to the instruction cache.
  */
 module ibex_prefetch_buffer (
-    input  logic        clk,
-    input  logic        rst_n,
+    input  logic        clk_i,
+    input  logic        rst_ni,
 
     input  logic        req_i,
 
@@ -71,8 +71,8 @@ module ibex_prefetch_buffer (
   //////////////////////////////////////////////
 
   ibex_fetch_fifo fifo_i (
-      .clk                   ( clk               ),
-      .rst_n                 ( rst_n             ),
+      .clk_i                 ( clk_i             ),
+      .rst_ni                ( rst_ni            ),
 
       .clear_i               ( fifo_clear        ),
 
@@ -210,8 +210,8 @@ module ibex_prefetch_buffer (
   // Registers //
   ///////////////
 
-  always_ff @(posedge clk, negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_i, negedge rst_ni) begin
+    if (!rst_ni) begin
       CS              <= IDLE;
       instr_addr_q    <= '0;
     end else begin

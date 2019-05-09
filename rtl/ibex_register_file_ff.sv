@@ -30,8 +30,8 @@ module ibex_register_file #(
     parameter DATA_WIDTH    = 32
 ) (
     // Clock and Reset
-    input  logic                   clk,
-    input  logic                   rst_n,
+    input  logic                   clk_i,
+    input  logic                   rst_ni,
 
     input  logic                   test_en_i,
 
@@ -65,8 +65,8 @@ module ibex_register_file #(
   end
 
   // loop from 1 to NUM_WORDS-1 as R0 is nil
-  always_ff @(posedge clk, negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_i, negedge rst_ni) begin
+    if (!rst_ni) begin
       rf_reg_tmp <= '{default:'0};
     end else begin
       for (int r = 1; r < NUM_WORDS; r++) begin
