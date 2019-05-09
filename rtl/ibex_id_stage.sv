@@ -36,8 +36,8 @@ module ibex_id_stage #(
     parameter bit RV32M  = 1,
     parameter bit RV32E  = 0
 ) (
-    input  logic                      clk,
-    input  logic                      rst_n,
+    input  logic                      clk_i,
+    input  logic                      rst_ni,
 
     input  logic                      test_en_i,
 
@@ -328,8 +328,8 @@ module ibex_id_stage #(
   end
 
   ibex_register_file #( .RV32E(RV32E)) registers_i (
-      .clk          ( clk                ),
-      .rst_n        ( rst_n              ),
+      .clk_i        ( clk_i              ),
+      .rst_ni       ( rst_ni             ),
 
       .test_en_i    ( test_en_i          ),
 
@@ -406,8 +406,8 @@ module ibex_id_stage #(
   ////////////////
 
   ibex_controller controller_i (
-      .clk                            ( clk                    ),
-      .rst_n                          ( rst_n                  ),
+      .clk_i                          ( clk_i                  ),
+      .rst_ni                         ( rst_ni                 ),
 
       .fetch_enable_i                 ( fetch_enable_i         ),
       .ctrl_busy_o                    ( ctrl_busy_o            ),
@@ -492,8 +492,8 @@ module ibex_id_stage #(
   //////////////////////////
 
   ibex_int_controller int_controller_i (
-      .clk                  ( clk                ),
-      .rst_n                ( rst_n              ),
+      .clk_i                ( clk_i              ),
+      .rst_ni               ( rst_ni             ),
 
       // to controller
       .irq_req_ctrl_o       ( irq_req_ctrl       ),
@@ -541,8 +541,8 @@ module ibex_id_stage #(
   ////////////////////////////////
   // ID-EX/WB Pipeline Register //
   ////////////////////////////////
-  always_ff @(posedge clk, negedge rst_n) begin : EX_WB_Pipeline_Register
-    if (!rst_n) begin
+  always_ff @(posedge clk_i, negedge rst_ni) begin : EX_WB_Pipeline_Register
+    if (!rst_ni) begin
       id_wb_fsm_cs  <= IDLE;
       branch_set_q  <= 1'b0;
     end else begin
@@ -645,22 +645,22 @@ module ibex_id_stage #(
 `ifndef VERILATOR
   // make sure that branch decision is valid when jumping
   assert property (
-    @(posedge clk) (branch_decision_i !== 1'bx || branch_in_id == 1'b0) ) else begin
+    @(posedge clk_i) (branch_decision_i !== 1'bx || branch_in_id == 1'b0) ) else begin
       $display("Branch decision is X"); $stop; end
 
 `ifdef CHECK_MISALIGNED
   assert property (
-    @(posedge clk) (~data_misaligned_i) ) else $display("Misaligned memory access at %x",pc_id_i);
+    @(posedge clk_i) (~data_misaligned_i) ) else $display("Misaligned memory access at %x",pc_id_i);
 `endif
 
   // the instruction delivered to the ID stage should always be valid
   assert property (
-    @(posedge clk) (instr_valid_i & (~illegal_c_insn_i)) |-> (!$isunknown(instr_rdata_i)) ) else
+    @(posedge clk_i) (instr_valid_i & (~illegal_c_insn_i)) |-> (!$isunknown(instr_rdata_i)) ) else
       $display("Instruction is valid, but has at least one X");
 
   // make sure multicycles enable signals are unique
   assert property (
-    @(posedge clk) ~(data_req_ex_o & multdiv_int_en )) else
+    @(posedge clk_i) ~(data_req_ex_o & multdiv_int_en )) else
       $display("Multicycles enable signals are not unique");
 
 `endif

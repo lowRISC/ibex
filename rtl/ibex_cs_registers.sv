@@ -31,8 +31,8 @@ module ibex_cs_registers #(
     parameter bit RV32M = 0
 ) (
     // Clock and Reset
-    input  logic                     clk,
-    input  logic                     rst_n,
+    input  logic                     clk_i,
+    input  logic                     rst_ni,
 
     // Core and Cluster ID
     input  logic  [3:0]              core_id_i,
@@ -68,7 +68,6 @@ module ibex_cs_registers #(
 
     input  ibex_defines::exc_cause_e csr_cause_i,
     input  logic                     csr_save_cause_i,
-
 
     // Performance Counters
     input  logic                     if_valid_i,        // IF stage gives a new instruction
@@ -360,8 +359,8 @@ module ibex_cs_registers #(
   assign debug_ebreakm_o      = dcsr_q.ebreakm;
 
   // actual registers
-  always_ff @(posedge clk, negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_i, negedge rst_ni) begin
+    if (!rst_ni) begin
       mstatus_q  <= '{
               mie:  1'b0,
               mpie: 1'b0,
@@ -533,8 +532,8 @@ module ibex_cs_registers #(
   end
 
   // Performance Counter Registers
-  always_ff @(posedge clk, negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_i, negedge rst_ni) begin
+    if (!rst_ni) begin
       PCER_q <= '0;
       PCMR_q <= 2'h3;
 

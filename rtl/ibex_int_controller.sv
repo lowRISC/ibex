@@ -20,8 +20,8 @@
  * Interrupt Controller
  */
 module ibex_int_controller (
-    input  logic        clk,
-    input  logic        rst_n,
+    input  logic        clk_i,
+    input  logic        rst_ni,
 
     // irq_req for controller
     output logic        irq_req_ctrl_o,
@@ -50,8 +50,8 @@ module ibex_int_controller (
   assign irq_req_ctrl_o = exc_ctrl_cs == IRQ_PENDING;
   assign irq_id_ctrl_o  = irq_id_q;
 
-  always_ff @(posedge clk, negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_i, negedge rst_ni) begin
+    if (!rst_ni) begin
       irq_id_q    <= '0;
       exc_ctrl_cs <= IDLE;
     end else begin

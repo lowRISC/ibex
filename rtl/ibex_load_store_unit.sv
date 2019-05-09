@@ -27,8 +27,8 @@
  * and to align bytes and halfwords.
  */
 module ibex_load_store_unit (
-    input  logic         clk,
-    input  logic         rst_n,
+    input  logic         clk_i,
+    input  logic         rst_ni,
 
     // output to data memory
     output logic         data_req_o,
@@ -157,8 +157,8 @@ module ibex_load_store_unit (
 
 
   // FF for rdata alignment and sign-extension
-  always_ff @(posedge clk, negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_i, negedge rst_ni) begin
+    if (!rst_ni) begin
       data_type_q     <= 2'h0;
       rdata_offset_q  <= 2'h0;
       data_sign_ext_q <= 1'b0;
@@ -277,8 +277,8 @@ module ibex_load_store_unit (
 
 
 
-  always_ff @(posedge clk, negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_i, negedge rst_ni) begin
+    if (!rst_ni) begin
       CS            <= IDLE;
       rdata_q       <= '0;
       data_misaligned_q <= '0;
@@ -451,16 +451,15 @@ module ibex_load_store_unit (
   // i.e. it should not be possible to get a grant without an rvalid for the
   // last request
   assert property (
-    @(posedge clk) ((CS == WAIT_RVALID) && (data_gnt_i == 1'b1)) |-> (data_rvalid_i == 1'b1) );
+    @(posedge clk_i) ((CS == WAIT_RVALID) && (data_gnt_i == 1'b1)) |-> (data_rvalid_i == 1'b1) );
 
   // there should be no rvalid when we are in IDLE
-  assert property (
-    @(posedge clk) (CS == IDLE) |-> (data_rvalid_i == 1'b0) );
+  assert property ( @(posedge clk_i) (CS == IDLE) |-> (data_rvalid_i == 1'b0) );
 
   // assert that errors are only sent at the same time as grant
-  assert property ( @(posedge clk) (data_err_i) |-> (data_gnt_i) );
+  assert property ( @(posedge clk_i) (data_err_i) |-> (data_gnt_i) );
 
   // assert that the address does not contain X when request is sent
-  assert property ( @(posedge clk) (data_req_o) |-> (!$isunknown(data_addr_o)) );
+  assert property ( @(posedge clk_i) (data_req_o) |-> (!$isunknown(data_addr_o)) );
 `endif
 endmodule

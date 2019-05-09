@@ -21,8 +21,8 @@
  * this cycle already.
  */
 module ibex_fetch_fifo (
-    input  logic        clk,
-    input  logic        rst_n,
+    input  logic        clk_i,
+    input  logic        rst_ni,
 
     // control signals
     input  logic        clear_i,          // clears the contents of the fifo
@@ -182,8 +182,8 @@ module ibex_fetch_fifo (
   // registers //
   ///////////////
 
-  always_ff @(posedge clk, negedge rst_n) begin
-    if (!rst_n) begin
+  always_ff @(posedge clk_i, negedge rst_ni) begin
+    if (!rst_ni) begin
       addr_Q    <= '{default: '0};
       rdata_Q   <= '{default: '0};
       valid_Q   <= '0;
@@ -205,6 +205,6 @@ module ibex_fetch_fifo (
   ////////////////
 `ifndef VERILATOR
   assert property (
-    @(posedge clk) (in_valid_i) |-> ((valid_Q[DEPTH-1] == 1'b0) || (clear_i == 1'b1)) );
+    @(posedge clk_i) (in_valid_i) |-> ((valid_Q[DEPTH-1] == 1'b0) || (clear_i == 1'b1)) );
 `endif
 endmodule

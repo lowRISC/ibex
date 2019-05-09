@@ -24,8 +24,8 @@
  * Main CPU controller of the processor
  */
 module ibex_controller (
-    input  logic                      clk,
-    input  logic                      rst_n,
+    input  logic                      clk_i,
+    input  logic                      rst_ni,
 
     input  logic                      fetch_enable_i,        // Start the decoding
     output logic                      ctrl_busy_o,           // Core is busy processing instructions
@@ -126,7 +126,7 @@ module ibex_controller (
   // synopsys translate_off
   // make sure we are called later so that we do not generate messages for
   // glitches
-  always_ff @(negedge clk) begin
+  always_ff @(negedge clk_i) begin
     // print warning in case of decoding errors
     if (is_decoding_o && illegal_insn_i) begin
       $display("%t: Illegal instruction (core %0d) at PC 0x%h: 0x%h", $time, ibex_core.core_id_i,
@@ -498,8 +498,8 @@ module ibex_controller (
   assign operand_a_fw_mux_sel_o = data_misaligned_i ? SEL_MISALIGNED : SEL_REGFILE;
 
   // update registers
-  always_ff @(posedge clk, negedge rst_n) begin : UPDATE_REGS
-    if (!rst_n) begin
+  always_ff @(posedge clk_i, negedge rst_ni) begin : UPDATE_REGS
+    if (!rst_ni) begin
       ctrl_fsm_cs <= RESET;
       //jump_done_q <= 1'b0;
       debug_mode_q   <= 1'b0;
