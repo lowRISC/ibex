@@ -246,6 +246,11 @@ module ibex_if_stage #(
   // Assertions //
   ////////////////
 `ifndef VERILATOR
+  // the boot address needs to be aligned to 256 bytes
+  assert property (
+    @(posedge clk) (boot_addr_i[7:0] == 8'h00) )
+  else $error("The provided boot address is not aligned to 256 bytes");
+
   // there should never be a grant when there is no request
   assert property (
     @(posedge clk) (instr_gnt_i) |-> (instr_req_o) )

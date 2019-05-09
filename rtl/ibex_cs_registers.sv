@@ -204,7 +204,7 @@ module ibex_cs_registers #(
                                   3'h0
                                 };
       // mtvec: machine trap-handler base address
-      CSR_MTVEC: csr_rdata_int = {boot_addr_i[31:8], 8'h0};
+      CSR_MTVEC: csr_rdata_int = boot_addr_i;
       // mepc: exception program counter
       CSR_MEPC: csr_rdata_int = mepc_q;
       // mcause: exception cause
