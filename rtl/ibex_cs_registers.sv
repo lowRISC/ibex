@@ -398,6 +398,10 @@ module ibex_cs_registers #(
   // Performance counters //
   //////////////////////////
 
+  logic [$bits(csr_num_e)-1:0] csr_addr;
+
+  assign csr_addr    = {csr_addr_i};
+
   assign PCCR_in[0]  = 1'b1;                          // cycle counter
   assign PCCR_in[1]  = if_valid_i;                    // instruction counter
   assign PCCR_in[2]  = 1'b0;                          // Reserved
@@ -444,14 +448,14 @@ module ibex_cs_registers #(
       endcase
 
       // look for 780 to 79F, Performance Counter Counter Registers
-      if ({csr_addr_i[11:5]} == 7'b0111100) begin
+      if (csr_addr[11:5] == 7'b0111100) begin
         is_pccr     = 1'b1;
 
-        pccr_index = {csr_addr_i[4:0]};
+        pccr_index = csr_addr[4:0];
 `ifdef  ASIC_SYNTHESIS
         perf_rdata = PCCR_q[0];
 `else
-        perf_rdata = {csr_addr_i[4:0]} < N_PERF_COUNTERS ? PCCR_q[{csr_addr_i[4:0]}] : '0;
+        perf_rdata = csr_addr[4:0] < N_PERF_COUNTERS ? PCCR_q[csr_addr[4:0]] : '0;
 `endif
       end
     end
