@@ -93,6 +93,8 @@ module ibex_decoder #(
   csr_op_e    csr_op;
   logic       csr_illegal;
 
+  opcode_e    opcode;
+
   /////////////
   // Decoder //
   /////////////
@@ -132,7 +134,9 @@ module ibex_decoder #(
     ecall_insn_o                = 1'b0;
     pipe_flush_o                = 1'b0;
 
-    unique case (opcode_e'(instr_rdata_i[6:0]))
+    opcode                      = opcode_e'(instr_rdata_i[6:0]);
+
+    unique case (opcode)
 
       ///////////
       // Jumps //
