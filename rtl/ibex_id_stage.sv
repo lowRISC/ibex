@@ -228,8 +228,6 @@ module ibex_id_stage #(
 
   logic [31:0] operand_a_fw_id;
 
-  logic [31:0] operand_b;
-
   logic [31:0] alu_operand_a;
   logic [31:0] alu_operand_b;
 
@@ -244,7 +242,6 @@ module ibex_id_stage #(
 
   // immediate for CSR manipulatin (zero extended)
   assign zimm_rs1_type = { 27'b0, instr[`REG_S1] };
-
 
   ///////////////////////////////
   // Source register selection //
@@ -285,14 +282,8 @@ module ibex_id_stage #(
   assign imm_a = (imm_a_mux_sel == IMM_A_Z) ? zimm_rs1_type : '0;
 
   // Operand a forwarding mux used with LSU instructions
-  always_comb begin : operand_a_fw_mux
-    case (operand_a_fw_mux_sel)
-      SEL_MISALIGNED:    operand_a_fw_id = misaligned_addr_i;
-      SEL_REGFILE:       operand_a_fw_id = regfile_data_ra_id;
-      default:           operand_a_fw_id = regfile_data_ra_id;
-    endcase // case (operand_a_fw_mux_sel)
-  end
-
+  assign operand_a_fw_id
+      = (operand_a_fw_mux_sel == SEL_MISALIGNED) ? misaligned_addr_i : regfile_data_ra_id;
 
   ///////////////
   // Operand B //
@@ -312,15 +303,7 @@ module ibex_id_stage #(
   end
 
   // ALU_Op_b Mux
-  always_comb begin : alu_operand_b_mux
-    case (alu_op_b_mux_sel)
-      OP_B_REGB_OR_FWD:  operand_b = regfile_data_rb_id;
-      OP_B_IMM:          operand_b = imm_b;
-      default:           operand_b = regfile_data_rb_id;
-    endcase // case (alu_op_b_mux_sel)
-  end
-
-  assign alu_operand_b   = operand_b;
+  assign alu_operand_b = (alu_op_b_mux_sel == OP_B_IMM) ? imm_b : regfile_data_rb_id;
 
   ///////////////
   // Registers //
@@ -655,7 +638,6 @@ module ibex_id_stage #(
   assign id_ready_o = ~load_stall & ~branch_stall & ~jump_stall & ~multdiv_stall;
 
   assign id_valid_o = ~halt_id & id_ready_o;
-
 
   ////////////////
   // Assertions //
