@@ -527,7 +527,7 @@ module ibex_core #(
   assign csr_wdata  =  alu_operand_a_ex;
   assign csr_op     =  csr_op_ex;
 
-  assign csr_addr   = csr_num_e'(csr_access_ex ? alu_operand_b_ex[11:0] : '0);
+  assign csr_addr   = csr_num_e'(csr_access_ex ? alu_operand_b_ex[11:0] : 12'b0);
 
 
 `ifndef VERILATOR
