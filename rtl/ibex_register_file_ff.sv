@@ -26,37 +26,37 @@
  * This register file is based on flip flops.
  */
 module ibex_register_file #(
-    parameter bit RV32E     = 0,
-    parameter DATA_WIDTH    = 32
+    parameter bit RV32E              = 0,
+    parameter int unsigned DataWidth = 32
 ) (
     // Clock and Reset
-    input  logic                   clk_i,
-    input  logic                   rst_ni,
+    input  logic                 clk_i,
+    input  logic                 rst_ni,
 
-    input  logic                   test_en_i,
+    input  logic                 test_en_i,
 
     //Read port R1
-    input  logic [4:0]             raddr_a_i,
-    output logic [DATA_WIDTH-1:0]  rdata_a_o,
+    input  logic [4:0]           raddr_a_i,
+    output logic [DataWidth-1:0] rdata_a_o,
 
     //Read port R2
-    input  logic [4:0]             raddr_b_i,
-    output logic [DATA_WIDTH-1:0]  rdata_b_o,
+    input  logic [4:0]           raddr_b_i,
+    output logic [DataWidth-1:0] rdata_b_o,
 
 
     // Write port W1
-    input  logic [4:0]              waddr_a_i,
-    input  logic [DATA_WIDTH-1:0]   wdata_a_i,
-    input  logic                    we_a_i
+    input  logic [4:0]           waddr_a_i,
+    input  logic [DataWidth-1:0] wdata_a_i,
+    input  logic                 we_a_i
 
 );
 
-  localparam    ADDR_WIDTH = RV32E ? 4 : 5;
-  localparam    NUM_WORDS  = 2**ADDR_WIDTH;
+  localparam int unsigned ADDR_WIDTH = RV32E ? 4 : 5;
+  localparam int unsigned NUM_WORDS  = 2**ADDR_WIDTH;
 
-  logic [NUM_WORDS-1:0][DATA_WIDTH-1:0] rf_reg;
-  logic [NUM_WORDS-1:1][DATA_WIDTH-1:0] rf_reg_tmp;
-  logic [NUM_WORDS-1:1]                 we_a_dec;
+  logic [NUM_WORDS-1:0][DataWidth-1:0] rf_reg;
+  logic [NUM_WORDS-1:1][DataWidth-1:0] rf_reg_tmp;
+  logic [NUM_WORDS-1:1]                we_a_dec;
 
   always_comb begin : we_a_decoder
     for (int i = 1; i < NUM_WORDS; i++) begin

@@ -27,8 +27,8 @@
  * the read instruction.
  */
 module ibex_if_stage #(
-    parameter DM_HALT_ADDRESS      = 32'h1A110800,
-    parameter DM_EXCEPTION_ADDRESS = 32'h1A110808
+    parameter int unsigned DmHaltAddr      = 32'h1A110800,
+    parameter int unsigned DmExceptionAddr = 32'h1A110808
 ) (
     input  logic                      clk_i,
     input  logic                      rst_ni,
@@ -104,8 +104,8 @@ module ibex_if_stage #(
       EXC_PC_ECALL:      exc_pc = { boot_addr_i[31:8], {EXC_OFF_ECALL} };
       EXC_PC_BREAKPOINT: exc_pc = { boot_addr_i[31:8], {EXC_OFF_BREAKPOINT} };
       EXC_PC_IRQ:        exc_pc = { boot_addr_i[31:8], {exc_vec_pc_mux_i}, 2'b0 };
-      EXC_PC_DBD:        exc_pc = { DM_HALT_ADDRESS };
-      EXC_PC_DBGEXC:     exc_pc = { DM_EXCEPTION_ADDRESS };
+      EXC_PC_DBD:        exc_pc = { DmHaltAddr };
+      EXC_PC_DBGEXC:     exc_pc = { DmExceptionAddr };
       // TODO: Add case for EXC_PC_STORE and EXC_PC_LOAD as soon as they are supported
       default:;
     endcase

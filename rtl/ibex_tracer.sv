@@ -22,7 +22,6 @@
 import ibex_defines::*;
 import ibex_tracer_defines::*;
 
-
 // Source/Destination register instruction index
 `define REG_S1 19:15
 `define REG_S2 24:20
@@ -33,51 +32,51 @@ import ibex_tracer_defines::*;
  * Traces the executed instructions
  */
 module ibex_tracer #(
-    parameter REG_ADDR_WIDTH      = 5
+    parameter int unsigned RegAddrWidth = 5
 ) (
     // Clock and Reset
-    input  logic                        clk_i,
-    input  logic                        rst_ni,
+    input  logic                      clk_i,
+    input  logic                      rst_ni,
 
-    input  logic                        fetch_enable_i,
-    input  logic [3:0]                  core_id_i,
-    input  logic [5:0]                  cluster_id_i,
+    input  logic                      fetch_enable_i,
+    input  logic [3:0]                core_id_i,
+    input  logic [5:0]                cluster_id_i,
 
-    input  logic [31:0]                 pc_i,
-    input  logic [31:0]                 instr_i,
-    input  logic                        compressed_i,
-    input  logic                        id_valid_i,
-    input  logic                        is_decoding_i,
-    input  logic                        is_branch_i,
-    input  logic                        branch_taken_i,
-    input  logic                        pipe_flush_i,
-    input  logic                        mret_insn_i,
-    input  logic                        dret_insn_i,
-    input  logic                        ecall_insn_i,
-    input  logic                        ebrk_insn_i,
-    input  logic                        csr_status_i,
-    input  logic [31:0]                 rs1_value_i,
-    input  logic [31:0]                 rs2_value_i,
-    input  logic [31:0]                 lsu_value_i,
+    input  logic [31:0]               pc_i,
+    input  logic [31:0]               instr_i,
+    input  logic                      compressed_i,
+    input  logic                      id_valid_i,
+    input  logic                      is_decoding_i,
+    input  logic                      is_branch_i,
+    input  logic                      branch_taken_i,
+    input  logic                      pipe_flush_i,
+    input  logic                      mret_insn_i,
+    input  logic                      dret_insn_i,
+    input  logic                      ecall_insn_i,
+    input  logic                      ebrk_insn_i,
+    input  logic                      csr_status_i,
+    input  logic [31:0]               rs1_value_i,
+    input  logic [31:0]               rs2_value_i,
+    input  logic [31:0]               lsu_value_i,
 
-    input  logic [(REG_ADDR_WIDTH-1):0] ex_reg_addr_i,
-    input  logic                        ex_reg_we_i,
-    input  logic [31:0]                 ex_reg_wdata_i,
-    input  logic                        data_valid_lsu_i,
-    input  logic                        ex_data_req_i,
-    input  logic                        ex_data_gnt_i,
-    input  logic                        ex_data_we_i,
-    input  logic [31:0]                 ex_data_addr_i,
-    input  logic [31:0]                 ex_data_wdata_i,
+    input  logic [(RegAddrWidth-1):0] ex_reg_addr_i,
+    input  logic                      ex_reg_we_i,
+    input  logic [31:0]               ex_reg_wdata_i,
+    input  logic                      data_valid_lsu_i,
+    input  logic                      ex_data_req_i,
+    input  logic                      ex_data_gnt_i,
+    input  logic                      ex_data_we_i,
+    input  logic [31:0]               ex_data_addr_i,
+    input  logic [31:0]               ex_data_wdata_i,
 
-    input  logic [31:0]                 lsu_reg_wdata_i,
+    input  logic [31:0]               lsu_reg_wdata_i,
 
-    input  logic [31:0]                 imm_i_type_i,
-    input  logic [31:0]                 imm_s_type_i,
-    input  logic [31:0]                 imm_b_type_i,
-    input  logic [31:0]                 imm_u_type_i,
-    input  logic [31:0]                 imm_j_type_i,
-    input  logic [31:0]                 zimm_rs1_type_i
+    input  logic [31:0]               imm_i_type_i,
+    input  logic [31:0]               imm_s_type_i,
+    input  logic [31:0]               imm_b_type_i,
+    input  logic [31:0]               imm_u_type_i,
+    input  logic [31:0]               imm_j_type_i,
+    input  logic [31:0]               zimm_rs1_type_i
 );
 
   integer      f;
@@ -86,7 +85,7 @@ module ibex_tracer #(
   logic [ 4:0] rd, rs1, rs2, rs3;
 
   typedef struct {
-    logic [(REG_ADDR_WIDTH-1):0] addr;
+    logic [(RegAddrWidth-1):0] addr;
     logic [31:0] value;
   } reg_t;
 
@@ -115,7 +114,7 @@ module ibex_tracer #(
       mem_access = {};
     endfunction
 
-    function string regAddrToStr(input logic [(REG_ADDR_WIDTH-1):0] addr);
+    function string regAddrToStr(input logic [(RegAddrWidth-1):0] addr);
       begin
         if (addr < 10) begin
           return $sformatf(" x%0d", addr);

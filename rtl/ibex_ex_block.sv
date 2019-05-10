@@ -27,7 +27,7 @@
  * Execution block: Hosts ALU and MUL/DIV unit
  */
 module ibex_ex_block #(
-    parameter bit RV32M  = 1
+    parameter bit RV32M = 1
 ) (
     input  logic                  clk_i,
     input  logic                  rst_ni,
@@ -61,7 +61,7 @@ module ibex_ex_block #(
 
   import ibex_defines::*;
 
-  localparam MULT_TYPE = 1; //0 is SLOW
+  localparam bit MULT_TYPE = 1; // 0 -> SLOW, 1 -> FAST
 
   logic [31:0] alu_result, multdiv_result;
 
