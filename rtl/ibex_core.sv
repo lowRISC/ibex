@@ -25,11 +25,11 @@
  * Top level module of the ibex RISC-V core
  */
 module ibex_core #(
-    parameter N_EXT_PERF_COUNTERS  = 1,
-    parameter bit RV32E            = 0,
-    parameter bit RV32M            = 1,
-    parameter DM_HALT_ADDRESS      = 32'h1A110800,
-    parameter DM_EXCEPTION_ADDRESS = 32'h1A110808
+    parameter int unsigned NumExtPerfCounters = 1,
+    parameter bit RV32E                       = 0,
+    parameter bit RV32M                       = 1,
+    parameter int unsigned DmHaltAddr         = 32'h1A110800,
+    parameter int unsigned DmExceptionAddr    = 32'h1A110808
 ) (
     // Clock and Reset
     input  logic        clk_i,
@@ -72,7 +72,7 @@ module ibex_core #(
     // CPU Control Signals
     input  logic        fetch_enable_i,
 
-    input  logic [N_EXT_PERF_COUNTERS-1:0] ext_perf_counters_i
+    input  logic [NumExtPerfCounters-1:0] ext_perf_counters_i
 );
 
   import ibex_defines::*;
@@ -224,8 +224,8 @@ module ibex_core #(
   //////////////
 
   ibex_if_stage #(
-      .DM_HALT_ADDRESS      ( DM_HALT_ADDRESS      ),
-      .DM_EXCEPTION_ADDRESS ( DM_EXCEPTION_ADDRESS )
+      .DmHaltAddr       ( DmHaltAddr      ),
+      .DmExceptionAddr  ( DmExceptionAddr )
   ) if_stage_i (
       .clk_i               ( clk               ),
       .rst_ni              ( rst_ni            ),
@@ -278,8 +278,8 @@ module ibex_core #(
   //////////////
 
   ibex_id_stage #(
-      .RV32E(RV32E),
-      .RV32M(RV32M)
+      .RV32E ( RV32E ),
+      .RV32M ( RV32M )
   ) id_stage_i (
       .clk_i                        ( clk                  ),
       .rst_ni                       ( rst_ni               ),
@@ -383,9 +383,7 @@ module ibex_core #(
 
 
   ibex_ex_block #(
-      //change the localparam MULT_TYPE to 0 or 1
-      //if you want a SLOW or FAST multiplier
-      .RV32M(RV32M)
+      .RV32M ( RV32M )
   ) ex_block_i (
       .clk_i                      ( clk                   ),
       .rst_ni                     ( rst_ni                ),
@@ -473,9 +471,9 @@ module ibex_core #(
   assign perf_store = data_req_o & data_gnt_i & data_we_o;
 
   ibex_cs_registers #(
-      .N_EXT_CNT       ( N_EXT_PERF_COUNTERS   ),
-      .RV32E           ( RV32E                 ),
-      .RV32M           ( RV32M                 )
+      .NumExtCounters ( NumExtPerfCounters ),
+      .RV32E          ( RV32E              ),
+      .RV32M          ( RV32M              )
   ) cs_registers_i (
       .clk_i                   ( clk                 ),
       .rst_ni                  ( rst_ni              ),

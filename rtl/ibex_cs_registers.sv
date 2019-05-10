@@ -26,63 +26,63 @@
  * priviledged instruction set spec (v1.9)
  */
 module ibex_cs_registers #(
-    parameter N_EXT_CNT = 0,
-    parameter bit RV32E = 0,
-    parameter bit RV32M = 0
+    parameter int unsigned NumExtCounters = 0,
+    parameter bit RV32E                   = 0,
+    parameter bit RV32M                   = 0
 ) (
     // Clock and Reset
-    input  logic                     clk_i,
-    input  logic                     rst_ni,
+    input  logic                      clk_i,
+    input  logic                      rst_ni,
 
     // Core and Cluster ID
-    input  logic  [3:0]              core_id_i,
-    input  logic  [5:0]              cluster_id_i,
+    input  logic  [3:0]               core_id_i,
+    input  logic  [5:0]               cluster_id_i,
 
-    input  logic [31:0]              boot_addr_i,
+    input  logic [31:0]               boot_addr_i,
 
     // Interface to registers (SRAM like)
-    input  logic                     csr_access_i,
-    input  ibex_defines::csr_num_e   csr_addr_i,
-    input  logic [31:0]              csr_wdata_i,
-    input  ibex_defines::csr_op_e    csr_op_i,
-    output logic [31:0]              csr_rdata_o,
+    input  logic                      csr_access_i,
+    input  ibex_defines::csr_num_e    csr_addr_i,
+    input  logic [31:0]               csr_wdata_i,
+    input  ibex_defines::csr_op_e     csr_op_i,
+    output logic [31:0]               csr_rdata_o,
 
     // Interrupts
-    output logic                     m_irq_enable_o,
-    output logic [31:0]              mepc_o,
+    output logic                      m_irq_enable_o,
+    output logic [31:0]               mepc_o,
 
     // debug
-    input  ibex_defines::dbg_cause_e debug_cause_i,
-    input  logic                     debug_csr_save_i,
-    output logic [31:0]              depc_o,
-    output logic                     debug_single_step_o,
-    output logic                     debug_ebreakm_o,
+    input  ibex_defines::dbg_cause_e  debug_cause_i,
+    input  logic                      debug_csr_save_i,
+    output logic [31:0]               depc_o,
+    output logic                      debug_single_step_o,
+    output logic                      debug_ebreakm_o,
 
-    input  logic [31:0]              pc_if_i,
-    input  logic [31:0]              pc_id_i,
+    input  logic [31:0]               pc_if_i,
+    input  logic [31:0]               pc_id_i,
 
-    input  logic                     csr_save_if_i,
-    input  logic                     csr_save_id_i,
-    input  logic                     csr_restore_mret_i,
-    input  logic                     csr_restore_dret_i,
+    input  logic                      csr_save_if_i,
+    input  logic                      csr_save_id_i,
+    input  logic                      csr_restore_mret_i,
+    input  logic                      csr_restore_dret_i,
 
-    input  ibex_defines::exc_cause_e csr_cause_i,
-    input  logic                     csr_save_cause_i,
+    input  ibex_defines::exc_cause_e  csr_cause_i,
+    input  logic                      csr_save_cause_i,
 
     // Performance Counters
-    input  logic                     if_valid_i,        // IF stage gives a new instruction
-    input  logic                     id_valid_i,        // ID stage is done
-    input  logic                     is_compressed_i,   // compressed instruction in ID
-    input  logic                     is_decoding_i,     // controller is in DECODE state
+    input  logic                      if_valid_i,        // IF stage gives a new instruction
+    input  logic                      id_valid_i,        // ID stage is done
+    input  logic                      is_compressed_i,   // compressed instruction in ID
+    input  logic                      is_decoding_i,     // controller is in DECODE state
 
-    input  logic                     imiss_i,           // instruction fetch
-    input  logic                     pc_set_i,          // pc was set to a new value
-    input  logic                     jump_i,            // jump instruction seen   (j, jr, jal, jalr)
-    input  logic                     branch_i,          // branch instruction seen (bf, bnf)
-    input  logic                     branch_taken_i,    // branch was taken
-    input  logic                     mem_load_i,        // load from memory in this cycle
-    input  logic                     mem_store_i,       // store to memory in this cycle
-    input  logic [N_EXT_CNT-1:0]     ext_counters_i
+    input  logic                      imiss_i,           // instruction fetch
+    input  logic                      pc_set_i,          // pc was set to a new value
+    input  logic                      jump_i,            // jump instruction seen   (j, jr, jal, jalr)
+    input  logic                      branch_i,          // branch instruction seen (bf, bnf)
+    input  logic                      branch_taken_i,    // branch was taken
+    input  logic                      mem_load_i,        // load from memory in this cycle
+    input  logic                      mem_store_i,       // store to memory in this cycle
+    input  logic [NumExtCounters-1:0] ext_counters_i
 );
   import ibex_defines::*;
 
@@ -102,7 +102,7 @@ module ibex_cs_registers #(
     | (0     << 23)  // X - Non-standard extensions present
     | (MXL   << 30); // M-XLEN
 
-  localparam N_PERF_COUNTERS = 11 + N_EXT_CNT;
+  localparam int unsigned N_PERF_COUNTERS = 11 + NumExtCounters;
 
 `ifdef ASIC_SYNTHESIS
   localparam N_PERF_REGS     = 1;
@@ -417,8 +417,8 @@ module ibex_cs_registers #(
   assign PCCR_in[10] = id_valid_i & is_decoding_i & is_compressed_i; // compressed intr ctr
 
   // assign external performance counters
-  for (genvar i = 0; i < N_EXT_CNT; i++) begin : gen_extcounters
-    assign PCCR_in[N_PERF_COUNTERS - N_EXT_CNT + i] = ext_counters_i[i];
+  for (genvar i = 0; i < NumExtCounters; i++) begin : gen_extcounters
+    assign PCCR_in[N_PERF_COUNTERS - NumExtCounters + i] = ext_counters_i[i];
   end
 
   // address decoder for performance counter registers

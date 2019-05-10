@@ -45,7 +45,7 @@ module ibex_fetch_fifo (
                                            // available immediately as it comes directly out of FFs
 );
 
-  localparam DEPTH = 3; // must be 3 or greater
+  localparam int unsigned DEPTH = 3; // must be 3 or greater
 
   // index 0 is used for output
   logic [DEPTH-1:0] [31:0]  addr_n,    addr_int,    addr_Q;

@@ -33,8 +33,8 @@
  * file.
  */
 module ibex_id_stage #(
-    parameter bit RV32M  = 1,
-    parameter bit RV32E  = 0
+    parameter bit RV32E = 0,
+    parameter bit RV32M = 1
 ) (
     input  logic                      clk_i,
     input  logic                      rst_ni,
@@ -327,7 +327,7 @@ module ibex_id_stage #(
     end
   end
 
-  ibex_register_file #( .RV32E(RV32E)) registers_i (
+  ibex_register_file #( .RV32E ( RV32E ) ) registers_i (
       .clk_i        ( clk_i              ),
       .rst_ni       ( rst_ni             ),
 
@@ -351,7 +351,7 @@ module ibex_id_stage #(
   // Decoder //
   /////////////
 
-  ibex_decoder #( .RV32M(RV32M)) decoder_i (
+  ibex_decoder #( .RV32M ( RV32M ) ) decoder_i (
       // controller related signals
       .deassert_we_i                   ( deassert_we               ),
       .data_misaligned_i               ( data_misaligned_i         ),
