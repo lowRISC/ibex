@@ -48,9 +48,9 @@ module ibex_fetch_fifo (
   localparam int unsigned DEPTH = 3; // must be 3 or greater
 
   // index 0 is used for output
-  logic [DEPTH-1:0] [31:0]  addr_n,    addr_int,    addr_Q;
-  logic [DEPTH-1:0] [31:0]  rdata_n,   rdata_int,   rdata_Q;
-  logic [DEPTH-1:0]         valid_n,   valid_int,   valid_Q;
+  logic [DEPTH-1:0] [31:0]  addr_n,    addr_int,    addr_q;
+  logic [DEPTH-1:0] [31:0]  rdata_n,   rdata_int,   rdata_q;
+  logic [DEPTH-1:0]         valid_n,   valid_int,   valid_q;
 
   logic             [31:2]  addr_next;
   logic             [31:0]  rdata, rdata_unaligned;
@@ -64,17 +64,17 @@ module ibex_fetch_fifo (
   /////////////////
 
 
-  assign rdata = valid_Q[0] ? rdata_Q[0] : in_rdata_i;
-  assign valid = valid_Q[0] | in_valid_i;
+  assign rdata = valid_q[0] ? rdata_q[0] : in_rdata_i;
+  assign valid = valid_q[0] | in_valid_i;
 
-  assign rdata_unaligned = valid_Q[1] ? {rdata_Q[1][15:0], rdata[31:16]} :
+  assign rdata_unaligned = valid_q[1] ? {rdata_q[1][15:0], rdata[31:16]} :
                                         {in_rdata_i[15:0], rdata[31:16]};
-  // it is implied that rdata_valid_Q[0] is set
-  assign valid_unaligned = valid_Q[1] | (valid_Q[0] & in_valid_i);
+  // it is implied that rdata_valid_q[0] is set
+  assign valid_unaligned = valid_q[1] | (valid_q[0] & in_valid_i);
 
   assign unaligned_is_compressed    = rdata[17:16] != 2'b11;
   assign aligned_is_compressed      = rdata[ 1: 0] != 2'b11;
-  assign unaligned_is_compressed_st = rdata_Q[0][17:16] != 2'b11;
+  assign unaligned_is_compressed_st = rdata_q[0][17:16] != 2'b11;
 
   ////////////////////////////////////////
   // Instruction aligner (if unaligned) //
@@ -100,7 +100,7 @@ module ibex_fetch_fifo (
     end
   end
 
-  assign out_addr_o = valid_Q[0] ? addr_Q[0] : in_addr_i;
+  assign out_addr_o = valid_q[0] ? addr_q[0] : in_addr_i;
 
   // this valid signal must not depend on signals from outside!
   always_comb begin
@@ -110,10 +110,10 @@ module ibex_fetch_fifo (
       if (unaligned_is_compressed_st) begin
         out_valid_stored_o = 1'b1;
       end else begin
-        out_valid_stored_o = valid_Q[1];
+        out_valid_stored_o = valid_q[1];
       end
     end else begin
-      out_valid_stored_o = valid_Q[0];
+      out_valid_stored_o = valid_q[0];
     end
   end
 
@@ -125,19 +125,19 @@ module ibex_fetch_fifo (
   // we accept data as long as our fifo is not full
   // we don't care about clear here as the data will be received one cycle
   // later anyway
-  assign in_ready_o = ~valid_Q[DEPTH-2];
+  assign in_ready_o = ~valid_q[DEPTH-2];
 
   /////////////////////
   // FIFO management //
   /////////////////////
 
   always_comb begin
-    addr_int    = addr_Q;
-    rdata_int   = rdata_Q;
-    valid_int   = valid_Q;
+    addr_int    = addr_q;
+    rdata_int   = rdata_q;
+    valid_int   = valid_q;
     if (in_valid_i) begin
       for (int j = 0; j < DEPTH; j++) begin
-        if (!valid_Q[j]) begin
+        if (!valid_q[j]) begin
           addr_int[j]  = in_addr_i;
           rdata_int[j] = in_rdata_i;
           valid_int[j] = 1'b1;
@@ -184,18 +184,18 @@ module ibex_fetch_fifo (
 
   always_ff @(posedge clk_i, negedge rst_ni) begin
     if (!rst_ni) begin
-      addr_Q    <= '{default: '0};
-      rdata_Q   <= '{default: '0};
-      valid_Q   <= '0;
+      addr_q    <= '{default: '0};
+      rdata_q   <= '{default: '0};
+      valid_q   <= '0;
     end else begin
       // on a clear signal from outside we invalidate the content of the FIFO
       // completely and start from an empty state
       if (clear_i) begin
-        valid_Q   <= '0;
+        valid_q   <= '0;
       end else begin
-        addr_Q    <= addr_n;
-        rdata_Q   <= rdata_n;
-        valid_Q   <= valid_n;
+        addr_q    <= addr_n;
+        rdata_q   <= rdata_n;
+        valid_q   <= valid_n;
       end
     end
   end
@@ -205,6 +205,6 @@ module ibex_fetch_fifo (
   ////////////////
 `ifndef VERILATOR
   assert property (
-    @(posedge clk_i) (in_valid_i) |-> ((valid_Q[DEPTH-1] == 1'b0) || (clear_i == 1'b1)) );
+    @(posedge clk_i) (in_valid_i) |-> ((valid_q[DEPTH-1] == 1'b0) || (clear_i == 1'b1)) );
 `endif
 endmodule
