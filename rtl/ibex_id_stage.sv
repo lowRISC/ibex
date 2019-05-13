@@ -541,7 +541,7 @@ module ibex_id_stage #(
   ////////////////////////////////
   // ID-EX/WB Pipeline Register //
   ////////////////////////////////
-  always_ff @(posedge clk_i or negedge rst_ni) begin : EX_WB_Pipeline_Register
+  always_ff @(posedge clk_i or negedge rst_ni) begin : id_wb_pipeline_reg
     if (!rst_ni) begin
       id_wb_fsm_cs  <= IDLE;
       branch_set_q  <= 1'b0;
@@ -552,10 +552,9 @@ module ibex_id_stage #(
   end
 
   //////////////////
-  // ID-EX/WB FMS //
+  // ID-EX/WB FSM //
   //////////////////
-
-  always_comb begin
+  always_comb begin : id_wb_fsm
     id_wb_fsm_ns    = id_wb_fsm_cs;
     regfile_we      = regfile_we_id;
     load_stall      = 1'b0;
