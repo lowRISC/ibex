@@ -498,7 +498,7 @@ module ibex_controller (
   assign operand_a_fw_mux_sel_o = data_misaligned_i ? SEL_MISALIGNED : SEL_REGFILE;
 
   // update registers
-  always_ff @(posedge clk_i, negedge rst_ni) begin : UPDATE_REGS
+  always_ff @(posedge clk_i or negedge rst_ni) begin : UPDATE_REGS
     if (!rst_ni) begin
       ctrl_fsm_cs <= RESET;
       //jump_done_q <= 1'b0;

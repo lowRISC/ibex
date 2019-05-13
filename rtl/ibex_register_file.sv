@@ -89,7 +89,7 @@ module ibex_register_file #(
   );
 
   // use clk_int here, since otherwise we don't want to write anything anyway
-  always_ff @(posedge clk_int, negedge rst_ni) begin : sample_waddr
+  always_ff @(posedge clk_int or negedge rst_ni) begin : sample_waddr
     if (!rst_ni) begin
       wdata_a_q   <= '0;
     end else begin

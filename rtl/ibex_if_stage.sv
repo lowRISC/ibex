@@ -155,7 +155,7 @@ module ibex_if_stage #(
 
 
   // offset initialization state
-  always_ff @(posedge clk_i, negedge rst_ni) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       offset_in_init_q <= 1'b1;
     end else begin
@@ -219,7 +219,7 @@ module ibex_if_stage #(
   );
 
   // IF-ID pipeline registers, frozen when the ID stage is stalled
-  always_ff @(posedge clk_i, negedge rst_ni) begin : IF_ID_PIPE_REGISTERS
+  always_ff @(posedge clk_i or negedge rst_ni) begin : IF_ID_PIPE_REGISTERS
     if (!rst_ni) begin
       instr_valid_id_o      <= 1'b0;
       instr_rdata_id_o      <= '0;

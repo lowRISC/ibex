@@ -157,7 +157,7 @@ module ibex_load_store_unit (
 
 
   // FF for rdata alignment and sign-extension
-  always_ff @(posedge clk_i, negedge rst_ni) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       data_type_q     <= 2'h0;
       rdata_offset_q  <= 2'h0;
@@ -277,7 +277,7 @@ module ibex_load_store_unit (
 
 
 
-  always_ff @(posedge clk_i, negedge rst_ni) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       CS            <= IDLE;
       rdata_q       <= '0;

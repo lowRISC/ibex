@@ -182,7 +182,7 @@ module ibex_fetch_fifo (
   // registers //
   ///////////////
 
-  always_ff @(posedge clk_i, negedge rst_ni) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       addr_q    <= '{default: '0};
       rdata_q   <= '{default: '0};
