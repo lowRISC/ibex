@@ -79,7 +79,7 @@ module ibex_ex_block #(
   if (RV32M) begin : gen_multdiv_m
     assign multdiv_en_sel     = MULT_TYPE ? div_en_i : mult_en_i | div_en_i;
     assign multdiv_en         = mult_en_i | div_en_i;
-  end else begin : gen_multdiv_nom
+  end else begin : gen_multdiv_no_m
     assign multdiv_en_sel     = 1'b0;
     assign multdiv_en         = 1'b0;
   end
@@ -130,7 +130,7 @@ module ibex_ex_block #(
         .alu_operand_b_o    ( multdiv_alu_operand_b ),
         .multdiv_result_o   ( multdiv_result        )
     );
-  end else begin: gen_multdiv_fast
+  end else begin : gen_multdiv_fast
     ibex_multdiv_fast multdiv_i (
         .clk_i              ( clk_i                 ),
         .rst_ni             ( rst_ni                ),

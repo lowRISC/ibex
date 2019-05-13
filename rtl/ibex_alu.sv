@@ -44,7 +44,7 @@ module ibex_alu (
   logic [32:0] operand_b_neg;
 
   // bit reverse operand_a for left shifts and bit counting
-  for (genvar k = 0; k < 32; k++) begin : gen_revloop
+  for (genvar k = 0; k < 32; k++) begin : gen_rev_operand_a
     assign operand_a_rev[k] = operand_a_i[31-k];
   end
 
@@ -122,7 +122,7 @@ module ibex_alu (
   assign shift_right_result        = shift_right_result_signed[31:0];
 
   // bit reverse the shift_right_result for left shifts
-  for (genvar j = 0; j < 32; j++) begin : gen_resrevloop
+  for (genvar j = 0; j < 32; j++) begin : gen_rev_shift_right_result
     assign shift_left_result[j] = shift_right_result[31-j];
   end
 

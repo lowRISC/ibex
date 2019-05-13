@@ -93,7 +93,7 @@ module ibex_if_stage #(
   logic       [31:0] exc_pc;
 
   // exception PC selection mux
-  always_comb begin : EXC_PC_MUX
+  always_comb begin : exc_pc_mux
     exc_pc = '0;
 
     // TODO: The behavior below follows an outdated (pre-1.10) RISC-V Privileged
@@ -111,8 +111,8 @@ module ibex_if_stage #(
     endcase
   end
 
-  // fetch address selection
-  always_comb begin
+  // fetch address selection mux
+  always_comb begin : fetch_addr_mux
     fetch_addr_n = '0;
 
     unique case (pc_mux_i)
@@ -219,7 +219,7 @@ module ibex_if_stage #(
   );
 
   // IF-ID pipeline registers, frozen when the ID stage is stalled
-  always_ff @(posedge clk_i or negedge rst_ni) begin : IF_ID_PIPE_REGISTERS
+  always_ff @(posedge clk_i or negedge rst_ni) begin : if_id_pipeline_regs
     if (!rst_ni) begin
       instr_valid_id_o      <= 1'b0;
       instr_rdata_id_o      <= '0;

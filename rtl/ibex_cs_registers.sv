@@ -417,7 +417,7 @@ module ibex_cs_registers #(
   assign PCCR_in[10] = id_valid_i & is_decoding_i & is_compressed_i; // compressed intr ctr
 
   // assign external performance counters
-  for (genvar i = 0; i < NumExtCounters; i++) begin : gen_extcounters
+  for (genvar i = 0; i < NumExtCounters; i++) begin : gen_ext_counters
     assign PCCR_in[N_PERF_COUNTERS - NumExtCounters + i] = ext_counters_i[i];
   end
 
@@ -486,7 +486,7 @@ module ibex_cs_registers #(
   end
 `else
   always_comb begin
-    for (int c = 0; c < N_PERF_COUNTERS; c++) begin : PERF_CNT_INC
+    for (int c = 0; c < N_PERF_COUNTERS; c++) begin : perf_counters_inc
       PCCR_inc[c] = PCCR_in[c] & PCER_q[c] & PCMR_q[0];
 
       PCCR_n[c]   = PCCR_q[c];

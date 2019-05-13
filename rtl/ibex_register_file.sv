@@ -81,7 +81,7 @@ module ibex_register_file #(
   // WRITE: SAMPLE INPUT DATA //
   ///////////////////////////////
 
-  prim_clock_gating CG_WE_GLOBAL (
+  prim_clock_gating cg_we_global (
       .clk_i     ( clk_i           ),
       .en_i      ( we_a_i          ),
       .test_en_i ( test_en_i       ),
@@ -89,7 +89,7 @@ module ibex_register_file #(
   );
 
   // use clk_int here, since otherwise we don't want to write anything anyway
-  always_ff @(posedge clk_int or negedge rst_ni) begin : sample_waddr
+  always_ff @(posedge clk_int or negedge rst_ni) begin : sample_wdata
     if (!rst_ni) begin
       wdata_a_q   <= '0;
     end else begin
@@ -102,8 +102,8 @@ module ibex_register_file #(
   ///////////////////////////////////////////////////////////////
   // WRITE: Write Address Decoder (WAD), combinatorial process //
   ///////////////////////////////////////////////////////////////
-  always_comb begin : p_WADa
-    for (int i = 1; i < NUM_WORDS; i++) begin : p_WordItera
+  always_comb begin : wad
+    for (int i = 1; i < NUM_WORDS; i++) begin : wad_word_iter
       if (we_a_i && (waddr_a_int == i)) begin
         waddr_onehot_a[i] = 1'b1;
       end else begin
@@ -115,8 +115,8 @@ module ibex_register_file #(
   //////////////////////////////////////////////////////////////////////////
   // WRITE: Clock gating (if integrated clock-gating cells are available) //
   //////////////////////////////////////////////////////////////////////////
-  for (genvar x = 1; x < NUM_WORDS; x++) begin : gen_CG_CELL_WORD_ITER
-    prim_clock_gating CG_Inst (
+  for (genvar x = 1; x < NUM_WORDS; x++) begin : gen_cg_word_iter
+    prim_clock_gating cg_i (
         .clk_i     ( clk_int           ),
         .en_i      ( waddr_onehot_a[x] ),
         .test_en_i ( test_en_i         ),
@@ -137,7 +137,7 @@ module ibex_register_file #(
     // Note: The assignment has to be done inside this process or Modelsim complains about it
     mem[0] = '0;
 
-    for (int k = 1; k < NUM_WORDS; k++) begin : w_WordIter
+    for (int k = 1; k < NUM_WORDS; k++) begin : latch_wdata_word_iter
       if (mem_clocks[k]) begin
         mem[k] = wdata_a_q;
       end

@@ -498,16 +498,13 @@ module ibex_controller (
   assign operand_a_fw_mux_sel_o = data_misaligned_i ? SEL_MISALIGNED : SEL_REGFILE;
 
   // update registers
-  always_ff @(posedge clk_i or negedge rst_ni) begin : UPDATE_REGS
+  always_ff @(posedge clk_i or negedge rst_ni) begin : update_regs
     if (!rst_ni) begin
-      ctrl_fsm_cs <= RESET;
-      //jump_done_q <= 1'b0;
-      debug_mode_q   <= 1'b0;
+      ctrl_fsm_cs  <= RESET;
+      debug_mode_q <= 1'b0;
     end else begin
-      ctrl_fsm_cs <= ctrl_fsm_ns;
-      // clear when id is valid (no instruction incoming)
-      //jump_done_q <= jump_done & (~id_ready_i);
-      debug_mode_q   <=  debug_mode_n;
+      ctrl_fsm_cs  <= ctrl_fsm_ns;
+      debug_mode_q <= debug_mode_n;
     end
   end
 
