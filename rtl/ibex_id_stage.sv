@@ -86,7 +86,7 @@ module ibex_id_stage #(
 
     // CSR
     output logic                      csr_access_ex_o,
-    output logic [1:0]                csr_op_ex_o,
+    output ibex_defines::csr_op_e     csr_op_ex_o,
     output ibex_defines::exc_cause_e  csr_cause_o,
     output logic                      csr_save_if_o,
     output logic                      csr_save_id_o,
@@ -220,7 +220,7 @@ module ibex_id_stage #(
 
   // CSR control
   logic        csr_access;
-  logic [1:0]  csr_op;
+  csr_op_e     csr_op;
   logic        csr_status;
 
   // Forwarding
