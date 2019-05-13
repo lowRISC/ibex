@@ -129,10 +129,10 @@ module ibex_core #(
 
   // CSR control
   logic        csr_access_ex;
-  logic  [1:0] csr_op_ex;
+  csr_op_e     csr_op_ex;
 
   logic        csr_access;
-  logic  [1:0] csr_op;
+  csr_op_e     csr_op;
   csr_num_e    csr_addr;
   logic [31:0] csr_rdata;
   logic [31:0] csr_wdata;
