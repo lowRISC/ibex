@@ -197,7 +197,7 @@ module ibex_core #(
   // interface to finish loading instructions
   assign core_busy_int = if_busy | ctrl_busy | lsu_busy;
 
-  always_ff @(posedge clk_i, negedge rst_ni) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       core_busy_q <= 1'b0;
     end else begin

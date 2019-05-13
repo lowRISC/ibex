@@ -359,7 +359,7 @@ module ibex_cs_registers #(
   assign debug_ebreakm_o      = dcsr_q.ebreakm;
 
   // actual registers
-  always_ff @(posedge clk_i, negedge rst_ni) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       mstatus_q  <= '{
               mie:  1'b0,
@@ -532,7 +532,7 @@ module ibex_cs_registers #(
   end
 
   // Performance Counter Registers
-  always_ff @(posedge clk_i, negedge rst_ni) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       PCER_q <= '0;
       PCMR_q <= 2'h3;

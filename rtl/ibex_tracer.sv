@@ -291,7 +291,7 @@ module ibex_tracer #(
   mailbox #(instr_trace_t) instr_wb = new ();
 
   // cycle counter
-  always_ff @(posedge clk_i, negedge rst_ni) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       cycles = 0;
     end else begin

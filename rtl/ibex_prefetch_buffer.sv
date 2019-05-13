@@ -210,7 +210,7 @@ module ibex_prefetch_buffer (
   // Registers //
   ///////////////
 
-  always_ff @(posedge clk_i, negedge rst_ni) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       CS              <= IDLE;
       instr_addr_q    <= '0;

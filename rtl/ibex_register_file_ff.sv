@@ -65,7 +65,7 @@ module ibex_register_file #(
   end
 
   // loop from 1 to NUM_WORDS-1 as R0 is nil
-  always_ff @(posedge clk_i, negedge rst_ni) begin
+  always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       rf_reg_tmp <= '{default:'0};
     end else begin
