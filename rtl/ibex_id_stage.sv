@@ -227,6 +227,7 @@ module ibex_id_stage #(
   op_fw_sel_e  operand_a_fw_mux_sel;
 
   logic [31:0] operand_a_fw_id;
+  logic [31:0] operand_b_fw_id;
 
   logic [31:0] alu_operand_a;
   logic [31:0] alu_operand_b;
@@ -304,6 +305,7 @@ module ibex_id_stage #(
 
   // ALU_Op_b Mux
   assign alu_operand_b = (alu_op_b_mux_sel == OP_B_IMM) ? imm_b : regfile_data_rb_id;
+  assign operand_b_fw_id = regfile_data_rb_id;
 
   ///////////////
   // Registers //
