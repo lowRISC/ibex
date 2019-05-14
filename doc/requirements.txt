@@ -1,4 +1,4 @@
 setuptools_scm
-sphinx>=1.8
+git+https://github.com/wallento/sphinx@fix-latex-figure-in-admonition#egg=sphinx
 sphinx_rtd_theme
 git+https://github.com/wallento/sphinx-wavedrom
