@@ -645,7 +645,7 @@ module ibex_id_stage #(
   // make sure that branch decision is valid when jumping
   assert property (
     @(posedge clk_i) (branch_decision_i !== 1'bx || branch_in_id == 1'b0) ) else begin
-      $display("Branch decision is X"); $stop; end
+      $display("Branch decision is X"); end
 
 `ifdef CHECK_MISALIGNED
   assert property (
