@@ -318,8 +318,10 @@ module ibex_load_store_unit (
 
   assign misaligned_st = data_misaligned_q;
 
-  assign load_err_o    = 1'b0;
-  assign store_err_o   = 1'b0;
+  // to know what kind of error to signal, we need to know the type of the transaction to which
+  // the outsanding rvalid belongs.
+  assign load_err_o    = data_err_i & data_rvalid_i & ~data_we_q;
+  assign store_err_o   = data_err_i & data_rvalid_i &  data_we_q;
 
   // FSM
   always_comb begin

@@ -58,6 +58,8 @@ module ibex_controller (
 
     // LSU
     input  logic                      data_misaligned_i,
+    input  logic                      load_err_i,
+    input  logic                      store_err_i,
 
     // jump/branch signals
     input  logic                      branch_in_id_i,        // branch in id
@@ -121,6 +123,8 @@ module ibex_controller (
   logic irq_enable_int;
 
   logic debug_mode_q, debug_mode_n;
+  logic load_err_q, load_err_n;
+  logic store_err_q, store_err_n;
 
 `ifndef SYNTHESIS
   // synopsys translate_off
@@ -179,6 +183,9 @@ module ibex_controller (
     debug_csr_save_o       = 1'b0;
     debug_cause_o          = DBG_CAUSE_EBREAK;
     debug_mode_n           = debug_mode_q;
+
+    load_err_n             = 1'b0;
+    store_err_n            = 1'b0;
 
     perf_tbranch_o         = 1'b0;
     perf_jump_o            = 1'b0;
@@ -290,10 +297,13 @@ module ibex_controller (
                 perf_tbranch_o = branch_set_i;
                 perf_jump_o    = jump_set_i;
               end else if (mret_insn_i || dret_insn_i || ecall_insn_i || pipe_flush_i ||
-                           ebrk_insn_i || illegal_insn_i || csr_status_i) begin
+                           ebrk_insn_i || illegal_insn_i || csr_status_i ||
+                           store_err_i || load_err_i) begin
                 ctrl_fsm_ns = FLUSH;
                 halt_if_o   = 1'b1;
                 halt_id_o   = 1'b1;
+                load_err_n  = load_err_i;
+                store_err_n = store_err_i;
               end
             end
           end
@@ -475,6 +485,25 @@ module ibex_controller (
               csr_cause_o           = EXC_CAUSE_BREAKPOINT;
             end
           end
+          load_err_q: begin
+            pc_mux_o         = PC_EXCEPTION;
+            pc_set_o         = 1'b1;
+            csr_save_id_o    = 1'b1;
+            csr_save_cause_o = 1'b1;
+            exc_pc_mux_o     = EXC_PC_LOAD;
+            exc_cause_o      = EXC_CAUSE_LOAD_ACCESS_FAULT;
+            csr_cause_o      = EXC_CAUSE_LOAD_ACCESS_FAULT;
+          end
+          store_err_q: begin
+            pc_mux_o         = PC_EXCEPTION;
+            pc_set_o         = 1'b1;
+            csr_save_id_o    = 1'b1;
+            csr_save_cause_o = 1'b1;
+            exc_pc_mux_o     = EXC_PC_STORE;
+            exc_cause_o      = EXC_CAUSE_STORE_ACCESS_FAULT;
+            csr_cause_o      = EXC_CAUSE_STORE_ACCESS_FAULT;
+          end
+
           default:;
         endcase
       end
@@ -502,9 +531,13 @@ module ibex_controller (
     if (!rst_ni) begin
       ctrl_fsm_cs  <= RESET;
       debug_mode_q <= 1'b0;
+      load_err_q   <= 1'b0;
+      store_err_q  <= 1'b0;
     end else begin
       ctrl_fsm_cs  <= ctrl_fsm_ns;
       debug_mode_q <= debug_mode_n;
+      load_err_q   <= load_err_n;
+      store_err_q  <= store_err_n;
     end
   end
 

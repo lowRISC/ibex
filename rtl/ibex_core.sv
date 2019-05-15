@@ -352,15 +352,15 @@ module ibex_core #(
       .data_misaligned_i            ( data_misaligned      ),
       .misaligned_addr_i            ( misaligned_addr      ),
 
+      .lsu_load_err_i               ( lsu_load_err         ),
+      .lsu_store_err_i              ( lsu_store_err        ),
+
       // Interrupt Signals
       .irq_i                        ( irq_i                ), // incoming interrupts
       .irq_id_i                     ( irq_id_i             ),
       .m_irq_enable_i               ( m_irq_enable         ),
       .irq_ack_o                    ( irq_ack_o            ),
       .irq_id_o                     ( irq_id_o             ),
-
-      .lsu_load_err_i               ( lsu_load_err         ),
-      .lsu_store_err_i              ( lsu_store_err        ),
 
       // Debug Signal
       .debug_cause_o                ( debug_cause          ),

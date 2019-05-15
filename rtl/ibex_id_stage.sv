@@ -440,6 +440,8 @@ module ibex_id_stage #(
 
       // LSU
       .data_misaligned_i              ( data_misaligned_i      ),
+      .load_err_i                     ( lsu_load_err_i         ),
+      .store_err_i                    ( lsu_store_err_i        ),
 
       // jump/branch control
       .branch_in_id_i                 ( branch_in_id           ),
