@@ -185,9 +185,11 @@ typedef enum logic [2:0] {
 
 // Exception cause
 typedef enum logic [5:0] {
-  EXC_CAUSE_ILLEGAL_INSN = 6'h02,
-  EXC_CAUSE_BREAKPOINT   = 6'h03,
-  EXC_CAUSE_ECALL_MMODE  = 6'h0B
+  EXC_CAUSE_ILLEGAL_INSN       = 6'h02,
+  EXC_CAUSE_BREAKPOINT         = 6'h03,
+  EXC_CAUSE_LOAD_ACCESS_FAULT  = 6'h05,
+  EXC_CAUSE_STORE_ACCESS_FAULT = 6'h07,
+  EXC_CAUSE_ECALL_MMODE        = 6'h0B
 } exc_cause_e;
 
 // Exceptions offsets
@@ -201,6 +203,7 @@ typedef enum logic [7:0] {
   EXC_OFF_RST        = 8'h80,
   EXC_OFF_ILLINSN    = 8'h84,
   EXC_OFF_ECALL      = 8'h88,
+  EXC_OFF_LSUERR     = 8'h8c,
   EXC_OFF_BREAKPOINT = 8'h90
 } exc_off_e;
 

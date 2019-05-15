@@ -310,7 +310,7 @@ module ibex_cs_registers #(
           mstatus_n.mpie = mstatus_q.mie;
           mstatus_n.mie  = 1'b0;
           mstatus_n.mpp  = PRIV_LVL_M;
-          mepc_n = exception_pc;
+          mepc_n         = exception_pc;
           mcause_n       = csr_cause_i;
         end
       end //csr_save_cause_i
