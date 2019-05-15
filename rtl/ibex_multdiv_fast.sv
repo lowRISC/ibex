@@ -56,7 +56,8 @@ module ibex_multdiv_fast (
   } div_fsm_e;
   div_fsm_e divcurr_state_q, divcurr_state_n;
 
-  logic signed [34:0] mac_res_ext;
+  logic signed [34:0] mac_res_signed;
+  logic        [34:0] mac_res_ext;
 
   logic [33:0] mac_res_q, mac_res_n, mac_res, op_reminder_n;
   logic [15:0] mult_op_a;
@@ -117,8 +118,9 @@ module ibex_multdiv_fast (
 
   assign multdiv_result_o = div_en_i ? mac_res_q[31:0] : mac_res_n[31:0];
 
-  assign mac_res_ext = $signed({sign_a, mult_op_a})*$signed({sign_b, mult_op_b}) + $signed(accum);
-  assign mac_res     = mac_res_ext[33:0];
+  assign mac_res_signed = $signed({sign_a, mult_op_a})*$signed({sign_b, mult_op_b}) + $signed(accum);
+  assign mac_res_ext    = $unsigned(mac_res_signed);
+  assign mac_res        = mac_res_ext[33:0];
 
   assign res_adder_h   = alu_adder_ext_i[33:1];
 
