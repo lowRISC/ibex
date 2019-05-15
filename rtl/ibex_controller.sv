@@ -156,10 +156,10 @@ module ibex_controller (
 
     csr_save_cause_o       = 1'b0;
 
-    exc_cause_o            = exc_cause_e'('0);
+    exc_cause_o            = exc_cause_e'({$bits(exc_cause_e){1'b0}});
     exc_pc_mux_o           = EXC_PC_IRQ;
 
-    csr_cause_o            = exc_cause_e'('0);
+    csr_cause_o            = exc_cause_e'({$bits(exc_cause_e){1'b0}});
 
     pc_mux_o               = PC_BOOT;
     pc_set_o               = 1'b0;

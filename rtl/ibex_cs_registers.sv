@@ -371,8 +371,8 @@ module ibex_cs_registers #(
 
       depc_q      <= '0;
       dcsr_q     <= '{
-        xdebugver: x_debug_ver_e'('0),
-        cause:     dbg_cause_e'('0),
+        xdebugver: x_debug_ver_e'({$bits(x_debug_ver_e){1'b0}}),
+        cause:     dbg_cause_e'({$bits(dbg_cause_e){1'b0}}),
         prv:       PRIV_LVL_M,
         default:   '0
       };
