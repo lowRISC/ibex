@@ -66,10 +66,9 @@ module ibex_multdiv_slow (
   logic        is_greater_equal;
   logic        div_change_sign, rem_change_sign;
 
-
-   //(accum_window_q + op_a_shift_q)
+   // (accum_window_q + op_a_shift_q)
   assign res_adder_l       = alu_adder_ext_i[32:0];
-   //(accum_window_q + op_a_shift_q)>>1
+   // (accum_window_q + op_a_shift_q)>>1
   assign res_adder_h       = alu_adder_ext_i[33:1];
 
   always_comb begin
@@ -89,56 +88,50 @@ module ibex_multdiv_slow (
       default: begin
         unique case(curr_state_q)
           MD_IDLE: begin
-            //0 - B = 0 iff B == 0
+            // 0 - B = 0 iff B == 0
             alu_operand_a_o     = {32'h0  , 1'b1};
             alu_operand_b_o     = {~op_b_i, 1'b1};
           end
           MD_ABS_A: begin
-            //ABS(A) = 0 - A
+            // ABS(A) = 0 - A
             alu_operand_a_o     = {32'h0  , 1'b1};
             alu_operand_b_o     = {~op_a_i, 1'b1};
           end
           MD_ABS_B: begin
-            //ABS(B) = 0 - B
+            // ABS(B) = 0 - B
             alu_operand_a_o     = {32'h0  , 1'b1};
             alu_operand_b_o     = {~op_b_i, 1'b1};
           end
           MD_CHANGE_SIGN: begin
-            //ABS(Quotient) = 0 - Quotient (or Reminder)
+            // ABS(Quotient) = 0 - Quotient (or Reminder)
             alu_operand_a_o     = {32'h0  , 1'b1};
             alu_operand_b_o     = {~accum_window_q[31:0], 1'b1};
           end
           default: begin
-            //Division
-            alu_operand_a_o     = {accum_window_q[31:0], 1'b1}; //it contains the reminder
-            alu_operand_b_o     = {~op_b_shift_q[31:0], 1'b1};  //-denominator two's compliment
+            // Division
+            alu_operand_a_o     = {accum_window_q[31:0], 1'b1}; // it contains the reminder
+            alu_operand_b_o     = {~op_b_shift_q[31:0], 1'b1};  // -denominator two's compliment
           end
         endcase
       end
     endcase
   end
 
-  /*
-     The adder in the ALU computes alu_operand_a_o + alu_operand_b_o which means
-     Reminder - Divisor. If Reminder - Divisor >= 0, is_greater_equal is equal to 1,
-     the next Reminder is Reminder - Divisor contained in res_adder_h and the
-     Quotient multdiv_state_q-th bit is set to 1 using the shift register op_b_shift_q.
-     The
-  */
-
- assign is_greater_equal =
-          ((accum_window_q[31] ^ op_b_shift_q[31]) == 1'b0) ?
-            (res_adder_h[31] == 1'b0) :
-            accum_window_q[31];
+  // The adder in the ALU computes alu_operand_a_o + alu_operand_b_o which means
+  // Reminder - Divisor. If Reminder - Divisor >= 0, is_greater_equal is equal to 1,
+  // the next Reminder is Reminder - Divisor contained in res_adder_h and the
+  // Quotient multdiv_state_q-th bit is set to 1 using the shift register op_b_shift_q.
+  assign is_greater_equal = ((accum_window_q[31] ^ op_b_shift_q[31]) == 1'b0) ?
+      (res_adder_h[31] == 1'b0) : accum_window_q[31];
 
   assign one_shift     = {32'b0, 1'b1} << multdiv_state_q;
 
-  assign next_reminder = is_greater_equal ? res_adder_h                   : op_remainder;
-  assign next_quotient = is_greater_equal ? op_a_shift_q | one_shift      : op_a_shift_q;
+  assign next_reminder = is_greater_equal ? res_adder_h              : op_remainder;
+  assign next_quotient = is_greater_equal ? op_a_shift_q | one_shift : op_a_shift_q;
 
   assign b_0             = {32{op_b_shift_q[0]}};
 
-  //build the partial product
+  // build the partial product
   assign op_a_bw_pp       = { ~(op_a_shift_q[32] & op_b_shift_q[0]),  (op_a_shift_q[31:0] & b_0) };
   assign op_a_bw_last_pp  = {  (op_a_shift_q[32] & op_b_shift_q[0]), ~(op_a_shift_q[31:0] & b_0) };
 
@@ -148,7 +141,7 @@ module ibex_multdiv_slow (
   assign op_a_ext = {sign_a, op_a_i};
   assign op_b_ext = {sign_b, op_b_i};
 
-  //division
+  // division
   assign op_remainder = accum_window_q[32:0];
 
   assign multdiv_state_m1  = multdiv_state_q - 5'h1;
@@ -199,14 +192,14 @@ module ibex_multdiv_slow (
               curr_state_d   = MD_COMP;
             end
             MD_OP_DIV: begin
-              //Check if the Denominator is 0
-              //quotient for division by 0
+              // Check if the Denominator is 0
+              // quotient for division by 0
               accum_window_d = {33{1'b1}};
               curr_state_d   = equal_to_zero ? MD_FINISH : MD_ABS_A;
             end
             default: begin
-              //Check if the Denominator is 0
-              //reminder for division by 0
+              // Check if the Denominator is 0
+              // reminder for division by 0
               accum_window_d = op_a_ext;
               curr_state_d   = equal_to_zero ? MD_FINISH : MD_ABS_A;
             end
@@ -215,17 +208,17 @@ module ibex_multdiv_slow (
         end
 
         MD_ABS_A: begin
-          //quotient
+          // quotient
           op_a_shift_d   = '0;
-          //A abs value
+          // A abs value
           op_numerator_d = sign_a ? alu_adder_i : op_a_i;
           curr_state_d   = MD_ABS_B;
         end
 
         MD_ABS_B: begin
-          //reminder
+          // reminder
           accum_window_d = { 32'h0, op_numerator_q[31]};
-          //B abs value
+          // B abs value
           op_b_shift_d   = sign_b ? alu_adder_i : op_b_i;
           curr_state_d   = MD_COMP;
         end
@@ -263,12 +256,13 @@ module ibex_multdiv_slow (
               curr_state_d   = MD_IDLE;
             end
             MD_OP_DIV: begin
-              //this time we save the quotient in accum_window_q since we do not need anymore the reminder
+              // this time we save the quotient in accum_window_q since we do not need anymore the
+              // reminder
               accum_window_d = next_quotient;
               curr_state_d   = MD_CHANGE_SIGN;
             end
             default: begin
-              //this time we do not save the quotient anymore since we need only the reminder
+              // this time we do not save the quotient anymore since we need only the reminder
               accum_window_d = {1'b0, next_reminder[31:0]};
               curr_state_d   = MD_CHANGE_SIGN;
             end
