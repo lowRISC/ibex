@@ -97,9 +97,9 @@ module ibex_multdiv_fast (
 
       if (div_en_i) begin
         div_counter_q     <= div_counter_n;
-        op_denominator_q  <= op_denominator_n  ;
-        op_numerator_q    <= op_numerator_n    ;
-        op_quotient_q     <= op_quotient_n     ;
+        op_denominator_q  <= op_denominator_n;
+        op_numerator_q    <= op_numerator_n;
+        op_quotient_q     <= op_quotient_n;
         divcurr_state_q   <= divcurr_state_n;
       end
 
@@ -134,12 +134,9 @@ module ibex_multdiv_fast (
 
   assign one_shift     = {31'b0, 1'b1} << div_counter_q;
 
-  /*
-     The adder in the ALU computes alu_operand_a_o + alu_operand_b_o which means
-     Reminder - Divisor. If Reminder - Divisor >= 0, is_greater_equal is equal to 1,
-     the next Reminder is Reminder - Divisor contained in res_adder_h and the
-  */
-
+  // The adder in the ALU computes alu_operand_a_o + alu_operand_b_o which means
+  // Reminder - Divisor. If Reminder - Divisor >= 0, is_greater_equal is equal to 1,
+  // the next Reminder is Reminder - Divisor contained in res_adder_h and the
   always_comb begin
     if ((mac_res_q[31] ^ op_denominator_q[31]) == 1'b0) begin
       is_greater_equal = (res_adder_h[31] == 1'b0);
@@ -167,42 +164,42 @@ module ibex_multdiv_fast (
     unique case(divcurr_state_q)
       MD_IDLE: begin
         if (operator_i == MD_OP_DIV) begin
-          //Check if the Denominator is 0
-          //quotient for division by 0
+          // Check if the Denominator is 0
+          // quotient for division by 0
           op_reminder_n    = '1;
           divcurr_state_n  = equal_to_zero ? MD_FINISH : MD_ABS_A;
         end else begin
-          //Check if the Denominator is 0
-          //reminder for division by 0
+          // Check if the Denominator is 0
+          // reminder for division by 0
           op_reminder_n     = {2'b0, op_a_i};
           divcurr_state_n    = equal_to_zero ? MD_FINISH : MD_ABS_A;
         end
-        //0 - B = 0 iff B == 0
+        // 0 - B = 0 iff B == 0
         alu_operand_a_o     = {32'h0  , 1'b1};
         alu_operand_b_o     = {~op_b_i, 1'b1};
         div_counter_n        = 5'd31;
       end
 
       MD_ABS_A: begin
-        //quotient
+        // quotient
         op_quotient_n     = '0;
-        //A abs value
+        // A abs value
         op_numerator_n    = div_sign_a ? alu_adder_i : op_a_i;
         divcurr_state_n   = MD_ABS_B;
         div_counter_n     = 5'd31;
-        //ABS(A) = 0 - A
+        // ABS(A) = 0 - A
         alu_operand_a_o   = {32'h0  , 1'b1};
         alu_operand_b_o   = {~op_a_i, 1'b1};
       end
 
       MD_ABS_B: begin
-        //reminder
+        // reminder
         op_reminder_n     = { 33'h0, op_numerator_q[31]};
-        //B abs value
+        // B abs value
         op_denominator_n  = div_sign_b ? alu_adder_i : op_b_i;
         divcurr_state_n   = MD_COMP;
         div_counter_n     = 5'd31;
-        //ABS(B) = 0 - B
+        // ABS(B) = 0 - B
         alu_operand_a_o   = {32'h0  , 1'b1};
         alu_operand_b_o   = {~op_b_i, 1'b1};
       end
@@ -211,8 +208,8 @@ module ibex_multdiv_fast (
         op_reminder_n     = {1'b0, next_reminder[31:0], op_numerator_q[div_counter_n]};
         op_quotient_n     = next_quotient[31:0];
         divcurr_state_n   = (div_counter_q == 5'd1) ? MD_LAST : MD_COMP;
-        //Division
-        alu_operand_a_o   = {mac_res_q[31:0], 1'b1}; //it contains the reminder
+        // Division
+        alu_operand_a_o   = {mac_res_q[31:0], 1'b1};         // it contains the reminder
         alu_operand_b_o   = {~op_denominator_q[31:0], 1'b1}; // -denominator two's compliment
       end
 
@@ -222,11 +219,11 @@ module ibex_multdiv_fast (
           // we do not need anymore the reminder
           op_reminder_n   = {1'b0, next_quotient};
         end else begin
-          //this time we do not save the quotient anymore since we need only the reminder
+          // this time we do not save the quotient anymore since we need only the reminder
           op_reminder_n  = {2'b0, next_reminder[31:0]};
         end
-        //Division
-        alu_operand_a_o     = {mac_res_q[31:0], 1'b1}; // it contains the reminder
+        // Division
+        alu_operand_a_o     = {mac_res_q[31:0], 1'b1};         // it contains the reminder
         alu_operand_b_o     = {~op_denominator_q[31:0], 1'b1}; // -denominator two's compliment
 
         divcurr_state_n = MD_CHANGE_SIGN;
@@ -239,7 +236,7 @@ module ibex_multdiv_fast (
         end else begin
           op_reminder_n = (rem_change_sign) ? {2'h0,alu_adder_i} : mac_res_q;
         end
-        //ABS(Quotient) = 0 - Quotient (or Reminder)
+        // ABS(Quotient) = 0 - Quotient (or Reminder)
         alu_operand_a_o     = {32'h0  , 1'b1};
         alu_operand_b_o     = {~mac_res_q[31:0], 1'b1};
       end
@@ -267,7 +264,7 @@ module ibex_multdiv_fast (
     unique case (mult_state_q)
 
       ALBL: begin
-        //al*bl
+        // al*bl
         mult_op_a = op_a_i[`OP_L];
         mult_op_b = op_b_i[`OP_L];
         sign_a    = 1'b0;
@@ -278,24 +275,24 @@ module ibex_multdiv_fast (
       end
 
       ALBH: begin
-        //al*bh<<16
+        // al*bh<<16
         mult_op_a = op_a_i[`OP_L];
         mult_op_b = op_b_i[`OP_H];
         sign_a    = 1'b0;
         sign_b    = signed_mode_i[1] & op_b_i[31];
-        //result of AL*BL (in mac_res_q) always unsigned with no carry, so carries_q always 00
+        // result of AL*BL (in mac_res_q) always unsigned with no carry, so carries_q always 00
         accum     = {18'b0,mac_res_q[31:16]};
         if (operator_i == MD_OP_MULL) begin
           mac_res_n = {2'b0,mac_res[`OP_L],mac_res_q[`OP_L]};
         end else begin
-          //MD_OP_MULH
+          // MD_OP_MULH
           mac_res_n = mac_res;
         end
         mult_state_n = AHBL;
       end
 
       AHBL: begin
-        //ah*bl<<16
+        // ah*bl<<16
         mult_op_a = op_a_i[`OP_H];
         mult_op_b = op_b_i[`OP_L];
         sign_a    = signed_mode_i[0] & op_a_i[31];
@@ -313,23 +310,21 @@ module ibex_multdiv_fast (
       end
 
       AHBH: begin
-        //only MD_OP_MULH here
-        //ah*bh
+        // only MD_OP_MULH here
+        // ah*bh
         mult_op_a = op_a_i[`OP_H];
         mult_op_b = op_b_i[`OP_H];
         sign_a    = signed_mode_i[0] & op_a_i[31];
         sign_b    = signed_mode_i[1] & op_b_i[31];
         accum[17: 0]  = mac_res_q[33:16];
         accum[33:18]  = {16{signed_mult & mac_res_q[33]}};
-        //result of AH*BL is not signed only if signed_mode_i == 2'b00
+        // result of AH*BL is not signed only if signed_mode_i == 2'b00
         mac_res_n    = mac_res;
         mult_state_n = ALBL;
         mult_is_ready = 1'b1;
-
       end
       default:;
     endcase // mult_state_q
   end
-
 
 endmodule // ibex_mult
