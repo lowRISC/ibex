@@ -114,9 +114,10 @@ module ibex_alu (
 
   // right shifts, we let the synthesizer optimize this
   logic [32:0] shift_op_a_32;
-
   assign shift_op_a_32 = {shift_arithmetic & shift_op_a[31], shift_op_a};
 
+  // The MSB of shift_right_result_ext can safely be ignored. We just extend the input to always
+  // do arithmetic shifts.
   logic signed [32:0] shift_right_result_signed;
   logic        [32:0] shift_right_result_ext;
   assign shift_right_result_signed = $signed(shift_op_a_32) >>> shift_amt[4:0];
