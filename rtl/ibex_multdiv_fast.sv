@@ -59,7 +59,7 @@ module ibex_multdiv_fast (
   logic signed [34:0] mac_res_signed;
   logic        [34:0] mac_res_ext;
 
-  logic [33:0] mac_res_q, mac_res_n, mac_res, op_reminder_n;
+  logic [33:0] mac_res_q, mac_res_n, mac_res, op_remainder_n;
   logic [15:0] mult_op_a;
   logic [15:0] mult_op_b;
   logic [33:0] accum;
@@ -75,7 +75,7 @@ module ibex_multdiv_fast (
   logic [31:0] op_denominator_n;
   logic [31:0] op_numerator_n;
   logic [31:0] op_quotient_n;
-  logic [31:0] next_reminder;
+  logic [31:0] next_remainder;
   logic [32:0] next_quotient;
   logic [32:0] res_adder_h;
   logic        mult_is_ready;
@@ -107,7 +107,7 @@ module ibex_multdiv_fast (
         mult_en_i:
           mac_res_q <= mac_res_n;
         div_en_i:
-          mac_res_q <= op_reminder_n;
+          mac_res_q <= op_remainder_n;
         default:
           mac_res_q <= mac_res_q;
        endcase
@@ -128,15 +128,15 @@ module ibex_multdiv_fast (
 
   assign res_adder_h   = alu_adder_ext_i[33:1];
 
-  assign next_reminder = is_greater_equal ? res_adder_h[31:0] : mac_res_q[31:0];
+  assign next_remainder = is_greater_equal ? res_adder_h[31:0] : mac_res_q[31:0];
   assign next_quotient = is_greater_equal ? {1'b0,op_quotient_q} | {1'b0,one_shift} :
                                             {1'b0,op_quotient_q};
 
   assign one_shift     = {31'b0, 1'b1} << div_counter_q;
 
   // The adder in the ALU computes alu_operand_a_o + alu_operand_b_o which means
-  // Reminder - Divisor. If Reminder - Divisor >= 0, is_greater_equal is equal to 1,
-  // the next Reminder is Reminder - Divisor contained in res_adder_h and the
+  // Remainder - Divisor. If Remainder - Divisor >= 0, is_greater_equal is equal to 1,
+  // the next Remainder is Remainder - Divisor contained in res_adder_h and the
   always_comb begin
     if ((mac_res_q[31] ^ op_denominator_q[31]) == 1'b0) begin
       is_greater_equal = (res_adder_h[31] == 1'b0);
@@ -153,7 +153,7 @@ module ibex_multdiv_fast (
 
   always_comb begin : div_fsm
     div_counter_n    = div_counter_q - 5'h1;
-    op_reminder_n    = mac_res_q;
+    op_remainder_n    = mac_res_q;
     op_quotient_n    = op_quotient_q;
     divcurr_state_n  = divcurr_state_q;
     op_numerator_n   = op_numerator_q;
@@ -166,12 +166,12 @@ module ibex_multdiv_fast (
         if (operator_i == MD_OP_DIV) begin
           // Check if the Denominator is 0
           // quotient for division by 0
-          op_reminder_n    = '1;
+          op_remainder_n    = '1;
           divcurr_state_n  = equal_to_zero ? MD_FINISH : MD_ABS_A;
         end else begin
           // Check if the Denominator is 0
-          // reminder for division by 0
-          op_reminder_n     = {2'b0, op_a_i};
+          // remainder for division by 0
+          op_remainder_n     = {2'b0, op_a_i};
           divcurr_state_n    = equal_to_zero ? MD_FINISH : MD_ABS_A;
         end
         // 0 - B = 0 iff B == 0
@@ -193,8 +193,8 @@ module ibex_multdiv_fast (
       end
 
       MD_ABS_B: begin
-        // reminder
-        op_reminder_n     = { 33'h0, op_numerator_q[31]};
+        // remainder
+        op_remainder_n     = { 33'h0, op_numerator_q[31]};
         // B abs value
         op_denominator_n  = div_sign_b ? alu_adder_i : op_b_i;
         divcurr_state_n   = MD_COMP;
@@ -205,25 +205,25 @@ module ibex_multdiv_fast (
       end
 
       MD_COMP: begin
-        op_reminder_n     = {1'b0, next_reminder[31:0], op_numerator_q[div_counter_n]};
+        op_remainder_n     = {1'b0, next_remainder[31:0], op_numerator_q[div_counter_n]};
         op_quotient_n     = next_quotient[31:0];
         divcurr_state_n   = (div_counter_q == 5'd1) ? MD_LAST : MD_COMP;
         // Division
-        alu_operand_a_o   = {mac_res_q[31:0], 1'b1};         // it contains the reminder
+        alu_operand_a_o   = {mac_res_q[31:0], 1'b1};         // it contains the remainder
         alu_operand_b_o   = {~op_denominator_q[31:0], 1'b1}; // -denominator two's compliment
       end
 
       MD_LAST: begin
         if (operator_i == MD_OP_DIV) begin
-          // this time we save the quotient in op_reminder_n (i.e. mac_res_q) since
-          // we do not need anymore the reminder
-          op_reminder_n   = {1'b0, next_quotient};
+          // this time we save the quotient in op_remainder_n (i.e. mac_res_q) since
+          // we do not need anymore the remainder
+          op_remainder_n   = {1'b0, next_quotient};
         end else begin
-          // this time we do not save the quotient anymore since we need only the reminder
-          op_reminder_n  = {2'b0, next_reminder[31:0]};
+          // this time we do not save the quotient anymore since we need only the remainder
+          op_remainder_n  = {2'b0, next_remainder[31:0]};
         end
         // Division
-        alu_operand_a_o     = {mac_res_q[31:0], 1'b1};         // it contains the reminder
+        alu_operand_a_o     = {mac_res_q[31:0], 1'b1};         // it contains the remainder
         alu_operand_b_o     = {~op_denominator_q[31:0], 1'b1}; // -denominator two's compliment
 
         divcurr_state_n = MD_CHANGE_SIGN;
@@ -232,11 +232,11 @@ module ibex_multdiv_fast (
       MD_CHANGE_SIGN: begin
         divcurr_state_n  = MD_FINISH;
         if (operator_i == MD_OP_DIV) begin
-          op_reminder_n = (div_change_sign) ? {2'h0,alu_adder_i} : mac_res_q;
+          op_remainder_n = (div_change_sign) ? {2'h0,alu_adder_i} : mac_res_q;
         end else begin
-          op_reminder_n = (rem_change_sign) ? {2'h0,alu_adder_i} : mac_res_q;
+          op_remainder_n = (rem_change_sign) ? {2'h0,alu_adder_i} : mac_res_q;
         end
-        // ABS(Quotient) = 0 - Quotient (or Reminder)
+        // ABS(Quotient) = 0 - Quotient (or Remainder)
         alu_operand_a_o     = {32'h0  , 1'b1};
         alu_operand_b_o     = {~mac_res_q[31:0], 1'b1};
       end
