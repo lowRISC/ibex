@@ -510,7 +510,7 @@ module ibex_controller (
 
       default: begin
         instr_req_o = 1'b0;
-        ctrl_fsm_ns = RESET;
+        ctrl_fsm_ns = ctrl_fsm_e'({$bits(ctrl_fsm_e){1'bX}});
       end
     endcase
   end

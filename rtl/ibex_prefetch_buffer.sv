@@ -200,8 +200,7 @@ module ibex_prefetch_buffer (
       end
 
       default: begin
-        // NS          = IDLE;      // unreachable, removing dead code
-        // instr_req_o = 1'b0;      // unreachable, removing dead code
+        NS = prefetch_fsm_e'({$bits(prefetch_fsm_e){1'bX}});
       end
     endcase
   end

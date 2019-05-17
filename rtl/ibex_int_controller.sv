@@ -85,6 +85,10 @@ module ibex_int_controller (
       IRQ_DONE: begin
         exc_ctrl_ns = IDLE;
       end
+
+      default: begin
+        exc_ctrl_ns = exc_ctrl_e'({$bits(exc_ctrl_e){1'bX}});
+      end
     endcase
   end
 

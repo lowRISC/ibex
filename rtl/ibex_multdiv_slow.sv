@@ -283,7 +283,9 @@ module ibex_multdiv_slow (
             curr_state_d = MD_IDLE;
         end
 
-        default:;
+        default: begin
+          curr_state_d = div_fsm_e'({$bits(div_fsm_e){1'bX}});
+        end
         endcase // curr_state_q
       end
   end

@@ -481,6 +481,7 @@ module ibex_cs_registers #(
         CSR_OP_WRITE:  PCCR_n[0] = csr_wdata_i;
         CSR_OP_SET:    PCCR_n[0] = csr_wdata_i | PCCR_q[0];
         CSR_OP_CLEAR:  PCCR_n[0] = csr_wdata_i & ~(PCCR_q[0]);
+        default:       ;
       endcase
     end
   end
@@ -501,6 +502,7 @@ module ibex_cs_registers #(
           CSR_OP_WRITE:  PCCR_n[c] = csr_wdata_i;
           CSR_OP_SET:    PCCR_n[c] = csr_wdata_i | PCCR_q[c];
           CSR_OP_CLEAR:  PCCR_n[c] = csr_wdata_i & ~(PCCR_q[c]);
+          default:       ;
         endcase
       end
     end
@@ -518,6 +520,7 @@ module ibex_cs_registers #(
         CSR_OP_WRITE:  PCMR_n = csr_wdata_i[1:0];
         CSR_OP_SET:    PCMR_n = csr_wdata_i[1:0] | PCMR_q;
         CSR_OP_CLEAR:  PCMR_n = csr_wdata_i[1:0] & ~(PCMR_q);
+        default:       ;
       endcase
     end
 
@@ -527,6 +530,7 @@ module ibex_cs_registers #(
         CSR_OP_WRITE:  PCER_n = csr_wdata_i[N_PERF_COUNTERS-1:0];
         CSR_OP_SET:    PCER_n = csr_wdata_i[N_PERF_COUNTERS-1:0] | PCER_q;
         CSR_OP_CLEAR:  PCER_n = csr_wdata_i[N_PERF_COUNTERS-1:0] & ~(PCER_q);
+        default:       ;
       endcase
     end
   end
