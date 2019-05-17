@@ -36,7 +36,7 @@ module ibex_compressed_decoder (
 
   always_comb begin
     illegal_instr_o = 1'b0;
-    instr_o         = '0;
+    instr_o         = 'X;
 
     unique case (instr_i[1:0])
       // C0
@@ -160,7 +160,15 @@ module ibex_compressed_decoder (
                     // 101: c.addw
                     illegal_instr_o = 1'b1;
                   end
+
+                  default: begin
+                    illegal_instr_o = 1'bX;
+                  end
                 endcase
+              end
+
+              default: begin
+                illegal_instr_o = 1'bX;
               end
             endcase
           end
@@ -174,7 +182,7 @@ module ibex_compressed_decoder (
           end
 
           default: begin
-            // illegal_instr_o = 1'b1;         // not reachable, dead code, commenting out
+            illegal_instr_o = 1'bX;
           end
         endcase
       end
@@ -226,8 +234,15 @@ module ibex_compressed_decoder (
                        instr_i[11:9], 2'b00, {OPCODE_STORE}};
           end
 
-          default: begin
+          3'b001,
+          3'b011,
+          3'b101,
+          3'b111: begin
             illegal_instr_o = 1'b1;
+          end
+
+          default: begin
+            illegal_instr_o = 1'bX;
           end
         endcase
       end

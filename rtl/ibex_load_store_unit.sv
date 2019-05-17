@@ -102,17 +102,19 @@ module ibex_load_store_unit (
       2'b00: begin // Writing a word
         if (!misaligned_st) begin // non-misaligned case
           unique case (data_addr_int[1:0])
-            2'b00: data_be = 4'b1111;
-            2'b01: data_be = 4'b1110;
-            2'b10: data_be = 4'b1100;
-            2'b11: data_be = 4'b1000;
+            2'b00:   data_be = 4'b1111;
+            2'b01:   data_be = 4'b1110;
+            2'b10:   data_be = 4'b1100;
+            2'b11:   data_be = 4'b1000;
+            default: data_be = 'X;
           endcase // case (data_addr_int[1:0])
         end else begin // misaligned case
           unique case (data_addr_int[1:0])
-            2'b00: data_be = 4'b0000; // this is not used, but included for completeness
-            2'b01: data_be = 4'b0001;
-            2'b10: data_be = 4'b0011;
-            2'b11: data_be = 4'b0111;
+            2'b00:   data_be = 4'b0000; // this is not used, but included for completeness
+            2'b01:   data_be = 4'b0001;
+            2'b10:   data_be = 4'b0011;
+            2'b11:   data_be = 4'b0111;
+            default: data_be = 'X;
           endcase // case (data_addr_int[1:0])
         end
       end
@@ -120,10 +122,11 @@ module ibex_load_store_unit (
       2'b01: begin // Writing a half word
         if (!misaligned_st) begin // non-misaligned case
           unique case (data_addr_int[1:0])
-            2'b00: data_be = 4'b0011;
-            2'b01: data_be = 4'b0110;
-            2'b10: data_be = 4'b1100;
-            2'b11: data_be = 4'b1000;
+            2'b00:   data_be = 4'b0011;
+            2'b01:   data_be = 4'b0110;
+            2'b10:   data_be = 4'b1100;
+            2'b11:   data_be = 4'b1000;
+            default: data_be = 'X;
           endcase // case (data_addr_int[1:0])
         end else begin // misaligned case
           data_be = 4'b0001;
@@ -133,10 +136,11 @@ module ibex_load_store_unit (
       2'b10,
       2'b11: begin // Writing a byte
         unique case (data_addr_int[1:0])
-          2'b00: data_be = 4'b0001;
-          2'b01: data_be = 4'b0010;
-          2'b10: data_be = 4'b0100;
-          2'b11: data_be = 4'b1000;
+          2'b00:   data_be = 4'b0001;
+          2'b01:   data_be = 4'b0010;
+          2'b10:   data_be = 4'b0100;
+          2'b11:   data_be = 4'b1000;
+          default: data_be = 'X;
         endcase // case (data_addr_int[1:0])
       end
     endcase // case (data_type_ex_i)
@@ -148,10 +152,11 @@ module ibex_load_store_unit (
   assign wdata_offset = data_addr_int[1:0] - data_reg_offset_ex_i[1:0];
   always_comb begin
     unique case (wdata_offset)
-      2'b00: data_wdata = data_wdata_ex_i[31:0];
-      2'b01: data_wdata = {data_wdata_ex_i[23:0], data_wdata_ex_i[31:24]};
-      2'b10: data_wdata = {data_wdata_ex_i[15:0], data_wdata_ex_i[31:16]};
-      2'b11: data_wdata = {data_wdata_ex_i[ 7:0], data_wdata_ex_i[31: 8]};
+      2'b00:   data_wdata =  data_wdata_ex_i[31:0];
+      2'b01:   data_wdata = {data_wdata_ex_i[23:0], data_wdata_ex_i[31:24]};
+      2'b10:   data_wdata = {data_wdata_ex_i[15:0], data_wdata_ex_i[31:16]};
+      2'b11:   data_wdata = {data_wdata_ex_i[ 7:0], data_wdata_ex_i[31: 8]};
+      default: data_wdata = 'X;
     endcase // case (wdata_offset)
   end
 
