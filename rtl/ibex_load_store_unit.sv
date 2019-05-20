@@ -98,7 +98,7 @@ module ibex_load_store_unit (
   // BE generation //
   ///////////////////
   always_comb begin
-    case (data_type_ex_i) // Data type 00 Word, 01 Half word, 11,10 byte
+    unique case (data_type_ex_i) // Data type 00 Word, 01 Half word, 11,10 byte
       2'b00: begin // Writing a word
         if (!misaligned_st) begin // non-misaligned case
           unique case (data_addr_int[1:0])
@@ -143,6 +143,8 @@ module ibex_load_store_unit (
           default: data_be = 'X;
         endcase // case (data_addr_int[1:0])
       end
+
+      default:     data_be = 'X;
     endcase // case (data_type_ex_i)
   end
 
@@ -189,17 +191,18 @@ module ibex_load_store_unit (
 
   // take care of misaligned words
   always_comb begin
-    case (rdata_offset_q)
-      2'b00: rdata_w_ext = data_rdata_i[31:0];
-      2'b01: rdata_w_ext = {data_rdata_i[ 7:0], rdata_q[31:8]};
-      2'b10: rdata_w_ext = {data_rdata_i[15:0], rdata_q[31:16]};
-      2'b11: rdata_w_ext = {data_rdata_i[23:0], rdata_q[31:24]};
+    unique case (rdata_offset_q)
+      2'b00:   rdata_w_ext =  data_rdata_i[31:0];
+      2'b01:   rdata_w_ext = {data_rdata_i[ 7:0], rdata_q[31:8]};
+      2'b10:   rdata_w_ext = {data_rdata_i[15:0], rdata_q[31:16]};
+      2'b11:   rdata_w_ext = {data_rdata_i[23:0], rdata_q[31:24]};
+      default: rdata_w_ext = 'X;
     endcase
   end
 
   // sign extension for half words
   always_comb begin
-    case (rdata_offset_q)
+    unique case (rdata_offset_q)
       2'b00: begin
         if (!data_sign_ext_q) begin
           rdata_h_ext = {16'h0000, data_rdata_i[15:0]};
@@ -231,12 +234,14 @@ module ibex_load_store_unit (
           rdata_h_ext = {{16{data_rdata_i[7]}}, data_rdata_i[7:0], rdata_q[31:24]};
         end
       end
+
+      default: rdata_h_ext = 'X;
     endcase // case (rdata_offset_q)
   end
 
   // sign extension for bytes
   always_comb begin
-    case (rdata_offset_q)
+    unique case (rdata_offset_q)
       2'b00: begin
         if (!data_sign_ext_q) begin
           rdata_b_ext = {24'h00_0000, data_rdata_i[7:0]};
@@ -268,15 +273,18 @@ module ibex_load_store_unit (
           rdata_b_ext = {{24{data_rdata_i[31]}}, data_rdata_i[31:24]};
         end
       end
+
+      default: rdata_b_ext = 'X;
     endcase // case (rdata_offset_q)
   end
 
   // select word, half word or byte sign extended version
   always_comb begin
-    case (data_type_q)
+    unique case (data_type_q)
       2'b00:       data_rdata_ext = rdata_w_ext;
       2'b01:       data_rdata_ext = rdata_h_ext;
       2'b10,2'b11: data_rdata_ext = rdata_b_ext;
+      default:     data_rdata_ext = 'X;
     endcase //~case(rdata_type_q)
   end
 
@@ -340,7 +348,7 @@ module ibex_load_store_unit (
     increase_address = 1'b0;
     data_misaligned_o = 1'b0;
 
-    case(CS)
+    unique case(CS)
       // starts from not active and stays in IDLE until request was granted
       IDLE: begin
         if (data_req_ex_i) begin
@@ -416,9 +424,8 @@ module ibex_load_store_unit (
         end
       end //~ WAIT_RVALID
 
-
       default: begin
-        NS = IDLE;
+        NS = ls_fsm_e'({$bits(ls_fsm_e){1'bX}});
       end
     endcase
   end
@@ -430,18 +437,23 @@ module ibex_load_store_unit (
     data_misaligned = 1'b0;
 
     if (data_req_ex_i && !data_misaligned_q) begin
-      case (data_type_ex_i)
+      unique case (data_type_ex_i)
         2'b00: begin // word
           if (data_addr_int[1:0] != 2'b00) begin
             data_misaligned = 1'b1;
           end
         end
+
         2'b01: begin // half word
           if (data_addr_int[1:0] == 2'b11) begin
             data_misaligned = 1'b1;
           end
         end
-      default: ;
+
+        2'b10,
+        2'b11:;
+
+        default: data_misaligned = 1'bX;
       endcase // case (data_type_ex_i)
     end
   end

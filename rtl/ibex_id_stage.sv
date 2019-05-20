@@ -272,12 +272,12 @@ module ibex_id_stage #(
 
   // ALU_Op_a Mux
   always_comb begin : alu_operand_a_mux
-    case (alu_op_a_mux_sel)
+    unique case (alu_op_a_mux_sel)
       OP_A_REGA_OR_FWD:  alu_operand_a = operand_a_fw_id;
       OP_A_CURRPC:       alu_operand_a = pc_id_i;
       OP_A_IMM:          alu_operand_a = imm_a;
-      default:           alu_operand_a = operand_a_fw_id;
-    endcase // case (alu_op_a_mux_sel)
+      default:           alu_operand_a = 'X;
+    endcase
   end
 
   assign imm_a = (imm_a_mux_sel == IMM_A_Z) ? zimm_rs1_type : '0;
