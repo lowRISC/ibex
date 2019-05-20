@@ -90,7 +90,7 @@ module ibex_load_store_unit (
     IDLE, WAIT_GNT_MIS, WAIT_RVALID_MIS, WAIT_GNT, WAIT_RVALID
   } ls_fsm_e;
 
-  ls_fsm_e CS, NS;
+  ls_fsm_e ls_fsm_cs, ls_fsm_ns;
 
   logic [31:0]  rdata_q;
 
@@ -288,16 +288,14 @@ module ibex_load_store_unit (
     endcase //~case(rdata_type_q)
   end
 
-
-
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      CS            <= IDLE;
-      rdata_q       <= '0;
+      ls_fsm_cs         <= IDLE;
+      rdata_q           <= '0;
       data_misaligned_q <= '0;
       misaligned_addr_o <= 32'b0;
     end else begin
-      CS            <= NS;
+      ls_fsm_cs         <= ls_fsm_ns;
       if (lsu_update_addr_o) begin
         data_misaligned_q <= data_misaligned;
         if (increase_address) begin
@@ -312,9 +310,9 @@ module ibex_load_store_unit (
         // writing to the register file
 
         if (data_misaligned_q || data_misaligned) begin
-          rdata_q  <= data_rdata_i;
+          rdata_q <= data_rdata_i;
         end else begin
-          rdata_q  <= data_rdata_ext;
+          rdata_q <= data_rdata_ext;
         end
       end
     end
@@ -338,17 +336,17 @@ module ibex_load_store_unit (
 
   // FSM
   always_comb begin
-    NS             = CS;
+    ls_fsm_ns         = ls_fsm_cs;
 
-    data_req_o     = 1'b0;
+    data_req_o        = 1'b0;
 
-    lsu_update_addr_o   = 1'b0;
+    lsu_update_addr_o = 1'b0;
 
-    data_valid_o     = 1'b0;
-    increase_address = 1'b0;
+    data_valid_o      = 1'b0;
+    increase_address  = 1'b0;
     data_misaligned_o = 1'b0;
 
-    unique case(CS)
+    unique case(ls_fsm_cs)
       // starts from not active and stays in IDLE until request was granted
       IDLE: begin
         if (data_req_ex_i) begin
@@ -356,9 +354,9 @@ module ibex_load_store_unit (
           if (data_gnt_i) begin
             lsu_update_addr_o   = 1'b1;
             increase_address = data_misaligned;
-            NS = data_misaligned ? WAIT_RVALID_MIS : WAIT_RVALID;
+            ls_fsm_ns = data_misaligned ? WAIT_RVALID_MIS : WAIT_RVALID;
           end else begin
-            NS = data_misaligned ? WAIT_GNT_MIS    : WAIT_GNT;
+            ls_fsm_ns = data_misaligned ? WAIT_GNT_MIS    : WAIT_GNT;
           end
         end
       end // IDLE
@@ -368,7 +366,7 @@ module ibex_load_store_unit (
         if (data_gnt_i) begin
           lsu_update_addr_o = 1'b1;
           increase_address  = data_misaligned;
-          NS = WAIT_RVALID_MIS;
+          ls_fsm_ns = WAIT_RVALID_MIS;
         end
       end // WAIT_GNT_MIS
 
@@ -383,49 +381,49 @@ module ibex_load_store_unit (
 
         if (data_rvalid_i) begin
           //if first part rvalid is received
-          data_req_o        = 1'b1;
+          data_req_o  = 1'b1;
           if (data_gnt_i) begin
             //second grant is received
-            NS             = WAIT_RVALID;
+            ls_fsm_ns = WAIT_RVALID;
             //in this stage we already received the first valid but no the second one
             //it differes from WAIT_RVALID_MIS because we do not send other requests
           end else begin
             //second grant is NOT received, but first rvalid yes
             //lsu_update_addr_o is 0 so data_misaligned_q stays high in WAIT_GNT
             //increase address stays the same as well
-            NS              = WAIT_GNT; //  [1]
+            ls_fsm_ns = WAIT_GNT; //  [1]
           end
         end else begin
           //if first part rvalid is NOT received
           //the second grand is not received either by protocol.
           //stay here
-          NS                 = WAIT_RVALID_MIS;
+          ls_fsm_ns   = WAIT_RVALID_MIS;
         end
       end
 
       WAIT_GNT: begin
         data_misaligned_o = data_misaligned_q;
         //useful in case [1]
-        data_req_o        = 1'b1;
+        data_req_o = 1'b1;
         if (data_gnt_i) begin
           lsu_update_addr_o = 1'b1;
-          NS = WAIT_RVALID;
+          ls_fsm_ns = WAIT_RVALID;
         end
       end //~ WAIT_GNT
 
       WAIT_RVALID: begin
-        data_req_o        = 1'b0;
+        data_req_o = 1'b0;
 
         if (data_rvalid_i) begin
           data_valid_o = 1'b1;
-          NS           = IDLE;
+          ls_fsm_ns    = IDLE;
         end else begin
-          NS           = WAIT_RVALID;
+          ls_fsm_ns    = WAIT_RVALID;
         end
       end //~ WAIT_RVALID
 
       default: begin
-        NS = ls_fsm_e'({$bits(ls_fsm_e){1'bX}});
+        ls_fsm_ns = ls_fsm_e'({$bits(ls_fsm_e){1'bX}});
       end
     endcase
   end
@@ -460,7 +458,7 @@ module ibex_load_store_unit (
 
   assign data_addr_int = adder_result_ex_i;
 
-  assign busy_o = (CS == WAIT_RVALID) | (data_req_o == 1'b1);
+  assign busy_o = (ls_fsm_cs == WAIT_RVALID) | (data_req_o == 1'b1);
 
   ////////////////
   // Assertions //
@@ -469,11 +467,11 @@ module ibex_load_store_unit (
   // make sure there is no new request when the old one is not yet completely done
   // i.e. it should not be possible to get a grant without an rvalid for the
   // last request
-  assert property (
-    @(posedge clk_i) ((CS == WAIT_RVALID) && (data_gnt_i == 1'b1)) |-> (data_rvalid_i == 1'b1) );
+  assert property ( @(posedge clk_i)
+      ((ls_fsm_cs == WAIT_RVALID) && (data_gnt_i == 1'b1)) |-> (data_rvalid_i == 1'b1) );
 
   // there should be no rvalid when we are in IDLE
-  assert property ( @(posedge clk_i) (CS == IDLE) |-> (data_rvalid_i == 1'b0) );
+  assert property ( @(posedge clk_i) (ls_fsm_cs == IDLE) |-> (data_rvalid_i == 1'b0) );
 
   // assert that errors are only sent at the same time as grant
   assert property ( @(posedge clk_i) (data_err_i) |-> (data_gnt_i) );
