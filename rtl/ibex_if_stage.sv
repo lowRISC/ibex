@@ -94,8 +94,6 @@ module ibex_if_stage #(
 
   // exception PC selection mux
   always_comb begin : exc_pc_mux
-    exc_pc = '0;
-
     // TODO: The behavior below follows an outdated (pre-1.10) RISC-V Privileged
     // Spec to implement a "free-form" vectored trap handler.
     // We need to update this code and crt0.S to follow the new mtvec spec.
@@ -108,14 +106,12 @@ module ibex_if_stage #(
       EXC_PC_IRQ:        exc_pc = { boot_addr_i[31:8], {exc_vec_pc_mux_i}, 2'b0 };
       EXC_PC_DBD:        exc_pc = { DmHaltAddr };
       EXC_PC_DBGEXC:     exc_pc = { DmExceptionAddr };
-      default:;
+      default:           exc_pc = 'X;
     endcase
   end
 
   // fetch address selection mux
   always_comb begin : fetch_addr_mux
-    fetch_addr_n = '0;
-
     unique case (pc_mux_i)
       PC_BOOT:      fetch_addr_n = {boot_addr_i[31:8], {EXC_OFF_RST}};
       PC_JUMP:      fetch_addr_n = jump_target_ex_i;
@@ -123,8 +119,7 @@ module ibex_if_stage #(
       PC_ERET:      fetch_addr_n = exception_pc_reg_i; // PC is restored when returning
                                                        // from IRQ/exception
       PC_DRET:      fetch_addr_n = depc_i;
-
-      default:;
+      default:      fetch_addr_n = 'X;
     endcase
   end
 

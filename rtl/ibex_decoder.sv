@@ -340,7 +340,10 @@ module ibex_decoder #(
               illegal_insn_o = 1'b1;
             end
           end
-          default:;
+
+          default: begin
+            alu_operator_o = alu_op_e'({$bits(alu_op_e){1'bX}});
+          end
         endcase
       end
 

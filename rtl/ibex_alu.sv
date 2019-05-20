@@ -72,7 +72,7 @@ module ibex_alu (
       ALU_SLT,  ALU_SLTU,
       ALU_SLET, ALU_SLETU: adder_op_b_negate = 1'b1;
 
-      default: ;
+      default:;
     endcase
   end
 
@@ -200,7 +200,7 @@ module ibex_alu (
       ALU_SLETU,
       ALU_LE,  ALU_LEU:  cmp_result = ~is_greater_equal | is_equal;
 
-      default: ;
+      default:;
     endcase
   end
 
@@ -237,7 +237,7 @@ module ibex_alu (
       ALU_SLT,  ALU_SLTU,
       ALU_SLET, ALU_SLETU: result_o = {31'h0,cmp_result};
 
-      default: ; // default case to suppress unique warning
+      default:;
     endcase
   end
 

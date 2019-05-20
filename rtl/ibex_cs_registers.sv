@@ -190,8 +190,7 @@ module ibex_cs_registers #(
   // read logic
   always_comb begin
     csr_rdata_int = '0;
-    case (csr_addr_i)
-
+    unique case (csr_addr_i)
       // mstatus: always M-mode, contains IE bit
       CSR_MSTATUS: csr_rdata_int = {
                                   19'b0,
@@ -219,10 +218,9 @@ module ibex_cs_registers #(
       CSR_DPC: csr_rdata_int = depc_q;
       CSR_DSCRATCH0: csr_rdata_int = dscratch0_q;
       CSR_DSCRATCH1: csr_rdata_int = dscratch1_q;
-      default: ;
+      default:;
     endcase
   end
-
 
   // write logic
   always_comb begin
@@ -235,7 +233,7 @@ module ibex_cs_registers #(
     mcause_n     = mcause_q;
     exception_pc = pc_id_i;
 
-    case (csr_addr_i)
+    unique case (csr_addr_i)
       // mstatus: IE bit
       CSR_MSTATUS: if (csr_we_int) begin
         mstatus_n = '{
@@ -283,7 +281,7 @@ module ibex_cs_registers #(
         begin
           dscratch1_n = csr_wdata_int;
         end
-      default: ;
+      default:;
     endcase
 
     // exception controller gets priority over other writes
@@ -332,7 +330,6 @@ module ibex_cs_registers #(
 
   // CSR operation logic
   always_comb begin
-    csr_wdata_int = csr_wdata_i;
     csr_we_int    = 1'b1;
 
     unique case (csr_op_i)
@@ -343,7 +340,10 @@ module ibex_cs_registers #(
         csr_wdata_int = csr_wdata_i;
         csr_we_int    = 1'b0;
       end
-      default:;
+      default: begin
+        csr_wdata_int = 'X;
+        csr_we_int    = 1'bX;
+      end
     endcase
   end
 
@@ -481,7 +481,7 @@ module ibex_cs_registers #(
         CSR_OP_WRITE:  PCCR_n[0] = csr_wdata_i;
         CSR_OP_SET:    PCCR_n[0] = csr_wdata_i | PCCR_q[0];
         CSR_OP_CLEAR:  PCCR_n[0] = csr_wdata_i & ~(PCCR_q[0]);
-        default:       ;
+        default:       PCCR_n[0] = 'X;
       endcase
     end
   end
@@ -502,7 +502,7 @@ module ibex_cs_registers #(
           CSR_OP_WRITE:  PCCR_n[c] = csr_wdata_i;
           CSR_OP_SET:    PCCR_n[c] = csr_wdata_i | PCCR_q[c];
           CSR_OP_CLEAR:  PCCR_n[c] = csr_wdata_i & ~(PCCR_q[c]);
-          default:       ;
+          default:       PCCR_n[c] = 'X;
         endcase
       end
     end
@@ -520,7 +520,7 @@ module ibex_cs_registers #(
         CSR_OP_WRITE:  PCMR_n = csr_wdata_i[1:0];
         CSR_OP_SET:    PCMR_n = csr_wdata_i[1:0] | PCMR_q;
         CSR_OP_CLEAR:  PCMR_n = csr_wdata_i[1:0] & ~(PCMR_q);
-        default:       ;
+        default:       PCMR_n = 'X;
       endcase
     end
 
@@ -530,7 +530,7 @@ module ibex_cs_registers #(
         CSR_OP_WRITE:  PCER_n = csr_wdata_i[N_PERF_COUNTERS-1:0];
         CSR_OP_SET:    PCER_n = csr_wdata_i[N_PERF_COUNTERS-1:0] | PCER_q;
         CSR_OP_CLEAR:  PCER_n = csr_wdata_i[N_PERF_COUNTERS-1:0] & ~(PCER_q);
-        default:       ;
+        default:       PCER_n = 'X;
       endcase
     end
   end
