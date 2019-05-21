@@ -104,8 +104,8 @@ module ibex_if_stage #(
       EXC_PC_STORE:      exc_pc = { boot_addr_i[31:8], {EXC_OFF_LSUERR} };
       EXC_PC_BREAKPOINT: exc_pc = { boot_addr_i[31:8], {EXC_OFF_BREAKPOINT} };
       EXC_PC_IRQ:        exc_pc = { boot_addr_i[31:8], {exc_vec_pc_mux_i}, 2'b0 };
-      EXC_PC_DBD:        exc_pc = { DmHaltAddr };
-      EXC_PC_DBGEXC:     exc_pc = { DmExceptionAddr };
+      EXC_PC_DBD:        exc_pc = DmHaltAddr;
+      EXC_PC_DBGEXC:     exc_pc = DmExceptionAddr;
       default:           exc_pc = 'X;
     endcase
   end
