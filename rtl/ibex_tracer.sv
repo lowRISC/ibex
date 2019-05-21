@@ -234,7 +234,7 @@ module ibex_tracer #(
           size = instr_i[30:28];
         end
 
-        case (size)
+        unique case (size)
           3'b000: mnemonic = "lb";
           3'b001: mnemonic = "lh";
           3'b010: mnemonic = "lw";
@@ -243,6 +243,10 @@ module ibex_tracer #(
           3'b110: mnemonic = "p.elw";
           3'b011,
           3'b111: begin
+            printMnemonic("INVALID");
+            return;
+          end
+          default: begin
             printMnemonic("INVALID");
             return;
           end
@@ -264,11 +268,15 @@ module ibex_tracer #(
       string mnemonic;
       begin
 
-        case (instr_i[13:12])
+        unique case (instr_i[13:12])
           2'b00:  mnemonic = "sb";
           2'b01:  mnemonic = "sh";
           2'b10:  mnemonic = "sw";
           2'b11: begin
+            printMnemonic("INVALID");
+            return;
+          end
+          default: begin
             printMnemonic("INVALID");
             return;
           end
@@ -333,7 +341,7 @@ module ibex_tracer #(
       trace.instr      = instr_i;
 
       // use casex instead of case inside due to ModelSim bug
-      casex (instr_i)
+      unique casex (instr_i)
         // Aliases
         32'h00_00_00_13:  trace.printMnemonic("nop");
         // Regular opcodes
