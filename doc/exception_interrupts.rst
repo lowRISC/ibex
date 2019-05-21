@@ -15,6 +15,8 @@ Ibex supports interrupts, exceptions on illegal instructions.
 +------------+-----------------------------+
 | **0x84**   | Illegal Instruction         |
 +------------+-----------------------------+
+| **0x8C**   | LSU Error                   |
++------------+-----------------------------+
 | **0x88**   | ECALL Instruction Executed  |
 +------------+-----------------------------+
 
@@ -32,7 +34,7 @@ Multiple interrupts requests are assumed to be handled by event/interrupt contro
 Exceptions
 ----------
 
-The illegal instruction exception and ecall instruction exceptions cannot be disabled and are always active.
+The illegal instruction exception, LSU error exceptions and ecall instruction exceptions cannot be disabled and are always active.
 
 
 Handling
