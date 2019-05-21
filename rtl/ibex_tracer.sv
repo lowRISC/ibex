@@ -252,10 +252,10 @@ module ibex_tracer #(
 
         if (instr_i[14:12] != 3'b111) begin
           // regular load
-            regs_read.push_back('{rs1, rs1_value_i});
-            str = $sformatf("%-16s x%0d, %0d(x%0d)", mnemonic, rd, $signed(imm_i_type_i), rs1);
+          regs_read.push_back('{rs1, rs1_value_i});
+          str = $sformatf("%-16s x%0d, %0d(x%0d)", mnemonic, rd, $signed(imm_i_type_i), rs1);
         end else begin
-            printMnemonic("INVALID");
+          printMnemonic("INVALID");
         end
       end
     endfunction
@@ -276,11 +276,11 @@ module ibex_tracer #(
 
         if (!instr_i[14]) begin
           // regular store
-            regs_read.push_back('{rs2, rs2_value_i});
-            regs_read.push_back('{rs1, rs1_value_i});
-            str = $sformatf("%-16s x%0d, %0d(x%0d)", mnemonic, rs2, $signed(imm_s_type_i), rs1);
+          regs_read.push_back('{rs2, rs2_value_i});
+          regs_read.push_back('{rs1, rs1_value_i});
+          str = $sformatf("%-16s x%0d, %0d(x%0d)", mnemonic, rs2, $signed(imm_s_type_i), rs1);
         end else begin
-            printMnemonic("INVALID");
+          printMnemonic("INVALID");
         end
       end
     endfunction // printSInstr
@@ -335,7 +335,7 @@ module ibex_tracer #(
       // use casex instead of case inside due to ModelSim bug
       casex (instr_i)
         // Aliases
-        32'h00_00_00_13:   trace.printMnemonic("nop");
+        32'h00_00_00_13:  trace.printMnemonic("nop");
         // Regular opcodes
         INSTR_LUI:        trace.printUInstr("lui");
         INSTR_AUIPC:      trace.printUInstr("auipc");
@@ -391,9 +391,10 @@ module ibex_tracer #(
         INSTR_DIVU:       trace.printRInstr("divu");
         INSTR_REM:        trace.printRInstr("rem");
         INSTR_REMU:       trace.printRInstr("remu");
-        {25'b?, {OPCODE_LOAD}}:     trace.printLoadInstr();
-        {25'b?, {OPCODE_STORE}}:    trace.printStoreInstr();
-        default:           trace.printMnemonic("INVALID");
+        // LOAD & STORE
+        INSTR_LOAD:       trace.printLoadInstr();
+        INSTR_STORE:      trace.printStoreInstr();
+        default:          trace.printMnemonic("INVALID");
       endcase // unique case (instr_i)
 
       // replace register written back
