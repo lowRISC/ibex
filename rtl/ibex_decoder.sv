@@ -28,36 +28,41 @@ module ibex_decoder #(
     parameter bit RV32M  = 1
 ) (
     // singals running to/from controller
-    input  logic                     deassert_we_i,         // deassert we, we are stalled or not active
-    input  logic                     data_misaligned_i,     // misaligned data load/store in progress
+    input  logic                     deassert_we_i,         // deassert we, we are stalled or
+                                                            // not active
+    input  logic                     data_misaligned_i,     // misaligned data load/store in
+                                                            // progress
     input  logic                     branch_mux_i,
     input  logic                     jump_mux_i,
-    output logic                     illegal_insn_o,        // illegal instruction encountered
-    output logic                     ebrk_insn_o,           // trap instruction encountered
-    output logic                     mret_insn_o,           // return from exception instruction encountered
-    output logic                     dret_insn_o,           // return from debug (M)
-    output logic                     ecall_insn_o,          // environment call (syscall)
-                                                            // instruction encountered
+    output logic                     illegal_insn_o,        // illegal instr encountered
+    output logic                     ebrk_insn_o,           // trap instr encountered
+    output logic                     mret_insn_o,           // return from exception instr
+                                                            // encountered
+    output logic                     dret_insn_o,           // return from debug instr encountered
+    output logic                     ecall_insn_o,          // syscall instr encountered
     output logic                     pipe_flush_o,          // pipeline flush is requested
 
     // from IF/ID pipeline
-    input  logic [31:0]              instr_rdata_i,         // instruction read from instr memory/cache
+    input  logic [31:0]              instr_rdata_i,         // instruction read from memory/cache
     input  logic                     illegal_c_insn_i,      // compressed instruction decode failed
 
     // ALU signals
     output ibex_defines::alu_op_e    alu_operator_o,        // ALU operation selection
     output ibex_defines::op_a_sel_e  alu_op_a_mux_sel_o,    // operand a selection: reg value, PC,
                                                             // immediate or zero
-    output ibex_defines::op_b_sel_e  alu_op_b_mux_sel_o,    // operand b selection: reg value or immediate
+    output ibex_defines::op_b_sel_e  alu_op_b_mux_sel_o,    // operand b selection: reg value or
+                                                            // immediate
 
     output ibex_defines::imm_a_sel_e imm_a_mux_sel_o,       // immediate selection for operand a
     output ibex_defines::imm_b_sel_e imm_b_mux_sel_o,       // immediate selection for operand b
 
     // MUL, DIV related control signals
     output logic                     mult_int_en_o,         // perform integer multiplication
-    output logic                     div_int_en_o,          // perform integer division or reminder
+    output logic                     div_int_en_o,          // perform integer division or
+                                                            // remainder
     output ibex_defines::md_op_e     multdiv_operator_o,
     output logic [1:0]               multdiv_signed_mode_o,
+
     // register file related signals
     output logic                     regfile_we_o,          // write enable for regfile
 
@@ -66,13 +71,14 @@ module ibex_decoder #(
     output ibex_defines::csr_op_e    csr_op_o,              // operation to perform on CSR
     output logic                     csr_status_o,          // access to xstatus CSR
 
-    // LD/ST unit signals
+    // LSU signals
     output logic                     data_req_o,            // start transaction to data memory
-    output logic                     data_we_o,             // data memory write enable
-    output logic [1:0]               data_type_o,           // data type on data memory: byte,
-                                                            // half word or word
-    output logic                     data_sign_extension_o, // sign extension on read data from data memory
-    output logic [1:0]               data_reg_offset_o,     // offset in byte inside register for stores
+    output logic                     data_we_o,             // write enable
+    output logic [1:0]               data_type_o,           // size of transaction: byte, half
+                                                            // word or word
+    output logic                     data_sign_extension_o, // sign extension for data read from
+                                                            // memory
+    output logic [1:0]               data_reg_offset_o,     // register byte offset for stores
 
     // jump/branches
     output logic                     jump_in_id_o,          // jump is being calculated in ALU

@@ -129,9 +129,9 @@ module ibex_id_stage #(
     input  logic [31:0]               csr_rdata_i,
 
     // Performance Counters
-    output logic                      perf_jump_o,    // we are executing a jump instruction
-    output logic                      perf_branch_o,  // we are executing a branch instruction
-    output logic                      perf_tbranch_o  // we are executing a taken branch instruction
+    output logic                      perf_jump_o,    // executing a jump instr
+    output logic                      perf_branch_o,  // executing a branch instr
+    output logic                      perf_tbranch_o  // executing a taken branch instr
 );
 
   import ibex_defines::*;
@@ -648,12 +648,13 @@ module ibex_id_stage #(
 `ifndef VERILATOR
   // make sure that branch decision is valid when jumping
   assert property (
-    @(posedge clk_i) (branch_decision_i !== 1'bx || branch_in_id == 1'b0) ) else begin
-      $display("Branch decision is X"); end
+    @(posedge clk_i) (branch_decision_i !== 1'bx || branch_in_id == 1'b0) ) else
+      $display("Branch decision is X");
 
 `ifdef CHECK_MISALIGNED
   assert property (
-    @(posedge clk_i) (~data_misaligned_i) ) else $display("Misaligned memory access at %x",pc_id_i);
+    @(posedge clk_i) (~data_misaligned_i) ) else
+      $display("Misaligned memory access at %x",pc_id_i);
 `endif
 
   // the instruction delivered to the ID stage should always be valid

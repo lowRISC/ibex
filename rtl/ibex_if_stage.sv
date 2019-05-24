@@ -43,22 +43,23 @@ module ibex_if_stage #(
     input  logic                      instr_rvalid_i,
     input  logic [31:0]               instr_rdata_i,
     // Output of IF Pipeline stage
-    output logic                      instr_valid_id_o,      // instruction in IF/ID pipeline is valid
-    output logic [31:0]               instr_rdata_id_o,      // read instruction is sampled and sent
+    output logic                      instr_valid_id_o,      // instr in IF/ID is valid
+    output logic [31:0]               instr_rdata_id_o,      // read instr is sampled and sent
                                                              // to ID stage for decoding
-    output logic                      is_compressed_id_o,    // compressed decoder thinks this is a
-                                                             // compressed instruction
-    output logic                      illegal_c_insn_id_o,   // compressed decoder thinks this is an
-                                                             // invalid instruction
+    output logic                      is_compressed_id_o,    // compressed decoder thinks this is
+                                                             // a compressed instr
+    output logic                      illegal_c_insn_id_o,   // compressed decoder thinks this is
+                                                             // an invalid instr
     output logic [31:0]               pc_if_o,
     output logic [31:0]               pc_id_o,
     // Forwarding ports - control signals
-    input  logic                      clear_instr_valid_i,   // clear instruction valid bit in IF/ID pipe
-    input  logic                      pc_set_i,              // set the program counter to a new value
-    input  logic [31:0]               exception_pc_reg_i,    // address used to restore PC when the
-                                                             // interrupt/exception is served
-    input  logic [31:0]               depc_i,                // address used to restore PC when the debug is served
-    input  ibex_defines::pc_sel_e     pc_mux_i,              // sel for pc multiplexer
+    input  logic                      clear_instr_valid_i,   // clear instr valid bit in IF/ID
+    input  logic                      pc_set_i,              // set the PC to a new value
+    input  logic [31:0]               exception_pc_reg_i,    // address used to restore PC when
+                                                             // the interrupt/exception is served
+    input  logic [31:0]               depc_i,                // address used to restore PC when
+                                                             // the debug request is served
+    input  ibex_defines::pc_sel_e     pc_mux_i,              // selector for PC multiplexer
     input  ibex_defines::exc_pc_sel_e exc_pc_mux_i,          // selects ISR address
     input  ibex_defines::exc_cause_e  exc_vec_pc_mux_i,      // selects ISR address for vectorized
                                                              // interrupt lines
@@ -71,8 +72,8 @@ module ibex_if_stage #(
     input  logic                      id_ready_i,
     output logic                      if_valid_o,
     // misc signals
-    output logic                      if_busy_o,             // is the IF stage busy fetching instructions?
-    output logic                      perf_imiss_o           // Instruction Fetch Miss
+    output logic                      if_busy_o,             // IF stage is busy fetching instr
+    output logic                      perf_imiss_o           // instr fetch miss
 );
 
   import ibex_defines::*;

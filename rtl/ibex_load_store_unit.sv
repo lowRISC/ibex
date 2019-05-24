@@ -43,18 +43,18 @@ module ibex_load_store_unit (
     input  logic [31:0]  data_rdata_i,
 
     // signals from ex stage
-    input  logic         data_we_ex_i,         // write enable                      -> from ex stage
-    input  logic [1:0]   data_type_ex_i,       // Data type word, halfword, byte    -> from ex stage
-    input  logic [31:0]  data_wdata_ex_i,      // data to write to memory           -> from ex stage
-    input  logic [1:0]   data_reg_offset_ex_i, // offset inside register for stores -> from ex stage
-    input  logic         data_sign_ext_ex_i,   // sign extension                    -> from ex stage
+    input  logic         data_we_ex_i,         // write enable                     -> from EX
+    input  logic [1:0]   data_type_ex_i,       // data type: word, half word, byte -> from EX
+    input  logic [31:0]  data_wdata_ex_i,      // data to write to memory          -> from EX
+    input  logic [1:0]   data_reg_offset_ex_i, // register byte offset for stores  -> from EX
+    input  logic         data_sign_ext_ex_i,   // sign extension                   -> from EX
 
-    output logic [31:0]  data_rdata_ex_o,      // requested data                    -> to ex stage
-    input  logic         data_req_ex_i,        // data request                      -> from ex stage
+    output logic [31:0]  data_rdata_ex_o,      // requested data                   -> to EX
+    input  logic         data_req_ex_i,        // data request                     -> from EX
 
     input  logic [31:0]  adder_result_ex_i,
 
-    output logic         data_misaligned_o,    // misaligned access was detected    -> to controller
+    output logic         data_misaligned_o,    // misaligned access detected       -> to controller
     output logic [31:0]  misaligned_addr_o,
 
     // exception signals

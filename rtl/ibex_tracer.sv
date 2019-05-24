@@ -331,8 +331,8 @@ module ibex_tracer #(
     instr_trace_t trace;
     mem_acc_t     mem_acc;
     // special case for WFI because we don't wait for unstalling there
-    if ( (id_valid_i || mret_insn_i || ecall_insn_i || pipe_flush_i || ebrk_insn_i || dret_insn_i ||
-          csr_status_i || ex_data_req_i) && is_decoding_i) begin
+    if ((id_valid_i || mret_insn_i || ecall_insn_i || pipe_flush_i || ebrk_insn_i ||
+         dret_insn_i || csr_status_i || ex_data_req_i) && is_decoding_i) begin
       trace = new ();
 
       trace.simtime    = $time;

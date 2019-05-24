@@ -122,7 +122,8 @@ module ibex_multdiv_fast (
   // 1. The 2 MSBs of the multiplicants are always equal, and
   // 2. The 16 MSBs of the addend (accum[33:18]) are always equal.
   // Thus, it is safe to ignore mac_res_ext[34].
-  assign mac_res_signed = $signed({sign_a, mult_op_a})*$signed({sign_b, mult_op_b}) + $signed(accum);
+  assign mac_res_signed =
+      $signed({sign_a, mult_op_a}) * $signed({sign_b, mult_op_b}) + $signed(accum);
   assign mac_res_ext    = $unsigned(mac_res_signed);
   assign mac_res        = mac_res_ext[33:0];
 
