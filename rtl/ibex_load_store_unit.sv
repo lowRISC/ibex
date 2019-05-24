@@ -423,7 +423,7 @@ module ibex_load_store_unit (
       end //~ WAIT_RVALID
 
       default: begin
-        ls_fsm_ns = ls_fsm_e'({$bits(ls_fsm_e){1'bX}});
+        ls_fsm_ns = ls_fsm_e'(1'bX);
       end
     endcase
   end

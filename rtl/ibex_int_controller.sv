@@ -87,7 +87,7 @@ module ibex_int_controller (
       end
 
       default: begin
-        exc_ctrl_ns = exc_ctrl_e'({$bits(exc_ctrl_e){1'bX}});
+        exc_ctrl_ns = exc_ctrl_e'(1'bX);
       end
     endcase
   end
