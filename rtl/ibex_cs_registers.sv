@@ -70,15 +70,15 @@ module ibex_cs_registers #(
     input  logic                      csr_save_cause_i,
 
     // Performance Counters
-    input  logic                      if_valid_i,        // IF stage gives a new instruction
+    input  logic                      if_valid_i,        // IF stage gives a new instr
     input  logic                      id_valid_i,        // ID stage is done
-    input  logic                      is_compressed_i,   // compressed instruction in ID
+    input  logic                      is_compressed_i,   // compressed instr in ID
     input  logic                      is_decoding_i,     // controller is in DECODE state
 
-    input  logic                      imiss_i,           // instruction fetch
+    input  logic                      imiss_i,           // instr fetch
     input  logic                      pc_set_i,          // pc was set to a new value
-    input  logic                      jump_i,            // jump instruction seen   (j, jr, jal, jalr)
-    input  logic                      branch_i,          // branch instruction seen (bf, bnf)
+    input  logic                      jump_i,            // jump instr seen (j, jr, jal, jalr)
+    input  logic                      branch_i,          // branch instr seen (bf, bnf)
     input  logic                      branch_taken_i,    // branch was taken
     input  logic                      mem_load_i,        // load from memory in this cycle
     input  logic                      mem_store_i,       // store to memory in this cycle

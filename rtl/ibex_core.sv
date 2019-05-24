@@ -532,7 +532,7 @@ module ibex_core #(
 `ifndef VERILATOR
 `ifdef TRACE_EXECUTION
   ibex_tracer ibex_tracer_i (
-      .clk_i            ( clk_i                                ), // always-running clock for tracing
+      .clk_i            ( clk_i                                ), // always-on clk for tracer
       .rst_ni           ( rst_ni                               ),
 
       .fetch_enable_i   ( fetch_enable_i                       ),
