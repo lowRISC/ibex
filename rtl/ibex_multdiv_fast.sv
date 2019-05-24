@@ -247,7 +247,7 @@ module ibex_multdiv_fast (
       end
 
       default: begin
-        divcurr_state_n = div_fsm_e'({$bits(div_fsm_e){1'bX}});
+        divcurr_state_n = div_fsm_e'(1'bX);
       end
     endcase // divcurr_state_q
   end
@@ -327,7 +327,7 @@ module ibex_multdiv_fast (
         mult_is_ready = 1'b1;
       end
       default: begin
-        mult_state_n = mult_fsm_e'({$bits(mult_fsm_e){1'bX}});
+        mult_state_n = mult_fsm_e'(1'bX);
       end
     endcase // mult_state_q
   end

@@ -112,8 +112,8 @@ typedef enum logic[1:0] {
 
 // Constants for the dcsr.xdebugver fields
 typedef enum logic[3:0] {
-   XDEBUGVER_NO  = 4'd0, // no external debug support
-   XDEBUGVER_STD = 4'd4, // external debug according to RISC-V debug spec
+   XDEBUGVER_NO     = 4'd0, // no external debug support
+   XDEBUGVER_STD    = 4'd4, // external debug according to RISC-V debug spec
    XDEBUGVER_NONSTD = 4'd15 // debug not conforming to RISC-V debug spec
 } x_debug_ver_e;
 
@@ -185,6 +185,7 @@ typedef enum logic [2:0] {
 
 // Exception cause
 typedef enum logic [5:0] {
+  EXC_CAUSE_INSN_ADDR_MISA     = 6'h00,
   EXC_CAUSE_ILLEGAL_INSN       = 6'h02,
   EXC_CAUSE_BREAKPOINT         = 6'h03,
   EXC_CAUSE_LOAD_ACCESS_FAULT  = 6'h05,
@@ -209,6 +210,7 @@ typedef enum logic [7:0] {
 
 // Debug cause
 typedef enum logic [2:0] {
+  DBG_CAUSE_NONE    = 3'h0,
   DBG_CAUSE_EBREAK  = 3'h1,
   DBG_CAUSE_TRIGGER = 3'h2,
   DBG_CAUSE_HALTREQ = 3'h3,

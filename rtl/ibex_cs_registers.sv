@@ -239,7 +239,7 @@ module ibex_cs_registers #(
         mstatus_n = '{
           mie:  csr_wdata_int[`MSTATUS_MIE_BITS],
           mpie: csr_wdata_int[`MSTATUS_MPIE_BITS],
-          mpp:  priv_lvl_e'(PRIV_LVL_M)
+          mpp:  PRIV_LVL_M
         };
       end
       // mepc: exception program counter
@@ -371,8 +371,8 @@ module ibex_cs_registers #(
 
       depc_q      <= '0;
       dcsr_q     <= '{
-        xdebugver: x_debug_ver_e'({$bits(x_debug_ver_e){1'b0}}),
-        cause:     dbg_cause_e'({$bits(dbg_cause_e){1'b0}}),
+        xdebugver: XDEBUGVER_NO,   // 4'h0
+        cause:     DBG_CAUSE_NONE, // 3'h0
         prv:       PRIV_LVL_M,
         default:   '0
       };

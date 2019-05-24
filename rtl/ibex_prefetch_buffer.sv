@@ -200,7 +200,7 @@ module ibex_prefetch_buffer (
       end
 
       default: begin
-        NS = prefetch_fsm_e'({$bits(prefetch_fsm_e){1'bX}});
+        NS = prefetch_fsm_e'(1'bX);
       end
     endcase
   end
