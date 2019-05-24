@@ -49,9 +49,9 @@ module ibex_prefetch_buffer (
 
   typedef enum logic [1:0] {
     IDLE, WAIT_GNT, WAIT_RVALID, WAIT_ABORTED
-  } prefetch_fsm_e;
+  } pf_fsm_e;
 
-  prefetch_fsm_e CS, NS;
+  pf_fsm_e pf_fsm_cs, pf_fsm_ns;
 
   logic [31:0] instr_addr_q, fetch_addr;
   logic        addr_valid;
@@ -64,7 +64,7 @@ module ibex_prefetch_buffer (
   // Prefetch buffer status //
   ////////////////////////////
 
-  assign busy_o = (CS != IDLE) | instr_req_o;
+  assign busy_o = (pf_fsm_cs != IDLE) | instr_req_o;
 
   //////////////////////////////////////////////
   // Fetch fifo - consumes addresses and data //
@@ -107,9 +107,9 @@ module ibex_prefetch_buffer (
     instr_addr_o  = fetch_addr;
     fifo_valid    = 1'b0;
     addr_valid    = 1'b0;
-    NS            = CS;
+    pf_fsm_ns     = pf_fsm_cs;
 
-    unique case(CS)
+    unique case(pf_fsm_cs)
       // default state, not waiting for requested data
       IDLE: begin
         instr_addr_o = fetch_addr;
@@ -125,7 +125,7 @@ module ibex_prefetch_buffer (
 
 
           //~> granted request or not
-          NS = instr_gnt_i ? WAIT_RVALID : WAIT_GNT;
+          pf_fsm_ns = instr_gnt_i ? WAIT_RVALID : WAIT_GNT;
         end
       end // case: IDLE
 
@@ -140,7 +140,7 @@ module ibex_prefetch_buffer (
         end
 
         //~> granted request or not
-        NS = instr_gnt_i ? WAIT_RVALID : WAIT_GNT;
+        pf_fsm_ns = instr_gnt_i ? WAIT_RVALID : WAIT_GNT;
       end // case: WAIT_GNT
 
       // we wait for rvalid, after that we are ready to serve a new request
@@ -160,13 +160,13 @@ module ibex_prefetch_buffer (
             addr_valid  = 1'b1;
 
             //~> granted request or not
-            NS = instr_gnt_i ? WAIT_RVALID : WAIT_GNT;
+            pf_fsm_ns = instr_gnt_i ? WAIT_RVALID : WAIT_GNT;
           end else begin
             // we are requested to abort our current request
             // we didn't get an rvalid yet, so wait for it
             if (branch_i) begin
               addr_valid = 1'b1;
-              NS         = WAIT_ABORTED;
+              pf_fsm_ns  = WAIT_ABORTED;
             end
           end
         end else begin
@@ -174,7 +174,7 @@ module ibex_prefetch_buffer (
 
           if (instr_rvalid_i) begin
             fifo_valid = 1'b1;
-            NS         = IDLE;
+            pf_fsm_ns  = IDLE;
           end
         end
       end // case: WAIT_RVALID
@@ -195,12 +195,12 @@ module ibex_prefetch_buffer (
           // no need to send address, already done in WAIT_RVALID
 
           //~> granted request or not
-          NS = instr_gnt_i ? WAIT_RVALID : WAIT_GNT;
+          pf_fsm_ns = instr_gnt_i ? WAIT_RVALID : WAIT_GNT;
         end
       end
 
       default: begin
-        NS = prefetch_fsm_e'(1'bX);
+        pf_fsm_ns = pf_fsm_e'(1'bX);
       end
     endcase
   end
@@ -211,13 +211,13 @@ module ibex_prefetch_buffer (
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      CS              <= IDLE;
-      instr_addr_q    <= '0;
+      pf_fsm_cs      <= IDLE;
+      instr_addr_q   <= '0;
     end else begin
-      CS              <= NS;
+      pf_fsm_cs      <= pf_fsm_ns;
 
       if (addr_valid) begin
-        instr_addr_q    <= instr_addr_o;
+        instr_addr_q <= instr_addr_o;
       end
     end
   end
