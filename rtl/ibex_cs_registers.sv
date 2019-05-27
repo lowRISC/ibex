@@ -14,21 +14,23 @@
 // Project Name:   ibex                                                       //
 // Language:       SystemVerilog                                              //
 //                                                                            //
-// Description:    Control and Status Registers (CSRs) loosely following the  //
-//                 RiscV draft priviledged instruction set spec (v1.9)        //
+// Description:    Control and Status Registers (CSRs) following the RISC-V   //
+//                 Privileged Specification, draft version 1.11               //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
  * Control and Status Registers
  *
- * Control and Status Registers (CSRs) loosely following the RiscV draft
- * priviledged instruction set spec (v1.9)
+ * Control and Status Registers (CSRs) following the RISC-V Privileged
+ * Specification, draft version 1.11
  */
 module ibex_cs_registers #(
-    parameter int unsigned NumExtCounters = 0,
-    parameter bit RV32E                   = 0,
-    parameter bit RV32M                   = 0
+    parameter int unsigned NumExtCounters    = 0,
+    parameter int unsigned MHPMCounterNum    = 8,
+    parameter int unsigned MHPMCounterWidth  = 40,
+    parameter bit RV32E                      = 0,
+    parameter bit RV32M                      = 0
 ) (
     // Clock and Reset
     input  logic                      clk_i,
@@ -70,18 +72,20 @@ module ibex_cs_registers #(
     input  logic                      csr_save_cause_i,
 
     // Performance Counters
-    input  logic                      if_valid_i,        // IF stage gives a new instr
-    input  logic                      id_valid_i,        // ID stage is done
-    input  logic                      is_compressed_i,   // compressed instr in ID
-    input  logic                      is_decoding_i,     // controller is in DECODE state
+    input  logic                      insn_ret_i,         // instr retired in ID/EX stage
+    input  logic                      if_valid_i,         // IF stage gives a new instr
+    input  logic                      id_valid_i,         // ID stage is done
+    input  logic                      is_compressed_i,    // compressed instr in ID
+    input  logic                      is_decoding_i,      // controller is in DECODE state
 
-    input  logic                      imiss_i,           // instr fetch
-    input  logic                      pc_set_i,          // pc was set to a new value
-    input  logic                      jump_i,            // jump instr seen (j, jr, jal, jalr)
-    input  logic                      branch_i,          // branch instr seen (bf, bnf)
-    input  logic                      branch_taken_i,    // branch was taken
-    input  logic                      mem_load_i,        // load from memory in this cycle
-    input  logic                      mem_store_i,       // store to memory in this cycle
+    input  logic                      imiss_i,            // instr fetch
+    input  logic                      pc_set_i,           // pc was set to a new value
+    input  logic                      jump_i,             // jump instr seen (j, jr, jal, jalr)
+    input  logic                      branch_i,           // branch instr seen (bf, bnf)
+    input  logic                      branch_taken_i,     // branch was taken
+    input  logic                      mem_load_i,         // load from memory in this cycle
+    input  logic                      mem_store_i,        // store to memory in this cycle
+    input  logic                      lsu_busy_i,
     input  logic [NumExtCounters-1:0] ext_counters_i
 );
 
@@ -152,8 +156,20 @@ module ibex_cs_registers #(
       priv_lvl_e    prv;
   } Dcsr_t;
 
+  // Hardware performance monitor signals
+  logic [31:0] mcountinhibit_n, mcountinhibit_q, mcountinhibit;
+  logic [31:0] mcountinhibit_force;
+  logic        mcountinhibit_we;
+  logic [63:0] mhpmcounter_mask [32];
+  logic [63:0] mhpmcounter_n [32];
+  logic [63:0] mhpmcounter_q [32];
+  logic [31:0] mhpmcounter_we;
+  logic [31:0] mhpmcounterh_we;
+  logic [31:0] mhpmcounter_incr;
+  logic [31:0] mhpmevent [32];
+  logic  [4:0] mhpmcounter_idx;
 
-  // Performance Counter Signals
+  // Legacy Performance Counter Signals
   logic [N_PERF_COUNTERS-1:0]    PCCR_in;  // input signals for each counter category
   logic [N_PERF_COUNTERS-1:0]    PCCR_inc, PCCR_inc_q; // should the counter be increased?
 
@@ -188,6 +204,10 @@ module ibex_cs_registers #(
   // CSR reg //
   /////////////
 
+  logic [$bits(csr_num_e)-1:0] csr_addr;
+  assign csr_addr        = {csr_addr_i};
+  assign mhpmcounter_idx = csr_addr[4:0];
+
   // read logic
   always_comb begin
     csr_rdata_int = '0;
@@ -221,11 +241,27 @@ module ibex_cs_registers #(
       // misa
       CSR_MISA: csr_rdata_int = MISA_VALUE;
 
-      CSR_DCSR: csr_rdata_int = dcsr_q;
-      CSR_DPC: csr_rdata_int = depc_q;
+      CSR_DCSR:      csr_rdata_int = dcsr_q;
+      CSR_DPC:       csr_rdata_int = depc_q;
       CSR_DSCRATCH0: csr_rdata_int = dscratch0_q;
       CSR_DSCRATCH1: csr_rdata_int = dscratch1_q;
-      default:;
+
+      // Machine Counter/Timers
+      CSR_MCOUNTINHIBIT: csr_rdata_int = mcountinhibit;
+      CSR_MCYCLE:        csr_rdata_int = mhpmcounter_q[0][31: 0];
+      CSR_MCYCLEH:       csr_rdata_int = mhpmcounter_q[0][63:32];
+      CSR_MINSTRET:      csr_rdata_int = mhpmcounter_q[2][31: 0];
+      CSR_MINSTRETH:     csr_rdata_int = mhpmcounter_q[2][63:32];
+
+      default: begin
+        if (csr_addr_i == CSR_MCOUNTER_SETUP_MASK) begin
+          csr_rdata_int = mhpmevent[mhpmcounter_idx];
+        end else if (csr_addr_i == CSR_MCOUNTER_MASK) begin
+          csr_rdata_int = mhpmcounter_q[mhpmcounter_idx][31: 0];
+        end else if (csr_addr_i == CSR_MCOUNTERH_MASK) begin
+          csr_rdata_int = mhpmcounter_q[mhpmcounter_idx][63:32];
+        end
+      end
     endcase
   end
 
@@ -240,6 +276,10 @@ module ibex_cs_registers #(
     mcause_n     = mcause_q;
     exception_pc = pc_id_i;
 
+    mcountinhibit_we = 1'b0;
+    mhpmcounter_we   = '0;
+    mhpmcounterh_we  = '0;
+
     unique case (csr_addr_i)
       // mstatus: IE bit
       CSR_MSTATUS: begin
@@ -251,6 +291,7 @@ module ibex_cs_registers #(
           };
         end
       end
+
       // mepc: exception program counter
       CSR_MEPC: if (csr_we_int) mepc_n = csr_wdata_int;
       // mcause
@@ -294,7 +335,46 @@ module ibex_cs_registers #(
         end
       end
 
-      default:;
+      CSR_MCOUNTINHIBIT: begin
+        if (csr_we_int) begin
+          mcountinhibit_we = 1'b1;
+        end
+      end
+
+      CSR_MCYCLE: begin
+        if (csr_we_int) begin
+          mhpmcounter_we[0] = 1'b1;
+        end
+      end
+
+      CSR_MCYCLEH: begin
+        if (csr_we_int) begin
+          mhpmcounterh_we[0] = 1'b1;
+        end
+      end
+
+      CSR_MINSTRET: begin
+        if (csr_we_int) begin
+          mhpmcounter_we[2] = 1'b1;
+        end
+      end
+
+      CSR_MINSTRETH: begin
+        if (csr_we_int) begin
+          mhpmcounterh_we[2] = 1'b1;
+        end
+      end
+
+      default: begin
+        if (csr_we_int == 1'b1) begin
+          // performance counters and event selector
+          if (csr_addr_i == CSR_MCOUNTER_MASK) begin
+            mhpmcounter_we[mhpmcounter_idx] = 1'b1;
+          end else if (csr_addr_i == CSR_MCOUNTERH_MASK) begin
+            mhpmcounterh_we[mhpmcounter_idx] = 1'b1;
+          end
+        end
+      end
     endcase
 
     // exception controller gets priority over other writes
@@ -339,7 +419,6 @@ module ibex_cs_registers #(
       default:;
     endcase
   end
-
 
   // CSR operation logic
   always_comb begin
@@ -409,12 +488,107 @@ module ibex_cs_registers #(
   end
 
   //////////////////////////
-  // Performance counters //
+  //  Performance monitor //
   //////////////////////////
 
-  logic [$bits(csr_num_e)-1:0] csr_addr;
+  // update enable signals
+  always_comb begin : mcountinhibit_update
+    if (mcountinhibit_we == 1'b1) begin
+      mcountinhibit_n = csr_wdata_int;
+    end else begin
+      mcountinhibit_n = mcountinhibit_q;
+    end
+    // bit 1 must always be 0
+    mcountinhibit_n[1] = 1'b0;
+  end
 
-  assign csr_addr    = {csr_addr_i};
+  assign mcountinhibit_force = {{29-MHPMCounterNum{1'b1}}, {MHPMCounterNum{1'b0}}, 3'b000};
+  assign mcountinhibit       = mcountinhibit_q | mcountinhibit_force;
+
+  // event selection (hardwired) & control
+  assign mhpmcounter_incr[0]  = 1'b1;                // mcycle
+  assign mhpmcounter_incr[1]  = 1'b0;                // reserved
+  assign mhpmcounter_incr[2]  = insn_ret_i;          // minstret
+  assign mhpmcounter_incr[3]  = lsu_busy_i;          // cycles waiting for data memory
+  assign mhpmcounter_incr[4]  = imiss_i & ~pc_set_i; // cycles waiting for instr fetches ex.
+                                                     // jumps and branches
+  assign mhpmcounter_incr[5]  = mem_load_i;          // num of loads
+  assign mhpmcounter_incr[6]  = mem_store_i;         // num of stores
+  assign mhpmcounter_incr[7]  = jump_i;              // num of jumps (unconditional)
+  assign mhpmcounter_incr[8]  = branch_i;            // num of branches (conditional)
+  assign mhpmcounter_incr[9]  = branch_taken_i;      // num of taken branches (conditional)
+  assign mhpmcounter_incr[10] = is_compressed_i      // num of compressed instr
+      & id_valid_i & is_decoding_i;
+
+  for (genvar i=3+MHPMCounterNum; i<32; i++) begin : gen_mhpmcounter_incr_inactive
+    assign mhpmcounter_incr[i] = 1'b0;
+  end
+
+  // event selector (hardwired, 0 means no event)
+  always_comb begin : gen_mhpmevent
+
+    // activate all
+    for (int i=0; i<32; i++) begin : gen_mhpmevent_active
+      mhpmevent[i][i] = 1'b1;
+    end
+
+    // deactivate
+    mhpmevent[1] = '0; // not existing, reserved
+    for (int i=3+MHPMCounterNum; i<32; i++) begin : gen_mhpmevent_inactive
+      mhpmevent[i] = '0;
+    end
+  end
+
+  // mask, controls effective counter width
+  always_comb begin : gen_mask
+
+    for (int i=0; i<3; i++) begin : gen_mask_fixed
+      // mcycle, mtime, minstret are always 64 bit wide
+      mhpmcounter_mask[i] = {64{1'b1}};
+    end
+
+    for (int i=3; i<32; i++) begin : gen_mask_configurable
+      // mhpmcounters have a configurable width
+      mhpmcounter_mask[i] = {{{64-MHPMCounterWidth}{1'b0}}, {MHPMCounterWidth{1'b1}}};
+    end
+  end
+
+  // update
+  always_comb begin : mhpmcounter_update
+    mhpmcounter_n = mhpmcounter_q;
+
+    for (int i=0; i<32; i++) begin : gen_mhpmcounter_update
+
+      // increment
+      if (mhpmcounter_incr[i] & ~mcountinhibit[i]) begin
+        mhpmcounter_n[i] = mhpmcounter_mask[i] & (mhpmcounter_n[i] + 64'h1);
+      end
+
+      // write
+      if (mhpmcounter_we[i]) begin
+        mhpmcounter_n[i][31: 0] = mhpmcounter_mask[i][31: 0] & csr_wdata_int;
+      end else if (mhpmcounterh_we[i]) begin
+        mhpmcounter_n[i][63:32] = mhpmcounter_mask[i][63:32] & csr_wdata_int;
+      end
+    end
+  end
+
+  // performance monitor registers
+  always_ff @(posedge clk_i or negedge rst_ni) begin : perf_counter_registers
+    if (!rst_ni) begin
+      mcountinhibit_q    <= '0;
+      for (int i=0; i<32; i++) begin
+        mhpmcounter_q[i] <= '0;
+      end
+    end else begin
+      mhpmcounter_q      <= mhpmcounter_n;
+      mcountinhibit_q    <= mcountinhibit_n;
+    end
+  end
+
+  /////////////////////////////////
+  // Legacy Performance counters //
+  /////////////////////////////////
 
   assign PCCR_in[0]  = 1'b1;                          // cycle counter
   assign PCCR_in[1]  = if_valid_i;                    // instruction counter

@@ -45,6 +45,7 @@ module ibex_id_stage #(
     output logic                      ctrl_busy_o,
     output logic                      core_ctrl_firstfetch_o,
     output logic                      is_decoding_o,
+    output logic                      illegal_insn_o,
 
     // Interface to IF stage
     input  logic                      instr_valid_i,
@@ -406,6 +407,7 @@ module ibex_id_stage #(
   ////////////////
   // Controller //
   ////////////////
+  assign illegal_insn_o = illegal_insn_dec | illegal_reg_rv32e;
 
   ibex_controller controller_i (
       .clk_i                          ( clk_i                  ),
@@ -418,7 +420,7 @@ module ibex_id_stage #(
 
       // decoder related signals
       .deassert_we_o                  ( deassert_we            ),
-      .illegal_insn_i                 ( illegal_insn_dec | illegal_reg_rv32e ),
+      .illegal_insn_i                 ( illegal_insn_o         ),
       .ecall_insn_i                   ( ecall_insn_dec         ),
       .mret_insn_i                    ( mret_insn_dec          ),
       .dret_insn_i                    ( dret_insn_dec          ),

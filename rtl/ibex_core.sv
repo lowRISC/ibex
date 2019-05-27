@@ -26,6 +26,8 @@
  */
 module ibex_core #(
     parameter int unsigned NumExtPerfCounters = 1,
+    parameter int unsigned MHPMCounterNum     = 8,
+    parameter int unsigned MHPMCounterWidth   = 40,
     parameter bit RV32E                       = 0,
     parameter bit RV32M                       = 1,
     parameter int unsigned DmHaltAddr         = 32'h1A110800,
@@ -82,6 +84,7 @@ module ibex_core #(
   logic [31:0] instr_rdata_id;    // Instruction sampled inside IF stage
   logic        is_compressed_id;
   logic        illegal_c_insn_id; // Illegal compressed instruction sent to ID stage
+  logic        illegal_insn_id;   // ID stage sees an illegal instruction
   logic [31:0] pc_if;             // Program counter in IF stage
   logic [31:0] pc_id;             // Program counter in ID stage
 
@@ -176,7 +179,8 @@ module ibex_core #(
   logic        debug_single_step;
   logic        debug_ebreakm;
 
-  // Performance Counters
+  // performance counter related signals
+  logic        insn_ret;
   logic        perf_imiss;
   logic        perf_jump;
   logic        perf_branch;
@@ -291,6 +295,7 @@ module ibex_core #(
       .ctrl_busy_o                  ( ctrl_busy            ),
       .core_ctrl_firstfetch_o       ( core_ctrl_firstfetch ),
       .is_decoding_o                ( is_decoding          ),
+      .illegal_insn_o               ( illegal_insn_id      ),
 
       // Interface to instruction memory
       .instr_valid_i                ( instr_valid_id       ),
@@ -378,7 +383,6 @@ module ibex_core #(
       .perf_jump_o                  ( perf_jump            ),
       .perf_branch_o                ( perf_branch          ),
       .perf_tbranch_o               ( perf_tbranch         )
-
   );
 
 
@@ -470,10 +474,16 @@ module ibex_core #(
   assign perf_load  = data_req_o & data_gnt_i & (~data_we_o);
   assign perf_store = data_req_o & data_gnt_i & data_we_o;
 
+  // An instruction has been executed and retired if the ID stage gets a new instruction and
+  // the previously seen instruction was valid.
+  assign insn_ret   = if_valid & ~illegal_insn_id;
+
   ibex_cs_registers #(
-      .NumExtCounters ( NumExtPerfCounters ),
-      .RV32E          ( RV32E              ),
-      .RV32M          ( RV32M              )
+      .NumExtCounters    ( NumExtPerfCounters ),
+      .MHPMCounterNum    ( MHPMCounterNum     ),
+      .MHPMCounterWidth  ( MHPMCounterWidth   ),
+      .RV32E             ( RV32E              ),
+      .RV32M             ( RV32M              )
   ) cs_registers_i (
       .clk_i                   ( clk                 ),
       .rst_ni                  ( rst_ni              ),
@@ -513,6 +523,7 @@ module ibex_core #(
 
 
       // performance counter related signals
+      .insn_ret_i              ( insn_ret            ),
       .if_valid_i              ( if_valid            ),
       .id_valid_i              ( id_valid            ),
       .is_compressed_i         ( is_compressed_id    ),
@@ -525,6 +536,7 @@ module ibex_core #(
       .branch_taken_i          ( perf_tbranch        ),
       .mem_load_i              ( perf_load           ),
       .mem_store_i             ( perf_store          ),
+      .lsu_busy_i              ( lsu_busy            ),
 
       .ext_counters_i          ( ext_perf_counters_i )
   );
