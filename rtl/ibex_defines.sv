@@ -242,7 +242,18 @@ typedef enum logic[11:0] {
 
   // Debug
   CSR_DSCRATCH0 = 12'h7b2, // optional
-  CSR_DSCRATCH1 = 12'h7b3  // optional
+  CSR_DSCRATCH1 = 12'h7b3, // optional
+
+  // Machine Counter/Timers
+  CSR_MCOUNTINHIBIT       = 12'h320,
+  CSR_MCYCLE              = 12'hB00,
+  CSR_MCYCLEH             = 12'hB80,
+  CSR_MINSTRET            = 12'hB02,
+  CSR_MINSTRETH           = 12'hB82,
+
+  CSR_MCOUNTER_SETUP_MASK = 12'b0011_001X_XXXX, // actually 12'h323 - 12'h33F
+  CSR_MCOUNTER_MASK       = 12'b1011_000X_XXXX, // actually 12'hB03 - 12'hB1F
+  CSR_MCOUNTERH_MASK      = 12'b1011_100X_XXXX  // actually 12'hB83 - 12'hB9F
 } csr_num_e;
 
 endpackage
