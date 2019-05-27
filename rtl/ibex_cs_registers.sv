@@ -84,6 +84,7 @@ module ibex_cs_registers #(
     input  logic                      mem_store_i,       // store to memory in this cycle
     input  logic [NumExtCounters-1:0] ext_counters_i
 );
+
   import ibex_defines::*;
 
   // misa
@@ -190,21 +191,27 @@ module ibex_cs_registers #(
   // read logic
   always_comb begin
     csr_rdata_int = '0;
+
     unique case (csr_addr_i)
       // mstatus: always M-mode, contains IE bit
-      CSR_MSTATUS: csr_rdata_int = {
-                                  19'b0,
-                                  mstatus_q.mpp,
-                                  3'b0,
-                                  mstatus_q.mpie,
-                                  3'h0,
-                                  mstatus_q.mie,
-                                  3'h0
-                                };
+      CSR_MSTATUS: begin
+        csr_rdata_int = {
+            19'b0,
+            mstatus_q.mpp,
+            3'b0,
+            mstatus_q.mpie,
+            3'h0,
+            mstatus_q.mie,
+            3'h0
+        };
+      end
+
       // mtvec: machine trap-handler base address
       CSR_MTVEC: csr_rdata_int = boot_addr_i;
+
       // mepc: exception program counter
       CSR_MEPC: csr_rdata_int = mepc_q;
+
       // mcause: exception cause
       CSR_MCAUSE: csr_rdata_int = {mcause_q[5], 26'b0, mcause_q[4:0]};
 
@@ -235,21 +242,22 @@ module ibex_cs_registers #(
 
     unique case (csr_addr_i)
       // mstatus: IE bit
-      CSR_MSTATUS: if (csr_we_int) begin
-        mstatus_n = '{
-          mie:  csr_wdata_int[`MSTATUS_MIE_BITS],
-          mpie: csr_wdata_int[`MSTATUS_MPIE_BITS],
-          mpp:  PRIV_LVL_M
-        };
+      CSR_MSTATUS: begin
+        if (csr_we_int) begin
+          mstatus_n = '{
+              mie:  csr_wdata_int[`MSTATUS_MIE_BITS],
+              mpie: csr_wdata_int[`MSTATUS_MPIE_BITS],
+              mpp:  PRIV_LVL_M
+          };
+        end
       end
       // mepc: exception program counter
       CSR_MEPC: if (csr_we_int) mepc_n = csr_wdata_int;
       // mcause
       CSR_MCAUSE: if (csr_we_int) mcause_n = {csr_wdata_int[31], csr_wdata_int[4:0]};
 
-      CSR_DCSR:
-        if (csr_we_int)
-        begin
+      CSR_DCSR: begin
+        if (csr_we_int) begin
           dcsr_n = csr_wdata_int;
           dcsr_n.xdebugver = XDEBUGVER_STD;
           dcsr_n.prv = PRIV_LVL_M; // only M-mode is supported
@@ -265,22 +273,27 @@ module ibex_cs_registers #(
           dcsr_n.zero1 = 1'b0;
           dcsr_n.zero2 = 12'h0;
         end
-      CSR_DPC:
+      end
+
+      CSR_DPC: begin
         // Only valid PC addresses are allowed (half-word aligned with C ext.)
-        if (csr_we_int && csr_wdata_int[0] == 1'b0)
-        begin
+        if (csr_we_int && csr_wdata_int[0] == 1'b0) begin
           depc_n = csr_wdata_int;
         end
-      CSR_DSCRATCH0:
-        if (csr_we_int)
-        begin
+      end
+
+      CSR_DSCRATCH0: begin
+        if (csr_we_int) begin
           dscratch0_n = csr_wdata_int;
         end
-      CSR_DSCRATCH1:
-        if (csr_we_int)
-        begin
+      end
+
+      CSR_DSCRATCH1: begin
+        if (csr_we_int) begin
           dscratch1_n = csr_wdata_int;
         end
+      end
+
       default:;
     endcase
 
@@ -362,36 +375,36 @@ module ibex_cs_registers #(
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       mstatus_q  <= '{
-              mie:  1'b0,
-              mpie: 1'b0,
-              mpp:  PRIV_LVL_M
-            };
+          mie:  1'b0,
+          mpie: 1'b0,
+          mpp:  PRIV_LVL_M
+      };
       mepc_q     <= '0;
       mcause_q   <= '0;
 
-      depc_q      <= '0;
+      depc_q     <= '0;
       dcsr_q     <= '{
-        xdebugver: XDEBUGVER_NO,   // 4'h0
-        cause:     DBG_CAUSE_NONE, // 3'h0
-        prv:       PRIV_LVL_M,
-        default:   '0
+          xdebugver: XDEBUGVER_NO,   // 4'h0
+          cause:     DBG_CAUSE_NONE, // 3'h0
+          prv:       PRIV_LVL_M,
+          default:   '0
       };
       dscratch0_q <= '0;
       dscratch1_q <= '0;
     end else begin
       // update CSRs
       mstatus_q  <= '{
-                mie:  mstatus_n.mie,
-                mpie: mstatus_n.mpie,
-                mpp:  PRIV_LVL_M
-              };
-      mepc_q     <= mepc_n;
-      mcause_q   <= mcause_n;
+          mie:  mstatus_n.mie,
+          mpie: mstatus_n.mpie,
+          mpp:  PRIV_LVL_M
+      };
+      mepc_q      <= mepc_n;
+      mcause_q    <= mcause_n;
 
-      depc_q     <= depc_n    ;
-      dcsr_q     <= dcsr_n    ;
-      dscratch0_q<= dscratch0_n;
-      dscratch1_q<= dscratch1_n;
+      depc_q      <= depc_n;
+      dcsr_q      <= dcsr_n;
+      dscratch0_q <= dscratch0_n;
+      dscratch1_q <= dscratch1_n;
     end
   end
 
