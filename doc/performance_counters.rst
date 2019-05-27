@@ -16,11 +16,11 @@ Reset Value: ``0x0000_0003``
 +-------+-----+------------------------------------------------------------------+
 | Bit#  | R/W | Description                                                      |
 +=======+=====+==================================================================+
-| 1     | R/W | **Global Enable:** Activate/deactivate all performance counters. |
+| 0     | R/W | **Global Enable:** Activate/deactivate all performance counters. |
 |       |     | If this bit is 0, all performance counters are disabled. After   |
 |       |     | reset, this bit is set.                                          |
 +-------+-----+------------------------------------------------------------------+
-| 0     | R/W | **Saturation:** If this bit is set, saturating arithmetic is     |
+| 1     | R/W | **Saturation:** If this bit is set, saturating arithmetic is     |
 |       |     | used in the performance counter counters. After reset, this bit  |
 |       |     | is set.                                                          |
 +-------+-----+------------------------------------------------------------------+
