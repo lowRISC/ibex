@@ -491,9 +491,9 @@ module ibex_cs_registers #(
     if (is_pccr) begin
       unique case (csr_op_i)
         CSR_OP_NONE:   ;
-        CSR_OP_WRITE:  PCCR_n[0] = csr_wdata_i;
-        CSR_OP_SET:    PCCR_n[0] = csr_wdata_i | PCCR_q[0];
-        CSR_OP_CLEAR:  PCCR_n[0] = csr_wdata_i & ~(PCCR_q[0]);
+        CSR_OP_WRITE:  PCCR_n[0] =  csr_wdata_i;
+        CSR_OP_SET:    PCCR_n[0] =  csr_wdata_i | PCCR_q[0];
+        CSR_OP_CLEAR:  PCCR_n[0] = ~csr_wdata_i & PCCR_q[0];
         default:       PCCR_n[0] = 'X;
       endcase
     end
@@ -512,9 +512,9 @@ module ibex_cs_registers #(
       if (is_pccr && (pccr_all_sel || pccr_index == c)) begin
         unique case (csr_op_i)
           CSR_OP_NONE:   ;
-          CSR_OP_WRITE:  PCCR_n[c] = csr_wdata_i;
-          CSR_OP_SET:    PCCR_n[c] = csr_wdata_i | PCCR_q[c];
-          CSR_OP_CLEAR:  PCCR_n[c] = csr_wdata_i & ~(PCCR_q[c]);
+          CSR_OP_WRITE:  PCCR_n[c] =  csr_wdata_i;
+          CSR_OP_SET:    PCCR_n[c] =  csr_wdata_i | PCCR_q[c];
+          CSR_OP_CLEAR:  PCCR_n[c] = ~csr_wdata_i & PCCR_q[c];
           default:       PCCR_n[c] = 'X;
         endcase
       end
@@ -530,9 +530,9 @@ module ibex_cs_registers #(
     if (is_pcmr) begin
       unique case (csr_op_i)
         CSR_OP_NONE:   ;
-        CSR_OP_WRITE:  PCMR_n = csr_wdata_i[1:0];
-        CSR_OP_SET:    PCMR_n = csr_wdata_i[1:0] | PCMR_q;
-        CSR_OP_CLEAR:  PCMR_n = csr_wdata_i[1:0] & ~(PCMR_q);
+        CSR_OP_WRITE:  PCMR_n =  csr_wdata_i[1:0];
+        CSR_OP_SET:    PCMR_n =  csr_wdata_i[1:0] | PCMR_q;
+        CSR_OP_CLEAR:  PCMR_n = ~csr_wdata_i[1:0] & PCMR_q;
         default:       PCMR_n = 'X;
       endcase
     end
@@ -540,9 +540,9 @@ module ibex_cs_registers #(
     if (is_pcer) begin
       unique case (csr_op_i)
         CSR_OP_NONE:   ;
-        CSR_OP_WRITE:  PCER_n = csr_wdata_i[N_PERF_COUNTERS-1:0];
-        CSR_OP_SET:    PCER_n = csr_wdata_i[N_PERF_COUNTERS-1:0] | PCER_q;
-        CSR_OP_CLEAR:  PCER_n = csr_wdata_i[N_PERF_COUNTERS-1:0] & ~(PCER_q);
+        CSR_OP_WRITE:  PCER_n =  csr_wdata_i[N_PERF_COUNTERS-1:0];
+        CSR_OP_SET:    PCER_n =  csr_wdata_i[N_PERF_COUNTERS-1:0] | PCER_q;
+        CSR_OP_CLEAR:  PCER_n = ~csr_wdata_i[N_PERF_COUNTERS-1:0] & PCER_q;
         default:       PCER_n = 'X;
       endcase
     end
