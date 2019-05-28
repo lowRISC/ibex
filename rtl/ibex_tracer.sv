@@ -340,70 +340,73 @@ module ibex_tracer #(
       trace.pc         = pc_i;
       trace.instr      = instr_i;
 
-      // use casex instead of case inside due to ModelSim bug
-      unique casex (instr_i)
-        // Aliases
-        32'h00_00_00_13:  trace.printMnemonic("nop");
-        // Regular opcodes
-        INSTR_LUI:        trace.printUInstr("lui");
-        INSTR_AUIPC:      trace.printUInstr("auipc");
-        INSTR_JAL:        trace.printUJInstr("jal");
-        INSTR_JALR:       trace.printIInstr("jalr");
-        // BRANCH
-        INSTR_BEQ:        trace.printSBInstr("beq");
-        INSTR_BNE:        trace.printSBInstr("bne");
-        INSTR_BLT:        trace.printSBInstr("blt");
-        INSTR_BGE:        trace.printSBInstr("bge");
-        INSTR_BLTU:       trace.printSBInstr("bltu");
-        INSTR_BGEU:       trace.printSBInstr("bgeu");
-        // OPIMM
-        INSTR_ADDI:       trace.printIInstr("addi");
-        INSTR_SLTI:       trace.printIInstr("slti");
-        INSTR_SLTIU:      trace.printIInstr("sltiu");
-        INSTR_XORI:       trace.printIInstr("xori");
-        INSTR_ORI:        trace.printIInstr("ori");
-        INSTR_ANDI:       trace.printIInstr("andi");
-        INSTR_SLLI:       trace.printIuInstr("slli");
-        INSTR_SRLI:       trace.printIuInstr("srli");
-        INSTR_SRAI:       trace.printIuInstr("srai");
-        // OP
-        INSTR_ADD:        trace.printRInstr("add");
-        INSTR_SUB:        trace.printRInstr("sub");
-        INSTR_SLL:        trace.printRInstr("sll");
-        INSTR_SLT:        trace.printRInstr("slt");
-        INSTR_SLTU:       trace.printRInstr("sltu");
-        INSTR_XOR:        trace.printRInstr("xor");
-        INSTR_SRL:        trace.printRInstr("srl");
-        INSTR_SRA:        trace.printRInstr("sra");
-        INSTR_OR:         trace.printRInstr("or");
-        INSTR_AND:        trace.printRInstr("and");
-        // SYSTEM (CSR manipulation)
-        INSTR_CSRRW:      trace.printCSRInstr("csrrw");
-        INSTR_CSRRS:      trace.printCSRInstr("csrrs");
-        INSTR_CSRRC:      trace.printCSRInstr("csrrc");
-        INSTR_CSRRWI:     trace.printCSRInstr("csrrwi");
-        INSTR_CSRRSI:     trace.printCSRInstr("csrrsi");
-        INSTR_CSRRCI:     trace.printCSRInstr("csrrci");
-        // SYSTEM (others)
-        INSTR_ECALL:      trace.printMnemonic("ecall");
-        INSTR_EBREAK:     trace.printMnemonic("ebreak");
-        INSTR_MRET:       trace.printMnemonic("mret");
-        INSTR_DRET:       trace.printMnemonic("dret");
-        INSTR_WFI:        trace.printMnemonic("wfi");
-        // RV32M
-        INSTR_PMUL:       trace.printRInstr("mul");
-        INSTR_PMUH:       trace.printRInstr("mulh");
-        INSTR_PMULHSU:    trace.printRInstr("mulhsu");
-        INSTR_PMULHU:     trace.printRInstr("mulhu");
-        INSTR_DIV:        trace.printRInstr("div");
-        INSTR_DIVU:       trace.printRInstr("divu");
-        INSTR_REM:        trace.printRInstr("rem");
-        INSTR_REMU:       trace.printRInstr("remu");
-        // LOAD & STORE
-        INSTR_LOAD:       trace.printLoadInstr();
-        INSTR_STORE:      trace.printStoreInstr();
-        default:          trace.printMnemonic("INVALID");
-      endcase // unique case (instr_i)
+      // separate case for 'nop' instruction to avoid overlapping with 'addi'
+      if (instr_i == 32'h00_00_00_13) begin
+        trace.printMnemonic("nop");
+      end else begin
+        // use casex instead of case inside due to ModelSim bug
+        unique casex (instr_i)
+          // Regular opcodes
+          INSTR_LUI:        trace.printUInstr("lui");
+          INSTR_AUIPC:      trace.printUInstr("auipc");
+          INSTR_JAL:        trace.printUJInstr("jal");
+          INSTR_JALR:       trace.printIInstr("jalr");
+          // BRANCH
+          INSTR_BEQ:        trace.printSBInstr("beq");
+          INSTR_BNE:        trace.printSBInstr("bne");
+          INSTR_BLT:        trace.printSBInstr("blt");
+          INSTR_BGE:        trace.printSBInstr("bge");
+          INSTR_BLTU:       trace.printSBInstr("bltu");
+          INSTR_BGEU:       trace.printSBInstr("bgeu");
+          // OPIMM
+          INSTR_ADDI:       trace.printIInstr("addi");
+          INSTR_SLTI:       trace.printIInstr("slti");
+          INSTR_SLTIU:      trace.printIInstr("sltiu");
+          INSTR_XORI:       trace.printIInstr("xori");
+          INSTR_ORI:        trace.printIInstr("ori");
+          INSTR_ANDI:       trace.printIInstr("andi");
+          INSTR_SLLI:       trace.printIuInstr("slli");
+          INSTR_SRLI:       trace.printIuInstr("srli");
+          INSTR_SRAI:       trace.printIuInstr("srai");
+          // OP
+          INSTR_ADD:        trace.printRInstr("add");
+          INSTR_SUB:        trace.printRInstr("sub");
+          INSTR_SLL:        trace.printRInstr("sll");
+          INSTR_SLT:        trace.printRInstr("slt");
+          INSTR_SLTU:       trace.printRInstr("sltu");
+          INSTR_XOR:        trace.printRInstr("xor");
+          INSTR_SRL:        trace.printRInstr("srl");
+          INSTR_SRA:        trace.printRInstr("sra");
+          INSTR_OR:         trace.printRInstr("or");
+          INSTR_AND:        trace.printRInstr("and");
+          // SYSTEM (CSR manipulation)
+          INSTR_CSRRW:      trace.printCSRInstr("csrrw");
+          INSTR_CSRRS:      trace.printCSRInstr("csrrs");
+          INSTR_CSRRC:      trace.printCSRInstr("csrrc");
+          INSTR_CSRRWI:     trace.printCSRInstr("csrrwi");
+          INSTR_CSRRSI:     trace.printCSRInstr("csrrsi");
+          INSTR_CSRRCI:     trace.printCSRInstr("csrrci");
+          // SYSTEM (others)
+          INSTR_ECALL:      trace.printMnemonic("ecall");
+          INSTR_EBREAK:     trace.printMnemonic("ebreak");
+          INSTR_MRET:       trace.printMnemonic("mret");
+          INSTR_DRET:       trace.printMnemonic("dret");
+          INSTR_WFI:        trace.printMnemonic("wfi");
+          // RV32M
+          INSTR_PMUL:       trace.printRInstr("mul");
+          INSTR_PMUH:       trace.printRInstr("mulh");
+          INSTR_PMULHSU:    trace.printRInstr("mulhsu");
+          INSTR_PMULHU:     trace.printRInstr("mulhu");
+          INSTR_DIV:        trace.printRInstr("div");
+          INSTR_DIVU:       trace.printRInstr("divu");
+          INSTR_REM:        trace.printRInstr("rem");
+          INSTR_REMU:       trace.printRInstr("remu");
+          // LOAD & STORE
+          INSTR_LOAD:       trace.printLoadInstr();
+          INSTR_STORE:      trace.printStoreInstr();
+          default:          trace.printMnemonic("INVALID");
+        endcase // unique case (instr_i)
+      end
 
       // replace register written back
       foreach(trace.regs_write[i]) begin
