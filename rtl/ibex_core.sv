@@ -25,13 +25,12 @@
  * Top level module of the ibex RISC-V core
  */
 module ibex_core #(
-    parameter int unsigned NumExtPerfCounters = 1,
-    parameter int unsigned MHPMCounterNum     = 8,
-    parameter int unsigned MHPMCounterWidth   = 40,
-    parameter bit RV32E                       = 0,
-    parameter bit RV32M                       = 1,
-    parameter int unsigned DmHaltAddr         = 32'h1A110800,
-    parameter int unsigned DmExceptionAddr    = 32'h1A110808
+    parameter int unsigned MHPMCounterNum   = 8,
+    parameter int unsigned MHPMCounterWidth = 40,
+    parameter bit RV32E                     = 0,
+    parameter bit RV32M                     = 1,
+    parameter int unsigned DmHaltAddr       = 32'h1A110800,
+    parameter int unsigned DmExceptionAddr  = 32'h1A110808
 ) (
     // Clock and Reset
     input  logic        clk_i,
@@ -72,9 +71,7 @@ module ibex_core #(
     input  logic        debug_req_i,
 
     // CPU Control Signals
-    input  logic        fetch_enable_i,
-
-    input  logic [NumExtPerfCounters-1:0] ext_perf_counters_i
+    input  logic        fetch_enable_i
 );
 
   import ibex_defines::*;
@@ -482,11 +479,10 @@ module ibex_core #(
   assign insn_ret   = if_valid & ~illegal_insn_id;
 
   ibex_cs_registers #(
-      .NumExtCounters    ( NumExtPerfCounters ),
-      .MHPMCounterNum    ( MHPMCounterNum     ),
-      .MHPMCounterWidth  ( MHPMCounterWidth   ),
-      .RV32E             ( RV32E              ),
-      .RV32M             ( RV32M              )
+      .MHPMCounterNum   ( MHPMCounterNum   ),
+      .MHPMCounterWidth ( MHPMCounterWidth ),
+      .RV32E            ( RV32E            ),
+      .RV32M            ( RV32M            )
   ) cs_registers_i (
       .clk_i                   ( clk                 ),
       .rst_ni                  ( rst_ni              ),
@@ -527,7 +523,6 @@ module ibex_core #(
 
       // performance counter related signals
       .insn_ret_i              ( insn_ret            ),
-      .if_valid_i              ( if_valid            ),
       .id_valid_i              ( id_valid            ),
       .is_compressed_i         ( is_compressed_id    ),
       .is_decoding_i           ( is_decoding         ),
@@ -539,9 +534,7 @@ module ibex_core #(
       .branch_taken_i          ( perf_tbranch        ),
       .mem_load_i              ( perf_load           ),
       .mem_store_i             ( perf_store          ),
-      .lsu_busy_i              ( lsu_busy            ),
-
-      .ext_counters_i          ( ext_perf_counters_i )
+      .lsu_busy_i              ( lsu_busy            )
   );
 
 `ifndef VERILATOR

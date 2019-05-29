@@ -26,11 +26,10 @@
  * Specification, draft version 1.11
  */
 module ibex_cs_registers #(
-    parameter int unsigned NumExtCounters    = 0,
-    parameter int unsigned MHPMCounterNum    = 8,
-    parameter int unsigned MHPMCounterWidth  = 40,
-    parameter bit RV32E                      = 0,
-    parameter bit RV32M                      = 0
+    parameter int unsigned MHPMCounterNum   = 8,
+    parameter int unsigned MHPMCounterWidth = 40,
+    parameter bit RV32E                     = 0,
+    parameter bit RV32M                     = 0
 ) (
     // Clock and Reset
     input  logic                      clk_i,
@@ -76,7 +75,6 @@ module ibex_cs_registers #(
                                                           // missing write permissions
     // Performance Counters
     input  logic                      insn_ret_i,         // instr retired in ID/EX stage
-    input  logic                      if_valid_i,         // IF stage gives a new instr
     input  logic                      id_valid_i,         // ID stage is done
     input  logic                      is_compressed_i,    // compressed instr in ID
     input  logic                      is_decoding_i,      // controller is in DECODE state
@@ -88,8 +86,7 @@ module ibex_cs_registers #(
     input  logic                      branch_taken_i,     // branch was taken
     input  logic                      mem_load_i,         // load from memory in this cycle
     input  logic                      mem_store_i,        // store to memory in this cycle
-    input  logic                      lsu_busy_i,
-    input  logic [NumExtCounters-1:0] ext_counters_i
+    input  logic                      lsu_busy_i
 );
 
   import ibex_defines::*;
@@ -109,14 +106,6 @@ module ibex_cs_registers #(
     | (0     << 20)  // U - User mode implemented
     | (0     << 23)  // X - Non-standard extensions present
     | (MXL   << 30); // M-XLEN
-
-  localparam int unsigned N_PERF_COUNTERS = 11 + NumExtCounters;
-
-`ifdef ASIC_SYNTHESIS
-  localparam N_PERF_REGS     = 1;
-`else
-  localparam N_PERF_REGS     = N_PERF_COUNTERS;
-`endif
 
   `define MSTATUS_UIE_BITS        0
   `define MSTATUS_SIE_BITS        1
@@ -172,22 +161,6 @@ module ibex_cs_registers #(
   logic [31:0] mhpmevent [32];
   logic  [4:0] mhpmcounter_idx;
 
-  // Legacy Performance Counter Signals
-  logic [N_PERF_COUNTERS-1:0]    PCCR_in;  // input signals for each counter category
-  logic [N_PERF_COUNTERS-1:0]    PCCR_inc, PCCR_inc_q; // should the counter be increased?
-
-  logic [N_PERF_REGS-1:0] [31:0] PCCR_q, PCCR_n; // performance counters counter register
-  logic [1:0]                    PCMR_n, PCMR_q; // mode register, controls saturation and
-                                                 // global enable
-  logic [N_PERF_COUNTERS-1:0]    PCER_n, PCER_q; // selected counter input
-
-  logic [31:0]                   perf_rdata;
-  logic [4:0]                    pccr_index;
-  logic                          pccr_all_sel;
-  logic                          is_pccr;
-  logic                          is_pcer;
-  logic                          is_pcmr;
-
   // CSR update logic
   logic [31:0] csr_wdata_int;
   logic [31:0] csr_rdata_int;
@@ -200,7 +173,7 @@ module ibex_cs_registers #(
   logic [31:0] dscratch0_q, dscratch0_n;
   logic [31:0] dscratch1_q, dscratch1_n;
   logic [ 5:0] mcause_q, mcause_n;
-  Status_t mstatus_q, mstatus_n;
+  Status_t     mstatus_q, mstatus_n;
   logic [31:0] exception_pc;
 
   // Access violation signals
@@ -213,8 +186,8 @@ module ibex_cs_registers #(
   /////////////
 
   logic [$bits(csr_num_e)-1:0] csr_addr;
-  assign csr_addr        = {csr_addr_i};
-  assign mhpmcounter_idx = csr_addr[4:0];
+  assign csr_addr           = {csr_addr_i};
+  assign mhpmcounter_idx    = csr_addr[4:0];
 
   assign illegal_csr_priv   = 1'b0; // we only support M-mode
   assign illegal_csr_write  = (csr_addr[11:10] == 2'b11) && csr_we_int;
@@ -474,8 +447,7 @@ module ibex_cs_registers #(
     endcase
   end
 
-  // output mux, possibly choose performance counters
-  assign csr_rdata_o = (is_pccr || is_pcer || is_pcmr) ? perf_rdata : csr_rdata_int;
+  assign csr_rdata_o = csr_rdata_int;
 
   // directly output some registers
   assign m_irq_enable_o  = mstatus_q.mie;
@@ -618,163 +590,6 @@ module ibex_cs_registers #(
     end else begin
       mhpmcounter_q      <= mhpmcounter_n;
       mcountinhibit_q    <= mcountinhibit_n;
-    end
-  end
-
-  /////////////////////////////////
-  // Legacy Performance counters //
-  /////////////////////////////////
-
-  assign PCCR_in[0]  = 1'b1;                          // cycle counter
-  assign PCCR_in[1]  = if_valid_i;                    // instruction counter
-  assign PCCR_in[2]  = 1'b0;                          // Reserved
-  assign PCCR_in[3]  = 1'b0;                          // Reserved
-  assign PCCR_in[4]  = imiss_i & (~pc_set_i);         // cycles waiting for instruction fetches,
-                                                      // excluding jumps and branches
-  assign PCCR_in[5]  = mem_load_i;                    // nr of loads
-  assign PCCR_in[6]  = mem_store_i;                   // nr of stores
-  assign PCCR_in[7]  = jump_i;                        // nr of jumps (unconditional)
-  assign PCCR_in[8]  = branch_i;                      // nr of branches (conditional)
-  assign PCCR_in[9]  = branch_taken_i;                // nr of taken branches (conditional)
-  assign PCCR_in[10] = id_valid_i & is_decoding_i & is_compressed_i; // compressed intr ctr
-
-  // assign external performance counters
-  for (genvar i = 0; i < NumExtCounters; i++) begin : gen_ext_counters
-    assign PCCR_in[N_PERF_COUNTERS - NumExtCounters + i] = ext_counters_i[i];
-  end
-
-  // address decoder for performance counter registers
-  always_comb begin
-    is_pccr      = 1'b0;
-    is_pcmr      = 1'b0;
-    is_pcer      = 1'b0;
-    pccr_all_sel = 1'b0;
-    pccr_index   = '0;
-    perf_rdata   = '0;
-
-    // only perform csr access if we actually care about the read data
-    if (csr_access_i) begin
-      unique case (csr_addr_i)
-        CSR_TSELECT: begin
-          is_pcer = 1'b1;
-          perf_rdata[N_PERF_COUNTERS-1:0] = PCER_q;
-        end
-        CSR_TDATA1: begin
-          is_pcmr = 1'b1;
-          perf_rdata[1:0] = PCMR_q;
-        end
-        CSR_PCCR31: begin
-          is_pccr = 1'b1;
-          pccr_all_sel = 1'b1;
-        end
-        default:;
-      endcase
-
-      // look for 780 to 79F, Performance Counter Counter Registers
-      if (csr_addr[11:5] == 7'b0111100) begin
-        is_pccr     = 1'b1;
-
-        pccr_index = csr_addr[4:0];
-`ifdef  ASIC_SYNTHESIS
-        perf_rdata = PCCR_q[0];
-`else
-        perf_rdata = csr_addr[4:0] < N_PERF_COUNTERS ? PCCR_q[csr_addr[4:0]] : '0;
-`endif
-      end
-    end
-  end
-
-
-  // performance counter counter update logic
-`ifdef ASIC_SYNTHESIS
-  // for synthesis we just have one performance counter register
-  assign PCCR_inc[0] = (|(PCCR_in & PCER_q)) & PCMR_q[0];
-
-  always_comb begin
-    PCCR_n[0]   = PCCR_q[0];
-
-    if ((PCCR_inc_q[0] == 1'b1) && ((PCCR_q[0] != 32'hFFFFFFFF) || (PCMR_q[1] == 1'b0))) begin
-      PCCR_n[0] = PCCR_q[0] + 32'h1;
-    end
-
-    if (is_pccr) begin
-      unique case (csr_op_i)
-        CSR_OP_NONE:   ;
-        CSR_OP_WRITE:  PCCR_n[0] =  csr_wdata_i;
-        CSR_OP_SET:    PCCR_n[0] =  csr_wdata_i | PCCR_q[0];
-        CSR_OP_CLEAR:  PCCR_n[0] = ~csr_wdata_i & PCCR_q[0];
-        default:       PCCR_n[0] = 'X;
-      endcase
-    end
-  end
-`else
-  always_comb begin
-    for (int c = 0; c < N_PERF_COUNTERS; c++) begin : perf_counters_inc
-      PCCR_inc[c] = PCCR_in[c] & PCER_q[c] & PCMR_q[0];
-
-      PCCR_n[c]   = PCCR_q[c];
-
-      if ((PCCR_inc_q[c] == 1'b1) && ((PCCR_q[c] != 32'hFFFFFFFF) || (PCMR_q[1] == 1'b0))) begin
-        PCCR_n[c] = PCCR_q[c] + 32'h1;
-      end
-
-      if (is_pccr && (pccr_all_sel || pccr_index == c)) begin
-        unique case (csr_op_i)
-          CSR_OP_NONE:   ;
-          CSR_OP_WRITE:  PCCR_n[c] =  csr_wdata_i;
-          CSR_OP_SET:    PCCR_n[c] =  csr_wdata_i | PCCR_q[c];
-          CSR_OP_CLEAR:  PCCR_n[c] = ~csr_wdata_i & PCCR_q[c];
-          default:       PCCR_n[c] = 'X;
-        endcase
-      end
-    end
-  end
-`endif
-
-  // update PCMR and PCER
-  always_comb begin
-    PCMR_n = PCMR_q;
-    PCER_n = PCER_q;
-
-    if (is_pcmr) begin
-      unique case (csr_op_i)
-        CSR_OP_NONE:   ;
-        CSR_OP_WRITE:  PCMR_n =  csr_wdata_i[1:0];
-        CSR_OP_SET:    PCMR_n =  csr_wdata_i[1:0] | PCMR_q;
-        CSR_OP_CLEAR:  PCMR_n = ~csr_wdata_i[1:0] & PCMR_q;
-        default:       PCMR_n = 'X;
-      endcase
-    end
-
-    if (is_pcer) begin
-      unique case (csr_op_i)
-        CSR_OP_NONE:   ;
-        CSR_OP_WRITE:  PCER_n =  csr_wdata_i[N_PERF_COUNTERS-1:0];
-        CSR_OP_SET:    PCER_n =  csr_wdata_i[N_PERF_COUNTERS-1:0] | PCER_q;
-        CSR_OP_CLEAR:  PCER_n = ~csr_wdata_i[N_PERF_COUNTERS-1:0] & PCER_q;
-        default:       PCER_n = 'X;
-      endcase
-    end
-  end
-
-  // Performance Counter Registers
-  always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni) begin
-      PCER_q <= '0;
-      PCMR_q <= 2'h3;
-
-      for (int r = 0; r < N_PERF_REGS; r++) begin
-        PCCR_q[r]     <= '0;
-        PCCR_inc_q[r] <= '0;
-      end
-    end else begin
-      PCER_q <= PCER_n;
-      PCMR_q <= PCMR_n;
-
-      for (int r = 0; r < N_PERF_REGS; r++) begin
-        PCCR_q[r]     <= PCCR_n[r];
-        PCCR_inc_q[r] <= PCCR_inc[r];
-      end
     end
   end
 
