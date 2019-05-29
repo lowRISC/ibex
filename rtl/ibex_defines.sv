@@ -232,13 +232,8 @@ typedef enum logic[11:0] {
   CSR_MCAUSE    = 12'h342,
 
   // Debug/trace
-  CSR_TSELECT   = 12'h7a0,
-  CSR_TDATA1    = 12'h7a1,
   CSR_DCSR      = 12'h7b0,
   CSR_DPC       = 12'h7b1,
-
-  // Performance counters
-  CSR_PCCR31    = 12'h79F, // custom
 
   // Debug
   CSR_DSCRATCH0 = 12'h7b2, // optional
