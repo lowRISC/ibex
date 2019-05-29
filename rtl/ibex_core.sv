@@ -139,6 +139,8 @@ module ibex_core #(
   csr_num_e    csr_addr;
   logic [31:0] csr_rdata;
   logic [31:0] csr_wdata;
+  logic        illegal_csr_insn_id; // CSR access to non-existent register,
+                                    // with wrong priviledge level, or missing write permissions
 
   // Data Memory Control
   logic        data_we_ex;
@@ -345,6 +347,7 @@ module ibex_core #(
       .csr_restore_mret_id_o        ( csr_restore_mret_id  ), // control signal to restore pc
       .csr_restore_dret_id_o        ( csr_restore_dret_id  ), // control signal to restore pc
       .csr_save_cause_o             ( csr_save_cause       ),
+      .illegal_csr_insn_i           ( illegal_csr_insn_id  ),
 
       // LSU
       .data_req_ex_o                ( data_req_ex          ), // to load store unit
@@ -520,7 +523,7 @@ module ibex_core #(
       .csr_restore_dret_i      ( csr_restore_dret_id ),
       .csr_cause_i             ( csr_cause           ),
       .csr_save_cause_i        ( csr_save_cause      ),
-
+      .illegal_csr_insn_o      ( illegal_csr_insn_id ),
 
       // performance counter related signals
       .insn_ret_i              ( insn_ret            ),

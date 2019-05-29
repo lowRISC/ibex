@@ -71,6 +71,9 @@ module ibex_cs_registers #(
     input  ibex_defines::exc_cause_e  csr_cause_i,
     input  logic                      csr_save_cause_i,
 
+    output logic                      illegal_csr_insn_o, // access to non-existent CSR,
+                                                          // with wrong priviledge level, or
+                                                          // missing write permissions
     // Performance Counters
     input  logic                      insn_ret_i,         // instr retired in ID/EX stage
     input  logic                      if_valid_i,         // IF stage gives a new instr
@@ -79,7 +82,7 @@ module ibex_cs_registers #(
     input  logic                      is_decoding_i,      // controller is in DECODE state
 
     input  logic                      imiss_i,            // instr fetch
-    input  logic                      pc_set_i,           // pc was set to a new value
+    input  logic                      pc_set_i,           // PC was set to a new value
     input  logic                      jump_i,             // jump instr seen (j, jr, jal, jalr)
     input  logic                      branch_i,           // branch instr seen (bf, bnf)
     input  logic                      branch_taken_i,     // branch was taken
@@ -200,6 +203,11 @@ module ibex_cs_registers #(
   Status_t mstatus_q, mstatus_n;
   logic [31:0] exception_pc;
 
+  // Access violation signals
+  logic        illegal_csr;
+  logic        illegal_csr_priv;
+  logic        illegal_csr_write;
+
   /////////////
   // CSR reg //
   /////////////
@@ -208,9 +216,14 @@ module ibex_cs_registers #(
   assign csr_addr        = {csr_addr_i};
   assign mhpmcounter_idx = csr_addr[4:0];
 
+  assign illegal_csr_priv   = 1'b0; // we only support M-mode
+  assign illegal_csr_write  = (csr_addr[11:10] == 2'b11) && csr_we_int;
+  assign illegal_csr_insn_o = illegal_csr | illegal_csr_write | illegal_csr_priv;
+
   // read logic
   always_comb begin
     csr_rdata_int = '0;
+    illegal_csr   = 1'b0;
 
     unique case (csr_addr_i)
       // mstatus: always M-mode, contains IE bit
@@ -256,10 +269,32 @@ module ibex_cs_registers #(
       default: begin
         if (csr_addr_i == CSR_MCOUNTER_SETUP_MASK) begin
           csr_rdata_int = mhpmevent[mhpmcounter_idx];
+          // check access to non-existent or already covered CSRs
+          if ((csr_addr[4:0] == 5'b00000) ||     // CSR_MCOUNTINHIBIT
+              (csr_addr[4:0] == 5'b00001) ||
+              (csr_addr[4:0] == 5'b00010)) begin
+            illegal_csr = csr_access_i;
+          end
+
         end else if (csr_addr_i == CSR_MCOUNTER_MASK) begin
           csr_rdata_int = mhpmcounter_q[mhpmcounter_idx][31: 0];
+          // check access to non-existent or already covered CSRs
+          if ((csr_addr[4:0] == 5'b00000) ||     // CSR_MCYCLE
+              (csr_addr[4:0] == 5'b00001) ||
+              (csr_addr[4:0] == 5'b00010)) begin // CSR_MINSTRET
+            illegal_csr = csr_access_i;
+          end
+
         end else if (csr_addr_i == CSR_MCOUNTERH_MASK) begin
           csr_rdata_int = mhpmcounter_q[mhpmcounter_idx][63:32];
+          // check access to non-existent or already covered CSRs
+          if ((csr_addr[4:0] == 5'b00000) ||     // CSR_MCYCLEH
+              (csr_addr[4:0] == 5'b00001) ||
+              (csr_addr[4:0] == 5'b00010)) begin // CSR_MINSTRETH
+            illegal_csr = csr_access_i;
+          end
+        end else begin
+          illegal_csr = csr_access_i;
         end
       end
     endcase

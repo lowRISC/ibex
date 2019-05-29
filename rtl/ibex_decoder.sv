@@ -96,7 +96,6 @@ module ibex_decoder #(
   logic       branch_in_id;
   logic       jump_in_id;
 
-  csr_op_e    csr_op;
   logic       csr_illegal;
 
   opcode_e    opcode;
@@ -125,7 +124,7 @@ module ibex_decoder #(
     csr_access_o                = 1'b0;
     csr_status_o                = 1'b0;
     csr_illegal                 = 1'b0;
-    csr_op                      = CSR_OP_NONE;
+    csr_op_o                    = CSR_OP_NONE;
 
     data_we_o                   = 1'b0;
     data_type_o                 = 2'b00;
@@ -496,9 +495,9 @@ module ibex_decoder #(
           end
 
           unique case (instr_rdata_i[13:12])
-            2'b01:   csr_op   = CSR_OP_WRITE;
-            2'b10:   csr_op   = CSR_OP_SET;
-            2'b11:   csr_op   = CSR_OP_CLEAR;
+            2'b01:   csr_op_o = CSR_OP_WRITE;
+            2'b10:   csr_op_o = CSR_OP_SET;
+            2'b11:   csr_op_o = CSR_OP_CLEAR;
             default: csr_illegal = 1'b1;
           endcase
 
@@ -514,7 +513,6 @@ module ibex_decoder #(
           end
 
           illegal_insn_o = csr_illegal;
-
         end
 
       end
@@ -549,7 +547,6 @@ module ibex_decoder #(
   assign mult_int_en_o     = RV32M ? ((deassert_we_i) ? 1'b0 : mult_int_en) : 1'b0;
   assign div_int_en_o      = RV32M ? ((deassert_we_i) ? 1'b0 : div_int_en ) : 1'b0;
   assign data_req_o        = (deassert_we_i) ? 1'b0          : data_req;
-  assign csr_op_o          = (deassert_we_i) ? CSR_OP_NONE   : csr_op;
   assign jump_in_id_o      = (deassert_we_i) ? 1'b0          : jump_in_id;
   assign branch_in_id_o    = (deassert_we_i) ? 1'b0          : branch_in_id;
 

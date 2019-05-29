@@ -94,6 +94,7 @@ module ibex_id_stage #(
     output logic                      csr_restore_mret_id_o,
     output logic                      csr_restore_dret_id_o,
     output logic                      csr_save_cause_o,
+    input  logic                      illegal_csr_insn_i,
 
     // Interface to load store unit
     output logic                      data_req_ex_o,
@@ -407,7 +408,7 @@ module ibex_id_stage #(
   ////////////////
   // Controller //
   ////////////////
-  assign illegal_insn_o = illegal_insn_dec | illegal_reg_rv32e;
+  assign illegal_insn_o = illegal_insn_dec | illegal_reg_rv32e | illegal_csr_insn_i;
 
   ibex_controller controller_i (
       .clk_i                          ( clk_i                  ),
