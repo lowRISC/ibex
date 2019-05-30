@@ -124,7 +124,7 @@ module ibex_decoder #(
     csr_access_o                = 1'b0;
     csr_status_o                = 1'b0;
     csr_illegal                 = 1'b0;
-    csr_op_o                    = CSR_OP_NONE;
+    csr_op_o                    = CSR_OP_READ;
 
     data_we_o                   = 1'b0;
     data_type_o                 = 2'b00;

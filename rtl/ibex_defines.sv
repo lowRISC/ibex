@@ -96,7 +96,7 @@ typedef enum logic [1:0] {
 
 // CSR operations
 typedef enum logic [1:0] {
-  CSR_OP_NONE,
+  CSR_OP_READ,
   CSR_OP_WRITE,
   CSR_OP_SET,
   CSR_OP_CLEAR
