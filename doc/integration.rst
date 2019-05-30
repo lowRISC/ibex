@@ -8,73 +8,73 @@ Instantiation Template
 
 .. code-block:: verilog
 
-  ibex_core
-   #(.N_EXT_PERF_COUNTERS (0),
-     .RV32E (0),
-     .RV32M (1),
-     .DM_HALT_ADDRESS(32'h1A110800),
-     .DM_EXCEPTION_ADDRESS(32'h1A110808))
-  u_core
-    (// Clock and reset
-     .clk_i (),
-     .rst_ni (),
-     .test_en_i (),
+  ibex_core #(
+      .NumMHPMCounters   (8),
+      .WidthMHPMCounters (40),
+      .RV32E             (0),
+      .RV32M             (1),
+      .DmHaltAddr        (32'h1A110800),
+      .DmExceptionAddr   (32'h1A110808)
+  ) u_core (
+      // Clock and reset
+      .clk_i          (),
+      .rst_ni         (),
+      .test_en_i      (),
 
-     // Configuration
-     .core_id_i (),
-     .cluster_id_i (),
-     .boot_addr_i (),
+      // Configuration
+      .core_id_i      (),
+      .cluster_id_i   (),
+      .boot_addr_i    (),
 
-     // Instruction memory interface
-     .instr_req_o (),
-     .instr_gnt_i (),
-     .instr_rvalid_i (),
-     .instr_addr_o (),
-     .instr_rdata_i (),
+      // Instruction memory interface
+      .instr_req_o    (),
+      .instr_gnt_i    (),
+      .instr_rvalid_i (),
+      .instr_addr_o   (),
+      .instr_rdata_i  (),
 
-     // Data memory interface
-     .data_req_o (),
-     .data_gnt_i (),
-     .data_rvalid_i (),
-     .data_we_o (),
-     .data_be_o (),
-     .data_addr_o (),
-     .data_wdata_o (),
-     .data_rdata_i (),
-     .data_err_i (),
+      // Data memory interface
+      .data_req_o     (),
+      .data_gnt_i     (),
+      .data_rvalid_i  (),
+      .data_we_o      (),
+      .data_be_o      (),
+      .data_addr_o    (),
+      .data_wdata_o   (),
+      .data_rdata_i   (),
+      .data_err_i     (),
 
-     // Interrupt inputs
-     .irq_i (),
-     .irq_id_i (),
-     .irq_ack_o (),
-     .irq_id_o (),
+      // Interrupt inputs
+      .irq_i          (),
+      .irq_id_i       (),
+      .irq_ack_o      (),
+      .irq_id_o       (),
 
-     // Debug Interface
-     .debug_req_i (),
+      // Debug Interface
+      .debug_req_i    (),
 
-     // Special control signal
-     .fetch_enable_i (),
-
-     // External performance counters
-     .ext_perf_counters_i ()
-    );
+      // Special control signal
+      .fetch_enable_i ()
+  );
 
 Parameters
 ----------
 
-+--------------------------+-------------+------------+-----------------------------------------------------------------+
-| Name                     | Type/Range  | Default    | Description                                                     |
-+==========================+=============+============+=================================================================+
-| ``N_EXT_PERF_COUNTERS``  | int (0..21) | 0          | Number of external performance counters                         |
-+--------------------------+-------------+------------+-----------------------------------------------------------------+
-| ``RV32E``                | bit         | 0          | RV32E mode enable (16 integer registers only)                   |
-+--------------------------+-------------+------------+-----------------------------------------------------------------+
-| ``RV32M``                | bit         | 1          | M(ultiply) extension enable                                     |
-+-------------------------+--------------+------------+-----------------------------------------------------------------+
-| ``DM_HALT_ADDRESS``      | int         | 0x1A110800 | Address to jump to when entering debug mode                     |
-+-------------------------+---------------------------------------------------------------------------------------------+
-| ``DM_EXCEPTION_ADDRESS`` | int         | 0x1A110808 | Address to jump to when an exception occurs while in debug mode |
-+--------------------------+--------------------------------------------------------------------------------------------+
++-----------------------+-------------+------------+-----------------------------------------------------------------+
+| Name                  | Type/Range  | Default    | Description                                                     |
++=======================+=============+============+=================================================================+
+| ``NumMHPMCounters``   | int (0..29) | 8          | Number of performance monitor event counters                    |
++-----------------------+-------------+------------+-----------------------------------------------------------------+
+| ``WidthMHPMCounters`` | int (64..32)| 40         | Bit width of performance monitor event counters                 |
++-----------------------+-------------+------------+-----------------------------------------------------------------+
+| ``RV32E``             | bit         | 0          | RV32E mode enable (16 integer registers only)                   |
++-----------------------+-------------+------------+-----------------------------------------------------------------+
+| ``RV32M``             | bit         | 1          | M(ultiply) extension enable                                     |
++-----------------------+-------------+------------+-----------------------------------------------------------------+
+| ``DmHaltAddr``        | int         | 0x1A110800 | Address to jump to when entering debug mode                     |
++-----------------------+-------------+------------+-----------------------------------------------------------------+
+| ``DmExceptionAddr``   | int         | 0x1A110808 | Address to jump to when an exception occurs while in debug mode |
++-----------------------+-------------+------------+-----------------------------------------------------------------+
 
 
 Interfaces
@@ -90,7 +90,7 @@ Interfaces
 +-------------------------+-------------------------+-----+----------------------------------------+
 | ``test_en_i``           | 1                       | in  | Test input, enables clock              |
 +-------------------------+-------------------------+-----+----------------------------------------+
-| ``core_id_i``           | 4                       | in  | Core id, usually static, can be read   |
+| ``core_id_i``           | 4                       | in  | Core ID, usually static, can be read   |
 |                         |                         |     | from :ref:`csr-mhartid`                |
 +-------------------------+-------------------------+-----+                                        +
 | ``cluster_id_i``        | 6                       | in  |                                        |
@@ -106,6 +106,4 @@ Interfaces
 | ``debug_*``             | Debug interface, see :ref:`debug-unit`                                 |
 +-------------------------+-------------------------+-----+----------------------------------------+
 | ``fetch_enable_i``      | 1                       | in  | Enable the core, won't fetch when 0    |
-+-------------------------+-------------------------+-----+----------------------------------------+
-| ``ext_perf_counters_i`` | ``N_EXT_PERF_COUNTERS`` | in  | External performance counter           |
 +-------------------------+-------------------------+-----+----------------------------------------+
