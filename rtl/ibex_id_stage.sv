@@ -405,6 +405,21 @@ module ibex_id_stage #(
       .branch_in_id_o                  ( branch_in_id              )
   );
 
+
+  ///////////////////////
+  // CSR operand check //
+  ///////////////////////
+  always_comb begin : csr_operand_check
+    csr_op_ex_o = csr_op;
+
+    // CSRRSI/CSRRCI must not write 0 to CSRs (uimm[4:0]=='0)
+    // CSRRS/CSRRC must not write from x0 to CSRs (rs1=='0)
+    if ((csr_op == CSR_OP_SET || csr_op == CSR_OP_CLEAR) &&
+        instr[`REG_S1] == '0) begin
+      csr_op_ex_o = CSR_OP_READ;
+    end
+  end
+
   ////////////////
   // Controller //
   ////////////////
@@ -532,7 +547,6 @@ module ibex_id_stage #(
   assign alu_operand_b_ex_o          = alu_operand_b;
 
   assign csr_access_ex_o             = csr_access;
-  assign csr_op_ex_o                 = csr_op;
 
   assign mult_en_ex_o                = mult_int_en;
   assign div_en_ex_o                 = div_int_en;
