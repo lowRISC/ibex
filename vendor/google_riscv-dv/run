@@ -1,0 +1,170 @@
+#!/bin/bash
+# Copyright 2018 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# This is simple run script to run a dedicated test or a regression
+#
+# Usage:
+# Run a single test with irun
+# ./run -tool irun -test riscv_instr_base_test
+#
+# Run regression with vcs
+# ./run -test all
+#
+# Change output directory
+# ./run -out my_output_dir
+
+DATE=`date +%Y-%m-%d`
+
+# RTL simulator, support vcs and irun
+SIMULATOR="vcs"
+
+# random seed
+SEED=`date +%s`
+
+# Test name, "all" means run all tests in the testlist
+TEST="riscv_instr_base_test"
+
+# Number of assembly programs to be generated for this test
+# This option only apply to single test mode. For the regression mode, the number is specified in
+# the testlist
+NUM_TESTS=1
+
+# Simulation output directory
+OUT="./out_${DATE}"
+
+# Simulation only
+SIM_ONLY=0
+
+# Compile only
+CMP_ONLY=0
+
+# Process command line options
+while [[ $# -gt 0 ]]
+do
+key="$1"
+case $key in
+    -tool)
+    SIMULATOR="$2"
+    shift
+    ;;
+    -test)
+    TEST="$2"
+    shift
+    ;;
+    -n)
+    NUM_TESTS="$2"
+    shift
+    ;;
+    -seed)
+    SEED="$2"
+    shift
+    ;;
+    -so)
+    SIM_ONLY=1
+    ;;
+    -co)
+    CMP_ONLY=1
+    ;;
+    -o)
+    OUT="$2"
+    shift
+    ;;
+    *)
+    echo "unknown option $1"
+    exit 1
+    ;;
+esac
+shift
+done
+
+# Generate compile and simulation commands
+if [[ "$SIMULATOR" == "vcs" ]]; then
+
+  COMPILE_CMD="vcs -file ./vcs.compile.option.f \
+                   -f ./files.f -full64 \
+                   -l $OUT/compile.log  \
+                   -Mdir=$OUT/vcs_simv.csrc \
+                   -o $OUT/vcs_simv"
+
+  SIM_CMD="$OUT/vcs_simv +UVM_TESTNAME="
+
+elif [[ "$SIMULATOR" == "irun" ]]; then
+
+  COMPILE_CMD="irun -64bit \
+                    -access +rwc \
+                    -f ./files.f \
+                    -q -sv -uvm  \
+                    -vlog_ext +.vh -I. \
+                    -uvmhome CDNS-1.2 \
+                    -l ${OUT}/compile.log"
+
+  SIM_CMD="irun -R +UVM_TESTNAME="
+
+else
+  echo "unsupported simulator $SIMULATOR"
+  exit 1
+fi
+
+# Clean up previous runs
+if [[ $SIM_ONLY == 0 ]]; then
+  rm -rf ${OUT}
+fi
+
+mkdir -p ${OUT}
+mkdir -p ${OUT}/asm_tests
+
+# Compilation
+if [[ $SIM_ONLY == 0 ]]; then
+  ${COMPILE_CMD}
+fi
+
+# Skip simulation if compilation only flag is set
+if [[ $CMP_ONLY == 1 ]]; then
+  exit 0
+fi
+
+# Run sim
+if [[ ${TEST} == "all" ]]; then
+  echo "Running regression with testlist:"
+  cat testlist
+  while read line; do
+    if ! [[ $line =~ ^\/\/ ]]; then
+      if [[ $line =~([a-z0-9_-]*)([[:space:]]*)\:([[:space:]]*)([0-9]*) ]]; then
+        SEED=`date +%s`
+        TEST=${BASH_REMATCH[1]}
+        ITERATION=${BASH_REMATCH[4]}
+        echo "Running ${TEST}, iteration count: ${ITERATION}"
+        if ! [[ $ITERATION == "0" ]]; then
+          ${SIM_CMD}${TEST} +asm_file_name=${OUT}/asm_tests/${TEST} \
+                            +ntb_random_seed=${SEED} \
+                            -l ${OUT}/sim_${TEST}.log +num_of_tests=${ITERATION}
+        fi
+      fi
+    fi
+  done < testlist
+else
+  echo "Running test ${TEST} with $SIMULATOR.."
+  ${SIM_CMD}${TEST} +asm_file_name=${OUT}/asm_tests/${TEST} \
+                    +ntb_random_seed=${SEED} \
+                    -l ${OUT}/sim_${TEST}.log \
+                    +num_of_tests=${NUM_TESTS}
+fi
+
+# List all generated assembly tests
+echo "==========================================================="
+echo "                Generated RISC-V assembly tests"
+echo " ----------------------------------------------------------"
+find $OUT/asm_tests -name "*.S" | sort -k11
