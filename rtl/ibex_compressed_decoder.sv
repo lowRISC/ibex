@@ -88,21 +88,20 @@ module ibex_compressed_decoder (
 
           3'b010: begin
             // c.li -> addi rd, x0, nzimm
+            // (c.li hints are translated into an addi hint)
             instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], 5'b0,
                        3'b0, instr_i[11:7], {OPCODE_OPIMM}};
-            if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
           end
 
           3'b011: begin
             // c.lui -> lui rd, imm
+            // (c.lui hints are translated into a lui hint)
             instr_o = {{15 {instr_i[12]}}, instr_i[6:2], instr_i[11:7], {OPCODE_LUI}};
 
             if (instr_i[11:7] == 5'h02) begin
               // c.addi16sp -> addi x2, x2, nzimm
               instr_o = {{3 {instr_i[12]}}, instr_i[4:3], instr_i[5], instr_i[2],
                          instr_i[6], 4'b0, 5'h02, 3'b000, 5'h02, {OPCODE_OPIMM}};
-            end else if (instr_i[11:7] == 5'b0) begin
-              illegal_instr_o = 1'b1;
             end
 
             if ({instr_i[12], instr_i[6:2]} == 6'b0) illegal_instr_o = 1'b1;
@@ -114,10 +113,10 @@ module ibex_compressed_decoder (
               2'b01: begin
                 // 00: c.srli -> srli rd, rd, shamt
                 // 01: c.srai -> srai rd, rd, shamt
+                // (c.srli/c.srai hints are translated into a srli/srai hint)
                 instr_o = {1'b0, instr_i[10], 5'b0, instr_i[6:2], 2'b01, instr_i[9:7],
                            3'b101, 2'b01, instr_i[9:7], {OPCODE_OPIMM}};
                 if (instr_i[12] == 1'b1)  illegal_instr_o = 1'b1;
-                if (instr_i[6:2] == 5'b0) illegal_instr_o = 1'b1;
               end
 
               2'b10: begin
@@ -192,9 +191,9 @@ module ibex_compressed_decoder (
         unique case (instr_i[15:13])
           3'b000: begin
             // c.slli -> slli rd, rd, shamt
+            // (c.ssli hints are translated into a slli hint)
             instr_o = {7'b0, instr_i[6:2], instr_i[11:7], 3'b001, instr_i[11:7], {OPCODE_OPIMM}};
-            if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
-            if (instr_i[12] == 1'b1 || instr_i[6:2] == 5'b0)  illegal_instr_o = 1'b1;
+            if (instr_i[12] == 1'b1)  illegal_instr_o = 1'b1; // reserved for custom extensions
           end
 
           3'b010: begin
