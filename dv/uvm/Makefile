@@ -2,12 +2,8 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-# Setting IP_NAME and PRJ_DIR. Assuming Makefile located at `hw/ip/<ip_name>/dv`
 DV_DIR    := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-IP_DIR    := $(subst /dv,,${DV_DIR})
-wordslist := $(subst /, ,${IP_DIR})
-IP_NAME   := $(lastword ${wordslist})
-GEN_DIR   := $(realpath ${DV_DIR}/../vendor/google_riscv-dv)
+GEN_DIR   := $(realpath ${DV_DIR}/../../vendor/google_riscv-dv)
 TOOLCHAIN := ${RISCV_TOOLCHAIN}
 OUT       := "${DV_DIR}/out"
 # Run time options for the instruction generator
@@ -26,10 +22,7 @@ endif
 
 SHELL=/bin/bash
 
-export PRJ_DIR:= $(realpath ${DV_DIR}/../..)
-
-tests = core_ibex_base_test
-test_bin = ${DV_DIR}/tests/bin/ibex_sanity_test.bin
+export PRJ_DIR:= $(realpath ${DV_DIR}/../../..)
 
 rand:=$(shell awk 'BEGIN{srand();printf("%d", 65536*rand())}')
 
@@ -53,7 +46,7 @@ iss_sim:
 # Compile ibex core TB
 compile:
 	mkdir -p ${OUT}/rtl_sim
-	vcs -f ${IP_NAME}_dv.f  -full64 \
+	vcs -f ibex_dv.f  -full64 \
       -l ${OUT}/rtl_sim/compile.log  \
       -sverilog -ntb_opts uvm-1.2 \
       +define+UVM_REGEX_NO_DPI -timescale=1ns/10ps -licqueue \

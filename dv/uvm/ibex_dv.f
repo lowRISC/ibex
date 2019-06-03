@@ -2,7 +2,7 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-${PRJ_DIR}/ibex/dv/tb/prim_clock_gating.sv
+${PRJ_DIR}/ibex/dv/uvm/tb/prim_clock_gating.sv
 
 // ibex CORE RTL files
 +incdir+${PRJ_DIR}/ibex/rtl
@@ -27,15 +27,15 @@ ${PRJ_DIR}/ibex/rtl/ibex_register_file_ff.sv
 ${PRJ_DIR}/ibex/rtl/ibex_core.sv
 
 // Core DV files
-+incdir+${PRJ_DIR}/ibex/dv/env
-+incdir+${PRJ_DIR}/ibex/dv/tests
-+incdir+${PRJ_DIR}/ibex/dv/common/ibex_mem_intf_agent
-+incdir+${PRJ_DIR}/ibex/dv/common/mem_model
-+incdir+${PRJ_DIR}/ibex/dv/common/utils
-${PRJ_DIR}/ibex/dv/common/utils/clk_if.sv
-${PRJ_DIR}/ibex/dv/common/utils/dv_utils_pkg.sv
-${PRJ_DIR}/ibex/dv/common/mem_model/mem_model_pkg.sv
-${PRJ_DIR}/ibex/dv/common/ibex_mem_intf_agent/ibex_mem_intf_agent_pkg.sv
-${PRJ_DIR}/ibex/dv/env/core_ibex_env_pkg.sv
-${PRJ_DIR}/ibex/dv/tests/core_ibex_test_pkg.sv
-${PRJ_DIR}/ibex/dv/tb/core_ibex_tb_top.sv
++incdir+${PRJ_DIR}/ibex/dv/uvm/env
++incdir+${PRJ_DIR}/ibex/dv/uvm/tests
++incdir+${PRJ_DIR}/ibex/dv/uvm/common/ibex_mem_intf_agent
++incdir+${PRJ_DIR}/ibex/dv/uvm/common/mem_model
++incdir+${PRJ_DIR}/ibex/dv/uvm/common/utils
+${PRJ_DIR}/ibex/dv/uvm/common/utils/clk_if.sv
+${PRJ_DIR}/ibex/dv/uvm/common/utils/dv_utils_pkg.sv
+${PRJ_DIR}/ibex/dv/uvm/common/mem_model/mem_model_pkg.sv
+${PRJ_DIR}/ibex/dv/uvm/common/ibex_mem_intf_agent/ibex_mem_intf_agent_pkg.sv
+${PRJ_DIR}/ibex/dv/uvm/env/core_ibex_env_pkg.sv
+${PRJ_DIR}/ibex/dv/uvm/tests/core_ibex_test_pkg.sv
+${PRJ_DIR}/ibex/dv/uvm/tb/core_ibex_tb_top.sv
