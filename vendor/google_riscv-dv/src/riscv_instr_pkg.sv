@@ -238,15 +238,8 @@ package riscv_instr_pkg;
     INVALID_INSTR
   } riscv_instr_name_t;
 
-  `include "riscv_core_setting.sv"
-
   // Maximum virtual address bits used by the program
   parameter MAX_USED_VADDR_BITS = 30;
-
-  // xSTATUS bit mask
-  parameter bit [XLEN - 1 : 0] MPRV_BIT_MASK = 'h1 << 17;
-  parameter bit [XLEN - 1 : 0] SUM_BIT_MASK  = 'h1 << 18;
-  parameter bit [XLEN - 1 : 0] MPP_BIT_MASK  = 'h3 << 11;
 
   typedef enum bit [4:0] {
     ZERO = 5'b00000,
@@ -620,7 +613,14 @@ package riscv_instr_pkg;
     STORE_AMO_PAGE_FAULT           = 4'hF
   } exception_cause_t;
 
+  `include "riscv_core_setting.sv"
+
   typedef bit [15:0] program_id_t;
+
+  // xSTATUS bit mask
+  parameter bit [XLEN - 1 : 0] MPRV_BIT_MASK = 'h1 << 17;
+  parameter bit [XLEN - 1 : 0] SUM_BIT_MASK  = 'h1 << 18;
+  parameter bit [XLEN - 1 : 0] MPP_BIT_MASK  = 'h3 << 11;
 
   parameter IMM25_WIDTH       = 25;
   parameter IMM12_WIDTH       = 12;
