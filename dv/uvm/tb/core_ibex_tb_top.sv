@@ -23,8 +23,7 @@ module core_ibex_tb_top;
     .irq_i('0),
     .irq_id_i('0),
     .debug_req_i('0),
-    .fetch_enable_i(fetch_enable),
-    .ext_perf_counters_i('0)
+    .fetch_enable_i(fetch_enable)
   );
 
   ibex_mem_intf data_mem_vif();
