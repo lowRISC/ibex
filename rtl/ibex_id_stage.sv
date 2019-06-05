@@ -25,6 +25,10 @@
 `define REG_S1 19:15
 `define REG_S2 24:20
 `define REG_D  11:07
+`ifdef RISCV_FORMAL
+  `define RVFI
+`endif
+
 
 /**
  * Instruction Decode Stage
@@ -129,6 +133,16 @@ module ibex_id_stage #(
     input  logic [31:0]               regfile_wdata_lsu_i,
     input  logic [31:0]               regfile_wdata_ex_i,
     input  logic [31:0]               csr_rdata_i,
+
+`ifdef RVFI
+    output logic [4:0]                rfvi_reg_raddr_ra_o,
+    output logic [31:0]               rfvi_reg_rdata_ra_o,
+    output logic [4:0]                rfvi_reg_raddr_rb_o,
+    output logic [31:0]               rfvi_reg_rdata_rb_o,
+    output logic [4:0]                rfvi_reg_waddr_rd_o,
+    output logic [31:0]               rfvi_reg_wdata_rd_o,
+    output logic                      rfvi_reg_we_o,
+`endif
 
     // Performance Counters
     output logic                      perf_jump_o,    // executing a jump instr
@@ -348,6 +362,16 @@ module ibex_id_stage #(
       .wdata_a_i    ( regfile_wdata_mux ),
       .we_a_i       ( regfile_we_mux    )
   );
+
+`ifdef RVFI
+  assign rfvi_reg_raddr_ra_o = regfile_addr_ra_id;
+  assign rfvi_reg_rdata_ra_o = regfile_data_ra_id;
+  assign rfvi_reg_raddr_rb_o = regfile_addr_rb_id;
+  assign rfvi_reg_rdata_rb_o = regfile_data_rb_id;
+  assign rfvi_reg_waddr_rd_o = regfile_waddr_mux;
+  assign rfvi_reg_wdata_rd_o = regfile_wdata_mux;
+  assign rfvi_reg_we_o       = regfile_we;
+`endif
 
   assign multdiv_int_en  = mult_int_en | div_int_en;
 

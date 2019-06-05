@@ -20,6 +20,10 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+`ifdef RISCV_FORMAL
+  `define RVFI
+`endif
+
 /**
  * Instruction Fetch Stage
  *
@@ -48,6 +52,10 @@ module ibex_if_stage #(
                                                              // to ID stage for decoding
     output logic                      is_compressed_id_o,    // compressed decoder thinks this is
                                                              // a compressed instr
+`ifdef RVFI
+    output logic [15:0]               instr_rdata_compressed_o,
+`endif
+
     output logic                      illegal_c_insn_id_o,   // compressed decoder thinks this is
                                                              // an invalid instr
     output logic [31:0]               pc_if_o,
@@ -218,20 +226,26 @@ module ibex_if_stage #(
   // IF-ID pipeline registers, frozen when the ID stage is stalled
   always_ff @(posedge clk_i or negedge rst_ni) begin : if_id_pipeline_regs
     if (!rst_ni) begin
-      instr_valid_id_o      <= 1'b0;
-      instr_rdata_id_o      <= '0;
-      illegal_c_insn_id_o   <= 1'b0;
-      is_compressed_id_o    <= 1'b0;
-      pc_id_o               <= '0;
+      instr_valid_id_o           <= 1'b0;
+      instr_rdata_id_o           <= '0;
+      illegal_c_insn_id_o        <= 1'b0;
+      is_compressed_id_o         <= 1'b0;
+`ifdef RVFI
+      instr_rdata_compressed_o   <= '0;
+`endif
+      pc_id_o                    <= '0;
     end else begin
       if (if_valid_o) begin
-        instr_valid_id_o    <= 1'b1;
-        instr_rdata_id_o    <= instr_decompressed;
-        illegal_c_insn_id_o <= illegal_c_insn;
-        is_compressed_id_o  <= instr_compressed_int;
-        pc_id_o             <= pc_if_o;
+        instr_valid_id_o         <= 1'b1;
+        instr_rdata_id_o         <= instr_decompressed;
+        illegal_c_insn_id_o      <= illegal_c_insn;
+        is_compressed_id_o       <= instr_compressed_int;
+`ifdef RVFI
+        instr_rdata_compressed_o <= fetch_rdata[15:0];
+`endif
+        pc_id_o                  <= pc_if_o;
       end else if (clear_instr_valid_i) begin
-        instr_valid_id_o    <= 1'b0;
+        instr_valid_id_o         <= 1'b0;
       end
     end
   end

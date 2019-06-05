@@ -21,6 +21,10 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+`ifdef RISCV_FORMAL
+  `define RVFI
+`endif
+
 /**
  * Top level module of the ibex RISC-V core
  */
@@ -70,8 +74,35 @@ module ibex_core #(
     // Debug Interface
     input  logic        debug_req_i,
 
+    // RISC-V Formal Interface
+    // Does not comply with the coding standards of _i/_o suffixes, but follows
+    // the convention of RISC-V Formal Interface Specification.
+`ifdef RVFI
+    output logic        rvfi_valid,
+    output logic [63:0] rvfi_order,
+    output logic [31:0] rvfi_insn,
+    output logic        rvfi_trap,
+    output logic        rvfi_halt,
+    output logic        rvfi_intr,
+    output logic [ 1:0] rvfi_mode,
+    output logic [ 4:0] rvfi_rs1_addr,
+    output logic [ 4:0] rvfi_rs2_addr,
+    output logic [31:0] rvfi_rs1_rdata,
+    output logic [31:0] rvfi_rs2_rdata,
+    output logic [ 4:0] rvfi_rd_addr,
+    output logic [31:0] rvfi_rd_wdata,
+    output logic [31:0] rvfi_pc_rdata,
+    output logic [31:0] rvfi_pc_wdata,
+    output logic [31:0] rvfi_mem_addr,
+    output logic [ 3:0] rvfi_mem_rmask,
+    output logic [ 3:0] rvfi_mem_wmask,
+    output logic [31:0] rvfi_mem_rdata,
+    output logic [31:0] rvfi_mem_wdata,
+`endif
+
     // CPU Control Signals
     input  logic        fetch_enable_i
+
 );
 
   import ibex_defines::*;
@@ -187,6 +218,34 @@ module ibex_core #(
   logic        perf_load;
   logic        perf_store;
 
+  // RISC-V Formal Interface signals
+`ifdef RVFI
+  logic [31:0] rvfi_insn_opcode;
+  logic [15:0] compressed_instr;
+  logic        rvfi_valid_int;
+  logic [4:0]  rvfi_rs1_addr_id;
+  logic [4:0]  rvfi_rs2_addr_id;
+  logic [31:0] rvfi_rs1_data_d;
+  logic [31:0] rvfi_rs1_data_id;
+  logic [31:0] rvfi_rs1_data_q;
+  logic [31:0] rvfi_rs2_data_d;
+  logic [31:0] rvfi_rs2_data_id;
+  logic [31:0] rvfi_rs2_data_q;
+  logic [4:0]  rvfi_rd_addr_id;
+  logic [4:0]  rvfi_rd_addr_q;
+  logic [4:0]  rvfi_rd_addr_d;
+  logic [31:0] rvfi_rd_wdata_id;
+  logic [31:0] rvfi_rd_wdata_d;
+  logic [31:0] rvfi_rd_wdata_q;
+  logic        rvfi_rd_we_id;
+  logic        rvfi_insn_new_d;
+  logic        rvfi_insn_new_q;
+  logic        rvfi_insn_clear_d;
+  logic        rvfi_insn_clear_q;
+  logic        rvfi_changed_insn;
+  logic        rvfi_changed_pc;
+  logic [31:0] rvfi_pc_id_q;
+`endif
 
   //////////////////////
   // Clock management //
@@ -230,49 +289,52 @@ module ibex_core #(
       .DmHaltAddr       ( DmHaltAddr      ),
       .DmExceptionAddr  ( DmExceptionAddr )
   ) if_stage_i (
-      .clk_i               ( clk               ),
-      .rst_ni              ( rst_ni            ),
+      .clk_i                    ( clk               ),
+      .rst_ni                   ( rst_ni            ),
 
       // boot address (trap vector location)
-      .boot_addr_i         ( boot_addr_i       ),
+      .boot_addr_i              ( boot_addr_i       ),
 
       // instruction request control
-      .req_i               ( instr_req_int     ),
+      .req_i                    ( instr_req_int     ),
 
       // instruction cache interface
-      .instr_req_o         ( instr_req_o       ),
-      .instr_addr_o        ( instr_addr_o      ),
-      .instr_gnt_i         ( instr_gnt_i       ),
-      .instr_rvalid_i      ( instr_rvalid_i    ),
-      .instr_rdata_i       ( instr_rdata_i     ),
+      .instr_req_o              ( instr_req_o       ),
+      .instr_addr_o             ( instr_addr_o      ),
+      .instr_gnt_i              ( instr_gnt_i       ),
+      .instr_rvalid_i           ( instr_rvalid_i    ),
+      .instr_rdata_i            ( instr_rdata_i     ),
 
       // outputs to ID stage
-      .instr_valid_id_o    ( instr_valid_id    ),
-      .instr_rdata_id_o    ( instr_rdata_id    ),
-      .is_compressed_id_o  ( is_compressed_id  ),
-      .illegal_c_insn_id_o ( illegal_c_insn_id ),
-      .pc_if_o             ( pc_if             ),
-      .pc_id_o             ( pc_id             ),
+      .instr_valid_id_o         ( instr_valid_id    ),
+      .instr_rdata_id_o         ( instr_rdata_id    ),
+      .is_compressed_id_o       ( is_compressed_id  ),
+`ifdef RVFI
+      .instr_rdata_compressed_o ( compressed_instr  ),
+`endif
+      .illegal_c_insn_id_o      ( illegal_c_insn_id ),
+      .pc_if_o                  ( pc_if             ),
+      .pc_id_o                  ( pc_id             ),
 
       // control signals
-      .clear_instr_valid_i ( clear_instr_valid ),
-      .pc_set_i            ( pc_set            ),
-      .exception_pc_reg_i  ( mepc              ), // exception return address
-      .depc_i              ( depc              ), // debug return address
-      .pc_mux_i            ( pc_mux_id         ), // sel for pc multiplexer
-      .exc_pc_mux_i        ( exc_pc_mux_id     ),
-      .exc_vec_pc_mux_i    ( exc_cause         ),
+      .clear_instr_valid_i      ( clear_instr_valid ),
+      .pc_set_i                 ( pc_set            ),
+      .exception_pc_reg_i       ( mepc              ), // exception return address
+      .depc_i                   ( depc              ), // debug return address
+      .pc_mux_i                 ( pc_mux_id         ), // sel for pc multiplexer
+      .exc_pc_mux_i             ( exc_pc_mux_id     ),
+      .exc_vec_pc_mux_i         ( exc_cause         ),
 
       // Jump targets
-      .jump_target_ex_i    ( jump_target_ex    ),
+      .jump_target_ex_i         ( jump_target_ex    ),
 
       // pipeline stalls
-      .halt_if_i           ( halt_if           ),
-      .id_ready_i          ( id_ready          ),
-      .if_valid_o          ( if_valid          ),
+      .halt_if_i                ( halt_if           ),
+      .id_ready_i               ( id_ready          ),
+      .if_valid_o               ( if_valid          ),
 
-      .if_busy_o           ( if_busy           ),
-      .perf_imiss_o        ( perf_imiss        )
+      .if_busy_o                ( if_busy           ),
+      .perf_imiss_o             ( perf_imiss        )
   );
 
 
@@ -378,6 +440,16 @@ module ibex_core #(
       .regfile_wdata_lsu_i          ( regfile_wdata_lsu    ),
       .regfile_wdata_ex_i           ( regfile_wdata_ex     ),
       .csr_rdata_i                  ( csr_rdata            ),
+
+`ifdef RVFI
+      .rfvi_reg_raddr_ra_o          ( rvfi_rs1_addr_id     ),
+      .rfvi_reg_rdata_ra_o          ( rvfi_rs1_data_id     ),
+      .rfvi_reg_raddr_rb_o          ( rvfi_rs2_addr_id     ),
+      .rfvi_reg_rdata_rb_o          ( rvfi_rs2_data_id     ),
+      .rfvi_reg_waddr_rd_o          ( rvfi_rd_addr_id      ),
+      .rfvi_reg_wdata_rd_o          ( rvfi_rd_wdata_id     ),
+      .rfvi_reg_we_o                ( rvfi_rd_we_id        ),
+`endif
 
       // Performance Counters
       .perf_jump_o                  ( perf_jump            ),
@@ -536,6 +608,111 @@ module ibex_core #(
       .mem_store_i             ( perf_store          ),
       .lsu_busy_i              ( lsu_busy            )
   );
+
+`ifdef RVFI
+  always_ff @(posedge clk) begin
+    rvfi_halt      <= '0;
+    rvfi_trap      <= '0;
+    rvfi_intr      <= irq_ack_o;
+    rvfi_order     <= rst_ni ? rvfi_order + rvfi_valid : '0;
+    rvfi_insn      <= rvfi_insn_opcode;
+    rvfi_mode      <= PRIV_LVL_M;
+    rvfi_rs1_addr  <= rvfi_rs1_addr_id;
+    rvfi_rs2_addr  <= rvfi_rs2_addr_id;
+    rvfi_pc_rdata  <= pc_id;
+    rvfi_mem_addr  <= '0;
+    rvfi_mem_rmask <= '0;
+    rvfi_mem_wmask <= '0;
+    rvfi_mem_rdata <= '0;
+    rvfi_mem_wdata <= '0;
+    rvfi_valid     <= rvfi_valid_int;
+    rvfi_rs1_rdata <= rvfi_rs1_data_d;
+    rvfi_rs2_rdata <= rvfi_rs2_data_d;
+  end
+
+  assign rvfi_pc_wdata  = pc_id;
+  assign rvfi_rd_wdata  = rvfi_rd_wdata_q;
+  assign rvfi_rd_addr   = rvfi_rd_addr_q;
+
+  assign rvfi_valid_int = id_valid && if_valid && !illegal_c_insn_id;
+
+  always_comb begin
+    if (is_compressed_id) begin
+      rvfi_insn_opcode = {16'b0, compressed_instr};
+    end else begin
+      rvfi_insn_opcode = instr_rdata_id;
+    end
+  end
+
+  // Source register data are kept stable for each instruction cycle
+  always_comb begin
+    if (rvfi_insn_new_d) begin
+      rvfi_rs1_data_d = rvfi_rs1_data_id;
+      rvfi_rs2_data_d = rvfi_rs2_data_id;
+    end else begin
+      rvfi_rs1_data_d = rvfi_rs1_data_q;
+      rvfi_rs2_data_d = rvfi_rs2_data_q;
+    end
+  end
+  always_ff @(posedge clk) begin
+    rvfi_rs1_data_q <= rvfi_rs1_data_d;
+    rvfi_rs2_data_q <= rvfi_rs2_data_d;
+  end
+
+  // RD write register is refreshed only once per cycle and
+  // then it is kept stable for the cycle.
+  always_comb begin
+    if (rvfi_insn_new_d) begin
+      if (rvfi_rd_we_id) begin
+        rvfi_rd_addr_d    = '0;
+        rvfi_rd_wdata_d   = '0;
+        rvfi_insn_clear_d = 1'b0;
+      end else begin
+        rvfi_rd_addr_d = rvfi_rd_addr_id;
+        if (!rvfi_rd_addr_id) begin
+          rvfi_rd_wdata_d = '0;
+        end else begin
+          rvfi_rd_wdata_d = rvfi_rd_wdata_id;
+        end
+        rvfi_insn_clear_d = 1'b1;
+      end
+    end else begin
+      rvfi_rd_addr_d    = rvfi_rd_addr_q;
+      rvfi_rd_wdata_d   = rvfi_rd_wdata_q;
+      rvfi_insn_clear_d = 1'b0;
+    end
+  end
+  always_ff @(posedge clk) begin
+    rvfi_insn_clear_q <= rvfi_insn_clear_d;
+    rvfi_rd_addr_q    <= rvfi_rd_addr_d;
+    rvfi_rd_wdata_q   <= rvfi_rd_wdata_d;
+  end
+
+  // New instruction signalling based on changes of
+  // instruction data, program counter and valid signal
+  always_comb begin
+    if (rvfi_changed_insn || rvfi_changed_pc || rvfi_valid ) begin
+      rvfi_insn_new_d = 1'b1;
+    end else if (rvfi_insn_clear_q) begin
+      rvfi_insn_new_d = 1'b0;
+    end else begin
+      rvfi_insn_new_d = rvfi_insn_new_q;
+    end
+  end
+  always_ff @(posedge clk) begin
+    rvfi_insn_new_q <= rvfi_insn_new_d;
+  end
+
+  // Change in instruction code
+  assign rvfi_changed_insn = rvfi_insn != rvfi_insn_opcode;
+
+  // Change in program counter
+  always_ff @(posedge clk) begin
+    rvfi_pc_id_q <= pc_id;
+  end
+  assign rvfi_changed_pc = rvfi_pc_id_q != pc_id;
+`endif
+
 
 `ifndef VERILATOR
 `ifdef TRACE_EXECUTION
