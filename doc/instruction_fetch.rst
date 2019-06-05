@@ -3,46 +3,50 @@
 Instruction Fetch
 =================
 
-The instruction fetcher of the core is able to supply one instruction to the ID stage per cycle if the instruction cache or the instruction memory is able to serve one instruction per cycle. The instruction address must be half-word-aligned due to the support of compressed instructions. It is not possible to jump to instruction addresses that have the LSB bit set.
+The Instruction-Fetch (IF) stage of the core is able to supply one instruction to the Instruction-Decode (ID) stage per cycle if the instruction cache or the instruction memory is able to serve one instruction per cycle.
+The instruction address must be half-word-aligned due to the support of compressed instructions.
+It is not possible to jump to instruction addresses that have the LSB bit set.
 
 For optimal performance and timing closure reasons, a prefetcher is used which fetches instruction from the instruction memory, or instruction cache.
 
-The following table describes the signals that are used to fetch instructions. This interface is a simplified version that is used by the LSU that is described in :ref:`load-store-unit`. The difference is that no writes are possible and thus it needs less signals.
-
+The following table describes the signals that are used to fetch instructions.
+This interface is a simplified version of the interface used on the data interface as described in :ref:`load-store-unit`.
+The main difference is that the instruction interface does not allow for writes transcations and thus needs less signals.
 
 .. tabularcolumns:: |p{4cm}|l|p{9cm}|
 
 +-------------------------+-----------+-----------------------------------------------+
 | Signal                  | Direction | Description                                   |
 +=========================+===========+===============================================+
-| ``instr_req_o``         | output    | Request ready, must stay high until           |
+| ``instr_req_o``         | output    | Request valid, must stay high until           |
 |                         |           | ``instr_gnt_i`` is high for one cycle         |
 +-------------------------+-----------+-----------------------------------------------+
 | ``instr_addr_o[31:0]``  | output    | Address                                       |
 +-------------------------+-----------+-----------------------------------------------+
-| ``instr_rdata_i[31:0]`` | input     | Data read from memory                         |
+| ``instr_gnt_i``         | input     | The other side accepted the request.          |
+|                         |           | ``instr_req_o`` may be deasserted in the next |
+|                         |           | cycle.                                        |
 +-------------------------+-----------+-----------------------------------------------+
-| ``instr_rvalid_i``      | input     | ``instr_rdata_is`` holds valid data when      |
+| ``instr_rvalid_i``      | input     | ``instr_rdata_i`` holds valid data when       |
 |                         |           | ``instr_rvalid_i`` is high. This signal will  |
 |                         |           | be high for exactly one cycle per request.    |
 +-------------------------+-----------+-----------------------------------------------+
-| ``instr_gnt_i``         | input     | The other side accepted the request.          |
-|                         |           | ``instr_addr_o`` may change in the next cycle |
+| ``instr_rdata_i[31:0]`` | input     | Data read from memory                         |
 +-------------------------+-----------+-----------------------------------------------+
 
 
 Protocol
 --------
 
-The protocol used to communicate with the instruction cache or the instruction memory is the same as the protocol used by the LSU. See the description of the LSU in :ref:`LSU Protocol<lsu-protocol>` for details about the protocol.
+The protocol used to communicate with the instruction cache or the instruction memory is very similar to the protocol used by the LSU on the data interface of Ibex.
+See the description of the LSU in :ref:`LSU Protocol<lsu-protocol>` for details about this protocol.
 
 .. caution::
 
-   The instruction fetch interface differs from the LSU interface in that the address can change
-   while the request is valid. This is because it can update the instructions to fetch when a
-   branch occurs. As depicted in :numref:`if_timing_difference` care has to be taken when
-   working with the address. The data returned must of course match the address during the grant
-   cycle.
+   The IF protocol differs from the LSU protocol in that the address can change while the request is valid (``instr_req_o`` is high).
+   This allows the core to immediately update the instruction fetch address when a branch occurs.
+   As depicted in :numref:`if_timing_difference`, care has to be taken when working with the address.
+   The data returned must match the address during the grant cycle.
 
    .. wavedrom::
       :name: if_timing_difference
@@ -51,11 +55,11 @@ The protocol used to communicate with the instruction cache or the instruction m
       {"signal":
         [
           {"name": "clk", "wave": "p......"},
-          {"name": "data_addr_o", "wave": "x===xxx", "data": ["Address", "Address", "Address"]},
-          {"name": "data_req_o", "wave": "01..0.."},
-          {"name": "data_gnt_i", "wave": "0..10.."},
-          {"name": "data_rvalid_i", "wave": "0....10"},
-          {"name": "data_rdata_i", "wave": "xxxxx=x", "data": ["RData"]}
+          {"name": "instr_req_o", "wave": "01..0.."},
+          {"name": "instr_addr_o", "wave": "x=.=xxx", "data": ["Addr1", "Addr2"]},
+          {"name": "instr_gnt_i", "wave": "0..10.."},
+          {"name": "instr_rvalid_i", "wave": "0....10"},
+          {"name": "instr_rdata_i", "wave": "xxxxx=x", "data": ["RData2"]}
         ],
         "config": { "hscale": 2 }
       }

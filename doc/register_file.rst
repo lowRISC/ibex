@@ -3,19 +3,21 @@
 Register File
 =============
 
-Ibex has 31 or 15 32-bit wide registers depending if the RV32E extension is enabled. Register x0 is statically bound to 0 and can only be read, it does not contain any sequential logic.
+Ibex has either 31 or 15 32-bit registers if the RV32E extension is disabled or enabled, respectively.
+Register ``x0`` is statically bound to 0 and can only be read, it does not contain any sequential logic.
 
 There are two flavors of register file available:
 
-1. Latch-based
+1. Latch based
 2. Flip-flop based
 
-While the latch-based register file is recommended for ASICs, the flip-flop based register file is recommended for FPGA synthesis, although both are compatible with either synthesis target. Note the flip-flop based register file is significantly larger than the latch-based register-file for an ASIC implementation.
+While the latch-based register file is recommended for ASICs, the flip-flop-based register file is recommended for FPGA synthesis, although both are compatible with either synthesis target.
+Note the flip-flop-based register file is significantly larger than the latch-based register-file for an ASIC implementation.
 
-Latch-based Register File
+Latch-Based Register File
 -------------------------
 
-The latch based register file contains manually instantiated clock gating cells to keep the clock inactive when the latches are not written.
+The latch-based register file contains manually instantiated clock gating cells to keep the clock inactive when the latches are not written.
 
 It is assumed that there is a clock gating cell for the target technology that is wrapped in a module called ``prim_clock_gating`` and has the following ports:
 

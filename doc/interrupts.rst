@@ -3,7 +3,8 @@
 Interrupts
 ==========
 
-Interrupts are signaled via the external core interface:
+Ibex requires a separate event/interrupt controller outside of the core that performs masking and buffering of multiple interrupt requests.
+Communication with this event/interrupt controller is established through the following external core interface:
 
 +-------------------------+-----------+-----------------------------------------------+
 | Signal                  | Direction | Description                                   |
@@ -17,9 +18,11 @@ Interrupts are signaled via the external core interface:
 | ``irq_id_o[4:0]``       | out       | Interrupt acknowledgement ID                  |
 +-------------------------+-----------+-----------------------------------------------+
 
-When external interrupts are enabled, the core will serve interrupt requests. An interrupt is signaled as asserted high level at the ``irq_i`` signal. The interrupt ID determines the interrupt vector ID (0 to 31).
+When external interrupts are enabled, the core will serve interrupt requests.
+An interrupt request is signaled with ``irq_i`` being high.
+The interrupt ID is signaled by ``irq_id_i`` and determines the address offset in the interrupt vector table of the core (see :ref:`exceptions-interrupts`).
 
-Once the interrupt processing is completed, the core will assert ``irq_ack_o`` for one clock cycle along with the identifier that has been completed.
+Once the interrupt processing is completed, the core asserts ``irq_ack_o`` for one clock cycle and signals the identifier that has been completed in ``irq_id_o``.
 
 .. important::
 
@@ -40,11 +43,14 @@ Once the interrupt processing is completed, the core will assert ``irq_ack_o`` f
      ]
    }	     
    
-As the interrupt identifier is registered once it is handled, it is allowed that the interrupt identifier at the input changes. This behavior can be used to handle interrupt priorities. But as the core may already have started interrupt processing, it is necessary to check the acknowledged ID. An example cycle is shown in :numref:`irq-processing-prio`.
+As the interrupt identifier is registered once it is handled, it is allowed that the interrupt identifier at the input changes.
+This behavior can be used to handle interrupt priorities.
+But as the core may already have started interrupt processing, it is necessary to check the acknowledged ID.
+An example cycle is shown in :numref:`irq-processing-prio`.
 
 .. wavedrom::
    :name: irq-processing-prio
-   :caption: Typical interrupt processing with priorization on the interface. Here the processing of ``ID0`` has already started.
+   :caption: Interrupt processing with priorization. The processing of ``ID0`` has already started.
 
    { "signal": [
      { "name": "clk_i",     "wave": "p...", "period": 2 },
