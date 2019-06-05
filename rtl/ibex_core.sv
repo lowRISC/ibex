@@ -245,6 +245,13 @@ module ibex_core #(
   logic        rvfi_changed_insn;
   logic        rvfi_changed_pc;
   logic [31:0] rvfi_pc_id_q;
+  logic [3:0]  rvfi_mem_mask_int;
+  logic [31:0] rvfi_mem_rdata_d;
+  logic [31:0] rvfi_mem_rdata_q;
+  logic [31:0] rvfi_mem_wdata_d;
+  logic [31:0] rvfi_mem_wdata_q;
+  logic [31:0] rvfi_mem_addr_d;
+  logic [31:0] rvfi_mem_addr_q;
 `endif
 
   //////////////////////
@@ -620,11 +627,8 @@ module ibex_core #(
     rvfi_rs1_addr  <= rvfi_rs1_addr_id;
     rvfi_rs2_addr  <= rvfi_rs2_addr_id;
     rvfi_pc_rdata  <= pc_id;
-    rvfi_mem_addr  <= '0;
-    rvfi_mem_rmask <= '0;
-    rvfi_mem_wmask <= '0;
-    rvfi_mem_rdata <= '0;
-    rvfi_mem_wdata <= '0;
+    rvfi_mem_rmask <= rvfi_mem_mask_int;
+    rvfi_mem_wmask <= data_we_o ? rvfi_mem_mask_int : 4'b0000;
     rvfi_valid     <= rvfi_valid_int;
     rvfi_rs1_rdata <= rvfi_rs1_data_d;
     rvfi_rs2_rdata <= rvfi_rs2_data_d;
@@ -633,6 +637,36 @@ module ibex_core #(
   assign rvfi_pc_wdata  = pc_id;
   assign rvfi_rd_wdata  = rvfi_rd_wdata_q;
   assign rvfi_rd_addr   = rvfi_rd_addr_q;
+  assign rvfi_mem_rdata = rvfi_mem_rdata_q;
+  assign rvfi_mem_wdata = rvfi_mem_wdata_q;
+  assign rvfi_mem_addr  = rvfi_mem_addr_q;
+
+  // Keep the mem data stable for each instruction cycle
+  always_comb begin
+    if (rvfi_insn_new) begin
+      rvfi_mem_addr_d  = alu_adder_result_ex;
+      rvfi_mem_rdata_d = regfile_wdata_lsu;
+      rvfi_mem_wdata_d = data_wdata_ex;
+    end else begin
+      rvfi_mem_addr_d  = rvfi_mem_addr_q;
+      rvfi_mem_rdata_d = rvfi_mem_rdata_q;
+      rvfi_mem_wdata_d = rvfi_mem_wdata_q;
+    end
+  end
+  always_ff @(posedge clk) begin
+    rvfi_mem_addr_q  <= rvfi_mem_addr_d;
+    rvfi_mem_rdata_q <= rvfi_mem_rdata_d;
+    rvfi_mem_wdata_q <= rvfi_mem_wdata_d;
+  end
+  // Byte enable based on data type
+  always_comb begin
+    unique case (data_type_ex)
+      2'b00:   rvfi_mem_mask_int = 4'b1111;
+      2'b01:   rvfi_mem_mask_int = 4'b0011;
+      2'b10:   rvfi_mem_mask_int = 4'b0001;
+      default: rvfi_mem_mask_int = 4'b0000;
+    endcase
+  end
 
   assign rvfi_valid_int = id_valid && if_valid && !illegal_c_insn_id;
 
