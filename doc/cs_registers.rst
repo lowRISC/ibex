@@ -8,7 +8,7 @@ Ibex implements all the Control and Status Registers (CSRs) listed in the follow
 +---------+--------------------+--------+-----------------------------------------------+
 | Address |   Name             | Access | Description                                   |
 +=========+====================+========+===============================================+
-|  0x300  | ``mstatus``        | RW     | Machine Status                                |
+|  0x300  | ``mstatus``        | WARL   | Machine Status                                |
 +---------+--------------------+--------+-----------------------------------------------+
 |  0x301  | ``misa``           | WARL   | Machine ISA and Extensions                    |
 +---------+--------------------+--------+-----------------------------------------------+
@@ -65,19 +65,20 @@ CSR Address: ``0x300``
 
 Reset Value: ``0x0000_1800``
 
-+-------+-----+------------------------------------------------------------------+
-| Bit#  | R/W | Description                                                      |
-+-------+-----+------------------------------------------------------------------+
-| 12:11 | R   | **MPP:** Statically 2’b11 and cannot be altered (read-only).     |
-+-------+-----+------------------------------------------------------------------+
-| 7     | RW  | **Previous Interrupt Enable:** When an exception is encountered, |
-|       |     | MPIE will be set to IE. When the mret instruction is executed,   |
-|       |     | the value of MPIE will be stored to IE.                          |
-+-------+-----+------------------------------------------------------------------+
-| 3     | RW  | **Interrupt Enable:** If you want to enable interrupt handling   |
-|       |     | in your exception handler, set the Interrupt Enable to 1’b1      |
-|       |     | inside your handler code.                                        |
-+-------+-----+------------------------------------------------------------------+
++-------+-----+---------------------------------------------------------------------------------+
+| Bit#  | R/W | Description                                                                     |
++-------+-----+---------------------------------------------------------------------------------+
+| 12:11 | R   | **MPP:** Statically 2'b11 and cannot be altered (read-only).                    |
++-------+-----+---------------------------------------------------------------------------------+
+| 7     | RW  | **Previous Interrupt Enable (MPIE)**, i.e., before entering exception handling. |
++-------+-----+---------------------------------------------------------------------------------+
+| 3     | RW  | **Interrupt Enable (MIE):** If set to 1'b1, interrupts are globally enabled.    |
++-------+-----+---------------------------------------------------------------------------------+
+
+When an exception is encountered, MPIE will be set to MIE.
+When the ``mret`` instruction is executed, the value of MPIE will be stored back to IE.
+
+If you want to enable interrupt handling in your exception handler, set MIE to 1'b1 inside your handler code.
 
 
 Machine Trap-Vector Base Address (mtvec)
@@ -85,8 +86,8 @@ Machine Trap-Vector Base Address (mtvec)
 
 CSR Address: ``0x305``
 
-When an exception is encountered, the core jumps to the corresponding handler using the content of the ``mtvec`` as base address.
-It is a read-only register  which contains the boot address.
+When an exception is encountered, the core jumps to the corresponding handler using the content of ``mtvec`` as base address.
+It is a read-only register which contains the boot address.
 
 
 Machine Exception PC (mepc)
@@ -97,7 +98,7 @@ CSR Address: ``0x341``
 Reset Value: ``0x0000_0000``
 
 When an exception is encountered, the current program counter is saved in ``mepc``, and the core jumps to the exception address.
-When an ``mret`` instruction is executed, the value from ``mepc`` replaces the current program counter.
+When an MRET instruction is executed, the value from ``mepc`` replaces the current program counter.
 
 
 Machine Cause (mcause)

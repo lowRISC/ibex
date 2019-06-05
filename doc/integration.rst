@@ -1,7 +1,10 @@
+.. _core-integration:
+
 Core Integration
 ================
 
-The main module is named ``ibex_core`` and can be found in ``ibex_core.sv``. In the following the instantiation template is given and the parameters and interfaces are described.
+The main module is named ``ibex_core`` and can be found in ``ibex_core.sv``.
+Below, the instantiation template is given and the parameters and interfaces are described.
 
 Instantiation Template
 ----------------------
@@ -9,12 +12,12 @@ Instantiation Template
 .. code-block:: verilog
 
   ibex_core #(
-      .NumMHPMCounters   (8),
-      .WidthMHPMCounters (40),
-      .RV32E             (0),
-      .RV32M             (1),
-      .DmHaltAddr        (32'h1A110800),
-      .DmExceptionAddr   (32'h1A110808)
+      .MHPMCounterNum   (8),
+      .MHPMCounterWidth (40),
+      .RV32E            (0),
+      .RV32M            (1),
+      .DmHaltAddr       (32'h1A110800),
+      .DmExceptionAddr  (32'h1A110808)
   ) u_core (
       // Clock and reset
       .clk_i          (),
@@ -50,7 +53,7 @@ Instantiation Template
       .irq_ack_o      (),
       .irq_id_o       (),
 
-      // Debug Interface
+      // Debug interface
       .debug_req_i    (),
 
       // Special control signal
@@ -63,9 +66,9 @@ Parameters
 +-----------------------+-------------+------------+-----------------------------------------------------------------+
 | Name                  | Type/Range  | Default    | Description                                                     |
 +=======================+=============+============+=================================================================+
-| ``NumMHPMCounters``   | int (0..29) | 8          | Number of performance monitor event counters                    |
+| ``MHPMCounterNum``    | int (0..29) | 8          | Number of performance monitor event counters                    |
 +-----------------------+-------------+------------+-----------------------------------------------------------------+
-| ``WidthMHPMCounters`` | int (64..32)| 40         | Bit width of performance monitor event counters                 |
+| ``MHPMCounterWidth``  | int (64..32)| 40         | Bit width of performance monitor event counters                 |
 +-----------------------+-------------+------------+-----------------------------------------------------------------+
 | ``RV32E``             | bit         | 0          | RV32E mode enable (16 integer registers only)                   |
 +-----------------------+-------------+------------+-----------------------------------------------------------------+
@@ -80,7 +83,6 @@ Parameters
 Interfaces
 ----------
 
-
 +-------------------------+-------------------------+-----+----------------------------------------+
 | Signal(s)               | Width                   | Dir | Description                            |
 +=========================+=========================+=====+========================================+
@@ -91,7 +93,7 @@ Interfaces
 | ``test_en_i``           | 1                       | in  | Test input, enables clock              |
 +-------------------------+-------------------------+-----+----------------------------------------+
 | ``core_id_i``           | 4                       | in  | Core ID, usually static, can be read   |
-|                         |                         |     | from :ref:`csr-mhartid`                |
+|                         |                         |     | from :ref:`csr-mhartid` CSR            |
 +-------------------------+-------------------------+-----+                                        +
 | ``cluster_id_i``        | 6                       | in  |                                        |
 +-------------------------+-------------------------+-----+----------------------------------------+
@@ -103,7 +105,7 @@ Interfaces
 +-------------------------+------------------------------------------------------------------------+
 | ``irq_*``               | Interrupt interface, see :ref:`interrupts`                             |
 +-------------------------+------------------------------------------------------------------------+
-| ``debug_*``             | Debug interface, see :ref:`debug-unit`                                 |
+| ``debug_*``             | Debug interface, see :ref:`debug-support`                              |
 +-------------------------+-------------------------+-----+----------------------------------------+
 | ``fetch_enable_i``      | 1                       | in  | Enable the core, won't fetch when 0    |
 +-------------------------+-------------------------+-----+----------------------------------------+

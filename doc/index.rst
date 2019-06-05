@@ -1,5 +1,5 @@
-Ibex: User Manual
-=======================
+Ibex User Manual
+================
 
 .. toctree::
    :maxdepth: 2
@@ -11,9 +11,9 @@ Ibex: User Manual
    load_store_unit
    register_file
    cs_registers
-   interrupts
    performance_counters
    exception_interrupts
+   interrupts
    debug
    rvfi
 

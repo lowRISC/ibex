@@ -1,16 +1,17 @@
 .. _load-store-unit:
 
-Load-Store-Unit (LSU)
-=====================
+Load-Store Unit
+===============
 
-The LSU of the core takes care of accessing the data memory. Load and stores on words (32 bit), half words (16 bit) and bytes (8 bit) are supported.
+The Load-Store Unit (LSU) of the core takes care of accessing the data memory.
+Loads and stores of words (32 bit), half words (16 bit) and bytes (8 bit) are supported.
 
 Signals that are used by the LSU:
 
 +-------------------------+-----------+-----------------------------------------------+
 | Signal                  | Direction | Description                                   |
 +=========================+===========+===============================================+
-| ``data_req_o``          | output    | Request ready, must stay high until           |
+| ``data_req_o``          | output    | Request valid, must stay high until           |
 |                         |           | ``data_gnt_i`` is high for one cycle          |
 +-------------------------+-----------+-----------------------------------------------+
 | ``data_addr_o[31:0]``   | output    | Address                                       |
@@ -43,7 +44,9 @@ Signals that are used by the LSU:
 Misaligned Accesses
 -------------------
 
-The LSU is able to perform misaligned accesses, meaning accesses that are not aligned on natural word boundaries. However, it needs to perform two separate word-aligned accesses internally. This means that at least two cycles are needed for misaligned loads and stores.
+The LSU is able to perform misaligned accesses, meaning accesses that are not aligned on natural word boundaries.
+However, it needs to perform two separate word-aligned accesses internally.
+This means that at least two cycles are needed for misaligned loads and stores.
 
 .. _lsu-protocol:
 
@@ -120,5 +123,3 @@ The protocol that is used by the LSU to communicate with a memory works as follo
      ],
      "config": { "hscale": 2 }
    }
-
-
