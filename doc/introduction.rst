@@ -38,7 +38,7 @@ This document summarizes all the functionality of the Ibex core in more detail. 
 History
 -------
 
-Ibex development started in 2015 under the name "ZERO-RISCY" as part of the [PULP platform](http://pulp.ethz.ch/) for
+Ibex development started in 2015 under the name "ZERO-RISCY" as part of the `PULP platform <http://pulp.ethz.ch/>`_ for
 energy-efficient computing.
 Much of the code was developed by simplifying the RV32 CPU core "RI5CY" to show how small a RISC-V CPU core could be.
 To make it even smaller, support for the ``E`` exension was added under the code name "MICRO-RISCY".
