@@ -46,9 +46,8 @@ The two register-file flavors are described in :ref:`register-file`.
 The control and status registers are explained in :ref:`cs-registers`.
 :ref:`performance-counters` gives an overview of the performance monitors and event counters available in Ibex.
 :ref:`exceptions-interrupts` deals with the infrastructure for handling exceptions and interrupts,
-
 :ref:`debug-support` gives a brief overview on the debug infrastructure.
-
+For information regarding formal verification support, check out :ref:`rvfi`.
 
 
 History
