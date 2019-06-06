@@ -1,7 +1,7 @@
 Introduction
 ============
 
-.. figure:: images/blockdiagram.png
+.. figure:: images/blockdiagram.svg
    :name: blockdiagram
 
    Block Diagram
