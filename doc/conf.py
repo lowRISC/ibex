@@ -48,7 +48,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Ibex'
+project = u'Ibex User Manual'
 copyright = u'2017-2018, ETH Zurich and University of Bologna, 2018-present lowRISC'
 author = u'lowRISC contributors'
 
@@ -95,9 +95,10 @@ html_theme = 'sphinx_rtd_theme'
 # documentation.
 #
 html_theme_options = {
+    'style_nav_header_background': '#E53651'
 }
 
-html_logo = ''
+html_logo = 'images/logo.svg'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
