@@ -66,6 +66,7 @@ else
 fi
 
 OUT="$RUN_DIR/rtl_sim"
+CWD=`pwd`
 
 # Run each test
 while read asm_test; do
@@ -77,7 +78,7 @@ while read asm_test; do
     SEED=$RANDOM
   fi
   if [[ $WAVES == 1 ]]; then
-    WAVES_OPTS="-ucli -do vcs.tcl"
+    WAVES_OPTS="-ucli -do $CWD/vcs.tcl"
   fi
   if [[ $COV == 1 ]]; then
     COV_OPTS="-cm line+tgl+assert+fsm+branch \
