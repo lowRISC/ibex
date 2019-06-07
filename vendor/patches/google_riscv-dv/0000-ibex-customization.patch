@@ -58,14 +58,19 @@ index 0000000..34036bb
 +# Process ibex log
 +process_ibex_sim_log(args.log, args.csv)
 diff --git a/src/riscv_asm_program_gen.sv b/src/riscv_asm_program_gen.sv
-index b538b72..78ab6ed 100644
+index b538b72..2f9f28f 100644
 --- a/src/riscv_asm_program_gen.sv
 +++ b/src/riscv_asm_program_gen.sv
-@@ -244,11 +244,19 @@ class riscv_asm_program_gen extends uvm_object;
+@@ -244,11 +244,36 @@ class riscv_asm_program_gen extends uvm_object;
    //---------------------------------------------------------------------------------------
  
    virtual function void gen_program_header();
 +    // ------------- IBEX modification start --------------------
++    // Override the cfg value, below field is not supported by ibex
++    cfg.mstatus_mprv = 0;
++    cfg.mstatus_mxr  = 0;
++    cfg.mstatus_sum  = 0;
++    cfg.mstatus_tvm  = 0;
 +    // The ibex core load the program from 0x80
 +    // Some address is reserved for hardware interrupt handling, need to decide if we need to copy
 +    // the init program from crt0.S later.
@@ -73,16 +78,29 @@ index b538b72..78ab6ed 100644
      instr_stream.push_back(".endm");
      instr_stream.push_back(".section .text.init");
      instr_stream.push_back(".globl _start");
+-    instr_stream.push_back("_start:");
 +    instr_stream.push_back("j _start");
 +    // Align the start section to 0x80
 +    instr_stream.push_back(".align 7");
-     instr_stream.push_back("_start:");
++    instr_stream.push_back("_start: j _reset_entry");
++    // ibex reserves 0x84-0x8C for trap handling, redirect everything mtvec_handler
++    // 0x84 illegal instruction
++    instr_stream.push_back(".align 2");
++    instr_stream.push_back("j mtvec_handler");
++    // 0x88 ECALL instruction handler
++    instr_stream.push_back(".align 2");
++    instr_stream.push_back("j mtvec_handler");
++    // 0x8C LSU error
++    instr_stream.push_back(".align 2");
++    instr_stream.push_back("j mtvec_handler");
++    // Starting point of the reset entry
++    instr_stream.push_back("_reset_entry:");
 +    // ------------- IBEX modification end --------------------
    endfunction
  
    virtual function void gen_program_end();
 diff --git a/src/riscv_core_setting.sv b/src/riscv_core_setting.sv
-index 5cb3d76..c523573 100644
+index 75c5821..0175d2f 100644
 --- a/src/riscv_core_setting.sv
 +++ b/src/riscv_core_setting.sv
 @@ -18,25 +18,27 @@
@@ -150,6 +168,52 @@ index 5cb3d76..c523573 100644
  
  // Byte size of kernel data pages
  int kernel_data_page_size = 4096;
+@@ -86,43 +82,15 @@ int kernel_program_instr_cnt = 400;
+ 
+ // Implemented previlieged CSR list
+ privileged_reg_t implemented_csr[$] = {
+-    // User mode CSR
+-    USTATUS,    // User status
+-    UIE,        // User interrupt-enable register
+-    UTVEC,      // User trap-handler base address
+-    USCRATCH,   // Scratch register for user trap handlers
+-    UEPC,       // User exception program counter
+-    UCAUSE,     // User trap cause
+-    UTVAL,      // User bad address or instruction
+-    UIP,        // User interrupt pending
+-    // Supervisor mode CSR
+-    SSTATUS,    // Supervisor status
+-    SEDELEG,    // Supervisor exception delegation register
+-    SIDELEG,    // Supervisor interrupt delegation register
+-    SIE,        // Supervisor interrupt-enable register
+-    STVEC,      // Supervisor trap-handler base address
+-    SCOUNTEREN, // Supervisor counter enable
+-    SSCRATCH,   // Scratch register for supervisor trap handlers
+-    SEPC,       // Supervisor exception program counter
+-    SCAUSE,     // Supervisor trap cause
+-    STVAL,      // Supervisor bad address or instruction
+-    SIP,        // Supervisor interrupt pending
+-    SATP,       // Supervisor address translation and protection
+     // Machine mode mode CSR
+     MVENDORID,  // Vendor ID
+     MARCHID,    // Architecture ID
+-    MIMPID,     // Implementation ID
+     MHARTID,    // Hardware thread ID
+     MSTATUS,    // Machine status
+     MISA,       // ISA and extensions
+-    MEDELEG,    // Machine exception delegation register
+-    MIDELEG,    // Machine interrupt delegation register
+-    MIE,        // Machine interrupt-enable register
+     MTVEC,      // Machine trap-handler base address
+-    MCOUNTEREN, // Machine counter enable
+-    MSCRATCH,   // Scratch register for machine trap handlers
+     MEPC,       // Machine exception program counter
+     MCAUSE,     // Machine trap cause
+-    MTVAL,      // Machine bad address or instruction
+-    MIP         // Machine interrupt pending
++    MTVAL       // Machine bad address or instruction
++    // TODO: Add performance CSRs and debug mode CSR
+ };
 diff --git a/testlist b/testlist
 index 123951e..0fd4e31 100644
 --- a/testlist
@@ -178,6 +242,6 @@ index 123951e..0fd4e31 100644
 +riscv_page_table_exception_test : 0
 +riscv_no_fence_test             : 10
 +riscv_sfence_exception_test     : 0
-+riscv_illegal_instr_test        : 10
++riscv_illegal_instr_test        : 1
 +riscv_hint_instr_test           : 10
  //------------------------------------------------
