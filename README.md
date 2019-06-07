@@ -1,26 +1,65 @@
-# Ibex: RISC-V Core
+# Ibex RISC-V Core
 
-Ibex is a small 32 bit RISC-V core with a 2-stage pipeline.
+Ibex is a small and efficient, 32-bit, in-order RISC-V core with a 2-stage pipeline that implements
+the RV32IMC instruction set architecture.
 
-Ibex fully implements the RV32IMC instruction set and a small set of RISC-V
-privileged specifications. Ibex can be configured to be very small by disabling
-the RV32M extensions and by activating the RV32E extensions.
+<p align="center"><img src="doc/images/blockdiagram.svg" width="650"></p>
 
-This core was initially developed as part of the
-[PULP platform](http://pulp.ethz.ch/) under the name "Zero-riscy", and has
-been contributed to [lowRISC](https://www.lowrisc.org) who maintains it and
-develops it further.
+Ibex offers several configuration parameters to meet the needs of various application scenarios.
+The options include two different choices for the architecture of the multiplier and divider unit,
+as well as the possibility to drop the support for the "M" extension completely. In addition, the
+"E" extension can be enabled when opting for a minimum-area configuration.
 
-Ibex is under active development, with further code cleanups, feature
-additions, and test and verification planned for the future.
+This core was initially developed as part of the [PULP platform](https://wwww.pulp-platform.org)
+under the name "Zero-riscy" \[[1](https://doi.org/10.1109/PATMOS.2017.8106976)\], and has been
+contributed to [lowRISC](https://www.lowrisc.org) who maintains it and develops it further. It is
+under active development, with further code cleanups, feature additions, and test and verification
+planned for the future.
 
 ## Documentation
 
-The Ibex documentation can be [read online at ReadTheDocs](https://ibex-core.readthedocs.io/en/latest/).
-It is also contained in the `doc` folder of this repository.
-We highly appreciate pull requests on the documentation if you find anything wrong or outdated!
+The Ibex user manual can be
+[read online at ReadTheDocs](https://ibex-core.readthedocs.io/en/latest/). It is also contained in
+the `doc` folder of this repository.
+
+## Contributing
+
+We highly appreciate community contributions. To ease our work of reviewing your contributions,
+please:
+
+* Create your own branch to commit your changes and then open a Pull Request.
+* Split large contributions into smaller commits addressing individual changes or bug fixes. Do not
+  mix unrelated changes into the same commit!
+* Write meaningful commit messages. For more information, please check out the [contribution
+  guide](https://github.com/lowrisc/ibex/blob/master/CONTRIBUTING.md).
+* If asked to modify your changes, do fixup your commits and rebase your branch to maintain a
+  clean history.
+
+When contributing SystemVerilog source code, please try to be consistent and match the sytle of the
+exisiting code. If unsure, consider for example the following [coding style
+guidelines](https://github.com/pulp-platform/style-guidelines).
+
+To get started, please check out the ["Good First Issue"
+ list](https://github.com/lowrisc/ibex/issues?q=is%3Aissue+is%3Aopen+label%3A%22Good+First+Issue%22).
+
+## Issues and Troubleshooting
+
+If you find any problems or issues with Ibex or the documentation, please check out the [issue
+ tracker](https://github.com/lowrisc/ibex/issues) and create a new issue if your problem is
+not yet tracked.
+
+## Questions?
+
+Do not hesitate to contact us, e.g., on our public [Ibex channel on
+Zulip](https://lowrisc.zulipchat.com/#narrow/stream/198227-ibex)!
 
 ## License
 
 Unless otherwise noted, everything in this repository is covered by the Apache
 License, Version 2.0 (see LICENSE for full text).
+
+## References
+1. [Schiavone, Pasquale Davide, et al. "Slow and steady wins the race? A comparison of
+ ultra-low-power RISC-V cores for Internet-of-Things applications."
+ _27th International Symposium on Power and Timing Modeling, Optimization and Simulation
+ (PATMOS 2017)_](https://doi.org/10.1109/PATMOS.2017.8106976)
