@@ -186,8 +186,10 @@ module ibex_cs_registers #(
   /////////////
 
   logic [$bits(csr_num_e)-1:0] csr_addr;
+  logic [4:0]                  unused_csr_addr;
   assign csr_addr           = {csr_addr_i};
   assign mhpmcounter_idx    = csr_addr[4:0];
+  assign unused_csr_addr    = csr_addr[9:5];
 
   assign illegal_csr_priv   = 1'b0; // we only support M-mode
   assign illegal_csr_write  = (csr_addr[11:10] == 2'b11) && csr_we_int;
@@ -541,7 +543,7 @@ module ibex_cs_registers #(
 
     // deactivate
     mhpmevent[1] = '0; // not existing, reserved
-    for (int i=3+MHPMCounterNum; i<32; i++) begin : gen_mhpmevent_inactive
+    for (int unsigned i=3+MHPMCounterNum; i<32; i++) begin : gen_mhpmevent_inactive
       mhpmevent[i] = '0;
     end
   end
@@ -556,7 +558,7 @@ module ibex_cs_registers #(
 
     for (int i=3; i<32; i++) begin : gen_mask_configurable
       // mhpmcounters have a configurable width
-      mhpmcounter_mask[i] = {{{64-MHPMCounterWidth}{1'b0}}, {MHPMCounterWidth{1'b1}}};
+      mhpmcounter_mask[i] = {{64-MHPMCounterWidth{1'b0}}, {MHPMCounterWidth{1'b1}}};
     end
   end
 
