@@ -15,9 +15,22 @@ WAVES     := 1
 WAVE_CMP_OPTS := -debug_access+all -ucli -do vcs.tcl
 # Enable coverage dump
 COV       := 0
+# Coverage dump options
+COV_CMP_OPTS := -cm line+tgl+assert+fsm+branch \
+                -cm_tgl portsonly \
+                -cm_tgl structarr \
+                -cm_report noinitial \
+                -cm_seqnoconst \
+                -cm_glitch 0 \
+                -cm_dir ${OUT}/rtl_sim/test.vdb \
+                -cm_hier cover.cfg
 
 ifeq (${WAVES}, 0)
 	WAVE_CMP_OPTS=
+endif
+
+ifeq (${COV}, 0)
+	COV_CMP_OPTS=
 endif
 
 SHELL=/bin/bash
@@ -55,13 +68,17 @@ compile:
       +define+BOOT_ADDR=32\'h8000_0000 \
       +define+TRACE_EXECUTION \
       -debug_access+pp \
-      ${WAVE_CMP_OPTS} \
+      ${WAVE_CMP_OPTS} ${COV_CMP_OPTS}\
       -lca -kdb
 
 # Run ibex RTL simulation with random instructions
 rtl_sim:
-	./sim ${SIM_OPTS} -dir ${OUT} -waves ${WAVES}
+	./sim ${SIM_OPTS} -dir ${OUT} -waves ${WAVES} -cov ${COV}
 
 # Compare the regression result between ISS and RTL sim
 post_compare:
 	./compare ${OUT}
+
+# Load verdi to review coverage
+cov:
+	cd ${OUT}/rtl_sim; verdi -cov -covdir test.vdb &

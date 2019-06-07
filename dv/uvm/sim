@@ -18,6 +18,10 @@ SEED=""
 WAVES=0
 WAVES_OPTS=""
 
+# Coveragedump options
+COV=0
+COV_OPTS=""
+
 # Process command line options
 while [[ $# -gt 0 ]]
 do
@@ -33,6 +37,10 @@ case $key in
     ;;
     -waves)
     WAVES="$2"
+    shift
+    ;;
+    -cov)
+    COV="$2"
     shift
     ;;
     -seed)
@@ -69,10 +77,17 @@ while read asm_test; do
     SEED=$RANDOM
   fi
   if [[ $WAVES == 1 ]]; then
-    WAVES_OPTS="-ucli -do $RUN_DIR/../vcs.tcl"
+    WAVES_OPTS="-ucli -do vcs.tcl"
+  fi
+  if [[ $COV == 1 ]]; then
+    COV_OPTS="-cm line+tgl+assert+fsm+branch \
+              -cm_dir ${RUN_DIR}/rtl_sim/test.vdb \
+              -cm_log /dev/null \
+              -assert nopostproc \
+              -cm_name test_${SEED}"
   fi
   CMD="$OUT/vcs_simv +UVM_TESTNAME=core_ibex_base_test \
-       ${WAVES_OPTS} +ntb_random_seed=${SEED} \
+       ${WAVES_OPTS} +ntb_random_seed=${SEED} +vcs+lic+wait ${COV_OPTS}\
        +bin=$BINFILE -l sim.log"
   echo "Running simulation for : $CMD"
   $CMD
