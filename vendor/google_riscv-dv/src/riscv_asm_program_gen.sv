@@ -245,6 +245,11 @@ class riscv_asm_program_gen extends uvm_object;
 
   virtual function void gen_program_header();
     // ------------- IBEX modification start --------------------
+    // Override the cfg value, below field is not supported by ibex
+    cfg.mstatus_mprv = 0;
+    cfg.mstatus_mxr  = 0;
+    cfg.mstatus_sum  = 0;
+    cfg.mstatus_tvm  = 0;
     // The ibex core load the program from 0x80
     // Some address is reserved for hardware interrupt handling, need to decide if we need to copy
     // the init program from crt0.S later.
@@ -255,7 +260,19 @@ class riscv_asm_program_gen extends uvm_object;
     instr_stream.push_back("j _start");
     // Align the start section to 0x80
     instr_stream.push_back(".align 7");
-    instr_stream.push_back("_start:");
+    instr_stream.push_back("_start: j _reset_entry");
+    // ibex reserves 0x84-0x8C for trap handling, redirect everything mtvec_handler
+    // 0x84 illegal instruction
+    instr_stream.push_back(".align 2");
+    instr_stream.push_back("j mtvec_handler");
+    // 0x88 ECALL instruction handler
+    instr_stream.push_back(".align 2");
+    instr_stream.push_back("j mtvec_handler");
+    // 0x8C LSU error
+    instr_stream.push_back(".align 2");
+    instr_stream.push_back("j mtvec_handler");
+    // Starting point of the reset entry
+    instr_stream.push_back("_reset_entry:");
     // ------------- IBEX modification end --------------------
   endfunction
 

@@ -82,43 +82,15 @@ int kernel_program_instr_cnt = 400;
 
 // Implemented previlieged CSR list
 privileged_reg_t implemented_csr[$] = {
-    // User mode CSR
-    USTATUS,    // User status
-    UIE,        // User interrupt-enable register
-    UTVEC,      // User trap-handler base address
-    USCRATCH,   // Scratch register for user trap handlers
-    UEPC,       // User exception program counter
-    UCAUSE,     // User trap cause
-    UTVAL,      // User bad address or instruction
-    UIP,        // User interrupt pending
-    // Supervisor mode CSR
-    SSTATUS,    // Supervisor status
-    SEDELEG,    // Supervisor exception delegation register
-    SIDELEG,    // Supervisor interrupt delegation register
-    SIE,        // Supervisor interrupt-enable register
-    STVEC,      // Supervisor trap-handler base address
-    SCOUNTEREN, // Supervisor counter enable
-    SSCRATCH,   // Scratch register for supervisor trap handlers
-    SEPC,       // Supervisor exception program counter
-    SCAUSE,     // Supervisor trap cause
-    STVAL,      // Supervisor bad address or instruction
-    SIP,        // Supervisor interrupt pending
-    SATP,       // Supervisor address translation and protection
     // Machine mode mode CSR
     MVENDORID,  // Vendor ID
     MARCHID,    // Architecture ID
-    MIMPID,     // Implementation ID
     MHARTID,    // Hardware thread ID
     MSTATUS,    // Machine status
     MISA,       // ISA and extensions
-    MEDELEG,    // Machine exception delegation register
-    MIDELEG,    // Machine interrupt delegation register
-    MIE,        // Machine interrupt-enable register
     MTVEC,      // Machine trap-handler base address
-    MCOUNTEREN, // Machine counter enable
-    MSCRATCH,   // Scratch register for machine trap handlers
     MEPC,       // Machine exception program counter
     MCAUSE,     // Machine trap cause
-    MTVAL,      // Machine bad address or instruction
-    MIP         // Machine interrupt pending
+    MTVAL       // Machine bad address or instruction
+    // TODO: Add performance CSRs and debug mode CSR
 };

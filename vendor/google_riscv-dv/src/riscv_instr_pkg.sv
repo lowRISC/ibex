@@ -682,11 +682,13 @@ package riscv_instr_pkg;
                                                    bit mprv,
                                                    ref string instr[$]);
     string store_instr = (XLEN == 32) ? "sw" : "sd";
-    // Use kernal stack for handling exceptions
-    // Save the user mode stack pointer to the scratch register
-    instr.push_back($sformatf("csrrw sp, 0x%0x, sp", scratch));
-    // Move TP to SP
-    instr.push_back("add sp, tp, zero");
+    if (scratch inside {implemented_csr}) begin
+      // Use kernal stack for handling exceptions
+      // Save the user mode stack pointer to the scratch register
+      instr.push_back($sformatf("csrrw sp, 0x%0x, sp", scratch));
+      // Move TP to SP
+      instr.push_back("add sp, tp, zero");
+    end
     // If MPRV is set and MPP is S/U mode, it means the address translation and memory protection
     // for load/store instruction is the same as the mode indicated by MPP. In this case, we
     // need to use the virtual address to access the kernel stack.
@@ -724,10 +726,12 @@ package riscv_instr_pkg;
     end
     // Restore kernel stack pointer
     instr.push_back($sformatf("addi sp, sp, %0d", 32 * (XLEN/8)));
-    // Move SP to TP
-    instr.push_back("add tp, sp, zero");
-    // Restore user mode stack pointer
-    instr.push_back($sformatf("csrrw sp, 0x%0x, sp", scratch));
+    if (scratch inside {implemented_csr}) begin
+      // Move SP to TP
+      instr.push_back("add tp, sp, zero");
+      // Restore user mode stack pointer
+      instr.push_back($sformatf("csrrw sp, 0x%0x, sp", scratch));
+    end
   endfunction
 
   `include "riscv_instr_gen_config.sv"
