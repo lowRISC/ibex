@@ -228,10 +228,6 @@ module ibex_id_stage #(
   // CSR control
   logic        csr_status;
 
-  // For tracer
-  logic [31:0] operand_a_fw_id, unused_operand_a_fw_id;
-  logic [31:0] operand_b_fw_id, unused_operand_b_fw_id;
-
   logic [31:0] alu_operand_a;
   logic [31:0] alu_operand_b;
 
@@ -285,13 +281,6 @@ module ibex_id_stage #(
 
   // ALU MUX for Operand B
   assign alu_operand_b = (alu_op_b_mux_sel == OP_B_IMM) ? imm_b : regfile_rdata_b;
-
-  // Signals used by tracer
-  assign operand_a_fw_id = lsu_addr_incr_req_i ? lsu_addr_last_i : regfile_rdata_a;
-  assign operand_b_fw_id = regfile_rdata_b;
-
-  assign unused_operand_a_fw_id = operand_a_fw_id;
-  assign unused_operand_b_fw_id = operand_b_fw_id;
 
   ///////////////////////
   // Register File MUX //
