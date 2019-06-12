@@ -11,9 +11,18 @@ filesets:
     files:
       - rtl/ibex_tracer_defines.sv
       - rtl/ibex_tracer.sv
+      - rtl/ibex_core_tracer.sv
     file_type: systemVerilogSource
+
+parameters:
+  RVFI:
+    datatype: bool
+    paramtype: vlogdefine
+    description: Enable RVFI signals for tracing
 
 targets:
   default:
     filesets:
       - files_rtl
+    parameters:
+      - RVFI=true

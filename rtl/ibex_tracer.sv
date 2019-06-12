@@ -42,41 +42,16 @@ module ibex_tracer #(
     input  logic [3:0]                core_id_i,
     input  logic [5:0]                cluster_id_i,
 
+    input  logic                      valid_i,
     input  logic [31:0]               pc_i,
     input  logic [31:0]               instr_i,
-    input  logic                      compressed_i,
-    input  logic                      id_valid_i,
-    input  logic                      is_decoding_i,
-    input  logic                      is_branch_i,
-    input  logic                      branch_taken_i,
-    input  logic                      pipe_flush_i,
-    input  logic                      mret_insn_i,
-    input  logic                      dret_insn_i,
-    input  logic                      ecall_insn_i,
-    input  logic                      ebrk_insn_i,
-    input  logic                      csr_status_i,
     input  logic [31:0]               rs1_value_i,
     input  logic [31:0]               rs2_value_i,
-    input  logic [31:0]               lsu_value_i,
-
     input  logic [(RegAddrWidth-1):0] ex_reg_addr_i,
-    input  logic                      ex_reg_we_i,
     input  logic [31:0]               ex_reg_wdata_i,
-    input  logic                      lsu_data_valid_i,
-    input  logic                      ex_data_req_i,
-    input  logic                      ex_data_gnt_i,
-    input  logic                      ex_data_we_i,
     input  logic [31:0]               ex_data_addr_i,
     input  logic [31:0]               ex_data_wdata_i,
-
-    input  logic [31:0]               lsu_reg_wdata_i,
-
-    input  logic [31:0]               imm_i_type_i,
-    input  logic [31:0]               imm_s_type_i,
-    input  logic [31:0]               imm_b_type_i,
-    input  logic [31:0]               imm_u_type_i,
-    input  logic [31:0]               imm_j_type_i,
-    input  logic [31:0]               zimm_rs1_type_i
+    input  logic [31:0]               ex_data_rdata_i
 );
 
   integer      f;
@@ -135,20 +110,26 @@ module ibex_tracer #(
 
         foreach(regs_write[i]) begin
           if (regs_write[i].addr != 0) begin
-            $fwrite(f, " %s=%08x", regAddrToStr(regs_write[i].addr), regs_write[i].value);
+            $fwrite(f, " %s=0x%08x", regAddrToStr(regs_write[i].addr), regs_write[i].value);
           end
         end
 
         foreach(regs_read[i]) begin
           if (regs_read[i].addr != 0) begin
-            $fwrite(f, " %s:%08x", regAddrToStr(regs_read[i].addr), regs_read[i].value);
+            $fwrite(f, " %s:0x%08x", regAddrToStr(regs_read[i].addr), regs_read[i].value);
           end
         end
 
         if (mem_access.size() > 0) begin
           mem_acc = mem_access.pop_front();
 
-          $fwrite(f, "  PA:%08x", mem_acc.addr);
+          $fwrite(f, " PA:0x%08x", mem_acc.addr);
+
+          if (mem_acc.we == 1'b1) begin
+            $fwrite(f, " store:0x%08x", mem_acc.wdata);
+          end else begin
+            $fwrite(f, "  load:0x%08x", mem_acc.rdata);
+          end
         end
 
         $fwrite(f, "\n");
@@ -174,7 +155,7 @@ module ibex_tracer #(
       begin
         regs_read.push_back('{rs1, rs1_value_i});
         regs_write.push_back('{rd, 'x});
-        str = $sformatf("%-16s x%0d, x%0d, %0d", mnemonic, rd, rs1, $signed(imm_i_type_i));
+        str = $sformatf("%-16s x%0d, x%0d, %0d", mnemonic, rd, rs1, $signed({{20 {instr[31]}}, instr[31:20]}));
       end
     endfunction // printIInstr
 
@@ -182,21 +163,21 @@ module ibex_tracer #(
       begin
         regs_read.push_back('{rs1, rs1_value_i});
         regs_write.push_back('{rd, 'x});
-        str = $sformatf("%-16s x%0d, x%0d, 0x%0x", mnemonic, rd, rs1, imm_i_type_i);
+        str = $sformatf("%-16s x%0d, x%0d, 0x%0x", mnemonic, rd, rs1, {{20 {instr[31]}}, instr[31:20]});
       end
     endfunction // printIuInstr
 
     function void printUInstr(input string mnemonic);
       begin
         regs_write.push_back('{rd, 'x});
-        str = $sformatf("%-16s x%0d, 0x%0h", mnemonic, rd, {imm_u_type_i[31:12], 12'h000});
+        str = $sformatf("%-16s x%0d, 0x%0h", mnemonic, rd, {instr[31:12], 12'h000});
       end
     endfunction // printUInstr
 
     function void printUJInstr(input string mnemonic);
       begin
         regs_write.push_back('{rd, 'x});
-        str =  $sformatf("%-16s x%0d, %0d", mnemonic, rd, $signed(imm_j_type_i));
+        str =  $sformatf("%-16s x%0d, %0d", mnemonic, rd, $signed({ {12 {instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0 }));
       end
     endfunction // printUJInstr
 
@@ -204,7 +185,7 @@ module ibex_tracer #(
       begin
         regs_read.push_back('{rs1, rs1_value_i});
         regs_read.push_back('{rs2, rs2_value_i});
-        str =  $sformatf("%-16s x%0d, x%0d, %0d", mnemonic, rs1, rs2, $signed(imm_b_type_i));
+        str =  $sformatf("%-16s x%0d, x%0d, %0d", mnemonic, rs1, rs2, $signed({ {19 {instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0 }));
       end
     endfunction // printSBInstr
 
@@ -219,14 +200,15 @@ module ibex_tracer #(
           regs_read.push_back('{rs1, rs1_value_i});
           str = $sformatf("%-16s x%0d, x%0d, 0x%h", mnemonic, rd, rs1, csr);
         end else begin
-          str = $sformatf("%-16s x%0d, 0x%h, 0x%h", mnemonic, rd, zimm_rs1_type_i, csr);
+          str = $sformatf("%-16s x%0d, 0x%h, 0x%h", mnemonic, rd, { 27'b0, instr[`REG_S1] }, csr);
         end
       end
     endfunction // printCSRInstr
 
     function void printLoadInstr();
-      string mnemonic;
+      string      mnemonic;
       logic [2:0] size;
+      mem_acc_t   mem_acc;
       begin
         // detect reg-reg load and find size
         size = instr_i[14:12];
@@ -257,15 +239,20 @@ module ibex_tracer #(
         if (instr_i[14:12] != 3'b111) begin
           // regular load
           regs_read.push_back('{rs1, rs1_value_i});
-          str = $sformatf("%-16s x%0d, %0d(x%0d)", mnemonic, rd, $signed(imm_i_type_i), rs1);
+          str = $sformatf("%-16s x%0d, %0d(x%0d)", mnemonic, rd, $signed({{20 {instr[31]}}, instr[31:20]}), rs1);
         end else begin
           printMnemonic("INVALID");
         end
+
+        mem_acc.addr  = ex_data_addr_i;
+        mem_acc.rdata = ex_data_rdata_i;
+        mem_access.push_back(mem_acc);
       end
     endfunction
 
     function void printStoreInstr();
-      string mnemonic;
+      string    mnemonic;
+      mem_acc_t mem_acc;
       begin
 
         unique case (instr_i[13:12])
@@ -286,10 +273,15 @@ module ibex_tracer #(
           // regular store
           regs_read.push_back('{rs2, rs2_value_i});
           regs_read.push_back('{rs1, rs1_value_i});
-          str = $sformatf("%-16s x%0d, %0d(x%0d)", mnemonic, rs2, $signed(imm_s_type_i), rs1);
+          str = $sformatf("%-16s x%0d, %0d(x%0d)", mnemonic, rs2, $signed({ {20 {instr[31]}}, instr[31:25], instr[11:7] }), rs1);
         end else begin
           printMnemonic("INVALID");
         end
+
+        mem_acc.addr  = ex_data_addr_i;
+        mem_acc.we    = 1'b1;
+        mem_acc.wdata = ex_data_wdata_i;
+        mem_access.push_back(mem_acc);
       end
     endfunction // printSInstr
 
@@ -327,12 +319,11 @@ module ibex_tracer #(
   assign rs3 = instr_i[`REG_S3];
 
   // log execution
-  always @(negedge clk_i) begin
+  always @(posedge clk_i) begin
     instr_trace_t trace;
     mem_acc_t     mem_acc;
     // special case for WFI because we don't wait for unstalling there
-    if ((id_valid_i || mret_insn_i || ecall_insn_i || pipe_flush_i || ebrk_insn_i ||
-         dret_insn_i || csr_status_i || ex_data_req_i) && is_decoding_i) begin
+    if (valid_i) begin
       trace = new ();
 
       trace.simtime    = $time;
@@ -410,38 +401,11 @@ module ibex_tracer #(
 
       // replace register written back
       foreach(trace.regs_write[i]) begin
-        if ((trace.regs_write[i].addr == ex_reg_addr_i) && ex_reg_we_i) begin
+        if ((trace.regs_write[i].addr == ex_reg_addr_i)) begin
           trace.regs_write[i].value = ex_reg_wdata_i;
         end
       end
-      // look for data accesses and log them
-      if (ex_data_req_i) begin
 
-        if (!ex_data_gnt_i) begin
-          //we wait until the the gnt comes
-          do @(negedge clk_i);
-          while (!ex_data_gnt_i);
-        end
-
-        mem_acc.addr = ex_data_addr_i;
-        mem_acc.we   = ex_data_we_i;
-
-        if (mem_acc.we) begin
-          mem_acc.wdata = ex_data_wdata_i;
-        end else begin
-          mem_acc.wdata = 'x;
-        end
-        //we wait until the the data instruction ends
-        do @(negedge clk_i);
-          while (!lsu_data_valid_i);
-
-        if (!mem_acc.we) begin
-          //load operations
-          foreach(trace.regs_write[i])
-            trace.regs_write[i].value = lsu_reg_wdata_i;
-        end
-        trace.mem_access.push_back(mem_acc);
-      end
       trace.printInstrTrace();
     end
   end // always @ (posedge clk_i)
