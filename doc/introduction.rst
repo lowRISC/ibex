@@ -50,6 +50,7 @@ The control and status registers are explained in :ref:`cs-registers`.
 :ref:`debug-support` gives a brief overview on the debug infrastructure.
 :ref:`tracer` gives a brief overview of the tracer module.
 For information regarding formal verification support, check out :ref:`rvfi`.
+:ref:`examples` gives an overview of how Ibex can be used.
 
 
 History

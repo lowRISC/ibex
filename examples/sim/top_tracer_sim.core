@@ -1,0 +1,25 @@
+CAPI=2:
+# Copyright lowRISC contributors.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+name: "lowrisc:ibex:top_tracer_sim:0.1"
+description: "Ibex tracer example for modelsim"
+filesets:
+  files_tb:
+    depend:
+      - lowrisc:ibex:tracer
+    files:
+      - rtl/prim_clock_gating.sv
+      - tb/ibex_tracer_tb.sv
+    file_type: systemVerilogSource
+
+targets:
+  sim:
+    default_tool: modelsim
+    filesets:
+      - files_tb
+    toplevel:
+      - ibex_tracer_tb
+    tools:
+      modelsim:
+        vlog_options: [-timescale=1ns/1ns]
