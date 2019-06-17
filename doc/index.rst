@@ -18,6 +18,7 @@ Ibex User Manual
    debug
    tracer
    rvfi
+   examples
 
 
 .. toctree::
