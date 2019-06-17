@@ -643,7 +643,7 @@ module ibex_core #(
 
   // Keep the mem data stable for each instruction cycle
   always_comb begin
-    if (rvfi_insn_new) begin
+    if (rvfi_insn_new_d) begin
       rvfi_mem_addr_d  = alu_adder_result_ex;
       rvfi_mem_rdata_d = regfile_wdata_lsu;
       rvfi_mem_wdata_d = data_wdata_ex;
