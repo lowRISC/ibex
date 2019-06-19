@@ -15,5 +15,5 @@ For a detailed why and how please refer to one of the multiple [resources](https
 If you use `vi` for your commit message, consider to put the following snippet inside your `~/.vimrc`:
 
 ```
-autocmd Filetype gitcommit setlocal spell textwidth=72s
+autocmd Filetype gitcommit setlocal spell textwidth=72
 ```
