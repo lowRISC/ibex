@@ -35,9 +35,8 @@ please:
 * If asked to modify your changes, do fixup your commits and rebase your branch to maintain a
   clean history.
 
-When contributing SystemVerilog source code, please try to be consistent and match the sytle of the
-exisiting code. If unsure, consider for example the following [coding style
-guidelines](https://github.com/pulp-platform/style-guidelines).
+When contributing SystemVerilog source code, please try to be consistent and adhere to [our Verilog
+coding style guide](https://github.com/lowRISC/style-guides/blob/master/VerilogCodingStyle.md).
 
 To get started, please check out the ["Good First Issue"
  list](https://github.com/lowrisc/ibex/issues?q=is%3Aissue+is%3Aopen+label%3A%22Good+First+Issue%22).
