@@ -186,10 +186,8 @@ module ibex_cs_registers #(
   /////////////
 
   logic [$bits(csr_num_e)-1:0] csr_addr;
-  logic [4:0]                  unused_csr_addr;
   assign csr_addr           = {csr_addr_i};
   assign mhpmcounter_idx    = csr_addr[4:0];
-  assign unused_csr_addr    = csr_addr[9:5];
 
   assign illegal_csr_priv   = 1'b0; // we only support M-mode
   assign illegal_csr_write  = (csr_addr[11:10] == 2'b11) && csr_we_int;
@@ -242,7 +240,7 @@ module ibex_cs_registers #(
       CSR_MINSTRETH:     csr_rdata_int = mhpmcounter_q[2][63:32];
 
       default: begin
-        if (csr_addr_i == CSR_MCOUNTER_SETUP_MASK) begin
+        if ((csr_addr & CSR_MASK_MCOUNTER) == CSR_OFF_MCOUNTER_SETUP) begin
           csr_rdata_int = mhpmevent[mhpmcounter_idx];
           // check access to non-existent or already covered CSRs
           if ((csr_addr[4:0] == 5'b00000) ||     // CSR_MCOUNTINHIBIT
@@ -251,7 +249,7 @@ module ibex_cs_registers #(
             illegal_csr = csr_access_i;
           end
 
-        end else if (csr_addr_i == CSR_MCOUNTER_MASK) begin
+        end else if ((csr_addr & CSR_MASK_MCOUNTER) == CSR_OFF_MCOUNTER) begin
           csr_rdata_int = mhpmcounter_q[mhpmcounter_idx][31: 0];
           // check access to non-existent or already covered CSRs
           if ((csr_addr[4:0] == 5'b00000) ||     // CSR_MCYCLE
@@ -260,7 +258,7 @@ module ibex_cs_registers #(
             illegal_csr = csr_access_i;
           end
 
-        end else if (csr_addr_i == CSR_MCOUNTERH_MASK) begin
+        end else if ((csr_addr & CSR_MASK_MCOUNTER) == CSR_OFF_MCOUNTERH) begin
           csr_rdata_int = mhpmcounter_q[mhpmcounter_idx][63:32];
           // check access to non-existent or already covered CSRs
           if ((csr_addr[4:0] == 5'b00000) ||     // CSR_MCYCLEH
@@ -378,9 +376,9 @@ module ibex_cs_registers #(
       default: begin
         if (csr_we_int == 1'b1) begin
           // performance counters and event selector
-          if (csr_addr_i == CSR_MCOUNTER_MASK) begin
+          if ((csr_addr & CSR_MASK_MCOUNTER) == CSR_OFF_MCOUNTER) begin
             mhpmcounter_we[mhpmcounter_idx] = 1'b1;
-          end else if (csr_addr_i == CSR_MCOUNTERH_MASK) begin
+          end else if ((csr_addr & CSR_MASK_MCOUNTER) == CSR_OFF_MCOUNTERH) begin
             mhpmcounterh_we[mhpmcounter_idx] = 1'b1;
           end
         end
@@ -515,22 +513,27 @@ module ibex_cs_registers #(
   assign mcountinhibit       = mcountinhibit_q | mcountinhibit_force;
 
   // event selection (hardwired) & control
-  assign mhpmcounter_incr[0]  = 1'b1;                // mcycle
-  assign mhpmcounter_incr[1]  = 1'b0;                // reserved
-  assign mhpmcounter_incr[2]  = insn_ret_i;          // minstret
-  assign mhpmcounter_incr[3]  = lsu_busy_i;          // cycles waiting for data memory
-  assign mhpmcounter_incr[4]  = imiss_i & ~pc_set_i; // cycles waiting for instr fetches ex.
-                                                     // jumps and branches
-  assign mhpmcounter_incr[5]  = mem_load_i;          // num of loads
-  assign mhpmcounter_incr[6]  = mem_store_i;         // num of stores
-  assign mhpmcounter_incr[7]  = jump_i;              // num of jumps (unconditional)
-  assign mhpmcounter_incr[8]  = branch_i;            // num of branches (conditional)
-  assign mhpmcounter_incr[9]  = branch_taken_i;      // num of taken branches (conditional)
-  assign mhpmcounter_incr[10] = is_compressed_i      // num of compressed instr
-      & id_valid_i & is_decoding_i;
+  always_comb begin : gen_mhpmcounter_incr
 
-  for (genvar i=3+MHPMCounterNum; i<32; i++) begin : gen_mhpmcounter_incr_inactive
-    assign mhpmcounter_incr[i] = 1'b0;
+    // active counters
+    mhpmcounter_incr[0]  = 1'b1;                // mcycle
+    mhpmcounter_incr[1]  = 1'b0;                // reserved
+    mhpmcounter_incr[2]  = insn_ret_i;          // minstret
+    mhpmcounter_incr[3]  = lsu_busy_i;          // cycles waiting for data memory
+    mhpmcounter_incr[4]  = imiss_i & ~pc_set_i; // cycles waiting for instr fetches ex.
+                                                // jumps and branches
+    mhpmcounter_incr[5]  = mem_load_i;          // num of loads
+    mhpmcounter_incr[6]  = mem_store_i;         // num of stores
+    mhpmcounter_incr[7]  = jump_i;              // num of jumps (unconditional)
+    mhpmcounter_incr[8]  = branch_i;            // num of branches (conditional)
+    mhpmcounter_incr[9]  = branch_taken_i;      // num of taken branches (conditional)
+    mhpmcounter_incr[10] = is_compressed_i      // num of compressed instr
+        & id_valid_i & is_decoding_i;
+
+    // inactive counters
+    for (int unsigned i=3+MHPMCounterNum; i<32; i++) begin : gen_mhpmcounter_incr_inactive
+      mhpmcounter_incr[i] = 1'b0;
+    end
   end
 
   // event selector (hardwired, 0 means no event)
@@ -538,6 +541,7 @@ module ibex_cs_registers #(
 
     // activate all
     for (int i=0; i<32; i++) begin : gen_mhpmevent_active
+      mhpmevent[i]    =   '0;
       mhpmevent[i][i] = 1'b1;
     end
 
@@ -556,9 +560,14 @@ module ibex_cs_registers #(
       mhpmcounter_mask[i] = {64{1'b1}};
     end
 
-    for (int i=3; i<32; i++) begin : gen_mask_configurable
+    for (int unsigned i=3; i<3+MHPMCounterNum; i++) begin : gen_mask_configurable
       // mhpmcounters have a configurable width
       mhpmcounter_mask[i] = {{64-MHPMCounterWidth{1'b0}}, {MHPMCounterWidth{1'b1}}};
+    end
+
+    for (int unsigned i=3+MHPMCounterNum; i<32; i++) begin : gen_mask_inactive
+      // mask inactive mhpmcounters
+      mhpmcounter_mask[i] = '0;
     end
   end
 
