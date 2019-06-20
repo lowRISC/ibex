@@ -68,7 +68,8 @@ module ibex_load_store_unit (
     output logic         busy_o
 );
 
-  logic [31:0]  data_addr_int;
+  logic [31:0]  data_addr;
+  logic [31:0]  data_addr_w_aligned;
 
   // registers for data_rdata alignment and sign extension
   logic [1:0]   data_type_q;
@@ -101,33 +102,33 @@ module ibex_load_store_unit (
     unique case (data_type_ex_i) // Data type 00 Word, 01 Half word, 11,10 byte
       2'b00: begin // Writing a word
         if (!misaligned_st) begin // non-misaligned case
-          unique case (data_addr_int[1:0])
+          unique case (data_addr[1:0])
             2'b00:   data_be = 4'b1111;
             2'b01:   data_be = 4'b1110;
             2'b10:   data_be = 4'b1100;
             2'b11:   data_be = 4'b1000;
             default: data_be = 'X;
-          endcase // case (data_addr_int[1:0])
+          endcase // case (data_addr[1:0])
         end else begin // misaligned case
-          unique case (data_addr_int[1:0])
+          unique case (data_addr[1:0])
             2'b00:   data_be = 4'b0000; // this is not used, but included for completeness
             2'b01:   data_be = 4'b0001;
             2'b10:   data_be = 4'b0011;
             2'b11:   data_be = 4'b0111;
             default: data_be = 'X;
-          endcase // case (data_addr_int[1:0])
+          endcase // case (data_addr[1:0])
         end
       end
 
       2'b01: begin // Writing a half word
         if (!misaligned_st) begin // non-misaligned case
-          unique case (data_addr_int[1:0])
+          unique case (data_addr[1:0])
             2'b00:   data_be = 4'b0011;
             2'b01:   data_be = 4'b0110;
             2'b10:   data_be = 4'b1100;
             2'b11:   data_be = 4'b1000;
             default: data_be = 'X;
-          endcase // case (data_addr_int[1:0])
+          endcase // case (data_addr[1:0])
         end else begin // misaligned case
           data_be = 4'b0001;
         end
@@ -135,13 +136,13 @@ module ibex_load_store_unit (
 
       2'b10,
       2'b11: begin // Writing a byte
-        unique case (data_addr_int[1:0])
+        unique case (data_addr[1:0])
           2'b00:   data_be = 4'b0001;
           2'b01:   data_be = 4'b0010;
           2'b10:   data_be = 4'b0100;
           2'b11:   data_be = 4'b1000;
           default: data_be = 'X;
-        endcase // case (data_addr_int[1:0])
+        endcase // case (data_addr[1:0])
       end
 
       default:     data_be = 'X;
@@ -151,7 +152,7 @@ module ibex_load_store_unit (
   // prepare data to be written to the memory
   // we handle misaligned accesses, half word and byte accesses and
   // register offsets here
-  assign wdata_offset = data_addr_int[1:0] - data_reg_offset_ex_i[1:0];
+  assign wdata_offset = data_addr[1:0] - data_reg_offset_ex_i[1:0];
   always_comb begin
     unique case (wdata_offset)
       2'b00:   data_wdata =  data_wdata_ex_i[31:0];
@@ -173,7 +174,7 @@ module ibex_load_store_unit (
     end else if (data_gnt_i) begin
       // request was granted, we wait for rvalid and can continue to WB
       data_type_q     <= data_type_ex_i;
-      rdata_offset_q  <= data_addr_int[1:0];
+      rdata_offset_q  <= data_addr[1:0];
       data_sign_ext_q <= data_sign_ext_ex_i;
       data_we_q       <= data_we_ex_i;
     end
@@ -299,7 +300,7 @@ module ibex_load_store_unit (
       if (lsu_update_addr_o) begin
         data_misaligned_q <= data_misaligned;
         if (increase_address) begin
-          misaligned_addr_o <= data_addr_int;
+          misaligned_addr_o <= data_addr;
         end
       end
       if (data_rvalid_i && !data_we_q) begin
@@ -321,8 +322,11 @@ module ibex_load_store_unit (
   // output to register file
   assign data_rdata_ex_o = data_rvalid_i ? data_rdata_ext : rdata_q;
 
+  // output data address must be aligned to word
+  assign data_addr_w_aligned = {data_addr[31:2], 2'b00};
+
   // output to data interface
-  assign data_addr_o   = data_addr_int;
+  assign data_addr_o   = data_addr_w_aligned;
   assign data_wdata_o  = data_wdata;
   assign data_we_o     = data_we_ex_i;
   assign data_be_o     = data_be;
@@ -437,13 +441,13 @@ module ibex_load_store_unit (
     if (data_req_ex_i && !data_misaligned_q) begin
       unique case (data_type_ex_i)
         2'b00: begin // word
-          if (data_addr_int[1:0] != 2'b00) begin
+          if (data_addr[1:0] != 2'b00) begin
             data_misaligned = 1'b1;
           end
         end
 
         2'b01: begin // half word
-          if (data_addr_int[1:0] == 2'b11) begin
+          if (data_addr[1:0] == 2'b11) begin
             data_misaligned = 1'b1;
           end
         end
@@ -456,7 +460,7 @@ module ibex_load_store_unit (
     end
   end
 
-  assign data_addr_int = adder_result_ex_i;
+  assign data_addr = adder_result_ex_i;
 
   assign busy_o = (ls_fsm_cs == WAIT_RVALID) | (data_req_o == 1'b1);
 
