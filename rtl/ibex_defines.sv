@@ -240,15 +240,17 @@ typedef enum logic[11:0] {
   CSR_DSCRATCH1 = 12'h7b3, // optional
 
   // Machine Counter/Timers
-  CSR_MCOUNTINHIBIT       = 12'h320,
-  CSR_MCYCLE              = 12'hB00,
-  CSR_MCYCLEH             = 12'hB80,
-  CSR_MINSTRET            = 12'hB02,
-  CSR_MINSTRETH           = 12'hB82,
-
-  CSR_MCOUNTER_SETUP_MASK = 12'b0011_001X_XXXX, // actually 12'h323 - 12'h33F
-  CSR_MCOUNTER_MASK       = 12'b1011_000X_XXXX, // actually 12'hB03 - 12'hB1F
-  CSR_MCOUNTERH_MASK      = 12'b1011_100X_XXXX  // actually 12'hB83 - 12'hB9F
+  CSR_MCOUNTINHIBIT      = 12'h320,
+  CSR_MCYCLE             = 12'hB00,
+  CSR_MCYCLEH            = 12'hB80,
+  CSR_MINSTRET           = 12'hB02,
+  CSR_MINSTRETH          = 12'hB82
 } csr_num_e;
+
+// CSR mhpmcounter-related offsets and mask
+parameter logic [11:0] CSR_OFF_MCOUNTER_SETUP = 12'h320; // mcounter_setup @ 12'h323 - 12'h33F
+parameter logic [11:0] CSR_OFF_MCOUNTER       = 12'hB00; // mcounter       @ 12'hB03 - 12'hB1F
+parameter logic [11:0] CSR_OFF_MCOUNTERH      = 12'hB80; // mcounterh      @ 12'hB83 - 12'hB9F
+parameter logic [11:0] CSR_MASK_MCOUNTER      = 12'hFE0;
 
 endpackage
