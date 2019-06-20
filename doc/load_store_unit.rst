@@ -14,7 +14,7 @@ Signals that are used by the LSU:
 | ``data_req_o``          | output    | Request valid, must stay high until           |
 |                         |           | ``data_gnt_i`` is high for one cycle          |
 +-------------------------+-----------+-----------------------------------------------+
-| ``data_addr_o[31:0]``   | output    | Address                                       |
+| ``data_addr_o[31:0]``   | output    | Address, word aligned                         |
 +-------------------------+-----------+-----------------------------------------------+
 | ``data_we_o``           | output    | Write Enable, high for writes, low for        |
 |                         |           | reads. Sent together with ``data_req_o``      |
@@ -44,8 +44,8 @@ Signals that are used by the LSU:
 Misaligned Accesses
 -------------------
 
-The LSU is able to perform misaligned accesses, meaning accesses that are not aligned on natural word boundaries.
-However, it needs to perform two separate word-aligned accesses internally.
+The LSU is able to handle misaligned memory accesses, meaning accesses that are not aligned on natural word boundaries.
+However, it does so by performing two separate word-aligned accesses.
 This means that at least two cycles are needed for misaligned loads and stores.
 
 .. _lsu-protocol:
