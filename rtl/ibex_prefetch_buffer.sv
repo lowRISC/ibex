@@ -54,6 +54,7 @@ module ibex_prefetch_buffer (
   pf_fsm_e pf_fsm_cs, pf_fsm_ns;
 
   logic [31:0] instr_addr_q, fetch_addr;
+  logic [31:0] instr_addr, instr_addr_w_aligned;
   logic        addr_valid;
 
   logic        fifo_valid;
@@ -103,20 +104,20 @@ module ibex_prefetch_buffer (
   //////////////////////////////////////////////////////////////////////////////
 
   always_comb begin
-    instr_req_o   = 1'b0;
-    instr_addr_o  = fetch_addr;
-    fifo_valid    = 1'b0;
-    addr_valid    = 1'b0;
-    pf_fsm_ns     = pf_fsm_cs;
+    instr_req_o = 1'b0;
+    instr_addr  = fetch_addr;
+    fifo_valid  = 1'b0;
+    addr_valid  = 1'b0;
+    pf_fsm_ns   = pf_fsm_cs;
 
     unique case(pf_fsm_cs)
       // default state, not waiting for requested data
       IDLE: begin
-        instr_addr_o = fetch_addr;
-        instr_req_o  = 1'b0;
+        instr_addr  = fetch_addr;
+        instr_req_o = 1'b0;
 
         if (branch_i) begin
-          instr_addr_o = addr_i;
+          instr_addr = addr_i;
         end
 
         if (req_i && (fifo_ready || branch_i )) begin
@@ -131,12 +132,12 @@ module ibex_prefetch_buffer (
 
       // we sent a request but did not yet get a grant
       WAIT_GNT: begin
-        instr_addr_o = instr_addr_q;
-        instr_req_o  = 1'b1;
+        instr_addr  = instr_addr_q;
+        instr_req_o = 1'b1;
 
         if (branch_i) begin
-          instr_addr_o = addr_i;
-          addr_valid   = 1'b1;
+          instr_addr = addr_i;
+          addr_valid = 1'b1;
         end
 
         //~> granted request or not
@@ -145,10 +146,10 @@ module ibex_prefetch_buffer (
 
       // we wait for rvalid, after that we are ready to serve a new request
       WAIT_RVALID: begin
-        instr_addr_o = fetch_addr;
+        instr_addr = fetch_addr;
 
         if (branch_i) begin
-          instr_addr_o  = addr_i;
+          instr_addr = addr_i;
         end
 
         if (req_i && (fifo_ready || branch_i)) begin
@@ -183,15 +184,15 @@ module ibex_prefetch_buffer (
       // there was no new request sent yet
       // we assume that req_i is set to high
       WAIT_ABORTED: begin
-        instr_addr_o = instr_addr_q;
+        instr_addr = instr_addr_q;
 
         if (branch_i) begin
-          instr_addr_o = addr_i;
-          addr_valid   = 1'b1;
+          instr_addr = addr_i;
+          addr_valid = 1'b1;
         end
 
         if (instr_rvalid_i) begin
-          instr_req_o  = 1'b1;
+          instr_req_o = 1'b1;
           // no need to send address, already done in WAIT_RVALID
 
           //~> granted request or not
@@ -217,9 +218,15 @@ module ibex_prefetch_buffer (
       pf_fsm_cs      <= pf_fsm_ns;
 
       if (addr_valid) begin
-        instr_addr_q <= instr_addr_o;
+        instr_addr_q <= instr_addr;
       end
     end
   end
+
+  /////////////////
+  // Output Addr //
+  /////////////////
+  assign instr_addr_w_aligned = {instr_addr[31:2], 2'b00};
+  assign instr_addr_o         =  instr_addr_w_aligned;
 
 endmodule

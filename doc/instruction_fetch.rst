@@ -4,10 +4,7 @@ Instruction Fetch
 =================
 
 The Instruction-Fetch (IF) stage of the core is able to supply one instruction to the Instruction-Decode (ID) stage per cycle if the instruction cache or the instruction memory is able to serve one instruction per cycle.
-The instruction address must be half-word-aligned due to the support of compressed instructions.
-It is not possible to jump to instruction addresses that have the LSB bit set.
-
-For optimal performance and timing closure reasons, a prefetcher is used which fetches instruction from the instruction memory, or instruction cache.
+For optimal performance and timing closure reasons, a prefetcher is used which fetches instructions from the instruction memory, or instruction cache.
 
 The following table describes the signals that are used to fetch instructions.
 This interface is a simplified version of the interface used on the data interface as described in :ref:`load-store-unit`.
@@ -21,7 +18,7 @@ The main difference is that the instruction interface does not allow for writes 
 | ``instr_req_o``         | output    | Request valid, must stay high until           |
 |                         |           | ``instr_gnt_i`` is high for one cycle         |
 +-------------------------+-----------+-----------------------------------------------+
-| ``instr_addr_o[31:0]``  | output    | Address                                       |
+| ``instr_addr_o[31:0]``  | output    | Address, word aligned                         |
 +-------------------------+-----------+-----------------------------------------------+
 | ``instr_gnt_i``         | input     | The other side accepted the request.          |
 |                         |           | ``instr_req_o`` may be deasserted in the next |
@@ -33,6 +30,15 @@ The main difference is that the instruction interface does not allow for writes 
 +-------------------------+-----------+-----------------------------------------------+
 | ``instr_rdata_i[31:0]`` | input     | Data read from memory                         |
 +-------------------------+-----------+-----------------------------------------------+
+
+
+Misaligned Accesses
+-------------------
+
+Externally, the IF interface performs word-aligned instruction fetches only.
+Misaligned instruction fetches are handled by performing two separate word-aligned instruction fetches.
+Internally, the core can deal with both word- and half-word-aligned instruction addresses to support compressed instructions.
+The LSB of the instruction address is ignored internally.
 
 
 Protocol
