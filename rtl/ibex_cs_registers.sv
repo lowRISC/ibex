@@ -165,6 +165,7 @@ module ibex_cs_registers #(
   logic [31:0] csr_wdata_int;
   logic [31:0] csr_rdata_int;
   logic        csr_we_int;
+  logic        csr_wreq;
 
   // Interrupt control signals
   logic [31:0] mepc_q, mepc_n;
@@ -192,7 +193,7 @@ module ibex_cs_registers #(
   assign unused_csr_addr    = csr_addr[9:5];
 
   assign illegal_csr_priv   = 1'b0; // we only support M-mode
-  assign illegal_csr_write  = (csr_addr[11:10] == 2'b11) && csr_we_int;
+  assign illegal_csr_write  = (csr_addr[11:10] == 2'b11) && csr_wreq;
   assign illegal_csr_insn_o = illegal_csr | illegal_csr_write | illegal_csr_priv;
 
   // read logic
@@ -432,7 +433,7 @@ module ibex_cs_registers #(
 
   // CSR operation logic
   always_comb begin
-    csr_we_int    = 1'b1;
+    csr_wreq = 1'b1;
 
     unique case (csr_op_i)
       CSR_OP_WRITE: csr_wdata_int =  csr_wdata_i;
@@ -440,14 +441,17 @@ module ibex_cs_registers #(
       CSR_OP_CLEAR: csr_wdata_int = ~csr_wdata_i & csr_rdata_o;
       CSR_OP_READ: begin
         csr_wdata_int = csr_wdata_i;
-        csr_we_int    = 1'b0;
+        csr_wreq      = 1'b0;
       end
       default: begin
         csr_wdata_int = 'X;
-        csr_we_int    = 1'bX;
+        csr_wreq      = 1'bX;
       end
     endcase
   end
+
+  // only write CSRs during one clock cycle
+  assign csr_we_int  = csr_wreq & is_decoding_i;
 
   assign csr_rdata_o = csr_rdata_int;
 
