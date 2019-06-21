@@ -579,7 +579,7 @@ module ibex_cs_registers #(
 
       // increment
       if (mhpmcounter_incr[i] & ~mcountinhibit[i]) begin
-        mhpmcounter_n[i] = mhpmcounter_mask[i] & (mhpmcounter_n[i] + 64'h1);
+        mhpmcounter_n[i] = mhpmcounter_mask[i] & (mhpmcounter_q[i] + 64'h1);
       end
 
       // write
