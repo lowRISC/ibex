@@ -477,8 +477,10 @@ module ibex_load_store_unit (
   // there should be no rvalid when we are in IDLE
   assert property ( @(posedge clk_i) (ls_fsm_cs == IDLE) |-> (data_rvalid_i == 1'b0) );
 
-  // assert that errors are only sent at the same time as grant
-  assert property ( @(posedge clk_i) (data_err_i) |-> (data_gnt_i) );
+  // assert that errors are only sent at the same time as rvalid
+  assert property (
+    @(posedge clk_i) (data_err_i) |-> (data_rvalid_i) ) else
+      $display("Data error not sent with rvalid");
 
   // assert that the address does not contain X when request is sent
   assert property ( @(posedge clk_i) (data_req_o) |-> (!$isunknown(data_addr_o)) );
