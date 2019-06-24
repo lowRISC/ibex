@@ -266,6 +266,11 @@ module ibex_if_stage #(
   assert property (
     @(posedge clk_i) (instr_gnt_i) |-> (instr_req_o) )
   else $warning("There was a grant without a request");
+
+  // assert that the address is word aligned when request is sent
+  assert property (
+    @(posedge clk_i) (instr_req_o) |-> (instr_addr_o[1:0] == 2'b00) ) else
+      $display("Instruction address not word aligned");
 `endif
 
 endmodule

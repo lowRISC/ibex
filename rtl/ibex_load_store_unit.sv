@@ -482,5 +482,10 @@ module ibex_load_store_unit (
 
   // assert that the address does not contain X when request is sent
   assert property ( @(posedge clk_i) (data_req_o) |-> (!$isunknown(data_addr_o)) );
+
+  // assert that the address is word aligned when request is sent
+  assert property (
+    @(posedge clk_i) (data_req_o) |-> (data_addr_o[1:0] == 2'b00) ) else
+      $display("Data address not word aligned");
 `endif
 endmodule
