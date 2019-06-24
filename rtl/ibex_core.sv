@@ -29,7 +29,7 @@
  * Top level module of the ibex RISC-V core
  */
 module ibex_core #(
-    parameter int unsigned MHPMCounterNum   = 8,
+    parameter int unsigned MHPMCounterNum   = 0,
     parameter int unsigned MHPMCounterWidth = 40,
     parameter bit RV32E                     = 0,
     parameter bit RV32M                     = 1,
