@@ -7,6 +7,8 @@ Ibex implements performance counters according to the RISC-V Privileged Specific
 The performance counters are placed inside the Control and Status Registers (CSRs) and can be accessed with the ``CSRRW(I)`` and ``CSRRS/C(I)`` instructions.
 
 Ibex implements the clock cycle counter ``mcycle(h)``, the retired instruction counter ``minstret(h)``, as well as the 29 event counters ``mhpmcounter3(h)`` - ``mhpmcounter31(h)`` and the corresponding event selector CSRs ``mhpmevent3`` - ``mhpmevent31``, and the ``mcountinhibit`` CSR to individually enable/disable the counters.
+``mcycle(h)`` and ``minstret(h)`` are always available and 64 bit wide.
+The ``mhpmcounter`` performance counters are optional (unavailable by default) and parametrizable in width.
 
 Event Selector
 --------------
@@ -44,8 +46,8 @@ The event selector CSRs ``mhpmevent3`` - ``mhpmevent31`` define which of these e
 If a specific bit in an event selector CSR is set to 1, this means that events with this ID are being counted by the counter associated with that selector CSR.
 If an event selector CSR is 0, this means that the corresponding counter is not counting any event.
 
-Counter Control
----------------
+Controlling the counters from software
+--------------------------------------
 
 By default, all available counters are enabled after reset.
 They can be individually enabled/disabled by overwriting the corresponding bit in the ``mcountinhibit`` CSR at address ``0x320`` as described in the RISC-V Privileged Specification, draft version 1.11 (see Machine Counter-Inhibit CSR, Section 3.1.13).
@@ -54,16 +56,22 @@ In particular, to enable/disable ``mcycle(h)``, bit 0 must be written. For ``min
 The lower 32 bits of all counters can be accessed through the base register, whereas the upper 32 bits are accessed through the ``h``-register.
 Reads to all these registers are non-destructive.
 
-Counter Config
---------------
+Parametrization at synthesis time
+---------------------------------
 
-The ``mcycle(h)`` and ``minstret(h)`` counters are 64 bit wide.
-The bit width of the event counters ``mhpmcounter3(h)`` - ``mhpmcounter31(h)`` can be controlled via the ``WidthMHPMCounters`` parameter.
+The ``mcycle(h)`` and ``minstret(h)`` counters are always available and 64 bit wide.
 
-The effective number of available event counters ``mhpmcounterX(h)`` can be controlled via the ``NumMHPMCounters`` parameter.
-By default, only the first 8 counters ``mhpmcounter3(h)`` - ``mhpmcounter10(h)`` are available.
-The association of events with these counters is hardwired as listed in the following table.
-The remaining counters are disabled and tied to 0.
+The event counters ``mhpmcounter3(h)`` - ``mhpmcounter31(h)`` are parametrizable.
+Their width can be parametrized between 1 and 64 bit through the ``WidthMHPMCounters`` parameter, which defaults to 40 bit wide counters.
+
+The number of available event counters ``mhpmcounterX(h)`` can be controlled via the ``NumMHPMCounters`` parameter.
+By default (``NumMHPMCounters`` set to 0), no counters are available to software.
+Set ``NumMHPMCounters`` to a value between 1 and 8 to make the counters ``mhpmcounter3(h)`` - ``mhpmcounter10(h)`` available as listed below.
+Setting ``NumMHPMCounters`` to values larger than 8 does not result in any more performance counters.
+
+Unavailable counters always read 0.
+
+The association of events with the ``mphmcounter``s is hardwired as listed in the following table.
 
 +----------------------+----------------+--------------+------------------+
 | Event Counter        | CSR Address    | Event ID/Bit | Event Name       |

@@ -12,7 +12,7 @@ Instantiation Template
 .. code-block:: verilog
 
   ibex_core #(
-      .MHPMCounterNum   (8),
+      .MHPMCounterNum   (0),
       .MHPMCounterWidth (40),
       .RV32E            (0),
       .RV32M            (1),
@@ -66,9 +66,9 @@ Parameters
 +-----------------------+-------------+------------+-----------------------------------------------------------------+
 | Name                  | Type/Range  | Default    | Description                                                     |
 +=======================+=============+============+=================================================================+
-| ``MHPMCounterNum``    | int (0..29) | 8          | Number of performance monitor event counters                    |
+| ``MHPMCounterNum``    | int (0..8)  | 0          | Number of performance monitor event counters                    |
 +-----------------------+-------------+------------+-----------------------------------------------------------------+
-| ``MHPMCounterWidth``  | int (64..32)| 40         | Bit width of performance monitor event counters                 |
+| ``MHPMCounterWidth``  | int (64..1) | 40         | Bit width of performance monitor event counters                 |
 +-----------------------+-------------+------------+-----------------------------------------------------------------+
 | ``RV32E``             | bit         | 0          | RV32E mode enable (16 integer registers only)                   |
 +-----------------------+-------------+------------+-----------------------------------------------------------------+
