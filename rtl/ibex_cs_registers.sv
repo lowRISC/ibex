@@ -97,15 +97,15 @@ module ibex_cs_registers #(
       (0     <<  0)  // A - Atomic Instructions extension
     | (1     <<  2)  // C - Compressed extension
     | (0     <<  3)  // D - Double precision floating-point extension
-    | (RV32E <<  4)  // E - RV32E base ISA
+    | {27'b0,RV32E,4'b0}  // E - RV32E base ISA
     | (0     <<  5)  // F - Single precision floating-point extension
     | (1     <<  8)  // I - RV32I/64I/128I base ISA
-    | (RV32M << 12)  // M - Integer Multiply/Divide extension
+    | {19'b0,RV32M,12'b0}  // M - Integer Multiply/Divide extension
     | (0     << 13)  // N - User level interrupts supported
     | (0     << 18)  // S - Supervisor mode implemented
     | (0     << 20)  // U - User mode implemented
     | (0     << 23)  // X - Non-standard extensions present
-    | (MXL   << 30); // M-XLEN
+    | {MXL,30'b0}; // M-XLEN
 
   `define MSTATUS_UIE_BITS        0
   `define MSTATUS_SIE_BITS        1

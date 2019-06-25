@@ -60,7 +60,7 @@ module ibex_register_file #(
 
   always_comb begin : we_a_decoder
     for (int i = 1; i < NUM_WORDS; i++) begin
-      we_a_dec[i] = (waddr_a_i == i) ?  we_a_i : 1'b0;
+      we_a_dec[i] = ({27'b0,waddr_a_i} == i) ?  we_a_i : 1'b0;
     end
   end
 
