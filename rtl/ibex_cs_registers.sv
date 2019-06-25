@@ -93,20 +93,37 @@ module ibex_cs_registers #(
 
   // misa
   localparam logic [1:0] MXL = 2'd1; // M-XLEN: XLEN in M-Mode for RV32
+  localparam logic MISA_X = 0,
+  MISA_W = 0,
+  MISA_V = 0,
+  MISA_U = 0,
+  MISA_T = 0,
+  MISA_S = 0,
+  MISA_R = 0,
+  MISA_Q = 0,
+  MISA_P = 0,
+  MISA_O = 0,
+  MISA_N = 0,
+  MISA_L = 0,
+  MISA_K = 0,
+  MISA_J = 0,
+  MISA_I = 0,
+  MISA_H = 0,
+  MISA_G = 0,
+  MISA_F = 0,
+  MISA_D = 0,
+  MISA_C = 1,
+  MISA_B = 0,
+  MISA_A = 0;
   localparam logic [31:0] MISA_VALUE =
-      (0     <<  0)  // A - Atomic Instructions extension
-    | (1     <<  2)  // C - Compressed extension
-    | (0     <<  3)  // D - Double precision floating-point extension
-    | {27'b0,RV32E,4'b0}  // E - RV32E base ISA
-    | (0     <<  5)  // F - Single precision floating-point extension
-    | (1     <<  8)  // I - RV32I/64I/128I base ISA
-    | {19'b0,RV32M,12'b0}  // M - Integer Multiply/Divide extension
-    | (0     << 13)  // N - User level interrupts supported
-    | (0     << 18)  // S - Supervisor mode implemented
-    | (0     << 20)  // U - User mode implemented
-    | (0     << 23)  // X - Non-standard extensions present
-    | {MXL,30'b0}; // M-XLEN
-
+    {MXL,6'b0,
+     MISA_X,MISA_W,MISA_V,MISA_U,
+     MISA_T,MISA_S,MISA_R,MISA_Q,
+     MISA_P,MISA_O,MISA_N,RV32M,
+     MISA_L,MISA_K,MISA_J,MISA_I,
+     MISA_H,MISA_G,MISA_F,RV32E,
+     MISA_D,MISA_C,MISA_B,MISA_A}; // M-XLEN
+ 
   `define MSTATUS_UIE_BITS        0
   `define MSTATUS_SIE_BITS        1
   `define MSTATUS_MIE_BITS        3
