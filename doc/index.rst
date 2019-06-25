@@ -6,6 +6,7 @@ Ibex User Manual
    :caption: Contents:
 
    introduction
+   getting_started
    integration
    instruction_fetch
    load_store_unit

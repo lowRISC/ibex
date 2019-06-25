@@ -15,7 +15,8 @@
 //                                                                            //
 // Description:    Register file with 31 or 15x 32 bit wide registers.        //
 //                 Register 0 is fixed to 0. This register file is based on   //
-//                 flip flops.                                                //
+//                 flip flops. Use this register file when targeting FPGA     //
+//                 synthesis or Verilator simulation.                         //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -23,7 +24,8 @@
  * RISC-V register file
  *
  * Register file with 31 or 15x 32 bit wide registers. Register 0 is fixed to 0.
- * This register file is based on flip flops.
+ * This register file is based on flip flops. Use this register file when
+ * targeting FPGA synthesis or Verilator simulation.
  */
 module ibex_register_file #(
     parameter bit RV32E              = 0,
