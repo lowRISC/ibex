@@ -52,15 +52,15 @@ module ibex_register_file #(
 );
 
   localparam int unsigned ADDR_WIDTH = RV32E ? 4 : 5;
-  localparam int unsigned NUM_WORDS  = 2**ADDR_WIDTH;
+  localparam logic [ADDR_WIDTH:0] NUM_WORDS  = 2**ADDR_WIDTH;
 
   logic [NUM_WORDS-1:0][DataWidth-1:0] rf_reg;
   logic [NUM_WORDS-1:1][DataWidth-1:0] rf_reg_tmp;
   logic [NUM_WORDS-1:1]                we_a_dec;
 
   always_comb begin : we_a_decoder
-    for (int i = 1; i < NUM_WORDS; i++) begin
-      we_a_dec[i] = ({27'b0,waddr_a_i} == i) ?  we_a_i : 1'b0;
+    for (logic [ADDR_WIDTH:0] i = 1; i < NUM_WORDS; i++) begin
+      we_a_dec[i] = {1'b0,waddr_a_i} == i ?  we_a_i : 1'b0;
     end
   end
 
@@ -69,7 +69,7 @@ module ibex_register_file #(
     if (!rst_ni) begin
       rf_reg_tmp <= '{default:'0};
     end else begin
-      for (int r = 1; r < NUM_WORDS; r++) begin
+      for (logic [ADDR_WIDTH:0] r = 1; r < NUM_WORDS; r++) begin
         if (we_a_dec[r]) rf_reg_tmp[r] <= wdata_a_i;
       end
     end
