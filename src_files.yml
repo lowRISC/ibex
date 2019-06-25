@@ -41,7 +41,7 @@ ibex_regfile_rtl:
   incdirs: [
   ]
   files: [
-    ibex_register_file.sv,
+    ibex_register_file_latch.sv,
   ]
 ibex_regfile_fpga:
   targets: [
