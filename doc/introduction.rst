@@ -40,6 +40,7 @@ Since latches are not well supported on FPGAs, it is crucial to select the flip-
 Contents
 --------
 
+:ref:`getting-started` discusses the requirements and initial steps to start using Ibex.
 :ref:`core-integration` provides the instantiation template and gives descriptions of the design parameters as well as the input and output ports.
 The instruction and data interfaces of Ibex are explained in :ref:`instruction-fetch` and :ref:`load-store-unit`, respectively.
 The two register-file flavors are described in :ref:`register-file`.

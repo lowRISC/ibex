@@ -17,6 +17,9 @@
 // Description:    Register file with 31 or 15x 32 bit wide registers.        //
 //                 Register 0 is fixed to 0. This register file is based on   //
 //                 latches and is thus smaller than the flip-flop based RF.   //
+//                 It requires a target technology-specific clock gating      //
+//                 cell. Use this register file when targeting ASIC           //
+//                 synthesis or event-based simulators.                       //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -25,7 +28,8 @@
  *
  * Register file with 31 or 15x 32 bit wide registers. Register 0 is fixed to 0.
  * This register file is based on latches and is thus smaller than the flip-flop
- * based RF.
+ * based RF. It requires a target technology-specific clock gating cell. Use this
+ * register file when targeting ASIC synthesis or event-based simulators.
  */
 module ibex_register_file #(
     parameter bit RV32E              = 0,
@@ -143,5 +147,12 @@ module ibex_register_file #(
       end
     end
   end
+
+`ifdef VERILATOR
+  initial begin
+    $display("Latch-based register file not supported for Verilator simulation");
+    $fatal;
+  end
+`endif
 
 endmodule
