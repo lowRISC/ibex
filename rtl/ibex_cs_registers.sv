@@ -148,6 +148,17 @@ module ibex_cs_registers #(
       priv_lvl_e    prv;
   } Dcsr_t;
 
+  // Interrupt and exception control signals
+  logic [31:0] exception_pc;
+
+  // CSRs
+  Status_t     mstatus_q, mstatus_n;
+  logic [31:0] mepc_q, mepc_n;
+  logic [31:0] mcause_q, mcause_n;
+  Dcsr_t       dcsr_q, dcsr_n;
+  logic [31:0] depc_q, depc_n;
+  logic [31:0] dscratch0_q, dscratch0_n;
+  logic [31:0] dscratch1_q, dscratch1_n;
   // Hardware performance monitor signals
   logic [31:0] mcountinhibit_n, mcountinhibit_q, mcountinhibit;
   logic [31:0] mcountinhibit_force;
@@ -166,16 +177,6 @@ module ibex_cs_registers #(
   logic [31:0] csr_rdata_int;
   logic        csr_we_int;
   logic        csr_wreq;
-
-  // Interrupt control signals
-  logic [31:0] mepc_q, mepc_n;
-  Dcsr_t       dcsr_q, dcsr_n;
-  logic [31:0] depc_q, depc_n;
-  logic [31:0] dscratch0_q, dscratch0_n;
-  logic [31:0] dscratch1_q, dscratch1_n;
-  logic [ 5:0] mcause_q, mcause_n;
-  Status_t     mstatus_q, mstatus_n;
-  logic [31:0] exception_pc;
 
   // Access violation signals
   logic        illegal_csr;
@@ -200,6 +201,9 @@ module ibex_cs_registers #(
     illegal_csr   = 1'b0;
 
     unique case (csr_addr_i)
+      // mhartid: unique hardware thread id
+      CSR_MHARTID: csr_rdata_int = {21'b0, cluster_id_i[5:0], 1'b0, core_id_i[3:0]};
+
       // mstatus: always M-mode, contains IE bit
       CSR_MSTATUS: begin
         csr_rdata_int = {
@@ -213,6 +217,9 @@ module ibex_cs_registers #(
         };
       end
 
+      // misa
+      CSR_MISA: csr_rdata_int = MISA_VALUE;
+
       // mtvec: machine trap-handler base address
       CSR_MTVEC: csr_rdata_int = boot_addr_i;
 
@@ -222,18 +229,13 @@ module ibex_cs_registers #(
       // mcause: exception cause
       CSR_MCAUSE: csr_rdata_int = {mcause_q[5], 26'b0, mcause_q[4:0]};
 
-      // mhartid: unique hardware thread id
-      CSR_MHARTID: csr_rdata_int = {21'b0, cluster_id_i[5:0], 1'b0, core_id_i[3:0]};
-
-      // misa
-      CSR_MISA: csr_rdata_int = MISA_VALUE;
 
       CSR_DCSR:      csr_rdata_int = dcsr_q;
       CSR_DPC:       csr_rdata_int = depc_q;
       CSR_DSCRATCH0: csr_rdata_int = dscratch0_q;
       CSR_DSCRATCH1: csr_rdata_int = dscratch1_q;
 
-      // Machine Counter/Timers
+      // machine counter/timers
       CSR_MCOUNTINHIBIT: csr_rdata_int = mcountinhibit;
       CSR_MCYCLE:        csr_rdata_int = mhpmcounter_q[0][31: 0];
       CSR_MCYCLEH:       csr_rdata_int = mhpmcounter_q[0][63:32];
@@ -276,15 +278,15 @@ module ibex_cs_registers #(
 
   // write logic
   always_comb begin
-    mepc_n       = mepc_q;
-    depc_n       = depc_q;
-    dcsr_n       = dcsr_q;
-    dscratch0_n  = dscratch0_q;
-    dscratch1_n  = dscratch1_q;
-    mstatus_n    = mstatus_q;
-    mcause_n     = mcause_q;
     exception_pc = pc_id_i;
 
+    mstatus_n    = mstatus_q;
+    mepc_n       = mepc_q;
+    mcause_n     = mcause_q;
+    dcsr_n       = dcsr_q;
+    depc_n       = depc_q;
+    dscratch0_n  = dscratch0_q;
+    dscratch1_n  = dscratch1_q;
     mcountinhibit_we = 1'b0;
     mhpmcounter_we   = '0;
     mhpmcounterh_we  = '0;
@@ -303,6 +305,7 @@ module ibex_cs_registers #(
 
       // mepc: exception program counter
       CSR_MEPC: if (csr_we_int) mepc_n = csr_wdata_int;
+
       // mcause
       CSR_MCAUSE: if (csr_we_int) mcause_n = {csr_wdata_int[31], csr_wdata_int[4:0]};
 
@@ -471,14 +474,13 @@ module ibex_cs_registers #(
       };
       mepc_q     <= '0;
       mcause_q   <= '0;
-
-      depc_q     <= '0;
       dcsr_q     <= '{
           xdebugver: XDEBUGVER_NO,   // 4'h0
           cause:     DBG_CAUSE_NONE, // 3'h0
           prv:       PRIV_LVL_M,
           default:   '0
       };
+      depc_q     <= '0;
       dscratch0_q <= '0;
       dscratch1_q <= '0;
     end else begin
@@ -490,9 +492,8 @@ module ibex_cs_registers #(
       };
       mepc_q      <= mepc_n;
       mcause_q    <= mcause_n;
-
-      depc_q      <= depc_n;
       dcsr_q      <= dcsr_n;
+      depc_q      <= depc_n;
       dscratch0_q <= dscratch0_n;
       dscratch1_q <= dscratch1_n;
     end
