@@ -8,7 +8,7 @@ For optimal performance and timing closure reasons, a prefetcher is used which f
 
 The following table describes the signals that are used to fetch instructions.
 This interface is a simplified version of the interface used on the data interface as described in :ref:`load-store-unit`.
-The main difference is that the instruction interface does not allow for writes transcations and thus needs less signals.
+The main difference is that the instruction interface does not allow for write transactions and thus needs less signals.
 
 .. tabularcolumns:: |p{4cm}|l|p{9cm}|
 

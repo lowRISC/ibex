@@ -13,9 +13,9 @@ Communication with this event/interrupt controller is established through the fo
 +-------------------------+-----------+-----------------------------------------------+
 | ``irq_id_i[4:0]``       | in        | Interrupt ID                                  |
 +-------------------------+-----------+-----------------------------------------------+
-| ``irq_ack_o``           | out       | Interrupt acknowledgement                     |
+| ``irq_ack_o``           | out       | Interrupt acknowledgment                      |
 +-------------------------+-----------+-----------------------------------------------+
-| ``irq_id_o[4:0]``       | out       | Interrupt acknowledgement ID                  |
+| ``irq_id_o[4:0]``       | out       | Interrupt acknowledgment ID                   |
 +-------------------------+-----------+-----------------------------------------------+
 
 When external interrupts are enabled, the core will serve interrupt requests.
@@ -50,7 +50,7 @@ An example cycle is shown in :numref:`irq-processing-prio`.
 
 .. wavedrom::
    :name: irq-processing-prio
-   :caption: Interrupt processing with priorization. The processing of ``ID0`` has already started.
+   :caption: Interrupt processing with prioritization. The processing of ``ID0`` has already started.
 
    { "signal": [
      { "name": "clk_i",     "wave": "p...", "period": 2 },
