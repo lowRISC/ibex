@@ -109,18 +109,20 @@ module ibex_core #(
 
   // IF/ID signals
   logic        instr_valid_id;
-  logic [31:0] instr_rdata_id;    // Instruction sampled inside IF stage
-  logic        is_compressed_id;
-  logic        illegal_c_insn_id; // Illegal compressed instruction sent to ID stage
-  logic        illegal_insn_id;   // ID stage sees an illegal instruction
-  logic [31:0] pc_if;             // Program counter in IF stage
-  logic [31:0] pc_id;             // Program counter in ID stage
+  logic [31:0] instr_rdata_id;         // Instruction sampled inside IF stage
+  logic [15:0] instr_rdata_c_id;       // Compressed instruction sampled inside IF stage
+  logic        instr_is_compressed_id;
+  logic        illegal_c_insn_id;      // Illegal compressed instruction sent to ID stage
+  logic        illegal_insn_id;        // ID stage sees an illegal instruction
+  logic [31:0] pc_if;                  // Program counter in IF stage
+  logic [31:0] pc_id;                  // Program counter in ID stage
 
   logic        clear_instr_valid;
   logic        pc_set;
-  pc_sel_e     pc_mux_id;         // Mux selector for next PC
-  exc_pc_sel_e exc_pc_mux_id;     // Mux selector for exception PC
-  exc_cause_e  exc_cause;         // Exception cause + IRQ ID for vectorized interrupt lines
+
+  pc_sel_e     pc_mux_id;              // Mux selector for next PC
+  exc_pc_sel_e exc_pc_mux_id;          // Mux selector for exception PC
+  exc_cause_e  exc_cause;              // Exception cause
 
   logic        lsu_load_err;
   logic        lsu_store_err;
@@ -129,7 +131,7 @@ module ibex_core #(
   logic        is_decoding;
 
   logic        data_misaligned;
-  logic [31:0] misaligned_addr;
+  logic [31:0] lsu_addr_last;
 
   // Jump and branch target and decision (EX->IF)
   logic [31:0] jump_target_ex;
@@ -147,7 +149,7 @@ module ibex_core #(
   logic [31:0] alu_operand_a_ex;
   logic [31:0] alu_operand_b_ex;
 
-  logic [31:0] alu_adder_result_ex; // Used to forward computed address to LSU
+  logic [31:0] alu_adder_result_ex;    // Used to forward computed address to LSU
   logic [31:0] regfile_wdata_ex;
 
   // Multiplier Control
@@ -167,8 +169,9 @@ module ibex_core #(
   csr_num_e    csr_addr;
   logic [31:0] csr_rdata;
   logic [31:0] csr_wdata;
-  logic        illegal_csr_insn_id; // CSR access to non-existent register,
-                                    // with wrong priviledge level, or missing write permissions
+  logic        illegal_csr_insn_id;    // CSR access to non-existent register,
+                                       // with wrong priviledge level,
+                                       // or missing write permissions
 
   // Data Memory Control
   logic        data_we_ex;
@@ -190,18 +193,19 @@ module ibex_core #(
   logic        data_valid_lsu;
 
   // Signals between instruction core interface and pipe (if and id stages)
-  logic        instr_req_int;    // Id stage asserts a req to instruction core interface
+  logic        instr_req_int;          // Id stage asserts a req to instruction core interface
 
   // Interrupts
   logic        m_irq_enable;
   logic [31:0] mepc, depc;
 
-  logic        csr_save_cause;
   logic        csr_save_if;
   logic        csr_save_id;
-  exc_cause_e  csr_cause;
   logic        csr_restore_mret_id;
   logic        csr_restore_dret_id;
+  logic        csr_save_cause;
+  exc_cause_e  csr_cause;
+  logic [31:0] csr_mtval;
 
   // debug mode and dcsr configuration
   dbg_cause_e  debug_cause;
@@ -221,7 +225,6 @@ module ibex_core #(
   // RISC-V Formal Interface signals
 `ifdef RVFI
   logic [31:0] rvfi_insn_opcode;
-  logic [15:0] compressed_instr;
   logic        rvfi_valid_int;
   logic [4:0]  rvfi_rs1_addr_id;
   logic [4:0]  rvfi_rs2_addr_id;
@@ -296,52 +299,50 @@ module ibex_core #(
       .DmHaltAddr       ( DmHaltAddr      ),
       .DmExceptionAddr  ( DmExceptionAddr )
   ) if_stage_i (
-      .clk_i                    ( clk               ),
-      .rst_ni                   ( rst_ni            ),
+      .clk_i                    ( clk                    ),
+      .rst_ni                   ( rst_ni                 ),
 
       // boot address (trap vector location)
-      .boot_addr_i              ( boot_addr_i       ),
+      .boot_addr_i              ( boot_addr_i            ),
 
       // instruction request control
-      .req_i                    ( instr_req_int     ),
+      .req_i                    ( instr_req_int          ),
 
       // instruction cache interface
-      .instr_req_o              ( instr_req_o       ),
-      .instr_addr_o             ( instr_addr_o      ),
-      .instr_gnt_i              ( instr_gnt_i       ),
-      .instr_rvalid_i           ( instr_rvalid_i    ),
-      .instr_rdata_i            ( instr_rdata_i     ),
+      .instr_req_o              ( instr_req_o            ),
+      .instr_addr_o             ( instr_addr_o           ),
+      .instr_gnt_i              ( instr_gnt_i            ),
+      .instr_rvalid_i           ( instr_rvalid_i         ),
+      .instr_rdata_i            ( instr_rdata_i          ),
 
       // outputs to ID stage
-      .instr_valid_id_o         ( instr_valid_id    ),
-      .instr_rdata_id_o         ( instr_rdata_id    ),
-      .is_compressed_id_o       ( is_compressed_id  ),
-`ifdef RVFI
-      .instr_rdata_compressed_o ( compressed_instr  ),
-`endif
-      .illegal_c_insn_id_o      ( illegal_c_insn_id ),
-      .pc_if_o                  ( pc_if             ),
-      .pc_id_o                  ( pc_id             ),
+      .instr_valid_id_o         ( instr_valid_id         ),
+      .instr_rdata_id_o         ( instr_rdata_id         ),
+      .instr_rdata_c_id_o       ( instr_rdata_c_id       ),
+      .instr_is_compressed_id_o ( instr_is_compressed_id ),
+      .illegal_c_insn_id_o      ( illegal_c_insn_id      ),
+      .pc_if_o                  ( pc_if                  ),
+      .pc_id_o                  ( pc_id                  ),
 
       // control signals
-      .clear_instr_valid_i      ( clear_instr_valid ),
-      .pc_set_i                 ( pc_set            ),
-      .exception_pc_reg_i       ( mepc              ), // exception return address
-      .depc_i                   ( depc              ), // debug return address
-      .pc_mux_i                 ( pc_mux_id         ), // sel for pc multiplexer
-      .exc_pc_mux_i             ( exc_pc_mux_id     ),
-      .exc_vec_pc_mux_i         ( exc_cause         ),
+      .clear_instr_valid_i      ( clear_instr_valid      ),
+      .pc_set_i                 ( pc_set                 ),
+      .exception_pc_reg_i       ( mepc                   ), // exception return address
+      .depc_i                   ( depc                   ), // debug return address
+      .pc_mux_i                 ( pc_mux_id              ), // sel for pc multiplexer
+      .exc_pc_mux_i             ( exc_pc_mux_id          ),
+      .exc_vec_pc_mux_i         ( exc_cause              ),
 
       // Jump targets
-      .jump_target_ex_i         ( jump_target_ex    ),
+      .jump_target_ex_i         ( jump_target_ex         ),
 
       // pipeline stalls
-      .halt_if_i                ( halt_if           ),
-      .id_ready_i               ( id_ready          ),
-      .if_valid_o               ( if_valid          ),
+      .halt_if_i                ( halt_if                ),
+      .id_ready_i               ( id_ready               ),
+      .if_valid_o               ( if_valid               ),
 
-      .if_busy_o                ( if_busy           ),
-      .perf_imiss_o             ( perf_imiss        )
+      .if_busy_o                ( if_busy                ),
+      .perf_imiss_o             ( perf_imiss             )
   );
 
 
@@ -353,49 +354,50 @@ module ibex_core #(
       .RV32E ( RV32E ),
       .RV32M ( RV32M )
   ) id_stage_i (
-      .clk_i                        ( clk                  ),
-      .rst_ni                       ( rst_ni               ),
+      .clk_i                        ( clk                    ),
+      .rst_ni                       ( rst_ni                 ),
 
-      .test_en_i                    ( test_en_i            ),
+      .test_en_i                    ( test_en_i              ),
 
       // Processor Enable
-      .fetch_enable_i               ( fetch_enable_i       ),
-      .ctrl_busy_o                  ( ctrl_busy            ),
-      .core_ctrl_firstfetch_o       ( core_ctrl_firstfetch ),
-      .is_decoding_o                ( is_decoding          ),
-      .illegal_insn_o               ( illegal_insn_id      ),
+      .fetch_enable_i               ( fetch_enable_i         ),
+      .ctrl_busy_o                  ( ctrl_busy              ),
+      .core_ctrl_firstfetch_o       ( core_ctrl_firstfetch   ),
+      .is_decoding_o                ( is_decoding            ),
+      .illegal_insn_o               ( illegal_insn_id        ),
 
       // Interface to instruction memory
-      .instr_valid_i                ( instr_valid_id       ),
-      .instr_rdata_i                ( instr_rdata_id       ),
-      .instr_req_o                  ( instr_req_int        ),
+      .instr_valid_i                ( instr_valid_id         ),
+      .instr_rdata_i                ( instr_rdata_id         ),
+      .instr_rdata_c_i              ( instr_rdata_c_id       ),
+      .instr_is_compressed_i        ( instr_is_compressed_id ),
+      .instr_req_o                  ( instr_req_int          ),
 
       // Jumps and branches
-      .branch_decision_i            ( branch_decision      ),
+      .branch_decision_i            ( branch_decision        ),
 
       // IF and ID control signals
-      .clear_instr_valid_o          ( clear_instr_valid    ),
-      .pc_set_o                     ( pc_set               ),
-      .pc_mux_o                     ( pc_mux_id            ),
-      .exc_pc_mux_o                 ( exc_pc_mux_id        ),
-      .exc_cause_o                  ( exc_cause            ),
+      .clear_instr_valid_o          ( clear_instr_valid      ),
+      .pc_set_o                     ( pc_set                 ),
+      .pc_mux_o                     ( pc_mux_id              ),
+      .exc_pc_mux_o                 ( exc_pc_mux_id          ),
+      .exc_cause_o                  ( exc_cause              ),
 
-      .illegal_c_insn_i             ( illegal_c_insn_id    ),
-      .is_compressed_i              ( is_compressed_id     ),
+      .illegal_c_insn_i             ( illegal_c_insn_id      ),
 
-      .pc_id_i                      ( pc_id                ),
+      .pc_id_i                      ( pc_id                  ),
 
       // Stalls
-      .halt_if_o                    ( halt_if              ),
+      .halt_if_o                    ( halt_if                ),
 
-      .id_ready_o                   ( id_ready             ),
-      .ex_ready_i                   ( ex_ready             ),
+      .id_ready_o                   ( id_ready               ),
+      .ex_ready_i                   ( ex_ready               ),
 
-      .id_valid_o                   ( id_valid             ),
+      .id_valid_o                   ( id_valid               ),
 
-      .alu_operator_ex_o            ( alu_operator_ex      ),
-      .alu_operand_a_ex_o           ( alu_operand_a_ex     ),
-      .alu_operand_b_ex_o           ( alu_operand_b_ex     ),
+      .alu_operator_ex_o            ( alu_operator_ex        ),
+      .alu_operand_a_ex_o           ( alu_operand_a_ex       ),
+      .alu_operand_b_ex_o           ( alu_operand_b_ex       ),
 
       .mult_en_ex_o                 ( mult_en_ex             ),
       .div_en_ex_o                  ( div_en_ex              ),
@@ -405,63 +407,64 @@ module ibex_core #(
       .multdiv_operand_b_ex_o       ( multdiv_operand_b_ex   ),
 
       // CSR ID/EX
-      .csr_access_ex_o              ( csr_access_ex        ),
-      .csr_op_ex_o                  ( csr_op_ex            ),
-      .csr_cause_o                  ( csr_cause            ),
-      .csr_save_if_o                ( csr_save_if          ), // control signal to save pc
-      .csr_save_id_o                ( csr_save_id          ), // control signal to save pc
-      .csr_restore_mret_id_o        ( csr_restore_mret_id  ), // control signal to restore pc
-      .csr_restore_dret_id_o        ( csr_restore_dret_id  ), // control signal to restore pc
-      .csr_save_cause_o             ( csr_save_cause       ),
-      .illegal_csr_insn_i           ( illegal_csr_insn_id  ),
+      .csr_access_ex_o              ( csr_access_ex          ),
+      .csr_op_ex_o                  ( csr_op_ex              ),
+      .csr_save_if_o                ( csr_save_if            ), // control signal to save pc
+      .csr_save_id_o                ( csr_save_id            ), // control signal to save pc
+      .csr_restore_mret_id_o        ( csr_restore_mret_id    ), // control signal to restore pc
+      .csr_restore_dret_id_o        ( csr_restore_dret_id    ), // control signal to restore pc
+      .csr_save_cause_o             ( csr_save_cause         ),
+      .csr_cause_o                  ( csr_cause              ),
+      .csr_mtval_o                  ( csr_mtval              ),
+      .illegal_csr_insn_i           ( illegal_csr_insn_id    ),
 
       // LSU
-      .data_req_ex_o                ( data_req_ex          ), // to load store unit
-      .data_we_ex_o                 ( data_we_ex           ), // to load store unit
-      .data_type_ex_o               ( data_type_ex         ), // to load store unit
-      .data_sign_ext_ex_o           ( data_sign_ext_ex     ), // to load store unit
-      .data_reg_offset_ex_o         ( data_reg_offset_ex   ), // to load store unit
-      .data_wdata_ex_o              ( data_wdata_ex        ), // to load store unit
+      .data_req_ex_o                ( data_req_ex            ), // to load store unit
+      .data_we_ex_o                 ( data_we_ex             ), // to load store unit
+      .data_type_ex_o               ( data_type_ex           ), // to load store unit
+      .data_sign_ext_ex_o           ( data_sign_ext_ex       ), // to load store unit
+      .data_reg_offset_ex_o         ( data_reg_offset_ex     ), // to load store unit
+      .data_wdata_ex_o              ( data_wdata_ex          ), // to load store unit
 
-      .data_misaligned_i            ( data_misaligned      ),
-      .misaligned_addr_i            ( misaligned_addr      ),
+      .data_misaligned_i            ( data_misaligned        ),
+      .lsu_addr_last_i              ( lsu_addr_last          ),
 
-      .lsu_load_err_i               ( lsu_load_err         ),
-      .lsu_store_err_i              ( lsu_store_err        ),
+      .lsu_load_err_i               ( lsu_load_err           ),
+      .lsu_store_err_i              ( lsu_store_err          ),
 
       // Interrupt Signals
-      .irq_i                        ( irq_i                ), // incoming interrupts
-      .irq_id_i                     ( irq_id_i             ),
-      .m_irq_enable_i               ( m_irq_enable         ),
-      .irq_ack_o                    ( irq_ack_o            ),
-      .irq_id_o                     ( irq_id_o             ),
+      .irq_i                        ( irq_i                  ), // incoming interrupts
+      .irq_id_i                     ( irq_id_i               ),
+      .m_irq_enable_i               ( m_irq_enable           ),
+      .irq_ack_o                    ( irq_ack_o              ),
+      .irq_id_o                     ( irq_id_o               ),
 
       // Debug Signal
-      .debug_cause_o                ( debug_cause          ),
-      .debug_csr_save_o             ( debug_csr_save       ),
-      .debug_req_i                  ( debug_req_i          ),
-      .debug_single_step_i          ( debug_single_step    ),
-      .debug_ebreakm_i              ( debug_ebreakm        ),
+      .debug_cause_o                ( debug_cause            ),
+      .debug_csr_save_o             ( debug_csr_save         ),
+      .debug_req_i                  ( debug_req_i            ),
+      .debug_single_step_i          ( debug_single_step      ),
+      .debug_ebreakm_i              ( debug_ebreakm          ),
 
       // write data to commit in the register file
-      .regfile_wdata_lsu_i          ( regfile_wdata_lsu    ),
-      .regfile_wdata_ex_i           ( regfile_wdata_ex     ),
-      .csr_rdata_i                  ( csr_rdata            ),
+      .regfile_wdata_lsu_i          ( regfile_wdata_lsu      ),
+      .regfile_wdata_ex_i           ( regfile_wdata_ex       ),
+      .csr_rdata_i                  ( csr_rdata              ),
 
 `ifdef RVFI
-      .rfvi_reg_raddr_ra_o          ( rvfi_rs1_addr_id     ),
-      .rfvi_reg_rdata_ra_o          ( rvfi_rs1_data_id     ),
-      .rfvi_reg_raddr_rb_o          ( rvfi_rs2_addr_id     ),
-      .rfvi_reg_rdata_rb_o          ( rvfi_rs2_data_id     ),
-      .rfvi_reg_waddr_rd_o          ( rvfi_rd_addr_id      ),
-      .rfvi_reg_wdata_rd_o          ( rvfi_rd_wdata_id     ),
-      .rfvi_reg_we_o                ( rvfi_rd_we_id        ),
+      .rfvi_reg_raddr_ra_o          ( rvfi_rs1_addr_id       ),
+      .rfvi_reg_rdata_ra_o          ( rvfi_rs1_data_id       ),
+      .rfvi_reg_raddr_rb_o          ( rvfi_rs2_addr_id       ),
+      .rfvi_reg_rdata_rb_o          ( rvfi_rs2_data_id       ),
+      .rfvi_reg_waddr_rd_o          ( rvfi_rd_addr_id        ),
+      .rfvi_reg_wdata_rd_o          ( rvfi_rd_wdata_id       ),
+      .rfvi_reg_we_o                ( rvfi_rd_we_id          ),
 `endif
 
       // Performance Counters
-      .perf_jump_o                  ( perf_jump            ),
-      .perf_branch_o                ( perf_branch          ),
-      .perf_tbranch_o               ( perf_tbranch         )
+      .perf_jump_o                  ( perf_jump              ),
+      .perf_branch_o                ( perf_branch            ),
+      .perf_tbranch_o               ( perf_tbranch           )
   );
 
 
@@ -528,7 +531,7 @@ module ibex_core #(
       .adder_result_ex_i     ( alu_adder_result_ex),
 
       .data_misaligned_o     ( data_misaligned    ),
-      .misaligned_addr_o     ( misaligned_addr    ),
+      .addr_last_o           ( lsu_addr_last      ),
 
       // exception signals
       .load_err_o            ( lsu_load_err       ),
@@ -563,57 +566,59 @@ module ibex_core #(
       .RV32E            ( RV32E            ),
       .RV32M            ( RV32M            )
   ) cs_registers_i (
-      .clk_i                   ( clk                 ),
-      .rst_ni                  ( rst_ni              ),
+      .clk_i                   ( clk                    ),
+      .rst_ni                  ( rst_ni                 ),
 
       // Core and Cluster ID from outside
-      .core_id_i               ( core_id_i           ),
-      .cluster_id_i            ( cluster_id_i        ),
+      .core_id_i               ( core_id_i              ),
+      .cluster_id_i            ( cluster_id_i           ),
       // boot address
-      .boot_addr_i             ( boot_addr_i         ),
+      .boot_addr_i             ( boot_addr_i            ),
+
       // Interface to CSRs (SRAM like)
-      .csr_access_i            ( csr_access          ),
-      .csr_addr_i              ( csr_addr            ),
-      .csr_wdata_i             ( csr_wdata           ),
-      .csr_op_i                ( csr_op              ),
-      .csr_rdata_o             ( csr_rdata           ),
+      .csr_access_i            ( csr_access             ),
+      .csr_addr_i              ( csr_addr               ),
+      .csr_wdata_i             ( csr_wdata              ),
+      .csr_op_i                ( csr_op                 ),
+      .csr_rdata_o             ( csr_rdata              ),
 
       // Interrupt related control signals
-      .m_irq_enable_o          ( m_irq_enable        ),
-      .mepc_o                  ( mepc                ),
+      .m_irq_enable_o          ( m_irq_enable           ),
+      .mepc_o                  ( mepc                   ),
 
       // debug
-      .debug_cause_i           ( debug_cause         ),
-      .debug_csr_save_i        ( debug_csr_save      ),
-      .depc_o                  ( depc                ),
-      .debug_single_step_o     ( debug_single_step   ),
-      .debug_ebreakm_o         ( debug_ebreakm       ),
+      .debug_cause_i           ( debug_cause            ),
+      .debug_csr_save_i        ( debug_csr_save         ),
+      .depc_o                  ( depc                   ),
+      .debug_single_step_o     ( debug_single_step      ),
+      .debug_ebreakm_o         ( debug_ebreakm          ),
 
-      .pc_if_i                 ( pc_if               ),
-      .pc_id_i                 ( pc_id               ),
+      .pc_if_i                 ( pc_if                  ),
+      .pc_id_i                 ( pc_id                  ),
 
-      .csr_save_if_i           ( csr_save_if         ),
-      .csr_save_id_i           ( csr_save_id         ),
-      .csr_restore_mret_i      ( csr_restore_mret_id ),
-      .csr_restore_dret_i      ( csr_restore_dret_id ),
-      .csr_cause_i             ( csr_cause           ),
-      .csr_save_cause_i        ( csr_save_cause      ),
-      .illegal_csr_insn_o      ( illegal_csr_insn_id ),
+      .csr_save_if_i           ( csr_save_if            ),
+      .csr_save_id_i           ( csr_save_id            ),
+      .csr_restore_mret_i      ( csr_restore_mret_id    ),
+      .csr_restore_dret_i      ( csr_restore_dret_id    ),
+      .csr_save_cause_i        ( csr_save_cause         ),
+      .csr_cause_i             ( csr_cause              ),
+      .csr_mtval_i             ( csr_mtval              ),
+      .illegal_csr_insn_o      ( illegal_csr_insn_id    ),
 
       // performance counter related signals
-      .insn_ret_i              ( insn_ret            ),
-      .id_valid_i              ( id_valid            ),
-      .is_compressed_i         ( is_compressed_id    ),
-      .is_decoding_i           ( is_decoding         ),
+      .insn_ret_i              ( insn_ret               ),
+      .id_valid_i              ( id_valid               ),
+      .instr_is_compressed_i   ( instr_is_compressed_id ),
+      .is_decoding_i           ( is_decoding            ),
 
-      .imiss_i                 ( perf_imiss          ),
-      .pc_set_i                ( pc_set              ),
-      .jump_i                  ( perf_jump           ),
-      .branch_i                ( perf_branch         ),
-      .branch_taken_i          ( perf_tbranch        ),
-      .mem_load_i              ( perf_load           ),
-      .mem_store_i             ( perf_store          ),
-      .lsu_busy_i              ( lsu_busy            )
+      .imiss_i                 ( perf_imiss             ),
+      .pc_set_i                ( pc_set                 ),
+      .jump_i                  ( perf_jump              ),
+      .branch_i                ( perf_branch            ),
+      .branch_taken_i          ( perf_tbranch           ),
+      .mem_load_i              ( perf_load              ),
+      .mem_store_i             ( perf_store             ),
+      .lsu_busy_i              ( lsu_busy               )
   );
 
 `ifdef RVFI
@@ -672,7 +677,7 @@ module ibex_core #(
 
   always_comb begin
     if (is_compressed_id) begin
-      rvfi_insn_opcode = {16'b0, compressed_instr};
+      rvfi_insn_opcode = {16'b0, instr_rdata_c_id};
     end else begin
       rvfi_insn_opcode = instr_rdata_id;
     end

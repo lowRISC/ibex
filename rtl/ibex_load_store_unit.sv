@@ -52,17 +52,19 @@ module ibex_load_store_unit (
     output logic [31:0]  data_rdata_ex_o,      // requested data                   -> to EX
     input  logic         data_req_ex_i,        // data request                     -> from EX
 
-    input  logic [31:0]  adder_result_ex_i,
+    input  logic [31:0]  adder_result_ex_i,    // address computed in ALU          -> from EX
 
     output logic         data_misaligned_o,    // misaligned access detected       -> to controller
-    output logic [31:0]  misaligned_addr_o,
+    output logic [31:0]  addr_last_o,          // address of last transaction      -> to controller
+                                               // -> mtval
+                                               // -> AGU for misaligned accesses
 
     // exception signals
     output logic         load_err_o,
     output logic         store_err_o,
 
     // stall signal
-    output logic         lsu_update_addr_o, // LSU ready for new data in EX stage
+    output logic         lsu_update_addr_o,    // LSU ready for new data in EX stage
     output logic         data_valid_o,
 
     output logic         busy_o
@@ -70,6 +72,7 @@ module ibex_load_store_unit (
 
   logic [31:0]  data_addr;
   logic [31:0]  data_addr_w_aligned;
+  logic [31:0]  addr_last_q, addr_last_n;
 
   // registers for data_rdata alignment and sign extension
   logic [1:0]   data_type_q;
@@ -85,7 +88,6 @@ module ibex_load_store_unit (
   logic         misaligned_st;   // high if we are currently performing the second part
                                  // of a misaligned store
   logic         data_misaligned, data_misaligned_q;
-  logic         increase_address;
 
   typedef enum logic [2:0]  {
     IDLE, WAIT_GNT_MIS, WAIT_RVALID_MIS, WAIT_GNT, WAIT_RVALID
@@ -289,19 +291,26 @@ module ibex_load_store_unit (
     endcase //~case(rdata_type_q)
   end
 
+  // store last output address for mtval + AGU for misaligned transactions
+  // do not update in case of errors, mtval needs the failing address
+  always_comb begin
+    addr_last_n = addr_last_q;
+    if (data_req_o & data_gnt_i & ~(load_err_o | store_err_o)) begin
+      addr_last_n = data_addr_o;
+    end
+  end
+
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       ls_fsm_cs         <= IDLE;
+      addr_last_q       <= '0;
       rdata_q           <= '0;
       data_misaligned_q <= '0;
-      misaligned_addr_o <= 32'b0;
     end else begin
       ls_fsm_cs         <= ls_fsm_ns;
+      addr_last_q       <= addr_last_n;
       if (lsu_update_addr_o) begin
         data_misaligned_q <= data_misaligned;
-        if (increase_address) begin
-          misaligned_addr_o <= data_addr;
-        end
       end
       if (data_rvalid_i && !data_we_q) begin
         // if we have detected a misaligned access, and we are
@@ -333,6 +342,8 @@ module ibex_load_store_unit (
 
   assign misaligned_st = data_misaligned_q;
 
+  assign addr_last_o   = addr_last_q;
+
   // to know what kind of error to signal, we need to know the type of the transaction to which
   // the outsanding rvalid belongs.
   assign load_err_o    = data_err_i & data_rvalid_i & ~data_we_q;
@@ -347,17 +358,15 @@ module ibex_load_store_unit (
     lsu_update_addr_o = 1'b0;
 
     data_valid_o      = 1'b0;
-    increase_address  = 1'b0;
     data_misaligned_o = 1'b0;
 
     unique case(ls_fsm_cs)
       // starts from not active and stays in IDLE until request was granted
       IDLE: begin
         if (data_req_ex_i) begin
-          data_req_o     = data_req_ex_i;
+          data_req_o = data_req_ex_i;
           if (data_gnt_i) begin
-            lsu_update_addr_o   = 1'b1;
-            increase_address = data_misaligned;
+            lsu_update_addr_o = 1'b1;
             ls_fsm_ns = data_misaligned ? WAIT_RVALID_MIS : WAIT_RVALID;
           end else begin
             ls_fsm_ns = data_misaligned ? WAIT_GNT_MIS    : WAIT_GNT;
@@ -369,15 +378,12 @@ module ibex_load_store_unit (
         data_req_o = 1'b1;
         if (data_gnt_i) begin
           lsu_update_addr_o = 1'b1;
-          increase_address  = data_misaligned;
           ls_fsm_ns = WAIT_RVALID_MIS;
         end
       end // WAIT_GNT_MIS
 
       // wait for rvalid in WB stage and send a new request if there is any
       WAIT_RVALID_MIS: begin
-        //increase_address goes down, we already have the proper address
-        increase_address  = 1'b0;
         //tell the controller to update the address
         data_misaligned_o = 1'b1;
         data_req_o        = 1'b0;

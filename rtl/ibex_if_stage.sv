@@ -40,48 +40,50 @@ module ibex_if_stage #(
     input  logic [31:0]               boot_addr_i,
     // instruction request control
     input  logic                      req_i,
+
     // instruction cache interface
     output logic                      instr_req_o,
     output logic [31:0]               instr_addr_o,
     input  logic                      instr_gnt_i,
     input  logic                      instr_rvalid_i,
     input  logic [31:0]               instr_rdata_i,
-    // Output of IF Pipeline stage
-    output logic                      instr_valid_id_o,      // instr in IF/ID is valid
-    output logic [31:0]               instr_rdata_id_o,      // read instr is sampled and sent
-                                                             // to ID stage for decoding
-    output logic                      is_compressed_id_o,    // compressed decoder thinks this is
-                                                             // a compressed instr
-`ifdef RVFI
-    output logic [15:0]               instr_rdata_compressed_o,
-`endif
 
-    output logic                      illegal_c_insn_id_o,   // compressed decoder thinks this is
-                                                             // an invalid instr
+    // Output of IF Pipeline stage
+    output logic                      instr_valid_id_o,         // instr in IF-ID is valid
+    output logic [31:0]               instr_rdata_id_o,         // instr for ID stage
+    output logic [15:0]               instr_rdata_c_id_o,       // compressed instr for ID stage
+                                                                // (mtval), meaningful only if
+                                                                // instr_is_compressed_id_o = 1'b1
+    output logic                      instr_is_compressed_id_o, // compressed decoder thinks this
+                                                                // is a compressed instr
+    output logic                      illegal_c_insn_id_o,      // compressed decoder thinks this
+                                                                // is an invalid instr
     output logic [31:0]               pc_if_o,
     output logic [31:0]               pc_id_o,
+
     // Forwarding ports - control signals
-    input  logic                      clear_instr_valid_i,   // clear instr valid bit in IF/ID
-    input  logic                      pc_set_i,              // set the PC to a new value
-    input  logic [31:0]               exception_pc_reg_i,    // address used to restore PC when
-                                                             // the interrupt/exception is served
-    input  logic [31:0]               depc_i,                // address used to restore PC when
-                                                             // the debug request is served
-    input  ibex_defines::pc_sel_e     pc_mux_i,              // selector for PC multiplexer
-    input  ibex_defines::exc_pc_sel_e exc_pc_mux_i,          // selects ISR address
-    input  ibex_defines::exc_cause_e  exc_vec_pc_mux_i,      // selects ISR address for vectorized
-                                                             // interrupt lines
+    input  logic                      clear_instr_valid_i,      // clear instr valid bit in IF-ID
+    input  logic                      pc_set_i,                 // set the PC to a new value
+    input  logic [31:0]               exception_pc_reg_i,       // PC to restore after handling
+                                                                // the interrupt/exception
+    input  logic [31:0]               depc_i,                   // PC to restore after handling
+                                                                // the debug request
+    input  ibex_defines::pc_sel_e     pc_mux_i,                 // selector for PC multiplexer
+    input  ibex_defines::exc_pc_sel_e exc_pc_mux_i,             // selects ISR address
+    input  ibex_defines::exc_cause_e  exc_vec_pc_mux_i,         // selects ISR address for
+                                                                // vectorized interrupt lines
 
     // jump and branch target and decision
-    input  logic [31:0]               jump_target_ex_i,      // jump target address
+    input  logic [31:0]               jump_target_ex_i,         // jump target address
 
     // pipeline stall
     input  logic                      halt_if_i,
     input  logic                      id_ready_i,
     output logic                      if_valid_o,
+
     // misc signals
-    output logic                      if_busy_o,             // IF stage is busy fetching instr
-    output logic                      perf_imiss_o           // instr fetch miss
+    output logic                      if_busy_o,               // IF stage is busy fetching instr
+    output logic                      perf_imiss_o             // instr fetch miss
 );
 
   import ibex_defines::*;
@@ -214,13 +216,13 @@ module ibex_if_stage #(
   // to ease timing closure
   logic [31:0] instr_decompressed;
   logic        illegal_c_insn;
-  logic        instr_compressed_int;
+  logic        instr_is_compressed_int;
 
   ibex_compressed_decoder compressed_decoder_i (
-      .instr_i         ( fetch_rdata          ),
-      .instr_o         ( instr_decompressed   ),
-      .is_compressed_o ( instr_compressed_int ),
-      .illegal_instr_o ( illegal_c_insn       )
+      .instr_i         ( fetch_rdata             ),
+      .instr_o         ( instr_decompressed      ),
+      .is_compressed_o ( instr_is_compressed_int ),
+      .illegal_instr_o ( illegal_c_insn          )
   );
 
   // IF-ID pipeline registers, frozen when the ID stage is stalled
@@ -228,21 +230,17 @@ module ibex_if_stage #(
     if (!rst_ni) begin
       instr_valid_id_o           <= 1'b0;
       instr_rdata_id_o           <= '0;
+      instr_rdata_c_id_o         <= '0;
+      instr_is_compressed_id_o   <= 1'b0;
       illegal_c_insn_id_o        <= 1'b0;
-      is_compressed_id_o         <= 1'b0;
-`ifdef RVFI
-      instr_rdata_compressed_o   <= '0;
-`endif
       pc_id_o                    <= '0;
     end else begin
       if (if_valid_o) begin
         instr_valid_id_o         <= 1'b1;
         instr_rdata_id_o         <= instr_decompressed;
+        instr_rdata_c_id_o       <= fetch_rdata[15:0];
+        instr_is_compressed_id_o <= instr_is_compressed_int;
         illegal_c_insn_id_o      <= illegal_c_insn;
-        is_compressed_id_o       <= instr_compressed_int;
-`ifdef RVFI
-        instr_rdata_compressed_o <= fetch_rdata[15:0];
-`endif
         pc_id_o                  <= pc_if_o;
       end else if (clear_instr_valid_i) begin
         instr_valid_id_o         <= 1'b0;

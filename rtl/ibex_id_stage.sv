@@ -53,7 +53,9 @@ module ibex_id_stage #(
 
     // Interface to IF stage
     input  logic                      instr_valid_i,
-    input  logic [31:0]               instr_rdata_i, // comes from pipeline of IF stage
+    input  logic [31:0]               instr_rdata_i,         // from IF-ID pipeline registers
+    input  logic [15:0]               instr_rdata_c_i,       // from IF-ID pipeline registers
+    input  logic                      instr_is_compressed_i,
     output logic                      instr_req_o,
 
     // Jumps and branches
@@ -66,7 +68,6 @@ module ibex_id_stage #(
     output ibex_defines::exc_pc_sel_e exc_pc_mux_o,
 
     input  logic                      illegal_c_insn_i,
-    input  logic                      is_compressed_i,
 
     input  logic [31:0]               pc_id_i,
 
@@ -92,12 +93,13 @@ module ibex_id_stage #(
     // CSR
     output logic                      csr_access_ex_o,
     output ibex_defines::csr_op_e     csr_op_ex_o,
-    output ibex_defines::exc_cause_e  csr_cause_o,
     output logic                      csr_save_if_o,
     output logic                      csr_save_id_o,
     output logic                      csr_restore_mret_id_o,
     output logic                      csr_restore_dret_id_o,
     output logic                      csr_save_cause_o,
+    output ibex_defines::exc_cause_e  csr_cause_o,
+    output logic [31:0]               csr_mtval_o,
     input  logic                      illegal_csr_insn_i,
 
     // Interface to load store unit
@@ -109,7 +111,7 @@ module ibex_id_stage #(
     output logic [31:0]               data_wdata_ex_o,
 
     input  logic                      data_misaligned_i,
-    input  logic [31:0]               misaligned_addr_i,
+    input  logic [31:0]               lsu_addr_last_i,
 
     // Interrupt signals
     input  logic                      irq_i,
@@ -300,7 +302,7 @@ module ibex_id_stage #(
   always_comb begin : alu_operand_a_mux
     unique case (alu_op_a_mux_sel)
       OP_A_REG_A:        alu_operand_a = regfile_data_ra_id;
-      OP_A_FWD:          alu_operand_a = misaligned_addr_i;
+      OP_A_FWD:          alu_operand_a = lsu_addr_last_i;
       OP_A_CURRPC:       alu_operand_a = pc_id_i;
       OP_A_IMM:          alu_operand_a = imm_a;
       default:           alu_operand_a = 'X;
@@ -321,7 +323,7 @@ module ibex_id_stage #(
       IMM_B_B:         imm_b = imm_b_type;
       IMM_B_U:         imm_b = imm_u_type;
       IMM_B_J:         imm_b = imm_j_type;
-      IMM_B_INCR_PC:   imm_b = is_compressed_i ? 32'h2 : 32'h4;
+      IMM_B_INCR_PC:   imm_b = instr_is_compressed_i ? 32'h2 : 32'h4;
       IMM_B_INCR_ADDR: imm_b = 32'h4;
       default:         imm_b = imm_i_type;
     endcase
@@ -331,7 +333,7 @@ module ibex_id_stage #(
   assign alu_operand_b = (alu_op_b_mux_sel == OP_B_IMM) ? imm_b : regfile_data_rb_id;
 
   // Signals used by tracer
-  assign operand_a_fw_id = data_misaligned_i ? misaligned_addr_i : regfile_data_ra_id;
+  assign operand_a_fw_id = data_misaligned_i ? lsu_addr_last_i : regfile_data_ra_id;
   assign operand_b_fw_id = regfile_data_rb_id;
 
   assign unused_operand_a_fw_id = operand_a_fw_id;
@@ -483,6 +485,9 @@ module ibex_id_stage #(
 
       // from IF/ID pipeline
       .instr_valid_i                  ( instr_valid_i          ),
+      .instr_i                        ( instr                  ),
+      .instr_compressed_i             ( instr_rdata_c_i        ),
+      .instr_is_compressed_i          ( instr_is_compressed_i  ),
 
       // from prefetcher
       .instr_req_o                    ( instr_req_o            ),
@@ -494,6 +499,7 @@ module ibex_id_stage #(
       .exc_cause_o                    ( exc_cause_o            ),
 
       // LSU
+      .lsu_addr_last_i                ( lsu_addr_last_i        ),
       .load_err_i                     ( lsu_load_err_i         ),
       .store_err_i                    ( lsu_store_err_i        ),
 
@@ -517,12 +523,13 @@ module ibex_id_stage #(
       .exc_kill_o                     ( exc_kill               ),
 
       // CSR Controller Signals
-      .csr_save_cause_o               ( csr_save_cause_o       ),
-      .csr_cause_o                    ( csr_cause_o            ),
       .csr_save_if_o                  ( csr_save_if_o          ),
       .csr_save_id_o                  ( csr_save_id_o          ),
       .csr_restore_mret_id_o          ( csr_restore_mret_id_o  ),
       .csr_restore_dret_id_o          ( csr_restore_dret_id_o  ),
+      .csr_save_cause_o               ( csr_save_cause_o       ),
+      .csr_cause_o                    ( csr_cause_o            ),
+      .csr_mtval_o                    ( csr_mtval_o            ),
 
       // Debug Signal
       .debug_cause_o                  ( debug_cause_o          ),
