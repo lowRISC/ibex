@@ -152,6 +152,7 @@ module ibex_cs_registers #(
 
   // CSRs
   Status_t     mstatus_q, mstatus_n;
+  logic [31:0] mscratch_q, mscratch_n;
   logic [31:0] mepc_q, mepc_n;
   logic  [5:0] mcause_q, mcause_n;
   logic [31:0] mtval_q, mtval_n;
@@ -221,6 +222,8 @@ module ibex_cs_registers #(
       // misa
       CSR_MISA: csr_rdata_int = MISA_VALUE;
 
+      CSR_MSCRATCH: csr_rdata_int = mscratch_q;
+
       // mtvec: trap-vector base address
       CSR_MTVEC: csr_rdata_int = csr_mtvec_i;
 
@@ -284,6 +287,7 @@ module ibex_cs_registers #(
     exception_pc = pc_id_i;
 
     mstatus_n    = mstatus_q;
+    mscratch_n   = mscratch_q;
     mepc_n       = mepc_q;
     mcause_n     = mcause_q;
     mtval_n      = mtval_q;
@@ -306,6 +310,8 @@ module ibex_cs_registers #(
           };
         end
       end
+
+      CSR_MSCRATCH: if (csr_we_int) mscratch_n = csr_wdata_int;
 
       // mepc: exception program counter
       CSR_MEPC: if (csr_we_int) mepc_n = {csr_wdata_int[31:1], 1'b0};
@@ -480,6 +486,7 @@ module ibex_cs_registers #(
           mpie: 1'b0,
           mpp:  PRIV_LVL_M
       };
+      mscratch_q <= '0;
       mepc_q     <= '0;
       mcause_q   <= '0;
       mtval_q    <= '0;
@@ -499,6 +506,7 @@ module ibex_cs_registers #(
           mpie: mstatus_n.mpie,
           mpp:  PRIV_LVL_M
       };
+      mscratch_q  <= mscratch_n;
       mepc_q      <= mepc_n;
       mcause_q    <= mcause_n;
       mtval_q     <= mtval_n;

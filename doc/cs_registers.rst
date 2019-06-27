@@ -22,9 +22,11 @@ Ibex implements all the Control and Status Registers (CSRs) listed in the follow
 +---------+--------------------+--------+-----------------------------------------------+
 |  0x33F  | ``mhpmevent31``    | WARL   | Machine performance-monitoring event selector |
 +---------+--------------------+--------+-----------------------------------------------+
-|  0x341  | ``mepc``           | RW     | Machine Exception Program Counter             |
+|  0x340  | ``mscratch``       | RW     | Machine Scratch Register                      |
 +---------+--------------------+--------+-----------------------------------------------+
-|  0x342  | ``mcause``         | RW     | Machine Trap Cause                            |
+|  0x341  | ``mepc``           | WARL   | Machine Exception Program Counter             |
++---------+--------------------+--------+-----------------------------------------------+
+|  0x342  | ``mcause``         | WLRL   | Machine Cause Register                        |
 +---------+--------------------+--------+-----------------------------------------------+
 |  0x343  | ``mtval``          | WARL   | Machine Trap Value Register                   |
 +---------+--------------------+--------+-----------------------------------------------+
@@ -78,7 +80,7 @@ Reset Value: ``0x0000_1800``
 +-------+-----+---------------------------------------------------------------------------------+
 
 When an exception is encountered, MPIE will be set to MIE.
-When the ``mret`` instruction is executed, the value of MPIE will be stored back to IE.
+When the MRET instruction is executed, the value of MPIE will be stored back to IE.
 
 If you want to enable interrupt handling in your exception handler, set MIE to 1'b1 inside your handler code.
 
