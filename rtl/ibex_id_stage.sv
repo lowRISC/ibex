@@ -207,18 +207,18 @@ module ibex_id_stage #(
   logic [4:0]  regfile_addr_rb_id;
 
   logic [4:0]  regfile_alu_waddr_id;
-  logic        regfile_we_id;
+  logic        regfile_we_id, regfile_we_dec;
 
   logic [31:0] regfile_data_ra_id;
   logic [31:0] regfile_data_rb_id;
 
   // ALU Control
   alu_op_e     alu_operator;
-  op_a_sel_e   alu_op_a_mux_sel;
-  op_b_sel_e   alu_op_b_mux_sel;
+  op_a_sel_e   alu_op_a_mux_sel, alu_op_a_mux_sel_dec;
+  op_b_sel_e   alu_op_b_mux_sel, alu_op_b_mux_sel_dec;
 
   imm_a_sel_e  imm_a_mux_sel;
-  imm_b_sel_e  imm_b_mux_sel;
+  imm_b_sel_e  imm_b_mux_sel, imm_b_mux_sel_dec;
 
   // Multiplier Control
   logic        mult_int_en;      // use integer multiplier
@@ -239,11 +239,9 @@ module ibex_id_stage #(
   csr_op_e     csr_op;
   logic        csr_status;
 
-  // Forwarding
-  op_fw_sel_e  operand_a_fw_mux_sel;
-
-  logic [31:0] operand_a_fw_id;
-  logic [31:0] operand_b_fw_id;
+  // For tracer
+  logic [31:0] operand_a_fw_id, unused_operand_a_fw_id;
+  logic [31:0] operand_b_fw_id, unused_operand_b_fw_id;
 
   logic [31:0] alu_operand_a;
   logic [31:0] alu_operand_b;
@@ -282,6 +280,18 @@ module ibex_id_stage #(
   // signal to 0 for instructions that are done
   assign clear_instr_valid_o = id_ready_o | halt_id;
 
+  /////////////
+  // LSU Mux //
+  /////////////
+
+  // Misaligned loads/stores result in two aligned loads/stores, compute second address
+  assign alu_op_a_mux_sel = data_misaligned_i ? OP_A_FWD        : alu_op_a_mux_sel_dec;
+  assign alu_op_b_mux_sel = data_misaligned_i ? OP_B_IMM        : alu_op_b_mux_sel_dec;
+  assign imm_b_mux_sel    = data_misaligned_i ? IMM_B_INCR_ADDR : imm_b_mux_sel_dec;
+
+  // do not write back the second address since the first calculated address was the correct one
+  assign regfile_we_id    = data_misaligned_i ? 1'b0            : regfile_we_dec;
+
   ///////////////
   // Operand A //
   ///////////////
@@ -289,7 +299,8 @@ module ibex_id_stage #(
   // ALU_Op_a Mux
   always_comb begin : alu_operand_a_mux
     unique case (alu_op_a_mux_sel)
-      OP_A_REGA_OR_FWD:  alu_operand_a = operand_a_fw_id;
+      OP_A_REG_A:        alu_operand_a = regfile_data_ra_id;
+      OP_A_FWD:          alu_operand_a = misaligned_addr_i;
       OP_A_CURRPC:       alu_operand_a = pc_id_i;
       OP_A_IMM:          alu_operand_a = imm_a;
       default:           alu_operand_a = 'X;
@@ -298,10 +309,6 @@ module ibex_id_stage #(
 
   assign imm_a = (imm_a_mux_sel == IMM_A_Z) ? zimm_rs1_type : '0;
 
-  // Operand a forwarding mux used with LSU instructions
-  assign operand_a_fw_id
-      = (operand_a_fw_mux_sel == SEL_MISALIGNED) ? misaligned_addr_i : regfile_data_ra_id;
-
   ///////////////
   // Operand B //
   ///////////////
@@ -309,19 +316,26 @@ module ibex_id_stage #(
   // Immediate Mux for operand B
   always_comb begin : immediate_b_mux
     unique case (imm_b_mux_sel)
-      IMM_B_I:      imm_b = imm_i_type;
-      IMM_B_S:      imm_b = imm_s_type;
-      IMM_B_B:      imm_b = imm_b_type;
-      IMM_B_U:      imm_b = imm_u_type;
-      IMM_B_J:      imm_b = imm_j_type;
-      IMM_B_PCINCR: imm_b = (is_compressed_i && !data_misaligned_i) ? 32'h2 : 32'h4;
-      default:      imm_b = imm_i_type;
+      IMM_B_I:         imm_b = imm_i_type;
+      IMM_B_S:         imm_b = imm_s_type;
+      IMM_B_B:         imm_b = imm_b_type;
+      IMM_B_U:         imm_b = imm_u_type;
+      IMM_B_J:         imm_b = imm_j_type;
+      IMM_B_INCR_PC:   imm_b = is_compressed_i ? 32'h2 : 32'h4;
+      IMM_B_INCR_ADDR: imm_b = 32'h4;
+      default:         imm_b = imm_i_type;
     endcase
   end
 
   // ALU_Op_b Mux
   assign alu_operand_b = (alu_op_b_mux_sel == OP_B_IMM) ? imm_b : regfile_data_rb_id;
+
+  // Signals used by tracer
+  assign operand_a_fw_id = data_misaligned_i ? misaligned_addr_i : regfile_data_ra_id;
   assign operand_b_fw_id = regfile_data_rb_id;
+
+  assign unused_operand_a_fw_id = operand_a_fw_id;
+  assign unused_operand_b_fw_id = operand_b_fw_id;
 
   ///////////////
   // Registers //
@@ -382,7 +396,6 @@ module ibex_id_stage #(
   ibex_decoder #( .RV32M ( RV32M ) ) decoder_i (
       // controller related signals
       .deassert_we_i                   ( deassert_we               ),
-      .data_misaligned_i               ( data_misaligned_i         ),
       .branch_mux_i                    ( branch_mux_dec            ),
       .jump_mux_i                      ( jump_mux_dec              ),
 
@@ -399,18 +412,18 @@ module ibex_id_stage #(
 
       // ALU signals
       .alu_operator_o                  ( alu_operator              ),
-      .alu_op_a_mux_sel_o              ( alu_op_a_mux_sel          ),
-      .alu_op_b_mux_sel_o              ( alu_op_b_mux_sel          ),
+      .alu_op_a_mux_sel_o              ( alu_op_a_mux_sel_dec      ),
+      .alu_op_b_mux_sel_o              ( alu_op_b_mux_sel_dec      ),
 
       .imm_a_mux_sel_o                 ( imm_a_mux_sel             ),
-      .imm_b_mux_sel_o                 ( imm_b_mux_sel             ),
+      .imm_b_mux_sel_o                 ( imm_b_mux_sel_dec         ),
 
       .mult_int_en_o                   ( mult_int_en               ),
       .div_int_en_o                    ( div_int_en                ),
       .multdiv_operator_o              ( multdiv_operator          ),
       .multdiv_signed_mode_o           ( multdiv_signed_mode       ),
       // Register file control signals
-      .regfile_we_o                    ( regfile_we_id             ),
+      .regfile_we_o                    ( regfile_we_dec            ),
 
       // CSR control signals
       .csr_access_o                    ( csr_access                ),
@@ -481,7 +494,6 @@ module ibex_id_stage #(
       .exc_cause_o                    ( exc_cause_o            ),
 
       // LSU
-      .data_misaligned_i              ( data_misaligned_i      ),
       .load_err_i                     ( lsu_load_err_i         ),
       .store_err_i                    ( lsu_store_err_i        ),
 
@@ -518,9 +530,6 @@ module ibex_id_stage #(
       .debug_req_i                    ( debug_req_i            ),
       .debug_single_step_i            ( debug_single_step_i    ),
       .debug_ebreakm_i                ( debug_ebreakm_i        ),
-
-      // Forwarding signals
-      .operand_a_fw_mux_sel_o         ( operand_a_fw_mux_sel   ),
 
       // Stall signals
       .halt_if_o                      ( halt_if_o              ),

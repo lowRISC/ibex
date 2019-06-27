@@ -30,8 +30,6 @@ module ibex_decoder #(
     // singals running to/from controller
     input  logic                     deassert_we_i,         // deassert we, we are stalled or
                                                             // not active
-    input  logic                     data_misaligned_i,     // misaligned data load/store in
-                                                            // progress
     input  logic                     branch_mux_i,
     input  logic                     jump_mux_i,
     output logic                     illegal_insn_o,        // illegal instr encountered
@@ -108,8 +106,8 @@ module ibex_decoder #(
     jump_in_id                  = 1'b0;
     branch_in_id                = 1'b0;
     alu_operator_o              = ALU_SLTU;
-    alu_op_a_mux_sel_o          = OP_A_REGA_OR_FWD;
-    alu_op_b_mux_sel_o          = OP_B_REGB_OR_FWD;
+    alu_op_a_mux_sel_o          = OP_A_REG_A;
+    alu_op_b_mux_sel_o          = OP_B_REG_B;
 
     imm_a_mux_sel_o             = IMM_A_ZERO;
     imm_b_mux_sel_o             = IMM_B_I;
@@ -160,7 +158,7 @@ module ibex_decoder #(
           // Calculate and store PC+4
           alu_op_a_mux_sel_o  = OP_A_CURRPC;
           alu_op_b_mux_sel_o  = OP_B_IMM;
-          imm_b_mux_sel_o     = IMM_B_PCINCR;
+          imm_b_mux_sel_o     = IMM_B_INCR_PC;
           alu_operator_o      = ALU_ADD;
           regfile_we          = 1'b1;
         end
@@ -170,7 +168,7 @@ module ibex_decoder #(
         jump_in_id            = 1'b1;
         if (jump_mux_i) begin
           // Calculate jump target
-          alu_op_a_mux_sel_o  = OP_A_REGA_OR_FWD;
+          alu_op_a_mux_sel_o  = OP_A_REG_A;
           alu_op_b_mux_sel_o  = OP_B_IMM;
           imm_b_mux_sel_o     = IMM_B_I;
           alu_operator_o      = ALU_ADD;
@@ -179,7 +177,7 @@ module ibex_decoder #(
           // Calculate and store PC+4
           alu_op_a_mux_sel_o  = OP_A_CURRPC;
           alu_op_b_mux_sel_o  = OP_B_IMM;
-          imm_b_mux_sel_o     = IMM_B_PCINCR;
+          imm_b_mux_sel_o     = IMM_B_INCR_PC;
           alu_operator_o      = ALU_ADD;
           regfile_we          = 1'b1;
         end
@@ -270,7 +268,7 @@ module ibex_decoder #(
         // reg-reg load (different encoding)
         if (instr_rdata_i[14:12] == 3'b111) begin
           // offset from RS2
-          alu_op_b_mux_sel_o = OP_B_REGB_OR_FWD;
+          alu_op_b_mux_sel_o = OP_B_REG_B;
 
           // sign/zero extension
           data_sign_extension_o = ~instr_rdata_i[30];
@@ -491,7 +489,7 @@ module ibex_decoder #(
             // rs1 field is used as immediate
             alu_op_a_mux_sel_o = OP_A_IMM;
           end else begin
-            alu_op_a_mux_sel_o = OP_A_REGA_OR_FWD;
+            alu_op_a_mux_sel_o = OP_A_REG_A;
           end
 
           unique case (instr_rdata_i[13:12])
@@ -524,21 +522,6 @@ module ibex_decoder #(
     // make sure invalid compressed instruction causes an exception
     if (illegal_c_insn_i) begin
       illegal_insn_o = 1'b1;
-    end
-
-    // misaligned access was detected by the LSU
-    // TODO: this section should eventually be moved out of the decoder
-    if (data_misaligned_i) begin
-      // only part of the pipeline is unstalled, make sure that the
-      // correct operands are sent to the AGU
-      alu_op_a_mux_sel_o  = OP_A_REGA_OR_FWD;
-      alu_op_b_mux_sel_o  = OP_B_IMM;
-      imm_b_mux_sel_o     = IMM_B_PCINCR;
-
-      // if prepost increments are used, we do not write back the
-      // second address since the first calculated address was
-      // the correct one
-      regfile_we = 1'b0;
     end
   end
 
