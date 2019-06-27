@@ -36,10 +36,9 @@ module ibex_if_stage #(
 ) (
     input  logic                      clk_i,
     input  logic                      rst_ni,
-    // the boot address is used to calculate the exception offsets
-    input  logic [31:0]               boot_addr_i,
-    // instruction request control
-    input  logic                      req_i,
+
+    input  logic [31:0]               boot_addr_i,              // also used for mtvec
+    input  logic                      req_i,                    // instruction request control
 
     // instruction cache interface
     output logic                      instr_req_o,
@@ -76,14 +75,17 @@ module ibex_if_stage #(
     // jump and branch target and decision
     input  logic [31:0]               jump_target_ex_i,         // jump target address
 
+    // CSRs
+    output logic [31:0]               csr_mtvec_o,
+
     // pipeline stall
     input  logic                      halt_if_i,
     input  logic                      id_ready_i,
     output logic                      if_valid_o,
 
     // misc signals
-    output logic                      if_busy_o,               // IF stage is busy fetching instr
-    output logic                      perf_imiss_o             // instr fetch miss
+    output logic                      if_busy_o,                // IF stage is busy fetching instr
+    output logic                      perf_imiss_o              // instr fetch miss
 );
 
   import ibex_defines::*;
@@ -102,6 +104,9 @@ module ibex_if_stage #(
   logic       [31:0] fetch_addr;
 
   logic       [31:0] exc_pc;
+
+  // trap-vector base address, mtvec.MODE set to vectored
+  assign csr_mtvec_o = {boot_addr_i[31:8], 6'b0, 2'b01};
 
   // exception PC selection mux
   always_comb begin : exc_pc_mux
