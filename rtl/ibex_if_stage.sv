@@ -63,13 +63,13 @@ module ibex_if_stage #(
     // Forwarding ports - control signals
     input  logic                      clear_instr_valid_i,      // clear instr valid bit in IF-ID
     input  logic                      pc_set_i,                 // set the PC to a new value
-    input  logic [31:0]               exception_pc_reg_i,       // PC to restore after handling
+    input  logic [31:0]               csr_mepc_i,               // PC to restore after handling
                                                                 // the interrupt/exception
-    input  logic [31:0]               depc_i,                   // PC to restore after handling
+    input  logic [31:0]               csr_depc_i,               // PC to restore after handling
                                                                 // the debug request
     input  ibex_defines::pc_sel_e     pc_mux_i,                 // selector for PC multiplexer
     input  ibex_defines::exc_pc_sel_e exc_pc_mux_i,             // selects ISR address
-    input  ibex_defines::exc_cause_e  exc_vec_pc_mux_i,         // selects ISR address for
+    input  ibex_defines::exc_cause_e  exc_cause,                // selects ISR address for
                                                                 // vectorized interrupt lines
 
     // jump and branch target and decision
@@ -105,37 +105,36 @@ module ibex_if_stage #(
 
   logic       [31:0] exc_pc;
 
+  logic        [5:0] irq_id;
+  logic              unused_irq_bit;
+
+  // extract interrupt ID from exception cause
+  assign irq_id         = {exc_cause};
+  assign unused_irq_bit = irq_id[5];   // MSB distinguishes interrupts from exceptions
+
   // trap-vector base address, mtvec.MODE set to vectored
   assign csr_mtvec_o = {boot_addr_i[31:8], 6'b0, 2'b01};
 
   // exception PC selection mux
   always_comb begin : exc_pc_mux
-    // TODO: The behavior below follows an outdated (pre-1.10) RISC-V Privileged
-    // Spec to implement a "free-form" vectored trap handler.
-    // We need to update this code and crt0.S to follow the new mtvec spec.
     unique case (exc_pc_mux_i)
-      EXC_PC_ILLINSN:    exc_pc = { boot_addr_i[31:8], {EXC_OFF_ILLINSN} };
-      EXC_PC_ECALL:      exc_pc = { boot_addr_i[31:8], {EXC_OFF_ECALL} };
-      EXC_PC_LOAD:       exc_pc = { boot_addr_i[31:8], {EXC_OFF_LSUERR} };
-      EXC_PC_STORE:      exc_pc = { boot_addr_i[31:8], {EXC_OFF_LSUERR} };
-      EXC_PC_BREAKPOINT: exc_pc = { boot_addr_i[31:8], {EXC_OFF_BREAKPOINT} };
-      EXC_PC_IRQ:        exc_pc = { boot_addr_i[31:8], {exc_vec_pc_mux_i}, 2'b0 };
-      EXC_PC_DBD:        exc_pc = DmHaltAddr;
-      EXC_PC_DBGEXC:     exc_pc = DmExceptionAddr;
-      default:           exc_pc = 'X;
+      EXC_PC_EXC:     exc_pc = { boot_addr_i[31:8], 8'h00                    };
+      EXC_PC_IRQ:     exc_pc = { boot_addr_i[31:8], 1'b0, irq_id[4:0], 2'b00 };
+      EXC_PC_DBD:     exc_pc = DmHaltAddr;
+      EXC_PC_DBG_EXC: exc_pc = DmExceptionAddr;
+      default:        exc_pc = 'X;
     endcase
   end
 
   // fetch address selection mux
   always_comb begin : fetch_addr_mux
     unique case (pc_mux_i)
-      PC_BOOT:      fetch_addr_n = {boot_addr_i[31:8], {EXC_OFF_RST}};
-      PC_JUMP:      fetch_addr_n = jump_target_ex_i;
-      PC_EXCEPTION: fetch_addr_n = exc_pc;             // set PC to exception handler
-      PC_ERET:      fetch_addr_n = exception_pc_reg_i; // PC is restored when returning
-                                                       // from IRQ/exception
-      PC_DRET:      fetch_addr_n = depc_i;
-      default:      fetch_addr_n = 'X;
+      PC_BOOT: fetch_addr_n = { boot_addr_i[31:8], 8'h80 };
+      PC_JUMP: fetch_addr_n = jump_target_ex_i;
+      PC_EXC:  fetch_addr_n = exc_pc;                       // set PC to exception handler
+      PC_ERET: fetch_addr_n = csr_mepc_i;                   // restore PC when returning from EXC
+      PC_DRET: fetch_addr_n = csr_depc_i;
+      default: fetch_addr_n = 'X;
     endcase
   end
 

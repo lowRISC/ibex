@@ -98,7 +98,6 @@ module ibex_controller (
     output logic                      csr_restore_mret_id_o,
     output logic                      csr_restore_dret_id_o,
     output logic                      csr_save_cause_o,
-    output ibex_defines::exc_cause_e  csr_cause_o,
     output logic [31:0]               csr_mtval_o,
 
     // stall signals
@@ -160,14 +159,13 @@ module ibex_controller (
     csr_restore_mret_id_o  = 1'b0;
     csr_restore_dret_id_o  = 1'b0;
     csr_save_cause_o       = 1'b0;
-    csr_cause_o            = EXC_CAUSE_INSN_ADDR_MISA; // = 6'h00
     csr_mtval_o            = '0;
-
-    exc_cause_o            = EXC_CAUSE_INSN_ADDR_MISA; // = 6'h00
-    exc_pc_mux_o           = EXC_PC_IRQ;
 
     pc_mux_o               = PC_BOOT;
     pc_set_o               = 1'b0;
+
+    exc_pc_mux_o           = EXC_PC_IRQ;
+    exc_cause_o            = EXC_CAUSE_INSN_ADDR_MISA; // = 6'h00
 
     ctrl_fsm_ns            = ctrl_fsm_cs;
 
@@ -319,15 +317,13 @@ module ibex_controller (
       end
 
       IRQ_TAKEN: begin
-        pc_mux_o          = PC_EXCEPTION;
+        pc_mux_o          = PC_EXC;
         pc_set_o          = 1'b1;
 
         exc_pc_mux_o      = EXC_PC_IRQ;
-        exc_cause_o       = exc_cause_e'({1'b0, irq_id_ctrl_i});
+        exc_cause_o       = exc_cause_e'({1'b1, irq_id_ctrl_i});
 
         csr_save_cause_o  = 1'b1;
-        csr_cause_o       = exc_cause_e'({1'b1, irq_id_ctrl_i});
-
         csr_save_if_o     = 1'b1;
 
         irq_ack_o         = 1'b1;
@@ -340,7 +336,7 @@ module ibex_controller (
       DBG_TAKEN_IF:
       begin
         // Jump to debug exception handler in debug memory
-        pc_mux_o          = PC_EXCEPTION;
+        pc_mux_o          = PC_EXC;
         pc_set_o          = 1'b1;
         exc_pc_mux_o      = EXC_PC_DBD;
 
@@ -372,7 +368,7 @@ module ibex_controller (
       // not to the next instruction's (which is why we save the pc in id).
       DBG_TAKEN_ID: begin
         // Jump to debug exception handler in debug memory
-        pc_mux_o          = PC_EXCEPTION;
+        pc_mux_o          = PC_EXC;
         pc_set_o          = 1'b1;
         exc_pc_mux_o      = EXC_PC_DBD;
 
@@ -414,27 +410,25 @@ module ibex_controller (
         unique case(1'b1)
           ecall_insn_i: begin
             //ecall
-            pc_mux_o              = PC_EXCEPTION;
+            pc_mux_o              = PC_EXC;
             pc_set_o              = 1'b1;
+            exc_pc_mux_o          = EXC_PC_EXC;
+            exc_cause_o           = EXC_CAUSE_ECALL_MMODE;
             csr_save_id_o         = 1'b1;
             csr_save_cause_o      = 1'b1;
-            exc_pc_mux_o          = EXC_PC_ECALL;
-            exc_cause_o           = EXC_CAUSE_ECALL_MMODE;
-            csr_cause_o           = EXC_CAUSE_ECALL_MMODE;
           end
           illegal_insn_i: begin
             //exceptions
-            pc_mux_o              = PC_EXCEPTION;
+            pc_mux_o              = PC_EXC;
             pc_set_o              = 1'b1;
-            csr_save_id_o         = 1'b1;
-            csr_save_cause_o      = 1'b1;
             if (debug_mode_q) begin
-              exc_pc_mux_o          = EXC_PC_DBGEXC;
+              exc_pc_mux_o          = EXC_PC_DBG_EXC;
             end else begin
-              exc_pc_mux_o          = EXC_PC_ILLINSN;
+              exc_pc_mux_o          = EXC_PC_EXC;
             end
             exc_cause_o           = EXC_CAUSE_ILLEGAL_INSN;
-            csr_cause_o           = EXC_CAUSE_ILLEGAL_INSN;
+            csr_save_id_o         = 1'b1;
+            csr_save_cause_o      = 1'b1;
             csr_mtval_o           = instr_is_compressed_i ? {16'b0, instr_compressed_i} : instr_i;
           end
           mret_insn_i: begin
@@ -478,33 +472,30 @@ module ibex_controller (
                * ECALL or EBREAK instruction itself, not the address of the
                * following instruction." (Privileged Spec, p. 40)
                */
-              pc_mux_o              = PC_EXCEPTION;
+              pc_mux_o              = PC_EXC;
               pc_set_o              = 1'b1;
+              exc_pc_mux_o          = EXC_PC_EXC;
+              exc_cause_o           = EXC_CAUSE_BREAKPOINT;
               csr_save_id_o         = 1'b1;
               csr_save_cause_o      = 1'b1;
-              exc_pc_mux_o          = EXC_PC_BREAKPOINT;
-              exc_cause_o           = EXC_CAUSE_BREAKPOINT;
-              csr_cause_o           = EXC_CAUSE_BREAKPOINT;
             end
           end
           load_err_q: begin
-            pc_mux_o         = PC_EXCEPTION;
+            pc_mux_o         = PC_EXC;
             pc_set_o         = 1'b1;
+            exc_pc_mux_o     = EXC_PC_EXC;
+            exc_cause_o      = EXC_CAUSE_LOAD_ACCESS_FAULT;
             csr_save_id_o    = 1'b1;
             csr_save_cause_o = 1'b1;
-            exc_pc_mux_o     = EXC_PC_LOAD;
-            exc_cause_o      = EXC_CAUSE_LOAD_ACCESS_FAULT;
-            csr_cause_o      = EXC_CAUSE_LOAD_ACCESS_FAULT;
             csr_mtval_o      = lsu_addr_last_i;
           end
           store_err_q: begin
-            pc_mux_o         = PC_EXCEPTION;
+            pc_mux_o         = PC_EXC;
             pc_set_o         = 1'b1;
+            exc_pc_mux_o     = EXC_PC_EXC;
+            exc_cause_o      = EXC_CAUSE_STORE_ACCESS_FAULT;
             csr_save_id_o    = 1'b1;
             csr_save_cause_o = 1'b1;
-            exc_pc_mux_o     = EXC_PC_STORE;
-            exc_cause_o      = EXC_CAUSE_STORE_ACCESS_FAULT;
-            csr_cause_o      = EXC_CAUSE_STORE_ACCESS_FAULT;
             csr_mtval_o      = lsu_addr_last_i;
           end
 

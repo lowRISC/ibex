@@ -98,7 +98,6 @@ module ibex_id_stage #(
     output logic                      csr_restore_mret_id_o,
     output logic                      csr_restore_dret_id_o,
     output logic                      csr_save_cause_o,
-    output ibex_defines::exc_cause_e  csr_cause_o,
     output logic [31:0]               csr_mtval_o,
     input  logic                      illegal_csr_insn_i,
 
@@ -528,7 +527,6 @@ module ibex_id_stage #(
       .csr_restore_mret_id_o          ( csr_restore_mret_id_o  ),
       .csr_restore_dret_id_o          ( csr_restore_dret_id_o  ),
       .csr_save_cause_o               ( csr_save_cause_o       ),
-      .csr_cause_o                    ( csr_cause_o            ),
       .csr_mtval_o                    ( csr_mtval_o            ),
 
       // Debug Signal

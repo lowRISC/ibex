@@ -162,21 +162,17 @@ typedef enum logic [2:0] {
 typedef enum logic [2:0] {
   PC_BOOT,
   PC_JUMP,
-  PC_EXCEPTION,
+  PC_EXC,
   PC_ERET,
   PC_DRET
 } pc_sel_e;
 
 // Exception PC mux selection
-typedef enum logic [2:0] {
-  EXC_PC_ILLINSN,
-  EXC_PC_ECALL,
-  EXC_PC_LOAD,
-  EXC_PC_STORE,
+typedef enum logic [1:0] {
+  EXC_PC_EXC,
   EXC_PC_IRQ,
   EXC_PC_DBD,
-  EXC_PC_DBGEXC, // Exception while in debug mode
-  EXC_PC_BREAKPOINT
+  EXC_PC_DBG_EXC // Exception while in debug mode
 } exc_pc_sel_e;
 
 // Exception cause
@@ -188,21 +184,6 @@ typedef enum logic [5:0] {
   EXC_CAUSE_STORE_ACCESS_FAULT = 6'h07,
   EXC_CAUSE_ECALL_MMODE        = 6'h0B
 } exc_cause_e;
-
-// Exceptions offsets
-// target address = {boot_addr[31:8], EXC_OFF} (boot_addr must be 32 BYTE aligned!)
-// offset 00 to 7e is used for external interrupts
-
-// TODO: The behavior below follows an outdated (pre-1.10) RISC-V Privileged
-// Spec to implement a "free-form" vectored trap handler.
-// We need to update this code and crt0.S to follow the new mtvec spec.
-typedef enum logic [7:0] {
-  EXC_OFF_RST        = 8'h80,
-  EXC_OFF_ILLINSN    = 8'h84,
-  EXC_OFF_ECALL      = 8'h88,
-  EXC_OFF_LSUERR     = 8'h8c,
-  EXC_OFF_BREAKPOINT = 8'h90
-} exc_off_e;
 
 // Debug cause
 typedef enum logic [2:0] {
