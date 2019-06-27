@@ -58,7 +58,6 @@ module ibex_controller (
     output ibex_defines::exc_pc_sel_e exc_pc_mux_o,          // IF stage selector for exception PC
 
     // LSU
-    input  logic                      data_misaligned_i,
     input  logic                      load_err_i,
     input  logic                      store_err_i,
 
@@ -97,9 +96,6 @@ module ibex_controller (
     output logic                      csr_restore_mret_id_o,
     output logic                      csr_restore_dret_id_o,
     output logic                      csr_save_cause_o,
-
-    // forwarding signals
-    output ibex_defines::op_fw_sel_e  operand_a_fw_mux_sel_o, // regfile ra selector for ID stage
 
     // stall signals
     output logic                      halt_if_o,
@@ -525,9 +521,6 @@ module ibex_controller (
   // deassert WE when the core is not decoding instructions
   // or in case of illegal instruction
   assign deassert_we_o = ~is_decoding_o | illegal_insn_i;
-
-  // Forwarding control unit
-  assign operand_a_fw_mux_sel_o = data_misaligned_i ? SEL_MISALIGNED : SEL_REGFILE;
 
   // update registers
   always_ff @(posedge clk_i or negedge rst_ni) begin : update_regs

@@ -122,15 +122,10 @@ typedef enum logic[3:0] {
 // ID stage //
 //////////////
 
-// Forwarding operand mux selection
-typedef enum logic {
-  SEL_REGFILE,
-  SEL_MISALIGNED
-} op_fw_sel_e;
-
 // Operand a selection
 typedef enum logic[1:0] {
-  OP_A_REGA_OR_FWD,
+  OP_A_REG_A,
+  OP_A_FWD,
   OP_A_CURRPC,
   OP_A_IMM
 } op_a_sel_e;
@@ -143,7 +138,7 @@ typedef enum logic {
 
 // Operand b selection
 typedef enum logic {
-  OP_B_REGB_OR_FWD,
+  OP_B_REG_B,
   OP_B_IMM
 } op_b_sel_e;
 
@@ -154,7 +149,8 @@ typedef enum logic [2:0] {
   IMM_B_B,
   IMM_B_U,
   IMM_B_J,
-  IMM_B_PCINCR
+  IMM_B_INCR_PC,
+  IMM_B_INCR_ADDR
 } imm_b_sel_e;
 
 
