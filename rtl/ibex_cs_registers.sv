@@ -39,8 +39,6 @@ module ibex_cs_registers #(
     input  logic  [3:0]               core_id_i,
     input  logic  [5:0]               cluster_id_i,
 
-    input  logic [31:0]               boot_addr_i,
-
     // Interface to registers (SRAM like)
     input  logic                      csr_access_i,
     input  ibex_defines::csr_num_e    csr_addr_i,
@@ -68,6 +66,7 @@ module ibex_cs_registers #(
     input  logic                      csr_restore_dret_i,
     input  logic                      csr_save_cause_i,
     input  logic [31:0]               csr_mtval_i,
+    input  logic [31:0]               csr_mtvec_i,
     input  ibex_defines::exc_cause_e  csr_cause_i,
 
     output logic                      illegal_csr_insn_o,    // access to non-existent CSR,
@@ -160,6 +159,7 @@ module ibex_cs_registers #(
   logic [31:0] depc_q, depc_n;
   logic [31:0] dscratch0_q, dscratch0_n;
   logic [31:0] dscratch1_q, dscratch1_n;
+
   // Hardware performance monitor signals
   logic [31:0] mcountinhibit_n, mcountinhibit_q, mcountinhibit;
   logic [31:0] mcountinhibit_force;
@@ -221,8 +221,8 @@ module ibex_cs_registers #(
       // misa
       CSR_MISA: csr_rdata_int = MISA_VALUE;
 
-      // mtvec: machine trap-handler base address
-      CSR_MTVEC: csr_rdata_int = boot_addr_i;
+      // mtvec: trap-vector base address
+      CSR_MTVEC: csr_rdata_int = csr_mtvec_i;
 
       // mepc: exception program counter
       CSR_MEPC: csr_rdata_int = mepc_q;

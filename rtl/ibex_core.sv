@@ -206,6 +206,7 @@ module ibex_core #(
   logic        csr_save_cause;
   exc_cause_e  csr_cause;
   logic [31:0] csr_mtval;
+  logic [31:0] csr_mtvec;
 
   // debug mode and dcsr configuration
   dbg_cause_e  debug_cause;
@@ -302,11 +303,8 @@ module ibex_core #(
       .clk_i                    ( clk                    ),
       .rst_ni                   ( rst_ni                 ),
 
-      // boot address (trap vector location)
       .boot_addr_i              ( boot_addr_i            ),
-
-      // instruction request control
-      .req_i                    ( instr_req_int          ),
+      .req_i                    ( instr_req_int          ), // instruction request control
 
       // instruction cache interface
       .instr_req_o              ( instr_req_o            ),
@@ -335,6 +333,8 @@ module ibex_core #(
 
       // Jump targets
       .jump_target_ex_i         ( jump_target_ex         ),
+
+      .csr_mtvec_o              ( csr_mtvec              ), // trap-vector base address
 
       // pipeline stalls
       .halt_if_i                ( halt_if                ),
@@ -572,8 +572,7 @@ module ibex_core #(
       // Core and Cluster ID from outside
       .core_id_i               ( core_id_i              ),
       .cluster_id_i            ( cluster_id_i           ),
-      // boot address
-      .boot_addr_i             ( boot_addr_i            ),
+
 
       // Interface to CSRs (SRAM like)
       .csr_access_i            ( csr_access             ),
@@ -603,6 +602,7 @@ module ibex_core #(
       .csr_save_cause_i        ( csr_save_cause         ),
       .csr_cause_i             ( csr_cause              ),
       .csr_mtval_i             ( csr_mtval              ),
+      .csr_mtvec_i             ( csr_mtvec              ),
       .illegal_csr_insn_o      ( illegal_csr_insn_id    ),
 
       // performance counter related signals
