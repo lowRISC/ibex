@@ -119,7 +119,6 @@ module ibex_core #(
 
   logic        clear_instr_valid;
   logic        pc_set;
-
   pc_sel_e     pc_mux_id;              // Mux selector for next PC
   exc_pc_sel_e exc_pc_mux_id;          // Mux selector for exception PC
   exc_cause_e  exc_cause;              // Exception cause
@@ -197,16 +196,15 @@ module ibex_core #(
 
   // Interrupts
   logic        m_irq_enable;
-  logic [31:0] mepc, depc;
+  logic [31:0] csr_mepc, csr_depc;
 
   logic        csr_save_if;
   logic        csr_save_id;
   logic        csr_restore_mret_id;
   logic        csr_restore_dret_id;
   logic        csr_save_cause;
-  exc_cause_e  csr_cause;
-  logic [31:0] csr_mtval;
   logic [31:0] csr_mtvec;
+  logic [31:0] csr_mtval;
 
   // debug mode and dcsr configuration
   dbg_cause_e  debug_cause;
@@ -325,15 +323,16 @@ module ibex_core #(
       // control signals
       .clear_instr_valid_i      ( clear_instr_valid      ),
       .pc_set_i                 ( pc_set                 ),
-      .exception_pc_reg_i       ( mepc                   ), // exception return address
-      .depc_i                   ( depc                   ), // debug return address
-      .pc_mux_i                 ( pc_mux_id              ), // sel for pc multiplexer
+      .pc_mux_i                 ( pc_mux_id              ),
       .exc_pc_mux_i             ( exc_pc_mux_id          ),
-      .exc_vec_pc_mux_i         ( exc_cause              ),
+      .exc_cause                ( exc_cause              ),
 
-      // Jump targets
+      // jump targets
       .jump_target_ex_i         ( jump_target_ex         ),
 
+      // CSRs
+      .csr_mepc_i               ( csr_mepc               ), // exception return address
+      .csr_depc_i               ( csr_depc               ), // debug return address
       .csr_mtvec_o              ( csr_mtvec              ), // trap-vector base address
 
       // pipeline stalls
@@ -414,7 +413,6 @@ module ibex_core #(
       .csr_restore_mret_id_o        ( csr_restore_mret_id    ), // control signal to restore pc
       .csr_restore_dret_id_o        ( csr_restore_dret_id    ), // control signal to restore pc
       .csr_save_cause_o             ( csr_save_cause         ),
-      .csr_cause_o                  ( csr_cause              ),
       .csr_mtval_o                  ( csr_mtval              ),
       .illegal_csr_insn_i           ( illegal_csr_insn_id    ),
 
@@ -583,12 +581,12 @@ module ibex_core #(
 
       // Interrupt related control signals
       .m_irq_enable_o          ( m_irq_enable           ),
-      .mepc_o                  ( mepc                   ),
+      .csr_mepc_o              ( csr_mepc               ),
 
       // debug
+      .csr_depc_o              ( csr_depc               ),
       .debug_cause_i           ( debug_cause            ),
       .debug_csr_save_i        ( debug_csr_save         ),
-      .depc_o                  ( depc                   ),
       .debug_single_step_o     ( debug_single_step      ),
       .debug_ebreakm_o         ( debug_ebreakm          ),
 
@@ -600,9 +598,9 @@ module ibex_core #(
       .csr_restore_mret_i      ( csr_restore_mret_id    ),
       .csr_restore_dret_i      ( csr_restore_dret_id    ),
       .csr_save_cause_i        ( csr_save_cause         ),
-      .csr_cause_i             ( csr_cause              ),
-      .csr_mtval_i             ( csr_mtval              ),
       .csr_mtvec_i             ( csr_mtvec              ),
+      .csr_mcause_i            ( exc_cause              ),
+      .csr_mtval_i             ( csr_mtval              ),
       .illegal_csr_insn_o      ( illegal_csr_insn_id    ),
 
       // performance counter related signals

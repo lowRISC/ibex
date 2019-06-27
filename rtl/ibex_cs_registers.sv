@@ -48,12 +48,12 @@ module ibex_cs_registers #(
 
     // Interrupts
     output logic                      m_irq_enable_o,
-    output logic [31:0]               mepc_o,
+    output logic [31:0]               csr_mepc_o,
 
     // debug
     input  ibex_defines::dbg_cause_e  debug_cause_i,
     input  logic                      debug_csr_save_i,
-    output logic [31:0]               depc_o,
+    output logic [31:0]               csr_depc_o,
     output logic                      debug_single_step_o,
     output logic                      debug_ebreakm_o,
 
@@ -65,9 +65,9 @@ module ibex_cs_registers #(
     input  logic                      csr_restore_mret_i,
     input  logic                      csr_restore_dret_i,
     input  logic                      csr_save_cause_i,
-    input  logic [31:0]               csr_mtval_i,
     input  logic [31:0]               csr_mtvec_i,
-    input  ibex_defines::exc_cause_e  csr_cause_i,
+    input  ibex_defines::exc_cause_e  csr_mcause_i,
+    input  logic [31:0]               csr_mtval_i,
 
     output logic                      illegal_csr_insn_o,    // access to non-existent CSR,
                                                              // with wrong priviledge level, or
@@ -421,7 +421,7 @@ module ibex_cs_registers #(
           mstatus_n.mie  = 1'b0;
           mstatus_n.mpp  = PRIV_LVL_M;
           mepc_n         = exception_pc;
-          mcause_n       = {csr_cause_i};
+          mcause_n       = {csr_mcause_i};
           mtval_n        = csr_mtval_i;
         end
       end //csr_save_cause_i
@@ -465,9 +465,9 @@ module ibex_cs_registers #(
   assign csr_rdata_o = csr_rdata_int;
 
   // directly output some registers
-  assign m_irq_enable_o  = mstatus_q.mie;
-  assign mepc_o          = mepc_q;
-  assign depc_o          = depc_q;
+  assign m_irq_enable_o = mstatus_q.mie;
+  assign csr_mepc_o     = mepc_q;
+  assign csr_depc_o     = depc_q;
 
   assign debug_single_step_o  = dcsr_q.step;
   assign debug_ebreakm_o      = dcsr_q.ebreakm;
