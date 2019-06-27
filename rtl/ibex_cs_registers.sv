@@ -308,7 +308,7 @@ module ibex_cs_registers #(
       end
 
       // mepc: exception program counter
-      CSR_MEPC: if (csr_we_int) mepc_n = csr_wdata_int;
+      CSR_MEPC: if (csr_we_int) mepc_n = {csr_wdata_int[31:1], 1'b0};
 
       // mcause
       CSR_MCAUSE: if (csr_we_int) mcause_n = {csr_wdata_int[31], csr_wdata_int[4:0]};
