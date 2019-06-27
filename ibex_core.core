@@ -28,8 +28,20 @@ filesets:
       - rtl/ibex_core.sv
     file_type: systemVerilogSource
 
+  files_lint:
+    files:
+      - dv/uvm/tb/prim_clock_gating.sv: {file_type: systemVerilogSource}
+
+  files_lint_verilator:
+    files:
+      - lint/verilator_waiver.vlt: {file_type: vlt}
+
 parameters:
   RVFI:
+    datatype: bool
+    paramtype: vlogdefine
+
+  SYNTHESIS:
     datatype: bool
     paramtype: vlogdefine
 
@@ -37,3 +49,21 @@ targets:
   default:
     filesets:
       - files_rtl
+
+  lint:
+    filesets:
+      # Note on Verilator waivers:
+      # You *must* include the waiver file first, otherwise only global waivers
+      # are applied, but not file-specific waivers.
+      - tool_verilator ? (files_lint_verilator)
+      - files_rtl
+      - files_lint
+    parameters:
+      - SYNTHESIS=true
+    default_tool: verilator
+    toplevel: ibex_core
+    tools:
+      verilator:
+        mode: lint-only
+        verilator_options:
+          - "-Wall"
