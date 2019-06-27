@@ -66,26 +66,26 @@ module ibex_cs_registers #(
     input  logic                      csr_save_id_i,
     input  logic                      csr_restore_mret_i,
     input  logic                      csr_restore_dret_i,
-
-    input  ibex_defines::exc_cause_e  csr_cause_i,
     input  logic                      csr_save_cause_i,
+    input  logic [31:0]               csr_mtval_i,
+    input  ibex_defines::exc_cause_e  csr_cause_i,
 
-    output logic                      illegal_csr_insn_o, // access to non-existent CSR,
-                                                          // with wrong priviledge level, or
-                                                          // missing write permissions
+    output logic                      illegal_csr_insn_o,    // access to non-existent CSR,
+                                                             // with wrong priviledge level, or
+                                                             // missing write permissions
     // Performance Counters
-    input  logic                      insn_ret_i,         // instr retired in ID/EX stage
-    input  logic                      id_valid_i,         // ID stage is done
-    input  logic                      is_compressed_i,    // compressed instr in ID
-    input  logic                      is_decoding_i,      // controller is in DECODE state
+    input  logic                      insn_ret_i,            // instr retired in ID/EX stage
+    input  logic                      id_valid_i,            // ID stage is done
+    input  logic                      instr_is_compressed_i, // compressed instr in ID
+    input  logic                      is_decoding_i,         // controller is in DECODE state
 
-    input  logic                      imiss_i,            // instr fetch
-    input  logic                      pc_set_i,           // PC was set to a new value
-    input  logic                      jump_i,             // jump instr seen (j, jr, jal, jalr)
-    input  logic                      branch_i,           // branch instr seen (bf, bnf)
-    input  logic                      branch_taken_i,     // branch was taken
-    input  logic                      mem_load_i,         // load from memory in this cycle
-    input  logic                      mem_store_i,        // store to memory in this cycle
+    input  logic                      imiss_i,               // instr fetch
+    input  logic                      pc_set_i,              // PC was set to a new value
+    input  logic                      jump_i,                // jump instr seen (j, jr, jal, jalr)
+    input  logic                      branch_i,              // branch instr seen (bf, bnf)
+    input  logic                      branch_taken_i,        // branch was taken
+    input  logic                      mem_load_i,            // load from memory in this cycle
+    input  logic                      mem_store_i,           // store to memory in this cycle
     input  logic                      lsu_busy_i
 );
 
@@ -155,6 +155,7 @@ module ibex_cs_registers #(
   Status_t     mstatus_q, mstatus_n;
   logic [31:0] mepc_q, mepc_n;
   logic [31:0] mcause_q, mcause_n;
+  logic [31:0] mtval_q, mtval_n;
   Dcsr_t       dcsr_q, dcsr_n;
   logic [31:0] depc_q, depc_n;
   logic [31:0] dscratch0_q, dscratch0_n;
@@ -229,6 +230,8 @@ module ibex_cs_registers #(
       // mcause: exception cause
       CSR_MCAUSE: csr_rdata_int = {mcause_q[5], 26'b0, mcause_q[4:0]};
 
+      // mtval: trap value
+      CSR_MTVAL: csr_rdata_int = mtval_q;
 
       CSR_DCSR:      csr_rdata_int = dcsr_q;
       CSR_DPC:       csr_rdata_int = depc_q;
@@ -283,6 +286,7 @@ module ibex_cs_registers #(
     mstatus_n    = mstatus_q;
     mepc_n       = mepc_q;
     mcause_n     = mcause_q;
+    mtval_n      = mtval_q;
     dcsr_n       = dcsr_q;
     depc_n       = depc_q;
     dscratch0_n  = dscratch0_q;
@@ -308,6 +312,9 @@ module ibex_cs_registers #(
 
       // mcause
       CSR_MCAUSE: if (csr_we_int) mcause_n = {csr_wdata_int[31], csr_wdata_int[4:0]};
+
+      // mtval: trap value
+      CSR_MTVAL: if (csr_we_int) mtval_n = csr_wdata_int;
 
       CSR_DCSR: begin
         if (csr_we_int) begin
@@ -415,6 +422,7 @@ module ibex_cs_registers #(
           mstatus_n.mpp  = PRIV_LVL_M;
           mepc_n         = exception_pc;
           mcause_n       = csr_cause_i;
+          mtval_n        = csr_mtval_i;
         end
       end //csr_save_cause_i
 
@@ -474,6 +482,7 @@ module ibex_cs_registers #(
       };
       mepc_q     <= '0;
       mcause_q   <= '0;
+      mtval_q    <= '0;
       dcsr_q     <= '{
           xdebugver: XDEBUGVER_NO,   // 4'h0
           cause:     DBG_CAUSE_NONE, // 3'h0
@@ -492,6 +501,7 @@ module ibex_cs_registers #(
       };
       mepc_q      <= mepc_n;
       mcause_q    <= mcause_n;
+      mtval_q     <= mtval_n;
       dcsr_q      <= dcsr_n;
       depc_q      <= depc_n;
       dscratch0_q <= dscratch0_n;
@@ -532,8 +542,8 @@ module ibex_cs_registers #(
     mhpmcounter_incr[7]  = jump_i;              // num of jumps (unconditional)
     mhpmcounter_incr[8]  = branch_i;            // num of branches (conditional)
     mhpmcounter_incr[9]  = branch_taken_i;      // num of taken branches (conditional)
-    mhpmcounter_incr[10] = is_compressed_i      // num of compressed instr
-        & id_valid_i & is_decoding_i;
+    mhpmcounter_incr[10] = is_decoding_i        // num of compressed instr
+        & id_valid_i & instr_is_compressed_i;
 
     // inactive counters
     for (int unsigned i=3+MHPMCounterNum; i<32; i++) begin : gen_mhpmcounter_incr_inactive

@@ -26,6 +26,8 @@ Ibex implements all the Control and Status Registers (CSRs) listed in the follow
 +---------+--------------------+--------+-----------------------------------------------+
 |  0x342  | ``mcause``         | RW     | Machine Trap Cause                            |
 +---------+--------------------+--------+-----------------------------------------------+
+|  0x343  | ``mtval``          | WARL   | Machine Trap Value Register                   |
++---------+--------------------+--------+-----------------------------------------------+
 |  0x7B0  | ``dcsr``           | RW     | Debug Control and Status Register             |
 +---------+--------------------+--------+-----------------------------------------------+
 |  0x7B1  | ``dpc``            | RW     | Debug PC                                      |
@@ -116,6 +118,21 @@ Reset Value: ``0x0000_0000``
 +-------+-----+------------------------------------------------------------------+
 | 4:0   | R   | **Exception Code**                                               |
 +-------+-----+------------------------------------------------------------------+
+
+Machine Trap Value (mtval)
+--------------------------
+
+CSR Address: ``0x343``
+
+Reset Value: ``0x0000_0000``
+
+When an exception is encountered, this register can hold exception-specific information to assist software in handling the trap.
+
+ * In the case of errors in the load-store unit ``mtval`` holds the address of the transaction causing the error.
+ * If this transaction is misaligned, ``mtval`` holds the address of the missing transaction part.
+ * In the case of illegal instruction exceptions, ``mtval`` holds the actual faulting instruction.
+
+For all other exceptions, ``mtval`` is 0.
 
 
 .. _csr-mhartid:

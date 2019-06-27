@@ -45,8 +45,10 @@ module ibex_controller (
     input  logic                      csr_status_i,          // decoder has CSR status instr
 
     // from IF/ID pipeline
-    input  logic                      instr_valid_i,         // instruction coming from IF/ID stage
-                                                             // is valid
+    input  logic                      instr_valid_i,         // instr from IF-ID reg is valid
+    input  logic [31:0]               instr_i,               // instr from IF-ID reg, for mtval
+    input  logic [15:0]               instr_compressed_i,    // instr from IF-ID reg, for mtval
+    input  logic                      instr_is_compressed_i, // instr from IF-ID reg is compressed
 
     // from prefetcher
     output logic                      instr_req_o,           // start fetching instructions
@@ -58,6 +60,7 @@ module ibex_controller (
     output ibex_defines::exc_pc_sel_e exc_pc_mux_o,          // IF stage selector for exception PC
 
     // LSU
+    input  logic [31:0]               lsu_addr_last_i,       // for mtval
     input  logic                      load_err_i,
     input  logic                      store_err_i,
 
@@ -92,10 +95,11 @@ module ibex_controller (
 
     output logic                      csr_save_if_o,
     output logic                      csr_save_id_o,
-    output ibex_defines::exc_cause_e  csr_cause_o,
     output logic                      csr_restore_mret_id_o,
     output logic                      csr_restore_dret_id_o,
     output logic                      csr_save_cause_o,
+    output ibex_defines::exc_cause_e  csr_cause_o,
+    output logic [31:0]               csr_mtval_o,
 
     // stall signals
     output logic                      halt_if_o,
@@ -154,15 +158,13 @@ module ibex_controller (
     csr_save_if_o          = 1'b0;
     csr_save_id_o          = 1'b0;
     csr_restore_mret_id_o  = 1'b0;
-
     csr_restore_dret_id_o  = 1'b0;
-
     csr_save_cause_o       = 1'b0;
+    csr_cause_o            = EXC_CAUSE_INSN_ADDR_MISA; // = 6'h00
+    csr_mtval_o            = '0;
 
     exc_cause_o            = EXC_CAUSE_INSN_ADDR_MISA; // = 6'h00
     exc_pc_mux_o           = EXC_PC_IRQ;
-
-    csr_cause_o            = EXC_CAUSE_INSN_ADDR_MISA; // = 6'h00
 
     pc_mux_o               = PC_BOOT;
     pc_set_o               = 1'b0;
@@ -342,7 +344,7 @@ module ibex_controller (
         pc_set_o          = 1'b1;
         exc_pc_mux_o      = EXC_PC_DBD;
 
-        csr_save_if_o   = 1'b1;
+        csr_save_if_o     = 1'b1;
         debug_csr_save_o  = 1'b1;
 
         csr_save_cause_o  = 1'b1;
@@ -433,6 +435,7 @@ module ibex_controller (
             end
             exc_cause_o           = EXC_CAUSE_ILLEGAL_INSN;
             csr_cause_o           = EXC_CAUSE_ILLEGAL_INSN;
+            csr_mtval_o           = instr_is_compressed_i ? {16'b0, instr_compressed_i} : instr_i;
           end
           mret_insn_i: begin
             //mret
@@ -492,6 +495,7 @@ module ibex_controller (
             exc_pc_mux_o     = EXC_PC_LOAD;
             exc_cause_o      = EXC_CAUSE_LOAD_ACCESS_FAULT;
             csr_cause_o      = EXC_CAUSE_LOAD_ACCESS_FAULT;
+            csr_mtval_o      = lsu_addr_last_i;
           end
           store_err_q: begin
             pc_mux_o         = PC_EXCEPTION;
@@ -501,6 +505,7 @@ module ibex_controller (
             exc_pc_mux_o     = EXC_PC_STORE;
             exc_cause_o      = EXC_CAUSE_STORE_ACCESS_FAULT;
             csr_cause_o      = EXC_CAUSE_STORE_ACCESS_FAULT;
+            csr_mtval_o      = lsu_addr_last_i;
           end
 
           default:;
