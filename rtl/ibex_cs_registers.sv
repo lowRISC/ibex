@@ -154,7 +154,7 @@ module ibex_cs_registers #(
   // CSRs
   Status_t     mstatus_q, mstatus_n;
   logic [31:0] mepc_q, mepc_n;
-  logic [31:0] mcause_q, mcause_n;
+  logic  [5:0] mcause_q, mcause_n;
   logic [31:0] mtval_q, mtval_n;
   Dcsr_t       dcsr_q, dcsr_n;
   logic [31:0] depc_q, depc_n;
@@ -421,7 +421,7 @@ module ibex_cs_registers #(
           mstatus_n.mie  = 1'b0;
           mstatus_n.mpp  = PRIV_LVL_M;
           mepc_n         = exception_pc;
-          mcause_n       = csr_cause_i;
+          mcause_n       = {csr_cause_i};
           mtval_n        = csr_mtval_i;
         end
       end //csr_save_cause_i
