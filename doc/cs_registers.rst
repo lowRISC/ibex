@@ -79,10 +79,10 @@ Reset Value: ``0x0000_1800``
 | 3     | RW  | **Interrupt Enable (MIE):** If set to 1'b1, interrupts are globally enabled.    |
 +-------+-----+---------------------------------------------------------------------------------+
 
-When an exception is encountered, MPIE will be set to MIE.
-When the MRET instruction is executed, the value of MPIE will be stored back to IE.
+When an exception is encountered, ``mstatus``.MPIE will be set to ``mstatus``.MIE.
+When the MRET instruction is executed, the value of MPIE will be stored back to ``mstatus``.MIE.
 
-If you want to enable interrupt handling in your exception handler, set MIE to 1'b1 inside your handler code.
+If you want to enable interrupt handling in your exception handler, set ``mstatus``.MIE to 1'b1 inside your handler code.
 
 
 Machine Trap-Vector Base Address (mtvec)
@@ -92,7 +92,7 @@ CSR Address: ``0x305``
 
 When an exception is encountered, the core jumps to the corresponding handler using the content of ``mtvec`` as base address.
 It is a read-only register which contains the boot address.
-Its LSBs (mode field) are set to 2'b01 to indicate vectored interrupt handling.
+``mtvec``.MODE is set to 2'b01 to indicate vectored interrupt handling.
 
 
 Machine Exception PC (mepc)
