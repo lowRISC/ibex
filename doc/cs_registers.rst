@@ -3,7 +3,7 @@
 Control and Status Registers
 ============================
 
-Ibex implements all the Control and Status Registers (CSRs) listed in the following table according to the RISC-V Privileged Specification, draft version 1.11.
+Ibex implements all the Control and Status Registers (CSRs) listed in the following table according to the RISC-V Privileged Specification, version 1.11.
 
 +---------+--------------------+--------+-----------------------------------------------+
 | Address |   Name             | Access | Description                                   |
