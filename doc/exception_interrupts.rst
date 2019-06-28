@@ -53,8 +53,8 @@ Handling
 
 Ibex does support nested interrupt/exception handling.
 Exceptions inside interrupt/exception handlers cause another exception.
-Thus, exceptions during the critical part of your exception handlers, i.e. before having saved the ``mepc`` and ``mstatus``, will cause those CSRs to be overwritten.
-Interrupts during interrupt/exception handlers are disabled by default, but can be explicitly enabled if desired.
+However, exceptions during the critical part of your exception handlers, i.e. before having saved the ``mepc`` and ``mstatus``, will cause those CSRs to be overwritten.
+Interrupts during interrupt/exception handlers are thus disabled by default, but can be explicitly enabled if desired.
 
-Upon executing an MRET instruction, the core jumps to the program counter saved in the ``mepc`` CSR and restores the MPIE value of the ``mstatus`` CSR to IE.
-When entering an interrupt/exception handler, the core sets ``mepc`` to the current program counter and saves the current value of MIE in MPIE of the ``mstatus``.
+When entering an interrupt/exception handler, the core sets ``mepc`` to the current program counter and saves ``mstatus``.MIE to ``mstatus``.MPIE.
+Upon executing an MRET instruction, the core jumps to the program counter saved in the ``mepc`` CSR and restores ``mstatus``.MPIE to ``mstatus``.MIE.
