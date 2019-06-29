@@ -34,6 +34,11 @@ class RiscvInstructiontTraceEntry(object):
     self.instr_str = ""
     self.privileged_mode = ""
 
+  def get_trace_string(self):
+    """Return a short string of the trace entry"""
+    return ("%s -> %s(0x%s) addr:0x%s" %
+           (self.instr_str, self.rd, self.rd_val, self.addr))
+
 class RiscvInstructiontTraceCsv(object):
   """RISC-V instruction trace CSV class
 
@@ -72,6 +77,7 @@ class RiscvInstructiontTraceCsv(object):
                               'rd_val' : entry.rd_val,
                               'binary' : entry.binary,
                               'addr'   : entry.addr})
+
 
 def gpr_to_abi(gpr):
   """Convert a general purpose register to its corresponding abi name"""

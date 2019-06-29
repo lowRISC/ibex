@@ -49,7 +49,9 @@ clean:
 # Generate random instructions
 gen:
 	mkdir -p ${OUT}
-	cd ${GEN_DIR}; ./run -o ${OUT}/instr_gen ${GEN_OPTS};
+	cd ${GEN_DIR}; \
+	./run -o ${OUT}/instr_gen ${GEN_OPTS} \
+	   -opts "+uvm_set_type_override=riscv_asm_program_gen,ibex_asm_program_gen";
 
 # ISS simulation
 iss_sim:

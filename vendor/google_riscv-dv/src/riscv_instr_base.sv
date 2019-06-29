@@ -458,6 +458,14 @@ class riscv_instr_base extends uvm_object;
         CJ_FORMAT:
           asm_str = $sformatf("%0s%0s", asm_str, get_imm());
       endcase
+    end else begin
+      // For EBREAK,C.EBREAK, making sure pc+4 is a valid instruction boundary
+      // This is needed to resume execution from epc+4 after ebreak handling
+      if(instr_name == EBREAK) begin
+        asm_str = ".option norvc;ebreak;.option rvc;";
+      end else if(instr_name == C_EBREAK) begin
+        asm_str = "c.ebreak;c.nop;";
+      end
     end
     if(comment != "")
       asm_str = {asm_str, " #",comment};

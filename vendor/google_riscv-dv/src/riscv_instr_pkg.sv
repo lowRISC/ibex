@@ -613,7 +613,7 @@ package riscv_instr_pkg;
     STORE_AMO_PAGE_FAULT           = 4'hF
   } exception_cause_t;
 
-  `include "riscv_core_setting.sv"
+  `include "../../../dv/uvm/riscv_dv_extension/ibex_core_setting.sv"
 
   typedef bit [15:0] program_id_t;
 
@@ -753,5 +753,6 @@ package riscv_instr_pkg;
   `include "riscv_load_store_instr_lib.sv"
   `include "riscv_instr_sequence.sv"
   `include "riscv_asm_program_gen.sv"
+  `include "../../../dv/uvm/riscv_dv_extension/ibex_asm_program_gen.sv"
 
 endpackage

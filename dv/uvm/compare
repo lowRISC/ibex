@@ -32,7 +32,7 @@ compare_log () {
   sed -i '/ecall/q' "$ibex_log"
   # Convert the spike log to riscv_instr_trace.proto format
   ibex_csv=$(echo "$ibex_log" | sed 's/\.log/.csv/g')
-  python $script_path/scripts/ibex_log_to_trace_csv.py \
+  python ./riscv_dv_extension/scripts/ibex_log_to_trace_csv.py \
          --log $ibex_log --csv $ibex_csv >> $report_file
 
   # -----------------------------------------------------------------------------
