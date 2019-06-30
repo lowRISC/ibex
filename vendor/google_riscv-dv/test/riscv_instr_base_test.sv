@@ -59,6 +59,7 @@ class riscv_instr_base_test extends uvm_test;
     end else begin
       `uvm_info("", "TEST FAILED", UVM_NONE);
     end
+    `uvm_info("", "TEST GENERATION DONE", UVM_NONE);
     super.report_phase(phase);
   endfunction
 

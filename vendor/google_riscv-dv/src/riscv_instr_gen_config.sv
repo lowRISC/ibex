@@ -72,6 +72,7 @@ class riscv_instr_gen_config extends uvm_object;
   bit                    no_csr_instr = 1; // No csr instruction
   bit                    no_ebreak = 1;    // No ebreak instruction
   bit                    no_fence;         // No fence instruction
+  bit                    no_wfi = 1;       // No WFI instruction
   bit                    enable_illegal_instruction;
   bit                    enable_hint_instruction;
   int                    bin_program_instr_cnt = 200;
@@ -226,6 +227,7 @@ class riscv_instr_gen_config extends uvm_object;
     get_int_arg_value("+num_of_sub_program=", num_of_sub_program);
     get_int_arg_value("+instr_cnt=", instr_cnt);
     get_bool_arg_value("+no_ebreak=", no_ebreak);
+    get_bool_arg_value("+no_wfi=", no_wfi);
     get_bool_arg_value("+no_branch_jump=", no_branch_jump);
     get_bool_arg_value("+no_load_store=", no_load_store);
     get_bool_arg_value("+no_csr_instr=", no_csr_instr);

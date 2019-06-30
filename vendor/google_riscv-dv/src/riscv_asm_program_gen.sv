@@ -244,36 +244,11 @@ class riscv_asm_program_gen extends uvm_object;
   //---------------------------------------------------------------------------------------
 
   virtual function void gen_program_header();
-    // ------------- IBEX modification start --------------------
-    // Override the cfg value, below field is not supported by ibex
-    cfg.mstatus_mprv = 0;
-    cfg.mstatus_mxr  = 0;
-    cfg.mstatus_sum  = 0;
-    cfg.mstatus_tvm  = 0;
-    // The ibex core load the program from 0x80
-    // Some address is reserved for hardware interrupt handling, need to decide if we need to copy
-    // the init program from crt0.S later.
     instr_stream.push_back(".macro init");
     instr_stream.push_back(".endm");
     instr_stream.push_back(".section .text.init");
     instr_stream.push_back(".globl _start");
-    instr_stream.push_back("j _start");
-    // Align the start section to 0x80
-    instr_stream.push_back(".align 7");
-    instr_stream.push_back("_start: j _reset_entry");
-    // ibex reserves 0x84-0x8C for trap handling, redirect everything mtvec_handler
-    // 0x84 illegal instruction
-    instr_stream.push_back(".align 2");
-    instr_stream.push_back("j mtvec_handler");
-    // 0x88 ECALL instruction handler
-    instr_stream.push_back(".align 2");
-    instr_stream.push_back("j mtvec_handler");
-    // 0x8C LSU error
-    instr_stream.push_back(".align 2");
-    instr_stream.push_back("j mtvec_handler");
-    // Starting point of the reset entry
-    instr_stream.push_back("_reset_entry:");
-    // ------------- IBEX modification end --------------------
+    instr_stream.push_back("_start:");
   endfunction
 
   virtual function void gen_program_end();
@@ -554,6 +529,8 @@ class riscv_asm_program_gen extends uvm_object;
             gen_trap_handler_section("u", UCAUSE, UTVEC, UTVAL, UEPC, USCRATCH, USTATUS);
       endcase
     end
+    // Ebreak handler
+    gen_ebreak_handler();
     // Ecall handler
     gen_ecall_handler();
     // Illegal instruction handler
@@ -595,6 +572,9 @@ class riscv_asm_program_gen extends uvm_object;
              $sformatf("csrr a1, 0x%0x # %0s", cause, cause.name()),
              $sformatf("csrr x31, 0x%0x # %0s", epc, epc.name()),
              $sformatf("csrr x29, 0x%0x # %0s", status, status.name()),
+             // Breakpoint
+             $sformatf("li a2, 0x%0x # BREAKPOINT", BREAKPOINT),
+             "beq a1, a2, ebreak_handler",
              // Check if it's an ECALL exception. Jump to ECALL exception handler
              $sformatf("li a2, 0x%0x # ECALL_UMODE", ECALL_UMODE),
              "beq a1, a2, ecall_handler",
@@ -645,6 +625,24 @@ class riscv_asm_program_gen extends uvm_object;
     instr_stream.push_back(str);
   endfunction
 
+  // Ebreak trap handler
+  // When breakpoint exception happens, epc will be written with ebreak instruction
+  // itself. Add epc by 4 and resume execution.
+  // Note the breakpoint could be triggered by a C.EBREAK instruction, the generated program
+  // guarantees that epc + 4 is a valid instruction boundary
+  // TODO: Support random operations in debug mode
+  // TODO: Support ebreak exception delegation
+  virtual function void gen_ebreak_handler();
+    string instr[$] = {
+           "csrr  x31, mepc",
+           "addi  x31, x31, 4",
+           "csrw  mepc, x31"
+    };
+    pop_gpr_from_kernel_stack(MSTATUS, MSCRATCH, cfg.mstatus_mprv, instr);
+    instr.push_back("mret");
+    gen_section("ebreak_handler", instr);
+  endfunction
+
   // Illegal instruction handler
   // Note: Save the illegal instruction to MTVAL is optional in the spec, and mepc could be
   // a virtual address that cannot be used in machine mode handler. As a result, there's no way to
@@ -652,7 +650,6 @@ class riscv_asm_program_gen extends uvm_object;
   // 4 and resumes execution. The way that the illegal instruction is injected guarantees that
   // PC + 4 is a valid instruction boundary.
   virtual function void gen_illegal_instr_handler();
-    string str;
     string instr[$] = {
            "csrr  x31, mepc",
            "addi  x31, x31, 4",
