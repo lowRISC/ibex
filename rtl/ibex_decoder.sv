@@ -28,8 +28,6 @@ module ibex_decoder #(
     parameter bit RV32M  = 1
 ) (
     // singals running to/from controller
-    input  logic                     deassert_we_i,         // deassert we, we are stalled or
-                                                            // not active
     input  logic                     branch_mux_i,
     input  logic                     jump_mux_i,
     output logic                     illegal_insn_o,        // illegal instr encountered
@@ -55,8 +53,8 @@ module ibex_decoder #(
     output ibex_defines::imm_b_sel_e imm_b_mux_sel_o,       // immediate selection for operand b
 
     // MUL, DIV related control signals
-    output logic                     mult_int_en_o,         // perform integer multiplication
-    output logic                     div_int_en_o,          // perform integer division or
+    output logic                     mult_en_o,             // perform integer multiplication
+    output logic                     div_en_o,              // perform integer division or
                                                             // remainder
     output ibex_defines::md_op_e     multdiv_operator_o,
     output logic [1:0]               multdiv_signed_mode_o,
@@ -79,20 +77,11 @@ module ibex_decoder #(
     output logic [1:0]               data_reg_offset_o,     // register byte offset for stores
 
     // jump/branches
-    output logic                     jump_in_id_o,          // jump is being calculated in ALU
-    output logic                     branch_in_id_o
+    output logic                     jump_in_dec_o,         // jump is being calculated in ALU
+    output logic                     branch_in_dec_o
 );
 
   import ibex_defines::*;
-
-  // write enable/request control
-  logic       regfile_we;
-  logic       data_req;
-
-  logic       mult_int_en;
-  logic       div_int_en;
-  logic       branch_in_id;
-  logic       jump_in_id;
 
   logic       csr_illegal;
 
@@ -103,8 +92,8 @@ module ibex_decoder #(
   /////////////
 
   always_comb begin
-    jump_in_id                  = 1'b0;
-    branch_in_id                = 1'b0;
+    jump_in_dec_o               = 1'b0;
+    branch_in_dec_o             = 1'b0;
     alu_operator_o              = ALU_SLTU;
     alu_op_a_mux_sel_o          = OP_A_REG_A;
     alu_op_b_mux_sel_o          = OP_B_REG_B;
@@ -112,12 +101,12 @@ module ibex_decoder #(
     imm_a_mux_sel_o             = IMM_A_ZERO;
     imm_b_mux_sel_o             = IMM_B_I;
 
-    mult_int_en                 = 1'b0;
-    div_int_en                  = 1'b0;
+    mult_en_o                   = 1'b0;
+    div_en_o                    = 1'b0;
     multdiv_operator_o          = MD_OP_MULL;
     multdiv_signed_mode_o       = 2'b00;
 
-    regfile_we                  = 1'b0;
+    regfile_we_o                = 1'b0;
 
     csr_access_o                = 1'b0;
     csr_status_o                = 1'b0;
@@ -128,7 +117,7 @@ module ibex_decoder #(
     data_type_o                 = 2'b00;
     data_sign_extension_o       = 1'b0;
     data_reg_offset_o           = 2'b00;
-    data_req                    = 1'b0;
+    data_req_o                  = 1'b0;
 
     illegal_insn_o              = 1'b0;
     ebrk_insn_o                 = 1'b0;
@@ -146,50 +135,50 @@ module ibex_decoder #(
       ///////////
 
       OPCODE_JAL: begin   // Jump and Link
-        jump_in_id            = 1'b1;
+        jump_in_dec_o         = 1'b1;
         if (jump_mux_i) begin
           // Calculate jump target
           alu_op_a_mux_sel_o  = OP_A_CURRPC;
           alu_op_b_mux_sel_o  = OP_B_IMM;
           imm_b_mux_sel_o     = IMM_B_J;
           alu_operator_o      = ALU_ADD;
-          regfile_we          = 1'b0;
+          regfile_we_o        = 1'b0;
         end else begin
           // Calculate and store PC+4
           alu_op_a_mux_sel_o  = OP_A_CURRPC;
           alu_op_b_mux_sel_o  = OP_B_IMM;
           imm_b_mux_sel_o     = IMM_B_INCR_PC;
           alu_operator_o      = ALU_ADD;
-          regfile_we          = 1'b1;
+          regfile_we_o        = 1'b1;
         end
       end
 
       OPCODE_JALR: begin  // Jump and Link Register
-        jump_in_id            = 1'b1;
+        jump_in_dec_o         = 1'b1;
         if (jump_mux_i) begin
           // Calculate jump target
           alu_op_a_mux_sel_o  = OP_A_REG_A;
           alu_op_b_mux_sel_o  = OP_B_IMM;
           imm_b_mux_sel_o     = IMM_B_I;
           alu_operator_o      = ALU_ADD;
-          regfile_we          = 1'b0;
+          regfile_we_o        = 1'b0;
         end else begin
           // Calculate and store PC+4
           alu_op_a_mux_sel_o  = OP_A_CURRPC;
           alu_op_b_mux_sel_o  = OP_B_IMM;
           imm_b_mux_sel_o     = IMM_B_INCR_PC;
           alu_operator_o      = ALU_ADD;
-          regfile_we          = 1'b1;
+          regfile_we_o        = 1'b1;
         end
         if (instr_rdata_i[14:12] != 3'b0) begin
-          jump_in_id       = 1'b0;
-          regfile_we       = 1'b0;
+          jump_in_dec_o    = 1'b0;
+          regfile_we_o     = 1'b0;
           illegal_insn_o   = 1'b1;
         end
       end
 
       OPCODE_BRANCH: begin // Branch
-        branch_in_id          = 1'b1;
+        branch_in_dec_o       = 1'b1;
         if (branch_mux_i) begin
           unique case (instr_rdata_i[14:12])
             3'b000:  alu_operator_o = ALU_EQ;
@@ -206,17 +195,16 @@ module ibex_decoder #(
           alu_op_b_mux_sel_o  = OP_B_IMM;
           imm_b_mux_sel_o     = IMM_B_B;
           alu_operator_o      = ALU_ADD;
-          regfile_we          = 1'b0;
+          regfile_we_o        = 1'b0;
         end
       end
-
 
       ////////////////
       // Load/store //
       ////////////////
 
       OPCODE_STORE: begin
-        data_req       = 1'b1;
+        data_req_o     = 1'b1;
         data_we_o      = 1'b1;
         alu_operator_o = ALU_ADD;
 
@@ -226,7 +214,7 @@ module ibex_decoder #(
           alu_op_b_mux_sel_o  = OP_B_IMM;
         end else begin
           // Register offset is illegal since no register c available
-          data_req       = 1'b0;
+          data_req_o     = 1'b0;
           data_we_o      = 1'b0;
           illegal_insn_o = 1'b1;
         end
@@ -237,7 +225,7 @@ module ibex_decoder #(
           2'b01: data_type_o = 2'b01; // SH
           2'b10: data_type_o = 2'b00; // SW
           default: begin
-            data_req       = 1'b0;
+            data_req_o     = 1'b0;
             data_we_o      = 1'b0;
             illegal_insn_o = 1'b1;
           end
@@ -245,8 +233,8 @@ module ibex_decoder #(
       end
 
       OPCODE_LOAD: begin
-        data_req        = 1'b1;
-        regfile_we      = 1'b1;
+        data_req_o      = 1'b1;
+        regfile_we_o    = 1'b1;
         data_type_o     = 2'b00;
 
         // offset from immediate
@@ -292,7 +280,6 @@ module ibex_decoder #(
         end
       end
 
-
       /////////
       // ALU //
       /////////
@@ -303,7 +290,7 @@ module ibex_decoder #(
         imm_a_mux_sel_o     = IMM_A_ZERO;
         imm_b_mux_sel_o     = IMM_B_U;
         alu_operator_o      = ALU_ADD;
-        regfile_we          = 1'b1;
+        regfile_we_o        = 1'b1;
       end
 
       OPCODE_AUIPC: begin  // Add Upper Immediate to PC
@@ -311,13 +298,13 @@ module ibex_decoder #(
         alu_op_b_mux_sel_o  = OP_B_IMM;
         imm_b_mux_sel_o     = IMM_B_U;
         alu_operator_o      = ALU_ADD;
-        regfile_we          = 1'b1;
+        regfile_we_o        = 1'b1;
       end
 
       OPCODE_OPIMM: begin // Register-Immediate ALU Operations
         alu_op_b_mux_sel_o  = OP_B_IMM;
         imm_b_mux_sel_o     = IMM_B_I;
-        regfile_we          = 1'b1;
+        regfile_we_o        = 1'b1;
 
         unique case (instr_rdata_i[14:12])
           3'b000: alu_operator_o = ALU_ADD;  // Add Immediate
@@ -351,7 +338,7 @@ module ibex_decoder #(
       end
 
       OPCODE_OP: begin  // Register-Register ALU operation
-        regfile_we     = 1'b1;
+        regfile_we_o   = 1'b1;
 
         if (instr_rdata_i[31]) begin
           illegal_insn_o = 1'b1;
@@ -373,56 +360,56 @@ module ibex_decoder #(
             {6'b00_0001, 3'b000}: begin // mul
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_MULL;
-              mult_int_en           = 1'b1;
+              mult_en_o             = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b00;
               illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b001}: begin // mulh
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_MULH;
-              mult_int_en           = 1'b1;
+              mult_en_o             = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b11;
               illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b010}: begin // mulhsu
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_MULH;
-              mult_int_en           = 1'b1;
+              mult_en_o             = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b01;
               illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b011}: begin // mulhu
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_MULH;
-              mult_int_en           = 1'b1;
+              mult_en_o             = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b00;
               illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b100}: begin // div
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_DIV;
-              div_int_en            = 1'b1;
+              div_en_o              = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b11;
               illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b101}: begin // divu
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_DIV;
-              div_int_en            = 1'b1;
+              div_en_o              = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b00;
               illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b110}: begin // rem
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_REM;
-              div_int_en            = 1'b1;
+              div_en_o              = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b11;
               illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b111}: begin // remu
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_REM;
-              div_int_en            = 1'b1;
+              div_en_o              = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b00;
               illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
             end
@@ -446,7 +433,7 @@ module ibex_decoder #(
         // an illegal instruction.
         if (instr_rdata_i[14:12] == 3'b000) begin
           alu_operator_o = ALU_ADD; // nop
-          regfile_we     = 1'b0;
+          regfile_we_o   = 1'b0;
         end else begin
           illegal_insn_o = 1'b1;
         end
@@ -480,7 +467,7 @@ module ibex_decoder #(
         end else begin
           // instruction to read/modify CSR
           csr_access_o        = 1'b1;
-          regfile_we          = 1'b1;
+          regfile_we_o        = 1'b1;
           alu_op_b_mux_sel_o  = OP_B_IMM;
           imm_a_mux_sel_o     = IMM_A_Z;
           imm_b_mux_sel_o     = IMM_B_I;  // CSR address is encoded in I imm
@@ -524,13 +511,5 @@ module ibex_decoder #(
       illegal_insn_o = 1'b1;
     end
   end
-
-  // deassert we signals (in case of stalls)
-  assign regfile_we_o      = (deassert_we_i) ? 1'b0          : regfile_we;
-  assign mult_int_en_o     = RV32M ? ((deassert_we_i) ? 1'b0 : mult_int_en) : 1'b0;
-  assign div_int_en_o      = RV32M ? ((deassert_we_i) ? 1'b0 : div_int_en ) : 1'b0;
-  assign data_req_o        = (deassert_we_i) ? 1'b0          : data_req;
-  assign jump_in_id_o      = (deassert_we_i) ? 1'b0          : jump_in_id;
-  assign branch_in_id_o    = (deassert_we_i) ? 1'b0          : branch_in_id;
 
 endmodule // controller
