@@ -44,16 +44,19 @@ module ibex_controller (
     input  logic                      ebrk_insn_i,           // decoder has EBREAK instr
     input  logic                      csr_status_i,          // decoder has CSR status instr
 
-    // from IF/ID pipeline
+    // from IF-ID pipeline stage
     input  logic                      instr_valid_i,         // instr from IF-ID reg is valid
     input  logic [31:0]               instr_i,               // instr from IF-ID reg, for mtval
     input  logic [15:0]               instr_compressed_i,    // instr from IF-ID reg, for mtval
     input  logic                      instr_is_compressed_i, // instr from IF-ID reg is compressed
 
-    // from prefetcher
-    output logic                      instr_req_o,           // start fetching instructions
+    // to IF-ID pipeline stage
+    output logic                      instr_valid_clear_o,   // kill instr in IF-ID reg
+    output logic                      id_ready_o,            // ID stage is ready for new instr
+    output logic                      halt_if_o,             // request halt of IF stage
 
     // to prefetcher
+    output logic                      instr_req_o,           // start fetching instructions
     output logic                      pc_set_o,              // jump to address set by pc_mux
     output ibex_defines::pc_sel_e     pc_mux_o,              // IF stage fetch address selector
                                                              // (boot, normal, exception...)
@@ -68,8 +71,6 @@ module ibex_controller (
     input  logic                      branch_in_id_i,        // branch in id
     input  logic                      branch_set_i,          // branch taken set signal
     input  logic                      jump_set_i,            // jump taken set signal
-
-    input  logic                      instr_multicyle_i,     // multicycle instructions active
 
     // External Interrupt Req Signals, used to wake up from wfi even if the interrupt is not taken
     input  logic                      irq_i,
@@ -101,16 +102,19 @@ module ibex_controller (
     output logic [31:0]               csr_mtval_o,
 
     // stall signals
-    output logic                      halt_if_o,
-    output logic                      halt_id_o,
+    input  logic                      stall_lsu_i,
+    input  logic                      stall_multdiv_i,
+    input  logic                      stall_jump_i,
+    input  logic                      stall_branch_i,
+    input  logic                      instr_multicyle_i,     // multicycle instructions active
 
-    input  logic                      id_ready_i,             // ID stage is ready
+    output logic                      id_valid_o,
 
     // Performance Counters
-    output logic                      perf_jump_o,            // we are executing a jump
-                                                              // instruction (j, jr, jal, jalr)
-    output logic                      perf_tbranch_o          // we are executing a taken branch
-                                                              // instruction
+    output logic                      perf_jump_o,           // we are executing a jump
+                                                             // instruction (j, jr, jal, jalr)
+    output logic                      perf_tbranch_o         // we are executing a taken branch
+                                                             // instruction
 );
   import ibex_defines::*;
 
@@ -127,6 +131,8 @@ module ibex_controller (
   logic debug_mode_q, debug_mode_n;
   logic load_err_q, load_err_n;
   logic store_err_q, store_err_n;
+
+  logic halt_id;
 
 `ifndef SYNTHESIS
   // synopsys translate_off
@@ -174,7 +180,7 @@ module ibex_controller (
     first_fetch_o          = 1'b0;
 
     halt_if_o              = 1'b0;
-    halt_id_o              = 1'b0;
+    halt_id                = 1'b0;
     irq_ack_o              = 1'b0;
     irq_id_o               = irq_id_ctrl_i;
     irq_enable_int         = m_IE_i;
@@ -213,7 +219,7 @@ module ibex_controller (
         ctrl_busy_o   = 1'b0;
         instr_req_o   = 1'b0;
         halt_if_o     = 1'b1;
-        halt_id_o     = 1'b1;
+        halt_id       = 1'b1;
         ctrl_fsm_ns   = SLEEP;
       end
 
@@ -224,7 +230,7 @@ module ibex_controller (
         ctrl_busy_o   = 1'b0;
         instr_req_o   = 1'b0;
         halt_if_o     = 1'b1;
-        halt_id_o     = 1'b1;
+        halt_id       = 1'b1;
 
         // normal execution flow
         // in debug mode or single step mode we leave immediately (wfi=nop)
@@ -236,7 +242,7 @@ module ibex_controller (
       FIRST_FETCH: begin
         first_fetch_o = 1'b1;
         // Stall because of IF miss
-        if (id_ready_i) begin
+        if (id_ready_o) begin
           ctrl_fsm_ns = DECODE;
         end
 
@@ -246,14 +252,14 @@ module ibex_controller (
           // going to sleep.
           ctrl_fsm_ns = IRQ_TAKEN;
           halt_if_o   = 1'b1;
-          halt_id_o   = 1'b1;
+          halt_id     = 1'b1;
         end
 
         // enter debug mode
         if (debug_req_i && !debug_mode_q) begin
           ctrl_fsm_ns  = DBG_TAKEN_IF;
           halt_if_o    = 1'b1;
-          halt_id_o    = 1'b1;
+          halt_id      = 1'b1;
         end
       end
 
@@ -272,14 +278,14 @@ module ibex_controller (
             // Enter debug mode from external request
             ctrl_fsm_ns   = DBG_TAKEN_ID;
             halt_if_o     = 1'b1;
-            halt_id_o     = 1'b1;
+            halt_id       = 1'b1;
           end
 
           irq_req_ctrl_i && irq_enable_int && !debug_req_i && !debug_mode_q: begin
             // Serve an interrupt (not in debug mode)
             ctrl_fsm_ns = IRQ_TAKEN;
             halt_if_o   = 1'b1;
-            halt_id_o   = 1'b1;
+            halt_id     = 1'b1;
           end
 
           default: begin
@@ -300,7 +306,7 @@ module ibex_controller (
                            store_err_i || load_err_i) begin
                 ctrl_fsm_ns = FLUSH;
                 halt_if_o   = 1'b1;
-                halt_id_o   = 1'b1;
+                halt_id     = 1'b1;
                 load_err_n  = load_err_i;
                 store_err_n = store_err_i;
               end
@@ -399,7 +405,7 @@ module ibex_controller (
       FLUSH: begin
 
         halt_if_o = 1'b1;
-        halt_id_o = 1'b1;
+        halt_id   = 1'b1;
 
         if (!pipe_flush_i) begin
           ctrl_fsm_ns = DECODE;
@@ -518,6 +524,15 @@ module ibex_controller (
   // in ID stage done, but waiting for next instruction from IF stage, or in case of illegal
   // instruction
   assign deassert_we_o = ~is_decoding_o | illegal_insn_i;
+
+  // signal to IF stage that ID stage is ready for next instruction
+  assign id_ready_o = ~stall_lsu_i & ~stall_multdiv_i & ~stall_jump_i & ~stall_branch_i;
+
+  // kill instruction in IF-ID reg for instructions that are done
+  assign instr_valid_clear_o = id_ready_o | halt_id;
+
+  // signal that ID stage has valid output
+  assign id_valid_o = id_ready_o & ~halt_id;
 
   // update registers
   always_ff @(posedge clk_i or negedge rst_ni) begin : update_regs

@@ -57,12 +57,14 @@ module ibex_id_stage #(
     input  logic [15:0]               instr_rdata_c_i,       // from IF-ID pipeline registers
     input  logic                      instr_is_compressed_i,
     output logic                      instr_req_o,
+    output logic                      instr_valid_clear_o,   // kill instr in IF-ID reg
+    output logic                      id_ready_o,            // ID stage is ready for next instr
+    output logic                      halt_if_o,             // ID stage requests IF stage to halt
 
     // Jumps and branches
     input  logic                      branch_decision_i,
 
     // IF and ID stage signals
-    output logic                      clear_instr_valid_o,
     output logic                      pc_set_o,
     output ibex_defines::pc_sel_e     pc_mux_o,
     output ibex_defines::exc_pc_sel_e exc_pc_mux_o,
@@ -72,8 +74,6 @@ module ibex_id_stage #(
     input  logic [31:0]               pc_id_i,
 
     // Stalls
-    output logic                      halt_if_o,  // controller requests a halt of the IF stage
-    output logic                      id_ready_o, // ID stage is ready for the next instruction
     input  logic                      ex_ready_i,
     output logic                      id_valid_o, // ID stage is done
 
@@ -174,13 +174,11 @@ module ibex_id_stage #(
   logic        jump_in_id, jump_in_dec;
 
   logic        instr_multicyle;
-  logic        load_stall;
-  logic        multdiv_stall;
-  logic        branch_stall;
-  logic        jump_stall;
+  logic        stall_lsu;
+  logic        stall_multdiv;
+  logic        stall_branch;
+  logic        stall_jump;
 
-  logic        halt_id;
-  //FSM signals to write back multi cycles instructions
   logic        regfile_we;
 
   typedef enum logic {RF_LSU, RF_EX} select_e;
@@ -275,10 +273,6 @@ module ibex_id_stage #(
   //                              regfile_alu_waddr_id[4]);
   //else
   assign illegal_reg_rv32e = 1'b0;
-
-  // kill instruction in the IF/ID stage by setting the instr_valid_id control
-  // signal to 0 for instructions that are done
-  assign clear_instr_valid_o = id_ready_o | halt_id;
 
   /////////////
   // LSU Mux //
@@ -479,11 +473,16 @@ module ibex_id_stage #(
       .ebrk_insn_i                    ( ebrk_insn              ),
       .csr_status_i                   ( csr_status             ),
 
-      // from IF/ID pipeline
+      // from IF-ID pipeline
       .instr_valid_i                  ( instr_valid_i          ),
       .instr_i                        ( instr                  ),
       .instr_compressed_i             ( instr_rdata_c_i        ),
       .instr_is_compressed_i          ( instr_is_compressed_i  ),
+
+      // to IF-ID pipeline
+      .instr_valid_clear_o            ( instr_valid_clear_o    ),
+      .id_ready_o                     ( id_ready_o             ),
+      .halt_if_o                      ( halt_if_o              ),
 
       // from prefetcher
       .instr_req_o                    ( instr_req_o            ),
@@ -533,11 +532,13 @@ module ibex_id_stage #(
       .debug_single_step_i            ( debug_single_step_i    ),
       .debug_ebreakm_i                ( debug_ebreakm_i        ),
 
-      // Stall signals
-      .halt_if_o                      ( halt_if_o              ),
-      .halt_id_o                      ( halt_id                ),
+      // stall signals
+      .stall_lsu_i                    ( stall_lsu              ),
+      .stall_multdiv_i                ( stall_multdiv          ),
+      .stall_jump_i                   ( stall_jump             ),
+      .stall_branch_i                 ( stall_branch           ),
 
-      .id_ready_i                     ( id_ready_o             ),
+      .id_valid_o                     ( id_valid_o             ),
 
       // Performance Counters
       .perf_jump_o                    ( perf_jump_o            ),
@@ -626,10 +627,10 @@ module ibex_id_stage #(
   always_comb begin : id_wb_fsm
     id_wb_fsm_ns    = id_wb_fsm_cs;
     regfile_we      = regfile_we_id;
-    load_stall      = 1'b0;
-    multdiv_stall   = 1'b0;
-    jump_stall      = 1'b0;
-    branch_stall    = 1'b0;
+    stall_lsu       = 1'b0;
+    stall_multdiv   = 1'b0;
+    stall_jump      = 1'b0;
+    stall_branch    = 1'b0;
     select_data_rf  = RF_EX;
     instr_multicyle = 1'b0;
     branch_set_n    = 1'b0;
@@ -648,13 +649,13 @@ module ibex_id_stage #(
             //LSU operation
             regfile_we      = 1'b0;
             id_wb_fsm_ns    = WAIT_MULTICYCLE;
-            load_stall      = 1'b1;
+            stall_lsu       = 1'b1;
             instr_multicyle = 1'b1;
           end
           branch_in_id: begin
             //Cond Branch operation
             id_wb_fsm_ns    = branch_decision_i ? WAIT_MULTICYCLE : IDLE;
-            branch_stall    = branch_decision_i;
+            stall_branch    = branch_decision_i;
             instr_multicyle = branch_decision_i;
             branch_set_n    = branch_decision_i;
             perf_branch_o   = 1'b1;
@@ -663,14 +664,14 @@ module ibex_id_stage #(
             //MUL or DIV operation
             regfile_we      = 1'b0;
             id_wb_fsm_ns    = WAIT_MULTICYCLE;
-            multdiv_stall   = 1'b1;
+            stall_multdiv   = 1'b1;
             instr_multicyle = 1'b1;
           end
           jump_in_id: begin
             //UnCond Branch operation
             regfile_we      = 1'b0;
             id_wb_fsm_ns    = WAIT_MULTICYCLE;
-            jump_stall      = 1'b1;
+            stall_jump      = 1'b1;
             instr_multicyle = 1'b1;
             jump_set        = 1'b1;
           end
@@ -682,17 +683,17 @@ module ibex_id_stage #(
         if (ex_ready_i) begin
           regfile_we     = regfile_we_id;
           id_wb_fsm_ns   = IDLE;
-          load_stall     = 1'b0;
-          multdiv_stall  = 1'b0;
+          stall_lsu      = 1'b0;
+          stall_multdiv  = 1'b0;
           select_data_rf = data_req_id ? RF_LSU : RF_EX;
         end else begin
           regfile_we      = 1'b0;
           instr_multicyle = 1'b1;
           unique case (1'b1)
             data_req_id:
-              load_stall    = 1'b1;
+              stall_lsu     = 1'b1;
             multdiv_en_id:
-              multdiv_stall = 1'b1;
+              stall_multdiv = 1'b1;
             default:;
           endcase
         end
@@ -701,11 +702,6 @@ module ibex_id_stage #(
       default:;
     endcase
   end
-
-  // stall control
-  assign id_ready_o = ~load_stall & ~branch_stall & ~jump_stall & ~multdiv_stall;
-
-  assign id_valid_o = ~halt_id & id_ready_o;
 
   ////////////////
   // Assertions //

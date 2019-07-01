@@ -61,7 +61,7 @@ module ibex_if_stage #(
     output logic [31:0]               pc_id_o,
 
     // Forwarding ports - control signals
-    input  logic                      clear_instr_valid_i,      // clear instr valid bit in IF-ID
+    input  logic                      instr_valid_clear_i,      // clear instr valid bit in IF-ID
     input  logic                      pc_set_i,                 // set the PC to a new value
     input  logic [31:0]               csr_mepc_i,               // PC to restore after handling
                                                                 // the interrupt/exception
@@ -246,7 +246,7 @@ module ibex_if_stage #(
         instr_is_compressed_id_o <= instr_is_compressed_int;
         illegal_c_insn_id_o      <= illegal_c_insn;
         pc_id_o                  <= pc_if_o;
-      end else if (clear_instr_valid_i) begin
+      end else if (instr_valid_clear_i) begin
         instr_valid_id_o         <= 1'b0;
       end
     end
