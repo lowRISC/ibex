@@ -7,4 +7,5 @@ interface core_ibex_dut_probe_if(input logic clk);
   logic illegal_instr;
   logic ecall;
   logic fetch_enable;
+  logic debug_req;
 endinterface
