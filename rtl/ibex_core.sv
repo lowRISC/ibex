@@ -763,7 +763,7 @@ module ibex_core #(
 
       .pc_i             ( id_stage_i.pc_id_i                   ),
       .instr_i          ( id_stage_i.instr                     ),
-      .compressed_i     ( id_stage_i.is_compressed_i           ),
+      .compressed_i     ( id_stage_i.instr_is_compressed_i     ),
       .id_valid_i       ( id_stage_i.id_valid_o                ),
       .is_decoding_i    ( id_stage_i.is_decoding_o             ),
       .is_branch_i      ( id_stage_i.branch_in_id              ),
