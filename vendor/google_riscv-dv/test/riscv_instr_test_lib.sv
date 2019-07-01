@@ -51,6 +51,12 @@
 // riscv_hint_instr_test:
 //  - Random instruction mixed with HINT instructions
 //
+// riscv_ebreak_test:
+//  - Randomly inject ebreak instruction, verify core can be halted and resumed properly
+//
+// riscv_wfi_test:
+//  - Randomly inject wfi instruction, verify core can be halted and resumed properly(by interrupt)
+//
 // riscv_privileged_csr_test:
 //  - To be released soon
 //
@@ -244,6 +250,30 @@ class riscv_hint_instr_test extends riscv_rand_instr_test;
 
   virtual function void randomize_cfg();
     cfg.enable_hint_instruction = 1'b1;
+    super.randomize_cfg();
+  endfunction
+
+endclass
+
+class riscv_ebreak_test extends riscv_rand_instr_test;
+
+  `uvm_component_utils(riscv_ebreak_test)
+  `uvm_component_new
+
+  virtual function void randomize_cfg();
+    cfg.no_ebreak = 1'b0;
+    super.randomize_cfg();
+  endfunction
+
+endclass
+
+class riscv_wfi_test extends riscv_rand_instr_test;
+
+  `uvm_component_utils(riscv_wfi_test)
+  `uvm_component_new
+
+  virtual function void randomize_cfg();
+    cfg.no_wfi = 1'b0;
     super.randomize_cfg();
   endfunction
 

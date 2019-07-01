@@ -22,6 +22,8 @@ package riscv_instr_pkg;
   `include "dv_defines.svh"
   `include "riscv_defines.svh"
 
+  `define include_file(f) `include "``f``"
+
   typedef enum bit [3:0] {
     BARE = 4'b0000,
     SV32 = 4'b0001,
@@ -613,7 +615,11 @@ package riscv_instr_pkg;
     STORE_AMO_PAGE_FAULT           = 4'hF
   } exception_cause_t;
 
-  `include "riscv_core_setting.sv"
+  `ifndef RISCV_CORE_SETTING
+    `define RISCV_CORE_SETTING ../setting/riscv_core_setting.sv
+  `endif
+
+  `include_file(`RISCV_CORE_SETTING)
 
   typedef bit [15:0] program_id_t;
 
@@ -753,5 +759,9 @@ package riscv_instr_pkg;
   `include "riscv_load_store_instr_lib.sv"
   `include "riscv_instr_sequence.sv"
   `include "riscv_asm_program_gen.sv"
+
+  `ifdef RISCV_DV_EXT_FILE_LIST
+    `include_file(`RISCV_DV_EXT_FILE_LIST)
+  `endif
 
 endpackage
