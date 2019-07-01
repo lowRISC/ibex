@@ -674,7 +674,7 @@ module ibex_core #(
   assign rvfi_valid_int = id_valid && if_valid && !illegal_c_insn_id;
 
   always_comb begin
-    if (is_compressed_id) begin
+    if (instr_is_compressed_id) begin
       rvfi_insn_opcode = {16'b0, instr_rdata_c_id};
     end else begin
       rvfi_insn_opcode = instr_rdata_id;
