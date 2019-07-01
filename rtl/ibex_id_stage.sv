@@ -166,13 +166,12 @@ module ibex_id_stage #(
   logic        ecall_insn_dec;
   logic        pipe_flush_dec;
 
-  logic        branch_in_id;
-  logic        branch_set_n;
-  logic        branch_set_q;
+  logic        branch_in_id, branch_in_dec;
+  logic        branch_set_n, branch_set_q;
   logic        branch_mux_dec;
   logic        jump_set;
   logic        jump_mux_dec;
-  logic        jump_in_id;
+  logic        jump_in_id, jump_in_dec;
 
   logic        instr_multicyle;
   logic        load_stall;
@@ -222,9 +221,9 @@ module ibex_id_stage #(
   imm_b_sel_e  imm_b_mux_sel, imm_b_mux_sel_dec;
 
   // Multiplier Control
-  logic        mult_int_en;      // use integer multiplier
-  logic        div_int_en;      // use integer division or reminder
-  logic        multdiv_int_en;
+  logic        mult_en_id, mult_en_dec; // use integer multiplier
+  logic        div_en_id, div_en_dec;   // use integer division or reminder
+  logic        multdiv_en_id;
   md_op_e      multdiv_operator;
   logic [1:0]  multdiv_signed_mode;
 
@@ -233,7 +232,7 @@ module ibex_id_stage #(
   logic [1:0]  data_type_id;
   logic        data_sign_ext_id;
   logic [1:0]  data_reg_offset_id;
-  logic        data_req_id;
+  logic        data_req_id, data_req_dec;
 
   // CSR control
   logic        csr_access;
@@ -291,7 +290,7 @@ module ibex_id_stage #(
   assign imm_b_mux_sel    = data_misaligned_i ? IMM_B_INCR_ADDR : imm_b_mux_sel_dec;
 
   // do not write back the second address since the first calculated address was the correct one
-  assign regfile_we_id    = data_misaligned_i ? 1'b0            : regfile_we_dec;
+  assign regfile_we_id    = data_misaligned_i ? 1'b0            : regfile_we_dec & ~deassert_we;
 
   ///////////////
   // Operand A //
@@ -388,15 +387,12 @@ module ibex_id_stage #(
   assign rfvi_reg_we_o       = regfile_we;
 `endif
 
-  assign multdiv_int_en  = mult_int_en | div_int_en;
-
   /////////////
   // Decoder //
   /////////////
 
   ibex_decoder #( .RV32M ( RV32M ) ) decoder_i (
       // controller related signals
-      .deassert_we_i                   ( deassert_we               ),
       .branch_mux_i                    ( branch_mux_dec            ),
       .jump_mux_i                      ( jump_mux_dec              ),
 
@@ -419,11 +415,12 @@ module ibex_id_stage #(
       .imm_a_mux_sel_o                 ( imm_a_mux_sel             ),
       .imm_b_mux_sel_o                 ( imm_b_mux_sel_dec         ),
 
-      .mult_int_en_o                   ( mult_int_en               ),
-      .div_int_en_o                    ( div_int_en                ),
+      .mult_en_o                       ( mult_en_dec               ),
+      .div_en_o                        ( div_en_dec                ),
       .multdiv_operator_o              ( multdiv_operator          ),
       .multdiv_signed_mode_o           ( multdiv_signed_mode       ),
-      // Register file control signals
+
+      // register file control signals
       .regfile_we_o                    ( regfile_we_dec            ),
 
       // CSR control signals
@@ -432,15 +429,15 @@ module ibex_id_stage #(
       .csr_status_o                    ( csr_status                ),
 
       // Data bus interface
-      .data_req_o                      ( data_req_id               ),
+      .data_req_o                      ( data_req_dec              ),
       .data_we_o                       ( data_we_id                ),
       .data_type_o                     ( data_type_id              ),
       .data_sign_extension_o           ( data_sign_ext_id          ),
       .data_reg_offset_o               ( data_reg_offset_id        ),
 
       // jump/branches
-      .jump_in_id_o                    ( jump_in_id                ),
-      .branch_in_id_o                  ( branch_in_id              )
+      .jump_in_dec_o                    ( jump_in_dec               ),
+      .branch_in_dec_o                  ( branch_in_dec             )
   );
 
 
@@ -569,15 +566,26 @@ module ibex_id_stage #(
       .m_IE_i               ( m_irq_enable_i     )
   );
 
+  //////////////
+  // ID-EX/WB //
+  //////////////
+  // Do not forward decoder output to EX or WB if:
+  // - current instr is already done, ID waiting for IF stage
+  // - current instr is illegal
+  assign data_req_id  = deassert_we ? 1'b0 : data_req_dec;
+  assign mult_en_id   = deassert_we ? 1'b0 : mult_en_dec;
+  assign div_en_id    = deassert_we ? 1'b0 : div_en_dec;
+  assign jump_in_id   = deassert_we ? 1'b0 : jump_in_dec;
+  assign branch_in_id = deassert_we ? 1'b0 : branch_in_dec;
+
   ///////////
   // ID-EX //
   ///////////
-
+  assign data_req_ex_o               = data_req_id;
   assign data_we_ex_o                = data_we_id;
   assign data_type_ex_o              = data_type_id;
   assign data_sign_ext_ex_o          = data_sign_ext_id;
   assign data_wdata_ex_o             = regfile_data_rb_id;
-  assign data_req_ex_o               = data_req_id;
   assign data_reg_offset_ex_o        = data_reg_offset_id;
 
   assign alu_operator_ex_o           = alu_operator;
@@ -586,8 +594,8 @@ module ibex_id_stage #(
 
   assign csr_access_ex_o             = csr_access;
 
-  assign mult_en_ex_o                = mult_int_en;
-  assign div_en_ex_o                 = div_int_en;
+  assign mult_en_ex_o                = mult_en_id;
+  assign div_en_ex_o                 = div_en_id;
 
   assign multdiv_operator_ex_o       = multdiv_operator;
   assign multdiv_signed_mode_ex_o    = multdiv_signed_mode;
@@ -613,6 +621,8 @@ module ibex_id_stage #(
   //////////////////
   // ID-EX/WB FSM //
   //////////////////
+  assign multdiv_en_id  = mult_en_id | div_en_id;
+
   always_comb begin : id_wb_fsm
     id_wb_fsm_ns    = id_wb_fsm_cs;
     regfile_we      = regfile_we_id;
@@ -649,7 +659,7 @@ module ibex_id_stage #(
             branch_set_n    = branch_decision_i;
             perf_branch_o   = 1'b1;
           end
-          multdiv_int_en: begin
+          multdiv_en_id: begin
             //MUL or DIV operation
             regfile_we      = 1'b0;
             id_wb_fsm_ns    = WAIT_MULTICYCLE;
@@ -681,7 +691,7 @@ module ibex_id_stage #(
           unique case (1'b1)
             data_req_id:
               load_stall    = 1'b1;
-            multdiv_int_en:
+            multdiv_en_id:
               multdiv_stall = 1'b1;
             default:;
           endcase
@@ -719,7 +729,7 @@ module ibex_id_stage #(
 
   // make sure multicycles enable signals are unique
   assert property (
-    @(posedge clk_i) ~(data_req_ex_o & multdiv_int_en )) else
+    @(posedge clk_i) ~(data_req_id & multdiv_en_id )) else
       $display("Multicycles enable signals are not unique");
 
 `endif

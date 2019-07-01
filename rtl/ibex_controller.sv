@@ -514,8 +514,9 @@ module ibex_controller (
   // Stall control //
   ///////////////////
 
-  // deassert WE when the core is not decoding instructions
-  // or in case of illegal instruction
+  // deassert write enable when the core is not decoding instructions, i.e., current instruction
+  // in ID stage done, but waiting for next instruction from IF stage, or in case of illegal
+  // instruction
   assign deassert_we_o = ~is_decoding_o | illegal_insn_i;
 
   // update registers
