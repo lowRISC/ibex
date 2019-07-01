@@ -171,8 +171,6 @@ module ibex_decoder #(
           regfile_we_o        = 1'b1;
         end
         if (instr_rdata_i[14:12] != 3'b0) begin
-          jump_in_dec_o    = 1'b0;
-          regfile_we_o     = 1'b0;
           illegal_insn_o   = 1'b1;
         end
       end
@@ -214,8 +212,6 @@ module ibex_decoder #(
           alu_op_b_mux_sel_o  = OP_B_IMM;
         end else begin
           // Register offset is illegal since no register c available
-          data_req_o     = 1'b0;
-          data_we_o      = 1'b0;
           illegal_insn_o = 1'b1;
         end
 
@@ -225,8 +221,6 @@ module ibex_decoder #(
           2'b01: data_type_o = 2'b01; // SH
           2'b10: data_type_o = 2'b00; // SW
           default: begin
-            data_req_o     = 1'b0;
-            data_we_o      = 1'b0;
             illegal_insn_o = 1'b1;
           end
         endcase
@@ -506,9 +500,25 @@ module ibex_decoder #(
       end
     endcase
 
-    // make sure invalid compressed instruction causes an exception
+    // make sure illegal compressed instructions cause illegal instruction exceptions
     if (illegal_c_insn_i) begin
       illegal_insn_o = 1'b1;
+    end
+
+    // make sure illegal instructions detected in the decoder do not propagate from decoder
+    // into register file, LSU, EX, WB, CSRs
+    // NOTE: instructions can also be detected to be illegal inside the CSRs (upon accesses with
+    // insufficient privileges), in ID stage (when accessing Reg 16 or higher in RV32E config),
+    // these cases are not handled here
+    if (illegal_insn_o) begin
+      regfile_we_o    = 1'b0;
+      data_req_o      = 1'b0;
+      data_we_o       = 1'b0;
+      mult_en_o       = 1'b0;
+      div_en_o        = 1'b0;
+      jump_in_dec_o   = 1'b0;
+      branch_in_dec_o = 1'b0;
+      csr_access_o    = 1'b0;
     end
   end
 
