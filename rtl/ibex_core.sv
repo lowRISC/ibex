@@ -700,7 +700,7 @@ module ibex_core #(
   // then it is kept stable for the cycle.
   always_comb begin
     if (rvfi_insn_new_d) begin
-      if (rvfi_rd_we_id) begin
+      if (!rvfi_rd_we_id) begin
         rvfi_rd_addr_d    = '0;
         rvfi_rd_wdata_d   = '0;
         rvfi_insn_clear_d = 1'b0;
