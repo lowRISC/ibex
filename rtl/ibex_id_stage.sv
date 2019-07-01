@@ -173,7 +173,7 @@ module ibex_id_stage #(
   logic        jump_mux_dec;
   logic        jump_in_id, jump_in_dec;
 
-  logic        instr_multicyle;
+  logic        instr_multicycle;
   logic        stall_lsu;
   logic        stall_multdiv;
   logic        stall_branch;
@@ -503,7 +503,7 @@ module ibex_id_stage #(
       .branch_set_i                   ( branch_set_q           ),
       .jump_set_i                     ( jump_set               ),
 
-      .instr_multicyle_i              ( instr_multicyle        ),
+      .instr_multicycle_i             ( instr_multicycle       ),
 
       .irq_i                          ( irq_i                  ),
       // Interrupt Controller Signals
@@ -625,55 +625,55 @@ module ibex_id_stage #(
   assign multdiv_en_id  = mult_en_id | div_en_id;
 
   always_comb begin : id_wb_fsm
-    id_wb_fsm_ns    = id_wb_fsm_cs;
-    regfile_we      = regfile_we_id;
-    stall_lsu       = 1'b0;
-    stall_multdiv   = 1'b0;
-    stall_jump      = 1'b0;
-    stall_branch    = 1'b0;
-    select_data_rf  = RF_EX;
-    instr_multicyle = 1'b0;
-    branch_set_n    = 1'b0;
-    branch_mux_dec  = 1'b0;
-    jump_set        = 1'b0;
-    jump_mux_dec    = 1'b0;
-    perf_branch_o   = 1'b0;
+    id_wb_fsm_ns     = id_wb_fsm_cs;
+    regfile_we       = regfile_we_id;
+    stall_lsu        = 1'b0;
+    stall_multdiv    = 1'b0;
+    stall_jump       = 1'b0;
+    stall_branch     = 1'b0;
+    select_data_rf   = RF_EX;
+    instr_multicycle = 1'b0;
+    branch_set_n     = 1'b0;
+    branch_mux_dec   = 1'b0;
+    jump_set         = 1'b0;
+    jump_mux_dec     = 1'b0;
+    perf_branch_o    = 1'b0;
 
     unique case (id_wb_fsm_cs)
 
       IDLE: begin
-        jump_mux_dec   = 1'b1;
-        branch_mux_dec = 1'b1;
+        jump_mux_dec         = 1'b1;
+        branch_mux_dec       = 1'b1;
         unique case (1'b1)
           data_req_id: begin
             //LSU operation
-            regfile_we      = 1'b0;
-            id_wb_fsm_ns    = WAIT_MULTICYCLE;
-            stall_lsu       = 1'b1;
-            instr_multicyle = 1'b1;
+            regfile_we       = 1'b0;
+            id_wb_fsm_ns     = WAIT_MULTICYCLE;
+            stall_lsu        = 1'b1;
+            instr_multicycle = 1'b1;
           end
           branch_in_id: begin
             //Cond Branch operation
-            id_wb_fsm_ns    = branch_decision_i ? WAIT_MULTICYCLE : IDLE;
-            stall_branch    = branch_decision_i;
-            instr_multicyle = branch_decision_i;
-            branch_set_n    = branch_decision_i;
-            perf_branch_o   = 1'b1;
+            id_wb_fsm_ns     = branch_decision_i ? WAIT_MULTICYCLE : IDLE;
+            stall_branch     = branch_decision_i;
+            instr_multicycle = branch_decision_i;
+            branch_set_n     = branch_decision_i;
+            perf_branch_o    = 1'b1;
           end
           multdiv_en_id: begin
             //MUL or DIV operation
-            regfile_we      = 1'b0;
-            id_wb_fsm_ns    = WAIT_MULTICYCLE;
-            stall_multdiv   = 1'b1;
-            instr_multicyle = 1'b1;
+            regfile_we       = 1'b0;
+            id_wb_fsm_ns     = WAIT_MULTICYCLE;
+            stall_multdiv    = 1'b1;
+            instr_multicycle = 1'b1;
           end
           jump_in_id: begin
             //UnCond Branch operation
-            regfile_we      = 1'b0;
-            id_wb_fsm_ns    = WAIT_MULTICYCLE;
-            stall_jump      = 1'b1;
-            instr_multicyle = 1'b1;
-            jump_set        = 1'b1;
+            regfile_we       = 1'b0;
+            id_wb_fsm_ns     = WAIT_MULTICYCLE;
+            stall_jump       = 1'b1;
+            instr_multicycle = 1'b1;
+            jump_set         = 1'b1;
           end
           default:;
         endcase
@@ -681,14 +681,14 @@ module ibex_id_stage #(
 
       WAIT_MULTICYCLE: begin
         if (ex_ready_i) begin
-          regfile_we     = regfile_we_id;
-          id_wb_fsm_ns   = IDLE;
-          stall_lsu      = 1'b0;
-          stall_multdiv  = 1'b0;
-          select_data_rf = data_req_id ? RF_LSU : RF_EX;
+          regfile_we        = regfile_we_id;
+          id_wb_fsm_ns      = IDLE;
+          stall_lsu         = 1'b0;
+          stall_multdiv     = 1'b0;
+          select_data_rf    = data_req_id ? RF_LSU : RF_EX;
         end else begin
-          regfile_we      = 1'b0;
-          instr_multicyle = 1'b1;
+          regfile_we        = 1'b0;
+          instr_multicycle  = 1'b1;
           unique case (1'b1)
             data_req_id:
               stall_lsu     = 1'b1;

@@ -106,7 +106,7 @@ module ibex_controller (
     input  logic                      stall_multdiv_i,
     input  logic                      stall_jump_i,
     input  logic                      stall_branch_i,
-    input  logic                      instr_multicyle_i,     // multicycle instructions active
+    input  logic                      instr_multicycle_i,    // multicycle instructions active
 
     output logic                      id_valid_o,
 
@@ -268,7 +268,7 @@ module ibex_controller (
 
         /*
          * TODO: What should happen on
-         * instr_valid_i && (instr_multicyle_i || branch_in_id_i)?
+         * instr_valid_i && (instr_multicycle_i || branch_in_id_i)?
          * Let the instruction finish executing before serving debug or
          * interrupt requests?
          */
@@ -289,7 +289,7 @@ module ibex_controller (
           end
 
           default: begin
-            exc_kill_o    = irq_req_ctrl_i & ~instr_multicyle_i & ~branch_in_id_i;
+            exc_kill_o    = irq_req_ctrl_i & ~instr_multicycle_i & ~branch_in_id_i;
 
             if (instr_valid_i) begin
               // analyze the current instruction in the ID stage
