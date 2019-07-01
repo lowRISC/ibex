@@ -117,7 +117,7 @@ module ibex_core #(
   logic [31:0] pc_if;                  // Program counter in IF stage
   logic [31:0] pc_id;                  // Program counter in ID stage
 
-  logic        clear_instr_valid;
+  logic        instr_valid_clear;
   logic        pc_set;
   pc_sel_e     pc_mux_id;              // Mux selector for next PC
   exc_pc_sel_e exc_pc_mux_id;          // Mux selector for exception PC
@@ -321,7 +321,7 @@ module ibex_core #(
       .pc_id_o                  ( pc_id                  ),
 
       // control signals
-      .clear_instr_valid_i      ( clear_instr_valid      ),
+      .instr_valid_clear_i      ( instr_valid_clear      ),
       .pc_set_i                 ( pc_set                 ),
       .pc_mux_i                 ( pc_mux_id              ),
       .exc_pc_mux_i             ( exc_pc_mux_id          ),
@@ -376,7 +376,7 @@ module ibex_core #(
       .branch_decision_i            ( branch_decision        ),
 
       // IF and ID control signals
-      .clear_instr_valid_o          ( clear_instr_valid      ),
+      .instr_valid_clear_o          ( instr_valid_clear      ),
       .pc_set_o                     ( pc_set                 ),
       .pc_mux_o                     ( pc_mux_id              ),
       .exc_pc_mux_o                 ( exc_pc_mux_id          ),
