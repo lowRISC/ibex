@@ -170,10 +170,12 @@ module ibex_id_stage #(
 
   logic        branch_in_id, branch_in_dec;
   logic        branch_set_n, branch_set_q;
+  logic        jump_in_dec;
   logic        jump_set;
-  logic        jump_in_id, jump_in_dec;
 
+  logic        instr_executing;
   logic        instr_multicycle;
+  logic        instr_multicycle_done_n, instr_multicycle_done_q;
   logic        stall_lsu;
   logic        stall_multdiv;
   logic        stall_branch;
@@ -220,7 +222,7 @@ module ibex_id_stage #(
   // Multiplier Control
   logic        mult_en_id, mult_en_dec; // use integer multiplier
   logic        div_en_id, div_en_dec;   // use integer division or reminder
-  logic        multdiv_en_id;
+  logic        multdiv_en_dec;
   md_op_e      multdiv_operator;
   logic [1:0]  multdiv_signed_mode;
 
@@ -561,14 +563,15 @@ module ibex_id_stage #(
   //////////////
   // ID-EX/WB //
   //////////////
-  // Do not forward decoder output to EX or WB if:
-  // - current instr is already done, ID waiting for IF stage
-  // - current instr is illegal
-  assign data_req_id  = deassert_we ? 1'b0 : data_req_dec;
-  assign mult_en_id   = deassert_we ? 1'b0 : mult_en_dec;
-  assign div_en_id    = deassert_we ? 1'b0 : div_en_dec;
-  assign jump_in_id   = deassert_we ? 1'b0 : jump_in_dec;
-  assign branch_in_id = deassert_we ? 1'b0 : branch_in_dec;
+  // Forward decoder output to EX, WB and controller only if current instr is still
+  // being executed. This is the case if the current instr is either:
+  // - a new instr (not yet done)
+  // - a multicycle instr that is not yet done
+  assign instr_executing = (instr_new_i | ~instr_multicycle_done_q);
+  assign data_req_id     = instr_executing ? data_req_dec  : 1'b0;
+  assign mult_en_id      = instr_executing ? mult_en_dec   : 1'b0;
+  assign div_en_id       = instr_executing ? div_en_dec    : 1'b0;
+  assign branch_in_id    = instr_executing ? branch_in_dec : 1'b0;
 
   ///////////
   // ID-EX //
@@ -602,85 +605,88 @@ module ibex_id_stage #(
   ////////////////////////////////
   always_ff @(posedge clk_i or negedge rst_ni) begin : id_wb_pipeline_reg
     if (!rst_ni) begin
-      id_wb_fsm_cs  <= IDLE;
-      branch_set_q  <= 1'b0;
+      id_wb_fsm_cs            <= IDLE;
+      branch_set_q            <= 1'b0;
+      instr_multicycle_done_q <= 1'b0;
     end else begin
-      id_wb_fsm_cs  <= id_wb_fsm_ns;
-      branch_set_q  <= branch_set_n;
+      id_wb_fsm_cs            <= id_wb_fsm_ns;
+      branch_set_q            <= branch_set_n;
+      instr_multicycle_done_q <= instr_multicycle_done_n;
     end
   end
 
   //////////////////
   // ID-EX/WB FSM //
   //////////////////
-  assign multdiv_en_id  = mult_en_id | div_en_id;
+  assign multdiv_en_dec  = mult_en_dec | div_en_dec;
 
   always_comb begin : id_wb_fsm
-    id_wb_fsm_ns     = id_wb_fsm_cs;
-    regfile_we       = regfile_we_id;
-    stall_lsu        = 1'b0;
-    stall_multdiv    = 1'b0;
-    stall_jump       = 1'b0;
-    stall_branch     = 1'b0;
-    select_data_rf   = RF_EX;
-    instr_multicycle = 1'b0;
-    branch_set_n     = 1'b0;
-    perf_branch_o    = 1'b0;
+    id_wb_fsm_ns            = id_wb_fsm_cs;
+    instr_multicycle        = 1'b0;
+    instr_multicycle_done_n = instr_multicycle_done_q;
+    regfile_we              = regfile_we_id;
+    stall_lsu               = 1'b0;
+    stall_multdiv           = 1'b0;
+    stall_jump              = 1'b0;
+    stall_branch            = 1'b0;
+    branch_set_n            = 1'b0;
+    perf_branch_o           = 1'b0;
 
     unique case (id_wb_fsm_cs)
 
       IDLE: begin
-        unique case (1'b1)
-          data_req_id: begin
-            //LSU operation
-            regfile_we       = 1'b0;
-            id_wb_fsm_ns     = WAIT_MULTICYCLE;
-            stall_lsu        = 1'b1;
-            instr_multicycle = 1'b1;
-          end
-          branch_in_id: begin
-            //Cond Branch operation
-            id_wb_fsm_ns     = branch_decision_i ? WAIT_MULTICYCLE : IDLE;
-            stall_branch     = branch_decision_i;
-            instr_multicycle = branch_decision_i;
-            branch_set_n     = branch_decision_i;
-            perf_branch_o    = 1'b1;
-          end
-          multdiv_en_id: begin
-            //MUL or DIV operation
-            regfile_we       = 1'b0;
-            id_wb_fsm_ns     = WAIT_MULTICYCLE;
-            stall_multdiv    = 1'b1;
-            instr_multicycle = 1'b1;
-          end
-          jump_in_id: begin
-            //UnCond Branch operation
-            regfile_we       = 1'b0;
-            id_wb_fsm_ns     = WAIT_MULTICYCLE;
-            stall_jump       = 1'b1;
-            instr_multicycle = 1'b1;
-          end
-          default:;
-        endcase
+        // only detect multicycle when instruction is new, do not re-detect after
+        // execution (when waiting for next instruction from IF stage)
+        if (instr_new_i) begin
+          unique case (1'b1)
+            data_req_dec: begin
+              // LSU operation
+              regfile_we              = 1'b0;
+              id_wb_fsm_ns            = WAIT_MULTICYCLE;
+              stall_lsu               = 1'b1;
+              instr_multicycle        = 1'b1;
+              instr_multicycle_done_n = 1'b0;
+            end
+            multdiv_en_dec: begin
+              // MUL or DIV operation
+              regfile_we              = 1'b0;
+              id_wb_fsm_ns            = WAIT_MULTICYCLE;
+              stall_multdiv           = 1'b1;
+              instr_multicycle        = 1'b1;
+              instr_multicycle_done_n = 1'b0;
+            end
+            branch_in_dec: begin
+              // cond branch operation
+              id_wb_fsm_ns            =  branch_decision_i ? WAIT_MULTICYCLE : IDLE;
+              stall_branch            =  branch_decision_i;
+              instr_multicycle        =  branch_decision_i;
+              instr_multicycle_done_n = ~branch_decision_i;
+              branch_set_n            =  branch_decision_i;
+              perf_branch_o           =  1'b1;
+            end
+            jump_in_dec: begin
+              // uncond branch operation
+              id_wb_fsm_ns            = WAIT_MULTICYCLE;
+              stall_jump              = 1'b1;
+              instr_multicycle        = 1'b1;
+              instr_multicycle_done_n = 1'b0;
+            end
+            default:;
+          endcase
+        end
       end
 
       WAIT_MULTICYCLE: begin
-        if ( (data_req_id & lsu_valid_i) | (~data_req_id & ex_valid_i) ) begin
-          regfile_we        = regfile_we_id;
-          id_wb_fsm_ns      = IDLE;
-          stall_lsu         = 1'b0;
-          stall_multdiv     = 1'b0;
-          select_data_rf    = data_req_id ? RF_LSU : RF_EX;
+        if ((data_req_dec & lsu_valid_i) | (~data_req_dec & ex_valid_i)) begin
+          id_wb_fsm_ns            = IDLE;
+          instr_multicycle_done_n = 1'b1;
         end else begin
-          regfile_we        = 1'b0;
-          instr_multicycle  = 1'b1;
-          unique case (1'b1)
-            data_req_id:
-              stall_lsu     = 1'b1;
-            multdiv_en_id:
-              stall_multdiv = 1'b1;
-            default:;
-          endcase
+          regfile_we              = 1'b0;
+          instr_multicycle        = 1'b1;
+          stall_lsu               = data_req_dec;
+          stall_multdiv           = multdiv_en_dec;
+          stall_branch            = branch_in_dec;
+          stall_jump              = jump_in_dec;
         end
       end
 
@@ -710,7 +716,7 @@ module ibex_id_stage #(
 
   // make sure multicycles enable signals are unique
   assert property (
-    @(posedge clk_i) ~(data_req_id & multdiv_en_id )) else
+    @(posedge clk_i) ~(data_req_dec & multdiv_en_dec)) else
       $display("Multicycles enable signals are not unique");
 
 `endif
