@@ -109,6 +109,7 @@ module ibex_core #(
 
   // IF/ID signals
   logic        instr_valid_id;
+  logic        instr_new_id;
   logic [31:0] instr_rdata_id;         // Instruction sampled inside IF stage
   logic [15:0] instr_rdata_c_id;       // Compressed instruction sampled inside IF stage
   logic        instr_is_compressed_id;
@@ -313,6 +314,7 @@ module ibex_core #(
 
       // outputs to ID stage
       .instr_valid_id_o         ( instr_valid_id         ),
+      .instr_new_id_o           ( instr_new_id           ),
       .instr_rdata_id_o         ( instr_rdata_id         ),
       .instr_rdata_c_id_o       ( instr_rdata_c_id       ),
       .instr_is_compressed_id_o ( instr_is_compressed_id ),
@@ -365,18 +367,19 @@ module ibex_core #(
       .is_decoding_o                ( is_decoding            ),
       .illegal_insn_o               ( illegal_insn_id        ),
 
-      // Interface to instruction memory
+      // from/to IF-ID pipeline register
       .instr_valid_i                ( instr_valid_id         ),
+      .instr_new_i                  ( instr_new_id           ),
       .instr_rdata_i                ( instr_rdata_id         ),
       .instr_rdata_c_i              ( instr_rdata_c_id       ),
       .instr_is_compressed_i        ( instr_is_compressed_id ),
-      .instr_req_o                  ( instr_req_int          ),
 
       // Jumps and branches
       .branch_decision_i            ( branch_decision        ),
 
       // IF and ID control signals
       .instr_valid_clear_o          ( instr_valid_clear      ),
+      .instr_req_o                  ( instr_req_int          ),
       .pc_set_o                     ( pc_set                 ),
       .pc_mux_o                     ( pc_mux_id              ),
       .exc_pc_mux_o                 ( exc_pc_mux_id          ),
