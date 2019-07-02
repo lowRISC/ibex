@@ -35,6 +35,7 @@ module ibex_decoder #(
     output logic                     dret_insn_o,           // return from debug instr encountered
     output logic                     ecall_insn_o,          // syscall instr encountered
     output logic                     pipe_flush_o,          // pipeline flush is requested
+    output logic                     jump_set_o,            // jump taken set signal
 
     // from IF/ID pipeline
     input  logic                     instr_new_i,           // instruction read is new
@@ -92,6 +93,7 @@ module ibex_decoder #(
 
   always_comb begin
     jump_in_dec_o               = 1'b0;
+    jump_set_o                  = 1'b0;
     branch_in_dec_o             = 1'b0;
     alu_operator_o              = ALU_SLTU;
     alu_op_a_mux_sel_o          = OP_A_REG_A;
@@ -142,6 +144,7 @@ module ibex_decoder #(
           imm_b_mux_sel_o     = IMM_B_J;
           alu_operator_o      = ALU_ADD;
           regfile_we_o        = 1'b0;
+          jump_set_o          = 1'b1;
         end else begin
           // Calculate and store PC+4
           alu_op_a_mux_sel_o  = OP_A_CURRPC;

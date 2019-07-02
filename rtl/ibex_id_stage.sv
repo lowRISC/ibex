@@ -393,6 +393,7 @@ module ibex_id_stage #(
       .dret_insn_o                     ( dret_insn_dec             ),
       .ecall_insn_o                    ( ecall_insn_dec            ),
       .pipe_flush_o                    ( pipe_flush_dec            ),
+      .jump_set_o                      ( jump_set                  ),
 
       // from IF/ID pipeline
       .instr_new_i                     ( instr_new_i               ),
@@ -632,7 +633,6 @@ module ibex_id_stage #(
     select_data_rf   = RF_EX;
     instr_multicycle = 1'b0;
     branch_set_n     = 1'b0;
-    jump_set         = 1'b0;
     perf_branch_o    = 1'b0;
 
     unique case (id_wb_fsm_cs)
@@ -667,7 +667,6 @@ module ibex_id_stage #(
             id_wb_fsm_ns     = WAIT_MULTICYCLE;
             stall_jump       = 1'b1;
             instr_multicycle = 1'b1;
-            jump_set         = 1'b1;
           end
           default:;
         endcase
