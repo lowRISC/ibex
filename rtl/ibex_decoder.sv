@@ -60,6 +60,7 @@ module ibex_decoder #(
     output logic [1:0]               multdiv_signed_mode_o,
 
     // register file related signals
+    output ibex_defines::rf_wd_sel_e regfile_wdata_sel_o,   // RF write data selection
     output logic                     regfile_we_o,          // write enable for regfile
 
     // CSR manipulation
@@ -107,6 +108,7 @@ module ibex_decoder #(
     multdiv_operator_o          = MD_OP_MULL;
     multdiv_signed_mode_o       = 2'b00;
 
+    regfile_wdata_sel_o         = RF_WD_EX;
     regfile_we_o                = 1'b0;
 
     csr_access_o                = 1'b0;
@@ -229,9 +231,10 @@ module ibex_decoder #(
       end
 
       OPCODE_LOAD: begin
-        data_req_o      = 1'b1;
-        regfile_we_o    = 1'b1;
-        data_type_o     = 2'b00;
+        data_req_o          = 1'b1;
+        regfile_wdata_sel_o = RF_WD_LSU;
+        regfile_we_o        = 1'b1;
+        data_type_o         = 2'b00;
 
         // offset from immediate
         alu_operator_o      = ALU_ADD;
@@ -463,6 +466,7 @@ module ibex_decoder #(
         end else begin
           // instruction to read/modify CSR
           csr_access_o        = 1'b1;
+          regfile_wdata_sel_o = RF_WD_CSR;
           regfile_we_o        = 1'b1;
           alu_op_b_mux_sel_o  = OP_B_IMM;
           imm_a_mux_sel_o     = IMM_A_Z;

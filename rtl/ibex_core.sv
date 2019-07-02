@@ -782,9 +782,9 @@ module ibex_core #(
 
       .lsu_value_i      ( data_wdata_ex                        ),
 
-      .ex_reg_addr_i    ( id_stage_i.regfile_waddr_mux         ),
-      .ex_reg_we_i      ( id_stage_i.regfile_we_mux            ),
-      .ex_reg_wdata_i   ( id_stage_i.regfile_wdata_mux         ),
+      .ex_reg_addr_i    ( id_stage_i.regfile_waddr_id          ),
+      .ex_reg_we_i      ( id_stage_i.regfile_we                ),
+      .ex_reg_wdata_i   ( id_stage_i.regfile_wdata_id          ),
       .data_valid_lsu_i ( data_valid_lsu                       ),
       .ex_data_addr_i   ( data_addr_o                          ),
       .ex_data_req_i    ( data_req_o                           ),
