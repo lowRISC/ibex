@@ -28,8 +28,6 @@ module ibex_decoder #(
     parameter bit RV32M  = 1
 ) (
     // singals running to/from controller
-    input  logic                     branch_mux_i,
-    input  logic                     jump_mux_i,
     output logic                     illegal_insn_o,        // illegal instr encountered
     output logic                     ebrk_insn_o,           // trap instr encountered
     output logic                     mret_insn_o,           // return from exception instr
@@ -39,6 +37,7 @@ module ibex_decoder #(
     output logic                     pipe_flush_o,          // pipeline flush is requested
 
     // from IF/ID pipeline
+    input  logic                     instr_new_i,           // instruction read is new
     input  logic [31:0]              instr_rdata_i,         // instruction read from memory/cache
     input  logic                     illegal_c_insn_i,      // compressed instruction decode failed
 
@@ -136,7 +135,7 @@ module ibex_decoder #(
 
       OPCODE_JAL: begin   // Jump and Link
         jump_in_dec_o         = 1'b1;
-        if (jump_mux_i) begin
+        if (instr_new_i) begin
           // Calculate jump target
           alu_op_a_mux_sel_o  = OP_A_CURRPC;
           alu_op_b_mux_sel_o  = OP_B_IMM;
@@ -155,7 +154,7 @@ module ibex_decoder #(
 
       OPCODE_JALR: begin  // Jump and Link Register
         jump_in_dec_o         = 1'b1;
-        if (jump_mux_i) begin
+        if (instr_new_i) begin
           // Calculate jump target
           alu_op_a_mux_sel_o  = OP_A_REG_A;
           alu_op_b_mux_sel_o  = OP_B_IMM;
@@ -177,7 +176,7 @@ module ibex_decoder #(
 
       OPCODE_BRANCH: begin // Branch
         branch_in_dec_o       = 1'b1;
-        if (branch_mux_i) begin
+        if (instr_new_i) begin
           unique case (instr_rdata_i[14:12])
             3'b000:  alu_operator_o = ALU_EQ;
             3'b001:  alu_operator_o = ALU_NE;

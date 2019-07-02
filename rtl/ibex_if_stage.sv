@@ -49,6 +49,7 @@ module ibex_if_stage #(
 
     // Output of IF Pipeline stage
     output logic                      instr_valid_id_o,         // instr in IF-ID is valid
+    output logic                      instr_new_id_o,           // instr in IF-ID is new
     output logic [31:0]               instr_rdata_id_o,         // instr for ID stage
     output logic [15:0]               instr_rdata_c_id_o,       // compressed instr for ID stage
                                                                 // (mtval), meaningful only if
@@ -232,6 +233,7 @@ module ibex_if_stage #(
   // IF-ID pipeline registers, frozen when the ID stage is stalled
   always_ff @(posedge clk_i or negedge rst_ni) begin : if_id_pipeline_regs
     if (!rst_ni) begin
+      instr_new_id_o             <= 1'b0;
       instr_valid_id_o           <= 1'b0;
       instr_rdata_id_o           <= '0;
       instr_rdata_c_id_o         <= '0;
@@ -239,6 +241,7 @@ module ibex_if_stage #(
       illegal_c_insn_id_o        <= 1'b0;
       pc_id_o                    <= '0;
     end else begin
+      instr_new_id_o             <= if_valid_o;
       if (if_valid_o) begin
         instr_valid_id_o         <= 1'b1;
         instr_rdata_id_o         <= instr_decompressed;

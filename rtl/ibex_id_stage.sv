@@ -53,6 +53,7 @@ module ibex_id_stage #(
 
     // Interface to IF stage
     input  logic                      instr_valid_i,
+    input  logic                      instr_new_i,
     input  logic [31:0]               instr_rdata_i,         // from IF-ID pipeline registers
     input  logic [15:0]               instr_rdata_c_i,       // from IF-ID pipeline registers
     input  logic                      instr_is_compressed_i,
@@ -169,9 +170,7 @@ module ibex_id_stage #(
 
   logic        branch_in_id, branch_in_dec;
   logic        branch_set_n, branch_set_q;
-  logic        branch_mux_dec;
   logic        jump_set;
-  logic        jump_mux_dec;
   logic        jump_in_id, jump_in_dec;
 
   logic        instr_multicycle;
@@ -388,9 +387,6 @@ module ibex_id_stage #(
 
   ibex_decoder #( .RV32M ( RV32M ) ) decoder_i (
       // controller related signals
-      .branch_mux_i                    ( branch_mux_dec            ),
-      .jump_mux_i                      ( jump_mux_dec              ),
-
       .illegal_insn_o                  ( illegal_insn_dec          ),
       .ebrk_insn_o                     ( ebrk_insn                 ),
       .mret_insn_o                     ( mret_insn_dec             ),
@@ -399,6 +395,7 @@ module ibex_id_stage #(
       .pipe_flush_o                    ( pipe_flush_dec            ),
 
       // from IF/ID pipeline
+      .instr_new_i                     ( instr_new_i               ),
       .instr_rdata_i                   ( instr                     ),
       .illegal_c_insn_i                ( illegal_c_insn_i          ),
 
@@ -635,16 +632,12 @@ module ibex_id_stage #(
     select_data_rf   = RF_EX;
     instr_multicycle = 1'b0;
     branch_set_n     = 1'b0;
-    branch_mux_dec   = 1'b0;
     jump_set         = 1'b0;
-    jump_mux_dec     = 1'b0;
     perf_branch_o    = 1'b0;
 
     unique case (id_wb_fsm_cs)
 
       IDLE: begin
-        jump_mux_dec         = 1'b1;
-        branch_mux_dec       = 1'b1;
         unique case (1'b1)
           data_req_id: begin
             //LSU operation
