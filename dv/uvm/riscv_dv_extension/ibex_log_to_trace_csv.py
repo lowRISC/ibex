@@ -6,6 +6,9 @@
 
 import argparse
 import re
+import sys
+
+sys.path.insert(0, "../../vendor/google_riscv-dv/scripts")
 
 from riscv_trace_csv import *
 

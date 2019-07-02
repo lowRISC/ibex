@@ -20,17 +20,16 @@ module core_ibex_tb_top;
     .core_id_i('0),
     .cluster_id_i('0),
     .boot_addr_i(`BOOT_ADDR), // align with spike boot address
-    .irq_i('0),
-    .irq_id_i('0),
     .debug_req_i('0),
     .fetch_enable_i(fetch_enable)
   );
 
-  ibex_mem_intf data_mem_vif();
-  ibex_mem_intf instr_mem_vif();
+  ibex_mem_intf  data_mem_vif();
+  ibex_mem_intf  instr_mem_vif();
+  irq_if         irq_vif();
 
   initial begin
-    //data load/store vif connection
+    // Data load/store vif connection
     force data_mem_vif.clock    = clk;
     force data_mem_vif.reset    = ~rst_n;
     force data_mem_vif.request  = dut.data_req_o;
@@ -42,7 +41,7 @@ module core_ibex_tb_top;
     force data_mem_vif.wdata    = dut.data_wdata_o;
     force dut.data_rdata_i      = data_mem_vif.rdata;
     force dut.data_err_i        = 0; // TODO(taliu) Support interface error
-    //instruction fetch vif connnection
+    // Instruction fetch vif connnection
     force instr_mem_vif.clock   = clk;
     force instr_mem_vif.reset   = ~rst_n;
     force instr_mem_vif.request = dut.instr_req_o;
@@ -53,18 +52,27 @@ module core_ibex_tb_top;
     force dut.instr_rvalid_i    = instr_mem_vif.rvalid;
     force instr_mem_vif.addr    = dut.instr_addr_o;
     force dut.instr_rdata_i     = instr_mem_vif.rdata;
+    // IRQ interface
+    force irq_vif.clock         = clk;
+    force irq_vif.reset         = ~rst_n;
+    force dut.irq_i             = irq_vif.irq_i;
+    force dut.irq_id_i          = irq_vif.irq_id_i;
+    force irq_vif.irq_ack_o     = dut.irq_ack_o;
+    force irq_vif.irq_id_o      = dut.irq_id_o;
   end
 
   // DUT probe interface
   core_ibex_dut_probe_if dut_if(.clk(clk));
   assign dut_if.ecall = dut.id_stage_i.ecall_insn_dec;
   assign fetch_enable = dut_if.fetch_enable;
+  assign dut_if.debug_req = dut.debug_req_i;
 
   initial begin
     uvm_config_db#(virtual clk_if)::set(null, "*", "clk_if", ibex_clk_if);
     uvm_config_db#(virtual core_ibex_dut_probe_if)::set(null, "*", "dut_if", dut_if);
     uvm_config_db#(virtual ibex_mem_intf)::set(null, "*data_if_slave*", "vif", data_mem_vif);
     uvm_config_db#(virtual ibex_mem_intf)::set(null, "*instr_if_slave*", "vif", instr_mem_vif);
+    uvm_config_db#(virtual irq_if)::set(null, "*", "vif", irq_vif);
     run_test();
   end
 
