@@ -77,7 +77,7 @@ module ibex_id_stage #(
     // Stalls
     input  logic                      ex_valid_i,  // EX stage has valid output
     input  logic                      lsu_valid_i, // LSU has valid output, or is done
-    output logic                      id_valid_o, // ID stage is done
+    output logic                      id_valid_o,  // ID stage is done
 
     // ALU
     output ibex_defines::alu_op_e     alu_operator_ex_o,
@@ -179,11 +179,6 @@ module ibex_id_stage #(
   logic        stall_branch;
   logic        stall_jump;
 
-  logic        regfile_we;
-
-  typedef enum logic {RF_LSU, RF_EX} select_e;
-  select_e select_data_rf;
-
   // Immediate decoding and sign extension
   logic [31:0] imm_i_type;
   logic [31:0] imm_s_type;
@@ -204,11 +199,15 @@ module ibex_id_stage #(
   logic [4:0]  regfile_addr_ra_id;
   logic [4:0]  regfile_addr_rb_id;
 
-  logic [4:0]  regfile_alu_waddr_id;
+  logic [4:0]  regfile_waddr_id;
   logic        regfile_we_id, regfile_we_dec;
 
   logic [31:0] regfile_data_ra_id;
   logic [31:0] regfile_data_rb_id;
+  logic [31:0] regfile_wdata_id;
+
+  rf_wd_sel_e  regfile_wdata_sel;
+  logic        regfile_we;
 
   // ALU Control
   alu_op_e     alu_operator;
@@ -265,12 +264,12 @@ module ibex_id_stage #(
   ///////////////////////////
   // Destination registers //
   ///////////////////////////
-  assign regfile_alu_waddr_id = instr[`REG_D];
+  assign regfile_waddr_id   = instr[`REG_D];
 
   //if (RV32E)
   //  assign illegal_reg_rv32e = (regfile_addr_ra_id[4] |
   //                              regfile_addr_rb_id[4] |
-  //                              regfile_alu_waddr_id[4]);
+  //                              regfile_waddr_id[4]);
   //else
   assign illegal_reg_rv32e = 1'b0;
 
@@ -335,22 +334,14 @@ module ibex_id_stage #(
   // Registers //
   ///////////////
 
-  logic [31:0] regfile_wdata_mux;
-  logic        regfile_we_mux;
-  logic  [4:0] regfile_waddr_mux;
-
-  //TODO: add assertion
-  // Register File mux
-  always_comb begin
-    regfile_we_mux      = regfile_we;
-    regfile_waddr_mux   = regfile_alu_waddr_id;
-    if (select_data_rf == RF_LSU) begin
-      regfile_wdata_mux = regfile_wdata_lsu_i;
-    end else if (csr_access) begin
-      regfile_wdata_mux = csr_rdata_i;
-    end else begin
-      regfile_wdata_mux = regfile_wdata_ex_i;
-    end
+  // Register file write data mux
+  always_comb begin : regfile_wdata_mux
+    unique case (regfile_wdata_sel)
+      RF_WD_EX:  regfile_wdata_id = regfile_wdata_ex_i;
+      RF_WD_LSU: regfile_wdata_id = regfile_wdata_lsu_i;
+      RF_WD_CSR: regfile_wdata_id = csr_rdata_i;
+      default:   regfile_wdata_id = regfile_wdata_ex_i;
+    endcase;
   end
 
   ibex_register_file #( .RV32E ( RV32E ) ) registers_i (
@@ -366,9 +357,9 @@ module ibex_id_stage #(
       .raddr_b_i    ( regfile_addr_rb_id ),
       .rdata_b_o    ( regfile_data_rb_id ),
       // write port
-      .waddr_a_i    ( regfile_waddr_mux ),
-      .wdata_a_i    ( regfile_wdata_mux ),
-      .we_a_i       ( regfile_we_mux    )
+      .waddr_a_i    ( regfile_waddr_id   ),
+      .wdata_a_i    ( regfile_wdata_id   ),
+      .we_a_i       ( regfile_we         )
   );
 
 `ifdef RVFI
@@ -376,8 +367,8 @@ module ibex_id_stage #(
   assign rfvi_reg_rdata_ra_o = regfile_data_ra_id;
   assign rfvi_reg_raddr_rb_o = regfile_addr_rb_id;
   assign rfvi_reg_rdata_rb_o = regfile_data_rb_id;
-  assign rfvi_reg_waddr_rd_o = regfile_waddr_mux;
-  assign rfvi_reg_wdata_rd_o = regfile_wdata_mux;
+  assign rfvi_reg_waddr_rd_o = regfile_waddr_id;
+  assign rfvi_reg_wdata_rd_o = regfile_wdata_id;
   assign rfvi_reg_we_o       = regfile_we;
 `endif
 
@@ -414,6 +405,7 @@ module ibex_id_stage #(
       .multdiv_signed_mode_o           ( multdiv_signed_mode       ),
 
       // register file control signals
+      .regfile_wdata_sel_o             ( regfile_wdata_sel         ),
       .regfile_we_o                    ( regfile_we_dec            ),
 
       // CSR control signals
