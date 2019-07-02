@@ -184,7 +184,7 @@ module ibex_core #(
   // stall control
   logic        halt_if;
   logic        id_ready;
-  logic        ex_ready;
+  logic        ex_valid;
 
   logic        if_valid;
   logic        id_valid;
@@ -390,7 +390,8 @@ module ibex_core #(
       .halt_if_o                    ( halt_if                ),
 
       .id_ready_o                   ( id_ready               ),
-      .ex_ready_i                   ( ex_ready               ),
+      .ex_valid_i                   ( ex_valid               ),
+      .lsu_valid_i                  ( data_valid_lsu         ),
 
       .id_valid_o                   ( id_valid               ),
 
@@ -469,31 +470,30 @@ module ibex_core #(
   ibex_ex_block #(
       .RV32M ( RV32M )
   ) ex_block_i (
-      .clk_i                      ( clk                   ),
-      .rst_ni                     ( rst_ni                ),
-      // Alu signals from ID stage
-      //TODO: hot encoding
-      .alu_operator_i             ( alu_operator_ex       ),
-      .multdiv_operator_i         ( multdiv_operator_ex   ),
-      .alu_operand_a_i            ( alu_operand_a_ex      ),
-      .alu_operand_b_i            ( alu_operand_b_ex      ),
+      .clk_i                      ( clk                    ),
+      .rst_ni                     ( rst_ni                 ),
 
-      // Multipler
-      .mult_en_i                  ( mult_en_ex            ),
-      .div_en_i                   ( div_en_ex             ),
-      .multdiv_signed_mode_i      ( multdiv_signed_mode_ex),
-      .multdiv_operand_a_i        ( multdiv_operand_a_ex  ),
-      .multdiv_operand_b_i        ( multdiv_operand_b_ex  ),
-      .alu_adder_result_ex_o      ( alu_adder_result_ex   ), // from ALU to LSU
-      .regfile_wdata_ex_o         ( regfile_wdata_ex      ),
+      // ALU signal from ID stage
+      .alu_operator_i             ( alu_operator_ex        ),
+      .alu_operand_a_i            ( alu_operand_a_ex       ),
+      .alu_operand_b_i            ( alu_operand_b_ex       ),
 
-      // To IF: Jump and branch target and decision
-      .jump_target_o              ( jump_target_ex        ),
-      .branch_decision_o          ( branch_decision       ),
+      // Multipler/Divider signal from ID stage
+      .multdiv_operator_i         ( multdiv_operator_ex    ),
+      .mult_en_i                  ( mult_en_ex             ),
+      .div_en_i                   ( div_en_ex              ),
+      .multdiv_signed_mode_i      ( multdiv_signed_mode_ex ),
+      .multdiv_operand_a_i        ( multdiv_operand_a_ex   ),
+      .multdiv_operand_b_i        ( multdiv_operand_b_ex   ),
 
-      .lsu_en_i                   ( data_req_ex           ),
-      .lsu_ready_ex_i             ( data_valid_lsu        ),
-      .ex_ready_o                 ( ex_ready              )
+      // Outputs
+      .alu_adder_result_ex_o      ( alu_adder_result_ex    ), // to LSU
+      .regfile_wdata_ex_o         ( regfile_wdata_ex       ), // to ID
+
+      .jump_target_o              ( jump_target_ex         ), // to IF
+      .branch_decision_o          ( branch_decision        ), // to ID
+
+      .ex_valid_o                 ( ex_valid               )
   );
 
   /////////////////////

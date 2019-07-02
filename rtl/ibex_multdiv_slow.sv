@@ -37,7 +37,7 @@ module ibex_multdiv_slow (
     output logic [32:0]          alu_operand_b_o,
     output logic [31:0]          multdiv_result_o,
 
-    output logic                 ready_o
+    output logic                 valid_o
 );
 
   import ibex_defines::*;
@@ -290,7 +290,7 @@ module ibex_multdiv_slow (
       end
   end
 
-  assign ready_o = (curr_state_q == MD_FINISH) |
+  assign valid_o = (curr_state_q == MD_FINISH) |
                    (curr_state_q == MD_LAST &
                      (operator_i == MD_OP_MULL |
                       operator_i == MD_OP_MULH));

@@ -74,7 +74,8 @@ module ibex_id_stage #(
     input  logic [31:0]               pc_id_i,
 
     // Stalls
-    input  logic                      ex_ready_i,
+    input  logic                      ex_valid_i,  // EX stage has valid output
+    input  logic                      lsu_valid_i, // LSU has valid output, or is done
     output logic                      id_valid_o, // ID stage is done
 
     // ALU
@@ -680,7 +681,7 @@ module ibex_id_stage #(
       end
 
       WAIT_MULTICYCLE: begin
-        if (ex_ready_i) begin
+        if ( (data_req_id & lsu_valid_i) | (~data_req_id & ex_valid_i) ) begin
           regfile_we        = regfile_we_id;
           id_wb_fsm_ns      = IDLE;
           stall_lsu         = 1'b0;

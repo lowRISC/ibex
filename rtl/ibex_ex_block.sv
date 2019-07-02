@@ -32,31 +32,26 @@ module ibex_ex_block #(
     input  logic                  clk_i,
     input  logic                  rst_ni,
 
-    // ALU signals from ID stage
+    // ALU
     input  ibex_defines::alu_op_e alu_operator_i,
-    input  ibex_defines::md_op_e  multdiv_operator_i,
-    input  logic                  mult_en_i,
-    input  logic                  div_en_i,
-
     input  logic [31:0]           alu_operand_a_i,
     input  logic [31:0]           alu_operand_b_i,
 
+    // Multiplier/Divider
+    input  ibex_defines::md_op_e  multdiv_operator_i,
+    input  logic                  mult_en_i,
+    input  logic                  div_en_i,
     input  logic  [1:0]           multdiv_signed_mode_i,
     input  logic [31:0]           multdiv_operand_a_i,
     input  logic [31:0]           multdiv_operand_b_i,
 
-    output logic [31:0]           alu_adder_result_ex_o,
+    // Outputs
+    output logic [31:0]           alu_adder_result_ex_o, // to LSU
     output logic [31:0]           regfile_wdata_ex_o,
+    output logic [31:0]           jump_target_o,         // to IF
+    output logic                  branch_decision_o,     // to ID
 
-    // To IF: Jump and branch target and decision
-    output logic [31:0]           jump_target_o,
-    output logic                  branch_decision_o,
-
-    input  logic                  lsu_en_i,
-
-    // Stall Control
-    input  logic                  lsu_ready_ex_i, // LSU is done
-    output logic                  ex_ready_o      // EX stage gets new data
+    output logic                  ex_valid_o             // EX has valid output
 );
 
   import ibex_defines::*;
@@ -68,7 +63,7 @@ module ibex_ex_block #(
   logic [32:0] multdiv_alu_operand_b, multdiv_alu_operand_a;
   logic [33:0] alu_adder_result_ext;
   logic        alu_cmp_result, alu_is_equal_result;
-  logic        multdiv_ready, multdiv_en_sel;
+  logic        multdiv_valid, multdiv_en_sel;
   logic        multdiv_en;
 
   /*
@@ -125,7 +120,7 @@ module ibex_ex_block #(
         .alu_adder_ext_i    ( alu_adder_result_ext  ),
         .alu_adder_i        ( alu_adder_result_ex_o ),
         .equal_to_zero      ( alu_is_equal_result   ),
-        .ready_o            ( multdiv_ready         ),
+        .valid_o            ( multdiv_valid         ),
         .alu_operand_a_o    ( multdiv_alu_operand_a ),
         .alu_operand_b_o    ( multdiv_alu_operand_b ),
         .multdiv_result_o   ( multdiv_result        )
@@ -145,21 +140,12 @@ module ibex_ex_block #(
         .alu_adder_ext_i    ( alu_adder_result_ext  ),
         .alu_adder_i        ( alu_adder_result_ex_o ),
         .equal_to_zero      ( alu_is_equal_result   ),
-        .ready_o            ( multdiv_ready         ),
+        .valid_o            ( multdiv_valid         ),
         .multdiv_result_o   ( multdiv_result        )
     );
   end
 
-  always_comb begin
-    unique case (1'b1)
-      multdiv_en:
-        ex_ready_o = multdiv_ready;
-      lsu_en_i:
-        ex_ready_o = lsu_ready_ex_i;
-      default:
-        //1 Cycle case
-        ex_ready_o = 1'b1;
-    endcase
-  end
+  // ALU output valid in same cycle, multiplier/divider may require multiple cycles
+  assign ex_valid_o = multdiv_en ? multdiv_valid : 1'b1;
 
 endmodule
