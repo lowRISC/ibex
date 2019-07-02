@@ -40,7 +40,7 @@ module ibex_multdiv_fast (
     output logic [32:0]          alu_operand_b_o,
 
     output logic [31:0]          multdiv_result_o,
-    output logic                 ready_o
+    output logic                 valid_o
 );
 
   import ibex_defines::*;
@@ -78,7 +78,8 @@ module ibex_multdiv_fast (
   logic [31:0] next_remainder;
   logic [32:0] next_quotient;
   logic [32:0] res_adder_h;
-  logic        mult_is_ready;
+  logic        mult_valid;
+  logic        div_valid;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin : proc_mult_state_q
     if (!rst_ni) begin
@@ -161,6 +162,7 @@ module ibex_multdiv_fast (
     op_denominator_n = op_denominator_q;
     alu_operand_a_o  = {32'h0  , 1'b1};
     alu_operand_b_o  = {~op_b_i, 1'b1};
+    div_valid        = 1'b0;
 
     unique case(divcurr_state_q)
       MD_IDLE: begin
@@ -244,6 +246,7 @@ module ibex_multdiv_fast (
 
       MD_FINISH: begin
         divcurr_state_n = MD_IDLE;
+        div_valid   = 1'b1;
       end
 
       default: begin
@@ -252,7 +255,7 @@ module ibex_multdiv_fast (
     endcase // divcurr_state_q
   end
 
-  assign ready_o  = mult_is_ready | (divcurr_state_q == MD_FINISH);
+  assign valid_o = mult_valid | div_valid;
 
   always_comb begin : mult_fsm
     mult_op_a    = op_a_i[`OP_L];
@@ -262,7 +265,7 @@ module ibex_multdiv_fast (
     accum        = mac_res_q;
     mac_res_n    = mac_res;
     mult_state_n = mult_state_q;
-    mult_is_ready = 1'b0;
+    mult_valid   = 1'b0;
 
     unique case (mult_state_q)
 
@@ -303,7 +306,7 @@ module ibex_multdiv_fast (
         if (operator_i == MD_OP_MULL) begin
           accum        = {18'b0,mac_res_q[31:16]};
           mac_res_n    = {2'b0,mac_res[15:0],mac_res_q[15:0]};
-          mult_is_ready = 1'b1;
+          mult_valid   = 1'b1;
           mult_state_n = ALBL;
         end else begin
           accum        = mac_res_q;
@@ -324,7 +327,7 @@ module ibex_multdiv_fast (
         // result of AH*BL is not signed only if signed_mode_i == 2'b00
         mac_res_n    = mac_res;
         mult_state_n = ALBL;
-        mult_is_ready = 1'b1;
+        mult_valid   = 1'b1;
       end
       default: begin
         mult_state_n = mult_fsm_e'(1'bX);
