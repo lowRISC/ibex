@@ -45,8 +45,8 @@ module ibex_multdiv_slow (
   logic [ 4:0] multdiv_state_q, multdiv_state_d, multdiv_state_m1;
   typedef enum logic [2:0] {
     MD_IDLE, MD_ABS_A, MD_ABS_B, MD_COMP, MD_LAST, MD_CHANGE_SIGN, MD_FINISH
-  } div_fsm_e;
-  div_fsm_e curr_state_q, curr_state_d;
+  } md_fsm_e;
+  md_fsm_e md_state_q, md_state_d;
 
   logic [32:0] accum_window_q, accum_window_d;
 
@@ -82,11 +82,11 @@ module ibex_multdiv_slow (
       end
 
       MD_OP_MULH: begin
-        alu_operand_b_o = (curr_state_q == MD_LAST) ? op_a_bw_last_pp : op_a_bw_pp;
+        alu_operand_b_o = (md_state_q == MD_LAST) ? op_a_bw_last_pp : op_a_bw_pp;
       end
 
       default: begin
-        unique case(curr_state_q)
+        unique case(md_state_q)
           MD_IDLE: begin
             // 0 - B = 0 iff B == 0
             alu_operand_a_o     = {32'h0  , 1'b1};
@@ -155,14 +155,14 @@ module ibex_multdiv_slow (
       op_b_shift_q     <= 33'h0;
       op_a_shift_q     <= 33'h0;
       op_numerator_q   <= 32'h0;
-      curr_state_q     <= MD_IDLE;
+      md_state_q       <= MD_IDLE;
     end else begin
       multdiv_state_q  <= multdiv_state_d;
       accum_window_q   <= accum_window_d;
       op_b_shift_q     <= op_b_shift_d;
       op_a_shift_q     <= op_a_shift_d;
       op_numerator_q   <= op_numerator_d;
-      curr_state_q     <= curr_state_d;
+      md_state_q       <= md_state_d;
     end
   end
 
@@ -172,9 +172,9 @@ module ibex_multdiv_slow (
     op_b_shift_d     = op_b_shift_q;
     op_a_shift_d     = op_a_shift_q;
     op_numerator_d   = op_numerator_q;
-    curr_state_d     = curr_state_q;
+    md_state_d       = md_state_q;
     if (mult_en_i || div_en_i) begin
-      unique case(curr_state_q)
+      unique case(md_state_q)
         MD_IDLE: begin
           unique case(operator_i)
             MD_OP_MULL: begin
@@ -182,26 +182,26 @@ module ibex_multdiv_slow (
               accum_window_d = {       ~(op_a_ext[32]   &     op_b_i[0]),
                                          op_a_ext[31:0] & {32{op_b_i[0]}}  };
               op_b_shift_d   = op_b_ext >> 1;
-              curr_state_d   = MD_COMP;
+              md_state_d     = MD_COMP;
             end
             MD_OP_MULH: begin
               op_a_shift_d   = op_a_ext;
               accum_window_d = { 1'b1, ~(op_a_ext[32]   &     op_b_i[0]),
                                          op_a_ext[31:1] & {31{op_b_i[0]}}  };
               op_b_shift_d   = op_b_ext >> 1;
-              curr_state_d   = MD_COMP;
+              md_state_d     = MD_COMP;
             end
             MD_OP_DIV: begin
               // Check if the Denominator is 0
               // quotient for division by 0
               accum_window_d = {33{1'b1}};
-              curr_state_d   = equal_to_zero ? MD_FINISH : MD_ABS_A;
+              md_state_d     = equal_to_zero ? MD_FINISH : MD_ABS_A;
             end
             default: begin
               // Check if the Denominator is 0
               // reminder for division by 0
               accum_window_d = op_a_ext;
-              curr_state_d   = equal_to_zero ? MD_FINISH : MD_ABS_A;
+              md_state_d     = equal_to_zero ? MD_FINISH : MD_ABS_A;
             end
           endcase
           multdiv_state_d   = 5'd31;
@@ -212,7 +212,7 @@ module ibex_multdiv_slow (
           op_a_shift_d   = '0;
           // A abs value
           op_numerator_d = sign_a ? alu_adder_i : op_a_i;
-          curr_state_d   = MD_ABS_B;
+          md_state_d     = MD_ABS_B;
         end
 
         MD_ABS_B: begin
@@ -220,7 +220,7 @@ module ibex_multdiv_slow (
           accum_window_d = { 32'h0, op_numerator_q[31]};
           // B abs value
           op_b_shift_d   = sign_b ? alu_adder_i : op_b_i;
-          curr_state_d   = MD_COMP;
+          md_state_d     = MD_COMP;
         end
 
         MD_COMP: begin
@@ -242,35 +242,35 @@ module ibex_multdiv_slow (
             end
           endcase
 
-          curr_state_d = (multdiv_state_q == 5'd1) ? MD_LAST : MD_COMP;
+          md_state_d = (multdiv_state_q == 5'd1) ? MD_LAST : MD_COMP;
         end
 
         MD_LAST: begin
           unique case(operator_i)
             MD_OP_MULL: begin
               accum_window_d = res_adder_l;
-              curr_state_d   = MD_IDLE;
+              md_state_d     = MD_IDLE;
             end
             MD_OP_MULH: begin
               accum_window_d = res_adder_l;
-              curr_state_d   = MD_IDLE;
+              md_state_d     = MD_IDLE;
             end
             MD_OP_DIV: begin
               // this time we save the quotient in accum_window_q since we do not need anymore the
               // reminder
               accum_window_d = next_quotient;
-              curr_state_d   = MD_CHANGE_SIGN;
+              md_state_d     = MD_CHANGE_SIGN;
             end
             default: begin
               // this time we do not save the quotient anymore since we need only the reminder
               accum_window_d = {1'b0, next_reminder[31:0]};
-              curr_state_d   = MD_CHANGE_SIGN;
+              md_state_d     = MD_CHANGE_SIGN;
             end
           endcase
         end
 
         MD_CHANGE_SIGN: begin
-          curr_state_d   = MD_FINISH;
+          md_state_d = MD_FINISH;
           unique case(operator_i)
             MD_OP_DIV:
               accum_window_d = (div_change_sign) ? alu_adder_i : accum_window_q;
@@ -280,19 +280,19 @@ module ibex_multdiv_slow (
         end
 
         MD_FINISH: begin
-            curr_state_d = MD_IDLE;
+          md_state_d = MD_IDLE;
         end
 
         default: begin
-          curr_state_d = div_fsm_e'(1'bX);
+          md_state_d = md_fsm_e'(1'bX);
         end
-        endcase // curr_state_q
+        endcase // md_state_q
       end
   end
 
-  assign valid_o = (curr_state_q == MD_FINISH) |
-                   (curr_state_q == MD_LAST &
-                     (operator_i == MD_OP_MULL |
-                      operator_i == MD_OP_MULH));
+  assign valid_o = (md_state_q == MD_FINISH) |
+                   (md_state_q == MD_LAST &
+                   (operator_i == MD_OP_MULL |
+                    operator_i == MD_OP_MULH));
 
 endmodule // ibex_mult
