@@ -88,8 +88,8 @@ module ibex_id_stage #(
     output logic [31:0]               multdiv_operand_b_ex_o,
 
     // CSR
-    output logic                      csr_access_ex_o,
-    output ibex_defines::csr_op_e     csr_op_ex_o,
+    output logic                      csr_access_o,
+    output ibex_defines::csr_op_e     csr_op_o,
     output logic                      csr_save_if_o,
     output logic                      csr_save_id_o,
     output logic                      csr_restore_mret_id_o,
@@ -226,8 +226,6 @@ module ibex_id_stage #(
   logic        data_req_id, data_req_dec;
 
   // CSR control
-  logic        csr_access;
-  csr_op_e     csr_op;
   logic        csr_status;
 
   // For tracer
@@ -394,8 +392,8 @@ module ibex_id_stage #(
       .multdiv_signed_mode_o           ( multdiv_signed_mode  ),
 
       // CSRs
-      .csr_access_o                    ( csr_access           ),
-      .csr_op_o                        ( csr_op               ),
+      .csr_access_o                    ( csr_access_o         ),
+      .csr_op_o                        ( csr_op_o             ),
       .csr_status_o                    ( csr_status           ),
 
       // LSU
@@ -556,9 +554,6 @@ module ibex_id_stage #(
   assign alu_operator_ex_o           = alu_operator;
   assign alu_operand_a_ex_o          = alu_operand_a;
   assign alu_operand_b_ex_o          = alu_operand_b;
-
-  assign csr_access_ex_o             = csr_access;
-  assign csr_op_ex_o                 = csr_op;
 
   assign mult_en_ex_o                = mult_en_id;
   assign div_en_ex_o                 = div_en_id;
