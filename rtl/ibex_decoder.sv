@@ -530,6 +530,11 @@ module ibex_decoder #(
             default:
               illegal_insn_o = 1'b1;
           endcase
+
+          // rs1 and rd must be 0
+          if (instr[`REG_S1] || instr[`REG_D]) begin
+            illegal_insn_o = 1'b1;
+          end
         end else begin
           // instruction to read/modify CSR
           csr_access_o        = 1'b1;
