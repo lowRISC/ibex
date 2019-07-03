@@ -69,6 +69,10 @@ module ibex_compressed_decoder (
       end
 
       // C1
+      //
+      // Register address checks for RV32E are performed in the regular instruction decoder.
+      // If this check fails, an illegal instruction exception is triggered and the controller
+      // writes the actual faulting instruction to mtval.
       2'b01: begin
         unique case (instr_i[15:13])
           3'b000: begin
@@ -187,6 +191,10 @@ module ibex_compressed_decoder (
       end
 
       // C2
+      //
+      // Register address checks for RV32E are performed in the regular instruction decoder.
+      // If this check fails, an illegal instruction exception is triggered and the controller
+      // writes the actual faulting instruction to mtval.
       2'b10: begin
         unique case (instr_i[15:13])
           3'b000: begin
