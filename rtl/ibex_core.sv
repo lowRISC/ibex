@@ -161,9 +161,6 @@ module ibex_core #(
   logic [31:0] multdiv_operand_b_ex;
 
   // CSR control
-  logic        csr_access_ex;
-  csr_op_e     csr_op_ex;
-
   logic        csr_access;
   csr_op_e     csr_op;
   csr_num_e    csr_addr;
@@ -410,8 +407,8 @@ module ibex_core #(
       .multdiv_operand_b_ex_o       ( multdiv_operand_b_ex   ),
 
       // CSR ID/EX
-      .csr_access_ex_o              ( csr_access_ex          ),
-      .csr_op_ex_o                  ( csr_op_ex              ),
+      .csr_access_o                 ( csr_access             ),
+      .csr_op_o                     ( csr_op                 ),
       .csr_save_if_o                ( csr_save_if            ), // control signal to save pc
       .csr_save_id_o                ( csr_save_id            ), // control signal to save pc
       .csr_restore_mret_id_o        ( csr_restore_mret_id    ), // control signal to restore pc
@@ -549,10 +546,8 @@ module ibex_core #(
   // CSRs (Control and Status Registers) //
   /////////////////////////////////////////
 
-  assign csr_access = csr_access_ex;
   assign csr_wdata  = alu_operand_a_ex;
-  assign csr_op     = csr_op_ex;
-  assign csr_addr   = csr_num_e'(csr_access_ex ? alu_operand_b_ex[11:0] : 12'b0);
+  assign csr_addr   = csr_num_e'(csr_access ? alu_operand_b_ex[11:0] : 12'b0);
 
   assign perf_load  = data_req_o & data_gnt_i & (~data_we_o);
   assign perf_store = data_req_o & data_gnt_i & data_we_o;
