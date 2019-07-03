@@ -168,8 +168,8 @@ module ibex_decoder #(
     jump_set_o                  = 1'b0;
     branch_in_dec_o             = 1'b0;
     alu_operator_o              = ALU_SLTU;
-    alu_op_a_mux_sel_o          = OP_A_REG_A;
-    alu_op_b_mux_sel_o          = OP_B_REG_B;
+    alu_op_a_mux_sel_o          = OP_A_IMM;
+    alu_op_b_mux_sel_o          = OP_B_IMM;
 
     imm_a_mux_sel_o             = IMM_A_ZERO;
     imm_b_mux_sel_o             = IMM_B_I;
@@ -253,6 +253,9 @@ module ibex_decoder #(
       OPCODE_BRANCH: begin // Branch
         branch_in_dec_o       = 1'b1;
         if (instr_new_i) begin
+          // Evaluate branch condition
+          alu_op_a_mux_sel_o  = OP_A_REG_A;
+          alu_op_b_mux_sel_o  = OP_B_REG_B;
           unique case (instr[14:12])
             3'b000:  alu_operator_o = ALU_EQ;
             3'b001:  alu_operator_o = ALU_NE;
@@ -277,9 +280,11 @@ module ibex_decoder #(
       ////////////////
 
       OPCODE_STORE: begin
-        data_req_o     = 1'b1;
-        data_we_o      = 1'b1;
-        alu_operator_o = ALU_ADD;
+        alu_op_a_mux_sel_o = OP_A_REG_A;
+        alu_op_b_mux_sel_o = OP_B_REG_B;
+        data_req_o         = 1'b1;
+        data_we_o          = 1'b1;
+        alu_operator_o     = ALU_ADD;
 
         if (!instr[14]) begin
           // offset from immediate
@@ -302,6 +307,7 @@ module ibex_decoder #(
       end
 
       OPCODE_LOAD: begin
+        alu_op_a_mux_sel_o  = OP_A_REG_A;
         data_req_o          = 1'b1;
         regfile_wdata_sel_o = RF_WD_LSU;
         regfile_we          = 1'b1;
@@ -372,6 +378,7 @@ module ibex_decoder #(
       end
 
       OPCODE_OPIMM: begin // Register-Immediate ALU Operations
+        alu_op_a_mux_sel_o  = OP_A_REG_A;
         alu_op_b_mux_sel_o  = OP_B_IMM;
         imm_b_mux_sel_o     = IMM_B_I;
         regfile_we          = 1'b1;
@@ -408,7 +415,9 @@ module ibex_decoder #(
       end
 
       OPCODE_OP: begin  // Register-Register ALU operation
-        regfile_we   = 1'b1;
+        alu_op_a_mux_sel_o = OP_A_REG_A;
+        alu_op_b_mux_sel_o = OP_B_REG_B;
+        regfile_we         = 1'b1;
 
         if (instr[31]) begin
           illegal_insn = 1'b1;
@@ -503,6 +512,7 @@ module ibex_decoder #(
         // an illegal instruction.
         if (instr[14:12] == 3'b000) begin
           alu_operator_o     = ALU_ADD; // nop
+          alu_op_a_mux_sel_o = OP_A_REG_A;
           alu_op_b_mux_sel_o = OP_B_IMM;
           regfile_we         = 1'b0;
         end else begin
@@ -513,6 +523,7 @@ module ibex_decoder #(
       OPCODE_SYSTEM: begin
         if (instr[14:12] == 3'b000) begin
           // non CSR related SYSTEM instructions
+          alu_op_a_mux_sel_o = OP_A_REG_A;
           alu_op_b_mux_sel_o = OP_B_IMM;
           unique case (instr[31:20])
             12'h000:  // ECALL
