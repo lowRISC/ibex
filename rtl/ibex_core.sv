@@ -765,7 +765,7 @@ module ibex_core #(
       .cluster_id_i     ( cluster_id_i                         ),
 
       .pc_i             ( id_stage_i.pc_id_i                   ),
-      .instr_i          ( id_stage_i.instr                     ),
+      .instr_i          ( id_stage_i.instr_rdata_i             ),
       .compressed_i     ( id_stage_i.instr_is_compressed_i     ),
       .id_valid_i       ( id_stage_i.id_valid_o                ),
       .is_decoding_i    ( id_stage_i.is_decoding_o             ),
@@ -782,9 +782,9 @@ module ibex_core #(
 
       .lsu_value_i      ( data_wdata_ex                        ),
 
-      .ex_reg_addr_i    ( id_stage_i.regfile_waddr_id          ),
+      .ex_reg_addr_i    ( id_stage_i.regfile_waddr             ),
       .ex_reg_we_i      ( id_stage_i.regfile_we                ),
-      .ex_reg_wdata_i   ( id_stage_i.regfile_wdata_id          ),
+      .ex_reg_wdata_i   ( id_stage_i.regfile_wdata             ),
       .data_valid_lsu_i ( data_valid_lsu                       ),
       .ex_data_addr_i   ( data_addr_o                          ),
       .ex_data_req_i    ( data_req_o                           ),

@@ -21,13 +21,19 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
+// Source/Destination register instruction index
+`define REG_S1 19:15
+`define REG_S2 24:20
+`define REG_D  11:07
+
 /**
  * Instruction decoder
  */
 module ibex_decoder #(
-    parameter bit RV32M  = 1
+    parameter bit RV32E = 0,
+    parameter bit RV32M = 1
 ) (
-    // singals running to/from controller
+    // to/from controller
     output logic                     illegal_insn_o,        // illegal instr encountered
     output logic                     ebrk_insn_o,           // trap instr encountered
     output logic                     mret_insn_o,           // return from exception instr
@@ -37,38 +43,48 @@ module ibex_decoder #(
     output logic                     pipe_flush_o,          // pipeline flush is requested
     output logic                     jump_set_o,            // jump taken set signal
 
-    // from IF/ID pipeline
+    // from IF-ID pipeline register
     input  logic                     instr_new_i,           // instruction read is new
     input  logic [31:0]              instr_rdata_i,         // instruction read from memory/cache
     input  logic                     illegal_c_insn_i,      // compressed instruction decode failed
 
-    // ALU signals
+    // immediates
+    output ibex_defines::imm_a_sel_e imm_a_mux_sel_o,       // immediate selection for operand a
+    output ibex_defines::imm_b_sel_e imm_b_mux_sel_o,       // immediate selection for operand b
+    output logic [31:0]              imm_i_type_o,
+    output logic [31:0]              imm_s_type_o,
+    output logic [31:0]              imm_b_type_o,
+    output logic [31:0]              imm_u_type_o,
+    output logic [31:0]              imm_j_type_o,
+    output logic [31:0]              zimm_rs1_type_o,
+
+    // register file
+    output ibex_defines::rf_wd_sel_e regfile_wdata_sel_o,   // RF write data selection
+    output logic                     regfile_we_o,          // write enable for regfile
+    output logic [4:0]               regfile_raddr_a_o,
+    output logic [4:0]               regfile_raddr_b_o,
+    output logic [4:0]               regfile_waddr_o,
+
+    // ALU
     output ibex_defines::alu_op_e    alu_operator_o,        // ALU operation selection
     output ibex_defines::op_a_sel_e  alu_op_a_mux_sel_o,    // operand a selection: reg value, PC,
                                                             // immediate or zero
     output ibex_defines::op_b_sel_e  alu_op_b_mux_sel_o,    // operand b selection: reg value or
                                                             // immediate
 
-    output ibex_defines::imm_a_sel_e imm_a_mux_sel_o,       // immediate selection for operand a
-    output ibex_defines::imm_b_sel_e imm_b_mux_sel_o,       // immediate selection for operand b
-
-    // MUL, DIV related control signals
+    // MULT & DIV
     output logic                     mult_en_o,             // perform integer multiplication
     output logic                     div_en_o,              // perform integer division or
                                                             // remainder
     output ibex_defines::md_op_e     multdiv_operator_o,
     output logic [1:0]               multdiv_signed_mode_o,
 
-    // register file related signals
-    output ibex_defines::rf_wd_sel_e regfile_wdata_sel_o,   // RF write data selection
-    output logic                     regfile_we_o,          // write enable for regfile
-
-    // CSR manipulation
+    // CSRs
     output logic                     csr_access_o,          // access to CSR
     output ibex_defines::csr_op_e    csr_op_o,              // operation to perform on CSR
     output logic                     csr_status_o,          // access to xstatus CSR
 
-    // LSU signals
+    // LSU
     output logic                     data_req_o,            // start transaction to data memory
     output logic                     data_we_o,             // write enable
     output logic [1:0]               data_type_o,           // size of transaction: byte, half
@@ -84,9 +100,60 @@ module ibex_decoder #(
 
   import ibex_defines::*;
 
-  logic       csr_illegal;
+  logic        illegal_reg_rv32e;
+  logic        csr_illegal;
+  logic [31:0] instr;
 
-  opcode_e    opcode;
+  csr_op_e     csr_op;
+
+  opcode_e     opcode;
+
+  assign instr = instr_rdata_i;
+
+  //////////////////////////////////////
+  // Register and immediate selection //
+  //////////////////////////////////////
+
+  // immediate extraction and sign extension
+  assign imm_i_type_o = { {20{instr[31]}}, instr[31:20] };
+  assign imm_s_type_o = { {20{instr[31]}}, instr[31:25], instr[11:7] };
+  assign imm_b_type_o = { {19{instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0 };
+  assign imm_u_type_o = { instr[31:12], 12'b0 };
+  assign imm_j_type_o = { {12{instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0 };
+
+  // immediate for CSR manipulation (zero extended)
+  assign zimm_rs1_type_o = { 27'b0, instr[`REG_S1] }; // rs1
+
+  // source registers
+  assign regfile_raddr_a_o = instr[`REG_S1]; // rs1
+  assign regfile_raddr_b_o = instr[`REG_S2]; // rs2
+
+  // destination register
+  assign regfile_waddr_o   = instr[`REG_D]; // rd
+
+  ////////////////////
+  // Register check //
+  ////////////////////
+  //if (RV32E)
+  //  assign illegal_reg_rv32e = (regfile_raddr_a_o[4] |
+  //                              regfile_raddr_b_o[4] |
+  //                              regfile_waddr_o[4]);
+  //else
+  assign illegal_reg_rv32e = 1'b0;
+
+  ///////////////////////
+  // CSR operand check //
+  ///////////////////////
+  always_comb begin : csr_operand_check
+    csr_op_o = csr_op;
+
+    // CSRRSI/CSRRCI must not write 0 to CSRs (uimm[4:0]=='0)
+    // CSRRS/CSRRC must not write from x0 to CSRs (rs1=='0)
+    if ((csr_op == CSR_OP_SET || csr_op == CSR_OP_CLEAR) &&
+        instr[`REG_S1] == '0) begin
+      csr_op_o = CSR_OP_READ;
+    end
+  end
 
   /////////////
   // Decoder //
@@ -114,7 +181,7 @@ module ibex_decoder #(
     csr_access_o                = 1'b0;
     csr_status_o                = 1'b0;
     csr_illegal                 = 1'b0;
-    csr_op_o                    = CSR_OP_READ;
+    csr_op                      = CSR_OP_READ;
 
     data_we_o                   = 1'b0;
     data_type_o                 = 2'b00;
@@ -129,7 +196,7 @@ module ibex_decoder #(
     ecall_insn_o                = 1'b0;
     pipe_flush_o                = 1'b0;
 
-    opcode                      = opcode_e'(instr_rdata_i[6:0]);
+    opcode                      = opcode_e'(instr[6:0]);
 
     unique case (opcode)
 
@@ -174,7 +241,7 @@ module ibex_decoder #(
           alu_operator_o      = ALU_ADD;
           regfile_we_o        = 1'b1;
         end
-        if (instr_rdata_i[14:12] != 3'b0) begin
+        if (instr[14:12] != 3'b0) begin
           illegal_insn_o   = 1'b1;
         end
       end
@@ -182,7 +249,7 @@ module ibex_decoder #(
       OPCODE_BRANCH: begin // Branch
         branch_in_dec_o       = 1'b1;
         if (instr_new_i) begin
-          unique case (instr_rdata_i[14:12])
+          unique case (instr[14:12])
             3'b000:  alu_operator_o = ALU_EQ;
             3'b001:  alu_operator_o = ALU_NE;
             3'b100:  alu_operator_o = ALU_LT;
@@ -210,7 +277,7 @@ module ibex_decoder #(
         data_we_o      = 1'b1;
         alu_operator_o = ALU_ADD;
 
-        if (!instr_rdata_i[14]) begin
+        if (!instr[14]) begin
           // offset from immediate
           imm_b_mux_sel_o     = IMM_B_S;
           alu_op_b_mux_sel_o  = OP_B_IMM;
@@ -220,7 +287,7 @@ module ibex_decoder #(
         end
 
         // store size
-        unique case (instr_rdata_i[13:12])
+        unique case (instr[13:12])
           2'b00: data_type_o = 2'b10; // SB
           2'b01: data_type_o = 2'b01; // SH
           2'b10: data_type_o = 2'b00; // SW
@@ -242,10 +309,10 @@ module ibex_decoder #(
         imm_b_mux_sel_o     = IMM_B_I;
 
         // sign/zero extension
-        data_sign_extension_o = ~instr_rdata_i[14];
+        data_sign_extension_o = ~instr[14];
 
         // load size
-        unique case (instr_rdata_i[13:12])
+        unique case (instr[13:12])
           2'b00:   data_type_o = 2'b10; // LB
           2'b01:   data_type_o = 2'b01; // LH
           2'b10:   data_type_o = 2'b00; // LW
@@ -253,15 +320,15 @@ module ibex_decoder #(
         endcase
 
         // reg-reg load (different encoding)
-        if (instr_rdata_i[14:12] == 3'b111) begin
+        if (instr[14:12] == 3'b111) begin
           // offset from RS2
           alu_op_b_mux_sel_o = OP_B_REG_B;
 
           // sign/zero extension
-          data_sign_extension_o = ~instr_rdata_i[30];
+          data_sign_extension_o = ~instr[30];
 
           // load size
-          unique case (instr_rdata_i[31:25])
+          unique case (instr[31:25])
             7'b0000_000,
             7'b0100_000: data_type_o = 2'b10; // LB, LBU
             7'b0001_000,
@@ -273,7 +340,7 @@ module ibex_decoder #(
           endcase
         end
 
-        if (instr_rdata_i[14:12] == 3'b011) begin
+        if (instr[14:12] == 3'b011) begin
           // LD -> RV64 only
           illegal_insn_o = 1'b1;
         end
@@ -305,7 +372,7 @@ module ibex_decoder #(
         imm_b_mux_sel_o     = IMM_B_I;
         regfile_we_o        = 1'b1;
 
-        unique case (instr_rdata_i[14:12])
+        unique case (instr[14:12])
           3'b000: alu_operator_o = ALU_ADD;  // Add Immediate
           3'b010: alu_operator_o = ALU_SLT;  // Set to one if Lower Than Immediate
           3'b011: alu_operator_o = ALU_SLTU; // Set to one if Lower Than Immediate Unsigned
@@ -315,15 +382,15 @@ module ibex_decoder #(
 
           3'b001: begin
             alu_operator_o = ALU_SLL;  // Shift Left Logical by Immediate
-            if (instr_rdata_i[31:25] != 7'b0) begin
+            if (instr[31:25] != 7'b0) begin
               illegal_insn_o = 1'b1;
             end
           end
 
           3'b101: begin
-            if (instr_rdata_i[31:25] == 7'b0) begin
+            if (instr[31:25] == 7'b0) begin
               alu_operator_o = ALU_SRL;  // Shift Right Logical by Immediate
-            end else if (instr_rdata_i[31:25] == 7'b010_0000) begin
+            end else if (instr[31:25] == 7'b010_0000) begin
               alu_operator_o = ALU_SRA;  // Shift Right Arithmetically by Immediate
             end else begin
               illegal_insn_o = 1'b1;
@@ -339,10 +406,10 @@ module ibex_decoder #(
       OPCODE_OP: begin  // Register-Register ALU operation
         regfile_we_o   = 1'b1;
 
-        if (instr_rdata_i[31]) begin
+        if (instr[31]) begin
           illegal_insn_o = 1'b1;
-        end else if (!instr_rdata_i[28]) begin // non bit-manipulation instructions
-          unique case ({instr_rdata_i[30:25], instr_rdata_i[14:12]})
+        end else if (!instr[28]) begin // non bit-manipulation instructions
+          unique case ({instr[30:25], instr[14:12]})
             // RV32I ALU operations
             {6'b00_0000, 3'b000}: alu_operator_o = ALU_ADD;   // Add
             {6'b10_0000, 3'b000}: alu_operator_o = ALU_SUB;   // Sub
@@ -430,7 +497,7 @@ module ibex_decoder #(
         // fence.i (funct3 == 001) was moved to a separate Zifencei extension
         // in the RISC-V ISA spec proposed for ratification, so we treat it as
         // an illegal instruction.
-        if (instr_rdata_i[14:12] == 3'b000) begin
+        if (instr[14:12] == 3'b000) begin
           alu_operator_o = ALU_ADD; // nop
           regfile_we_o   = 1'b0;
         end else begin
@@ -439,9 +506,9 @@ module ibex_decoder #(
       end
 
       OPCODE_SYSTEM: begin
-        if (instr_rdata_i[14:12] == 3'b000) begin
+        if (instr[14:12] == 3'b000) begin
           // non CSR related SYSTEM instructions
-          unique case (instr_rdata_i[31:20])
+          unique case (instr[31:20])
             12'h000:  // ECALL
               // environment (system) call
               ecall_insn_o = 1'b1;
@@ -472,27 +539,27 @@ module ibex_decoder #(
           imm_a_mux_sel_o     = IMM_A_Z;
           imm_b_mux_sel_o     = IMM_B_I;  // CSR address is encoded in I imm
 
-          if (instr_rdata_i[14]) begin
+          if (instr[14]) begin
             // rs1 field is used as immediate
             alu_op_a_mux_sel_o = OP_A_IMM;
           end else begin
             alu_op_a_mux_sel_o = OP_A_REG_A;
           end
 
-          unique case (instr_rdata_i[13:12])
-            2'b01:   csr_op_o = CSR_OP_WRITE;
-            2'b10:   csr_op_o = CSR_OP_SET;
-            2'b11:   csr_op_o = CSR_OP_CLEAR;
+          unique case (instr[13:12])
+            2'b01:   csr_op = CSR_OP_WRITE;
+            2'b10:   csr_op = CSR_OP_SET;
+            2'b11:   csr_op = CSR_OP_CLEAR;
             default: csr_illegal = 1'b1;
           endcase
 
           if (!csr_illegal) begin
             // flush pipeline on access to mstatus or debug CSRs
-            if (csr_num_e'(instr_rdata_i[31:20]) == CSR_MSTATUS   ||
-                csr_num_e'(instr_rdata_i[31:20]) == CSR_DCSR      ||
-                csr_num_e'(instr_rdata_i[31:20]) == CSR_DPC       ||
-                csr_num_e'(instr_rdata_i[31:20]) == CSR_DSCRATCH0 ||
-                csr_num_e'(instr_rdata_i[31:20]) == CSR_DSCRATCH1) begin
+            if (csr_num_e'(instr[31:20]) == CSR_MSTATUS   ||
+                csr_num_e'(instr[31:20]) == CSR_DCSR      ||
+                csr_num_e'(instr[31:20]) == CSR_DPC       ||
+                csr_num_e'(instr[31:20]) == CSR_DSCRATCH0 ||
+                csr_num_e'(instr[31:20]) == CSR_DSCRATCH1) begin
               csr_status_o = 1'b1;
             end
           end
@@ -508,6 +575,12 @@ module ibex_decoder #(
 
     // make sure illegal compressed instructions cause illegal instruction exceptions
     if (illegal_c_insn_i) begin
+      illegal_insn_o = 1'b1;
+    end
+
+    // make sure instructions accessing non-available registers in RV32E cause illegal
+    // instruction exceptions
+    if (illegal_reg_rv32e) begin
       illegal_insn_o = 1'b1;
     end
 
