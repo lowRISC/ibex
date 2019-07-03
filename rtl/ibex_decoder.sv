@@ -502,16 +502,18 @@ module ibex_decoder #(
         // in the RISC-V ISA spec proposed for ratification, so we treat it as
         // an illegal instruction.
         if (instr[14:12] == 3'b000) begin
-          alu_operator_o = ALU_ADD; // nop
-          regfile_we     = 1'b0;
+          alu_operator_o     = ALU_ADD; // nop
+          alu_op_b_mux_sel_o = OP_B_IMM;
+          regfile_we         = 1'b0;
         end else begin
-          illegal_insn   = 1'b1;
+          illegal_insn       = 1'b1;
         end
       end
 
       OPCODE_SYSTEM: begin
         if (instr[14:12] == 3'b000) begin
           // non CSR related SYSTEM instructions
+          alu_op_b_mux_sel_o = OP_B_IMM;
           unique case (instr[31:20])
             12'h000:  // ECALL
               // environment (system) call
