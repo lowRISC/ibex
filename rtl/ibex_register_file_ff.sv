@@ -61,7 +61,7 @@ module ibex_register_file #(
   logic [NUM_WORDS-1:1]                we_a_dec;
 
   always_comb begin : we_a_decoder
-    for (int i = 1; i < NUM_WORDS; i++) begin
+    for (int unsigned i = 1; i < NUM_WORDS; i++) begin
       we_a_dec[i] = (waddr_a_i == 5'(i)) ?  we_a_i : 1'b0;
     end
   end
