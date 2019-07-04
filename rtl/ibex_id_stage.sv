@@ -106,7 +106,7 @@ module ibex_id_stage #(
     output logic [1:0]                data_reg_offset_ex_o,
     output logic [31:0]               data_wdata_ex_o,
 
-    input  logic                      data_misaligned_i,
+    input  logic                      lsu_addr_incr_req_i,
     input  logic [31:0]               lsu_addr_last_i,
 
     // Interrupt signals
@@ -240,12 +240,12 @@ module ibex_id_stage #(
   /////////////
 
   // Misaligned loads/stores result in two aligned loads/stores, compute second address
-  assign alu_op_a_mux_sel = data_misaligned_i ? OP_A_FWD        : alu_op_a_mux_sel_dec;
-  assign alu_op_b_mux_sel = data_misaligned_i ? OP_B_IMM        : alu_op_b_mux_sel_dec;
-  assign imm_b_mux_sel    = data_misaligned_i ? IMM_B_INCR_ADDR : imm_b_mux_sel_dec;
+  assign alu_op_a_mux_sel = lsu_addr_incr_req_i ? OP_A_FWD        : alu_op_a_mux_sel_dec;
+  assign alu_op_b_mux_sel = lsu_addr_incr_req_i ? OP_B_IMM        : alu_op_b_mux_sel_dec;
+  assign imm_b_mux_sel    = lsu_addr_incr_req_i ? IMM_B_INCR_ADDR : imm_b_mux_sel_dec;
 
   // do not write back the second address since the first calculated address was the correct one
-  assign regfile_we_id    = data_misaligned_i ? 1'b0            : regfile_we_dec & ~deassert_we;
+  assign regfile_we_id    = lsu_addr_incr_req_i ? 1'b0            : regfile_we_dec & ~deassert_we;
 
   ///////////////////
   // Operand A MUX //
@@ -287,7 +287,7 @@ module ibex_id_stage #(
   assign alu_operand_b = (alu_op_b_mux_sel == OP_B_IMM) ? imm_b : regfile_rdata_b;
 
   // Signals used by tracer
-  assign operand_a_fw_id = data_misaligned_i ? lsu_addr_last_i : regfile_rdata_a;
+  assign operand_a_fw_id = lsu_addr_incr_req_i ? lsu_addr_last_i : regfile_rdata_a;
   assign operand_b_fw_id = regfile_rdata_b;
 
   assign unused_operand_a_fw_id = operand_a_fw_id;
@@ -676,7 +676,7 @@ module ibex_id_stage #(
 
 `ifdef CHECK_MISALIGNED
   assert property (
-    @(posedge clk_i) (~data_misaligned_i) ) else
+    @(posedge clk_i) (~lsu_addr_incr_req_i) ) else
       $display("Misaligned memory access at %x",pc_id_i);
 `endif
 

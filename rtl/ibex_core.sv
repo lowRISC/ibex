@@ -130,7 +130,8 @@ module ibex_core #(
   // ID performance counter signals
   logic        is_decoding;
 
-  logic        data_misaligned;
+  // LSU signals
+  logic        lsu_addr_incr_req;
   logic [31:0] lsu_addr_last;
 
   // Jump and branch target and decision (EX->IF)
@@ -187,7 +188,7 @@ module ibex_core #(
   logic        if_valid;
   logic        id_valid;
 
-  logic        data_valid_lsu;
+  logic        lsu_data_valid;
 
   // Signals between instruction core interface and pipe (if and id stages)
   logic        instr_req_int;          // Id stage asserts a req to instruction core interface
@@ -391,7 +392,7 @@ module ibex_core #(
 
       .id_ready_o                   ( id_ready               ),
       .ex_valid_i                   ( ex_valid               ),
-      .lsu_valid_i                  ( data_valid_lsu         ),
+      .lsu_valid_i                  ( lsu_data_valid         ),
 
       .id_valid_o                   ( id_valid               ),
 
@@ -425,7 +426,7 @@ module ibex_core #(
       .data_reg_offset_ex_o         ( data_reg_offset_ex     ), // to load store unit
       .data_wdata_ex_o              ( data_wdata_ex          ), // to load store unit
 
-      .data_misaligned_i            ( data_misaligned        ),
+      .lsu_addr_incr_req_i          ( lsu_addr_incr_req      ),
       .lsu_addr_last_i              ( lsu_addr_last          ),
 
       .lsu_load_err_i               ( lsu_load_err           ),
@@ -501,44 +502,42 @@ module ibex_core #(
   /////////////////////
 
   ibex_load_store_unit  load_store_unit_i (
-      .clk_i                 ( clk                ),
-      .rst_ni                ( rst_ni             ),
+      .clk_i                 ( clk                 ),
+      .rst_ni                ( rst_ni              ),
 
-      //output to data memory
-      .data_req_o            ( data_req_o         ),
-      .data_gnt_i            ( data_gnt_i         ),
-      .data_rvalid_i         ( data_rvalid_i      ),
-      .data_err_i            ( data_err_i         ),
+      // data interface
+      .data_req_o            ( data_req_o          ),
+      .data_gnt_i            ( data_gnt_i          ),
+      .data_rvalid_i         ( data_rvalid_i       ),
+      .data_err_i            ( data_err_i          ),
 
-      .data_addr_o           ( data_addr_o        ),
-      .data_we_o             ( data_we_o          ),
-      .data_be_o             ( data_be_o          ),
-      .data_wdata_o          ( data_wdata_o       ),
-      .data_rdata_i          ( data_rdata_i       ),
+      .data_addr_o           ( data_addr_o         ),
+      .data_we_o             ( data_we_o           ),
+      .data_be_o             ( data_be_o           ),
+      .data_wdata_o          ( data_wdata_o        ),
+      .data_rdata_i          ( data_rdata_i        ),
 
-      // signal from ex stage
-      .data_we_ex_i          ( data_we_ex         ),
-      .data_type_ex_i        ( data_type_ex       ),
-      .data_wdata_ex_i       ( data_wdata_ex      ),
-      .data_reg_offset_ex_i  ( data_reg_offset_ex ),
-      .data_sign_ext_ex_i    ( data_sign_ext_ex   ),
+      // signals to/from ID/EX stage
+      .data_we_ex_i          ( data_we_ex          ),
+      .data_type_ex_i        ( data_type_ex        ),
+      .data_wdata_ex_i       ( data_wdata_ex       ),
+      .data_reg_offset_ex_i  ( data_reg_offset_ex  ),
+      .data_sign_ext_ex_i    ( data_sign_ext_ex    ),
 
-      .data_rdata_ex_o       ( regfile_wdata_lsu  ),
-      .data_req_ex_i         ( data_req_ex        ),
+      .data_rdata_ex_o       ( regfile_wdata_lsu   ),
+      .data_req_ex_i         ( data_req_ex         ),
 
-      .adder_result_ex_i     ( alu_adder_result_ex),
+      .adder_result_ex_i     ( alu_adder_result_ex ),
 
-      .data_misaligned_o     ( data_misaligned    ),
-      .addr_last_o           ( lsu_addr_last      ),
+      .addr_incr_req_o       ( lsu_addr_incr_req   ),
+      .addr_last_o           ( lsu_addr_last       ),
+      .data_valid_o          ( lsu_data_valid      ),
 
       // exception signals
-      .load_err_o            ( lsu_load_err       ),
-      .store_err_o           ( lsu_store_err      ),
+      .load_err_o            ( lsu_load_err        ),
+      .store_err_o           ( lsu_store_err       ),
 
-      // control signals
-      .data_valid_o          ( data_valid_lsu     ),
-      .lsu_update_addr_o     (                    ),
-      .busy_o                ( lsu_busy           )
+      .busy_o                ( lsu_busy            )
   );
 
 
@@ -780,7 +779,7 @@ module ibex_core #(
       .ex_reg_addr_i    ( id_stage_i.regfile_waddr             ),
       .ex_reg_we_i      ( id_stage_i.regfile_we                ),
       .ex_reg_wdata_i   ( id_stage_i.regfile_wdata             ),
-      .data_valid_lsu_i ( data_valid_lsu                       ),
+      .lsu_data_valid_i ( lsu_data_valid                       ),
       .ex_data_addr_i   ( data_addr_o                          ),
       .ex_data_req_i    ( data_req_o                           ),
       .ex_data_gnt_i    ( data_gnt_i                           ),
