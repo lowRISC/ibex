@@ -40,7 +40,7 @@ module ibex_decoder #(
                                                             // encountered
     output logic                     dret_insn_o,           // return from debug instr encountered
     output logic                     ecall_insn_o,          // syscall instr encountered
-    output logic                     pipe_flush_o,          // pipeline flush is requested
+    output logic                     wfi_insn_o,            // wait for interrupt instr encountered
     output logic                     jump_set_o,            // jump taken set signal
 
     // from IF-ID pipeline register
@@ -198,7 +198,7 @@ module ibex_decoder #(
     mret_insn_o                 = 1'b0;
     dret_insn_o                 = 1'b0;
     ecall_insn_o                = 1'b0;
-    pipe_flush_o                = 1'b0;
+    wfi_insn_o                  = 1'b0;
 
     opcode                      = opcode_e'(instr[6:0]);
 
@@ -542,8 +542,7 @@ module ibex_decoder #(
               dret_insn_o = 1'b1;
 
             12'h105:  // wfi
-              // flush pipeline
-              pipe_flush_o = 1'b1;
+              wfi_insn_o = 1'b1;
 
             default:
               illegal_insn = 1'b1;

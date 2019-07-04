@@ -40,7 +40,7 @@ module ibex_controller (
     input  logic                      ecall_insn_i,          // decoder has ECALL instr
     input  logic                      mret_insn_i,           // decoder has MRET instr
     input  logic                      dret_insn_i,           // decoder has DRET instr
-    input  logic                      pipe_flush_i,          // decoder wants to do a pipe flush
+    input  logic                      wfi_insn_i,            // decoder has WFI instr
     input  logic                      ebrk_insn_i,           // decoder has EBREAK instr
     input  logic                      csr_status_i,          // decoder has CSR status instr
 
@@ -301,7 +301,7 @@ module ibex_controller (
 
                 perf_tbranch_o = branch_set_i;
                 perf_jump_o    = jump_set_i;
-              end else if (mret_insn_i || dret_insn_i || ecall_insn_i || pipe_flush_i ||
+              end else if (mret_insn_i || dret_insn_i || ecall_insn_i || wfi_insn_i ||
                            ebrk_insn_i || illegal_insn_i || csr_status_i ||
                            store_err_i || load_err_i) begin
                 ctrl_fsm_ns = FLUSH;
@@ -407,7 +407,7 @@ module ibex_controller (
         halt_if_o = 1'b1;
         halt_id   = 1'b1;
 
-        if (!pipe_flush_i) begin
+        if (!wfi_insn_i) begin
           ctrl_fsm_ns = DECODE;
         end else begin
           ctrl_fsm_ns = WAIT_SLEEP;
