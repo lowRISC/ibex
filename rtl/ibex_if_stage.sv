@@ -109,6 +109,10 @@ module ibex_if_stage #(
   logic        [5:0] irq_id;
   logic              unused_irq_bit;
 
+  logic        [7:0] unused_boot_addr;
+
+  assign unused_boot_addr = boot_addr_i[7:0];
+
   // extract interrupt ID from exception cause
   assign irq_id         = {exc_cause};
   assign unused_irq_bit = irq_id[5];   // MSB distinguishes interrupts from exceptions
