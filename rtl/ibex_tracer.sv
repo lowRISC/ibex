@@ -62,7 +62,7 @@ module ibex_tracer #(
     input  logic [(RegAddrWidth-1):0] ex_reg_addr_i,
     input  logic                      ex_reg_we_i,
     input  logic [31:0]               ex_reg_wdata_i,
-    input  logic                      data_valid_lsu_i,
+    input  logic                      lsu_data_valid_i,
     input  logic                      ex_data_req_i,
     input  logic                      ex_data_gnt_i,
     input  logic                      ex_data_we_i,
@@ -433,7 +433,7 @@ module ibex_tracer #(
         end
         //we wait until the the data instruction ends
         do @(negedge clk_i);
-          while (!data_valid_lsu_i);
+          while (!lsu_data_valid_i);
 
         if (!mem_acc.we) begin
           //load operations
