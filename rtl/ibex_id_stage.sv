@@ -158,7 +158,7 @@ module ibex_id_stage #(
   logic        mret_insn_dec;
   logic        dret_insn_dec;
   logic        ecall_insn_dec;
-  logic        pipe_flush_dec;
+  logic        wfi_insn_dec;
 
   logic        branch_in_id, branch_in_dec;
   logic        branch_set_n, branch_set_q;
@@ -342,7 +342,7 @@ module ibex_id_stage #(
       .mret_insn_o                     ( mret_insn_dec        ),
       .dret_insn_o                     ( dret_insn_dec        ),
       .ecall_insn_o                    ( ecall_insn_dec       ),
-      .pipe_flush_o                    ( pipe_flush_dec       ),
+      .wfi_insn_o                      ( wfi_insn_dec         ),
       .jump_set_o                      ( jump_set             ),
 
       // from IF-ID pipeline register
@@ -418,7 +418,7 @@ module ibex_id_stage #(
       .ecall_insn_i                   ( ecall_insn_dec         ),
       .mret_insn_i                    ( mret_insn_dec          ),
       .dret_insn_i                    ( dret_insn_dec          ),
-      .pipe_flush_i                   ( pipe_flush_dec         ),
+      .wfi_insn_i                     ( wfi_insn_dec           ),
       .ebrk_insn_i                    ( ebrk_insn              ),
       .csr_status_i                   ( csr_status             ),
 
