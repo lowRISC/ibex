@@ -33,9 +33,6 @@ module ibex_controller (
     output logic                      is_decoding_o,         // core is in decoding state
 
     // decoder related signals
-    output logic                      deassert_we_o,         // deassert write enable for next
-                                                             // instr
-
     input  logic                      illegal_insn_i,        // decoder has an invalid instr
     input  logic                      ecall_insn_i,          // decoder has ECALL instr
     input  logic                      mret_insn_i,           // decoder has MRET instr
@@ -510,11 +507,6 @@ module ibex_controller (
   // if low, current instr finishes in current cycle
   // multicycle instructions have this set except during the last cycle
   assign stall = stall_lsu_i | stall_multdiv_i | stall_jump_i | stall_branch_i;
-
-  // deassert write enable when the core is not decoding instructions, i.e., current instruction
-  // in ID stage done, but waiting for next instruction from IF stage, or in case of illegal
-  // instruction
-  assign deassert_we_o = ~is_decoding_o | illegal_insn_i;
 
   // signal to IF stage that ID stage is ready for next instruction
   assign id_ready_o = ~stall;

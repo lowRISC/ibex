@@ -150,9 +150,7 @@ module ibex_id_stage #(
 
   import ibex_defines::*;
 
-  // Decoder/Controller ID stage internal signals
-  logic        deassert_we;
-
+  // Decoder/Controller, ID stage internal signals
   logic        illegal_insn_dec;
   logic        ebrk_insn;
   logic        mret_insn_dec;
@@ -240,9 +238,6 @@ module ibex_id_stage #(
   assign alu_op_b_mux_sel = lsu_addr_incr_req_i ? OP_B_IMM        : alu_op_b_mux_sel_dec;
   assign imm_b_mux_sel    = lsu_addr_incr_req_i ? IMM_B_INCR_ADDR : imm_b_mux_sel_dec;
 
-  // do not write back the second address since the first calculated address was the correct one
-  assign regfile_we_id    = lsu_addr_incr_req_i ? 1'b0            : regfile_we_dec & ~deassert_we;
-
   ///////////////////
   // Operand A MUX //
   ///////////////////
@@ -285,6 +280,9 @@ module ibex_id_stage #(
   ///////////////////////
   // Register File MUX //
   ///////////////////////
+
+  // Register file write enable mux - do not propagate illegal CSR ops, do not write when idle
+  assign regfile_we = (illegal_csr_insn_i || !instr_executing) ? 1'b0 : regfile_we_id;
 
   // Register file write data mux
   always_comb begin : regfile_wdata_mux
@@ -413,7 +411,6 @@ module ibex_id_stage #(
       .is_decoding_o                  ( is_decoding_o          ),
 
       // decoder related signals
-      .deassert_we_o                  ( deassert_we            ),
       .illegal_insn_i                 ( illegal_insn_o         ),
       .ecall_insn_i                   ( ecall_insn_dec         ),
       .mret_insn_i                    ( mret_insn_dec          ),
@@ -580,7 +577,7 @@ module ibex_id_stage #(
   always_comb begin : id_wb_fsm
     id_wb_fsm_ns            = id_wb_fsm_cs;
     instr_multicycle_done_n = instr_multicycle_done_q;
-    regfile_we              = regfile_we_id;
+    regfile_we_id           = regfile_we_dec;
     stall_lsu               = 1'b0;
     stall_multdiv           = 1'b0;
     stall_jump              = 1'b0;
@@ -597,14 +594,14 @@ module ibex_id_stage #(
           unique case (1'b1)
             data_req_dec: begin
               // LSU operation
-              regfile_we              = 1'b0;
+              regfile_we_id           = 1'b0;
               id_wb_fsm_ns            = WAIT_MULTICYCLE;
               stall_lsu               = 1'b1;
               instr_multicycle_done_n = 1'b0;
             end
             multdiv_en_dec: begin
               // MUL or DIV operation
-              regfile_we              = 1'b0;
+              regfile_we_id           = 1'b0;
               id_wb_fsm_ns            = WAIT_MULTICYCLE;
               stall_multdiv           = 1'b1;
               instr_multicycle_done_n = 1'b0;
@@ -633,7 +630,7 @@ module ibex_id_stage #(
           id_wb_fsm_ns            = IDLE;
           instr_multicycle_done_n = 1'b1;
         end else begin
-          regfile_we              = 1'b0;
+          regfile_we_id           = 1'b0;
           stall_lsu               = data_req_dec;
           stall_multdiv           = multdiv_en_dec;
           stall_branch            = branch_in_dec;
