@@ -133,6 +133,7 @@ module ibex_controller (
   logic stall;
   logic halt_id;
   logic irq;
+  logic exc_req;
   logic special_req;
 
 `ifndef SYNTHESIS
@@ -152,9 +153,11 @@ module ibex_controller (
   assign irq         = irq_req_ctrl_i & m_IE_i;
   assign exc_kill_o  = 1'b0;
 
-  // special requests: special instructions, exceptions, pipeline flushes...
-  assign special_req = mret_insn_i | dret_insn_i | ecall_insn_i | ebrk_insn_i | wfi_insn_i |
-                      illegal_insn_i | store_err_i | load_err_i | csr_status_i;
+  // exception requests
+  assign exc_req     = ecall_insn_i | ebrk_insn_i | illegal_insn_i | store_err_i | load_err_i;
+
+  // special requests: special instructions, pipeline flushes, exceptions...
+  assign special_req = mret_insn_i | dret_insn_i | wfi_insn_i | csr_status_i | exc_req;
 
   /////////////////////
   // Core controller //
@@ -301,7 +304,18 @@ module ibex_controller (
           if ((debug_req_i || irq) && stall && !debug_mode_q) begin
             halt_if_o   = 1'b1;
           end
-        end
+
+          // single stepping:
+          // execute a single instruction and then enter debug mode, in case of exceptions,
+          // set registers but do not jump into handler (debug-spec p.44).
+          if (debug_single_step_i && !debug_mode_q) begin
+            halt_if_o   = 1'b1;
+
+            if (!special_req && !stall) begin
+              ctrl_fsm_ns = DBG_TAKEN_IF;
+            end
+          end
+        end // instr_valid_i
 
         if  (debug_req_i && !stall && !special_req && !debug_mode_q) begin
           // enter debug mode
@@ -316,13 +330,7 @@ module ibex_controller (
           halt_id     = 1'b1;
         end
 
-        // Single stepping
-        // prevent any more instructions from executing
-        if (debug_single_step_i && !debug_mode_q) begin
-          halt_if_o   = 1'b1;
-          ctrl_fsm_ns = DBG_TAKEN_IF;
-        end
-      end
+      end // DECODE
 
       IRQ_TAKEN: begin
         pc_mux_o          = PC_EXC;
@@ -509,7 +517,13 @@ module ibex_controller (
 
           default:;
         endcase
-      end
+
+        // single stepping
+        // set exception registers, but do not jump into handler (debug-spec p.44).
+        if (debug_single_step_i && !debug_mode_q) begin
+          ctrl_fsm_ns = DBG_TAKEN_IF;
+        end
+      end // FLUSH
 
       default: begin
         instr_req_o = 1'b0;
