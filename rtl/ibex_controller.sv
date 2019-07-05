@@ -16,12 +16,12 @@
 // Project Name:   ibex                                                       //
 // Language:       SystemVerilog                                              //
 //                                                                            //
-// Description:    Main CPU controller of the processor                       //
+// Description:    Main controller of the processor                           //
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Main CPU controller of the processor
+ * Main controller of the processor
  */
 module ibex_controller (
     input  logic                      clk_i,
@@ -87,7 +87,7 @@ module ibex_controller (
     output logic                      exc_ack_o,
     output logic                      exc_kill_o,
 
-    // Debug Signal
+    // debug signals
     input  logic                      debug_req_i,
     output ibex_defines::dbg_cause_e  debug_cause_o,
     output logic                      debug_csr_save_o,
@@ -110,7 +110,7 @@ module ibex_controller (
 
     output logic                      id_valid_o,
 
-    // Performance Counters
+    // performance monitors
     output logic                      perf_jump_o,           // we are executing a jump
                                                              // instruction (j, jr, jal, jalr)
     output logic                      perf_tbranch_o         // we are executing a taken branch
@@ -126,9 +126,9 @@ module ibex_controller (
 
   ctrl_fsm_e ctrl_fsm_cs, ctrl_fsm_ns;
 
-  logic debug_mode_q, debug_mode_n;
-  logic load_err_q, load_err_n;
-  logic store_err_q, store_err_n;
+  logic debug_mode_q, debug_mode_d;
+  logic load_err_q, load_err_d;
+  logic store_err_q, store_err_d;
 
   logic stall;
   logic halt_id;
@@ -150,6 +150,9 @@ module ibex_controller (
   // synopsys translate_on
 `endif
 
+  assign load_err_d  = load_err_i;
+  assign store_err_d = store_err_i;
+
   assign irq         = irq_req_ctrl_i & m_IE_i;
   assign exc_kill_o  = 1'b0;
 
@@ -165,47 +168,44 @@ module ibex_controller (
 
   always_comb begin
     // Default values
-    instr_req_o            = 1'b1;
+    instr_req_o           = 1'b1;
 
-    exc_ack_o              = 1'b0;
+    exc_ack_o             = 1'b0;
 
-    csr_save_if_o          = 1'b0;
-    csr_save_id_o          = 1'b0;
-    csr_restore_mret_id_o  = 1'b0;
-    csr_restore_dret_id_o  = 1'b0;
-    csr_save_cause_o       = 1'b0;
-    csr_mtval_o            = '0;
+    csr_save_if_o         = 1'b0;
+    csr_save_id_o         = 1'b0;
+    csr_restore_mret_id_o = 1'b0;
+    csr_restore_dret_id_o = 1'b0;
+    csr_save_cause_o      = 1'b0;
+    csr_mtval_o           = '0;
 
-    pc_mux_o               = PC_BOOT;
-    pc_set_o               = 1'b0;
+    pc_mux_o              = PC_BOOT;
+    pc_set_o              = 1'b0;
 
-    exc_pc_mux_o           = EXC_PC_IRQ;
-    exc_cause_o            = EXC_CAUSE_INSN_ADDR_MISA; // = 6'h00
+    exc_pc_mux_o          = EXC_PC_IRQ;
+    exc_cause_o           = EXC_CAUSE_INSN_ADDR_MISA; // = 6'h00
 
-    ctrl_fsm_ns            = ctrl_fsm_cs;
+    ctrl_fsm_ns           = ctrl_fsm_cs;
 
-    ctrl_busy_o            = 1'b1;
-    is_decoding_o          = 1'b0;
-    first_fetch_o          = 1'b0;
+    ctrl_busy_o           = 1'b1;
+    is_decoding_o         = 1'b0;
+    first_fetch_o         = 1'b0;
 
-    halt_if_o              = 1'b0;
-    halt_id                = 1'b0;
-    irq_ack_o              = 1'b0;
-    irq_id_o               = irq_id_ctrl_i;
+    halt_if_o             = 1'b0;
+    halt_id               = 1'b0;
+    irq_ack_o             = 1'b0;
+    irq_id_o              = irq_id_ctrl_i;
 
-    debug_csr_save_o       = 1'b0;
-    debug_cause_o          = DBG_CAUSE_EBREAK;
-    debug_mode_n           = debug_mode_q;
+    debug_csr_save_o      = 1'b0;
+    debug_cause_o         = DBG_CAUSE_EBREAK;
+    debug_mode_d          = debug_mode_q;
 
-    load_err_n             = 1'b0;
-    store_err_n            = 1'b0;
-
-    perf_tbranch_o         = 1'b0;
-    perf_jump_o            = 1'b0;
+    perf_tbranch_o        = 1'b0;
+    perf_jump_o           = 1'b0;
 
     unique case (ctrl_fsm_cs)
-      // We were just reset, wait for fetch_enable
       RESET: begin
+        // just wait for fetch_enable
         instr_req_o   = 1'b0;
         pc_mux_o      = PC_BOOT;
         pc_set_o      = 1'b1;
@@ -214,8 +214,8 @@ module ibex_controller (
         end
       end
 
-      // copy boot address to instr fetch address
       BOOT_SET: begin
+        // copy boot address to instr fetch address
         instr_req_o   = 1'b1;
         pc_mux_o      = PC_BOOT;
         pc_set_o      = 1'b1;
@@ -231,10 +231,9 @@ module ibex_controller (
         ctrl_fsm_ns   = SLEEP;
       end
 
-      // instruction in if_stage is already valid
       SLEEP: begin
-        // we begin execution when an
-        // interrupt has arrived
+        // instruction in if_stage is already valid
+        // we begin execution when an interrupt has arrived
         ctrl_busy_o   = 1'b0;
         instr_req_o   = 1'b0;
         halt_if_o     = 1'b1;
@@ -265,9 +264,9 @@ module ibex_controller (
 
         // enter debug mode
         if (debug_req_i && !debug_mode_q) begin
-          ctrl_fsm_ns  = DBG_TAKEN_IF;
-          halt_if_o    = 1'b1;
-          halt_id      = 1'b1;
+          ctrl_fsm_ns = DBG_TAKEN_IF;
+          halt_if_o   = 1'b1;
+          halt_id     = 1'b1;
         end
       end
 
@@ -295,8 +294,6 @@ module ibex_controller (
             ctrl_fsm_ns = FLUSH;
             halt_if_o   = 1'b1;
             halt_id     = 1'b1;
-            load_err_n  = load_err_i;
-            store_err_n = store_err_i;
           end
 
           // stall IF stage to not starve debug and interrupt requests, these just
@@ -307,7 +304,7 @@ module ibex_controller (
 
           // single stepping:
           // execute a single instruction and then enter debug mode, in case of exceptions,
-          // set registers but do not jump into handler (debug-spec p.44).
+          // set registers but do not jump into handler [Debug Spec v0.13.2, p.44]
           if (debug_single_step_i && !debug_mode_q) begin
             halt_if_o   = 1'b1;
 
@@ -333,33 +330,32 @@ module ibex_controller (
       end // DECODE
 
       IRQ_TAKEN: begin
-        pc_mux_o          = PC_EXC;
-        pc_set_o          = 1'b1;
+        pc_mux_o         = PC_EXC;
+        pc_set_o         = 1'b1;
 
-        exc_pc_mux_o      = EXC_PC_IRQ;
-        exc_cause_o       = exc_cause_e'({1'b1, irq_id_ctrl_i});
+        exc_pc_mux_o     = EXC_PC_IRQ;
+        exc_cause_o      = exc_cause_e'({1'b1, irq_id_ctrl_i});
 
-        csr_save_cause_o  = 1'b1;
-        csr_save_if_o     = 1'b1;
+        csr_save_cause_o = 1'b1;
+        csr_save_if_o    = 1'b1;
 
-        irq_ack_o         = 1'b1;
-        exc_ack_o         = 1'b1;
+        irq_ack_o        = 1'b1;
+        exc_ack_o        = 1'b1;
 
-        ctrl_fsm_ns       = DECODE;
+        ctrl_fsm_ns      = DECODE;
       end
 
-      // Enter debug mode and save PC in IF to DPC
-      DBG_TAKEN_IF:
-      begin
-        // Jump to debug exception handler in debug memory
-        pc_mux_o          = PC_EXC;
-        pc_set_o          = 1'b1;
-        exc_pc_mux_o      = EXC_PC_DBD;
+      DBG_TAKEN_IF: begin
+        // enter debug mode and save PC in IF to dpc
+        // jump to debug exception handler in debug memory
+        pc_mux_o         = PC_EXC;
+        pc_set_o         = 1'b1;
+        exc_pc_mux_o     = EXC_PC_DBD;
 
-        csr_save_if_o     = 1'b1;
-        debug_csr_save_o  = 1'b1;
+        csr_save_if_o    = 1'b1;
+        debug_csr_save_o = 1'b1;
 
-        csr_save_cause_o  = 1'b1;
+        csr_save_cause_o = 1'b1;
         if (debug_single_step_i) begin
           debug_cause_o = DBG_CAUSE_STEP;
         end else if (debug_req_i) begin
@@ -368,35 +364,34 @@ module ibex_controller (
           debug_cause_o = DBG_CAUSE_EBREAK;
         end
 
-        // We've entered debug mode
-        debug_mode_n    = 1'b1;
+        // enter debug mode
+        debug_mode_d = 1'b1;
 
-        ctrl_fsm_ns     = DECODE;
+        ctrl_fsm_ns  = DECODE;
       end
 
-      // We enter this state when we encounter
-      // 1. ebreak during debug mode
-      // 2. ebreak with forced entry into debug mode (ebreakm or ebreaku set).
-      // 3. halt request during decode
-      // Regular ebreak's go through FLUSH_EX and FLUSH_WB.
-      // For 1. we don't update dcsr and dpc while for 2. and 3. we do
-      // (debug-spec p.39). Critically dpc is set to the address of ebreak and
-      // not to the next instruction's (which is why we save the pc in id).
       DBG_TAKEN_ID: begin
-        // Jump to debug exception handler in debug memory
-        pc_mux_o          = PC_EXC;
-        pc_set_o          = 1'b1;
-        exc_pc_mux_o      = EXC_PC_DBD;
+        // enter debug mode and save PC in ID to dpc, used when encountering
+        // 1. EBREAK during debug mode
+        // 2. EBREAK with forced entry into debug mode (ebreakm or ebreaku set).
+        // 3. halt request during decode
+        // regular ebreak's go through FLUSH.
+        //
+        // for 1. do not update dcsr and dpc, for 2. and 3. do so [Debug Spec v0.13.2, p.39]
+        // jump to debug exception handler in debug memory
+        pc_mux_o     = PC_EXC;
+        pc_set_o     = 1'b1;
+        exc_pc_mux_o = EXC_PC_DBD;
 
-        // Update DCSR and DPC
+        // update dcsr and dpc
         if ((ebrk_insn_i && debug_ebreakm_i && !debug_mode_q) || // ebreak with forced entry
             (debug_req_i && !debug_mode_q)) begin // halt request
 
-          // DPC (set to the address of the ebreak, i.e. set to PC in ID stage)
+          // dpc (set to the address of the EBREAK, i.e. set to PC in ID stage)
           csr_save_cause_o = 1'b1;
           csr_save_id_o    = 1'b1;
 
-          // DCSR
+          // dcsr
           debug_csr_save_o = 1'b1;
           if (debug_req_i) begin
             debug_cause_o = DBG_CAUSE_HALTREQ;
@@ -405,8 +400,8 @@ module ibex_controller (
           end
         end
 
-        // We've entered debug mode
-        debug_mode_n = 1'b1;
+        // enter debug mode
+        debug_mode_d = 1'b1;
 
         ctrl_fsm_ns  = DECODE;
       end
@@ -425,22 +420,22 @@ module ibex_controller (
           csr_save_id_o    = 1'b1;
           csr_save_cause_o = 1'b1;
 
-          // set exception registers, priorities according to Table 3.7 of RISC-V Privileged Spec
+          // set exception registers, priorities according to Table 3.7 of Privileged Spec v1.11
           if (illegal_insn_i) begin
-            exc_cause_o      = EXC_CAUSE_ILLEGAL_INSN;
-            csr_mtval_o      = instr_is_compressed_i ? {16'b0, instr_compressed_i} : instr_i;
+            exc_cause_o = EXC_CAUSE_ILLEGAL_INSN;
+            csr_mtval_o = instr_is_compressed_i ? {16'b0, instr_compressed_i} : instr_i;
 
           end else if (ecall_insn_i) begin
-            exc_cause_o      = EXC_CAUSE_ECALL_MMODE;
+            exc_cause_o = EXC_CAUSE_ECALL_MMODE;
 
           end else if (ebrk_insn_i) begin
             if (debug_mode_q) begin
               /*
-               * ebreak in debug mode re-enters debug mode
+               * EBREAK in debug mode re-enters debug mode
                *
-               * "The only exception is ebreak. When that is executed in Debug
+               * "The only exception is EBREAK. When that is executed in Debug
                * Mode, it halts the hart again but without updating dpc or
-               * dcsr." [RISC-V Debug Specification v0.13.1, p. 41]
+               * dcsr." [Debug Spec v0.13.2, p.39]
                */
               pc_set_o         = 1'b0;
               csr_save_id_o    = 1'b0;
@@ -449,8 +444,8 @@ module ibex_controller (
             end else if (debug_ebreakm_i) begin
               /*
                * dcsr.ebreakm == 1:
-               * "ebreak instructions in M-mode enter Debug Mode."
-               * (Debug Spec, p. 44)
+               * "EBREAK instructions in M-mode enter Debug Mode."
+               * [Debug Spec v0.13.2, p.42]
                */
               pc_set_o         = 1'b0;
               csr_save_id_o    = 1'b0;
@@ -464,18 +459,18 @@ module ibex_controller (
                * operation. [...] ECALL and EBREAK cause the receiving
                * privilege mode’s epc register to be set to the address of the
                * ECALL or EBREAK instruction itself, not the address of the
-               * following instruction." (Privileged Spec, p. 40)
+               * following instruction." [Privileged Spec v1.11, p.40]
                */
               exc_cause_o      = EXC_CAUSE_BREAKPOINT;
             end
 
           end else if (store_err_q) begin
-            exc_cause_o      = EXC_CAUSE_STORE_ACCESS_FAULT;
-            csr_mtval_o      = lsu_addr_last_i;
+            exc_cause_o = EXC_CAUSE_STORE_ACCESS_FAULT;
+            csr_mtval_o = lsu_addr_last_i;
 
           end else if (load_err_q) begin
-            exc_cause_o      = EXC_CAUSE_LOAD_ACCESS_FAULT;
-            csr_mtval_o      = lsu_addr_last_i;
+            exc_cause_o = EXC_CAUSE_LOAD_ACCESS_FAULT;
+            csr_mtval_o = lsu_addr_last_i;
           end
 
         end else begin
@@ -488,14 +483,14 @@ module ibex_controller (
             pc_mux_o              = PC_DRET;
             pc_set_o              = 1'b1;
             csr_restore_dret_id_o = 1'b1;
-            debug_mode_n          = 1'b0;
+            debug_mode_d          = 1'b0;
           end else if (wfi_insn_i) begin
             ctrl_fsm_ns           = WAIT_SLEEP;
           end
         end // exc_req
 
         // single stepping
-        // set exception registers, but do not jump into handler (debug-spec p.44).
+        // set exception registers, but do not jump into handler [Debug Spec v0.13.2, p.44]
         if (debug_single_step_i && !debug_mode_q) begin
           pc_set_o    = 1'b0;
           ctrl_fsm_ns = DBG_TAKEN_IF;
@@ -513,8 +508,9 @@ module ibex_controller (
   // Stall control //
   ///////////////////
 
-  // current instr needs at least one more cycle to finsih after the current cycle
-  // if low, current instr finsihes in current cycle
+  // if high, current instr needs at least one more cycle to finish after the current cycle
+  // if low, current instr finishes in current cycle
+  // multicycle instructions have this set except during the last cycle
   assign stall = stall_lsu_i | stall_multdiv_i | stall_jump_i | stall_branch_i;
 
   // deassert write enable when the core is not decoding instructions, i.e., current instruction
@@ -540,10 +536,10 @@ module ibex_controller (
       store_err_q  <= 1'b0;
     end else begin
       ctrl_fsm_cs  <= ctrl_fsm_ns;
-      debug_mode_q <= debug_mode_n;
-      load_err_q   <= load_err_n;
-      store_err_q  <= store_err_n;
+      debug_mode_q <= debug_mode_d;
+      load_err_q   <= load_err_d;
+      store_err_q  <= store_err_d;
     end
   end
 
-endmodule // controller
+endmodule
