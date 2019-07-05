@@ -68,7 +68,6 @@ module ibex_controller (
     input  logic                      store_err_i,
 
     // jump/branch signals
-    input  logic                      branch_in_id_i,        // branch in id
     input  logic                      branch_set_i,          // branch taken set signal
     input  logic                      jump_set_i,            // jump taken set signal
 
@@ -106,7 +105,6 @@ module ibex_controller (
     input  logic                      stall_multdiv_i,
     input  logic                      stall_jump_i,
     input  logic                      stall_branch_i,
-    input  logic                      instr_multicycle_i,    // multicycle instructions active
 
     output logic                      id_valid_o,
 

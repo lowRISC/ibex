@@ -160,13 +160,13 @@ module ibex_id_stage #(
   logic        ecall_insn_dec;
   logic        wfi_insn_dec;
 
-  logic        branch_in_id, branch_in_dec;
+  logic        branch_in_dec;
+  logic        branch_in_id, unused_branch_in_id;
   logic        branch_set_n, branch_set_q;
   logic        jump_in_dec;
   logic        jump_set;
 
   logic        instr_executing;
-  logic        instr_multicycle;
   logic        instr_multicycle_done_n, instr_multicycle_done_q;
   logic        stall_lsu;
   logic        stall_multdiv;
@@ -448,11 +448,8 @@ module ibex_id_stage #(
       .store_err_i                    ( lsu_store_err_i        ),
 
       // jump/branch control
-      .branch_in_id_i                 ( branch_in_id           ),
       .branch_set_i                   ( branch_set_q           ),
       .jump_set_i                     ( jump_set               ),
-
-      .instr_multicycle_i             ( instr_multicycle       ),
 
       .irq_i                          ( irq_i                  ),
       // Interrupt Controller Signals
@@ -528,7 +525,10 @@ module ibex_id_stage #(
   assign data_req_id     = instr_executing ? data_req_dec  : 1'b0;
   assign mult_en_id      = instr_executing ? mult_en_dec   : 1'b0;
   assign div_en_id       = instr_executing ? div_en_dec    : 1'b0;
-  assign branch_in_id    = instr_executing ? branch_in_dec : 1'b0;
+
+  // For tracer
+  assign branch_in_id        = instr_executing ? branch_in_dec : 1'b0;
+  assign unused_branch_in_id = branch_in_id;
 
   ///////////
   // ID-EX //
@@ -579,7 +579,6 @@ module ibex_id_stage #(
 
   always_comb begin : id_wb_fsm
     id_wb_fsm_ns            = id_wb_fsm_cs;
-    instr_multicycle        = 1'b0;
     instr_multicycle_done_n = instr_multicycle_done_q;
     regfile_we              = regfile_we_id;
     stall_lsu               = 1'b0;
@@ -601,7 +600,6 @@ module ibex_id_stage #(
               regfile_we              = 1'b0;
               id_wb_fsm_ns            = WAIT_MULTICYCLE;
               stall_lsu               = 1'b1;
-              instr_multicycle        = 1'b1;
               instr_multicycle_done_n = 1'b0;
             end
             multdiv_en_dec: begin
@@ -609,14 +607,12 @@ module ibex_id_stage #(
               regfile_we              = 1'b0;
               id_wb_fsm_ns            = WAIT_MULTICYCLE;
               stall_multdiv           = 1'b1;
-              instr_multicycle        = 1'b1;
               instr_multicycle_done_n = 1'b0;
             end
             branch_in_dec: begin
               // cond branch operation
               id_wb_fsm_ns            =  branch_decision_i ? WAIT_MULTICYCLE : IDLE;
               stall_branch            =  branch_decision_i;
-              instr_multicycle        =  branch_decision_i;
               instr_multicycle_done_n = ~branch_decision_i;
               branch_set_n            =  branch_decision_i;
               perf_branch_o           =  1'b1;
@@ -625,7 +621,6 @@ module ibex_id_stage #(
               // uncond branch operation
               id_wb_fsm_ns            = WAIT_MULTICYCLE;
               stall_jump              = 1'b1;
-              instr_multicycle        = 1'b1;
               instr_multicycle_done_n = 1'b0;
             end
             default:;
@@ -636,11 +631,9 @@ module ibex_id_stage #(
       WAIT_MULTICYCLE: begin
         if ((data_req_dec & lsu_valid_i) | (~data_req_dec & ex_valid_i)) begin
           id_wb_fsm_ns            = IDLE;
-          instr_multicycle        = 1'b1;
           instr_multicycle_done_n = 1'b1;
         end else begin
           regfile_we              = 1'b0;
-          instr_multicycle        = 1'b1;
           stall_lsu               = data_req_dec;
           stall_multdiv           = multdiv_en_dec;
           stall_branch            = branch_in_dec;
