@@ -497,6 +497,7 @@ module ibex_controller (
         // single stepping
         // set exception registers, but do not jump into handler (debug-spec p.44).
         if (debug_single_step_i && !debug_mode_q) begin
+          pc_set_o    = 1'b0;
           ctrl_fsm_ns = DBG_TAKEN_IF;
         end
       end // FLUSH
