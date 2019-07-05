@@ -53,7 +53,7 @@ module ibex_controller (
     // to IF-ID pipeline stage
     output logic                      instr_valid_clear_o,   // kill instr in IF-ID reg
     output logic                      id_ready_o,            // ID stage is ready for new instr
-    output logic                      halt_if_o,             // request halt of IF stage
+    output logic                      halt_if_o,             // IF stage must not forward new instr
 
     // to prefetcher
     output logic                      instr_req_o,           // start fetching instructions
@@ -126,13 +126,14 @@ module ibex_controller (
 
   ctrl_fsm_e ctrl_fsm_cs, ctrl_fsm_ns;
 
-  logic irq_enable_int;
-
   logic debug_mode_q, debug_mode_n;
   logic load_err_q, load_err_n;
   logic store_err_q, store_err_n;
 
+  logic stall;
   logic halt_id;
+  logic irq;
+  logic special_req;
 
 `ifndef SYNTHESIS
   // synopsys translate_off
@@ -148,6 +149,12 @@ module ibex_controller (
   // synopsys translate_on
 `endif
 
+  assign irq         = irq_req_ctrl_i & m_IE_i;
+  assign exc_kill_o  = 1'b0;
+
+  // special requests: special instructions, exceptions, pipeline flushes...
+  assign special_req = mret_insn_i | dret_insn_i | ecall_insn_i | ebrk_insn_i | wfi_insn_i |
+                      illegal_insn_i | store_err_i | load_err_i | csr_status_i;
 
   /////////////////////
   // Core controller //
@@ -158,7 +165,6 @@ module ibex_controller (
     instr_req_o            = 1'b1;
 
     exc_ack_o              = 1'b0;
-    exc_kill_o             = 1'b0;
 
     csr_save_if_o          = 1'b0;
     csr_save_id_o          = 1'b0;
@@ -183,7 +189,6 @@ module ibex_controller (
     halt_id                = 1'b0;
     irq_ack_o              = 1'b0;
     irq_id_o               = irq_id_ctrl_i;
-    irq_enable_int         = m_IE_i;
 
     debug_csr_save_o       = 1'b0;
     debug_cause_o          = DBG_CAUSE_EBREAK;
@@ -247,7 +252,7 @@ module ibex_controller (
         end
 
         // handle interrupts
-        if (irq_req_ctrl_i && irq_enable_int) begin
+        if (irq) begin
           // This assumes that the pipeline is always flushed before
           // going to sleep.
           ctrl_fsm_ns = IRQ_TAKEN;
@@ -264,60 +269,57 @@ module ibex_controller (
       end
 
       DECODE: begin
-        is_decoding_o = 1'b0;
+        // normal operating mode of the ID stage, in case of debug and interrupt requests,
+        // priorities are as follows (lower number == higher priority)
+        // 1. currently running (multicycle) instructions and exceptions caused by these
+        // 2. debug requests
+        // 3. interrupt requests
 
-        /*
-         * TODO: What should happen on
-         * instr_valid_i && (instr_multicycle_i || branch_in_id_i)?
-         * Let the instruction finish executing before serving debug or
-         * interrupt requests?
-         */
+        if (instr_valid_i) begin
+          // analyze current instruction in ID stage
+          is_decoding_o = 1'b1;
 
-        unique case (1'b1)
-          debug_req_i && !debug_mode_q: begin
-            // Enter debug mode from external request
-            ctrl_fsm_ns   = DBG_TAKEN_ID;
-            halt_if_o     = 1'b1;
-            halt_id       = 1'b1;
-          end
+          // set PC in IF stage to branch or jump target
+          if (branch_set_i || jump_set_i) begin
+            pc_mux_o       = PC_JUMP;
+            pc_set_o       = 1'b1;
 
-          irq_req_ctrl_i && irq_enable_int && !debug_req_i && !debug_mode_q: begin
-            // Serve an interrupt (not in debug mode)
-            ctrl_fsm_ns = IRQ_TAKEN;
+            perf_tbranch_o = branch_set_i;
+            perf_jump_o    = jump_set_i;
+
+          // get ready for special instructions, exceptions, pipeline flushes
+          end else if (special_req) begin
+            ctrl_fsm_ns = FLUSH;
             halt_if_o   = 1'b1;
             halt_id     = 1'b1;
+            load_err_n  = load_err_i;
+            store_err_n = store_err_i;
           end
 
-          default: begin
-            exc_kill_o    = irq_req_ctrl_i & ~instr_multicycle_i & ~branch_in_id_i;
-
-            if (instr_valid_i) begin
-              // analyze the current instruction in the ID stage
-              is_decoding_o = 1'b1;
-
-              if (branch_set_i || jump_set_i) begin
-                pc_mux_o       = PC_JUMP;
-                pc_set_o       = 1'b1;
-
-                perf_tbranch_o = branch_set_i;
-                perf_jump_o    = jump_set_i;
-              end else if (mret_insn_i || dret_insn_i || ecall_insn_i || wfi_insn_i ||
-                           ebrk_insn_i || illegal_insn_i || csr_status_i ||
-                           store_err_i || load_err_i) begin
-                ctrl_fsm_ns = FLUSH;
-                halt_if_o   = 1'b1;
-                halt_id     = 1'b1;
-                load_err_n  = load_err_i;
-                store_err_n = store_err_i;
-              end
-            end
+          // stall IF stage to not starve debug and interrupt requests, these just
+          // need to wait until after the current (multicycle) instruction
+          if ((debug_req_i || irq) && stall && !debug_mode_q) begin
+            halt_if_o   = 1'b1;
           end
-        endcase
+        end
+
+        if  (debug_req_i && !stall && !special_req && !debug_mode_q) begin
+          // enter debug mode
+          ctrl_fsm_ns = DBG_TAKEN_ID;
+          halt_if_o   = 1'b1;
+          halt_id     = 1'b1;
+
+        end else if (irq && !stall && !special_req && !debug_mode_q) begin
+          // handle interrupt (not in debug mode)
+          ctrl_fsm_ns = IRQ_TAKEN;
+          halt_if_o   = 1'b1;
+          halt_id     = 1'b1;
+        end
 
         // Single stepping
         // prevent any more instructions from executing
         if (debug_single_step_i && !debug_mode_q) begin
-          halt_if_o = 1'b1;
+          halt_if_o   = 1'b1;
           ctrl_fsm_ns = DBG_TAKEN_IF;
         end
       end
@@ -520,13 +522,17 @@ module ibex_controller (
   // Stall control //
   ///////////////////
 
+  // current instr needs at least one more cycle to finsih after the current cycle
+  // if low, current instr finsihes in current cycle
+  assign stall = stall_lsu_i | stall_multdiv_i | stall_jump_i | stall_branch_i;
+
   // deassert write enable when the core is not decoding instructions, i.e., current instruction
   // in ID stage done, but waiting for next instruction from IF stage, or in case of illegal
   // instruction
   assign deassert_we_o = ~is_decoding_o | illegal_insn_i;
 
   // signal to IF stage that ID stage is ready for next instruction
-  assign id_ready_o = ~stall_lsu_i & ~stall_multdiv_i & ~stall_jump_i & ~stall_branch_i;
+  assign id_ready_o = ~stall;
 
   // kill instruction in IF-ID reg for instructions that are done
   assign instr_valid_clear_o = id_ready_o | halt_id;

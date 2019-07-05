@@ -636,6 +636,7 @@ module ibex_id_stage #(
       WAIT_MULTICYCLE: begin
         if ((data_req_dec & lsu_valid_i) | (~data_req_dec & ex_valid_i)) begin
           id_wb_fsm_ns            = IDLE;
+          instr_multicycle        = 1'b1;
           instr_multicycle_done_n = 1'b1;
         end else begin
           regfile_we              = 1'b0;
