@@ -100,8 +100,11 @@ module ibex_decoder #(
 
   import ibex_defines::*;
 
+  logic        illegal_insn;
   logic        illegal_reg_rv32e;
   logic        csr_illegal;
+  logic        regfile_we;
+
   logic [31:0] instr;
 
   csr_op_e     csr_op;
@@ -134,12 +137,13 @@ module ibex_decoder #(
   ////////////////////
   // Register check //
   ////////////////////
-  //if (RV32E)
-  //  assign illegal_reg_rv32e = (regfile_raddr_a_o[4] |
-  //                              regfile_raddr_b_o[4] |
-  //                              regfile_waddr_o[4]);
-  //else
-  assign illegal_reg_rv32e = 1'b0;
+  if (RV32E) begin
+    assign illegal_reg_rv32e = ((regfile_raddr_a_o[4] && (alu_op_a_mux_sel_o == OP_A_REG_A)) ||
+                                (regfile_raddr_b_o[4] && (alu_op_b_mux_sel_o == OP_B_REG_B)) ||
+                                (regfile_waddr_o[4] & regfile_we));
+  end else begin
+    assign illegal_reg_rv32e = 1'b0;
+  end
 
   ///////////////////////
   // CSR operand check //
@@ -176,7 +180,7 @@ module ibex_decoder #(
     multdiv_signed_mode_o       = 2'b00;
 
     regfile_wdata_sel_o         = RF_WD_EX;
-    regfile_we_o                = 1'b0;
+    regfile_we                  = 1'b0;
 
     csr_access_o                = 1'b0;
     csr_status_o                = 1'b0;
@@ -189,7 +193,7 @@ module ibex_decoder #(
     data_reg_offset_o           = 2'b00;
     data_req_o                  = 1'b0;
 
-    illegal_insn_o              = 1'b0;
+    illegal_insn                = 1'b0;
     ebrk_insn_o                 = 1'b0;
     mret_insn_o                 = 1'b0;
     dret_insn_o                 = 1'b0;
@@ -212,7 +216,7 @@ module ibex_decoder #(
           alu_op_b_mux_sel_o  = OP_B_IMM;
           imm_b_mux_sel_o     = IMM_B_J;
           alu_operator_o      = ALU_ADD;
-          regfile_we_o        = 1'b0;
+          regfile_we          = 1'b0;
           jump_set_o          = 1'b1;
         end else begin
           // Calculate and store PC+4
@@ -220,7 +224,7 @@ module ibex_decoder #(
           alu_op_b_mux_sel_o  = OP_B_IMM;
           imm_b_mux_sel_o     = IMM_B_INCR_PC;
           alu_operator_o      = ALU_ADD;
-          regfile_we_o        = 1'b1;
+          regfile_we          = 1'b1;
         end
       end
 
@@ -232,17 +236,17 @@ module ibex_decoder #(
           alu_op_b_mux_sel_o  = OP_B_IMM;
           imm_b_mux_sel_o     = IMM_B_I;
           alu_operator_o      = ALU_ADD;
-          regfile_we_o        = 1'b0;
+          regfile_we          = 1'b0;
         end else begin
           // Calculate and store PC+4
           alu_op_a_mux_sel_o  = OP_A_CURRPC;
           alu_op_b_mux_sel_o  = OP_B_IMM;
           imm_b_mux_sel_o     = IMM_B_INCR_PC;
           alu_operator_o      = ALU_ADD;
-          regfile_we_o        = 1'b1;
+          regfile_we          = 1'b1;
         end
         if (instr[14:12] != 3'b0) begin
-          illegal_insn_o   = 1'b1;
+          illegal_insn = 1'b1;
         end
       end
 
@@ -256,7 +260,7 @@ module ibex_decoder #(
             3'b101:  alu_operator_o = ALU_GE;
             3'b110:  alu_operator_o = ALU_LTU;
             3'b111:  alu_operator_o = ALU_GEU;
-            default: illegal_insn_o = 1'b1;
+            default: illegal_insn   = 1'b1;
           endcase
         end else begin
           // Calculate jump target in EX
@@ -264,7 +268,7 @@ module ibex_decoder #(
           alu_op_b_mux_sel_o  = OP_B_IMM;
           imm_b_mux_sel_o     = IMM_B_B;
           alu_operator_o      = ALU_ADD;
-          regfile_we_o        = 1'b0;
+          regfile_we          = 1'b0;
         end
       end
 
@@ -283,7 +287,7 @@ module ibex_decoder #(
           alu_op_b_mux_sel_o  = OP_B_IMM;
         end else begin
           // Register offset is illegal since no register c available
-          illegal_insn_o = 1'b1;
+          illegal_insn = 1'b1;
         end
 
         // store size
@@ -292,7 +296,7 @@ module ibex_decoder #(
           2'b01: data_type_o = 2'b01; // SH
           2'b10: data_type_o = 2'b00; // SW
           default: begin
-            illegal_insn_o = 1'b1;
+            illegal_insn = 1'b1;
           end
         endcase
       end
@@ -300,7 +304,7 @@ module ibex_decoder #(
       OPCODE_LOAD: begin
         data_req_o          = 1'b1;
         regfile_wdata_sel_o = RF_WD_LSU;
-        regfile_we_o        = 1'b1;
+        regfile_we          = 1'b1;
         data_type_o         = 2'b00;
 
         // offset from immediate
@@ -335,14 +339,14 @@ module ibex_decoder #(
             7'b0101_000: data_type_o = 2'b01; // LH, LHU
             7'b0010_000: data_type_o = 2'b00; // LW
             default: begin
-              illegal_insn_o = 1'b1;
+              illegal_insn = 1'b1;
             end
           endcase
         end
 
         if (instr[14:12] == 3'b011) begin
           // LD -> RV64 only
-          illegal_insn_o = 1'b1;
+          illegal_insn = 1'b1;
         end
       end
 
@@ -356,7 +360,7 @@ module ibex_decoder #(
         imm_a_mux_sel_o     = IMM_A_ZERO;
         imm_b_mux_sel_o     = IMM_B_U;
         alu_operator_o      = ALU_ADD;
-        regfile_we_o        = 1'b1;
+        regfile_we          = 1'b1;
       end
 
       OPCODE_AUIPC: begin  // Add Upper Immediate to PC
@@ -364,13 +368,13 @@ module ibex_decoder #(
         alu_op_b_mux_sel_o  = OP_B_IMM;
         imm_b_mux_sel_o     = IMM_B_U;
         alu_operator_o      = ALU_ADD;
-        regfile_we_o        = 1'b1;
+        regfile_we          = 1'b1;
       end
 
       OPCODE_OPIMM: begin // Register-Immediate ALU Operations
         alu_op_b_mux_sel_o  = OP_B_IMM;
         imm_b_mux_sel_o     = IMM_B_I;
-        regfile_we_o        = 1'b1;
+        regfile_we          = 1'b1;
 
         unique case (instr[14:12])
           3'b000: alu_operator_o = ALU_ADD;  // Add Immediate
@@ -383,7 +387,7 @@ module ibex_decoder #(
           3'b001: begin
             alu_operator_o = ALU_SLL;  // Shift Left Logical by Immediate
             if (instr[31:25] != 7'b0) begin
-              illegal_insn_o = 1'b1;
+              illegal_insn = 1'b1;
             end
           end
 
@@ -393,7 +397,7 @@ module ibex_decoder #(
             end else if (instr[31:25] == 7'b010_0000) begin
               alu_operator_o = ALU_SRA;  // Shift Right Arithmetically by Immediate
             end else begin
-              illegal_insn_o = 1'b1;
+              illegal_insn   = 1'b1;
             end
           end
 
@@ -404,10 +408,10 @@ module ibex_decoder #(
       end
 
       OPCODE_OP: begin  // Register-Register ALU operation
-        regfile_we_o   = 1'b1;
+        regfile_we   = 1'b1;
 
         if (instr[31]) begin
-          illegal_insn_o = 1'b1;
+          illegal_insn = 1'b1;
         end else if (!instr[28]) begin // non bit-manipulation instructions
           unique case ({instr[30:25], instr[14:12]})
             // RV32I ALU operations
@@ -428,59 +432,59 @@ module ibex_decoder #(
               multdiv_operator_o    = MD_OP_MULL;
               mult_en_o             = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b00;
-              illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
+              illegal_insn          = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b001}: begin // mulh
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_MULH;
               mult_en_o             = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b11;
-              illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
+              illegal_insn          = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b010}: begin // mulhsu
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_MULH;
               mult_en_o             = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b01;
-              illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
+              illegal_insn          = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b011}: begin // mulhu
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_MULH;
               mult_en_o             = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b00;
-              illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
+              illegal_insn          = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b100}: begin // div
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_DIV;
               div_en_o              = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b11;
-              illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
+              illegal_insn          = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b101}: begin // divu
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_DIV;
               div_en_o              = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b00;
-              illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
+              illegal_insn          = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b110}: begin // rem
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_REM;
               div_en_o              = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b11;
-              illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
+              illegal_insn          = RV32M ? 1'b0 : 1'b1;
             end
             {6'b00_0001, 3'b111}: begin // remu
               alu_operator_o        = ALU_ADD;
               multdiv_operator_o    = MD_OP_REM;
               div_en_o              = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b00;
-              illegal_insn_o        = RV32M ? 1'b0 : 1'b1;
+              illegal_insn          = RV32M ? 1'b0 : 1'b1;
             end
             default: begin
-              illegal_insn_o = 1'b1;
+              illegal_insn = 1'b1;
             end
           endcase
         end
@@ -499,9 +503,9 @@ module ibex_decoder #(
         // an illegal instruction.
         if (instr[14:12] == 3'b000) begin
           alu_operator_o = ALU_ADD; // nop
-          regfile_we_o   = 1'b0;
+          regfile_we     = 1'b0;
         end else begin
-          illegal_insn_o = 1'b1;
+          illegal_insn   = 1'b1;
         end
       end
 
@@ -528,13 +532,13 @@ module ibex_decoder #(
               pipe_flush_o = 1'b1;
 
             default:
-              illegal_insn_o = 1'b1;
+              illegal_insn = 1'b1;
           endcase
         end else begin
           // instruction to read/modify CSR
           csr_access_o        = 1'b1;
           regfile_wdata_sel_o = RF_WD_CSR;
-          regfile_we_o        = 1'b1;
+          regfile_we          = 1'b1;
           alu_op_b_mux_sel_o  = OP_B_IMM;
           imm_a_mux_sel_o     = IMM_A_Z;
           imm_b_mux_sel_o     = IMM_B_I;  // CSR address is encoded in I imm
@@ -564,24 +568,18 @@ module ibex_decoder #(
             end
           end
 
-          illegal_insn_o = csr_illegal;
+          illegal_insn = csr_illegal;
         end
 
       end
       default: begin
-        illegal_insn_o = 1'b1;
+        illegal_insn = 1'b1;
       end
     endcase
 
     // make sure illegal compressed instructions cause illegal instruction exceptions
     if (illegal_c_insn_i) begin
-      illegal_insn_o = 1'b1;
-    end
-
-    // make sure instructions accessing non-available registers in RV32E cause illegal
-    // instruction exceptions
-    if (illegal_reg_rv32e) begin
-      illegal_insn_o = 1'b1;
+      illegal_insn = 1'b1;
     end
 
     // make sure illegal instructions detected in the decoder do not propagate from decoder
@@ -589,8 +587,8 @@ module ibex_decoder #(
     // NOTE: instructions can also be detected to be illegal inside the CSRs (upon accesses with
     // insufficient privileges), in ID stage (when accessing Reg 16 or higher in RV32E config),
     // these cases are not handled here
-    if (illegal_insn_o) begin
-      regfile_we_o    = 1'b0;
+    if (illegal_insn) begin
+      regfile_we      = 1'b0;
       data_req_o      = 1'b0;
       data_we_o       = 1'b0;
       mult_en_o       = 1'b0;
@@ -600,5 +598,12 @@ module ibex_decoder #(
       csr_access_o    = 1'b0;
     end
   end
+
+  // make sure instructions accessing non-available registers in RV32E cause illegal
+  // instruction exceptions
+  assign illegal_insn_o = illegal_insn | illegal_reg_rv32e;
+
+  // do not propgate regfile write enable if non-available registers are accessed in RV32E
+  assign regfile_we_o = regfile_we & ~illegal_reg_rv32e;
 
 endmodule // controller
