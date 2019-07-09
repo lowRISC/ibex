@@ -56,6 +56,12 @@ class riscv_instr_gen_config extends uvm_object;
   // Enable sfence.vma instruction
   rand bit               enable_sfence;
 
+  // Options for privileged mode CSR checking
+  // Below checking can be made optional as the ISS implementation could be different with the
+  // processor.
+  bit                    check_misa_init_val = 1'b1;
+  bit                    check_xstatus = 1'b1;
+
   //-----------------------------------------------------------------------------
   // Command line options or control knobs
   //-----------------------------------------------------------------------------

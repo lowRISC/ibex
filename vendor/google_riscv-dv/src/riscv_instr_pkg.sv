@@ -615,6 +615,35 @@ package riscv_instr_pkg;
     STORE_AMO_PAGE_FAULT           = 4'hF
   } exception_cause_t;
 
+  typedef enum int {
+    MISA_EXT_A = 0,
+    MISA_EXT_B,
+    MISA_EXT_C,
+    MISA_EXT_D,
+    MISA_EXT_E,
+    MISA_EXT_F,
+    MISA_EXT_G,
+    MISA_EXT_H,
+    MISA_EXT_I,
+    MISA_EXT_J,
+    MISA_EXT_K,
+    MISA_EXT_L,
+    MISA_EXT_M,
+    MISA_EXT_N,
+    MISA_EXT_O,
+    MISA_EXT_P,
+    MISA_EXT_Q,
+    MISA_EXT_R,
+    MISA_EXT_S,
+    MISA_EXT_T,
+    MISA_EXT_U,
+    MISA_EXT_V,
+    MISA_EXT_W,
+    MISA_EXT_X,
+    MISA_EXT_Y,
+    MISA_EXT_Z
+  } misa_ext_t;
+
   `ifndef RISCV_CORE_SETTING
     `define RISCV_CORE_SETTING ../setting/riscv_core_setting.sv
   `endif
