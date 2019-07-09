@@ -67,7 +67,7 @@ def compare_trace_csv(csv1, csv2, name1, name2,
           mismatch_cnt += 1
           # print first few mismatches
           if mismatch_cnt <= mismatch_print_limit:
-            print("Mismatch:\n%s[%d] : %s" %
+            print("Mismatch[%d]:\n%s[%d] : %s" %
                   (mismatch_cnt, name1, trace_2_index - 1,
                    trace.get_trace_string()))
             print("%s[%d] : %s" %
@@ -195,7 +195,7 @@ parser.add_argument("csv_file_2", type=str, help="Instruction trace 2 CSV")
 parser.add_argument("csv_name_1", type=str, help="Instruction trace 1 name")
 parser.add_argument("csv_name_2", type=str, help="Instruction trace 2 name")
 # optional arguments
-parser.add_argument("--in_order_mode", type=int, default=0,
+parser.add_argument("--in_order_mode", type=int, default=1,
                     help="In order comparison mode")
 parser.add_argument("--gpr_update_coalescing_limit", type=int, default=1,
                     help="Allow the core to merge multiple updates to the \
