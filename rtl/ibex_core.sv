@@ -127,9 +127,6 @@ module ibex_core #(
   logic        lsu_load_err;
   logic        lsu_store_err;
 
-  // ID performance counter signals
-  logic        is_decoding;
-
   // LSU signals
   logic        lsu_addr_incr_req;
   logic [31:0] lsu_addr_last;
@@ -185,7 +182,6 @@ module ibex_core #(
   logic        ex_valid;
 
   logic        if_id_pipe_reg_we;
-  logic        id_out_valid;
 
   logic        lsu_data_valid;
 
@@ -211,13 +207,17 @@ module ibex_core #(
   logic        debug_ebreakm;
 
   // performance counter related signals
-  logic        insn_ret;
+  logic        instr_ret;
+  logic        instr_ret_compressed;
   logic        perf_imiss;
   logic        perf_jump;
   logic        perf_branch;
   logic        perf_tbranch;
   logic        perf_load;
   logic        perf_store;
+
+  // for RVFI
+  logic        id_out_valid, unused_id_out_valid;
 
   // RISC-V Formal Interface signals
 `ifdef RVFI
@@ -360,7 +360,6 @@ module ibex_core #(
       .fetch_enable_i               ( fetch_enable_i         ),
       .ctrl_busy_o                  ( ctrl_busy              ),
       .core_ctrl_firstfetch_o       ( core_ctrl_firstfetch   ),
-      .is_decoding_o                ( is_decoding            ),
       .illegal_insn_o               ( illegal_insn_id        ),
 
       // from/to IF-ID pipeline register
@@ -463,6 +462,8 @@ module ibex_core #(
       .perf_tbranch_o               ( perf_tbranch           )
   );
 
+  // for RVFI only
+  assign unused_id_out_valid = id_out_valid;
 
   ibex_ex_block #(
       .RV32M ( RV32M )
@@ -549,7 +550,8 @@ module ibex_core #(
 
   // An instruction has been executed and retired if the ID stage gets a new instruction and
   // the previously seen instruction was valid.
-  assign insn_ret   = if_id_pipe_reg_we & ~illegal_insn_id;
+  assign instr_ret            = if_id_pipe_reg_we & ~illegal_insn_id;
+  assign instr_ret_compressed = instr_ret & instr_is_compressed_id;
 
   ibex_cs_registers #(
       .MHPMCounterNum   ( MHPMCounterNum   ),
@@ -563,7 +565,6 @@ module ibex_core #(
       // Core and Cluster ID from outside
       .core_id_i               ( core_id_i              ),
       .cluster_id_i            ( cluster_id_i           ),
-
 
       // Interface to CSRs (SRAM like)
       .csr_access_i            ( csr_access             ),
@@ -596,12 +597,11 @@ module ibex_core #(
       .csr_mtval_i             ( csr_mtval              ),
       .illegal_csr_insn_o      ( illegal_csr_insn_id    ),
 
-      // performance counter related signals
-      .insn_ret_i              ( insn_ret               ),
-      .id_out_valid_i          ( id_out_valid           ),
-      .instr_is_compressed_i   ( instr_is_compressed_id ),
-      .is_decoding_i           ( is_decoding            ),
+      .instr_new_id_i          ( instr_new_id           ),
 
+      // performance counter related signals
+      .instr_ret_i             ( instr_ret              ),
+      .instr_ret_compressed_i  ( instr_ret_compressed   ),
       .imiss_i                 ( perf_imiss             ),
       .pc_set_i                ( pc_set                 ),
       .jump_i                  ( perf_jump              ),
