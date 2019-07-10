@@ -181,12 +181,11 @@ module ibex_core #(
   logic [31:0] regfile_wdata_lsu;
 
   // stall control
-  logic        halt_if;
-  logic        id_ready;
+  logic        id_in_ready;
   logic        ex_valid;
 
-  logic        if_valid;
-  logic        id_valid;
+  logic        if_id_pipe_reg_we;
+  logic        id_out_valid;
 
   logic        lsu_data_valid;
 
@@ -336,9 +335,8 @@ module ibex_core #(
       .csr_mtvec_o              ( csr_mtvec              ), // trap-vector base address
 
       // pipeline stalls
-      .halt_if_i                ( halt_if                ),
-      .id_ready_i               ( id_ready               ),
-      .if_valid_o               ( if_valid               ),
+      .id_in_ready_i            ( id_in_ready            ),
+      .if_id_pipe_reg_we_o      ( if_id_pipe_reg_we      ),
 
       .if_busy_o                ( if_busy                ),
       .perf_imiss_o             ( perf_imiss             )
@@ -376,6 +374,7 @@ module ibex_core #(
       .branch_decision_i            ( branch_decision        ),
 
       // IF and ID control signals
+      .id_in_ready_o                ( id_in_ready            ),
       .instr_valid_clear_o          ( instr_valid_clear      ),
       .instr_req_o                  ( instr_req_int          ),
       .pc_set_o                     ( pc_set                 ),
@@ -388,13 +387,10 @@ module ibex_core #(
       .pc_id_i                      ( pc_id                  ),
 
       // Stalls
-      .halt_if_o                    ( halt_if                ),
-
-      .id_ready_o                   ( id_ready               ),
       .ex_valid_i                   ( ex_valid               ),
       .lsu_valid_i                  ( lsu_data_valid         ),
 
-      .id_valid_o                   ( id_valid               ),
+      .id_out_valid_o               ( id_out_valid           ),
 
       .alu_operator_ex_o            ( alu_operator_ex        ),
       .alu_operand_a_ex_o           ( alu_operand_a_ex       ),
@@ -553,7 +549,7 @@ module ibex_core #(
 
   // An instruction has been executed and retired if the ID stage gets a new instruction and
   // the previously seen instruction was valid.
-  assign insn_ret   = if_valid & ~illegal_insn_id;
+  assign insn_ret   = if_id_pipe_reg_we & ~illegal_insn_id;
 
   ibex_cs_registers #(
       .MHPMCounterNum   ( MHPMCounterNum   ),
@@ -602,7 +598,7 @@ module ibex_core #(
 
       // performance counter related signals
       .insn_ret_i              ( insn_ret               ),
-      .id_valid_i              ( id_valid               ),
+      .id_out_valid_i          ( id_out_valid           ),
       .instr_is_compressed_i   ( instr_is_compressed_id ),
       .is_decoding_i           ( is_decoding            ),
 
@@ -668,7 +664,7 @@ module ibex_core #(
     endcase
   end
 
-  assign rvfi_valid_int = id_valid && if_valid && !illegal_c_insn_id;
+  assign rvfi_valid_int = id_out_valid && if_id_pipe_reg_we && !illegal_c_insn_id;
 
   always_comb begin
     if (instr_is_compressed_id) begin

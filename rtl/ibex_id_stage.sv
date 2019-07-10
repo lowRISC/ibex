@@ -54,8 +54,7 @@ module ibex_id_stage #(
     input  logic                      instr_is_compressed_i,
     output logic                      instr_req_o,
     output logic                      instr_valid_clear_o,   // kill instr in IF-ID reg
-    output logic                      id_ready_o,            // ID stage is ready for next instr
-    output logic                      halt_if_o,             // ID stage requests IF stage to halt
+    output logic                      id_in_ready_o,         // ID stage is ready for next instr
 
     // Jumps and branches
     input  logic                      branch_decision_i,
@@ -70,9 +69,9 @@ module ibex_id_stage #(
     input  logic [31:0]               pc_id_i,
 
     // Stalls
-    input  logic                      ex_valid_i,  // EX stage has valid output
-    input  logic                      lsu_valid_i, // LSU has valid output, or is done
-    output logic                      id_valid_o,  // ID stage is done
+    input  logic                      ex_valid_i,     // EX stage has valid output
+    input  logic                      lsu_valid_i,    // LSU has valid output, or is done
+    output logic                      id_out_valid_o, // ID stage is done
 
     // ALU
     output ibex_defines::alu_op_e     alu_operator_ex_o,
@@ -427,8 +426,7 @@ module ibex_id_stage #(
 
       // to IF-ID pipeline
       .instr_valid_clear_o            ( instr_valid_clear_o    ),
-      .id_ready_o                     ( id_ready_o             ),
-      .halt_if_o                      ( halt_if_o              ),
+      .id_in_ready_o                  ( id_in_ready_o          ),
 
       // from prefetcher
       .instr_req_o                    ( instr_req_o            ),
@@ -481,7 +479,7 @@ module ibex_id_stage #(
       .stall_jump_i                   ( stall_jump             ),
       .stall_branch_i                 ( stall_branch           ),
 
-      .id_valid_o                     ( id_valid_o             ),
+      .id_out_valid_o                 ( id_out_valid_o         ),
 
       // Performance Counters
       .perf_jump_o                    ( perf_jump_o            ),
