@@ -61,6 +61,8 @@ Ibex implements all the Control and Status Registers (CSRs) listed in the follow
 |  0xF14  | ``mhartid``        | R      | Hardware Thread ID                            |
 +---------+--------------------+--------+-----------------------------------------------+
 
+See the :ref:`performance-counters` documentation for a description of the counter registers.
+
 
 Machine Status (mstatus)
 ------------------------
