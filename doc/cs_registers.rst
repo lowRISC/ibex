@@ -12,7 +12,7 @@ Ibex implements all the Control and Status Registers (CSRs) listed in the follow
 +---------+--------------------+--------+-----------------------------------------------+
 |  0x301  | ``misa``           | WARL   | Machine ISA and Extensions                    |
 +---------+--------------------+--------+-----------------------------------------------+
-|  0x305  | ``mtvec``          | R      | Machine Trap-Vector Base Address              |
+|  0x305  | ``mtvec``          | WARL   | Machine Trap-Vector Base Address              |
 +---------+--------------------+--------+-----------------------------------------------+
 |  0x320  | ``mcountinhibit``  | RW     | Machine Counter-Inhibit Register              |
 +---------+--------------------+--------+-----------------------------------------------+
@@ -100,7 +100,8 @@ Machine Trap-Vector Base Address (mtvec)
 CSR Address: ``0x305``
 
 When an exception is encountered, the core jumps to the corresponding handler using the content of ``mtvec`` as base address.
-It is a read-only register which contains the boot address.
+It is a WARL register which contains the boot address.
+It contains a hard-wired value, so will remain unchanged after any writes.
 ``mtvec``.MODE is set to 2'b01 to indicate vectored interrupt handling.
 
 
