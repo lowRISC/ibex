@@ -237,6 +237,7 @@ module ibex_decoder #(
           imm_b_mux_sel_o     = IMM_B_I;
           alu_operator_o      = ALU_ADD;
           regfile_we          = 1'b0;
+          jump_set_o          = 1'b1;
         end else begin
           // Calculate and store PC+4
           alu_op_a_mux_sel_o  = OP_A_CURRPC;
@@ -550,7 +551,7 @@ module ibex_decoder #(
 
           // rs1 and rd must be 0
           if (instr[`REG_S1] || instr[`REG_D]) begin
-            illegal_insn_o = 1'b1;
+            illegal_insn = 1'b1;
           end
         end else begin
           // instruction to read/modify CSR
