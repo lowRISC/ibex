@@ -49,8 +49,7 @@ module ibex_controller (
 
     // to IF-ID pipeline stage
     output logic                      instr_valid_clear_o,   // kill instr in IF-ID reg
-    output logic                      id_ready_o,            // ID stage is ready for new instr
-    output logic                      halt_if_o,             // IF stage must not forward new instr
+    output logic                      id_in_ready_o,         // ID stage is ready for new instr
 
     // to prefetcher
     output logic                      instr_req_o,           // start fetching instructions
@@ -103,7 +102,7 @@ module ibex_controller (
     input  logic                      stall_jump_i,
     input  logic                      stall_branch_i,
 
-    output logic                      id_valid_o,
+    output logic                      id_out_valid_o,        // ID stage has valid output
 
     // performance monitors
     output logic                      perf_jump_o,           // we are executing a jump
@@ -126,6 +125,7 @@ module ibex_controller (
   logic store_err_q, store_err_d;
 
   logic stall;
+  logic halt_if;
   logic halt_id;
   logic irq;
   logic exc_req;
@@ -186,7 +186,7 @@ module ibex_controller (
     is_decoding_o         = 1'b0;
     first_fetch_o         = 1'b0;
 
-    halt_if_o             = 1'b0;
+    halt_if               = 1'b0;
     halt_id               = 1'b0;
     irq_ack_o             = 1'b0;
     irq_id_o              = irq_id_ctrl_i;
@@ -221,17 +221,17 @@ module ibex_controller (
       WAIT_SLEEP: begin
         ctrl_busy_o   = 1'b0;
         instr_req_o   = 1'b0;
-        halt_if_o     = 1'b1;
+        halt_if       = 1'b1;
         halt_id       = 1'b1;
         ctrl_fsm_ns   = SLEEP;
       end
 
       SLEEP: begin
-        // instruction in if_stage is already valid
+        // instruction in IF stage is already valid
         // we begin execution when an interrupt has arrived
         ctrl_busy_o   = 1'b0;
         instr_req_o   = 1'b0;
-        halt_if_o     = 1'b1;
+        halt_if       = 1'b1;
         halt_id       = 1'b1;
 
         // normal execution flow
@@ -244,7 +244,7 @@ module ibex_controller (
       FIRST_FETCH: begin
         first_fetch_o = 1'b1;
         // Stall because of IF miss
-        if (id_ready_o) begin
+        if (id_in_ready_o) begin
           ctrl_fsm_ns = DECODE;
         end
 
@@ -253,14 +253,14 @@ module ibex_controller (
           // This assumes that the pipeline is always flushed before
           // going to sleep.
           ctrl_fsm_ns = IRQ_TAKEN;
-          halt_if_o   = 1'b1;
+          halt_if     = 1'b1;
           halt_id     = 1'b1;
         end
 
         // enter debug mode
         if (debug_req_i && !debug_mode_q) begin
           ctrl_fsm_ns = DBG_TAKEN_IF;
-          halt_if_o   = 1'b1;
+          halt_if     = 1'b1;
           halt_id     = 1'b1;
         end
       end
@@ -287,21 +287,21 @@ module ibex_controller (
           // get ready for special instructions, exceptions, pipeline flushes
           end else if (special_req) begin
             ctrl_fsm_ns = FLUSH;
-            halt_if_o   = 1'b1;
+            halt_if     = 1'b1;
             halt_id     = 1'b1;
           end
 
           // stall IF stage to not starve debug and interrupt requests, these just
           // need to wait until after the current (multicycle) instruction
           if ((debug_req_i || irq) && stall && !debug_mode_q) begin
-            halt_if_o   = 1'b1;
+            halt_if = 1'b1;
           end
 
           // single stepping:
           // execute a single instruction and then enter debug mode, in case of exceptions,
           // set registers but do not jump into handler [Debug Spec v0.13.2, p.44]
           if (debug_single_step_i && !debug_mode_q) begin
-            halt_if_o   = 1'b1;
+            halt_if = 1'b1;
 
             if (!special_req && !stall) begin
               ctrl_fsm_ns = DBG_TAKEN_IF;
@@ -312,13 +312,13 @@ module ibex_controller (
         if  (debug_req_i && !stall && !special_req && !debug_mode_q) begin
           // enter debug mode
           ctrl_fsm_ns = DBG_TAKEN_ID;
-          halt_if_o   = 1'b1;
+          halt_if     = 1'b1;
           halt_id     = 1'b1;
 
         end else if (irq && !stall && !special_req && !debug_mode_q) begin
           // handle interrupt (not in debug mode)
           ctrl_fsm_ns = IRQ_TAKEN;
-          halt_if_o   = 1'b1;
+          halt_if     = 1'b1;
           halt_id     = 1'b1;
         end
 
@@ -403,7 +403,7 @@ module ibex_controller (
 
       FLUSH: begin
         // flush the pipeline
-        halt_if_o   = 1'b1;
+        halt_if     = 1'b1;
         halt_id     = 1'b1;
         ctrl_fsm_ns = DECODE;
 
@@ -508,14 +508,15 @@ module ibex_controller (
   // multicycle instructions have this set except during the last cycle
   assign stall = stall_lsu_i | stall_multdiv_i | stall_jump_i | stall_branch_i;
 
-  // signal to IF stage that ID stage is ready for next instruction
-  assign id_ready_o = ~stall;
+  // signal to IF stage that ID stage is ready for next instr
+  assign id_in_ready_o       = ~stall & ~halt_if;
 
-  // kill instruction in IF-ID reg for instructions that are done
-  assign instr_valid_clear_o = id_ready_o | halt_id;
+  // kill instr in IF-ID pipeline reg that are done, or if a
+  // multicycle instr causes an exception for example
+  assign instr_valid_clear_o = ~stall |  halt_id;
 
   // signal that ID stage has valid output
-  assign id_valid_o = id_ready_o & ~halt_id;
+  assign id_out_valid_o      = ~stall & instr_valid_i & ~special_req;
 
   // update registers
   always_ff @(posedge clk_i or negedge rst_ni) begin : update_regs

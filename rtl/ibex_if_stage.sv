@@ -80,9 +80,8 @@ module ibex_if_stage #(
     output logic [31:0]               csr_mtvec_o,
 
     // pipeline stall
-    input  logic                      halt_if_i,
-    input  logic                      id_ready_i,
-    output logic                      if_valid_o,
+    input  logic                      id_in_ready_i,            // ID stage is ready for new instr
+    output logic                      if_id_pipe_reg_we_o,      // IF-ID pipeline reg write enable
 
     // misc signals
     output logic                      if_busy_o,                // IF stage is busy fetching instr
@@ -92,8 +91,8 @@ module ibex_if_stage #(
   import ibex_defines::*;
 
   logic              offset_in_init_d, offset_in_init_q;
-  logic              valid;
-  logic              if_ready;
+  logic              have_instr;
+
   // prefetch buffer related signals
   logic              prefetch_busy;
   logic              branch_req;
@@ -183,22 +182,23 @@ module ibex_if_stage #(
   always_comb begin
     offset_in_init_d = offset_in_init_q;
 
-    fetch_ready   = 1'b0;
-    branch_req    = 1'b0;
-    valid         = 1'b0;
+    fetch_ready      = 1'b0;
+    branch_req       = 1'b0;
+    have_instr       = 1'b0;
 
     if (offset_in_init_q) begin
       // no valid instruction data for ID stage, assume aligned
       if (req_i) begin
-        branch_req    = 1'b1;
+        branch_req       = 1'b1;
         offset_in_init_d = 1'b0;
       end
     end else begin
+      // an instruction is ready for ID stage
       if (fetch_valid) begin
-        valid   = 1'b1; // an instruction is ready for ID stage
+        have_instr = 1'b1;
 
-        if (req_i && if_valid_o) begin
-          fetch_ready   = 1'b1;
+        if (req_i && if_id_pipe_reg_we_o) begin
+          fetch_ready      = 1'b1;
           offset_in_init_d = 1'b0;
         end
       end
@@ -206,17 +206,17 @@ module ibex_if_stage #(
 
     // take care of jumps and branches
     if (pc_set_i) begin
-      valid = 1'b0;
+      have_instr       = 1'b0;
 
       // switch to new PC from ID stage
-      branch_req = 1'b1;
+      branch_req       = 1'b1;
       offset_in_init_d = 1'b0;
     end
   end
 
-  assign pc_if_o         = fetch_addr;
-  assign if_busy_o       = prefetch_busy;
-  assign perf_imiss_o    = ~fetch_valid | branch_req;
+  assign pc_if_o      = fetch_addr;
+  assign if_busy_o    = prefetch_busy;
+  assign perf_imiss_o = ~fetch_valid | branch_req;
 
   // compressed instruction decoding, or more precisely compressed instruction
   // expander
@@ -235,6 +235,8 @@ module ibex_if_stage #(
   );
 
   // IF-ID pipeline registers, frozen when the ID stage is stalled
+  assign if_id_pipe_reg_we_o = have_instr & id_in_ready_i;
+
   always_ff @(posedge clk_i or negedge rst_ni) begin : if_id_pipeline_regs
     if (!rst_ni) begin
       instr_new_id_o             <= 1'b0;
@@ -245,8 +247,8 @@ module ibex_if_stage #(
       illegal_c_insn_id_o        <= 1'b0;
       pc_id_o                    <= '0;
     end else begin
-      instr_new_id_o             <= if_valid_o;
-      if (if_valid_o) begin
+      instr_new_id_o             <= if_id_pipe_reg_we_o;
+      if (if_id_pipe_reg_we_o) begin
         instr_valid_id_o         <= 1'b1;
         instr_rdata_id_o         <= instr_decompressed;
         instr_rdata_c_id_o       <= fetch_rdata[15:0];
@@ -258,9 +260,6 @@ module ibex_if_stage #(
       end
     end
   end
-
-  assign if_ready = valid & id_ready_i;
-  assign if_valid_o = ~halt_if_i & if_ready;
 
   ////////////////
   // Assertions //

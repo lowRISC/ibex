@@ -74,7 +74,7 @@ module ibex_cs_registers #(
                                                              // missing write permissions
     // Performance Counters
     input  logic                      insn_ret_i,            // instr retired in ID/EX stage
-    input  logic                      id_valid_i,            // ID stage is done
+    input  logic                      id_out_valid_i,        // ID stage is done
     input  logic                      instr_is_compressed_i, // compressed instr in ID
     input  logic                      is_decoding_i,         // controller is in DECODE state
 
@@ -551,7 +551,7 @@ module ibex_cs_registers #(
     mhpmcounter_incr[8]  = branch_i;            // num of branches (conditional)
     mhpmcounter_incr[9]  = branch_taken_i;      // num of taken branches (conditional)
     mhpmcounter_incr[10] = is_decoding_i        // num of compressed instr
-        & id_valid_i & instr_is_compressed_i;
+        & id_out_valid_i & instr_is_compressed_i;
 
     // inactive counters
     for (int unsigned i=3+MHPMCounterNum; i<32; i++) begin : gen_mhpmcounter_incr_inactive
