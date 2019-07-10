@@ -85,6 +85,15 @@ When the MRET instruction is executed, the value of MPIE will be stored back to 
 If you want to enable interrupt handling in your exception handler, set ``mstatus``.MIE to 1'b1 inside your handler code.
 
 
+Machine ISA Register (misa)
+---------------------------
+
+CSR Address: ``0x301``
+
+``misa`` is a WARL register which describes the ISA supported by the hart.
+One Ibex, ``misa`` is hard-wired, i.e. it will remain unchanged after any write.
+
+
 Machine Trap-Vector Base Address (mtvec)
 ----------------------------------------
 
