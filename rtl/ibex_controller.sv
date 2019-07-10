@@ -30,7 +30,6 @@ module ibex_controller (
     input  logic                      fetch_enable_i,        // start decoding
     output logic                      ctrl_busy_o,           // core is busy processing instrs
     output logic                      first_fetch_o,         // core is at the FIRST FETCH stage
-    output logic                      is_decoding_o,         // core is in decoding state
 
     // decoder related signals
     input  logic                      illegal_insn_i,        // decoder has an invalid instr
@@ -137,7 +136,7 @@ module ibex_controller (
   // glitches
   always_ff @(negedge clk_i) begin
     // print warning in case of decoding errors
-    if (is_decoding_o && illegal_insn_i) begin
+    if ((ctrl_fsm_cs == DECODE) && instr_valid_i && illegal_insn_i) begin
       $display("%t: Illegal instruction (core %0d) at PC 0x%h: 0x%h", $time, ibex_core.core_id_i,
                ibex_id_stage.pc_id_i, ibex_id_stage.instr_rdata_i);
     end
@@ -183,7 +182,6 @@ module ibex_controller (
     ctrl_fsm_ns           = ctrl_fsm_cs;
 
     ctrl_busy_o           = 1'b1;
-    is_decoding_o         = 1'b0;
     first_fetch_o         = 1'b0;
 
     halt_if               = 1'b0;
@@ -273,8 +271,6 @@ module ibex_controller (
         // 3. interrupt requests
 
         if (instr_valid_i) begin
-          // analyze current instruction in ID stage
-          is_decoding_o = 1'b1;
 
           // set PC in IF stage to branch or jump target
           if (branch_set_i || jump_set_i) begin

@@ -32,60 +32,58 @@ module ibex_cs_registers #(
     parameter bit RV32M                     = 0
 ) (
     // Clock and Reset
-    input  logic                      clk_i,
-    input  logic                      rst_ni,
+    input  logic                     clk_i,
+    input  logic                     rst_ni,
 
     // Core and Cluster ID
-    input  logic  [3:0]               core_id_i,
-    input  logic  [5:0]               cluster_id_i,
+    input  logic  [3:0]              core_id_i,
+    input  logic  [5:0]              cluster_id_i,
 
     // Interface to registers (SRAM like)
-    input  logic                      csr_access_i,
-    input  ibex_defines::csr_num_e    csr_addr_i,
-    input  logic [31:0]               csr_wdata_i,
-    input  ibex_defines::csr_op_e     csr_op_i,
-    output logic [31:0]               csr_rdata_o,
+    input  logic                     csr_access_i,
+    input  ibex_defines::csr_num_e   csr_addr_i,
+    input  logic [31:0]              csr_wdata_i,
+    input  ibex_defines::csr_op_e    csr_op_i,
+    output logic [31:0]              csr_rdata_o,
 
     // Interrupts
-    output logic                      m_irq_enable_o,
-    output logic [31:0]               csr_mepc_o,
+    output logic                     m_irq_enable_o,
+    output logic [31:0]              csr_mepc_o,
 
     // debug
-    input  ibex_defines::dbg_cause_e  debug_cause_i,
-    input  logic                      debug_csr_save_i,
-    output logic [31:0]               csr_depc_o,
-    output logic                      debug_single_step_o,
-    output logic                      debug_ebreakm_o,
+    input  ibex_defines::dbg_cause_e debug_cause_i,
+    input  logic                     debug_csr_save_i,
+    output logic [31:0]              csr_depc_o,
+    output logic                     debug_single_step_o,
+    output logic                     debug_ebreakm_o,
 
-    input  logic [31:0]               pc_if_i,
-    input  logic [31:0]               pc_id_i,
+    input  logic [31:0]              pc_if_i,
+    input  logic [31:0]              pc_id_i,
 
-    input  logic                      csr_save_if_i,
-    input  logic                      csr_save_id_i,
-    input  logic                      csr_restore_mret_i,
-    input  logic                      csr_restore_dret_i,
-    input  logic                      csr_save_cause_i,
-    input  logic [31:0]               csr_mtvec_i,
-    input  ibex_defines::exc_cause_e  csr_mcause_i,
-    input  logic [31:0]               csr_mtval_i,
-
-    output logic                      illegal_csr_insn_o,    // access to non-existent CSR,
+    input  logic                     csr_save_if_i,
+    input  logic                     csr_save_id_i,
+    input  logic                     csr_restore_mret_i,
+    input  logic                     csr_restore_dret_i,
+    input  logic                     csr_save_cause_i,
+    input  logic [31:0]              csr_mtvec_i,
+    input  ibex_defines::exc_cause_e csr_mcause_i,
+    input  logic [31:0]              csr_mtval_i,
+    output logic                     illegal_csr_insn_o,     // access to non-existent CSR,
                                                              // with wrong priviledge level, or
                                                              // missing write permissions
-    // Performance Counters
-    input  logic                      insn_ret_i,            // instr retired in ID/EX stage
-    input  logic                      id_out_valid_i,        // ID stage is done
-    input  logic                      instr_is_compressed_i, // compressed instr in ID
-    input  logic                      is_decoding_i,         // controller is in DECODE state
+    input  logic                     instr_new_id_i,         // ID stage sees a new instr
 
-    input  logic                      imiss_i,               // instr fetch
-    input  logic                      pc_set_i,              // PC was set to a new value
-    input  logic                      jump_i,                // jump instr seen (j, jr, jal, jalr)
-    input  logic                      branch_i,              // branch instr seen (bf, bnf)
-    input  logic                      branch_taken_i,        // branch was taken
-    input  logic                      mem_load_i,            // load from memory in this cycle
-    input  logic                      mem_store_i,           // store to memory in this cycle
-    input  logic                      lsu_busy_i
+    // Performance Counters
+    input  logic                     instr_ret_i,            // instr retired in ID/EX stage
+    input  logic                     instr_ret_compressed_i, // compressed instr retired
+    input  logic                     imiss_i,                // instr fetch
+    input  logic                     pc_set_i,               // PC was set to a new value
+    input  logic                     jump_i,                 // jump instr seen (j, jr, jal, jalr)
+    input  logic                     branch_i,               // branch instr seen (bf, bnf)
+    input  logic                     branch_taken_i,         // branch was taken
+    input  logic                     mem_load_i,             // load from memory in this cycle
+    input  logic                     mem_store_i,            // store to memory in this cycle
+    input  logic                     lsu_busy_i
 );
 
   import ibex_defines::*;
@@ -466,7 +464,7 @@ module ibex_cs_registers #(
   end
 
   // only write CSRs during one clock cycle
-  assign csr_we_int  = csr_wreq & is_decoding_i;
+  assign csr_we_int  = csr_wreq & instr_new_id_i;
 
   assign csr_rdata_o = csr_rdata_int;
 
@@ -539,19 +537,18 @@ module ibex_cs_registers #(
   always_comb begin : gen_mhpmcounter_incr
 
     // active counters
-    mhpmcounter_incr[0]  = 1'b1;                // mcycle
-    mhpmcounter_incr[1]  = 1'b0;                // reserved
-    mhpmcounter_incr[2]  = insn_ret_i;          // minstret
-    mhpmcounter_incr[3]  = lsu_busy_i;          // cycles waiting for data memory
-    mhpmcounter_incr[4]  = imiss_i & ~pc_set_i; // cycles waiting for instr fetches ex.
-                                                // jumps and branches
-    mhpmcounter_incr[5]  = mem_load_i;          // num of loads
-    mhpmcounter_incr[6]  = mem_store_i;         // num of stores
-    mhpmcounter_incr[7]  = jump_i;              // num of jumps (unconditional)
-    mhpmcounter_incr[8]  = branch_i;            // num of branches (conditional)
-    mhpmcounter_incr[9]  = branch_taken_i;      // num of taken branches (conditional)
-    mhpmcounter_incr[10] = is_decoding_i        // num of compressed instr
-        & id_out_valid_i & instr_is_compressed_i;
+    mhpmcounter_incr[0]  = 1'b1;                   // mcycle
+    mhpmcounter_incr[1]  = 1'b0;                   // reserved
+    mhpmcounter_incr[2]  = instr_ret_i;            // minstret
+    mhpmcounter_incr[3]  = lsu_busy_i;             // cycles waiting for data memory
+    mhpmcounter_incr[4]  = imiss_i & ~pc_set_i;    // cycles waiting for instr fetches
+                                                   // excl. jump and branch set cycles
+    mhpmcounter_incr[5]  = mem_load_i;             // num of loads
+    mhpmcounter_incr[6]  = mem_store_i;            // num of stores
+    mhpmcounter_incr[7]  = jump_i;                 // num of jumps (unconditional)
+    mhpmcounter_incr[8]  = branch_i;               // num of branches (conditional)
+    mhpmcounter_incr[9]  = branch_taken_i;         // num of taken branches (conditional)
+    mhpmcounter_incr[10] = instr_ret_compressed_i; // num of compressed instr
 
     // inactive counters
     for (int unsigned i=3+MHPMCounterNum; i<32; i++) begin : gen_mhpmcounter_incr_inactive
