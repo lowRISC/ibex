@@ -128,6 +128,7 @@ module ibex_controller (
   logic halt_id;
   logic irq;
   logic exc_req;
+  logic exc_req_lsu;
   logic special_req;
 
 `ifndef SYNTHESIS
@@ -151,10 +152,14 @@ module ibex_controller (
   assign exc_kill_o  = 1'b0;
 
   // exception requests
-  assign exc_req     = ecall_insn_i | ebrk_insn_i | illegal_insn_i | store_err_i | load_err_i;
+  assign exc_req     = ecall_insn_i | ebrk_insn_i | illegal_insn_i;
+
+  // LSU exception requests
+  assign exc_req_lsu = store_err_i | load_err_i;
 
   // special requests: special instructions, pipeline flushes, exceptions...
-  assign special_req = mret_insn_i | dret_insn_i | wfi_insn_i | csr_status_i | exc_req;
+  assign special_req = mret_insn_i | dret_insn_i | wfi_insn_i | csr_status_i |
+      exc_req | exc_req_lsu;
 
   /////////////////////
   // Core controller //
@@ -404,6 +409,7 @@ module ibex_controller (
         ctrl_fsm_ns = DECODE;
 
         // exceptions: set exception PC, save PC and exception cause
+        // exc_req_lsu is high for one clock cycle only (in DECODE)
         if (exc_req || store_err_q || load_err_q) begin
           pc_set_o         = 1'b1;
           pc_mux_o         = PC_EXC;
