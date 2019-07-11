@@ -106,6 +106,9 @@ module ibex_id_stage #(
     input  logic [31:0]           lsu_addr_last_i,
 
     // Interrupt signals
+    input  logic                  csr_msip_i,
+    input  logic                  csr_mtip_i,
+    input  logic                  csr_meip_i,
     input  logic                  irq_i,
     input  logic [4:0]            irq_id_i,
     input  logic                  m_irq_enable_i,
@@ -427,14 +430,11 @@ module ibex_id_stage #(
       .instr_valid_clear_o            ( instr_valid_clear_o    ),
       .id_in_ready_o                  ( id_in_ready_o          ),
 
-      // from prefetcher
-      .instr_req_o                    ( instr_req_o            ),
-
       // to prefetcher
+      .instr_req_o                    ( instr_req_o            ),
       .pc_set_o                       ( pc_set_o               ),
       .pc_mux_o                       ( pc_mux_o               ),
       .exc_pc_mux_o                   ( exc_pc_mux_o           ),
-      .exc_cause_o                    ( exc_cause_o            ),
 
       // LSU
       .lsu_addr_last_i                ( lsu_addr_last_i        ),
@@ -456,6 +456,13 @@ module ibex_id_stage #(
 
       .exc_ack_o                      ( exc_ack                ),
       .exc_kill_o                     ( exc_kill               ),
+
+      // interrupt pending bits from CSRs
+      .csr_msip_i                     ( csr_msip_i             ),
+      .csr_mtip_i                     ( csr_mtip_i             ),
+      .csr_meip_i                     ( csr_meip_i             ),
+
+      .exc_cause_o                    ( exc_cause_o            ),
 
       // CSR Controller Signals
       .csr_save_if_o                  ( csr_save_if_o          ),

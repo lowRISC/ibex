@@ -46,7 +46,13 @@ module ibex_cs_registers #(
     input  ibex_pkg::csr_op_e    csr_op_i,
     output logic [31:0]          csr_rdata_o,
 
-    // Interrupts
+    // interrupts
+    input  logic                 irq_software_i,
+    input  logic                 irq_timer_i,
+    input  logic                 irq_external_i,
+    output logic                 csr_msip_o,             // software interrupt pending
+    output logic                 csr_mtip_o,             // timer interrupt pending
+    output logic                 csr_meip_o,             // external interrupt pending
     output logic                 m_irq_enable_o,
     output logic [31:0]          csr_mepc_o,
 
@@ -127,6 +133,13 @@ module ibex_cs_registers #(
     priv_lvl_e mpp;
   } Status_t;
 
+  // struct for mip/mie CSRs
+  typedef struct packed {
+    logic software;
+    logic timer;
+    logic external;
+  } Interrupts_t;
+
   typedef struct packed {
       x_debug_ver_e xdebugver;
       logic [11:0]  zero2;
@@ -150,10 +163,12 @@ module ibex_cs_registers #(
 
   // CSRs
   Status_t     mstatus_q, mstatus_d;
+  Interrupts_t mie_q, mie_d;
   logic [31:0] mscratch_q, mscratch_d;
   logic [31:0] mepc_q, mepc_d;
   logic  [5:0] mcause_q, mcause_d;
   logic [31:0] mtval_q, mtval_d;
+  Interrupts_t mip;
   Dcsr_t       dcsr_q, dcsr_d;
   logic [31:0] depc_q, depc_d;
   logic [31:0] dscratch0_q, dscratch0_d;
@@ -195,6 +210,11 @@ module ibex_cs_registers #(
   assign illegal_csr_write  = (csr_addr[11:10] == 2'b11) && csr_wreq;
   assign illegal_csr_insn_o = illegal_csr | illegal_csr_write | illegal_csr_priv;
 
+  // mip CSR is purely combintational - must be able to re-enable the clock upon WFI
+  assign mip.software = irq_software_i & mie_q.software;
+  assign mip.timer    = irq_timer_i    & mie_q.timer;
+  assign mip.external = irq_external_i & mie_q.external;
+
   // read logic
   always_comb begin
     csr_rdata_int = '0;
@@ -220,6 +240,14 @@ module ibex_cs_registers #(
       // misa
       CSR_MISA: csr_rdata_int = MISA_VALUE;
 
+      // interrupt enable
+      CSR_MIE: begin
+        csr_rdata_int               = '0;
+        csr_rdata_int[CSR_MSIX_BIT] = mie_q.software;
+        csr_rdata_int[CSR_MTIX_BIT] = mie_q.timer;
+        csr_rdata_int[CSR_MEIX_BIT] = mie_q.external;
+      end
+
       CSR_MSCRATCH: csr_rdata_int = mscratch_q;
 
       // mtvec: trap-vector base address
@@ -233,6 +261,14 @@ module ibex_cs_registers #(
 
       // mtval: trap value
       CSR_MTVAL: csr_rdata_int = mtval_q;
+
+      // mip: interrupt pending
+      CSR_MIP: begin
+        csr_rdata_int                = '0;
+        csr_rdata_int[CSR_MSIX_BIT]  = mip.software;
+        csr_rdata_int[CSR_MTIX_BIT]  = mip.timer;
+        csr_rdata_int[CSR_MEIX_BIT]  = mip.external;
+      end
 
       CSR_DCSR:      csr_rdata_int = dcsr_q;
       CSR_DPC:       csr_rdata_int = depc_q;
@@ -285,6 +321,7 @@ module ibex_cs_registers #(
     exception_pc = pc_id_i;
 
     mstatus_d    = mstatus_q;
+    mie_d        = mie_q;
     mscratch_d   = mscratch_q;
     mepc_d       = mepc_q;
     mcause_d     = mcause_q;
@@ -306,6 +343,15 @@ module ibex_cs_registers #(
               mpie: csr_wdata_int[`MSTATUS_MPIE_BITS],
               mpp:  PRIV_LVL_M
           };
+        end
+      end
+
+      // interrupt enable
+      CSR_MIE: begin
+        if (csr_we_int) begin
+          mie_d.software = csr_wdata_int[CSR_MSIX_BIT];
+          mie_d.timer    = csr_wdata_int[CSR_MTIX_BIT];
+          mie_d.external = csr_wdata_int[CSR_MEIX_BIT];
         end
       end
 
@@ -469,6 +515,10 @@ module ibex_cs_registers #(
   assign csr_rdata_o = csr_rdata_int;
 
   // directly output some registers
+  assign csr_msip_o = mip.software;
+  assign csr_mtip_o = mip.timer;
+  assign csr_meip_o = mip.external;
+
   assign m_irq_enable_o = mstatus_q.mie;
   assign csr_mepc_o     = mepc_q;
   assign csr_depc_o     = depc_q;
@@ -484,6 +534,7 @@ module ibex_cs_registers #(
           mpie: 1'b0,
           mpp:  PRIV_LVL_M
       };
+      mie_q      <= '0;
       mscratch_q <= '0;
       mepc_q     <= '0;
       mcause_q   <= '0;
@@ -504,6 +555,7 @@ module ibex_cs_registers #(
           mpie: mstatus_d.mpie,
           mpp:  PRIV_LVL_M
       };
+      mie_q       <= mie_d;
       mscratch_q  <= mscratch_d;
       mepc_q      <= mepc_d;
       mcause_q    <= mcause_d;

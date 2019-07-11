@@ -73,13 +73,18 @@ module ibex_controller (
     input  logic [4:0]            irq_id_ctrl_i,
     input  logic                  m_IE_i,                // interrupt enable bit from CSR
                                                          // (M mode)
-
     output logic                  irq_ack_o,
     output logic [4:0]            irq_id_o,
 
-    output ibex_pkg::exc_cause_e  exc_cause_o,
     output logic                  exc_ack_o,
     output logic                  exc_kill_o,
+
+    // interrupt pending bits from CSRs
+    input  logic                  csr_msip_i,            // software interrupt pending
+    input  logic                  csr_mtip_i,            // timer interrupt pending
+    input  logic                  csr_meip_i,            // external interrupt pending
+
+    output ibex_pkg::exc_cause_e  exc_cause_o,           // for IF stage, CSRs
 
     // debug signals
     input  logic                  debug_req_i,
@@ -128,6 +133,7 @@ module ibex_controller (
   logic exc_req_lsu;
   logic special_req;
   logic enter_debug_mode;
+  logic irq;
   logic handle_irq;
 
 `ifndef SYNTHESIS
@@ -167,8 +173,9 @@ module ibex_controller (
 
   assign enter_debug_mode = debug_req_i & ~debug_mode_q;
 
+  assign irq              = csr_msip_i | csr_mtip_i | csr_meip_i;
   // interrupts including NMI are ignored while in debug mode [Debug Spec v0.13.2, p.39]
-  assign handle_irq       = irq_req_ctrl_i & m_IE_i & ~debug_mode_q;
+  assign handle_irq       = (irq | irq_req_ctrl_i) & m_IE_i & ~debug_mode_q;
   assign exc_kill_o       = 1'b0;
 
   /////////////////////
@@ -249,7 +256,7 @@ module ibex_controller (
 
         // normal execution flow
         // in debug mode or single step mode we leave immediately (wfi=nop)
-        if (irq_i || debug_req_i || debug_mode_q || debug_single_step_i) begin
+        if (irq_i || irq || debug_req_i || debug_mode_q || debug_single_step_i) begin
           ctrl_fsm_ns  = FIRST_FETCH;
         end
       end
@@ -342,13 +349,22 @@ module ibex_controller (
         pc_set_o         = 1'b1;
 
         exc_pc_mux_o     = EXC_PC_IRQ;
-        exc_cause_o      = exc_cause_e'({1'b1, irq_id_ctrl_i});
+
+        // interrupt priorities according to Privileged Spec v1.11 p.31
+        if (csr_meip_i) begin
+          exc_cause_o    = EXC_CAUSE_IRQ_EXTERNAL_M;
+        end else if (csr_msip_i) begin
+          exc_cause_o    = EXC_CAUSE_IRQ_SOFTWARE_M;
+        end else if (csr_mtip_i) begin
+          exc_cause_o    = EXC_CAUSE_IRQ_TIMER_M;
+        end else begin
+          exc_cause_o    = exc_cause_e'({1'b1, irq_id_ctrl_i});
+          irq_ack_o      = 1'b1;
+          exc_ack_o      = 1'b1;
+        end
 
         csr_save_cause_o = 1'b1;
         csr_save_if_o    = 1'b1;
-
-        irq_ack_o        = 1'b1;
-        exc_ack_o        = 1'b1;
 
         ctrl_fsm_ns      = DECODE;
       end
