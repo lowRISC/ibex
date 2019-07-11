@@ -504,7 +504,7 @@ module ibex_decoder #(
       // Special //
       /////////////
 
-      OPCODE_FENCE: begin
+      OPCODE_MISC_MEM: begin
         // For now, treat the fence (funct3 == 000) instruction as a nop.
         // This may not be correct in a system with caches and should be
         // revisited.
