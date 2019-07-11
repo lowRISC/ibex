@@ -40,8 +40,11 @@ module ibex_tracer_tb;
     #10ns instr_rdata = 32'h60008113;
     #10ns instr_rdata = 32'h00000013;
     #10ns instr_rdata = 32'h00000113;
+    #30ns instr_rdata = 32'h00000013;
+    #10ns instr_rdata = 32'h0000000f;
     #10ns instr_rdata = 32'h00000013;
     #10ns instr_rdata = 32'h00000013;
+    #10ns instr_rdata = 32'h0000000f;
   end
 
   ibex_core_tracer ibex_i (

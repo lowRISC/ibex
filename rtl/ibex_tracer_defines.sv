@@ -68,4 +68,7 @@ parameter logic [31:0] INSTR_PMULHU  = { 7'b0000001, 10'b?, 3'b011, 5'b?, {OPCOD
 parameter logic [31:0] INSTR_LOAD    = {25'b?,                            {OPCODE_LOAD } };
 parameter logic [31:0] INSTR_STORE   = {25'b?,                            {OPCODE_STORE} };
 
+// MISC-MEM
+parameter logic [31:0] INSTR_FENCE   = { 17'b?,             3'b000, 5'b?, {OPCODE_MISC_MEM} };
+
 endpackage
