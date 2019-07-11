@@ -31,7 +31,7 @@ package ibex_defines;
 typedef enum logic [6:0] {
   OPCODE_LOAD     = 7'h03,
   OPCODE_MISC_MEM = 7'h0f,
-  OPCODE_OPIMM    = 7'h13,
+  OPCODE_OP_IMM   = 7'h13,
   OPCODE_AUIPC    = 7'h17,
   OPCODE_STORE    = 7'h23,
   OPCODE_OP       = 7'h33,

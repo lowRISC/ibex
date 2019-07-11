@@ -20,15 +20,15 @@ parameter logic [31:0] INSTR_BLTU    = { 17'b?,             3'b110, 5'b?, {OPCOD
 parameter logic [31:0] INSTR_BGEU    = { 17'b?,             3'b111, 5'b?, {OPCODE_BRANCH} };
 parameter logic [31:0] INSTR_BALL    = { 17'b?,             3'b010, 5'b?, {OPCODE_BRANCH} };
 // OPIMM
-parameter logic [31:0] INSTR_ADDI    = { 17'b?,             3'b000, 5'b?, {OPCODE_OPIMM} };
-parameter logic [31:0] INSTR_SLTI    = { 17'b?,             3'b010, 5'b?, {OPCODE_OPIMM} };
-parameter logic [31:0] INSTR_SLTIU   = { 17'b?,             3'b011, 5'b?, {OPCODE_OPIMM} };
-parameter logic [31:0] INSTR_XORI    = { 17'b?,             3'b100, 5'b?, {OPCODE_OPIMM} };
-parameter logic [31:0] INSTR_ORI     = { 17'b?,             3'b110, 5'b?, {OPCODE_OPIMM} };
-parameter logic [31:0] INSTR_ANDI    = { 17'b?,             3'b111, 5'b?, {OPCODE_OPIMM} };
-parameter logic [31:0] INSTR_SLLI    = { 7'b0000000, 10'b?, 3'b001, 5'b?, {OPCODE_OPIMM} };
-parameter logic [31:0] INSTR_SRLI    = { 7'b0000000, 10'b?, 3'b101, 5'b?, {OPCODE_OPIMM} };
-parameter logic [31:0] INSTR_SRAI    = { 7'b0100000, 10'b?, 3'b101, 5'b?, {OPCODE_OPIMM} };
+parameter logic [31:0] INSTR_ADDI    = { 17'b?,             3'b000, 5'b?, {OPCODE_OP_IMM} };
+parameter logic [31:0] INSTR_SLTI    = { 17'b?,             3'b010, 5'b?, {OPCODE_OP_IMM} };
+parameter logic [31:0] INSTR_SLTIU   = { 17'b?,             3'b011, 5'b?, {OPCODE_OP_IMM} };
+parameter logic [31:0] INSTR_XORI    = { 17'b?,             3'b100, 5'b?, {OPCODE_OP_IMM} };
+parameter logic [31:0] INSTR_ORI     = { 17'b?,             3'b110, 5'b?, {OPCODE_OP_IMM} };
+parameter logic [31:0] INSTR_ANDI    = { 17'b?,             3'b111, 5'b?, {OPCODE_OP_IMM} };
+parameter logic [31:0] INSTR_SLLI    = { 7'b0000000, 10'b?, 3'b001, 5'b?, {OPCODE_OP_IMM} };
+parameter logic [31:0] INSTR_SRLI    = { 7'b0000000, 10'b?, 3'b101, 5'b?, {OPCODE_OP_IMM} };
+parameter logic [31:0] INSTR_SRAI    = { 7'b0100000, 10'b?, 3'b101, 5'b?, {OPCODE_OP_IMM} };
 // OP
 parameter logic [31:0] INSTR_ADD     = { 7'b0000000, 10'b?, 3'b000, 5'b?, {OPCODE_OP} };
 parameter logic [31:0] INSTR_SUB     = { 7'b0100000, 10'b?, 3'b000, 5'b?, {OPCODE_OP} };
