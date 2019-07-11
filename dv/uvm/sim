@@ -90,7 +90,7 @@ while read asm_test; do
   fi
   CMD="$OUT/vcs_simv +UVM_TESTNAME=core_ibex_base_test \
        ${WAVES_OPTS} +ntb_random_seed=${SEED} +vcs+lic+wait ${COV_OPTS}\
-       +bin=$BINFILE -l sim.log"
+       +UVM_MAX_QUIT_COUNT=5 +bin=$BINFILE -l sim.log"
   echo "Running simulation for : $CMD"
   $CMD
 done <"$RUN_DIR/asm_test_list"

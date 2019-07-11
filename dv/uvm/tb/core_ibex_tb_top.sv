@@ -13,7 +13,7 @@ module core_ibex_tb_top;
   clk_if ibex_clk_if(.clk(clk));
 
   // TODO(taliu) Resolve the tied-off ports
-  ibex_core dut(
+  ibex_core_tracer dut(
     .clk_i(clk),
     .rst_ni(rst_n),
     .test_en_i(1'b1),
@@ -63,7 +63,7 @@ module core_ibex_tb_top;
 
   // DUT probe interface
   core_ibex_dut_probe_if dut_if(.clk(clk));
-  assign dut_if.ecall = dut.id_stage_i.ecall_insn_dec;
+  assign dut_if.ecall = dut.u_ibex_core.id_stage_i.ecall_insn_dec;
   assign fetch_enable = dut_if.fetch_enable;
   assign dut_if.debug_req = dut.debug_req_i;
 
