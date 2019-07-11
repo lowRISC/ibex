@@ -17,6 +17,10 @@ class ibex_asm_program_gen extends riscv_asm_program_gen;
     cfg.mstatus_mxr  = 0;
     cfg.mstatus_sum  = 0;
     cfg.mstatus_tvm  = 0;
+    // Disable below fields checking against spike as spike implementation is different compared
+    // with ibex.
+    cfg.check_misa_init_val = 1'b0;
+    cfg.check_xstatus = 1'b0;
     // The ibex core load the program from 0x80
     // Some address is reserved for hardware interrupt handling, need to decide if we need to copy
     // the init program from crt0.S later.
@@ -24,7 +28,8 @@ class ibex_asm_program_gen extends riscv_asm_program_gen;
     instr_stream.push_back(".endm");
     instr_stream.push_back(".section .text.init");
     instr_stream.push_back(".globl _start");
-    instr_stream.push_back("j _start");
+    // 0x0 is reserved for trap handling
+    instr_stream.push_back("j mtvec_handler");
     // Align the start section to 0x80
     instr_stream.push_back(".align 7");
     instr_stream.push_back("_start: j _reset_entry");

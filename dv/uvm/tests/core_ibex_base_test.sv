@@ -1,10 +1,18 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+
 class core_ibex_base_test extends uvm_test;
 
   core_ibex_env                   env;
+  core_ibex_env_cfg               cfg;
   virtual clk_if                  clk_vif;
   virtual core_ibex_dut_probe_if  dut_vif;
   mem_model_pkg::mem_model        mem;
   core_ibex_vseq                  vseq;
+  bit                             enable_irq_seq;
+  bit                             enable_debug_seq;
+  irq_seq                         irq_seq_h;
   int unsigned                    timeout_in_cycles = 2000000;
 
   `uvm_component_utils(core_ibex_base_test)
@@ -23,10 +31,13 @@ class core_ibex_base_test extends uvm_test;
       `uvm_fatal(get_full_name(), "Cannot get dut_if")
     end
     env = core_ibex_env::type_id::create("env", this);
+    cfg = core_ibex_env_cfg::type_id::create("cfg", this);
+    uvm_config_db#(core_ibex_env_cfg)::set(this, "*", "cfg", cfg);
     mem = mem_model_pkg::mem_model#()::type_id::create("mem");
     // Create virtual sequence and assign memory handle
     vseq = core_ibex_vseq::type_id::create("vseq");
     vseq.mem = mem;
+    vseq.cfg = cfg;
   endfunction
 
   virtual task run_phase(uvm_phase phase);
@@ -37,6 +48,7 @@ class core_ibex_base_test extends uvm_test;
     dut_vif.fetch_enable = 1'b1;
     vseq.start(env.vseqr);
     wait_for_test_done();
+    vseq.stop();
     phase.drop_objection(this);
   endtask
 
