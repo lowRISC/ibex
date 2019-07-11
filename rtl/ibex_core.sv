@@ -66,6 +66,9 @@ module ibex_core #(
     input  logic        data_err_i,
 
     // Interrupt inputs
+    input  logic        irq_software_i,
+    input  logic        irq_timer_i,
+    input  logic        irq_external_i,
     input  logic        irq_i,                 // level sensitive IR lines
     input  logic [4:0]  irq_id_i,
     output logic        irq_ack_o,             // irq ack
@@ -187,6 +190,9 @@ module ibex_core #(
   logic        instr_req_int;          // Id stage asserts a req to instruction core interface
 
   // Interrupts
+  logic        csr_msip;
+  logic        csr_mtip;
+  logic        csr_meip;
   logic        m_irq_enable;
   logic [31:0] csr_mepc, csr_depc;
 
@@ -268,7 +274,7 @@ module ibex_core #(
 
   assign core_busy   = core_ctrl_firstfetch ? 1'b1 : core_busy_q;
 
-  assign clock_en    = core_busy | irq_i | debug_req_i;
+  assign clock_en    = core_busy | irq_i | csr_meip | csr_mtip | csr_msip | debug_req_i;
 
   // main clock gate of the core
   // generates all clocks except the one for the debug unit which is
@@ -417,6 +423,9 @@ module ibex_core #(
       .lsu_store_err_i              ( lsu_store_err          ),
 
       // Interrupt Signals
+      .csr_msip_i                   ( csr_msip               ),
+      .csr_mtip_i                   ( csr_mtip               ),
+      .csr_meip_i                   ( csr_meip               ),
       .irq_i                        ( irq_i                  ), // incoming interrupts
       .irq_id_i                     ( irq_id_i               ),
       .m_irq_enable_i               ( m_irq_enable           ),
@@ -560,6 +569,12 @@ module ibex_core #(
       .csr_rdata_o             ( csr_rdata              ),
 
       // Interrupt related control signals
+      .irq_software_i          ( irq_software_i         ),
+      .irq_timer_i             ( irq_timer_i            ),
+      .irq_external_i          ( irq_external_i         ),
+      .csr_msip_o              ( csr_msip               ),
+      .csr_mtip_o              ( csr_mtip               ),
+      .csr_meip_o              ( csr_meip               ),
       .m_irq_enable_o          ( m_irq_enable           ),
       .csr_mepc_o              ( csr_mepc               ),
 

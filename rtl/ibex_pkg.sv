@@ -183,12 +183,15 @@ typedef enum logic [1:0] {
 
 // Exception cause
 typedef enum logic [5:0] {
-  EXC_CAUSE_INSN_ADDR_MISA     = 6'h00,
-  EXC_CAUSE_ILLEGAL_INSN       = 6'h02,
-  EXC_CAUSE_BREAKPOINT         = 6'h03,
-  EXC_CAUSE_LOAD_ACCESS_FAULT  = 6'h05,
-  EXC_CAUSE_STORE_ACCESS_FAULT = 6'h07,
-  EXC_CAUSE_ECALL_MMODE        = 6'h0B
+  EXC_CAUSE_IRQ_SOFTWARE_M     = {1'b1, 5'd03},
+  EXC_CAUSE_IRQ_TIMER_M        = {1'b1, 5'd07},
+  EXC_CAUSE_IRQ_EXTERNAL_M     = {1'b1, 5'd11},
+  EXC_CAUSE_INSN_ADDR_MISA     = {1'b0, 5'd00},
+  EXC_CAUSE_ILLEGAL_INSN       = {1'b0, 5'd01},
+  EXC_CAUSE_BREAKPOINT         = {1'b0, 5'd03},
+  EXC_CAUSE_LOAD_ACCESS_FAULT  = {1'b0, 5'd05},
+  EXC_CAUSE_STORE_ACCESS_FAULT = {1'b0, 5'd07},
+  EXC_CAUSE_ECALL_MMODE        = {1'b0, 5'd11}
 } exc_cause_e;
 
 // Debug cause
@@ -208,6 +211,7 @@ typedef enum logic[11:0] {
   // Machine trap setup
   CSR_MSTATUS   = 12'h300,
   CSR_MISA      = 12'h301,
+  CSR_MIE       = 12'h304,
   CSR_MTVEC     = 12'h305,
 
   // Machine trap handling
@@ -215,6 +219,7 @@ typedef enum logic[11:0] {
   CSR_MEPC      = 12'h341,
   CSR_MCAUSE    = 12'h342,
   CSR_MTVAL     = 12'h343,
+  CSR_MIP       = 12'h344,
 
   // Debug/trace
   CSR_DCSR      = 12'h7b0,
@@ -237,5 +242,10 @@ parameter logic [11:0] CSR_OFF_MCOUNTER_SETUP = 12'h320; // mcounter_setup @ 12'
 parameter logic [11:0] CSR_OFF_MCOUNTER       = 12'hB00; // mcounter       @ 12'hB03 - 12'hB1F
 parameter logic [11:0] CSR_OFF_MCOUNTERH      = 12'hB80; // mcounterh      @ 12'hB83 - 12'hB9F
 parameter logic [11:0] CSR_MASK_MCOUNTER      = 12'hFE0;
+
+// CSR interrupt pending/enable bits
+parameter int unsigned CSR_MSIX_BIT = 3;
+parameter int unsigned CSR_MTIX_BIT = 7;
+parameter int unsigned CSR_MEIX_BIT = 11;
 
 endpackage
