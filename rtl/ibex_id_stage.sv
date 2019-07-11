@@ -190,7 +190,6 @@ module ibex_id_stage #(
   logic [4:0]  regfile_raddr_b;
 
   logic [4:0]  regfile_waddr;
-  logic        regfile_we_id, regfile_we_dec;
 
   logic [31:0] regfile_rdata_a;
   logic [31:0] regfile_rdata_b;
@@ -198,6 +197,7 @@ module ibex_id_stage #(
 
   rf_wd_sel_e  regfile_wdata_sel;
   logic        regfile_we;
+  logic        regfile_we_wb, regfile_we_dec;
 
   // ALU Control
   alu_op_e     alu_operator;
@@ -279,8 +279,10 @@ module ibex_id_stage #(
   // Register File MUX //
   ///////////////////////
 
-  // Register file write enable mux - do not propagate illegal CSR ops, do not write when idle
-  assign regfile_we = (illegal_csr_insn_i || !instr_executing) ? 1'b0 : regfile_we_id;
+  // Register file write enable mux - do not propagate illegal CSR ops, do not write when idle,
+  // for loads/stores and multdiv operations write when the data is ready only
+  assign regfile_we = (illegal_csr_insn_i || !instr_executing) ? 1'b0          :
+                      (data_req_dec || multdiv_en_dec)         ? regfile_we_wb : regfile_we_dec;
 
   // Register file write data mux
   always_comb begin : regfile_wdata_mux
@@ -573,7 +575,7 @@ module ibex_id_stage #(
   always_comb begin : id_wb_fsm
     id_wb_fsm_ns            = id_wb_fsm_cs;
     instr_multicycle_done_n = instr_multicycle_done_q;
-    regfile_we_id           = regfile_we_dec;
+    regfile_we_wb           = 1'b0;
     stall_lsu               = 1'b0;
     stall_multdiv           = 1'b0;
     stall_jump              = 1'b0;
@@ -590,14 +592,12 @@ module ibex_id_stage #(
           unique case (1'b1)
             data_req_dec: begin
               // LSU operation
-              regfile_we_id           = 1'b0;
               id_wb_fsm_ns            = WAIT_MULTICYCLE;
               stall_lsu               = 1'b1;
               instr_multicycle_done_n = 1'b0;
             end
             multdiv_en_dec: begin
               // MUL or DIV operation
-              regfile_we_id           = 1'b0;
               id_wb_fsm_ns            = WAIT_MULTICYCLE;
               stall_multdiv           = 1'b1;
               instr_multicycle_done_n = 1'b0;
@@ -625,8 +625,8 @@ module ibex_id_stage #(
         if ((data_req_dec & lsu_valid_i) | (~data_req_dec & ex_valid_i)) begin
           id_wb_fsm_ns            = IDLE;
           instr_multicycle_done_n = 1'b1;
+          regfile_we_wb           = regfile_we_dec;
         end else begin
-          regfile_we_id           = 1'b0;
           stall_lsu               = data_req_dec;
           stall_multdiv           = multdiv_en_dec;
           stall_branch            = branch_in_dec;
