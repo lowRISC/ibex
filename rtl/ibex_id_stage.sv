@@ -157,7 +157,6 @@ module ibex_id_stage #(
   logic        wfi_insn_dec;
 
   logic        branch_in_dec;
-  logic        branch_in_id, unused_branch_in_id;
   logic        branch_set_n, branch_set_q;
   logic        jump_in_dec;
   logic        jump_set;
@@ -521,10 +520,6 @@ module ibex_id_stage #(
   assign mult_en_id      = instr_executing ? mult_en_dec   : 1'b0;
   assign div_en_id       = instr_executing ? div_en_dec    : 1'b0;
 
-  // For tracer
-  assign branch_in_id        = instr_executing ? branch_in_dec : 1'b0;
-  assign unused_branch_in_id = branch_in_id;
-
   ///////////
   // ID-EX //
   ///////////
@@ -647,7 +642,7 @@ module ibex_id_stage #(
 `ifndef VERILATOR
   // make sure that branch decision is valid when jumping
   assert property (
-    @(posedge clk_i) (branch_decision_i !== 1'bx || branch_in_id == 1'b0) ) else
+    @(posedge clk_i) (branch_decision_i !== 1'bx || branch_in_dec == 1'b0) ) else
       $display("Branch decision is X");
 
 `ifdef CHECK_MISALIGNED
