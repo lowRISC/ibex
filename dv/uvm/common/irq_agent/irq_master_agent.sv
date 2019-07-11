@@ -4,9 +4,9 @@
 
 class irq_master_agent extends uvm_agent;
 
-  irq_master_driver driver;
-  irq_master_sequencer sequencer;
-  irq_monitor monitor;
+  irq_master_driver     driver;
+  irq_master_sequencer  sequencer;
+  irq_monitor           monitor;
 
   `uvm_component_utils(irq_master_agent)
   `uvm_component_new
