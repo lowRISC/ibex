@@ -378,7 +378,7 @@ module ibex_decoder #(
         regfile_we          = 1'b1;
       end
 
-      OPCODE_OPIMM: begin // Register-Immediate ALU Operations
+      OPCODE_OP_IMM: begin // Register-Immediate ALU Operations
         alu_op_a_mux_sel_o  = OP_A_REG_A;
         alu_op_b_mux_sel_o  = OP_B_IMM;
         imm_b_mux_sel_o     = IMM_B_I;

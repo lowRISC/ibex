@@ -45,7 +45,7 @@ module ibex_compressed_decoder (
           3'b000: begin
             // c.addi4spn -> addi rd', x2, imm
             instr_o = {2'b0, instr_i[10:7], instr_i[12:11], instr_i[5],
-                       instr_i[6], 2'b00, 5'h02, 3'b000, 2'b01, instr_i[4:2], {OPCODE_OPIMM}};
+                       instr_i[6], 2'b00, 5'h02, 3'b000, 2'b01, instr_i[4:2], {OPCODE_OP_IMM}};
             if (instr_i[12:5] == 8'b0)  illegal_instr_o = 1'b1;
           end
 
@@ -79,7 +79,7 @@ module ibex_compressed_decoder (
             // c.addi -> addi rd, rd, nzimm
             // c.nop
             instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2],
-                       instr_i[11:7], 3'b0, instr_i[11:7], {OPCODE_OPIMM}};
+                       instr_i[11:7], 3'b0, instr_i[11:7], {OPCODE_OP_IMM}};
           end
 
           3'b001, 3'b101: begin
@@ -94,7 +94,7 @@ module ibex_compressed_decoder (
             // c.li -> addi rd, x0, nzimm
             // (c.li hints are translated into an addi hint)
             instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], 5'b0,
-                       3'b0, instr_i[11:7], {OPCODE_OPIMM}};
+                       3'b0, instr_i[11:7], {OPCODE_OP_IMM}};
           end
 
           3'b011: begin
@@ -105,7 +105,7 @@ module ibex_compressed_decoder (
             if (instr_i[11:7] == 5'h02) begin
               // c.addi16sp -> addi x2, x2, nzimm
               instr_o = {{3 {instr_i[12]}}, instr_i[4:3], instr_i[5], instr_i[2],
-                         instr_i[6], 4'b0, 5'h02, 3'b000, 5'h02, {OPCODE_OPIMM}};
+                         instr_i[6], 4'b0, 5'h02, 3'b000, 5'h02, {OPCODE_OP_IMM}};
             end
 
             if ({instr_i[12], instr_i[6:2]} == 6'b0) illegal_instr_o = 1'b1;
@@ -119,14 +119,14 @@ module ibex_compressed_decoder (
                 // 01: c.srai -> srai rd, rd, shamt
                 // (c.srli/c.srai hints are translated into a srli/srai hint)
                 instr_o = {1'b0, instr_i[10], 5'b0, instr_i[6:2], 2'b01, instr_i[9:7],
-                           3'b101, 2'b01, instr_i[9:7], {OPCODE_OPIMM}};
+                           3'b101, 2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
                 if (instr_i[12] == 1'b1)  illegal_instr_o = 1'b1;
               end
 
               2'b10: begin
                 // c.andi -> andi rd, rd, imm
                 instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], 2'b01, instr_i[9:7],
-                           3'b111, 2'b01, instr_i[9:7], {OPCODE_OPIMM}};
+                           3'b111, 2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
               end
 
               2'b11: begin
@@ -200,7 +200,7 @@ module ibex_compressed_decoder (
           3'b000: begin
             // c.slli -> slli rd, rd, shamt
             // (c.ssli hints are translated into a slli hint)
-            instr_o = {7'b0, instr_i[6:2], instr_i[11:7], 3'b001, instr_i[11:7], {OPCODE_OPIMM}};
+            instr_o = {7'b0, instr_i[6:2], instr_i[11:7], 3'b001, instr_i[11:7], {OPCODE_OP_IMM}};
             if (instr_i[12] == 1'b1)  illegal_instr_o = 1'b1; // reserved for custom extensions
           end
 
