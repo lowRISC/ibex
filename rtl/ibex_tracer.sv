@@ -395,6 +395,8 @@ module ibex_tracer #(
           // LOAD & STORE
           INSTR_LOAD:       trace.printLoadInstr();
           INSTR_STORE:      trace.printStoreInstr();
+          // MISC-MEM
+          INSTR_FENCE:      trace.printMnemonic("fence");
           default:          trace.printMnemonic("INVALID");
         endcase // unique case (instr_i)
       end
