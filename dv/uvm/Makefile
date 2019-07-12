@@ -72,7 +72,7 @@ compile:
       -Mdir=${OUT}/rtl_sim/vcs_simv.csrc \
       -o ${OUT}/rtl_sim/vcs_simv \
       +define+BOOT_ADDR=32\'h8000_0000 \
-      +define+TRACE_EXECUTION \
+      +define+TRACE_EXECUTION +define+RVFI\
       -debug_access+pp \
       ${WAVE_CMP_OPTS} ${COV_CMP_OPTS}\
       -lca -kdb
