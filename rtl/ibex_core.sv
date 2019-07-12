@@ -459,7 +459,9 @@ module ibex_core #(
       // Performance Counters
       .perf_jump_o                  ( perf_jump              ),
       .perf_branch_o                ( perf_branch            ),
-      .perf_tbranch_o               ( perf_tbranch           )
+      .perf_tbranch_o               ( perf_tbranch           ),
+      .instr_ret_o                  ( instr_ret              ),
+      .instr_ret_compressed_o       ( instr_ret_compressed   )
   );
 
   // for RVFI only
@@ -547,11 +549,6 @@ module ibex_core #(
 
   assign perf_load  = data_req_o & data_gnt_i & (~data_we_o);
   assign perf_store = data_req_o & data_gnt_i & data_we_o;
-
-  // An instruction has been executed and retired if the ID stage gets a new instruction and
-  // the previously seen instruction was valid.
-  assign instr_ret            = if_id_pipe_reg_we & ~illegal_insn_id;
-  assign instr_ret_compressed = instr_ret & instr_is_compressed_id;
 
   ibex_cs_registers #(
       .MHPMCounterNum   ( MHPMCounterNum   ),

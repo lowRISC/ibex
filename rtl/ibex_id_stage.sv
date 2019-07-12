@@ -143,7 +143,9 @@ module ibex_id_stage #(
     // Performance Counters
     output logic                      perf_jump_o,    // executing a jump instr
     output logic                      perf_branch_o,  // executing a branch instr
-    output logic                      perf_tbranch_o  // executing a taken branch instr
+    output logic                      perf_tbranch_o, // executing a taken branch instr
+    output logic                      instr_ret_o,
+    output logic                      instr_ret_compressed_o
 );
 
   import ibex_defines::*;
@@ -577,6 +579,7 @@ module ibex_id_stage #(
     stall_branch            = 1'b0;
     branch_set_n            = 1'b0;
     perf_branch_o           = 1'b0;
+    instr_ret_o             = 1'b0;
 
     unique case (id_wb_fsm_cs)
 
@@ -604,6 +607,7 @@ module ibex_id_stage #(
               instr_multicycle_done_n = ~branch_decision_i;
               branch_set_n            =  branch_decision_i;
               perf_branch_o           =  1'b1;
+              instr_ret_o             = ~branch_decision_i;
             end
             jump_in_dec: begin
               // uncond branch operation
@@ -611,7 +615,9 @@ module ibex_id_stage #(
               stall_jump              = 1'b1;
               instr_multicycle_done_n = 1'b0;
             end
-            default:;
+            default: begin
+              instr_ret_o             = 1'b1;
+            end
           endcase
         end
       end
@@ -621,6 +627,7 @@ module ibex_id_stage #(
           id_wb_fsm_ns            = IDLE;
           instr_multicycle_done_n = 1'b1;
           regfile_we_wb           = regfile_we_dec;
+          instr_ret_o             = 1'b1;
         end else begin
           stall_lsu               = data_req_dec;
           stall_multdiv           = multdiv_en_dec;
@@ -634,6 +641,8 @@ module ibex_id_stage #(
       end
     endcase
   end
+
+  assign instr_ret_compressed_o = instr_ret_o & instr_is_compressed_i;
 
   ////////////////
   // Assertions //
