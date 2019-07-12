@@ -126,10 +126,11 @@ module ibex_controller (
   logic stall;
   logic halt_if;
   logic halt_id;
-  logic irq;
   logic exc_req;
   logic exc_req_lsu;
   logic special_req;
+  logic enter_debug_mode;
+  logic handle_irq;
 
 `ifndef SYNTHESIS
   // synopsys translate_off
@@ -145,11 +146,12 @@ module ibex_controller (
   // synopsys translate_on
 `endif
 
+  ////////////////
+  // Exceptions //
+  ////////////////
+
   assign load_err_d  = load_err_i;
   assign store_err_d = store_err_i;
-
-  assign irq         = irq_req_ctrl_i & m_IE_i;
-  assign exc_kill_o  = 1'b0;
 
   // exception requests
   assign exc_req     = ecall_insn_i | ebrk_insn_i | illegal_insn_i;
@@ -160,6 +162,16 @@ module ibex_controller (
   // special requests: special instructions, pipeline flushes, exceptions...
   assign special_req = mret_insn_i | dret_insn_i | wfi_insn_i | csr_status_i |
       exc_req | exc_req_lsu;
+
+  ////////////////
+  // Interrupts //
+  ////////////////
+
+  assign enter_debug_mode = debug_req_i & ~debug_mode_q;
+
+  // interrupts including NMI are ignored while in debug mode [Debug Spec v0.13.2, p.39]
+  assign handle_irq       = irq_req_ctrl_i & m_IE_i & ~debug_mode_q;
+  assign exc_kill_o       = 1'b0;
 
   /////////////////////
   // Core controller //
@@ -252,7 +264,7 @@ module ibex_controller (
         end
 
         // handle interrupts
-        if (irq) begin
+        if (handle_irq) begin
           // This assumes that the pipeline is always flushed before
           // going to sleep.
           ctrl_fsm_ns = IRQ_TAKEN;
@@ -261,7 +273,7 @@ module ibex_controller (
         end
 
         // enter debug mode
-        if (debug_req_i && !debug_mode_q) begin
+        if (enter_debug_mode) begin
           ctrl_fsm_ns = DBG_TAKEN_IF;
           halt_if     = 1'b1;
           halt_id     = 1'b1;
@@ -294,7 +306,7 @@ module ibex_controller (
 
           // stall IF stage to not starve debug and interrupt requests, these just
           // need to wait until after the current (multicycle) instruction
-          if ((debug_req_i || irq) && stall && !debug_mode_q) begin
+          if ((enter_debug_mode || handle_irq) && stall) begin
             halt_if = 1'b1;
           end
 
@@ -310,17 +322,19 @@ module ibex_controller (
           end
         end // instr_valid_i
 
-        if  (debug_req_i && !stall && !special_req && !debug_mode_q) begin
-          // enter debug mode
-          ctrl_fsm_ns = DBG_TAKEN_ID;
-          halt_if     = 1'b1;
-          halt_id     = 1'b1;
+        if (!stall && !special_req) begin
+          if (enter_debug_mode) begin
+            // enter debug mode
+            ctrl_fsm_ns = DBG_TAKEN_ID;
+            halt_if     = 1'b1;
+            halt_id     = 1'b1;
 
-        end else if (irq && !stall && !special_req && !debug_mode_q) begin
-          // handle interrupt (not in debug mode)
-          ctrl_fsm_ns = IRQ_TAKEN;
-          halt_if     = 1'b1;
-          halt_id     = 1'b1;
+          end else if (handle_irq) begin
+            // handle interrupt (not in debug mode)
+            ctrl_fsm_ns = IRQ_TAKEN;
+            halt_if     = 1'b1;
+            halt_id     = 1'b1;
+          end
         end
 
       end // DECODE
@@ -381,7 +395,7 @@ module ibex_controller (
 
         // update dcsr and dpc
         if ((ebrk_insn_i && debug_ebreakm_i && !debug_mode_q) || // ebreak with forced entry
-            (debug_req_i && !debug_mode_q)) begin // halt request
+            (enter_debug_mode)) begin // halt request
 
           // dpc (set to the address of the EBREAK, i.e. set to PC in ID stage)
           csr_save_cause_o = 1'b1;
