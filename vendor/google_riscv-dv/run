@@ -60,7 +60,9 @@ VERBOSE=0
 
 # Submit to LSF
 LSF_CMD="bsub"
+LSF_OPTS=""
 LSF=0
+LSF_TIMEOUT=100
 
 # Testlist for regression
 TEST_LIST=testlist
@@ -98,6 +100,10 @@ case $key in
     TEST_LIST="$2"
     shift
     ;;
+    -timeout)
+    LSF_TIMEOUT="$2"
+    shift
+    ;;
     -so)
     SIM_ONLY=1
     ;;
@@ -109,6 +115,10 @@ case $key in
     ;;
     -lsf)
     LSF=1
+    ;;
+    -lsf_opts)
+    LSF_OPTS="$2"
+    shift
     ;;
     -o)
     OUT="$2"
@@ -204,9 +214,9 @@ if [[ ${TEST} == "all" ]]; then
           ((PROGRAM_CNT+=$ITERATION))
           echo "${OUT}/sim_${TEST}.log" >> ${LOG_LIST}
           if [[ $VERBOSE == 1 ]]; then
-            ${LSF_CMD} ${CMD}
+            ${LSF_CMD} ${LSF_OPTS} ${CMD}
           else
-            ${LSF_CMD} ${CMD} > /dev/null
+            ${LSF_CMD} ${LSF_OPTS} ${CMD} > /dev/null
           fi
         fi
       fi
@@ -214,6 +224,7 @@ if [[ ${TEST} == "all" ]]; then
   done < $TEST_LIST
   # Wait util all tests are generated
   if [[ $LSF == 1 ]]; then
+    TIMEOUT_CNT=0
     TOTAL_CNT=`wc -l < ${LOG_LIST}`
     echo "Waiting for ${TOTAL_CNT} tests to complete, ${PROGRAM_CNT} programs to generate."
     while [[ 1 ]]; do
@@ -222,16 +233,30 @@ if [[ ${TEST} == "all" ]]; then
         if [[ -f "$log" ]]; then
           if grep -q "TEST GENERATION DONE" $log; then
             ((COMPLETED_CNT+=1))
+          else
+            if [[ $VERBOSE == 1 ]]; then
+              echo "$log is not completed"
+            fi
+          fi
+        else
+          if [[ $VERBOSE == 1 ]]; then
+            echo "$log is not completed"
           fi
         fi
       done < ${LOG_LIST}
       GENERATED_CNT=`find ${OUT}/asm_tests/ -name "*.S" | wc -l`
-      echo "Progress > Test:${COMPLETED_CNT}/${TOTAL_CNT} Program:${GENERATED_CNT}/${PROGRAM_CNT}"
+      echo "[$TIMEOUT_CNT] Progress > Test:${COMPLETED_CNT}/${TOTAL_CNT} Program:${GENERATED_CNT}/${PROGRAM_CNT}"
       if [[ "$COMPLETED_CNT" == "$TOTAL_CNT" ]]; then
         break
       else
-        sleep 10
+        if [[ "$TIMEOUT_CNT" == "$LSF_TIMEOUT" ]]; then
+          echo "Generator timeout after $LSF_TIMEOUT * 10 seconds"
+          break
+        else
+          sleep 10
+        fi
       fi
+      ((TIMEOUT_CNT+=1))
     done
   fi
 else

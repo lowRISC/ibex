@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Path for RISC-V GCC toolchain
+# Environment variable for the path of RISC-V GCC toolchain
 # You can install the toolchain from https://github.com/riscv/riscv-gcc
-RISCV_TOOLCHAIN="XXX"
+# RISCV_TOOLCHAIN="XXX"
 
 # GCC compile options
 ABI="lp64"
@@ -28,7 +28,10 @@ ISS="spike" # other options: ovpsim, all
 
 # riscv-ovpsim options
 OVPSIM_VARIANT="RV64GC"
-RISCV_OVPSIM="YOUR_PATH_HERE/riscv-ovpsim/bin/Linux64/riscvOVPsim.exe"
+
+# Binary of RISC-V ovpsim ISS
+# https://github.com/riscv/riscv-ovpsim
+RISCV_OVPSIM="${OVPSIM_PATH}/riscv-ovpsim/bin/Linux64/riscvOVPsim.exe"
 
 # Directory of assemble tests
 SRC_DIR="./out_${DATE}/asm_tests"
@@ -42,11 +45,16 @@ REPORT="$SRC_DIR/regression_report.log"
 # Clean the result of the previous runs
 CLEAN=1
 
+if [[ -z $RISCV_TOOLCHAIN ]]; then
+  echo "ERROR: Please define RISCV_TOOLCHAIN environment variable first"
+  exit 1
+fi
+
 # Process command line options
 while [[ $# -gt 0 ]]
 do
 key="$1"
-case $key in
+  case $key in
     -iss)
     ISS="$2"
     shift
@@ -154,6 +162,10 @@ while read asm_test; do
   fi
   # riscv_ovpsim sim
   if [[ "$ISS" == "ovpsim" ]] || [[ "$ISS" == "all" ]]; then
+    if [[ -z $OVPSIM_PATH ]]; then
+      echo "ERROR: Please define OVPSIM_PATH environment variable first"
+      exit 1
+    fi
     OVPSIM_LOG="$SRC_DIR/riscv_ovpsim/$TEST_NAME.log"
     echo "Running ovpsim: $TEST_NAME"
     RISCV_OVPSIM_CMD="$RISCV_OVPSIM --variant $OVPSIM_VARIANT \
