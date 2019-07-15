@@ -370,8 +370,6 @@ module ibex_controller (
           debug_cause_o = DBG_CAUSE_STEP;
         end else if (debug_req_i) begin
           debug_cause_o = DBG_CAUSE_HALTREQ;
-        end else if (ebrk_insn_i) begin
-          debug_cause_o = DBG_CAUSE_EBREAK;
         end
 
         // enter debug mode
