@@ -48,67 +48,68 @@ module ibex_tracer_tb;
   end
 
   ibex_core_tracer ibex_i (
-    .clk_i              (clk),
-    .rst_ni             (rst_n),
+    .clk_i                  (clk),
+    .rst_ni                 (rst_n),
 
-    .test_en_i          (1'b0),
+    .test_en_i              (1'b0),
 
     // Core ID, Cluster ID and boot address are considered more or less static
-    .core_id_i          (4'b0),
-    .cluster_id_i       (6'b0),
-    .boot_addr_i        (32'b0),
+    .core_id_i              (4'b0),
+    .cluster_id_i           (6'b0),
+    .boot_addr_i            (32'b0),
 
     // Instruction memory interface
-    .instr_req_o        (),
-    .instr_gnt_i        (1'b1),
-    .instr_rvalid_i     (1'b1),
-    .instr_addr_o       (),
-    .instr_rdata_i      (instr_rdata),
+    .instr_req_o            (),
+    .instr_gnt_i            (instr_gnt),
+    .instr_rvalid_i         (instr_rvalid),
+    .instr_addr_o           (),
+    .instr_rdata_i          (instr_rdata),
 
     // Data memory interface
-    .data_req_o         (),
-    .data_gnt_i         (1'b1),
-    .data_rvalid_i      (1'b1),
-    .data_we_o          (),
-    .data_be_o          (),
-    .data_addr_o        (),
-    .data_wdata_o       (),
-    .data_rdata_i       (data_rdata),
-    .data_err_i         (1'b0),
+    .data_req_o             (),
+    .data_gnt_i             (1'b1),
+    .data_rvalid_i          (1'b1),
+    .data_we_o              (),
+    .data_be_o              (),
+    .data_addr_o            (),
+    .data_wdata_o           (),
+    .data_rdata_i           (data_rdata),
+    .data_err_i             (1'b0),
 
     // Interrupt inputs
-    .irq_i              (1'b0),
-    .irq_id_i           (5'b0),
-    .irq_ack_o          (),
-    .irq_id_o           (),
+    .irq_i                  (1'b0),
+    .irq_id_i               (5'b0),
+    .irq_ack_o              (),
+    .irq_id_o               (),
 
     // Debug Interface
-    .debug_req_i        (1'b0),
+    .debug_req_i            (1'b0),
 
     // RISC-V Formal Interface
-    .rvfi_valid         (),
-    .rvfi_order         (),
-    .rvfi_insn          (),
-    .rvfi_trap          (),
-    .rvfi_halt          (),
-    .rvfi_intr          (),
-    .rvfi_mode          (),
-    .rvfi_rs1_addr      (),
-    .rvfi_rs2_addr      (),
-    .rvfi_rs1_rdata     (),
-    .rvfi_rs2_rdata     (),
-    .rvfi_rd_addr       (),
-    .rvfi_rd_wdata      (),
-    .rvfi_pc_rdata      (),
-    .rvfi_pc_wdata      (),
-    .rvfi_mem_addr      (),
-    .rvfi_mem_rmask     (),
-    .rvfi_mem_wmask     (),
-    .rvfi_mem_rdata     (),
-    .rvfi_mem_wdata     (),
+    .rvfi_valid             (),
+    .rvfi_order             (),
+    .rvfi_insn              (),
+    .rvfi_insn_uncompressed (),
+    .rvfi_trap              (),
+    .rvfi_halt              (),
+    .rvfi_intr              (),
+    .rvfi_mode              (),
+    .rvfi_rs1_addr          (),
+    .rvfi_rs2_addr          (),
+    .rvfi_rs1_rdata         (),
+    .rvfi_rs2_rdata         (),
+    .rvfi_rd_addr           (),
+    .rvfi_rd_wdata          (),
+    .rvfi_pc_rdata          (),
+    .rvfi_pc_wdata          (),
+    .rvfi_mem_addr          (),
+    .rvfi_mem_rmask         (),
+    .rvfi_mem_wmask         (),
+    .rvfi_mem_rdata         (),
+    .rvfi_mem_wdata         (),
 
     // CPU Control Signals
-    .fetch_enable_i     (1'b1)
+    .fetch_enable_i         (1'b1)
   );
 
 endmodule

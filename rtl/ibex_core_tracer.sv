@@ -62,6 +62,7 @@ module ibex_core_tracer #(
     output logic        rvfi_valid,
     output logic [63:0] rvfi_order,
     output logic [31:0] rvfi_insn,
+    output logic [31:0] rvfi_insn_uncompressed,
     output logic        rvfi_trap,
     output logic        rvfi_halt,
     output logic        rvfi_intr,
@@ -132,6 +133,7 @@ module ibex_core_tracer #(
     .rvfi_valid,
     .rvfi_order,
     .rvfi_insn,
+    .rvfi_insn_uncompressed,
     .rvfi_trap,
     .rvfi_halt,
     .rvfi_intr,
@@ -157,23 +159,23 @@ module ibex_core_tracer #(
 
 `ifndef VERILATOR
   ibex_tracer ibex_tracer_i (
-      .clk_i            ( clk_i          ),
-      .rst_ni           ( rst_ni         ),
+      .clk_i            ( clk_i                  ),
+      .rst_ni           ( rst_ni                 ),
 
-      .fetch_enable_i   ( fetch_enable_i ),
-      .core_id_i        ( core_id_i      ),
-      .cluster_id_i     ( cluster_id_i   ),
+      .fetch_enable_i   ( fetch_enable_i         ),
+      .core_id_i        ( core_id_i              ),
+      .cluster_id_i     ( cluster_id_i           ),
 
-      .valid_i          ( rvfi_valid     ),
-      .pc_i             ( rvfi_pc_rdata  ),
-      .instr_i          ( rvfi_insn      ),
-      .rs1_value_i      ( rvfi_rs1_rdata ),
-      .rs2_value_i      ( rvfi_rs2_rdata ),
-      .ex_reg_addr_i    ( rvfi_rd_addr   ),
-      .ex_reg_wdata_i   ( rvfi_rd_wdata  ),
-      .ex_data_addr_i   ( rvfi_mem_addr  ),
-      .ex_data_wdata_i  ( rvfi_mem_wdata ),
-      .ex_data_rdata_i  ( rvfi_mem_rdata )
+      .valid_i          ( rvfi_valid             ),
+      .pc_i             ( rvfi_pc_rdata          ),
+      .instr_i          ( rvfi_insn_uncompressed ),
+      .rs1_value_i      ( rvfi_rs1_rdata         ),
+      .rs2_value_i      ( rvfi_rs2_rdata         ),
+      .ex_reg_addr_i    ( rvfi_rd_addr           ),
+      .ex_reg_wdata_i   ( rvfi_rd_wdata          ),
+      .ex_data_addr_i   ( rvfi_mem_addr          ),
+      .ex_data_wdata_i  ( rvfi_mem_wdata         ),
+      .ex_data_rdata_i  ( rvfi_mem_rdata         )
   );
 `endif // VERILATOR
 
