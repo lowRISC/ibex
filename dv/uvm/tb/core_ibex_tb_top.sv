@@ -9,18 +9,21 @@ module core_ibex_tb_top;
   logic clk;
   logic rst_n;
   logic fetch_enable;
+  logic debug_req;
 
   clk_if ibex_clk_if(.clk(clk));
 
   // TODO(taliu) Resolve the tied-off ports
-  ibex_core_tracer dut(
+  ibex_core_tracer #(.DmHaltAddr(`BOOT_ADDR + 'h40),
+                     .DmExceptionAddr(`BOOT_ADDR + 'h44)
+  ) dut (
     .clk_i(clk),
     .rst_ni(rst_n),
     .test_en_i(1'b1),
     .core_id_i('0),
     .cluster_id_i('0),
     .boot_addr_i(`BOOT_ADDR), // align with spike boot address
-    .debug_req_i('0),
+    .debug_req_i(debug_req),
     .fetch_enable_i(fetch_enable)
   );
 
@@ -65,7 +68,7 @@ module core_ibex_tb_top;
   core_ibex_dut_probe_if dut_if(.clk(clk));
   assign dut_if.ecall = dut.u_ibex_core.id_stage_i.ecall_insn_dec;
   assign fetch_enable = dut_if.fetch_enable;
-  assign dut_if.debug_req = dut.debug_req_i;
+  assign debug_req = dut_if.debug_req;
 
   initial begin
     uvm_config_db#(virtual clk_if)::set(null, "*", "clk_if", ibex_clk_if);

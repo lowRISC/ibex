@@ -30,8 +30,8 @@ class core_base_seq #(type REQ = uvm_sequence_item) extends uvm_sequence#(REQ);
   }
 
   virtual task body();
-    if(!uvm_config_db#(virtual clk_if)::get(null, "", "vif", clk_vif)) begin
-       `uvm_error(get_full_name(), "Cannot get clk_if")
+    if(!uvm_config_db#(virtual clk_if)::get(null, "", "clk_if", clk_vif)) begin
+       `uvm_fatal(get_full_name(), "Cannot get clk_if")
     end
     void'(randomize(delay));
     clk_vif.wait_clks(delay);
@@ -46,7 +46,7 @@ class core_base_seq #(type REQ = uvm_sequence_item) extends uvm_sequence#(REQ);
       end
     end
     seq_finished = 1'b1;
-    `uvm_info(get_full_name(), "Exiting IRQ sequence", UVM_LOW)
+    `uvm_info(get_full_name(), "Exiting sequence", UVM_LOW)
   endtask
 
   virtual task send_req();
@@ -89,12 +89,14 @@ class debug_seq extends core_base_seq;
     if (!uvm_config_db#(virtual core_ibex_dut_probe_if)::get(null, "", "dut_if", dut_vif)) begin
       `uvm_fatal(get_full_name(), "Cannot get dut_if")
     end
+    dut_vif.debug_req <= 1'b0;
     super.body();
   endtask
 
   virtual task send_req();
+    `uvm_info(get_full_name(), "Sending debug request", UVM_HIGH)
     dut_vif.debug_req <= 1'b1;
-    clk_vif.wait_clks(1);
+    clk_vif.wait_clks($urandom_range(1, 20));
     dut_vif.debug_req <= 1'b0;
   endtask
 
