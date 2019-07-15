@@ -32,6 +32,9 @@ riscv_instr_name_t unsupported_instr[];
 // ISA supported by the processor
 riscv_instr_group_t supported_isa[$] = {RV32I, RV32M, RV64I, RV64M, RV32C, RV64C};
 
+// Debug mode support
+bit support_debug_mode = 0;
+
 // Support delegate trap to user mode
 bit support_umode_trap = 0;
 
