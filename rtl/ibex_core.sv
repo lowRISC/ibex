@@ -81,6 +81,7 @@ module ibex_core #(
     output logic        rvfi_valid,
     output logic [63:0] rvfi_order,
     output logic [31:0] rvfi_insn,
+    output logic [31:0] rvfi_insn_uncompressed,
     output logic        rvfi_trap,
     output logic        rvfi_halt,
     output logic        rvfi_intr,
@@ -600,47 +601,49 @@ module ibex_core #(
 `ifdef RVFI
   always_ff @(posedge clk or negedge rst_ni) begin
     if (!rst_ni) begin
-      rvfi_halt      <= '0;
-      rvfi_trap      <= '0;
-      rvfi_intr      <= '0;
-      rvfi_order     <= '0;
-      rvfi_insn      <= '0;
-      rvfi_mode      <= '0;
-      rvfi_rs1_addr  <= '0;
-      rvfi_rs2_addr  <= '0;
-      rvfi_pc_rdata  <= '0;
-      rvfi_pc_wdata  <= '0;
-      rvfi_mem_rmask <= '0;
-      rvfi_mem_wmask <= '0;
-      rvfi_valid     <= '0;
-      rvfi_rs1_rdata <= '0;
-      rvfi_rs2_rdata <= '0;
-      rvfi_rd_wdata  <= '0;
-      rvfi_rd_addr   <= '0;
-      rvfi_mem_rdata <= '0;
-      rvfi_mem_wdata <= '0;
-      rvfi_mem_addr  <= '0;
+      rvfi_halt              <= '0;
+      rvfi_trap              <= '0;
+      rvfi_intr              <= '0;
+      rvfi_order             <= '0;
+      rvfi_insn              <= '0;
+      rvfi_insn_uncompressed <= '0;
+      rvfi_mode              <= '0;
+      rvfi_rs1_addr          <= '0;
+      rvfi_rs2_addr          <= '0;
+      rvfi_pc_rdata          <= '0;
+      rvfi_pc_wdata          <= '0;
+      rvfi_mem_rmask         <= '0;
+      rvfi_mem_wmask         <= '0;
+      rvfi_valid             <= '0;
+      rvfi_rs1_rdata         <= '0;
+      rvfi_rs2_rdata         <= '0;
+      rvfi_rd_wdata          <= '0;
+      rvfi_rd_addr           <= '0;
+      rvfi_mem_rdata         <= '0;
+      rvfi_mem_wdata         <= '0;
+      rvfi_mem_addr          <= '0;
     end else begin
-      rvfi_halt      <= '0;
-      rvfi_trap      <= illegal_insn_id;
-      rvfi_intr      <= irq_ack_o;
-      rvfi_order     <= rvfi_order + rvfi_valid;
-      rvfi_insn      <= rvfi_insn_id;
-      rvfi_mode      <= PRIV_LVL_M; // TODO: Update for user mode support
-      rvfi_rs1_addr  <= rvfi_rs1_addr_id;
-      rvfi_rs2_addr  <= rvfi_rs2_addr_id;
-      rvfi_pc_rdata  <= pc_id;
-      rvfi_pc_wdata  <= pc_if;
-      rvfi_mem_rmask <= rvfi_mem_mask_int;
-      rvfi_mem_wmask <= data_we_o ? rvfi_mem_mask_int : 4'b0000;
-      rvfi_valid     <= instr_ret;
-      rvfi_rs1_rdata <= rvfi_rs1_data_d;
-      rvfi_rs2_rdata <= rvfi_rs2_data_d;
-      rvfi_rd_wdata  <= rvfi_rd_wdata_d;
-      rvfi_rd_addr   <= rvfi_rd_addr_d;
-      rvfi_mem_rdata <= rvfi_mem_rdata_d;
-      rvfi_mem_wdata <= rvfi_mem_wdata_d;
-      rvfi_mem_addr  <= rvfi_mem_addr_d;
+      rvfi_halt              <= '0;
+      rvfi_trap              <= illegal_insn_id;
+      rvfi_intr              <= irq_ack_o;
+      rvfi_order             <= rvfi_order + rvfi_valid;
+      rvfi_insn              <= rvfi_insn_id;
+      rvfi_insn_uncompressed <= instr_rdata_id;
+      rvfi_mode              <= PRIV_LVL_M; // TODO: Update for user mode support
+      rvfi_rs1_addr          <= rvfi_rs1_addr_id;
+      rvfi_rs2_addr          <= rvfi_rs2_addr_id;
+      rvfi_pc_rdata          <= pc_id;
+      rvfi_pc_wdata          <= pc_if;
+      rvfi_mem_rmask         <= rvfi_mem_mask_int;
+      rvfi_mem_wmask         <= data_we_o ? rvfi_mem_mask_int : 4'b0000;
+      rvfi_valid             <= instr_ret;
+      rvfi_rs1_rdata         <= rvfi_rs1_data_d;
+      rvfi_rs2_rdata         <= rvfi_rs2_data_d;
+      rvfi_rd_wdata          <= rvfi_rd_wdata_d;
+      rvfi_rd_addr           <= rvfi_rd_addr_d;
+      rvfi_mem_rdata         <= rvfi_mem_rdata_d;
+      rvfi_mem_wdata         <= rvfi_mem_wdata_d;
+      rvfi_mem_addr          <= rvfi_mem_addr_d;
     end
   end
 
