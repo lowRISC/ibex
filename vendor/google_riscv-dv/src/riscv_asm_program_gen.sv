@@ -174,6 +174,9 @@ class riscv_asm_program_gen extends uvm_object;
     gen_privileged_mode_switch_routine();
     // Program end
     gen_program_end();
+    // Generate debug mode section
+    gen_debug_mode_section();
+    // Starting point of data section
     gen_data_page_begin();
     // Generate the sub program in binary format
     gen_bin_program();
@@ -891,5 +894,16 @@ class riscv_asm_program_gen extends uvm_object;
     end
   endfunction
 
+  // Generate the program in the debug ROM
+  // Processor will fetch instruction from here upon receiving debug request from debug module
+  virtual function gen_debug_mode_section();
+    string instr[];
+    if (riscv_instr_pkg::support_debug_mode) begin
+      instr = {"dret"};
+      gen_section("debug_rom", instr);
+      instr = {"dret"};
+      gen_section("debug_exception", instr);
+    end
+  endfunction
 
 endclass
