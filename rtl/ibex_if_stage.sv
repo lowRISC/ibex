@@ -20,10 +20,6 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`ifdef RISCV_FORMAL
-  `define RVFI
-`endif
-
 /**
  * Instruction Fetch Stage
  *
