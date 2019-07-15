@@ -358,7 +358,7 @@ module ibex_controller (
       DBG_TAKEN_IF: begin
         // enter debug mode and save PC in IF to dpc
         // jump to debug exception handler in debug memory
-        if (debug_single_step_i || debug_req_i)
+        if (debug_single_step_i || debug_req_i) begin
           pc_mux_o         = PC_EXC;
           pc_set_o         = 1'b1;
           exc_pc_mux_o     = EXC_PC_DBD;
