@@ -77,7 +77,6 @@ module ibex_if_stage #(
 
     // pipeline stall
     input  logic                      id_in_ready_i,            // ID stage is ready for new instr
-    output logic                      if_id_pipe_reg_we_o,      // IF-ID pipeline reg write enable
 
     // misc signals
     output logic                      if_busy_o,                // IF stage is busy fetching instr
@@ -103,6 +102,8 @@ module ibex_if_stage #(
 
   logic        [5:0] irq_id;
   logic              unused_irq_bit;
+
+  logic              if_id_pipe_reg_we; // IF-ID pipeline reg write enable
 
   logic        [7:0] unused_boot_addr;
 
@@ -193,7 +194,7 @@ module ibex_if_stage #(
       if (fetch_valid) begin
         have_instr = 1'b1;
 
-        if (req_i && if_id_pipe_reg_we_o) begin
+        if (req_i && if_id_pipe_reg_we) begin
           fetch_ready      = 1'b1;
           offset_in_init_d = 1'b0;
         end
@@ -231,7 +232,7 @@ module ibex_if_stage #(
   );
 
   // IF-ID pipeline registers, frozen when the ID stage is stalled
-  assign if_id_pipe_reg_we_o = have_instr & id_in_ready_i;
+  assign if_id_pipe_reg_we = have_instr & id_in_ready_i;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin : if_id_pipeline_regs
     if (!rst_ni) begin
@@ -243,8 +244,8 @@ module ibex_if_stage #(
       illegal_c_insn_id_o        <= 1'b0;
       pc_id_o                    <= '0;
     end else begin
-      instr_new_id_o             <= if_id_pipe_reg_we_o;
-      if (if_id_pipe_reg_we_o) begin
+      instr_new_id_o             <= if_id_pipe_reg_we;
+      if (if_id_pipe_reg_we) begin
         instr_valid_id_o         <= 1'b1;
         instr_rdata_id_o         <= instr_decompressed;
         instr_rdata_c_id_o       <= fetch_rdata[15:0];

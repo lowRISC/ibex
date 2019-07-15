@@ -101,8 +101,6 @@ module ibex_controller (
     input  logic                      stall_jump_i,
     input  logic                      stall_branch_i,
 
-    output logic                      id_out_valid_o,        // ID stage has valid output
-
     // performance monitors
     output logic                      perf_jump_o,           // we are executing a jump
                                                              // instruction (j, jr, jal, jalr)
@@ -532,9 +530,6 @@ module ibex_controller (
   // kill instr in IF-ID pipeline reg that are done, or if a
   // multicycle instr causes an exception for example
   assign instr_valid_clear_o = ~stall |  halt_id;
-
-  // signal that ID stage has valid output
-  assign id_out_valid_o      = ~stall & instr_valid_i & ~special_req;
 
   // update registers
   always_ff @(posedge clk_i or negedge rst_ni) begin : update_regs
