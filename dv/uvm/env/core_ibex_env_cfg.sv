@@ -15,7 +15,7 @@ class core_ibex_env_cfg extends uvm_object;
   function new(string name = "");
     super.new(name);
     void'($value$plusargs("enable_irq_seq=%0d", enable_irq_seq));
-    void'($value$plusargs("enable_deug_seq=%0d", enable_debug_seq));
+    void'($value$plusargs("enable_debug_seq=%0d", enable_debug_seq));
   endfunction
 
 endclass

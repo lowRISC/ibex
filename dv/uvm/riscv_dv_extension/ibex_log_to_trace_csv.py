@@ -30,7 +30,7 @@ def process_ibex_sim_log(ibex_log, csv):
             # Extract instruction infromation
             m = re.search(r"^\s*(?P<time>\d+)\s+(?P<cycle>\d+) " \
                           "(?P<pc>[0-9a-f]+) (?P<bin>[0-9a-f]+) (?P<instr>.*)" \
-                          "x(?P<rd>\d+)=(?P<val>[0-9a-f]+)", line)
+                          "x(?P<rd>\d+)=0x(?P<val>[0-9a-f]+)", line)
             if m:
                 # Write the extracted instruction to a csvcol buffer file
                 rv_instr_trace = RiscvInstructiontTraceEntry()
@@ -40,7 +40,6 @@ def process_ibex_sim_log(ibex_log, csv):
                 rv_instr_trace.binary = m.group("bin")
                 rv_instr_trace.instr_str = m.group("instr")
                 trace_csv.write_trace_entry(rv_instr_trace)
-                #print("Processed instruction[%d] : %0s" % (instr_cnt, m.group("instr")))
                 instr_cnt += 1
 
     print("Processed instruction count : %d" % instr_cnt)
