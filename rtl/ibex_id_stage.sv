@@ -70,8 +70,6 @@ module ibex_id_stage #(
     // Stalls
     input  logic                      ex_valid_i,     // EX stage has valid output
     input  logic                      lsu_valid_i,    // LSU has valid output, or is done
-    output logic                      id_out_valid_o, // ID stage is done
-
     // ALU
     output ibex_defines::alu_op_e     alu_operator_ex_o,
     output logic [31:0]               alu_operand_a_ex_o,
@@ -479,8 +477,6 @@ module ibex_id_stage #(
       .stall_multdiv_i                ( stall_multdiv          ),
       .stall_jump_i                   ( stall_jump             ),
       .stall_branch_i                 ( stall_branch           ),
-
-      .id_out_valid_o                 ( id_out_valid_o         ),
 
       // Performance Counters
       .perf_jump_o                    ( perf_jump_o            ),
