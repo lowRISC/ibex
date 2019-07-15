@@ -21,7 +21,6 @@ COV_CMP_OPTS := -cm line+tgl+assert+fsm+branch \
                 -cm_tgl structarr \
                 -cm_report noinitial \
                 -cm_seqnoconst \
-                -cm_glitch 0 \
                 -cm_dir ${OUT}/rtl_sim/test.vdb \
                 -cm_hier cover.cfg
 

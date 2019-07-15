@@ -28,8 +28,15 @@ class ibex_asm_program_gen extends riscv_asm_program_gen;
     instr_stream.push_back(".endm");
     instr_stream.push_back(".section .text.init");
     instr_stream.push_back(".globl _start");
-    // 0x0 is reserved for trap handling
+    // 0x0 - 0xFF is reserved for trap/interrupt handling
+    instr_stream.push_back(".option norvc");
     instr_stream.push_back("j mtvec_handler");
+    // 0x40 debug mode entry
+    instr_stream.push_back(".align 6");
+    instr_stream.push_back("j debug_rom");
+    // 0x44 debug mode exception handler
+    instr_stream.push_back("j debug_exception");
+    instr_stream.push_back(".option rvc");
     // Align the start section to 0x80
     instr_stream.push_back(".align 7");
     instr_stream.push_back("_start: j _reset_entry");
