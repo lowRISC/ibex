@@ -50,10 +50,13 @@ module ibex_cs_registers #(
     input  logic                 irq_software_i,
     input  logic                 irq_timer_i,
     input  logic                 irq_external_i,
+    input  logic [14:0]          irq_fast_i,
+    output logic                 irq_pending_o,          // interupt request pending
     output logic                 csr_msip_o,             // software interrupt pending
     output logic                 csr_mtip_o,             // timer interrupt pending
     output logic                 csr_meip_o,             // external interrupt pending
-    output logic                 m_irq_enable_o,
+    output logic [14:0]          csr_mfip_o,             // fast interrupt pending
+    output logic                 csr_mstatus_mie_o,
     output logic [31:0]          csr_mepc_o,
 
     // debug
@@ -135,9 +138,11 @@ module ibex_cs_registers #(
 
   // struct for mip/mie CSRs
   typedef struct packed {
-    logic software;
-    logic timer;
-    logic external;
+    logic        software;
+    logic        timer;
+    logic        external;
+    logic [14:0] fast; // 15 fast interrupts,
+                       // one interrupt is reserved for NMI (not visible through mip/mie)
   } Interrupts_t;
 
   typedef struct packed {
@@ -214,6 +219,7 @@ module ibex_cs_registers #(
   assign mip.software = irq_software_i & mie_q.software;
   assign mip.timer    = irq_timer_i    & mie_q.timer;
   assign mip.external = irq_external_i & mie_q.external;
+  assign mip.fast     = irq_fast_i     & mie_q.fast;
 
   // read logic
   always_comb begin
@@ -242,10 +248,11 @@ module ibex_cs_registers #(
 
       // interrupt enable
       CSR_MIE: begin
-        csr_rdata_int               = '0;
-        csr_rdata_int[CSR_MSIX_BIT] = mie_q.software;
-        csr_rdata_int[CSR_MTIX_BIT] = mie_q.timer;
-        csr_rdata_int[CSR_MEIX_BIT] = mie_q.external;
+        csr_rdata_int                                     = '0;
+        csr_rdata_int[CSR_MSIX_BIT]                       = mie_q.software;
+        csr_rdata_int[CSR_MTIX_BIT]                       = mie_q.timer;
+        csr_rdata_int[CSR_MEIX_BIT]                       = mie_q.external;
+        csr_rdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mie_q.fast;
       end
 
       CSR_MSCRATCH: csr_rdata_int = mscratch_q;
@@ -264,10 +271,11 @@ module ibex_cs_registers #(
 
       // mip: interrupt pending
       CSR_MIP: begin
-        csr_rdata_int                = '0;
-        csr_rdata_int[CSR_MSIX_BIT]  = mip.software;
-        csr_rdata_int[CSR_MTIX_BIT]  = mip.timer;
-        csr_rdata_int[CSR_MEIX_BIT]  = mip.external;
+        csr_rdata_int                                     = '0;
+        csr_rdata_int[CSR_MSIX_BIT]                       = mip.software;
+        csr_rdata_int[CSR_MTIX_BIT]                       = mip.timer;
+        csr_rdata_int[CSR_MEIX_BIT]                       = mip.external;
+        csr_rdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mip.fast;
       end
 
       CSR_DCSR:      csr_rdata_int = dcsr_q;
@@ -352,6 +360,7 @@ module ibex_cs_registers #(
           mie_d.software = csr_wdata_int[CSR_MSIX_BIT];
           mie_d.timer    = csr_wdata_int[CSR_MTIX_BIT];
           mie_d.external = csr_wdata_int[CSR_MEIX_BIT];
+          mie_d.fast     = csr_wdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW];
         end
       end
 
@@ -518,13 +527,16 @@ module ibex_cs_registers #(
   assign csr_msip_o = mip.software;
   assign csr_mtip_o = mip.timer;
   assign csr_meip_o = mip.external;
+  assign csr_mfip_o = mip.fast;
 
-  assign m_irq_enable_o = mstatus_q.mie;
-  assign csr_mepc_o     = mepc_q;
-  assign csr_depc_o     = depc_q;
+  assign csr_mepc_o = mepc_q;
+  assign csr_depc_o = depc_q;
 
-  assign debug_single_step_o  = dcsr_q.step;
-  assign debug_ebreakm_o      = dcsr_q.ebreakm;
+  assign csr_mstatus_mie_o   = mstatus_q.mie;
+  assign debug_single_step_o = dcsr_q.step;
+  assign debug_ebreakm_o     = dcsr_q.ebreakm;
+
+  assign irq_pending_o = csr_msip_o | csr_mtip_o | csr_meip_o | (|csr_mfip_o);
 
   // actual registers
   always_ff @(posedge clk_i or negedge rst_ni) begin

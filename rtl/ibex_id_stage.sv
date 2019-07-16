@@ -62,6 +62,7 @@ module ibex_id_stage #(
     output logic                  pc_set_o,
     output ibex_pkg::pc_sel_e     pc_mux_o,
     output ibex_pkg::exc_pc_sel_e exc_pc_mux_o,
+    output ibex_pkg::exc_cause_e  exc_cause_o,
 
     input  logic                  illegal_c_insn_i,
 
@@ -106,15 +107,12 @@ module ibex_id_stage #(
     input  logic [31:0]           lsu_addr_last_i,
 
     // Interrupt signals
+    input  logic                  csr_mstatus_mie_i,
     input  logic                  csr_msip_i,
     input  logic                  csr_mtip_i,
     input  logic                  csr_meip_i,
-    input  logic                  irq_i,
-    input  logic [4:0]            irq_id_i,
-    input  logic                  m_irq_enable_i,
-    output logic                  irq_ack_o,
-    output logic [4:0]            irq_id_o,
-    output ibex_pkg::exc_cause_e  exc_cause_o,
+    input  logic [14:0]           csr_mfip_i,
+    input  logic                  irq_pending_i,
 
     input  logic                  lsu_load_err_i,
     input  logic                  lsu_store_err_i,
@@ -181,11 +179,6 @@ module ibex_id_stage #(
 
   logic [31:0] imm_a;       // contains the immediate for operand b
   logic [31:0] imm_b;       // contains the immediate for operand b
-
-  // Signals running between controller and exception controller
-  logic       irq_req_ctrl;
-  logic [4:0] irq_id_ctrl;
-  logic       exc_ack, exc_kill;// handshake
 
   // Register file interface
   logic [4:0]  regfile_raddr_a;
@@ -435,6 +428,7 @@ module ibex_id_stage #(
       .pc_set_o                       ( pc_set_o               ),
       .pc_mux_o                       ( pc_mux_o               ),
       .exc_pc_mux_o                   ( exc_pc_mux_o           ),
+      .exc_cause_o                    ( exc_cause_o            ),
 
       // LSU
       .lsu_addr_last_i                ( lsu_addr_last_i        ),
@@ -445,24 +439,13 @@ module ibex_id_stage #(
       .branch_set_i                   ( branch_set_q           ),
       .jump_set_i                     ( jump_set               ),
 
-      .irq_i                          ( irq_i                  ),
-      // Interrupt Controller Signals
-      .irq_req_ctrl_i                 ( irq_req_ctrl           ),
-      .irq_id_ctrl_i                  ( irq_id_ctrl            ),
-      .m_IE_i                         ( m_irq_enable_i         ),
-
-      .irq_ack_o                      ( irq_ack_o              ),
-      .irq_id_o                       ( irq_id_o               ),
-
-      .exc_ack_o                      ( exc_ack                ),
-      .exc_kill_o                     ( exc_kill               ),
-
-      // interrupt pending bits from CSRs
+      // interrupt signals
+      .csr_mstatus_mie_i              ( csr_mstatus_mie_i      ),
       .csr_msip_i                     ( csr_msip_i             ),
       .csr_mtip_i                     ( csr_mtip_i             ),
       .csr_meip_i                     ( csr_meip_i             ),
-
-      .exc_cause_o                    ( exc_cause_o            ),
+      .csr_mfip_i                     ( csr_mfip_i             ),
+      .irq_pending_i                  ( irq_pending_i          ),
 
       // CSR Controller Signals
       .csr_save_if_o                  ( csr_save_if_o          ),
@@ -488,28 +471,6 @@ module ibex_id_stage #(
       // Performance Counters
       .perf_jump_o                    ( perf_jump_o            ),
       .perf_tbranch_o                 ( perf_tbranch_o         )
-  );
-
-  //////////////////////////
-  // Interrupt controller //
-  //////////////////////////
-
-  ibex_int_controller int_controller_i (
-      .clk_i                ( clk_i              ),
-      .rst_ni               ( rst_ni             ),
-
-      // to controller
-      .irq_req_ctrl_o       ( irq_req_ctrl       ),
-      .irq_id_ctrl_o        ( irq_id_ctrl        ),
-
-      .ctrl_ack_i           ( exc_ack            ),
-      .ctrl_kill_i          ( exc_kill           ),
-
-      // Interrupt signals
-      .irq_i                ( irq_i              ),
-      .irq_id_i             ( irq_id_i           ),
-
-      .m_IE_i               ( m_irq_enable_i     )
   );
 
   //////////////
