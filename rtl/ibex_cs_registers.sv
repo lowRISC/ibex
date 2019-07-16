@@ -179,6 +179,12 @@ module ibex_cs_registers #(
   logic [31:0] dscratch0_q, dscratch0_d;
   logic [31:0] dscratch1_q, dscratch1_d;
 
+  // CSRs for recoverable NMIs
+  // NOTE: these CSRS are nonstandard, see https://github.com/riscv/riscv-isa-manual/issues/261
+  Status_t     mstack_q, mstack_d;
+  logic [31:0] mstack_epc_q, mstack_epc_d;
+  logic  [5:0] mstack_cause_q, mstack_cause_d;
+
   // Hardware performance monitor signals
   logic [31:0] mcountinhibit_d, mcountinhibit_q, mcountinhibit;
   logic [31:0] mcountinhibit_force;
@@ -338,6 +344,11 @@ module ibex_cs_registers #(
     depc_d       = depc_q;
     dscratch0_d  = dscratch0_q;
     dscratch1_d  = dscratch1_q;
+
+    mstack_d       = mstack_q;
+    mstack_epc_d   = mstack_epc_q;
+    mstack_cause_d = mstack_cause_q;
+
     mcountinhibit_we = 1'b0;
     mhpmcounter_we   = '0;
     mhpmcounterh_we  = '0;
@@ -470,30 +481,40 @@ module ibex_cs_registers #(
         endcase
 
         if (debug_csr_save_i) begin
-          // all interrupts are masked, don't update cause, epc, tval dpc and
-          // mpstatus
+          // all interrupts are masked
+          // do not update cause, epc, tval, epc and status
           dcsr_d.prv   = PRIV_LVL_M;
           dcsr_d.cause = debug_cause_i;
           depc_d       = exception_pc;
         end else begin
+          mtval_d        = csr_mtval_i;
+          mstatus_d.mie  = 1'b0; // disable interrupts
+          // save current status
           mstatus_d.mpie = mstatus_q.mie;
-          mstatus_d.mie  = 1'b0;
           mstatus_d.mpp  = PRIV_LVL_M;
           mepc_d         = exception_pc;
           mcause_d       = {csr_mcause_i};
-          mtval_d        = csr_mtval_i;
+          // save previous status for recoverable NMI
+          mstack_d.mpie  = mstatus_q.mpie;
+          mstack_d.mpp   = mstatus_q.mpp;
+          mstack_epc_d   = mepc_q;
+          mstack_cause_d = mcause_q;
         end
-      end //csr_save_cause_i
+      end // csr_save_cause_i
 
-      csr_restore_mret_i: begin //MRET
+      csr_restore_mret_i: begin // MRET
+        mstatus_d.mie  = mstatus_q.mpie; // re-enable interrupts
+        // restore previous status for recoverable NMI
+        mstatus_d.mpie = mstack_q.mpie;
+        mstatus_d.mpp  = mstack_q.mpp;
+        mepc_d         = mstack_epc_q;
+        mcause_d       = mstack_cause_q;
+      end // csr_restore_mret_i
+
+      csr_restore_dret_i: begin // DRET
         mstatus_d.mie  = mstatus_q.mpie;
         mstatus_d.mpie = 1'b1;
-      end //csr_restore_mret_i
-
-      csr_restore_dret_i: begin //DRET
-        mstatus_d.mie  = mstatus_q.mpie;
-        mstatus_d.mpie = 1'b1;
-      end //csr_restore_dret_i
+      end // csr_restore_dret_i
 
       default:;
     endcase
@@ -541,41 +562,51 @@ module ibex_cs_registers #(
   // actual registers
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      mstatus_q  <= '{
+      mstatus_q      <= '{
           mie:  1'b0,
           mpie: 1'b0,
           mpp:  PRIV_LVL_M
       };
-      mie_q      <= '0;
-      mscratch_q <= '0;
-      mepc_q     <= '0;
-      mcause_q   <= '0;
-      mtval_q    <= '0;
-      dcsr_q     <= '{
+      mie_q          <= '0;
+      mscratch_q     <= '0;
+      mepc_q         <= '0;
+      mcause_q       <= '0;
+      mtval_q        <= '0;
+      dcsr_q         <= '{
           xdebugver: XDEBUGVER_NO,   // 4'h0
           cause:     DBG_CAUSE_NONE, // 3'h0
           prv:       PRIV_LVL_M,
           default:   '0
       };
-      depc_q     <= '0;
-      dscratch0_q <= '0;
-      dscratch1_q <= '0;
-    end else begin
-      // update CSRs
-      mstatus_q  <= '{
-          mie:  mstatus_d.mie,
-          mpie: mstatus_d.mpie,
+      depc_q         <= '0;
+      dscratch0_q    <= '0;
+      dscratch1_q    <= '0;
+
+      mstack_q       <= '{
+          mie:  1'b0,
+          mpie: 1'b0,
           mpp:  PRIV_LVL_M
       };
-      mie_q       <= mie_d;
-      mscratch_q  <= mscratch_d;
-      mepc_q      <= mepc_d;
-      mcause_q    <= mcause_d;
-      mtval_q     <= mtval_d;
-      dcsr_q      <= dcsr_d;
-      depc_q      <= depc_d;
-      dscratch0_q <= dscratch0_d;
-      dscratch1_q <= dscratch1_d;
+      mstack_epc_q   <= '0;
+      mstack_cause_q <= '0;
+
+    end else begin
+      // update CSRs
+      mstatus_q      <= mstatus_d;
+      mie_q          <= mie_d;
+      mscratch_q     <= mscratch_d;
+      mepc_q         <= mepc_d;
+      mcause_q       <= mcause_d;
+      mtval_q        <= mtval_d;
+      dcsr_q         <= dcsr_d;
+      depc_q         <= depc_d;
+      dscratch0_q    <= dscratch0_d;
+      dscratch1_q    <= dscratch1_d;
+
+      mstack_q       <= mstack_d;
+      mstack_epc_q   <= mstack_epc_d;
+      mstack_cause_q <= mstack_cause_d;
+
     end
   end
 
