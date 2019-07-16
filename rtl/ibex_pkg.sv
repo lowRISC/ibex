@@ -188,6 +188,7 @@ typedef enum logic [5:0] {
   EXC_CAUSE_IRQ_EXTERNAL_M     = {1'b1, 5'd11},
   // EXC_CAUSE_IRQ_FAST_0      = {1'b1, 5'd16},
   // EXC_CAUSE_IRQ_FAST_14     = {1'b1, 5'd30},
+  EXC_CAUSE_IRQ_NM             = {1'b1, 5'd31}, // == EXC_CAUSE_IRQ_FAST_15
   EXC_CAUSE_INSN_ADDR_MISA     = {1'b0, 5'd00},
   EXC_CAUSE_ILLEGAL_INSN       = {1'b0, 5'd01},
   EXC_CAUSE_BREAKPOINT         = {1'b0, 5'd03},
