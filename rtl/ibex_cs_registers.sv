@@ -113,26 +113,9 @@ module ibex_cs_registers #(
     | (0          << 23)  // X - Non-standard extensions present
     | (32'(MXL)   << 30); // M-XLEN
 
-  `define MSTATUS_UIE_BITS        0
-  `define MSTATUS_SIE_BITS        1
-  `define MSTATUS_MIE_BITS        3
-  `define MSTATUS_UPIE_BITS       4
-  `define MSTATUS_SPIE_BITS       5
-  `define MSTATUS_MPIE_BITS       7
-  `define MSTATUS_SPP_BITS        8
-  `define MSTATUS_MPP_BITS    12:11
-
   typedef struct packed {
-    //logic uie;       - unimplemented, hardwired to '0
-    // logic sie;      - unimplemented, hardwired to '0
-    // logic hie;      - unimplemented, hardwired to '0
-    logic mie;
-    //logic upie;     - unimplemented, hardwired to '0
-    // logic spie;     - unimplemented, hardwired to '0
-    // logic hpie;     - unimplemented, hardwired to '0
-    logic mpie;
-    // logic spp;      - unimplemented, hardwired to '0
-    // logic[1:0] hpp; - unimplemented, hardwired to '0
+    logic      mie;
+    logic      mpie;
     priv_lvl_e mpp;
   } Status_t;
 
@@ -238,15 +221,10 @@ module ibex_cs_registers #(
 
       // mstatus: always M-mode, contains IE bit
       CSR_MSTATUS: begin
-        csr_rdata_int = {
-            19'b0,
-            mstatus_q.mpp,
-            3'b0,
-            mstatus_q.mpie,
-            3'h0,
-            mstatus_q.mie,
-            3'h0
-        };
+        csr_rdata_int                                                   = '0;
+        csr_rdata_int[CSR_MSTATUS_MIE_BIT]                              = mstatus_q.mie;
+        csr_rdata_int[CSR_MSTATUS_MPIE_BIT]                             = mstatus_q.mpie;
+        csr_rdata_int[CSR_MSTATUS_MPP_BIT_HIGH:CSR_MSTATUS_MPP_BIT_LOW] = mstatus_q.mpp;
       end
 
       // misa
@@ -358,8 +336,8 @@ module ibex_cs_registers #(
       CSR_MSTATUS: begin
         if (csr_we_int) begin
           mstatus_d = '{
-              mie:  csr_wdata_int[`MSTATUS_MIE_BITS],
-              mpie: csr_wdata_int[`MSTATUS_MPIE_BITS],
+              mie:  csr_wdata_int[CSR_MSTATUS_MIE_BIT],
+              mpie: csr_wdata_int[CSR_MSTATUS_MPIE_BIT],
               mpp:  PRIV_LVL_M
           };
         end
