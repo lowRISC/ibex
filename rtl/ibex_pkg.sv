@@ -246,6 +246,12 @@ parameter logic [11:0] CSR_OFF_MCOUNTER       = 12'hB00; // mcounter       @ 12'
 parameter logic [11:0] CSR_OFF_MCOUNTERH      = 12'hB80; // mcounterh      @ 12'hB83 - 12'hB9F
 parameter logic [11:0] CSR_MASK_MCOUNTER      = 12'hFE0;
 
+// CSR status bits
+parameter int unsigned CSR_MSTATUS_MIE_BIT      = 3;
+parameter int unsigned CSR_MSTATUS_MPIE_BIT     = 7;
+parameter int unsigned CSR_MSTATUS_MPP_BIT_LOW  = 11;
+parameter int unsigned CSR_MSTATUS_MPP_BIT_HIGH = 12;
+
 // CSR interrupt pending/enable bits
 parameter int unsigned CSR_MSIX_BIT      = 3;
 parameter int unsigned CSR_MTIX_BIT      = 7;
