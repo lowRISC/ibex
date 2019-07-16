@@ -114,7 +114,6 @@ module ibex_core #(
   logic [15:0] instr_rdata_c_id;       // Compressed instruction sampled inside IF stage
   logic        instr_is_compressed_id;
   logic        illegal_c_insn_id;      // Illegal compressed instruction sent to ID stage
-  logic        illegal_insn_id;        // ID stage sees an illegal instruction
   logic [31:0] pc_if;                  // Program counter in IF stage
   logic [31:0] pc_id;                  // Program counter in ID stage
 
@@ -217,7 +216,8 @@ module ibex_core #(
   logic        perf_store;
 
   // for RVFI
-  logic        id_out_valid, unused_id_out_valid;
+  logic        id_out_valid, unused_id_out_valid;       // ID stage has valid output data
+  logic        illegal_insn_id, unused_illegal_insn_id; // ID stage sees an illegal instruction
 
   // RISC-V Formal Interface signals
 `ifdef RVFI
@@ -465,7 +465,8 @@ module ibex_core #(
   );
 
   // for RVFI only
-  assign unused_id_out_valid = id_out_valid;
+  assign unused_id_out_valid    = id_out_valid;
+  assign unused_illegal_insn_id = illegal_insn_id;
 
   ibex_ex_block #(
       .RV32M ( RV32M )
