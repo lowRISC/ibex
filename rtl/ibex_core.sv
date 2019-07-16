@@ -70,6 +70,7 @@ module ibex_core #(
     input  logic        irq_timer_i,
     input  logic        irq_external_i,
     input  logic [14:0] irq_fast_i,
+    input  logic        irq_nm_i,       // non-maskeable interrupt
 
     // Debug Interface
     input  logic        debug_req_i,
@@ -273,7 +274,7 @@ module ibex_core #(
 
   assign core_busy   = core_ctrl_firstfetch ? 1'b1 : core_busy_q;
 
-  assign clock_en    = core_busy | debug_req_i | irq_pending;
+  assign clock_en    = core_busy | debug_req_i | irq_pending | irq_nm_i;
 
   // main clock gate of the core
   // generates all clocks except the one for the debug unit which is
@@ -428,6 +429,7 @@ module ibex_core #(
       .csr_meip_i                   ( csr_meip               ),
       .csr_mfip_i                   ( csr_mfip               ),
       .irq_pending_i                ( irq_pending            ),
+      .irq_nm_i                     ( irq_nm_i               ),
 
       // Debug Signal
       .debug_cause_o                ( debug_cause            ),

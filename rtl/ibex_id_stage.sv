@@ -113,6 +113,7 @@ module ibex_id_stage #(
     input  logic                  csr_meip_i,
     input  logic [14:0]           csr_mfip_i,
     input  logic                  irq_pending_i,
+    input  logic                  irq_nm_i,
 
     input  logic                  lsu_load_err_i,
     input  logic                  lsu_store_err_i,
@@ -446,6 +447,7 @@ module ibex_id_stage #(
       .csr_meip_i                     ( csr_meip_i             ),
       .csr_mfip_i                     ( csr_mfip_i             ),
       .irq_pending_i                  ( irq_pending_i          ),
+      .irq_nm_i                       ( irq_nm_i               ),
 
       // CSR Controller Signals
       .csr_save_if_o                  ( csr_save_if_o          ),

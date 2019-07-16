@@ -74,6 +74,7 @@ module ibex_controller (
     input  logic                  csr_meip_i,            // external interrupt pending
     input  logic [14:0]           csr_mfip_i,            // fast interrupt pending
     input  logic                  irq_pending_i,         // interrupt request pending
+    input  logic                  irq_nm_i,              // non-maskeable interrupt
 
     // debug signals
     input  logic                  debug_req_i,
@@ -111,6 +112,7 @@ module ibex_controller (
 
   ctrl_fsm_e ctrl_fsm_cs, ctrl_fsm_ns;
 
+  logic nmi_mode_q, nmi_mode_d;
   logic debug_mode_q, debug_mode_d;
   logic load_err_q, load_err_d;
   logic store_err_q, store_err_d;
@@ -165,7 +167,8 @@ module ibex_controller (
   assign enter_debug_mode = debug_req_i & ~debug_mode_q;
 
   // interrupts including NMI are ignored while in debug mode [Debug Spec v0.13.2, p.39]
-  assign handle_irq       = irq_pending_i & csr_mstatus_mie_i & ~debug_mode_q;
+  assign handle_irq       = ~debug_mode_q &
+      ((irq_nm_i & ~nmi_mode_q) | (irq_pending_i & csr_mstatus_mie_i));
 
   // generate ID of fast interrupts, highest priority to highest ID
   always_comb begin : gen_mfip_id
@@ -221,6 +224,7 @@ module ibex_controller (
     debug_csr_save_o      = 1'b0;
     debug_cause_o         = DBG_CAUSE_EBREAK;
     debug_mode_d          = debug_mode_q;
+    nmi_mode_d            = 1'b0;
 
     perf_tbranch_o        = 1'b0;
     perf_jump_o           = 1'b0;
@@ -263,7 +267,7 @@ module ibex_controller (
 
         // normal execution flow
         // in debug mode or single step mode we leave immediately (wfi=nop)
-        if (irq_pending_i || debug_req_i || debug_mode_q || debug_single_step_i) begin
+        if (irq_nm_i || irq_pending_i || debug_req_i || debug_mode_q || debug_single_step_i) begin
           ctrl_fsm_ns  = FIRST_FETCH;
         end
       end
@@ -361,7 +365,10 @@ module ibex_controller (
           csr_save_cause_o = 1'b1;
 
           // interrupt priorities according to Privileged Spec v1.11 p.31
-          if (csr_mfip_i) begin
+          if (irq_nm_i && !nmi_mode_q) begin
+            exc_cause_o = EXC_CAUSE_IRQ_NM;
+            nmi_mode_d  = 1'b1; // enter NMI mode
+          end else if (csr_mfip_i != 15'b0) begin
             exc_cause_o = exc_cause_e'({1'b1, mfip_id});
           end else if (csr_meip_i) begin
             exc_cause_o = EXC_CAUSE_IRQ_EXTERNAL_M;
@@ -506,6 +513,9 @@ module ibex_controller (
             pc_mux_o              = PC_ERET;
             pc_set_o              = 1'b1;
             csr_restore_mret_id_o = 1'b1;
+            if (nmi_mode_q) begin
+              nmi_mode_d          = 1'b0; // exit NMI mode
+            end
           end else if (dret_insn_i) begin
             pc_mux_o              = PC_DRET;
             pc_set_o              = 1'b1;
@@ -551,11 +561,13 @@ module ibex_controller (
   always_ff @(posedge clk_i or negedge rst_ni) begin : update_regs
     if (!rst_ni) begin
       ctrl_fsm_cs  <= RESET;
+      nmi_mode_q   <= 1'b0;
       debug_mode_q <= 1'b0;
       load_err_q   <= 1'b0;
       store_err_q  <= 1'b0;
     end else begin
       ctrl_fsm_cs  <= ctrl_fsm_ns;
+      nmi_mode_q   <= nmi_mode_d;
       debug_mode_q <= debug_mode_d;
       load_err_q   <= load_err_d;
       store_err_q  <= store_err_d;
