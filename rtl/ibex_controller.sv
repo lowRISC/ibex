@@ -56,6 +56,7 @@ module ibex_controller (
     output ibex_pkg::pc_sel_e     pc_mux_o,              // IF stage fetch address selector
                                                          // (boot, normal, exception...)
     output ibex_pkg::exc_pc_sel_e exc_pc_mux_o,          // IF stage selector for exception PC
+    output ibex_pkg::exc_cause_e  exc_cause_o,           // for IF stage, CSRs
 
     // LSU
     input  logic [31:0]           lsu_addr_last_i,       // for mtval
@@ -66,25 +67,13 @@ module ibex_controller (
     input  logic                  branch_set_i,          // branch taken set signal
     input  logic                  jump_set_i,            // jump taken set signal
 
-    // External Interrupt Req Signals, used to wake up from wfi even if the interrupt is not taken
-    input  logic                  irq_i,
-    // Interrupt Controller Signals
-    input  logic                  irq_req_ctrl_i,
-    input  logic [4:0]            irq_id_ctrl_i,
-    input  logic                  m_IE_i,                // interrupt enable bit from CSR
-                                                         // (M mode)
-    output logic                  irq_ack_o,
-    output logic [4:0]            irq_id_o,
-
-    output logic                  exc_ack_o,
-    output logic                  exc_kill_o,
-
-    // interrupt pending bits from CSRs
+    // interrupt signals
+    input  logic                  csr_mstatus_mie_i,     // M-mode interrupt enable bit
     input  logic                  csr_msip_i,            // software interrupt pending
     input  logic                  csr_mtip_i,            // timer interrupt pending
     input  logic                  csr_meip_i,            // external interrupt pending
-
-    output ibex_pkg::exc_cause_e  exc_cause_o,           // for IF stage, CSRs
+    input  logic [14:0]           csr_mfip_i,            // fast interrupt pending
+    input  logic                  irq_pending_i,         // interrupt request pending
 
     // debug signals
     input  logic                  debug_req_i,
@@ -133,8 +122,10 @@ module ibex_controller (
   logic exc_req_lsu;
   logic special_req;
   logic enter_debug_mode;
-  logic irq;
   logic handle_irq;
+
+  logic [4:0] mfip_id;
+  logic       unused_csr_mtip;
 
 `ifndef SYNTHESIS
   // synopsys translate_off
@@ -173,10 +164,30 @@ module ibex_controller (
 
   assign enter_debug_mode = debug_req_i & ~debug_mode_q;
 
-  assign irq              = csr_msip_i | csr_mtip_i | csr_meip_i;
   // interrupts including NMI are ignored while in debug mode [Debug Spec v0.13.2, p.39]
-  assign handle_irq       = (irq | irq_req_ctrl_i) & m_IE_i & ~debug_mode_q;
-  assign exc_kill_o       = 1'b0;
+  assign handle_irq       = irq_pending_i & csr_mstatus_mie_i & ~debug_mode_q;
+
+  // generate ID of fast interrupts, highest priority to highest ID
+  always_comb begin : gen_mfip_id
+    if      (csr_mfip_i[14]) mfip_id = 5'd14;
+    else if (csr_mfip_i[13]) mfip_id = 5'd13;
+    else if (csr_mfip_i[12]) mfip_id = 5'd12;
+    else if (csr_mfip_i[11]) mfip_id = 5'd11;
+    else if (csr_mfip_i[10]) mfip_id = 5'd10;
+    else if (csr_mfip_i[ 9]) mfip_id = 5'd9;
+    else if (csr_mfip_i[ 8]) mfip_id = 5'd8;
+    else if (csr_mfip_i[ 7]) mfip_id = 5'd7;
+    else if (csr_mfip_i[ 6]) mfip_id = 5'd6;
+    else if (csr_mfip_i[ 5]) mfip_id = 5'd5;
+    else if (csr_mfip_i[ 5]) mfip_id = 5'd5;
+    else if (csr_mfip_i[ 4]) mfip_id = 5'd4;
+    else if (csr_mfip_i[ 3]) mfip_id = 5'd3;
+    else if (csr_mfip_i[ 2]) mfip_id = 5'd2;
+    else if (csr_mfip_i[ 1]) mfip_id = 5'd1;
+    else                     mfip_id = 5'd0;
+  end
+
+  assign unused_csr_mtip = csr_mtip_i;
 
   /////////////////////
   // Core controller //
@@ -185,8 +196,6 @@ module ibex_controller (
   always_comb begin
     // Default values
     instr_req_o           = 1'b1;
-
-    exc_ack_o             = 1'b0;
 
     csr_save_if_o         = 1'b0;
     csr_save_id_o         = 1'b0;
@@ -208,8 +217,6 @@ module ibex_controller (
 
     halt_if               = 1'b0;
     halt_id               = 1'b0;
-    irq_ack_o             = 1'b0;
-    irq_id_o              = irq_id_ctrl_i;
 
     debug_csr_save_o      = 1'b0;
     debug_cause_o         = DBG_CAUSE_EBREAK;
@@ -256,7 +263,7 @@ module ibex_controller (
 
         // normal execution flow
         // in debug mode or single step mode we leave immediately (wfi=nop)
-        if (irq_i || irq || debug_req_i || debug_mode_q || debug_single_step_i) begin
+        if (irq_pending_i || debug_req_i || debug_mode_q || debug_single_step_i) begin
           ctrl_fsm_ns  = FIRST_FETCH;
         end
       end
@@ -345,28 +352,27 @@ module ibex_controller (
       end // DECODE
 
       IRQ_TAKEN: begin
-        pc_mux_o         = PC_EXC;
-        pc_set_o         = 1'b1;
+        if (handle_irq) begin
+          pc_mux_o         = PC_EXC;
+          pc_set_o         = 1'b1;
+          exc_pc_mux_o     = EXC_PC_IRQ;
 
-        exc_pc_mux_o     = EXC_PC_IRQ;
+          csr_save_if_o    = 1'b1;
+          csr_save_cause_o = 1'b1;
 
-        // interrupt priorities according to Privileged Spec v1.11 p.31
-        if (csr_meip_i) begin
-          exc_cause_o    = EXC_CAUSE_IRQ_EXTERNAL_M;
-        end else if (csr_msip_i) begin
-          exc_cause_o    = EXC_CAUSE_IRQ_SOFTWARE_M;
-        end else if (csr_mtip_i) begin
-          exc_cause_o    = EXC_CAUSE_IRQ_TIMER_M;
-        end else begin
-          exc_cause_o    = exc_cause_e'({1'b1, irq_id_ctrl_i});
-          irq_ack_o      = 1'b1;
-          exc_ack_o      = 1'b1;
+          // interrupt priorities according to Privileged Spec v1.11 p.31
+          if (csr_mfip_i) begin
+            exc_cause_o = exc_cause_e'({1'b1, mfip_id});
+          end else if (csr_meip_i) begin
+            exc_cause_o = EXC_CAUSE_IRQ_EXTERNAL_M;
+          end else if (csr_msip_i) begin
+            exc_cause_o = EXC_CAUSE_IRQ_SOFTWARE_M;
+          end else begin // csr_mtip_i
+            exc_cause_o = EXC_CAUSE_IRQ_TIMER_M;
+          end
         end
 
-        csr_save_cause_o = 1'b1;
-        csr_save_if_o    = 1'b1;
-
-        ctrl_fsm_ns      = DECODE;
+        ctrl_fsm_ns = DECODE;
       end
 
       DBG_TAKEN_IF: begin

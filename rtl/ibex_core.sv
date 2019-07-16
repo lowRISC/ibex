@@ -69,10 +69,7 @@ module ibex_core #(
     input  logic        irq_software_i,
     input  logic        irq_timer_i,
     input  logic        irq_external_i,
-    input  logic        irq_i,                 // level sensitive IR lines
-    input  logic [4:0]  irq_id_i,
-    output logic        irq_ack_o,             // irq ack
-    output logic [4:0]  irq_id_o,
+    input  logic [14:0] irq_fast_i,
 
     // Debug Interface
     input  logic        debug_req_i,
@@ -190,10 +187,12 @@ module ibex_core #(
   logic        instr_req_int;          // Id stage asserts a req to instruction core interface
 
   // Interrupts
+  logic        irq_pending;
   logic        csr_msip;
   logic        csr_mtip;
   logic        csr_meip;
-  logic        m_irq_enable;
+  logic [14:0] csr_mfip;
+  logic        csr_mstatus_mie;
   logic [31:0] csr_mepc, csr_depc;
 
   logic        csr_save_if;
@@ -274,7 +273,7 @@ module ibex_core #(
 
   assign core_busy   = core_ctrl_firstfetch ? 1'b1 : core_busy_q;
 
-  assign clock_en    = core_busy | irq_i | csr_meip | csr_mtip | csr_msip | debug_req_i;
+  assign clock_en    = core_busy | debug_req_i | irq_pending;
 
   // main clock gate of the core
   // generates all clocks except the one for the debug unit which is
@@ -423,14 +422,12 @@ module ibex_core #(
       .lsu_store_err_i              ( lsu_store_err          ),
 
       // Interrupt Signals
+      .csr_mstatus_mie_i            ( csr_mstatus_mie        ),
       .csr_msip_i                   ( csr_msip               ),
       .csr_mtip_i                   ( csr_mtip               ),
       .csr_meip_i                   ( csr_meip               ),
-      .irq_i                        ( irq_i                  ), // incoming interrupts
-      .irq_id_i                     ( irq_id_i               ),
-      .m_irq_enable_i               ( m_irq_enable           ),
-      .irq_ack_o                    ( irq_ack_o              ),
-      .irq_id_o                     ( irq_id_o               ),
+      .csr_mfip_i                   ( csr_mfip               ),
+      .irq_pending_i                ( irq_pending            ),
 
       // Debug Signal
       .debug_cause_o                ( debug_cause            ),
@@ -572,10 +569,13 @@ module ibex_core #(
       .irq_software_i          ( irq_software_i         ),
       .irq_timer_i             ( irq_timer_i            ),
       .irq_external_i          ( irq_external_i         ),
+      .irq_fast_i              ( irq_fast_i             ),
+      .irq_pending_o           ( irq_pending            ),
       .csr_msip_o              ( csr_msip               ),
       .csr_mtip_o              ( csr_mtip               ),
       .csr_meip_o              ( csr_meip               ),
-      .m_irq_enable_o          ( m_irq_enable           ),
+      .csr_mfip_o              ( csr_mfip               ),
+      .csr_mstatus_mie_o       ( csr_mstatus_mie        ),
       .csr_mepc_o              ( csr_mepc               ),
 
       // debug

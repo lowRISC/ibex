@@ -4,7 +4,6 @@ ibex_compressed_decoder.sv
 ibex_controller.sv
 ibex_cs_registers.sv
 ibex_decoder.sv
-ibex_int_controller.sv
 ibex_ex_block.sv
 ibex_id_stage.sv
 ibex_if_stage.sv

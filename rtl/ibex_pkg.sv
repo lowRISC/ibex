@@ -186,6 +186,8 @@ typedef enum logic [5:0] {
   EXC_CAUSE_IRQ_SOFTWARE_M     = {1'b1, 5'd03},
   EXC_CAUSE_IRQ_TIMER_M        = {1'b1, 5'd07},
   EXC_CAUSE_IRQ_EXTERNAL_M     = {1'b1, 5'd11},
+  // EXC_CAUSE_IRQ_FAST_0      = {1'b1, 5'd16},
+  // EXC_CAUSE_IRQ_FAST_14     = {1'b1, 5'd30},
   EXC_CAUSE_INSN_ADDR_MISA     = {1'b0, 5'd00},
   EXC_CAUSE_ILLEGAL_INSN       = {1'b0, 5'd01},
   EXC_CAUSE_BREAKPOINT         = {1'b0, 5'd03},
@@ -244,8 +246,10 @@ parameter logic [11:0] CSR_OFF_MCOUNTERH      = 12'hB80; // mcounterh      @ 12'
 parameter logic [11:0] CSR_MASK_MCOUNTER      = 12'hFE0;
 
 // CSR interrupt pending/enable bits
-parameter int unsigned CSR_MSIX_BIT = 3;
-parameter int unsigned CSR_MTIX_BIT = 7;
-parameter int unsigned CSR_MEIX_BIT = 11;
+parameter int unsigned CSR_MSIX_BIT      = 3;
+parameter int unsigned CSR_MTIX_BIT      = 7;
+parameter int unsigned CSR_MEIX_BIT      = 11;
+parameter int unsigned CSR_MFIX_BIT_LOW  = 16;
+parameter int unsigned CSR_MFIX_BIT_HIGH = 30;
 
 endpackage
