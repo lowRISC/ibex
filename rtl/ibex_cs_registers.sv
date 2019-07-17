@@ -72,7 +72,6 @@ module ibex_cs_registers #(
     input  logic                 csr_save_if_i,
     input  logic                 csr_save_id_i,
     input  logic                 csr_restore_mret_i,
-    input  logic                 csr_restore_dret_i,
     input  logic                 csr_save_cause_i,
     input  logic [31:0]          csr_mtvec_i,
     input  ibex_pkg::exc_cause_e csr_mcause_i,
@@ -488,11 +487,6 @@ module ibex_cs_registers #(
         mepc_d         = mstack_epc_q;
         mcause_d       = mstack_cause_q;
       end // csr_restore_mret_i
-
-      csr_restore_dret_i: begin // DRET
-        mstatus_d.mie  = mstatus_q.mpie;
-        mstatus_d.mpie = 1'b1;
-      end // csr_restore_dret_i
 
       default:;
     endcase

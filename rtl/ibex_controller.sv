@@ -86,7 +86,6 @@ module ibex_controller (
     output logic                  csr_save_if_o,
     output logic                  csr_save_id_o,
     output logic                  csr_restore_mret_id_o,
-    output logic                  csr_restore_dret_id_o,
     output logic                  csr_save_cause_o,
     output logic [31:0]           csr_mtval_o,
 
@@ -203,7 +202,6 @@ module ibex_controller (
     csr_save_if_o         = 1'b0;
     csr_save_id_o         = 1'b0;
     csr_restore_mret_id_o = 1'b0;
-    csr_restore_dret_id_o = 1'b0;
     csr_save_cause_o      = 1'b0;
     csr_mtval_o           = '0;
 
@@ -519,7 +517,6 @@ module ibex_controller (
           end else if (dret_insn_i) begin
             pc_mux_o              = PC_DRET;
             pc_set_o              = 1'b1;
-            csr_restore_dret_id_o = 1'b1;
             debug_mode_d          = 1'b0;
           end else if (wfi_insn_i) begin
             ctrl_fsm_ns           = WAIT_SLEEP;

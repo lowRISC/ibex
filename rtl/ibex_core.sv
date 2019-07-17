@@ -199,7 +199,6 @@ module ibex_core #(
   logic        csr_save_if;
   logic        csr_save_id;
   logic        csr_restore_mret_id;
-  logic        csr_restore_dret_id;
   logic        csr_save_cause;
   logic [31:0] csr_mtvec;
   logic [31:0] csr_mtval;
@@ -400,10 +399,9 @@ module ibex_core #(
       // CSR ID/EX
       .csr_access_o                 ( csr_access             ),
       .csr_op_o                     ( csr_op                 ),
-      .csr_save_if_o                ( csr_save_if            ), // control signal to save pc
-      .csr_save_id_o                ( csr_save_id            ), // control signal to save pc
-      .csr_restore_mret_id_o        ( csr_restore_mret_id    ), // control signal to restore pc
-      .csr_restore_dret_id_o        ( csr_restore_dret_id    ), // control signal to restore pc
+      .csr_save_if_o                ( csr_save_if            ), // control signal to save PC
+      .csr_save_id_o                ( csr_save_id            ), // control signal to save PC
+      .csr_restore_mret_id_o        ( csr_restore_mret_id    ), // restore mstatus upon MRET
       .csr_save_cause_o             ( csr_save_cause         ),
       .csr_mtval_o                  ( csr_mtval              ),
       .illegal_csr_insn_i           ( illegal_csr_insn_id    ),
@@ -593,7 +591,6 @@ module ibex_core #(
       .csr_save_if_i           ( csr_save_if            ),
       .csr_save_id_i           ( csr_save_id            ),
       .csr_restore_mret_i      ( csr_restore_mret_id    ),
-      .csr_restore_dret_i      ( csr_restore_dret_id    ),
       .csr_save_cause_i        ( csr_save_cause         ),
       .csr_mtvec_i             ( csr_mtvec              ),
       .csr_mcause_i            ( exc_cause              ),
