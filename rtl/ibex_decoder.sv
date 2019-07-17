@@ -253,19 +253,20 @@ module ibex_decoder #(
 
       OPCODE_BRANCH: begin // Branch
         branch_in_dec_o       = 1'b1;
+        // Check branch condition selection
+        unique case (instr[14:12])
+          3'b000:  alu_operator_o = ALU_EQ;
+          3'b001:  alu_operator_o = ALU_NE;
+          3'b100:  alu_operator_o = ALU_LT;
+          3'b101:  alu_operator_o = ALU_GE;
+          3'b110:  alu_operator_o = ALU_LTU;
+          3'b111:  alu_operator_o = ALU_GEU;
+          default: illegal_insn   = 1'b1;
+        endcase
         if (instr_new_i) begin
           // Evaluate branch condition
           alu_op_a_mux_sel_o  = OP_A_REG_A;
           alu_op_b_mux_sel_o  = OP_B_REG_B;
-          unique case (instr[14:12])
-            3'b000:  alu_operator_o = ALU_EQ;
-            3'b001:  alu_operator_o = ALU_NE;
-            3'b100:  alu_operator_o = ALU_LT;
-            3'b101:  alu_operator_o = ALU_GE;
-            3'b110:  alu_operator_o = ALU_LTU;
-            3'b111:  alu_operator_o = ALU_GEU;
-            default: illegal_insn   = 1'b1;
-          endcase
         end else begin
           // Calculate jump target in EX
           alu_op_a_mux_sel_o  = OP_A_CURRPC;
@@ -422,7 +423,7 @@ module ibex_decoder #(
 
         if (instr[31]) begin
           illegal_insn = 1'b1;
-        end else if (!instr[28]) begin // non bit-manipulation instructions
+        end else begin
           unique case ({instr[30:25], instr[14:12]})
             // RV32I ALU operations
             {6'b00_0000, 3'b000}: alu_operator_o = ALU_ADD;   // Add
