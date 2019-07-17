@@ -48,10 +48,11 @@ Instantiation Template
       .data_err_i     (),
 
       // Interrupt inputs
-      .irq_i          (),
-      .irq_id_i       (),
-      .irq_ack_o      (),
-      .irq_id_o       (),
+      .irq_software_i (),
+      .irq_timer_i    (),
+      .irq_external_i (),
+      .irq_fast_i     (),
+      .irq_nm_i       (),
 
       // Debug interface
       .debug_req_i    (),
@@ -103,7 +104,7 @@ Interfaces
 +-------------------------+------------------------------------------------------------------------+
 | ``data_*``              | Load-store unit interface, see :ref:`load-store-unit`                  |
 +-------------------------+------------------------------------------------------------------------+
-| ``irq_*``               | Interrupt interface, see :ref:`interrupts`                             |
+| ``irq_*``               | Interrupt inputs, see :ref:`exceptions-interrupts`                     |
 +-------------------------+------------------------------------------------------------------------+
 | ``debug_*``             | Debug interface, see :ref:`debug-support`                              |
 +-------------------------+-------------------------+-----+----------------------------------------+

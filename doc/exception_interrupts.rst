@@ -6,7 +6,7 @@ Exceptions and Interrupts
 Ibex implements trap handling for interrupts and exceptions according to the RISC-V Privileged Specification, version 1.11.
 
 All exceptions cause the core to jump to the base address of the vector table in the ``mtvec`` CSR.
-Interrupts are handled in vectored mode, i.e., the core jumps to the base address plus four times the interrupt cause number.
+Interrupts are handled in vectored mode, i.e., the core jumps to the base address plus four times the interrupt ID.
 
 The base address of the vector table is given by the boot address (must be aligned to 256 bytes, i.e., its least significant byte must be 0x00).
 The most significant 3 bytes of the boot address given to the core are used for the first instruction fetch of the core and as the basis of the interrupt vector table.
@@ -18,12 +18,47 @@ It is assumed that the boot address is supplied via a register to avoid long pat
 Interrupts
 ----------
 
-Interrupts can only be enabled/disabled on a global basis and not individually.
-The global interrupt enable is done via the ``mstatus`` CSR.
+Ibex supports the following interrupts.
 
-It is assumed that there is a separate event/interrupt controller outside of the core that performs masking and buffering of multiple interrupt requests.
-When an interrupt is taken, the core gives an acknowledge signal to the external event/interrupt controller as well as the interrupt ID taken.
-Check :ref:`interrupts` for more details.
++-------------------------+-------+--------------------------------------------------+
+| Interrupt Input Signal  | ID    | Description                                      |
++=========================+=======+==================================================+
+| ``irq_nm_i``            | 31    | Non-maskable interrupt (NMI)                     |
++-------------------------+-------+--------------------------------------------------+
+| ``irq_fast_i[14:0]``    | 30:16 | 15 fast, local interrupts                        |
++-------------------------+-------+--------------------------------------------------+
+| ``irq_external_i``      | 11    | Connected to platform-level interrupt controller |
++-------------------------+-------+--------------------------------------------------+
+| ``irq_timer_i``         | 7     | Connected to timer module                        |
++-------------------------+-------+--------------------------------------------------+
+| ``irq_software_i``      | 3     | Connected to memory-mapped (inter-processor)     |
+|                         |       | interrupt register                               |
++-------------------------+-------+--------------------------------------------------+
+
+All interrupts except for the non-maskable interrupt (NMI) are controlled via the ``mstatus``, ``mie`` and ``mip`` CSRs.
+After reset, all interrupts are disabled.
+To enable interrupts, both the global interrupt enable (MIE) bit in the ``mstatus`` CSR and the corresponding individual interrupt enable bit in the ``mie`` CSR need to be set.
+For more information, see the :ref:`cs-registers` documentation.
+
+If multiple interrupts are pending, the highest priority is given to the interrupt with the highest ID.
+
+The NMI is enabled independent of the values in the ``mstatus`` and ``mie`` CSRs, and it is not visible through the ``mip`` CSR.
+It has interrupt ID 31, i.e., it has the highest priority of all interrupts and the core jumps to the trap-handler base address (in ``mtvec``) plus 0x7C to handle the NMI.
+
+All interrupt lines are level-sensitive.
+It is assumed that the interrupt handler signals completion of the handling routine to the interrupt source, e.g., through a memory-mapped register, which then deasserts the corresponding interrupt line.
+
+In debug mode, all interrupts including the NMI are ignored independent of ``mstatus``.MIE and the content of the ``mie`` CSR.
+
+
+Recoverable Non-Maskable Interrupt
+----------------------------------
+
+To support recovering from an NMI happening during a trap handling routine, Ibex features additional CSRs for backing up ``mstatus``.MPP, ``mstatus``.MPIE, ``mepc`` and ``mcause``.
+These CSRs are not accessible by software running on the core.
+
+These CSRs are nonstandard.
+For more information, see `the corresponding proposal <https://github.com/riscv/riscv-isa-manual/issues/261>`_.
 
 
 Exceptions

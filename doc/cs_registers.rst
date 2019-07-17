@@ -12,6 +12,8 @@ Ibex implements all the Control and Status Registers (CSRs) listed in the follow
 +---------+--------------------+--------+-----------------------------------------------+
 |  0x301  | ``misa``           | WARL   | Machine ISA and Extensions                    |
 +---------+--------------------+--------+-----------------------------------------------+
+|  0x304  | ``mie``            | WARL   | Machine Interrupt Enable Register             |
++---------+--------------------+--------+-----------------------------------------------+
 |  0x305  | ``mtvec``          | WARL   | Machine Trap-Vector Base Address              |
 +---------+--------------------+--------+-----------------------------------------------+
 |  0x320  | ``mcountinhibit``  | RW     | Machine Counter-Inhibit Register              |
@@ -20,7 +22,7 @@ Ibex implements all the Control and Status Registers (CSRs) listed in the follow
 +---------+--------------------+--------+-----------------------------------------------+
 |     .             .               .                    .                              |
 +---------+--------------------+--------+-----------------------------------------------+
-|  0x33F  | ``mhpmevent31``    | WARL   | Machine performance-monitoring event selector |
+|  0x33F  | ``mhpmevent31``    | WARL   | Machine Performance-Monitoring Event Selector |
 +---------+--------------------+--------+-----------------------------------------------+
 |  0x340  | ``mscratch``       | RW     | Machine Scratch Register                      |
 +---------+--------------------+--------+-----------------------------------------------+
@@ -29,6 +31,8 @@ Ibex implements all the Control and Status Registers (CSRs) listed in the follow
 |  0x342  | ``mcause``         | WLRL   | Machine Cause Register                        |
 +---------+--------------------+--------+-----------------------------------------------+
 |  0x343  | ``mtval``          | WARL   | Machine Trap Value Register                   |
++---------+--------------------+--------+-----------------------------------------------+
+|  0x344  | ``mip``            | R      | Machine Interrupt Pending Register            |
 +---------+--------------------+--------+-----------------------------------------------+
 |  0x7B0  | ``dcsr``           | RW     | Debug Control and Status Register             |
 +---------+--------------------+--------+-----------------------------------------------+
@@ -96,6 +100,30 @@ CSR Address: ``0x301``
 On Ibex, ``misa`` is hard-wired, i.e. it will remain unchanged after any write.
 
 
+Machine Interrupt Enable Register (mie)
+---------------------------------------
+
+CSR Address: ``0x304``
+
+Reset Value: ``0x0000_0000``
+
+``mie`` is a WARL register which allows to individually enable/disable local interrupts.
+After reset, all interrupts are disabled.
+
++-------+--------------------------------------------------------------------------------------+
+| Bit#  | Interrupt                                                                            |
++-------+--------------------------------------------------------------------------------------+
+| 30:16 | Machine Fast Interrupt Enables: Set bit x+16 to enable                               |
+|       | fast interrupt ``irq_fast_i[x]``.                                                    |
++-------+--------------------------------------------------------------------------------------+
+| 11    | **Machine External Interrupt Enable (MEIE):** If set, ``irq_external_i`` is enabled. |
++-------+--------------------------------------------------------------------------------------+
+| 7     | **Machine Timer Interrupt Enable (MTIE):** If set, ``irq_timer_i`` is enabled.       |
++-------+--------------------------------------------------------------------------------------+
+| 3     | **Machine Software Interrupt Enable (MSIE):** if set, ``irq_software_i`` is enabled. |
++-------+--------------------------------------------------------------------------------------+
+
+
 Machine Trap-Vector Base Address (mtvec)
 ----------------------------------------
 
@@ -151,6 +179,30 @@ When an exception is encountered, this register can hold exception-specific info
  * In the case of illegal instruction exceptions, ``mtval`` holds the actual faulting instruction.
 
 For all other exceptions, ``mtval`` is 0.
+
+
+Machine Interrupt Pending Register (mip)
+----------------------------------------
+
+CSR Address: ``0x344``
+
+Reset Value: ``0x0000_0000``
+
+``mip`` is a read-only register indicating pending interrupt requests.
+A particular bit in the register reads as one if the corresponding interrupt input signal is high and if the interrupt is enabled in the ``mie`` CSR.
+
++-------+---------------------------------------------------------------------------------------+
+| Bit#  | Interrupt                                                                             |
++-------+---------------------------------------------------------------------------------------+
+| 30:16 | Machine Fast Interrupts Pending: If bit x+16 is set,                                  |
+|       | fast interrupt ``irq_fast_i[x]`` is pending.                                          |
++-------+---------------------------------------------------------------------------------------+
+| 11    | **Machine External Interrupt Pending (MEIP):** If set, ``irq_external_i`` is pending. |
++-------+---------------------------------------------------------------------------------------+
+| 7     | **Machine Timer Interrupt Pending (MTIP):** If set, ``irq_timer_i`` is pending.       |
++-------+---------------------------------------------------------------------------------------+
+| 3     | **Machine Software Interrupt Pending (MSIP):** if set, ``irq_software_i`` is pending. |
++-------+---------------------------------------------------------------------------------------+
 
 
 .. _csr-mhartid:
