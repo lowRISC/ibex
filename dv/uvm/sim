@@ -68,10 +68,10 @@ fi
 
 OUT="$RUN_DIR/rtl_sim"
 CWD=`pwd`
-OPTS=""
 
 # Run each test
 while read asm_test; do
+  OPTS=""
   SRC=$(echo "$asm_test" | sed 's/^.*\///g' | sed 's/\.S>*$//g')
   BINFILE="$asm_test.bin"
   mkdir -p $OUT/$SRC
@@ -89,10 +89,10 @@ while read asm_test; do
               -assert nopostproc \
               -cm_name test_${SEED}"
   fi
-  if [[ $BINFILE =~ ebreak ]]; then
+  if [[ "$BINFILE" =~ "ebreak" ]]; then
     OPTS="+enable_debug_seq=1"
   fi
-  if [[ $BINFILE =~ wfi ]]; then
+  if [[ "$BINFILE" =~ "wfi" ]]; then
     OPTS="+enable_irq_seq=1"
   fi
   CMD="$OUT/vcs_simv +UVM_TESTNAME=core_ibex_base_test \
