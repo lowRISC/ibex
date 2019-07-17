@@ -14,7 +14,6 @@ Ibex User Manual
    cs_registers
    performance_counters
    exception_interrupts
-   interrupts
    debug
    tracer
    rvfi
