@@ -323,7 +323,7 @@ module ibex_controller (
         if (!stall && !special_req) begin
           if (enter_debug_mode) begin
             // enter debug mode
-            ctrl_fsm_ns = DBG_TAKEN_ID;
+            ctrl_fsm_ns = DBG_TAKEN_IF;
             halt_if     = 1'b1;
             halt_id     = 1'b1;
 
@@ -382,19 +382,17 @@ module ibex_controller (
         // enter debug mode and save PC in ID to dpc, used when encountering
         // 1. EBREAK during debug mode
         // 2. EBREAK with forced entry into debug mode (ebreakm or ebreaku set).
-        // 3. halt request during decode
         // regular ebreak's go through FLUSH.
         //
-        // for 1. do not update dcsr and dpc, for 2. and 3. do so [Debug Spec v0.13.2, p.39]
+        // for 1. do not update dcsr and dpc, for 2. do so [Debug Spec v0.13.2, p.39]
         // jump to debug exception handler in debug memory
-        if (ebrk_insn_i || debug_req_i) begin
+        if (ebrk_insn_i) begin
           pc_mux_o     = PC_EXC;
           pc_set_o     = 1'b1;
           exc_pc_mux_o = EXC_PC_DBD;
 
           // update dcsr and dpc
-          if ((ebrk_insn_i && debug_ebreakm_i && !debug_mode_q) || // ebreak with forced entry
-              (enter_debug_mode)) begin // halt request
+          if (debug_ebreakm_i && !debug_mode_q) begin // ebreak with forced entry
 
             // dpc (set to the address of the EBREAK, i.e. set to PC in ID stage)
             csr_save_cause_o = 1'b1;
@@ -402,11 +400,7 @@ module ibex_controller (
 
             // dcsr
             debug_csr_save_o = 1'b1;
-            if (debug_req_i) begin
-              debug_cause_o = DBG_CAUSE_HALTREQ;
-            end else begin
-              debug_cause_o = DBG_CAUSE_EBREAK;
-            end
+            debug_cause_o    = DBG_CAUSE_EBREAK;
           end
 
           // enter debug mode
