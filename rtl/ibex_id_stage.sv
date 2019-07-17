@@ -622,7 +622,7 @@ module ibex_id_stage #(
         if ((data_req_dec & lsu_valid_i) | (~data_req_dec & ex_valid_i)) begin
           id_wb_fsm_ns            = IDLE;
           instr_multicycle_done_n = 1'b1;
-          regfile_we_wb           = regfile_we_dec;
+          regfile_we_wb           = regfile_we_dec & ~lsu_load_err_i;
           instr_ret_o             = 1'b1;
         end else begin
           stall_lsu               = data_req_dec;
