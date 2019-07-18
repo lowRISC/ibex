@@ -29,32 +29,32 @@
 module ibex_ex_block #(
     parameter bit RV32M = 1
 ) (
-    input  logic                  clk_i,
-    input  logic                  rst_ni,
+    input  logic              clk_i,
+    input  logic              rst_ni,
 
     // ALU
-    input  ibex_defines::alu_op_e alu_operator_i,
-    input  logic [31:0]           alu_operand_a_i,
-    input  logic [31:0]           alu_operand_b_i,
+    input  ibex_pkg::alu_op_e alu_operator_i,
+    input  logic [31:0]       alu_operand_a_i,
+    input  logic [31:0]       alu_operand_b_i,
 
     // Multiplier/Divider
-    input  ibex_defines::md_op_e  multdiv_operator_i,
-    input  logic                  mult_en_i,
-    input  logic                  div_en_i,
-    input  logic  [1:0]           multdiv_signed_mode_i,
-    input  logic [31:0]           multdiv_operand_a_i,
-    input  logic [31:0]           multdiv_operand_b_i,
+    input  ibex_pkg::md_op_e  multdiv_operator_i,
+    input  logic              mult_en_i,
+    input  logic              div_en_i,
+    input  logic  [1:0]       multdiv_signed_mode_i,
+    input  logic [31:0]       multdiv_operand_a_i,
+    input  logic [31:0]       multdiv_operand_b_i,
 
     // Outputs
-    output logic [31:0]           alu_adder_result_ex_o, // to LSU
-    output logic [31:0]           regfile_wdata_ex_o,
-    output logic [31:0]           jump_target_o,         // to IF
-    output logic                  branch_decision_o,     // to ID
+    output logic [31:0]       alu_adder_result_ex_o, // to LSU
+    output logic [31:0]       regfile_wdata_ex_o,
+    output logic [31:0]       jump_target_o,         // to IF
+    output logic              branch_decision_o,     // to ID
 
-    output logic                  ex_valid_o             // EX has valid output
+    output logic              ex_valid_o             // EX has valid output
 );
 
-  import ibex_defines::*;
+  import ibex_pkg::*;
 
   localparam bit MULT_TYPE = 1; // 0 -> SLOW, 1 -> FAST
 

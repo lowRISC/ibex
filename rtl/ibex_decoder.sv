@@ -34,71 +34,71 @@ module ibex_decoder #(
     parameter bit RV32M = 1
 ) (
     // to/from controller
-    output logic                     illegal_insn_o,        // illegal instr encountered
-    output logic                     ebrk_insn_o,           // trap instr encountered
-    output logic                     mret_insn_o,           // return from exception instr
-                                                            // encountered
-    output logic                     dret_insn_o,           // return from debug instr encountered
-    output logic                     ecall_insn_o,          // syscall instr encountered
-    output logic                     wfi_insn_o,            // wait for interrupt instr encountered
-    output logic                     jump_set_o,            // jump taken set signal
+    output logic                 illegal_insn_o,        // illegal instr encountered
+    output logic                 ebrk_insn_o,           // trap instr encountered
+    output logic                 mret_insn_o,           // return from exception instr
+                                                        // encountered
+    output logic                 dret_insn_o,           // return from debug instr encountered
+    output logic                 ecall_insn_o,          // syscall instr encountered
+    output logic                 wfi_insn_o,            // wait for interrupt instr encountered
+    output logic                 jump_set_o,            // jump taken set signal
 
     // from IF-ID pipeline register
-    input  logic                     instr_new_i,           // instruction read is new
-    input  logic [31:0]              instr_rdata_i,         // instruction read from memory/cache
-    input  logic                     illegal_c_insn_i,      // compressed instruction decode failed
+    input  logic                 instr_new_i,           // instruction read is new
+    input  logic [31:0]          instr_rdata_i,         // instruction read from memory/cache
+    input  logic                 illegal_c_insn_i,      // compressed instruction decode failed
 
     // immediates
-    output ibex_defines::imm_a_sel_e imm_a_mux_sel_o,       // immediate selection for operand a
-    output ibex_defines::imm_b_sel_e imm_b_mux_sel_o,       // immediate selection for operand b
-    output logic [31:0]              imm_i_type_o,
-    output logic [31:0]              imm_s_type_o,
-    output logic [31:0]              imm_b_type_o,
-    output logic [31:0]              imm_u_type_o,
-    output logic [31:0]              imm_j_type_o,
-    output logic [31:0]              zimm_rs1_type_o,
+    output ibex_pkg::imm_a_sel_e imm_a_mux_sel_o,       // immediate selection for operand a
+    output ibex_pkg::imm_b_sel_e imm_b_mux_sel_o,       // immediate selection for operand b
+    output logic [31:0]          imm_i_type_o,
+    output logic [31:0]          imm_s_type_o,
+    output logic [31:0]          imm_b_type_o,
+    output logic [31:0]          imm_u_type_o,
+    output logic [31:0]          imm_j_type_o,
+    output logic [31:0]          zimm_rs1_type_o,
 
     // register file
-    output ibex_defines::rf_wd_sel_e regfile_wdata_sel_o,   // RF write data selection
-    output logic                     regfile_we_o,          // write enable for regfile
-    output logic [4:0]               regfile_raddr_a_o,
-    output logic [4:0]               regfile_raddr_b_o,
-    output logic [4:0]               regfile_waddr_o,
+    output ibex_pkg::rf_wd_sel_e regfile_wdata_sel_o,   // RF write data selection
+    output logic                 regfile_we_o,          // write enable for regfile
+    output logic [4:0]           regfile_raddr_a_o,
+    output logic [4:0]           regfile_raddr_b_o,
+    output logic [4:0]           regfile_waddr_o,
 
     // ALU
-    output ibex_defines::alu_op_e    alu_operator_o,        // ALU operation selection
-    output ibex_defines::op_a_sel_e  alu_op_a_mux_sel_o,    // operand a selection: reg value, PC,
-                                                            // immediate or zero
-    output ibex_defines::op_b_sel_e  alu_op_b_mux_sel_o,    // operand b selection: reg value or
-                                                            // immediate
+    output ibex_pkg::alu_op_e    alu_operator_o,        // ALU operation selection
+    output ibex_pkg::op_a_sel_e  alu_op_a_mux_sel_o,    // operand a selection: reg value, PC,
+                                                        // immediate or zero
+    output ibex_pkg::op_b_sel_e  alu_op_b_mux_sel_o,    // operand b selection: reg value or
+                                                        // immediate
 
     // MULT & DIV
-    output logic                     mult_en_o,             // perform integer multiplication
-    output logic                     div_en_o,              // perform integer division or
-                                                            // remainder
-    output ibex_defines::md_op_e     multdiv_operator_o,
-    output logic [1:0]               multdiv_signed_mode_o,
+    output logic                 mult_en_o,             // perform integer multiplication
+    output logic                 div_en_o,              // perform integer division or
+                                                        // remainder
+    output ibex_pkg::md_op_e     multdiv_operator_o,
+    output logic [1:0]           multdiv_signed_mode_o,
 
     // CSRs
-    output logic                     csr_access_o,          // access to CSR
-    output ibex_defines::csr_op_e    csr_op_o,              // operation to perform on CSR
-    output logic                     csr_status_o,          // access to xstatus CSR
+    output logic                 csr_access_o,          // access to CSR
+    output ibex_pkg::csr_op_e    csr_op_o,              // operation to perform on CSR
+    output logic                 csr_status_o,          // access to xstatus CSR
 
     // LSU
-    output logic                     data_req_o,            // start transaction to data memory
-    output logic                     data_we_o,             // write enable
-    output logic [1:0]               data_type_o,           // size of transaction: byte, half
-                                                            // word or word
-    output logic                     data_sign_extension_o, // sign extension for data read from
-                                                            // memory
-    output logic [1:0]               data_reg_offset_o,     // register byte offset for stores
+    output logic                 data_req_o,            // start transaction to data memory
+    output logic                 data_we_o,             // write enable
+    output logic [1:0]           data_type_o,           // size of transaction: byte, half
+                                                        // word or word
+    output logic                 data_sign_extension_o, // sign extension for data read from
+                                                        // memory
+    output logic [1:0]           data_reg_offset_o,     // register byte offset for stores
 
     // jump/branches
-    output logic                     jump_in_dec_o,         // jump is being calculated in ALU
-    output logic                     branch_in_dec_o
+    output logic                 jump_in_dec_o,         // jump is being calculated in ALU
+    output logic                 branch_in_dec_o
 );
 
-  import ibex_defines::*;
+  import ibex_pkg::*;
 
   logic        illegal_insn;
   logic        illegal_reg_rv32e;

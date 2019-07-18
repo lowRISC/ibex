@@ -28,7 +28,7 @@ module ibex_compressed_decoder (
     output logic        is_compressed_o,
     output logic        illegal_instr_o
 );
-  import ibex_defines::*;
+  import ibex_pkg::*;
 
   ////////////////////////
   // Compressed decoder //

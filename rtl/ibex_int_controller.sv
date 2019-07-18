@@ -38,7 +38,7 @@ module ibex_int_controller (
     input  logic        m_IE_i          // interrupt enable bit from CSR (M mode)
 );
 
-  import ibex_defines::*;
+  import ibex_pkg::*;
 
   typedef enum logic [1:0] { IDLE, IRQ_PENDING, IRQ_DONE} exc_ctrl_e;
   exc_ctrl_e exc_ctrl_ns, exc_ctrl_cs;

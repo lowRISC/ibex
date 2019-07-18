@@ -7,7 +7,7 @@ description: "CPU core with 2 stage pipeline implementing the RV32IMC_Zicsr ISA"
 filesets:
   files_rtl:
     files:
-      - rtl/ibex_defines.sv
+      - rtl/ibex_pkg.sv
       - rtl/ibex_alu.sv
       - rtl/ibex_compressed_decoder.sv
       - rtl/ibex_controller.sv

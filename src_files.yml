@@ -2,7 +2,7 @@ ibex:
   incdirs: [
   ]
   files: [
-    ibex_defines.sv,
+    ibex_pkg.sv,
     ibex_alu.sv,
     ibex_compressed_decoder.sv,
     ibex_controller.sv,
@@ -27,8 +27,8 @@ ibex_vip_rtl:
   incdirs: [
   ]
   files: [
-    ibex_defines.sv,
-    ibex_tracer_defines.sv,
+    ibex_pkg.sv,
+    ibex_tracer_pkg.sv,
     ibex_tracer.sv,
   ]
 ibex_regfile_rtl:

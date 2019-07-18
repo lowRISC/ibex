@@ -19,8 +19,8 @@
 
 `ifndef VERILATOR
 
-import ibex_defines::*;
-import ibex_tracer_defines::*;
+import ibex_pkg::*;
+import ibex_tracer_pkg::*;
 
 // Source/Destination register instruction index
 `define REG_S1 19:15

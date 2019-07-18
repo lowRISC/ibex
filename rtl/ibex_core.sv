@@ -106,7 +106,7 @@ module ibex_core #(
 
 );
 
-  import ibex_defines::*;
+  import ibex_pkg::*;
 
   // IF/ID signals
   logic        instr_valid_id;

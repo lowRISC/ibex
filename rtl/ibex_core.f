@@ -1,4 +1,4 @@
-ibex_defines.sv
+ibex_pkg.sv
 ibex_alu.sv
 ibex_compressed_decoder.sv
 ibex_controller.sv

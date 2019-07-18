@@ -3,8 +3,8 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-package ibex_tracer_defines;
-import ibex_defines::*;
+package ibex_tracer_pkg;
+import ibex_pkg::*;
 
 // instruction masks (for tracer)
 parameter logic [31:0] INSTR_LUI     = { 25'b?,                           {OPCODE_LUI  } };

@@ -87,7 +87,7 @@ module ibex_core_tracer #(
 
 );
 
-  import ibex_defines::*;
+  import ibex_pkg::*;
 
   ibex_core #(
     .MHPMCounterNum(MHPMCounterNum),
