@@ -32,61 +32,61 @@ module ibex_cs_registers #(
     parameter bit RV32M                     = 0
 ) (
     // Clock and Reset
-    input  logic                     clk_i,
-    input  logic                     rst_ni,
+    input  logic                 clk_i,
+    input  logic                 rst_ni,
 
     // Core and Cluster ID
-    input  logic  [3:0]              core_id_i,
-    input  logic  [5:0]              cluster_id_i,
+    input  logic  [3:0]          core_id_i,
+    input  logic  [5:0]          cluster_id_i,
 
     // Interface to registers (SRAM like)
-    input  logic                     csr_access_i,
-    input  ibex_defines::csr_num_e   csr_addr_i,
-    input  logic [31:0]              csr_wdata_i,
-    input  ibex_defines::csr_op_e    csr_op_i,
-    output logic [31:0]              csr_rdata_o,
+    input  logic                 csr_access_i,
+    input  ibex_pkg::csr_num_e   csr_addr_i,
+    input  logic [31:0]          csr_wdata_i,
+    input  ibex_pkg::csr_op_e    csr_op_i,
+    output logic [31:0]          csr_rdata_o,
 
     // Interrupts
-    output logic                     m_irq_enable_o,
-    output logic [31:0]              csr_mepc_o,
+    output logic                 m_irq_enable_o,
+    output logic [31:0]          csr_mepc_o,
 
     // debug
-    input  ibex_defines::dbg_cause_e debug_cause_i,
-    input  logic                     debug_csr_save_i,
-    output logic [31:0]              csr_depc_o,
-    output logic                     debug_single_step_o,
-    output logic                     debug_ebreakm_o,
+    input  ibex_pkg::dbg_cause_e debug_cause_i,
+    input  logic                 debug_csr_save_i,
+    output logic [31:0]          csr_depc_o,
+    output logic                 debug_single_step_o,
+    output logic                 debug_ebreakm_o,
 
-    input  logic [31:0]              pc_if_i,
-    input  logic [31:0]              pc_id_i,
+    input  logic [31:0]          pc_if_i,
+    input  logic [31:0]          pc_id_i,
 
-    input  logic                     csr_save_if_i,
-    input  logic                     csr_save_id_i,
-    input  logic                     csr_restore_mret_i,
-    input  logic                     csr_restore_dret_i,
-    input  logic                     csr_save_cause_i,
-    input  logic [31:0]              csr_mtvec_i,
-    input  ibex_defines::exc_cause_e csr_mcause_i,
-    input  logic [31:0]              csr_mtval_i,
-    output logic                     illegal_csr_insn_o,     // access to non-existent CSR,
-                                                             // with wrong priviledge level, or
-                                                             // missing write permissions
-    input  logic                     instr_new_id_i,         // ID stage sees a new instr
+    input  logic                 csr_save_if_i,
+    input  logic                 csr_save_id_i,
+    input  logic                 csr_restore_mret_i,
+    input  logic                 csr_restore_dret_i,
+    input  logic                 csr_save_cause_i,
+    input  logic [31:0]          csr_mtvec_i,
+    input  ibex_pkg::exc_cause_e csr_mcause_i,
+    input  logic [31:0]          csr_mtval_i,
+    output logic                 illegal_csr_insn_o,     // access to non-existent CSR,
+                                                         // with wrong priviledge level, or
+                                                         // missing write permissions
+    input  logic                 instr_new_id_i,         // ID stage sees a new instr
 
     // Performance Counters
-    input  logic                     instr_ret_i,            // instr retired in ID/EX stage
-    input  logic                     instr_ret_compressed_i, // compressed instr retired
-    input  logic                     imiss_i,                // instr fetch
-    input  logic                     pc_set_i,               // PC was set to a new value
-    input  logic                     jump_i,                 // jump instr seen (j, jr, jal, jalr)
-    input  logic                     branch_i,               // branch instr seen (bf, bnf)
-    input  logic                     branch_taken_i,         // branch was taken
-    input  logic                     mem_load_i,             // load from memory in this cycle
-    input  logic                     mem_store_i,            // store to memory in this cycle
-    input  logic                     lsu_busy_i
+    input  logic                 instr_ret_i,            // instr retired in ID/EX stage
+    input  logic                 instr_ret_compressed_i, // compressed instr retired
+    input  logic                 imiss_i,                // instr fetch
+    input  logic                 pc_set_i,               // PC was set to a new value
+    input  logic                 jump_i,                 // jump instr seen (j, jr, jal, jalr)
+    input  logic                 branch_i,               // branch instr seen (bf, bnf)
+    input  logic                 branch_taken_i,         // branch was taken
+    input  logic                 mem_load_i,             // load from memory in this cycle
+    input  logic                 mem_store_i,            // store to memory in this cycle
+    input  logic                 lsu_busy_i
 );
 
-  import ibex_defines::*;
+  import ibex_pkg::*;
 
   // misa
   localparam logic [1:0] MXL = 2'd1; // M-XLEN: XLEN in M-Mode for RV32

@@ -24,26 +24,26 @@
  * 16x16 kernel multiplier and Long Division
  */
 module ibex_multdiv_fast (
-    input  logic                 clk_i,
-    input  logic                 rst_ni,
-    input  logic                 mult_en_i,
-    input  logic                 div_en_i,
-    input  ibex_defines::md_op_e operator_i,
-    input  logic  [1:0]          signed_mode_i,
-    input  logic [31:0]          op_a_i,
-    input  logic [31:0]          op_b_i,
-    input  logic [33:0]          alu_adder_ext_i,
-    input  logic [31:0]          alu_adder_i,
-    input  logic                 equal_to_zero,
+    input  logic             clk_i,
+    input  logic             rst_ni,
+    input  logic             mult_en_i,
+    input  logic             div_en_i,
+    input  ibex_pkg::md_op_e operator_i,
+    input  logic  [1:0]      signed_mode_i,
+    input  logic [31:0]      op_a_i,
+    input  logic [31:0]      op_b_i,
+    input  logic [33:0]      alu_adder_ext_i,
+    input  logic [31:0]      alu_adder_i,
+    input  logic             equal_to_zero,
 
-    output logic [32:0]          alu_operand_a_o,
-    output logic [32:0]          alu_operand_b_o,
+    output logic [32:0]      alu_operand_a_o,
+    output logic [32:0]      alu_operand_b_o,
 
-    output logic [31:0]          multdiv_result_o,
-    output logic                 valid_o
+    output logic [31:0]      multdiv_result_o,
+    output logic             valid_o
 );
 
-  import ibex_defines::*;
+  import ibex_pkg::*;
 
   logic [ 4:0] div_counter_q, div_counter_n;
   typedef enum logic [1:0] {

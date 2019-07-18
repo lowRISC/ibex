@@ -35,118 +35,118 @@ module ibex_id_stage #(
     parameter bit RV32E = 0,
     parameter bit RV32M = 1
 ) (
-    input  logic                      clk_i,
-    input  logic                      rst_ni,
+    input  logic                  clk_i,
+    input  logic                  rst_ni,
 
-    input  logic                      test_en_i,
+    input  logic                  test_en_i,
 
-    input  logic                      fetch_enable_i,
-    output logic                      ctrl_busy_o,
-    output logic                      core_ctrl_firstfetch_o,
-    output logic                      illegal_insn_o,
+    input  logic                  fetch_enable_i,
+    output logic                  ctrl_busy_o,
+    output logic                  core_ctrl_firstfetch_o,
+    output logic                  illegal_insn_o,
 
     // Interface to IF stage
-    input  logic                      instr_valid_i,
-    input  logic                      instr_new_i,
-    input  logic [31:0]               instr_rdata_i,         // from IF-ID pipeline registers
-    input  logic [15:0]               instr_rdata_c_i,       // from IF-ID pipeline registers
-    input  logic                      instr_is_compressed_i,
-    output logic                      instr_req_o,
-    output logic                      instr_valid_clear_o,   // kill instr in IF-ID reg
-    output logic                      id_in_ready_o,         // ID stage is ready for next instr
+    input  logic                  instr_valid_i,
+    input  logic                  instr_new_i,
+    input  logic [31:0]           instr_rdata_i,         // from IF-ID pipeline registers
+    input  logic [15:0]           instr_rdata_c_i,       // from IF-ID pipeline registers
+    input  logic                  instr_is_compressed_i,
+    output logic                  instr_req_o,
+    output logic                  instr_valid_clear_o,   // kill instr in IF-ID reg
+    output logic                  id_in_ready_o,         // ID stage is ready for next instr
 
     // Jumps and branches
-    input  logic                      branch_decision_i,
+    input  logic                  branch_decision_i,
 
     // IF and ID stage signals
-    output logic                      pc_set_o,
-    output ibex_defines::pc_sel_e     pc_mux_o,
-    output ibex_defines::exc_pc_sel_e exc_pc_mux_o,
+    output logic                  pc_set_o,
+    output ibex_pkg::pc_sel_e     pc_mux_o,
+    output ibex_pkg::exc_pc_sel_e exc_pc_mux_o,
 
-    input  logic                      illegal_c_insn_i,
+    input  logic                  illegal_c_insn_i,
 
-    input  logic [31:0]               pc_id_i,
+    input  logic [31:0]           pc_id_i,
 
     // Stalls
-    input  logic                      ex_valid_i,     // EX stage has valid output
-    input  logic                      lsu_valid_i,    // LSU has valid output, or is done
+    input  logic                  ex_valid_i,     // EX stage has valid output
+    input  logic                  lsu_valid_i,    // LSU has valid output, or is done
     // ALU
-    output ibex_defines::alu_op_e     alu_operator_ex_o,
-    output logic [31:0]               alu_operand_a_ex_o,
-    output logic [31:0]               alu_operand_b_ex_o,
+    output ibex_pkg::alu_op_e     alu_operator_ex_o,
+    output logic [31:0]           alu_operand_a_ex_o,
+    output logic [31:0]           alu_operand_b_ex_o,
 
     // MUL, DIV
-    output logic                      mult_en_ex_o,
-    output logic                      div_en_ex_o,
-    output ibex_defines::md_op_e      multdiv_operator_ex_o,
-    output logic  [1:0]               multdiv_signed_mode_ex_o,
-    output logic [31:0]               multdiv_operand_a_ex_o,
-    output logic [31:0]               multdiv_operand_b_ex_o,
+    output logic                  mult_en_ex_o,
+    output logic                  div_en_ex_o,
+    output ibex_pkg::md_op_e      multdiv_operator_ex_o,
+    output logic  [1:0]           multdiv_signed_mode_ex_o,
+    output logic [31:0]           multdiv_operand_a_ex_o,
+    output logic [31:0]           multdiv_operand_b_ex_o,
 
     // CSR
-    output logic                      csr_access_o,
-    output ibex_defines::csr_op_e     csr_op_o,
-    output logic                      csr_save_if_o,
-    output logic                      csr_save_id_o,
-    output logic                      csr_restore_mret_id_o,
-    output logic                      csr_restore_dret_id_o,
-    output logic                      csr_save_cause_o,
-    output logic [31:0]               csr_mtval_o,
-    input  logic                      illegal_csr_insn_i,
+    output logic                  csr_access_o,
+    output ibex_pkg::csr_op_e     csr_op_o,
+    output logic                  csr_save_if_o,
+    output logic                  csr_save_id_o,
+    output logic                  csr_restore_mret_id_o,
+    output logic                  csr_restore_dret_id_o,
+    output logic                  csr_save_cause_o,
+    output logic [31:0]           csr_mtval_o,
+    input  logic                  illegal_csr_insn_i,
 
     // Interface to load store unit
-    output logic                      data_req_ex_o,
-    output logic                      data_we_ex_o,
-    output logic [1:0]                data_type_ex_o,
-    output logic                      data_sign_ext_ex_o,
-    output logic [1:0]                data_reg_offset_ex_o,
-    output logic [31:0]               data_wdata_ex_o,
+    output logic                  data_req_ex_o,
+    output logic                  data_we_ex_o,
+    output logic [1:0]            data_type_ex_o,
+    output logic                  data_sign_ext_ex_o,
+    output logic [1:0]            data_reg_offset_ex_o,
+    output logic [31:0]           data_wdata_ex_o,
 
-    input  logic                      lsu_addr_incr_req_i,
-    input  logic [31:0]               lsu_addr_last_i,
+    input  logic                  lsu_addr_incr_req_i,
+    input  logic [31:0]           lsu_addr_last_i,
 
     // Interrupt signals
-    input  logic                      irq_i,
-    input  logic [4:0]                irq_id_i,
-    input  logic                      m_irq_enable_i,
-    output logic                      irq_ack_o,
-    output logic [4:0]                irq_id_o,
-    output ibex_defines::exc_cause_e  exc_cause_o,
+    input  logic                  irq_i,
+    input  logic [4:0]            irq_id_i,
+    input  logic                  m_irq_enable_i,
+    output logic                  irq_ack_o,
+    output logic [4:0]            irq_id_o,
+    output ibex_pkg::exc_cause_e  exc_cause_o,
 
-    input  logic                      lsu_load_err_i,
-    input  logic                      lsu_store_err_i,
+    input  logic                  lsu_load_err_i,
+    input  logic                  lsu_store_err_i,
 
     // Debug Signal
-    output ibex_defines::dbg_cause_e  debug_cause_o,
-    output logic                      debug_csr_save_o,
-    input  logic                      debug_req_i,
-    input  logic                      debug_single_step_i,
-    input  logic                      debug_ebreakm_i,
+    output ibex_pkg::dbg_cause_e  debug_cause_o,
+    output logic                  debug_csr_save_o,
+    input  logic                  debug_req_i,
+    input  logic                  debug_single_step_i,
+    input  logic                  debug_ebreakm_i,
 
     // Write back signal
-    input  logic [31:0]               regfile_wdata_lsu_i,
-    input  logic [31:0]               regfile_wdata_ex_i,
-    input  logic [31:0]               csr_rdata_i,
+    input  logic [31:0]           regfile_wdata_lsu_i,
+    input  logic [31:0]           regfile_wdata_ex_i,
+    input  logic [31:0]           csr_rdata_i,
 
 `ifdef RVFI
-    output logic [4:0]                rfvi_reg_raddr_ra_o,
-    output logic [31:0]               rfvi_reg_rdata_ra_o,
-    output logic [4:0]                rfvi_reg_raddr_rb_o,
-    output logic [31:0]               rfvi_reg_rdata_rb_o,
-    output logic [4:0]                rfvi_reg_waddr_rd_o,
-    output logic [31:0]               rfvi_reg_wdata_rd_o,
-    output logic                      rfvi_reg_we_o,
+    output logic [4:0]            rfvi_reg_raddr_ra_o,
+    output logic [31:0]           rfvi_reg_rdata_ra_o,
+    output logic [4:0]            rfvi_reg_raddr_rb_o,
+    output logic [31:0]           rfvi_reg_rdata_rb_o,
+    output logic [4:0]            rfvi_reg_waddr_rd_o,
+    output logic [31:0]           rfvi_reg_wdata_rd_o,
+    output logic                  rfvi_reg_we_o,
 `endif
 
     // Performance Counters
-    output logic                      perf_jump_o,    // executing a jump instr
-    output logic                      perf_branch_o,  // executing a branch instr
-    output logic                      perf_tbranch_o, // executing a taken branch instr
-    output logic                      instr_ret_o,
-    output logic                      instr_ret_compressed_o
+    output logic                  perf_jump_o,    // executing a jump instr
+    output logic                  perf_branch_o,  // executing a branch instr
+    output logic                  perf_tbranch_o, // executing a taken branch instr
+    output logic                  instr_ret_o,
+    output logic                  instr_ret_compressed_o
 );
 
-  import ibex_defines::*;
+  import ibex_pkg::*;
 
   // Decoder/Controller, ID stage internal signals
   logic        illegal_insn_dec;

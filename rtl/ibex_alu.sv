@@ -22,23 +22,23 @@
  * Arithmetic logic unit
  */
 module ibex_alu (
-    input  ibex_defines::alu_op_e operator_i,
-    input  logic [31:0]           operand_a_i,
-    input  logic [31:0]           operand_b_i,
+    input  ibex_pkg::alu_op_e operator_i,
+    input  logic [31:0]       operand_a_i,
+    input  logic [31:0]       operand_b_i,
 
-    input  logic [32:0]           multdiv_operand_a_i,
-    input  logic [32:0]           multdiv_operand_b_i,
+    input  logic [32:0]       multdiv_operand_a_i,
+    input  logic [32:0]       multdiv_operand_b_i,
 
-    input  logic                  multdiv_en_i,
+    input  logic              multdiv_en_i,
 
-    output logic [31:0]           adder_result_o,
-    output logic [33:0]           adder_result_ext_o,
+    output logic [31:0]       adder_result_o,
+    output logic [33:0]       adder_result_ext_o,
 
-    output logic [31:0]           result_o,
-    output logic                  comparison_result_o,
-    output logic                  is_equal_result_o
+    output logic [31:0]       result_o,
+    output logic              comparison_result_o,
+    output logic              is_equal_result_o
 );
-  import ibex_defines::*;
+  import ibex_pkg::*;
 
   logic [31:0] operand_a_rev;
   logic [32:0] operand_b_neg;

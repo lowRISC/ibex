@@ -19,9 +19,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Defines for various constants used by the processor core
+ * Package with constants used by Ibex
  */
-package ibex_defines;
+package ibex_pkg;
 
 
 /////////////

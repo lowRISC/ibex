@@ -30,60 +30,60 @@ module ibex_if_stage #(
     parameter int unsigned DmHaltAddr      = 32'h1A110800,
     parameter int unsigned DmExceptionAddr = 32'h1A110808
 ) (
-    input  logic                      clk_i,
-    input  logic                      rst_ni,
+    input  logic                   clk_i,
+    input  logic                   rst_ni,
 
-    input  logic [31:0]               boot_addr_i,              // also used for mtvec
-    input  logic                      req_i,                    // instruction request control
+    input  logic [31:0]            boot_addr_i,              // also used for mtvec
+    input  logic                   req_i,                    // instruction request control
 
     // instruction cache interface
-    output logic                      instr_req_o,
-    output logic [31:0]               instr_addr_o,
-    input  logic                      instr_gnt_i,
-    input  logic                      instr_rvalid_i,
-    input  logic [31:0]               instr_rdata_i,
+    output logic                  instr_req_o,
+    output logic [31:0]           instr_addr_o,
+    input  logic                  instr_gnt_i,
+    input  logic                  instr_rvalid_i,
+    input  logic [31:0]           instr_rdata_i,
 
     // Output of IF Pipeline stage
-    output logic                      instr_valid_id_o,         // instr in IF-ID is valid
-    output logic                      instr_new_id_o,           // instr in IF-ID is new
-    output logic [31:0]               instr_rdata_id_o,         // instr for ID stage
-    output logic [15:0]               instr_rdata_c_id_o,       // compressed instr for ID stage
-                                                                // (mtval), meaningful only if
-                                                                // instr_is_compressed_id_o = 1'b1
-    output logic                      instr_is_compressed_id_o, // compressed decoder thinks this
-                                                                // is a compressed instr
-    output logic                      illegal_c_insn_id_o,      // compressed decoder thinks this
-                                                                // is an invalid instr
-    output logic [31:0]               pc_if_o,
-    output logic [31:0]               pc_id_o,
+    output logic                  instr_valid_id_o,         // instr in IF-ID is valid
+    output logic                  instr_new_id_o,           // instr in IF-ID is new
+    output logic [31:0]           instr_rdata_id_o,         // instr for ID stage
+    output logic [15:0]           instr_rdata_c_id_o,       // compressed instr for ID stage
+                                                            // (mtval), meaningful only if
+                                                            // instr_is_compressed_id_o = 1'b1
+    output logic                  instr_is_compressed_id_o, // compressed decoder thinks this
+                                                            // is a compressed instr
+    output logic                  illegal_c_insn_id_o,      // compressed decoder thinks this
+                                                            // is an invalid instr
+    output logic [31:0]           pc_if_o,
+    output logic [31:0]           pc_id_o,
 
     // Forwarding ports - control signals
-    input  logic                      instr_valid_clear_i,      // clear instr valid bit in IF-ID
-    input  logic                      pc_set_i,                 // set the PC to a new value
-    input  logic [31:0]               csr_mepc_i,               // PC to restore after handling
-                                                                // the interrupt/exception
-    input  logic [31:0]               csr_depc_i,               // PC to restore after handling
-                                                                // the debug request
-    input  ibex_defines::pc_sel_e     pc_mux_i,                 // selector for PC multiplexer
-    input  ibex_defines::exc_pc_sel_e exc_pc_mux_i,             // selects ISR address
-    input  ibex_defines::exc_cause_e  exc_cause,                // selects ISR address for
+    input  logic                  instr_valid_clear_i,      // clear instr valid bit in IF-ID
+    input  logic                  pc_set_i,                 // set the PC to a new value
+    input  logic [31:0]           csr_mepc_i,               // PC to restore after handling
+                                                            // the interrupt/exception
+    input  logic [31:0]           csr_depc_i,               // PC to restore after handling
+                                                            // the debug request
+    input  ibex_pkg::pc_sel_e     pc_mux_i,                 // selector for PC multiplexer
+    input  ibex_pkg::exc_pc_sel_e exc_pc_mux_i,             // selects ISR address
+    input  ibex_pkg::exc_cause_e  exc_cause,                // selects ISR address for
                                                                 // vectorized interrupt lines
 
     // jump and branch target and decision
-    input  logic [31:0]               jump_target_ex_i,         // jump target address
+    input  logic [31:0]           jump_target_ex_i,         // jump target address
 
     // CSRs
-    output logic [31:0]               csr_mtvec_o,
+    output logic [31:0]           csr_mtvec_o,
 
     // pipeline stall
-    input  logic                      id_in_ready_i,            // ID stage is ready for new instr
+    input  logic                  id_in_ready_i,            // ID stage is ready for new instr
 
     // misc signals
-    output logic                      if_busy_o,                // IF stage is busy fetching instr
-    output logic                      perf_imiss_o              // instr fetch miss
+    output logic                  if_busy_o,                // IF stage is busy fetching instr
+    output logic                  perf_imiss_o              // instr fetch miss
 );
 
-  import ibex_defines::*;
+  import ibex_pkg::*;
 
   logic              offset_in_init_d, offset_in_init_q;
   logic              have_instr;
