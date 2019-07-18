@@ -7,7 +7,7 @@ description: "Ibex example toplevel for the Arty A7-100 board"
 filesets:
   files_rtl_artya7:
     depend:
-      - lowrisc:ibex:ibex
+      - lowrisc:ibex:ibex_core
     files:
       - rtl/top_artya7_100.sv
       - rtl/ram_1p.sv

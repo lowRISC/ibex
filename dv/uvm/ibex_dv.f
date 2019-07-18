@@ -25,7 +25,7 @@ ${PRJ_DIR}/ibex/rtl/ibex_prefetch_buffer.sv
 ${PRJ_DIR}/ibex/rtl/ibex_fetch_fifo.sv
 ${PRJ_DIR}/ibex/rtl/ibex_register_file_ff.sv
 ${PRJ_DIR}/ibex/rtl/ibex_core.sv
-${PRJ_DIR}/ibex/rtl/ibex_core_tracer.sv
+${PRJ_DIR}/ibex/rtl/ibex_core_tracing.sv
 
 // Core DV files
 +incdir+${PRJ_DIR}/ibex/dv/uvm/env

@@ -3,13 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 
-// ibex_tracer relies on the signals from the RISC-V Formal Interface
-`define RVFI
-
 /**
  * Top level module of the ibex RISC-V core with tracing enabled
  */
-module ibex_core_tracer #(
+module ibex_core_tracing #(
     parameter int unsigned MHPMCounterNum   = 8,
     parameter int unsigned MHPMCounterWidth = 40,
     parameter bit RV32E                     = 0,
@@ -55,39 +52,39 @@ module ibex_core_tracer #(
     // Debug Interface
     input  logic        debug_req_i,
 
-    // RISC-V Formal Interface
-    // Does not comply with the coding standards of _i/_o suffixes, but follows
-    // the convention of RISC-V Formal Interface Specification.
-`ifdef RVFI
-    output logic        rvfi_valid,
-    output logic [63:0] rvfi_order,
-    output logic [31:0] rvfi_insn,
-    output logic [31:0] rvfi_insn_uncompressed,
-    output logic        rvfi_trap,
-    output logic        rvfi_halt,
-    output logic        rvfi_intr,
-    output logic [ 1:0] rvfi_mode,
-    output logic [ 4:0] rvfi_rs1_addr,
-    output logic [ 4:0] rvfi_rs2_addr,
-    output logic [31:0] rvfi_rs1_rdata,
-    output logic [31:0] rvfi_rs2_rdata,
-    output logic [ 4:0] rvfi_rd_addr,
-    output logic [31:0] rvfi_rd_wdata,
-    output logic [31:0] rvfi_pc_rdata,
-    output logic [31:0] rvfi_pc_wdata,
-    output logic [31:0] rvfi_mem_addr,
-    output logic [ 3:0] rvfi_mem_rmask,
-    output logic [ 3:0] rvfi_mem_wmask,
-    output logic [31:0] rvfi_mem_rdata,
-    output logic [31:0] rvfi_mem_wdata,
-`endif
-
     // CPU Control Signals
     input  logic        fetch_enable_i
 
 );
 
   import ibex_pkg::*;
+
+  // ibex_tracer relies on the signals from the RISC-V Formal Interface
+  `ifndef RVFI
+    Fatal error: RVFI needs to be defined globally.
+  `endif
+
+  logic        rvfi_valid;
+  logic [63:0] rvfi_order;
+  logic [31:0] rvfi_insn;
+  logic [31:0] rvfi_insn_uncompressed;
+  logic        rvfi_trap;
+  logic        rvfi_halt;
+  logic        rvfi_intr;
+  logic [ 1:0] rvfi_mode;
+  logic [ 4:0] rvfi_rs1_addr;
+  logic [ 4:0] rvfi_rs2_addr;
+  logic [31:0] rvfi_rs1_rdata;
+  logic [31:0] rvfi_rs2_rdata;
+  logic [ 4:0] rvfi_rd_addr;
+  logic [31:0] rvfi_rd_wdata;
+  logic [31:0] rvfi_pc_rdata;
+  logic [31:0] rvfi_pc_wdata;
+  logic [31:0] rvfi_mem_addr;
+  logic [ 3:0] rvfi_mem_rmask;
+  logic [ 3:0] rvfi_mem_wmask;
+  logic [31:0] rvfi_mem_rdata;
+  logic [31:0] rvfi_mem_wdata;
 
   ibex_core #(
     .MHPMCounterNum(MHPMCounterNum),
@@ -129,7 +126,6 @@ module ibex_core_tracer #(
 
     .debug_req_i,
 
-`ifdef RVFI
     .rvfi_valid,
     .rvfi_order,
     .rvfi_insn,
@@ -151,14 +147,13 @@ module ibex_core_tracer #(
     .rvfi_mem_wmask,
     .rvfi_mem_rdata,
     .rvfi_mem_wdata,
-`endif
 
     .fetch_enable_i
   );
 
 
 `ifndef VERILATOR
-  ibex_tracer ibex_tracer_i (
+  ibex_tracer u_ibex_tracer (
       .clk_i            ( clk_i                  ),
       .rst_ni           ( rst_ni                 ),
 
@@ -177,6 +172,8 @@ module ibex_core_tracer #(
       .ex_data_wdata_i  ( rvfi_mem_wdata         ),
       .ex_data_rdata_i  ( rvfi_mem_rdata         )
   );
-`endif // VERILATOR
+`else
+    // ibex_tracer uses language constructs which Verilator doesn't understand.
+`endif
 
 endmodule

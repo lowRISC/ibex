@@ -2,10 +2,10 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
-// Sample testbench for Ibex tracer
+// Sample testbench for Ibex with tracing enabled
 // The `nop` instruction is the only input
 
-module ibex_tracer_tb;
+module ibex_tracing_tb;
   logic         clk          = 1'b0;
   logic         rst_n        = 1'b0;
   logic [31:0]  instr_rdata  = 32'h00000013;
@@ -70,7 +70,7 @@ module ibex_tracer_tb;
     #10ns  instr_rdata  = 32'h0000000f;
   end
 
-  ibex_core_tracer ibex_i (
+  ibex_core_tracing ibex_i (
     .clk_i                  (clk),
     .rst_ni                 (rst_n),
 
@@ -107,29 +107,6 @@ module ibex_tracer_tb;
 
     // Debug Interface
     .debug_req_i            (1'b0),
-
-    // RISC-V Formal Interface
-    .rvfi_valid             (),
-    .rvfi_order             (),
-    .rvfi_insn              (),
-    .rvfi_insn_uncompressed (),
-    .rvfi_trap              (),
-    .rvfi_halt              (),
-    .rvfi_intr              (),
-    .rvfi_mode              (),
-    .rvfi_rs1_addr          (),
-    .rvfi_rs2_addr          (),
-    .rvfi_rs1_rdata         (),
-    .rvfi_rs2_rdata         (),
-    .rvfi_rd_addr           (),
-    .rvfi_rd_wdata          (),
-    .rvfi_pc_rdata          (),
-    .rvfi_pc_wdata          (),
-    .rvfi_mem_addr          (),
-    .rvfi_mem_rmask         (),
-    .rvfi_mem_wmask         (),
-    .rvfi_mem_rdata         (),
-    .rvfi_mem_wdata         (),
 
     // CPU Control Signals
     .fetch_enable_i         (1'b1)
