@@ -2,7 +2,7 @@ CAPI=2:
 # Copyright lowRISC contributors.
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
-name: "lowrisc:ibex:ibex:0.1"
+name: "lowrisc:ibex:ibex_core:0.1"
 description: "CPU core with 2 stage pipeline implementing the RV32IMC_Zicsr ISA"
 filesets:
   files_rtl:
@@ -28,6 +28,11 @@ filesets:
       - rtl/ibex_register_file_ff.sv # FPGA
       - rtl/ibex_core.sv
     file_type: systemVerilogSource
+
+parameters:
+  RVFI:
+    datatype: bool
+    paramtype: vlogdefine
 
 targets:
   default:

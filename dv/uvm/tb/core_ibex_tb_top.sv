@@ -14,8 +14,8 @@ module core_ibex_tb_top;
   clk_if ibex_clk_if(.clk(clk));
 
   // TODO(taliu) Resolve the tied-off ports
-  ibex_core_tracer #(.DmHaltAddr(`BOOT_ADDR + 'h40),
-                     .DmExceptionAddr(`BOOT_ADDR + 'h44)
+  ibex_core_tracing #(.DmHaltAddr(`BOOT_ADDR + 'h40),
+                      .DmExceptionAddr(`BOOT_ADDR + 'h44)
   ) dut (
     .clk_i(clk),
     .rst_ni(rst_n),
