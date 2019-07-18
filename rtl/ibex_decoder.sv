@@ -602,9 +602,9 @@ module ibex_decoder #(
     end
 
     // make sure illegal instructions detected in the decoder do not propagate from decoder
-    // into register file, LSU, EX, WB, CSRs
+    // into register file, LSU, EX, WB, CSRs, PC
     // NOTE: instructions can also be detected to be illegal inside the CSRs (upon accesses with
-    // insufficient privileges), in ID stage (when accessing Reg 16 or higher in RV32E config),
+    // insufficient privileges), or when accessing non-available registers in RV32E,
     // these cases are not handled here
     if (illegal_insn) begin
       regfile_we      = 1'b0;
@@ -613,6 +613,7 @@ module ibex_decoder #(
       mult_en_o       = 1'b0;
       div_en_o        = 1'b0;
       jump_in_dec_o   = 1'b0;
+      jump_set_o      = 1'b0;
       branch_in_dec_o = 1'b0;
       csr_access_o    = 1'b0;
     end
