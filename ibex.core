@@ -8,7 +8,6 @@ filesets:
   files_rtl:
     files:
       - rtl/ibex_defines.sv
-      - rtl/ibex_tracer_defines.sv
       - rtl/ibex_alu.sv
       - rtl/ibex_compressed_decoder.sv
       - rtl/ibex_controller.sv
