@@ -17,10 +17,6 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-
-import ibex_pkg::*;
-import ibex_tracer_pkg::*;
-
 // Source/Destination register instruction index
 `define REG_S1 19:15
 `define REG_S2 24:20
@@ -55,6 +51,9 @@ module ibex_tracer #(
     input  logic [31:0]               ex_data_wdata_i,
     input  logic [31:0]               ex_data_rdata_i
 );
+
+  import ibex_pkg::*;
+  import ibex_tracer_pkg::*;
 
   integer      f;
   string       fn;
