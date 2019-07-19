@@ -31,23 +31,13 @@ class riscv_illegal_instr extends uvm_object;
     kHintInstr
   } illegal_instr_type_e;
 
+  // Default legal opcode for RV32I instructions
   bit [6:0]  legal_opcode[$] = '{7'b0000011,
-                                 7'b0000111,
                                  7'b0001111,
                                  7'b0010011,
                                  7'b0010111,
-                                 7'b0011011,
                                  7'b0100011,
-                                 7'b0100111,
-                                 7'b0101111,
-                                 7'b0110011,
                                  7'b0110111,
-                                 7'b0111011,
-                                 7'b1000011,
-                                 7'b1000111,
-                                 7'b1001011,
-                                 7'b1001111,
-                                 7'b1010011,
                                  7'b1100011,
                                  7'b1100111,
                                  7'b1101111,
@@ -107,12 +97,12 @@ class riscv_illegal_instr extends uvm_object;
       ((c_msb == 3'b100) && (c_op == 2'b00)) ||
       ((instr_bin[15:10] == 6'b100111) && (instr_bin[6:5] == 2'b10) && (c_op == 2'b01)) ||
       ((instr_bin[15:10] == 6'b100111) && (instr_bin[6:5] == 2'b11) && (c_op == 2'b01)) ||
-      ((c_msb == 3'b001) && (c_op == 2'b01) && (instr_bin[11:7] == 5'b0)) ||
+      ((c_msb == 3'b001) && (c_op == 2'b01) && (instr_bin[11:7] == 5'b0) && (XLEN == 64)) ||
       ((c_msb == 3'b011) && (c_op == 2'b01) && (instr_bin[12:2] == 11'h40)) ||
       ((c_msb == 3'b001) && (c_op == 2'b10) && (instr_bin[11:7] == 5'b0)) ||
       ((c_msb == 3'b010) && (c_op == 2'b10) && (instr_bin[11:7] == 5'b0)) ||
       ((c_msb == 3'b011) && (c_op == 2'b10) && (instr_bin[11:7] == 5'b0)) ||
-      ((c_msb == 3'b100) && (c_op == 2'b10) && (instr_bin[11:7] == 5'b0));
+      (instr_bin == 16'b1000_0000_0000_0010);
     }
   }
 
@@ -121,7 +111,7 @@ class riscv_illegal_instr extends uvm_object;
       ((c_msb == 3'b000) && (c_op == 2'b01) && ({instr_bin[12], instr_bin[6:2]} == 6'b0)) ||
       ((c_msb == 3'b010) && (c_op == 2'b01) && (instr_bin[11:7] == 5'b0)) ||
       ((c_msb == 3'b011) && (c_op == 2'b01) && (instr_bin[11:7] == 5'b0)) ||
-      ((c_msb == 3'b100) && (c_op == 2'b10) && (instr_bin[11:7] == 5'b0) &&
+      ((c_msb == 3'b100) && (c_op == 2'b10) && (instr_bin[12:7] == 6'b0) &&
                                                (instr_bin[6:2] != 0));
     }
   }
@@ -172,7 +162,7 @@ class riscv_illegal_instr extends uvm_object;
 
   constraint has_func3_c {
     solve opcode before func7;
-    if ((opcode inside {7'b0110111, 7'b1101111})) {
+    if ((opcode inside {7'b0110111, 7'b1101111, 7'b0010111})) {
       has_func3 == 1'b0;
     } else {
       has_func3 == 1'b1;
@@ -189,14 +179,30 @@ class riscv_illegal_instr extends uvm_object;
     }
   }
 
-  // Avoid generating unsupported extensions - F, A, D
-  constraint unsupported_isa_opcode_c{
-    !(opcode inside {7'b0101111, 7'b0000111, 7'b0100111, 7'b1000111,
-                     7'b1001011, 7'b1001111, 7'b1010011, 7'b1000011});
-  }
-
   `uvm_object_utils(riscv_illegal_instr)
   `uvm_object_new
+
+  function init(riscv_instr_gen_config cfg);
+    this.cfg = cfg;
+    if ((riscv_instr_pkg::RV32F inside {riscv_instr_pkg::supported_isa}) ||
+         riscv_instr_pkg::RV32D inside {riscv_instr_pkg::supported_isa}) begin
+      legal_opcode = {legal_opcode, 7'b0000111, 7'b0100111, 7'b1000011,
+                                    7'b1000111, 7'b1001011, 7'b1001111,  7'b1010011};
+    end
+    if (riscv_instr_pkg::RV64I inside {riscv_instr_pkg::supported_isa}) begin
+      legal_opcode = {legal_opcode, 7'b0011011};
+    end
+    if (riscv_instr_pkg::RV32A inside {riscv_instr_pkg::supported_isa}) begin
+      legal_opcode = {legal_opcode, 7'b0101111};
+    end
+    if (riscv_instr_pkg::RV32M inside {riscv_instr_pkg::supported_isa}) begin
+      legal_opcode = {legal_opcode, 7'b0110011};
+    end
+    if ((riscv_instr_pkg::RV64I inside {riscv_instr_pkg::supported_isa}) ||
+         riscv_instr_pkg::RV64M inside {riscv_instr_pkg::supported_isa}) begin
+      legal_opcode = {legal_opcode, 7'b0111011};
+    end
+  endfunction
 
   function string get_bin_str();
     if (compressed) begin
