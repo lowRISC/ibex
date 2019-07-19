@@ -299,12 +299,10 @@ module ibex_decoder #(
 
         // store size
         unique case (instr[13:12])
-          2'b00: data_type_o = 2'b10; // SB
-          2'b01: data_type_o = 2'b01; // SH
-          2'b10: data_type_o = 2'b00; // SW
-          default: begin
-            illegal_insn = 1'b1;
-          end
+          2'b00:   data_type_o  = 2'b10; // SB
+          2'b01:   data_type_o  = 2'b01; // SH
+          2'b10:   data_type_o  = 2'b00; // SW
+          default: illegal_insn = 1'b1;
         endcase
       end
 
@@ -325,37 +323,18 @@ module ibex_decoder #(
 
         // load size
         unique case (instr[13:12])
-          2'b00:   data_type_o = 2'b10; // LB
-          2'b01:   data_type_o = 2'b01; // LH
-          2'b10:   data_type_o = 2'b00; // LW
-          default: data_type_o = 2'b00; // illegal or reg-reg
-        endcase
-
-        // reg-reg load (different encoding)
-        if (instr[14:12] == 3'b111) begin
-          // offset from RS2
-          alu_op_b_mux_sel_o = OP_B_REG_B;
-
-          // sign/zero extension
-          data_sign_extension_o = ~instr[30];
-
-          // load size
-          unique case (instr[31:25])
-            7'b0000_000,
-            7'b0100_000: data_type_o = 2'b10; // LB, LBU
-            7'b0001_000,
-            7'b0101_000: data_type_o = 2'b01; // LH, LHU
-            7'b0010_000: data_type_o = 2'b00; // LW
-            default: begin
-              illegal_insn = 1'b1;
+          2'b00: data_type_o = 2'b10; // LB(U)
+          2'b01: data_type_o = 2'b01; // LH(U)
+          2'b10: begin
+            data_type_o = 2'b00;      // LW
+            if (instr[14]) begin
+              illegal_insn = 1'b1;    // LWU does not exist
             end
-          endcase
-        end
-
-        if (instr[14:12] == 3'b011) begin
-          // LD -> RV64 only
-          illegal_insn = 1'b1;
-        end
+          end
+          default: begin
+            illegal_insn = 1'b1;
+          end
+        endcase
       end
 
       /////////
