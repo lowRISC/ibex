@@ -17,7 +17,6 @@
 //                                                                            //
 ////////////////////////////////////////////////////////////////////////////////
 
-`ifndef VERILATOR
 
 import ibex_pkg::*;
 import ibex_tracer_pkg::*;
@@ -30,6 +29,9 @@ import ibex_tracer_pkg::*;
 
 /**
  * Traces the executed instructions
+ *
+ * Note: Verilator does not support the language constructs used in this
+ * module!
  */
 module ibex_tracer #(
     parameter int unsigned RegAddrWidth = 5
@@ -418,5 +420,3 @@ endmodule
 `undef REG_S2
 `undef REG_S3
 `undef REG_D
-
-`endif
