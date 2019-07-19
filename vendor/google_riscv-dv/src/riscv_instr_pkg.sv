@@ -22,7 +22,7 @@ package riscv_instr_pkg;
   `include "dv_defines.svh"
   `include "riscv_defines.svh"
 
-  `define include_file(f) `include "``f``"
+  `define include_file(f) `include `"f`"
 
   typedef enum bit [3:0] {
     BARE = 4'b0000,

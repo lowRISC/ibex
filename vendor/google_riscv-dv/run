@@ -147,7 +147,7 @@ if [[ "$SIMULATOR" == "vcs" ]]; then
                    -Mdir=$OUT/vcs_simv.csrc \
                    -o $OUT/vcs_simv ${CMP_OPTS}"
 
-  SIM_CMD="$OUT/vcs_simv +UVM_TESTNAME="
+  SIM_CMD="$OUT/vcs_simv +vcs+lic+wait +UVM_TESTNAME="
 
 elif [[ "$SIMULATOR" == "irun" ]]; then
 
