@@ -6,8 +6,8 @@ ${PRJ_DIR}/ibex/dv/uvm/tb/prim_clock_gating.sv
 
 // ibex CORE RTL files
 +incdir+${PRJ_DIR}/ibex/rtl
-${PRJ_DIR}/ibex/rtl/ibex_defines.sv
-${PRJ_DIR}/ibex/rtl/ibex_tracer_defines.sv
+${PRJ_DIR}/ibex/rtl/ibex_pkg.sv
+${PRJ_DIR}/ibex/rtl/ibex_tracer_pkg.sv
 ${PRJ_DIR}/ibex/rtl/ibex_tracer.sv
 ${PRJ_DIR}/ibex/rtl/ibex_alu.sv
 ${PRJ_DIR}/ibex/rtl/ibex_compressed_decoder.sv
