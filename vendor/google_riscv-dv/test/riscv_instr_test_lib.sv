@@ -57,8 +57,11 @@
 // riscv_wfi_test:
 //  - Randomly inject wfi instruction, verify core can be halted and resumed properly(by interrupt)
 //
-// riscv_privileged_csr_test:
-//  - To be released soon
+// riscv_csr_test:
+//  - Random instructions with CSR intruction enabled
+//
+// riscv_illegal_csr_test:
+//  - Accessing non-existence CSR or CSR with the wrong privileged mode
 //
 //================================================================================================
 
@@ -274,6 +277,18 @@ class riscv_wfi_test extends riscv_rand_instr_test;
 
   virtual function void randomize_cfg();
     cfg.no_wfi = 1'b0;
+    super.randomize_cfg();
+  endfunction
+
+endclass
+
+class riscv_illegal_csr_test extends riscv_rand_instr_test;
+
+  `uvm_component_utils(riscv_illegal_csr_test)
+  `uvm_component_new
+
+  virtual function void randomize_cfg();
+    cfg.enable_illegal_csr_instruction = 1'b1;
     super.randomize_cfg();
   endfunction
 
