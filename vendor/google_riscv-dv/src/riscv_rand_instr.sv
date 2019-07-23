@@ -72,9 +72,6 @@ class riscv_rand_instr extends riscv_instr_base;
   }
 
   constraint constraint_cfg_knob_c {
-    if(cfg.no_csr_instr == 1) {
-      category != CSR;
-    }
     if(cfg.no_ebreak) {
       instr_name != EBREAK;
       instr_name != C_EBREAK;
@@ -90,6 +87,25 @@ class riscv_rand_instr extends riscv_instr_base;
     }
     if(cfg.no_branch_jump) {
       category != BRANCH;
+    }
+  }
+
+  constraint csr_instr_c {
+    if(cfg.no_csr_instr == 1) {
+      category != CSR;
+    } else {
+      if (cfg.enable_illegal_csr_instruction) {
+        !(csr inside {implemented_csr});
+      } else {
+        // Use scratch register to avoid the side effect of modifying other privileged mode CSR.
+        if (cfg.init_privileged_mode == MACHINE_MODE) {
+          csr == MSCRATCH;
+        } else if (cfg.init_privileged_mode == SUPERVISOR_MODE) {
+          csr == SSCRATCH;
+        } else {
+          csr == USCRATCH;
+        }
+      }
     }
   }
 

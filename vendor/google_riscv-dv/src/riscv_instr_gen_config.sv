@@ -59,7 +59,7 @@ class riscv_instr_gen_config extends uvm_object;
   // Options for privileged mode CSR checking
   // Below checking can be made optional as the ISS implementation could be different with the
   // processor.
-  bit                    check_misa_init_val = 1'b1;
+  bit                    check_misa_init_val = 1'b0;
   bit                    check_xstatus = 1'b1;
 
   //-----------------------------------------------------------------------------
@@ -75,7 +75,7 @@ class riscv_instr_gen_config extends uvm_object;
   // Options to turn off some specific types of instructions
   bit                    no_branch_jump;   // No branch/jump instruction
   bit                    no_load_store;    // No load/store instruction
-  bit                    no_csr_instr = 1; // No csr instruction
+  bit                    no_csr_instr;     // No csr instruction
   bit                    no_ebreak = 1;    // No ebreak instruction
   bit                    no_fence;         // No fence instruction
   bit                    no_wfi = 1;       // No WFI instruction
@@ -90,6 +90,10 @@ class riscv_instr_gen_config extends uvm_object;
   string                 asm_test_suffix;
   // Enable interrupt bit in MSTATUS (MIE, SIE, UIE)
   int                    enable_interrupt;
+  // Enable accessing illegal CSR instruction
+  // - Accessing non-existence CSR
+  // - Accessing CSR with wrong privileged mode
+  bit                    enable_illegal_csr_instruction;
   // sfence support
   bit                    allow_sfence_exception = 0;
   // Interrupt/Exception Delegation
@@ -237,6 +241,7 @@ class riscv_instr_gen_config extends uvm_object;
     get_bool_arg_value("+no_branch_jump=", no_branch_jump);
     get_bool_arg_value("+no_load_store=", no_load_store);
     get_bool_arg_value("+no_csr_instr=", no_csr_instr);
+    get_bool_arg_value("+enable_illegal_csr_instruction=", enable_illegal_csr_instruction);
     get_bool_arg_value("+allow_sfence_exception=", allow_sfence_exception);
     get_bool_arg_value("+no_data_page=", no_data_page);
     get_bool_arg_value("+no_directed_instr=", no_directed_instr);
