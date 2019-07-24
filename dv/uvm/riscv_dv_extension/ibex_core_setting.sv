@@ -94,6 +94,7 @@ privileged_reg_t implemented_csr[$] = {
     MTVEC,      // Machine trap-handler base address
     MEPC,       // Machine exception program counter
     MCAUSE,     // Machine trap cause
-    MTVAL       // Machine bad address or instruction
+    MTVAL,      // Machine bad address or instruction
+    MIE         // Machine interrupt enable
     // TODO: Add performance CSRs and debug mode CSR
 };

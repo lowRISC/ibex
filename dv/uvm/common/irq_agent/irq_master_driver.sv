@@ -47,9 +47,6 @@ class irq_master_driver extends uvm_driver #(irq_seq_item);
   endtask : reset_signals
 
   virtual protected task drive_seq_item (irq_seq_item trans);
-    if (trans.delay > 0) begin
-      repeat(trans.delay) @(posedge vif.clock);
-    end
     vif.irq_software <= trans.irq_software;
     vif.irq_timer    <= trans.irq_timer;
     vif.irq_external <= trans.irq_external;

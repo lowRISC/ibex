@@ -17,5 +17,5 @@ riscv_sfence_exception_test     :      0     :
 riscv_illegal_instr_test        :      10    :
 riscv_hint_instr_test           :      10    :
 riscv_ebreak_test               :      20    :
-riscv_wfi_test                  :      0     :
+riscv_wfi_test                  :      5     : +enable_interrupt=1
 //--------------------------------------------------------------------
