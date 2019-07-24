@@ -4,14 +4,20 @@
 
 class irq_seq_item extends uvm_sequence_item;
 
-  rand bit [4:0] irq_id;
-  rand bit [3:0] delay;
-  rand bit [4:0] irq_id_o;
+  rand bit          irq_software;
+  rand bit          irq_timer;
+  rand bit          irq_external;
+  rand bit [14:0]   irq_fast;
+  rand bit          irq_nm;
+  rand int unsigned delay;
 
   `uvm_object_utils_begin(irq_seq_item)
-    `uvm_field_int(irq_id,   UVM_DEFAULT)
-    `uvm_field_int(irq_id_o, UVM_DEFAULT)
-    `uvm_field_int(delay,    UVM_DEFAULT)
+    `uvm_field_int(irq_software, UVM_DEFAULT)
+    `uvm_field_int(irq_timer,    UVM_DEFAULT)
+    `uvm_field_int(irq_external, UVM_DEFAULT)
+    `uvm_field_int(irq_fast,     UVM_DEFAULT)
+    `uvm_field_int(irq_nm,       UVM_DEFAULT)
+    `uvm_field_int(delay,        UVM_DEFAULT)
   `uvm_object_utils_end
 
   `uvm_object_new

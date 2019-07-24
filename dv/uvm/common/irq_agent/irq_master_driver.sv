@@ -42,8 +42,7 @@ class irq_master_driver extends uvm_driver #(irq_seq_item);
   virtual protected task reset_signals();
     forever begin
       @(posedge vif.reset);
-      vif.irq_i      <= 'h0;
-      vif.irq_id_i   <= 'hz;
+      drive_reset_value();
     end
   endtask : reset_signals
 
@@ -51,16 +50,22 @@ class irq_master_driver extends uvm_driver #(irq_seq_item);
     if (trans.delay > 0) begin
       repeat(trans.delay) @(posedge vif.clock);
     end
-    vif.irq_i     <= 1'b1;
-    vif.irq_id_i  <= trans.irq_id;
+    vif.irq_software <= trans.irq_software;
+    vif.irq_timer    <= trans.irq_timer;
+    vif.irq_external <= trans.irq_external;
+    vif.irq_fast     <= trans.irq_fast;
+    vif.irq_nm       <= trans.irq_nm;
     @(posedge vif.clock);
-    while (vif.irq_ack_o !== 1'b1) begin
-      @(posedge vif.clock);
-    end
-    trans.irq_id_o = vif.irq_id_o;
-    vif.irq_i     <= 'h0;
-    vif.irq_id_i  <= 'hz;
+    drive_reset_value();
   endtask : drive_seq_item
+
+  task drive_reset_value();
+    vif.irq_software <= '0;
+    vif.irq_timer    <= '0;
+    vif.irq_external <= '0;
+    vif.irq_fast     <= '0;
+    vif.irq_nm       <= '0;
+  endtask : drive_reset_value
 
 endclass : irq_master_driver
 

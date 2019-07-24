@@ -28,12 +28,16 @@ class irq_monitor extends uvm_monitor;
   virtual protected task collect_irq();
     irq_seq_item irq;
     forever begin
-      irq = irq_seq_item::type_id::create("irq");
-      while (vif.irq_i === 1'b0) @(posedge vif.clock);
-      irq.irq_id  = vif.irq_id_i;
-      while (vif.irq_ack_o === 1'b0) @(posedge vif.clock);
-      irq.irq_id_o  = vif.irq_id_o;
-      irq_port.write(irq);
+      if (|{vif.irq_software, vif.irq_timer, vif.irq_external,
+            vif.irq_fast, vif.irq_nm}) begin
+        irq = irq_seq_item::type_id::create("irq");
+        irq.irq_software = vif.irq_software;
+        irq.irq_timer = vif.irq_timer;
+        irq.irq_external = vif.irq_external;
+        irq.irq_fast = vif.irq_fast;
+        irq.irq_nm = vif.irq_nm;
+        irq_port.write(irq);
+      end
       @(posedge vif.clock);
     end
   endtask : collect_irq

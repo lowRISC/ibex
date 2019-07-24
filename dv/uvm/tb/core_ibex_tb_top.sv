@@ -12,10 +12,14 @@ module core_ibex_tb_top;
   logic debug_req;
 
   clk_if ibex_clk_if(.clk(clk));
+  irq_if irq_vif();
+
+  // DUT probe interface
+  core_ibex_dut_probe_if dut_if(.clk(clk));
 
   // TODO(taliu) Resolve the tied-off ports
-  ibex_core_tracing #(.DmHaltAddr(`BOOT_ADDR + 'h40),
-                      .DmExceptionAddr(`BOOT_ADDR + 'h44)
+  ibex_core_tracing #(.DmHaltAddr(`BOOT_ADDR + 'h50),
+                      .DmExceptionAddr(`BOOT_ADDR + 'h54)
   ) dut (
     .clk_i(clk),
     .rst_ni(rst_n),
@@ -24,12 +28,17 @@ module core_ibex_tb_top;
     .cluster_id_i('0),
     .boot_addr_i(`BOOT_ADDR), // align with spike boot address
     .debug_req_i(debug_req),
-    .fetch_enable_i(fetch_enable)
+    .irq_software_i(irq_if.irq_software),
+    .irq_timer_i(irq_if.irq_timer),
+    .irq_external_i(irq_if.irq_external),
+    .irq_fast_i(irq_if.irq_fast),
+    .irq_nm_i(irq_if.irq_nm),
+    .fetch_enable_i(dut_if.fetch_enable),
+    .debug_req_i(dut_if.debug_req)
   );
 
   ibex_mem_intf  data_mem_vif();
   ibex_mem_intf  instr_mem_vif();
-  irq_if         irq_vif();
 
   initial begin
     // Data load/store vif connection
@@ -58,17 +67,10 @@ module core_ibex_tb_top;
     // IRQ interface
     force irq_vif.clock         = clk;
     force irq_vif.reset         = ~rst_n;
-    force dut.irq_i             = irq_vif.irq_i;
-    force dut.irq_id_i          = irq_vif.irq_id_i;
-    force irq_vif.irq_ack_o     = dut.irq_ack_o;
-    force irq_vif.irq_id_o      = dut.irq_id_o;
   end
 
-  // DUT probe interface
-  core_ibex_dut_probe_if dut_if(.clk(clk));
   assign dut_if.ecall = dut.u_ibex_core.id_stage_i.ecall_insn_dec;
-  assign fetch_enable = dut_if.fetch_enable;
-  assign debug_req = dut_if.debug_req;
+
 
   initial begin
     uvm_config_db#(virtual clk_if)::set(null, "*", "clk_if", ibex_clk_if);
