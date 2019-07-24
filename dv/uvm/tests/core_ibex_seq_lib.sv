@@ -55,6 +55,7 @@ class core_base_seq #(type REQ = uvm_sequence_item) extends uvm_sequence#(REQ);
 
   virtual task stop();
     stop_seq = 1'b1;
+    `uvm_info(get_full_name(), "Stopping sequence", UVM_LOW)
     wait (seq_finished == 1'b1);
   endtask
 
@@ -72,6 +73,7 @@ class irq_seq extends core_base_seq#(irq_seq_item);
     start_item(irq);
     `DV_CHECK_RANDOMIZE_FATAL(irq)
     finish_item(irq);
+    get_response(irq);
   endtask
 
 endclass
