@@ -137,11 +137,11 @@ module ibex_decoder #(
   ////////////////////
   // Register check //
   ////////////////////
-  if (RV32E) begin
-    assign illegal_reg_rv32e = ((regfile_raddr_a_o[4] && (alu_op_a_mux_sel_o == OP_A_REG_A)) ||
-                                (regfile_raddr_b_o[4] && (alu_op_b_mux_sel_o == OP_B_REG_B)) ||
-                                (regfile_waddr_o[4] & regfile_we));
-  end else begin
+  if (RV32E) begin : gen_rv32e_reg_check_active
+    assign illegal_reg_rv32e = ((regfile_raddr_a_o[4] & (alu_op_a_mux_sel_o == OP_A_REG_A)) |
+                                (regfile_raddr_b_o[4] & (alu_op_b_mux_sel_o == OP_B_REG_B)) |
+                                (regfile_waddr_o[4]   & regfile_we));
+  end else begin : gen_rv32e_reg_check_inactive
     assign illegal_reg_rv32e = 1'b0;
   end
 
@@ -529,7 +529,7 @@ module ibex_decoder #(
           endcase
 
           // rs1 and rd must be 0
-          if (instr[`REG_S1] || instr[`REG_D]) begin
+          if (instr[`REG_S1] != 5'b0 || instr[`REG_D] != 5'b0) begin
             illegal_insn = 1'b1;
           end
         end else begin
