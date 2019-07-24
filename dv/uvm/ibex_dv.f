@@ -14,7 +14,6 @@ ${PRJ_DIR}/ibex/rtl/ibex_compressed_decoder.sv
 ${PRJ_DIR}/ibex/rtl/ibex_controller.sv
 ${PRJ_DIR}/ibex/rtl/ibex_cs_registers.sv
 ${PRJ_DIR}/ibex/rtl/ibex_decoder.sv
-${PRJ_DIR}/ibex/rtl/ibex_int_controller.sv
 ${PRJ_DIR}/ibex/rtl/ibex_ex_block.sv
 ${PRJ_DIR}/ibex/rtl/ibex_id_stage.sv
 ${PRJ_DIR}/ibex/rtl/ibex_if_stage.sv
