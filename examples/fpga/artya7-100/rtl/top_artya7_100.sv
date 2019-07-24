@@ -70,10 +70,11 @@ module top_artya7_100 (
      .data_rdata_i          (data_rdata),
      .data_err_i            ('b0),
 
-     .irq_i                 ('b0),
-     .irq_id_i              ('b0),
-     .irq_ack_o             (),
-     .irq_id_o              (),
+     .irq_software_i        (1'b0),
+     .irq_timer_i           (1'b0),
+     .irq_external_i        (1'b0),
+     .irq_fast_i            (15'b0),
+     .irq_nm_i              (1'b0),
 
      .debug_req_i           ('b0),
 

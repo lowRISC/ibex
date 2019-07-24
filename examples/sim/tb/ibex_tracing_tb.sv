@@ -100,10 +100,11 @@ module ibex_tracing_tb;
     .data_err_i             (1'b0),
 
     // Interrupt inputs
-    .irq_i                  (1'b0),
-    .irq_id_i               (5'b0),
-    .irq_ack_o              (),
-    .irq_id_o               (),
+    .irq_software_i         (1'b0),
+    .irq_timer_i            (1'b0),
+    .irq_external_i         (1'b0),
+    .irq_fast_i             (15'b0),
+    .irq_nm_i               (1'b0),
 
     // Debug Interface
     .debug_req_i            (1'b0),

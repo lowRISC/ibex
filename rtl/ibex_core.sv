@@ -85,7 +85,6 @@ module ibex_core #(
     output logic [31:0] rvfi_insn_uncompressed,
     output logic        rvfi_trap,
     output logic        rvfi_halt,
-    output logic        rvfi_intr,
     output logic [ 1:0] rvfi_mode,
     output logic [ 4:0] rvfi_rs1_addr,
     output logic [ 4:0] rvfi_rs2_addr,
@@ -620,7 +619,6 @@ module ibex_core #(
     if (!rst_ni) begin
       rvfi_halt              <= '0;
       rvfi_trap              <= '0;
-      rvfi_intr              <= '0;
       rvfi_order             <= '0;
       rvfi_insn              <= '0;
       rvfi_insn_uncompressed <= '0;
@@ -642,7 +640,6 @@ module ibex_core #(
     end else begin
       rvfi_halt              <= '0;
       rvfi_trap              <= illegal_insn_id;
-      rvfi_intr              <= irq_ack_o;
       rvfi_order             <= rvfi_order + rvfi_valid;
       rvfi_insn              <= rvfi_insn_id;
       rvfi_insn_uncompressed <= instr_rdata_id;

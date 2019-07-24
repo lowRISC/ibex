@@ -44,10 +44,11 @@ module ibex_core_tracing #(
     input  logic        data_err_i,
 
     // Interrupt inputs
-    input  logic        irq_i,                 // level sensitive IR lines
-    input  logic [4:0]  irq_id_i,
-    output logic        irq_ack_o,             // irq ack
-    output logic [4:0]  irq_id_o,
+    input  logic        irq_software_i,
+    input  logic        irq_timer_i,
+    input  logic        irq_external_i,
+    input  logic [14:0] irq_fast_i,
+    input  logic        irq_nm_i,       // non-maskeable interrupt
 
     // Debug Interface
     input  logic        debug_req_i,
@@ -70,7 +71,6 @@ module ibex_core_tracing #(
   logic [31:0] rvfi_insn_uncompressed;
   logic        rvfi_trap;
   logic        rvfi_halt;
-  logic        rvfi_intr;
   logic [ 1:0] rvfi_mode;
   logic [ 4:0] rvfi_rs1_addr;
   logic [ 4:0] rvfi_rs2_addr;
@@ -119,10 +119,11 @@ module ibex_core_tracing #(
     .data_rdata_i,
     .data_err_i,
 
-    .irq_i,
-    .irq_id_i,
-    .irq_ack_o,
-    .irq_id_o,
+    .irq_software_i,
+    .irq_timer_i,
+    .irq_external_i,
+    .irq_fast_i,
+    .irq_nm_i,
 
     .debug_req_i,
 
@@ -132,7 +133,6 @@ module ibex_core_tracing #(
     .rvfi_insn_uncompressed,
     .rvfi_trap,
     .rvfi_halt,
-    .rvfi_intr,
     .rvfi_mode,
     .rvfi_rs1_addr,
     .rvfi_rs2_addr,
