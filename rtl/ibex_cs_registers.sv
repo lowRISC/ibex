@@ -58,6 +58,7 @@ module ibex_cs_registers #(
     output logic [14:0]          csr_mfip_o,             // fast interrupt pending
     output logic                 csr_mstatus_mie_o,
     output logic [31:0]          csr_mepc_o,
+    output logic [31:0]          csr_mtvec_o,
 
     // debug
     input  ibex_pkg::dbg_cause_e debug_cause_i,
@@ -73,7 +74,6 @@ module ibex_cs_registers #(
     input  logic                 csr_save_id_i,
     input  logic                 csr_restore_mret_i,
     input  logic                 csr_save_cause_i,
-    input  logic [31:0]          csr_mtvec_i,
     input  ibex_pkg::exc_cause_e csr_mcause_i,
     input  logic [31:0]          csr_mtval_i,
     output logic                 illegal_csr_insn_o,     // access to non-existent CSR,
@@ -155,6 +155,7 @@ module ibex_cs_registers #(
   logic [31:0] mepc_q, mepc_d;
   logic  [5:0] mcause_q, mcause_d;
   logic [31:0] mtval_q, mtval_d;
+  logic [31:0] mtvec_q, mtvec_d;
   Interrupts_t mip;
   Dcsr_t       dcsr_q, dcsr_d;
   logic [31:0] depc_q, depc_d;
@@ -214,6 +215,9 @@ module ibex_cs_registers #(
     csr_rdata_int = '0;
     illegal_csr   = 1'b0;
 
+    // we always want the current value of mtvec to be accessible so the IF stage can jump to it
+    csr_mtvec_o = mtvec_q;
+
     unique case (csr_addr_i)
       // mhartid: unique hardware thread id
       CSR_MHARTID: csr_rdata_int = {21'b0, cluster_id_i[5:0], 1'b0, core_id_i[3:0]};
@@ -241,7 +245,7 @@ module ibex_cs_registers #(
       CSR_MSCRATCH: csr_rdata_int = mscratch_q;
 
       // mtvec: trap-vector base address
-      CSR_MTVEC: csr_rdata_int = csr_mtvec_i;
+      CSR_MTVEC: csr_rdata_int = mtvec_q;
 
       // mepc: exception program counter
       CSR_MEPC: csr_rdata_int = mepc_q;
@@ -317,6 +321,7 @@ module ibex_cs_registers #(
     mepc_d       = mepc_q;
     mcause_d     = mcause_q;
     mtval_d      = mtval_q;
+    mtvec_d      = mtvec_q;
     dcsr_d       = dcsr_q;
     depc_d       = depc_q;
     dscratch0_d  = dscratch0_q;
@@ -362,6 +367,9 @@ module ibex_cs_registers #(
 
       // mtval: trap value
       CSR_MTVAL: if (csr_we_int) mtval_d = csr_wdata_int;
+
+      // mtvec
+      CSR_MTVEC: if (csr_we_int) mtvec_d = csr_wdata_int;
 
       CSR_DCSR: begin
         if (csr_we_int) begin
@@ -544,6 +552,8 @@ module ibex_cs_registers #(
       mepc_q         <= '0;
       mcause_q       <= '0;
       mtval_q        <= '0;
+      // set mtvec to 1 to signify vectored mode
+      mtvec_q        <= '1;
       dcsr_q         <= '{
           xdebugver: XDEBUGVER_NO,   // 4'h0
           cause:     DBG_CAUSE_NONE, // 3'h0
@@ -570,6 +580,7 @@ module ibex_cs_registers #(
       mepc_q         <= mepc_d;
       mcause_q       <= mcause_d;
       mtval_q        <= mtval_d;
+      mtvec_q        <= mtvec_d;
       dcsr_q         <= dcsr_d;
       depc_q         <= depc_d;
       dscratch0_q    <= dscratch0_d;

@@ -64,6 +64,7 @@ module ibex_if_stage #(
                                                             // the interrupt/exception
     input  logic [31:0]           csr_depc_i,               // PC to restore after handling
                                                             // the debug request
+    output logic [31:0]           csr_mtvec_i,              // base PC to jump to on exception
     input  ibex_pkg::pc_sel_e     pc_mux_i,                 // selector for PC multiplexer
     input  ibex_pkg::exc_pc_sel_e exc_pc_mux_i,             // selects ISR address
     input  ibex_pkg::exc_cause_e  exc_cause,                // selects ISR address for
@@ -71,9 +72,6 @@ module ibex_if_stage #(
 
     // jump and branch target and decision
     input  logic [31:0]           jump_target_ex_i,         // jump target address
-
-    // CSRs
-    output logic [31:0]           csr_mtvec_o,
 
     // pipeline stall
     input  logic                  id_in_ready_i,            // ID stage is ready for new instr
@@ -113,14 +111,13 @@ module ibex_if_stage #(
   assign irq_id         = {exc_cause};
   assign unused_irq_bit = irq_id[5];   // MSB distinguishes interrupts from exceptions
 
-  // trap-vector base address, mtvec.MODE set to vectored
-  assign csr_mtvec_o = {boot_addr_i[31:8], 6'b0, 2'b01};
-
   // exception PC selection mux
   always_comb begin : exc_pc_mux
     unique case (exc_pc_mux_i)
-      EXC_PC_EXC:     exc_pc = { boot_addr_i[31:8], 8'h00                    };
-      EXC_PC_IRQ:     exc_pc = { boot_addr_i[31:8], 1'b0, irq_id[4:0], 2'b00 };
+      EXC_PC_EXC:     exc_pc = {csr_mtvec_i, 2'b0};
+      EXC_PC_IRQ: begin
+        exc_pc = {csr_mtvec_i[31:2], 2'b0} + (csr_mtvec_i[1:0] == '1 ? {irq_id[4:0], 2'b00 } : '0);
+      end
       EXC_PC_DBD:     exc_pc = DmHaltAddr;
       EXC_PC_DBG_EXC: exc_pc = DmExceptionAddr;
       default:        exc_pc = 'X;
@@ -130,7 +127,7 @@ module ibex_if_stage #(
   // fetch address selection mux
   always_comb begin : fetch_addr_mux
     unique case (pc_mux_i)
-      PC_BOOT: fetch_addr_n = { boot_addr_i[31:8], 8'h80 };
+      PC_BOOT: fetch_addr_n = boot_addr_i;
       PC_JUMP: fetch_addr_n = jump_target_ex_i;
       PC_EXC:  fetch_addr_n = exc_pc;                       // set PC to exception handler
       PC_ERET: fetch_addr_n = csr_mepc_i;                   // restore PC when returning from EXC
@@ -262,11 +259,6 @@ module ibex_if_stage #(
   // Assertions //
   ////////////////
 `ifndef VERILATOR
-  // the boot address needs to be aligned to 256 bytes
-  assert property (
-    @(posedge clk_i) (boot_addr_i[7:0] == 8'h00) ) else
-      $error("The provided boot address is not aligned to 256 bytes");
-
   // there should never be a grant when there is no request
   assert property (
     @(posedge clk_i) (instr_gnt_i) |-> (instr_req_o) ) else
