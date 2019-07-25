@@ -22,4 +22,4 @@ targets:
       - ibex_tracing_tb
     tools:
       modelsim:
-        vlog_options: [-timescale=1ns/1ns]
+        vlog_options: [-timescale 1ns/1ns]
