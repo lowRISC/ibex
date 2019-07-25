@@ -43,7 +43,7 @@ module ibex_if_stage #(
     input  logic                  instr_rvalid_i,
     input  logic [31:0]           instr_rdata_i,
 
-    // Output of IF Pipeline stage
+    // output of ID stage
     output logic                  instr_valid_id_o,         // instr in IF-ID is valid
     output logic                  instr_new_id_o,           // instr in IF-ID is new
     output logic [31:0]           instr_rdata_id_o,         // instr for ID stage
@@ -57,23 +57,23 @@ module ibex_if_stage #(
     output logic [31:0]           pc_if_o,
     output logic [31:0]           pc_id_o,
 
-    // Forwarding ports - control signals
+    // control signals
     input  logic                  instr_valid_clear_i,      // clear instr valid bit in IF-ID
     input  logic                  pc_set_i,                 // set the PC to a new value
+    input  ibex_pkg::pc_sel_e     pc_mux_i,                 // selector for PC multiplexer
+    input  ibex_pkg::exc_pc_sel_e exc_pc_mux_i,             // selects ISR address
+    input  ibex_pkg::exc_cause_e  exc_cause,                // selects ISR address for
+                                                            // vectorized interrupt lines
+    // jump and branch target
+    input  logic [31:0]           jump_target_ex_i,         // jump target address
+
+    // CSRs
     input  logic [31:0]           csr_mepc_i,               // PC to restore after handling
                                                             // the interrupt/exception
     input  logic [31:0]           csr_depc_i,               // PC to restore after handling
                                                             // the debug request
-    input  ibex_pkg::pc_sel_e     pc_mux_i,                 // selector for PC multiplexer
-    input  ibex_pkg::exc_pc_sel_e exc_pc_mux_i,             // selects ISR address
-    input  ibex_pkg::exc_cause_e  exc_cause,                // selects ISR address for
-                                                                // vectorized interrupt lines
-
-    // jump and branch target and decision
-    input  logic [31:0]           jump_target_ex_i,         // jump target address
-
-    // CSRs
-    output logic [31:0]           csr_mtvec_o,
+    input  logic [31:0]           csr_mtvec_i,              // base PC to jump to on exception
+    output logic                  csr_mtvec_init_o,         // tell CS regfile to init mtvec
 
     // pipeline stall
     input  logic                  id_in_ready_i,            // ID stage is ready for new instr
@@ -106,21 +106,20 @@ module ibex_if_stage #(
   logic              if_id_pipe_reg_we; // IF-ID pipeline reg write enable
 
   logic        [7:0] unused_boot_addr;
+  logic        [7:0] unused_csr_mtvec;
 
   assign unused_boot_addr = boot_addr_i[7:0];
+  assign unused_csr_mtvec = csr_mtvec_i[7:0];
 
   // extract interrupt ID from exception cause
   assign irq_id         = {exc_cause};
   assign unused_irq_bit = irq_id[5];   // MSB distinguishes interrupts from exceptions
 
-  // trap-vector base address, mtvec.MODE set to vectored
-  assign csr_mtvec_o = {boot_addr_i[31:8], 6'b0, 2'b01};
-
   // exception PC selection mux
   always_comb begin : exc_pc_mux
     unique case (exc_pc_mux_i)
-      EXC_PC_EXC:     exc_pc = { boot_addr_i[31:8], 8'h00                    };
-      EXC_PC_IRQ:     exc_pc = { boot_addr_i[31:8], 1'b0, irq_id[4:0], 2'b00 };
+      EXC_PC_EXC:     exc_pc = { csr_mtvec_i[31:8], 8'h00                    };
+      EXC_PC_IRQ:     exc_pc = { csr_mtvec_i[31:8], 1'b0, irq_id[4:0], 2'b00 };
       EXC_PC_DBD:     exc_pc = DmHaltAddr;
       EXC_PC_DBG_EXC: exc_pc = DmExceptionAddr;
       default:        exc_pc = 'X;
@@ -138,6 +137,9 @@ module ibex_if_stage #(
       default: fetch_addr_n = 'X;
     endcase
   end
+
+  // tell CS register file to initialize mtvec on boot
+  assign csr_mtvec_init_o = (pc_mux_i == PC_BOOT) & pc_set_i;
 
   // prefetch buffer, caches a fixed number of instructions
   ibex_prefetch_buffer prefetch_buffer_i (
