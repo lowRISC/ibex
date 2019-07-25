@@ -39,6 +39,11 @@ module ibex_cs_registers #(
     input  logic  [3:0]          core_id_i,
     input  logic  [5:0]          cluster_id_i,
 
+    // mtvec
+    output logic [31:0]          csr_mtvec_o,
+    input  logic                 csr_mtvec_init_i,
+    input  logic [31:0]          boot_addr_i,
+
     // Interface to registers (SRAM like)
     input  logic                 csr_access_i,
     input  ibex_pkg::csr_num_e   csr_addr_i,
@@ -73,7 +78,6 @@ module ibex_cs_registers #(
     input  logic                 csr_save_id_i,
     input  logic                 csr_restore_mret_i,
     input  logic                 csr_save_cause_i,
-    input  logic [31:0]          csr_mtvec_i,
     input  ibex_pkg::exc_cause_e csr_mcause_i,
     input  logic [31:0]          csr_mtval_i,
     output logic                 illegal_csr_insn_o,     // access to non-existent CSR,
@@ -155,6 +159,7 @@ module ibex_cs_registers #(
   logic [31:0] mepc_q, mepc_d;
   logic  [5:0] mcause_q, mcause_d;
   logic [31:0] mtval_q, mtval_d;
+  logic [31:0] mtvec_q, mtvec_d;
   Interrupts_t mip;
   Dcsr_t       dcsr_q, dcsr_d;
   logic [31:0] depc_q, depc_d;
@@ -190,6 +195,10 @@ module ibex_cs_registers #(
   logic        illegal_csr;
   logic        illegal_csr_priv;
   logic        illegal_csr_write;
+
+  logic [7:0]  unused_boot_addr;
+
+  assign unused_boot_addr = boot_addr_i[7:0];
 
   /////////////
   // CSR reg //
@@ -241,7 +250,7 @@ module ibex_cs_registers #(
       CSR_MSCRATCH: csr_rdata_int = mscratch_q;
 
       // mtvec: trap-vector base address
-      CSR_MTVEC: csr_rdata_int = csr_mtvec_i;
+      CSR_MTVEC: csr_rdata_int = mtvec_q;
 
       // mepc: exception program counter
       CSR_MEPC: csr_rdata_int = mepc_q;
@@ -317,6 +326,7 @@ module ibex_cs_registers #(
     mepc_d       = mepc_q;
     mcause_d     = mcause_q;
     mtval_d      = mtval_q;
+    mtvec_d      = csr_mtvec_init_i ? {boot_addr_i[31:8], 6'b0, 2'b01} : mtvec_q;
     dcsr_d       = dcsr_q;
     depc_d       = depc_q;
     dscratch0_d  = dscratch0_q;
@@ -362,6 +372,11 @@ module ibex_cs_registers #(
 
       // mtval: trap value
       CSR_MTVAL: if (csr_we_int) mtval_d = csr_wdata_int;
+
+      // mtvec
+      // mtvec.MODE set to vectored
+      // mtvec.BASE must be 256-byte aligned
+      CSR_MTVEC: if (csr_we_int) mtvec_d = {csr_wdata_int[31:8], 6'b0, 2'b01};
 
       CSR_DCSR: begin
         if (csr_we_int) begin
@@ -517,13 +532,14 @@ module ibex_cs_registers #(
   assign csr_rdata_o = csr_rdata_int;
 
   // directly output some registers
-  assign csr_msip_o = mip.software;
-  assign csr_mtip_o = mip.timer;
-  assign csr_meip_o = mip.external;
-  assign csr_mfip_o = mip.fast;
+  assign csr_msip_o  = mip.software;
+  assign csr_mtip_o  = mip.timer;
+  assign csr_meip_o  = mip.external;
+  assign csr_mfip_o  = mip.fast;
 
-  assign csr_mepc_o = mepc_q;
-  assign csr_depc_o = depc_q;
+  assign csr_mepc_o  = mepc_q;
+  assign csr_depc_o  = depc_q;
+  assign csr_mtvec_o = mtvec_q;
 
   assign csr_mstatus_mie_o   = mstatus_q.mie;
   assign debug_single_step_o = dcsr_q.step;
@@ -544,6 +560,7 @@ module ibex_cs_registers #(
       mepc_q         <= '0;
       mcause_q       <= '0;
       mtval_q        <= '0;
+      mtvec_q        <= 32'b01;
       dcsr_q         <= '{
           xdebugver: XDEBUGVER_NO,   // 4'h0
           cause:     DBG_CAUSE_NONE, // 3'h0
@@ -570,6 +587,7 @@ module ibex_cs_registers #(
       mepc_q         <= mepc_d;
       mcause_q       <= mcause_d;
       mtval_q        <= mtval_d;
+      mtvec_q        <= mtvec_d;
       dcsr_q         <= dcsr_d;
       depc_q         <= depc_d;
       dscratch0_q    <= dscratch0_d;

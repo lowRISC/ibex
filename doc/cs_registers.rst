@@ -129,10 +129,18 @@ Machine Trap-Vector Base Address (mtvec)
 
 CSR Address: ``0x305``
 
-When an exception is encountered, the core jumps to the corresponding handler using the content of ``mtvec`` as base address.
-It is a WARL register which contains the boot address.
-It contains a hard-wired value, so will remain unchanged after any writes.
-``mtvec``.MODE is set to 2'b01 to indicate vectored interrupt handling.
+Reset Value: ``0x0000_0001``
+
+``mtvec`` is a WARL register which contains the machine trap-vector base address.
+
++-------+--------------------------------------------------------------------------------------+
+| Bit#  | Interrupt                                                                            |
++-------+--------------------------------------------------------------------------------------+
+| 31:2  | **BASE:** The trap-vector base address, always aligned to 256 bytes, i.e.,           |
+|       | ``mtvec[7:2]`` is always set to 6'b0.                                                |
++-------+--------------------------------------------------------------------------------------+
+| 1:0   | **MODE:** Always set to 2'b01 to indicate vectored interrupt handling (read-only).   |
++-------+--------------------------------------------------------------------------------------+
 
 
 Machine Exception PC (mepc)

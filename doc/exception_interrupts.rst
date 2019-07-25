@@ -8,10 +8,11 @@ Ibex implements trap handling for interrupts and exceptions according to the RIS
 All exceptions cause the core to jump to the base address of the vector table in the ``mtvec`` CSR.
 Interrupts are handled in vectored mode, i.e., the core jumps to the base address plus four times the interrupt ID.
 
-The base address of the vector table is given by the boot address (must be aligned to 256 bytes, i.e., its least significant byte must be 0x00).
-The most significant 3 bytes of the boot address given to the core are used for the first instruction fetch of the core and as the basis of the interrupt vector table.
+The base address of the vector table is initialized to the boot address (must be aligned to 256 bytes, i.e., its least significant byte must be 0x00) when the core is booting.
+The base address can be changed after bootup by writing to the ``mtvec`` CSR.
+For more information, see the :ref:`cs-registers` documentation.
+
 The core starts fetching at the address made by concatenating the most significant 3 bytes of the boot address and the reset value (0x80) as the least significant byte.
-The boot address can be changed after the first instruction was fetched to change the interrupt vector table address.
 It is assumed that the boot address is supplied via a register to avoid long paths to the instruction fetch unit.
 
 

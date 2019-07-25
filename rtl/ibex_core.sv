@@ -200,6 +200,7 @@ module ibex_core #(
   logic        csr_save_id;
   logic        csr_restore_mret_id;
   logic        csr_save_cause;
+  logic        csr_mtvec_init;
   logic [31:0] csr_mtvec;
   logic [31:0] csr_mtval;
 
@@ -332,7 +333,8 @@ module ibex_core #(
       // CSRs
       .csr_mepc_i               ( csr_mepc               ), // exception return address
       .csr_depc_i               ( csr_depc               ), // debug return address
-      .csr_mtvec_o              ( csr_mtvec              ), // trap-vector base address
+      .csr_mtvec_i              ( csr_mtvec              ), // trap-vector base address
+      .csr_mtvec_init_o         ( csr_mtvec_init         ),
 
       // pipeline stalls
       .id_in_ready_i            ( id_in_ready            ),
@@ -561,6 +563,11 @@ module ibex_core #(
       .core_id_i               ( core_id_i              ),
       .cluster_id_i            ( cluster_id_i           ),
 
+      // mtvec
+      .csr_mtvec_o             ( csr_mtvec              ),
+      .csr_mtvec_init_i        ( csr_mtvec_init         ),
+      .boot_addr_i             ( boot_addr_i            ),
+
       // Interface to CSRs (SRAM like)
       .csr_access_i            ( csr_access             ),
       .csr_addr_i              ( csr_addr               ),
@@ -595,7 +602,6 @@ module ibex_core #(
       .csr_save_id_i           ( csr_save_id            ),
       .csr_restore_mret_i      ( csr_restore_mret_id    ),
       .csr_save_cause_i        ( csr_save_cause         ),
-      .csr_mtvec_i             ( csr_mtvec              ),
       .csr_mcause_i            ( exc_cause              ),
       .csr_mtval_i             ( csr_mtval              ),
       .illegal_csr_insn_o      ( illegal_csr_insn_id    ),
