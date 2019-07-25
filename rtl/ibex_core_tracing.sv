@@ -71,6 +71,7 @@ module ibex_core_tracing #(
   logic [31:0] rvfi_insn_uncompressed;
   logic        rvfi_trap;
   logic        rvfi_halt;
+  logic        rvfi_intr;
   logic [ 1:0] rvfi_mode;
   logic [ 4:0] rvfi_rs1_addr;
   logic [ 4:0] rvfi_rs2_addr;
@@ -133,6 +134,7 @@ module ibex_core_tracing #(
     .rvfi_insn_uncompressed,
     .rvfi_trap,
     .rvfi_halt,
+    .rvfi_intr,
     .rvfi_mode,
     .rvfi_rs1_addr,
     .rvfi_rs2_addr,
