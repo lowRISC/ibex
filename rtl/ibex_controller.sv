@@ -60,6 +60,8 @@ module ibex_controller (
     input  logic [14:0]           csr_mfip_i,            // fast interrupt pending
     input  logic                  irq_pending_i,         // interrupt request pending
     input  logic                  irq_nm_i,              // non-maskeable interrupt
+    output logic                  irq_ack_o,             // to ext. int controller
+    output logic [3:0]            irq_ack_id_o,          // to ext. int controller
 
     // debug signals
     input  logic                  debug_req_i,
@@ -220,6 +222,9 @@ module ibex_controller (
     perf_tbranch_o        = 1'b0;
     perf_jump_o           = 1'b0;
 
+    irq_ack_o             = 1'b0;
+    irq_ack_id_o          = 4'b0;
+
     unique case (ctrl_fsm_cs)
       RESET: begin
         // just wait for fetch_enable
@@ -365,6 +370,8 @@ module ibex_controller (
             // - second bit adds 16 to fast interrupt ID
             // for example EXC_CAUSE_IRQ_FAST_0 = {1'b1, 5'd16}
             exc_cause_o = exc_cause_e'({2'b11, mfip_id});
+            irq_ack_o    = 1'b1;
+            irq_ack_id_o = mfip_id;
           end else if (csr_meip_i) begin
             exc_cause_o = EXC_CAUSE_IRQ_EXTERNAL_M;
           end else if (csr_msip_i) begin

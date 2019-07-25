@@ -95,6 +95,8 @@ module ibex_id_stage #(
     input  logic [14:0]           csr_mfip_i,
     input  logic                  irq_pending_i,
     input  logic                  irq_nm_i,
+    output logic                  irq_ack_o,
+    output logic [3:0]            irq_ack_id_o,
 
     input  logic                  lsu_load_err_i,
     input  logic                  lsu_store_err_i,
@@ -438,6 +440,8 @@ module ibex_id_stage #(
       .csr_restore_mret_id_o          ( csr_restore_mret_id_o  ),
       .csr_save_cause_o               ( csr_save_cause_o       ),
       .csr_mtval_o                    ( csr_mtval_o            ),
+      .irq_ack_o                      ( irq_ack_o              ),
+      .irq_ack_id_o                   ( irq_ack_id_o           ),
 
       // Debug Signal
       .debug_mode_o                   ( debug_mode_o           ),
