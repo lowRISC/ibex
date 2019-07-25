@@ -114,7 +114,7 @@ module ibex_if_stage #(
   // exception PC selection mux
   always_comb begin : exc_pc_mux
     unique case (exc_pc_mux_i)
-      EXC_PC_EXC:     exc_pc = {csr_mtvec_i, 2'b0};
+      EXC_PC_EXC:     exc_pc = {csr_mtvec_i[31:2], 2'b0};
       EXC_PC_IRQ: begin
         exc_pc = {csr_mtvec_i[31:2], 2'b0} + (csr_mtvec_i[1:0] == '1 ? {irq_id[4:0], 2'b00 } : '0);
       end
