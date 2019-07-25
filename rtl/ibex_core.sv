@@ -85,6 +85,7 @@ module ibex_core #(
     output logic [31:0] rvfi_insn_uncompressed,
     output logic        rvfi_trap,
     output logic        rvfi_halt,
+    output logic        rvfi_intr,
     output logic [ 1:0] rvfi_mode,
     output logic [ 4:0] rvfi_rs1_addr,
     output logic [ 4:0] rvfi_rs2_addr,
@@ -224,6 +225,9 @@ module ibex_core #(
 
   // RISC-V Formal Interface signals
 `ifdef RVFI
+  logic        rvfi_intr_d;
+  logic        rvfi_set_trap_pc_d;
+  logic        rvfi_set_trap_pc_q;
   logic [31:0] rvfi_insn_id;
   logic [4:0]  rvfi_rs1_addr_id;
   logic [4:0]  rvfi_rs2_addr_id;
@@ -619,6 +623,7 @@ module ibex_core #(
     if (!rst_ni) begin
       rvfi_halt              <= '0;
       rvfi_trap              <= '0;
+      rvfi_intr              <= '0;
       rvfi_order             <= '0;
       rvfi_insn              <= '0;
       rvfi_insn_uncompressed <= '0;
@@ -640,6 +645,7 @@ module ibex_core #(
     end else begin
       rvfi_halt              <= '0;
       rvfi_trap              <= illegal_insn_id;
+      rvfi_intr              <= rvfi_intr_d;
       rvfi_order             <= rvfi_order + rvfi_valid;
       rvfi_insn              <= rvfi_insn_id;
       rvfi_insn_uncompressed <= instr_rdata_id;
@@ -768,6 +774,30 @@ module ibex_core #(
       end else begin
         rvfi_insn_new_q <= rvfi_insn_new_d;
       end
+    end
+  end
+
+  // generate rvfi_intr_d
+  assign rvfi_intr_d = rvfi_set_trap_pc_q & rvfi_insn_new_d;
+
+  always_comb begin
+    rvfi_set_trap_pc_d = rvfi_set_trap_pc_q;
+
+    if (pc_set && pc_mux_id == PC_EXC &&
+        (exc_pc_mux_id == EXC_PC_EXC || exc_pc_mux_id == EXC_PC_IRQ)) begin
+      // PC is set to enter a trap handler
+      rvfi_set_trap_pc_d = 1'b1;
+    end else if (rvfi_set_trap_pc_q && instr_ret) begin
+      // first instruction has been executed after PC is set to trap handler
+      rvfi_set_trap_pc_d = 1'b0;
+    end
+  end
+
+  always_ff @(posedge clk or negedge rst_ni) begin
+    if (!rst_ni) begin
+      rvfi_set_trap_pc_q <= 1'b0;
+    end else begin
+      rvfi_set_trap_pc_q <= rvfi_set_trap_pc_d;
     end
   end
 
