@@ -369,7 +369,9 @@ module ibex_cs_registers #(
       CSR_MTVAL: if (csr_we_int) mtval_d = csr_wdata_int;
 
       // mtvec
-      CSR_MTVEC: if (csr_we_int) mtvec_d = csr_wdata_int;
+      // the 2 LSBs of mtvec should always be 01 since we use only vectored mode
+      // we also want mtvec to be 256-byte aligned, so we discard the bottom 8 bits of the input
+      CSR_MTVEC: if (csr_we_int) mtvec_d = {csr_wdata_int[31:8], 6'b0, 2'b01};
 
       CSR_DCSR: begin
         if (csr_we_int) begin
