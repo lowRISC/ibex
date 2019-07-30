@@ -39,6 +39,9 @@ module ibex_cs_registers #(
     input  logic  [3:0]          core_id_i,
     input  logic  [5:0]          cluster_id_i,
 
+    // mtvec reset value
+    input  logic [31:0]          mtvec_resetval_i,
+
     // Interface to registers (SRAM like)
     input  logic                 csr_access_i,
     input  ibex_pkg::csr_num_e   csr_addr_i,
@@ -554,8 +557,7 @@ module ibex_cs_registers #(
       mepc_q         <= '0;
       mcause_q       <= '0;
       mtval_q        <= '0;
-      // set mtvec to 1 to signify vectored mode
-      mtvec_q        <= '1;
+      mtvec_q        <= {mtvec_resetval_i[31:8], 6'b0, 2'b01};
       dcsr_q         <= '{
           xdebugver: XDEBUGVER_NO,   // 4'h0
           cause:     DBG_CAUSE_NONE, // 3'h0
