@@ -11,17 +11,52 @@ Ibex has been designed to be small and efficient.
 Via two parameters, the core is configurable to support four ISA configurations.
 :numref:`blockdiagram` shows a block diagram of the core.
 
-Supported Instruction Set
--------------------------
+Standards Compliance
+--------------------
 
-Ibex supports the following instruction sets and extensions:
+Ibex is a standards-compliant 32b RISC-V processor.
+It follows these specifications:
 
-* Full support for RV32I Base Integer Instruction Set
-* Full support for RV32E Base Integer Instruction Set
-* Full support for RV32C Standard Extension for Compressed Instructions
-* Full support for RV32M Integer Multiplication and Division Instruction Set Extension
+* `RISC-V Instruction Set Manual, Volume I: User-Level ISA, document version 20190608-Base-Ratified (June 8, 2019) <https://github.com/riscv/riscv-isa-manual/releases/download/Ratified-IMFDQC-and-Priv-v1.11/riscv-spec-20190608.pdf>`_
+* `RISC-V Instruction Set Manual, Volume II: Privileged Architecture, document version 20190608-Base-Ratified (June 8, 2019) <https://github.com/riscv/riscv-isa-manual/releases/download/Ratified-IMFDQC-and-Priv-v1.11/riscv-privileged-20190608.pdf>`_.
+  Ibex implements the Machine ISA version 1.11.
+* `RISC-V External Debug Support, version 0.13.2 <https://content.riscv.org/wp-content/uploads/2019/03/riscv-debug-release.pdf>`_
 
-Support for RV32M and RV32E can be enabled or disabled using two separate configuration parameters.
+Many features in the RISC-V specification are optional, and Ibex can be parametrized to enable or disable some of them.
+
+Ibex can be parametrized to support either of the following two instruction sets.
+
+* The RV32I Base Integer Instruction Set, version 2.1
+* The RV32E Base Integer Instruction Set, version 1.9 (draft from June 8, 2019)
+
+In addition, the following instruction set extensions are available.
+
+.. list-table:: Ibex Instruction Set Extensions
+   :header-rows: 1
+
+   * - Extension
+     - Version
+     - Configurability
+
+   * - **M**: Standard Extension for Compressed Instructions
+     - 2.0
+     - always enabled
+
+   * - **C**: Standard Extension for Integer Multiplication and Division
+     - 2.0
+     - optional
+
+   * - **Zicsr**: Control and Status Register Instructions
+     - 2.0
+     - always enabled
+
+Most content of the RISC-V privileged specification is optional.
+Ibex currently supports the following features according to the RISC-V Privileged Specification, version 1.11.
+
+* M mode
+* All CSRs listed in :ref:`cs-registers`
+* Performance counters as described in :ref:`performance-counters`
+* Vectorized trap handling as described at :ref:`exceptions-interrupts`
 
 ASIC Synthesis
 --------------
