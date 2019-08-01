@@ -20,26 +20,14 @@ report_file="$3"
 # -----------------------------------------------------------------------------
 # Convert spike log to standard instruction trace csv
 # -----------------------------------------------------------------------------
-# Remove all the init spike boot instructions
-# 0xffffffff80000000 is the first user instruction
-if [[ "$XLEN" == "32" ]]; then
-  sed -i '/0xffffffff80000000/,$!d' "$spike_log"
-else
-  sed -i '/core.*0x0000000080000000/,$!d' "$spike_log"
-fi
-# Remove all instructions after ecall (end of program excecution)
-sed -i '/ecall/q' "$spike_log"
 # Convert the spike log to riscv_instr_trace.proto format
 spike_csv=$(echo "$spike_log" | sed 's/\.log/.csv/g')
-python scripts/spike_log_to_trace_csv.py --log $spike_log --csv $spike_csv
+python scripts/spike_log_to_trace_csv.py --log $spike_log \
+                                         --csv $spike_csv --xlen 64
 
 # -----------------------------------------------------------------------------
 # Convert ovpsim log to standard instruction trace csv
 # -----------------------------------------------------------------------------
-# Remove the header part of ovpsim log
-sed -i '/Info 1:/,$!d' "$ovpsim_log"
-# Remove all instructions after ecall (end of program excecution)
-sed -i '/ecall/q' "$ovpsim_log"
 # Convert the spike log to riscv_instr_trace.proto format
 ovpsim_csv=$(echo "$ovpsim_log" | sed 's/\.log/.csv/g')
 python scripts/ovpsim_log_to_trace_csv.py --log $ovpsim_log --csv $ovpsim_csv
@@ -47,4 +35,6 @@ python scripts/ovpsim_log_to_trace_csv.py --log $ovpsim_log --csv $ovpsim_csv
 # -----------------------------------------------------------------------------
 # Compare the trace log
 # -----------------------------------------------------------------------------
-python scripts/instr_trace_compare.py $spike_csv $ovpsim_csv "spike" "ovpsim" >> $report_file
+python scripts/instr_trace_compare.py $spike_csv $ovpsim_csv \
+                                      spike ovpsim >> $report_file
+echo >> $report_file

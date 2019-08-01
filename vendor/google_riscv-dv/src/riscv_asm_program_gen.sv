@@ -330,7 +330,7 @@ class riscv_asm_program_gen extends uvm_object;
   endfunction
 
   // Setup MISA based on supported extensions
-  virtual function setup_misa();
+  virtual function void setup_misa();
     bit [XLEN-1:0] misa;
     misa[XLEN-1:XLEN-3] = (XLEN == 32) ? 1 :
                           (XLEN == 64) ? 2 : 3;
@@ -829,6 +829,23 @@ class riscv_asm_program_gen extends uvm_object;
     directed_instr_stream_ratio[name] = ratio;
   endfunction
 
+  virtual function void get_directed_instr_stream();
+    string args, val;
+    string opts[$];
+    for (int i=0; i<cfg.max_directed_instr_stream_seq; i++) begin
+      args = $sformatf("directed_instr_%0d=", i);
+      if ($value$plusargs({args,"%0s"}, val)) begin
+        uvm_split_string(val, ",", opts);
+        if (opts.size() != 2) begin
+          `uvm_fatal(`gfn, $sformatf(
+            "Incorrect directed instruction format : %0s, expect: name,ratio", val))
+        end else begin
+          add_directed_instr_stream(opts[0], opts[1].atoi());
+        end
+      end
+    end
+  endfunction
+
   // Generate directed instruction stream based on the ratio setting
   virtual function void generate_directed_instr_stream(input string label,
                                                        input int unsigned original_instr_cnt,
@@ -896,7 +913,7 @@ class riscv_asm_program_gen extends uvm_object;
 
   // Generate the program in the debug ROM
   // Processor will fetch instruction from here upon receiving debug request from debug module
-  virtual function gen_debug_mode_section();
+  virtual function void gen_debug_mode_section();
     string instr[];
     if (riscv_instr_pkg::support_debug_mode) begin
       instr = {"dret"};

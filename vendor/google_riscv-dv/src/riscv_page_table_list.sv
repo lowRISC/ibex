@@ -104,7 +104,7 @@ class riscv_page_table_list#(satp_mode_t MODE = SV39) extends uvm_object;
   // Take SV39 for example: (PTE_SIZE = 8B)
   // Table size is 4KB, PTE_SIZE=8B, entry count = 4K/8 = 512
   // Level 2: Root table, 2 entries, PTE[0] and PTE[1] is non-leaf PTE, PTE[2] is leaf PTE, all
-  //          other PTEs are invalid, totally 1 page table with 3 PTEs at this level.
+  //          other PTEs are invalid, totalling 1 page table with 3 PTEs at this level.
   // Level 1: Two page tables, map to PTE[0] and PTE[1] of the root table.
   //          Each table has 512 entries, PTE[0], PTE[1] are non-leaf PTE, cover 4MB memory
   //          space. PTE[2:511] are leaf PTE, cover 510 * 2MB memory space.
@@ -113,7 +113,7 @@ class riscv_page_table_list#(satp_mode_t MODE = SV39) extends uvm_object;
   // In summary, 7(1+2+4) tables are needed for SV39.
   // Similarly, 3 (1+2) page tables for SV32, 15 (1 + 2 + 4 + 8) page tables for SV48.
   // Note:
-  // - The number of randomization call is optmized to improve performance
+  // - The number of randomization call is optimized to improve performance
   // - PPN assignment is done at program run time
   virtual function void randomize_page_table();
     int pte_index;
@@ -196,7 +196,7 @@ class riscv_page_table_list#(satp_mode_t MODE = SV39) extends uvm_object;
     `DV_CHECK_RANDOMIZE_FATAL(exception_cfg)
     `DV_CHECK_RANDOMIZE_WITH_FATAL(illegal_pte,
                                    !(xwr inside {NEXT_LEVEL_PAGE, R_W_EXECUTE_PAGE});)
-    // Wrong privielge mode setting
+    // Wrong privilege mode setting
     if(exception_cfg.allow_privileged_mode_exception) begin
       pte.u = ~pte.u;
     end

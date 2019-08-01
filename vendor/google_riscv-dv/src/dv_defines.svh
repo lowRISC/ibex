@@ -33,15 +33,15 @@
 `endif
 
 `ifndef DV_CHECK
-`define DV_CHECK(T_, MSG_="", SEV_=error, ID_=`gfn) \
-    if (!(T_)) begin \
+`define DV_CHECK(T_, MSG_="", SEV_=error, ID_=`gfn, WITH_C_=) \
+    if (!(T_ WITH_C_)) begin \
       `uvm_``SEV_(ID_, $sformatf("Check failed (%s) %s ", `"T_`", MSG_)); \
     end
 `endif
 
 `ifndef DV_CHECK_FATAL
-  `define DV_CHECK_FATAL(T_, MSG_="", ID_=`gfn) \
-    `DV_CHECK(T_, MSG_, fatal, ID_)
+  `define DV_CHECK_FATAL(T_, MSG_="", ID_=`gfn, WITH_C_=) \
+    `DV_CHECK(T_, MSG_, fatal, ID_, WITH_C_)
 `endif
 
 // Shorthand for common foo.randomize() + fatal check
@@ -59,11 +59,11 @@
 // Shorthand for common foo.randomize() with { } + fatal check
 `ifndef DV_CHECK_RANDOMIZE_WITH_FATAL
   `define DV_CHECK_RANDOMIZE_WITH_FATAL(VAR_, WITH_C_, MSG_="Randomization failed!", ID_=`gfn) \
-    `DV_CHECK_FATAL(VAR_.randomize() with {WITH_C_}, MSG_, ID_)
+    `DV_CHECK_FATAL(VAR_.randomize(), MSG_, ID_, with { WITH_C_ })
 `endif
 
 // Shorthand for common std::randomize(foo) with { } + fatal check
 `ifndef DV_CHECK_STD_RANDOMIZE_WITH_FATAL
   `define DV_CHECK_STD_RANDOMIZE_WITH_FATAL(VAR_, WITH_C_,MSG_="Randomization failed!",ID_=`gfn) \
-    `DV_CHECK_FATAL(std::randomize(VAR_) with {WITH_C_}, MSG_, ID_)
+    `DV_CHECK_FATAL(std::randomize(VAR_), MSG_, ID_, with { WITH_C_ })
 `endif

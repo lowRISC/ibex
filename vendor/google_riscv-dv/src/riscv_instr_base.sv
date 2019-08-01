@@ -395,7 +395,7 @@ class riscv_instr_base extends uvm_object;
     super.new(name);
   endfunction
 
-  // Convert the instrunction to one-liner print message
+  // Convert the instruction to one-liner print message
   virtual function string convert2string();
     return convert2asm();
   endfunction

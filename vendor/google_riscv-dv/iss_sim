@@ -31,7 +31,7 @@ OVPSIM_VARIANT="RV64GC"
 
 # Binary of RISC-V ovpsim ISS
 # https://github.com/riscv/riscv-ovpsim
-RISCV_OVPSIM="${OVPSIM_PATH}/riscv-ovpsim/bin/Linux64/riscvOVPsim.exe"
+RISCV_OVPSIM="${OVPSIM_PATH}/riscvOVPsim.exe"
 
 # Directory of assemble tests
 SRC_DIR="./out_${DATE}/asm_tests"
