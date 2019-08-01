@@ -131,7 +131,7 @@ class riscv_instr_sequence extends uvm_sequence;
   virtual function void post_process_instr();
     int i;
     int label_idx;
-    int branch_target[string];
+    int branch_target[string] = '{default: 0};
     // Insert directed instructions, it's randomly mixed with the random instruction stream.
     foreach (directed_instr[i]) begin
       instr_stream.insert_instr_stream(directed_instr[i].instr_list);

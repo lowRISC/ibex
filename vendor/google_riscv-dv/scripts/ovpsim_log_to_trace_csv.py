@@ -16,6 +16,7 @@ limitations under the License.
 Convert ovpsim sim log to standard riscv instruction trace format
 """
 import re
+import os
 import argparse
 
 from riscv_trace_csv import *
@@ -31,6 +32,13 @@ def process_ovpsim_sim_log(ovpsim_log, csv):
   trace_instr = ""
   trace_bin = ""
   trace_addr = ""
+
+  # Remove the header part of ovpsim log
+  cmd = ("sed -i '/Info 1:/,$!d' %s" % ovpsim_log)
+  os.system(cmd)
+  # Remove all instructions after ecall (end of program excecution)
+  cmd = ("sed -i '/ecall/q' %s" % ovpsim_log)
+  os.system(cmd)
 
   with open(ovpsim_log, "r") as f, open(csv, "w") as csv_fd:
     trace_csv = RiscvInstructiontTraceCsv(csv_fd)
@@ -60,11 +68,18 @@ def process_ovpsim_sim_log(ovpsim_log, csv):
           trace_csv.write_trace_entry(rv_instr_trace)
   print("Processed instruction count : %d" % instr_cnt)
 
-instr_trace = []
-# Parse input arguments
-parser = argparse.ArgumentParser()
-parser.add_argument("--log", type=str, help="Input ovpsim simulation log")
-parser.add_argument("--csv", type=str, help="Output trace csv_buf file")
-args = parser.parse_args()
-# Process ovpsim log
-process_ovpsim_sim_log(args.log, args.csv)
+
+def main():
+  instr_trace = []
+  # Parse input arguments
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--log", type=str, help="Input ovpsim simulation log")
+  parser.add_argument("--csv", type=str, help="Output trace csv_buf file")
+  args = parser.parse_args()
+  # Process ovpsim log
+  process_ovpsim_sim_log(args.log, args.csv)
+
+
+if __name__ == "__main__":
+  main()
+

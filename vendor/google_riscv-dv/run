@@ -28,7 +28,7 @@
 
 DATE=`date +%Y-%m-%d`
 
-# RTL simulator, support vcs and irun
+# RTL simulator, supports vcs, irun, and questa
 SIMULATOR="vcs"
 
 # random seed
@@ -141,25 +141,53 @@ OUT=`realpath ${OUT}`
 # Generate compile and simulation commands
 if [[ "$SIMULATOR" == "vcs" ]]; then
 
-  COMPILE_CMD="vcs -file ./vcs.compile.option.f \
-                   -f ./files.f -full64 \
-                   -l $OUT/compile.log  \
-                   -Mdir=$OUT/vcs_simv.csrc \
-                   -o $OUT/vcs_simv ${CMP_OPTS}"
+  function run_compile {
+    vcs -file ./vcs.compile.option.f \
+        -f ./files.f -full64 \
+        -l $OUT/compile.log  \
+        -Mdir=$OUT/vcs_simv.csrc \
+        -o $OUT/vcs_simv ${CMP_OPTS}
+  }
 
   SIM_CMD="$OUT/vcs_simv +vcs+lic+wait +UVM_TESTNAME="
+  SIM_SEED="+ntb_random_seed="
 
 elif [[ "$SIMULATOR" == "irun" ]]; then
 
-  COMPILE_CMD="irun -64bit \
-                    -access +rwc \
-                    -f ./files.f \
-                    -q -sv -uvm  \
-                    -vlog_ext +.vh -I. \
-                    -uvmhome CDNS-1.2 \
-                    -l ${OUT}/compile.log ${CMP_OPTS}"
+  function run_compile {
+    irun -64bit \
+         -access +rwc \
+         -f ./files.f \
+         -q -sv -uvm  \
+         -vlog_ext +.vh -I. \
+         -uvmhome CDNS-1.2 \
+         -elaborate \
+         -l ${OUT}/compile.log ${CMP_OPTS}
+    }
 
   SIM_CMD="irun -R +UVM_TESTNAME="
+  SIM_SEED="-svseed "
+
+elif [[ "$SIMULATOR" == "questa" ]]; then
+#Questa requires mapping libraries to compile correctly
+  function run_compile {
+      vmap mtiUvm $QUESTA_HOME/questasim/uvm-1.2
+      vlog -64 \
+           -access=rwc \
+           -f ./files.f \
+           -sv \
+           -mfcu -cuname design_cuname \
+           +define+UVM_REGEX_NO_DPI \
+           -writetoplevels ${OUT}/top.list \
+           -l ${OUT}/compile.log ${CMP_OPTS}
+      vopt -64 -debug \
+           +designfile -f ${OUT}/top.list \
+           -l ${OUT}/optimize.log ${CMP_OPTS} \
+           -o design_opt
+    }
+
+  SIM_CMD="vsim -64 -c  -do questa_sim.tcl design_opt  +UVM_TESTNAME="
+  SIM_SEED="-sv_seed "
 
 else
   echo "unsupported simulator $SIMULATOR"
@@ -180,9 +208,9 @@ mkdir -p ${OUT}/asm_tests
 if [[ $SIM_ONLY == 0 ]]; then
   echo "Building RISC-V instruction generator..."
   if [[ $VERBOSE == 1 ]]; then
-    ${COMPILE_CMD}
+    run_compile
   else
-    ${COMPILE_CMD} > /dev/null
+    run_compile > /dev/null
   fi
   echo "Building RISC-V instruction generator...done"
 fi
@@ -209,7 +237,7 @@ if [[ ${TEST} == "all" ]]; then
         if [[ ${ITERATION} != "0" ]]; then
           echo "Running ${TEST} to generate ${ITERATION} tests"
           CMD="${SIM_CMD}${TEST} +asm_file_name=${OUT}/asm_tests/${TEST} \
-               +ntb_random_seed=${SEED} ${TEST_OPTS} ${SIM_OPTS} \
+               ${SIM_SEED}${SEED} ${TEST_OPTS} ${SIM_OPTS} \
                -l ${OUT}/sim_${TEST}.log +num_of_tests=${ITERATION}"
           ((PROGRAM_CNT+=$ITERATION))
           echo "${OUT}/sim_${TEST}.log" >> ${LOG_LIST}
@@ -262,7 +290,7 @@ if [[ ${TEST} == "all" ]]; then
 else
   echo "Running test ${TEST} to generate ${NUM_TESTS} tests"
   CMD="${SIM_CMD}${TEST} +asm_file_name=${OUT}/asm_tests/${TEST} \
-                    +ntb_random_seed=${SEED} \
+                    ${SIM_SEED}${SEED} \
                     -l ${OUT}/sim_${TEST}.log \
                     +num_of_tests=${NUM_TESTS} ${SIM_OPTS}"
   if [[ $VERBOSE == 1 ]]; then

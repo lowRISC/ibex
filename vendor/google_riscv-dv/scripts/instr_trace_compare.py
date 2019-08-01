@@ -15,17 +15,30 @@ limitations under the License.
 
 Compare the instruction trace CSV
 """
-import re
+
 import argparse
+import re
+import sys
 
 from riscv_trace_csv import *
 
-def compare_trace_csv(csv1, csv2, name1, name2,
-                      in_order_mode, coalescing_limit, verbose,
-                      mismatch_print_limit, compare_final_value_only):
+def compare_trace_csv(csv1, csv2, name1, name2, log,
+                      in_order_mode = 1,
+                      coalescing_limit = 0,
+                      verbose = 0,
+                      mismatch_print_limit = 5,
+                      compare_final_value_only = 0):
   """Compare two trace CSV file"""
   matched_cnt = 0
   mismatch_cnt = 0
+
+  if log:
+    fd = open(log, 'a+')
+  else:
+    fd = sys.stdout
+
+  fd.write("%s : %s\n" % (name1, csv1))
+  fd.write("%s : %s\n" % (name2, csv2))
 
   with open(csv1, "r") as fd1, open(csv2, "r") as fd2:
     instr_trace_1 = []
@@ -58,21 +71,21 @@ def compare_trace_csv(csv1, csv2, name1, name2,
         # Check if the GPR update is the same between trace 1 and 2
         if gpr_state_change_2 == 0:
           mismatch_cnt += 1
-          print("Mismatch[%d]:\n[%d] %s : %s" %
-                (mismatch_cnt, trace_1_index, name1, trace.get_trace_string()))
-          print ("%0d instructions left in trace %0s" %
-                 (len(instr_trace_1) - trace_1_index + 1, name1))
+          fd.write("Mismatch[%d]:\n[%d] %s : %s\n" %
+                   (mismatch_cnt, trace_1_index, name1, trace.get_trace_string()))
+          fd.write("%0d instructions left in trace %0s\n" %
+                   (len(instr_trace_1) - trace_1_index + 1, name1))
         elif (trace.rd != instr_trace_2[trace_2_index-1].rd or
               trace.rd_val != instr_trace_2[trace_2_index-1].rd_val):
           mismatch_cnt += 1
           # print first few mismatches
           if mismatch_cnt <= mismatch_print_limit:
-            print("Mismatch[%d]:\n%s[%d] : %s" %
-                  (mismatch_cnt, name1, trace_2_index - 1,
-                   trace.get_trace_string()))
-            print("%s[%d] : %s" %
-                  (name2, trace_2_index - 1,
-                   instr_trace_2[trace_2_index-1].get_trace_string()))
+            fd.write("Mismatch[%d]:\n%s[%d] : %s\n" %
+                     (mismatch_cnt, name1, trace_2_index - 1,
+                     trace.get_trace_string()))
+            fd.write("%s[%d] : %s\n" %
+                     (name2, trace_2_index - 1,
+                     instr_trace_2[trace_2_index-1].get_trace_string()))
         else:
           matched_cnt += 1
         # Break the loop if it reaches the end of trace 2
@@ -86,8 +99,8 @@ def compare_trace_csv(csv1, csv2, name1, name2,
                                instr_trace_2[trace_2_index].rd_val,
                                gpr_val_2)
           if gpr_state_change_2 == 1:
-            print ("%0d instructions left in trace %0s" %
-                  (len(instr_trace_2) - trace_2_index, name2))
+            fd.write("%0d instructions left in trace %0s\n" %
+                     (len(instr_trace_2) - trace_2_index, name2))
             mismatch_cnt += len(instr_trace_2) - trace_2_index
             break
           trace_2_index += 1
@@ -101,17 +114,17 @@ def compare_trace_csv(csv1, csv2, name1, name2,
       parse_gpr_update_from_trace(instr_trace_1, gpr_trace_1)
       parse_gpr_update_from_trace(instr_trace_2, gpr_trace_2)
       if len(gpr_trace_1) != len(gpr_trace_2):
-        print("Mismatch: affected GPR count mismtach %s:%d VS %s:%d" %
-              (name1, len(gpr_trace_1), name2, len(gpr_trace_2)))
+        fd.write("Mismatch: affected GPR count mismtach %s:%d VS %s:%d\n" %
+                 (name1, len(gpr_trace_1), name2, len(gpr_trace_2)))
         mismatch_cnt += 1
       if not compare_final_value_only:
         for gpr in gpr_trace_1:
           coalesced_updates = 0
           if (len(gpr_trace_1[gpr]) != len(gpr_trace_2[gpr]) and
               coalescing_limit == 0):
-            print("Mismatch: GPR[%s] trace count mismtach %s:%d VS %s:%d" %
-                  (gpr, name1, len(gpr_trace_1[gpr]),
-                   name2, len(gpr_trace_2[gpr])))
+            fd.write("Mismatch: GPR[%s] trace count mismtach %s:%d VS %s:%d\n" %
+                     (gpr, name1, len(gpr_trace_1[gpr]),
+                     name2, len(gpr_trace_2[gpr])))
             mismatch_cnt += 1
           trace_2_index = 0
           coalesced_updates = 0
@@ -124,45 +137,47 @@ def compare_trace_csv(csv1, csv2, name1, name2,
                 coalesced_updates = 0
                 mismatch_cnt += 1
                 if mismatch_cnt <= mismatch_print_limit:
-                  print("Mismatch:")
-                  print("%s[%d] : %s" % (name1, trace_1_index,
-                        gpr_trace_1[gpr][trace_1_index].get_trace_string()))
-                  print("%s[%d] : %s" % (name2, trace_2_index,
-                        gpr_trace_2[gpr][trace_2_index].get_trace_string()))
+                  fd.write("Mismatch:\n")
+                  fd.write("%s[%d] : %s\n" % (name1, trace_1_index,
+                           gpr_trace_1[gpr][trace_1_index].get_trace_string()))
+                  fd.write("%s[%d] : %s\n" % (name2, trace_2_index,
+                           gpr_trace_2[gpr][trace_2_index].get_trace_string()))
                 trace_2_index += 1
               else:
                 if verbose:
-                  print("Skipping %s[%d] : %s" %
-                        (name1, trace_1_index,
-                         gpr_trace_1[gpr][trace_1_index].get_trace_string()))
+                  fd.write("Skipping %s[%d] : %s\n" %
+                           (name1, trace_1_index,
+                           gpr_trace_1[gpr][trace_1_index].get_trace_string()))
                 coalesced_updates += 1
             else:
               coalesced_updates = 0
               matched_cnt += 1
               if verbose:
-                print("Matched [%0d]: %s : %s" %
-                      (trace_1_index, name1,
-                       gpr_trace_1[gpr][trace_1_index].get_trace_string()))
+                fd.write("Matched [%0d]: %s : %s\n" %
+                         (trace_1_index, name1,
+                         gpr_trace_1[gpr][trace_1_index].get_trace_string()))
               trace_2_index += 1
       # Check the final value match between the two traces
       for gpr in gpr_trace_1:
         if (len(gpr_trace_1[gpr]) == 0 or len(gpr_trace_2[gpr]) == 0):
           mismatch_cnt += 1
-          print("Zero GPR[%s] updates observed: %s:%d, %s:%d" % (gpr,
-                name1, len(gpr_trace_1[gpr]), name2, len(gpr_trace_2[gpr])))
+          fd.write("Zero GPR[%s] updates observed: %s:%d, %s:%d\n" % (gpr,
+                   name1, len(gpr_trace_1[gpr]), name2, len(gpr_trace_2[gpr])))
         elif long(gpr_trace_1[gpr][-1].rd_val, 16) != \
              long(gpr_trace_2[gpr][-1].rd_val, 16):
           mismatch_cnt += 1
           if mismatch_cnt <= mismatch_print_limit:
-            print("Mismatch final value:")
-            print("%s : %s" % (name1, gpr_trace_1[gpr][-1].get_trace_string()))
-            print("%s : %s" % (name2, gpr_trace_2[gpr][-1].get_trace_string()))
+            fd.write("Mismatch final value:\n")
+            fd.write("%s : %s\n" % (name1, gpr_trace_1[gpr][-1].get_trace_string()))
+            fd.write("%s : %s\n" % (name2, gpr_trace_2[gpr][-1].get_trace_string()))
     if mismatch_cnt == 0:
       compare_result = "PASSED"
     else:
       compare_result = "FAILED"
-    print("Compare result[%s]: %d matched, %d mismatch" %
-          (compare_result, matched_cnt, mismatch_cnt))
+    fd.write("Compare result[%s]: %d matched, %d mismatch\n\n" %
+             (compare_result, matched_cnt, mismatch_cnt))
+    if log:
+      fd.close()
 
 
 def parse_gpr_update_from_trace(trace_csv, gpr_trace):
@@ -188,34 +203,41 @@ def check_update_gpr(rd, rd_val, gpr):
   return gpr_state_change
 
 
-# Parse input arguments
-parser = argparse.ArgumentParser()
-parser.add_argument("csv_file_1", type=str, help="Instruction trace 1 CSV")
-parser.add_argument("csv_file_2", type=str, help="Instruction trace 2 CSV")
-parser.add_argument("csv_name_1", type=str, help="Instruction trace 1 name")
-parser.add_argument("csv_name_2", type=str, help="Instruction trace 2 name")
-# optional arguments
-parser.add_argument("--in_order_mode", type=int, default=1,
-                    help="In order comparison mode")
-parser.add_argument("--gpr_update_coalescing_limit", type=int, default=1,
-                    help="Allow the core to merge multiple updates to the \
-                          same GPR into one. This option only applies to \
-                          trace 2")
-parser.add_argument("--mismatch_print_limit", type=int, default=5,
-                    help="Max number of mismatches printed")
-parser.add_argument("--verbose", type=int, default=0,
-                    help="Verbose logging")
-parser.add_argument("--compare_final_value_only", type=int, default=0,
-                    help="Only compare the final value of the GPR")
+def main():
+  # Parse input arguments
+  parser = argparse.ArgumentParser()
+  parser.add_argument("csv_file_1", type=str, help="Instruction trace 1 CSV")
+  parser.add_argument("csv_file_2", type=str, help="Instruction trace 2 CSV")
+  parser.add_argument("csv_name_1", type=str, help="Instruction trace 1 name")
+  parser.add_argument("csv_name_2", type=str, help="Instruction trace 2 name")
+  # optional arguments
+  parser.add_argument("--log", type=str, default="",
+                      help="Log file")
+  parser.add_argument("--in_order_mode", type=int, default=1,
+                      help="In order comparison mode")
+  parser.add_argument("--gpr_update_coalescing_limit", type=int, default=1,
+                      help="Allow the core to merge multiple updates to the \
+                            same GPR into one. This option only applies to \
+                            trace 2")
+  parser.add_argument("--mismatch_print_limit", type=int, default=5,
+                      help="Max number of mismatches printed")
+  parser.add_argument("--verbose", type=int, default=0,
+                      help="Verbose logging")
+  parser.add_argument("--compare_final_value_only", type=int, default=0,
+                      help="Only compare the final value of the GPR")
 
-args = parser.parse_args()
+  args = parser.parse_args()
 
-if args.compare_final_value_only:
-  args.in_order_mode = 0
+  if args.compare_final_value_only:
+    args.in_order_mode = 0
 
-# Compare trace CSV
-compare_trace_csv(args.csv_file_1, args.csv_file_2,
-                  args.csv_name_1, args.csv_name_2,
-                  args.in_order_mode, args.gpr_update_coalescing_limit,
-                  args.verbose, args.mismatch_print_limit,
-                  args.compare_final_value_only)
+  # Compare trace CSV
+  compare_trace_csv(args.csv_file_1, args.csv_file_2,
+                    args.csv_name_1, args.csv_name_2, args.log,
+                    args.in_order_mode, args.gpr_update_coalescing_limit,
+                    args.verbose, args.mismatch_print_limit,
+                    args.compare_final_value_only)
+
+
+if __name__ == "__main__":
+  main()

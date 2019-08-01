@@ -91,7 +91,8 @@ class riscv_rand_instr extends riscv_instr_base;
   }
 
   constraint csr_instr_c {
-    if(cfg.no_csr_instr == 1) {
+    // TODO: support CSR instruction in other modes
+    if(cfg.no_csr_instr || (cfg.init_privileged_mode != MACHINE_MODE)) {
       category != CSR;
     } else {
       if (cfg.enable_illegal_csr_instruction) {

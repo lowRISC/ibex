@@ -107,6 +107,8 @@ class riscv_instr_gen_config extends uvm_object;
   int                    max_stack_len_per_program = 16 * (XLEN/8);
   // Maximum branch distance, avoid skipping large portion of the code
   int                    max_branch_step = 20;
+  // Maximum directed instruction stream sequence count
+  int                    max_directed_instr_stream_seq = 20;
   // Reserved registers
   // Default reserved registers, only used by special instructions
   riscv_reg_t            default_reserved_regs[];
