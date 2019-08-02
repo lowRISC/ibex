@@ -2,87 +2,120 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-DV_DIR    := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-GEN_DIR   := $(realpath ${DV_DIR}/../../vendor/google_riscv-dv)
-TOOLCHAIN := ${RISCV_TOOLCHAIN}
-OUT       := "${DV_DIR}/out"
+DV_DIR     := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+GEN_DIR    := $(realpath ${DV_DIR}/../../vendor/google_riscv-dv)
+TOOLCHAIN  := ${RISCV_TOOLCHAIN}
+OUT        := "${DV_DIR}/out"
 # Run time options for the instruction generator
-GEN_OPTS  :=
+GEN_OPTS   :=
 # Run time options for ibex RTL simulation
-SIM_OPTS  :=
+SIM_OPTS   :=
 # Enable waveform dumping
-WAVES     := 1
-WAVE_CMP_OPTS := -debug_access+all -ucli -do vcs.tcl
+WAVES      := 1
 # Enable coverage dump
-COV       := 0
-# Coverage dump options
-COV_CMP_OPTS := -cm line+tgl+assert+fsm+branch \
-                -cm_tgl portsonly \
-                -cm_tgl structarr \
-                -cm_report noinitial \
-                -cm_seqnoconst \
-                -cm_dir ${OUT}/rtl_sim/test.vdb \
-                -cm_hier cover.cfg
-
-ifeq (${WAVES}, 0)
-	WAVE_CMP_OPTS=
-endif
-
-ifeq (${COV}, 0)
-	COV_CMP_OPTS=
-endif
+COV        := 0
+# RTL simulator
+SIMULATOR  := "vcs"
+# ISS (spike, ovpsim)
+ISS        := "spike"
+# ISA
+ISA        := "rv32imc"
+# Test name (default: full regression)
+TEST       := "all"
+# Seed for instruction generator and RTL simulation
+SEED       := -1
+# Verbose logging
+VERBOSE    := 0
+# Number of iterations for each test, assign a non-zero value to override the
+# iteration count in the test list
+ITERATIONS := 0
+# LSF CMD
+LSF_CMD    :=
 
 SHELL=/bin/bash
 
 export PRJ_DIR:= $(realpath ${DV_DIR}/../../..)
 
-rand:=$(shell awk 'BEGIN{srand();printf("%d", 65536*rand())}')
+.PHONY: rtl_sim clean gcc_compile iss_sim
 
-.PHONY: rtl_sim clean iss_sim
-
-all: clean gen iss_sim compile rtl_sim post_compare
+all: clean gen gcc_compile iss_sim compile rtl_sim post_compare
 
 clean:
 	rm -rf ${OUT}
 
+# Common options for all targets
+COMMON_OPTS=--seed=${SEED} \
+            --test=${TEST} \
+            --verbose=${VERBOSE} \
+            --testlist=${DV_DIR}/riscv_dv_extension/testlist.yaml \
+            --iterations=${ITERATIONS}
+
 # Generate random instructions
-gen:
+.SILENT gen:
 	mkdir -p ${OUT}
 	cd ${GEN_DIR}; \
-	./run -o ${OUT}/instr_gen ${GEN_OPTS} \
-	   -cmp_opts "+define+RISCV_CORE_SETTING=${DV_DIR}/riscv_dv_extension/ibex_core_setting.sv \
-		 +define+RISCV_DV_EXT_FILE_LIST=${DV_DIR}/riscv_dv_extension/flist \
-		 +incdir+${DV_DIR}/riscv_dv_extension/ " \
-		 -testlist ${DV_DIR}/riscv_dv_extension/testlist \
-	   -sim_opts "+uvm_set_type_override=riscv_asm_program_gen,ibex_asm_program_gen";
+	python3 ./run.py \
+     --o=${OUT}/instr_gen ${GEN_OPTS} \
+     --steps=gen \
+     --lsf_cmd="${LSF_CMD}" \
+     ${COMMON_OPTS} \
+     --cmp_opts="+define+RISCV_CORE_SETTING=${DV_DIR}/riscv_dv_extension/ibex_core_setting.sv \
+       +define+RISCV_DV_EXT_FILE_LIST=${DV_DIR}/riscv_dv_extension/flist \
+       +incdir+${DV_DIR}/riscv_dv_extension/ " \
+     --sim_opts="+uvm_set_type_override=riscv_asm_program_gen,ibex_asm_program_gen";
+
+# Compile the generated assmebly programs to ELF/BIN
+gcc_compile:
+	cd ${GEN_DIR}; \
+	python3 ./run.py \
+     --o=${OUT}/instr_gen ${GEN_OPTS} \
+     --steps=gcc_compile \
+     ${COMMON_OPTS} \
+     --isa=${ISA} \
+     --mabi=ilp32
 
 # ISS simulation
 iss_sim:
 	cd ${GEN_DIR}; \
-	./iss_sim -dir ${OUT}/instr_gen -toolchain ${TOOLCHAIN} -isa rv32imc -abi ilp32;
+	python3 ./run.py \
+     --o=${OUT}/instr_gen ${GEN_OPTS} \
+     --steps=iss_sim \
+     ${COMMON_OPTS} \
+     --iss=${ISS} \
+     --isa=${ISA} \
 
 # Compile ibex core TB
 compile:
 	mkdir -p ${OUT}/rtl_sim
-	vcs -f ibex_dv.f  -full64 \
-      -l ${OUT}/rtl_sim/compile.log  \
-      -sverilog -ntb_opts uvm-1.2 \
-      +define+UVM_REGEX_NO_DPI -timescale=1ns/10ps -licqueue \
-      -Mdir=${OUT}/rtl_sim/vcs_simv.csrc \
-      -o ${OUT}/rtl_sim/vcs_simv \
-      +define+BOOT_ADDR=32\'h8000_0000 \
-      +define+TRACE_EXECUTION +define+RVFI\
-      -debug_access+pp \
-      ${WAVE_CMP_OPTS} ${COV_CMP_OPTS}\
-      -lca -kdb
+	python3 ./sim.py \
+     --o=${OUT} \
+     --steps=compile \
+     ${COMMON_OPTS} \
+     --simulator=${SIMULATOR} \
+     --en_cov=${COV} \
+     --en_wave=${WAVE} \
 
 # Run ibex RTL simulation with random instructions
 rtl_sim:
-	./sim ${SIM_OPTS} -dir ${OUT} -waves ${WAVES} -cov ${COV}
+	mkdir -p ${OUT}/rtl_sim
+	python3 ./sim.py \
+     --o=${OUT} \
+     --steps=sim \
+     ${COMMON_OPTS} \
+     --simulator=${SIMULATOR} \
+     --en_cov=${COV} \
+     --en_wave=${WAVE} \
+     ${SIM_OPTS}
 
 # Compare the regression result between ISS and RTL sim
 post_compare:
-	./compare ${OUT}
+	rm -rf ${OUT}/regr.log
+	python3 ./sim.py \
+     --o=${OUT} \
+     --steps=compare \
+     ${COMMON_OPTS} \
+     --simulator=${SIMULATOR} \
+     --iss=${ISS}
 
 # Load verdi to review coverage
 cov:
