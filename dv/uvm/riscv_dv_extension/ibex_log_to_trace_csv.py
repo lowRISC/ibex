@@ -45,11 +45,16 @@ def process_ibex_sim_log(ibex_log, csv):
     print("Processed instruction count : %d" % instr_cnt)
 
 
-instr_trace = []
-# Parse input arguments
-parser = argparse.ArgumentParser()
-parser.add_argument("--log", type=str, help="Input ibex simulation log")
-parser.add_argument("--csv", type=str, help="Output trace csv_buf file")
-args = parser.parse_args()
-# Process ibex log
-process_ibex_sim_log(args.log, args.csv)
+def main():
+  instr_trace = []
+  # Parse input arguments
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--log", type=str, help="Input ibex simulation log")
+  parser.add_argument("--csv", type=str, help="Output trace csv_buf file")
+  args = parser.parse_args()
+  # Process ibex log
+  process_ibex_sim_log(args.log, args.csv)
+
+
+if __name__ == "__main__":
+  main()

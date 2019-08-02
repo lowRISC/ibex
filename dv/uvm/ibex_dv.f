@@ -2,6 +2,10 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
++define+BOOT_ADDR=32'h8000_0000
++define+TRACE_EXECUTION
++define+RVFI
+
 ${PRJ_DIR}/ibex/dv/uvm/tb/prim_clock_gating.sv
 
 // ibex CORE RTL files
