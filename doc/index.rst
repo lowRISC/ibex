@@ -17,6 +17,7 @@ Ibex User Manual
    debug
    tracer
    rvfi
+   verification
    examples
 
 
