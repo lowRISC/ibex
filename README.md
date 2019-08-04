@@ -10,7 +10,7 @@ The options include two different choices for the architecture of the multiplier
 as well as the possibility to drop the support for the "M" extension completely. In addition, the
 "E" extension can be enabled when opting for a minimum-area configuration.
 
-This core was initially developed as part of the [PULP platform](https://wwww.pulp-platform.org)
+This core was initially developed as part of the [PULP platform](https://www.pulp-platform.org)
 under the name "Zero-riscy" \[[1](https://doi.org/10.1109/PATMOS.2017.8106976)\], and has been
 contributed to [lowRISC](https://www.lowrisc.org) who maintains it and develops it further. It is
 under active development, with further code cleanups, feature additions, and test and verification
