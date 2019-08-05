@@ -8,6 +8,7 @@ class core_ibex_base_test extends uvm_test;
   core_ibex_env_cfg               cfg;
   virtual clk_if                  clk_vif;
   virtual core_ibex_dut_probe_if  dut_vif;
+  virtual core_ibex_reg_file_if   regfile_vif;
   mem_model_pkg::mem_model        mem;
   core_ibex_vseq                  vseq;
   bit                             enable_irq_seq;
@@ -29,6 +30,9 @@ class core_ibex_base_test extends uvm_test;
     end
     if (!uvm_config_db#(virtual core_ibex_dut_probe_if)::get(null, "", "dut_if", dut_vif)) begin
       `uvm_fatal(get_full_name(), "Cannot get dut_if")
+    end
+    if (!uvm_config_db#(virtual core_ibex_reg_file_if)::get(null, "", "regfile_vif", regfile_vif)) begin
+      `uvm_fatal(get_full_name(), "Cannot get regfile_vif")
     end
     env = core_ibex_env::type_id::create("env", this);
     cfg = core_ibex_env_cfg::type_id::create("cfg", this);
