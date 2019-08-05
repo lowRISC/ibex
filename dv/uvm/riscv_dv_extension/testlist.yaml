@@ -152,3 +152,9 @@
     +enable_irq_seq=1
   compare_opts: >
     +compare_final_value_only=1
+
+- test: riscv_csr_test
+  description: >
+    Test all CSR instructions on all implemented CSR registers
+  iterations: 5
+  rtl_test: core_ibex_csr_test
