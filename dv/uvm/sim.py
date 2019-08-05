@@ -159,6 +159,7 @@ def rtl_sim(sim_cmd, test_list, output_dir, bin_dir, lsf_cmd, seed, opts, verbos
   # Run the RTL simulation
   sim_cmd = re.sub("<out>", output_dir, sim_cmd)
   sim_cmd = re.sub("<sim_opts>", opts, sim_cmd)
+  sim_cmd = re.sub("<cwd>", cwd, sim_cmd)
   print ("Running RTL simulation...")
   cmd_list = []
   for test in test_list:
