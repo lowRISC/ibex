@@ -22,8 +22,7 @@
          -Mdir=<out>/vcs_simv.csrc
          -o <out>/vcs_simv
          -debug_access+pp
-         -lca -kdb
-         <wave_opts> <cov_opts>"
+         -lca -kdb <wave_opts> <cov_opts>"
     cov_opts: >
       -cm line+tgl+assert+fsm+branch
       -cm_tgl portsonly
@@ -36,7 +35,7 @@
       -debug_access+all -ucli -do vcs.tcl
   sim:
     cmd: >
-      <out>/vcs_simv +vcs+lic+wait <sim_opts>
+      <out>/vcs_simv +vcs+lic+wait <sim_opts> <wave_opts> <cov_opts>
     cov_opts: >
       -cm line+tgl+assert+fsm+branch
       -cm_dir <out>/test.vdb
@@ -44,4 +43,4 @@
       -assert nopostproc
       -cm_name test_<seed>
     wave_opts: >
-      -ucli -do vcs.tcl
+      -ucli -do <cwd>/vcs.tcl

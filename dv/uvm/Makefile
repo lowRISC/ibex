@@ -93,7 +93,7 @@ compile:
      ${COMMON_OPTS} \
      --simulator=${SIMULATOR} \
      --en_cov=${COV} \
-     --en_wave=${WAVE} \
+     --en_wave=${WAVES} \
 
 # Run ibex RTL simulation with random instructions
 rtl_sim:
@@ -104,7 +104,7 @@ rtl_sim:
      ${COMMON_OPTS} \
      --simulator=${SIMULATOR} \
      --en_cov=${COV} \
-     --en_wave=${WAVE} \
+     --en_wave=${WAVES} \
      ${SIM_OPTS}
 
 # Compare the regression result between ISS and RTL sim
