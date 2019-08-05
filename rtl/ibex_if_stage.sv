@@ -69,6 +69,8 @@ module ibex_if_stage #(
     input  ibex_pkg::exc_pc_sel_e exc_pc_mux_i,             // selects ISR address
     input  ibex_pkg::exc_cause_e  exc_cause,                // selects ISR address for
                                                                 // vectorized interrupt lines
+    output logic                  csr_mtvec_init_o,         // tell CS register file to initialize
+                                                            // mtvec
 
     // jump and branch target and decision
     input  logic [31:0]           jump_target_ex_i,         // jump target address
@@ -111,11 +113,14 @@ module ibex_if_stage #(
   assign irq_id         = {exc_cause};
   assign unused_irq_bit = irq_id[5];   // MSB distinguishes interrupts from exceptions
 
+  // tell CS register file to initialize mtvec on boot
+  assign csr_mtvec_init_o = (pc_mux_i == PC_BOOT);
+
   // exception PC selection mux
   always_comb begin : exc_pc_mux
     unique case (exc_pc_mux_i)
-      EXC_PC_EXC:     exc_pc = { csr_mtvec_i[31:2], 2'b0 };
-      EXC_PC_IRQ:     exc_pc = { csr_mtvec_i[31:8], 1'b0, irq_id[4:0], 2'b00 } );
+      EXC_PC_EXC:     exc_pc = { csr_mtvec_i[31:8], 8'h00                    };
+      EXC_PC_IRQ:     exc_pc = { csr_mtvec_i[31:8], 1'b0, irq_id[4:0], 2'b00 };
       EXC_PC_DBD:     exc_pc = DmHaltAddr;
       EXC_PC_DBG_EXC: exc_pc = DmExceptionAddr;
       default:        exc_pc = 'X;

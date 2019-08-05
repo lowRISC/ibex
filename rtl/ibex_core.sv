@@ -124,6 +124,7 @@ module ibex_core #(
   pc_sel_e     pc_mux_id;              // Mux selector for next PC
   exc_pc_sel_e exc_pc_mux_id;          // Mux selector for exception PC
   exc_cause_e  exc_cause;              // Exception cause
+  logic        csr_mtvec_init;
 
   logic        lsu_load_err;
   logic        lsu_store_err;
@@ -325,6 +326,7 @@ module ibex_core #(
       .pc_mux_i                 ( pc_mux_id              ),
       .exc_pc_mux_i             ( exc_pc_mux_id          ),
       .exc_cause                ( exc_cause              ),
+      .csr_mtvec_init_o         ( csr_mtvec_init         ),
 
       // jump targets
       .jump_target_ex_i         ( jump_target_ex         ),
@@ -561,8 +563,9 @@ module ibex_core #(
       .core_id_i               ( core_id_i              ),
       .cluster_id_i            ( cluster_id_i           ),
 
-      // mtvec reset value
-      .mtvec_resetval_i        ( boot_addr_i            ),
+      // mtvec initialization
+      .csr_mtvec_resetval_i    ( boot_addr_i            ),
+      .csr_mtvec_init_i        ( csr_mtvec_init         ),
 
       // Interface to CSRs (SRAM like)
       .csr_access_i            ( csr_access             ),

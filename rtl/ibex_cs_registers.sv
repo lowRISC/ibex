@@ -39,8 +39,9 @@ module ibex_cs_registers #(
     input  logic  [3:0]          core_id_i,
     input  logic  [5:0]          cluster_id_i,
 
-    // mtvec reset value
-    input  logic [31:0]          mtvec_resetval_i,
+    // mtvec initialization
+    input  logic [31:0]          csr_mtvec_resetval_i,
+    input  logic                 csr_mtvec_init_i,
 
     // Interface to registers (SRAM like)
     input  logic                 csr_access_i,
@@ -218,9 +219,6 @@ module ibex_cs_registers #(
     csr_rdata_int = '0;
     illegal_csr   = 1'b0;
 
-    // we always want the current value of mtvec to be accessible so the IF stage can jump to it
-    csr_mtvec_o = mtvec_q;
-
     unique case (csr_addr_i)
       // mhartid: unique hardware thread id
       CSR_MHARTID: csr_rdata_int = {21'b0, cluster_id_i[5:0], 1'b0, core_id_i[3:0]};
@@ -324,7 +322,7 @@ module ibex_cs_registers #(
     mepc_d       = mepc_q;
     mcause_d     = mcause_q;
     mtval_d      = mtval_q;
-    mtvec_d      = mtvec_q;
+    mtvec_d      = csr_mtvec_init_i ? csr_mtvec_resetval_i : mtvec_q;
     dcsr_d       = dcsr_q;
     depc_d       = depc_q;
     dscratch0_d  = dscratch0_q;
@@ -372,7 +370,7 @@ module ibex_cs_registers #(
       CSR_MTVAL: if (csr_we_int) mtval_d = csr_wdata_int;
 
       // mtvec
-      // the 2 LSBs of mtvec should always be 01 since we use only vectored mode
+      // mtvec.MODE set to vectored
       // we also want mtvec to be 256-byte aligned, so we discard the bottom 8 bits of the input
       CSR_MTVEC: if (csr_we_int) mtvec_d = {csr_wdata_int[31:8], 6'b0, 2'b01};
 
@@ -537,6 +535,7 @@ module ibex_cs_registers #(
 
   assign csr_mepc_o = mepc_q;
   assign csr_depc_o = depc_q;
+  assign csr_mtvec_o = mtvec_q;
 
   assign csr_mstatus_mie_o   = mstatus_q.mie;
   assign debug_single_step_o = dcsr_q.step;
@@ -557,7 +556,7 @@ module ibex_cs_registers #(
       mepc_q         <= '0;
       mcause_q       <= '0;
       mtval_q        <= '0;
-      mtvec_q        <= {mtvec_resetval_i[31:8], 6'b0, 2'b01};
+      mtvec_q        <= 32'b01;
       dcsr_q         <= '{
           xdebugver: XDEBUGVER_NO,   // 4'h0
           cause:     DBG_CAUSE_NONE, // 3'h0
