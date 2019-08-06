@@ -580,6 +580,7 @@ module ibex_id_stage #(
               instr_multicycle_done_n = 1'b0;
             end
             default: begin
+              instr_multicycle_done_n = 1'b0;
               instr_ret_o             = 1'b1;
             end
           endcase
