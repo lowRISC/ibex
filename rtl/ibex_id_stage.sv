@@ -163,6 +163,7 @@ module ibex_id_stage #(
   logic        jump_set;
 
   logic        instr_executing;
+  logic        instr_multicycle;
   logic        instr_multicycle_done_n, instr_multicycle_done_q;
   logic        stall_lsu;
   logic        stall_multdiv;
@@ -477,11 +478,14 @@ module ibex_id_stage #(
   // ID-EX/WB //
   //////////////
 
+  assign multdiv_en_dec   = mult_en_dec | div_en_dec;
+  assign instr_multicycle = data_req_dec | multdiv_en_dec | branch_in_dec | jump_in_dec;
+
   // Forward decoder output to EX, WB and controller only if current instr is still
   // being executed. This is the case if the current instr is either:
   // - a new instr (not yet done)
   // - a multicycle instr that is not yet done
-  assign instr_executing = (instr_new_i | ~instr_multicycle_done_q);
+  assign instr_executing = instr_new_i | (instr_multicycle & ~instr_multicycle_done_q);
   assign data_req_id     = instr_executing ? data_req_dec  : 1'b0;
   assign mult_en_id      = instr_executing ? mult_en_dec   : 1'b0;
   assign div_en_id       = instr_executing ? div_en_dec    : 1'b0;
@@ -489,6 +493,7 @@ module ibex_id_stage #(
   ///////////
   // ID-EX //
   ///////////
+
   assign data_req_ex_o               = data_req_id;
   assign data_we_ex_o                = data_we_id;
   assign data_type_ex_o              = data_type_id;
@@ -530,8 +535,6 @@ module ibex_id_stage #(
   //////////////////
   // ID-EX/WB FSM //
   //////////////////
-
-  assign multdiv_en_dec  = mult_en_dec | div_en_dec;
 
   always_comb begin : id_wb_fsm
     id_wb_fsm_ns            = id_wb_fsm_cs;
