@@ -129,9 +129,14 @@ Machine Trap-Vector Base Address (mtvec)
 
 CSR Address: ``0x305``
 
+Reset Value: ``0x0000_0001``
+
 When an exception is encountered, the core jumps to the corresponding handler using the content of ``mtvec`` as base address.
-It is a WARL register which contains the boot address.
-It contains a hard-wired value, so will remain unchanged after any writes.
+``mtvec`` is a WARL register.
+Its value can be changed using the instructions added by the Zicsr extension.
+The value written to and read from the register will always be 256-byte aligned, and only vectored mode is supported.
+This means the bottom 8 bits of the write input are ignored, and instead ``0x01`` is written in the bottom 8 bits of the register.
+``mtvec``.BASE is initialized to the 256-byte aligned boot address on booting the core.
 ``mtvec``.MODE is set to 2'b01 to indicate vectored interrupt handling.
 
 
