@@ -114,7 +114,7 @@ module ibex_if_stage #(
   assign unused_irq_bit = irq_id[5];   // MSB distinguishes interrupts from exceptions
 
   // tell CS register file to initialize mtvec on boot
-  assign csr_mtvec_init_o = (pc_mux_i == PC_BOOT);
+  assign csr_mtvec_init_o = (pc_mux_i == PC_BOOT) && pc_set_i;
 
   // exception PC selection mux
   always_comb begin : exc_pc_mux

@@ -564,7 +564,7 @@ module ibex_core #(
       .cluster_id_i            ( cluster_id_i           ),
 
       // mtvec initialization
-      .csr_mtvec_resetval_i    ( boot_addr_i            ),
+      .boot_addr_i             ( boot_addr_i            ),
       .csr_mtvec_init_i        ( csr_mtvec_init         ),
 
       // Interface to CSRs (SRAM like)
