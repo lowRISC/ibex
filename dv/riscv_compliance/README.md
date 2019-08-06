@@ -14,7 +14,7 @@ How to run RISC-V Compliance on Ibex
 ------------------------------------
 
 0. Check your prerequisites
-   To compile the simulation and run the compliance test suite you need to 
+   To compile the simulation and run the compliance test suite you need to
    have the following tools installed:
    - Verilator
    - fusesoc
@@ -47,14 +47,13 @@ How to run RISC-V Compliance on Ibex
 
    The compliance test suite currently needs workarounds for Ibex.
    Get a modified version of it.
-   
+
    ```
    git clone https://github.com/imphil/riscv-compliance.git
    cd riscv-compliance
    git checkout ibex
    ```
-   
-   
+
 3. Run the test suite
    ```sh
    cd $RISCV_COMPLIANCE_REPO_BASE
@@ -65,3 +64,36 @@ How to run RISC-V Compliance on Ibex
    make clean
    make
    ```
+
+Compliance test suite system
+----------------------------
+
+This directory contains a system designed especially to run the compliance test suite.
+The system consists of
+
+- an Ibex core,
+- a bus,
+- a single-port memory for data and instructions,
+- a bus-attached test utility.
+
+The CPU core boots from SRAM at address 0x0.
+
+The test utility is used by the software to end the simulation, and to inform
+the simulator of the memory region where the test signature is stored.
+The bus host reads the test signature from memory.
+
+The memory map of the whole system is as follows:
+
+| Start   | End     | Size  | Device                         |
+|---------|---------|-------|--------------------------------|
+| 0x0     | 0xFFFF  | 64 kB | shared instruction/data memory |
+| 0x20000 | 0x203FF | 1 kB  | test utility                   |
+
+
+The test utility provides the following registers relative to the base address.
+
+| Address | R/W | Description                                                         |
+|---------|-----|---------------------------------------------------------------------|
+| 0x0     | W   | Write any value to dump the test signature and terminate simulation |
+| 0x4     | W   | Start address of the test signature                                 |
+| 0x8     | W   | End address of the test signature                                   |
