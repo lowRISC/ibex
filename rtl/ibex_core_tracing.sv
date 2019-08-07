@@ -31,6 +31,7 @@ module ibex_core_tracing #(
     input  logic        instr_rvalid_i,
     output logic [31:0] instr_addr_o,
     input  logic [31:0] instr_rdata_i,
+    input  logic        instr_err_i,
 
     // Data memory interface
     output logic        data_req_o,
@@ -109,6 +110,7 @@ module ibex_core_tracing #(
     .instr_rvalid_i,
     .instr_addr_o,
     .instr_rdata_i,
+    .instr_err_i,
 
     .data_req_o,
     .data_gnt_i,

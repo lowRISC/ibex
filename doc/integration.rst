@@ -35,6 +35,7 @@ Instantiation Template
       .instr_rvalid_i (),
       .instr_addr_o   (),
       .instr_rdata_i  (),
+      .instr_err_i    (),
 
       // Data memory interface
       .data_req_o     (),

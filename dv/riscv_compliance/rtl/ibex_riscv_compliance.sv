@@ -120,6 +120,7 @@ module ibex_riscv_compliance (
       .instr_rvalid_i        (host_rvalid[CoreI]),
       .instr_addr_o          (host_addr[CoreI]),
       .instr_rdata_i         (host_rdata[CoreI]),
+      .instr_err_i           (host_err[CoreI]),
 
       .data_req_o            (host_req[CoreD]),
       .data_gnt_i            (host_gnt[CoreD]),

@@ -64,6 +64,7 @@ module core_ibex_tb_top;
     force dut.instr_rvalid_i    = instr_mem_vif.rvalid;
     force instr_mem_vif.addr    = dut.instr_addr_o;
     force dut.instr_rdata_i     = instr_mem_vif.rdata;
+    force dut.instr_err_i       = 0; // TODO(taliu) Support interface error
     // IRQ interface
     force irq_vif.clock         = clk;
     force irq_vif.reset         = ~rst_n;

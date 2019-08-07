@@ -42,6 +42,7 @@ module ibex_if_stage #(
     input  logic                  instr_gnt_i,
     input  logic                  instr_rvalid_i,
     input  logic [31:0]           instr_rdata_i,
+    input  logic                  instr_err_i,
 
     // output of ID stage
     output logic                  instr_valid_id_o,         // instr in IF-ID is valid
@@ -52,6 +53,7 @@ module ibex_if_stage #(
                                                             // instr_is_compressed_id_o = 1'b1
     output logic                  instr_is_compressed_id_o, // compressed decoder thinks this
                                                             // is a compressed instr
+    output logic                  instr_fetch_err_o,        // bus error on fetch
     output logic                  illegal_c_insn_id_o,      // compressed decoder thinks this
                                                             // is an invalid instr
     output logic [31:0]           pc_if_o,
@@ -97,6 +99,7 @@ module ibex_if_stage #(
   logic              fetch_ready;
   logic       [31:0] fetch_rdata;
   logic       [31:0] fetch_addr;
+  logic              fetch_err;
 
   logic       [31:0] exc_pc;
 
@@ -155,6 +158,7 @@ module ibex_if_stage #(
       .valid_o           ( fetch_valid                 ),
       .rdata_o           ( fetch_rdata                 ),
       .addr_o            ( fetch_addr                  ),
+      .err_o             ( fetch_err                   ),
 
       // goes to instruction memory / instruction cache
       .instr_req_o       ( instr_req_o                 ),
@@ -162,6 +166,7 @@ module ibex_if_stage #(
       .instr_gnt_i       ( instr_gnt_i                 ),
       .instr_rvalid_i    ( instr_rvalid_i              ),
       .instr_rdata_i     ( instr_rdata_i               ),
+      .instr_err_i       ( instr_err_i                 ),
 
       // Prefetch Buffer Status
       .busy_o            ( prefetch_busy               )
@@ -241,6 +246,7 @@ module ibex_if_stage #(
       instr_new_id_o             <= 1'b0;
       instr_valid_id_o           <= 1'b0;
       instr_rdata_id_o           <= '0;
+      instr_fetch_err_o          <= '0;
       instr_rdata_c_id_o         <= '0;
       instr_is_compressed_id_o   <= 1'b0;
       illegal_c_insn_id_o        <= 1'b0;
@@ -250,6 +256,7 @@ module ibex_if_stage #(
       if (if_id_pipe_reg_we) begin
         instr_valid_id_o         <= 1'b1;
         instr_rdata_id_o         <= instr_decompressed;
+        instr_fetch_err_o        <= fetch_err;
         instr_rdata_c_id_o       <= fetch_rdata[15:0];
         instr_is_compressed_id_o <= instr_is_compressed_int;
         illegal_c_insn_id_o      <= illegal_c_insn;

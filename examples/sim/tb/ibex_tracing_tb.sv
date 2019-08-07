@@ -87,6 +87,7 @@ module ibex_tracing_tb;
     .instr_rvalid_i         (instr_rvalid),
     .instr_addr_o           (),
     .instr_rdata_i          (instr_rdata),
+    .instr_err_i            (1'b0),
 
     // Data memory interface
     .data_req_o             (),
