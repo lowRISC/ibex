@@ -58,6 +58,7 @@ module top_artya7_100 (
      .instr_rvalid_i        (instr_rvalid),
      .instr_addr_o          (instr_addr),
      .instr_rdata_i         (instr_rdata),
+     .instr_err_i           ('b0),
 
      .data_req_o            (data_req),
      .data_gnt_i            (data_gnt),

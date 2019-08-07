@@ -34,6 +34,7 @@ module ibex_prefetch_buffer (
     output logic        valid_o,
     output logic [31:0] rdata_o,
     output logic [31:0] addr_o,
+    output logic        err_o,
 
 
     // goes to instruction memory / instruction cache
@@ -41,6 +42,7 @@ module ibex_prefetch_buffer (
     input  logic        instr_gnt_i,
     output logic [31:0] instr_addr_o,
     input  logic [31:0] instr_rdata_i,
+    input  logic        instr_err_i,
     input  logic        instr_rvalid_i,
 
     // Prefetch Buffer Status
@@ -79,6 +81,7 @@ module ibex_prefetch_buffer (
 
       .in_addr_i             ( instr_addr_q      ),
       .in_rdata_i            ( instr_rdata_i     ),
+      .in_err_i              ( instr_err_i       ),
       .in_valid_i            ( fifo_valid        ),
       .in_ready_o            ( fifo_ready        ),
 
@@ -87,6 +90,7 @@ module ibex_prefetch_buffer (
       .out_ready_i           ( ready_i           ),
       .out_rdata_o           ( rdata_o           ),
       .out_addr_o            ( addr_o            ),
+      .out_err_o             ( err_o             ),
 
       .out_valid_stored_o    (                   )
   );

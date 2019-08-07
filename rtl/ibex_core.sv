@@ -53,6 +53,7 @@ module ibex_core #(
     input  logic        instr_rvalid_i,
     output logic [31:0] instr_addr_o,
     input  logic [31:0] instr_rdata_i,
+    input  logic        instr_err_i,
 
     // Data memory interface
     output logic        data_req_o,
@@ -115,6 +116,7 @@ module ibex_core #(
   logic [31:0] instr_rdata_id;         // Instruction sampled inside IF stage
   logic [15:0] instr_rdata_c_id;       // Compressed instruction sampled inside IF stage
   logic        instr_is_compressed_id;
+  logic        instr_fetch_err;        // Bus error on instr fetch
   logic        illegal_c_insn_id;      // Illegal compressed instruction sent to ID stage
   logic [31:0] pc_if;                  // Program counter in IF stage
   logic [31:0] pc_id;                  // Program counter in ID stage
@@ -308,6 +310,7 @@ module ibex_core #(
       .instr_gnt_i              ( instr_gnt_i            ),
       .instr_rvalid_i           ( instr_rvalid_i         ),
       .instr_rdata_i            ( instr_rdata_i          ),
+      .instr_err_i              ( instr_err_i            ),
 
       // outputs to ID stage
       .instr_valid_id_o         ( instr_valid_id         ),
@@ -315,6 +318,7 @@ module ibex_core #(
       .instr_rdata_id_o         ( instr_rdata_id         ),
       .instr_rdata_c_id_o       ( instr_rdata_c_id       ),
       .instr_is_compressed_id_o ( instr_is_compressed_id ),
+      .instr_fetch_err_o        ( instr_fetch_err        ),
       .illegal_c_insn_id_o      ( illegal_c_insn_id      ),
       .pc_if_o                  ( pc_if                  ),
       .pc_id_o                  ( pc_id                  ),
@@ -380,6 +384,7 @@ module ibex_core #(
       .exc_pc_mux_o                 ( exc_pc_mux_id          ),
       .exc_cause_o                  ( exc_cause              ),
 
+      .instr_fetch_err_i            ( instr_fetch_err        ),
       .illegal_c_insn_i             ( illegal_c_insn_id      ),
 
       .pc_id_i                      ( pc_id                  ),

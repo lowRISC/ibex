@@ -45,6 +45,8 @@ module ibex_controller (
     input  logic [31:0]           instr_i,               // instr from IF-ID reg, for mtval
     input  logic [15:0]           instr_compressed_i,    // instr from IF-ID reg, for mtval
     input  logic                  instr_is_compressed_i, // instr from IF-ID reg is compressed
+    input  logic                  instr_fetch_err_i,     // instr from IF-ID reg has error
+    input  logic [31:0]           pc_id_i,               // instr from IF-ID reg address
 
     // to IF-ID pipeline stage
     output logic                  instr_valid_clear_o,   // kill instr in IF-ID reg
@@ -150,7 +152,7 @@ module ibex_controller (
   assign store_err_d = store_err_i;
 
   // exception requests
-  assign exc_req     = ecall_insn_i | ebrk_insn_i | illegal_insn_i;
+  assign exc_req     = ecall_insn_i | ebrk_insn_i | illegal_insn_i | instr_fetch_err_i;
 
   // LSU exception requests
   assign exc_req_lsu = store_err_i | load_err_i;
@@ -453,7 +455,11 @@ module ibex_controller (
           csr_save_cause_o = 1'b1;
 
           // set exception registers, priorities according to Table 3.7 of Privileged Spec v1.11
-          if (illegal_insn_i) begin
+          if (instr_fetch_err_i) begin
+            exc_cause_o = EXC_CAUSE_INSTR_ACCESS_FAULT;
+            csr_mtval_o = pc_id_i;
+
+          end else if (illegal_insn_i) begin
             exc_cause_o = EXC_CAUSE_ILLEGAL_INSN;
             csr_mtval_o = instr_is_compressed_i ? {16'b0, instr_compressed_i} : instr_i;
 

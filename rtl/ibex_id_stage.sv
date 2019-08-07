@@ -65,6 +65,7 @@ module ibex_id_stage #(
     output ibex_pkg::exc_cause_e  exc_cause_o,
 
     input  logic                  illegal_c_insn_i,
+    input  logic                  instr_fetch_err_i,
 
     input  logic [31:0]           pc_id_i,
 
@@ -419,6 +420,8 @@ module ibex_id_stage #(
       .instr_i                        ( instr_rdata_i          ),
       .instr_compressed_i             ( instr_rdata_c_i        ),
       .instr_is_compressed_i          ( instr_is_compressed_i  ),
+      .instr_fetch_err_i              ( instr_fetch_err_i      ),
+      .pc_id_i                        ( pc_id_i                ),
 
       // to IF-ID pipeline
       .instr_valid_clear_o            ( instr_valid_clear_o    ),
@@ -630,7 +633,8 @@ module ibex_id_stage #(
 
   // the instruction delivered to the ID stage should always be valid
   assert property (
-    @(posedge clk_i) (instr_valid_i & (~illegal_c_insn_i)) |-> (!$isunknown(instr_rdata_i)) ) else
+    @(posedge clk_i) (instr_valid_i & ~(illegal_c_insn_i | instr_fetch_err_i)) |->
+        (!$isunknown(instr_rdata_i)) ) else
       $display("Instruction is valid, but has at least one X");
 
   // make sure multicycles enable signals are unique
