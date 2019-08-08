@@ -25,7 +25,7 @@ TEST       := "all"
 # Seed for instruction generator and RTL simulation
 SEED       := -1
 # Verbose logging
-VERBOSE    := 0
+VERBOSE    :=
 # Number of iterations for each test, assign a non-zero value to override the
 # iteration count in the test list
 ITERATIONS := 0
@@ -46,7 +46,7 @@ clean:
 # Common options for all targets
 COMMON_OPTS=--seed=${SEED} \
             --test=${TEST} \
-            --verbose=${VERBOSE} \
+            #--verbose=${VERBOSE} \
             --testlist=${DV_DIR}/riscv_dv_extension/testlist.yaml \
             --iterations=${ITERATIONS}
 
