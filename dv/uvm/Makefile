@@ -47,8 +47,8 @@ clean:
 COMMON_OPTS=--seed=${SEED} \
             --test=${TEST} \
             --testlist=${DV_DIR}/riscv_dv_extension/testlist.yaml \
-            --iterations=${ITERATIONS}
-            #--verbose=${VERBOSE} \
+            --iterations=${ITERATIONS} \
+            --verbose=${VERBOSE}
 
 # Generate random instructions
 .SILENT gen:
