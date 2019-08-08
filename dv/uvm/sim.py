@@ -208,7 +208,10 @@ def compare(test_list, iss, output_dir, verbose):
       uvm_log = ("%s/rtl_sim/%s.%d/sim.log" % (output_dir, test['test'], i))
       rtl_log = ("%s/rtl_sim/%s.%d/trace_core_00_0.log" % (output_dir, test['test'], i))
       rtl_csv = ("%s/rtl_sim/%s.%d/trace_core_00_0.csv" % (output_dir, test['test'], i))
-      if 'no_post_compare' in test and test['no_post_compare'] == 0:
+      if 'no_post_compare' in test and test['no_post_compare'] == 1:
+        test_name = "%s.%d" % (test['test'], i)
+        check_ibex_uvm_log(uvm_log, "ibex", test_name, report)
+      else:
         process_ibex_sim_log(rtl_log, rtl_csv)
         iss_log = ("%s/instr_gen/%s_sim/%s.%d.log" % (output_dir, iss, test['test'], i))
         iss_csv = ("%s/instr_gen/%s_sim/%s.%d.csv" % (output_dir, iss, test['test'], i))
@@ -220,9 +223,6 @@ def compare(test_list, iss, output_dir, verbose):
           print("Unsupported ISS" % iss)
           sys.exit(1)
         compare_trace_csv(rtl_csv, iss_csv, "ibex", iss, report)
-      else:
-        test_name = "%s.%d" % (test['test'], i)
-        check_ibex_uvm_log(uvm_log, "ibex", test_name, report)
   passed_cnt = run_cmd("grep PASSED %s | wc -l" % report).strip()
   failed_cnt = run_cmd("grep FAILED %s | wc -l" % report).strip()
   summary = ("%s PASSED, %s FAILED" % (passed_cnt, failed_cnt))
