@@ -81,12 +81,19 @@
   privilege_mode: M
   read_only: 1
   rv32:
-    - field_name: hart_ID
+    - field_name: cluster_id
       description: >
-        hart id
+        ID of the cluster
       type: R
       reset_val: 0
-      msb: 31
+      msb: 10
+      lsb: 5
+    - field_name: core_id
+      description: >
+        ID of the core within cluster
+      type: R
+      reset_val: 0
+      msb: 3
       lsb: 0
 
 # MSTATUS
@@ -125,7 +132,7 @@
     Contains pending interrupt information
   address: 0x344
   privilege_mode: M
-  read_only: 0
+  read_only: 1
   rv32:
     - field_name: fast
       description: >
@@ -246,7 +253,7 @@
       msb: 4
       lsb: 0
 
-## MTVAL
+# MTVAL
 - csr: mtval
   description: >
     Machine Trap Value register
@@ -260,4 +267,34 @@
       type: WARL
       reset_val: 0
       msb: 31
+      lsb: 0
+
+# MTVEC
+- csr: mtvec
+  description: >
+    Machine trap vector base address
+  address: 0x305
+  privilege_mode: M
+  read_only: 0
+  rv32:
+    - field_name: base
+      description: >
+        trap vector base address (256 byte aligned)
+      type: WARL
+      reset_val: 0x800000
+      msb: 31
+      lsb: 8
+    - field_name: base_zero_end
+      description: >
+        bottom six bits of base always set to zero
+      type: R
+      reset_val: 0
+      msb: 7
+      lsb: 2
+    - field_name: mode
+      description: >
+        trap handling mode
+      type: R
+      reset_val: 0x1
+      msb: 1
       lsb: 0

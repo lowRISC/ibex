@@ -46,9 +46,9 @@ clean:
 # Common options for all targets
 COMMON_OPTS=--seed=${SEED} \
             --test=${TEST} \
-            #--verbose=${VERBOSE} \
             --testlist=${DV_DIR}/riscv_dv_extension/testlist.yaml \
             --iterations=${ITERATIONS}
+            #--verbose=${VERBOSE} \
 
 # Generate random instructions
 .SILENT gen:
