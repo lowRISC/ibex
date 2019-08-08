@@ -19,7 +19,6 @@
 #    BRIEF_DESCRIPTION
 #  address: 0x###
 #  privilege_mode: MODE (D/M/S/H/U)
-#  read_only: READ_ONLY (0/1)
 #  rv32:
 #    - MSB_FIELD_NAME:
 #      - description: >
@@ -56,7 +55,6 @@
     Machine ISA Register
   address: 0x301
   privilege_mode: M
-  read_only: 0
   rv32:
     - field_name: MXL
       description: >
@@ -79,7 +77,6 @@
     Contains integer ID of hardware thread running code
   address: 0xF14
   privilege_mode: M
-  read_only: 1
   rv32:
     - field_name: cluster_id
       description: >
@@ -102,7 +99,6 @@
     Controls hart's current operating state
   address: 0x300
   privilege_mode: M
-  read_only: 0
   rv32:
     - field_name: mpp
       description: >
@@ -132,7 +128,6 @@
     Contains pending interrupt information
   address: 0x344
   privilege_mode: M
-  read_only: 1
   rv32:
     - field_name: fast
       description: >
@@ -169,7 +164,6 @@
     Contains interrupt information
   address: 0x304
   privilege_mode: M
-  read_only: 0
   rv32:
     - field_name: fast
       description: >
@@ -206,7 +200,6 @@
     M-mode scratch register
   address: 0x340
   privilege_mode: M
-  read_only: 0
   rv32:
     - field_name: mscratch
       description: >
@@ -222,7 +215,6 @@
     Stores the address of the instruction that was interrupted or caused exception
   address: 0x341
   privilege_mode: M
-  read_only: 0
   rv32:
     - field_name: mepc
       description: >
@@ -238,7 +230,6 @@
     Indicates trap cause
   address: 0x342
   privilege_mode: M
-  read_only: 0
   rv32:
     - field_name: Interrupt
       description: >
@@ -259,7 +250,6 @@
     Machine Trap Value register
   address: 0x343
   privilege_mode: M
-  read_only: 0
   rv32:
     - field_name: mtval
       description: >
@@ -275,7 +265,6 @@
     Machine trap vector base address
   address: 0x305
   privilege_mode: M
-  read_only: 0
   rv32:
     - field_name: base
       description: >
