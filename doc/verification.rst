@@ -44,7 +44,7 @@ End-to-end RTL/ISS co-simulation flow
 
    RTL/ISS co-simulation flow chart
 
-The flow is controlled by a `Makefile <Makefile>`_, here’s the list of frequently
+The flow is controlled by a `Makefile <https://github.com/lowRISC/ibex/blob/master/dv/uvm/Makefile>`_, here’s the list of frequently
 used commands:
 
 .. codeblock:: bash
@@ -88,7 +88,7 @@ used commands:
 Run with a different RTL simulator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can add the compile/simulation options in `simulator.yaml <yaml/rtl_simulation.yaml>`_.
+You can add the compile/simulation options in `simulator.yaml <https://github.com/lowRISC/ibex/blob/master/dv/uvm/yaml/rtl_simulation.yaml>`_.
 
 .. codeblock:: bash
 
