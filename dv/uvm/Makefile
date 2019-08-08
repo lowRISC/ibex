@@ -57,7 +57,7 @@ COMMON_OPTS=--seed=${SEED} \
 	python3 ./run.py \
      --o=${OUT}/instr_gen ${GEN_OPTS} \
      --steps=gen \
-			--csr_yaml=${DV_DIR}/riscv_dv_extension/csr_description.yaml \
+		 --csr_yaml=${DV_DIR}/riscv_dv_extension/csr_description.yaml \
 		 --isa=${ISA} \
      --lsf_cmd="${LSF_CMD}" \
      ${COMMON_OPTS} \
