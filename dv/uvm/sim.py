@@ -208,7 +208,7 @@ def compare(test_list, iss, output_dir, verbose):
       uvm_log = ("%s/rtl_sim/%s.%d/sim.log" % (output_dir, test['test'], i))
       rtl_log = ("%s/rtl_sim/%s.%d/trace_core_00_0.log" % (output_dir, test['test'], i))
       rtl_csv = ("%s/rtl_sim/%s.%d/trace_core_00_0.csv" % (output_dir, test['test'], i))
-      if test['no_post_compare'] == 0:
+      if 'no_post_compare' in test and test['no_post_compare'] == 0:
         process_ibex_sim_log(rtl_log, rtl_csv)
         iss_log = ("%s/instr_gen/%s_sim/%s.%d.log" % (output_dir, iss, test['test'], i))
         iss_csv = ("%s/instr_gen/%s_sim/%s.%d.csv" % (output_dir, iss, test['test'], i))
