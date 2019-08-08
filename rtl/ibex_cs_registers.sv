@@ -124,11 +124,11 @@ module ibex_cs_registers #(
 
   // struct for mip/mie CSRs
   typedef struct packed {
-    logic        software;
-    logic        timer;
-    logic        external;
-    logic [14:0] fast; // 15 fast interrupts,
-                       // one interrupt is reserved for NMI (not visible through mip/mie)
+    logic        irq_software;
+    logic        irq_timer;
+    logic        irq_external;
+    logic [14:0] irq_fast; // 15 fast interrupts,
+                           // one interrupt is reserved for NMI (not visible through mip/mie)
   } Interrupts_t;
 
   typedef struct packed {
@@ -213,10 +213,10 @@ module ibex_cs_registers #(
   assign illegal_csr_insn_o = illegal_csr | illegal_csr_write | illegal_csr_priv;
 
   // mip CSR is purely combintational - must be able to re-enable the clock upon WFI
-  assign mip.software = irq_software_i & mie_q.software;
-  assign mip.timer    = irq_timer_i    & mie_q.timer;
-  assign mip.external = irq_external_i & mie_q.external;
-  assign mip.fast     = irq_fast_i     & mie_q.fast;
+  assign mip.irq_software = irq_software_i & mie_q.irq_software;
+  assign mip.irq_timer    = irq_timer_i    & mie_q.irq_timer;
+  assign mip.irq_external = irq_external_i & mie_q.irq_external;
+  assign mip.irq_fast     = irq_fast_i     & mie_q.irq_fast;
 
   // read logic
   always_comb begin
@@ -241,10 +241,10 @@ module ibex_cs_registers #(
       // interrupt enable
       CSR_MIE: begin
         csr_rdata_int                                     = '0;
-        csr_rdata_int[CSR_MSIX_BIT]                       = mie_q.software;
-        csr_rdata_int[CSR_MTIX_BIT]                       = mie_q.timer;
-        csr_rdata_int[CSR_MEIX_BIT]                       = mie_q.external;
-        csr_rdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mie_q.fast;
+        csr_rdata_int[CSR_MSIX_BIT]                       = mie_q.irq_software;
+        csr_rdata_int[CSR_MTIX_BIT]                       = mie_q.irq_timer;
+        csr_rdata_int[CSR_MEIX_BIT]                       = mie_q.irq_external;
+        csr_rdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mie_q.irq_fast;
       end
 
       CSR_MSCRATCH: csr_rdata_int = mscratch_q;
@@ -264,10 +264,10 @@ module ibex_cs_registers #(
       // mip: interrupt pending
       CSR_MIP: begin
         csr_rdata_int                                     = '0;
-        csr_rdata_int[CSR_MSIX_BIT]                       = mip.software;
-        csr_rdata_int[CSR_MTIX_BIT]                       = mip.timer;
-        csr_rdata_int[CSR_MEIX_BIT]                       = mip.external;
-        csr_rdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mip.fast;
+        csr_rdata_int[CSR_MSIX_BIT]                       = mip.irq_software;
+        csr_rdata_int[CSR_MTIX_BIT]                       = mip.irq_timer;
+        csr_rdata_int[CSR_MEIX_BIT]                       = mip.irq_external;
+        csr_rdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mip.irq_fast;
       end
 
       CSR_DCSR:      csr_rdata_int = dcsr_q;
@@ -355,10 +355,10 @@ module ibex_cs_registers #(
       // interrupt enable
       CSR_MIE: begin
         if (csr_we_int) begin
-          mie_d.software = csr_wdata_int[CSR_MSIX_BIT];
-          mie_d.timer    = csr_wdata_int[CSR_MTIX_BIT];
-          mie_d.external = csr_wdata_int[CSR_MEIX_BIT];
-          mie_d.fast     = csr_wdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW];
+          mie_d.irq_software = csr_wdata_int[CSR_MSIX_BIT];
+          mie_d.irq_timer    = csr_wdata_int[CSR_MTIX_BIT];
+          mie_d.irq_external = csr_wdata_int[CSR_MEIX_BIT];
+          mie_d.irq_fast     = csr_wdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW];
         end
       end
 
@@ -532,10 +532,10 @@ module ibex_cs_registers #(
   assign csr_rdata_o = csr_rdata_int;
 
   // directly output some registers
-  assign csr_msip_o  = mip.software;
-  assign csr_mtip_o  = mip.timer;
-  assign csr_meip_o  = mip.external;
-  assign csr_mfip_o  = mip.fast;
+  assign csr_msip_o  = mip.irq_software;
+  assign csr_mtip_o  = mip.irq_timer;
+  assign csr_meip_o  = mip.irq_external;
+  assign csr_mfip_o  = mip.irq_fast;
 
   assign csr_mepc_o  = mepc_q;
   assign csr_depc_o  = depc_q;
