@@ -13,16 +13,16 @@ class core_ibex_csr_test extends core_ibex_base_test;
   virtual task wait_for_test_done();
     fork
     begin
+      wait(regfile_vif.we_a && regfile_vif.waddr_a === 3);
+      @(negedge regfile_vif.clk);
+      if (regfile_vif.wdata_a === 1) begin
+        `uvm_info(`gfn, "CSR test completed successfully", UVM_LOW)
+      end else if (regfile_vif.wdata_a === 2) begin
+        `uvm_error(`gfn, "CSR TEST FAILED")
+      end
       wait(dut_vif.ecall === 1'b1);
       `uvm_info(`gfn, "ECALL instruction is detected, test done", UVM_LOW)
       //dut_vif.fetch_enable = 1'b0;
-      wait(regfile_vif.we_a && regfile_vif.waddr_a === 3);
-      if (regfile_vif.wdata_a === 1) begin
-        `uvm_info(`gfn, "CSR TEST PASSED", UVM_LOW)
-      end else if (regfile_vif.wdata_a === 2) begin
-        // error/fatal
-        `uvm_info(`gfn, "CSR TEST FAILED", UVM_LOW)
-      end
     end
     begin
       clk_vif.wait_clks(timeout_in_cycles);
