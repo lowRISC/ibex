@@ -19,7 +19,10 @@ class core_ibex_base_test extends uvm_test;
   `uvm_component_utils(core_ibex_base_test)
 
   function new(string name="", uvm_component parent=null);
+    core_ibex_report_server ibex_report_server;
     super.new(name, parent);
+    ibex_report_server = new();
+    uvm_report_server::set_server(ibex_report_server);
   endfunction
 
   virtual function void build_phase(uvm_phase phase);
@@ -55,6 +58,10 @@ class core_ibex_base_test extends uvm_test;
     vseq.stop();
     phase.drop_objection(this);
   endtask
+
+  virtual function void report_phase(uvm_phase phase);
+    super.report_phase(phase);
+  endfunction
 
   function void load_binary_to_mem();
     string      bin;
