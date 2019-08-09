@@ -2,35 +2,38 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-DV_DIR     := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-GEN_DIR    := $(realpath ${DV_DIR}/../../vendor/google_riscv-dv)
-TOOLCHAIN  := ${RISCV_TOOLCHAIN}
-OUT        := "${DV_DIR}/out"
+DV_DIR     		:= $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+GEN_DIR    		:= $(realpath ${DV_DIR}/../../vendor/google_riscv-dv)
+TOOLCHAIN  		:= ${RISCV_TOOLCHAIN}
+OUT        		:= "${DV_DIR}/out"
 # Run time options for the instruction generator
-GEN_OPTS   :=
+GEN_OPTS   		:=
 # Run time options for ibex RTL simulation
-SIM_OPTS   :=
+SIM_OPTS   		:=
 # Enable waveform dumping
-WAVES      := 1
+WAVES      		:= 1
 # Enable coverage dump
-COV        := 0
+COV        		:= 0
 # RTL simulator
-SIMULATOR  := "vcs"
+SIMULATOR  		:= "vcs"
 # ISS (spike, ovpsim)
-ISS        := "spike"
+ISS        		:= "spike"
 # ISA
-ISA        := "rv32imc"
+ISA        		:= "rv32imc"
 # Test name (default: full regression)
-TEST       := "all"
+TEST       		:= "all"
 # Seed for instruction generator and RTL simulation
-SEED       := -1
+SEED       		:= -1
 # Verbose logging
-VERBOSE    := 0
+VERBOSE    		:=
 # Number of iterations for each test, assign a non-zero value to override the
 # iteration count in the test list
-ITERATIONS := 0
+ITERATIONS 		:= 0
 # LSF CMD
-LSF_CMD    :=
+LSF_CMD    		:=
+
+# Privileged CSR YAML description file
+CSR_FILE			:= ${DV_DIR}/riscv_dv_extension/csr_description.yaml
 
 SHELL=/bin/bash
 
@@ -46,9 +49,13 @@ clean:
 # Common options for all targets
 COMMON_OPTS=--seed=${SEED} \
             --test=${TEST} \
-            --verbose=${VERBOSE} \
             --testlist=${DV_DIR}/riscv_dv_extension/testlist.yaml \
-            --iterations=${ITERATIONS}
+            --iterations=${ITERATIONS} \
+            --verbose=${VERBOSE}
+
+# Options used for privileged CSR test generation
+CSR_OPTS=--csr_yaml=${CSR_FILE} \
+         --isa=${ISA}
 
 # Generate random instructions
 .SILENT gen:
@@ -59,6 +66,7 @@ COMMON_OPTS=--seed=${SEED} \
      --steps=gen \
      --lsf_cmd="${LSF_CMD}" \
      ${COMMON_OPTS} \
+     ${CSR_OPTS} \
      --cmp_opts="+define+RISCV_CORE_SETTING=${DV_DIR}/riscv_dv_extension/ibex_core_setting.sv \
        +define+RISCV_DV_EXT_FILE_LIST=${DV_DIR}/riscv_dv_extension/flist \
        +incdir+${DV_DIR}/riscv_dv_extension/ " \
