@@ -34,6 +34,12 @@ LSF_CMD    		:=
 
 # Privileged CSR YAML description file
 CSR_FILE			:= ${DV_DIR}/riscv_dv_extension/csr_description.yaml
+# Address that privileged CSR test will write to to indicate end of test
+END_SIGNATURE_ADDR	:= 0x8ffffffc
+# Value written to END_SIGNATURE_ADDR that indicates test success
+PASS_VAL  := 0x1
+# Value written to END_SIGNATURE_ADDR that indicates test failure
+FAIL_VAL  := 0x0
 
 SHELL=/bin/bash
 
@@ -50,12 +56,13 @@ clean:
 COMMON_OPTS=--seed=${SEED} \
             --test=${TEST} \
             --testlist=${DV_DIR}/riscv_dv_extension/testlist.yaml \
-            --iterations=${ITERATIONS} \
-            --verbose=${VERBOSE}
+            --iterations=${ITERATIONS}
+            #--verbose=${VERBOSE}
 
 # Options used for privileged CSR test generation
 CSR_OPTS=--csr_yaml=${CSR_FILE} \
-         --isa=${ISA}
+         --isa=${ISA} \
+         --end_signature_addr=${END_SIGNATURE_ADDR}
 
 # Generate random instructions
 .SILENT gen:
@@ -113,6 +120,7 @@ rtl_sim:
      --simulator=${SIMULATOR} \
      --en_cov=${COV} \
      --en_wave=${WAVES} \
+     --sim_opts="+end_signature_addr=${END_SIGNATURE_ADDR} +pass_val=${PASS_VAL} +fail_val=${FAIL_VAL}" \
      ${SIM_OPTS}
 
 # Compare the regression result between ISS and RTL sim

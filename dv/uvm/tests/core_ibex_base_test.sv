@@ -8,6 +8,7 @@ class core_ibex_base_test extends uvm_test;
   core_ibex_env_cfg               cfg;
   virtual clk_if                  clk_vif;
   virtual core_ibex_dut_probe_if  dut_vif;
+  virtual ibex_mem_intf           dmem_vif;
   mem_model_pkg::mem_model        mem;
   core_ibex_vseq                  vseq;
   bit                             enable_irq_seq;
@@ -18,7 +19,10 @@ class core_ibex_base_test extends uvm_test;
   `uvm_component_utils(core_ibex_base_test)
 
   function new(string name="", uvm_component parent=null);
+    core_ibex_report_server ibex_report_server;
     super.new(name, parent);
+    ibex_report_server = new();
+    uvm_report_server::set_server(ibex_report_server);
   endfunction
 
   virtual function void build_phase(uvm_phase phase);
@@ -29,6 +33,9 @@ class core_ibex_base_test extends uvm_test;
     end
     if (!uvm_config_db#(virtual core_ibex_dut_probe_if)::get(null, "", "dut_if", dut_vif)) begin
       `uvm_fatal(get_full_name(), "Cannot get dut_if")
+    end
+    if (!uvm_config_db#(virtual ibex_mem_intf)::get(null, "*data_if_slave*", "vif", dmem_vif)) begin
+      `uvm_fatal(get_full_name(), "Cannot get dmem_vif")
     end
     env = core_ibex_env::type_id::create("env", this);
     cfg = core_ibex_env_cfg::type_id::create("cfg", this);
@@ -51,6 +58,10 @@ class core_ibex_base_test extends uvm_test;
     vseq.stop();
     phase.drop_objection(this);
   endtask
+
+  virtual function void report_phase(uvm_phase phase);
+    super.report_phase(phase);
+  endfunction
 
   function void load_binary_to_mem();
     string      bin;
