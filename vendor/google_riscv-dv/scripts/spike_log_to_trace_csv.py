@@ -20,6 +20,7 @@ import argparse
 import os
 import re
 import sys
+import logging
 
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 
@@ -31,7 +32,7 @@ def process_spike_sim_log(spike_log, csv):
   Extract instruction and affected register information from spike simulation
   log and save to a list.
   """
-  print("Processing spike log : %s" % spike_log)
+  logging.info("Processing spike log : %s" % spike_log)
   instr_cnt = 0
   spike_instr = ""
 
@@ -65,7 +66,7 @@ def process_spike_sim_log(spike_log, csv):
           rv_instr_trace.binary = m.group("bin")
           rv_instr_trace.instr_str = spike_instr
           trace_csv.write_trace_entry(rv_instr_trace)
-  print("Processed instruction count : %d" % instr_cnt)
+  logging.info("Processed instruction count : %d" % instr_cnt)
 
 
 def main():

@@ -12,19 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ======================================================================
+# ================================================================================
 #                  Regression test list format
-# ----------------------------------------------------------------------
-# test         : Assembly test name
-# description  : Description of this test
-# gen_opts     : Instruction generator options
-# iterations   : Number of iterations of this test
-# gen_test     : Test name used by the instruction generator
-# rtl_test     : RTL simulation test name
-# cmp_opts     : Compile options passed to the instruction generator
-# sim_opts     : Simulation options passed to the instruction generator
-# compare_opts : Options for the RTL & ISS trace comparison
-# ----------------------------------------------------------------------
+# --------------------------------------------------------------------------------
+# test            : Assembly test name
+# description     : Description of this test
+# gen_opts        : Instruction generator options
+# iterations      : Number of iterations of this test
+# no_iss          : Enable/disable ISS simulator (Optional)
+# gen_test        : Test name used by the instruction generator
+# rtl_test        : RTL simulation test name
+# cmp_opts        : Compile options passed to the instruction generator
+# sim_opts        : Simulation options passed to the instruction generator
+# no_post_compare : Enable/disable comparison of trace log and ISS log (Optional)
+# compare_opts    : Options for the RTL & ISS trace comparison
+# --------------------------------------------------------------------------------
 
 - test: riscv_arithmetic_basic_test
   description: >
@@ -205,3 +207,11 @@
     +enable_irq_seq=1
   compare_opts: >
     +compare_final_value_only=1
+
+- test: riscv_csr_test
+  description: >
+    Test all CSR instructions on all implemented CSR registers
+  iterations: 1
+  no_iss: 1
+  rtl_test: core_ibex_csr_test
+  no_post_compare: 1
