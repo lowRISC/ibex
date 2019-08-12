@@ -3,23 +3,6 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-////////////////////////////////////////////////////////////////////////////////
-// Engineer:       Igor Loi - igor.loi@unibo.it                               //
-//                                                                            //
-// Additional contributions by:                                               //
-//                 Andreas Traber - atraber@iis.ee.ethz.ch                    //
-//                 Markus Wegmann - markus.wegmann@technokrat.ch              //
-//                 Davide Schiavone - pschiavo@iis.ee.ethz.ch                 //
-//                                                                            //
-// Design Name:    Load Store Unit                                            //
-// Project Name:   ibex                                                       //
-// Language:       SystemVerilog                                              //
-//                                                                            //
-// Description:    Load Store Unit, used to eliminate multiple access during  //
-//                 processor stalls, and to align bytes and halfwords         //
-//                                                                            //
-////////////////////////////////////////////////////////////////////////////////
-
 /**
  * Load Store Unit
  *
@@ -58,7 +41,7 @@ module ibex_load_store_unit (
     output logic [31:0]  addr_last_o,          // address of last transaction      -> to controller
                                                // -> mtval
                                                // -> AGU for misaligned accesses
-    output logic         data_valid_o,         // LSU has completed transaction    -> to 
+    output logic         data_valid_o,         // LSU has completed transaction    -> to
 
     // exception signals
     output logic         load_err_o,

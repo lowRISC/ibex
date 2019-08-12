@@ -3,18 +3,6 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-////////////////////////////////////////////////////////////////////////////////
-// Engineer:       Davide Schiavone - pschiavo@iis.ee.ethz.ch                 //
-//                                                                            //
-//                                                                            //
-// Design Name:    Fast Multiplier and Division                               //
-// Project Name:   ibex                                                       //
-// Language:       SystemVerilog                                              //
-//                                                                            //
-// Description:    16x16 kernel multiplier and Long Division                  //
-//                                                                            //
-////////////////////////////////////////////////////////////////////////////////
-
 `define OP_L 15:0
 `define OP_H 31:16
 

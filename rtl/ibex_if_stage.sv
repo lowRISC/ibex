@@ -3,23 +3,6 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-////////////////////////////////////////////////////////////////////////////////
-// Engineer:       Renzo Andri - andrire@student.ethz.ch                      //
-//                                                                            //
-// Additional contributions by:                                               //
-//                 Igor Loi - igor.loi@unibo.it                               //
-//                 Andreas Traber - atraber@student.ethz.ch                   //
-//                 Sven Stucki - svstucki@student.ethz.ch                     //
-//                                                                            //
-// Design Name:    Instruction Fetch Stage                                    //
-// Project Name:   ibex                                                       //
-// Language:       SystemVerilog                                              //
-//                                                                            //
-// Description:    Instruction fetch unit: Selection of the next PC, and      //
-//                 buffering (sampling) of the read instruction               //
-//                                                                            //
-////////////////////////////////////////////////////////////////////////////////
-
 /**
  * Instruction Fetch Stage
  *

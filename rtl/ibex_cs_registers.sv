@@ -3,22 +3,6 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-////////////////////////////////////////////////////////////////////////////////
-// Engineer:       Sven Stucki - svstucki@student.ethz.ch                     //
-//                                                                            //
-// Additional contributions by:                                               //
-//                 Andreas Traber - atraber@iis.ee.ethz.ch                    //
-//                 Davide Schiavone - pschiavo@iis.ee.ethz.ch                 //
-//                                                                            //
-// Design Name:    Control and Status Registers                               //
-// Project Name:   ibex                                                       //
-// Language:       SystemVerilog                                              //
-//                                                                            //
-// Description:    Control and Status Registers (CSRs) following the RISC-V   //
-//                 Privileged Specification, draft version 1.11               //
-//                                                                            //
-////////////////////////////////////////////////////////////////////////////////
-
 /**
  * Control and Status Registers
  *

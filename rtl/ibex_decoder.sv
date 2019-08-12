@@ -3,24 +3,6 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-////////////////////////////////////////////////////////////////////////////////
-// Engineer        Andreas Traber - atraber@iis.ee.ethz.ch                    //
-//                                                                            //
-// Additional contributions by:                                               //
-//                 Matthias Baer - baermatt@student.ethz.ch                   //
-//                 Igor Loi - igor.loi@unibo.it                               //
-//                 Sven Stucki - svstucki@student.ethz.ch                     //
-//                 Davide Schiavone - pschiavo@iis.ee.ethz.ch                 //
-//                 Markus Wegmann - markus.wegmann@technokrat.ch              //
-//                                                                            //
-// Design Name:    Decoder                                                    //
-// Project Name:   ibex                                                       //
-// Language:       SystemVerilog                                              //
-//                                                                            //
-// Description:    Decoder                                                    //
-//                                                                            //
-////////////////////////////////////////////////////////////////////////////////
-
 // Source/Destination register instruction index
 `define REG_S1 19:15
 `define REG_S2 24:20

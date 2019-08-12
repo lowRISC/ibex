@@ -3,20 +3,6 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-////////////////////////////////////////////////////////////////////////////////
-// Engineer:       Andreas Traber - atraber@iis.ee.ethz.ch                    //
-//                                                                            //
-// Additional contributions by:                                               //
-//                 Davide Schiavone - pschiavo@iis.ee.ethz.ch                 //
-//                                                                            //
-// Design Name:    RISC-V Tracer                                              //
-// Project Name:   ibex                                                       //
-// Language:       SystemVerilog                                              //
-//                                                                            //
-// Description:    Traces the executed instructions                           //
-//                                                                            //
-////////////////////////////////////////////////////////////////////////////////
-
 // Source/Destination register instruction index
 `define REG_S1 19:15
 `define REG_S2 24:20
