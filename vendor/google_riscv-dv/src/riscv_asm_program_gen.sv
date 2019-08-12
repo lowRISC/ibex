@@ -199,13 +199,17 @@ class riscv_asm_program_gen extends uvm_object;
   virtual function void gen_kernel_sections();
     instr_stream.push_back("_kernel_start: .align 12");
     // Kernel programs
-    smode_accessible_umode_program = riscv_instr_sequence::type_id::
-                                     create("smode_accessible_umode_program");
+    if (cfg.init_privileged_mode != MACHINE_MODE) begin
+      smode_accessible_umode_program = riscv_instr_sequence::type_id::
+                                       create("smode_accessible_umode_program");
+      gen_kernel_program(smode_accessible_umode_program);
+    end
     smode_program = riscv_instr_sequence::type_id::create("smode_program");
-    gen_kernel_program(smode_accessible_umode_program);
     gen_kernel_program(smode_program);
-    smode_ls_umem_program = riscv_instr_sequence::type_id::create("smode_ls_umem_program");
-    gen_kernel_program(smode_ls_umem_program);
+    if (cfg.init_privileged_mode != MACHINE_MODE) begin
+      smode_ls_umem_program = riscv_instr_sequence::type_id::create("smode_ls_umem_program");
+      gen_kernel_program(smode_ls_umem_program);
+    end
     // All trap/interrupt handling is in the kernel region
     // Trap/interrupt delegation to user mode is not supported now
     // Trap handler

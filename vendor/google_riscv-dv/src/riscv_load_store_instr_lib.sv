@@ -121,7 +121,11 @@ class riscv_load_store_base_instr_stream extends riscv_directed_instr_stream;
       `DV_CHECK_RANDOMIZE_WITH_FATAL(rand_instr,
         solve rs1 before rd;
         rs1 == rs1_reg;
-        instr_name inside {allowed_instr};
+        if (!cfg.enable_unaligned_load_store) {
+          instr_name inside {allowed_instr};
+        } else {
+          category inside {LOAD, STORE};
+        }
         if(avail_regs.size() > 0) {
           rd inside {avail_regs};
         }
