@@ -3,16 +3,6 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-////////////////////////////////////////////////////////////////////////////////
-// Engineer:       Andreas Traber - atraber@iis.ee.ethz.ch                    //
-//                                                                            //
-// Design Name:    Fetch Fifo for 32 bit memory interface                     //
-// Project Name:   ibex                                                       //
-// Language:       SystemVerilog                                              //
-//                                                                            //
-// Description:    Fetch fifo                                                 //
-////////////////////////////////////////////////////////////////////////////////
-
 /**
  * Fetch Fifo for 32 bit memory interface
  *
