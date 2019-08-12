@@ -61,27 +61,28 @@
       msb: 25
       lsb: 0
 
+# TODO(udij) - clarify expected write behavior
 # MHARTID
-- csr: mhartid
-  description: >
-    Contains integer ID of hardware thread running code
-  address: 0xF14
-  privilege_mode: M
-  rv32:
-    - field_name: cluster_id
-      description: >
-        ID of the cluster
-      type: R
-      reset_val: 0
-      msb: 10
-      lsb: 5
-    - field_name: core_id
-      description: >
-        ID of the core within cluster
-      type: R
-      reset_val: 0
-      msb: 3
-      lsb: 0
+#- csr: mhartid
+#  description: >
+#    Contains integer ID of hardware thread running code
+#  address: 0xF14
+#  privilege_mode: M
+#  rv32:
+#    - field_name: cluster_id
+#      description: >
+#        ID of the cluster
+#      type: R
+#      reset_val: 0
+#      msb: 10
+#      lsb: 5
+#    - field_name: core_id
+#      description: >
+#        ID of the core within cluster
+#      type: R
+#      reset_val: 0
+#      msb: 3
+#      lsb: 0
 
 # MSTATUS
 - csr: mstatus
