@@ -161,7 +161,7 @@ def gen(test_list, csr_file, end_signature_addr, isa, simulator,
           rand_seed = get_seed(seed)
           cmd = lsf_cmd + " " + sim_cmd.rstrip() + \
                 (" +UVM_TESTNAME=%s " % test['gen_test']) + \
-                (" +num_of_tests=%d " % 'iterations') + \
+                (" +num_of_tests=%i " % iterations) + \
                 (" +asm_file_name=%s/asm_tests/%s " % (output_dir, test['test'])) + \
                 (" -l %s/sim_%s.log " % (output_dir, test['test']))
           cmd = re.sub("<seed>", str(rand_seed), cmd)
