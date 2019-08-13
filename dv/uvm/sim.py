@@ -83,43 +83,6 @@ def get_simulator_cmd(simulator, simulator_yaml, en_cov, en_wave):
   sys.exit(1)
 
 
-def run_cmd(cmd):
-  """Run a command and return output
-
-  Args:
-    cmd : shell command to run
-
-  Returns:
-    command output
-  """
-  try:
-    ps = subprocess.Popen(cmd,
-                          shell=True,
-                          universal_newlines=True,
-                          stdout=subprocess.PIPE,
-                          stderr=subprocess.STDOUT,
-                          executable='/bin/bash')
-  except subprocess.CalledProcessError as exc:
-    print(ps.communicate()[0])
-    sys.exit(1)
-  return ps.communicate()[0]
-
-
-def get_seed(seed):
-  """Get the seed to run the generator
-
-  Args:
-    seed : input seed
-
-  Returns:
-    seed to run instruction generator
-  """
-  if seed >= 0:
-    return seed
-  else:
-    return random.getrandbits(32)
-
-
 def rtl_compile(compile_cmd, test_list, output_dir, lsf_cmd, opts, verbose):
   """Run the instruction generator
 
@@ -165,27 +128,24 @@ def rtl_sim(sim_cmd, test_list, output_dir, bin_dir, lsf_cmd, seed, opts, verbos
   for test in test_list:
     for i in range(test['iterations']):
       rand_seed = get_seed(seed)
-      sim_cmd = re.sub("<seed>", str(rand_seed), sim_cmd)
+      test_sim_cmd = re.sub("<seed>", str(rand_seed), sim_cmd)
+      if "sim_opts" in test:
+        test_sim_cmd += test['sim_opts']
+      print(test_sim_cmd)
       sim_dir = output_dir + ("/%s.%d" %(test['test'], i))
       run_cmd(("mkdir -p %s" % sim_dir))
       os.chdir(sim_dir)
       if verbose:
         print("Run dir: %s" % sim_dir)
       binary = ("%s/%s.%d.bin" % (bin_dir, test['test'], i))
-      cmd = lsf_cmd + " " + sim_cmd.rstrip() + \
+      cmd = lsf_cmd + " " + test_sim_cmd.rstrip() + \
             (" +UVM_TESTNAME=%s " % test['rtl_test']) + \
             (" +bin=%s " % binary) + \
             (" -l sim.log ")
       print("Running %s with %s" % (test['rtl_test'], binary))
       if verbose:
         print(cmd)
-      try:
-        output = subprocess.check_output(cmd.split(),
-                                         timeout=1000,
-                                         universal_newlines=True)
-      except subprocess.CalledProcessError as exc:
-        print(output)
-        sys.exit(1)
+      output = run_cmd(' '.join(cmd.split()))
       if verbose:
         print(output)
 
@@ -222,7 +182,18 @@ def compare(test_list, iss, output_dir, verbose):
         else:
           print("Unsupported ISS" % iss)
           sys.exit(1)
-        compare_trace_csv(rtl_csv, iss_csv, "ibex", iss, report)
+        if 'compare_opts' in test:
+          compare_opts = test.get('compare_opts')
+          in_order_mode = compare_opts.get('in_order_mode', 1)
+          coalescing_limit = compare_opts.get('coalescing_limit', 0)
+          verbose = compare_opts.get('verbose', 0)
+          mismatch = compare_opts.get('mismatch_print_limit', 5)
+          compare_final = compare_opts.get('compare_final_value_only', 0)
+          compare_trace_csv(rtl_csv, iss_csv, "ibex", iss, report,
+                            in_order_mode, coalescing_limit, verbose,
+                            mismatch, compare_final)
+        else:
+          compare_trace_csv(rtl_csv, iss_csv, "ibex", iss, report)
   passed_cnt = run_cmd("grep PASSED %s | wc -l" % report).strip()
   failed_cnt = run_cmd("grep FAILED %s | wc -l" % report).strip()
   summary = ("%s PASSED, %s FAILED" % (passed_cnt, failed_cnt))
