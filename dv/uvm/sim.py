@@ -45,7 +45,7 @@ def process_cmd(keyword, cmd, opts, enable):
     Processed command
   """
   if enable == "1":
-    return re.sub(keyword, opts, cmd)
+    return re.sub(keyword, opts.rstrip(), cmd)
   else:
     return re.sub(keyword, "", cmd)
 
@@ -165,6 +165,7 @@ def rtl_sim(sim_cmd, test_list, output_dir, bin_dir, lsf_cmd, seed, opts, verbos
   for test in test_list:
     for i in range(test['iterations']):
       rand_seed = get_seed(seed)
+      sim_cmd = re.sub("<seed>", str(rand_seed), sim_cmd)
       sim_dir = output_dir + ("/%s.%d" %(test['test'], i))
       run_cmd(("mkdir -p %s" % sim_dir))
       os.chdir(sim_dir)
@@ -174,7 +175,6 @@ def rtl_sim(sim_cmd, test_list, output_dir, bin_dir, lsf_cmd, seed, opts, verbos
       cmd = lsf_cmd + " " + sim_cmd.rstrip() + \
             (" +UVM_TESTNAME=%s " % test['rtl_test']) + \
             (" +bin=%s " % binary) + \
-            (" +ntb_random_seed=%d " % rand_seed) + \
             (" -l sim.log ")
       print("Running %s with %s" % (test['rtl_test'], binary))
       if verbose:
@@ -250,7 +250,7 @@ parser.add_argument("--simulator_yaml", type=str, default="yaml/rtl_simulation.y
                     help="RTL simulator setting YAML")
 parser.add_argument("--iss", type=str, default="spike",
                     help="Instruction set simulator")
-parser.add_argument("--verbose", type=int, default=0,
+parser.add_argument("-v", "--verbose", dest="verbose", action="store_true",
                     help="Verbose logging")
 parser.add_argument("--cmp_opts", type=str, default="",
                     help="Compile options for the generator")
@@ -267,6 +267,7 @@ parser.add_argument("--lsf_cmd", type=str, default="",
                           command is not specified")
 
 args = parser.parse_args()
+parser.set_defaults(verbose=False)
 cwd = os.path.dirname(os.path.realpath(__file__))
 
 # Create the output directory
