@@ -38,7 +38,7 @@ module ibex_controller (
     input  logic                  dret_insn_i,           // decoder has DRET instr
     input  logic                  wfi_insn_i,            // decoder has WFI instr
     input  logic                  ebrk_insn_i,           // decoder has EBREAK instr
-    input  logic                  csr_status_i,          // decoder has CSR status instr
+    input  logic                  csr_pipe_flush_i,      // do CSR-related pipeline flush
 
     // from IF-ID pipeline stage
     input  logic                  instr_valid_i,         // instr from IF-ID reg is valid
@@ -158,7 +158,7 @@ module ibex_controller (
   assign exc_req_lsu = store_err_i | load_err_i;
 
   // special requests: special instructions, pipeline flushes, exceptions...
-  assign special_req = mret_insn_i | dret_insn_i | wfi_insn_i | csr_status_i |
+  assign special_req = mret_insn_i | dret_insn_i | wfi_insn_i | csr_pipe_flush_i |
       exc_req | exc_req_lsu;
 
   ////////////////
@@ -512,7 +512,7 @@ module ibex_controller (
           end
 
         end else begin
-          // special instructions
+          // special instructions and pipeline flushes
           if (mret_insn_i) begin
             pc_mux_o              = PC_ERET;
             pc_set_o              = 1'b1;
@@ -526,6 +526,9 @@ module ibex_controller (
             debug_mode_d          = 1'b0;
           end else if (wfi_insn_i) begin
             ctrl_fsm_ns           = WAIT_SLEEP;
+          end else if (csr_pipe_flush_i && handle_irq) begin
+            // start handling IRQs when doing CSR-related pipeline flushes
+            ctrl_fsm_ns           = IRQ_TAKEN;
           end
         end // exc_req
 
