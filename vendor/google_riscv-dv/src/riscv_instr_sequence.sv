@@ -91,6 +91,7 @@ class riscv_instr_sequence extends uvm_sequence;
   // pointer(SP) is reduced by the amount the stack space allocated to this program.
   function void gen_stack_enter_instr();
     bit allow_branch = ((illegal_instr_pct > 0) || (hint_instr_pct > 0)) ? 1'b0 : 1'b1;
+    allow_branch &= !cfg.no_branch_jump;
     `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(program_stack_len,
       program_stack_len inside {[cfg.min_stack_len_per_program : cfg.max_stack_len_per_program]};
       // Keep stack len word aligned to avoid unaligned load/store
