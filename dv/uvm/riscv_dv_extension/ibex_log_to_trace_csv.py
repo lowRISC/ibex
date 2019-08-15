@@ -27,6 +27,8 @@ def process_ibex_sim_log(ibex_log, csv):
         trace_csv = RiscvInstructiontTraceCsv(csv_fd)
         trace_csv.start_new_trace()
         for line in f:
+            if re.search("ecall", line):
+              break
             # Extract instruction infromation
             m = re.search(r"^\s*(?P<time>\d+)\s+(?P<cycle>\d+) " \
                           "(?P<pc>[0-9a-f]+) (?P<bin>[0-9a-f]+) (?P<instr>.*)" \
