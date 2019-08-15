@@ -86,8 +86,12 @@ class riscv_load_store_base_instr_stream extends riscv_directed_instr_stream;
 
   // Generate each load/store instruction
   virtual function void gen_load_store_instr();
+    bit enable_compressed_load_store;
     riscv_rand_instr rand_instr;
     riscv_instr_name_t allowed_instr[];
+    if (rs1_reg inside {[S0 : A5]}) begin
+      enable_compressed_load_store = 1;
+    end
     if(avail_regs.size() > 0) begin
       `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(avail_regs,
                                          unique{avail_regs};
@@ -106,30 +110,49 @@ class riscv_load_store_base_instr_stream extends riscv_directed_instr_stream;
       if (addr[i][0] == 1'b0) begin
         allowed_instr = {LH, LHU, SH, allowed_instr};
       end
-      if (addr[i][1:0] == 2'b00) begin
-        allowed_instr = {LW, SW, LWU, allowed_instr};
-        if((offset[i] inside {[0:127]}) && (offset[i] % 4 == 0)) begin
+      if (!cfg.enable_unaligned_load_store) begin
+        if (addr[i][1:0] == 2'b00) begin
+          allowed_instr = {LW, SW, allowed_instr};
+          if((offset[i] inside {[0:127]}) && (offset[i] % 4 == 0) &&
+             (RV32C inside {riscv_instr_pkg::supported_isa}) &&
+             enable_compressed_load_store) begin
+            allowed_instr = {C_LW, C_SW, allowed_instr};
+          end
+        end
+        if ((XLEN >= 64) && (addr[i][2:0] == 3'b000)) begin
+          allowed_instr = {LWU, LD, SD, allowed_instr};
+          if((offset[i] inside {[0:255]}) && (offset[i] % 8 == 0) &&
+             (RV64C inside {riscv_instr_pkg::supported_isa} &&
+             enable_compressed_load_store)) begin
+            allowed_instr = {C_LD, C_SD, allowed_instr};
+          end
+        end
+      end else begin
+        allowed_instr = {LW, SW, allowed_instr};
+        if ((offset[i] inside {[0:127]}) && (offset[i] % 4 == 0) &&
+            (RV32C inside {riscv_instr_pkg::supported_isa}) &&
+            enable_compressed_load_store) begin
           allowed_instr = {C_LW, C_SW, allowed_instr};
         end
-      end
-      if(addr[i][2:0] == 3'b000) begin
-        allowed_instr = {LD, SD, allowed_instr};
-        if((offset[i] inside {[0:255]}) && (offset[i] % 8 == 0)) begin
-          allowed_instr = {C_LD, C_SD, allowed_instr};
+        if (XLEN >= 64) begin
+          allowed_instr = {LWU, LD, SD, allowed_instr};
+          if ((offset[i] inside {[0:255]}) && (offset[i] % 8 == 0) &&
+              (RV64C inside {riscv_instr_pkg::supported_isa}) &&
+              enable_compressed_load_store) begin
+              allowed_instr = {C_LD, C_SD, allowed_instr};
+           end
         end
       end
       `DV_CHECK_RANDOMIZE_WITH_FATAL(rand_instr,
         solve rs1 before rd;
         rs1 == rs1_reg;
-        if (!cfg.enable_unaligned_load_store) {
-          instr_name inside {allowed_instr};
-        } else {
-          category inside {LOAD, STORE};
-        }
+        instr_name inside {allowed_instr};
         if(avail_regs.size() > 0) {
           rd inside {avail_regs};
         }
-        rd != rs1;
+        if (num_load_store > 1) {
+          rd != rs1;
+        }
       )
       rand_instr.process_load_store = 0;
       rand_instr.imm_str = $sformatf("%0d", offset[i]);

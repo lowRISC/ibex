@@ -110,6 +110,14 @@ class riscv_rand_instr extends riscv_instr_base;
     }
   }
 
+  // No label is needed if there's no branch/jump instruction
+  function void post_randomize();
+    super.post_randomize();
+    if (cfg.no_branch_jump) begin
+      has_label = 1'b0;
+    end
+  endfunction
+
   `uvm_object_new
 
 endclass

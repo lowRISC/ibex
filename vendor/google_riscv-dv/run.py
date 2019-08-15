@@ -127,15 +127,18 @@ def gen(test_list, csr_file, end_signature_addr, isa, simulator,
   compile_cmd = []
   sim_cmd = ""
   compile_cmd, sim_cmd = get_generator_cmd(simulator, simulator_yaml);
+  if len(test_list) == 0:
+    return
   # Compile the instruction generator
   if not sim_only:
-    logging.info("Building RISC-V instruction generator")
-    for cmd in compile_cmd:
-      cmd = re.sub("<out>", os.path.abspath(output_dir), cmd)
-      cmd = re.sub("<cwd>", cwd, cmd)
-      cmd = re.sub("<cmp_opts>", cmp_opts, cmd)
-      logging.debug("Compile command: %s" % cmd)
-      logging.debug(run_cmd(cmd))
+    if (not((len(test_list) == 1) and (test_list[0]['test'] == 'riscv_csr_test'))):
+      logging.info("Building RISC-V instruction generator")
+      for cmd in compile_cmd:
+        cmd = re.sub("<out>", os.path.abspath(output_dir), cmd)
+        cmd = re.sub("<cwd>", cwd, cmd)
+        cmd = re.sub("<cmp_opts>", cmp_opts, cmd)
+        logging.debug("Compile command: %s" % cmd)
+        logging.debug(run_cmd(cmd))
   # Run the instruction generator
   if not compile_only:
     cmd_list = []
@@ -176,7 +179,7 @@ def gen(test_list, csr_file, end_signature_addr, isa, simulator,
       run_parallel_cmd(cmd_list, timeout_s)
 
 
-def gcc_compile(test_list, output_dir, isa, mabi):
+def gcc_compile(test_list, output_dir, isa, mabi, opts):
   """Use riscv gcc toolchain to compile the assembly program
 
   Args:
@@ -194,9 +197,9 @@ def gcc_compile(test_list, output_dir, isa, mabi):
       # gcc comilation
       cmd = ("%s -march=%s -mabi=%s -static -mcmodel=medany \
              -fvisibility=hidden -nostdlib \
-             -nostartfiles \
+             -nostartfiles %s \
              -Tscripts/link.ld %s -o %s" % \
-             (get_env_var("RISCV_GCC") ,isa, mabi, asm, elf))
+             (get_env_var("RISCV_GCC") ,isa, mabi, asm, opts, elf))
       logging.info("Compiling %s" % asm)
       logging.debug(cmd)
       output = subprocess.check_output(cmd.split())
@@ -323,6 +326,8 @@ def setup_parser():
                       help="Compile options for the generator")
   parser.add_argument("--sim_opts", type=str, default="",
                       help="Simulation options for the generator")
+  parser.add_argument("--gcc_opts", type=str, default="",
+                      help="GCC compile options")
   parser.add_argument("--steps", type=str, default="all",
                       help="Run steps: gen,gcc_compile,iss_sim,iss_cmp")
   parser.add_argument("--lsf_cmd", type=str, default="",
@@ -397,7 +402,7 @@ def main():
   if not args.co:
     # Compile the assembly program to ELF, convert to plain binary
     if args.steps == "all" or re.match("gcc_compile", args.steps):
-      gcc_compile(matched_list, output_dir, args.isa, args.mabi)
+      gcc_compile(matched_list, output_dir, args.isa, args.mabi, args.gcc_opts)
 
     # Run ISS simulation
     if args.steps == "all" or re.match("iss_sim", args.steps):
