@@ -219,7 +219,7 @@ module ibex_id_stage #(
   logic        data_req_id, data_req_dec;
 
   // CSR control
-  logic        csr_status;
+  logic        csr_pipe_flush;
 
   logic [31:0] alu_operand_a;
   logic [31:0] alu_operand_b;
@@ -378,7 +378,7 @@ module ibex_id_stage #(
       // CSRs
       .csr_access_o                    ( csr_access_o         ),
       .csr_op_o                        ( csr_op_o             ),
-      .csr_status_o                    ( csr_status           ),
+      .csr_pipe_flush_o                ( csr_pipe_flush       ),
 
       // LSU
       .data_req_o                      ( data_req_dec         ),
@@ -413,7 +413,7 @@ module ibex_id_stage #(
       .dret_insn_i                    ( dret_insn_dec          ),
       .wfi_insn_i                     ( wfi_insn_dec           ),
       .ebrk_insn_i                    ( ebrk_insn              ),
-      .csr_status_i                   ( csr_status             ),
+      .csr_pipe_flush_i               ( csr_pipe_flush         ),
 
       // from IF-ID pipeline
       .instr_valid_i                  ( instr_valid_i          ),
