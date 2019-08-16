@@ -4,17 +4,18 @@
 
 class core_ibex_base_test extends uvm_test;
 
-  core_ibex_env                   env;
-  core_ibex_env_cfg               cfg;
-  virtual clk_if                  clk_vif;
-  virtual core_ibex_dut_probe_if  dut_vif;
-  virtual ibex_mem_intf           dmem_vif;
-  mem_model_pkg::mem_model        mem;
-  core_ibex_vseq                  vseq;
-  bit                             enable_irq_seq;
-  bit                             enable_debug_seq;
-  irq_seq                         irq_seq_h;
-  int unsigned                    timeout_in_cycles = 2000000;
+  core_ibex_env                                   env;
+  core_ibex_env_cfg                               cfg;
+  virtual clk_if                                  clk_vif;
+  virtual core_ibex_dut_probe_if                  dut_vif;
+  virtual ibex_mem_intf                           dmem_vif;
+  mem_model_pkg::mem_model                        mem;
+  core_ibex_vseq                                  vseq;
+  bit                                             enable_irq_seq;
+  bit                                             enable_debug_seq;
+  irq_seq                                         irq_seq_h;
+  int unsigned                                    timeout_in_cycles = 2000000;
+  uvm_tlm_analysis_fifo #(ibex_mem_intf_seq_item) addr_ph_port;
 
   `uvm_component_utils(core_ibex_base_test)
 
@@ -23,6 +24,7 @@ class core_ibex_base_test extends uvm_test;
     super.new(name, parent);
     ibex_report_server = new();
     uvm_report_server::set_server(ibex_report_server);
+    addr_ph_port = new("addr_ph_port_test", this);
   endfunction
 
   virtual function void build_phase(uvm_phase phase);
@@ -45,6 +47,11 @@ class core_ibex_base_test extends uvm_test;
     vseq = core_ibex_vseq::type_id::create("vseq");
     vseq.mem = mem;
     vseq.cfg = cfg;
+  endfunction
+
+  virtual function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    env.data_if_slave_agent.monitor.addr_ph_port.connect(this.addr_ph_port.analysis_export);
   endfunction
 
   virtual task run_phase(uvm_phase phase);
@@ -102,6 +109,19 @@ class core_ibex_base_test extends uvm_test;
         `uvm_fatal(`gfn, "TEST TIMEOUT!!")
       end
     join_any
+  endtask
+
+  virtual task wait_for_mem_txn(input bit[ibex_mem_intf_agent_pkg::ADDR_WIDTH-1:0] ref_addr,
+                                input bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] ref_val,
+                                output bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] data);
+    ibex_mem_intf_seq_item mem_txn;
+    forever begin
+      addr_ph_port.get(mem_txn);
+      if (mem_txn.addr == ref_addr && mem_txn.data == ref_val && mem_txn.read_write == WRITE) begin
+        data = mem_txn.data;
+        return;
+      end
+    end
   endtask
 
 endclass

@@ -6,6 +6,7 @@
   description: >
     Arithmetic instruction test, no load/store/branch instructions
   gen_opts: >
+    +empty_debug_section=1
     +instr_cnt=10000
     +num_of_sub_program=0
     +no_fence=1
@@ -22,6 +23,7 @@
   iterations: 10
   gen_test: riscv_instr_base_test
   gen_opts: >
+    +empty_debug_section=1
     +instr_cnt=10000
     +num_of_sub_program=5
     +boot_mode=m
@@ -33,6 +35,7 @@
   iterations: 10
   gen_test: riscv_instr_base_test
   gen_opts: >
+    +empty_debug_section=1
     +instr_cnt=10000
     +num_of_sub_program=5
     +directed_instr_0=riscv_load_store_rand_instr_stream,4
@@ -49,6 +52,7 @@
   iterations: 10
   gen_test: riscv_instr_base_test
   gen_opts: >
+    +empty_debug_section=1
     +instr_cnt=15000
     +num_of_sub_program=20
     +directed_instr_0=riscv_load_store_rand_instr_stream,8
@@ -61,6 +65,7 @@
   iterations: 10
   gen_test: riscv_instr_base_test
   gen_opts: >
+    +empty_debug_section=1
     +instr_cnt=10000
     +num_of_sub_program=5
     +directed_instr_0=riscv_load_store_rand_instr_stream,40
@@ -78,6 +83,7 @@
   iterations: 10
   gen_test: riscv_rand_instr_test
   gen_opts: >
+    +empty_debug_section=1
     +enable_illegal_instruction=1
   rtl_test: core_ibex_base_test
 
@@ -88,6 +94,7 @@
   iterations: 10
   gen_test: riscv_rand_instr_test
   gen_opts: >
+    +empty_debug_section=1
     +enable_hint_instruction=1
   rtl_test: core_ibex_base_test
 
@@ -98,6 +105,7 @@
   iterations: 10
   gen_test: riscv_rand_instr_test
   gen_opts: >
+    +empty_debug_section=1
     +instr_cnt=6000
     +no_ebreak=0
   rtl_test: core_ibex_base_test
@@ -109,12 +117,32 @@
   gen_test: riscv_instr_base_test
   gen_opts: >
     +no_ebreak=1
-    +instr_cnt=6000
     +no_branch_jump=1
+    +instr_cnt=6000
     +no_csr_instr=1
     +no_fence=1
     +num_of_sub_program=0
-  rtl_test: core_ibex_base_test
+  rtl_test: core_ibex_debug_test
+  sim_opts: >
+    +enable_debug_seq=1
+  compare_opts:
+    compare_final_value_only: 1
+    verbose: 1
+
+- test: riscv_debug_branch_jump_test
+  description: >
+    Randomly assert debug_req_i, insert branch instructions and subprograms into debug_rom to make core
+    jump around within the debug_rom
+  iterations: 10
+  gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +no_ebreak=1
+    +instr_cnt=10000
+    +no_csr_instr=1
+    +no_fence=1
+    +num_of_sub_program=5
+    +num_debug_sub_program=2
+  rtl_test: core_ibex_debug_test
   sim_opts: >
     +enable_debug_seq=1
   compare_opts:
@@ -146,11 +174,14 @@
   iterations: 2
   gen_test: riscv_rand_instr_test
   gen_opts: >
+    +empty_debug_section=1
     +skip_trap_handling=1
     +no_wfi=0
   rtl_test: core_ibex_base_test
   sim_opts: >
     +enable_irq_seq=1
+  compare_opts:
+    compare_final_value_only: 1
 
 - test: riscv_full_interrupt_test
   description: >
@@ -177,6 +208,7 @@
   iterations: 5
   gen_test: riscv_instr_base_test
   gen_opts: >
+    +empty_debug_section=1
     +instr_cnt=10000
     +num_of_sub_program=5
     +directed_instr_0=riscv_load_store_rand_instr_stream,20

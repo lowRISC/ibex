@@ -16,6 +16,6 @@ package core_ibex_test_pkg;
   `include "core_ibex_seq_lib.sv"
   `include "core_ibex_vseq.sv"
   `include "core_ibex_base_test.sv"
-  `include "core_ibex_csr_test.sv"
+  `include "core_ibex_test_lib.sv"
 
 endpackage
