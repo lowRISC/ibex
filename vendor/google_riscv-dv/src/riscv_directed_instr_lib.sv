@@ -93,7 +93,7 @@ class riscv_jump_instr extends riscv_rand_instr_stream;
   rand riscv_instr_base    jump;
   rand riscv_instr_base    addi;
   rand riscv_pseudo_instr  la;
-  rand riscv_instr_base    branch;
+  rand riscv_rand_instr    branch;
   rand bit                 enable_branch;
   rand int                 mixed_instr_cnt;
   riscv_instr_base         stack_exit_instr[];
@@ -125,8 +125,12 @@ class riscv_jump_instr extends riscv_rand_instr_stream;
     jump = riscv_instr_base::type_id::create("jump");
     la = riscv_pseudo_instr::type_id::create("la");
     addi = riscv_instr_base::type_id::create("addi");
-    branch = riscv_instr_base::type_id::create("branch");
+    branch = riscv_rand_instr::type_id::create("branch");
     instr_list.rand_mode(0);
+  endfunction
+
+  function void pre_randomize();
+    branch.cfg = cfg;
   endfunction
 
   function void post_randomize();
@@ -171,7 +175,7 @@ class riscv_push_stack_instr extends riscv_rand_instr_stream;
   int                      num_of_redudant_instr;
   riscv_instr_base         push_stack_instr[];
   riscv_reg_t              saved_regs[];
-  rand riscv_instr_base    branch_instr;
+  rand riscv_rand_instr    branch_instr;
   rand bit                 enable_branch;
   string                   push_start_label;
 
@@ -179,7 +183,6 @@ class riscv_push_stack_instr extends riscv_rand_instr_stream;
 
   function new(string name = "");
     super.new(name);
-    branch_instr = riscv_instr_base::type_id::create("branch_instr");
   endfunction
 
   function void init();
@@ -225,6 +228,8 @@ class riscv_push_stack_instr extends riscv_rand_instr_stream;
     end
     if(enable_branch) begin
       // Cover jal -> branch scenario, the branch is added before push stack operation
+      branch_instr = riscv_rand_instr::type_id::create("branch_instr");
+      branch_instr.cfg = cfg;
       `DV_CHECK_RANDOMIZE_WITH_FATAL(branch_instr,
                                      category == BRANCH;)
       branch_instr.imm_str = push_start_label;
