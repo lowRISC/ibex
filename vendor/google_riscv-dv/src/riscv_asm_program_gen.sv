@@ -31,6 +31,7 @@ class riscv_asm_program_gen extends uvm_object;
    riscv_instr_sequence                sub_program[];
    // Program in binary format, stored in the data section, used to inject illegal/HINT instruction
    riscv_instr_sequence                bin_program;
+   riscv_instr_sequence                debug_program;
    string                              instr_binary[$];
    // Kernel programs
    // These programs are called in the interrupt/exception handling routine based on the privileged
@@ -78,6 +79,7 @@ class riscv_asm_program_gen extends uvm_object;
     if(cfg.enable_illegal_instruction || cfg.enable_hint_instruction) begin
       bin_program = riscv_instr_sequence::type_id::create("bin_program");
       bin_program.instr_cnt = cfg.bin_program_instr_cnt;
+      bin_program.is_debug_program = 0;
       bin_program.label_name = bin_program.get_name();
       bin_program.cfg = cfg;
       if (cfg.enable_illegal_instruction) begin
@@ -99,6 +101,7 @@ class riscv_asm_program_gen extends uvm_object;
       foreach(sub_program[i]) begin
         sub_program[i] = riscv_instr_sequence::type_id::create($sformatf("sub_%0d",i+1));
         sub_program[i].instr_cnt = cfg.sub_program_instr_cnt[i];
+        sub_program[i].is_debug_program = 0;
         generate_directed_instr_stream(.label(sub_program[i].get_name()),
                                        .original_instr_cnt(sub_program[i].instr_cnt),
                                        .min_insert_cnt(0),
@@ -113,6 +116,7 @@ class riscv_asm_program_gen extends uvm_object;
     // Generate main program
     main_program = riscv_instr_sequence::type_id::create("main_program");
     main_program.instr_cnt = cfg.main_program_instr_cnt;
+    main_program.is_debug_program = 0;
     main_program.label_name = "_main";
     generate_directed_instr_stream(.label("main"),
                                    .original_instr_cnt(main_program.instr_cnt),
@@ -174,8 +178,10 @@ class riscv_asm_program_gen extends uvm_object;
     gen_privileged_mode_switch_routine();
     // Program end
     gen_program_end();
-    // Generate debug mode section
+    // Generate debug rom section
     gen_debug_mode_section();
+    // Generate debug mode exception handler
+    gen_debug_exception_section();
     // Starting point of data section
     gen_data_page_begin();
     // Generate the sub program in binary format
@@ -238,6 +244,7 @@ class riscv_asm_program_gen extends uvm_object;
                                    .instr_stream(seq.directed_instr),
                                    .access_u_mode_mem(1'b0));
     seq.label_name = seq.get_name();
+    seq.is_debug_program = 0;
     seq.cfg = cfg;
     `DV_CHECK_RANDOMIZE_FATAL(seq)
     seq.gen_instr(0);
@@ -796,6 +803,14 @@ class riscv_asm_program_gen extends uvm_object;
   // Helper functions
   //---------------------------------------------------------------------------------------
 
+  // Format a code section, without generating it
+  virtual function void format_section(ref string instr[$]);
+    string prefix = format_string(" ", LABEL_STR_LEN);
+    foreach(instr[i]) begin
+      instr[i] = {prefix, instr[i]};
+    end
+  endfunction
+
   // Generate a code section
   virtual function void gen_section(string label, string instr[$]);
     string str;
@@ -918,10 +933,39 @@ class riscv_asm_program_gen extends uvm_object;
   // Generate the program in the debug ROM
   // Processor will fetch instruction from here upon receiving debug request from debug module
   virtual function void gen_debug_mode_section();
-    string instr[];
+    string push_gpr[$];
+    string pop_gpr[$];
+    string instr[$];
+    string dret;
     if (riscv_instr_pkg::support_debug_mode) begin
-      instr = {"dret"};
+      // The main debug rom
+      if (!cfg.empty_debug_section) begin
+        debug_program = riscv_instr_sequence::type_id::create("debug_program");
+        debug_program.instr_cnt = cfg.debug_program_instr_cnt;
+        debug_program.is_debug_program = 1;
+        debug_program.cfg = cfg;
+        `DV_CHECK_RANDOMIZE_FATAL(debug_program)
+        debug_program.gen_instr(.is_main_program(1'b1), .enable_hint_instr(1'b0),
+                                .no_branch(1'b1));
+        debug_program.post_process_instr();
+        debug_program.generate_instr_stream(.no_label(1'b1));
+        // Need to save off GPRs to avoid modifying program flow
+        push_gpr_to_kernel_stack(MSTATUS, MSCRATCH, cfg.mstatus_mprv, push_gpr);
+        format_section(push_gpr);
+        pop_gpr_from_kernel_stack(MSTATUS, MSCRATCH, cfg.mstatus_mprv, pop_gpr);
+        format_section(pop_gpr);
+        instr = {push_gpr, debug_program.instr_string_list, pop_gpr};
+      end
+      dret = {format_string(" ", LABEL_STR_LEN), "dret"};
+      instr = {instr, dret};
       gen_section("debug_rom", instr);
+    end
+  endfunction
+
+  // Generate exception handling routine for debug ROM
+  virtual function void gen_debug_exception_section();
+    if (riscv_instr_pkg::support_debug_mode) begin
+      string instr[];
       instr = {"dret"};
       gen_section("debug_exception", instr);
     end

@@ -100,88 +100,22 @@ python3 run.py --test riscv_page_table_exception_test --co
 ### Privileged CSR Test Generation
 
 
-The CSR generation script is located at [scripts/gen_csr_test.py](https://github.com/google/riscv-dv/blob/master/scripts/gen_csr_test.py). The CSR test code that this script generates will execute every CSR instruction on every processor implemented CSR, writing values to the CSR and then using a prediction function to calculate a reference value that will be written into another GPR. The reference value will then be compared to the value actually stored in the CSR to determine whether to jump to the failure condition or continue executing, allowing it to be completely self checking.
-To quickly generate a basic CSR test, run the below command:
+The CSR generation script is located at
+[scripts/gen_csr_test.py](https://github.com/google/riscv-dv/blob/master/scripts/gen_csr_test.py).
+The CSR test code that this script generates will execute every CSR instruction
+on every processor implemented CSR, writing values to the CSR and then using a
+prediction function to calculate a reference value that will be written into
+another GPR. The reference value will then be compared to the value actually
+stored in the CSR to determine whether to jump to the failure condition or
+continue executing, allowing it to be completely self checking. This script has
+been integrated with run.py. If you want to run it separately, you can get the
+command reference with --help:
 
 ```
-python3 scripts/gen_csr_test.py
+python3 scripts/gen_csr_test.py --help
 ```
-
-To create a new processor-specific CSR description YAML file, format it as
-detailed below, and then run:
-```
-python3 scripts/gen_csr_test.py --csr_file PATH_TO_NEW_CSR_DESCRIPTION_FILE
-```
-
-If the CSRs are a different XLEN, such as 64-bit or 128-bit, use the `--xlen`
-option to change the ISA length used to generate the test.
-```
-python3 scripts/gen_csr_test.py --xlen 64
-```
-
-To input the number of CSR test files that should be generated, use the
-`--iterations` option. Say 10 tests should be generated:
-```
-python3 scripts/gen_csr_test.py --iterations 10
-```
-
-To change the output directory that the tests are generated into, use the
-`--out` option. Say the tests should be generated into the home directory:
-```
-python3 scripts/gen_csr_test.py --out ~
-```
-
-Any number of the above options can be combined together, and all of them have
-default values should they not be specified at runtime.
 
 ## Configuration
-
-### Setup CSR description list
-
-This YAML description file of all CSRs is only required for the privileged CSR
-test. All other standard tests do not use this description.
-
-[CSR descriptions in YAML
-format](https://github.com/google/riscv-dv/blob/master/yaml/csr_template.yaml)
-
-```
-- csr: CSR_NAME
-  description: >
-    BRIEF_DESCRIPTION
-  address: 0x###
-  privilege_mode: MODE (D/M/S/H/U)
-  rv32:
-    - MSB_FIELD_NAME:
-      - description: >
-          BRIEF_DESCRIPTION
-      - type: TYPE (WPRI/WLRL/WARL/R)
-      - reset_val: RESET_VAL
-      - msb: MSB_POS
-      - lsb: LSB_POS
-    - ...
-    - ...
-    - LSB_FIELD_NAME:
-      - description: ...
-      - type: ...
-      - ...
-  rv64:
-    - MSB_FIELD_NAME:
-      - description: >
-          BRIEF_DESCRIPTION
-      - type: TYPE (WPRI/WLRL/WARL/R)
-      - reset_val: RESET_VAL
-      - msb: MSB_POS
-      - lsb: LSB_POS
-    - ...
-    - ...
-    - LSB_FIELD_NAME:
-      - description: ...
-      - type: ...
-      - ...
-```
-
-To specify what ISA width should be generated in the test, simply include the
-matching rv32/rv64/rv128 entry and fill in the appropriate CSR field entries.
 
 ### Setup regression test list
 
@@ -269,6 +203,56 @@ riscv_instr_group_t supported_isa[] = {RV32I, RV32M, RV64I, RV64M};
 | boot_mode                   | m:Machine mode, s:Supervisor mode, u:User mode  | m       |
 | no_directed_instr           | Disable directed instruction stream             | 0       |
 | enable_interrupt            | Enable MStatus.MIE, used in interrupt test      | 0       |
+| empty_debug_section         | Disables randomized debug_rom section           | 0       |
+
+
+### Setup Privileged CSR description
+
+This YAML description file of all CSRs is only required for the privileged CSR
+test. All other standard tests do not use this description.
+
+[CSR descriptions in YAML
+format](https://github.com/google/riscv-dv/blob/master/yaml/csr_template.yaml)
+
+```
+- csr: CSR_NAME
+  description: >
+    BRIEF_DESCRIPTION
+  address: 0x###
+  privilege_mode: MODE (D/M/S/H/U)
+  rv32:
+    - MSB_FIELD_NAME:
+      - description: >
+          BRIEF_DESCRIPTION
+      - type: TYPE (WPRI/WLRL/WARL/R)
+      - reset_val: RESET_VAL
+      - msb: MSB_POS
+      - lsb: LSB_POS
+    - ...
+    - ...
+    - LSB_FIELD_NAME:
+      - description: ...
+      - type: ...
+      - ...
+  rv64:
+    - MSB_FIELD_NAME:
+      - description: >
+          BRIEF_DESCRIPTION
+      - type: TYPE (WPRI/WLRL/WARL/R)
+      - reset_val: RESET_VAL
+      - msb: MSB_POS
+      - lsb: LSB_POS
+    - ...
+    - ...
+    - LSB_FIELD_NAME:
+      - description: ...
+      - type: ...
+      - ...
+```
+
+To specify what ISA width should be generated in the test, simply include the
+matching rv32/rv64/rv128 entry and fill in the appropriate CSR field entries.
+
 
 ### Adding new instruction stream and test
 
@@ -290,17 +274,19 @@ it with random instructions
 
 ## Run ISS (Instruction Set Simulator) simulation
 
-The default ISS is spike. Thanks for the great support from Imperas Software Ltd.,
-we have added the support for [riscv-ovpsim](https://github.com/riscv/riscv-ovpsim).
+Currently three ISS are supported, the default ISS is spike. You can install any
+one of below to run ISS simulation.
 
-- spike setup
+- [spike](https://github.com/riscv/riscv-isa-sim#) setup
   - Follow the [steps](https://github.com/riscv/riscv-isa-sim#build-steps) to build spike
      - Make sure RISCV_ENABLE_COMMITLOG is defined in [config.h.in](https://github.com/riscv/riscv-isa-sim/blob/master/config.h.in)
   - Set environment variable SPIKE_PATH to the directory of the spike binary
 - [riscv-ovpsim](https://github.com/riscv/riscv-ovpsim) setup
   - Download the riscv-ovpsim binary
   - Set environment variable OVPSIM_PATH to the directory of the ovpsim binary
-
+- [sail-riscv](https://github.com/rems-project/sail-riscv) setup
+  - Follow the [steps](https://github.com/rems-project/sail-riscv/blob/master/README.md) to install sail-riscv
+  - Set environment variable SAIL_RISCV to the sail-riscv binary
 
 You can use -iss to run with different ISS.
 
@@ -310,6 +296,9 @@ python3 run.py --test riscv_page_table_exception_test --iss spike
 
 // Run ISS with riscv-ovpsim
 python3 run.py --test riscv_rand_instr_test --iss ovpsim
+
+// Run ISS with sail-riscv
+python3 run.py --test riscv_rand_instr_test --iss sail
 ```
 
 To run with ISS simulation for RV32IMC, you can specify ISA and ABI from command
@@ -327,6 +316,7 @@ real RISC-V processor.
 
 ```
 python3 run.py --test=riscv_rand_instr_test --iss=spike,ovpsim
+python3 run.py --test=riscv_rand_instr_test --iss=spike,sail
 ```
 
 ### Integrate a new ISS

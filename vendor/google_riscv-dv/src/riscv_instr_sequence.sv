@@ -40,6 +40,7 @@ class riscv_instr_sequence extends uvm_sequence;
   riscv_pop_stack_instr    instr_stack_exit;     // Stack pop instructions for sub-programs
   riscv_rand_instr_stream  instr_stream;         // Main instruction streams
   bit                      is_main_program;      // Type of this sequence (main or sub program)
+  bit                      is_debug_program;     // Indicates whether sequence is debug program
   string                   label_name;           // Label of the sequence (program name)
   riscv_instr_gen_config   cfg;                  // Configuration class handle
   string                   instr_string_list[$]; // Save the instruction list in string format
@@ -70,7 +71,8 @@ class riscv_instr_sequence extends uvm_sequence;
   // considerably as the instruction stream becomes longer. The downside is we cannot specify
   // constraints between instructions. The way to solve it is to have a dedicated directed
   // instruction stream for such scenarios, like hazard sequence.
-  virtual function void gen_instr(bit is_main_program, bit enable_hint_instr = 1'b0);
+  virtual function void gen_instr(bit is_main_program, bit enable_hint_instr = 1'b0,
+                                  bit no_branch = 1'b0);
     this.is_main_program = is_main_program;
     instr_stream.cfg = cfg;
     instr_stream.initialize_instr_list(instr_cnt);
@@ -78,7 +80,8 @@ class riscv_instr_sequence extends uvm_sequence;
                                instr_stream.instr_list.size()), UVM_LOW)
     // Do not generate load/store instruction here
     // The load/store instruction will be inserted as directed instruction stream
-    instr_stream.gen_instr(.no_load_store(1'b1), .enable_hint_instr(enable_hint_instr));
+    instr_stream.gen_instr(.no_branch(no_branch), .no_load_store(1'b1),
+                           .enable_hint_instr(enable_hint_instr));
     if(!is_main_program) begin
       gen_stack_enter_instr();
       gen_stack_exit_instr();
@@ -243,13 +246,17 @@ class riscv_instr_sequence extends uvm_sequence;
   // Convert the instruction stream to the string format.
   // Label is attached to the instruction if available, otherwise attach proper space to make
   // the code indent consistent.
-  function void generate_instr_stream();
+  function void generate_instr_stream(bit no_label = 1'b0);
     string prefix, str;
     int i;
     instr_string_list = {};
     for(i = 0; i < instr_stream.instr_list.size(); i++) begin
       if(i == 0) begin
-        prefix = format_string($sformatf("%0s:", label_name), LABEL_STR_LEN);
+        if (no_label) begin
+          prefix = format_string(" ", LABEL_STR_LEN);
+        end else begin
+          prefix = format_string($sformatf("%0s:", label_name), LABEL_STR_LEN);
+        end
         instr_stream.instr_list[i].has_label = 1'b1;
       end else begin
         if(instr_stream.instr_list[i].has_label) begin

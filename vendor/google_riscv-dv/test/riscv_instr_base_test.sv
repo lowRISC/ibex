@@ -85,7 +85,6 @@ class riscv_instr_base_test extends uvm_test;
   endfunction
 
   virtual function void apply_directed_instr();
-    
   endfunction
 
   task run_phase(uvm_phase phase);

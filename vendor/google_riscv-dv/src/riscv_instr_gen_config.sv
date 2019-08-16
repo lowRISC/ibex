@@ -30,6 +30,9 @@ class riscv_instr_gen_config extends uvm_object;
   // Instruction count of each sub-program
   rand int               sub_program_instr_cnt[];
 
+  // Instruction count of the debug rom
+  rand int               debug_program_instr_cnt;
+
   // Pattern of data section: RAND_DATA, ALL_ZERO, INCR_VAL
   rand data_pattern_t    data_page_pattern;
 
@@ -61,6 +64,12 @@ class riscv_instr_gen_config extends uvm_object;
   // processor.
   bit                    check_misa_init_val = 1'b0;
   bit                    check_xstatus = 1'b1;
+
+  // Enable a full or empty debug_rom section.
+  // Full debug_rom will contain random instruction streams.
+  // Empty debug_rom will contain just dret instruction and will return immediately.
+  // Will be empty by default.
+  bit                    empty_debug_section = 1'b0;
 
   //-----------------------------------------------------------------------------
   // Command line options or control knobs
@@ -123,8 +132,13 @@ class riscv_instr_gen_config extends uvm_object;
 
   constraint default_c {
     sub_program_instr_cnt.size() == num_of_sub_program;
-    main_program_instr_cnt + sub_program_instr_cnt.sum() == instr_cnt;
+    if (riscv_instr_pkg::support_debug_mode) {
+      main_program_instr_cnt + sub_program_instr_cnt.sum() + debug_program_instr_cnt == instr_cnt;
+    } else {
+      main_program_instr_cnt + sub_program_instr_cnt.sum() == instr_cnt;
+    }
     main_program_instr_cnt inside {[1 : instr_cnt]};
+    debug_program_instr_cnt inside {[1 : instr_cnt]};
     foreach(sub_program_instr_cnt[i]) {
       sub_program_instr_cnt[i] inside {[1 : instr_cnt]};
     }
@@ -255,6 +269,7 @@ class riscv_instr_gen_config extends uvm_object;
     get_bool_arg_value("+enable_hint_instruction=", enable_hint_instruction);
     get_bool_arg_value("+force_m_delegation=", force_m_delegation);
     get_bool_arg_value("+force_s_delegation=", force_s_delegation);
+    get_bool_arg_value("+empty_debug_section=", empty_debug_section);
     if(inst.get_arg_value("+boot_mode=", boot_mode_opts)) begin
       `uvm_info(get_full_name(), $sformatf(
                 "Got boot mode option - %0s", boot_mode_opts), UVM_LOW)
@@ -278,7 +293,8 @@ class riscv_instr_gen_config extends uvm_object;
       uvm_split_string(s, ",", cmdline_march_list);
       riscv_instr_pkg::supported_isa.delete();
       foreach(cmdline_march_list[i]) begin
-        if(uvm_enum_wrapper#(riscv_instr_group_t)::from_name(cmdline_march_list[i], march)) begin
+        if(uvm_enum_wrapper#(riscv_instr_group_t)::from_name(
+           cmdline_march_list[i].toupper(), march)) begin
           riscv_instr_pkg::supported_isa.push_back(march);
         end else begin
           `uvm_fatal(get_full_name(), $sformatf(
