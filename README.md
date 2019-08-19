@@ -1,3 +1,5 @@
+[![Build Status](https://dev.azure.com/lowrisc/ibex/_apis/build/status/lowRISC.ibex?branchName=master)](https://dev.azure.com/lowrisc/ibex/_build/latest?definitionId=3&branchName=master)
+
 # Ibex RISC-V Core
 
 Ibex is a small and efficient, 32-bit, in-order RISC-V core with a 2-stage pipeline that implements
