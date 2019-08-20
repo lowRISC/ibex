@@ -91,7 +91,6 @@ module ibex_decoder #(
                                                         // word or word
     output logic                 data_sign_extension_o, // sign extension for data read from
                                                         // memory
-    output logic [1:0]           data_reg_offset_o,     // register byte offset for stores
 
     // jump/branches
     output logic                 jump_in_dec_o,         // jump is being calculated in ALU
@@ -215,7 +214,6 @@ module ibex_decoder #(
     data_we_o                   = 1'b0;
     data_type_o                 = 2'b00;
     data_sign_extension_o       = 1'b0;
-    data_reg_offset_o           = 2'b00;
     data_req_o                  = 1'b0;
 
     illegal_insn                = 1'b0;
