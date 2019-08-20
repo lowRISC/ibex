@@ -2,45 +2,49 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-DV_DIR        			:= $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-GEN_DIR       			:= $(realpath ${DV_DIR}/../../vendor/google_riscv-dv)
-TOOLCHAIN     			:= ${RISCV_TOOLCHAIN}
-OUT           			:= "${DV_DIR}/out"
+DV_DIR              := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+GEN_DIR             := $(realpath ${DV_DIR}/../../vendor/google_riscv-dv)
+TOOLCHAIN           := ${RISCV_TOOLCHAIN}
+OUT                 := "${DV_DIR}/out"
 # Run time options for the instruction generator
-GEN_OPTS      			:=
+GEN_OPTS            :=
 # Run time options for ibex RTL simulation
-SIM_OPTS      			:=
+SIM_OPTS            :=
 # Enable waveform dumping
-WAVES         			:= 1
+WAVES               := 1
 # Enable coverage dump
-COV           			:= 0
+COV                 := 0
 # RTL simulator
-SIMULATOR     			:= "vcs"
+SIMULATOR           := "vcs"
 # ISS (spike, ovpsim)
-ISS           			:= "spike"
+ISS                 := "spike"
 # ISA
-ISA           			:= "rv32imc"
+ISA                 := "rv32imc"
 # Test name (default: full regression)
-TEST          			:= "all"
+TEST                := "all"
 # Seed for instruction generator and RTL simulation
-SEED          			:= -1
+SEED                := -1
 # Verbose logging
-VERBOSE       			:=
+VERBOSE             :=
 # Number of iterations for each test, assign a non-zero value to override the
 # iteration count in the test list
-ITERATIONS    			:= 0
+ITERATIONS          := 0
 # LSF CMD
-LSF_CMD       			:=
+LSF_CMD             :=
 # Generator timeout limit in seconds
-TIMEOUT       			:= 1800
+TIMEOUT             := 1800
 # Privileged CSR YAML description file
-CSR_FILE      			:= ${DV_DIR}/riscv_dv_extension/csr_description.yaml
+CSR_FILE            := ${DV_DIR}/riscv_dv_extension/csr_description.yaml
 # Pass/fail signature address at the end of test
-END_SIGNATURE_ADDR  := 8ffffffc
-# Value written to END_SIGNATURE_ADDR that indicates test success
-PASS_VAL      			:= 0x1
-# Value written to END_SIGNATURE_ADDR that indicates test failure
-FAIL_VAL      			:= 0x0
+SIGNATURE_ADDR      := 8ffffffc
+# Value written to SIGNATURE_ADDR that indicates test success
+PASS_VAL            := 0x1
+# Value written to SIGNATURE_ADDR that indicates test failure
+FAIL_VAL            := 0x0
+# Value written to SIGNATURE_ADDR to indicate that debug stimulus can safely be sent
+DEBUG_START_REQ     := 2
+# Value written to SIGNATURE_ADDR to indicate that interrupt stimulus can safely be sent
+IRQ_START_REQ       := 3
 
 SHELL=/bin/bash
 
@@ -66,14 +70,14 @@ endif
 # Options used for privileged CSR test generation
 CSR_OPTS=--csr_yaml=${CSR_FILE} \
          --isa=${ISA} \
-         --end_signature_addr=0x${END_SIGNATURE_ADDR}
+         --end_signature_addr=0x${SIGNATURE_ADDR}
 
 # Generate random instructions
 .SILENT gen:
 	mkdir -p ${OUT}
 	cd ${GEN_DIR}; \
 	python3 ./run.py \
-     --o=${OUT}/instr_gen ${GEN_OPTS} \
+     --output=${OUT}/instr_gen ${GEN_OPTS} \
      --steps=gen \
      --gen_timeout=${TIMEOUT} \
      --lsf_cmd="${LSF_CMD}" \
@@ -82,7 +86,9 @@ CSR_OPTS=--csr_yaml=${CSR_FILE} \
      --cmp_opts="+define+RISCV_CORE_SETTING=${DV_DIR}/riscv_dv_extension/ibex_core_setting.sv \
        +define+RISCV_DV_EXT_FILE_LIST=${DV_DIR}/riscv_dv_extension/flist \
        +incdir+${DV_DIR}/riscv_dv_extension/ " \
-     --sim_opts="+uvm_set_type_override=riscv_asm_program_gen,ibex_asm_program_gen";
+     --sim_opts="+uvm_set_type_override=riscv_asm_program_gen,ibex_asm_program_gen \
+                 +signature_addr=${SIGNATURE_ADDR} +debug_start_req=${DEBUG_START_REQ} \
+								 +irq_start_req=${IRQ_START_REQ}";
 
 # Compile the generated assmebly programs to ELF/BIN
 gcc_compile:
@@ -126,7 +132,8 @@ rtl_sim:
      --simulator=${SIMULATOR} \
      --en_cov ${COV} \
      --en_wave ${WAVES} \
-     --sim_opts="+end_signature_addr=${END_SIGNATURE_ADDR} +pass_val=${PASS_VAL} +fail_val=${FAIL_VAL}" \
+     --sim_opts="+signature_addr=0x${SIGNATURE_ADDR} +pass_val=${PASS_VAL} +fail_val=${FAIL_VAL} \
+                 +debug_start_req=0x${DEBUG_START_REQ} +irq_start_req=0x${IRQ_START_REQ}" \
      ${SIM_OPTS}
 
 # Compare the regression result between ISS and RTL sim
