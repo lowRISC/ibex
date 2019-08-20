@@ -175,7 +175,6 @@ module ibex_core #(
   logic        data_we_ex;
   logic [1:0]  data_type_ex;
   logic        data_sign_ext_ex;
-  logic [1:0]  data_reg_offset_ex;
   logic        data_req_ex;
   logic [31:0] data_wdata_ex;
   logic [31:0] regfile_wdata_lsu;
@@ -421,7 +420,6 @@ module ibex_core #(
       .data_we_ex_o                 ( data_we_ex             ), // to load store unit
       .data_type_ex_o               ( data_type_ex           ), // to load store unit
       .data_sign_ext_ex_o           ( data_sign_ext_ex       ), // to load store unit
-      .data_reg_offset_ex_o         ( data_reg_offset_ex     ), // to load store unit
       .data_wdata_ex_o              ( data_wdata_ex          ), // to load store unit
 
       .lsu_addr_incr_req_i          ( lsu_addr_incr_req      ),
@@ -525,7 +523,6 @@ module ibex_core #(
       .data_we_ex_i          ( data_we_ex          ),
       .data_type_ex_i        ( data_type_ex        ),
       .data_wdata_ex_i       ( data_wdata_ex       ),
-      .data_reg_offset_ex_i  ( data_reg_offset_ex  ),
       .data_sign_ext_ex_i    ( data_sign_ext_ex    ),
 
       .data_rdata_ex_o       ( regfile_wdata_lsu   ),

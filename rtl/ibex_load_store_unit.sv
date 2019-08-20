@@ -46,7 +46,6 @@ module ibex_load_store_unit (
     input  logic         data_we_ex_i,         // write enable                     -> from ID/EX
     input  logic [1:0]   data_type_ex_i,       // data type: word, half word, byte -> from ID/EX
     input  logic [31:0]  data_wdata_ex_i,      // data to write to memory          -> from ID/EX
-    input  logic [1:0]   data_reg_offset_ex_i, // register byte offset for stores  -> from ID/EX
     input  logic         data_sign_ext_ex_i,   // sign extension                   -> from ID/EX
 
     output logic [31:0]  data_rdata_ex_o,      // requested data                   -> to ID/EX
@@ -161,9 +160,8 @@ module ibex_load_store_unit (
   /////////////////////
 
   // prepare data to be written to the memory
-  // we handle misaligned accesses, half word and byte accesses and
-  // register offsets here
-  assign wdata_offset = data_addr[1:0] - data_reg_offset_ex_i[1:0];
+  // we handle misaligned accesses, half word and byte accesses here
+  assign wdata_offset = data_addr[1:0];
   always_comb begin
     unique case (wdata_offset)
       2'b00:   data_wdata =  data_wdata_ex_i[31:0];
