@@ -29,6 +29,7 @@ ibex_vip_rtl:
     rtl/ibex_pkg.sv,
     rtl/ibex_tracer_pkg.sv,
     rtl/ibex_tracer.sv,
+    rtl/ibex_core_tracing.sv,
   ]
 ibex_regfile_rtl:
   targets: [
