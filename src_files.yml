@@ -17,6 +17,7 @@ ibex:
     rtl/ibex_multdiv_fast.sv,
     rtl/ibex_prefetch_buffer.sv,
     rtl/ibex_fetch_fifo.sv,
+    rtl/ibex_pmp.sv,
     rtl/ibex_core.sv,
   ]
 ibex_vip_rtl:

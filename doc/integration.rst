@@ -12,6 +12,9 @@ Instantiation Template
 .. code-block:: verilog
 
   ibex_core #(
+      .PMPEnable        (0),
+      .PMPGranularity   (0),
+      .PMPNumRegions    (4),
       .MHPMCounterNum   (0),
       .MHPMCounterWidth (40),
       .RV32E            (0),
@@ -68,6 +71,12 @@ Parameters
 +-----------------------+-------------+------------+-----------------------------------------------------------------+
 | Name                  | Type/Range  | Default    | Description                                                     |
 +=======================+=============+============+=================================================================+
+| ``PMPEnable``         | bit         | 0          | Enable PMP support                                              |
++-----------------------+-------------+------------+-----------------------------------------------------------------+
+| ``PMPGranularity``    | int (0..31) | 0          | Minimum granularity of PMP address matching                     |
++-----------------------+-------------+------------+-----------------------------------------------------------------+
+| ``PMPNumRegions``     | int (1..16) | 4          | Number implemented PMP regions (ignored if PMPEnable == 0)      |
++-----------------------+-------------+------------+-----------------------------------------------------------------+
 | ``MHPMCounterNum``    | int (0..8)  | 0          | Number of performance monitor event counters                    |
 +-----------------------+-------------+------------+-----------------------------------------------------------------+
 | ``MHPMCounterWidth``  | int (64..1) | 40         | Bit width of performance monitor event counters                 |

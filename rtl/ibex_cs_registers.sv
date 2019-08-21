@@ -12,6 +12,9 @@
 module ibex_cs_registers #(
     parameter int unsigned MHPMCounterNum   = 8,
     parameter int unsigned MHPMCounterWidth = 40,
+    parameter bit          PMPEnable        = 0,
+    parameter int unsigned PMPGranularity   = 0,
+    parameter int unsigned PMPNumRegions    = 4,
     parameter bit RV32E                     = 0,
     parameter bit RV32M                     = 0
 ) (
@@ -22,6 +25,7 @@ module ibex_cs_registers #(
     // Core and Cluster ID
     input  logic  [3:0]          core_id_i,
     input  logic  [5:0]          cluster_id_i,
+    output ibex_pkg::priv_lvl_e  priv_mode_o,
 
     // mtvec
     output logic [31:0]          csr_mtvec_o,
@@ -47,6 +51,10 @@ module ibex_cs_registers #(
     output logic [14:0]          csr_mfip_o,             // fast interrupt pending
     output logic                 csr_mstatus_mie_o,
     output logic [31:0]          csr_mepc_o,
+
+    // PMP
+    output ibex_pkg::pmp_cfg_t   csr_pmp_cfg_o  [PMPNumRegions],
+    output logic [33:0]          csr_pmp_addr_o [PMPNumRegions],
 
     // debug
     input  ibex_pkg::dbg_cause_e debug_cause_i,
@@ -156,6 +164,10 @@ module ibex_cs_registers #(
   logic [31:0] mstack_epc_q, mstack_epc_d;
   logic  [5:0] mstack_cause_q, mstack_cause_d;
 
+  // PMP Signals
+  logic [31:0]                 pmp_addr_rdata  [PMP_MAX_REGIONS];
+  logic [PMP_CFG_W-1:0]        pmp_cfg_rdata   [PMP_MAX_REGIONS];
+
   // Hardware performance monitor signals
   logic [31:0] mcountinhibit_d, mcountinhibit_q, mcountinhibit;
   logic [31:0] mcountinhibit_force;
@@ -253,6 +265,32 @@ module ibex_cs_registers #(
         csr_rdata_int[CSR_MEIX_BIT]                       = mip.irq_external;
         csr_rdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mip.irq_fast;
       end
+
+      // PMP registers
+      CSR_PMPCFG0:   csr_rdata_int = {pmp_cfg_rdata[3],  pmp_cfg_rdata[2],
+                                      pmp_cfg_rdata[1],  pmp_cfg_rdata[0]};
+      CSR_PMPCFG1:   csr_rdata_int = {pmp_cfg_rdata[7],  pmp_cfg_rdata[6],
+                                      pmp_cfg_rdata[5],  pmp_cfg_rdata[4]};
+      CSR_PMPCFG2:   csr_rdata_int = {pmp_cfg_rdata[11], pmp_cfg_rdata[10],
+                                      pmp_cfg_rdata[9],  pmp_cfg_rdata[8]};
+      CSR_PMPCFG3:   csr_rdata_int = {pmp_cfg_rdata[15], pmp_cfg_rdata[14],
+                                      pmp_cfg_rdata[13], pmp_cfg_rdata[12]};
+      CSR_PMPADDR0:  csr_rdata_int = pmp_addr_rdata[0];
+      CSR_PMPADDR1:  csr_rdata_int = pmp_addr_rdata[1];
+      CSR_PMPADDR2:  csr_rdata_int = pmp_addr_rdata[2];
+      CSR_PMPADDR3:  csr_rdata_int = pmp_addr_rdata[3];
+      CSR_PMPADDR4:  csr_rdata_int = pmp_addr_rdata[4];
+      CSR_PMPADDR5:  csr_rdata_int = pmp_addr_rdata[5];
+      CSR_PMPADDR6:  csr_rdata_int = pmp_addr_rdata[6];
+      CSR_PMPADDR7:  csr_rdata_int = pmp_addr_rdata[7];
+      CSR_PMPADDR8:  csr_rdata_int = pmp_addr_rdata[8];
+      CSR_PMPADDR9:  csr_rdata_int = pmp_addr_rdata[9];
+      CSR_PMPADDR10: csr_rdata_int = pmp_addr_rdata[10];
+      CSR_PMPADDR11: csr_rdata_int = pmp_addr_rdata[11];
+      CSR_PMPADDR12: csr_rdata_int = pmp_addr_rdata[12];
+      CSR_PMPADDR13: csr_rdata_int = pmp_addr_rdata[13];
+      CSR_PMPADDR14: csr_rdata_int = pmp_addr_rdata[14];
+      CSR_PMPADDR15: csr_rdata_int = pmp_addr_rdata[15];
 
       CSR_DCSR:      csr_rdata_int = dcsr_q;
       CSR_DPC:       csr_rdata_int = depc_q;
@@ -511,7 +549,7 @@ module ibex_cs_registers #(
   end
 
   // only write CSRs during one clock cycle
-  assign csr_we_int  = csr_wreq & instr_new_id_i;
+  assign csr_we_int  = csr_wreq & ~illegal_csr_priv & instr_new_id_i;
 
   assign csr_rdata_o = csr_rdata_int;
 
@@ -581,6 +619,131 @@ module ibex_cs_registers #(
       mstack_epc_q   <= mstack_epc_d;
       mstack_cause_q <= mstack_cause_d;
 
+    end
+  end
+
+  assign priv_mode_o = mstatus_q.mpp;
+
+  // -----------------
+  // PMP registers
+  // -----------------
+
+  if (PMPEnable) begin : g_pmp_registers
+    pmp_cfg_t                    pmp_cfg         [PMPNumRegions];
+    pmp_cfg_t                    pmp_cfg_wdata   [PMPNumRegions];
+    logic [31:0]                 pmp_addr        [PMPNumRegions];
+    logic [PMPNumRegions-1:0]    pmp_cfg_we;
+    logic [PMPNumRegions-1:0]    pmp_addr_we;
+
+    // Expanded / qualified register read data
+    for (genvar i = 0; i < PMP_MAX_REGIONS; i++) begin : g_exp_rd_data
+      if (i < PMPNumRegions) begin : g_implemented_regions
+        // Add in zero padding for reserved fields
+        assign pmp_cfg_rdata[i] = {pmp_cfg[i].lock, 2'b00, pmp_cfg[i].mode,
+                                   pmp_cfg[i].exec, pmp_cfg[i].write, pmp_cfg[i].read};
+
+        // Address field read data depends on the current programmed mode and the granularity
+        // See RISC-V Privileged Specification, version 1.11, Section 3.6.1
+        if (PMPGranularity == 0) begin : g_pmp_g0
+          // If G == 0, read data is unmodified
+          assign pmp_addr_rdata[i] = pmp_addr[i];
+
+        end else if (PMPGranularity == 1) begin : g_pmp_g1
+          // If G == 1, bit [G-1] reads as zero in TOR or OFF mode
+          always_comb begin
+            pmp_addr_rdata[i] = pmp_addr[i];
+            if ((pmp_cfg[i].mode == PMP_MODE_OFF) || (pmp_cfg[i].mode == PMP_MODE_TOR)) begin
+              pmp_addr_rdata[i][PMPGranularity-1:0] = '0;
+            end
+          end
+
+        end else begin
+          // For G >= 2, bits are masked to one or zero depending on the mode
+          always_comb begin
+            pmp_addr_rdata[i] = pmp_addr[i];
+            if ((pmp_cfg[i].mode == PMP_MODE_OFF) || (pmp_cfg[i].mode == PMP_MODE_TOR)) begin
+              // In TOR or OFF mode, bits [G-1:0] must read as zero
+              pmp_addr_rdata[i][PMPGranularity-1:0] = '0;
+            end else if (pmp_cfg[i].mode == PMP_MODE_NAPOT) begin
+              // In NAPOT mode, bits [G-2:0] must read as one
+              pmp_addr_rdata[i][PMPGranularity-2:0] = '1;
+            end
+          end
+        end
+
+      end else begin : g_other_regions
+        // Non-implemented regions read as zero
+        assign pmp_cfg_rdata[i]  = '0;
+        assign pmp_addr_rdata[i] = '0;
+      end
+    end
+
+    // Write data calculation
+    for (genvar i = 0; i < PMPNumRegions; i++) begin : g_pmp_csrs
+      // -------------------------
+      // Instantiate cfg registers
+      // -------------------------
+      assign pmp_cfg_we[i] = csr_we_int & ~pmp_cfg[i].lock &
+                             (csr_addr == (CSR_OFF_PMP_CFG + (i[11:0] >> 2)));
+
+      // Select the correct WDATA (each CSR contains 4 CFG fields, each with 2 RES bits)
+      assign pmp_cfg_wdata[i].lock  = csr_wdata_int[(i%4)*PMP_CFG_W+7];
+      // NA4 mode is not selectable when G > 0, mode is treated as OFF
+      always_comb begin
+        unique case (csr_wdata_int[(i%4)*PMP_CFG_W+3+:2])
+          2'b00   : pmp_cfg_wdata[i].mode = PMP_MODE_OFF;
+          2'b01   : pmp_cfg_wdata[i].mode = PMP_MODE_TOR;
+          2'b10   : pmp_cfg_wdata[i].mode = (PMPGranularity == 0) ? PMP_MODE_NA4:
+                                                                    PMP_MODE_OFF;
+          2'b11   : pmp_cfg_wdata[i].mode = PMP_MODE_NAPOT;
+          default : pmp_cfg_wdata[i].mode = pmp_cfg_mode_e'('X);
+        endcase
+      end
+      assign pmp_cfg_wdata[i].exec  = csr_wdata_int[(i%4)*PMP_CFG_W+2];
+      // W = 1, R = 0 is a reserved combination. For now, we force W to 0 if R == 0
+      assign pmp_cfg_wdata[i].write = &csr_wdata_int[(i%4)*PMP_CFG_W+:2];
+      assign pmp_cfg_wdata[i].read  = csr_wdata_int[(i%4)*PMP_CFG_W];
+
+      always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni) begin
+          pmp_cfg[i] <= pmp_cfg_t'('b0);
+        end else if (pmp_cfg_we[i]) begin
+          pmp_cfg[i] <= pmp_cfg_wdata[i];
+        end
+      end
+
+      // --------------------------
+      // Instantiate addr registers
+      // --------------------------
+      if (i < PMPNumRegions - 1) begin : g_lower
+        assign pmp_addr_we[i] = csr_we_int & ~pmp_cfg[i].lock &
+                                (pmp_cfg[i+1].mode != PMP_MODE_TOR) &
+                                (csr_addr == (CSR_OFF_PMP_ADDR + i[11:0]));
+      end else begin : g_upper
+        assign pmp_addr_we[i] = csr_we_int & ~pmp_cfg[i].lock &
+                                (csr_addr == (CSR_OFF_PMP_ADDR + i[11:0]));
+      end
+
+      always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni) begin
+          pmp_addr[i] <= 'b0;
+        end else if (pmp_addr_we[i]) begin
+          pmp_addr[i] <= csr_wdata_int;
+        end
+      end
+      assign csr_pmp_cfg_o[i]  = pmp_cfg[i];
+      assign csr_pmp_addr_o[i] = {pmp_addr[i],2'b00};
+    end
+
+  end else begin : g_no_pmp_tieoffs
+    // Generate tieoffs when PMP is not configured
+    for (genvar i = 0; i < PMP_MAX_REGIONS; i++) begin : g_rdata
+      assign pmp_addr_rdata[i] = '0;
+      assign pmp_cfg_rdata[i]  = '0;
+    end
+    for (genvar i = 0; i < PMPNumRegions; i++) begin : g_outputs
+      assign csr_pmp_cfg_o[i]  = pmp_cfg_t'('0);
+      assign csr_pmp_addr_o[i] = '0;
     end
   end
 

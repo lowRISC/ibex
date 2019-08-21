@@ -26,6 +26,7 @@ module ibex_if_stage #(
     input  logic                  instr_rvalid_i,
     input  logic [31:0]           instr_rdata_i,
     input  logic                  instr_err_i,
+    input  logic                  instr_pmp_err_i,
 
     // output of ID stage
     output logic                  instr_valid_id_o,         // instr in IF-ID is valid
@@ -150,6 +151,7 @@ module ibex_if_stage #(
       .instr_rvalid_i    ( instr_rvalid_i              ),
       .instr_rdata_i     ( instr_rdata_i               ),
       .instr_err_i       ( instr_err_i                 ),
+      .instr_pmp_err_i   ( instr_pmp_err_i             ),
 
       // Prefetch Buffer Status
       .busy_o            ( prefetch_busy               )
