@@ -15,6 +15,10 @@ class core_ibex_base_test extends uvm_test;
   bit                                             enable_debug_seq;
   irq_seq                                         irq_seq_h;
   int unsigned                                    timeout_in_cycles = 2000000;
+  // If no signature_addr handshake functionality is desired between the
+  // testbench and the generated code, the test will wait for the specified
+  // number of cycles before starting stimulus sequences (irq and debug)
+  int unsigned                                    stimulus_delay = 800;
   uvm_tlm_analysis_fifo #(ibex_mem_intf_seq_item) addr_ph_port;
 
   `uvm_component_utils(core_ibex_base_test)
