@@ -41,10 +41,8 @@ SIGNATURE_ADDR      := 8ffffffc
 PASS_VAL            := 0x1
 # Value written to SIGNATURE_ADDR that indicates test failure
 FAIL_VAL            := 0x0
-# Value written to SIGNATURE_ADDR to indicate that debug stimulus can safely be sent
-DEBUG_START_REQ     := 2
-# Value written to SIGNATURE_ADDR to indicate that interrupt stimulus can safely be sent
-IRQ_START_REQ       := 3
+# Value written to SIGNATURE_ADDR to indicate that stimulus can safely be sent from testbench
+CORE_START_REQ     := 2
 
 SHELL=/bin/bash
 
@@ -87,8 +85,7 @@ CSR_OPTS=--csr_yaml=${CSR_FILE} \
        +define+RISCV_DV_EXT_FILE_LIST=${DV_DIR}/riscv_dv_extension/flist \
        +incdir+${DV_DIR}/riscv_dv_extension/ " \
      --sim_opts="+uvm_set_type_override=riscv_asm_program_gen,ibex_asm_program_gen \
-                 +signature_addr=${SIGNATURE_ADDR} +debug_start_req=${DEBUG_START_REQ} \
-								 +irq_start_req=${IRQ_START_REQ}";
+                 +signature_addr=${SIGNATURE_ADDR}";
 
 # Compile the generated assmebly programs to ELF/BIN
 gcc_compile:
@@ -133,7 +130,7 @@ rtl_sim:
      --en_cov ${COV} \
      --en_wave ${WAVES} \
      --sim_opts="+signature_addr=0x${SIGNATURE_ADDR} +pass_val=${PASS_VAL} +fail_val=${FAIL_VAL} \
-                 +debug_start_req=0x${DEBUG_START_REQ} +irq_start_req=0x${IRQ_START_REQ}" \
+                 +core_start_req=0x${CORE_START_REQ}" \
      ${SIM_OPTS}
 
 # Compare the regression result between ISS and RTL sim
