@@ -32,6 +32,7 @@ module ibex_prefetch_buffer (
     output logic [31:0] instr_addr_o,
     input  logic [31:0] instr_rdata_i,
     input  logic        instr_err_i,
+    input  logic        instr_pmp_err_i,
     input  logic        instr_rvalid_i,
 
     // Prefetch Buffer Status
@@ -47,6 +48,8 @@ module ibex_prefetch_buffer (
   logic [31:0] instr_addr_q, fetch_addr;
   logic [31:0] instr_addr, instr_addr_w_aligned;
   logic        addr_valid;
+  logic        pmp_err_q;
+  logic        instr_or_pmp_err;
 
   logic        fifo_valid;
   logic        fifo_ready;
@@ -62,6 +65,10 @@ module ibex_prefetch_buffer (
   // Fetch fifo - consumes addresses and data //
   //////////////////////////////////////////////
 
+  // Instruction fetch errors are valid on the data phase of a request
+  // PMP errors are generated in the address phase, and registered into a fake data phase
+  assign instr_or_pmp_err = instr_err_i | pmp_err_q;
+
   ibex_fetch_fifo fifo_i (
       .clk_i                 ( clk_i             ),
       .rst_ni                ( rst_ni            ),
@@ -70,7 +77,7 @@ module ibex_prefetch_buffer (
 
       .in_addr_i             ( instr_addr_q      ),
       .in_rdata_i            ( instr_rdata_i     ),
-      .in_err_i              ( instr_err_i       ),
+      .in_err_i              ( instr_or_pmp_err  ),
       .in_valid_i            ( fifo_valid        ),
       .in_ready_o            ( fifo_ready        ),
 
@@ -134,7 +141,10 @@ module ibex_prefetch_buffer (
         end
 
         //~> granted request or not
-        pf_fsm_ns = instr_gnt_i ? WAIT_RVALID : WAIT_GNT;
+        // If the instruction generated a PMP error, we may or may not
+        // get granted (the external valid is suppressed by the error)
+        // but we proceed to WAIT_RVALID to push the error to the fifo
+        pf_fsm_ns = (instr_gnt_i || pmp_err_q) ? WAIT_RVALID : WAIT_GNT;
       end // case: WAIT_GNT
 
       // we wait for rvalid, after that we are ready to serve a new request
@@ -148,7 +158,8 @@ module ibex_prefetch_buffer (
         if (req_i && (fifo_ready || branch_i)) begin
           // prepare for next request
 
-          if (instr_rvalid_i) begin
+          // Fake the rvalid for PMP errors to push the error to the fifo
+          if (instr_rvalid_i || pmp_err_q) begin
             instr_req_o = 1'b1;
             fifo_valid  = 1'b1;
             addr_valid  = 1'b1;
@@ -166,7 +177,8 @@ module ibex_prefetch_buffer (
         end else begin
           // just wait for rvalid and go back to IDLE, no new request
 
-          if (instr_rvalid_i) begin
+          // Fake the rvalid for PMP errors to push the error to the fifo
+          if (instr_rvalid_i || pmp_err_q) begin
             fifo_valid = 1'b1;
             pf_fsm_ns  = IDLE;
           end
@@ -207,11 +219,13 @@ module ibex_prefetch_buffer (
     if (!rst_ni) begin
       pf_fsm_cs      <= IDLE;
       instr_addr_q   <= '0;
+      pmp_err_q      <= '0;
     end else begin
       pf_fsm_cs      <= pf_fsm_ns;
 
       if (addr_valid) begin
         instr_addr_q <= instr_addr;
+        pmp_err_q    <= instr_pmp_err_i;
       end
     end
   end

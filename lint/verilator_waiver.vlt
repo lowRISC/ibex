@@ -24,7 +24,7 @@ lint_off -msg UNUSED -file "*/rtl/ibex_if_stage.sv" -lines 40
 
 // Bits of signal are not used: fetch_addr_n[0]
 // cleaner to write all bits even if not all are used
-lint_off -msg UNUSED -file "*/rtl/ibex_if_stage.sv" -lines 79
+lint_off -msg UNUSED -file "*/rtl/ibex_if_stage.sv" -lines 80
 
 // Bits of signal are not used: shift_right_result_ext[32]
 // cleaner to write all bits even if not all are used
@@ -46,6 +46,26 @@ lint_off -msg UNUSED -file "*/rtl/ibex_multdiv_fast.sv" -lines 68
 // testability signal
 lint_off -msg UNUSED -file "*/rtl/ibex_register_file_ff.sv" -lines 21
 
+// Signal is not used: clk_i
+// leaving clk and reset connected in-case we want to add assertions
+lint_off -msg UNUSED -file "*/rtl/ibex_pmp.sv" -lines 15
+
+// Signal is not used: rst_ni
+// leaving clk and reset connected in-case we want to add assertions
+lint_off -msg UNUSED -file "*/rtl/ibex_pmp.sv" -lines 16
+
+// Signal is not used: csr_pmp_addr
+// Signal not connected when PMP is not configured
+lint_off -msg UNUSED -file "*/rtl/ibex_core.sv" -lines 188
+
+// Signal is not used: csr_pmp_cfg
+// Signal not connected when PMP is not configured
+lint_off -msg UNUSED -file "*/rtl/ibex_core.sv" -lines 189
+
+// Signal is not used: priv_mode
+// Signal not connected when PMP is not configured
+lint_off -msg UNUSED -file "*/rtl/ibex_core.sv" -lines 201
+
 // Signal unoptimizable: Feedback to clock or circular logic:
 // ibex_core.id_stage_i.controller_i.ctrl_fsm_cs
 // Issue lowrisc/ibex#211
@@ -54,4 +74,4 @@ lint_off -msg UNOPTFLAT -file "*/rtl/ibex_controller.sv" -lines 97
 // Signal unoptimizable: Feedback to clock or circular logic:
 // ibex_core.cs_registers_i.mie_q
 // Issue lowrisc/ibex#212
-lint_off -msg UNOPTFLAT -file "*/rtl/ibex_cs_registers.sv" -lines 141
+lint_off -msg UNOPTFLAT -file "*/rtl/ibex_cs_registers.sv" -lines 149
