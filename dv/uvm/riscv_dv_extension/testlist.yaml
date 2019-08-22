@@ -105,7 +105,7 @@
 - test: riscv_debug_basic_test
   description: >
     Randomly assert debug_req_i, random instruction sequence in debug_rom section
-  iterations: 10
+  iterations: 5
   gen_test: riscv_instr_base_test
   gen_opts: >
     +require_signature_addr=1
@@ -116,7 +116,7 @@
     +no_csr_instr=1
     +no_fence=1
     +num_of_sub_program=0
-  rtl_test: core_ibex_debug_test
+  rtl_test: core_ibex_debug_intr_test
   sim_opts: >
     +require_signature_addr=1
     +enable_debug_seq=1
@@ -134,7 +134,8 @@
     +instr_cnt=6000
     +no_csr_instr=1
     +no_fence=1
-  rtl_test: core_ibex_debug_test
+  rtl_test: core_ibex_debug_intr_test
+  iterations: 5
   sim_opts: >
     +frequent_debug=1
     +require_signature_addr=1
@@ -146,7 +147,7 @@
   description: >
     Randomly assert debug_req_i, insert branch instructions and subprograms into debug_rom to make core
     jump around within the debug_rom
-  iterations: 10
+  iterations: 5
   gen_test: riscv_rand_instr_test
   gen_opts: >
     +require_signature_addr=1
@@ -157,7 +158,7 @@
     +no_fence=1
     +num_of_sub_program=5
     +num_debug_sub_program=5
-  rtl_test: core_ibex_debug_test
+  rtl_test: core_ibex_debug_intr_test
   sim_opts: >
     +require_signature_addr=1
     +enable_debug_seq=1
@@ -165,51 +166,14 @@
     compare_final_value_only: 1
     verbose: 1
 
-# TODO(udij) - this test is later in testlist - ignore for now
-- test: riscv_debug_ebreak_mode_test
-  description: >
-    Ebreak instruction test with debug mode enabled.
-  iterations: 0
-  gen_test: riscv_rand_instr_test
-  gen_opts: >
-    +require_signature_addr=1
-    +instr_cnt=6000
-    +no_ebreak=0
-  rtl_test: core_ibex_base_test
-  sim_opts: >
-    +require_signature_addr=1
-    +enable_debug_seq=1
-  compare_opts:
-    compare_final_value_only: 1
-
-- test: riscv_fast_interrupt_test
-  description: >
-    WFI(wait for interrupt) instruction test. If WFI is supported, processor
-    should halt execution upon decoding WFI instruction and resume execution
-    by interrupt. Otherwise WFI should be executed as NOP instruction.
-    Interrupt handling routine is skipped to allow instruction strace comparison
-    with ISS which is not interrupted during execution.
-  iterations: 2
-  gen_test: riscv_rand_instr_test
-  gen_opts: >
-    +require_signature_addr=1
-    +skip_trap_handling=1
-    +no_wfi=0
-  rtl_test: core_ibex_base_test
-  sim_opts: >
-    +require_signature_addr=1
-    +enable_irq_seq=1
-  compare_opts:
-    compare_final_value_only: 1
-
-- test: riscv_full_interrupt_test
+- test: riscv_interrupt_test
   description: >
     Random instruction test with complete interrupt handling
   iterations: 0
   gen_test: riscv_rand_instr_test
   gen_opts: >
     +require_signature_addr=1
-  rtl_test: core_ibex_base_test
+  rtl_test: core_ibex_debug_intr_test
   sim_opts: >
     +require_signature_addr=1
     +enable_irq_seq=1
