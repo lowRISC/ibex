@@ -33,6 +33,9 @@ class riscv_instr_gen_config extends uvm_object;
   // Instruction count of the debug rom
   rand int               debug_program_instr_cnt;
 
+  // Instruction count of debug sub-programs
+  rand int               debug_sub_program_instr_cnt[];
+
   // Pattern of data section: RAND_DATA, ALL_ZERO, INCR_VAL
   rand data_pattern_t    data_page_pattern;
 
@@ -55,6 +58,7 @@ class riscv_instr_gen_config extends uvm_object;
   rand bit               mstatus_mxr;
   rand bit               mstatus_sum;
   rand bit               mstatus_tvm;
+  rand mtvec_mode_t      mtvec_mode;
 
   // Enable sfence.vma instruction
   rand bit               enable_sfence;
@@ -64,12 +68,6 @@ class riscv_instr_gen_config extends uvm_object;
   // processor.
   bit                    check_misa_init_val = 1'b0;
   bit                    check_xstatus = 1'b1;
-
-  // Enable a full or empty debug_rom section.
-  // Full debug_rom will contain random instruction streams.
-  // Empty debug_rom will contain just dret instruction and will return immediately.
-  // Will be empty by default.
-  bit                    empty_debug_section = 1'b0;
 
   //-----------------------------------------------------------------------------
   // Command line options or control knobs
@@ -111,6 +109,18 @@ class riscv_instr_gen_config extends uvm_object;
   bit                    force_m_delegation = 0;
   bit                    force_s_delegation = 0;
   bit                    support_supervisor_mode;
+  // "Memory mapped" address that when written to will indicate some event to
+  // the testbench - testbench will take action based on the value written
+  int                    signature_addr = 32'hdead_beef;
+  bit                    require_signature_addr = 1'b0;
+  bit                    gen_debug_section = 1'b0;
+  // Enable a full or empty debug_rom section.
+  // Full debug_rom will contain random instruction streams.
+  // Empty debug_rom will contain just dret instruction and will return immediately.
+  // Will be empty by default.
+  bit                    empty_debug_section = 1'b0;
+  // Number of sub programs in the debug rom
+  int                    num_debug_sub_program = 0;
   // Stack space allocated to each program, need to be enough to store necessary context
   // Example: RA, SP, T0, loop registers
   int                    min_stack_len_per_program = 10 * (XLEN/8);
@@ -132,13 +142,19 @@ class riscv_instr_gen_config extends uvm_object;
 
   constraint default_c {
     sub_program_instr_cnt.size() == num_of_sub_program;
+    debug_sub_program_instr_cnt.size() == num_debug_sub_program;
     if (riscv_instr_pkg::support_debug_mode) {
-      main_program_instr_cnt + sub_program_instr_cnt.sum() + debug_program_instr_cnt == instr_cnt;
+      main_program_instr_cnt + sub_program_instr_cnt.sum()
+                             + debug_program_instr_cnt
+                             + debug_sub_program_instr_cnt.sum() == instr_cnt;
+      debug_program_instr_cnt inside {[100 : 300]};
+      foreach(debug_sub_program_instr_cnt[i]) {
+        debug_sub_program_instr_cnt[i] inside {[100 : 300]};
+      }
     } else {
       main_program_instr_cnt + sub_program_instr_cnt.sum() == instr_cnt;
     }
     main_program_instr_cnt inside {[1 : instr_cnt]};
-    debug_program_instr_cnt inside {[1 : instr_cnt]};
     foreach(sub_program_instr_cnt[i]) {
       sub_program_instr_cnt[i] inside {[1 : instr_cnt]};
     }
@@ -167,6 +183,10 @@ class riscv_instr_gen_config extends uvm_object;
     } else {
       init_privileged_mode == riscv_instr_pkg::supported_privileged_mode[0];
     }
+  }
+
+  constraint mtvec_c {
+    mtvec_mode inside {supported_interrupt_mode};
   }
 
   constraint mstatus_c {
@@ -269,7 +289,12 @@ class riscv_instr_gen_config extends uvm_object;
     get_bool_arg_value("+enable_hint_instruction=", enable_hint_instruction);
     get_bool_arg_value("+force_m_delegation=", force_m_delegation);
     get_bool_arg_value("+force_s_delegation=", force_s_delegation);
-    get_bool_arg_value("+empty_debug_section=", empty_debug_section);
+    get_bool_arg_value("+require_signature_addr=", require_signature_addr);
+    if (this.require_signature_addr) begin
+      get_hex_arg_value("+signature_addr=", signature_addr);
+    end
+    get_bool_arg_value("+gen_debug_section=", gen_debug_section);
+    get_int_arg_value("+num_debug_sub_program=", num_debug_sub_program);
     if(inst.get_arg_value("+boot_mode=", boot_mode_opts)) begin
       `uvm_info(get_full_name(), $sformatf(
                 "Got boot mode option - %0s", boot_mode_opts), UVM_LOW)
@@ -379,15 +404,25 @@ class riscv_instr_gen_config extends uvm_object;
   // Get an integer argument from comand line
   function void get_int_arg_value(string cmdline_str, ref int val);
     string s;
-    if(inst.get_arg_value(cmdline_str, s))
+    if(inst.get_arg_value(cmdline_str, s)) begin
       val = s.atoi();
+    end
   endfunction
 
   // Get a bool argument from comand line
   function void get_bool_arg_value(string cmdline_str, ref bit val);
     string s;
-    if(inst.get_arg_value(cmdline_str, s))
+    if(inst.get_arg_value(cmdline_str, s)) begin
       val = s.atobin();
+    end
+  endfunction
+
+  // Get a hex argument from command line
+  function void get_hex_arg_value(string cmdline_str, ref int val);
+    string s;
+    if(inst.get_arg_value(cmdline_str, s)) begin
+      val = s.atohex();
+    end
   endfunction
 
 endclass

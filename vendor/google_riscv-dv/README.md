@@ -186,24 +186,27 @@ riscv_instr_group_t supported_isa[] = {RV32I, RV32M, RV64I, RV64M};
 
 ### Runtime options of the generator
 
-| Option                      | Description                                     | Default |
-|:---------------------------:|:-----------------------------------------------:|:-------:|
-| num_of_tests                | Number of assembly tests to be generated        | 1       |
-| num_of_sub_program          | Number of sub-program in one test               | 5       |
-| instr_cnt                   | Instruction count per test                      | 200     |
-| enable_page_table_exception | Enable page table exception                     | 0       |
-| no_ebreak                   | Disable ebreak instruction                      | 1       |
-| no_wfi                      | Disable WFI instruction                         | 1       |
-| no_branch_jump              | Disable branch/jump instruction                 | 0       |
-| no_load_store               | Disable load/store instruction                  | 0       |
-| no_csr_instr                | Disable CSR instruction                         | 0       |
-| no_fence                    | Disable fence instruction                       | 0       |
-| enable_illegal_instruction  | Enable illegal instructions                     | 0       |
-| enable_hint_instruction     | Enable HINT instruction                         | 0       |
-| boot_mode                   | m:Machine mode, s:Supervisor mode, u:User mode  | m       |
-| no_directed_instr           | Disable directed instruction stream             | 0       |
-| enable_interrupt            | Enable MStatus.MIE, used in interrupt test      | 0       |
-| empty_debug_section         | Disables randomized debug_rom section           | 0       |
+| Option                      | Description                                       | Default |
+|:---------------------------:|:-------------------------------------------------:|:-------:|
+| num_of_tests                | Number of assembly tests to be generated          | 1       |
+| num_of_sub_program          | Number of sub-program in one test                 | 5       |
+| instr_cnt                   | Instruction count per test                        | 200     |
+| enable_page_table_exception | Enable page table exception                       | 0       |
+| no_ebreak                   | Disable ebreak instruction                        | 1       |
+| no_wfi                      | Disable WFI instruction                           | 1       |
+| no_branch_jump              | Disable branch/jump instruction                   | 0       |
+| no_load_store               | Disable load/store instruction                    | 0       |
+| no_csr_instr                | Disable CSR instruction                           | 0       |
+| no_fence                    | Disable fence instruction                         | 0       |
+| enable_illegal_instruction  | Enable illegal instructions                       | 0       |
+| enable_hint_instruction     | Enable HINT instruction                           | 0       |
+| boot_mode                   | m:Machine mode, s:Supervisor mode, u:User mode    | m       |
+| no_directed_instr           | Disable directed instruction stream               | 0       |
+| require_signature_addr      | Set to 1 if test needs to talk to testbench       | 0       |
+| signature_addr              | Write to this addr to send data to testbench      | 0       |
+| enable_interrupt            | Enable MStatus.MIE, used in interrupt test        | 0       |
+| gen_debug_section           | Disables randomized debug_rom section             | 0       |
+| num_debug_sub_program       | Number of debug sub-programs in test              | 0       |
 
 
 ### Setup Privileged CSR description

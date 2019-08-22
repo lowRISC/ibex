@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#      http:#www.apache.org/licenses/LICENSE-2.0
+#      http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -185,10 +185,12 @@
   iterations: 2
   gen_test: riscv_rand_instr_test
   gen_opts: >
+    +require_signature_addr=1
     +instr_cnt=6000
     +no_ebreak=0
   rtl_test: core_base_test
   sim_opts: >
+    +require_signature_addr=1
     +enable_debug_seq=1
   compare_opts: >
     +compare_final_value_only=1
@@ -203,10 +205,12 @@
   iterations: 2
   gen_test: riscv_rand_instr_test
   gen_opts: >
+    +require_signature_addr=1
     +skip_trap_handling=1
     +no_wfi=0
   rtl_test: core_base_test
   sim_opts: >
+    +require_signature_addr=1
     +enable_irq_seq=1
 
 - test: riscv_full_interrupt_test
@@ -214,8 +218,11 @@
     Random instruction test with complete interrupt handling
   iterations: 2
   gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +require_signature_addr=1
   rtl_test: core_base_test
   sim_opts: >
+    +require_signature_addr=1
     +enable_irq_seq=1
   compare_opts: >
     +compare_final_value_only=1
