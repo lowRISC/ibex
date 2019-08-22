@@ -100,8 +100,6 @@ jobs:
     displayName: Get RISC-V Compliance test suite
 
   - bash: |
-      set -x
-
       # Build simulation model of Ibex
       fusesoc --cores-root=. run --target=sim --setup --build lowrisc:ibex:ibex_riscv_compliance --RV32M=1 --RV32E=0
       if [ $? != 0 ]; then
@@ -115,11 +113,23 @@ jobs:
       export RISCV_PREFIX=riscv32-unknown-elf-
       export RISCV_TARGET=ibex
       export RISCV_DEVICE=rv32imc
-      export RISCV_ISA=rv32imc
-      cd build/riscv-compliance && make clean && make
-      if [ $? != 0 ]; then
-        echo -n "##vso[task.logissue type=error]"
-        echo "The RISC-V compliance test suite failed."
-        exit 1
-      fi
+      fail=0
+      for isa in rv32i rv32im rv32imc; do
+        make -C build/riscv-compliance RISCV_ISA=$isa 2>&1 | tee run.log 
+        if [ ${PIPESTATUS[0]} != 0 ]; then
+          echo -n "##vso[task.logissue type=error]"
+          echo "The RISC-V compliance test suite failed for $isa"
+
+          # There's no easy way to get the test results in machine-readable
+          # form to properly exclude known-failing tests. Going with an
+          # approximate solution for now.
+          if [ $isa == rv32i ] && grep -q 'FAIL: 5/55' run.log; then
+            echo -n "##vso[task.logissue type=error]"
+            echo "Expected failure for rv32i, see lowrisc/ibex#100 more more information."
+          else
+            fail=1
+          fi
+        fi
+      done
+      exit $fail
     displayName: "Run RISC-V Compliance test for Ibex RV32IMC"
