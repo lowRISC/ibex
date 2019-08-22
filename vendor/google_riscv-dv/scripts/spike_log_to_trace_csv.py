@@ -65,6 +65,9 @@ def process_spike_sim_log(spike_log, csv):
         rv_instr_trace.instr_str = spike_instr
         rv_instr_trace.addr = m.group("addr")
         rv_instr_trace.binary = m.group("bin")
+        if spike_instr == "wfi":
+          trace_csv.write_trace_entry(rv_instr_trace)
+          continue
         nextline = f.readline()
         if nextline != "":
           m = RD_RE.search(nextline)
