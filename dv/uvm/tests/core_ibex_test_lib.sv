@@ -35,11 +35,11 @@ class core_ibex_csr_test extends core_ibex_base_test;
 endclass
 
 // Debug test class
-class core_ibex_debug_test extends core_ibex_base_test;
+class core_ibex_debug_intr_test extends core_ibex_base_test;
 
   bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] core_start_data;
 
-  `uvm_component_utils(core_ibex_debug_test)
+  `uvm_component_utils(core_ibex_debug_intr_test)
   `uvm_component_new
 
   virtual task run_phase(uvm_phase phase);
