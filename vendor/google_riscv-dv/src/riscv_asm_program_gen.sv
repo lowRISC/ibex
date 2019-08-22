@@ -645,9 +645,6 @@ class riscv_asm_program_gen extends uvm_object;
     bit is_interrupt = 'b1;
     string tvec_name;
     string instr[$];
-    // The trap handler will occupy one 4KB page, it will be allocated one entry in the page table
-    // with a specific privileged mode.
-    instr_stream.push_back(".align 12");
     if (cfg.mtvec_mode == VECTORED) begin
       gen_interrupt_vector_table(mode, status, cause, scratch, instr);
     end else begin
@@ -667,6 +664,9 @@ class riscv_asm_program_gen extends uvm_object;
                $sformatf("srli a1, a1, %0d", XLEN-1),
                $sformatf("bne a1, x0, %0smode_intr_handler", mode)};
     end
+    // The trap handler will occupy one 4KB page, it will be allocated one entry in the page table
+    // with a specific privileged mode.
+    instr_stream.push_back(".align 12");
     tvec_name = tvec.name();
     gen_section($sformatf("%0s_handler", tvec_name.tolower()), instr);
     // Exception handler
