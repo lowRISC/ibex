@@ -147,7 +147,7 @@ def process_regression_list(testlist, test, iterations, matched_list):
   yaml_data = read_yaml(testlist)
   for entry in yaml_data:
     if (entry['test'] == test) or (test == "all"):
-      if iterations > 0:
+      if (iterations > 0 and  entry['iterations'] > 0):
         entry['iterations'] = iterations
       if entry['iterations'] > 0:
         logging.info("Found matched tests: %s, iterations:%0d" %

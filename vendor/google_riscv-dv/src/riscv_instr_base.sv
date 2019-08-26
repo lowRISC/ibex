@@ -30,6 +30,8 @@ class riscv_instr_base extends uvm_object;
   rand imm_t                    imm_type;
   rand bit [4:0]                imm_len;
   rand bit                      is_pseudo_instr;
+  rand bit                      aq;
+  rand bit                      rl;
   bit                           is_branch_target;
   bit                           has_label = 1'b1;
   bit                           atomic = 0;
@@ -104,6 +106,10 @@ class riscv_instr_base extends uvm_object;
     if(imm_type inside {NZIMM, NZUIMM}) {
       imm != 0;
     }
+  }
+
+  constraint aq_rl_c {
+    aq && rl == 0;
   }
 
   // Avoid generating HINT or illegal instruction by default as it's not supported by the compiler
@@ -366,6 +372,32 @@ class riscv_instr_base extends uvm_object;
   `add_instr(C_FLDSP, CI_FORMAT, LOAD, RV32DC, UIMM)
   `add_instr(C_FSDSP, CSS_FORMAT, STORE, RV32DC, UIMM)
 
+  // RV32A
+  `add_instr(LR_W,      R_FORMAT, LOAD, RV32A)
+  `add_instr(SC_W,      R_FORMAT, STORE, RV32A)
+  `add_instr(AMOSWAP_W, R_FORMAT, AMO, RV32A)
+  `add_instr(AMOADD_W,  R_FORMAT, AMO, RV32A)
+  `add_instr(AMOAND_W,  R_FORMAT, AMO, RV32A)
+  `add_instr(AMOOR_W,   R_FORMAT, AMO, RV32A)
+  `add_instr(AMOXOR_W,  R_FORMAT, AMO, RV32A)
+  `add_instr(AMOMIN_W,  R_FORMAT, AMO, RV32A)
+  `add_instr(AMOMAX_W,  R_FORMAT, AMO, RV32A)
+  `add_instr(AMOMINU_W, R_FORMAT, AMO, RV32A)
+  `add_instr(AMOMAXU_W, R_FORMAT, AMO, RV32A)
+
+  // RV64A
+  `add_instr(LR_D,      R_FORMAT, LOAD, RV32A)
+  `add_instr(SC_D,      R_FORMAT, STORE, RV32A)
+  `add_instr(AMOSWAP_D, R_FORMAT, AMO, RV32A)
+  `add_instr(AMOADD_D,  R_FORMAT, AMO, RV32A)
+  `add_instr(AMOAND_D,  R_FORMAT, AMO, RV32A)
+  `add_instr(AMOOR_D,   R_FORMAT, AMO, RV32A)
+  `add_instr(AMOXOR_D,  R_FORMAT, AMO, RV32A)
+  `add_instr(AMOMIN_D,  R_FORMAT, AMO, RV32A)
+  `add_instr(AMOMAX_D,  R_FORMAT, AMO, RV32A)
+  `add_instr(AMOMINU_D, R_FORMAT, AMO, RV32A)
+  `add_instr(AMOMAXU_D, R_FORMAT, AMO, RV32A)
+
   // Supervisor Instructions
   `add_instr(SFENCE_VMA, R_FORMAT,SYNCH,RV32I)
 
@@ -408,7 +440,7 @@ class riscv_instr_base extends uvm_object;
   virtual function string convert2asm(string prefix = "");
     string asm_str;
     asm_str = format_string(get_instr_name(), MAX_INSTR_STR_LEN);
-    if(category != SYSTEM) begin
+    if((category != SYSTEM) && !(group inside {RV32A, RV64A})) begin
       case(format)
         J_FORMAT, U_FORMAT : // instr rd,imm
           asm_str = $sformatf("%0s%0s, %0s", asm_str, rd.name(), get_imm());
@@ -431,12 +463,13 @@ class riscv_instr_base extends uvm_object;
           else
             asm_str = $sformatf("%0s%0s, %0s, %0s", asm_str, rs1.name(), rs2.name(), get_imm());
         R_FORMAT: // instr rd,rs1,rs2
-          if(category == CSR)
+          if(category == CSR) begin
             asm_str = $sformatf("%0s%0s, 0x%0x, %0s", asm_str, rd.name(), csr, rs1.name());
-          else if(instr_name == SFENCE_VMA)
+          end else if(instr_name == SFENCE_VMA) begin
             asm_str = "sfence.vma x0, x0"; // TODO: Support all possible sfence
-          else
+          end else begin
             asm_str = $sformatf("%0s%0s, %0s, %0s", asm_str, rd.name(), rs1.name(), rs2.name());
+          end
         CI_FORMAT, CIW_FORMAT:
           if(instr_name == C_NOP)
             asm_str = "c.nop";
@@ -458,6 +491,12 @@ class riscv_instr_base extends uvm_object;
         CJ_FORMAT:
           asm_str = $sformatf("%0s%0s", asm_str, get_imm());
       endcase
+    end else if (group inside {RV32A, RV64A}) begin
+      if (instr_name inside {LR_W, LR_D}) begin
+        asm_str = $sformatf("%0s %0s, (%0s)", asm_str, rd.name(), rs1.name());
+      end else begin
+        asm_str = $sformatf("%0s %0s, %0s, (%0s)", asm_str, rd.name(), rs2.name(), rs1.name());
+      end
     end else begin
       // For EBREAK,C.EBREAK, making sure pc+4 is a valid instruction boundary
       // This is needed to resume execution from epc+4 after ebreak handling
@@ -835,6 +874,14 @@ class riscv_instr_base extends uvm_object;
     get_instr_name = instr_name.name();
     if(get_instr_name.substr(0, 1) == "C_") begin
       get_instr_name = {"c.", get_instr_name.substr(2, get_instr_name.len() - 1)};
+    end else if (group == RV32A) begin
+      get_instr_name = {get_instr_name.substr(0, get_instr_name.len() - 3), ".w"};
+      get_instr_name = aq ? {get_instr_name, ".aq"} :
+                       rl ? {get_instr_name, ".rl"} : get_instr_name;
+    end else if (group == RV64A) begin
+      get_instr_name = {get_instr_name.substr(0, get_instr_name.len() - 3), ".d"};
+      get_instr_name = aq ? {get_instr_name, ".aq"} :
+                       rl ? {get_instr_name, ".rl"} : get_instr_name;
     end
     return get_instr_name;
   endfunction

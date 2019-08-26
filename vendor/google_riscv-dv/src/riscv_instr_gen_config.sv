@@ -113,6 +113,8 @@ class riscv_instr_gen_config extends uvm_object;
   // the testbench - testbench will take action based on the value written
   int                    signature_addr = 32'hdead_beef;
   bit                    require_signature_addr = 1'b0;
+  rand riscv_reg_t       signature_addr_reg;
+  rand riscv_reg_t       signature_data_reg;
   bit                    gen_debug_section = 1'b0;
   // Enable a full or empty debug_rom section.
   // Full debug_rom will contain random instruction streams.
@@ -245,6 +247,9 @@ class riscv_instr_gen_config extends uvm_object;
     foreach(loop_regs[i]) {
       !(loop_regs[i] inside {default_reserved_regs});
     }
+    !(signature_addr_reg inside {default_reserved_regs, loop_regs});
+    !(signature_data_reg inside {default_reserved_regs, loop_regs});
+    signature_addr_reg != signature_data_reg;
   }
 
   constraint legal_loop_regs_c {
