@@ -37,12 +37,6 @@ TIMEOUT             := 1800
 CSR_FILE            := ${DV_DIR}/riscv_dv_extension/csr_description.yaml
 # Pass/fail signature address at the end of test
 SIGNATURE_ADDR      := 8ffffffc
-# Value written to SIGNATURE_ADDR that indicates test success
-PASS_VAL            := 0x1
-# Value written to SIGNATURE_ADDR that indicates test failure
-FAIL_VAL            := 0x0
-# Value written to SIGNATURE_ADDR to indicate that stimulus can safely be sent from testbench
-CORE_START_REQ     := 2
 
 SHELL=/bin/bash
 
@@ -129,8 +123,7 @@ rtl_sim:
      --simulator=${SIMULATOR} \
      --en_cov ${COV} \
      --en_wave ${WAVES} \
-     --sim_opts="+signature_addr=0x${SIGNATURE_ADDR} +pass_val=${PASS_VAL} +fail_val=${FAIL_VAL} \
-                 +core_start_req=0x${CORE_START_REQ}" \
+     --sim_opts="+signature_addr=0x${SIGNATURE_ADDR}" \
      ${SIM_OPTS}
 
 # Compare the regression result between ISS and RTL sim
