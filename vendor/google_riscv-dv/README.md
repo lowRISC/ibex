@@ -3,7 +3,7 @@
 RISCV-DV is a SV/UVM based open-source instruction generator for RISC-V
 processor verification. It currently supports the following features:
 
-- Supported instruction set: RV32IMC, RV64IMC
+- Supported instruction set: RV32IMAC, RV64IMAC
 - Supported privileged mode: machine mode, supervisor mode, user mode
 - Page table randomization and exception
 - Privileged CSR setup randomization
@@ -370,73 +370,6 @@ We have some work in progress which will be part of future releases:
 -   Coverage model.
 -   Debug mode support
 
-### DEPRECATED simulation flow
-
-Note: The flow mentioned below will soon be deprecated. Please switch to new
-flow.
-
-A simple script "run" is provided for you to run a single test or a regression.
-Here is the command to run a single test:
-
-```
-./run -test riscv_instr_base_test
-```
-You can specify the simulator by "-tool" option
-
-```
-./run -test riscv_instr_base_test -tool irun
-./run -test riscv_instr_base_test -tool vcs
-./run -test riscv_instr_base_test -tool questa
-```
-The complete test list can be found in testlist. To run a full regression, you
-can just specify the test name to "all".
-
-```
-./run -test all
-```
-The script will run each test in the test list sequentially with the iteration
-count specified in the "testlist". All the generated RISC-V assembly will be
-listed when the regression is done. If it is successful, you should see the
-following output:
-
-```
-===========================================================
-                Generated RISC-V assembly tests
- ----------------------------------------------------------
-./out_2018-11-20/asm_tests/riscv_arithmetic_basic_test.0.S
-./out_2018-11-20/asm_tests/riscv_machine_mode_rand_test.0.S
-./out_2018-11-20/asm_tests/riscv_mmu_stress_test.0.S
-./out_2018-11-20/asm_tests/riscv_mmu_stress_test.1.S
-./out_2018-11-20/asm_tests/riscv_no_fence_test.0.S
-./out_2018-11-20/asm_tests/riscv_page_table_exception_test.0.S
-./out_2018-11-20/asm_tests/riscv_page_table_exception_test.1.S
-./out_2018-11-20/asm_tests/riscv_privileged_mode_rand_test.0.S
-./out_2018-11-20/asm_tests/riscv_privileged_mode_rand_test.1.S
-./out_2018-11-20/asm_tests/riscv_rand_instr_test.0.S
-./out_2018-11-20/asm_tests/riscv_rand_instr_test.1.S
-./out_2018-11-20/asm_tests/riscv_rand_jump_test.0.S
-./out_2018-11-20/asm_tests/riscv_sfence_exception_test.0.S
-```
-
-Here's a few more examples of the run command:
-
-```
-// Run a single test 10 times
-./run -test riscv_page_table_exception_test -n 10
-
-// Run a test with a specified seed
-./run -test riscv_page_table_exception_test -seed 123
-
-// Run a test with addtional runtime options, separated with comma
-./run -test riscv_rand_instr_test -runo +instr_cnt=10000,+no_fence=1
-
-// Two steps compile and simulation (Avoid multiple compilation)
-./run -co # compile only
-# Generate multiple tests
-./run -so -test riscv_rand_instr_test -n 10
-./run -so -test riscv_mmu_stress_test -n 20
-....
-```
 ## Disclaimer
 
 This is not an officially supported Google product.

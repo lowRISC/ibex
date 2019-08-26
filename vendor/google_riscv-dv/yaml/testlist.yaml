@@ -185,7 +185,6 @@
   iterations: 2
   gen_test: riscv_rand_instr_test
   gen_opts: >
-    +require_signature_addr=1
     +instr_cnt=6000
     +no_ebreak=0
   rtl_test: core_base_test
@@ -195,34 +194,14 @@
   compare_opts: >
     +compare_final_value_only=1
 
-- test: riscv_fast_interrupt_test
-  description: >
-    WFI(wait for interrupt) instruction test. If WFI is supported, processor
-    should halt execution upon decoding WFI instruction and resume execution
-    by interrupt. Otherwise WFI should be executed as NOP instruction.
-    Interrupt handling routine is skipped to allow instruction strace comparison
-    with ISS which is not interrupted during execution.
-  iterations: 2
-  gen_test: riscv_rand_instr_test
-  gen_opts: >
-    +require_signature_addr=1
-    +skip_trap_handling=1
-    +no_wfi=0
-  rtl_test: core_base_test
-  sim_opts: >
-    +require_signature_addr=1
-    +enable_irq_seq=1
-
 - test: riscv_full_interrupt_test
   description: >
     Random instruction test with complete interrupt handling
   iterations: 2
   gen_test: riscv_rand_instr_test
   gen_opts: >
-    +require_signature_addr=1
   rtl_test: core_base_test
   sim_opts: >
-    +require_signature_addr=1
     +enable_irq_seq=1
   compare_opts: >
     +compare_final_value_only=1
@@ -252,3 +231,15 @@
     +directed_instr_3=riscv_multi_page_load_store_instr_stream,20
     +enable_unaligned_load_store=1
   rtl_test: core_ibex_base_test
+
+- test: riscv_amo_test
+  description: >
+    RISC-V atomic instruction extension test
+  iterations: 2
+  gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +instr_cnt=5000
+    +num_of_sub_program=5
+    +directed_instr_0=riscv_lr_sc_instr_stream,10
+    +directed_instr_1=riscv_amo_instr_stream,10
+  rtl_test: core_base_test

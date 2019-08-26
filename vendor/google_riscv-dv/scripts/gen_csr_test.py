@@ -43,8 +43,9 @@ except ImportError as e:
 Defines the test's success/failure values, one of which will be written to
 the chosen signature address to indicate the test's result.
 """
-PASS_VAL = 1
-FAIL_VAL = 0
+TEST_RESULT = 1
+TEST_PASS   = 0
+TEST_FAIL   = 1
 
 def get_csr_map(csr_file, xlen):
   """
@@ -227,7 +228,9 @@ def gen_csr_test_fail(test_file, end_addr):
     end_addr: address that should be written to at end of test
   """
   test_file.write(f"csr_fail:\n")
-  test_file.write(f"\tli x1, {FAIL_VAL}\n")
+  test_file.write(f"\tli x1, {TEST_FAIL}\n")
+  test_file.write(f"\tslli x1, x1, 8\n")
+  test_file.write(f"\taddi x1, x1, {TEST_RESULT}\n")
   test_file.write(f"\tli x2, {end_addr}\n")
   test_file.write(f"\tsw x1, 0(x2)\n")
   test_file.write(f"\tj csr_fail\n")
@@ -244,7 +247,9 @@ def gen_csr_test_pass(test_file, end_addr):
     end_addr: address that should be written to at end of test
   """
   test_file.write(f"csr_pass:\n")
-  test_file.write(f"\tli x1, {PASS_VAL}\n")
+  test_file.write(f"\tli x1, {TEST_PASS}\n")
+  test_file.write(f"\tslli x1, x1, 8\n")
+  test_file.write(f"\taddi x1, x1, {TEST_RESULT}\n")
   test_file.write(f"\tli x2, {end_addr}\n")
   test_file.write(f"\tsw x1, 0(x2)\n")
   test_file.write(f"\tj csr_pass\n")

@@ -17,14 +17,13 @@
 package riscv_instr_pkg;
 
   import uvm_pkg::*;
+  import riscv_signature_pkg::*;
 
   `include "uvm_macros.svh"
   `include "dv_defines.svh"
   `include "riscv_defines.svh"
 
   `define include_file(f) `include `"f`"
-
-  parameter CORE_INITIALIZATION_DONE = 2;
 
   typedef enum bit [3:0] {
     BARE = 4'b0000,
@@ -237,6 +236,30 @@ package riscv_instr_pkg;
     C_FSD,
     C_FLDSP,
     C_FSDSP,
+    // RV32A
+    LR_W,
+    SC_W,
+    AMOSWAP_W,
+    AMOADD_W,
+    AMOAND_W,
+    AMOOR_W,
+    AMOXOR_W,
+    AMOMIN_W,
+    AMOMAX_W,
+    AMOMINU_W,
+    AMOMAXU_W,
+    // RV64A
+    LR_D,
+    SC_D,
+    AMOSWAP_D,
+    AMOADD_D,
+    AMOAND_D,
+    AMOOR_D,
+    AMOXOR_D,
+    AMOMIN_D,
+    AMOMAX_D,
+    AMOMINU_D,
+    AMOMAXU_D,
     // Supervisor instruction
     MRET,
     URET,
@@ -317,7 +340,8 @@ package riscv_instr_pkg;
     CSR,
     CHANGELEVEL,
     TRAP,
-    INTERRUPT
+    INTERRUPT,
+    AMO
   } riscv_instr_cateogry_t;
 
   typedef bit [11:0] riscv_csr_t;
@@ -776,6 +800,7 @@ package riscv_instr_pkg;
     end
   endfunction
 
+
   `include "riscv_instr_gen_config.sv"
   `include "riscv_illegal_instr.sv"
   `include "riscv_reg.sv"
@@ -793,6 +818,7 @@ package riscv_instr_pkg;
   `include "riscv_loop_instr.sv"
   `include "riscv_directed_instr_lib.sv"
   `include "riscv_load_store_instr_lib.sv"
+  `include "riscv_amo_instr_lib.sv"
   `include "riscv_instr_sequence.sv"
   `include "riscv_asm_program_gen.sv"
 

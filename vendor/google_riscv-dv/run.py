@@ -334,7 +334,7 @@ def setup_parser():
   parser.add_argument("--lsf_cmd", type=str, default="",
                       help="LSF command. Run in local sequentially if lsf \
                             command is not specified")
-  parser.add_argument("--isa", type=str, default="rv64imc",
+  parser.add_argument("--isa", type=str, default="rv64gc",
                       help="RISC-V ISA subset")
   parser.add_argument("-m", "--mabi", type=str, default="lp64",
                       help="mabi used for compilation, lp32 or lp64", dest="mabi")
