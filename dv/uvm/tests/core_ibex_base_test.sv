@@ -19,7 +19,7 @@ class core_ibex_base_test extends uvm_test;
   // testbench and the generated code, the test will wait for the specified
   // number of cycles before starting stimulus sequences (irq and debug)
   int unsigned                                    stimulus_delay = 800;
-  uvm_tlm_analysis_fifo #(ibex_mem_intf_seq_item) addr_ph_port;
+  uvm_tlm_analysis_fifo #(ibex_mem_intf_seq_item) item_collected_port;
 
   `uvm_component_utils(core_ibex_base_test)
 
@@ -28,7 +28,7 @@ class core_ibex_base_test extends uvm_test;
     super.new(name, parent);
     ibex_report_server = new();
     uvm_report_server::set_server(ibex_report_server);
-    addr_ph_port = new("addr_ph_port_test", this);
+    item_collected_port = new("item_collected_port_test", this);
   endfunction
 
   virtual function void build_phase(uvm_phase phase);
@@ -55,7 +55,7 @@ class core_ibex_base_test extends uvm_test;
 
   virtual function void connect_phase(uvm_phase phase);
     super.connect_phase(phase);
-    env.data_if_slave_agent.monitor.addr_ph_port.connect(this.addr_ph_port.analysis_export);
+    env.data_if_slave_agent.monitor.item_collected_port.connect(this.item_collected_port.analysis_export);
   endfunction
 
   virtual task run_phase(uvm_phase phase);
@@ -116,13 +116,46 @@ class core_ibex_base_test extends uvm_test;
   endtask
 
   virtual task wait_for_mem_txn(input bit[ibex_mem_intf_agent_pkg::ADDR_WIDTH-1:0] ref_addr,
-                                input bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] ref_val,
-                                output bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] data);
+                                input signature_type_t ref_type,
+                                output bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] data[$]);
     ibex_mem_intf_seq_item mem_txn;
+    bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] signature_data;
     forever begin
-      addr_ph_port.get(mem_txn);
-      if (mem_txn.addr == ref_addr && mem_txn.data == ref_val && mem_txn.read_write == WRITE) begin
-        data = mem_txn.data;
+      // The first write to this address is guaranteed to contain the
+      // signature type in bits [7:0]
+      item_collected_port.get(mem_txn);
+      if (mem_txn.addr == ref_addr && mem_txn.data[7:0] === ref_type && mem_txn.read_write == WRITE) begin
+        signature_data = mem_txn.data;
+        case (ref_type)
+          CORE_STATUS: begin
+            data.push_back(signature_data >> 8);
+          end
+          TEST_RESULT: begin
+            data.push_back(signature_data >> 8);
+          end
+          // The next 32 writes to the address are guaranteed to be a dump of
+          // all GPRs
+          WRITE_GPR: begin
+            for(int i = 0; i < 32; i++) begin
+              do begin
+                item_collected_port.get(mem_txn);
+              end while(!(mem_txn.addr == ref_addr && mem_txn.read_write == WRITE));
+              data.push_back(mem_txn.data);
+            end
+          end
+          // The next write to this address is guaranteed to be the data held
+          // in the CSR
+          WRITE_CSR: begin
+            data.push_back(signature_data >> 8);
+            do begin
+              item_collected_port.get(mem_txn);
+            end while (!(mem_txn.addr == ref_addr && mem_txn.read_write == WRITE));
+            data.push_back(mem_txn.data);
+          end
+          default: begin
+            `uvm_fatal(`gfn, $sformatf("The data 0x%0h written to the signature address is formatted incorrectly.", signature_data))
+          end
+        endcase
         return;
       end
     end

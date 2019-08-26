@@ -140,7 +140,7 @@
     +frequent_debug=1
     +require_signature_addr=1
   compare_opts:
-    compare_final_value_only : 1
+    compare_final_value_only: 1
     verbose: 1
 
 - test: riscv_debug_branch_jump_test
