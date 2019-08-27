@@ -80,10 +80,11 @@
     +directed_instr_5=riscv_multi_page_load_store_instr_stream,4
   rtl_test: core_base_test
 
+# TODO: Temporarily disable this as compiler seems to generate compressed instruction with rv64im
 - test: riscv_non_compressed_instr_test
   description: >
     Random instruction test without compressed instructions
-  iterations: 2
+  iterations: 0
   gen_test: riscv_rand_instr_test
   gen_opts: >
     +march=RV32I,RV32M,RV64I,RV64M
