@@ -18,7 +18,6 @@ class riscv_instr_base extends uvm_object;
 
   rand riscv_instr_group_t      group;
   rand riscv_instr_format_t     format;
-  rand bit [3:0]                latency;
   rand riscv_instr_cateogry_t   category;
   rand riscv_instr_name_t       instr_name;
   rand bit [11:0]               csr;
@@ -40,27 +39,20 @@ class riscv_instr_base extends uvm_object;
   bit                           is_compressed;
   bit                           is_illegal_instr;
   bit                           is_hint_instr;
-
+  bit                           has_imm;
+  bit                           has_rs1;
+  bit                           has_rs2;
+  bit                           has_rd;
+  bit [31:0]                    imm_mask = '1;
   string                        imm_str;
   string                        comment;
   string                        label;
   bit                           is_local_numeric_label;
   int                           idx = -1;
 
-  `uvm_object_utils_begin(riscv_instr_base)
-    `uvm_field_enum(riscv_instr_group_t, group, UVM_DEFAULT)
-    `uvm_field_enum(riscv_instr_format_t, format, UVM_DEFAULT)
-    `uvm_field_enum(riscv_instr_cateogry_t, category, UVM_DEFAULT)
-    `uvm_field_enum(riscv_instr_name_t, instr_name, UVM_DEFAULT)
-    `uvm_field_enum(riscv_reg_t, rs2, UVM_DEFAULT)
-    `uvm_field_enum(riscv_reg_t, rs1, UVM_DEFAULT)
-    `uvm_field_enum(riscv_reg_t, rd, UVM_DEFAULT)
-    `uvm_field_int(imm, UVM_DEFAULT)
-    `uvm_field_enum(imm_t, imm_type, UVM_DEFAULT)
-  `uvm_object_utils_end
+  `uvm_object_utils(riscv_instr_base)
 
   constraint default_c {
-    soft latency == 1;
     soft is_pseudo_instr == 0;
     instr_name != INVALID_INSTR;
   }
@@ -182,6 +174,20 @@ class riscv_instr_base extends uvm_object;
     }
   }
 
+  constraint rvc_csr_c {
+    //  Registers specified by the three-bit rs1’, rs2’, and rd’ fields of the CIW, CL, CS,
+    //  and CB formats
+    if(format inside {CIW_FORMAT, CL_FORMAT, CS_FORMAT, CB_FORMAT}) {
+      rs1 inside {[S0:A5]};
+      rs2 inside {[S0:A5]};
+      rd  inside {[S0:A5]};
+    }
+    // C_ADDI16SP is only valid when rd == SP
+    if(instr_name == C_ADDI16SP) {
+      rd == SP;
+    }
+  }
+
   ////////////  RV32I instructions  //////////////
   // LOAD instructions
   `add_instr(LB,     I_FORMAT, LOAD, RV32I)
@@ -238,7 +244,7 @@ class riscv_instr_base extends uvm_object;
   `add_instr(URET,    I_FORMAT, SYSTEM, RV32I)
   `add_instr(SRET,    I_FORMAT, SYSTEM, RV32I)
   `add_instr(MRET,    I_FORMAT, SYSTEM, RV32I)
-  `add_instr(WFI,     I_FORMAT, SYSTEM, RV32I)
+  `add_instr(WFI,     I_FORMAT, INTERRUPT, RV32I)
   // CSR instructions
   `add_instr(CSRRW,  R_FORMAT, CSR, RV32I, UIMM)
   `add_instr(CSRRS,  R_FORMAT, CSR, RV32I, UIMM)
@@ -402,25 +408,93 @@ class riscv_instr_base extends uvm_object;
   `add_instr(SFENCE_VMA, R_FORMAT,SYNCH,RV32I)
 
   function void post_randomize();
+    if (group inside {RV32C, RV64C, RV128C, RV32DC, RV32FC}) begin
+      is_compressed = 1'b1;
+    end
+    if (!(format inside {R_FORMAT, CR_FORMAT})) begin
+      imm_mask = '1;
+      imm_mask = imm_mask << imm_len;
+      has_imm = 1'b1;
+      mask_imm();
+      if (imm_str == "") begin
+        update_imm_str();
+      end
+    end
+    if (format inside {R_FORMAT, S_FORMAT, B_FORMAT, CSS_FORMAT, CS_FORMAT}) begin
+      has_rs2 = 1'b1;
+    end
+    if (!(format inside {J_FORMAT, U_FORMAT, CJ_FORMAT, CSS_FORMAT})) begin
+      has_rs1 = 1'b1;
+    end
+    if (!(format inside {CJ_FORMAT, CB_FORMAT, CS_FORMAT, CSS_FORMAT, B_FORMAT, S_FORMAT})) begin
+      has_rd = 1'b1;
+    end
+  endfunction
+
+  function void mask_imm();
     // Process the immediate value and sign extension
-    bit [31:0] imm_mask = '1;
-    imm_mask = imm_mask << imm_len;
-    if(imm_type inside {UIMM, NZUIMM}) begin
+    if (imm_type inside {UIMM, NZUIMM}) begin
       imm = imm & ~imm_mask;
     end else begin
-      if(imm[imm_len-1])
+      if (imm[imm_len-1]) begin
         imm = imm | imm_mask;
-      else
+      end else begin
         imm = imm & ~imm_mask;
+      end
     end
     // Give a random value if imm is zero after masking unexpectedly
     if((imm_type inside {NZIMM, NZUIMM}) && (imm == '0)) begin
       imm = $urandom_range(2 ** (imm_len-1) - 1, 1);
     end
-    if (group inside {RV32C, RV64C, RV128C, RV32DC, RV32FC})
-      is_compressed = 1'b1;
-    if(imm_str == "")
-      imm_str = $sformatf("%0d", $signed(imm));
+  endfunction
+
+  function void gen_rand_imm();
+    if (!randomize(imm)) begin
+      `uvm_fatal(`gfn, "Cannot randomize imm")
+    end
+    mask_imm();
+    update_imm_str();
+  endfunction
+
+  function void update_imm_str();
+    imm_str = $sformatf("%0d", $signed(imm));
+  endfunction
+
+  function void set_imm(int imm);
+    this.imm = imm;
+    mask_imm();
+    update_imm_str();
+  endfunction
+
+  function riscv_reg_t gen_rand_gpr(riscv_reg_t included_reg[] = {},
+                                    riscv_reg_t excluded_reg[] = {});
+    riscv_reg_t gpr;
+    `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(gpr,
+                                       if (is_compressed) {
+                                         gpr inside {[S0:A5]};
+                                       }
+                                       if (excluded_reg.size() != 0) {
+                                         !(gpr inside {excluded_reg});
+                                       }
+                                       if (included_reg.size() != 0) {
+                                         gpr inside {included_reg};
+                                       })
+    return gpr;
+  endfunction
+
+  function void gen_rand_csr(bit illegal_csr_instr = 0,
+                             privileged_mode_t privileged_mode = MACHINE_MODE);
+    if (illegal_csr_instr) begin
+      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(csr, !(csr inside {implemented_csr});)
+    end else begin
+      // Use scratch register to avoid the side effect of modifying other privileged mode CSR.
+      if (privileged_mode == MACHINE_MODE)
+        csr = MSCRATCH;
+      else if (privileged_mode == SUPERVISOR_MODE)
+        csr = SSCRATCH;
+      else
+        csr = USCRATCH;
+    end
   endfunction
 
   function new(string name = "");
@@ -901,6 +975,30 @@ class riscv_instr_base extends uvm_object;
     if(has_label && !is_branch_target && is_local_numeric_label) begin
       has_label = 1'b0;
     end
+  endfunction
+
+  // Copy the rand fields of the base instruction
+  virtual function void copy_base_instr(riscv_instr_base obj);
+    this.group           = obj.group;
+    this.format          = obj.format;
+    this.category        = obj.category;
+    this.instr_name      = obj.instr_name;
+    this.rs2             = obj.rs2;
+    this.rs1             = obj.rs1;
+    this.rd              = obj.rd;
+    this.imm             = obj.imm;
+    this.imm_type        = obj.imm_type;
+    this.imm_len         = obj.imm_len;
+    this.imm_mask        = obj.imm_mask;
+    this.imm_str         = obj.imm_str;
+    this.is_pseudo_instr = obj.is_pseudo_instr;
+    this.aq              = obj.aq;
+    this.rl              = obj.rl;
+    this.is_compressed   = obj.is_compressed;
+    this.has_imm         = obj.has_imm;
+    this.has_rs1         = obj.has_rs1;
+    this.has_rs2         = obj.has_rs2;
+    this.has_rd          = obj.has_rd;
   endfunction
 
 endclass

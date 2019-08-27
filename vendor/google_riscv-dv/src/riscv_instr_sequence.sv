@@ -48,7 +48,6 @@ class riscv_instr_sequence extends uvm_sequence;
   riscv_instr_stream       directed_instr[];     // List of all directed instruction stream
   riscv_illegal_instr      illegal_instr;        // Illegal instruction generator
   int                      illegal_instr_pct;    // Percentage of illegal instruction
-  bit                      enable_hint_instr;    // Enable HINT instruction
   int                      hint_instr_pct;       // Percentage of HINT instruction
 
   `uvm_object_utils(riscv_instr_sequence)
@@ -71,8 +70,7 @@ class riscv_instr_sequence extends uvm_sequence;
   // considerably as the instruction stream becomes longer. The downside is we cannot specify
   // constraints between instructions. The way to solve it is to have a dedicated directed
   // instruction stream for such scenarios, like hazard sequence.
-  virtual function void gen_instr(bit is_main_program, bit enable_hint_instr = 1'b0,
-                                  bit no_branch = 1'b0);
+  virtual function void gen_instr(bit is_main_program, bit no_branch = 1'b0);
     this.is_main_program = is_main_program;
     instr_stream.cfg = cfg;
     instr_stream.initialize_instr_list(instr_cnt);
@@ -80,8 +78,7 @@ class riscv_instr_sequence extends uvm_sequence;
                                instr_stream.instr_list.size()), UVM_LOW)
     // Do not generate load/store instruction here
     // The load/store instruction will be inserted as directed instruction stream
-    instr_stream.gen_instr(.no_branch(no_branch), .no_load_store(1'b1),
-                           .enable_hint_instr(enable_hint_instr));
+    instr_stream.gen_instr(.no_branch(no_branch), .no_load_store(1'b1));
     if(!is_main_program) begin
       gen_stack_enter_instr();
       gen_stack_exit_instr();
@@ -238,9 +235,9 @@ class riscv_instr_sequence extends uvm_sequence;
         jump_instr.jump.rd == RA;
       },
       "Cannot randomize jump_instr")
-    `uvm_info(get_full_name(), $sformatf("%0s -> %0s",
-              jump_instr.jump.instr_name.name(), label_name), UVM_HIGH)
     instr_stream.insert_instr_stream(jump_instr.instr_list);
+    `uvm_info(get_full_name(), $sformatf("%0s -> %0s...done",
+              jump_instr.jump.instr_name.name(), label_name), UVM_LOW)
   endfunction
 
   // Convert the instruction stream to the string format.

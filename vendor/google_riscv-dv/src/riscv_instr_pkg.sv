@@ -800,7 +800,7 @@ package riscv_instr_pkg;
     end
   endfunction
 
-
+  `include "riscv_instr_base.sv"
   `include "riscv_instr_gen_config.sv"
   `include "riscv_illegal_instr.sv"
   `include "riscv_reg.sv"
@@ -811,7 +811,6 @@ package riscv_instr_pkg;
   `include "riscv_page_table_list.sv"
   `include "riscv_privileged_common_seq.sv"
   `include "riscv_callstack_gen.sv"
-  `include "riscv_instr_base.sv"
   `include "riscv_data_page_gen.sv"
   `include "riscv_rand_instr.sv"
   `include "riscv_instr_stream.sv"

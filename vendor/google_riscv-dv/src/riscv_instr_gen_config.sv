@@ -70,6 +70,14 @@ class riscv_instr_gen_config extends uvm_object;
   bit                    check_xstatus = 1'b1;
 
   //-----------------------------------------------------------------------------
+  // Instruction list based on the config, generate by build_instruction_template
+  //-----------------------------------------------------------------------------
+  riscv_instr_base       instr_template[riscv_instr_name_t];
+  riscv_instr_name_t     basic_instr[$];
+  riscv_instr_name_t     instr_group[riscv_instr_cateogry_t][$];
+  riscv_instr_name_t     instr_category[riscv_instr_cateogry_t][$];
+
+  //-----------------------------------------------------------------------------
   // Command line options or control knobs
   //-----------------------------------------------------------------------------
   // Main options for RISC-V assembly program generation
@@ -156,9 +164,9 @@ class riscv_instr_gen_config extends uvm_object;
     } else {
       main_program_instr_cnt + sub_program_instr_cnt.sum() == instr_cnt;
     }
-    main_program_instr_cnt inside {[1 : instr_cnt]};
+    main_program_instr_cnt inside {[10 : instr_cnt]};
     foreach(sub_program_instr_cnt[i]) {
-      sub_program_instr_cnt[i] inside {[1 : instr_cnt]};
+      sub_program_instr_cnt[i] inside {[10 : instr_cnt]};
     }
     // Disable sfence if the program is not boot to supervisor mode
     // If sfence exception is allowed, we can enable sfence instruction in any priviledged mode.
@@ -247,8 +255,8 @@ class riscv_instr_gen_config extends uvm_object;
     foreach(loop_regs[i]) {
       !(loop_regs[i] inside {default_reserved_regs});
     }
-    !(signature_addr_reg inside {default_reserved_regs, loop_regs});
-    !(signature_data_reg inside {default_reserved_regs, loop_regs});
+    !(signature_addr_reg inside {ZERO, default_reserved_regs, loop_regs});
+    !(signature_data_reg inside {ZERO, default_reserved_regs, loop_regs});
     signature_addr_reg != signature_data_reg;
   }
 
@@ -428,6 +436,61 @@ class riscv_instr_gen_config extends uvm_object;
     if(inst.get_arg_value(cmdline_str, s)) begin
       val = s.atohex();
     end
+  endfunction
+
+  // Build instruction template
+  virtual function void build_instruction_template();
+    riscv_instr_name_t instr_name;
+    riscv_instr_name_t excluded_instr[$];
+    get_excluded_instr(excluded_instr);
+    instr_name = instr_name.first;
+    do begin
+      riscv_instr_base instr;
+      if (!(instr_name inside {unsupported_instr, excluded_instr})) begin
+        instr = riscv_instr_base::type_id::create("instr");
+        `DV_CHECK_RANDOMIZE_WITH_FATAL(instr, instr_name == local::instr_name;)
+        if (instr.group inside {supported_isa}) begin
+          `uvm_info(`gfn, $sformatf("Adding [%s] %s to the list",
+                          instr.group.name(), instr.instr_name.name()), UVM_HIGH)
+          if (instr.category inside {SHIFT, ARITHMETIC, LOGICAL, COMPARE}) begin
+            basic_instr.push_back(instr_name);
+          end
+          instr_group[instr.group].push_back(instr_name);
+          instr_category[instr.category].push_back(instr_name);
+          instr_template[instr_name] = instr;
+        end
+      end
+      instr_name = instr_name.next;
+    end
+    while (instr_name != instr_name.first);
+    if (no_ebreak == 0) begin
+      basic_instr = {basic_instr, EBREAK};
+    end
+    if (no_fence == 0) begin
+      basic_instr = {basic_instr, instr_category[SYNCH]};
+    end
+    // TODO: Support CSR instruction in other mode
+    if ((no_csr_instr == 0) && (init_privileged_mode == MACHINE_MODE)) begin
+      basic_instr = {basic_instr, instr_category[CSR]};
+    end
+    if (no_wfi == 0) begin
+      basic_instr = {basic_instr, WFI};
+    end
+  endfunction
+
+  virtual function void get_excluded_instr(ref riscv_instr_name_t excluded[$]);
+    excluded = {excluded, INVALID_INSTR};
+    // Below instrutions will modify stack pointer, not allowed in normal instruction stream.
+    // It can be used in stack operation instruction stream.
+    excluded = {excluded, C_SWSP, C_SDSP, C_ADDI16SP};
+    if (!enable_sfence) begin
+      excluded = {excluded, SFENCE_VMA};
+    end
+    if (no_fence) begin
+      excluded = {excluded, FENCE, FENCEI, SFENCE_VMA};
+    end
+    // TODO: Support C_ADDI4SPN
+    excluded = {excluded, C_ADDI4SPN};
   endfunction
 
 endclass

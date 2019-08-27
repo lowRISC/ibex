@@ -68,20 +68,6 @@ class riscv_rand_instr extends riscv_instr_base;
     instr_name != C_ADDI4SPN;
   }
 
-  constraint rvc_csr_c {
-    //  Registers specified by the three-bit rs1’, rs2’, and rd’ fields of the CIW, CL, CS,
-    //  and CB formats
-    if(format inside {CIW_FORMAT, CL_FORMAT, CS_FORMAT, CB_FORMAT}) {
-      rs1 inside {[S0:A5]};
-      rs2 inside {[S0:A5]};
-      rd  inside {[S0:A5]};
-    }
-    // C_ADDI16SP is only valid when rd == SP
-    if(instr_name == C_ADDI16SP) {
-      rd == SP;
-    }
-  }
-
   constraint constraint_cfg_knob_c {
     if(cfg.no_ebreak) {
       instr_name != EBREAK;

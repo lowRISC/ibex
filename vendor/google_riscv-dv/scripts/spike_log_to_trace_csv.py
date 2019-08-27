@@ -42,6 +42,7 @@ def process_spike_sim_log(spike_log, csv):
   INSTR_RE = re.compile(r"(?P<instr>[a-z\.]+?)(\s+?)(?P<operand>.*)")
   GPR_RE   = re.compile(r"^[a-z][0-9a-z]$")
   CSR_RE   = re.compile(r"csr")
+  ILLE_RE  = re.compile(r"trap_illegal_instruction")
 
   # Remove all the init spike boot instructions
   cmd = ("sed -i '/core.*0x0000000000001010/,$!d' %s" % spike_log)
@@ -70,6 +71,8 @@ def process_spike_sim_log(spike_log, csv):
           continue
         nextline = f.readline()
         if nextline != "":
+          if ILLE_RE.search(nextline):
+            continue
           m = RD_RE.search(nextline)
           if m:
             # Extract RD information
