@@ -168,8 +168,8 @@ def compare(test_list, iss, output_dir, verbose):
       uvm_log = ("%s/rtl_sim/%s.%d/sim.log" % (output_dir, test['test'], i))
       rtl_log = ("%s/rtl_sim/%s.%d/trace_core_00_0.log" % (output_dir, test['test'], i))
       rtl_csv = ("%s/rtl_sim/%s.%d/trace_core_00_0.csv" % (output_dir, test['test'], i))
+      test_name = "%s.%d" % (test['test'], i)
       if 'no_post_compare' in test and test['no_post_compare'] == 1:
-        test_name = "%s.%d" % (test['test'], i)
         check_ibex_uvm_log(uvm_log, "ibex", test_name, report)
       else:
         process_ibex_sim_log(rtl_log, rtl_csv)
@@ -182,18 +182,22 @@ def compare(test_list, iss, output_dir, verbose):
         else:
           print("Unsupported ISS" % iss)
           sys.exit(1)
-        if 'compare_opts' in test:
-          compare_opts = test.get('compare_opts')
-          in_order_mode = compare_opts.get('in_order_mode', 1)
-          coalescing_limit = compare_opts.get('coalescing_limit', 0)
-          verbose = compare_opts.get('verbose', 0)
-          mismatch = compare_opts.get('mismatch_print_limit', 5)
-          compare_final = compare_opts.get('compare_final_value_only', 0)
-          compare_trace_csv(rtl_csv, iss_csv, "ibex", iss, report,
-                            in_order_mode, coalescing_limit, verbose,
-                            mismatch, compare_final)
+        uvm_result = check_ibex_uvm_log(uvm_log, "ibex", test_name, report, False)
+        if not uvm_result:
+          check_ibex_uvm_log(uvm_log, "ibex", test_name, report)
         else:
-          compare_trace_csv(rtl_csv, iss_csv, "ibex", iss, report)
+          if 'compare_opts' in test:
+            compare_opts = test.get('compare_opts')
+            in_order_mode = compare_opts.get('in_order_mode', 1)
+            coalescing_limit = compare_opts.get('coalescing_limit', 0)
+            verbose = compare_opts.get('verbose', 0)
+            mismatch = compare_opts.get('mismatch_print_limit', 5)
+            compare_final = compare_opts.get('compare_final_value_only', 0)
+            compare_trace_csv(rtl_csv, iss_csv, "ibex", iss, report,
+                              in_order_mode, coalescing_limit, verbose,
+                              mismatch, compare_final)
+          else:
+            compare_trace_csv(rtl_csv, iss_csv, "ibex", iss, report)
   passed_cnt = run_cmd("grep PASSED %s | wc -l" % report).strip()
   failed_cnt = run_cmd("grep FAILED %s | wc -l" % report).strip()
   summary = ("%s PASSED, %s FAILED" % (passed_cnt, failed_cnt))
