@@ -122,7 +122,7 @@ module ibex_register_file #(
     mem[0] = '0;
 
     for (int k = 1; k < NUM_WORDS; k++) begin : latch_wdata_word_iter
-      if (mem_clocks[k]) begin
+      if (!mem_clocks[k]) begin
         mem[k] = wdata_a_q;
       end
     end
