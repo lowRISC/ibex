@@ -104,6 +104,8 @@ module ibex_controller (
   logic stall;
   logic halt_if;
   logic halt_id;
+  logic illegal_dret;
+  logic illegal_insn;
   logic exc_req;
   logic exc_req_lsu;
   logic special_req;
@@ -119,7 +121,7 @@ module ibex_controller (
   // glitches
   always_ff @(negedge clk_i) begin
     // print warning in case of decoding errors
-    if ((ctrl_fsm_cs == DECODE) && instr_valid_i && illegal_insn_i) begin
+    if ((ctrl_fsm_cs == DECODE) && instr_valid_i && illegal_insn) begin
       $display("%t: Illegal instruction (core %0d) at PC 0x%h: 0x%h", $time, ibex_core.core_id_i,
                ibex_id_stage.pc_id_i, ibex_id_stage.instr_rdata_i);
     end
@@ -134,8 +136,13 @@ module ibex_controller (
   assign load_err_d  = load_err_i;
   assign store_err_d = store_err_i;
 
+  // "Executing DRET outside of Debug Mode causes an illegal instruction exception."
+  // [Debug Spec v0.13.2, p.41]
+  assign illegal_dret = dret_insn_i & ~debug_mode_q;
+  assign illegal_insn = illegal_insn_i | illegal_dret;
+
   // exception requests
-  assign exc_req     = ecall_insn_i | ebrk_insn_i | illegal_insn_i | instr_fetch_err_i;
+  assign exc_req     = ecall_insn_i | ebrk_insn_i | illegal_insn | instr_fetch_err_i;
 
   // LSU exception requests
   assign exc_req_lsu = store_err_i | load_err_i;
@@ -442,7 +449,7 @@ module ibex_controller (
             exc_cause_o = EXC_CAUSE_INSTR_ACCESS_FAULT;
             csr_mtval_o = pc_id_i;
 
-          end else if (illegal_insn_i) begin
+          end else if (illegal_insn) begin
             exc_cause_o = EXC_CAUSE_ILLEGAL_INSN;
             csr_mtval_o = instr_is_compressed_i ? {16'b0, instr_compressed_i} : instr_i;
 
