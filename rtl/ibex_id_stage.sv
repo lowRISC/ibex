@@ -100,6 +100,7 @@ module ibex_id_stage #(
     input  logic                  lsu_store_err_i,
 
     // Debug Signal
+    output logic                  debug_mode_o,
     output ibex_pkg::dbg_cause_e  debug_cause_o,
     output logic                  debug_csr_save_o,
     input  logic                  debug_req_i,
@@ -439,6 +440,7 @@ module ibex_id_stage #(
       .csr_mtval_o                    ( csr_mtval_o            ),
 
       // Debug Signal
+      .debug_mode_o                   ( debug_mode_o           ),
       .debug_cause_o                  ( debug_cause_o          ),
       .debug_csr_save_o               ( debug_csr_save_o       ),
       .debug_req_i                    ( debug_req_i            ),

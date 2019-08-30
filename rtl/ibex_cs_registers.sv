@@ -57,6 +57,7 @@ module ibex_cs_registers #(
     output logic [33:0]          csr_pmp_addr_o [PMPNumRegions],
 
     // debug
+    input  logic                 debug_mode_i,
     input  ibex_pkg::dbg_cause_e debug_cause_i,
     input  logic                 debug_csr_save_i,
     output logic [31:0]          csr_depc_o,
@@ -292,10 +293,22 @@ module ibex_cs_registers #(
       CSR_PMPADDR14: csr_rdata_int = pmp_addr_rdata[14];
       CSR_PMPADDR15: csr_rdata_int = pmp_addr_rdata[15];
 
-      CSR_DCSR:      csr_rdata_int = dcsr_q;
-      CSR_DPC:       csr_rdata_int = depc_q;
-      CSR_DSCRATCH0: csr_rdata_int = dscratch0_q;
-      CSR_DSCRATCH1: csr_rdata_int = dscratch1_q;
+      CSR_DCSR: begin
+        csr_rdata_int = dcsr_q;
+        illegal_csr = ~debug_mode_i;
+      end
+      CSR_DPC: begin
+        csr_rdata_int = depc_q;
+        illegal_csr = ~debug_mode_i;
+      end
+      CSR_DSCRATCH0: begin
+        csr_rdata_int = dscratch0_q;
+        illegal_csr = ~debug_mode_i;
+      end
+      CSR_DSCRATCH1: begin
+        csr_rdata_int = dscratch1_q;
+        illegal_csr = ~debug_mode_i;
+      end
 
       // machine counter/timers
       CSR_MCOUNTINHIBIT: csr_rdata_int = mcountinhibit;
