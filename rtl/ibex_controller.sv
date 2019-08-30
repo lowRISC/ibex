@@ -65,6 +65,7 @@ module ibex_controller (
     input  logic                  debug_req_i,
     output ibex_pkg::dbg_cause_e  debug_cause_o,
     output logic                  debug_csr_save_o,
+    output logic                  debug_mode_o,
     input  logic                  debug_single_step_i,
     input  logic                  debug_ebreakm_i,
 
@@ -536,6 +537,9 @@ module ibex_controller (
       end
     endcase
   end
+
+  // signal to CSR when in debug mode
+  assign debug_mode_o = debug_mode_q;
 
   ///////////////////
   // Stall control //

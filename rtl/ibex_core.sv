@@ -201,6 +201,7 @@ module ibex_core #(
   priv_lvl_e   priv_mode;
 
   // debug mode and dcsr configuration
+  logic        debug_mode;
   dbg_cause_e  debug_cause;
   logic        debug_csr_save;
   logic        debug_single_step;
@@ -436,6 +437,7 @@ module ibex_core #(
       .irq_nm_i                     ( irq_nm_i               ),
 
       // Debug Signal
+      .debug_mode_o                 ( debug_mode             ),
       .debug_cause_o                ( debug_cause            ),
       .debug_csr_save_o             ( debug_csr_save         ),
       .debug_req_i                  ( debug_req_i            ),
@@ -600,6 +602,7 @@ module ibex_core #(
 
       // debug
       .csr_depc_o              ( csr_depc               ),
+      .debug_mode_i            ( debug_mode             ),
       .debug_cause_i           ( debug_cause            ),
       .debug_csr_save_i        ( debug_csr_save         ),
       .debug_single_step_o     ( debug_single_step      ),
