@@ -3,7 +3,7 @@ CAPI=2:
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 name: "lowrisc:ibex:top_tracing_sim:0.1"
-description: "Ibex with tracing enabled (ModelSim only right now)"
+description: "Ibex with tracing enabled"
 filesets:
   files_tb:
     depend:
@@ -13,13 +13,27 @@ filesets:
       - tb/ibex_tracing_tb.sv
     file_type: systemVerilogSource
 
+  files_verilator_tb:
+    files:
+      - tb/ibex_tracing_tb.cpp
+    file_type: cSource
+
 targets:
   sim:
     default_tool: modelsim
     filesets:
       - files_tb
+      - tool_verilator ? (files_verilator_tb)
     toplevel:
       - ibex_tracing_tb
     tools:
       modelsim:
         vlog_options: [-timescale 1ns/1ns]
+      verilator:
+        mode: cc
+        verilator_options:
+          - "--exe"
+          - "--trace"
+          - "-Wno-UNOPTFLAT"
+          - "-Wno-WIDTH"
+          - "-Wno-CASEX"

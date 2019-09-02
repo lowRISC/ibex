@@ -65,6 +65,8 @@ module ibex_core_tracing #(
     Fatal error: RVFI needs to be defined globally.
   `endif
 
+  parameter int unsigned RegAddrWidth = RV32E ? 4 : 5;
+
   logic        rvfi_valid;
   logic [63:0] rvfi_order;
   logic [31:0] rvfi_insn;
@@ -152,9 +154,9 @@ module ibex_core_tracing #(
     .core_sleep_o
   );
 
-
-`ifndef VERILATOR
-  ibex_tracer u_ibex_tracer (
+  ibex_tracer #(
+    .RegAddrWidth(RegAddrWidth)
+  ) u_ibex_tracer (
       .clk_i            ( clk_i                  ),
       .rst_ni           ( rst_ni                 ),
 
@@ -172,8 +174,5 @@ module ibex_core_tracing #(
       .ex_data_wdata_i  ( rvfi_mem_wdata         ),
       .ex_data_rdata_i  ( rvfi_mem_rdata         )
   );
-`else
-    // ibex_tracer uses language constructs which Verilator doesn't understand.
-`endif
 
 endmodule

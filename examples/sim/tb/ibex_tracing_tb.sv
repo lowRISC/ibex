@@ -5,6 +5,7 @@
 // Sample testbench for Ibex with tracing enabled
 // The `nop` instruction is the only input
 
+`ifndef VERILATOR
 module ibex_tracing_tb;
   logic         clk          = 1'b0;
   logic         rst_n        = 1'b0;
@@ -12,7 +13,20 @@ module ibex_tracing_tb;
   logic [31:0]  data_rdata   = 32'h00000000;
   logic         instr_gnt    = 1'b0;
   logic         instr_rvalid = 1'b0;
+  logic         sim_done     = 1'b0;
+`else
+module ibex_tracing_tb (
+  input logic         clk,
+  input logic         rst_n,
+  input logic [31:0]  instr_rdata,
+  input logic [31:0]  data_rdata,
+  input logic         instr_gnt,
+  input logic         instr_rvalid,
+  input logic         sim_done
+);
+`endif
 
+`ifndef VERILATOR
   initial begin: clock_gen
     forever begin
       #5ns clk = 1'b0;
@@ -69,6 +83,13 @@ module ibex_tracing_tb;
     #30ns  instr_rdata  = 32'h00000013;
     #10ns  instr_rdata  = 32'h0000000f;
   end
+`else
+  always @(posedge clk) begin
+    if (sim_done) begin
+      $finish;
+    end
+  end
+`endif
 
   ibex_core_tracing ibex_i (
     .clk_i                  (clk),
