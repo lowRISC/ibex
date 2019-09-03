@@ -27,9 +27,7 @@ module ibex_core #(
 
     input  logic        test_en_i,     // enable all clock gates for testing
 
-    // Core ID, Cluster ID and boot address are considered more or less static
-    input  logic [ 3:0] core_id_i,
-    input  logic [ 5:0] cluster_id_i,
+    input  logic [31:0] hart_id_i,
     input  logic [31:0] boot_addr_i,
 
     // Instruction memory interface
@@ -566,9 +564,8 @@ module ibex_core #(
       .clk_i                   ( clk                    ),
       .rst_ni                  ( rst_ni                 ),
 
-      // Core and Cluster ID from outside
-      .core_id_i               ( core_id_i              ),
-      .cluster_id_i            ( cluster_id_i           ),
+      // Hart ID from outside
+      .hart_id_i               ( hart_id_i              ),
       .priv_mode_o             ( priv_mode              ),
 
       // mtvec

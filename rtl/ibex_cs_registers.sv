@@ -22,9 +22,8 @@ module ibex_cs_registers #(
     input  logic                 clk_i,
     input  logic                 rst_ni,
 
-    // Core and Cluster ID
-    input  logic  [3:0]          core_id_i,
-    input  logic  [5:0]          cluster_id_i,
+    // Hart ID
+    input  logic [31:0]          hart_id_i,
     output ibex_pkg::priv_lvl_e  priv_mode_o,
 
     // mtvec
@@ -222,7 +221,7 @@ module ibex_cs_registers #(
 
     unique case (csr_addr_i)
       // mhartid: unique hardware thread id
-      CSR_MHARTID: csr_rdata_int = {21'b0, cluster_id_i[5:0], 1'b0, core_id_i[3:0]};
+      CSR_MHARTID: csr_rdata_int = hart_id_i;
 
       // mstatus: always M-mode, contains IE bit
       CSR_MSTATUS: begin

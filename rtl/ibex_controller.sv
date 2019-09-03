@@ -123,7 +123,7 @@ module ibex_controller (
   always_ff @(negedge clk_i) begin
     // print warning in case of decoding errors
     if ((ctrl_fsm_cs == DECODE) && instr_valid_i && illegal_insn) begin
-      $display("%t: Illegal instruction (core %0d) at PC 0x%h: 0x%h", $time, ibex_core.core_id_i,
+      $display("%t: Illegal instruction (hart %0x) at PC 0x%h: 0x%h", $time, ibex_core.hart_id_i,
                ibex_id_stage.pc_id_i, ibex_id_stage.instr_rdata_i);
     end
   end

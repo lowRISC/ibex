@@ -20,9 +20,7 @@ module ibex_core_tracing #(
 
     input  logic        test_en_i,     // enable all clock gates for testing
 
-    // Core ID, Cluster ID and boot address are considered more or less static
-    input  logic [ 3:0] core_id_i,
-    input  logic [ 5:0] cluster_id_i,
+    input  logic [31:0] hart_id_i,
     input  logic [31:0] boot_addr_i,
 
     // Instruction memory interface
@@ -101,8 +99,7 @@ module ibex_core_tracing #(
 
     .test_en_i,
 
-    .core_id_i,
-    .cluster_id_i,
+    .hart_id_i,
     .boot_addr_i,
 
     .instr_req_o,
@@ -162,8 +159,7 @@ module ibex_core_tracing #(
       .rst_ni           ( rst_ni                 ),
 
       .fetch_enable_i   ( fetch_enable_i         ),
-      .core_id_i        ( core_id_i              ),
-      .cluster_id_i     ( cluster_id_i           ),
+      .hart_id_i        ( hart_id_i              ),
 
       .valid_i          ( rvfi_valid             ),
       .pc_i             ( rvfi_pc_rdata          ),
