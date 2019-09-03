@@ -28,8 +28,7 @@ Instantiation Template
       .test_en_i      (),
 
       // Configuration
-      .core_id_i      (),
-      .cluster_id_i   (),
+      .hart_id_i      (),
       .boot_addr_i    (),
 
       // Instruction memory interface
@@ -90,7 +89,6 @@ Parameters
 | ``DmExceptionAddr``   | int         | 0x1A110808 | Address to jump to when an exception occurs while in debug mode |
 +-----------------------+-------------+------------+-----------------------------------------------------------------+
 
-
 Interfaces
 ----------
 
@@ -103,10 +101,8 @@ Interfaces
 +-------------------------+-------------------------+-----+----------------------------------------+
 | ``test_en_i``           | 1                       | in  | Test input, enables clock              |
 +-------------------------+-------------------------+-----+----------------------------------------+
-| ``core_id_i``           | 4                       | in  | Core ID, usually static, can be read   |
+| ``hart_id_i``           | 32                      | in  | Hart ID, usually static, can be read   |
 |                         |                         |     | from :ref:`csr-mhartid` CSR            |
-+-------------------------+-------------------------+-----+                                        +
-| ``cluster_id_i``        | 6                       | in  |                                        |
 +-------------------------+-------------------------+-----+----------------------------------------+
 | ``boot_addr_i``         | 32                      | in  | First program counter after reset      |
 |                         |                         |     | = ``boot_addr_i`` + 0x80,              |

@@ -110,8 +110,7 @@ module ibex_riscv_compliance (
 
       .test_en_i             ('b0),
 
-      .core_id_i             (4'b0),
-      .cluster_id_i          (6'b0),
+      .hart_id_i             (32'b0),
       // First instruction executed is at 0x0 + 0x80
       .boot_addr_i           (32'h00000000),
 

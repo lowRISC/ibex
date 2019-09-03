@@ -77,8 +77,7 @@ module ibex_tracing_tb;
     .test_en_i              (1'b0),
 
     // Core ID, Cluster ID and boot address are considered more or less static
-    .core_id_i              (4'b0),
-    .cluster_id_i           (6'b0),
+    .hart_id_i              (32'b0),
     .boot_addr_i            (32'b0),
 
     // Instruction memory interface

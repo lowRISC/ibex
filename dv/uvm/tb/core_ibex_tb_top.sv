@@ -23,8 +23,7 @@ module core_ibex_tb_top;
     .clk_i(clk),
     .rst_ni(rst_n),
     .test_en_i(1'b1),
-    .core_id_i('0),
-    .cluster_id_i('0),
+    .hart_id_i(32'b0),
     .boot_addr_i(`BOOT_ADDR), // align with spike boot address
     .debug_req_i(debug_req),
     .irq_software_i(irq_if.irq_software),
