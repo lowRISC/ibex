@@ -53,7 +53,8 @@ module ibex_core_tracing #(
     input  logic        debug_req_i,
 
     // CPU Control Signals
-    input  logic        fetch_enable_i
+    input  logic        fetch_enable_i,
+    output logic        core_sleep_o
 
 );
 
@@ -150,6 +151,7 @@ module ibex_core_tracing #(
     .rvfi_mem_wdata,
 
     .fetch_enable_i
+    .core_sleep_o
   );
 
 

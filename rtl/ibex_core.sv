@@ -87,8 +87,8 @@ module ibex_core #(
 `endif
 
     // CPU Control Signals
-    input  logic        fetch_enable_i
-
+    input  logic        fetch_enable_i,
+    output logic        core_sleep_o
 );
 
   import ibex_pkg::*;
@@ -271,6 +271,8 @@ module ibex_core #(
   end
 
   assign core_busy   = core_ctrl_firstfetch ? 1'b1 : core_busy_q;
+
+  assign core_sleep_o = ~clock_en;
 
   assign clock_en    = core_busy | debug_req_i | irq_pending | irq_nm_i;
 
