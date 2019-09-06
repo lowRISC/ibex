@@ -68,11 +68,12 @@ module core_ibex_tb_top;
     force irq_vif.reset         = ~rst_n;
   end
 
-  assign dut_if.ecall   = dut.u_ibex_core.id_stage_i.ecall_insn_dec;
-  assign dut_if.wfi     = dut.u_ibex_core.id_stage_i.wfi_insn_dec;
-  assign dut_if.ebreak  = dut.u_ibex_core.id_stage_i.ebrk_insn;
-  assign dut_if.dret    = dut.u_ibex_core.id_stage_i.dret_insn_dec;
-  assign dut_if.mret    = dut.u_ibex_core.id_stage_i.mret_insn_dec;
+  assign dut_if.ecall       = dut.u_ibex_core.id_stage_i.ecall_insn_dec;
+  assign dut_if.wfi         = dut.u_ibex_core.id_stage_i.wfi_insn_dec;
+  assign dut_if.ebreak      = dut.u_ibex_core.id_stage_i.ebrk_insn;
+  assign dut_if.dret        = dut.u_ibex_core.id_stage_i.dret_insn_dec;
+  assign dut_if.mret        = dut.u_ibex_core.id_stage_i.mret_insn_dec;
+  assign dut_if.core_sleep  = dut.u_ibex_core.core_sleep_o;
 
 
   initial begin
