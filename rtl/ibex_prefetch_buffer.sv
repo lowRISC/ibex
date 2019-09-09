@@ -44,6 +44,7 @@ module ibex_prefetch_buffer (
 
   logic                valid_req;
   logic                valid_req_d, valid_req_q;
+  logic                hold_addr_d, hold_addr_q;
   logic                gnt_or_pmp_err, rvalid_or_pmp_err;
   logic [NUM_REQS-1:0] rdata_outstanding_n, rdata_outstanding_s, rdata_outstanding_q;
   logic [NUM_REQS-1:0] branch_abort_n, branch_abort_s, branch_abort_q;
@@ -100,8 +101,7 @@ module ibex_prefetch_buffer (
   //////////////
 
   // Make a new request any time there is space in the FIFO, and space in the request queue
-  assign valid_req = req_i & (fifo_ready | branch_i) &
-                     ~&rdata_outstanding_q;
+  assign valid_req = valid_req_q | (req_i & (fifo_ready | branch_i) & (~&rdata_outstanding_q));
 
   // If a request address triggers a PMP error, the external bus request is suppressed. We might
   // therefore never receive a grant for such a request. The grant is faked in this case to make
@@ -115,16 +115,21 @@ module ibex_prefetch_buffer (
   // As with the grant, the rvalid must be faked for a PMP error, since the request was suppressed.
   // Since the pmp_err_q flop is only updated when the address updates, it will always point to the
   // PMP error status of the oldest outstanding request
-  assign rvalid_or_pmp_err = instr_rvalid_i | pmp_err_q;
+  assign rvalid_or_pmp_err = rdata_outstanding_q[0] & (instr_rvalid_i | pmp_err_q);
 
-  // Hold the address stable for requests that couldn't be issued, or didn't get granted
-  assign valid_req_d = (branch_i | valid_req_q) & ~(valid_req & instr_gnt_i);
+  // Hold the request stable for requests that didn't get granted
+  assign valid_req_d = valid_req & ~instr_gnt_i;
+
+  // Hold the address stable for requests that couldn't be issued, or didn't get granted.
+  // This is different to valid_req_q since there are cases where we must use addr+4 for
+  // an ungranted request rather than addr_q (where addr_q has not been updated).
+  assign hold_addr_d = (branch_i | hold_addr_q) & ~(valid_req & instr_gnt_i);
 
   ////////////////
   // Fetch addr //
   ////////////////
 
-  // The address flop is used to hold the address steady for ungranted requests and also to 
+  // The address flop is used to hold the address steady for ungranted requests and also to
   // push the address to the FIFO for completed requests. For this reason, the address is only
   // updated once a request is the oldest outstanding to ensure that newer requests do not
   // overwrite the addresses of older ones. Branches are an exception to this, since all older
@@ -133,7 +138,7 @@ module ibex_prefetch_buffer (
   // Update the addr_q flop on any branch, or
   assign addr_valid = branch_i |
                       // A new request which will be the oldest, or
-                      (req_i & fifo_ready & ~rdata_outstanding_q[0]) |
+                      (valid_req & instr_gnt_i & ~rdata_outstanding_q[0]) |
                       // each time a valid request becomes the oldest
                       (rvalid_or_pmp_err & ~branch_abort_q[0] &
                        ((valid_req & instr_gnt_i) | rdata_outstanding_q[1]));
@@ -143,7 +148,7 @@ module ibex_prefetch_buffer (
 
   // Address mux
   assign instr_addr = branch_i    ? addr_i :
-                      valid_req_q ? instr_addr_q :
+                      hold_addr_q ? instr_addr_q :
                                     fetch_addr;
 
   assign instr_addr_w_aligned = {instr_addr[31:2], 2'b00};
@@ -180,7 +185,7 @@ module ibex_prefetch_buffer (
                                                    branch_abort_n;
 
   // Push a new entry to the FIFO once complete (and not aborted by a branch)
-  assign fifo_valid = rdata_outstanding_q[0] & ~branch_abort_q[0] & rvalid_or_pmp_err;
+  assign fifo_valid = rvalid_or_pmp_err & ~branch_abort_q[0];
 
   ///////////////
   // Registers //
@@ -189,10 +194,12 @@ module ibex_prefetch_buffer (
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       valid_req_q          <= 1'b0;
+      hold_addr_q          <= 1'b0;
       rdata_outstanding_q  <= 'b0;
       branch_abort_q       <= 'b0;
     end else begin
       valid_req_q          <= valid_req_d;
+      hold_addr_q          <= hold_addr_d;
       rdata_outstanding_q  <= rdata_outstanding_s;
       branch_abort_q       <= branch_abort_s;
     end
@@ -211,7 +218,7 @@ module ibex_prefetch_buffer (
   /////////////
 
   assign instr_req_o          = valid_req;
-  assign instr_addr_o         =  instr_addr_w_aligned;
+  assign instr_addr_o         = instr_addr_w_aligned;
 
   ////////////////
   // Assertions //
