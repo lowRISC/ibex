@@ -213,4 +213,15 @@ module ibex_prefetch_buffer (
   assign instr_req_o          = valid_req;
   assign instr_addr_o         =  instr_addr_w_aligned;
 
+  ////////////////
+  // Assertions //
+  ////////////////
+
+`ifndef VERILATOR
+  // Code changes required to support > 2 outstanding requests
+  assert property (
+    @(posedge clk_i) disable iff (!rst_ni)
+    (NUM_REQS <= 2) );
+`endif
+
 endmodule

@@ -216,11 +216,6 @@ module ibex_fetch_fifo (
   // Assertions //
   ////////////////
 `ifndef VERILATOR
-  // Code changes required to support > 2 outstanding requests
-  assert property (
-    @(posedge clk_i) disable iff (!rst_ni)
-    (NUM_REQS <= 2) );
-
   assert property (
     @(posedge clk_i) disable iff (!rst_ni)
     (in_valid_i) |-> ((valid_q[DEPTH-1] == 1'b0) || (clear_i == 1'b1)) );
