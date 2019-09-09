@@ -76,7 +76,7 @@ module ibex_fetch_fifo (
   // Alignment is tracked with a flag, this records whether entry[0] of the FIFO has become unaligned.
   // The flag is set once any compressed instruction enters the FIFO and is only cleared once a
   // a compressed instruction realigns the FIFO, or the FIFO is cleared.
-  
+
                               // New incoming unaligned request (must be a branch) or already unaligned
   assign entry0_unaligned_d = ((((in_valid_i & in_addr_i[1]) | entry0_unaligned_q) &
                                 // cleared by a compressed unaligned instruction
