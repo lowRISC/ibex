@@ -74,6 +74,8 @@ module ibex_controller (
     output logic                  csr_restore_mret_id_o,
     output logic                  csr_save_cause_o,
     output logic [31:0]           csr_mtval_o,
+    input  ibex_pkg::priv_lvl_e   priv_mode_i,
+    input  logic                  csr_mstatus_tw_i,
 
     // stall signals
     input  logic                  stall_lsu_i,
@@ -108,6 +110,7 @@ module ibex_controller (
   logic halt_if;
   logic flush_id;
   logic illegal_dret;
+  logic illegal_umode;
   logic exc_req_lsu;
   logic special_req;
   logic enter_debug_mode;
@@ -157,11 +160,17 @@ module ibex_controller (
   // "Executing DRET outside of Debug Mode causes an illegal instruction exception."
   // [Debug Spec v0.13.2, p.41]
   assign illegal_dret = dret_insn & ~debug_mode_q;
+
+  // Some instructions can only be executed in M-Mode
+  assign illegal_umode = (priv_mode_i != PRIV_LVL_M) &
+                         // MRET must be in M-Mode. TW means trap WFI to M-Mode.
+                         (mret_insn | (csr_mstatus_tw_i & wfi_insn));
+
   // This is recorded in the illegal_insn_q flop to help timing.  Specifically
   // it is needed to break the path from ibex_cs_registers/illegal_csr_insn_o
   // to pc_set_o.  Clear when controller is in FLUSH so it won't remain set
   // once illegal instruction is handled.
-  assign illegal_insn_d = (illegal_insn_i | illegal_dret) & (ctrl_fsm_cs != FLUSH);
+  assign illegal_insn_d = (illegal_insn_i | illegal_dret | illegal_umode) & (ctrl_fsm_cs != FLUSH);
 
   // exception requests
   // requests are flopped in exc_req_q.  This is cleared when controller is in
@@ -486,7 +495,8 @@ module ibex_controller (
             csr_mtval_o = instr_is_compressed_i ? {16'b0, instr_compressed_i} : instr_i;
 
           end else if (ecall_insn) begin
-            exc_cause_o = EXC_CAUSE_ECALL_MMODE;
+            exc_cause_o = (priv_mode_i == PRIV_LVL_M) ? EXC_CAUSE_ECALL_MMODE :
+                                                        EXC_CAUSE_ECALL_UMODE;
 
           end else if (ebrk_insn) begin
             if (debug_mode_q) begin

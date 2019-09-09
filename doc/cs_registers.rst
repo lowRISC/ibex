@@ -90,18 +90,24 @@ Reset Value: ``0x0000_1800``
 +-------+-----+---------------------------------------------------------------------------------+
 | Bit#  | R/W | Description                                                                     |
 +-------+-----+---------------------------------------------------------------------------------+
-| 12:11 | R   | **MPP:** Statically 2'b11 and cannot be altered (read-only).                    |
+| 21    | RW  | **TW:** Timeout Wait (WFI executed in User Mode will trap to Machine Mode).     |
++-------+-----+---------------------------------------------------------------------------------+
+| 17    | RW  | **MPRV:** Modify Privilege (Loads and stores use MPP for privilege checking).   |
++-------+-----+---------------------------------------------------------------------------------+
+| 12:11 | RW  | **MPP:** Machine Previous Privilege mode.                                       |
 +-------+-----+---------------------------------------------------------------------------------+
 | 7     | RW  | **Previous Interrupt Enable (MPIE)**, i.e., before entering exception handling. |
 +-------+-----+---------------------------------------------------------------------------------+
 | 3     | RW  | **Interrupt Enable (MIE):** If set to 1'b1, interrupts are globally enabled.    |
 +-------+-----+---------------------------------------------------------------------------------+
 
-When an exception is encountered, ``mstatus``.MPIE will be set to ``mstatus``.MIE.
-When the MRET instruction is executed, the value of MPIE will be stored back to ``mstatus``.MIE.
+When an exception is encountered, ``mstatus``.MPIE will be set to ``mstatus``.MIE, and ``mstatus``.MPP will be set to the current privilege mode.
+When the MRET instruction is executed, the value of MPIE will be stored back to ``mstatus``.MIE, and the privilege mode will be restored from ``mstatus``.MPP.
 
 If you want to enable interrupt handling in your exception handler, set ``mstatus``.MIE to 1'b1 inside your handler code.
 
+Only Machine Mode and User Mode are supported.
+Any write to ``mstatus``.MPP of an unsupported value will be interpreted as Machine Mode.
 
 Machine ISA Register (misa)
 ---------------------------
@@ -275,6 +281,15 @@ Reset Value: ``0x0000_0000``
 +----------------+
 | address[33:2]  |
 +----------------+
+
+Time Registers (time(h))
+------------------------
+
+CSR Address: ``0xC01 / 0xC81``
+
+The User Mode ``time(h)`` registers are not implemented in Ibex.
+Any access to these registers will trap.
+It is recommended that trap handler software provides a means of accessing platform-defined ``mtime(h)`` timers where available.
 
 .. _csr-mhartid:
 

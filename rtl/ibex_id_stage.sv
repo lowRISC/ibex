@@ -75,6 +75,8 @@ module ibex_id_stage #(
     output logic                  csr_restore_mret_id_o,
     output logic                  csr_save_cause_o,
     output logic [31:0]           csr_mtval_o,
+    input  ibex_pkg::priv_lvl_e   priv_mode_i,
+    input  logic                  csr_mstatus_tw_i,
     input  logic                  illegal_csr_insn_i,
 
     // Interface to load store unit
@@ -438,6 +440,8 @@ module ibex_id_stage #(
       .csr_restore_mret_id_o          ( csr_restore_mret_id_o  ),
       .csr_save_cause_o               ( csr_save_cause_o       ),
       .csr_mtval_o                    ( csr_mtval_o            ),
+      .priv_mode_i                    ( priv_mode_i            ),
+      .csr_mstatus_tw_i               ( csr_mstatus_tw_i       ),
 
       // Debug Signal
       .debug_mode_o                   ( debug_mode_o           ),
