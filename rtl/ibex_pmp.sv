@@ -19,8 +19,7 @@ module ibex_pmp #(
     input  ibex_pkg::pmp_cfg_t      csr_pmp_cfg_i  [PMPNumRegions],
     input  logic [33:0]             csr_pmp_addr_i [PMPNumRegions],
 
-    input  ibex_pkg::priv_lvl_e     priv_mode_i,    // Current priv mode, assumed to
-                                                    // be the same for all channels
+    input  ibex_pkg::priv_lvl_e     priv_mode_i    [PMPNumChan],
     // Access checking channels
     input  logic [33:0]             pmp_req_addr_i [PMPNumChan],
     input  ibex_pkg::pmp_req_e      pmp_req_type_i [PMPNumChan],
@@ -104,8 +103,8 @@ module ibex_pmp #(
                                             ~|region_match_partial[c][r-1:0];
       end
     end
-    assign access_fault[c] = (priv_mode_i == PRIV_LVL_M) ? |machine_access_fault[c] :
-                                                           ~|user_access_allowed[c];
+    assign access_fault[c] = (priv_mode_i[c] == PRIV_LVL_M) ? |machine_access_fault[c] :
+                                                              ~|user_access_allowed[c];
 
     assign pmp_req_err_o[c] = access_fault[c];
   end

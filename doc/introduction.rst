@@ -53,7 +53,7 @@ In addition, the following instruction set extensions are available.
 Most content of the RISC-V privileged specification is optional.
 Ibex currently supports the following features according to the RISC-V Privileged Specification, version 1.11.
 
-* M mode
+* M-Mode and U-Mode
 * All CSRs listed in :ref:`cs-registers`
 * Performance counters as described in :ref:`performance-counters`
 * Vectorized trap handling as described at :ref:`exceptions-interrupts`
