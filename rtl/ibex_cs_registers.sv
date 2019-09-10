@@ -780,6 +780,10 @@ module ibex_cs_registers #(
   // event selection (hardwired) & control
   always_comb begin : gen_mhpmcounter_incr
 
+    // When adding or altering performance counter meanings and default
+    // mappings please update dv/verilator/pcount/cpp/ibex_pcounts.cc
+    // appropriately.
+    //
     // active counters
     mhpmcounter_incr[0]  = 1'b1;                   // mcycle
     mhpmcounter_incr[1]  = 1'b0;                   // reserved
