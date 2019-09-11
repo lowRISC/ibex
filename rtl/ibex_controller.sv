@@ -215,7 +215,7 @@ module ibex_controller (
     debug_csr_save_o      = 1'b0;
     debug_cause_o         = DBG_CAUSE_EBREAK;
     debug_mode_d          = debug_mode_q;
-    nmi_mode_d            = 1'b0;
+    nmi_mode_d            = nmi_mode_q;
 
     perf_tbranch_o        = 1'b0;
     perf_jump_o           = 1'b0;
