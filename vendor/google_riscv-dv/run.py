@@ -193,7 +193,7 @@ def gcc_compile(test_list, output_dir, isa, mabi, opts):
   """
   for test in test_list:
     for i in range(0, test['iterations']):
-      prefix = ("%s/asm_tests/%s.%d" % (output_dir, test['test'], i))
+      prefix = ("%s/asm_tests/%s_%d" % (output_dir, test['test'], i))
       asm = prefix + ".S"
       elf = prefix + ".o"
       binary = prefix + ".bin"
@@ -201,8 +201,10 @@ def gcc_compile(test_list, output_dir, isa, mabi, opts):
       cmd = ("%s -static -mcmodel=medany \
              -fvisibility=hidden -nostdlib \
              -nostartfiles %s \
-             -Tscripts/link.ld %s -o %s " % \
-             (get_env_var("RISCV_GCC"), asm, opts, elf))
+             -I%s/user_extension \
+             -T%s/scripts/link.ld %s -o %s " % \
+             (get_env_var("RISCV_GCC"), asm, get_env_var("RISCV_DV_ROOT"),
+              get_env_var("RISCV_DV_ROOT"), opts, elf))
       if 'gcc_opts' in test:
         cmd += test['gcc_opts']
       # If march/mabi is not defined in the test gcc_opts, use the default
@@ -243,7 +245,7 @@ def iss_sim(test_list, output_dir, iss_list, iss_yaml, isa, timeout_s):
         continue
       else:
         for i in range(0, test['iterations']):
-          prefix = ("%s/asm_tests/%s.%d" % (output_dir, test['test'], i))
+          prefix = ("%s/asm_tests/%s_%d" % (output_dir, test['test'], i))
           elf = prefix + ".o"
           log = ("%s/%s.%d.log" % (log_dir, test['test'], i))
           cmd = get_iss_cmd(base_cmd, elf, log)
@@ -268,7 +270,7 @@ def iss_cmp(test_list, iss, output_dir, isa):
   run_cmd("rm -rf %s" % report)
   for test in test_list:
     for i in range(0, test['iterations']):
-      elf = ("%s/asm_tests/%s.%d.o" % (output_dir, test['test'], i))
+      elf = ("%s/asm_tests/%s_%d.o" % (output_dir, test['test'], i))
       logging.info("Comparing ISS sim result %s/%s : %s" %
                   (iss_list[0], iss_list[1], elf))
       csv_list = []
@@ -342,7 +344,7 @@ def setup_parser():
                       help="Generator timeout limit in seconds")
   parser.add_argument("--end_signature_addr", type=str, default="0",
                       help="Address that privileged CSR test writes to at EOT")
-  parser.add_argument("--iss_timeout", type=int, default=50,
+  parser.add_argument("--iss_timeout", type=int, default=25,
                       help="ISS sim timeout limit in seconds")
   parser.add_argument("--iss_yaml", type=str, default="",
                       help="ISS setting YAML")
@@ -376,7 +378,7 @@ def setup_logging(verbose):
 
 def main():
   """This is the main entry point."""
-
+  check_riscv_dv_setting()
   parser = setup_parser()
   args = parser.parse_args()
   cwd = os.path.dirname(os.path.realpath(__file__))
@@ -399,6 +401,7 @@ def main():
     output_dir = "out_" + str(date.today())
   else:
     output_dir = args.o
+
   subprocess.run(["mkdir", "-p", output_dir])
   subprocess.run(["mkdir", "-p", ("%s/asm_tests" % output_dir)])
 

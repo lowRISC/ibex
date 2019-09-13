@@ -15,7 +15,7 @@
  */
 
 // Base class for AMO instruction stream
-class riscv_amo_base_instr_stream extends riscv_directed_instr_stream;
+class riscv_amo_base_instr_stream extends riscv_mem_access_stream;
 
   rand int unsigned  num_amo;
   rand int unsigned  num_mixed_instr;
@@ -23,6 +23,7 @@ class riscv_amo_base_instr_stream extends riscv_directed_instr_stream;
   rand riscv_reg_t   rs1_reg;
   riscv_reg_t        reserved_rd[$];
   rand int unsigned  data_page_id;
+  rand int           max_load_store_offset;
 
   // User can specify a small group of available registers to generate various hazard condition
   rand riscv_reg_t   avail_regs[];
@@ -70,10 +71,10 @@ class riscv_amo_base_instr_stream extends riscv_directed_instr_stream;
                                    pseudo_instr_name == LA;
                                    rd == rs1_reg;,
                                    "Cannot randomize la_instr")
-    if(access_u_mode_mem) begin
-      la_instr.imm_str = $sformatf("data_page_%0d+%0d", data_page_id, base);
+    if(kernel_mode) begin
+      la_instr.imm_str = cfg.s_mem_region[data_page_id].name;
     end else begin
-      la_instr.imm_str = $sformatf("kernel_data_page_%0d+%0d", data_page_id, base);
+      la_instr.imm_str = cfg.mem_region[data_page_id].name;
     end
     instr_list.push_front(la_instr);
   endfunction

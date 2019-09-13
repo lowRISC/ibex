@@ -182,6 +182,9 @@ class riscv_instr_base extends uvm_object;
       rs2 inside {[S0:A5]};
       rd  inside {[S0:A5]};
     }
+    if(format inside {CI_FORMAT, CR_FORMAT}) {
+      rs1 == rd;
+    }
     // C_ADDI16SP is only valid when rd == SP
     if(instr_name == C_ADDI16SP) {
       rd == SP;
@@ -244,6 +247,7 @@ class riscv_instr_base extends uvm_object;
   `add_instr(URET,    I_FORMAT, SYSTEM, RV32I)
   `add_instr(SRET,    I_FORMAT, SYSTEM, RV32I)
   `add_instr(MRET,    I_FORMAT, SYSTEM, RV32I)
+  `add_instr(DRET,    I_FORMAT, SYSTEM, RV32I)
   `add_instr(WFI,     I_FORMAT, INTERRUPT, RV32I)
   // CSR instructions
   `add_instr(CSRRW,  R_FORMAT, CSR, RV32I, UIMM)
@@ -469,16 +473,35 @@ class riscv_instr_base extends uvm_object;
   function riscv_reg_t gen_rand_gpr(riscv_reg_t included_reg[] = {},
                                     riscv_reg_t excluded_reg[] = {});
     riscv_reg_t gpr;
-    `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(gpr,
-                                       if (is_compressed) {
-                                         gpr inside {[S0:A5]};
-                                       }
-                                       if (excluded_reg.size() != 0) {
-                                         !(gpr inside {excluded_reg});
-                                       }
-                                       if (included_reg.size() != 0) {
-                                         gpr inside {included_reg};
-                                       })
+    int unsigned i;
+    riscv_reg_t legal_gpr[$];
+    if (included_reg.size() > 0) begin
+      legal_gpr = included_reg;
+      while (is_compressed && (i < legal_gpr.size())) begin
+        if (legal_gpr[i] < S0 || legal_gpr[i] > A5) begin
+          legal_gpr.delete(i);
+        end else begin
+          i++;
+        end
+      end
+    end else if (is_compressed) begin
+      legal_gpr = riscv_instr_pkg::compressed_gpr;
+    end else begin
+      legal_gpr = riscv_instr_pkg::all_gpr;
+    end
+    if (excluded_reg.size() > 0) begin
+      i = 0;
+      while (i < legal_gpr.size()) begin
+        if (legal_gpr[i] inside {excluded_reg}) begin
+          legal_gpr.delete(i);
+        end else begin
+          i++;
+        end
+      end
+    end
+    `DV_CHECK_FATAL(legal_gpr.size() > 0)
+    `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(i, i < legal_gpr.size();)
+    gpr = legal_gpr[i];
     return gpr;
   endfunction
 
@@ -521,6 +544,8 @@ class riscv_instr_base extends uvm_object;
         I_FORMAT: // instr rd,rs1,imm
           if(instr_name == NOP)
             asm_str = "nop";
+          else if(instr_name == WFI)
+            asm_str = "wfi";
           else if(instr_name == FENCE)
             asm_str = $sformatf("fence"); // TODO: Support all fence combinations
           else if(instr_name == FENCEI)
@@ -602,7 +627,7 @@ class riscv_instr_base extends uvm_object;
       FENCE, FENCEI                                                : get_opcode = 7'b0001111;
       ECALL, EBREAK, CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI   : get_opcode = 7'b1110011;
       ADDW, SUBW, SLLW, SRLW, SRAW, MULW, DIVW, DIVUW, REMW, REMUW : get_opcode = 7'b0111011;
-      ECALL, EBREAK, URET, SRET, MRET, WFI, SFENCE_VMA             : get_opcode = 7'b1110011;
+      ECALL, EBREAK, URET, SRET, MRET, DRET, WFI, SFENCE_VMA       : get_opcode = 7'b1110011;
       default : `uvm_fatal(`gfn, $sformatf("Unsupported instruction %0s", instr_name.name()))
     endcase
   endfunction
@@ -744,7 +769,7 @@ class riscv_instr_base extends uvm_object;
       C_SWSP     : get_func3 = 3'b110;
       C_FSWSP    : get_func3 = 3'b111;
       C_SDSP     : get_func3 = 3'b111;
-      ECALL, EBREAK, URET, SRET, MRET, WFI, SFENCE_VMA : get_func3 = 3'b000;
+      ECALL, EBREAK, URET, SRET, MRET, DRET, WFI, SFENCE_VMA : get_func3 = 3'b000;
       default : `uvm_fatal(`gfn, $sformatf("Unsupported instruction %0s", instr_name.name()))
     endcase
   endfunction
@@ -794,6 +819,7 @@ class riscv_instr_base extends uvm_object;
       URET   : get_func7 = 7'b0000000;
       SRET   : get_func7 = 7'b0001000;
       MRET   : get_func7 = 7'b0011000;
+      DRET   : get_func7 = 7'b0111101;
       WFI    : get_func7 = 7'b0001000;
       SFENCE_VMA: get_func7 = 7'b0001001;
       default : `uvm_fatal(`gfn, $sformatf("Unsupported instruction %0s", instr_name.name()))
@@ -820,6 +846,8 @@ class riscv_instr_base extends uvm_object;
             binary = $sformatf("%8h", {get_func7(), 18'b0, get_opcode()});
           else if(instr_name inside {URET, SRET, MRET})
             binary = $sformatf("%8h", {get_func7(), 5'b10, 13'b0, get_opcode()});
+          else if(instr_name inside {DRET})
+            binary = $sformatf("%8h", {get_func7(), 5'b10010, 13'b0, get_opcode()});
           else if(instr_name == EBREAK)
             binary = $sformatf("%8h", {get_func7(), 5'b01, 13'b0, get_opcode()});
           else if(instr_name == WFI)

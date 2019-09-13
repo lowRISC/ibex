@@ -37,7 +37,7 @@ def process_spike_sim_log(spike_log, csv):
   spike_instr = ""
 
   RD_RE    = re.compile(r"(?P<pri>\d) 0x(?P<addr>[a-f0-9]+?) " \
-                      "\((?P<bin>.*?)\) x\s*(?P<reg>\d*?) 0x(?P<val>.*)")
+                        "\((?P<bin>.*?)\) x\s*(?P<reg>\d*?) 0x(?P<val>[a-f0-9]+)")
   CORE_RE  = re.compile(r"core.*0x(?P<addr>[a-f0-9]+?) \(0x(?P<bin>.*?)\) (?P<instr>.*?)$")
   INSTR_RE = re.compile(r"(?P<instr>[a-z\.]+?)(\s+?)(?P<operand>.*)")
   GPR_RE   = re.compile(r"^[a-z][0-9a-z]$")

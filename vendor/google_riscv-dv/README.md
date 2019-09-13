@@ -184,6 +184,37 @@ riscv_instr_group_t supported_isa[] = {RV32I, RV32M, RV64I, RV64M};
 ...
 ```
 
+### Setup the memory map
+
+Here's a few cases that you might want to allocate the instruction and data
+sections to match the actual memory map
+- The processor has internal memories, and you want to test load/store from
+  various internal/externel memory regions
+- The processor implments the PMP feature, and you want to configure the memory
+  map to match PMP setting.
+- Virtual address translation is implmented and you want to test load/store from
+  sparse memory locations to verify data TLB replacement logic.
+
+You can configure the memory map in [riscv_instr_gen_config.sv](https://github.com/google/riscv-dv/blob/master/src/riscv_instr_gen_config.sv)
+
+```
+  mem_region_t mem_region[$] = '{
+    '{name:"region_0", size_in_bytes: 4096,      xwr: 3'b111},
+    '{name:"region_1", size_in_bytes: 4096 * 4,  xwr: 3'b111},
+    '{name:"region_2", size_in_bytes: 4096 * 2,  xwr: 3'b111},
+    '{name:"region_3", size_in_bytes: 512,       xwr: 3'b111},
+    '{name:"region_4", size_in_bytes: 4096,      xwr: 3'b111}
+  };
+```
+
+Each memory region belongs to a separate section in the generated assembly
+program. You can modify the link script to link each section to the target
+memory location. Please avoid setting a large memory range as it could takes a
+long time to randomly initializing the memory. You can break down a large memory
+region to a few representative small regions which covers all the boundary
+conditions for the load/store testing. 
+
+
 ### Runtime options of the generator
 
 | Option                      | Description                                       | Default |
@@ -198,8 +229,8 @@ riscv_instr_group_t supported_isa[] = {RV32I, RV32M, RV64I, RV64M};
 | no_load_store               | Disable load/store instruction                    | 0       |
 | no_csr_instr                | Disable CSR instruction                           | 0       |
 | no_fence                    | Disable fence instruction                         | 0       |
-| enable_illegal_instruction  | Enable illegal instructions                       | 0       |
-| enable_hint_instruction     | Enable HINT instruction                           | 0       |
+| illegal_instr_ratio         | Number of illegal instructions every 1000 instr   | 0       |
+| hint_instr_ratio            | Number of HINT instructions every 1000 instr      | 0       |
 | boot_mode                   | m:Machine mode, s:Supervisor mode, u:User mode    | m       |
 | no_directed_instr           | Disable directed instruction stream               | 0       |
 | require_signature_addr      | Set to 1 if test needs to talk to testbench       | 0       |
@@ -343,9 +374,23 @@ python3 run.py --test riscv_page_table_exception_test --iss new_iss_name
 
 We have collaborated with LowRISC to apply this flow for [IBEX RISC-V core
 verification](https://github.com/lowRISC/ibex/blob/master/doc/verification.rst). You can use
-it as a reference to setup end-to-end co-simulation flow. It's also a good
-reference for [customizing the generator](https://github.com/lowRISC/ibex/tree/master/dv/uvm/riscv_dv_extension) without getting impacted by upstream
-changes.
+it as a reference to setup end-to-end co-simulation flow.
+This repo is still under active development, here's recommended approach to
+customize the instruction generator while keeping the minimum effort of merging
+upstream changes.
+- Do not modify the upstream classes directly. When possible, extending from
+  the upstream classses and implment your own functionalities.
+- Use command line type override to use your extended classes.
+  --sim_opts="+uvm_set_type_override=<upstream_class>,<extended_class>"
+- Create a new file list for your local modifications. Pass to the instruction
+  generator like below:
+  --cmp_opts "+define+RISCV_DV_EXT_FILE_LIST=<local_file_list>"
+- Create a new file for the core settings, and pass to the instruction generator:
+  --cmp_opts "+define+RISCV_CORE_SETTING=<your_core_setting.sv>"
+
+You can refer to [riscv-dv extension for ibex](https://github.com/lowRISC/ibex/blob/master/dv/uvm/Makefile#L68) for a working example.
+
+
 We have plan to open-source the end-to-end environment of other advanced RISC-V
 processors. Stay tuned!
 

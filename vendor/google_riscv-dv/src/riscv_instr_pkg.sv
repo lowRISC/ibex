@@ -14,16 +14,23 @@
  * limitations under the License.
  */
 
+`include "dv_defines.svh"
+
 package riscv_instr_pkg;
 
   import uvm_pkg::*;
   import riscv_signature_pkg::*;
 
   `include "uvm_macros.svh"
-  `include "dv_defines.svh"
   `include "riscv_defines.svh"
-
   `define include_file(f) `include `"f`"
+
+  // Data section setting
+  typedef struct {
+    string         name;
+    int unsigned   size_in_bytes;
+    bit [2:0]      xwr; // Excutable,Writable,Readale
+  } mem_region_t;
 
   typedef enum bit [3:0] {
     BARE = 4'b0000,
@@ -261,6 +268,7 @@ package riscv_instr_pkg;
     AMOMINU_D,
     AMOMAXU_D,
     // Supervisor instruction
+    DRET,
     MRET,
     URET,
     SRET,
@@ -570,7 +578,8 @@ package riscv_instr_pkg;
     TDATA3          = 'h7A3,  // Third Debug/Trace trigger data register
     DCSR            = 'h7B0,  // Debug control and status register
     DPC             = 'h7B1,  // Debug PC
-    DSCRATCH        = 'h7B2   // Debug scratch register
+    DSCRATCH0       = 'h7B2,  // Debug scratch register
+    DSCRATCH1       = 'h7B3   // Debug scratch register
   } privileged_reg_t;
 
   typedef enum bit [5:0] {
@@ -589,7 +598,6 @@ package riscv_instr_pkg;
   } privileged_level_t;
 
   typedef enum bit [1:0] {
-    WIRI, // Reserved Writes Ignored, Reads Ignore Value
     WPRI, // Reserved Writes Preserve Values, Reads Ignore Value
     WLRL, // Write/Read Only Legal Values
     WARL  // Write Any Values, Reads Legal Values
@@ -772,10 +780,10 @@ package riscv_instr_pkg;
         instr.push_back($sformatf("srli sp, sp, %0d", XLEN - MAX_USED_VADDR_BITS));
       end
     end
-    // Reserve space from kernel stack to save all 32 GPR
-    instr.push_back($sformatf("1: addi sp, sp, -%0d", 32 * (XLEN/8)));
+    // Reserve space from kernel stack to save all 32 GPR except for x0
+    instr.push_back($sformatf("1: addi sp, sp, -%0d", 31 * (XLEN/8)));
     // Push all GPRs to kernel stack
-    for(int i = 0; i < 32; i++) begin
+    for(int i = 1; i < 32; i++) begin
       instr.push_back($sformatf("%0s  x%0d, %0d(sp)", store_instr, i, i * (XLEN/8)));
     end
   endfunction
@@ -787,11 +795,11 @@ package riscv_instr_pkg;
                                                     ref string instr[$]);
     string load_instr = (XLEN == 32) ? "lw" : "ld";
     // Pop user mode GPRs from kernel stack
-    for(int i = 0; i < 32; i++) begin
+    for(int i = 1; i < 32; i++) begin
       instr.push_back($sformatf("%0s  x%0d, %0d(sp)", load_instr, i, i * (XLEN/8)));
     end
     // Restore kernel stack pointer
-    instr.push_back($sformatf("addi sp, sp, %0d", 32 * (XLEN/8)));
+    instr.push_back($sformatf("addi sp, sp, %0d", 31 * (XLEN/8)));
     if (scratch inside {implemented_csr}) begin
       // Move SP to TP
       instr.push_back("add tp, sp, zero");
@@ -799,6 +807,12 @@ package riscv_instr_pkg;
       instr.push_back($sformatf("csrrw sp, 0x%0x, sp", scratch));
     end
   endfunction
+
+  riscv_reg_t all_gpr[] = {ZERO, RA, SP, GP, TP, T0, T1, T2, S0, S1, A0,
+                           A1, A2, A3, A4, A5, A6, A7, S2, S3, S4, S5, S6,
+                           S7, S8, S9, S10, S11, T3, T4, T5, T6};
+
+  riscv_reg_t compressed_gpr[] = {S0, S1, A0, A1, A2, A3, A4, A5};
 
   `include "riscv_instr_base.sv"
   `include "riscv_instr_gen_config.sv"
