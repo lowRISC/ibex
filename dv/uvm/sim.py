@@ -137,7 +137,7 @@ def rtl_sim(sim_cmd, test_list, output_dir, bin_dir, lsf_cmd, seed, opts, verbos
       os.chdir(sim_dir)
       if verbose:
         print("Run dir: %s" % sim_dir)
-      binary = ("%s/%s.%d.bin" % (bin_dir, test['test'], i))
+      binary = ("%s/%s_%d.bin" % (bin_dir, test['test'], i))
       cmd = lsf_cmd + " " + test_sim_cmd.rstrip() + \
             (" +UVM_TESTNAME=%s " % test['rtl_test']) + \
             (" +bin=%s " % binary) + \

@@ -46,25 +46,7 @@ bit support_umode_trap = 0;
 // Support sfence.vma instruction
 bit support_sfence = 0;
 
-// Cache line size (in bytes)
-// If processor does not support caches, set to XLEN/8
-int dcache_line_size_in_bytes = 128;
-
-// Number of data section
-// For processor that doesn't have data TLB, this can be set to 1
-// For processor that supports data TLB, this should be set to be larger than the number
-// of entries of dTLB to cover dTLB hit/miss scenario
-int num_of_data_pages = 4;
-
-// Data section byte size
-// For processor with no dTLB and data cache, keep the value below 10K
-// For processor with dTLB support, set it to the physical memory size that covers one entry
-// of the dTLB
-int data_page_size = 4096;
-int data_page_alignment = $clog2(data_page_size);
-
-// Stack section word length
-int stack_len = 5000;
+int max_interrupt_vector_num = 32;
 
 //-----------------------------------------------------------------------------
 // Kernel section setting, used by supervisor mode programs
