@@ -39,9 +39,10 @@ class riscv_illegal_instr extends uvm_object;
                                  7'b0100011,
                                  7'b0110111,
                                  7'b1100011,
+                                 7'b0110011,
                                  7'b1100111,
-                                 7'b1101111,
-                                 7'b1110011};
+                                 7'b1110011,
+                                 7'b1101111};
 
   rand illegal_instr_type_e  exception;
   rand bit [31:0]            instr_bin;
@@ -212,9 +213,6 @@ class riscv_illegal_instr extends uvm_object;
     end
     if (riscv_instr_pkg::RV32A inside {riscv_instr_pkg::supported_isa}) begin
       legal_opcode = {legal_opcode, 7'b0101111};
-    end
-    if (riscv_instr_pkg::RV32M inside {riscv_instr_pkg::supported_isa}) begin
-      legal_opcode = {legal_opcode, 7'b0110011};
     end
     if ((riscv_instr_pkg::RV64I inside {riscv_instr_pkg::supported_isa}) ||
          riscv_instr_pkg::RV64M inside {riscv_instr_pkg::supported_isa}) begin

@@ -40,6 +40,27 @@ class riscv_directed_instr_stream extends riscv_rand_instr_stream;
 
 endclass
 
+// Base class for memory access stream
+class riscv_mem_access_stream extends riscv_directed_instr_stream;
+
+  int             max_data_page_id;
+  mem_region_t    data_page[$];
+  string          label;
+
+  `uvm_object_utils(riscv_mem_access_stream)
+  `uvm_object_new
+
+  function void pre_randomize();
+    if(kernel_mode) begin
+      data_page = cfg.s_mem_region;
+    end else begin
+      data_page = cfg.mem_region;
+    end
+    max_data_page_id = data_page.size();
+  endfunction
+
+endclass
+
 // Create a infinte zero instruction loop, test if we can interrupt or
 // enter debug mode while core is executing this loop
 class riscv_infinte_loop_instr extends riscv_directed_instr_stream;
@@ -109,10 +130,7 @@ class riscv_jump_instr extends riscv_rand_instr_stream;
     !(addi.rs1 inside {cfg.reserved_regs, ZERO});
     addi.rs1 == la.rd;
     addi.rd  == la.rd;
-    // Avoid using negative offset -1024
-    addi.imm != 'hFFFF_FC00;
-    addi.imm != 1024;
-    jump.imm == ~addi.imm + 1;
+    imm inside {[-1023:1023]};
     jump.rs1 == addi.rd;
     addi.instr_name == ADDI;
     branch.category == BRANCH;
@@ -142,6 +160,8 @@ class riscv_jump_instr extends riscv_rand_instr_stream;
     initialize_instr_list(mixed_instr_cnt);
     gen_instr(1'b1);
     la.imm_str = target_program_label;
+    addi.imm_str = $sformatf("%0d", imm);
+    jump.imm_str = $sformatf("%0d", -imm);
     // The branch instruction is always inserted right before the jump instruction to avoid
     // skipping other required instructions like restore stack, load jump base etc.
     // The purse of adding the branch instruction here is to cover branch -> jump scenario.
@@ -188,8 +208,9 @@ class riscv_push_stack_instr extends riscv_rand_instr_stream;
   endfunction
 
   function void init();
-    // Save RA, T0 and all reserved loop regs
-    saved_regs = {RA, T0, cfg.loop_regs};
+    // Save RA, T0
+    reserved_rd = {RA, T0};
+    saved_regs = {RA, T0};
     num_of_reg_to_save = saved_regs.size();
     if(num_of_reg_to_save * (XLEN/8) > stack_len) begin
       `uvm_fatal(get_full_name(), $sformatf("stack len [%0d] is not enough to store %d regs",
@@ -266,6 +287,7 @@ class riscv_pop_stack_instr extends riscv_rand_instr_stream;
   endfunction
 
   function void init();
+    reserved_rd = {RA, T0};
     num_of_reg_to_save = saved_regs.size();
     if(num_of_reg_to_save * 4 > stack_len) begin
       `uvm_fatal(get_full_name(), $sformatf("stack len [%0d] is not enough to store %d regs",
@@ -337,7 +359,8 @@ class riscv_long_branch_instr extends riscv_rand_instr_stream;
     backward_branch_instr_stream.initialize_instr_list(branch_instr_stream_len);
   endfunction
 
-  virtual function void gen_instr(bit no_branch = 1'b0, bit no_load_store = 1'b1);
+  virtual function void gen_instr(bit no_branch = 1'b0, bit no_load_store = 1'b1,
+                                  bit is_debug_program = 1'b0);
     int branch_offset;
     super.gen_instr(1'b1);
     forward_branch_instr_stream.gen_instr();

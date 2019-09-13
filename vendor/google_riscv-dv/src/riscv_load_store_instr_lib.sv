@@ -16,7 +16,14 @@
 
 // Base class for all load/store instruction stream
 
-class riscv_load_store_base_instr_stream extends riscv_directed_instr_stream;
+class riscv_load_store_base_instr_stream extends riscv_mem_access_stream;
+
+  typedef enum bit [1:0] {
+    NARROW,
+    HIGH,
+    MEDIUM,
+    SPARSE
+  } locality_e;
 
   rand int unsigned  num_load_store;
   rand int unsigned  num_mixed_instr;
@@ -25,6 +32,8 @@ class riscv_load_store_base_instr_stream extends riscv_directed_instr_stream;
   rand int           addr[];
   rand int unsigned  data_page_id;
   rand riscv_reg_t   rs1_reg;
+  rand locality_e    locality;
+  rand int           max_load_store_offset;
 
   `uvm_object_utils(riscv_load_store_base_instr_stream)
 
@@ -38,13 +47,35 @@ class riscv_load_store_base_instr_stream extends riscv_directed_instr_stream;
   }
 
   constraint addr_c {
+    solve data_page_id before max_load_store_offset;
+    solve max_load_store_offset before base;
+    solve max_load_store_offset before addr;
+    solve max_load_store_offset before offset;
     data_page_id < max_data_page_id;
+    foreach (data_page[i]) {
+      if (i == data_page_id) {
+        max_load_store_offset == data_page[i].size_in_bytes;
+      }
+    }
     base inside {[0 : max_load_store_offset-1]};
     foreach(offset[i]) {
       addr[i] == base + offset[i];
-      // Make sure address is still valid
       addr[i] inside {[0 : max_load_store_offset - 1]};
-      offset[i] inside {[-2048:2047]};
+    }
+  }
+
+  constraint offset_locality_c {
+    solve locality before offset;
+    foreach(offset[i]) {
+      if (locality == NARROW) {
+        soft offset[i] inside {[-16:16]};
+      } else if (locality == HIGH) {
+        soft offset[i] inside {[-64:64]};
+      } else if (locality == MEDIUM) {
+        soft offset[i] inside {[-256:256]};
+      } else if (locality == SPARSE) {
+        soft offset[i] inside {[-2048:2047]};
+      }
     }
   }
 
@@ -72,10 +103,10 @@ class riscv_load_store_base_instr_stream extends riscv_directed_instr_stream;
                                    pseudo_instr_name == LA;
                                    rd == rs1_reg;,
                                    "Cannot randomize la_instr")
-    if(access_u_mode_mem) begin
-      la_instr.imm_str = $sformatf("data_page_%0d+%0d", data_page_id, base);
+    if(kernel_mode) begin
+      la_instr.imm_str = $sformatf("%s+%0d", cfg.s_mem_region[data_page_id].name, base);
     end else begin
-      la_instr.imm_str = $sformatf("kernel_data_page_%0d+%0d", data_page_id, base);
+      la_instr.imm_str = $sformatf("%s+%0d", cfg.mem_region[data_page_id].name, base);
     end
     instr_list.push_front(la_instr);
   endfunction
@@ -253,27 +284,11 @@ class riscv_load_store_hazard_instr_stream extends riscv_load_store_base_instr_s
       addr[i] = temp_addr;
     end
   endfunction
-
-endclass
-
-// Back-to-back access to the same cache line
-class riscv_cache_line_stress_instr_stream extends riscv_load_store_stress_instr_stream;
-
-  constraint same_cache_line_c {
-    base % riscv_instr_pkg::dcache_line_size_in_bytes == 0;
-    foreach(offset[i]) {
-      offset[i] inside {[0 : riscv_instr_pkg::dcache_line_size_in_bytes-1]};
-    }
-  }
-
-  `uvm_object_utils(riscv_cache_line_stress_instr_stream)
-  `uvm_object_new
-
 endclass
 
 // Back to back access to multiple data pages
 // This is useful to test data TLB switch and replacement
-class riscv_multi_page_load_store_instr_stream extends riscv_directed_instr_stream;
+class riscv_multi_page_load_store_instr_stream extends riscv_mem_access_stream;
 
   riscv_load_store_stress_instr_stream load_store_instr_stream[];
   rand int unsigned num_of_instr_stream;
@@ -287,11 +302,15 @@ class riscv_multi_page_load_store_instr_stream extends riscv_directed_instr_stre
     data_page_id.size() == num_of_instr_stream;
     rs1_reg.size() == num_of_instr_stream;
     unique {rs1_reg};
-    unique {data_page_id};
-    num_of_instr_stream inside {[1 : max_data_page_id]};
     foreach(rs1_reg[i]) {
       !(rs1_reg[i] inside {cfg.reserved_regs, ZERO});
     }
+  }
+
+  constraint page_c {
+    solve num_of_instr_stream before data_page_id;
+    num_of_instr_stream inside {[1 : max_data_page_id]};
+    unique {data_page_id};
   }
 
   // Avoid accessing a large number of pages because we may run out of registers for rs1
@@ -332,5 +351,22 @@ class riscv_multi_page_load_store_instr_stream extends riscv_directed_instr_stre
       end
     end
   endfunction
+
+endclass
+
+// Access the different locations of the same memory regions
+class riscv_mem_region_stress_test extends riscv_multi_page_load_store_instr_stream;
+
+  `uvm_object_utils(riscv_mem_region_stress_test)
+  `uvm_object_new
+
+  constraint page_c {
+    num_of_instr_stream inside {[2:5]};
+    foreach (data_page_id[i]) {
+      if (i > 0) {
+        data_page_id[i] == data_page_id[i-1];
+      }
+    }
+  }
 
 endclass

@@ -59,6 +59,15 @@ def get_env_var(var):
   return val
 
 
+def check_riscv_dv_setting():
+  """Check the RISCV-DV directory setting, default "."
+  """
+  try:
+    val = os.environ["RISCV_DV_ROOT"]
+  except KeyError:
+    os.environ["RISCV_DV_ROOT"] = "."
+
+
 def get_seed(seed):
   """Get the seed to run the generator
 
