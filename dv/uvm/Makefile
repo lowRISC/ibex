@@ -123,6 +123,7 @@ rtl_sim:
      --simulator=${SIMULATOR} \
      --en_cov ${COV} \
      --en_wave ${WAVES} \
+     --lsf_cmd="${LSF_CMD}" \
      --sim_opts="+signature_addr=0x${SIGNATURE_ADDR}" \
      ${SIM_OPTS}
 
