@@ -20,7 +20,7 @@
 // instruction, mix two instruction streams etc.
 class riscv_instr_stream extends uvm_object;
 
-  rand riscv_instr_base instr_list[$];
+  riscv_instr_base      instr_list[$];
   int unsigned          instr_cnt;
   string                label = "";
   // User can specify a small group of available registers to generate various hazard condition
@@ -158,14 +158,6 @@ class riscv_rand_instr_stream extends riscv_instr_stream;
   bit                     kernel_mode;
   riscv_instr_name_t      allowed_instr[$];
 
-  constraint avoid_reserved_rd_c {
-    if(reserved_rd.size() > 0) {
-      foreach(instr_list[i]) {
-        !(instr_list[i].rd inside {reserved_rd});
-      }
-    }
-  }
-
   `uvm_object_utils(riscv_rand_instr_stream)
   `uvm_object_new
 
@@ -225,7 +217,7 @@ class riscv_rand_instr_stream extends riscv_instr_stream;
                               instr.has_rs1,
                               instr.has_rs2,
                               instr.has_rd,
-                              instr.has_imm), UVM_HIGH)
+                              instr.has_imm), UVM_FULL)
     if (instr.has_imm && !skip_imm) begin
       instr.gen_rand_imm();
     end

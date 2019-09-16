@@ -135,7 +135,7 @@ class riscv_instr_sequence extends uvm_sequence;
     int label_idx;
     int branch_cnt;
     int unsigned branch_idx[];
-    int branch_target[string] = '{default: 0};
+    int branch_target[int] = '{default: 0};
     // Insert directed instructions, it's randomly mixed with the random instruction stream.
     foreach (directed_instr[i]) begin
       instr_stream.insert_instr_stream(directed_instr[i].instr_list);
@@ -242,14 +242,11 @@ class riscv_instr_sequence extends uvm_sequence;
     jump_instr.cfg = cfg;
     jump_instr.label = label_name;
     jump_instr.idx = idx;
-    `DV_CHECK_RANDOMIZE_WITH_FATAL(jump_instr,
-      if(is_main_program) {
-        jump_instr.jump.rd == RA;
-      },
-      "Cannot randomize jump_instr")
+    jump_instr.use_jalr = is_main_program;
+    `DV_CHECK_RANDOMIZE_FATAL(jump_instr)
     instr_stream.insert_instr_stream(jump_instr.instr_list);
     `uvm_info(get_full_name(), $sformatf("%0s -> %0s...done",
-              jump_instr.jump.instr_name.name(), label_name), UVM_LOW)
+              jump_instr.jump.instr_name.name(), target_label), UVM_LOW)
   endfunction
 
   // Convert the instruction stream to the string format.

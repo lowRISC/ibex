@@ -71,7 +71,7 @@ class riscv_instr_gen_config extends uvm_object;
   bit                    check_xstatus = 1'b1;
 
   // Virtual address translation is on for this test
-  bit                    virtual_addr_translation_on;
+  rand bit               virtual_addr_translation_on;
 
   //-----------------------------------------------------------------------------
   //  User space memory region and stack setting
@@ -195,17 +195,6 @@ class riscv_instr_gen_config extends uvm_object;
   constraint default_c {
     sub_program_instr_cnt.size() == num_of_sub_program;
     debug_sub_program_instr_cnt.size() == num_debug_sub_program;
-    if (riscv_instr_pkg::support_debug_mode) {
-      main_program_instr_cnt + sub_program_instr_cnt.sum()
-                             + debug_program_instr_cnt
-                             + debug_sub_program_instr_cnt.sum() == instr_cnt;
-      debug_program_instr_cnt inside {[100 : 300]};
-      foreach(debug_sub_program_instr_cnt[i]) {
-        debug_sub_program_instr_cnt[i] inside {[100 : 300]};
-      }
-    } else {
-      main_program_instr_cnt + sub_program_instr_cnt.sum() == instr_cnt;
-    }
     main_program_instr_cnt inside {[10 : instr_cnt]};
     foreach(sub_program_instr_cnt[i]) {
       sub_program_instr_cnt[i] inside {[10 : instr_cnt]};
@@ -220,6 +209,29 @@ class riscv_instr_gen_config extends uvm_object;
       (init_privileged_mode != SUPERVISOR_MODE || !riscv_instr_pkg::support_sfence || mstatus_tvm || no_fence)
                                                      -> (enable_sfence == 1'b0);
     }
+  }
+
+  constraint debug_mode_c {
+      if (riscv_instr_pkg::support_debug_mode) {
+        debug_program_instr_cnt inside {[100 : 300]};
+        foreach(debug_sub_program_instr_cnt[i]) {
+          debug_sub_program_instr_cnt[i] inside {[100 : 300]};
+        }
+      }
+    `ifndef DSIM
+       main_program_instr_cnt + sub_program_instr_cnt.sum() == instr_cnt;
+    `else
+       // dsim has some issue supporting sum(), use some approximate constraint to generate
+       // instruction cnt
+       if (num_of_sub_program > 0) {
+         main_program_instr_cnt inside {[10:instr_cnt/2]};
+         foreach (sub_program_instr_cnt[i]) {
+           sub_program_instr_cnt[i] inside {[10:instr_cnt/num_of_sub_program]};
+         }
+       } else {
+         main_program_instr_cnt == instr_cnt;
+       }
+    `endif
   }
 
   // Boot privileged mode distribution
@@ -310,6 +322,15 @@ class riscv_instr_gen_config extends uvm_object;
       signature_addr_reg != scratch_reg;
       signature_data_reg != ZERO;
       signature_addr_reg != ZERO;
+    }
+  }
+
+  constraint addr_translaction_c {
+    solve init_privileged_mode before virtual_addr_translation_on;
+    if ((init_privileged_mode != MACHINE_MODE) && (SATP_MODE != BARE)) {
+      virtual_addr_translation_on == 1'b1;
+    } else {
+      virtual_addr_translation_on == 1'b0;
     }
   }
 
@@ -415,7 +436,7 @@ class riscv_instr_gen_config extends uvm_object;
   // The other normal instruction cannot use them as destination register
   virtual function void setup_default_reserved_regs();
     default_reserved_regs = {SP, // x2, stack pointer (user stack)
-                             TP // x4, thread pointer, used as kernel stack pointer
+                             TP  // x4, thread pointer, used as kernel stack pointer
                              };
   endfunction
 
@@ -433,9 +454,6 @@ class riscv_instr_gen_config extends uvm_object;
     min_stack_len_per_program = 2 * (XLEN/8);
     // Check if the setting is legal
     check_setting();
-    if ((init_privileged_mode != MACHINE_MODE) && (SATP_MODE != BARE)) begin
-      virtual_addr_translation_on = 1'b1;
-    end
   endfunction
 
   function void check_setting();

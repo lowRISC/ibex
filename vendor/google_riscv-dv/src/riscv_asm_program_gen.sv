@@ -250,7 +250,7 @@ class riscv_asm_program_gen extends uvm_object;
             idx++;
             pid = callstack_gen.program_h[i].sub_program_id[j] - 1;
             `uvm_info(get_full_name(), $sformatf(
-                      "Gen jump instr %0d -> sub[%0d] %0d", i, j, pid+1), UVM_HIGH)
+                      "Gen jump instr %0d -> sub[%0d] %0d", i, j, pid+1), UVM_LOW)
             if(i == 0)
               main_program.insert_jump_instr(sub_program_name[pid], idx);
             else
@@ -707,11 +707,11 @@ class riscv_asm_program_gen extends uvm_object;
              "beq a1, a2, ecall_handler",
              // Page table fault or access fault conditions
              $sformatf("li a2, 0x%0x", INSTRUCTION_ACCESS_FAULT),
-             "beq a1, a2, pt_fault_handler",
+             "beq a1, a2, 1f",
              $sformatf("li a2, 0x%0x", LOAD_ACCESS_FAULT),
-             "beq a1, a2, pt_fault_handler",
+             "beq a1, a2, 1f",
              $sformatf("li a2, 0x%0x", STORE_AMO_ACCESS_FAULT),
-             "beq a1, a2, pt_fault_handler",
+             "beq a1, a2, 1f",
              $sformatf("li a2, 0x%0x", INSTRUCTION_PAGE_FAULT),
              "beq a1, a2, pt_fault_handler",
              $sformatf("li a2, 0x%0x", LOAD_PAGE_FAULT),
@@ -756,7 +756,7 @@ class riscv_asm_program_gen extends uvm_object;
       intr_handler = {intr_handler,
                       $sformatf("csrr a1, 0x%0x # %0s", cause, cause.name()),
                       // Terminate the test if xCause[31] != 0 (indicating exception)
-                      $sformatf("srli a1, a1, 0x1f"),
+                      $sformatf("srli a1, a1, 0x%0x", XLEN-1),
                       $sformatf("beqz a1, 1f")};
       gen_signature_handshake(.instr(intr_handler), .signature_type(WRITE_CSR), .csr(status));
       gen_signature_handshake(.instr(intr_handler), .signature_type(WRITE_CSR), .csr(cause));
@@ -1084,6 +1084,14 @@ class riscv_asm_program_gen extends uvm_object;
       if(instr_insert_cnt <= min_insert_cnt) begin
         instr_insert_cnt = min_insert_cnt;
       end
+      `ifdef DSIM
+        // Temporarily skip loop instruction for dsim as it cannot support dynamic array
+        // randomization
+        if (uvm_is_match("*loop*", instr_stream_name)) begin
+          `uvm_info(`gfn, $sformatf("%0s is skipped", instr_stream_name), UVM_LOW)
+          continue;
+        end
+      `endif
       `uvm_info(get_full_name(), $sformatf("Insert directed instr stream %0s %0d/%0d times",
                                  instr_stream_name, instr_insert_cnt, original_instr_cnt), UVM_LOW)
       for(int i = 0; i < instr_insert_cnt; i++) begin

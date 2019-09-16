@@ -59,6 +59,7 @@ You can specify the simulator by "-simulator" option
 python3 run.py --test riscv_arithmetic_basic_test --simulator ius
 python3 run.py --test riscv_arithmetic_basic_test --simulator vcs
 python3 run.py --test riscv_arithmetic_basic_test --simulator questa
+python3 run.py --test riscv_arithmetic_basic_test --simulator dsim
 ```
 The complete test list can be found in [yaml/testlist.yaml](https://github.com/google/riscv-dv/blob/master/yaml/testlist.yaml). To run a full
 regression, simply use below command
@@ -77,22 +78,22 @@ Here's a few more examples of the run command:
 
 ```
 // Run a single test 10 times
-python3 run.py --test riscv_page_table_exception_test --iterations 10
+python3 run.py --test riscv_arithmetic_basic_test --iterations 10
 
 // Run a test with verbose logging
-python3 run.py --test riscv_page_table_exception_test --verbose
+python3 run.py --test riscv_arithmetic_basic_test --verbose
 
 // Run a test with a specified seed
-python3 run.py --test riscv_page_table_exception_test --seed 123
+python3 run.py --test riscv_arithmetic_basic_test --seed 123
 
 // Skip the generation, run ISS simulation with previously generated program
-python3 run.py --test riscv_page_table_exception_test --steps iss_sim
+python3 run.py --test riscv_arithmetic_basic_test --steps iss_sim
 
 // Run the generator only, do not compile and simluation with ISS
-python3 run.py --test riscv_page_table_exception_test --steps gen
+python3 run.py --test riscv_arithmetic_basic_test --steps gen
 
 // Compile the generator only, do not simulate
-python3 run.py --test riscv_page_table_exception_test --co
+python3 run.py --test riscv_arithmetic_basic_test --co
 
 ....
 ```
@@ -326,7 +327,7 @@ You can use -iss to run with different ISS.
 
 ```
 // Run ISS with spike
-python3 run.py --test riscv_page_table_exception_test --iss spike
+python3 run.py --test riscv_arithmetic_basic_test --iss spike
 
 // Run ISS with riscv-ovpsim
 python3 run.py --test riscv_rand_instr_test --iss ovpsim
@@ -367,7 +368,7 @@ You can add a new entry in [iss.yaml](https://github.com/google/riscv-dv/blob/ma
 Simulate with the new ISS
 
 ```
-python3 run.py --test riscv_page_table_exception_test --iss new_iss_name
+python3 run.py --test riscv_arithmetic_basic_test --iss new_iss_name
 ```
 
 ## End-to-end RTL and ISS co-simulation flow
@@ -380,13 +381,14 @@ customize the instruction generator while keeping the minimum effort of merging
 upstream changes.
 - Do not modify the upstream classes directly. When possible, extending from
   the upstream classses and implment your own functionalities.
+- Add your extensions under user_extension directory, and add the files to
+  user_extension/user_extension.svh. If you prefer to put your extensions in a
+  different directory, you can use "-ext <user_extension_path>" to override the
+  user extension path.
+- Create a new file for riscv_core_setting.sv, add the path with below option:
+  "-cs <new_core_setting_path>"
 - Use command line type override to use your extended classes.
   --sim_opts="+uvm_set_type_override=<upstream_class>,<extended_class>"
-- Create a new file list for your local modifications. Pass to the instruction
-  generator like below:
-  --cmp_opts "+define+RISCV_DV_EXT_FILE_LIST=<local_file_list>"
-- Create a new file for the core settings, and pass to the instruction generator:
-  --cmp_opts "+define+RISCV_CORE_SETTING=<your_core_setting.sv>"
 
 You can refer to [riscv-dv extension for ibex](https://github.com/lowRISC/ibex/blob/master/dv/uvm/Makefile#L68) for a working example.
 

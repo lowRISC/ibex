@@ -396,17 +396,17 @@ class riscv_instr_base extends uvm_object;
   `add_instr(AMOMAXU_W, R_FORMAT, AMO, RV32A)
 
   // RV64A
-  `add_instr(LR_D,      R_FORMAT, LOAD, RV32A)
-  `add_instr(SC_D,      R_FORMAT, STORE, RV32A)
-  `add_instr(AMOSWAP_D, R_FORMAT, AMO, RV32A)
-  `add_instr(AMOADD_D,  R_FORMAT, AMO, RV32A)
-  `add_instr(AMOAND_D,  R_FORMAT, AMO, RV32A)
-  `add_instr(AMOOR_D,   R_FORMAT, AMO, RV32A)
-  `add_instr(AMOXOR_D,  R_FORMAT, AMO, RV32A)
-  `add_instr(AMOMIN_D,  R_FORMAT, AMO, RV32A)
-  `add_instr(AMOMAX_D,  R_FORMAT, AMO, RV32A)
-  `add_instr(AMOMINU_D, R_FORMAT, AMO, RV32A)
-  `add_instr(AMOMAXU_D, R_FORMAT, AMO, RV32A)
+  `add_instr(LR_D,      R_FORMAT, LOAD, RV64A)
+  `add_instr(SC_D,      R_FORMAT, STORE, RV64A)
+  `add_instr(AMOSWAP_D, R_FORMAT, AMO, RV64A)
+  `add_instr(AMOADD_D,  R_FORMAT, AMO, RV64A)
+  `add_instr(AMOAND_D,  R_FORMAT, AMO, RV64A)
+  `add_instr(AMOOR_D,   R_FORMAT, AMO, RV64A)
+  `add_instr(AMOXOR_D,  R_FORMAT, AMO, RV64A)
+  `add_instr(AMOMIN_D,  R_FORMAT, AMO, RV64A)
+  `add_instr(AMOMAX_D,  R_FORMAT, AMO, RV64A)
+  `add_instr(AMOMINU_D, R_FORMAT, AMO, RV64A)
+  `add_instr(AMOMAXU_D, R_FORMAT, AMO, RV64A)
 
   // Supervisor Instructions
   `add_instr(SFENCE_VMA, R_FORMAT,SYNCH,RV32I)

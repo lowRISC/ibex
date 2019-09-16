@@ -28,19 +28,14 @@ class riscv_load_store_base_instr_stream extends riscv_mem_access_stream;
   rand int unsigned  num_load_store;
   rand int unsigned  num_mixed_instr;
   rand int           base;
-  rand int           offset[];
-  rand int           addr[];
+  int                offset[];
+  int                addr[];
   rand int unsigned  data_page_id;
   rand riscv_reg_t   rs1_reg;
   rand locality_e    locality;
   rand int           max_load_store_offset;
 
   `uvm_object_utils(riscv_load_store_base_instr_stream)
-
-  constraint size_c {
-    offset.size() == num_load_store;
-    addr.size() == num_load_store;
-  }
 
   constraint rs1_c {
     !(rs1_reg inside {cfg.reserved_regs, reserved_rd, ZERO});
@@ -49,8 +44,6 @@ class riscv_load_store_base_instr_stream extends riscv_mem_access_stream;
   constraint addr_c {
     solve data_page_id before max_load_store_offset;
     solve max_load_store_offset before base;
-    solve max_load_store_offset before addr;
-    solve max_load_store_offset before offset;
     data_page_id < max_data_page_id;
     foreach (data_page[i]) {
       if (i == data_page_id) {
@@ -58,57 +51,48 @@ class riscv_load_store_base_instr_stream extends riscv_mem_access_stream;
       }
     }
     base inside {[0 : max_load_store_offset-1]};
-    foreach(offset[i]) {
-      addr[i] == base + offset[i];
-      addr[i] inside {[0 : max_load_store_offset - 1]};
-    }
-  }
-
-  constraint offset_locality_c {
-    solve locality before offset;
-    foreach(offset[i]) {
-      if (locality == NARROW) {
-        soft offset[i] inside {[-16:16]};
-      } else if (locality == HIGH) {
-        soft offset[i] inside {[-64:64]};
-      } else if (locality == MEDIUM) {
-        soft offset[i] inside {[-256:256]};
-      } else if (locality == SPARSE) {
-        soft offset[i] inside {[-2048:2047]};
-      }
-    }
   }
 
   function new(string name = "");
     super.new(name);
-    instr_list.rand_mode(0);
+  endfunction
+
+  virtual function void randomize_offset();
+    int offset_, addr_;
+    offset = new[num_load_store];
+    addr = new[num_load_store];
+    for (int i=0; i<num_load_store; i++) begin
+      if (!std::randomize(offset_, addr_) with {
+        // Locality
+        if (locality == NARROW) {
+          soft offset_ inside {[-16:16]};
+        } else if (locality == HIGH) {
+          soft offset_ inside {[-64:64]};
+        } else if (locality == MEDIUM) {
+          soft offset_ inside {[-256:256]};
+        } else if (locality == SPARSE) {
+          soft offset_ inside {[-2048:2047]};
+        }
+        addr_ == base + offset_;
+        addr_ inside {[0 : max_load_store_offset - 1]};
+      }) begin
+        `uvm_fatal(`gfn, "Cannot randomize load/store offset")
+      end
+      offset[i] = offset_;
+      addr[i] = addr_;
+    end
   endfunction
 
   function void post_randomize();
+    randomize_offset();
     // rs1 cannot be modified by other instructions
     if(!(rs1_reg inside {reserved_rd})) begin
       reserved_rd = {reserved_rd, rs1_reg};
     end
     gen_load_store_instr();
-    add_mixed_instr();
-    add_rs1_init_la_instr();
+    add_mixed_instr(num_mixed_instr);
+    add_rs1_init_la_instr(rs1_reg, data_page_id, base);
     super.post_randomize();
-  endfunction
-
-  // Use "la" instruction to initialize the base regiseter
-  virtual function void add_rs1_init_la_instr();
-    riscv_pseudo_instr la_instr;
-    la_instr = riscv_pseudo_instr::type_id::create("la_instr");
-    `DV_CHECK_RANDOMIZE_WITH_FATAL(la_instr,
-                                   pseudo_instr_name == LA;
-                                   rd == rs1_reg;,
-                                   "Cannot randomize la_instr")
-    if(kernel_mode) begin
-      la_instr.imm_str = $sformatf("%s+%0d", cfg.s_mem_region[data_page_id].name, base);
-    end else begin
-      la_instr.imm_str = $sformatf("%s+%0d", cfg.mem_region[data_page_id].name, base);
-    end
-    instr_list.push_front(la_instr);
   endfunction
 
   // Generate each load/store instruction
@@ -136,7 +120,7 @@ class riscv_load_store_base_instr_stream extends riscv_mem_access_stream;
         allowed_instr = {LH, LHU, SH, allowed_instr};
       end
       if (!cfg.enable_unaligned_load_store) begin
-        if (addr[i][1:0] == 2'b00) begin
+        if (addr[i] % 4 == 0) begin
           allowed_instr = {LW, SW, allowed_instr};
           if((offset[i] inside {[0:127]}) && (offset[i] % 4 == 0) &&
              (RV32C inside {riscv_instr_pkg::supported_isa}) &&
@@ -144,7 +128,7 @@ class riscv_load_store_base_instr_stream extends riscv_mem_access_stream;
             allowed_instr = {C_LW, C_SW, allowed_instr};
           end
         end
-        if ((XLEN >= 64) && (addr[i][2:0] == 3'b000)) begin
+        if ((XLEN >= 64) && (addr[i] % 8 == 0)) begin
           allowed_instr = {LWU, LD, SD, allowed_instr};
           if((offset[i] inside {[0:255]}) && (offset[i] % 8 == 0) &&
              (RV64C inside {riscv_instr_pkg::supported_isa} &&
@@ -173,17 +157,6 @@ class riscv_load_store_base_instr_stream extends riscv_mem_access_stream;
       instr.set_imm(offset[i]);
       instr.process_load_store = 0;
       instr_list.push_back(instr);
-    end
-  endfunction
-
-  // Insert some other instructions to mix with load/store instruction
-  virtual function void add_mixed_instr();
-    riscv_instr_base instr;
-    setup_allowed_instr(1, 1);
-    for(int i = 0; i < num_mixed_instr; i ++) begin
-      instr = riscv_instr_base::type_id::create("instr");
-      randomize_instr(instr);
-      insert_instr(instr);
     end
   endfunction
 
