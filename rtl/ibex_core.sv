@@ -689,7 +689,7 @@ module ibex_core #(
       rvfi_halt              <= '0;
       rvfi_trap              <= illegal_insn_id;
       rvfi_intr              <= rvfi_intr_d;
-      rvfi_order             <= rvfi_order + rvfi_valid;
+      rvfi_order             <= rvfi_order + 64'(rvfi_valid);
       rvfi_insn              <= rvfi_insn_id;
       rvfi_mode              <= PRIV_LVL_M; // TODO: Update for user mode support
       rvfi_rs1_addr          <= rvfi_rs1_addr_id;
@@ -779,7 +779,7 @@ module ibex_core #(
         rvfi_rd_wdata_d   = '0;
       end else begin
         rvfi_rd_addr_d = rvfi_rd_addr_id;
-        if (!rvfi_rd_addr_id) begin
+        if (rvfi_rd_addr_id == 5'h0) begin
           rvfi_rd_wdata_d = '0;
         end else begin
           rvfi_rd_wdata_d = rvfi_rd_wdata_id;
