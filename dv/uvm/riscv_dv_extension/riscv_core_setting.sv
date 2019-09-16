@@ -37,6 +37,10 @@ riscv_instr_group_t supported_isa[$] = {RV32I, RV32M, RV32C};
 // Interrupt mode support
 mtvec_mode_t supported_interrupt_mode[$] = {VECTORED};
 
+// The number of interrupt vectors to be generated, only used if VECTORED interrupt mode is
+// supported
+int max_interrupt_vector_num = 32;
+
 // Debug mode support
 bit support_debug_mode = 1;
 
@@ -45,8 +49,6 @@ bit support_umode_trap = 0;
 
 // Support sfence.vma instruction
 bit support_sfence = 0;
-
-int max_interrupt_vector_num = 32;
 
 //-----------------------------------------------------------------------------
 // Kernel section setting, used by supervisor mode programs

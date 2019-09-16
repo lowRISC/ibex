@@ -201,16 +201,6 @@
   sim_opts: >
     +require_signature_addr=1
 
-- test: riscv_ebreak_test
-  description: >
-    Ebreak instructions will be inserted into the M mode code, ibex should handle them normally.
-  iterations: 5
-  gen_test: riscv_rand_instr_test
-  gen_opts: >
-    +no_ebreak=0
-    +instr_cnt=6000
-  rtl_test: core_ibex_base_test
-
 - test: riscv_debug_ebreak_test
   description: >
     A directed ebreak sequence will be inserted into the debug rom, upon encountering it,
@@ -259,14 +249,15 @@
 - test: riscv_interrupt_test
   description: >
     Random instruction test with complete interrupt handling
-  iterations: 0
+  iterations: 10
   gen_test: riscv_rand_instr_test
   gen_opts: >
     +require_signature_addr=1
+    +enable_interrupt=1
   rtl_test: core_ibex_debug_intr_basic_test
   sim_opts: >
     +require_signature_addr=1
-    +enable_irq_stress_seq=1
+    +enable_irq_seq=1
   compare_opts:
     compare_final_value_only: 1
 

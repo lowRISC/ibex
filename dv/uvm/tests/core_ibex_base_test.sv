@@ -10,7 +10,6 @@ class core_ibex_base_test extends uvm_test;
   virtual core_ibex_dut_probe_if                  dut_vif;
   mem_model_pkg::mem_model                        mem;
   core_ibex_vseq                                  vseq;
-  irq_seq                                         irq_seq_h;
   int unsigned                                    timeout_in_cycles = 3000000;
   // If no signature_addr handshake functionality is desired between the testbench and the generated
   // code, the test will wait for the specifield number of cycles before starting stimulus
@@ -19,6 +18,7 @@ class core_ibex_base_test extends uvm_test;
   bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0]    signature_data_q[$];
   bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0]    signature_data;
   uvm_tlm_analysis_fifo #(ibex_mem_intf_seq_item) item_collected_port;
+  uvm_tlm_analysis_fifo #(irq_seq_item)           irq_collected_port;
 
   `uvm_component_utils(core_ibex_base_test)
 
@@ -28,6 +28,7 @@ class core_ibex_base_test extends uvm_test;
     ibex_report_server = new();
     uvm_report_server::set_server(ibex_report_server);
     item_collected_port = new("item_collected_port_test", this);
+    irq_collected_port  = new("irq_collected_port_test", this);
   endfunction
 
   virtual function void build_phase(uvm_phase phase);
@@ -52,6 +53,9 @@ class core_ibex_base_test extends uvm_test;
   virtual function void connect_phase(uvm_phase phase);
     super.connect_phase(phase);
     env.data_if_slave_agent.monitor.item_collected_port.connect(this.item_collected_port.analysis_export);
+    if (cfg.enable_irq_seq) begin
+      env.irq_agent.monitor.irq_port.connect(this.irq_collected_port.analysis_export);
+    end
   endfunction
 
   virtual task run_phase(uvm_phase phase);
@@ -165,7 +169,7 @@ class core_ibex_base_test extends uvm_test;
 
   // Gets the next CORE_STATUS signature write and compares it against the provided core_status
   // type, throws uvm_error on mismatch
-  virtual task check_next_core_status(core_status_t core_status, error_msg="");
+  virtual task check_next_core_status(core_status_t core_status, string error_msg="");
     wait_for_mem_txn(cfg.signature_addr, CORE_STATUS);
     signature_data = signature_data_q.pop_front();
     if (signature_data != core_status) begin

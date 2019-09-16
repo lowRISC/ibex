@@ -143,6 +143,7 @@ def rtl_sim(sim_cmd, test_list, output_dir, bin_dir, lsf_cmd, seed, opts):
       rand_seed = get_seed(seed)
       test_sim_cmd = re.sub("<seed>", str(rand_seed), sim_cmd)
       if "sim_opts" in test:
+        test_sim_cmd += ' '
         test_sim_cmd += test['sim_opts']
       sim_dir = output_dir + ("/%s.%d" %(test['test'], i))
       run_cmd(("mkdir -p %s" % sim_dir))
