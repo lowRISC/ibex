@@ -61,6 +61,7 @@ targets:
       - files_lint
     parameters:
       - SYNTHESIS=true
+      - RVFI=true
     default_tool: verilator
     toplevel: ibex_core
     tools:
