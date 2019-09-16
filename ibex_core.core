@@ -46,6 +46,14 @@ parameters:
     datatype: bool
     paramtype: vlogdefine
 
+  RV32E:
+    datatype: bool
+    paramtype: vlogparam
+
+  RV32M:
+    datatype: bool
+    paramtype: vlogparam
+
 targets:
   default:
     filesets:
