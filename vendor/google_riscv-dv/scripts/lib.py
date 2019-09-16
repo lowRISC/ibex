@@ -24,6 +24,22 @@ import time
 import yaml
 import logging
 
+def setup_logging(verbose):
+  """Setup the root logger.
+
+  Args:
+    verbose: Verbose logging
+  """
+  if verbose:
+    logging.basicConfig(format="%(asctime)s %(filename)s:%(lineno)-5s %(levelname)-8s %(message)s",
+                        datefmt='%a, %d %b %Y %H:%M:%S',
+                        level=logging.DEBUG)
+  else:
+    logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s",
+                        datefmt='%a, %d %b %Y %H:%M:%S',
+                        level=logging.INFO)
+
+
 def read_yaml(yaml_file):
   """ Read YAML file to a dictionary
 
@@ -92,6 +108,7 @@ def run_cmd(cmd, timeout_s = 999):
   Returns:
     command output
   """
+  logging.debug(cmd)
   try:
     ps = subprocess.Popen(cmd,
                           shell=True,

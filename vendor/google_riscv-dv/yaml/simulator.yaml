@@ -15,6 +15,8 @@
 - tool: vcs
   compile_cmd:
     - "vcs -file <cwd>/vcs.compile.option.f
+            +incdir+<setting>
+            +incdir+<user_extension>
            -f <cwd>/files.f -full64
            -l <out>/compile.log
            -Mdir=<out>/vcs_simv.csrc
@@ -25,6 +27,8 @@
 - tool: ius
   compile_cmd:
     - "irun -64bit -access +rwc -f <cwd>/files.f
+            +incdir+<setting>
+            +incdir+<user_extension>
             -q -sv -uvm -vlog_ext +.vh -I.
             -uvmhome CDNS-1.2
             -elaborate
@@ -36,6 +40,8 @@
   compile_cmd:
     - "vmap mtiUvm $QUESTA_HOME/questasim/uvm-1.2"
     - "vlog -64
+      +incdir+<setting>
+      +incdir+<user_extension>
       -access=rwc
       -f <cwd>/files.f
       -sv
@@ -49,3 +55,20 @@
       -o design_opt"
   sim_cmd: >
     vsim -64 -c -do <cwd>/questa_sim.tcl design_opt <sim_opts>  -sv_seed <seed>
+
+- tool: dsim
+  env_var: DSIM,DSIM_LIB_PATH
+  compile_cmd:
+    - "mkdir -p <out>/dsim"
+    - "<DSIM> -sv -work <out>/dsim
+              -genimage image
+              +incdir+$UVM_HOME/src
+              $UVM_HOME/src/uvm_pkg.sv
+              +define+DSIM
+              +incdir+<setting>
+              +incdir+<user_extension>
+              -f <cwd>/files.f
+              -l <out>/dsim/compile.log <cmp_opts>"
+  sim_cmd: >
+    <DSIM> <sim_opts> -sv_seed <seed> -pli_lib <DSIM_LIB_PATH>/libuvm_dpi.so +acc+rwb -image image -work <out>/dsim
+

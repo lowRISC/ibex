@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+
+`include "uvm_macros.svh"
+
 // Base test
 class riscv_instr_base_test extends uvm_test;
 
@@ -32,7 +35,9 @@ class riscv_instr_base_test extends uvm_test;
 
   virtual function void build_phase(uvm_phase phase);
     super.build_phase(phase);
+    `uvm_info(`gfn, "Create configuration instance", UVM_LOW)
     cfg = riscv_instr_gen_config::type_id::create("cfg");
+    `uvm_info(`gfn, "Create configuration instance...done", UVM_LOW)
     uvm_config_db#(riscv_instr_gen_config)::set(null, "*", "instr_cfg", cfg);
     if(cfg.asm_test_suffix != "")
       asm_file_name = {asm_file_name, ".", cfg.asm_test_suffix};
@@ -91,7 +96,6 @@ class riscv_instr_base_test extends uvm_test;
     int fd;
     for(int i = 0; i < cfg.num_of_tests; i++) begin
       string test_name;
-      cfg = riscv_instr_gen_config::type_id::create("cfg");
       randomize_cfg();
       asm_gen = riscv_asm_program_gen::type_id::create("asm_gen");
       get_directed_instr_stream_opts();

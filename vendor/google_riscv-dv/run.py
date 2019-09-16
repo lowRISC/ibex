@@ -51,6 +51,11 @@ def get_generator_cmd(simulator, simulator_yaml):
       logging.info("Found matching simulator: %s" % entry['tool'])
       compile_cmd = entry['compile_cmd']
       sim_cmd = entry['sim_cmd']
+      if 'env_var' in entry:
+        for env_var in entry['env_var'].split(','):
+          for i in range(len(compile_cmd)):
+            compile_cmd[i] = re.sub("<"+env_var+">", get_env_var(env_var), compile_cmd[i])
+          sim_cmd = re.sub("<"+env_var+">", get_env_var(env_var), sim_cmd)
       return compile_cmd, sim_cmd
   logging.error("Cannot find RTL simulator %0s" % simulator)
   sys.exit(1)
@@ -102,7 +107,7 @@ def get_iss_cmd(base_cmd, elf, log):
 
 def gen(test_list, csr_file, end_signature_addr, isa, simulator,
         simulator_yaml, output_dir, sim_only, compile_only, lsf_cmd, seed,
-        cwd, cmp_opts, sim_opts, timeout_s):
+        cwd, cmp_opts, sim_opts, timeout_s, core_setting_dir, ext_dir):
   """Run the instruction generator
 
   Args:
@@ -120,6 +125,8 @@ def gen(test_list, csr_file, end_signature_addr, isa, simulator,
     cmp_opts              : Compile options for the generator
     sim_opts              : Simulation options for the generator
     timeout_s             : Timeout limit in seconds
+    core_setting_dir      : Path for riscv_core_setting.sv
+    ext_dir               : User extension directory
   """
   # Mutually exclusive options between compile_only and sim_only
   if compile_only and sim_only:
@@ -136,8 +143,17 @@ def gen(test_list, csr_file, end_signature_addr, isa, simulator,
       logging.info("Building RISC-V instruction generator")
       for cmd in compile_cmd:
         cmd = re.sub("<out>", os.path.abspath(output_dir), cmd)
+        if core_setting_dir == "":
+          cmd = re.sub("<setting>", "<cwd>/setting", cmd)
+        else:
+          cmd = re.sub("<setting>", core_setting_dir, cmd)
+        if ext_dir == "":
+          cmd = re.sub("<user_extension>", "<cwd>/user_extension", cmd)
+        else:
+          cmd = re.sub("<user_extension>", ext_dir, cmd)
         cmd = re.sub("<cwd>", cwd, cmd)
         cmd = re.sub("<cmp_opts>", cmp_opts, cmd)
+
         logging.debug("Compile command: %s" % cmd)
         logging.debug(run_cmd(cmd))
   # Run the instruction generator
@@ -352,28 +368,14 @@ def setup_parser():
                       help="RTL simulator setting YAML")
   parser.add_argument("--csr_yaml", type=str, default="",
                       help="CSR description file")
-
+  parser.add_argument("-cs", "--core_setting_dir", type=str, default="",
+                      help="Path for the riscv_core_setting.sv")
+  parser.add_argument("-ext", "--user_extension_dir", type=str, default="",
+                      help="Path for the user extension directory")
   parser.set_defaults(co=False)
   parser.set_defaults(so=False)
   parser.set_defaults(verbose=False)
-
   return parser
-
-
-def setup_logging(verbose):
-  """Setup the root logger.
-
-  Args:
-    verbose: Verbose logging
-  """
-  if verbose:
-    logging.basicConfig(format="%(asctime)s %(filename)s:%(lineno)-5s %(levelname)-8s %(message)s",
-                        datefmt='%a, %d %b %Y %H:%M:%S',
-                        level=logging.DEBUG)
-  else:
-    logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s",
-                        datefmt='%a, %d %b %Y %H:%M:%S',
-                        level=logging.INFO)
 
 
 def main():
@@ -416,7 +418,8 @@ def main():
     gen(matched_list, args.csr_yaml, args.end_signature_addr, args.isa,
         args.simulator, args.simulator_yaml, output_dir, args.so,
         args.co, args.lsf_cmd, args.seed, cwd, args.cmp_opts,
-        args.sim_opts, args.gen_timeout)
+        args.sim_opts, args.gen_timeout,
+        args.core_setting_dir, args.user_extension_dir)
 
   if not args.co:
     # Compile the assembly program to ELF, convert to plain binary
