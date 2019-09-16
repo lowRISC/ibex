@@ -9,6 +9,7 @@ filesets:
   files_cpp:
     files:
       - cpp/verilator_sim_ctrl.cc
+      - cpp/verilated_toplevel.cc
       - cpp/verilator_sim_ctrl.h: { is_include_file: true }
       - cpp/verilated_toplevel.h: { is_include_file: true }
     file_type: cppSource

@@ -5,18 +5,42 @@
 #ifndef VERILATED_TOPLEVEL_H_
 #define VERILATED_TOPLEVEL_H_
 
+#ifndef TOPLEVEL_NAME
+#error "TOPLEVEL_NAME must be set to the name of the toplevel."
+#endif
+
 #include <verilated.h>
+
+#define STR(s) #s
+#define STR_AND_EXPAND(s) STR(s)
+
+// Include Verilator-generated toplevel
+#define VERILATED_TOPLEVEL_HEADER_STR2(s) STR(V##s)
+#define VERILATED_TOPLEVEL_HEADER_STR(s) VERILATED_TOPLEVEL_HEADER_STR2(s)
+
+#include VERILATED_TOPLEVEL_HEADER_STR(TOPLEVEL_NAME.h)
+
+// Name of the Verilated class
+#define VERILATED_TOPLEVEL_NAME3(s) V##s
+#define VERILATED_TOPLEVEL_NAME2(s) VERILATED_TOPLEVEL_NAME3(s)
+#define VERILATED_TOPLEVEL_NAME VERILATED_TOPLEVEL_NAME2(TOPLEVEL_NAME)
+
+// VM_TRACE is defined by Verilator and passed through the command line as 1 or
+// 0. The code below serves as safety net only.
+#ifndef VM_TRACE
+#define VM_TRACE 0
+#endif
 
 // VM_TRACE_FMT_FST must be set by the user when calling Verilator with
 // --trace-fst. VM_TRACE is set by Verilator itself.
 #if VM_TRACE == 1
-#  ifdef VM_TRACE_FMT_FST
-#    include "verilated_fst_c.h"
-#    define VM_TRACE_CLASS_NAME VerilatedFstC
-#  else
-#    include "verilated_vcd_c.h"
-#    define VM_TRACE_CLASS_NAME VerilatedVcdC
-#  endif
+#ifdef VM_TRACE_FMT_FST
+#include "verilated_fst_c.h"
+#define VM_TRACE_CLASS_NAME VerilatedFstC
+#else
+#include "verilated_vcd_c.h"
+#define VM_TRACE_CLASS_NAME VerilatedVcdC
+#endif
 #endif
 
 #if VM_TRACE == 1
@@ -66,8 +90,11 @@ class VerilatedTracer {
 };
 #endif  // VM_TRACE == 1
 
+// Forward-declare for use in VerilatedToplevel
+class TOPLEVEL_NAME;
+
 /**
- * Pure abstract class (interface) for verilated toplevel modules
+ * Abstract class for verilated toplevel modules
  *
  * Verilator-produced toplevel modules do not have a common base class defining
  * the methods such as eval(); instead, they are only inheriting from the
@@ -95,29 +122,34 @@ class VerilatedToplevel {
   virtual void final() = 0;
   virtual const char *name() const = 0;
   virtual void trace(VerilatedTracer &tfp, int levels, int options) = 0;
+
+  /**
+   * Get the Verilator-generated device under test
+   *
+   * Use this method to access all public signals of the DUT:
+   *
+   * VerilatedToplevel &top;
+   * int clk_value = top->dut().IO_CLK;
+   * top->dut().IO_CLK = 1;
+   */
+  TOPLEVEL_NAME &dut();
 };
 
-#define STR(s) #s
-
+class TOPLEVEL_NAME : public VERILATED_TOPLEVEL_NAME, public VerilatedToplevel {
+ public:
+  TOPLEVEL_NAME(const char *name = "TOP")
+      : VERILATED_TOPLEVEL_NAME(name), VerilatedToplevel() {}
+  const char *name() const { return STR_AND_EXPAND(TOPLEVEL_NAME); }
+  void eval() { VERILATED_TOPLEVEL_NAME::eval(); }
+  void final() { VERILATED_TOPLEVEL_NAME::final(); }
+  void trace(VerilatedTracer &tfp, int levels, int options = 0) {
 #if VM_TRACE == 1
-#  define VERILATED_TOPLEVEL_TRACE_CALL(topname) \
-    V##topname::trace(static_cast<VM_TRACE_CLASS_NAME *>(tfp), levels, options);
+    VERILATED_TOPLEVEL_NAME::trace(static_cast<VM_TRACE_CLASS_NAME *>(tfp),
+                                   levels, options);
 #else
-#  define VERILATED_TOPLEVEL_TRACE_CALL(topname) \
     assert(0 && "Tracing not enabled.");
 #endif
-
-#define VERILATED_TOPLEVEL(topname)                                 \
-  class topname : public V##topname, public VerilatedToplevel {     \
-   public:                                                          \
-    topname(const char *name = "TOP")                               \
-        : V##topname(name), VerilatedToplevel() {}                  \
-    const char *name() const { return STR(topname); }               \
-    void eval() { V##topname::eval(); }                             \
-    void final() { V##topname::final(); }                           \
-    void trace(VerilatedTracer &tfp, int levels, int options = 0) { \
-      VERILATED_TOPLEVEL_TRACE_CALL(topname)                        \
-    }                                                               \
-  };
+  }
+};
 
 #endif  // VERILATED_TOPLEVEL_H_
