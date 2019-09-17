@@ -100,7 +100,7 @@ module ibex_riscv_compliance (
     .cfg_device_addr_mask
   );
 
-  ibex_core #(
+  ibex_core_tracing #(
       .DmHaltAddr(32'h00000000),
       .DmExceptionAddr(32'h00000000),
       .RV32E(RV32E),
