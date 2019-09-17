@@ -22,7 +22,6 @@ import random
 import re
 import subprocess
 import sys
-import logging
 
 sys.path.insert(0, "../../vendor/google_riscv-dv/scripts")
 sys.path.insert(0, "./riscv_dv_extension")
@@ -32,22 +31,6 @@ from ibex_log_to_trace_csv import *
 from spike_log_to_trace_csv import *
 from ovpsim_log_to_trace_csv import *
 from instr_trace_compare import *
-
-# TODO: Move this common function to riscv-dv/lib
-def setup_logging(verbose):
-  """Setup the root logger.
-
-  Args:
-    verbose: Verbose logging
-  """
-  if verbose:
-    logging.basicConfig(format="%(asctime)s %(filename)s:%(lineno)-5s %(levelname)-8s %(message)s",
-                        datefmt='%a, %d %b %Y %H:%M:%S',
-                        level=logging.DEBUG)
-  else:
-    logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s",
-                        datefmt='%a, %d %b %Y %H:%M:%S',
-                        level=logging.INFO)
 
 
 def process_cmd(keyword, cmd, opts, enable):
