@@ -9,8 +9,8 @@
 module ibex_core_tracing #(
     parameter int unsigned MHPMCounterNum   = 8,
     parameter int unsigned MHPMCounterWidth = 40,
-    parameter bit RV32E                     = 0,
-    parameter bit RV32M                     = 1,
+    parameter bit RV32E                     = 1'b0,
+    parameter bit RV32M                     = 1'b1,
     parameter int unsigned DmHaltAddr       = 32'h1A110800,
     parameter int unsigned DmExceptionAddr  = 32'h1A110808
 ) (
