@@ -89,13 +89,22 @@ def get_simulator_cmd(simulator, simulator_yaml, en_cov, en_wave):
       logging.info("Found matching simulator: %s" % entry['tool'])
       compile_cmd = entry['compile']['cmd']
       for i in range(len(compile_cmd)):
-        compile_cmd[i] = process_cmd("<cov_opts>", compile_cmd[i],
-                                     entry['compile']['cov_opts'], en_cov)
-        compile_cmd[i] = process_cmd("<wave_opts>", compile_cmd[i],
-                                     entry['compile']['wave_opts'], en_wave)
+        if 'cov_opts' in entry['compile']:
+          compile_cmd[i] = process_cmd("<cov_opts>", compile_cmd[i],
+                                       entry['compile']['cov_opts'], en_cov)
+        if 'wave_opts' in entry['compile']:
+          compile_cmd[i] = process_cmd("<wave_opts>", compile_cmd[i],
+                                       entry['compile']['wave_opts'], en_wave)
       sim_cmd = entry['sim']['cmd']
-      sim_cmd = process_cmd("<cov_opts>", sim_cmd, entry['sim']['cov_opts'], en_cov)
-      sim_cmd = process_cmd("<wave_opts>", sim_cmd, entry['sim']['wave_opts'], en_wave)
+      if 'cov_opts' in entry['sim']:
+        sim_cmd = process_cmd("<cov_opts>", sim_cmd, entry['sim']['cov_opts'], en_cov)
+      if 'wave_opts' in entry['sim']:
+        sim_cmd = process_cmd("<wave_opts>", sim_cmd, entry['sim']['wave_opts'], en_wave)
+      if 'env_var' in entry:
+        for env_var in entry['env_var'].split(','):
+          for i in range(len(compile_cmd)):
+            compile_cmd[i] = re.sub("<"+env_var+">", get_env_var(env_var), compile_cmd[i])
+          sim_cmd = re.sub("<"+env_var+">", get_env_var(env_var), sim_cmd)
       return compile_cmd, sim_cmd
   logging.info("Cannot find RTL simulator %0s" % simulator)
   sys.exit(1)

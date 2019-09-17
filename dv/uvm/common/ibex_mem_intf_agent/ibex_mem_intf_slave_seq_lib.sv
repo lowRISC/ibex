@@ -25,7 +25,7 @@ class ibex_mem_intf_slave_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
       bit [ADDR_WIDTH-1:0] aligned_addr;
       p_sequencer.addr_ph_port.get(item);
       req = ibex_mem_intf_seq_item::type_id::create("req");
-      req.randomize() with {
+      if (!req.randomize() with {
         addr       == item.addr;
         read_write == item.read_write;
         data       == item.data;
@@ -36,7 +36,9 @@ class ibex_mem_intf_slave_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
           [max_rvalid_delay/2 : max_rvalid_delay-1]   :/ 1,
           max_rvalid_delay                            :/ 1
         };
-      };
+      }) begin
+        `uvm_fatal(`gfn, "Cannot randomize slave request")
+      end
       aligned_addr = {req.addr[DATA_WIDTH-1:2], 2'b0};
       if(req.read_write == READ) begin : READ_block
         req.data = m_mem.read(aligned_addr);

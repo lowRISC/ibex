@@ -61,16 +61,19 @@ class ibex_mem_intf_slave_driver extends uvm_driver #(ibex_mem_intf_seq_item);
   virtual protected task send_grant();
     int gnt_delay;
     forever begin
+      vif.grant = 1'b1;
       while(vif.request !== 1'b1) begin
         @(negedge vif.clock);
       end
-      std::randomize(gnt_delay) with {
+      if (!std::randomize(gnt_delay) with {
         gnt_delay dist {
           min_grant_delay                         :/ 1,
           [min_grant_delay+1 : max_grant_delay-1] :/ 1,
           max_grant_delay                         :/ 1
         };
-      };
+      }) begin
+        `uvm_fatal(`gfn, $sformatf("Cannot randomize grant"))
+      end
       repeat(gnt_delay) @(negedge vif.clock);
       if(~vif.reset) begin
         vif.grant = 1'b1;
