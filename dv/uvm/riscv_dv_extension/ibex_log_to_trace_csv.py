@@ -11,6 +11,7 @@ import sys
 sys.path.insert(0, "../../vendor/google_riscv-dv/scripts")
 
 from riscv_trace_csv import *
+from lib import *
 
 
 def process_ibex_sim_log(ibex_log, csv):
@@ -19,7 +20,7 @@ def process_ibex_sim_log(ibex_log, csv):
     Extract instruction and affected register information from ibex simulation
     log and save to a standard CSV format.
     """
-    print("Processing ibex log : %s" % ibex_log)
+    logging.info("Processing ibex log : %s" % ibex_log)
     instr_cnt = 0
     ibex_instr = ""
 
@@ -44,7 +45,7 @@ def process_ibex_sim_log(ibex_log, csv):
                 trace_csv.write_trace_entry(rv_instr_trace)
                 instr_cnt += 1
 
-    print("Processed instruction count : %d" % instr_cnt)
+    logging.info("Processed instruction count : %d" % instr_cnt)
 
 
 def check_ibex_uvm_log(uvm_log, core_name, test_name, report, write=True):
