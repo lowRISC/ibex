@@ -169,7 +169,7 @@ class core_ibex_base_test extends uvm_test;
 
   // Gets the next CORE_STATUS signature write and compares it against the provided core_status
   // type, throws uvm_error on mismatch
-  virtual task check_next_core_status(core_status_t core_status, string error_msg="");
+  virtual task check_next_core_status(core_status_t core_status, string error_msg = "");
     wait_for_mem_txn(cfg.signature_addr, CORE_STATUS);
     signature_data = signature_data_q.pop_front();
     if (signature_data != core_status) begin

@@ -298,7 +298,8 @@ class core_ibex_dret_test extends core_ibex_directed_test;
       check_next_core_status(HANDLING_EXCEPTION, "Core did not jump to vectored exception handler");
       // The core will receive an illegal instruction handshake after jumping from the vectored trap
       // handler to the illegal instruction exception handler
-      check_next_core_status(ILLEGAL_INSTR_EXCEPTION, "Core did not treat dret like illegal instruction");
+      check_next_core_status(ILLEGAL_INSTR_EXCEPTION,
+                             "Core did not treat dret like illegal instruction");
     end
   endtask
 
@@ -317,7 +318,8 @@ class core_ibex_debug_ebreak_test extends core_ibex_directed_test;
     forever begin
       wait (dut_vif.ebreak === 1'b1);
       check_next_core_status(HANDLING_EXCEPTION, "Core did not jump to exception handler");
-      check_next_core_status(EBREAK_EXCEPTION, "Core did not jump from exception handler to ebreak handler");
+      check_next_core_status(EBREAK_EXCEPTION,
+                             "Core did not jump from exception handler to ebreak handler");
       wait (dut_vif.mret === 1'b1);
       // Want to wait until after the ebreak handler has finished to send debug stimulus, to avoid
       // nested trap scenarios
@@ -335,9 +337,11 @@ class core_ibex_debug_ebreak_test extends core_ibex_directed_test;
       wait (dut_vif.ebreak === 1'b1);
       // compare the second writes of dcsr and dpc against the captured values
       wait_for_csr_write(CSR_DCSR);
-      `DV_CHECK_EQ_FATAL(dcsr, signature_data, "ebreak inside the debug rom has changed the value of DCSR")
+      `DV_CHECK_EQ_FATAL(dcsr, signature_data,
+                         "ebreak inside the debug rom has changed the value of DCSR")
       wait_for_csr_write(CSR_DPC);
-      `DV_CHECK_EQ_FATAL(dpc, signature_data, "ebreak inside the debug rom has changed the value of DPC")
+      `DV_CHECK_EQ_FATAL(dpc, signature_data,
+                         "ebreak inside the debug rom has changed the value of DPC")
       wait (dut_vif.dret === 1'b1);
     end
   endtask
@@ -353,7 +357,8 @@ class core_ibex_debug_ebreakm_test extends core_ibex_directed_test;
   virtual task check_stimulus();
     // send a single debug request after core initialization to configure dcsr
     vseq.start_debug_single_seq();
-    check_next_core_status(IN_DEBUG_MODE, "Core did not enter debug mode after debug_req stimulus");
+    check_next_core_status(IN_DEBUG_MODE,
+                           "Core did not enter debug mode after debug_req stimulus");
     // Read dcsr and verify the appropriate ebreak(m/s/u) bit has been set based on the prv field,
     // as well as the cause field
     wait_for_csr_write(CSR_DCSR);
@@ -362,7 +367,8 @@ class core_ibex_debug_ebreakm_test extends core_ibex_directed_test;
     wait (dut_vif.dret === 1'b1);
     forever begin
       wait (dut_vif.ebreak === 1'b1);
-      check_next_core_status(IN_DEBUG_MODE, "Core did not enter debug mode after execution of ebreak");
+      check_next_core_status(IN_DEBUG_MODE,
+                             "Core did not enter debug mode after execution of ebreak");
       // Read dcsr and verify the appropriate ebreak(m/s/u) bit has been set based on the prv field
       wait_for_csr_write(CSR_DCSR);
       check_dcsr_ebreak();

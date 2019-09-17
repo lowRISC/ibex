@@ -75,6 +75,7 @@ CSR_OPTS=--csr_yaml=${CSR_FILE} \
      --lsf_cmd="${LSF_CMD}" \
      --core_setting_dir=${DV_DIR}/riscv_dv_extension \
      --user_extension_dir=${DV_DIR}/riscv_dv_extension \
+     --simulator=${SIMULATOR} \
      ${COMMON_OPTS} \
      ${CSR_OPTS} \
      --sim_opts="+uvm_set_type_override=riscv_asm_program_gen,ibex_asm_program_gen \
