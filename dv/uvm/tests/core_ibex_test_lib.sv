@@ -378,3 +378,62 @@ class core_ibex_debug_ebreakm_test extends core_ibex_directed_test;
   endtask
 
 endclass
+
+// Memory interface error test class
+class core_ibex_mem_error_test extends core_ibex_directed_test;
+
+  `uvm_component_utils(core_ibex_mem_error_test)
+  `uvm_component_new
+
+  int err_delay;
+
+  // check memory error inputs and verify that core jumps to correct exception handler
+  virtual task check_stimulus();
+    forever begin
+      while (!vseq.data_intf_seq.get_error_synch()) begin
+        clk_vif.wait_clks(1);
+      end
+      vseq.data_intf_seq.inject_error();
+      // Dmem interface error could be either a load or store operation
+      fork
+        begin
+          fork
+            check_mem_fault(LOAD_FAULT_EXCEPTION, EXC_CAUSE_LOAD_ACCESS_FAULT);
+            check_mem_fault(STORE_FAULT_EXCEPTION, EXC_CAUSE_STORE_ACCESS_FAULT);
+          join_any
+          disable fork;
+        end
+      join
+      // Random delay before injecting instruction fetch fault
+      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(err_delay, err_delay inside { [5:100] };)
+      clk_vif.wait_clks(err_delay);
+      while (!vseq.instr_intf_seq.get_error_synch()) begin
+        clk_vif.wait_clks(1);
+      end
+      `uvm_info(`gfn, $sformatf("vseq.instr_intf_seq.error_synch: 0x%0x", vseq.instr_intf_seq.get_error_synch()), UVM_LOW)
+      vseq.instr_intf_seq.inject_error();
+      `uvm_info(`gfn, $sformatf("vseq.instr_intf_seq.enable_error: 0x%0x", vseq.instr_intf_seq.enable_error), UVM_LOW)
+      check_mem_fault(INSTR_FAULT_EXCEPTION, EXC_CAUSE_INSTR_ACCESS_FAULT);
+      // Random delay before injecting this series of errors again
+      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(err_delay, err_delay inside { [250:750] };)
+      clk_vif.wait_clks(err_delay);
+    end
+  endtask
+
+  virtual task check_mem_fault(core_status_t fault_type, ibex_pkg::exc_cause_e exc_type);
+    bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] mcause;
+    forever begin
+      wait_for_core_status(HANDLING_EXCEPTION);
+      wait_for_core_status(fault_type);
+      wait_for_csr_write(CSR_MCAUSE);
+      mcause = signature_data;
+      `DV_CHECK_EQ_FATAL(mcause[ibex_mem_intf_agent_pkg::DATA_WIDTH-1], 1'b0,
+                         "mcause interrupt is not set to 1'b0")
+      `DV_CHECK_EQ_FATAL(mcause[ibex_mem_intf_agent_pkg::DATA_WIDTH-2:0],
+                         exc_type,
+                         "mcause.exception_code is encoding the wrong exception type")
+      wait(dut_vif.mret === 1'b1);
+    end
+  endtask
+
+endclass

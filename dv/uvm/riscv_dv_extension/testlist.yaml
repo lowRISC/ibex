@@ -35,11 +35,6 @@
   gen_opts: >
     +instr_cnt=10000
     +num_of_sub_program=5
-    +directed_instr_0=riscv_load_store_rand_instr_stream,4
-    +directed_instr_1=riscv_loop_instr,4
-    +directed_instr_2=riscv_hazard_instr_stream,4
-    +directed_instr_3=riscv_load_store_hazard_instr_stream,4
-    +directed_instr_4=riscv_multi_page_load_store_instr_stream,4
   rtl_test: core_ibex_base_test
 
 - test: riscv_rand_jump_test
@@ -282,3 +277,17 @@
     +directed_instr_2=riscv_multi_page_load_store_instr_stream,20
     +enable_unaligned_load_store=1
   rtl_test: core_ibex_base_test
+
+- test: riscv_mem_error_test
+  description: >
+    Normal random instruction test, but randomly insert instruction fetch or memory load/store errors
+  iterations: 5
+  gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +require_signature_addr=1
+    +instr_cnt=10000
+  rtl_test: core_ibex_mem_error_test
+  sim_opts: >
+    +require_signature_addr=1
+  compare_opts:
+    compare_final_value_only: 1
