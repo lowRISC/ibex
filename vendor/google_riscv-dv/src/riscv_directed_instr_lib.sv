@@ -168,7 +168,7 @@ class riscv_jump_instr extends riscv_rand_instr_stream;
     riscv_instr_base instr[];
     `DV_CHECK_RANDOMIZE_WITH_FATAL(jump,
       (use_jalr) -> (instr_name == JALR);
-      instr_name dist {JAL := 1, JALR := 1};
+      instr_name dist {JAL := 1, JALR := 9};
       rd == RA;
       rs1 == gpr;
     )

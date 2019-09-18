@@ -49,9 +49,9 @@ class riscv_instr_gen_config extends uvm_object;
   // Priviledged mode after boot
   rand privileged_mode_t init_privileged_mode;
 
-  rand bit[XLEN-1:0] mstatus, mie,
-                     sstatus, sie,
-                     ustatus, uie;
+  rand bit[XLEN-1:0]     mstatus, mie,
+                         sstatus, sie,
+                         ustatus, uie;
 
   // Key fields in xSTATUS
   // Memory protection bits
@@ -286,7 +286,7 @@ class riscv_instr_gen_config extends uvm_object;
   // You can modify this constraint if your ISS support different set of delegations
   constraint delegation_c {
     foreach(m_mode_exception_delegation[i]) {
-      if(!support_supervisor_mode) {
+      if(!support_supervisor_mode || no_delegation) {
         m_mode_exception_delegation[i] == 0;
       }
       if(!(i inside {INSTRUCTION_ADDRESS_MISALIGNED, BREAKPOINT, ECALL_UMODE,
@@ -295,7 +295,7 @@ class riscv_instr_gen_config extends uvm_object;
       }
     }
     foreach(m_mode_interrupt_delegation[i]) {
-      if(!support_supervisor_mode) {
+      if(!support_supervisor_mode || no_delegation) {
         m_mode_interrupt_delegation[i] == 0;
       }
       if(!(i inside {S_SOFTWARE_INTR, S_TIMER_INTR, S_EXTERNAL_INTR})) {

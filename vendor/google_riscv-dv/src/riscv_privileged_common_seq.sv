@@ -55,10 +55,8 @@ class riscv_privileged_common_seq extends uvm_sequence;
   virtual function void setup_mmode_reg(privileged_mode_t mode, ref riscv_privil_reg regs[$]);
     mstatus = riscv_privil_reg::type_id::create("mstatus");
     mstatus.init_reg(MSTATUS);
-    `uvm_info(`gfn, $sformatf("mstatus_val: 0x%0x", cfg.mstatus), UVM_LOW)
     mstatus.set_val({cfg.mstatus[XLEN-1:XLEN-21], cfg.mstatus_tvm, cfg.mstatus_mxr,
                      cfg.mstatus_sum, cfg.mstatus_mprv, cfg.mstatus[16:0]});
-    `DV_CHECK_RANDOMIZE_FATAL(mstatus, "cannot randomize mstatus");
     if(XLEN==64) begin
       mstatus.set_field("UXL", 2'b10);
       mstatus.set_field("SXL", 2'b10);
@@ -80,6 +78,7 @@ class riscv_privileged_common_seq extends uvm_sequence;
     mstatus.set_field("SIE",  cfg.enable_interrupt);
     mstatus.set_field("UPIE", cfg.enable_interrupt);
     mstatus.set_field("UIE", riscv_instr_pkg::support_umode_trap);
+    `uvm_info(`gfn, $sformatf("mstatus_val: 0x%0x", mstatus.get_val()), UVM_LOW)
     regs.push_back(mstatus);
     // Enable external and timer interrupt
     if (MIE inside {implemented_csr}) begin

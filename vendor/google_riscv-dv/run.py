@@ -240,6 +240,45 @@ def gcc_compile(test_list, output_dir, isa, mabi, opts):
       logging.debug(output)
 
 
+def run_assembly(asm_test, iss_yaml, isa, mabi, iss):
+  """Run a directed assembly test with spike
+
+  Args:
+    asm_tset   : Assembly test file
+    iss_yaml   : ISS configuration file in YAML format
+    isa        : ISA variant passed to the ISS
+    mabi       : MABI variant passed to GCC
+    iss        : Instruction set simulators
+  """
+  asm = asm_test
+  elf = asm_test + ".o"
+  binary = asm_test + ".bin"
+  log = asm_test + ".log"
+  logging.info("Compiling assembly test : %s" % asm)
+  # gcc comilation
+  cmd = ("%s -static -mcmodel=medany \
+         -fvisibility=hidden -nostdlib \
+         -nostartfiles %s \
+         -I%s/user_extension \
+         -T%s/scripts/link.ld -o %s " % \
+         (get_env_var("RISCV_GCC"), asm, get_env_var("RISCV_DV_ROOT"),
+          get_env_var("RISCV_DV_ROOT"), elf))
+  cmd += (" -march=%s" % isa)
+  cmd += (" -mabi=%s" % mabi)
+  logging.info("Compiling %s" % asm)
+  output = subprocess.check_output(cmd.split())
+  # Convert the ELF to plain binary, used in RTL sim
+  logging.info("Converting to %s" % binary)
+  cmd = ("%s -O binary %s %s" % (get_env_var("RISCV_OBJCOPY"), elf, binary))
+  output = subprocess.check_output(cmd.split())
+  logging.debug(output)
+  base_cmd = parse_iss_yaml(iss, iss_yaml, isa)
+  logging.info("[%0s] Running ISS simulation: %s" % (iss, elf))
+  cmd = get_iss_cmd(base_cmd, elf, log)
+  run_cmd(cmd, 20)
+  logging.info("[%0s] Running ISS simulation: %s ...done" % (iss, elf))
+
+
 def iss_sim(test_list, output_dir, iss_list, iss_yaml, isa, timeout_s):
   """Run ISS simulation with the generated test program
 
@@ -372,6 +411,8 @@ def setup_parser():
                       help="Path for the riscv_core_setting.sv")
   parser.add_argument("-ext", "--user_extension_dir", type=str, default="",
                       help="Path for the user extension directory")
+  parser.add_argument("--asm_test", type=str, default="",
+                      help="Directed assembly test")
   parser.set_defaults(co=False)
   parser.set_defaults(so=False)
   parser.set_defaults(verbose=False)
@@ -397,6 +438,10 @@ def main():
 
   if not args.testlist:
     args.testlist = cwd + "/yaml/testlist.yaml"
+
+  if args.asm_test != "":
+    run_assembly(args.asm_test, args.iss_yaml, args.isa, args.mabi, args.iss)
+    return
 
   # Create output directory
   if args.o is None:
