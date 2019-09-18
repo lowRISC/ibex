@@ -469,7 +469,9 @@ module ibex_id_stage #(
   // being executed. This is the case if the current instr is either:
   // - a new instr (not yet done)
   // - a multicycle instr that is not yet done
-  assign instr_executing = instr_new_i | (instr_multicycle & ~instr_multicycle_done_q);
+  // An instruction error will suppress any requests or register writes
+  assign instr_executing = (instr_new_i | (instr_multicycle & ~instr_multicycle_done_q)) &
+                           ~instr_fetch_err_i;
   assign data_req_id     = instr_executing ? data_req_dec  : 1'b0;
   assign mult_en_id      = instr_executing ? mult_en_dec   : 1'b0;
   assign div_en_id       = instr_executing ? div_en_dec    : 1'b0;
@@ -536,7 +538,7 @@ module ibex_id_stage #(
       IDLE: begin
         // only detect multicycle when instruction is new, do not re-detect after
         // execution (when waiting for next instruction from IF stage)
-        if (instr_new_i) begin
+        if (instr_new_i & ~instr_fetch_err_i) begin
           unique case (1'b1)
             data_req_dec: begin
               // LSU operation

@@ -147,6 +147,7 @@ module ibex_core #(
 
   // CSR control
   logic        csr_access;
+  logic        valid_csr_id;
   csr_op_e     csr_op;
   csr_num_e    csr_addr;
   logic [31:0] csr_rdata;
@@ -554,6 +555,9 @@ module ibex_core #(
   assign perf_load  = data_req_o & data_gnt_i & (~data_we_o);
   assign perf_store = data_req_o & data_gnt_i & data_we_o;
 
+  // CSR access is qualified by instruction fetch error
+  assign valid_csr_id = instr_new_id & ~instr_fetch_err;
+
   ibex_cs_registers #(
       .MHPMCounterNum   ( MHPMCounterNum   ),
       .MHPMCounterWidth ( MHPMCounterWidth ),
@@ -618,7 +622,7 @@ module ibex_core #(
       .csr_mtval_i             ( csr_mtval              ),
       .illegal_csr_insn_o      ( illegal_csr_insn_id    ),
 
-      .instr_new_id_i          ( instr_new_id           ),
+      .instr_new_id_i          ( valid_csr_id           ),
 
       // performance counter related signals
       .instr_ret_i             ( instr_ret              ),
