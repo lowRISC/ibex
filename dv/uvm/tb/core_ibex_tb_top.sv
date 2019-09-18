@@ -38,11 +38,11 @@ module core_ibex_tb_top;
     .data_gnt_i(data_mem_vif.grant),
     .data_rvalid_i(data_mem_vif.rvalid),
     .data_rdata_i(data_mem_vif.rdata),
-    .data_err_i(0),
+    .data_err_i(data_mem_vif.error),
     .instr_gnt_i(instr_mem_vif.grant),
     .instr_rvalid_i(instr_mem_vif.rvalid),
     .instr_rdata_i(instr_mem_vif.rdata),
-    .instr_err_i(0)
+    .instr_err_i(instr_mem_vif.error)
   );
 
   // Data load/store vif connection

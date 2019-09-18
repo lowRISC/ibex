@@ -16,12 +16,10 @@ class ibex_mem_intf_slave_driver extends uvm_driver #(ibex_mem_intf_seq_item);
   `uvm_component_utils(ibex_mem_intf_slave_driver)
   `uvm_component_new
 
-  mailbox #(ibex_mem_intf_seq_item) grant_queue;
   mailbox #(ibex_mem_intf_seq_item) rdata_queue;
 
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
-    grant_queue = new();
     rdata_queue = new();
     if(!uvm_config_db#(virtual ibex_mem_intf)::get(this, "", "vif", vif))
       `uvm_fatal("NOVIF",{"virtual interface must be set for: ",get_full_name(),".vif"});
@@ -39,6 +37,7 @@ class ibex_mem_intf_slave_driver extends uvm_driver #(ibex_mem_intf_seq_item);
     vif.rvalid  <= 1'b0;
     vif.grant   <= 1'b0;
     vif.rdata   <= 'b0;
+    vif.error   <= 1'b0;
   endtask : reset_signals
 
   virtual protected task get_and_drive();
@@ -88,11 +87,13 @@ class ibex_mem_intf_slave_driver extends uvm_driver #(ibex_mem_intf_seq_item);
       @(posedge vif.clock);
       vif.rvalid <=  1'b0;
       vif.rdata  <= 'x;
+      vif.error  <= 1'b0;
       rdata_queue.get(tr);
       if(vif.reset) continue;
       repeat(tr.rvalid_delay) @(posedge vif.clock);
       if(~vif.reset) begin
         vif.rvalid <=  1'b1;
+        vif.error  <=  tr.error;
         vif.rdata  <=  tr.data;
       end
     end
