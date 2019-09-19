@@ -98,6 +98,7 @@ module core_ibex_tb_top;
     rst_n = 1'b0;
     repeat(100) @(posedge clk);
     rst_n = 1'b1;
+    dut_if.debug_req = 1'b0;
   end
 
 endmodule
