@@ -62,7 +62,7 @@ module ibex_core_tracing #(
 
   // ibex_tracer relies on the signals from the RISC-V Formal Interface
   `ifndef RVFI
-    Fatal error: RVFI needs to be defined globally.
+    $fatal("Fatal error: RVFI needs to be defined globally.");
   `endif
 
   logic        rvfi_valid;
