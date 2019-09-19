@@ -40,10 +40,8 @@ class irq_master_driver extends uvm_driver #(irq_seq_item);
   endtask : get_and_drive
 
   virtual protected task reset_signals();
-    forever begin
-      @(posedge vif.reset);
-      drive_reset_value();
-    end
+    @(negedge vif.reset);
+    drive_reset_value();
   endtask : reset_signals
 
   virtual protected task drive_seq_item (irq_seq_item trans);
