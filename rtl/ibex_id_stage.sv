@@ -376,7 +376,7 @@ module ibex_id_stage #(
   // Controller //
   ////////////////
 
-  assign illegal_insn_o = illegal_insn_dec | illegal_csr_insn_i;
+  assign illegal_insn_o = instr_valid_i & (illegal_insn_dec | illegal_csr_insn_i);
 
   ibex_controller controller_i (
       .clk_i                          ( clk_i                  ),

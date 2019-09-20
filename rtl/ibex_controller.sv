@@ -104,7 +104,7 @@ module ibex_controller (
 
   logic stall;
   logic halt_if;
-  logic halt_id;
+  logic flush_id;
   logic illegal_dret;
   logic illegal_insn;
   logic exc_req;
@@ -115,6 +115,14 @@ module ibex_controller (
 
   logic [3:0] mfip_id;
   logic       unused_csr_mtip;
+
+  logic ecall_insn;
+  logic mret_insn;
+  logic dret_insn;
+  logic wfi_insn;
+  logic ebrk_insn;
+  logic csr_pipe_flush;
+  logic instr_fetch_err;
 
 `ifndef SYNTHESIS
   // synopsys translate_off
@@ -137,19 +145,28 @@ module ibex_controller (
   assign load_err_d  = load_err_i;
   assign store_err_d = store_err_i;
 
+  // Decoder doesn't take instr_valid into account, factor it in here.
+  assign ecall_insn      = ecall_insn_i      & instr_valid_i;
+  assign mret_insn       = mret_insn_i       & instr_valid_i;
+  assign dret_insn       = dret_insn_i       & instr_valid_i;
+  assign wfi_insn        = wfi_insn_i        & instr_valid_i;
+  assign ebrk_insn       = ebrk_insn_i       & instr_valid_i;
+  assign csr_pipe_flush  = csr_pipe_flush_i  & instr_valid_i;
+  assign instr_fetch_err = instr_fetch_err_i & instr_valid_i;
+
   // "Executing DRET outside of Debug Mode causes an illegal instruction exception."
   // [Debug Spec v0.13.2, p.41]
-  assign illegal_dret = dret_insn_i & ~debug_mode_q;
+  assign illegal_dret = dret_insn & ~debug_mode_q;
   assign illegal_insn = illegal_insn_i | illegal_dret;
 
   // exception requests
-  assign exc_req     = ecall_insn_i | ebrk_insn_i | illegal_insn | instr_fetch_err_i;
+  assign exc_req     = ecall_insn | ebrk_insn | illegal_insn | instr_fetch_err;
 
   // LSU exception requests
   assign exc_req_lsu = store_err_i | load_err_i;
 
   // special requests: special instructions, pipeline flushes, exceptions...
-  assign special_req = mret_insn_i | dret_insn_i | wfi_insn_i | csr_pipe_flush_i |
+  assign special_req = mret_insn | dret_insn | wfi_insn | csr_pipe_flush |
       exc_req | exc_req_lsu;
 
   ////////////////
@@ -210,7 +227,7 @@ module ibex_controller (
     first_fetch_o         = 1'b0;
 
     halt_if               = 1'b0;
-    halt_id               = 1'b0;
+    flush_id              = 1'b0;
 
     debug_csr_save_o      = 1'b0;
     debug_cause_o         = DBG_CAUSE_EBREAK;
@@ -244,7 +261,7 @@ module ibex_controller (
         ctrl_busy_o   = 1'b0;
         instr_req_o   = 1'b0;
         halt_if       = 1'b1;
-        halt_id       = 1'b1;
+        flush_id      = 1'b1;
         ctrl_fsm_ns   = SLEEP;
       end
 
@@ -254,7 +271,7 @@ module ibex_controller (
         ctrl_busy_o   = 1'b0;
         instr_req_o   = 1'b0;
         halt_if       = 1'b1;
-        halt_id       = 1'b1;
+        flush_id      = 1'b1;
 
         // normal execution flow
         // in debug mode or single step mode we leave immediately (wfi=nop)
@@ -276,14 +293,14 @@ module ibex_controller (
           // going to sleep.
           ctrl_fsm_ns = IRQ_TAKEN;
           halt_if     = 1'b1;
-          halt_id     = 1'b1;
+          flush_id    = 1'b1;
         end
 
         // enter debug mode
         if (enter_debug_mode) begin
           ctrl_fsm_ns = DBG_TAKEN_IF;
           halt_if     = 1'b1;
-          halt_id     = 1'b1;
+          flush_id    = 1'b1;
         end
       end
 
@@ -298,9 +315,11 @@ module ibex_controller (
 
           // get ready for special instructions, exceptions, pipeline flushes
           if (special_req) begin
-            ctrl_fsm_ns    = FLUSH;
-            halt_if        = 1'b1;
-            halt_id        = 1'b1;
+            // Halt IF but don't flush ID. This leaves a valid instruction in
+            // ID so controller can determine appropriate action in the
+            // FLUSH state.
+            ctrl_fsm_ns = FLUSH;
+            halt_if     = 1'b1;
           // set PC in IF stage to branch or jump target
           end else if (branch_set_i || jump_set_i) begin
             pc_mux_o       = PC_JUMP;
@@ -334,13 +353,13 @@ module ibex_controller (
             // enter debug mode
             ctrl_fsm_ns = DBG_TAKEN_IF;
             halt_if     = 1'b1;
-            halt_id     = 1'b1;
+            flush_id    = 1'b1;
 
           end else if (handle_irq) begin
             // handle interrupt (not in debug mode)
             ctrl_fsm_ns = IRQ_TAKEN;
             halt_if     = 1'b1;
-            halt_id     = 1'b1;
+            flush_id    = 1'b1;
           end
         end
 
@@ -410,7 +429,7 @@ module ibex_controller (
         //
         // for 1. do not update dcsr and dpc, for 2. do so [Debug Spec v0.13.2, p.39]
         // jump to debug exception handler in debug memory
-        if (ebrk_insn_i) begin
+        if (ebrk_insn) begin
           pc_mux_o     = PC_EXC;
           pc_set_o     = 1'b1;
           exc_pc_mux_o = EXC_PC_DBD;
@@ -437,7 +456,7 @@ module ibex_controller (
       FLUSH: begin
         // flush the pipeline
         halt_if     = 1'b1;
-        halt_id     = 1'b1;
+        flush_id    = 1'b1;
         ctrl_fsm_ns = DECODE;
 
         // exceptions: set exception PC, save PC and exception cause
@@ -450,7 +469,7 @@ module ibex_controller (
           csr_save_cause_o = 1'b1;
 
           // set exception registers, priorities according to Table 3.7 of Privileged Spec v1.11
-          if (instr_fetch_err_i) begin
+          if (instr_fetch_err) begin
             exc_cause_o = EXC_CAUSE_INSTR_ACCESS_FAULT;
             csr_mtval_o = pc_id_i;
 
@@ -458,10 +477,10 @@ module ibex_controller (
             exc_cause_o = EXC_CAUSE_ILLEGAL_INSN;
             csr_mtval_o = instr_is_compressed_i ? {16'b0, instr_compressed_i} : instr_i;
 
-          end else if (ecall_insn_i) begin
+          end else if (ecall_insn) begin
             exc_cause_o = EXC_CAUSE_ECALL_MMODE;
 
-          end else if (ebrk_insn_i) begin
+          end else if (ebrk_insn) begin
             if (debug_mode_q) begin
               /*
                * EBREAK in debug mode re-enters debug mode
@@ -508,20 +527,20 @@ module ibex_controller (
 
         end else begin
           // special instructions and pipeline flushes
-          if (mret_insn_i) begin
+          if (mret_insn) begin
             pc_mux_o              = PC_ERET;
             pc_set_o              = 1'b1;
             csr_restore_mret_id_o = 1'b1;
             if (nmi_mode_q) begin
               nmi_mode_d          = 1'b0; // exit NMI mode
             end
-          end else if (dret_insn_i) begin
+          end else if (dret_insn) begin
             pc_mux_o              = PC_DRET;
             pc_set_o              = 1'b1;
             debug_mode_d          = 1'b0;
-          end else if (wfi_insn_i) begin
+          end else if (wfi_insn) begin
             ctrl_fsm_ns           = WAIT_SLEEP;
-          end else if (csr_pipe_flush_i && handle_irq) begin
+          end else if (csr_pipe_flush && handle_irq) begin
             // start handling IRQs when doing CSR-related pipeline flushes
             ctrl_fsm_ns           = IRQ_TAKEN;
           end
@@ -559,7 +578,10 @@ module ibex_controller (
 
   // kill instr in IF-ID pipeline reg that are done, or if a
   // multicycle instr causes an exception for example
-  assign instr_valid_clear_o = ~stall |  halt_id;
+  // halt_if is another kind of stall, where the instr_valid bit must remain
+  // set (unless flush_id is set also). It cannot be factored directly into
+  // stall as this causes a combinational loop.
+  assign instr_valid_clear_o = ~(stall | halt_if) | flush_id;
 
   // update registers
   always_ff @(posedge clk_i or negedge rst_ni) begin : update_regs
