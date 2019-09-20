@@ -101,13 +101,13 @@ module ibex_controller (
   logic debug_mode_q, debug_mode_d;
   logic load_err_q, load_err_d;
   logic store_err_q, store_err_d;
+  logic exc_req_q, exc_req_d;
+  logic illegal_insn_q, illegal_insn_d;
 
   logic stall;
   logic halt_if;
   logic flush_id;
   logic illegal_dret;
-  logic illegal_insn;
-  logic exc_req;
   logic exc_req_lsu;
   logic special_req;
   logic enter_debug_mode;
@@ -130,7 +130,7 @@ module ibex_controller (
   // glitches
   always_ff @(negedge clk_i) begin
     // print warning in case of decoding errors
-    if ((ctrl_fsm_cs == DECODE) && instr_valid_i && !instr_fetch_err_i && illegal_insn) begin
+    if ((ctrl_fsm_cs == DECODE) && instr_valid_i && !instr_fetch_err_i && illegal_insn_d) begin
       $display("%t: Illegal instruction (hart %0x) at PC 0x%h: 0x%h", $time, ibex_core.hart_id_i,
                ibex_id_stage.pc_id_i, ibex_id_stage.instr_rdata_i);
     end
@@ -157,17 +157,25 @@ module ibex_controller (
   // "Executing DRET outside of Debug Mode causes an illegal instruction exception."
   // [Debug Spec v0.13.2, p.41]
   assign illegal_dret = dret_insn & ~debug_mode_q;
-  assign illegal_insn = illegal_insn_i | illegal_dret;
+  // This is recorded in the illegal_insn_q flop to help timing.  Specifically
+  // it is needed to break the path from ibex_cs_registers/illegal_csr_insn_o
+  // to pc_set_o.  Clear when controller is in FLUSH so it won't remain set
+  // once illegal instruction is handled.
+  assign illegal_insn_d = (illegal_insn_i | illegal_dret) & (ctrl_fsm_cs != FLUSH);
 
   // exception requests
-  assign exc_req     = ecall_insn | ebrk_insn | illegal_insn | instr_fetch_err;
+  // requests are flopped in exc_req_q.  This is cleared when controller is in
+  // the FLUSH state so the cycle following exc_req_q won't remain set for an
+  // exception request that has just been handled.
+  assign exc_req_d = (ecall_insn | ebrk_insn | illegal_insn_d | instr_fetch_err) &
+                     (ctrl_fsm_cs != FLUSH);
 
   // LSU exception requests
   assign exc_req_lsu = store_err_i | load_err_i;
 
   // special requests: special instructions, pipeline flushes, exceptions...
   assign special_req = mret_insn | dret_insn | wfi_insn | csr_pipe_flush |
-      exc_req | exc_req_lsu;
+      exc_req_d | exc_req_lsu;
 
   ////////////////
   // Interrupts //
@@ -461,7 +469,7 @@ module ibex_controller (
 
         // exceptions: set exception PC, save PC and exception cause
         // exc_req_lsu is high for one clock cycle only (in DECODE)
-        if (exc_req || store_err_q || load_err_q) begin
+        if (exc_req_q || store_err_q || load_err_q) begin
           pc_set_o         = 1'b1;
           pc_mux_o         = PC_EXC;
           exc_pc_mux_o     = debug_mode_q ? EXC_PC_DBG_EXC : EXC_PC_EXC;
@@ -473,7 +481,7 @@ module ibex_controller (
             exc_cause_o = EXC_CAUSE_INSTR_ACCESS_FAULT;
             csr_mtval_o = pc_id_i;
 
-          end else if (illegal_insn) begin
+          end else if (illegal_insn_q) begin
             exc_cause_o = EXC_CAUSE_ILLEGAL_INSN;
             csr_mtval_o = instr_is_compressed_i ? {16'b0, instr_compressed_i} : instr_i;
 
@@ -544,7 +552,7 @@ module ibex_controller (
             // start handling IRQs when doing CSR-related pipeline flushes
             ctrl_fsm_ns           = IRQ_TAKEN;
           end
-        end // exc_req
+        end // exc_req_q
 
         // single stepping
         // set exception registers, but do not jump into handler [Debug Spec v0.13.2, p.44]
@@ -586,17 +594,21 @@ module ibex_controller (
   // update registers
   always_ff @(posedge clk_i or negedge rst_ni) begin : update_regs
     if (!rst_ni) begin
-      ctrl_fsm_cs  <= RESET;
-      nmi_mode_q   <= 1'b0;
-      debug_mode_q <= 1'b0;
-      load_err_q   <= 1'b0;
-      store_err_q  <= 1'b0;
+      ctrl_fsm_cs    <= RESET;
+      nmi_mode_q     <= 1'b0;
+      debug_mode_q   <= 1'b0;
+      load_err_q     <= 1'b0;
+      store_err_q    <= 1'b0;
+      exc_req_q      <= 1'b0;
+      illegal_insn_q <= 1'b0;
     end else begin
-      ctrl_fsm_cs  <= ctrl_fsm_ns;
-      nmi_mode_q   <= nmi_mode_d;
-      debug_mode_q <= debug_mode_d;
-      load_err_q   <= load_err_d;
-      store_err_q  <= store_err_d;
+      ctrl_fsm_cs    <= ctrl_fsm_ns;
+      nmi_mode_q     <= nmi_mode_d;
+      debug_mode_q   <= debug_mode_d;
+      load_err_q     <= load_err_d;
+      store_err_q    <= store_err_d;
+      exc_req_q      <= exc_req_d;
+      illegal_insn_q <= illegal_insn_d;
     end
   end
 
