@@ -172,9 +172,7 @@ class core_ibex_base_test extends uvm_test;
   virtual task check_next_core_status(core_status_t core_status, string error_msg = "");
     wait_for_mem_txn(cfg.signature_addr, CORE_STATUS);
     signature_data = signature_data_q.pop_front();
-    if (signature_data != core_status) begin
-      `uvm_error(`gfn, error_msg)
-    end
+    `DV_CHECK_EQ_FATAL(signature_data, core_status, error_msg);
   endtask
 
   // Waits for a write to the address of the specified CSR and retrieves the csr data
