@@ -39,7 +39,7 @@ HEX_RE   = re.compile(r"^0x")
 
 LOGGER = logging.getLogger()
 
-def process_spike_sim_log(spike_log, csv, full_trace = 1):
+def process_spike_sim_log(spike_log, csv, full_trace = 0):
   """Process SPIKE simulation log.
 
   Extract instruction and affected register information from spike simulation
@@ -50,7 +50,7 @@ def process_spike_sim_log(spike_log, csv, full_trace = 1):
   spike_instr = ""
 
   # Remove all the init spike boot instructions
-  cmd = ("sed -i '/3 0x0000000000001010/,$!d' %s" % spike_log)
+  cmd = ("sed -i '/core.*0x0000000000001010/,$!d' %s" % spike_log)
   os.system(cmd)
   # Remove all instructions after ecall (end of program excecution)
   cmd = ("sed -i '/ecall/q' %s" % spike_log)
@@ -363,7 +363,8 @@ def assign_operand(trace, operands, gpr):
     trace.rd = 'zero'
     trace.rd_val = '0'
     trace.rs1 = operands[0]
-    trace.rs1_val = gpr[trace.rs1]
+    if trace.rs1 in gpr:
+      trace.rs1_val = gpr[trace.rs1]
   elif trace.instr in ['li']:
     trace.instr = 'li'
   elif trace.instr[0:2] in ['lr', 'am', 'sc']:

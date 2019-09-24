@@ -685,6 +685,13 @@ package riscv_instr_pkg;
     MISA_EXT_Z
   } misa_ext_t;
 
+  typedef enum bit [1:0] {
+    NO_HAZARD,
+    RAW_HAZARD,
+    WAR_HAZARD,
+    WAW_HAZARD
+  } hazard_e;
+
   `include "riscv_core_setting.sv"
 
   typedef bit [15:0] program_id_t;

@@ -111,12 +111,23 @@ class riscv_illegal_instr extends uvm_object;
 
   constraint hint_instr_c {
     if (exception == kHintInstr) {
+      // C.ADDI
       ((c_msb == 3'b000) && (c_op == 2'b01) && ({instr_bin[12], instr_bin[6:2]} == 6'b0)) ||
+      // C.LI
       ((c_msb == 3'b010) && (c_op == 2'b01) && (instr_bin[11:7] == 5'b0)) ||
+      // C.SRAI64, C.SRLI64
+      ((c_msb == 3'b100) && (c_op == 2'b01) && (instr_bin[12:11] == 2'b00) &&
+                                               (instr_bin[6:2] == 5'b0)) ||
       // C.LUI
       ((c_msb == 3'b011) && (c_op == 2'b01) && (instr_bin[11:7] == 5'b0) &&
                                                ({instr_bin[12], instr_bin[6:2]} != 6'b0)) ||
-      ((c_msb == 3'b100) && (c_op == 2'b10) && (instr_bin[12:7] == 6'b0) &&
+      // C.SLLI
+      ((c_msb == 3'b000) && (c_op == 2'b10) && (instr_bin[11:7] == 5'b0))  ||
+      // C.SLLI64
+      ((c_msb == 3'b000) && (c_op == 2'b10) && (instr_bin[11:7] != 5'b0) && !instr_bin[12] &&
+                                               (instr_bin[6:2] == 0))  ||
+      // C.ADD
+      ((c_msb == 3'b100) && (c_op == 2'b10) && (instr_bin[11:7] == 5'b0) && instr_bin[12] &&
                                                (instr_bin[6:2] != 0));
     }
   }
