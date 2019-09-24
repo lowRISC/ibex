@@ -132,6 +132,12 @@ typedef enum logic [2:0] {
   IMM_B_INCR_ADDR
 } imm_b_sel_e;
 
+// Only used when BranchTargetALU == 1
+typedef enum logic {
+  JT_ALU,   // Jump target from main ALU
+  JT_BT_ALU // Jump target from specialised branch ALU
+} jt_mux_sel_e;
+
 // Regfile write data selection
 typedef enum logic [1:0] {
   RF_WD_LSU,

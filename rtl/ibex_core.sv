@@ -18,6 +18,7 @@ module ibex_core #(
     parameter int unsigned MHPMCounterWidth         = 40,
     parameter bit          RV32E                    = 1'b0,
     parameter bit          RV32M                    = 1'b1,
+    parameter bit          BranchTargetALU          = 1'b0,
     parameter              MultiplierImplementation = "fast",
     parameter bit          DbgTriggerEn             = 1'b0,
     parameter int unsigned DmHaltAddr               = 32'h1A110800,
@@ -134,6 +135,9 @@ module ibex_core #(
   alu_op_e     alu_operator_ex;
   logic [31:0] alu_operand_a_ex;
   logic [31:0] alu_operand_b_ex;
+
+  jt_mux_sel_e jt_mux_sel_ex;
+  logic [11:0] bt_operand_imm_ex;
 
   logic [31:0] alu_adder_result_ex;    // Used to forward computed address to LSU
   logic [31:0] regfile_wdata_ex;
@@ -356,8 +360,9 @@ module ibex_core #(
   //////////////
 
   ibex_id_stage #(
-      .RV32E ( RV32E ),
-      .RV32M ( RV32M )
+      .RV32E           ( RV32E ),
+      .RV32M           ( RV32M ),
+      .BranchTargetALU ( BranchTargetALU )
   ) id_stage_i (
       .clk_i                        ( clk                    ),
       .rst_ni                       ( rst_ni                 ),
@@ -400,6 +405,9 @@ module ibex_core #(
       .alu_operator_ex_o            ( alu_operator_ex        ),
       .alu_operand_a_ex_o           ( alu_operand_a_ex       ),
       .alu_operand_b_ex_o           ( alu_operand_b_ex       ),
+
+      .jt_mux_sel_ex_o              ( jt_mux_sel_ex          ),
+      .bt_operand_imm_o             ( bt_operand_imm_ex      ),
 
       .mult_en_ex_o                 ( mult_en_ex             ),
       .div_en_ex_o                  ( div_en_ex              ),
@@ -482,6 +490,7 @@ module ibex_core #(
 
   ibex_ex_block #(
       .RV32M                      ( RV32M                    ),
+      .BranchTargetALU            ( BranchTargetALU          ),
       .MultiplierImplementation   ( MultiplierImplementation )
   ) ex_block_i (
       .clk_i                      ( clk                      ),
@@ -491,6 +500,11 @@ module ibex_core #(
       .alu_operator_i             ( alu_operator_ex          ),
       .alu_operand_a_i            ( alu_operand_a_ex         ),
       .alu_operand_b_i            ( alu_operand_b_ex         ),
+
+      // Branch target ALU signal from ID stage
+      .jt_mux_sel_i               ( jt_mux_sel_ex            ),
+      .bt_operand_imm_i           ( bt_operand_imm_ex        ),
+      .pc_id_i                    ( pc_id                    ),
 
       // Multipler/Divider signal from ID stage
       .multdiv_operator_i         ( multdiv_operator_ex      ),

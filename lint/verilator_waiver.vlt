@@ -47,12 +47,12 @@ lint_off -msg UNUSED -file "*/rtl/ibex_register_file_fpga.sv" -lines 22
 // Signal is not used: clk_i
 // leaving clk and reset connected in-case we want to add assertions
 lint_off -msg UNUSED -file "*/rtl/ibex_compressed_decoder.sv" -lines 17
-lint_off -msg UNUSED -file "*/rtl/ibex_decoder.sv" -lines 24
+lint_off -msg UNUSED -file "*/rtl/ibex_decoder.sv" -lines 25
 
 // Signal is not used: rst_ni
 // leaving clk and reset connected in-case we want to add assertions
 lint_off -msg UNUSED -file "*/rtl/ibex_compressed_decoder.sv" -lines 18
-lint_off -msg UNUSED -file "*/rtl/ibex_decoder.sv" -lines 25
+lint_off -msg UNUSED -file "*/rtl/ibex_decoder.sv" -lines 26
 lint_off -msg UNUSED -file "*/rtl/ibex_register_file_fpga.sv" -lines 20
 
 // Signal unoptimizable: Feedback to clock or circular logic:

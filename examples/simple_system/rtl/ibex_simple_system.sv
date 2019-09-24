@@ -18,8 +18,9 @@ module ibex_simple_system (
   input IO_RST_N
 );
 
-  parameter bit RV32E = 0;
-  parameter bit RV32M = 1;
+  parameter bit RV32E           = 0;
+  parameter bit RV32M           = 1;
+  parameter bit BranchTargetALU = 0;
 
   logic clk_sys = 1'b0, rst_sys_n;
 
@@ -137,7 +138,8 @@ module ibex_simple_system (
       .DmHaltAddr(32'h00100000),
       .DmExceptionAddr(32'h00100000),
       .RV32E(RV32E),
-      .RV32M(RV32M)
+      .RV32M(RV32M),
+      .BranchTargetALU(BranchTargetALU)
     ) u_core (
       .clk_i                 (clk_sys),
       .rst_ni                (rst_sys_n),

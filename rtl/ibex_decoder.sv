@@ -18,8 +18,9 @@
 `include "prim_assert.sv"
 
 module ibex_decoder #(
-    parameter bit RV32E = 0,
-    parameter bit RV32M = 1
+    parameter bit RV32E           = 0,
+    parameter bit RV32M           = 1,
+    parameter bit BranchTargetALU = 0
 ) (
     input  logic                 clk_i,
     input  logic                 rst_ni,
@@ -40,14 +41,15 @@ module ibex_decoder #(
     input  logic                 illegal_c_insn_i,      // compressed instruction decode failed
 
     // immediates
-    output ibex_pkg::imm_a_sel_e imm_a_mux_sel_o,       // immediate selection for operand a
-    output ibex_pkg::imm_b_sel_e imm_b_mux_sel_o,       // immediate selection for operand b
-    output logic [31:0]          imm_i_type_o,
-    output logic [31:0]          imm_s_type_o,
-    output logic [31:0]          imm_b_type_o,
-    output logic [31:0]          imm_u_type_o,
-    output logic [31:0]          imm_j_type_o,
-    output logic [31:0]          zimm_rs1_type_o,
+    output ibex_pkg::imm_a_sel_e  imm_a_mux_sel_o,       // immediate selection for operand a
+    output ibex_pkg::imm_b_sel_e  imm_b_mux_sel_o,       // immediate selection for operand b
+    output ibex_pkg::jt_mux_sel_e jt_mux_sel_o,          // jump target selection
+    output logic [31:0]           imm_i_type_o,
+    output logic [31:0]           imm_s_type_o,
+    output logic [31:0]           imm_b_type_o,
+    output logic [31:0]           imm_u_type_o,
+    output logic [31:0]           imm_j_type_o,
+    output logic [31:0]           zimm_rs1_type_o,
 
     // register file
     output ibex_pkg::rf_wd_sel_e regfile_wdata_sel_o,   // RF write data selection
@@ -214,6 +216,8 @@ module ibex_decoder #(
     ecall_insn_o                = 1'b0;
     wfi_insn_o                  = 1'b0;
 
+    jt_mux_sel_o                = JT_ALU;
+
     opcode                      = opcode_e'(instr[6:0]);
 
     unique case (opcode)
@@ -224,6 +228,11 @@ module ibex_decoder #(
 
       OPCODE_JAL: begin   // Jump and Link
         jump_in_dec_o         = 1'b1;
+
+        if(BranchTargetALU) begin
+          jt_mux_sel_o = JT_ALU;
+        end
+
         if (instr_new_i) begin
           // Calculate jump target
           alu_op_a_mux_sel_o  = OP_A_CURRPC;
@@ -244,6 +253,11 @@ module ibex_decoder #(
 
       OPCODE_JALR: begin  // Jump and Link Register
         jump_in_dec_o         = 1'b1;
+
+        if(BranchTargetALU) begin
+          jt_mux_sel_o = JT_ALU;
+        end
+
         if (instr_new_i) begin
           // Calculate jump target
           alu_op_a_mux_sel_o  = OP_A_REG_A;
@@ -277,17 +291,28 @@ module ibex_decoder #(
           3'b111:  alu_operator_o = ALU_GEU;
           default: illegal_insn   = 1'b1;
         endcase
-        if (instr_new_i) begin
-          // Evaluate branch condition
+
+        if (BranchTargetALU) begin
+          // With branch target ALU main ALU evaluates branch condition and branch target ALU
+          // calculates target (which is controlled in a seperate block below)
           alu_op_a_mux_sel_o  = OP_A_REG_A;
           alu_op_b_mux_sel_o  = OP_B_REG_B;
-        end else begin
-          // Calculate jump target in EX
-          alu_op_a_mux_sel_o  = OP_A_CURRPC;
-          alu_op_b_mux_sel_o  = OP_B_IMM;
-          imm_b_mux_sel_o     = IMM_B_B;
-          alu_operator_o      = ALU_ADD;
           regfile_we          = 1'b0;
+          jt_mux_sel_o        = JT_BT_ALU;
+        end else begin
+          // Without branch target ALU branch is 2 stage operation using the Main ALU in both stages
+          if (instr_new_i) begin
+            // First evaluates branch condition
+            alu_op_a_mux_sel_o  = OP_A_REG_A;
+            alu_op_b_mux_sel_o  = OP_B_REG_B;
+          end else begin
+            // Then calculate jump target
+            alu_op_a_mux_sel_o  = OP_A_CURRPC;
+            alu_op_b_mux_sel_o  = OP_B_IMM;
+            imm_b_mux_sel_o     = IMM_B_B;
+            alu_operator_o      = ALU_ADD;
+            regfile_we          = 1'b0;
+          end
         end
       end
 
