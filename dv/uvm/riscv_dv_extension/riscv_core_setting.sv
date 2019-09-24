@@ -29,7 +29,7 @@ privileged_mode_t supported_privileged_mode[] = {MACHINE_MODE};
 // Unsupported instructions
 // Avoid generating these instructions in regular regression
 // FENCE.I is intentionally treated as illegal instruction by ibex core
-riscv_instr_name_t unsupported_instr[] = {FENCEI};
+riscv_instr_name_t unsupported_instr[] = {FENCE_I};
 
 // ISA supported by the processor
 riscv_instr_group_t supported_isa[$] = {RV32I, RV32M, RV32C};
@@ -71,7 +71,7 @@ int kernel_program_instr_cnt = 400;
 // ----------------------------------------------------------------------------
 
 // Implemented previlieged CSR list
-privileged_reg_t implemented_csr[$] = {
+parameter privileged_reg_t implemented_csr[] = {
     // Machine mode mode CSR
     MVENDORID,        // Vendor ID
     MARCHID,          // Architecture ID
