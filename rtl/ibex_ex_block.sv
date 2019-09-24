@@ -10,31 +10,38 @@
  */
 module ibex_ex_block #(
     parameter bit    RV32M                    = 1,
+    parameter bit    BranchTargetALU          = 0,
     parameter        MultiplierImplementation = "fast"
 ) (
-    input  logic              clk_i,
-    input  logic              rst_ni,
+    input  logic                  clk_i,
+    input  logic                  rst_ni,
 
     // ALU
-    input  ibex_pkg::alu_op_e alu_operator_i,
-    input  logic [31:0]       alu_operand_a_i,
-    input  logic [31:0]       alu_operand_b_i,
+    input  ibex_pkg::alu_op_e     alu_operator_i,
+    input  logic [31:0]           alu_operand_a_i,
+    input  logic [31:0]           alu_operand_b_i,
+
+    // Branch Target ALU
+    // All of these signals are unusued when BranchTargetALU == 0
+    input  ibex_pkg::jt_mux_sel_e jt_mux_sel_i,
+    input  logic [11:0]           bt_operand_imm_i,
+    input  logic [31:0]           pc_id_i,
 
     // Multiplier/Divider
-    input  ibex_pkg::md_op_e  multdiv_operator_i,
-    input  logic              mult_en_i,
-    input  logic              div_en_i,
-    input  logic  [1:0]       multdiv_signed_mode_i,
-    input  logic [31:0]       multdiv_operand_a_i,
-    input  logic [31:0]       multdiv_operand_b_i,
+    input  ibex_pkg::md_op_e      multdiv_operator_i,
+    input  logic                  mult_en_i,
+    input  logic                  div_en_i,
+    input  logic  [1:0]           multdiv_signed_mode_i,
+    input  logic [31:0]           multdiv_operand_a_i,
+    input  logic [31:0]           multdiv_operand_b_i,
 
     // Outputs
-    output logic [31:0]       alu_adder_result_ex_o, // to LSU
-    output logic [31:0]       regfile_wdata_ex_o,
-    output logic [31:0]       jump_target_o,         // to IF
-    output logic              branch_decision_o,     // to ID
+    output logic [31:0]           alu_adder_result_ex_o, // to LSU
+    output logic [31:0]           regfile_wdata_ex_o,
+    output logic [31:0]           jump_target_o,         // to IF
+    output logic                  branch_decision_o,     // to ID
 
-    output logic              ex_valid_o             // EX has valid output
+    output logic                  ex_valid_o             // EX has valid output
 );
 
   import ibex_pkg::*;
@@ -64,7 +71,25 @@ module ibex_ex_block #(
 
   // branch handling
   assign branch_decision_o  = alu_cmp_result;
-  assign jump_target_o      = alu_adder_result_ex_o;
+
+  if (BranchTargetALU) begin : g_branch_target_alu
+    logic [32:0] bt_alu_result;
+
+    assign bt_alu_result = {{19{bt_operand_imm_i[11]}}, bt_operand_imm_i, 1'b0} + pc_id_i;
+
+    assign jump_target_o = (jt_mux_sel_i == JT_ALU) ? alu_adder_result_ex_o : bt_alu_result[31:0];
+  end else begin : g_no_branch_target_alu
+    // Unused jt_mux_sel_i/bt_operand_imm_i/pc_id_i signals causes lint errors, this avoids them
+    ibex_pkg::jt_mux_sel_e jt_mux_sel_unused;
+    logic [11:0]           bt_operand_imm_unused;
+    logic [31:0]           pc_id_unused;
+
+    assign jt_mux_sel_unused     = jt_mux_sel_i;
+    assign bt_operand_imm_unused = bt_operand_imm_i;
+    assign pc_id_unused          = pc_id_i;
+
+    assign jump_target_o = alu_adder_result_ex_o;
+  end
 
   /////////
   // ALU //

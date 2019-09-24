@@ -13,6 +13,7 @@ set_flow_var config_file "${lr_synth_top_module}_lr_synth_conf.tcl" "Synth confi
 set_flow_var rpt_out "./${lr_synth_out_dir}/reports" "Report output directory"
 set_flow_bool_var flatten 1 "flatten"
 set_flow_bool_var timing_run 0 "timing run"
+set_flow_bool_var ibex_branch_target_alu 0 "Enable branch target ALU in Ibex"
 
 source $lr_synth_config_file
 

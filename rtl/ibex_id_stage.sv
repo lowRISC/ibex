@@ -17,8 +17,9 @@
 `include "prim_assert.sv"
 
 module ibex_id_stage #(
-    parameter bit RV32E = 0,
-    parameter bit RV32M = 1
+    parameter bit RV32E           = 0,
+    parameter bit RV32M           = 1,
+    parameter bit BranchTargetALU = 0
 ) (
     input  logic                  clk_i,
     input  logic                  rst_ni,
@@ -60,6 +61,10 @@ module ibex_id_stage #(
     output ibex_pkg::alu_op_e     alu_operator_ex_o,
     output logic [31:0]           alu_operand_a_ex_o,
     output logic [31:0]           alu_operand_b_ex_o,
+
+    // Branch target ALU
+    output ibex_pkg::jt_mux_sel_e jt_mux_sel_ex_o,
+    output logic [11:0]           bt_operand_imm_o,
 
     // MUL, DIV
     output logic                  mult_en_ex_o,
@@ -149,7 +154,7 @@ module ibex_id_stage #(
   logic        wfi_insn_dec;
 
   logic        branch_in_dec;
-  logic        branch_set_n, branch_set_q;
+  logic        branch_set, branch_set_n;
   logic        jump_in_dec;
   logic        jump_set;
 
@@ -317,8 +322,9 @@ module ibex_id_stage #(
   /////////////
 
   ibex_decoder #(
-      .RV32E ( RV32E ),
-      .RV32M ( RV32M )
+      .RV32E           ( RV32E           ),
+      .RV32M           ( RV32M           ),
+      .BranchTargetALU ( BranchTargetALU )
   ) decoder_i (
       .clk_i                           ( clk_i                ),
       .rst_ni                          ( rst_ni               ),
@@ -340,6 +346,7 @@ module ibex_id_stage #(
       // immediates
       .imm_a_mux_sel_o                 ( imm_a_mux_sel        ),
       .imm_b_mux_sel_o                 ( imm_b_mux_sel_dec    ),
+      .jt_mux_sel_o                    ( jt_mux_sel_ex_o      ),
 
       .imm_i_type_o                    ( imm_i_type           ),
       .imm_s_type_o                    ( imm_s_type           ),
@@ -430,7 +437,7 @@ module ibex_id_stage #(
       .store_err_i                    ( lsu_store_err_i        ),
 
       // jump/branch control
-      .branch_set_i                   ( branch_set_q           ),
+      .branch_set_i                   ( branch_set             ),
       .jump_set_i                     ( jump_set               ),
 
       // interrupt signals
@@ -506,6 +513,14 @@ module ibex_id_stage #(
   assign alu_operand_a_ex_o          = alu_operand_a;
   assign alu_operand_b_ex_o          = alu_operand_b;
 
+  if (BranchTargetALU) begin : g_bt_operand_imm
+    // Branch target ALU sign-extends and inserts bottom 0 bit so only want the
+    // 'raw' B-type immediate bits.
+    assign bt_operand_imm_o = imm_b_type[12:1];
+  end else begin : g_no_bt_operand_imm
+    assign bt_operand_imm_o = '0;
+  end
+
   assign mult_en_ex_o                = mult_en_id;
   assign div_en_ex_o                 = div_en_id;
 
@@ -521,14 +536,32 @@ module ibex_id_stage #(
   // ID-EX/WB Pipeline Register //
   ////////////////////////////////
 
+  if (BranchTargetALU) begin : g_branch_set_direct
+    // Branch set fed straight to controller with branch target ALU
+    // (condition pass/fail used same cycle as generated instruction request)
+    assign branch_set = branch_set_n;
+  end else begin : g_branch_set_flopped
+    // Branch set flopped without branch target ALU
+    // (condition pass/fail used next cycle where branch target is calculated)
+    logic branch_set_q;
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        branch_set_q <= 1'b0;
+      end else begin
+        branch_set_q <= branch_set_n;
+      end
+    end
+
+    assign branch_set = branch_set_q;
+  end
+
   always_ff @(posedge clk_i or negedge rst_ni) begin : id_wb_pipeline_reg
     if (!rst_ni) begin
       id_wb_fsm_cs            <= IDLE;
-      branch_set_q            <= 1'b0;
       instr_multicycle_done_q <= 1'b0;
     end else begin
       id_wb_fsm_cs            <= id_wb_fsm_ns;
-      branch_set_q            <= branch_set_n;
       instr_multicycle_done_q <= instr_multicycle_done_n;
     end
   end
