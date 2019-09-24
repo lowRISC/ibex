@@ -505,10 +505,13 @@ class riscv_instr_gen_config extends uvm_object;
   endfunction
 
   // Build instruction template
-  virtual function void build_instruction_template();
+  virtual function void build_instruction_template(bit skip_instr_exclusion = 0);
     riscv_instr_name_t instr_name;
     riscv_instr_name_t excluded_instr[$];
-    get_excluded_instr(excluded_instr);
+    excluded_instr = {INVALID_INSTR};
+    if (!skip_instr_exclusion) begin
+      get_excluded_instr(excluded_instr);
+    end
     instr_name = instr_name.first;
     do begin
       riscv_instr_base instr;
@@ -518,9 +521,6 @@ class riscv_instr_gen_config extends uvm_object;
         if (instr.group inside {supported_isa}) begin
           `uvm_info(`gfn, $sformatf("Adding [%s] %s to the list",
                           instr.group.name(), instr.instr_name.name()), UVM_HIGH)
-          if (instr.category inside {SHIFT, ARITHMETIC, LOGICAL, COMPARE}) begin
-            basic_instr.push_back(instr_name);
-          end
           instr_group[instr.group].push_back(instr_name);
           instr_category[instr.category].push_back(instr_name);
           instr_template[instr_name] = instr;
@@ -529,6 +529,11 @@ class riscv_instr_gen_config extends uvm_object;
       instr_name = instr_name.next;
     end
     while (instr_name != instr_name.first);
+  endfunction
+
+  virtual function void build_instruction_list();
+    basic_instr = {instr_category[SHIFT], instr_category[ARITHMETIC],
+                   instr_category[LOGICAL], instr_category[COMPARE]};
     if (no_ebreak == 0) begin
       basic_instr = {basic_instr, EBREAK};
       foreach(riscv_instr_pkg::supported_isa[i]) begin
@@ -546,6 +551,7 @@ class riscv_instr_gen_config extends uvm_object;
     end
     // TODO: Support CSR instruction in other mode
     if ((no_csr_instr == 0) && (init_privileged_mode == MACHINE_MODE)) begin
+      `uvm_info(`gfn, $sformatf("Adding CSR instr, mode: %0s", init_privileged_mode.name()), UVM_LOW)
       basic_instr = {basic_instr, instr_category[CSR]};
     end
     if (no_wfi == 0) begin
@@ -554,7 +560,6 @@ class riscv_instr_gen_config extends uvm_object;
   endfunction
 
   virtual function void get_excluded_instr(ref riscv_instr_name_t excluded[$]);
-    excluded = {excluded, INVALID_INSTR};
     // Below instrutions will modify stack pointer, not allowed in normal instruction stream.
     // It can be used in stack operation instruction stream.
     excluded = {excluded, C_SWSP, C_SDSP, C_ADDI16SP};
@@ -562,7 +567,7 @@ class riscv_instr_gen_config extends uvm_object;
       excluded = {excluded, SFENCE_VMA};
     end
     if (no_fence) begin
-      excluded = {excluded, FENCE, FENCEI, SFENCE_VMA};
+      excluded = {excluded, FENCE, FENCE_I, SFENCE_VMA};
     end
     // TODO: Support C_ADDI4SPN
     excluded = {excluded, C_ADDI4SPN};

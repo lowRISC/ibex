@@ -62,7 +62,7 @@ class riscv_rand_instr extends riscv_instr_base;
       instr_name != SFENCE_VMA;
     }
     if(cfg.no_fence) {
-      !(instr_name inside {FENCE, FENCEI, SFENCE_VMA});
+      !(instr_name inside {FENCE, FENCE_I, SFENCE_VMA});
     }
     // TODO: Support C_ADDI4SPN
     instr_name != C_ADDI4SPN;

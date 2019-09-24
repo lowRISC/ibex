@@ -32,12 +32,13 @@ from scripts.instr_trace_compare import *
 
 LOGGER = logging.getLogger()
 
-def get_generator_cmd(simulator, simulator_yaml):
+def get_generator_cmd(simulator, simulator_yaml, cov):
   """ Setup the compile and simulation command for the generator
 
   Args:
     simulator      : RTL simulator used to run instruction generator
     simulator_yaml : RTL simulator configuration file in YAML format
+    cov            : Enable functional coverage
 
   Returns:
     compile_cmd    : RTL simulator command to compile the instruction generator
@@ -49,8 +50,18 @@ def get_generator_cmd(simulator, simulator_yaml):
   for entry in yaml_data:
     if entry['tool'] == simulator:
       logging.info("Found matching simulator: %s" % entry['tool'])
-      compile_cmd = entry['compile_cmd']
-      sim_cmd = entry['sim_cmd']
+      compile_spec = entry['compile']
+      compile_cmd = compile_spec['cmd']
+      for i in range(len(compile_cmd)):
+        if ('cov_opts' in compile_spec) and cov:
+          compile_cmd[i] = re.sub('<cov_opts>', compile_spec['cov_opts'].rstrip(), compile_cmd[i])
+        else:
+          compile_cmd[i] = re.sub('<cov_opts>', '', compile_cmd[i])
+      sim_cmd = entry['sim']['cmd']
+      if ('cov_opts' in entry['sim']) and cov:
+        sim_cmd = re.sub('<cov_opts>', entry['sim']['cov_opts'].rstrip(), sim_cmd)
+      else:
+        sim_cmd = re.sub('<cov_opts>', '', sim_cmd)
       if 'env_var' in entry:
         for env_var in entry['env_var'].split(','):
           for i in range(len(compile_cmd)):
@@ -107,7 +118,8 @@ def get_iss_cmd(base_cmd, elf, log):
 
 def gen(test_list, csr_file, end_signature_addr, isa, simulator,
         simulator_yaml, output_dir, sim_only, compile_only, lsf_cmd, seed,
-        cwd, cmp_opts, sim_opts, timeout_s, core_setting_dir, ext_dir):
+        cwd, cmp_opts, sim_opts, timeout_s, core_setting_dir, ext_dir, cov,
+        log_suffix, batch_size):
   """Run the instruction generator
 
   Args:
@@ -127,6 +139,9 @@ def gen(test_list, csr_file, end_signature_addr, isa, simulator,
     timeout_s             : Timeout limit in seconds
     core_setting_dir      : Path for riscv_core_setting.sv
     ext_dir               : User extension directory
+    cov                   : Enable functional coverage
+    log_suffix            : Simulation log file name suffix
+    batch_size            : Number of tests to generate per run
   """
   # Mutually exclusive options between compile_only and sim_only
   if compile_only and sim_only:
@@ -134,8 +149,8 @@ def gen(test_list, csr_file, end_signature_addr, isa, simulator,
   # Setup the compile and simulation command for the generator
   compile_cmd = []
   sim_cmd = ""
-  compile_cmd, sim_cmd = get_generator_cmd(simulator, simulator_yaml);
-  if len(test_list) == 0:
+  compile_cmd, sim_cmd = get_generator_cmd(simulator, simulator_yaml, cov);
+  if ((compile_only == 0) and (len(test_list) == 0)):
     return
   # Compile the instruction generator
   if not sim_only:
@@ -165,6 +180,7 @@ def gen(test_list, csr_file, end_signature_addr, isa, simulator,
     logging.info("Running RISC-V instruction generator")
     for test in test_list:
       iterations = test['iterations']
+      logging.info("Generating %d %s" % (iterations, test['test']))
       if iterations > 0:
         """
         If we are running a CSR test, need to call a separate python script
@@ -177,23 +193,39 @@ def gen(test_list, csr_file, end_signature_addr, isa, simulator,
                 (" --iterations %i" % iterations) + \
                 (" --out %s/asm_tests" % output_dir) + \
                 (" --end_signature_addr %s" % end_signature_addr)
+          if lsf_cmd:
+            cmd_list.append(cmd)
+          else:
+            run_cmd(cmd, timeout_s)
         else:
-          rand_seed = get_seed(seed)
-          cmd = lsf_cmd + " " + sim_cmd.rstrip() + \
-                (" +UVM_TESTNAME=%s " % test['gen_test']) + \
-                (" +num_of_tests=%i " % iterations) + \
-                (" +asm_file_name=%s/asm_tests/%s " % (output_dir, test['test'])) + \
-                (" -l %s/sim_%s.log " % (output_dir, test['test']))
-          cmd = re.sub("<seed>", str(rand_seed), cmd)
-          if "gen_opts" in test:
-            cmd += test['gen_opts']
-        if not re.search("c", isa):
-          cmd += "+disable_comparessed_instr=1";
-        logging.info("Generating %d %s" % (iterations, test['test']))
-        if lsf_cmd:
-          cmd_list.append(cmd)
-        else:
-          run_cmd(cmd, timeout_s)
+          if batch_size > 0:
+            batch_cnt = int((iterations + batch_size - 1)  / batch_size);
+          else:
+            batch_cnt = 1
+          logging.info("Running %s with %0d batches" % (test['test'], batch_cnt))
+          for i in range(0, batch_cnt):
+            rand_seed = get_seed(seed)
+            if i < batch_cnt - 1:
+              test_cnt = batch_size
+            else:
+              test_cnt = iterations - i * batch_size;
+            cmd = lsf_cmd + " " + sim_cmd.rstrip() + \
+                  (" +UVM_TESTNAME=%s " % test['gen_test']) + \
+                  (" +num_of_tests=%i " % test_cnt) + \
+                  (" +start_idx=%d " % (i*batch_size)) + \
+                  (" +asm_file_name=%s/asm_tests/%s " % (output_dir, test['test'])) + \
+                  (" -l %s/sim_%s_%d%s.log " % (output_dir, test['test'], i, log_suffix))
+            cmd = re.sub("<seed>", str(rand_seed), cmd)
+            if "gen_opts" in test:
+              cmd += test['gen_opts']
+            if not re.search("c", isa):
+              cmd += "+disable_comparessed_instr=1";
+            if lsf_cmd:
+              cmd_list.append(cmd)
+            else:
+              logging.info("Running %s, batch %0d/%0d, test_cnt:%0d" %
+                           (test['test'], i+1, batch_cnt, test_cnt))
+              run_cmd(cmd, timeout_s)
     if lsf_cmd:
       run_parallel_cmd(cmd_list, timeout_s)
 
@@ -209,6 +241,8 @@ def gcc_compile(test_list, output_dir, isa, mabi, opts):
   """
   for test in test_list:
     for i in range(0, test['iterations']):
+      if 'no_gcc' in test and test['no_gcc'] == 1:
+        continue
       prefix = ("%s/asm_tests/%s_%d" % (output_dir, test['test'], i))
       asm = prefix + ".S"
       elf = prefix + ".o"
@@ -304,7 +338,7 @@ def iss_sim(test_list, output_dir, iss_list, iss_yaml, isa, timeout_s):
           elf = prefix + ".o"
           log = ("%s/%s.%d.log" % (log_dir, test['test'], i))
           cmd = get_iss_cmd(base_cmd, elf, log)
-          logging.info("Running ISS simulation: %s" % elf)
+          logging.info("Running %s sim: %s" % (iss, elf))
           run_cmd(cmd, timeout_s)
           logging.debug(cmd)
 
@@ -378,6 +412,8 @@ def setup_parser():
                       help="Verbose logging")
   parser.add_argument("--co", dest="co", action="store_true",
                       help="Compile the generator only")
+  parser.add_argument("--cov", dest="cov", action="store_true",
+                      help="Enable functional coverage")
   parser.add_argument("--so", dest="so", action="store_true",
                       help="Simulate the generator only")
   parser.add_argument("--cmp_opts", type=str, default="",
@@ -413,9 +449,15 @@ def setup_parser():
                       help="Path for the user extension directory")
   parser.add_argument("--asm_test", type=str, default="",
                       help="Directed assembly test")
+  parser.add_argument("--log_suffix", type=str, default="",
+                      help="Simulation log name suffix")
+  parser.add_argument("-bz", "--batch_size", type=int, default=0,
+                      help="Number of tests to generate per run. You can split a big"
+                           " job to small batches with this option")
   parser.set_defaults(co=False)
   parser.set_defaults(so=False)
   parser.set_defaults(verbose=False)
+  parser.set_defaults(cov=False)
   return parser
 
 
@@ -454,17 +496,19 @@ def main():
 
   # Process regression test list
   matched_list = []
-  process_regression_list(args.testlist, args.test, args.iterations, matched_list)
-  if len(matched_list) == 0:
-    sys.exit("Cannot find %s in %s" % (args.test, args.testlist))
+
+  if not args.co:
+    process_regression_list(args.testlist, args.test, args.iterations, matched_list)
+    if len(matched_list) == 0:
+      sys.exit("Cannot find %s in %s" % (args.test, args.testlist))
 
   # Run instruction generator
   if args.steps == "all" or re.match("gen", args.steps):
     gen(matched_list, args.csr_yaml, args.end_signature_addr, args.isa,
         args.simulator, args.simulator_yaml, output_dir, args.so,
         args.co, args.lsf_cmd, args.seed, cwd, args.cmp_opts,
-        args.sim_opts, args.gen_timeout,
-        args.core_setting_dir, args.user_extension_dir)
+        args.sim_opts, args.gen_timeout, args.core_setting_dir,
+        args.user_extension_dir, args.cov, args.log_suffix, args.batch_size)
 
   if not args.co:
     # Compile the assembly program to ELF, convert to plain binary

@@ -993,6 +993,11 @@ class riscv_asm_program_gen extends uvm_object;
 
   // Dump performance CSRs if applicable
   virtual function void dump_perf_stats();
+    foreach(implemented_csr[i]) begin
+      if (implemented_csr[i] inside {[MCYCLE:MHPMCOUNTER31H]}) begin
+        gen_signature_handshake(.instr(instr_stream), .signature_type(WRITE_CSR), .csr(implemented_csr[i]));
+      end
+    end
   endfunction
 
   // Write the generated program to a file
@@ -1083,6 +1088,7 @@ class riscv_asm_program_gen extends uvm_object;
 
   virtual function void add_directed_instr_stream(string name, int unsigned ratio);
     directed_instr_stream_ratio[name] = ratio;
+    `uvm_info(`gfn, $sformatf("Adding directed instruction stream:%0s ratio:%0d/1000", name, ratio), UVM_LOW)
   endfunction
 
   virtual function void get_directed_instr_stream();
