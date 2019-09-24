@@ -92,6 +92,7 @@ class riscv_instr_base extends uvm_object;
         imm_len == 8;
       }
     }
+    imm_len <= 20;
   }
 
   constraint imm_val_c {
@@ -113,7 +114,7 @@ class riscv_instr_base extends uvm_object;
     if (instr_name == C_JR) {
       rs1 != ZERO;
     }
-    if (instr_name == C_MV) {
+    if (instr_name inside {C_ADD, C_MV}) {
       rs2 != ZERO;
     }
   }
@@ -128,21 +129,9 @@ class riscv_instr_base extends uvm_object;
     }
   }
 
-  constraint fence_c {
-    if (instr_name == FENCE) {
-      rs1 == ZERO;
-      rd  == ZERO;
-      imm == 0;
-    }
-    if (instr_name == FENCEI) {
-      rs1 == ZERO;
-      rd  == ZERO;
-      imm == 0;
-    }
-  }
-
   // Cannot shift more than the width of the bus
   constraint shift_imm_val_c {
+    solve category before imm;
     if(category == SHIFT) {
       if(group == RV64I) {
         // The new instruction in RV64I only handles 32 bits value
@@ -181,9 +170,6 @@ class riscv_instr_base extends uvm_object;
       rs1 inside {[S0:A5]};
       rs2 inside {[S0:A5]};
       rd  inside {[S0:A5]};
-    }
-    if(format inside {CI_FORMAT, CR_FORMAT}) {
-      rs1 == rd;
     }
     // C_ADDI16SP is only valid when rd == SP
     if(instr_name == C_ADDI16SP) {
@@ -240,7 +226,7 @@ class riscv_instr_base extends uvm_object;
   `add_instr(JALR,   I_FORMAT, JUMP, RV32I)
   // SYNCH instructions
   `add_instr(FENCE,   I_FORMAT, SYNCH, RV32I)
-  `add_instr(FENCEI,  I_FORMAT, SYNCH, RV32I)
+  `add_instr(FENCE_I,  I_FORMAT, SYNCH, RV32I)
   // SYSTEM instructions
   `add_instr(ECALL,   I_FORMAT, SYSTEM, RV32I)
   `add_instr(EBREAK,  I_FORMAT, SYSTEM, RV32I)
@@ -334,7 +320,7 @@ class riscv_instr_base extends uvm_object;
   `add_instr(C_LI,       CI_FORMAT, ARITHMETIC, RV32C)
   `add_instr(C_LUI,      CI_FORMAT, ARITHMETIC, RV32C, NZUIMM)
   `add_instr(C_SUB,      CS_FORMAT, ARITHMETIC, RV32C)
-  `add_instr(C_ADD,      CS_FORMAT, ARITHMETIC, RV32C)
+  `add_instr(C_ADD,      CR_FORMAT, ARITHMETIC, RV32C)
   `add_instr(C_NOP,      CI_FORMAT, ARITHMETIC, RV32C)
   `add_instr(C_MV,       CR_FORMAT, ARITHMETIC, RV32C)
   `add_instr(C_ANDI,     CB_FORMAT, LOGICAL, RV32C)
@@ -424,14 +410,20 @@ class riscv_instr_base extends uvm_object;
         update_imm_str();
       end
     end
-    if (format inside {R_FORMAT, S_FORMAT, B_FORMAT, CSS_FORMAT, CS_FORMAT}) begin
+    if (format inside {R_FORMAT, S_FORMAT, B_FORMAT, CSS_FORMAT, CS_FORMAT, CR_FORMAT}) begin
       has_rs2 = 1'b1;
     end
-    if (!(format inside {J_FORMAT, U_FORMAT, CJ_FORMAT, CSS_FORMAT})) begin
+    if (!(format inside {J_FORMAT, U_FORMAT, CJ_FORMAT, CSS_FORMAT, CR_FORMAT, CI_FORMAT})) begin
       has_rs1 = 1'b1;
     end
     if (!(format inside {CJ_FORMAT, CB_FORMAT, CS_FORMAT, CSS_FORMAT, B_FORMAT, S_FORMAT})) begin
       has_rd = 1'b1;
+    end
+    if (category == CSR) begin
+      has_rs2 = 1'b0;
+      if (instr_name inside {CSRRWI, CSRRSI, CSRRCI}) begin
+        has_rs1 = 1'b0;
+      end
     end
   endfunction
 
@@ -544,11 +536,13 @@ class riscv_instr_base extends uvm_object;
         I_FORMAT: // instr rd,rs1,imm
           if(instr_name == NOP)
             asm_str = "nop";
+          else if(instr_name == C_NOP)
+            asm_str = "c.nop";
           else if(instr_name == WFI)
             asm_str = "wfi";
           else if(instr_name == FENCE)
             asm_str = $sformatf("fence"); // TODO: Support all fence combinations
-          else if(instr_name == FENCEI)
+          else if(instr_name == FENCE_I)
             asm_str = "fence.i";
           else if(category == LOAD) // Use psuedo instruction format
             asm_str = $sformatf("%0s%0s, %0s(%0s)", asm_str, rd.name(), get_imm(), rs1.name());
@@ -624,7 +618,7 @@ class riscv_instr_base extends uvm_object;
       MULH, MULHSU, MULHU, DIV, DIVU, REM, REMU                    : get_opcode = 7'b0110011;
       ADDIW, SLLIW, SRLIW, SRAIW                                   : get_opcode = 7'b0011011;
       MULH, MULHSU, MULHU, DIV, DIVU, REM, REMU                    : get_opcode = 7'b0110011;
-      FENCE, FENCEI                                                : get_opcode = 7'b0001111;
+      FENCE, FENCE_I                                               : get_opcode = 7'b0001111;
       ECALL, EBREAK, CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRRCI   : get_opcode = 7'b1110011;
       ADDW, SUBW, SLLW, SRLW, SRAW, MULW, DIVW, DIVUW, REMW, REMUW : get_opcode = 7'b0111011;
       ECALL, EBREAK, URET, SRET, MRET, DRET, WFI, SFENCE_VMA       : get_opcode = 7'b1110011;
@@ -686,7 +680,7 @@ class riscv_instr_base extends uvm_object;
       OR         : get_func3 = 3'b110;
       AND        : get_func3 = 3'b111;
       FENCE      : get_func3 = 3'b000;
-      FENCEI     : get_func3 = 3'b001;
+      FENCE_I    : get_func3 = 3'b001;
       ECALL      : get_func3 = 3'b000;
       EBREAK     : get_func3 = 3'b000;
       CSRRW      : get_func3 = 3'b001;
@@ -790,7 +784,7 @@ class riscv_instr_base extends uvm_object;
       OR     : get_func7 = 7'b0000000;
       AND    : get_func7 = 7'b0000000;
       FENCE  : get_func7 = 7'b0000000;
-      FENCEI : get_func7 = 7'b0000000;
+      FENCE_I : get_func7 = 7'b0000000;
       ECALL  : get_func7 = 7'b0000000;
       EBREAK : get_func7 = 7'b0000000;
       SLLIW  : get_func7 = 7'b0000000;
@@ -838,7 +832,7 @@ class riscv_instr_base extends uvm_object;
             binary = $sformatf("%8h", {imm[31:12], rd,  get_opcode()});
         end
         I_FORMAT: begin
-          if(instr_name inside {FENCE, FENCEI})
+          if(instr_name inside {FENCE, FENCE_I})
             binary = $sformatf("%8h", {17'b0, get_func3(), 5'b0, get_opcode()});
           else if(category == CSR)
             binary = $sformatf("%8h", {csr[10:0], imm[4:0], get_func3(), rd, get_opcode()});

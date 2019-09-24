@@ -60,6 +60,8 @@ class riscv_illegal_instr extends uvm_object;
     solve opcode before instr_bin;
     solve func3 before instr_bin;
     solve func7 before instr_bin;
+    solve c_msb before instr_bin;
+    solve c_op before instr_bin;
     if (compressed) {
       instr_bin[1:0] == c_op;
       instr_bin[15:13] == c_msb;
@@ -111,7 +113,9 @@ class riscv_illegal_instr extends uvm_object;
     if (exception == kHintInstr) {
       ((c_msb == 3'b000) && (c_op == 2'b01) && ({instr_bin[12], instr_bin[6:2]} == 6'b0)) ||
       ((c_msb == 3'b010) && (c_op == 2'b01) && (instr_bin[11:7] == 5'b0)) ||
-      ((c_msb == 3'b011) && (c_op == 2'b01) && (instr_bin[11:7] == 5'b0)) ||
+      // C.LUI
+      ((c_msb == 3'b011) && (c_op == 2'b01) && (instr_bin[11:7] == 5'b0) &&
+                                               ({instr_bin[12], instr_bin[6:2]} != 6'b0)) ||
       ((c_msb == 3'b100) && (c_op == 2'b10) && (instr_bin[12:7] == 6'b0) &&
                                                (instr_bin[6:2] != 0));
     }

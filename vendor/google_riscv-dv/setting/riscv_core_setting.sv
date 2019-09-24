@@ -53,7 +53,7 @@ bit support_sfence = 1;
 // ----------------------------------------------------------------------------
 
 // Implemented previlieged CSR list
-privileged_reg_t implemented_csr[$] = {
+parameter privileged_reg_t implemented_csr[] = {
     // User mode CSR
     USTATUS,    // User status
     UIE,        // User interrupt-enable register

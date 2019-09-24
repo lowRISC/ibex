@@ -19,6 +19,7 @@ package riscv_instr_pkg;
 
   `include "dv_defines.svh"
   `include "riscv_defines.svh"
+  `include "uvm_macros.svh"
 
   import uvm_pkg::*;
   import riscv_signature_pkg::*;
@@ -121,7 +122,7 @@ package riscv_instr_pkg;
     AND,
     NOP,
     FENCE,
-    FENCEI,
+    FENCE_I,
     ECALL,
     EBREAK,
     CSRRW,
@@ -445,7 +446,7 @@ package riscv_instr_pkg;
     SIP             = 'h144,  // Supervisor interrupt pending
     SATP            = 'h180,  // Supervisor address translation and protection
     // Machine mode register
-    MVENDORID      = 'hF11,  // Vendor ID
+    MVENDORID       = 'hF11,  // Vendor ID
     MARCHID         = 'hF12,  // Architecture ID
     MIMPID          = 'hF13,  // Implementation ID
     MHARTID         = 'hF14,  // Hardware thread ID
@@ -543,6 +544,7 @@ package riscv_instr_pkg;
     MHPMCOUNTER29H  = 'hB9D,  // Upper 32 bits of HPMCOUNTER29, RV32I only
     MHPMCOUNTER30H  = 'hB9E,  // Upper 32 bits of HPMCOUNTER30, RV32I only
     MHPMCOUNTER31H  = 'hB9F,  // Upper 32 bits of HPMCOUNTER31, RV32I only
+    MCOUNTINHIBIT   = 'h320,  // Machine counter-inhibit register
     MHPMEVENT3      = 'h323,  // Machine performance-monitoring event selector
     MHPMEVENT4      = 'h324,  // Machine performance-monitoring event selector
     MHPMEVENT5      = 'h325,  // Machine performance-monitoring event selector
@@ -692,10 +694,10 @@ package riscv_instr_pkg;
   parameter bit [XLEN - 1 : 0] SUM_BIT_MASK  = 'h1 << 18;
   parameter bit [XLEN - 1 : 0] MPP_BIT_MASK  = 'h3 << 11;
 
-  parameter IMM25_WIDTH       = 25;
-  parameter IMM12_WIDTH       = 12;
-  parameter INSTR_WIDTH       = 32;
-  parameter DATA_WIDTH        = 32;
+  parameter IMM25_WIDTH = 25;
+  parameter IMM12_WIDTH = 12;
+  parameter INSTR_WIDTH = 32;
+  parameter DATA_WIDTH  = 32;
 
   // Parameters for output assembly program formatting
   parameter MAX_INSTR_STR_LEN = 11;
@@ -830,6 +832,8 @@ package riscv_instr_pkg;
   `include "riscv_amo_instr_lib.sv"
   `include "riscv_instr_sequence.sv"
   `include "riscv_asm_program_gen.sv"
+  `include "riscv_instr_cov_item.sv"
+  `include "riscv_instr_cover_group.sv"
   `include "user_extension.svh"
 
 endpackage
