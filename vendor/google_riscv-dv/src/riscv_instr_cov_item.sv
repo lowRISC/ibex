@@ -19,6 +19,7 @@ class riscv_instr_cov_item extends riscv_instr_base;
   rand bit [XLEN-1:0]   rs1_value;
   rand bit [XLEN-1:0]   rs2_value;
   rand bit [XLEN-1:0]   rd_value;
+  bit [31:0]            binary;
   bit [XLEN-1:0]        pc;
   bit [XLEN-1:0]        mem_addr;
 
@@ -30,6 +31,8 @@ class riscv_instr_cov_item extends riscv_instr_base;
   operand_sign_e        rs2_sign;
   operand_sign_e        imm_sign;
   operand_sign_e        rd_sign;
+  hazard_e              gpr_hazard;
+  hazard_e              lsu_hazard;
   special_val_e         rs1_special_val;
   special_val_e         rs2_special_val;
   special_val_e         rd_special_val;
@@ -182,6 +185,41 @@ class riscv_instr_cov_item extends riscv_instr_base;
       return SIMILAR;
     else
       return DIFFERENT;
+  endfunction
+
+  function void check_hazard_condition(riscv_instr_cov_item pre_instr);
+    riscv_reg_t gpr;
+    if (pre_instr.has_rd) begin
+      if ((has_rs1 && (rs1 == pre_instr.rd)) || (has_rs2 && (rs2 == pre_instr.rd))) begin
+        gpr_hazard = RAW_HAZARD;
+      end else if (has_rd && (rd == pre_instr.rd)) begin
+        gpr_hazard = WAW_HAZARD;
+      end else if (has_rd && ((pre_instr.has_rs1 && (pre_instr.rs1 == rd)) ||
+                              (pre_instr.has_rs2 && (pre_instr.rs2 == rd)))) begin
+        gpr_hazard = WAR_HAZARD;
+      end else begin
+        gpr_hazard = NO_HAZARD;
+      end
+    end
+    if (category == LOAD) begin
+      if ((pre_instr.category == STORE) && (pre_instr.mem_addr == mem_addr)) begin
+        lsu_hazard = RAW_HAZARD;
+      end else begin
+        lsu_hazard = NO_HAZARD;
+      end
+    end
+    if (category == STORE) begin
+      if ((pre_instr.category == STORE) && (pre_instr.mem_addr == mem_addr)) begin
+        lsu_hazard = WAW_HAZARD;
+      end else if ((pre_instr.category == LOAD) && (pre_instr.mem_addr == mem_addr)) begin
+        lsu_hazard = WAR_HAZARD;
+      end else begin
+        lsu_hazard = NO_HAZARD;
+      end
+    end
+    `uvm_info(`gfn, $sformatf("Pre:%0s, Cur:%0s, Hazard: %0s/%0s",
+                              pre_instr.convert2asm(), this.convert2asm(),
+                              gpr_hazard.name(), lsu_hazard.name()), UVM_FULL)
   endfunction
 
   virtual function void sample_cov();
