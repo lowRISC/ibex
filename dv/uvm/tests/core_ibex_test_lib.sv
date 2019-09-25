@@ -174,6 +174,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
       end
       begin
         forever begin
+          wait(dut_vif.debug_req === 1'b1);
           check_next_core_status(IN_DEBUG_MODE, "Core did not enter debug mode properly");
           wait(dut_vif.dret === 1'b1);
         end
