@@ -31,6 +31,85 @@ class core_ibex_csr_test extends core_ibex_base_test;
 
 endclass
 
+// Performance counter test class
+class core_ibex_perf_test extends core_ibex_base_test;
+
+  `uvm_component_utils(core_ibex_perf_test)
+  `uvm_component_new
+
+  virtual task check_perf_stats();
+    bit [63:0] num_cycles, num_instr_ret, num_cycles_lsu, num_cycles_if, num_loads, num_stores,
+               num_jumps, num_branches, num_branches_taken, num_instr_ret_c;
+    wait_for_csr_write(CSR_MCYCLE);
+    num_cycles[31:0] = signature_data;
+    wait_for_csr_write(CSR_MCYCLEH);
+    num_cycles[63:32] = signature_data;
+    wait_for_csr_write(CSR_MINSTRET);
+    num_instr_ret[31:0] = signature_data;
+    wait_for_csr_write(CSR_MINSTRETH);
+    num_instr_ret[63:32] = signature_data;
+    // mhpmcounter3
+    wait_for_csr_write(12'hB03);
+    num_cycles_lsu[31:0] = signature_data;
+    // mhpmcounter4
+    wait_for_csr_write(12'hB04);
+    num_cycles_if[31:0] = signature_data;
+    // mhpmcounter5
+    wait_for_csr_write(12'hB05);
+    num_loads[31:0] = signature_data;
+    // mhpmcounter6
+    wait_for_csr_write(12'hB06);
+    num_stores[31:0] = signature_data;
+    // mhpmcounter7
+    wait_for_csr_write(12'hB07);
+    num_jumps[31:0] = signature_data;
+    // mhpmcounter8
+    wait_for_csr_write(12'hB08);
+    num_branches[31:0] = signature_data;
+    // mhpmcounter9
+    wait_for_csr_write(12'hB09);
+    num_branches_taken[31:0] = signature_data;
+    // mhpmcounter10
+    wait_for_csr_write(12'hB0A);
+    num_instr_ret_c[31:0] = signature_data;
+    // mhpmcounterh3
+    wait_for_csr_write(12'hB83);
+    num_cycles_lsu[63:32] = signature_data;
+    // mhpmcounterh4
+    wait_for_csr_write(12'hB84);
+    num_cycles_if[63:32] = signature_data;
+    // mhpmcounterh5
+    wait_for_csr_write(12'hB85);
+    num_loads[63:32] = signature_data;
+    // mhpmcounterh6
+    wait_for_csr_write(12'hB86);
+    num_stores[63:32] = signature_data;
+    // mhpmcounterh7
+    wait_for_csr_write(12'hB87);
+    num_jumps[63:32] = signature_data;
+    // mhpmcounterh8
+    wait_for_csr_write(12'hB88);
+    num_branches[63:32] = signature_data;
+    // mhpmcounterh9
+    wait_for_csr_write(12'hB89);
+    num_branches_taken[63:32] = signature_data;
+    // mhpmcounterh10
+    wait_for_csr_write(12'hB8A);
+    num_instr_ret_c[63:32] = signature_data;
+    `uvm_info(`gfn, $sformatf("NUM_CYCLES: 0x%0x", num_cycles), UVM_LOW)
+    `uvm_info(`gfn, $sformatf("NUM_INSTR_RET: 0x%0x", num_instr_ret), UVM_LOW)
+    `uvm_info(`gfn, $sformatf("NUM_CYCLES_LSU: 0x%0x", num_cycles_lsu), UVM_LOW)
+    `uvm_info(`gfn, $sformatf("NUM_CYCLES_IF: 0x%0x", num_cycles_if), UVM_LOW)
+    `uvm_info(`gfn, $sformatf("NUM_LOADS: 0x%0x", num_loads), UVM_LOW)
+    `uvm_info(`gfn, $sformatf("NUM_STORES: 0x%0x", num_stores), UVM_LOW)
+    `uvm_info(`gfn, $sformatf("NUM_JUMPS: 0x%0x", num_jumps), UVM_LOW)
+    `uvm_info(`gfn, $sformatf("NUM_BRANCHES: 0x%0x", num_branches), UVM_LOW)
+    `uvm_info(`gfn, $sformatf("NUM_BRANCHES_TAKEN: 0x%0x", num_branches_taken), UVM_LOW)
+    `uvm_info(`gfn, $sformatf("NUM_INSTR_RET_COMPRESSED: 0x%0x", num_instr_ret_c), UVM_LOW)
+  endtask
+
+endclass
+
 // Debug test class
 class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
 

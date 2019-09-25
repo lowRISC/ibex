@@ -77,6 +77,9 @@ class core_ibex_base_test extends uvm_test;
     vseq.start(env.vseqr);
   endtask
 
+  virtual task check_perf_stats();
+  endtask
+
   function void load_binary_to_mem();
     string      bin;
     bit [7:0]   r8;
@@ -109,8 +112,11 @@ class core_ibex_base_test extends uvm_test;
         `uvm_info(`gfn, "ECALL instruction is detected, test done", UVM_LOW)
         // De-assert fetch enable to finish the test
         dut_vif.fetch_enable = 1'b0;
-        // Wait some time for the remaining instruction to finish
-        clk_vif.wait_clks(100);
+        fork
+          check_perf_stats();
+          // Wait some time for the remaining instruction to finish
+          clk_vif.wait_clks(3000);
+        join
       end
       begin
         clk_vif.wait_clks(timeout_in_cycles);
