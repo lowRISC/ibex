@@ -7,12 +7,16 @@ processor verification. It currently supports the following features:
 - Supported privileged mode: machine mode, supervisor mode, user mode
 - Page table randomization and exception
 - Privileged CSR setup randomization
+- Privileged CSR test suite
 - Trap/interrupt handling
 - Test suite to stress test MMU
 - Support sub-programs and random program calls
 - Support illegal instruction and HINT instruction
 - Random forward/backward branch instructions
 - Supports mixing directed instructions with random instruction stream
+- Debug mode support, with fully randomized debug ROM
+- Instruction generation coverage model
+- Communication of information to any integrated SV testbench
 - Supports co-simulation with multiple ISS : spike, riscv-ovpsim
 
 A CSR test generation script written in Python is also provided, to generate a
@@ -213,7 +217,7 @@ program. You can modify the link script to link each section to the target
 memory location. Please avoid setting a large memory range as it could takes a
 long time to randomly initializing the memory. You can break down a large memory
 region to a few representative small regions which covers all the boundary
-conditions for the load/store testing. 
+conditions for the load/store testing.
 
 
 ### Runtime options of the generator
@@ -224,8 +228,10 @@ conditions for the load/store testing.
 | num_of_sub_program          | Number of sub-program in one test                 | 5       |
 | instr_cnt                   | Instruction count per test                        | 200     |
 | enable_page_table_exception | Enable page table exception                       | 0       |
+| enable_unaligned_load_store | Enable unaligned memory operations                | 0       |
 | no_ebreak                   | Disable ebreak instruction                        | 1       |
 | no_wfi                      | Disable WFI instruction                           | 1       |
+| no_dret                     | Disable dret instruction                          | 1       |
 | no_branch_jump              | Disable branch/jump instruction                   | 0       |
 | no_load_store               | Disable load/store instruction                    | 0       |
 | no_csr_instr                | Disable CSR instruction                           | 0       |
@@ -239,6 +245,9 @@ conditions for the load/store testing.
 | enable_interrupt            | Enable MStatus.MIE, used in interrupt test        | 0       |
 | gen_debug_section           | Disables randomized debug_rom section             | 0       |
 | num_debug_sub_program       | Number of debug sub-programs in test              | 0       |
+| enable_ebreak_in_debug_rom  | Generate ebreak instructions inside debug ROM     | 0       |
+| set_dcsr_ebreak             | Randomly enable dcsr.ebreak(m/s/u)                | 0       |
+| randomize_csr               | Fully randomize main CSRs (xSTATUS, xIE)          | 0       |
 
 
 ### Setup Privileged CSR description
@@ -408,14 +417,6 @@ We definitely welcome external contributions. We hope it could be a
 collaborative effort to build a strong open source RISC-V processor
 verification platform. Free feel to submit your pull request for review.
 Please refer to CONTRIBUTING.md for license related questions.
-
-## Future release plan
-
-We have some work in progress which will be part of future releases:
-
--   Privileged CSR test suite.
--   Coverage model.
--   Debug mode support
 
 ## Disclaimer
 
