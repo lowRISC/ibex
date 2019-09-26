@@ -253,8 +253,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
       end
       begin
         forever begin
-          wait(dut_vif.debug_req === 1'b1);
-          check_next_core_status(IN_DEBUG_MODE, "Core did not enter debug mode properly");
+          wait_for_core_status(IN_DEBUG_MODE);
           wait(dut_vif.dret === 1'b1);
         end
       end
@@ -470,27 +469,35 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
   // check memory error inputs and verify that core jumps to correct exception handler
   // TODO(udinator) - add checks for the RVFI interface
   virtual task check_stimulus();
-    forever begin
-      while (!vseq.data_intf_seq.get_error_synch()) begin
-        clk_vif.wait_clks(1);
+    fork
+      begin : drive_mem_err
+        forever begin
+          while (!vseq.data_intf_seq.get_error_synch()) begin
+            clk_vif.wait_clks(1);
+          end
+          vseq.data_intf_seq.inject_error();
+          `uvm_info(`gfn, "Injected dmem error", UVM_LOW)
+          // Dmem interface error could be either a load or store operation
+          check_mem_fault(1'b1);
+          // Random delay before injecting instruction fetch fault
+          `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(err_delay, err_delay inside { [25:100] };)
+          clk_vif.wait_clks(err_delay);
+          while (!vseq.instr_intf_seq.get_error_synch()) begin
+            clk_vif.wait_clks(1);
+          end
+          `uvm_info(`gfn, "Injecting imem fault", UVM_LOW)
+          vseq.instr_intf_seq.inject_error();
+          check_mem_fault(1'b0);
+          // Random delay before injecting this series of errors again
+          `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(err_delay, err_delay inside { [250:750] };)
+          clk_vif.wait_clks(err_delay);
+        end
       end
-      vseq.data_intf_seq.inject_error();
-      `uvm_info(`gfn, "Injected dmem error", UVM_LOW)
-      // Dmem interface error could be either a load or store operation
-      check_mem_fault(1'b1);
-      // Random delay before injecting instruction fetch fault
-      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(err_delay, err_delay inside { [25:100] };)
-      clk_vif.wait_clks(err_delay);
-      while (!vseq.instr_intf_seq.get_error_synch()) begin
-        clk_vif.wait_clks(1);
+      begin
+        wait(dut_vif.ecall === 1'b1);
+        disable drive_mem_err;
       end
-      `uvm_info(`gfn, "Injecting imem fault", UVM_LOW)
-      vseq.instr_intf_seq.inject_error();
-      check_mem_fault(1'b0);
-      // Random delay before injecting this series of errors again
-      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(err_delay, err_delay inside { [250:750] };)
-      clk_vif.wait_clks(err_delay);
-    end
+    join_any
   endtask
 
   virtual task check_mem_fault(bit imem_or_dmem);
