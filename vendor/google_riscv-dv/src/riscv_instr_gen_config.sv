@@ -147,6 +147,7 @@ class riscv_instr_gen_config extends uvm_object;
   // - Accessing non-existence CSR
   // - Accessing CSR with wrong privileged mode
   bit                    enable_illegal_csr_instruction;
+  bit                    randomize_csr = 0;
   // sfence support
   bit                    allow_sfence_exception = 0;
   // Interrupt/Exception Delegation
@@ -368,6 +369,7 @@ class riscv_instr_gen_config extends uvm_object;
     get_bool_arg_value("+force_m_delegation=", force_m_delegation);
     get_bool_arg_value("+force_s_delegation=", force_s_delegation);
     get_bool_arg_value("+require_signature_addr=", require_signature_addr);
+    get_bool_arg_value("+randomize_csr=", randomize_csr);
     if (this.require_signature_addr) begin
       get_hex_arg_value("+signature_addr=", signature_addr);
     end
