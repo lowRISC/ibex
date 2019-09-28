@@ -1,3 +1,20 @@
+/*
+ * Copyright 2019 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
 `define INSTR_CG_BEGIN(INSTR_NAME) \
   covergroup ``INSTR_NAME``_cg with function sample(riscv_instr_cov_item instr);
 
@@ -72,9 +89,6 @@
 
 `define CSR_INSTR_CG_BEGIN(INSTR_NAME) \
   `INSTR_CG_BEGIN(INSTR_NAME) \
-    cp_csr         : coverpoint instr.csr { \
-      bins csr[] = cp_csr with (is_implemented_csr(item)); \
-    } \
     cp_rs1         : coverpoint instr.rs1; \
     cp_rd          : coverpoint instr.rd; \
     cp_gpr_harzard : coverpoint instr.gpr_hazard;
@@ -160,8 +174,7 @@
 
 `define CG_END endgroup
 
-class riscv_instr_cover_group#(privileged_reg_t implemented_pcsr[] =
-                               riscv_instr_pkg::implemented_csr);
+class riscv_instr_cover_group;
 
   riscv_instr_gen_config  cfg;
   riscv_instr_cov_item    cur_instr;
@@ -170,7 +183,6 @@ class riscv_instr_cover_group#(privileged_reg_t implemented_pcsr[] =
   int unsigned            instr_cnt;
   int unsigned            branch_instr_cnt;
   bit [4:0]               branch_hit_history; // The last 5 branch result
-  privileged_reg_t        privil_csr[$];
 
   ///////////// RV32I instruction functional coverage //////////////
 
@@ -208,16 +220,28 @@ class riscv_instr_cover_group#(privileged_reg_t implemented_pcsr[] =
     cp_sign_cross: cross cp_rs1_sign, cp_rs2_sign;
   `CG_END
 
-  `I_INSTR_CG_BEGIN(srai)
-    cp_sign_cross: cross cp_rs1_sign, cp_imm_sign;
+  `INSTR_CG_BEGIN(srai)
+    cp_rs1         : coverpoint instr.rs1;
+    cp_rd          : coverpoint instr.rd;
+    cp_rs1_sign    : coverpoint instr.rs1_sign;
+    cp_rd_sign     : coverpoint instr.rd_sign;
+    cp_gpr_harzard : coverpoint instr.gpr_hazard;
   `CG_END
 
-  `I_INSTR_CG_BEGIN(slli)
-    cp_sign_cross: cross cp_rs1_sign, cp_imm_sign;
+  `INSTR_CG_BEGIN(slli)
+    cp_rs1         : coverpoint instr.rs1;
+    cp_rd          : coverpoint instr.rd;
+    cp_rs1_sign    : coverpoint instr.rs1_sign;
+    cp_rd_sign     : coverpoint instr.rd_sign;
+    cp_gpr_harzard : coverpoint instr.gpr_hazard;
   `CG_END
 
-  `I_INSTR_CG_BEGIN(srli)
-    cp_sign_cross: cross cp_rs1_sign, cp_imm_sign;
+  `INSTR_CG_BEGIN(srli)
+    cp_rs1         : coverpoint instr.rs1;
+    cp_rd          : coverpoint instr.rd;
+    cp_rs1_sign    : coverpoint instr.rs1_sign;
+    cp_rd_sign     : coverpoint instr.rd_sign;
+    cp_gpr_harzard : coverpoint instr.gpr_hazard;
   `CG_END
 
   // Logical instructions
@@ -438,16 +462,28 @@ class riscv_instr_cover_group#(privileged_reg_t implemented_pcsr[] =
     cp_sign_cross: cross cp_rs1_sign, cp_rs2_sign;
   `CG_END
 
-  `I_INSTR_CG_BEGIN(sraiw)
-    cp_sign_cross: cross cp_rs1_sign, cp_imm_sign;
+  `INSTR_CG_BEGIN(sraiw)
+    cp_rs1         : coverpoint instr.rs1;
+    cp_rd          : coverpoint instr.rd;
+    cp_rs1_sign    : coverpoint instr.rs1_sign;
+    cp_rd_sign     : coverpoint instr.rd_sign;
+    cp_gpr_harzard : coverpoint instr.gpr_hazard;
   `CG_END
 
-  `I_INSTR_CG_BEGIN(slliw)
-    cp_sign_cross: cross cp_rs1_sign, cp_imm_sign;
+  `INSTR_CG_BEGIN(slliw)
+    cp_rs1         : coverpoint instr.rs1;
+    cp_rd          : coverpoint instr.rd;
+    cp_rs1_sign    : coverpoint instr.rs1_sign;
+    cp_rd_sign     : coverpoint instr.rd_sign;
+    cp_gpr_harzard : coverpoint instr.gpr_hazard;
   `CG_END
 
-  `I_INSTR_CG_BEGIN(srliw)
-    cp_sign_cross: cross cp_rs1_sign, cp_imm_sign;
+  `INSTR_CG_BEGIN(srliw)
+    cp_rs1         : coverpoint instr.rs1;
+    cp_rd          : coverpoint instr.rd;
+    cp_rs1_sign    : coverpoint instr.rs1_sign;
+    cp_rd_sign     : coverpoint instr.rd_sign;
+    cp_gpr_harzard : coverpoint instr.gpr_hazard;
   `CG_END
 
   `R_INSTR_CG_BEGIN(addw)
@@ -518,13 +554,31 @@ class riscv_instr_cover_group#(privileged_reg_t implemented_pcsr[] =
   `CB_INSTR_CG_BEGIN(c_bnez)
   `CG_END
 
-  `CB_INSTR_CG_BEGIN(c_srli)
+  `INSTR_CG_BEGIN(c_srli)
+    cp_rs1      : coverpoint instr.rs1 {
+      bins gpr[] = cp_rs1 with (is_compressed_gpr(riscv_reg_t'(item)));
+    }
+    cp_gpr_harzard : coverpoint instr.gpr_hazard {
+      bins valid_hazard[] = {NO_HAZARD, RAW_HAZARD};
+    }
   `CG_END
 
-  `CB_INSTR_CG_BEGIN(c_srai)
+  `INSTR_CG_BEGIN(c_srai)
+    cp_rs1      : coverpoint instr.rs1 {
+      bins gpr[] = cp_rs1 with (is_compressed_gpr(riscv_reg_t'(item)));
+    }
+    cp_gpr_harzard : coverpoint instr.gpr_hazard {
+      bins valid_hazard[] = {NO_HAZARD, RAW_HAZARD};
+    }
   `CG_END
 
-  `CI_INSTR_CG_BEGIN(c_slli)
+  `INSTR_CG_BEGIN(c_slli)
+    cp_rs1      : coverpoint instr.rs1 {
+      bins gpr[] = cp_rs1 with (is_compressed_gpr(riscv_reg_t'(item)));
+    }
+    cp_gpr_harzard : coverpoint instr.gpr_hazard {
+      bins valid_hazard[] = {NO_HAZARD, RAW_HAZARD};
+    }
   `CG_END
 
   `CJ_INSTR_CG_BEGIN(c_j)
@@ -613,7 +667,36 @@ class riscv_instr_cover_group#(privileged_reg_t implemented_pcsr[] =
   endgroup
   */
 
-  // TODO: Add covergroup for various hazard conditions
+  covergroup privileged_csr_cg with function sample(bit [11:0] csr);
+    cp_csr : coverpoint csr {
+      bins pcsr[] = cp_csr with (item inside {implemented_csr});
+    }
+  endgroup
+
+  // Privileged CSR covergroup
+  covergroup mcause_exception_cg with function sample(exception_cause_t exception);
+    cp_exception: coverpoint exception {
+       bins exception[] = cp_exception with (item inside {implemented_exception});
+    }
+  endgroup
+
+  covergroup mcause_interrupt_cg with function sample(interrupt_cause_t interrupt);
+    cp_interrupt: coverpoint interrupt {
+       bins interrupt[] = cp_interrupt with (item inside {implemented_interrupt});
+    }
+  endgroup
+
+  covergroup mepc_cg with function sample(bit [XLEN-1:0] val);
+    cp_align: coverpoint val[1:0] {
+      bins alignment[] = {2'b00, 2'b10};
+    }
+  endgroup
+
+  covergroup mstatus_m_cg with function sample(bit [XLEN-1:0] val);
+    cp_mie  : coverpoint val[3];
+    cp_mpie : coverpoint val[7];
+    cp_mpp  : coverpoint val[12:11];
+  endgroup
 
   function new(riscv_instr_gen_config cfg);
     this.cfg = cfg;
@@ -731,6 +814,11 @@ class riscv_instr_cover_group#(privileged_reg_t implemented_pcsr[] =
       c_subw_cg = new();
       c_addw_cg = new();
     end
+    privileged_csr_cg = new();
+    mcause_exception_cg = new();
+    mcause_interrupt_cg = new();
+    mepc_cg = new();
+    mstatus_m_cg = new();
   endfunction
 
   function void sample(riscv_instr_cov_item instr);
@@ -847,20 +935,33 @@ class riscv_instr_cover_group#(privileged_reg_t implemented_pcsr[] =
         branch_hit_history_cg.sample();
       end
     end
+    if (instr.category == CSR) begin
+      privileged_csr_cg.sample(instr.csr);
+      case (instr.csr)
+        MCAUSE: begin
+          if (instr.rd_value[XLEN-1]) begin
+            interrupt_cause_t interrupt;
+            if ($cast(interrupt, instr.rd_value[3:0])) begin
+              mcause_interrupt_cg.sample(interrupt);
+            end
+          end else begin
+            exception_cause_t exception;
+            if ($cast(exception, instr.rd_value[3:0])) begin
+              mcause_exception_cg.sample(exception);
+            end
+          end
+        end
+        MEPC: mepc_cg.sample(instr.rd_value);
+        MSTATUS: begin
+          mstatus_m_cg.sample(instr.rd_value);
+        end
+      endcase
+    end
     if (instr_cnt > 1) begin
       // instr_trans_cg.sample();
     end
     pre_instr.copy_base_instr(instr);
     pre_instr.mem_addr = instr.mem_addr;
-  endfunction
-
-  // Check if the privileged CSR is implemented
-  virtual function bit is_implemented_csr(bit [11:0] pcsr);
-    if (pcsr inside {implemented_pcsr}) begin
-      return 1'b1;
-    end else begin
-      return 1'b0;
-    end
   endfunction
 
   // Check if the instruction is supported
@@ -885,9 +986,6 @@ class riscv_instr_cover_group#(privileged_reg_t implemented_pcsr[] =
   virtual function void build_instr_list();
     riscv_instr_name_t instr_name;
     instr_name = instr_name.first;
-    foreach (riscv_instr_pkg::implemented_csr[i]) begin
-      privil_csr.push_back(riscv_instr_pkg::implemented_csr[i]);
-    end
     do begin
       riscv_instr_base instr;
       if (!(instr_name inside {unsupported_instr}) && (instr_name != INVALID_INSTR)) begin

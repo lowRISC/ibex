@@ -308,22 +308,20 @@ class riscv_instr_gen_config extends uvm_object;
   constraint reserve_scratch_reg_c {
     scratch_reg != ZERO;
     foreach (default_reserved_regs[i]) {
-      signature_data_reg != default_reserved_regs[i];
-      signature_addr_reg != default_reserved_regs[i];
+      scratch_reg != default_reserved_regs[i];
     }
   }
 
   constraint signature_addr_c {
-    if (require_signature_addr) {
-      foreach (default_reserved_regs[i]) {
-        signature_addr_reg != default_reserved_regs[i];
-        signature_data_reg != default_reserved_regs[i];
-      }
-      signature_data_reg != scratch_reg;
-      signature_addr_reg != scratch_reg;
-      signature_data_reg != ZERO;
-      signature_addr_reg != ZERO;
+    foreach (default_reserved_regs[i]) {
+      signature_addr_reg != default_reserved_regs[i];
+      signature_data_reg != default_reserved_regs[i];
     }
+    signature_addr_reg != signature_data_reg;
+    signature_data_reg != scratch_reg;
+    signature_addr_reg != scratch_reg;
+    signature_data_reg != ZERO;
+    signature_addr_reg != ZERO;
   }
 
   constraint addr_translaction_c {
