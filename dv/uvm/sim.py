@@ -167,6 +167,12 @@ def compare(test_list, iss, output_dir, verbose):
   """
   report = ("%s/regr.log" % output_dir).rstrip()
   for test in test_list:
+    compare_opts = test.get('compare_opts', {})
+    in_order_mode = compare_opts.get('in_order_mode', 1)
+    coalescing_limit = compare_opts.get('coalescing_limit', 0)
+    verbose = compare_opts.get('verbose', 0)
+    mismatch = compare_opts.get('mismatch_print_limit', 5)
+    compare_final = compare_opts.get('compare_final_value_only', 0)
     for i in range(0, test['iterations']):
       elf = ("%s/asm_tests/%s.%d.o" % (output_dir, test['test'], i))
       logging.info("Comparing %s/DUT sim result : %s" % (iss, elf))
@@ -193,12 +199,6 @@ def compare(test_list, iss, output_dir, verbose):
           check_ibex_uvm_log(uvm_log, "ibex", test_name, report)
         else:
           if 'compare_opts' in test:
-            compare_opts = test.get('compare_opts')
-            in_order_mode = compare_opts.get('in_order_mode', 1)
-            coalescing_limit = compare_opts.get('coalescing_limit', 0)
-            verbose = compare_opts.get('verbose', 0)
-            mismatch = compare_opts.get('mismatch_print_limit', 5)
-            compare_final = compare_opts.get('compare_final_value_only', 0)
             compare_trace_csv(rtl_csv, iss_csv, "ibex", iss, report,
                               in_order_mode, coalescing_limit, verbose,
                               mismatch, compare_final)

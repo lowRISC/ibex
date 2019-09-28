@@ -137,3 +137,22 @@ parameter privileged_reg_t implemented_csr[] = {
     DSCRATCH0,        // Debug scratch register 0
     DSCRATCH1         // Debug scratch register 1
 };
+
+// --------------------------------------------------------------------------
+// Supported interrupt/exception setting, used for functional coverage
+// --------------------------------------------------------------------------
+
+parameter interrupt_cause_t implemented_interrupt[] = {
+  M_SOFTWARE_INTR,
+  M_TIMER_INTR,
+  M_EXTERNAL_INTR
+};
+
+parameter exception_cause_t implemented_exception[] = {
+  INSTRUCTION_ACCESS_FAULT,
+  ILLEGAL_INSTRUCTION,
+  BREAKPOINT,
+  LOAD_ACCESS_FAULT,
+  STORE_AMO_ACCESS_FAULT,
+  ECALL_MMODE
+};
