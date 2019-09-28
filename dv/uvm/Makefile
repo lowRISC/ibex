@@ -137,6 +137,12 @@ post_compare:
      --simulator=${SIMULATOR} \
      --iss=${ISS}
 
+
+# Generate functional coverage
+fcov:
+	cd ${GEN_DIR}; \
+	python3 ./cov.py --dir ${OUT}/instr_gen/spike_sim -o ${OUT}/fcov
+
 # Load verdi to review coverage
 cov:
 	cd ${OUT}/rtl_sim; verdi -cov -covdir test.vdb &
