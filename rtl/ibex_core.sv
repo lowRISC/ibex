@@ -557,6 +557,7 @@ module ibex_core #(
   ibex_cs_registers #(
       .MHPMCounterNum   ( MHPMCounterNum   ),
       .MHPMCounterWidth ( MHPMCounterWidth ),
+      .PMPEnable        ( PMPEnable        ),
       .PMPGranularity   ( PMPGranularity   ),
       .PMPNumRegions    ( PMPNumRegions    ),
       .RV32E            ( RV32E            ),
