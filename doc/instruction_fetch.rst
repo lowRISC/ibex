@@ -2,9 +2,27 @@
 
 Instruction Fetch
 =================
+:file:`rtl/ibex_if_stage.sv.`
 
-The Instruction-Fetch (IF) stage of the core is able to supply one instruction to the Instruction-Decode (ID) stage per cycle if the instruction cache or the instruction memory is able to serve one instruction per cycle.
-For optimal performance and timing closure reasons, a prefetcher is used which fetches instructions from the instruction memory, or instruction cache.
+.. figure:: images/if_stage.svg
+   :name: if_stage
+   :align: center
+
+   Instruction Fetch (IF) stage
+
+The Instruction Fetch (IF) stage of the core is able to supply one instruction to the Instruction-Decode (ID) stage per cycle if the instruction cache or the instruction memory is able to serve one instruction per cycle.
+
+Instructions are fetched into a prefetch buffer (:file:`rtl/ibex_prefetch_buffer.sv`) for optimal performance and timing closure reasons.
+This buffer simply fetches instructions linearly until it is full.
+The instructions themselves are stored along with the Program Counter (PC) they came from in the fetch FIFO (:file:`rtl/ibex_fetch_fifo.sv`).
+The fetch FIFO has a feedthrough path so when empty a new instruction entering the FIFO is immediately made available on the FIFO output.
+A localparam ``DEPTH`` gives a configurable depth which is set to 3 by default.
+
+The top-level of the instruction fetch controls the prefetch buffer (in particular flushing it on branches/jumps/exception and beginning prefetching from the appropriate new PC) and supplies new instructions to the ID/EX stage along with their PC.
+Compressed instructions are expanded by the IF stage so the decoder can always deal with uncompressed instructions (the ID stage still receives the compressed instruction for placing into ``mtval`` on an illegal instruction exception).
+
+Instruction-Side Memory Interface
+---------------------------------
 
 The following table describes the signals that are used to fetch instructions.
 This interface is a simplified version of the interface used on the data interface as described in :ref:`load-store-unit`.
