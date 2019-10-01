@@ -5,3 +5,6 @@ build
 .project
 .vscode/
 .sw[a-p]
+
+# ibex_tracer log file
+trace_core_*.log
