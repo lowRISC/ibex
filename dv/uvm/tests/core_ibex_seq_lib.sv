@@ -119,7 +119,7 @@ class debug_seq extends core_base_seq;
   virtual task send_req();
     `uvm_info(get_full_name(), "Sending debug request", UVM_HIGH)
     dut_vif.debug_req <= 1'b1;
-    clk_vif.wait_clks($urandom_range(10, 30));
+    clk_vif.wait_clks(50);
     dut_vif.debug_req <= 1'b0;
   endtask
 
