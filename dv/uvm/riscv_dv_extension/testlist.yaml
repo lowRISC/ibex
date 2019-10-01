@@ -9,8 +9,8 @@
     +instr_cnt=10000
     +num_of_sub_program=0
     +no_fence=1
-    +no_data_page=1'b1
-    +no_branch_jump=1'b1
+    +no_data_page=1
+    +no_branch_jump=1
     +boot_mode=m
   iterations: 10
   gen_test: riscv_instr_base_test
@@ -314,3 +314,28 @@
   rtl_test: core_ibex_perf_test
   sim_opts: >
     +require_signature_addr=1
+
+- test: riscv_debug_single_step_test
+  description: >
+    Randomly assert debug_req_i, and set dcsr.step to make ibex execute one isntruction and then re-enter debug mode
+  iterations: 5
+  gen_test: riscv_instr_base_test
+  gen_opts: >
+    +require_signature_addr=1
+    +gen_debug_section=1
+    +no_ebreak=1
+    +no_branch_jump=1
+    +instr_cnt=6000
+    +no_csr_instr=1
+    +no_fence=1
+    +num_of_sub_program=0
+    +randomize_csr=1
+    +enable_debug_single_step=1
+  rtl_test: core_ibex_debug_single_step_test
+  sim_opts: >
+    +require_signature_addr=1
+    +max_interval=1500
+    +enable_debug_single_seq=1
+  compare_opts:
+    compare_final_value_only: 1
+    verbose: 1

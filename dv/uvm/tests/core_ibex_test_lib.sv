@@ -296,7 +296,15 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
           wait_for_core_setup();
           // Should be extended by derived classes.
           // DO NOT use this test class directly.
-          check_stimulus();
+          fork
+            begin : stimulus
+              check_stimulus();
+            end : stimulus
+            begin
+              wait(dut_vif.ecall === 1'b1);
+              disable stimulus;
+            end
+          join
         end
       end
     join_none
@@ -459,6 +467,58 @@ class core_ibex_debug_ebreakm_test extends core_ibex_directed_test;
 
 endclass
 
+// Debug single step test
+class core_ibex_debug_single_step_test extends core_ibex_directed_test;
+
+  `uvm_component_utils(core_ibex_debug_single_step_test)
+  `uvm_component_new
+
+  virtual task check_stimulus();
+    bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] ret_pc;
+    bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] counter = 0;
+    bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] next_counter = 0;
+    forever begin
+      vseq.start_debug_single_seq();
+      check_next_core_status(IN_DEBUG_MODE,
+                             "Core did not enter debug mode after debug stimulus");
+      wait_for_csr_write(CSR_DPC);
+      ret_pc = signature_data;
+      wait_for_csr_write(CSR_DSCRATCH0);
+      next_counter = signature_data;
+      wait_for_csr_write(CSR_DCSR);
+      check_dcsr_cause(DBG_CAUSE_HALTREQ);
+      `DV_CHECK_EQ_FATAL(signature_data[1], 1'b1, "dcsr.step is not set")
+      wait(dut_vif.dret === 1'b1);
+      // now we loop on the counter until we are done single stepping
+      while (counter >= 0) begin
+        counter = next_counter;
+        check_next_core_status(IN_DEBUG_MODE,
+                               "Core did not enter debug mode after debug stimulus");
+        wait_for_csr_write(CSR_DPC);
+        if (signature_data - ret_pc !== 'h2 &&
+            signature_data - ret_pc !== 'h4) begin
+          `uvm_fatal(`gfn, $sformatf("DPC value [0x%0x] is not the next instruction after ret_pc [0x%0x]",
+                             signature_data, ret_pc))
+        end
+        ret_pc = signature_data;
+        wait_for_csr_write(CSR_DSCRATCH0);
+        next_counter = signature_data;
+        wait_for_csr_write(CSR_DCSR);
+        check_dcsr_cause(DBG_CAUSE_STEP);
+        if (counter === 0) begin
+          `DV_CHECK_EQ_FATAL(signature_data[2], 1'b0, "dcsr.step is set")
+        end else begin
+          `DV_CHECK_EQ_FATAL(signature_data[2], 1'b1, "dcsr.step is not set")
+        end
+        wait(dut_vif.dret === 1'b1);
+        if (counter === 0) break;
+      end
+      clk_vif.wait_clks(2000);
+    end
+  endtask
+
+endclass
+
 // Memory interface error test class
 class core_ibex_mem_error_test extends core_ibex_directed_test;
 
@@ -470,35 +530,27 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
   // check memory error inputs and verify that core jumps to correct exception handler
   // TODO(udinator) - add checks for the RVFI interface
   virtual task check_stimulus();
-    fork
-      begin : drive_mem_err
-        forever begin
-          while (!vseq.data_intf_seq.get_error_synch()) begin
-            clk_vif.wait_clks(1);
-          end
-          vseq.data_intf_seq.inject_error();
-          `uvm_info(`gfn, "Injected dmem error", UVM_LOW)
-          // Dmem interface error could be either a load or store operation
-          check_mem_fault(1'b1);
-          // Random delay before injecting instruction fetch fault
-          `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(err_delay, err_delay inside { [25:100] };)
-          clk_vif.wait_clks(err_delay);
-          while (!vseq.instr_intf_seq.get_error_synch()) begin
-            clk_vif.wait_clks(1);
-          end
-          `uvm_info(`gfn, "Injecting imem fault", UVM_LOW)
-          vseq.instr_intf_seq.inject_error();
-          check_mem_fault(1'b0);
-          // Random delay before injecting this series of errors again
-          `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(err_delay, err_delay inside { [250:750] };)
-          clk_vif.wait_clks(err_delay);
-        end
+    forever begin
+      while (!vseq.data_intf_seq.get_error_synch()) begin
+        clk_vif.wait_clks(1);
       end
-      begin
-        wait(dut_vif.ecall === 1'b1);
-        disable drive_mem_err;
+      vseq.data_intf_seq.inject_error();
+      `uvm_info(`gfn, "Injected dmem error", UVM_LOW)
+      // Dmem interface error could be either a load or store operation
+      check_mem_fault(1'b1);
+      // Random delay before injecting instruction fetch fault
+      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(err_delay, err_delay inside { [25:100] };)
+      clk_vif.wait_clks(err_delay);
+      while (!vseq.instr_intf_seq.get_error_synch()) begin
+        clk_vif.wait_clks(1);
       end
-    join_any
+      `uvm_info(`gfn, "Injecting imem fault", UVM_LOW)
+      vseq.instr_intf_seq.inject_error();
+      check_mem_fault(1'b0);
+      // Random delay before injecting this series of errors again
+      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(err_delay, err_delay inside { [250:750] };)
+      clk_vif.wait_clks(err_delay);
+    end
   endtask
 
   virtual task check_mem_fault(bit imem_or_dmem);
