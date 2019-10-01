@@ -89,10 +89,10 @@ jobs:
     displayName: Display environment
 
   - bash: |
-      fusesoc --cores-root . run --target=lint lowrisc:ibex:ibex_core
+      fusesoc --cores-root . run --target=lint lowrisc:ibex:ibex_core_tracing
       if [ $? != 0 ]; then
         echo -n "##vso[task.logissue type=error]"
-        echo "Verilog lint failed. Run 'fusesoc --cores-root . run --target=lint lowrisc:ibex:ibex_core' to check and fix all errors."
+        echo "Verilog lint failed. Run 'fusesoc --cores-root . run --target=lint lowrisc:ibex:ibex_core_tracing' to check and fix all errors."
         exit 1
       fi
     displayName: Lint Verilog source files with Verilator
@@ -118,7 +118,7 @@ jobs:
       export RISCV_DEVICE=rv32imc
       fail=0
       for isa in rv32i rv32im rv32imc; do
-        make -C build/riscv-compliance RISCV_ISA=$isa 2>&1 | tee run.log 
+        make -C build/riscv-compliance RISCV_ISA=$isa 2>&1 | tee run.log
         if [ ${PIPESTATUS[0]} != 0 ]; then
           echo -n "##vso[task.logissue type=error]"
           echo "The RISC-V compliance test suite failed for $isa"
