@@ -33,7 +33,7 @@ def process_ibex_sim_log(ibex_log, csv):
             # Extract instruction information
             m = re.search(r"^\s*(?P<time>\d+)\s+(?P<cycle>\d+)\s+" \
                           "(?P<pc>[0-9a-f]+)\s+(?P<bin>[0-9a-f]+)\s+(?P<instr>.*)" \
-                          ".*x(?P<rd>\d+)=0x(?P<val>[0-9a-f]+)", line)
+                          ".*x(?P<rd>[1-9]\d*)=0x(?P<val>[0-9a-f]+)", line)
             if m:
                 # Write the extracted instruction to a csvcol buffer file
                 rv_instr_trace = RiscvInstructiontTraceEntry()
