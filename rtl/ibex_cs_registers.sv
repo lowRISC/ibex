@@ -204,6 +204,7 @@ module ibex_cs_registers #(
   assign csr_addr           = {csr_addr_i};
   assign mhpmcounter_idx    = csr_addr[4:0];
 
+  // See RISC-V Privileged Specification, version 1.11, Section 2.1
   assign illegal_csr_priv   = 1'b0; // we only support M-mode
   assign illegal_csr_write  = (csr_addr[11:10] == 2'b11) && csr_wreq;
   assign illegal_csr_insn_o = illegal_csr | illegal_csr_write | illegal_csr_priv;
@@ -374,46 +375,42 @@ module ibex_cs_registers #(
     mhpmcounter_we   = '0;
     mhpmcounterh_we  = '0;
 
-    unique case (csr_addr_i)
-      // mstatus: IE bit
-      CSR_MSTATUS: begin
-        if (csr_we_int) begin
+    if (csr_we_int) begin
+      unique case (csr_addr_i)
+        // mstatus: IE bit
+        CSR_MSTATUS: begin
           mstatus_d = '{
               mie:  csr_wdata_int[CSR_MSTATUS_MIE_BIT],
               mpie: csr_wdata_int[CSR_MSTATUS_MPIE_BIT],
               mpp:  PRIV_LVL_M
           };
         end
-      end
 
-      // interrupt enable
-      CSR_MIE: begin
-        if (csr_we_int) begin
+        // interrupt enable
+        CSR_MIE: begin
           mie_d.irq_software = csr_wdata_int[CSR_MSIX_BIT];
           mie_d.irq_timer    = csr_wdata_int[CSR_MTIX_BIT];
           mie_d.irq_external = csr_wdata_int[CSR_MEIX_BIT];
           mie_d.irq_fast     = csr_wdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW];
         end
-      end
 
-      CSR_MSCRATCH: if (csr_we_int) mscratch_d = csr_wdata_int;
+        CSR_MSCRATCH: mscratch_d = csr_wdata_int;
 
-      // mepc: exception program counter
-      CSR_MEPC: if (csr_we_int) mepc_d = {csr_wdata_int[31:1], 1'b0};
+        // mepc: exception program counter
+        CSR_MEPC: mepc_d = {csr_wdata_int[31:1], 1'b0};
 
-      // mcause
-      CSR_MCAUSE: if (csr_we_int) mcause_d = {csr_wdata_int[31], csr_wdata_int[4:0]};
+        // mcause
+        CSR_MCAUSE: mcause_d = {csr_wdata_int[31], csr_wdata_int[4:0]};
 
-      // mtval: trap value
-      CSR_MTVAL: if (csr_we_int) mtval_d = csr_wdata_int;
+        // mtval: trap value
+        CSR_MTVAL: mtval_d = csr_wdata_int;
 
-      // mtvec
-      // mtvec.MODE set to vectored
-      // mtvec.BASE must be 256-byte aligned
-      CSR_MTVEC: if (csr_we_int) mtvec_d = {csr_wdata_int[31:8], 6'b0, 2'b01};
+        // mtvec
+        // mtvec.MODE set to vectored
+        // mtvec.BASE must be 256-byte aligned
+        CSR_MTVEC: mtvec_d = {csr_wdata_int[31:8], 6'b0, 2'b01};
 
-      CSR_DCSR: begin
-        if (csr_we_int) begin
+        CSR_DCSR: begin
           dcsr_d = csr_wdata_int;
           dcsr_d.xdebugver = XDEBUGVER_STD;
           dcsr_d.prv = PRIV_LVL_M; // only M-mode is supported
@@ -429,59 +426,24 @@ module ibex_cs_registers #(
           dcsr_d.zero1 = 1'b0;
           dcsr_d.zero2 = 12'h0;
         end
-      end
 
-      CSR_DPC: begin
-        // Only valid PC addresses are allowed (half-word aligned with C ext.)
-        if (csr_we_int && csr_wdata_int[0] == 1'b0) begin
-          depc_d = csr_wdata_int;
+        CSR_DPC: begin
+          // Only valid PC addresses are allowed (half-word aligned with C ext.)
+          if (csr_wdata_int[0] == 1'b0) begin
+            depc_d = csr_wdata_int;
+          end
         end
-      end
 
-      CSR_DSCRATCH0: begin
-        if (csr_we_int) begin
-          dscratch0_d = csr_wdata_int;
-        end
-      end
+        CSR_DSCRATCH0: dscratch0_d = csr_wdata_int;
+        CSR_DSCRATCH1: dscratch1_d = csr_wdata_int;
 
-      CSR_DSCRATCH1: begin
-        if (csr_we_int) begin
-          dscratch1_d = csr_wdata_int;
-        end
-      end
+        CSR_MCOUNTINHIBIT: mcountinhibit_we   = 1'b1;
+        CSR_MCYCLE:        mhpmcounter_we[0]  = 1'b1;
+        CSR_MCYCLEH:       mhpmcounterh_we[0] = 1'b1;
+        CSR_MINSTRET:      mhpmcounter_we[2]  = 1'b1;
+        CSR_MINSTRETH:     mhpmcounterh_we[2] = 1'b1;
 
-      CSR_MCOUNTINHIBIT: begin
-        if (csr_we_int) begin
-          mcountinhibit_we = 1'b1;
-        end
-      end
-
-      CSR_MCYCLE: begin
-        if (csr_we_int) begin
-          mhpmcounter_we[0] = 1'b1;
-        end
-      end
-
-      CSR_MCYCLEH: begin
-        if (csr_we_int) begin
-          mhpmcounterh_we[0] = 1'b1;
-        end
-      end
-
-      CSR_MINSTRET: begin
-        if (csr_we_int) begin
-          mhpmcounter_we[2] = 1'b1;
-        end
-      end
-
-      CSR_MINSTRETH: begin
-        if (csr_we_int) begin
-          mhpmcounterh_we[2] = 1'b1;
-        end
-      end
-
-      default: begin
-        if (csr_we_int == 1'b1) begin
+        default: begin
           // performance counters and event selector
           if ((csr_addr & CSR_MASK_MCOUNTER) == CSR_OFF_MCOUNTER) begin
             mhpmcounter_we[mhpmcounter_idx] = 1'b1;
@@ -489,8 +451,8 @@ module ibex_cs_registers #(
             mhpmcounterh_we[mhpmcounter_idx] = 1'b1;
           end
         end
-      end
-    endcase
+      endcase
+    end
 
     // exception controller gets priority over other writes
     unique case (1'b1)
