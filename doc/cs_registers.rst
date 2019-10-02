@@ -231,7 +231,7 @@ A particular bit in the register reads as one if the corresponding interrupt inp
 +-------+---------------------------------------------------------------------------------------+
 
 PMP Configuration Register (pmpcfgx)
-----------------------------------------
+------------------------------------
 
 CSR Address: ``0x3A0 - 0x3A3``
 
@@ -239,11 +239,11 @@ Reset Value: ``0x0000_0000``
 
 ``pmpcfgx`` are registers to configure PMP regions. Each register configures 4 PMP regions.
 
-+---------------------------------------+
++---------+---------+---------+---------+
 |  31:24  |  23:16  |  15:8   |   7:0   |
-+---------------------------------------+
++---------+---------+---------+---------+
 | pmp3cfg | pmp2cfg | pmp1cfg | pmp0cfg |
-+---------------------------------------+
++---------+---------+---------+---------+
 
 The configuration fields for each region are as follows:
 
@@ -268,7 +268,7 @@ Details of these configuration bits can be found in the RISC-V Privileged Specif
 Note that the combination of Write permission = 1, Read permission = 0 is reserved, and will be treated by the core as Read/Write permission = 0.
 
 PMP Address Register (pmpaddrx)
-----------------------------------------
+-------------------------------
 
 CSR Address: ``0x3B0 - 0x3BF``
 
