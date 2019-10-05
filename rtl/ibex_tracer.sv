@@ -583,7 +583,10 @@ module ibex_tracer (
     string      mnemonic;
 
     /*
-    TODO: Gives wrong results in Verilator for unknown reasons. Debug what's going on.
+    Gives wrong results in Verilator < 4.020.
+    See https://github.com/lowRISC/ibex/issues/372 and
+    https://www.veripool.org/issues/1536-Verilator-Misoptimization-in-if-and-case-with-default-statement-inside-a-function
+
     unique case (rvfi_insn[14:12])
       3'b000: mnemonic = "lb";
       3'b001: mnemonic = "lh";
