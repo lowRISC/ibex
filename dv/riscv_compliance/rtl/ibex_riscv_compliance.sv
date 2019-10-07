@@ -18,6 +18,7 @@ module ibex_riscv_compliance (
   parameter bit RV32E           = 1'b0;
   parameter bit RV32M           = 1'b1;
   parameter bit BranchTargetALU = 1'b0;
+  parameter bit WritebackStage  = 1'b0;
 
   logic clk_sys, rst_sys_n;
 
@@ -106,7 +107,8 @@ module ibex_riscv_compliance (
       .DmExceptionAddr(32'h00000000),
       .RV32E(RV32E),
       .RV32M(RV32M),
-      .BranchTargetALU(BranchTargetALU)
+      .BranchTargetALU(BranchTargetALU),
+      .WritebackStage(WritebackStage)
     ) u_core (
       .clk_i                 (clk_sys),
       .rst_ni                (rst_sys_n),

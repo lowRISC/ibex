@@ -90,6 +90,9 @@ Parameters
 | ``BranchTargetALU``          | bit         | 0          | *EXPERIMENTAL* - Enables branch target ALU removing a stall     |
 |                              |             |            | cycle from taken branches                                       |
 +------------------------------+-------------+------------+-----------------------------------------------------------------+
+| ``WritebackStage``           | bit         | 0          | *EXPERIMENTAL* - Enables third pipeline stage (writeback)       |
+|                              |             |            | improving performance of loads and stores                       |
++------------------------------+-------------+------------+-----------------------------------------------------------------+
 | ``MultiplierImplementation`` | string      | "fast"     | Multiplicator type:                                             |
 |                              |             |            | "slow": multi-cycle slow,                                       |
 |                              |             |            | "fast": multi-cycle fast,                                       |

@@ -38,6 +38,7 @@ module tb_cs_registers #(
   ibex_pkg::csr_num_e   csr_addr_i;
   logic [31:0]          csr_wdata_i;
   ibex_pkg::csr_op_e    csr_op_i;
+  logic                 csr_op_en_i;
   logic [31:0]          csr_rdata_o;
 
   // interrupts
@@ -67,9 +68,11 @@ module tb_cs_registers #(
 
   logic [31:0]          pc_if_i;
   logic [31:0]          pc_id_i;
+  logic [31:0]          pc_wb_i;
 
   logic                 csr_save_if_i;
   logic                 csr_save_id_i;
+  logic                 csr_save_wb_i;
   logic                 csr_restore_mret_i;
   logic                 csr_restore_dret_i;
   logic                 csr_save_cause_i;
@@ -83,14 +86,14 @@ module tb_cs_registers #(
   // Performance Counters
   logic                 instr_ret_i;            // instr retired in ID/EX stage
   logic                 instr_ret_compressed_i; // compressed instr retired
-  logic                 imiss_i;                // instr fetch
+  logic                 iside_wait_i;           // core waiting for the iside
   logic                 pc_set_i;               // PC was set to a new value
   logic                 jump_i;                 // jump instr seen (j, jr, jal, jalr)
   logic                 branch_i;               // branch instr seen (bf, bnf)
   logic                 branch_taken_i;         // branch was taken
   logic                 mem_load_i;             // load from memory in this cycle
   logic                 mem_store_i;            // store to memory in this cycle
-  logic                 lsu_busy_i;
+  logic                 dside_wait_i;           // core waiting for the dside
 
   //-----------------
   // Reset generation
@@ -162,12 +165,14 @@ module tb_cs_registers #(
                           illegal_csr_insn_o,
                           csr_access_i,
                           csr_op_i,
+                          csr_op_en_i,
                           csr_addr_i,
                           csr_wdata_i,
                           csr_rdata_o);
     reg_dpi::driver_tick("reg_driver",
                          csr_access_i,
                          csr_op_i,
+                         csr_op_en_i,
                          csr_addr_i,
                          csr_wdata_i);
   end

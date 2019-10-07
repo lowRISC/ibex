@@ -9,7 +9,9 @@
 
 `include "prim_assert.sv"
 
-module ibex_controller (
+module ibex_controller #(
+    parameter bit WritebackStage = 0
+ ) (
     input  logic                  clk_i,
     input  logic                  rst_ni,
 
@@ -36,6 +38,8 @@ module ibex_controller (
     // to IF-ID pipeline stage
     output logic                  instr_valid_clear_o,   // kill instr in IF-ID reg
     output logic                  id_in_ready_o,         // ID stage is ready for new instr
+    output logic                  controller_run_o,      // Controller is in standard instruction
+                                                         // run mode
 
     // to prefetcher
     output logic                  instr_req_o,           // start fetching instructions
@@ -49,6 +53,7 @@ module ibex_controller (
     input  logic [31:0]           lsu_addr_last_i,       // for mtval
     input  logic                  load_err_i,
     input  logic                  store_err_i,
+    output logic                  wb_exception_o,        // Instruction in WB taking an exception
 
     // jump/branch signals
     input  logic                  branch_set_i,          // branch taken set signal
@@ -74,6 +79,7 @@ module ibex_controller (
 
     output logic                  csr_save_if_o,
     output logic                  csr_save_id_o,
+    output logic                  csr_save_wb_o,
     output logic                  csr_restore_mret_id_o,
     output logic                  csr_restore_dret_id_o,
     output logic                  csr_save_cause_o,
@@ -81,11 +87,10 @@ module ibex_controller (
     input  ibex_pkg::priv_lvl_e   priv_mode_i,
     input  logic                  csr_mstatus_tw_i,
 
-    // stall signals
-    input  logic                  stall_lsu_i,
-    input  logic                  stall_multdiv_i,
-    input  logic                  stall_jump_i,
-    input  logic                  stall_branch_i,
+    // stall & flush signals
+    input  logic                  stall_id_i,
+    input  logic                  stall_wb_i,
+    output logic                  flush_id_o,
 
     // performance monitors
     output logic                  perf_jump_o,           // we are executing a jump
@@ -211,6 +216,13 @@ module ibex_controller (
   `ASSERT(SpecialReqAllGivesSpecialReqBranchIfBranchInst,
     special_req_all && (branch_set_i || jump_set_i) |-> special_req_branch)
 
+  if (WritebackStage) begin
+    // Instruction in writeback is generating an exception so instruction in ID must not execute
+    assign wb_exception_o = load_err_q | store_err_q | load_err_i | store_err_i;
+  end else begin
+    assign wb_exception_o = 1'b0;
+  end
+
   ////////////////
   // Interrupts //
   ////////////////
@@ -269,6 +281,7 @@ module ibex_controller (
 
     csr_save_if_o         = 1'b0;
     csr_save_id_o         = 1'b0;
+    csr_save_wb_o         = 1'b0;
     csr_restore_mret_id_o = 1'b0;
     csr_restore_dret_id_o = 1'b0;
     csr_save_cause_o      = 1'b0;
@@ -298,6 +311,8 @@ module ibex_controller (
 
     perf_tbranch_o        = 1'b0;
     perf_jump_o           = 1'b0;
+
+    controller_run_o      = 1'b0;
 
     unique case (ctrl_fsm_cs)
       RESET: begin
@@ -352,11 +367,12 @@ module ibex_controller (
 
         // handle interrupts
         if (handle_irq) begin
-          // This assumes that the pipeline is always flushed before
-          // going to sleep.
+          // We are handling an interrupt. Set halt_if to tell IF not to give
+          // us any more instructions before it redirects to the handler, but
+          // don't set flush_id: we must allow this instruction to complete
+          // (since it might have outstanding loads or stores).
           ctrl_fsm_ns = IRQ_TAKEN;
           halt_if     = 1'b1;
-          flush_id    = 1'b1;
         end
 
         // enter debug mode
@@ -374,6 +390,8 @@ module ibex_controller (
         // 1. currently running (multicycle) instructions and exceptions caused by these
         // 2. debug requests
         // 3. interrupt requests
+
+        controller_run_o = 1'b1;
 
         // Set PC mux for branch and jump here to ease timing. Value is only relevant if pc_set_o is
         // also set. Setting the mux value here avoids factoring in special_req and instr_valid_i
@@ -416,8 +434,12 @@ module ibex_controller (
           end else if (handle_irq) begin
             // handle interrupt (not in debug mode)
             ctrl_fsm_ns = IRQ_TAKEN;
+            // We are handling an interrupt (not in debug mode). Set halt_if to
+            // tell IF not to give us any more instructions before it redirects
+            // to the handler, but don't set flush_id: we must allow this
+            // instruction to complete (since it might have outstanding loads
+            // or stores).
             halt_if     = 1'b1;
-            flush_id    = 1'b1;
           end
         end
 
@@ -530,7 +552,17 @@ module ibex_controller (
           pc_set_o         = 1'b1;
           pc_mux_o         = PC_EXC;
           exc_pc_mux_o     = debug_mode_q ? EXC_PC_DBG_EXC : EXC_PC_EXC;
-          csr_save_id_o    = 1'b1;
+
+          if (WritebackStage) begin : g_writeback_mepc_save
+            // With the writeback stage present whether an instruction accessing memory will cause
+            // an exception is only known when it is in writeback. So when taking such an exception
+            // epc must come from writeback.
+            csr_save_id_o  = ~(store_err_q | load_err_q);
+            csr_save_wb_o  = store_err_q | load_err_q;
+          end else begin : g_no_writeback_mepc_save
+            csr_save_id_o  = 1'b0;
+          end
+
           csr_save_cause_o = 1'b1;
 
           // set exception registers, priorities according to Table 3.7 of Privileged Spec v1.11
@@ -628,6 +660,8 @@ module ibex_controller (
     endcase
   end
 
+  assign flush_id_o = flush_id;
+
   // signal to CSR when in debug mode
   assign debug_mode_o = debug_mode_q;
 
@@ -638,10 +672,10 @@ module ibex_controller (
   // Stall control //
   ///////////////////
 
-  // if high, current instr needs at least one more cycle to finish after the current cycle
-  // if low, current instr finishes in current cycle
-  // multicycle instructions have this set except during the last cycle
-  assign stall = stall_lsu_i | stall_multdiv_i | stall_jump_i | stall_branch_i;
+  // If high current instruction cannot complete this cycle. Either because it needs more cycles to
+  // finish (stall_id_i) or because the writeback stage cannot accept it yet (stall_wb_i). If there
+  // is no writeback stage stall_wb_i is a constant 0.
+  assign stall = stall_id_i | stall_wb_i;
 
   // signal to IF stage that ID stage is ready for next instr
   assign id_in_ready_o       = ~stall & ~halt_if;

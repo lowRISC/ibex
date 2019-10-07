@@ -70,8 +70,7 @@ module ibex_if_stage #(
     input  logic                  id_in_ready_i,            // ID stage is ready for new instr
 
     // misc signals
-    output logic                  if_busy_o,                // IF stage is busy fetching instr
-    output logic                  perf_imiss_o              // instr fetch miss
+    output logic                  if_busy_o                 // IF stage is busy fetching instr
 );
 
   import ibex_pkg::*;
@@ -207,7 +206,6 @@ module ibex_if_stage #(
 
   assign pc_if_o      = fetch_addr;
   assign if_busy_o    = prefetch_busy;
-  assign perf_imiss_o = ~fetch_valid | branch_req;
 
   // compressed instruction decoding, or more precisely compressed instruction
   // expander

@@ -36,6 +36,8 @@ module ibex_fetch_fifo #(
     output logic        out_err_o
 );
 
+  // To gain extra performance DEPTH should be increased, this is due to some inefficiencies in the
+  // way the fetch fifo operates see issue #574 for more details
   localparam int unsigned DEPTH = NUM_REQS+1;
 
   // index 0 is used for output

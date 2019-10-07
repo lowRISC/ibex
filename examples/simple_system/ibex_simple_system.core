@@ -42,6 +42,11 @@ parameters:
     paramtype: vlogparam
     default: 0
     description: Enables seperate branch target ALU (increasing branch performance EXPERIMENTAL) [0/1]
+  WritebackStage:
+    datatype: int
+    paramtype: vlogparam
+    default: 0
+    description: Enables third pipeline stage (EXPERIMENTAL) [0/1]
 
 targets:
   sim:
@@ -53,6 +58,7 @@ targets:
       - RV32M
       - RV32E
       - BranchTargetALU
+      - WritebackStage
       - SRAM_INIT_FILE
     toplevel: ibex_simple_system
     tools:

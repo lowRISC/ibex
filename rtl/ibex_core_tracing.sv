@@ -17,6 +17,7 @@ module ibex_core_tracing #(
     parameter bit          BranchTargetALU          = 1'b0,
     parameter              MultiplierImplementation = "fast",
     parameter bit          DbgTriggerEn             = 1'b0,
+    parameter bit          WritebackStage           = 1'b0,
     parameter int unsigned DmHaltAddr               = 32'h1A110800,
     parameter int unsigned DmExceptionAddr          = 32'h1A110808
 ) (
@@ -101,8 +102,9 @@ module ibex_core_tracing #(
     .RV32E                    ( RV32E                    ),
     .RV32M                    ( RV32M                    ),
     .BranchTargetALU          ( BranchTargetALU          ),
-    .DbgTriggerEn             ( DbgTriggerEn             ),
     .MultiplierImplementation ( MultiplierImplementation ),
+    .DbgTriggerEn             ( DbgTriggerEn             ),
+    .WritebackStage           ( WritebackStage           ),
     .DmHaltAddr               ( DmHaltAddr               ),
     .DmExceptionAddr          ( DmExceptionAddr          )
   ) u_ibex_core (
