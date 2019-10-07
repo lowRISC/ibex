@@ -35,10 +35,11 @@ module ibex_ex_block #(
     input  logic  [1:0]           multdiv_signed_mode_i,
     input  logic [31:0]           multdiv_operand_a_i,
     input  logic [31:0]           multdiv_operand_b_i,
+    input  logic                  multdiv_ready_id_i,
 
     // Outputs
     output logic [31:0]           alu_adder_result_ex_o, // to LSU
-    output logic [31:0]           regfile_wdata_ex_o,
+    output logic [31:0]           result_ex_o,
     output logic [31:0]           jump_target_o,         // to IF
     output logic                  branch_decision_o,     // to ID
 
@@ -66,7 +67,7 @@ module ibex_ex_block #(
     assign multdiv_en     = 1'b0;
   end
 
-  assign regfile_wdata_ex_o = multdiv_en ? multdiv_result : alu_result;
+  assign result_ex_o = multdiv_en ? multdiv_result : alu_result;
 
   // branch handling
   assign branch_decision_o  = alu_cmp_result;
@@ -128,6 +129,7 @@ module ibex_ex_block #(
         .valid_o            ( multdiv_valid         ),
         .alu_operand_a_o    ( multdiv_alu_operand_a ),
         .alu_operand_b_o    ( multdiv_alu_operand_b ),
+        .multdiv_ready_id_i ( multdiv_ready_id_i    ),
         .multdiv_result_o   ( multdiv_result        )
     );
   end else if (MultiplierImplementation == "fast") begin : gen_multdiv_fast
@@ -147,6 +149,7 @@ module ibex_ex_block #(
         .alu_adder_ext_i    ( alu_adder_result_ext  ),
         .alu_adder_i        ( alu_adder_result_ex_o ),
         .equal_to_zero      ( alu_is_equal_result   ),
+        .multdiv_ready_id_i ( multdiv_ready_id_i    ),
         .valid_o            ( multdiv_valid         ),
         .multdiv_result_o   ( multdiv_result        )
     );
@@ -167,6 +170,7 @@ module ibex_ex_block #(
         .alu_adder_ext_i    ( alu_adder_result_ext  ),
         .alu_adder_i        ( alu_adder_result_ex_o ),
         .equal_to_zero      ( alu_is_equal_result   ),
+        .multdiv_ready_id_i ( multdiv_ready_id_i    ),
         .valid_o            ( multdiv_valid         ),
         .multdiv_result_o   ( multdiv_result        )
     );

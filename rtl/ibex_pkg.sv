@@ -96,6 +96,16 @@ typedef enum logic[3:0] {
    XDEBUGVER_NONSTD = 4'd15 // debug not conforming to RISC-V debug spec
 } x_debug_ver_e;
 
+//////////////
+// WB stage //
+//////////////
+
+// Type of instruction present in writeback stage
+typedef enum logic[1:0] {
+  WB_INSTR_LOAD,  // Instruction is awaiting load data
+  WB_INSTR_STORE, // Instruction is awaiting store response
+  WB_INSTR_OTHER  // Instruction doesn't fit into above categories
+} wb_instr_type_e;
 
 //////////////
 // ID stage //
@@ -139,8 +149,7 @@ typedef enum logic {
 } jt_mux_sel_e;
 
 // Regfile write data selection
-typedef enum logic [1:0] {
-  RF_WD_LSU,
+typedef enum logic {
   RF_WD_EX,
   RF_WD_CSR
 } rf_wd_sel_e;

@@ -39,6 +39,11 @@ parameters:
     paramtype: vlogparam
     default: 0
     description: Enables seperate branch target ALU (increasing branch performance EXPERIMENTAL) [0/1]
+  WritebackStage:
+    datatype: int
+    paramtype: vlogparam
+    default: 0
+    description: Enables third pipeline stage (EXPERIMENTAL) [0/1]
 
 targets:
   sim:
@@ -50,6 +55,7 @@ targets:
       - RV32M
       - RV32E
       - BranchTargetALU
+      - WritebackStage
     toplevel: ibex_riscv_compliance
     tools:
       verilator:
