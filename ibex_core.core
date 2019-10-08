@@ -22,10 +22,8 @@ filesets:
       - rtl/ibex_multdiv_slow.sv
       - rtl/ibex_prefetch_buffer.sv
       - rtl/ibex_pmp.sv
-      # XXX: Figure out the best way to switch these two implementations
-      # dynamically on the target.
-#      - rtl/ibex_register_file_latch.sv # ASIC
-      - rtl/ibex_register_file_ff.sv # FPGA
+      - " ibex_rf_latch? (rtl/ibex_register_file_latch.sv)" # ASIC
+      - "!ibex_rf_latch? (rtl/ibex_register_file_ff.sv)" # FPGA
       - rtl/ibex_core.sv
     file_type: systemVerilogSource
 
