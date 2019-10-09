@@ -668,7 +668,7 @@ module ibex_cs_registers #(
             end
           end
 
-        end else begin
+        end else begin : g_pmp_g2
           // For G >= 2, bits are masked to one or zero depending on the mode
           always_comb begin
             pmp_addr_rdata[i] = pmp_addr[i];
