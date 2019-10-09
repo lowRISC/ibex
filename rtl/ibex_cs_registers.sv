@@ -753,7 +753,7 @@ module ibex_cs_registers #(
       assign pmp_cfg_rdata[i]  = '0;
     end
     for (genvar i = 0; i < PMPNumRegions; i++) begin : g_outputs
-      assign csr_pmp_cfg_o[i]  = pmp_cfg_t'('0);
+      assign csr_pmp_cfg_o[i]  = pmp_cfg_t'(1'b0);
       assign csr_pmp_addr_o[i] = '0;
     end
   end
