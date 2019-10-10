@@ -31,6 +31,37 @@ class core_ibex_csr_test extends core_ibex_base_test;
 
 endclass
 
+// Reset test
+class core_ibex_reset_test extends core_ibex_base_test;
+
+  `uvm_component_utils(core_ibex_reset_test)
+  `uvm_component_new
+
+  virtual task send_stimulus();
+    vseq.start(env.vseqr);
+    // Mid-test reset is possible in a wide range of times
+    clk_vif.wait_clks($urandom_range(20000, 200000));
+    fork
+      begin
+        dut_vif.fetch_enable = 1'b0;
+        clk_vif.reset();
+      end
+      begin
+        clk_vif.wait_clks(1);
+        // Flush FIFOs
+        item_collected_port.flush();
+        irq_collected_port.flush();
+        // Reset testbench state
+        env.reset();
+        load_binary_to_mem();
+      end
+    join
+    // Assert fetch_enable to have the core start executing from boot address
+    dut_vif.fetch_enable = 1'b1;
+  endtask
+
+endclass
+
 // Performance counter test class
 class core_ibex_perf_test extends core_ibex_base_test;
 
