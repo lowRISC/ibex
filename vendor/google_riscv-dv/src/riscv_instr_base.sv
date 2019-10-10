@@ -123,7 +123,7 @@ class riscv_instr_base extends uvm_object;
     }
   }
 
-  // Registers specified by the three-bit rs1’, rs2’, and rd’ fields of the CIW, CL, CS,
+  // Registers specified by the three-bit rs1', rs2', and rd' fields of the CIW, CL, CS,
   // and CB formats
   constraint compressed_three_bits_csr_c {
     if(format inside {CIW_FORMAT, CL_FORMAT, CS_FORMAT, CB_FORMAT}) {
@@ -168,7 +168,7 @@ class riscv_instr_base extends uvm_object;
   }
 
   constraint rvc_csr_c {
-    //  Registers specified by the three-bit rs1’, rs2’, and rd’ fields of the CIW, CL, CS,
+    //  Registers specified by the three-bit rs1', rs2', and rd' fields of the CIW, CL, CS,
     //  and CB formats
     if(format inside {CIW_FORMAT, CL_FORMAT, CS_FORMAT, CB_FORMAT}) {
       rs1 inside {[S0:A5]};
