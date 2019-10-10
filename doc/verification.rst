@@ -44,8 +44,7 @@ End-to-end RTL/ISS co-simulation flow
 
    RTL/ISS co-simulation flow chart
 
-The flow is controlled by a `Makefile <https://github.com/lowRISC/ibex/blob/master/dv/uvm/Makefile>`_, here’s the list of frequently
-used commands:
+The flow is controlled by a `Makefile <https://github.com/lowRISC/ibex/blob/master/dv/uvm/Makefile>`_, here is the list of frequently used commands:
 
 .. code-block:: bash
 

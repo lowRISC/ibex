@@ -527,7 +527,7 @@ module ibex_controller (
                * to be transferred back to a debugging environment. It
                * generates a breakpoint exception and performs no other
                * operation. [...] ECALL and EBREAK cause the receiving
-               * privilege mode’s epc register to be set to the address of the
+               * privilege mode's epc register to be set to the address of the
                * ECALL or EBREAK instruction itself, not the address of the
                * following instruction." [Privileged Spec v1.11, p.40]
                */
