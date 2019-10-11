@@ -21,17 +21,17 @@ interface clk_if(inout clk,
   endclocking
 
   // Wait for 'n' clocks based of postive clock edge
-  task wait_clks(int num_clks);
+  task automatic wait_clks(int num_clks);
     repeat (num_clks) @cb;
   endtask
 
   // Wait for 'n' clocks based of negative clock edge
-  task wait_n_clks(int num_clks);
+  task automatic wait_n_clks(int num_clks);
     repeat (num_clks) @cbn;
   endtask
 
   // generate mid-test reset
-  task reset();
+  task automatic reset();
     rst_no = 1'b0;
     wait_clks(100);
     rst_no = 1'b1;

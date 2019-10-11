@@ -407,7 +407,8 @@ class core_ibex_debug_wfi_test extends core_ibex_directed_test;
       vseq.start_debug_single_seq();
       // After assserting this signal, core should wake up and jump into debug mode from WFI state
       // - next handshake should be a notification that the core is now in debug mode
-      check_next_core_status(IN_DEBUG_MODE, "Core did not jump into debug mode from WFI state", 1000);
+      check_next_core_status(IN_DEBUG_MODE, "Core did not jump into debug mode from WFI state",
+                             1000);
       // We don't want to trigger debug stimulus for any WFI instructions encountered inside the
       // debug rom - those should act as NOP instructions - so we wait until hitting the end of the
       // debug rom.
@@ -431,7 +432,8 @@ class core_ibex_dret_test extends core_ibex_directed_test;
       wait (dut_vif.dret === 1'b1);
       // After hitting a dret, the core will jump to the vectored trap handler, which sends a
       // handshake write to the bench
-      check_next_core_status(HANDLING_EXCEPTION, "Core did not jump to vectored exception handler", 1000);
+      check_next_core_status(HANDLING_EXCEPTION, "Core did not jump to vectored exception handler",
+                             1000);
       // The core will receive an illegal instruction handshake after jumping from the vectored trap
       // handler to the illegal instruction exception handler
       check_next_core_status(ILLEGAL_INSTR_EXCEPTION,
@@ -546,8 +548,9 @@ class core_ibex_debug_single_step_test extends core_ibex_directed_test;
         wait_for_csr_write(CSR_DPC, 500);
         if (signature_data - ret_pc !== 'h2 &&
             signature_data - ret_pc !== 'h4) begin
-          `uvm_fatal(`gfn, $sformatf("DPC value [0x%0x] is not the next instruction after ret_pc [0x%0x]",
-                             signature_data, ret_pc))
+          `uvm_fatal(`gfn,
+                     $sformatf("DPC value [0x%0x] is not the next instruction after ret_pc [0x%0x]",
+                     signature_data, ret_pc))
         end
         ret_pc = signature_data;
         wait_for_csr_write(CSR_DSCRATCH0, 500);
@@ -621,7 +624,8 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
       end
       `uvm_info(`gfn, $sformatf("0x%0x", exc_type), UVM_LOW)
     end else begin
-      check_next_core_status(INSTR_FAULT_EXCEPTION, "Core did not register correct memory fault type", 500);
+      check_next_core_status(INSTR_FAULT_EXCEPTION,
+                             "Core did not register correct memory fault type", 500);
       exc_type = EXC_CAUSE_INSTR_ACCESS_FAULT;
     end
     wait_for_csr_write(CSR_MCAUSE, 750);
