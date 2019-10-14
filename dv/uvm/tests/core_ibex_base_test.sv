@@ -53,7 +53,8 @@ class core_ibex_base_test extends uvm_test;
 
   virtual function void connect_phase(uvm_phase phase);
     super.connect_phase(phase);
-    env.data_if_slave_agent.monitor.item_collected_port.connect(this.item_collected_port.analysis_export);
+    env.data_if_slave_agent.monitor.item_collected_port.connect(
+      this.item_collected_port.analysis_export);
     if (cfg.enable_irq_seq) begin
       env.irq_agent.monitor.irq_port.connect(this.irq_collected_port.analysis_export);
     end
@@ -134,7 +135,8 @@ class core_ibex_base_test extends uvm_test;
     forever begin
       // The first write to this address is guaranteed to contain the signature type in bits [7:0]
       item_collected_port.get(mem_txn);
-      if (mem_txn.addr == ref_addr && mem_txn.data[7:0] === ref_type && mem_txn.read_write == WRITE) begin
+      if (mem_txn.addr == ref_addr && mem_txn.data[7:0] === ref_type &&
+          mem_txn.read_write == WRITE) begin
         signature_data = mem_txn.data;
         case (ref_type)
           // The very first write to the signature address in every test is guaranteed to be a write
@@ -163,7 +165,9 @@ class core_ibex_base_test extends uvm_test;
             signature_data_q.push_back(mem_txn.data);
           end
           default: begin
-            `uvm_fatal(`gfn, $sformatf("The data 0x%0h written to the signature address is formatted incorrectly.", signature_data))
+            `uvm_fatal(`gfn,
+              $sformatf("The data 0x%0h written to the signature address is formatted incorrectly.",
+                        signature_data))
           end
         endcase
         return;
@@ -188,8 +192,9 @@ class core_ibex_base_test extends uvm_test;
       end
       begin : wait_timeout
         clk_vif.wait_clks(timeout);
-        `uvm_fatal(`gfn, $sformatf("Did not receive core_status 0x%0x within %0d cycle timeout period",
-                                    core_status, timeout))
+        `uvm_fatal(`gfn,
+                   $sformatf("Did not receive core_status 0x%0x within %0d cycle timeout period",
+                   core_status, timeout))
       end
     join_any
     // Will only get here if we successfully beat the timeout period
@@ -211,8 +216,9 @@ class core_ibex_base_test extends uvm_test;
       end
       begin : wait_timeout
         clk_vif.wait_clks(timeout);
-        `uvm_fatal(`gfn, $sformatf("Did not receive write to csr 0x%0x within %0d cycle timeout period",
-                                    csr, timeout))
+        `uvm_fatal(`gfn,
+                   $sformatf("Did not receive write to csr 0x%0x within %0d cycle timeout period",
+                   csr, timeout))
       end
     join_any
     // Will only get here if we successfully beat the timeout period
