@@ -552,7 +552,7 @@ module ibex_cs_registers #(
   end
 
   // only write CSRs during one clock cycle
-  assign csr_we_int  = csr_wreq & ~illegal_csr_priv & instr_new_id_i;
+  assign csr_we_int  = csr_wreq & ~illegal_csr_insn_o & instr_new_id_i;
 
   assign csr_rdata_o = csr_rdata_int;
 
