@@ -190,7 +190,12 @@ module ibex_controller (
   // Interrupts //
   ////////////////
 
-  assign enter_debug_mode = debug_req_i & ~debug_mode_q;
+  // Enter debug mode due to an external debug_req_i or because the core is in
+  // single step mode (dcsr.step == 1). Single step must be qualified with
+  // instruction valid otherwise the core will immediately enter debug mode
+  // due to a recently flushed IF (or a delay in an instruction returning from
+  // memory) before it has had anything to single step.
+  assign enter_debug_mode = (debug_req_i | (debug_single_step_i & instr_valid_i)) & ~debug_mode_q;
 
   // interrupts including NMI are ignored while in debug mode [Debug Spec v0.13.2, p.39]
   assign handle_irq       = ~debug_mode_q &
@@ -316,8 +321,9 @@ module ibex_controller (
         // enter debug mode
         if (enter_debug_mode) begin
           ctrl_fsm_ns = DBG_TAKEN_IF;
+          // Halt IF only for now, ID will be flushed in DBG_TAKEN_IF as the
+          // ID state is needed for correct debug mode entry
           halt_if     = 1'b1;
-          flush_id    = 1'b1;
         end
       end
 
@@ -346,22 +352,11 @@ module ibex_controller (
             perf_jump_o    = jump_set_i;
           end
 
-
-          // stall IF stage to not starve debug and interrupt requests, these just
-          // need to wait until after the current (multicycle) instruction
+          // If entering debug mode or handling an IRQ the core needs to wait
+          // until the current instruction has finished executing. Stall IF
+          // during that time.
           if ((enter_debug_mode || handle_irq) && stall) begin
             halt_if = 1'b1;
-          end
-
-          // single stepping:
-          // execute a single instruction and then enter debug mode, in case of exceptions,
-          // set registers but do not jump into handler [Debug Spec v0.13.2, p.44]
-          if (debug_single_step_i && !debug_mode_q) begin
-            halt_if = 1'b1;
-
-            if (!special_req && !stall) begin
-              ctrl_fsm_ns = DBG_TAKEN_IF;
-            end
           end
         end // instr_valid_i
 
@@ -369,9 +364,9 @@ module ibex_controller (
           if (enter_debug_mode) begin
             // enter debug mode
             ctrl_fsm_ns = DBG_TAKEN_IF;
+            // Halt IF only for now, ID will be flushed in DBG_TAKEN_IF as the
+            // ID state is needed for correct debug mode entry
             halt_if     = 1'b1;
-            flush_id    = 1'b1;
-
           end else if (handle_irq) begin
             // handle interrupt (not in debug mode)
             ctrl_fsm_ns = IRQ_TAKEN;
@@ -417,6 +412,7 @@ module ibex_controller (
         // enter debug mode and save PC in IF to dpc
         // jump to debug exception handler in debug memory
         if (debug_single_step_i || debug_req_i) begin
+          flush_id         = 1'b1;
           pc_mux_o         = PC_EXC;
           pc_set_o         = 1'b1;
           exc_pc_mux_o     = EXC_PC_DBD;
@@ -447,6 +443,7 @@ module ibex_controller (
         // for 1. do not update dcsr and dpc, for 2. do so [Debug Spec v0.13.2, p.39]
         // jump to debug exception handler in debug memory
         if (ebrk_insn) begin
+          flush_id     = 1'b1;
           pc_mux_o     = PC_EXC;
           pc_set_o     = 1'b1;
           exc_pc_mux_o = EXC_PC_DBD;
@@ -499,7 +496,7 @@ module ibex_controller (
                                                         EXC_CAUSE_ECALL_UMODE;
 
           end else if (ebrk_insn) begin
-            if (debug_mode_q) begin
+            if (debug_mode_q | debug_ebreakm_i) begin
               /*
                * EBREAK in debug mode re-enters debug mode
                *
@@ -507,11 +504,7 @@ module ibex_controller (
                * Mode, it halts the hart again but without updating dpc or
                * dcsr." [Debug Spec v0.13.2, p.39]
                */
-              pc_set_o         = 1'b0;
-              csr_save_id_o    = 1'b0;
-              csr_save_cause_o = 1'b0;
-              ctrl_fsm_ns      = DBG_TAKEN_ID;
-            end else if (debug_ebreakm_i) begin
+
               /*
                * dcsr.ebreakm == 1:
                * "EBREAK instructions in M-mode enter Debug Mode."
@@ -521,6 +514,7 @@ module ibex_controller (
               csr_save_id_o    = 1'b0;
               csr_save_cause_o = 1'b0;
               ctrl_fsm_ns      = DBG_TAKEN_ID;
+              flush_id         = 1'b0;
             end else begin
               /*
                * "The EBREAK instruction is used by debuggers to cause control
@@ -566,7 +560,7 @@ module ibex_controller (
 
         // single stepping
         // set exception registers, but do not jump into handler [Debug Spec v0.13.2, p.44]
-        if (debug_single_step_i && !debug_mode_q) begin
+        if (enter_debug_mode) begin
           pc_set_o    = 1'b0;
           ctrl_fsm_ns = DBG_TAKEN_IF;
         end
