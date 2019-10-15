@@ -351,6 +351,9 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
             begin
               wait(dut_vif.ecall === 1'b1);
               disable stimulus;
+              if (run.get_objection_count(this) > 1) begin
+                run.drop_objection(this);
+              end
             end
           join
         end
@@ -589,45 +592,84 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
       vseq.data_intf_seq.inject_error();
       `uvm_info(`gfn, "Injected dmem error", UVM_LOW)
       // Dmem interface error could be either a load or store operation
-      check_mem_fault(1'b1);
+      check_dmem_fault();
       // Random delay before injecting instruction fetch fault
       `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(err_delay, err_delay inside { [25:100] };)
       clk_vif.wait_clks(err_delay);
-      while (!vseq.instr_intf_seq.get_error_synch()) begin
-        clk_vif.wait_clks(1);
-      end
-      `uvm_info(`gfn, "Injecting imem fault", UVM_LOW)
-      vseq.instr_intf_seq.inject_error();
-      check_mem_fault(1'b0);
+      inject_imem_error();
+      check_imem_fault();
       // Random delay before injecting this series of errors again
       `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(err_delay, err_delay inside { [250:750] };)
       clk_vif.wait_clks(err_delay);
     end
   endtask
 
-  virtual task check_mem_fault(bit imem_or_dmem);
+  virtual task inject_imem_error();
+    while (!vseq.instr_intf_seq.get_error_synch()) begin
+      clk_vif.wait_clks(1);
+    end
+    `uvm_info(`gfn, "Injecting imem fault", UVM_LOW)
+    vseq.instr_intf_seq.inject_error();
+  endtask
+
+  virtual task check_dmem_fault();
     bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] mcause;
     core_status_t mem_status;
     ibex_pkg::exc_cause_e exc_type;
-    // Don't impose a timeout period for this check, since dmem errors injected by the sequence are
+    // Don't impose a timeout period for dmem check, since dmem errors injected by the sequence are
     // not guaranteed to be reflected in RTL state until the next memory instruction is executed,
     // and the frequency of which is not controllable by the testbench
     check_next_core_status(HANDLING_EXCEPTION, "Core did not jump to exception handler");
-    if (imem_or_dmem) begin
-      // Next write of CORE_STATUS will be the load/store fault type
-      wait_for_mem_txn(cfg.signature_addr, CORE_STATUS);
-      mem_status = signature_data_q.pop_front();
-      if (mem_status == LOAD_FAULT_EXCEPTION) begin
-        exc_type = EXC_CAUSE_LOAD_ACCESS_FAULT;
-      end else if (mem_status == STORE_FAULT_EXCEPTION) begin
-        exc_type = EXC_CAUSE_STORE_ACCESS_FAULT;
-      end
-      `uvm_info(`gfn, $sformatf("0x%0x", exc_type), UVM_LOW)
-    end else begin
-      check_next_core_status(INSTR_FAULT_EXCEPTION,
-                             "Core did not register correct memory fault type", 500);
-      exc_type = EXC_CAUSE_INSTR_ACCESS_FAULT;
+    // Next write of CORE_STATUS will be the load/store fault type
+    wait_for_mem_txn(cfg.signature_addr, CORE_STATUS);
+    mem_status = signature_data_q.pop_front();
+    if (mem_status == LOAD_FAULT_EXCEPTION) begin
+      exc_type = EXC_CAUSE_LOAD_ACCESS_FAULT;
+    end else if (mem_status == STORE_FAULT_EXCEPTION) begin
+      exc_type = EXC_CAUSE_STORE_ACCESS_FAULT;
     end
+    check_mcause(exc_type);
+    wait(dut_vif.mret === 1'b1);
+    `uvm_info(`gfn, "exiting mem fault checker", UVM_LOW)
+  endtask
+
+  virtual task check_imem_fault();
+    bit latched_imem_err = 1'b0;
+    core_status_t mem_status;
+    ibex_pkg::exc_cause_e exc_type;
+    // Need to account for case where imem_error is asserted during an instruction fetch that gets
+    // killed - due to jumps and control flow changes
+    do begin
+      fork
+        begin
+          fork : imem_fork
+            begin
+              check_next_core_status(HANDLING_EXCEPTION, "Core did not jump to exception handler");
+              latched_imem_err = 1'b1;
+              `uvm_info(`gfn, $sformatf("latched_imem_err: 0x%0x", latched_imem_err), UVM_LOW)
+            end
+            begin
+              clk_vif.wait_clks(750);
+            end
+          join_any
+          disable imem_fork;
+        end
+      join
+      if (latched_imem_err === 1'b0) begin
+        run.drop_objection(this);
+        inject_imem_error();
+      end
+    end while (latched_imem_err === 1'b0);
+    check_next_core_status(INSTR_FAULT_EXCEPTION,
+                           "Core did not register correct memory fault type", 500);
+    exc_type = EXC_CAUSE_INSTR_ACCESS_FAULT;
+    check_mcause(exc_type);
+    wait(dut_vif.mret === 1'b1);
+    `uvm_info(`gfn, "exiting mem fault checker", UVM_LOW)
+  endtask
+
+  virtual task check_mcause(ibex_pkg::exc_cause_e exc_type);
+    bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] mcause;
     wait_for_csr_write(CSR_MCAUSE, 750);
     mcause = signature_data;
     `DV_CHECK_EQ_FATAL(mcause[ibex_mem_intf_agent_pkg::DATA_WIDTH-1], 1'b0,
@@ -635,8 +677,6 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
     `DV_CHECK_EQ_FATAL(mcause[ibex_mem_intf_agent_pkg::DATA_WIDTH-2:0],
                        exc_type,
                        "mcause.exception_code is encoding the wrong exception type")
-    wait(dut_vif.mret === 1'b1);
-    `uvm_info(`gfn, "exiting mem fault checker", UVM_LOW)
   endtask
 
 endclass
