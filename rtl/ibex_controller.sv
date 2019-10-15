@@ -68,6 +68,7 @@ module ibex_controller (
     output logic                  debug_mode_o,
     input  logic                  debug_single_step_i,
     input  logic                  debug_ebreakm_i,
+    input  logic                  debug_ebreaku_i,
 
     output logic                  csr_save_if_o,
     output logic                  csr_save_id_o,
@@ -114,6 +115,7 @@ module ibex_controller (
   logic exc_req_lsu;
   logic special_req;
   logic enter_debug_mode;
+  logic ebreak_into_debug;
   logic handle_irq;
 
   logic [3:0] mfip_id;
@@ -196,6 +198,12 @@ module ibex_controller (
   // due to a recently flushed IF (or a delay in an instruction returning from
   // memory) before it has had anything to single step.
   assign enter_debug_mode = (debug_req_i | (debug_single_step_i & instr_valid_i)) & ~debug_mode_q;
+
+  // Set when an ebreak should enter debug mode rather than jump to exception
+  // handler
+  assign ebreak_into_debug = priv_mode_i == PRIV_LVL_M ? debug_ebreakm_i :
+                             priv_mode_i == PRIV_LVL_U ? debug_ebreaku_i :
+                                                         1'b0;
 
   // interrupts including NMI are ignored while in debug mode [Debug Spec v0.13.2, p.39]
   assign handle_irq       = ~debug_mode_q &
@@ -449,7 +457,7 @@ module ibex_controller (
           exc_pc_mux_o = EXC_PC_DBD;
 
           // update dcsr and dpc
-          if (debug_ebreakm_i && !debug_mode_q) begin // ebreak with forced entry
+          if (ebreak_into_debug && !debug_mode_q) begin // ebreak with forced entry
 
             // dpc (set to the address of the EBREAK, i.e. set to PC in ID stage)
             csr_save_cause_o = 1'b1;
@@ -496,7 +504,7 @@ module ibex_controller (
                                                         EXC_CAUSE_ECALL_UMODE;
 
           end else if (ebrk_insn) begin
-            if (debug_mode_q | debug_ebreakm_i) begin
+            if (debug_mode_q | ebreak_into_debug) begin
               /*
                * EBREAK in debug mode re-enters debug mode
                *
