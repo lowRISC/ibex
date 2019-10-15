@@ -67,6 +67,7 @@ module ibex_cs_registers #(
     output logic [31:0]          csr_depc_o,
     output logic                 debug_single_step_o,
     output logic                 debug_ebreakm_o,
+    output logic                 debug_ebreaku_o,
 
     input  logic [31:0]          pc_if_i,
     input  logic [31:0]          pc_id_i,
@@ -570,6 +571,7 @@ module ibex_cs_registers #(
   assign csr_mstatus_tw_o    = mstatus_q.tw;
   assign debug_single_step_o = dcsr_q.step;
   assign debug_ebreakm_o     = dcsr_q.ebreakm;
+  assign debug_ebreaku_o     = dcsr_q.ebreaku;
 
   assign irq_pending_o = csr_msip_o | csr_mtip_o | csr_meip_o | (|csr_mfip_o);
 
