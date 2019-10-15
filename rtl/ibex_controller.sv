@@ -566,10 +566,13 @@ module ibex_controller (
           end
         end // exc_req_q
 
-        // single stepping
-        // set exception registers, but do not jump into handler [Debug Spec v0.13.2, p.44]
+        // Entering debug mode due to either single step or debug_req. Ensure
+        // registers are set for exception but then enter debug handler rather
+        // than exception handler [Debug Spec v0.13.2, p.44]
+        // Leave all other signals as is to ensure CSRs and PC get set as if
+        // core was entering exception handler, entry to debug mode will then
+        // see the appropriate state and setup dpc correctly.
         if (enter_debug_mode) begin
-          pc_set_o    = 1'b0;
           ctrl_fsm_ns = DBG_TAKEN_IF;
         end
       end // FLUSH
