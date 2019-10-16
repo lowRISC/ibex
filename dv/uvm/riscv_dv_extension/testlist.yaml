@@ -353,3 +353,14 @@
   compare_opts:
     compare_final_value_only: 1
     verbose: 1
+
+- test: riscv_rv32im_instr_test
+  description: >
+    Random instruction test without compressed instructions
+  iterations: 5
+  gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +disable_compressed_instr=1
+  gcc_opts: >
+    -march=rv32im
+  rtl_test: core_ibex_base_test
