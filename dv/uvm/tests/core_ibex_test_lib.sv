@@ -457,15 +457,8 @@ class core_ibex_debug_ebreak_test extends core_ibex_directed_test;
 
   virtual task check_stimulus();
     forever begin
-      wait (dut_vif.ebreak === 1'b1);
-      check_next_core_status(HANDLING_EXCEPTION, "Core did not jump to exception handler", 1000);
-      check_next_core_status(EBREAK_EXCEPTION,
-                             "Core did not jump from exception handler to ebreak handler", 500);
-      wait (dut_vif.mret === 1'b1);
-      // Want to wait until after the ebreak handler has finished to send debug stimulus, to avoid
-      // nested trap scenarios
-      clk_vif.wait_clks($urandom_range(5, 11));
       vseq.start_debug_single_seq();
+      check_next_core_status(IN_DEBUG_MODE, "Core did not properly jump into debug mode", 1000);
       // capture the first write of dcsr
       wait_for_csr_write(CSR_DCSR, 500);
       dcsr = signature_data;
@@ -474,16 +467,16 @@ class core_ibex_debug_ebreak_test extends core_ibex_directed_test;
       // capture the first write of dpc
       wait_for_csr_write(CSR_DPC, 500);
       dpc = signature_data;
-      check_next_core_status(IN_DEBUG_MODE, "Core did not properly jump into debug mode", 1000);
       wait (dut_vif.ebreak === 1'b1);
       // compare the second writes of dcsr and dpc against the captured values
-      wait_for_csr_write(CSR_DCSR, 500);
+      wait_for_csr_write(CSR_DCSR, 1000);
       `DV_CHECK_EQ_FATAL(dcsr, signature_data,
                          "ebreak inside the debug rom has changed the value of DCSR")
       wait_for_csr_write(CSR_DPC, 500);
       `DV_CHECK_EQ_FATAL(dpc, signature_data,
                          "ebreak inside the debug rom has changed the value of DPC")
-      wait_dret(500);
+      wait_dret(1000);
+      clk_vif.wait_clks($urandom_range(250, 500));
     end
   endtask
 
