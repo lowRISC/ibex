@@ -10,3 +10,7 @@ Please see the ``LICENSE`` file in the source code for the full (and legally bin
 
 Even though the license doesn't require it, we appreciate feedback and contributions to make Ibex work better for everyone.
 Please open an `issue <https://github.com/lowRISC/ibex/issues>`_ for bug reports, questions, or suggested improvements, or a `pull request <https://github.com/lowRISC/ibex/pulls>`_ if you'd like to contribute code.
+
+.. note::
+
+  Commercial support for Ibex is available from `lowRISC <https://www.lowrisc.org/>`_.
