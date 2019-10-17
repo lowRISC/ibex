@@ -721,7 +721,14 @@ module ibex_tracer (
       end else begin
         unique casez (rvfi_insn[15:0])
           // C0 Opcodes
-          INSN_CADDI4SPN:  decode_ciw_insn("c.addi4spn");
+          INSN_CADDI4SPN: begin
+            if (rvfi_insn[12:2] == 11'h0) begin
+              // Align with pseudo-mnemonic used by GNU binutils and LLVM's MC layer
+              decode_mnemonic("c.unimp");
+            end else begin
+              decode_ciw_insn("c.addi4spn");
+            end
+          end
           INSN_CLW:        decode_compressed_load_insn("c.lw");
           INSN_CSW:        decode_compressed_store_insn("c.sw");
           // C1 Opcodes
