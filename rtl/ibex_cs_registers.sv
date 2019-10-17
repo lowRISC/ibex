@@ -234,7 +234,7 @@ module ibex_cs_registers #(
     csr_rdata_int = '0;
     illegal_csr   = 1'b0;
 
-    unique case (csr_addr_i)
+    unique casez (csr_addr)
       // mhartid: unique hardware thread id
       CSR_MHARTID: csr_rdata_int = hart_id_i;
 
@@ -327,42 +327,33 @@ module ibex_cs_registers #(
       end
 
       // machine counter/timers
-      CSR_MCOUNTINHIBIT: csr_rdata_int = mcountinhibit;
-      CSR_MCYCLE:        csr_rdata_int = mhpmcounter_q[0][31: 0];
-      CSR_MCYCLEH:       csr_rdata_int = mhpmcounter_q[0][63:32];
-      CSR_MINSTRET:      csr_rdata_int = mhpmcounter_q[2][31: 0];
-      CSR_MINSTRETH:     csr_rdata_int = mhpmcounter_q[2][63:32];
+      CSR_Z_MCOUNTER_SETUP: begin
+        unique case (mhpmcounter_idx)
+          CSR_MCOUNTINHIBIT[4:0]: csr_rdata_int = mcountinhibit;
+          5'b00001, 5'b00010:     illegal_csr   = 1'b1;
+          default:                csr_rdata_int = mhpmevent[mhpmcounter_idx];
+        endcase
+      end
 
+      CSR_Z_MCOUNTER: begin
+        unique case (mhpmcounter_idx)
+          CSR_MCYCLE[4:0]:   csr_rdata_int = mhpmcounter_q[0][31:0];
+          5'b00001:          illegal_csr   = 1'b1;
+          CSR_MINSTRET[4:0]: csr_rdata_int = mhpmcounter_q[2][31:0];
+          default:           csr_rdata_int = mhpmcounter_q[mhpmcounter_idx][31:0];
+        endcase
+      end
+
+      CSR_Z_MCOUNTERH: begin
+        unique case (mhpmcounter_idx)
+          CSR_MCYCLEH[4:0]:   csr_rdata_int = mhpmcounter_q[0][63:32];
+          5'b00001:           illegal_csr   = 1'b1;
+          CSR_MINSTRETH[4:0]: csr_rdata_int = mhpmcounter_q[2][63:32];
+          default:            csr_rdata_int = mhpmcounter_q[mhpmcounter_idx][63:32];
+        endcase
+      end
       default: begin
-        if ((csr_addr & CSR_MASK_MCOUNTER) == CSR_OFF_MCOUNTER_SETUP) begin
-          csr_rdata_int = mhpmevent[mhpmcounter_idx];
-          // check access to non-existent or already covered CSRs
-          if ((csr_addr[4:0] == 5'b00000) ||     // CSR_MCOUNTINHIBIT
-              (csr_addr[4:0] == 5'b00001) ||
-              (csr_addr[4:0] == 5'b00010)) begin
-            illegal_csr = 1'b1;
-          end
-
-        end else if ((csr_addr & CSR_MASK_MCOUNTER) == CSR_OFF_MCOUNTER) begin
-          csr_rdata_int = mhpmcounter_q[mhpmcounter_idx][31: 0];
-          // check access to non-existent or already covered CSRs
-          if ((csr_addr[4:0] == 5'b00000) ||     // CSR_MCYCLE
-              (csr_addr[4:0] == 5'b00001) ||
-              (csr_addr[4:0] == 5'b00010)) begin // CSR_MINSTRET
-            illegal_csr = 1'b1;
-          end
-
-        end else if ((csr_addr & CSR_MASK_MCOUNTER) == CSR_OFF_MCOUNTERH) begin
-          csr_rdata_int = mhpmcounter_q[mhpmcounter_idx][63:32];
-          // check access to non-existent or already covered CSRs
-          if ((csr_addr[4:0] == 5'b00000) ||     // CSR_MCYCLEH
-              (csr_addr[4:0] == 5'b00001) ||
-              (csr_addr[4:0] == 5'b00010)) begin // CSR_MINSTRETH
-            illegal_csr = 1'b1;
-          end
-        end else begin
-          illegal_csr = 1'b1;
-        end
+        illegal_csr = 1'b1;
       end
     endcase
   end
@@ -393,7 +384,7 @@ module ibex_cs_registers #(
     mhpmcounterh_we  = '0;
 
     if (csr_we_int) begin
-      unique case (csr_addr_i)
+      unique casez (csr_addr)
         // mstatus: IE bit
         CSR_MSTATUS: begin
           mstatus_d = '{
@@ -464,19 +455,25 @@ module ibex_cs_registers #(
         CSR_DSCRATCH1: dscratch1_d = csr_wdata_int;
 
         CSR_MCOUNTINHIBIT: mcountinhibit_we   = 1'b1;
-        CSR_MCYCLE:        mhpmcounter_we[0]  = 1'b1;
-        CSR_MCYCLEH:       mhpmcounterh_we[0] = 1'b1;
-        CSR_MINSTRET:      mhpmcounter_we[2]  = 1'b1;
-        CSR_MINSTRETH:     mhpmcounterh_we[2] = 1'b1;
 
-        default: begin
-          // performance counters and event selector
-          if ((csr_addr & CSR_MASK_MCOUNTER) == CSR_OFF_MCOUNTER) begin
-            mhpmcounter_we[mhpmcounter_idx] = 1'b1;
-          end else if ((csr_addr & CSR_MASK_MCOUNTER) == CSR_OFF_MCOUNTERH) begin
-            mhpmcounterh_we[mhpmcounter_idx] = 1'b1;
-          end
+        CSR_Z_MCOUNTER: begin
+          unique case (mhpmcounter_idx)
+            CSR_MCYCLE[4:0]:   mhpmcounter_we[0] = 1'b1;
+            5'b00001: ;
+            CSR_MINSTRET[4:0]: mhpmcounter_we[2] = 1'b1;
+            default:           mhpmcounter_we[mhpmcounter_idx] = 1'b1;
+          endcase
         end
+
+        CSR_Z_MCOUNTERH: begin
+          unique case (mhpmcounter_idx)
+            CSR_MCYCLEH[4:0]:   mhpmcounterh_we[0] = 1'b1;
+            5'b00001: ;
+            CSR_MINSTRETH[4:0]: mhpmcounterh_we[2] = 1'b1;
+            default:            mhpmcounterh_we[mhpmcounter_idx] = 1'b1;
+          endcase
+        end
+        default: ;
       endcase
     end
 
