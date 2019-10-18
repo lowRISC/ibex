@@ -10,7 +10,7 @@ class core_ibex_base_test extends uvm_test;
   virtual core_ibex_dut_probe_if                  dut_vif;
   mem_model_pkg::mem_model                        mem;
   core_ibex_vseq                                  vseq;
-  int unsigned                                    timeout_in_cycles = 5000000;
+  int unsigned                                    timeout_in_cycles = 10000000;
   // If no signature_addr handshake functionality is desired between the testbench and the generated
   // code, the test will wait for the specifield number of cycles before starting stimulus
   // sequences (irq and debug)
