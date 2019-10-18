@@ -109,7 +109,7 @@ targets:
           - '--trace-params'
           - '--trace-max-array 1024'
           - '-CFLAGS "-std=c++14 -Wall -DTOPLEVEL_NAME=tb_cs_registers -DVM_TRACE_FMT_FST -g"'
-          - '-LDFLAGS "-pthread -lutil"'
+          - '-LDFLAGS "-pthread -lutil -lelf"'
           - "-Wall"
           - "-Wno-PINCONNECTEMPTY"
           # XXX: Cleanup all warnings and remove this option

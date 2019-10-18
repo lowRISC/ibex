@@ -45,6 +45,7 @@ jobs:
           flex \
           bison \
           curl \
+          libelf-dev \
         && sudo pip3 install -U six fusesoc
     displayName: Install dependencies
 
