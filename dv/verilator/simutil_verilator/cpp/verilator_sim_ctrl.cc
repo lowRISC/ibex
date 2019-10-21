@@ -68,12 +68,13 @@ void VerilatorSimCtrl::PrintHelp() const {
             << "\n"
                "\n";
   if (tracing_possible_) {
-    std::cout << "-t|--trace             Write a trace file from the start\n";
+    std::cout << "-t|--trace                Write trace file from the start\n";
   }
-  std::cout << "-r|--rominit=VMEMFILE  Initialize the ROM with VMEMFILE\n"
-               "-m|--raminit=VMEMFILE  Initialize the RAM with VMEMFILE\n"
-               "-f|--flashinit=VMEMFILE  Initialize the FLASH with VMEMFILE\n"
-               "-h|--help              Show help\n"
+  std::cout << "-r|--rominit=VMEMFILE     Initialize the ROM with VMEMFILE\n"
+               "-m|--raminit=VMEMFILE     Initialize the RAM with VMEMFILE\n"
+               "-f|--flashinit=VMEMFILE   Initialize the FLASH with VMEMFILE\n"
+               "-c|--term-after-cycles=N  Terminate simulation after N cycles\n"
+               "-h|--help                 Show help\n"
                "\n"
                "All further arguments are passed to the design and can be used "
                "in the \n"
@@ -154,7 +155,7 @@ bool VerilatorSimCtrl::ParseCommandArgs(int argc, char **argv, int &retcode) {
       {nullptr, no_argument, nullptr, 0}};
 
   while (1) {
-    int c = getopt_long(argc, argv, ":r:m:f:th", long_options, nullptr);
+    int c = getopt_long(argc, argv, ":r:m:f:c:th", long_options, nullptr);
     if (c == -1) {
       break;
     }
