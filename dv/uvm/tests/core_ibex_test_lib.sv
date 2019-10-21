@@ -394,6 +394,22 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
 
 endclass
 
+// Interrupt WFI test class
+class core_ibex_irq_wfi_test extends core_ibex_directed_test;
+
+  `uvm_component_utils(core_ibex_irq_wfi_test)
+  `uvm_component_new
+
+  virtual task check_stimulus();
+    forever begin
+      wait (dut_vif.wfi === 1'b1);
+      wait(dut_vif.core_sleep === 1'b1);
+      send_irq_stimulus();
+    end
+  endtask
+
+endclass
+
 // Debug WFI test class
 class core_ibex_debug_wfi_test extends core_ibex_directed_test;
 

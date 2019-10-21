@@ -48,6 +48,28 @@
     +directed_instr_0=riscv_load_store_rand_instr_stream,8
   rtl_test: core_ibex_base_test
 
+- test: riscv_jump_stress_test
+  description: >
+    Stress back to back jump instruction
+  iterations: 10
+  gen_test: riscv_instr_base_test
+  gen_opts: >
+    +instr_cnt=5000
+    +num_of_sub_program=5
+    +directed_instr_1=riscv_jal_instr,20
+  rtl_test: core_ibex_base_test
+
+- test: riscv_loop_test
+  description: >
+    Loop test
+  iterations: 10
+  gen_test: riscv_instr_base_test
+  gen_opts: >
+    +instr_cnt=10000
+    +num_of_sub_program=5
+    +directed_instr_1=riscv_loop_instr,20
+  rtl_test: core_ibex_base_test
+
 - test: riscv_mmu_stress_test
   description: >
     Test with different patterns of load/store instructions, stress test MMU
@@ -98,7 +120,7 @@
 - test: riscv_debug_basic_test
   description: >
     Randomly assert debug_req_i, random instruction sequence in debug_rom section
-  iterations: 5
+  iterations: 10
   gen_test: riscv_instr_base_test
   gen_opts: >
     +require_signature_addr=1
@@ -113,7 +135,7 @@
   rtl_test: core_ibex_debug_intr_basic_test
   sim_opts: >
     +require_signature_addr=1
-    +max_interval=1000
+    +max_interval=500
     +enable_debug_stress_seq=1
   compare_opts:
     compare_final_value_only: 1
@@ -130,7 +152,7 @@
     +no_csr_instr=1
     +no_fence=1
   rtl_test: core_ibex_debug_intr_basic_test
-  iterations: 10
+  iterations: 15
   sim_opts: >
     +max_interval=250
     +enable_debug_stress_seq=1
@@ -142,7 +164,7 @@
   description: >
     Randomly assert debug_req_i, insert branch instructions and subprograms into debug_rom to make core
     jump around within the debug_rom
-  iterations: 5
+  iterations: 10
   gen_test: riscv_rand_instr_test
   gen_opts: >
     +require_signature_addr=1
@@ -205,7 +227,7 @@
     A directed ebreak sequence will be inserted into the debug rom, upon encountering it,
     ibex should jump back to the beginning of debug mode. The sequence is designed to avoid an
     infinite loop.
-  iterations: 10
+  iterations: 15
   gen_test: riscv_rand_instr_test
   gen_opts: >
     +require_signature_addr=1
@@ -251,7 +273,7 @@
 - test: riscv_interrupt_test
   description: >
     Random instruction test with complete interrupt handling
-  iterations: 10
+  iterations: 15
   gen_test: riscv_rand_instr_test
   gen_opts: >
     +instr_cnt=6000
@@ -259,6 +281,24 @@
     +enable_interrupt=1
     +randomize_csr=1
   rtl_test: core_ibex_debug_intr_basic_test
+  sim_opts: >
+    +require_signature_addr=1
+    +enable_irq_seq=1
+  compare_opts:
+    compare_final_value_only: 1
+
+- test: riscv_interrupt_wfi_test
+  description: >
+    Inject interrupts after a encountering wfi instructions.
+  iterations: 15
+  gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +instr_cnt=6000
+    +require_signature_addr=1
+    +enable_interrupt=1
+    +randomize_csr=1
+    +no_wfi=0
+  rtl_test: core_ibex_irq_wfi_test
   sim_opts: >
     +require_signature_addr=1
     +enable_irq_seq=1
@@ -290,7 +330,7 @@
 - test: riscv_mem_error_test
   description: >
     Normal random instruction test, but randomly insert instruction fetch or memory load/store errors
-  iterations: 10
+  iterations: 15
   gen_test: riscv_rand_instr_test
   gen_opts: >
     +require_signature_addr=1
@@ -319,7 +359,7 @@
 - test: riscv_debug_single_step_test
   description: >
     Randomly assert debug_req_i, and set dcsr.step to make ibex execute one isntruction and then re-enter debug mode
-  iterations: 10
+  iterations: 15
   gen_test: riscv_instr_base_test
   gen_opts: >
     +require_signature_addr=1
@@ -344,7 +384,7 @@
 - test: riscv_reset_test
   description: >
     Randomly reset the core once in the middle of program execution
-  iterations: 10
+  iterations: 15
   gen_test: riscv_rand_instr_test
   gen_opts: >
     +instr_cnt=10000
