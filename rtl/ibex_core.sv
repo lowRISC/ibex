@@ -11,15 +11,16 @@
  * Top level module of the ibex RISC-V core
  */
 module ibex_core #(
-    parameter bit          PMPEnable        = 1'b0,
-    parameter int unsigned PMPGranularity   = 0,
-    parameter int unsigned PMPNumRegions    = 4,
-    parameter int unsigned MHPMCounterNum   = 0,
-    parameter int unsigned MHPMCounterWidth = 40,
-    parameter bit          RV32E            = 1'b0,
-    parameter bit          RV32M            = 1'b1,
-    parameter int unsigned DmHaltAddr       = 32'h1A110800,
-    parameter int unsigned DmExceptionAddr  = 32'h1A110808
+    parameter bit          PMPEnable                = 1'b0,
+    parameter int unsigned PMPGranularity           = 0,
+    parameter int unsigned PMPNumRegions            = 4,
+    parameter int unsigned MHPMCounterNum           = 0,
+    parameter int unsigned MHPMCounterWidth         = 40,
+    parameter bit          RV32E                    = 1'b0,
+    parameter bit          RV32M                    = 1'b1,
+    parameter string       MultiplierImplementation = "fast",
+    parameter int unsigned DmHaltAddr               = 32'h1A110800,
+    parameter int unsigned DmExceptionAddr          = 32'h1A110808
 ) (
     // Clock and Reset
     input  logic        clk_i,
@@ -478,32 +479,33 @@ module ibex_core #(
   assign unused_illegal_insn_id = illegal_insn_id;
 
   ibex_ex_block #(
-      .RV32M ( RV32M )
+      .RV32M                      ( RV32M                    ),
+      .MultiplierImplementation   ( MultiplierImplementation )
   ) ex_block_i (
-      .clk_i                      ( clk                    ),
-      .rst_ni                     ( rst_ni                 ),
+      .clk_i                      ( clk                      ),
+      .rst_ni                     ( rst_ni                   ),
 
       // ALU signal from ID stage
-      .alu_operator_i             ( alu_operator_ex        ),
-      .alu_operand_a_i            ( alu_operand_a_ex       ),
-      .alu_operand_b_i            ( alu_operand_b_ex       ),
+      .alu_operator_i             ( alu_operator_ex          ),
+      .alu_operand_a_i            ( alu_operand_a_ex         ),
+      .alu_operand_b_i            ( alu_operand_b_ex         ),
 
       // Multipler/Divider signal from ID stage
-      .multdiv_operator_i         ( multdiv_operator_ex    ),
-      .mult_en_i                  ( mult_en_ex             ),
-      .div_en_i                   ( div_en_ex              ),
-      .multdiv_signed_mode_i      ( multdiv_signed_mode_ex ),
-      .multdiv_operand_a_i        ( multdiv_operand_a_ex   ),
-      .multdiv_operand_b_i        ( multdiv_operand_b_ex   ),
+      .multdiv_operator_i         ( multdiv_operator_ex      ),
+      .mult_en_i                  ( mult_en_ex               ),
+      .div_en_i                   ( div_en_ex                ),
+      .multdiv_signed_mode_i      ( multdiv_signed_mode_ex   ),
+      .multdiv_operand_a_i        ( multdiv_operand_a_ex     ),
+      .multdiv_operand_b_i        ( multdiv_operand_b_ex     ),
 
       // Outputs
-      .alu_adder_result_ex_o      ( alu_adder_result_ex    ), // to LSU
-      .regfile_wdata_ex_o         ( regfile_wdata_ex       ), // to ID
+      .alu_adder_result_ex_o      ( alu_adder_result_ex      ), // to LSU
+      .regfile_wdata_ex_o         ( regfile_wdata_ex         ), // to ID
 
-      .jump_target_o              ( jump_target_ex         ), // to IF
-      .branch_decision_o          ( branch_decision        ), // to ID
+      .jump_target_o              ( jump_target_ex           ), // to IF
+      .branch_decision_o          ( branch_decision          ), // to ID
 
-      .ex_valid_o                 ( ex_valid               )
+      .ex_valid_o                 ( ex_valid                 )
   );
 
   /////////////////////

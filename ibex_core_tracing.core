@@ -40,6 +40,12 @@ parameters:
     datatype: bool
     paramtype: vlogparam
 
+  MultiplierImplementation:
+    datatype: str
+    paramtype: vlogparam
+    description: "Multiplier implementation. Valid values: fast, slow"
+    default: fast
+
 
 
 targets:
