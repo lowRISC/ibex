@@ -463,7 +463,13 @@ module ibex_tracer (
 
   function void decode_cr_insn(input string mnemonic);
     if (rvfi_rs2_addr == 5'b0) begin
-      data_accessed = RS1;
+      if (rvfi_insn[12] == 1'b1) begin
+        // C.JALR
+        data_accessed = RS1 | RD;
+      end else begin
+        // C.JR
+        data_accessed = RS1;
+      end
       decoded_str = $sformatf("%s\tx%0d", mnemonic, rvfi_rs1_addr);
     end else begin
       data_accessed = RS1 | RS2 | RD; // RS1 == RD
@@ -549,6 +555,10 @@ module ibex_tracer (
   endfunction
 
   function void decode_cj_insn(input string mnemonic);
+    if (rvfi_insn[15:13] == 3'b001) begin
+      // C.JAL
+      data_accessed = RD;
+    end
     decoded_str = $sformatf("%s\t%0x", mnemonic, rvfi_pc_wdata);
   endfunction
 
