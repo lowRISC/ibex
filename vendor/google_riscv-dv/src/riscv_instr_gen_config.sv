@@ -76,6 +76,7 @@ class riscv_instr_gen_config extends uvm_object;
   // Use a random register for stack pointer/thread pointer
   rand riscv_reg_t       sp;
   rand riscv_reg_t       tp;
+  rand riscv_reg_t       ra;
 
   // Options for privileged mode CSR checking
   // Below checking can be made optional as the ISS implementation could be different with the
@@ -324,8 +325,16 @@ class riscv_instr_gen_config extends uvm_object;
     }
   }
 
+  constraint ra_c {
+    ra dist {RA := 5, T1 := 2, [SP:T0] :/ 1, [T2:T6] :/ 2};
+    ra != sp;
+    ra != tp;
+    ra != ZERO;
+  }
+
   constraint sp_tp_c {
     sp != tp;
+    sp dist {SP := 6, RA := 1, [GP:T6] :/ 3};
     !(sp inside {GP, RA, ZERO});
     !(tp inside {GP, RA, ZERO});
   }
@@ -436,6 +445,9 @@ class riscv_instr_gen_config extends uvm_object;
                      "Invalid march %0s specified in command line", cmdline_march_list[i]))
         end
       end
+    end
+    if (!(RV32C inside {supported_isa})) begin
+      disable_compressed_instr = 1;
     end
   endfunction
 
