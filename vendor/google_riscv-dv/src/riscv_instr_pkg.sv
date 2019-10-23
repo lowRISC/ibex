@@ -348,6 +348,7 @@ package riscv_instr_pkg;
     CB_FORMAT,
     CJ_FORMAT,
     CR_FORMAT,
+    CA_FORMAT,
     CL_FORMAT,
     CS_FORMAT,
     CSS_FORMAT,

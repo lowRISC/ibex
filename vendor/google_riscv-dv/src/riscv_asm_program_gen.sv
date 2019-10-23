@@ -35,12 +35,12 @@ class riscv_asm_program_gen extends uvm_object;
    // These programs are called in the interrupt/exception handling routine based on the privileged
    // mode settings. For example, when the interrupt/exception is delegated to S-mode, if both SUM
    // and MPRV equal 1, kernel program can fetch/load/store from U-mode pages,
-   // smode_accessible_umode_program is designed for this purpose. There can be other cases that
+   // umode_program is designed for this purpose. There can be other cases that
    // instruction can only be fetched from S-mode pages but load/store can access U-mode pages, or
    // everything needs to be in S-mode pages.
-   riscv_instr_sequence                smode_accessible_umode_program;
+   riscv_instr_sequence                umode_program;
    riscv_instr_sequence                smode_program;
-   riscv_instr_sequence                smode_ls_umem_program;
+   riscv_instr_sequence                smode_lsu_program;
    riscv_instr_stream                  directed_instr[];
    string                              instr_stream[$];
    riscv_callstack_gen                 callstack_gen;
@@ -141,13 +141,12 @@ class riscv_asm_program_gen extends uvm_object;
     instr_stream.push_back(".text");
     // Kernel programs
     if (cfg.virtual_addr_translation_on) begin
-      smode_accessible_umode_program = riscv_instr_sequence::type_id::
-                                       create("smode_accessible_umode_program");
-      gen_kernel_program(smode_accessible_umode_program);
+      umode_program = riscv_instr_sequence::type_id::create("umode_program");
+      gen_kernel_program(umode_program);
       smode_program = riscv_instr_sequence::type_id::create("smode_program");
       gen_kernel_program(smode_program);
-      smode_ls_umem_program = riscv_instr_sequence::type_id::create("smode_ls_umem_program");
-      gen_kernel_program(smode_ls_umem_program);
+      smode_lsu_program = riscv_instr_sequence::type_id::create("smode_lsu_program");
+      gen_kernel_program(smode_lsu_program);
     end
     // All trap/interrupt handling is in the kernel region
     // Trap/interrupt delegation to user mode is not supported now
@@ -1155,7 +1154,7 @@ class riscv_asm_program_gen extends uvm_object;
         end
         if($cast(new_instr_stream, object_h)) begin
           new_instr_stream.cfg = cfg;
-          new_instr_stream.label = $sformatf("%0s_instr_%0d", label, idx);
+          new_instr_stream.label = $sformatf("%0s_%0d", label, idx);
           new_instr_stream.kernel_mode = kernel_mode;
           `DV_CHECK_RANDOMIZE_FATAL(new_instr_stream)
           instr_stream = {instr_stream, new_instr_stream};
