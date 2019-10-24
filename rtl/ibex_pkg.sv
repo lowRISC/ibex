@@ -50,10 +50,6 @@ typedef enum logic [4:0] {
   // Comparisons
   ALU_LT,
   ALU_LTU,
-  ALU_LE,
-  ALU_LEU,
-  ALU_GT,
-  ALU_GTU,
   ALU_GE,
   ALU_GEU,
   ALU_EQ,

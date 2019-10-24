@@ -28,7 +28,7 @@ lint_off -msg UNUSED -file "*/rtl/ibex_if_stage.sv" -lines 80
 
 // Bits of signal are not used: shift_right_result_ext[32]
 // cleaner to write all bits even if not all are used
-lint_off -msg UNUSED -file "*/rtl/ibex_alu.sv" -lines 107
+lint_off -msg UNUSED -file "*/rtl/ibex_alu.sv" -lines 105
 
 // Bits of signal are not used: alu_adder_ext_i[0]
 // Bottom bit is round, not needed
