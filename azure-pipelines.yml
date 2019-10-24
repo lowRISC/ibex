@@ -5,6 +5,9 @@
 # Azure Pipelines CI build configuration
 # Documentation at https://aka.ms/yaml
 
+# Note: all changes in this file should result in changes in docker/Dockerfile
+# and/or docker/entrypoint.sh. For more details consult docker/README.md
+
 variables:
   VERILATOR_VERSION: 4.016
   VERILATOR_PATH: /opt/buildcache/verilator/$(VERILATOR_VERSION)

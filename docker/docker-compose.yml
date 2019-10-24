@@ -1,0 +1,9 @@
+version: "3"
+
+services:
+  ibex-test:
+    image: marekpikula/ibex-tests  # TODO: change to upstream after merge
+    volumes:
+      - ../:/home/ibex/repo
+    network_mode: "none"
+#    build: .

@@ -22,8 +22,9 @@ please feel free to open a pull request to get your name added to this file.
 - Greg Chadwick
 - Igor Loi
 - Ioannis Karageorgos
-- Markus Wegmann
 - Ivan Ribeiro
+- Marek Pikuła
+- Markus Wegmann
 - Matthias Baer
 - Michael Gautschi
 - Michael Schaffner
