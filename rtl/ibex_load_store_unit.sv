@@ -483,18 +483,11 @@ module ibex_load_store_unit (
   ////////////////
 
 `ifndef VERILATOR
-  // make sure there is no new request when the old one is not yet completely done
-  // i.e. it should not be possible to get a grant without an rvalid for the
-  // last request
+  // there should not be an rvalid unless the FSM is handlling it
   assert property (
-    @(posedge clk_i)
-      ((ls_fsm_cs == WAIT_RVALID) && (data_gnt_i == 1'b1)) |-> (data_rvalid_i == 1'b1) ) else
-        $display("Data grant set while LSU keeps waiting for rvalid");
-
-  // there should be no rvalid when we are in IDLE
-  assert property (
-    @(posedge clk_i) (ls_fsm_cs == IDLE) |-> (data_rvalid_i == 1'b0) ) else
-      $display("Data rvalid set while LSU idle");
+    @(posedge clk_i) (data_rvalid_i) |-> ((ls_fsm_cs == WAIT_RVALID) ||
+        (ls_fsm_cs == WAIT_RVALID_MIS) || (ls_fsm_cs == WAIT_RVALID_DONE)) ) else
+      $display("Data response valid received without expecting it");
 
   // assert that errors are only sent at the same time as rvalid
   assert property (
