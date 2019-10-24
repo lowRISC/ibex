@@ -17,7 +17,7 @@ COV                 := 0
 # RTL simulator
 SIMULATOR           := "vcs"
 # ISS (spike, ovpsim)
-ISS                 := "spike"
+ISS                 := "ovpsim"
 # ISA
 ISA                 := "rv32imc"
 # Test name (default: full regression)
@@ -101,6 +101,7 @@ iss_sim:
      ${COMMON_OPTS} \
      --iss=${ISS} \
      --isa=${ISA} \
+     --core_setting_dir=${DV_DIR}/riscv_dv_extension \
 
 # Compile ibex core TB
 compile:

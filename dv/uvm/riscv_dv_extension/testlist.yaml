@@ -90,10 +90,10 @@
     instruction and handle corresponding exception properly. An exception
     handling routine is designed to resume execution after illegal
     instruction exception.
-  iterations: 10
+  iterations: 15
   gen_test: riscv_rand_instr_test
   gen_opts: >
-    +illegal_instr_ratio=5
+    +illegal_instr_ratio=25
   rtl_test: core_ibex_base_test
 
 - test: riscv_hint_instr_test
