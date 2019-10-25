@@ -415,6 +415,28 @@ class core_ibex_irq_wfi_test extends core_ibex_directed_test;
 
 endclass
 
+// Interrupt CSR test class
+class core_ibex_irq_csr_test extends core_ibex_directed_test;
+
+  `uvm_component_utils(core_ibex_irq_csr_test)
+  `uvm_component_new
+
+  virtual task check_stimulus();
+    vseq.irq_single_seq_h.max_delay = 0;
+    // wait for a write to mstatus - should be in init code
+    wait(csr_vif.csr_access === 1'b1 && csr_vif.csr_addr === CSR_MSTATUS &&
+         csr_vif.csr_op != CSR_OP_READ);
+    // send interrupt immediately after detection
+    send_irq_stimulus();
+    // wait for a write to mie - should be in init code
+    wait(csr_vif.csr_access === 1'b1 && csr_vif.csr_addr === CSR_MIE &&
+         csr_vif.csr_op != CSR_OP_READ);
+    // send interrupt immediately after detection
+    send_irq_stimulus();
+  endtask
+
+endclass
+
 // Debug WFI test class
 class core_ibex_debug_wfi_test extends core_ibex_directed_test;
 
@@ -441,6 +463,36 @@ class core_ibex_debug_wfi_test extends core_ibex_directed_test;
       check_dcsr_cause(DBG_CAUSE_HALTREQ);
       wait_dret(5000);
     end
+  endtask
+
+endclass
+
+// Debug CSR entry test
+class core_ibex_debug_csr_test extends core_ibex_directed_test;
+
+  `uvm_component_utils(core_ibex_debug_csr_test)
+  `uvm_component_new
+
+  virtual task check_stimulus();
+    vseq.debug_seq_single_h.max_delay = 0;
+    // wait for a dummy write to mstatus in init code
+    wait(csr_vif.csr_access === 1'b1 && csr_vif.csr_addr === CSR_MSTATUS &&
+         csr_vif.csr_op != CSR_OP_READ);
+    vseq.start_debug_single_seq();
+    check_next_core_status(IN_DEBUG_MODE, "Core did not jump into debug mode from WFI state",
+                           1000);
+    wait_for_csr_write(CSR_DCSR, 500);
+    check_dcsr_cause(DBG_CAUSE_HALTREQ);
+    wait_dret(5000);
+    // wait for a dummy write to mie in the init code
+    wait(csr_vif.csr_access === 1'b1 && csr_vif.csr_addr === CSR_MIE &&
+         csr_vif.csr_op != CSR_OP_READ);
+    vseq.start_debug_single_seq();
+    check_next_core_status(IN_DEBUG_MODE, "Core did not jump into debug mode from WFI state",
+                           1000);
+    wait_for_csr_write(CSR_DCSR, 500);
+    check_dcsr_cause(DBG_CAUSE_HALTREQ);
+    wait_dret(5000);
   endtask
 
 endclass
