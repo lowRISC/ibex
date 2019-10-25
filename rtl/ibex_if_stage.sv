@@ -93,10 +93,10 @@ module ibex_if_stage #(
   logic              if_id_pipe_reg_we; // IF-ID pipeline reg write enable
 
   logic        [7:0] unused_boot_addr;
-  logic        [7:0] unused_csr_mtvec;
+  logic        [1:0] unused_csr_mtvec;
 
   assign unused_boot_addr = boot_addr_i[7:0];
-  assign unused_csr_mtvec = csr_mtvec_i[7:0];
+  assign unused_csr_mtvec = csr_mtvec_i[1:0];
 
   // extract interrupt ID from exception cause
   assign irq_id         = {exc_cause};
@@ -105,7 +105,7 @@ module ibex_if_stage #(
   // exception PC selection mux
   always_comb begin : exc_pc_mux
     unique case (exc_pc_mux_i)
-      EXC_PC_EXC:     exc_pc = { csr_mtvec_i[31:8], 8'h00                    };
+      EXC_PC_EXC:     exc_pc = { csr_mtvec_i[31:2], 2'h00                    };
       EXC_PC_IRQ:     exc_pc = { csr_mtvec_i[31:8], 1'b0, irq_id[4:0], 2'b00 };
       EXC_PC_DBD:     exc_pc = DmHaltAddr;
       EXC_PC_DBG_EXC: exc_pc = DmExceptionAddr;

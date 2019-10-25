@@ -378,6 +378,7 @@ module ibex_cs_registers #(
     mepc_d       = mepc_q;
     mcause_d     = mcause_q;
     mtval_d      = mtval_q;
+    // TODO Should this assignment use boot_addr_i[31:1]? [7:2] always 6'b0
     mtvec_d      = csr_mtvec_init_i ? {boot_addr_i[31:8], 6'b0, 2'b01} : mtvec_q;
     dcsr_d       = dcsr_q;
     depc_d       = depc_q;
@@ -430,8 +431,8 @@ module ibex_cs_registers #(
 
         // mtvec
         // mtvec.MODE set to vectored
-        // mtvec.BASE must be 256-byte aligned
-        CSR_MTVEC: mtvec_d = {csr_wdata_int[31:8], 6'b0, 2'b01};
+        // mtvec.BASE must be 4-byte aligned
+        CSR_MTVEC: mtvec_d = {csr_wdata_int[31:2], 2'b01};
 
         CSR_DCSR: begin
           dcsr_d = csr_wdata_int;
