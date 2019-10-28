@@ -10,7 +10,7 @@
  */
 module ibex_ex_block #(
     parameter bit    RV32M                    = 1,
-    parameter string MultiplierImplementation = "fast"
+    parameter        MultiplierImplementation = "fast"
 ) (
     input  logic              clk_i,
     input  logic              rst_ni,
