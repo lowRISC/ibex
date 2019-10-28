@@ -18,7 +18,7 @@ module ibex_core #(
     parameter int unsigned MHPMCounterWidth         = 40,
     parameter bit          RV32E                    = 1'b0,
     parameter bit          RV32M                    = 1'b1,
-    parameter string       MultiplierImplementation = "fast",
+    parameter              MultiplierImplementation = "fast",
     parameter int unsigned DmHaltAddr               = 32'h1A110800,
     parameter int unsigned DmExceptionAddr          = 32'h1A110808
 ) (
