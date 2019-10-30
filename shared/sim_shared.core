@@ -10,6 +10,7 @@ filesets:
       - ./rtl/prim_clock_gating.sv
       - ./rtl/ram_1p.sv
       - ./rtl/bus.sv
+      - ./rtl/sim/simulator_ctrl.sv
     file_type: systemVerilogSource
 
 targets:
