@@ -9,13 +9,11 @@ filesets:
     depend:
       - lowrisc:dv_verilator:simutil_verilator
       - lowrisc:ibex:ibex_core_tracing
+      - lowrisc:ibex:sim_shared
 
     files:
       - rtl/ibex_riscv_compliance.sv
       - ibex_riscv_compliance.cc: { file_type: cppSource }
-      - rtl/prim_clock_gating.sv
-      - rtl/ram_1p.sv
-      - rtl/bus.sv
       - rtl/riscv_testutil.sv
     file_type: systemVerilogSource
 
