@@ -1,4 +1,4 @@
-## Based on https://github.com/Digilent/digilent-xdc/blob/master/Arty-A7-100-Master.xdc
+## Based on https://github.com/Digilent/digilent-xdc/blob/master/Nexys-4-DDR-Master.xdc
 ## This file is a general .xdc for the Nexys4 DDR Rev. C
 ## To use it in a project:
 ## - uncomment the lines corresponding to used pins
