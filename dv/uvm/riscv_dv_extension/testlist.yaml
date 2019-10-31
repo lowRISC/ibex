@@ -270,6 +270,22 @@
   compare_opts:
     compare_final_value_only: 1
 
+- test: riscv_debug_csr_entry_test
+  description: >
+    Inject debug stimulus during writes to xSTATUS and xIE
+  iterations: 10
+  gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +require_signature_addr=1
+    +gen_debug_section=1
+    +randomize_csr=1
+  rtl_test: core_ibex_debug_csr_test
+  sim_opts: >
+    +require_signature_addr=1
+    +enable_debug_single_seq=1
+  compare_opts:
+    compare_final_value_only: 1
+
 - test: riscv_interrupt_test
   description: >
     Random instruction test with complete interrupt handling
@@ -299,6 +315,22 @@
     +randomize_csr=1
     +no_wfi=0
   rtl_test: core_ibex_irq_wfi_test
+  sim_opts: >
+    +require_signature_addr=1
+    +enable_irq_seq=1
+  compare_opts:
+    compare_final_value_only: 1
+
+- test: riscv_interrupt_csr_test
+  description: >
+    Inject interrupts during dummy writes to xSTATUS and xIE
+  iterations: 10
+  gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +require_signature_addr=1
+    +enable_interrupt=1
+    +randomize_csr=1
+  rtl_test: core_ibex_irq_csr_test
   sim_opts: >
     +require_signature_addr=1
     +enable_irq_seq=1
