@@ -52,8 +52,7 @@ module ibex_alu (
       ALU_EQ,   ALU_NE,
       ALU_GE,   ALU_GEU,
       ALU_LT,   ALU_LTU,
-      ALU_SLT,  ALU_SLTU,
-      ALU_SLET, ALU_SLETU: adder_op_b_negate = 1'b1;
+      ALU_SLT,  ALU_SLTU: adder_op_b_negate = 1'b1;
 
       default:;
     endcase
@@ -128,8 +127,7 @@ module ibex_alu (
     unique case (operator_i)
       ALU_GE,
       ALU_LT,
-      ALU_SLT,
-      ALU_SLET: begin
+      ALU_SLT: begin
         cmp_signed = 1'b1;
       end
 
@@ -168,12 +166,11 @@ module ibex_alu (
     cmp_result = is_equal;
 
     unique case (operator_i)
-      ALU_EQ:              cmp_result =  is_equal;
-      ALU_NE:              cmp_result = ~is_equal;
-      ALU_GE,  ALU_GEU:    cmp_result = is_greater_equal;
+      ALU_EQ:            cmp_result =  is_equal;
+      ALU_NE:            cmp_result = ~is_equal;
+      ALU_GE,  ALU_GEU:  cmp_result = is_greater_equal;
       ALU_LT,  ALU_LTU,
-      ALU_SLT, ALU_SLTU:   cmp_result = ~is_greater_equal;
-      ALU_SLET, ALU_SLETU: cmp_result = ~is_greater_equal | is_equal;
+      ALU_SLT, ALU_SLTU: cmp_result = ~is_greater_equal;
 
       default:;
     endcase
@@ -205,8 +202,7 @@ module ibex_alu (
       ALU_EQ,   ALU_NE,
       ALU_GE,   ALU_GEU,
       ALU_LT,   ALU_LTU,
-      ALU_SLT,  ALU_SLTU,
-      ALU_SLET, ALU_SLETU: result_o = {31'h0,cmp_result};
+      ALU_SLT,  ALU_SLTU: result_o = {31'h0,cmp_result};
 
       default:;
     endcase

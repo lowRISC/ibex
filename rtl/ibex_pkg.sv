@@ -57,9 +57,7 @@ typedef enum logic [4:0] {
 
   // Set lower than
   ALU_SLT,
-  ALU_SLTU,
-  ALU_SLET,
-  ALU_SLETU
+  ALU_SLTU
 } alu_op_e;
 
 typedef enum logic [1:0] {
