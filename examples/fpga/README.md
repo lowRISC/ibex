@@ -4,6 +4,11 @@ Please see [examples](https://ibex-core.readthedocs.io/en/latest/examples.html "
 
 ## Requirements
 
+This example is available for two boards:
+
+- Arty-A7
+- Nexys 4 DDR
+
 ### Tools
 
   - RV32 compiler
@@ -28,21 +33,19 @@ This should produce a `led.vmem` file which is used in the synthesises to update
 
 ### Hardware
 
-Run the following command at the top level to build the hardware.
+Run the following command at the top level of the repository to build the hardware.
 
-```
-fusesoc --cores-root=. build lowrisc:ibex:top_artya7_100
-```
+- For the Arty: `fusesoc --cores-root=. build lowrisc:ibex:top_artya7_100`
 
-This will create a directory `build` which contains the output files, including
-the bitstream.
+- For the Nexys 4 DDR: `fusesoc --cores-root=. build lowrisc:ibex:top_nexys4a7ddr`
+
+This will create a directory `build` which contains the output files, including the bitstream.
 
 ## Program
 
 After the board is connected to the computer it can be programmed with:
 
-```
-fusesoc --cores-root=. pgm lowrisc:ibex:top_artya7_100
-```
+- `fusesoc --cores-root=. pgm lowrisc:ibex:top_artya7_100` for the Arty.
+- `fusesoc --cores-root=. pgm lowrisc:ibex:top_nexys4a7ddr` for the Nexys4 DDR.
 
 LED1/LED3 and LED0/LED2 should alternately be on after the FPGA programming is finished.
