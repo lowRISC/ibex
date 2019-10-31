@@ -165,3 +165,14 @@ uint32_t NonImpRegister::RegisterWrite(uint32_t newval) { return 0; }
 uint32_t NonImpRegister::RegisterSet(uint32_t newval) { return 0; }
 
 uint32_t NonImpRegister::RegisterClear(uint32_t newval) { return 0; }
+
+WARLRegister::WARLRegister(
+    uint32_t addr, std::vector<std::unique_ptr<BaseRegister>> *map_pointer,
+    uint32_t mask, uint32_t resval)
+    : BaseRegister{addr, map_pointer},
+      register_mask_(mask),
+      register_value_reset_(resval) {}
+
+void WARLRegister::RegisterReset() { register_value_ = register_value_reset_; }
+
+uint32_t WARLRegister::GetLockMask() { return register_mask_; }
