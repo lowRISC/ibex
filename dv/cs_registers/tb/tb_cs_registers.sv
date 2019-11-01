@@ -62,6 +62,7 @@ module tb_cs_registers #(
   logic [31:0]          csr_depc_o;
   logic                 debug_single_step_o;
   logic                 debug_ebreakm_o;
+  logic                 debug_ebreaku_o;
 
   logic [31:0]          pc_if_i;
   logic [31:0]          pc_id_i;
