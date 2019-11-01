@@ -12,7 +12,6 @@ module ibex_controller (
 
     input  logic                  fetch_enable_i,        // start decoding
     output logic                  ctrl_busy_o,           // core is busy processing instrs
-    output logic                  first_fetch_o,         // core is at the FIRST FETCH stage
 
     // decoder related signals
     input  logic                  illegal_insn_i,        // decoder has an invalid instr
@@ -256,7 +255,6 @@ module ibex_controller (
     ctrl_fsm_ns           = ctrl_fsm_cs;
 
     ctrl_busy_o           = 1'b1;
-    first_fetch_o         = 1'b0;
 
     halt_if               = 1'b0;
     flush_id              = 1'b0;
@@ -300,7 +298,6 @@ module ibex_controller (
       SLEEP: begin
         // instruction in IF stage is already valid
         // we begin execution when an interrupt has arrived
-        ctrl_busy_o   = 1'b0;
         instr_req_o   = 1'b0;
         halt_if       = 1'b1;
         flush_id      = 1'b1;
@@ -308,12 +305,14 @@ module ibex_controller (
         // normal execution flow
         // in debug mode or single step mode we leave immediately (wfi=nop)
         if (irq_nm_i || irq_pending_i || debug_req_i || debug_mode_q || debug_single_step_i) begin
-          ctrl_fsm_ns  = FIRST_FETCH;
+          ctrl_fsm_ns = FIRST_FETCH;
+        end else begin
+          // Make sure clock remains disabled.
+          ctrl_busy_o = 1'b0;
         end
       end
 
       FIRST_FETCH: begin
-        first_fetch_o = 1'b1;
         // Stall because of IF miss
         if (id_in_ready_o) begin
           ctrl_fsm_ns = DECODE;
