@@ -123,12 +123,11 @@ module ibex_core #(
   logic [31:0] jump_target_ex;
   logic        branch_decision;
 
+  // Core busy signals
   logic        ctrl_busy;
   logic        if_busy;
   logic        lsu_busy;
-  //core busy signals
-  logic        core_busy;
-  logic        core_ctrl_firstfetch, core_busy_int, core_busy_q;
+  logic        core_busy_d, core_busy_q;
 
   // ALU Control
   alu_op_e     alu_operator_ex;
@@ -264,23 +263,20 @@ module ibex_core #(
 
   logic        clock_en;
 
-  // if we are sleeping on a barrier let's just wait on the instruction
-  // interface to finish loading instructions
-  assign core_busy_int = if_busy | ctrl_busy | lsu_busy;
+  // Before going to sleep, wait for I- and D-side
+  // interfaces to finish ongoing operations.
+  assign core_busy_d = ctrl_busy | if_busy | lsu_busy;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       core_busy_q <= 1'b0;
     end else begin
-      core_busy_q <= core_busy_int;
+      core_busy_q <= core_busy_d;
     end
   end
 
-  assign core_busy   = core_ctrl_firstfetch ? 1'b1 : core_busy_q;
-
+  assign clock_en     = core_busy_q | debug_req_i | irq_pending | irq_nm_i;
   assign core_sleep_o = ~clock_en;
-
-  assign clock_en    = core_busy | debug_req_i | irq_pending | irq_nm_i;
 
   // main clock gate of the core
   // generates all clocks except the one for the debug unit which is
@@ -368,7 +364,6 @@ module ibex_core #(
       // Processor Enable
       .fetch_enable_i               ( fetch_enable_i         ),
       .ctrl_busy_o                  ( ctrl_busy              ),
-      .core_ctrl_firstfetch_o       ( core_ctrl_firstfetch   ),
       .illegal_insn_o               ( illegal_insn_id        ),
 
       // from/to IF-ID pipeline register

@@ -24,7 +24,6 @@ module ibex_id_stage #(
 
     input  logic                  fetch_enable_i,
     output logic                  ctrl_busy_o,
-    output logic                  core_ctrl_firstfetch_o,
     output logic                  illegal_insn_o,
 
     // Interface to IF stage
@@ -388,7 +387,6 @@ module ibex_id_stage #(
 
       .fetch_enable_i                 ( fetch_enable_i         ),
       .ctrl_busy_o                    ( ctrl_busy_o            ),
-      .first_fetch_o                  ( core_ctrl_firstfetch_o ),
 
       // decoder related signals
       .illegal_insn_i                 ( illegal_insn_o         ),
