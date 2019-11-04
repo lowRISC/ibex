@@ -164,7 +164,7 @@ class riscv_load_store_base_instr_stream extends riscv_mem_access_stream;
            end
         end
       end
-      randomize_instr(instr, .skip_rs1(1'b1), .skip_imm(1'b1));
+      randomize_instr(instr, .skip_rs1(1'b1), .skip_imm(1'b1), .disable_dist(1'b1));
       instr.rs1 = rs1_reg;
       instr.set_imm(offset[i]);
       instr.process_load_store = 0;
@@ -182,7 +182,7 @@ class riscv_single_load_store_instr_stream extends riscv_load_store_base_instr_s
     num_mixed_instr < 5;
   }
 
-  `uvm_object_utils(riscv_load_store_base_instr_stream)
+  `uvm_object_utils(riscv_single_load_store_instr_stream)
   `uvm_object_new
 
 endclass

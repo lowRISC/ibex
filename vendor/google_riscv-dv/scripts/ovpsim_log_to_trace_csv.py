@@ -70,7 +70,52 @@ def process_if_compressed(prev_trace):
     prev_trace.instr = "c."+prev_trace.instr
     # logging.debug("process_if_compressed(%s, %s)" % (prev_trace.instr, prev_trace.binary))
 
-def process_ovpsim_sim_log(ovpsim_log, csv, full_trace = 0):
+pseudos={
+    'mv'        :'addi',
+    'not'       :'xori',
+    'neg'       :'sub',
+    'negw'      :'subw',
+    'sext.w'    :'addiw',
+    'seqz'      :'sltiu',
+    'snez'      :'sltu',
+    'sltz'      :'slt',
+    'sgtz'      :'slt',
+    'beqz'      :'beg',
+    'bnez'      :'bnez',
+    'bgez'      :'bgez',
+    'bltz'      :'blt',
+    'blez'      :'bge',
+    'bgtz'      :'blt',
+    'csrr'      :'csrrw',
+    'csrw'      :'csrrw',
+    'csrs'      :'csrrs',
+    'csrc'      :'csrrc',
+    'csrwi'     :'csrrwi',
+    'csrsi'     :'csrrsi',
+    'csrci'     :'csrrci',
+    'j'         :'jal',
+    'jr'        :'jal',
+    }
+def check_conversion(entry, stop_on_first_error):
+    instr_str_0 =entry.instr_str.split(" ")[0]
+    instr       =entry.instr.split(" ")[0]
+    if "c." in instr[0:2]:
+        instr = instr[2:]
+    if instr in instr_str_0:
+        return # same
+    #logging.debug("converted pseudo %10s -> %s" % (instr_str_0, instr))
+    if instr_str_0 in pseudos:
+        p_instr = pseudos[instr_str_0]
+        if p_instr in instr:
+            return # is pseudo, converted ok
+        logging.error("converted        %10s -> %s <<-- not correct pseudo (%s)" % (instr_str_0, instr, p_instr))
+        if stop_on_first_error:
+            sys.exit(-1)
+    logging.error("converted        %10s -> %s  <<-- not correct at all" % (instr_str_0, instr))
+    if stop_on_first_error:
+        sys.exit(-1)
+
+def process_ovpsim_sim_log(ovpsim_log, csv, full_trace = 0, stop_on_first_error = 1):
   """Process OVPsim simulation log.
 
   Extract instruction and affected register information from ovpsim simulation
@@ -95,7 +140,7 @@ def process_ovpsim_sim_log(ovpsim_log, csv, full_trace = 0):
     gpr[g] = 0
 
   with open(ovpsim_log, "r") as f, open(csv, "w") as csv_fd:
-    trace_csv = RiscvInstructiontTraceCsv(csv_fd)
+    trace_csv = RiscvInstructionTraceCsv(csv_fd)
     trace_csv.start_new_trace()
     prev_trace = 0
     for line in f:
@@ -104,20 +149,22 @@ def process_ovpsim_sim_log(ovpsim_log, csv, full_trace = 0):
                      "(?P<mode>[A-Za-z]*?)\s+(?P<bin>[a-f0-9]*?)\s+(?P<instr>.*?)$", line)
       if m:
         if prev_trace: # if not yet written as it had no data following it
+            check_conversion(prev_trace, stop_on_first_error)
             trace_csv.write_trace_entry(prev_trace)
             prev_trace = 0
         trace_bin = m.group("bin")
         trace_instr_str = m.group("instr")
         trace_addr = m.group("addr")
-        trace_section = m.group("section") # not yet used
-        #trace_mode = convert_mode(m.group("mode"), line)
+        trace_section = m.group("section")
+        trace_mode = convert_mode(m.group("mode"), line)
+        trace_instr = trace_instr_str.split(" ")[0]
         instr_cnt += 1
-        prev_trace = RiscvInstructiontTraceEntry()
+        prev_trace = RiscvInstructionTraceEntry()
         prev_trace.instr_str = trace_instr_str
         prev_trace.binary = trace_bin
         prev_trace.addr = trace_addr
-        #prev_trace.privileged_mode = trace_mode
-        prev_trace.instr = trace_instr # wrong
+        prev_trace.privileged_mode = trace_mode
+        prev_trace.instr = trace_instr
 
         if 0:
             print ("line ::"+line)
@@ -126,18 +173,13 @@ def process_ovpsim_sim_log(ovpsim_log, csv, full_trace = 0):
             print ("ins  ::"+trace_instr)
             print ("addr ::"+trace_addr)
             print ("sect ::"+trace_section)
-            #print ("mode ::"+prev_trace.privileged_mode)
+            print ("mode ::"+trace_mode)
             sys.exit(-1)
 
         if full_trace:
             i = re.search (r"(?P<instr>[a-z]*?)\s", trace_instr_str)
             if i:
                 trace_instr = i.group("instr")
-            if trace_instr_str == "nop" or \
-               trace_instr_str == "mret" or \
-               trace_instr_str == "ecall" :
-               # this will probably need also doing for things like wfi too
-              trace_instr = trace_instr_str
             prev_trace.instr = trace_instr
             process_if_compressed(prev_trace)
             o = re.search (r"(?P<instr>[a-z]*?)\s(?P<operand>.*)", trace_instr_str)
@@ -148,7 +190,6 @@ def process_ovpsim_sim_log(ovpsim_log, csv, full_trace = 0):
                   process_jalr(prev_trace, operands, gpr)
                 else:
                   assign_operand(prev_trace, operands, gpr)
-                # sys.exit(-1)
             else:
                 # print("no operand for [%s] in [%s]" % (trace_instr, trace_instr_str))
                 pass
@@ -164,29 +205,28 @@ def process_ovpsim_sim_log(ovpsim_log, csv, full_trace = 0):
           # Write the extracted instruction to a csvcol buffer file
           # print("%0s %0s = %0s" % (trace_instr_str, m.group("rd"), m.group("val")))
           if n.group("rd") != "frm":
-            rv_instr_trace = RiscvInstructiontTraceEntry()
-            rv_instr_trace.rd = n.group("rd")
-            rv_instr_trace.rd_val = n.group("val")
-            rv_instr_trace.rs1 = prev_trace.rs1
-            rv_instr_trace.rs1_val = prev_trace.rs1_val
-            rv_instr_trace.rs2 = prev_trace.rs2
-            rv_instr_trace.rs2_val = prev_trace.rs2_val
-            rv_instr_trace.instr_str = trace_instr_str
-            rv_instr_trace.instr = prev_trace.instr
-            rv_instr_trace.binary = trace_bin
-            rv_instr_trace.addr = trace_addr
-            #rv_instr_trace.privileged_mode = trace_mode
-            gpr[rv_instr_trace.rd] = rv_instr_trace.rd_val
-            if full_trace:
-                rv_instr_trace.instr = prev_trace.instr
+            rv_instr_trace              = RiscvInstructionTraceEntry()
+            rv_instr_trace.rd           = n.group("rd")
+            rv_instr_trace.rd_val       = n.group("val")
+            rv_instr_trace.rs1          = prev_trace.rs1
+            rv_instr_trace.rs1_val      = prev_trace.rs1_val
+            rv_instr_trace.rs2          = prev_trace.rs2
+            rv_instr_trace.rs2_val      = prev_trace.rs2_val
+            rv_instr_trace.instr_str    = trace_instr_str
+            rv_instr_trace.instr        = prev_trace.instr
+            rv_instr_trace.binary       = trace_bin
+            rv_instr_trace.addr         = trace_addr
+            rv_instr_trace.privileged_mode = trace_mode
+            gpr[rv_instr_trace.rd]      = rv_instr_trace.rd_val
+            check_conversion(rv_instr_trace, stop_on_first_error)
             trace_csv.write_trace_entry(rv_instr_trace)
             prev_trace = 0 # we wrote out as it had data, so no need to write it next time round
             if 0:
-              print ("write entry [[%d]]: rd[%s] val[%s] instr(%s) bin(%s) addr(%s)"
-                  % (instr_cnt, rv_instr_trace.rd, rv_instr_trace.rd_val,
-                     trace_instr_str, trace_bin, trace_addr))
-              print (rv_instr_trace.__dict__)
-              sys.exit(-1)
+                print ("write entry [[%d]]: rd[%s] val[%s] instr(%s) bin(%s) addr(%s)"
+                    % (instr_cnt, rv_instr_trace.rd, rv_instr_trace.rd_val,
+                        trace_instr_str, trace_bin, trace_addr))
+                print (rv_instr_trace.__dict__)
+                sys.exit(-1)
         else:
             if 0:
                 print ("write previous entry: [%s] %s " % (str(instr_cnt), line))

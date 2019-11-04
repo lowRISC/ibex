@@ -59,7 +59,7 @@ def process_spike_sim_log(spike_log, csv, full_trace = 0):
   gpr["zero"] = 0
 
   with open(spike_log, "r") as f, open(csv, "w") as csv_fd:
-    trace_csv = RiscvInstructiontTraceCsv(csv_fd)
+    trace_csv = RiscvInstructionTraceCsv(csv_fd)
     trace_csv.start_new_trace()
     for line in f:
       # Extract instruction infromation
@@ -67,7 +67,7 @@ def process_spike_sim_log(spike_log, csv, full_trace = 0):
       if m:
         spike_instr = m.group("instr").replace("pc + ", "")
         spike_instr = spike_instr.replace("pc - ", "-")
-        rv_instr_trace = RiscvInstructiontTraceEntry()
+        rv_instr_trace = RiscvInstructionTraceEntry()
         rv_instr_trace.instr_str = spike_instr
         rv_instr_trace.addr = m.group("addr")
         rv_instr_trace.binary = m.group("bin")

@@ -72,29 +72,28 @@ def get_generator_cmd(simulator, simulator_yaml, cov):
   sys.exit(1)
 
 
-def parse_iss_yaml(iss, iss_yaml, isa):
+def parse_iss_yaml(iss, iss_yaml, isa, setting_dir):
   """Parse ISS YAML to get the simulation command
 
   Args:
-    iss        : target ISS used to look up in ISS YAML
-    iss_yaml   : ISS configuration file in YAML format
-    isa        : ISA variant passed to the ISS
+    iss         : target ISS used to look up in ISS YAML
+    iss_yaml    : ISS configuration file in YAML format
+    isa         : ISA variant passed to the ISS
+    setting_dir : Generator setting directory
 
   Returns:
-    cmd        : ISS run command
+    cmd         : ISS run command
   """
   logging.info("Processing ISS setup file : %s" % iss_yaml)
   yaml_data = read_yaml(iss_yaml)
+  cwd = os.path.dirname(os.path.realpath(__file__))
   # Search for matched ISS
   for entry in yaml_data:
     if entry['iss'] == iss:
       logging.info("Found matching ISS: %s" % entry['iss'])
       cmd = entry['cmd'].rstrip()
       cmd = re.sub("\<path_var\>", get_env_var(entry['path_var']), cmd)
-      if iss == "ovpsim":
-        cmd = re.sub("\<variant\>", isa, cmd)
-      else:
-        cmd = re.sub("\<variant\>", isa, cmd)
+      cmd = re.sub("\<variant\>", isa, cmd)
       return cmd
   logging.error("Cannot find ISS %0s" % iss)
   sys.exit(1)
@@ -159,10 +158,7 @@ def gen(test_list, csr_file, end_signature_addr, isa, simulator,
       logging.info("Building RISC-V instruction generator")
       for cmd in compile_cmd:
         cmd = re.sub("<out>", os.path.abspath(output_dir), cmd)
-        if core_setting_dir == "":
-          cmd = re.sub("<setting>", "<cwd>/setting", cmd)
-        else:
-          cmd = re.sub("<setting>", core_setting_dir, cmd)
+        cmd = re.sub("<setting>", core_setting_dir, cmd)
         if ext_dir == "":
           cmd = re.sub("<user_extension>", "<cwd>/user_extension", cmd)
         else:
@@ -253,6 +249,7 @@ def gcc_compile(test_list, output_dir, isa, mabi, opts):
     isa        : ISA variant passed to GCC
     mabi       : MABI variant passed to GCC
   """
+  cwd = os.path.dirname(os.path.realpath(__file__))
   for test in test_list:
     for i in range(0, test['iterations']):
       if 'no_gcc' in test and test['no_gcc'] == 1:
@@ -261,20 +258,24 @@ def gcc_compile(test_list, output_dir, isa, mabi, opts):
       asm = prefix + ".S"
       elf = prefix + ".o"
       binary = prefix + ".bin"
+      test_isa = isa
       # gcc comilation
       cmd = ("%s -static -mcmodel=medany \
              -fvisibility=hidden -nostdlib \
              -nostartfiles %s \
              -I%s/user_extension \
              -T%s/scripts/link.ld %s -o %s " % \
-             (get_env_var("RISCV_GCC"), asm, get_env_var("RISCV_DV_ROOT"),
-              get_env_var("RISCV_DV_ROOT"), opts, elf))
+             (get_env_var("RISCV_GCC"), asm, cwd, cwd, opts, elf))
       if 'gcc_opts' in test:
         cmd += test['gcc_opts']
+      if 'gen_opts' in test:
+        # Disable compressed instruction
+        if re.search('disable_compressed_instr', test['gen_opts']):
+          test_isa = re.sub("c",  "", test_isa)
       # If march/mabi is not defined in the test gcc_opts, use the default
       # setting from the command line.
       if not re.search('march', cmd):
-        cmd += (" -march=%s" % isa)
+        cmd += (" -march=%s" % test_isa)
       if not re.search('mabi', cmd):
         cmd += (" -mabi=%s" % mabi)
       logging.info("Compiling %s" % asm)
@@ -298,6 +299,7 @@ def run_assembly(asm_test, iss_yaml, isa, mabi, iss):
     mabi       : MABI variant passed to GCC
     iss        : Instruction set simulators
   """
+  cwd = os.path.dirname(os.path.realpath(__file__))
   asm = asm_test
   elf = asm_test + ".o"
   binary = asm_test + ".bin"
@@ -309,8 +311,7 @@ def run_assembly(asm_test, iss_yaml, isa, mabi, iss):
          -nostartfiles %s \
          -I%s/user_extension \
          -T%s/scripts/link.ld -o %s " % \
-         (get_env_var("RISCV_GCC"), asm, get_env_var("RISCV_DV_ROOT"),
-          get_env_var("RISCV_DV_ROOT"), elf))
+         (get_env_var("RISCV_GCC"), asm, cwd, cwd, elf))
   cmd += (" -march=%s" % isa)
   cmd += (" -mabi=%s" % mabi)
   logging.info("Compiling %s" % asm)
@@ -327,20 +328,21 @@ def run_assembly(asm_test, iss_yaml, isa, mabi, iss):
   logging.info("[%0s] Running ISS simulation: %s ...done" % (iss, elf))
 
 
-def iss_sim(test_list, output_dir, iss_list, iss_yaml, isa, timeout_s):
+def iss_sim(test_list, output_dir, iss_list, iss_yaml, isa, setting_dir, timeout_s):
   """Run ISS simulation with the generated test program
 
   Args:
-    test_list  : List of assembly programs to be compiled
-    output_dir : Output directory of the ELF files
-    iss_list   : List of instruction set simulators
-    iss_yaml   : ISS configuration file in YAML format
-    isa        : ISA variant passed to the ISS
-    timeout_s  : Timeout limit in seconds
+    test_list   : List of assembly programs to be compiled
+    output_dir  : Output directory of the ELF files
+    iss_list    : List of instruction set simulators
+    iss_yaml    : ISS configuration file in YAML format
+    isa         : ISA variant passed to the ISS
+    setting_dir : Generator setting directory
+    timeout_s   : Timeout limit in seconds
   """
   for iss in iss_list.split(","):
     log_dir = ("%s/%s_sim" % (output_dir, iss))
-    base_cmd = parse_iss_yaml(iss, iss_yaml, isa)
+    base_cmd = parse_iss_yaml(iss, iss_yaml, isa, setting_dir)
     logging.info("%s sim log dir: %s" % (iss, log_dir))
     subprocess.run(["mkdir", "-p", log_dir])
     for test in test_list:
@@ -408,6 +410,9 @@ def setup_parser():
   # Parse input arguments
   parser = argparse.ArgumentParser()
 
+  parser.add_argument("--target", type=str, default="rv64imc",
+                      help="Run the generator with pre-defined targets: \
+                            rv32imc, rv32i, rv64imc, rv64gc")
   parser.add_argument("-o", "--output", type=str,
                       help="Output directory name", dest="o")
   parser.add_argument("-tl", "--testlist", type=str, default="",
@@ -441,15 +446,15 @@ def setup_parser():
   parser.add_argument("--lsf_cmd", type=str, default="",
                       help="LSF command. Run in local sequentially if lsf \
                             command is not specified")
-  parser.add_argument("--isa", type=str, default="rv64gc",
+  parser.add_argument("--isa", type=str, default="",
                       help="RISC-V ISA subset")
-  parser.add_argument("-m", "--mabi", type=str, default="lp64",
-                      help="mabi used for compilation, lp32 or lp64", dest="mabi")
+  parser.add_argument("-m", "--mabi", type=str, default="",
+                      help="mabi used for compilation", dest="mabi")
   parser.add_argument("--gen_timeout", type=int, default=360,
                       help="Generator timeout limit in seconds")
   parser.add_argument("--end_signature_addr", type=str, default="0",
                       help="Address that privileged CSR test writes to at EOT")
-  parser.add_argument("--iss_timeout", type=int, default=25,
+  parser.add_argument("--iss_timeout", type=int, default=10,
                       help="ISS sim timeout limit in seconds")
   parser.add_argument("--iss_yaml", type=str, default="",
                       help="ISS setting YAML")
@@ -460,15 +465,14 @@ def setup_parser():
   parser.add_argument("--seed_yaml", type=str, default="",
                       help="Rerun the generator with the seed specification \
                             from a prior regression")
+  parser.add_argument("-ct", "--custom_target", type=str, default="",
+                      help="Directory name of the custom target")
   parser.add_argument("-cs", "--core_setting_dir", type=str, default="",
                       help="Path for the riscv_core_setting.sv")
   parser.add_argument("-ext", "--user_extension_dir", type=str, default="",
                       help="Path for the user extension directory")
   parser.add_argument("--asm_test", type=str, default="",
                       help="Directed assembly test")
-  parser.add_argument("--target", type=str, default="",
-                      help="Run the generator with pre-defined targets: \
-                            rv32imc, rv32i, rv64imc")
   parser.add_argument("--log_suffix", type=str, default="",
                       help="Simulation log name suffix")
   parser.add_argument("-bz", "--batch_size", type=int, default=0,
@@ -483,10 +487,10 @@ def setup_parser():
 
 def main():
   """This is the main entry point."""
-  check_riscv_dv_setting()
   parser = setup_parser()
   args = parser.parse_args()
   cwd = os.path.dirname(os.path.realpath(__file__))
+  os.environ["RISCV_DV_ROOT"] = cwd
   setup_logging(args.verbose)
 
   if not args.csr_yaml:
@@ -498,8 +502,17 @@ def main():
   if not args.simulator_yaml:
     args.simulator_yaml = cwd + "/yaml/simulator.yaml"
 
-  if args.target:
-    args.testlist = cwd + "/target/"+ args.target +"/testlist.yaml"
+  # Keep the core_setting_dir option to be backward compatible, suggest to use
+  # --custom_target
+  if args.core_setting_dir:
+    if not args.custom_target:
+      args.custom_target = args.core_setting_dir
+  else:
+    args.core_setting_dir = args.custom_target
+
+  if not args.custom_target:
+    if not args.testlist:
+      args.testlist = cwd + "/target/"+ args.target +"/testlist.yaml"
     args.core_setting_dir = cwd + "/target/"+ args.target
     if args.target == "rv32imc":
       args.mabi = "ilp32"
@@ -510,10 +523,16 @@ def main():
     elif args.target == "rv64imc":
       args.mabi = "lp64"
       args.isa  = "rv64imc"
+    elif args.target == "ml":
+      args.mabi = "lp64"
+      args.isa  = "rv64imc"
     else:
-      print ("Unsupported target: %0s" % args.target)
-  elif not args.testlist:
-    args.testlist = cwd + "/yaml/testlist.yaml"
+      print ("Unsupported pre-defined target: %0s" % args.target)
+  else:
+    if (not args.mabi) or (not args.isa):
+      sys.exit("mabi and isa must be specified for custom target %0s" % args.custom_target)
+    if not args.testlist:
+      args.testlist = args.custom_target + "/testlist.yaml"
 
   if args.asm_test != "":
     run_assembly(args.asm_test, args.iss_yaml, args.isa, args.mabi, args.iss)
@@ -553,7 +572,7 @@ def main():
     # Run ISS simulation
     if args.steps == "all" or re.match(".*iss_sim.*", args.steps):
       iss_sim(matched_list, output_dir, args.iss, args.iss_yaml,
-              args.isa, args.iss_timeout)
+              args.isa, args.core_setting_dir, args.iss_timeout)
 
     # Compare ISS simulation result
     if args.steps == "all" or re.match(".*iss_cmp.*", args.steps):

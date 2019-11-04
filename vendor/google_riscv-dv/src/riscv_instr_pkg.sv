@@ -372,7 +372,7 @@ package riscv_instr_pkg;
     TRAP,
     INTERRUPT,
     AMO
-  } riscv_instr_cateogry_t;
+  } riscv_instr_category_t;
 
   typedef bit [11:0] riscv_csr_t;
 

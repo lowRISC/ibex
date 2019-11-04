@@ -181,7 +181,6 @@ class riscv_instr_cov_item extends riscv_instr_base;
       BGE    : is_branch_hit = ($signed(rs1_value) >  $signed(rs2_value));
       BLTU   : is_branch_hit = (rs1_value < rs2_value);
       BGEU   : is_branch_hit = (rs1_value > rs2_value);
-      BGEU   : is_branch_hit = (rs1_value > rs2_value);
       default: `uvm_error(get_name(), $sformatf("Unexpected instr %0s", instr_name.name()))
     endcase
     return is_branch_hit;

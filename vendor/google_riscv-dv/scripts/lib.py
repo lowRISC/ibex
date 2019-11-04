@@ -75,15 +75,6 @@ def get_env_var(var):
   return val
 
 
-def check_riscv_dv_setting():
-  """Check the RISCV-DV directory setting, default "."
-  """
-  try:
-    val = os.environ["RISCV_DV_ROOT"]
-  except KeyError:
-    os.environ["RISCV_DV_ROOT"] = "."
-
-
 def get_seed(seed):
   """Get the seed to run the generator
 
@@ -112,6 +103,7 @@ def run_cmd(cmd, timeout_s = 999):
   try:
     ps = subprocess.Popen("exec " + cmd,
                           shell=True,
+                          executable='/bin/bash',
                           universal_newlines=True,
                           stdout=subprocess.PIPE,
                           stderr=subprocess.STDOUT)
@@ -141,6 +133,7 @@ def run_parallel_cmd(cmd_list, timeout_s = 999):
   for cmd in cmd_list:
     ps = subprocess.Popen("exec " + cmd,
                           shell=True,
+                          executable='/bin/bash',
                           universal_newlines=True,
                           stdout=subprocess.PIPE,
                           stderr=subprocess.STDOUT)
