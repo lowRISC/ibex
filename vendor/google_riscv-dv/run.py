@@ -93,7 +93,10 @@ def parse_iss_yaml(iss, iss_yaml, isa, setting_dir):
       logging.info("Found matching ISS: %s" % entry['iss'])
       cmd = entry['cmd'].rstrip()
       cmd = re.sub("\<path_var\>", get_env_var(entry['path_var']), cmd)
-      cmd = re.sub("\<variant\>", isa, cmd)
+      if iss == "ovpsim":
+        cmd = re.sub("\<cfg_path\>", setting_dir, cmd)
+      else:
+        cmd = re.sub("\<variant\>", isa, cmd)
       return cmd
   logging.error("Cannot find ISS %0s" % iss)
   sys.exit(1)
