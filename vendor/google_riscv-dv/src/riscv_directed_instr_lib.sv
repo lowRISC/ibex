@@ -184,7 +184,7 @@ class riscv_jal_instr extends riscv_rand_instr_stream;
   riscv_instr_base     jump_start;
   riscv_instr_base     jump_end;
   rand int unsigned    num_of_jump_instr;
-  riscv_instr_name_t   jal[];
+  riscv_instr_name_t   jal[$];
 
   constraint instr_c {
     num_of_jump_instr inside {[10:30]};
@@ -207,7 +207,10 @@ class riscv_jal_instr extends riscv_rand_instr_stream;
     setup_allowed_instr(1, 1);
     jal = {JAL};
     if (!cfg.disable_compressed_instr) begin
-      jal = (XLEN == 32) ? {jal, C_J, C_JAL} : {jal, C_J};
+      jal.push_back(C_J);
+      if (XLEN == 32) begin
+        jal.push_back(C_JAL);
+      end
     end
     // First instruction
     jump_start = riscv_instr_base::type_id::create("jump_start");

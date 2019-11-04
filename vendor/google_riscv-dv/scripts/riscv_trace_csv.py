@@ -20,7 +20,7 @@ import csv
 import re
 import logging
 
-class RiscvInstructiontTraceEntry(object):
+class RiscvInstructionTraceEntry(object):
   """RISC-V instruction trace entry"""
   def __init__(self):
     self.rd = ""
@@ -43,7 +43,7 @@ class RiscvInstructiontTraceEntry(object):
     return ("%s -> %s(0x%s) addr:0x%s" %
            (self.instr_str, self.rd, self.rd_val, self.addr))
 
-class RiscvInstructiontTraceCsv(object):
+class RiscvInstructionTraceCsv(object):
   """RISC-V instruction trace CSV class
 
   This class provides functions to read/write trace CSV
@@ -66,7 +66,7 @@ class RiscvInstructiontTraceCsv(object):
     """Read instruction trace from CSV file"""
     csv_reader = csv.DictReader(self.csv_fd)
     for row in csv_reader:
-      new_trace = RiscvInstructiontTraceEntry()
+      new_trace = RiscvInstructionTraceEntry()
       new_trace.rd = row['rd']
       new_trace.rd_val = row['rd_val']
       new_trace.addr = row['addr']

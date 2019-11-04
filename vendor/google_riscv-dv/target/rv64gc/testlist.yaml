@@ -90,7 +90,8 @@
   gen_opts: >
     +instr_cnt=5000
     +num_of_sub_program=5
-    +directed_instr_1=riscv_jal_instr,20
+    +stream_name_0=riscv_jal_instr
+    +stream_freq_0=10
   rtl_test: core_base_test
 
 - test: riscv_loop_test
@@ -111,8 +112,6 @@
   gen_test: riscv_rand_instr_test
   gen_opts: >
     +disable_compressed_instr=1
-  gcc_opts: >
-    -march=rv64im
   rtl_test: core_base_test
 
 - test: riscv_rand_jump_test

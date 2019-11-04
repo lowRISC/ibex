@@ -90,8 +90,6 @@
   gen_test: riscv_rand_instr_test
   gen_opts: >
     +disable_compressed_instr=1
-  gcc_opts: >
-    -march=rv32im
   rtl_test: core_base_test
 
 - test: riscv_rand_jump_test

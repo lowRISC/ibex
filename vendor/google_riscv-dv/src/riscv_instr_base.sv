@@ -18,7 +18,7 @@ class riscv_instr_base extends uvm_object;
 
   rand riscv_instr_group_t      group;
   rand riscv_instr_format_t     format;
-  rand riscv_instr_cateogry_t   category;
+  rand riscv_instr_category_t   category;
   rand riscv_instr_name_t       instr_name;
   rand bit [11:0]               csr;
 
@@ -156,6 +156,12 @@ class riscv_instr_base extends uvm_object;
       rs1 == ZERO;
       rs2 == ZERO;
       rd  == ZERO;
+    }
+  }
+
+  constraint jal_c {
+    if (XLEN != 32) {
+      soft instr_name != C_JAL;
     }
   }
 
@@ -942,8 +948,6 @@ class riscv_instr_base extends uvm_object;
       AND    : get_func7 = 7'b0000000;
       FENCE  : get_func7 = 7'b0000000;
       FENCE_I : get_func7 = 7'b0000000;
-      ECALL  : get_func7 = 7'b0000000;
-      EBREAK : get_func7 = 7'b0000000;
       SLLIW  : get_func7 = 7'b0000000;
       SRLIW  : get_func7 = 7'b0000000;
       SRAIW  : get_func7 = 7'b0100000;
