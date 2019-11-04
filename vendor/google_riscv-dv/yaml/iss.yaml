@@ -21,7 +21,7 @@
   path_var: OVPSIM_PATH
   cmd: >
     <path_var>/riscvOVPsim.exe
-    --controlfile target/<variant>/riscvOVPsim.ic
+    --controlfile <cfg_path>/riscvOVPsim.ic
     --objfilenoentry <elf>
     --override riscvOVPsim/cpu/PMP_registers=0
     --override riscvOVPsim/cpu/simulateexceptions=T
