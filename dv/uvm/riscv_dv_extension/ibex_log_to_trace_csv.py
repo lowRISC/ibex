@@ -25,7 +25,7 @@ def process_ibex_sim_log(ibex_log, csv):
     ibex_instr = ""
 
     with open(ibex_log, "r") as f, open(csv, "w") as csv_fd:
-        trace_csv = RiscvInstructiontTraceCsv(csv_fd)
+        trace_csv = RiscvInstructionTraceCsv(csv_fd)
         trace_csv.start_new_trace()
         for line in f:
             if re.search("ecall", line):
@@ -36,7 +36,7 @@ def process_ibex_sim_log(ibex_log, csv):
                           ".*x(?P<rd>[1-9]\d*)=0x(?P<val>[0-9a-f]+)", line)
             if m:
                 # Write the extracted instruction to a csvcol buffer file
-                rv_instr_trace = RiscvInstructiontTraceEntry()
+                rv_instr_trace = RiscvInstructionTraceEntry()
                 rv_instr_trace.rd = gpr_to_abi("x%0s" % m.group("rd"))
                 rv_instr_trace.rd_val = m.group("val")
                 rv_instr_trace.addr = m.group("pc")
