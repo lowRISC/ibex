@@ -93,12 +93,41 @@ End-to-end RTL/ISS co-simulation flow
 
    RTL/ISS co-simulation flow chart
 
-Correctness checking is performed by the last stage in this flow, where the Ibex core's trace log
-is compared against a golden model ISS trace log and checked for any inconsistent instruction
-executions.
+The last stage in this flow handles log comparisons to determine correctness of a given simulation.
+To do this, both the trace log produced by the core and the trace log produced by the chosen golden
+model ISS are parsed to collect information about all register writebacks that occur.
+These two sets of register writeback data are then compared to verify that the core is writing the
+correct data to the correct registers in the correct order.
 
-The flow is controlled by the Makefile found at
-`dv/uvm/Makefile <https://github.com/lowRISC/ibex/blob/master/dv/uvm/Makefile>`_, here is the list of frequently used commands:
+However, this checking model quickly falls apart once situations involving external stimulus (such
+as interrupts and debug requests) start being tested, as while ISS models can simulate traps due to
+exceptions, they cannot model traps due to external stimulus.
+In order to provide support for these sorts of scenarios to verify if the core has entered the
+proper interrupt handler, entered debug mode properly, updated any CSRs correctly, and so on, the
+handshaking mechanism provided by the RISCV-DV instruction generator is heavily used, which
+effectively allows the core to send status information to the testbench during program execution for
+any analysis that is required to increase verification effectiveness.
+This mechanism is explained in detail at https://github.com/google/riscv-dv/blob/master/HANDSHAKE.md.
+As a sidenote, the signature address that this testbench uses for the handshaking is ``0x8ffffffc``.
+Additionally, as is mentioned in the RISCV-DV documentation of this handshake, a small set of API
+tasks are provided in `dv/uvm/tests/core_ibex_base_test.sv
+<https://github.com/lowRISC/ibex/blob/master/dv/uvm/tests/core_ibex_base_tests.sv>`_ to enable easy
+and efficient integration and usage of this mechanism in this test environment.
+To see how this handshake is used during real simulations, look in
+`dv/uvm/tests/core_ibex_test_lib.sv
+<https://github.com/lowRISC/ibex/blob/master/dv/uvm/tests/core_ibex_test_lib.sv>`_.
+As can be seen, this mechanism is extensively used to provide runtime verification for situations involving external debug
+requests, interrupt assertions, and memory faults.
+To add another layer of correctness checking to the checking already provided by the handshake
+mechanism, a modified version of the trace log comparison is used, as comparing every register write
+performed during the entire simulation will lead to an incorrect result since the ISS trace log will
+not contain any execution information in the debug ROM or in any interrupt handler code.
+As a result, only the final values contained in every register at the end of the test are compared
+against each other, since any code executed in the debug ROM and trap handlers should not corrupt
+register state in the rest of the program.
+
+The entirety of this flow is controlled by the Makefile found at
+`dv/uvm/Makefile <https://github.com/lowRISC/ibex/blob/master/dv/uvm/Makefile>`_; here is a list of frequently used commands:
 
 .. code-block:: bash
 
