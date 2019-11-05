@@ -444,8 +444,6 @@ class core_ibex_debug_wfi_test extends core_ibex_directed_test;
   `uvm_component_new
 
   virtual task check_stimulus();
-    // TODO(udi) - need to check that no other instruction fetches occur after after the WFI
-    // is detected, and before any stimulus is sent to the core
     forever begin
       wait (dut_vif.wfi === 1'b1);
       wait (dut_vif.core_sleep === 1'b1);
@@ -649,7 +647,6 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
   int err_delay;
 
   // check memory error inputs and verify that core jumps to correct exception handler
-  // TODO(udinator) - add checks for the RVFI interface
   virtual task check_stimulus();
     forever begin
       while (!vseq.data_intf_seq.get_error_synch()) begin

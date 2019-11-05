@@ -107,11 +107,6 @@ class core_ibex_base_test extends uvm_test;
   endfunction
 
   virtual task wait_for_test_done();
-    // TODO(taliu): We need a consistent approach to determine the test is completed for both
-    // random instruction test and firmware based test. For example, it could be done by writing to
-    // a specific memory location of the test signature. Right now the random instruction generator
-    // use ecall instruction to indicate the end of the program. It could be changed to align with
-    // firmware test completion mechanism.
     fork
       begin
         wait (dut_vif.ecall === 1'b1);

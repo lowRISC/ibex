@@ -26,7 +26,6 @@ module core_ibex_tb_top;
   // CSR access interface
   core_ibex_csr_if csr_if(.clk(clk));
 
-  // TODO(taliu) Resolve the tied-off ports
   ibex_core_tracing #(.DmHaltAddr(`BOOT_ADDR + 'h0),
                       .DmExceptionAddr(`BOOT_ADDR + 'h4)) dut (
     .clk_i(clk),
