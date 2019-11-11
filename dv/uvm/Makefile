@@ -142,8 +142,11 @@ post_compare:
 
 # Generate functional coverage
 fcov:
-	cd ${GEN_DIR}; \
-	python3 ./cov.py --dir ${OUT}/instr_gen/spike_sim -o ${OUT}/fcov
+	python3 ${GEN_DIR}/cov.py \
+          --core ibex \
+          --dir ${OUT}/rtl_sim \
+          -o ${OUT}/fcov \
+          ${RISCV_DV_OPTS} \
 
 # Load verdi to review coverage
 cov:
