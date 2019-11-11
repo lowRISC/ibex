@@ -146,7 +146,7 @@ fcov:
           --core ibex \
           --dir ${OUT}/rtl_sim \
           -o ${OUT}/fcov \
-          ${RISCV_DV_OPTS} \
+          --custom_target ${DV_DIR}/riscv_dv_extension \
 
 # Load verdi to review coverage
 cov:

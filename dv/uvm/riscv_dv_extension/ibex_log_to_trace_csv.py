@@ -64,7 +64,6 @@ def process_ibex_sim_log(ibex_log, csv, full_trace = 1):
 
                 # Extract all missing operand values
                 if full_trace:
-                  logging.info("full trace enabled")
                   o = re.search(r"(?P<instr_name>[a-z.]*)\s+(?P<operands>.*)", rv_instr_trace.instr_str)
                   if o:
                     operands = o.group("operands").split(",")
