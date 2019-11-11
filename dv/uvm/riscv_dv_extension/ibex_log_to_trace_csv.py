@@ -64,6 +64,7 @@ def process_ibex_sim_log(ibex_log, csv, full_trace = 1):
 
                 # Extract all missing operand values
                 if full_trace:
+                  gpr[rv_instr_trace.rd] = rv_instr_trace.rd_val
                   o = re.search(r"(?P<instr_name>[a-z.]*)\s+(?P<operands>.*)", rv_instr_trace.instr_str)
                   if o:
                     operands = o.group("operands").split(",")
@@ -85,7 +86,6 @@ def process_ibex_sim_log(ibex_log, csv, full_trace = 1):
                     else:
                       assign_operand(rv_instr_trace, operands, gpr)
 
-                gpr[rv_instr_trace.rd] = rv_instr_trace.rd_val
                 trace_csv.write_trace_entry(rv_instr_trace)
 
     logging.info("Processed instruction count : %d" % instr_cnt)
