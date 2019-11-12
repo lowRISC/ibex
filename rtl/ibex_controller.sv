@@ -540,7 +540,7 @@ module ibex_controller (
             exc_cause_o = EXC_CAUSE_STORE_ACCESS_FAULT;
             csr_mtval_o = lsu_addr_last_i;
 
-          end else if (load_err_q) begin
+          end else begin // load_err_q
             exc_cause_o = EXC_CAUSE_LOAD_ACCESS_FAULT;
             csr_mtval_o = lsu_addr_last_i;
           end
