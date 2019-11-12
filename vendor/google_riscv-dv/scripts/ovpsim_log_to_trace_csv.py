@@ -1,5 +1,6 @@
 """
 Copyright 2019 Google LLC
+Copyright 2019 Imperas Software Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,7 +14,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-Convert ovpsim sim log to standard riscv instruction trace format
+Convert ovpsim sim log to standard riscv-dv .csv instruction trace format
 """
 import re
 import os
@@ -21,29 +22,62 @@ import argparse
 import logging
 
 import sys
-import pprint as pp
+from lib import *
 
 from riscv_trace_csv import *
 
-def convert_mode(pri, line):
-    if "Machine" in pri: return str(3)
-    logging.info("convert_mode = UNKNOWN PRIV MODE  [%s]: %s" % (pri, line))
+try:
+    from ovpsim_log_to_trace_csv_vectors import *
+except:
+    def assign_operand_vector(a,b,c,d):
+        """ stub version when no vector processing included """
+        logging.info("No OVPsim vector instruction processing included")
+        if stop_on_first_error:
+            sys.exit(-1)
+
+stop_on_first_error = 0
+
+def fatal (s):
+    """ ensure we end if a problem """
+    logging.fatal("ERROR: "+s)
     sys.exit(-1)
+
+def convert_mode(pri, line):
+    """ OVPsim uses text string, convert to numeric """
+    if "Machine"    in pri:    return str(3)
+    if "Supervisor" in pri:    return str(1)
+    if "User"       in pri:    return str(0)
+    logging.error("convert_mode = UNKNOWN PRIV MODE  [%s]: %s" % (pri, line))
+    if stop_on_first_error:
+        sys.exit(-1)
 
 REGS = ["zero","ra","sp","gp","tp","t0","t1","t2","s0","s1",
         "a0","a1","a2","a3","a4","a5","a6","a7",
         "s2","s3","s4","s5","s6","s7","s8","s9","s10","s11",
         "t3","t4","t5","t6"]
 
+def process_jal(trace, operands, gpr):
+    """ correctly process jal """
+    # TODO need to merge with jalr
+    ## jal rd, imm
+    if len(operands) == 2:
+        trace.rd = operands[0]
+        trace.rd_val = gpr[trace.rd]
+        trace.imm = get_imm_hex_val(operands[1])
+    else:
+        fatal("process_jal(%s) wrong num operands (%d)" %
+            (trace.instr, len(operands)))
+
 def process_jalr(trace, operands, gpr):
+  """ process jalr """
   ## jalr x3
   ## jalr 9(x3)
   ## jalr x2,x3
   ## jalr x2,4(x3)
   if len(operands) == 1:
-    trace.rd = 'zero'
-    trace.rd_val  = '0'
     m = ADDR_RE.search(operands[0])
+    trace.rd = 'ra'
+    trace.rd_val = gpr['ra']
     if m: # jalr 9(x3)
       trace.rs1 = m.group('rs1')
       trace.rs1_val = gpr[trace.rs1]
@@ -66,9 +100,11 @@ def process_jalr(trace, operands, gpr):
         trace.imm = get_imm_hex_val('0')
 
 def process_if_compressed(prev_trace):
+  """ convert naming for compressed instructions """
   if len(prev_trace.binary) == 4: # compressed are always 4 hex digits
     prev_trace.instr = "c."+prev_trace.instr
-    # logging.debug("process_if_compressed(%s, %s)" % (prev_trace.instr, prev_trace.binary))
+    # logging.debug("process_if_compressed(%s, %s)" %
+    #   (prev_trace.instr, prev_trace.binary))
 
 pseudos={
     'mv'        :'addi',
@@ -96,7 +132,9 @@ pseudos={
     'j'         :'jal',
     'jr'        :'jal',
     }
-def check_conversion(entry, stop_on_first_error):
+
+def check_conversion(entry):
+    """ after conversion check that the entry was converted correctly """
     instr_str_0 =entry.instr_str.split(" ")[0]
     instr       =entry.instr.split(" ")[0]
     if "c." in instr[0:2]:
@@ -108,152 +146,271 @@ def check_conversion(entry, stop_on_first_error):
         p_instr = pseudos[instr_str_0]
         if p_instr in instr:
             return # is pseudo, converted ok
-        logging.error("converted        %10s -> %s <<-- not correct pseudo (%s)" % (instr_str_0, instr, p_instr))
+        logging.error(
+            "converted        %10s -> %s <<-- not correct pseudo (%s)" %
+                (instr_str_0, instr, p_instr))
         if stop_on_first_error:
             sys.exit(-1)
-    logging.error("converted        %10s -> %s  <<-- not correct at all" % (instr_str_0, instr))
+    logging.error("converted        %10s -> %s  <<-- not correct at all" %
+            (instr_str_0, instr))
     if stop_on_first_error:
         sys.exit(-1)
 
-def process_ovpsim_sim_log(ovpsim_log, csv, full_trace = 0, stop_on_first_error = 1):
+def show_line_instr(line, i):
+    """ show line """
+    if i.instr_str[0] in ['v']:
+        logging.debug("%s" % (line.strip()))
+        logging.debug(
+            "  -->> instr_str(%s) binary(%s) addr(%s) mode(%s) instr(%s)"
+            % (      i.instr_str, i.binary,  i.addr, i.privileged_mode,
+                i.instr))
+
+def check_num_operands(instr_str, num_operands, n):
+    """ ensure consistency """
+    if n != num_operands:
+        fatal("%s: num operands wrong, expected (%d) got (%d)" % (instr_str,
+            n, num_operands))
+
+def is_csr(r):
+    """ see if r is a csr """
+    
+    # add more as needed
+    if r in ["mtvec","pmpaddr0","pmpcfg0","mstatus","mepc","mscratch","mcause",
+            "mtval","vl","vtype"]:
+        return True
+    else:
+        return False
+
+def process_branch_offset (opn, operands, prev_trace):
+    """ convert from ovpsim logs branch offsets as absolute to relative """
+    addr = operands[opn]
+    pc = prev_trace.addr
+    offset_dec = int(addr, 16) - int(pc, 16)
+    offset = hex(offset_dec)
+    operands[opn] = offset
+
+def process_ovpsim_sim_log(ovpsim_log, csv, full_trace = 1, stop = 0, 
+    dont_truncate_after_first_ecall = 0,
+    verbose2 = False):
   """Process OVPsim simulation log.
 
   Extract instruction and affected register information from ovpsim simulation
   log and save to a list.
   """
-  logging.info("Processing ovpsim log [%d]: %s" % (full_trace, ovpsim_log))
-  instr_cnt = 0
-  trace_instr = ""
-  trace_bin = ""
-  trace_addr = ""
+
+  stop_on_first_error = stop
+
+  logging.info("Processing ovpsim log [%s %s %s]: %s" %
+    ("full_trace" if full_trace else "", "stop_on_first_error" if stop else "",
+    "dont_truncate_after_first_ecall" if dont_truncate_after_first_ecall else
+        "", ovpsim_log))
 
   # Remove the header part of ovpsim log
   cmd = ("sed -i '/Info 1:/,$!d' %s" % ovpsim_log)
   os.system(cmd)
-  # Remove all instructions after ecall (end of program excecution)
-  cmd = ("sed -i '/ecall/q' %s" % ovpsim_log)
+  # Remove all instructions after end of trace data (end of program excecution)
+  if dont_truncate_after_first_ecall:
+    cmd = ("sed -i '/^Info --/q' %s" % ovpsim_log)
+    logging.info("Dont truncate logfile after first ecall: %s", ovpsim_log)
+  else:
+    cmd = ("sed -i '/ecall/q' %s" % ovpsim_log)
   os.system(cmd)
 
+  # storage and initial values of gpr and csr
+  
   gpr = {}
-
-  for g in REGS:
+  csr = {}
+  
+  for g in REGS: # base base isa gprs
     gpr[g] = 0
+  for i in range(32): # add in v0-v31 gprs
+  
+    gpr["v"+str(i)] = 0
 
+  csr["vl"]    = 0
+  csr["vtype"] = 0
+
+  instr_cnt = 0
   with open(ovpsim_log, "r") as f, open(csv, "w") as csv_fd:
     trace_csv = RiscvInstructionTraceCsv(csv_fd)
     trace_csv.start_new_trace()
     prev_trace = 0
+    logit = 0
     for line in f:
       # Extract instruction infromation
       m = re.search(r"riscvOVPsim.*, 0x(?P<addr>.*?)(?P<section>\(.*\): ?)" \
-                     "(?P<mode>[A-Za-z]*?)\s+(?P<bin>[a-f0-9]*?)\s+(?P<instr>.*?)$", line)
+            "(?P<mode>[A-Za-z]*?)\s+(?P<bin>[a-f0-9]*?)\s+(?P<instr_str>.*?)$",
+                line)
       if m:
-        if prev_trace: # if not yet written as it had no data following it
-            check_conversion(prev_trace, stop_on_first_error)
+        # its instruction disassembly line
+        if prev_trace: # write out the previous one when find next one
+            check_conversion(prev_trace)
+            instr_cnt += 1
             trace_csv.write_trace_entry(prev_trace)
+            if verbose2:
+                logging.debug("prev_trace:: "+str(prev_trace.__dict__))
+                logging.debug("csr       :: "+str(csr))
+                logging.debug("gpr       :: "+str(gpr))
+            if logit:
+                # fatal ("stop for now")
+                pass
             prev_trace = 0
-        trace_bin = m.group("bin")
-        trace_instr_str = m.group("instr")
-        trace_addr = m.group("addr")
-        trace_section = m.group("section")
-        trace_mode = convert_mode(m.group("mode"), line)
-        trace_instr = trace_instr_str.split(" ")[0]
-        instr_cnt += 1
         prev_trace = RiscvInstructionTraceEntry()
-        prev_trace.instr_str = trace_instr_str
-        prev_trace.binary = trace_bin
-        prev_trace.addr = trace_addr
-        prev_trace.privileged_mode = trace_mode
-        prev_trace.instr = trace_instr
+        prev_trace.instr_str = m.group("instr_str")
+        prev_trace.instr = prev_trace.instr_str.split(" ")[0]
+        prev_trace.binary = m.group("bin")
+        prev_trace.addr = m.group("addr")
+        prev_trace.section = m.group("section")
+        prev_trace.privileged_mode = convert_mode(m.group("mode"), line)
+        prev_trace.updated_csr = []
+        prev_trace.updated_gpr = []
 
-        if 0:
-            print ("line ::"+line)
-            print ("bin  ::"+trace_bin)
-            print ("instr::"+trace_instr_str)
-            print ("ins  ::"+trace_instr)
-            print ("addr ::"+trace_addr)
-            print ("sect ::"+trace_section)
-            print ("mode ::"+trace_mode)
-            sys.exit(-1)
+        #if prev_trace.instr in ["vsetvli"]:
+        #if prev_trace.instr in ["vlh.v"]:
+        #if prev_trace.instr in ["vmul.vx"]:
+        if prev_trace.instr in ["vmul.vx_XXX"]:
+            logit = 1
+            verbose2 = True
+
+        show_line_instr(line, prev_trace)
 
         if full_trace:
-            i = re.search (r"(?P<instr>[a-z]*?)\s", trace_instr_str)
-            if i:
-                trace_instr = i.group("instr")
-            prev_trace.instr = trace_instr
+            # TODO - when got full ins decode remove this
+            if  "fsriw" in line or \
+                "fsw" in line or \
+                "fsd" in line or \
+                "fnmsub.d" in line or \
+                "flw" in line:
+                    logging.debug ("Ignoring ins...(%s) " % (line))
+                    continue
             process_if_compressed(prev_trace)
-            o = re.search (r"(?P<instr>[a-z]*?)\s(?P<operand>.*)", trace_instr_str)
+            o = re.search (r"(?P<instr>[a-z]*?)\s(?P<operand>.*)",
+                prev_trace.instr_str)
             if o:
                 operand_str = o.group("operand").replace(" ", "")
                 operands = operand_str.split(",")
-                if (prev_trace.instr in ['jalr']):
+                if (prev_trace.instr in ['jalr', 'c.jalr']):
                   process_jalr(prev_trace, operands, gpr)
+                elif (prev_trace.instr in ['jal','c.jal']):
+                  process_jal(prev_trace, operands, gpr)
                 else:
-                  assign_operand(prev_trace, operands, gpr)
+                  if 'v' in prev_trace.instr[0]:
+                    assign_operand_vector(prev_trace, operands, gpr,
+                        stop_on_first_error)
+                  elif 'f' in prev_trace.instr[0] or "c.f" in prev_trace.instr[0:3]:
+                    pass # ignore floating point. TODO include them
+                  else:
+                    if prev_trace.instr in [
+                        'beq', 'bne', 'blt', 'bge', 'bltu', 'bgeu']:
+                            process_branch_offset (2, operands, prev_trace)
+                    elif prev_trace.instr in [
+                        'c.beqz', 'c.bnez', 'beqz', 'bnez', 'bgez',
+                             'bltz', 'blez', 'bgtz']:
+                        process_branch_offset (1, operands, prev_trace)
+                    assign_operand(prev_trace, operands, gpr,
+                        stop_on_first_error)
             else:
-                # print("no operand for [%s] in [%s]" % (trace_instr, trace_instr_str))
+                # logging.debug("no operand for [%s] in [%s]" % (trace_instr,
+                #   trace_instr_str))
                 pass
-        else:
-            trace_instr = ""
       else:
-        if 0:
-            print ("not ins line... [%s]" % (line))
-        # Extract register value information
-        n = re.search(r" (?P<rd>[a-z]{1,3}[0-9]{0,2}?) (?P<pre>[a-f0-9]+?)" \
+        # its a csr, gpr new value or report
+        if 0: logging.debug ("reg change... [%s]" % (line.strip()))
+        # Extract register change value information
+        c = re.search(r" (?P<r>[a-z]*[0-9]{0,2}?) (?P<pre>[a-f0-9]+?)" \
                        " -> (?P<val>[a-f0-9]+?)$", line)
-        if n:
-          # Write the extracted instruction to a csvcol buffer file
-          # print("%0s %0s = %0s" % (trace_instr_str, m.group("rd"), m.group("val")))
-          if n.group("rd") != "frm":
-            rv_instr_trace              = RiscvInstructionTraceEntry()
-            rv_instr_trace.rd           = n.group("rd")
-            rv_instr_trace.rd_val       = n.group("val")
-            rv_instr_trace.rs1          = prev_trace.rs1
-            rv_instr_trace.rs1_val      = prev_trace.rs1_val
-            rv_instr_trace.rs2          = prev_trace.rs2
-            rv_instr_trace.rs2_val      = prev_trace.rs2_val
-            rv_instr_trace.instr_str    = trace_instr_str
-            rv_instr_trace.instr        = prev_trace.instr
-            rv_instr_trace.binary       = trace_bin
-            rv_instr_trace.addr         = trace_addr
-            rv_instr_trace.privileged_mode = trace_mode
-            gpr[rv_instr_trace.rd]      = rv_instr_trace.rd_val
-            check_conversion(rv_instr_trace, stop_on_first_error)
-            trace_csv.write_trace_entry(rv_instr_trace)
-            prev_trace = 0 # we wrote out as it had data, so no need to write it next time round
+        if c and is_csr (c.group("r")):
+            csr[c.group("r")] = c.group("val")
+            if verbose2: logging.debug("c:csr %0s = %0s" %
+                (c.group("r"), c.group("val")))
+            csr[c.group("r")] = c.group("val")
+            # prev_trace.updated_csr.append(c.group("r"))
+            prev_trace.updated_csr.append([c.group("r"), c.group("val")])
+            continue
+        n = re.search(r" (?P<r>[a-z]{1,3}[0-9]{0,2}?) (?P<pre>[a-f0-9]+?)" \
+                       " -> (?P<val>[a-f0-9]+?)$", line)
+        if n: # gpr
+          if verbose2: logging.debug(("n:gpr %0s = %0s" %
+                (n.group("r"), n.group("val"))))
+          if n.group("r") != "frm":
+            # prev_trace.updated_gpr.append(n.group("r"))
+            prev_trace.updated_gpr.append([n.group("r"), n.group("val")])
+            if 'v' in prev_trace.instr[0]:
+                gpr[n.group("r")] = n.group("val")
+            else:
+                # backwards compatible
+                prev_trace.rd_val       = n.group("val")
+                gpr[prev_trace.rd]      = prev_trace.rd_val
             if 0:
-                print ("write entry [[%d]]: rd[%s] val[%s] instr(%s) bin(%s) addr(%s)"
+              print (
+                "write entry [[%d]]: rd[%s] val[%s] instr(%s) bin(%s) addr(%s)"
                     % (instr_cnt, rv_instr_trace.rd, rv_instr_trace.rd_val,
-                        trace_instr_str, trace_bin, trace_addr))
-                print (rv_instr_trace.__dict__)
-                sys.exit(-1)
+                        trace_instr_str, prev_trace.binary, prev_trace.addr))
+              print (rv_instr_trace.__dict__)
+              sys.exit(-1)
         else:
-            if 0:
-                print ("write previous entry: [%s] %s " % (str(instr_cnt), line))
-                sys.exit(-1)
-  logging.info("Processed instruction count : %d" % instr_cnt)
+            line = line.strip()
+            if verbose2: logging.debug("ignoring line: [%s] %s " %
+                (str(instr_cnt), line))
+            line = re.sub(' +', ' ', line)
+            split = line.split(" ")
+            if len(split) == 1: continue
+            item = split[1]
+            if "----" in item: continue
+            if "REPORT" in line or item in [ # TODO sort csrs
+                    "mtvec","pmpaddr0","pmpcfg0","mstatus","mepc","mscratch",
+                        "mcause","mtval","vl","vtype","sstatus"]:
+                logging.debug("Ignoring: [%d]  [[%s]]" % (instr_cnt, line))
+                pass
+            elif "Warning (RISCV_" in line:
+                logging.debug("Skipping: [%d] (%s) [[%s]]" % 
+                    (instr_cnt, prev_trace.instr_str, line))
+                prev_trace.instr = "nop"
+                prev_trace.instr_str = "nop"
+            else:
+                logging.debug("<unknown> (%s) in line: [%s] %s " %
+                        (item, str(instr_cnt), line))
+                if stop_on_first_error:
+                    fatal ("")
+  logging.info("Processed instruction count : %d " % instr_cnt)
   if instr_cnt == 0:
     logging.error ("No Instructions in logfile: %s" % ovpsim_log)
     sys.exit(-1)
   logging.info("CSV saved to : %s" % csv)
 
-
 def main():
+  """ if used standalone set up for testing """
   instr_trace = []
   # Parse input arguments
   parser = argparse.ArgumentParser()
   parser.add_argument("--log", type=str, help="Input ovpsim simulation log")
   parser.add_argument("--csv", type=str, help="Output trace csv_buf file")
-  parser.add_argument("-f", "--full_trace", dest="full_trace", action="store_true",
+  parser.add_argument("--full_trace", dest="full_trace",
+                                         action="store_true",
                                          help="Generate the full trace")
-  parser.add_argument("-v", "--verbose", dest="verbose", action="store_true",
+  parser.add_argument("--verbose", dest="verbose", action="store_true",
                                          help="Verbose logging")
+  parser.add_argument("--verbose2", dest="verbose2", action="store_true",
+                                         help="Verbose logging detail 2")
+  parser.add_argument("--stop_on_first_error", dest="stop_on_first_error",
+                                         action="store_true",
+                                         help="Stop on first error")
+  parser.add_argument("--dont_truncate_after_first_ecall",
+                                         dest="dont_truncate_after_first_ecall",
+                                         action="store_true",
+                    help="Dont truncate on first ecall")
   parser.set_defaults(full_trace=False)
   parser.set_defaults(verbose=False)
+  parser.set_defaults(verbose2=False)
+  parser.set_defaults(stop_on_first_error=False)
+  parser.set_defaults(dont_truncate_after_first_ecall=False)
   args = parser.parse_args()
   setup_logging(args.verbose)
+  logging.debug("Logging Debug set")
   # Process ovpsim log
-  process_ovpsim_sim_log(args.log, args.csv, args.full_trace)
+  process_ovpsim_sim_log(args.log, args.csv, args.full_trace,
+    args.stop_on_first_error, args.dont_truncate_after_first_ecall,
+    args.verbose2)
 
 
 if __name__ == "__main__":

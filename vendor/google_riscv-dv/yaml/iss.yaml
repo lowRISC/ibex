@@ -32,3 +32,8 @@
   path_var: SAIL_RISCV
   cmd: >
     <path_var> <elf>
+
+- iss: whisper
+  path_var: WHISPER_ISS
+  cmd: >
+    <path_var> <elf> --log --xlen <xlen> --isa <variant>

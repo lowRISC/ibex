@@ -1,6 +1,6 @@
 *.ini
 *.bin
-out_*/
+*out_*/
 work/
 *.pyc
 /.cproject

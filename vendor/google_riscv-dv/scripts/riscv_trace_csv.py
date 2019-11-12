@@ -19,6 +19,7 @@ Class for RISC-V instruction trace CSV
 import csv
 import re
 import logging
+import sys
 
 class RiscvInstructionTraceEntry(object):
   """RISC-V instruction trace entry"""
@@ -37,6 +38,20 @@ class RiscvInstructionTraceEntry(object):
     self.instr = ""
     self.privileged_mode = ""
     self.csr = ""
+    self.vd = ""
+    self.vd_val = ""
+    self.vs1 = ""
+    self.vs1_val = ""
+    self.vs2 = ""
+    self.vs2_val = ""
+    self.vs3 = ""
+    self.vs3_val = ""
+    self.vtype_e = ""
+    self.vtype_m = ""
+    self.vtype_d = ""
+    self.vm = ""
+    self.updated_csr = ""
+    self.updated_gpr = ""
 
   def get_trace_string(self):
     """Return a short string of the trace entry"""
@@ -56,8 +71,11 @@ class RiscvInstructionTraceCsv(object):
 
   def start_new_trace(self):
     """Create a CSV file handle for a new trace"""
-    fields = ["instr", "rd", "rd_val", "rs1", "rs1_val", "rs2", "rs2_val",
-              "imm", "str", "addr", "binary", "csr", "mode"]
+    fields = [
+        "instr", "rd", "rd_val", "rs1", "rs1_val", "rs2", "rs2_val",
+        "imm", "str", "addr", "binary", "csr", "mode",
+        "vd", "vd_val", "vs1", "vs1_val","vs2", "vs2_val","vs3", "vs3_val",
+        "vtype_e", "vtype_m", "vtype_d", "vm", "updated_csr", "updated_gpr"]
     self.csv_writer = csv.DictWriter(self.csv_fd, fieldnames=fields)
     self.csv_writer.writeheader()
 
@@ -78,18 +96,34 @@ class RiscvInstructionTraceCsv(object):
   def write_trace_entry(self, entry):
     """Write a new trace entry to CSV"""
     self.gpr[entry.rd] = entry.rd_val
-    self.csv_writer.writerow({'str'     : entry.instr_str,
-                              'rd'      : entry.rd,
-                              'rd_val'  : entry.rd_val,
-                              'rs1'     : entry.rs1,
-                              'rs1_val' : entry.rs1_val,
-                              'rs2'     : entry.rs2,
-                              'rs2_val' : entry.rs2_val,
-                              'addr'    : entry.addr,
-                              'instr'   : entry.instr,
-                              'imm'     : entry.imm,
-                              'csr'     : entry.csr,
-                              'binary'  : entry.binary})
+    self.csv_writer.writerow({'str'        : entry.instr_str,
+                              'rd'         : entry.rd,
+                              'rd_val'     : entry.rd_val,
+                              'rs1'        : entry.rs1,
+                              'rs1_val'    : entry.rs1_val,
+                              'rs2'        : entry.rs2,
+                              'rs2_val'    : entry.rs2_val,
+                              'addr'       : entry.addr,
+                              'instr'      : entry.instr,
+                              'imm'        : entry.imm,
+                              'csr'        : entry.csr,
+                              'binary'     : entry.binary,
+                              'mode'       : entry.privileged_mode,
+                              'vd'         : entry.vd,
+                              'vd_val'     : entry.vd_val,
+                              'vs1'        : entry.vs1,
+                              'vs1_val'    : entry.vs1_val,
+                              'vs2'        : entry.vs2,
+                              'vs2_val'    : entry.vs2_val,
+                              'vs3'        : entry.vs3,
+                              'vs3_val'    : entry.vs3_val,
+                              'vtype_e'    : entry.vtype_e,
+                              'vtype_m'    : entry.vtype_m,
+                              'vtype_d'    : entry.vtype_d,
+                              'vm'         : entry.vm,
+                              'updated_csr': entry.updated_csr,
+                              'updated_gpr': entry.updated_gpr,
+                })
 
 
 def gpr_to_abi(gpr):
@@ -185,7 +219,7 @@ def get_imm_hex_val(imm):
 
 ADDR_RE  = re.compile(r"(?P<imm>[\-0-9]+?)\((?P<rs1>.*)\)")
 
-def assign_operand(trace, operands, gpr):
+def assign_operand(trace, operands, gpr, stop_on_first_error = 0):
   """Assign the operand value of the instruction trace"""
   if trace.instr in ['lb', 'lh', 'lw', 'lbu', 'lhu', 'ld', 'lq', 'lwu', 'ldu',
                      'c.lw', 'c.ld', 'c.lq', 'c.lwsp', 'c.ldsp', 'c.lqsp']:
@@ -213,11 +247,12 @@ def assign_operand(trace, operands, gpr):
       trace.rs1_val = gpr[trace.rs1]
     else:
       logging.info("Unexpected store address %0s", operands[1])
-  elif trace.instr in ['mul', 'mulh', 'mulhsu', 'mulhu', 'div', 'divu', 'rem', 'remu',
-                       'mulw', 'muld', 'divw', 'divuw', 'divd', 'remw', 'remd', 'remuw',
-                       'remud', 'sll', 'srl', 'sra', 'add', 'sub', 'xor', 'or', 'and',
-                       'slt', 'sltu', 'sllw', 'slld', 'srlw', 'srld', 'sraw', 'srad',
-                       'addw', 'addd', 'subw', 'subd']:
+  elif trace.instr in [
+        'mul', 'mulh', 'mulhsu', 'mulhu', 'div', 'divu', 'rem', 'remu',
+        'mulw', 'muld', 'divw', 'divuw', 'divd', 'remw', 'remd', 'remuw',
+        'remud', 'sll', 'srl', 'sra', 'add', 'sub', 'xor', 'or', 'and',
+        'slt', 'sltu', 'sllw', 'slld', 'srlw', 'srld', 'sraw', 'srad',
+        'addw', 'addd', 'subw', 'subd']:
     # R type instruction
     trace.rd = operands[0]
     trace.rd_val = gpr[trace.rd]
@@ -225,7 +260,8 @@ def assign_operand(trace, operands, gpr):
     trace.rs1_val = gpr[trace.rs1]
     trace.rs2 = operands[2]
     trace.rs2_val = gpr[trace.rs2]
-  elif trace.instr in ['c.add', 'c.addw', 'c.mv', 'c.sub', 'c.and', 'c.or', 'c.xor', 'c.subw']:
+  elif trace.instr in [
+        'c.add', 'c.addw', 'c.mv', 'c.sub', 'c.and', 'c.or', 'c.xor', 'c.subw']:
     # CR type
     trace.rd = operands[0]
     trace.rd_val = gpr[trace.rd]
@@ -245,9 +281,10 @@ def assign_operand(trace, operands, gpr):
     trace.rs1_val = gpr[trace.rs1]
     trace.rs2 = 'zero'
     trace.rs2_val = '0'
-  elif trace.instr in ['slli', 'srli', 'srai', 'addi', 'xori', 'ori', 'andi', 'slti',
-                       'sltiu', 'slliw', 'sllid', 'srliw', 'srlid', 'sraiw', 'sraid',
-                       'addiw', 'addid']:
+  elif trace.instr in [
+        'slli', 'srli', 'srai', 'addi', 'xori', 'ori', 'andi', 'slti',
+        'sltiu', 'slliw', 'sllid', 'srliw', 'srlid', 'sraiw', 'sraid',
+         'addiw', 'addid']:
     # I type instruction
     trace.rd = operands[0]
     trace.rd_val = gpr[trace.rd]
@@ -291,8 +328,9 @@ def assign_operand(trace, operands, gpr):
     trace.rd_val = gpr[trace.rd]
     trace.csr = operands[1]
     trace.imm = get_imm_hex_val(operands[2])
-  elif trace.instr in ['scall', 'sbreak', 'fence', 'fence.i', 'ecall', 'ebreak', 'wfi',
-                       'sfence.vma', 'c.ebreak', 'nop', 'c.nop']:
+  elif trace.instr in [
+        'scall', 'sbreak', 'fence', 'fence.i', 'ecall', 'ebreak', 'wfi',
+        'sfence.vma', 'c.ebreak', 'nop', 'c.nop']:
     trace.rd  = 'zero'
     trace.rs1 = 'zero'
     trace.rs2 = 'zero'
@@ -318,8 +356,13 @@ def assign_operand(trace, operands, gpr):
       trace.rs1 = operands[1]
       trace.rs1_val = gpr[trace.rs1]
       trace.imm = get_imm_hex_val(operands[2])
-  elif trace.instr in ['c.j', 'c.jal']:
+  elif trace.instr in ['c.j']:
     trace.imm = get_imm_hex_val(operands[0])
+  elif trace.instr in ['c.jal']:
+    if len(operands) == 1:
+      trace.imm = get_imm_hex_val(operands[0])
+    else:
+      trace.imm = get_imm_hex_val(operands[1])
   # Pseudo instruction convertion below
   elif trace.instr in ['mv']:
     trace.instr = 'addi'
@@ -449,5 +492,7 @@ def assign_operand(trace, operands, gpr):
     pass
   else:
     # TODO: Support other instructions
-    logging.info("Unsupported instr : %s" % trace.instr)
-
+    logging.debug("Unsupported instr : %s (%s)" %
+                  (trace.instr, trace.instr_str))
+    if stop_on_first_error:
+        sys.exit(-1)

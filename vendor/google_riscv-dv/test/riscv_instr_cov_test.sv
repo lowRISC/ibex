@@ -36,6 +36,8 @@ class riscv_instr_cov_test extends uvm_test;
       i++;
     end
     cfg = riscv_instr_gen_config::type_id::create("cfg");
+    // disable_compressed_instr is not relevant to coverage test
+    cfg.disable_compressed_instr = 0;
     cfg.build_instruction_template(.skip_instr_exclusion(1));
     instr = riscv_instr_cov_item::type_id::create("instr");
     instr.rand_mode(0);

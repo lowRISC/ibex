@@ -172,3 +172,21 @@ def process_regression_list(testlist, test, iterations, matched_list):
         logging.info("Found matched tests: %s, iterations:%0d" %
                     (entry['test'], entry['iterations']))
         matched_list.append(entry)
+
+def check_simulator_return(output, simulator, stop_on_first_error):
+    """
+    tests simulator output for errors and terminates run if found
+    ONLY works when verbose is on (as output not returned otherwise)
+    TODO add other simulators
+    """
+
+    if not stop_on_first_error: return
+
+    if "questa" in simulator:
+      for line in output.splitlines():
+        if "Errors: " in line:
+          if not "Errors: 0" in line:
+            logging.fatal (
+              "check_simulator_return (%s): TERMINATING as got errors: [%s]" %
+                (simulator, line))
+            sys.exit(-1)
