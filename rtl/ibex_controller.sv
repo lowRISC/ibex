@@ -450,27 +450,25 @@ module ibex_controller (
         //
         // for 1. do not update dcsr and dpc, for 2. do so [Debug Spec v0.13.2, p.39]
         // jump to debug exception handler in debug memory
-        if (ebrk_insn) begin
-          flush_id     = 1'b1;
-          pc_mux_o     = PC_EXC;
-          pc_set_o     = 1'b1;
-          exc_pc_mux_o = EXC_PC_DBD;
+        flush_id     = 1'b1;
+        pc_mux_o     = PC_EXC;
+        pc_set_o     = 1'b1;
+        exc_pc_mux_o = EXC_PC_DBD;
 
-          // update dcsr and dpc
-          if (ebreak_into_debug && !debug_mode_q) begin // ebreak with forced entry
+        // update dcsr and dpc
+        if (ebreak_into_debug && !debug_mode_q) begin // ebreak with forced entry
 
-            // dpc (set to the address of the EBREAK, i.e. set to PC in ID stage)
-            csr_save_cause_o = 1'b1;
-            csr_save_id_o    = 1'b1;
+          // dpc (set to the address of the EBREAK, i.e. set to PC in ID stage)
+          csr_save_cause_o = 1'b1;
+          csr_save_id_o    = 1'b1;
 
-            // dcsr
-            debug_csr_save_o = 1'b1;
-            debug_cause_o    = DBG_CAUSE_EBREAK;
-          end
-
-          // enter debug mode
-          debug_mode_d = 1'b1;
+          // dcsr
+          debug_csr_save_o = 1'b1;
+          debug_cause_o    = DBG_CAUSE_EBREAK;
         end
+
+        // enter debug mode
+        debug_mode_d = 1'b1;
 
         ctrl_fsm_ns  = DECODE;
       end
