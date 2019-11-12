@@ -459,12 +459,8 @@ module ibex_cs_registers #(
           dcsr_d.zero2 = 12'h0;
         end
 
-        CSR_DPC: begin
-          // Only valid PC addresses are allowed (half-word aligned with C ext.)
-          if (csr_wdata_int[0] == 1'b0) begin
-            depc_d = csr_wdata_int;
-          end
-        end
+        // dpc: debug program counter
+        CSR_DPC: depc_d = {csr_wdata_int[31:1], 1'b0};
 
         CSR_DSCRATCH0: dscratch0_d = csr_wdata_int;
         CSR_DSCRATCH1: dscratch1_d = csr_wdata_int;
