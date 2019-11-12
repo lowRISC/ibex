@@ -146,6 +146,7 @@ fcov:
           --core ibex \
           --dir ${OUT}/rtl_sim \
           -o ${OUT}/fcov \
+          --isa rv32imc \
           --custom_target ${DV_DIR}/riscv_dv_extension \
 
 # Load verdi to review coverage
