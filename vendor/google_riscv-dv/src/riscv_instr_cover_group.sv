@@ -857,14 +857,12 @@ class riscv_instr_cover_group;
     // instr_trans_cg = new();
     branch_hit_history_cg = new();
     rv32i_misc_cg = new();
-    if (!cfg.disable_compressed_instr) begin
-      illegal_compressed_instr_cg = new();
-    end
-    opcode_cg = new();
     if (RV32C inside {supported_isa}) begin
+      illegal_compressed_instr_cg = new();
       compressed_opcode_cg = new();
       hint_cg = new();
     end
+    opcode_cg = new();
     if (RV32M inside {supported_isa}) begin
       mul_cg = new();
       mulh_cg = new();
@@ -940,7 +938,7 @@ class riscv_instr_cover_group;
     privileged_csr_cg = new();
     mcause_exception_cg = new();
     mcause_interrupt_cg = new();
-    if (!cfg.disable_compressed_instr) begin
+    if (RV32C inside {supported_isa}) begin
       mepc_alignment_cg = new();
     end
     mstatus_m_cg = new();
@@ -1075,7 +1073,7 @@ class riscv_instr_cover_group;
       C_ADDW     : c_addw_cg.sample(instr);
       C_ADDIW    : c_addiw_cg.sample(instr);
       default: begin
-        if (!cfg.disable_compressed_instr) begin
+        if (RV32C inside {supported_isa}) begin
           illegal_compressed_instr_cg.sample(instr.binary);
         end
         if (instr.group == RV32I) begin
@@ -1107,7 +1105,7 @@ class riscv_instr_cover_group;
           end
         end
         MEPC: begin
-          if (!cfg.disable_compressed_instr) begin
+          if (RV32C inside {supported_isa}) begin
             mepc_alignment_cg.sample(instr.rd_value);
           end
         end

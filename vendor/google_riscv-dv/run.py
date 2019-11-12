@@ -27,6 +27,7 @@ from datetime import date
 from scripts.lib import *
 from scripts.spike_log_to_trace_csv import *
 from scripts.ovpsim_log_to_trace_csv import *
+from scripts.whisper_log_trace_csv import *
 from scripts.sail_log_to_trace_csv import *
 from scripts.instr_trace_compare import *
 
@@ -95,6 +96,16 @@ def parse_iss_yaml(iss, iss_yaml, isa, setting_dir):
       cmd = re.sub("\<path_var\>", get_env_var(entry['path_var']), cmd)
       if iss == "ovpsim":
         cmd = re.sub("\<cfg_path\>", setting_dir, cmd)
+      elif iss == "whisper":
+        m = re.search(r"rv(?P<xlen>[0-9]+?)(?P<variant>[a-z]+?)$", isa)
+        if m:
+          # TODO: Support u/s mode
+          cmd = re.sub("\<xlen\>", m.group('xlen'), cmd)
+          variant = re.sub('g', 'imafd',  m.group('variant'))
+          cmd = re.sub("\<variant\>", variant, cmd)
+        else:
+          logging.error("Illegal ISA %0s" % isa)
+        cmd = re.sub("\<xlen\>", setting_dir, cmd)
       else:
         cmd = re.sub("\<variant\>", isa, cmd)
       return cmd
@@ -121,7 +132,7 @@ def get_iss_cmd(base_cmd, elf, log):
 def gen(test_list, csr_file, end_signature_addr, isa, simulator,
         simulator_yaml, output_dir, sim_only, compile_only, lsf_cmd, seed,
         cwd, cmp_opts, sim_opts, timeout_s, core_setting_dir, ext_dir, cov,
-        log_suffix, batch_size, seed_yaml):
+        log_suffix, batch_size, seed_yaml, stop_on_first_error, verbose=False):
   """Run the instruction generator
 
   Args:
@@ -145,6 +156,7 @@ def gen(test_list, csr_file, end_signature_addr, isa, simulator,
     log_suffix            : Simulation log file name suffix
     batch_size            : Number of tests to generate per run
     seed_yaml             : Seed specification from a prior regression
+    stop_on_first_error   : will end run on first error detected
   """
   # Mutually exclusive options between compile_only and sim_only
   if compile_only and sim_only:
@@ -170,7 +182,9 @@ def gen(test_list, csr_file, end_signature_addr, isa, simulator,
         cmd = re.sub("<cmp_opts>", cmp_opts, cmd)
 
         logging.debug("Compile command: %s" % cmd)
-        logging.debug(run_cmd(cmd))
+        output = run_cmd(cmd)
+        logging.debug(output)
+        check_simulator_return(output, simulator, stop_on_first_error)
   # Run the instruction generator
   if not compile_only:
     cmd_list = []
@@ -201,7 +215,8 @@ def gen(test_list, csr_file, end_signature_addr, isa, simulator,
           if lsf_cmd:
             cmd_list.append(cmd)
           else:
-            run_cmd(cmd, timeout_s)
+            output = run_cmd(cmd, timeout_s)
+            check_simulator_return(output, simulator, stop_on_first_error)
         else:
           if batch_size > 0:
             batch_cnt = int((iterations + batch_size - 1)  / batch_size);
@@ -224,6 +239,8 @@ def gen(test_list, csr_file, end_signature_addr, isa, simulator,
                   (" +start_idx=%d " % (i*batch_size)) + \
                   (" +asm_file_name=%s/asm_tests/%s " % (output_dir, test['test'])) + \
                   (" -l %s/sim_%s_%d%s.log " % (output_dir, test['test'], i, log_suffix))
+            if verbose:
+              cmd += "+UVM_VERBOSITY=UVM_HIGH "
             cmd = re.sub("<seed>", str(rand_seed), cmd)
             sim_seed[test_id] = str(rand_seed)
             if "gen_opts" in test:
@@ -235,7 +252,8 @@ def gen(test_list, csr_file, end_signature_addr, isa, simulator,
             else:
               logging.info("Running %s, batch %0d/%0d, test_cnt:%0d" %
                            (test['test'], i+1, batch_cnt, test_cnt))
-              run_cmd(cmd, timeout_s)
+              output = run_cmd(cmd, timeout_s)
+              check_simulator_return(output, simulator, stop_on_first_error)
     if sim_seed:
       with open(('%s/seed.yaml' % os.path.abspath(output_dir)) , 'w') as outfile:
         yaml.dump(sim_seed, outfile, default_flow_style=False)
@@ -362,7 +380,7 @@ def iss_sim(test_list, output_dir, iss_list, iss_yaml, isa, setting_dir, timeout
           logging.debug(cmd)
 
 
-def iss_cmp(test_list, iss, output_dir, isa):
+def iss_cmp(test_list, iss, output_dir, isa, stop_on_first_error):
   """Compare ISS simulation reult
 
   Args:
@@ -370,6 +388,7 @@ def iss_cmp(test_list, iss, output_dir, isa):
     iss            : List of instruction set simulators
     output_dir     : Output directory of the ELF files
     isa            : ISA
+    stop_on_first_error : will end run on first error detected
   """
   iss_list = iss.split(",")
   if len(iss_list) != 2:
@@ -390,9 +409,11 @@ def iss_cmp(test_list, iss, output_dir, isa):
         if iss == "spike":
           process_spike_sim_log(log, csv)
         elif iss == "ovpsim":
-          process_ovpsim_sim_log(log, csv)
+          process_ovpsim_sim_log(log, csv, 1, stop_on_first_error)
         elif iss == "sail":
           process_sail_sim_log(log, csv)
+        elif iss == "whisper":
+          process_whisper_sim_log(log, csv)
         else:
           logging.error("Unsupported ISS" % iss)
           sys.exit(1)
@@ -413,7 +434,7 @@ def setup_parser():
   # Parse input arguments
   parser = argparse.ArgumentParser()
 
-  parser.add_argument("--target", type=str, default="rv64imc",
+  parser.add_argument("--target", type=str, default="rv32imc",
                       help="Run the generator with pre-defined targets: \
                             rv32imc, rv32i, rv64imc, rv64gc")
   parser.add_argument("-o", "--output", type=str,
@@ -481,10 +502,13 @@ def setup_parser():
   parser.add_argument("-bz", "--batch_size", type=int, default=0,
                       help="Number of tests to generate per run. You can split a big"
                            " job to small batches with this option")
+  parser.add_argument("--stop_on_first_error", dest="stop_on_first_error", action="store_true",
+                      help="Stop on detecting first error")
   parser.set_defaults(co=False)
   parser.set_defaults(so=False)
   parser.set_defaults(verbose=False)
   parser.set_defaults(cov=False)
+  parser.set_defaults(stop_on_first_error=False)
   return parser
 
 
@@ -526,14 +550,18 @@ def main():
     elif args.target == "rv64imc":
       args.mabi = "lp64"
       args.isa  = "rv64imc"
+    elif args.target == "rv64gc":
+      args.mabi = "lp64"
+      args.isa  = "rv64gc"
     elif args.target == "ml":
       args.mabi = "lp64"
       args.isa  = "rv64imc"
     else:
       print ("Unsupported pre-defined target: %0s" % args.target)
   else:
-    if (not args.mabi) or (not args.isa):
-      sys.exit("mabi and isa must be specified for custom target %0s" % args.custom_target)
+    if re.match(".*gcc_compile.*", args.steps) or re.match(".*iss_sim.*", args.steps):
+      if (not args.mabi) or (not args.isa):
+        sys.exit("mabi and isa must be specified for custom target %0s" % args.custom_target)
     if not args.testlist:
       args.testlist = args.custom_target + "/testlist.yaml"
 
@@ -565,7 +593,7 @@ def main():
         args.co, args.lsf_cmd, args.seed, cwd, args.cmp_opts,
         args.sim_opts, args.gen_timeout, args.core_setting_dir,
         args.user_extension_dir, args.cov, args.log_suffix, args.batch_size,
-        args.seed_yaml)
+        args.seed_yaml, args.stop_on_first_error, args.verbose)
 
   if not args.co:
     # Compile the assembly program to ELF, convert to plain binary
@@ -579,7 +607,7 @@ def main():
 
     # Compare ISS simulation result
     if args.steps == "all" or re.match(".*iss_cmp.*", args.steps):
-      iss_cmp(matched_list, args.iss, output_dir, args.isa)
+      iss_cmp(matched_list, args.iss, output_dir, args.isa, args.stop_on_first_error)
 
 if __name__ == "__main__":
   main()
