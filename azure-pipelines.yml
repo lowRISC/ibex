@@ -123,7 +123,7 @@ jobs:
           # There's no easy way to get the test results in machine-readable
           # form to properly exclude known-failing tests. Going with an
           # approximate solution for now.
-          if [ $isa == rv32i ] && grep -q 'FAIL: 5/55' run.log; then
+          if [ $isa == rv32i ] && grep -q 'FAIL: 4/48' run.log; then
             echo -n "##vso[task.logissue type=error]"
             echo "Expected failure for rv32i, see lowrisc/ibex#100 more more information."
           else
