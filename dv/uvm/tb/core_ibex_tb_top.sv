@@ -97,6 +97,7 @@ module core_ibex_tb_top;
   assign dut_if.mret            = dut.u_ibex_core.id_stage_i.mret_insn_dec;
   assign dut_if.core_sleep      = dut.u_ibex_core.core_sleep_o;
   assign dut_if.reset           = ~rst_n;
+  assign dut_if.priv_mode       = dut.u_ibex_core.priv_mode_id;
   // CSR interface connections
   assign csr_if.csr_access      = dut.u_ibex_core.csr_access;
   assign csr_if.csr_addr        = dut.u_ibex_core.csr_addr;

@@ -46,6 +46,10 @@ export PRJ_DIR:= $(realpath ${DV_DIR}/../../..)
 
 all: clean gen gcc_compile iss_sim compile rtl_sim post_compare
 
+instr: gen gcc_compile iss_sim
+
+sim: compile rtl_sim post_compare
+
 clean:
 	rm -rf ${OUT}
 
