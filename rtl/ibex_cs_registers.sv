@@ -75,6 +75,7 @@ module ibex_cs_registers #(
     input  logic                 csr_save_if_i,
     input  logic                 csr_save_id_i,
     input  logic                 csr_restore_mret_i,
+    input  logic                 csr_restore_dret_i,
     input  logic                 csr_save_cause_i,
     input  ibex_pkg::exc_cause_e csr_mcause_i,
     input  logic [31:0]          csr_mtval_i,
@@ -516,6 +517,9 @@ module ibex_cs_registers #(
           default:;
         endcase
 
+        // Any exception, including debug mode, causes a switch to M-mode
+        priv_lvl_d = PRIV_LVL_M;
+
         if (debug_csr_save_i) begin
           // all interrupts are masked
           // do not update cause, epc, tval, epc and status
@@ -523,7 +527,6 @@ module ibex_cs_registers #(
           dcsr_d.cause = debug_cause_i;
           depc_d       = exception_pc;
         end else begin
-          priv_lvl_d     = PRIV_LVL_M;
           mtval_d        = csr_mtval_i;
           mstatus_d.mie  = 1'b0; // disable interrupts
           // save current status
@@ -538,6 +541,10 @@ module ibex_cs_registers #(
           mstack_cause_d = mcause_q;
         end
       end // csr_save_cause_i
+
+      csr_restore_dret_i: begin // DRET
+        priv_lvl_d = dcsr_q.prv;
+      end // csr_restore_dret_i
 
       csr_restore_mret_i: begin // MRET
         priv_lvl_d     = mstatus_q.mpp;
