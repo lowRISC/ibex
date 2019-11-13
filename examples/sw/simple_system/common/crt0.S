@@ -69,7 +69,7 @@ main_entry:
   jal x1, main
 
   /* Halt simulation */
-  la x5, SIM_CTRL_BASE + SIM_CTRL_CTRL
+  li x5, SIM_CTRL_BASE + SIM_CTRL_CTRL
   li x6, 1
   sw x6, 0(x5)
 
