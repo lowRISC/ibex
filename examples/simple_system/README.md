@@ -94,14 +94,9 @@ The simulator produces several output files
 
 ## System Memory Map
 
-+---------------------|-----------------------------------------------------------------------------+
-| Address             | Description                                                                 |
-+=====================|=============================================================================+
-| 0x20000             | ASCII Out, write ASCII characters here that will get output to the log file |
-+---------------------|-----------------------------------------------------------------------------+
-| 0x20004             | Simulator Halt, write 1 here to halt the simulation                         |
-+---------------------|-----------------------------------------------------------------------------+
-| 0x100000 - 0x1FFFFF | 1 MB memory for instruction and data. Execution starts at 0x100080,         |
-|                     | exception handler base is 0x100000                                          |
-+---------------------|-----------------------------------------------------------------------------+
+| Address             | Description                                                                                            |
+|---------------------|--------------------------------------------------------------------------------------------------------|
+| 0x20000             | ASCII Out, write ASCII characters here that will get output to the log file                            |
+| 0x20004             | Simulator Halt, write 1 here to halt the simulation                                                    |
+| 0x100000 – 0x1FFFFF | 1 MB memory for instruction and data. Execution starts at 0x100080, exception handler base is 0x100000 |
 
