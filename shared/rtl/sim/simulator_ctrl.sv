@@ -36,6 +36,7 @@ module simulator_ctrl #(
   localparam SIM_CTRL_ADDR = 1;
 
   logic [7:0] ctrl_addr;
+  logic [2:0] sim_finish;
 
   integer log_fd;
 
@@ -52,6 +53,7 @@ module simulator_ctrl #(
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (~rst_ni) begin
       rvalid_o <= 0;
+      sim_finish <= 'b0;
     end else begin
       // Immeditely respond to any request
       rvalid_o <= req_i;
@@ -68,9 +70,9 @@ module simulator_ctrl #(
             end
           end
           SIM_CTRL_ADDR: begin
-            if (be_i[0] & wdata_i[0]) begin
+            if ((be_i[0] & wdata_i[0]) && (sim_finish == 'b0)) begin
               $display("Terminating simulation by software request.");
-              $finish;
+              sim_finish <= 3'b001;
             end
           end
         endcase
@@ -78,6 +80,14 @@ module simulator_ctrl #(
     end
   end
 
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (sim_finish != 'b0) begin
+      sim_finish <= sim_finish + 1;
+    end
+    if (sim_finish >= 3'b010) begin
+      $finish;
+    end
+  end
   assign rdata_o = '0;
 endmodule
 
