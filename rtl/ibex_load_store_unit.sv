@@ -483,25 +483,25 @@ module ibex_load_store_unit (
   ////////////////
 
 `ifndef VERILATOR
-  // there should not be an rvalid unless the FSM is handlling it
-  assert property (
-    @(posedge clk_i) (data_rvalid_i) |-> ((ls_fsm_cs == WAIT_RVALID) ||
-        (ls_fsm_cs == WAIT_RVALID_MIS) || (ls_fsm_cs == WAIT_RVALID_DONE)) ) else
-      $display("Data response valid received without expecting it");
+  // there must not be an rvalid unless the FSM is handlling it
+  assert property (@(posedge clk_i) disable iff (!rst_ni)
+      (data_rvalid_i) |-> ((ls_fsm_cs == WAIT_RVALID) ||
+      (ls_fsm_cs == WAIT_RVALID_MIS) || (ls_fsm_cs == WAIT_RVALID_DONE))) else
+    $display("Data response valid received without expecting it");
 
-  // assert that errors are only sent at the same time as rvalid
-  assert property (
-    @(posedge clk_i) (data_err_i) |-> (data_rvalid_i) ) else
-      $display("Data error not sent with rvalid");
+  // errors must only be sent together with rvalid
+  assert property (@(posedge clk_i) disable iff (!rst_ni)
+      (data_err_i) |-> (data_rvalid_i)) else
+    $display("Data error not sent with rvalid");
 
-  // assert that the address does not contain X when request is sent
-  assert property (
-    @(posedge clk_i) (data_req_o) |-> (!$isunknown(data_addr_o)) ) else
-      $display("Data address not valid");
+  // address must not contain X when request is sent
+  assert property (@(posedge clk_i) disable iff (!rst_ni)
+      (data_req_o) |-> (!$isunknown(data_addr_o))) else
+    $display("Data address not valid");
 
-  // assert that the address is word aligned when request is sent
-  assert property (
-    @(posedge clk_i) (data_req_o) |-> (data_addr_o[1:0] == 2'b00) ) else
-      $display("Data address not word aligned");
+  // address must be word aligned when request is sent
+  assert property (@(posedge clk_i) disable iff (!rst_ni)
+      (data_req_o) |-> (data_addr_o[1:0] == 2'b00)) else
+    $display("Data address not word aligned");
 `endif
 endmodule
