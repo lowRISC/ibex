@@ -88,9 +88,9 @@ Parameters
 +------------------------------+-------------+------------+-----------------------------------------------------------------+
 | ``MultiplierImplementation`` | string      | "fast"     | Multiplicator type, "slow", or "fast"                           |
 +------------------------------+-------------+------------+-----------------------------------------------------------------+
-| ``DmHaltAddr``               | int         | 0x1A110800 | Address to jump to when entering debug mode                     |
+| ``DmHaltAddr``               | int         | 0x1A110800 | Address to jump to when entering Debug Mode                     |
 +------------------------------+-------------+------------+-----------------------------------------------------------------+
-| ``DmExceptionAddr``          | int         | 0x1A110808 | Address to jump to when an exception occurs while in debug mode |
+| ``DmExceptionAddr``          | int         | 0x1A110808 | Address to jump to when an exception occurs while in Debug Mode |
 +------------------------------+-------------+------------+-----------------------------------------------------------------+
 
 Interfaces

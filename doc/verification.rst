@@ -68,7 +68,7 @@ Testplan
 
 The goal of this bench is to fully verify the Ibex core with 100%
 coverage. This includes testing all RV32IMC instructions, privileged
-spec compliance, exception and interrupt testing, debug mode operation etc.
+spec compliance, exception and interrupt testing, Debug Mode operation etc.
 The complete test list can be found in the file `dv/uvm/riscv_dv_extension/testlist.yaml
 <https://github.com/lowRISC/ibex/blob/master/dv/uvm/riscv_dv_extension/testlist.yaml>`_.
 
@@ -103,7 +103,7 @@ However, this checking model quickly falls apart once situations involving exter
 as interrupts and debug requests) start being tested, as while ISS models can simulate traps due to
 exceptions, they cannot model traps due to external stimulus.
 In order to provide support for these sorts of scenarios to verify if the core has entered the
-proper interrupt handler, entered debug mode properly, updated any CSRs correctly, and so on, the
+proper interrupt handler, entered Debug Mode properly, updated any CSRs correctly, and so on, the
 handshaking mechanism provided by the RISCV-DV instruction generator is heavily used, which
 effectively allows the core to send status information to the testbench during program execution for
 any analysis that is required to increase verification effectiveness.
