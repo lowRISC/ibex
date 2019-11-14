@@ -70,6 +70,7 @@ module tb_cs_registers #(
   logic                 csr_save_if_i;
   logic                 csr_save_id_i;
   logic                 csr_restore_mret_i;
+  logic                 csr_restore_dret_i;
   logic                 csr_save_cause_i;
   ibex_pkg::exc_cause_e csr_mcause_i;
   logic [31:0]          csr_mtval_i;

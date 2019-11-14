@@ -8,14 +8,18 @@
 
 void RegisterTransaction::Randomize(std::default_random_engine &gen) {
   std::uniform_int_distribution<int> addr_dist_ =
-      std::uniform_int_distribution<int>(kCSRPMPCfg0, kCSRPMPAddr15);
+      std::uniform_int_distribution<int>(
+          0, (sizeof(CSRAddresses) / sizeof(uint16_t)) - 1);
   std::uniform_int_distribution<int> wdata_dist_ =
       std::uniform_int_distribution<int>(0, 0xFFFFFFFF);
   std::uniform_int_distribution<int> operation_dist_ =
       std::uniform_int_distribution<int>(kCSRRead, kCSRClear);
-  csr_addr = addr_dist_(gen);
+  // Generate a random array index, and get the address
+  csr_addr = CSRAddresses[addr_dist_(gen)];
+  // Generate a random op type
   csr_op = static_cast<CSRegisterOperation>(operation_dist_(gen));
   if (csr_op != kCSRRead) {
+    // Generate random wdata
     csr_wdata = wdata_dist_(gen);
   }
 }
@@ -46,47 +50,12 @@ std::string RegisterTransaction::RegOpString() {
 }
 
 std::string RegisterTransaction::RegAddrString() {
+  // String representation created automatically by macro
   switch (csr_addr) {
-    case kCSRPMPCfg0:
-      return "PMP Cfg 0";
-    case kCSRPMPCfg1:
-      return "PMP Cfg 1";
-    case kCSRPMPCfg2:
-      return "PMP Cfg 2";
-    case kCSRPMPCfg3:
-      return "PMP Cfg 3";
-    case kCSRPMPAddr0:
-      return "PMP Addr 0";
-    case kCSRPMPAddr1:
-      return "PMP Addr 1";
-    case kCSRPMPAddr2:
-      return "PMP Addr 2";
-    case kCSRPMPAddr3:
-      return "PMP Addr 3";
-    case kCSRPMPAddr4:
-      return "PMP Addr 4";
-    case kCSRPMPAddr5:
-      return "PMP Addr 5";
-    case kCSRPMPAddr6:
-      return "PMP Addr 6";
-    case kCSRPMPAddr7:
-      return "PMP Addr 7";
-    case kCSRPMPAddr8:
-      return "PMP Addr 8";
-    case kCSRPMPAddr9:
-      return "PMP Addr 9";
-    case kCSRPMPAddr10:
-      return "PMP Addr 10";
-    case kCSRPMPAddr11:
-      return "PMP Addr 11";
-    case kCSRPMPAddr12:
-      return "PMP Addr 12";
-    case kCSRPMPAddr13:
-      return "PMP Addr 13";
-    case kCSRPMPAddr14:
-      return "PMP Addr 14";
-    case kCSRPMPAddr15:
-      return "PMP Addr 15";
+#define CSR(reg, addr) \
+  case kCSR##reg:      \
+    return #reg;
+#include "csr_listing.def"
     default:
       return "Undef reg: " + std::to_string(csr_addr);
   }
