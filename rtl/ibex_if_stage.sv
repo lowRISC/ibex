@@ -261,6 +261,16 @@ module ibex_if_stage #(
       (boot_addr_i[7:0] == 8'h00)) else
     $error("Provided boot address not aligned to 256 bytes");
 
+  // errors must only be sent together with rvalid
+  assert property (@(posedge clk_i) disable iff (!rst_ni)
+      (instr_err_i) |-> (instr_rvalid_i)) else
+    $display("Instruction error not sent with rvalid");
+
+  // address must not contain X when request is sent
+  assert property (@(posedge clk_i) disable iff (!rst_ni)
+      (instr_req_o) |-> (!$isunknown(instr_addr_o))) else
+    $display("Instruction address not valid");
+
   // address must be word aligned when request is sent
   assert property (@(posedge clk_i) disable iff (!rst_ni)
       (instr_req_o) |-> (instr_addr_o[1:0] == 2'b00)) else
