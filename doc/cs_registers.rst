@@ -371,12 +371,5 @@ Hardware Thread ID (mhartid)
 
 CSR Address: ``0xF14``
 
-Reset Value: Defined
-
-+-------+-----+------------------------------------------------------------------+
-| Bit#  | R/W | Description                                                      |
-+-------+-----+------------------------------------------------------------------+
-| 10:5  | R   | **Cluster ID:** ID of the cluster                                |
-+-------+-----+------------------------------------------------------------------+
-| 3:0   | R   | **Core ID:** ID of the core within the cluster                   |
-+-------+-----+------------------------------------------------------------------+
+Reads directly return the value of the ``hart_id_i`` input signal.
+See also :ref:`core-integration`.
