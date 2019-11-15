@@ -443,7 +443,7 @@ module ibex_cs_registers #(
         CSR_DCSR: begin
           dcsr_d = csr_wdata_int;
           dcsr_d.xdebugver = XDEBUGVER_STD;
-          // Change to PRIV_LVL_M if sofware writes an unsupported value
+          // Change to PRIV_LVL_M if software writes an unsupported value
           if ((dcsr_d.prv != PRIV_LVL_M) && (dcsr_d.prv != PRIV_LVL_U)) begin
             dcsr_d.prv = PRIV_LVL_M;
           end
