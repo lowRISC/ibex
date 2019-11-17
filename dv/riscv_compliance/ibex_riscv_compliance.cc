@@ -20,6 +20,9 @@ int main(int argc, char **argv) {
 
   // Setup simctrl
   retcode = simctrl->SetupSimulation(argc, argv);
+  if (retcode != 0) {
+    goto free_return;
+  }
 
   // Initialize RAM
   simctrl->InitRam("TOP.ibex_riscv_compliance.u_ram");
@@ -27,6 +30,7 @@ int main(int argc, char **argv) {
   // Run the simulation
   simctrl->RunSimulation();
 
+free_return:
   delete top;
   delete simctrl;
   return retcode;
