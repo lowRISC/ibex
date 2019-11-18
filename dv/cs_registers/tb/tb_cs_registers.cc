@@ -26,8 +26,10 @@ int main(int argc, char **argv) {
   // Setup the simulation
   retcode = simctrl->SetupSimulation(argc, argv);
 
-  // Run the simulation
-  simctrl->RunSimulation();
+  if (!retcode) {
+    // Run the simulation
+    simctrl->RunSimulation();
+  }
 
   delete top;
   delete simctrl;
