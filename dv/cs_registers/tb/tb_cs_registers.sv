@@ -13,7 +13,8 @@ module tb_cs_registers #(
 ) (
     // Clock and Reset
     inout  wire                 clk_i,
-    inout  wire                 in_rst_ni
+    inout  wire                 in_rst_ni,
+    output wire                 test_passed_o
 );
 
   logic                 dpi_rst_ni;
@@ -126,6 +127,7 @@ module tb_cs_registers #(
 
   // DPI calls
   bit stop_simulation;
+  bit test_passed;
   bit [31:0] seed;
 
   initial begin
@@ -140,12 +142,16 @@ module tb_cs_registers #(
   end
 
   always_ff @(posedge clk_i) begin
-    env_dpi::env_tick(stop_simulation);
+    env_dpi::env_tick(stop_simulation, test_passed);
     rst_dpi::rst_tick("rstn_driver", dpi_rst_ni);
     if (stop_simulation) begin
       $finish();
     end
   end
+
+  // Signal test pass / fail as an output (Verilator sims can pick this up and use it as a
+  // return code)
+  assign test_passed_o = test_passed;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     reg_dpi::monitor_tick("reg_driver",

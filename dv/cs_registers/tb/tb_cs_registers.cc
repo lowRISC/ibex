@@ -18,5 +18,12 @@ int main(int argc, char **argv) {
   simctrl.SetTop(&top, &top.clk_i, &top.in_rst_ni,
                  VerilatorSimCtrlFlags::ResetPolarityNegative);
 
-  return simctrl.Exec(argc, argv);
+
+  // Get pass / fail from Verilator
+  int retcode = simctrl.Exec(argc, argv);
+  if (!retcode) {
+    // Get pass / fail from testbench
+    retcode = !top.test_passed_o;
+  }
+  return retcode;
 }

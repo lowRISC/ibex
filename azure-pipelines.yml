@@ -96,6 +96,11 @@ jobs:
     displayName: Lint Verilog source files with Verilator
 
   - bash: |
+      # Build and run CSR testbench
+      fusesoc --cores-root=. run --target=sim --tool=verilator lowrisc:ibex:tb_cs_registers
+    displayName: Build and run CSR testbench with Verilator
+
+  - bash: |
       cd build
       git clone https://github.com/riscv/riscv-compliance.git
     displayName: Get RISC-V Compliance test suite
