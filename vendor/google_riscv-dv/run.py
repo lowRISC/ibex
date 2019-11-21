@@ -183,8 +183,6 @@ def gen(test_list, csr_file, end_signature_addr, isa, simulator,
 
         logging.debug("Compile command: %s" % cmd)
         output = run_cmd(cmd)
-        logging.debug(output)
-        check_simulator_return(output, simulator, stop_on_first_error)
   # Run the instruction generator
   if not compile_only:
     cmd_list = []
@@ -216,7 +214,6 @@ def gen(test_list, csr_file, end_signature_addr, isa, simulator,
             cmd_list.append(cmd)
           else:
             output = run_cmd(cmd, timeout_s)
-            check_simulator_return(output, simulator, stop_on_first_error)
         else:
           if batch_size > 0:
             batch_cnt = int((iterations + batch_size - 1)  / batch_size);
@@ -253,7 +250,6 @@ def gen(test_list, csr_file, end_signature_addr, isa, simulator,
               logging.info("Running %s, batch %0d/%0d, test_cnt:%0d" %
                            (test['test'], i+1, batch_cnt, test_cnt))
               output = run_cmd(cmd, timeout_s)
-              check_simulator_return(output, simulator, stop_on_first_error)
     if sim_seed:
       with open(('%s/seed.yaml' % os.path.abspath(output_dir)) , 'w') as outfile:
         yaml.dump(sim_seed, outfile, default_flow_style=False)
@@ -582,7 +578,7 @@ def main():
   matched_list = []
 
   if not args.co:
-    process_regression_list(args.testlist, args.test, args.iterations, matched_list)
+    process_regression_list(args.testlist, args.test, args.iterations, matched_list, cwd)
     if len(matched_list) == 0:
       sys.exit("Cannot find %s in %s" % (args.test, args.testlist))
 
