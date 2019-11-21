@@ -1,4 +1,4 @@
-# Verilator simulator support
+# Verilator memory loading support
 
 ## ELF support
 
