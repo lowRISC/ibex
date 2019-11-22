@@ -443,7 +443,7 @@ module ibex_cs_registers #(
         CSR_DCSR: begin
           dcsr_d = csr_wdata_int;
           dcsr_d.xdebugver = XDEBUGVER_STD;
-          // Change to PRIV_LVL_M if sofware writes an unsupported value
+          // Change to PRIV_LVL_M if software writes an unsupported value
           if ((dcsr_d.prv != PRIV_LVL_M) && (dcsr_d.prv != PRIV_LVL_U)) begin
             dcsr_d.prv = PRIV_LVL_M;
           end
@@ -522,7 +522,9 @@ module ibex_cs_registers #(
           dcsr_d.prv   = priv_lvl_q;
           dcsr_d.cause = debug_cause_i;
           depc_d       = exception_pc;
-        end else begin
+        end else if (!debug_mode_i) begin
+          // In debug mode, "exceptions do not update any registers. That
+          // includes cause, epc, tval, dpc and mstatus." [Debug Spec v0.13.2, p.39]
           mtval_d        = csr_mtval_i;
           mstatus_d.mie  = 1'b0; // disable interrupts
           // save current status

@@ -233,14 +233,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
     `DV_CHECK_EQ_FATAL(mstatus[7], 1'b1, "mstatus.mpie was not set to 1'b1 after entering handler")
     `DV_CHECK_EQ_FATAL(mstatus[3], 1'b0, "mstatus.mie was not set to 1'b0 after entering handler")
     // check mcause against the interrupt id
-    wait_for_csr_write(CSR_MCAUSE, 500);
-    mcause = signature_data;
-    // check that mcause.interrupt is set
-    `DV_CHECK_EQ_FATAL(mcause[ibex_mem_intf_agent_pkg::DATA_WIDTH-1], 1'b1,
-                       "mcause.interrupt is not set to 1'b1")
-    // check that mcause.exception_code matches the current interrupt's ID
-    `DV_CHECK_EQ_FATAL(mcause[ibex_mem_intf_agent_pkg::DATA_WIDTH-2:0], irq_id,
-                       "mcause.exception_code is encoding the wrong interrupt type")
+    check_mcause(1'b1, irq_id);
     // Wait for MIE and MIP to be written regardless of what interrupt ibex is dealing with, to
     // prevent the case where MIP/MIE stays at 0 due to a nonmaskable interrupt, which will falsely
     // trigger the following call of check_next_core_status()
@@ -282,6 +275,16 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
       end
     end
   endfunction
+
+  virtual task check_mcause(bit irq_or_exc, bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-2:0] cause);
+    bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] mcause;
+    wait_for_csr_write(CSR_MCAUSE, 750);
+    mcause = signature_data;
+    `DV_CHECK_EQ_FATAL(mcause[ibex_mem_intf_agent_pkg::DATA_WIDTH-1], irq_or_exc,
+                        $sformatf("mcause.interrupt is not set to 0x%0x", irq_or_exc))
+    `DV_CHECK_EQ_FATAL(mcause[ibex_mem_intf_agent_pkg::DATA_WIDTH-2:0], cause,
+                       "mcause.exception_code is encoding the wrong exception type")
+  endtask
 
   // Basic debug stimulus check for Ibex for debug stimulus stress tests: check that Ibex enters
   // debug mode properly after stimulus is sent and then check that a dret is encountered signifying
@@ -385,6 +388,17 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
   //------------------------------------------------------
   // Checker functions/tasks that might be commonly used
   //------------------------------------------------------
+
+  // Illegal instruction checker
+  virtual task check_illegal_insn(string exception_msg);
+    check_next_core_status(HANDLING_EXCEPTION, "Core did not jump to vectored exception handler", 1000);
+    check_priv_mode(PRIV_LVL_M);
+    check_next_core_status(ILLEGAL_INSTR_EXCEPTION, exception_msg, 500);
+    check_mcause(1'b0, EXC_CAUSE_ILLEGAL_INSN);
+    wait (dut_vif.mret === 1'b1);
+    clk_vif.wait_clks(5);
+    check_priv_mode(operating_mode);
+  endtask
 
   // compares dcsr.ebreak against the privilege mode encoded in dcsr.prv
   virtual function check_dcsr_ebreak();
@@ -527,14 +541,7 @@ class core_ibex_dret_test extends core_ibex_directed_test;
   virtual task check_stimulus();
     forever begin
       wait (dut_vif.dret === 1'b1);
-      // After hitting a dret, the core will jump to the vectored trap handler, which sends a
-      // handshake write to the bench
-      check_next_core_status(HANDLING_EXCEPTION, "Core did not jump to vectored exception handler",
-                             1000);
-      // The core will receive an illegal instruction handshake after jumping from the vectored trap
-      // handler to the illegal instruction exception handler
-      check_next_core_status(ILLEGAL_INSTR_EXCEPTION,
-                             "Core did not treat dret like illegal instruction", 500);
+      check_illegal_insn("Core did not treat dret like illegal instruction");
     end
   endtask
 
@@ -724,7 +731,7 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
     end else if (mem_status == STORE_FAULT_EXCEPTION) begin
       exc_type = EXC_CAUSE_STORE_ACCESS_FAULT;
     end
-    check_mcause(exc_type);
+    check_mcause(1'b0, exc_type);
     wait(dut_vif.mret === 1'b1);
     `uvm_info(`gfn, "exiting mem fault checker", UVM_LOW)
   endtask
@@ -760,20 +767,42 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
     check_next_core_status(INSTR_FAULT_EXCEPTION,
                            "Core did not register correct memory fault type", 500);
     exc_type = EXC_CAUSE_INSTR_ACCESS_FAULT;
-    check_mcause(exc_type);
+    check_mcause(1'b0, exc_type);
     wait(dut_vif.mret === 1'b1);
     `uvm_info(`gfn, "exiting mem fault checker", UVM_LOW)
   endtask
 
-  virtual task check_mcause(ibex_pkg::exc_cause_e exc_type);
-    bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] mcause;
-    wait_for_csr_write(CSR_MCAUSE, 750);
-    mcause = signature_data;
-    `DV_CHECK_EQ_FATAL(mcause[ibex_mem_intf_agent_pkg::DATA_WIDTH-1], 1'b0,
-                       "mcause interrupt is not set to 1'b0")
-    `DV_CHECK_EQ_FATAL(mcause[ibex_mem_intf_agent_pkg::DATA_WIDTH-2:0],
-                       exc_type,
-                       "mcause.exception_code is encoding the wrong exception type")
+endclass
+
+// U-mode mstatus.tw test class
+class core_ibex_umode_tw_test extends core_ibex_directed_test;
+
+  `uvm_component_utils(core_ibex_umode_tw_test)
+  `uvm_component_new
+
+  virtual task check_stimulus();
+    bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] mcause;
+    forever begin
+      wait (dut_vif.wfi === 1'b1);
+      check_illegal_insn("Core did not treat U-mode WFI as illegal");
+    end
+  endtask
+
+endclass
+
+// Priv-mode CSR access test
+class core_ibex_invalid_csr_test extends core_ibex_directed_test;
+
+  `uvm_component_utils(core_ibex_invalid_csr_test)
+  `uvm_component_new
+
+  virtual task check_stimulus();
+    forever begin
+      // Wait for a CSR access
+      wait (csr_vif.csr_access == 1'b1);
+      check_illegal_insn($sformatf("Core did not treat access to CSR 0x%0x from %0s as illegal",
+                                   csr_vif.csr_addr, operating_mode));
+    end
   endtask
 
 endclass
