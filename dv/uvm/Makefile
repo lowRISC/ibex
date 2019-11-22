@@ -103,6 +103,7 @@ iss_sim:
 	cd ${GEN_DIR}; \
 	python3 ./run.py \
      --o=${OUT}/instr_gen ${GEN_OPTS} \
+     --riscv_dv_root=${GEN_DIR} \
      --steps=iss_sim \
      ${COMMON_OPTS} \
      --iss=${ISS} \
@@ -113,6 +114,7 @@ compile:
 	mkdir -p ${OUT}/rtl_sim
 	python3 ./sim.py \
      --o=${OUT} \
+     --riscv_dv_root=${GEN_DIR} \
      --steps=compile \
      ${COMMON_OPTS} \
      --simulator=${SIMULATOR} \
@@ -124,6 +126,7 @@ rtl_sim:
 	mkdir -p ${OUT}/rtl_sim
 	python3 ./sim.py \
      --o=${OUT} \
+     --riscv_dv_root=${GEN_DIR} \
      --steps=sim \
      ${COMMON_OPTS} \
      --simulator=${SIMULATOR} \
