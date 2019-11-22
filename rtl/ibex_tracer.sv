@@ -74,7 +74,7 @@ module ibex_tracer (
   import ibex_pkg::*;
   import ibex_tracer_pkg::*;
 
-  int          file_handle;
+  int          file_handle = 32'h0;
   string       file_name;
 
   int unsigned cycle;

@@ -20,11 +20,9 @@ module ibex_simple_system (
 
   parameter bit RV32E = 0;
   parameter bit RV32M = 1;
+  parameter MEM_FILE = "";
 
   logic clk_sys, rst_sys_n;
-
-  assign clk_sys = IO_CLK;
-  assign rst_sys_n = IO_RST_N;
 
   typedef enum {
     CoreD,
@@ -68,6 +66,25 @@ module ibex_simple_system (
   assign cfg_device_addr_base[SimCtrl] = 32'h20000;
   assign cfg_device_addr_mask[SimCtrl] = ~32'h3FF; // 1 kB
 
+
+  `ifdef VERILATOR
+    assign clk_sys = IO_CLK;
+    assign rst_sys_n = IO_RST_N;
+  `else
+
+    initial begin
+      rst_sys_n = 0;
+      device_err = '{default:1'b0};
+      #100
+      rst_sys_n = 1;
+    end
+
+    always begin
+      #5 clk_sys = 1;
+      #5 clk_sys = 0;
+    end
+
+  `endif
 
   bus #(
     .NrDevices   (NrDevices),
@@ -152,7 +169,8 @@ module ibex_simple_system (
 
   // SRAM block for instruction and data storage
   ram_1p #(
-      .Depth(1024*1024/4)
+      .Depth(1024*1024/4),
+      .MEM_FILE(MEM_FILE)
     ) u_ram (
       .clk_i     (clk_sys),
       .rst_ni    (rst_sys_n),

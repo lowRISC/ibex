@@ -27,6 +27,11 @@ parameters:
     paramtype: vlogparam
     default: 0
     description: Enable the E ISA extension (reduced register set) [0/1]
+  MEM_FILE:
+    datatype: str
+    paramtype: vlogparam
+    default: ""
+    description: Path to the verilog VMEM file to initialize memory
 
 targets:
   sim:
@@ -36,8 +41,13 @@ targets:
     parameters:
       - RV32M
       - RV32E
+      - MEM_FILE
     toplevel: ibex_simple_system
     tools:
+      vcs:
+        vcs_options:
+          - '+vcs+initreg+random'
+          - '-debug_access+r'
       verilator:
         mode: cc
         verilator_options:

@@ -6,7 +6,8 @@
  * Single-port RAM with 1 cycle read/write delay, 32 bit words
  */
 module ram_1p #(
-    parameter int Depth = 128
+    parameter int Depth = 128,
+    parameter MEM_FILE = ""
 ) (
     input               clk_i,
     input               rst_ni,
@@ -57,14 +58,14 @@ module ram_1p #(
     input string file;
     $readmemh(file, mem);
     endtask
-  `endif
-
-  `ifdef SRAM_INIT_FILE
-    localparam MEM_FILE = `"`SRAM_INIT_FILE`";
+  `else
     initial begin
-      $display("Initializing SRAM from %s", MEM_FILE);
-      $readmemh(MEM_FILE, mem);
+      if (MEM_FILE) begin
+        $display("Initializing SRAM from %s", MEM_FILE);
+        $readmemh(MEM_FILE, mem);
+      end
     end
   `endif
+
 endmodule
 
