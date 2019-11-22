@@ -179,7 +179,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
             end
           end
           begin
-            if (cfg.enable_debug_stress_seq) begin
+            if (cfg.enable_debug_seq) begin
               send_debug_stimulus();
             end
           end
@@ -260,10 +260,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
     irq = {irq_txn.irq_nm, irq_txn.irq_fast, 4'b0, irq_txn.irq_external, 3'b0,
            irq_txn.irq_timer, 3'b0, irq_txn.irq_software, 3'b0};
     `DV_CHECK_EQ_FATAL(irq, 0, "Interrupt lines have not been dropped")
-    wait (dut_vif.mret === 1'b1);
-    clk_vif.wait_clks(5);
-    // after mret, ibex should switch back to original privilege mode
-    check_priv_mode(operating_mode);
+    wait_ret("mret", 1000);
   endtask
 
   function int get_max_irq_id(bit [irq_agent_pkg::DATA_WIDTH-1:0] irq);
@@ -278,7 +275,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
 
   virtual task check_mcause(bit irq_or_exc, bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-2:0] cause);
     bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] mcause;
-    wait_for_csr_write(CSR_MCAUSE, 750);
+    wait_for_csr_write(CSR_MCAUSE, 1000);
     mcause = signature_data;
     `DV_CHECK_EQ_FATAL(mcause[ibex_mem_intf_agent_pkg::DATA_WIDTH-1], irq_or_exc,
                         $sformatf("mcause.interrupt is not set to 0x%0x", irq_or_exc))
@@ -298,28 +295,38 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
         forever begin
           wait_for_core_status(IN_DEBUG_MODE);
           check_priv_mode(PRIV_LVL_M);
-          wait_dret(20000);
+          wait_ret("dret", 20000);
         end
       end
     join_none
   endtask
 
-  // Task that waits for dret to be asserted within a certain number of cycles
-  virtual task wait_dret(int timeout);
+  // Task that waits for xRET to be asserted within a certain number of cycles
+  virtual task wait_ret(string ret, int timeout);
     run.raise_objection(this);
     fork
       begin
-        wait(dut_vif.dret === 1'b1);
-        clk_vif.wait_clks(5);
-        check_priv_mode(operating_mode);
+        case (ret)
+          "dret": begin
+            wait (dut_vif.dret === 1'b1);
+          end
+          "mret": begin
+            wait (dut_vif.mret === 1'b1);
+          end
+          default: begin
+            `uvm_fatal(`gfn, $sformatf("Invalid xRET instruction %0s", ret))
+          end
+        endcase
+        wait (dut_vif.priv_mode === operating_mode);
       end
-      begin : dret_timeout
+      begin : ret_timeout
         clk_vif.wait_clks(timeout);
-        `uvm_fatal(`gfn, $sformatf("No dret detected in timeout period of %0d cycles", timeout))
+        `uvm_fatal(`gfn, $sformatf("No %0s detected, or incorrect privilege mode switch in \
+                                    timeout period of %0d cycles", ret, timeout))
       end
     join_any
     // Will only get here if dret successfully detected within timeout period
-    disable dret_timeout;
+    disable ret_timeout;
     run.drop_objection(this);
   endtask
 
@@ -353,7 +360,7 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
               end
             end
             begin
-              if (cfg.enable_debug_stress_seq) begin
+              if (cfg.enable_debug_seq) begin
                 send_debug_stimulus();
               end
             end
@@ -393,11 +400,9 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
   virtual task check_illegal_insn(string exception_msg);
     check_next_core_status(HANDLING_EXCEPTION, "Core did not jump to vectored exception handler", 1000);
     check_priv_mode(PRIV_LVL_M);
-    check_next_core_status(ILLEGAL_INSTR_EXCEPTION, exception_msg, 500);
+    check_next_core_status(ILLEGAL_INSTR_EXCEPTION, exception_msg, 1000);
     check_mcause(1'b0, EXC_CAUSE_ILLEGAL_INSN);
-    wait (dut_vif.mret === 1'b1);
-    clk_vif.wait_clks(5);
-    check_priv_mode(operating_mode);
+    wait_ret("mret", 1500);
   endtask
 
   // compares dcsr.ebreak against the privilege mode encoded in dcsr.prv
@@ -492,7 +497,7 @@ class core_ibex_debug_wfi_test extends core_ibex_directed_test;
       wait_for_csr_write(CSR_DCSR, 500);
       check_dcsr_prv(operating_mode);
       check_dcsr_cause(DBG_CAUSE_HALTREQ);
-      wait_dret(5000);
+      wait_ret("dret", 5000);
     end
   endtask
 
@@ -516,7 +521,7 @@ class core_ibex_debug_csr_test extends core_ibex_directed_test;
     wait_for_csr_write(CSR_DCSR, 500);
     check_dcsr_prv(operating_mode);
     check_dcsr_cause(DBG_CAUSE_HALTREQ);
-    wait_dret(5000);
+    wait_ret("dret", 5000);
     // wait for a dummy write to mie in the init code
     wait(csr_vif.csr_access === 1'b1 && csr_vif.csr_addr === CSR_MIE &&
          csr_vif.csr_op != CSR_OP_READ);
@@ -527,7 +532,7 @@ class core_ibex_debug_csr_test extends core_ibex_directed_test;
     wait_for_csr_write(CSR_DCSR, 500);
     check_dcsr_prv(operating_mode);
     check_dcsr_cause(DBG_CAUSE_HALTREQ);
-    wait_dret(5000);
+    wait_ret("dret", 5000);
   endtask
 
 endclass
@@ -578,7 +583,7 @@ class core_ibex_debug_ebreak_test extends core_ibex_directed_test;
       wait_for_csr_write(CSR_DPC, 500);
       `DV_CHECK_EQ_FATAL(dpc, signature_data,
                          "ebreak inside the debug rom has changed the value of DPC")
-      wait_dret(1000);
+      wait_ret("dret", 1000);
       clk_vif.wait_clks($urandom_range(250, 500));
     end
   endtask
@@ -603,7 +608,7 @@ class core_ibex_debug_ebreakmu_test extends core_ibex_directed_test;
     check_dcsr_prv(operating_mode);
     check_dcsr_ebreak();
     check_dcsr_cause(DBG_CAUSE_HALTREQ);
-    wait_dret(5000);
+    wait_ret("dret", 5000);
     forever begin
       wait (dut_vif.ebreak === 1'b1);
       check_next_core_status(IN_DEBUG_MODE,
@@ -614,7 +619,7 @@ class core_ibex_debug_ebreakmu_test extends core_ibex_directed_test;
       check_dcsr_prv(operating_mode);
       check_dcsr_ebreak();
       check_dcsr_cause(DBG_CAUSE_EBREAK);
-      wait_dret(5000);
+      wait_ret("dret", 5000);
     end
   endtask
 
@@ -643,7 +648,7 @@ class core_ibex_debug_single_step_test extends core_ibex_directed_test;
       check_dcsr_prv(operating_mode);
       check_dcsr_cause(DBG_CAUSE_HALTREQ);
       `DV_CHECK_EQ_FATAL(signature_data[2], 1'b1, "dcsr.step is not set")
-      wait_dret(5000);
+      wait_ret("dret", 5000);
       // now we loop on the counter until we are done single stepping
       while (counter >= 0) begin
         counter = next_counter;
@@ -668,7 +673,7 @@ class core_ibex_debug_single_step_test extends core_ibex_directed_test;
         end else begin
           `DV_CHECK_EQ_FATAL(signature_data[2], 1'b1, "dcsr.step is not set")
         end
-        wait_dret(5000);
+        wait_ret("dret", 5000);
         if (counter === 0) break;
       end
       clk_vif.wait_clks(2000);
@@ -696,7 +701,7 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
       // Dmem interface error could be either a load or store operation
       check_dmem_fault();
       // Random delay before injecting instruction fetch fault
-      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(err_delay, err_delay inside { [25:100] };)
+      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(err_delay, err_delay inside { [50:200] };)
       clk_vif.wait_clks(err_delay);
       inject_imem_error();
       check_imem_fault();
@@ -732,7 +737,7 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
       exc_type = EXC_CAUSE_STORE_ACCESS_FAULT;
     end
     check_mcause(1'b0, exc_type);
-    wait(dut_vif.mret === 1'b1);
+    wait (dut_vif.mret === 1'b1);
     `uvm_info(`gfn, "exiting mem fault checker", UVM_LOW)
   endtask
 
@@ -768,7 +773,7 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
                            "Core did not register correct memory fault type", 500);
     exc_type = EXC_CAUSE_INSTR_ACCESS_FAULT;
     check_mcause(1'b0, exc_type);
-    wait(dut_vif.mret === 1'b1);
+    wait (dut_vif.mret === 1'b1);
     `uvm_info(`gfn, "exiting mem fault checker", UVM_LOW)
   endtask
 

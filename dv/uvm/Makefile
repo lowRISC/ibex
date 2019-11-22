@@ -85,7 +85,7 @@ RISCV_DV_OPTS=--custom_target=${DV_DIR}/riscv_dv_extension \
      ${COMMON_OPTS} \
      ${CSR_OPTS} \
      --sim_opts="+uvm_set_type_override=riscv_asm_program_gen,ibex_asm_program_gen \
-                 +signature_addr=${SIGNATURE_ADDR}";
+                 +signature_addr=0x${SIGNATURE_ADDR}";
 
 # Compile the generated assmebly programs to ELF/BIN
 gcc_compile:

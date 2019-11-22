@@ -38,11 +38,10 @@ class core_ibex_vseq extends uvm_sequence;
       irq_drop_seq_h.max_delay = 1;
       irq_drop_seq_h.interval = 0;
     end
-    if (cfg.enable_debug_stress_seq) begin
+    if (cfg.enable_debug_seq) begin
       debug_seq_stress_h = debug_seq::type_id::create("debug_seq_stress_h");
       debug_seq_stress_h.max_interval = cfg.max_interval;
-    end
-    if (cfg.enable_debug_single_seq) begin
+
       debug_seq_single_h = debug_seq::type_id::create("debug_seq_single_h");
       debug_seq_single_h.num_of_iterations = 1;
       debug_seq_single_h.max_interval = 1;
@@ -60,14 +59,12 @@ class core_ibex_vseq extends uvm_sequence;
 
   virtual task stop();
     if (cfg.enable_irq_seq) begin
-      irq_single_seq_h.stop();
-      irq_drop_seq_h.stop();
+      if (irq_single_seq_h.is_started) irq_single_seq_h.stop();
+      if (irq_drop_seq_h.is_started)   irq_drop_seq_h.stop();
     end
-    if (cfg.enable_debug_stress_seq) begin
-      debug_seq_stress_h.stop();
-    end
-    if (cfg.enable_debug_single_seq) begin
-      debug_seq_single_h.stop();
+    if (cfg.enable_debug_seq) begin
+      if (debug_seq_stress_h.is_started) debug_seq_stress_h.stop();
+      if (debug_seq_single_h.is_started) debug_seq_single_h.stop();
     end
   endtask
 

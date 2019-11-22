@@ -137,7 +137,7 @@
   sim_opts: >
     +require_signature_addr=1
     +max_interval=500
-    +enable_debug_stress_seq=1
+    +enable_debug_seq=1
   compare_opts:
     compare_final_value_only: 1
     verbose: 1
@@ -156,7 +156,7 @@
   iterations: 15
   sim_opts: >
     +max_interval=250
-    +enable_debug_stress_seq=1
+    +enable_debug_seq=1
     +require_signature_addr=1
   compare_opts:
     verbose: 1
@@ -181,7 +181,7 @@
   sim_opts: >
     +require_signature_addr=1
     +max_interval=3000
-    +enable_debug_stress_seq=1
+    +enable_debug_seq=1
   compare_opts:
     compare_final_value_only: 1
     verbose: 1
@@ -204,7 +204,7 @@
   rtl_test: core_ibex_debug_wfi_test
   sim_opts: >
     +require_signature_addr=1
-    +enable_debug_single_seq=1
+    +enable_debug_seq=1
   compare_opts:
     compare_final_value_only: 1
     verbose: 1
@@ -243,7 +243,7 @@
   rtl_test: core_ibex_debug_ebreak_test
   sim_opts: >
     +require_signature_addr=1
-    +enable_debug_single_seq=1
+    +enable_debug_seq=1
   compare_opts:
     compare_final_value_only: 1
 
@@ -267,7 +267,7 @@
   rtl_test: core_ibex_debug_ebreakmu_test
   sim_opts: >
     +require_signature_addr=1
-    +enable_debug_single_seq=1
+    +enable_debug_seq=1
   compare_opts:
     compare_final_value_only: 1
 
@@ -285,7 +285,7 @@
   rtl_test: core_ibex_debug_csr_test
   sim_opts: >
     +require_signature_addr=1
-    +enable_debug_single_seq=1
+    +enable_debug_seq=1
   compare_opts:
     compare_final_value_only: 1
 
@@ -413,7 +413,7 @@
   sim_opts: >
     +require_signature_addr=1
     +max_interval=1500
-    +enable_debug_single_seq=1
+    +enable_debug_seq=1
   compare_opts:
     compare_final_value_only: 1
     verbose: 1
