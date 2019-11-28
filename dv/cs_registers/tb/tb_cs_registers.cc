@@ -9,7 +9,7 @@
 // TODO : remove this - see Ibex #317
 extern "C" {
 void simutil_verilator_memload(const char *file) {}
-int simutil_verilator_set_mem(int index, const svLogicVecVal *val) { return 1; }
+int simutil_verilator_set_mem(int index, const svLogicVecVal *val) { return 0; }
 }
 
 int main(int argc, char **argv) {
