@@ -2,11 +2,7 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-#include <signal.h>
-
-#include <fstream>
 #include <iostream>
-#include <memory>
 
 #include "ibex_pcounts.h"
 #include "verilated_toplevel.h"
