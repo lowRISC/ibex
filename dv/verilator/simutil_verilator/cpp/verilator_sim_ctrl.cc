@@ -27,39 +27,13 @@ struct BufferDesc {
   size_t length;
 };
 
-// Static pointer to a single simctrl instance used by SignalHandler
-static VerilatorSimCtrl *simctrl = nullptr;
-
-static void SignalHandler(int sig) {
-  if (!simctrl) {
-    return;
-  }
-
-  switch (sig) {
-    case SIGINT:
-      simctrl->RequestStop(true);
-      break;
-    case SIGUSR1:
-      if (simctrl->TracingEnabled()) {
-        simctrl->TraceOff();
-      } else {
-        simctrl->TraceOn();
-      }
-      break;
-  }
-}
-
 /**
  * Get the current simulation time
  *
  * Called by $time in Verilog, converts to double, to match what SystemC does
  */
 double sc_time_stamp() {
-  if (simctrl) {
-    return simctrl->GetTime();
-  } else {
-    return 0;
-  }
+  return VerilatorSimCtrl::GetInstance().GetTime();
 }
 
 // DPI Exports
@@ -80,12 +54,13 @@ extern void simutil_verilator_memload(const char *file);
 extern int simutil_verilator_set_mem(int index, const svLogicVecVal *val);
 }
 
-VerilatorSimCtrl::VerilatorSimCtrl(VerilatedToplevel &top, CData &sig_clk,
-                                   CData &sig_rst, VerilatorSimCtrlFlags flags)
-    : top_(top),
-      sig_clk_(sig_clk),
-      sig_rst_(sig_rst),
-      flags_(flags),
+VerilatorSimCtrl& VerilatorSimCtrl::GetInstance() {
+  static VerilatorSimCtrl instance;
+  return instance;
+}
+
+VerilatorSimCtrl::VerilatorSimCtrl()
+    : top_(nullptr),
       time_(0),
       tracing_enabled_(false),
       tracing_enabled_changed_(false),
@@ -98,6 +73,15 @@ VerilatorSimCtrl::VerilatorSimCtrl(VerilatedToplevel &top, CData &sig_clk,
       tracer_(VerilatedTracer()),
       term_after_cycles_(0),
       callback_(nullptr) {}
+
+void VerilatorSimCtrl::SetTop(VerilatedToplevel *top, CData *sig_clk,
+                              CData *sig_rst,
+                              VerilatorSimCtrlFlags flags) {
+  top_ = top;
+  sig_clk_ = sig_clk;
+  sig_rst_ = sig_rst;
+  flags_ = flags;
+}
 
 int VerilatorSimCtrl::Exec(int argc, char **argv) {
   RegisterSignalHandler();
@@ -141,15 +125,29 @@ void VerilatorSimCtrl::RunSimulation() {
 void VerilatorSimCtrl::RegisterSignalHandler() {
   struct sigaction sigIntHandler;
 
-  // Point the static simctrl pointer at this object
-  simctrl = this;
-
   sigIntHandler.sa_handler = SignalHandler;
   sigemptyset(&sigIntHandler.sa_mask);
   sigIntHandler.sa_flags = 0;
 
   sigaction(SIGINT, &sigIntHandler, NULL);
   sigaction(SIGUSR1, &sigIntHandler, NULL);
+}
+
+void VerilatorSimCtrl::SignalHandler(int sig) {
+  VerilatorSimCtrl &simctrl = VerilatorSimCtrl::GetInstance();
+
+  switch (sig) {
+    case SIGINT:
+      simctrl.RequestStop(true);
+      break;
+    case SIGUSR1:
+      if (simctrl.TracingEnabled()) {
+        simctrl.TraceOff();
+      } else {
+        simctrl.TraceOn();
+      }
+      break;
+  }
 }
 
 void VerilatorSimCtrl::RequestStop(bool simulation_success) {
@@ -177,8 +175,15 @@ bool VerilatorSimCtrl::TraceOff() {
   return tracing_enabled_;
 }
 
+std::string VerilatorSimCtrl::GetName() const {
+  if (top_) {
+    return top_->name();
+  }
+  return "unknown";
+}
+
 void VerilatorSimCtrl::PrintHelp() const {
-  std::cout << "Execute a simulation model for " << top_.name()
+  std::cout << "Execute a simulation model for " << GetName()
             << "\n"
                "\n";
   if (tracing_possible_) {
@@ -529,14 +534,16 @@ void VerilatorSimCtrl::SetOnClockCallback(SimCtrlCallBack callback) {
 }
 
 void VerilatorSimCtrl::Run() {
+  assert(top_ && "Use SetTop() first.");
+
   // We always need to enable this as tracing can be enabled at runtime
   if (tracing_possible_) {
     Verilated::traceEverOn(true);
-    top_.trace(tracer_, 99, 0);
+    top_->trace(tracer_, 99, 0);
   }
 
   // Evaluate all initial blocks, including the DPI setup routines
-  top_.eval();
+  top_->eval();
 
   std::cout << std::endl
             << "Simulation running, end by pressing CTRL-c." << std::endl;
@@ -552,13 +559,13 @@ void VerilatorSimCtrl::Run() {
       UnsetReset();
     }
 
-    sig_clk_ = !sig_clk_;
+    *sig_clk_ = !*sig_clk_;
 
-    if (sig_clk_ && (callback_ != nullptr)) {
+    if (*sig_clk_ && (callback_ != nullptr)) {
       callback_(time_);
     }
 
-    top_.eval();
+    top_->eval();
     time_++;
 
     Trace();
@@ -580,7 +587,7 @@ void VerilatorSimCtrl::Run() {
     }
   }
 
-  top_.final();
+  top_->final();
   time_end_ = std::chrono::steady_clock::now();
 
   if (TracingEverEnabled()) {
@@ -590,17 +597,17 @@ void VerilatorSimCtrl::Run() {
 
 void VerilatorSimCtrl::SetReset() {
   if (flags_ & ResetPolarityNegative) {
-    sig_rst_ = 0;
+    *sig_rst_ = 0;
   } else {
-    sig_rst_ = 1;
+    *sig_rst_ = 1;
   }
 }
 
 void VerilatorSimCtrl::UnsetReset() {
   if (flags_ & ResetPolarityNegative) {
-    sig_rst_ = 1;
+    *sig_rst_ = 1;
   } else {
-    sig_rst_ = 0;
+    *sig_rst_ = 0;
   }
 }
 

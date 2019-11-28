@@ -10,8 +10,9 @@
 
 int main(int argc, char **argv) {
   ibex_simple_system top;
-  VerilatorSimCtrl simctrl(top, top.IO_CLK, top.IO_RST_N,
-                           VerilatorSimCtrlFlags::ResetPolarityNegative);
+  VerilatorSimCtrl &simctrl = VerilatorSimCtrl::GetInstance();
+  simctrl.SetTop(&top, &top.IO_CLK, &top.IO_RST_N,
+                 VerilatorSimCtrlFlags::ResetPolarityNegative);
 
   simctrl.RegisterMemoryArea("ram", "TOP.ibex_simple_system.u_ram");
 
