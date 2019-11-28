@@ -64,7 +64,19 @@ double sc_time_stamp() {
 
 // DPI Exports
 extern "C" {
+
+/**
+ * Write |file| to a memory
+ *
+ * @param file path to a SystemVerilog $readmemh()-compatible file (VMEM file)
+ */
 extern void simutil_verilator_memload(const char *file);
+
+/**
+ * Write a 32 bit word |val| to memory at index |index|
+ *
+ * @return 1 if successful, 0 otherwise
+ */
 extern int simutil_verilator_set_mem(int index, const svLogicVecVal *val);
 }
 
@@ -360,7 +372,7 @@ bool VerilatorSimCtrl::WriteElfToMem(const svScope &scope,
     goto ret;
   }
   for (int i = 0; i < len_bytes / 4; ++i) {
-    if (simutil_verilator_set_mem(i, (svLogicVecVal *)&buf[4 * i])) {
+    if (!simutil_verilator_set_mem(i, (svLogicVecVal *)&buf[4 * i])) {
       std::cerr << "ERROR: Could not set memory byte: " << i * 4 << "/"
                 << len_bytes << "" << std::endl;
 
