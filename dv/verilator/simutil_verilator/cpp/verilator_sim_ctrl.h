@@ -39,16 +39,28 @@ struct MemArea {
  */
 class VerilatorSimCtrl {
  public:
-  VerilatorSimCtrl(VerilatedToplevel &top, CData &clk, CData &rst_n,
-                   VerilatorSimCtrlFlags flags = Defaults);
+  /**
+   * Get the simulation controller instance
+   *
+   * @see SetTop()
+   */
+  static VerilatorSimCtrl& GetInstance();
+
+  VerilatorSimCtrl(VerilatorSimCtrl const&) = delete;
+  void operator=(VerilatorSimCtrl const&) = delete;
+
+  /**
+   * Set the top-level design
+   */
+  void SetTop(VerilatedToplevel *top, CData *sig_clk, CData *sig_rst,
+              VerilatorSimCtrlFlags flags = Defaults);
 
   /**
    * Setup and run the simulation (all in one)
    *
    * Use this function as high-level entry point, suitable for most use cases.
    *
-   * Exec() can be used only once per process as it registers a global signal
-   * handler.
+   * SetTop() must be called before this function.
    *
    * This function performs the following tasks:
    * 1. Sets up a signal handler to enable tracing to be turned on/off during
@@ -64,7 +76,7 @@ class VerilatorSimCtrl {
   /**
    * A helper function to execute a standard set of run commands.
    *
-   * This function performs the followind tasks:
+   * This function performs the following tasks:
    * 1. Prints some tracer-related helper messages
    * 2. Runs the simulation
    * 3. Prints some further helper messages and statistics once the simulation
@@ -109,6 +121,13 @@ class VerilatorSimCtrl {
    * Get the current time in ticks
    */
   unsigned long GetTime() const { return time_; }
+
+  /**
+   * Get a name for this simulation
+   *
+   * This name is typically the name of the top-level.
+   */
+  std::string GetName() const;
 
   /**
    * Get the simulation result
@@ -181,9 +200,9 @@ class VerilatorSimCtrl {
   void SetOnClockCallback(SimCtrlCallBack callback);
 
  private:
-  VerilatedToplevel &top_;
-  CData &sig_clk_;
-  CData &sig_rst_;
+  VerilatedToplevel *top_;
+  CData *sig_clk_;
+  CData *sig_rst_;
   VerilatorSimCtrlFlags flags_;
   unsigned long time_;
   bool tracing_enabled_;
@@ -202,9 +221,23 @@ class VerilatorSimCtrl {
   SimCtrlCallBack callback_;
 
   /**
+   * Default constructor
+   *
+   * Use GetInstance() instead.
+   */
+  VerilatorSimCtrl();
+
+  /**
    * Register the signal handler
    */
   void RegisterSignalHandler();
+
+  /**
+   * Signal handler callback
+   *
+   * Use RegisterSignalHandler() to setup.
+   */
+  static void SignalHandler(int sig);
 
   /**
    * Parse command line arguments

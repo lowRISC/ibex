@@ -14,8 +14,9 @@ int simutil_verilator_set_mem(int index, const svLogicVecVal *val) { return 1; }
 
 int main(int argc, char **argv) {
   tb_cs_registers top;
-  VerilatorSimCtrl simctrl(top, top.clk_i, top.in_rst_ni,
-                           VerilatorSimCtrlFlags::ResetPolarityNegative);
+  VerilatorSimCtrl &simctrl = VerilatorSimCtrl::GetInstance();
+  simctrl.SetTop(&top, &top.clk_i, &top.in_rst_ni,
+                 VerilatorSimCtrlFlags::ResetPolarityNegative);
 
   return simctrl.Exec(argc, argv);
 }
