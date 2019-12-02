@@ -27,6 +27,10 @@ parameters:
     paramtype: vlogparam
     default: 0
     description: Enable the E ISA extension (reduced register set) [0/1]
+  SRAM_INIT_FILE:
+    datatype: str
+    paramtype: vlogdefine
+    descriptions: Path to a vmem file to initialize the RAM with
 
 targets:
   sim:
@@ -36,8 +40,12 @@ targets:
     parameters:
       - RV32M
       - RV32E
+      - SRAM_INIT_FILE
     toplevel: ibex_simple_system
     tools:
+      vcs:
+        vcs_options:
+          - '-debug_access+r'
       verilator:
         mode: cc
         verilator_options:
