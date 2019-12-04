@@ -737,8 +737,6 @@ bool VerilatorSimCtrl::ElfFileToBinary(const std::string &filepath,
     buffers.push_back(buf_data);
   }
 
-  // TODO: Check for the case that phdr.p_memsz > phdr.p_filesz
-
   // Put the collected data into a continuous buffer
   // Memory is freed by the caller
   *data = (uint8_t *)malloc(len_bytes);
