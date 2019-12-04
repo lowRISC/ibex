@@ -3,13 +3,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 module tb_cs_registers #(
+    parameter bit          DbgTriggerEn     = 0,
     parameter int unsigned MHPMCounterNum   = 8,
     parameter int unsigned MHPMCounterWidth = 40,
     parameter bit          PMPEnable        = 0,
     parameter int unsigned PMPGranularity   = 0,
     parameter int unsigned PMPNumRegions    = 4,
-    parameter bit RV32E                     = 0,
-    parameter bit RV32M                     = 0
+    parameter bit          RV32E            = 0,
+    parameter bit          RV32M            = 0
 ) (
     // Clock and Reset
     inout  wire                 clk_i,
@@ -64,6 +65,7 @@ module tb_cs_registers #(
   logic                 debug_single_step_o;
   logic                 debug_ebreakm_o;
   logic                 debug_ebreaku_o;
+  logic                 trigger_match_o;
 
   logic [31:0]          pc_if_i;
   logic [31:0]          pc_id_i;
@@ -116,6 +118,7 @@ module tb_cs_registers #(
 `endif
 
   ibex_cs_registers #(
+    .DbgTriggerEn     (DbgTriggerEn),
     .MHPMCounterNum   (MHPMCounterNum),
     .MHPMCounterWidth (MHPMCounterWidth),
     .PMPEnable        (PMPEnable),
