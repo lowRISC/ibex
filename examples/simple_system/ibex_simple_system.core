@@ -30,7 +30,7 @@ parameters:
   SRAM_INIT_FILE:
     datatype: str
     paramtype: vlogdefine
-    descriptions: Path to a vmem file to initialize the RAM with
+    description: Path to a vmem file to initialize the RAM with
 
 targets:
   sim:
