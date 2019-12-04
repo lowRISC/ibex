@@ -10,13 +10,14 @@
  * Specification, draft version 1.11
  */
 module ibex_cs_registers #(
+    parameter bit          DbgTriggerEn     = 0,
     parameter int unsigned MHPMCounterNum   = 8,
     parameter int unsigned MHPMCounterWidth = 40,
     parameter bit          PMPEnable        = 0,
     parameter int unsigned PMPGranularity   = 0,
     parameter int unsigned PMPNumRegions    = 4,
-    parameter bit RV32E                     = 0,
-    parameter bit RV32M                     = 0
+    parameter bit          RV32E            = 0,
+    parameter bit          RV32M            = 0
 ) (
     // Clock and Reset
     input  logic                 clk_i,
@@ -68,6 +69,7 @@ module ibex_cs_registers #(
     output logic                 debug_single_step_o,
     output logic                 debug_ebreakm_o,
     output logic                 debug_ebreaku_o,
+    output logic                 trigger_match_o,
 
     input  logic [31:0]          pc_if_i,
     input  logic [31:0]          pc_id_i,
@@ -195,6 +197,11 @@ module ibex_cs_registers #(
   logic [31:0] mhpmcounter_incr;
   logic [31:0] mhpmevent [32];
   logic  [4:0] mhpmcounter_idx;
+
+  // Debug / trigger registers
+  logic [31:0] tselect_rdata;
+  logic [31:0] tmatch_control_rdata;
+  logic [31:0] tmatch_value_rdata;
 
   // CSR update logic
   logic [31:0] csr_wdata_int;
@@ -366,6 +373,32 @@ module ibex_cs_registers #(
       CSR_MHPMCOUNTER24H, CSR_MHPMCOUNTER25H, CSR_MHPMCOUNTER26H, CSR_MHPMCOUNTER27H,
       CSR_MHPMCOUNTER28H, CSR_MHPMCOUNTER29H, CSR_MHPMCOUNTER30H, CSR_MHPMCOUNTER31H: begin
         csr_rdata_int = mhpmcounter_q[mhpmcounter_idx][63:32];
+      end
+
+      // Debug triggers
+      CSR_TSELECT: begin
+        csr_rdata_int = tselect_rdata;
+        illegal_csr   = ~DbgTriggerEn;
+      end
+      CSR_TDATA1: begin
+        csr_rdata_int = tmatch_control_rdata;
+        illegal_csr   = ~DbgTriggerEn;
+      end
+      CSR_TDATA2: begin
+        csr_rdata_int = tmatch_value_rdata;
+        illegal_csr   = ~DbgTriggerEn;
+      end
+      CSR_TDATA3: begin
+        csr_rdata_int = '0;
+        illegal_csr   = ~DbgTriggerEn;
+      end
+      CSR_MCONTEXT: begin
+        csr_rdata_int = '0;
+        illegal_csr   = ~DbgTriggerEn;
+      end
+      CSR_SCONTEXT: begin
+        csr_rdata_int = '0;
+        illegal_csr   = ~DbgTriggerEn;
       end
 
       default: begin
@@ -897,6 +930,80 @@ module ibex_cs_registers #(
       mhpmcounter_q      <= mhpmcounter_d;
       mcountinhibit_q    <= mcountinhibit_d;
     end
+  end
+
+  /////////////////////////////
+  // Debug trigger registers //
+  /////////////////////////////
+
+  if (DbgTriggerEn) begin : gen_trigger_regs
+    // Register values
+    logic        tmatch_control_d, tmatch_control_q;
+    logic [31:0] tmatch_value_d, tmatch_value_q;
+    // Write enables
+    logic tmatch_control_we;
+    logic tmatch_value_we;
+
+    // Write select
+    assign tmatch_control_we = csr_we_int & debug_mode_i & (csr_addr_i == CSR_TDATA1);
+    assign tmatch_value_we   = csr_we_int & debug_mode_i & (csr_addr_i == CSR_TDATA2);
+
+    // tmatch_control is enabled when the execute bit is set
+    assign tmatch_control_d = tmatch_control_we ? csr_wdata_int[2] :
+                                                  tmatch_control_q;
+    // tmatch_value has its own clock gate
+    assign tmatch_value_d   = csr_wdata_int[31:0];
+
+    // Registers
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        tmatch_control_q <= 'b0;
+      end else begin
+        tmatch_control_q <= tmatch_control_d;
+      end
+    end
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        tmatch_value_q <= 'b0;
+      end else if (tmatch_value_we) begin
+        tmatch_value_q <= tmatch_value_d;
+      end
+    end
+
+    // Assign read data
+    // TSELECT - only one supported
+    assign tselect_rdata = 'b0;
+    // TDATA0 - only support simple address matching
+    assign tmatch_control_rdata = {4'h2,              // type    : address/data match
+                                   1'b1,              // dmode   : access from D mode only
+                                   6'h00,             // maskmax : exact match only
+                                   1'b0,              // hit     : not supported
+                                   1'b0,              // select  : address match only
+                                   1'b0,              // timing  : match before execution
+                                   2'b00,             // sizelo  : match any access
+                                   4'h1,              // action  : enter debug mode
+                                   1'b0,              // chain   : not supported
+                                   4'h0,              // match   : simple match
+                                   1'b1,              // m       : match in m-mode
+                                   1'b0,              // 0       : zero
+                                   1'b0,              // s       : not supported
+                                   1'b1,              // u       : match in u-mode
+                                   tmatch_control_q,  // execute : match instruction address
+                                   1'b0,              // store   : not supported
+                                   1'b0};             // load    : not supported
+    // TDATA1 - address match value only
+    assign tmatch_value_rdata = tmatch_value_q;
+
+    // Breakpoint matching
+    // We match against the next address, as the breakpoint must be taken before execution
+    assign trigger_match_o = tmatch_control_q & (pc_if_i[31:0] == tmatch_value_q[31:0]);
+
+  end else begin : gen_no_trigger_regs
+    assign tselect_rdata        = 'b0;
+    assign tmatch_control_rdata = 'b0;
+    assign tmatch_value_rdata   = 'b0;
+    assign trigger_match_o      = 'b0;
   end
 
 endmodule
