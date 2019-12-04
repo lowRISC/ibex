@@ -111,7 +111,7 @@ module ibex_cs_registers #(
     | (32'(RV32M) << 12)  // M - Integer Multiply/Divide extension
     | (0          << 13)  // N - User level interrupts supported
     | (0          << 18)  // S - Supervisor mode implemented
-    | (0          << 20)  // U - User mode implemented
+    | (1          << 20)  // U - User mode implemented
     | (0          << 23)  // X - Non-standard extensions present
     | (32'(MXL)   << 30); // M-XLEN
 
