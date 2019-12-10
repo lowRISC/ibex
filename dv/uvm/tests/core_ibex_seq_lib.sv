@@ -65,6 +65,23 @@ class core_base_seq #(type REQ = uvm_sequence_item) extends uvm_sequence#(REQ);
 endclass
 
 // Interrupt sequences
+
+class irq_raise_seq extends core_base_seq#(irq_seq_item);
+
+  `uvm_object_utils(irq_raise_seq)
+  `uvm_object_new
+
+  virtual task send_req();
+    irq_seq_item irq;
+    irq = irq_seq_item::type_id::create($sformatf("irq_raise_single[%0d]", iteration_cnt));
+    start_item(irq);
+    `DV_CHECK_RANDOMIZE_WITH_FATAL(irq, num_of_interrupt > 1;)
+    finish_item(irq);
+    get_response(irq);
+  endtask
+
+endclass
+
 class irq_raise_single_seq extends core_base_seq#(irq_seq_item);
 
   `uvm_object_utils(irq_raise_single_seq)
@@ -74,7 +91,7 @@ class irq_raise_single_seq extends core_base_seq#(irq_seq_item);
     irq_seq_item irq;
     irq = irq_seq_item::type_id::create($sformatf("irq_raise_single[%0d]", iteration_cnt));
     start_item(irq);
-    `DV_CHECK_RANDOMIZE_FATAL(irq)
+    `DV_CHECK_RANDOMIZE_WITH_FATAL(irq, num_of_interrupt == 1;)
     finish_item(irq);
     get_response(irq);
   endtask

@@ -156,6 +156,12 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
   bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] core_init_mie;
   priv_lvl_e                                    operating_mode;
   bit [$clog2(irq_agent_pkg::DATA_WIDTH)-1:0]   irq_id;
+  irq_seq_item                                  irq_txn;
+  bit [irq_agent_pkg::DATA_WIDTH-1:0]           irq;
+  bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] mstatus;
+  bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] mcause;
+  bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] mip;
+  bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] mie;
 
   virtual task send_stimulus();
     fork
@@ -172,7 +178,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
         end
         fork
           begin
-            if (cfg.enable_irq_seq) begin
+            if (enable_irq_seq) begin
               forever begin
                 send_irq_stimulus();
               end
@@ -199,24 +205,20 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
   endtask
 
   virtual task send_irq_stimulus();
-    irq_seq_item                                  irq_txn;
-    bit [irq_agent_pkg::DATA_WIDTH-1:0]           irq;
-    bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] mstatus;
-    bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] mcause;
-    bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] mip;
-    bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] mie;
+    bit irq_valid;
     // send the interrupt
-    vseq.start_irq_single_seq();
+    if (cfg.enable_irq_single_seq)        vseq.start_irq_raise_single_seq();
+    else if (cfg.enable_irq_multiple_seq) vseq.start_irq_raise_seq();
     irq_collected_port.get(irq_txn);
     irq = {irq_txn.irq_nm, irq_txn.irq_fast, 4'b0, irq_txn.irq_external, 3'b0,
            irq_txn.irq_timer, 3'b0, irq_txn.irq_software, 3'b0};
     // Get the bit position of the highest priority interrupt - ibex will only handle this one if
-    // there are multiple irqs asserted at once
-    irq_id = get_max_irq_id(irq);
+    // there are multiple irqs asserted at once.
+    irq_valid = get_max_valid_irq_id(irq);
     // If the interrupt is maskable, and the corresponding bit in MIE is not set, skip the next
     // checks, as it means the interrupt in question is not enabled by Ibex, and drop the interrupt
-    // lines to avoid locking up the simulation
-    if (!irq_txn.irq_nm && !core_init_mie[irq_id]) begin
+    // lines to avoid locking up the simulation.
+    if (!irq_valid) begin
       vseq.start_irq_drop_seq();
       irq_collected_port.get(irq_txn);
       irq = {irq_txn.irq_nm, irq_txn.irq_fast, 4'b0, irq_txn.irq_external, 3'b0,
@@ -224,6 +226,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
       `DV_CHECK_EQ_FATAL(irq, 0, "Interrupt lines have not been dropped")
       return;
     end
+    `uvm_info(`gfn, $sformatf("irq: 0b%0b", irq), UVM_LOW)
     check_next_core_status(HANDLING_IRQ, "Core did not jump to vectored interrupt handler", 750);
     check_priv_mode(PRIV_LVL_M);
     // check mstatus
@@ -263,14 +266,22 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
     wait_ret("mret", 1000);
   endtask
 
-  function int get_max_irq_id(bit [irq_agent_pkg::DATA_WIDTH-1:0] irq);
+  function int get_max_valid_irq_id(bit [irq_agent_pkg::DATA_WIDTH-1:0] irq);
     int i;
-    for (i = irq_agent_pkg::DATA_WIDTH-1; i >= 0; i = i - 1) begin
-      if (irq[i] === 1'b1) begin
-        return i;
+    // Ibex implementation of MIE does not mask NM interrupts, so need to check this separately
+    if (irq[irq_agent_pkg::DATA_WIDTH - 1]) begin
+      irq_id = irq_agent_pkg::DATA_WIDTH - 1;
+      return 1;
+    end
+    for (i = irq_agent_pkg::DATA_WIDTH - 2; i >= 0; i = i - 1) begin
+      // Ensure that irq is active and unmasked by the core
+      if (irq[i] == 1'b1 && core_init_mie[i] == 1'b1) begin
+        irq_id = i;
+        return 1;
         break;
       end
     end
+    return 0;
   endfunction
 
   virtual task check_mcause(bit irq_or_exc, bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-2:0] cause);
@@ -353,7 +364,7 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
           clk_vif.wait_clks(stimulus_delay);
           fork
             begin
-              if (cfg.enable_irq_seq) begin
+              if (enable_irq_seq) begin
                 forever begin
                   send_irq_stimulus();
                 end
@@ -458,7 +469,7 @@ class core_ibex_irq_csr_test extends core_ibex_directed_test;
   `uvm_component_new
 
   virtual task check_stimulus();
-    vseq.irq_single_seq_h.max_delay = 0;
+    vseq.irq_raise_seq_h.max_delay = 0;
     // wait for a write to mstatus - should be in init code
     wait(csr_vif.csr_access === 1'b1 && csr_vif.csr_addr === CSR_MSTATUS &&
          csr_vif.csr_op != CSR_OP_READ);
