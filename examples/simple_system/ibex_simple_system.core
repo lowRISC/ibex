@@ -7,6 +7,7 @@ description: "Generic simple system for running binaries on ibex using verilator
 filesets:
   files_sim_verilator:
     depend:
+      - lowrisc:dv_verilator:memutil_verilator
       - lowrisc:dv_verilator:simutil_verilator
       - lowrisc:ibex:ibex_core_tracing
       - lowrisc:ibex:sim_shared
