@@ -50,6 +50,7 @@ module ibex_cs_registers #(
     input  logic                 irq_external_i,
     input  logic [14:0]          irq_fast_i,
     output logic                 irq_pending_o,          // interupt request pending
+    input  logic                 nmi_mode_i,
     output logic                 csr_msip_o,             // software interrupt pending
     output logic                 csr_mtip_o,             // timer interrupt pending
     output logic                 csr_meip_o,             // external interrupt pending
@@ -580,13 +581,19 @@ module ibex_cs_registers #(
       csr_restore_mret_i: begin // MRET
         priv_lvl_d     = mstatus_q.mpp;
         mstatus_d.mie  = mstatus_q.mpie; // re-enable interrupts
-        // restore previous status for recoverable NMI
-        mstatus_d.mpie = mstack_q.mpie;
-        mstatus_d.mpp  = mstack_q.mpp;
-        mepc_d         = mstack_epc_q;
-        mcause_d       = mstack_cause_q;
-        mstack_d.mpie  = 1'b1;
-        mstack_d.mpp   = PRIV_LVL_U;
+
+        if (nmi_mode_i) begin
+          // when returning from an NMI restore state from mstack CSR
+          mstatus_d.mpie = mstack_q.mpie;
+          mstatus_d.mpp  = mstack_q.mpp;
+          mepc_d         = mstack_epc_q;
+          mcause_d       = mstack_cause_q;
+        end else begin
+          // otherwise just set mstatus.MPIE/MPP
+          // See RISC-V Privileged Specification, version 1.11, Section 3.1.6.1
+          mstatus_d.mpie = 1'b1;
+          mstatus_d.mpp  = PRIV_LVL_U;
+        end
       end // csr_restore_mret_i
 
       default:;

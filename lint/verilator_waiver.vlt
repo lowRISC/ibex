@@ -57,4 +57,4 @@ lint_off -msg UNUSED -file "*/rtl/ibex_pmp.sv" -lines 16
 // Signal unoptimizable: Feedback to clock or circular logic:
 // ibex_core.cs_registers_i.mie_q
 // Issue lowrisc/ibex#212
-lint_off -msg UNOPTFLAT -file "*/rtl/ibex_cs_registers.sv" -lines 166
+lint_off -msg UNOPTFLAT -file "*/rtl/ibex_cs_registers.sv" -lines 167

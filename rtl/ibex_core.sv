@@ -176,6 +176,7 @@ module ibex_core #(
 
   // Interrupts
   logic        irq_pending;
+  logic        nmi_mode;
   logic        csr_msip;
   logic        csr_mtip;
   logic        csr_meip;
@@ -441,6 +442,7 @@ module ibex_core #(
       .csr_mfip_i                   ( csr_mfip               ),
       .irq_pending_i                ( irq_pending            ),
       .irq_nm_i                     ( irq_nm_i               ),
+      .nmi_mode_o                   ( nmi_mode               ),
 
       // Debug Signal
       .debug_mode_o                 ( debug_mode             ),
@@ -604,6 +606,7 @@ module ibex_core #(
       .irq_external_i          ( irq_external_i         ),
       .irq_fast_i              ( irq_fast_i             ),
       .irq_pending_o           ( irq_pending            ),
+      .nmi_mode_i              ( nmi_mode               ),
       .csr_msip_o              ( csr_msip               ),
       .csr_mtip_o              ( csr_mtip               ),
       .csr_meip_o              ( csr_meip               ),
