@@ -280,12 +280,32 @@
     +require_signature_addr=1
     +gen_debug_section=1
     +randomize_csr=1
+    +no_csr_instr=1
     +enable_dummy_csr_write=1
     +boot_mode=m
   rtl_test: core_ibex_debug_csr_test
   sim_opts: >
     +require_signature_addr=1
     +enable_debug_seq=1
+  compare_opts:
+    compare_final_value_only: 1
+
+- test: riscv_irq_in_debug_mode_test
+  description: >
+    Send interrupts while the core is executing in debug mode, should ignore everything
+  iterations: 10
+  gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +require_signature_addr=1
+    +gen_debug_section=1
+    +randomize_csr=1
+    +no_csr_instr=1
+    +no_fence=1
+  rtl_test: core_ibex_debug_irq_test
+  sim_opts: >
+    +require_signature_addr=1
+    +enable_debug_seq=1
+    +enable_irq_multiple_seq=1
   compare_opts:
     compare_final_value_only: 1
 
