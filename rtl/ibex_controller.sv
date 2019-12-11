@@ -59,6 +59,7 @@ module ibex_controller (
     input  logic [14:0]           csr_mfip_i,            // fast interrupt pending
     input  logic                  irq_pending_i,         // interrupt request pending
     input  logic                  irq_nm_i,              // non-maskeable interrupt
+    output logic                  nmi_mode_o,            // core executing NMI handler
 
     // debug signals
     input  logic                  debug_req_i,
@@ -591,6 +592,9 @@ module ibex_controller (
 
   // signal to CSR when in debug mode
   assign debug_mode_o = debug_mode_q;
+
+  // signal to CSR when in an NMI handler (for nested exception handling)
+  assign nmi_mode_o = nmi_mode_q;
 
   ///////////////////
   // Stall control //
