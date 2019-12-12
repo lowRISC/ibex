@@ -192,8 +192,8 @@ class core_ibex_base_test extends uvm_test;
       begin : wait_timeout
         clk_vif.wait_clks(timeout);
         `uvm_fatal(`gfn,
-                   $sformatf("Did not receive core_status 0x%0x within %0d cycle timeout period",
-                   core_status, timeout))
+                   $sformatf("Did not receive core_status %0s within %0d cycle timeout period",
+                   core_status.name(), timeout))
       end
     join_any
     // Will only get here if we successfully beat the timeout period
