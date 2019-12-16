@@ -469,7 +469,7 @@ class core_ibex_irq_csr_test extends core_ibex_directed_test;
   `uvm_component_new
 
   virtual task check_stimulus();
-    vseq.irq_raise_seq_h.max_delay = 0;
+    vseq.irq_raise_single_seq_h.max_delay = 0;
     // wait for a write to mstatus - should be in init code
     wait(csr_vif.csr_access === 1'b1 && csr_vif.csr_addr === CSR_MSTATUS &&
          csr_vif.csr_op != CSR_OP_READ);
