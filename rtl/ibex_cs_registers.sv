@@ -613,8 +613,8 @@ module ibex_cs_registers #(
         csr_wreq      = 1'b0;
       end
       default: begin
-        csr_wdata_int = 'X;
-        csr_wreq      = 1'bX;
+        csr_wdata_int = csr_wdata_i;
+        csr_wreq      = 1'b0;
       end
     endcase
   end
@@ -777,7 +777,7 @@ module ibex_cs_registers #(
           2'b10   : pmp_cfg_wdata[i].mode = (PMPGranularity == 0) ? PMP_MODE_NA4:
                                                                     PMP_MODE_OFF;
           2'b11   : pmp_cfg_wdata[i].mode = PMP_MODE_NAPOT;
-          default : pmp_cfg_wdata[i].mode = pmp_cfg_mode_e'('X);
+          default : pmp_cfg_wdata[i].mode = PMP_MODE_OFF;
         endcase
       end
       assign pmp_cfg_wdata[i].exec  = csr_wdata_int[(i%4)*PMP_CFG_W+2];
@@ -1012,5 +1012,18 @@ module ibex_cs_registers #(
     assign tmatch_value_rdata   = 'b0;
     assign trigger_match_o      = 'b0;
   end
+
+  ////////////////
+  // Assertions //
+  ////////////////
+
+  // Selectors must be known/valid.
+  `ASSERT(IbexCsrOpValid, csr_op_i inside {
+      CSR_OP_READ,
+      CSR_OP_WRITE,
+      CSR_OP_SET,
+      CSR_OP_CLEAR
+      }, clk_i, !rst_ni)
+  `ASSERT_KNOWN(IbexCsrWdataIntKnown, csr_wdata_int, clk_i, !rst_ni)
 
 endmodule

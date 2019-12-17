@@ -105,7 +105,7 @@ module ibex_load_store_unit (
             2'b01:   data_be = 4'b1110;
             2'b10:   data_be = 4'b1100;
             2'b11:   data_be = 4'b1000;
-            default: data_be = 'X;
+            default: data_be = 4'b1111;
           endcase // case (data_offset)
         end else begin // second part of misaligned transaction
           unique case (data_offset)
@@ -113,7 +113,7 @@ module ibex_load_store_unit (
             2'b01:   data_be = 4'b0001;
             2'b10:   data_be = 4'b0011;
             2'b11:   data_be = 4'b0111;
-            default: data_be = 'X;
+            default: data_be = 4'b1111;
           endcase // case (data_offset)
         end
       end
@@ -125,7 +125,7 @@ module ibex_load_store_unit (
             2'b01:   data_be = 4'b0110;
             2'b10:   data_be = 4'b1100;
             2'b11:   data_be = 4'b1000;
-            default: data_be = 'X;
+            default: data_be = 4'b1111;
           endcase // case (data_offset)
         end else begin // second part of misaligned transaction
           data_be = 4'b0001;
@@ -139,11 +139,11 @@ module ibex_load_store_unit (
           2'b01:   data_be = 4'b0010;
           2'b10:   data_be = 4'b0100;
           2'b11:   data_be = 4'b1000;
-          default: data_be = 'X;
+          default: data_be = 4'b1111;
         endcase // case (data_offset)
       end
 
-      default:     data_be = 'X;
+      default:     data_be = 4'b1111;
     endcase // case (data_type_ex_i)
   end
 
@@ -159,7 +159,7 @@ module ibex_load_store_unit (
       2'b01:   data_wdata = {data_wdata_ex_i[23:0], data_wdata_ex_i[31:24]};
       2'b10:   data_wdata = {data_wdata_ex_i[15:0], data_wdata_ex_i[31:16]};
       2'b11:   data_wdata = {data_wdata_ex_i[ 7:0], data_wdata_ex_i[31: 8]};
-      default: data_wdata = 'X;
+      default: data_wdata =  data_wdata_ex_i[31:0];
     endcase // case (data_offset)
   end
 
@@ -208,7 +208,7 @@ module ibex_load_store_unit (
       2'b01:   rdata_w_ext = {data_rdata_i[ 7:0], rdata_q[31:8]};
       2'b10:   rdata_w_ext = {data_rdata_i[15:0], rdata_q[31:16]};
       2'b11:   rdata_w_ext = {data_rdata_i[23:0], rdata_q[31:24]};
-      default: rdata_w_ext = 'X;
+      default: rdata_w_ext =  data_rdata_i[31:0];
     endcase
   end
 
@@ -251,7 +251,7 @@ module ibex_load_store_unit (
         end
       end
 
-      default: rdata_h_ext = 'X;
+      default: rdata_h_ext = {16'h0000, data_rdata_i[15:0]};
     endcase // case (rdata_offset_q)
   end
 
@@ -290,7 +290,7 @@ module ibex_load_store_unit (
         end
       end
 
-      default: rdata_b_ext = 'X;
+      default: rdata_b_ext = {24'h00_0000, data_rdata_i[7:0]};
     endcase // case (rdata_offset_q)
   end
 
@@ -300,8 +300,8 @@ module ibex_load_store_unit (
       2'b00:       data_rdata_ext = rdata_w_ext;
       2'b01:       data_rdata_ext = rdata_h_ext;
       2'b10,2'b11: data_rdata_ext = rdata_b_ext;
-      default:     data_rdata_ext = 'X;
-    endcase //~case(rdata_type_q)
+      default:     data_rdata_ext = rdata_w_ext;
+    endcase // case (data_type_q)
   end
 
   /////////////
@@ -433,7 +433,7 @@ module ibex_load_store_unit (
       end
 
       default: begin
-        ls_fsm_ns = ls_fsm_e'(1'bX);
+        ls_fsm_ns = IDLE;
       end
     endcase
   end
@@ -481,6 +481,16 @@ module ibex_load_store_unit (
   ////////////////
   // Assertions //
   ////////////////
+
+  // Selectors must be known/valid.
+  `ASSERT_KNOWN(IbexDataTypeKnown, data_type_ex_i, clk_i, !rst_ni)
+  `ASSERT_KNOWN(IbexDataOffsetKnown, data_offset, clk_i, !rst_ni)
+  `ASSERT_KNOWN(IbexRDataOffsetQKnown, rdata_offset_q, clk_i, !rst_ni)
+  `ASSERT_KNOWN(IbexDataTypeQKnown, data_type_q, clk_i, !rst_ni)
+  `ASSERT(IbexLsuStateValid, ls_fsm_cs inside {
+      IDLE, WAIT_GNT_MIS, WAIT_RVALID_MIS, WAIT_GNT, WAIT_RVALID,
+      WAIT_RVALID_DONE
+      }, clk_i, !rst_ni)
 
 `ifndef VERILATOR
   // there must not be an rvalid unless the FSM is handlling it
