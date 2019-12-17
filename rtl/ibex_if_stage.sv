@@ -268,26 +268,16 @@ module ibex_if_stage #(
       PC_DRET
       }, clk_i, !rst_ni)
 
-`ifndef VERILATOR
-  // boot address must be aligned to 256 bytes
-  assert property (@(posedge clk_i) disable iff (!rst_ni)
-      (boot_addr_i[7:0] == 8'h00)) else
-    $error("Provided boot address not aligned to 256 bytes");
+  // Boot address must be aligned to 256 bytes.
+  `ASSERT(IbexBootAddrUnaligned, boot_addr_i[7:0] == 8'h00, clk_i, !rst_ni)
 
-  // errors must only be sent together with rvalid
-  assert property (@(posedge clk_i) disable iff (!rst_ni)
-      (instr_err_i) |-> (instr_rvalid_i)) else
-    $display("Instruction error not sent with rvalid");
+  // Errors must only be sent together with rvalid.
+  `ASSERT(IbexInstrErrWithoutRvalid, instr_err_i |-> instr_rvalid_i, clk_i, !rst_ni)
 
-  // address must not contain X when request is sent
-  assert property (@(posedge clk_i) disable iff (!rst_ni)
-      (instr_req_o) |-> (!$isunknown(instr_addr_o))) else
-    $display("Instruction address not valid");
+  // Address must not contain X when request is sent.
+  `ASSERT(IbexInstrAddrUnknown, instr_req_o |-> !$isunknown(instr_addr_o), clk_i, !rst_ni)
 
-  // address must be word aligned when request is sent
-  assert property (@(posedge clk_i) disable iff (!rst_ni)
-      (instr_req_o) |-> (instr_addr_o[1:0] == 2'b00)) else
-    $display("Instruction address not word aligned");
-`endif
+  // Address must be word aligned when request is sent.
+  `ASSERT(IbexInstrAddrUnaligned, instr_req_o |-> (instr_addr_o[1:0] == 2'b00), clk_i, !rst_ni)
 
 endmodule
