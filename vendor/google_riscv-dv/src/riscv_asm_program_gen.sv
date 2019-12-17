@@ -802,6 +802,21 @@ class riscv_asm_program_gen extends uvm_object;
     for (int i = 1; i < max_interrupt_vector_num; i++) begin
       string intr_handler[$];
       push_gpr_to_kernel_stack(status, scratch, cfg.mstatus_mprv, cfg.sp, cfg.tp, intr_handler);
+      // If nested interrupts are enabled, set xSTATUS.xIE in the interrupt handler
+      // to re-enable interrupt handling capabilities
+      if (cfg.enable_nested_interrupt) begin
+        case (status)
+          MSTATUS: begin
+            intr_handler.push_back($sformatf("csrsi 0x%0x, 0x%0x", status, 8));
+          end
+          SSTATUS: begin
+            intr_handler.push_back($sformatf("csrsi 0x%0x, 0x%0x", status, 2));
+          end
+          USTATUS: begin
+            intr_handler.push_back($sformatf("csrsi 0x%0x, 0x%0x", status, 1));
+          end
+        endcase
+      end
       gen_signature_handshake(.instr(intr_handler), .signature_type(CORE_STATUS), .core_status(HANDLING_IRQ));
       intr_handler = {intr_handler,
                       $sformatf("csrr x%0d, 0x%0x # %0s", cfg.gpr[0], cause, cause.name()),

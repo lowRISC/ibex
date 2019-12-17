@@ -221,6 +221,9 @@ class riscv_rand_instr_stream extends riscv_instr_stream;
         ((avail_regs.size() > 0) && !(SP inside {avail_regs}))) begin
       exclude_instr = {C_ADDI4SPN, C_ADDI16SP, C_LWSP, C_LDSP};
     end
+    if (is_in_debug && !cfg.enable_ebreak_in_debug_rom) begin
+      exclude_instr = {exclude_instr, EBREAK, C_EBREAK};
+    end
     instr = riscv_instr::get_rand_instr(.include_instr(allowed_instr),
                                         .exclude_instr(exclude_instr));
     randomize_gpr(instr);
