@@ -233,7 +233,7 @@ module ibex_id_stage #(
       OP_A_FWD:    alu_operand_a = lsu_addr_last_i;
       OP_A_CURRPC: alu_operand_a = pc_id_i;
       OP_A_IMM:    alu_operand_a = imm_a;
-      default:     alu_operand_a = 'X;
+      default:     alu_operand_a = pc_id_i;
     endcase
   end
 
@@ -251,7 +251,7 @@ module ibex_id_stage #(
       IMM_B_J:         imm_b = imm_j_type;
       IMM_B_INCR_PC:   imm_b = instr_is_compressed_i ? 32'h2 : 32'h4;
       IMM_B_INCR_ADDR: imm_b = 32'h4;
-      default:         imm_b = 'X;
+      default:         imm_b = 32'h4;
     endcase
   end
 
@@ -273,8 +273,8 @@ module ibex_id_stage #(
       RF_WD_EX:  regfile_wdata = regfile_wdata_ex_i;
       RF_WD_LSU: regfile_wdata = regfile_wdata_lsu_i;
       RF_WD_CSR: regfile_wdata = csr_rdata_i;
-      default:   regfile_wdata = 'X;
-    endcase;
+      default:   regfile_wdata = regfile_wdata_ex_i;
+    endcase
   end
 
   ///////////////////
@@ -317,6 +317,9 @@ module ibex_id_stage #(
       .RV32E ( RV32E ),
       .RV32M ( RV32M )
   ) decoder_i (
+      .clk_i                           ( clk_i                ),
+      .rst_ni                          ( rst_ni               ),
+
       // controller
       .illegal_insn_o                  ( illegal_insn_dec     ),
       .ebrk_insn_o                     ( ebrk_insn            ),
@@ -600,7 +603,7 @@ module ibex_id_stage #(
       end
 
       default: begin
-        id_wb_fsm_ns = id_fsm_e'(1'bX);
+        id_wb_fsm_ns = IDLE;
       end
     endcase
   end
@@ -610,6 +613,24 @@ module ibex_id_stage #(
   ////////////////
   // Assertions //
   ////////////////
+
+  // Selectors must be known/valid.
+  `ASSERT_KNOWN(IbexAluOpMuxSelKnown, alu_op_a_mux_sel, clk_i, !rst_ni)
+  `ASSERT(IbexImmBMuxSelValid, imm_b_mux_sel inside {
+      IMM_B_I,
+      IMM_B_S,
+      IMM_B_B,
+      IMM_B_U,
+      IMM_B_J,
+      IMM_B_INCR_PC,
+      IMM_B_INCR_ADDR
+      }, clk_i, !rst_ni)
+  `ASSERT(IbexRegfileWdataSelValid, regfile_wdata_sel inside {
+      RF_WD_LSU,
+      RF_WD_EX,
+      RF_WD_CSR
+      }, clk_i, !rst_ni)
+  `ASSERT_KNOWN(IbexWbStateKnown, id_wb_fsm_cs, clk_i, !rst_ni)
 
 `ifndef VERILATOR
   // branch decision must be valid when jumping

@@ -585,7 +585,7 @@ module ibex_controller (
 
       default: begin
         instr_req_o = 1'b0;
-        ctrl_fsm_ns = ctrl_fsm_e'(1'bX);
+        ctrl_fsm_ns = RESET;
       end
     endcase
   end
@@ -635,5 +635,15 @@ module ibex_controller (
       illegal_insn_q <= illegal_insn_d;
     end
   end
+
+  ////////////////
+  // Assertions //
+  ////////////////
+
+  // Selectors must be known/valid.
+  `ASSERT(IbexCtrlStateValid, ctrl_fsm_cs inside {
+      RESET, BOOT_SET, WAIT_SLEEP, SLEEP, FIRST_FETCH, DECODE, FLUSH,
+      IRQ_TAKEN, DBG_TAKEN_IF, DBG_TAKEN_ID
+      }, clk_i, !rst_ni)
 
 endmodule
