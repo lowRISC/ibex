@@ -149,6 +149,7 @@ class riscv_instr_gen_config extends uvm_object;
   string                 asm_test_suffix;
   // Enable interrupt bit in MSTATUS (MIE, SIE, UIE)
   bit                    enable_interrupt;
+  bit                    enable_nested_interrupt;
   // We need a separate control knob for enabling timer interrupts, as Spike
   // throws an exception if xIE.xTIE is enabled
   bit                    enable_timer_irq;
@@ -440,6 +441,7 @@ class riscv_instr_gen_config extends uvm_object;
     get_int_arg_value("+num_of_tests=", num_of_tests);
     get_int_arg_value("+enable_page_table_exception=", enable_page_table_exception);
     get_bool_arg_value("+enable_interrupt=", enable_interrupt);
+    get_bool_arg_value("+enable_nested_interrupt=", enable_nested_interrupt);
     get_bool_arg_value("+enable_timer_irq=", enable_timer_irq);
     get_int_arg_value("+num_of_sub_program=", num_of_sub_program);
     get_int_arg_value("+instr_cnt=", instr_cnt);
