@@ -64,7 +64,7 @@ module ibex_load_store_unit (
   logic         data_sign_ext_q;
   logic         data_we_q;
 
-  logic [1:0]   wdata_offset;   // mux control for data to be written to memory
+  logic [1:0]   data_offset;   // mux control for data to be written to memory
 
   logic [3:0]   data_be;
   logic [31:0]  data_wdata;
@@ -89,7 +89,8 @@ module ibex_load_store_unit (
 
   ls_fsm_e ls_fsm_cs, ls_fsm_ns;
 
-  assign data_addr = adder_result_ex_i;
+  assign data_addr   = adder_result_ex_i;
+  assign data_offset = data_addr[1:0];
 
   ///////////////////
   // BE generation //
@@ -99,33 +100,33 @@ module ibex_load_store_unit (
     unique case (data_type_ex_i) // Data type 00 Word, 01 Half word, 11,10 byte
       2'b00: begin // Writing a word
         if (!handle_misaligned_q) begin // first part of potentially misaligned transaction
-          unique case (data_addr[1:0])
+          unique case (data_offset)
             2'b00:   data_be = 4'b1111;
             2'b01:   data_be = 4'b1110;
             2'b10:   data_be = 4'b1100;
             2'b11:   data_be = 4'b1000;
             default: data_be = 'X;
-          endcase // case (data_addr[1:0])
+          endcase // case (data_offset)
         end else begin // second part of misaligned transaction
-          unique case (data_addr[1:0])
+          unique case (data_offset)
             2'b00:   data_be = 4'b0000; // this is not used, but included for completeness
             2'b01:   data_be = 4'b0001;
             2'b10:   data_be = 4'b0011;
             2'b11:   data_be = 4'b0111;
             default: data_be = 'X;
-          endcase // case (data_addr[1:0])
+          endcase // case (data_offset)
         end
       end
 
       2'b01: begin // Writing a half word
         if (!handle_misaligned_q) begin // first part of potentially misaligned transaction
-          unique case (data_addr[1:0])
+          unique case (data_offset)
             2'b00:   data_be = 4'b0011;
             2'b01:   data_be = 4'b0110;
             2'b10:   data_be = 4'b1100;
             2'b11:   data_be = 4'b1000;
             default: data_be = 'X;
-          endcase // case (data_addr[1:0])
+          endcase // case (data_offset)
         end else begin // second part of misaligned transaction
           data_be = 4'b0001;
         end
@@ -133,13 +134,13 @@ module ibex_load_store_unit (
 
       2'b10,
       2'b11: begin // Writing a byte
-        unique case (data_addr[1:0])
+        unique case (data_offset)
           2'b00:   data_be = 4'b0001;
           2'b01:   data_be = 4'b0010;
           2'b10:   data_be = 4'b0100;
           2'b11:   data_be = 4'b1000;
           default: data_be = 'X;
-        endcase // case (data_addr[1:0])
+        endcase // case (data_offset)
       end
 
       default:     data_be = 'X;
@@ -152,15 +153,14 @@ module ibex_load_store_unit (
 
   // prepare data to be written to the memory
   // we handle misaligned accesses, half word and byte accesses here
-  assign wdata_offset = data_addr[1:0];
   always_comb begin
-    unique case (wdata_offset)
+    unique case (data_offset)
       2'b00:   data_wdata =  data_wdata_ex_i[31:0];
       2'b01:   data_wdata = {data_wdata_ex_i[23:0], data_wdata_ex_i[31:24]};
       2'b10:   data_wdata = {data_wdata_ex_i[15:0], data_wdata_ex_i[31:16]};
       2'b11:   data_wdata = {data_wdata_ex_i[ 7:0], data_wdata_ex_i[31: 8]};
       default: data_wdata = 'X;
-    endcase // case (wdata_offset)
+    endcase // case (data_offset)
   end
 
   /////////////////////
@@ -184,7 +184,7 @@ module ibex_load_store_unit (
       data_sign_ext_q <= 1'b0;
       data_we_q       <= 1'b0;
     end else if (ctrl_update) begin
-      rdata_offset_q  <= data_addr[1:0];
+      rdata_offset_q  <= data_offset;
       data_type_q     <= data_type_ex_i;
       data_sign_ext_q <= data_sign_ext_ex_i;
       data_we_q       <= data_we_ex_i;
@@ -310,8 +310,8 @@ module ibex_load_store_unit (
 
   // check for misaligned accesses that need to be split into two word-aligned accesses
   assign split_misaligned_access =
-      ((data_type_ex_i == 2'b00) && (data_addr[1:0] != 2'b00)) || // misaligned word access
-      ((data_type_ex_i == 2'b01) && (data_addr[1:0] == 2'b11));   // misaligned half-word access
+      ((data_type_ex_i == 2'b00) && (data_offset != 2'b00)) || // misaligned word access
+      ((data_type_ex_i == 2'b01) && (data_offset == 2'b11));   // misaligned half-word access
 
   // FSM
   always_comb begin
