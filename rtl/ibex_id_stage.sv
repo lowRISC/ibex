@@ -632,28 +632,20 @@ module ibex_id_stage #(
       }, clk_i, !rst_ni)
   `ASSERT_KNOWN(IbexWbStateKnown, id_wb_fsm_cs, clk_i, !rst_ni)
 
-`ifndef VERILATOR
-  // branch decision must be valid when jumping
-  assert property (@(posedge clk_i) disable iff (!rst_ni)
-      (branch_decision_i !== 1'bx || !branch_in_dec)) else
-    $display("Branch decision is X");
+  // Branch decision must be valid when jumping.
+  `ASSERT(IbexBranchDecisionValid, branch_in_dec |-> !$isunknown(branch_decision_i), clk_i, !rst_ni)
 
-`ifdef CHECK_MISALIGNED
-  assert property (@(posedge clk_i) disable iff (!rst_ni)
-      (!lsu_addr_incr_req_i)) else
-    $display("Misaligned memory access at %x",pc_id_i);
-`endif
+  // Instruction delivered to ID stage can not contain X.
+  `ASSERT(IbexIdInstrKnown,
+      (instr_valid_i && !(illegal_c_insn_i || instr_fetch_err_i)) |-> !$isunknown(instr_rdata_i),
+      clk_i, !rst_ni)
 
-  // instruction delivered to ID stage must always be valid
-  assert property (@(posedge clk_i) disable iff (!rst_ni)
-      (instr_valid_i && !(illegal_c_insn_i || instr_fetch_err_i)) |->
-      (!$isunknown(instr_rdata_i))) else
-    $display("Instruction is valid, but has at least one X");
+  // Multicycle enable signals must be unique.
+  `ASSERT(IbexMulticycleEnableUnique,
+      $onehot0({data_req_dec, multdiv_en_dec, branch_in_dec, jump_in_dec}), clk_i, !rst_ni)
 
-  // multicycle enable signals must be unique
-  assert property (@(posedge clk_i) disable iff (!rst_ni)
-      ($onehot0({data_req_dec, multdiv_en_dec, branch_in_dec, jump_in_dec}))) else
-    $display("Multicycle enable signals are not unique");
-`endif
+  `ifdef CHECK_MISALIGNED
+  `ASSERT(IbexMisalignedMemoryAccess, !lsu_addr_incr_req_i, clk_i, !rst_ni)
+  `endif
 
 endmodule
