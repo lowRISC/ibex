@@ -472,11 +472,12 @@ class riscv_load_store_rand_addr_instr_stream extends riscv_load_store_base_inst
         store.copy(store_instr);
         store.rs2 = riscv_reg_t'(i % 32);
         store.imm_str = load_store_instr[i].imm_str;
+        // TODO: C_FLDSP is in both rv32 and rv64 ISA
         case (load_store_instr[i].instr_name) inside
           LB, LBU : store.instr_name = SB;
           LH, LHU : store.instr_name = SH;
-          LW, C_LW, FLW, C_FLW : store.instr_name = SW;
-          LD, C_LD, FLD, C_FLD, LWU : store.instr_name = SD;
+          LW, C_LW, C_LWSP, FLW, C_FLW, C_FLWSP : store.instr_name = SW;
+          LD, C_LD, C_LDSP, FLD, C_FLD, LWU     : store.instr_name = SD;
           default : `uvm_fatal(`gfn, $sformatf("Unexpected op: %0s",
                                                load_store_instr[i].convert2asm()))
         endcase
