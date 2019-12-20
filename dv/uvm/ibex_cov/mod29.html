@@ -1,0 +1,2331 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Author" content="<username>"> <meta name="GENERATOR" content="urg/version [en] (platform name) [urg]">
+<title>Unified Coverage Report :: Module :: ibex_tracer</title>
+<link type="text/css" rel="stylesheet" href="css/.urg.css">
+<link type="text/css" rel="stylesheet" href="css/.layout.css">
+<link type="text/css" rel="stylesheet" href="css/.breadcrumb.css">
+<script type="text/javascript" src="js/.jquery.js"></script>
+<script type="text/javascript" src="js/.jquery-ui.js"></script>
+<script type="text/javascript" src="js/.sortable.js"></script>
+<script type="text/javascript" src="js/.layout.js"></script>
+<script type="text/javascript" src="js/.breadcrumb.js"></script>
+<script type="text/javascript">
+var layout, westLayout, centerLayout;
+$(document).ready(function () {
+  if ($("#north-bread-crumb")) {
+    $("#north-bread-crumb").jBreadCrumb({easing:'swing'})
+  }
+  layout = $("body").layout({ 
+    resizable: true,
+    spacing_open: 4,
+    spacing_closed: 4,
+    north: {
+      size: 76
+    },
+    south: {
+      size: 45,
+      initClosed: true
+    },
+    west: {
+      size: 500,
+      resizable: true,
+      initClosed: false
+    }
+  });
+  centerLayout = $('div.ui-layout-center').layout({
+    north__paneSelector: ".ui-layout-center-inner-north",
+    center__paneSelector: ".ui-layout-center-inner-center", 
+    north__size: 50,
+    spacing_open: 4,
+    spacing_closed: 4
+  });
+});
+</script>
+</head>
+<body onLoad="initPage();"><div class="ui-layout-north">
+<div class="logo"></div>
+<center class="pagetitle">Module Definition</center>
+<div align="center"><a href="dashboard.html" ><b>dashboard</b></a> | <a href="hierarchy.html" ><b>hierarchy</b></a> | <a href="modlist.html" ><b>modlist</b></a> | groups | <a href="tests.html" ><b>tests</b></a> | <a href="asserts.html" ><b>asserts</b></a></div>
+
+</div>
+<div class="ui-layout-west">
+<div name='tag_ibex_tracer'>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module : <a href="#"  onclick="showContent('tag_ibex_tracer')">ibex_tracer</a></span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s7 cl rt"> 78.06</td>
+<td class="s5 cl rt"><a href="mod29.html#Line" > 57.26</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"><a href="mod29.html#Branch" > 98.86</a></td>
+<td class="wht cl rt"></td>
+</tr></table><br clear=all>
+<span class=repname>Source File(s) : </span>
+<br clear=all>
+<a href="javascript:void(0);"  onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_tracer.sv')">/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_tracer.sv</a><br clear=all>
+<br clear=all>
+<span class=repname>Module self-instances :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="wht cl wordwrap"><a href="mod29.html#inst_tag_30"  onclick="showContent('inst_tag_30')">core_ibex_tb_top.dut.u_ibex_tracer<img src="fx.gif" class="icon"></a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+</tr></table></div>
+</div>
+<br clear=all>
+</div>
+<div class="ui-layout-center">
+<div class="ui-layout-center-inner-center">
+<div name='tag_ibex_tracer'>
+<a name="Line"></a>
+Line Coverage for Module : <a href="mod29.html" >ibex_tracer</a><br clear=all>
+<table class="noborder">
+<col width="122">
+<col span="4" width="82">
+<tr><th></th><th>Line No.</th><th>Total</th><th>Covered</th><th>Percent</th></tr>
+<tr class="s5"><td class="lf">TOTAL</td><td></td><td>489</td><td>280</td><td>57.26</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>94</td><td>23</td><td>23</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>140</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s1"><td class="lf">ROUTINE</td><td>149</td><td>242</td><td>36</td><td>14.88</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>395</td><td>1</td><td>1</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>399</td><td>2</td><td>2</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>404</td><td>2</td><td>2</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>412</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>419</td><td>2</td><td>2</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>425</td><td>2</td><td>2</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>431</td><td>2</td><td>2</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>440</td><td>4</td><td>4</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>451</td><td>7</td><td>7</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>465</td><td>7</td><td>7</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>482</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>489</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>496</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>503</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>510</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>518</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>525</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s7"><td class="lf">ROUTINE</td><td>533</td><td>12</td><td>9</td><td>75.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>553</td><td>2</td><td>2</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>558</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>568</td><td>5</td><td>5</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>581</td><td>5</td><td>5</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>613</td><td>15</td><td>15</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>638</td><td>10</td><td>10</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>660</td><td>9</td><td>9</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ROUTINE</td><td>678</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>685</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">INITIAL</td><td>694</td><td>2</td><td>2</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>701</td><td>2</td><td>2</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>707</td><td>97</td><td>97</td><td>100.00</td></tr>
+</table>
+<pre class="code"><br clear=all>
+93                      
+94         1/1              if (file_handle == 32'h0) begin
+95                            string file_name_base = &quot;trace_core&quot;;
+96         1/1                $value$plusargs(&quot;ibex_tracer_file_base=%s&quot;, file_name_base);
+97         1/1                $sformat(file_name, &quot;%s_%h.log&quot;, file_name_base, hart_id_i);
+98                      
+99         1/1                $display(&quot;%m: Writing execution trace to %s&quot;, file_name);
+100        1/1                file_handle = $fopen(file_name, &quot;w&quot;);
+101        1/1                $fwrite(file_handle, &quot;Time\tCycle\tPC\tInsn\tDecoded instruction\tRegister and memory contents\n&quot;);
+102                         end
+                        MISSING_ELSE
+103                     
+104                         // Write compressed instructions as four hex digits (16 bit word), and
+105                         // uncompressed ones as 8 hex digits (32 bit words).
+106        1/1              if (insn_is_compressed) begin
+107        1/1                rvfi_insn_str = $sformatf(&quot;%h&quot;, rvfi_insn[15:0]);
+108                         end else begin
+109        1/1                rvfi_insn_str = $sformatf(&quot;%h&quot;, rvfi_insn);
+110                         end
+111                     
+112        1/1              $fwrite(file_handle, &quot;%15t\t%d\t%h\t%s\t%s\t&quot;, $time, cycle, rvfi_pc_rdata, rvfi_insn_str, decoded_str);
+113                     
+114        1/1              if ((data_accessed &amp; RS1) != 0) begin
+115        1/1                $fwrite(file_handle, &quot; %s:0x%08x&quot;, reg_addr_to_str(rvfi_rs1_addr), rvfi_rs1_rdata);
+116                         end
+                        MISSING_ELSE
+117        1/1              if ((data_accessed &amp; RS2) != 0) begin
+118        1/1                $fwrite(file_handle, &quot; %s:0x%08x&quot;, reg_addr_to_str(rvfi_rs2_addr), rvfi_rs2_rdata);
+119                         end
+                        MISSING_ELSE
+120        1/1              if ((data_accessed &amp; RD) != 0) begin
+121        1/1                $fwrite(file_handle, &quot; %s=0x%08x&quot;, reg_addr_to_str(rvfi_rd_addr), rvfi_rd_wdata);
+122                         end
+                        MISSING_ELSE
+123        1/1              if ((data_accessed &amp; MEM) != 0) begin
+124        1/1                $fwrite(file_handle, &quot; PA:0x%08x&quot;, rvfi_mem_addr);
+125                     
+126        1/1                if (rvfi_mem_rmask != 4'b000) begin
+127        1/1                  $fwrite(file_handle, &quot; store:0x%08x&quot;, rvfi_mem_wdata);
+128                           end
+                   <font color = "red">==>  MISSING_ELSE</font>
+129        1/1                if (rvfi_mem_wmask != 4'b000) begin
+130        1/1                  $fwrite(file_handle, &quot; load:0x%08x&quot;, rvfi_mem_rdata);
+131                           end
+                        MISSING_ELSE
+132                         end
+                        MISSING_ELSE
+133                     
+134        1/1              $fwrite(file_handle, &quot;\n&quot;);
+135                       endfunction
+136                     
+137                     
+138                       // Format register address with &quot;x&quot; prefix, left-aligned to a fixed width of 3 characters.
+139                       function string reg_addr_to_str(input logic [4:0] addr);
+140        1/1              if (addr &lt; 10) begin
+141        1/1                return $sformatf(&quot; x%0d&quot;, addr);
+142                         end else begin
+143        1/1                return $sformatf(&quot;x%0d&quot;, addr);
+144                         end
+145                       endfunction
+146                     
+147                       // Get a CSR name for a CSR address.
+148                       function string get_csr_name(input logic [11:0] csr_addr);
+149        1/1              unique case (csr_addr)
+150        <font color = "red">0/1     ==>        12'd0: return &quot;ustatus&quot;;</font>
+151        <font color = "red">0/1     ==>        12'd4: return &quot;uie&quot;;</font>
+152        <font color = "red">0/1     ==>        12'd5: return &quot;utvec&quot;;</font>
+153        <font color = "red">0/1     ==>        12'd64: return &quot;uscratch&quot;;</font>
+154        <font color = "red">0/1     ==>        12'd65: return &quot;uepc&quot;;</font>
+155        <font color = "red">0/1     ==>        12'd66: return &quot;ucause&quot;;</font>
+156        <font color = "red">0/1     ==>        12'd67: return &quot;utval&quot;;</font>
+157        <font color = "red">0/1     ==>        12'd68: return &quot;uip&quot;;</font>
+158        <font color = "red">0/1     ==>        12'd1: return &quot;fflags&quot;;</font>
+159        <font color = "red">0/1     ==>        12'd2: return &quot;frm&quot;;</font>
+160        <font color = "red">0/1     ==>        12'd3: return &quot;fcsr&quot;;</font>
+161        <font color = "red">0/1     ==>        12'd3072: return &quot;cycle&quot;;</font>
+162        <font color = "red">0/1     ==>        12'd3073: return &quot;time&quot;;</font>
+163        <font color = "red">0/1     ==>        12'd3074: return &quot;instret&quot;;</font>
+164        <font color = "red">0/1     ==>        12'd3075: return &quot;hpmcounter3&quot;;</font>
+165        <font color = "red">0/1     ==>        12'd3076: return &quot;hpmcounter4&quot;;</font>
+166        <font color = "red">0/1     ==>        12'd3077: return &quot;hpmcounter5&quot;;</font>
+167        <font color = "red">0/1     ==>        12'd3078: return &quot;hpmcounter6&quot;;</font>
+168        <font color = "red">0/1     ==>        12'd3079: return &quot;hpmcounter7&quot;;</font>
+169        <font color = "red">0/1     ==>        12'd3080: return &quot;hpmcounter8&quot;;</font>
+170        <font color = "red">0/1     ==>        12'd3081: return &quot;hpmcounter9&quot;;</font>
+171        <font color = "red">0/1     ==>        12'd3082: return &quot;hpmcounter10&quot;;</font>
+172        <font color = "red">0/1     ==>        12'd3083: return &quot;hpmcounter11&quot;;</font>
+173        <font color = "red">0/1     ==>        12'd3084: return &quot;hpmcounter12&quot;;</font>
+174        <font color = "red">0/1     ==>        12'd3085: return &quot;hpmcounter13&quot;;</font>
+175        <font color = "red">0/1     ==>        12'd3086: return &quot;hpmcounter14&quot;;</font>
+176        <font color = "red">0/1     ==>        12'd3087: return &quot;hpmcounter15&quot;;</font>
+177        <font color = "red">0/1     ==>        12'd3088: return &quot;hpmcounter16&quot;;</font>
+178        <font color = "red">0/1     ==>        12'd3089: return &quot;hpmcounter17&quot;;</font>
+179        <font color = "red">0/1     ==>        12'd3090: return &quot;hpmcounter18&quot;;</font>
+180        <font color = "red">0/1     ==>        12'd3091: return &quot;hpmcounter19&quot;;</font>
+181        <font color = "red">0/1     ==>        12'd3092: return &quot;hpmcounter20&quot;;</font>
+182        <font color = "red">0/1     ==>        12'd3093: return &quot;hpmcounter21&quot;;</font>
+183        <font color = "red">0/1     ==>        12'd3094: return &quot;hpmcounter22&quot;;</font>
+184        <font color = "red">0/1     ==>        12'd3095: return &quot;hpmcounter23&quot;;</font>
+185        <font color = "red">0/1     ==>        12'd3096: return &quot;hpmcounter24&quot;;</font>
+186        <font color = "red">0/1     ==>        12'd3097: return &quot;hpmcounter25&quot;;</font>
+187        <font color = "red">0/1     ==>        12'd3098: return &quot;hpmcounter26&quot;;</font>
+188        <font color = "red">0/1     ==>        12'd3099: return &quot;hpmcounter27&quot;;</font>
+189        <font color = "red">0/1     ==>        12'd3100: return &quot;hpmcounter28&quot;;</font>
+190        <font color = "red">0/1     ==>        12'd3101: return &quot;hpmcounter29&quot;;</font>
+191        <font color = "red">0/1     ==>        12'd3102: return &quot;hpmcounter30&quot;;</font>
+192        <font color = "red">0/1     ==>        12'd3103: return &quot;hpmcounter31&quot;;</font>
+193        <font color = "red">0/1     ==>        12'd3200: return &quot;cycleh&quot;;</font>
+194        <font color = "red">0/1     ==>        12'd3201: return &quot;timeh&quot;;</font>
+195        <font color = "red">0/1     ==>        12'd3202: return &quot;instreth&quot;;</font>
+196        <font color = "red">0/1     ==>        12'd3203: return &quot;hpmcounter3h&quot;;</font>
+197        <font color = "red">0/1     ==>        12'd3204: return &quot;hpmcounter4h&quot;;</font>
+198        <font color = "red">0/1     ==>        12'd3205: return &quot;hpmcounter5h&quot;;</font>
+199        <font color = "red">0/1     ==>        12'd3206: return &quot;hpmcounter6h&quot;;</font>
+200        <font color = "red">0/1     ==>        12'd3207: return &quot;hpmcounter7h&quot;;</font>
+201        <font color = "red">0/1     ==>        12'd3208: return &quot;hpmcounter8h&quot;;</font>
+202        <font color = "red">0/1     ==>        12'd3209: return &quot;hpmcounter9h&quot;;</font>
+203        <font color = "red">0/1     ==>        12'd3210: return &quot;hpmcounter10h&quot;;</font>
+204        <font color = "red">0/1     ==>        12'd3211: return &quot;hpmcounter11h&quot;;</font>
+205        <font color = "red">0/1     ==>        12'd3212: return &quot;hpmcounter12h&quot;;</font>
+206        <font color = "red">0/1     ==>        12'd3213: return &quot;hpmcounter13h&quot;;</font>
+207        <font color = "red">0/1     ==>        12'd3214: return &quot;hpmcounter14h&quot;;</font>
+208        <font color = "red">0/1     ==>        12'd3215: return &quot;hpmcounter15h&quot;;</font>
+209        <font color = "red">0/1     ==>        12'd3216: return &quot;hpmcounter16h&quot;;</font>
+210        <font color = "red">0/1     ==>        12'd3217: return &quot;hpmcounter17h&quot;;</font>
+211        <font color = "red">0/1     ==>        12'd3218: return &quot;hpmcounter18h&quot;;</font>
+212        <font color = "red">0/1     ==>        12'd3219: return &quot;hpmcounter19h&quot;;</font>
+213        <font color = "red">0/1     ==>        12'd3220: return &quot;hpmcounter20h&quot;;</font>
+214        <font color = "red">0/1     ==>        12'd3221: return &quot;hpmcounter21h&quot;;</font>
+215        <font color = "red">0/1     ==>        12'd3222: return &quot;hpmcounter22h&quot;;</font>
+216        <font color = "red">0/1     ==>        12'd3223: return &quot;hpmcounter23h&quot;;</font>
+217        <font color = "red">0/1     ==>        12'd3224: return &quot;hpmcounter24h&quot;;</font>
+218        <font color = "red">0/1     ==>        12'd3225: return &quot;hpmcounter25h&quot;;</font>
+219        <font color = "red">0/1     ==>        12'd3226: return &quot;hpmcounter26h&quot;;</font>
+220        <font color = "red">0/1     ==>        12'd3227: return &quot;hpmcounter27h&quot;;</font>
+221        <font color = "red">0/1     ==>        12'd3228: return &quot;hpmcounter28h&quot;;</font>
+222        <font color = "red">0/1     ==>        12'd3229: return &quot;hpmcounter29h&quot;;</font>
+223        <font color = "red">0/1     ==>        12'd3230: return &quot;hpmcounter30h&quot;;</font>
+224        <font color = "red">0/1     ==>        12'd3231: return &quot;hpmcounter31h&quot;;</font>
+225        <font color = "red">0/1     ==>        12'd256: return &quot;sstatus&quot;;</font>
+226        <font color = "red">0/1     ==>        12'd258: return &quot;sedeleg&quot;;</font>
+227        <font color = "red">0/1     ==>        12'd259: return &quot;sideleg&quot;;</font>
+228        <font color = "red">0/1     ==>        12'd260: return &quot;sie&quot;;</font>
+229        <font color = "red">0/1     ==>        12'd261: return &quot;stvec&quot;;</font>
+230        <font color = "red">0/1     ==>        12'd262: return &quot;scounteren&quot;;</font>
+231        <font color = "red">0/1     ==>        12'd320: return &quot;sscratch&quot;;</font>
+232        <font color = "red">0/1     ==>        12'd321: return &quot;sepc&quot;;</font>
+233        <font color = "red">0/1     ==>        12'd322: return &quot;scause&quot;;</font>
+234        <font color = "red">0/1     ==>        12'd323: return &quot;stval&quot;;</font>
+235        <font color = "red">0/1     ==>        12'd324: return &quot;sip&quot;;</font>
+236        <font color = "red">0/1     ==>        12'd384: return &quot;satp&quot;;</font>
+237        <font color = "red">0/1     ==>        12'd3857: return &quot;mvendorid&quot;;</font>
+238        <font color = "red">0/1     ==>        12'd3858: return &quot;marchid&quot;;</font>
+239        <font color = "red">0/1     ==>        12'd3859: return &quot;mimpid&quot;;</font>
+240        <font color = "red">0/1     ==>        12'd3860: return &quot;mhartid&quot;;</font>
+241        1/1                12'd768: return &quot;mstatus&quot;;
+242        1/1                12'd769: return &quot;misa&quot;;
+243        <font color = "red">0/1     ==>        12'd770: return &quot;medeleg&quot;;</font>
+244        <font color = "red">0/1     ==>        12'd771: return &quot;mideleg&quot;;</font>
+245        1/1                12'd772: return &quot;mie&quot;;
+246        1/1                12'd773: return &quot;mtvec&quot;;
+247        <font color = "red">0/1     ==>        12'd774: return &quot;mcounteren&quot;;</font>
+248        1/1                12'd832: return &quot;mscratch&quot;;
+249        1/1                12'd833: return &quot;mepc&quot;;
+250        1/1                12'd834: return &quot;mcause&quot;;
+251        1/1                12'd835: return &quot;mtval&quot;;
+252        1/1                12'd836: return &quot;mip&quot;;
+253        <font color = "red">0/1     ==>        12'd928: return &quot;pmpcfg0&quot;;</font>
+254        <font color = "red">0/1     ==>        12'd929: return &quot;pmpcfg1&quot;;</font>
+255        <font color = "red">0/1     ==>        12'd930: return &quot;pmpcfg2&quot;;</font>
+256        <font color = "red">0/1     ==>        12'd931: return &quot;pmpcfg3&quot;;</font>
+257        <font color = "red">0/1     ==>        12'd944: return &quot;pmpaddr0&quot;;</font>
+258        <font color = "red">0/1     ==>        12'd945: return &quot;pmpaddr1&quot;;</font>
+259        <font color = "red">0/1     ==>        12'd946: return &quot;pmpaddr2&quot;;</font>
+260        <font color = "red">0/1     ==>        12'd947: return &quot;pmpaddr3&quot;;</font>
+261        <font color = "red">0/1     ==>        12'd948: return &quot;pmpaddr4&quot;;</font>
+262        <font color = "red">0/1     ==>        12'd949: return &quot;pmpaddr5&quot;;</font>
+263        <font color = "red">0/1     ==>        12'd950: return &quot;pmpaddr6&quot;;</font>
+264        <font color = "red">0/1     ==>        12'd951: return &quot;pmpaddr7&quot;;</font>
+265        <font color = "red">0/1     ==>        12'd952: return &quot;pmpaddr8&quot;;</font>
+266        <font color = "red">0/1     ==>        12'd953: return &quot;pmpaddr9&quot;;</font>
+267        <font color = "red">0/1     ==>        12'd954: return &quot;pmpaddr10&quot;;</font>
+268        <font color = "red">0/1     ==>        12'd955: return &quot;pmpaddr11&quot;;</font>
+269        <font color = "red">0/1     ==>        12'd956: return &quot;pmpaddr12&quot;;</font>
+270        <font color = "red">0/1     ==>        12'd957: return &quot;pmpaddr13&quot;;</font>
+271        <font color = "red">0/1     ==>        12'd958: return &quot;pmpaddr14&quot;;</font>
+272        <font color = "red">0/1     ==>        12'd959: return &quot;pmpaddr15&quot;;</font>
+273        1/1                12'd2816: return &quot;mcycle&quot;;
+274        1/1                12'd2818: return &quot;minstret&quot;;
+275        1/1                12'd2819: return &quot;mhpmcounter3&quot;;
+276        1/1                12'd2820: return &quot;mhpmcounter4&quot;;
+277        1/1                12'd2821: return &quot;mhpmcounter5&quot;;
+278        1/1                12'd2822: return &quot;mhpmcounter6&quot;;
+279        1/1                12'd2823: return &quot;mhpmcounter7&quot;;
+280        1/1                12'd2824: return &quot;mhpmcounter8&quot;;
+281        1/1                12'd2825: return &quot;mhpmcounter9&quot;;
+282        1/1                12'd2826: return &quot;mhpmcounter10&quot;;
+283        <font color = "red">0/1     ==>        12'd2827: return &quot;mhpmcounter11&quot;;</font>
+284        <font color = "red">0/1     ==>        12'd2828: return &quot;mhpmcounter12&quot;;</font>
+285        <font color = "red">0/1     ==>        12'd2829: return &quot;mhpmcounter13&quot;;</font>
+286        <font color = "red">0/1     ==>        12'd2830: return &quot;mhpmcounter14&quot;;</font>
+287        <font color = "red">0/1     ==>        12'd2831: return &quot;mhpmcounter15&quot;;</font>
+288        <font color = "red">0/1     ==>        12'd2832: return &quot;mhpmcounter16&quot;;</font>
+289        <font color = "red">0/1     ==>        12'd2833: return &quot;mhpmcounter17&quot;;</font>
+290        <font color = "red">0/1     ==>        12'd2834: return &quot;mhpmcounter18&quot;;</font>
+291        <font color = "red">0/1     ==>        12'd2835: return &quot;mhpmcounter19&quot;;</font>
+292        <font color = "red">0/1     ==>        12'd2836: return &quot;mhpmcounter20&quot;;</font>
+293        <font color = "red">0/1     ==>        12'd2837: return &quot;mhpmcounter21&quot;;</font>
+294        <font color = "red">0/1     ==>        12'd2838: return &quot;mhpmcounter22&quot;;</font>
+295        <font color = "red">0/1     ==>        12'd2839: return &quot;mhpmcounter23&quot;;</font>
+296        <font color = "red">0/1     ==>        12'd2840: return &quot;mhpmcounter24&quot;;</font>
+297        <font color = "red">0/1     ==>        12'd2841: return &quot;mhpmcounter25&quot;;</font>
+298        <font color = "red">0/1     ==>        12'd2842: return &quot;mhpmcounter26&quot;;</font>
+299        <font color = "red">0/1     ==>        12'd2843: return &quot;mhpmcounter27&quot;;</font>
+300        <font color = "red">0/1     ==>        12'd2844: return &quot;mhpmcounter28&quot;;</font>
+301        <font color = "red">0/1     ==>        12'd2845: return &quot;mhpmcounter29&quot;;</font>
+302        <font color = "red">0/1     ==>        12'd2846: return &quot;mhpmcounter30&quot;;</font>
+303        <font color = "red">0/1     ==>        12'd2847: return &quot;mhpmcounter31&quot;;</font>
+304        1/1                12'd2944: return &quot;mcycleh&quot;;
+305        1/1                12'd2946: return &quot;minstreth&quot;;
+306        1/1                12'd2947: return &quot;mhpmcounter3h&quot;;
+307        1/1                12'd2948: return &quot;mhpmcounter4h&quot;;
+308        1/1                12'd2949: return &quot;mhpmcounter5h&quot;;
+309        1/1                12'd2950: return &quot;mhpmcounter6h&quot;;
+310        1/1                12'd2951: return &quot;mhpmcounter7h&quot;;
+311        1/1                12'd2952: return &quot;mhpmcounter8h&quot;;
+312        1/1                12'd2953: return &quot;mhpmcounter9h&quot;;
+313        1/1                12'd2954: return &quot;mhpmcounter10h&quot;;
+314        <font color = "red">0/1     ==>        12'd2955: return &quot;mhpmcounter11h&quot;;</font>
+315        <font color = "red">0/1     ==>        12'd2956: return &quot;mhpmcounter12h&quot;;</font>
+316        1/1                12'd2957: return &quot;mhpmcounter13h&quot;;
+317        <font color = "red">0/1     ==>        12'd2958: return &quot;mhpmcounter14h&quot;;</font>
+318        <font color = "red">0/1     ==>        12'd2959: return &quot;mhpmcounter15h&quot;;</font>
+319        <font color = "red">0/1     ==>        12'd2960: return &quot;mhpmcounter16h&quot;;</font>
+320        <font color = "red">0/1     ==>        12'd2961: return &quot;mhpmcounter17h&quot;;</font>
+321        <font color = "red">0/1     ==>        12'd2962: return &quot;mhpmcounter18h&quot;;</font>
+322        <font color = "red">0/1     ==>        12'd2963: return &quot;mhpmcounter19h&quot;;</font>
+323        <font color = "red">0/1     ==>        12'd2964: return &quot;mhpmcounter20h&quot;;</font>
+324        <font color = "red">0/1     ==>        12'd2965: return &quot;mhpmcounter21h&quot;;</font>
+325        <font color = "red">0/1     ==>        12'd2966: return &quot;mhpmcounter22h&quot;;</font>
+326        <font color = "red">0/1     ==>        12'd2967: return &quot;mhpmcounter23h&quot;;</font>
+327        <font color = "red">0/1     ==>        12'd2968: return &quot;mhpmcounter24h&quot;;</font>
+328        <font color = "red">0/1     ==>        12'd2969: return &quot;mhpmcounter25h&quot;;</font>
+329        <font color = "red">0/1     ==>        12'd2970: return &quot;mhpmcounter26h&quot;;</font>
+330        <font color = "red">0/1     ==>        12'd2971: return &quot;mhpmcounter27h&quot;;</font>
+331        <font color = "red">0/1     ==>        12'd2972: return &quot;mhpmcounter28h&quot;;</font>
+332        <font color = "red">0/1     ==>        12'd2973: return &quot;mhpmcounter29h&quot;;</font>
+333        <font color = "red">0/1     ==>        12'd2974: return &quot;mhpmcounter30h&quot;;</font>
+334        <font color = "red">0/1     ==>        12'd2975: return &quot;mhpmcounter31h&quot;;</font>
+335        <font color = "red">0/1     ==>        12'd803: return &quot;mhpmevent3&quot;;</font>
+336        <font color = "red">0/1     ==>        12'd804: return &quot;mhpmevent4&quot;;</font>
+337        <font color = "red">0/1     ==>        12'd805: return &quot;mhpmevent5&quot;;</font>
+338        <font color = "red">0/1     ==>        12'd806: return &quot;mhpmevent6&quot;;</font>
+339        <font color = "red">0/1     ==>        12'd807: return &quot;mhpmevent7&quot;;</font>
+340        <font color = "red">0/1     ==>        12'd808: return &quot;mhpmevent8&quot;;</font>
+341        <font color = "red">0/1     ==>        12'd809: return &quot;mhpmevent9&quot;;</font>
+342        <font color = "red">0/1     ==>        12'd810: return &quot;mhpmevent10&quot;;</font>
+343        <font color = "red">0/1     ==>        12'd811: return &quot;mhpmevent11&quot;;</font>
+344        <font color = "red">0/1     ==>        12'd812: return &quot;mhpmevent12&quot;;</font>
+345        <font color = "red">0/1     ==>        12'd813: return &quot;mhpmevent13&quot;;</font>
+346        <font color = "red">0/1     ==>        12'd814: return &quot;mhpmevent14&quot;;</font>
+347        <font color = "red">0/1     ==>        12'd815: return &quot;mhpmevent15&quot;;</font>
+348        <font color = "red">0/1     ==>        12'd816: return &quot;mhpmevent16&quot;;</font>
+349        <font color = "red">0/1     ==>        12'd817: return &quot;mhpmevent17&quot;;</font>
+350        <font color = "red">0/1     ==>        12'd818: return &quot;mhpmevent18&quot;;</font>
+351        <font color = "red">0/1     ==>        12'd819: return &quot;mhpmevent19&quot;;</font>
+352        <font color = "red">0/1     ==>        12'd820: return &quot;mhpmevent20&quot;;</font>
+353        <font color = "red">0/1     ==>        12'd821: return &quot;mhpmevent21&quot;;</font>
+354        <font color = "red">0/1     ==>        12'd822: return &quot;mhpmevent22&quot;;</font>
+355        <font color = "red">0/1     ==>        12'd823: return &quot;mhpmevent23&quot;;</font>
+356        <font color = "red">0/1     ==>        12'd824: return &quot;mhpmevent24&quot;;</font>
+357        <font color = "red">0/1     ==>        12'd825: return &quot;mhpmevent25&quot;;</font>
+358        <font color = "red">0/1     ==>        12'd826: return &quot;mhpmevent26&quot;;</font>
+359        <font color = "red">0/1     ==>        12'd827: return &quot;mhpmevent27&quot;;</font>
+360        <font color = "red">0/1     ==>        12'd828: return &quot;mhpmevent28&quot;;</font>
+361        <font color = "red">0/1     ==>        12'd829: return &quot;mhpmevent29&quot;;</font>
+362        <font color = "red">0/1     ==>        12'd830: return &quot;mhpmevent30&quot;;</font>
+363        <font color = "red">0/1     ==>        12'd831: return &quot;mhpmevent31&quot;;</font>
+364        <font color = "red">0/1     ==>        12'd1952: return &quot;tselect&quot;;</font>
+365        <font color = "red">0/1     ==>        12'd1953: return &quot;tdata1&quot;;</font>
+366        <font color = "red">0/1     ==>        12'd1954: return &quot;tdata2&quot;;</font>
+367        <font color = "red">0/1     ==>        12'd1955: return &quot;tdata3&quot;;</font>
+368        1/1                12'd1968: return &quot;dcsr&quot;;
+369        1/1                12'd1969: return &quot;dpc&quot;;
+370        1/1                12'd1970: return &quot;dscratch&quot;;
+371        <font color = "red">0/1     ==>        12'd512: return &quot;hstatus&quot;;</font>
+372        <font color = "red">0/1     ==>        12'd514: return &quot;hedeleg&quot;;</font>
+373        <font color = "red">0/1     ==>        12'd515: return &quot;hideleg&quot;;</font>
+374        <font color = "red">0/1     ==>        12'd516: return &quot;hie&quot;;</font>
+375        <font color = "red">0/1     ==>        12'd517: return &quot;htvec&quot;;</font>
+376        1/1                12'd576: return &quot;hscratch&quot;;
+377        <font color = "red">0/1     ==>        12'd577: return &quot;hepc&quot;;</font>
+378        <font color = "red">0/1     ==>        12'd578: return &quot;hcause&quot;;</font>
+379        <font color = "red">0/1     ==>        12'd579: return &quot;hbadaddr&quot;;</font>
+380        <font color = "red">0/1     ==>        12'd580: return &quot;hip&quot;;</font>
+381        <font color = "red">0/1     ==>        12'd896: return &quot;mbase&quot;;</font>
+382        <font color = "red">0/1     ==>        12'd897: return &quot;mbound&quot;;</font>
+383        <font color = "red">0/1     ==>        12'd898: return &quot;mibase&quot;;</font>
+384        <font color = "red">0/1     ==>        12'd899: return &quot;mibound&quot;;</font>
+385        <font color = "red">0/1     ==>        12'd900: return &quot;mdbase&quot;;</font>
+386        <font color = "red">0/1     ==>        12'd901: return &quot;mdbound&quot;;</font>
+387        <font color = "red">0/1     ==>        12'd800: return &quot;mucounteren&quot;;</font>
+388        <font color = "red">0/1     ==>        12'd801: return &quot;mscounteren&quot;;</font>
+389        <font color = "red">0/1     ==>        12'd802: return &quot;mhcounteren&quot;;</font>
+390        1/1                default: return $sformatf(&quot;0x%x&quot;, csr_addr);
+391                         endcase
+392                       endfunction
+393                     
+394                       function void decode_mnemonic(input string mnemonic);
+395        1/1              decoded_str = mnemonic;
+396                       endfunction
+397                     
+398                       function void decode_r_insn(input string mnemonic);
+399        1/1              data_accessed = RS1 | RS2 | RD;
+400        1/1              decoded_str = $sformatf(&quot;%s\tx%0d,x%0d,x%0d&quot;, mnemonic, rvfi_rd_addr, rvfi_rs1_addr, rvfi_rs2_addr);
+401                       endfunction
+402                     
+403                       function void decode_i_insn(input string mnemonic);
+404        1/1              data_accessed = RS1 | RD;
+405        1/1              decoded_str = $sformatf(&quot;%s\tx%0d,x%0d,%0d&quot;, mnemonic, rvfi_rd_addr, rvfi_rs1_addr,
+406                                         $signed({{20 {rvfi_insn[31]}}, rvfi_insn[31:20]}));
+407                       endfunction
+408                     
+409                       function void decode_i_shift_insn(input string mnemonic);
+410                         // SLLI, SRLI, SRAI
+411                         logic [4:0] shamt;
+412        1/1              shamt = {rvfi_insn[24:20]};
+413        1/1              data_accessed = RS1 | RD;
+414        1/1              decoded_str = $sformatf(&quot;%s\tx%0d,x%0d,0x%0x&quot;, mnemonic, rvfi_rd_addr, rvfi_rs1_addr, shamt);
+415                       endfunction
+416                     
+417                       function void decode_i_jalr_insn(input string mnemonic);
+418                         // JALR
+419        1/1              data_accessed = RS1 | RD;
+420        1/1              decoded_str = $sformatf(&quot;%s\tx%0d,%0d(x%0d)&quot;, mnemonic, rvfi_rd_addr,
+421                             $signed({{20 {rvfi_insn[31]}}, rvfi_insn[31:20]}), rvfi_rs1_addr);
+422                       endfunction
+423                     
+424                       function void decode_u_insn(input string mnemonic);
+425        1/1              data_accessed = RD;
+426        1/1              decoded_str = $sformatf(&quot;%s\tx%0d,0x%0x&quot;, mnemonic, rvfi_rd_addr, {rvfi_insn[31:12]});
+427                       endfunction
+428                     
+429                       function void decode_j_insn(input string mnemonic);
+430                         // JAL
+431        1/1              data_accessed = RD;
+432        1/1              decoded_str = $sformatf(&quot;%s\tx%0d,%0x&quot;, mnemonic, rvfi_rd_addr, rvfi_pc_wdata);
+433                       endfunction
+434                     
+435                       function void decode_b_insn(input string mnemonic);
+436                         logic [31:0] branch_target;
+437                         logic [31:0] imm;
+438                     
+439                         // We cannot use rvfi_pc_wdata for conditional jumps.
+440        1/1              imm = $signed({ {19 {rvfi_insn[31]}}, rvfi_insn[31], rvfi_insn[7],
+441                                  rvfi_insn[30:25], rvfi_insn[11:8], 1'b0 });
+442        1/1              branch_target = rvfi_pc_rdata + imm;
+443                     
+444        1/1              data_accessed = RS1 | RS2 | RD;
+445        1/1              decoded_str = $sformatf(&quot;%s\tx%0d,x%0d,%0x&quot;, mnemonic, rvfi_rs1_addr, rvfi_rs2_addr, branch_target);
+446                       endfunction
+447                     
+448                       function void decode_csr_insn(input string mnemonic);
+449                         logic [11:0] csr;
+450                         string csr_name;
+451        1/1              csr = rvfi_insn[31:20];
+452        1/1              csr_name = get_csr_name(csr);
+453                     
+454        1/1              data_accessed = RD;
+455                     
+456        1/1              if (!rvfi_insn[14]) begin
+457        1/1                data_accessed |= RS1;
+458        1/1                decoded_str = $sformatf(&quot;%s\tx%0d,%s,x%0d&quot;, mnemonic, rvfi_rd_addr, csr_name, rvfi_rs1_addr);
+459                         end else begin
+460        1/1                decoded_str = $sformatf(&quot;%s\tx%0d,%s,%0d&quot;, mnemonic, rvfi_rd_addr, csr_name, { 27'b0, rvfi_insn[19:15]});
+461                         end
+462                       endfunction
+463                     
+464                       function void decode_cr_insn(input string mnemonic);
+465        1/1              if (rvfi_rs2_addr == 5'b0) begin
+466        1/1                if (rvfi_insn[12] == 1'b1) begin
+467                             // C.JALR
+468        1/1                  data_accessed = RS1 | RD;
+469                           end else begin
+470                             // C.JR
+471        1/1                  data_accessed = RS1;
+472                           end
+473        1/1                decoded_str = $sformatf(&quot;%s\tx%0d&quot;, mnemonic, rvfi_rs1_addr);
+474                         end else begin
+475        1/1                data_accessed = RS1 | RS2 | RD; // RS1 == RD
+476        1/1                decoded_str = $sformatf(&quot;%s\tx%0d,x%0d&quot;, mnemonic, rvfi_rd_addr, rvfi_rs2_addr);
+477                         end
+478                       endfunction
+479                     
+480                       function void decode_ci_cli_insn(input string mnemonic);
+481                         logic [5:0] imm;
+482        1/1              imm = {rvfi_insn[12], rvfi_insn[6:2]};
+483        1/1              data_accessed = RD;
+484        1/1              decoded_str = $sformatf(&quot;%s\tx%0d,%0d&quot;, mnemonic, rvfi_rd_addr, $signed(imm));
+485                       endfunction
+486                     
+487                       function void decode_ci_caddi_insn(input string mnemonic);
+488                         logic [5:0] nzimm;
+489        1/1              nzimm = {rvfi_insn[12], rvfi_insn[6:2]};
+490        1/1              data_accessed = RS1 | RD;
+491        1/1              decoded_str = $sformatf(&quot;%s\tx%0d,%0d&quot;, mnemonic, rvfi_rd_addr, $signed(nzimm));
+492                       endfunction
+493                     
+494                       function void decode_ci_caddi16sp_insn(input string mnemonic);
+495                         logic [9:0] nzimm;
+496        1/1              nzimm = {rvfi_insn[12], rvfi_insn[4:3], rvfi_insn[5], rvfi_insn[2], rvfi_insn[6], 4'b0};
+497        1/1              data_accessed = RS1 | RD;
+498        1/1              decoded_str = $sformatf(&quot;%s\tx%0d,%0d&quot;, mnemonic, rvfi_rd_addr, $signed(nzimm));
+499                       endfunction
+500                     
+501                       function void decode_ci_clui_insn(input string mnemonic);
+502                         logic [5:0] nzimm;
+503        1/1              nzimm = {rvfi_insn[12], rvfi_insn[6:2]};
+504        1/1              data_accessed = RD;
+505        1/1              decoded_str = $sformatf(&quot;%s\tx%0d,0x%0x&quot;, mnemonic, rvfi_rd_addr, 20'($signed(nzimm)));
+506                       endfunction
+507                     
+508                       function void decode_ci_cslli_insn(input string mnemonic);
+509                         logic [5:0] shamt;
+510        1/1              shamt = {rvfi_insn[12], rvfi_insn[6:2]};
+511        1/1              data_accessed = RS1 | RD;
+512        1/1              decoded_str = $sformatf(&quot;%s\tx%0d,0x%0x&quot;, mnemonic, rvfi_rd_addr, shamt);
+513                       endfunction
+514                     
+515                       function void decode_ciw_insn(input string mnemonic);
+516                         // C.ADDI4SPN
+517                         logic [9:0] nzuimm;
+518        1/1              nzuimm = {rvfi_insn[10:7], rvfi_insn[12:11], rvfi_insn[5], rvfi_insn[6], 2'b00};
+519        1/1              data_accessed = RD;
+520        1/1              decoded_str = $sformatf(&quot;%s\tx%0d,x2,%0d&quot;, mnemonic, rvfi_rd_addr, nzuimm);
+521                       endfunction
+522                     
+523                       function void decode_cb_sr_insn(input string mnemonic);
+524                         logic [5:0] shamt;
+525        1/1              shamt = {rvfi_insn[12], rvfi_insn[6:2]};
+526        1/1              data_accessed = RS1 | RD;
+527        1/1              decoded_str = $sformatf(&quot;%s\tx%0d,0x%0x&quot;, mnemonic, rvfi_rs1_addr, shamt);
+528                       endfunction
+529                     
+530                       function void decode_cb_insn(input string mnemonic);
+531                         logic [7:0] imm;
+532                         logic [31:0] jump_target;
+533        1/1              if (rvfi_insn[15:13] == 3'b110 || rvfi_insn[15:13] == 3'b111) begin
+534                           // C.BNEZ and C.BEQZ
+535                           // We cannot use rvfi_pc_wdata for conditional jumps.
+536        1/1                imm = {rvfi_insn[12], rvfi_insn[6:5], rvfi_insn[2], rvfi_insn[11:10], rvfi_insn[4:3]};
+537        1/1                jump_target = rvfi_pc_rdata + 32'($signed({imm, 1'b0}));
+538        1/1                data_accessed = RS1;
+539        1/1                decoded_str = $sformatf(&quot;%s\tx%0d,%0x&quot;, mnemonic, rvfi_rs1_addr, jump_target);
+540        1/1              end else if (rvfi_insn[15:13] == 3'b100) begin
+541                           // C.ANDI
+542        1/1                imm = {{2{rvfi_insn[12]}}, rvfi_insn[12], rvfi_insn[6:2]};
+543        1/1                data_accessed = RS1 | RD; // RS1 == RD
+544        1/1                decoded_str = $sformatf(&quot;%s\tx%0d,%0d&quot;, mnemonic, rvfi_rd_addr, $signed(imm));
+545                         end else begin
+546        <font color = "red">0/1     ==>        imm = {rvfi_insn[12], rvfi_insn[6:2], 2'b00};</font>
+547        <font color = "red">0/1     ==>        data_accessed = RS1;</font>
+548        <font color = "red">0/1     ==>        decoded_str = $sformatf(&quot;%s\tx%0d,0x%0x&quot;, mnemonic, rvfi_rs1_addr, imm);</font>
+549                         end
+550                       endfunction
+551                     
+552                       function void decode_cs_insn(input string mnemonic);
+553        1/1              data_accessed = RS1 | RS2 | RD; // RS1 == RD
+554        1/1              decoded_str = $sformatf(&quot;%s\tx%0d,x%0d&quot;, mnemonic, rvfi_rd_addr, rvfi_rs2_addr);
+555                       endfunction
+556                     
+557                       function void decode_cj_insn(input string mnemonic);
+558        1/1              if (rvfi_insn[15:13] == 3'b001) begin
+559                           // C.JAL
+560        1/1                data_accessed = RD;
+561                         end
+                        MISSING_ELSE
+562        1/1              decoded_str = $sformatf(&quot;%s\t%0x&quot;, mnemonic, rvfi_pc_wdata);
+563                       endfunction
+564                     
+565                       function void decode_compressed_load_insn(input string mnemonic);
+566                         logic [7:0] imm;
+567                     
+568        1/1              if (rvfi_insn[1:0] == OPCODE_C0) begin
+569                           // C.LW
+570        1/1                imm = {1'b0, rvfi_insn[5], rvfi_insn[12:10], rvfi_insn[6], 2'b00};
+571                         end else begin
+572                           // C.LWSP
+573        1/1                imm = {rvfi_insn[3:2], rvfi_insn[12], rvfi_insn[6:4], 2'b00};
+574                         end
+575        1/1              data_accessed = RS1 | RD | MEM;
+576        1/1              decoded_str = $sformatf(&quot;%s\tx%0d,%0d(x%0d)&quot;, mnemonic, rvfi_rd_addr, imm, rvfi_rs1_addr);
+577                       endfunction
+578                     
+579                       function void decode_compressed_store_insn(input string mnemonic);
+580                         logic [7:0] imm;
+581        1/1              if (rvfi_insn[1:0] == OPCODE_C0) begin
+582                           // C.SW
+583        1/1                imm = {1'b0, rvfi_insn[5], rvfi_insn[12:10], rvfi_insn[6], 2'b00};
+584                         end else begin
+585                           // C.SWSP
+586        1/1                imm = {rvfi_insn[8:7], rvfi_insn[12:9], 2'b00};
+587                         end
+588        1/1              data_accessed = RS1 | RS2 | MEM;
+589        1/1              decoded_str = $sformatf(&quot;%s\tx%0d,%0d(x%0d)&quot;, mnemonic, rvfi_rs2_addr, imm, rvfi_rs1_addr);
+590                       endfunction
+591                     
+592                       function void decode_load_insn();
+593                         string      mnemonic;
+594                     
+595                         /*
+596                         Gives wrong results in Verilator &lt; 4.020.
+597                         See https://github.com/lowRISC/ibex/issues/372 and
+598                         https://www.veripool.org/issues/1536-Verilator-Misoptimization-in-if-and-case-with-default-statement-inside-a-function
+599                     
+600                         unique case (rvfi_insn[14:12])
+601                           3'b000: mnemonic = &quot;lb&quot;;
+602                           3'b001: mnemonic = &quot;lh&quot;;
+603                           3'b010: mnemonic = &quot;lw&quot;;
+604                           3'b100: mnemonic = &quot;lbu&quot;;
+605                           3'b101: mnemonic = &quot;lhu&quot;;
+606                           default: begin
+607                             decode_mnemonic(&quot;INVALID&quot;);
+608                             return;
+609                           end
+610                         endcase
+611                         */
+612                         logic [2:0] size;
+613        1/1              size = rvfi_insn[14:12];
+614        1/1              if (size == 3'b000) begin
+615        1/1                mnemonic = &quot;lb&quot;;
+616        1/1              end else if (size == 3'b001) begin
+617        1/1                mnemonic = &quot;lh&quot;;
+618        1/1              end else if (size == 3'b010) begin
+619        1/1                mnemonic = &quot;lw&quot;;
+620        1/1              end else if (size == 3'b100) begin
+621        1/1                mnemonic = &quot;lbu&quot;;
+622        1/1              end else if (size == 3'b101) begin
+623        1/1                mnemonic = &quot;lhu&quot;;
+624                         end else begin
+625        1/1                decode_mnemonic(&quot;INVALID&quot;);
+626        1/1                return;
+627                         end
+628                     
+629                     
+630        1/1              data_accessed = RD | RS1 | MEM;
+631        1/1              decoded_str = $sformatf(&quot;%s\tx%0d,%0d(x%0d)&quot;, mnemonic, rvfi_rd_addr,
+632                                         $signed({{20 {rvfi_insn[31]}}, rvfi_insn[31:20]}), rvfi_rs1_addr);
+633                       endfunction
+634                     
+635                       function void decode_store_insn();
+636                         string    mnemonic;
+637                     
+638        1/1              unique case (rvfi_insn[13:12])
+639        1/1                2'b00:  mnemonic = &quot;sb&quot;;
+640        1/1                2'b01:  mnemonic = &quot;sh&quot;;
+641        1/1                2'b10:  mnemonic = &quot;sw&quot;;
+642                           default: begin
+643        1/1                  decode_mnemonic(&quot;INVALID&quot;);
+644        1/1                  return;
+645                           end
+646                         endcase
+647                     
+648        1/1              if (!rvfi_insn[14]) begin
+649                           // regular store
+650        1/1                data_accessed = RS1 | RS2 | MEM;
+651        1/1                decoded_str = $sformatf(&quot;%s\tx%0d,%0d(x%0d)&quot;, mnemonic, rvfi_rs2_addr,
+652                                           $signed({ {20 {rvfi_insn[31]}}, rvfi_insn[31:25], rvfi_insn[11:7] }), rvfi_rs1_addr);
+653                         end else begin
+654        1/1                decode_mnemonic(&quot;INVALID&quot;);
+655                         end
+656                       endfunction
+657                     
+658                       function string get_fence_description(logic [3:0] bits);
+659                         string desc = &quot;&quot;;
+660        1/1              if (bits[3]) begin
+661        1/1                desc = {desc, &quot;i&quot;};
+662                         end
+                        MISSING_ELSE
+663        1/1              if (bits[2]) begin
+664        1/1                desc = {desc, &quot;o&quot;};
+665                         end
+                        MISSING_ELSE
+666        1/1              if (bits[1]) begin
+667        1/1                desc = {desc, &quot;r&quot;};
+668                         end
+                        MISSING_ELSE
+669        1/1              if (bits[0]) begin
+670        1/1                desc = {desc, &quot;w&quot;};
+671                         end
+                        MISSING_ELSE
+672        1/1              return desc;
+673                       endfunction
+674                     
+675                       function void decode_fence();
+676                         string predecessor;
+677                         string successor;
+678        1/1              predecessor = get_fence_description(rvfi_insn[27:24]);
+679        1/1              successor = get_fence_description(rvfi_insn[23:20]);
+680        1/1              decoded_str = $sformatf(&quot;fence\t%s,%s&quot;, predecessor, successor);
+681                       endfunction
+682                     
+683                       // cycle counter
+684                       always_ff @(posedge clk_i or negedge rst_ni) begin
+685        1/1              if (!rst_ni) begin
+686        1/1                cycle &lt;= 0;
+687                         end else begin
+688        1/1                cycle &lt;= cycle + 1;
+689                         end
+690                       end
+691                     
+692                       // close output file for writing
+693                       final begin
+694        1/1              if (file_handle != 32'h0) begin
+695        1/1                $fclose(file_handle);
+696                         end
+                   <font color = "red">==>  MISSING_ELSE</font>
+697                       end
+698                     
+699                       // log execution
+700                       always_ff @(posedge clk_i) begin
+701        1/1              if (rvfi_valid) begin
+702        1/1                printbuffer_dumpline();
+703                         end
+                        MISSING_ELSE
+704                       end
+705                     
+706                       always_comb begin
+707        1/1              decoded_str = &quot;&quot;;
+708        1/1              data_accessed = 4'h0;
+709        1/1              insn_is_compressed = 0;
+710                     
+711                         // Check for compressed instructions
+712        1/1              if (rvfi_insn[1:0] != 2'b11) begin
+713        1/1                insn_is_compressed = 1;
+714                           // Separate case to avoid overlapping decoding
+715        1/1                if (rvfi_insn[15:13] == 3'b100 &amp;&amp; rvfi_insn[1:0] == 2'b10) begin
+716        1/1                  if (rvfi_insn[12]) begin
+717        1/1                    if (rvfi_insn[11:2] == 10'h0) begin
+718        1/1                      decode_mnemonic(&quot;c.ebreak&quot;);
+719        1/1                    end else if (rvfi_insn[6:2] == 5'b0) begin
+720        1/1                      decode_cr_insn(&quot;c.jalr&quot;);
+721                               end else begin
+722        1/1                      decode_cr_insn(&quot;c.add&quot;);
+723                               end
+724                             end else begin
+725        1/1                    if (rvfi_insn[6:2] == 5'h0) begin
+726        1/1                      decode_cr_insn(&quot;c.jr&quot;);
+727                               end else begin
+728        1/1                      decode_cr_insn(&quot;c.mv&quot;);
+729                               end
+730                             end
+731                           end else begin
+732        1/1                  unique casez (rvfi_insn[15:0])
+733                               // C0 Opcodes
+734                               INSN_CADDI4SPN: begin
+735        1/1                      if (rvfi_insn[12:2] == 11'h0) begin
+736                                   // Align with pseudo-mnemonic used by GNU binutils and LLVM's MC layer
+737        1/1                        decode_mnemonic(&quot;c.unimp&quot;);
+738                                 end else begin
+739        1/1                        decode_ciw_insn(&quot;c.addi4spn&quot;);
+740                                 end
+741                               end
+742        1/1                    INSN_CLW:        decode_compressed_load_insn(&quot;c.lw&quot;);
+743        1/1                    INSN_CSW:        decode_compressed_store_insn(&quot;c.sw&quot;);
+744                               // C1 Opcodes
+745        1/1                    INSN_CADDI:      decode_ci_caddi_insn(&quot;c.addi&quot;);
+746        1/1                    INSN_CJAL:       decode_cj_insn(&quot;c.jal&quot;);
+747        1/1                    INSN_CJ:         decode_cj_insn(&quot;c.j&quot;);
+748        1/1                    INSN_CLI:        decode_ci_cli_insn(&quot;c.li&quot;);
+749                               INSN_CLUI: begin
+750                                 // These two instructions share opcode
+751        1/1                      if (rvfi_insn[11:7] == 5'd2) begin
+752        1/1                        decode_ci_caddi16sp_insn(&quot;c.addi16sp&quot;);
+753                                 end else begin
+754        1/1                        decode_ci_clui_insn(&quot;c.lui&quot;);
+755                                 end
+756                               end
+757        1/1                    INSN_CSRLI:      decode_cb_sr_insn(&quot;c.srli&quot;);
+758        1/1                    INSN_CSRAI:      decode_cb_sr_insn(&quot;c.srai&quot;);
+759        1/1                    INSN_CANDI:      decode_cb_insn(&quot;c.andi&quot;);
+760        1/1                    INSN_CSUB:       decode_cs_insn(&quot;c.sub&quot;);
+761        1/1                    INSN_CXOR:       decode_cs_insn(&quot;c.xor&quot;);
+762        1/1                    INSN_COR:        decode_cs_insn(&quot;c.or&quot;);
+763        1/1                    INSN_CAND:       decode_cs_insn(&quot;c.and&quot;);
+764        1/1                    INSN_CBEQZ:      decode_cb_insn(&quot;c.beqz&quot;);
+765        1/1                    INSN_CBNEZ:      decode_cb_insn(&quot;c.bnez&quot;);
+766                               // C2 Opcodes
+767        1/1                    INSN_CSLLI:      decode_ci_cslli_insn(&quot;c.slli&quot;);
+768        1/1                    INSN_CLWSP:      decode_compressed_load_insn(&quot;c.lwsp&quot;);
+769        1/1                    INSN_SWSP:       decode_compressed_store_insn(&quot;c.swsp&quot;);
+770        1/1                    default:         decode_mnemonic(&quot;INVALID&quot;);
+771                             endcase
+772                           end
+773                         end else begin
+774        1/1                unique casez (rvfi_insn)
+775                             // Regular opcodes
+776        1/1                  INSN_LUI:        decode_u_insn(&quot;lui&quot;);
+777        1/1                  INSN_AUIPC:      decode_u_insn(&quot;auipc&quot;);
+778        1/1                  INSN_JAL:        decode_j_insn(&quot;jal&quot;);
+779        1/1                  INSN_JALR:       decode_i_jalr_insn(&quot;jalr&quot;);
+780                             // BRANCH
+781        1/1                  INSN_BEQ:        decode_b_insn(&quot;beq&quot;);
+782        1/1                  INSN_BNE:        decode_b_insn(&quot;bne&quot;);
+783        1/1                  INSN_BLT:        decode_b_insn(&quot;blt&quot;);
+784        1/1                  INSN_BGE:        decode_b_insn(&quot;bge&quot;);
+785        1/1                  INSN_BLTU:       decode_b_insn(&quot;bltu&quot;);
+786        1/1                  INSN_BGEU:       decode_b_insn(&quot;bgeu&quot;);
+787                             // OPIMM
+788                             INSN_ADDI: begin
+789        1/1                    if (rvfi_insn == 32'h00_00_00_13) begin
+790                                 // TODO: objdump doesn't decode this as nop currently, even though it would be helpful
+791                                 // Decide what to do here: diverge from objdump, or make the trace less readable to
+792                                 // users.
+793                                 //decode_mnemonic(&quot;nop&quot;);
+794        1/1                      decode_i_insn(&quot;addi&quot;);
+795                               end else begin
+796        1/1                      decode_i_insn(&quot;addi&quot;);
+797                               end
+798                             end
+799        1/1                  INSN_SLTI:       decode_i_insn(&quot;slti&quot;);
+800        1/1                  INSN_SLTIU:      decode_i_insn(&quot;sltiu&quot;);
+801        1/1                  INSN_XORI:       decode_i_insn(&quot;xori&quot;);
+802        1/1                  INSN_ORI:        decode_i_insn(&quot;ori&quot;);
+803        1/1                  INSN_ANDI:       decode_i_insn(&quot;andi&quot;);
+804        1/1                  INSN_SLLI:       decode_i_shift_insn(&quot;slli&quot;);
+805        1/1                  INSN_SRLI:       decode_i_shift_insn(&quot;srli&quot;);
+806        1/1                  INSN_SRAI:       decode_i_shift_insn(&quot;srai&quot;);
+807                             // OP
+808        1/1                  INSN_ADD:        decode_r_insn(&quot;add&quot;);
+809        1/1                  INSN_SUB:        decode_r_insn(&quot;sub&quot;);
+810        1/1                  INSN_SLL:        decode_r_insn(&quot;sll&quot;);
+811        1/1                  INSN_SLT:        decode_r_insn(&quot;slt&quot;);
+812        1/1                  INSN_SLTU:       decode_r_insn(&quot;sltu&quot;);
+813        1/1                  INSN_XOR:        decode_r_insn(&quot;xor&quot;);
+814        1/1                  INSN_SRL:        decode_r_insn(&quot;srl&quot;);
+815        1/1                  INSN_SRA:        decode_r_insn(&quot;sra&quot;);
+816        1/1                  INSN_OR:         decode_r_insn(&quot;or&quot;);
+817        1/1                  INSN_AND:        decode_r_insn(&quot;and&quot;);
+818                             // SYSTEM (CSR manipulation)
+819        1/1                  INSN_CSRRW:      decode_csr_insn(&quot;csrrw&quot;);
+820        1/1                  INSN_CSRRS:      decode_csr_insn(&quot;csrrs&quot;);
+821        1/1                  INSN_CSRRC:      decode_csr_insn(&quot;csrrc&quot;);
+822        1/1                  INSN_CSRRWI:     decode_csr_insn(&quot;csrrwi&quot;);
+823        1/1                  INSN_CSRRSI:     decode_csr_insn(&quot;csrrsi&quot;);
+824        1/1                  INSN_CSRRCI:     decode_csr_insn(&quot;csrrci&quot;);
+825                             // SYSTEM (others)
+826        1/1                  INSN_ECALL:      decode_mnemonic(&quot;ecall&quot;);
+827        1/1                  INSN_EBREAK:     decode_mnemonic(&quot;ebreak&quot;);
+828        1/1                  INSN_MRET:       decode_mnemonic(&quot;mret&quot;);
+829        1/1                  INSN_DRET:       decode_mnemonic(&quot;dret&quot;);
+830        1/1                  INSN_WFI:        decode_mnemonic(&quot;wfi&quot;);
+831                             // RV32M
+832        1/1                  INSN_PMUL:       decode_r_insn(&quot;mul&quot;);
+833        1/1                  INSN_PMUH:       decode_r_insn(&quot;mulh&quot;);
+834        1/1                  INSN_PMULHSU:    decode_r_insn(&quot;mulhsu&quot;);
+835        1/1                  INSN_PMULHU:     decode_r_insn(&quot;mulhu&quot;);
+836        1/1                  INSN_DIV:        decode_r_insn(&quot;div&quot;);
+837        1/1                  INSN_DIVU:       decode_r_insn(&quot;divu&quot;);
+838        1/1                  INSN_REM:        decode_r_insn(&quot;rem&quot;);
+839        1/1                  INSN_REMU:       decode_r_insn(&quot;remu&quot;);
+840                             // LOAD &amp; STORE
+841        1/1                  INSN_LOAD:       decode_load_insn();
+842        1/1                  INSN_STORE:      decode_store_insn();
+843                             // MISC-MEM
+844        1/1                  INSN_FENCE:      decode_fence();
+845        1/1                  INSN_FENCEI:     decode_mnemonic(&quot;fence.i&quot;);
+846        1/1                  default:         decode_mnemonic(&quot;INVALID&quot;);
+</pre>
+<hr>
+<a name="Branch"></a>
+Branch Coverage for Module : <a href="mod29.html" >ibex_tracer</a><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Line No.</th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th></tr><tr class="s9">
+<td>Branches</td>
+<td></td>
+<td class="rt">88</td>
+<td class="rt">87</td>
+<td class="rt">98.86 </td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">685</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s5">
+<td>IF</td>
+<td class="rt">694</td>
+<td class="rt">2</td>
+<td class="rt">1</td>
+<td class="rt">50.00 </td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">701</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">712</td>
+<td class="rt">82</td>
+<td class="rt">82</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+685            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+686              cycle <= 0;
+           <font color = "green">      ==></font>
+687            end else begin
+688              cycle <= cycle + 1;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+694            if (file_handle != 32'h0) begin
+               <font color = "red">-1-</font>  
+695              $fclose(file_handle);
+           <font color = "green">      ==></font>
+696            end
+               MISSING_ELSE
+           <font color = "red">    ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>0</td>
+<td>Not Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+701            if (rvfi_valid) begin
+               <font color = "green">-1-</font>  
+702              printbuffer_dumpline();
+           <font color = "green">      ==></font>
+703            end
+               MISSING_ELSE
+           <font color = "green">    ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+712            if (rvfi_insn[1:0] != 2'b11) begin
+               <font color = "green">-1-</font>  
+713              insn_is_compressed = 1;
+714              // Separate case to avoid overlapping decoding
+715              if (rvfi_insn[15:13] == 3'b100 && rvfi_insn[1:0] == 2'b10) begin
+                 <font color = "green">-2-</font>  
+716                if (rvfi_insn[12]) begin
+                   <font color = "green">-3-</font>  
+717                  if (rvfi_insn[11:2] == 10'h0) begin
+                     <font color = "green">-4-</font>  
+718                    decode_mnemonic("c.ebreak");
+           <font color = "green">            ==></font>
+719                  end else if (rvfi_insn[6:2] == 5'b0) begin
+                              <font color = "green">-5-</font>  
+720                    decode_cr_insn("c.jalr");
+           <font color = "green">            ==></font>
+721                  end else begin
+722                    decode_cr_insn("c.add");
+           <font color = "green">            ==></font>
+723                  end
+724                end else begin
+725                  if (rvfi_insn[6:2] == 5'h0) begin
+                     <font color = "green">-6-</font>  
+726                    decode_cr_insn("c.jr");
+           <font color = "green">            ==></font>
+727                  end else begin
+728                    decode_cr_insn("c.mv");
+           <font color = "green">            ==></font>
+729                  end
+730                end
+731              end else begin
+732                unique casez (rvfi_insn[15:0])
+                          <font color = "green">-7-</font>  
+733                  // C0 Opcodes
+734                  INSN_CADDI4SPN: begin
+735                    if (rvfi_insn[12:2] == 11'h0) begin
+                       <font color = "green">-8-</font>  
+736                      // Align with pseudo-mnemonic used by GNU binutils and LLVM's MC layer
+737                      decode_mnemonic("c.unimp");
+           <font color = "green">              ==></font>
+738                    end else begin
+739                      decode_ciw_insn("c.addi4spn");
+           <font color = "green">              ==></font>
+740                    end
+741                  end
+742                  INSN_CLW:        decode_compressed_load_insn("c.lw");
+           <font color = "green">          ==></font>
+743                  INSN_CSW:        decode_compressed_store_insn("c.sw");
+           <font color = "green">          ==></font>
+744                  // C1 Opcodes
+745                  INSN_CADDI:      decode_ci_caddi_insn("c.addi");
+           <font color = "green">          ==></font>
+746                  INSN_CJAL:       decode_cj_insn("c.jal");
+           <font color = "green">          ==></font>
+747                  INSN_CJ:         decode_cj_insn("c.j");
+           <font color = "green">          ==></font>
+748                  INSN_CLI:        decode_ci_cli_insn("c.li");
+           <font color = "green">          ==></font>
+749                  INSN_CLUI: begin
+750                    // These two instructions share opcode
+751                    if (rvfi_insn[11:7] == 5'd2) begin
+                       <font color = "green">-9-</font>  
+752                      decode_ci_caddi16sp_insn("c.addi16sp");
+           <font color = "green">              ==></font>
+753                    end else begin
+754                      decode_ci_clui_insn("c.lui");
+           <font color = "green">              ==></font>
+755                    end
+756                  end
+757                  INSN_CSRLI:      decode_cb_sr_insn("c.srli");
+           <font color = "green">          ==></font>
+758                  INSN_CSRAI:      decode_cb_sr_insn("c.srai");
+           <font color = "green">          ==></font>
+759                  INSN_CANDI:      decode_cb_insn("c.andi");
+           <font color = "green">          ==></font>
+760                  INSN_CSUB:       decode_cs_insn("c.sub");
+           <font color = "green">          ==></font>
+761                  INSN_CXOR:       decode_cs_insn("c.xor");
+           <font color = "green">          ==></font>
+762                  INSN_COR:        decode_cs_insn("c.or");
+           <font color = "green">          ==></font>
+763                  INSN_CAND:       decode_cs_insn("c.and");
+           <font color = "green">          ==></font>
+764                  INSN_CBEQZ:      decode_cb_insn("c.beqz");
+           <font color = "green">          ==></font>
+765                  INSN_CBNEZ:      decode_cb_insn("c.bnez");
+           <font color = "green">          ==></font>
+766                  // C2 Opcodes
+767                  INSN_CSLLI:      decode_ci_cslli_insn("c.slli");
+           <font color = "green">          ==></font>
+768                  INSN_CLWSP:      decode_compressed_load_insn("c.lwsp");
+           <font color = "green">          ==></font>
+769                  INSN_SWSP:       decode_compressed_store_insn("c.swsp");
+           <font color = "green">          ==></font>
+770                  default:         decode_mnemonic("INVALID");
+           <font color = "green">          ==></font>
+771                endcase
+772              end
+773            end else begin
+774              unique casez (rvfi_insn)
+                        <font color = "green">-10-</font>  
+775                // Regular opcodes
+776                INSN_LUI:        decode_u_insn("lui");
+           <font color = "green">        ==></font>
+777                INSN_AUIPC:      decode_u_insn("auipc");
+           <font color = "green">        ==></font>
+778                INSN_JAL:        decode_j_insn("jal");
+           <font color = "green">        ==></font>
+779                INSN_JALR:       decode_i_jalr_insn("jalr");
+           <font color = "green">        ==></font>
+780                // BRANCH
+781                INSN_BEQ:        decode_b_insn("beq");
+           <font color = "green">        ==></font>
+782                INSN_BNE:        decode_b_insn("bne");
+           <font color = "green">        ==></font>
+783                INSN_BLT:        decode_b_insn("blt");
+           <font color = "green">        ==></font>
+784                INSN_BGE:        decode_b_insn("bge");
+           <font color = "green">        ==></font>
+785                INSN_BLTU:       decode_b_insn("bltu");
+           <font color = "green">        ==></font>
+786                INSN_BGEU:       decode_b_insn("bgeu");
+           <font color = "green">        ==></font>
+787                // OPIMM
+788                INSN_ADDI: begin
+789                  if (rvfi_insn == 32'h00_00_00_13) begin
+                     <font color = "green">-11-</font>  
+790                    // TODO: objdump doesn't decode this as nop currently, even though it would be helpful
+791                    // Decide what to do here: diverge from objdump, or make the trace less readable to
+792                    // users.
+793                    //decode_mnemonic("nop");
+794                    decode_i_insn("addi");
+           <font color = "green">            ==></font>
+795                  end else begin
+796                    decode_i_insn("addi");
+           <font color = "green">            ==></font>
+797                  end
+798                end
+799                INSN_SLTI:       decode_i_insn("slti");
+           <font color = "green">        ==></font>
+800                INSN_SLTIU:      decode_i_insn("sltiu");
+           <font color = "green">        ==></font>
+801                INSN_XORI:       decode_i_insn("xori");
+           <font color = "green">        ==></font>
+802                INSN_ORI:        decode_i_insn("ori");
+           <font color = "green">        ==></font>
+803                INSN_ANDI:       decode_i_insn("andi");
+           <font color = "green">        ==></font>
+804                INSN_SLLI:       decode_i_shift_insn("slli");
+           <font color = "green">        ==></font>
+805                INSN_SRLI:       decode_i_shift_insn("srli");
+           <font color = "green">        ==></font>
+806                INSN_SRAI:       decode_i_shift_insn("srai");
+           <font color = "green">        ==></font>
+807                // OP
+808                INSN_ADD:        decode_r_insn("add");
+           <font color = "green">        ==></font>
+809                INSN_SUB:        decode_r_insn("sub");
+           <font color = "green">        ==></font>
+810                INSN_SLL:        decode_r_insn("sll");
+           <font color = "green">        ==></font>
+811                INSN_SLT:        decode_r_insn("slt");
+           <font color = "green">        ==></font>
+812                INSN_SLTU:       decode_r_insn("sltu");
+           <font color = "green">        ==></font>
+813                INSN_XOR:        decode_r_insn("xor");
+           <font color = "green">        ==></font>
+814                INSN_SRL:        decode_r_insn("srl");
+           <font color = "green">        ==></font>
+815                INSN_SRA:        decode_r_insn("sra");
+           <font color = "green">        ==></font>
+816                INSN_OR:         decode_r_insn("or");
+           <font color = "green">        ==></font>
+817                INSN_AND:        decode_r_insn("and");
+           <font color = "green">        ==></font>
+818                // SYSTEM (CSR manipulation)
+819                INSN_CSRRW:      decode_csr_insn("csrrw");
+           <font color = "green">        ==></font>
+820                INSN_CSRRS:      decode_csr_insn("csrrs");
+           <font color = "green">        ==></font>
+821                INSN_CSRRC:      decode_csr_insn("csrrc");
+           <font color = "green">        ==></font>
+822                INSN_CSRRWI:     decode_csr_insn("csrrwi");
+           <font color = "green">        ==></font>
+823                INSN_CSRRSI:     decode_csr_insn("csrrsi");
+           <font color = "green">        ==></font>
+824                INSN_CSRRCI:     decode_csr_insn("csrrci");
+           <font color = "green">        ==></font>
+825                // SYSTEM (others)
+826                INSN_ECALL:      decode_mnemonic("ecall");
+           <font color = "green">        ==></font>
+827                INSN_EBREAK:     decode_mnemonic("ebreak");
+           <font color = "green">        ==></font>
+828                INSN_MRET:       decode_mnemonic("mret");
+           <font color = "green">        ==></font>
+829                INSN_DRET:       decode_mnemonic("dret");
+           <font color = "green">        ==></font>
+830                INSN_WFI:        decode_mnemonic("wfi");
+           <font color = "green">        ==></font>
+831                // RV32M
+832                INSN_PMUL:       decode_r_insn("mul");
+           <font color = "green">        ==></font>
+833                INSN_PMUH:       decode_r_insn("mulh");
+           <font color = "green">        ==></font>
+834                INSN_PMULHSU:    decode_r_insn("mulhsu");
+           <font color = "green">        ==></font>
+835                INSN_PMULHU:     decode_r_insn("mulhu");
+           <font color = "green">        ==></font>
+836                INSN_DIV:        decode_r_insn("div");
+           <font color = "green">        ==></font>
+837                INSN_DIVU:       decode_r_insn("divu");
+           <font color = "green">        ==></font>
+838                INSN_REM:        decode_r_insn("rem");
+           <font color = "green">        ==></font>
+839                INSN_REMU:       decode_r_insn("remu");
+           <font color = "green">        ==></font>
+840                // LOAD & STORE
+841                INSN_LOAD:       decode_load_insn();
+           <font color = "green">        ==></font>
+842                INSN_STORE:      decode_store_insn();
+           <font color = "green">        ==></font>
+843                // MISC-MEM
+844                INSN_FENCE:      decode_fence();
+           <font color = "green">        ==></font>
+845                INSN_FENCEI:     decode_mnemonic("fence.i");
+           <font color = "green">        ==></font>
+846                default:         decode_mnemonic("INVALID");
+           <font color = "green">        ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>-5-</th><th nowrap width=80>-6-</th><th nowrap width=80>-7-</th><th nowrap width=80>-8-</th><th nowrap width=80>-9-</th><th nowrap width=80>-10-</th><th nowrap width=80>-11-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CADDI4SPN </td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CADDI4SPN </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CLW </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CSW </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CADDI </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CJAL </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CJ </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CLI </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CLUI </td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CLUI </td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CSRLI </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CSRAI </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CANDI </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CSUB </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CXOR </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_COR </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CAND </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CBEQZ </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CBNEZ </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CSLLI </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CLWSP </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_SWSP </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_LUI </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_AUIPC </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_JAL </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_JALR </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_BEQ </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_BNE </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_BLT </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_BGE </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_BLTU </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_BGEU </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_ADDI </td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_ADDI </td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_SLTI </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_SLTIU </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_XORI </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_ORI </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_ANDI </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_SLLI </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_SRLI </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_SRAI </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_ADD </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_SUB </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_SLL </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_SLT </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_SLTU </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_XOR </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_SRL </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_SRA </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_OR </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_AND </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CSRRW </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CSRRS </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CSRRC </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CSRRWI </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CSRRSI </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_CSRRCI </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_ECALL </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_EBREAK </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_MRET </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_DRET </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_WFI </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_PMUL </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_PMUH </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_PMULHSU </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_PMULHU </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_DIV </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_DIVU </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_REM </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_REMU </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_LOAD </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_STORE </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_FENCE </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>ibex_tracer_pkg::INSN_FENCEI </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+</div>
+</div>
+<div class="ui-layout-center-inner-north">
+<div id="center-bread-crumb" class="breadCrumb module urg-margin-bottom">
+  <ul name="tag_ibex_tracer">
+    <li>
+      <a href="#Line">Line</a>    </li>
+    <li>
+      <a href="#Branch">Branch</a>    </li>
+  </ul>
+</div>
+</div>
+</div>
+<div class="ui-layout-south">
+<table align=center><tr><td class="s0 cl">0%</td>
+<td class="s1 cl">10%</td>
+<td class="s2 cl">20%</td>
+<td class="s3 cl">30%</td>
+<td class="s4 cl">40%</td>
+<td class="s5 cl">50%</td>
+<td class="s6 cl">60%</td>
+<td class="s7 cl">70%</td>
+<td class="s8 cl">80%</td>
+<td class="s9 cl">90%</td>
+<td class="s10 cl">100%</td></tr></table></div>
+</body>
+</html>

@@ -1,0 +1,53 @@
+Design Hierarchy
+
+
+----------------
+SCORE  LINE   TOGGLE FSM    BRANCH ASSERT                     
+ 95.63  99.01 100.00  81.97  97.15 100.00 core_ibex_tb_top(X) 
+  
+  ----------------
+  SCORE  LINE   TOGGLE FSM    BRANCH ASSERT     
+   95.63  99.01 100.00  81.97  97.15 100.00 dut 
+    
+    ----------------
+    SCORE  LINE   TOGGLE FSM    BRANCH ASSERT             
+     94.53  99.01 --      81.97  97.15 100.00 u_ibex_core 
+      
+      ----------------
+      SCORE  LINE   TOGGLE FSM    BRANCH ASSERT                   
+      100.00 100.00 --     --     100.00 --     core_clock_gate_i 
+       94.75  97.45 --     --      92.05 --     cs_registers_i(x) 
+       96.26  99.32 --      89.47 100.00 --     ex_block_i        
+        
+        ----------------
+        SCORE  LINE   TOGGLE FSM    BRANCH ASSERT                               
+         98.15  96.30 --     --     100.00 --     alu_i(x)                      
+         96.49 100.00 --      89.47 100.00 --     gen_multdiv_fast.multdiv_i(x) 
+      
+      ----------------
+      SCORE  LINE   TOGGLE FSM    BRANCH ASSERT            
+       90.39  99.07 --      66.67  95.83 100.00 id_stage_i 
+        
+        ----------------
+        SCORE  LINE   TOGGLE FSM    BRANCH ASSERT              
+         85.13  98.07 --      66.67  90.67 --     controller_i 
+         98.69  99.61 --     --      97.78 --     decoder_i(x) 
+        100.00 100.00 --     --     100.00 --     registers_i  
+      
+      ----------------
+      SCORE  LINE   TOGGLE FSM    BRANCH ASSERT               
+      100.00 100.00 --     --     100.00 100.00 if_stage_i(x) 
+        
+        ----------------
+        SCORE  LINE   TOGGLE FSM    BRANCH ASSERT                         
+        100.00 100.00 --     --     100.00 --     compressed_decoder_i(x) 
+        100.00 100.00 --     --     100.00 100.00 prefetch_buffer_i       
+          
+          ----------------
+          SCORE  LINE   TOGGLE FSM    BRANCH ASSERT        
+          100.00 100.00 --     --     100.00 100.00 fifo_i 
+      
+      ----------------
+      SCORE  LINE   TOGGLE FSM    BRANCH ASSERT                      
+      100.00 100.00 --     100.00 100.00 100.00 load_store_unit_i(x) 
+

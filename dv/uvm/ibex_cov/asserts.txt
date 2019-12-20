@@ -1,0 +1,58 @@
+Assertions
+
+
+Assertions by Category
+           ASSERT PROPERTIES SEQUENCES
+Total          16          0         0
+Category 0     16          0         0
+
+-------------------------------------------------------------------------------
+
+Assertions by Severity
+           ASSERT PROPERTIES SEQUENCES
+Total          16          0         0
+Severity 0     16          0         0
+
+-------------------------------------------------------------------------------
+
+Summary for Assertions
+                 NUMBER PERCENT
+Total Number         16  100.00
+Uncovered             2   12.50
+Success              14   87.50
+Failure               0    0.00
+Incomplete            0    0.00
+Without Attempts      2   12.50
+
+-------------------------------------------------------------------------------
+
+Detail Report for Assertions
+
+Assertions Uncovered:
+                       ASSERTIONS                       CATEGORY SEVERITY ATTEMPTS REAL SUCCESSES FAILURES INCOMPLETE
+uvm_pkg.\uvm_reg_map::do_read .unnamed$$_0.unnamed$$_1         0        0        0              0        0          0
+uvm_pkg.\uvm_reg_map::do_write .unnamed$$_0.unnamed$$_1        0        0        0              0        0          0
+
+Assertions Success:
+                                    ASSERTIONS                                    CATEGORY SEVERITY  ATTEMPTS REAL SUCCESSES FAILURES INCOMPLETE
+core_ibex_tb_top.dut.u_ibex_core.id_stage_i.unnamed$$_0                                  0        0 159095193      159002193        0          0
+core_ibex_tb_top.dut.u_ibex_core.id_stage_i.unnamed$$_1                                  0        0 159095193       83899918        0          0
+core_ibex_tb_top.dut.u_ibex_core.id_stage_i.unnamed$$_2                                  0        0 159095193      159002193        0          0
+core_ibex_tb_top.dut.u_ibex_core.if_stage_i.prefetch_buffer_i.fifo_i.unnamed$$_10        0        0 159095193        6939424        0          0
+core_ibex_tb_top.dut.u_ibex_core.if_stage_i.prefetch_buffer_i.fifo_i.unnamed$$_11        0        0 159095193       12904223        0          0
+core_ibex_tb_top.dut.u_ibex_core.if_stage_i.unnamed$$_10                                 0        0 159095193      159002193        0          0
+core_ibex_tb_top.dut.u_ibex_core.if_stage_i.unnamed$$_11                                 0        0 159095193           1845        0          0
+core_ibex_tb_top.dut.u_ibex_core.if_stage_i.unnamed$$_12                                 0        0 159095193       81863018        0          0
+core_ibex_tb_top.dut.u_ibex_core.if_stage_i.unnamed$$_13                                 0        0 159095193       81863018        0          0
+core_ibex_tb_top.dut.u_ibex_core.load_store_unit_i.unnamed$$_68                          0        0 159095193        4648786        0          0
+core_ibex_tb_top.dut.u_ibex_core.load_store_unit_i.unnamed$$_69                          0        0 159095193           1803        0          0
+core_ibex_tb_top.dut.u_ibex_core.load_store_unit_i.unnamed$$_70                          0        0 159095193       27896040        0          0
+core_ibex_tb_top.dut.u_ibex_core.load_store_unit_i.unnamed$$_71                          0        0 159095193       27896040        0          0
+uvm_pkg.\uvm_component_name_check_visitor::visit .unnamed$$_0                            0        0     35020          35020        0          0
+
+Assertions Without Attempts:
+                       ASSERTIONS                       CATEGORY SEVERITY ATTEMPTS REAL SUCCESSES FAILURES INCOMPLETE
+uvm_pkg.\uvm_reg_map::do_read .unnamed$$_0.unnamed$$_1         0        0        0              0        0          0
+uvm_pkg.\uvm_reg_map::do_write .unnamed$$_0.unnamed$$_1        0        0        0              0        0          0
+
+

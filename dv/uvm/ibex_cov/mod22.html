@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Author" content="<username>"> <meta name="GENERATOR" content="urg/version [en] (platform name) [urg]">
+<title>Unified Coverage Report :: Module :: ibex_alu</title>
+<link type="text/css" rel="stylesheet" href="css/.urg.css">
+<link type="text/css" rel="stylesheet" href="css/.layout.css">
+<link type="text/css" rel="stylesheet" href="css/.breadcrumb.css">
+<script type="text/javascript" src="js/.jquery.js"></script>
+<script type="text/javascript" src="js/.jquery-ui.js"></script>
+<script type="text/javascript" src="js/.sortable.js"></script>
+<script type="text/javascript" src="js/.layout.js"></script>
+<script type="text/javascript" src="js/.breadcrumb.js"></script>
+<script type="text/javascript">
+var layout, westLayout, centerLayout;
+$(document).ready(function () {
+  if ($("#north-bread-crumb")) {
+    $("#north-bread-crumb").jBreadCrumb({easing:'swing'})
+  }
+  layout = $("body").layout({ 
+    resizable: true,
+    spacing_open: 4,
+    spacing_closed: 4,
+    north: {
+      size: 76
+    },
+    south: {
+      size: 45,
+      initClosed: true
+    },
+    west: {
+      size: 500,
+      resizable: true,
+      initClosed: false
+    }
+  });
+  centerLayout = $('div.ui-layout-center').layout({
+    north__paneSelector: ".ui-layout-center-inner-north",
+    center__paneSelector: ".ui-layout-center-inner-center", 
+    north__size: 50,
+    spacing_open: 4,
+    spacing_closed: 4
+  });
+});
+</script>
+</head>
+<body onLoad="initPage();"><div class="ui-layout-north">
+<div class="logo"></div>
+<center class="pagetitle">Module Definition</center>
+<div align="center"><a href="dashboard.html" ><b>dashboard</b></a> | <a href="hierarchy.html" ><b>hierarchy</b></a> | <a href="modlist.html" ><b>modlist</b></a> | groups | <a href="tests.html" ><b>tests</b></a> | <a href="asserts.html" ><b>asserts</b></a></div>
+
+</div>
+<div class="ui-layout-west">
+<div name='tag_ibex_alu'>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module : <a href="#"  onclick="showContent('tag_ibex_alu')">ibex_alu</a></span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s9 cl rt"> 96.23</td>
+<td class="s9 cl rt"><a href="mod22.html#Line" > 96.30</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"><a href="mod22.html#Branch" > 96.15</a></td>
+<td class="wht cl rt"></td>
+</tr></table><br clear=all>
+<span class=repname>Source File(s) : </span>
+<br clear=all>
+<a href="javascript:void(0);"  onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_alu.sv')">/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_alu.sv</a><br clear=all>
+<br clear=all>
+<span class=repname>Module self-instances :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="wht cl wordwrap"><a href="mod22.html#inst_tag_23"  onclick="showContent('inst_tag_23')">core_ibex_tb_top.dut.u_ibex_core.ex_block_i.alu_i<img src="ex.gif" class="icon"></a></td>
+<td class="s9 cl rt"> 98.15</td>
+<td class="s9 cl rt"><a href="mod22.html#inst_tag_23_Line" > 96.30</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod22.html#inst_tag_23_Branch" >100.00</a></td>
+<td class="wht cl rt"></td>
+</tr></table></div>
+</div>
+<br clear=all>
+<div name='inst_tag_23'>
+<hr>
+<a name="inst_tag_23"></a>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module Instance : <a href="hierarchy.html#tag_urg_inst_23" >core_ibex_tb_top.dut.u_ibex_core.ex_block_i.alu_i<img src="ex.gif" class="icon"></a></span>
+<br clear=all>
+<br clear=all>
+<span class=repname>Instance :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s9 cl rt"> 98.15</td>
+<td class="s9 cl rt"><a href="mod22.html#inst_tag_23_Line" > 96.30</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod22.html#inst_tag_23_Branch" >100.00</a></td>
+<td class="wht cl rt"></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Instance's subtree :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s9 cl rt"> 98.15</td>
+<td class="s9 cl rt"> 96.30</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Parent : </span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td><td class="alfsrt">NAME</td></tr><tr>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td><a href="mod25.html#inst_tag_26" >ex_block_i</a></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Subtrees :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td colspan=7>no children</td>
+</tr></table><br clear=all>
+</div>
+</div>
+</div>
+<div class="ui-layout-center">
+<div class="ui-layout-center-inner-center">
+<div name='tag_ibex_alu'>
+<a name="Line"></a>
+Line Coverage for Module : <a href="mod22.html" >ibex_alu</a><br clear=all>
+<table class="noborder">
+<col width="122">
+<col span="4" width="82">
+<tr><th></th><th>Line No.</th><th>Total</th><th>Covered</th><th>Percent</th></tr>
+<tr class="s9"><td class="lf">TOTAL</td><td></td><td>27</td><td>26</td><td>96.30</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>45</td><td>4</td><td>4</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>125</td><td>4</td><td>4</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>143</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>166</td><td>7</td><td>7</td><td>100.00</td></tr>
+<tr class="s8"><td class="lf">ALWAYS</td><td>186</td><td>9</td><td>8</td><td>88.89</td></tr>
+</table>
+<pre class="code"><br clear=all>
+44                        always_comb begin
+45         1/1              adder_op_b_negate = 1'b0;
+46                      
+47         1/1              unique case (operator_i)
+48                            // Adder OPs
+49                            ALU_SUB,
+50                      
+51                            // Comparator OPs
+52                            ALU_EQ,   ALU_NE,
+53                            ALU_GE,   ALU_GEU,
+54                            ALU_LT,   ALU_LTU,
+55         1/1                ALU_SLT,  ALU_SLTU: adder_op_b_negate = 1'b1;
+56                      
+57         1/1                default:;
+58                          endcase
+59                        end
+60                      
+61                        // prepare operand a
+62                        assign adder_in_a    = multdiv_en_i ? multdiv_operand_a_i : {operand_a_i,1'b1};
+63                      
+64                        // prepare operand b
+65                        assign operand_b_neg = {operand_b_i,1'b0} ^ {33{adder_op_b_negate}};
+66                        assign adder_in_b    = multdiv_en_i ? multdiv_operand_b_i : operand_b_neg ;
+67                      
+68                        // actual adder
+69                        assign adder_result_ext_o = $unsigned(adder_in_a) + $unsigned(adder_in_b);
+70                      
+71                        assign adder_result       = adder_result_ext_o[32:1];
+72                      
+73                        assign adder_result_o     = adder_result;
+74                      
+75                        ///////////
+76                        // Shift //
+77                        ///////////
+78                      
+79                        logic        shift_left;         // should we shift left
+80                        logic        shift_arithmetic;
+81                      
+82                        logic  [4:0] shift_amt;          // amount of shift, to the right
+83                        logic [31:0] shift_op_a;         // input of the shifter
+84                        logic [31:0] shift_result;
+85                        logic [31:0] shift_right_result;
+86                        logic [31:0] shift_left_result;
+87                      
+88                        assign shift_amt = operand_b_i[4:0];
+89                      
+90                        assign shift_left = (operator_i == ALU_SLL);
+91                      
+92                        assign shift_arithmetic = (operator_i == ALU_SRA);
+93                      
+94                        // choose the bit reversed or the normal input for shift operand a
+95                        assign shift_op_a    = shift_left ? operand_a_rev : operand_a_i;
+96                      
+97                        // right shifts, we let the synthesizer optimize this
+98                        logic [32:0] shift_op_a_32;
+99                        assign shift_op_a_32 = {shift_arithmetic &amp; shift_op_a[31], shift_op_a};
+100                     
+101                       // The MSB of shift_right_result_ext can safely be ignored. We just extend the input to always
+102                       // do arithmetic shifts.
+103                       logic signed [32:0] shift_right_result_signed;
+104                       logic        [32:0] shift_right_result_ext;
+105                       assign shift_right_result_signed = $signed(shift_op_a_32) &gt;&gt;&gt; shift_amt[4:0];
+106                       assign shift_right_result_ext    = $unsigned(shift_right_result_signed);
+107                       assign shift_right_result        = shift_right_result_ext[31:0];
+108                     
+109                       // bit reverse the shift_right_result for left shifts
+110                       for (genvar j = 0; j &lt; 32; j++) begin : gen_rev_shift_right_result
+111                         assign shift_left_result[j] = shift_right_result[31-j];
+112                       end
+113                     
+114                       assign shift_result = shift_left ? shift_left_result : shift_right_result;
+115                     
+116                       ////////////////
+117                       // Comparison //
+118                       ////////////////
+119                     
+120                       logic is_equal;
+121                       logic is_greater_equal;  // handles both signed and unsigned forms
+122                       logic cmp_signed;
+123                     
+124                       always_comb begin
+125        1/1              cmp_signed = 1'b0;
+126                     
+127        1/1              unique case (operator_i)
+128                           ALU_GE,
+129                           ALU_LT,
+130                           ALU_SLT: begin
+131        1/1                  cmp_signed = 1'b1;
+132                           end
+133                     
+134        1/1                default:;
+135                         endcase
+136                       end
+137                     
+138                       assign is_equal = (adder_result == 32'b0);
+139                       assign is_equal_result_o = is_equal;
+140                     
+141                       // Is greater equal
+142                       always_comb begin
+143        1/1              if ((operand_a_i[31] ^ operand_b_i[31]) == 1'b0) begin
+144        1/1                is_greater_equal = (adder_result[31] == 1'b0);
+145                         end else begin
+146        1/1                is_greater_equal = operand_a_i[31] ^ (cmp_signed);
+147                         end
+148                       end
+149                     
+150                       // GTE unsigned:
+151                       // (a[31] == 1 &amp;&amp; b[31] == 1) =&gt; adder_result[31] == 0
+152                       // (a[31] == 0 &amp;&amp; b[31] == 0) =&gt; adder_result[31] == 0
+153                       // (a[31] == 1 &amp;&amp; b[31] == 0) =&gt; 1
+154                       // (a[31] == 0 &amp;&amp; b[31] == 1) =&gt; 0
+155                     
+156                       // GTE signed:
+157                       // (a[31] == 1 &amp;&amp; b[31] == 1) =&gt; adder_result[31] == 0
+158                       // (a[31] == 0 &amp;&amp; b[31] == 0) =&gt; adder_result[31] == 0
+159                       // (a[31] == 1 &amp;&amp; b[31] == 0) =&gt; 0
+160                       // (a[31] == 0 &amp;&amp; b[31] == 1) =&gt; 1
+161                     
+162                       // generate comparison result
+163                       logic cmp_result;
+164                     
+165                       always_comb begin
+166        1/1              cmp_result = is_equal;
+167                     
+168        1/1              unique case (operator_i)
+169        1/1                ALU_EQ:            cmp_result =  is_equal;
+170        1/1                ALU_NE:            cmp_result = ~is_equal;
+171        1/1                ALU_GE,  ALU_GEU:  cmp_result = is_greater_equal;
+172                           ALU_LT,  ALU_LTU,
+173        1/1                ALU_SLT, ALU_SLTU: cmp_result = ~is_greater_equal;
+174                     
+175        1/1                default:;
+176                         endcase
+177                       end
+178                     
+179                       assign comparison_result_o = cmp_result;
+180                     
+181                       ////////////////
+182                       // Result mux //
+183                       ////////////////
+184                     
+185                       always_comb begin
+186        1/1              result_o   = '0;
+187                     
+188        1/1              unique case (operator_i)
+189                           // Standard Operations
+190        1/1                ALU_AND:  result_o = operand_a_i &amp; operand_b_i;
+191        1/1                ALU_OR:   result_o = operand_a_i | operand_b_i;
+192        1/1                ALU_XOR:  result_o = operand_a_i ^ operand_b_i;
+193                     
+194                           // Adder Operations
+195        1/1                ALU_ADD, ALU_SUB: result_o = adder_result;
+196                     
+197                           // Shift Operations
+198                           ALU_SLL,
+199        1/1                ALU_SRL, ALU_SRA: result_o = shift_result;
+200                     
+201                           // Comparison Operations
+202                           ALU_EQ,   ALU_NE,
+203                           ALU_GE,   ALU_GEU,
+204                           ALU_LT,   ALU_LTU,
+205        1/1                ALU_SLT,  ALU_SLTU: result_o = {31'h0,cmp_result};
+206                     
+207        <font color = "red">0/1     ==>        default:;</font>
+</pre>
+<hr>
+<a name="Branch"></a>
+Branch Coverage for Module : <a href="mod22.html" >ibex_alu</a><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Line No.</th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th></tr><tr class="s9">
+<td>Branches</td>
+<td></td>
+<td class="rt">26</td>
+<td class="rt">25</td>
+<td class="rt">96.15 </td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">62</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">66</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">95</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">114</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">47</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">127</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">143</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">168</td>
+<td class="rt">5</td>
+<td class="rt">5</td>
+<td class="rt">100.00</td>
+</tr><tr class="s8">
+<td>CASE</td>
+<td class="rt">188</td>
+<td class="rt">7</td>
+<td class="rt">6</td>
+<td class="rt">85.71 </td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+62           assign adder_in_a    = multdiv_en_i ? multdiv_operand_a_i : {operand_a_i,1'b1};
+                                                 <font color = "green">-1-</font>  
+                                                 <font color = "green">==></font>  
+                                                 <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+66           assign adder_in_b    = multdiv_en_i ? multdiv_operand_b_i : operand_b_neg ;
+                                                 <font color = "green">-1-</font>  
+                                                 <font color = "green">==></font>  
+                                                 <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+95           assign shift_op_a    = shift_left ? operand_a_rev : operand_a_i;
+                                               <font color = "green">-1-</font>  
+                                               <font color = "green">==></font>  
+                                               <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+114          assign shift_result = shift_left ? shift_left_result : shift_right_result;
+                                              <font color = "green">-1-</font>  
+                                              <font color = "green">==></font>  
+                                              <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+47             unique case (operator_i)
+                      <font color = "green">-1-</font>  
+48               // Adder OPs
+49               ALU_SUB,
+50         
+51               // Comparator OPs
+52               ALU_EQ,   ALU_NE,
+53               ALU_GE,   ALU_GEU,
+54               ALU_LT,   ALU_LTU,
+55               ALU_SLT,  ALU_SLTU: adder_op_b_negate = 1'b1;
+           <font color = "green">      ==></font>
+56         
+57               default:;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>ALU_SUB ALU_EQ ALU_NE ALU_GE ALU_GEU ALU_LT ALU_LTU ALU_SLT ALU_SLTU </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+127            unique case (operator_i)
+                      <font color = "green">-1-</font>  
+128              ALU_GE,
+129              ALU_LT,
+130              ALU_SLT: begin
+131                cmp_signed = 1'b1;
+           <font color = "green">        ==></font>
+132              end
+133        
+134              default:;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>ALU_GE ALU_LT ALU_SLT </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+143            if ((operand_a_i[31] ^ operand_b_i[31]) == 1'b0) begin
+               <font color = "green">-1-</font>  
+144              is_greater_equal = (adder_result[31] == 1'b0);
+           <font color = "green">      ==></font>
+145            end else begin
+146              is_greater_equal = operand_a_i[31] ^ (cmp_signed);
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+168            unique case (operator_i)
+                      <font color = "green">-1-</font>  
+169              ALU_EQ:            cmp_result =  is_equal;
+           <font color = "green">      ==></font>
+170              ALU_NE:            cmp_result = ~is_equal;
+           <font color = "green">      ==></font>
+171              ALU_GE,  ALU_GEU:  cmp_result = is_greater_equal;
+           <font color = "green">      ==></font>
+172              ALU_LT,  ALU_LTU,
+173              ALU_SLT, ALU_SLTU: cmp_result = ~is_greater_equal;
+           <font color = "green">      ==></font>
+174        
+175              default:;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>ALU_EQ </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALU_NE </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALU_GE ALU_GEU </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALU_LT ALU_LTU ALU_SLT ALU_SLTU </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+188            unique case (operator_i)
+                      <font color = "red">-1-</font>  
+189              // Standard Operations
+190              ALU_AND:  result_o = operand_a_i & operand_b_i;
+           <font color = "green">      ==></font>
+191              ALU_OR:   result_o = operand_a_i | operand_b_i;
+           <font color = "green">      ==></font>
+192              ALU_XOR:  result_o = operand_a_i ^ operand_b_i;
+           <font color = "green">      ==></font>
+193        
+194              // Adder Operations
+195              ALU_ADD, ALU_SUB: result_o = adder_result;
+           <font color = "green">      ==></font>
+196        
+197              // Shift Operations
+198              ALU_SLL,
+199              ALU_SRL, ALU_SRA: result_o = shift_result;
+           <font color = "green">      ==></font>
+200        
+201              // Comparison Operations
+202              ALU_EQ,   ALU_NE,
+203              ALU_GE,   ALU_GEU,
+204              ALU_LT,   ALU_LTU,
+205              ALU_SLT,  ALU_SLTU: result_o = {31'h0,cmp_result};
+           <font color = "green">      ==></font>
+206        
+207              default:;
+           <font color = "red">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>ALU_AND </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALU_OR </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALU_XOR </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALU_ADD ALU_SUB </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALU_SLL ALU_SRL ALU_SRA </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALU_EQ ALU_NE ALU_GE ALU_GEU ALU_LT ALU_LTU ALU_SLT ALU_SLTU </td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>default</td>
+<td>Not Covered</td>
+</tr></table><br clear=all>
+</div>
+<div name='inst_tag_23'>
+<a name="inst_tag_23_Line"></a>
+<b>Line Coverage for Instance : <a href="mod22.html#inst_tag_23" >core_ibex_tb_top.dut.u_ibex_core.ex_block_i.alu_i<img src="ex.gif" class="icon"></a></b><br clear=all>
+<table class="noborder">
+<col width="122">
+<col span="4" width="82">
+<tr><th></th><th>Line No.</th><th>Total</th><th>Covered</th><th>Percent</th></tr>
+<tr class="s9"><td class="lf">TOTAL</td><td></td><td>27</td><td>26</td><td>96.30</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>45</td><td>4</td><td>4</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>125</td><td>4</td><td>4</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>143</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>166</td><td>7</td><td>7</td><td>100.00</td></tr>
+<tr class="s8"><td class="lf">ALWAYS</td><td>186</td><td>9</td><td>8</td><td>88.89</td></tr>
+</table>
+<pre class="code"><br clear=all>
+44                        always_comb begin
+45         1/1              adder_op_b_negate = 1'b0;
+46                      
+47         1/1              unique case (operator_i)
+48                            // Adder OPs
+49                            ALU_SUB,
+50                      
+51                            // Comparator OPs
+52                            ALU_EQ,   ALU_NE,
+53                            ALU_GE,   ALU_GEU,
+54                            ALU_LT,   ALU_LTU,
+55         1/1                ALU_SLT,  ALU_SLTU: adder_op_b_negate = 1'b1;
+56                      
+57         1/1                default:;
+58                          endcase
+59                        end
+60                      
+61                        // prepare operand a
+62                        assign adder_in_a    = multdiv_en_i ? multdiv_operand_a_i : {operand_a_i,1'b1};
+63                      
+64                        // prepare operand b
+65                        assign operand_b_neg = {operand_b_i,1'b0} ^ {33{adder_op_b_negate}};
+66                        assign adder_in_b    = multdiv_en_i ? multdiv_operand_b_i : operand_b_neg ;
+67                      
+68                        // actual adder
+69                        assign adder_result_ext_o = $unsigned(adder_in_a) + $unsigned(adder_in_b);
+70                      
+71                        assign adder_result       = adder_result_ext_o[32:1];
+72                      
+73                        assign adder_result_o     = adder_result;
+74                      
+75                        ///////////
+76                        // Shift //
+77                        ///////////
+78                      
+79                        logic        shift_left;         // should we shift left
+80                        logic        shift_arithmetic;
+81                      
+82                        logic  [4:0] shift_amt;          // amount of shift, to the right
+83                        logic [31:0] shift_op_a;         // input of the shifter
+84                        logic [31:0] shift_result;
+85                        logic [31:0] shift_right_result;
+86                        logic [31:0] shift_left_result;
+87                      
+88                        assign shift_amt = operand_b_i[4:0];
+89                      
+90                        assign shift_left = (operator_i == ALU_SLL);
+91                      
+92                        assign shift_arithmetic = (operator_i == ALU_SRA);
+93                      
+94                        // choose the bit reversed or the normal input for shift operand a
+95                        assign shift_op_a    = shift_left ? operand_a_rev : operand_a_i;
+96                      
+97                        // right shifts, we let the synthesizer optimize this
+98                        logic [32:0] shift_op_a_32;
+99                        assign shift_op_a_32 = {shift_arithmetic &amp; shift_op_a[31], shift_op_a};
+100                     
+101                       // The MSB of shift_right_result_ext can safely be ignored. We just extend the input to always
+102                       // do arithmetic shifts.
+103                       logic signed [32:0] shift_right_result_signed;
+104                       logic        [32:0] shift_right_result_ext;
+105                       assign shift_right_result_signed = $signed(shift_op_a_32) &gt;&gt;&gt; shift_amt[4:0];
+106                       assign shift_right_result_ext    = $unsigned(shift_right_result_signed);
+107                       assign shift_right_result        = shift_right_result_ext[31:0];
+108                     
+109                       // bit reverse the shift_right_result for left shifts
+110                       for (genvar j = 0; j &lt; 32; j++) begin : gen_rev_shift_right_result
+111                         assign shift_left_result[j] = shift_right_result[31-j];
+112                       end
+113                     
+114                       assign shift_result = shift_left ? shift_left_result : shift_right_result;
+115                     
+116                       ////////////////
+117                       // Comparison //
+118                       ////////////////
+119                     
+120                       logic is_equal;
+121                       logic is_greater_equal;  // handles both signed and unsigned forms
+122                       logic cmp_signed;
+123                     
+124                       always_comb begin
+125        1/1              cmp_signed = 1'b0;
+126                     
+127        1/1              unique case (operator_i)
+128                           ALU_GE,
+129                           ALU_LT,
+130                           ALU_SLT: begin
+131        1/1                  cmp_signed = 1'b1;
+132                           end
+133                     
+134        1/1                default:;
+135                         endcase
+136                       end
+137                     
+138                       assign is_equal = (adder_result == 32'b0);
+139                       assign is_equal_result_o = is_equal;
+140                     
+141                       // Is greater equal
+142                       always_comb begin
+143        1/1              if ((operand_a_i[31] ^ operand_b_i[31]) == 1'b0) begin
+144        1/1                is_greater_equal = (adder_result[31] == 1'b0);
+145                         end else begin
+146        1/1                is_greater_equal = operand_a_i[31] ^ (cmp_signed);
+147                         end
+148                       end
+149                     
+150                       // GTE unsigned:
+151                       // (a[31] == 1 &amp;&amp; b[31] == 1) =&gt; adder_result[31] == 0
+152                       // (a[31] == 0 &amp;&amp; b[31] == 0) =&gt; adder_result[31] == 0
+153                       // (a[31] == 1 &amp;&amp; b[31] == 0) =&gt; 1
+154                       // (a[31] == 0 &amp;&amp; b[31] == 1) =&gt; 0
+155                     
+156                       // GTE signed:
+157                       // (a[31] == 1 &amp;&amp; b[31] == 1) =&gt; adder_result[31] == 0
+158                       // (a[31] == 0 &amp;&amp; b[31] == 0) =&gt; adder_result[31] == 0
+159                       // (a[31] == 1 &amp;&amp; b[31] == 0) =&gt; 0
+160                       // (a[31] == 0 &amp;&amp; b[31] == 1) =&gt; 1
+161                     
+162                       // generate comparison result
+163                       logic cmp_result;
+164                     
+165                       always_comb begin
+166        1/1              cmp_result = is_equal;
+167                     
+168        1/1              unique case (operator_i)
+169        1/1                ALU_EQ:            cmp_result =  is_equal;
+170        1/1                ALU_NE:            cmp_result = ~is_equal;
+171        1/1                ALU_GE,  ALU_GEU:  cmp_result = is_greater_equal;
+172                           ALU_LT,  ALU_LTU,
+173        1/1                ALU_SLT, ALU_SLTU: cmp_result = ~is_greater_equal;
+174                     
+175        1/1                default:;
+176                         endcase
+177                       end
+178                     
+179                       assign comparison_result_o = cmp_result;
+180                     
+181                       ////////////////
+182                       // Result mux //
+183                       ////////////////
+184                     
+185                       always_comb begin
+186        1/1              result_o   = '0;
+187                     
+188        1/1              unique case (operator_i)
+189                           // Standard Operations
+190        1/1                ALU_AND:  result_o = operand_a_i &amp; operand_b_i;
+191        1/1                ALU_OR:   result_o = operand_a_i | operand_b_i;
+192        1/1                ALU_XOR:  result_o = operand_a_i ^ operand_b_i;
+193                     
+194                           // Adder Operations
+195        1/1                ALU_ADD, ALU_SUB: result_o = adder_result;
+196                     
+197                           // Shift Operations
+198                           ALU_SLL,
+199        1/1                ALU_SRL, ALU_SRA: result_o = shift_result;
+200                     
+201                           // Comparison Operations
+202                           ALU_EQ,   ALU_NE,
+203                           ALU_GE,   ALU_GEU,
+204                           ALU_LT,   ALU_LTU,
+205        1/1                ALU_SLT,  ALU_SLTU: result_o = {31'h0,cmp_result};
+206                     
+207        <font color = "red">0/1     ==>        default:;</font>
+</pre>
+<hr>
+<a name="inst_tag_23_Branch"></a>
+<b>Branch Coverage for Instance : <a href="mod22.html#inst_tag_23" >core_ibex_tb_top.dut.u_ibex_core.ex_block_i.alu_i<img src="ex.gif" class="icon"></a></b><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Line No.</th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th></tr><tr class="s10">
+<td>Branches</td>
+<td></td>
+<td class="rt">25</td>
+<td class="rt">25</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">62</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">66</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">95</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">114</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">47</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">127</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">143</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">168</td>
+<td class="rt">5</td>
+<td class="rt">5</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">188</td>
+<td class="rt">6</td>
+<td class="rt">6</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+62           assign adder_in_a    = multdiv_en_i ? multdiv_operand_a_i : {operand_a_i,1'b1};
+                                                 <font color = "green">-1-</font>  
+                                                 <font color = "green">==></font>  
+                                                 <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+66           assign adder_in_b    = multdiv_en_i ? multdiv_operand_b_i : operand_b_neg ;
+                                                 <font color = "green">-1-</font>  
+                                                 <font color = "green">==></font>  
+                                                 <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+95           assign shift_op_a    = shift_left ? operand_a_rev : operand_a_i;
+                                               <font color = "green">-1-</font>  
+                                               <font color = "green">==></font>  
+                                               <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+114          assign shift_result = shift_left ? shift_left_result : shift_right_result;
+                                              <font color = "green">-1-</font>  
+                                              <font color = "green">==></font>  
+                                              <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+47             unique case (operator_i)
+                      <font color = "green">-1-</font>  
+48               // Adder OPs
+49               ALU_SUB,
+50         
+51               // Comparator OPs
+52               ALU_EQ,   ALU_NE,
+53               ALU_GE,   ALU_GEU,
+54               ALU_LT,   ALU_LTU,
+55               ALU_SLT,  ALU_SLTU: adder_op_b_negate = 1'b1;
+           <font color = "green">      ==></font>
+56         
+57               default:;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>ALU_SUB ALU_EQ ALU_NE ALU_GE ALU_GEU ALU_LT ALU_LTU ALU_SLT ALU_SLTU </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+127            unique case (operator_i)
+                      <font color = "green">-1-</font>  
+128              ALU_GE,
+129              ALU_LT,
+130              ALU_SLT: begin
+131                cmp_signed = 1'b1;
+           <font color = "green">        ==></font>
+132              end
+133        
+134              default:;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>ALU_GE ALU_LT ALU_SLT </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+143            if ((operand_a_i[31] ^ operand_b_i[31]) == 1'b0) begin
+               <font color = "green">-1-</font>  
+144              is_greater_equal = (adder_result[31] == 1'b0);
+           <font color = "green">      ==></font>
+145            end else begin
+146              is_greater_equal = operand_a_i[31] ^ (cmp_signed);
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+168            unique case (operator_i)
+                      <font color = "green">-1-</font>  
+169              ALU_EQ:            cmp_result =  is_equal;
+           <font color = "green">      ==></font>
+170              ALU_NE:            cmp_result = ~is_equal;
+           <font color = "green">      ==></font>
+171              ALU_GE,  ALU_GEU:  cmp_result = is_greater_equal;
+           <font color = "green">      ==></font>
+172              ALU_LT,  ALU_LTU,
+173              ALU_SLT, ALU_SLTU: cmp_result = ~is_greater_equal;
+           <font color = "green">      ==></font>
+174        
+175              default:;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>ALU_EQ </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALU_NE </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALU_GE ALU_GEU </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALU_LT ALU_LTU ALU_SLT ALU_SLTU </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+188            unique case (operator_i)
+                      <font color = "red">-1-</font>  
+189              // Standard Operations
+190              ALU_AND:  result_o = operand_a_i & operand_b_i;
+           <font color = "green">      ==></font>
+191              ALU_OR:   result_o = operand_a_i | operand_b_i;
+           <font color = "green">      ==></font>
+192              ALU_XOR:  result_o = operand_a_i ^ operand_b_i;
+           <font color = "green">      ==></font>
+193        
+194              // Adder Operations
+195              ALU_ADD, ALU_SUB: result_o = adder_result;
+           <font color = "green">      ==></font>
+196        
+197              // Shift Operations
+198              ALU_SLL,
+199              ALU_SRL, ALU_SRA: result_o = shift_result;
+           <font color = "green">      ==></font>
+200        
+201              // Comparison Operations
+202              ALU_EQ,   ALU_NE,
+203              ALU_GE,   ALU_GEU,
+204              ALU_LT,   ALU_LTU,
+205              ALU_SLT,  ALU_SLTU: result_o = {31'h0,cmp_result};
+           <font color = "green">      ==></font>
+206        
+207              default:;
+           <font color = "grey">      ==> (Excluded)</font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>ALU_AND </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALU_OR </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALU_XOR </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALU_ADD ALU_SUB </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALU_SLL ALU_SRL ALU_SRA </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALU_EQ ALU_NE ALU_GE ALU_GEU ALU_LT ALU_LTU ALU_SLT ALU_SLTU </td>
+<td>Covered</td>
+</tr><tr class="wht">
+<td align=center>default</td>
+<td>Excluded</td>
+</tr></table><br clear=all>
+</div>
+</div>
+<div class="ui-layout-center-inner-north">
+<div id="center-bread-crumb" class="breadCrumb module urg-margin-bottom">
+  <ul name="inst_tag_23">
+    <li>
+      <a href="#inst_tag_23_Line">Line</a>    </li>
+    <li>
+      <a href="#inst_tag_23_Branch">Branch</a>    </li>
+  </ul>
+  <ul name="tag_ibex_alu">
+    <li>
+      <a href="#Line">Line</a>    </li>
+    <li>
+      <a href="#Branch">Branch</a>    </li>
+  </ul>
+</div>
+</div>
+</div>
+<div class="ui-layout-south">
+<table align=center><tr><td class="s0 cl">0%</td>
+<td class="s1 cl">10%</td>
+<td class="s2 cl">20%</td>
+<td class="s3 cl">30%</td>
+<td class="s4 cl">40%</td>
+<td class="s5 cl">50%</td>
+<td class="s6 cl">60%</td>
+<td class="s7 cl">70%</td>
+<td class="s8 cl">80%</td>
+<td class="s9 cl">90%</td>
+<td class="s10 cl">100%</td></tr></table></div>
+</body>
+</html>

@@ -1,0 +1,27 @@
+Dashboard
+
+Date: Fri Dec 20 11:36:31 2019
+
+User: udij
+
+Version: P-2019.06-1
+Command line: urg -full64 -dir test.vdb -format both -elfile ../../ibex_exclusion.el
+Number of tests: 340
+
+-------------------------------------------------------------------------------
+Total Coverage Summary 
+SCORE  LINE   TOGGLE FSM    BRANCH ASSERT 
+ 95.63  99.01 100.00  81.97  97.15 100.00 
+
+
+-------------------------------------------------------------------------------
+Hierarchical coverage data for top-level instances 
+SCORE  LINE   TOGGLE FSM    BRANCH ASSERT NAME                
+ 95.63  99.01 100.00  81.97  97.15 100.00 core_ibex_tb_top(X) 
+
+
+-------------------------------------------------------------------------------
+Total Module Definition Coverage Summary 
+SCORE  LINE   TOGGLE FSM    BRANCH ASSERT 
+ 90.30  86.90 100.00  81.97  95.15  87.50 
+

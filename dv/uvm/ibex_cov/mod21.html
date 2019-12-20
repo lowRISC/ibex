@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Author" content="<username>"> <meta name="GENERATOR" content="urg/version [en] (platform name) [urg]">
+<title>Unified Coverage Report :: Module :: ibex_if_stage</title>
+<link type="text/css" rel="stylesheet" href="css/.urg.css">
+<link type="text/css" rel="stylesheet" href="css/.layout.css">
+<link type="text/css" rel="stylesheet" href="css/.breadcrumb.css">
+<script type="text/javascript" src="js/.jquery.js"></script>
+<script type="text/javascript" src="js/.jquery-ui.js"></script>
+<script type="text/javascript" src="js/.sortable.js"></script>
+<script type="text/javascript" src="js/.layout.js"></script>
+<script type="text/javascript" src="js/.breadcrumb.js"></script>
+<script type="text/javascript">
+var layout, westLayout, centerLayout;
+$(document).ready(function () {
+  if ($("#north-bread-crumb")) {
+    $("#north-bread-crumb").jBreadCrumb({easing:'swing'})
+  }
+  layout = $("body").layout({ 
+    resizable: true,
+    spacing_open: 4,
+    spacing_closed: 4,
+    north: {
+      size: 76
+    },
+    south: {
+      size: 45,
+      initClosed: true
+    },
+    west: {
+      size: 500,
+      resizable: true,
+      initClosed: false
+    }
+  });
+  centerLayout = $('div.ui-layout-center').layout({
+    north__paneSelector: ".ui-layout-center-inner-north",
+    center__paneSelector: ".ui-layout-center-inner-center", 
+    north__size: 50,
+    spacing_open: 4,
+    spacing_closed: 4
+  });
+});
+</script>
+</head>
+<body onLoad="initPage();"><div class="ui-layout-north">
+<div class="logo"></div>
+<center class="pagetitle">Module Definition</center>
+<div align="center"><a href="dashboard.html" ><b>dashboard</b></a> | <a href="hierarchy.html" ><b>hierarchy</b></a> | <a href="modlist.html" ><b>modlist</b></a> | groups | <a href="tests.html" ><b>tests</b></a> | <a href="asserts.html" ><b>asserts</b></a></div>
+
+</div>
+<div class="ui-layout-west">
+<div name='tag_ibex_if_stage'>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module : <a href="#"  onclick="showContent('tag_ibex_if_stage')">ibex_if_stage</a></span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s9 cl rt"> 95.96</td>
+<td class="s9 cl rt"><a href="mod21.html#Line" > 96.23</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"><a href="mod21.html#Branch" > 91.67</a></td>
+<td class="s10 cl rt"><a href="mod21.html#Assert" >100.00</a></td>
+</tr></table><br clear=all>
+<span class=repname>Source File(s) : </span>
+<br clear=all>
+<a href="javascript:void(0);"  onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_if_stage.sv')">/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_if_stage.sv</a><br clear=all>
+<br clear=all>
+<span class=repname>Module self-instances :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="wht cl wordwrap"><a href="mod21.html#inst_tag_22"  onclick="showContent('inst_tag_22')">core_ibex_tb_top.dut.u_ibex_core.if_stage_i<img src="ex.gif" class="icon"></a></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt"><a href="mod21.html#inst_tag_22_Line" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod21.html#inst_tag_22_Branch" >100.00</a></td>
+<td class="s10 cl rt"><a href="mod21.html#inst_tag_22_Assert" >100.00</a></td>
+</tr></table></div>
+</div>
+<br clear=all>
+<div name='inst_tag_22'>
+<hr>
+<a name="inst_tag_22"></a>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module Instance : <a href="hierarchy.html#tag_urg_inst_22" >core_ibex_tb_top.dut.u_ibex_core.if_stage_i<img src="ex.gif" class="icon"></a></span>
+<br clear=all>
+<br clear=all>
+<span class=repname>Instance :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt"><a href="mod21.html#inst_tag_22_Line" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod21.html#inst_tag_22_Branch" >100.00</a></td>
+<td class="s10 cl rt"><a href="mod21.html#inst_tag_22_Assert" >100.00</a></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Instance's subtree :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Parent : </span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td><td class="alfsrt">NAME</td></tr><tr>
+<td class="s9 cl rt"> 98.10</td>
+<td class="s9 cl rt"> 99.07</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"> 97.14</td>
+<td class="wht cl rt"></td>
+<td><a href="mod9.html#inst_tag_9" >u_ibex_core</a></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Subtrees :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="wht cl wordwrap"><a href="mod32.html#inst_tag_33" id="tag_urg_inst_33">compressed_decoder_i<img src="ex.gif" class="icon"></a></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+</tr><tr>
+<td class="wht cl wordwrap"><a href="mod27.html#inst_tag_28" id="tag_urg_inst_28">prefetch_buffer_i</a></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+</tr></table><br clear=all>
+</div>
+</div>
+</div>
+<div class="ui-layout-center">
+<div class="ui-layout-center-inner-center">
+<div name='tag_ibex_if_stage'>
+<a name="Line"></a>
+Line Coverage for Module : <a href="mod21.html" >ibex_if_stage</a><br clear=all>
+<table class="noborder">
+<col width="122">
+<col span="4" width="82">
+<tr><th></th><th>Line No.</th><th>Total</th><th>Covered</th><th>Percent</th></tr>
+<tr class="s9"><td class="lf">TOTAL</td><td></td><td>53</td><td>51</td><td>96.23</td></tr>
+<tr class="s8"><td class="lf">ALWAYS</td><td>107</td><td>6</td><td>5</td><td>83.33</td></tr>
+<tr class="s8"><td class="lf">ALWAYS</td><td>118</td><td>7</td><td>6</td><td>85.71</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>163</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>172</td><td>17</td><td>17</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>230</td><td>20</td><td>20</td><td>100.00</td></tr>
+</table>
+<pre class="code"><br clear=all>
+106                       always_comb begin : exc_pc_mux
+107        1/1              unique case (exc_pc_mux_i)
+108        1/1                EXC_PC_EXC:     exc_pc = { csr_mtvec_i[31:8], 8'h00                    };
+109        1/1                EXC_PC_IRQ:     exc_pc = { csr_mtvec_i[31:8], 1'b0, irq_id[4:0], 2'b00 };
+110        1/1                EXC_PC_DBD:     exc_pc = DmHaltAddr;
+111        1/1                EXC_PC_DBG_EXC: exc_pc = DmExceptionAddr;
+112        <font color = "red">0/1     ==>        default:        exc_pc = { csr_mtvec_i[31:8], 8'h00                    };</font>
+113                         endcase
+114                       end
+115                     
+116                       // fetch address selection mux
+117                       always_comb begin : fetch_addr_mux
+118        1/1              unique case (pc_mux_i)
+119        1/1                PC_BOOT: fetch_addr_n = { boot_addr_i[31:8], 8'h80 };
+120        1/1                PC_JUMP: fetch_addr_n = jump_target_ex_i;
+121        1/1                PC_EXC:  fetch_addr_n = exc_pc;                       // set PC to exception handler
+122        1/1                PC_ERET: fetch_addr_n = csr_mepc_i;                   // restore PC when returning from EXC
+123        1/1                PC_DRET: fetch_addr_n = csr_depc_i;
+124        <font color = "red">0/1     ==>        default: fetch_addr_n = { boot_addr_i[31:8], 8'h80 };</font>
+125                         endcase
+126                       end
+127                     
+128                       // tell CS register file to initialize mtvec on boot
+129                       assign csr_mtvec_init_o = (pc_mux_i == PC_BOOT) &amp; pc_set_i;
+130                     
+131                       // prefetch buffer, caches a fixed number of instructions
+132                       ibex_prefetch_buffer prefetch_buffer_i (
+133                           .clk_i             ( clk_i                       ),
+134                           .rst_ni            ( rst_ni                      ),
+135                     
+136                           .req_i             ( req_i                       ),
+137                     
+138                           .branch_i          ( branch_req                  ),
+139                           .addr_i            ( {fetch_addr_n[31:1], 1'b0}  ),
+140                     
+141                           .ready_i           ( fetch_ready                 ),
+142                           .valid_o           ( fetch_valid                 ),
+143                           .rdata_o           ( fetch_rdata                 ),
+144                           .addr_o            ( fetch_addr                  ),
+145                           .err_o             ( fetch_err                   ),
+146                     
+147                           // goes to instruction memory / instruction cache
+148                           .instr_req_o       ( instr_req_o                 ),
+149                           .instr_addr_o      ( instr_addr_o                ),
+150                           .instr_gnt_i       ( instr_gnt_i                 ),
+151                           .instr_rvalid_i    ( instr_rvalid_i              ),
+152                           .instr_rdata_i     ( instr_rdata_i               ),
+153                           .instr_err_i       ( instr_err_i                 ),
+154                           .instr_pmp_err_i   ( instr_pmp_err_i             ),
+155                     
+156                           // Prefetch Buffer Status
+157                           .busy_o            ( prefetch_busy               )
+158                       );
+159                     
+160                     
+161                       // offset initialization state
+162                       always_ff @(posedge clk_i or negedge rst_ni) begin
+163        1/1              if (!rst_ni) begin
+164        1/1                offset_in_init_q &lt;= 1'b1;
+165                         end else begin
+166        1/1                offset_in_init_q &lt;= offset_in_init_d;
+167                         end
+168                       end
+169                     
+170                       // offset initialization related transition logic
+171                       always_comb begin
+172        1/1              offset_in_init_d = offset_in_init_q;
+173                     
+174        1/1              fetch_ready      = 1'b0;
+175        1/1              branch_req       = 1'b0;
+176        1/1              have_instr       = 1'b0;
+177                     
+178        1/1              if (offset_in_init_q) begin
+179                           // no valid instruction data for ID stage, assume aligned
+180        1/1                if (req_i) begin
+181        1/1                  branch_req       = 1'b1;
+182        1/1                  offset_in_init_d = 1'b0;
+183                           end
+                        MISSING_ELSE
+184                         end else begin
+185                           // an instruction is ready for ID stage
+186        1/1                if (fetch_valid) begin
+187        1/1                  have_instr = 1'b1;
+188                     
+189        1/1                  if (req_i &amp;&amp; if_id_pipe_reg_we) begin
+190        1/1                    fetch_ready      = 1'b1;
+191        1/1                    offset_in_init_d = 1'b0;
+192                             end
+                        MISSING_ELSE
+193                           end
+                        MISSING_ELSE
+194                         end
+195                     
+196                         // take care of jumps and branches
+197        1/1              if (pc_set_i) begin
+198        1/1                have_instr       = 1'b0;
+199                     
+200                           // switch to new PC from ID stage
+201        1/1                branch_req       = 1'b1;
+202        1/1                offset_in_init_d = 1'b0;
+203                         end
+                        MISSING_ELSE
+204                       end
+205                     
+206                       assign pc_if_o      = fetch_addr;
+207                       assign if_busy_o    = prefetch_busy;
+208                       assign perf_imiss_o = ~fetch_valid | branch_req;
+209                     
+210                       // compressed instruction decoding, or more precisely compressed instruction
+211                       // expander
+212                       //
+213                       // since it does not matter where we decompress instructions, we do it here
+214                       // to ease timing closure
+215                       logic [31:0] instr_decompressed;
+216                       logic        illegal_c_insn;
+217                       logic        instr_is_compressed_int;
+218                     
+219                       ibex_compressed_decoder compressed_decoder_i (
+220                           .clk_i           ( clk_i                   ),
+221                           .rst_ni          ( rst_ni                  ),
+222                           .instr_i         ( fetch_rdata             ),
+223                           .instr_o         ( instr_decompressed      ),
+224                           .is_compressed_o ( instr_is_compressed_int ),
+225                           .illegal_instr_o ( illegal_c_insn          )
+226                       );
+227                     
+228                       // IF-ID pipeline registers, frozen when the ID stage is stalled
+229                       assign if_id_pipe_reg_we = have_instr &amp; id_in_ready_i;
+230        1/1          
+231        1/1            always_ff @(posedge clk_i or negedge rst_ni) begin : if_id_pipeline_regs
+232        1/1              if (!rst_ni) begin
+233        1/1                instr_new_id_o             &lt;= 1'b0;
+234        1/1                instr_valid_id_o           &lt;= 1'b0;
+235        1/1                instr_rdata_id_o           &lt;= '0;
+236        1/1                instr_fetch_err_o          &lt;= '0;
+237        1/1                instr_rdata_c_id_o         &lt;= '0;
+238        1/1                instr_is_compressed_id_o   &lt;= 1'b0;
+239                           illegal_c_insn_id_o        &lt;= 1'b0;
+240        1/1                pc_id_o                    &lt;= '0;
+241        1/1              end else begin
+242        1/1                instr_new_id_o             &lt;= if_id_pipe_reg_we;
+243        1/1                if (if_id_pipe_reg_we) begin
+244        1/1                  instr_valid_id_o         &lt;= 1'b1;
+245        1/1                  instr_rdata_id_o         &lt;= instr_decompressed;
+246        1/1                  instr_fetch_err_o        &lt;= fetch_err;
+247        1/1                  instr_rdata_c_id_o       &lt;= fetch_rdata[15:0];
+248        1/1                  instr_is_compressed_id_o &lt;= instr_is_compressed_int;
+249        1/1                  illegal_c_insn_id_o      &lt;= illegal_c_insn;
+250        1/1                  pc_id_o                  &lt;= pc_if_o;
+251                           end else if (instr_valid_clear_i) begin
+                        MISSING_ELSE
+</pre>
+<hr>
+<a name="Branch"></a>
+Branch Coverage for Module : <a href="mod21.html" >ibex_if_stage</a><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Line No.</th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th></tr><tr class="s9">
+<td>Branches</td>
+<td></td>
+<td class="rt">24</td>
+<td class="rt">22</td>
+<td class="rt">91.67 </td>
+</tr><tr class="s8">
+<td>CASE</td>
+<td class="rt">107</td>
+<td class="rt">5</td>
+<td class="rt">4</td>
+<td class="rt">80.00 </td>
+</tr><tr class="s8">
+<td>CASE</td>
+<td class="rt">118</td>
+<td class="rt">6</td>
+<td class="rt">5</td>
+<td class="rt">83.33 </td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">163</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">178</td>
+<td class="rt">5</td>
+<td class="rt">5</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">197</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">230</td>
+<td class="rt">4</td>
+<td class="rt">4</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+107            unique case (exc_pc_mux_i)
+                      <font color = "red">-1-</font>  
+108              EXC_PC_EXC:     exc_pc = { csr_mtvec_i[31:8], 8'h00                    };
+           <font color = "green">      ==></font>
+109              EXC_PC_IRQ:     exc_pc = { csr_mtvec_i[31:8], 1'b0, irq_id[4:0], 2'b00 };
+           <font color = "green">      ==></font>
+110              EXC_PC_DBD:     exc_pc = DmHaltAddr;
+           <font color = "green">      ==></font>
+111              EXC_PC_DBG_EXC: exc_pc = DmExceptionAddr;
+           <font color = "green">      ==></font>
+112              default:        exc_pc = { csr_mtvec_i[31:8], 8'h00                    };
+           <font color = "red">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>EXC_PC_EXC </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>EXC_PC_IRQ </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>EXC_PC_DBD </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>EXC_PC_DBG_EXC </td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>default</td>
+<td>Not Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+118            unique case (pc_mux_i)
+                      <font color = "red">-1-</font>  
+119              PC_BOOT: fetch_addr_n = { boot_addr_i[31:8], 8'h80 };
+           <font color = "green">      ==></font>
+120              PC_JUMP: fetch_addr_n = jump_target_ex_i;
+           <font color = "green">      ==></font>
+121              PC_EXC:  fetch_addr_n = exc_pc;                       // set PC to exception handler
+           <font color = "green">      ==></font>
+122              PC_ERET: fetch_addr_n = csr_mepc_i;                   // restore PC when returning from EXC
+           <font color = "green">      ==></font>
+123              PC_DRET: fetch_addr_n = csr_depc_i;
+           <font color = "green">      ==></font>
+124              default: fetch_addr_n = { boot_addr_i[31:8], 8'h80 };
+           <font color = "red">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>PC_BOOT </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>PC_JUMP </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>PC_EXC </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>PC_ERET </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>PC_DRET </td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>default</td>
+<td>Not Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+163            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+164              offset_in_init_q <= 1'b1;
+           <font color = "green">      ==></font>
+165            end else begin
+166              offset_in_init_q <= offset_in_init_d;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+178            if (offset_in_init_q) begin
+               <font color = "green">-1-</font>  
+179              // no valid instruction data for ID stage, assume aligned
+180              if (req_i) begin
+                 <font color = "green">-2-</font>  
+181                branch_req       = 1'b1;
+           <font color = "green">        ==></font>
+182                offset_in_init_d = 1'b0;
+183              end
+                 MISSING_ELSE
+           <font color = "green">      ==></font>
+184            end else begin
+185              // an instruction is ready for ID stage
+186              if (fetch_valid) begin
+                 <font color = "green">-3-</font>  
+187                have_instr = 1'b1;
+188        
+189                if (req_i && if_id_pipe_reg_we) begin
+                   <font color = "green">-4-</font>             
+190                  fetch_ready      = 1'b1;
+           <font color = "green">          ==></font>
+191                  offset_in_init_d = 1'b0;
+192                end
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+193              end
+                 MISSING_ELSE
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+197            if (pc_set_i) begin
+               <font color = "green">-1-</font>  
+198              have_instr       = 1'b0;
+           <font color = "green">      ==></font>
+199        
+200              // switch to new PC from ID stage
+201              branch_req       = 1'b1;
+202              offset_in_init_d = 1'b0;
+203            end
+               MISSING_ELSE
+           <font color = "green">    ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+230        
+           <font color = "green">-1-</font>
+231          always_ff @(posedge clk_i or negedge rst_ni) begin : if_id_pipeline_regs
+           <font color = "green">  ==></font>
+232            if (!rst_ni) begin
+233              instr_new_id_o             <= 1'b0;
+234              instr_valid_id_o           <= 1'b0;
+235              instr_rdata_id_o           <= '0;
+236              instr_fetch_err_o          <= '0;
+237              instr_rdata_c_id_o         <= '0;
+238              instr_is_compressed_id_o   <= 1'b0;
+239              illegal_c_insn_id_o        <= 1'b0;
+240              pc_id_o                    <= '0;
+241            end else begin
+               <font color = "green">-2-</font>              
+242              instr_new_id_o             <= if_id_pipe_reg_we;
+           <font color = "green">      ==></font>
+243              if (if_id_pipe_reg_we) begin
+244                instr_valid_id_o         <= 1'b1;
+245                instr_rdata_id_o         <= instr_decompressed;
+246                instr_fetch_err_o        <= fetch_err;
+247                instr_rdata_c_id_o       <= fetch_rdata[15:0];
+248                instr_is_compressed_id_o <= instr_is_compressed_int;
+249                illegal_c_insn_id_o      <= illegal_c_insn;
+                   <font color = "green">-3-</font>                                           
+250                pc_id_o                  <= pc_if_o;
+           <font color = "green">        ==></font>
+251              end else if (instr_valid_clear_i) begin
+                 MISSING_ELSE
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<hr>
+<a name="Assert"></a>
+Assert Coverage for Module : <a href="mod21.html" >ibex_if_stage</a><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Total</th><th nowrap width=80>Attempted</th><th nowrap width=80>Percent</th><th nowrap width=80>Succeeded/Matched</th><th nowrap width=80>Percent</th></tr><tr>
+<td class="wht cl"><a href="#1942712640" >Assertions</a></td>
+<td class="wht cl rt">4</td>
+<td class="s10 cl rt">4</td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">4</td>
+<td class="s10 cl rt">100.00</td>
+</tr><tr>
+<td class="wht cl"><a href="#1346653643" >Cover properties</a></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+</tr><tr>
+<td class="wht cl"><a href="#1786745350" >Cover sequences</a></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+</tr><tr>
+<td class="wht cl"><b>Total</b></td>
+<td class="wht cl rt">4</td>
+<td class="s10 cl rt">4</td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">4</td>
+<td class="s10 cl rt">100.00</td>
+</tr></table><br clear=all>
+<br clear=all>
+<hr>
+<br clear=all>
+<a name="1942712640"></a>
+<b>Assertion Details</b><br clear=all>
+<br clear=all>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">Name</td><td>Attempts</td><td>Real Successes</td><td>Failures</td><td>Incomplete</td></tr><tr>
+<td class="wht cl"><a name="1582648323"></a>
+unnamed$$_10</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">159002193</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr><tr>
+<td class="wht cl"><a name="1613668130"></a>
+unnamed$$_11</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">1845</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr><tr>
+<td class="wht cl"><a name="1644687937"></a>
+unnamed$$_12</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">81863018</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr><tr>
+<td class="wht cl"><a name="1675707744"></a>
+unnamed$$_13</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">81863018</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr></table><br clear=all>
+</div>
+<div name='inst_tag_22'>
+<a name="inst_tag_22_Line"></a>
+<b>Line Coverage for Instance : <a href="mod21.html#inst_tag_22" >core_ibex_tb_top.dut.u_ibex_core.if_stage_i<img src="ex.gif" class="icon"></a></b><br clear=all>
+<table class="noborder">
+<col width="122">
+<col span="4" width="82">
+<tr><th></th><th>Line No.</th><th>Total</th><th>Covered</th><th>Percent</th></tr>
+<tr class="s10"><td class="lf">TOTAL</td><td></td><td>51</td><td>51</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>107</td><td>5</td><td>5</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>118</td><td>6</td><td>6</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>163</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>172</td><td>17</td><td>17</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>230</td><td>20</td><td>20</td><td>100.00</td></tr>
+</table>
+<pre class="code"><br clear=all>
+106                       always_comb begin : exc_pc_mux
+107        1/1              unique case (exc_pc_mux_i)
+108        1/1                EXC_PC_EXC:     exc_pc = { csr_mtvec_i[31:8], 8'h00                    };
+109        1/1                EXC_PC_IRQ:     exc_pc = { csr_mtvec_i[31:8], 1'b0, irq_id[4:0], 2'b00 };
+110        1/1                EXC_PC_DBD:     exc_pc = DmHaltAddr;
+111        1/1                EXC_PC_DBG_EXC: exc_pc = DmExceptionAddr;
+112        <font color = "grey">excluded     </font>      default:        exc_pc = { csr_mtvec_i[31:8], 8'h00                    };
+113                         endcase
+114                       end
+115                     
+116                       // fetch address selection mux
+117                       always_comb begin : fetch_addr_mux
+118        1/1              unique case (pc_mux_i)
+119        1/1                PC_BOOT: fetch_addr_n = { boot_addr_i[31:8], 8'h80 };
+120        1/1                PC_JUMP: fetch_addr_n = jump_target_ex_i;
+121        1/1                PC_EXC:  fetch_addr_n = exc_pc;                       // set PC to exception handler
+122        1/1                PC_ERET: fetch_addr_n = csr_mepc_i;                   // restore PC when returning from EXC
+123        1/1                PC_DRET: fetch_addr_n = csr_depc_i;
+124        <font color = "grey">excluded     </font>      default: fetch_addr_n = { boot_addr_i[31:8], 8'h80 };
+125                         endcase
+126                       end
+127                     
+128                       // tell CS register file to initialize mtvec on boot
+129                       assign csr_mtvec_init_o = (pc_mux_i == PC_BOOT) &amp; pc_set_i;
+130                     
+131                       // prefetch buffer, caches a fixed number of instructions
+132                       ibex_prefetch_buffer prefetch_buffer_i (
+133                           .clk_i             ( clk_i                       ),
+134                           .rst_ni            ( rst_ni                      ),
+135                     
+136                           .req_i             ( req_i                       ),
+137                     
+138                           .branch_i          ( branch_req                  ),
+139                           .addr_i            ( {fetch_addr_n[31:1], 1'b0}  ),
+140                     
+141                           .ready_i           ( fetch_ready                 ),
+142                           .valid_o           ( fetch_valid                 ),
+143                           .rdata_o           ( fetch_rdata                 ),
+144                           .addr_o            ( fetch_addr                  ),
+145                           .err_o             ( fetch_err                   ),
+146                     
+147                           // goes to instruction memory / instruction cache
+148                           .instr_req_o       ( instr_req_o                 ),
+149                           .instr_addr_o      ( instr_addr_o                ),
+150                           .instr_gnt_i       ( instr_gnt_i                 ),
+151                           .instr_rvalid_i    ( instr_rvalid_i              ),
+152                           .instr_rdata_i     ( instr_rdata_i               ),
+153                           .instr_err_i       ( instr_err_i                 ),
+154                           .instr_pmp_err_i   ( instr_pmp_err_i             ),
+155                     
+156                           // Prefetch Buffer Status
+157                           .busy_o            ( prefetch_busy               )
+158                       );
+159                     
+160                     
+161                       // offset initialization state
+162                       always_ff @(posedge clk_i or negedge rst_ni) begin
+163        1/1              if (!rst_ni) begin
+164        1/1                offset_in_init_q &lt;= 1'b1;
+165                         end else begin
+166        1/1                offset_in_init_q &lt;= offset_in_init_d;
+167                         end
+168                       end
+169                     
+170                       // offset initialization related transition logic
+171                       always_comb begin
+172        1/1              offset_in_init_d = offset_in_init_q;
+173                     
+174        1/1              fetch_ready      = 1'b0;
+175        1/1              branch_req       = 1'b0;
+176        1/1              have_instr       = 1'b0;
+177                     
+178        1/1              if (offset_in_init_q) begin
+179                           // no valid instruction data for ID stage, assume aligned
+180        1/1                if (req_i) begin
+181        1/1                  branch_req       = 1'b1;
+182        1/1                  offset_in_init_d = 1'b0;
+183                           end
+                        MISSING_ELSE
+184                         end else begin
+185                           // an instruction is ready for ID stage
+186        1/1                if (fetch_valid) begin
+187        1/1                  have_instr = 1'b1;
+188                     
+189        1/1                  if (req_i &amp;&amp; if_id_pipe_reg_we) begin
+190        1/1                    fetch_ready      = 1'b1;
+191        1/1                    offset_in_init_d = 1'b0;
+192                             end
+                        MISSING_ELSE
+193                           end
+                        MISSING_ELSE
+194                         end
+195                     
+196                         // take care of jumps and branches
+197        1/1              if (pc_set_i) begin
+198        1/1                have_instr       = 1'b0;
+199                     
+200                           // switch to new PC from ID stage
+201        1/1                branch_req       = 1'b1;
+202        1/1                offset_in_init_d = 1'b0;
+203                         end
+                        MISSING_ELSE
+204                       end
+205                     
+206                       assign pc_if_o      = fetch_addr;
+207                       assign if_busy_o    = prefetch_busy;
+208                       assign perf_imiss_o = ~fetch_valid | branch_req;
+209                     
+210                       // compressed instruction decoding, or more precisely compressed instruction
+211                       // expander
+212                       //
+213                       // since it does not matter where we decompress instructions, we do it here
+214                       // to ease timing closure
+215                       logic [31:0] instr_decompressed;
+216                       logic        illegal_c_insn;
+217                       logic        instr_is_compressed_int;
+218                     
+219                       ibex_compressed_decoder compressed_decoder_i (
+220                           .clk_i           ( clk_i                   ),
+221                           .rst_ni          ( rst_ni                  ),
+222                           .instr_i         ( fetch_rdata             ),
+223                           .instr_o         ( instr_decompressed      ),
+224                           .is_compressed_o ( instr_is_compressed_int ),
+225                           .illegal_instr_o ( illegal_c_insn          )
+226                       );
+227                     
+228                       // IF-ID pipeline registers, frozen when the ID stage is stalled
+229                       assign if_id_pipe_reg_we = have_instr &amp; id_in_ready_i;
+230        1/1          
+231        1/1            always_ff @(posedge clk_i or negedge rst_ni) begin : if_id_pipeline_regs
+232        1/1              if (!rst_ni) begin
+233        1/1                instr_new_id_o             &lt;= 1'b0;
+234        1/1                instr_valid_id_o           &lt;= 1'b0;
+235        1/1                instr_rdata_id_o           &lt;= '0;
+236        1/1                instr_fetch_err_o          &lt;= '0;
+237        1/1                instr_rdata_c_id_o         &lt;= '0;
+238        1/1                instr_is_compressed_id_o   &lt;= 1'b0;
+239                           illegal_c_insn_id_o        &lt;= 1'b0;
+240        1/1                pc_id_o                    &lt;= '0;
+241        1/1              end else begin
+242        1/1                instr_new_id_o             &lt;= if_id_pipe_reg_we;
+243        1/1                if (if_id_pipe_reg_we) begin
+244        1/1                  instr_valid_id_o         &lt;= 1'b1;
+245        1/1                  instr_rdata_id_o         &lt;= instr_decompressed;
+246        1/1                  instr_fetch_err_o        &lt;= fetch_err;
+247        1/1                  instr_rdata_c_id_o       &lt;= fetch_rdata[15:0];
+248        1/1                  instr_is_compressed_id_o &lt;= instr_is_compressed_int;
+249        1/1                  illegal_c_insn_id_o      &lt;= illegal_c_insn;
+250        1/1                  pc_id_o                  &lt;= pc_if_o;
+251                           end else if (instr_valid_clear_i) begin
+                        MISSING_ELSE
+</pre>
+<hr>
+<a name="inst_tag_22_Branch"></a>
+<b>Branch Coverage for Instance : <a href="mod21.html#inst_tag_22" >core_ibex_tb_top.dut.u_ibex_core.if_stage_i<img src="ex.gif" class="icon"></a></b><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Line No.</th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th></tr><tr class="s10">
+<td>Branches</td>
+<td></td>
+<td class="rt">22</td>
+<td class="rt">22</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">107</td>
+<td class="rt">4</td>
+<td class="rt">4</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">118</td>
+<td class="rt">5</td>
+<td class="rt">5</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">163</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">178</td>
+<td class="rt">5</td>
+<td class="rt">5</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">197</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">230</td>
+<td class="rt">4</td>
+<td class="rt">4</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+107            unique case (exc_pc_mux_i)
+                      <font color = "red">-1-</font>  
+108              EXC_PC_EXC:     exc_pc = { csr_mtvec_i[31:8], 8'h00                    };
+           <font color = "green">      ==></font>
+109              EXC_PC_IRQ:     exc_pc = { csr_mtvec_i[31:8], 1'b0, irq_id[4:0], 2'b00 };
+           <font color = "green">      ==></font>
+110              EXC_PC_DBD:     exc_pc = DmHaltAddr;
+           <font color = "green">      ==></font>
+111              EXC_PC_DBG_EXC: exc_pc = DmExceptionAddr;
+           <font color = "green">      ==></font>
+112              default:        exc_pc = { csr_mtvec_i[31:8], 8'h00                    };
+           <font color = "grey">      ==> (Excluded)</font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>EXC_PC_EXC </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>EXC_PC_IRQ </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>EXC_PC_DBD </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>EXC_PC_DBG_EXC </td>
+<td>Covered</td>
+</tr><tr class="wht">
+<td align=center>default</td>
+<td>Excluded</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+118            unique case (pc_mux_i)
+                      <font color = "red">-1-</font>  
+119              PC_BOOT: fetch_addr_n = { boot_addr_i[31:8], 8'h80 };
+           <font color = "green">      ==></font>
+120              PC_JUMP: fetch_addr_n = jump_target_ex_i;
+           <font color = "green">      ==></font>
+121              PC_EXC:  fetch_addr_n = exc_pc;                       // set PC to exception handler
+           <font color = "green">      ==></font>
+122              PC_ERET: fetch_addr_n = csr_mepc_i;                   // restore PC when returning from EXC
+           <font color = "green">      ==></font>
+123              PC_DRET: fetch_addr_n = csr_depc_i;
+           <font color = "green">      ==></font>
+124              default: fetch_addr_n = { boot_addr_i[31:8], 8'h80 };
+           <font color = "grey">      ==> (Excluded)</font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>PC_BOOT </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>PC_JUMP </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>PC_EXC </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>PC_ERET </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>PC_DRET </td>
+<td>Covered</td>
+</tr><tr class="wht">
+<td align=center>default</td>
+<td>Excluded</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+163            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+164              offset_in_init_q <= 1'b1;
+           <font color = "green">      ==></font>
+165            end else begin
+166              offset_in_init_q <= offset_in_init_d;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+178            if (offset_in_init_q) begin
+               <font color = "green">-1-</font>  
+179              // no valid instruction data for ID stage, assume aligned
+180              if (req_i) begin
+                 <font color = "green">-2-</font>  
+181                branch_req       = 1'b1;
+           <font color = "green">        ==></font>
+182                offset_in_init_d = 1'b0;
+183              end
+                 MISSING_ELSE
+           <font color = "green">      ==></font>
+184            end else begin
+185              // an instruction is ready for ID stage
+186              if (fetch_valid) begin
+                 <font color = "green">-3-</font>  
+187                have_instr = 1'b1;
+188        
+189                if (req_i && if_id_pipe_reg_we) begin
+                   <font color = "green">-4-</font>             
+190                  fetch_ready      = 1'b1;
+           <font color = "green">          ==></font>
+191                  offset_in_init_d = 1'b0;
+192                end
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+193              end
+                 MISSING_ELSE
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+197            if (pc_set_i) begin
+               <font color = "green">-1-</font>  
+198              have_instr       = 1'b0;
+           <font color = "green">      ==></font>
+199        
+200              // switch to new PC from ID stage
+201              branch_req       = 1'b1;
+202              offset_in_init_d = 1'b0;
+203            end
+               MISSING_ELSE
+           <font color = "green">    ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+230        
+           <font color = "green">-1-</font>
+231          always_ff @(posedge clk_i or negedge rst_ni) begin : if_id_pipeline_regs
+           <font color = "green">  ==></font>
+232            if (!rst_ni) begin
+233              instr_new_id_o             <= 1'b0;
+234              instr_valid_id_o           <= 1'b0;
+235              instr_rdata_id_o           <= '0;
+236              instr_fetch_err_o          <= '0;
+237              instr_rdata_c_id_o         <= '0;
+238              instr_is_compressed_id_o   <= 1'b0;
+239              illegal_c_insn_id_o        <= 1'b0;
+240              pc_id_o                    <= '0;
+241            end else begin
+               <font color = "green">-2-</font>              
+242              instr_new_id_o             <= if_id_pipe_reg_we;
+           <font color = "green">      ==></font>
+243              if (if_id_pipe_reg_we) begin
+244                instr_valid_id_o         <= 1'b1;
+245                instr_rdata_id_o         <= instr_decompressed;
+246                instr_fetch_err_o        <= fetch_err;
+247                instr_rdata_c_id_o       <= fetch_rdata[15:0];
+248                instr_is_compressed_id_o <= instr_is_compressed_int;
+249                illegal_c_insn_id_o      <= illegal_c_insn;
+                   <font color = "green">-3-</font>                                           
+250                pc_id_o                  <= pc_if_o;
+           <font color = "green">        ==></font>
+251              end else if (instr_valid_clear_i) begin
+                 MISSING_ELSE
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<hr>
+<a name="inst_tag_22_Assert"></a>
+<b>Assert Coverage for Instance : <a href="mod21.html#inst_tag_22" >core_ibex_tb_top.dut.u_ibex_core.if_stage_i<img src="ex.gif" class="icon"></a></b><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Total</th><th nowrap width=80>Attempted</th><th nowrap width=80>Percent</th><th nowrap width=80>Succeeded/Matched</th><th nowrap width=80>Percent</th></tr><tr>
+<td class="wht cl"><a href="#1447376321" >Assertions</a></td>
+<td class="wht cl rt">4</td>
+<td class="s10 cl rt">4</td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">4</td>
+<td class="s10 cl rt">100.00</td>
+</tr><tr>
+<td class="wht cl"><a href="#894475894" >Cover properties</a></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+</tr><tr>
+<td class="wht cl"><a href="#847367301" >Cover sequences</a></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+</tr><tr>
+<td class="wht cl"><b>Total</b></td>
+<td class="wht cl rt">4</td>
+<td class="s10 cl rt">4</td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">4</td>
+<td class="s10 cl rt">100.00</td>
+</tr></table><br clear=all>
+<br clear=all>
+<hr>
+<br clear=all>
+<a name="1447376321"></a>
+<b>Assertion Details</b><br clear=all>
+<br clear=all>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">Name</td><td>Attempts</td><td>Real Successes</td><td>Failures</td><td>Incomplete</td></tr><tr>
+<td class="wht cl"><a name="1717284290"></a>
+unnamed$$_10</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">159002193</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr><tr>
+<td class="wht cl"><a name="1737621665"></a>
+unnamed$$_11</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">1845</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr><tr>
+<td class="wht cl"><a name="1757959040"></a>
+unnamed$$_12</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">81863018</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr><tr>
+<td class="wht cl"><a name="1778296415"></a>
+unnamed$$_13</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">81863018</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr></table><br clear=all>
+</div>
+</div>
+<div class="ui-layout-center-inner-north">
+<div id="center-bread-crumb" class="breadCrumb module urg-margin-bottom">
+  <ul name="inst_tag_22">
+    <li>
+      <a href="#inst_tag_22_Line">Line</a>    </li>
+    <li>
+      <a href="#inst_tag_22_Branch">Branch</a>    </li>
+    <li>
+      <a href="#inst_tag_22_Assert">Assert</a>    </li>
+  </ul>
+  <ul name="tag_ibex_if_stage">
+    <li>
+      <a href="#Line">Line</a>    </li>
+    <li>
+      <a href="#Branch">Branch</a>    </li>
+    <li>
+      <a href="#Assert">Assert</a>    </li>
+  </ul>
+</div>
+</div>
+</div>
+<div class="ui-layout-south">
+<table align=center><tr><td class="s0 cl">0%</td>
+<td class="s1 cl">10%</td>
+<td class="s2 cl">20%</td>
+<td class="s3 cl">30%</td>
+<td class="s4 cl">40%</td>
+<td class="s5 cl">50%</td>
+<td class="s6 cl">60%</td>
+<td class="s7 cl">70%</td>
+<td class="s8 cl">80%</td>
+<td class="s9 cl">90%</td>
+<td class="s10 cl">100%</td></tr></table></div>
+</body>
+</html>

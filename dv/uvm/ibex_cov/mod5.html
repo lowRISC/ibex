@@ -1,0 +1,3902 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Author" content="<username>"> <meta name="GENERATOR" content="urg/version [en] (platform name) [urg]">
+<title>Unified Coverage Report :: Module :: ibex_controller</title>
+<link type="text/css" rel="stylesheet" href="css/.urg.css">
+<link type="text/css" rel="stylesheet" href="css/.layout.css">
+<link type="text/css" rel="stylesheet" href="css/.breadcrumb.css">
+<script type="text/javascript" src="js/.jquery.js"></script>
+<script type="text/javascript" src="js/.jquery-ui.js"></script>
+<script type="text/javascript" src="js/.sortable.js"></script>
+<script type="text/javascript" src="js/.layout.js"></script>
+<script type="text/javascript" src="js/.breadcrumb.js"></script>
+<script type="text/javascript">
+var layout, westLayout, centerLayout;
+$(document).ready(function () {
+  if ($("#north-bread-crumb")) {
+    $("#north-bread-crumb").jBreadCrumb({easing:'swing'})
+  }
+  layout = $("body").layout({ 
+    resizable: true,
+    spacing_open: 4,
+    spacing_closed: 4,
+    north: {
+      size: 76
+    },
+    south: {
+      size: 45,
+      initClosed: true
+    },
+    west: {
+      size: 500,
+      resizable: true,
+      initClosed: false
+    }
+  });
+  centerLayout = $('div.ui-layout-center').layout({
+    north__paneSelector: ".ui-layout-center-inner-north",
+    center__paneSelector: ".ui-layout-center-inner-center", 
+    north__size: 50,
+    spacing_open: 4,
+    spacing_closed: 4
+  });
+});
+</script>
+</head>
+<body onLoad="initPage();"><div class="ui-layout-north">
+<div class="logo"></div>
+<center class="pagetitle">Module Definition</center>
+<div align="center"><a href="dashboard.html" ><b>dashboard</b></a> | <a href="hierarchy.html" ><b>hierarchy</b></a> | <a href="modlist.html" ><b>modlist</b></a> | groups | <a href="tests.html" ><b>tests</b></a> | <a href="asserts.html" ><b>asserts</b></a></div>
+
+</div>
+<div class="ui-layout-west">
+<div name='tag_ibex_controller'>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module : <a href="#"  onclick="showContent('tag_ibex_controller')">ibex_controller</a></span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s8 cl rt"> 85.13</td>
+<td class="s9 cl rt"><a href="mod5.html#Line" > 98.07</a></td>
+<td class="wht cl rt"></td>
+<td class="s6 cl rt"><a href="mod5.html#FSM" > 66.67</a></td>
+<td class="s9 cl rt"><a href="mod5.html#Branch" > 90.67</a></td>
+<td class="wht cl rt"></td>
+</tr></table><br clear=all>
+<span class=repname>Source File(s) : </span>
+<br clear=all>
+<a href="javascript:void(0);"  onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_controller.sv')">/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_controller.sv</a><br clear=all>
+<br clear=all>
+<span class=repname>Module self-instances :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="wht cl wordwrap"><a href="mod5.html#inst_tag_5"  onclick="showContent('inst_tag_5')">core_ibex_tb_top.dut.u_ibex_core.id_stage_i.controller_i</a></td>
+<td class="s8 cl rt"> 85.13</td>
+<td class="s9 cl rt"><a href="mod5.html#Line" > 98.07</a></td>
+<td class="wht cl rt"></td>
+<td class="s6 cl rt"><a href="mod5.html#FSM" > 66.67</a></td>
+<td class="s9 cl rt"><a href="mod5.html#Branch" > 90.67</a></td>
+<td class="wht cl rt"></td>
+</tr></table></div>
+</div>
+<br clear=all>
+<div name='tag_ibex_controller'>
+<hr>
+<a name="inst_tag_5"></a>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module Instance : <a href="hierarchy.html#tag_urg_inst_5" >core_ibex_tb_top.dut.u_ibex_core.id_stage_i.controller_i</a></span>
+<br clear=all>
+<br clear=all>
+<span class=repname>Instance :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s8 cl rt"> 85.13</td>
+<td class="s9 cl rt"><a href="mod5.html#Line" > 98.07</a></td>
+<td class="wht cl rt"></td>
+<td class="s6 cl rt"><a href="mod5.html#FSM" > 66.67</a></td>
+<td class="s9 cl rt"><a href="mod5.html#Branch" > 90.67</a></td>
+<td class="wht cl rt"></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Instance's subtree :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s8 cl rt"> 85.13</td>
+<td class="s9 cl rt"> 98.07</td>
+<td class="wht cl rt"></td>
+<td class="s6 cl rt"> 66.67</td>
+<td class="s9 cl rt"> 90.67</td>
+<td class="wht cl rt"></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Parent : </span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td><td class="alfsrt">NAME</td></tr><tr>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+<td><a href="mod34.html#inst_tag_35" >id_stage_i</a></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Subtrees :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td colspan=7>no children</td>
+</tr></table><br clear=all>
+</div>
+</div>
+<hr>
+Since this is the module's only instance, the coverage report is the same as for the module.</div>
+<div class="ui-layout-center">
+<div class="ui-layout-center-inner-center">
+<div name='tag_ibex_controller'>
+<a name="Line"></a>
+Line Coverage for Module : <a href="mod5.html" >ibex_controller</a><br clear=all>
+<table class="noborder">
+<col width="122">
+<col span="4" width="82">
+<tr><th></th><th>Line No.</th><th>Total</th><th>Covered</th><th>Percent</th></tr>
+<tr class="s9"><td class="lf">TOTAL</td><td></td><td>207</td><td>203</td><td>98.07</td></tr>
+<tr class="wht"><td class="lf">ALWAYS</td><td>140</td><td>0</td><td>0</td><td></td></tr>
+<tr class="s9"><td class="lf">ALWAYS</td><td>218</td><td>31</td><td>30</td><td>96.77</td></tr>
+<tr class="s9"><td class="lf">ALWAYS</td><td>244</td><td>161</td><td>158</td><td>98.14</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>620</td><td>15</td><td>15</td><td>100.00</td></tr>
+</table>
+<pre class="code"><br clear=all>
+139                         // print warning in case of decoding errors
+140        <font color = "grey">unreachable  </font>    if ((ctrl_fsm_cs == DECODE) &amp;&amp; instr_valid_i &amp;&amp; !instr_fetch_err_i &amp;&amp; illegal_insn_d) begin
+141        <font color = "grey">unreachable  </font>      $display(&quot;%t: Illegal instruction (hart %0x) at PC 0x%h: 0x%h&quot;, $time, ibex_core.hart_id_i,
+142                                    ibex_id_stage.pc_id_i, ibex_id_stage.instr_rdata_i);
+143                         end
+                   <font color = "red">==>  MISSING_ELSE</font>
+144                       end
+145                       // synopsys translate_on
+146                     `endif
+147                     
+148                       ////////////////
+149                       // Exceptions //
+150                       ////////////////
+151                     
+152                       assign load_err_d  = load_err_i;
+153                       assign store_err_d = store_err_i;
+154                     
+155                       // Decoder doesn't take instr_valid into account, factor it in here.
+156                       assign ecall_insn      = ecall_insn_i      &amp; instr_valid_i;
+157                       assign mret_insn       = mret_insn_i       &amp; instr_valid_i;
+158                       assign dret_insn       = dret_insn_i       &amp; instr_valid_i;
+159                       assign wfi_insn        = wfi_insn_i        &amp; instr_valid_i;
+160                       assign ebrk_insn       = ebrk_insn_i       &amp; instr_valid_i;
+161                       assign csr_pipe_flush  = csr_pipe_flush_i  &amp; instr_valid_i;
+162                       assign instr_fetch_err = instr_fetch_err_i &amp; instr_valid_i;
+163                     
+164                       // &quot;Executing DRET outside of Debug Mode causes an illegal instruction exception.&quot;
+165                       // [Debug Spec v0.13.2, p.41]
+166                       assign illegal_dret = dret_insn &amp; ~debug_mode_q;
+167                     
+168                       // Some instructions can only be executed in M-Mode
+169                       assign illegal_umode = (priv_mode_i != PRIV_LVL_M) &amp;
+170                                              // MRET must be in M-Mode. TW means trap WFI to M-Mode.
+171                                              (mret_insn | (csr_mstatus_tw_i &amp; wfi_insn));
+172                     
+173                       // This is recorded in the illegal_insn_q flop to help timing.  Specifically
+174                       // it is needed to break the path from ibex_cs_registers/illegal_csr_insn_o
+175                       // to pc_set_o.  Clear when controller is in FLUSH so it won't remain set
+176                       // once illegal instruction is handled.
+177                       assign illegal_insn_d = (illegal_insn_i | illegal_dret | illegal_umode) &amp; (ctrl_fsm_cs != FLUSH);
+178                     
+179                       // exception requests
+180                       // requests are flopped in exc_req_q.  This is cleared when controller is in
+181                       // the FLUSH state so the cycle following exc_req_q won't remain set for an
+182                       // exception request that has just been handled.
+183                       assign exc_req_d = (ecall_insn | ebrk_insn | illegal_insn_d | instr_fetch_err) &amp;
+184                                          (ctrl_fsm_cs != FLUSH);
+185                     
+186                       // LSU exception requests
+187                       assign exc_req_lsu = store_err_i | load_err_i;
+188                     
+189                       // special requests: special instructions, pipeline flushes, exceptions...
+190                       assign special_req = mret_insn | dret_insn | wfi_insn | csr_pipe_flush |
+191                           exc_req_d | exc_req_lsu;
+192                     
+193                       ////////////////
+194                       // Interrupts //
+195                       ////////////////
+196                     
+197                       // Enter debug mode due to an external debug_req_i or because the core is in
+198                       // single step mode (dcsr.step == 1). Single step must be qualified with
+199                       // instruction valid otherwise the core will immediately enter debug mode
+200                       // due to a recently flushed IF (or a delay in an instruction returning from
+201                       // memory) before it has had anything to single step.
+202                       // Also enter debug mode on a trigger match (hardware breakpoint)
+203                       assign enter_debug_mode = (debug_req_i | (debug_single_step_i &amp; instr_valid_i) |
+204                                                  trigger_match_i) &amp; ~debug_mode_q;
+205                     
+206                       // Set when an ebreak should enter debug mode rather than jump to exception
+207                       // handler
+208                       assign ebreak_into_debug = priv_mode_i == PRIV_LVL_M ? debug_ebreakm_i :
+209                                                  priv_mode_i == PRIV_LVL_U ? debug_ebreaku_i :
+210                                                                              1'b0;
+211                     
+212                       // interrupts including NMI are ignored while in debug mode [Debug Spec v0.13.2, p.39]
+213                       assign handle_irq       = ~debug_mode_q &amp;
+214                           ((irq_nm_i &amp; ~nmi_mode_q) | (irq_pending_i &amp; csr_mstatus_mie_i));
+215                     
+216                       // generate ID of fast interrupts, highest priority to highest ID
+217                       always_comb begin : gen_mfip_id
+218        2/2              if      (csr_mfip_i[14]) mfip_id = 4'd14;
+219        2/2              else if (csr_mfip_i[13]) mfip_id = 4'd13;
+220        2/2              else if (csr_mfip_i[12]) mfip_id = 4'd12;
+221        2/2              else if (csr_mfip_i[11]) mfip_id = 4'd11;
+222        2/2              else if (csr_mfip_i[10]) mfip_id = 4'd10;
+223        2/2              else if (csr_mfip_i[ 9]) mfip_id = 4'd9;
+224        2/2              else if (csr_mfip_i[ 8]) mfip_id = 4'd8;
+225        2/2              else if (csr_mfip_i[ 7]) mfip_id = 4'd7;
+226        2/2              else if (csr_mfip_i[ 6]) mfip_id = 4'd6;
+227        2/2              else if (csr_mfip_i[ 5]) mfip_id = 4'd5;
+228        <font color = "red">1/2     ==>      else if (csr_mfip_i[ 5]) mfip_id = 4'd5;</font>
+229        2/2              else if (csr_mfip_i[ 4]) mfip_id = 4'd4;
+230        2/2              else if (csr_mfip_i[ 3]) mfip_id = 4'd3;
+231        2/2              else if (csr_mfip_i[ 2]) mfip_id = 4'd2;
+232        2/2              else if (csr_mfip_i[ 1]) mfip_id = 4'd1;
+233        1/1              else                     mfip_id = 4'd0;
+234                       end
+235                     
+236                       assign unused_csr_mtip = csr_mtip_i;
+237                     
+238                       /////////////////////
+239                       // Core controller //
+240                       /////////////////////
+241                     
+242                       always_comb begin
+243                         // Default values
+244        1/1              instr_req_o           = 1'b1;
+245                     
+246        1/1              csr_save_if_o         = 1'b0;
+247        1/1              csr_save_id_o         = 1'b0;
+248        1/1              csr_restore_mret_id_o = 1'b0;
+249        1/1              csr_restore_dret_id_o = 1'b0;
+250        1/1              csr_save_cause_o      = 1'b0;
+251        1/1              csr_mtval_o           = '0;
+252                     
+253        1/1              pc_mux_o              = PC_BOOT;
+254        1/1              pc_set_o              = 1'b0;
+255                     
+256        1/1              exc_pc_mux_o          = EXC_PC_IRQ;
+257        1/1              exc_cause_o           = EXC_CAUSE_INSN_ADDR_MISA; // = 6'h00
+258                     
+259        1/1              ctrl_fsm_ns           = ctrl_fsm_cs;
+260                     
+261        1/1              ctrl_busy_o           = 1'b1;
+262                     
+263        1/1              halt_if               = 1'b0;
+264        1/1              flush_id              = 1'b0;
+265                     
+266        1/1              debug_csr_save_o      = 1'b0;
+267        1/1              debug_cause_o         = DBG_CAUSE_EBREAK;
+268        1/1              debug_mode_d          = debug_mode_q;
+269        1/1              nmi_mode_d            = nmi_mode_q;
+270                     
+271        1/1              perf_tbranch_o        = 1'b0;
+272        1/1              perf_jump_o           = 1'b0;
+273                     
+274        1/1              unique case (ctrl_fsm_cs)
+275                           RESET: begin
+276                             // just wait for fetch_enable
+277        1/1                  instr_req_o   = 1'b0;
+278        1/1                  pc_mux_o      = PC_BOOT;
+279        1/1                  pc_set_o      = 1'b1;
+280        1/1                  if (fetch_enable_i) begin
+281        1/1                    ctrl_fsm_ns = BOOT_SET;
+282                             end
+                        MISSING_ELSE
+283                           end
+284                     
+285                           BOOT_SET: begin
+286                             // copy boot address to instr fetch address
+287        1/1                  instr_req_o   = 1'b1;
+288        1/1                  pc_mux_o      = PC_BOOT;
+289        1/1                  pc_set_o      = 1'b1;
+290                     
+291        1/1                  ctrl_fsm_ns = FIRST_FETCH;
+292                           end
+293                     
+294                           WAIT_SLEEP: begin
+295        1/1                  ctrl_busy_o   = 1'b0;
+296        1/1                  instr_req_o   = 1'b0;
+297        1/1                  halt_if       = 1'b1;
+298        1/1                  flush_id      = 1'b1;
+299        1/1                  ctrl_fsm_ns   = SLEEP;
+300                           end
+301                     
+302                           SLEEP: begin
+303                             // instruction in IF stage is already valid
+304                             // we begin execution when an interrupt has arrived
+305        1/1                  instr_req_o   = 1'b0;
+306        1/1                  halt_if       = 1'b1;
+307        1/1                  flush_id      = 1'b1;
+308                     
+309                             // normal execution flow
+310                             // in debug mode or single step mode we leave immediately (wfi=nop)
+311        1/1                  if (irq_nm_i || irq_pending_i || debug_req_i || debug_mode_q || debug_single_step_i) begin
+312        1/1                    ctrl_fsm_ns = FIRST_FETCH;
+313                             end else begin
+314                               // Make sure clock remains disabled.
+315        1/1                    ctrl_busy_o = 1'b0;
+316                             end
+317                           end
+318                     
+319                           FIRST_FETCH: begin
+320                             // Stall because of IF miss
+321        1/1                  if (id_in_ready_o) begin
+322        1/1                    ctrl_fsm_ns = DECODE;
+323                             end
+                        MISSING_ELSE
+324                     
+325                             // handle interrupts
+326        1/1                  if (handle_irq) begin
+327                               // This assumes that the pipeline is always flushed before
+328                               // going to sleep.
+329        1/1                    ctrl_fsm_ns = IRQ_TAKEN;
+330        1/1                    halt_if     = 1'b1;
+331        1/1                    flush_id    = 1'b1;
+332                             end
+                        MISSING_ELSE
+333                     
+334                             // enter debug mode
+335        1/1                  if (enter_debug_mode) begin
+336        <font color = "red">0/1     ==>            ctrl_fsm_ns = DBG_TAKEN_IF;</font>
+337                               // Halt IF only for now, ID will be flushed in DBG_TAKEN_IF as the
+338                               // ID state is needed for correct debug mode entry
+339        <font color = "red">0/1     ==>            halt_if     = 1'b1;</font>
+340                             end
+                        MISSING_ELSE
+341                           end
+342                     
+343                           DECODE: begin
+344                             // normal operating mode of the ID stage, in case of debug and interrupt requests,
+345                             // priorities are as follows (lower number == higher priority)
+346                             // 1. currently running (multicycle) instructions and exceptions caused by these
+347                             // 2. debug requests
+348                             // 3. interrupt requests
+349                     
+350        1/1                  if (instr_valid_i) begin
+351                     
+352                               // get ready for special instructions, exceptions, pipeline flushes
+353        1/1                    if (special_req) begin
+354                                 // Halt IF but don't flush ID. This leaves a valid instruction in
+355                                 // ID so controller can determine appropriate action in the
+356                                 // FLUSH state.
+357        1/1                      ctrl_fsm_ns = FLUSH;
+358        1/1                      halt_if     = 1'b1;
+359                               // set PC in IF stage to branch or jump target
+360        1/1                    end else if (branch_set_i || jump_set_i) begin
+361        1/1                      pc_mux_o       = PC_JUMP;
+362        1/1                      pc_set_o       = 1'b1;
+363                     
+364        1/1                      perf_tbranch_o = branch_set_i;
+365        1/1                      perf_jump_o    = jump_set_i;
+366                               end
+                        MISSING_ELSE
+367                     
+368                               // If entering debug mode or handling an IRQ the core needs to wait
+369                               // until the current instruction has finished executing. Stall IF
+370                               // during that time.
+371        1/1                    if ((enter_debug_mode || handle_irq) &amp;&amp; stall) begin
+372        1/1                      halt_if = 1'b1;
+373                               end
+                        MISSING_ELSE
+374                             end // instr_valid_i
+                        MISSING_ELSE
+375                     
+376        1/1                  if (!stall &amp;&amp; !special_req) begin
+377        1/1                    if (enter_debug_mode) begin
+378                                 // enter debug mode
+379        1/1                      ctrl_fsm_ns = DBG_TAKEN_IF;
+380                                 // Halt IF only for now, ID will be flushed in DBG_TAKEN_IF as the
+381                                 // ID state is needed for correct debug mode entry
+382        1/1                      halt_if     = 1'b1;
+383        1/1                    end else if (handle_irq) begin
+384                                 // handle interrupt (not in debug mode)
+385        1/1                      ctrl_fsm_ns = IRQ_TAKEN;
+386        1/1                      halt_if     = 1'b1;
+387        1/1                      flush_id    = 1'b1;
+388                               end
+                        MISSING_ELSE
+389                             end
+                        MISSING_ELSE
+390                     
+391                           end // DECODE
+392                     
+393                           IRQ_TAKEN: begin
+394        1/1                  if (handle_irq) begin
+395        1/1                    pc_mux_o         = PC_EXC;
+396        1/1                    pc_set_o         = 1'b1;
+397        1/1                    exc_pc_mux_o     = EXC_PC_IRQ;
+398                     
+399        1/1                    csr_save_if_o    = 1'b1;
+400        1/1                    csr_save_cause_o = 1'b1;
+401                     
+402                               // interrupt priorities according to Privileged Spec v1.11 p.31
+403        1/1                    if (irq_nm_i &amp;&amp; !nmi_mode_q) begin
+404        1/1                      exc_cause_o = EXC_CAUSE_IRQ_NM;
+405        1/1                      nmi_mode_d  = 1'b1; // enter NMI mode
+406        1/1                    end else if (csr_mfip_i != 15'b0) begin
+407                                 // generate exception cause ID from fast interrupt ID:
+408                                 // - first bit distinguishes interrupts from exceptions,
+409                                 // - second bit adds 16 to fast interrupt ID
+410                                 // for example EXC_CAUSE_IRQ_FAST_0 = {1'b1, 5'd16}
+411        1/1                      exc_cause_o = exc_cause_e'({2'b11, mfip_id});
+412        1/1                    end else if (csr_meip_i) begin
+413        1/1                      exc_cause_o = EXC_CAUSE_IRQ_EXTERNAL_M;
+414        1/1                    end else if (csr_msip_i) begin
+415        1/1                      exc_cause_o = EXC_CAUSE_IRQ_SOFTWARE_M;
+416                               end else begin // csr_mtip_i
+417        <font color = "red">0/1     ==>              exc_cause_o = EXC_CAUSE_IRQ_TIMER_M;</font>
+418                               end
+419                             end
+                   <font color = "red">==>  MISSING_ELSE</font>
+420                     
+421        1/1                  ctrl_fsm_ns = DECODE;
+422                           end
+423                     
+424                           DBG_TAKEN_IF: begin
+425                             // enter debug mode and save PC in IF to dpc
+426                             // jump to debug exception handler in debug memory
+427        1/1                  if (debug_single_step_i || debug_req_i || trigger_match_i) begin
+428        1/1                    flush_id         = 1'b1;
+429        1/1                    pc_mux_o         = PC_EXC;
+430        1/1                    pc_set_o         = 1'b1;
+431        1/1                    exc_pc_mux_o     = EXC_PC_DBD;
+432                     
+433        1/1                    csr_save_if_o    = 1'b1;
+434        1/1                    debug_csr_save_o = 1'b1;
+435                     
+436        1/1                    csr_save_cause_o = 1'b1;
+437        1/1                    if (trigger_match_i) begin
+438        <font color = "grey">unreachable  </font>            debug_cause_o = DBG_CAUSE_TRIGGER;
+439        1/1                    end else if (debug_single_step_i) begin
+440        1/1                      debug_cause_o = DBG_CAUSE_STEP;
+441                               end else begin
+442        1/1                      debug_cause_o = DBG_CAUSE_HALTREQ;
+443                               end
+444                     
+445                               // enter debug mode
+446        1/1                    debug_mode_d = 1'b1;
+447                             end
+                        MISSING_ELSE
+448                     
+449        1/1                  ctrl_fsm_ns  = DECODE;
+450                           end
+451                     
+452                           DBG_TAKEN_ID: begin
+453                             // enter debug mode and save PC in ID to dpc, used when encountering
+454                             // 1. EBREAK during debug mode
+455                             // 2. EBREAK with forced entry into debug mode (ebreakm or ebreaku set).
+456                             // regular ebreak's go through FLUSH.
+457                             //
+458                             // for 1. do not update dcsr and dpc, for 2. do so [Debug Spec v0.13.2, p.39]
+459                             // jump to debug exception handler in debug memory
+460        1/1                  flush_id     = 1'b1;
+461        1/1                  pc_mux_o     = PC_EXC;
+462        1/1                  pc_set_o     = 1'b1;
+463        1/1                  exc_pc_mux_o = EXC_PC_DBD;
+464                     
+465                             // update dcsr and dpc
+466        1/1                  if (ebreak_into_debug &amp;&amp; !debug_mode_q) begin // ebreak with forced entry
+467                     
+468                               // dpc (set to the address of the EBREAK, i.e. set to PC in ID stage)
+469        1/1                    csr_save_cause_o = 1'b1;
+470        1/1                    csr_save_id_o    = 1'b1;
+471                     
+472                               // dcsr
+473        1/1                    debug_csr_save_o = 1'b1;
+474        1/1                    debug_cause_o    = DBG_CAUSE_EBREAK;
+475                             end
+                   <font color = "red">==>  MISSING_ELSE</font>
+476                     
+477                             // enter debug mode
+478        1/1                  debug_mode_d = 1'b1;
+479                     
+480        1/1                  ctrl_fsm_ns  = DECODE;
+481                           end
+482                     
+483                           FLUSH: begin
+484                             // flush the pipeline
+485        1/1                  halt_if     = 1'b1;
+486        1/1                  flush_id    = 1'b1;
+487        1/1                  ctrl_fsm_ns = DECODE;
+488                     
+489                             // exceptions: set exception PC, save PC and exception cause
+490                             // exc_req_lsu is high for one clock cycle only (in DECODE)
+491        1/1                  if (exc_req_q || store_err_q || load_err_q) begin
+492        1/1                    pc_set_o         = 1'b1;
+493        1/1                    pc_mux_o         = PC_EXC;
+494        1/1                    exc_pc_mux_o     = debug_mode_q ? EXC_PC_DBG_EXC : EXC_PC_EXC;
+495        1/1                    csr_save_id_o    = 1'b1;
+496        1/1                    csr_save_cause_o = 1'b1;
+497                     
+498                               // set exception registers, priorities according to Table 3.7 of Privileged Spec v1.11
+499        1/1                    if (instr_fetch_err) begin
+500        1/1                      exc_cause_o = EXC_CAUSE_INSTR_ACCESS_FAULT;
+501        1/1                      csr_mtval_o = pc_id_i;
+502                     
+503        1/1                    end else if (illegal_insn_q) begin
+504        1/1                      exc_cause_o = EXC_CAUSE_ILLEGAL_INSN;
+505        1/1                      csr_mtval_o = instr_is_compressed_i ? {16'b0, instr_compressed_i} : instr_i;
+506                     
+507        1/1                    end else if (ecall_insn) begin
+508        1/1                      exc_cause_o = (priv_mode_i == PRIV_LVL_M) ? EXC_CAUSE_ECALL_MMODE :
+509                                                                             EXC_CAUSE_ECALL_UMODE;
+510                     
+511        1/1                    end else if (ebrk_insn) begin
+512        1/1                      if (debug_mode_q | ebreak_into_debug) begin
+513                                   /*
+514                                    * EBREAK in debug mode re-enters debug mode
+515                                    *
+516                                    * &quot;The only exception is EBREAK. When that is executed in Debug
+517                                    * Mode, it halts the hart again but without updating dpc or
+518                                    * dcsr.&quot; [Debug Spec v0.13.2, p.39]
+519                                    */
+520                     
+521                                   /*
+522                                    * dcsr.ebreakm == 1:
+523                                    * &quot;EBREAK instructions in M-mode enter Debug Mode.&quot;
+524                                    * [Debug Spec v0.13.2, p.42]
+525                                    */
+526        1/1                        pc_set_o         = 1'b0;
+527        1/1                        csr_save_id_o    = 1'b0;
+528        1/1                        csr_save_cause_o = 1'b0;
+529        1/1                        ctrl_fsm_ns      = DBG_TAKEN_ID;
+530        1/1                        flush_id         = 1'b0;
+531                                 end else begin
+532                                   /*
+533                                    * &quot;The EBREAK instruction is used by debuggers to cause control
+534                                    * to be transferred back to a debugging environment. It
+535                                    * generates a breakpoint exception and performs no other
+536                                    * operation. [...] ECALL and EBREAK cause the receiving
+537                                    * privilege mode's epc register to be set to the address of the
+538                                    * ECALL or EBREAK instruction itself, not the address of the
+539                                    * following instruction.&quot; [Privileged Spec v1.11, p.40]
+540                                    */
+541        1/1                        exc_cause_o      = EXC_CAUSE_BREAKPOINT;
+542                                 end
+543                     
+544        1/1                    end else if (store_err_q) begin
+545        1/1                      exc_cause_o = EXC_CAUSE_STORE_ACCESS_FAULT;
+546        1/1                      csr_mtval_o = lsu_addr_last_i;
+547                     
+548                               end else begin // load_err_q
+549        1/1                      exc_cause_o = EXC_CAUSE_LOAD_ACCESS_FAULT;
+550        1/1                      csr_mtval_o = lsu_addr_last_i;
+551                               end
+552                     
+553                             end else begin
+554                               // special instructions and pipeline flushes
+555        1/1                    if (mret_insn) begin
+556        1/1                      pc_mux_o              = PC_ERET;
+557        1/1                      pc_set_o              = 1'b1;
+558        1/1                      csr_restore_mret_id_o = 1'b1;
+559        1/1                      if (nmi_mode_q) begin
+560        1/1                        nmi_mode_d          = 1'b0; // exit NMI mode
+561                                 end
+                        MISSING_ELSE
+562        1/1                    end else if (dret_insn) begin
+563        1/1                      pc_mux_o              = PC_DRET;
+564        1/1                      pc_set_o              = 1'b1;
+565        1/1                      debug_mode_d          = 1'b0;
+566        1/1                      csr_restore_dret_id_o = 1'b1;
+567        1/1                    end else if (wfi_insn) begin
+568        1/1                      ctrl_fsm_ns           = WAIT_SLEEP;
+569        1/1                    end else if (csr_pipe_flush &amp;&amp; handle_irq) begin
+570                                 // start handling IRQs when doing CSR-related pipeline flushes
+571        1/1                      ctrl_fsm_ns           = IRQ_TAKEN;
+572                               end
+                        MISSING_ELSE
+573                             end // exc_req_q
+574                     
+575                             // Entering debug mode due to either single step or debug_req. Ensure
+576                             // registers are set for exception but then enter debug handler rather
+577                             // than exception handler [Debug Spec v0.13.2, p.44]
+578                             // Leave all other signals as is to ensure CSRs and PC get set as if
+579                             // core was entering exception handler, entry to debug mode will then
+580                             // see the appropriate state and setup dpc correctly.
+581        1/1                  if (enter_debug_mode) begin
+582        1/1                    ctrl_fsm_ns = DBG_TAKEN_IF;
+583                             end
+                        MISSING_ELSE
+584                           end // FLUSH
+585                     
+586                           default: begin
+587        1/1                  instr_req_o = 1'b0;
+588        1/1                  ctrl_fsm_ns = RESET;
+589                           end
+590                         endcase
+591                       end
+592                     
+593                       // signal to CSR when in debug mode
+594                       assign debug_mode_o = debug_mode_q;
+595                     
+596                       // signal to CSR when in an NMI handler (for nested exception handling)
+597                       assign nmi_mode_o = nmi_mode_q;
+598                     
+599                       ///////////////////
+600                       // Stall control //
+601                       ///////////////////
+602                     
+603                       // if high, current instr needs at least one more cycle to finish after the current cycle
+604                       // if low, current instr finishes in current cycle
+605                       // multicycle instructions have this set except during the last cycle
+606                       assign stall = stall_lsu_i | stall_multdiv_i | stall_jump_i | stall_branch_i;
+607                     
+608                       // signal to IF stage that ID stage is ready for next instr
+609                       assign id_in_ready_o       = ~stall &amp; ~halt_if;
+610                     
+611                       // kill instr in IF-ID pipeline reg that are done, or if a
+612                       // multicycle instr causes an exception for example
+613                       // halt_if is another kind of stall, where the instr_valid bit must remain
+614                       // set (unless flush_id is set also). It cannot be factored directly into
+615                       // stall as this causes a combinational loop.
+616                       assign instr_valid_clear_o = ~(stall | halt_if) | flush_id;
+617                     
+618                       // update registers
+619                       always_ff @(posedge clk_i or negedge rst_ni) begin : update_regs
+620        1/1              if (!rst_ni) begin
+621        1/1                ctrl_fsm_cs    &lt;= RESET;
+622        1/1                nmi_mode_q     &lt;= 1'b0;
+623        1/1                debug_mode_q   &lt;= 1'b0;
+624        1/1                load_err_q     &lt;= 1'b0;
+625        1/1                store_err_q    &lt;= 1'b0;
+626        1/1                exc_req_q      &lt;= 1'b0;
+627        1/1                illegal_insn_q &lt;= 1'b0;
+628                         end else begin
+629        1/1                ctrl_fsm_cs    &lt;= ctrl_fsm_ns;
+630        1/1                nmi_mode_q     &lt;= nmi_mode_d;
+631        1/1                debug_mode_q   &lt;= debug_mode_d;
+632        1/1                load_err_q     &lt;= load_err_d;
+633        1/1                store_err_q    &lt;= store_err_d;
+634        1/1                exc_req_q      &lt;= exc_req_d;
+635        1/1                illegal_insn_q &lt;= illegal_insn_d;
+</pre>
+<hr>
+<a name="FSM"></a>
+FSM Coverage for Module : <a href="mod5.html" >ibex_controller</a><br clear=all>
+<table align=left class="noborder">
+<caption><b>Summary for FSM :: ctrl_fsm_cs</b></caption>
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th><th nowrap width=200></th></tr><tr class="wht">
+<td>States</td>
+<td class="rt">10</td>
+<td class="rt">10</td>
+<td class="rt">100.00</td>
+<td>(Not included in score)</td>
+</tr><tr class="s6">
+<td>Transitions</td>
+<td class="rt">27</td>
+<td class="rt">18</td>
+<td class="rt">66.67 </td>
+<td></td>
+</tr><tr class="wht">
+<td>Sequences</td>
+<td class="rt">0</td>
+<td class="rt">0</td>
+<td></td>
+<td></td>
+</tr></table><br clear=all>
+<b>State, Transition and Sequence Details for FSM :: ctrl_fsm_cs</b><hr>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">states</td><td>Line No.</td><td class="alfsrt">Covered</td></tr><tr class="uGreen">
+<td nowrap>BOOT_SET</td>
+<td class="rt">281</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>DBG_TAKEN_ID</td>
+<td class="rt">529</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>DBG_TAKEN_IF</td>
+<td class="rt">336</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>DECODE</td>
+<td class="rt">322</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>FIRST_FETCH</td>
+<td class="rt">291</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>FLUSH</td>
+<td class="rt">357</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>IRQ_TAKEN</td>
+<td class="rt">329</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>RESET</td>
+<td class="rt">621</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>SLEEP</td>
+<td class="rt">299</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_SLEEP</td>
+<td class="rt">568</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<br clear=all>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">transitions</td><td>Line No.</td><td class="alfsrt">Covered</td></tr><tr class="uGreen">
+<td nowrap>BOOT_SET->FIRST_FETCH</td>
+<td class="rt">291</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td nowrap>BOOT_SET->RESET</td>
+<td class="rt">621</td>
+<td>Not&nbsp;Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>DBG_TAKEN_ID->DECODE</td>
+<td class="rt">480</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td nowrap>DBG_TAKEN_ID->RESET</td>
+<td class="rt">621</td>
+<td>Not&nbsp;Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>DBG_TAKEN_IF->DECODE</td>
+<td class="rt">449</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td nowrap>DBG_TAKEN_IF->RESET</td>
+<td class="rt">621</td>
+<td>Not&nbsp;Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>DECODE->DBG_TAKEN_IF</td>
+<td class="rt">379</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>DECODE->FLUSH</td>
+<td class="rt">357</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>DECODE->IRQ_TAKEN</td>
+<td class="rt">385</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>DECODE->RESET</td>
+<td class="rt">621</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td nowrap>FIRST_FETCH->DBG_TAKEN_IF</td>
+<td class="rt">336</td>
+<td>Not&nbsp;Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>FIRST_FETCH->DECODE</td>
+<td class="rt">322</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>FIRST_FETCH->IRQ_TAKEN</td>
+<td class="rt">329</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td nowrap>FIRST_FETCH->RESET</td>
+<td class="rt">621</td>
+<td>Not&nbsp;Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>FLUSH->DBG_TAKEN_ID</td>
+<td class="rt">529</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>FLUSH->DBG_TAKEN_IF</td>
+<td class="rt">582</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>FLUSH->DECODE</td>
+<td class="rt">487</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>FLUSH->IRQ_TAKEN</td>
+<td class="rt">571</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td nowrap>FLUSH->RESET</td>
+<td class="rt">621</td>
+<td>Not&nbsp;Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>FLUSH->WAIT_SLEEP</td>
+<td class="rt">568</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>IRQ_TAKEN->DECODE</td>
+<td class="rt">421</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td nowrap>IRQ_TAKEN->RESET</td>
+<td class="rt">621</td>
+<td>Not&nbsp;Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>RESET->BOOT_SET</td>
+<td class="rt">281</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>SLEEP->FIRST_FETCH</td>
+<td class="rt">312</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td nowrap>SLEEP->RESET</td>
+<td class="rt">621</td>
+<td>Not&nbsp;Covered</td>
+</tr><tr class="uRed">
+<td nowrap>WAIT_SLEEP->RESET</td>
+<td class="rt">621</td>
+<td>Not&nbsp;Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_SLEEP->SLEEP</td>
+<td class="rt">299</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<br clear=all>
+<hr>
+<a name="Branch"></a>
+Branch Coverage for Module : <a href="mod5.html" >ibex_controller</a><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Line No.</th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th></tr><tr class="s9">
+<td>Branches</td>
+<td></td>
+<td class="rt">75</td>
+<td class="rt">68</td>
+<td class="rt">90.67 </td>
+</tr><tr class="s6">
+<td>TERNARY</td>
+<td class="rt">208</td>
+<td class="rt">3</td>
+<td class="rt">2</td>
+<td class="rt">66.67 </td>
+</tr><tr class="s9">
+<td>IF</td>
+<td class="rt">218</td>
+<td class="rt">16</td>
+<td class="rt">15</td>
+<td class="rt">93.75 </td>
+</tr><tr class="s9">
+<td>CASE</td>
+<td class="rt">274</td>
+<td class="rt">54</td>
+<td class="rt">49</td>
+<td class="rt">90.74 </td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">620</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+208          assign ebreak_into_debug = priv_mode_i == PRIV_LVL_M ? debug_ebreakm_i :
+                                                                  <font color = "green">-1-</font>  
+                                                                  <font color = "green">==></font>  
+209                                     priv_mode_i == PRIV_LVL_U ? debug_ebreaku_i :
+                                                                  <font color = "red">-2-</font>  
+                                                                  <font color = "green">==></font>  
+                                                                  <font color = "red">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>0</td>
+<td align=center>0</td>
+<td>Not Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+218            if      (csr_mfip_i[14]) mfip_id = 4'd14;
+               <font color = "green">-1-</font>  
+           <font color = "green">    ==></font>
+219            else if (csr_mfip_i[13]) mfip_id = 4'd13;
+                    <font color = "green">-2-</font>  
+           <font color = "green">    ==></font>
+220            else if (csr_mfip_i[12]) mfip_id = 4'd12;
+                    <font color = "green">-3-</font>  
+           <font color = "green">    ==></font>
+221            else if (csr_mfip_i[11]) mfip_id = 4'd11;
+                    <font color = "green">-4-</font>  
+           <font color = "green">    ==></font>
+222            else if (csr_mfip_i[10]) mfip_id = 4'd10;
+                    <font color = "green">-5-</font>  
+           <font color = "green">    ==></font>
+223            else if (csr_mfip_i[ 9]) mfip_id = 4'd9;
+                    <font color = "green">-6-</font>  
+           <font color = "green">    ==></font>
+224            else if (csr_mfip_i[ 8]) mfip_id = 4'd8;
+                    <font color = "green">-7-</font>  
+           <font color = "green">    ==></font>
+225            else if (csr_mfip_i[ 7]) mfip_id = 4'd7;
+                    <font color = "green">-8-</font>  
+           <font color = "green">    ==></font>
+226            else if (csr_mfip_i[ 6]) mfip_id = 4'd6;
+                    <font color = "green">-9-</font>  
+           <font color = "green">    ==></font>
+227            else if (csr_mfip_i[ 5]) mfip_id = 4'd5;
+                    <font color = "green">-10-</font>  
+           <font color = "green">    ==></font>
+228            else if (csr_mfip_i[ 5]) mfip_id = 4'd5;
+                    <font color = "red">-11-</font>  
+           <font color = "red">    ==></font>
+229            else if (csr_mfip_i[ 4]) mfip_id = 4'd4;
+                    <font color = "green">-12-</font>  
+           <font color = "green">    ==></font>
+230            else if (csr_mfip_i[ 3]) mfip_id = 4'd3;
+                    <font color = "green">-13-</font>  
+           <font color = "green">    ==></font>
+231            else if (csr_mfip_i[ 2]) mfip_id = 4'd2;
+                    <font color = "green">-14-</font>  
+           <font color = "green">    ==></font>
+232            else if (csr_mfip_i[ 1]) mfip_id = 4'd1;
+                    <font color = "green">-15-</font>  
+           <font color = "green">    ==></font>
+233            else                     mfip_id = 4'd0;
+           <font color = "green">    ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>-5-</th><th nowrap width=80>-6-</th><th nowrap width=80>-7-</th><th nowrap width=80>-8-</th><th nowrap width=80>-9-</th><th nowrap width=80>-10-</th><th nowrap width=80>-11-</th><th nowrap width=80>-12-</th><th nowrap width=80>-13-</th><th nowrap width=80>-14-</th><th nowrap width=80>-15-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+274            unique case (ctrl_fsm_cs)
+                      <font color = "green">-1-</font>  
+275              RESET: begin
+276                // just wait for fetch_enable
+277                instr_req_o   = 1'b0;
+278                pc_mux_o      = PC_BOOT;
+279                pc_set_o      = 1'b1;
+280                if (fetch_enable_i) begin
+                   <font color = "green">-2-</font>  
+281                  ctrl_fsm_ns = BOOT_SET;
+           <font color = "green">          ==></font>
+282                end
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+283              end
+284        
+285              BOOT_SET: begin
+286                // copy boot address to instr fetch address
+287                instr_req_o   = 1'b1;
+           <font color = "green">        ==></font>
+288                pc_mux_o      = PC_BOOT;
+289                pc_set_o      = 1'b1;
+290        
+291                ctrl_fsm_ns = FIRST_FETCH;
+292              end
+293        
+294              WAIT_SLEEP: begin
+295                ctrl_busy_o   = 1'b0;
+           <font color = "green">        ==></font>
+296                instr_req_o   = 1'b0;
+297                halt_if       = 1'b1;
+298                flush_id      = 1'b1;
+299                ctrl_fsm_ns   = SLEEP;
+300              end
+301        
+302              SLEEP: begin
+303                // instruction in IF stage is already valid
+304                // we begin execution when an interrupt has arrived
+305                instr_req_o   = 1'b0;
+306                halt_if       = 1'b1;
+307                flush_id      = 1'b1;
+308        
+309                // normal execution flow
+310                // in debug mode or single step mode we leave immediately (wfi=nop)
+311                if (irq_nm_i || irq_pending_i || debug_req_i || debug_mode_q || debug_single_step_i) begin
+                   <font color = "green">-3-</font>  
+312                  ctrl_fsm_ns = FIRST_FETCH;
+           <font color = "green">          ==></font>
+313                end else begin
+314                  // Make sure clock remains disabled.
+315                  ctrl_busy_o = 1'b0;
+           <font color = "green">          ==></font>
+316                end
+317              end
+318        
+319              FIRST_FETCH: begin
+320                // Stall because of IF miss
+321                if (id_in_ready_o) begin
+                   <font color = "green">-4-</font>  
+322                  ctrl_fsm_ns = DECODE;
+           <font color = "green">          ==></font>
+323                end
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+324        
+325                // handle interrupts
+326                if (handle_irq) begin
+                   <font color = "green">-5-</font>  
+327                  // This assumes that the pipeline is always flushed before
+328                  // going to sleep.
+329                  ctrl_fsm_ns = IRQ_TAKEN;
+           <font color = "green">          ==></font>
+330                  halt_if     = 1'b1;
+331                  flush_id    = 1'b1;
+332                end
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+333        
+334                // enter debug mode
+335                if (enter_debug_mode) begin
+                   <font color = "red">-6-</font>  
+336                  ctrl_fsm_ns = DBG_TAKEN_IF;
+           <font color = "red">          ==></font>
+337                  // Halt IF only for now, ID will be flushed in DBG_TAKEN_IF as the
+338                  // ID state is needed for correct debug mode entry
+339                  halt_if     = 1'b1;
+340                end
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+341              end
+342        
+343              DECODE: begin
+344                // normal operating mode of the ID stage, in case of debug and interrupt requests,
+345                // priorities are as follows (lower number == higher priority)
+346                // 1. currently running (multicycle) instructions and exceptions caused by these
+347                // 2. debug requests
+348                // 3. interrupt requests
+349        
+350                if (instr_valid_i) begin
+                   <font color = "green">-7-</font>  
+351        
+352                  // get ready for special instructions, exceptions, pipeline flushes
+353                  if (special_req) begin
+                     <font color = "green">-8-</font>  
+354                    // Halt IF but don't flush ID. This leaves a valid instruction in
+355                    // ID so controller can determine appropriate action in the
+356                    // FLUSH state.
+357                    ctrl_fsm_ns = FLUSH;
+           <font color = "green">            ==></font>
+358                    halt_if     = 1'b1;
+359                  // set PC in IF stage to branch or jump target
+360                  end else if (branch_set_i || jump_set_i) begin
+                              <font color = "green">-9-</font>  
+361                    pc_mux_o       = PC_JUMP;
+           <font color = "green">            ==></font>
+362                    pc_set_o       = 1'b1;
+363        
+364                    perf_tbranch_o = branch_set_i;
+365                    perf_jump_o    = jump_set_i;
+366                  end
+                     MISSING_ELSE
+           <font color = "green">          ==></font>
+367        
+368                  // If entering debug mode or handling an IRQ the core needs to wait
+369                  // until the current instruction has finished executing. Stall IF
+370                  // during that time.
+371                  if ((enter_debug_mode || handle_irq) && stall) begin
+                     <font color = "green">-10-</font>  
+372                    halt_if = 1'b1;
+           <font color = "green">            ==></font>
+373                  end
+                     MISSING_ELSE
+           <font color = "green">          ==></font>
+374                end // instr_valid_i
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+375        
+376                if (!stall && !special_req) begin
+                   <font color = "green">-11-</font>  
+377                  if (enter_debug_mode) begin
+                     <font color = "green">-12-</font>  
+378                    // enter debug mode
+379                    ctrl_fsm_ns = DBG_TAKEN_IF;
+           <font color = "green">            ==></font>
+380                    // Halt IF only for now, ID will be flushed in DBG_TAKEN_IF as the
+381                    // ID state is needed for correct debug mode entry
+382                    halt_if     = 1'b1;
+383                  end else if (handle_irq) begin
+                              <font color = "green">-13-</font>  
+384                    // handle interrupt (not in debug mode)
+385                    ctrl_fsm_ns = IRQ_TAKEN;
+           <font color = "green">            ==></font>
+386                    halt_if     = 1'b1;
+387                    flush_id    = 1'b1;
+388                  end
+                     MISSING_ELSE
+           <font color = "green">          ==></font>
+389                end
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+390        
+391              end // DECODE
+392        
+393              IRQ_TAKEN: begin
+394                if (handle_irq) begin
+                   <font color = "red">-14-</font>  
+395                  pc_mux_o         = PC_EXC;
+396                  pc_set_o         = 1'b1;
+397                  exc_pc_mux_o     = EXC_PC_IRQ;
+398        
+399                  csr_save_if_o    = 1'b1;
+400                  csr_save_cause_o = 1'b1;
+401        
+402                  // interrupt priorities according to Privileged Spec v1.11 p.31
+403                  if (irq_nm_i && !nmi_mode_q) begin
+                     <font color = "green">-15-</font>  
+404                    exc_cause_o = EXC_CAUSE_IRQ_NM;
+           <font color = "green">            ==></font>
+405                    nmi_mode_d  = 1'b1; // enter NMI mode
+406                  end else if (csr_mfip_i != 15'b0) begin
+                              <font color = "green">-16-</font>  
+407                    // generate exception cause ID from fast interrupt ID:
+408                    // - first bit distinguishes interrupts from exceptions,
+409                    // - second bit adds 16 to fast interrupt ID
+410                    // for example EXC_CAUSE_IRQ_FAST_0 = {1'b1, 5'd16}
+411                    exc_cause_o = exc_cause_e'({2'b11, mfip_id});
+           <font color = "green">            ==></font>
+412                  end else if (csr_meip_i) begin
+                              <font color = "green">-17-</font>  
+413                    exc_cause_o = EXC_CAUSE_IRQ_EXTERNAL_M;
+           <font color = "green">            ==></font>
+414                  end else if (csr_msip_i) begin
+                              <font color = "red">-18-</font>  
+415                    exc_cause_o = EXC_CAUSE_IRQ_SOFTWARE_M;
+           <font color = "green">            ==></font>
+416                  end else begin // csr_mtip_i
+417                    exc_cause_o = EXC_CAUSE_IRQ_TIMER_M;
+           <font color = "red">            ==></font>
+418                  end
+419                end
+                   MISSING_ELSE
+           <font color = "red">        ==></font>
+420        
+421                ctrl_fsm_ns = DECODE;
+422              end
+423        
+424              DBG_TAKEN_IF: begin
+425                // enter debug mode and save PC in IF to dpc
+426                // jump to debug exception handler in debug memory
+427                if (debug_single_step_i || debug_req_i || trigger_match_i) begin
+                   <font color = "green">-19-</font>  
+428                  flush_id         = 1'b1;
+429                  pc_mux_o         = PC_EXC;
+430                  pc_set_o         = 1'b1;
+431                  exc_pc_mux_o     = EXC_PC_DBD;
+432        
+433                  csr_save_if_o    = 1'b1;
+434                  debug_csr_save_o = 1'b1;
+435        
+436                  csr_save_cause_o = 1'b1;
+437                  if (trigger_match_i) begin
+                     <font color = "red">-20-</font>  
+438                    debug_cause_o = DBG_CAUSE_TRIGGER;
+           <font color = "red">            ==></font>
+439                  end else if (debug_single_step_i) begin
+                              <font color = "green">-21-</font>  
+440                    debug_cause_o = DBG_CAUSE_STEP;
+           <font color = "green">            ==></font>
+441                  end else begin
+442                    debug_cause_o = DBG_CAUSE_HALTREQ;
+           <font color = "green">            ==></font>
+443                  end
+444        
+445                  // enter debug mode
+446                  debug_mode_d = 1'b1;
+447                end
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+448        
+449                ctrl_fsm_ns  = DECODE;
+450              end
+451        
+452              DBG_TAKEN_ID: begin
+453                // enter debug mode and save PC in ID to dpc, used when encountering
+454                // 1. EBREAK during debug mode
+455                // 2. EBREAK with forced entry into debug mode (ebreakm or ebreaku set).
+456                // regular ebreak's go through FLUSH.
+457                //
+458                // for 1. do not update dcsr and dpc, for 2. do so [Debug Spec v0.13.2, p.39]
+459                // jump to debug exception handler in debug memory
+460                flush_id     = 1'b1;
+461                pc_mux_o     = PC_EXC;
+462                pc_set_o     = 1'b1;
+463                exc_pc_mux_o = EXC_PC_DBD;
+464        
+465                // update dcsr and dpc
+466                if (ebreak_into_debug && !debug_mode_q) begin // ebreak with forced entry
+                   <font color = "red">-22-</font>  
+467        
+468                  // dpc (set to the address of the EBREAK, i.e. set to PC in ID stage)
+469                  csr_save_cause_o = 1'b1;
+           <font color = "green">          ==></font>
+470                  csr_save_id_o    = 1'b1;
+471        
+472                  // dcsr
+473                  debug_csr_save_o = 1'b1;
+474                  debug_cause_o    = DBG_CAUSE_EBREAK;
+475                end
+                   MISSING_ELSE
+           <font color = "red">        ==></font>
+476        
+477                // enter debug mode
+478                debug_mode_d = 1'b1;
+479        
+480                ctrl_fsm_ns  = DECODE;
+481              end
+482        
+483              FLUSH: begin
+484                // flush the pipeline
+485                halt_if     = 1'b1;
+486                flush_id    = 1'b1;
+487                ctrl_fsm_ns = DECODE;
+488        
+489                // exceptions: set exception PC, save PC and exception cause
+490                // exc_req_lsu is high for one clock cycle only (in DECODE)
+491                if (exc_req_q || store_err_q || load_err_q) begin
+                   <font color = "green">-23-</font>  
+492                  pc_set_o         = 1'b1;
+493                  pc_mux_o         = PC_EXC;
+494                  exc_pc_mux_o     = debug_mode_q ? EXC_PC_DBG_EXC : EXC_PC_EXC;
+                                                     <font color = "green">-24-</font>  
+                                                     <font color = "green">==></font>  
+                                                     <font color = "green">==></font>  
+495                  csr_save_id_o    = 1'b1;
+496                  csr_save_cause_o = 1'b1;
+497        
+498                  // set exception registers, priorities according to Table 3.7 of Privileged Spec v1.11
+499                  if (instr_fetch_err) begin
+                     <font color = "green">-25-</font>  
+500                    exc_cause_o = EXC_CAUSE_INSTR_ACCESS_FAULT;
+           <font color = "green">            ==></font>
+501                    csr_mtval_o = pc_id_i;
+502        
+503                  end else if (illegal_insn_q) begin
+                              <font color = "green">-26-</font>  
+504                    exc_cause_o = EXC_CAUSE_ILLEGAL_INSN;
+505                    csr_mtval_o = instr_is_compressed_i ? {16'b0, instr_compressed_i} : instr_i;
+                                                           <font color = "green">-27-</font>  
+                                                           <font color = "green">==></font>  
+                                                           <font color = "green">==></font>  
+506        
+507                  end else if (ecall_insn) begin
+                              <font color = "green">-28-</font>  
+508                    exc_cause_o = (priv_mode_i == PRIV_LVL_M) ? EXC_CAUSE_ECALL_MMODE :
+                                                                 <font color = "green">-29-</font>  
+                                                                 <font color = "green">==></font>  
+                                                                 <font color = "green">==></font>  
+509                                                                EXC_CAUSE_ECALL_UMODE;
+510        
+511                  end else if (ebrk_insn) begin
+                              <font color = "green">-30-</font>  
+512                    if (debug_mode_q | ebreak_into_debug) begin
+                       <font color = "green">-31-</font>  
+513                      /*
+514                       * EBREAK in debug mode re-enters debug mode
+515                       *
+516                       * "The only exception is EBREAK. When that is executed in Debug
+517                       * Mode, it halts the hart again but without updating dpc or
+518                       * dcsr." [Debug Spec v0.13.2, p.39]
+519                       */
+520        
+521                      /*
+522                       * dcsr.ebreakm == 1:
+523                       * "EBREAK instructions in M-mode enter Debug Mode."
+524                       * [Debug Spec v0.13.2, p.42]
+525                       */
+526                      pc_set_o         = 1'b0;
+           <font color = "green">              ==></font>
+527                      csr_save_id_o    = 1'b0;
+528                      csr_save_cause_o = 1'b0;
+529                      ctrl_fsm_ns      = DBG_TAKEN_ID;
+530                      flush_id         = 1'b0;
+531                    end else begin
+532                      /*
+533                       * "The EBREAK instruction is used by debuggers to cause control
+534                       * to be transferred back to a debugging environment. It
+535                       * generates a breakpoint exception and performs no other
+536                       * operation. [...] ECALL and EBREAK cause the receiving
+537                       * privilege mode's epc register to be set to the address of the
+538                       * ECALL or EBREAK instruction itself, not the address of the
+539                       * following instruction." [Privileged Spec v1.11, p.40]
+540                       */
+541                      exc_cause_o      = EXC_CAUSE_BREAKPOINT;
+           <font color = "green">              ==></font>
+542                    end
+543        
+544                  end else if (store_err_q) begin
+                              <font color = "green">-32-</font>  
+545                    exc_cause_o = EXC_CAUSE_STORE_ACCESS_FAULT;
+           <font color = "green">            ==></font>
+546                    csr_mtval_o = lsu_addr_last_i;
+547        
+548                  end else begin // load_err_q
+549                    exc_cause_o = EXC_CAUSE_LOAD_ACCESS_FAULT;
+           <font color = "green">            ==></font>
+550                    csr_mtval_o = lsu_addr_last_i;
+551                  end
+552        
+553                end else begin
+554                  // special instructions and pipeline flushes
+555                  if (mret_insn) begin
+                     <font color = "green">-33-</font>  
+556                    pc_mux_o              = PC_ERET;
+557                    pc_set_o              = 1'b1;
+558                    csr_restore_mret_id_o = 1'b1;
+559                    if (nmi_mode_q) begin
+                       <font color = "green">-34-</font>  
+560                      nmi_mode_d          = 1'b0; // exit NMI mode
+           <font color = "green">              ==></font>
+561                    end
+                       MISSING_ELSE
+           <font color = "green">            ==></font>
+562                  end else if (dret_insn) begin
+                              <font color = "green">-35-</font>  
+563                    pc_mux_o              = PC_DRET;
+           <font color = "green">            ==></font>
+564                    pc_set_o              = 1'b1;
+565                    debug_mode_d          = 1'b0;
+566                    csr_restore_dret_id_o = 1'b1;
+567                  end else if (wfi_insn) begin
+                              <font color = "green">-36-</font>  
+568                    ctrl_fsm_ns           = WAIT_SLEEP;
+           <font color = "green">            ==></font>
+569                  end else if (csr_pipe_flush && handle_irq) begin
+                              <font color = "green">-37-</font>  
+570                    // start handling IRQs when doing CSR-related pipeline flushes
+571                    ctrl_fsm_ns           = IRQ_TAKEN;
+           <font color = "green">            ==></font>
+572                  end
+                     MISSING_ELSE
+           <font color = "green">          ==></font>
+573                end // exc_req_q
+574        
+575                // Entering debug mode due to either single step or debug_req. Ensure
+576                // registers are set for exception but then enter debug handler rather
+577                // than exception handler [Debug Spec v0.13.2, p.44]
+578                // Leave all other signals as is to ensure CSRs and PC get set as if
+579                // core was entering exception handler, entry to debug mode will then
+580                // see the appropriate state and setup dpc correctly.
+581                if (enter_debug_mode) begin
+                   <font color = "green">-38-</font>  
+582                  ctrl_fsm_ns = DBG_TAKEN_IF;
+           <font color = "green">          ==></font>
+583                end
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+584              end // FLUSH
+585        
+586              default: begin
+587                instr_req_o = 1'b0;
+           <font color = "green">        ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>-5-</th><th nowrap width=80>-6-</th><th nowrap width=80>-7-</th><th nowrap width=80>-8-</th><th nowrap width=80>-9-</th><th nowrap width=80>-10-</th><th nowrap width=80>-11-</th><th nowrap width=80>-12-</th><th nowrap width=80>-13-</th><th nowrap width=80>-14-</th><th nowrap width=80>-15-</th><th nowrap width=80>-16-</th><th nowrap width=80>-17-</th><th nowrap width=80>-18-</th><th nowrap width=80>-19-</th><th nowrap width=80>-20-</th><th nowrap width=80>-21-</th><th nowrap width=80>-22-</th><th nowrap width=80>-23-</th><th nowrap width=80>-24-</th><th nowrap width=80>-25-</th><th nowrap width=80>-26-</th><th nowrap width=80>-27-</th><th nowrap width=80>-28-</th><th nowrap width=80>-29-</th><th nowrap width=80>-30-</th><th nowrap width=80>-31-</th><th nowrap width=80>-32-</th><th nowrap width=80>-33-</th><th nowrap width=80>-34-</th><th nowrap width=80>-35-</th><th nowrap width=80>-36-</th><th nowrap width=80>-37-</th><th nowrap width=80>-38-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>RESET </td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>RESET </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>BOOT_SET </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_SLEEP </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>SLEEP </td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>SLEEP </td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FIRST_FETCH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FIRST_FETCH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FIRST_FETCH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FIRST_FETCH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>FIRST_FETCH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FIRST_FETCH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>DECODE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>DECODE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>DECODE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>DECODE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>DECODE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>DECODE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>DECODE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>DECODE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>DECODE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>DECODE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IRQ_TAKEN </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IRQ_TAKEN </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IRQ_TAKEN </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IRQ_TAKEN </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>IRQ_TAKEN </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uRed">
+<td align=center>IRQ_TAKEN </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uRed">
+<td align=center>DBG_TAKEN_IF </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>DBG_TAKEN_IF </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>DBG_TAKEN_IF </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>DBG_TAKEN_IF </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>DBG_TAKEN_ID </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>DBG_TAKEN_ID </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FLUSH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FLUSH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FLUSH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FLUSH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FLUSH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FLUSH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FLUSH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FLUSH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FLUSH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FLUSH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FLUSH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FLUSH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FLUSH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FLUSH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FLUSH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FLUSH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FLUSH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FLUSH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>FLUSH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+620            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+621              ctrl_fsm_cs    <= RESET;
+           <font color = "green">      ==></font>
+622              nmi_mode_q     <= 1'b0;
+623              debug_mode_q   <= 1'b0;
+624              load_err_q     <= 1'b0;
+625              store_err_q    <= 1'b0;
+626              exc_req_q      <= 1'b0;
+627              illegal_insn_q <= 1'b0;
+628            end else begin
+629              ctrl_fsm_cs    <= ctrl_fsm_ns;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+</div>
+</div>
+<div class="ui-layout-center-inner-north">
+<div id="center-bread-crumb" class="breadCrumb module urg-margin-bottom">
+  <ul name="inst_tag_5">
+    <li>
+      <a href="#Line">Line</a>    </li>
+    <li>
+      <a href="#FSM">FSM</a>    </li>
+    <li>
+      <a href="#Branch">Branch</a>    </li>
+  </ul>
+  <ul name="tag_ibex_controller">
+    <li>
+      <a href="#Line">Line</a>    </li>
+    <li>
+      <a href="#FSM">FSM</a>    </li>
+    <li>
+      <a href="#Branch">Branch</a>    </li>
+  </ul>
+</div>
+</div>
+</div>
+<div class="ui-layout-south">
+<table align=center><tr><td class="s0 cl">0%</td>
+<td class="s1 cl">10%</td>
+<td class="s2 cl">20%</td>
+<td class="s3 cl">30%</td>
+<td class="s4 cl">40%</td>
+<td class="s5 cl">50%</td>
+<td class="s6 cl">60%</td>
+<td class="s7 cl">70%</td>
+<td class="s8 cl">80%</td>
+<td class="s9 cl">90%</td>
+<td class="s10 cl">100%</td></tr></table></div>
+</body>
+</html>

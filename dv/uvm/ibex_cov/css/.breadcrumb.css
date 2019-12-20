@@ -1,0 +1,86 @@
+.module:after {
+  clear: both;
+  content: ".";
+  display: block;
+  height: 0;
+  visibility: hidden;
+}
+/* float clearing for IE6 */
+* html .module {
+  height: 1%;
+  overflow: visible;
+}
+/* float clearing for IE7 */
+* + html .module {
+  min-height: 1%;
+}
+.breadCrumb {
+  margin: 0;
+  padding: 0;
+  display: block;
+  height: 21px;
+  overflow: hidden;
+  padding:5px;
+  border:solid 1px #dedede;
+  background:#fff;
+  height: auto;
+}
+.breadCrumb ul {
+  margin: 0;
+  padding: 0;
+  height: 21px;
+  display: block;
+}
+.breadCrumb ul li {
+  display: block;
+  float: left;
+  position: relative;
+  height: 21px;
+  overflow: hidden;
+  line-height: 21px;
+  margin: 0px 6px 0px 0;
+  padding: 0px 10px 0px 0;
+  font-size: 13px;
+  background: url(data:image/gif;base64,R0lGODlhBQAUALMPAOLi4u3t7e/v7+Xl5eTk5Ozs7OHh4f7+/tXV1c3NzfHx8c/Pz/Dw8P39/dTU1P///yH5BAEAAA8ALAAAAAAFABQAAAQmsLz5HH0j0GMpEVTTTQATIpehhEuYUIb5iFQ50dM3cVRGjQ8JJQIAOw==) no-repeat 100% 0;
+}
+.breadCrumb ul li div.chevronOverlay {
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 2;
+}
+.breadCrumb ul li span {
+  display: block;
+  overflow: hidden;
+}
+.breadCrumb ul li a {
+  display: block;
+  position: relative;
+  height: 21px;
+  line-height: 21px;
+  overflow: hidden;
+  float: left;
+}
+.breadCrumb ul li.first a {
+  height: 16px !important;
+  text-indent:-1000em;
+  width:16px;
+  padding: 0;
+  margin-top: 2px;
+  overflow: hidden;
+  background: url(data:image/gif;base64,R0lGODlhEAAgAOZ/AOTw8YjJNZjRUZSlyZi22EiQuv3+/lpaWne0vMzMzKO58klJScDAwGlpaaGhodbsue/v79XV1bq6uiyKmPL56fr6+qKiojSDsq2trfb29vD2+tzvxKSkpObm5oGBgdjY2Ov33YS+vcjIyKenp46OjoWj9dLS0oiIiPPz86rZb/Dw8Lvgivr99nXBFHSV+3Sqy8fHx+LyzrGxscLjl3t7e3C/DHil3kF26Txy6piYmJmZmZeXl5qampycnJ+fn5aWlpubm52dne0cJJ6enuhMUuZkad3Q0uR8gZSUlPj4+OCsr+KUmN7ExulARt+4u9vb216qp0+K1fj6/vz9+UKbl+dYXvb779Xm76nG6KzA/LzX5cjmotDqr4Os34q+x+VwdWShxV2J7WSuqmKosoGf/D+A0L7T8Lva3GiO7GuQ7k+gpO/448fg5mCW2Nfk96LOzomr8cfX+OPz0KLVYOvr6+bs/YKg+zd6zn7FI+OIjG++Ct3d3ZWVlXd3d////wAAACH5BAEAAH8ALAAAAAAQACAAAAeCgH+Cg4SFhoeIhH2CfYuJjYuNj5CRiJSQlpeYhZqXnJ2bg56eiqGUn5KMoaqpf6eJsLGys7S1hT+COTqwOzk5fzo8ib7BwkCIxTxAPT2Iysw9QUFDPobM09Q+Pg7chdrb3NwW44Xh5BYc6RyF4+iD6SMjherrgvHx8/CD9/K2/raBAAA7) no-repeat 0 0;
+}
+.breadCrumb ul li.first a:hover {
+  background-position: 0 -16px;
+}
+.breadCrumb ul li.last {
+  background: none;
+  margin-right: 0;
+  padding-right: 0;
+}
+.chevronOverlay {
+  display: none;
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAANhJREFUeNqslLsOgzAUQ52sRbzSIQg68f+/xASCiefGAI2ltkJiq2zJQzIcWbnXMed5IigJfgYXwWXw62KefbALfuCjbduw7zucc7jK4k9FUYRhGG73fwONMciyDOM4aoBUURTo+14HZMo0TTHPswb4Tdl1nQ5orUUcx1iWRQOkyrL8pZQAmZJrtK6rBkhVVYWmaXRA6jgOHbBtW9R1rQEyGbudJIkGyAnzDSVTZjpOl+kkQHaZeyhpCv9S9ph9lgCZjl2W/DZMN00T8jzXALkm3vvb/VuAAQA+U08h6yjgOwAAAABJRU5ErkJggg==) no-repeat 100% 0;
+  width: 13px;
+  height: 20px;
+}

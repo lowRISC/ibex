@@ -1,0 +1,3596 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Author" content="<username>"> <meta name="GENERATOR" content="urg/version [en] (platform name) [urg]">
+<title>Unified Coverage Report :: Module :: ibex_cs_registers</title>
+<link type="text/css" rel="stylesheet" href="css/.urg.css">
+<link type="text/css" rel="stylesheet" href="css/.layout.css">
+<link type="text/css" rel="stylesheet" href="css/.breadcrumb.css">
+<script type="text/javascript" src="js/.jquery.js"></script>
+<script type="text/javascript" src="js/.jquery-ui.js"></script>
+<script type="text/javascript" src="js/.sortable.js"></script>
+<script type="text/javascript" src="js/.layout.js"></script>
+<script type="text/javascript" src="js/.breadcrumb.js"></script>
+<script type="text/javascript">
+var layout, westLayout, centerLayout;
+$(document).ready(function () {
+  if ($("#north-bread-crumb")) {
+    $("#north-bread-crumb").jBreadCrumb({easing:'swing'})
+  }
+  layout = $("body").layout({ 
+    resizable: true,
+    spacing_open: 4,
+    spacing_closed: 4,
+    north: {
+      size: 76
+    },
+    south: {
+      size: 45,
+      initClosed: true
+    },
+    west: {
+      size: 500,
+      resizable: true,
+      initClosed: false
+    }
+  });
+  centerLayout = $('div.ui-layout-center').layout({
+    north__paneSelector: ".ui-layout-center-inner-north",
+    center__paneSelector: ".ui-layout-center-inner-center", 
+    north__size: 50,
+    spacing_open: 4,
+    spacing_closed: 4
+  });
+});
+</script>
+</head>
+<body onLoad="initPage();"><div class="ui-layout-north">
+<div class="logo"></div>
+<center class="pagetitle">Module Definition</center>
+<div align="center"><a href="dashboard.html" ><b>dashboard</b></a> | <a href="hierarchy.html" ><b>hierarchy</b></a> | <a href="modlist.html" ><b>modlist</b></a> | groups | <a href="tests.html" ><b>tests</b></a> | <a href="asserts.html" ><b>asserts</b></a></div>
+
+</div>
+<div class="ui-layout-west">
+<div name='tag_ibex_cs_registers'>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module : <a href="#"  onclick="showContent('tag_ibex_cs_registers')">ibex_cs_registers</a></span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s9 cl rt"> 94.54</td>
+<td class="s9 cl rt"><a href="mod37.html#Line" > 97.03</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"><a href="mod37.html#Branch" > 92.05</a></td>
+<td class="wht cl rt"></td>
+</tr></table><br clear=all>
+<span class=repname>Source File(s) : </span>
+<br clear=all>
+<a href="javascript:void(0);"  onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_cs_registers.sv')">/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_cs_registers.sv</a><br clear=all>
+<br clear=all>
+<span class=repname>Module self-instances :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="wht cl wordwrap"><a href="mod37.html#inst_tag_38"  onclick="showContent('inst_tag_38')">core_ibex_tb_top.dut.u_ibex_core.cs_registers_i<img src="ex.gif" class="icon"></a></td>
+<td class="s9 cl rt"> 94.75</td>
+<td class="s9 cl rt"><a href="mod37.html#inst_tag_38_Line" > 97.45</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"><a href="mod37.html#inst_tag_38_Branch" > 92.05</a></td>
+<td class="wht cl rt"></td>
+</tr></table></div>
+</div>
+<br clear=all>
+<div name='inst_tag_38'>
+<hr>
+<a name="inst_tag_38"></a>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module Instance : <a href="hierarchy.html#tag_urg_inst_38" >core_ibex_tb_top.dut.u_ibex_core.cs_registers_i<img src="ex.gif" class="icon"></a></span>
+<br clear=all>
+<br clear=all>
+<span class=repname>Instance :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s9 cl rt"> 94.75</td>
+<td class="s9 cl rt"><a href="mod37.html#inst_tag_38_Line" > 97.45</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"><a href="mod37.html#inst_tag_38_Branch" > 92.05</a></td>
+<td class="wht cl rt"></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Instance's subtree :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s9 cl rt"> 94.75</td>
+<td class="s9 cl rt"> 97.45</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"> 92.05</td>
+<td class="wht cl rt"></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Parent : </span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td><td class="alfsrt">NAME</td></tr><tr>
+<td class="s9 cl rt"> 98.10</td>
+<td class="s9 cl rt"> 99.07</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"> 97.14</td>
+<td class="wht cl rt"></td>
+<td><a href="mod9.html#inst_tag_9" >u_ibex_core</a></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Subtrees :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td colspan=7>no children</td>
+</tr></table><br clear=all>
+</div>
+</div>
+</div>
+<div class="ui-layout-center">
+<div class="ui-layout-center-inner-center">
+<div name='tag_ibex_cs_registers'>
+<a name="Line"></a>
+Line Coverage for Module : <a href="mod37.html" >ibex_cs_registers</a><br clear=all>
+<table class="noborder">
+<col width="122">
+<col span="4" width="82">
+<tr><th></th><th>Line No.</th><th>Total</th><th>Covered</th><th>Percent</th></tr>
+<tr class="s9"><td class="lf">TOTAL</td><td></td><td>236</td><td>229</td><td>97.03</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>245</td><td>71</td><td>71</td><td>100.00</td></tr>
+<tr class="s9"><td class="lf">ALWAYS</td><td>413</td><td>83</td><td>78</td><td>93.98</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>605</td><td>9</td><td>9</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>647</td><td>31</td><td>31</td><td>100.00</td></tr>
+<tr class="s6"><td class="lf">ALWAYS</td><td>837</td><td>3</td><td>2</td><td>66.67</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>855</td><td>13</td><td>13</td><td>100.00</td></tr>
+<tr class="wht"><td class="lf">ALWAYS</td><td>878</td><td>0</td><td>0</td><td></td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>878</td><td>6</td><td>6</td><td>100.00</td></tr>
+<tr class="wht"><td class="lf">ALWAYS</td><td>893</td><td>0</td><td>0</td><td></td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>893</td><td>6</td><td>6</td><td>100.00</td></tr>
+<tr class="s8"><td class="lf">ALWAYS</td><td>911</td><td>8</td><td>7</td><td>87.50</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>931</td><td>6</td><td>6</td><td>100.00</td></tr>
+</table>
+<pre class="code"><br clear=all>
+244                       always_comb begin
+245        1/1              csr_rdata_int = '0;
+246        1/1              illegal_csr   = 1'b0;
+247                     
+248        1/1              unique case (csr_addr_i)
+249                           // mhartid: unique hardware thread id
+250        1/1                CSR_MHARTID: csr_rdata_int = hart_id_i;
+251                     
+252                           // mstatus: always M-mode, contains IE bit
+253                           CSR_MSTATUS: begin
+254        1/1                  csr_rdata_int                                                   = '0;
+255        1/1                  csr_rdata_int[CSR_MSTATUS_MIE_BIT]                              = mstatus_q.mie;
+256        1/1                  csr_rdata_int[CSR_MSTATUS_MPIE_BIT]                             = mstatus_q.mpie;
+257        1/1                  csr_rdata_int[CSR_MSTATUS_MPP_BIT_HIGH:CSR_MSTATUS_MPP_BIT_LOW] = mstatus_q.mpp;
+258        1/1                  csr_rdata_int[CSR_MSTATUS_MPRV_BIT]                             = mstatus_q.mprv;
+259        1/1                  csr_rdata_int[CSR_MSTATUS_TW_BIT]                               = mstatus_q.tw;
+260                           end
+261                     
+262                           // misa
+263        1/1                CSR_MISA: csr_rdata_int = MISA_VALUE;
+264                     
+265                           // interrupt enable
+266                           CSR_MIE: begin
+267        1/1                  csr_rdata_int                                     = '0;
+268        1/1                  csr_rdata_int[CSR_MSIX_BIT]                       = mie_q.irq_software;
+269        1/1                  csr_rdata_int[CSR_MTIX_BIT]                       = mie_q.irq_timer;
+270        1/1                  csr_rdata_int[CSR_MEIX_BIT]                       = mie_q.irq_external;
+271        1/1                  csr_rdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mie_q.irq_fast;
+272                           end
+273                     
+274        1/1                CSR_MSCRATCH: csr_rdata_int = mscratch_q;
+275                     
+276                           // mtvec: trap-vector base address
+277        1/1                CSR_MTVEC: csr_rdata_int = mtvec_q;
+278                     
+279                           // mepc: exception program counter
+280        1/1                CSR_MEPC: csr_rdata_int = mepc_q;
+281                     
+282                           // mcause: exception cause
+283        1/1                CSR_MCAUSE: csr_rdata_int = {mcause_q[5], 26'b0, mcause_q[4:0]};
+284                     
+285                           // mtval: trap value
+286        1/1                CSR_MTVAL: csr_rdata_int = mtval_q;
+287                     
+288                           // mip: interrupt pending
+289                           CSR_MIP: begin
+290        1/1                  csr_rdata_int                                     = '0;
+291        1/1                  csr_rdata_int[CSR_MSIX_BIT]                       = mip.irq_software;
+292        1/1                  csr_rdata_int[CSR_MTIX_BIT]                       = mip.irq_timer;
+293        1/1                  csr_rdata_int[CSR_MEIX_BIT]                       = mip.irq_external;
+294        1/1                  csr_rdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mip.irq_fast;
+295                           end
+296                     
+297                           // PMP registers
+298        1/1                CSR_PMPCFG0:   csr_rdata_int = {pmp_cfg_rdata[3],  pmp_cfg_rdata[2],
+299                                                           pmp_cfg_rdata[1],  pmp_cfg_rdata[0]};
+300        1/1                CSR_PMPCFG1:   csr_rdata_int = {pmp_cfg_rdata[7],  pmp_cfg_rdata[6],
+301                                                           pmp_cfg_rdata[5],  pmp_cfg_rdata[4]};
+302        1/1                CSR_PMPCFG2:   csr_rdata_int = {pmp_cfg_rdata[11], pmp_cfg_rdata[10],
+303                                                           pmp_cfg_rdata[9],  pmp_cfg_rdata[8]};
+304        1/1                CSR_PMPCFG3:   csr_rdata_int = {pmp_cfg_rdata[15], pmp_cfg_rdata[14],
+305                                                           pmp_cfg_rdata[13], pmp_cfg_rdata[12]};
+306        1/1                CSR_PMPADDR0:  csr_rdata_int = pmp_addr_rdata[0];
+307        1/1                CSR_PMPADDR1:  csr_rdata_int = pmp_addr_rdata[1];
+308        1/1                CSR_PMPADDR2:  csr_rdata_int = pmp_addr_rdata[2];
+309        1/1                CSR_PMPADDR3:  csr_rdata_int = pmp_addr_rdata[3];
+310        1/1                CSR_PMPADDR4:  csr_rdata_int = pmp_addr_rdata[4];
+311        1/1                CSR_PMPADDR5:  csr_rdata_int = pmp_addr_rdata[5];
+312        1/1                CSR_PMPADDR6:  csr_rdata_int = pmp_addr_rdata[6];
+313        1/1                CSR_PMPADDR7:  csr_rdata_int = pmp_addr_rdata[7];
+314        1/1                CSR_PMPADDR8:  csr_rdata_int = pmp_addr_rdata[8];
+315        1/1                CSR_PMPADDR9:  csr_rdata_int = pmp_addr_rdata[9];
+316        1/1                CSR_PMPADDR10: csr_rdata_int = pmp_addr_rdata[10];
+317        1/1                CSR_PMPADDR11: csr_rdata_int = pmp_addr_rdata[11];
+318        1/1                CSR_PMPADDR12: csr_rdata_int = pmp_addr_rdata[12];
+319        1/1                CSR_PMPADDR13: csr_rdata_int = pmp_addr_rdata[13];
+320        1/1                CSR_PMPADDR14: csr_rdata_int = pmp_addr_rdata[14];
+321        1/1                CSR_PMPADDR15: csr_rdata_int = pmp_addr_rdata[15];
+322                     
+323                           CSR_DCSR: begin
+324        1/1                  csr_rdata_int = dcsr_q;
+325        1/1                  illegal_csr = ~debug_mode_i;
+326                           end
+327                           CSR_DPC: begin
+328        1/1                  csr_rdata_int = depc_q;
+329        1/1                  illegal_csr = ~debug_mode_i;
+330                           end
+331                           CSR_DSCRATCH0: begin
+332        1/1                  csr_rdata_int = dscratch0_q;
+333        1/1                  illegal_csr = ~debug_mode_i;
+334                           end
+335                           CSR_DSCRATCH1: begin
+336        1/1                  csr_rdata_int = dscratch1_q;
+337        1/1                  illegal_csr = ~debug_mode_i;
+338                           end
+339                     
+340                           // machine counter/timers
+341        1/1                CSR_MCOUNTINHIBIT: csr_rdata_int = mcountinhibit;
+342                           CSR_MHPMEVENT3,
+343                           CSR_MHPMEVENT4,  CSR_MHPMEVENT5,  CSR_MHPMEVENT6,  CSR_MHPMEVENT7,
+344                           CSR_MHPMEVENT8,  CSR_MHPMEVENT9,  CSR_MHPMEVENT10, CSR_MHPMEVENT11,
+345                           CSR_MHPMEVENT12, CSR_MHPMEVENT13, CSR_MHPMEVENT14, CSR_MHPMEVENT15,
+346                           CSR_MHPMEVENT16, CSR_MHPMEVENT17, CSR_MHPMEVENT18, CSR_MHPMEVENT19,
+347                           CSR_MHPMEVENT20, CSR_MHPMEVENT21, CSR_MHPMEVENT22, CSR_MHPMEVENT23,
+348                           CSR_MHPMEVENT24, CSR_MHPMEVENT25, CSR_MHPMEVENT26, CSR_MHPMEVENT27,
+349                           CSR_MHPMEVENT28, CSR_MHPMEVENT29, CSR_MHPMEVENT30, CSR_MHPMEVENT31: begin
+350        1/1                  csr_rdata_int = mhpmevent[mhpmcounter_idx];
+351                           end
+352                     
+353                           CSR_MCYCLE,
+354                           CSR_MINSTRET,
+355                           CSR_MHPMCOUNTER3,
+356                           CSR_MHPMCOUNTER4,  CSR_MHPMCOUNTER5,  CSR_MHPMCOUNTER6,  CSR_MHPMCOUNTER7,
+357                           CSR_MHPMCOUNTER8,  CSR_MHPMCOUNTER9,  CSR_MHPMCOUNTER10, CSR_MHPMCOUNTER11,
+358                           CSR_MHPMCOUNTER12, CSR_MHPMCOUNTER13, CSR_MHPMCOUNTER14, CSR_MHPMCOUNTER15,
+359                           CSR_MHPMCOUNTER16, CSR_MHPMCOUNTER17, CSR_MHPMCOUNTER18, CSR_MHPMCOUNTER19,
+360                           CSR_MHPMCOUNTER20, CSR_MHPMCOUNTER21, CSR_MHPMCOUNTER22, CSR_MHPMCOUNTER23,
+361                           CSR_MHPMCOUNTER24, CSR_MHPMCOUNTER25, CSR_MHPMCOUNTER26, CSR_MHPMCOUNTER27,
+362                           CSR_MHPMCOUNTER28, CSR_MHPMCOUNTER29, CSR_MHPMCOUNTER30, CSR_MHPMCOUNTER31: begin
+363        1/1                  csr_rdata_int = mhpmcounter_q[mhpmcounter_idx][31:0];
+364                           end
+365                     
+366                           CSR_MCYCLEH,
+367                           CSR_MINSTRETH,
+368                           CSR_MHPMCOUNTER3H,
+369                           CSR_MHPMCOUNTER4H,  CSR_MHPMCOUNTER5H,  CSR_MHPMCOUNTER6H,  CSR_MHPMCOUNTER7H,
+370                           CSR_MHPMCOUNTER8H,  CSR_MHPMCOUNTER9H,  CSR_MHPMCOUNTER10H, CSR_MHPMCOUNTER11H,
+371                           CSR_MHPMCOUNTER12H, CSR_MHPMCOUNTER13H, CSR_MHPMCOUNTER14H, CSR_MHPMCOUNTER15H,
+372                           CSR_MHPMCOUNTER16H, CSR_MHPMCOUNTER17H, CSR_MHPMCOUNTER18H, CSR_MHPMCOUNTER19H,
+373                           CSR_MHPMCOUNTER20H, CSR_MHPMCOUNTER21H, CSR_MHPMCOUNTER22H, CSR_MHPMCOUNTER23H,
+374                           CSR_MHPMCOUNTER24H, CSR_MHPMCOUNTER25H, CSR_MHPMCOUNTER26H, CSR_MHPMCOUNTER27H,
+375                           CSR_MHPMCOUNTER28H, CSR_MHPMCOUNTER29H, CSR_MHPMCOUNTER30H, CSR_MHPMCOUNTER31H: begin
+376        1/1                  csr_rdata_int = mhpmcounter_q[mhpmcounter_idx][63:32];
+377                           end
+378                     
+379                           // Debug triggers
+380                           CSR_TSELECT: begin
+381        1/1                  csr_rdata_int = tselect_rdata;
+382        1/1                  illegal_csr   = ~DbgTriggerEn;
+383                           end
+384                           CSR_TDATA1: begin
+385        1/1                  csr_rdata_int = tmatch_control_rdata;
+386        1/1                  illegal_csr   = ~DbgTriggerEn;
+387                           end
+388                           CSR_TDATA2: begin
+389        1/1                  csr_rdata_int = tmatch_value_rdata;
+390        1/1                  illegal_csr   = ~DbgTriggerEn;
+391                           end
+392                           CSR_TDATA3: begin
+393        1/1                  csr_rdata_int = '0;
+394        1/1                  illegal_csr   = ~DbgTriggerEn;
+395                           end
+396                           CSR_MCONTEXT: begin
+397        1/1                  csr_rdata_int = '0;
+398        1/1                  illegal_csr   = ~DbgTriggerEn;
+399                           end
+400                           CSR_SCONTEXT: begin
+401        1/1                  csr_rdata_int = '0;
+402        1/1                  illegal_csr   = ~DbgTriggerEn;
+403                           end
+404                     
+405                           default: begin
+406        1/1                  illegal_csr = 1'b1;
+407                           end
+408                         endcase
+409                       end
+410                     
+411                       // write logic
+412                       always_comb begin
+413        1/1              exception_pc = pc_id_i;
+414                     
+415        1/1              priv_lvl_d   = priv_lvl_q;
+416        1/1              mstatus_d    = mstatus_q;
+417        1/1              mie_d        = mie_q;
+418        1/1              mscratch_d   = mscratch_q;
+419        1/1              mepc_d       = mepc_q;
+420        1/1              mcause_d     = mcause_q;
+421        1/1              mtval_d      = mtval_q;
+422        1/1              mtvec_d      = csr_mtvec_init_i ? {boot_addr_i[31:8], 6'b0, 2'b01} : mtvec_q;
+423        1/1              dcsr_d       = dcsr_q;
+424        1/1              depc_d       = depc_q;
+425        1/1              dscratch0_d  = dscratch0_q;
+426        1/1              dscratch1_d  = dscratch1_q;
+427                     
+428        1/1              mstack_d       = mstack_q;
+429        1/1              mstack_epc_d   = mstack_epc_q;
+430        1/1              mstack_cause_d = mstack_cause_q;
+431                     
+432        1/1              mcountinhibit_we = 1'b0;
+433        1/1              mhpmcounter_we   = '0;
+434        1/1              mhpmcounterh_we  = '0;
+435                     
+436        1/1              if (csr_we_int) begin
+437        1/1                unique case (csr_addr_i)
+438                             // mstatus: IE bit
+439                             CSR_MSTATUS: begin
+440        1/1                    mstatus_d = '{
+441                                   mie:  csr_wdata_int[CSR_MSTATUS_MIE_BIT],
+442                                   mpie: csr_wdata_int[CSR_MSTATUS_MPIE_BIT],
+443                                   mpp:  priv_lvl_e'(csr_wdata_int[CSR_MSTATUS_MPP_BIT_HIGH:CSR_MSTATUS_MPP_BIT_LOW]),
+444                                   mprv: csr_wdata_int[CSR_MSTATUS_MPRV_BIT],
+445                                   tw:   csr_wdata_int[CSR_MSTATUS_TW_BIT]
+446                               };
+447                               // Convert illegal values to M-mode
+448        1/1                    if ((mstatus_d.mpp != PRIV_LVL_M) &amp;&amp; (mstatus_d.mpp != PRIV_LVL_U)) begin
+449        <font color = "red">0/1     ==>              mstatus_d.mpp = PRIV_LVL_M;</font>
+450                               end
+                        MISSING_ELSE
+451                             end
+452                     
+453                             // interrupt enable
+454                             CSR_MIE: begin
+455        1/1                    mie_d.irq_software = csr_wdata_int[CSR_MSIX_BIT];
+456        1/1                    mie_d.irq_timer    = csr_wdata_int[CSR_MTIX_BIT];
+457        1/1                    mie_d.irq_external = csr_wdata_int[CSR_MEIX_BIT];
+458        1/1                    mie_d.irq_fast     = csr_wdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW];
+459                             end
+460                     
+461        1/1                  CSR_MSCRATCH: mscratch_d = csr_wdata_int;
+462                     
+463                             // mepc: exception program counter
+464        1/1                  CSR_MEPC: mepc_d = {csr_wdata_int[31:1], 1'b0};
+465                     
+466                             // mcause
+467        1/1                  CSR_MCAUSE: mcause_d = {csr_wdata_int[31], csr_wdata_int[4:0]};
+468                     
+469                             // mtval: trap value
+470        1/1                  CSR_MTVAL: mtval_d = csr_wdata_int;
+471                     
+472                             // mtvec
+473                             // mtvec.MODE set to vectored
+474                             // mtvec.BASE must be 256-byte aligned
+475        1/1                  CSR_MTVEC: mtvec_d = {csr_wdata_int[31:8], 6'b0, 2'b01};
+476                     
+477                             CSR_DCSR: begin
+478        1/1                    dcsr_d = csr_wdata_int;
+479        1/1                    dcsr_d.xdebugver = XDEBUGVER_STD;
+480                               // Change to PRIV_LVL_M if software writes an unsupported value
+481        1/1                    if ((dcsr_d.prv != PRIV_LVL_M) &amp;&amp; (dcsr_d.prv != PRIV_LVL_U)) begin
+482        <font color = "red">0/1     ==>              dcsr_d.prv = PRIV_LVL_M;</font>
+483                               end
+                        MISSING_ELSE
+484                     
+485                               // currently not supported:
+486        1/1                    dcsr_d.nmip = 1'b0;
+487        1/1                    dcsr_d.mprven = 1'b0;
+488        1/1                    dcsr_d.stopcount = 1'b0;
+489        1/1                    dcsr_d.stoptime = 1'b0;
+490                     
+491                               // forced to be zero
+492        1/1                    dcsr_d.zero0 = 1'b0;
+493        1/1                    dcsr_d.zero1 = 1'b0;
+494        1/1                    dcsr_d.zero2 = 12'h0;
+495                             end
+496                     
+497                             // dpc: debug program counter
+498        1/1                  CSR_DPC: depc_d = {csr_wdata_int[31:1], 1'b0};
+499                     
+500        1/1                  CSR_DSCRATCH0: dscratch0_d = csr_wdata_int;
+501        1/1                  CSR_DSCRATCH1: dscratch1_d = csr_wdata_int;
+502                     
+503                             // machine counter/timers
+504        <font color = "red">0/1     ==>          CSR_MCOUNTINHIBIT: mcountinhibit_we = 1'b1;</font>
+505                     
+506                             CSR_MCYCLE,
+507                             CSR_MINSTRET,
+508                             CSR_MHPMCOUNTER3,
+509                             CSR_MHPMCOUNTER4,  CSR_MHPMCOUNTER5,  CSR_MHPMCOUNTER6,  CSR_MHPMCOUNTER7,
+510                             CSR_MHPMCOUNTER8,  CSR_MHPMCOUNTER9,  CSR_MHPMCOUNTER10, CSR_MHPMCOUNTER11,
+511                             CSR_MHPMCOUNTER12, CSR_MHPMCOUNTER13, CSR_MHPMCOUNTER14, CSR_MHPMCOUNTER15,
+512                             CSR_MHPMCOUNTER16, CSR_MHPMCOUNTER17, CSR_MHPMCOUNTER18, CSR_MHPMCOUNTER19,
+513                             CSR_MHPMCOUNTER20, CSR_MHPMCOUNTER21, CSR_MHPMCOUNTER22, CSR_MHPMCOUNTER23,
+514                             CSR_MHPMCOUNTER24, CSR_MHPMCOUNTER25, CSR_MHPMCOUNTER26, CSR_MHPMCOUNTER27,
+515                             CSR_MHPMCOUNTER28, CSR_MHPMCOUNTER29, CSR_MHPMCOUNTER30, CSR_MHPMCOUNTER31: begin
+516        <font color = "red">0/1     ==>            mhpmcounter_we[mhpmcounter_idx] = 1'b1;</font>
+517                             end
+518                     
+519                             CSR_MCYCLEH,
+520                             CSR_MINSTRETH,
+521                             CSR_MHPMCOUNTER3H,
+522                             CSR_MHPMCOUNTER4H,  CSR_MHPMCOUNTER5H,  CSR_MHPMCOUNTER6H,  CSR_MHPMCOUNTER7H,
+523                             CSR_MHPMCOUNTER8H,  CSR_MHPMCOUNTER9H,  CSR_MHPMCOUNTER10H, CSR_MHPMCOUNTER11H,
+524                             CSR_MHPMCOUNTER12H, CSR_MHPMCOUNTER13H, CSR_MHPMCOUNTER14H, CSR_MHPMCOUNTER15H,
+525                             CSR_MHPMCOUNTER16H, CSR_MHPMCOUNTER17H, CSR_MHPMCOUNTER18H, CSR_MHPMCOUNTER19H,
+526                             CSR_MHPMCOUNTER20H, CSR_MHPMCOUNTER21H, CSR_MHPMCOUNTER22H, CSR_MHPMCOUNTER23H,
+527                             CSR_MHPMCOUNTER24H, CSR_MHPMCOUNTER25H, CSR_MHPMCOUNTER26H, CSR_MHPMCOUNTER27H,
+528                             CSR_MHPMCOUNTER28H, CSR_MHPMCOUNTER29H, CSR_MHPMCOUNTER30H, CSR_MHPMCOUNTER31H: begin
+529        1/1                    mhpmcounterh_we[mhpmcounter_idx] = 1'b1;
+530                             end
+531                     
+532        1/1                  default:;
+533                           endcase
+534                         end
+                        MISSING_ELSE
+535                     
+536                         // exception controller gets priority over other writes
+537        1/1              unique case (1'b1)
+538                     
+539                           csr_save_cause_i: begin
+540        1/1                  unique case (1'b1)
+541                               csr_save_if_i: begin
+542        1/1                      exception_pc = pc_if_i;
+543                               end
+544                               csr_save_id_i: begin
+545        1/1                      exception_pc = pc_id_i;
+546                               end
+547        <font color = "red">0/1     ==>            default:;</font>
+548                             endcase
+549                     
+550                             // Any exception, including debug mode, causes a switch to M-mode
+551        1/1                  priv_lvl_d = PRIV_LVL_M;
+552                     
+553        1/1                  if (debug_csr_save_i) begin
+554                               // all interrupts are masked
+555                               // do not update cause, epc, tval, epc and status
+556        1/1                    dcsr_d.prv   = priv_lvl_q;
+557        1/1                    dcsr_d.cause = debug_cause_i;
+558        1/1                    depc_d       = exception_pc;
+559        1/1                  end else if (!debug_mode_i) begin
+560                               // In debug mode, &quot;exceptions do not update any registers. That
+561                               // includes cause, epc, tval, dpc and mstatus.&quot; [Debug Spec v0.13.2, p.39]
+562        1/1                    mtval_d        = csr_mtval_i;
+563        1/1                    mstatus_d.mie  = 1'b0; // disable interrupts
+564                               // save current status
+565        1/1                    mstatus_d.mpie = mstatus_q.mie;
+566        1/1                    mstatus_d.mpp  = priv_lvl_q;
+567        1/1                    mepc_d         = exception_pc;
+568        1/1                    mcause_d       = {csr_mcause_i};
+569                               // save previous status for recoverable NMI
+570        1/1                    mstack_d.mpie  = mstatus_q.mpie;
+571        1/1                    mstack_d.mpp   = mstatus_q.mpp;
+572        1/1                    mstack_epc_d   = mepc_q;
+573        1/1                    mstack_cause_d = mcause_q;
+574                             end
+                        MISSING_ELSE
+575                           end // csr_save_cause_i
+576                     
+577                           csr_restore_dret_i: begin // DRET
+578        1/1                  priv_lvl_d = dcsr_q.prv;
+579                           end // csr_restore_dret_i
+580                     
+581                           csr_restore_mret_i: begin // MRET
+582        1/1                  priv_lvl_d     = mstatus_q.mpp;
+583        1/1                  mstatus_d.mie  = mstatus_q.mpie; // re-enable interrupts
+584                     
+585        1/1                  if (nmi_mode_i) begin
+586                               // when returning from an NMI restore state from mstack CSR
+587        1/1                    mstatus_d.mpie = mstack_q.mpie;
+588        1/1                    mstatus_d.mpp  = mstack_q.mpp;
+589        1/1                    mepc_d         = mstack_epc_q;
+590        1/1                    mcause_d       = mstack_cause_q;
+591                             end else begin
+592                               // otherwise just set mstatus.MPIE/MPP
+593                               // See RISC-V Privileged Specification, version 1.11, Section 3.1.6.1
+594        1/1                    mstatus_d.mpie = 1'b1;
+595        1/1                    mstatus_d.mpp  = PRIV_LVL_U;
+596                             end
+597                           end // csr_restore_mret_i
+598                     
+599        1/1                default:;
+600                         endcase
+601                       end
+602                     
+603                       // CSR operation logic
+604                       always_comb begin
+605        1/1              csr_wreq = 1'b1;
+606                     
+607        1/1              unique case (csr_op_i)
+608        1/1                CSR_OP_WRITE: csr_wdata_int =  csr_wdata_i;
+609        1/1                CSR_OP_SET:   csr_wdata_int =  csr_wdata_i | csr_rdata_o;
+610        1/1                CSR_OP_CLEAR: csr_wdata_int = ~csr_wdata_i &amp; csr_rdata_o;
+611                           CSR_OP_READ: begin
+612        1/1                  csr_wdata_int = csr_wdata_i;
+613        1/1                  csr_wreq      = 1'b0;
+614                           end
+615                           default: begin
+616        1/1                  csr_wdata_int = csr_wdata_i;
+617        1/1                  csr_wreq      = 1'b0;
+618                           end
+619                         endcase
+620                       end
+621                     
+622                       // only write CSRs during one clock cycle
+623                       assign csr_we_int  = csr_wreq &amp; ~illegal_csr_insn_o &amp; instr_new_id_i;
+624                     
+625                       assign csr_rdata_o = csr_rdata_int;
+626                     
+627                       // directly output some registers
+628                       assign csr_msip_o  = mip.irq_software;
+629                       assign csr_mtip_o  = mip.irq_timer;
+630                       assign csr_meip_o  = mip.irq_external;
+631                       assign csr_mfip_o  = mip.irq_fast;
+632                     
+633                       assign csr_mepc_o  = mepc_q;
+634                       assign csr_depc_o  = depc_q;
+635                       assign csr_mtvec_o = mtvec_q;
+636                     
+637                       assign csr_mstatus_mie_o   = mstatus_q.mie;
+638                       assign csr_mstatus_tw_o    = mstatus_q.tw;
+639                       assign debug_single_step_o = dcsr_q.step;
+640                       assign debug_ebreakm_o     = dcsr_q.ebreakm;
+641                       assign debug_ebreaku_o     = dcsr_q.ebreaku;
+642                     
+643                       assign irq_pending_o = csr_msip_o | csr_mtip_o | csr_meip_o | (|csr_mfip_o);
+644                     
+645                       // actual registers
+646                       always_ff @(posedge clk_i or negedge rst_ni) begin
+647        1/1              if (!rst_ni) begin
+648        1/1                priv_lvl_q     &lt;= PRIV_LVL_M;
+649        1/1                mstatus_q      &lt;= '{
+650                               mie:  1'b0,
+651                               mpie: 1'b1,
+652                               mpp:  PRIV_LVL_U,
+653                               mprv: 1'b0,
+654                               tw:   1'b0
+655                           };
+656        1/1                mie_q          &lt;= '0;
+657        1/1                mscratch_q     &lt;= '0;
+658        1/1                mepc_q         &lt;= '0;
+659        1/1                mcause_q       &lt;= '0;
+660        1/1                mtval_q        &lt;= '0;
+661        1/1                mtvec_q        &lt;= 32'b01;
+662        1/1                dcsr_q         &lt;= '{
+663                               xdebugver: XDEBUGVER_STD,
+664                               cause:     DBG_CAUSE_NONE, // 3'h0
+665                               prv:       PRIV_LVL_M,
+666                               default:   '0
+667                           };
+668        1/1                depc_q         &lt;= '0;
+669        1/1                dscratch0_q    &lt;= '0;
+670        1/1                dscratch1_q    &lt;= '0;
+671                     
+672        1/1                mstack_q       &lt;= '{
+673                               mpie: 1'b1,
+674                               mpp:  PRIV_LVL_U
+675                           };
+676        1/1                mstack_epc_q   &lt;= '0;
+677        1/1                mstack_cause_q &lt;= '0;
+678                     
+679                         end else begin
+680                           // update CSRs
+681        1/1                priv_lvl_q     &lt;= priv_lvl_d;
+682        1/1                mstatus_q      &lt;= mstatus_d;
+683        1/1                mie_q          &lt;= mie_d;
+684        1/1                mscratch_q     &lt;= mscratch_d;
+685        1/1                mepc_q         &lt;= mepc_d;
+686        1/1                mcause_q       &lt;= mcause_d;
+687        1/1                mtval_q        &lt;= mtval_d;
+688        1/1                mtvec_q        &lt;= mtvec_d;
+689        1/1                dcsr_q         &lt;= dcsr_d;
+690        1/1                depc_q         &lt;= depc_d;
+691        1/1                dscratch0_q    &lt;= dscratch0_d;
+692        1/1                dscratch1_q    &lt;= dscratch1_d;
+693                     
+694        1/1                mstack_q       &lt;= mstack_d;
+695        1/1                mstack_epc_q   &lt;= mstack_epc_d;
+696        1/1                mstack_cause_q &lt;= mstack_cause_d;
+697                     
+698                         end
+699                       end
+700                     
+701                       // Send current priv level to the decoder
+702                       assign priv_mode_id_o = priv_lvl_q;
+703                       // New instruction fetches need to account for updates to priv_lvl_q this cycle
+704                       assign priv_mode_if_o = priv_lvl_d;
+705                       // Load/store instructions must factor in MPRV for PMP checking
+706                       assign priv_mode_lsu_o = mstatus_q.mprv ? mstatus_q.mpp : priv_lvl_q;
+707                     
+708                       // -----------------
+709                       // PMP registers
+710                       // -----------------
+711                     
+712                       if (PMPEnable) begin : g_pmp_registers
+713                         pmp_cfg_t                    pmp_cfg         [PMPNumRegions];
+714                         pmp_cfg_t                    pmp_cfg_wdata   [PMPNumRegions];
+715                         logic [31:0]                 pmp_addr        [PMPNumRegions];
+716                         logic [PMPNumRegions-1:0]    pmp_cfg_we;
+717                         logic [PMPNumRegions-1:0]    pmp_addr_we;
+718                     
+719                         // Expanded / qualified register read data
+720                         for (genvar i = 0; i &lt; PMP_MAX_REGIONS; i++) begin : g_exp_rd_data
+721                           if (i &lt; PMPNumRegions) begin : g_implemented_regions
+722                             // Add in zero padding for reserved fields
+723                             assign pmp_cfg_rdata[i] = {pmp_cfg[i].lock, 2'b00, pmp_cfg[i].mode,
+724                                                        pmp_cfg[i].exec, pmp_cfg[i].write, pmp_cfg[i].read};
+725                     
+726                             // Address field read data depends on the current programmed mode and the granularity
+727                             // See RISC-V Privileged Specification, version 1.11, Section 3.6.1
+728                             if (PMPGranularity == 0) begin : g_pmp_g0
+729                               // If G == 0, read data is unmodified
+730                               assign pmp_addr_rdata[i] = pmp_addr[i];
+731                     
+732                             end else if (PMPGranularity == 1) begin : g_pmp_g1
+733                               // If G == 1, bit [G-1] reads as zero in TOR or OFF mode
+734                               always_comb begin
+735                                 pmp_addr_rdata[i] = pmp_addr[i];
+736                                 if ((pmp_cfg[i].mode == PMP_MODE_OFF) || (pmp_cfg[i].mode == PMP_MODE_TOR)) begin
+737                                   pmp_addr_rdata[i][PMPGranularity-1:0] = '0;
+738                                 end
+739                               end
+740                     
+741                             end else begin : g_pmp_g2
+742                               // For G &gt;= 2, bits are masked to one or zero depending on the mode
+743                               always_comb begin
+744                                 pmp_addr_rdata[i] = pmp_addr[i];
+745                                 if ((pmp_cfg[i].mode == PMP_MODE_OFF) || (pmp_cfg[i].mode == PMP_MODE_TOR)) begin
+746                                   // In TOR or OFF mode, bits [G-1:0] must read as zero
+747                                   pmp_addr_rdata[i][PMPGranularity-1:0] = '0;
+748                                 end else if (pmp_cfg[i].mode == PMP_MODE_NAPOT) begin
+749                                   // In NAPOT mode, bits [G-2:0] must read as one
+750                                   pmp_addr_rdata[i][PMPGranularity-2:0] = '1;
+751                                 end
+752                               end
+753                             end
+754                     
+755                           end else begin : g_other_regions
+756                             // Non-implemented regions read as zero
+757                             assign pmp_cfg_rdata[i]  = '0;
+758                             assign pmp_addr_rdata[i] = '0;
+759                           end
+760                         end
+761                     
+762                         // Write data calculation
+763                         for (genvar i = 0; i &lt; PMPNumRegions; i++) begin : g_pmp_csrs
+764                           // -------------------------
+765                           // Instantiate cfg registers
+766                           // -------------------------
+767                           assign pmp_cfg_we[i] = csr_we_int &amp; ~pmp_cfg[i].lock &amp;
+768                                                  (csr_addr == (CSR_OFF_PMP_CFG + (i[11:0] &gt;&gt; 2)));
+769                     
+770                           // Select the correct WDATA (each CSR contains 4 CFG fields, each with 2 RES bits)
+771                           assign pmp_cfg_wdata[i].lock  = csr_wdata_int[(i%4)*PMP_CFG_W+7];
+772                           // NA4 mode is not selectable when G &gt; 0, mode is treated as OFF
+773                           always_comb begin
+774                             unique case (csr_wdata_int[(i%4)*PMP_CFG_W+3+:2])
+775                               2'b00   : pmp_cfg_wdata[i].mode = PMP_MODE_OFF;
+776                               2'b01   : pmp_cfg_wdata[i].mode = PMP_MODE_TOR;
+777                               2'b10   : pmp_cfg_wdata[i].mode = (PMPGranularity == 0) ? PMP_MODE_NA4:
+778                                                                                         PMP_MODE_OFF;
+779                               2'b11   : pmp_cfg_wdata[i].mode = PMP_MODE_NAPOT;
+780                               default : pmp_cfg_wdata[i].mode = PMP_MODE_OFF;
+781                             endcase
+782                           end
+783                           assign pmp_cfg_wdata[i].exec  = csr_wdata_int[(i%4)*PMP_CFG_W+2];
+784                           // W = 1, R = 0 is a reserved combination. For now, we force W to 0 if R == 0
+785                           assign pmp_cfg_wdata[i].write = &amp;csr_wdata_int[(i%4)*PMP_CFG_W+:2];
+786                           assign pmp_cfg_wdata[i].read  = csr_wdata_int[(i%4)*PMP_CFG_W];
+787                     
+788                           always_ff @(posedge clk_i or negedge rst_ni) begin
+789                             if (!rst_ni) begin
+790                               pmp_cfg[i] &lt;= pmp_cfg_t'('b0);
+791                             end else if (pmp_cfg_we[i]) begin
+792                               pmp_cfg[i] &lt;= pmp_cfg_wdata[i];
+793                             end
+794                           end
+795                     
+796                           // --------------------------
+797                           // Instantiate addr registers
+798                           // --------------------------
+799                           if (i &lt; PMPNumRegions - 1) begin : g_lower
+800                             assign pmp_addr_we[i] = csr_we_int &amp; ~pmp_cfg[i].lock &amp;
+801                                                     (pmp_cfg[i+1].mode != PMP_MODE_TOR) &amp;
+802                                                     (csr_addr == (CSR_OFF_PMP_ADDR + i[11:0]));
+803                           end else begin : g_upper
+804                             assign pmp_addr_we[i] = csr_we_int &amp; ~pmp_cfg[i].lock &amp;
+805                                                     (csr_addr == (CSR_OFF_PMP_ADDR + i[11:0]));
+806                           end
+807                     
+808                           always_ff @(posedge clk_i or negedge rst_ni) begin
+809                             if (!rst_ni) begin
+810                               pmp_addr[i] &lt;= 'b0;
+811                             end else if (pmp_addr_we[i]) begin
+812                               pmp_addr[i] &lt;= csr_wdata_int;
+813                             end
+814                           end
+815                           assign csr_pmp_cfg_o[i]  = pmp_cfg[i];
+816                           assign csr_pmp_addr_o[i] = {pmp_addr[i],2'b00};
+817                         end
+818                     
+819                       end else begin : g_no_pmp_tieoffs
+820                         // Generate tieoffs when PMP is not configured
+821                         for (genvar i = 0; i &lt; PMP_MAX_REGIONS; i++) begin : g_rdata
+822                           assign pmp_addr_rdata[i] = '0;
+823                           assign pmp_cfg_rdata[i]  = '0;
+824                         end
+825                         for (genvar i = 0; i &lt; PMPNumRegions; i++) begin : g_outputs
+826                           assign csr_pmp_cfg_o[i]  = pmp_cfg_t'(1'b0);
+827                           assign csr_pmp_addr_o[i] = '0;
+828                         end
+829                       end
+830                     
+831                       //////////////////////////
+832                       //  Performance monitor //
+833                       //////////////////////////
+834                     
+835                       // update enable signals
+836                       always_comb begin : mcountinhibit_update
+837        1/1              if (mcountinhibit_we == 1'b1) begin
+838        <font color = "red">0/1     ==>        mcountinhibit_d = {csr_wdata_int[31:2], 1'b0, csr_wdata_int[0]}; // bit 1 must always be 0</font>
+839                         end else begin
+840        1/1                mcountinhibit_d = mcountinhibit_q;
+841                         end
+842                       end
+843                     
+844                       assign mcountinhibit_force = {{29-MHPMCounterNum{1'b1}}, {MHPMCounterNum{1'b0}}, 3'b000};
+845                       assign mcountinhibit       = mcountinhibit_q | mcountinhibit_force;
+846                     
+847                       // event selection (hardwired) &amp; control
+848                       always_comb begin : gen_mhpmcounter_incr
+849                     
+850                         // When adding or altering performance counter meanings and default
+851                         // mappings please update dv/verilator/pcount/cpp/ibex_pcounts.cc
+852                         // appropriately.
+853                         //
+854                         // active counters
+855        1/1              mhpmcounter_incr[0]  = 1'b1;                   // mcycle
+856        1/1              mhpmcounter_incr[1]  = 1'b0;                   // reserved
+857        1/1              mhpmcounter_incr[2]  = instr_ret_i;            // minstret
+858        1/1              mhpmcounter_incr[3]  = lsu_busy_i;             // cycles waiting for data memory
+859        1/1              mhpmcounter_incr[4]  = imiss_i &amp; ~pc_set_i;    // cycles waiting for instr fetches
+860                                                                        // excl. jump and branch set cycles
+861        1/1              mhpmcounter_incr[5]  = mem_load_i;             // num of loads
+862        1/1              mhpmcounter_incr[6]  = mem_store_i;            // num of stores
+863        1/1              mhpmcounter_incr[7]  = jump_i;                 // num of jumps (unconditional)
+864        1/1              mhpmcounter_incr[8]  = branch_i;               // num of branches (conditional)
+865        1/1              mhpmcounter_incr[9]  = branch_taken_i;         // num of taken branches (conditional)
+866        1/1              mhpmcounter_incr[10] = instr_ret_compressed_i; // num of compressed instr
+867                     
+868                         // inactive counters
+869        1/1              for (int unsigned i=3+MHPMCounterNum; i&lt;32; i++) begin : gen_mhpmcounter_incr_inactive
+870        1/1                mhpmcounter_incr[i] = 1'b0;
+871                         end
+872                       end
+873                     
+874                       // event selector (hardwired, 0 means no event)
+875                       always_comb begin : gen_mhpmevent
+876                     
+877                         // activate all
+878        1/1              for (int i=0; i&lt;32; i++) begin : gen_mhpmevent_active
+879        1/1                mhpmevent[i]    =   '0;
+880        1/1                mhpmevent[i][i] = 1'b1;
+881                         end
+882                     
+883                         // deactivate
+884        1/1              mhpmevent[1] = '0; // not existing, reserved
+885        1/1              for (int unsigned i=3+MHPMCounterNum; i&lt;32; i++) begin : gen_mhpmevent_inactive
+886        1/1                mhpmevent[i] = '0;
+887                         end
+888                       end
+889                     
+890                       // mask, controls effective counter width
+891                       always_comb begin : gen_mask
+892                     
+893        1/1              for (int i=0; i&lt;3; i++) begin : gen_mask_fixed
+894                           // mcycle, mtime, minstret are always 64 bit wide
+895        1/1                mhpmcounter_mask[i] = {64{1'b1}};
+896                         end
+897                     
+898        1/1              for (int unsigned i=3; i&lt;3+MHPMCounterNum; i++) begin : gen_mask_configurable
+899                           // mhpmcounters have a configurable width
+900        1/1                mhpmcounter_mask[i] = {{64-MHPMCounterWidth{1'b0}}, {MHPMCounterWidth{1'b1}}};
+901                         end
+902                     
+903        1/1              for (int unsigned i=3+MHPMCounterNum; i&lt;32; i++) begin : gen_mask_inactive
+904                           // mask inactive mhpmcounters
+905        1/1                mhpmcounter_mask[i] = '0;
+906                         end
+907                       end
+908                     
+909                       // update
+910                       always_comb begin : mhpmcounter_update
+911        1/1              mhpmcounter_d = mhpmcounter_q;
+912                     
+913        1/1              for (int i=0; i&lt;32; i++) begin : gen_mhpmcounter_update
+914                     
+915                           // increment
+916        1/1                if (mhpmcounter_incr[i] &amp; ~mcountinhibit[i]) begin
+917        1/1                  mhpmcounter_d[i] = mhpmcounter_mask[i] &amp; (mhpmcounter_q[i] + 64'h1);
+918                           end
+                        MISSING_ELSE
+919                     
+920                           // write
+921        1/1                if (mhpmcounter_we[i]) begin
+922        <font color = "red">0/1     ==>          mhpmcounter_d[i][31: 0] = mhpmcounter_mask[i][31: 0] &amp; csr_wdata_int;</font>
+923        1/1                end else if (mhpmcounterh_we[i]) begin
+924        1/1                  mhpmcounter_d[i][63:32] = mhpmcounter_mask[i][63:32] &amp; csr_wdata_int;
+925                           end
+                        MISSING_ELSE
+926                         end
+927                       end
+928                     
+929                       // performance monitor registers
+930                       always_ff @(posedge clk_i or negedge rst_ni) begin : perf_counter_registers
+931        1/1              if (!rst_ni) begin
+932        1/1                mcountinhibit_q    &lt;= '0;
+933        1/1                for (int i=0; i&lt;32; i++) begin
+934        1/1                  mhpmcounter_q[i] &lt;= '0;
+935                           end
+936                         end else begin
+937        1/1                mhpmcounter_q      &lt;= mhpmcounter_d;
+938        1/1                mcountinhibit_q    &lt;= mcountinhibit_d;
+</pre>
+<hr>
+<a name="Branch"></a>
+Branch Coverage for Module : <a href="mod37.html" >ibex_cs_registers</a><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Line No.</th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th></tr><tr class="s9">
+<td>Branches</td>
+<td></td>
+<td class="rt">88</td>
+<td class="rt">81</td>
+<td class="rt">92.05 </td>
+</tr><tr class="s5">
+<td>TERNARY</td>
+<td class="rt">706</td>
+<td class="rt">2</td>
+<td class="rt">1</td>
+<td class="rt">50.00 </td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">248</td>
+<td class="rt">45</td>
+<td class="rt">45</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">422</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s7">
+<td>IF</td>
+<td class="rt">436</td>
+<td class="rt">18</td>
+<td class="rt">14</td>
+<td class="rt">77.78 </td>
+</tr><tr class="s9">
+<td>CASE</td>
+<td class="rt">537</td>
+<td class="rt">10</td>
+<td class="rt">9</td>
+<td class="rt">90.00 </td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">607</td>
+<td class="rt">5</td>
+<td class="rt">5</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">647</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s5">
+<td>IF</td>
+<td class="rt">837</td>
+<td class="rt">2</td>
+<td class="rt">1</td>
+<td class="rt">50.00 </td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">931</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+706          assign priv_mode_lsu_o = mstatus_q.mprv ? mstatus_q.mpp : priv_lvl_q;
+                                                     <font color = "red">-1-</font>  
+                                                     <font color = "red">==></font>  
+                                                     <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uRed">
+<td align=center>1</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+248            unique case (csr_addr_i)
+                      <font color = "green">-1-</font>  
+249              // mhartid: unique hardware thread id
+250              CSR_MHARTID: csr_rdata_int = hart_id_i;
+           <font color = "green">      ==></font>
+251        
+252              // mstatus: always M-mode, contains IE bit
+253              CSR_MSTATUS: begin
+254                csr_rdata_int                                                   = '0;
+           <font color = "green">        ==></font>
+255                csr_rdata_int[CSR_MSTATUS_MIE_BIT]                              = mstatus_q.mie;
+256                csr_rdata_int[CSR_MSTATUS_MPIE_BIT]                             = mstatus_q.mpie;
+257                csr_rdata_int[CSR_MSTATUS_MPP_BIT_HIGH:CSR_MSTATUS_MPP_BIT_LOW] = mstatus_q.mpp;
+258                csr_rdata_int[CSR_MSTATUS_MPRV_BIT]                             = mstatus_q.mprv;
+259                csr_rdata_int[CSR_MSTATUS_TW_BIT]                               = mstatus_q.tw;
+260              end
+261        
+262              // misa
+263              CSR_MISA: csr_rdata_int = MISA_VALUE;
+           <font color = "green">      ==></font>
+264        
+265              // interrupt enable
+266              CSR_MIE: begin
+267                csr_rdata_int                                     = '0;
+           <font color = "green">        ==></font>
+268                csr_rdata_int[CSR_MSIX_BIT]                       = mie_q.irq_software;
+269                csr_rdata_int[CSR_MTIX_BIT]                       = mie_q.irq_timer;
+270                csr_rdata_int[CSR_MEIX_BIT]                       = mie_q.irq_external;
+271                csr_rdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mie_q.irq_fast;
+272              end
+273        
+274              CSR_MSCRATCH: csr_rdata_int = mscratch_q;
+           <font color = "green">      ==></font>
+275        
+276              // mtvec: trap-vector base address
+277              CSR_MTVEC: csr_rdata_int = mtvec_q;
+           <font color = "green">      ==></font>
+278        
+279              // mepc: exception program counter
+280              CSR_MEPC: csr_rdata_int = mepc_q;
+           <font color = "green">      ==></font>
+281        
+282              // mcause: exception cause
+283              CSR_MCAUSE: csr_rdata_int = {mcause_q[5], 26'b0, mcause_q[4:0]};
+           <font color = "green">      ==></font>
+284        
+285              // mtval: trap value
+286              CSR_MTVAL: csr_rdata_int = mtval_q;
+           <font color = "green">      ==></font>
+287        
+288              // mip: interrupt pending
+289              CSR_MIP: begin
+290                csr_rdata_int                                     = '0;
+           <font color = "green">        ==></font>
+291                csr_rdata_int[CSR_MSIX_BIT]                       = mip.irq_software;
+292                csr_rdata_int[CSR_MTIX_BIT]                       = mip.irq_timer;
+293                csr_rdata_int[CSR_MEIX_BIT]                       = mip.irq_external;
+294                csr_rdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mip.irq_fast;
+295              end
+296        
+297              // PMP registers
+298              CSR_PMPCFG0:   csr_rdata_int = {pmp_cfg_rdata[3],  pmp_cfg_rdata[2],
+           <font color = "green">      ==></font>
+299                                              pmp_cfg_rdata[1],  pmp_cfg_rdata[0]};
+300              CSR_PMPCFG1:   csr_rdata_int = {pmp_cfg_rdata[7],  pmp_cfg_rdata[6],
+           <font color = "green">      ==></font>
+301                                              pmp_cfg_rdata[5],  pmp_cfg_rdata[4]};
+302              CSR_PMPCFG2:   csr_rdata_int = {pmp_cfg_rdata[11], pmp_cfg_rdata[10],
+           <font color = "green">      ==></font>
+303                                              pmp_cfg_rdata[9],  pmp_cfg_rdata[8]};
+304              CSR_PMPCFG3:   csr_rdata_int = {pmp_cfg_rdata[15], pmp_cfg_rdata[14],
+           <font color = "green">      ==></font>
+305                                              pmp_cfg_rdata[13], pmp_cfg_rdata[12]};
+306              CSR_PMPADDR0:  csr_rdata_int = pmp_addr_rdata[0];
+           <font color = "green">      ==></font>
+307              CSR_PMPADDR1:  csr_rdata_int = pmp_addr_rdata[1];
+           <font color = "green">      ==></font>
+308              CSR_PMPADDR2:  csr_rdata_int = pmp_addr_rdata[2];
+           <font color = "green">      ==></font>
+309              CSR_PMPADDR3:  csr_rdata_int = pmp_addr_rdata[3];
+           <font color = "green">      ==></font>
+310              CSR_PMPADDR4:  csr_rdata_int = pmp_addr_rdata[4];
+           <font color = "green">      ==></font>
+311              CSR_PMPADDR5:  csr_rdata_int = pmp_addr_rdata[5];
+           <font color = "green">      ==></font>
+312              CSR_PMPADDR6:  csr_rdata_int = pmp_addr_rdata[6];
+           <font color = "green">      ==></font>
+313              CSR_PMPADDR7:  csr_rdata_int = pmp_addr_rdata[7];
+           <font color = "green">      ==></font>
+314              CSR_PMPADDR8:  csr_rdata_int = pmp_addr_rdata[8];
+           <font color = "green">      ==></font>
+315              CSR_PMPADDR9:  csr_rdata_int = pmp_addr_rdata[9];
+           <font color = "green">      ==></font>
+316              CSR_PMPADDR10: csr_rdata_int = pmp_addr_rdata[10];
+           <font color = "green">      ==></font>
+317              CSR_PMPADDR11: csr_rdata_int = pmp_addr_rdata[11];
+           <font color = "green">      ==></font>
+318              CSR_PMPADDR12: csr_rdata_int = pmp_addr_rdata[12];
+           <font color = "green">      ==></font>
+319              CSR_PMPADDR13: csr_rdata_int = pmp_addr_rdata[13];
+           <font color = "green">      ==></font>
+320              CSR_PMPADDR14: csr_rdata_int = pmp_addr_rdata[14];
+           <font color = "green">      ==></font>
+321              CSR_PMPADDR15: csr_rdata_int = pmp_addr_rdata[15];
+           <font color = "green">      ==></font>
+322        
+323              CSR_DCSR: begin
+324                csr_rdata_int = dcsr_q;
+           <font color = "green">        ==></font>
+325                illegal_csr = ~debug_mode_i;
+326              end
+327              CSR_DPC: begin
+328                csr_rdata_int = depc_q;
+           <font color = "green">        ==></font>
+329                illegal_csr = ~debug_mode_i;
+330              end
+331              CSR_DSCRATCH0: begin
+332                csr_rdata_int = dscratch0_q;
+           <font color = "green">        ==></font>
+333                illegal_csr = ~debug_mode_i;
+334              end
+335              CSR_DSCRATCH1: begin
+336                csr_rdata_int = dscratch1_q;
+           <font color = "green">        ==></font>
+337                illegal_csr = ~debug_mode_i;
+338              end
+339        
+340              // machine counter/timers
+341              CSR_MCOUNTINHIBIT: csr_rdata_int = mcountinhibit;
+           <font color = "green">      ==></font>
+342              CSR_MHPMEVENT3,
+343              CSR_MHPMEVENT4,  CSR_MHPMEVENT5,  CSR_MHPMEVENT6,  CSR_MHPMEVENT7,
+344              CSR_MHPMEVENT8,  CSR_MHPMEVENT9,  CSR_MHPMEVENT10, CSR_MHPMEVENT11,
+345              CSR_MHPMEVENT12, CSR_MHPMEVENT13, CSR_MHPMEVENT14, CSR_MHPMEVENT15,
+346              CSR_MHPMEVENT16, CSR_MHPMEVENT17, CSR_MHPMEVENT18, CSR_MHPMEVENT19,
+347              CSR_MHPMEVENT20, CSR_MHPMEVENT21, CSR_MHPMEVENT22, CSR_MHPMEVENT23,
+348              CSR_MHPMEVENT24, CSR_MHPMEVENT25, CSR_MHPMEVENT26, CSR_MHPMEVENT27,
+349              CSR_MHPMEVENT28, CSR_MHPMEVENT29, CSR_MHPMEVENT30, CSR_MHPMEVENT31: begin
+350                csr_rdata_int = mhpmevent[mhpmcounter_idx];
+           <font color = "green">        ==></font>
+351              end
+352        
+353              CSR_MCYCLE,
+354              CSR_MINSTRET,
+355              CSR_MHPMCOUNTER3,
+356              CSR_MHPMCOUNTER4,  CSR_MHPMCOUNTER5,  CSR_MHPMCOUNTER6,  CSR_MHPMCOUNTER7,
+357              CSR_MHPMCOUNTER8,  CSR_MHPMCOUNTER9,  CSR_MHPMCOUNTER10, CSR_MHPMCOUNTER11,
+358              CSR_MHPMCOUNTER12, CSR_MHPMCOUNTER13, CSR_MHPMCOUNTER14, CSR_MHPMCOUNTER15,
+359              CSR_MHPMCOUNTER16, CSR_MHPMCOUNTER17, CSR_MHPMCOUNTER18, CSR_MHPMCOUNTER19,
+360              CSR_MHPMCOUNTER20, CSR_MHPMCOUNTER21, CSR_MHPMCOUNTER22, CSR_MHPMCOUNTER23,
+361              CSR_MHPMCOUNTER24, CSR_MHPMCOUNTER25, CSR_MHPMCOUNTER26, CSR_MHPMCOUNTER27,
+362              CSR_MHPMCOUNTER28, CSR_MHPMCOUNTER29, CSR_MHPMCOUNTER30, CSR_MHPMCOUNTER31: begin
+363                csr_rdata_int = mhpmcounter_q[mhpmcounter_idx][31:0];
+           <font color = "green">        ==></font>
+364              end
+365        
+366              CSR_MCYCLEH,
+367              CSR_MINSTRETH,
+368              CSR_MHPMCOUNTER3H,
+369              CSR_MHPMCOUNTER4H,  CSR_MHPMCOUNTER5H,  CSR_MHPMCOUNTER6H,  CSR_MHPMCOUNTER7H,
+370              CSR_MHPMCOUNTER8H,  CSR_MHPMCOUNTER9H,  CSR_MHPMCOUNTER10H, CSR_MHPMCOUNTER11H,
+371              CSR_MHPMCOUNTER12H, CSR_MHPMCOUNTER13H, CSR_MHPMCOUNTER14H, CSR_MHPMCOUNTER15H,
+372              CSR_MHPMCOUNTER16H, CSR_MHPMCOUNTER17H, CSR_MHPMCOUNTER18H, CSR_MHPMCOUNTER19H,
+373              CSR_MHPMCOUNTER20H, CSR_MHPMCOUNTER21H, CSR_MHPMCOUNTER22H, CSR_MHPMCOUNTER23H,
+374              CSR_MHPMCOUNTER24H, CSR_MHPMCOUNTER25H, CSR_MHPMCOUNTER26H, CSR_MHPMCOUNTER27H,
+375              CSR_MHPMCOUNTER28H, CSR_MHPMCOUNTER29H, CSR_MHPMCOUNTER30H, CSR_MHPMCOUNTER31H: begin
+376                csr_rdata_int = mhpmcounter_q[mhpmcounter_idx][63:32];
+           <font color = "green">        ==></font>
+377              end
+378        
+379              // Debug triggers
+380              CSR_TSELECT: begin
+381                csr_rdata_int = tselect_rdata;
+           <font color = "green">        ==></font>
+382                illegal_csr   = ~DbgTriggerEn;
+383              end
+384              CSR_TDATA1: begin
+385                csr_rdata_int = tmatch_control_rdata;
+           <font color = "green">        ==></font>
+386                illegal_csr   = ~DbgTriggerEn;
+387              end
+388              CSR_TDATA2: begin
+389                csr_rdata_int = tmatch_value_rdata;
+           <font color = "green">        ==></font>
+390                illegal_csr   = ~DbgTriggerEn;
+391              end
+392              CSR_TDATA3: begin
+393                csr_rdata_int = '0;
+           <font color = "green">        ==></font>
+394                illegal_csr   = ~DbgTriggerEn;
+395              end
+396              CSR_MCONTEXT: begin
+397                csr_rdata_int = '0;
+           <font color = "green">        ==></font>
+398                illegal_csr   = ~DbgTriggerEn;
+399              end
+400              CSR_SCONTEXT: begin
+401                csr_rdata_int = '0;
+           <font color = "green">        ==></font>
+402                illegal_csr   = ~DbgTriggerEn;
+403              end
+404        
+405              default: begin
+406                illegal_csr = 1'b1;
+           <font color = "green">        ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>CSR_MHARTID </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MSTATUS </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MISA </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MIE </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MSCRATCH </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MTVEC </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MEPC </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MCAUSE </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MTVAL </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MIP </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPCFG0 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPCFG1 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPCFG2 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPCFG3 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR0 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR1 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR2 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR3 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR4 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR5 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR6 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR7 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR8 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR9 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR10 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR11 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR12 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR13 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR14 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR15 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_DCSR </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_DPC </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_DSCRATCH0 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_DSCRATCH1 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MCOUNTINHIBIT </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center nowrap>CASEITEM-36: CSR_MHPMEVENT3 CSR_MHPMEVENT4 CSR_MHPMEVENT5 CSR_MHPMEVENT6 CSR_MHPMEVENT7 CSR_MHPMEVENT8 CSR_MHPMEVENT9 CSR_MHPMEVENT10 CSR_MHPMEVENT11 CSR_MHPMEVENT12 CSR_MHPMEVENT13 CSR_MHPMEVENT14 CSR_MHPMEVENT15 CSR_MHPMEVENT16 CSR_MHPMEVENT17 CSR_MHPMEVENT18 CSR_MHPMEVENT19 CSR_MHPMEVENT20 CSR_MHPMEVENT21 CSR_MHPMEVENT22 CSR_MHPMEVENT23 CSR_MHPMEVENT24 CSR_MHPMEVENT25 CSR_MHPMEVENT26 CSR_MHPMEVENT27 CSR_MHPMEVENT28 CSR_MHPMEVENT29 CSR_MHPMEVENT30 CSR_MHPMEVENT31 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center nowrap>CASEITEM-37: CSR_MCYCLE CSR_MINSTRET CSR_MHPMCOUNTER3 CSR_MHPMCOUNTER4 CSR_MHPMCOUNTER5 CSR_MHPMCOUNTER6 CSR_MHPMCOUNTER7 CSR_MHPMCOUNTER8 CSR_MHPMCOUNTER9 CSR_MHPMCOUNTER10 CSR_MHPMCOUNTER11 CSR_MHPMCOUNTER12 CSR_MHPMCOUNTER13 CSR_MHPMCOUNTER14 CSR_MHPMCOUNTER15 CSR_MHPMCOUNTER16 CSR_MHPMCOUNTER17 CSR_MHPMCOUNTER18 CSR_MHPMCOUNTER19 CSR_MHPMCOUNTER20 CSR_MHPMCOUNTER21 CSR_MHPMCOUNTER22 CSR_MHPMCOUNTER23 CSR_MHPMCOUNTER24 CSR_MHPMCOUNTER25 CSR_MHPMCOUNTER26 CSR_MHPMCOUNTER27 CSR_MHPMCOUNTER28 CSR_MHPMCOUNTER29 CSR_MHPMCOUNTER30 CSR_MHPMCOUNTER31 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center nowrap>CASEITEM-38: CSR_MCYCLEH CSR_MINSTRETH CSR_MHPMCOUNTER3H CSR_MHPMCOUNTER4H CSR_MHPMCOUNTER5H CSR_MHPMCOUNTER6H CSR_MHPMCOUNTER7H CSR_MHPMCOUNTER8H CSR_MHPMCOUNTER9H CSR_MHPMCOUNTER10H CSR_MHPMCOUNTER11H CSR_MHPMCOUNTER12H CSR_MHPMCOUNTER13H CSR_MHPMCOUNTER14H CSR_MHPMCOUNTER15H CSR_MHPMCOUNTER16H CSR_MHPMCOUNTER17H CSR_MHPMCOUNTER18H CSR_MHPMCOUNTER19H CSR_MHPMCOUNTER20H CSR_MHPMCOUNTER21H CSR_MHPMCOUNTER22H CSR_MHPMCOUNTER23H CSR_MHPMCOUNTER24H CSR_MHPMCOUNTER25H CSR_MHPMCOUNTER26H CSR_MHPMCOUNTER27H CSR_MHPMCOUNTER28H CSR_MHPMCOUNTER29H CSR_MHPMCOUNTER30H CSR_MHPMCOUNTER31H </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_TSELECT </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_TDATA1 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_TDATA2 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_TDATA3 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MCONTEXT </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_SCONTEXT </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+422            mtvec_d      = csr_mtvec_init_i ? {boot_addr_i[31:8], 6'b0, 2'b01} : mtvec_q;
+                                               <font color = "green">-1-</font>  
+                                               <font color = "green">==></font>  
+                                               <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+436            if (csr_we_int) begin
+               <font color = "green">-1-</font>  
+437              unique case (csr_addr_i)
+                        <font color = "red">-2-</font>  
+438                // mstatus: IE bit
+439                CSR_MSTATUS: begin
+440                  mstatus_d = '{
+441                      mie:  csr_wdata_int[CSR_MSTATUS_MIE_BIT],
+442                      mpie: csr_wdata_int[CSR_MSTATUS_MPIE_BIT],
+443                      mpp:  priv_lvl_e'(csr_wdata_int[CSR_MSTATUS_MPP_BIT_HIGH:CSR_MSTATUS_MPP_BIT_LOW]),
+444                      mprv: csr_wdata_int[CSR_MSTATUS_MPRV_BIT],
+445                      tw:   csr_wdata_int[CSR_MSTATUS_TW_BIT]
+446                  };
+447                  // Convert illegal values to M-mode
+448                  if ((mstatus_d.mpp != PRIV_LVL_M) && (mstatus_d.mpp != PRIV_LVL_U)) begin
+                     <font color = "red">-3-</font>  
+449                    mstatus_d.mpp = PRIV_LVL_M;
+           <font color = "red">            ==></font>
+450                  end
+                     MISSING_ELSE
+           <font color = "green">          ==></font>
+451                end
+452        
+453                // interrupt enable
+454                CSR_MIE: begin
+455                  mie_d.irq_software = csr_wdata_int[CSR_MSIX_BIT];
+           <font color = "green">          ==></font>
+456                  mie_d.irq_timer    = csr_wdata_int[CSR_MTIX_BIT];
+457                  mie_d.irq_external = csr_wdata_int[CSR_MEIX_BIT];
+458                  mie_d.irq_fast     = csr_wdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW];
+459                end
+460        
+461                CSR_MSCRATCH: mscratch_d = csr_wdata_int;
+           <font color = "green">        ==></font>
+462        
+463                // mepc: exception program counter
+464                CSR_MEPC: mepc_d = {csr_wdata_int[31:1], 1'b0};
+           <font color = "green">        ==></font>
+465        
+466                // mcause
+467                CSR_MCAUSE: mcause_d = {csr_wdata_int[31], csr_wdata_int[4:0]};
+           <font color = "green">        ==></font>
+468        
+469                // mtval: trap value
+470                CSR_MTVAL: mtval_d = csr_wdata_int;
+           <font color = "green">        ==></font>
+471        
+472                // mtvec
+473                // mtvec.MODE set to vectored
+474                // mtvec.BASE must be 256-byte aligned
+475                CSR_MTVEC: mtvec_d = {csr_wdata_int[31:8], 6'b0, 2'b01};
+           <font color = "green">        ==></font>
+476        
+477                CSR_DCSR: begin
+478                  dcsr_d = csr_wdata_int;
+479                  dcsr_d.xdebugver = XDEBUGVER_STD;
+480                  // Change to PRIV_LVL_M if software writes an unsupported value
+481                  if ((dcsr_d.prv != PRIV_LVL_M) && (dcsr_d.prv != PRIV_LVL_U)) begin
+                     <font color = "red">-4-</font>  
+482                    dcsr_d.prv = PRIV_LVL_M;
+           <font color = "red">            ==></font>
+483                  end
+                     MISSING_ELSE
+           <font color = "green">          ==></font>
+484        
+485                  // currently not supported:
+486                  dcsr_d.nmip = 1'b0;
+487                  dcsr_d.mprven = 1'b0;
+488                  dcsr_d.stopcount = 1'b0;
+489                  dcsr_d.stoptime = 1'b0;
+490        
+491                  // forced to be zero
+492                  dcsr_d.zero0 = 1'b0;
+493                  dcsr_d.zero1 = 1'b0;
+494                  dcsr_d.zero2 = 12'h0;
+495                end
+496        
+497                // dpc: debug program counter
+498                CSR_DPC: depc_d = {csr_wdata_int[31:1], 1'b0};
+           <font color = "green">        ==></font>
+499        
+500                CSR_DSCRATCH0: dscratch0_d = csr_wdata_int;
+           <font color = "green">        ==></font>
+501                CSR_DSCRATCH1: dscratch1_d = csr_wdata_int;
+           <font color = "green">        ==></font>
+502        
+503                // machine counter/timers
+504                CSR_MCOUNTINHIBIT: mcountinhibit_we = 1'b1;
+           <font color = "red">        ==></font>
+505        
+506                CSR_MCYCLE,
+507                CSR_MINSTRET,
+508                CSR_MHPMCOUNTER3,
+509                CSR_MHPMCOUNTER4,  CSR_MHPMCOUNTER5,  CSR_MHPMCOUNTER6,  CSR_MHPMCOUNTER7,
+510                CSR_MHPMCOUNTER8,  CSR_MHPMCOUNTER9,  CSR_MHPMCOUNTER10, CSR_MHPMCOUNTER11,
+511                CSR_MHPMCOUNTER12, CSR_MHPMCOUNTER13, CSR_MHPMCOUNTER14, CSR_MHPMCOUNTER15,
+512                CSR_MHPMCOUNTER16, CSR_MHPMCOUNTER17, CSR_MHPMCOUNTER18, CSR_MHPMCOUNTER19,
+513                CSR_MHPMCOUNTER20, CSR_MHPMCOUNTER21, CSR_MHPMCOUNTER22, CSR_MHPMCOUNTER23,
+514                CSR_MHPMCOUNTER24, CSR_MHPMCOUNTER25, CSR_MHPMCOUNTER26, CSR_MHPMCOUNTER27,
+515                CSR_MHPMCOUNTER28, CSR_MHPMCOUNTER29, CSR_MHPMCOUNTER30, CSR_MHPMCOUNTER31: begin
+516                  mhpmcounter_we[mhpmcounter_idx] = 1'b1;
+           <font color = "red">          ==></font>
+517                end
+518        
+519                CSR_MCYCLEH,
+520                CSR_MINSTRETH,
+521                CSR_MHPMCOUNTER3H,
+522                CSR_MHPMCOUNTER4H,  CSR_MHPMCOUNTER5H,  CSR_MHPMCOUNTER6H,  CSR_MHPMCOUNTER7H,
+523                CSR_MHPMCOUNTER8H,  CSR_MHPMCOUNTER9H,  CSR_MHPMCOUNTER10H, CSR_MHPMCOUNTER11H,
+524                CSR_MHPMCOUNTER12H, CSR_MHPMCOUNTER13H, CSR_MHPMCOUNTER14H, CSR_MHPMCOUNTER15H,
+525                CSR_MHPMCOUNTER16H, CSR_MHPMCOUNTER17H, CSR_MHPMCOUNTER18H, CSR_MHPMCOUNTER19H,
+526                CSR_MHPMCOUNTER20H, CSR_MHPMCOUNTER21H, CSR_MHPMCOUNTER22H, CSR_MHPMCOUNTER23H,
+527                CSR_MHPMCOUNTER24H, CSR_MHPMCOUNTER25H, CSR_MHPMCOUNTER26H, CSR_MHPMCOUNTER27H,
+528                CSR_MHPMCOUNTER28H, CSR_MHPMCOUNTER29H, CSR_MHPMCOUNTER30H, CSR_MHPMCOUNTER31H: begin
+529                  mhpmcounterh_we[mhpmcounter_idx] = 1'b1;
+           <font color = "green">          ==></font>
+530                end
+531        
+532                default:;
+           <font color = "green">        ==></font>
+533              endcase
+534            end
+               MISSING_ELSE
+           <font color = "green">    ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>Status</th></tr><tr class="uRed">
+<td align=center>1</td>
+<td align=center>CSR_MSTATUS </td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_MSTATUS </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_MIE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_MSCRATCH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_MEPC </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_MCAUSE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_MTVAL </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_MTVEC </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>1</td>
+<td align=center>CSR_DCSR </td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_DCSR </td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_DPC </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_DSCRATCH0 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_DSCRATCH1 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>1</td>
+<td align=center>CSR_MCOUNTINHIBIT </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uRed">
+<td align=center>1</td>
+<td align=center nowrap>CASEITEM-13: CSR_MCYCLE CSR_MINSTRET CSR_MHPMCOUNTER3 CSR_MHPMCOUNTER4 CSR_MHPMCOUNTER5 CSR_MHPMCOUNTER6 CSR_MHPMCOUNTER7 CSR_MHPMCOUNTER8 CSR_MHPMCOUNTER9 CSR_MHPMCOUNTER10 CSR_MHPMCOUNTER11 CSR_MHPMCOUNTER12 CSR_MHPMCOUNTER13 CSR_MHPMCOUNTER14 CSR_MHPMCOUNTER15 CSR_MHPMCOUNTER16 CSR_MHPMCOUNTER17 CSR_MHPMCOUNTER18 CSR_MHPMCOUNTER19 CSR_MHPMCOUNTER20 CSR_MHPMCOUNTER21 CSR_MHPMCOUNTER22 CSR_MHPMCOUNTER23 CSR_MHPMCOUNTER24 CSR_MHPMCOUNTER25 CSR_MHPMCOUNTER26 CSR_MHPMCOUNTER27 CSR_MHPMCOUNTER28 CSR_MHPMCOUNTER29 CSR_MHPMCOUNTER30 CSR_MHPMCOUNTER31 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center nowrap>CASEITEM-14: CSR_MCYCLEH CSR_MINSTRETH CSR_MHPMCOUNTER3H CSR_MHPMCOUNTER4H CSR_MHPMCOUNTER5H CSR_MHPMCOUNTER6H CSR_MHPMCOUNTER7H CSR_MHPMCOUNTER8H CSR_MHPMCOUNTER9H CSR_MHPMCOUNTER10H CSR_MHPMCOUNTER11H CSR_MHPMCOUNTER12H CSR_MHPMCOUNTER13H CSR_MHPMCOUNTER14H CSR_MHPMCOUNTER15H CSR_MHPMCOUNTER16H CSR_MHPMCOUNTER17H CSR_MHPMCOUNTER18H CSR_MHPMCOUNTER19H CSR_MHPMCOUNTER20H CSR_MHPMCOUNTER21H CSR_MHPMCOUNTER22H CSR_MHPMCOUNTER23H CSR_MHPMCOUNTER24H CSR_MHPMCOUNTER25H CSR_MHPMCOUNTER26H CSR_MHPMCOUNTER27H CSR_MHPMCOUNTER28H CSR_MHPMCOUNTER29H CSR_MHPMCOUNTER30H CSR_MHPMCOUNTER31H </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+537            unique case (1'b1)
+                      <font color = "green">-1-</font>  
+538        
+539              csr_save_cause_i: begin
+540                unique case (1'b1)
+                          <font color = "red">-2-</font>  
+541                  csr_save_if_i: begin
+542                    exception_pc = pc_if_i;
+           <font color = "green">            ==></font>
+543                  end
+544                  csr_save_id_i: begin
+545                    exception_pc = pc_id_i;
+           <font color = "green">            ==></font>
+546                  end
+547                  default:;
+           <font color = "red">          ==></font>
+548                endcase
+549        
+550                // Any exception, including debug mode, causes a switch to M-mode
+551                priv_lvl_d = PRIV_LVL_M;
+552        
+553                if (debug_csr_save_i) begin
+                   <font color = "green">-3-</font>  
+554                  // all interrupts are masked
+555                  // do not update cause, epc, tval, epc and status
+556                  dcsr_d.prv   = priv_lvl_q;
+           <font color = "green">          ==></font>
+557                  dcsr_d.cause = debug_cause_i;
+558                  depc_d       = exception_pc;
+559                end else if (!debug_mode_i) begin
+                            <font color = "green">-4-</font>  
+560                  // In debug mode, "exceptions do not update any registers. That
+561                  // includes cause, epc, tval, dpc and mstatus." [Debug Spec v0.13.2, p.39]
+562                  mtval_d        = csr_mtval_i;
+           <font color = "green">          ==></font>
+563                  mstatus_d.mie  = 1'b0; // disable interrupts
+564                  // save current status
+565                  mstatus_d.mpie = mstatus_q.mie;
+566                  mstatus_d.mpp  = priv_lvl_q;
+567                  mepc_d         = exception_pc;
+568                  mcause_d       = {csr_mcause_i};
+569                  // save previous status for recoverable NMI
+570                  mstack_d.mpie  = mstatus_q.mpie;
+571                  mstack_d.mpp   = mstatus_q.mpp;
+572                  mstack_epc_d   = mepc_q;
+573                  mstack_cause_d = mcause_q;
+574                end
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+575              end // csr_save_cause_i
+576        
+577              csr_restore_dret_i: begin // DRET
+578                priv_lvl_d = dcsr_q.prv;
+           <font color = "green">        ==></font>
+579              end // csr_restore_dret_i
+580        
+581              csr_restore_mret_i: begin // MRET
+582                priv_lvl_d     = mstatus_q.mpp;
+583                mstatus_d.mie  = mstatus_q.mpie; // re-enable interrupts
+584        
+585                if (nmi_mode_i) begin
+                   <font color = "green">-5-</font>  
+586                  // when returning from an NMI restore state from mstack CSR
+587                  mstatus_d.mpie = mstack_q.mpie;
+           <font color = "green">          ==></font>
+588                  mstatus_d.mpp  = mstack_q.mpp;
+589                  mepc_d         = mstack_epc_q;
+590                  mcause_d       = mstack_cause_q;
+591                end else begin
+592                  // otherwise just set mstatus.MPIE/MPP
+593                  // See RISC-V Privileged Specification, version 1.11, Section 3.1.6.1
+594                  mstatus_d.mpie = 1'b1;
+           <font color = "green">          ==></font>
+595                  mstatus_d.mpp  = PRIV_LVL_U;
+596                end
+597              end // csr_restore_mret_i
+598        
+599              default:;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>-5-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>csr_save_cause_i </td>
+<td align=center>csr_save_if_i </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>csr_save_cause_i </td>
+<td align=center>csr_save_id_i </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>csr_save_cause_i </td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>csr_save_cause_i </td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>csr_save_cause_i </td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>csr_save_cause_i </td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>csr_restore_dret_i </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>csr_restore_mret_i </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>csr_restore_mret_i </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+607            unique case (csr_op_i)
+                      <font color = "green">-1-</font>  
+608              CSR_OP_WRITE: csr_wdata_int =  csr_wdata_i;
+           <font color = "green">      ==></font>
+609              CSR_OP_SET:   csr_wdata_int =  csr_wdata_i | csr_rdata_o;
+           <font color = "green">      ==></font>
+610              CSR_OP_CLEAR: csr_wdata_int = ~csr_wdata_i & csr_rdata_o;
+           <font color = "green">      ==></font>
+611              CSR_OP_READ: begin
+612                csr_wdata_int = csr_wdata_i;
+           <font color = "green">        ==></font>
+613                csr_wreq      = 1'b0;
+614              end
+615              default: begin
+616                csr_wdata_int = csr_wdata_i;
+           <font color = "green">        ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>CSR_OP_WRITE </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_OP_SET </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_OP_CLEAR </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_OP_READ </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+647            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+648              priv_lvl_q     <= PRIV_LVL_M;
+           <font color = "green">      ==></font>
+649              mstatus_q      <= '{
+650                  mie:  1'b0,
+651                  mpie: 1'b1,
+652                  mpp:  PRIV_LVL_U,
+653                  mprv: 1'b0,
+654                  tw:   1'b0
+655              };
+656              mie_q          <= '0;
+657              mscratch_q     <= '0;
+658              mepc_q         <= '0;
+659              mcause_q       <= '0;
+660              mtval_q        <= '0;
+661              mtvec_q        <= 32'b01;
+662              dcsr_q         <= '{
+663                  xdebugver: XDEBUGVER_STD,
+664                  cause:     DBG_CAUSE_NONE, // 3'h0
+665                  prv:       PRIV_LVL_M,
+666                  default:   '0
+667              };
+668              depc_q         <= '0;
+669              dscratch0_q    <= '0;
+670              dscratch1_q    <= '0;
+671        
+672              mstack_q       <= '{
+673                  mpie: 1'b1,
+674                  mpp:  PRIV_LVL_U
+675              };
+676              mstack_epc_q   <= '0;
+677              mstack_cause_q <= '0;
+678        
+679            end else begin
+680              // update CSRs
+681              priv_lvl_q     <= priv_lvl_d;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+837            if (mcountinhibit_we == 1'b1) begin
+               <font color = "red">-1-</font>  
+838              mcountinhibit_d = {csr_wdata_int[31:2], 1'b0, csr_wdata_int[0]}; // bit 1 must always be 0
+           <font color = "red">      ==></font>
+839            end else begin
+840              mcountinhibit_d = mcountinhibit_q;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uRed">
+<td align=center>1</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+931            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+932              mcountinhibit_q    <= '0;
+           <font color = "green">      ==></font>
+933              for (int i=0; i<32; i++) begin
+934                mhpmcounter_q[i] <= '0;
+935              end
+936            end else begin
+937              mhpmcounter_q      <= mhpmcounter_d;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+</div>
+<div name='inst_tag_38'>
+<a name="inst_tag_38_Line"></a>
+<b>Line Coverage for Instance : <a href="mod37.html#inst_tag_38" >core_ibex_tb_top.dut.u_ibex_core.cs_registers_i<img src="ex.gif" class="icon"></a></b><br clear=all>
+<table class="noborder">
+<col width="122">
+<col span="4" width="82">
+<tr><th></th><th>Line No.</th><th>Total</th><th>Covered</th><th>Percent</th></tr>
+<tr class="s9"><td class="lf">TOTAL</td><td></td><td>235</td><td>229</td><td>97.45</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>245</td><td>71</td><td>71</td><td>100.00</td></tr>
+<tr class="s9"><td class="lf">ALWAYS</td><td>413</td><td>82</td><td>78</td><td>95.12</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>605</td><td>9</td><td>9</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>647</td><td>31</td><td>31</td><td>100.00</td></tr>
+<tr class="s6"><td class="lf">ALWAYS</td><td>837</td><td>3</td><td>2</td><td>66.67</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>855</td><td>13</td><td>13</td><td>100.00</td></tr>
+<tr class="wht"><td class="lf">ALWAYS</td><td>878</td><td>0</td><td>0</td><td></td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>878</td><td>6</td><td>6</td><td>100.00</td></tr>
+<tr class="wht"><td class="lf">ALWAYS</td><td>893</td><td>0</td><td>0</td><td></td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>893</td><td>6</td><td>6</td><td>100.00</td></tr>
+<tr class="s8"><td class="lf">ALWAYS</td><td>911</td><td>8</td><td>7</td><td>87.50</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>931</td><td>6</td><td>6</td><td>100.00</td></tr>
+</table>
+<pre class="code"><br clear=all>
+244                       always_comb begin
+245        1/1              csr_rdata_int = '0;
+246        1/1              illegal_csr   = 1'b0;
+247                     
+248        1/1              unique case (csr_addr_i)
+249                           // mhartid: unique hardware thread id
+250        1/1                CSR_MHARTID: csr_rdata_int = hart_id_i;
+251                     
+252                           // mstatus: always M-mode, contains IE bit
+253                           CSR_MSTATUS: begin
+254        1/1                  csr_rdata_int                                                   = '0;
+255        1/1                  csr_rdata_int[CSR_MSTATUS_MIE_BIT]                              = mstatus_q.mie;
+256        1/1                  csr_rdata_int[CSR_MSTATUS_MPIE_BIT]                             = mstatus_q.mpie;
+257        1/1                  csr_rdata_int[CSR_MSTATUS_MPP_BIT_HIGH:CSR_MSTATUS_MPP_BIT_LOW] = mstatus_q.mpp;
+258        1/1                  csr_rdata_int[CSR_MSTATUS_MPRV_BIT]                             = mstatus_q.mprv;
+259        1/1                  csr_rdata_int[CSR_MSTATUS_TW_BIT]                               = mstatus_q.tw;
+260                           end
+261                     
+262                           // misa
+263        1/1                CSR_MISA: csr_rdata_int = MISA_VALUE;
+264                     
+265                           // interrupt enable
+266                           CSR_MIE: begin
+267        1/1                  csr_rdata_int                                     = '0;
+268        1/1                  csr_rdata_int[CSR_MSIX_BIT]                       = mie_q.irq_software;
+269        1/1                  csr_rdata_int[CSR_MTIX_BIT]                       = mie_q.irq_timer;
+270        1/1                  csr_rdata_int[CSR_MEIX_BIT]                       = mie_q.irq_external;
+271        1/1                  csr_rdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mie_q.irq_fast;
+272                           end
+273                     
+274        1/1                CSR_MSCRATCH: csr_rdata_int = mscratch_q;
+275                     
+276                           // mtvec: trap-vector base address
+277        1/1                CSR_MTVEC: csr_rdata_int = mtvec_q;
+278                     
+279                           // mepc: exception program counter
+280        1/1                CSR_MEPC: csr_rdata_int = mepc_q;
+281                     
+282                           // mcause: exception cause
+283        1/1                CSR_MCAUSE: csr_rdata_int = {mcause_q[5], 26'b0, mcause_q[4:0]};
+284                     
+285                           // mtval: trap value
+286        1/1                CSR_MTVAL: csr_rdata_int = mtval_q;
+287                     
+288                           // mip: interrupt pending
+289                           CSR_MIP: begin
+290        1/1                  csr_rdata_int                                     = '0;
+291        1/1                  csr_rdata_int[CSR_MSIX_BIT]                       = mip.irq_software;
+292        1/1                  csr_rdata_int[CSR_MTIX_BIT]                       = mip.irq_timer;
+293        1/1                  csr_rdata_int[CSR_MEIX_BIT]                       = mip.irq_external;
+294        1/1                  csr_rdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mip.irq_fast;
+295                           end
+296                     
+297                           // PMP registers
+298        1/1                CSR_PMPCFG0:   csr_rdata_int = {pmp_cfg_rdata[3],  pmp_cfg_rdata[2],
+299                                                           pmp_cfg_rdata[1],  pmp_cfg_rdata[0]};
+300        1/1                CSR_PMPCFG1:   csr_rdata_int = {pmp_cfg_rdata[7],  pmp_cfg_rdata[6],
+301                                                           pmp_cfg_rdata[5],  pmp_cfg_rdata[4]};
+302        1/1                CSR_PMPCFG2:   csr_rdata_int = {pmp_cfg_rdata[11], pmp_cfg_rdata[10],
+303                                                           pmp_cfg_rdata[9],  pmp_cfg_rdata[8]};
+304        1/1                CSR_PMPCFG3:   csr_rdata_int = {pmp_cfg_rdata[15], pmp_cfg_rdata[14],
+305                                                           pmp_cfg_rdata[13], pmp_cfg_rdata[12]};
+306        1/1                CSR_PMPADDR0:  csr_rdata_int = pmp_addr_rdata[0];
+307        1/1                CSR_PMPADDR1:  csr_rdata_int = pmp_addr_rdata[1];
+308        1/1                CSR_PMPADDR2:  csr_rdata_int = pmp_addr_rdata[2];
+309        1/1                CSR_PMPADDR3:  csr_rdata_int = pmp_addr_rdata[3];
+310        1/1                CSR_PMPADDR4:  csr_rdata_int = pmp_addr_rdata[4];
+311        1/1                CSR_PMPADDR5:  csr_rdata_int = pmp_addr_rdata[5];
+312        1/1                CSR_PMPADDR6:  csr_rdata_int = pmp_addr_rdata[6];
+313        1/1                CSR_PMPADDR7:  csr_rdata_int = pmp_addr_rdata[7];
+314        1/1                CSR_PMPADDR8:  csr_rdata_int = pmp_addr_rdata[8];
+315        1/1                CSR_PMPADDR9:  csr_rdata_int = pmp_addr_rdata[9];
+316        1/1                CSR_PMPADDR10: csr_rdata_int = pmp_addr_rdata[10];
+317        1/1                CSR_PMPADDR11: csr_rdata_int = pmp_addr_rdata[11];
+318        1/1                CSR_PMPADDR12: csr_rdata_int = pmp_addr_rdata[12];
+319        1/1                CSR_PMPADDR13: csr_rdata_int = pmp_addr_rdata[13];
+320        1/1                CSR_PMPADDR14: csr_rdata_int = pmp_addr_rdata[14];
+321        1/1                CSR_PMPADDR15: csr_rdata_int = pmp_addr_rdata[15];
+322                     
+323                           CSR_DCSR: begin
+324        1/1                  csr_rdata_int = dcsr_q;
+325        1/1                  illegal_csr = ~debug_mode_i;
+326                           end
+327                           CSR_DPC: begin
+328        1/1                  csr_rdata_int = depc_q;
+329        1/1                  illegal_csr = ~debug_mode_i;
+330                           end
+331                           CSR_DSCRATCH0: begin
+332        1/1                  csr_rdata_int = dscratch0_q;
+333        1/1                  illegal_csr = ~debug_mode_i;
+334                           end
+335                           CSR_DSCRATCH1: begin
+336        1/1                  csr_rdata_int = dscratch1_q;
+337        1/1                  illegal_csr = ~debug_mode_i;
+338                           end
+339                     
+340                           // machine counter/timers
+341        1/1                CSR_MCOUNTINHIBIT: csr_rdata_int = mcountinhibit;
+342                           CSR_MHPMEVENT3,
+343                           CSR_MHPMEVENT4,  CSR_MHPMEVENT5,  CSR_MHPMEVENT6,  CSR_MHPMEVENT7,
+344                           CSR_MHPMEVENT8,  CSR_MHPMEVENT9,  CSR_MHPMEVENT10, CSR_MHPMEVENT11,
+345                           CSR_MHPMEVENT12, CSR_MHPMEVENT13, CSR_MHPMEVENT14, CSR_MHPMEVENT15,
+346                           CSR_MHPMEVENT16, CSR_MHPMEVENT17, CSR_MHPMEVENT18, CSR_MHPMEVENT19,
+347                           CSR_MHPMEVENT20, CSR_MHPMEVENT21, CSR_MHPMEVENT22, CSR_MHPMEVENT23,
+348                           CSR_MHPMEVENT24, CSR_MHPMEVENT25, CSR_MHPMEVENT26, CSR_MHPMEVENT27,
+349                           CSR_MHPMEVENT28, CSR_MHPMEVENT29, CSR_MHPMEVENT30, CSR_MHPMEVENT31: begin
+350        1/1                  csr_rdata_int = mhpmevent[mhpmcounter_idx];
+351                           end
+352                     
+353                           CSR_MCYCLE,
+354                           CSR_MINSTRET,
+355                           CSR_MHPMCOUNTER3,
+356                           CSR_MHPMCOUNTER4,  CSR_MHPMCOUNTER5,  CSR_MHPMCOUNTER6,  CSR_MHPMCOUNTER7,
+357                           CSR_MHPMCOUNTER8,  CSR_MHPMCOUNTER9,  CSR_MHPMCOUNTER10, CSR_MHPMCOUNTER11,
+358                           CSR_MHPMCOUNTER12, CSR_MHPMCOUNTER13, CSR_MHPMCOUNTER14, CSR_MHPMCOUNTER15,
+359                           CSR_MHPMCOUNTER16, CSR_MHPMCOUNTER17, CSR_MHPMCOUNTER18, CSR_MHPMCOUNTER19,
+360                           CSR_MHPMCOUNTER20, CSR_MHPMCOUNTER21, CSR_MHPMCOUNTER22, CSR_MHPMCOUNTER23,
+361                           CSR_MHPMCOUNTER24, CSR_MHPMCOUNTER25, CSR_MHPMCOUNTER26, CSR_MHPMCOUNTER27,
+362                           CSR_MHPMCOUNTER28, CSR_MHPMCOUNTER29, CSR_MHPMCOUNTER30, CSR_MHPMCOUNTER31: begin
+363        1/1                  csr_rdata_int = mhpmcounter_q[mhpmcounter_idx][31:0];
+364                           end
+365                     
+366                           CSR_MCYCLEH,
+367                           CSR_MINSTRETH,
+368                           CSR_MHPMCOUNTER3H,
+369                           CSR_MHPMCOUNTER4H,  CSR_MHPMCOUNTER5H,  CSR_MHPMCOUNTER6H,  CSR_MHPMCOUNTER7H,
+370                           CSR_MHPMCOUNTER8H,  CSR_MHPMCOUNTER9H,  CSR_MHPMCOUNTER10H, CSR_MHPMCOUNTER11H,
+371                           CSR_MHPMCOUNTER12H, CSR_MHPMCOUNTER13H, CSR_MHPMCOUNTER14H, CSR_MHPMCOUNTER15H,
+372                           CSR_MHPMCOUNTER16H, CSR_MHPMCOUNTER17H, CSR_MHPMCOUNTER18H, CSR_MHPMCOUNTER19H,
+373                           CSR_MHPMCOUNTER20H, CSR_MHPMCOUNTER21H, CSR_MHPMCOUNTER22H, CSR_MHPMCOUNTER23H,
+374                           CSR_MHPMCOUNTER24H, CSR_MHPMCOUNTER25H, CSR_MHPMCOUNTER26H, CSR_MHPMCOUNTER27H,
+375                           CSR_MHPMCOUNTER28H, CSR_MHPMCOUNTER29H, CSR_MHPMCOUNTER30H, CSR_MHPMCOUNTER31H: begin
+376        1/1                  csr_rdata_int = mhpmcounter_q[mhpmcounter_idx][63:32];
+377                           end
+378                     
+379                           // Debug triggers
+380                           CSR_TSELECT: begin
+381        1/1                  csr_rdata_int = tselect_rdata;
+382        1/1                  illegal_csr   = ~DbgTriggerEn;
+383                           end
+384                           CSR_TDATA1: begin
+385        1/1                  csr_rdata_int = tmatch_control_rdata;
+386        1/1                  illegal_csr   = ~DbgTriggerEn;
+387                           end
+388                           CSR_TDATA2: begin
+389        1/1                  csr_rdata_int = tmatch_value_rdata;
+390        1/1                  illegal_csr   = ~DbgTriggerEn;
+391                           end
+392                           CSR_TDATA3: begin
+393        1/1                  csr_rdata_int = '0;
+394        1/1                  illegal_csr   = ~DbgTriggerEn;
+395                           end
+396                           CSR_MCONTEXT: begin
+397        1/1                  csr_rdata_int = '0;
+398        1/1                  illegal_csr   = ~DbgTriggerEn;
+399                           end
+400                           CSR_SCONTEXT: begin
+401        1/1                  csr_rdata_int = '0;
+402        1/1                  illegal_csr   = ~DbgTriggerEn;
+403                           end
+404                     
+405                           default: begin
+406        1/1                  illegal_csr = 1'b1;
+407                           end
+408                         endcase
+409                       end
+410                     
+411                       // write logic
+412                       always_comb begin
+413        1/1              exception_pc = pc_id_i;
+414                     
+415        1/1              priv_lvl_d   = priv_lvl_q;
+416        1/1              mstatus_d    = mstatus_q;
+417        1/1              mie_d        = mie_q;
+418        1/1              mscratch_d   = mscratch_q;
+419        1/1              mepc_d       = mepc_q;
+420        1/1              mcause_d     = mcause_q;
+421        1/1              mtval_d      = mtval_q;
+422        1/1              mtvec_d      = csr_mtvec_init_i ? {boot_addr_i[31:8], 6'b0, 2'b01} : mtvec_q;
+423        1/1              dcsr_d       = dcsr_q;
+424        1/1              depc_d       = depc_q;
+425        1/1              dscratch0_d  = dscratch0_q;
+426        1/1              dscratch1_d  = dscratch1_q;
+427                     
+428        1/1              mstack_d       = mstack_q;
+429        1/1              mstack_epc_d   = mstack_epc_q;
+430        1/1              mstack_cause_d = mstack_cause_q;
+431                     
+432        1/1              mcountinhibit_we = 1'b0;
+433        1/1              mhpmcounter_we   = '0;
+434        1/1              mhpmcounterh_we  = '0;
+435                     
+436        1/1              if (csr_we_int) begin
+437        1/1                unique case (csr_addr_i)
+438                             // mstatus: IE bit
+439                             CSR_MSTATUS: begin
+440        1/1                    mstatus_d = '{
+441                                   mie:  csr_wdata_int[CSR_MSTATUS_MIE_BIT],
+442                                   mpie: csr_wdata_int[CSR_MSTATUS_MPIE_BIT],
+443                                   mpp:  priv_lvl_e'(csr_wdata_int[CSR_MSTATUS_MPP_BIT_HIGH:CSR_MSTATUS_MPP_BIT_LOW]),
+444                                   mprv: csr_wdata_int[CSR_MSTATUS_MPRV_BIT],
+445                                   tw:   csr_wdata_int[CSR_MSTATUS_TW_BIT]
+446                               };
+447                               // Convert illegal values to M-mode
+448        1/1                    if ((mstatus_d.mpp != PRIV_LVL_M) &amp;&amp; (mstatus_d.mpp != PRIV_LVL_U)) begin
+449        <font color = "red">0/1     ==>              mstatus_d.mpp = PRIV_LVL_M;</font>
+450                               end
+                        MISSING_ELSE
+451                             end
+452                     
+453                             // interrupt enable
+454                             CSR_MIE: begin
+455        1/1                    mie_d.irq_software = csr_wdata_int[CSR_MSIX_BIT];
+456        1/1                    mie_d.irq_timer    = csr_wdata_int[CSR_MTIX_BIT];
+457        1/1                    mie_d.irq_external = csr_wdata_int[CSR_MEIX_BIT];
+458        1/1                    mie_d.irq_fast     = csr_wdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW];
+459                             end
+460                     
+461        1/1                  CSR_MSCRATCH: mscratch_d = csr_wdata_int;
+462                     
+463                             // mepc: exception program counter
+464        1/1                  CSR_MEPC: mepc_d = {csr_wdata_int[31:1], 1'b0};
+465                     
+466                             // mcause
+467        1/1                  CSR_MCAUSE: mcause_d = {csr_wdata_int[31], csr_wdata_int[4:0]};
+468                     
+469                             // mtval: trap value
+470        1/1                  CSR_MTVAL: mtval_d = csr_wdata_int;
+471                     
+472                             // mtvec
+473                             // mtvec.MODE set to vectored
+474                             // mtvec.BASE must be 256-byte aligned
+475        1/1                  CSR_MTVEC: mtvec_d = {csr_wdata_int[31:8], 6'b0, 2'b01};
+476                     
+477                             CSR_DCSR: begin
+478        1/1                    dcsr_d = csr_wdata_int;
+479        1/1                    dcsr_d.xdebugver = XDEBUGVER_STD;
+480                               // Change to PRIV_LVL_M if software writes an unsupported value
+481        1/1                    if ((dcsr_d.prv != PRIV_LVL_M) &amp;&amp; (dcsr_d.prv != PRIV_LVL_U)) begin
+482        <font color = "red">0/1     ==>              dcsr_d.prv = PRIV_LVL_M;</font>
+483                               end
+                        MISSING_ELSE
+484                     
+485                               // currently not supported:
+486        1/1                    dcsr_d.nmip = 1'b0;
+487        1/1                    dcsr_d.mprven = 1'b0;
+488        1/1                    dcsr_d.stopcount = 1'b0;
+489        1/1                    dcsr_d.stoptime = 1'b0;
+490                     
+491                               // forced to be zero
+492        1/1                    dcsr_d.zero0 = 1'b0;
+493        1/1                    dcsr_d.zero1 = 1'b0;
+494        1/1                    dcsr_d.zero2 = 12'h0;
+495                             end
+496                     
+497                             // dpc: debug program counter
+498        1/1                  CSR_DPC: depc_d = {csr_wdata_int[31:1], 1'b0};
+499                     
+500        1/1                  CSR_DSCRATCH0: dscratch0_d = csr_wdata_int;
+501        1/1                  CSR_DSCRATCH1: dscratch1_d = csr_wdata_int;
+502                     
+503                             // machine counter/timers
+504        <font color = "red">0/1     ==>          CSR_MCOUNTINHIBIT: mcountinhibit_we = 1'b1;</font>
+505                     
+506                             CSR_MCYCLE,
+507                             CSR_MINSTRET,
+508                             CSR_MHPMCOUNTER3,
+509                             CSR_MHPMCOUNTER4,  CSR_MHPMCOUNTER5,  CSR_MHPMCOUNTER6,  CSR_MHPMCOUNTER7,
+510                             CSR_MHPMCOUNTER8,  CSR_MHPMCOUNTER9,  CSR_MHPMCOUNTER10, CSR_MHPMCOUNTER11,
+511                             CSR_MHPMCOUNTER12, CSR_MHPMCOUNTER13, CSR_MHPMCOUNTER14, CSR_MHPMCOUNTER15,
+512                             CSR_MHPMCOUNTER16, CSR_MHPMCOUNTER17, CSR_MHPMCOUNTER18, CSR_MHPMCOUNTER19,
+513                             CSR_MHPMCOUNTER20, CSR_MHPMCOUNTER21, CSR_MHPMCOUNTER22, CSR_MHPMCOUNTER23,
+514                             CSR_MHPMCOUNTER24, CSR_MHPMCOUNTER25, CSR_MHPMCOUNTER26, CSR_MHPMCOUNTER27,
+515                             CSR_MHPMCOUNTER28, CSR_MHPMCOUNTER29, CSR_MHPMCOUNTER30, CSR_MHPMCOUNTER31: begin
+516        <font color = "red">0/1     ==>            mhpmcounter_we[mhpmcounter_idx] = 1'b1;</font>
+517                             end
+518                     
+519                             CSR_MCYCLEH,
+520                             CSR_MINSTRETH,
+521                             CSR_MHPMCOUNTER3H,
+522                             CSR_MHPMCOUNTER4H,  CSR_MHPMCOUNTER5H,  CSR_MHPMCOUNTER6H,  CSR_MHPMCOUNTER7H,
+523                             CSR_MHPMCOUNTER8H,  CSR_MHPMCOUNTER9H,  CSR_MHPMCOUNTER10H, CSR_MHPMCOUNTER11H,
+524                             CSR_MHPMCOUNTER12H, CSR_MHPMCOUNTER13H, CSR_MHPMCOUNTER14H, CSR_MHPMCOUNTER15H,
+525                             CSR_MHPMCOUNTER16H, CSR_MHPMCOUNTER17H, CSR_MHPMCOUNTER18H, CSR_MHPMCOUNTER19H,
+526                             CSR_MHPMCOUNTER20H, CSR_MHPMCOUNTER21H, CSR_MHPMCOUNTER22H, CSR_MHPMCOUNTER23H,
+527                             CSR_MHPMCOUNTER24H, CSR_MHPMCOUNTER25H, CSR_MHPMCOUNTER26H, CSR_MHPMCOUNTER27H,
+528                             CSR_MHPMCOUNTER28H, CSR_MHPMCOUNTER29H, CSR_MHPMCOUNTER30H, CSR_MHPMCOUNTER31H: begin
+529        1/1                    mhpmcounterh_we[mhpmcounter_idx] = 1'b1;
+530                             end
+531                     
+532        1/1                  default:;
+533                           endcase
+534                         end
+                        MISSING_ELSE
+535                     
+536                         // exception controller gets priority over other writes
+537        1/1              unique case (1'b1)
+538                     
+539                           csr_save_cause_i: begin
+540        1/1                  unique case (1'b1)
+541                               csr_save_if_i: begin
+542        1/1                      exception_pc = pc_if_i;
+543                               end
+544                               csr_save_id_i: begin
+545        1/1                      exception_pc = pc_id_i;
+546                               end
+547        <font color = "grey">excluded     </font>          default:;
+548                             endcase
+549                     
+550                             // Any exception, including debug mode, causes a switch to M-mode
+551        1/1                  priv_lvl_d = PRIV_LVL_M;
+552                     
+553        1/1                  if (debug_csr_save_i) begin
+554                               // all interrupts are masked
+555                               // do not update cause, epc, tval, epc and status
+556        1/1                    dcsr_d.prv   = priv_lvl_q;
+557        1/1                    dcsr_d.cause = debug_cause_i;
+558        1/1                    depc_d       = exception_pc;
+559        1/1                  end else if (!debug_mode_i) begin
+560                               // In debug mode, &quot;exceptions do not update any registers. That
+561                               // includes cause, epc, tval, dpc and mstatus.&quot; [Debug Spec v0.13.2, p.39]
+562        1/1                    mtval_d        = csr_mtval_i;
+563        1/1                    mstatus_d.mie  = 1'b0; // disable interrupts
+564                               // save current status
+565        1/1                    mstatus_d.mpie = mstatus_q.mie;
+566        1/1                    mstatus_d.mpp  = priv_lvl_q;
+567        1/1                    mepc_d         = exception_pc;
+568        1/1                    mcause_d       = {csr_mcause_i};
+569                               // save previous status for recoverable NMI
+570        1/1                    mstack_d.mpie  = mstatus_q.mpie;
+571        1/1                    mstack_d.mpp   = mstatus_q.mpp;
+572        1/1                    mstack_epc_d   = mepc_q;
+573        1/1                    mstack_cause_d = mcause_q;
+574                             end
+                        MISSING_ELSE
+575                           end // csr_save_cause_i
+576                     
+577                           csr_restore_dret_i: begin // DRET
+578        1/1                  priv_lvl_d = dcsr_q.prv;
+579                           end // csr_restore_dret_i
+580                     
+581                           csr_restore_mret_i: begin // MRET
+582        1/1                  priv_lvl_d     = mstatus_q.mpp;
+583        1/1                  mstatus_d.mie  = mstatus_q.mpie; // re-enable interrupts
+584                     
+585        1/1                  if (nmi_mode_i) begin
+586                               // when returning from an NMI restore state from mstack CSR
+587        1/1                    mstatus_d.mpie = mstack_q.mpie;
+588        1/1                    mstatus_d.mpp  = mstack_q.mpp;
+589        1/1                    mepc_d         = mstack_epc_q;
+590        1/1                    mcause_d       = mstack_cause_q;
+591                             end else begin
+592                               // otherwise just set mstatus.MPIE/MPP
+593                               // See RISC-V Privileged Specification, version 1.11, Section 3.1.6.1
+594        1/1                    mstatus_d.mpie = 1'b1;
+595        1/1                    mstatus_d.mpp  = PRIV_LVL_U;
+596                             end
+597                           end // csr_restore_mret_i
+598                     
+599        1/1                default:;
+600                         endcase
+601                       end
+602                     
+603                       // CSR operation logic
+604                       always_comb begin
+605        1/1              csr_wreq = 1'b1;
+606                     
+607        1/1              unique case (csr_op_i)
+608        1/1                CSR_OP_WRITE: csr_wdata_int =  csr_wdata_i;
+609        1/1                CSR_OP_SET:   csr_wdata_int =  csr_wdata_i | csr_rdata_o;
+610        1/1                CSR_OP_CLEAR: csr_wdata_int = ~csr_wdata_i &amp; csr_rdata_o;
+611                           CSR_OP_READ: begin
+612        1/1                  csr_wdata_int = csr_wdata_i;
+613        1/1                  csr_wreq      = 1'b0;
+614                           end
+615                           default: begin
+616        1/1                  csr_wdata_int = csr_wdata_i;
+617        1/1                  csr_wreq      = 1'b0;
+618                           end
+619                         endcase
+620                       end
+621                     
+622                       // only write CSRs during one clock cycle
+623                       assign csr_we_int  = csr_wreq &amp; ~illegal_csr_insn_o &amp; instr_new_id_i;
+624                     
+625                       assign csr_rdata_o = csr_rdata_int;
+626                     
+627                       // directly output some registers
+628                       assign csr_msip_o  = mip.irq_software;
+629                       assign csr_mtip_o  = mip.irq_timer;
+630                       assign csr_meip_o  = mip.irq_external;
+631                       assign csr_mfip_o  = mip.irq_fast;
+632                     
+633                       assign csr_mepc_o  = mepc_q;
+634                       assign csr_depc_o  = depc_q;
+635                       assign csr_mtvec_o = mtvec_q;
+636                     
+637                       assign csr_mstatus_mie_o   = mstatus_q.mie;
+638                       assign csr_mstatus_tw_o    = mstatus_q.tw;
+639                       assign debug_single_step_o = dcsr_q.step;
+640                       assign debug_ebreakm_o     = dcsr_q.ebreakm;
+641                       assign debug_ebreaku_o     = dcsr_q.ebreaku;
+642                     
+643                       assign irq_pending_o = csr_msip_o | csr_mtip_o | csr_meip_o | (|csr_mfip_o);
+644                     
+645                       // actual registers
+646                       always_ff @(posedge clk_i or negedge rst_ni) begin
+647        1/1              if (!rst_ni) begin
+648        1/1                priv_lvl_q     &lt;= PRIV_LVL_M;
+649        1/1                mstatus_q      &lt;= '{
+650                               mie:  1'b0,
+651                               mpie: 1'b1,
+652                               mpp:  PRIV_LVL_U,
+653                               mprv: 1'b0,
+654                               tw:   1'b0
+655                           };
+656        1/1                mie_q          &lt;= '0;
+657        1/1                mscratch_q     &lt;= '0;
+658        1/1                mepc_q         &lt;= '0;
+659        1/1                mcause_q       &lt;= '0;
+660        1/1                mtval_q        &lt;= '0;
+661        1/1                mtvec_q        &lt;= 32'b01;
+662        1/1                dcsr_q         &lt;= '{
+663                               xdebugver: XDEBUGVER_STD,
+664                               cause:     DBG_CAUSE_NONE, // 3'h0
+665                               prv:       PRIV_LVL_M,
+666                               default:   '0
+667                           };
+668        1/1                depc_q         &lt;= '0;
+669        1/1                dscratch0_q    &lt;= '0;
+670        1/1                dscratch1_q    &lt;= '0;
+671                     
+672        1/1                mstack_q       &lt;= '{
+673                               mpie: 1'b1,
+674                               mpp:  PRIV_LVL_U
+675                           };
+676        1/1                mstack_epc_q   &lt;= '0;
+677        1/1                mstack_cause_q &lt;= '0;
+678                     
+679                         end else begin
+680                           // update CSRs
+681        1/1                priv_lvl_q     &lt;= priv_lvl_d;
+682        1/1                mstatus_q      &lt;= mstatus_d;
+683        1/1                mie_q          &lt;= mie_d;
+684        1/1                mscratch_q     &lt;= mscratch_d;
+685        1/1                mepc_q         &lt;= mepc_d;
+686        1/1                mcause_q       &lt;= mcause_d;
+687        1/1                mtval_q        &lt;= mtval_d;
+688        1/1                mtvec_q        &lt;= mtvec_d;
+689        1/1                dcsr_q         &lt;= dcsr_d;
+690        1/1                depc_q         &lt;= depc_d;
+691        1/1                dscratch0_q    &lt;= dscratch0_d;
+692        1/1                dscratch1_q    &lt;= dscratch1_d;
+693                     
+694        1/1                mstack_q       &lt;= mstack_d;
+695        1/1                mstack_epc_q   &lt;= mstack_epc_d;
+696        1/1                mstack_cause_q &lt;= mstack_cause_d;
+697                     
+698                         end
+699                       end
+700                     
+701                       // Send current priv level to the decoder
+702                       assign priv_mode_id_o = priv_lvl_q;
+703                       // New instruction fetches need to account for updates to priv_lvl_q this cycle
+704                       assign priv_mode_if_o = priv_lvl_d;
+705                       // Load/store instructions must factor in MPRV for PMP checking
+706                       assign priv_mode_lsu_o = mstatus_q.mprv ? mstatus_q.mpp : priv_lvl_q;
+707                     
+708                       // -----------------
+709                       // PMP registers
+710                       // -----------------
+711                     
+712                       if (PMPEnable) begin : g_pmp_registers
+713                         pmp_cfg_t                    pmp_cfg         [PMPNumRegions];
+714                         pmp_cfg_t                    pmp_cfg_wdata   [PMPNumRegions];
+715                         logic [31:0]                 pmp_addr        [PMPNumRegions];
+716                         logic [PMPNumRegions-1:0]    pmp_cfg_we;
+717                         logic [PMPNumRegions-1:0]    pmp_addr_we;
+718                     
+719                         // Expanded / qualified register read data
+720                         for (genvar i = 0; i &lt; PMP_MAX_REGIONS; i++) begin : g_exp_rd_data
+721                           if (i &lt; PMPNumRegions) begin : g_implemented_regions
+722                             // Add in zero padding for reserved fields
+723                             assign pmp_cfg_rdata[i] = {pmp_cfg[i].lock, 2'b00, pmp_cfg[i].mode,
+724                                                        pmp_cfg[i].exec, pmp_cfg[i].write, pmp_cfg[i].read};
+725                     
+726                             // Address field read data depends on the current programmed mode and the granularity
+727                             // See RISC-V Privileged Specification, version 1.11, Section 3.6.1
+728                             if (PMPGranularity == 0) begin : g_pmp_g0
+729                               // If G == 0, read data is unmodified
+730                               assign pmp_addr_rdata[i] = pmp_addr[i];
+731                     
+732                             end else if (PMPGranularity == 1) begin : g_pmp_g1
+733                               // If G == 1, bit [G-1] reads as zero in TOR or OFF mode
+734                               always_comb begin
+735                                 pmp_addr_rdata[i] = pmp_addr[i];
+736                                 if ((pmp_cfg[i].mode == PMP_MODE_OFF) || (pmp_cfg[i].mode == PMP_MODE_TOR)) begin
+737                                   pmp_addr_rdata[i][PMPGranularity-1:0] = '0;
+738                                 end
+739                               end
+740                     
+741                             end else begin : g_pmp_g2
+742                               // For G &gt;= 2, bits are masked to one or zero depending on the mode
+743                               always_comb begin
+744                                 pmp_addr_rdata[i] = pmp_addr[i];
+745                                 if ((pmp_cfg[i].mode == PMP_MODE_OFF) || (pmp_cfg[i].mode == PMP_MODE_TOR)) begin
+746                                   // In TOR or OFF mode, bits [G-1:0] must read as zero
+747                                   pmp_addr_rdata[i][PMPGranularity-1:0] = '0;
+748                                 end else if (pmp_cfg[i].mode == PMP_MODE_NAPOT) begin
+749                                   // In NAPOT mode, bits [G-2:0] must read as one
+750                                   pmp_addr_rdata[i][PMPGranularity-2:0] = '1;
+751                                 end
+752                               end
+753                             end
+754                     
+755                           end else begin : g_other_regions
+756                             // Non-implemented regions read as zero
+757                             assign pmp_cfg_rdata[i]  = '0;
+758                             assign pmp_addr_rdata[i] = '0;
+759                           end
+760                         end
+761                     
+762                         // Write data calculation
+763                         for (genvar i = 0; i &lt; PMPNumRegions; i++) begin : g_pmp_csrs
+764                           // -------------------------
+765                           // Instantiate cfg registers
+766                           // -------------------------
+767                           assign pmp_cfg_we[i] = csr_we_int &amp; ~pmp_cfg[i].lock &amp;
+768                                                  (csr_addr == (CSR_OFF_PMP_CFG + (i[11:0] &gt;&gt; 2)));
+769                     
+770                           // Select the correct WDATA (each CSR contains 4 CFG fields, each with 2 RES bits)
+771                           assign pmp_cfg_wdata[i].lock  = csr_wdata_int[(i%4)*PMP_CFG_W+7];
+772                           // NA4 mode is not selectable when G &gt; 0, mode is treated as OFF
+773                           always_comb begin
+774                             unique case (csr_wdata_int[(i%4)*PMP_CFG_W+3+:2])
+775                               2'b00   : pmp_cfg_wdata[i].mode = PMP_MODE_OFF;
+776                               2'b01   : pmp_cfg_wdata[i].mode = PMP_MODE_TOR;
+777                               2'b10   : pmp_cfg_wdata[i].mode = (PMPGranularity == 0) ? PMP_MODE_NA4:
+778                                                                                         PMP_MODE_OFF;
+779                               2'b11   : pmp_cfg_wdata[i].mode = PMP_MODE_NAPOT;
+780                               default : pmp_cfg_wdata[i].mode = PMP_MODE_OFF;
+781                             endcase
+782                           end
+783                           assign pmp_cfg_wdata[i].exec  = csr_wdata_int[(i%4)*PMP_CFG_W+2];
+784                           // W = 1, R = 0 is a reserved combination. For now, we force W to 0 if R == 0
+785                           assign pmp_cfg_wdata[i].write = &amp;csr_wdata_int[(i%4)*PMP_CFG_W+:2];
+786                           assign pmp_cfg_wdata[i].read  = csr_wdata_int[(i%4)*PMP_CFG_W];
+787                     
+788                           always_ff @(posedge clk_i or negedge rst_ni) begin
+789                             if (!rst_ni) begin
+790                               pmp_cfg[i] &lt;= pmp_cfg_t'('b0);
+791                             end else if (pmp_cfg_we[i]) begin
+792                               pmp_cfg[i] &lt;= pmp_cfg_wdata[i];
+793                             end
+794                           end
+795                     
+796                           // --------------------------
+797                           // Instantiate addr registers
+798                           // --------------------------
+799                           if (i &lt; PMPNumRegions - 1) begin : g_lower
+800                             assign pmp_addr_we[i] = csr_we_int &amp; ~pmp_cfg[i].lock &amp;
+801                                                     (pmp_cfg[i+1].mode != PMP_MODE_TOR) &amp;
+802                                                     (csr_addr == (CSR_OFF_PMP_ADDR + i[11:0]));
+803                           end else begin : g_upper
+804                             assign pmp_addr_we[i] = csr_we_int &amp; ~pmp_cfg[i].lock &amp;
+805                                                     (csr_addr == (CSR_OFF_PMP_ADDR + i[11:0]));
+806                           end
+807                     
+808                           always_ff @(posedge clk_i or negedge rst_ni) begin
+809                             if (!rst_ni) begin
+810                               pmp_addr[i] &lt;= 'b0;
+811                             end else if (pmp_addr_we[i]) begin
+812                               pmp_addr[i] &lt;= csr_wdata_int;
+813                             end
+814                           end
+815                           assign csr_pmp_cfg_o[i]  = pmp_cfg[i];
+816                           assign csr_pmp_addr_o[i] = {pmp_addr[i],2'b00};
+817                         end
+818                     
+819                       end else begin : g_no_pmp_tieoffs
+820                         // Generate tieoffs when PMP is not configured
+821                         for (genvar i = 0; i &lt; PMP_MAX_REGIONS; i++) begin : g_rdata
+822                           assign pmp_addr_rdata[i] = '0;
+823                           assign pmp_cfg_rdata[i]  = '0;
+824                         end
+825                         for (genvar i = 0; i &lt; PMPNumRegions; i++) begin : g_outputs
+826                           assign csr_pmp_cfg_o[i]  = pmp_cfg_t'(1'b0);
+827                           assign csr_pmp_addr_o[i] = '0;
+828                         end
+829                       end
+830                     
+831                       //////////////////////////
+832                       //  Performance monitor //
+833                       //////////////////////////
+834                     
+835                       // update enable signals
+836                       always_comb begin : mcountinhibit_update
+837        1/1              if (mcountinhibit_we == 1'b1) begin
+838        <font color = "red">0/1     ==>        mcountinhibit_d = {csr_wdata_int[31:2], 1'b0, csr_wdata_int[0]}; // bit 1 must always be 0</font>
+839                         end else begin
+840        1/1                mcountinhibit_d = mcountinhibit_q;
+841                         end
+842                       end
+843                     
+844                       assign mcountinhibit_force = {{29-MHPMCounterNum{1'b1}}, {MHPMCounterNum{1'b0}}, 3'b000};
+845                       assign mcountinhibit       = mcountinhibit_q | mcountinhibit_force;
+846                     
+847                       // event selection (hardwired) &amp; control
+848                       always_comb begin : gen_mhpmcounter_incr
+849                     
+850                         // When adding or altering performance counter meanings and default
+851                         // mappings please update dv/verilator/pcount/cpp/ibex_pcounts.cc
+852                         // appropriately.
+853                         //
+854                         // active counters
+855        1/1              mhpmcounter_incr[0]  = 1'b1;                   // mcycle
+856        1/1              mhpmcounter_incr[1]  = 1'b0;                   // reserved
+857        1/1              mhpmcounter_incr[2]  = instr_ret_i;            // minstret
+858        1/1              mhpmcounter_incr[3]  = lsu_busy_i;             // cycles waiting for data memory
+859        1/1              mhpmcounter_incr[4]  = imiss_i &amp; ~pc_set_i;    // cycles waiting for instr fetches
+860                                                                        // excl. jump and branch set cycles
+861        1/1              mhpmcounter_incr[5]  = mem_load_i;             // num of loads
+862        1/1              mhpmcounter_incr[6]  = mem_store_i;            // num of stores
+863        1/1              mhpmcounter_incr[7]  = jump_i;                 // num of jumps (unconditional)
+864        1/1              mhpmcounter_incr[8]  = branch_i;               // num of branches (conditional)
+865        1/1              mhpmcounter_incr[9]  = branch_taken_i;         // num of taken branches (conditional)
+866        1/1              mhpmcounter_incr[10] = instr_ret_compressed_i; // num of compressed instr
+867                     
+868                         // inactive counters
+869        1/1              for (int unsigned i=3+MHPMCounterNum; i&lt;32; i++) begin : gen_mhpmcounter_incr_inactive
+870        1/1                mhpmcounter_incr[i] = 1'b0;
+871                         end
+872                       end
+873                     
+874                       // event selector (hardwired, 0 means no event)
+875                       always_comb begin : gen_mhpmevent
+876                     
+877                         // activate all
+878        1/1              for (int i=0; i&lt;32; i++) begin : gen_mhpmevent_active
+879        1/1                mhpmevent[i]    =   '0;
+880        1/1                mhpmevent[i][i] = 1'b1;
+881                         end
+882                     
+883                         // deactivate
+884        1/1              mhpmevent[1] = '0; // not existing, reserved
+885        1/1              for (int unsigned i=3+MHPMCounterNum; i&lt;32; i++) begin : gen_mhpmevent_inactive
+886        1/1                mhpmevent[i] = '0;
+887                         end
+888                       end
+889                     
+890                       // mask, controls effective counter width
+891                       always_comb begin : gen_mask
+892                     
+893        1/1              for (int i=0; i&lt;3; i++) begin : gen_mask_fixed
+894                           // mcycle, mtime, minstret are always 64 bit wide
+895        1/1                mhpmcounter_mask[i] = {64{1'b1}};
+896                         end
+897                     
+898        1/1              for (int unsigned i=3; i&lt;3+MHPMCounterNum; i++) begin : gen_mask_configurable
+899                           // mhpmcounters have a configurable width
+900        1/1                mhpmcounter_mask[i] = {{64-MHPMCounterWidth{1'b0}}, {MHPMCounterWidth{1'b1}}};
+901                         end
+902                     
+903        1/1              for (int unsigned i=3+MHPMCounterNum; i&lt;32; i++) begin : gen_mask_inactive
+904                           // mask inactive mhpmcounters
+905        1/1                mhpmcounter_mask[i] = '0;
+906                         end
+907                       end
+908                     
+909                       // update
+910                       always_comb begin : mhpmcounter_update
+911        1/1              mhpmcounter_d = mhpmcounter_q;
+912                     
+913        1/1              for (int i=0; i&lt;32; i++) begin : gen_mhpmcounter_update
+914                     
+915                           // increment
+916        1/1                if (mhpmcounter_incr[i] &amp; ~mcountinhibit[i]) begin
+917        1/1                  mhpmcounter_d[i] = mhpmcounter_mask[i] &amp; (mhpmcounter_q[i] + 64'h1);
+918                           end
+                        MISSING_ELSE
+919                     
+920                           // write
+921        1/1                if (mhpmcounter_we[i]) begin
+922        <font color = "red">0/1     ==>          mhpmcounter_d[i][31: 0] = mhpmcounter_mask[i][31: 0] &amp; csr_wdata_int;</font>
+923        1/1                end else if (mhpmcounterh_we[i]) begin
+924        1/1                  mhpmcounter_d[i][63:32] = mhpmcounter_mask[i][63:32] &amp; csr_wdata_int;
+925                           end
+                        MISSING_ELSE
+926                         end
+927                       end
+928                     
+929                       // performance monitor registers
+930                       always_ff @(posedge clk_i or negedge rst_ni) begin : perf_counter_registers
+931        1/1              if (!rst_ni) begin
+932        1/1                mcountinhibit_q    &lt;= '0;
+933        1/1                for (int i=0; i&lt;32; i++) begin
+934        1/1                  mhpmcounter_q[i] &lt;= '0;
+935                           end
+936                         end else begin
+937        1/1                mhpmcounter_q      &lt;= mhpmcounter_d;
+938        1/1                mcountinhibit_q    &lt;= mcountinhibit_d;
+</pre>
+<hr>
+<a name="inst_tag_38_Branch"></a>
+<b>Branch Coverage for Instance : <a href="mod37.html#inst_tag_38" >core_ibex_tb_top.dut.u_ibex_core.cs_registers_i<img src="ex.gif" class="icon"></a></b><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Line No.</th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th></tr><tr class="s9">
+<td>Branches</td>
+<td></td>
+<td class="rt">88</td>
+<td class="rt">81</td>
+<td class="rt">92.05 </td>
+</tr><tr class="s5">
+<td>TERNARY</td>
+<td class="rt">706</td>
+<td class="rt">2</td>
+<td class="rt">1</td>
+<td class="rt">50.00 </td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">248</td>
+<td class="rt">45</td>
+<td class="rt">45</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">422</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s7">
+<td>IF</td>
+<td class="rt">436</td>
+<td class="rt">18</td>
+<td class="rt">14</td>
+<td class="rt">77.78 </td>
+</tr><tr class="s9">
+<td>CASE</td>
+<td class="rt">537</td>
+<td class="rt">10</td>
+<td class="rt">9</td>
+<td class="rt">90.00 </td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">607</td>
+<td class="rt">5</td>
+<td class="rt">5</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">647</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s5">
+<td>IF</td>
+<td class="rt">837</td>
+<td class="rt">2</td>
+<td class="rt">1</td>
+<td class="rt">50.00 </td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">931</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+706          assign priv_mode_lsu_o = mstatus_q.mprv ? mstatus_q.mpp : priv_lvl_q;
+                                                     <font color = "red">-1-</font>  
+                                                     <font color = "red">==></font>  
+                                                     <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uRed">
+<td align=center>1</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+248            unique case (csr_addr_i)
+                      <font color = "green">-1-</font>  
+249              // mhartid: unique hardware thread id
+250              CSR_MHARTID: csr_rdata_int = hart_id_i;
+           <font color = "green">      ==></font>
+251        
+252              // mstatus: always M-mode, contains IE bit
+253              CSR_MSTATUS: begin
+254                csr_rdata_int                                                   = '0;
+           <font color = "green">        ==></font>
+255                csr_rdata_int[CSR_MSTATUS_MIE_BIT]                              = mstatus_q.mie;
+256                csr_rdata_int[CSR_MSTATUS_MPIE_BIT]                             = mstatus_q.mpie;
+257                csr_rdata_int[CSR_MSTATUS_MPP_BIT_HIGH:CSR_MSTATUS_MPP_BIT_LOW] = mstatus_q.mpp;
+258                csr_rdata_int[CSR_MSTATUS_MPRV_BIT]                             = mstatus_q.mprv;
+259                csr_rdata_int[CSR_MSTATUS_TW_BIT]                               = mstatus_q.tw;
+260              end
+261        
+262              // misa
+263              CSR_MISA: csr_rdata_int = MISA_VALUE;
+           <font color = "green">      ==></font>
+264        
+265              // interrupt enable
+266              CSR_MIE: begin
+267                csr_rdata_int                                     = '0;
+           <font color = "green">        ==></font>
+268                csr_rdata_int[CSR_MSIX_BIT]                       = mie_q.irq_software;
+269                csr_rdata_int[CSR_MTIX_BIT]                       = mie_q.irq_timer;
+270                csr_rdata_int[CSR_MEIX_BIT]                       = mie_q.irq_external;
+271                csr_rdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mie_q.irq_fast;
+272              end
+273        
+274              CSR_MSCRATCH: csr_rdata_int = mscratch_q;
+           <font color = "green">      ==></font>
+275        
+276              // mtvec: trap-vector base address
+277              CSR_MTVEC: csr_rdata_int = mtvec_q;
+           <font color = "green">      ==></font>
+278        
+279              // mepc: exception program counter
+280              CSR_MEPC: csr_rdata_int = mepc_q;
+           <font color = "green">      ==></font>
+281        
+282              // mcause: exception cause
+283              CSR_MCAUSE: csr_rdata_int = {mcause_q[5], 26'b0, mcause_q[4:0]};
+           <font color = "green">      ==></font>
+284        
+285              // mtval: trap value
+286              CSR_MTVAL: csr_rdata_int = mtval_q;
+           <font color = "green">      ==></font>
+287        
+288              // mip: interrupt pending
+289              CSR_MIP: begin
+290                csr_rdata_int                                     = '0;
+           <font color = "green">        ==></font>
+291                csr_rdata_int[CSR_MSIX_BIT]                       = mip.irq_software;
+292                csr_rdata_int[CSR_MTIX_BIT]                       = mip.irq_timer;
+293                csr_rdata_int[CSR_MEIX_BIT]                       = mip.irq_external;
+294                csr_rdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mip.irq_fast;
+295              end
+296        
+297              // PMP registers
+298              CSR_PMPCFG0:   csr_rdata_int = {pmp_cfg_rdata[3],  pmp_cfg_rdata[2],
+           <font color = "green">      ==></font>
+299                                              pmp_cfg_rdata[1],  pmp_cfg_rdata[0]};
+300              CSR_PMPCFG1:   csr_rdata_int = {pmp_cfg_rdata[7],  pmp_cfg_rdata[6],
+           <font color = "green">      ==></font>
+301                                              pmp_cfg_rdata[5],  pmp_cfg_rdata[4]};
+302              CSR_PMPCFG2:   csr_rdata_int = {pmp_cfg_rdata[11], pmp_cfg_rdata[10],
+           <font color = "green">      ==></font>
+303                                              pmp_cfg_rdata[9],  pmp_cfg_rdata[8]};
+304              CSR_PMPCFG3:   csr_rdata_int = {pmp_cfg_rdata[15], pmp_cfg_rdata[14],
+           <font color = "green">      ==></font>
+305                                              pmp_cfg_rdata[13], pmp_cfg_rdata[12]};
+306              CSR_PMPADDR0:  csr_rdata_int = pmp_addr_rdata[0];
+           <font color = "green">      ==></font>
+307              CSR_PMPADDR1:  csr_rdata_int = pmp_addr_rdata[1];
+           <font color = "green">      ==></font>
+308              CSR_PMPADDR2:  csr_rdata_int = pmp_addr_rdata[2];
+           <font color = "green">      ==></font>
+309              CSR_PMPADDR3:  csr_rdata_int = pmp_addr_rdata[3];
+           <font color = "green">      ==></font>
+310              CSR_PMPADDR4:  csr_rdata_int = pmp_addr_rdata[4];
+           <font color = "green">      ==></font>
+311              CSR_PMPADDR5:  csr_rdata_int = pmp_addr_rdata[5];
+           <font color = "green">      ==></font>
+312              CSR_PMPADDR6:  csr_rdata_int = pmp_addr_rdata[6];
+           <font color = "green">      ==></font>
+313              CSR_PMPADDR7:  csr_rdata_int = pmp_addr_rdata[7];
+           <font color = "green">      ==></font>
+314              CSR_PMPADDR8:  csr_rdata_int = pmp_addr_rdata[8];
+           <font color = "green">      ==></font>
+315              CSR_PMPADDR9:  csr_rdata_int = pmp_addr_rdata[9];
+           <font color = "green">      ==></font>
+316              CSR_PMPADDR10: csr_rdata_int = pmp_addr_rdata[10];
+           <font color = "green">      ==></font>
+317              CSR_PMPADDR11: csr_rdata_int = pmp_addr_rdata[11];
+           <font color = "green">      ==></font>
+318              CSR_PMPADDR12: csr_rdata_int = pmp_addr_rdata[12];
+           <font color = "green">      ==></font>
+319              CSR_PMPADDR13: csr_rdata_int = pmp_addr_rdata[13];
+           <font color = "green">      ==></font>
+320              CSR_PMPADDR14: csr_rdata_int = pmp_addr_rdata[14];
+           <font color = "green">      ==></font>
+321              CSR_PMPADDR15: csr_rdata_int = pmp_addr_rdata[15];
+           <font color = "green">      ==></font>
+322        
+323              CSR_DCSR: begin
+324                csr_rdata_int = dcsr_q;
+           <font color = "green">        ==></font>
+325                illegal_csr = ~debug_mode_i;
+326              end
+327              CSR_DPC: begin
+328                csr_rdata_int = depc_q;
+           <font color = "green">        ==></font>
+329                illegal_csr = ~debug_mode_i;
+330              end
+331              CSR_DSCRATCH0: begin
+332                csr_rdata_int = dscratch0_q;
+           <font color = "green">        ==></font>
+333                illegal_csr = ~debug_mode_i;
+334              end
+335              CSR_DSCRATCH1: begin
+336                csr_rdata_int = dscratch1_q;
+           <font color = "green">        ==></font>
+337                illegal_csr = ~debug_mode_i;
+338              end
+339        
+340              // machine counter/timers
+341              CSR_MCOUNTINHIBIT: csr_rdata_int = mcountinhibit;
+           <font color = "green">      ==></font>
+342              CSR_MHPMEVENT3,
+343              CSR_MHPMEVENT4,  CSR_MHPMEVENT5,  CSR_MHPMEVENT6,  CSR_MHPMEVENT7,
+344              CSR_MHPMEVENT8,  CSR_MHPMEVENT9,  CSR_MHPMEVENT10, CSR_MHPMEVENT11,
+345              CSR_MHPMEVENT12, CSR_MHPMEVENT13, CSR_MHPMEVENT14, CSR_MHPMEVENT15,
+346              CSR_MHPMEVENT16, CSR_MHPMEVENT17, CSR_MHPMEVENT18, CSR_MHPMEVENT19,
+347              CSR_MHPMEVENT20, CSR_MHPMEVENT21, CSR_MHPMEVENT22, CSR_MHPMEVENT23,
+348              CSR_MHPMEVENT24, CSR_MHPMEVENT25, CSR_MHPMEVENT26, CSR_MHPMEVENT27,
+349              CSR_MHPMEVENT28, CSR_MHPMEVENT29, CSR_MHPMEVENT30, CSR_MHPMEVENT31: begin
+350                csr_rdata_int = mhpmevent[mhpmcounter_idx];
+           <font color = "green">        ==></font>
+351              end
+352        
+353              CSR_MCYCLE,
+354              CSR_MINSTRET,
+355              CSR_MHPMCOUNTER3,
+356              CSR_MHPMCOUNTER4,  CSR_MHPMCOUNTER5,  CSR_MHPMCOUNTER6,  CSR_MHPMCOUNTER7,
+357              CSR_MHPMCOUNTER8,  CSR_MHPMCOUNTER9,  CSR_MHPMCOUNTER10, CSR_MHPMCOUNTER11,
+358              CSR_MHPMCOUNTER12, CSR_MHPMCOUNTER13, CSR_MHPMCOUNTER14, CSR_MHPMCOUNTER15,
+359              CSR_MHPMCOUNTER16, CSR_MHPMCOUNTER17, CSR_MHPMCOUNTER18, CSR_MHPMCOUNTER19,
+360              CSR_MHPMCOUNTER20, CSR_MHPMCOUNTER21, CSR_MHPMCOUNTER22, CSR_MHPMCOUNTER23,
+361              CSR_MHPMCOUNTER24, CSR_MHPMCOUNTER25, CSR_MHPMCOUNTER26, CSR_MHPMCOUNTER27,
+362              CSR_MHPMCOUNTER28, CSR_MHPMCOUNTER29, CSR_MHPMCOUNTER30, CSR_MHPMCOUNTER31: begin
+363                csr_rdata_int = mhpmcounter_q[mhpmcounter_idx][31:0];
+           <font color = "green">        ==></font>
+364              end
+365        
+366              CSR_MCYCLEH,
+367              CSR_MINSTRETH,
+368              CSR_MHPMCOUNTER3H,
+369              CSR_MHPMCOUNTER4H,  CSR_MHPMCOUNTER5H,  CSR_MHPMCOUNTER6H,  CSR_MHPMCOUNTER7H,
+370              CSR_MHPMCOUNTER8H,  CSR_MHPMCOUNTER9H,  CSR_MHPMCOUNTER10H, CSR_MHPMCOUNTER11H,
+371              CSR_MHPMCOUNTER12H, CSR_MHPMCOUNTER13H, CSR_MHPMCOUNTER14H, CSR_MHPMCOUNTER15H,
+372              CSR_MHPMCOUNTER16H, CSR_MHPMCOUNTER17H, CSR_MHPMCOUNTER18H, CSR_MHPMCOUNTER19H,
+373              CSR_MHPMCOUNTER20H, CSR_MHPMCOUNTER21H, CSR_MHPMCOUNTER22H, CSR_MHPMCOUNTER23H,
+374              CSR_MHPMCOUNTER24H, CSR_MHPMCOUNTER25H, CSR_MHPMCOUNTER26H, CSR_MHPMCOUNTER27H,
+375              CSR_MHPMCOUNTER28H, CSR_MHPMCOUNTER29H, CSR_MHPMCOUNTER30H, CSR_MHPMCOUNTER31H: begin
+376                csr_rdata_int = mhpmcounter_q[mhpmcounter_idx][63:32];
+           <font color = "green">        ==></font>
+377              end
+378        
+379              // Debug triggers
+380              CSR_TSELECT: begin
+381                csr_rdata_int = tselect_rdata;
+           <font color = "green">        ==></font>
+382                illegal_csr   = ~DbgTriggerEn;
+383              end
+384              CSR_TDATA1: begin
+385                csr_rdata_int = tmatch_control_rdata;
+           <font color = "green">        ==></font>
+386                illegal_csr   = ~DbgTriggerEn;
+387              end
+388              CSR_TDATA2: begin
+389                csr_rdata_int = tmatch_value_rdata;
+           <font color = "green">        ==></font>
+390                illegal_csr   = ~DbgTriggerEn;
+391              end
+392              CSR_TDATA3: begin
+393                csr_rdata_int = '0;
+           <font color = "green">        ==></font>
+394                illegal_csr   = ~DbgTriggerEn;
+395              end
+396              CSR_MCONTEXT: begin
+397                csr_rdata_int = '0;
+           <font color = "green">        ==></font>
+398                illegal_csr   = ~DbgTriggerEn;
+399              end
+400              CSR_SCONTEXT: begin
+401                csr_rdata_int = '0;
+           <font color = "green">        ==></font>
+402                illegal_csr   = ~DbgTriggerEn;
+403              end
+404        
+405              default: begin
+406                illegal_csr = 1'b1;
+           <font color = "green">        ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>CSR_MHARTID </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MSTATUS </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MISA </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MIE </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MSCRATCH </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MTVEC </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MEPC </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MCAUSE </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MTVAL </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MIP </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPCFG0 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPCFG1 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPCFG2 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPCFG3 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR0 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR1 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR2 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR3 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR4 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR5 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR6 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR7 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR8 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR9 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR10 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR11 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR12 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR13 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR14 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_PMPADDR15 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_DCSR </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_DPC </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_DSCRATCH0 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_DSCRATCH1 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MCOUNTINHIBIT </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center nowrap>CASEITEM-36: CSR_MHPMEVENT3 CSR_MHPMEVENT4 CSR_MHPMEVENT5 CSR_MHPMEVENT6 CSR_MHPMEVENT7 CSR_MHPMEVENT8 CSR_MHPMEVENT9 CSR_MHPMEVENT10 CSR_MHPMEVENT11 CSR_MHPMEVENT12 CSR_MHPMEVENT13 CSR_MHPMEVENT14 CSR_MHPMEVENT15 CSR_MHPMEVENT16 CSR_MHPMEVENT17 CSR_MHPMEVENT18 CSR_MHPMEVENT19 CSR_MHPMEVENT20 CSR_MHPMEVENT21 CSR_MHPMEVENT22 CSR_MHPMEVENT23 CSR_MHPMEVENT24 CSR_MHPMEVENT25 CSR_MHPMEVENT26 CSR_MHPMEVENT27 CSR_MHPMEVENT28 CSR_MHPMEVENT29 CSR_MHPMEVENT30 CSR_MHPMEVENT31 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center nowrap>CASEITEM-37: CSR_MCYCLE CSR_MINSTRET CSR_MHPMCOUNTER3 CSR_MHPMCOUNTER4 CSR_MHPMCOUNTER5 CSR_MHPMCOUNTER6 CSR_MHPMCOUNTER7 CSR_MHPMCOUNTER8 CSR_MHPMCOUNTER9 CSR_MHPMCOUNTER10 CSR_MHPMCOUNTER11 CSR_MHPMCOUNTER12 CSR_MHPMCOUNTER13 CSR_MHPMCOUNTER14 CSR_MHPMCOUNTER15 CSR_MHPMCOUNTER16 CSR_MHPMCOUNTER17 CSR_MHPMCOUNTER18 CSR_MHPMCOUNTER19 CSR_MHPMCOUNTER20 CSR_MHPMCOUNTER21 CSR_MHPMCOUNTER22 CSR_MHPMCOUNTER23 CSR_MHPMCOUNTER24 CSR_MHPMCOUNTER25 CSR_MHPMCOUNTER26 CSR_MHPMCOUNTER27 CSR_MHPMCOUNTER28 CSR_MHPMCOUNTER29 CSR_MHPMCOUNTER30 CSR_MHPMCOUNTER31 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center nowrap>CASEITEM-38: CSR_MCYCLEH CSR_MINSTRETH CSR_MHPMCOUNTER3H CSR_MHPMCOUNTER4H CSR_MHPMCOUNTER5H CSR_MHPMCOUNTER6H CSR_MHPMCOUNTER7H CSR_MHPMCOUNTER8H CSR_MHPMCOUNTER9H CSR_MHPMCOUNTER10H CSR_MHPMCOUNTER11H CSR_MHPMCOUNTER12H CSR_MHPMCOUNTER13H CSR_MHPMCOUNTER14H CSR_MHPMCOUNTER15H CSR_MHPMCOUNTER16H CSR_MHPMCOUNTER17H CSR_MHPMCOUNTER18H CSR_MHPMCOUNTER19H CSR_MHPMCOUNTER20H CSR_MHPMCOUNTER21H CSR_MHPMCOUNTER22H CSR_MHPMCOUNTER23H CSR_MHPMCOUNTER24H CSR_MHPMCOUNTER25H CSR_MHPMCOUNTER26H CSR_MHPMCOUNTER27H CSR_MHPMCOUNTER28H CSR_MHPMCOUNTER29H CSR_MHPMCOUNTER30H CSR_MHPMCOUNTER31H </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_TSELECT </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_TDATA1 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_TDATA2 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_TDATA3 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_MCONTEXT </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_SCONTEXT </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+422            mtvec_d      = csr_mtvec_init_i ? {boot_addr_i[31:8], 6'b0, 2'b01} : mtvec_q;
+                                               <font color = "green">-1-</font>  
+                                               <font color = "green">==></font>  
+                                               <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+436            if (csr_we_int) begin
+               <font color = "green">-1-</font>  
+437              unique case (csr_addr_i)
+                        <font color = "red">-2-</font>  
+438                // mstatus: IE bit
+439                CSR_MSTATUS: begin
+440                  mstatus_d = '{
+441                      mie:  csr_wdata_int[CSR_MSTATUS_MIE_BIT],
+442                      mpie: csr_wdata_int[CSR_MSTATUS_MPIE_BIT],
+443                      mpp:  priv_lvl_e'(csr_wdata_int[CSR_MSTATUS_MPP_BIT_HIGH:CSR_MSTATUS_MPP_BIT_LOW]),
+444                      mprv: csr_wdata_int[CSR_MSTATUS_MPRV_BIT],
+445                      tw:   csr_wdata_int[CSR_MSTATUS_TW_BIT]
+446                  };
+447                  // Convert illegal values to M-mode
+448                  if ((mstatus_d.mpp != PRIV_LVL_M) && (mstatus_d.mpp != PRIV_LVL_U)) begin
+                     <font color = "red">-3-</font>  
+449                    mstatus_d.mpp = PRIV_LVL_M;
+           <font color = "red">            ==></font>
+450                  end
+                     MISSING_ELSE
+           <font color = "green">          ==></font>
+451                end
+452        
+453                // interrupt enable
+454                CSR_MIE: begin
+455                  mie_d.irq_software = csr_wdata_int[CSR_MSIX_BIT];
+           <font color = "green">          ==></font>
+456                  mie_d.irq_timer    = csr_wdata_int[CSR_MTIX_BIT];
+457                  mie_d.irq_external = csr_wdata_int[CSR_MEIX_BIT];
+458                  mie_d.irq_fast     = csr_wdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW];
+459                end
+460        
+461                CSR_MSCRATCH: mscratch_d = csr_wdata_int;
+           <font color = "green">        ==></font>
+462        
+463                // mepc: exception program counter
+464                CSR_MEPC: mepc_d = {csr_wdata_int[31:1], 1'b0};
+           <font color = "green">        ==></font>
+465        
+466                // mcause
+467                CSR_MCAUSE: mcause_d = {csr_wdata_int[31], csr_wdata_int[4:0]};
+           <font color = "green">        ==></font>
+468        
+469                // mtval: trap value
+470                CSR_MTVAL: mtval_d = csr_wdata_int;
+           <font color = "green">        ==></font>
+471        
+472                // mtvec
+473                // mtvec.MODE set to vectored
+474                // mtvec.BASE must be 256-byte aligned
+475                CSR_MTVEC: mtvec_d = {csr_wdata_int[31:8], 6'b0, 2'b01};
+           <font color = "green">        ==></font>
+476        
+477                CSR_DCSR: begin
+478                  dcsr_d = csr_wdata_int;
+479                  dcsr_d.xdebugver = XDEBUGVER_STD;
+480                  // Change to PRIV_LVL_M if software writes an unsupported value
+481                  if ((dcsr_d.prv != PRIV_LVL_M) && (dcsr_d.prv != PRIV_LVL_U)) begin
+                     <font color = "red">-4-</font>  
+482                    dcsr_d.prv = PRIV_LVL_M;
+           <font color = "red">            ==></font>
+483                  end
+                     MISSING_ELSE
+           <font color = "green">          ==></font>
+484        
+485                  // currently not supported:
+486                  dcsr_d.nmip = 1'b0;
+487                  dcsr_d.mprven = 1'b0;
+488                  dcsr_d.stopcount = 1'b0;
+489                  dcsr_d.stoptime = 1'b0;
+490        
+491                  // forced to be zero
+492                  dcsr_d.zero0 = 1'b0;
+493                  dcsr_d.zero1 = 1'b0;
+494                  dcsr_d.zero2 = 12'h0;
+495                end
+496        
+497                // dpc: debug program counter
+498                CSR_DPC: depc_d = {csr_wdata_int[31:1], 1'b0};
+           <font color = "green">        ==></font>
+499        
+500                CSR_DSCRATCH0: dscratch0_d = csr_wdata_int;
+           <font color = "green">        ==></font>
+501                CSR_DSCRATCH1: dscratch1_d = csr_wdata_int;
+           <font color = "green">        ==></font>
+502        
+503                // machine counter/timers
+504                CSR_MCOUNTINHIBIT: mcountinhibit_we = 1'b1;
+           <font color = "red">        ==></font>
+505        
+506                CSR_MCYCLE,
+507                CSR_MINSTRET,
+508                CSR_MHPMCOUNTER3,
+509                CSR_MHPMCOUNTER4,  CSR_MHPMCOUNTER5,  CSR_MHPMCOUNTER6,  CSR_MHPMCOUNTER7,
+510                CSR_MHPMCOUNTER8,  CSR_MHPMCOUNTER9,  CSR_MHPMCOUNTER10, CSR_MHPMCOUNTER11,
+511                CSR_MHPMCOUNTER12, CSR_MHPMCOUNTER13, CSR_MHPMCOUNTER14, CSR_MHPMCOUNTER15,
+512                CSR_MHPMCOUNTER16, CSR_MHPMCOUNTER17, CSR_MHPMCOUNTER18, CSR_MHPMCOUNTER19,
+513                CSR_MHPMCOUNTER20, CSR_MHPMCOUNTER21, CSR_MHPMCOUNTER22, CSR_MHPMCOUNTER23,
+514                CSR_MHPMCOUNTER24, CSR_MHPMCOUNTER25, CSR_MHPMCOUNTER26, CSR_MHPMCOUNTER27,
+515                CSR_MHPMCOUNTER28, CSR_MHPMCOUNTER29, CSR_MHPMCOUNTER30, CSR_MHPMCOUNTER31: begin
+516                  mhpmcounter_we[mhpmcounter_idx] = 1'b1;
+           <font color = "red">          ==></font>
+517                end
+518        
+519                CSR_MCYCLEH,
+520                CSR_MINSTRETH,
+521                CSR_MHPMCOUNTER3H,
+522                CSR_MHPMCOUNTER4H,  CSR_MHPMCOUNTER5H,  CSR_MHPMCOUNTER6H,  CSR_MHPMCOUNTER7H,
+523                CSR_MHPMCOUNTER8H,  CSR_MHPMCOUNTER9H,  CSR_MHPMCOUNTER10H, CSR_MHPMCOUNTER11H,
+524                CSR_MHPMCOUNTER12H, CSR_MHPMCOUNTER13H, CSR_MHPMCOUNTER14H, CSR_MHPMCOUNTER15H,
+525                CSR_MHPMCOUNTER16H, CSR_MHPMCOUNTER17H, CSR_MHPMCOUNTER18H, CSR_MHPMCOUNTER19H,
+526                CSR_MHPMCOUNTER20H, CSR_MHPMCOUNTER21H, CSR_MHPMCOUNTER22H, CSR_MHPMCOUNTER23H,
+527                CSR_MHPMCOUNTER24H, CSR_MHPMCOUNTER25H, CSR_MHPMCOUNTER26H, CSR_MHPMCOUNTER27H,
+528                CSR_MHPMCOUNTER28H, CSR_MHPMCOUNTER29H, CSR_MHPMCOUNTER30H, CSR_MHPMCOUNTER31H: begin
+529                  mhpmcounterh_we[mhpmcounter_idx] = 1'b1;
+           <font color = "green">          ==></font>
+530                end
+531        
+532                default:;
+           <font color = "green">        ==></font>
+533              endcase
+534            end
+               MISSING_ELSE
+           <font color = "green">    ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>Status</th></tr><tr class="uRed">
+<td align=center>1</td>
+<td align=center>CSR_MSTATUS </td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_MSTATUS </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_MIE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_MSCRATCH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_MEPC </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_MCAUSE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_MTVAL </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_MTVEC </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>1</td>
+<td align=center>CSR_DCSR </td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_DCSR </td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_DPC </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_DSCRATCH0 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>CSR_DSCRATCH1 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>1</td>
+<td align=center>CSR_MCOUNTINHIBIT </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uRed">
+<td align=center>1</td>
+<td align=center nowrap>CASEITEM-13: CSR_MCYCLE CSR_MINSTRET CSR_MHPMCOUNTER3 CSR_MHPMCOUNTER4 CSR_MHPMCOUNTER5 CSR_MHPMCOUNTER6 CSR_MHPMCOUNTER7 CSR_MHPMCOUNTER8 CSR_MHPMCOUNTER9 CSR_MHPMCOUNTER10 CSR_MHPMCOUNTER11 CSR_MHPMCOUNTER12 CSR_MHPMCOUNTER13 CSR_MHPMCOUNTER14 CSR_MHPMCOUNTER15 CSR_MHPMCOUNTER16 CSR_MHPMCOUNTER17 CSR_MHPMCOUNTER18 CSR_MHPMCOUNTER19 CSR_MHPMCOUNTER20 CSR_MHPMCOUNTER21 CSR_MHPMCOUNTER22 CSR_MHPMCOUNTER23 CSR_MHPMCOUNTER24 CSR_MHPMCOUNTER25 CSR_MHPMCOUNTER26 CSR_MHPMCOUNTER27 CSR_MHPMCOUNTER28 CSR_MHPMCOUNTER29 CSR_MHPMCOUNTER30 CSR_MHPMCOUNTER31 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center nowrap>CASEITEM-14: CSR_MCYCLEH CSR_MINSTRETH CSR_MHPMCOUNTER3H CSR_MHPMCOUNTER4H CSR_MHPMCOUNTER5H CSR_MHPMCOUNTER6H CSR_MHPMCOUNTER7H CSR_MHPMCOUNTER8H CSR_MHPMCOUNTER9H CSR_MHPMCOUNTER10H CSR_MHPMCOUNTER11H CSR_MHPMCOUNTER12H CSR_MHPMCOUNTER13H CSR_MHPMCOUNTER14H CSR_MHPMCOUNTER15H CSR_MHPMCOUNTER16H CSR_MHPMCOUNTER17H CSR_MHPMCOUNTER18H CSR_MHPMCOUNTER19H CSR_MHPMCOUNTER20H CSR_MHPMCOUNTER21H CSR_MHPMCOUNTER22H CSR_MHPMCOUNTER23H CSR_MHPMCOUNTER24H CSR_MHPMCOUNTER25H CSR_MHPMCOUNTER26H CSR_MHPMCOUNTER27H CSR_MHPMCOUNTER28H CSR_MHPMCOUNTER29H CSR_MHPMCOUNTER30H CSR_MHPMCOUNTER31H </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+537            unique case (1'b1)
+                      <font color = "green">-1-</font>  
+538        
+539              csr_save_cause_i: begin
+540                unique case (1'b1)
+                          <font color = "red">-2-</font>  
+541                  csr_save_if_i: begin
+542                    exception_pc = pc_if_i;
+           <font color = "green">            ==></font>
+543                  end
+544                  csr_save_id_i: begin
+545                    exception_pc = pc_id_i;
+           <font color = "green">            ==></font>
+546                  end
+547                  default:;
+           <font color = "red">          ==></font>
+548                endcase
+549        
+550                // Any exception, including debug mode, causes a switch to M-mode
+551                priv_lvl_d = PRIV_LVL_M;
+552        
+553                if (debug_csr_save_i) begin
+                   <font color = "green">-3-</font>  
+554                  // all interrupts are masked
+555                  // do not update cause, epc, tval, epc and status
+556                  dcsr_d.prv   = priv_lvl_q;
+           <font color = "green">          ==></font>
+557                  dcsr_d.cause = debug_cause_i;
+558                  depc_d       = exception_pc;
+559                end else if (!debug_mode_i) begin
+                            <font color = "green">-4-</font>  
+560                  // In debug mode, "exceptions do not update any registers. That
+561                  // includes cause, epc, tval, dpc and mstatus." [Debug Spec v0.13.2, p.39]
+562                  mtval_d        = csr_mtval_i;
+           <font color = "green">          ==></font>
+563                  mstatus_d.mie  = 1'b0; // disable interrupts
+564                  // save current status
+565                  mstatus_d.mpie = mstatus_q.mie;
+566                  mstatus_d.mpp  = priv_lvl_q;
+567                  mepc_d         = exception_pc;
+568                  mcause_d       = {csr_mcause_i};
+569                  // save previous status for recoverable NMI
+570                  mstack_d.mpie  = mstatus_q.mpie;
+571                  mstack_d.mpp   = mstatus_q.mpp;
+572                  mstack_epc_d   = mepc_q;
+573                  mstack_cause_d = mcause_q;
+574                end
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+575              end // csr_save_cause_i
+576        
+577              csr_restore_dret_i: begin // DRET
+578                priv_lvl_d = dcsr_q.prv;
+           <font color = "green">        ==></font>
+579              end // csr_restore_dret_i
+580        
+581              csr_restore_mret_i: begin // MRET
+582                priv_lvl_d     = mstatus_q.mpp;
+583                mstatus_d.mie  = mstatus_q.mpie; // re-enable interrupts
+584        
+585                if (nmi_mode_i) begin
+                   <font color = "green">-5-</font>  
+586                  // when returning from an NMI restore state from mstack CSR
+587                  mstatus_d.mpie = mstack_q.mpie;
+           <font color = "green">          ==></font>
+588                  mstatus_d.mpp  = mstack_q.mpp;
+589                  mepc_d         = mstack_epc_q;
+590                  mcause_d       = mstack_cause_q;
+591                end else begin
+592                  // otherwise just set mstatus.MPIE/MPP
+593                  // See RISC-V Privileged Specification, version 1.11, Section 3.1.6.1
+594                  mstatus_d.mpie = 1'b1;
+           <font color = "green">          ==></font>
+595                  mstatus_d.mpp  = PRIV_LVL_U;
+596                end
+597              end // csr_restore_mret_i
+598        
+599              default:;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>-5-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>csr_save_cause_i </td>
+<td align=center>csr_save_if_i </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>csr_save_cause_i </td>
+<td align=center>csr_save_id_i </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>csr_save_cause_i </td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>csr_save_cause_i </td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>csr_save_cause_i </td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>csr_save_cause_i </td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>csr_restore_dret_i </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>csr_restore_mret_i </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>csr_restore_mret_i </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+607            unique case (csr_op_i)
+                      <font color = "green">-1-</font>  
+608              CSR_OP_WRITE: csr_wdata_int =  csr_wdata_i;
+           <font color = "green">      ==></font>
+609              CSR_OP_SET:   csr_wdata_int =  csr_wdata_i | csr_rdata_o;
+           <font color = "green">      ==></font>
+610              CSR_OP_CLEAR: csr_wdata_int = ~csr_wdata_i & csr_rdata_o;
+           <font color = "green">      ==></font>
+611              CSR_OP_READ: begin
+612                csr_wdata_int = csr_wdata_i;
+           <font color = "green">        ==></font>
+613                csr_wreq      = 1'b0;
+614              end
+615              default: begin
+616                csr_wdata_int = csr_wdata_i;
+           <font color = "green">        ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>CSR_OP_WRITE </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_OP_SET </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_OP_CLEAR </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>CSR_OP_READ </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+647            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+648              priv_lvl_q     <= PRIV_LVL_M;
+           <font color = "green">      ==></font>
+649              mstatus_q      <= '{
+650                  mie:  1'b0,
+651                  mpie: 1'b1,
+652                  mpp:  PRIV_LVL_U,
+653                  mprv: 1'b0,
+654                  tw:   1'b0
+655              };
+656              mie_q          <= '0;
+657              mscratch_q     <= '0;
+658              mepc_q         <= '0;
+659              mcause_q       <= '0;
+660              mtval_q        <= '0;
+661              mtvec_q        <= 32'b01;
+662              dcsr_q         <= '{
+663                  xdebugver: XDEBUGVER_STD,
+664                  cause:     DBG_CAUSE_NONE, // 3'h0
+665                  prv:       PRIV_LVL_M,
+666                  default:   '0
+667              };
+668              depc_q         <= '0;
+669              dscratch0_q    <= '0;
+670              dscratch1_q    <= '0;
+671        
+672              mstack_q       <= '{
+673                  mpie: 1'b1,
+674                  mpp:  PRIV_LVL_U
+675              };
+676              mstack_epc_q   <= '0;
+677              mstack_cause_q <= '0;
+678        
+679            end else begin
+680              // update CSRs
+681              priv_lvl_q     <= priv_lvl_d;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+837            if (mcountinhibit_we == 1'b1) begin
+               <font color = "red">-1-</font>  
+838              mcountinhibit_d = {csr_wdata_int[31:2], 1'b0, csr_wdata_int[0]}; // bit 1 must always be 0
+           <font color = "red">      ==></font>
+839            end else begin
+840              mcountinhibit_d = mcountinhibit_q;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uRed">
+<td align=center>1</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+931            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+932              mcountinhibit_q    <= '0;
+           <font color = "green">      ==></font>
+933              for (int i=0; i<32; i++) begin
+934                mhpmcounter_q[i] <= '0;
+935              end
+936            end else begin
+937              mhpmcounter_q      <= mhpmcounter_d;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+</div>
+</div>
+<div class="ui-layout-center-inner-north">
+<div id="center-bread-crumb" class="breadCrumb module urg-margin-bottom">
+  <ul name="inst_tag_38">
+    <li>
+      <a href="#inst_tag_38_Line">Line</a>    </li>
+    <li>
+      <a href="#inst_tag_38_Branch">Branch</a>    </li>
+  </ul>
+  <ul name="tag_ibex_cs_registers">
+    <li>
+      <a href="#Line">Line</a>    </li>
+    <li>
+      <a href="#Branch">Branch</a>    </li>
+  </ul>
+</div>
+</div>
+</div>
+<div class="ui-layout-south">
+<table align=center><tr><td class="s0 cl">0%</td>
+<td class="s1 cl">10%</td>
+<td class="s2 cl">20%</td>
+<td class="s3 cl">30%</td>
+<td class="s4 cl">40%</td>
+<td class="s5 cl">50%</td>
+<td class="s6 cl">60%</td>
+<td class="s7 cl">70%</td>
+<td class="s8 cl">80%</td>
+<td class="s9 cl">90%</td>
+<td class="s10 cl">100%</td></tr></table></div>
+</body>
+</html>

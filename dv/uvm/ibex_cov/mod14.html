@@ -1,0 +1,3780 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Author" content="<username>"> <meta name="GENERATOR" content="urg/version [en] (platform name) [urg]">
+<title>Unified Coverage Report :: Module :: ibex_load_store_unit</title>
+<link type="text/css" rel="stylesheet" href="css/.urg.css">
+<link type="text/css" rel="stylesheet" href="css/.layout.css">
+<link type="text/css" rel="stylesheet" href="css/.breadcrumb.css">
+<script type="text/javascript" src="js/.jquery.js"></script>
+<script type="text/javascript" src="js/.jquery-ui.js"></script>
+<script type="text/javascript" src="js/.sortable.js"></script>
+<script type="text/javascript" src="js/.layout.js"></script>
+<script type="text/javascript" src="js/.breadcrumb.js"></script>
+<script type="text/javascript">
+var layout, westLayout, centerLayout;
+$(document).ready(function () {
+  if ($("#north-bread-crumb")) {
+    $("#north-bread-crumb").jBreadCrumb({easing:'swing'})
+  }
+  layout = $("body").layout({ 
+    resizable: true,
+    spacing_open: 4,
+    spacing_closed: 4,
+    north: {
+      size: 76
+    },
+    south: {
+      size: 45,
+      initClosed: true
+    },
+    west: {
+      size: 500,
+      resizable: true,
+      initClosed: false
+    }
+  });
+  centerLayout = $('div.ui-layout-center').layout({
+    north__paneSelector: ".ui-layout-center-inner-north",
+    center__paneSelector: ".ui-layout-center-inner-center", 
+    north__size: 50,
+    spacing_open: 4,
+    spacing_closed: 4
+  });
+});
+</script>
+</head>
+<body onLoad="initPage();"><div class="ui-layout-north">
+<div class="logo"></div>
+<center class="pagetitle">Module Definition</center>
+<div align="center"><a href="dashboard.html" ><b>dashboard</b></a> | <a href="hierarchy.html" ><b>hierarchy</b></a> | <a href="modlist.html" ><b>modlist</b></a> | groups | <a href="tests.html" ><b>tests</b></a> | <a href="asserts.html" ><b>asserts</b></a></div>
+
+</div>
+<div class="ui-layout-west">
+<div name='tag_ibex_load_store_unit'>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module : <a href="#"  onclick="showContent('tag_ibex_load_store_unit')">ibex_load_store_unit</a></span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s9 cl rt"> 96.33</td>
+<td class="s9 cl rt"><a href="mod14.html#Line" > 94.97</a></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod14.html#FSM" >100.00</a></td>
+<td class="s9 cl rt"><a href="mod14.html#Branch" > 90.36</a></td>
+<td class="s10 cl rt"><a href="mod14.html#Assert" >100.00</a></td>
+</tr></table><br clear=all>
+<span class=repname>Source File(s) : </span>
+<br clear=all>
+<a href="javascript:void(0);"  onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_load_store_unit.sv')">/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_load_store_unit.sv</a><br clear=all>
+<br clear=all>
+<span class=repname>Module self-instances :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="wht cl wordwrap"><a href="mod14.html#inst_tag_14"  onclick="showContent('inst_tag_14')">core_ibex_tb_top.dut.u_ibex_core.load_store_unit_i<img src="ex.gif" class="icon"></a></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt"><a href="mod14.html#inst_tag_14_Line" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod14.html#inst_tag_14_FSM" >100.00</a></td>
+<td class="s10 cl rt"><a href="mod14.html#inst_tag_14_Branch" >100.00</a></td>
+<td class="s10 cl rt"><a href="mod14.html#inst_tag_14_Assert" >100.00</a></td>
+</tr></table></div>
+</div>
+<br clear=all>
+<div name='inst_tag_14'>
+<hr>
+<a name="inst_tag_14"></a>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module Instance : <a href="hierarchy.html#tag_urg_inst_14" >core_ibex_tb_top.dut.u_ibex_core.load_store_unit_i<img src="ex.gif" class="icon"></a></span>
+<br clear=all>
+<br clear=all>
+<span class=repname>Instance :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt"><a href="mod14.html#inst_tag_14_Line" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod14.html#inst_tag_14_FSM" >100.00</a></td>
+<td class="s10 cl rt"><a href="mod14.html#inst_tag_14_Branch" >100.00</a></td>
+<td class="s10 cl rt"><a href="mod14.html#inst_tag_14_Assert" >100.00</a></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Instance's subtree :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Parent : </span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td><td class="alfsrt">NAME</td></tr><tr>
+<td class="s9 cl rt"> 98.10</td>
+<td class="s9 cl rt"> 99.07</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"> 97.14</td>
+<td class="wht cl rt"></td>
+<td><a href="mod9.html#inst_tag_9" >u_ibex_core</a></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Subtrees :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td colspan=7>no children</td>
+</tr></table><br clear=all>
+</div>
+</div>
+</div>
+<div class="ui-layout-center">
+<div class="ui-layout-center-inner-center">
+<div name='tag_ibex_load_store_unit'>
+<a name="Line"></a>
+Line Coverage for Module : <a href="mod14.html" >ibex_load_store_unit</a><br clear=all>
+<table class="noborder">
+<col width="122">
+<col span="4" width="82">
+<tr><th></th><th>Line No.</th><th>Total</th><th>Covered</th><th>Percent</th></tr>
+<tr class="s9"><td class="lf">TOTAL</td><td></td><td>159</td><td>151</td><td>94.97</td></tr>
+<tr class="s8"><td class="lf">ALWAYS</td><td>99</td><td>29</td><td>25</td><td>86.21</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>157</td><td>6</td><td>6</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>172</td><td>4</td><td>4</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>181</td><td>10</td><td>10</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>197</td><td>4</td><td>4</td><td>100.00</td></tr>
+<tr class="s8"><td class="lf">ALWAYS</td><td>206</td><td>6</td><td>5</td><td>83.33</td></tr>
+<tr class="s9"><td class="lf">ALWAYS</td><td>221</td><td>14</td><td>13</td><td>92.86</td></tr>
+<tr class="s9"><td class="lf">ALWAYS</td><td>260</td><td>14</td><td>13</td><td>92.86</td></tr>
+<tr class="s7"><td class="lf">ALWAYS</td><td>299</td><td>5</td><td>4</td><td>80.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>318</td><td>58</td><td>58</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>443</td><td>9</td><td>9</td><td>100.00</td></tr>
+</table>
+<pre class="code"><br clear=all>
+98                      
+99         1/1            always_comb begin
+100                         unique case (data_type_ex_i) // Data type 00 Word, 01 Half word, 11,10 byte
+101        1/1                2'b00: begin // Writing a word
+102        1/1                  if (!handle_misaligned_q) begin // first part of potentially misaligned transaction
+103        1/1                    unique case (data_offset)
+104        1/1                      2'b00:   data_be = 4'b1111;
+105        1/1                      2'b01:   data_be = 4'b1110;
+106        1/1                      2'b10:   data_be = 4'b1100;
+107        1/1                      2'b11:   data_be = 4'b1000;
+108                                 default: data_be = 4'b1111;
+109                               endcase // case (data_offset)
+110        1/1                  end else begin // second part of misaligned transaction
+111        1/1                    unique case (data_offset)
+112        1/1                      2'b00:   data_be = 4'b0000; // this is not used, but included for completeness
+113        1/1                      2'b01:   data_be = 4'b0001;
+114        1/1                      2'b10:   data_be = 4'b0011;
+115        <font color = "red">0/1     ==>              2'b11:   data_be = 4'b0111;</font>
+116                                 default: data_be = 4'b1111;
+117                               endcase // case (data_offset)
+118                             end
+119                           end
+120                     
+121        1/1                2'b01: begin // Writing a half word
+122        1/1                  if (!handle_misaligned_q) begin // first part of potentially misaligned transaction
+123        1/1                    unique case (data_offset)
+124        1/1                      2'b00:   data_be = 4'b0011;
+125        1/1                      2'b01:   data_be = 4'b0110;
+126        1/1                      2'b10:   data_be = 4'b1100;
+127        <font color = "red">0/1     ==>              2'b11:   data_be = 4'b1000;</font>
+128                                 default: data_be = 4'b1111;
+129                               endcase // case (data_offset)
+130        1/1                  end else begin // second part of misaligned transaction
+131                               data_be = 4'b0001;
+132                             end
+133                           end
+134                     
+135                           2'b10,
+136        1/1                2'b11: begin // Writing a byte
+137        1/1                  unique case (data_offset)
+138        1/1                    2'b00:   data_be = 4'b0001;
+139        1/1                    2'b01:   data_be = 4'b0010;
+140        1/1                    2'b10:   data_be = 4'b0100;
+141        <font color = "red">0/1     ==>            2'b11:   data_be = 4'b1000;</font>
+142                               default: data_be = 4'b1111;
+143                             endcase // case (data_offset)
+144                           end
+145        <font color = "red">0/1     ==>  </font>
+146                           default:     data_be = 4'b1111;
+147                         endcase // case (data_type_ex_i)
+148                       end
+149                     
+150                       /////////////////////
+151                       // WData alignment //
+152                       /////////////////////
+153                     
+154                       // prepare data to be written to the memory
+155                       // we handle misaligned accesses, half word and byte accesses here
+156                       always_comb begin
+157        1/1              unique case (data_offset)
+158        1/1                2'b00:   data_wdata =  data_wdata_ex_i[31:0];
+159        1/1                2'b01:   data_wdata = {data_wdata_ex_i[23:0], data_wdata_ex_i[31:24]};
+160        1/1                2'b10:   data_wdata = {data_wdata_ex_i[15:0], data_wdata_ex_i[31:16]};
+161        1/1                2'b11:   data_wdata = {data_wdata_ex_i[ 7:0], data_wdata_ex_i[31: 8]};
+162        1/1                default: data_wdata =  data_wdata_ex_i[31:0];
+163                         endcase // case (data_offset)
+164                       end
+165                     
+166                       /////////////////////
+167                       // RData alignment //
+168                       /////////////////////
+169                     
+170                       // register for unaligned rdata
+171                       always_ff @(posedge clk_i or negedge rst_ni) begin
+172        1/1              if (!rst_ni) begin
+173        1/1                rdata_q &lt;= '0;
+174        1/1              end else if (rdata_update) begin
+175        1/1                rdata_q &lt;= data_rdata_i[31:8];
+176                         end
+                        MISSING_ELSE
+177                       end
+178                     
+179                       // registers for transaction control
+180                       always_ff @(posedge clk_i or negedge rst_ni) begin
+181        1/1              if (!rst_ni) begin
+182        1/1                rdata_offset_q  &lt;= 2'h0;
+183        1/1                data_type_q     &lt;= 2'h0;
+184        1/1                data_sign_ext_q &lt;= 1'b0;
+185        1/1                data_we_q       &lt;= 1'b0;
+186        1/1              end else if (ctrl_update) begin
+187        1/1                rdata_offset_q  &lt;= data_offset;
+188        1/1                data_type_q     &lt;= data_type_ex_i;
+189        1/1                data_sign_ext_q &lt;= data_sign_ext_ex_i;
+190        1/1                data_we_q       &lt;= data_we_ex_i;
+191                         end
+                        MISSING_ELSE
+192                       end
+193                     
+194                       // Store last address for mtval + AGU for misaligned transactions.
+195                       // Do not update in case of errors, mtval needs the (first) failing address
+196                       always_ff @(posedge clk_i or negedge rst_ni) begin
+197        1/1              if (!rst_ni) begin
+198        1/1                addr_last_q &lt;= '0;
+199        1/1              end else if (addr_update) begin
+200        1/1                addr_last_q &lt;= data_addr;
+201                         end
+                        MISSING_ELSE
+202                       end
+203                     
+204                       // take care of misaligned words
+205                       always_comb begin
+206        1/1              unique case (rdata_offset_q)
+207        1/1                2'b00:   rdata_w_ext =  data_rdata_i[31:0];
+208        1/1                2'b01:   rdata_w_ext = {data_rdata_i[ 7:0], rdata_q[31:8]};
+209        1/1                2'b10:   rdata_w_ext = {data_rdata_i[15:0], rdata_q[31:16]};
+210        1/1                2'b11:   rdata_w_ext = {data_rdata_i[23:0], rdata_q[31:24]};
+211        <font color = "red">0/1     ==>        default: rdata_w_ext =  data_rdata_i[31:0];</font>
+212                         endcase
+213                       end
+214                     
+215                       ////////////////////
+216                       // Sign extension //
+217                       ////////////////////
+218                     
+219                       // sign extension for half words
+220                       always_comb begin
+221        1/1              unique case (rdata_offset_q)
+222                           2'b00: begin
+223        1/1                  if (!data_sign_ext_q) begin
+224        1/1                    rdata_h_ext = {16'h0000, data_rdata_i[15:0]};
+225                             end else begin
+226        1/1                    rdata_h_ext = {{16{data_rdata_i[15]}}, data_rdata_i[15:0]};
+227                             end
+228                           end
+229                     
+230                           2'b01: begin
+231        1/1                  if (!data_sign_ext_q) begin
+232        1/1                    rdata_h_ext = {16'h0000, data_rdata_i[23:8]};
+233                             end else begin
+234        1/1                    rdata_h_ext = {{16{data_rdata_i[23]}}, data_rdata_i[23:8]};
+235                             end
+236                           end
+237                     
+238                           2'b10: begin
+239        1/1                  if (!data_sign_ext_q) begin
+240        1/1                    rdata_h_ext = {16'h0000, data_rdata_i[31:16]};
+241                             end else begin
+242        1/1                    rdata_h_ext = {{16{data_rdata_i[31]}}, data_rdata_i[31:16]};
+243                             end
+244                           end
+245                     
+246                           2'b11: begin
+247        1/1                  if (!data_sign_ext_q) begin
+248        1/1                    rdata_h_ext = {16'h0000, data_rdata_i[7:0], rdata_q[31:24]};
+249                             end else begin
+250        1/1                    rdata_h_ext = {{16{data_rdata_i[7]}}, data_rdata_i[7:0], rdata_q[31:24]};
+251                             end
+252                           end
+253                     
+254        <font color = "red">0/1     ==>        default: rdata_h_ext = {16'h0000, data_rdata_i[15:0]};</font>
+255                         endcase // case (rdata_offset_q)
+256                       end
+257                     
+258                       // sign extension for bytes
+259                       always_comb begin
+260        1/1              unique case (rdata_offset_q)
+261                           2'b00: begin
+262        1/1                  if (!data_sign_ext_q) begin
+263        1/1                    rdata_b_ext = {24'h00_0000, data_rdata_i[7:0]};
+264                             end else begin
+265        1/1                    rdata_b_ext = {{24{data_rdata_i[7]}}, data_rdata_i[7:0]};
+266                             end
+267                           end
+268                     
+269                           2'b01: begin
+270        1/1                  if (!data_sign_ext_q) begin
+271        1/1                    rdata_b_ext = {24'h00_0000, data_rdata_i[15:8]};
+272                             end else begin
+273        1/1                    rdata_b_ext = {{24{data_rdata_i[15]}}, data_rdata_i[15:8]};
+274                             end
+275                           end
+276                     
+277                           2'b10: begin
+278        1/1                  if (!data_sign_ext_q) begin
+279        1/1                    rdata_b_ext = {24'h00_0000, data_rdata_i[23:16]};
+280                             end else begin
+281        1/1                    rdata_b_ext = {{24{data_rdata_i[23]}}, data_rdata_i[23:16]};
+282                             end
+283                           end
+284                     
+285                           2'b11: begin
+286        1/1                  if (!data_sign_ext_q) begin
+287        1/1                    rdata_b_ext = {24'h00_0000, data_rdata_i[31:24]};
+288                             end else begin
+289        1/1                    rdata_b_ext = {{24{data_rdata_i[31]}}, data_rdata_i[31:24]};
+290                             end
+291                           end
+292                     
+293        <font color = "red">0/1     ==>        default: rdata_b_ext = {24'h00_0000, data_rdata_i[7:0]};</font>
+294                         endcase // case (rdata_offset_q)
+295                       end
+296                     
+297                       // select word, half word or byte sign extended version
+298                       always_comb begin
+299        1/1              unique case (data_type_q)
+300        1/1                2'b00:       data_rdata_ext = rdata_w_ext;
+301        1/1                2'b01:       data_rdata_ext = rdata_h_ext;
+302        1/1                2'b10,2'b11: data_rdata_ext = rdata_b_ext;
+303        <font color = "red">0/1     ==>        default:     data_rdata_ext = rdata_w_ext;</font>
+304                         endcase // case (data_type_q)
+305                       end
+306                     
+307                       /////////////
+308                       // LSU FSM //
+309                       /////////////
+310                     
+311                       // check for misaligned accesses that need to be split into two word-aligned accesses
+312                       assign split_misaligned_access =
+313                           ((data_type_ex_i == 2'b00) &amp;&amp; (data_offset != 2'b00)) || // misaligned word access
+314                           ((data_type_ex_i == 2'b01) &amp;&amp; (data_offset == 2'b11));   // misaligned half-word access
+315                     
+316                       // FSM
+317                       always_comb begin
+318        1/1              ls_fsm_ns       = ls_fsm_cs;
+319                     
+320        1/1              data_req_o          = 1'b0;
+321        1/1              data_valid_o        = 1'b0;
+322        1/1              addr_incr_req_o     = 1'b0;
+323        1/1              handle_misaligned_d = handle_misaligned_q;
+324        1/1              data_or_pmp_err     = 1'b0;
+325        1/1              pmp_err_d           = pmp_err_q;
+326        1/1              lsu_err_d           = lsu_err_q;
+327                     
+328        1/1              addr_update         = 1'b0;
+329        1/1              ctrl_update         = 1'b0;
+330        1/1              rdata_update        = 1'b0;
+331                     
+332        1/1              unique case (ls_fsm_cs)
+333                     
+334                           IDLE: begin
+335        1/1                  if (data_req_ex_i) begin
+336        1/1                    data_req_o = 1'b1;
+337        1/1                    pmp_err_d  = data_pmp_err_i;
+338        1/1                    lsu_err_d  = 1'b0;
+339        1/1                    if (data_gnt_i) begin
+340        1/1                      ctrl_update         = 1'b1;
+341        1/1                      addr_update         = 1'b1;
+342        1/1                      handle_misaligned_d = split_misaligned_access;
+343        1/1                      ls_fsm_ns           = split_misaligned_access ? WAIT_RVALID_MIS : WAIT_RVALID;
+344                               end else begin
+345        1/1                      ls_fsm_ns           = split_misaligned_access ? WAIT_GNT_MIS    : WAIT_GNT;
+346                               end
+347                             end
+                        MISSING_ELSE
+348                           end
+349                     
+350                           WAIT_GNT_MIS: begin
+351        1/1                  data_req_o = 1'b1;
+352                             // data_pmp_err_i is valid during the address phase of a request. An error will block the
+353                             // external request and so a data_gnt_i might never be signalled. The registered version
+354                             // pmp_err_q is only updated for new address phases and so can be used in WAIT_GNT* and
+355                             // WAIT_RVALID* states
+356        1/1                  if (data_gnt_i || pmp_err_q) begin
+357        1/1                    addr_update         = 1'b1;
+358        1/1                    ctrl_update         = 1'b1;
+359        1/1                    handle_misaligned_d = 1'b1;
+360        1/1                    ls_fsm_ns           = WAIT_RVALID_MIS;
+361                             end
+                        MISSING_ELSE
+362                           end
+363                     
+364                           WAIT_RVALID_MIS: begin
+365                             // push out second request
+366        1/1                  data_req_o = 1'b1;
+367                             // tell ID/EX stage to update the address
+368        1/1                  addr_incr_req_o = 1'b1;
+369                     
+370                             // first part rvalid is received, or gets a PMP error
+371        1/1                  if (data_rvalid_i || pmp_err_q) begin
+372                               // Update the PMP error for the second part
+373        1/1                    pmp_err_d = data_pmp_err_i;
+374                               // Record the error status of the first part
+375        1/1                    lsu_err_d = data_err_i | pmp_err_q;
+376                               // Capture the first rdata for loads
+377        1/1                    rdata_update = ~data_we_q;
+378                               // If already granted, wait for second rvalid
+379        1/1                    ls_fsm_ns = data_gnt_i ? WAIT_RVALID : WAIT_GNT;
+380                               // Update the address for the second part, if no error
+381        1/1                    addr_update = data_gnt_i &amp; ~(data_err_i | pmp_err_q);
+382                     
+383                             end else begin
+384                               // first part rvalid is NOT received
+385        1/1                    if (data_gnt_i) begin
+386                                 // second grant is received
+387        1/1                      ls_fsm_ns = WAIT_RVALID_DONE;
+388                               end
+                        MISSING_ELSE
+389                             end
+390                           end
+391                     
+392                           WAIT_GNT: begin
+393                             // tell ID/EX stage to update the address
+394        1/1                  addr_incr_req_o = handle_misaligned_q;
+395        1/1                  data_req_o      = 1'b1;
+396        1/1                  if (data_gnt_i || pmp_err_q) begin
+397        1/1                    ctrl_update = 1'b1;
+398                               // Update the address, unless there was an error
+399        1/1                    addr_update = ~lsu_err_q;
+400        1/1                    ls_fsm_ns   = WAIT_RVALID;
+401                             end
+                        MISSING_ELSE
+402                           end
+403                     
+404                           WAIT_RVALID: begin
+405        1/1                  if (data_rvalid_i || pmp_err_q) begin
+406        1/1                    data_valid_o        = 1'b1;
+407                               // Data error from either part
+408        1/1                    data_or_pmp_err     = lsu_err_q | data_err_i | pmp_err_q;
+409        1/1                    handle_misaligned_d = 1'b0;
+410        1/1                    ls_fsm_ns           = IDLE;
+411                             end else begin
+412        1/1                    ls_fsm_ns           = WAIT_RVALID;
+413                             end
+414                           end
+415                     
+416                           WAIT_RVALID_DONE: begin
+417                             // tell ID/EX stage to update the address (to make sure the
+418                             // second address can be captured correctly for mtval and PMP checking)
+419        1/1                  addr_incr_req_o = 1'b1;
+420                             // Wait for the first rvalid, second request is already granted
+421        1/1                  if (data_rvalid_i) begin
+422                               // Update the pmp error for the second part
+423        1/1                    pmp_err_d = data_pmp_err_i;
+424                               // The first part cannot see a PMP error in this state
+425        1/1                    lsu_err_d = data_err_i;
+426                               // Now we can update the address for the second part if no error
+427        1/1                    addr_update = ~data_err_i;
+428                               // Capture the first rdata for loads
+429        1/1                    rdata_update = ~data_we_q;
+430                               // Wait for second rvalid
+431        1/1                    ls_fsm_ns = WAIT_RVALID;
+432                             end
+                        MISSING_ELSE
+433                           end
+434                     
+435                           default: begin
+436        1/1                  ls_fsm_ns = IDLE;
+437                           end
+438                         endcase
+439                       end
+440                     
+441                       // registers for FSM
+442                       always_ff @(posedge clk_i or negedge rst_ni) begin
+443        1/1              if (!rst_ni) begin
+444        1/1                ls_fsm_cs           &lt;= IDLE;
+445        1/1                handle_misaligned_q &lt;= '0;
+446        1/1                pmp_err_q           &lt;= '0;
+447        1/1                lsu_err_q           &lt;= '0;
+448                         end else begin
+449        1/1                ls_fsm_cs           &lt;= ls_fsm_ns;
+450        1/1                handle_misaligned_q &lt;= handle_misaligned_d;
+451        1/1                pmp_err_q           &lt;= pmp_err_d;
+452        1/1                lsu_err_q           &lt;= lsu_err_d;
+</pre>
+<hr>
+<a name="FSM"></a>
+FSM Coverage for Module : <a href="mod14.html" >ibex_load_store_unit</a><br clear=all>
+<table align=left class="noborder">
+<caption><b>Summary for FSM :: ls_fsm_cs</b></caption>
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th><th nowrap width=200></th></tr><tr class="wht">
+<td>States</td>
+<td class="rt">6</td>
+<td class="rt">6</td>
+<td class="rt">100.00</td>
+<td>(Not included in score)</td>
+</tr><tr class="s10">
+<td>Transitions</td>
+<td class="rt">15</td>
+<td class="rt">15</td>
+<td class="rt">100.00</td>
+<td></td>
+</tr><tr class="wht">
+<td>Sequences</td>
+<td class="rt">0</td>
+<td class="rt">0</td>
+<td></td>
+<td></td>
+</tr></table><br clear=all>
+<b>State, Transition and Sequence Details for FSM :: ls_fsm_cs</b><hr>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">states</td><td>Line No.</td><td class="alfsrt">Covered</td></tr><tr class="uGreen">
+<td nowrap>IDLE</td>
+<td class="rt">444</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_GNT</td>
+<td class="rt">345</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_GNT_MIS</td>
+<td class="rt">345</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID</td>
+<td class="rt">343</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID_DONE</td>
+<td class="rt">387</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID_MIS</td>
+<td class="rt">343</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<br clear=all>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">transitions</td><td>Line No.</td><td class="alfsrt">Covered</td></tr><tr class="uGreen">
+<td nowrap>IDLE->WAIT_GNT</td>
+<td class="rt">345</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>IDLE->WAIT_GNT_MIS</td>
+<td class="rt">345</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>IDLE->WAIT_RVALID</td>
+<td class="rt">343</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>IDLE->WAIT_RVALID_MIS</td>
+<td class="rt">343</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_GNT->IDLE</td>
+<td class="rt">444</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_GNT->WAIT_RVALID</td>
+<td class="rt">400</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_GNT_MIS->IDLE</td>
+<td class="rt">444</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_GNT_MIS->WAIT_RVALID_MIS</td>
+<td class="rt">360</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID->IDLE</td>
+<td class="rt">444</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID_DONE->IDLE</td>
+<td class="rt">444</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID_DONE->WAIT_RVALID</td>
+<td class="rt">431</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID_MIS->IDLE</td>
+<td class="rt">444</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID_MIS->WAIT_GNT</td>
+<td class="rt">379</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID_MIS->WAIT_RVALID</td>
+<td class="rt">379</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID_MIS->WAIT_RVALID_DONE</td>
+<td class="rt">387</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<br clear=all>
+<hr>
+<a name="Branch"></a>
+Branch Coverage for Module : <a href="mod14.html" >ibex_load_store_unit</a><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Line No.</th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th></tr><tr class="s9">
+<td>Branches</td>
+<td></td>
+<td class="rt">83</td>
+<td class="rt">75</td>
+<td class="rt">90.36 </td>
+</tr><tr class="s8">
+<td>CASE</td>
+<td class="rt">99</td>
+<td class="rt">22</td>
+<td class="rt">18</td>
+<td class="rt">81.82 </td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">157</td>
+<td class="rt">5</td>
+<td class="rt">5</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">172</td>
+<td class="rt">3</td>
+<td class="rt">3</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">181</td>
+<td class="rt">3</td>
+<td class="rt">3</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">197</td>
+<td class="rt">3</td>
+<td class="rt">3</td>
+<td class="rt">100.00</td>
+</tr><tr class="s8">
+<td>CASE</td>
+<td class="rt">206</td>
+<td class="rt">5</td>
+<td class="rt">4</td>
+<td class="rt">80.00 </td>
+</tr><tr class="s8">
+<td>CASE</td>
+<td class="rt">221</td>
+<td class="rt">9</td>
+<td class="rt">8</td>
+<td class="rt">88.89 </td>
+</tr><tr class="s8">
+<td>CASE</td>
+<td class="rt">260</td>
+<td class="rt">9</td>
+<td class="rt">8</td>
+<td class="rt">88.89 </td>
+</tr><tr class="s7">
+<td>CASE</td>
+<td class="rt">299</td>
+<td class="rt">4</td>
+<td class="rt">3</td>
+<td class="rt">75.00 </td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">332</td>
+<td class="rt">18</td>
+<td class="rt">18</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">443</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+99           always_comb begin
+             <font color = "red">-1-</font>                 
+100            unique case (data_type_ex_i) // Data type 00 Word, 01 Half word, 11,10 byte
+101              2'b00: begin // Writing a word
+                 <font color = "green">-2-</font>                              
+102                if (!handle_misaligned_q) begin // first part of potentially misaligned transaction
+                   <font color = "green">-3-</font>                                                                                   
+103                  unique case (data_offset)
+           <font color = "green">          ==></font>
+104                    2'b00:   data_be = 4'b1111;
+           <font color = "green">            ==></font>
+105                    2'b01:   data_be = 4'b1110;
+           <font color = "green">            ==></font>
+106                    2'b10:   data_be = 4'b1100;
+           <font color = "green">            ==></font>
+107                    2'b11:   data_be = 4'b1000;
+           <font color = "green">            ==></font>
+108                    default: data_be = 4'b1111;
+109                  endcase // case (data_offset)
+110                end else begin // second part of misaligned transaction
+                   <font color = "red">-4-</font>                                                       
+111                  unique case (data_offset)
+           <font color = "green">          ==></font>
+112                    2'b00:   data_be = 4'b0000; // this is not used, but included for completeness
+           <font color = "green">            ==></font>
+113                    2'b01:   data_be = 4'b0001;
+           <font color = "green">            ==></font>
+114                    2'b10:   data_be = 4'b0011;
+           <font color = "green">            ==></font>
+115                    2'b11:   data_be = 4'b0111;
+           <font color = "red">            ==></font>
+116                    default: data_be = 4'b1111;
+117                  endcase // case (data_offset)
+118                end
+119              end
+120        
+121              2'b01: begin // Writing a half word
+                 <font color = "green">-5-</font>                                   
+122                if (!handle_misaligned_q) begin // first part of potentially misaligned transaction
+                   <font color = "red">-6-</font>                                                                                   
+123                  unique case (data_offset)
+           <font color = "green">          ==></font>
+124                    2'b00:   data_be = 4'b0011;
+           <font color = "green">            ==></font>
+125                    2'b01:   data_be = 4'b0110;
+           <font color = "green">            ==></font>
+126                    2'b10:   data_be = 4'b1100;
+           <font color = "green">            ==></font>
+127                    2'b11:   data_be = 4'b1000;
+           <font color = "red">            ==></font>
+128                    default: data_be = 4'b1111;
+129                  endcase // case (data_offset)
+130                end else begin // second part of misaligned transaction
+           <font color = "green">        ==></font>
+131                  data_be = 4'b0001;
+132                end
+133              end
+134        
+135              2'b10,
+136              2'b11: begin // Writing a byte
+                 <font color = "red">-7-</font>                              
+137                unique case (data_offset)
+           <font color = "green">        ==></font>
+138                  2'b00:   data_be = 4'b0001;
+           <font color = "green">          ==></font>
+139                  2'b01:   data_be = 4'b0010;
+           <font color = "green">          ==></font>
+140                  2'b10:   data_be = 4'b0100;
+           <font color = "green">          ==></font>
+141                  2'b11:   data_be = 4'b1000;
+           <font color = "red">          ==></font>
+142                  default: data_be = 4'b1111;
+143                endcase // case (data_offset)
+144              end
+145        
+           <font color = "red">==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>-5-</th><th nowrap width=80>-6-</th><th nowrap width=80>-7-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>1</td>
+<td align=center>2'b00 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>1</td>
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>1</td>
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>1</td>
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>1</td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b00 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>2'b00 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>2'b00 </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b00 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b01 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b10 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b11 </td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>2'b10 2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>default</td>
+<td>Not Covered</td>
+</tr><tr class="uRed">
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+157            unique case (data_offset)
+                      <font color = "green">-1-</font>  
+158              2'b00:   data_wdata =  data_wdata_ex_i[31:0];
+           <font color = "green">      ==></font>
+159              2'b01:   data_wdata = {data_wdata_ex_i[23:0], data_wdata_ex_i[31:24]};
+           <font color = "green">      ==></font>
+160              2'b10:   data_wdata = {data_wdata_ex_i[15:0], data_wdata_ex_i[31:16]};
+           <font color = "green">      ==></font>
+161              2'b11:   data_wdata = {data_wdata_ex_i[ 7:0], data_wdata_ex_i[31: 8]};
+           <font color = "green">      ==></font>
+162              default: data_wdata =  data_wdata_ex_i[31:0];
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b11 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+172            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+173              rdata_q <= '0;
+           <font color = "green">      ==></font>
+174            end else if (rdata_update) begin
+                        <font color = "green">-2-</font>  
+175              rdata_q <= data_rdata_i[31:8];
+           <font color = "green">      ==></font>
+176            end
+               MISSING_ELSE
+           <font color = "green">    ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+181            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+182              rdata_offset_q  <= 2'h0;
+           <font color = "green">      ==></font>
+183              data_type_q     <= 2'h0;
+184              data_sign_ext_q <= 1'b0;
+185              data_we_q       <= 1'b0;
+186            end else if (ctrl_update) begin
+                        <font color = "green">-2-</font>  
+187              rdata_offset_q  <= data_offset;
+           <font color = "green">      ==></font>
+188              data_type_q     <= data_type_ex_i;
+189              data_sign_ext_q <= data_sign_ext_ex_i;
+190              data_we_q       <= data_we_ex_i;
+191            end
+               MISSING_ELSE
+           <font color = "green">    ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+197            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+198              addr_last_q <= '0;
+           <font color = "green">      ==></font>
+199            end else if (addr_update) begin
+                        <font color = "green">-2-</font>  
+200              addr_last_q <= data_addr;
+           <font color = "green">      ==></font>
+201            end
+               MISSING_ELSE
+           <font color = "green">    ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+206            unique case (rdata_offset_q)
+                      <font color = "red">-1-</font>  
+207              2'b00:   rdata_w_ext =  data_rdata_i[31:0];
+           <font color = "green">      ==></font>
+208              2'b01:   rdata_w_ext = {data_rdata_i[ 7:0], rdata_q[31:8]};
+           <font color = "green">      ==></font>
+209              2'b10:   rdata_w_ext = {data_rdata_i[15:0], rdata_q[31:16]};
+           <font color = "green">      ==></font>
+210              2'b11:   rdata_w_ext = {data_rdata_i[23:0], rdata_q[31:24]};
+           <font color = "green">      ==></font>
+211              default: rdata_w_ext =  data_rdata_i[31:0];
+           <font color = "red">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b11 </td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>default</td>
+<td>Not Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+221            unique case (rdata_offset_q)
+                      <font color = "red">-1-</font>  
+222              2'b00: begin
+223                if (!data_sign_ext_q) begin
+                   <font color = "green">-2-</font>  
+224                  rdata_h_ext = {16'h0000, data_rdata_i[15:0]};
+           <font color = "green">          ==></font>
+225                end else begin
+226                  rdata_h_ext = {{16{data_rdata_i[15]}}, data_rdata_i[15:0]};
+           <font color = "green">          ==></font>
+227                end
+228              end
+229        
+230              2'b01: begin
+231                if (!data_sign_ext_q) begin
+                   <font color = "green">-3-</font>  
+232                  rdata_h_ext = {16'h0000, data_rdata_i[23:8]};
+           <font color = "green">          ==></font>
+233                end else begin
+234                  rdata_h_ext = {{16{data_rdata_i[23]}}, data_rdata_i[23:8]};
+           <font color = "green">          ==></font>
+235                end
+236              end
+237        
+238              2'b10: begin
+239                if (!data_sign_ext_q) begin
+                   <font color = "green">-4-</font>  
+240                  rdata_h_ext = {16'h0000, data_rdata_i[31:16]};
+           <font color = "green">          ==></font>
+241                end else begin
+242                  rdata_h_ext = {{16{data_rdata_i[31]}}, data_rdata_i[31:16]};
+           <font color = "green">          ==></font>
+243                end
+244              end
+245        
+246              2'b11: begin
+247                if (!data_sign_ext_q) begin
+                   <font color = "green">-5-</font>  
+248                  rdata_h_ext = {16'h0000, data_rdata_i[7:0], rdata_q[31:24]};
+           <font color = "green">          ==></font>
+249                end else begin
+250                  rdata_h_ext = {{16{data_rdata_i[7]}}, data_rdata_i[7:0], rdata_q[31:24]};
+           <font color = "green">          ==></font>
+251                end
+252              end
+253        
+254              default: rdata_h_ext = {16'h0000, data_rdata_i[15:0]};
+           <font color = "red">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>-5-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+260            unique case (rdata_offset_q)
+                      <font color = "red">-1-</font>  
+261              2'b00: begin
+262                if (!data_sign_ext_q) begin
+                   <font color = "green">-2-</font>  
+263                  rdata_b_ext = {24'h00_0000, data_rdata_i[7:0]};
+           <font color = "green">          ==></font>
+264                end else begin
+265                  rdata_b_ext = {{24{data_rdata_i[7]}}, data_rdata_i[7:0]};
+           <font color = "green">          ==></font>
+266                end
+267              end
+268        
+269              2'b01: begin
+270                if (!data_sign_ext_q) begin
+                   <font color = "green">-3-</font>  
+271                  rdata_b_ext = {24'h00_0000, data_rdata_i[15:8]};
+           <font color = "green">          ==></font>
+272                end else begin
+273                  rdata_b_ext = {{24{data_rdata_i[15]}}, data_rdata_i[15:8]};
+           <font color = "green">          ==></font>
+274                end
+275              end
+276        
+277              2'b10: begin
+278                if (!data_sign_ext_q) begin
+                   <font color = "green">-4-</font>  
+279                  rdata_b_ext = {24'h00_0000, data_rdata_i[23:16]};
+           <font color = "green">          ==></font>
+280                end else begin
+281                  rdata_b_ext = {{24{data_rdata_i[23]}}, data_rdata_i[23:16]};
+           <font color = "green">          ==></font>
+282                end
+283              end
+284        
+285              2'b11: begin
+286                if (!data_sign_ext_q) begin
+                   <font color = "green">-5-</font>  
+287                  rdata_b_ext = {24'h00_0000, data_rdata_i[31:24]};
+           <font color = "green">          ==></font>
+288                end else begin
+289                  rdata_b_ext = {{24{data_rdata_i[31]}}, data_rdata_i[31:24]};
+           <font color = "green">          ==></font>
+290                end
+291              end
+292        
+293              default: rdata_b_ext = {24'h00_0000, data_rdata_i[7:0]};
+           <font color = "red">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>-5-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+299            unique case (data_type_q)
+                      <font color = "red">-1-</font>  
+300              2'b00:       data_rdata_ext = rdata_w_ext;
+           <font color = "green">      ==></font>
+301              2'b01:       data_rdata_ext = rdata_h_ext;
+           <font color = "green">      ==></font>
+302              2'b10,2'b11: data_rdata_ext = rdata_b_ext;
+           <font color = "green">      ==></font>
+303              default:     data_rdata_ext = rdata_w_ext;
+           <font color = "red">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 2'b11 </td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>default</td>
+<td>Not Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+332            unique case (ls_fsm_cs)
+                      <font color = "green">-1-</font>  
+333        
+334              IDLE: begin
+335                if (data_req_ex_i) begin
+                   <font color = "green">-2-</font>  
+336                  data_req_o = 1'b1;
+337                  pmp_err_d  = data_pmp_err_i;
+338                  lsu_err_d  = 1'b0;
+339                  if (data_gnt_i) begin
+                     <font color = "green">-3-</font>  
+340                    ctrl_update         = 1'b1;
+341                    addr_update         = 1'b1;
+342                    handle_misaligned_d = split_misaligned_access;
+343                    ls_fsm_ns           = split_misaligned_access ? WAIT_RVALID_MIS : WAIT_RVALID;
+                                                                     <font color = "green">-4-</font>  
+                                                                     <font color = "green">==></font>  
+                                                                     <font color = "green">==></font>  
+344                  end else begin
+345                    ls_fsm_ns           = split_misaligned_access ? WAIT_GNT_MIS    : WAIT_GNT;
+                                                                     <font color = "green">-5-</font>  
+                                                                     <font color = "green">==></font>  
+                                                                     <font color = "green">==></font>  
+346                  end
+347                end
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+348              end
+349        
+350              WAIT_GNT_MIS: begin
+351                data_req_o = 1'b1;
+352                // data_pmp_err_i is valid during the address phase of a request. An error will block the
+353                // external request and so a data_gnt_i might never be signalled. The registered version
+354                // pmp_err_q is only updated for new address phases and so can be used in WAIT_GNT* and
+355                // WAIT_RVALID* states
+356                if (data_gnt_i || pmp_err_q) begin
+                   <font color = "green">-6-</font>  
+357                  addr_update         = 1'b1;
+           <font color = "green">          ==></font>
+358                  ctrl_update         = 1'b1;
+359                  handle_misaligned_d = 1'b1;
+360                  ls_fsm_ns           = WAIT_RVALID_MIS;
+361                end
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+362              end
+363        
+364              WAIT_RVALID_MIS: begin
+365                // push out second request
+366                data_req_o = 1'b1;
+367                // tell ID/EX stage to update the address
+368                addr_incr_req_o = 1'b1;
+369        
+370                // first part rvalid is received, or gets a PMP error
+371                if (data_rvalid_i || pmp_err_q) begin
+                   <font color = "green">-7-</font>  
+372                  // Update the PMP error for the second part
+373                  pmp_err_d = data_pmp_err_i;
+374                  // Record the error status of the first part
+375                  lsu_err_d = data_err_i | pmp_err_q;
+376                  // Capture the first rdata for loads
+377                  rdata_update = ~data_we_q;
+378                  // If already granted, wait for second rvalid
+379                  ls_fsm_ns = data_gnt_i ? WAIT_RVALID : WAIT_GNT;
+                                            <font color = "green">-8-</font>  
+                                            <font color = "green">==></font>  
+                                            <font color = "green">==></font>  
+380                  // Update the address for the second part, if no error
+381                  addr_update = data_gnt_i & ~(data_err_i | pmp_err_q);
+382        
+383                end else begin
+384                  // first part rvalid is NOT received
+385                  if (data_gnt_i) begin
+                     <font color = "green">-9-</font>  
+386                    // second grant is received
+387                    ls_fsm_ns = WAIT_RVALID_DONE;
+           <font color = "green">            ==></font>
+388                  end
+                     MISSING_ELSE
+           <font color = "green">          ==></font>
+389                end
+390              end
+391        
+392              WAIT_GNT: begin
+393                // tell ID/EX stage to update the address
+394                addr_incr_req_o = handle_misaligned_q;
+395                data_req_o      = 1'b1;
+396                if (data_gnt_i || pmp_err_q) begin
+                   <font color = "green">-10-</font>  
+397                  ctrl_update = 1'b1;
+           <font color = "green">          ==></font>
+398                  // Update the address, unless there was an error
+399                  addr_update = ~lsu_err_q;
+400                  ls_fsm_ns   = WAIT_RVALID;
+401                end
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+402              end
+403        
+404              WAIT_RVALID: begin
+405                if (data_rvalid_i || pmp_err_q) begin
+                   <font color = "green">-11-</font>  
+406                  data_valid_o        = 1'b1;
+           <font color = "green">          ==></font>
+407                  // Data error from either part
+408                  data_or_pmp_err     = lsu_err_q | data_err_i | pmp_err_q;
+409                  handle_misaligned_d = 1'b0;
+410                  ls_fsm_ns           = IDLE;
+411                end else begin
+412                  ls_fsm_ns           = WAIT_RVALID;
+           <font color = "green">          ==></font>
+413                end
+414              end
+415        
+416              WAIT_RVALID_DONE: begin
+417                // tell ID/EX stage to update the address (to make sure the
+418                // second address can be captured correctly for mtval and PMP checking)
+419                addr_incr_req_o = 1'b1;
+420                // Wait for the first rvalid, second request is already granted
+421                if (data_rvalid_i) begin
+                   <font color = "green">-12-</font>  
+422                  // Update the pmp error for the second part
+423                  pmp_err_d = data_pmp_err_i;
+           <font color = "green">          ==></font>
+424                  // The first part cannot see a PMP error in this state
+425                  lsu_err_d = data_err_i;
+426                  // Now we can update the address for the second part if no error
+427                  addr_update = ~data_err_i;
+428                  // Capture the first rdata for loads
+429                  rdata_update = ~data_we_q;
+430                  // Wait for second rvalid
+431                  ls_fsm_ns = WAIT_RVALID;
+432                end
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+433              end
+434        
+435              default: begin
+436                ls_fsm_ns = IDLE;
+           <font color = "green">        ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>-5-</th><th nowrap width=80>-6-</th><th nowrap width=80>-7-</th><th nowrap width=80>-8-</th><th nowrap width=80>-9-</th><th nowrap width=80>-10-</th><th nowrap width=80>-11-</th><th nowrap width=80>-12-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>IDLE </td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IDLE </td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IDLE </td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IDLE </td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IDLE </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_GNT_MIS </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_GNT_MIS </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_RVALID_MIS </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_RVALID_MIS </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_RVALID_MIS </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_RVALID_MIS </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_GNT </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_GNT </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_RVALID </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_RVALID </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_RVALID_DONE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_RVALID_DONE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+443            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+444              ls_fsm_cs           <= IDLE;
+           <font color = "green">      ==></font>
+445              handle_misaligned_q <= '0;
+446              pmp_err_q           <= '0;
+447              lsu_err_q           <= '0;
+448            end else begin
+449              ls_fsm_cs           <= ls_fsm_ns;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<hr>
+<a name="Assert"></a>
+Assert Coverage for Module : <a href="mod14.html" >ibex_load_store_unit</a><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Total</th><th nowrap width=80>Attempted</th><th nowrap width=80>Percent</th><th nowrap width=80>Succeeded/Matched</th><th nowrap width=80>Percent</th></tr><tr>
+<td class="wht cl"><a href="#662971801" >Assertions</a></td>
+<td class="wht cl rt">4</td>
+<td class="s10 cl rt">4</td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">4</td>
+<td class="s10 cl rt">100.00</td>
+</tr><tr>
+<td class="wht cl"><a href="#1859574652" >Cover properties</a></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+</tr><tr>
+<td class="wht cl"><a href="#755789537" >Cover sequences</a></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+</tr><tr>
+<td class="wht cl"><b>Total</b></td>
+<td class="wht cl rt">4</td>
+<td class="s10 cl rt">4</td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">4</td>
+<td class="s10 cl rt">100.00</td>
+</tr></table><br clear=all>
+<br clear=all>
+<hr>
+<br clear=all>
+<a name="662971801"></a>
+<b>Assertion Details</b><br clear=all>
+<br clear=all>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">Name</td><td>Attempts</td><td>Real Successes</td><td>Failures</td><td>Incomplete</td></tr><tr>
+<td class="wht cl"><a name="708644263"></a>
+unnamed$$_68</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">4648786</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr><tr>
+<td class="wht cl"><a name="1475032664"></a>
+unnamed$$_69</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">1803</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr><tr>
+<td class="wht cl"><a name="1011913346"></a>
+unnamed$$_70</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">27896040</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr><tr>
+<td class="wht cl"><a name="1099377023"></a>
+unnamed$$_71</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">27896040</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr></table><br clear=all>
+</div>
+<div name='inst_tag_14'>
+<a name="inst_tag_14_Line"></a>
+<b>Line Coverage for Instance : <a href="mod14.html#inst_tag_14" >core_ibex_tb_top.dut.u_ibex_core.load_store_unit_i<img src="ex.gif" class="icon"></a></b><br clear=all>
+<table class="noborder">
+<col width="122">
+<col span="4" width="82">
+<tr><th></th><th>Line No.</th><th>Total</th><th>Covered</th><th>Percent</th></tr>
+<tr class="s10"><td class="lf">TOTAL</td><td></td><td>151</td><td>151</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>99</td><td>25</td><td>25</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>157</td><td>6</td><td>6</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>172</td><td>4</td><td>4</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>181</td><td>10</td><td>10</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>197</td><td>4</td><td>4</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>206</td><td>5</td><td>5</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>221</td><td>13</td><td>13</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>260</td><td>13</td><td>13</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>299</td><td>4</td><td>4</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>318</td><td>58</td><td>58</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>443</td><td>9</td><td>9</td><td>100.00</td></tr>
+</table>
+<pre class="code"><br clear=all>
+98                      
+99         1/1            always_comb begin
+100                         unique case (data_type_ex_i) // Data type 00 Word, 01 Half word, 11,10 byte
+101        1/1                2'b00: begin // Writing a word
+102        1/1                  if (!handle_misaligned_q) begin // first part of potentially misaligned transaction
+103        1/1                    unique case (data_offset)
+104        1/1                      2'b00:   data_be = 4'b1111;
+105        1/1                      2'b01:   data_be = 4'b1110;
+106        1/1                      2'b10:   data_be = 4'b1100;
+107        1/1                      2'b11:   data_be = 4'b1000;
+108                                 default: data_be = 4'b1111;
+109                               endcase // case (data_offset)
+110        1/1                  end else begin // second part of misaligned transaction
+111        1/1                    unique case (data_offset)
+112        1/1                      2'b00:   data_be = 4'b0000; // this is not used, but included for completeness
+113        1/1                      2'b01:   data_be = 4'b0001;
+114        1/1                      2'b10:   data_be = 4'b0011;
+115        <font color = "grey">excluded     </font>            2'b11:   data_be = 4'b0111;
+116                                 default: data_be = 4'b1111;
+117                               endcase // case (data_offset)
+118                             end
+119                           end
+120                     
+121        1/1                2'b01: begin // Writing a half word
+122        1/1                  if (!handle_misaligned_q) begin // first part of potentially misaligned transaction
+123        1/1                    unique case (data_offset)
+124        1/1                      2'b00:   data_be = 4'b0011;
+125        1/1                      2'b01:   data_be = 4'b0110;
+126        1/1                      2'b10:   data_be = 4'b1100;
+127        <font color = "grey">excluded     </font>            2'b11:   data_be = 4'b1000;
+128                                 default: data_be = 4'b1111;
+129                               endcase // case (data_offset)
+130        1/1                  end else begin // second part of misaligned transaction
+131                               data_be = 4'b0001;
+132                             end
+133                           end
+134                     
+135                           2'b10,
+136        1/1                2'b11: begin // Writing a byte
+137        1/1                  unique case (data_offset)
+138        1/1                    2'b00:   data_be = 4'b0001;
+139        1/1                    2'b01:   data_be = 4'b0010;
+140        1/1                    2'b10:   data_be = 4'b0100;
+141        <font color = "grey">excluded     </font>          2'b11:   data_be = 4'b1000;
+142                               default: data_be = 4'b1111;
+143                             endcase // case (data_offset)
+144                           end
+145        <font color = "grey">excluded     </font>
+146                           default:     data_be = 4'b1111;
+147                         endcase // case (data_type_ex_i)
+148                       end
+149                     
+150                       /////////////////////
+151                       // WData alignment //
+152                       /////////////////////
+153                     
+154                       // prepare data to be written to the memory
+155                       // we handle misaligned accesses, half word and byte accesses here
+156                       always_comb begin
+157        1/1              unique case (data_offset)
+158        1/1                2'b00:   data_wdata =  data_wdata_ex_i[31:0];
+159        1/1                2'b01:   data_wdata = {data_wdata_ex_i[23:0], data_wdata_ex_i[31:24]};
+160        1/1                2'b10:   data_wdata = {data_wdata_ex_i[15:0], data_wdata_ex_i[31:16]};
+161        1/1                2'b11:   data_wdata = {data_wdata_ex_i[ 7:0], data_wdata_ex_i[31: 8]};
+162        1/1                default: data_wdata =  data_wdata_ex_i[31:0];
+163                         endcase // case (data_offset)
+164                       end
+165                     
+166                       /////////////////////
+167                       // RData alignment //
+168                       /////////////////////
+169                     
+170                       // register for unaligned rdata
+171                       always_ff @(posedge clk_i or negedge rst_ni) begin
+172        1/1              if (!rst_ni) begin
+173        1/1                rdata_q &lt;= '0;
+174        1/1              end else if (rdata_update) begin
+175        1/1                rdata_q &lt;= data_rdata_i[31:8];
+176                         end
+                        MISSING_ELSE
+177                       end
+178                     
+179                       // registers for transaction control
+180                       always_ff @(posedge clk_i or negedge rst_ni) begin
+181        1/1              if (!rst_ni) begin
+182        1/1                rdata_offset_q  &lt;= 2'h0;
+183        1/1                data_type_q     &lt;= 2'h0;
+184        1/1                data_sign_ext_q &lt;= 1'b0;
+185        1/1                data_we_q       &lt;= 1'b0;
+186        1/1              end else if (ctrl_update) begin
+187        1/1                rdata_offset_q  &lt;= data_offset;
+188        1/1                data_type_q     &lt;= data_type_ex_i;
+189        1/1                data_sign_ext_q &lt;= data_sign_ext_ex_i;
+190        1/1                data_we_q       &lt;= data_we_ex_i;
+191                         end
+                        MISSING_ELSE
+192                       end
+193                     
+194                       // Store last address for mtval + AGU for misaligned transactions.
+195                       // Do not update in case of errors, mtval needs the (first) failing address
+196                       always_ff @(posedge clk_i or negedge rst_ni) begin
+197        1/1              if (!rst_ni) begin
+198        1/1                addr_last_q &lt;= '0;
+199        1/1              end else if (addr_update) begin
+200        1/1                addr_last_q &lt;= data_addr;
+201                         end
+                        MISSING_ELSE
+202                       end
+203                     
+204                       // take care of misaligned words
+205                       always_comb begin
+206        1/1              unique case (rdata_offset_q)
+207        1/1                2'b00:   rdata_w_ext =  data_rdata_i[31:0];
+208        1/1                2'b01:   rdata_w_ext = {data_rdata_i[ 7:0], rdata_q[31:8]};
+209        1/1                2'b10:   rdata_w_ext = {data_rdata_i[15:0], rdata_q[31:16]};
+210        1/1                2'b11:   rdata_w_ext = {data_rdata_i[23:0], rdata_q[31:24]};
+211        <font color = "grey">excluded     </font>      default: rdata_w_ext =  data_rdata_i[31:0];
+212                         endcase
+213                       end
+214                     
+215                       ////////////////////
+216                       // Sign extension //
+217                       ////////////////////
+218                     
+219                       // sign extension for half words
+220                       always_comb begin
+221        1/1              unique case (rdata_offset_q)
+222                           2'b00: begin
+223        1/1                  if (!data_sign_ext_q) begin
+224        1/1                    rdata_h_ext = {16'h0000, data_rdata_i[15:0]};
+225                             end else begin
+226        1/1                    rdata_h_ext = {{16{data_rdata_i[15]}}, data_rdata_i[15:0]};
+227                             end
+228                           end
+229                     
+230                           2'b01: begin
+231        1/1                  if (!data_sign_ext_q) begin
+232        1/1                    rdata_h_ext = {16'h0000, data_rdata_i[23:8]};
+233                             end else begin
+234        1/1                    rdata_h_ext = {{16{data_rdata_i[23]}}, data_rdata_i[23:8]};
+235                             end
+236                           end
+237                     
+238                           2'b10: begin
+239        1/1                  if (!data_sign_ext_q) begin
+240        1/1                    rdata_h_ext = {16'h0000, data_rdata_i[31:16]};
+241                             end else begin
+242        1/1                    rdata_h_ext = {{16{data_rdata_i[31]}}, data_rdata_i[31:16]};
+243                             end
+244                           end
+245                     
+246                           2'b11: begin
+247        1/1                  if (!data_sign_ext_q) begin
+248        1/1                    rdata_h_ext = {16'h0000, data_rdata_i[7:0], rdata_q[31:24]};
+249                             end else begin
+250        1/1                    rdata_h_ext = {{16{data_rdata_i[7]}}, data_rdata_i[7:0], rdata_q[31:24]};
+251                             end
+252                           end
+253                     
+254        <font color = "grey">excluded     </font>      default: rdata_h_ext = {16'h0000, data_rdata_i[15:0]};
+255                         endcase // case (rdata_offset_q)
+256                       end
+257                     
+258                       // sign extension for bytes
+259                       always_comb begin
+260        1/1              unique case (rdata_offset_q)
+261                           2'b00: begin
+262        1/1                  if (!data_sign_ext_q) begin
+263        1/1                    rdata_b_ext = {24'h00_0000, data_rdata_i[7:0]};
+264                             end else begin
+265        1/1                    rdata_b_ext = {{24{data_rdata_i[7]}}, data_rdata_i[7:0]};
+266                             end
+267                           end
+268                     
+269                           2'b01: begin
+270        1/1                  if (!data_sign_ext_q) begin
+271        1/1                    rdata_b_ext = {24'h00_0000, data_rdata_i[15:8]};
+272                             end else begin
+273        1/1                    rdata_b_ext = {{24{data_rdata_i[15]}}, data_rdata_i[15:8]};
+274                             end
+275                           end
+276                     
+277                           2'b10: begin
+278        1/1                  if (!data_sign_ext_q) begin
+279        1/1                    rdata_b_ext = {24'h00_0000, data_rdata_i[23:16]};
+280                             end else begin
+281        1/1                    rdata_b_ext = {{24{data_rdata_i[23]}}, data_rdata_i[23:16]};
+282                             end
+283                           end
+284                     
+285                           2'b11: begin
+286        1/1                  if (!data_sign_ext_q) begin
+287        1/1                    rdata_b_ext = {24'h00_0000, data_rdata_i[31:24]};
+288                             end else begin
+289        1/1                    rdata_b_ext = {{24{data_rdata_i[31]}}, data_rdata_i[31:24]};
+290                             end
+291                           end
+292                     
+293        <font color = "grey">excluded     </font>      default: rdata_b_ext = {24'h00_0000, data_rdata_i[7:0]};
+294                         endcase // case (rdata_offset_q)
+295                       end
+296                     
+297                       // select word, half word or byte sign extended version
+298                       always_comb begin
+299        1/1              unique case (data_type_q)
+300        1/1                2'b00:       data_rdata_ext = rdata_w_ext;
+301        1/1                2'b01:       data_rdata_ext = rdata_h_ext;
+302        1/1                2'b10,2'b11: data_rdata_ext = rdata_b_ext;
+303        <font color = "grey">excluded     </font>      default:     data_rdata_ext = rdata_w_ext;
+304                         endcase // case (data_type_q)
+305                       end
+306                     
+307                       /////////////
+308                       // LSU FSM //
+309                       /////////////
+310                     
+311                       // check for misaligned accesses that need to be split into two word-aligned accesses
+312                       assign split_misaligned_access =
+313                           ((data_type_ex_i == 2'b00) &amp;&amp; (data_offset != 2'b00)) || // misaligned word access
+314                           ((data_type_ex_i == 2'b01) &amp;&amp; (data_offset == 2'b11));   // misaligned half-word access
+315                     
+316                       // FSM
+317                       always_comb begin
+318        1/1              ls_fsm_ns       = ls_fsm_cs;
+319                     
+320        1/1              data_req_o          = 1'b0;
+321        1/1              data_valid_o        = 1'b0;
+322        1/1              addr_incr_req_o     = 1'b0;
+323        1/1              handle_misaligned_d = handle_misaligned_q;
+324        1/1              data_or_pmp_err     = 1'b0;
+325        1/1              pmp_err_d           = pmp_err_q;
+326        1/1              lsu_err_d           = lsu_err_q;
+327                     
+328        1/1              addr_update         = 1'b0;
+329        1/1              ctrl_update         = 1'b0;
+330        1/1              rdata_update        = 1'b0;
+331                     
+332        1/1              unique case (ls_fsm_cs)
+333                     
+334                           IDLE: begin
+335        1/1                  if (data_req_ex_i) begin
+336        1/1                    data_req_o = 1'b1;
+337        1/1                    pmp_err_d  = data_pmp_err_i;
+338        1/1                    lsu_err_d  = 1'b0;
+339        1/1                    if (data_gnt_i) begin
+340        1/1                      ctrl_update         = 1'b1;
+341        1/1                      addr_update         = 1'b1;
+342        1/1                      handle_misaligned_d = split_misaligned_access;
+343        1/1                      ls_fsm_ns           = split_misaligned_access ? WAIT_RVALID_MIS : WAIT_RVALID;
+344                               end else begin
+345        1/1                      ls_fsm_ns           = split_misaligned_access ? WAIT_GNT_MIS    : WAIT_GNT;
+346                               end
+347                             end
+                        MISSING_ELSE
+348                           end
+349                     
+350                           WAIT_GNT_MIS: begin
+351        1/1                  data_req_o = 1'b1;
+352                             // data_pmp_err_i is valid during the address phase of a request. An error will block the
+353                             // external request and so a data_gnt_i might never be signalled. The registered version
+354                             // pmp_err_q is only updated for new address phases and so can be used in WAIT_GNT* and
+355                             // WAIT_RVALID* states
+356        1/1                  if (data_gnt_i || pmp_err_q) begin
+357        1/1                    addr_update         = 1'b1;
+358        1/1                    ctrl_update         = 1'b1;
+359        1/1                    handle_misaligned_d = 1'b1;
+360        1/1                    ls_fsm_ns           = WAIT_RVALID_MIS;
+361                             end
+                        MISSING_ELSE
+362                           end
+363                     
+364                           WAIT_RVALID_MIS: begin
+365                             // push out second request
+366        1/1                  data_req_o = 1'b1;
+367                             // tell ID/EX stage to update the address
+368        1/1                  addr_incr_req_o = 1'b1;
+369                     
+370                             // first part rvalid is received, or gets a PMP error
+371        1/1                  if (data_rvalid_i || pmp_err_q) begin
+372                               // Update the PMP error for the second part
+373        1/1                    pmp_err_d = data_pmp_err_i;
+374                               // Record the error status of the first part
+375        1/1                    lsu_err_d = data_err_i | pmp_err_q;
+376                               // Capture the first rdata for loads
+377        1/1                    rdata_update = ~data_we_q;
+378                               // If already granted, wait for second rvalid
+379        1/1                    ls_fsm_ns = data_gnt_i ? WAIT_RVALID : WAIT_GNT;
+380                               // Update the address for the second part, if no error
+381        1/1                    addr_update = data_gnt_i &amp; ~(data_err_i | pmp_err_q);
+382                     
+383                             end else begin
+384                               // first part rvalid is NOT received
+385        1/1                    if (data_gnt_i) begin
+386                                 // second grant is received
+387        1/1                      ls_fsm_ns = WAIT_RVALID_DONE;
+388                               end
+                        MISSING_ELSE
+389                             end
+390                           end
+391                     
+392                           WAIT_GNT: begin
+393                             // tell ID/EX stage to update the address
+394        1/1                  addr_incr_req_o = handle_misaligned_q;
+395        1/1                  data_req_o      = 1'b1;
+396        1/1                  if (data_gnt_i || pmp_err_q) begin
+397        1/1                    ctrl_update = 1'b1;
+398                               // Update the address, unless there was an error
+399        1/1                    addr_update = ~lsu_err_q;
+400        1/1                    ls_fsm_ns   = WAIT_RVALID;
+401                             end
+                        MISSING_ELSE
+402                           end
+403                     
+404                           WAIT_RVALID: begin
+405        1/1                  if (data_rvalid_i || pmp_err_q) begin
+406        1/1                    data_valid_o        = 1'b1;
+407                               // Data error from either part
+408        1/1                    data_or_pmp_err     = lsu_err_q | data_err_i | pmp_err_q;
+409        1/1                    handle_misaligned_d = 1'b0;
+410        1/1                    ls_fsm_ns           = IDLE;
+411                             end else begin
+412        1/1                    ls_fsm_ns           = WAIT_RVALID;
+413                             end
+414                           end
+415                     
+416                           WAIT_RVALID_DONE: begin
+417                             // tell ID/EX stage to update the address (to make sure the
+418                             // second address can be captured correctly for mtval and PMP checking)
+419        1/1                  addr_incr_req_o = 1'b1;
+420                             // Wait for the first rvalid, second request is already granted
+421        1/1                  if (data_rvalid_i) begin
+422                               // Update the pmp error for the second part
+423        1/1                    pmp_err_d = data_pmp_err_i;
+424                               // The first part cannot see a PMP error in this state
+425        1/1                    lsu_err_d = data_err_i;
+426                               // Now we can update the address for the second part if no error
+427        1/1                    addr_update = ~data_err_i;
+428                               // Capture the first rdata for loads
+429        1/1                    rdata_update = ~data_we_q;
+430                               // Wait for second rvalid
+431        1/1                    ls_fsm_ns = WAIT_RVALID;
+432                             end
+                        MISSING_ELSE
+433                           end
+434                     
+435                           default: begin
+436        1/1                  ls_fsm_ns = IDLE;
+437                           end
+438                         endcase
+439                       end
+440                     
+441                       // registers for FSM
+442                       always_ff @(posedge clk_i or negedge rst_ni) begin
+443        1/1              if (!rst_ni) begin
+444        1/1                ls_fsm_cs           &lt;= IDLE;
+445        1/1                handle_misaligned_q &lt;= '0;
+446        1/1                pmp_err_q           &lt;= '0;
+447        1/1                lsu_err_q           &lt;= '0;
+448                         end else begin
+449        1/1                ls_fsm_cs           &lt;= ls_fsm_ns;
+450        1/1                handle_misaligned_q &lt;= handle_misaligned_d;
+451        1/1                pmp_err_q           &lt;= pmp_err_d;
+452        1/1                lsu_err_q           &lt;= lsu_err_d;
+</pre>
+<hr>
+<a name="inst_tag_14_FSM"></a>
+<b>FSM Coverage for Instance : <a href="mod14.html#inst_tag_14" >core_ibex_tb_top.dut.u_ibex_core.load_store_unit_i<img src="ex.gif" class="icon"></a></b><br clear=all>
+<table align=left class="noborder">
+<caption><b>Summary for FSM :: ls_fsm_cs</b></caption>
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th><th nowrap width=200></th></tr><tr class="wht">
+<td>States</td>
+<td class="rt">6</td>
+<td class="rt">6</td>
+<td class="rt">100.00</td>
+<td>(Not included in score)</td>
+</tr><tr class="s10">
+<td>Transitions</td>
+<td class="rt">15</td>
+<td class="rt">15</td>
+<td class="rt">100.00</td>
+<td></td>
+</tr><tr class="wht">
+<td>Sequences</td>
+<td class="rt">0</td>
+<td class="rt">0</td>
+<td></td>
+<td></td>
+</tr></table><br clear=all>
+<b>State, Transition and Sequence Details for FSM :: ls_fsm_cs</b><hr>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">states</td><td>Line No.</td><td class="alfsrt">Covered</td></tr><tr class="uGreen">
+<td nowrap>IDLE</td>
+<td class="rt">444</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_GNT</td>
+<td class="rt">345</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_GNT_MIS</td>
+<td class="rt">345</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID</td>
+<td class="rt">343</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID_DONE</td>
+<td class="rt">387</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID_MIS</td>
+<td class="rt">343</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<br clear=all>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">transitions</td><td>Line No.</td><td class="alfsrt">Covered</td></tr><tr class="uGreen">
+<td nowrap>IDLE->WAIT_GNT</td>
+<td class="rt">345</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>IDLE->WAIT_GNT_MIS</td>
+<td class="rt">345</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>IDLE->WAIT_RVALID</td>
+<td class="rt">343</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>IDLE->WAIT_RVALID_MIS</td>
+<td class="rt">343</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_GNT->IDLE</td>
+<td class="rt">444</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_GNT->WAIT_RVALID</td>
+<td class="rt">400</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_GNT_MIS->IDLE</td>
+<td class="rt">444</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_GNT_MIS->WAIT_RVALID_MIS</td>
+<td class="rt">360</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID->IDLE</td>
+<td class="rt">444</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID_DONE->IDLE</td>
+<td class="rt">444</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID_DONE->WAIT_RVALID</td>
+<td class="rt">431</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID_MIS->IDLE</td>
+<td class="rt">444</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID_MIS->WAIT_GNT</td>
+<td class="rt">379</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID_MIS->WAIT_RVALID</td>
+<td class="rt">379</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>WAIT_RVALID_MIS->WAIT_RVALID_DONE</td>
+<td class="rt">387</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<br clear=all>
+<hr>
+<a name="inst_tag_14_Branch"></a>
+<b>Branch Coverage for Instance : <a href="mod14.html#inst_tag_14" >core_ibex_tb_top.dut.u_ibex_core.load_store_unit_i<img src="ex.gif" class="icon"></a></b><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Line No.</th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th></tr><tr class="s10">
+<td>Branches</td>
+<td></td>
+<td class="rt">75</td>
+<td class="rt">75</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">99</td>
+<td class="rt">18</td>
+<td class="rt">18</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">157</td>
+<td class="rt">5</td>
+<td class="rt">5</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">172</td>
+<td class="rt">3</td>
+<td class="rt">3</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">181</td>
+<td class="rt">3</td>
+<td class="rt">3</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">197</td>
+<td class="rt">3</td>
+<td class="rt">3</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">206</td>
+<td class="rt">4</td>
+<td class="rt">4</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">221</td>
+<td class="rt">8</td>
+<td class="rt">8</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">260</td>
+<td class="rt">8</td>
+<td class="rt">8</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">299</td>
+<td class="rt">3</td>
+<td class="rt">3</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">332</td>
+<td class="rt">18</td>
+<td class="rt">18</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">443</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+99           always_comb begin
+             <font color = "red">-1-</font>                 
+100            unique case (data_type_ex_i) // Data type 00 Word, 01 Half word, 11,10 byte
+101              2'b00: begin // Writing a word
+                 <font color = "green">-2-</font>                              
+102                if (!handle_misaligned_q) begin // first part of potentially misaligned transaction
+                   <font color = "green">-3-</font>                                                                                   
+103                  unique case (data_offset)
+           <font color = "green">          ==></font>
+104                    2'b00:   data_be = 4'b1111;
+           <font color = "green">            ==></font>
+105                    2'b01:   data_be = 4'b1110;
+           <font color = "green">            ==></font>
+106                    2'b10:   data_be = 4'b1100;
+           <font color = "green">            ==></font>
+107                    2'b11:   data_be = 4'b1000;
+           <font color = "green">            ==></font>
+108                    default: data_be = 4'b1111;
+109                  endcase // case (data_offset)
+110                end else begin // second part of misaligned transaction
+                   <font color = "red">-4-</font>                                                       
+111                  unique case (data_offset)
+           <font color = "green">          ==></font>
+112                    2'b00:   data_be = 4'b0000; // this is not used, but included for completeness
+           <font color = "green">            ==></font>
+113                    2'b01:   data_be = 4'b0001;
+           <font color = "green">            ==></font>
+114                    2'b10:   data_be = 4'b0011;
+           <font color = "green">            ==></font>
+115                    2'b11:   data_be = 4'b0111;
+           <font color = "grey">            ==> (Excluded)</font>
+116                    default: data_be = 4'b1111;
+117                  endcase // case (data_offset)
+118                end
+119              end
+120        
+121              2'b01: begin // Writing a half word
+                 <font color = "green">-5-</font>                                   
+122                if (!handle_misaligned_q) begin // first part of potentially misaligned transaction
+                   <font color = "red">-6-</font>                                                                                   
+123                  unique case (data_offset)
+           <font color = "green">          ==></font>
+124                    2'b00:   data_be = 4'b0011;
+           <font color = "green">            ==></font>
+125                    2'b01:   data_be = 4'b0110;
+           <font color = "green">            ==></font>
+126                    2'b10:   data_be = 4'b1100;
+           <font color = "green">            ==></font>
+127                    2'b11:   data_be = 4'b1000;
+           <font color = "grey">            ==> (Excluded)</font>
+128                    default: data_be = 4'b1111;
+129                  endcase // case (data_offset)
+130                end else begin // second part of misaligned transaction
+           <font color = "green">        ==></font>
+131                  data_be = 4'b0001;
+132                end
+133              end
+134        
+135              2'b10,
+136              2'b11: begin // Writing a byte
+                 <font color = "red">-7-</font>                              
+137                unique case (data_offset)
+           <font color = "green">        ==></font>
+138                  2'b00:   data_be = 4'b0001;
+           <font color = "green">          ==></font>
+139                  2'b01:   data_be = 4'b0010;
+           <font color = "green">          ==></font>
+140                  2'b10:   data_be = 4'b0100;
+           <font color = "green">          ==></font>
+141                  2'b11:   data_be = 4'b1000;
+           <font color = "grey">          ==> (Excluded)</font>
+142                  default: data_be = 4'b1111;
+143                endcase // case (data_offset)
+144              end
+145        
+           <font color = "grey">==> (Excluded)</font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>-5-</th><th nowrap width=80>-6-</th><th nowrap width=80>-7-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>1</td>
+<td align=center>2'b00 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>1</td>
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>1</td>
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>1</td>
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>1</td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b00 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="wht">
+<td align=center>2'b00 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Excluded</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>2'b00 </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="wht">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td>Excluded</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b00 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b01 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b10 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b11 </td>
+<td>Covered</td>
+</tr><tr class="wht">
+<td align=center>2'b10 2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>default</td>
+<td>Excluded</td>
+</tr><tr class="wht">
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Excluded</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+157            unique case (data_offset)
+                      <font color = "green">-1-</font>  
+158              2'b00:   data_wdata =  data_wdata_ex_i[31:0];
+           <font color = "green">      ==></font>
+159              2'b01:   data_wdata = {data_wdata_ex_i[23:0], data_wdata_ex_i[31:24]};
+           <font color = "green">      ==></font>
+160              2'b10:   data_wdata = {data_wdata_ex_i[15:0], data_wdata_ex_i[31:16]};
+           <font color = "green">      ==></font>
+161              2'b11:   data_wdata = {data_wdata_ex_i[ 7:0], data_wdata_ex_i[31: 8]};
+           <font color = "green">      ==></font>
+162              default: data_wdata =  data_wdata_ex_i[31:0];
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b11 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+172            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+173              rdata_q <= '0;
+           <font color = "green">      ==></font>
+174            end else if (rdata_update) begin
+                        <font color = "green">-2-</font>  
+175              rdata_q <= data_rdata_i[31:8];
+           <font color = "green">      ==></font>
+176            end
+               MISSING_ELSE
+           <font color = "green">    ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+181            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+182              rdata_offset_q  <= 2'h0;
+           <font color = "green">      ==></font>
+183              data_type_q     <= 2'h0;
+184              data_sign_ext_q <= 1'b0;
+185              data_we_q       <= 1'b0;
+186            end else if (ctrl_update) begin
+                        <font color = "green">-2-</font>  
+187              rdata_offset_q  <= data_offset;
+           <font color = "green">      ==></font>
+188              data_type_q     <= data_type_ex_i;
+189              data_sign_ext_q <= data_sign_ext_ex_i;
+190              data_we_q       <= data_we_ex_i;
+191            end
+               MISSING_ELSE
+           <font color = "green">    ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+197            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+198              addr_last_q <= '0;
+           <font color = "green">      ==></font>
+199            end else if (addr_update) begin
+                        <font color = "green">-2-</font>  
+200              addr_last_q <= data_addr;
+           <font color = "green">      ==></font>
+201            end
+               MISSING_ELSE
+           <font color = "green">    ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+206            unique case (rdata_offset_q)
+                      <font color = "red">-1-</font>  
+207              2'b00:   rdata_w_ext =  data_rdata_i[31:0];
+           <font color = "green">      ==></font>
+208              2'b01:   rdata_w_ext = {data_rdata_i[ 7:0], rdata_q[31:8]};
+           <font color = "green">      ==></font>
+209              2'b10:   rdata_w_ext = {data_rdata_i[15:0], rdata_q[31:16]};
+           <font color = "green">      ==></font>
+210              2'b11:   rdata_w_ext = {data_rdata_i[23:0], rdata_q[31:24]};
+           <font color = "green">      ==></font>
+211              default: rdata_w_ext =  data_rdata_i[31:0];
+           <font color = "grey">      ==> (Excluded)</font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b11 </td>
+<td>Covered</td>
+</tr><tr class="wht">
+<td align=center>default</td>
+<td>Excluded</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+221            unique case (rdata_offset_q)
+                      <font color = "red">-1-</font>  
+222              2'b00: begin
+223                if (!data_sign_ext_q) begin
+                   <font color = "green">-2-</font>  
+224                  rdata_h_ext = {16'h0000, data_rdata_i[15:0]};
+           <font color = "green">          ==></font>
+225                end else begin
+226                  rdata_h_ext = {{16{data_rdata_i[15]}}, data_rdata_i[15:0]};
+           <font color = "green">          ==></font>
+227                end
+228              end
+229        
+230              2'b01: begin
+231                if (!data_sign_ext_q) begin
+                   <font color = "green">-3-</font>  
+232                  rdata_h_ext = {16'h0000, data_rdata_i[23:8]};
+           <font color = "green">          ==></font>
+233                end else begin
+234                  rdata_h_ext = {{16{data_rdata_i[23]}}, data_rdata_i[23:8]};
+           <font color = "green">          ==></font>
+235                end
+236              end
+237        
+238              2'b10: begin
+239                if (!data_sign_ext_q) begin
+                   <font color = "green">-4-</font>  
+240                  rdata_h_ext = {16'h0000, data_rdata_i[31:16]};
+           <font color = "green">          ==></font>
+241                end else begin
+242                  rdata_h_ext = {{16{data_rdata_i[31]}}, data_rdata_i[31:16]};
+           <font color = "green">          ==></font>
+243                end
+244              end
+245        
+246              2'b11: begin
+247                if (!data_sign_ext_q) begin
+                   <font color = "green">-5-</font>  
+248                  rdata_h_ext = {16'h0000, data_rdata_i[7:0], rdata_q[31:24]};
+           <font color = "green">          ==></font>
+249                end else begin
+250                  rdata_h_ext = {{16{data_rdata_i[7]}}, data_rdata_i[7:0], rdata_q[31:24]};
+           <font color = "green">          ==></font>
+251                end
+252              end
+253        
+254              default: rdata_h_ext = {16'h0000, data_rdata_i[15:0]};
+           <font color = "grey">      ==> (Excluded)</font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>-5-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="wht">
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Excluded</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+260            unique case (rdata_offset_q)
+                      <font color = "red">-1-</font>  
+261              2'b00: begin
+262                if (!data_sign_ext_q) begin
+                   <font color = "green">-2-</font>  
+263                  rdata_b_ext = {24'h00_0000, data_rdata_i[7:0]};
+           <font color = "green">          ==></font>
+264                end else begin
+265                  rdata_b_ext = {{24{data_rdata_i[7]}}, data_rdata_i[7:0]};
+           <font color = "green">          ==></font>
+266                end
+267              end
+268        
+269              2'b01: begin
+270                if (!data_sign_ext_q) begin
+                   <font color = "green">-3-</font>  
+271                  rdata_b_ext = {24'h00_0000, data_rdata_i[15:8]};
+           <font color = "green">          ==></font>
+272                end else begin
+273                  rdata_b_ext = {{24{data_rdata_i[15]}}, data_rdata_i[15:8]};
+           <font color = "green">          ==></font>
+274                end
+275              end
+276        
+277              2'b10: begin
+278                if (!data_sign_ext_q) begin
+                   <font color = "green">-4-</font>  
+279                  rdata_b_ext = {24'h00_0000, data_rdata_i[23:16]};
+           <font color = "green">          ==></font>
+280                end else begin
+281                  rdata_b_ext = {{24{data_rdata_i[23]}}, data_rdata_i[23:16]};
+           <font color = "green">          ==></font>
+282                end
+283              end
+284        
+285              2'b11: begin
+286                if (!data_sign_ext_q) begin
+                   <font color = "green">-5-</font>  
+287                  rdata_b_ext = {24'h00_0000, data_rdata_i[31:24]};
+           <font color = "green">          ==></font>
+288                end else begin
+289                  rdata_b_ext = {{24{data_rdata_i[31]}}, data_rdata_i[31:24]};
+           <font color = "green">          ==></font>
+290                end
+291              end
+292        
+293              default: rdata_b_ext = {24'h00_0000, data_rdata_i[7:0]};
+           <font color = "grey">      ==> (Excluded)</font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>-5-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="wht">
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Excluded</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+299            unique case (data_type_q)
+                      <font color = "red">-1-</font>  
+300              2'b00:       data_rdata_ext = rdata_w_ext;
+           <font color = "green">      ==></font>
+301              2'b01:       data_rdata_ext = rdata_h_ext;
+           <font color = "green">      ==></font>
+302              2'b10,2'b11: data_rdata_ext = rdata_b_ext;
+           <font color = "green">      ==></font>
+303              default:     data_rdata_ext = rdata_w_ext;
+           <font color = "grey">      ==> (Excluded)</font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 2'b11 </td>
+<td>Covered</td>
+</tr><tr class="wht">
+<td align=center>default</td>
+<td>Excluded</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+332            unique case (ls_fsm_cs)
+                      <font color = "green">-1-</font>  
+333        
+334              IDLE: begin
+335                if (data_req_ex_i) begin
+                   <font color = "green">-2-</font>  
+336                  data_req_o = 1'b1;
+337                  pmp_err_d  = data_pmp_err_i;
+338                  lsu_err_d  = 1'b0;
+339                  if (data_gnt_i) begin
+                     <font color = "green">-3-</font>  
+340                    ctrl_update         = 1'b1;
+341                    addr_update         = 1'b1;
+342                    handle_misaligned_d = split_misaligned_access;
+343                    ls_fsm_ns           = split_misaligned_access ? WAIT_RVALID_MIS : WAIT_RVALID;
+                                                                     <font color = "green">-4-</font>  
+                                                                     <font color = "green">==></font>  
+                                                                     <font color = "green">==></font>  
+344                  end else begin
+345                    ls_fsm_ns           = split_misaligned_access ? WAIT_GNT_MIS    : WAIT_GNT;
+                                                                     <font color = "green">-5-</font>  
+                                                                     <font color = "green">==></font>  
+                                                                     <font color = "green">==></font>  
+346                  end
+347                end
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+348              end
+349        
+350              WAIT_GNT_MIS: begin
+351                data_req_o = 1'b1;
+352                // data_pmp_err_i is valid during the address phase of a request. An error will block the
+353                // external request and so a data_gnt_i might never be signalled. The registered version
+354                // pmp_err_q is only updated for new address phases and so can be used in WAIT_GNT* and
+355                // WAIT_RVALID* states
+356                if (data_gnt_i || pmp_err_q) begin
+                   <font color = "green">-6-</font>  
+357                  addr_update         = 1'b1;
+           <font color = "green">          ==></font>
+358                  ctrl_update         = 1'b1;
+359                  handle_misaligned_d = 1'b1;
+360                  ls_fsm_ns           = WAIT_RVALID_MIS;
+361                end
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+362              end
+363        
+364              WAIT_RVALID_MIS: begin
+365                // push out second request
+366                data_req_o = 1'b1;
+367                // tell ID/EX stage to update the address
+368                addr_incr_req_o = 1'b1;
+369        
+370                // first part rvalid is received, or gets a PMP error
+371                if (data_rvalid_i || pmp_err_q) begin
+                   <font color = "green">-7-</font>  
+372                  // Update the PMP error for the second part
+373                  pmp_err_d = data_pmp_err_i;
+374                  // Record the error status of the first part
+375                  lsu_err_d = data_err_i | pmp_err_q;
+376                  // Capture the first rdata for loads
+377                  rdata_update = ~data_we_q;
+378                  // If already granted, wait for second rvalid
+379                  ls_fsm_ns = data_gnt_i ? WAIT_RVALID : WAIT_GNT;
+                                            <font color = "green">-8-</font>  
+                                            <font color = "green">==></font>  
+                                            <font color = "green">==></font>  
+380                  // Update the address for the second part, if no error
+381                  addr_update = data_gnt_i & ~(data_err_i | pmp_err_q);
+382        
+383                end else begin
+384                  // first part rvalid is NOT received
+385                  if (data_gnt_i) begin
+                     <font color = "green">-9-</font>  
+386                    // second grant is received
+387                    ls_fsm_ns = WAIT_RVALID_DONE;
+           <font color = "green">            ==></font>
+388                  end
+                     MISSING_ELSE
+           <font color = "green">          ==></font>
+389                end
+390              end
+391        
+392              WAIT_GNT: begin
+393                // tell ID/EX stage to update the address
+394                addr_incr_req_o = handle_misaligned_q;
+395                data_req_o      = 1'b1;
+396                if (data_gnt_i || pmp_err_q) begin
+                   <font color = "green">-10-</font>  
+397                  ctrl_update = 1'b1;
+           <font color = "green">          ==></font>
+398                  // Update the address, unless there was an error
+399                  addr_update = ~lsu_err_q;
+400                  ls_fsm_ns   = WAIT_RVALID;
+401                end
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+402              end
+403        
+404              WAIT_RVALID: begin
+405                if (data_rvalid_i || pmp_err_q) begin
+                   <font color = "green">-11-</font>  
+406                  data_valid_o        = 1'b1;
+           <font color = "green">          ==></font>
+407                  // Data error from either part
+408                  data_or_pmp_err     = lsu_err_q | data_err_i | pmp_err_q;
+409                  handle_misaligned_d = 1'b0;
+410                  ls_fsm_ns           = IDLE;
+411                end else begin
+412                  ls_fsm_ns           = WAIT_RVALID;
+           <font color = "green">          ==></font>
+413                end
+414              end
+415        
+416              WAIT_RVALID_DONE: begin
+417                // tell ID/EX stage to update the address (to make sure the
+418                // second address can be captured correctly for mtval and PMP checking)
+419                addr_incr_req_o = 1'b1;
+420                // Wait for the first rvalid, second request is already granted
+421                if (data_rvalid_i) begin
+                   <font color = "green">-12-</font>  
+422                  // Update the pmp error for the second part
+423                  pmp_err_d = data_pmp_err_i;
+           <font color = "green">          ==></font>
+424                  // The first part cannot see a PMP error in this state
+425                  lsu_err_d = data_err_i;
+426                  // Now we can update the address for the second part if no error
+427                  addr_update = ~data_err_i;
+428                  // Capture the first rdata for loads
+429                  rdata_update = ~data_we_q;
+430                  // Wait for second rvalid
+431                  ls_fsm_ns = WAIT_RVALID;
+432                end
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+433              end
+434        
+435              default: begin
+436                ls_fsm_ns = IDLE;
+           <font color = "green">        ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>-5-</th><th nowrap width=80>-6-</th><th nowrap width=80>-7-</th><th nowrap width=80>-8-</th><th nowrap width=80>-9-</th><th nowrap width=80>-10-</th><th nowrap width=80>-11-</th><th nowrap width=80>-12-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>IDLE </td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IDLE </td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IDLE </td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IDLE </td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IDLE </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_GNT_MIS </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_GNT_MIS </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_RVALID_MIS </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_RVALID_MIS </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_RVALID_MIS </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_RVALID_MIS </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_GNT </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_GNT </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_RVALID </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_RVALID </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_RVALID_DONE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_RVALID_DONE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+443            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+444              ls_fsm_cs           <= IDLE;
+           <font color = "green">      ==></font>
+445              handle_misaligned_q <= '0;
+446              pmp_err_q           <= '0;
+447              lsu_err_q           <= '0;
+448            end else begin
+449              ls_fsm_cs           <= ls_fsm_ns;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<hr>
+<a name="inst_tag_14_Assert"></a>
+<b>Assert Coverage for Instance : <a href="mod14.html#inst_tag_14" >core_ibex_tb_top.dut.u_ibex_core.load_store_unit_i<img src="ex.gif" class="icon"></a></b><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Total</th><th nowrap width=80>Attempted</th><th nowrap width=80>Percent</th><th nowrap width=80>Succeeded/Matched</th><th nowrap width=80>Percent</th></tr><tr>
+<td class="wht cl"><a href="#212070190" >Assertions</a></td>
+<td class="wht cl rt">4</td>
+<td class="s10 cl rt">4</td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">4</td>
+<td class="s10 cl rt">100.00</td>
+</tr><tr>
+<td class="wht cl"><a href="#665338073" >Cover properties</a></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+</tr><tr>
+<td class="wht cl"><a href="#1990267852" >Cover sequences</a></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+</tr><tr>
+<td class="wht cl"><b>Total</b></td>
+<td class="wht cl rt">4</td>
+<td class="s10 cl rt">4</td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">4</td>
+<td class="s10 cl rt">100.00</td>
+</tr></table><br clear=all>
+<br clear=all>
+<hr>
+<br clear=all>
+<a name="212070190"></a>
+<b>Assertion Details</b><br clear=all>
+<br clear=all>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">Name</td><td>Attempts</td><td>Real Successes</td><td>Failures</td><td>Incomplete</td></tr><tr>
+<td class="wht cl"><a name="393483282"></a>
+unnamed$$_68</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">4648786</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr><tr>
+<td class="wht cl"><a name="184784979"></a>
+unnamed$$_69</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">1803</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr><tr>
+<td class="wht cl"><a name="255222185"></a>
+unnamed$$_70</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">27896040</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr><tr>
+<td class="wht cl"><a name="46523882"></a>
+unnamed$$_71</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">27896040</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr></table><br clear=all>
+</div>
+</div>
+<div class="ui-layout-center-inner-north">
+<div id="center-bread-crumb" class="breadCrumb module urg-margin-bottom">
+  <ul name="inst_tag_14">
+    <li>
+      <a href="#inst_tag_14_Line">Line</a>    </li>
+    <li>
+      <a href="#inst_tag_14_FSM">FSM</a>    </li>
+    <li>
+      <a href="#inst_tag_14_Branch">Branch</a>    </li>
+    <li>
+      <a href="#inst_tag_14_Assert">Assert</a>    </li>
+  </ul>
+  <ul name="tag_ibex_load_store_unit">
+    <li>
+      <a href="#Line">Line</a>    </li>
+    <li>
+      <a href="#FSM">FSM</a>    </li>
+    <li>
+      <a href="#Branch">Branch</a>    </li>
+    <li>
+      <a href="#Assert">Assert</a>    </li>
+  </ul>
+</div>
+</div>
+</div>
+<div class="ui-layout-south">
+<table align=center><tr><td class="s0 cl">0%</td>
+<td class="s1 cl">10%</td>
+<td class="s2 cl">20%</td>
+<td class="s3 cl">30%</td>
+<td class="s4 cl">40%</td>
+<td class="s5 cl">50%</td>
+<td class="s6 cl">60%</td>
+<td class="s7 cl">70%</td>
+<td class="s8 cl">80%</td>
+<td class="s9 cl">90%</td>
+<td class="s10 cl">100%</td></tr></table></div>
+</body>
+</html>

@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Author" content="<username>"> <meta name="GENERATOR" content="urg/version [en] (platform name) [urg]">
+<title>Unified Coverage Report :: Module :: ibex_core</title>
+<link type="text/css" rel="stylesheet" href="css/.urg.css">
+<link type="text/css" rel="stylesheet" href="css/.layout.css">
+<link type="text/css" rel="stylesheet" href="css/.breadcrumb.css">
+<script type="text/javascript" src="js/.jquery.js"></script>
+<script type="text/javascript" src="js/.jquery-ui.js"></script>
+<script type="text/javascript" src="js/.sortable.js"></script>
+<script type="text/javascript" src="js/.layout.js"></script>
+<script type="text/javascript" src="js/.breadcrumb.js"></script>
+<script type="text/javascript">
+var layout, westLayout, centerLayout;
+$(document).ready(function () {
+  if ($("#north-bread-crumb")) {
+    $("#north-bread-crumb").jBreadCrumb({easing:'swing'})
+  }
+  layout = $("body").layout({ 
+    resizable: true,
+    spacing_open: 4,
+    spacing_closed: 4,
+    north: {
+      size: 76
+    },
+    south: {
+      size: 45,
+      initClosed: true
+    },
+    west: {
+      size: 500,
+      resizable: true,
+      initClosed: false
+    }
+  });
+  centerLayout = $('div.ui-layout-center').layout({
+    north__paneSelector: ".ui-layout-center-inner-north",
+    center__paneSelector: ".ui-layout-center-inner-center", 
+    north__size: 50,
+    spacing_open: 4,
+    spacing_closed: 4
+  });
+});
+</script>
+</head>
+<body onLoad="initPage();"><div class="ui-layout-north">
+<div class="logo"></div>
+<center class="pagetitle">Module Definition</center>
+<div align="center"><a href="dashboard.html" ><b>dashboard</b></a> | <a href="hierarchy.html" ><b>hierarchy</b></a> | <a href="modlist.html" ><b>modlist</b></a> | groups | <a href="tests.html" ><b>tests</b></a> | <a href="asserts.html" ><b>asserts</b></a></div>
+
+</div>
+<div class="ui-layout-west">
+<div name='tag_ibex_core'>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module : <a href="#"  onclick="showContent('tag_ibex_core')">ibex_core</a></span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s9 cl rt"> 98.10</td>
+<td class="s9 cl rt"><a href="mod9.html#Line" > 99.07</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"><a href="mod9.html#Branch" > 97.14</a></td>
+<td class="wht cl rt"></td>
+</tr></table><br clear=all>
+<span class=repname>Source File(s) : </span>
+<br clear=all>
+<a href="javascript:void(0);"  onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_core.sv')">/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_core.sv</a><br clear=all>
+<br clear=all>
+<span class=repname>Module self-instances :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="wht cl wordwrap"><a href="mod9.html#inst_tag_9"  onclick="showContent('inst_tag_9')">core_ibex_tb_top.dut.u_ibex_core</a></td>
+<td class="s9 cl rt"> 98.10</td>
+<td class="s9 cl rt"><a href="mod9.html#Line" > 99.07</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"><a href="mod9.html#Branch" > 97.14</a></td>
+<td class="wht cl rt"></td>
+</tr></table></div>
+</div>
+<br clear=all>
+<div name='tag_ibex_core'>
+<hr>
+<a name="inst_tag_9"></a>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module Instance : <a href="hierarchy.html#tag_urg_inst_9" >core_ibex_tb_top.dut.u_ibex_core</a></span>
+<br clear=all>
+<br clear=all>
+<span class=repname>Instance :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s9 cl rt"> 98.10</td>
+<td class="s9 cl rt"><a href="mod9.html#Line" > 99.07</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"><a href="mod9.html#Branch" > 97.14</a></td>
+<td class="wht cl rt"></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Instance's subtree :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s9 cl rt"> 94.53</td>
+<td class="s9 cl rt"> 99.01</td>
+<td class="wht cl rt"></td>
+<td class="s8 cl rt"> 81.97</td>
+<td class="s9 cl rt"> 97.15</td>
+<td class="s10 cl rt">100.00</td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Parent : </span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td><td class="alfsrt">NAME</td></tr><tr>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td><a href="mod4.html#inst_tag_4" >dut</a></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Subtrees :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="wht cl wordwrap"><a href="mod11.html#inst_tag_11" id="tag_urg_inst_11">core_clock_gate_i</a></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+</tr><tr>
+<td class="wht cl wordwrap"><a href="mod37.html#inst_tag_38" id="tag_urg_inst_38">cs_registers_i<img src="ex.gif" class="icon"></a></td>
+<td class="s9 cl rt"> 94.75</td>
+<td class="s9 cl rt"> 97.45</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"> 92.05</td>
+<td class="wht cl rt"></td>
+</tr><tr>
+<td class="wht cl wordwrap"><a href="mod25.html#inst_tag_26" id="tag_urg_inst_26">ex_block_i</a></td>
+<td class="s9 cl rt"> 96.26</td>
+<td class="s9 cl rt"> 99.32</td>
+<td class="wht cl rt"></td>
+<td class="s8 cl rt"> 89.47</td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+</tr><tr>
+<td class="wht cl wordwrap"><a href="mod34.html#inst_tag_35" id="tag_urg_inst_35">id_stage_i</a></td>
+<td class="s9 cl rt"> 90.39</td>
+<td class="s9 cl rt"> 99.07</td>
+<td class="wht cl rt"></td>
+<td class="s6 cl rt"> 66.67</td>
+<td class="s9 cl rt"> 95.83</td>
+<td class="s10 cl rt">100.00</td>
+</tr><tr>
+<td class="wht cl wordwrap"><a href="mod21.html#inst_tag_22" id="tag_urg_inst_22">if_stage_i<img src="ex.gif" class="icon"></a></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+</tr><tr>
+<td class="wht cl wordwrap"><a href="mod14.html#inst_tag_14" id="tag_urg_inst_14">load_store_unit_i<img src="ex.gif" class="icon"></a></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+</tr></table><br clear=all>
+</div>
+</div>
+<hr>
+Since this is the module's only instance, the coverage report is the same as for the module.</div>
+<div class="ui-layout-center">
+<div class="ui-layout-center-inner-center">
+<div name='tag_ibex_core'>
+<a name="Line"></a>
+Line Coverage for Module : <a href="mod9.html" >ibex_core</a><br clear=all>
+<table class="noborder">
+<col width="122">
+<col span="4" width="82">
+<tr><th></th><th>Line No.</th><th>Total</th><th>Covered</th><th>Percent</th></tr>
+<tr class="s9"><td class="lf">TOTAL</td><td></td><td>107</td><td>106</td><td>99.07</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>274</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>704</td><td>41</td><td>41</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>751</td><td>7</td><td>7</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>762</td><td>7</td><td>7</td><td>100.00</td></tr>
+<tr class="s7"><td class="lf">ALWAYS</td><td>774</td><td>5</td><td>4</td><td>80.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>783</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>792</td><td>5</td><td>5</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>801</td><td>5</td><td>5</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>813</td><td>10</td><td>10</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>831</td><td>5</td><td>5</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>841</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>848</td><td>5</td><td>5</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>863</td><td>5</td><td>5</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>876</td><td>3</td><td>3</td><td>100.00</td></tr>
+</table>
+<pre class="code"><br clear=all>
+273                       always_ff @(posedge clk_i or negedge rst_ni) begin
+274        1/1              if (!rst_ni) begin
+275        1/1                core_busy_q &lt;= 1'b0;
+276                         end else begin
+277        1/1                core_busy_q &lt;= core_busy_d;
+278                         end
+279                       end
+280                     
+281                       assign clock_en     = core_busy_q | debug_req_i | irq_pending | irq_nm_i;
+282                       assign core_sleep_o = ~clock_en;
+283                     
+284                       // main clock gate of the core
+285                       // generates all clocks except the one for the debug unit which is
+286                       // independent
+287                       prim_clock_gating core_clock_gate_i (
+288                           .clk_i     ( clk_i           ),
+289                           .en_i      ( clock_en        ),
+290                           .test_en_i ( test_en_i       ),
+291                           .clk_o     ( clk             )
+292                       );
+293                     
+294                       //////////////
+295                       // IF stage //
+296                       //////////////
+297                     
+298                       ibex_if_stage #(
+299                           .DmHaltAddr       ( DmHaltAddr      ),
+300                           .DmExceptionAddr  ( DmExceptionAddr )
+301                       ) if_stage_i (
+302                           .clk_i                    ( clk                    ),
+303                           .rst_ni                   ( rst_ni                 ),
+304                     
+305                           .boot_addr_i              ( boot_addr_i            ),
+306                           .req_i                    ( instr_req_int          ), // instruction request control
+307                     
+308                           // instruction cache interface
+309                           .instr_req_o              ( instr_req_out          ),
+310                           .instr_addr_o             ( instr_addr_o           ),
+311                           .instr_gnt_i              ( instr_gnt_i            ),
+312                           .instr_rvalid_i           ( instr_rvalid_i         ),
+313                           .instr_rdata_i            ( instr_rdata_i          ),
+314                           .instr_err_i              ( instr_err_i            ),
+315                           .instr_pmp_err_i          ( pmp_req_err[PMP_I]     ),
+316                     
+317                           // outputs to ID stage
+318                           .instr_valid_id_o         ( instr_valid_id         ),
+319                           .instr_new_id_o           ( instr_new_id           ),
+320                           .instr_rdata_id_o         ( instr_rdata_id         ),
+321                           .instr_rdata_c_id_o       ( instr_rdata_c_id       ),
+322                           .instr_is_compressed_id_o ( instr_is_compressed_id ),
+323                           .instr_fetch_err_o        ( instr_fetch_err        ),
+324                           .illegal_c_insn_id_o      ( illegal_c_insn_id      ),
+325                           .pc_if_o                  ( pc_if                  ),
+326                           .pc_id_o                  ( pc_id                  ),
+327                     
+328                           // control signals
+329                           .instr_valid_clear_i      ( instr_valid_clear      ),
+330                           .pc_set_i                 ( pc_set                 ),
+331                           .pc_mux_i                 ( pc_mux_id              ),
+332                           .exc_pc_mux_i             ( exc_pc_mux_id          ),
+333                           .exc_cause                ( exc_cause              ),
+334                     
+335                           // jump targets
+336                           .jump_target_ex_i         ( jump_target_ex         ),
+337                     
+338                           // CSRs
+339                           .csr_mepc_i               ( csr_mepc               ), // exception return address
+340                           .csr_depc_i               ( csr_depc               ), // debug return address
+341                           .csr_mtvec_i              ( csr_mtvec              ), // trap-vector base address
+342                           .csr_mtvec_init_o         ( csr_mtvec_init         ),
+343                     
+344                           // pipeline stalls
+345                           .id_in_ready_i            ( id_in_ready            ),
+346                     
+347                           .if_busy_o                ( if_busy                ),
+348                           .perf_imiss_o             ( perf_imiss             )
+349                       );
+350                     
+351                       // Qualify the instruction request with PMP error
+352                       assign instr_req_o = instr_req_out &amp; ~pmp_req_err[PMP_I];
+353                     
+354                       //////////////
+355                       // ID stage //
+356                       //////////////
+357                     
+358                       ibex_id_stage #(
+359                           .RV32E ( RV32E ),
+360                           .RV32M ( RV32M )
+361                       ) id_stage_i (
+362                           .clk_i                        ( clk                    ),
+363                           .rst_ni                       ( rst_ni                 ),
+364                     
+365                           .test_en_i                    ( test_en_i              ),
+366                     
+367                           // Processor Enable
+368                           .fetch_enable_i               ( fetch_enable_i         ),
+369                           .ctrl_busy_o                  ( ctrl_busy              ),
+370                           .illegal_insn_o               ( illegal_insn_id        ),
+371                     
+372                           // from/to IF-ID pipeline register
+373                           .instr_valid_i                ( instr_valid_id         ),
+374                           .instr_new_i                  ( instr_new_id           ),
+375                           .instr_rdata_i                ( instr_rdata_id         ),
+376                           .instr_rdata_c_i              ( instr_rdata_c_id       ),
+377                           .instr_is_compressed_i        ( instr_is_compressed_id ),
+378                     
+379                           // Jumps and branches
+380                           .branch_decision_i            ( branch_decision        ),
+381                     
+382                           // IF and ID control signals
+383                           .id_in_ready_o                ( id_in_ready            ),
+384                           .instr_valid_clear_o          ( instr_valid_clear      ),
+385                           .instr_req_o                  ( instr_req_int          ),
+386                           .pc_set_o                     ( pc_set                 ),
+387                           .pc_mux_o                     ( pc_mux_id              ),
+388                           .exc_pc_mux_o                 ( exc_pc_mux_id          ),
+389                           .exc_cause_o                  ( exc_cause              ),
+390                     
+391                           .instr_fetch_err_i            ( instr_fetch_err        ),
+392                           .illegal_c_insn_i             ( illegal_c_insn_id      ),
+393                     
+394                           .pc_id_i                      ( pc_id                  ),
+395                     
+396                           // Stalls
+397                           .ex_valid_i                   ( ex_valid               ),
+398                           .lsu_valid_i                  ( lsu_data_valid         ),
+399                     
+400                           .alu_operator_ex_o            ( alu_operator_ex        ),
+401                           .alu_operand_a_ex_o           ( alu_operand_a_ex       ),
+402                           .alu_operand_b_ex_o           ( alu_operand_b_ex       ),
+403                     
+404                           .mult_en_ex_o                 ( mult_en_ex             ),
+405                           .div_en_ex_o                  ( div_en_ex              ),
+406                           .multdiv_operator_ex_o        ( multdiv_operator_ex    ),
+407                           .multdiv_signed_mode_ex_o     ( multdiv_signed_mode_ex ),
+408                           .multdiv_operand_a_ex_o       ( multdiv_operand_a_ex   ),
+409                           .multdiv_operand_b_ex_o       ( multdiv_operand_b_ex   ),
+410                     
+411                           // CSR ID/EX
+412                           .csr_access_o                 ( csr_access             ),
+413                           .csr_op_o                     ( csr_op                 ),
+414                           .csr_save_if_o                ( csr_save_if            ), // control signal to save PC
+415                           .csr_save_id_o                ( csr_save_id            ), // control signal to save PC
+416                           .csr_restore_mret_id_o        ( csr_restore_mret_id    ), // restore mstatus upon DRET
+417                           .csr_restore_dret_id_o        ( csr_restore_dret_id    ), // restore mstatus upon MRET
+418                           .csr_save_cause_o             ( csr_save_cause         ),
+419                           .csr_mtval_o                  ( csr_mtval              ),
+420                           .priv_mode_i                  ( priv_mode_id           ),
+421                           .csr_mstatus_tw_i             ( csr_mstatus_tw         ),
+422                           .illegal_csr_insn_i           ( illegal_csr_insn_id    ),
+423                     
+424                           // LSU
+425                           .data_req_ex_o                ( data_req_ex            ), // to load store unit
+426                           .data_we_ex_o                 ( data_we_ex             ), // to load store unit
+427                           .data_type_ex_o               ( data_type_ex           ), // to load store unit
+428                           .data_sign_ext_ex_o           ( data_sign_ext_ex       ), // to load store unit
+429                           .data_wdata_ex_o              ( data_wdata_ex          ), // to load store unit
+430                     
+431                           .lsu_addr_incr_req_i          ( lsu_addr_incr_req      ),
+432                           .lsu_addr_last_i              ( lsu_addr_last          ),
+433                     
+434                           .lsu_load_err_i               ( lsu_load_err           ),
+435                           .lsu_store_err_i              ( lsu_store_err          ),
+436                     
+437                           // Interrupt Signals
+438                           .csr_mstatus_mie_i            ( csr_mstatus_mie        ),
+439                           .csr_msip_i                   ( csr_msip               ),
+440                           .csr_mtip_i                   ( csr_mtip               ),
+441                           .csr_meip_i                   ( csr_meip               ),
+442                           .csr_mfip_i                   ( csr_mfip               ),
+443                           .irq_pending_i                ( irq_pending            ),
+444                           .irq_nm_i                     ( irq_nm_i               ),
+445                           .nmi_mode_o                   ( nmi_mode               ),
+446                     
+447                           // Debug Signal
+448                           .debug_mode_o                 ( debug_mode             ),
+449                           .debug_cause_o                ( debug_cause            ),
+450                           .debug_csr_save_o             ( debug_csr_save         ),
+451                           .debug_req_i                  ( debug_req_i            ),
+452                           .debug_single_step_i          ( debug_single_step      ),
+453                           .debug_ebreakm_i              ( debug_ebreakm          ),
+454                           .debug_ebreaku_i              ( debug_ebreaku          ),
+455                           .trigger_match_i              ( trigger_match          ),
+456                     
+457                           // write data to commit in the register file
+458                           .regfile_wdata_lsu_i          ( regfile_wdata_lsu      ),
+459                           .regfile_wdata_ex_i           ( regfile_wdata_ex       ),
+460                           .csr_rdata_i                  ( csr_rdata              ),
+461                     
+462                     `ifdef RVFI
+463                           .rfvi_reg_raddr_ra_o          ( rvfi_rs1_addr_id       ),
+464                           .rfvi_reg_rdata_ra_o          ( rvfi_rs1_data_id       ),
+465                           .rfvi_reg_raddr_rb_o          ( rvfi_rs2_addr_id       ),
+466                           .rfvi_reg_rdata_rb_o          ( rvfi_rs2_data_id       ),
+467                           .rfvi_reg_waddr_rd_o          ( rvfi_rd_addr_id        ),
+468                           .rfvi_reg_wdata_rd_o          ( rvfi_rd_wdata_id       ),
+469                           .rfvi_reg_we_o                ( rvfi_rd_we_id          ),
+470                     `endif
+471                     
+472                           // Performance Counters
+473                           .perf_jump_o                  ( perf_jump              ),
+474                           .perf_branch_o                ( perf_branch            ),
+475                           .perf_tbranch_o               ( perf_tbranch           ),
+476                           .instr_ret_o                  ( instr_ret              ),
+477                           .instr_ret_compressed_o       ( instr_ret_compressed   )
+478                       );
+479                     
+480                       // for RVFI only
+481                       assign unused_illegal_insn_id = illegal_insn_id;
+482                     
+483                       ibex_ex_block #(
+484                           .RV32M                      ( RV32M                    ),
+485                           .MultiplierImplementation   ( MultiplierImplementation )
+486                       ) ex_block_i (
+487                           .clk_i                      ( clk                      ),
+488                           .rst_ni                     ( rst_ni                   ),
+489                     
+490                           // ALU signal from ID stage
+491                           .alu_operator_i             ( alu_operator_ex          ),
+492                           .alu_operand_a_i            ( alu_operand_a_ex         ),
+493                           .alu_operand_b_i            ( alu_operand_b_ex         ),
+494                     
+495                           // Multipler/Divider signal from ID stage
+496                           .multdiv_operator_i         ( multdiv_operator_ex      ),
+497                           .mult_en_i                  ( mult_en_ex               ),
+498                           .div_en_i                   ( div_en_ex                ),
+499                           .multdiv_signed_mode_i      ( multdiv_signed_mode_ex   ),
+500                           .multdiv_operand_a_i        ( multdiv_operand_a_ex     ),
+501                           .multdiv_operand_b_i        ( multdiv_operand_b_ex     ),
+502                     
+503                           // Outputs
+504                           .alu_adder_result_ex_o      ( alu_adder_result_ex      ), // to LSU
+505                           .regfile_wdata_ex_o         ( regfile_wdata_ex         ), // to ID
+506                     
+507                           .jump_target_o              ( jump_target_ex           ), // to IF
+508                           .branch_decision_o          ( branch_decision          ), // to ID
+509                     
+510                           .ex_valid_o                 ( ex_valid                 )
+511                       );
+512                     
+513                       /////////////////////
+514                       // Load/store unit //
+515                       /////////////////////
+516                     
+517                       assign data_req_o = data_req_out &amp; ~pmp_req_err[PMP_D];
+518                     
+519                       ibex_load_store_unit  load_store_unit_i (
+520                           .clk_i                 ( clk                 ),
+521                           .rst_ni                ( rst_ni              ),
+522                     
+523                           // data interface
+524                           .data_req_o            ( data_req_out        ),
+525                           .data_gnt_i            ( data_gnt_i          ),
+526                           .data_rvalid_i         ( data_rvalid_i       ),
+527                           .data_err_i            ( data_err_i          ),
+528                           .data_pmp_err_i        ( pmp_req_err[PMP_D]  ),
+529                     
+530                           .data_addr_o           ( data_addr_o         ),
+531                           .data_we_o             ( data_we_o           ),
+532                           .data_be_o             ( data_be_o           ),
+533                           .data_wdata_o          ( data_wdata_o        ),
+534                           .data_rdata_i          ( data_rdata_i        ),
+535                     
+536                           // signals to/from ID/EX stage
+537                           .data_we_ex_i          ( data_we_ex          ),
+538                           .data_type_ex_i        ( data_type_ex        ),
+539                           .data_wdata_ex_i       ( data_wdata_ex       ),
+540                           .data_sign_ext_ex_i    ( data_sign_ext_ex    ),
+541                     
+542                           .data_rdata_ex_o       ( regfile_wdata_lsu   ),
+543                           .data_req_ex_i         ( data_req_ex         ),
+544                     
+545                           .adder_result_ex_i     ( alu_adder_result_ex ),
+546                     
+547                           .addr_incr_req_o       ( lsu_addr_incr_req   ),
+548                           .addr_last_o           ( lsu_addr_last       ),
+549                           .data_valid_o          ( lsu_data_valid      ),
+550                     
+551                           // exception signals
+552                           .load_err_o            ( lsu_load_err        ),
+553                           .store_err_o           ( lsu_store_err       ),
+554                     
+555                           .busy_o                ( lsu_busy            )
+556                       );
+557                     
+558                     
+559                       /////////////////////////////////////////
+560                       // CSRs (Control and Status Registers) //
+561                       /////////////////////////////////////////
+562                     
+563                       assign csr_wdata  = alu_operand_a_ex;
+564                       assign csr_addr   = csr_num_e'(csr_access ? alu_operand_b_ex[11:0] : 12'b0);
+565                     
+566                       assign perf_load  = data_req_o &amp; data_gnt_i &amp; (~data_we_o);
+567                       assign perf_store = data_req_o &amp; data_gnt_i &amp; data_we_o;
+568                     
+569                       // CSR access is qualified by instruction fetch error
+570                       assign valid_csr_id = instr_new_id &amp; ~instr_fetch_err;
+571                     
+572                       ibex_cs_registers #(
+573                           .DbgTriggerEn     ( DbgTriggerEn     ),
+574                           .MHPMCounterNum   ( MHPMCounterNum   ),
+575                           .MHPMCounterWidth ( MHPMCounterWidth ),
+576                           .PMPEnable        ( PMPEnable        ),
+577                           .PMPGranularity   ( PMPGranularity   ),
+578                           .PMPNumRegions    ( PMPNumRegions    ),
+579                           .RV32E            ( RV32E            ),
+580                           .RV32M            ( RV32M            )
+581                       ) cs_registers_i (
+582                           .clk_i                   ( clk                    ),
+583                           .rst_ni                  ( rst_ni                 ),
+584                     
+585                           // Hart ID from outside
+586                           .hart_id_i               ( hart_id_i              ),
+587                           .priv_mode_id_o          ( priv_mode_id           ),
+588                           .priv_mode_if_o          ( priv_mode_if           ),
+589                           .priv_mode_lsu_o         ( priv_mode_lsu          ),
+590                     
+591                           // mtvec
+592                           .csr_mtvec_o             ( csr_mtvec              ),
+593                           .csr_mtvec_init_i        ( csr_mtvec_init         ),
+594                           .boot_addr_i             ( boot_addr_i            ),
+595                     
+596                           // Interface to CSRs (SRAM like)
+597                           .csr_access_i            ( csr_access             ),
+598                           .csr_addr_i              ( csr_addr               ),
+599                           .csr_wdata_i             ( csr_wdata              ),
+600                           .csr_op_i                ( csr_op                 ),
+601                           .csr_rdata_o             ( csr_rdata              ),
+602                     
+603                           // Interrupt related control signals
+604                           .irq_software_i          ( irq_software_i         ),
+605                           .irq_timer_i             ( irq_timer_i            ),
+606                           .irq_external_i          ( irq_external_i         ),
+607                           .irq_fast_i              ( irq_fast_i             ),
+608                           .irq_pending_o           ( irq_pending            ),
+609                           .nmi_mode_i              ( nmi_mode               ),
+610                           .csr_msip_o              ( csr_msip               ),
+611                           .csr_mtip_o              ( csr_mtip               ),
+612                           .csr_meip_o              ( csr_meip               ),
+613                           .csr_mfip_o              ( csr_mfip               ),
+614                           .csr_mstatus_mie_o       ( csr_mstatus_mie        ),
+615                           .csr_mstatus_tw_o        ( csr_mstatus_tw         ),
+616                           .csr_mepc_o              ( csr_mepc               ),
+617                     
+618                           // PMP
+619                           .csr_pmp_cfg_o           ( csr_pmp_cfg            ),
+620                           .csr_pmp_addr_o          ( csr_pmp_addr           ),
+621                     
+622                           // debug
+623                           .csr_depc_o              ( csr_depc               ),
+624                           .debug_mode_i            ( debug_mode             ),
+625                           .debug_cause_i           ( debug_cause            ),
+626                           .debug_csr_save_i        ( debug_csr_save         ),
+627                           .debug_single_step_o     ( debug_single_step      ),
+628                           .debug_ebreakm_o         ( debug_ebreakm          ),
+629                           .debug_ebreaku_o         ( debug_ebreaku          ),
+630                           .trigger_match_o         ( trigger_match          ),
+631                     
+632                           .pc_if_i                 ( pc_if                  ),
+633                           .pc_id_i                 ( pc_id                  ),
+634                     
+635                           .csr_save_if_i           ( csr_save_if            ),
+636                           .csr_save_id_i           ( csr_save_id            ),
+637                           .csr_restore_mret_i      ( csr_restore_mret_id    ),
+638                           .csr_restore_dret_i      ( csr_restore_dret_id    ),
+639                           .csr_save_cause_i        ( csr_save_cause         ),
+640                           .csr_mcause_i            ( exc_cause              ),
+641                           .csr_mtval_i             ( csr_mtval              ),
+642                           .illegal_csr_insn_o      ( illegal_csr_insn_id    ),
+643                     
+644                           .instr_new_id_i          ( valid_csr_id           ),
+645                     
+646                           // performance counter related signals
+647                           .instr_ret_i             ( instr_ret              ),
+648                           .instr_ret_compressed_i  ( instr_ret_compressed   ),
+649                           .imiss_i                 ( perf_imiss             ),
+650                           .pc_set_i                ( pc_set                 ),
+651                           .jump_i                  ( perf_jump              ),
+652                           .branch_i                ( perf_branch            ),
+653                           .branch_taken_i          ( perf_tbranch           ),
+654                           .mem_load_i              ( perf_load              ),
+655                           .mem_store_i             ( perf_store             ),
+656                           .lsu_busy_i              ( lsu_busy               )
+657                       );
+658                     
+659                       if (PMPEnable) begin : g_pmp
+660                         logic [33:0] pmp_req_addr [PMP_NUM_CHAN];
+661                         pmp_req_e    pmp_req_type [PMP_NUM_CHAN];
+662                         priv_lvl_e   pmp_priv_lvl [PMP_NUM_CHAN];
+663                     
+664                         assign pmp_req_addr[PMP_I] = {2'b00,instr_addr_o[31:0]};
+665                         assign pmp_req_type[PMP_I] = PMP_ACC_EXEC;
+666                         assign pmp_priv_lvl[PMP_I] = priv_mode_if;
+667                         assign pmp_req_addr[PMP_D] = {2'b00,data_addr_o[31:0]};
+668                         assign pmp_req_type[PMP_D] = data_we_o ? PMP_ACC_WRITE : PMP_ACC_READ;
+669                         assign pmp_priv_lvl[PMP_D] = priv_mode_lsu;
+670                     
+671                         ibex_pmp #(
+672                             .PMPGranularity        ( PMPGranularity ),
+673                             .PMPNumChan            ( PMP_NUM_CHAN   ),
+674                             .PMPNumRegions         ( PMPNumRegions  )
+675                         ) pmp_i (
+676                             .clk_i                 ( clk            ),
+677                             .rst_ni                ( rst_ni         ),
+678                             // Interface to CSRs
+679                             .csr_pmp_cfg_i         ( csr_pmp_cfg    ),
+680                             .csr_pmp_addr_i        ( csr_pmp_addr   ),
+681                             .priv_mode_i           ( pmp_priv_lvl   ),
+682                             // Access checking channels
+683                             .pmp_req_addr_i        ( pmp_req_addr   ),
+684                             .pmp_req_type_i        ( pmp_req_type   ),
+685                             .pmp_req_err_o         ( pmp_req_err    )
+686                         );
+687                       end else begin : g_no_pmp
+688                         // Unused signal tieoff
+689                         priv_lvl_e unused_priv_lvl_if, unused_priv_lvl_ls;
+690                         logic [33:0] unused_csr_pmp_addr [PMPNumRegions];
+691                         pmp_cfg_t    unused_csr_pmp_cfg  [PMPNumRegions];
+692                         assign unused_priv_lvl_if = priv_mode_if;
+693                         assign unused_priv_lvl_ls = priv_mode_lsu;
+694                         assign unused_csr_pmp_addr = csr_pmp_addr;
+695                         assign unused_csr_pmp_cfg = csr_pmp_cfg;
+696                     
+697                         // Output tieoff
+698                         assign pmp_req_err[PMP_I] = 1'b0;
+699                         assign pmp_req_err[PMP_D] = 1'b0;
+700                       end
+701                     
+702                     `ifdef RVFI
+703                       always_ff @(posedge clk or negedge rst_ni) begin
+704        1/1              if (!rst_ni) begin
+705        1/1                rvfi_halt              &lt;= '0;
+706        1/1                rvfi_trap              &lt;= '0;
+707        1/1                rvfi_intr              &lt;= '0;
+708        1/1                rvfi_order             &lt;= '0;
+709        1/1                rvfi_insn              &lt;= '0;
+710        1/1                rvfi_mode              &lt;= {PRIV_LVL_M};
+711        1/1                rvfi_rs1_addr          &lt;= '0;
+712        1/1                rvfi_rs2_addr          &lt;= '0;
+713        1/1                rvfi_pc_rdata          &lt;= '0;
+714        1/1                rvfi_pc_wdata          &lt;= '0;
+715        1/1                rvfi_mem_rmask         &lt;= '0;
+716        1/1                rvfi_mem_wmask         &lt;= '0;
+717        1/1                rvfi_valid             &lt;= '0;
+718        1/1                rvfi_rs1_rdata         &lt;= '0;
+719        1/1                rvfi_rs2_rdata         &lt;= '0;
+720        1/1                rvfi_rd_wdata          &lt;= '0;
+721        1/1                rvfi_rd_addr           &lt;= '0;
+722        1/1                rvfi_mem_rdata         &lt;= '0;
+723        1/1                rvfi_mem_wdata         &lt;= '0;
+724        1/1                rvfi_mem_addr          &lt;= '0;
+725                         end else begin
+726        1/1                rvfi_halt              &lt;= '0;
+727        1/1                rvfi_trap              &lt;= illegal_insn_id;
+728        1/1                rvfi_intr              &lt;= rvfi_intr_d;
+729        1/1                rvfi_order             &lt;= rvfi_order + 64'(rvfi_valid);
+730        1/1                rvfi_insn              &lt;= rvfi_insn_id;
+731        1/1                rvfi_mode              &lt;= {priv_mode_id};
+732        1/1                rvfi_rs1_addr          &lt;= rvfi_rs1_addr_id;
+733        1/1                rvfi_rs2_addr          &lt;= rvfi_rs2_addr_id;
+734        1/1                rvfi_pc_rdata          &lt;= pc_id;
+735        1/1                rvfi_pc_wdata          &lt;= pc_if;
+736        1/1                rvfi_mem_rmask         &lt;= rvfi_mem_mask_int;
+737        1/1                rvfi_mem_wmask         &lt;= data_we_o ? rvfi_mem_mask_int : 4'b0000;
+738        1/1                rvfi_valid             &lt;= instr_ret;
+739        1/1                rvfi_rs1_rdata         &lt;= rvfi_rs1_data_d;
+740        1/1                rvfi_rs2_rdata         &lt;= rvfi_rs2_data_d;
+741        1/1                rvfi_rd_wdata          &lt;= rvfi_rd_wdata_d;
+742        1/1                rvfi_rd_addr           &lt;= rvfi_rd_addr_d;
+743        1/1                rvfi_mem_rdata         &lt;= rvfi_mem_rdata_d;
+744        1/1                rvfi_mem_wdata         &lt;= rvfi_mem_wdata_d;
+745        1/1                rvfi_mem_addr          &lt;= rvfi_mem_addr_d;
+746                         end
+747                       end
+748                     
+749                       // Keep the mem data stable for each instruction cycle
+750                       always_comb begin
+751        1/1              if (rvfi_insn_new_d &amp;&amp; lsu_data_valid) begin
+752        1/1                rvfi_mem_addr_d  = alu_adder_result_ex;
+753        1/1                rvfi_mem_rdata_d = regfile_wdata_lsu;
+754        1/1                rvfi_mem_wdata_d = data_wdata_ex;
+755                         end else begin
+756        1/1                rvfi_mem_addr_d  = rvfi_mem_addr_q;
+757        1/1                rvfi_mem_rdata_d = rvfi_mem_rdata_q;
+758        1/1                rvfi_mem_wdata_d = rvfi_mem_wdata_q;
+759                         end
+760                       end
+761                       always_ff @(posedge clk or negedge rst_ni) begin
+762        1/1              if (!rst_ni) begin
+763        1/1                rvfi_mem_addr_q  &lt;= '0;
+764        1/1                rvfi_mem_rdata_q &lt;= '0;
+765        1/1                rvfi_mem_wdata_q &lt;= '0;
+766                         end else begin
+767        1/1                rvfi_mem_addr_q  &lt;= rvfi_mem_addr_d;
+768        1/1                rvfi_mem_rdata_q &lt;= rvfi_mem_rdata_d;
+769        1/1                rvfi_mem_wdata_q &lt;= rvfi_mem_wdata_d;
+770                         end
+771                       end
+772                       // Byte enable based on data type
+773                       always_comb begin
+774        1/1              unique case (data_type_ex)
+775        1/1                2'b00:   rvfi_mem_mask_int = 4'b1111;
+776        1/1                2'b01:   rvfi_mem_mask_int = 4'b0011;
+777        1/1                2'b10:   rvfi_mem_mask_int = 4'b0001;
+778        <font color = "red">0/1     ==>        default: rvfi_mem_mask_int = 4'b0000;</font>
+779                         endcase
+780                       end
+781                     
+782                       always_comb begin
+783        1/1              if (instr_is_compressed_id) begin
+784        1/1                rvfi_insn_id = {16'b0, instr_rdata_c_id};
+785                         end else begin
+786        1/1                rvfi_insn_id = instr_rdata_id;
+787                         end
+788                       end
+789                     
+790                       // Source register data are kept stable for each instruction cycle
+791                       always_comb begin
+792        1/1              if (instr_new_id) begin
+793        1/1                rvfi_rs1_data_d = rvfi_rs1_data_id;
+794        1/1                rvfi_rs2_data_d = rvfi_rs2_data_id;
+795                         end else begin
+796        1/1                rvfi_rs1_data_d = rvfi_rs1_data_q;
+797        1/1                rvfi_rs2_data_d = rvfi_rs2_data_q;
+798                         end
+799                       end
+800                       always_ff @(posedge clk or negedge rst_ni) begin
+801        1/1              if (!rst_ni) begin
+802        1/1                rvfi_rs1_data_q &lt;= '0;
+803        1/1                rvfi_rs2_data_q &lt;= '0;
+804                         end else begin
+805        1/1                rvfi_rs1_data_q &lt;= rvfi_rs1_data_d;
+806        1/1                rvfi_rs2_data_q &lt;= rvfi_rs2_data_d;
+807                         end
+808                       end
+809                     
+810                       // RD write register is refreshed only once per cycle and
+811                       // then it is kept stable for the cycle.
+812                       always_comb begin
+813        1/1              if (rvfi_insn_new_d) begin
+814        1/1                if (!rvfi_rd_we_id) begin
+815        1/1                  rvfi_rd_addr_d    = '0;
+816        1/1                  rvfi_rd_wdata_d   = '0;
+817                           end else begin
+818        1/1                  rvfi_rd_addr_d = rvfi_rd_addr_id;
+819        1/1                  if (rvfi_rd_addr_id == 5'h0) begin
+820        1/1                    rvfi_rd_wdata_d = '0;
+821                             end else begin
+822        1/1                    rvfi_rd_wdata_d = rvfi_rd_wdata_id;
+823                             end
+824                           end
+825                         end else begin
+826        1/1                rvfi_rd_addr_d    = rvfi_rd_addr_q;
+827        1/1                rvfi_rd_wdata_d   = rvfi_rd_wdata_q;
+828                         end
+829                       end
+830                       always_ff @(posedge clk or negedge rst_ni) begin
+831        1/1              if (!rst_ni) begin
+832        1/1                rvfi_rd_addr_q    &lt;= '0;
+833        1/1                rvfi_rd_wdata_q   &lt;= '0;
+834                         end else begin
+835        1/1                rvfi_rd_addr_q    &lt;= rvfi_rd_addr_d;
+836        1/1                rvfi_rd_wdata_q   &lt;= rvfi_rd_wdata_d;
+837                         end
+838                       end
+839                     
+840                       always_comb begin
+841        1/1              if (instr_new_id) begin
+842        1/1                rvfi_insn_new_d = 1'b1;
+843                         end else begin
+844        1/1                rvfi_insn_new_d = rvfi_insn_new_q;
+845                         end
+846                       end
+847                       always_ff @(posedge clk or negedge rst_ni) begin
+848        1/1              if (!rst_ni) begin
+849        1/1                rvfi_insn_new_q &lt;= 1'b0;
+850                         end else begin
+851        1/1                if (instr_ret) begin
+852        1/1                  rvfi_insn_new_q &lt;= 1'b0;
+853                           end else begin
+854        1/1                  rvfi_insn_new_q &lt;= rvfi_insn_new_d;
+855                           end
+856                         end
+857                       end
+858                     
+859                       // generate rvfi_intr_d
+860                       assign rvfi_intr_d = rvfi_set_trap_pc_q &amp; rvfi_insn_new_d;
+861                     
+862                       always_comb begin
+863        1/1              rvfi_set_trap_pc_d = rvfi_set_trap_pc_q;
+864                     
+865        1/1              if (pc_set &amp;&amp; pc_mux_id == PC_EXC &amp;&amp;
+866                             (exc_pc_mux_id == EXC_PC_EXC || exc_pc_mux_id == EXC_PC_IRQ)) begin
+867                           // PC is set to enter a trap handler
+868        1/1                rvfi_set_trap_pc_d = 1'b1;
+869        1/1              end else if (rvfi_set_trap_pc_q &amp;&amp; instr_ret) begin
+870                           // first instruction has been executed after PC is set to trap handler
+871        1/1                rvfi_set_trap_pc_d = 1'b0;
+872                         end
+                        MISSING_ELSE
+873                       end
+874                     
+875                       always_ff @(posedge clk or negedge rst_ni) begin
+876        1/1              if (!rst_ni) begin
+877        1/1                rvfi_set_trap_pc_q &lt;= 1'b0;
+878                         end else begin
+879        1/1                rvfi_set_trap_pc_q &lt;= rvfi_set_trap_pc_d;
+</pre>
+<hr>
+<a name="Branch"></a>
+Branch Coverage for Module : <a href="mod9.html" >ibex_core</a><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Line No.</th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th></tr><tr class="s9">
+<td>Branches</td>
+<td></td>
+<td class="rt">35</td>
+<td class="rt">34</td>
+<td class="rt">97.14 </td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">274</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">704</td>
+<td class="rt">3</td>
+<td class="rt">3</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">751</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">762</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s7">
+<td>CASE</td>
+<td class="rt">774</td>
+<td class="rt">4</td>
+<td class="rt">3</td>
+<td class="rt">75.00 </td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">783</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">792</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">801</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">813</td>
+<td class="rt">4</td>
+<td class="rt">4</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">831</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">841</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">848</td>
+<td class="rt">3</td>
+<td class="rt">3</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">865</td>
+<td class="rt">3</td>
+<td class="rt">3</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">876</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+274            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+275              core_busy_q <= 1'b0;
+           <font color = "green">      ==></font>
+276            end else begin
+277              core_busy_q <= core_busy_d;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+704            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+705              rvfi_halt              <= '0;
+           <font color = "green">      ==></font>
+706              rvfi_trap              <= '0;
+707              rvfi_intr              <= '0;
+708              rvfi_order             <= '0;
+709              rvfi_insn              <= '0;
+710              rvfi_mode              <= {PRIV_LVL_M};
+711              rvfi_rs1_addr          <= '0;
+712              rvfi_rs2_addr          <= '0;
+713              rvfi_pc_rdata          <= '0;
+714              rvfi_pc_wdata          <= '0;
+715              rvfi_mem_rmask         <= '0;
+716              rvfi_mem_wmask         <= '0;
+717              rvfi_valid             <= '0;
+718              rvfi_rs1_rdata         <= '0;
+719              rvfi_rs2_rdata         <= '0;
+720              rvfi_rd_wdata          <= '0;
+721              rvfi_rd_addr           <= '0;
+722              rvfi_mem_rdata         <= '0;
+723              rvfi_mem_wdata         <= '0;
+724              rvfi_mem_addr          <= '0;
+725            end else begin
+726              rvfi_halt              <= '0;
+727              rvfi_trap              <= illegal_insn_id;
+728              rvfi_intr              <= rvfi_intr_d;
+729              rvfi_order             <= rvfi_order + 64'(rvfi_valid);
+730              rvfi_insn              <= rvfi_insn_id;
+731              rvfi_mode              <= {priv_mode_id};
+732              rvfi_rs1_addr          <= rvfi_rs1_addr_id;
+733              rvfi_rs2_addr          <= rvfi_rs2_addr_id;
+734              rvfi_pc_rdata          <= pc_id;
+735              rvfi_pc_wdata          <= pc_if;
+736              rvfi_mem_rmask         <= rvfi_mem_mask_int;
+737              rvfi_mem_wmask         <= data_we_o ? rvfi_mem_mask_int : 4'b0000;
+                                                     <font color = "green">-2-</font>  
+                                                     <font color = "green">==></font>  
+                                                     <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+751            if (rvfi_insn_new_d && lsu_data_valid) begin
+               <font color = "green">-1-</font>  
+752              rvfi_mem_addr_d  = alu_adder_result_ex;
+           <font color = "green">      ==></font>
+753              rvfi_mem_rdata_d = regfile_wdata_lsu;
+754              rvfi_mem_wdata_d = data_wdata_ex;
+755            end else begin
+756              rvfi_mem_addr_d  = rvfi_mem_addr_q;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+762            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+763              rvfi_mem_addr_q  <= '0;
+           <font color = "green">      ==></font>
+764              rvfi_mem_rdata_q <= '0;
+765              rvfi_mem_wdata_q <= '0;
+766            end else begin
+767              rvfi_mem_addr_q  <= rvfi_mem_addr_d;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+774            unique case (data_type_ex)
+                      <font color = "red">-1-</font>  
+775              2'b00:   rvfi_mem_mask_int = 4'b1111;
+           <font color = "green">      ==></font>
+776              2'b01:   rvfi_mem_mask_int = 4'b0011;
+           <font color = "green">      ==></font>
+777              2'b10:   rvfi_mem_mask_int = 4'b0001;
+           <font color = "green">      ==></font>
+778              default: rvfi_mem_mask_int = 4'b0000;
+           <font color = "red">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>default</td>
+<td>Not Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+783            if (instr_is_compressed_id) begin
+               <font color = "green">-1-</font>  
+784              rvfi_insn_id = {16'b0, instr_rdata_c_id};
+           <font color = "green">      ==></font>
+785            end else begin
+786              rvfi_insn_id = instr_rdata_id;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+792            if (instr_new_id) begin
+               <font color = "green">-1-</font>  
+793              rvfi_rs1_data_d = rvfi_rs1_data_id;
+           <font color = "green">      ==></font>
+794              rvfi_rs2_data_d = rvfi_rs2_data_id;
+795            end else begin
+796              rvfi_rs1_data_d = rvfi_rs1_data_q;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+801            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+802              rvfi_rs1_data_q <= '0;
+           <font color = "green">      ==></font>
+803              rvfi_rs2_data_q <= '0;
+804            end else begin
+805              rvfi_rs1_data_q <= rvfi_rs1_data_d;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+813            if (rvfi_insn_new_d) begin
+               <font color = "green">-1-</font>  
+814              if (!rvfi_rd_we_id) begin
+                 <font color = "green">-2-</font>  
+815                rvfi_rd_addr_d    = '0;
+           <font color = "green">        ==></font>
+816                rvfi_rd_wdata_d   = '0;
+817              end else begin
+818                rvfi_rd_addr_d = rvfi_rd_addr_id;
+819                if (rvfi_rd_addr_id == 5'h0) begin
+                   <font color = "green">-3-</font>  
+820                  rvfi_rd_wdata_d = '0;
+           <font color = "green">          ==></font>
+821                end else begin
+822                  rvfi_rd_wdata_d = rvfi_rd_wdata_id;
+           <font color = "green">          ==></font>
+823                end
+824              end
+825            end else begin
+826              rvfi_rd_addr_d    = rvfi_rd_addr_q;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+831            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+832              rvfi_rd_addr_q    <= '0;
+           <font color = "green">      ==></font>
+833              rvfi_rd_wdata_q   <= '0;
+834            end else begin
+835              rvfi_rd_addr_q    <= rvfi_rd_addr_d;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+841            if (instr_new_id) begin
+               <font color = "green">-1-</font>  
+842              rvfi_insn_new_d = 1'b1;
+           <font color = "green">      ==></font>
+843            end else begin
+844              rvfi_insn_new_d = rvfi_insn_new_q;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+848            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+849              rvfi_insn_new_q <= 1'b0;
+           <font color = "green">      ==></font>
+850            end else begin
+851              if (instr_ret) begin
+                 <font color = "green">-2-</font>  
+852                rvfi_insn_new_q <= 1'b0;
+           <font color = "green">        ==></font>
+853              end else begin
+854                rvfi_insn_new_q <= rvfi_insn_new_d;
+           <font color = "green">        ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+865            if (pc_set && pc_mux_id == PC_EXC &&
+               <font color = "green">-1-</font>  
+866                (exc_pc_mux_id == EXC_PC_EXC || exc_pc_mux_id == EXC_PC_IRQ)) begin
+867              // PC is set to enter a trap handler
+868              rvfi_set_trap_pc_d = 1'b1;
+           <font color = "green">      ==></font>
+869            end else if (rvfi_set_trap_pc_q && instr_ret) begin
+                        <font color = "green">-2-</font>  
+870              // first instruction has been executed after PC is set to trap handler
+871              rvfi_set_trap_pc_d = 1'b0;
+           <font color = "green">      ==></font>
+872            end
+               MISSING_ELSE
+           <font color = "green">    ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+876            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+877              rvfi_set_trap_pc_q <= 1'b0;
+           <font color = "green">      ==></font>
+878            end else begin
+879              rvfi_set_trap_pc_q <= rvfi_set_trap_pc_d;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+</div>
+</div>
+<div class="ui-layout-center-inner-north">
+<div id="center-bread-crumb" class="breadCrumb module urg-margin-bottom">
+  <ul name="inst_tag_9">
+    <li>
+      <a href="#Line">Line</a>    </li>
+    <li>
+      <a href="#Branch">Branch</a>    </li>
+  </ul>
+  <ul name="tag_ibex_core">
+    <li>
+      <a href="#Line">Line</a>    </li>
+    <li>
+      <a href="#Branch">Branch</a>    </li>
+  </ul>
+</div>
+</div>
+</div>
+<div class="ui-layout-south">
+<table align=center><tr><td class="s0 cl">0%</td>
+<td class="s1 cl">10%</td>
+<td class="s2 cl">20%</td>
+<td class="s3 cl">30%</td>
+<td class="s4 cl">40%</td>
+<td class="s5 cl">50%</td>
+<td class="s6 cl">60%</td>
+<td class="s7 cl">70%</td>
+<td class="s8 cl">80%</td>
+<td class="s9 cl">90%</td>
+<td class="s10 cl">100%</td></tr></table></div>
+</body>
+</html>

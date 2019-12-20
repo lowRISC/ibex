@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Author" content="<username>"> <meta name="GENERATOR" content="urg/version [en] (platform name) [urg]">
+<title>Unified Coverage Report :: Assertions</title>
+<link type="text/css" rel="stylesheet" href="css/.urg.css">
+<link type="text/css" rel="stylesheet" href="css/.layout.css">
+<link type="text/css" rel="stylesheet" href="css/.breadcrumb.css">
+<script type="text/javascript" src="js/.jquery.js"></script>
+<script type="text/javascript" src="js/.jquery-ui.js"></script>
+<script type="text/javascript" src="js/.sortable.js"></script>
+<script type="text/javascript" src="js/.layout.js"></script>
+<script type="text/javascript" src="js/.breadcrumb.js"></script>
+<script type="text/javascript">
+var layout, westLayout, centerLayout;
+$(document).ready(function () {
+  if ($("#north-bread-crumb")) {
+    $("#north-bread-crumb").jBreadCrumb({easing:'swing'})
+  }
+  layout = $("body").layout({ 
+    resizable: true,
+    spacing_open: 4,
+    spacing_closed: 4,
+    north: {
+      size: 76
+    },
+    south: {
+      size: 45,
+      initClosed: true
+    },
+    west: {
+      size: 500,
+      resizable: true,
+      initClosed: false
+    }
+  });
+  centerLayout = $('div.ui-layout-center').layout({
+    north__paneSelector: ".ui-layout-center-inner-north",
+    center__paneSelector: ".ui-layout-center-inner-center", 
+    north__size: 50,
+    spacing_open: 4,
+    spacing_closed: 4
+  });
+});
+</script>
+</head>
+<body onLoad="initPage();"><div class="ui-layout-north">
+<div class="logo"></div>
+<center class="pagetitle">Assertions</center>
+<div align="center"><a href="dashboard.html" ><b>dashboard</b></a> | <a href="hierarchy.html" ><b>hierarchy</b></a> | <a href="modlist.html" ><b>modlist</b></a> | groups | <a href="tests.html" ><b>tests</b></a> | <a href="asserts.html" ><b>asserts</b></a></div>
+
+</div>
+<br clear=all>
+<div class="ui-layout-west">
+<b>Assertions by Category</b><table class="noborder">
+<col width="180">
+<col span="3" width="60"><tr class="sortablehead"><td> </td><td>ASSERT</td><td>PROPERTIES</td><td>SEQUENCES</td>
+<tr class="wht"><td class="lf">Total</td><td>16</td><td>0</td><td>0</td></tr>
+<tr class="wht"><td class="lf">Category 0</td><td>16</td><td>0</td><td>0</td></tr>
+</table>
+<hr>
+<br clear=all>
+<b>Assertions by Severity</b><table class="noborder">
+<col width="180">
+<col span="3" width="60"><tr class="sortablehead"><td> </td><td>ASSERT</td><td>PROPERTIES</td><td>SEQUENCES</td>
+<tr class="wht"><td class="lf">Total</td><td>16</td><td>0</td><td>0</td></tr>
+<tr class="wht"><td class="lf">Severity 0</td><td>16</td><td>0</td><td>0</td></tr>
+</table>
+<hr>
+<br clear=all>
+<b>Summary for Assertions</b><table class="noborder">
+<col width="180">
+<col span="2" width="60"><tr class="sortablehead"><td> </td><td>NUMBER</td><td>PERCENT</td>
+<tr class="wht"><td class="lf">Total Number</td><td>16</td><td>100.00</td></tr>
+<tr class="wht"><td class="lf"><a href="#tag_ast_no_covr">Uncovered</a></td><td>2</td><td>12.50</td></tr>
+<tr class="wht"><td class="lf"><a href="#tag_ast_succ">Success</a></td><td>14</td><td>87.50</td></tr>
+<tr class="wht"><td class="lf">Failure</td><td>0</td><td>0.00</td></tr>
+<tr class="wht"><td class="lf">Incomplete</td><td>0</td><td>0.00</td></tr>
+<tr class="wht"><td class="lf"><a href="#tag_ast_no_attp">Without Attempts</a></td><td>2</td><td>12.50</td></tr>
+</table>
+</div>
+<div class="ui-layout-center">
+<div class="ui-layout-center-inner-center">
+<hr>
+<br clear=all>
+<b>Detail Report for Assertions</b><br clear=all>
+<br clear=all>
+Assertions Uncovered:<a name="tag_ast_no_covr"></a>
+<table class="sortable rt">
+<col width="180">
+<col span="6" width="60"><tr class="sortablehead">
+<td class="alfsrt">ASSERTIONS<td>CATEGORY</td><td>SEVERITY</td><td>ATTEMPTS</td><td>REAL SUCCESSES</td><td>FAILURES</td><td>INCOMPLETE</td><td>SRC</td>
+<tr class="wht"><td class="lf"><a name="tag_hvp_ast_uvm_pkg.\uvm_reg_map::do_read .unnamed$$_0.unnamed$$_1" title="mod15.html#117826508" href="mod15.html#117826508">uvm_pkg.\uvm_reg_map::do_read .unnamed$$_0.unnamed$$_1</a>
+</td><td>0</td><td>0</td><td class="s3">0</td><td class="s3">0</td><td>0</td><td>0</td><td class="ct"><a title="/edascratch/ms_edatools/synopsys/vcs/2019.06-1/etc/uvm-1.2/reg/uvm_reg_map.svh" href="javascript:void(0);" onclick="openSrcFile('/edascratch/ms_edatools/synopsys/vcs/2019.06-1/etc/uvm-1.2/reg/uvm_reg_map.svh')"><img class="sourcefile"></a>
+</td></tr>
+<tr class="wht"><td class="lf"><a name="tag_hvp_ast_uvm_pkg.\uvm_reg_map::do_write .unnamed$$_0.unnamed$$_1" title="mod15.html#686230363" href="mod15.html#686230363">uvm_pkg.\uvm_reg_map::do_write .unnamed$$_0.unnamed$$_1</a>
+</td><td>0</td><td>0</td><td class="s3">0</td><td class="s3">0</td><td>0</td><td>0</td><td class="ct"><a title="/edascratch/ms_edatools/synopsys/vcs/2019.06-1/etc/uvm-1.2/reg/uvm_reg_map.svh" href="javascript:void(0);" onclick="openSrcFile('/edascratch/ms_edatools/synopsys/vcs/2019.06-1/etc/uvm-1.2/reg/uvm_reg_map.svh')"><img class="sourcefile"></a>
+</td></tr>
+</table>
+<br clear=all>
+Assertions Success:<a name="tag_ast_succ"></a>
+<table class="sortable rt">
+<col width="180">
+<col span="6" width="60"><tr class="sortablehead">
+<td class="alfsrt">ASSERTIONS<td>CATEGORY</td><td>SEVERITY</td><td>ATTEMPTS</td><td>REAL SUCCESSES</td><td>FAILURES</td><td>INCOMPLETE</td><td>SRC</td>
+<tr class="wht"><td class="lf"><a name="tag_hvp_ast_core_ibex_tb_top.dut.u_ibex_core.id_stage_i.unnamed$$_0" title="mod34.html#395899568" href="mod34.html#395899568">core_ibex_tb_top.dut.u_ibex_core.id_stage_i.unnamed$$_0</a>
+</td><td>0</td><td>0</td><td class="s9">159095193</td><td class="s9">159002193</td><td>0</td><td>0</td><td class="ct"><a title="/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_id_stage.sv" href="javascript:void(0);" onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_id_stage.sv')"><img class="sourcefile"></a>
+</td></tr>
+<tr class="wht"><td class="lf"><a name="tag_hvp_ast_core_ibex_tb_top.dut.u_ibex_core.id_stage_i.unnamed$$_1" title="mod34.html#1681309775" href="mod34.html#1681309775">core_ibex_tb_top.dut.u_ibex_core.id_stage_i.unnamed$$_1</a>
+</td><td>0</td><td>0</td><td class="s9">159095193</td><td class="s9">83899918</td><td>0</td><td>0</td><td class="ct"><a title="/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_id_stage.sv" href="javascript:void(0);" onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_id_stage.sv')"><img class="sourcefile"></a>
+</td></tr>
+<tr class="wht"><td class="lf"><a name="tag_hvp_ast_core_ibex_tb_top.dut.u_ibex_core.id_stage_i.unnamed$$_2" title="mod34.html#536448178" href="mod34.html#536448178">core_ibex_tb_top.dut.u_ibex_core.id_stage_i.unnamed$$_2</a>
+</td><td>0</td><td>0</td><td class="s9">159095193</td><td class="s9">159002193</td><td>0</td><td>0</td><td class="ct"><a title="/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_id_stage.sv" href="javascript:void(0);" onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_id_stage.sv')"><img class="sourcefile"></a>
+</td></tr>
+<tr class="wht"><td class="lf"><a name="tag_hvp_ast_core_ibex_tb_top.dut.u_ibex_core.if_stage_i.prefetch_buffer_i.fifo_i.unnamed$$_10" title="mod1.html#1807607464" href="mod1.html#1807607464">core_ibex_tb_top.dut.u_ibex_core.if_stage_i.prefetch_buffer_i.fifo_i.unnamed$$_10</a>
+</td><td>0</td><td>0</td><td class="s9">159095193</td><td class="s9">6939424</td><td>0</td><td>0</td><td class="ct"><a title="/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_fetch_fifo.sv" href="javascript:void(0);" onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_fetch_fifo.sv')"><img class="sourcefile"></a>
+</td></tr>
+<tr class="wht"><td class="lf"><a name="tag_hvp_ast_core_ibex_tb_top.dut.u_ibex_core.if_stage_i.prefetch_buffer_i.fifo_i.unnamed$$_11" title="mod1.html#2062344009" href="mod1.html#2062344009">core_ibex_tb_top.dut.u_ibex_core.if_stage_i.prefetch_buffer_i.fifo_i.unnamed$$_11</a>
+</td><td>0</td><td>0</td><td class="s9">159095193</td><td class="s9">12904223</td><td>0</td><td>0</td><td class="ct"><a title="/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_fetch_fifo.sv" href="javascript:void(0);" onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_fetch_fifo.sv')"><img class="sourcefile"></a>
+</td></tr>
+<tr class="wht"><td class="lf"><a name="tag_hvp_ast_core_ibex_tb_top.dut.u_ibex_core.if_stage_i.unnamed$$_10" title="mod21.html#1717284290" href="mod21.html#1717284290">core_ibex_tb_top.dut.u_ibex_core.if_stage_i.unnamed$$_10</a>
+</td><td>0</td><td>0</td><td class="s9">159095193</td><td class="s9">159002193</td><td>0</td><td>0</td><td class="ct"><a title="/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_if_stage.sv" href="javascript:void(0);" onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_if_stage.sv')"><img class="sourcefile"></a>
+</td></tr>
+<tr class="wht"><td class="lf"><a name="tag_hvp_ast_core_ibex_tb_top.dut.u_ibex_core.if_stage_i.unnamed$$_11" title="mod21.html#1737621665" href="mod21.html#1737621665">core_ibex_tb_top.dut.u_ibex_core.if_stage_i.unnamed$$_11</a>
+</td><td>0</td><td>0</td><td class="s9">159095193</td><td class="s9">1845</td><td>0</td><td>0</td><td class="ct"><a title="/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_if_stage.sv" href="javascript:void(0);" onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_if_stage.sv')"><img class="sourcefile"></a>
+</td></tr>
+<tr class="wht"><td class="lf"><a name="tag_hvp_ast_core_ibex_tb_top.dut.u_ibex_core.if_stage_i.unnamed$$_12" title="mod21.html#1757959040" href="mod21.html#1757959040">core_ibex_tb_top.dut.u_ibex_core.if_stage_i.unnamed$$_12</a>
+</td><td>0</td><td>0</td><td class="s9">159095193</td><td class="s9">81863018</td><td>0</td><td>0</td><td class="ct"><a title="/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_if_stage.sv" href="javascript:void(0);" onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_if_stage.sv')"><img class="sourcefile"></a>
+</td></tr>
+<tr class="wht"><td class="lf"><a name="tag_hvp_ast_core_ibex_tb_top.dut.u_ibex_core.if_stage_i.unnamed$$_13" title="mod21.html#1778296415" href="mod21.html#1778296415">core_ibex_tb_top.dut.u_ibex_core.if_stage_i.unnamed$$_13</a>
+</td><td>0</td><td>0</td><td class="s9">159095193</td><td class="s9">81863018</td><td>0</td><td>0</td><td class="ct"><a title="/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_if_stage.sv" href="javascript:void(0);" onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_if_stage.sv')"><img class="sourcefile"></a>
+</td></tr>
+<tr class="wht"><td class="lf"><a name="tag_hvp_ast_core_ibex_tb_top.dut.u_ibex_core.load_store_unit_i.unnamed$$_68" title="mod14.html#393483282" href="mod14.html#393483282">core_ibex_tb_top.dut.u_ibex_core.load_store_unit_i.unnamed$$_68</a>
+</td><td>0</td><td>0</td><td class="s9">159095193</td><td class="s9">4648786</td><td>0</td><td>0</td><td class="ct"><a title="/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_load_store_unit.sv" href="javascript:void(0);" onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_load_store_unit.sv')"><img class="sourcefile"></a>
+</td></tr>
+<tr class="wht"><td class="lf"><a name="tag_hvp_ast_core_ibex_tb_top.dut.u_ibex_core.load_store_unit_i.unnamed$$_69" title="mod14.html#184784979" href="mod14.html#184784979">core_ibex_tb_top.dut.u_ibex_core.load_store_unit_i.unnamed$$_69</a>
+</td><td>0</td><td>0</td><td class="s9">159095193</td><td class="s9">1803</td><td>0</td><td>0</td><td class="ct"><a title="/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_load_store_unit.sv" href="javascript:void(0);" onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_load_store_unit.sv')"><img class="sourcefile"></a>
+</td></tr>
+<tr class="wht"><td class="lf"><a name="tag_hvp_ast_core_ibex_tb_top.dut.u_ibex_core.load_store_unit_i.unnamed$$_70" title="mod14.html#255222185" href="mod14.html#255222185">core_ibex_tb_top.dut.u_ibex_core.load_store_unit_i.unnamed$$_70</a>
+</td><td>0</td><td>0</td><td class="s9">159095193</td><td class="s9">27896040</td><td>0</td><td>0</td><td class="ct"><a title="/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_load_store_unit.sv" href="javascript:void(0);" onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_load_store_unit.sv')"><img class="sourcefile"></a>
+</td></tr>
+<tr class="wht"><td class="lf"><a name="tag_hvp_ast_core_ibex_tb_top.dut.u_ibex_core.load_store_unit_i.unnamed$$_71" title="mod14.html#46523882" href="mod14.html#46523882">core_ibex_tb_top.dut.u_ibex_core.load_store_unit_i.unnamed$$_71</a>
+</td><td>0</td><td>0</td><td class="s9">159095193</td><td class="s9">27896040</td><td>0</td><td>0</td><td class="ct"><a title="/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_load_store_unit.sv" href="javascript:void(0);" onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_load_store_unit.sv')"><img class="sourcefile"></a>
+</td></tr>
+<tr class="wht"><td class="lf"><a name="tag_hvp_ast_uvm_pkg.\uvm_component_name_check_visitor::visit .unnamed$$_0" title="mod15.html#1469058985" href="mod15.html#1469058985">uvm_pkg.\uvm_component_name_check_visitor::visit .unnamed$$_0</a>
+</td><td>0</td><td>0</td><td class="s9">35020</td><td class="s9">35020</td><td>0</td><td>0</td><td class="ct"><a title="/edascratch/ms_edatools/synopsys/vcs/2019.06-1/etc/uvm-1.2/base/uvm_traversal.svh" href="javascript:void(0);" onclick="openSrcFile('/edascratch/ms_edatools/synopsys/vcs/2019.06-1/etc/uvm-1.2/base/uvm_traversal.svh')"><img class="sourcefile"></a>
+</td></tr>
+</table>
+<br clear=all>
+Assertions Without Attempts:<a name="tag_ast_no_attp"></a>
+<table class="sortable rt">
+<col width="180">
+<col span="6" width="60"><tr class="sortablehead">
+<td class="alfsrt">ASSERTIONS<td>CATEGORY</td><td>SEVERITY</td><td>ATTEMPTS</td><td>REAL SUCCESSES</td><td>FAILURES</td><td>INCOMPLETE</td><td>SRC</td>
+<tr class="wht"><td class="lf"><a name="tag_hvp_ast_uvm_pkg.\uvm_reg_map::do_read .unnamed$$_0.unnamed$$_1" title="mod15.html#117826508" href="mod15.html#117826508">uvm_pkg.\uvm_reg_map::do_read .unnamed$$_0.unnamed$$_1</a>
+</td><td>0</td><td>0</td><td class="s3">0</td><td class="s3">0</td><td>0</td><td>0</td><td class="ct"><a title="/edascratch/ms_edatools/synopsys/vcs/2019.06-1/etc/uvm-1.2/reg/uvm_reg_map.svh" href="javascript:void(0);" onclick="openSrcFile('/edascratch/ms_edatools/synopsys/vcs/2019.06-1/etc/uvm-1.2/reg/uvm_reg_map.svh')"><img class="sourcefile"></a>
+</td></tr>
+<tr class="wht"><td class="lf"><a name="tag_hvp_ast_uvm_pkg.\uvm_reg_map::do_write .unnamed$$_0.unnamed$$_1" title="mod15.html#686230363" href="mod15.html#686230363">uvm_pkg.\uvm_reg_map::do_write .unnamed$$_0.unnamed$$_1</a>
+</td><td>0</td><td>0</td><td class="s3">0</td><td class="s3">0</td><td>0</td><td>0</td><td class="ct"><a title="/edascratch/ms_edatools/synopsys/vcs/2019.06-1/etc/uvm-1.2/reg/uvm_reg_map.svh" href="javascript:void(0);" onclick="openSrcFile('/edascratch/ms_edatools/synopsys/vcs/2019.06-1/etc/uvm-1.2/reg/uvm_reg_map.svh')"><img class="sourcefile"></a>
+</td></tr>
+</table>
+<br clear=all>
+</div>
+<div class="ui-layout-center-inner-north">
+<div id="center-bread-crumb" class="breadCrumb module urg-margin-bottom">
+  <ul>
+    <li>
+      <a href="#tag_ast_no_covr">Assertions Uncovered</a>    </li>
+    <li>
+      <a href="#tag_ast_succ">Assertions Success</a>    </li>
+    <li>
+      <a href="#tag_ast_no_attp">Assertions Without Attempts</a>    </li>
+  </ul>
+</div>
+</div>
+</div>
+<div class="ui-layout-south">
+<table align=center><tr><td class="s0 cl">0%</td>
+<td class="s1 cl">10%</td>
+<td class="s2 cl">20%</td>
+<td class="s3 cl">30%</td>
+<td class="s4 cl">40%</td>
+<td class="s5 cl">50%</td>
+<td class="s6 cl">60%</td>
+<td class="s7 cl">70%</td>
+<td class="s8 cl">80%</td>
+<td class="s9 cl">90%</td>
+<td class="s10 cl">100%</td></tr></table></div>
+</body>
+</html>

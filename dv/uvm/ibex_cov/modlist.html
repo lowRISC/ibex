@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Author" content="<username>"> <meta name="GENERATOR" content="urg/version [en] (platform name) [urg]">
+<title>Unified Coverage Report :: Module List</title>
+<link type="text/css" rel="stylesheet" href="css/.urg.css">
+<link type="text/css" rel="stylesheet" href="css/.treetable.css">
+<link type="text/css" rel="stylesheet" href="css/.layout.css">
+<script type="text/javascript" src="js/.jquery.js"></script>
+<script type="text/javascript" src="js/.jquery-ui.js"></script>
+<script type="text/javascript" src="js/.sortable.js"></script>
+<script type="text/javascript" src="js/.treetable.js"></script>
+<script type="text/javascript" src="js/.colResizable.js"></script>
+<script type="text/javascript" src="js/.layout.js"></script>
+<script type="text/javascript">
+var layout, westLayout, centerLayout;
+$(document).ready(function () {
+  layout = $("body").layout({ 
+    resizable: true,
+    spacing_open: 4,
+    spacing_closed: 4,
+    north: {
+      size: 76
+    },
+    south: {
+      size: 45,
+      initClosed: true
+    }  });
+  $("#hierarchyTable tbody tr").mousedown(function() {
+    $("tr.selected").removeClass("selected");
+    $("td.selected").removeClass("selected");
+    $(this).addClass("selected");
+    $(this).children().addClass("selected");
+  });
+  $("tr[data-tt-id='hierarchyTable_root']").each(function () {
+    $(this).attr("style", "display:none");
+  });
+  $("tr[data-tt-parent-id='hierarchyTable_root']").each(function () {
+    $(this).attr("style", "display:table-row");
+    $("#hierarchyTable").treetable("expandNode", $(this).attr("data-tt-id"));
+  });
+  $("table").colResizable({    liveDrag:true,
+    fixed:false,
+    draggingClass:"dragging"
+  });
+});
+function expandAll() {
+  $("#hierarchyTable").treetable("expandAll");
+}
+function collapseAll() {
+  if ($("tr[data-tt-parent-id='hierarchyTable_root']").length > 0) {
+    $("tr[data-tt-parent-id='hierarchyTable_root']").each(function () {
+      var nodeId = $(this).attr("data-tt-id");
+      var node = $("#hierarchyTable").treetable("node", nodeId);
+      $("#hierarchyTable").treetable("collapseNodeRecursive", node);
+    });
+  } else {
+    $("#hierarchyTable").treetable("collapseAll");
+  }
+}
+</script>
+</head>
+<body><div class="ui-layout-north">
+<div class="logo"></div>
+<center class="pagetitle">Design Module List</center>
+<div align="center"><a href="dashboard.html" ><b>dashboard</b></a> | <a href="hierarchy.html" ><b>hierarchy</b></a> | <a href="modlist.html" ><b>modlist</b></a> | groups | <a href="tests.html" ><b>tests</b></a> | <a href="asserts.html" ><b>asserts</b></a></div>
+
+</div>
+<div class="ui-layout-center">
+<b>Total Module Definition Coverage Summary</b>&nbsp;<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td nowrap width=65>SCORE</td><td nowrap width=65>LINE</td><td nowrap width=65>TOGGLE</td><td nowrap width=65>FSM</td><td nowrap width=65>BRANCH</td><td nowrap width=65>ASSERT</td></tr><tr>
+<td class="s9 cl rt"> 90.30</td>
+<td class="s8 cl rt"> 86.90</td>
+<td class="s10 cl rt">100.00</td>
+<td class="s8 cl rt"> 81.97</td>
+<td class="s9 cl rt"> 95.15</td>
+<td class="s8 cl rt"> 87.50</td>
+</tr></table><br clear=all>
+<br clear=all>
+Total modules in report: 19<hr>
+<table class="noborder">
+  <tr>
+    <td class="noborder"><input type="button" value="Expand All" onClick="expandAll()"></td>
+    <td class="noborder"><input type="button" value="Collapse All" onClick="collapseAll()"></td>
+  </tr>
+</table>
+<table id="hierarchyTable" border="0" cellpadding="0" cellspacing="0" class="sortable">
+  <thead class="table-header">
+    <tr>
+<th class="alfsrt">NAME</th><th>SCORE</th><th>LINE</th><th>TOGGLE</th><th>FSM</th><th>BRANCH</th><th>ASSERT</th>    </tr>
+  </thead>
+  <tbody>
+    <tr data-tt-id="hierarchyTable_root">
+<td></td><td></td><td></td><td></td><td></td><td></td><td></td>    </tr>
+    <tr data-tt-id="mod_15" data-tt-parent-id="hierarchyTable_root">
+<td class="wordwrap"><a name="tag_uvm_pkg"></a>
+<a href="mod15.html" >uvm_pkg</a></td>
+<td class="s3 cl rt"> 33.33</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s3 cl rt"><a href="mod15.html#Assert" > 33.33</a></td>
+    </tr>
+    <tr data-tt-id="mod_29" data-tt-parent-id="hierarchyTable_root">
+<td class="wordwrap"><a name="tag_ibex_tracer"></a>
+<a href="mod29.html" >ibex_tracer</a></td>
+<td class="s7 cl rt"> 78.06</td>
+<td class="s5 cl rt"><a href="mod29.html#Line" > 57.26</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"><a href="mod29.html#Branch" > 98.86</a></td>
+<td class="wht cl rt"></td>
+    </tr>
+    <tr data-tt-id="mod_5" data-tt-parent-id="hierarchyTable_root">
+<td class="wordwrap"><a name="tag_ibex_controller"></a>
+<a href="mod5.html" >ibex_controller</a></td>
+<td class="s8 cl rt"> 85.13</td>
+<td class="s9 cl rt"><a href="mod5.html#Line" > 98.07</a></td>
+<td class="wht cl rt"></td>
+<td class="s6 cl rt"><a href="mod5.html#FSM" > 66.67</a></td>
+<td class="s9 cl rt"><a href="mod5.html#Branch" > 90.67</a></td>
+<td class="wht cl rt"></td>
+    </tr>
+    <tr data-tt-id="mod_32" data-tt-parent-id="hierarchyTable_root">
+<td class="wordwrap"><a name="tag_ibex_compressed_decoder"></a>
+<a href="mod32.html" >ibex_compressed_decoder</a></td>
+<td class="s9 cl rt"> 91.17</td>
+<td class="s9 cl rt"><a href="mod32.html#Line" > 92.86</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s8 cl rt"><a href="mod32.html#Branch" > 89.47</a></td>
+<td class="wht cl rt"></td>
+    </tr>
+    <tr data-tt-id="mod_37" data-tt-parent-id="hierarchyTable_root">
+<td class="wordwrap"><a name="tag_ibex_cs_registers"></a>
+<a href="mod37.html" >ibex_cs_registers</a></td>
+<td class="s9 cl rt"> 94.54</td>
+<td class="s9 cl rt"><a href="mod37.html#Line" > 97.03</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"><a href="mod37.html#Branch" > 92.05</a></td>
+<td class="wht cl rt"></td>
+    </tr>
+    <tr data-tt-id="mod_31" data-tt-parent-id="hierarchyTable_root">
+<td class="wordwrap"><a name="tag_ibex_multdiv_fast"></a>
+<a href="mod31.html" >ibex_multdiv_fast</a></td>
+<td class="s9 cl rt"> 95.40</td>
+<td class="s9 cl rt"><a href="mod31.html#Line" > 99.17</a></td>
+<td class="wht cl rt"></td>
+<td class="s8 cl rt"><a href="mod31.html#FSM" > 89.47</a></td>
+<td class="s9 cl rt"><a href="mod31.html#Branch" > 97.56</a></td>
+<td class="wht cl rt"></td>
+    </tr>
+    <tr data-tt-id="mod_21" data-tt-parent-id="hierarchyTable_root">
+<td class="wordwrap"><a name="tag_ibex_if_stage"></a>
+<a href="mod21.html" >ibex_if_stage</a></td>
+<td class="s9 cl rt"> 95.96</td>
+<td class="s9 cl rt"><a href="mod21.html#Line" > 96.23</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"><a href="mod21.html#Branch" > 91.67</a></td>
+<td class="s10 cl rt"><a href="mod21.html#Assert" >100.00</a></td>
+    </tr>
+    <tr data-tt-id="mod_22" data-tt-parent-id="hierarchyTable_root">
+<td class="wordwrap"><a name="tag_ibex_alu"></a>
+<a href="mod22.html" >ibex_alu</a></td>
+<td class="s9 cl rt"> 96.23</td>
+<td class="s9 cl rt"><a href="mod22.html#Line" > 96.30</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"><a href="mod22.html#Branch" > 96.15</a></td>
+<td class="wht cl rt"></td>
+    </tr>
+    <tr data-tt-id="mod_14" data-tt-parent-id="hierarchyTable_root">
+<td class="wordwrap"><a name="tag_ibex_load_store_unit"></a>
+<a href="mod14.html" >ibex_load_store_unit</a></td>
+<td class="s9 cl rt"> 96.33</td>
+<td class="s9 cl rt"><a href="mod14.html#Line" > 94.97</a></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod14.html#FSM" >100.00</a></td>
+<td class="s9 cl rt"><a href="mod14.html#Branch" > 90.36</a></td>
+<td class="s10 cl rt"><a href="mod14.html#Assert" >100.00</a></td>
+    </tr>
+    <tr data-tt-id="mod_9" data-tt-parent-id="hierarchyTable_root">
+<td class="wordwrap"><a name="tag_ibex_core"></a>
+<a href="mod9.html" >ibex_core</a></td>
+<td class="s9 cl rt"> 98.10</td>
+<td class="s9 cl rt"><a href="mod9.html#Line" > 99.07</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"><a href="mod9.html#Branch" > 97.14</a></td>
+<td class="wht cl rt"></td>
+    </tr>
+    <tr data-tt-id="mod_17" data-tt-parent-id="hierarchyTable_root">
+<td class="wordwrap"><a name="tag_ibex_decoder"></a>
+<a href="mod17.html" >ibex_decoder</a></td>
+<td class="s9 cl rt"> 98.50</td>
+<td class="s9 cl rt"><a href="mod17.html#Line" > 99.22</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"><a href="mod17.html#Branch" > 97.78</a></td>
+<td class="wht cl rt"></td>
+    </tr>
+    <tr data-tt-id="mod_1" data-tt-parent-id="hierarchyTable_root">
+<td class="wordwrap"><a name="tag_ibex_fetch_fifo"></a>
+<a href="mod1.html" >ibex_fetch_fifo</a></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt"><a href="mod1.html#Line" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod1.html#Branch" >100.00</a></td>
+<td class="s10 cl rt"><a href="mod1.html#Assert" >100.00</a></td>
+    </tr>
+    <tr data-tt-id="mod_4" data-tt-parent-id="hierarchyTable_root">
+<td class="wordwrap"><a name="tag_ibex_core_tracing"></a>
+<a href="mod4.html" >ibex_core_tracing</a></td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod4.html#Toggle" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+    </tr>
+    <tr data-tt-id="mod_6" data-tt-parent-id="hierarchyTable_root">
+<td class="wordwrap"><a name="tag_ibex_register_file"></a>
+<a href="mod6.html" >ibex_register_file</a></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt"><a href="mod6.html#Line" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod6.html#Branch" >100.00</a></td>
+<td class="wht cl rt"></td>
+    </tr>
+    <tr data-tt-id="mod_11" data-tt-parent-id="hierarchyTable_root">
+<td class="wordwrap"><a name="tag_prim_clock_gating"></a>
+<a href="mod11.html" >prim_clock_gating</a></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt"><a href="mod11.html#Line" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod11.html#Branch" >100.00</a></td>
+<td class="wht cl rt"></td>
+    </tr>
+    <tr data-tt-id="mod_25" data-tt-parent-id="hierarchyTable_root">
+<td class="wordwrap"><a name="tag_ibex_ex_block"></a>
+<a href="mod25.html" >ibex_ex_block</a></td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod25.html#Branch" >100.00</a></td>
+<td class="wht cl rt"></td>
+    </tr>
+    <tr data-tt-id="mod_27" data-tt-parent-id="hierarchyTable_root">
+<td class="wordwrap"><a name="tag_ibex_prefetch_buffer"></a>
+<a href="mod27.html" >ibex_prefetch_buffer</a></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt"><a href="mod27.html#Line" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod27.html#Branch" >100.00</a></td>
+<td class="wht cl rt"></td>
+    </tr>
+    <tr data-tt-id="mod_34" data-tt-parent-id="hierarchyTable_root">
+<td class="wordwrap"><a name="tag_ibex_id_stage"></a>
+<a href="mod34.html" >ibex_id_stage</a></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt"><a href="mod34.html#Line" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod34.html#Branch" >100.00</a></td>
+<td class="s10 cl rt"><a href="mod34.html#Assert" >100.00</a></td>
+    </tr>
+    <tr data-tt-id="mod_2" data-tt-parent-id="hierarchyTable_root">
+<td class="wordwrap"><a name="tag_core_ibex_tb_top"></a>
+<a href="mod2.html" >core_ibex_tb_top<img src="fx.gif" class="icon"></a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<div class="ui-layout-south">
+<table align=center><tr><td class="s0 cl">0%</td>
+<td class="s1 cl">10%</td>
+<td class="s2 cl">20%</td>
+<td class="s3 cl">30%</td>
+<td class="s4 cl">40%</td>
+<td class="s5 cl">50%</td>
+<td class="s6 cl">60%</td>
+<td class="s7 cl">70%</td>
+<td class="s8 cl">80%</td>
+<td class="s9 cl">90%</td>
+<td class="s10 cl">100%</td></tr></table></div>
+
+<script>
+$("#hierarchyTable").treetable({ expandable: true });
+</script>
+</body>
+</html>

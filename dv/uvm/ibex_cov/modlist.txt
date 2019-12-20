@@ -1,0 +1,30 @@
+Design Module List
+
+Total Module Definition Coverage Summary 
+SCORE  LINE   TOGGLE FSM    BRANCH ASSERT 
+ 90.30  86.90 100.00  81.97  95.15  87.50 
+
+
+Total modules in report: 19
+-------------------------------------------------------------------------------
+SCORE  LINE   TOGGLE FSM    BRANCH ASSERT NAME                    
+ 33.33 --     --     --     --      33.33 uvm_pkg                 
+ 78.06  57.26 --     --      98.86 --     ibex_tracer             
+ 85.13  98.07 --      66.67  90.67 --     ibex_controller         
+ 91.17  92.86 --     --      89.47 --     ibex_compressed_decoder 
+ 94.54  97.03 --     --      92.05 --     ibex_cs_registers       
+ 95.40  99.17 --      89.47  97.56 --     ibex_multdiv_fast       
+ 95.96  96.23 --     --      91.67 100.00 ibex_if_stage           
+ 96.23  96.30 --     --      96.15 --     ibex_alu                
+ 96.33  94.97 --     100.00  90.36 100.00 ibex_load_store_unit    
+ 98.10  99.07 --     --      97.14 --     ibex_core               
+ 98.50  99.22 --     --      97.78 --     ibex_decoder            
+100.00 100.00 --     --     100.00 100.00 ibex_fetch_fifo         
+100.00 --     100.00 --     --     --     ibex_core_tracing       
+100.00 100.00 --     --     100.00 --     ibex_register_file      
+100.00 100.00 --     --     100.00 --     prim_clock_gating       
+100.00 --     --     --     100.00 --     ibex_ex_block           
+100.00 100.00 --     --     100.00 --     ibex_prefetch_buffer    
+100.00 100.00 --     --     100.00 100.00 ibex_id_stage           
+--     --     --     --     --     --     core_ibex_tb_top(X)     
+

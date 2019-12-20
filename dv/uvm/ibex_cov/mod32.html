@@ -1,0 +1,2740 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Author" content="<username>"> <meta name="GENERATOR" content="urg/version [en] (platform name) [urg]">
+<title>Unified Coverage Report :: Module :: ibex_compressed_decoder</title>
+<link type="text/css" rel="stylesheet" href="css/.urg.css">
+<link type="text/css" rel="stylesheet" href="css/.layout.css">
+<link type="text/css" rel="stylesheet" href="css/.breadcrumb.css">
+<script type="text/javascript" src="js/.jquery.js"></script>
+<script type="text/javascript" src="js/.jquery-ui.js"></script>
+<script type="text/javascript" src="js/.sortable.js"></script>
+<script type="text/javascript" src="js/.layout.js"></script>
+<script type="text/javascript" src="js/.breadcrumb.js"></script>
+<script type="text/javascript">
+var layout, westLayout, centerLayout;
+$(document).ready(function () {
+  if ($("#north-bread-crumb")) {
+    $("#north-bread-crumb").jBreadCrumb({easing:'swing'})
+  }
+  layout = $("body").layout({ 
+    resizable: true,
+    spacing_open: 4,
+    spacing_closed: 4,
+    north: {
+      size: 76
+    },
+    south: {
+      size: 45,
+      initClosed: true
+    },
+    west: {
+      size: 500,
+      resizable: true,
+      initClosed: false
+    }
+  });
+  centerLayout = $('div.ui-layout-center').layout({
+    north__paneSelector: ".ui-layout-center-inner-north",
+    center__paneSelector: ".ui-layout-center-inner-center", 
+    north__size: 50,
+    spacing_open: 4,
+    spacing_closed: 4
+  });
+});
+</script>
+</head>
+<body onLoad="initPage();"><div class="ui-layout-north">
+<div class="logo"></div>
+<center class="pagetitle">Module Definition</center>
+<div align="center"><a href="dashboard.html" ><b>dashboard</b></a> | <a href="hierarchy.html" ><b>hierarchy</b></a> | <a href="modlist.html" ><b>modlist</b></a> | groups | <a href="tests.html" ><b>tests</b></a> | <a href="asserts.html" ><b>asserts</b></a></div>
+
+</div>
+<div class="ui-layout-west">
+<div name='tag_ibex_compressed_decoder'>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module : <a href="#"  onclick="showContent('tag_ibex_compressed_decoder')">ibex_compressed_decoder</a></span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s9 cl rt"> 91.17</td>
+<td class="s9 cl rt"><a href="mod32.html#Line" > 92.86</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s8 cl rt"><a href="mod32.html#Branch" > 89.47</a></td>
+<td class="wht cl rt"></td>
+</tr></table><br clear=all>
+<span class=repname>Source File(s) : </span>
+<br clear=all>
+<a href="javascript:void(0);"  onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_compressed_decoder.sv')">/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_compressed_decoder.sv</a><br clear=all>
+<br clear=all>
+<span class=repname>Module self-instances :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="wht cl wordwrap"><a href="mod32.html#inst_tag_33"  onclick="showContent('inst_tag_33')">core_ibex_tb_top.dut.u_ibex_core.if_stage_i.compressed_decoder_i<img src="ex.gif" class="icon"></a></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt"><a href="mod32.html#inst_tag_33_Line" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod32.html#inst_tag_33_Branch" >100.00</a></td>
+<td class="wht cl rt"></td>
+</tr></table></div>
+</div>
+<br clear=all>
+<div name='inst_tag_33'>
+<hr>
+<a name="inst_tag_33"></a>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module Instance : <a href="hierarchy.html#tag_urg_inst_33" >core_ibex_tb_top.dut.u_ibex_core.if_stage_i.compressed_decoder_i<img src="ex.gif" class="icon"></a></span>
+<br clear=all>
+<br clear=all>
+<span class=repname>Instance :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt"><a href="mod32.html#inst_tag_33_Line" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod32.html#inst_tag_33_Branch" >100.00</a></td>
+<td class="wht cl rt"></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Instance's subtree :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Parent : </span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td><td class="alfsrt">NAME</td></tr><tr>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+<td><a href="mod21.html#inst_tag_22" >if_stage_i<img src="ex.gif" class="icon"></a></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Subtrees :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td colspan=7>no children</td>
+</tr></table><br clear=all>
+</div>
+</div>
+</div>
+<div class="ui-layout-center">
+<div class="ui-layout-center-inner-center">
+<div name='tag_ibex_compressed_decoder'>
+<a name="Line"></a>
+Line Coverage for Module : <a href="mod32.html" >ibex_compressed_decoder</a><br clear=all>
+<table class="noborder">
+<col width="122">
+<col span="4" width="82">
+<tr><th></th><th>Line No.</th><th>Total</th><th>Covered</th><th>Percent</th></tr>
+<tr class="s9"><td class="lf">TOTAL</td><td></td><td>56</td><td>52</td><td>92.86</td></tr>
+<tr class="s9"><td class="lf">ALWAYS</td><td>25</td><td>56</td><td>52</td><td>92.86</td></tr>
+</table>
+<pre class="code"><br clear=all>
+24                        // Compressed decoder //
+25         1/1            ////////////////////////
+26         1/1          
+27                        always_comb begin
+28         1/1              // By default, forward incoming instruction, mark it as legal.
+29                          instr_o         = instr_i;
+30                          illegal_instr_o = 1'b0;
+31         1/1          
+32                          // Check if incoming instruction is compressed.
+33                          unique case (instr_i[1:0])
+34         1/1                // C0
+35                            2'b00: begin
+36         2/2                  unique case (instr_i[15:13])
+                        MISSING_ELSE
+37                                3'b000: begin
+38                                  // c.addi4spn -&gt; addi rd', x2, imm
+39                                  instr_o = {2'b0, instr_i[10:7], instr_i[12:11], instr_i[5],
+40                                             instr_i[6], 2'b00, 5'h02, 3'b000, 2'b01, instr_i[4:2], {OPCODE_OP_IMM}};
+41         1/1                      if (instr_i[12:5] == 8'b0)  illegal_instr_o = 1'b1;
+42                                end
+43                      
+44                                3'b010: begin
+45                                  // c.lw -&gt; lw rd', imm(rs1')
+46                                  instr_o = {5'b0, instr_i[5], instr_i[12:10], instr_i[6],
+47         1/1                                 2'b00, 2'b01, instr_i[9:7], 3'b010, 2'b01, instr_i[4:2], {OPCODE_LOAD}};
+48                                end
+49                      
+50                                3'b110: begin
+51                                  // c.sw -&gt; sw rs2', imm(rs1')
+52                                  instr_o = {5'b0, instr_i[5], instr_i[12], 2'b01, instr_i[4:2],
+53         1/1                                 2'b01, instr_i[9:7], 3'b010, instr_i[11:10], instr_i[6],
+54                                             2'b00, {OPCODE_STORE}};
+55                                end
+56                      
+57                                3'b001,
+58                                3'b011,
+59                                3'b100,
+60                                3'b101,
+61                                3'b111: begin
+62                                  illegal_instr_o = 1'b1;
+63                                end
+64         1/1          
+65                                default: begin
+66                                  illegal_instr_o = 1'b1;
+67                                end
+68         1/1                  endcase
+69                            end
+70                      
+71                            // C1
+72                            //
+73                            // Register address checks for RV32E are performed in the regular instruction decoder.
+74                            // If this check fails, an illegal instruction exception is triggered and the controller
+75         1/1                // writes the actual faulting instruction to mtval.
+76                            2'b01: begin
+77                              unique case (instr_i[15:13])
+78                                3'b000: begin
+79                                  // c.addi -&gt; addi rd, rd, nzimm
+80                                  // c.nop
+81                                  instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2],
+82                                             instr_i[11:7], 3'b0, instr_i[11:7], {OPCODE_OP_IMM}};
+83         1/1                    end
+84                      
+85                                3'b001, 3'b101: begin
+86                                  // 001: c.jal -&gt; jal x1, imm
+87                                  // 101: c.j   -&gt; jal x0, imm
+88                                  instr_o = {instr_i[12], instr_i[8], instr_i[10:9], instr_i[6],
+89                                             instr_i[7], instr_i[2], instr_i[11], instr_i[5:3],
+90         1/1                                 {9 {instr_i[12]}}, 4'b0, ~instr_i[15], {OPCODE_JAL}};
+91                                end
+92         1/1          
+93                                3'b010: begin
+94         1/1                      // c.li -&gt; addi rd, x0, nzimm
+95                                  // (c.li hints are translated into an addi hint)
+96                                  instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], 5'b0,
+                        MISSING_ELSE
+97                                             3'b0, instr_i[11:7], {OPCODE_OP_IMM}};
+98         2/2                    end
+                        MISSING_ELSE
+99                      
+100                               3'b011: begin
+101                                 // c.lui -&gt; lui rd, imm
+102        1/1                      // (c.lui hints are translated into a lui hint)
+103                                 instr_o = {{15 {instr_i[12]}}, instr_i[6:2], instr_i[11:7], {OPCODE_LUI}};
+104                     
+105                                 if (instr_i[11:7] == 5'h02) begin
+106                                   // c.addi16sp -&gt; addi x2, x2, nzimm
+107                                   instr_o = {{3 {instr_i[12]}}, instr_i[4:3], instr_i[5], instr_i[2],
+108        1/1                                   instr_i[6], 4'b0, 5'h02, 3'b000, 5'h02, {OPCODE_OP_IMM}};
+109                                 end
+110        2/2          
+                        MISSING_ELSE
+111                                 if ({instr_i[12], instr_i[6:2]} == 6'b0) illegal_instr_o = 1'b1;
+112                               end
+113                     
+114                               3'b100: begin
+115        1/1                      unique case (instr_i[11:10])
+116                                   2'b00,
+117                                   2'b01: begin
+118                                     // 00: c.srli -&gt; srli rd, rd, shamt
+119                                     // 01: c.srai -&gt; srai rd, rd, shamt
+120        1/1                          // (c.srli/c.srai hints are translated into a srli/srai hint)
+121                                     instr_o = {1'b0, instr_i[10], 5'b0, instr_i[6:2], 2'b01, instr_i[9:7],
+122                                                3'b101, 2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
+123        1/1                          if (instr_i[12] == 1'b1)  illegal_instr_o = 1'b1;
+124                                   end
+125                     
+126                                   2'b10: begin
+127                                     // c.andi -&gt; andi rd, rd, imm
+128                                     instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], 2'b01, instr_i[9:7],
+129        1/1                                     3'b111, 2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
+130                                   end
+131                     
+132                                   2'b11: begin
+133                                     unique case ({instr_i[12], instr_i[6:5]})
+134                                       3'b000: begin
+135        1/1                              // c.sub -&gt; sub rd', rd', rs2'
+136                                         instr_o = {2'b01, 5'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7],
+137                                                    3'b000, 2'b01, instr_i[9:7], {OPCODE_OP}};
+138                                       end
+139                     
+140                                       3'b001: begin
+141        1/1                              // c.xor -&gt; xor rd', rd', rs2'
+142                                         instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b100,
+143                                                    2'b01, instr_i[9:7], {OPCODE_OP}};
+144                                       end
+145                     
+146                                       3'b010: begin
+147                                         // c.or  -&gt; or  rd', rd', rs2'
+148                                         instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b110,
+149                                                    2'b01, instr_i[9:7], {OPCODE_OP}};
+150                                       end
+151        1/1          
+152                                       3'b011: begin
+153                                         // c.and -&gt; and rd', rd', rs2'
+154                                         instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b111,
+155        <font color = "red">0/1     ==>                                 2'b01, instr_i[9:7], {OPCODE_OP}};</font>
+156                                       end
+157                     
+158                                       3'b100,
+159                                       3'b101,
+160                                       3'b110,
+161        <font color = "red">0/1     ==>                    3'b111: begin</font>
+162                                         // 100: c.subw
+163                                         // 101: c.addw
+164                                         illegal_instr_o = 1'b1;
+165                                       end
+166                     
+167                                       default: begin
+168                                         illegal_instr_o = 1'b1;
+169        1/1                            end
+170                                     endcase
+171                                   end
+172                     
+173                                   default: begin
+174                                     illegal_instr_o = 1'b1;
+175        <font color = "red">0/1     ==>                end</font>
+176                                 endcase
+177                               end
+178                     
+179                               3'b110, 3'b111: begin
+180                                 // 0: c.beqz -&gt; beq rs1', x0, imm
+181                                 // 1: c.bnez -&gt; bne rs1', x0, imm
+182                                 instr_o = {{4 {instr_i[12]}}, instr_i[6:5], instr_i[2], 5'b0, 2'b01,
+183                                            instr_i[9:7], 2'b00, instr_i[13], instr_i[11:10], instr_i[4:3],
+184                                            instr_i[12], {OPCODE_BRANCH}};
+185                               end
+186        1/1          
+187                               default: begin
+188                                 illegal_instr_o = 1'b1;
+189                               end
+190        1/1                  endcase
+191        2/2                end
+                        MISSING_ELSE
+192                     
+193                           // C2
+194                           //
+195                           // Register address checks for RV32E are performed in the regular instruction decoder.
+196        1/1                // If this check fails, an illegal instruction exception is triggered and the controller
+197                           // writes the actual faulting instruction to mtval.
+198        2/2                2'b10: begin
+                        MISSING_ELSE
+199                             unique case (instr_i[15:13])
+200                               3'b000: begin
+201                                 // c.slli -&gt; slli rd, rd, shamt
+202        1/1                      // (c.ssli hints are translated into a slli hint)
+203        1/1                      instr_o = {7'b0, instr_i[6:2], instr_i[11:7], 3'b001, instr_i[11:7], {OPCODE_OP_IMM}};
+204                                 if (instr_i[12] == 1'b1)  illegal_instr_o = 1'b1; // reserved for custom extensions
+205                               end
+206        1/1          
+207                               3'b010: begin
+208                                 // c.lwsp -&gt; lw rd, imm(x2)
+209        1/1                      instr_o = {4'b0, instr_i[3:2], instr_i[12], instr_i[6:4], 2'b00, 5'h02,
+210        2/2                                 3'b010, instr_i[11:7], OPCODE_LOAD};
+                        MISSING_ELSE
+211                                 if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
+212                               end
+213        1/1          
+214                               3'b100: begin
+215                                 if (instr_i[12] == 1'b0) begin
+216        1/1                        if (instr_i[6:2] != 5'b0) begin
+217                                     // c.mv -&gt; add rd/rs1, x0, rs2
+218        1/1                          // (c.mv hints are translated into an add hint)
+219                                     instr_o = {7'b0, instr_i[6:2], 5'b0, 3'b0, instr_i[11:7], {OPCODE_OP}};
+220        1/1                        end else begin
+221                                     // c.jr -&gt; jalr x0, rd/rs1, 0
+222                                     instr_o = {12'b0, instr_i[11:7], 3'b0, 5'b0, {OPCODE_JALR}};
+223        1/1                          if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
+224                                   end
+225                                 end else begin
+226                                   if (instr_i[6:2] != 5'b0) begin
+227                                     // c.add -&gt; add rd, rd, rs2
+228                                     // (c.add hints are translated into an add hint)
+229                                     instr_o = {7'b0, instr_i[6:2], instr_i[11:7], 3'b0, instr_i[11:7], {OPCODE_OP}};
+230                                   end else begin
+231        1/1                          if (instr_i[11:7] == 5'b0) begin
+232                                       // c.ebreak -&gt; ebreak
+233                                       instr_o = {32'h00_10_00_73};
+234                                     end else begin
+235                                       // c.jalr -&gt; jalr x1, rs1, 0
+236                                       instr_o = {12'b0, instr_i[11:7], 3'b000, 5'b00001, {OPCODE_JALR}};
+237                                     end
+238                                   end
+239        1/1                      end
+240                               end
+241                     
+242                               3'b110: begin
+243        <font color = "red">0/1     ==>              // c.swsp -&gt; sw rs2, imm(x2)</font>
+244                                 instr_o = {4'b0, instr_i[8:7], instr_i[12], instr_i[6:2], 5'h02, 3'b010,
+245                                            instr_i[11:9], 2'b00, {OPCODE_STORE}};
+246                               end
+247                     
+248                               3'b001,
+249                               3'b011,
+250        1/1                    3'b101,
+</pre>
+<hr>
+<a name="Branch"></a>
+Branch Coverage for Module : <a href="mod32.html" >ibex_compressed_decoder</a><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Line No.</th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th></tr><tr class="s8">
+<td>Branches</td>
+<td></td>
+<td class="rt">38</td>
+<td class="rt">34</td>
+<td class="rt">89.47 </td>
+</tr><tr class="s8">
+<td>CASE</td>
+<td class="rt">28</td>
+<td class="rt">38</td>
+<td class="rt">34</td>
+<td class="rt">89.47 </td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+28             // By default, forward incoming instruction, mark it as legal.
+                                                                             <font color = "green">-1-</font>
+29             instr_o         = instr_i;
+30             illegal_instr_o = 1'b0;
+31         
+           <font color = "green">-2-</font>
+32             // Check if incoming instruction is compressed.
+33             unique case (instr_i[1:0])
+34               // C0
+35               2'b00: begin
+36                 unique case (instr_i[15:13])
+                   <font color = "green">-3-</font>                            
+           <font color = "green">        ==></font>
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+37                   3'b000: begin
+38                     // c.addi4spn -> addi rd', x2, imm
+39                     instr_o = {2'b0, instr_i[10:7], instr_i[12:11], instr_i[5],
+40                                instr_i[6], 2'b00, 5'h02, 3'b000, 2'b01, instr_i[4:2], {OPCODE_OP_IMM}};
+41                     if (instr_i[12:5] == 8'b0)  illegal_instr_o = 1'b1;
+           <font color = "green">            ==></font>
+42                   end
+43         
+44                   3'b010: begin
+45                     // c.lw -> lw rd', imm(rs1')
+46                     instr_o = {5'b0, instr_i[5], instr_i[12:10], instr_i[6],
+47                                2'b00, 2'b01, instr_i[9:7], 3'b010, 2'b01, instr_i[4:2], {OPCODE_LOAD}};
+           <font color = "green">                       ==></font>
+48                   end
+49         
+50                   3'b110: begin
+51                     // c.sw -> sw rs2', imm(rs1')
+52                     instr_o = {5'b0, instr_i[5], instr_i[12], 2'b01, instr_i[4:2],
+53                                2'b01, instr_i[9:7], 3'b010, instr_i[11:10], instr_i[6],
+           <font color = "green">                       ==></font>
+54                                2'b00, {OPCODE_STORE}};
+55                   end
+56         
+57                   3'b001,
+58                   3'b011,
+59                   3'b100,
+60                   3'b101,
+61                   3'b111: begin
+62                     illegal_instr_o = 1'b1;
+63                   end
+64         
+           <font color = "red">-4-</font>
+65                   default: begin
+66                     illegal_instr_o = 1'b1;
+67                   end
+68                 endcase
+           <font color = "green">        ==></font>
+69               end
+70         
+71               // C1
+72               //
+73               // Register address checks for RV32E are performed in the regular instruction decoder.
+74               // If this check fails, an illegal instruction exception is triggered and the controller
+75               // writes the actual faulting instruction to mtval.
+           <font color = "green">      ==></font>
+76               2'b01: begin
+77                 unique case (instr_i[15:13])
+78                   3'b000: begin
+79                     // c.addi -> addi rd, rd, nzimm
+80                     // c.nop
+81                     instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2],
+82                                instr_i[11:7], 3'b0, instr_i[11:7], {OPCODE_OP_IMM}};
+83                   end
+           <font color = "green">          ==></font>
+84         
+85                   3'b001, 3'b101: begin
+86                     // 001: c.jal -> jal x1, imm
+87                     // 101: c.j   -> jal x0, imm
+88                     instr_o = {instr_i[12], instr_i[8], instr_i[10:9], instr_i[6],
+89                                instr_i[7], instr_i[2], instr_i[11], instr_i[5:3],
+90                                {9 {instr_i[12]}}, 4'b0, ~instr_i[15], {OPCODE_JAL}};
+91                   end
+92         
+           <font color = "green">-5-</font>
+93                   3'b010: begin
+94                     // c.li -> addi rd, x0, nzimm
+           <font color = "green">            ==></font>
+95                     // (c.li hints are translated into an addi hint)
+96                     instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], 5'b0,
+                       MISSING_ELSE
+           <font color = "green">            ==></font>
+97                                3'b0, instr_i[11:7], {OPCODE_OP_IMM}};
+98                   end
+                     <font color = "green">-6-</font>   
+           <font color = "green">          ==></font>
+                     MISSING_ELSE
+           <font color = "green">          ==></font>
+99         
+100                  3'b011: begin
+101                    // c.lui -> lui rd, imm
+102                    // (c.lui hints are translated into a lui hint)
+                                                                      <font color = "red">-7-</font>
+103                    instr_o = {{15 {instr_i[12]}}, instr_i[6:2], instr_i[11:7], {OPCODE_LUI}};
+104        
+105                    if (instr_i[11:7] == 5'h02) begin
+106                      // c.addi16sp -> addi x2, x2, nzimm
+107                      instr_o = {{3 {instr_i[12]}}, instr_i[4:3], instr_i[5], instr_i[2],
+108                                 instr_i[6], 4'b0, 5'h02, 3'b000, 5'h02, {OPCODE_OP_IMM}};
+109                    end
+110        
+           <font color = "green">-8-</font>
+           <font color = "green">==></font>
+           MISSING_ELSE
+           <font color = "green">==></font>
+111                    if ({instr_i[12], instr_i[6:2]} == 6'b0) illegal_instr_o = 1'b1;
+112                  end
+113        
+114                  3'b100: begin
+115                    unique case (instr_i[11:10])
+           <font color = "green">            ==></font>
+116                      2'b00,
+117                      2'b01: begin
+118                        // 00: c.srli -> srli rd, rd, shamt
+119                        // 01: c.srai -> srai rd, rd, shamt
+120                        // (c.srli/c.srai hints are translated into a srli/srai hint)
+                                                                                        <font color = "red">-9-</font>
+121                        instr_o = {1'b0, instr_i[10], 5'b0, instr_i[6:2], 2'b01, instr_i[9:7],
+122                                   3'b101, 2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
+123                        if (instr_i[12] == 1'b1)  illegal_instr_o = 1'b1;
+           <font color = "green">                ==></font>
+124                      end
+125        
+126                      2'b10: begin
+127                        // c.andi -> andi rd, rd, imm
+128                        instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], 2'b01, instr_i[9:7],
+129                                   3'b111, 2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
+           <font color = "green">                           ==></font>
+130                      end
+131        
+132                      2'b11: begin
+133                        unique case ({instr_i[12], instr_i[6:5]})
+134                          3'b000: begin
+135                            // c.sub -> sub rd', rd', rs2'
+           <font color = "green">                    ==></font>
+136                            instr_o = {2'b01, 5'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7],
+137                                       3'b000, 2'b01, instr_i[9:7], {OPCODE_OP}};
+138                          end
+139        
+140                          3'b001: begin
+141                            // c.xor -> xor rd', rd', rs2'
+           <font color = "green">                    ==></font>
+142                            instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b100,
+143                                       2'b01, instr_i[9:7], {OPCODE_OP}};
+144                          end
+145        
+146                          3'b010: begin
+147                            // c.or  -> or  rd', rd', rs2'
+148                            instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b110,
+149                                       2'b01, instr_i[9:7], {OPCODE_OP}};
+150                          end
+151        
+           <font color = "green">==></font>
+152                          3'b011: begin
+153                            // c.and -> and rd', rd', rs2'
+154                            instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b111,
+155                                       2'b01, instr_i[9:7], {OPCODE_OP}};
+           <font color = "red">                               ==></font>
+156                          end
+157        
+158                          3'b100,
+159                          3'b101,
+160                          3'b110,
+161                          3'b111: begin
+           <font color = "red">                  ==></font>
+162                            // 100: c.subw
+163                            // 101: c.addw
+164                            illegal_instr_o = 1'b1;
+165                          end
+166        
+167                          default: begin
+168                            illegal_instr_o = 1'b1;
+169                          end
+           <font color = "green">                  ==></font>
+170                        endcase
+171                      end
+172        
+173                      default: begin
+174                        illegal_instr_o = 1'b1;
+175                      end
+           <font color = "red">              ==></font>
+176                    endcase
+177                  end
+178        
+179                  3'b110, 3'b111: begin
+180                    // 0: c.beqz -> beq rs1', x0, imm
+181                    // 1: c.bnez -> bne rs1', x0, imm
+182                    instr_o = {{4 {instr_i[12]}}, instr_i[6:5], instr_i[2], 5'b0, 2'b01,
+183                               instr_i[9:7], 2'b00, instr_i[13], instr_i[11:10], instr_i[4:3],
+184                               instr_i[12], {OPCODE_BRANCH}};
+185                  end
+186        
+           <font color = "red">-10-</font>
+187                  default: begin
+188                    illegal_instr_o = 1'b1;
+189                  end
+190                endcase
+191              end
+                 <font color = "green">-11-</font>   
+           <font color = "green">      ==></font>
+                 MISSING_ELSE
+           <font color = "green">      ==></font>
+192        
+193              // C2
+194              //
+195              // Register address checks for RV32E are performed in the regular instruction decoder.
+196              // If this check fails, an illegal instruction exception is triggered and the controller
+197              // writes the actual faulting instruction to mtval.
+198              2'b10: begin
+                 <font color = "green">-12-</font>            
+           <font color = "green">      ==></font>
+                 MISSING_ELSE
+           <font color = "green">      ==></font>
+199                unique case (instr_i[15:13])
+200                  3'b000: begin
+201                    // c.slli -> slli rd, rd, shamt
+202                    // (c.ssli hints are translated into a slli hint)
+                                                                        <font color = "green">-13-</font>
+203                    instr_o = {7'b0, instr_i[6:2], instr_i[11:7], 3'b001, instr_i[11:7], {OPCODE_OP_IMM}};
+                       <font color = "green">-14-</font>                                                                                      
+204                    if (instr_i[12] == 1'b1)  illegal_instr_o = 1'b1; // reserved for custom extensions
+205                  end
+206        
+           <font color = "green">==></font>
+207                  3'b010: begin
+208                    // c.lwsp -> lw rd, imm(x2)
+209                    instr_o = {4'b0, instr_i[3:2], instr_i[12], instr_i[6:4], 2'b00, 5'h02,
+210                               3'b010, instr_i[11:7], OPCODE_LOAD};
+                                  <font color = "green">-15-</font>                                    
+           <font color = "green">                       ==></font>
+                                  MISSING_ELSE
+           <font color = "green">                       ==></font>
+211                    if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
+212                  end
+213        
+           <font color = "green">-16-</font>
+214                  3'b100: begin
+215                    if (instr_i[12] == 1'b0) begin
+216                      if (instr_i[6:2] != 5'b0) begin
+           <font color = "green">              ==></font>
+217                        // c.mv -> add rd/rs1, x0, rs2
+218                        // (c.mv hints are translated into an add hint)
+                                                                          <font color = "green">-17-</font>
+219                        instr_o = {7'b0, instr_i[6:2], 5'b0, 3'b0, instr_i[11:7], {OPCODE_OP}};
+220                      end else begin
+           <font color = "green">              ==></font>
+221                        // c.jr -> jalr x0, rd/rs1, 0
+222                        instr_o = {12'b0, instr_i[11:7], 3'b0, 5'b0, {OPCODE_JALR}};
+223                        if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
+           <font color = "green">                ==></font>
+224                      end
+225                    end else begin
+226                      if (instr_i[6:2] != 5'b0) begin
+227                        // c.add -> add rd, rd, rs2
+228                        // (c.add hints are translated into an add hint)
+229                        instr_o = {7'b0, instr_i[6:2], instr_i[11:7], 3'b0, instr_i[11:7], {OPCODE_OP}};
+230                      end else begin
+231                        if (instr_i[11:7] == 5'b0) begin
+           <font color = "green">                ==></font>
+232                          // c.ebreak -> ebreak
+233                          instr_o = {32'h00_10_00_73};
+234                        end else begin
+235                          // c.jalr -> jalr x1, rs1, 0
+236                          instr_o = {12'b0, instr_i[11:7], 3'b000, 5'b00001, {OPCODE_JALR}};
+237                        end
+238                      end
+239                    end
+           <font color = "green">            ==></font>
+240                  end
+241        
+242                  3'b110: begin
+243                    // c.swsp -> sw rs2, imm(x2)
+           <font color = "red">            ==></font>
+244                    instr_o = {4'b0, instr_i[8:7], instr_i[12], instr_i[6:2], 5'h02, 3'b010,
+245                               instr_i[11:9], 2'b00, {OPCODE_STORE}};
+246                  end
+247        
+248                  3'b001,
+249                  3'b011,
+250                  3'b101,
+           <font color = "green">          ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>-5-</th><th nowrap width=80>-6-</th><th nowrap width=80>-7-</th><th nowrap width=80>-8-</th><th nowrap width=80>-9-</th><th nowrap width=80>-10-</th><th nowrap width=80>-11-</th><th nowrap width=80>-12-</th><th nowrap width=80>-13-</th><th nowrap width=80>-14-</th><th nowrap width=80>-15-</th><th nowrap width=80>-16-</th><th nowrap width=80>-17-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>3'b000 </td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>3'b000 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>3'b010 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>3'b110 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b000 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b1 3'b101 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b010 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b011 </td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b011 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b011 </td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b011 </td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b0 2'b1 </td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b0 2'b1 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center>3'b000 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center>3'b001 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center>3'b010 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center>3'b011 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 3'b101 3'b110 3'b111 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uRed">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b110 3'b111 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b000 </td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b000 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b010 </td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b010 </td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b110 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b1 3'b011 3'b101 3'b111 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+</div>
+<div name='inst_tag_33'>
+<a name="inst_tag_33_Line"></a>
+<b>Line Coverage for Instance : <a href="mod32.html#inst_tag_33" >core_ibex_tb_top.dut.u_ibex_core.if_stage_i.compressed_decoder_i<img src="ex.gif" class="icon"></a></b><br clear=all>
+<table class="noborder">
+<col width="122">
+<col span="4" width="82">
+<tr><th></th><th>Line No.</th><th>Total</th><th>Covered</th><th>Percent</th></tr>
+<tr class="s10"><td class="lf">TOTAL</td><td></td><td>52</td><td>52</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>25</td><td>52</td><td>52</td><td>100.00</td></tr>
+</table>
+<pre class="code"><br clear=all>
+24                        // Compressed decoder //
+25         1/1            ////////////////////////
+26         1/1          
+27                        always_comb begin
+28         1/1              // By default, forward incoming instruction, mark it as legal.
+29                          instr_o         = instr_i;
+30                          illegal_instr_o = 1'b0;
+31         1/1          
+32                          // Check if incoming instruction is compressed.
+33                          unique case (instr_i[1:0])
+34         1/1                // C0
+35                            2'b00: begin
+36         2/2                  unique case (instr_i[15:13])
+                        MISSING_ELSE
+37                                3'b000: begin
+38                                  // c.addi4spn -&gt; addi rd', x2, imm
+39                                  instr_o = {2'b0, instr_i[10:7], instr_i[12:11], instr_i[5],
+40                                             instr_i[6], 2'b00, 5'h02, 3'b000, 2'b01, instr_i[4:2], {OPCODE_OP_IMM}};
+41         1/1                      if (instr_i[12:5] == 8'b0)  illegal_instr_o = 1'b1;
+42                                end
+43                      
+44                                3'b010: begin
+45                                  // c.lw -&gt; lw rd', imm(rs1')
+46                                  instr_o = {5'b0, instr_i[5], instr_i[12:10], instr_i[6],
+47         1/1                                 2'b00, 2'b01, instr_i[9:7], 3'b010, 2'b01, instr_i[4:2], {OPCODE_LOAD}};
+48                                end
+49                      
+50                                3'b110: begin
+51                                  // c.sw -&gt; sw rs2', imm(rs1')
+52                                  instr_o = {5'b0, instr_i[5], instr_i[12], 2'b01, instr_i[4:2],
+53         1/1                                 2'b01, instr_i[9:7], 3'b010, instr_i[11:10], instr_i[6],
+54                                             2'b00, {OPCODE_STORE}};
+55                                end
+56                      
+57                                3'b001,
+58                                3'b011,
+59                                3'b100,
+60                                3'b101,
+61                                3'b111: begin
+62                                  illegal_instr_o = 1'b1;
+63                                end
+64         1/1          
+65                                default: begin
+66                                  illegal_instr_o = 1'b1;
+67                                end
+68         1/1                  endcase
+69                            end
+70                      
+71                            // C1
+72                            //
+73                            // Register address checks for RV32E are performed in the regular instruction decoder.
+74                            // If this check fails, an illegal instruction exception is triggered and the controller
+75         1/1                // writes the actual faulting instruction to mtval.
+76                            2'b01: begin
+77                              unique case (instr_i[15:13])
+78                                3'b000: begin
+79                                  // c.addi -&gt; addi rd, rd, nzimm
+80                                  // c.nop
+81                                  instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2],
+82                                             instr_i[11:7], 3'b0, instr_i[11:7], {OPCODE_OP_IMM}};
+83         1/1                    end
+84                      
+85                                3'b001, 3'b101: begin
+86                                  // 001: c.jal -&gt; jal x1, imm
+87                                  // 101: c.j   -&gt; jal x0, imm
+88                                  instr_o = {instr_i[12], instr_i[8], instr_i[10:9], instr_i[6],
+89                                             instr_i[7], instr_i[2], instr_i[11], instr_i[5:3],
+90         1/1                                 {9 {instr_i[12]}}, 4'b0, ~instr_i[15], {OPCODE_JAL}};
+91                                end
+92         1/1          
+93                                3'b010: begin
+94         1/1                      // c.li -&gt; addi rd, x0, nzimm
+95                                  // (c.li hints are translated into an addi hint)
+96                                  instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], 5'b0,
+                        MISSING_ELSE
+97                                             3'b0, instr_i[11:7], {OPCODE_OP_IMM}};
+98         2/2                    end
+                        MISSING_ELSE
+99                      
+100                               3'b011: begin
+101                                 // c.lui -&gt; lui rd, imm
+102        1/1                      // (c.lui hints are translated into a lui hint)
+103                                 instr_o = {{15 {instr_i[12]}}, instr_i[6:2], instr_i[11:7], {OPCODE_LUI}};
+104                     
+105                                 if (instr_i[11:7] == 5'h02) begin
+106                                   // c.addi16sp -&gt; addi x2, x2, nzimm
+107                                   instr_o = {{3 {instr_i[12]}}, instr_i[4:3], instr_i[5], instr_i[2],
+108        1/1                                   instr_i[6], 4'b0, 5'h02, 3'b000, 5'h02, {OPCODE_OP_IMM}};
+109                                 end
+110        2/2          
+                        MISSING_ELSE
+111                                 if ({instr_i[12], instr_i[6:2]} == 6'b0) illegal_instr_o = 1'b1;
+112                               end
+113                     
+114                               3'b100: begin
+115        1/1                      unique case (instr_i[11:10])
+116                                   2'b00,
+117                                   2'b01: begin
+118                                     // 00: c.srli -&gt; srli rd, rd, shamt
+119                                     // 01: c.srai -&gt; srai rd, rd, shamt
+120        1/1                          // (c.srli/c.srai hints are translated into a srli/srai hint)
+121                                     instr_o = {1'b0, instr_i[10], 5'b0, instr_i[6:2], 2'b01, instr_i[9:7],
+122                                                3'b101, 2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
+123        1/1                          if (instr_i[12] == 1'b1)  illegal_instr_o = 1'b1;
+124                                   end
+125                     
+126                                   2'b10: begin
+127                                     // c.andi -&gt; andi rd, rd, imm
+128                                     instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], 2'b01, instr_i[9:7],
+129        1/1                                     3'b111, 2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
+130                                   end
+131                     
+132                                   2'b11: begin
+133                                     unique case ({instr_i[12], instr_i[6:5]})
+134                                       3'b000: begin
+135        1/1                              // c.sub -&gt; sub rd', rd', rs2'
+136                                         instr_o = {2'b01, 5'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7],
+137                                                    3'b000, 2'b01, instr_i[9:7], {OPCODE_OP}};
+138                                       end
+139                     
+140                                       3'b001: begin
+141        1/1                              // c.xor -&gt; xor rd', rd', rs2'
+142                                         instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b100,
+143                                                    2'b01, instr_i[9:7], {OPCODE_OP}};
+144                                       end
+145                     
+146                                       3'b010: begin
+147                                         // c.or  -&gt; or  rd', rd', rs2'
+148                                         instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b110,
+149                                                    2'b01, instr_i[9:7], {OPCODE_OP}};
+150                                       end
+151        1/1          
+152                                       3'b011: begin
+153                                         // c.and -&gt; and rd', rd', rs2'
+154                                         instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b111,
+155        <font color = "grey">excluded     </font>                               2'b01, instr_i[9:7], {OPCODE_OP}};
+156                                       end
+157                     
+158                                       3'b100,
+159                                       3'b101,
+160                                       3'b110,
+161        <font color = "grey">excluded     </font>                  3'b111: begin
+162                                         // 100: c.subw
+163                                         // 101: c.addw
+164                                         illegal_instr_o = 1'b1;
+165                                       end
+166                     
+167                                       default: begin
+168                                         illegal_instr_o = 1'b1;
+169        1/1                            end
+170                                     endcase
+171                                   end
+172                     
+173                                   default: begin
+174                                     illegal_instr_o = 1'b1;
+175        <font color = "grey">excluded     </font>              end
+176                                 endcase
+177                               end
+178                     
+179                               3'b110, 3'b111: begin
+180                                 // 0: c.beqz -&gt; beq rs1', x0, imm
+181                                 // 1: c.bnez -&gt; bne rs1', x0, imm
+182                                 instr_o = {{4 {instr_i[12]}}, instr_i[6:5], instr_i[2], 5'b0, 2'b01,
+183                                            instr_i[9:7], 2'b00, instr_i[13], instr_i[11:10], instr_i[4:3],
+184                                            instr_i[12], {OPCODE_BRANCH}};
+185                               end
+186        1/1          
+187                               default: begin
+188                                 illegal_instr_o = 1'b1;
+189                               end
+190        1/1                  endcase
+191        2/2                end
+                        MISSING_ELSE
+192                     
+193                           // C2
+194                           //
+195                           // Register address checks for RV32E are performed in the regular instruction decoder.
+196        1/1                // If this check fails, an illegal instruction exception is triggered and the controller
+197                           // writes the actual faulting instruction to mtval.
+198        2/2                2'b10: begin
+                        MISSING_ELSE
+199                             unique case (instr_i[15:13])
+200                               3'b000: begin
+201                                 // c.slli -&gt; slli rd, rd, shamt
+202        1/1                      // (c.ssli hints are translated into a slli hint)
+203        1/1                      instr_o = {7'b0, instr_i[6:2], instr_i[11:7], 3'b001, instr_i[11:7], {OPCODE_OP_IMM}};
+204                                 if (instr_i[12] == 1'b1)  illegal_instr_o = 1'b1; // reserved for custom extensions
+205                               end
+206        1/1          
+207                               3'b010: begin
+208                                 // c.lwsp -&gt; lw rd, imm(x2)
+209        1/1                      instr_o = {4'b0, instr_i[3:2], instr_i[12], instr_i[6:4], 2'b00, 5'h02,
+210        2/2                                 3'b010, instr_i[11:7], OPCODE_LOAD};
+                        MISSING_ELSE
+211                                 if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
+212                               end
+213        1/1          
+214                               3'b100: begin
+215                                 if (instr_i[12] == 1'b0) begin
+216        1/1                        if (instr_i[6:2] != 5'b0) begin
+217                                     // c.mv -&gt; add rd/rs1, x0, rs2
+218        1/1                          // (c.mv hints are translated into an add hint)
+219                                     instr_o = {7'b0, instr_i[6:2], 5'b0, 3'b0, instr_i[11:7], {OPCODE_OP}};
+220        1/1                        end else begin
+221                                     // c.jr -&gt; jalr x0, rd/rs1, 0
+222                                     instr_o = {12'b0, instr_i[11:7], 3'b0, 5'b0, {OPCODE_JALR}};
+223        1/1                          if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
+224                                   end
+225                                 end else begin
+226                                   if (instr_i[6:2] != 5'b0) begin
+227                                     // c.add -&gt; add rd, rd, rs2
+228                                     // (c.add hints are translated into an add hint)
+229                                     instr_o = {7'b0, instr_i[6:2], instr_i[11:7], 3'b0, instr_i[11:7], {OPCODE_OP}};
+230                                   end else begin
+231        1/1                          if (instr_i[11:7] == 5'b0) begin
+232                                       // c.ebreak -&gt; ebreak
+233                                       instr_o = {32'h00_10_00_73};
+234                                     end else begin
+235                                       // c.jalr -&gt; jalr x1, rs1, 0
+236                                       instr_o = {12'b0, instr_i[11:7], 3'b000, 5'b00001, {OPCODE_JALR}};
+237                                     end
+238                                   end
+239        1/1                      end
+240                               end
+241                     
+242                               3'b110: begin
+243        <font color = "grey">excluded     </font>            // c.swsp -&gt; sw rs2, imm(x2)
+244                                 instr_o = {4'b0, instr_i[8:7], instr_i[12], instr_i[6:2], 5'h02, 3'b010,
+245                                            instr_i[11:9], 2'b00, {OPCODE_STORE}};
+246                               end
+247                     
+248                               3'b001,
+249                               3'b011,
+250        1/1                    3'b101,
+</pre>
+<hr>
+<a name="inst_tag_33_Branch"></a>
+<b>Branch Coverage for Instance : <a href="mod32.html#inst_tag_33" >core_ibex_tb_top.dut.u_ibex_core.if_stage_i.compressed_decoder_i<img src="ex.gif" class="icon"></a></b><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Line No.</th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th></tr><tr class="s10">
+<td>Branches</td>
+<td></td>
+<td class="rt">34</td>
+<td class="rt">34</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">28</td>
+<td class="rt">34</td>
+<td class="rt">34</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+28             // By default, forward incoming instruction, mark it as legal.
+                                                                             <font color = "green">-1-</font>
+29             instr_o         = instr_i;
+30             illegal_instr_o = 1'b0;
+31         
+           <font color = "green">-2-</font>
+32             // Check if incoming instruction is compressed.
+33             unique case (instr_i[1:0])
+34               // C0
+35               2'b00: begin
+36                 unique case (instr_i[15:13])
+                   <font color = "green">-3-</font>                            
+           <font color = "green">        ==></font>
+                   MISSING_ELSE
+           <font color = "green">        ==></font>
+37                   3'b000: begin
+38                     // c.addi4spn -> addi rd', x2, imm
+39                     instr_o = {2'b0, instr_i[10:7], instr_i[12:11], instr_i[5],
+40                                instr_i[6], 2'b00, 5'h02, 3'b000, 2'b01, instr_i[4:2], {OPCODE_OP_IMM}};
+41                     if (instr_i[12:5] == 8'b0)  illegal_instr_o = 1'b1;
+           <font color = "green">            ==></font>
+42                   end
+43         
+44                   3'b010: begin
+45                     // c.lw -> lw rd', imm(rs1')
+46                     instr_o = {5'b0, instr_i[5], instr_i[12:10], instr_i[6],
+47                                2'b00, 2'b01, instr_i[9:7], 3'b010, 2'b01, instr_i[4:2], {OPCODE_LOAD}};
+           <font color = "green">                       ==></font>
+48                   end
+49         
+50                   3'b110: begin
+51                     // c.sw -> sw rs2', imm(rs1')
+52                     instr_o = {5'b0, instr_i[5], instr_i[12], 2'b01, instr_i[4:2],
+53                                2'b01, instr_i[9:7], 3'b010, instr_i[11:10], instr_i[6],
+           <font color = "green">                       ==></font>
+54                                2'b00, {OPCODE_STORE}};
+55                   end
+56         
+57                   3'b001,
+58                   3'b011,
+59                   3'b100,
+60                   3'b101,
+61                   3'b111: begin
+62                     illegal_instr_o = 1'b1;
+63                   end
+64         
+           <font color = "red">-4-</font>
+65                   default: begin
+66                     illegal_instr_o = 1'b1;
+67                   end
+68                 endcase
+           <font color = "green">        ==></font>
+69               end
+70         
+71               // C1
+72               //
+73               // Register address checks for RV32E are performed in the regular instruction decoder.
+74               // If this check fails, an illegal instruction exception is triggered and the controller
+75               // writes the actual faulting instruction to mtval.
+           <font color = "green">      ==></font>
+76               2'b01: begin
+77                 unique case (instr_i[15:13])
+78                   3'b000: begin
+79                     // c.addi -> addi rd, rd, nzimm
+80                     // c.nop
+81                     instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2],
+82                                instr_i[11:7], 3'b0, instr_i[11:7], {OPCODE_OP_IMM}};
+83                   end
+           <font color = "green">          ==></font>
+84         
+85                   3'b001, 3'b101: begin
+86                     // 001: c.jal -> jal x1, imm
+87                     // 101: c.j   -> jal x0, imm
+88                     instr_o = {instr_i[12], instr_i[8], instr_i[10:9], instr_i[6],
+89                                instr_i[7], instr_i[2], instr_i[11], instr_i[5:3],
+90                                {9 {instr_i[12]}}, 4'b0, ~instr_i[15], {OPCODE_JAL}};
+91                   end
+92         
+           <font color = "green">-5-</font>
+93                   3'b010: begin
+94                     // c.li -> addi rd, x0, nzimm
+           <font color = "green">            ==></font>
+95                     // (c.li hints are translated into an addi hint)
+96                     instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], 5'b0,
+                       MISSING_ELSE
+           <font color = "green">            ==></font>
+97                                3'b0, instr_i[11:7], {OPCODE_OP_IMM}};
+98                   end
+                     <font color = "green">-6-</font>   
+           <font color = "green">          ==></font>
+                     MISSING_ELSE
+           <font color = "green">          ==></font>
+99         
+100                  3'b011: begin
+101                    // c.lui -> lui rd, imm
+102                    // (c.lui hints are translated into a lui hint)
+                                                                      <font color = "red">-7-</font>
+103                    instr_o = {{15 {instr_i[12]}}, instr_i[6:2], instr_i[11:7], {OPCODE_LUI}};
+104        
+105                    if (instr_i[11:7] == 5'h02) begin
+106                      // c.addi16sp -> addi x2, x2, nzimm
+107                      instr_o = {{3 {instr_i[12]}}, instr_i[4:3], instr_i[5], instr_i[2],
+108                                 instr_i[6], 4'b0, 5'h02, 3'b000, 5'h02, {OPCODE_OP_IMM}};
+109                    end
+110        
+           <font color = "green">-8-</font>
+           <font color = "green">==></font>
+           MISSING_ELSE
+           <font color = "green">==></font>
+111                    if ({instr_i[12], instr_i[6:2]} == 6'b0) illegal_instr_o = 1'b1;
+112                  end
+113        
+114                  3'b100: begin
+115                    unique case (instr_i[11:10])
+           <font color = "green">            ==></font>
+116                      2'b00,
+117                      2'b01: begin
+118                        // 00: c.srli -> srli rd, rd, shamt
+119                        // 01: c.srai -> srai rd, rd, shamt
+120                        // (c.srli/c.srai hints are translated into a srli/srai hint)
+                                                                                        <font color = "red">-9-</font>
+121                        instr_o = {1'b0, instr_i[10], 5'b0, instr_i[6:2], 2'b01, instr_i[9:7],
+122                                   3'b101, 2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
+123                        if (instr_i[12] == 1'b1)  illegal_instr_o = 1'b1;
+           <font color = "green">                ==></font>
+124                      end
+125        
+126                      2'b10: begin
+127                        // c.andi -> andi rd, rd, imm
+128                        instr_o = {{6 {instr_i[12]}}, instr_i[12], instr_i[6:2], 2'b01, instr_i[9:7],
+129                                   3'b111, 2'b01, instr_i[9:7], {OPCODE_OP_IMM}};
+           <font color = "green">                           ==></font>
+130                      end
+131        
+132                      2'b11: begin
+133                        unique case ({instr_i[12], instr_i[6:5]})
+134                          3'b000: begin
+135                            // c.sub -> sub rd', rd', rs2'
+           <font color = "green">                    ==></font>
+136                            instr_o = {2'b01, 5'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7],
+137                                       3'b000, 2'b01, instr_i[9:7], {OPCODE_OP}};
+138                          end
+139        
+140                          3'b001: begin
+141                            // c.xor -> xor rd', rd', rs2'
+           <font color = "green">                    ==></font>
+142                            instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b100,
+143                                       2'b01, instr_i[9:7], {OPCODE_OP}};
+144                          end
+145        
+146                          3'b010: begin
+147                            // c.or  -> or  rd', rd', rs2'
+148                            instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b110,
+149                                       2'b01, instr_i[9:7], {OPCODE_OP}};
+150                          end
+151        
+           <font color = "green">==></font>
+152                          3'b011: begin
+153                            // c.and -> and rd', rd', rs2'
+154                            instr_o = {7'b0, 2'b01, instr_i[4:2], 2'b01, instr_i[9:7], 3'b111,
+155                                       2'b01, instr_i[9:7], {OPCODE_OP}};
+           <font color = "grey">                               ==> (Excluded)</font>
+156                          end
+157        
+158                          3'b100,
+159                          3'b101,
+160                          3'b110,
+161                          3'b111: begin
+           <font color = "grey">                  ==> (Excluded)</font>
+162                            // 100: c.subw
+163                            // 101: c.addw
+164                            illegal_instr_o = 1'b1;
+165                          end
+166        
+167                          default: begin
+168                            illegal_instr_o = 1'b1;
+169                          end
+           <font color = "green">                  ==></font>
+170                        endcase
+171                      end
+172        
+173                      default: begin
+174                        illegal_instr_o = 1'b1;
+175                      end
+           <font color = "grey">              ==> (Excluded)</font>
+176                    endcase
+177                  end
+178        
+179                  3'b110, 3'b111: begin
+180                    // 0: c.beqz -> beq rs1', x0, imm
+181                    // 1: c.bnez -> bne rs1', x0, imm
+182                    instr_o = {{4 {instr_i[12]}}, instr_i[6:5], instr_i[2], 5'b0, 2'b01,
+183                               instr_i[9:7], 2'b00, instr_i[13], instr_i[11:10], instr_i[4:3],
+184                               instr_i[12], {OPCODE_BRANCH}};
+185                  end
+186        
+           <font color = "red">-10-</font>
+187                  default: begin
+188                    illegal_instr_o = 1'b1;
+189                  end
+190                endcase
+191              end
+                 <font color = "green">-11-</font>   
+           <font color = "green">      ==></font>
+                 MISSING_ELSE
+           <font color = "green">      ==></font>
+192        
+193              // C2
+194              //
+195              // Register address checks for RV32E are performed in the regular instruction decoder.
+196              // If this check fails, an illegal instruction exception is triggered and the controller
+197              // writes the actual faulting instruction to mtval.
+198              2'b10: begin
+                 <font color = "green">-12-</font>            
+           <font color = "green">      ==></font>
+                 MISSING_ELSE
+           <font color = "green">      ==></font>
+199                unique case (instr_i[15:13])
+200                  3'b000: begin
+201                    // c.slli -> slli rd, rd, shamt
+202                    // (c.ssli hints are translated into a slli hint)
+                                                                        <font color = "green">-13-</font>
+203                    instr_o = {7'b0, instr_i[6:2], instr_i[11:7], 3'b001, instr_i[11:7], {OPCODE_OP_IMM}};
+                       <font color = "green">-14-</font>                                                                                      
+204                    if (instr_i[12] == 1'b1)  illegal_instr_o = 1'b1; // reserved for custom extensions
+205                  end
+206        
+           <font color = "green">==></font>
+207                  3'b010: begin
+208                    // c.lwsp -> lw rd, imm(x2)
+209                    instr_o = {4'b0, instr_i[3:2], instr_i[12], instr_i[6:4], 2'b00, 5'h02,
+210                               3'b010, instr_i[11:7], OPCODE_LOAD};
+                                  <font color = "green">-15-</font>                                    
+           <font color = "green">                       ==></font>
+                                  MISSING_ELSE
+           <font color = "green">                       ==></font>
+211                    if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
+212                  end
+213        
+           <font color = "green">-16-</font>
+214                  3'b100: begin
+215                    if (instr_i[12] == 1'b0) begin
+216                      if (instr_i[6:2] != 5'b0) begin
+           <font color = "green">              ==></font>
+217                        // c.mv -> add rd/rs1, x0, rs2
+218                        // (c.mv hints are translated into an add hint)
+                                                                          <font color = "green">-17-</font>
+219                        instr_o = {7'b0, instr_i[6:2], 5'b0, 3'b0, instr_i[11:7], {OPCODE_OP}};
+220                      end else begin
+           <font color = "green">              ==></font>
+221                        // c.jr -> jalr x0, rd/rs1, 0
+222                        instr_o = {12'b0, instr_i[11:7], 3'b0, 5'b0, {OPCODE_JALR}};
+223                        if (instr_i[11:7] == 5'b0)  illegal_instr_o = 1'b1;
+           <font color = "green">                ==></font>
+224                      end
+225                    end else begin
+226                      if (instr_i[6:2] != 5'b0) begin
+227                        // c.add -> add rd, rd, rs2
+228                        // (c.add hints are translated into an add hint)
+229                        instr_o = {7'b0, instr_i[6:2], instr_i[11:7], 3'b0, instr_i[11:7], {OPCODE_OP}};
+230                      end else begin
+231                        if (instr_i[11:7] == 5'b0) begin
+           <font color = "green">                ==></font>
+232                          // c.ebreak -> ebreak
+233                          instr_o = {32'h00_10_00_73};
+234                        end else begin
+235                          // c.jalr -> jalr x1, rs1, 0
+236                          instr_o = {12'b0, instr_i[11:7], 3'b000, 5'b00001, {OPCODE_JALR}};
+237                        end
+238                      end
+239                    end
+           <font color = "green">            ==></font>
+240                  end
+241        
+242                  3'b110: begin
+243                    // c.swsp -> sw rs2, imm(x2)
+           <font color = "grey">            ==> (Excluded)</font>
+244                    instr_o = {4'b0, instr_i[8:7], instr_i[12], instr_i[6:2], 5'h02, 3'b010,
+245                               instr_i[11:9], 2'b00, {OPCODE_STORE}};
+246                  end
+247        
+248                  3'b001,
+249                  3'b011,
+250                  3'b101,
+           <font color = "green">          ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>-5-</th><th nowrap width=80>-6-</th><th nowrap width=80>-7-</th><th nowrap width=80>-8-</th><th nowrap width=80>-9-</th><th nowrap width=80>-10-</th><th nowrap width=80>-11-</th><th nowrap width=80>-12-</th><th nowrap width=80>-13-</th><th nowrap width=80>-14-</th><th nowrap width=80>-15-</th><th nowrap width=80>-16-</th><th nowrap width=80>-17-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>3'b000 </td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>3'b000 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>3'b010 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>3'b110 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b00 </td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b000 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b1 3'b101 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b010 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b011 </td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b011 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b011 </td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b011 </td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b0 2'b1 </td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b0 2'b1 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center>3'b000 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center>3'b001 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center>3'b010 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center>3'b011 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 3'b101 3'b110 3'b111 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="wht">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>2'b11 </td>
+<td align=center nowrap>-</td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Excluded</td>
+</tr><tr class="wht">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Excluded</td>
+</tr><tr class="uGreen">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b110 3'b111 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="wht">
+<td align=center>2'b01 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Excluded</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b000 </td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b000 </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b010 </td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b010 </td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b100 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b110 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>3'b1 3'b011 3'b101 3'b111 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="wht">
+<td align=center>2'b10 </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Excluded</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+</div>
+</div>
+<div class="ui-layout-center-inner-north">
+<div id="center-bread-crumb" class="breadCrumb module urg-margin-bottom">
+  <ul name="inst_tag_33">
+    <li>
+      <a href="#inst_tag_33_Line">Line</a>    </li>
+    <li>
+      <a href="#inst_tag_33_Branch">Branch</a>    </li>
+  </ul>
+  <ul name="tag_ibex_compressed_decoder">
+    <li>
+      <a href="#Line">Line</a>    </li>
+    <li>
+      <a href="#Branch">Branch</a>    </li>
+  </ul>
+</div>
+</div>
+</div>
+<div class="ui-layout-south">
+<table align=center><tr><td class="s0 cl">0%</td>
+<td class="s1 cl">10%</td>
+<td class="s2 cl">20%</td>
+<td class="s3 cl">30%</td>
+<td class="s4 cl">40%</td>
+<td class="s5 cl">50%</td>
+<td class="s6 cl">60%</td>
+<td class="s7 cl">70%</td>
+<td class="s8 cl">80%</td>
+<td class="s9 cl">90%</td>
+<td class="s10 cl">100%</td></tr></table></div>
+</body>
+</html>

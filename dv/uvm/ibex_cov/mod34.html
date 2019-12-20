@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Author" content="<username>"> <meta name="GENERATOR" content="urg/version [en] (platform name) [urg]">
+<title>Unified Coverage Report :: Module :: ibex_id_stage</title>
+<link type="text/css" rel="stylesheet" href="css/.urg.css">
+<link type="text/css" rel="stylesheet" href="css/.layout.css">
+<link type="text/css" rel="stylesheet" href="css/.breadcrumb.css">
+<script type="text/javascript" src="js/.jquery.js"></script>
+<script type="text/javascript" src="js/.jquery-ui.js"></script>
+<script type="text/javascript" src="js/.sortable.js"></script>
+<script type="text/javascript" src="js/.layout.js"></script>
+<script type="text/javascript" src="js/.breadcrumb.js"></script>
+<script type="text/javascript">
+var layout, westLayout, centerLayout;
+$(document).ready(function () {
+  if ($("#north-bread-crumb")) {
+    $("#north-bread-crumb").jBreadCrumb({easing:'swing'})
+  }
+  layout = $("body").layout({ 
+    resizable: true,
+    spacing_open: 4,
+    spacing_closed: 4,
+    north: {
+      size: 76
+    },
+    south: {
+      size: 45,
+      initClosed: true
+    },
+    west: {
+      size: 500,
+      resizable: true,
+      initClosed: false
+    }
+  });
+  centerLayout = $('div.ui-layout-center').layout({
+    north__paneSelector: ".ui-layout-center-inner-north",
+    center__paneSelector: ".ui-layout-center-inner-center", 
+    north__size: 50,
+    spacing_open: 4,
+    spacing_closed: 4
+  });
+});
+</script>
+</head>
+<body onLoad="initPage();"><div class="ui-layout-north">
+<div class="logo"></div>
+<center class="pagetitle">Module Definition</center>
+<div align="center"><a href="dashboard.html" ><b>dashboard</b></a> | <a href="hierarchy.html" ><b>hierarchy</b></a> | <a href="modlist.html" ><b>modlist</b></a> | groups | <a href="tests.html" ><b>tests</b></a> | <a href="asserts.html" ><b>asserts</b></a></div>
+
+</div>
+<div class="ui-layout-west">
+<div name='tag_ibex_id_stage'>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module : <a href="#"  onclick="showContent('tag_ibex_id_stage')">ibex_id_stage</a></span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt"><a href="mod34.html#Line" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod34.html#Branch" >100.00</a></td>
+<td class="s10 cl rt"><a href="mod34.html#Assert" >100.00</a></td>
+</tr></table><br clear=all>
+<span class=repname>Source File(s) : </span>
+<br clear=all>
+<a href="javascript:void(0);"  onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_id_stage.sv')">/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_id_stage.sv</a><br clear=all>
+<br clear=all>
+<span class=repname>Module self-instances :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="wht cl wordwrap"><a href="mod34.html#inst_tag_35"  onclick="showContent('inst_tag_35')">core_ibex_tb_top.dut.u_ibex_core.id_stage_i</a></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt"><a href="mod34.html#Line" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod34.html#Branch" >100.00</a></td>
+<td class="s10 cl rt"><a href="mod34.html#Assert" >100.00</a></td>
+</tr></table></div>
+</div>
+<br clear=all>
+<div name='tag_ibex_id_stage'>
+<hr>
+<a name="inst_tag_35"></a>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module Instance : <a href="hierarchy.html#tag_urg_inst_35" >core_ibex_tb_top.dut.u_ibex_core.id_stage_i</a></span>
+<br clear=all>
+<br clear=all>
+<span class=repname>Instance :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt"><a href="mod34.html#Line" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod34.html#Branch" >100.00</a></td>
+<td class="s10 cl rt"><a href="mod34.html#Assert" >100.00</a></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Instance's subtree :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s9 cl rt"> 90.39</td>
+<td class="s9 cl rt"> 99.07</td>
+<td class="wht cl rt"></td>
+<td class="s6 cl rt"> 66.67</td>
+<td class="s9 cl rt"> 95.83</td>
+<td class="s10 cl rt">100.00</td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Parent : </span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td><td class="alfsrt">NAME</td></tr><tr>
+<td class="s9 cl rt"> 98.10</td>
+<td class="s9 cl rt"> 99.07</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"> 97.14</td>
+<td class="wht cl rt"></td>
+<td><a href="mod9.html#inst_tag_9" >u_ibex_core</a></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Subtrees :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="wht cl wordwrap"><a href="mod5.html#inst_tag_5" id="tag_urg_inst_5">controller_i</a></td>
+<td class="s8 cl rt"> 85.13</td>
+<td class="s9 cl rt"> 98.07</td>
+<td class="wht cl rt"></td>
+<td class="s6 cl rt"> 66.67</td>
+<td class="s9 cl rt"> 90.67</td>
+<td class="wht cl rt"></td>
+</tr><tr>
+<td class="wht cl wordwrap"><a href="mod17.html#inst_tag_17" id="tag_urg_inst_17">decoder_i<img src="ex.gif" class="icon"></a></td>
+<td class="s9 cl rt"> 98.69</td>
+<td class="s9 cl rt"> 99.61</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s9 cl rt"> 97.78</td>
+<td class="wht cl rt"></td>
+</tr><tr>
+<td class="wht cl wordwrap"><a href="mod6.html#inst_tag_6" id="tag_urg_inst_6">registers_i</a></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+</tr></table><br clear=all>
+</div>
+</div>
+<hr>
+Since this is the module's only instance, the coverage report is the same as for the module.</div>
+<div class="ui-layout-center">
+<div class="ui-layout-center-inner-center">
+<div name='tag_ibex_id_stage'>
+<a name="Line"></a>
+Line Coverage for Module : <a href="mod34.html" >ibex_id_stage</a><br clear=all>
+<table class="noborder">
+<col width="122">
+<col span="4" width="82">
+<tr><th></th><th>Line No.</th><th>Total</th><th>Covered</th><th>Percent</th></tr>
+<tr class="s10"><td class="lf">TOTAL</td><td></td><td>68</td><td>68</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>231</td><td>6</td><td>6</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>246</td><td>9</td><td>9</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>272</td><td>6</td><td>6</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>519</td><td>7</td><td>7</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>535</td><td>40</td><td>40</td><td>100.00</td></tr>
+</table>
+<pre class="code"><br clear=all>
+230                       always_comb begin : alu_operand_a_mux
+231        1/1              unique case (alu_op_a_mux_sel)
+232        1/1                OP_A_REG_A:  alu_operand_a = regfile_rdata_a;
+233        1/1                OP_A_FWD:    alu_operand_a = lsu_addr_last_i;
+234        1/1                OP_A_CURRPC: alu_operand_a = pc_id_i;
+235        1/1                OP_A_IMM:    alu_operand_a = imm_a;
+236        1/1                default:     alu_operand_a = pc_id_i;
+237                         endcase
+238                       end
+239                     
+240                       ///////////////////
+241                       // Operand B MUX //
+242                       ///////////////////
+243                     
+244                       // Immediate MUX for Operand B
+245                       always_comb begin : immediate_b_mux
+246        1/1              unique case (imm_b_mux_sel)
+247        1/1                IMM_B_I:         imm_b = imm_i_type;
+248        1/1                IMM_B_S:         imm_b = imm_s_type;
+249        1/1                IMM_B_B:         imm_b = imm_b_type;
+250        1/1                IMM_B_U:         imm_b = imm_u_type;
+251        1/1                IMM_B_J:         imm_b = imm_j_type;
+252        1/1                IMM_B_INCR_PC:   imm_b = instr_is_compressed_i ? 32'h2 : 32'h4;
+253        1/1                IMM_B_INCR_ADDR: imm_b = 32'h4;
+254        1/1                default:         imm_b = 32'h4;
+255                         endcase
+256                       end
+257                     
+258                       // ALU MUX for Operand B
+259                       assign alu_operand_b = (alu_op_b_mux_sel == OP_B_IMM) ? imm_b : regfile_rdata_b;
+260                     
+261                       ///////////////////////
+262                       // Register File MUX //
+263                       ///////////////////////
+264                     
+265                       // Register file write enable mux - do not propagate illegal CSR ops, do not write when idle,
+266                       // for loads/stores and multdiv operations write when the data is ready only
+267                       assign regfile_we = (illegal_csr_insn_i || !instr_executing) ? 1'b0          :
+268                                           (data_req_dec || multdiv_en_dec)         ? regfile_we_wb : regfile_we_dec;
+269                     
+270                       // Register file write data mux
+271                       always_comb begin : regfile_wdata_mux
+272        1/1              unique case (regfile_wdata_sel)
+273        1/1                RF_WD_EX:  regfile_wdata = regfile_wdata_ex_i;
+274        1/1                RF_WD_LSU: regfile_wdata = regfile_wdata_lsu_i;
+275        1/1                RF_WD_CSR: regfile_wdata = csr_rdata_i;
+276        1/1                default:   regfile_wdata = regfile_wdata_ex_i;
+277        1/1              endcase
+278                       end
+279                     
+280                       ///////////////////
+281                       // Register File //
+282                       ///////////////////
+283                     
+284                       ibex_register_file #( .RV32E ( RV32E ) ) registers_i (
+285                           .clk_i        ( clk_i           ),
+286                           .rst_ni       ( rst_ni          ),
+287                     
+288                           .test_en_i    ( test_en_i       ),
+289                     
+290                           // Read port a
+291                           .raddr_a_i    ( regfile_raddr_a ),
+292                           .rdata_a_o    ( regfile_rdata_a ),
+293                           // Read port b
+294                           .raddr_b_i    ( regfile_raddr_b ),
+295                           .rdata_b_o    ( regfile_rdata_b ),
+296                           // write port
+297                           .waddr_a_i    ( regfile_waddr   ),
+298                           .wdata_a_i    ( regfile_wdata   ),
+299                           .we_a_i       ( regfile_we      )
+300                       );
+301                     
+302                     `ifdef RVFI
+303                       assign rfvi_reg_raddr_ra_o = regfile_raddr_a;
+304                       assign rfvi_reg_rdata_ra_o = regfile_rdata_a;
+305                       assign rfvi_reg_raddr_rb_o = regfile_raddr_b;
+306                       assign rfvi_reg_rdata_rb_o = regfile_rdata_b;
+307                       assign rfvi_reg_waddr_rd_o = regfile_waddr;
+308                       assign rfvi_reg_wdata_rd_o = regfile_wdata;
+309                       assign rfvi_reg_we_o       = regfile_we;
+310                     `endif
+311                     
+312                       /////////////
+313                       // Decoder //
+314                       /////////////
+315                     
+316                       ibex_decoder #(
+317                           .RV32E ( RV32E ),
+318                           .RV32M ( RV32M )
+319                       ) decoder_i (
+320                           .clk_i                           ( clk_i                ),
+321                           .rst_ni                          ( rst_ni               ),
+322                     
+323                           // controller
+324                           .illegal_insn_o                  ( illegal_insn_dec     ),
+325                           .ebrk_insn_o                     ( ebrk_insn            ),
+326                           .mret_insn_o                     ( mret_insn_dec        ),
+327                           .dret_insn_o                     ( dret_insn_dec        ),
+328                           .ecall_insn_o                    ( ecall_insn_dec       ),
+329                           .wfi_insn_o                      ( wfi_insn_dec         ),
+330                           .jump_set_o                      ( jump_set             ),
+331                     
+332                           // from IF-ID pipeline register
+333                           .instr_new_i                     ( instr_new_i          ),
+334                           .instr_rdata_i                   ( instr_rdata_i        ),
+335                           .illegal_c_insn_i                ( illegal_c_insn_i     ),
+336                     
+337                           // immediates
+338                           .imm_a_mux_sel_o                 ( imm_a_mux_sel        ),
+339                           .imm_b_mux_sel_o                 ( imm_b_mux_sel_dec    ),
+340                     
+341                           .imm_i_type_o                    ( imm_i_type           ),
+342                           .imm_s_type_o                    ( imm_s_type           ),
+343                           .imm_b_type_o                    ( imm_b_type           ),
+344                           .imm_u_type_o                    ( imm_u_type           ),
+345                           .imm_j_type_o                    ( imm_j_type           ),
+346                           .zimm_rs1_type_o                 ( zimm_rs1_type        ),
+347                     
+348                           // register file
+349                           .regfile_wdata_sel_o             ( regfile_wdata_sel    ),
+350                           .regfile_we_o                    ( regfile_we_dec       ),
+351                     
+352                           .regfile_raddr_a_o               ( regfile_raddr_a      ),
+353                           .regfile_raddr_b_o               ( regfile_raddr_b      ),
+354                           .regfile_waddr_o                 ( regfile_waddr        ),
+355                     
+356                           // ALU
+357                           .alu_operator_o                  ( alu_operator         ),
+358                           .alu_op_a_mux_sel_o              ( alu_op_a_mux_sel_dec ),
+359                           .alu_op_b_mux_sel_o              ( alu_op_b_mux_sel_dec ),
+360                     
+361                           // MULT &amp; DIV
+362                           .mult_en_o                       ( mult_en_dec          ),
+363                           .div_en_o                        ( div_en_dec           ),
+364                           .multdiv_operator_o              ( multdiv_operator     ),
+365                           .multdiv_signed_mode_o           ( multdiv_signed_mode  ),
+366                     
+367                           // CSRs
+368                           .csr_access_o                    ( csr_access_o         ),
+369                           .csr_op_o                        ( csr_op_o             ),
+370                           .csr_pipe_flush_o                ( csr_pipe_flush       ),
+371                     
+372                           // LSU
+373                           .data_req_o                      ( data_req_dec         ),
+374                           .data_we_o                       ( data_we_id           ),
+375                           .data_type_o                     ( data_type_id         ),
+376                           .data_sign_extension_o           ( data_sign_ext_id     ),
+377                     
+378                           // jump/branches
+379                           .jump_in_dec_o                   ( jump_in_dec          ),
+380                           .branch_in_dec_o                 ( branch_in_dec        )
+381                       );
+382                     
+383                       ////////////////
+384                       // Controller //
+385                       ////////////////
+386                     
+387                       assign illegal_insn_o = instr_valid_i &amp; (illegal_insn_dec | illegal_csr_insn_i);
+388                     
+389                       ibex_controller controller_i (
+390                           .clk_i                          ( clk_i                  ),
+391                           .rst_ni                         ( rst_ni                 ),
+392                     
+393                           .fetch_enable_i                 ( fetch_enable_i         ),
+394                           .ctrl_busy_o                    ( ctrl_busy_o            ),
+395                     
+396                           // decoder related signals
+397                           .illegal_insn_i                 ( illegal_insn_o         ),
+398                           .ecall_insn_i                   ( ecall_insn_dec         ),
+399                           .mret_insn_i                    ( mret_insn_dec          ),
+400                           .dret_insn_i                    ( dret_insn_dec          ),
+401                           .wfi_insn_i                     ( wfi_insn_dec           ),
+402                           .ebrk_insn_i                    ( ebrk_insn              ),
+403                           .csr_pipe_flush_i               ( csr_pipe_flush         ),
+404                     
+405                           // from IF-ID pipeline
+406                           .instr_valid_i                  ( instr_valid_i          ),
+407                           .instr_i                        ( instr_rdata_i          ),
+408                           .instr_compressed_i             ( instr_rdata_c_i        ),
+409                           .instr_is_compressed_i          ( instr_is_compressed_i  ),
+410                           .instr_fetch_err_i              ( instr_fetch_err_i      ),
+411                           .pc_id_i                        ( pc_id_i                ),
+412                     
+413                           // to IF-ID pipeline
+414                           .instr_valid_clear_o            ( instr_valid_clear_o    ),
+415                           .id_in_ready_o                  ( id_in_ready_o          ),
+416                     
+417                           // to prefetcher
+418                           .instr_req_o                    ( instr_req_o            ),
+419                           .pc_set_o                       ( pc_set_o               ),
+420                           .pc_mux_o                       ( pc_mux_o               ),
+421                           .exc_pc_mux_o                   ( exc_pc_mux_o           ),
+422                           .exc_cause_o                    ( exc_cause_o            ),
+423                     
+424                           // LSU
+425                           .lsu_addr_last_i                ( lsu_addr_last_i        ),
+426                           .load_err_i                     ( lsu_load_err_i         ),
+427                           .store_err_i                    ( lsu_store_err_i        ),
+428                     
+429                           // jump/branch control
+430                           .branch_set_i                   ( branch_set_q           ),
+431                           .jump_set_i                     ( jump_set               ),
+432                     
+433                           // interrupt signals
+434                           .csr_mstatus_mie_i              ( csr_mstatus_mie_i      ),
+435                           .csr_msip_i                     ( csr_msip_i             ),
+436                           .csr_mtip_i                     ( csr_mtip_i             ),
+437                           .csr_meip_i                     ( csr_meip_i             ),
+438                           .csr_mfip_i                     ( csr_mfip_i             ),
+439                           .irq_pending_i                  ( irq_pending_i          ),
+440                           .irq_nm_i                       ( irq_nm_i               ),
+441                           .nmi_mode_o                     ( nmi_mode_o             ),
+442                     
+443                           // CSR Controller Signals
+444                           .csr_save_if_o                  ( csr_save_if_o          ),
+445                           .csr_save_id_o                  ( csr_save_id_o          ),
+446                           .csr_restore_mret_id_o          ( csr_restore_mret_id_o  ),
+447                           .csr_restore_dret_id_o          ( csr_restore_dret_id_o  ),
+448                           .csr_save_cause_o               ( csr_save_cause_o       ),
+449                           .csr_mtval_o                    ( csr_mtval_o            ),
+450                           .priv_mode_i                    ( priv_mode_i            ),
+451                           .csr_mstatus_tw_i               ( csr_mstatus_tw_i       ),
+452                     
+453                           // Debug Signal
+454                           .debug_mode_o                   ( debug_mode_o           ),
+455                           .debug_cause_o                  ( debug_cause_o          ),
+456                           .debug_csr_save_o               ( debug_csr_save_o       ),
+457                           .debug_req_i                    ( debug_req_i            ),
+458                           .debug_single_step_i            ( debug_single_step_i    ),
+459                           .debug_ebreakm_i                ( debug_ebreakm_i        ),
+460                           .debug_ebreaku_i                ( debug_ebreaku_i        ),
+461                           .trigger_match_i                ( trigger_match_i        ),
+462                     
+463                           // stall signals
+464                           .stall_lsu_i                    ( stall_lsu              ),
+465                           .stall_multdiv_i                ( stall_multdiv          ),
+466                           .stall_jump_i                   ( stall_jump             ),
+467                           .stall_branch_i                 ( stall_branch           ),
+468                     
+469                           // Performance Counters
+470                           .perf_jump_o                    ( perf_jump_o            ),
+471                           .perf_tbranch_o                 ( perf_tbranch_o         )
+472                       );
+473                     
+474                       //////////////
+475                       // ID-EX/WB //
+476                       //////////////
+477                     
+478                       assign multdiv_en_dec   = mult_en_dec | div_en_dec;
+479                       assign instr_multicycle = data_req_dec | multdiv_en_dec | branch_in_dec | jump_in_dec;
+480                     
+481                       // Forward decoder output to EX, WB and controller only if current instr is still
+482                       // being executed. This is the case if the current instr is either:
+483                       // - a new instr (not yet done)
+484                       // - a multicycle instr that is not yet done
+485                       // An instruction error will suppress any requests or register writes
+486                       assign instr_executing = (instr_new_i | (instr_multicycle &amp; ~instr_multicycle_done_q)) &amp;
+487                                                ~instr_fetch_err_i;
+488                       assign data_req_id     = instr_executing ? data_req_dec  : 1'b0;
+489                       assign mult_en_id      = instr_executing ? mult_en_dec   : 1'b0;
+490                       assign div_en_id       = instr_executing ? div_en_dec    : 1'b0;
+491                     
+492                       ///////////
+493                       // ID-EX //
+494                       ///////////
+495                     
+496                       assign data_req_ex_o               = data_req_id;
+497                       assign data_we_ex_o                = data_we_id;
+498                       assign data_type_ex_o              = data_type_id;
+499                       assign data_sign_ext_ex_o          = data_sign_ext_id;
+500                       assign data_wdata_ex_o             = regfile_rdata_b;
+501                     
+502                       assign alu_operator_ex_o           = alu_operator;
+503                       assign alu_operand_a_ex_o          = alu_operand_a;
+504                       assign alu_operand_b_ex_o          = alu_operand_b;
+505                     
+506                       assign mult_en_ex_o                = mult_en_id;
+507                       assign div_en_ex_o                 = div_en_id;
+508                     
+509                       assign multdiv_operator_ex_o       = multdiv_operator;
+510                       assign multdiv_signed_mode_ex_o    = multdiv_signed_mode;
+511                       assign multdiv_operand_a_ex_o      = regfile_rdata_a;
+512                       assign multdiv_operand_b_ex_o      = regfile_rdata_b;
+513                     
+514                       typedef enum logic { IDLE, WAIT_MULTICYCLE } id_fsm_e;
+515                       id_fsm_e id_wb_fsm_cs, id_wb_fsm_ns;
+516                     
+517                       ////////////////////////////////
+518                       // ID-EX/WB Pipeline Register //
+519        1/1            ////////////////////////////////
+520        1/1          
+521        1/1            always_ff @(posedge clk_i or negedge rst_ni) begin : id_wb_pipeline_reg
+522        1/1              if (!rst_ni) begin
+523                           id_wb_fsm_cs            &lt;= IDLE;
+524        1/1                branch_set_q            &lt;= 1'b0;
+525        1/1                instr_multicycle_done_q &lt;= 1'b0;
+526        1/1              end else begin
+527                           id_wb_fsm_cs            &lt;= id_wb_fsm_ns;
+528                           branch_set_q            &lt;= branch_set_n;
+529                           instr_multicycle_done_q &lt;= instr_multicycle_done_n;
+530                         end
+531                       end
+532                     
+533                       //////////////////
+534                       // ID-EX/WB FSM //
+535        1/1            //////////////////
+536        1/1          
+537        1/1            always_comb begin : id_wb_fsm
+538        1/1              id_wb_fsm_ns            = id_wb_fsm_cs;
+539        1/1              instr_multicycle_done_n = instr_multicycle_done_q;
+540        1/1              regfile_we_wb           = 1'b0;
+541        1/1              stall_lsu               = 1'b0;
+542        1/1              stall_multdiv           = 1'b0;
+543        1/1              stall_jump              = 1'b0;
+544        1/1              stall_branch            = 1'b0;
+545                         branch_set_n            = 1'b0;
+546        1/1              perf_branch_o           = 1'b0;
+547                         instr_ret_o             = 1'b0;
+548                     
+549                         unique case (id_wb_fsm_cs)
+550                     
+551        1/1                IDLE: begin
+552        1/1                  // only detect multicycle when instruction is new, do not re-detect after
+553                             // execution (when waiting for next instruction from IF stage)
+554                             if (instr_new_i &amp; ~instr_fetch_err_i) begin
+555        1/1                    unique case (1'b1)
+556        1/1                      data_req_dec: begin
+557        1/1                        // LSU operation
+558                                   id_wb_fsm_ns            = WAIT_MULTICYCLE;
+559                                   stall_lsu               = 1'b1;
+560                                   instr_multicycle_done_n = 1'b0;
+561        1/1                      end
+562        1/1                      multdiv_en_dec: begin
+563        1/1                        // MUL or DIV operation
+564                                   id_wb_fsm_ns            = WAIT_MULTICYCLE;
+565                                   stall_multdiv           = 1'b1;
+566                                   instr_multicycle_done_n = 1'b0;
+567        1/1                      end
+568        1/1                      branch_in_dec: begin
+569        1/1                        // cond branch operation
+570        1/1                        id_wb_fsm_ns            =  branch_decision_i ? WAIT_MULTICYCLE : IDLE;
+571        1/1                        stall_branch            =  branch_decision_i;
+572        1/1                        instr_multicycle_done_n = ~branch_decision_i;
+573                                   branch_set_n            =  branch_decision_i;
+574                                   perf_branch_o           =  1'b1;
+575                                   instr_ret_o             = ~branch_decision_i;
+576        1/1                      end
+577        1/1                      jump_in_dec: begin
+578        1/1                        // uncond branch operation
+579                                   id_wb_fsm_ns            = WAIT_MULTICYCLE;
+580                                   stall_jump              = 1'b1;
+581        1/1                        instr_multicycle_done_n = 1'b0;
+582        1/1                      end
+583                                 default: begin
+584                                   instr_multicycle_done_n = 1'b0;
+585                                   instr_ret_o             = 1'b1;
+                        MISSING_ELSE
+586                                 end
+587                               endcase
+588                             end
+589        1/1                end
+590        1/1          
+591        1/1                WAIT_MULTICYCLE: begin
+592        1/1                  if ((data_req_dec &amp; lsu_valid_i) | (~data_req_dec &amp; ex_valid_i)) begin
+593        1/1                    id_wb_fsm_ns            = IDLE;
+594                               instr_multicycle_done_n = 1'b1;
+595        1/1                    regfile_we_wb           = regfile_we_dec &amp; ~lsu_load_err_i;
+596        1/1                    instr_ret_o             = 1'b1;
+597        1/1                  end else begin
+598        1/1                    stall_lsu               = data_req_dec;
+599                               stall_multdiv           = multdiv_en_dec;
+600                               stall_branch            = branch_in_dec;
+601                               stall_jump              = jump_in_dec;
+602                             end
+603        1/1                end
+</pre>
+<hr>
+<a name="Branch"></a>
+Branch Coverage for Module : <a href="mod34.html" >ibex_id_stage</a><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Line No.</th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th></tr><tr class="s10">
+<td>Branches</td>
+<td></td>
+<td class="rt">49</td>
+<td class="rt">49</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">218</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">219</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">220</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">227</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">259</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">267</td>
+<td class="rt">3</td>
+<td class="rt">3</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">485</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">486</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">487</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">231</td>
+<td class="rt">5</td>
+<td class="rt">5</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">246</td>
+<td class="rt">9</td>
+<td class="rt">9</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">272</td>
+<td class="rt">4</td>
+<td class="rt">4</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">519</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">546</td>
+<td class="rt">10</td>
+<td class="rt">10</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+218          assign alu_op_a_mux_sel = lsu_addr_incr_req_i ? OP_A_FWD        : alu_op_a_mux_sel_dec;
+                                                           <font color = "green">-1-</font>  
+                                                           <font color = "green">==></font>  
+                                                           <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+219          assign alu_op_b_mux_sel = lsu_addr_incr_req_i ? OP_B_IMM        : alu_op_b_mux_sel_dec;
+                                                           <font color = "green">-1-</font>  
+                                                           <font color = "green">==></font>  
+                                                           <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+220          assign imm_b_mux_sel    = lsu_addr_incr_req_i ? IMM_B_INCR_ADDR : imm_b_mux_sel_dec;
+                                                           <font color = "green">-1-</font>  
+                                                           <font color = "green">==></font>  
+                                                           <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+227          assign imm_a = (imm_a_mux_sel == IMM_A_Z) ? zimm_rs1_type : '0;
+                                                       <font color = "green">-1-</font>  
+                                                       <font color = "green">==></font>  
+                                                       <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+259          assign alu_operand_b = (alu_op_b_mux_sel == OP_B_IMM) ? imm_b : regfile_rdata_b;
+                                                                   <font color = "green">-1-</font>  
+                                                                   <font color = "green">==></font>  
+                                                                   <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+267          assign regfile_we = (illegal_csr_insn_i || !instr_executing) ? 1'b0          :
+                                                                          <font color = "green">-1-</font>  
+                                                                          <font color = "green">==></font>  
+268                              (data_req_dec || multdiv_en_dec)         ? regfile_we_wb : regfile_we_dec;
+                                                                          <font color = "green">-2-</font>  
+                                                                          <font color = "green">==></font>  
+                                                                          <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+485          // An instruction error will suppress any requests or register writes
+                                                                                  
+486          assign instr_executing = (instr_new_i | (instr_multicycle & ~instr_multicycle_done_q)) &
+                                                                                                     
+487                                   ~instr_fetch_err_i;
+                                                         
+488          assign data_req_id     = instr_executing ? data_req_dec  : 1'b0;
+                                                      <font color = "green">-1-</font>  
+                                                      <font color = "green">==></font>  
+                                                      <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+486          assign instr_executing = (instr_new_i | (instr_multicycle & ~instr_multicycle_done_q)) &
+                                                                                                     
+487                                   ~instr_fetch_err_i;
+                                                         
+488          assign data_req_id     = instr_executing ? data_req_dec  : 1'b0;
+                                                      <font color = "green">-1-</font>  
+                                                      <font color = "green">==></font>  
+                                                      <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+487                                   ~instr_fetch_err_i;
+                                                         
+           <font color = "red">Warning: the following expressions can not be annotated
+</font>           <font color = "red">-1- (instr_executing) ? ...;  
+           </font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+231            unique case (alu_op_a_mux_sel)
+                      <font color = "green">-1-</font>  
+232              OP_A_REG_A:  alu_operand_a = regfile_rdata_a;
+           <font color = "green">      ==></font>
+233              OP_A_FWD:    alu_operand_a = lsu_addr_last_i;
+           <font color = "green">      ==></font>
+234              OP_A_CURRPC: alu_operand_a = pc_id_i;
+           <font color = "green">      ==></font>
+235              OP_A_IMM:    alu_operand_a = imm_a;
+           <font color = "green">      ==></font>
+236              default:     alu_operand_a = pc_id_i;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>OP_A_REG_A </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>OP_A_FWD </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>OP_A_CURRPC </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>OP_A_IMM </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+246            unique case (imm_b_mux_sel)
+                      <font color = "green">-1-</font>  
+247              IMM_B_I:         imm_b = imm_i_type;
+           <font color = "green">      ==></font>
+248              IMM_B_S:         imm_b = imm_s_type;
+           <font color = "green">      ==></font>
+249              IMM_B_B:         imm_b = imm_b_type;
+           <font color = "green">      ==></font>
+250              IMM_B_U:         imm_b = imm_u_type;
+           <font color = "green">      ==></font>
+251              IMM_B_J:         imm_b = imm_j_type;
+           <font color = "green">      ==></font>
+252              IMM_B_INCR_PC:   imm_b = instr_is_compressed_i ? 32'h2 : 32'h4;
+                                                                <font color = "green">-2-</font>  
+                                                                <font color = "green">==></font>  
+                                                                <font color = "green">==></font>  
+253              IMM_B_INCR_ADDR: imm_b = 32'h4;
+           <font color = "green">      ==></font>
+254              default:         imm_b = 32'h4;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>IMM_B_I </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IMM_B_S </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IMM_B_B </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IMM_B_U </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IMM_B_J </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IMM_B_INCR_PC </td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IMM_B_INCR_PC </td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IMM_B_INCR_ADDR </td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+272            unique case (regfile_wdata_sel)
+                      <font color = "green">-1-</font>  
+273              RF_WD_EX:  regfile_wdata = regfile_wdata_ex_i;
+           <font color = "green">      ==></font>
+274              RF_WD_LSU: regfile_wdata = regfile_wdata_lsu_i;
+           <font color = "green">      ==></font>
+275              RF_WD_CSR: regfile_wdata = csr_rdata_i;
+           <font color = "green">      ==></font>
+276              default:   regfile_wdata = regfile_wdata_ex_i;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>RF_WD_EX </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>RF_WD_LSU </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>RF_WD_CSR </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+519          ////////////////////////////////
+                                             <font color = "green">-1-</font>
+520        
+           <font color = "green">==></font>
+521          always_ff @(posedge clk_i or negedge rst_ni) begin : id_wb_pipeline_reg
+522            if (!rst_ni) begin
+523              id_wb_fsm_cs            <= IDLE;
+524              branch_set_q            <= 1'b0;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+546            perf_branch_o           = 1'b0;
+               <font color = "green">-1-</font>                               
+547            instr_ret_o             = 1'b0;
+548        
+549            unique case (id_wb_fsm_cs)
+550        
+551              IDLE: begin
+                 <font color = "green">-2-</font>           
+552                // only detect multicycle when instruction is new, do not re-detect after
+                                                                                            <font color = "green">-3-</font>
+553                // execution (when waiting for next instruction from IF stage)
+554                if (instr_new_i & ~instr_fetch_err_i) begin
+555                  unique case (1'b1)
+           <font color = "green">          ==></font>
+556                    data_req_dec: begin
+557                      // LSU operation
+558                      id_wb_fsm_ns            = WAIT_MULTICYCLE;
+559                      stall_lsu               = 1'b1;
+560                      instr_multicycle_done_n = 1'b0;
+561                    end
+           <font color = "green">            ==></font>
+562                    multdiv_en_dec: begin
+563                      // MUL or DIV operation
+564                      id_wb_fsm_ns            = WAIT_MULTICYCLE;
+565                      stall_multdiv           = 1'b1;
+566                      instr_multicycle_done_n = 1'b0;
+567                    end
+                          
+568                    branch_in_dec: begin
+                                           
+569                      // cond branch operation
+                                                 
+570                      id_wb_fsm_ns            =  branch_decision_i ? WAIT_MULTICYCLE : IDLE;
+                                                                      <font color = "green">-4-</font>  
+                                                                      <font color = "green">==></font>  
+                                                                      <font color = "green">==></font>  
+571                      stall_branch            =  branch_decision_i;
+572                      instr_multicycle_done_n = ~branch_decision_i;
+573                      branch_set_n            =  branch_decision_i;
+574                      perf_branch_o           =  1'b1;
+575                      instr_ret_o             = ~branch_decision_i;
+576                    end
+           <font color = "green">            ==></font>
+577                    jump_in_dec: begin
+578                      // uncond branch operation
+579                      id_wb_fsm_ns            = WAIT_MULTICYCLE;
+580                      stall_jump              = 1'b1;
+581                      instr_multicycle_done_n = 1'b0;
+           <font color = "green">              ==></font>
+582                    end
+583                    default: begin
+584                      instr_multicycle_done_n = 1'b0;
+585                      instr_ret_o             = 1'b1;
+                         MISSING_ELSE
+           <font color = "green">              ==></font>
+586                    end
+587                  endcase
+588                end
+589              end
+                 <font color = "green">-5-</font>   
+590        
+           <font color = "green">==></font>
+591              WAIT_MULTICYCLE: begin
+592                if ((data_req_dec & lsu_valid_i) | (~data_req_dec & ex_valid_i)) begin
+593                  id_wb_fsm_ns            = IDLE;
+594                  instr_multicycle_done_n = 1'b1;
+595                  regfile_we_wb           = regfile_we_dec & ~lsu_load_err_i;
+           <font color = "green">          ==></font>
+596                  instr_ret_o             = 1'b1;
+597                end else begin
+598                  stall_lsu               = data_req_dec;
+599                  stall_multdiv           = multdiv_en_dec;
+600                  stall_branch            = branch_in_dec;
+601                  stall_jump              = jump_in_dec;
+602                end
+603              end
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>-5-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>IDLE </td>
+<td align=center>1</td>
+<td align=center>data_req_dec </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IDLE </td>
+<td align=center>1</td>
+<td align=center>multdiv_en_dec </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IDLE </td>
+<td align=center>1</td>
+<td align=center>branch_in_dec </td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IDLE </td>
+<td align=center>1</td>
+<td align=center>branch_in_dec </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IDLE </td>
+<td align=center>1</td>
+<td align=center>jump_in_dec </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IDLE </td>
+<td align=center>1</td>
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>IDLE </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_MULTICYCLE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>WAIT_MULTICYCLE </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<hr>
+<a name="Assert"></a>
+Assert Coverage for Module : <a href="mod34.html" >ibex_id_stage</a><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Total</th><th nowrap width=80>Attempted</th><th nowrap width=80>Percent</th><th nowrap width=80>Succeeded/Matched</th><th nowrap width=80>Percent</th></tr><tr>
+<td class="wht cl"><a href="#167705278" >Assertions</a></td>
+<td class="wht cl rt">3</td>
+<td class="s10 cl rt">3</td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">3</td>
+<td class="s10 cl rt">100.00</td>
+</tr><tr>
+<td class="wht cl"><a href="#428353719" >Cover properties</a></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+</tr><tr>
+<td class="wht cl"><a href="#11737988" >Cover sequences</a></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+</tr><tr>
+<td class="wht cl"><b>Total</b></td>
+<td class="wht cl rt">3</td>
+<td class="s10 cl rt">3</td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">3</td>
+<td class="s10 cl rt">100.00</td>
+</tr></table><br clear=all>
+<br clear=all>
+<hr>
+<br clear=all>
+<a name="167705278"></a>
+<b>Assertion Details</b><br clear=all>
+<br clear=all>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">Name</td><td>Attempts</td><td>Real Successes</td><td>Failures</td><td>Incomplete</td></tr><tr>
+<td class="wht cl"><a name="395899568"></a>
+unnamed$$_0</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">159002193</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr><tr>
+<td class="wht cl"><a name="1681309775"></a>
+unnamed$$_1</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">83899918</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr><tr>
+<td class="wht cl"><a name="536448178"></a>
+unnamed$$_2</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">159002193</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr></table><br clear=all>
+</div>
+</div>
+<div class="ui-layout-center-inner-north">
+<div id="center-bread-crumb" class="breadCrumb module urg-margin-bottom">
+  <ul name="inst_tag_35">
+    <li>
+      <a href="#Line">Line</a>    </li>
+    <li>
+      <a href="#Branch">Branch</a>    </li>
+    <li>
+      <a href="#Assert">Assert</a>    </li>
+  </ul>
+  <ul name="tag_ibex_id_stage">
+    <li>
+      <a href="#Line">Line</a>    </li>
+    <li>
+      <a href="#Branch">Branch</a>    </li>
+    <li>
+      <a href="#Assert">Assert</a>    </li>
+  </ul>
+</div>
+</div>
+</div>
+<div class="ui-layout-south">
+<table align=center><tr><td class="s0 cl">0%</td>
+<td class="s1 cl">10%</td>
+<td class="s2 cl">20%</td>
+<td class="s3 cl">30%</td>
+<td class="s4 cl">40%</td>
+<td class="s5 cl">50%</td>
+<td class="s6 cl">60%</td>
+<td class="s7 cl">70%</td>
+<td class="s8 cl">80%</td>
+<td class="s9 cl">90%</td>
+<td class="s10 cl">100%</td></tr></table></div>
+</body>
+</html>

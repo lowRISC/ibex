@@ -1,0 +1,44 @@
+<session version="1.1" release="P-2019.06-1" timestp="2019-12-17 22:00:24 GMT">
+  <info>
+    <attr name="datetime" value="Fri Dec 20 11:36:31 2019
+"/>
+    <attr name="command" value="urg -full64 -dir test.vdb -format both -elfile ../../ibex_exclusion.el"/>
+    <attr name="top_instance" value="core_ibex_tb_top,uvm_custom_install_recording,uvm_custom_install_verdi_recording"/>
+  </info>
+  <hvp>
+    <datadef>
+      <metdef name="Line" type="ratio" aggregator="average" builtin="1" />
+      <metdef name="Toggle" type="ratio" aggregator="average" builtin="1" />
+      <metdef name="FSM" type="ratio" aggregator="average" builtin="1" />
+      <metdef name="Branch" type="ratio" aggregator="average" builtin="1" />
+      <metdef name="Assert" type="ratio" aggregator="average" builtin="1" />
+    </datadef>
+  </hvp>
+  <old_coverage>
+  <scope type="top" name="top">
+    <metric name="Line" value="1306/1319" />
+    <metric name="Toggle" value="386/386" />
+    <metric name="FSM" value="50/61" />
+    <metric name="Branch" value="580/597" />
+    <metric name="Assert" value="13/13" />
+  </scope>
+  <scope type="instance" name="top">
+  </scope>
+  <scope type="group" name="top">
+  </scope>
+  <scope type="assert" name="Statistics">
+    <scorelist type="total" name="Design Hierarchy Assert">
+      <score name="Assert" value="13/13" />
+      <score name="Score" value="100.00" />
+    </scorelist>
+    <scorelist type="total" name="Module List Assert">
+      <score name="Assert" value="14/16" />
+      <score name="Score" value="87.50" />
+    </scorelist>
+    <scorelist type="total" name="Assertion">
+      <score name="Assert" value="14/16" />
+      <score name="Score" value="87.50" />
+    </scorelist>
+  </scope>
+  </old_coverage>
+</session>

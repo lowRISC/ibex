@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Author" content="<username>"> <meta name="GENERATOR" content="urg/version [en] (platform name) [urg]">
+<title>Unified Coverage Report :: Module :: ibex_fetch_fifo</title>
+<link type="text/css" rel="stylesheet" href="css/.urg.css">
+<link type="text/css" rel="stylesheet" href="css/.layout.css">
+<link type="text/css" rel="stylesheet" href="css/.breadcrumb.css">
+<script type="text/javascript" src="js/.jquery.js"></script>
+<script type="text/javascript" src="js/.jquery-ui.js"></script>
+<script type="text/javascript" src="js/.sortable.js"></script>
+<script type="text/javascript" src="js/.layout.js"></script>
+<script type="text/javascript" src="js/.breadcrumb.js"></script>
+<script type="text/javascript">
+var layout, westLayout, centerLayout;
+$(document).ready(function () {
+  if ($("#north-bread-crumb")) {
+    $("#north-bread-crumb").jBreadCrumb({easing:'swing'})
+  }
+  layout = $("body").layout({ 
+    resizable: true,
+    spacing_open: 4,
+    spacing_closed: 4,
+    north: {
+      size: 76
+    },
+    south: {
+      size: 45,
+      initClosed: true
+    },
+    west: {
+      size: 500,
+      resizable: true,
+      initClosed: false
+    }
+  });
+  centerLayout = $('div.ui-layout-center').layout({
+    north__paneSelector: ".ui-layout-center-inner-north",
+    center__paneSelector: ".ui-layout-center-inner-center", 
+    north__size: 50,
+    spacing_open: 4,
+    spacing_closed: 4
+  });
+});
+</script>
+</head>
+<body onLoad="initPage();"><div class="ui-layout-north">
+<div class="logo"></div>
+<center class="pagetitle">Module Definition</center>
+<div align="center"><a href="dashboard.html" ><b>dashboard</b></a> | <a href="hierarchy.html" ><b>hierarchy</b></a> | <a href="modlist.html" ><b>modlist</b></a> | groups | <a href="tests.html" ><b>tests</b></a> | <a href="asserts.html" ><b>asserts</b></a></div>
+
+</div>
+<div class="ui-layout-west">
+<div name='tag_ibex_fetch_fifo'>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module : <a href="#"  onclick="showContent('tag_ibex_fetch_fifo')">ibex_fetch_fifo</a></span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt"><a href="mod1.html#Line" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod1.html#Branch" >100.00</a></td>
+<td class="s10 cl rt"><a href="mod1.html#Assert" >100.00</a></td>
+</tr></table><br clear=all>
+<span class=repname>Source File(s) : </span>
+<br clear=all>
+<a href="javascript:void(0);"  onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_fetch_fifo.sv')">/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_fetch_fifo.sv</a><br clear=all>
+<br clear=all>
+<span class=repname>Module self-instances :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="wht cl wordwrap"><a href="mod1.html#inst_tag_1"  onclick="showContent('inst_tag_1')">core_ibex_tb_top.dut.u_ibex_core.if_stage_i.prefetch_buffer_i.fifo_i</a></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt"><a href="mod1.html#Line" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod1.html#Branch" >100.00</a></td>
+<td class="s10 cl rt"><a href="mod1.html#Assert" >100.00</a></td>
+</tr></table></div>
+</div>
+<br clear=all>
+<div name='tag_ibex_fetch_fifo'>
+<hr>
+<a name="inst_tag_1"></a>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module Instance : <a href="hierarchy.html#tag_urg_inst_1" >core_ibex_tb_top.dut.u_ibex_core.if_stage_i.prefetch_buffer_i.fifo_i</a></span>
+<br clear=all>
+<br clear=all>
+<span class=repname>Instance :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt"><a href="mod1.html#Line" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt"><a href="mod1.html#Branch" >100.00</a></td>
+<td class="s10 cl rt"><a href="mod1.html#Assert" >100.00</a></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Instance's subtree :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Parent : </span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td><td class="alfsrt">NAME</td></tr><tr>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td><a href="mod27.html#inst_tag_28" >prefetch_buffer_i</a></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Subtrees :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td colspan=7>no children</td>
+</tr></table><br clear=all>
+</div>
+</div>
+<hr>
+Since this is the module's only instance, the coverage report is the same as for the module.</div>
+<div class="ui-layout-center">
+<div class="ui-layout-center-inner-center">
+<div name='tag_ibex_fetch_fifo'>
+<a name="Line"></a>
+Line Coverage for Module : <a href="mod1.html" >ibex_fetch_fifo</a><br clear=all>
+<table class="noborder">
+<col width="122">
+<col span="4" width="82">
+<tr><th></th><th>Line No.</th><th>Total</th><th>Covered</th><th>Percent</th></tr>
+<tr class="s10"><td class="lf">TOTAL</td><td></td><td>23</td><td>23</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>102</td><td>9</td><td>9</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>137</td><td>2</td><td>2</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>203</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>212</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>212</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>212</td><td>3</td><td>3</td><td>100.00</td></tr>
+</table>
+<pre class="code"><br clear=all>
+101                       always_comb begin
+102        1/1              if (out_addr_o[1]) begin
+103                           // unaligned case
+104        1/1                out_rdata_o = rdata_unaligned;
+105        1/1                out_err_o   = err_unaligned;
+106                     
+107        1/1                if (unaligned_is_compressed) begin
+108        1/1                  out_valid_o = valid;
+109                           end else begin
+110        1/1                  out_valid_o = valid_unaligned;
+111                           end
+112                         end else begin
+113                           // aligned case
+114        1/1                out_rdata_o = rdata;
+115        1/1                out_err_o   = err;
+116        1/1                out_valid_o = valid;
+117                         end
+118                       end
+119                     
+120                       /////////////////////////
+121                       // Instruction address //
+122                       /////////////////////////
+123                     
+124                       // Update the address on branches and every time an instruction is driven
+125                       assign instr_addr_en = clear_i | (out_ready_i &amp; out_valid_o);
+126                     
+127                       // Increment the address by two every time a compressed instruction is popped
+128                       assign addr_incr_two = instr_addr_q[1] ? unaligned_is_compressed :
+129                                                                aligned_is_compressed;
+130                     
+131                       assign instr_addr_d = clear_i ? in_addr_i[31:1] :
+132                                                       (instr_addr_q[31:1] +
+133                                                        // Increment address by 4 or 2
+134                                                        {29'd0,~addr_incr_two,addr_incr_two});
+135                     
+136                       always_ff @(posedge clk_i) begin
+137        1/1              if (instr_addr_en) begin
+138        1/1                instr_addr_q &lt;= instr_addr_d;
+139                         end
+                        MISSING_ELSE
+140                       end
+141                     
+142                       assign out_addr_o[31:1] = instr_addr_q[31:1];
+143                       assign out_addr_o[0]    = 1'b0;
+144                     
+145                       // The LSB of the address is unused, since all addresses are halfword aligned
+146                       assign unused_addr_in = in_addr_i[0];
+147                     
+148                       ////////////////
+149                       // input port //
+150                       ////////////////
+151                     
+152                       // Accept data as long as our FIFO has space to accept the maximum number of outstanding
+153                       // requests. Note that the prefetch buffer does not count how many requests are actually
+154                       // outstanding, so space must be reserved for the maximum number.
+155                       assign in_ready_o = ~valid_q[DEPTH-NUM_REQS];
+156                     
+157                       /////////////////////
+158                       // FIFO management //
+159                       /////////////////////
+160                     
+161                       // Since an entry can contain unaligned instructions, popping an entry can leave the entry valid
+162                       assign pop_fifo = out_ready_i &amp; out_valid_o &amp; (~aligned_is_compressed | out_addr_o[1]);
+163                     
+164                       for (genvar i = 0; i &lt; (DEPTH - 1); i++) begin : g_fifo_next
+165                         // Calculate lowest free entry (write pointer)
+166                         if (i == 0) begin : g_ent0
+167                           assign lowest_free_entry[i] = ~valid_q[i];
+168                         end else begin : g_ent_others
+169                           assign lowest_free_entry[i] = ~valid_q[i] &amp; valid_q[i-1];
+170                         end
+171                     
+172                         // An entry is set when an incoming request chooses the lowest available entry
+173                         assign valid_pushed[i] = (in_valid_i &amp; lowest_free_entry[i]) |
+174                                                  valid_q[i];
+175                         // Popping the FIFO shifts all entries down
+176                         assign valid_popped[i] = pop_fifo ? valid_pushed[i+1] : valid_pushed[i];
+177                         // All entries are wiped out on a clear
+178                         assign valid_d[i] = valid_popped[i] &amp; ~clear_i;
+179                     
+180                         // data flops are enabled if there is new data to shift into it, or
+181                         assign entry_en[i] = (valid_pushed[i+1] &amp; pop_fifo) |
+182                                              // a new request is incoming and this is the lowest free entry
+183                                              (in_valid_i &amp; lowest_free_entry[i] &amp; ~pop_fifo);
+184                     
+185                         // take the next entry or the incoming data
+186                         assign rdata_d[i]  = valid_q[i+1] ? rdata_q[i+1] : in_rdata_i;
+187                         assign err_d  [i]  = valid_q[i+1] ? err_q  [i+1] : in_err_i;
+188                       end
+189                       // The top entry is similar but with simpler muxing
+190                       assign lowest_free_entry[DEPTH-1] = ~valid_q[DEPTH-1] &amp; valid_q[DEPTH-2];
+191                       assign valid_pushed     [DEPTH-1] = valid_q[DEPTH-1] | (in_valid_i &amp; lowest_free_entry[DEPTH-1]);
+192                       assign valid_popped     [DEPTH-1] = pop_fifo ? 1'b0 : valid_pushed[DEPTH-1];
+193                       assign valid_d [DEPTH-1]          = valid_popped[DEPTH-1] &amp; ~clear_i;
+194                       assign entry_en[DEPTH-1]          = in_valid_i &amp; lowest_free_entry[DEPTH-1];
+195                       assign rdata_d [DEPTH-1]          = in_rdata_i;
+196                       assign err_d   [DEPTH-1]          = in_err_i;
+197                     
+198                       ////////////////////
+199                       // FIFO registers //
+200                       ////////////////////
+201                     
+202                       always_ff @(posedge clk_i or negedge rst_ni) begin
+203        1/1              if (!rst_ni) begin
+204        1/1                valid_q &lt;= '0;
+205                         end else begin
+206        1/1                valid_q &lt;= valid_d;
+207                         end
+208                       end
+209                     
+210                       for (genvar i = 0; i &lt; DEPTH; i++) begin : g_fifo_regs
+211                         always_ff @(posedge clk_i) begin
+212        1/1                if (entry_en[i]) begin
+213        1/1                  rdata_q[i]   &lt;= rdata_d[i];
+214        1/1                  err_q[i]     &lt;= err_d[i];
+215                           end
+                        MISSING_ELSE
+***repeat 1
+212        1/1                if (entry_en[i]) begin
+213        1/1                  rdata_q[i]   &lt;= rdata_d[i];
+214        1/1                  err_q[i]     &lt;= err_d[i];
+215                           end
+                        MISSING_ELSE
+***repeat 2
+212        1/1                if (entry_en[i]) begin
+213        1/1                  rdata_q[i]   &lt;= rdata_d[i];
+214        1/1                  err_q[i]     &lt;= err_d[i];
+215                           end
+                        MISSING_ELSE
+</pre>
+<hr>
+<a name="Branch"></a>
+Branch Coverage for Module : <a href="mod1.html" >ibex_fetch_fifo</a><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Line No.</th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th></tr><tr class="s10">
+<td>Branches</td>
+<td></td>
+<td class="rt">41</td>
+<td class="rt">41</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">62</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">63</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">78</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">86</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">91</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">128</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">131</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">192</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">176</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">186</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">187</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">176</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">186</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">187</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">102</td>
+<td class="rt">3</td>
+<td class="rt">3</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">137</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">203</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">212</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">212</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">212</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+62           assign rdata = valid_q[0] ? rdata_q[0] : in_rdata_i;
+                                       <font color = "green">-1-</font>  
+                                       <font color = "green">==></font>  
+                                       <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+63           assign err   = valid_q[0] ? err_q[0]   : in_err_i;
+                                       <font color = "green">-1-</font>  
+                                       <font color = "green">==></font>  
+                                       <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+78           assign rdata_unaligned = valid_q[1] ? {rdata_q[1][15:0], rdata[31:16]} :
+                                                 <font color = "green">-1-</font>  
+                                                 <font color = "green">==></font>  
+                                                 <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+86           assign err_unaligned   = valid_q[1] ? ((err_q[1] & ~unaligned_is_compressed) | err_q[0]) :
+                                                 <font color = "green">-1-</font>  
+                                                 <font color = "green">==></font>  
+                                                 <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+91           assign valid_unaligned = valid_q[1] ? 1'b1 :
+                                                 <font color = "green">-1-</font>  
+                                                 <font color = "green">==></font>  
+                                                 <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+128          assign addr_incr_two = instr_addr_q[1] ? unaligned_is_compressed :
+                                                    <font color = "green">-1-</font>  
+                                                    <font color = "green">==></font>  
+                                                    <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+131          assign instr_addr_d = clear_i ? in_addr_i[31:1] :
+                                           <font color = "green">-1-</font>  
+                                           <font color = "green">==></font>  
+                                           <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+192          assign valid_popped     [DEPTH-1] = pop_fifo ? 1'b0 : valid_pushed[DEPTH-1];
+                                                          <font color = "green">-1-</font>  
+                                                          <font color = "green">==></font>  
+                                                          <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+176            assign valid_popped[i] = pop_fifo ? valid_pushed[i+1] : valid_pushed[i];
+                                                 <font color = "green">-1-</font>  
+                                                 <font color = "green">==></font>  
+                                                 <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+186            assign rdata_d[i]  = valid_q[i+1] ? rdata_q[i+1] : in_rdata_i;
+                                                 <font color = "green">-1-</font>  
+                                                 <font color = "green">==></font>  
+                                                 <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+187            assign err_d  [i]  = valid_q[i+1] ? err_q  [i+1] : in_err_i;
+                                                 <font color = "green">-1-</font>  
+                                                 <font color = "green">==></font>  
+                                                 <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+176            assign valid_popped[i] = pop_fifo ? valid_pushed[i+1] : valid_pushed[i];
+                                                 <font color = "green">-1-</font>  
+                                                 <font color = "green">==></font>  
+                                                 <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+186            assign rdata_d[i]  = valid_q[i+1] ? rdata_q[i+1] : in_rdata_i;
+                                                 <font color = "green">-1-</font>  
+                                                 <font color = "green">==></font>  
+                                                 <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+187            assign err_d  [i]  = valid_q[i+1] ? err_q  [i+1] : in_err_i;
+                                                 <font color = "green">-1-</font>  
+                                                 <font color = "green">==></font>  
+                                                 <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+102            if (out_addr_o[1]) begin
+               <font color = "green">-1-</font>  
+103              // unaligned case
+104              out_rdata_o = rdata_unaligned;
+105              out_err_o   = err_unaligned;
+106        
+107              if (unaligned_is_compressed) begin
+                 <font color = "green">-2-</font>  
+108                out_valid_o = valid;
+           <font color = "green">        ==></font>
+109              end else begin
+110                out_valid_o = valid_unaligned;
+           <font color = "green">        ==></font>
+111              end
+112            end else begin
+113              // aligned case
+114              out_rdata_o = rdata;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+137            if (instr_addr_en) begin
+               <font color = "green">-1-</font>  
+138              instr_addr_q <= instr_addr_d;
+           <font color = "green">      ==></font>
+139            end
+               MISSING_ELSE
+           <font color = "green">    ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+203            if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+204              valid_q <= '0;
+           <font color = "green">      ==></font>
+205            end else begin
+206              valid_q <= valid_d;
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+212              if (entry_en[i]) begin
+                 <font color = "green">-1-</font>  
+213                rdata_q[i]   <= rdata_d[i];
+           <font color = "green">        ==></font>
+214                err_q[i]     <= err_d[i];
+215              end
+                 MISSING_ELSE
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+212              if (entry_en[i]) begin
+                 <font color = "green">-1-</font>  
+213                rdata_q[i]   <= rdata_d[i];
+           <font color = "green">        ==></font>
+214                err_q[i]     <= err_d[i];
+215              end
+                 MISSING_ELSE
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+212              if (entry_en[i]) begin
+                 <font color = "green">-1-</font>  
+213                rdata_q[i]   <= rdata_d[i];
+           <font color = "green">        ==></font>
+214                err_q[i]     <= err_d[i];
+215              end
+                 MISSING_ELSE
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<hr>
+<a name="Assert"></a>
+Assert Coverage for Module : <a href="mod1.html" >ibex_fetch_fifo</a><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Total</th><th nowrap width=80>Attempted</th><th nowrap width=80>Percent</th><th nowrap width=80>Succeeded/Matched</th><th nowrap width=80>Percent</th></tr><tr>
+<td class="wht cl"><a href="#616817493" >Assertions</a></td>
+<td class="wht cl rt">2</td>
+<td class="s10 cl rt">2</td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">2</td>
+<td class="s10 cl rt">100.00</td>
+</tr><tr>
+<td class="wht cl"><a href="#965228256" >Cover properties</a></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+</tr><tr>
+<td class="wht cl"><a href="#1056107163" >Cover sequences</a></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+<td class="wht cl rt">0</td>
+<td class="wht cl"></td>
+</tr><tr>
+<td class="wht cl"><b>Total</b></td>
+<td class="wht cl rt">2</td>
+<td class="s10 cl rt">2</td>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">2</td>
+<td class="s10 cl rt">100.00</td>
+</tr></table><br clear=all>
+<br clear=all>
+<hr>
+<br clear=all>
+<a name="616817493"></a>
+<b>Assertion Details</b><br clear=all>
+<br clear=all>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">Name</td><td>Attempts</td><td>Real Successes</td><td>Failures</td><td>Incomplete</td></tr><tr>
+<td class="wht cl"><a name="1807607464"></a>
+unnamed$$_10</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">6939424</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr><tr>
+<td class="wht cl"><a name="2062344009"></a>
+unnamed$$_11</td>
+<td class="s9 cl rt">159095193</td>
+<td class="s9 cl rt">12904223</td>
+<td class="s9 cl rt">0</td>
+<td class="wht cl rt">0</td>
+</tr></table><br clear=all>
+</div>
+</div>
+<div class="ui-layout-center-inner-north">
+<div id="center-bread-crumb" class="breadCrumb module urg-margin-bottom">
+  <ul name="inst_tag_1">
+    <li>
+      <a href="#Line">Line</a>    </li>
+    <li>
+      <a href="#Branch">Branch</a>    </li>
+    <li>
+      <a href="#Assert">Assert</a>    </li>
+  </ul>
+  <ul name="tag_ibex_fetch_fifo">
+    <li>
+      <a href="#Line">Line</a>    </li>
+    <li>
+      <a href="#Branch">Branch</a>    </li>
+    <li>
+      <a href="#Assert">Assert</a>    </li>
+  </ul>
+</div>
+</div>
+</div>
+<div class="ui-layout-south">
+<table align=center><tr><td class="s0 cl">0%</td>
+<td class="s1 cl">10%</td>
+<td class="s2 cl">20%</td>
+<td class="s3 cl">30%</td>
+<td class="s4 cl">40%</td>
+<td class="s5 cl">50%</td>
+<td class="s6 cl">60%</td>
+<td class="s7 cl">70%</td>
+<td class="s8 cl">80%</td>
+<td class="s9 cl">90%</td>
+<td class="s10 cl">100%</td></tr></table></div>
+</body>
+</html>

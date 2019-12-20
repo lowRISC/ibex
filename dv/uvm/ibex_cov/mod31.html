@@ -1,0 +1,2496 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Author" content="<username>"> <meta name="GENERATOR" content="urg/version [en] (platform name) [urg]">
+<title>Unified Coverage Report :: Module :: ibex_multdiv_fast</title>
+<link type="text/css" rel="stylesheet" href="css/.urg.css">
+<link type="text/css" rel="stylesheet" href="css/.layout.css">
+<link type="text/css" rel="stylesheet" href="css/.breadcrumb.css">
+<script type="text/javascript" src="js/.jquery.js"></script>
+<script type="text/javascript" src="js/.jquery-ui.js"></script>
+<script type="text/javascript" src="js/.sortable.js"></script>
+<script type="text/javascript" src="js/.layout.js"></script>
+<script type="text/javascript" src="js/.breadcrumb.js"></script>
+<script type="text/javascript">
+var layout, westLayout, centerLayout;
+$(document).ready(function () {
+  if ($("#north-bread-crumb")) {
+    $("#north-bread-crumb").jBreadCrumb({easing:'swing'})
+  }
+  layout = $("body").layout({ 
+    resizable: true,
+    spacing_open: 4,
+    spacing_closed: 4,
+    north: {
+      size: 76
+    },
+    south: {
+      size: 45,
+      initClosed: true
+    },
+    west: {
+      size: 500,
+      resizable: true,
+      initClosed: false
+    }
+  });
+  centerLayout = $('div.ui-layout-center').layout({
+    north__paneSelector: ".ui-layout-center-inner-north",
+    center__paneSelector: ".ui-layout-center-inner-center", 
+    north__size: 50,
+    spacing_open: 4,
+    spacing_closed: 4
+  });
+});
+</script>
+</head>
+<body onLoad="initPage();"><div class="ui-layout-north">
+<div class="logo"></div>
+<center class="pagetitle">Module Definition</center>
+<div align="center"><a href="dashboard.html" ><b>dashboard</b></a> | <a href="hierarchy.html" ><b>hierarchy</b></a> | <a href="modlist.html" ><b>modlist</b></a> | groups | <a href="tests.html" ><b>tests</b></a> | <a href="asserts.html" ><b>asserts</b></a></div>
+
+</div>
+<div class="ui-layout-west">
+<div name='tag_ibex_multdiv_fast'>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module : <a href="#"  onclick="showContent('tag_ibex_multdiv_fast')">ibex_multdiv_fast</a></span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s9 cl rt"> 95.40</td>
+<td class="s9 cl rt"><a href="mod31.html#Line" > 99.17</a></td>
+<td class="wht cl rt"></td>
+<td class="s8 cl rt"><a href="mod31.html#FSM" > 89.47</a></td>
+<td class="s9 cl rt"><a href="mod31.html#Branch" > 97.56</a></td>
+<td class="wht cl rt"></td>
+</tr></table><br clear=all>
+<span class=repname>Source File(s) : </span>
+<br clear=all>
+<a href="javascript:void(0);"  onclick="openSrcFile('/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_multdiv_fast.sv')">/usr/local/google/home/udij/opentitan/ibex/rtl/ibex_multdiv_fast.sv</a><br clear=all>
+<br clear=all>
+<span class=repname>Module self-instances :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="wht cl wordwrap"><a href="mod31.html#inst_tag_32"  onclick="showContent('inst_tag_32')">core_ibex_tb_top.dut.u_ibex_core.ex_block_i.gen_multdiv_fast.multdiv_i<img src="ex.gif" class="icon"></a></td>
+<td class="s9 cl rt"> 96.49</td>
+<td class="s10 cl rt"><a href="mod31.html#inst_tag_32_Line" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="s8 cl rt"><a href="mod31.html#inst_tag_32_FSM" > 89.47</a></td>
+<td class="s10 cl rt"><a href="mod31.html#inst_tag_32_Branch" >100.00</a></td>
+<td class="wht cl rt"></td>
+</tr></table></div>
+</div>
+<br clear=all>
+<div name='inst_tag_32'>
+<hr>
+<a name="inst_tag_32"></a>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Module Instance : <a href="hierarchy.html#tag_urg_inst_32" >core_ibex_tb_top.dut.u_ibex_core.ex_block_i.gen_multdiv_fast.multdiv_i<img src="ex.gif" class="icon"></a></span>
+<br clear=all>
+<br clear=all>
+<span class=repname>Instance :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s9 cl rt"> 96.49</td>
+<td class="s10 cl rt"><a href="mod31.html#inst_tag_32_Line" >100.00</a></td>
+<td class="wht cl rt"></td>
+<td class="s8 cl rt"><a href="mod31.html#inst_tag_32_FSM" > 89.47</a></td>
+<td class="s10 cl rt"><a href="mod31.html#inst_tag_32_Branch" >100.00</a></td>
+<td class="wht cl rt"></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Instance's subtree :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td class="s9 cl rt"> 96.49</td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="s8 cl rt"> 89.47</td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Parent : </span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td><td class="alfsrt">NAME</td></tr><tr>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="wht cl rt"></td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt"></td>
+<td><a href="mod25.html#inst_tag_26" >ex_block_i</a></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Subtrees :</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td><td>ASSERT</td></tr><tr>
+<td colspan=7>no children</td>
+</tr></table><br clear=all>
+</div>
+</div>
+</div>
+<div class="ui-layout-center">
+<div class="ui-layout-center-inner-center">
+<div name='tag_ibex_multdiv_fast'>
+<a name="Line"></a>
+Line Coverage for Module : <a href="mod31.html" >ibex_multdiv_fast</a><br clear=all>
+<table class="noborder">
+<col width="122">
+<col span="4" width="82">
+<tr><th></th><th>Line No.</th><th>Total</th><th>Covered</th><th>Percent</th></tr>
+<tr class="s9"><td class="lf">TOTAL</td><td></td><td>120</td><td>119</td><td>99.17</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>73</td><td>20</td><td>20</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>131</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>145</td><td>50</td><td>50</td><td>100.00</td></tr>
+<tr class="s9"><td class="lf">ALWAYS</td><td>249</td><td>47</td><td>46</td><td>97.87</td></tr>
+</table>
+<pre class="code"><br clear=all>
+72                        always_ff @(posedge clk_i or negedge rst_ni) begin : proc_mult_state_q
+73         1/1              if (!rst_ni) begin
+74         1/1                mult_state_q     &lt;= ALBL;
+75         1/1                mac_res_q        &lt;= '0;
+76         1/1                div_counter_q    &lt;= '0;
+77         1/1                md_state_q       &lt;= MD_IDLE;
+78         1/1                op_denominator_q &lt;= '0;
+79         1/1                op_numerator_q   &lt;= '0;
+80         1/1                op_quotient_q    &lt;= '0;
+81                          end else begin
+82                      
+83         1/1                if (mult_en_i) begin
+84         1/1                  mult_state_q &lt;= mult_state_n;
+85                            end
+                        MISSING_ELSE
+86                      
+87         1/1                if (div_en_i) begin
+88         1/1                  div_counter_q    &lt;= div_counter_n;
+89         1/1                  op_denominator_q &lt;= op_denominator_n;
+90         1/1                  op_numerator_q   &lt;= op_numerator_n;
+91         1/1                  op_quotient_q    &lt;= op_quotient_n;
+92         1/1                  md_state_q       &lt;= md_state_n;
+93                            end
+                        MISSING_ELSE
+94                      
+95         1/1                unique case(1'b1)
+96                              mult_en_i:
+97         1/1                    mac_res_q &lt;= mac_res_n;
+98                              div_en_i:
+99         1/1                    mac_res_q &lt;= op_remainder_n;
+100                             default:
+101        1/1                    mac_res_q &lt;= mac_res_q;
+102                            endcase
+103                         end
+104                       end
+105                     
+106                       assign signed_mult      = (signed_mode_i != 2'b00);
+107                     
+108                       assign multdiv_result_o = div_en_i ? mac_res_q[31:0] : mac_res_n[31:0];
+109                     
+110                       // The 2 MSBs of mac_res_ext (mac_res_ext[34:33]) are always equal since:
+111                       // 1. The 2 MSBs of the multiplicants are always equal, and
+112                       // 2. The 16 MSBs of the addend (accum[33:18]) are always equal.
+113                       // Thus, it is safe to ignore mac_res_ext[34].
+114                       assign mac_res_signed =
+115                           $signed({sign_a, mult_op_a}) * $signed({sign_b, mult_op_b}) + $signed(accum);
+116                       assign mac_res_ext    = $unsigned(mac_res_signed);
+117                       assign mac_res        = mac_res_ext[33:0];
+118                     
+119                       assign res_adder_h    = alu_adder_ext_i[33:1];
+120                     
+121                       assign next_remainder = is_greater_equal ? res_adder_h[31:0] : mac_res_q[31:0];
+122                       assign next_quotient  = is_greater_equal ? {1'b0,op_quotient_q} | {1'b0,one_shift} :
+123                                                                  {1'b0,op_quotient_q};
+124                     
+125                       assign one_shift      = {31'b0, 1'b1} &lt;&lt; div_counter_q;
+126                     
+127                       // The adder in the ALU computes alu_operand_a_o + alu_operand_b_o which means
+128                       // Remainder - Divisor. If Remainder - Divisor &gt;= 0, is_greater_equal is equal to 1,
+129                       // the next Remainder is Remainder - Divisor contained in res_adder_h and the
+130                       always_comb begin
+131        1/1              if ((mac_res_q[31] ^ op_denominator_q[31]) == 1'b0) begin
+132        1/1                is_greater_equal = (res_adder_h[31] == 1'b0);
+133                         end else begin
+134        1/1                is_greater_equal = mac_res_q[31];
+135                         end
+136                       end
+137                     
+138                       assign div_sign_a      = op_a_i[31] &amp; signed_mode_i[0];
+139                       assign div_sign_b      = op_b_i[31] &amp; signed_mode_i[1];
+140                       assign div_change_sign = div_sign_a ^ div_sign_b;
+141                       assign rem_change_sign = div_sign_a;
+142                     
+143                     
+144                       always_comb begin : md_fsm
+145        1/1              div_counter_n    = div_counter_q - 5'h1;
+146        1/1              op_remainder_n   = mac_res_q;
+147        1/1              op_quotient_n    = op_quotient_q;
+148        1/1              md_state_n       = md_state_q;
+149        1/1              op_numerator_n   = op_numerator_q;
+150        1/1              op_denominator_n = op_denominator_q;
+151        1/1              alu_operand_a_o  = {32'h0  , 1'b1};
+152        1/1              alu_operand_b_o  = {~op_b_i, 1'b1};
+153        1/1              div_valid        = 1'b0;
+154                     
+155        1/1              unique case(md_state_q)
+156                           MD_IDLE: begin
+157        1/1                  if (operator_i == MD_OP_DIV) begin
+158                               // Check if the Denominator is 0
+159                               // quotient for division by 0
+160        1/1                    op_remainder_n = '1;
+161        1/1                    md_state_n     = equal_to_zero ? MD_FINISH : MD_ABS_A;
+162                             end else begin
+163                               // Check if the Denominator is 0
+164                               // remainder for division by 0
+165        1/1                    op_remainder_n = {2'b0, op_a_i};
+166        1/1                    md_state_n     = equal_to_zero ? MD_FINISH : MD_ABS_A;
+167                             end
+168                             // 0 - B = 0 iff B == 0
+169        1/1                  alu_operand_a_o  = {32'h0  , 1'b1};
+170        1/1                  alu_operand_b_o  = {~op_b_i, 1'b1};
+171        1/1                  div_counter_n    = 5'd31;
+172                           end
+173                     
+174                           MD_ABS_A: begin
+175                             // quotient
+176        1/1                  op_quotient_n   = '0;
+177                             // A abs value
+178        1/1                  op_numerator_n  = div_sign_a ? alu_adder_i : op_a_i;
+179        1/1                  md_state_n      = MD_ABS_B;
+180        1/1                  div_counter_n   = 5'd31;
+181                             // ABS(A) = 0 - A
+182        1/1                  alu_operand_a_o = {32'h0  , 1'b1};
+183        1/1                  alu_operand_b_o = {~op_a_i, 1'b1};
+184                           end
+185                     
+186                           MD_ABS_B: begin
+187                             // remainder
+188        1/1                  op_remainder_n   = { 33'h0, op_numerator_q[31]};
+189                             // B abs value
+190        1/1                  op_denominator_n = div_sign_b ? alu_adder_i : op_b_i;
+191        1/1                  md_state_n       = MD_COMP;
+192        1/1                  div_counter_n    = 5'd31;
+193                             // ABS(B) = 0 - B
+194        1/1                  alu_operand_a_o  = {32'h0  , 1'b1};
+195        1/1                  alu_operand_b_o  = {~op_b_i, 1'b1};
+196                           end
+197                     
+198                           MD_COMP: begin
+199        1/1                  op_remainder_n  = {1'b0, next_remainder[31:0], op_numerator_q[div_counter_n]};
+200        1/1                  op_quotient_n   = next_quotient[31:0];
+201        1/1                  md_state_n      = (div_counter_q == 5'd1) ? MD_LAST : MD_COMP;
+202                             // Division
+203        1/1                  alu_operand_a_o = {mac_res_q[31:0], 1'b1};         // it contains the remainder
+204        1/1                  alu_operand_b_o = {~op_denominator_q[31:0], 1'b1}; // -denominator two's compliment
+205                           end
+206                     
+207                           MD_LAST: begin
+208        1/1                  if (operator_i == MD_OP_DIV) begin
+209                               // this time we save the quotient in op_remainder_n (i.e. mac_res_q) since
+210                               // we do not need anymore the remainder
+211        1/1                    op_remainder_n = {1'b0, next_quotient};
+212                             end else begin
+213                               // this time we do not save the quotient anymore since we need only the remainder
+214        1/1                    op_remainder_n = {2'b0, next_remainder[31:0]};
+215                             end
+216                             // Division
+217        1/1                  alu_operand_a_o  = {mac_res_q[31:0], 1'b1};         // it contains the remainder
+218        1/1                  alu_operand_b_o  = {~op_denominator_q[31:0], 1'b1}; // -denominator two's compliment
+219                     
+220        1/1                  md_state_n = MD_CHANGE_SIGN;
+221                           end
+222                     
+223                           MD_CHANGE_SIGN: begin
+224        1/1                  md_state_n  = MD_FINISH;
+225        1/1                  if (operator_i == MD_OP_DIV) begin
+226        1/1                    op_remainder_n = (div_change_sign) ? {2'h0,alu_adder_i} : mac_res_q;
+227                             end else begin
+228        1/1                    op_remainder_n = (rem_change_sign) ? {2'h0,alu_adder_i} : mac_res_q;
+229                             end
+230                             // ABS(Quotient) = 0 - Quotient (or Remainder)
+231        1/1                  alu_operand_a_o  = {32'h0  , 1'b1};
+232        1/1                  alu_operand_b_o  = {~mac_res_q[31:0], 1'b1};
+233                           end
+234                     
+235                           MD_FINISH: begin
+236        1/1                  md_state_n = MD_IDLE;
+237        1/1                  div_valid   = 1'b1;
+238                           end
+239                     
+240                           default: begin
+241        1/1                  md_state_n = MD_IDLE;
+242                           end
+243                         endcase // md_state_q
+244                       end
+245                     
+246                       assign valid_o = mult_valid | div_valid;
+247                     
+248                       always_comb begin : mult_fsm
+249        1/1              mult_op_a    = op_a_i[`OP_L];
+250        1/1              mult_op_b    = op_b_i[`OP_L];
+251        1/1              sign_a       = 1'b0;
+252        1/1              sign_b       = 1'b0;
+253        1/1              accum        = mac_res_q;
+254        1/1              mac_res_n    = mac_res;
+255        1/1              mult_state_n = mult_state_q;
+256        1/1              mult_valid   = 1'b0;
+257                     
+258        1/1              unique case (mult_state_q)
+259                     
+260                           ALBL: begin
+261                             // al*bl
+262        1/1                  mult_op_a = op_a_i[`OP_L];
+263        1/1                  mult_op_b = op_b_i[`OP_L];
+264        1/1                  sign_a    = 1'b0;
+265        1/1                  sign_b    = 1'b0;
+266        1/1                  accum     = '0;
+267        1/1                  mac_res_n = mac_res;
+268        1/1                  mult_state_n = ALBH;
+269                           end
+270                     
+271                           ALBH: begin
+272                             // al*bh&lt;&lt;16
+273        1/1                  mult_op_a = op_a_i[`OP_L];
+274        1/1                  mult_op_b = op_b_i[`OP_H];
+275        1/1                  sign_a    = 1'b0;
+276        1/1                  sign_b    = signed_mode_i[1] &amp; op_b_i[31];
+277                             // result of AL*BL (in mac_res_q) always unsigned with no carry, so carries_q always 00
+278        1/1                  accum     = {18'b0,mac_res_q[31:16]};
+279        1/1                  if (operator_i == MD_OP_MULL) begin
+280        1/1                    mac_res_n = {2'b0,mac_res[`OP_L],mac_res_q[`OP_L]};
+281                             end else begin
+282                               // MD_OP_MULH
+283        1/1                    mac_res_n = mac_res;
+284                             end
+285        1/1                  mult_state_n = AHBL;
+286                           end
+287                     
+288                           AHBL: begin
+289                             // ah*bl&lt;&lt;16
+290        1/1                  mult_op_a = op_a_i[`OP_H];
+291        1/1                  mult_op_b = op_b_i[`OP_L];
+292        1/1                  sign_a    = signed_mode_i[0] &amp; op_a_i[31];
+293        1/1                  sign_b    = 1'b0;
+294        1/1                  if (operator_i == MD_OP_MULL) begin
+295        1/1                    accum        = {18'b0,mac_res_q[31:16]};
+296        1/1                    mac_res_n    = {2'b0,mac_res[15:0],mac_res_q[15:0]};
+297        1/1                    mult_valid   = 1'b1;
+298        1/1                    mult_state_n = ALBL;
+299                             end else begin
+300        1/1                    accum        = mac_res_q;
+301        1/1                    mac_res_n    = mac_res;
+302        1/1                    mult_state_n = AHBH;
+303                             end
+304                           end
+305                     
+306                           AHBH: begin
+307                             // only MD_OP_MULH here
+308                             // ah*bh
+309        1/1                  mult_op_a = op_a_i[`OP_H];
+310        1/1                  mult_op_b = op_b_i[`OP_H];
+311        1/1                  sign_a    = signed_mode_i[0] &amp; op_a_i[31];
+312        1/1                  sign_b    = signed_mode_i[1] &amp; op_b_i[31];
+313        1/1                  accum[17: 0]  = mac_res_q[33:16];
+314        1/1                  accum[33:18]  = {16{signed_mult &amp; mac_res_q[33]}};
+315                             // result of AH*BL is not signed only if signed_mode_i == 2'b00
+316        1/1                  mac_res_n    = mac_res;
+317        1/1                  mult_state_n = ALBL;
+318        1/1                  mult_valid   = 1'b1;
+319                           end
+320                           default: begin
+321        <font color = "red">0/1     ==>          mult_state_n = ALBL;</font>
+</pre>
+<hr>
+<a name="FSM"></a>
+FSM Coverage for Module : <a href="mod31.html" >ibex_multdiv_fast</a><br clear=all>
+<table align=left class="noborder">
+<caption><b>Summary for FSM :: mult_state_q</b></caption>
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th><th nowrap width=200></th></tr><tr class="wht">
+<td>States</td>
+<td class="rt">4</td>
+<td class="rt">4</td>
+<td class="rt">100.00</td>
+<td>(Not included in score)</td>
+</tr><tr class="s10">
+<td>Transitions</td>
+<td class="rt">6</td>
+<td class="rt">6</td>
+<td class="rt">100.00</td>
+<td></td>
+</tr><tr class="wht">
+<td>Sequences</td>
+<td class="rt">0</td>
+<td class="rt">0</td>
+<td></td>
+<td></td>
+</tr></table><br clear=all>
+<b>State, Transition and Sequence Details for FSM :: mult_state_q</b><hr>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">states</td><td>Line No.</td><td class="alfsrt">Covered</td></tr><tr class="uGreen">
+<td nowrap>AHBH</td>
+<td class="rt">302</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>AHBL</td>
+<td class="rt">285</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>ALBH</td>
+<td class="rt">268</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>ALBL</td>
+<td class="rt">74</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<br clear=all>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">transitions</td><td>Line No.</td><td class="alfsrt">Covered</td></tr><tr class="uGreen">
+<td nowrap>AHBH->ALBL</td>
+<td class="rt">74</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>AHBL->AHBH</td>
+<td class="rt">302</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>AHBL->ALBL</td>
+<td class="rt">74</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>ALBH->AHBL</td>
+<td class="rt">285</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>ALBH->ALBL</td>
+<td class="rt">74</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>ALBL->ALBH</td>
+<td class="rt">268</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<br clear=all>
+<table align=left class="noborder">
+<caption><b>Summary for FSM :: md_state_q</b></caption>
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th><th nowrap width=200></th></tr><tr class="wht">
+<td>States</td>
+<td class="rt">7</td>
+<td class="rt">7</td>
+<td class="rt">100.00</td>
+<td>(Not included in score)</td>
+</tr><tr class="s8">
+<td>Transitions</td>
+<td class="rt">13</td>
+<td class="rt">11</td>
+<td class="rt">84.62 </td>
+<td></td>
+</tr><tr class="wht">
+<td>Sequences</td>
+<td class="rt">0</td>
+<td class="rt">0</td>
+<td></td>
+<td></td>
+</tr></table><br clear=all>
+<b>State, Transition and Sequence Details for FSM :: md_state_q</b><hr>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">states</td><td>Line No.</td><td class="alfsrt">Covered</td></tr><tr class="uGreen">
+<td nowrap>MD_ABS_A</td>
+<td class="rt">161</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_ABS_B</td>
+<td class="rt">179</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_CHANGE_SIGN</td>
+<td class="rt">220</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_COMP</td>
+<td class="rt">191</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_FINISH</td>
+<td class="rt">161</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_IDLE</td>
+<td class="rt">77</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_LAST</td>
+<td class="rt">201</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<br clear=all>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">transitions</td><td>Line No.</td><td class="alfsrt">Covered</td></tr><tr class="uGreen">
+<td nowrap>MD_ABS_A->MD_ABS_B</td>
+<td class="rt">179</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_ABS_A->MD_IDLE</td>
+<td class="rt">77</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_ABS_B->MD_COMP</td>
+<td class="rt">191</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_ABS_B->MD_IDLE</td>
+<td class="rt">77</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_CHANGE_SIGN->MD_FINISH</td>
+<td class="rt">224</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td nowrap>MD_CHANGE_SIGN->MD_IDLE</td>
+<td class="rt">77</td>
+<td>Not&nbsp;Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_COMP->MD_IDLE</td>
+<td class="rt">77</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_COMP->MD_LAST</td>
+<td class="rt">201</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_FINISH->MD_IDLE</td>
+<td class="rt">77</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_IDLE->MD_ABS_A</td>
+<td class="rt">161</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_IDLE->MD_FINISH</td>
+<td class="rt">161</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_LAST->MD_CHANGE_SIGN</td>
+<td class="rt">220</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td nowrap>MD_LAST->MD_IDLE</td>
+<td class="rt">77</td>
+<td>Not&nbsp;Covered</td>
+</tr></table><br clear=all>
+<br clear=all>
+<hr>
+<a name="Branch"></a>
+Branch Coverage for Module : <a href="mod31.html" >ibex_multdiv_fast</a><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Line No.</th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th></tr><tr class="s9">
+<td>Branches</td>
+<td></td>
+<td class="rt">41</td>
+<td class="rt">40</td>
+<td class="rt">97.56 </td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">108</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">121</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">122</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">73</td>
+<td class="rt">8</td>
+<td class="rt">8</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">131</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">155</td>
+<td class="rt">18</td>
+<td class="rt">18</td>
+<td class="rt">100.00</td>
+</tr><tr class="s8">
+<td>CASE</td>
+<td class="rt">258</td>
+<td class="rt">7</td>
+<td class="rt">6</td>
+<td class="rt">85.71 </td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+108          assign multdiv_result_o = div_en_i ? mac_res_q[31:0] : mac_res_n[31:0];
+                                                <font color = "green">-1-</font>  
+                                                <font color = "green">==></font>  
+                                                <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+121          assign next_remainder = is_greater_equal ? res_adder_h[31:0] : mac_res_q[31:0];
+                                                      <font color = "green">-1-</font>  
+                                                      <font color = "green">==></font>  
+                                                      <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+122          assign next_quotient  = is_greater_equal ? {1'b0,op_quotient_q} | {1'b0,one_shift} :
+                                                      <font color = "green">-1-</font>  
+                                                      <font color = "green">==></font>  
+                                                      <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+73             if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+74               mult_state_q     <= ALBL;
+           <font color = "green">      ==></font>
+75               mac_res_q        <= '0;
+76               div_counter_q    <= '0;
+77               md_state_q       <= MD_IDLE;
+78               op_denominator_q <= '0;
+79               op_numerator_q   <= '0;
+80               op_quotient_q    <= '0;
+81             end else begin
+82         
+83               if (mult_en_i) begin
+                 <font color = "green">-2-</font>  
+84                 mult_state_q <= mult_state_n;
+           <font color = "green">        ==></font>
+85               end
+                 MISSING_ELSE
+           <font color = "green">      ==></font>
+86         
+87               if (div_en_i) begin
+                 <font color = "green">-3-</font>  
+88                 div_counter_q    <= div_counter_n;
+           <font color = "green">        ==></font>
+89                 op_denominator_q <= op_denominator_n;
+90                 op_numerator_q   <= op_numerator_n;
+91                 op_quotient_q    <= op_quotient_n;
+92                 md_state_q       <= md_state_n;
+93               end
+                 MISSING_ELSE
+           <font color = "green">      ==></font>
+94         
+95               unique case(1'b1)
+                        <font color = "green">-4-</font>  
+96                 mult_en_i:
+97                   mac_res_q <= mac_res_n;
+           <font color = "green">          ==></font>
+98                 div_en_i:
+99                   mac_res_q <= op_remainder_n;
+           <font color = "green">          ==></font>
+100                default:
+101                  mac_res_q <= mac_res_q;
+           <font color = "green">          ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>mult_en_i </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>div_en_i </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>default</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+131            if ((mac_res_q[31] ^ op_denominator_q[31]) == 1'b0) begin
+               <font color = "green">-1-</font>  
+132              is_greater_equal = (res_adder_h[31] == 1'b0);
+           <font color = "green">      ==></font>
+133            end else begin
+134              is_greater_equal = mac_res_q[31];
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+155            unique case(md_state_q)
+                      <font color = "green">-1-</font>  
+156              MD_IDLE: begin
+157                if (operator_i == MD_OP_DIV) begin
+                   <font color = "green">-2-</font>  
+158                  // Check if the Denominator is 0
+159                  // quotient for division by 0
+160                  op_remainder_n = '1;
+161                  md_state_n     = equal_to_zero ? MD_FINISH : MD_ABS_A;
+                                                    <font color = "green">-3-</font>  
+                                                    <font color = "green">==></font>  
+                                                    <font color = "green">==></font>  
+162                end else begin
+163                  // Check if the Denominator is 0
+164                  // remainder for division by 0
+165                  op_remainder_n = {2'b0, op_a_i};
+166                  md_state_n     = equal_to_zero ? MD_FINISH : MD_ABS_A;
+                                                    <font color = "green">-4-</font>  
+                                                    <font color = "green">==></font>  
+                                                    <font color = "green">==></font>  
+167                end
+168                // 0 - B = 0 iff B == 0
+169                alu_operand_a_o  = {32'h0  , 1'b1};
+170                alu_operand_b_o  = {~op_b_i, 1'b1};
+171                div_counter_n    = 5'd31;
+172              end
+173        
+174              MD_ABS_A: begin
+175                // quotient
+176                op_quotient_n   = '0;
+177                // A abs value
+178                op_numerator_n  = div_sign_a ? alu_adder_i : op_a_i;
+                                                <font color = "green">-5-</font>  
+                                                <font color = "green">==></font>  
+                                                <font color = "green">==></font>  
+179                md_state_n      = MD_ABS_B;
+180                div_counter_n   = 5'd31;
+181                // ABS(A) = 0 - A
+182                alu_operand_a_o = {32'h0  , 1'b1};
+183                alu_operand_b_o = {~op_a_i, 1'b1};
+184              end
+185        
+186              MD_ABS_B: begin
+187                // remainder
+188                op_remainder_n   = { 33'h0, op_numerator_q[31]};
+189                // B abs value
+190                op_denominator_n = div_sign_b ? alu_adder_i : op_b_i;
+                                                 <font color = "green">-6-</font>  
+                                                 <font color = "green">==></font>  
+                                                 <font color = "green">==></font>  
+191                md_state_n       = MD_COMP;
+192                div_counter_n    = 5'd31;
+193                // ABS(B) = 0 - B
+194                alu_operand_a_o  = {32'h0  , 1'b1};
+195                alu_operand_b_o  = {~op_b_i, 1'b1};
+196              end
+197        
+198              MD_COMP: begin
+199                op_remainder_n  = {1'b0, next_remainder[31:0], op_numerator_q[div_counter_n]};
+200                op_quotient_n   = next_quotient[31:0];
+201                md_state_n      = (div_counter_q == 5'd1) ? MD_LAST : MD_COMP;
+                                                             <font color = "green">-7-</font>  
+                                                             <font color = "green">==></font>  
+                                                             <font color = "green">==></font>  
+202                // Division
+203                alu_operand_a_o = {mac_res_q[31:0], 1'b1};         // it contains the remainder
+204                alu_operand_b_o = {~op_denominator_q[31:0], 1'b1}; // -denominator two's compliment
+205              end
+206        
+207              MD_LAST: begin
+208                if (operator_i == MD_OP_DIV) begin
+                   <font color = "green">-8-</font>  
+209                  // this time we save the quotient in op_remainder_n (i.e. mac_res_q) since
+210                  // we do not need anymore the remainder
+211                  op_remainder_n = {1'b0, next_quotient};
+           <font color = "green">          ==></font>
+212                end else begin
+213                  // this time we do not save the quotient anymore since we need only the remainder
+214                  op_remainder_n = {2'b0, next_remainder[31:0]};
+           <font color = "green">          ==></font>
+215                end
+216                // Division
+217                alu_operand_a_o  = {mac_res_q[31:0], 1'b1};         // it contains the remainder
+218                alu_operand_b_o  = {~op_denominator_q[31:0], 1'b1}; // -denominator two's compliment
+219        
+220                md_state_n = MD_CHANGE_SIGN;
+221              end
+222        
+223              MD_CHANGE_SIGN: begin
+224                md_state_n  = MD_FINISH;
+225                if (operator_i == MD_OP_DIV) begin
+                   <font color = "green">-9-</font>  
+226                  op_remainder_n = (div_change_sign) ? {2'h0,alu_adder_i} : mac_res_q;
+                                                        <font color = "green">-10-</font>  
+                                                        <font color = "green">==></font>  
+                                                        <font color = "green">==></font>  
+227                end else begin
+228                  op_remainder_n = (rem_change_sign) ? {2'h0,alu_adder_i} : mac_res_q;
+                                                        <font color = "green">-11-</font>  
+                                                        <font color = "green">==></font>  
+                                                        <font color = "green">==></font>  
+229                end
+230                // ABS(Quotient) = 0 - Quotient (or Remainder)
+231                alu_operand_a_o  = {32'h0  , 1'b1};
+232                alu_operand_b_o  = {~mac_res_q[31:0], 1'b1};
+233              end
+234        
+235              MD_FINISH: begin
+236                md_state_n = MD_IDLE;
+           <font color = "green">        ==></font>
+237                div_valid   = 1'b1;
+238              end
+239        
+240              default: begin
+241                md_state_n = MD_IDLE;
+           <font color = "green">        ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>-5-</th><th nowrap width=80>-6-</th><th nowrap width=80>-7-</th><th nowrap width=80>-8-</th><th nowrap width=80>-9-</th><th nowrap width=80>-10-</th><th nowrap width=80>-11-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>MD_IDLE </td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_IDLE </td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_IDLE </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_IDLE </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_ABS_A </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_ABS_A </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_ABS_B </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_ABS_B </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_COMP </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_COMP </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_LAST </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_LAST </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_CHANGE_SIGN </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_CHANGE_SIGN </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_CHANGE_SIGN </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_CHANGE_SIGN </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_FINISH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+258            unique case (mult_state_q)
+                      <font color = "red">-1-</font>  
+259        
+260              ALBL: begin
+261                // al*bl
+262                mult_op_a = op_a_i[`OP_L];
+           <font color = "green">        ==></font>
+263                mult_op_b = op_b_i[`OP_L];
+264                sign_a    = 1'b0;
+265                sign_b    = 1'b0;
+266                accum     = '0;
+267                mac_res_n = mac_res;
+268                mult_state_n = ALBH;
+269              end
+270        
+271              ALBH: begin
+272                // al*bh<<16
+273                mult_op_a = op_a_i[`OP_L];
+274                mult_op_b = op_b_i[`OP_H];
+275                sign_a    = 1'b0;
+276                sign_b    = signed_mode_i[1] & op_b_i[31];
+277                // result of AL*BL (in mac_res_q) always unsigned with no carry, so carries_q always 00
+278                accum     = {18'b0,mac_res_q[31:16]};
+279                if (operator_i == MD_OP_MULL) begin
+                   <font color = "green">-2-</font>  
+280                  mac_res_n = {2'b0,mac_res[`OP_L],mac_res_q[`OP_L]};
+           <font color = "green">          ==></font>
+281                end else begin
+282                  // MD_OP_MULH
+283                  mac_res_n = mac_res;
+           <font color = "green">          ==></font>
+284                end
+285                mult_state_n = AHBL;
+286              end
+287        
+288              AHBL: begin
+289                // ah*bl<<16
+290                mult_op_a = op_a_i[`OP_H];
+291                mult_op_b = op_b_i[`OP_L];
+292                sign_a    = signed_mode_i[0] & op_a_i[31];
+293                sign_b    = 1'b0;
+294                if (operator_i == MD_OP_MULL) begin
+                   <font color = "green">-3-</font>  
+295                  accum        = {18'b0,mac_res_q[31:16]};
+           <font color = "green">          ==></font>
+296                  mac_res_n    = {2'b0,mac_res[15:0],mac_res_q[15:0]};
+297                  mult_valid   = 1'b1;
+298                  mult_state_n = ALBL;
+299                end else begin
+300                  accum        = mac_res_q;
+           <font color = "green">          ==></font>
+301                  mac_res_n    = mac_res;
+302                  mult_state_n = AHBH;
+303                end
+304              end
+305        
+306              AHBH: begin
+307                // only MD_OP_MULH here
+308                // ah*bh
+309                mult_op_a = op_a_i[`OP_H];
+           <font color = "green">        ==></font>
+310                mult_op_b = op_b_i[`OP_H];
+311                sign_a    = signed_mode_i[0] & op_a_i[31];
+312                sign_b    = signed_mode_i[1] & op_b_i[31];
+313                accum[17: 0]  = mac_res_q[33:16];
+314                accum[33:18]  = {16{signed_mult & mac_res_q[33]}};
+315                // result of AH*BL is not signed only if signed_mode_i == 2'b00
+316                mac_res_n    = mac_res;
+317                mult_state_n = ALBL;
+318                mult_valid   = 1'b1;
+319              end
+320              default: begin
+321                mult_state_n = ALBL;
+           <font color = "red">        ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>ALBL </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALBH </td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALBH </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>AHBL </td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>AHBL </td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>AHBH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Not Covered</td>
+</tr></table><br clear=all>
+</div>
+<div name='inst_tag_32'>
+<a name="inst_tag_32_Line"></a>
+<b>Line Coverage for Instance : <a href="mod31.html#inst_tag_32" >core_ibex_tb_top.dut.u_ibex_core.ex_block_i.gen_multdiv_fast.multdiv_i<img src="ex.gif" class="icon"></a></b><br clear=all>
+<table class="noborder">
+<col width="122">
+<col span="4" width="82">
+<tr><th></th><th>Line No.</th><th>Total</th><th>Covered</th><th>Percent</th></tr>
+<tr class="s10"><td class="lf">TOTAL</td><td></td><td>119</td><td>119</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>73</td><td>20</td><td>20</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>131</td><td>3</td><td>3</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>145</td><td>50</td><td>50</td><td>100.00</td></tr>
+<tr class="s10"><td class="lf">ALWAYS</td><td>249</td><td>46</td><td>46</td><td>100.00</td></tr>
+</table>
+<pre class="code"><br clear=all>
+72                        always_ff @(posedge clk_i or negedge rst_ni) begin : proc_mult_state_q
+73         1/1              if (!rst_ni) begin
+74         1/1                mult_state_q     &lt;= ALBL;
+75         1/1                mac_res_q        &lt;= '0;
+76         1/1                div_counter_q    &lt;= '0;
+77         1/1                md_state_q       &lt;= MD_IDLE;
+78         1/1                op_denominator_q &lt;= '0;
+79         1/1                op_numerator_q   &lt;= '0;
+80         1/1                op_quotient_q    &lt;= '0;
+81                          end else begin
+82                      
+83         1/1                if (mult_en_i) begin
+84         1/1                  mult_state_q &lt;= mult_state_n;
+85                            end
+                        MISSING_ELSE
+86                      
+87         1/1                if (div_en_i) begin
+88         1/1                  div_counter_q    &lt;= div_counter_n;
+89         1/1                  op_denominator_q &lt;= op_denominator_n;
+90         1/1                  op_numerator_q   &lt;= op_numerator_n;
+91         1/1                  op_quotient_q    &lt;= op_quotient_n;
+92         1/1                  md_state_q       &lt;= md_state_n;
+93                            end
+                        MISSING_ELSE
+94                      
+95         1/1                unique case(1'b1)
+96                              mult_en_i:
+97         1/1                    mac_res_q &lt;= mac_res_n;
+98                              div_en_i:
+99         1/1                    mac_res_q &lt;= op_remainder_n;
+100                             default:
+101        1/1                    mac_res_q &lt;= mac_res_q;
+102                            endcase
+103                         end
+104                       end
+105                     
+106                       assign signed_mult      = (signed_mode_i != 2'b00);
+107                     
+108                       assign multdiv_result_o = div_en_i ? mac_res_q[31:0] : mac_res_n[31:0];
+109                     
+110                       // The 2 MSBs of mac_res_ext (mac_res_ext[34:33]) are always equal since:
+111                       // 1. The 2 MSBs of the multiplicants are always equal, and
+112                       // 2. The 16 MSBs of the addend (accum[33:18]) are always equal.
+113                       // Thus, it is safe to ignore mac_res_ext[34].
+114                       assign mac_res_signed =
+115                           $signed({sign_a, mult_op_a}) * $signed({sign_b, mult_op_b}) + $signed(accum);
+116                       assign mac_res_ext    = $unsigned(mac_res_signed);
+117                       assign mac_res        = mac_res_ext[33:0];
+118                     
+119                       assign res_adder_h    = alu_adder_ext_i[33:1];
+120                     
+121                       assign next_remainder = is_greater_equal ? res_adder_h[31:0] : mac_res_q[31:0];
+122                       assign next_quotient  = is_greater_equal ? {1'b0,op_quotient_q} | {1'b0,one_shift} :
+123                                                                  {1'b0,op_quotient_q};
+124                     
+125                       assign one_shift      = {31'b0, 1'b1} &lt;&lt; div_counter_q;
+126                     
+127                       // The adder in the ALU computes alu_operand_a_o + alu_operand_b_o which means
+128                       // Remainder - Divisor. If Remainder - Divisor &gt;= 0, is_greater_equal is equal to 1,
+129                       // the next Remainder is Remainder - Divisor contained in res_adder_h and the
+130                       always_comb begin
+131        1/1              if ((mac_res_q[31] ^ op_denominator_q[31]) == 1'b0) begin
+132        1/1                is_greater_equal = (res_adder_h[31] == 1'b0);
+133                         end else begin
+134        1/1                is_greater_equal = mac_res_q[31];
+135                         end
+136                       end
+137                     
+138                       assign div_sign_a      = op_a_i[31] &amp; signed_mode_i[0];
+139                       assign div_sign_b      = op_b_i[31] &amp; signed_mode_i[1];
+140                       assign div_change_sign = div_sign_a ^ div_sign_b;
+141                       assign rem_change_sign = div_sign_a;
+142                     
+143                     
+144                       always_comb begin : md_fsm
+145        1/1              div_counter_n    = div_counter_q - 5'h1;
+146        1/1              op_remainder_n   = mac_res_q;
+147        1/1              op_quotient_n    = op_quotient_q;
+148        1/1              md_state_n       = md_state_q;
+149        1/1              op_numerator_n   = op_numerator_q;
+150        1/1              op_denominator_n = op_denominator_q;
+151        1/1              alu_operand_a_o  = {32'h0  , 1'b1};
+152        1/1              alu_operand_b_o  = {~op_b_i, 1'b1};
+153        1/1              div_valid        = 1'b0;
+154                     
+155        1/1              unique case(md_state_q)
+156                           MD_IDLE: begin
+157        1/1                  if (operator_i == MD_OP_DIV) begin
+158                               // Check if the Denominator is 0
+159                               // quotient for division by 0
+160        1/1                    op_remainder_n = '1;
+161        1/1                    md_state_n     = equal_to_zero ? MD_FINISH : MD_ABS_A;
+162                             end else begin
+163                               // Check if the Denominator is 0
+164                               // remainder for division by 0
+165        1/1                    op_remainder_n = {2'b0, op_a_i};
+166        1/1                    md_state_n     = equal_to_zero ? MD_FINISH : MD_ABS_A;
+167                             end
+168                             // 0 - B = 0 iff B == 0
+169        1/1                  alu_operand_a_o  = {32'h0  , 1'b1};
+170        1/1                  alu_operand_b_o  = {~op_b_i, 1'b1};
+171        1/1                  div_counter_n    = 5'd31;
+172                           end
+173                     
+174                           MD_ABS_A: begin
+175                             // quotient
+176        1/1                  op_quotient_n   = '0;
+177                             // A abs value
+178        1/1                  op_numerator_n  = div_sign_a ? alu_adder_i : op_a_i;
+179        1/1                  md_state_n      = MD_ABS_B;
+180        1/1                  div_counter_n   = 5'd31;
+181                             // ABS(A) = 0 - A
+182        1/1                  alu_operand_a_o = {32'h0  , 1'b1};
+183        1/1                  alu_operand_b_o = {~op_a_i, 1'b1};
+184                           end
+185                     
+186                           MD_ABS_B: begin
+187                             // remainder
+188        1/1                  op_remainder_n   = { 33'h0, op_numerator_q[31]};
+189                             // B abs value
+190        1/1                  op_denominator_n = div_sign_b ? alu_adder_i : op_b_i;
+191        1/1                  md_state_n       = MD_COMP;
+192        1/1                  div_counter_n    = 5'd31;
+193                             // ABS(B) = 0 - B
+194        1/1                  alu_operand_a_o  = {32'h0  , 1'b1};
+195        1/1                  alu_operand_b_o  = {~op_b_i, 1'b1};
+196                           end
+197                     
+198                           MD_COMP: begin
+199        1/1                  op_remainder_n  = {1'b0, next_remainder[31:0], op_numerator_q[div_counter_n]};
+200        1/1                  op_quotient_n   = next_quotient[31:0];
+201        1/1                  md_state_n      = (div_counter_q == 5'd1) ? MD_LAST : MD_COMP;
+202                             // Division
+203        1/1                  alu_operand_a_o = {mac_res_q[31:0], 1'b1};         // it contains the remainder
+204        1/1                  alu_operand_b_o = {~op_denominator_q[31:0], 1'b1}; // -denominator two's compliment
+205                           end
+206                     
+207                           MD_LAST: begin
+208        1/1                  if (operator_i == MD_OP_DIV) begin
+209                               // this time we save the quotient in op_remainder_n (i.e. mac_res_q) since
+210                               // we do not need anymore the remainder
+211        1/1                    op_remainder_n = {1'b0, next_quotient};
+212                             end else begin
+213                               // this time we do not save the quotient anymore since we need only the remainder
+214        1/1                    op_remainder_n = {2'b0, next_remainder[31:0]};
+215                             end
+216                             // Division
+217        1/1                  alu_operand_a_o  = {mac_res_q[31:0], 1'b1};         // it contains the remainder
+218        1/1                  alu_operand_b_o  = {~op_denominator_q[31:0], 1'b1}; // -denominator two's compliment
+219                     
+220        1/1                  md_state_n = MD_CHANGE_SIGN;
+221                           end
+222                     
+223                           MD_CHANGE_SIGN: begin
+224        1/1                  md_state_n  = MD_FINISH;
+225        1/1                  if (operator_i == MD_OP_DIV) begin
+226        1/1                    op_remainder_n = (div_change_sign) ? {2'h0,alu_adder_i} : mac_res_q;
+227                             end else begin
+228        1/1                    op_remainder_n = (rem_change_sign) ? {2'h0,alu_adder_i} : mac_res_q;
+229                             end
+230                             // ABS(Quotient) = 0 - Quotient (or Remainder)
+231        1/1                  alu_operand_a_o  = {32'h0  , 1'b1};
+232        1/1                  alu_operand_b_o  = {~mac_res_q[31:0], 1'b1};
+233                           end
+234                     
+235                           MD_FINISH: begin
+236        1/1                  md_state_n = MD_IDLE;
+237        1/1                  div_valid   = 1'b1;
+238                           end
+239                     
+240                           default: begin
+241        1/1                  md_state_n = MD_IDLE;
+242                           end
+243                         endcase // md_state_q
+244                       end
+245                     
+246                       assign valid_o = mult_valid | div_valid;
+247                     
+248                       always_comb begin : mult_fsm
+249        1/1              mult_op_a    = op_a_i[`OP_L];
+250        1/1              mult_op_b    = op_b_i[`OP_L];
+251        1/1              sign_a       = 1'b0;
+252        1/1              sign_b       = 1'b0;
+253        1/1              accum        = mac_res_q;
+254        1/1              mac_res_n    = mac_res;
+255        1/1              mult_state_n = mult_state_q;
+256        1/1              mult_valid   = 1'b0;
+257                     
+258        1/1              unique case (mult_state_q)
+259                     
+260                           ALBL: begin
+261                             // al*bl
+262        1/1                  mult_op_a = op_a_i[`OP_L];
+263        1/1                  mult_op_b = op_b_i[`OP_L];
+264        1/1                  sign_a    = 1'b0;
+265        1/1                  sign_b    = 1'b0;
+266        1/1                  accum     = '0;
+267        1/1                  mac_res_n = mac_res;
+268        1/1                  mult_state_n = ALBH;
+269                           end
+270                     
+271                           ALBH: begin
+272                             // al*bh&lt;&lt;16
+273        1/1                  mult_op_a = op_a_i[`OP_L];
+274        1/1                  mult_op_b = op_b_i[`OP_H];
+275        1/1                  sign_a    = 1'b0;
+276        1/1                  sign_b    = signed_mode_i[1] &amp; op_b_i[31];
+277                             // result of AL*BL (in mac_res_q) always unsigned with no carry, so carries_q always 00
+278        1/1                  accum     = {18'b0,mac_res_q[31:16]};
+279        1/1                  if (operator_i == MD_OP_MULL) begin
+280        1/1                    mac_res_n = {2'b0,mac_res[`OP_L],mac_res_q[`OP_L]};
+281                             end else begin
+282                               // MD_OP_MULH
+283        1/1                    mac_res_n = mac_res;
+284                             end
+285        1/1                  mult_state_n = AHBL;
+286                           end
+287                     
+288                           AHBL: begin
+289                             // ah*bl&lt;&lt;16
+290        1/1                  mult_op_a = op_a_i[`OP_H];
+291        1/1                  mult_op_b = op_b_i[`OP_L];
+292        1/1                  sign_a    = signed_mode_i[0] &amp; op_a_i[31];
+293        1/1                  sign_b    = 1'b0;
+294        1/1                  if (operator_i == MD_OP_MULL) begin
+295        1/1                    accum        = {18'b0,mac_res_q[31:16]};
+296        1/1                    mac_res_n    = {2'b0,mac_res[15:0],mac_res_q[15:0]};
+297        1/1                    mult_valid   = 1'b1;
+298        1/1                    mult_state_n = ALBL;
+299                             end else begin
+300        1/1                    accum        = mac_res_q;
+301        1/1                    mac_res_n    = mac_res;
+302        1/1                    mult_state_n = AHBH;
+303                             end
+304                           end
+305                     
+306                           AHBH: begin
+307                             // only MD_OP_MULH here
+308                             // ah*bh
+309        1/1                  mult_op_a = op_a_i[`OP_H];
+310        1/1                  mult_op_b = op_b_i[`OP_H];
+311        1/1                  sign_a    = signed_mode_i[0] &amp; op_a_i[31];
+312        1/1                  sign_b    = signed_mode_i[1] &amp; op_b_i[31];
+313        1/1                  accum[17: 0]  = mac_res_q[33:16];
+314        1/1                  accum[33:18]  = {16{signed_mult &amp; mac_res_q[33]}};
+315                             // result of AH*BL is not signed only if signed_mode_i == 2'b00
+316        1/1                  mac_res_n    = mac_res;
+317        1/1                  mult_state_n = ALBL;
+318        1/1                  mult_valid   = 1'b1;
+319                           end
+320                           default: begin
+321        <font color = "grey">excluded     </font>        mult_state_n = ALBL;
+</pre>
+<hr>
+<a name="inst_tag_32_FSM"></a>
+<b>FSM Coverage for Instance : <a href="mod31.html#inst_tag_32" >core_ibex_tb_top.dut.u_ibex_core.ex_block_i.gen_multdiv_fast.multdiv_i<img src="ex.gif" class="icon"></a></b><br clear=all>
+<table align=left class="noborder">
+<caption><b>Summary for FSM :: mult_state_q</b></caption>
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th><th nowrap width=200></th></tr><tr class="wht">
+<td>States</td>
+<td class="rt">4</td>
+<td class="rt">4</td>
+<td class="rt">100.00</td>
+<td>(Not included in score)</td>
+</tr><tr class="s10">
+<td>Transitions</td>
+<td class="rt">6</td>
+<td class="rt">6</td>
+<td class="rt">100.00</td>
+<td></td>
+</tr><tr class="wht">
+<td>Sequences</td>
+<td class="rt">0</td>
+<td class="rt">0</td>
+<td></td>
+<td></td>
+</tr></table><br clear=all>
+<b>State, Transition and Sequence Details for FSM :: mult_state_q</b><hr>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">states</td><td>Line No.</td><td class="alfsrt">Covered</td></tr><tr class="uGreen">
+<td nowrap>AHBH</td>
+<td class="rt">302</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>AHBL</td>
+<td class="rt">285</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>ALBH</td>
+<td class="rt">268</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>ALBL</td>
+<td class="rt">74</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<br clear=all>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">transitions</td><td>Line No.</td><td class="alfsrt">Covered</td></tr><tr class="uGreen">
+<td nowrap>AHBH->ALBL</td>
+<td class="rt">74</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>AHBL->AHBH</td>
+<td class="rt">302</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>AHBL->ALBL</td>
+<td class="rt">74</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>ALBH->AHBL</td>
+<td class="rt">285</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>ALBH->ALBL</td>
+<td class="rt">74</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>ALBL->ALBH</td>
+<td class="rt">268</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<br clear=all>
+<table align=left class="noborder">
+<caption><b>Summary for FSM :: md_state_q</b></caption>
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th><th nowrap width=200></th></tr><tr class="wht">
+<td>States</td>
+<td class="rt">7</td>
+<td class="rt">7</td>
+<td class="rt">100.00</td>
+<td>(Not included in score)</td>
+</tr><tr class="s8">
+<td>Transitions</td>
+<td class="rt">13</td>
+<td class="rt">11</td>
+<td class="rt">84.62 </td>
+<td></td>
+</tr><tr class="wht">
+<td>Sequences</td>
+<td class="rt">0</td>
+<td class="rt">0</td>
+<td></td>
+<td></td>
+</tr></table><br clear=all>
+<b>State, Transition and Sequence Details for FSM :: md_state_q</b><hr>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">states</td><td>Line No.</td><td class="alfsrt">Covered</td></tr><tr class="uGreen">
+<td nowrap>MD_ABS_A</td>
+<td class="rt">161</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_ABS_B</td>
+<td class="rt">179</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_CHANGE_SIGN</td>
+<td class="rt">220</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_COMP</td>
+<td class="rt">191</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_FINISH</td>
+<td class="rt">161</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_IDLE</td>
+<td class="rt">77</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_LAST</td>
+<td class="rt">201</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<br clear=all>
+<table align=left class="sortable noborder">
+<tr class="sortablehead">
+<td class="alfsrt">transitions</td><td>Line No.</td><td class="alfsrt">Covered</td></tr><tr class="uGreen">
+<td nowrap>MD_ABS_A->MD_ABS_B</td>
+<td class="rt">179</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_ABS_A->MD_IDLE</td>
+<td class="rt">77</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_ABS_B->MD_COMP</td>
+<td class="rt">191</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_ABS_B->MD_IDLE</td>
+<td class="rt">77</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_CHANGE_SIGN->MD_FINISH</td>
+<td class="rt">224</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td nowrap>MD_CHANGE_SIGN->MD_IDLE</td>
+<td class="rt">77</td>
+<td>Not&nbsp;Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_COMP->MD_IDLE</td>
+<td class="rt">77</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_COMP->MD_LAST</td>
+<td class="rt">201</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_FINISH->MD_IDLE</td>
+<td class="rt">77</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_IDLE->MD_ABS_A</td>
+<td class="rt">161</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_IDLE->MD_FINISH</td>
+<td class="rt">161</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td nowrap>MD_LAST->MD_CHANGE_SIGN</td>
+<td class="rt">220</td>
+<td>Covered</td>
+</tr><tr class="uRed">
+<td nowrap>MD_LAST->MD_IDLE</td>
+<td class="rt">77</td>
+<td>Not&nbsp;Covered</td>
+</tr></table><br clear=all>
+<br clear=all>
+<hr>
+<a name="inst_tag_32_Branch"></a>
+<b>Branch Coverage for Instance : <a href="mod31.html#inst_tag_32" >core_ibex_tb_top.dut.u_ibex_core.ex_block_i.gen_multdiv_fast.multdiv_i<img src="ex.gif" class="icon"></a></b><br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=120></th><th nowrap width=80>Line No.</th><th nowrap width=80>Total</th><th nowrap width=80>Covered</th><th nowrap width=80>Percent</th></tr><tr class="s10">
+<td>Branches</td>
+<td></td>
+<td class="rt">40</td>
+<td class="rt">40</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">108</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">121</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>TERNARY</td>
+<td class="rt">122</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">73</td>
+<td class="rt">8</td>
+<td class="rt">8</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>IF</td>
+<td class="rt">131</td>
+<td class="rt">2</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">155</td>
+<td class="rt">18</td>
+<td class="rt">18</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td>CASE</td>
+<td class="rt">258</td>
+<td class="rt">6</td>
+<td class="rt">6</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+108          assign multdiv_result_o = div_en_i ? mac_res_q[31:0] : mac_res_n[31:0];
+                                                <font color = "green">-1-</font>  
+                                                <font color = "green">==></font>  
+                                                <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+121          assign next_remainder = is_greater_equal ? res_adder_h[31:0] : mac_res_q[31:0];
+                                                      <font color = "green">-1-</font>  
+                                                      <font color = "green">==></font>  
+                                                      <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+122          assign next_quotient  = is_greater_equal ? {1'b0,op_quotient_q} | {1'b0,one_shift} :
+                                                      <font color = "green">-1-</font>  
+                                                      <font color = "green">==></font>  
+                                                      <font color = "green">==></font>  
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+73             if (!rst_ni) begin
+               <font color = "green">-1-</font>  
+74               mult_state_q     <= ALBL;
+           <font color = "green">      ==></font>
+75               mac_res_q        <= '0;
+76               div_counter_q    <= '0;
+77               md_state_q       <= MD_IDLE;
+78               op_denominator_q <= '0;
+79               op_numerator_q   <= '0;
+80               op_quotient_q    <= '0;
+81             end else begin
+82         
+83               if (mult_en_i) begin
+                 <font color = "green">-2-</font>  
+84                 mult_state_q <= mult_state_n;
+           <font color = "green">        ==></font>
+85               end
+                 MISSING_ELSE
+           <font color = "green">      ==></font>
+86         
+87               if (div_en_i) begin
+                 <font color = "green">-3-</font>  
+88                 div_counter_q    <= div_counter_n;
+           <font color = "green">        ==></font>
+89                 op_denominator_q <= op_denominator_n;
+90                 op_numerator_q   <= op_numerator_n;
+91                 op_quotient_q    <= op_quotient_n;
+92                 md_state_q       <= md_state_n;
+93               end
+                 MISSING_ELSE
+           <font color = "green">      ==></font>
+94         
+95               unique case(1'b1)
+                        <font color = "green">-4-</font>  
+96                 mult_en_i:
+97                   mac_res_q <= mac_res_n;
+           <font color = "green">          ==></font>
+98                 div_en_i:
+99                   mac_res_q <= op_remainder_n;
+           <font color = "green">          ==></font>
+100                default:
+101                  mac_res_q <= mac_res_q;
+           <font color = "green">          ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>mult_en_i </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>div_en_i </td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>default</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+131            if ((mac_res_q[31] ^ op_denominator_q[31]) == 1'b0) begin
+               <font color = "green">-1-</font>  
+132              is_greater_equal = (res_adder_h[31] == 1'b0);
+           <font color = "green">      ==></font>
+133            end else begin
+134              is_greater_equal = mac_res_q[31];
+           <font color = "green">      ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>0</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+155            unique case(md_state_q)
+                      <font color = "green">-1-</font>  
+156              MD_IDLE: begin
+157                if (operator_i == MD_OP_DIV) begin
+                   <font color = "green">-2-</font>  
+158                  // Check if the Denominator is 0
+159                  // quotient for division by 0
+160                  op_remainder_n = '1;
+161                  md_state_n     = equal_to_zero ? MD_FINISH : MD_ABS_A;
+                                                    <font color = "green">-3-</font>  
+                                                    <font color = "green">==></font>  
+                                                    <font color = "green">==></font>  
+162                end else begin
+163                  // Check if the Denominator is 0
+164                  // remainder for division by 0
+165                  op_remainder_n = {2'b0, op_a_i};
+166                  md_state_n     = equal_to_zero ? MD_FINISH : MD_ABS_A;
+                                                    <font color = "green">-4-</font>  
+                                                    <font color = "green">==></font>  
+                                                    <font color = "green">==></font>  
+167                end
+168                // 0 - B = 0 iff B == 0
+169                alu_operand_a_o  = {32'h0  , 1'b1};
+170                alu_operand_b_o  = {~op_b_i, 1'b1};
+171                div_counter_n    = 5'd31;
+172              end
+173        
+174              MD_ABS_A: begin
+175                // quotient
+176                op_quotient_n   = '0;
+177                // A abs value
+178                op_numerator_n  = div_sign_a ? alu_adder_i : op_a_i;
+                                                <font color = "green">-5-</font>  
+                                                <font color = "green">==></font>  
+                                                <font color = "green">==></font>  
+179                md_state_n      = MD_ABS_B;
+180                div_counter_n   = 5'd31;
+181                // ABS(A) = 0 - A
+182                alu_operand_a_o = {32'h0  , 1'b1};
+183                alu_operand_b_o = {~op_a_i, 1'b1};
+184              end
+185        
+186              MD_ABS_B: begin
+187                // remainder
+188                op_remainder_n   = { 33'h0, op_numerator_q[31]};
+189                // B abs value
+190                op_denominator_n = div_sign_b ? alu_adder_i : op_b_i;
+                                                 <font color = "green">-6-</font>  
+                                                 <font color = "green">==></font>  
+                                                 <font color = "green">==></font>  
+191                md_state_n       = MD_COMP;
+192                div_counter_n    = 5'd31;
+193                // ABS(B) = 0 - B
+194                alu_operand_a_o  = {32'h0  , 1'b1};
+195                alu_operand_b_o  = {~op_b_i, 1'b1};
+196              end
+197        
+198              MD_COMP: begin
+199                op_remainder_n  = {1'b0, next_remainder[31:0], op_numerator_q[div_counter_n]};
+200                op_quotient_n   = next_quotient[31:0];
+201                md_state_n      = (div_counter_q == 5'd1) ? MD_LAST : MD_COMP;
+                                                             <font color = "green">-7-</font>  
+                                                             <font color = "green">==></font>  
+                                                             <font color = "green">==></font>  
+202                // Division
+203                alu_operand_a_o = {mac_res_q[31:0], 1'b1};         // it contains the remainder
+204                alu_operand_b_o = {~op_denominator_q[31:0], 1'b1}; // -denominator two's compliment
+205              end
+206        
+207              MD_LAST: begin
+208                if (operator_i == MD_OP_DIV) begin
+                   <font color = "green">-8-</font>  
+209                  // this time we save the quotient in op_remainder_n (i.e. mac_res_q) since
+210                  // we do not need anymore the remainder
+211                  op_remainder_n = {1'b0, next_quotient};
+           <font color = "green">          ==></font>
+212                end else begin
+213                  // this time we do not save the quotient anymore since we need only the remainder
+214                  op_remainder_n = {2'b0, next_remainder[31:0]};
+           <font color = "green">          ==></font>
+215                end
+216                // Division
+217                alu_operand_a_o  = {mac_res_q[31:0], 1'b1};         // it contains the remainder
+218                alu_operand_b_o  = {~op_denominator_q[31:0], 1'b1}; // -denominator two's compliment
+219        
+220                md_state_n = MD_CHANGE_SIGN;
+221              end
+222        
+223              MD_CHANGE_SIGN: begin
+224                md_state_n  = MD_FINISH;
+225                if (operator_i == MD_OP_DIV) begin
+                   <font color = "green">-9-</font>  
+226                  op_remainder_n = (div_change_sign) ? {2'h0,alu_adder_i} : mac_res_q;
+                                                        <font color = "green">-10-</font>  
+                                                        <font color = "green">==></font>  
+                                                        <font color = "green">==></font>  
+227                end else begin
+228                  op_remainder_n = (rem_change_sign) ? {2'h0,alu_adder_i} : mac_res_q;
+                                                        <font color = "green">-11-</font>  
+                                                        <font color = "green">==></font>  
+                                                        <font color = "green">==></font>  
+229                end
+230                // ABS(Quotient) = 0 - Quotient (or Remainder)
+231                alu_operand_a_o  = {32'h0  , 1'b1};
+232                alu_operand_b_o  = {~mac_res_q[31:0], 1'b1};
+233              end
+234        
+235              MD_FINISH: begin
+236                md_state_n = MD_IDLE;
+           <font color = "green">        ==></font>
+237                div_valid   = 1'b1;
+238              end
+239        
+240              default: begin
+241                md_state_n = MD_IDLE;
+           <font color = "green">        ==></font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>-4-</th><th nowrap width=80>-5-</th><th nowrap width=80>-6-</th><th nowrap width=80>-7-</th><th nowrap width=80>-8-</th><th nowrap width=80>-9-</th><th nowrap width=80>-10-</th><th nowrap width=80>-11-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>MD_IDLE </td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_IDLE </td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_IDLE </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_IDLE </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_ABS_A </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_ABS_A </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_ABS_B </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_ABS_B </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_COMP </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_COMP </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_LAST </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_LAST </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_CHANGE_SIGN </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_CHANGE_SIGN </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_CHANGE_SIGN </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_CHANGE_SIGN </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>MD_FINISH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr></table><br clear=all>
+<pre class="code"><br clear=all>
+258            unique case (mult_state_q)
+                      <font color = "red">-1-</font>  
+259        
+260              ALBL: begin
+261                // al*bl
+262                mult_op_a = op_a_i[`OP_L];
+           <font color = "green">        ==></font>
+263                mult_op_b = op_b_i[`OP_L];
+264                sign_a    = 1'b0;
+265                sign_b    = 1'b0;
+266                accum     = '0;
+267                mac_res_n = mac_res;
+268                mult_state_n = ALBH;
+269              end
+270        
+271              ALBH: begin
+272                // al*bh<<16
+273                mult_op_a = op_a_i[`OP_L];
+274                mult_op_b = op_b_i[`OP_H];
+275                sign_a    = 1'b0;
+276                sign_b    = signed_mode_i[1] & op_b_i[31];
+277                // result of AL*BL (in mac_res_q) always unsigned with no carry, so carries_q always 00
+278                accum     = {18'b0,mac_res_q[31:16]};
+279                if (operator_i == MD_OP_MULL) begin
+                   <font color = "green">-2-</font>  
+280                  mac_res_n = {2'b0,mac_res[`OP_L],mac_res_q[`OP_L]};
+           <font color = "green">          ==></font>
+281                end else begin
+282                  // MD_OP_MULH
+283                  mac_res_n = mac_res;
+           <font color = "green">          ==></font>
+284                end
+285                mult_state_n = AHBL;
+286              end
+287        
+288              AHBL: begin
+289                // ah*bl<<16
+290                mult_op_a = op_a_i[`OP_H];
+291                mult_op_b = op_b_i[`OP_L];
+292                sign_a    = signed_mode_i[0] & op_a_i[31];
+293                sign_b    = 1'b0;
+294                if (operator_i == MD_OP_MULL) begin
+                   <font color = "green">-3-</font>  
+295                  accum        = {18'b0,mac_res_q[31:16]};
+           <font color = "green">          ==></font>
+296                  mac_res_n    = {2'b0,mac_res[15:0],mac_res_q[15:0]};
+297                  mult_valid   = 1'b1;
+298                  mult_state_n = ALBL;
+299                end else begin
+300                  accum        = mac_res_q;
+           <font color = "green">          ==></font>
+301                  mac_res_n    = mac_res;
+302                  mult_state_n = AHBH;
+303                end
+304              end
+305        
+306              AHBH: begin
+307                // only MD_OP_MULH here
+308                // ah*bh
+309                mult_op_a = op_a_i[`OP_H];
+           <font color = "green">        ==></font>
+310                mult_op_b = op_b_i[`OP_H];
+311                sign_a    = signed_mode_i[0] & op_a_i[31];
+312                sign_b    = signed_mode_i[1] & op_b_i[31];
+313                accum[17: 0]  = mac_res_q[33:16];
+314                accum[33:18]  = {16{signed_mult & mac_res_q[33]}};
+315                // result of AH*BL is not signed only if signed_mode_i == 2'b00
+316                mac_res_n    = mac_res;
+317                mult_state_n = ALBL;
+318                mult_valid   = 1'b1;
+319              end
+320              default: begin
+321                mult_state_n = ALBL;
+           <font color = "grey">        ==> (Excluded)</font>
+</pre>
+<br clear=all>
+<span class=repname>Branches:</span>
+<br clear=all>
+<table align=left class="noborder">
+<tr>
+<th nowrap width=80>-1-</th><th nowrap width=80>-2-</th><th nowrap width=80>-3-</th><th nowrap width=80>Status</th></tr><tr class="uGreen">
+<td align=center>ALBL </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALBH </td>
+<td align=center>1</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>ALBH </td>
+<td align=center>0</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>AHBL </td>
+<td align=center nowrap>-</td>
+<td align=center>1</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>AHBL </td>
+<td align=center nowrap>-</td>
+<td align=center>0</td>
+<td>Covered</td>
+</tr><tr class="uGreen">
+<td align=center>AHBH </td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Covered</td>
+</tr><tr class="wht">
+<td align=center>default</td>
+<td align=center nowrap>-</td>
+<td align=center nowrap>-</td>
+<td>Excluded</td>
+</tr></table><br clear=all>
+</div>
+</div>
+<div class="ui-layout-center-inner-north">
+<div id="center-bread-crumb" class="breadCrumb module urg-margin-bottom">
+  <ul name="inst_tag_32">
+    <li>
+      <a href="#inst_tag_32_Line">Line</a>    </li>
+    <li>
+      <a href="#inst_tag_32_FSM">FSM</a>    </li>
+    <li>
+      <a href="#inst_tag_32_Branch">Branch</a>    </li>
+  </ul>
+  <ul name="tag_ibex_multdiv_fast">
+    <li>
+      <a href="#Line">Line</a>    </li>
+    <li>
+      <a href="#FSM">FSM</a>    </li>
+    <li>
+      <a href="#Branch">Branch</a>    </li>
+  </ul>
+</div>
+</div>
+</div>
+<div class="ui-layout-south">
+<table align=center><tr><td class="s0 cl">0%</td>
+<td class="s1 cl">10%</td>
+<td class="s2 cl">20%</td>
+<td class="s3 cl">30%</td>
+<td class="s4 cl">40%</td>
+<td class="s5 cl">50%</td>
+<td class="s6 cl">60%</td>
+<td class="s7 cl">70%</td>
+<td class="s8 cl">80%</td>
+<td class="s9 cl">90%</td>
+<td class="s10 cl">100%</td></tr></table></div>
+</body>
+</html>
