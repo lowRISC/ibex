@@ -219,6 +219,7 @@ module ibex_if_stage #(
   ibex_compressed_decoder compressed_decoder_i (
       .clk_i           ( clk_i                   ),
       .rst_ni          ( rst_ni                  ),
+      .valid_i         ( fetch_valid             ),
       .instr_i         ( fetch_rdata             ),
       .instr_o         ( instr_decompressed      ),
       .is_compressed_o ( instr_is_compressed_int ),
