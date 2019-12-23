@@ -7,6 +7,8 @@
 
 class SimCtrlExtension {
  public:
+  virtual ~SimCtrlExtension() = default;
+
   /**
    * Parse command line arguments
    *
