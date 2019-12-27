@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <cassert>
 #include <cstring>
 #include <iostream>
 #include <list>
@@ -32,11 +33,6 @@ extern void simutil_verilator_memload(const char *file);
  */
 extern int simutil_verilator_set_mem(int index, const svLogicVecVal *val);
 }
-
-struct BufferDesc {
-  uint8_t *data;
-  size_t length;
-};
 
 bool VerilatorMemUtil::RegisterMemoryArea(const std::string name,
                                           const std::string location) {
@@ -228,9 +224,14 @@ bool VerilatorMemUtil::IsFileReadable(std::string filepath) const {
 bool VerilatorMemUtil::ElfFileToBinary(const std::string &filepath,
                                        uint8_t **data,
                                        size_t &len_bytes) const {
-  bool retval;
-  std::list<BufferDesc> buffers;
-  size_t offset = 0;
+  uint8_t *buf;
+  bool retval, any = false;
+  GElf_Phdr phdr;
+  GElf_Addr high = 0;
+  GElf_Addr low = (GElf_Addr)-1;
+  Elf_Data *elf_data;
+  size_t i;
+
   (void)elf_errno();
   len_bytes = 0;
 
@@ -271,48 +272,66 @@ bool VerilatorMemUtil::ElfFileToBinary(const std::string &filepath,
     goto return_elf_end;
   }
 
-  GElf_Phdr phdr;
-  Elf_Data *elf_data;
-  elf_data = NULL;
-  for (size_t i = 0; i < phnum; i++) {
+  //
+  // To mimic what objcopy does (that is, the binary target of BFD), we need to
+  // iterate over all loadable program headers, find the lowest address, and
+  // then copy in our loadable sections based on their offset with respect to
+  // the found base address.
+  //
+  for (i = 0; i < phnum; i++) {
     if (gelf_getphdr(elf_desc, i, &phdr) == NULL) {
       std::cerr << elf_errmsg(-1) << " segment number: " << i
                 << " in: " << filepath << std::endl;
       retval = false;
       goto return_elf_end;
     }
+
     if (phdr.p_type != PT_LOAD) {
-      std::cout << "Program header number " << i << "is not of type PT_LOAD."
-                << "Continue." << std::endl;
+      std::cout << "Program header number " << i << " is not of type PT_LOAD; "
+                << "ignoring." << std::endl;
       continue;
     }
+
+    if (phdr.p_filesz == 0) {
+      continue;
+    }
+
+    if (!any || phdr.p_paddr < low) {
+      low = phdr.p_paddr;
+    }
+
+    if (!any || phdr.p_paddr + phdr.p_filesz > high) {
+      high = phdr.p_paddr + phdr.p_filesz;
+    }
+
+    any = true;
+  }
+
+  len_bytes = high - low;
+  buf = (uint8_t *)malloc(len_bytes);
+  assert(buf != NULL);
+
+  for (i = 0; i < phnum; i++) {
+    (void)gelf_getphdr(elf_desc, i, &phdr);
+
+    if (phdr.p_type != PT_LOAD || phdr.p_filesz == 0) {
+      continue;
+    }
+
     elf_data = elf_getdata_rawchunk(elf_desc, phdr.p_offset, phdr.p_filesz,
                                     ELF_T_BYTE);
 
     if (elf_data == NULL) {
       retval = false;
+      free(buf);
       goto return_elf_end;
     }
 
-    BufferDesc buf_data;
-    buf_data.length = elf_data->d_size;
-    len_bytes += buf_data.length;
-    buf_data.data = (uint8_t *)malloc(elf_data->d_size);
-    memcpy(buf_data.data, ((uint8_t *)elf_data->d_buf), buf_data.length);
-    buffers.push_back(buf_data);
+    memcpy(&buf[phdr.p_paddr - low], (uint8_t *)elf_data->d_buf,
+           elf_data->d_size);
   }
 
-  // Put the collected data into a continuous buffer
-  // Memory is freed by the caller
-  *data = (uint8_t *)malloc(len_bytes);
-  for (std::list<BufferDesc>::iterator it = buffers.begin();
-       it != buffers.end(); ++it) {
-    memcpy(((uint8_t *)*data) + offset, it->data, it->length);
-    offset += it->length;
-    free(it->data);
-  }
-  buffers.clear();
-
+  *data = buf;
   retval = true;
 
 return_elf_end:
