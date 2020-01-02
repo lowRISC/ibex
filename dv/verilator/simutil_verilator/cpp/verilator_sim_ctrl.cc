@@ -175,7 +175,7 @@ bool VerilatorSimCtrl::ParseCommandArgs(int argc, char **argv, bool &exit_app) {
       case 'h':
         PrintHelp();
         exit_app = true;
-        return true;
+        break;
       case ':':  // missing argument
         std::cerr << "ERROR: Missing argument." << std::endl << std::endl;
         return false;
@@ -213,8 +213,8 @@ void VerilatorSimCtrl::PrintHelp() const {
                "  Terminate simulation after N cycles\n\n"
                "-h|--help\n"
                "  Show help\n\n"
-               "All further arguments are passed to the design and can be used "
-               "in the design, e.g. by DPI modules.\n";
+               "All arguments are passed to the design and can be used "
+               "in the design, e.g. by DPI modules.\n\n";
 }
 
 bool VerilatorSimCtrl::TraceOn() {
