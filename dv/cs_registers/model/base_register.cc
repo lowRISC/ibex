@@ -56,7 +56,17 @@ bool BaseRegister::ProcessTransaction(bool *match, RegisterTransaction *trans) {
       read_val = RegisterClear(trans->csr_wdata);
       break;
   }
-  if (read_val != trans->csr_rdata) {
+  if (trans->csr_addr == kCSRMCycle || trans->csr_addr == kCSRMCycleH) {
+    // MCycle(H) can increment or even overflow without TB interaction
+    if (trans->csr_rdata < read_val) {
+      std::cout << "MCycle(H) overflow detected" << std::endl;
+    }
+    // else if (read_val != trans->csr_rdata) {
+    //  std::cout << "MCycle(H) incrementing as expected" << std::endl;
+    //}
+    // Don't panic about MCycle(H) incremeting, this is expected behavior as
+    // the clock is always running. Silently ignore mismatches for MCycle(H).
+  } else if (read_val != trans->csr_rdata) {
     std::cout << "Error, transaction:" << std::endl;
     trans->Print();
     std::cout << "Expected rdata: " << std::hex << read_val << std::dec
