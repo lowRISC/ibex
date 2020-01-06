@@ -198,7 +198,7 @@ module ibex_simple_system (
   logic [63:0] mhpmcounter_vals [32] /*verilator public_flat*/;
 
   for(genvar i = 0;i < 32; i = i + 1) begin
-      assign mhpmcounter_vals[i] = u_core.u_ibex_core.cs_registers_i.mhpmcounter_q[i];
+      assign mhpmcounter_vals[i] = u_core.u_ibex_core.cs_registers_i.mhpmcounter[i];
   end
 endmodule
 
