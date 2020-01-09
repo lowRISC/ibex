@@ -10,4 +10,8 @@
     rev: "master",
   },
 
+  exclude_from_upstream: [
+    "docs/riscv-dv.pdf",
+  ]
+
 }
