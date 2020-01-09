@@ -12,6 +12,7 @@
 
   exclude_from_upstream: [
     "docs/riscv-dv.pdf",
+    "sample/sample_rv32imc_test.tar.gz",
   ]
 
 }
