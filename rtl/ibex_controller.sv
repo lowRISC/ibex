@@ -253,6 +253,10 @@ module ibex_controller (
     csr_save_cause_o      = 1'b0;
     csr_mtval_o           = '0;
 
+    // The values of pc_mux and exc_pc_mux are only relevant if pc_set is set. Some of the states
+    // below always set pc_mux and exc_pc_mux but only set pc_set if certain conditions are met.
+    // This avoid having to factor those conditions into the pc_mux and exc_pc_mux select signals
+    // helping timing.
     pc_mux_o              = PC_BOOT;
     pc_set_o              = 1'b0;
 
@@ -350,6 +354,11 @@ module ibex_controller (
         // 2. debug requests
         // 3. interrupt requests
 
+        // Set PC mux for branch and jump here to ease timing. Value is only relevant if pc_set_o is
+        // also set. Setting the mux value here avoids factoring in special_req and instr_valid_i
+        // which helps timing.
+        pc_mux_o = PC_JUMP;
+
         if (instr_valid_i) begin
 
           // get ready for special instructions, exceptions, pipeline flushes
@@ -361,7 +370,6 @@ module ibex_controller (
             halt_if     = 1'b1;
           // set PC in IF stage to branch or jump target
           end else if (branch_set_i || jump_set_i) begin
-            pc_mux_o       = PC_JUMP;
             pc_set_o       = 1'b1;
 
             perf_tbranch_o = branch_set_i;
@@ -394,10 +402,11 @@ module ibex_controller (
       end // DECODE
 
       IRQ_TAKEN: begin
+        pc_mux_o     = PC_EXC;
+        exc_pc_mux_o = EXC_PC_IRQ;
+
         if (handle_irq) begin
-          pc_mux_o         = PC_EXC;
           pc_set_o         = 1'b1;
-          exc_pc_mux_o     = EXC_PC_IRQ;
 
           csr_save_if_o    = 1'b1;
           csr_save_cause_o = 1'b1;
@@ -425,13 +434,14 @@ module ibex_controller (
       end
 
       DBG_TAKEN_IF: begin
+        pc_mux_o     = PC_EXC;
+        exc_pc_mux_o = EXC_PC_DBD;
+
         // enter debug mode and save PC in IF to dpc
         // jump to debug exception handler in debug memory
         if (debug_single_step_i || debug_req_i || trigger_match_i) begin
           flush_id         = 1'b1;
-          pc_mux_o         = PC_EXC;
           pc_set_o         = 1'b1;
-          exc_pc_mux_o     = EXC_PC_DBD;
 
           csr_save_if_o    = 1'b1;
           debug_csr_save_o = 1'b1;
@@ -488,6 +498,9 @@ module ibex_controller (
         halt_if     = 1'b1;
         flush_id    = 1'b1;
         ctrl_fsm_ns = DECODE;
+
+        // As pc_mux and exc_pc_mux can take various values in this state they aren't set early
+        // here.
 
         // exceptions: set exception PC, save PC and exception cause
         // exc_req_lsu is high for one clock cycle only (in DECODE)
