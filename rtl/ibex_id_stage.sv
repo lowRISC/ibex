@@ -34,6 +34,7 @@ module ibex_id_stage #(
     input  logic                  instr_valid_i,
     input  logic                  instr_new_i,
     input  logic [31:0]           instr_rdata_i,         // from IF-ID pipeline registers
+    input  logic [31:0]           instr_rdata_alu_i,     // from IF-ID pipeline registers
     input  logic [15:0]           instr_rdata_c_i,       // from IF-ID pipeline registers
     input  logic                  instr_is_compressed_i,
     output logic                  instr_req_o,
@@ -341,6 +342,7 @@ module ibex_id_stage #(
       // from IF-ID pipeline register
       .instr_new_i                     ( instr_new_i          ),
       .instr_rdata_i                   ( instr_rdata_i        ),
+      .instr_rdata_alu_i               ( instr_rdata_alu_i    ),
       .illegal_c_insn_i                ( illegal_c_insn_i     ),
 
       // immediates
@@ -676,9 +678,17 @@ module ibex_id_stage #(
       (instr_valid_i && !(illegal_c_insn_i || instr_fetch_err_i)) |-> !$isunknown(instr_rdata_i),
       clk_i, !rst_ni)
 
+  // Instruction delivered to ID stage can not contain X.
+  `ASSERT(IbexIdInstrALUKnown,
+      (instr_valid_i && !(illegal_c_insn_i || instr_fetch_err_i)) |-> !$isunknown(instr_rdata_alu_i),
+      clk_i, !rst_ni)
+
   // Multicycle enable signals must be unique.
   `ASSERT(IbexMulticycleEnableUnique,
       $onehot0({data_req_dec, multdiv_en_dec, branch_in_dec, jump_in_dec}), clk_i, !rst_ni)
+
+  // Duplicated instruction flops must match
+  `ASSERT(IbexDuplicateInstrMatch, instr_valid_i |-> instr_rdata_i == instr_rdata_alu_i, clk_i, !rst_ni);
 
   `ifdef CHECK_MISALIGNED
   `ASSERT(IbexMisalignedMemoryAccess, !lsu_addr_incr_req_i, clk_i, !rst_ni)
