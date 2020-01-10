@@ -21,7 +21,7 @@ lint_off -msg DECLFILENAME -file "*/rtl/ibex_register_file_fpga.sv"
 
 // Bits of signal are not used: fetch_addr_n[0]
 // cleaner to write all bits even if not all are used
-lint_off -msg UNUSED -file "*/rtl/ibex_if_stage.sv" -lines 83
+lint_off -msg UNUSED -file "*/rtl/ibex_if_stage.sv" -lines 85
 
 // Bits of signal are not used: shift_right_result_ext[32]
 // cleaner to write all bits even if not all are used

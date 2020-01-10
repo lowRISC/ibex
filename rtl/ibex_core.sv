@@ -101,6 +101,8 @@ module ibex_core #(
   logic        instr_valid_id;
   logic        instr_new_id;
   logic [31:0] instr_rdata_id;         // Instruction sampled inside IF stage
+  logic [31:0] instr_rdata_alu_id;     // Instruction sampled inside IF stage (replicated to ease
+                                       // fan-out)
   logic [15:0] instr_rdata_c_id;       // Compressed instruction sampled inside IF stage
   logic        instr_is_compressed_id;
   logic        instr_fetch_err;        // Bus error on instr fetch
@@ -322,6 +324,7 @@ module ibex_core #(
       .instr_valid_id_o         ( instr_valid_id         ),
       .instr_new_id_o           ( instr_new_id           ),
       .instr_rdata_id_o         ( instr_rdata_id         ),
+      .instr_rdata_alu_id_o     ( instr_rdata_alu_id     ),
       .instr_rdata_c_id_o       ( instr_rdata_c_id       ),
       .instr_is_compressed_id_o ( instr_is_compressed_id ),
       .instr_fetch_err_o        ( instr_fetch_err        ),
@@ -378,6 +381,7 @@ module ibex_core #(
       .instr_valid_i                ( instr_valid_id         ),
       .instr_new_i                  ( instr_new_id           ),
       .instr_rdata_i                ( instr_rdata_id         ),
+      .instr_rdata_alu_i            ( instr_rdata_alu_id     ),
       .instr_rdata_c_i              ( instr_rdata_c_id       ),
       .instr_is_compressed_i        ( instr_is_compressed_id ),
 
