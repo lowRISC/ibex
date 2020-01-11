@@ -69,9 +69,6 @@ targets:
 
   lint:
     filesets:
-      # Note on Verilator waivers:
-      # You *must* include the waiver file first, otherwise only global waivers
-      # are applied, but not file-specific waivers.
       - tool_verilator ? (files_lint_verilator)
       - files_rtl
       - files_lint
