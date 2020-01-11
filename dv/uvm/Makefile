@@ -153,5 +153,11 @@ fcov:
           --custom_target ${DV_DIR}/riscv_dv_extension \
 
 # Load verdi to review coverage
-cov:
+cov_vcs:
 	cd ${OUT}/rtl_sim; verdi -cov -covdir test.vdb &
+
+cov_ius:
+	if [ ! -d "${OUT}/rtl_sim/cov_work/scope/merged_cov" ]; \
+	  then imc -execcmd "merge -out ${OUT}/rtl_sim/cov_work/scope/merged_cov ${OUT}/rtl_sim/cov_work/scope/test_*"; \
+  	fi
+	imc -load ${OUT}/rtl_sim/cov_work/scope/merged_cov &
