@@ -72,6 +72,8 @@ module ibex_decoder #(
     output logic                 mult_en_o,             // perform integer multiplication
     output logic                 div_en_o,              // perform integer division or
                                                         // remainder
+    output logic                 multdiv_sel_o,
+
     output ibex_pkg::md_op_e     multdiv_operator_o,
     output logic [1:0]           multdiv_signed_mode_o,
 
@@ -554,6 +556,8 @@ module ibex_decoder #(
 
     jt_mux_sel_o       = JT_ALU;
 
+    multdiv_sel_o      = 1'b0;
+
     opcode_alu         = opcode_e'(instr_alu[6:0]);
 
     unique case (opcode_alu)
@@ -735,6 +739,7 @@ module ibex_decoder #(
           {6'b00_0001, 3'b101}, // divu
           {6'b00_0001, 3'b110}, // rem
           {6'b00_0001, 3'b111}: begin // remu
+            multdiv_sel_o         = 1'b1;
             alu_operator_o        = ALU_ADD;
           end
 

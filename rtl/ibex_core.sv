@@ -147,6 +147,7 @@ module ibex_core #(
   // Multiplier Control
   logic        mult_en_ex;
   logic        div_en_ex;
+  logic        multdiv_sel_ex;
   md_op_e      multdiv_operator_ex;
   logic [1:0]  multdiv_signed_mode_ex;
   logic [31:0] multdiv_operand_a_ex;
@@ -415,6 +416,7 @@ module ibex_core #(
 
       .mult_en_ex_o                 ( mult_en_ex             ),
       .div_en_ex_o                  ( div_en_ex              ),
+      .multdiv_sel_ex_o             ( multdiv_sel_ex         ),
       .multdiv_operator_ex_o        ( multdiv_operator_ex    ),
       .multdiv_signed_mode_ex_o     ( multdiv_signed_mode_ex ),
       .multdiv_operand_a_ex_o       ( multdiv_operand_a_ex   ),
@@ -514,6 +516,7 @@ module ibex_core #(
       .multdiv_operator_i         ( multdiv_operator_ex      ),
       .mult_en_i                  ( mult_en_ex               ),
       .div_en_i                   ( div_en_ex                ),
+      .multdiv_sel_i              ( multdiv_sel_ex           ),
       .multdiv_signed_mode_i      ( multdiv_signed_mode_ex   ),
       .multdiv_operand_a_i        ( multdiv_operand_a_ex     ),
       .multdiv_operand_b_i        ( multdiv_operand_b_ex     ),
