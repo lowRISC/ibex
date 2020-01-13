@@ -43,6 +43,11 @@ if { $lr_synth_timing_run } {
   set_flow_var sta_paths_per_group 100 "STA paths reported per group"
   set_flow_var sta_overall_paths 1000 "STA paths reported in overall report"
   puts "clock period: $lr_synth_clk_period ps"
+
+  if { $lr_synth_abc_clk_uprate > $lr_synth_clk_period } {
+    puts "WARNING: abc_clk_uprate must be less than clk_period otherwise ABC will be given a negative clk period"
+  }
+
 }
 
 puts "================================================="
