@@ -59,3 +59,9 @@ lint_off -msg UNUSED -file "*/rtl/ibex_register_file_fpga.sv" -lines 20
 // ibex_core.cs_registers_i.mie_q
 // Issue lowrisc/ibex#212
 lint_off -msg UNOPTFLAT -file "*/rtl/ibex_cs_registers.sv" -lines 170
+
+// Bits of signal are not used: instr_alu[24:15,11:7]
+// instr flops are duplicated to reduce fan-out, neater to just leave unused
+// bits in fully duplicated instr for synthesiser to optimise out rather than
+// explicitly flopping only the bits we want.
+lint_off -msg UNUSED -file "*/rtl/ibex_decoder.sv" -lines 106

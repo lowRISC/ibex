@@ -70,6 +70,7 @@ module ibex_id_stage #(
     // MUL, DIV
     output logic                  mult_en_ex_o,
     output logic                  div_en_ex_o,
+    output logic                  multdiv_sel_ex_o,
     output ibex_pkg::md_op_e      multdiv_operator_ex_o,
     output logic  [1:0]           multdiv_signed_mode_ex_o,
     output logic [31:0]           multdiv_operand_a_ex_o,
@@ -203,6 +204,7 @@ module ibex_id_stage #(
   // Multiplier Control
   logic        mult_en_id, mult_en_dec; // use integer multiplier
   logic        div_en_id, div_en_dec;   // use integer division or reminder
+  logic        multdiv_sel_dec;
   logic        multdiv_en_dec;
   md_op_e      multdiv_operator;
   logic [1:0]  multdiv_signed_mode;
@@ -373,6 +375,7 @@ module ibex_id_stage #(
       // MULT & DIV
       .mult_en_o                       ( mult_en_dec          ),
       .div_en_o                        ( div_en_dec           ),
+      .multdiv_sel_o                   ( multdiv_sel_dec      ),
       .multdiv_operator_o              ( multdiv_operator     ),
       .multdiv_signed_mode_o           ( multdiv_signed_mode  ),
 
@@ -525,6 +528,7 @@ module ibex_id_stage #(
 
   assign mult_en_ex_o                = mult_en_id;
   assign div_en_ex_o                 = div_en_id;
+  assign multdiv_sel_ex_o            = multdiv_sel_dec;
 
   assign multdiv_operator_ex_o       = multdiv_operator;
   assign multdiv_signed_mode_ex_o    = multdiv_signed_mode;

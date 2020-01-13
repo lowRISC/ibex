@@ -31,6 +31,7 @@ module ibex_ex_block #(
     input  ibex_pkg::md_op_e      multdiv_operator_i,
     input  logic                  mult_en_i,
     input  logic                  div_en_i,
+    input  logic                  multdiv_sel_i,
     input  logic  [1:0]           multdiv_signed_mode_i,
     input  logic [31:0]           multdiv_operand_a_i,
     input  logic [31:0]           multdiv_operand_b_i,
@@ -51,7 +52,7 @@ module ibex_ex_block #(
   logic [32:0] multdiv_alu_operand_b, multdiv_alu_operand_a;
   logic [33:0] alu_adder_result_ext;
   logic        alu_cmp_result, alu_is_equal_result;
-  logic        multdiv_valid, multdiv_en_sel;
+  logic        multdiv_valid;
   logic        multdiv_en;
 
   /*
@@ -60,10 +61,8 @@ module ibex_ex_block #(
     from the multdiv_i module are eliminated
   */
   if (RV32M) begin : gen_multdiv_m
-    assign multdiv_en_sel = MultiplierImplementation == "fast" ? div_en_i : mult_en_i | div_en_i;
     assign multdiv_en     = mult_en_i | div_en_i;
   end else begin : gen_multdiv_no_m
-    assign multdiv_en_sel = 1'b0;
     assign multdiv_en     = 1'b0;
   end
 
@@ -101,7 +100,7 @@ module ibex_ex_block #(
       .operand_b_i         ( alu_operand_b_i           ),
       .multdiv_operand_a_i ( multdiv_alu_operand_a     ),
       .multdiv_operand_b_i ( multdiv_alu_operand_b     ),
-      .multdiv_en_i        ( multdiv_en_sel            ),
+      .multdiv_sel_i       ( multdiv_sel_i             ),
       .adder_result_o      ( alu_adder_result_ex_o     ),
       .adder_result_ext_o  ( alu_adder_result_ext      ),
       .result_o            ( alu_result                ),
