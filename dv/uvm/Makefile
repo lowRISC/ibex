@@ -23,6 +23,7 @@ ISA                 := "rv32imc"
 # Test name (default: full regression)
 TEST                := "all"
 # Seed for instruction generator and RTL simulation
+TESTLIST            := ${DV_DIR}/riscv_dv_extension/testlist.yaml
 SEED                := -1
 # Verbose logging
 VERBOSE             :=
@@ -56,7 +57,7 @@ clean:
 # Common options for all targets
 COMMON_OPTS:=--seed=${SEED} \
              --test=${TEST} \
-             --testlist=${DV_DIR}/riscv_dv_extension/testlist.yaml \
+             --testlist=${TESTLIST} \
              --iterations=${ITERATIONS}
 
 ifeq ($(VERBOSE), 1)
