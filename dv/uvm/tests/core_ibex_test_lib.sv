@@ -484,6 +484,43 @@ class core_ibex_irq_csr_test extends core_ibex_directed_test;
 
 endclass
 
+// Debug mode IRQ test
+class core_ibex_debug_irq_test extends core_ibex_directed_test;
+
+  `uvm_component_utils(core_ibex_debug_irq_test)
+  `uvm_component_new
+
+  virtual task check_stimulus();
+    bit detected_irq = 1'b0;
+    forever begin
+      // Drive core into debug mode
+      vseq.start_debug_single_seq();
+      check_next_core_status(IN_DEBUG_MODE, "Core did not enter debug mode properly", 1000);
+      check_priv_mode(PRIV_LVL_M);
+      wait_for_csr_write(CSR_DCSR, 500);
+      check_dcsr_prv(operating_mode);
+      check_dcsr_cause(DBG_CAUSE_HALTREQ);
+      clk_vif.wait_clks($urandom_range(50, 100));
+      // Raise interrupts while the core is in debug mode
+      vseq.start_irq_raise_seq();
+      fork
+        begin : wait_irq
+          wait_for_core_status(HANDLING_IRQ);
+          `uvm_fatal(`gfn, "Core is handling interrupt detected in debug mode")
+        end
+        begin
+          clk_vif.wait_clks(500);
+          disable wait_irq;
+        end
+      join
+      vseq.start_irq_drop_seq();
+      wait_ret("dret", 5000);
+      clk_vif.wait_clks($urandom_range(250, 500));
+    end
+  endtask
+
+endclass
+
 // Debug WFI test class
 class core_ibex_debug_wfi_test extends core_ibex_directed_test;
 
