@@ -47,9 +47,12 @@ Read the description for more information.
 |                       |                                      | takes to receive a response the longer loads and stores     |
 |                       |                                      | will stall.                                                 |
 +-----------------------+--------------------------------------+-------------------------------------------------------------+
-| Multiplication        | 2/3 (Fast Multiplier)                | Fast: 2 for MUL, 3 for MULH.                                |
-|                       |                                      | Slow: clog2(``op_b``) for MUL, 32 for MULH.                 |
-|                       | clog2(``op_b``)/32 (Slow Multiplier) | See details in :ref:`mult-div`                              |
+| Multiplication        | 0/1 (Single-Cycle Multiplier)        | 0 for MUL, 1 for MULH.                                      |
+|                       |                                      |                                                             |
+|                       | 2/3 (Fast Multi-Cycle Multiplier)    | 2 for MUL, 3 for MULH.                                      |
+|                       |                                      |                                                             |
+|                       | clog2(``op_b``)/32 (Slow Multi-Cycle | clog2(``op_b``) for MUL, 32 for MULH.                       |
+|                       | Multiplier)                          | See details in :ref:`mult-div`.                             |
 +-----------------------+--------------------------------------+-------------------------------------------------------------+
 | Division              | 1 or 37                              | 1 stall cycle if divide by 0, otherwise full long division. |
 |                       |                                      | See details in :ref:`mult-div`                              |
