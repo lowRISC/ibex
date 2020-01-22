@@ -21,8 +21,9 @@ First the software must be built. Go into `examples/sw/led` and call:
 make CC=/path/to/RISC-V-compiler
 ```
 
+The setting of `CC` is only required if `riscv32-unknown-elf-gcc` is not available through the `PATH` environment variable.
 The path to the RV32 compiler `/path/to/RISC-V-compiler` depends on the environment.
-For example, it can be `riscv32-unknown-elf-gcc` if the binary is available through the `PATH` environment or `/opt/riscv/bin/riscv-none-embed-gcc` if a specific path is used.
+For example, it can be for example `/opt/riscv/bin/riscv-none-embed-gcc` if the whole path is required or simply the name of the executable if it is available through the `PATH` environment variable.
 
 This should produce a `led.vmem` file which is used in the synthesises to update the SRAM storage.
 
