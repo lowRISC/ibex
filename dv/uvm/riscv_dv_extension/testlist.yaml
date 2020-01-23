@@ -343,6 +343,26 @@
   compare_opts:
     compare_final_value_only: 1
 
+- test: riscv_nested_interrupt_test
+  description: >
+    Assert interrupt, and then assert another interrupt during the first irq_handler routine
+  iterations: 10
+  gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +instr_cnt=10000
+    +require_signature_addr=1
+    +enable_interrupt=1
+    +enable_nested_interrupt=1
+    +randomize_csr=1
+    +no_csr_instr=1
+  rtl_test: core_ibex_nested_irq_test
+  sim_opts: >
+    +require_signature_addr=1
+    +enable_irq_multiple_seq=1
+    +enable_nested_irq=1
+  compare_opts:
+    compare_final_value_only: 1
+
 - test: riscv_interrupt_wfi_test
   description: >
     Inject interrupts after a encountering wfi instructions.
