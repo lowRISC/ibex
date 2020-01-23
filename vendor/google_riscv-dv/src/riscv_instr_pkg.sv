@@ -90,7 +90,9 @@ package riscv_instr_pkg;
     RV32V,
     RV32B,
     RV64V,
-    RV64B
+    RV64B,
+    RV32X,
+    RV64X
   } riscv_instr_group_t;
 
   typedef enum {
@@ -491,6 +493,8 @@ package riscv_instr_pkg;
     SRET,
     WFI,
     SFENCE_VMA,
+    // Custom instructions
+    `include "isa/custom/riscv_custom_instr_enum.sv"
     // You can add other instructions here
     INVALID_INSTR
   } riscv_instr_name_t;
@@ -1106,6 +1110,9 @@ package riscv_instr_pkg;
     `include "isa/rv64m_instr.sv"
     `include "isa/rv128c_instr.sv"
     `include "isa/rv32v_instr.sv"
+    `include "isa/custom/riscv_custom_instr.sv"
+    `include "isa/custom/rv32x_instr.sv"
+    `include "isa/custom/rv64x_instr.sv"
   `endif
 
   `include "riscv_pseudo_instr.sv"
