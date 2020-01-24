@@ -188,7 +188,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
           end
           begin
             if (cfg.enable_debug_seq) begin
-              send_debug_stimulus();
+              stress_debug();
             end
           end
         join_none
@@ -323,7 +323,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
   // Basic debug stimulus check for Ibex for debug stimulus stress tests: check that Ibex enters
   // debug mode properly after stimulus is sent and then check that a dret is encountered signifying
   // the end of debug mode.
-  virtual task send_debug_stimulus();
+  virtual task stress_debug();
     fork
       begin
         vseq.start_debug_stress_seq();
@@ -398,7 +398,7 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
             end
             begin
               if (cfg.enable_debug_seq) begin
-                send_debug_stimulus();
+                stress_debug();
               end
             end
           join_none
@@ -432,6 +432,17 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
   //------------------------------------------------------
   // Checker functions/tasks that might be commonly used
   //------------------------------------------------------
+
+  // Send a single debug request and perform all relevant checks
+  virtual task send_debug_stimulus(priv_lvl_e mode, string debug_status_err_msg);
+    vseq.start_debug_single_seq();
+    check_next_core_status(IN_DEBUG_MODE, debug_status_err_msg, 1000);
+    check_priv_mode(PRIV_LVL_M);
+    wait_for_csr_write(CSR_DCSR, 500);
+    check_dcsr_prv(mode);
+    check_dcsr_cause(DBG_CAUSE_HALTREQ);
+    wait_ret("dret", 5000);
+  endtask
 
   // Illegal instruction checker
   virtual task check_illegal_insn(string exception_msg);
@@ -510,10 +521,10 @@ class core_ibex_irq_csr_test extends core_ibex_directed_test;
 
 endclass
 
-// Debug mode IRQ test
-class core_ibex_debug_irq_test extends core_ibex_directed_test;
+// Tests irqs asserted in debug mode
+class core_ibex_irq_in_debug_test extends core_ibex_directed_test;
 
-  `uvm_component_utils(core_ibex_debug_irq_test)
+  `uvm_component_utils(core_ibex_irq_in_debug_test)
   `uvm_component_new
 
   virtual task check_stimulus();
@@ -541,6 +552,37 @@ class core_ibex_debug_irq_test extends core_ibex_directed_test;
       join
       vseq.start_irq_drop_seq();
       wait_ret("dret", 5000);
+      clk_vif.wait_clks($urandom_range(250, 500));
+    end
+  endtask
+
+endclass
+
+// Tests debug mode asserted during irq handler
+class core_ibex_debug_in_irq_test extends core_ibex_directed_test;
+
+  `uvm_component_utils(core_ibex_debug_in_irq_test)
+  `uvm_component_new
+
+  virtual task check_stimulus();
+    // send first part of irq/checking routine
+    // then assert basic debug stimulus
+    // check that core enters and exits debug mode correctly
+    // then finish interrupt handling routine
+    bit valid_irq;
+    forever begin
+      send_irq_stimulus_start(1'b0, valid_irq);
+      if (valid_irq) begin
+        fork
+          begin
+            send_debug_stimulus(operating_mode, "Core did not enter debug mode from interrupt handler");
+          end
+          begin
+            wait(dut_vif.dret == 1'b1);
+            send_irq_stimulus_end();
+          end
+        join
+      end
       clk_vif.wait_clks($urandom_range(250, 500));
     end
   endtask
@@ -588,20 +630,7 @@ class core_ibex_debug_wfi_test extends core_ibex_directed_test;
       wait (dut_vif.wfi === 1'b1);
       wait (dut_vif.core_sleep === 1'b1);
       clk_vif.wait_clks($urandom_range(100));
-      vseq.start_debug_single_seq();
-      // After assserting this signal, core should wake up and jump into debug mode from WFI state
-      // - next handshake should be a notification that the core is now in debug mode
-      check_next_core_status(IN_DEBUG_MODE, "Core did not jump into debug mode from WFI state",
-                             1000);
-      check_priv_mode(PRIV_LVL_M);
-      // We don't want to trigger debug stimulus for any WFI instructions encountered inside the
-      // debug rom - those should act as NOP instructions - so we wait until hitting the end of the
-      // debug rom.
-      // We also want to check that dcsr.cause has been set correctly
-      wait_for_csr_write(CSR_DCSR, 500);
-      check_dcsr_prv(init_operating_mode);
-      check_dcsr_cause(DBG_CAUSE_HALTREQ);
-      wait_ret("dret", 5000);
+      send_debug_stimulus(init_operating_mode, "Core did not jump into debug mode from WFI state");
     end
   endtask
 
@@ -618,25 +647,11 @@ class core_ibex_debug_csr_test extends core_ibex_directed_test;
     // wait for a dummy write to mstatus in init code
     wait(csr_vif.csr_access === 1'b1 && csr_vif.csr_addr === CSR_MSTATUS &&
          csr_vif.csr_op != CSR_OP_READ);
-    vseq.start_debug_single_seq();
-    check_next_core_status(IN_DEBUG_MODE, "Core did not jump into debug mode from WFI state",
-                           1000);
-    check_priv_mode(PRIV_LVL_M);
-    wait_for_csr_write(CSR_DCSR, 500);
-    check_dcsr_prv(init_operating_mode);
-    check_dcsr_cause(DBG_CAUSE_HALTREQ);
-    wait_ret("dret", 5000);
+    send_debug_stimulus(init_operating_mode, "Core did not trap to debug mode upon debug stimulus");
     // wait for a dummy write to mie in the init code
     wait(csr_vif.csr_access === 1'b1 && csr_vif.csr_addr === CSR_MIE &&
          csr_vif.csr_op != CSR_OP_READ);
-    vseq.start_debug_single_seq();
-    check_next_core_status(IN_DEBUG_MODE, "Core did not jump into debug mode from WFI state",
-                           1000);
-    check_priv_mode(PRIV_LVL_M);
-    wait_for_csr_write(CSR_DCSR, 500);
-    check_dcsr_prv(init_operating_mode);
-    check_dcsr_cause(DBG_CAUSE_HALTREQ);
-    wait_ret("dret", 5000);
+    send_debug_stimulus(init_operating_mode, "Core did not trap to debug mode upon debug stimulus");
   endtask
 
 endclass
