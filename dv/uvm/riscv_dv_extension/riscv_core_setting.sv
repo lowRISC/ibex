@@ -50,6 +50,9 @@ mtvec_mode_t supported_interrupt_mode[$] = {VECTORED};
 // supported
 int max_interrupt_vector_num = 32;
 
+// Physical memory protection support
+bit support_pmp = 1;
+
 // Debug mode support
 bit support_debug_mode = 1;
 
