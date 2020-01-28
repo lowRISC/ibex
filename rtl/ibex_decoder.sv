@@ -14,6 +14,9 @@
  * This module is fully combinatorial, clock and reset are used for
  * assertions only.
  */
+
+`include "prim_assert.sv"
+
 module ibex_decoder #(
     parameter bit RV32E = 0,
     parameter bit RV32M = 1

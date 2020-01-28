@@ -6,6 +6,9 @@
 /**
  * Main controller of the processor
  */
+
+`include "prim_assert.sv"
+
 module ibex_controller (
     input  logic                  clk_i,
     input  logic                  rst_ni,
