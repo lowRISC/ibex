@@ -121,8 +121,7 @@ endclass
 
 // Simple debug sequence
 // debug_req is just a single bit sideband signal, use the interface to drive it directly
-class debug_seq extends core_base_seq;
-
+class debug_seq extends core_base_seq#(irq_seq_item);
   virtual core_ibex_dut_probe_if dut_vif;
 
   `uvm_object_utils(debug_seq)
