@@ -13,6 +13,9 @@
  * Decode stage of the core. It decodes the instructions and hosts the register
  * file.
  */
+
+`include "prim_assert.sv"
+
 module ibex_id_stage #(
     parameter bit RV32E = 0,
     parameter bit RV32M = 1

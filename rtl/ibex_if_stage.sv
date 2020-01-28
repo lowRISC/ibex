@@ -9,6 +9,9 @@
  * Instruction fetch unit: Selection of the next PC, and buffering (sampling) of
  * the read instruction.
  */
+
+`include "prim_assert.sv"
+
 module ibex_if_stage #(
     parameter int unsigned DmHaltAddr      = 32'h1A110800,
     parameter int unsigned DmExceptionAddr = 32'h1A110808

@@ -9,6 +9,9 @@
  * Control and Status Registers (CSRs) following the RISC-V Privileged
  * Specification, draft version 1.11
  */
+
+`include "prim_assert.sv"
+
 module ibex_cs_registers #(
     parameter bit          DbgTriggerEn     = 0,
     parameter int unsigned MHPMCounterNum   = 8,
