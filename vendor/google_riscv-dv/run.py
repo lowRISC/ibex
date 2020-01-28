@@ -133,6 +133,7 @@ def get_iss_cmd(base_cmd, elf, log):
   cmd += (" &> %s" % log)
   return cmd
 
+
 def do_compile(compile_cmd, test_list, core_setting_dir, cwd, ext_dir,
                cmp_opts, output_dir, debug_cmd):
   """Compile the instruction generator
@@ -162,6 +163,7 @@ def do_compile(compile_cmd, test_list, core_setting_dir, cwd, ext_dir,
       logging.debug("Compile command: %s" % cmd)
       run_cmd(cmd, debug_cmd = debug_cmd)
 
+
 def run_csr_test(cmd_list, cwd, csr_file, isa, iterations, lsf_cmd,
                  end_signature_addr, timeout_s, output_dir, debug_cmd):
   """Run CSR test
@@ -178,6 +180,7 @@ def run_csr_test(cmd_list, cwd, csr_file, isa, iterations, lsf_cmd,
     cmd_list.append(cmd)
   else:
     run_cmd(cmd, timeout_s, debug_cmd = debug_cmd)
+
 
 def do_simulate(sim_cmd, test_list, cwd, sim_opts, seed_yaml, seed, csr_file,
                 isa, end_signature_addr, lsf_cmd, timeout_s, log_suffix,
@@ -411,6 +414,7 @@ def run_assembly(asm_test, iss_yaml, isa, mabi, gcc_opts, iss_opts, output_dir,
   if len(iss_list) == 2:
     compare_iss_log(iss_list, log_list, report)
 
+
 def run_assembly_from_dir(asm_test_dir, iss_yaml, isa, mabi, gcc_opts, iss,
                           output_dir, setting_dir, debug_cmd):
   """Run a directed assembly test from a directory with spike
@@ -439,6 +443,7 @@ def run_assembly_from_dir(asm_test_dir, iss_yaml, isa, mabi, gcc_opts, iss,
         save_regr_report(report)
   else:
     logging.error("No assembly test(*.S) found under %s" % asm_test_dir)
+
 
 def run_c(c_test, iss_yaml, isa, mabi, gcc_opts, iss_opts, output_dir,
           setting_dir, debug_cmd):
@@ -498,9 +503,10 @@ def run_c(c_test, iss_yaml, isa, mabi, gcc_opts, iss_opts, output_dir,
   if len(iss_list) == 2:
     compare_iss_log(iss_list, log_list, report)
 
+
 def run_c_from_dir(c_test_dir, iss_yaml, isa, mabi, gcc_opts, iss,
                    output_dir, setting_dir, debug_cmd):
-  """Run a directed assembly test from a directory with spike
+  """Run a directed c test from a directory with spike
 
   Args:
     c_test_dir      : C test file directory
@@ -526,6 +532,7 @@ def run_c_from_dir(c_test_dir, iss_yaml, isa, mabi, gcc_opts, iss,
         save_regr_report(report)
   else:
     logging.error("No c test(*.c) found under %s" % c_test_dir)
+
 
 def iss_sim(test_list, output_dir, iss_list, iss_yaml, isa,
             setting_dir, timeout_s, debug_cmd):
@@ -592,6 +599,7 @@ def iss_cmp(test_list, iss, output_dir, stop_on_first_error, exp, debug_cmd):
         log_list.append("%s/%s_sim/%s.%d.log" % (output_dir, iss, test['test'], i))
       compare_iss_log(iss_list, log_list, report, stop_on_first_error, exp)
   save_regr_report(report)
+
 
 def compare_iss_log(iss_list, log_list, report, stop_on_first_error=0, exp=False):
   if (len(iss_list) != 2 or len(log_list) != 2) :
@@ -716,6 +724,7 @@ def setup_parser():
                       help="Generate debug command log file")
   return parser
 
+
 def load_config(args, cwd):
   """
   Load configuration from the command line and the configuration file.
@@ -777,6 +786,7 @@ def load_config(args, cwd):
   cfg = vars(args)
   return cfg
 
+
 def main():
   """This is the main entry point."""
   try:
@@ -832,27 +842,38 @@ def main():
     # Process regression test list
     matched_list = []
     # Any tests in the YAML test list that specify a directed assembly test
-    directed_list = []
+    asm_directed_list = []
+    # Any tests in the YAML test list that specify a directed c test
+    c_directed_list = []
 
     if not args.co:
       process_regression_list(args.testlist, args.test, args.iterations, matched_list, cwd)
       for t in list(matched_list):
+        # Check mutual exclusive between gen_test, asm_tests, and c_tests
         if 'asm_tests' in t:
-          if 'gen_test' in t:
-            logging.error('asm_test must not be defined in the testlist '
-                          'together with the gen_test field')
+          if 'gen_test' in t or 'c_tests' in t:
+            logging.error('asm_tests must not be defined in the testlist '
+                          'together with the gen_test or c_tests field')
             sys.exit(RET_FATAL)
-          directed_list.append(t)
+          asm_directed_list.append(t)
           matched_list.remove(t)
 
-      if len(matched_list) == 0 and len(directed_list) == 0:
+        if 'c_tests' in t:
+          if 'gen_test' in t or 'asm_tests' in t:
+            logging.error('c_tests must not be defined in the testlist '
+                          'together with the gen_test or asm_tests field')
+            sys.exit(RET_FATAL)
+          c_directed_list.append(t)
+          matched_list.remove(t)
+
+      if len(matched_list) == 0 and len(asm_directed_list) == 0 and len(c_directed_list) == 0:
         sys.exit("Cannot find %s in %s" % (args.test, args.testlist))
 
     # Run instruction generator
     if args.steps == "all" or re.match(".*gen.*", args.steps):
       # Run any handcoded/directed assembly tests specified in YAML format
-      if len(directed_list) != 0:
-        for test_entry in directed_list:
+      if len(asm_directed_list) != 0:
+        for test_entry in asm_directed_list:
           gcc_opts = args.gcc_opts
           gcc_opts += test_entry.get('gcc_opts', '')
           path_asm_test = os.path.expanduser(test_entry.get('asm_tests'))
@@ -870,6 +891,28 @@ def main():
               if not args.debug:
                 logging.error('%s does not exist' % path_asm_test)
                 sys.exit(RET_FAIL)
+
+      # Run any handcoded/directed C tests specified in YAML format
+      if len(c_directed_list) != 0:
+        for test_entry in c_directed_list:
+          gcc_opts = args.gcc_opts
+          gcc_opts += test_entry.get('gcc_opts', '')
+          path_c_test = os.path.expanduser(test_entry.get('c_tests'))
+          if path_c_test:
+            # path_c_test is a directory
+            if os.path.isdir(path_c_test):
+              run_c_from_dir(path_c_test, args.iss_yaml, args.isa, args.mabi,
+                             gcc_opts, args.iss, output_dir,
+                             args.core_setting_dir, args.debug)
+            # path_c_test is a C file
+            elif os.path.isfile(path_c_test):
+              run_c(path_c_test, args.iss_yaml, args.isa, args.mabi, gcc_opts,
+                    args.iss, output_dir, args.core_setting_dir, args.debug)
+            else:
+              if not args.debug:
+                logging.error('%s does not exist' % path_c_test)
+                sys.exit(RET_FAIL)
+
       # Run remaining tests using the instruction generator
       gen(matched_list, cfg, output_dir, cwd)
 
