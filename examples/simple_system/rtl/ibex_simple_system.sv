@@ -24,8 +24,7 @@ module ibex_simple_system (
   logic clk_sys = 1'b0, rst_sys_n;
 
   typedef enum {
-    CoreD,
-    CoreI
+    CoreD
   } bus_host_e;
 
   typedef enum {
@@ -35,7 +34,7 @@ module ibex_simple_system (
   } bus_device_e;
 
   localparam NrDevices = 3;
-  localparam NrHosts = 2;
+  localparam NrHosts = 1;
 
   // interrupts
   logic timer_irq;
@@ -71,6 +70,16 @@ module ibex_simple_system (
   assign cfg_device_addr_base[Timer] = 32'h30000;
   assign cfg_device_addr_mask[Timer] = ~32'h3FF; // 1 kB
 
+  // Instruction fetch signals
+  logic instr_req;
+  logic instr_gnt;
+  logic instr_rvalid;
+  logic [31:0] instr_addr;
+  logic [31:0] instr_rdata;
+  logic instr_err;
+
+  assign instr_gnt = instr_req;
+  assign instr_err = '0;
 
   `ifdef VERILATOR
     assign clk_sys = IO_CLK;
@@ -123,10 +132,6 @@ module ibex_simple_system (
     .cfg_device_addr_mask
   );
 
-  assign host_we[CoreI]    = 1'b0;
-  assign host_be[CoreI]    = 4'b1111;
-  assign host_wdata[CoreI] = 32'b0;
-
   ibex_core_tracing #(
       .MHPMCounterNum(29),
       .DmHaltAddr(32'h00100000),
@@ -143,12 +148,12 @@ module ibex_simple_system (
       // First instruction executed is at 0x0 + 0x80
       .boot_addr_i           (32'h00100000),
 
-      .instr_req_o           (host_req[CoreI]),
-      .instr_gnt_i           (host_gnt[CoreI]),
-      .instr_rvalid_i        (host_rvalid[CoreI]),
-      .instr_addr_o          (host_addr[CoreI]),
-      .instr_rdata_i         (host_rdata[CoreI]),
-      .instr_err_i           (host_err[CoreI]),
+      .instr_req_o           (instr_req),
+      .instr_gnt_i           (instr_gnt),
+      .instr_rvalid_i        (instr_rvalid),
+      .instr_addr_o          (instr_addr),
+      .instr_rdata_i         (instr_rdata),
+      .instr_err_i           (instr_err),
 
       .data_req_o            (host_req[CoreD]),
       .data_gnt_i            (host_gnt[CoreD]),
@@ -173,18 +178,27 @@ module ibex_simple_system (
     );
 
   // SRAM block for instruction and data storage
-  ram_1p #(
+  ram_2p #(
       .Depth(1024*1024/4)
     ) u_ram (
-      .clk_i     (clk_sys),
-      .rst_ni    (rst_sys_n),
-      .req_i     (device_req[Ram]),
-      .we_i      (device_we[Ram]),
-      .be_i      (device_be[Ram]),
-      .addr_i    (device_addr[Ram]),
-      .wdata_i   (device_wdata[Ram]),
-      .rvalid_o  (device_rvalid[Ram]),
-      .rdata_o   (device_rdata[Ram])
+      .clk_i       (clk_sys),
+      .rst_ni      (rst_sys_n),
+
+      .a_req_i     (device_req[Ram]),
+      .a_we_i      (device_we[Ram]),
+      .a_be_i      (device_be[Ram]),
+      .a_addr_i    (device_addr[Ram]),
+      .a_wdata_i   (device_wdata[Ram]),
+      .a_rvalid_o  (device_rvalid[Ram]),
+      .a_rdata_o   (device_rdata[Ram]),
+
+      .b_req_i     (instr_req),
+      .b_we_i      (1'b0),
+      .b_be_i      (4'b0),
+      .b_addr_i    (instr_addr),
+      .b_wdata_i   (32'b0),
+      .b_rvalid_o  (instr_rvalid),
+      .b_rdata_o   (instr_rdata)
     );
 
   simulator_ctrl #(
