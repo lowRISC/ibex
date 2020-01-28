@@ -19,10 +19,6 @@ lint_off -msg DECLFILENAME -file "*/rtl/ibex_register_file_ff.sv"
 lint_off -msg DECLFILENAME -file "*/rtl/ibex_register_file_latch.sv"
 lint_off -msg DECLFILENAME -file "*/rtl/ibex_register_file_fpga.sv"
 
-// Bits of signal are not used: boot_addr_i[7:0]
-// Boot address is 256B aligned, cleaner to pass all bits in
-lint_off -msg UNUSED -file "*/rtl/ibex_if_stage.sv" -lines 40
-
 // Bits of signal are not used: fetch_addr_n[0]
 // cleaner to write all bits even if not all are used
 lint_off -msg UNUSED -file "*/rtl/ibex_if_stage.sv" -lines 83
@@ -50,13 +46,11 @@ lint_off -msg UNUSED -file "*/rtl/ibex_register_file_fpga.sv" -lines 22
 
 // Signal is not used: clk_i
 // leaving clk and reset connected in-case we want to add assertions
-lint_off -msg UNUSED -file "*/rtl/ibex_pmp.sv" -lines 15
 lint_off -msg UNUSED -file "*/rtl/ibex_compressed_decoder.sv" -lines 17
 lint_off -msg UNUSED -file "*/rtl/ibex_decoder.sv" -lines 24
 
 // Signal is not used: rst_ni
 // leaving clk and reset connected in-case we want to add assertions
-lint_off -msg UNUSED -file "*/rtl/ibex_pmp.sv" -lines 19
 lint_off -msg UNUSED -file "*/rtl/ibex_compressed_decoder.sv" -lines 18
 lint_off -msg UNUSED -file "*/rtl/ibex_decoder.sv" -lines 25
 lint_off -msg UNUSED -file "*/rtl/ibex_register_file_fpga.sv" -lines 20
