@@ -7,6 +7,7 @@
 +define+BOOT_ADDR=2147483648 // 32'h8000_0000
 +define+TRACE_EXECUTION
 +define+RVFI
++incdir+${PRJ_DIR}/ibex/shared/rtl
 
 ${PRJ_DIR}/ibex/shared/rtl/prim_clock_gating.sv
 

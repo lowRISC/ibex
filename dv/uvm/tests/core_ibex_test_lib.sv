@@ -84,53 +84,37 @@ class core_ibex_perf_test extends core_ibex_base_test;
     num_instr_ret[31:0] = signature_data;
     wait_for_csr_write(CSR_MINSTRETH);
     num_instr_ret[63:32] = signature_data;
-    // mhpmcounter3
-    wait_for_csr_write(12'hB03);
+    wait_for_csr_write(CSR_MHPMCOUNTER3);
     num_cycles_lsu[31:0] = signature_data;
-    // mhpmcounter4
-    wait_for_csr_write(12'hB04);
+    wait_for_csr_write(CSR_MHPMCOUNTER4);
     num_cycles_if[31:0] = signature_data;
-    // mhpmcounter5
-    wait_for_csr_write(12'hB05);
+    wait_for_csr_write(CSR_MHPMCOUNTER5);
     num_loads[31:0] = signature_data;
-    // mhpmcounter6
-    wait_for_csr_write(12'hB06);
+    wait_for_csr_write(CSR_MHPMCOUNTER6);
     num_stores[31:0] = signature_data;
-    // mhpmcounter7
-    wait_for_csr_write(12'hB07);
+    wait_for_csr_write(CSR_MHPMCOUNTER7);
     num_jumps[31:0] = signature_data;
-    // mhpmcounter8
-    wait_for_csr_write(12'hB08);
+    wait_for_csr_write(CSR_MHPMCOUNTER8);
     num_branches[31:0] = signature_data;
-    // mhpmcounter9
-    wait_for_csr_write(12'hB09);
+    wait_for_csr_write(CSR_MHPMCOUNTER9);
     num_branches_taken[31:0] = signature_data;
-    // mhpmcounter10
-    wait_for_csr_write(12'hB0A);
+    wait_for_csr_write(CSR_MHPMCOUNTER10);
     num_instr_ret_c[31:0] = signature_data;
-    // mhpmcounterh3
-    wait_for_csr_write(12'hB83);
+    wait_for_csr_write(CSR_MHPMCOUNTER3H);
     num_cycles_lsu[63:32] = signature_data;
-    // mhpmcounterh4
-    wait_for_csr_write(12'hB84);
+    wait_for_csr_write(CSR_MHPMCOUNTER4H);
     num_cycles_if[63:32] = signature_data;
-    // mhpmcounterh5
-    wait_for_csr_write(12'hB85);
+    wait_for_csr_write(CSR_MHPMCOUNTER5H);
     num_loads[63:32] = signature_data;
-    // mhpmcounterh6
-    wait_for_csr_write(12'hB86);
+    wait_for_csr_write(CSR_MHPMCOUNTER6H);
     num_stores[63:32] = signature_data;
-    // mhpmcounterh7
-    wait_for_csr_write(12'hB87);
+    wait_for_csr_write(CSR_MHPMCOUNTER7H);
     num_jumps[63:32] = signature_data;
-    // mhpmcounterh8
-    wait_for_csr_write(12'hB88);
+    wait_for_csr_write(CSR_MHPMCOUNTER8H);
     num_branches[63:32] = signature_data;
-    // mhpmcounterh9
-    wait_for_csr_write(12'hB89);
+    wait_for_csr_write(CSR_MHPMCOUNTER9H);
     num_branches_taken[63:32] = signature_data;
-    // mhpmcounterh10
-    wait_for_csr_write(12'hB8A);
+    wait_for_csr_write(CSR_MHPMCOUNTER10H);
     num_instr_ret_c[63:32] = signature_data;
     `uvm_info(`gfn, $sformatf("NUM_CYCLES: 0x%0x", num_cycles), UVM_LOW)
     `uvm_info(`gfn, $sformatf("NUM_INSTR_RET: 0x%0x", num_instr_ret), UVM_LOW)
@@ -205,7 +189,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
     wait_for_csr_write(CSR_MSTATUS, 1000);
     core_init_mstatus = signature_data;
     // capture the initial privilege mode ibex will boot into
-    init_operating_mode = core_init_mstatus[12:11];
+    init_operating_mode = priv_lvl_e'(core_init_mstatus[12:11]);
     wait_for_csr_write(CSR_MIE, 500);
     core_init_mie = signature_data;
     check_next_core_status(INITIALIZED, "Core initialization handshake failure", 500);
