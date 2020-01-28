@@ -78,7 +78,6 @@ module ibex_simple_system (
   `else
     initial begin
       rst_sys_n = 1'b0;
-      device_err = '{default:1'b0};
       #8
       rst_sys_n = 1'b1;
     end
@@ -87,6 +86,10 @@ module ibex_simple_system (
       #1 clk_sys = 1'b1;
     end
   `endif
+
+  // Tie-off unused error signals
+  assign device_err[Ram] = 1'b0;
+  assign device_err[SimCtrl] = 1'b0;
 
   bus #(
     .NrDevices   (NrDevices),
