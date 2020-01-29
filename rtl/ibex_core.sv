@@ -184,10 +184,7 @@ module ibex_core #(
   // Interrupts
   logic        irq_pending;
   logic        nmi_mode;
-  logic        csr_msip;
-  logic        csr_mtip;
-  logic        csr_meip;
-  logic [14:0] csr_mfip;
+  irqs_t       irqs;
   logic        csr_mstatus_mie;
   logic [31:0] csr_mepc, csr_depc;
 
@@ -450,11 +447,8 @@ module ibex_core #(
 
       // Interrupt Signals
       .csr_mstatus_mie_i            ( csr_mstatus_mie        ),
-      .csr_msip_i                   ( csr_msip               ),
-      .csr_mtip_i                   ( csr_mtip               ),
-      .csr_meip_i                   ( csr_meip               ),
-      .csr_mfip_i                   ( csr_mfip               ),
       .irq_pending_i                ( irq_pending            ),
+      .irqs_i                       ( irqs                   ),
       .irq_nm_i                     ( irq_nm_i               ),
       .nmi_mode_o                   ( nmi_mode               ),
 
@@ -626,12 +620,9 @@ module ibex_core #(
       .irq_timer_i             ( irq_timer_i            ),
       .irq_external_i          ( irq_external_i         ),
       .irq_fast_i              ( irq_fast_i             ),
-      .irq_pending_o           ( irq_pending            ),
       .nmi_mode_i              ( nmi_mode               ),
-      .csr_msip_o              ( csr_msip               ),
-      .csr_mtip_o              ( csr_mtip               ),
-      .csr_meip_o              ( csr_meip               ),
-      .csr_mfip_o              ( csr_mfip               ),
+      .irq_pending_o           ( irq_pending            ),
+      .irqs_o                  ( irqs                   ),
       .csr_mstatus_mie_o       ( csr_mstatus_mie        ),
       .csr_mstatus_tw_o        ( csr_mstatus_tw         ),
       .csr_mepc_o              ( csr_mepc               ),
