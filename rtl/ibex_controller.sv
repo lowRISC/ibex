@@ -212,9 +212,12 @@ module ibex_controller (
                              priv_mode_i == PRIV_LVL_U ? debug_ebreaku_i :
                                                          1'b0;
 
-  // interrupts including NMI are ignored while in debug mode [Debug Spec v0.13.2, p.39]
-  assign handle_irq       = ~debug_mode_q &
-      ((irq_nm_i & ~nmi_mode_q) | (irq_pending_i & csr_mstatus_mie_i));
+  // Interrupts including NMI are ignored,
+  // - while in debug mode [Debug Spec v0.13.2, p.39],
+  // - while in NMI mode (nested NMIs are not supported, NMI has highest priority and
+  //   cannot be interrupted by regular interrupts).
+  assign handle_irq = ~debug_mode_q & ~nmi_mode_q &
+      (irq_nm_i | (irq_pending_i & csr_mstatus_mie_i));
 
   // generate ID of fast interrupts, highest priority to highest ID
   always_comb begin : gen_mfip_id
