@@ -101,11 +101,8 @@ module ibex_id_stage #(
 
     // Interrupt signals
     input  logic                  csr_mstatus_mie_i,
-    input  logic                  csr_msip_i,
-    input  logic                  csr_mtip_i,
-    input  logic                  csr_meip_i,
-    input  logic [14:0]           csr_mfip_i,
     input  logic                  irq_pending_i,
+    input  ibex_pkg::irqs_t       irqs_i,
     input  logic                  irq_nm_i,
     output logic                  nmi_mode_o,
 
@@ -447,11 +444,8 @@ module ibex_id_stage #(
 
       // interrupt signals
       .csr_mstatus_mie_i              ( csr_mstatus_mie_i      ),
-      .csr_msip_i                     ( csr_msip_i             ),
-      .csr_mtip_i                     ( csr_mtip_i             ),
-      .csr_meip_i                     ( csr_meip_i             ),
-      .csr_mfip_i                     ( csr_mfip_i             ),
       .irq_pending_i                  ( irq_pending_i          ),
+      .irqs_i                         ( irqs_i                 ),
       .irq_nm_i                       ( irq_nm_i               ),
       .nmi_mode_o                     ( nmi_mode_o             ),
 

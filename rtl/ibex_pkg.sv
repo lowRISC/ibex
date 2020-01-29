@@ -166,6 +166,15 @@ typedef enum logic [1:0] {
   EXC_PC_DBG_EXC // Exception while in debug mode
 } exc_pc_sel_e;
 
+// Interrupt requests
+typedef struct packed {
+  logic        irq_software;
+  logic        irq_timer;
+  logic        irq_external;
+  logic [14:0] irq_fast; // 15 fast interrupts,
+                         // one interrupt is reserved for NMI (not visible through mip/mie)
+} irqs_t;
+
 // Exception cause
 typedef enum logic [5:0] {
   EXC_CAUSE_IRQ_SOFTWARE_M     = {1'b1, 5'd03},
