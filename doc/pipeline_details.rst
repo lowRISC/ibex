@@ -77,7 +77,7 @@ Read the description for more information.
 |                       |                       | ``BranchTargetALU`` set to ``1`` a seperate ALU calculates  |
 |                       |                       | the branch target simultaneously to calculating the branch  |
 |                       |                       | condition with the main ALU so 1 less stall cycle is        |
-|                       |                       | required                                                    |
+|                       |                       | required.                                                   |
 +-----------------------+-----------------------+-------------------------------------------------------------+
 | Instruction Fence     | 1 - N                 | The FENCE.I instruction as defined in 'Zifencei' of the     |
 |                       |                       | RISC-V specification. Internally it is implemented as a     |
