@@ -567,7 +567,7 @@ module ibex_decoder #(
       ///////////
 
       OPCODE_JAL: begin // Jump and Link
-        if(BranchTargetALU) begin
+        if (BranchTargetALU) begin
           jt_mux_sel_o = JT_ALU;
         end
 
@@ -587,7 +587,7 @@ module ibex_decoder #(
       end
 
       OPCODE_JALR: begin // Jump and Link Register
-        if(BranchTargetALU) begin
+        if (BranchTargetALU) begin
           jt_mux_sel_o = JT_ALU;
         end
 
@@ -619,15 +619,16 @@ module ibex_decoder #(
         endcase
 
         if (BranchTargetALU) begin
-          // With branch target ALU main ALU evaluates branch condition and branch target ALU
-          // calculates target (which is controlled in a seperate block below)
+          // With branch target ALU the main ALU evaluates the branch condition and the branch
+          // target ALU calculates the target (which is controlled in a seperate block below)
           alu_op_a_mux_sel_o  = OP_A_REG_A;
           alu_op_b_mux_sel_o  = OP_B_REG_B;
           jt_mux_sel_o        = JT_BT_ALU;
         end else begin
-          // Without branch target ALU branch is 2 stage operation using the Main ALU in both stages
+          // Without branch target ALU, a branch is a two-stage operation using the Main ALU in both
+          // stages
           if (instr_new_i) begin
-            // First evaluates branch condition
+            // First evaluate the branch condition
             alu_op_a_mux_sel_o  = OP_A_REG_A;
             alu_op_b_mux_sel_o  = OP_B_REG_B;
           end else begin

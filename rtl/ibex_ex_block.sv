@@ -79,13 +79,13 @@ module ibex_ex_block #(
     assign jump_target_o = (jt_mux_sel_i == JT_ALU) ? alu_adder_result_ex_o : bt_alu_result[31:0];
   end else begin : g_no_branch_target_alu
     // Unused jt_mux_sel_i/bt_operand_imm_i/pc_id_i signals causes lint errors, this avoids them
-    ibex_pkg::jt_mux_sel_e jt_mux_sel_unused;
-    logic [11:0]           bt_operand_imm_unused;
-    logic [31:0]           pc_id_unused;
+    ibex_pkg::jt_mux_sel_e unused_jt_mux_sel;
+    logic [11:0]           unused_bt_operand_imm;
+    logic [31:0]           unused_pc_id;
 
-    assign jt_mux_sel_unused     = jt_mux_sel_i;
-    assign bt_operand_imm_unused = bt_operand_imm_i;
-    assign pc_id_unused          = pc_id_i;
+    assign unused_jt_mux_sel     = jt_mux_sel_i;
+    assign unused_bt_operand_imm = bt_operand_imm_i;
+    assign unused_pc_id          = pc_id_i;
 
     assign jump_target_o = alu_adder_result_ex_o;
   end

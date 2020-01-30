@@ -156,7 +156,7 @@ module ibex_id_stage #(
   logic        wfi_insn_dec;
 
   logic        branch_in_dec;
-  logic        branch_set, branch_set_n;
+  logic        branch_set, branch_set_d;
   logic        jump_in_dec;
   logic        jump_set;
 
@@ -545,7 +545,7 @@ module ibex_id_stage #(
   if (BranchTargetALU) begin : g_branch_set_direct
     // Branch set fed straight to controller with branch target ALU
     // (condition pass/fail used same cycle as generated instruction request)
-    assign branch_set = branch_set_n;
+    assign branch_set = branch_set_d;
   end else begin : g_branch_set_flopped
     // Branch set flopped without branch target ALU
     // (condition pass/fail used next cycle where branch target is calculated)
@@ -555,7 +555,7 @@ module ibex_id_stage #(
       if (!rst_ni) begin
         branch_set_q <= 1'b0;
       end else begin
-        branch_set_q <= branch_set_n;
+        branch_set_q <= branch_set_d;
       end
     end
 
@@ -584,7 +584,7 @@ module ibex_id_stage #(
     stall_multdiv           = 1'b0;
     stall_jump              = 1'b0;
     stall_branch            = 1'b0;
-    branch_set_n            = 1'b0;
+    branch_set_d            = 1'b0;
     perf_branch_o           = 1'b0;
     instr_ret_o             = 1'b0;
 
@@ -612,7 +612,7 @@ module ibex_id_stage #(
               id_wb_fsm_ns            =  branch_decision_i ? WAIT_MULTICYCLE : IDLE;
               stall_branch            =  branch_decision_i;
               instr_multicycle_done_n = ~branch_decision_i;
-              branch_set_n            =  branch_decision_i;
+              branch_set_d            =  branch_decision_i;
               perf_branch_o           =  1'b1;
               instr_ret_o             = ~branch_decision_i;
             end
