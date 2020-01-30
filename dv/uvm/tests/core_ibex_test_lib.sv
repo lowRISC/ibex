@@ -833,7 +833,7 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
     check_priv_mode(PRIV_LVL_M);
     // Next write of CORE_STATUS will be the load/store fault type
     wait_for_mem_txn(cfg.signature_addr, CORE_STATUS);
-    mem_status = signature_data_q.pop_front();
+    mem_status = core_status_t'(signature_data_q.pop_front());
     if (mem_status == LOAD_FAULT_EXCEPTION) begin
       exc_type = EXC_CAUSE_LOAD_ACCESS_FAULT;
     end else if (mem_status == STORE_FAULT_EXCEPTION) begin
