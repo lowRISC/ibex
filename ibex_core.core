@@ -104,3 +104,7 @@ targets:
         mode: lint-only
         verilator_options:
           - "-Wall"
+      veriblelint:
+        ruleset: default
+        rules:
+          - "-parameter-name-style"
