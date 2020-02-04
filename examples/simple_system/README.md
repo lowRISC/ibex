@@ -113,6 +113,18 @@ To run the simulator:
 
 Pass `-gui` to use the DVE GUI.
 
+## Simulating with Riviera-PRO
+
+To build and run Simple System run:
+
+```
+fusesoc --cores-root=. run --target=sim --tool=rivierapro lowrisc:ibex:ibex_simple_system --RV32M=1 --RV32E=0 --SRAM_INIT_FILE=<sw_vmem_file>
+```
+
+`<sw_vmem_file>` should be a path to a vmem file built as described above, use
+`./examples/sw/simple_system/hello_test/hello_test.vmem` to run the `hello_test`
+binary.
+
 ## System Memory Map
 
 | Address             | Description                                                                                            |
