@@ -91,6 +91,9 @@ class riscv_instr_gen_config extends uvm_object;
   // Vector extension setting
   rand riscv_vector_cfg  vector_cfg;
 
+  // PMP configuration settings
+  rand riscv_pmp_cfg pmp_cfg;
+
   //-----------------------------------------------------------------------------
   //  User space memory region and stack setting
   //-----------------------------------------------------------------------------
@@ -145,6 +148,8 @@ class riscv_instr_gen_config extends uvm_object;
   bit                    enable_unaligned_load_store;
   int                    illegal_instr_ratio;
   int                    hint_instr_ratio;
+  // Use SP as stack pointer
+  bit                    fix_sp;
   // Directed boot privileged mode, u, m, s
   string                 boot_mode_opts;
   int                    enable_page_table_exception;
@@ -225,7 +230,6 @@ class riscv_instr_gen_config extends uvm_object;
   int                    dist_control_mode;
   int unsigned           category_dist[riscv_instr_category_t];
 
-  uvm_cmdline_processor  inst;
 
   constraint default_c {
     sub_program_instr_cnt.size() == num_of_sub_program;
@@ -354,6 +358,9 @@ class riscv_instr_gen_config extends uvm_object;
   }
 
   constraint sp_tp_c {
+    if (fix_sp) {
+      sp == SP;
+    }
     sp != tp;
     !(sp inside {GP, RA, ZERO});
     !(tp inside {GP, RA, ZERO});
@@ -415,6 +422,7 @@ class riscv_instr_gen_config extends uvm_object;
     `uvm_field_int(no_dret, UVM_DEFAULT)
     `uvm_field_int(no_fence, UVM_DEFAULT)
     `uvm_field_int(no_wfi, UVM_DEFAULT)
+    `uvm_field_int(fix_sp, UVM_DEFAULT)
     `uvm_field_int(enable_unaligned_load_store, UVM_DEFAULT)
     `uvm_field_int(illegal_instr_ratio, UVM_DEFAULT)
     `uvm_field_int(hint_instr_ratio, UVM_DEFAULT)
@@ -468,6 +476,7 @@ class riscv_instr_gen_config extends uvm_object;
     get_bool_arg_value("+no_branch_jump=", no_branch_jump);
     get_bool_arg_value("+no_load_store=", no_load_store);
     get_bool_arg_value("+no_csr_instr=", no_csr_instr);
+    get_bool_arg_value("+fix_sp=", fix_sp);
     get_bool_arg_value("+enable_illegal_csr_instruction=", enable_illegal_csr_instruction);
     get_bool_arg_value("+enable_access_invalid_csr_level=", enable_access_invalid_csr_level);
     get_bool_arg_value("+enable_misaligned_instr=", enable_misaligned_instr);
@@ -533,6 +542,8 @@ class riscv_instr_gen_config extends uvm_object;
       disable_compressed_instr = 1;
     end
     vector_cfg = riscv_vector_cfg::type_id::create("vector_cfg");
+    pmp_cfg = riscv_pmp_cfg::type_id::create("pmp_cfg");
+    pmp_cfg.rand_mode(pmp_cfg.pmp_randomize);
     setup_instr_distribution();
     get_invalid_priv_lvl_csr();
   endfunction
@@ -657,30 +668,6 @@ class riscv_instr_gen_config extends uvm_object;
       if (csr_name[0] inside {invalid_lvl}) begin
         invalid_priv_mode_csrs.push_back(implemented_csr[i]);
       end
-    end
-  endfunction
-
-  // Get an integer argument from comand line
-  function void get_int_arg_value(string cmdline_str, ref int val);
-    string s;
-    if(inst.get_arg_value(cmdline_str, s)) begin
-      val = s.atoi();
-    end
-  endfunction
-
-  // Get a bool argument from comand line
-  function void get_bool_arg_value(string cmdline_str, ref bit val);
-    string s;
-    if(inst.get_arg_value(cmdline_str, s)) begin
-      val = s.atobin();
-    end
-  endfunction
-
-  // Get a hex argument from command line
-  function void get_hex_arg_value(string cmdline_str, ref int val);
-    string s;
-    if(inst.get_arg_value(cmdline_str, s)) begin
-      val = s.atohex();
     end
   endfunction
 

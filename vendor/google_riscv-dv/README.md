@@ -64,7 +64,11 @@ cov --help
 
 ## Document
 
-To understand how to setup and customize the generator, please check the full document under docs directory. You can use the makefile to generate the document. [HTML preview](https://htmlpreview.github.io/?https://github.com/google/riscv-dv/blob/master/docs/build/singlehtml/index.html#document-index)
+To understand how to setup and customize the generator, please check the full
+document under docs directory. You can use the makefile to generate the
+document. [HTML
+preview](https://htmlpreview.github.io/?https://github.com/google/riscv-dv/blob/master/docs/build/singlehtml/index.html#document-index).
+You can find the prebuilt document under docs/build/singlehtml/index.html
 
 ## External contributions and collaborations
 

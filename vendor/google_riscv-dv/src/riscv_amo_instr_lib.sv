@@ -85,8 +85,18 @@ class riscv_lr_sc_instr_stream extends riscv_amo_base_instr_stream;
   endfunction
 
   virtual function void gen_amo_instr();
-    lr_instr = riscv_instr::get_rand_instr(.include_instr({LR_W, LR_D}));
-    sc_instr = riscv_instr::get_rand_instr(.include_instr({SC_W, SC_D}));
+    riscv_instr_name_t allowed_lr_instr[];
+    riscv_instr_name_t allowed_sc_instr[];
+    if (RV32A inside {supported_isa}) begin
+      allowed_lr_instr = {LR_W};
+      allowed_sc_instr = {SC_W};
+    end
+    if (RV64A inside {supported_isa}) begin
+      allowed_lr_instr = {allowed_lr_instr, LR_D};
+      allowed_sc_instr = {allowed_sc_instr, SC_D};
+    end
+    lr_instr = riscv_instr::get_rand_instr(.include_instr({allowed_lr_instr}));
+    sc_instr = riscv_instr::get_rand_instr(.include_instr({allowed_sc_instr}));
     `DV_CHECK_RANDOMIZE_WITH_FATAL(lr_instr,
       rs1 == rs1_reg;
       if (reserved_rd.size() > 0) {
