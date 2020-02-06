@@ -574,3 +574,13 @@
   rtl_test: core_ibex_invalid_csr_test
   sim_opts: >
     +require_signature_addr=1
+
+- test: riscv_pmp_test
+  desc: >
+    Random PMP settings
+  iterations: 1
+  gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +instr_cnt=6000
+    +num_of_sub_program=2
+  rtl_test: core_ibex_base_test
