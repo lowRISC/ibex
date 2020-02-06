@@ -110,9 +110,38 @@ Test list in `YAML format`_
 
 .. _YAML format: https://github.com/google/riscv-dv/blob/master/yaml/base_testlist.yaml
 
-.. note:: To automatically generate CSR tests without having to explicitly run the
-    script, include `riscv_csr_test` in the testlist as shown in the example YAML
-    file above.
+You can also add directed assembly/C test in the testlist
+
+.. code-block:: yaml
+
+    - test: riscv_single_c_test
+      description: >
+         single c test entry
+      iterations: 1
+      c_test: sample_c.c
+
+    - test: riscv_c_regression_test
+      description: >
+        Run all c tests under the given directory
+      iterations: 1
+      c_test: c_test_directory
+      gcc_opts:
+         # Some custom gcc options
+
+    - test: riscv_single_asm_test
+      description: >
+         single assembly test entry
+      iterations: 1
+      asm_test: sample_asm.S
+
+    - test: riscv_asm_regression_test
+      description: >
+        Run all assembly tests under the given directory
+      iterations: 1
+      asm_test: assembly_test_directory
+      gcc_opts:
+         # Some custom gcc options
+
 
 Runtime options of the generator
 --------------------------------

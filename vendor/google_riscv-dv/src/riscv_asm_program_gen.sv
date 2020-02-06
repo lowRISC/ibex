@@ -525,6 +525,8 @@ class riscv_asm_program_gen extends uvm_object;
     end
     // Setup trap vector register
     trap_vector_init();
+    // Setup PMP CSRs
+    setup_pmp();
     // Initialize PTE (link page table based on their real physical address)
     if(cfg.virtual_addr_translation_on) begin
       page_table_list.process_page_table(instr);
@@ -590,6 +592,16 @@ class riscv_asm_program_gen extends uvm_object;
              $sformatf("j init_%0s", mode_name.tolower())
             };
     gen_section("mepc_setup", instr);
+  endfunction
+
+  // Setup PMP CSR configuration
+  virtual function void setup_pmp();
+    string instr[$];
+    if (riscv_instr_pkg::support_pmp) begin
+      cfg.pmp_cfg.setup_pmp();
+      cfg.pmp_cfg.gen_pmp_instr(instr, cfg.scratch_reg);
+      gen_section("pmp_setup", instr);
+    end
   endfunction
 
   //---------------------------------------------------------------------------------------

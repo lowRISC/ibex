@@ -26,12 +26,34 @@ package riscv_instr_pkg;
 
   `define include_file(f) `include `"f`"
 
+  uvm_cmdline_processor  inst;
+
   // Data section setting
   typedef struct {
     string         name;
     int unsigned   size_in_bytes;
     bit [2:0]      xwr; // Excutable,Writable,Readale
   } mem_region_t;
+
+  // PMP address matching mode
+  typedef enum bit [1:0] {
+    OFF   = 2'b00,
+    TOR   = 2'b01,
+    NA4   = 2'b10,
+    NAPOT = 2'b11
+  } pmp_addr_mode_t;
+
+  // PMP configuration register layout
+  // This configuration struct includes the pmp address for simplicity
+  typedef struct{
+    rand bit                   l;
+    bit [1:0]                  zero;
+    rand pmp_addr_mode_t       a;
+    rand bit                   x;
+    rand bit                   w;
+    rand bit                   r;
+    rand bit [33:0]            addr;
+  } pmp_cfg_reg_t;
 
   typedef enum bit [3:0] {
     BARE = 4'b0000,
@@ -1069,6 +1091,30 @@ package riscv_instr_pkg;
     end
   endfunction
 
+  // Get an integer argument from comand line
+  function automatic void get_int_arg_value(string cmdline_str, ref int val);
+    string s;
+    if(inst.get_arg_value(cmdline_str, s)) begin
+      val = s.atoi();
+    end
+  endfunction
+
+  // Get a bool argument from comand line
+  function automatic void get_bool_arg_value(string cmdline_str, ref bit val);
+    string s;
+    if(inst.get_arg_value(cmdline_str, s)) begin
+      val = s.atobin();
+    end
+  endfunction
+
+  // Get a hex argument from command line
+  function automatic void get_hex_arg_value(string cmdline_str, ref int val);
+    string s;
+    if(inst.get_arg_value(cmdline_str, s)) begin
+      val = s.atohex();
+    end
+  endfunction
+
   riscv_reg_t all_gpr[] = {ZERO, RA, SP, GP, TP, T0, T1, T2, S0, S1, A0,
                            A1, A2, A3, A4, A5, A6, A7, S2, S3, S4, S5, S6,
                            S7, S8, S9, S10, S11, T3, T4, T5, T6};
@@ -1081,6 +1127,7 @@ package riscv_instr_pkg;
   };
 
   `include "riscv_vector_cfg.sv"
+  `include "riscv_pmp_cfg.sv"
   typedef class riscv_instr;
   `include "riscv_instr_gen_config.sv"
   `include "isa/riscv_instr.sv"
