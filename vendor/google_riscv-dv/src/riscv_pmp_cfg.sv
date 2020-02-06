@@ -114,14 +114,14 @@ class riscv_pmp_cfg extends uvm_object;
       if (i == pmp_cfg.size() - 1) begin
         instr.push_back($sformatf("li x%0d, 0x%0x", scratch_reg, pmp_word));
         instr.push_back($sformatf("csrw 0x%0x, x%0d",
-                                  base_pmpcfg_addr + pmp_id),
+                                  base_pmpcfg_addr + pmp_id,
                                   scratch_reg));
         return;
       end else if ((i + 1) % cfg_per_csr == 0) begin
         // if we've filled up pmp_word, write to the corresponding CSR
         instr.push_back($sformatf("li x%0d, 0x%0x", scratch_reg, pmp_word));
         instr.push_back($sformatf("csrw 0x%0x, x%0d",
-                                  base_pmpcfg_addr + pmp_id),
+                                  base_pmpcfg_addr + pmp_id,
                                   scratch_reg));
         pmp_word = 0;
       end
