@@ -486,29 +486,27 @@ module ibex_load_store_unit (
   ////////////////
 
   // Selectors must be known/valid.
-  `ASSERT_KNOWN(IbexDataTypeKnown, data_type_ex_i, clk_i, !rst_ni)
-  `ASSERT_KNOWN(IbexDataOffsetKnown, data_offset, clk_i, !rst_ni)
-  `ASSERT_KNOWN(IbexRDataOffsetQKnown, rdata_offset_q, clk_i, !rst_ni)
-  `ASSERT_KNOWN(IbexDataTypeQKnown, data_type_q, clk_i, !rst_ni)
+  `ASSERT_KNOWN(IbexDataTypeKnown, data_type_ex_i)
+  `ASSERT_KNOWN(IbexDataOffsetKnown, data_offset)
+  `ASSERT_KNOWN(IbexRDataOffsetQKnown, rdata_offset_q)
+  `ASSERT_KNOWN(IbexDataTypeQKnown, data_type_q)
   `ASSERT(IbexLsuStateValid, ls_fsm_cs inside {
       IDLE, WAIT_GNT_MIS, WAIT_RVALID_MIS, WAIT_GNT, WAIT_RVALID,
-      WAIT_RVALID_DONE
-      }, clk_i, !rst_ni)
+      WAIT_RVALID_DONE})
 
   // There must not be an rvalid unless the FSM is handlling it.
   `ASSERT(IbexRvalidNotHandled, data_rvalid_i |-> (
       (ls_fsm_cs == WAIT_RVALID) ||
       (ls_fsm_cs == WAIT_RVALID_MIS) ||
-      (ls_fsm_cs == WAIT_RVALID_DONE)
-      ), clk_i, !rst_ni)
+      (ls_fsm_cs == WAIT_RVALID_DONE)))
 
   // Errors must only be sent together with rvalid.
-  `ASSERT(IbexDataErrWithoutRvalid, data_err_i |-> data_rvalid_i, clk_i, !rst_ni)
+  `ASSERT(IbexDataErrWithoutRvalid, data_err_i |-> data_rvalid_i)
 
   // Address must not contain X when request is sent.
-  `ASSERT(IbexDataAddrUnknown, data_req_o |-> !$isunknown(data_addr_o), clk_i, !rst_ni)
+  `ASSERT(IbexDataAddrUnknown, data_req_o |-> !$isunknown(data_addr_o))
 
   // Address must be word aligned when request is sent.
-  `ASSERT(IbexDataAddrUnaligned, data_req_o |-> (data_addr_o[1:0] == 2'b00), clk_i, !rst_ni)
+  `ASSERT(IbexDataAddrUnaligned, data_req_o |-> (data_addr_o[1:0] == 2'b00))
 
 endmodule

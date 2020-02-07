@@ -1025,7 +1025,7 @@ module ibex_cs_registers #(
       CSR_OP_WRITE,
       CSR_OP_SET,
       CSR_OP_CLEAR
-      }, clk_i, !rst_ni)
-  `ASSERT_KNOWN(IbexCsrWdataIntKnown, csr_wdata_int, clk_i, !rst_ni)
+      })
+  `ASSERT_KNOWN(IbexCsrWdataIntKnown, csr_wdata_int)
 
 endmodule
