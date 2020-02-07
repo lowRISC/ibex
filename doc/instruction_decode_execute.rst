@@ -82,7 +82,7 @@ Fast Multiplier
   - In some cases it may be desirable to replace this with a specific implementation (such as a hard macro in an FPGA or an explicit gate level implementation).
 
 Slow Multiplier
-  - Completes multiply in 33 cycles using a Baugh-Wooley multiplier (for both MUL and MULH).
+  - Completes multiply in clog2(``op_b``) + 1 cycles (for MUL) or 33 cycles (for MULH) using a Baugh-Wooley multiplier.
   - The ALU block is used to compute additions.
 
 Divider
