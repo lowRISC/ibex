@@ -660,7 +660,6 @@ module ibex_controller (
   // Selectors must be known/valid.
   `ASSERT(IbexCtrlStateValid, ctrl_fsm_cs inside {
       RESET, BOOT_SET, WAIT_SLEEP, SLEEP, FIRST_FETCH, DECODE, FLUSH,
-      IRQ_TAKEN, DBG_TAKEN_IF, DBG_TAKEN_ID
-      }, clk_i, !rst_ni)
+      IRQ_TAKEN, DBG_TAKEN_IF, DBG_TAKEN_ID})
 
 endmodule
