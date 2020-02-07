@@ -51,7 +51,11 @@ module ibex_load_store_unit (
     output logic         load_err_o,
     output logic         store_err_o,
 
-    output logic         busy_o
+    output logic         busy_o,
+
+    // used for assertions only
+    input  logic         illegal_insn_id_i,    // illegal instruciton -> from ID/EX
+    input  logic         instr_valid_id_i      // valid instruction   -> from ID/EX
 );
 
   logic [31:0]  data_addr;
@@ -485,9 +489,16 @@ module ibex_load_store_unit (
   // Assertions //
   ////////////////
 
+  logic unused_instr_valid_id;
+  logic unused_illegal_insn_id;
+
+  // Inputs only used for assertions
+  assign unused_instr_valid_id  = instr_valid_id_i;
+  assign unused_illegal_insn_id = illegal_insn_id_i;
+
   // Selectors must be known/valid.
-  `ASSERT_KNOWN(IbexDataTypeKnown, data_type_ex_i)
-  `ASSERT_KNOWN(IbexDataOffsetKnown, data_offset)
+  `ASSERT(IbexDataTypeKnown, (instr_valid_id_i & ~illegal_insn_id_i) |-> !$isunknown(data_type_ex_i))
+  `ASSERT(IbexDataOffsetKnown, (instr_valid_id_i & ~illegal_insn_id_i) |-> !$isunknown(data_offset))
   `ASSERT_KNOWN(IbexRDataOffsetQKnown, rdata_offset_q)
   `ASSERT_KNOWN(IbexDataTypeQKnown, data_type_q)
   `ASSERT(IbexLsuStateValid, ls_fsm_cs inside {
