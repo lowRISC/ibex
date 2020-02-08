@@ -28,9 +28,7 @@ module core_ibex_tb_top;
 
   ibex_core_tracing #(.DmHaltAddr(`BOOT_ADDR + 'h0),
                       .DmExceptionAddr(`BOOT_ADDR + 'h4),
-                      .PMPEnable(1'b1),
-                      .PMPGranularity(0),
-                      .PMPNumRegions(16)) dut (
+                      .PMPEnable(1'b1)) dut (
     .clk_i(clk),
     .rst_ni(rst_n),
     .test_en_i(1'b1),

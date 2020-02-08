@@ -8,6 +8,8 @@ TOOLCHAIN           := ${RISCV_TOOLCHAIN}
 OUT                 := "${DV_DIR}/out"
 # Run time options for the instruction generator
 GEN_OPTS            :=
+# Compile time options for ibex RTL simulation
+COMPILE_OPTS        +=
 # Run time options for ibex RTL simulation
 SIM_OPTS            :=
 # Enable waveform dumping
@@ -15,13 +17,15 @@ WAVES               := 1
 # Enable coverage dump
 COV                 := 0
 # RTL simulator
-SIMULATOR           := "vcs"
+SIMULATOR           := vcs
 # ISS (spike, ovpsim)
-ISS                 := "ovpsim"
+ISS                 := ovpsim
+# ISS runtime options
+ISS_OPTS            :=
 # ISA
-ISA                 := "rv32imc"
+ISA                 := rv32imc
 # Test name (default: full regression)
-TEST                := "all"
+TEST                := all
 # Seed for instruction generator and RTL simulation
 TESTLIST            := ${DV_DIR}/riscv_dv_extension/testlist.yaml
 SEED                := -1
@@ -38,6 +42,29 @@ TIMEOUT             := 1800
 CSR_FILE            := ${DV_DIR}/riscv_dv_extension/csr_description.yaml
 # Pass/fail signature address at the end of test
 SIGNATURE_ADDR      := 8ffffffc
+
+### Ibex top level parameters ###
+### Required by RISCV-DV, some ISS, and RTL ###
+# PMP Regions
+PMP_REGIONS         := 16
+# PMP Granularity
+PMP_GRANULARITY     := 0
+
+# TODO(udinator) - might need options for SAIL/Whisper/Spike
+ifeq (${ISS},ovpsim)
+	ISS_OPTS += --override riscvOVPsim/cpu/PMP_registers=${PMP_REGIONS}
+	ISS_OPTS += --override riscvOVPsim/cpu/PMP_grain=${PMP_GRANULARITY}
+endif
+
+# Check which simulator is being used and add correct compile options
+ifeq (${SIMULATOR},vcs)
+	COMPILE_OPTS += -pvalue+core_ibex_tb_top.dut.PMPNumRegions=${PMP_REGIONS}
+	COMPILE_OPTS += -pvalue+core_ibex_tb_top.dut.PMPGranularity=${PMP_GRANULARITY}
+else ifeq (${SIMULATOR},ius)
+	COMPILE_OPTS += -defparam core_ibex_tb_top.dut.PMPNumRegions=${PMP_REGIONS}
+	COMPILE_OPTS += -defparam core_ibex_tb_top.dut.PMPGranularity=${PMP_GRANULARITY}
+# TODO(udinator) - support dsim and riviera
+endif
 
 SHELL=/bin/bash
 
@@ -56,7 +83,7 @@ clean:
 
 # Common options for all targets
 COMMON_OPTS:=--seed=${SEED} \
-             --test=${TEST} \
+             --test"=${TEST}" \
              --testlist=${TESTLIST} \
              --iterations=${ITERATIONS}
 
@@ -66,11 +93,11 @@ endif
 
 # Options used for privileged CSR test generation
 CSR_OPTS=--csr_yaml=${CSR_FILE} \
-         --isa=${ISA} \
+         --isa="${ISA}" \
          --end_signature_addr=0x${SIGNATURE_ADDR}
 
 RISCV_DV_OPTS=--custom_target=${DV_DIR}/riscv_dv_extension \
-              --isa=${ISA} \
+              --isa="${ISA}" \
               --mabi=ilp32 \
 
 # Generate random instructions
@@ -81,12 +108,13 @@ RISCV_DV_OPTS=--custom_target=${DV_DIR}/riscv_dv_extension \
      --steps=gen \
      --gen_timeout=${TIMEOUT} \
      --lsf_cmd="${LSF_CMD}" \
-     --simulator=${SIMULATOR} \
+     --simulator="${SIMULATOR}" \
      ${RISCV_DV_OPTS} \
      ${COMMON_OPTS} \
      ${CSR_OPTS} \
      --sim_opts="+uvm_set_inst_override=riscv_asm_program_gen,ibex_asm_program_gen,"uvm_test_top.asm_gen" \
-                 +signature_addr=${SIGNATURE_ADDR}";
+                 +signature_addr=${SIGNATURE_ADDR} +pmp_num_regions=${PMP_REGIONS} \
+                 +pmp_granularity=${PMP_GRANULARITY}";
 
 # Compile the generated assmebly programs to ELF/BIN
 gcc_compile:
@@ -103,20 +131,22 @@ iss_sim:
      --o=${OUT}/instr_gen ${GEN_OPTS} \
      --steps=iss_sim \
      ${COMMON_OPTS} \
-     --iss=${ISS} \
+     --iss="${ISS}" \
+     --iss_opts="${ISS_OPTS}" \
      ${RISCV_DV_OPTS} \
 
 # Compile ibex core TB
 compile:
-	mkdir -p ${OUT}/rtl_sim
+	mkdir -p ${OUT}/rtl_sim;
 	python3 ./sim.py \
      --o=${OUT} \
      --riscv_dv_root=${GEN_DIR} \
      --steps=compile \
      ${COMMON_OPTS} \
-     --simulator=${SIMULATOR} \
+     --simulator="${SIMULATOR}" \
      --en_cov=${COV} \
      --en_wave=${WAVES} \
+     --cmp_opts="${COMPILE_OPTS}" \
 
 # Run ibex RTL simulation with random instructions
 rtl_sim:
@@ -126,7 +156,7 @@ rtl_sim:
      --riscv_dv_root=${GEN_DIR} \
      --steps=sim \
      ${COMMON_OPTS} \
-     --simulator=${SIMULATOR} \
+     --simulator="${SIMULATOR}" \
      --en_cov ${COV} \
      --en_wave ${WAVES} \
      --lsf_cmd="${LSF_CMD}" \
@@ -140,8 +170,8 @@ post_compare:
      --o=${OUT} \
      --steps=compare \
      ${COMMON_OPTS} \
-     --simulator=${SIMULATOR} \
-     --iss=${ISS}
+     --simulator="${SIMULATOR}" \
+     --iss="${ISS}"
 
 
 # Generate functional coverage
