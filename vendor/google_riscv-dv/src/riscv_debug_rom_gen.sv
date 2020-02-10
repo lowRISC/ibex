@@ -82,7 +82,7 @@ class riscv_debug_rom_gen extends riscv_asm_program_gen;
       format_section(debug_main);
       gen_sub_program(sub_program, sub_program_name,
                       cfg.num_debug_sub_program, 1'b1, "debug_sub");
-      main_program = riscv_instr_sequence::type_id::create("debug_program");
+      main_program = riscv_instr_sequence::type_id::create("main_program");
       main_program.instr_cnt = cfg.debug_program_instr_cnt;
       main_program.is_debug_program = 1;
       main_program.cfg = cfg;

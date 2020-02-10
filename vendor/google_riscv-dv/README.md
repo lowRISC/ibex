@@ -62,6 +62,17 @@ run --help
 cov --help
 ```
 
+Use below command to install Verible, which is the tool to check Verilog style
+```bash
+verilog_style/build-verible.sh
+```
+
+This is the command to run Verilog style check. It's recommended to run and clean up
+all the style violations before submit a PR
+```bash
+verilog_style/run.sh
+```
+
 ## Document
 
 To understand how to setup and customize the generator, please check the full
