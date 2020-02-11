@@ -157,3 +157,12 @@ texinfo_documents = [
      author, 'ibex', 'Ibex RV32 CPU core',
      'Miscellaneous'),
 ]
+
+# -- Tool version numbers -------------------------------------------------
+
+# Add minimum versions of required tools as variables for use inside the
+# documentation.
+exec(open(os.path.join(topsrcdir, 'tool_requirements.py')).read())
+rst_epilog = ""
+for tool_name, tool_version in __TOOL_REQUIREMENTS__.items():
+    rst_epilog += ".. |tool_requirements.{}| replace:: {}\n".format(tool_name, tool_version)
