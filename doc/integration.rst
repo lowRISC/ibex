@@ -93,7 +93,7 @@ Parameters
 | ``MultiplierImplementation`` | string      | "fast"     | Multiplicator type:                                             |
 |                              |             |            | "slow": multi-cycle slow,                                       |
 |                              |             |            | "fast": multi-cycle fast,                                       |
-|                              |             |            | "single-cycle": single-cycle                                       |
+|                              |             |            | "single-cycle": single-cycle                                    |
 +------------------------------+-------------+------------+-----------------------------------------------------------------+
 | ``DbgTriggerEn``             | bit         | 0          | Enable debug trigger support (one trigger only)                 |
 +------------------------------+-------------+------------+-----------------------------------------------------------------+
