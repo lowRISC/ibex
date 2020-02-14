@@ -37,7 +37,7 @@ lint_off -msg UNUSED -file "*/rtl/ibex_multdiv_fast.sv" -lines 43
 
 // Bits of signal are not used: res_adder_h[32]
 // cleaner to write all bits even if not all are used
-lint_off -msg UNUSED -file "*/rtl/ibex_multdiv_fast.sv" -lines 65
+lint_off -msg UNUSED -file "*/rtl/ibex_multdiv_fast.sv" -lines 69
 
 // Bits of signal are not used: mult1_res[33:32]
 // cleaner to write all bits even if not all are used
