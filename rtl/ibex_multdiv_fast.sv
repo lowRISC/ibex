@@ -46,8 +46,12 @@ module ibex_multdiv_fast #(
   logic        mult_valid;
   logic        signed_mult;
 
-  // Shared signals (div + mult)
-  logic [33:0] mac_res_q, mac_res_d, mac_res, op_remainder_d;
+  // Flop used for intermediate value holding during div & mul calculation
+  logic [33:0] intermediate_val_q, intermediate_val_d;
+  // Results that become intermediate value depending on whether mul or div is being calculated
+  logic [33:0] mac_res_d, op_remainder_d;
+  // Raw output of MAC calculation
+  logic [33:0] mac_res;
 
   // Divider signals
   logic        div_sign_a, div_sign_b;
@@ -65,6 +69,7 @@ module ibex_multdiv_fast #(
   logic [32:0] res_adder_h;
   logic        div_valid;
   logic [ 4:0] div_counter_q, div_counter_d;
+  logic        multdiv_en;
 
   typedef enum logic [2:0] {
     MD_IDLE, MD_ABS_A, MD_ABS_B, MD_COMP, MD_LAST, MD_CHANGE_SIGN, MD_FINISH
@@ -73,35 +78,34 @@ module ibex_multdiv_fast #(
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      mac_res_q        <= '0;
-      div_counter_q    <= '0;
-      md_state_q       <= MD_IDLE;
-      op_denominator_q <= '0;
-      op_numerator_q   <= '0;
-      op_quotient_q    <= '0;
-    end else begin
-
-      if (div_en_i) begin
-        div_counter_q    <= div_counter_d;
-        op_denominator_q <= op_denominator_d;
-        op_numerator_q   <= op_numerator_d;
-        op_quotient_q    <= op_quotient_d;
-        md_state_q       <= md_state_d;
-      end
-
-      unique case(1'b1)
-        mult_en_i:
-          mac_res_q <= mac_res_d;
-        div_en_i:
-          mac_res_q <= op_remainder_d;
-        default:
-          mac_res_q <= mac_res_q;
-       endcase
+      div_counter_q      <= '0;
+      md_state_q         <= MD_IDLE;
+      op_denominator_q   <= '0;
+      op_numerator_q     <= '0;
+      op_quotient_q      <= '0;
+    end else if (div_en_i) begin
+      div_counter_q    <= div_counter_d;
+      op_denominator_q <= op_denominator_d;
+      op_numerator_q   <= op_numerator_d;
+      op_quotient_q    <= op_quotient_d;
+      md_state_q       <= md_state_d;
     end
   end
 
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      intermediate_val_q <= '0;
+    end else if (multdiv_en) begin
+      intermediate_val_q <= intermediate_val_d;
+    end
+  end
+
+  assign multdiv_en = mult_en_i | div_en_i;
+
+  assign intermediate_val_d = div_en_i ? op_remainder_d : mac_res_d;
+
   assign signed_mult      = (signed_mode_i != 2'b00);
-  assign multdiv_result_o = div_en_i ? mac_res_q[31:0] : mac_res_d[31:0];
+  assign multdiv_result_o = div_en_i ? intermediate_val_q[31:0] : mac_res_d[31:0];
 
   // The single cycle multiplier uses three 17 bit multipliers to compute MUL instructions in a
   // single cycle and MULH instructions in two cycles.
@@ -147,8 +151,8 @@ module ibex_multdiv_fast #(
     assign mult2_op_b = op_b_i[`OP_H];
 
     // used in MULH
-    assign accum[17:0] = mac_res_q[33:16];
-    assign accum[33:18] = {16{signed_mult & mac_res_q[33]}};
+    assign accum[17:0] = intermediate_val_q[33:16];
+    assign accum[33:18] = {16{signed_mult & intermediate_val_q[33]}};
 
     always_comb begin
       // Default values == MULL
@@ -239,7 +243,7 @@ module ibex_multdiv_fast #(
       mult_op_b    = op_b_i[`OP_L];
       sign_a       = 1'b0;
       sign_b       = 1'b0;
-      accum        = mac_res_q;
+      accum        = intermediate_val_q;
       mac_res_d    = mac_res;
       mult_state_d = mult_state_q;
       mult_valid   = 1'b0;
@@ -263,10 +267,10 @@ module ibex_multdiv_fast #(
           mult_op_b = op_b_i[`OP_H];
           sign_a    = 1'b0;
           sign_b    = signed_mode_i[1] & op_b_i[31];
-          // result of AL*BL (in mac_res_q) always unsigned with no carry, so carries_q always 00
-          accum     = {18'b0, mac_res_q[31:16]};
+          // result of AL*BL (in intermediate_val_q) always unsigned with no carry, so carries_q always 00
+          accum     = {18'b0, intermediate_val_q[31:16]};
           if (operator_i == MD_OP_MULL) begin
-            mac_res_d = {2'b0, mac_res[`OP_L], mac_res_q[`OP_L]};
+            mac_res_d = {2'b0, mac_res[`OP_L], intermediate_val_q[`OP_L]};
           end else begin
             // MD_OP_MULH
             mac_res_d = mac_res;
@@ -281,12 +285,12 @@ module ibex_multdiv_fast #(
           sign_a    = signed_mode_i[0] & op_a_i[31];
           sign_b    = 1'b0;
           if (operator_i == MD_OP_MULL) begin
-            accum        = {18'b0, mac_res_q[31:16]};
-            mac_res_d    = {2'b0, mac_res[15:0], mac_res_q[15:0]};
+            accum        = {18'b0, intermediate_val_q[31:16]};
+            mac_res_d    = {2'b0, mac_res[15:0], intermediate_val_q[15:0]};
             mult_valid   = 1'b1;
             mult_state_d = ALBL;
           end else begin
-            accum        = mac_res_q;
+            accum        = intermediate_val_q;
             mac_res_d    = mac_res;
             mult_state_d = AHBH;
           end
@@ -299,8 +303,8 @@ module ibex_multdiv_fast #(
           mult_op_b = op_b_i[`OP_H];
           sign_a    = signed_mode_i[0] & op_a_i[31];
           sign_b    = signed_mode_i[1] & op_b_i[31];
-          accum[17: 0]  = mac_res_q[33:16];
-          accum[33:18]  = {16{signed_mult & mac_res_q[33]}};
+          accum[17: 0]  = intermediate_val_q[33:16];
+          accum[33:18]  = {16{signed_mult & intermediate_val_q[33]}};
           // result of AH*BL is not signed only if signed_mode_i == 2'b00
           mac_res_d    = mac_res;
           mult_state_d = ALBL;
@@ -330,7 +334,7 @@ module ibex_multdiv_fast #(
   // Divider
   assign res_adder_h    = alu_adder_ext_i[33:1];
 
-  assign next_remainder = is_greater_equal ? res_adder_h[31:0] : mac_res_q[31:0];
+  assign next_remainder = is_greater_equal ? res_adder_h[31:0] : intermediate_val_q[31:0];
   assign next_quotient  = is_greater_equal ? {1'b0, op_quotient_q} | {1'b0, one_shift} :
                                              {1'b0, op_quotient_q};
 
@@ -340,10 +344,10 @@ module ibex_multdiv_fast #(
   // Remainder - Divisor. If Remainder - Divisor >= 0, is_greater_equal is equal to 1,
   // the next Remainder is Remainder - Divisor contained in res_adder_h and the
   always_comb begin
-    if ((mac_res_q[31] ^ op_denominator_q[31]) == 1'b0) begin
+    if ((intermediate_val_q[31] ^ op_denominator_q[31]) == 1'b0) begin
       is_greater_equal = (res_adder_h[31] == 1'b0);
     end else begin
-      is_greater_equal = mac_res_q[31];
+      is_greater_equal = intermediate_val_q[31];
     end
   end
 
@@ -355,7 +359,7 @@ module ibex_multdiv_fast #(
 
   always_comb begin
     div_counter_d    = div_counter_q - 5'h1;
-    op_remainder_d   = mac_res_q;
+    op_remainder_d   = intermediate_val_q;
     op_quotient_d    = op_quotient_q;
     md_state_d       = md_state_q;
     op_numerator_d   = op_numerator_q;
@@ -412,13 +416,13 @@ module ibex_multdiv_fast #(
         op_quotient_d   = next_quotient[31:0];
         md_state_d      = (div_counter_q == 5'd1) ? MD_LAST : MD_COMP;
         // Division
-        alu_operand_a_o = {mac_res_q[31:0], 1'b1};         // it contains the remainder
-        alu_operand_b_o = {~op_denominator_q[31:0], 1'b1}; // -denominator two's compliment
+        alu_operand_a_o = {intermediate_val_q[31:0], 1'b1}; // it contains the remainder
+        alu_operand_b_o = {~op_denominator_q[31:0], 1'b1};  // -denominator two's compliment
       end
 
       MD_LAST: begin
         if (operator_i == MD_OP_DIV) begin
-          // this time we save the quotient in op_remainder_d (i.e. mac_res_q) since
+          // this time we save the quotient in op_remainder_d (i.e. intermediate_val_q) since
           // we do not need anymore the remainder
           op_remainder_d = {1'b0, next_quotient};
         end else begin
@@ -426,8 +430,8 @@ module ibex_multdiv_fast #(
           op_remainder_d = {2'b0, next_remainder[31:0]};
         end
         // Division
-        alu_operand_a_o  = {mac_res_q[31:0], 1'b1};         // it contains the remainder
-        alu_operand_b_o  = {~op_denominator_q[31:0], 1'b1}; // -denominator two's compliment
+        alu_operand_a_o  = {intermediate_val_q[31:0], 1'b1}; // it contains the remainder
+        alu_operand_b_o  = {~op_denominator_q[31:0], 1'b1};  // -denominator two's compliment
 
         md_state_d = MD_CHANGE_SIGN;
       end
@@ -435,13 +439,13 @@ module ibex_multdiv_fast #(
       MD_CHANGE_SIGN: begin
         md_state_d  = MD_FINISH;
         if (operator_i == MD_OP_DIV) begin
-          op_remainder_d = (div_change_sign) ? {2'h0, alu_adder_i} : mac_res_q;
+          op_remainder_d = (div_change_sign) ? {2'h0, alu_adder_i} : intermediate_val_q;
         end else begin
-          op_remainder_d = (rem_change_sign) ? {2'h0, alu_adder_i} : mac_res_q;
+          op_remainder_d = (rem_change_sign) ? {2'h0, alu_adder_i} : intermediate_val_q;
         end
         // ABS(Quotient) = 0 - Quotient (or Remainder)
         alu_operand_a_o  = {32'h0  , 1'b1};
-        alu_operand_b_o  = {~mac_res_q[31:0], 1'b1};
+        alu_operand_b_o  = {~intermediate_val_q[31:0], 1'b1};
       end
 
       MD_FINISH: begin
