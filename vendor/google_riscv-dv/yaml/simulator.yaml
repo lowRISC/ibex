@@ -42,7 +42,7 @@
               -l <out>/compile.log <cmp_opts>"
   sim:
     cmd: >
-      irun -R <sim_opts> -svseed <seed>
+      irun -R <sim_opts> -svseed <seed> -svrnc rand_struct
 
 - tool: questa
   compile:

@@ -534,8 +534,8 @@ def run_c_from_dir(c_test_dir, iss_yaml, isa, mabi, gcc_opts, iss,
     logging.error("No c test(*.c) found under %s" % c_test_dir)
 
 
-def iss_sim(test_list, output_dir, iss_list, iss_yaml, isa,
-            setting_dir, timeout_s, debug_cmd):
+def iss_sim(test_list, output_dir, iss_list, iss_yaml, iss_opts,
+            isa, setting_dir, timeout_s, debug_cmd):
   """Run ISS simulation with the generated test program
 
   Args:
@@ -543,6 +543,7 @@ def iss_sim(test_list, output_dir, iss_list, iss_yaml, isa,
     output_dir  : Output directory of the ELF files
     iss_list    : List of instruction set simulators
     iss_yaml    : ISS configuration file in YAML format
+    iss_opts    : ISS command line options
     isa         : ISA variant passed to the ISS
     setting_dir : Generator setting directory
     timeout_s   : Timeout limit in seconds
@@ -562,6 +563,9 @@ def iss_sim(test_list, output_dir, iss_list, iss_yaml, isa,
           elf = prefix + ".o"
           log = ("%s/%s.%d.log" % (log_dir, test['test'], i))
           cmd = get_iss_cmd(base_cmd, elf, log)
+          if 'iss_opts' in test:
+            cmd += ' '
+            cmd += test['iss_opts']
           logging.info("Running %s sim: %s" % (iss, elf))
           if iss == "ovpsim":
             run_cmd(cmd, timeout_s, check_return_code=False, debug_cmd = debug_cmd)
@@ -687,6 +691,8 @@ def setup_parser():
                       help="Generator timeout limit in seconds")
   parser.add_argument("--end_signature_addr", type=str, default="0",
                       help="Address that privileged CSR test writes to at EOT")
+  parser.add_argument("--iss_opts", type=str, default="",
+                      help="Any ISS command line arguments")
   parser.add_argument("--iss_timeout", type=int, default=10,
                       help="ISS sim timeout limit in seconds")
   parser.add_argument("--iss_yaml", type=str, default="",
@@ -924,7 +930,7 @@ def main():
 
       # Run ISS simulation
       if args.steps == "all" or re.match(".*iss_sim.*", args.steps):
-        iss_sim(matched_list, output_dir, args.iss, args.iss_yaml,
+        iss_sim(matched_list, output_dir, args.iss, args.iss_yaml, args.iss_opts,
                 args.isa, args.core_setting_dir, args.iss_timeout, args.debug)
 
       # Compare ISS simulation result

@@ -19,11 +19,14 @@ class riscv_pmp_cfg extends uvm_object;
   // default to a single PMP region
   rand int pmp_num_regions = 1;
   // default to granularity of 0 (4 bytes grain)
-  rand int pmp_granularity = 0;
+  int pmp_granularity = 0;
   // enable bit for pmp randomization
   bit pmp_randomize = 0;
   // pmp CSR configurations
   rand pmp_cfg_reg_t pmp_cfg[];
+  // PMP maximum address - used to set defaults
+  // TODO(udinator) - make this address configurable?
+  bit [XLEN - 1 : 0] pmp_max_address = {XLEN{1'b1}};
 
   // used to parse addr_mode configuration from cmdline
   typedef uvm_enum_wrapper#(pmp_addr_mode_t) addr_mode_wrapper;
@@ -40,7 +43,8 @@ class riscv_pmp_cfg extends uvm_object;
     pmp_granularity inside {[0 : XLEN + 3]};
   }
 
-  // TODO(udinator) move these constraints to post_randomize() to save performance
+  // TODO(udinator) more address constraints?
+  // TODO(udinator) move to posts_randomize() if lower performance
   constraint xwr_c {
     foreach (pmp_cfg[i]) {
       !(pmp_cfg[i].w && !pmp_cfg[i].r);
@@ -56,15 +60,27 @@ class riscv_pmp_cfg extends uvm_object;
   function new(string name = "");
     string s;
     super.new(name);
+    inst = uvm_cmdline_processor::get_inst();
     get_bool_arg_value("+pmp_randomize=", pmp_randomize);
+    get_int_arg_value("+pmp_granularity=", pmp_granularity);
+    get_int_arg_value("+pmp_num_regions=", pmp_num_regions);
     pmp_cfg = new[pmp_num_regions];
+    // As per privileged spec, the top 10 bits of a rv64 PMP address are all 0.
+    if (XLEN == 64) begin
+      pmp_max_address[XLEN - 1 : XLEN - 11] = 10'b0;
+    end
     if (!pmp_randomize) begin
       set_defaults();
+      setup_pmp();
     end
   endfunction
 
-  // TODO(udinator) partition address space to map to all active pmp_addr CSRs
-  // TODO(udinator) set pmp address defaults
+  // This will only get called if pmp_randomize is set, in which case we apply command line
+  // arguments after randomization
+  function void post_randomize();
+    setup_pmp();
+  endfunction
+
   function void set_defaults();
     foreach(pmp_cfg[i]) begin
       pmp_cfg[i].l    = 1'b0;
@@ -72,15 +88,86 @@ class riscv_pmp_cfg extends uvm_object;
       pmp_cfg[i].x    = 1'b1;
       pmp_cfg[i].w    = 1'b1;
       pmp_cfg[i].r    = 1'b1;
-      pmp_cfg[i].addr = 34'h3FFFFFFFF;
+      pmp_cfg[i].addr = assign_default_addr(pmp_num_regions, i + 1);
     end
   endfunction
 
+  // Helper function to break down
+  function bit [XLEN - 1 : 0] assign_default_addr(int num_regions, int index);
+    return pmp_max_address / num_regions * index;
+  endfunction
+
   function void setup_pmp();
+    string arg_name;
     string pmp_region;
-    get_int_arg_value("+pmp_num_regions=", pmp_num_regions);
-    get_int_arg_value("+pmp_granularity=", pmp_granularity);
-    // TODO(udinator) - parse the pmp configuration values
+    foreach (pmp_cfg[i]) begin
+      arg_name = $sformatf("+pmp_region_%0d=", i);
+      if (inst.get_arg_value(arg_name, pmp_region)) begin
+        parse_pmp_config(pmp_region, pmp_cfg[i]);
+        `uvm_info(`gfn, $sformatf("Configured pmp_cfg[%0d] from command line: %p", i, pmp_cfg[i]), UVM_LOW)
+      end
+    end
+  endfunction
+
+  function void parse_pmp_config(string pmp_region, ref pmp_cfg_reg_t pmp_cfg_reg);
+    string fields[$];
+    string field_vals[$];
+    string field_type;
+    string field_val;
+    uvm_split_string(pmp_region, ",", fields);
+    foreach (fields[i]) begin
+      uvm_split_string(fields[i], ":", field_vals);
+      field_type = field_vals.pop_front();
+      field_val = field_vals.pop_front();
+      case (field_type)
+        "L": begin
+          pmp_cfg_reg.l = field_val.atobin();
+        end
+        "A": begin
+          `DV_CHECK(addr_mode_wrapper::from_name(field_val, addr_mode))
+          pmp_cfg_reg.a = addr_mode;
+        end
+        "X": begin
+          pmp_cfg_reg.x = field_val.atobin();
+        end
+        "W": begin
+          pmp_cfg_reg.w = field_val.atobin();
+        end
+        "R": begin
+          pmp_cfg_reg.r = field_val.atobin();
+        end
+        "ADDR": begin
+          // Don't have to convert address to "PMP format" here,
+          // since it must be masked off in hardware
+          pmp_cfg_reg.addr = format_addr(field_val.atohex());
+        end
+        default: begin
+          `uvm_fatal(`gfn, $sformatf("%s, Invalid PMP configuration field name!", field_val))
+        end
+      endcase
+    end
+  endfunction
+
+  function bit [XLEN - 1 : 0] format_addr(bit [XLEN - 1 : 0] addr);
+    // For all ISAs, pmpaddr CSRs do not include the bottom two bits of the input address
+    bit [XLEN - 1 : 0] shifted_addr;
+    shifted_addr = addr >> 2; case (XLEN)
+      // RV32 - pmpaddr is bits [33:2] of the whole 34 bit address
+      // Return the input address right-shifted by 2 bits
+      32: begin
+        return shifted_addr;
+      end
+      // RV64 - pmpaddr is bits [55:2] of the whole 56 bit address, prepended by 10'b0
+      // Return {10'b0, shifted_addr[53:0]}
+      64: begin
+        return {10'b0, shifted_addr[53:0]};
+      end
+    endcase
+  endfunction
+
+  // TODO(udinator) - implement function to return hardware masked pmpaddr "representation"
+  function bit [XLEN - 1 : 0] convert_addr2pmp(bit [XLEN - 1 : 0] addr);
+    `uvm_info(`gfn, "Placeholder function, need to implement", UVM_LOW)
   endfunction
 
   // This function parses the pmp_cfg[] array to generate the actual instructions to set up
@@ -97,7 +184,7 @@ class riscv_pmp_cfg extends uvm_object;
     riscv_instr_pkg::privileged_reg_t base_pmpcfg_addr = PMPCFG0;
     int pmp_id;
     foreach (pmp_cfg[i]) begin
-      // TODO(udijnator) condense this calculations if possible
+      // TODO(udinator) condense this calculations if possible
       pmp_id = i / cfg_per_csr;
       cfg_byte = {pmp_cfg[i].l, pmp_cfg[i].zero, pmp_cfg[i].a,
                   pmp_cfg[i].x, pmp_cfg[i].w, pmp_cfg[i].r};
@@ -107,8 +194,8 @@ class riscv_pmp_cfg extends uvm_object;
       pmp_word = pmp_word | cfg_bitmask;
       `uvm_info(`gfn, $sformatf("pmp_word: 0x%0x", pmp_word), UVM_DEBUG)
       cfg_bitmask = 0;
-      //TODO (udinator) - add rv64 support for pmpaddr writes
-      instr.push_back($sformatf("li x%0d, 0x%0x", scratch_reg, pmp_cfg[i].addr[XLEN + 1 : 2]));
+      `uvm_info(`gfn, $sformatf("pmp_addr: 0x%0x", pmp_cfg[i].addr), UVM_DEBUG)
+      instr.push_back($sformatf("li x%0d, 0x%0x", scratch_reg, pmp_cfg[i].addr));
       instr.push_back($sformatf("csrw 0x%0x, x%0d", base_pmp_addr + i, scratch_reg));
       // short circuit if end of list
       if (i == pmp_cfg.size() - 1) begin

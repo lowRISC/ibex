@@ -245,8 +245,8 @@ class riscv_instr_gen_config extends uvm_object;
       enable_sfence == 1'b1;
       (init_privileged_mode != SUPERVISOR_MODE) || (mstatus_tvm == 1'b1);
     } else {
-      (init_privileged_mode != SUPERVISOR_MODE || !riscv_instr_pkg::support_sfence || mstatus_tvm || no_fence)
-                                                     -> (enable_sfence == 1'b0);
+      (init_privileged_mode != SUPERVISOR_MODE || !riscv_instr_pkg::support_sfence || mstatus_tvm
+          || no_fence) -> (enable_sfence == 1'b0);
     }
   }
 
@@ -640,7 +640,8 @@ class riscv_instr_gen_config extends uvm_object;
     end
   endfunction
 
-  // Populate invalid_priv_mode_csrs with the main implemented CSRs for each supported privilege mode
+  // Populate invalid_priv_mode_csrs with the main implemented CSRs for each supported privilege
+  // mode
   // TODO(udi) - include performance/pmp/trigger CSRs?
   virtual function void get_invalid_priv_lvl_csr();
     string invalid_lvl[$];
