@@ -35,26 +35,6 @@ package riscv_instr_pkg;
     bit [2:0]      xwr; // Excutable,Writable,Readale
   } mem_region_t;
 
-  // PMP address matching mode
-  typedef enum bit [1:0] {
-    OFF   = 2'b00,
-    TOR   = 2'b01,
-    NA4   = 2'b10,
-    NAPOT = 2'b11
-  } pmp_addr_mode_t;
-
-  // PMP configuration register layout
-  // This configuration struct includes the pmp address for simplicity
-  typedef struct{
-    rand bit                   l;
-    bit [1:0]                  zero;
-    rand pmp_addr_mode_t       a;
-    rand bit                   x;
-    rand bit                   w;
-    rand bit                   r;
-    rand bit [33:0]            addr;
-  } pmp_cfg_reg_t;
-
   typedef enum bit [3:0] {
     BARE = 4'b0000,
     SV32 = 4'b0001,
@@ -522,7 +502,7 @@ package riscv_instr_pkg;
   } riscv_instr_name_t;
 
   // Maximum virtual address bits used by the program
-  parameter MAX_USED_VADDR_BITS = 30;
+  parameter int MAX_USED_VADDR_BITS = 30;
 
   typedef enum bit [4:0] {
     ZERO = 5'b00000,
@@ -951,6 +931,29 @@ package riscv_instr_pkg;
 
   `include "riscv_core_setting.sv"
 
+  // PMP address matching mode
+  typedef enum bit [1:0] {
+    OFF   = 2'b00,
+    TOR   = 2'b01,
+    NA4   = 2'b10,
+    NAPOT = 2'b11
+  } pmp_addr_mode_t;
+
+  // PMP configuration register layout
+  // This configuration struct includes the pmp address for simplicity
+  // TODO (udinator) allow a full 34 bit address for rv32?
+  typedef struct{
+    rand bit                   l;
+    bit [1:0]                  zero;
+    rand pmp_addr_mode_t       a;
+    rand bit                   x;
+    rand bit                   w;
+    rand bit                   r;
+    // RV32: addr is the top 32 bits of a 34 bit PMP address
+    // RV64: addr is the top 54 bits of a 56 bit PMP address
+    rand bit [XLEN - 1 : 0]    addr;
+  } pmp_cfg_reg_t;
+
   typedef struct packed {
     bit ill;
     bit [XLEN-2:7] reserved;
@@ -975,19 +978,19 @@ package riscv_instr_pkg;
   parameter bit [XLEN - 1 : 0] SUM_BIT_MASK  = 'h1 << 18;
   parameter bit [XLEN - 1 : 0] MPP_BIT_MASK  = 'h3 << 11;
 
-  parameter IMM25_WIDTH = 25;
-  parameter IMM12_WIDTH = 12;
-  parameter INSTR_WIDTH = 32;
-  parameter DATA_WIDTH  = 32;
+  parameter int IMM25_WIDTH = 25;
+  parameter int IMM12_WIDTH = 12;
+  parameter int INSTR_WIDTH = 32;
+  parameter int DATA_WIDTH  = 32;
 
   // Parameters for output assembly program formatting
-  parameter MAX_INSTR_STR_LEN = 11;
-  parameter LABEL_STR_LEN     = 18;
+  parameter int MAX_INSTR_STR_LEN = 11;
+  parameter int LABEL_STR_LEN     = 18;
 
   // Parameter for program generation
-  parameter MAX_CALLSTACK_DEPTH = 20;
-  parameter MAX_SUB_PROGRAM_CNT = 20;
-  parameter MAX_CALL_PER_FUNC   = 5;
+  parameter int MAX_CALLSTACK_DEPTH = 20;
+  parameter int MAX_SUB_PROGRAM_CNT = 20;
+  parameter int MAX_CALL_PER_FUNC   = 5;
 
   string indent = {LABEL_STR_LEN{" "}};
 
@@ -1054,7 +1057,8 @@ package riscv_instr_pkg;
         instr.push_back($sformatf("csrr x%0d, 0x%0x // MSTATUS", tp, status));
         instr.push_back($sformatf("srli x%0d, x%0d, 11", tp, tp));  // Move MPP to bit 0
         instr.push_back($sformatf("andi x%0d, x%0d, 0x3", tp, tp)); // keep the MPP bits
-        instr.push_back($sformatf("xori x%0d, x%0d, 0x3", tp, tp)); // Check if MPP equals to M-mode('b11)
+        // Check if MPP equals to M-mode('b11)
+        instr.push_back($sformatf("xori x%0d, x%0d, 0x3", tp, tp));
         instr.push_back($sformatf("bnez x%0d, 1f", tp));      // Use physical address for kernel SP
         // Use virtual address for stack pointer
         instr.push_back($sformatf("slli x%0d, x%0d, %0d", sp, sp, XLEN - MAX_USED_VADDR_BITS));
