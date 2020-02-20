@@ -555,11 +555,14 @@ class riscv_asm_program_gen extends uvm_object;
         // is complete, for any initial state analysis
         case(riscv_instr_pkg::supported_privileged_mode[i])
           SUPERVISOR_MODE: begin
-            gen_signature_handshake(.instr(csr_handshake), .signature_type(WRITE_CSR), .csr(SSTATUS));
-            gen_signature_handshake(.instr(csr_handshake), .signature_type(WRITE_CSR), .csr(SIE));
+            gen_signature_handshake(.instr(csr_handshake), .signature_type(WRITE_CSR),
+                                    .csr(SSTATUS));
+            gen_signature_handshake(.instr(csr_handshake), .signature_type(WRITE_CSR),
+                                    .csr(SIE));
           end
           USER_MODE: begin
-            gen_signature_handshake(.instr(csr_handshake), .signature_type(WRITE_CSR), .csr(USTATUS));
+            gen_signature_handshake(.instr(csr_handshake), .signature_type(WRITE_CSR),
+                                    .csr(USTATUS));
             gen_signature_handshake(.instr(csr_handshake), .signature_type(WRITE_CSR), .csr(UIE));
           end
         endcase
@@ -744,15 +747,15 @@ class riscv_asm_program_gen extends uvm_object;
       // Push user mode GPR to kernel stack before executing exception handling, this is to avoid
       // exception handling routine modify user program state unexpectedly
       push_gpr_to_kernel_stack(status, scratch, cfg.mstatus_mprv, cfg.sp, cfg.tp, instr);
-      // Checking xStatus can be optional if ISS (like spike) has different implementation of certain
-      // fields compared with the RTL processor.
+      // Checking xStatus can be optional if ISS (like spike) has different implementation of
+      // certain fields compared with the RTL processor.
       if (cfg.check_xstatus) begin
         instr = {instr, $sformatf("csrr x%0d, 0x%0x # %0s", cfg.gpr[0], status, status.name())};
       end
       instr = {instr,
                // Use scratch CSR to save a GPR value
-               // Check if the exception is caused by an interrupt, if yes, jump to interrupt handler
-               // Interrupt is indicated by xCause[XLEN-1]
+               // Check if the exception is caused by an interrupt, if yes, jump to interrupt
+               // handler Interrupt is indicated by xCause[XLEN-1]
                $sformatf("csrr x%0d, 0x%0x # %0s", cfg.gpr[0], cause, cause.name()),
                $sformatf("srli x%0d, x%0d, %0d", cfg.gpr[0], cfg.gpr[0], XLEN-1),
                $sformatf("bne x%0d, x0, %0smode_intr_handler", cfg.gpr[0], mode)};
@@ -833,7 +836,8 @@ class riscv_asm_program_gen extends uvm_object;
     for (int i = 1; i < max_interrupt_vector_num; i++) begin
       string intr_handler[$];
       push_gpr_to_kernel_stack(status, scratch, cfg.mstatus_mprv, cfg.sp, cfg.tp, intr_handler);
-      gen_signature_handshake(.instr(intr_handler), .signature_type(CORE_STATUS), .core_status(HANDLING_IRQ));
+      gen_signature_handshake(.instr(intr_handler), .signature_type(CORE_STATUS),
+                              .core_status(HANDLING_IRQ));
       intr_handler = {intr_handler,
                       $sformatf("csrr x%0d, 0x%0x # %0s", cfg.gpr[0], cause, cause.name()),
                       // Terminate the test if xCause[31] != 0 (indicating exception)
@@ -1193,7 +1197,8 @@ class riscv_asm_program_gen extends uvm_object;
 
   virtual function void add_directed_instr_stream(string name, int unsigned ratio);
     directed_instr_stream_ratio[name] = ratio;
-    `uvm_info(`gfn, $sformatf("Adding directed instruction stream:%0s ratio:%0d/1000", name, ratio), UVM_LOW)
+    `uvm_info(`gfn, $sformatf("Adding directed instruction stream:%0s ratio:%0d/1000", name, ratio),
+              UVM_LOW)
   endfunction
 
   virtual function void get_directed_instr_stream();
