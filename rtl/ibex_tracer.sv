@@ -655,7 +655,7 @@ module ibex_tracer (
     end
   endfunction
 
-  function string get_fence_description(logic [3:0] bits);
+  function automatic string get_fence_description(logic [3:0] bits);
     string desc = "";
     if (bits[3]) begin
       desc = {desc, "i"};
