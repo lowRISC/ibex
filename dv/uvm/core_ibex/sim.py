@@ -23,7 +23,7 @@ import re
 import subprocess
 import sys
 
-sys.path.insert(0, "../../vendor/google_riscv-dv/scripts")
+sys.path.insert(0, "../../../vendor/google_riscv-dv/scripts")
 sys.path.insert(0, "./riscv_dv_extension")
 
 from lib import *

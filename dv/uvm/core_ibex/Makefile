@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 DV_DIR              := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-GEN_DIR             := $(realpath ${DV_DIR}/../../vendor/google_riscv-dv)
+GEN_DIR             := $(realpath ${DV_DIR}/../../../vendor/google_riscv-dv)
 TOOLCHAIN           := ${RISCV_TOOLCHAIN}
 OUT                 := "${DV_DIR}/out"
 # Run time options for the instruction generator
@@ -68,7 +68,7 @@ endif
 
 SHELL=/bin/bash
 
-export PRJ_DIR:= $(realpath ${DV_DIR}/../../..)
+export PRJ_DIR:= $(realpath ${DV_DIR}/../../../../)
 
 .PHONY: rtl_sim clean gcc_compile iss_sim
 
