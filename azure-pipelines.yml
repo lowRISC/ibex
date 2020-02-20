@@ -9,6 +9,7 @@ variables:
   VERILATOR_VERSION: 4.016
   VERILATOR_PATH: /opt/buildcache/verilator/$(VERILATOR_VERSION)
   RISCV_TOOLCHAIN_TAR_VERSION: 20190807-1
+  RISCV_COMPLIANCE_GIT_VERSION: 844c6660ef3f0d9b96957991109dfd80cc4938e2
 
 trigger:
   batch: true
@@ -125,6 +126,8 @@ jobs:
   - bash: |
       cd build
       git clone https://github.com/riscv/riscv-compliance.git
+      cd riscv-compliance
+      git checkout "$(RISCV_COMPLIANCE_GIT_VERSION)"
     displayName: Get RISC-V Compliance test suite
 
   - bash: |
