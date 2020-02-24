@@ -78,6 +78,7 @@ module core_ibex_tb_top;
   assign rvfi_if.trap           = dut.rvfi_trap;
   assign rvfi_if.intr           = dut.rvfi_intr;
   assign rvfi_if.mode           = dut.rvfi_mode;
+  assign rvfi_if.ixl            = dut.rvfi_ixl;
   assign rvfi_if.rs1_addr       = dut.rvfi_rs1_addr;
   assign rvfi_if.rs2_addr       = dut.rvfi_rs2_addr;
   assign rvfi_if.rs1_rdata      = dut.rvfi_rs1_rdata;

@@ -80,6 +80,7 @@ module ibex_core #(
     output logic        rvfi_halt,
     output logic        rvfi_intr,
     output logic [ 1:0] rvfi_mode,
+    output logic [ 1:0] rvfi_ixl,
     output logic [ 4:0] rvfi_rs1_addr,
     output logic [ 4:0] rvfi_rs2_addr,
     output logic [ 4:0] rvfi_rs3_addr,
@@ -959,6 +960,7 @@ module ibex_core #(
   logic        rvfi_stage_halt      [RVFI_STAGES-1:0];
   logic        rvfi_stage_intr      [RVFI_STAGES-1:0];
   logic [ 1:0] rvfi_stage_mode      [RVFI_STAGES-1:0];
+  logic [ 1:0] rvfi_stage_ixl       [RVFI_STAGES-1:0];
   logic [ 4:0] rvfi_stage_rs1_addr  [RVFI_STAGES-1:0];
   logic [ 4:0] rvfi_stage_rs2_addr  [RVFI_STAGES-1:0];
   logic [ 4:0] rvfi_stage_rs3_addr  [RVFI_STAGES-1:0];
@@ -984,6 +986,7 @@ module ibex_core #(
   assign rvfi_halt      = rvfi_stage_halt     [RVFI_STAGES-1];
   assign rvfi_intr      = rvfi_stage_intr     [RVFI_STAGES-1];
   assign rvfi_mode      = rvfi_stage_mode     [RVFI_STAGES-1];
+  assign rvfi_ixl       = rvfi_stage_ixl      [RVFI_STAGES-1];
   assign rvfi_rs1_addr  = rvfi_stage_rs1_addr [RVFI_STAGES-1];
   assign rvfi_rs2_addr  = rvfi_stage_rs2_addr [RVFI_STAGES-1];
   assign rvfi_rs3_addr  = rvfi_stage_rs3_addr [RVFI_STAGES-1];
@@ -1044,6 +1047,7 @@ module ibex_core #(
         rvfi_stage_order[i]     <= '0;
         rvfi_stage_insn[i]      <= '0;
         rvfi_stage_mode[i]      <= {PRIV_LVL_M};
+        rvfi_stage_ixl[i]       <= CSR_MISA_MXL;
         rvfi_stage_rs1_addr[i]  <= '0;
         rvfi_stage_rs2_addr[i]  <= '0;
         rvfi_stage_rs3_addr[i]  <= '0;
@@ -1071,6 +1075,7 @@ module ibex_core #(
             rvfi_stage_order[i]     <= rvfi_order + 64'(rvfi_valid);
             rvfi_stage_insn[i]      <= rvfi_insn_id;
             rvfi_stage_mode[i]      <= {priv_mode_id};
+            rvfi_stage_ixl[i]       <= CSR_MISA_MXL;
             rvfi_stage_rs1_addr[i]  <= rvfi_rs1_addr_d;
             rvfi_stage_rs2_addr[i]  <= rvfi_rs2_addr_d;
             rvfi_stage_rs3_addr[i]  <= rvfi_rs3_addr_d;
@@ -1095,6 +1100,7 @@ module ibex_core #(
             rvfi_stage_order[i]     <= rvfi_stage_order[i-1];
             rvfi_stage_insn[i]      <= rvfi_stage_insn[i-1];
             rvfi_stage_mode[i]      <= rvfi_stage_mode[i-1];
+            rvfi_stage_ixl[i]       <= rvfi_stage_ixl[i-1];
             rvfi_stage_rs1_addr[i]  <= rvfi_stage_rs1_addr[i-1];
             rvfi_stage_rs2_addr[i]  <= rvfi_stage_rs2_addr[i-1];
             rvfi_stage_rs3_addr[i]  <= rvfi_stage_rs3_addr[i-1];

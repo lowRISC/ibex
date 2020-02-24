@@ -46,6 +46,7 @@ module ibex_tracer (
   input logic        rvfi_halt,
   input logic        rvfi_intr,
   input logic [ 1:0] rvfi_mode,
+  input logic [ 1:0] rvfi_ixl,
   input logic [ 4:0] rvfi_rs1_addr,
   input logic [ 4:0] rvfi_rs2_addr,
   input logic [ 4:0] rvfi_rs3_addr,
@@ -72,6 +73,7 @@ module ibex_tracer (
   logic        unused_rvfi_halt = rvfi_halt;
   logic        unused_rvfi_intr = rvfi_intr;
   logic [ 1:0] unused_rvfi_mode = rvfi_mode;
+  logic [ 1:0] unused_rvfi_ixl = rvfi_ixl;
 
   import ibex_tracer_pkg::*;
 
