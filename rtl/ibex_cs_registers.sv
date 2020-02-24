@@ -117,20 +117,19 @@ module ibex_cs_registers #(
   import ibex_pkg::*;
 
   // misa
-  localparam logic [1:0] MXL = 2'd1; // M-XLEN: XLEN in M-Mode for RV32
   localparam logic [31:0] MISA_VALUE =
-      (0           <<  0)  // A - Atomic Instructions extension
-    | (1           <<  2)  // C - Compressed extension
-    | (0           <<  3)  // D - Double precision floating-point extension
-    | (32'(RV32E)  <<  4)  // E - RV32E base ISA
-    | (0           <<  5)  // F - Single precision floating-point extension
-    | (32'(!RV32E) <<  8)  // I - RV32I/64I/128I base ISA
-    | (32'(RV32M)  << 12)  // M - Integer Multiply/Divide extension
-    | (0           << 13)  // N - User level interrupts supported
-    | (0           << 18)  // S - Supervisor mode implemented
-    | (1           << 20)  // U - User mode implemented
-    | (0           << 23)  // X - Non-standard extensions present
-    | (32'(MXL)    << 30); // M-XLEN
+      (0                 <<  0)  // A - Atomic Instructions extension
+    | (1                 <<  2)  // C - Compressed extension
+    | (0                 <<  3)  // D - Double precision floating-point extension
+    | (32'(RV32E)        <<  4)  // E - RV32E base ISA
+    | (0                 <<  5)  // F - Single precision floating-point extension
+    | (32'(!RV32E)       <<  8)  // I - RV32I/64I/128I base ISA
+    | (32'(RV32M)        << 12)  // M - Integer Multiply/Divide extension
+    | (0                 << 13)  // N - User level interrupts supported
+    | (0                 << 18)  // S - Supervisor mode implemented
+    | (1                 << 20)  // U - User mode implemented
+    | (0                 << 23)  // X - Non-standard extensions present
+    | (32'(CSR_MISA_MXL) << 30); // M-XLEN
 
   typedef struct packed {
     logic      mie;

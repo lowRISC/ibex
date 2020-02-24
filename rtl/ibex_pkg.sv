@@ -472,6 +472,9 @@ parameter int unsigned CSR_MSTATUS_MPP_BIT_HIGH = 12;
 parameter int unsigned CSR_MSTATUS_MPRV_BIT     = 17;
 parameter int unsigned CSR_MSTATUS_TW_BIT       = 21;
 
+// CSR machine ISA
+parameter logic [1:0] CSR_MISA_MXL = 2'd1; // M-XLEN: XLEN in M-Mode for RV32
+
 // CSR interrupt pending/enable bits
 parameter int unsigned CSR_MSIX_BIT      = 3;
 parameter int unsigned CSR_MTIX_BIT      = 7;
