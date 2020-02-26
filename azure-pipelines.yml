@@ -105,7 +105,7 @@ jobs:
 
   - bash: |
       fork_origin=$(git merge-base --fork-point origin/master)
-      changed_files=$(git diff --name-only $fork_origin | grep -v /vendor/ | grep -E '\.(cpp|cc|c|h)$')
+      changed_files=$(git diff --name-only $fork_origin | grep -v '^vendor' | grep -E '\.(cpp|cc|c|h)$')
       test -z "$changed_files" || git diff -U0 $fork_origin $changed_files | clang-format-diff -p1 | tee clang-format-output
       if [ -s clang-format-output ]; then
         echo -n "##vso[task.logissue type=error]"
