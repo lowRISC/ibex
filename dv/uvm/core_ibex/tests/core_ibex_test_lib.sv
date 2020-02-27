@@ -186,7 +186,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
   endfunction
 
   virtual task wait_for_core_setup();
-    wait_for_csr_write(CSR_MSTATUS, 1000);
+    wait_for_csr_write(CSR_MSTATUS, 2000);
     core_init_mstatus = signature_data;
     // capture the initial privilege mode ibex will boot into
     init_operating_mode = priv_lvl_e'(core_init_mstatus[12:11]);
