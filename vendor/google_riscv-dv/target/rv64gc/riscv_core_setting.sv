@@ -60,6 +60,9 @@ parameter int VLEN = 512;
 parameter int ELEN = 64;
 parameter int SLEN = 64;
 
+// Number of harts
+parameter int NUM_HARTS = 1;
+
 // ----------------------------------------------------------------------------
 // Previleged CSR implementation
 // ----------------------------------------------------------------------------

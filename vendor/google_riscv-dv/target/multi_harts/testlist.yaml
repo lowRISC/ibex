@@ -53,14 +53,27 @@
     +hint_instr_ratio=5
   rtl_test: core_base_test
 
-- test: riscv_pmp_test
+
+- test: riscv_amo_test
   description: >
-    Provide some PMP configuration parameters, and setup PMP CSRs appropriately
+    RISC-V atomic instruction extension test
   iterations: 2
   gen_test: riscv_rand_instr_test
   gen_opts: >
-    +pmp_randomize=0
-    +pmp_num_regions=1
-    +pmp_granularity=1
-    +pmp_region_0=L:0,A:NAPOT,X:1,W:1,R:1,ADDR:FFFFFFFF
+    +instr_cnt=5000
+    +num_of_sub_program=5
+    +directed_instr_0=riscv_lr_sc_instr_stream,10
+    +directed_instr_1=riscv_amo_instr_stream,10
   rtl_test: core_base_test
+
+
+- test: riscv_single_hart_test
+  description: >
+    single hart random test
+  iterations: 2
+  gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +instr_cnt=6000
+    +num_of_harts=1
+  rtl_test: core_base_test
+

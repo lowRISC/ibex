@@ -1,5 +1,5 @@
 # riscOVPsim configuration file converted from YAML
---variant RVB64I
+--variant RV64I
 --override riscvOVPsim/cpu/add_Extensions=MC
 --override riscvOVPsim/cpu/misa_MXL=2
 --override riscvOVPsim/cpu/misa_MXL_mask=0x0 # 0

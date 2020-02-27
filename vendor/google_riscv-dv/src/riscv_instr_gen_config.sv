@@ -106,6 +106,12 @@ class riscv_instr_gen_config extends uvm_object;
     '{name:"region_4", size_in_bytes: 4096,      xwr: 3'b111}
   };
 
+  // Dedicated shared memory region for multi-harts atomic operations
+  mem_region_t amo_region[$] = '{
+    '{name:"amo_0",    size_in_bytes: 4096,      xwr: 3'b111},
+    '{name:"amo_1",    size_in_bytes: 4096,      xwr: 3'b111}
+  };
+
   // Stack section word length
   int stack_len = 5000;
 
@@ -148,6 +154,8 @@ class riscv_instr_gen_config extends uvm_object;
   bit                    enable_unaligned_load_store;
   int                    illegal_instr_ratio;
   int                    hint_instr_ratio;
+  // Number of harts to be simulated, must be <= NUM_HARTS
+  int                    num_of_harts = NUM_HARTS;
   // Use SP as stack pointer
   bit                    fix_sp;
   // Directed boot privileged mode, u, m, s
@@ -303,6 +311,11 @@ class riscv_instr_gen_config extends uvm_object;
     // This is default disabled at setup phase. It can be enabled in the exception and interrupt
     // handling routine
     mstatus_mprv == 1'b0;
+    if (SATP_MODE == BARE) {
+      mstatus_mxr == 0;
+      mstatus_sum == 0;
+      mstatus_tvm == 0;
+    }
   }
 
   // Exception delegation setting
@@ -444,6 +457,7 @@ class riscv_instr_gen_config extends uvm_object;
     `uvm_field_int(support_supervisor_mode, UVM_DEFAULT)
     `uvm_field_int(disable_compressed_instr, UVM_DEFAULT)
     `uvm_field_int(signature_addr, UVM_DEFAULT)
+    `uvm_field_int(num_of_harts, UVM_DEFAULT)
     `uvm_field_int(require_signature_addr, UVM_DEFAULT)
     `uvm_field_int(gen_debug_section, UVM_DEFAULT)
     `uvm_field_int(enable_ebreak_in_debug_rom, UVM_DEFAULT)
@@ -488,6 +502,7 @@ class riscv_instr_gen_config extends uvm_object;
     get_bool_arg_value("+no_delegation=", no_delegation);
     get_int_arg_value("+illegal_instr_ratio=", illegal_instr_ratio);
     get_int_arg_value("+hint_instr_ratio=", hint_instr_ratio);
+    get_int_arg_value("+num_of_harts=", num_of_harts);
     get_bool_arg_value("+enable_unaligned_load_store=", enable_unaligned_load_store);
     get_bool_arg_value("+force_m_delegation=", force_m_delegation);
     get_bool_arg_value("+force_s_delegation=", force_s_delegation);
