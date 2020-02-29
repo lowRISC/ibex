@@ -94,7 +94,7 @@ endif
 # Options used for privileged CSR test generation
 CSR_OPTS=--csr_yaml=${CSR_FILE} \
          --isa="${ISA}" \
-         --end_signature_addr=0x${SIGNATURE_ADDR}
+         --end_signature_addr=${SIGNATURE_ADDR}
 
 RISCV_DV_OPTS=--custom_target=${DV_DIR}/riscv_dv_extension \
               --isa="${ISA}" \
@@ -160,7 +160,7 @@ rtl_sim:
      --en_cov ${COV} \
      --en_wave ${WAVES} \
      --lsf_cmd="${LSF_CMD}" \
-     --sim_opts="+signature_addr=0x${SIGNATURE_ADDR}" \
+     --sim_opts="+signature_addr=${SIGNATURE_ADDR}" \
      ${SIM_OPTS}
 
 # Compare the regression result between ISS and RTL sim
