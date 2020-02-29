@@ -26,6 +26,9 @@ parameter int VLEN = 512;
 parameter int ELEN = 64;
 parameter int SLEN = 64;
 
+// Number of harts
+parameter int NUM_HARTS = 1;
+
 // Parameter for SATP mode, set to BARE if address translation is not supported
 parameter satp_mode_t SATP_MODE = BARE;
 
@@ -67,7 +70,7 @@ bit support_sfence = 0;
 //-----------------------------------------------------------------------------
 
 // Number of kernel data pages
-int num_of_kernel_data_pages = 2;
+int num_of_kernel_data_pages = 0;
 
 // Byte size of kernel data pages
 int kernel_data_page_size = 4096;
