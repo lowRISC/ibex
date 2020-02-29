@@ -438,7 +438,7 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
   endtask
 
   // compares dcsr.ebreak against the privilege mode encoded in dcsr.prv
-  virtual function check_dcsr_ebreak();
+  virtual function void check_dcsr_ebreak();
     // dcsr.prv is the bottom two bits.
     case (signature_data[1:0])
       2'b11: begin
@@ -456,7 +456,7 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
     endcase
   endfunction
 
-  virtual function check_dcsr_cause(dbg_cause_e cause);
+  virtual function void check_dcsr_cause(dbg_cause_e cause);
     `DV_CHECK_EQ_FATAL(cause, signature_data[8:6], "dcsr.cause has been incorrectly updated")
   endfunction
 
