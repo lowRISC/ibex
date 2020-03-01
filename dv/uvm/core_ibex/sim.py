@@ -89,8 +89,8 @@ def get_simulator_cmd(simulator, simulator_yaml, en_cov, en_wave):
             compile_cmd[i] = re.sub("<"+env_var+">", get_env_var(env_var), compile_cmd[i])
           sim_cmd = re.sub("<"+env_var+">", get_env_var(env_var), sim_cmd)
       return compile_cmd, sim_cmd
-  logging.info("Cannot find RTL simulator %0s" % simulator)
-  sys.exit(1)
+  logging.error("Cannot find RTL simulator %0s" % simulator)
+  sys.exit(RET_FAIL)
 
 
 def rtl_compile(compile_cmd, output_dir, lsf_cmd, opts):
@@ -199,8 +199,8 @@ def compare(test_list, iss, output_dir, verbose):
         elif iss == "ovpsim":
           process_ovpsim_sim_log(iss_log, iss_csv)
         else:
-          logging.info("Unsupported ISS" % iss)
-          sys.exit(1)
+          logging.error("Unsupported ISS" % iss)
+          sys.exit(RET_FAIL)
         uvm_result = check_ibex_uvm_log(uvm_log, "ibex", test_name, report, False)
         if not uvm_result:
           check_ibex_uvm_log(uvm_log, "ibex", test_name, report)
