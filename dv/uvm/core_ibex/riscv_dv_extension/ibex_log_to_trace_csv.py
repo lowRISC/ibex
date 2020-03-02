@@ -32,45 +32,69 @@ RD_RE = re.compile(r"(x(?P<rd>[1-9]\d*)=0x(?P<rd_val>[0-9a-f]+))")
 ADDR_RE  = re.compile(r"(?P<imm>[\-0-9]+?)\((?P<rs1>.*)\)")
 
 
-def process_ibex_sim_log(ibex_log, csv, full_trace = 1):
-  """Process ibex simulation log.
+def _process_ibex_sim_log_fd(log_fd, csv_fd, full_trace=True):
+    """Process ibex simulation log.
 
-  Extract instruction and affected register information from ibex simulation
-  log and save to a standard CSV format.
-  """
-  logging.info("Processing ibex log : %s" % ibex_log)
-  instr_cnt = 0
-  ibex_instr = ""
+    Reads from log_fd, which should be a file object containing a trace from an
+    Ibex simulation. Writes in a standard CSV format to csv_fd, which should be
+    a file object opened for writing.
 
-  with open(ibex_log, "r") as f, open(csv, "w") as csv_fd:
+    If full_trace is true, this dumps information about operands for, replacing
+    absolute branch destinations with offsets relative to the current pc.
+
+    """
+    instr_cnt = 0
+
     trace_csv = RiscvInstructionTraceCsv(csv_fd)
     trace_csv.start_new_trace()
-    for line in f:
-      if re.search("ecall", line):
-        break
-      # Extract instruction information
-      m = INSTR_RE.search(line)
-      if m:
-        instr_cnt += 1
-        # Write the extracted instruction to a csvcol buffer file
-        rv_instr_trace = RiscvInstructionTraceEntry()
-        rv_instr_trace.instr_str = m.group("instr")
-        rv_instr_trace.instr = m.group("instr").split()[0]
-        rv_instr_trace.pc = m.group("pc")
-        rv_instr_trace.binary = m.group("bin")
-        if full_trace:
-          rv_instr_trace.operand = m.group("instr").split()[1]
-          process_trace(rv_instr_trace)
-      c = RD_RE.search(line)
-      if c:
-        rv_instr_trace.gpr.append(gpr_to_abi("x%0s" % c.group("rd")) + ":" + c.group("rd_val"))
-        trace_csv.write_trace_entry(rv_instr_trace)
 
-  logging.info("Processed instruction count : %d" % instr_cnt)
-  if instr_cnt == 0:
-    logging.error("No instructions in logfile: %s" % ibex_log)
-    sys.exit(RET_FATAL)
-  logging.info("CSV saved to : %s" % csv)
+    trace_entry = None
+
+    for line in log_fd:
+        if re.search("ecall", line):
+            break
+
+        # Extract instruction information
+        m = INSTR_RE.search(line)
+        if m:
+            instr_cnt += 1
+            # Write the extracted instruction to a csvcol buffer file
+            trace_entry = RiscvInstructionTraceEntry()
+            trace_entry.instr_str = m.group("instr")
+            trace_entry.instr = m.group("instr").split()[0]
+            trace_entry.pc = m.group("pc")
+            trace_entry.binary = m.group("bin")
+            if full_trace:
+                trace_entry.operand = m.group("instr").split()[1]
+                process_trace(trace_entry)
+
+        c = RD_RE.search(line)
+        if c:
+            trace_entry.gpr.append('{}:{}'
+                                   .format(gpr_to_abi("x%0s" % c.group("rd")),
+                                           c.group("rd_val")))
+            trace_csv.write_trace_entry(trace_entry)
+
+    return instr_cnt
+
+
+def process_ibex_sim_log(ibex_log, csv, full_trace=1):
+    """Process ibex simulation log.
+
+    Extract instruction and affected register information from ibex simulation
+    log and save to a standard CSV format.
+    """
+    logging.info("Processing ibex log : %s" % ibex_log)
+    with open(ibex_log, "r") as log_fd, open(csv, "w") as csv_fd:
+        count = _process_ibex_sim_log_fd(log_fd, csv_fd,
+                                         True if full_trace else False)
+
+    logging.info("Processed instruction count : %d" % count)
+    if not count:
+      logging.error("No instructions in logfile: %s" % ibex_log)
+      sys.exit(RET_FATAL)
+
+    logging.info("CSV saved to : %s" % csv)
 
 
 def process_trace(trace):
@@ -142,17 +166,23 @@ def check_ibex_uvm_log(uvm_log, core_name, test_name, report, write=True):
 
 
 def main():
-  instr_trace = []
-  # Parse input arguments
-  parser = argparse.ArgumentParser()
-  parser.add_argument("--log", type=str, help="Input ibex simulation log")
-  parser.add_argument("--csv", type=str, help="Output trace csv_buf file")
-  parser.add_argument("--full_trace", type=int, default=1,
-                      help="Enable full log trace")
-  args = parser.parse_args()
-  # Process ibex log
-  process_ibex_sim_log(args.log, args.csv, args.full_trace)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--log",
+                        help="Input ibex simulation log (default: stdin)",
+                        type=argparse.FileType('r'),
+                        default=sys.stdin)
+    parser.add_argument("--csv",
+                        help="Output trace csv file (default: stdout)",
+                        type=argparse.FileType('w'),
+                        default=sys.stdout)
+    parser.add_argument("--full_trace", type=int, default=1,
+                        help="Enable full log trace")
+
+    args = parser.parse_args()
+
+    _process_ibex_sim_log_fd(args.log, args.csv,
+                             True if args.full_trace else False)
 
 
 if __name__ == "__main__":
-  main()
+    main()
