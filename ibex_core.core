@@ -77,6 +77,7 @@ parameters:
 targets:
   default:
     filesets:
+      - tool_verilator ? (files_lint_verilator)
       - files_rtl
       - files_check_tool_requirements
   lint:
