@@ -90,8 +90,17 @@ module riscv_testutil (
     end
   end
 
-  // only word writes are supported
-  assign dev_err_o = (~dev_we_i | dev_be_i != 4'hf) & dev_req_i;
+  // The interface is write-only, and only supports 32-bit writes. If
+  // either of these checks fails, raise dev_err_o on the next cycle.
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      dev_err_o <= 1'b0;
+    end else begin
+      dev_err_o <= (~dev_we_i | dev_be_i != 4'hf) & dev_req_i;
+    end
+  end
+
+  // Since the interface is write-only, tie rdata to 0.
   assign dev_rdata_o = 32'h0;
 
 
