@@ -5,13 +5,25 @@
 # Convert ibex log to the standard trace CSV format
 
 import argparse
+import os
 import re
 import sys
 
-sys.path.insert(0, "../../vendor/google_riscv-dv/scripts")
+_IBEX_ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__),
+                                           '../../../..'))
+_DV_SCRIPTS = os.path.join(_IBEX_ROOT, 'vendor/google_riscv-dv/scripts')
+_OLD_SYS_PATH = sys.path
 
-from riscv_trace_csv import *
-from lib import *
+# Import riscv_trace_csv and lib from _DV_SCRIPTS before putting sys.path back
+# as it started.
+try:
+    sys.path.insert(0, _DV_SCRIPTS)
+
+    from riscv_trace_csv import *
+    from lib import *
+
+finally:
+    sys.path = _OLD_SYS_PATH
 
 
 INSTR_RE = re.compile(r"^\s*(?P<time>\d+)\s+(?P<cycle>\d+)\s+(?P<pc>[0-9a-f]+)\s+" \
