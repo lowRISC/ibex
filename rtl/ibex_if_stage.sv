@@ -178,7 +178,6 @@ module ibex_if_stage #(
 
     fetch_ready      = 1'b0;
     branch_req       = 1'b0;
-    have_instr       = 1'b0;
 
     if (offset_in_init_q) begin
       // no valid instruction data for ID stage, assume aligned
@@ -189,8 +188,6 @@ module ibex_if_stage #(
     end else begin
       // an instruction is ready for ID stage
       if (fetch_valid) begin
-        have_instr = 1'b1;
-
         if (req_i && if_id_pipe_reg_we) begin
           fetch_ready      = 1'b1;
           offset_in_init_d = 1'b0;
@@ -200,13 +197,13 @@ module ibex_if_stage #(
 
     // take care of jumps and branches
     if (pc_set_i) begin
-      have_instr       = 1'b0;
-
       // switch to new PC from ID stage
       branch_req       = 1'b1;
       offset_in_init_d = 1'b0;
     end
   end
+
+  assign have_instr = fetch_valid & ~ (offset_in_init_q | pc_set_i);
 
   assign pc_if_o      = fetch_addr;
   assign if_busy_o    = prefetch_busy;
