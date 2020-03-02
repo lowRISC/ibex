@@ -145,30 +145,36 @@ def check_ibex_uvm_log(uvm_log, core_name, test_name, report, write=True):
       signature
 
     """
-    pass_cnt = 0
-    fail_cnt = 0
+    passed = False
+    failed = False
+
     with open(uvm_log, "r") as log:
         for line in log:
             if 'RISC-V UVM TEST PASSED' in line:
-                pass_cnt += 1
+                passed = True
+
+            if 'RISC-V UVM TEST FAILED' in line:
+                failed = True
                 break
-            elif 'RISC-V UVM TEST FAILED' in line:
-                fail_cnt += 1
-                break
+
+    # If we saw PASSED and FAILED, that's a bit odd. But we should treat the
+    # test as having failed.
+    if failed:
+        passed = False
 
     if write:
         fd = open(report, "a+") if report else sys.stdout
 
         fd.write("%s uvm log : %s\n" % (core_name, uvm_log))
-        if pass_cnt == 1:
+        if passed:
             fd.write("%s : [PASSED]\n\n" % test_name)
-        elif fail_cnt == 1:
+        elif failed:
             fd.write("%s : [FAILED]\n\n" % test_name)
 
         if report:
             fd.close()
 
-    return pass_cnt == 1
+    return passed
 
 
 def main():
