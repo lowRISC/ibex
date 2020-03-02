@@ -39,6 +39,18 @@ lint_off -rule UNUSED -file "*/rtl/ibex_multdiv_fast.sv" -match "*mac_res_ext*"
 // cleaner to write all bits even if not all are used
 lint_off -rule UNUSED -file "*/rtl/ibex_multdiv_fast.sv" -match "*'res_adder_h'[32]*"
 
+// Bits of signal are not used: be_i[3:1]
+// Bits of signal are not used: addr_i[31:10,1:0]
+// Bits of signal are not used: wdata_i[31:8]
+//
+// simulator_ctrl exposes a 32-bit write-only interface to its control
+// registers, but actually only looks at the bottom byte and rounds addresses
+// down to be 4-byte aligned.
+//
+lint_off -rule UNUSED -file "*/rtl/sim/simulator_ctrl.sv" -match "*'be_i'[3:1]*"
+lint_off -rule UNUSED -file "*/rtl/sim/simulator_ctrl.sv" -match "*'addr_i'[31:10,1:0]*"
+lint_off -rule UNUSED -file "*/rtl/sim/simulator_ctrl.sv" -match "*'wdata_i'[31:8]*"
+
 // Signal is not used: test_en_i
 // testability signal
 lint_off -rule UNUSED -file "*/rtl/ibex_register_file_ff.sv" -match "*test_en_i*"
