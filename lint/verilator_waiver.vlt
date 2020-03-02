@@ -51,6 +51,13 @@ lint_off -rule UNUSED -file "*/rtl/sim/simulator_ctrl.sv" -match "*'be_i'[3:1]*"
 lint_off -rule UNUSED -file "*/rtl/sim/simulator_ctrl.sv" -match "*'addr_i'[31:10,1:0]*"
 lint_off -rule UNUSED -file "*/rtl/sim/simulator_ctrl.sv" -match "*'wdata_i'[31:8]*"
 
+// Bits of signal are not used: timer_addr_i[31:10]
+//
+// The upper bits of this address are used to select whether the timer is
+// addressed at all (encoded in the timer_req_i input). However, we pass the
+// entire 32-bit address around to make the code a bit cleaner.
+lint_off -rule UNUSED -file "*/rtl/timer.sv" -match "*'timer_addr_i'[31:10]*"
+
 // Signal is not used: test_en_i
 // testability signal
 lint_off -rule UNUSED -file "*/rtl/ibex_register_file_ff.sv" -match "*test_en_i*"
