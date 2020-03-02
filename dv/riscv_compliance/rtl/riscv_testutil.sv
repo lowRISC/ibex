@@ -106,8 +106,6 @@ module riscv_testutil (
   logic [31:0] read_addr_d, read_addr_q;
   always_comb begin
     state_d = state_q;
-    host_req_o = 1'b0;
-
     unique case (state_q)
       WAIT: begin
         if (read_signature_and_terminate) begin
@@ -119,8 +117,6 @@ module riscv_testutil (
       end
 
       READ: begin
-        host_req_o = 1'b1;
-        host_addr_o = read_addr_q;
         if (host_gnt_i) begin
           read_addr_d = read_addr_q + 4;
           if (read_addr_d == end_signature_addr_q) begin
@@ -141,6 +137,11 @@ module riscv_testutil (
       end
     endcase
   end
+
+  // These are the address and read request bits, respectively of the
+  // TestUtilHost master port.
+  assign host_addr_o = read_addr_q;
+  assign host_req_o = (state_q == READ);
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
