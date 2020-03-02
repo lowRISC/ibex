@@ -131,7 +131,7 @@ binary.
 | Address             | Description                                                                                            |
 |---------------------|--------------------------------------------------------------------------------------------------------|
 | 0x20000             | ASCII Out, write ASCII characters here that will get output to the log file                            |
-| 0x20004             | Simulator Halt, write 1 here to halt the simulation                                                    |
+| 0x20008             | Simulator Halt, write 1 here to halt the simulation                                                    |
 | 0x30000             | RISC-V timer `mtime` register                                                                          |
 | 0x30004             | RISC-V timer `mtimeh` register                                                                         |
 | 0x30008             | RISC-V timer `mtimecmp` register                                                                       |
