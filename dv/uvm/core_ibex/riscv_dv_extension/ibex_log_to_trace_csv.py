@@ -19,17 +19,21 @@ _OLD_SYS_PATH = sys.path
 try:
     sys.path.insert(0, _DV_SCRIPTS)
 
-    from riscv_trace_csv import *
-    from lib import *
+    from riscv_trace_csv import (RiscvInstructionTraceCsv,
+                                 RiscvInstructionTraceEntry,
+                                 get_imm_hex_val)
+    from lib import RET_FATAL, gpr_to_abi, sint_to_hex
+    import logging
 
 finally:
     sys.path = _OLD_SYS_PATH
 
 
-INSTR_RE = re.compile(r"^\s*(?P<time>\d+)\s+(?P<cycle>\d+)\s+(?P<pc>[0-9a-f]+)\s+" \
-                      "(?P<bin>[0-9a-f]+)\s+(?P<instr>\S+\s+\S+)\s*")
+INSTR_RE = \
+    re.compile(r"^\s*(?P<time>\d+)\s+(?P<cycle>\d+)\s+(?P<pc>[0-9a-f]+)\s+"
+               r"(?P<bin>[0-9a-f]+)\s+(?P<instr>\S+\s+\S+)\s*")
 RD_RE = re.compile(r"(x(?P<rd>[1-9]\d*)=0x(?P<rd_val>[0-9a-f]+))")
-ADDR_RE  = re.compile(r"(?P<imm>[\-0-9]+?)\((?P<rs1>.*)\)")
+ADDR_RE = re.compile(r"(?P<imm>[\-0-9]+?)\((?P<rs1>.*)\)")
 
 
 def _process_ibex_sim_log_fd(log_fd, csv_fd, full_trace=True):
@@ -91,78 +95,80 @@ def process_ibex_sim_log(ibex_log, csv, full_trace=1):
 
     logging.info("Processed instruction count : %d" % count)
     if not count:
-      logging.error("No instructions in logfile: %s" % ibex_log)
-      sys.exit(RET_FATAL)
+        logging.error("No instructions in logfile: %s" % ibex_log)
+        sys.exit(RET_FATAL)
 
     logging.info("CSV saved to : %s" % csv)
 
 
 def process_trace(trace):
-  """ Process instruction trace """
-  process_imm(trace)
-  if trace.instr == 'jalr':
-    n = ADDR_RE.search(trace.operand)
-    if n:
-      trace.imm = get_imm_hex_val(n.group("imm"))
+    """ Process instruction trace """
+    process_imm(trace)
+    if trace.instr == 'jalr':
+        n = ADDR_RE.search(trace.operand)
+        if n:
+            trace.imm = get_imm_hex_val(n.group("imm"))
 
 
 def process_imm(trace):
-  """ Process imm to follow RISC-V standard convention """
-  if trace.instr in ['beq', 'bne', 'blt', 'bge', 'bltu', 'bgeu', 'c.beqz',
-                     'c.bnez', 'beqz', 'bnez', 'bgez', 'bltz', 'blez', 'bgtz',
-                     'c.j', 'j', 'c.jal', 'jal']:
-    idx = trace.operand.rfind(',')
-    if idx == -1:
-      imm = trace.operand
-      imm = str(sint_to_hex(int(imm, 16) - int(trace.pc, 16)))
-      trace.operand = imm
-    else:
-      imm = trace.operand[idx + 1 : ]
-      imm = str(sint_to_hex(int(imm, 16) - int(trace.pc, 16)))
-      trace.operand = trace.operand[0 : idx + 1] + imm
+    """Process imm to follow RISC-V standard convention"""
+    if trace.instr in ['beq', 'bne', 'blt', 'bge', 'bltu', 'bgeu', 'c.beqz',
+                       'c.bnez', 'beqz', 'bnez', 'bgez', 'bltz', 'blez',
+                       'bgtz', 'c.j', 'j', 'c.jal', 'jal']:
+        idx = trace.operand.rfind(',')
+        if idx == -1:
+            imm = trace.operand
+            imm = str(sint_to_hex(int(imm, 16) - int(trace.pc, 16)))
+            trace.operand = imm
+        else:
+            imm = trace.operand[idx + 1:]
+            imm = str(sint_to_hex(int(imm, 16) - int(trace.pc, 16)))
+            trace.operand = trace.operand[0:idx + 1] + imm
 
 
 def check_ibex_uvm_log(uvm_log, core_name, test_name, report, write=True):
-  """Process Ibex UVM simulation log.
+    """Process Ibex UVM simulation log.
 
-  This function will be used when a test disables the normal post_compare step.
-  Process the UVM simulation log produced by the test to check for correctness
+    This function will be used when a test disables the normal post_compare
+    step. Process the UVM simulation log produced by the test to check for
+    correctness
 
-  Args:
-    uvm_log: the uvm simulation log
-    core_name: the name of the core
-    test_name: name of the test being checked
-    report: the output report file
-    write: enables writing to the log file
+    Args:
+      uvm_log: the uvm simulation log
+      core_name: the name of the core
+      test_name: name of the test being checked
+      report: the output report file
+      write: enables writing to the log file
 
-  Returns:
-    A boolean indicating whether the test passed or failed based on the signature
-  """
-  pass_cnt = 0
-  fail_cnt = 0
-  with open(uvm_log, "r") as log:
-    for line in log:
-      if 'RISC-V UVM TEST PASSED' in line:
-        pass_cnt += 1
-        break
-      elif 'RISC-V UVM TEST FAILED' in line:
-        fail_cnt += 1
-        break
+    Returns:
+      A boolean indicating whether the test passed or failed based on the
+      signature
 
-  if write:
-    if report:
-      fd = open(report, "a+")
-    else:
-      fd = sys.stdout
-    fd.write("%s uvm log : %s\n" % (core_name, uvm_log))
-    if pass_cnt == 1:
-      fd.write("%s : [PASSED]\n\n" % test_name)
-    elif fail_cnt == 1:
-      fd.write("%s : [FAILED]\n\n" % test_name)
-    if report:
-      fd.close()
+    """
+    pass_cnt = 0
+    fail_cnt = 0
+    with open(uvm_log, "r") as log:
+        for line in log:
+            if 'RISC-V UVM TEST PASSED' in line:
+                pass_cnt += 1
+                break
+            elif 'RISC-V UVM TEST FAILED' in line:
+                fail_cnt += 1
+                break
 
-  return pass_cnt == 1
+    if write:
+        fd = open(report, "a+") if report else sys.stdout
+
+        fd.write("%s uvm log : %s\n" % (core_name, uvm_log))
+        if pass_cnt == 1:
+            fd.write("%s : [PASSED]\n\n" % test_name)
+        elif fail_cnt == 1:
+            fd.write("%s : [FAILED]\n\n" % test_name)
+
+        if report:
+            fd.close()
+
+    return pass_cnt == 1
 
 
 def main():
