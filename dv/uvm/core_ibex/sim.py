@@ -159,7 +159,7 @@ def rtl_sim(sim_cmd, simulator, test_list, output_dir, bin_dir,
     # Run the RTL simulation
     sim_cmd = re.sub("<out>", output_dir, sim_cmd)
     sim_cmd = re.sub("<sim_opts>", opts, sim_cmd)
-    sim_cmd = re.sub("<cwd>", cwd, sim_cmd)
+    sim_cmd = re.sub("<cwd>", _CORE_IBEX, sim_cmd)
     logging.info("Running RTL simulation...")
     cmd_list = []
     for test in test_list:
@@ -252,86 +252,94 @@ def compare(test_list, iss, output_dir, verbose):
     logging.info("RTL & ISS regression report is saved to %s" % report)
 
 
-# Parse input arguments
-parser = argparse.ArgumentParser()
+def main():
+    '''Entry point when run as a script'''
 
-parser.add_argument("--o", type=str, default="./out",
-                    help="Output directory name")
-parser.add_argument("--riscv_dv_root", type=str, default="",
-                    help="Root directory of RISCV-DV")
-parser.add_argument("--testlist", type=str,
-                    default="riscv_dv_extension/testlist.yaml",
-                    help="Regression testlist")
-parser.add_argument("--test", type=str, default="all",
-                    help="Test name, 'all' means all tests in the list")
-parser.add_argument("--seed", type=int, default=-1,
-                    help="Randomization seed, default -1 means random seed")
-parser.add_argument("--iterations", type=int, default=0,
-                    help="Override the iteration count in the test list")
-parser.add_argument("--simulator", type=str, default="vcs",
-                    help="Simulator used to run the generator, default VCS")
-parser.add_argument("--simulator_yaml", type=str,
-                    default="yaml/rtl_simulation.yaml",
-                    help="RTL simulator setting YAML")
-parser.add_argument("--iss", type=str, default="spike",
-                    help="Instruction set simulator")
-parser.add_argument("-v", "--verbose", dest="verbose", action="store_true",
-                    help="Verbose logging")
-parser.add_argument("--cmp_opts", type=str, default="",
-                    help="Compile options for the generator")
-parser.add_argument("--sim_opts", type=str, default="",
-                    help="Simulation options for the generator")
-parser.add_argument("--en_cov", type=str, default=0,
-                    help="Enable coverage dump")
-parser.add_argument("--en_wave", type=str, default=0,
-                    help="Enable waveform dump")
-parser.add_argument("--steps", type=str, default="all",
-                    help="Run steps: compile,sim,compare")
-parser.add_argument("--lsf_cmd", type=str, default="",
-                    help=("LSF command. Run in local sequentially if lsf "
-                          "command is not specified"))
+    # Parse input arguments
+    parser = argparse.ArgumentParser()
 
-args = parser.parse_args()
-setup_logging(args.verbose)
-parser.set_defaults(verbose=False)
-cwd = os.path.dirname(os.path.realpath(__file__))
+    parser.add_argument("--o", type=str, default="./out",
+                        help="Output directory name")
+    parser.add_argument("--riscv_dv_root", type=str, default="",
+                        help="Root directory of RISCV-DV")
+    parser.add_argument("--testlist", type=str,
+                        default="riscv_dv_extension/testlist.yaml",
+                        help="Regression testlist")
+    parser.add_argument("--test", type=str, default="all",
+                        help="Test name, 'all' means all tests in the list")
+    parser.add_argument("--seed", type=int, default=-1,
+                        help=("Randomization seed; the default of -1 picks "
+                              "a random seed"))
+    parser.add_argument("--iterations", type=int, default=0,
+                        help="Override the iteration count in the test list")
+    parser.add_argument("--simulator", type=str, default="vcs",
+                        help="RTL simulator to use (default: vcs)")
+    parser.add_argument("--simulator_yaml", type=str,
+                        default="yaml/rtl_simulation.yaml",
+                        help="RTL simulator setting YAML")
+    parser.add_argument("--iss", type=str, default="spike",
+                        help="Instruction set simulator")
+    parser.add_argument("-v", "--verbose", dest="verbose", action="store_true",
+                        help="Verbose logging")
+    parser.add_argument("--cmp_opts", type=str, default="",
+                        help="Compile options for the generator")
+    parser.add_argument("--sim_opts", type=str, default="",
+                        help="Simulation options for the generator")
+    parser.add_argument("--en_cov", type=str, default=0,
+                        help="Enable coverage dump")
+    parser.add_argument("--en_wave", type=str, default=0,
+                        help="Enable waveform dump")
+    parser.add_argument("--steps", type=str, default="all",
+                        help="Run steps: compile,sim,compare")
+    parser.add_argument("--lsf_cmd", type=str, default="",
+                        help=("LSF command. Run in local sequentially if lsf "
+                              "command is not specified"))
 
-# Create the output directory
-output_dir = ("%s/rtl_sim" % args.o)
-bin_dir = ("%s/instr_gen/asm_tests" % args.o)
-subprocess.run(["mkdir", "-p", output_dir])
+    args = parser.parse_args()
+    setup_logging(args.verbose)
+    parser.set_defaults(verbose=False)
 
-steps = {
-    'compile': args.steps == "all" or re.match("compile", args.steps),
-    'sim': args.steps == "all" or re.match("sim", args.steps),
-    'compare': args.steps == "all" or re.match("compare", args.steps)
-}
+    # Create the output directory
+    output_dir = ("%s/rtl_sim" % args.o)
+    bin_dir = ("%s/instr_gen/asm_tests" % args.o)
+    subprocess.run(["mkdir", "-p", output_dir])
 
-compile_cmd = []
-sim_cmd = ""
-matched_list = []
-if steps['compile'] or steps['sim']:
-    compile_cmd, sim_cmd = get_simulator_cmd(args.simulator,
-                                             args.simulator_yaml,
-                                             args.en_cov, args.en_wave)
-if steps['sim'] or steps['compare']:
-    process_regression_list(args.testlist, args.test, args.iterations,
-                            matched_list, args.riscv_dv_root)
-    if not matched_list:
-        sys.exit("Cannot find %s in %s" % (args.test, args.testlist))
+    steps = {
+        'compile': args.steps == "all" or re.match("compile", args.steps),
+        'sim': args.steps == "all" or re.match("sim", args.steps),
+        'compare': args.steps == "all" or re.match("compare", args.steps)
+    }
+
+    compile_cmd = []
+    sim_cmd = ""
+    matched_list = []
+    if steps['compile'] or steps['sim']:
+        compile_cmd, sim_cmd = get_simulator_cmd(args.simulator,
+                                                 args.simulator_yaml,
+                                                 args.en_cov, args.en_wave)
+    if steps['sim'] or steps['compare']:
+        process_regression_list(args.testlist, args.test, args.iterations,
+                                matched_list, args.riscv_dv_root)
+        if not matched_list:
+            sys.exit("Cannot find %s in %s" % (args.test, args.testlist))
+
+    # Compile TB
+    if steps['compile']:
+        rtl_compile(compile_cmd, output_dir, args.lsf_cmd, args.cmp_opts)
+
+    # Run RTL simulation
+    if steps['sim']:
+        rtl_sim(sim_cmd, args.simulator, matched_list, output_dir, bin_dir,
+                args.lsf_cmd, args.seed, args.sim_opts)
+
+    # Compare RTL & ISS simulation result.;
+    if steps['compare']:
+        compare(matched_list, args.iss, args.o, args.verbose)
 
 
-# Compile TB
-if steps['compile']:
-    rtl_compile(compile_cmd, output_dir, args.lsf_cmd, args.cmp_opts)
-
-
-# Run RTL simulation
-if steps['sim']:
-    rtl_sim(sim_cmd, args.simulator, matched_list, output_dir, bin_dir,
-            args.lsf_cmd, args.seed, args.sim_opts)
-
-
-# Compare RTL & ISS simulation result.;
-if steps['compare']:
-    compare(matched_list, args.iss, args.o, args.verbose)
+if __name__ == '__main__':
+    try:
+        main()
+    except RuntimeError as err:
+        sys.stderr.write('Error: {}\n'.format(err))
+        sys.exit(RET_FAIL)
