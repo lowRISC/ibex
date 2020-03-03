@@ -18,19 +18,34 @@ Regression script for RISC-V random instruction generator
 
 import argparse
 import os
-import random
 import re
 import subprocess
 import sys
 
-sys.path.insert(0, "../../../vendor/google_riscv-dv/scripts")
-sys.path.insert(0, "./riscv_dv_extension")
+_CORE_IBEX = os.path.normpath(os.path.join(os.path.dirname(__file__)))
+_IBEX_ROOT = os.path.normpath(os.path.join(_CORE_IBEX, '../../..'))
+_DV_SCRIPTS = os.path.join(_IBEX_ROOT, 'vendor/google_riscv-dv/scripts')
+_OLD_SYS_PATH = sys.path
 
-from lib import *
-from ibex_log_to_trace_csv import *
-from spike_log_to_trace_csv import *
-from ovpsim_log_to_trace_csv import *
-from instr_trace_compare import *
+# Import riscv_trace_csv and lib from _DV_SCRIPTS before putting sys.path back
+# as it started.
+try:
+    sys.path = ([os.path.join(_CORE_IBEX, 'riscv_dv_extension'), _DV_SCRIPTS] +
+                sys.path)
+
+    from lib import (get_env_var, get_seed, process_regression_list,
+                     read_yaml, run_cmd, run_parallel_cmd,
+                     setup_logging, RET_FAIL)
+    import logging
+
+    from spike_log_to_trace_csv import process_spike_sim_log
+    from ovpsim_log_to_trace_csv import process_ovpsim_sim_log
+    from instr_trace_compare import compare_trace_csv
+
+    from ibex_log_to_trace_csv import process_ibex_sim_log, check_ibex_uvm_log
+
+finally:
+    sys.path = _OLD_SYS_PATH
 
 
 def process_cmd(keyword, cmd, opts, enable):
