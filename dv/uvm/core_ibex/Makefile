@@ -311,6 +311,9 @@ compile-vars-prereq = $(call vars-prereq,comp,compiling TB,$(compile-var-deps))
 
 $(call dump-vars-match,$(compile-var-deps),comp)
 
+cov-arg := $(if $(call equal,$(COV),1),--en_cov,)
+wave-arg := $(if $(call equal,$(WAVE),1),--en_wave,)
+
 $(OUT)/rtl_sim/.compile.stamp: \
   $(compile-vars-prereq) $(all-verilog) $(risc-dv-files) | $(OUT)/rtl_sim
 	@python3 ./sim.py \
@@ -318,9 +321,7 @@ $(OUT)/rtl_sim/.compile.stamp: \
      --riscv_dv_root=${GEN_DIR} \
      --steps=compile \
      ${COMMON_OPTS} \
-     --simulator="${SIMULATOR}" \
-     --en_cov=${COV} \
-     --en_wave=${WAVES} \
+     --simulator="${SIMULATOR}" $(cov-arg) $(wave-arg) \
      --cmp_opts="${COMPILE_OPTS}"
 	$(call dump-vars,$(OUT)/rtl_sim/.compile-vars.mk,comp,$(compile-var-deps))
 	@touch $@
@@ -354,9 +355,7 @@ $(metadata)/rtl_sim.run.stamp: \
      --riscv_dv_root=${GEN_DIR} \
      --steps=sim \
      ${TEST_OPTS} \
-     --simulator="${SIMULATOR}" \
-     --en_cov ${COV} \
-     --en_wave ${WAVES} \
+     --simulator="${SIMULATOR}" $(cov-arg) $(wave-arg) \
      --lsf_cmd="${LSF_CMD}" \
      --sim_opts="+signature_addr=${SIGNATURE_ADDR}" \
      ${SIM_OPTS}

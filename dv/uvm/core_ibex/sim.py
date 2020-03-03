@@ -320,9 +320,9 @@ def main():
                         help="Compile options for the generator")
     parser.add_argument("--sim_opts", type=str, default="",
                         help="Simulation options for the generator")
-    parser.add_argument("--en_cov", type=str, default=0,
+    parser.add_argument("--en_cov", action='store_true',
                         help="Enable coverage dump")
-    parser.add_argument("--en_wave", type=str, default=0,
+    parser.add_argument("--en_wave", action='store_true',
                         help="Enable waveform dump")
     parser.add_argument("--steps", type=str, default="all",
                         help="Run steps: compile,sim,compare")
@@ -350,8 +350,8 @@ def main():
     matched_list = []
     if steps['compile'] or steps['sim']:
         enables = {
-            'cov_opts': True if args.en_cov == '1' else False,
-            'wave_opts': True if args.en_wave == '1' else False
+            'cov_opts': args.en_cov,
+            'wave_opts': args.en_wave
         }
         compile_cmds, sim_cmd = get_simulator_cmd(args.simulator,
                                                   args.simulator_yaml, enables)
