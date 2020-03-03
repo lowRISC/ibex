@@ -318,7 +318,6 @@ $(OUT)/rtl_sim/.compile.stamp: \
   $(compile-vars-prereq) $(all-verilog) $(risc-dv-files) | $(OUT)/rtl_sim
 	@python3 ./sim.py \
      --o=${OUT} \
-     --riscv_dv_root=${GEN_DIR} \
      --steps=compile \
      ${COMMON_OPTS} \
      --simulator="${SIMULATOR}" $(cov-arg) $(wave-arg) \
@@ -352,7 +351,6 @@ $(metadata)/rtl_sim.run.stamp: \
   $(metadata)/rtl_sim.compile.stamp $(metadata)/instr_gen.compile.stamp
 	@python3 ./sim.py \
      --o=$(OUT-SEED) \
-     --riscv_dv_root=${GEN_DIR} \
      --steps=sim \
      ${TEST_OPTS} \
      --simulator="${SIMULATOR}" $(cov-arg) $(wave-arg) \

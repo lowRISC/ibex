@@ -24,13 +24,14 @@ import sys
 
 _CORE_IBEX = os.path.normpath(os.path.join(os.path.dirname(__file__)))
 _IBEX_ROOT = os.path.normpath(os.path.join(_CORE_IBEX, '../../..'))
-_DV_SCRIPTS = os.path.join(_IBEX_ROOT, 'vendor/google_riscv-dv/scripts')
+_RISCV_DV_ROOT = os.path.join(_IBEX_ROOT, 'vendor/google_riscv-dv')
 _OLD_SYS_PATH = sys.path
 
 # Import riscv_trace_csv and lib from _DV_SCRIPTS before putting sys.path back
 # as it started.
 try:
-    sys.path = ([os.path.join(_CORE_IBEX, 'riscv_dv_extension'), _DV_SCRIPTS] +
+    sys.path = ([os.path.join(_CORE_IBEX, 'riscv_dv_extension'),
+                 os.path.join(_RISCV_DV_ROOT, 'scripts')] +
                 sys.path)
 
     from lib import (get_seed, process_regression_list,
@@ -292,8 +293,6 @@ def main():
 
     parser.add_argument("--o", type=str, default="out",
                         help="Output directory name")
-    parser.add_argument("--riscv_dv_root", type=str, default="",
-                        help="Root directory of RISCV-DV")
     parser.add_argument("--testlist", help="Regression testlist",
                         default=os.path.join(_CORE_IBEX,
                                              'riscv_dv_extension',
@@ -358,7 +357,7 @@ def main():
 
     if steps['sim'] or steps['compare']:
         process_regression_list(args.testlist, args.test, args.iterations,
-                                matched_list, args.riscv_dv_root)
+                                matched_list, _RISCV_DV_ROOT)
         if not matched_list:
             sys.exit("Cannot find %s in %s" % (args.test, args.testlist))
 
