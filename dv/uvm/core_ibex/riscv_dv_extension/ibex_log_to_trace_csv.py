@@ -95,8 +95,7 @@ def process_ibex_sim_log(ibex_log, csv, full_trace=1):
 
     logging.info("Processed instruction count : %d" % count)
     if not count:
-        logging.error("No instructions in logfile: %s" % ibex_log)
-        sys.exit(RET_FATAL)
+        raise RuntimeError("No instructions in logfile: %s" % ibex_log)
 
     logging.info("CSV saved to : %s" % csv)
 
@@ -134,11 +133,13 @@ def check_ibex_uvm_log(uvm_log, core_name, test_name, report, write=True):
     correctness
 
     Args:
-      uvm_log: the uvm simulation log
+      uvm_log:   the uvm simulation log
       core_name: the name of the core
       test_name: name of the test being checked
-      report: the output report file
-      write: enables writing to the log file
+      report:    the output report file
+      write:     enables writing to the log file. If equal to 'onfail',
+                 write when the test fails. Otherwise (true, but not the
+                 string 'onfail'), write unconditionally.
 
     Returns:
       A boolean indicating whether the test passed or failed based on the
@@ -197,4 +198,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except RuntimeError as err:
+        sys.stderr.write('Error: {}\n'.format(err))
+        sys.exit(RET_FATAL)
