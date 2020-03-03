@@ -33,7 +33,7 @@ try:
     sys.path = ([os.path.join(_CORE_IBEX, 'riscv_dv_extension'), _DV_SCRIPTS] +
                 sys.path)
 
-    from lib import (get_env_var, get_seed, process_regression_list,
+    from lib import (get_seed, process_regression_list,
                      read_yaml, run_cmd, run_parallel_cmd,
                      setup_logging, RET_FAIL)
     import logging
@@ -48,87 +48,119 @@ finally:
     sys.path = _OLD_SYS_PATH
 
 
-def process_cmd(keyword, cmd, opts, enable):
-    """ Process the compile and simulation command
+def subst_opt(string, name, enable, replacement):
+    '''Substitute the <name> option in string
 
-    Args:
-      keyword : Keyword to search
-      cmd     : Command to be processed
-      opts    : Options to replace the keyword
-      enable  : Option enable/disable
+    If enable is False, <name> is replaced by '' in string. If it is True,
+    <name> is replaced by replacement, which should be a string or None. If
+    replacement is None and <name> occurs in string, we throw an error.
 
-    Returns:
-      Processed command
-    """
-    if enable == "1":
-        return re.sub(keyword, opts.rstrip(), cmd)
-    else:
-        return re.sub(keyword, "", cmd)
+    '''
+    needle = '<{}>'.format(name)
+    if not enable:
+        return string.replace(needle, '')
 
+    if replacement is None:
+        if needle in string:
+            raise RuntimeError('No replacement defined for {} '
+                               '(used in string: {!r}).'
+                               .format(needle, string))
+        return string
 
-def get_simulator_cmd(simulator, simulator_yaml, en_cov, en_wave):
-    """ Setup the compile and simulation command for the generator
-
-    Args:
-      simulator      : RTL simulator used to run instruction generator
-      simulator_yaml : RTL simulator configuration file in YAML format
-      en_cov         : Enable coverage dump
-      en_wave        : Enable waveform
-
-    Returns:
-      compile_cmd    : RTL simulator command to compile instruction generator
-      sim_cmd        : RTL simulator command to run the instruction generator
-    """
-    logging.info("Processing simulator setup file : %s" % simulator_yaml)
-    yaml_data = read_yaml(simulator_yaml)
-    # Search for matched simulator
-    for entry in yaml_data:
-        if entry['tool'] != simulator:
-            continue
-        logging.info("Found matching simulator: %s" % entry['tool'])
-        compile_cmd = entry['compile']['cmd']
-        for i in range(len(compile_cmd)):
-            if 'cov_opts' in entry['compile']:
-                compile_cmd[i] = process_cmd("<cov_opts>", compile_cmd[i],
-                                             entry['compile']['cov_opts'],
-                                             en_cov)
-            if 'wave_opts' in entry['compile']:
-                compile_cmd[i] = process_cmd("<wave_opts>", compile_cmd[i],
-                                             entry['compile']['wave_opts'],
-                                             en_wave)
-        sim_cmd = entry['sim']['cmd']
-        if 'cov_opts' in entry['sim']:
-            sim_cmd = process_cmd("<cov_opts>", sim_cmd,
-                                  entry['sim']['cov_opts'], en_cov)
-        if 'wave_opts' in entry['sim']:
-            sim_cmd = process_cmd("<wave_opts>", sim_cmd,
-                                  entry['sim']['wave_opts'], en_wave)
-        if 'env_var' in entry:
-            for env_var in entry['env_var'].split(','):
-                for i in range(len(compile_cmd)):
-                    compile_cmd[i] = re.sub("<"+env_var+">",
-                                            get_env_var(env_var),
-                                            compile_cmd[i])
-                sim_cmd = re.sub("<"+env_var+">",
-                                 get_env_var(env_var), sim_cmd)
-        return compile_cmd, sim_cmd
-
-    logging.error("Cannot find RTL simulator %0s" % simulator)
-    sys.exit(RET_FAIL)
+    return string.replace(needle, replacement)
 
 
-def rtl_compile(compile_cmd, output_dir, lsf_cmd, opts):
+def subst_env_vars(string, env_vars):
+    '''Substitute environment variables in string
+
+    env_vars should be a string with a comma-separated list of environment
+    variables to substitute. For each environment variable, V, in the list, any
+    occurrence of <V> in string will be replaced by the value of the
+    environment variable with that name. If <V> occurs in the string but $V is
+    not set in the environment, an error is raised.
+
+    '''
+    env_vars = env_vars.strip()
+    if not env_vars:
+        return string
+
+    for env_var in env_vars.split(','):
+        env_var = env_var.strip()
+        needle = '<{}>'.format(env_var)
+        if needle in string:
+            value = os.environ.get(env_var)
+            if value is None:
+                raise RuntimeError('Cannot substitute {} in command because '
+                                   'the environment variable ${} is not set.'
+                                   .format(needle, env_var))
+            string = string.replace(needle, value)
+
+    return string
+
+
+def subst_cmd(cmd, enable_dict, opts_dict, env_vars):
+    '''Substitute options and environment variables in cmd
+
+    enable_dict should be a dict mapping names to bools. For each key, N, in
+    enable_dict, if enable_dict[N] is False, then all occurrences of <N> in cmd
+    will be replaced with ''. If enable_dict[N] is True, all occurrences of <N>
+    in cmd will be replaced with opts_dict[N].
+
+    If N is not a key in opts_dict, this is no problem unless cmd contains
+    <N>, in which case we throw a RuntimeError.
+
+    Finally, the environment variables are substituted as described in
+    subst_env_vars.
+
+    '''
+    for name, enable in enable_dict.items():
+        cmd = subst_opt(cmd, name, enable, opts_dict.get(name))
+
+    return subst_env_vars(cmd, env_vars)
+
+
+def get_yaml_for_simulator(simulator, yaml_path):
+    '''Read yaml at yaml_path and find entry for simulator'''
+    logging.info("Processing simulator setup file : %s" % yaml_path)
+    for entry in read_yaml(yaml_path):
+        if entry.get('tool') == simulator:
+            return entry
+
+    raise RuntimeError("Cannot find RTL simulator {}".format(simulator))
+
+
+def get_simulator_cmd(simulator, yaml_path, enables):
+    '''Get compile and run commands for the testbench
+
+    simulator is the name of the simulator to use. yaml_path is the path to a
+    yaml file describing various command line options. enables is a dictionary
+    keyed by option names with boolean values: true if the option is enabled.
+
+    Returns (compile_cmds, sim_cmd), which are the simulator commands to
+    compile and run the testbench, respectively. compile_cmd is a list of
+    strings (multiple commands); sim_cmd is a single string.
+
+    '''
+    entry = get_yaml_for_simulator(simulator, yaml_path)
+    env_vars = entry.get('env_var', '')
+
+    return ([subst_cmd(arg, enables, entry['compile'], env_vars)
+             for arg in entry['compile']['cmd']],
+            subst_cmd(entry['sim']['cmd'], enables, entry['sim'], env_vars))
+
+
+def rtl_compile(compile_cmds, output_dir, lsf_cmd, opts):
     """Run the instruction generator
 
     Args:
-      compile_cmd : Compile command
+      compile_cmd : Compile commands
       output_dir  : Output directory of the ELF files
       lsf_cmd     : LSF command to run compilation
       opts        : Compile options for the generator
     """
     # Compile the TB
     logging.info("Compiling TB")
-    for cmd in compile_cmd:
+    for cmd in compile_cmds:
         cmd = re.sub("<out>", output_dir, cmd)
         cmd = re.sub("<cmp_opts>", opts, cmd)
         logging.debug("Compile command: %s" % cmd)
@@ -310,13 +342,17 @@ def main():
         'compare': args.steps == "all" or re.match("compare", args.steps)
     }
 
-    compile_cmd = []
+    compile_cmds = []
     sim_cmd = ""
     matched_list = []
     if steps['compile'] or steps['sim']:
-        compile_cmd, sim_cmd = get_simulator_cmd(args.simulator,
-                                                 args.simulator_yaml,
-                                                 args.en_cov, args.en_wave)
+        enables = {
+            'cov_opts': True if args.en_cov == '1' else False,
+            'wave_opts': True if args.en_wave == '1' else False
+        }
+        compile_cmds, sim_cmd = get_simulator_cmd(args.simulator,
+                                                  args.simulator_yaml, enables)
+
     if steps['sim'] or steps['compare']:
         process_regression_list(args.testlist, args.test, args.iterations,
                                 matched_list, args.riscv_dv_root)
@@ -325,7 +361,7 @@ def main():
 
     # Compile TB
     if steps['compile']:
-        rtl_compile(compile_cmd, output_dir, args.lsf_cmd, args.cmp_opts)
+        rtl_compile(compile_cmds, output_dir, args.lsf_cmd, args.cmp_opts)
 
     # Run RTL simulation
     if steps['sim']:
