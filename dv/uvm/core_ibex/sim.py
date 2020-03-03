@@ -18,6 +18,7 @@ Regression script for RISC-V random instruction generator
 
 import argparse
 import os
+import random
 import subprocess
 import sys
 
@@ -33,7 +34,7 @@ try:
                  os.path.join(_RISCV_DV_ROOT, 'scripts')] +
                 sys.path)
 
-    from lib import (get_seed, process_regression_list,
+    from lib import (process_regression_list,
                      read_yaml, run_cmd, run_parallel_cmd,
                      setup_logging, RET_FAIL)
     import logging
@@ -206,18 +207,18 @@ def rtl_sim(sim_cmd, simulator, test_list, output_dir, bin_dir,
                          {
                              'out': output_dir,
                              'sim_opts': opts,
-                             'cwd': _CORE_IBEX
+                             'cwd': _CORE_IBEX,
+                             'seed': str(seed)
                          })
 
     logging.info("Running RTL simulation...")
     cmd_list = []
     for test in test_list:
         for i in range(test['iterations']):
-            rand_seed = get_seed(seed)
-            test_sim_cmd = sim_cmd.replace("<seed>", str(rand_seed))
-            if "sim_opts" in test:
-                test_sim_cmd += ' '
-                test_sim_cmd += test['sim_opts']
+            test_sim_cmd = (sim_cmd + ' ' + test['sim_opts']
+                            if "sim_opts" in test
+                            else sim_cmd)
+
             sim_dir = output_dir + ("/%s.%d" % (test['test'], i))
             run_cmd(("mkdir -p %s" % sim_dir))
             os.chdir(sim_dir)
@@ -315,9 +316,8 @@ def main():
                                              'testlist.yaml'))
     parser.add_argument("--test", type=str, default="all",
                         help="Test name, 'all' means all tests in the list")
-    parser.add_argument("--seed", type=int, default=-1,
-                        help=("Randomization seed; the default of -1 picks "
-                              "a random seed"))
+    parser.add_argument("--seed", type=int,
+                        help=("Randomization seed; random if not specified"))
     parser.add_argument("--iterations", type=int, default=0,
                         help="Override the iteration count in the test list")
     parser.add_argument("--simulator", type=str, default="vcs",
@@ -383,8 +383,16 @@ def main():
 
     # Run RTL simulation
     if steps['sim']:
+        # Pick a seed: either the one we were given, or pick one at random. In
+        # the latter case, print it out so the user can see what's going on.
+        if args.seed is None or args.seed < 0:
+            seed = random.getrandbits(32)
+            logging.info("Random seed chosen: {}".format(seed))
+        else:
+            seed = args.seed
+
         rtl_sim(sim_cmd, args.simulator, matched_list, output_dir, bin_dir,
-                args.lsf_cmd, args.seed, args.sim_opts)
+                args.lsf_cmd, seed, args.sim_opts)
 
     # Compare RTL & ISS simulation result.;
     if steps['compare']:
