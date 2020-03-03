@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Copyright 2019 Google LLC
 
@@ -111,13 +113,13 @@ def subst_cmd(cmd, enable_dict, opts_dict, env_vars):
     <N>, in which case we throw a RuntimeError.
 
     Finally, the environment variables are substituted as described in
-    subst_env_vars.
+    subst_env_vars and any newlines are stripped out.
 
     '''
     for name, enable in enable_dict.items():
         cmd = subst_opt(cmd, name, enable, opts_dict.get(name))
 
-    return subst_env_vars(cmd, env_vars)
+    return subst_env_vars(cmd, env_vars).replace('\n', ' ')
 
 
 def subst_vars(string, var_dict):
@@ -160,7 +162,7 @@ def get_simulator_cmd(simulator, yaml_path, enables):
 
 
 def rtl_compile(compile_cmds, output_dir, lsf_cmd, opts):
-    """Run the instruction generator
+    """Compile the testbench RTL
 
     Args:
       compile_cmd : Compile commands
@@ -180,29 +182,108 @@ def rtl_compile(compile_cmds, output_dir, lsf_cmd, opts):
         run_cmd(cmd)
 
 
-def rtl_sim(sim_cmd, simulator, test_list, output_dir, bin_dir,
-            lsf_cmd, seed, opts):
-    """Run the instruction generator
+def get_test_sim_cmd(base_cmd, test, idx, output_dir, bin_dir, lsf_cmd):
+    '''Generate the command that runs a test iteration in the simulator
 
-    Args:
-      sim_cmd    : Simulation command
-      simulator  : Simulator being used
-      test_list  : List of assembly programs
-      output_dir : Simulation output directory
-      bin_dir    : Directory of the ELF files
-      lsf_cmd    : LSF command to run simulation
-      seed       : Seed of RTL simulation
-      opts       : Simulation options
+    base_cmd is the command to use before any test-specific substitutions. test
+    is a dictionary describing the test (originally read from the testlist YAML
+    file). idx is the test iteration (an integer).
+
+    output_dir is the directory below which the test results will be written.
+    bin_dir is the directory containing compiled binaries. lsf_cmd (if not
+    None) is a string that runs bsub to submit the task on LSF.
+
+    Returns (desc, cmd, dirname) where desc is a description of the command,
+    cmd is the command to run and dirname is the directory in which to run it.
+
+    '''
+    sim_cmd = (base_cmd + ' ' + test['sim_opts'].replace('\n', ' ')
+               if "sim_opts" in test
+               else base_cmd)
+
+    test_name = test['test']
+
+    sim_dir = os.path.join(output_dir, '{}.{}'.format(test_name, idx))
+    binary = os.path.join(bin_dir, '{}_{}.bin'.format(test_name, idx))
+    desc = '{} with {}'.format(test['rtl_test'], binary)
+
+    if not os.path.exists(binary):
+        raise RuntimeError('When computing simulation command for running '
+                           'iteration {} of test {}, cannot find the '
+                           'expected binary at {!r}.'
+                           .format(idx, test_name, binary))
+
+    # Add plusargs for the test and a log file.
+    sim_cmd += (' +UVM_TESTNAME={} +bin={} +ibex_tracer_file_base={} -l {}'
+                .format(test['rtl_test'], binary,
+                        os.path.join(sim_dir, 'trace_core'),
+                        os.path.join(sim_dir, 'sim.log')))
+
+    if lsf_cmd is not None:
+        sim_cmd = lsf_cmd + ' ' + sim_cmd
+
+    return (desc, sim_cmd, sim_dir)
+
+
+def run_sim_commands(command_list, use_lsf, check_return_code):
+    '''Run the given list of commands
+
+    command_list should be a list of tuples (desc, cmd, dirname) where desc is
+    a human-readable description of the test, cmd is a command to run and
+    dirname is the directory in which to run it (which will be created if
+    necessary).
+
+    If use_lsf is true, the commands in command_list begin with something like
+    'bsub -Is'. It seems that we always use interactive bsub, so we'll have a
+    local process per job, which we track with run_parallel_cmd.
+
+    If check_return_code is true, we check that the commands pass and stop if
+    not.
+
+    '''
+    # If we're in LSF mode, we submit all the commands 'at once', which means
+    # we have to create the output directories in advance.
+    if use_lsf:
+        cmds = []
+        for cmd, dirname in command_list:
+            os.makedirs(dirname, exist_ok=True)
+            cmds.append(cmd)
+        run_parallel_cmd(cmds, 600, check_return_code=check_return_code)
+        return
+
+    # We're not in LSF mode, so we'll create the output directories as we go.
+    # That should make it a bit easier to see how far we got if there was an
+    # error.
+    for desc, cmd, dirname in command_list:
+        os.makedirs(dirname, exist_ok=True)
+        logging.info("Running " + desc)
+        run_cmd(cmd, 300, check_return_code=check_return_code)
+
+
+def rtl_sim(sim_cmd, test_list, seed, opts,
+            output_dir, bin_dir, lsf_cmd, check_return_code):
+    """Run the testbench in the simulator
+
+    sim_cmd is the base command (as returned by get_simulator_cmd). This will
+    still have placeholders for test-specific arguments. test_list is a list of
+    test objects read from the testlist YAML file which gives the tests to run.
+
+    seed is the seed to use in the simulations (controls things like random
+    delays on the bus). opts is a string of plusargs to give to the simulator.
+
+    output_dir is the output directory for simulation files (and the directory
+    in which the simulator gets run). bin_dir is the directory containing
+    binaries to be run.
+
+    If lsf_cmd is not None, it should be prefixed on each command, which will
+    be run in parallel.
+
+    check_return_code is True if we should check the return codes from
+    simulator executions.
+
     """
-    check_return_code = True
-    # Don't check return code for IUS sims, as a failure will short circuit
-    # the entire simulation flow
-    if simulator == "ius":
-        check_return_code = False
-        logging.debug("Disable return code checking for %s simulator"
-                      % simulator)
+    logging.info("Running RTL simulation...")
 
-    # Run the RTL simulation
     sim_cmd = subst_vars(sim_cmd,
                          {
                              'out': output_dir,
@@ -211,31 +292,15 @@ def rtl_sim(sim_cmd, simulator, test_list, output_dir, bin_dir,
                              'seed': str(seed)
                          })
 
-    logging.info("Running RTL simulation...")
+    # Compute a list of pairs (cmd, dirname) where cmd is the command to run
+    # and dirname is the directory in which the command should be run.
     cmd_list = []
     for test in test_list:
         for i in range(test['iterations']):
-            test_sim_cmd = (sim_cmd + ' ' + test['sim_opts']
-                            if "sim_opts" in test
-                            else sim_cmd)
+            cmd_list.append(get_test_sim_cmd(sim_cmd, test, i,
+                                             output_dir, bin_dir, lsf_cmd))
 
-            sim_dir = output_dir + ("/%s.%d" % (test['test'], i))
-            run_cmd(("mkdir -p %s" % sim_dir))
-            os.chdir(sim_dir)
-            binary = ("%s/%s_%d.bin" % (bin_dir, test['test'], i))
-            cmd = (lsf_cmd + " " + test_sim_cmd +
-                   (" +UVM_TESTNAME=%s " % test['rtl_test']) +
-                   (" +bin=%s " % binary) +
-                   (" -l sim.log "))
-            cmd = cmd.replace('\n', '')
-            if lsf_cmd == "":
-                logging.info("Running %s with %s" % (test['rtl_test'], binary))
-                run_cmd(cmd, 300, check_return_code=check_return_code)
-            else:
-                cmd_list.append(cmd)
-    if lsf_cmd != "":
-        logging.info("Running %0d simulation jobs." % len(cmd_list))
-        run_parallel_cmd(cmd_list, 600, check_return_code=check_return_code)
+    run_sim_commands(cmd_list, lsf_cmd is not None, check_return_code)
 
 
 def compare(test_list, iss, output_dir, verbose):
@@ -341,8 +406,8 @@ def main():
                         help="Enable waveform dump")
     parser.add_argument("--steps", type=str, default="all",
                         help="Run steps: compile,sim,compare")
-    parser.add_argument("--lsf_cmd", type=str, default="",
-                        help=("LSF command. Run in local sequentially if lsf "
+    parser.add_argument("--lsf_cmd", type=str,
+                        help=("LSF command. Run locally if lsf "
                               "command is not specified"))
 
     args = parser.parse_args()
@@ -383,6 +448,15 @@ def main():
 
     # Run RTL simulation
     if steps['sim']:
+        check_return_code = True
+        # Don't check return code for IUS sims, as a failure will short circuit
+        # the entire simulation flow
+        check_return_code = True
+        if args.simulator == "ius":
+            check_return_code = False
+            logging.debug("Disable return code checking for %s simulator"
+                          % args.simulator)
+
         # Pick a seed: either the one we were given, or pick one at random. In
         # the latter case, print it out so the user can see what's going on.
         if args.seed is None or args.seed < 0:
@@ -391,8 +465,8 @@ def main():
         else:
             seed = args.seed
 
-        rtl_sim(sim_cmd, args.simulator, matched_list, output_dir, bin_dir,
-                args.lsf_cmd, seed, args.sim_opts)
+        rtl_sim(sim_cmd, matched_list, seed, args.sim_opts,
+                output_dir, bin_dir, args.lsf_cmd, check_return_code)
 
     # Compare RTL & ISS simulation result.;
     if steps['compare']:

@@ -2,7 +2,7 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-DV_DIR              := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+DV_DIR              := $(shell dirname $(lastword $(MAKEFILE_LIST)))
 GEN_DIR             := $(realpath ${DV_DIR}/../../../vendor/google_riscv-dv)
 TOOLCHAIN           := ${RISCV_TOOLCHAIN}
 
@@ -313,10 +313,11 @@ $(call dump-vars-match,$(compile-var-deps),comp)
 
 cov-arg := $(if $(call equal,$(COV),1),--en_cov,)
 wave-arg := $(if $(call equal,$(WAVE),1),--en_wave,)
+lsf-arg := $(if $(LSF_CMD),--lsf_cmd="$(LSF_CMD)",)
 
 $(OUT)/rtl_sim/.compile.stamp: \
-  $(compile-vars-prereq) $(all-verilog) $(risc-dv-files) | $(OUT)/rtl_sim
-	@python3 ./sim.py \
+  $(compile-vars-prereq) $(all-verilog) $(risc-dv-files) sim.py | $(OUT)/rtl_sim
+	@./sim.py \
      --o=${OUT} \
      --steps=compile \
      ${COMMON_OPTS} \
@@ -348,15 +349,13 @@ $(metadata)/rtl_sim.compile.stamp: \
 # This rule actually runs the simulation. It depends on the copied-in testbench
 # and also on us having already compiled the test programs.
 $(metadata)/rtl_sim.run.stamp: \
-  $(metadata)/rtl_sim.compile.stamp $(metadata)/instr_gen.compile.stamp
-	@python3 ./sim.py \
+  $(metadata)/rtl_sim.compile.stamp $(metadata)/instr_gen.compile.stamp sim.py
+	@./sim.py \
      --o=$(OUT-SEED) \
      --steps=sim \
      ${TEST_OPTS} \
-     --simulator="${SIMULATOR}" $(cov-arg) $(wave-arg) \
-     --lsf_cmd="${LSF_CMD}" \
-     --sim_opts="+signature_addr=${SIGNATURE_ADDR}" \
-     ${SIM_OPTS}
+     --simulator="${SIMULATOR}" $(cov-arg) $(wave-arg) $(lsf-arg) \
+     --sim_opts="+signature_addr=${SIGNATURE_ADDR}" ${SIM_OPTS}
 	@touch $@
 
 .PHONY: rtl_sim
@@ -368,7 +367,7 @@ $(OUT-SEED)/regr.log: \
   $(metadata)/instr_gen.iss.stamp \
   $(metadata)/rtl_sim.run.stamp
 	@rm -f $@
-	@python3 ./sim.py \
+	@./sim.py \
      --o=$(OUT-SEED) \
      --steps=compare \
      ${TEST_OPTS} \
