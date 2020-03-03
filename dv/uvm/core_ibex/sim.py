@@ -290,13 +290,14 @@ def main():
     # Parse input arguments
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--o", type=str, default="./out",
+    parser.add_argument("--o", type=str, default="out",
                         help="Output directory name")
     parser.add_argument("--riscv_dv_root", type=str, default="",
                         help="Root directory of RISCV-DV")
-    parser.add_argument("--testlist", type=str,
-                        default="riscv_dv_extension/testlist.yaml",
-                        help="Regression testlist")
+    parser.add_argument("--testlist", help="Regression testlist",
+                        default=os.path.join(_CORE_IBEX,
+                                             'riscv_dv_extension',
+                                             'testlist.yaml'))
     parser.add_argument("--test", type=str, default="all",
                         help="Test name, 'all' means all tests in the list")
     parser.add_argument("--seed", type=int, default=-1,
@@ -306,9 +307,11 @@ def main():
                         help="Override the iteration count in the test list")
     parser.add_argument("--simulator", type=str, default="vcs",
                         help="RTL simulator to use (default: vcs)")
-    parser.add_argument("--simulator_yaml", type=str,
-                        default="yaml/rtl_simulation.yaml",
-                        help="RTL simulator setting YAML")
+    parser.add_argument("--simulator_yaml",
+                        help="RTL simulator setting YAML",
+                        default=os.path.join(_CORE_IBEX,
+                                             'yaml',
+                                             'rtl_simulation.yaml'))
     parser.add_argument("--iss", type=str, default="spike",
                         help="Instruction set simulator")
     parser.add_argument("-v", "--verbose", dest="verbose", action="store_true",
