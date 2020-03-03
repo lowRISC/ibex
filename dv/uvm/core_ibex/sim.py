@@ -18,7 +18,6 @@ Regression script for RISC-V random instruction generator
 
 import argparse
 import os
-import re
 import subprocess
 import sys
 
@@ -120,6 +119,15 @@ def subst_cmd(cmd, enable_dict, opts_dict, env_vars):
     return subst_env_vars(cmd, env_vars)
 
 
+def subst_vars(string, var_dict):
+    '''Apply substitutions in var_dict to string
+
+    If var_dict[K] = V, then <K> will be replaced with V in string.'''
+    for key, value in var_dict.items():
+        string = string.replace('<{}>'.format(key), value)
+    return string
+
+
 def get_yaml_for_simulator(simulator, yaml_path):
     '''Read yaml at yaml_path and find entry for simulator'''
     logging.info("Processing simulator setup file : %s" % yaml_path)
@@ -162,8 +170,11 @@ def rtl_compile(compile_cmds, output_dir, lsf_cmd, opts):
     # Compile the TB
     logging.info("Compiling TB")
     for cmd in compile_cmds:
-        cmd = re.sub("<out>", output_dir, cmd)
-        cmd = re.sub("<cmp_opts>", opts, cmd)
+        cmd = subst_vars(cmd,
+                         {
+                             'out': output_dir,
+                             'cmp_opts': opts
+                         })
         logging.debug("Compile command: %s" % cmd)
         run_cmd(cmd)
 
@@ -189,16 +200,21 @@ def rtl_sim(sim_cmd, simulator, test_list, output_dir, bin_dir,
         check_return_code = False
         logging.debug("Disable return code checking for %s simulator"
                       % simulator)
+
     # Run the RTL simulation
-    sim_cmd = re.sub("<out>", output_dir, sim_cmd)
-    sim_cmd = re.sub("<sim_opts>", opts, sim_cmd)
-    sim_cmd = re.sub("<cwd>", _CORE_IBEX, sim_cmd)
+    sim_cmd = subst_vars(sim_cmd,
+                         {
+                             'out': output_dir,
+                             'sim_opts': opts,
+                             'cwd': _CORE_IBEX
+                         })
+
     logging.info("Running RTL simulation...")
     cmd_list = []
     for test in test_list:
         for i in range(test['iterations']):
             rand_seed = get_seed(seed)
-            test_sim_cmd = re.sub("<seed>", str(rand_seed), sim_cmd)
+            test_sim_cmd = sim_cmd.replace("<seed>", str(rand_seed))
             if "sim_opts" in test:
                 test_sim_cmd += ' '
                 test_sim_cmd += test['sim_opts']
@@ -210,7 +226,7 @@ def rtl_sim(sim_cmd, simulator, test_list, output_dir, bin_dir,
                    (" +UVM_TESTNAME=%s " % test['rtl_test']) +
                    (" +bin=%s " % binary) +
                    (" -l sim.log "))
-            cmd = re.sub('\n', '', cmd)
+            cmd = cmd.replace('\n', '')
             if lsf_cmd == "":
                 logging.info("Running %s with %s" % (test['rtl_test'], binary))
                 run_cmd(cmd, 300, check_return_code=check_return_code)
@@ -339,9 +355,9 @@ def main():
     subprocess.run(["mkdir", "-p", output_dir])
 
     steps = {
-        'compile': args.steps == "all" or re.match("compile", args.steps),
-        'sim': args.steps == "all" or re.match("sim", args.steps),
-        'compare': args.steps == "all" or re.match("compare", args.steps)
+        'compile': args.steps == "all" or 'compile' in args.steps,
+        'sim': args.steps == "all" or 'sim' in args.steps,
+        'compare': args.steps == "all" or 'compare' in args.steps
     }
 
     compile_cmds = []
