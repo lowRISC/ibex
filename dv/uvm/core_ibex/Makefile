@@ -2,8 +2,7 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-DV_DIR              := $(shell dirname $(lastword $(MAKEFILE_LIST)))
-GEN_DIR             := $(realpath ${DV_DIR}/../../../vendor/google_riscv-dv)
+GEN_DIR             := $(realpath ../../../vendor/google_riscv-dv)
 TOOLCHAIN           := ${RISCV_TOOLCHAIN}
 
 # Seed for instruction generator and RTL simulation
@@ -18,7 +17,7 @@ SEED                := $(shell echo $$RANDOM)
 # This is the top-level output directory. Everything we generate goes in
 # here. Most generated stuff actually goes in $(OUT)/seed-$(SEED), which allows
 # us to run multiple times without deleting existing results.
-OUT                 := ${DV_DIR}/out
+OUT                 := out
 OUT-SEED            := $(OUT)/seed-$(SEED)
 
 # Run time options for the instruction generator
@@ -41,7 +40,7 @@ ISS_OPTS            :=
 ISA                 := rv32imc
 # Test name (default: full regression)
 TEST                := all
-TESTLIST            := ${DV_DIR}/riscv_dv_extension/testlist.yaml
+TESTLIST            := riscv_dv_extension/testlist.yaml
 # Verbose logging
 VERBOSE             :=
 # Number of iterations for each test, assign a non-zero value to override the
@@ -52,7 +51,7 @@ LSF_CMD             :=
 # Generator timeout limit in seconds
 TIMEOUT             := 1800
 # Privileged CSR YAML description file
-CSR_FILE            := ${DV_DIR}/riscv_dv_extension/csr_description.yaml
+CSR_FILE            := riscv_dv_extension/csr_description.yaml
 # Pass/fail signature address at the end of test
 SIGNATURE_ADDR      := 8ffffffc
 
@@ -81,7 +80,7 @@ endif
 
 SHELL=/bin/bash
 
-export PRJ_DIR:= $(realpath ${DV_DIR}/../../../..)
+export PRJ_DIR:= $(realpath ../../../..)
 
 all: sim
 
@@ -108,7 +107,7 @@ CSR_OPTS=--csr_yaml=${CSR_FILE} \
          --isa="${ISA}" \
          --end_signature_addr=${SIGNATURE_ADDR}
 
-RISCV_DV_OPTS=--custom_target=${DV_DIR}/riscv_dv_extension \
+RISCV_DV_OPTS=--custom_target=riscv_dv_extension \
               --isa="${ISA}" \
               --mabi=ilp32 \
 
@@ -385,7 +384,7 @@ fcov:
           --dir ${OUT}/rtl_sim \
           -o ${OUT}/fcov \
           --isa rv32imc \
-          --custom_target ${DV_DIR}/riscv_dv_extension \
+          --custom_target riscv_dv_extension
 
 # Load verdi to review coverage
 cov_vcs:
