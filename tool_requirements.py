@@ -5,5 +5,5 @@
 # Version requirements for various tools. Checked by tooling (e.g. fusesoc),
 # and inserted into the Sphinx-generated documentation.
 __TOOL_REQUIREMENTS__ = {
-    'verilator': '4.010',
+    'verilator': '4.028',
 }
