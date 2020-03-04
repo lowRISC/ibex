@@ -32,14 +32,6 @@ module rv_dm #(
   input  logic [NrHarts-1:0]    unavailable_i, // communicate whether the hart is unavailable
                                                // (e.g.: power down)
 
-  // bus device with debug memory, for an execution based technique
-  input  tlul_pkg::tl_h2d_t tl_d_i,
-  output tlul_pkg::tl_d2h_t tl_d_o,
-
-  // bus host, for system bus accesses
-  output tlul_pkg::tl_h2d_t  tl_h_o,
-  input  tlul_pkg::tl_d2h_t  tl_h_i,
-
   input  logic               tck_i,           // JTAG test clock pad
   input  logic               tms_i,           // JTAG test mode select pad
   input  logic               trst_ni,         // JTAG test reset pad
@@ -57,7 +49,18 @@ module rv_dm #(
     input logic [SramDw-1:0]     wmask_i,
     output      [SramDw-1:0]     rdata_o,
     output logic                 rvalid_o,
-    output      [1:0]            rerror_o // 2 bit error [1]: Uncorrectable, [0]: Correctable
+    output      [1:0]            rerror_o, // 2 bit error [1]: Uncorrectable, [0]: Correctable
+
+    // Debug SBA interface (if needed)
+  output logic                   master_req_o,
+  output logic   [BusWidth-1:0]  master_add_o,
+  output logic                   master_we_o,
+  output logic   [BusWidth-1:0]  master_wdata_o,
+  output logic [BusWidth/8-1:0]  master_be_o,
+  input logic                   master_gnt_i,
+  input logic                   master_r_valid_i,
+  input logic   [BusWidth-1:0]  master_r_rdata_i
+   
 );
 
   `ASSERT_INIT(paramCheckNrHarts, NrHarts > 0)
@@ -171,28 +174,19 @@ module rv_dm #(
     .sberror_i               ( sberror               )
   );
 
-  logic                   master_req;
-  logic   [BusWidth-1:0]  master_add;
-  logic                   master_we;
-  logic   [BusWidth-1:0]  master_wdata;
-  logic [BusWidth/8-1:0]  master_be;
-  logic                   master_gnt;
-  logic                   master_r_valid;
-  logic   [BusWidth-1:0]  master_r_rdata;
-
   dm_sba #(
     .BusWidth(BusWidth)
   ) i_dm_sba (
     .clk_i                   ( clk_i                 ),
     .rst_ni                  ( rst_ni                ),
-    .master_req_o            ( master_req            ),
-    .master_add_o            ( master_add            ),
-    .master_we_o             ( master_we             ),
-    .master_wdata_o          ( master_wdata          ),
-    .master_be_o             ( master_be             ),
-    .master_gnt_i            ( master_gnt            ),
-    .master_r_valid_i        ( master_r_valid        ),
-    .master_r_rdata_i        ( master_r_rdata        ),
+    .master_req_o,
+    .master_add_o,
+    .master_we_o,
+    .master_wdata_o,
+    .master_be_o,
+    .master_gnt_i,
+    .master_r_valid_i,
+    .master_r_rdata_i,
     .dmactive_i              ( dmactive_o            ),
     .sbaddress_i             ( sbaddress_csrs_sba    ),
     .sbaddress_o             ( sbaddress_sba_csrs    ),
@@ -209,25 +203,6 @@ module rv_dm #(
     .sbbusy_o                ( sbbusy                ),
     .sberror_valid_o         ( sberror_valid         ),
     .sberror_o               ( sberror               )
-  );
-
-  tlul_adapter_host #(
-    .AW(BusWidth),
-    .DW(BusWidth)
-  ) tl_adapter_host_sba (
-    .clk_i,
-    .rst_ni,
-    .req_i        (master_req),
-    .gnt_o        (master_gnt),
-    .addr_i       (master_add),
-    .we_i         (master_we),
-    .wdata_i      (master_wdata),
-    .be_i         (master_be),
-    .size_i       (sbaccess[1:0]),
-    .valid_o      (master_r_valid),
-    .rdata_o      (master_r_rdata),
-    .tl_o         (tl_h_o),
-    .tl_i         (tl_h_i)
   );
 
   localparam int unsigned AddressWidthWords = BusWidth - $clog2(BusWidth/8);

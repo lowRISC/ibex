@@ -20,13 +20,6 @@ module top_artya7 (
   parameter logic [31:0] DBG_START = 32'h10000000;
   parameter logic [31:0] DBG_MASK  = 32'h00000fff;
 
-  import tlul_pkg::*;
-  import top_pkg::*;
-  import tl_main_pkg::*;
-
-  tl_h2d_t  tl_dm_sba_h_h2d;
-  tl_d2h_t  tl_dm_sba_h_d2h;
-
   // JTAG IDCODE for development versions of this code.
   // Manufacturers of OpenTitan chips must replace this code with one of their
   // own IDs.
@@ -34,7 +27,7 @@ module top_artya7 (
   // section 12.1.1.
   localparam JTAG_IDCODE = {
     4'h0,     // Version
-    16'h4F54, // Part Number: "OT"
+    16'h4F53, // Part Number: "OS"
     11'h426,  // Manufacturer Identity: Google
     1'b1      // (fixed)
   };
@@ -144,8 +137,8 @@ module top_artya7 (
     .rerror_o      (),
               
     // bus host (for system bus accesses, SBA)
-    .tl_h_o        (tl_dm_sba_h_h2d),
-    .tl_h_i        (tl_dm_sba_h_d2h),
+//    .tl_h_o        (tl_dm_sba_h_h2d),
+//    .tl_h_i        (tl_dm_sba_h_d2h),
 
     //JTAG
     .tck_i            (jtag_tck_i),
