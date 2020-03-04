@@ -22,13 +22,14 @@ module clkgen_xil7series (
   );
 
   PLLE2_ADV #(
+    .CLKIN1_PERIOD        (10.0),
     .BANDWIDTH            ("OPTIMIZED"),
     .COMPENSATION         ("ZHOLD"),
     .STARTUP_WAIT         ("FALSE"),
     .DIVCLK_DIVIDE        (1),
-    .CLKFBOUT_MULT        (12),
+    .CLKFBOUT_MULT        (10),
     .CLKFBOUT_PHASE       (0.000),
-    .CLKOUT0_DIVIDE       (24),
+    .CLKOUT0_DIVIDE       (20),
     .CLKOUT0_PHASE        (0.000),
     .CLKOUT0_DUTY_CYCLE   (0.500)
   ) pll (

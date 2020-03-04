@@ -5,12 +5,39 @@
 module top_artya7 (
     input               IO_CLK,
     input               IO_RST_N,
-    output [3:0]        LED
+    output [3:0]        LED,
+  // JTAG interface
+  input               jtag_tck_i,
+  input               jtag_tms_i,
+  input               jtag_trst_ni,
+  input               jtag_td_i,
+  output              jtag_td_o    
 );
 
   parameter int          MEM_SIZE  = 64 * 1024; // 64 kB
   parameter logic [31:0] MEM_START = 32'h00000000;
   parameter logic [31:0] MEM_MASK  = MEM_SIZE-1;
+  parameter logic [31:0] DBG_START = 32'h10000000;
+  parameter logic [31:0] DBG_MASK  = 32'h00000fff;
+
+  import tlul_pkg::*;
+  import top_pkg::*;
+  import tl_main_pkg::*;
+
+  tl_h2d_t  tl_dm_sba_h_h2d;
+  tl_d2h_t  tl_dm_sba_h_d2h;
+
+  // JTAG IDCODE for development versions of this code.
+  // Manufacturers of OpenTitan chips must replace this code with one of their
+  // own IDs.
+  // Field structure as defined in the IEEE 1149.1 (JTAG) specification,
+  // section 12.1.1.
+  localparam JTAG_IDCODE = {
+    4'h0,     // Version
+    16'h4F54, // Part Number: "OT"
+    11'h426,  // Manufacturer Identity: Google
+    1'b1      // (fixed)
+  };
 
   logic clk_sys, rst_sys_n;
 
@@ -34,16 +61,23 @@ module top_artya7 (
   // SRAM arbiter
   logic [31:0] mem_addr;
   logic        mem_req;
+  logic        dbg_req;
   logic        mem_write;
   logic  [3:0] mem_be;
   logic [31:0] mem_wdata;
   logic        mem_rvalid;
+  logic        dbg_rvalid;
   logic [31:0] mem_rdata;
+  logic [31:0] dbg_rdata;
 
+  // debug request from rv_dm to core
+  logic debug_req;
+  // Non-debug module reset == reset for everything except for the debug module
+  logic ndmreset_req;
 
   ibex_core #(
-     .DmHaltAddr(32'h00000000),
-     .DmExceptionAddr(32'h00000000)
+     .DmHaltAddr(DBG_START + dm::HaltAddress),
+     .DmExceptionAddr(DBG_START + dm::ExceptionAddress)
   ) u_core (
      .clk_i                 (clk_sys),
      .rst_ni                (rst_sys_n),
@@ -77,24 +111,66 @@ module top_artya7 (
      .irq_fast_i            (15'b0),
      .irq_nm_i              (1'b0),
 
-     .debug_req_i           ('b0),
+     .debug_req_i           (debug_req),
 
      .fetch_enable_i        ('b1),
      .core_sleep_o          ()
   );
 
+  // Debug Module (RISC-V Debug Spec 0.13)
+  //
+
+  rv_dm #(
+    .NrHarts     (1),
+    .IdcodeValue (JTAG_IDCODE)
+  ) u_dm_top (
+    .clk_i         (clk_sys),
+    .rst_ni        (rst_sys_n),
+    .testmode_i    (1'b0),
+    .ndmreset_o    (ndmreset_req),
+    .dmactive_o    (),
+    .debug_req_o   (debug_req),
+    .unavailable_i (1'b0),
+
+    .req_i         (dbg_req),
+    .gnt_o         (),
+    .we_i          (mem_write),
+    .be_i          (mem_be),
+    .addr_i        (mem_addr),
+    .wdata_i       (mem_wdata),
+    .wmask_i       (-1),
+    .rdata_o       (dbg_rdata),
+    .rvalid_o      (dbg_rvalid),
+    .rerror_o      (),
+              
+    // bus host (for system bus accesses, SBA)
+    .tl_h_o        (tl_dm_sba_h_h2d),
+    .tl_h_i        (tl_dm_sba_h_d2h),
+
+    //JTAG
+    .tck_i            (jtag_tck_i),
+    .tms_i            (jtag_tms_i),
+    .trst_ni          (jtag_trst_ni),
+    .td_i             (jtag_td_i),
+    .td_o             (jtag_td_o),
+    .tdo_oe_o         (       )
+  );
+
   // Connect Ibex to SRAM
   always_comb begin
     mem_req        = 1'b0;
+    dbg_req        = 1'b0;
     mem_addr       = 32'b0;
     mem_write      = 1'b0;
     mem_be         = 4'b0;
     mem_wdata      = 32'b0;
     if (instr_req) begin
       mem_req        = (instr_addr & ~MEM_MASK) == MEM_START;
+      dbg_req        = (instr_addr & ~MEM_MASK) == DBG_START;
       mem_addr       = instr_addr;
     end else if (data_req) begin
       mem_req        = (data_addr & ~MEM_MASK) == MEM_START;
+      dbg_req        = (data_addr & ~MEM_MASK) == DBG_START;
       mem_write      = data_we;
       mem_be         = data_be;
       mem_addr       = data_addr;
@@ -118,18 +194,18 @@ module top_artya7 (
   );
 
   // SRAM to Ibex
-  assign instr_rdata    = mem_rdata;
-  assign data_rdata     = mem_rdata;
-  assign instr_rvalid   = mem_rvalid;
+  assign data_rdata     = mem_rvalid ? mem_rdata : dbg_rvalid ? dbg_rdata : '0;
+  assign instr_rdata    = data_rdata;
+  assign instr_rvalid   = mem_rvalid | dbg_rvalid;
   always_ff @(posedge clk_sys or negedge rst_sys_n) begin
     if (!rst_sys_n) begin
       instr_gnt    <= 'b0;
       data_gnt     <= 'b0;
       data_rvalid  <= 'b0;
     end else begin
-      instr_gnt    <= instr_req && mem_req;
-      data_gnt     <= ~instr_req && data_req && mem_req;
-      data_rvalid  <= ~instr_req && data_req && mem_req;
+      instr_gnt    <= instr_req && (mem_req|dbg_req);
+      data_gnt     <= ~instr_req && data_req && (mem_req|dbg_req);
+      data_rvalid  <= ~instr_req && data_req && (mem_req|dbg_req);
     end
   end
 
