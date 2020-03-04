@@ -8,6 +8,10 @@
 set_property -dict { PACKAGE_PIN E3    IOSTANDARD LVCMOS33 } [get_ports { IO_CLK }]; #IO_L12P_T1_MRCC_35 Sch=gclk[100]
 create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { IO_CLK }];
 
+# accept sub-optimal placement
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets jtag_tck_i]
+create_clock -add -name jtag_clk_pin -period 100.00 -waveform {0 50} [get_ports { jtag_tck_i }];
+
 ## Switches
 #set_property -dict { PACKAGE_PIN A8    IOSTANDARD LVCMOS33 } [get_ports { sw[0] }]; #IO_L12N_T1_MRCC_16 Sch=sw[0]
 #set_property -dict { PACKAGE_PIN C11   IOSTANDARD LVCMOS33 } [get_ports { sw[1] }]; #IO_L13P_T2_MRCC_16 Sch=sw[1]
@@ -69,6 +73,13 @@ set_property -dict { PACKAGE_PIN T10   IOSTANDARD LVCMOS33 } [get_ports { LED[3]
 #set_property -dict { PACKAGE_PIN V14   IOSTANDARD LVCMOS33 } [get_ports { jc[5] }]; #IO_L22N_T3_A04_D20_14 Sch=jc_n[3]
 #set_property -dict { PACKAGE_PIN T13   IOSTANDARD LVCMOS33 } [get_ports { jc[6] }]; #IO_L23P_T3_A03_D19_14 Sch=jc_p[4]
 #set_property -dict { PACKAGE_PIN U13   IOSTANDARD LVCMOS33 } [get_ports { jc[7] }]; #IO_L23N_T3_A02_D18_14 Sch=jc_n[4]
+
+## PMOD Header JC JTAG connections (import from ariane-4.0.0 release)
+set_property -dict {PACKAGE_PIN U12 IOSTANDARD LVCMOS33} [get_ports jtag_tck_i]; #IO_L19P_T3_13 Sch=jc[1]
+set_property -dict {PACKAGE_PIN V12 IOSTANDARD LVCMOS33} [get_ports jtag_td_i]; #IO_L20P_T3_13 Sch=jc[2]
+set_property -dict {PACKAGE_PIN V10 IOSTANDARD LVCMOS33} [get_ports jtag_td_o]; #IO_L18N_T2_13 Sch=jc[3]
+set_property -dict {PACKAGE_PIN V11 IOSTANDARD LVCMOS33} [get_ports jtag_tms_i]; #IO_L15P_T2_DQS_13 Sch=jc[4]
+set_property -dict {PACKAGE_PIN U14 IOSTANDARD LVCMOS33} [get_ports jtag_trst_ni]; #IO_L19N_T3_VREF_13 Sch=jc[7]
 
 ## Pmod Header JD
 #set_property -dict { PACKAGE_PIN D4    IOSTANDARD LVCMOS33 } [get_ports { jd[0] }]; #IO_L11N_T1_SRCC_35 Sch=jd[1]
