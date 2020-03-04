@@ -74,12 +74,14 @@ program-arty:
 		lowrisc:ibex:top_artya7
 
 # This target launches openocd and connects to the Arty via the supplied JTAG/power cable
+
 .PHONY: openocd-arty
 openocd-arty: examples/fpga/artya7/openocd_pmod_tiny.cfg
 	openocd -f $<
 
 # This target launches gdb and attaches to a previously launched openocd session
 # the command 'target remote :3333' followed by 'load' and then 'cont' should be used.
+# BUG: gdb starts the program in the default_exc_handler, use set $pc=0x90 to workaround for now
 
 .PHONY: gdb-arty
 gdb-arty: examples/sw/led/led.elf
