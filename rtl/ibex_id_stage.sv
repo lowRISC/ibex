@@ -160,6 +160,8 @@ module ibex_id_stage #(
     output logic                      perf_tbranch_o, // executing a taken branch instr
     output logic                      perf_dside_wait_o, // instruction in ID/EX is awaiting memory
                                                          // access to finish before proceeding
+    output logic                      perf_mul_wait_o,
+    output logic                      perf_div_wait_o,
     output logic                      instr_id_done_o,
     output logic                      instr_id_done_compressed_o
 );
@@ -835,6 +837,9 @@ module ibex_id_stage #(
     assign en_wb_o         = 1'b0;
     assign instr_id_done_o = instr_done;
   end
+
+  assign perf_mul_wait_o = stall_multdiv & mult_en_dec;
+  assign perf_div_wait_o = stall_multdiv & div_en_dec;
 
   assign instr_id_done_compressed_o = instr_id_done_o & instr_is_compressed_i;
 
