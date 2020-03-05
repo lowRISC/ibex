@@ -94,6 +94,8 @@ module tb_cs_registers #(
   logic                 mem_load_i;             // load from memory in this cycle
   logic                 mem_store_i;            // store to memory in this cycle
   logic                 dside_wait_i;           // core waiting for the dside
+  logic                 mul_wait_i;
+  logic                 div_wait_i;
 
   //-----------------
   // Reset generation
