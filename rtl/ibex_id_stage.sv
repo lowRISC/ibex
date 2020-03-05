@@ -684,7 +684,7 @@ module ibex_id_stage #(
   // Duplicated instruction flops must match
   // === as DV environment can produce instructions with Xs in, so must use precise match that
   // includes Xs
-  `ASSERT(IbexDuplicateInstrMatch, instr_valid_i |-> instr_rdata_i === instr_rdata_alu_i);
+  `ASSERT(IbexDuplicateInstrMatch, instr_valid_i |-> instr_rdata_i === instr_rdata_alu_i)
 
   `ifdef CHECK_MISALIGNED
   `ASSERT(IbexMisalignedMemoryAccess, !lsu_addr_incr_req_i)
