@@ -73,6 +73,11 @@ program-arty:
 	fusesoc --cores-root=. run --target=synth --run \
 		lowrisc:ibex:top_artya7
 
+# Create and program the cfgmem
+
+cfgmem-arty:
+	vivado -mode batch -nojournal -source shared/artya7-a100-cfgmem.tcl
+
 # This target launches openocd and connects to the Arty via the supplied JTAG/power cable
 
 .PHONY: openocd-arty
