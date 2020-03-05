@@ -162,13 +162,22 @@ def get_simulator_cmd(simulator, yaml_path, enables):
 def rtl_compile(compile_cmds, output_dir, lsf_cmd, opts):
     """Compile the testbench RTL
 
-    Args:
-      compile_cmd : Compile commands
-      output_dir  : Output directory of the ELF files
-      lsf_cmd     : LSF command to run compilation
-      opts        : Compile options for the generator
+    compile_cmds is a list of commands (each a string), which will have <out>
+    and <cmp_opts> substituted. Running them in sequence should compile the
+    testbench.
+
+    output_dir is the directory in which to generate the testbench (usually
+    something like 'out/rtl_sim'). This will be substituted for <out> in the
+    commands.
+
+    If lsf_cmd is not None, it should be a string to prefix onto commands to
+    run them through LSF. Here, this is not used for parallelism, but might
+    still be needed for licence servers.
+
+    opts is a string giving extra compilation options. This is substituted for
+    <cmp_opts> in the commands.
+
     """
-    # Compile the TB
     logging.info("Compiling TB")
     for cmd in compile_cmds:
         cmd = subst_vars(cmd,
@@ -176,7 +185,14 @@ def rtl_compile(compile_cmds, output_dir, lsf_cmd, opts):
                              'out': output_dir,
                              'cmp_opts': opts
                          })
+
+        if lsf_cmd is not None:
+            cmd = lsf_cmd + ' ' + cmd
+
         logging.debug("Compile command: %s" % cmd)
+
+        # Note that we don't use run_parallel_cmd here: the commands in
+        # compile_cmds need to be run serially.
         run_cmd(cmd)
 
 
