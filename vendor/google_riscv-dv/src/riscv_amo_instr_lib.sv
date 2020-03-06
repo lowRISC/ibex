@@ -50,6 +50,21 @@ class riscv_amo_base_instr_stream extends riscv_mem_access_stream;
     super.new(name);
   endfunction
 
+  function void pre_randomize();
+    data_page = cfg.amo_region;
+    max_data_page_id = data_page.size();
+  endfunction
+
+  // Use "la" instruction to initialize the base regiseter
+  virtual function void add_rs1_init_la_instr(riscv_reg_t gpr, int id, int base = 0);
+    riscv_pseudo_instr la_instr;
+    la_instr = riscv_pseudo_instr::type_id::create("la_instr");
+    la_instr.pseudo_instr_name = LA;
+    la_instr.rd = gpr;
+    la_instr.imm_str = $sformatf("%0s+%0d", cfg.amo_region[id].name, base);
+    instr_list.push_front(la_instr);
+  endfunction
+
   function void post_randomize();
     gen_amo_instr();
     // rs1 cannot be modified by other instructions

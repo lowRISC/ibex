@@ -354,7 +354,7 @@ class riscv_page_table_list#(satp_mode_t MODE = SV39) extends uvm_object;
     // Fix kernel leaf PTE
     instr.push_back("fix_kernel_leaf_pte:");
     // - Load the starting virtual address of the kernel space
-    instr.push_back($sformatf("la x%0d, _kernel_instr_start", tmp_reg));
+    instr.push_back($sformatf("la x%0d, kernel_instr_start", tmp_reg));
     // TODO: Fix kernel instruction/data pages separatedly
     instr.push_back($sformatf("slli x%0d, x%0d, %0d", tmp_reg, tmp_reg,
                     XLEN - MAX_USED_VADDR_BITS));
@@ -471,8 +471,8 @@ class riscv_page_table_list#(satp_mode_t MODE = SV39) extends uvm_object;
     if (cfg.support_supervisor_mode) begin
       instr = {instr,
                // Process kernel instruction pages
-               $sformatf("la x%0d, _kernel_instr_start", cfg.gpr[0]),
-               $sformatf("la x%0d, _kernel_instr_end", cfg.gpr[1]),
+               $sformatf("la x%0d, kernel_instr_start", cfg.gpr[0]),
+               $sformatf("la x%0d, kernel_instr_end", cfg.gpr[1]),
                // Get the VPN of the physical address
                $sformatf("slli x%0d, x%0d, %0d",
                          cfg.gpr[0], cfg.gpr[0], XLEN - MAX_USED_VADDR_BITS),
@@ -501,7 +501,7 @@ class riscv_page_table_list#(satp_mode_t MODE = SV39) extends uvm_object;
                // If not the end of the kernel space, process the next PTE
                $sformatf("ble x%0d, x%0d, 1b", cfg.gpr[0], cfg.gpr[1]),
                // Process kernel data pages
-               $sformatf("la x%0d, _kernel_data_start", cfg.gpr[0]),
+               $sformatf("la x%0d, kernel_data_start", cfg.gpr[0]),
                // Get the VPN of the physical address
                $sformatf("slli x%0d, x%0d, %0d", cfg.gpr[0], cfg.gpr[0],
                          XLEN - MAX_USED_VADDR_BITS),

@@ -954,6 +954,18 @@ package riscv_instr_pkg;
     rand bit [XLEN - 1 : 0]    addr;
   } pmp_cfg_reg_t;
 
+  function automatic string hart_prefix(int hart = 0);
+    if (NUM_HARTS <= 1) begin
+      return "";
+    end else begin
+      return $sformatf("h%0d_", hart);
+    end
+  endfunction : hart_prefix
+
+  function automatic string get_label(string label, int hart = 0);
+    return {hart_prefix(hart), label};
+  endfunction : get_label
+
   typedef struct packed {
     bit ill;
     bit [XLEN-2:7] reserved;
