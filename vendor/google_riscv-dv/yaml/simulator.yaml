@@ -79,6 +79,7 @@
                 +incdir+$UVM_HOME/src
                 $UVM_HOME/src/uvm_pkg.sv
                 +define+DSIM
+                -suppress EnumMustBePositive
                 +incdir+<setting>
                 +incdir+<user_extension>
                 -f <cwd>/files.f

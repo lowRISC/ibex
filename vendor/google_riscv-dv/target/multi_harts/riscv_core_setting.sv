@@ -18,7 +18,7 @@
 // Processor feature configuration
 //-----------------------------------------------------------------------------
 // XLEN
-parameter int XLEN = 64;
+parameter int XLEN = 32;
 
 // Parameter for SATP mode, set to BARE if address translation is not supported
 parameter satp_mode_t SATP_MODE = BARE;
@@ -30,7 +30,7 @@ privileged_mode_t supported_privileged_mode[] = {MACHINE_MODE};
 riscv_instr_name_t unsupported_instr[];
 
 // ISA supported by the processor
-riscv_instr_group_t supported_isa[$] = {RV32I, RV32M, RV64I, RV64M, RV32C, RV64C};
+riscv_instr_group_t supported_isa[$] = {RV32I, RV32M, RV32C, RV32A};
 
 // Interrupt mode support
 mtvec_mode_t supported_interrupt_mode[$] = {DIRECT, VECTORED};
@@ -61,7 +61,8 @@ parameter int ELEN = 64;
 parameter int SLEN = 64;
 
 // Number of harts
-parameter int NUM_HARTS = 1;
+parameter int NUM_HARTS = 2;
+
 // ----------------------------------------------------------------------------
 // Previleged CSR implementation
 // ----------------------------------------------------------------------------

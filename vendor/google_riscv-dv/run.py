@@ -135,7 +135,7 @@ def get_iss_cmd(base_cmd, elf, log):
 
 
 def do_compile(compile_cmd, test_list, core_setting_dir, cwd, ext_dir,
-               cmp_opts, output_dir, debug_cmd):
+               cmp_opts, output_dir, debug_cmd, lsf_cmd):
   """Compile the instruction generator
 
   Args:
@@ -147,6 +147,7 @@ def do_compile(compile_cmd, test_list, core_setting_dir, cwd, ext_dir,
     cmd_opts            : Compile options for the generator
     output_dir          : Output directory of the ELF files
     debug_cmd           : Produce the debug cmd log without running
+    lsf_cmd             : LSF command used to run the instruction generator
   """
   if (not((len(test_list) == 1) and (test_list[0]['test'] == 'riscv_csr_test'))):
     logging.info("Building RISC-V instruction generator")
@@ -159,9 +160,12 @@ def do_compile(compile_cmd, test_list, core_setting_dir, cwd, ext_dir,
         cmd = re.sub("<user_extension>", ext_dir, cmd)
       cmd = re.sub("<cwd>", cwd, cmd)
       cmd = re.sub("<cmp_opts>", cmp_opts, cmd)
-
-      logging.debug("Compile command: %s" % cmd)
-      run_cmd(cmd, debug_cmd = debug_cmd)
+      if lsf_cmd:
+        cmd = lsf_cmd + " " + cmd
+        run_parallel_cmd([cmd], debug_cmd = debug_cmd)
+      else:
+        logging.debug("Compile command: %s" % cmd)
+        run_cmd(cmd, debug_cmd = debug_cmd)
 
 
 def run_csr_test(cmd_list, cwd, csr_file, isa, iterations, lsf_cmd,
@@ -296,7 +300,7 @@ def gen(test_list, cfg, output_dir, cwd):
   # Compile the instruction generator
   if not argv.so:
     do_compile(compile_cmd, test_list, argv.core_setting_dir, cwd, argv.user_extension_dir,
-               argv.cmp_opts, output_dir, argv.debug)
+               argv.cmp_opts, output_dir, argv.debug, argv.lsf_cmd)
   # Run the instruction generator
   if not argv.co:
     do_simulate(sim_cmd, test_list, cwd, argv.sim_opts, argv.seed_yaml, argv.seed, argv.csr_yaml,
@@ -765,6 +769,9 @@ def load_config(args, cwd):
     if args.target == "rv32imc":
       args.mabi = "ilp32"
       args.isa  = "rv32imc"
+    elif args.target == "multi_harts":
+      args.mabi = "ilp32"
+      args.isa  = "rv32gc"
     elif args.target == "rv32i":
       args.mabi = "ilp32"
       args.isa  = "rv32i"

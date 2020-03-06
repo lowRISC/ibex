@@ -104,12 +104,13 @@ class riscv_pmp_cfg extends uvm_object;
       arg_name = $sformatf("+pmp_region_%0d=", i);
       if (inst.get_arg_value(arg_name, pmp_region)) begin
         parse_pmp_config(pmp_region, pmp_cfg[i]);
-        `uvm_info(`gfn, $sformatf("Configured pmp_cfg[%0d] from command line: %p", i, pmp_cfg[i]), UVM_LOW)
+        `uvm_info(`gfn, $sformatf("Configured pmp_cfg[%0d] from command line: %p",
+                                  i, pmp_cfg[i]), UVM_LOW)
       end
     end
   endfunction
 
-  function void parse_pmp_config(string pmp_region, ref pmp_cfg_reg_t pmp_cfg_reg);
+  function void parse_pmp_config(string pmp_region, output pmp_cfg_reg_t pmp_cfg_reg);
     string fields[$];
     string field_vals[$];
     string field_type;
@@ -160,7 +161,7 @@ class riscv_pmp_cfg extends uvm_object;
       // RV64 - pmpaddr is bits [55:2] of the whole 56 bit address, prepended by 10'b0
       // Return {10'b0, shifted_addr[53:0]}
       64: begin
-        return {10'b0, shifted_addr[53:0]};
+        return {10'b0, shifted_addr[XLEN - 11 : 0]};
       end
     endcase
   endfunction
