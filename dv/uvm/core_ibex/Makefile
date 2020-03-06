@@ -106,7 +106,7 @@ TEST_OPTS := $(COMMON_OPTS) \
 # Options used for privileged CSR test generation
 CSR_OPTS=--csr_yaml=${CSR_FILE} \
          --isa="${ISA}" \
-         --end_signature_addr=0x${SIGNATURE_ADDR}
+         --end_signature_addr=${SIGNATURE_ADDR}
 
 RISCV_DV_OPTS=--custom_target=${DV_DIR}/riscv_dv_extension \
               --isa="${ISA}" \
