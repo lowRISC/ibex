@@ -15,6 +15,7 @@ filesets:
       - rtl/ibex_compressed_decoder.sv
       - rtl/ibex_controller.sv
       - rtl/ibex_cs_registers.sv
+      - rtl/ibex_counters.sv
       - rtl/ibex_decoder.sv
       - rtl/ibex_ex_block.sv
       - rtl/ibex_fetch_fifo.sv

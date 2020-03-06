@@ -58,6 +58,52 @@ lint_off -rule UNUSED -file "*/rtl/sim/simulator_ctrl.sv" -match "*'wdata_i'[31:
 // entire 32-bit address around to make the code a bit cleaner.
 lint_off -rule UNUSED -file "*/rtl/timer.sv" -match "*'timer_addr_i'[31:10]*"
 
+// Bits of signal are not used for MHPMCounterNum < 29: mhpmcounter_we[31:MHPMCounterNum+3]
+// cleaner to write all bits even if not all are used
+lint_off -rule UNUSED -file "*/rtl/ibex_cs_registers.sv" -match "*'mhpmcounter_we'[31:MHPMCounterNum+3]*"
+
+// Bits of signal are not used: mhpmcounter_we[1]
+// Bits of signal are not used: mhpmcounterh_we[1]
+// Bits of signal are not used: mhpmcounter_incr[1]
+//
+// cleaner to write all bits even if not all are used
+//
+lint_off -rule UNUSED -file "*/rtl/ibex_cs_registers.sv" -match "*'mhpmcounter_we'[1]*"
+lint_off -rule UNUSED -file "*/rtl/ibex_cs_registers.sv" -match "*'mhpmcounterh_we'[1]*"
+lint_off -rule UNUSED -file "*/rtl/ibex_cs_registers.sv" -match "*'mhpmcounter_incr'[1]*"
+
+// Signals are unused if MHPMCounterNum == 0: clk_i, rst_ni
+// Signal is unused if MHPMCounterNum == 0: counter_val_i[31:0]
+//
+// If no counters are implemented, no flops are elaborated. No clock, reset or
+// next-state logic is used.
+//
+lint_off -rule UNUSED -file "*/rtl/ibex_counters.sv" -match "*'clk_i'"
+lint_off -rule UNUSED -file "*/rtl/ibex_counters.sv" -match "*'rst_ni'"
+lint_off -rule UNUSED -file "*/rtl/ibex_counters.sv" -match "*'counter_val_i'"
+
+// Bits of signal are not used for MHPMCounterNum < 29: counter_inc_i[28:MHPMCounterNum]
+// Bits of signal are not used for MHPMCounterNum < 29: counterh_we_i[28:MHPMCounterNum]
+// Bits of signal are not used for MHPMCounterNum < 29: counter_we_i[28:MHPMCounterNum]
+//
+// cleaner to write all bits even if not all are used
+//
+// lint_off -rule UNUSED -file "*/rtl/ibex_counters.sv" -match "*'counter_inc_i'[28:*]*"
+// lint_off -rule UNUSED -file "*/rtl/ibex_counters.sv" -match "*'counterh_we_i'[28:*]*"
+// lint_off -rule UNUSED -file "*/rtl/ibex_counters.sv" -match "*'counter_we_i'[28:*]*"
+
+lint_off -rule UNUSED -file "*/rtl/ibex_counters.sv" -match "*counter_inc_i*"
+lint_off -rule UNUSED -file "*/rtl/ibex_counters.sv" -match "*counterh_we_i*"
+lint_off -rule UNUSED -file "*/rtl/ibex_counters.sv" -match "*counter_we_i*"
+
+// Bits of signal are not used for MHPMCounterWidth < 64: counter_upd[63:MHPMCounterWidth]
+// Bits of signal are not used for MHPMCounterWidth < 64: counter_load[63:MHPMCounterWidth]
+//
+// cleaner to write all bits even if not all are used
+//
+lint_off -rule UNUSED -file "*/rtl/ibex_counters.sv" -match "*'counter_upd'[63:*]*"
+lint_off -rule UNUSED -file "*/rtl/ibex_counters.sv" -match "*'counter_load'[63:*]*"
+
 // Signal is not used: test_en_i
 // testability signal
 lint_off -rule UNUSED -file "*/rtl/ibex_register_file_ff.sv" -match "*test_en_i*"
