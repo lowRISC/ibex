@@ -316,7 +316,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
         forever begin
           wait_for_core_status(IN_DEBUG_MODE);
           check_priv_mode(PRIV_LVL_M);
-          wait_ret("dret", 20000);
+          wait_ret("dret", 100000);
         end
       end
     join_none
