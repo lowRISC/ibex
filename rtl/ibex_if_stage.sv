@@ -75,7 +75,6 @@ module ibex_if_stage #(
 
   import ibex_pkg::*;
 
-  logic              offset_in_init_d, offset_in_init_q;
   logic              have_instr;
 
   // prefetch buffer related signals
@@ -161,51 +160,12 @@ module ibex_if_stage #(
       .busy_o            ( prefetch_busy               )
   );
 
+  assign branch_req  = pc_set_i;
+  assign fetch_ready = id_in_ready_i;
+  assign have_instr  = fetch_valid & ~pc_set_i;
 
-  // offset initialization state
-  always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni) begin
-      offset_in_init_q <= 1'b1;
-    end else begin
-      offset_in_init_q <= offset_in_init_d;
-    end
-  end
-
-  // offset initialization related transition logic
-  always_comb begin
-    offset_in_init_d = offset_in_init_q;
-
-    fetch_ready      = 1'b0;
-    branch_req       = 1'b0;
-
-    if (offset_in_init_q) begin
-      // no valid instruction data for ID stage, assume aligned
-      if (req_i) begin
-        branch_req       = 1'b1;
-        offset_in_init_d = 1'b0;
-      end
-    end else begin
-      // an instruction is ready for ID stage
-      if (fetch_valid) begin
-        if (req_i && if_id_pipe_reg_we) begin
-          fetch_ready      = 1'b1;
-          offset_in_init_d = 1'b0;
-        end
-      end
-    end
-
-    // take care of jumps and branches
-    if (pc_set_i) begin
-      // switch to new PC from ID stage
-      branch_req       = 1'b1;
-      offset_in_init_d = 1'b0;
-    end
-  end
-
-  assign have_instr = fetch_valid & ~ (offset_in_init_q | pc_set_i);
-
-  assign pc_if_o      = fetch_addr;
-  assign if_busy_o    = prefetch_busy;
+  assign pc_if_o     = fetch_addr;
+  assign if_busy_o   = prefetch_busy;
 
   // compressed instruction decoding, or more precisely compressed instruction
   // expander
