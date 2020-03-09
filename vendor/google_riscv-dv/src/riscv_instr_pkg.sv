@@ -511,8 +511,8 @@ package riscv_instr_pkg;
   } riscv_reg_t;
 
   typedef enum bit [4:0] {
-    F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12, F13, F14, F15,
-    F16, F17, F18, F19, F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, F31
+    FT0, FT1, FT2, FT3, FT4, FT5, FT6, FT7, FS0, FS1, FA0, FA1, FA2, FA3, FA4, FA5,
+    FA6, FA7, FS2, FS3, FS4, FS5, FS6, FS7, FS8, FS9, FS10, FS11, FT8, FT9, FT10, FT11
   } riscv_fpr_t;
 
   typedef enum bit [4:0] {

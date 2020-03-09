@@ -386,10 +386,6 @@ class riscv_asm_program_gen extends uvm_object;
     // Init stack pointer to point to the end of the user stack
     str = {indent, $sformatf("la x%0d, %0suser_stack_end", cfg.sp, hart_prefix(hart))};
     instr_stream.push_back(str);
-    if (support_pmp) begin
-      str = {indent, "j main"};
-      instr_stream.push_back(str);
-    end
     if (cfg.enable_floating_point) begin
       init_floating_point_gpr();
     end
@@ -398,6 +394,10 @@ class riscv_asm_program_gen extends uvm_object;
     end
     core_is_initialized();
     gen_dummy_csr_write(); // TODO add a way to disable xStatus read
+    if (support_pmp) begin
+      str = {indent, "j main"};
+      instr_stream.push_back(str);
+    end
   endfunction
 
   // Setup MISA based on supported extensions
