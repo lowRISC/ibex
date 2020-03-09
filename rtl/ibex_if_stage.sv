@@ -75,7 +75,8 @@ module ibex_if_stage #(
 
   import ibex_pkg::*;
 
-  logic              have_instr;
+  logic              instr_valid_id_d, instr_valid_id_q;
+  logic              instr_new_id_d, instr_new_id_q;
 
   // prefetch buffer related signals
   logic              prefetch_busy;
@@ -162,7 +163,6 @@ module ibex_if_stage #(
 
   assign branch_req  = pc_set_i;
   assign fetch_ready = id_in_ready_i;
-  assign have_instr  = fetch_valid & ~pc_set_i;
 
   assign pc_if_o     = fetch_addr;
   assign if_busy_o   = prefetch_busy;
@@ -186,35 +186,40 @@ module ibex_if_stage #(
       .illegal_instr_o ( illegal_c_insn          )
   );
 
-  // IF-ID pipeline registers, frozen when the ID stage is stalled
-  assign if_id_pipe_reg_we = have_instr & id_in_ready_i;
+  // The ID stage becomes valid as soon as any instruction is registered in the ID stage flops.
+  // Note that the current instruction is squashed by the incoming pc_set_i signal.
+  // Valid is held until it is explicitly cleared (due to an instruction completing or an exception)
+  assign instr_valid_id_d = (fetch_valid & id_in_ready_i & ~pc_set_i) |
+                            (instr_valid_id_q & ~instr_valid_clear_i);
+  assign instr_new_id_d   = fetch_valid & id_in_ready_i;
 
-  always_ff @(posedge clk_i or negedge rst_ni) begin : if_id_pipeline_regs
+  always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      instr_new_id_o             <= 1'b0;
-      instr_valid_id_o           <= 1'b0;
-      instr_rdata_id_o           <= '0;
-      instr_rdata_alu_id_o       <= '0;
-      instr_fetch_err_o          <= '0;
-      instr_rdata_c_id_o         <= '0;
-      instr_is_compressed_id_o   <= 1'b0;
-      illegal_c_insn_id_o        <= 1'b0;
-      pc_id_o                    <= '0;
+      instr_valid_id_q <= 1'b0;
+      instr_new_id_q   <= 1'b0;
     end else begin
-      instr_new_id_o             <= if_id_pipe_reg_we;
-      if (if_id_pipe_reg_we) begin
-        instr_valid_id_o         <= 1'b1;
-        instr_rdata_id_o         <= instr_decompressed;
-        // To reduce fan-out and help timing from the instr_rdata_id flops they are replicated.
-        instr_rdata_alu_id_o     <= instr_decompressed;
-        instr_fetch_err_o        <= fetch_err;
-        instr_rdata_c_id_o       <= fetch_rdata[15:0];
-        instr_is_compressed_id_o <= instr_is_compressed_int;
-        illegal_c_insn_id_o      <= illegal_c_insn;
-        pc_id_o                  <= pc_if_o;
-      end else if (instr_valid_clear_i) begin
-        instr_valid_id_o         <= 1'b0;
-      end
+      instr_valid_id_q <= instr_valid_id_d;
+      instr_new_id_q   <= instr_new_id_d;
+    end
+  end
+
+  assign instr_valid_id_o = instr_valid_id_q;
+  // Signal when a new instruction enters the ID stage (only used for RVFI signalling).
+  assign instr_new_id_o   = instr_new_id_q;
+
+  // IF-ID pipeline registers, frozen when the ID stage is stalled
+  assign if_id_pipe_reg_we = instr_new_id_d;
+
+  always_ff @(posedge clk_i) begin
+    if (if_id_pipe_reg_we) begin
+      instr_rdata_id_o         <= instr_decompressed;
+      // To reduce fan-out and help timing from the instr_rdata_id flops they are replicated.
+      instr_rdata_alu_id_o     <= instr_decompressed;
+      instr_fetch_err_o        <= fetch_err;
+      instr_rdata_c_id_o       <= fetch_rdata[15:0];
+      instr_is_compressed_id_o <= instr_is_compressed_int;
+      illegal_c_insn_id_o      <= illegal_c_insn;
+      pc_id_o                  <= pc_if_o;
     end
   end
 
