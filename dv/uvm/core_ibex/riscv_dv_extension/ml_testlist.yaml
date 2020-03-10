@@ -200,6 +200,8 @@
     +max_interval=100000
     +enable_debug_seq=1
   rtl_test: core_ibex_debug_intr_basic_test
+  compare_opts:
+    compare_final_value_only: 1
 
 
 # --------------------------------------------------------------------------------
@@ -243,7 +245,7 @@
     +fix_sp=0
     +enable_illegal_csr_instruction=0
     +enable_access_invalid_csr_level=0
-    +enable_misaligned_instr=1
+    +enable_misaligned_instr=0
     +enable_dummy_csr_write=0
     +no_data_page=0
     +no_directed_instr=0
@@ -283,3 +285,5 @@
     +enable_irq_single_seq=1
     +enable_irq_multiple_seq=0
   rtl_test: core_ibex_debug_intr_basic_test
+  compare_opts:
+    compare_final_value_only: 1
