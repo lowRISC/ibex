@@ -218,7 +218,7 @@ risc-dv-files := $(shell find $(GEN_DIR) -type f)
 # the (phony) FORCE target if any variables have changed. If the rule actually
 # runs, it starts by deleting any existing contents of $(OUT-SEED)/instr_gen.
 $(metadata)/instr_gen.gen.stamp: \
-  $(gen-vars-prereq) $(risc-dv-files) | $(metadata)
+  $(gen-vars-prereq) $(risc-dv-files) $(TESTLIST) | $(metadata)
 	@rm -rf $(OUT-SEED)/instr_gen
 	@python3 ${GEN_DIR}/run.py \
      --output=$(OUT-SEED)/instr_gen ${GEN_OPTS} \
@@ -243,7 +243,8 @@ gen: $(metadata)/instr_gen.gen.stamp
 #
 # We don't explicitly track dependencies on the RISCV toolchain, so this
 # doesn't depend on anything more than the instr_gen stage did.
-$(metadata)/instr_gen.compile.stamp: $(metadata)/instr_gen.gen.stamp
+$(metadata)/instr_gen.compile.stamp: \
+  $(metadata)/instr_gen.gen.stamp $(TESTLIST)
 	@python3 ${GEN_DIR}/run.py \
      --o=$(OUT-SEED)/instr_gen ${GEN_OPTS} \
      --steps=gcc_compile \
@@ -267,7 +268,7 @@ iss-var-deps := ISS ISS_OPTS
 iss-vars-prereq = $(call vars-prereq,iss,running ISS,$(iss-var-deps))
 
 $(metadata)/instr_gen.iss.stamp: \
-  $(iss-vars-prereq) $(metadata)/instr_gen.compile.stamp
+  $(iss-vars-prereq) $(TESTLIST) $(metadata)/instr_gen.compile.stamp
 	@python3 ${GEN_DIR}/run.py \
      --o=$(OUT-SEED)/instr_gen ${GEN_OPTS} \
      --steps=iss_sim \
@@ -348,7 +349,8 @@ $(metadata)/rtl_sim.compile.stamp: \
 # This rule actually runs the simulation. It depends on the copied-in testbench
 # and also on us having already compiled the test programs.
 $(metadata)/rtl_sim.run.stamp: \
-  $(metadata)/rtl_sim.compile.stamp $(metadata)/instr_gen.compile.stamp sim.py
+  $(metadata)/rtl_sim.compile.stamp \
+  $(metadata)/instr_gen.compile.stamp $(TESTLIST) sim.py
 	@./sim.py \
      --o=$(OUT-SEED) \
      --steps=sim \
@@ -364,7 +366,7 @@ rtl_sim: $(metadata)/rtl_sim.run.stamp
 # Compare ISS and RTL sim results
 $(OUT-SEED)/regr.log: \
   $(metadata)/instr_gen.iss.stamp \
-  $(metadata)/rtl_sim.run.stamp
+  $(metadata)/rtl_sim.run.stamp $(TESTLIST)
 	@rm -f $@
 	@./sim.py \
      --o=$(OUT-SEED) \
