@@ -10,6 +10,7 @@
  */
 module ibex_ex_block #(
     parameter bit RV32M                    = 1,
+    parameter bit RV32B                    = 0,
     parameter bit BranchTargetALU          = 0,
     parameter     MultiplierImplementation = "fast"
 ) (
@@ -93,7 +94,9 @@ module ibex_ex_block #(
   // ALU //
   /////////
 
-  ibex_alu alu_i (
+  ibex_alu #(
+    .RV32B( RV32B )
+  ) alu_i (
       .operator_i          ( alu_operator_i            ),
       .operand_a_i         ( alu_operand_a_i           ),
       .operand_b_i         ( alu_operand_b_i           ),

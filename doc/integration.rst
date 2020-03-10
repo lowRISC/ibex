@@ -19,6 +19,7 @@ Instantiation Template
       .MHPMCounterWidth         ( 40           ),
       .RV32E                    ( 0            ),
       .RV32M                    ( 1            ),
+      .RV32B                    ( 0            ),
       .MultiplierImplementation ( "fast"       ),
       .ICache                   ( 0            ),
       .ICacheECC                ( 0            ),
@@ -88,6 +89,9 @@ Parameters
 | ``RV32E``                    | bit         | 0          | RV32E mode enable (16 integer registers only)                   |
 +------------------------------+-------------+------------+-----------------------------------------------------------------+
 | ``RV32M``                    | bit         | 1          | M(ultiply) extension enable                                     |
++------------------------------+-------------+------------+-----------------------------------------------------------------+
+| ``RV32B``                    | bit         | 0          | *EXPERIMENTAL* - B(itmanipulation) extension enable:            |
+|                              |             |            | Currently supported Z-extensions: Zbb (base)                    |
 +------------------------------+-------------+------------+-----------------------------------------------------------------+
 | ``BranchTargetALU``          | bit         | 0          | *EXPERIMENTAL* - Enables branch target ALU removing a stall     |
 |                              |             |            | cycle from taken branches                                       |

@@ -19,6 +19,7 @@
 module ibex_id_stage #(
     parameter bit RV32E           = 0,
     parameter bit RV32M           = 1,
+    parameter bit RV32B           = 0,
     parameter bit BranchTargetALU = 0,
     parameter bit WritebackStage  = 0
 ) (
@@ -360,6 +361,7 @@ module ibex_id_stage #(
   ibex_decoder #(
       .RV32E           ( RV32E           ),
       .RV32M           ( RV32M           ),
+      .RV32B           ( RV32B           ),
       .BranchTargetALU ( BranchTargetALU )
   ) decoder_i (
       .clk_i                           ( clk_i                ),

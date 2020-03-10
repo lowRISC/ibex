@@ -32,7 +32,7 @@ typedef enum logic [6:0] {
 // ALU operations //
 ////////////////////
 
-typedef enum logic [4:0] {
+typedef enum logic [5:0] {
   // Arithmetics
   ALU_ADD,
   ALU_SUB,
@@ -41,11 +41,23 @@ typedef enum logic [4:0] {
   ALU_XOR,
   ALU_OR,
   ALU_AND,
+  // RV32B
+  ALU_XNOR,
+  ALU_ORN,
+  ALU_ANDN,
 
   // Shifts
   ALU_SRA,
   ALU_SRL,
   ALU_SLL,
+  // RV32B
+  ALU_SRO,
+  ALU_SLO,
+  ALU_ROR,
+  ALU_ROL,
+  ALU_REV,
+  ALU_REV8,
+  ALU_ORCB,
 
   // Comparisons
   ALU_LT,
@@ -54,6 +66,23 @@ typedef enum logic [4:0] {
   ALU_GEU,
   ALU_EQ,
   ALU_NE,
+  // RV32B
+  ALU_MIN,
+  ALU_MINU,
+  ALU_MAX,
+  ALU_MAXU,
+
+  // Pack
+  // RV32B
+  ALU_PACK,
+  ALU_PACKU,
+  ALU_PACKH,
+
+  // Bitcounting
+  // RV32B
+  ALU_CLZ,
+  ALU_CTZ,
+  ALU_PCNT,
 
   // Set lower than
   ALU_SLT,
