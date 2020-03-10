@@ -18,6 +18,7 @@ module ibex_core #(
     parameter int unsigned MHPMCounterWidth         = 40,
     parameter bit          RV32E                    = 1'b0,
     parameter bit          RV32M                    = 1'b1,
+    parameter bit          RV32B                    = 1'b0,
     parameter bit          BranchTargetALU          = 1'b0,
     parameter bit          WritebackStage           = 1'b0,
     parameter              MultiplierImplementation = "fast",
@@ -415,6 +416,7 @@ module ibex_core #(
   ibex_id_stage #(
       .RV32E           ( RV32E           ),
       .RV32M           ( RV32M           ),
+      .RV32B           ( RV32B           ),
       .BranchTargetALU ( BranchTargetALU ),
       .WritebackStage  ( WritebackStage  )
   ) id_stage_i (
@@ -559,12 +561,12 @@ module ibex_core #(
 
   ibex_ex_block #(
       .RV32M                      ( RV32M                    ),
+      .RV32B                      ( RV32B                    ),
       .BranchTargetALU            ( BranchTargetALU          ),
       .MultiplierImplementation   ( MultiplierImplementation )
   ) ex_block_i (
       .clk_i                      ( clk                      ),
       .rst_ni                     ( rst_ni                   ),
-
       // ALU signal from ID stage
       .alu_operator_i             ( alu_operator_ex          ),
       .alu_operand_a_i            ( alu_operand_a_ex         ),
