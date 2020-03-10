@@ -614,9 +614,13 @@ module ibex_id_stage #(
             end
             multdiv_en_dec: begin
               // MUL or DIV operation
-              id_fsm_d      = MULTI_CYCLE;
-              rf_we_raw     = 1'b0;
-              stall_multdiv = 1'b1;
+              if (~ex_valid_i) begin
+                // When single-cycle multiply is configured mul can finish in the first cycle so
+                // only enter MULTI_CYCLE state if a result isn't immediately available
+                id_fsm_d      = MULTI_CYCLE;
+                rf_we_raw     = 1'b0;
+                stall_multdiv = 1'b1;
+              end
             end
             branch_in_dec: begin
               // cond branch operation

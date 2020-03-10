@@ -111,6 +111,10 @@ module ibex_multdiv_fast #(
     end
   end
 
+  `ASSERT_KNOWN(DivEnKnown, div_en_internal);
+  `ASSERT_KNOWN(MultEnKnown, mult_en_internal);
+  `ASSERT_KNOWN(MultDivEnKnown, multdiv_en);
+
   assign multdiv_en = mult_en_internal | div_en_internal;
 
   assign intermediate_val_d = div_en_i ? op_remainder_d : mac_res_d;
@@ -183,6 +187,8 @@ module ibex_multdiv_fast #(
       mult_valid = mult_en_i;
       mult_state_d = MULL;
 
+      mult_hold = 1'b0;
+
       unique case (mult_state_q)
 
         MULL: begin
@@ -190,6 +196,8 @@ module ibex_multdiv_fast #(
             mac_res_d = mac_res;
             mult_valid = 1'b0;
             mult_state_d = MULH;
+          end else begin
+            mult_hold = ~multdiv_ready_id_i;
           end
         end
 
@@ -207,6 +215,8 @@ module ibex_multdiv_fast #(
 
           mult_state_d = MULL;
           mult_valid = 1'b1;
+
+          mult_hold = ~multdiv_ready_id_i;
         end
 
         default: begin
