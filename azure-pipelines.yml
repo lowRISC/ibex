@@ -128,6 +128,19 @@ jobs:
     displayName: Lint Verilog source files with Verible (experimental)
 
   - bash: |
+      fusesoc --cores-root . run --no-export --target=format --tool=veribleformat lowrisc:ibex:ibex_core_tracing
+      if [ $? != 0 ]; then
+        echo -n "##vso[task.logissue type=error]"
+        echo "Verilog format with Verible failed. Run 'fusesoc --cores-root . run --no-export --target=format --tool=veribleformat lowrisc:ibex:ibex_core_tracing' to check and fix all errors."
+        echo "This flow is currently experimental and failures can be ignored."
+      fi
+      # Show diff of what verilog_format would have changed, and then revert.
+      git diff
+      git reset --hard HEAD
+    continueOnError: true
+    displayName: Format all source code with Verible format (experimental)
+
+  - bash: |
       fork_origin=$(git merge-base --fork-point origin/master)
       changed_files=$(git diff --name-only $fork_origin | grep -v '^vendor' | grep -E '\.(cpp|cc|c|h)$')
       test -z "$changed_files" || git diff -U0 $fork_origin $changed_files | clang-format-diff -p1 | tee clang-format-output
