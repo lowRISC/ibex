@@ -108,3 +108,15 @@ targets:
         ruleset: default
         rules:
           - "-parameter-name-style"
+  format:
+    filesets:
+      - files_rtl
+    parameters:
+      - SYNTHESIS=true
+      - RVFI=true
+    default_tool: veribleformat
+    toplevel: ibex_core
+    tools:
+      veribleformat:
+        verible_format_args:
+          - "--inplace"
