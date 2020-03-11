@@ -312,7 +312,7 @@ compile-vars-prereq = $(call vars-prereq,comp,compiling TB,$(compile-var-deps))
 $(call dump-vars-match,$(compile-var-deps),comp)
 
 cov-arg := $(if $(call equal,$(COV),1),--en_cov,)
-wave-arg := $(if $(call equal,$(WAVE),1),--en_wave,)
+wave-arg := $(if $(call equal,$(WAVES),1),--en_wave,)
 lsf-arg := $(if $(LSF_CMD),--lsf_cmd="$(LSF_CMD)",)
 
 $(OUT)/rtl_sim/.compile.stamp: \
