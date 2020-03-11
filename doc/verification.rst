@@ -160,9 +160,10 @@ against each other, since any code executed in the debug ROM and trap handlers s
 register state in the rest of the program.
 
 The entirety of this flow is controlled by the Makefile found at
-`dv/uvm/Makefile <https://github.com/lowRISC/ibex/blob/master/dv/uvm/Makefile>`_; here is a list of frequently used commands:
+`dv/uvm/core_ibex/Makefile <https://github.com/lowRISC/ibex/blob/master/dv/uvm/core_ibex/Makefile>`_; here is a list of frequently used commands:
 
 .. code-block:: bash
+   cd dv/uvm/core_ibex
 
    # Run a full regression
    make
