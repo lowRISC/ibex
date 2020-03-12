@@ -221,17 +221,20 @@ def get_test_sim_cmd(base_cmd, test, idx, output_dir, bin_dir, lsf_cmd):
     binary = os.path.join(bin_dir, '{}_{}.bin'.format(test_name, idx))
     desc = '{} with {}'.format(test['rtl_test'], binary)
 
+    # Do final interpolation into the test command for variables that depend on
+    # the test name or iteration number.
+    sim_cmd = subst_vars(sim_cmd,
+                         {
+                             'sim_dir': sim_dir,
+                             'rtl_test': test['rtl_test'],
+                             'binary': binary
+                         })
+
     if not os.path.exists(binary):
         raise RuntimeError('When computing simulation command for running '
                            'iteration {} of test {}, cannot find the '
                            'expected binary at {!r}.'
                            .format(idx, test_name, binary))
-
-    # Add plusargs for the test and a log file.
-    sim_cmd += (' +UVM_TESTNAME={} +bin={} +ibex_tracer_file_base={} -l {}'
-                .format(test['rtl_test'], binary,
-                        os.path.join(sim_dir, 'trace_core'),
-                        os.path.join(sim_dir, 'sim.log')))
 
     if lsf_cmd is not None:
         sim_cmd = lsf_cmd + ' ' + sim_cmd
