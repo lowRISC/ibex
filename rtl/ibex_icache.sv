@@ -21,22 +21,25 @@ module ibex_icache #(
   // Only cache branch targets
   parameter bit          BranchCache = 1'b0
 ) (
+    // Clock and reset
     input  logic                clk_i,
     input  logic                rst_ni,
 
+    // Signal that the core would like instructions
     input  logic                req_i,
 
+    // Set the cache's address counter
     input  logic                branch_i,
     input  logic [31:0]         addr_i,
 
-    // IF stage interface
+    // IF stage interface: Pass fetched instructions to the core
     input  logic                ready_i,
     output logic                valid_o,
     output logic [31:0]         rdata_o,
     output logic [31:0]         addr_o,
     output logic                err_o,
 
-    // Instruction memory / interconnect interface
+    // Instruction memory / interconnect interface: Fetch instruction data from memory
     output logic                instr_req_o,
     input  logic                instr_gnt_i,
     output logic [31:0]         instr_addr_o,
