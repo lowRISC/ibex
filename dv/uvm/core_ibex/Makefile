@@ -319,13 +319,15 @@ wave-arg := $(if $(call equal,$(WAVES),1),--en_wave,)
 lsf-arg := $(if $(LSF_CMD),--lsf_cmd="$(LSF_CMD)",)
 
 $(OUT)/rtl_sim/.compile.stamp: \
-  $(compile-vars-prereq) $(all-verilog) $(risc-dv-files) sim.py | $(OUT)/rtl_sim
+  $(compile-vars-prereq) $(all-verilog) $(risc-dv-files) \
+  sim.py yaml/rtl_simulation.yaml \
+  | $(OUT)/rtl_sim
 	@./sim.py \
-     --o=${OUT} \
-     --steps=compile \
-     ${COMMON_OPTS} \
-     --simulator="${SIMULATOR}" $(cov-arg) $(wave-arg) \
-     --cmp_opts="${COMPILE_OPTS}"
+	 --o=${OUT} \
+	 --steps=compile \
+	 ${COMMON_OPTS} \
+	 --simulator="${SIMULATOR}" --simulator_yaml=yaml/rtl_simulation.yaml \
+	 $(cov-arg) $(wave-arg) --cmp_opts="${COMPILE_OPTS}"
 	$(call dump-vars,$(OUT)/rtl_sim/.compile-vars.mk,comp,$(compile-var-deps))
 	@touch $@
 
@@ -353,13 +355,15 @@ $(metadata)/rtl_sim.compile.stamp: \
 # and also on us having already compiled the test programs.
 $(metadata)/rtl_sim.run.stamp: \
   $(metadata)/rtl_sim.compile.stamp \
-  $(metadata)/instr_gen.compile.stamp $(TESTLIST) sim.py
+  $(metadata)/instr_gen.compile.stamp $(TESTLIST) \
+  sim.py yaml/rtl_simulation.yaml
 	@./sim.py \
-     --o=$(OUT-SEED) \
-     --steps=sim \
-     ${TEST_OPTS} \
-     --simulator="${SIMULATOR}" $(cov-arg) $(wave-arg) $(lsf-arg) \
-     --sim_opts="+signature_addr=${SIGNATURE_ADDR}" ${SIM_OPTS}
+	 --o=$(OUT-SEED) \
+	 --steps=sim \
+	 ${TEST_OPTS} \
+	 --simulator="${SIMULATOR}" --simulator_yaml=yaml/rtl_simulation.yaml \
+	 $(cov-arg) $(wave-arg) $(lsf-arg) \
+	 --sim_opts="+signature_addr=${SIGNATURE_ADDR}" ${SIM_OPTS}
 	@touch $@
 
 .PHONY: rtl_sim
