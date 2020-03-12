@@ -9,7 +9,25 @@ NOTE - This module is currently DRAFT
 The optional Instruction Cache (I$) is designed to improve CPU performance in systems with high instruction memory latency.
 The I$ integrates into the CPU by replacing the prefetch buffer, interfacing directly between the bus and IF stage.
 
-For details of the memory and IF stage interfaces see :ref:`instruction-fetch`.
+High-level operation
+--------------------
+
+The I$ passes instructions to the core using a ready / valid interface.
+Inside the cache is an address counter, which increments for every instruction fetched (by 2 or 4 bytes, depending on whether the instruction contents show it to be compressed).
+When the core takes a branch, it resets the counter to a new address by raising the ``branch_i`` signal and supplying the new address on ``addr_i``.
+The next instruction returned by the cache will be the instruction at this new address.
+
+The I$ communicates with instruction memory using an interface that matches the IF stage (allowing the cache to be enabled or disabled without needing to change the Ibex toplevel's interface). For more details of this interface, see :ref:`instruction-fetch`.
+
+To avoid the cache fetching needlessly when the core is asleep (after a ``wfi`` instruction), it has a ``req_i`` input. Shortly after this goes low, the cache will stop making memory transactions.
+
+If the ``icache_enable_i`` input is low, the cache operates in pass-through mode, where every requested instruction is fetched from memory and no results are cached.
+
+In order to invalidate the cache, the core can raise the ``icache_inval_i`` line for one or more cycles, which will start an internal cache invalidation.
+No fetches are cached while the invalidation is taking place (behaving as if ``icache_enable_i`` is low).
+
+While the I$ is busy, either (pre)fetching data or invalidating its memory, it raises the ``busy_o`` signal.
+This can be used to avoid the cache's clock being gated when it is doing something.
 
 
 Configuration options
@@ -111,15 +129,15 @@ Fill buffers
 
 The fill buffers perform several functions in the I$ and constitute most of it's complexity.
 
-- Since external requests can be made speculatively in parallel with the cache lookup, a fill buffer must be allocated in IC0 to track the request.
-- The fill buffers are used as data storage for hitting requests as well as for miss tracking so all lookup requests require a fill buffer.
-- A fill buffer makes multiple external requests to memory to fetch the required data to fill a cache line (tracked via ``fill_ext_cnt_q``).
-- Returning data is tracked via ``fill_rvd_cnt_q``.
-Not all requests will fetch all their data, since requests can be cancelled due to a cache hit or an intervening branch.
-- If a fill buffer has not made any external requests it will be cancelled by an intervening branch, if it has made requests then the requests will be completed and the line allocated.
-- Beats of data are supplied to the IF stage, tracked via ``fill_out_cnt_q``.
-- If the line is due to be allocated into the cache, it will request for arbitration once all data has been received.
-- Once all required actions are complete, the fill buffer releases and becomes available for a new request.
+* Since external requests can be made speculatively in parallel with the cache lookup, a fill buffer must be allocated in IC0 to track the request.
+* The fill buffers are used as data storage for hitting requests as well as for miss tracking so all lookup requests require a fill buffer.
+* A fill buffer makes multiple external requests to memory to fetch the required data to fill a cache line (tracked via ``fill_ext_cnt_q``).
+* Returning data is tracked via ``fill_rvd_cnt_q``.
+  Not all requests will fetch all their data, since requests can be cancelled due to a cache hit or an intervening branch.
+* If a fill buffer has not made any external requests it will be cancelled by an intervening branch, if it has made requests then the requests will be completed and the line allocated.
+* Beats of data are supplied to the IF stage, tracked via ``fill_out_cnt_q``.
+* If the line is due to be allocated into the cache, it will request for arbitration once all data has been received.
+* Once all required actions are complete, the fill buffer releases and becomes available for a new request.
 
 Since requests can perform actions out of order (cache hit in the shadow of an outstanding miss), and multiple requests can complete at the same time, the fill buffers are not a simple FIFO.
 Each fill buffer maintains a matrix of which requests are older than it, and this is used for arbitrating between the fill buffers.
@@ -149,3 +167,55 @@ Cache invalidation
 After reset, and when requested by the core (due to a FENCE.I instruction), the whole cache is invalidated.
 Requests are inserted to invalidate the tag RAM for all ways in each cache line in sequence.
 While the invalidation is in-progress, lookups and instruction fetches can proceed, but nothing will be allocated to the cache.
+
+Detailed behaviour
+^^^^^^^^^^^^^^^^^^
+
+This section describes the expected behaviour of the cache, in order to allow functional verification.
+This isn't an attempt to describe the cache's performance characteristics.
+
+The I$ has a single clock (``clk_i``) and asynchronous reset (``rst_ni``).
+
+Data is requested from the instruction memory with the ports prefixed by ``instr_``. These work as described in :ref:`instruction-fetch`.
+Note that there's one extra port on the I$, which doesn't appear at the ``ibex_core`` top-level.
+This is ``instr_pmp_err_i``.
+If the PMP block disallows a fetch for a certain address, it will squash the outgoing memory request entirely and set ``instr_pmp_err_i``.
+If that happens, the cache behaves as if the request was granted but returned some time later with an error.
+Note that it is possible for ``instr_gnt_i`` and ``instr_pmp_err_i`` to be high on the same cycle.
+In that case, the error signal takes precedence.
+
+Fetched instructions are returned to the core using ports ``ready_i``, ``valid_o``, ``rdata_o``, ``addr_o`` and ``err_o``.
+This interface uses ready/valid handshaking in the usual way (a transaction is signalled by ready and valid being high; if valid goes high, it will remain high and the other output signals will remain stable until the 
+transaction goes through).
+The one exception is if ``branch_i`` is asserted, which will cause ``valid_o`` to de-assert.
+The ``rdata_o`` signal contains 32 bits of instruction data, which was fetched from ``addr_o``.
+The ``err_o`` signal will be high if the instruction fetch failed (either with ``instr_pmp_err_i`` or ``instr_err_i``); in this case ``rdata_o`` is not specified.
+
+The ``req_i`` signal tells the cache that the core is awake and will start requesting instructions soon.
+As well as the main cache memory, the I$ contains a prefetch buffer.
+The cache fills this buffer by issuing fetches when ``req_i`` is high.
+If ``req_i`` becomes false, the cache may do a few more instruction fetches to fill a cache line, but will stop fetching when that is done.
+The cache will not do any instruction fetches after this until ``req_i`` goes high again.
+A correctly behaving core should not not assert ``ready_i`` when ``req_i`` is low.
+
+Inside the cache is an address counter.
+If ``branch_i`` is asserted then the address counter will be set to ``addr_i`` and the next instruction that is passed to the core will be the one fetched from that address.
+The cache will also start reading into a new prefetch buffer, storing the current contents into the main cache memory or discarding it (see ``icache_enable_i`` below).
+On other cycles, the address counter will be incremented every time an instruction is passed to the core.
+This increment depends on the instruction data (visible at ``rdata_o``): if the bottom bits of the instruction are not ``2'b11``, the instruction is considered to be compressed and the address will be incremented by 2.
+If the bottom bits of the instruction are ``2'b11`` then the instruction is considered to be uncompressed and the address will be incremented by 4.
+Since the contents of ``rdata_o`` are not specified if an instruction fetch has caused an error, the core must signal a branch before accepting another instruction after it sees ``err_o``.
+
+Since the address counter is not initialised on reset, the behaviour of the I$ is unspecified unless ``branch_i`` is asserted on or before the first cycle that ``req_i`` is asserted after reset.
+If that is not true, there's nothing to stop the cache fetching from random addresses.
+
+The ``icache_enable_i`` signal controls whether the cache copies fetched data from the prefetch buffer to the main cache memory.
+If the signal is false, fetched data will be discarded on a branch or after enough instructions have been consumed by the core.
+On reset, or whenever ``icache_inval_i`` goes high, the cache will invalidate its stored data.
+While doing this, the cache behaves as if ``icache_enable_i`` is false and will not store any fetched data.
+
+.. note::
+   The rules for ``icache_enable_i`` and ``icache_inval_i`` mean that, in order to be completely sure of executing newly fetched code, the core should raise the ``icache_inval_i`` line for at least a cycle and then should branch. The Ibex core does this in response to a ``FENCE.I`` instruction, branching explicitly to the next PC.
+
+The ``busy_o`` signal is guaranteed to be high while the cache is invalidating its internal memories or whenever it has a pending fetch on the instruction bus.
+When the ``busy_o`` signal is low, it is safe to clock gate the cache.
