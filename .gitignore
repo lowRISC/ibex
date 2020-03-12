@@ -6,6 +6,7 @@ build
 .vscode/
 .sw[a-p]
 tags
+*~
 
 # ibex_tracer log file
 trace_core_*.log
