@@ -163,6 +163,7 @@ The entirety of this flow is controlled by the Makefile found at
 `dv/uvm/core_ibex/Makefile <https://github.com/lowRISC/ibex/blob/master/dv/uvm/core_ibex/Makefile>`_; here is a list of frequently used commands:
 
 .. code-block:: bash
+
    cd dv/uvm/core_ibex
 
    # Run a full regression
