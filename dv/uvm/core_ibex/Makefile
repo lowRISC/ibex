@@ -89,7 +89,7 @@ all: sim
 
 instr: iss_sim
 
-sim: post_compare
+sim: post_compare cov
 
 .PHONY: clean
 clean:
@@ -101,7 +101,7 @@ COMMON_OPTS := $(if $(call equal,$(VERBOSE),1),--verbose,)
 # Options for all targets that depend on the tests we're running.
 TEST_OPTS := $(COMMON_OPTS) \
              --seed=${SEED} \
-             --test"=${TEST}" \
+             --test="${TEST}" \
              --testlist=${TESTLIST} \
              --iterations=${ITERATIONS}
 
@@ -386,7 +386,7 @@ $(OUT-SEED)/regr.log: \
 post_compare: $(OUT-SEED)/regr.log
 
 ###############################################################################
-# Generate functional coverage
+# Generate RISCV-DV functional coverage
 fcov:
 	python3 ${GEN_DIR}/cov.py \
           --core ibex \
@@ -395,12 +395,15 @@ fcov:
           --isa rv32imc \
           --custom_target riscv_dv_extension
 
-# Load verdi to review coverage
-cov_vcs:
-	cd ${OUT}/rtl_sim; verdi -cov -covdir test.vdb &
-
-cov_ius:
-	if [ ! -d "${OUT}/rtl_sim/cov_work/scope/merged_cov" ]; \
-	  then imc -execcmd "merge -out ${OUT}/rtl_sim/cov_work/scope/merged_cov ${OUT}/rtl_sim/cov_work/scope/test_*"; \
-    fi
-	imc -load ${OUT}/rtl_sim/cov_work/scope/merged_cov &
+# Merge coverage in the <out> directory
+cov:
+	@rm -rf ${OUT}/rtl_sim/test.vdb
+	@./sim.py \
+		--steps=cov \
+		${TEST_OPTS} \
+		--simulator="${SIMULATOR}" \
+		--o="${OUT}" \
+		--lsf_cmd="${LSF_CMD}";
+	@if [ -d "test.vdb" ]; then \
+		mv -f test.vdb ./${OUT}/rtl_sim/; \
+	fi

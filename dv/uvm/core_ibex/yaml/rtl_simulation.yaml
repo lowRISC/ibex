@@ -46,7 +46,7 @@
       -cm_dir <out>/test.vdb
       -cm_log /dev/null
       -assert nopostproc
-      -cm_name test_<seed>
+      -cm_name test_<test_name>_<iteration>
     wave_opts: >
       -ucli -do <cwd>/vcs.tcl
 
