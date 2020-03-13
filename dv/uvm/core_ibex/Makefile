@@ -5,6 +5,9 @@
 GEN_DIR             := $(realpath ../../../vendor/google_riscv-dv)
 TOOLCHAIN           := ${RISCV_TOOLCHAIN}
 
+# Explicitly ask for the bash shell
+SHELL                := bash
+
 # Seed for instruction generator and RTL simulation
 #
 # By default, SEED is set to a different value on each run by picking a random
