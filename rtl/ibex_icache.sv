@@ -14,12 +14,13 @@ module ibex_icache #(
   // Cache arrangement parameters
   parameter int unsigned BusWidth       = 32,
   parameter int unsigned CacheSizeBytes = 4*1024,
+  parameter bit          CacheECC       = 1'b0,
   parameter int unsigned LineSize       = 64,
   parameter int unsigned NumWays        = 2,
   // Always make speculative bus requests in parallel with lookups
-  parameter bit          SpecRequest = 1'b0,
+  parameter bit          SpecRequest    = 1'b0,
   // Only cache branch targets
-  parameter bit          BranchCache = 1'b0
+  parameter bit          BranchCache    = 1'b0
 ) (
     // Clock and reset
     input  logic                clk_i,
@@ -55,7 +56,6 @@ module ibex_icache #(
 );
 
   // NOTE RTL IS DRAFT
-  // TODO different RAM primitives?
 
   // Local constants
   localparam int unsigned ADDR_W       = 32;
@@ -64,6 +64,7 @@ module ibex_icache #(
   // Request throttling threshold
   localparam int unsigned FB_THRESHOLD = NUM_FB - 2;
   // Derived parameters
+  localparam int unsigned LINE_SIZE_ECC   = CacheECC ? (LineSize + 8) : LineSize;
   localparam int unsigned LINE_SIZE_BYTES = LineSize/8;
   localparam int unsigned LINE_W          = $clog2(LINE_SIZE_BYTES);
   localparam int unsigned BUS_BYTES       = BusWidth/8;
@@ -74,6 +75,7 @@ module ibex_icache #(
   localparam int unsigned INDEX_W         = $clog2(NUM_LINES);
   localparam int unsigned INDEX_HI        = INDEX_W + LINE_W - 1;
   localparam int unsigned TAG_SIZE        = ADDR_W - INDEX_W - LINE_W + 1; // 1 valid bit
+  localparam int unsigned TAG_SIZE_ECC    = CacheECC ? (TAG_SIZE + 6) : TAG_SIZE;
   localparam int unsigned OUTPUT_BEATS    = (BUS_BYTES / 2); // number of halfwords
 
   // Prefetch signals
@@ -87,7 +89,7 @@ module ibex_icache #(
   logic [INDEX_W-1:0]                  lookup_index_ic0;
   logic                                fill_req_ic0;
   logic [INDEX_W-1:0]                  fill_index_ic0;
-  logic [31:INDEX_HI+1]                fill_tag_ic0;
+  logic [TAG_SIZE-1:0]                 fill_tag_ic0;
   logic [LineSize-1:0]                 fill_wdata_ic0;
   logic                                lookup_grant_ic0;
   logic                                lookup_actual_ic0;
@@ -96,16 +98,16 @@ module ibex_icache #(
   logic [INDEX_W-1:0]                  tag_index_ic0;
   logic [NumWays-1:0]                  tag_banks_ic0;
   logic                                tag_write_ic0;
-  logic [TAG_SIZE-1:0]                 tag_wdata_ic0;
+  logic [TAG_SIZE_ECC-1:0]             tag_wdata_ic0;
   logic                                data_req_ic0;
   logic [INDEX_W-1:0]                  data_index_ic0;
   logic [NumWays-1:0]                  data_banks_ic0;
   logic                                data_write_ic0;
-  logic [LineSize-1:0]                 data_wdata_ic0;
+  logic [LINE_SIZE_ECC-1:0]            data_wdata_ic0;
   // Cache pipelipe IC1 signals
-  logic [TAG_SIZE-1:0]                 tag_rdata_ic1  [NumWays];
-  logic [LineSize-1:0]                 data_rdata_ic1 [NumWays];
-  logic [LineSize-1:0]                 hit_data_ic1;
+  logic [TAG_SIZE_ECC-1:0]             tag_rdata_ic1  [NumWays];
+  logic [LINE_SIZE_ECC-1:0]            data_rdata_ic1 [NumWays];
+  logic [LINE_SIZE_ECC-1:0]            hit_data_ic1;
   logic                                lookup_valid_ic1;
   logic [ADDR_W-1:INDEX_HI+1]          lookup_addr_ic1;
   logic [NumWays-1:0]                  tag_match_ic1;
@@ -114,6 +116,10 @@ module ibex_icache #(
   logic [NumWays-1:0]                  lowest_invalid_way_ic1;
   logic [NumWays-1:0]                  round_robin_way_ic1, round_robin_way_q;
   logic [NumWays-1:0]                  sel_way_ic1;
+  logic                                ecc_err_ic1;
+  logic                                ecc_write_req;
+  logic [NumWays-1:0]                  ecc_write_ways;
+  logic [INDEX_W-1:0]                  ecc_write_index;
   // Fill buffer signals
   logic                                gnt_or_pmp_err;
   logic [$clog2(NUM_FB)-1:0]           fb_fill_level;
@@ -133,6 +139,7 @@ module ibex_icache #(
   logic [NUM_FB-1:0][LINE_BEATS_W:0]   fill_rvd_cnt_d, fill_rvd_cnt_q;
   logic [NUM_FB-1:0]                   fill_rvd_done;
   logic [NUM_FB-1:0]                   fill_ram_done_d, fill_ram_done_q;
+  logic [NUM_FB-1:0]                   fill_out_grant;
   logic [NUM_FB-1:0][LINE_BEATS_W:0]   fill_out_cnt_d, fill_out_cnt_q;
   logic [NUM_FB-1:0]                   fill_out_done;
   logic [NUM_FB-1:0]                   fill_ext_req, fill_rvd_exp, fill_ram_req, fill_out_req;
@@ -214,7 +221,7 @@ module ibex_icache #(
   // Cache lookup
   assign lookup_throttle  = (fb_fill_level > FB_THRESHOLD[$clog2(NUM_FB)-1:0]);
 
-  assign lookup_req_ic0   = req_i & ~&fill_busy_q & (branch_i | ~lookup_throttle);
+  assign lookup_req_ic0   = req_i & ~&fill_busy_q & (branch_i | ~lookup_throttle) & ~ecc_write_req;
   assign lookup_addr_ic0  = branch_i ? addr_i :
                                        prefetch_addr_q;
   assign lookup_index_ic0 = lookup_addr_ic0[INDEX_HI:LINE_W];
@@ -222,30 +229,61 @@ module ibex_icache #(
   // Cache write
   assign fill_req_ic0   = (|fill_ram_req);
   assign fill_index_ic0 = fill_ram_req_addr[INDEX_HI:LINE_W];
-  assign fill_tag_ic0   = fill_ram_req_addr[ADDR_W-1:INDEX_HI+1];
+  assign fill_tag_ic0   = {(~inval_prog_q & ~ecc_write_req),fill_ram_req_addr[ADDR_W-1:INDEX_HI+1]};
   assign fill_wdata_ic0 = fill_ram_req_data;
 
   // Arbitrated signals - lookups have highest priority
   assign lookup_grant_ic0  = lookup_req_ic0;
-  assign fill_grant_ic0    = fill_req_ic0 & ~lookup_req_ic0 & ~inval_prog_q;
+  assign fill_grant_ic0    = fill_req_ic0 & ~lookup_req_ic0 & ~inval_prog_q & ~ecc_write_req;
   // Qualified lookup grant to mask ram signals in IC1 if access was not made
   assign lookup_actual_ic0 = lookup_grant_ic0 & icache_enable_i & ~inval_prog_q;
 
   // Tagram
-  assign tag_req_ic0   = lookup_req_ic0 | fill_req_ic0 | inval_prog_q;
+  assign tag_req_ic0   = lookup_req_ic0 | fill_req_ic0 | inval_prog_q | ecc_write_req;
   assign tag_index_ic0 = inval_prog_q   ? inval_index_q :
+                         ecc_write_req  ? ecc_write_index :
                          fill_grant_ic0 ? fill_index_ic0 :
                                           lookup_index_ic0;
-  assign tag_banks_ic0 = fill_grant_ic0 ? fill_ram_req_way : {NumWays{1'b1}};
-  assign tag_write_ic0 = fill_grant_ic0 | inval_prog_q;
-  assign tag_wdata_ic0 = {~inval_prog_q,fill_tag_ic0};
+  assign tag_banks_ic0 = ecc_write_req  ? ecc_write_ways :
+                         fill_grant_ic0 ? fill_ram_req_way :
+                                          {NumWays{1'b1}};
+  assign tag_write_ic0 = fill_grant_ic0 | inval_prog_q | ecc_write_req;
 
   // Dataram
   assign data_req_ic0   = lookup_req_ic0 | fill_req_ic0;
   assign data_index_ic0 = tag_index_ic0;
   assign data_banks_ic0 = tag_banks_ic0;
   assign data_write_ic0 = tag_write_ic0;
-  assign data_wdata_ic0 = fill_wdata_ic0;
+
+  // Append ECC checkbits to write data if required
+  if (CacheECC) begin : gen_ecc_wdata
+
+    // Tagram ECC
+    // Reuse the same ecc encoding module for larger cache sizes by padding with zeros
+    logic [21:0]          tag_ecc_input_padded;
+    logic [27:0]          tag_ecc_output_padded;
+    logic [22-TAG_SIZE:0] tag_ecc_output_unused;
+
+    assign tag_ecc_input_padded  = {{22-TAG_SIZE{1'b0}},fill_tag_ic0};
+    assign tag_ecc_output_unused = tag_ecc_output_padded[21:TAG_SIZE-1];
+
+    prim_secded_28_22_enc tag_ecc_enc (
+      .in  (tag_ecc_input_padded),
+      .out (tag_ecc_output_padded)
+    );
+
+    assign tag_wdata_ic0 = {tag_ecc_output_padded[27:22],tag_ecc_output_padded[TAG_SIZE-1:0]};
+
+    // Dataram ECC
+    prim_secded_72_64_enc data_ecc_enc (
+      .in  (fill_wdata_ic0),
+      .out (data_wdata_ic0)
+    );
+
+  end else begin : gen_noecc_wdata
+    assign tag_wdata_ic0  = fill_tag_ic0;
+    assign data_wdata_ic0 = fill_wdata_ic0;
+  end
 
   ////////////////
   // IC0 -> IC1 //
@@ -254,14 +292,14 @@ module ibex_icache #(
   for (genvar way = 0; way < NumWays; way++) begin : gen_rams
     // Tag RAM instantiation
     prim_generic_ram_1p #(
-      .Width    (TAG_SIZE),
+      .Width    (TAG_SIZE_ECC),
       .Depth    (NUM_LINES)
     ) tag_bank (
       .clk_i    (clk_i),
       .rst_ni   (rst_ni),
       .req_i    (tag_req_ic0 & tag_banks_ic0[way]),
       .write_i  (tag_write_ic0),
-      .wmask_i  ({TAG_SIZE{1'b1}}),
+      .wmask_i  ({TAG_SIZE_ECC{1'b1}}),
       .addr_i   (tag_index_ic0),
       .wdata_i  (tag_wdata_ic0),
       .rvalid_o (),
@@ -269,14 +307,14 @@ module ibex_icache #(
     );
     // Data RAM instantiation
     prim_generic_ram_1p #(
-      .Width    (LineSize),
+      .Width    (LINE_SIZE_ECC),
       .Depth    (NUM_LINES)
     ) data_bank (
       .clk_i    (clk_i),
       .rst_ni   (rst_ni),
       .req_i    (data_req_ic0 & data_banks_ic0[way]),
       .write_i  (data_write_ic0),
-      .wmask_i  ({LineSize{1'b1}}),
+      .wmask_i  ({LINE_SIZE_ECC{1'b1}}),
       .addr_i   (data_index_ic0),
       .wdata_i  (data_wdata_ic0),
       .rvalid_o (),
@@ -305,10 +343,11 @@ module ibex_icache #(
 
   // Tag matching
   for (genvar way = 0; way < NumWays; way++) begin : gen_tag_match
-    assign tag_match_ic1[way]   = (tag_rdata_ic1[way] ==
+    assign tag_match_ic1[way]   = (tag_rdata_ic1[way][TAG_SIZE-1:0] ==
                                    {1'b1,lookup_addr_ic1[ADDR_W-1:INDEX_HI+1]});
     assign tag_invalid_ic1[way] = ~tag_rdata_ic1[way][TAG_SIZE-1];
   end
+
   assign tag_hit_ic1 = |tag_match_ic1;
 
   // Hit data mux
@@ -341,6 +380,83 @@ module ibex_icache #(
 
   assign sel_way_ic1 = |tag_invalid_ic1 ? lowest_invalid_way_ic1 :
                                           round_robin_way_q;
+
+  // ECC checking logic
+  if (CacheECC) begin : gen_data_ecc_checking
+    logic [NumWays-1:0] tag_err_ic1;
+    logic [1:0]         data_err_ic1;
+    logic               ecc_correction_write_d, ecc_correction_write_q;
+    logic [NumWays-1:0] ecc_correction_ways_d, ecc_correction_ways_q;
+    logic [INDEX_W-1:0] lookup_index_ic1, ecc_correction_index_q;
+
+    // Tag ECC checking
+    for (genvar way = 0; way < NumWays; way++) begin : gen_tag_ecc
+      logic [1:0]  tag_err_bank_ic1;
+      logic [27:0] tag_rdata_padded_ic1;
+
+      // Expand the tag rdata with extra padding if the tag size is less than the maximum
+      assign tag_rdata_padded_ic1 = {tag_rdata_ic1[way][TAG_SIZE_ECC-1-:6],
+                                     {22-TAG_SIZE{1'b0}},
+                                     tag_rdata_ic1[way][TAG_SIZE-1:0]};
+
+      prim_secded_28_22_dec data_ecc_dec (
+        .in         (tag_rdata_padded_ic1),
+        .d_o        (),
+        .syndrome_o (),
+        .err_o      (tag_err_bank_ic1)
+      );
+      assign tag_err_ic1[way] = |tag_err_bank_ic1;
+    end
+
+    // Data ECC checking
+    // Note - could generate for all ways and mux after
+    prim_secded_72_64_dec data_ecc_dec (
+      .in         (hit_data_ic1),
+      .d_o        (),
+      .syndrome_o (),
+      .err_o      (data_err_ic1)
+    );
+
+    assign ecc_err_ic1 = lookup_valid_ic1 & ((|data_err_ic1) | (|tag_err_ic1));
+
+    // Error correction
+    // The way(s) producing the error will be invalidated in the next cycle.
+    assign ecc_correction_ways_d  = tag_err_ic1 | (tag_match_ic1 & {NumWays{|data_err_ic1}});
+    assign ecc_correction_write_d = ecc_err_ic1;
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        ecc_correction_write_q <= 1'b0;
+      end else begin
+        ecc_correction_write_q <= ecc_correction_write_d;
+      end
+    end
+
+    // The index is required in IC1 only when ECC is configured so is registered here
+    always_ff @(posedge clk_i) begin
+      if (lookup_grant_ic0) begin
+        lookup_index_ic1 <= lookup_addr_ic0[INDEX_HI-:INDEX_W];
+      end
+    end
+
+    // Store the ways with errors to be invalidated
+    always_ff @(posedge clk_i) begin
+      if (ecc_err_ic1) begin
+        ecc_correction_ways_q  <= ecc_correction_ways_d;
+        ecc_correction_index_q <= lookup_index_ic1;
+      end
+    end
+
+    assign ecc_write_req   = ecc_correction_write_q;
+    assign ecc_write_ways  = ecc_correction_ways_q;
+    assign ecc_write_index = ecc_correction_index_q;
+
+  end else begin : gen_no_data_ecc
+    assign ecc_err_ic1     = 1'b0;
+    assign ecc_write_req   = 1'b0;
+    assign ecc_write_ways  = '0;
+    assign ecc_write_index = '0;
+  end
 
   ///////////////////////////////
   // Cache allocation decision //
@@ -436,7 +552,7 @@ module ibex_icache #(
                                  (fill_cache_q[fb] & fill_busy_q[fb]);
     // Record whether the request hit in the cache
     assign fill_hit_ic1[fb]    = lookup_valid_ic1 & fill_in_ic1[fb] & tag_hit_ic1;
-    assign fill_hit_d[fb]      = fill_hit_ic1[fb] |
+    assign fill_hit_d[fb]      = (fill_hit_ic1[fb] & ~ecc_err_ic1) |
                                  (fill_hit_q[fb] & fill_busy_q[fb]);
 
     ///////////////////////////////////////////
@@ -454,10 +570,10 @@ module ibex_icache #(
     // External request must be held until granted
     assign fill_ext_hold_d[fb] = (fill_alloc[fb] & fill_spec_hold) |
                                  (fill_ext_arb[fb] & ~gnt_or_pmp_err);
-    // Extneral requests are completed when the counter is filled or when the request is cancelled
+    // External requests are completed when the counter is filled or when the request is cancelled
     assign fill_ext_done[fb]   = (fill_ext_cnt_q[fb][LINE_BEATS_W] |
                                   // external requests are considered complete if the request hit
-                                  fill_hit_ic1[fb] | fill_hit_q[fb] |
+                                  (fill_hit_ic1[fb] & ~ecc_err_ic1) | fill_hit_q[fb] |
                                   // cancel if the line is stale and won't be cached
                                   (~fill_cache_q[fb] & (branch_i | fill_stale_q[fb]))) &
                                  // can't cancel while we are waiting for a grant on the bus
@@ -485,11 +601,13 @@ module ibex_icache #(
                                  (fill_hit_ic1[fb] | fill_hit_q[fb] |
                                   (fill_rvd_cnt_q[fb] > fill_out_cnt_q[fb]) | fill_rvd_arb[fb]);
 
+    // Calculate when a beat of data is output. Any ECC error squashes the output that cycle.
+    assign fill_out_grant[fb]  = fill_out_arb[fb] & output_ready & ~ecc_err_ic1;
+
     // Count the beats of data output to the IF stage
     assign fill_out_cnt_d[fb]  = fill_alloc[fb] ? {1'b0,lookup_addr_ic0[LINE_W-1:BUS_W]} :
                                                   (fill_out_cnt_q[fb] +
-                                                   {{LINE_BEATS_W{1'b0}},(fill_out_arb[fb] &
-                                                                          output_ready)});
+                                                   {{LINE_BEATS_W{1'b0}},fill_out_grant[fb]});
     // Data output complete when the counter fills
     assign fill_out_done[fb]   = fill_out_cnt_q[fb][LINE_BEATS_W];
 
@@ -531,6 +649,7 @@ module ibex_icache #(
                                     fill_older_q[fb]);
     // Arbitrate the request which has data available to send, and is the oldest outstanding
     assign fill_out_arb[fb]    = fill_out_req[fb] & fill_data_sel[fb];
+    // Assign incoming rvalid data to the oldest fill buffer expecting it
     assign fill_rvd_arb[fb]    = instr_rvalid_i & fill_rvd_exp[fb] & ~|(fill_rvd_exp & fill_older_q[fb]);
 
     /////////////////////////////
@@ -604,9 +723,10 @@ module ibex_icache #(
       end
     end
 
-    // Data either comes from the cache or the bus
-    assign fill_data_d[fb] = fill_hit_ic1[fb] ? hit_data_ic1 :
-                                                {LINE_BEATS{instr_rdata_i}};
+    // Data either comes from the cache or the bus. If there was an ECC error, we must take
+    // the incoming bus data since the cache hit data is corrupted.
+    assign fill_data_d[fb] = (fill_hit_ic1[fb] & ~ecc_err_ic1) ? hit_data_ic1[LineSize-1:0] :
+                                                                 {LINE_BEATS{instr_rdata_i}};
 
     for (genvar b = 0; b < LINE_BEATS; b++) begin : gen_data_buf
       // Error tracking (per beat)
@@ -698,8 +818,8 @@ module ibex_icache #(
   ////////////////////////
 
   // Mux between line-width data sources
-  assign line_data = |fill_data_hit ? hit_data_ic1 : fill_out_data;
-  assign line_err  = |fill_data_hit ? '0 : fill_out_err;
+  assign line_data = |fill_data_hit ? hit_data_ic1[LineSize-1:0] : fill_out_data;
+  assign line_err  = |fill_data_hit ? {LINE_BEATS{1'b0}} : fill_out_err;
 
   // Mux the relevant beat of line data, based on the output address
   always_comb begin
@@ -722,7 +842,8 @@ module ibex_icache #(
   // Output data is valid (from any of the three possible sources). Note that fill_out_arb
   // must be used here rather than fill_out_req because data can become valid out of order
   // (e.g. cache hit data can become available ahead of an older outstanding miss).
-  assign data_valid = |fill_out_arb;
+  // Any ECC error suppresses the output that cycle.
+  assign data_valid = |fill_out_arb & ~ecc_err_ic1;
 
   // Skid buffer data
   assign skid_data_d = output_data[31:16];
@@ -855,6 +976,10 @@ module ibex_icache #(
   // Assertions //
   ////////////////
 
-  `ASSERT_INIT(param_legal, (LineSize > 32))
+  `ASSERT_INIT(size_param_legal, (LineSize > 32))
+
+  // ECC primitives will need to be changed for different sizes
+  `ASSERT_INIT(ecc_tag_param_legal, (TAG_SIZE <= 27))
+  `ASSERT_INIT(ecc_data_param_legal, (LineSize <= 121))
 
 endmodule
