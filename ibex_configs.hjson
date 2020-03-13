@@ -1,0 +1,18 @@
+{
+  small-fastmult : {
+    RV32E                    : 0
+    RV32M                    : 1
+    BranchTargetALU          : 0
+    WritebackStage           : 0
+    MultiplierImplementation : "fast"
+  }
+
+  maxperf-scmult : {
+    RV32E                    : 0
+    RV32M                    : 1
+    BranchTargetALU          : 1
+    WritebackStage           : 1
+    MultiplierImplementation : "single-cycle"
+  }
+}
+

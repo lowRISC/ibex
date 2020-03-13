@@ -11,6 +11,7 @@ variables:
   RISCV_TOOLCHAIN_TAR_VERSION: 20190807-1
   RISCV_COMPLIANCE_GIT_VERSION: 844c6660ef3f0d9b96957991109dfd80cc4938e2
   VERIBLE_VERSION: v0.0-266-g9e55307
+  ibex_configs : ['small-fastmult', 'maxperf-scmult']
 
 trigger:
   batch: true
@@ -32,7 +33,7 @@ pr:
 
 jobs:
 - job: lint_dv
-  displayName: Run quality checks (Lint and DV)
+  displayName: CI all the things 2!
   pool:
     vmImage: "ubuntu-16.04"
   steps:
@@ -65,144 +66,112 @@ jobs:
         && sudo pip3 install -U -r python-requirements.txt
     displayName: Install dependencies
 
-  - bash: |
-      set -e
-      mkdir -p build/verible
-      cd build/verible
-      curl -Ls -o verible.tar.gz https://github.com/google/verible/releases/download/$(VERIBLE_VERSION)/verible-$(VERIBLE_VERSION)-Ubuntu-16.04-xenial-x86_64.tar.gz
-      sudo mkdir -p /tools/verible && sudo chmod 777 /tools/verible
-      tar -C /tools/verible -xf verible.tar.gz --strip-components=1
-      echo "##vso[task.setvariable variable=PATH]/tools/verible/bin:$PATH"
-    displayName: Install Verible
+    #  - bash: |
+    #      set -e
+    #      mkdir -p build/verible
+    #      cd build/verible
+    #      curl -Ls -o verible.tar.gz https://github.com/google/verible/releases/download/$(VERIBLE_VERSION)/verible-$(VERIBLE_VERSION)-Ubuntu-16.04-xenial-x86_64.tar.gz
+    #      sudo mkdir -p /tools/verible && sudo chmod 777 /tools/verible
+    #      tar -C /tools/verible -xf verible.tar.gz --strip-components=1
+    #      echo "##vso[task.setvariable variable=PATH]/tools/verible/bin:$PATH"
+    #    displayName: Install Verible
+    #
+    #  - bash: |
+    #      set -e
+    #      if [ ! -d $(VERILATOR_PATH) ]; then
+    #        echo "Building verilator (no cached build found)"
+    #        mkdir -p build/verilator
+    #        cd build/verilator
+    #        curl -Ls -o verilator.tgz https://www.veripool.org/ftp/verilator-$(VERILATOR_VERSION).tgz
+    #        tar -xf verilator.tgz
+    #        cd verilator-$(VERILATOR_VERSION)
+    #        ./configure --prefix=$(VERILATOR_PATH)
+    #        make -j$(nproc)
+    #        mkdir -p $VERILATOR_PATH
+    #        make install
+    #      else
+    #        echo "Re-using cached verilator build"
+    #      fi
+    #      echo "##vso[task.setvariable variable=PATH]$VERILATOR_PATH/bin:$PATH"
+    #    displayName: Build and install Verilator
+    #
+    #  - bash: |
+    #      cd build
+    #      git clone https://github.com/riscv/riscv-compliance.git
+    #      cd riscv-compliance
+    #      git checkout "$(RISCV_COMPLIANCE_GIT_VERSION)"
+    #    displayName: Get RISC-V Compliance test suite
+    #
+    #  - bash: |
+    #      export TOOLCHAIN_URL=https://github.com/lowRISC/lowrisc-toolchains/releases/download/${RISCV_TOOLCHAIN_TAR_VERSION}/lowrisc-toolchain-gcc-rv32imc-${RISCV_TOOLCHAIN_TAR_VERSION}.tar.xz
+    #      mkdir -p build/toolchain
+    #      curl -Ls -o build/toolchain/rv32-toolchain.tar.xz $TOOLCHAIN_URL
+    #      sudo mkdir -p /tools/riscv && sudo chmod 777 /tools/riscv
+    #      tar -C /tools/riscv -xf build/toolchain/rv32-toolchain.tar.xz --strip-components=1
+    #      echo "##vso[task.setvariable variable=PATH]/tools/riscv/bin:$PATH"
+    #    displayName: Get precompiled RISC-V toolchain
+    #
+    #  - bash: |
+    #      echo $PATH
+    #      python3 --version
+    #      echo -n "fusesoc "
+    #      fusesoc --version
+    #      verilator --version
+    #      riscv32-unknown-elf-gcc --version
+    #    displayName: Display environment
 
-  - bash: |
-      set -e
-      if [ ! -d $(VERILATOR_PATH) ]; then
-        echo "Building verilator (no cached build found)"
-        mkdir -p build/verilator
-        cd build/verilator
-        curl -Ls -o verilator.tgz https://www.veripool.org/ftp/verilator-$(VERILATOR_VERSION).tgz
-        tar -xf verilator.tgz
-        cd verilator-$(VERILATOR_VERSION)
-        ./configure --prefix=$(VERILATOR_PATH)
-        make -j$(nproc)
-        mkdir -p $VERILATOR_PATH
-        make install
-      else
-        echo "Re-using cached verilator build"
-      fi
-      echo "##vso[task.setvariable variable=PATH]$VERILATOR_PATH/bin:$PATH"
-    displayName: Build and install Verilator
+    #- ${{ each config in parameters.ibexConfigs }}
+    #- - steps:
+    #-   - bash: |
+    #-       ./util/ibex_config.py ${{ config }} fusesoc_opts
+    #-     displayName: Display fusesoc config for ${{ config }}
+  - template : ci/ibex-ci-steps.yml
+    parameters:
+      ibex_config : ${{ variables.ibex_configs }}
 
-  - bash: |
-      export TOOLCHAIN_URL=https://github.com/lowRISC/lowrisc-toolchains/releases/download/${RISCV_TOOLCHAIN_TAR_VERSION}/lowrisc-toolchain-gcc-rv32imc-${RISCV_TOOLCHAIN_TAR_VERSION}.tar.xz
-      mkdir -p build/toolchain
-      curl -Ls -o build/toolchain/rv32-toolchain.tar.xz $TOOLCHAIN_URL
-      sudo mkdir -p /tools/riscv && sudo chmod 777 /tools/riscv
-      tar -C /tools/riscv -xf build/toolchain/rv32-toolchain.tar.xz --strip-components=1
-      echo "##vso[task.setvariable variable=PATH]/tools/riscv/bin:$PATH"
-    displayName: Get precompiled RISC-V toolchain
+  #- template : ci/ibex-ci-steps.yml
+  #  parameters:
+  #    ibex_config : 'small-fastmult'
 
-  - bash: |
-      echo $PATH
-      python3 --version
-      echo -n "fusesoc "
-      fusesoc --version
-      verilator --version
-      riscv32-unknown-elf-gcc --version
-      verilog_lint --version
-    displayName: Display environment
+  #- template : ci/ibex-ci-steps.yml
+  #  parameters:
+  #    ibex_config : 'maxperf-scmult'
 
-  - bash: |
-      fusesoc --cores-root . run --no-export --target=lint --tool=verilator lowrisc:ibex:ibex_core_tracing
-      if [ $? != 0 ]; then
-        echo -n "##vso[task.logissue type=error]"
-        echo "Verilog lint with Verilator failed. Run 'fusesoc --cores-root . run --target=lint --tool=verilator lowrisc:ibex:ibex_core_tracing' to check and fix all errors."
-        exit 1
-      fi
-    displayName: Lint Verilog source files with Verilator
+        #  - bash: |
+        #      fusesoc --cores-root . run --no-export --target=lint --tool=veriblelint lowrisc:ibex:ibex_core_tracing
+        #      if [ $? != 0 ]; then
+        #        echo -n "##vso[task.logissue type=error]"
+        #        echo "Verilog lint with Verible failed. Run 'fusesoc --cores-root . run --target=lint --tool=veriblelint lowrisc:ibex:ibex_core_tracing' to check and fix all errors."
+        #        echo "This flow is currently experimental and failures can be ignored."
+        #        exit 1
+        #      fi
+        #    continueOnError: true
+        #    displayName: Lint Verilog source files with Verible (experimental)
+        #
+        #  - bash: |
+        #      fusesoc --cores-root . run --no-export --target=format --tool=veribleformat lowrisc:ibex:ibex_core_tracing
+        #      if [ $? != 0 ]; then
+        #        echo -n "##vso[task.logissue type=error]"
+        #        echo "Verilog format with Verible failed. Run 'fusesoc --cores-root . run --no-export --target=format --tool=veribleformat lowrisc:ibex:ibex_core_tracing' to check and fix all errors."
+        #        echo "This flow is currently experimental and failures can be ignored."
+        #      fi
+        #      # Show diff of what verilog_format would have changed, and then revert.
+        #      git diff
+        #      git reset --hard HEAD
+        #    continueOnError: true
+        #    displayName: Format all source code with Verible format (experimental)
+        #
+        #  - bash: |
+        #      fork_origin=$(git merge-base --fork-point origin/master)
+        #      changed_files=$(git diff --name-only $fork_origin | grep -v '^vendor' | grep -E '\.(cpp|cc|c|h)$')
+        #      test -z "$changed_files" || git diff -U0 $fork_origin $changed_files | clang-format-diff -p1 | tee clang-format-output
+        #      if [ -s clang-format-output ]; then
+        #        echo -n "##vso[task.logissue type=error]"
+        #        echo "C/C++ lint failed. Use 'git clang-format' with appropriate options to reformat the changed code."
+        #        exit 1
+        #      fi
+        #    # This check is not idempotent, but checks changes to a base branch.
+        #    # Run it only on pull requests.
+        #    condition: eq(variables['Build.Reason'], 'PullRequest')
+        #    displayName: 'Use clang-format to check C/C++ coding style'
 
-  - bash: |
-      fusesoc --cores-root . run --no-export --target=lint --tool=veriblelint lowrisc:ibex:ibex_core_tracing
-      if [ $? != 0 ]; then
-        echo -n "##vso[task.logissue type=error]"
-        echo "Verilog lint with Verible failed. Run 'fusesoc --cores-root . run --target=lint --tool=veriblelint lowrisc:ibex:ibex_core_tracing' to check and fix all errors."
-        echo "This flow is currently experimental and failures can be ignored."
-        exit 1
-      fi
-    continueOnError: true
-    displayName: Lint Verilog source files with Verible (experimental)
-
-  - bash: |
-      fusesoc --cores-root . run --no-export --target=format --tool=veribleformat lowrisc:ibex:ibex_core_tracing
-      if [ $? != 0 ]; then
-        echo -n "##vso[task.logissue type=error]"
-        echo "Verilog format with Verible failed. Run 'fusesoc --cores-root . run --no-export --target=format --tool=veribleformat lowrisc:ibex:ibex_core_tracing' to check and fix all errors."
-        echo "This flow is currently experimental and failures can be ignored."
-      fi
-      # Show diff of what verilog_format would have changed, and then revert.
-      git diff
-      git reset --hard HEAD
-    continueOnError: true
-    displayName: Format all source code with Verible format (experimental)
-
-  - bash: |
-      fork_origin=$(git merge-base --fork-point origin/master)
-      changed_files=$(git diff --name-only $fork_origin | grep -v '^vendor' | grep -E '\.(cpp|cc|c|h)$')
-      test -z "$changed_files" || git diff -U0 $fork_origin $changed_files | clang-format-diff -p1 | tee clang-format-output
-      if [ -s clang-format-output ]; then
-        echo -n "##vso[task.logissue type=error]"
-        echo "C/C++ lint failed. Use 'git clang-format' with appropriate options to reformat the changed code."
-        exit 1
-      fi
-    # This check is not idempotent, but checks changes to a base branch.
-    # Run it only on pull requests.
-    condition: eq(variables['Build.Reason'], 'PullRequest')
-    displayName: 'Use clang-format to check C/C++ coding style'
-
-  - bash: |
-      # Build and run CSR testbench
-      fusesoc --cores-root=. run --target=sim --tool=verilator lowrisc:ibex:tb_cs_registers
-    displayName: Build and run CSR testbench with Verilator
-
-  - bash: |
-      cd build
-      git clone https://github.com/riscv/riscv-compliance.git
-      cd riscv-compliance
-      git checkout "$(RISCV_COMPLIANCE_GIT_VERSION)"
-    displayName: Get RISC-V Compliance test suite
-
-  - bash: |
-      # Build simulation model of Ibex
-      fusesoc --cores-root=. run --target=sim --setup --build lowrisc:ibex:ibex_riscv_compliance --RV32M=1 --RV32E=0
-      if [ $? != 0 ]; then
-        echo -n "##vso[task.logissue type=error]"
-        echo "Unable to build Verilator model of Ibex for compliance testing."
-        exit 1
-      fi
-
-      # Run compliance test suite
-      export TARGET_SIM=$PWD/build/lowrisc_ibex_ibex_riscv_compliance_0.1/sim-verilator/Vibex_riscv_compliance
-      export RISCV_PREFIX=riscv32-unknown-elf-
-      export RISCV_TARGET=ibex
-      export RISCV_DEVICE=rv32imc
-      fail=0
-      for isa in rv32i rv32im rv32imc rv32Zicsr rv32Zifencei; do
-        make -C build/riscv-compliance RISCV_ISA=$isa 2>&1 | tee run.log
-        if [ ${PIPESTATUS[0]} != 0 ]; then
-          echo -n "##vso[task.logissue type=error]"
-          echo "The RISC-V compliance test suite failed for $isa"
-
-          # There's no easy way to get the test results in machine-readable
-          # form to properly exclude known-failing tests. Going with an
-          # approximate solution for now.
-          if [ $isa == rv32i ] && grep -q 'FAIL: 4/48' run.log; then
-            echo -n "##vso[task.logissue type=error]"
-            echo "Expected failure for rv32i, see lowrisc/ibex#100 more more information."
-          else
-            fail=1
-          fi
-        fi
-      done
-      exit $fail
-    displayName: "Run RISC-V Compliance test for Ibex RV32IMC"

@@ -73,7 +73,7 @@ module ibex_ex_block #(
   assign branch_decision_o  = alu_cmp_result;
 
   if (BranchTargetALU) begin : g_branch_target_alu
-    logic [32:0] bt_alu_result;
+    logic [31:0] bt_alu_result;
 
     assign bt_alu_result = {{19{bt_operand_imm_i[11]}}, bt_operand_imm_i, 1'b0} + pc_id_i;
 

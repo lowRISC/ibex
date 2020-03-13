@@ -33,18 +33,18 @@ parameters:
     paramtype: vlogdefine
 
   RV32E:
-    datatype: bool
+    datatype: int
     paramtype: vlogparam
 
   RV32M:
-    datatype: bool
+    datatype: int
     paramtype: vlogparam
 
   MultiplierImplementation:
     datatype: str
     paramtype: vlogparam
-    description: "Multiplier implementation. Valid values: fast, slow"
-    default: fast
+    description: "Multiplier implementation. Valid values: fast, slow, single-cycle"
+    default: "fast"
 
   BranchTargetALU:
     datatype: int
@@ -52,7 +52,11 @@ parameters:
     default: 0
     description: "Enables seperate branch target ALU (increasing branch performance EXPERIMENTAL) [0/1]"
 
-
+  WritebackStage:
+    datatype: int
+    paramtype: vlogparam
+    default: 0
+    description: "Enables third pipeline stage (EXPERIMENTAL) [0/1]"
 
 targets:
   default:
@@ -72,6 +76,11 @@ targets:
     parameters:
       - RVFI=true
       - SYNTHESIS=true
+      - RV32M
+      - RV32E
+      - BranchTargetALU
+      - WritebackStage
+      - MultiplierImplementation
     default_tool: verilator
     toplevel: ibex_core_tracing
     tools:
