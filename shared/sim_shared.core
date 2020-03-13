@@ -10,6 +10,7 @@ filesets:
       - lowrisc:prim:assert
     files:
       - ./rtl/prim_clock_gating.sv
+      - ./rtl/prim_generic_ram_1p.sv
       - ./rtl/ram_1p.sv
       - ./rtl/ram_2p.sv
       - ./rtl/bus.sv

@@ -81,8 +81,7 @@ This causes a minor performance inefficiency, but should not happen often in pra
 RAM Arrangement
 ---------------
 
-The data RAMs are arranged as a series of 32 bit banks, the number depending on the cache line width and number of ways.
-Each group of banks forming a single way can be combined into wider RAM instances if required since they are always accessed together.
+The data RAMs are arranged as ``NumWays`` banks of ``LineSize`` width.
 
 Indicative RAM sizes for common configurations are given in the table below:
 
