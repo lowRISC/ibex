@@ -71,10 +71,9 @@ module ibex_icache #(
   localparam int unsigned LINE_BEATS      = LINE_SIZE_BYTES / BUS_BYTES;
   localparam int unsigned LINE_BEATS_W    = $clog2(LINE_BEATS);
   localparam int unsigned NUM_LINES       = CacheSizeBytes / NumWays / LINE_SIZE_BYTES;
-  localparam int unsigned NUM_BANKS       = LINE_BEATS * NumWays;
   localparam int unsigned INDEX_W         = $clog2(NUM_LINES);
   localparam int unsigned INDEX_HI        = INDEX_W + LINE_W - 1;
-  localparam int unsigned TAG_W           = ADDR_W - INDEX_W - LINE_W + 1; // 1 valid bit
+  localparam int unsigned TAG_SIZE        = ADDR_W - INDEX_W - LINE_W + 1; // 1 valid bit
   localparam int unsigned OUTPUT_BEATS    = (BUS_BYTES / 2); // number of halfwords
 
   // Prefetch signals
@@ -90,7 +89,6 @@ module ibex_icache #(
   logic [INDEX_W-1:0]                  fill_index_ic0;
   logic [31:INDEX_HI+1]                fill_tag_ic0;
   logic [LineSize-1:0]                 fill_wdata_ic0;
-  logic [NUM_BANKS-1:0]                fill_banks_ic0;
   logic                                lookup_grant_ic0;
   logic                                lookup_actual_ic0;
   logic                                fill_grant_ic0;
@@ -98,14 +96,14 @@ module ibex_icache #(
   logic [INDEX_W-1:0]                  tag_index_ic0;
   logic [NumWays-1:0]                  tag_banks_ic0;
   logic                                tag_write_ic0;
-  logic [TAG_W-1:0]                    tag_wdata_ic0;
+  logic [TAG_SIZE-1:0]                 tag_wdata_ic0;
   logic                                data_req_ic0;
   logic [INDEX_W-1:0]                  data_index_ic0;
-  logic [NUM_BANKS-1:0]                data_banks_ic0;
+  logic [NumWays-1:0]                  data_banks_ic0;
   logic                                data_write_ic0;
   logic [LineSize-1:0]                 data_wdata_ic0;
   // Cache pipelipe IC1 signals
-  logic [TAG_W-1:0]                    tag_rdata_ic1  [NumWays];
+  logic [TAG_SIZE-1:0]                 tag_rdata_ic1  [NumWays];
   logic [LineSize-1:0]                 data_rdata_ic1 [NumWays];
   logic [LineSize-1:0]                 hit_data_ic1;
   logic                                lookup_valid_ic1;
@@ -226,9 +224,6 @@ module ibex_icache #(
   assign fill_index_ic0 = fill_ram_req_addr[INDEX_HI:LINE_W];
   assign fill_tag_ic0   = fill_ram_req_addr[ADDR_W-1:INDEX_HI+1];
   assign fill_wdata_ic0 = fill_ram_req_data;
-  for (genvar way = 0; way < NumWays; way++) begin : gen_way_banks
-    assign fill_banks_ic0[way*LINE_BEATS+:LINE_BEATS] = {LINE_BEATS{fill_ram_req_way[way]}};
-  end
 
   // Arbitrated signals - lookups have highest priority
   assign lookup_grant_ic0  = lookup_req_ic0;
@@ -248,7 +243,7 @@ module ibex_icache #(
   // Dataram
   assign data_req_ic0   = lookup_req_ic0 | fill_req_ic0;
   assign data_index_ic0 = tag_index_ic0;
-  assign data_banks_ic0 = fill_grant_ic0 ? fill_banks_ic0 : {NUM_BANKS{1'b1}};
+  assign data_banks_ic0 = tag_banks_ic0;
   assign data_write_ic0 = tag_write_ic0;
   assign data_wdata_ic0 = fill_wdata_ic0;
 
@@ -258,36 +253,35 @@ module ibex_icache #(
 
   for (genvar way = 0; way < NumWays; way++) begin : gen_rams
     // Tag RAM instantiation
-    logic [ADDR_W-TAG_W-1:0] unused_tag_ic1;
-    ram_1p #(
-      .Depth (NUM_LINES)
+    prim_generic_ram_1p #(
+      .Width    (TAG_SIZE),
+      .Depth    (NUM_LINES)
     ) tag_bank (
-      .clk_i           (clk_i),
-      .rst_ni          (rst_ni),
-      .req_i           (tag_req_ic0 & tag_banks_ic0[way]),
-      .we_i            (tag_write_ic0),
-      .be_i            (4'hF),
-      .addr_i          ({{32-INDEX_W-2{1'b0}},tag_index_ic0,2'b00}),
-      .wdata_i         ({{32-TAG_W{1'b0}},tag_wdata_ic0}),
-      .rvalid_o        (),
-      .rdata_o         ({unused_tag_ic1,tag_rdata_ic1[way]})
+      .clk_i    (clk_i),
+      .rst_ni   (rst_ni),
+      .req_i    (tag_req_ic0 & tag_banks_ic0[way]),
+      .write_i  (tag_write_ic0),
+      .wmask_i  ({TAG_SIZE{1'b1}}),
+      .addr_i   (tag_index_ic0),
+      .wdata_i  (tag_wdata_ic0),
+      .rvalid_o (),
+      .rdata_o  (tag_rdata_ic1[way])
     );
     // Data RAM instantiation
-    for (genvar sub = 0; sub < LINE_BEATS; sub++) begin : gen_sub_banks
-      ram_1p #(
-        .Depth (NUM_LINES)
-      ) data_bank (
-        .clk_i           (clk_i),
-        .rst_ni          (rst_ni),
-        .req_i           (data_req_ic0 & data_banks_ic0[way*LINE_BEATS+sub]),
-        .we_i            (data_write_ic0),
-        .be_i            (4'hF),
-        .addr_i          ({{32-INDEX_W-2{1'b0}},data_index_ic0,2'b00}),
-        .wdata_i         (data_wdata_ic0[sub*32+:32]),
-        .rvalid_o        (),
-        .rdata_o         (data_rdata_ic1[way][sub*32+:32])
-      );
-    end
+    prim_generic_ram_1p #(
+      .Width    (LineSize),
+      .Depth    (NUM_LINES)
+    ) data_bank (
+      .clk_i    (clk_i),
+      .rst_ni   (rst_ni),
+      .req_i    (data_req_ic0 & data_banks_ic0[way]),
+      .write_i  (data_write_ic0),
+      .wmask_i  ({LineSize{1'b1}}),
+      .addr_i   (data_index_ic0),
+      .wdata_i  (data_wdata_ic0),
+      .rvalid_o (),
+      .rdata_o  (data_rdata_ic1[way])
+    );
   end
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -313,7 +307,7 @@ module ibex_icache #(
   for (genvar way = 0; way < NumWays; way++) begin : gen_tag_match
     assign tag_match_ic1[way]   = (tag_rdata_ic1[way] ==
                                    {1'b1,lookup_addr_ic1[ADDR_W-1:INDEX_HI+1]});
-    assign tag_invalid_ic1[way] = ~tag_rdata_ic1[way][TAG_W-1];
+    assign tag_invalid_ic1[way] = ~tag_rdata_ic1[way][TAG_SIZE-1];
   end
   assign tag_hit_ic1 = |tag_match_ic1;
 
