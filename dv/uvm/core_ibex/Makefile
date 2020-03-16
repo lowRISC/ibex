@@ -395,7 +395,7 @@ fcov:
           --isa rv32imc \
           --custom_target riscv_dv_extension
 
-# Merge coverage in the <out> directory
+# Merge all output coverage directories into the <out>/rtl_sim directory
 cov:
 	@rm -rf ${OUT}/rtl_sim/test.vdb
 	@./sim.py \
@@ -405,5 +405,5 @@ cov:
 		--o="${OUT}" \
 		--lsf_cmd="${LSF_CMD}";
 	@if [ -d "test.vdb" ]; then \
-		mv -f test.vdb ./${OUT}/rtl_sim/; \
+		mv -f test.vdb ${OUT}/rtl_sim/; \
 	fi
