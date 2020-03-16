@@ -14,9 +14,15 @@ variables:
 trigger:
   batch: true
   branches:
-# Combine builds on master as long as another build is running
     include:
-    - master
+    - '*'
+  tags:
+    include:
+    - '*'
+pr:
+  branches:
+    include:
+      - '*'
 
 # Note: All tests run as part of one job to avoid copying intermediate build
 # artifacts around (e.g. Verilator and toolchain builds). Once more builds/tests
