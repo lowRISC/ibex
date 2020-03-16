@@ -420,7 +420,7 @@ module ibex_icache #(
 
     // Track which other fill buffers are older than this one (for age-based arbitration)
     // TODO sparsify
-    assign fill_older_d[fb]    = fill_alloc[fb] ? fill_busy_q : (fill_older_q[fb] & ~fill_done);
+    assign fill_older_d[fb]    = (fill_alloc[fb] ? fill_busy_q : fill_older_q[fb]) & ~fill_done;
 
     // A fill buffer can release once all its actions are completed
                                  // all data written to the cache (unless hit or error)
