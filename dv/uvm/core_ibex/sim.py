@@ -227,7 +227,9 @@ def get_test_sim_cmd(base_cmd, test, idx, output_dir, bin_dir, lsf_cmd):
                          {
                              'sim_dir': sim_dir,
                              'rtl_test': test['rtl_test'],
-                             'binary': binary
+                             'binary': binary,
+                             'test_name': test_name,
+                             'iteration': str(idx)
                          })
 
     if not os.path.exists(binary):
@@ -413,6 +415,43 @@ def compare(test_list, iss, output_dir):
     return fails == 0
 
 
+#TODO(udinator) - support IUS, DSim, and Riviera
+def gen_cov(base_dir, simulator, lsf_cmd):
+    """Generate a merged coverage directory.
+
+    Args:
+        base_dir:   the base simulation output directory (default: out/)
+        simulator:  the chosen RTL simulator
+        lsf_cmd:    command to run on LSF
+
+    """
+    # Compile a list of all output seed-###/rtl_sim/test.vdb directories
+    dir_list = []
+    for entry in os.scandir(base_dir):
+        vdb_path = "%s/%s/rtl_sim/test.vdb" % (base_dir, entry.name)
+        if 'seed' in entry.name:
+            logging.info("Searching %s/%s for coverage database" %
+                          (base_dir, entry.name))
+            if os.path.exists(vdb_path):
+                dir_list.append(vdb_path)
+    if dir_list == []:
+        logging.info("No coverage data available, exiting...")
+        sys.exit(RET_SUCCESS)
+
+    if simulator == 'vcs':
+        cov_cmd = "urg -full64 -format both -dbname test.vdb " \
+                  "-report %s/rtl_sim/urgReport -dir" % base_dir
+        for cov_dir in dir_list:
+            cov_cmd += " %s" % cov_dir
+        logging.info("Generating merged coverage directory")
+        if lsf_cmd is not None:
+            cov_cmd = lsf_cmd + ' ' + cov_cmd
+        run_cmd(cov_cmd)
+    else:
+        logging.error("%s is an unsuported simulator! Exiting..." % simulator)
+        sys.exit(RET_FAIL)
+
+
 def main():
     '''Entry point when run as a script'''
 
@@ -452,7 +491,7 @@ def main():
     parser.add_argument("--en_wave", action='store_true',
                         help="Enable waveform dump")
     parser.add_argument("--steps", type=str, default="all",
-                        help="Run steps: compile,sim,compare")
+                        help="Run steps: compile,sim,compare,cov")
     parser.add_argument("--lsf_cmd", type=str,
                         help=("LSF command. Run locally if lsf "
                               "command is not specified"))
@@ -469,7 +508,8 @@ def main():
     steps = {
         'compile': args.steps == "all" or 'compile' in args.steps,
         'sim': args.steps == "all" or 'sim' in args.steps,
-        'compare': args.steps == "all" or 'compare' in args.steps
+        'compare': args.steps == "all" or 'compare' in args.steps,
+        'cov': args.steps == "all" or 'cov' in args.steps
     }
 
     compile_cmds = []
@@ -520,6 +560,10 @@ def main():
     if steps['compare']:
         if not compare(matched_list, args.iss, args.o):
             return RET_FAIL
+
+    # Generate merged coverage directory and load it into appropriate GUI
+    if steps['cov']:
+      gen_cov(args.o, args.simulator, args.lsf_cmd)
 
     return RET_SUCCESS
 
