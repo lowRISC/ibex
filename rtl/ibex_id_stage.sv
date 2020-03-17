@@ -51,6 +51,7 @@ module ibex_id_stage #(
 
     input  logic                      illegal_c_insn_i,
     input  logic                      instr_fetch_err_i,
+    input  logic                      instr_fetch_err_plus2_i,
 
     input  logic [31:0]               pc_id_i,
 
@@ -421,87 +422,88 @@ module ibex_id_stage #(
   ibex_controller #(
     .WritebackStage ( WritebackStage )
   ) controller_i (
-      .clk_i                          ( clk_i                  ),
-      .rst_ni                         ( rst_ni                 ),
+      .clk_i                          ( clk_i                   ),
+      .rst_ni                         ( rst_ni                  ),
 
-      .fetch_enable_i                 ( fetch_enable_i         ),
-      .ctrl_busy_o                    ( ctrl_busy_o            ),
+      .fetch_enable_i                 ( fetch_enable_i          ),
+      .ctrl_busy_o                    ( ctrl_busy_o             ),
 
       // decoder related signals
-      .illegal_insn_i                 ( illegal_insn_o         ),
-      .ecall_insn_i                   ( ecall_insn_dec         ),
-      .mret_insn_i                    ( mret_insn_dec          ),
-      .dret_insn_i                    ( dret_insn_dec          ),
-      .wfi_insn_i                     ( wfi_insn_dec           ),
-      .ebrk_insn_i                    ( ebrk_insn              ),
-      .csr_pipe_flush_i               ( csr_pipe_flush         ),
+      .illegal_insn_i                 ( illegal_insn_o          ),
+      .ecall_insn_i                   ( ecall_insn_dec          ),
+      .mret_insn_i                    ( mret_insn_dec           ),
+      .dret_insn_i                    ( dret_insn_dec           ),
+      .wfi_insn_i                     ( wfi_insn_dec            ),
+      .ebrk_insn_i                    ( ebrk_insn               ),
+      .csr_pipe_flush_i               ( csr_pipe_flush          ),
 
       // from IF-ID pipeline
-      .instr_valid_i                  ( instr_valid_i          ),
-      .instr_i                        ( instr_rdata_i          ),
-      .instr_compressed_i             ( instr_rdata_c_i        ),
-      .instr_is_compressed_i          ( instr_is_compressed_i  ),
-      .instr_fetch_err_i              ( instr_fetch_err_i      ),
-      .pc_id_i                        ( pc_id_i                ),
+      .instr_valid_i                  ( instr_valid_i           ),
+      .instr_i                        ( instr_rdata_i           ),
+      .instr_compressed_i             ( instr_rdata_c_i         ),
+      .instr_is_compressed_i          ( instr_is_compressed_i   ),
+      .instr_fetch_err_i              ( instr_fetch_err_i       ),
+      .instr_fetch_err_plus2_i        ( instr_fetch_err_plus2_i ),
+      .pc_id_i                        ( pc_id_i                 ),
 
       // to IF-ID pipeline
-      .instr_valid_clear_o            ( instr_valid_clear_o    ),
-      .id_in_ready_o                  ( id_in_ready_o          ),
-      .controller_run_o               ( controller_run         ),
+      .instr_valid_clear_o            ( instr_valid_clear_o     ),
+      .id_in_ready_o                  ( id_in_ready_o           ),
+      .controller_run_o               ( controller_run          ),
 
       // to prefetcher
-      .instr_req_o                    ( instr_req_o            ),
-      .pc_set_o                       ( pc_set_o               ),
-      .pc_mux_o                       ( pc_mux_o               ),
-      .exc_pc_mux_o                   ( exc_pc_mux_o           ),
-      .exc_cause_o                    ( exc_cause_o            ),
+      .instr_req_o                    ( instr_req_o             ),
+      .pc_set_o                       ( pc_set_o                ),
+      .pc_mux_o                       ( pc_mux_o                ),
+      .exc_pc_mux_o                   ( exc_pc_mux_o            ),
+      .exc_cause_o                    ( exc_cause_o             ),
 
       // LSU
-      .lsu_addr_last_i                ( lsu_addr_last_i        ),
-      .load_err_i                     ( lsu_load_err_i         ),
-      .store_err_i                    ( lsu_store_err_i        ),
-      .wb_exception_o                 ( wb_exception           ),
+      .lsu_addr_last_i                ( lsu_addr_last_i         ),
+      .load_err_i                     ( lsu_load_err_i          ),
+      .store_err_i                    ( lsu_store_err_i         ),
+      .wb_exception_o                 ( wb_exception            ),
 
       // jump/branch control
-      .branch_set_i                   ( branch_set             ),
-      .jump_set_i                     ( jump_set               ),
+      .branch_set_i                   ( branch_set              ),
+      .jump_set_i                     ( jump_set                ),
 
       // interrupt signals
-      .csr_mstatus_mie_i              ( csr_mstatus_mie_i      ),
-      .irq_pending_i                  ( irq_pending_i          ),
-      .irqs_i                         ( irqs_i                 ),
-      .irq_nm_i                       ( irq_nm_i               ),
-      .nmi_mode_o                     ( nmi_mode_o             ),
+      .csr_mstatus_mie_i              ( csr_mstatus_mie_i       ),
+      .irq_pending_i                  ( irq_pending_i           ),
+      .irqs_i                         ( irqs_i                  ),
+      .irq_nm_i                       ( irq_nm_i                ),
+      .nmi_mode_o                     ( nmi_mode_o              ),
 
       // CSR Controller Signals
-      .csr_save_if_o                  ( csr_save_if_o          ),
-      .csr_save_id_o                  ( csr_save_id_o          ),
-      .csr_save_wb_o                  ( csr_save_wb_o          ),
-      .csr_restore_mret_id_o          ( csr_restore_mret_id_o  ),
-      .csr_restore_dret_id_o          ( csr_restore_dret_id_o  ),
-      .csr_save_cause_o               ( csr_save_cause_o       ),
-      .csr_mtval_o                    ( csr_mtval_o            ),
-      .priv_mode_i                    ( priv_mode_i            ),
-      .csr_mstatus_tw_i               ( csr_mstatus_tw_i       ),
+      .csr_save_if_o                  ( csr_save_if_o           ),
+      .csr_save_id_o                  ( csr_save_id_o           ),
+      .csr_save_wb_o                  ( csr_save_wb_o           ),
+      .csr_restore_mret_id_o          ( csr_restore_mret_id_o   ),
+      .csr_restore_dret_id_o          ( csr_restore_dret_id_o   ),
+      .csr_save_cause_o               ( csr_save_cause_o        ),
+      .csr_mtval_o                    ( csr_mtval_o             ),
+      .priv_mode_i                    ( priv_mode_i             ),
+      .csr_mstatus_tw_i               ( csr_mstatus_tw_i        ),
 
       // Debug Signal
-      .debug_mode_o                   ( debug_mode_o           ),
-      .debug_cause_o                  ( debug_cause_o          ),
-      .debug_csr_save_o               ( debug_csr_save_o       ),
-      .debug_req_i                    ( debug_req_i            ),
-      .debug_single_step_i            ( debug_single_step_i    ),
-      .debug_ebreakm_i                ( debug_ebreakm_i        ),
-      .debug_ebreaku_i                ( debug_ebreaku_i        ),
-      .trigger_match_i                ( trigger_match_i        ),
+      .debug_mode_o                   ( debug_mode_o            ),
+      .debug_cause_o                  ( debug_cause_o           ),
+      .debug_csr_save_o               ( debug_csr_save_o        ),
+      .debug_req_i                    ( debug_req_i             ),
+      .debug_single_step_i            ( debug_single_step_i     ),
+      .debug_ebreakm_i                ( debug_ebreakm_i         ),
+      .debug_ebreaku_i                ( debug_ebreaku_i         ),
+      .trigger_match_i                ( trigger_match_i         ),
 
       // stall signals
-      .stall_id_i                     ( stall_id               ),
-      .stall_wb_i                     ( stall_wb               ),
-      .flush_id_o                     ( flush_id               ),
+      .stall_id_i                     ( stall_id                ),
+      .stall_wb_i                     ( stall_wb                ),
+      .flush_id_o                     ( flush_id                ),
 
       // Performance Counters
-      .perf_jump_o                    ( perf_jump_o            ),
-      .perf_tbranch_o                 ( perf_tbranch_o         )
+      .perf_jump_o                    ( perf_jump_o             ),
+      .perf_tbranch_o                 ( perf_tbranch_o          )
   );
 
   assign multdiv_en_dec   = mult_en_dec | div_en_dec;
