@@ -39,6 +39,7 @@ module ibex_icache #(
     output logic [31:0]         rdata_o,
     output logic [31:0]         addr_o,
     output logic                err_o,
+    output logic                err_plus2_o,
 
     // Instruction memory / interconnect interface: Fetch instruction data from memory
     output logic                instr_req_o,
@@ -931,10 +932,13 @@ module ibex_icache #(
     end
   end
 
-  assign valid_o = output_valid;
-  assign rdata_o = {output_data_hi, (skid_valid_q ? skid_data_q : output_data_lo)};
-  assign addr_o  = {output_addr_q, 1'b0};
-  assign err_o   = (skid_valid_q & skid_err_q) | output_err;
+  assign valid_o     = output_valid;
+  assign rdata_o     = {output_data_hi, (skid_valid_q ? skid_data_q : output_data_lo)};
+  assign addr_o      = {output_addr_q, 1'b0};
+  assign err_o       = (skid_valid_q & skid_err_q) | (~skid_complete_instr & output_err);
+  // Error caused by the second half of a misaligned uncompressed instruction
+  assign err_plus2_o = output_addr_q[1] & output_err & ~skid_err_q &
+                       ~(output_data[17:16] != 2'b11);
 
   ///////////////////
   // Invalidations //

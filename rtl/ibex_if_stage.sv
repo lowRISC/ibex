@@ -43,6 +43,7 @@ module ibex_if_stage #(
     output logic                  instr_is_compressed_id_o, // compressed decoder thinks this
                                                             // is a compressed instr
     output logic                  instr_fetch_err_o,        // bus error on fetch
+    output logic                  instr_fetch_err_plus2_o,  // bus error misaligned
     output logic                  illegal_c_insn_id_o,      // compressed decoder thinks this
                                                             // is an invalid instr
     output logic [31:0]           pc_if_o,
@@ -88,6 +89,7 @@ module ibex_if_stage #(
   logic       [31:0] fetch_rdata;
   logic       [31:0] fetch_addr;
   logic              fetch_err;
+  logic              fetch_err_plus2;
 
   logic       [31:0] exc_pc;
 
@@ -147,6 +149,7 @@ module ibex_if_stage #(
       .rdata_o           ( fetch_rdata                 ),
       .addr_o            ( fetch_addr                  ),
       .err_o             ( fetch_err                   ),
+      .err_plus2_o       ( fetch_err_plus2             ),
 
       // goes to instruction memory / instruction cache
       .instr_req_o       ( instr_req_o                 ),
@@ -216,6 +219,7 @@ module ibex_if_stage #(
       // To reduce fan-out and help timing from the instr_rdata_id flops they are replicated.
       instr_rdata_alu_id_o     <= instr_decompressed;
       instr_fetch_err_o        <= fetch_err;
+      instr_fetch_err_plus2_o  <= fetch_err_plus2;
       instr_rdata_c_id_o       <= fetch_rdata[15:0];
       instr_is_compressed_id_o <= instr_is_compressed_int;
       illegal_c_insn_id_o      <= illegal_c_insn;
