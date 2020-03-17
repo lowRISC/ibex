@@ -121,7 +121,7 @@ module ibex_icache #(
   logic [NumWays-1:0]                  ecc_write_ways;
   logic [INDEX_W-1:0]                  ecc_write_index;
   // Fill buffer signals
-  logic                                gnt_or_pmp_err;
+  logic                                gnt_or_pmp_err, gnt_not_pmp_err;
   logic [$clog2(NUM_FB)-1:0]           fb_fill_level;
   logic                                fill_cache_new;
   logic                                fill_new_alloc, fill_spec_done, fill_spec_hold;
@@ -505,7 +505,8 @@ module ibex_icache #(
   end
 
   // PMP errors might not / don't need to be granted (since the external request is masked)
-  assign gnt_or_pmp_err = instr_gnt_i | instr_pmp_err_i;
+  assign gnt_or_pmp_err  = instr_gnt_i | instr_pmp_err_i;
+  assign gnt_not_pmp_err = instr_gnt_i & ~instr_pmp_err_i;
   // Allocate a new buffer for every granted lookup
   assign fill_new_alloc = lookup_grant_ic0;
   // Track whether a speculative external request was made from IC0, and whether it was granted
@@ -563,10 +564,11 @@ module ibex_icache #(
     assign fill_ext_req[fb]    = fill_busy_q[fb] & ~fill_ext_done[fb];
 
     // Count the number of completed external requests (each line requires LINE_BEATS requests)
+    // Don't count fake PMP error grants here since they will never receive an rvalid response
     assign fill_ext_cnt_d[fb]  = fill_alloc[fb] ?
                                    {{LINE_BEATS_W{1'b0}},fill_spec_done} :
                                    (fill_ext_cnt_q[fb] + {{LINE_BEATS_W{1'b0}},
-                                                          fill_ext_arb[fb] & gnt_or_pmp_err});
+                                                          fill_ext_arb[fb] & gnt_not_pmp_err});
     // External request must be held until granted
     assign fill_ext_hold_d[fb] = (fill_alloc[fb] & fill_spec_hold) |
                                  (fill_ext_arb[fb] & ~gnt_or_pmp_err);
@@ -574,6 +576,8 @@ module ibex_icache #(
     assign fill_ext_done[fb]   = (fill_ext_cnt_q[fb][LINE_BEATS_W] |
                                   // external requests are considered complete if the request hit
                                   (fill_hit_ic1[fb] & ~ecc_err_ic1) | fill_hit_q[fb] |
+                                  // external requests will stop once any PMP error is received
+                                  fill_err_q[fb][fill_ext_off[fb]] |
                                   // cancel if the line is stale and won't be cached
                                   (~fill_cache_q[fb] & (branch_i | fill_stale_q[fb]))) &
                                  // can't cancel while we are waiting for a grant on the bus
@@ -880,13 +884,15 @@ module ibex_icache #(
     end
   end
 
-  // Signal that valid data is available to the IF stage :
+  // Signal that valid data is available to the IF stage
+  // Note that if the first half of an unaligned instruction reports an error, we do not need
+  // to wait for the second half (and for PMP errors we might not have fetched the second half)
                         // Compressed instruction completely satisfied by skid buffer
   assign output_valid = skid_complete_instr |
                         // Output data available and, output stream aligned, or skid data available,
                         (data_valid & (~output_addr_q[1] | skid_valid_q |
-                         // or this is an unaligned compressed instruction
-                         (output_data[17:16] != 2'b11)));
+                         // or this half is an error, or this is an unaligned compressed instruction
+                         output_err | (output_data[17:16] != 2'b11)));
 
   // Update the address on branches and every time an instruction is driven
   assign output_addr_en = branch_i | (ready_i & valid_o);
