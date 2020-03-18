@@ -62,7 +62,8 @@
                 +define+DSIM
                 +acc+rwb
                 -f ibex_dv.f
-                -l <out>/dsim/compile.log"
+                -l <out>/dsim/compile.log
+                -suppress EnumMustBePositive"
   sim:
     cmd: >
       <DSIM> <sim_opts> -sv_seed <seed> -pli_lib <DSIM_LIB_PATH>/libuvm_dpi.so +acc+rwb -image image -work <out>/dsim <wave_opts>
