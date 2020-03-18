@@ -24,29 +24,34 @@ filesets:
 
 parameters:
   RV32M:
-    datatype: int
+    datatype: bool
     paramtype: vlogparam
-    default: 1
+    default: true
     description: Enable the M ISA extension (hardware multiply/divide) [0/1]
   RV32E:
-    datatype: int
+    datatype: bool
     paramtype: vlogparam
-    default: 0
+    default: false
     description: Enable the E ISA extension (reduced register set) [0/1]
   SRAM_INIT_FILE:
     datatype: str
     paramtype: vlogdefine
     description: Path to a vmem file to initialize the RAM with
+  MultiplierImplementation:
+    datatype: str
+    paramtype: vlogparam
+    description: "Multiplier implementation. Valid values: fast, slow, single-cycle"
+    default: "fast"
   BranchTargetALU:
-    datatype: int
+    datatype: bool
     paramtype: vlogparam
-    default: 0
-    description: Enables seperate branch target ALU (increasing branch performance EXPERIMENTAL) [0/1]
+    default: false
+    description: Enables seperate branch target ALU (increasing branch performance EXPERIMENTAL)
   WritebackStage:
-    datatype: int
+    datatype: bool
     paramtype: vlogparam
-    default: 0
-    description: Enables third pipeline stage (EXPERIMENTAL) [0/1]
+    default: false
+    description: Enables third pipeline stage (EXPERIMENTAL)
 
 targets:
   sim:
@@ -57,6 +62,7 @@ targets:
     parameters:
       - RV32M
       - RV32E
+      - MultiplierImplementation
       - BranchTargetALU
       - WritebackStage
       - SRAM_INIT_FILE
