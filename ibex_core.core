@@ -84,16 +84,16 @@ parameters:
     default: false
 
   BranchTargetALU:
-    datatype: int
+    datatype: bool
     paramtype: vlogparam
-    default: 0
-    description: "Enables seperate branch target ALU (increasing branch performance EXPERIMENTAL) [0/1]"
+    default: false
+    description: "Enables seperate branch target ALU (increasing branch performance EXPERIMENTAL)"
 
   WritebackStage:
-    datatype: int
+    datatype: bool
     paramtype: vlogparam
-    default: 0
-    description: "Enables third pipeline stage (EXPERIMENTAL) [0/1]"
+    default: false
+    description: "Enables third pipeline stage (EXPERIMENTAL)"
 
 targets:
   default:
