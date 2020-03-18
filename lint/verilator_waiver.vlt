@@ -12,6 +12,13 @@
 `verilator_config
 lint_off -rule PINCONNECTEMPTY
 
+// Operator expects 1 bit on initial value but initial value's CONST generates
+// 32 bits
+lint_off -rule WIDTH -file "*/rtl/ibex_core_tracing.sv" -match "*'RV32M'*"
+lint_off -rule WIDTH -file "*/rtl/ibex_core_tracing.sv" -match "*'RV32E'*"
+lint_off -rule WIDTH -file "*/rtl/ibex_core_tracing.sv" -match "*'BranchTargetALU'*"
+lint_off -rule WIDTH -file "*/rtl/ibex_core_tracing.sv" -match "*'WritebackStage'*"
+
 // Filename 'ibex_register_file_ff' does not match MODULE name: ibex_register_file
 // ibex_register_file_ff and ibex_register_file_latch provide two
 // implementation choices for the same module.
@@ -31,9 +38,11 @@ lint_off -rule UNUSED -file "*/rtl/ibex_alu.sv" -match "*'shift_right_result_ext
 // Bottom bit is round, not needed
 lint_off -rule UNUSED -file "*/rtl/ibex_multdiv_fast.sv" -match "*'alu_adder_ext_i'[0]*"
 
-// Bits of signal are not used: mac_res_ext[34]
+// Bits of signal are not used: mac_res_ext[34], mult1_res[33:32]
 // cleaner to write all bits even if not all are used
 lint_off -rule UNUSED -file "*/rtl/ibex_multdiv_fast.sv" -match "*mac_res_ext*"
+lint_off -rule UNUSED -file "*/rtl/ibex_multdiv_fast.sv" -match "*mult1_res*"
+
 
 // Bits of signal are not used: res_adder_h[32]
 // cleaner to write all bits even if not all are used

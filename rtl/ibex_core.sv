@@ -949,6 +949,10 @@ module ibex_core #(
   assign rvfi_mem_wdata = rvfi_stage_mem_wdata[RVFI_STAGES-1];
 
   if (WritebackStage) begin
+    logic unused_instr_new_id;
+
+    assign unused_instr_new_id = instr_new_id;
+
     // With writeback stage first RVFI stage buffers instruction information captured in ID/EX
     // awaiting instruction retirement and RF Write data/Mem read data whilst instruction is in WB
     // So first stage becomes valid when instruction leaves ID/EX stage and remains valid until

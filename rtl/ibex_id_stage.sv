@@ -725,6 +725,8 @@ module ibex_id_stage #(
   assign instr_first_cycle_id_o = instr_first_cycle;
 
   if (WritebackStage) begin : gen_stall_mem
+    logic unused_lsu_busy;
+
     // Register read address matches write address in WB
     logic rf_rd_a_wb_match;
     logic rf_rd_b_wb_match;
@@ -738,6 +740,8 @@ module ibex_id_stage #(
     logic outstanding_memory_access;
 
     logic instr_kill;
+
+    assign unused_lsu_busy = lsu_busy_i;
 
     assign data_req_complete_d =
       (data_req_complete_q | (lsu_req & lsu_req_done_i)) & ~instr_id_done_o;
