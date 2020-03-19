@@ -13,8 +13,10 @@
 `include "prim_assert.sv"
 
 module ibex_if_stage #(
-    parameter int unsigned DmHaltAddr      = 32'h1A110800,
-    parameter int unsigned DmExceptionAddr = 32'h1A110808
+    parameter int unsigned DmHaltAddr       = 32'h1A110800,
+    parameter int unsigned DmExceptionAddr  = 32'h1A110808,
+    parameter bit          ICache           = 1'b0,
+    parameter bit          ICacheECC        = 1'b0
 ) (
     input  logic                   clk_i,
     input  logic                   rst_ni,
@@ -56,6 +58,9 @@ module ibex_if_stage #(
     input  ibex_pkg::exc_pc_sel_e exc_pc_mux_i,             // selects ISR address
     input  ibex_pkg::exc_cause_e  exc_cause,                // selects ISR address for
                                                             // vectorized interrupt lines
+    input logic                   icache_enable_i,
+    input logic                   icache_inval_i,
+
     // jump and branch target
     input  logic [31:0]           jump_target_ex_i,         // jump target address
 
@@ -134,35 +139,71 @@ module ibex_if_stage #(
   // tell CS register file to initialize mtvec on boot
   assign csr_mtvec_init_o = (pc_mux_i == PC_BOOT) & pc_set_i;
 
-  // prefetch buffer, caches a fixed number of instructions
-  ibex_prefetch_buffer prefetch_buffer_i (
-      .clk_i             ( clk_i                       ),
-      .rst_ni            ( rst_ni                      ),
+  if (ICache) begin : gen_icache
+    // Full I-Cache option
+    ibex_icache #(
+      .ICacheECC (ICacheECC)
+    ) icache_i (
+        .clk_i             ( clk_i                       ),
+        .rst_ni            ( rst_ni                      ),
 
-      .req_i             ( req_i                       ),
+        .req_i             ( req_i                       ),
 
-      .branch_i          ( branch_req                  ),
-      .addr_i            ( {fetch_addr_n[31:1], 1'b0}  ),
+        .branch_i          ( branch_req                  ),
+        .addr_i            ( {fetch_addr_n[31:1], 1'b0}  ),
 
-      .ready_i           ( fetch_ready                 ),
-      .valid_o           ( fetch_valid                 ),
-      .rdata_o           ( fetch_rdata                 ),
-      .addr_o            ( fetch_addr                  ),
-      .err_o             ( fetch_err                   ),
-      .err_plus2_o       ( fetch_err_plus2             ),
+        .ready_i           ( fetch_ready                 ),
+        .valid_o           ( fetch_valid                 ),
+        .rdata_o           ( fetch_rdata                 ),
+        .addr_o            ( fetch_addr                  ),
+        .err_o             ( fetch_err                   ),
+        .err_plus2_o       ( fetch_err_plus2             ),
 
-      // goes to instruction memory / instruction cache
-      .instr_req_o       ( instr_req_o                 ),
-      .instr_addr_o      ( instr_addr_o                ),
-      .instr_gnt_i       ( instr_gnt_i                 ),
-      .instr_rvalid_i    ( instr_rvalid_i              ),
-      .instr_rdata_i     ( instr_rdata_i               ),
-      .instr_err_i       ( instr_err_i                 ),
-      .instr_pmp_err_i   ( instr_pmp_err_i             ),
+        .instr_req_o       ( instr_req_o                 ),
+        .instr_addr_o      ( instr_addr_o                ),
+        .instr_gnt_i       ( instr_gnt_i                 ),
+        .instr_rvalid_i    ( instr_rvalid_i              ),
+        .instr_rdata_i     ( instr_rdata_i               ),
+        .instr_err_i       ( instr_err_i                 ),
+        .instr_pmp_err_i   ( instr_pmp_err_i             ),
 
-      // Prefetch Buffer Status
-      .busy_o            ( prefetch_busy               )
-  );
+        .icache_enable_i   ( icache_enable_i             ),
+        .icache_inval_i    ( icache_inval_i              ),
+        .busy_o            ( prefetch_busy               )
+    );
+  end else begin : gen_prefetch_buffer
+    // prefetch buffer, caches a fixed number of instructions
+    ibex_prefetch_buffer prefetch_buffer_i (
+        .clk_i             ( clk_i                       ),
+        .rst_ni            ( rst_ni                      ),
+
+        .req_i             ( req_i                       ),
+
+        .branch_i          ( branch_req                  ),
+        .addr_i            ( {fetch_addr_n[31:1], 1'b0}  ),
+
+        .ready_i           ( fetch_ready                 ),
+        .valid_o           ( fetch_valid                 ),
+        .rdata_o           ( fetch_rdata                 ),
+        .addr_o            ( fetch_addr                  ),
+        .err_o             ( fetch_err                   ),
+        .err_plus2_o       ( fetch_err_plus2             ),
+
+        .instr_req_o       ( instr_req_o                 ),
+        .instr_addr_o      ( instr_addr_o                ),
+        .instr_gnt_i       ( instr_gnt_i                 ),
+        .instr_rvalid_i    ( instr_rvalid_i              ),
+        .instr_rdata_i     ( instr_rdata_i               ),
+        .instr_err_i       ( instr_err_i                 ),
+        .instr_pmp_err_i   ( instr_pmp_err_i             ),
+
+        .busy_o            ( prefetch_busy               )
+    );
+    // ICache tieoffs
+    logic unused_icen, unused_icinv;
+    assign unused_icen  = icache_enable_i;
+    assign unused_icinv = icache_inval_i;
+  end
 
   assign branch_req  = pc_set_i;
   assign fetch_ready = id_in_ready_i;

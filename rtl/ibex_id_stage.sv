@@ -39,6 +39,7 @@ module ibex_id_stage #(
     output logic                      instr_first_cycle_id_o,
     output logic                      instr_valid_clear_o,   // kill instr in IF-ID reg
     output logic                      id_in_ready_o,         // ID stage is ready for next instr
+    output logic                      icache_inval_o,
 
     // Jumps and branches
     input  logic                      branch_decision_i,
@@ -331,6 +332,7 @@ module ibex_id_stage #(
       .ecall_insn_o                    ( ecall_insn_dec       ),
       .wfi_insn_o                      ( wfi_insn_dec         ),
       .jump_set_o                      ( jump_set             ),
+      .icache_inval_o                  ( icache_inval_o       ),
 
       // from IF-ID pipeline register
       .instr_first_cycle_i             ( instr_first_cycle    ),

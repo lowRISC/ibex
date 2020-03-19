@@ -46,6 +46,18 @@ parameters:
     description: "Multiplier implementation. Valid values: fast, slow"
     default: fast
 
+  ICache:
+    datatype: bool
+    paramtype: vlogparam
+    description: "Enable instruction cache"
+    default: false
+
+  ICacheECC:
+    datatype: bool
+    paramtype: vlogparam
+    description: "Enable ECC protection in instruction cache"
+    default: false
+
   BranchTargetALU:
     datatype: int
     paramtype: vlogparam
@@ -79,6 +91,9 @@ targets:
         mode: lint-only
         verilator_options:
           - "-Wall"
+          # RAM primitives wider than 64bit (required for ECC) fail to build in
+          # Verilator without increasing the unroll count (see Verilator#1266)
+          - "--unroll-count 72"
       veriblelint:
         ruleset: default
         rules:

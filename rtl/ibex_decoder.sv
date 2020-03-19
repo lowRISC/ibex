@@ -34,6 +34,7 @@ module ibex_decoder #(
     output logic                 ecall_insn_o,          // syscall instr encountered
     output logic                 wfi_insn_o,            // wait for interrupt instr encountered
     output logic                 jump_set_o,            // jump taken set signal
+    output logic                 icache_inval_o,
 
     // from IF-ID pipeline register
     input  logic                 instr_first_cycle_i,   // instruction read is in its first cycle
@@ -171,6 +172,7 @@ module ibex_decoder #(
     jump_in_dec_o               = 1'b0;
     jump_set_o                  = 1'b0;
     branch_in_dec_o             = 1'b0;
+    icache_inval_o              = 1'b0;
 
     mult_en_o                   = 1'b0;
     div_en_o                    = 1'b0;
@@ -431,7 +433,7 @@ module ibex_decoder #(
       OPCODE_MISC_MEM: begin
         // For now, treat the FENCE (funct3 == 000) instruction as a NOP.  This may not be correct
         // in a system with caches and should be revisited.
-        // FENCE.I will flush the IF stage and prefetch buffer but nothing else.
+        // FENCE.I will flush the IF stage and prefetch buffer (or ICache) but nothing else.
         unique case (instr[14:12])
           3'b000: begin
             rf_we           = 1'b0;
@@ -440,12 +442,14 @@ module ibex_decoder #(
             // FENCE.I is implemented as a jump to the next PC, this gives the required flushing
             // behaviour (iside prefetch buffer flushed and response to any outstanding iside
             // requests will be ignored).
+            // If present, the ICache will also be flushed.
             jump_in_dec_o   = 1'b1;
 
             rf_we           = 1'b0;
 
             if (instr_first_cycle_i) begin
               jump_set_o       = 1'b1;
+              icache_inval_o   = 1'b1;
             end
           end
           default: begin

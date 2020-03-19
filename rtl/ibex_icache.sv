@@ -14,7 +14,7 @@ module ibex_icache #(
   // Cache arrangement parameters
   parameter int unsigned BusWidth       = 32,
   parameter int unsigned CacheSizeBytes = 4*1024,
-  parameter bit          CacheECC       = 1'b0,
+  parameter bit          ICacheECC      = 1'b0,
   parameter int unsigned LineSize       = 64,
   parameter int unsigned NumWays        = 2,
   // Always make speculative bus requests in parallel with lookups
@@ -65,7 +65,7 @@ module ibex_icache #(
   // Request throttling threshold
   localparam int unsigned FB_THRESHOLD = NUM_FB - 2;
   // Derived parameters
-  localparam int unsigned LINE_SIZE_ECC   = CacheECC ? (LineSize + 8) : LineSize;
+  localparam int unsigned LINE_SIZE_ECC   = ICacheECC ? (LineSize + 8) : LineSize;
   localparam int unsigned LINE_SIZE_BYTES = LineSize/8;
   localparam int unsigned LINE_W          = $clog2(LINE_SIZE_BYTES);
   localparam int unsigned BUS_BYTES       = BusWidth/8;
@@ -76,7 +76,7 @@ module ibex_icache #(
   localparam int unsigned INDEX_W         = $clog2(NUM_LINES);
   localparam int unsigned INDEX_HI        = INDEX_W + LINE_W - 1;
   localparam int unsigned TAG_SIZE        = ADDR_W - INDEX_W - LINE_W + 1; // 1 valid bit
-  localparam int unsigned TAG_SIZE_ECC    = CacheECC ? (TAG_SIZE + 6) : TAG_SIZE;
+  localparam int unsigned TAG_SIZE_ECC    = ICacheECC ? (TAG_SIZE + 6) : TAG_SIZE;
   localparam int unsigned OUTPUT_BEATS    = (BUS_BYTES / 2); // number of halfwords
 
   // Prefetch signals
@@ -257,7 +257,7 @@ module ibex_icache #(
   assign data_write_ic0 = tag_write_ic0;
 
   // Append ECC checkbits to write data if required
-  if (CacheECC) begin : gen_ecc_wdata
+  if (ICacheECC) begin : gen_ecc_wdata
 
     // Tagram ECC
     // Reuse the same ecc encoding module for larger cache sizes by padding with zeros
@@ -383,7 +383,7 @@ module ibex_icache #(
                                           round_robin_way_q;
 
   // ECC checking logic
-  if (CacheECC) begin : gen_data_ecc_checking
+  if (ICacheECC) begin : gen_data_ecc_checking
     logic [NumWays-1:0] tag_err_ic1;
     logic [1:0]         data_err_ic1;
     logic               ecc_correction_write_d, ecc_correction_write_q;

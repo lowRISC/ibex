@@ -20,6 +20,8 @@ Instantiation Template
       .RV32E                    ( 0            ),
       .RV32M                    ( 1            ),
       .MultiplierImplementation ( "fast"       ),
+      .ICache                   ( 0            ),
+      .ICacheECC                ( 0            ),
       .DbgTriggerEn             ( 0            ),
       .DmHaltAddr               ( 32'h1A110800 ),
       .DmExceptionAddr          ( 32'h1A110808 )
@@ -97,6 +99,12 @@ Parameters
 |                              |             |            | "slow": multi-cycle slow,                                       |
 |                              |             |            | "fast": multi-cycle fast,                                       |
 |                              |             |            | "single-cycle": single-cycle                                    |
++------------------------------+-------------+------------+-----------------------------------------------------------------+
+| ``ICache``                   | bit         | 0          | *EXPERIMENTAL* Enable instruction cache instead of prefetch     |
+|                              |             |            | buffer                                                          |
++------------------------------+-------------+------------+-----------------------------------------------------------------+
+| ``ICacheECC``                | bit         | 0          | *EXPERIMENTAL* Enable SECDED ECC protection in ICache (if       |
+|                              |             |            | ICache == 1)                                                    |
 +------------------------------+-------------+------------+-----------------------------------------------------------------+
 | ``DbgTriggerEn``             | bit         | 0          | Enable debug trigger support (one trigger only)                 |
 +------------------------------+-------------+------------+-----------------------------------------------------------------+

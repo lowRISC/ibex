@@ -14,6 +14,7 @@
 
 module ibex_cs_registers #(
     parameter bit          DbgTriggerEn     = 0,
+    parameter bit          ICache           = 1'b0,
     parameter int unsigned MHPMCounterNum   = 10,
     parameter int unsigned MHPMCounterWidth = 40,
     parameter bit          PMPEnable        = 0,
@@ -77,6 +78,10 @@ module ibex_cs_registers #(
     input  logic [31:0]          pc_id_i,
     input  logic [31:0]          pc_wb_i,
 
+    // CPU control bits
+    output logic                 icache_enable_o,
+
+    // Exception save/restore
     input  logic                 csr_save_if_i,
     input  logic                 csr_save_id_i,
     input  logic                 csr_save_wb_i,
@@ -151,6 +156,12 @@ module ibex_cs_registers #(
       priv_lvl_e    prv;
   } Dcsr_t;
 
+  // CPU control register fields
+  typedef struct packed {
+    logic [30:0] unused_ctrl;
+    logic        icache_enable;
+  } CpuCtrl_t;
+
   // Interrupt and exception control signals
   logic [31:0] exception_pc;
 
@@ -199,6 +210,9 @@ module ibex_cs_registers #(
   logic [31:0] tselect_rdata;
   logic [31:0] tmatch_control_rdata;
   logic [31:0] tmatch_value_rdata;
+
+  // CPU control bits
+  CpuCtrl_t    cpuctrl_rdata, cpuctrl_wdata;
 
   // CSR update logic
   logic [31:0] csr_wdata_int;
@@ -396,6 +410,11 @@ module ibex_cs_registers #(
       CSR_SCONTEXT: begin
         csr_rdata_int = '0;
         illegal_csr   = ~DbgTriggerEn;
+      end
+
+      // Custom CSR for controlling CPU features
+      CSR_CPUCTRL: begin
+        csr_rdata_int = {cpuctrl_rdata};
       end
 
       default: begin
@@ -1015,6 +1034,44 @@ module ibex_cs_registers #(
     assign tmatch_value_rdata   = 'b0;
     assign trigger_match_o      = 'b0;
   end
+
+  // CPU control fields
+  assign cpuctrl_rdata.unused_ctrl = '0;
+  // Cast register write data
+  assign cpuctrl_wdata = CpuCtrl_t'(csr_wdata_int);
+
+  // Generate icache enable bit
+  if (ICache) begin : gen_icache_enable
+    logic icache_enable_d, icache_enable_q;
+
+    // Update the value when cpuctrl register is written
+    assign icache_enable_d = (csr_we_int & (csr_addr == CSR_CPUCTRL)) ?
+        cpuctrl_wdata.icache_enable : icache_enable_q;
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        icache_enable_q <= 1'b0; // disabled on reset
+      end else begin
+        icache_enable_q <= icache_enable_d;
+      end
+    end
+
+    assign cpuctrl_rdata.icache_enable = icache_enable_q;
+
+  end else begin : gen_no_icache
+    // tieoff for the unused icen bit
+    logic unused_icen;
+    assign unused_icen = cpuctrl_wdata.icache_enable;
+
+    // icen field will always read as zero if ICache not configured
+    assign cpuctrl_rdata.icache_enable = 1'b0;
+  end
+
+  // tieoff for the currently unused bits of cpuctrl
+  logic [31:1] unused_cpuctrl;
+  assign unused_cpuctrl = {cpuctrl_wdata[31:1]};
+
+  assign icache_enable_o = cpuctrl_rdata.icache_enable;
 
   ////////////////
   // Assertions //

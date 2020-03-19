@@ -14,6 +14,11 @@ ${PRJ_DIR}/ibex/shared/rtl/prim_clock_gating.sv
 // ibex CORE RTL files
 +incdir+${PRJ_DIR}/ibex/rtl
 ${PRJ_DIR}/ibex/shared/rtl/prim_assert.sv
+${PRJ_DIR}/ibex/shared/rtl/prim_generic_ram_1p.sv
+${PRJ_DIR}/ibex/shared/rtl/prim_secded_28_22_enc.sv
+${PRJ_DIR}/ibex/shared/rtl/prim_secded_28_22_dec.sv
+${PRJ_DIR}/ibex/shared/rtl/prim_secded_72_64_enc.sv
+${PRJ_DIR}/ibex/shared/rtl/prim_secded_72_64_dec.sv
 ${PRJ_DIR}/ibex/rtl/ibex_pkg.sv
 ${PRJ_DIR}/ibex/rtl/ibex_tracer_pkg.sv
 ${PRJ_DIR}/ibex/rtl/ibex_tracer.sv
@@ -26,6 +31,7 @@ ${PRJ_DIR}/ibex/rtl/ibex_decoder.sv
 ${PRJ_DIR}/ibex/rtl/ibex_ex_block.sv
 ${PRJ_DIR}/ibex/rtl/ibex_wb_stage.sv
 ${PRJ_DIR}/ibex/rtl/ibex_id_stage.sv
+${PRJ_DIR}/ibex/rtl/ibex_icache.sv
 ${PRJ_DIR}/ibex/rtl/ibex_if_stage.sv
 ${PRJ_DIR}/ibex/rtl/ibex_load_store_unit.sv
 ${PRJ_DIR}/ibex/rtl/ibex_multdiv_slow.sv

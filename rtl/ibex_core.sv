@@ -21,6 +21,8 @@ module ibex_core #(
     parameter bit          BranchTargetALU          = 1'b0,
     parameter bit          WritebackStage           = 1'b0,
     parameter              MultiplierImplementation = "fast",
+    parameter bit          ICache                   = 1'b0,
+    parameter bit          ICacheECC                = 1'b0,
     parameter bit          DbgTriggerEn             = 1'b0,
     parameter int unsigned DmHaltAddr               = 32'h1A110800,
     parameter int unsigned DmExceptionAddr          = 32'h1A110808
@@ -112,6 +114,9 @@ module ibex_core #(
   logic [31:0] pc_if;                  // Program counter in IF stage
   logic [31:0] pc_id;                  // Program counter in ID stage
   logic [31:0] pc_wb;                  // Program counter in WB stage
+
+  logic        icache_enable;
+  logic        icache_inval;
 
   logic        instr_first_cycle_id;
   logic        instr_valid_clear;
@@ -339,8 +344,10 @@ module ibex_core #(
   //////////////
 
   ibex_if_stage #(
-      .DmHaltAddr       ( DmHaltAddr      ),
-      .DmExceptionAddr  ( DmExceptionAddr )
+      .DmHaltAddr       ( DmHaltAddr       ),
+      .DmExceptionAddr  ( DmExceptionAddr  ),
+      .ICache           ( ICache           ),
+      .ICacheECC        ( ICacheECC        )
   ) if_stage_i (
       .clk_i                    ( clk                    ),
       .rst_ni                   ( rst_ni                 ),
@@ -376,6 +383,8 @@ module ibex_core #(
       .pc_mux_i                 ( pc_mux_id              ),
       .exc_pc_mux_i             ( exc_pc_mux_id          ),
       .exc_cause                ( exc_cause              ),
+      .icache_enable_i          ( icache_enable          ),
+      .icache_inval_i           ( icache_inval           ),
 
       // jump targets
       .jump_target_ex_i         ( jump_target_ex         ),
@@ -436,6 +445,7 @@ module ibex_core #(
       .pc_mux_o                     ( pc_mux_id                ),
       .exc_pc_mux_o                 ( exc_pc_mux_id            ),
       .exc_cause_o                  ( exc_cause                ),
+      .icache_inval_o               ( icache_inval             ),
 
       .instr_fetch_err_i            ( instr_fetch_err          ),
       .instr_fetch_err_plus2_i      ( instr_fetch_err_plus2    ),
@@ -756,6 +766,7 @@ module ibex_core #(
 
   ibex_cs_registers #(
       .DbgTriggerEn     ( DbgTriggerEn     ),
+      .ICache           ( ICache           ),
       .MHPMCounterNum   ( MHPMCounterNum   ),
       .MHPMCounterWidth ( MHPMCounterWidth ),
       .PMPEnable        ( PMPEnable        ),
@@ -815,6 +826,8 @@ module ibex_core #(
       .pc_if_i                 ( pc_if                    ),
       .pc_id_i                 ( pc_id                    ),
       .pc_wb_i                 ( pc_wb                    ),
+
+      .icache_enable_o         ( icache_enable            ),
 
       .csr_save_if_i           ( csr_save_if              ),
       .csr_save_id_i           ( csr_save_id              ),
