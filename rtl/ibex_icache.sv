@@ -511,7 +511,7 @@ module ibex_icache #(
   // Allocate a new buffer for every granted lookup
   assign fill_new_alloc = lookup_grant_ic0;
   // Track whether a speculative external request was made from IC0, and whether it was granted
-  assign fill_spec_done = (SpecRequest | branch_i) & ~|fill_ext_req & gnt_or_pmp_err;
+  assign fill_spec_done = (SpecRequest | branch_i) & ~|fill_ext_req & gnt_not_pmp_err;
   assign fill_spec_hold = (SpecRequest | branch_i) & ~|fill_ext_req & ~gnt_or_pmp_err;
 
   for (genvar fb = 0; fb < NUM_FB; fb++) begin : gen_fbs
@@ -584,7 +584,7 @@ module ibex_icache #(
                                  // can't cancel while we are waiting for a grant on the bus
                                  ~fill_ext_hold_q[fb];
     // Track whether this fill buffer expects to receive beats of data
-    assign fill_rvd_exp[fb]    = fill_busy_q[fb] & ~fill_rvd_done[fb] & (|fill_ext_cnt_q[fb]);
+    assign fill_rvd_exp[fb]    = fill_busy_q[fb] & ~fill_rvd_done[fb];
     // Count the number of rvalid beats received
     assign fill_rvd_cnt_d[fb]  = fill_alloc[fb] ? '0 :
                                                   (fill_rvd_cnt_q[fb] +
