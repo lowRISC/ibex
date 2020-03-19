@@ -4,6 +4,7 @@
 
 module tb_cs_registers #(
     parameter bit          DbgTriggerEn     = 0,
+    parameter bit          ICache           = 0,
     parameter int unsigned MHPMCounterNum   = 8,
     parameter int unsigned MHPMCounterWidth = 40,
     parameter bit          PMPEnable        = 0,
@@ -69,6 +70,8 @@ module tb_cs_registers #(
   logic [31:0]          pc_if_i;
   logic [31:0]          pc_id_i;
   logic [31:0]          pc_wb_i;
+
+  logic                 icache_enable_o;
 
   logic                 csr_save_if_i;
   logic                 csr_save_id_i;

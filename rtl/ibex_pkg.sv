@@ -389,7 +389,8 @@ typedef enum logic[11:0] {
   CSR_MHPMCOUNTER28H = 12'hB9C,
   CSR_MHPMCOUNTER29H = 12'hB9D,
   CSR_MHPMCOUNTER30H = 12'hB9E,
-  CSR_MHPMCOUNTER31H = 12'hB9F
+  CSR_MHPMCOUNTER31H = 12'hB9F,
+  CSR_CPUCTRL        = 12'h7C0
 } csr_num_e;
 
 // CSR pmp-related offsets
