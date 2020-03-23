@@ -604,7 +604,7 @@ module ibex_icache #(
     // - Data is available from the bus this cycle (fill_rvd_arb)
     assign fill_out_req[fb]    = fill_busy_q[fb] & ~fill_stale_q[fb] & ~fill_out_done[fb] &
                                  (fill_hit_ic1[fb] | fill_hit_q[fb] |
-                                  (fill_rvd_cnt_q[fb] > fill_out_cnt_q[fb]) | fill_rvd_arb[fb]);
+                                  (fill_rvd_beat[fb] > fill_out_cnt_q[fb]) | fill_rvd_arb[fb]);
 
     // Calculate when a beat of data is output. Any ECC error squashes the output that cycle.
     assign fill_out_grant[fb]  = fill_out_arb[fb] & output_ready & ~ecc_err_ic1;
