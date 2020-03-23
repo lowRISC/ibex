@@ -521,7 +521,7 @@ class core_ibex_irq_in_debug_test extends core_ibex_directed_test;
       wait_for_csr_write(CSR_DCSR, 500);
       check_dcsr_prv(operating_mode);
       check_dcsr_cause(DBG_CAUSE_HALTREQ);
-      clk_vif.wait_clks($urandom_range(50, 100));
+      clk_vif.wait_clks($urandom_range(25, 50));
       // Raise interrupts while the core is in debug mode
       vseq.start_irq_raise_seq();
       fork
@@ -530,7 +530,7 @@ class core_ibex_irq_in_debug_test extends core_ibex_directed_test;
           `uvm_fatal(`gfn, "Core is handling interrupt detected in debug mode")
         end
         begin
-          clk_vif.wait_clks(500);
+          clk_vif.wait_clks(100);
           disable wait_irq;
         end
       join
