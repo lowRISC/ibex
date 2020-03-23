@@ -197,7 +197,7 @@ class riscv_instr_gen_config extends uvm_object;
   bit                    disable_compressed_instr;
   // "Memory mapped" address that when written to will indicate some event to
   // the testbench - testbench will take action based on the value written
-  int                    signature_addr = 32'hdead_beef;
+  bit [XLEN - 1 : 0]     signature_addr = 32'hdead_beef;
   bit                    require_signature_addr = 1'b0;
   // Enable a full or empty debug_rom section.
   // Full debug_rom will contain random instruction streams.
@@ -232,6 +232,8 @@ class riscv_instr_gen_config extends uvm_object;
   bit                    enable_floating_point;
   // Vector extension support
   bit                    enable_vector_extension;
+  // Bit manipulation extension support
+  bit                    enable_b_extension;
 
   //-----------------------------------------------------------------------------
   // Command line options for instruction distribution control
@@ -396,7 +398,7 @@ class riscv_instr_gen_config extends uvm_object;
   constraint addr_translaction_rnd_order_c {
     solve init_privileged_mode before virtual_addr_translation_on;
   }
-  
+
   constraint addr_translaction_c {
     if ((init_privileged_mode != MACHINE_MODE) && (SATP_MODE != BARE)) {
       virtual_addr_translation_on == 1'b1;
@@ -474,6 +476,7 @@ class riscv_instr_gen_config extends uvm_object;
     `uvm_field_int(max_directed_instr_stream_seq, UVM_DEFAULT)
     `uvm_field_int(enable_floating_point, UVM_DEFAULT)
     `uvm_field_int(enable_vector_extension, UVM_DEFAULT)
+    `uvm_field_int(enable_b_extension, UVM_DEFAULT)
     `uvm_field_int(use_push_data_section, UVM_DEFAULT)
   `uvm_object_utils_end
 
@@ -527,6 +530,7 @@ class riscv_instr_gen_config extends uvm_object;
     get_bool_arg_value("+set_mstatus_tw=", set_mstatus_tw);
     get_bool_arg_value("+enable_floating_point=", enable_floating_point);
     get_bool_arg_value("+enable_vector_extension=", enable_vector_extension);
+    get_bool_arg_value("+enable_b_extension=", enable_b_extension);
     if(inst.get_arg_value("+boot_mode=", boot_mode_opts)) begin
       `uvm_info(get_full_name(), $sformatf(
                 "Got boot mode option - %0s", boot_mode_opts), UVM_LOW)
@@ -566,6 +570,7 @@ class riscv_instr_gen_config extends uvm_object;
     vector_cfg = riscv_vector_cfg::type_id::create("vector_cfg");
     pmp_cfg = riscv_pmp_cfg::type_id::create("pmp_cfg");
     pmp_cfg.rand_mode(pmp_cfg.pmp_randomize);
+    pmp_cfg.initialize(require_signature_addr);
     setup_instr_distribution();
     get_invalid_priv_lvl_csr();
   endfunction
@@ -642,7 +647,8 @@ class riscv_instr_gen_config extends uvm_object;
     bit support_64b;
     bit support_128b;
     foreach (riscv_instr_pkg::supported_isa[i]) begin
-      if (riscv_instr_pkg::supported_isa[i] inside {RV64I, RV64M, RV64A, RV64F, RV64D, RV64C}) begin
+      if (riscv_instr_pkg::supported_isa[i] inside {RV64I, RV64M, RV64A, RV64F, RV64D, RV64C,
+                                                    RV64B}) begin
         support_64b = 1'b1;
       end else if (riscv_instr_pkg::supported_isa[i] inside {RV128I, RV128C}) begin
         support_128b = 1'b1;

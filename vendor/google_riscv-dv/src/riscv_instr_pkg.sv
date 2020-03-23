@@ -147,6 +147,108 @@ package riscv_instr_pkg;
     CSRRWI,
     CSRRSI,
     CSRRCI,
+    // RV32B instructions
+    ANDN,
+    ORN,
+    XNOR,
+    GORC,
+    SLO,
+    SRO,
+    ROL,
+    ROR,
+    SBCLR,
+    SBSET,
+    SBINV,
+    SBEXT,
+    GREV,
+    SLOI,
+    SROI,
+    RORI,
+    SBCLRI,
+    SBSETI,
+    SBINVI,
+    SBEXTI,
+    GORCI,
+    GREVI,
+    CMIX,
+    CMOV,
+    FSL,
+    FSR,
+    FSRI,
+    CLZ,
+    CTZ,
+    PCNT,
+    SEXT_B,
+    SEXT_H,
+    CRC32_B,
+    CRC32_H,
+    CRC32_W,
+    CRC32C_B,
+    CRC32C_H,
+    CRC32C_W,
+    CLMUL,
+    CLMULR,
+    CLMULH,
+    MIN,
+    MAX,
+    MINU,
+    MAXU,
+    SHFL,
+    UNSHFL,
+    BDEP,
+    BEXT,
+    PACK,
+    PACKU,
+    BMATOR,
+    BMATXOR,
+    PACKH,
+    BFP,
+    SHFLI,
+    UNSHFLI,
+    //RV64B instructions
+    ADDIWU,
+    SLLIU_W,
+    ADDWU,
+    SUBWU,
+    BMATFLIP,
+    CRC32_D,
+    CRC32C_D,
+    ADDU_W,
+    SUBU_W,
+    SLOW,
+    SROW,
+    ROLW,
+    RORW,
+    SBCLRW,
+    SBSETW,
+    SBINVW,
+    SBEXTW,
+    GORCW,
+    GREVW,
+    SLOIW,
+    SROIW,
+    RORIW,
+    SBCLRIW,
+    SBSETIW,
+    SBINVIW,
+    GORCIW,
+    GREVIW,
+    FSLW,
+    FSRW,
+    FSRIW,
+    CLZW,
+    CTZW,
+    PCNTW,
+    CLMULW,
+    CLMULRW,
+    CLMULHW,
+    SHFLW,
+    UNSHFLW,
+    BDEPW,
+    BEXTW,
+    PACKW,
+    PACKUW,
+    BFPW,
     // RV32M instructions
     MUL,
     MULH,
@@ -1124,7 +1226,8 @@ package riscv_instr_pkg;
   endfunction
 
   // Get a hex argument from command line
-  function automatic void get_hex_arg_value(string cmdline_str, ref int val);
+  function automatic void get_hex_arg_value(string cmdline_str,
+                                            ref bit [XLEN - 1 : 0] val);
     string s;
     if(inst.get_arg_value(cmdline_str, s)) begin
       val = s.atohex();
@@ -1148,6 +1251,7 @@ package riscv_instr_pkg;
   `include "riscv_instr_gen_config.sv"
   `include "isa/riscv_instr.sv"
   `include "isa/riscv_amo_instr.sv"
+  `include "isa/riscv_b_instr.sv"
   `include "isa/riscv_floating_point_instr.sv"
   `include "isa/riscv_vector_instr.sv"
   `include "isa/riscv_compressed_instr.sv"
@@ -1158,8 +1262,10 @@ package riscv_instr_pkg;
   `include "isa/rv32fc_instr.sv"
   `include "isa/rv32f_instr.sv"
   `include "isa/rv32i_instr.sv"
+  `include "isa/rv32b_instr.sv"
   `include "isa/rv32m_instr.sv"
   `include "isa/rv64a_instr.sv"
+  `include "isa/rv64b_instr.sv"
   `include "isa/rv64c_instr.sv"
   `include "isa/rv64d_instr.sv"
   `include "isa/rv64f_instr.sv"
