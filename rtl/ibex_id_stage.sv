@@ -628,8 +628,8 @@ module ibex_id_stage #(
             end
             branch_in_dec: begin
               // cond branch operation
-              id_fsm_d      =  branch_decision_i ? MULTI_CYCLE : FIRST_CYCLE;
-              stall_branch  =  branch_decision_i;
+              id_fsm_d      =  (!BranchTargetALU && branch_decision_i) ? MULTI_CYCLE : FIRST_CYCLE;
+              stall_branch  =  ~BranchTargetALU & branch_decision_i;
               branch_set_d  =  branch_decision_i;
               perf_branch_o =  1'b1;
             end
