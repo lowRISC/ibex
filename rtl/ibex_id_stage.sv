@@ -67,8 +67,8 @@ module ibex_id_stage #(
     output logic [31:0]               alu_operand_b_ex_o,
 
     // Branch target ALU
-    output ibex_pkg::jt_mux_sel_e     jt_mux_sel_ex_o,
-    output logic [11:0]               bt_operand_imm_o,
+    output logic [31:0]               bt_a_operand_o,
+    output logic [31:0]               bt_b_operand_o,
 
     // MUL, DIV
     output logic                      mult_en_ex_o,
@@ -224,6 +224,9 @@ module ibex_id_stage #(
   op_a_sel_e   alu_op_a_mux_sel, alu_op_a_mux_sel_dec;
   op_b_sel_e   alu_op_b_mux_sel, alu_op_b_mux_sel_dec;
 
+  op_a_sel_e   bt_a_mux_sel;
+  imm_b_sel_e  bt_b_mux_sel;
+
   imm_a_sel_e  imm_a_mux_sel;
   imm_b_sel_e  imm_b_mux_sel, imm_b_mux_sel_dec;
 
@@ -258,13 +261,13 @@ module ibex_id_stage #(
   assign imm_b_mux_sel    = lsu_addr_incr_req_i ? IMM_B_INCR_ADDR : imm_b_mux_sel_dec;
 
   ///////////////////
-  // Operand A MUX //
+  // Operand MUXES //
   ///////////////////
 
-  // Immediate MUX for Operand A
+  // Main ALU immediate MUX for Operand A
   assign imm_a = (imm_a_mux_sel == IMM_A_Z) ? zimm_rs1_type : '0;
 
-  // ALU MUX for Operand A
+  // Main ALU MUX for Operand A
   always_comb begin : alu_operand_a_mux
     unique case (alu_op_a_mux_sel)
       OP_A_REG_A:  alu_operand_a = rf_rdata_a_fwd;
@@ -275,22 +278,60 @@ module ibex_id_stage #(
     endcase
   end
 
-  ///////////////////
-  // Operand B MUX //
-  ///////////////////
+  if (BranchTargetALU) begin : g_btalu_muxes
+    // Branch target ALU operand A mux
+    always_comb begin : bt_operand_a_mux
+      unique case (bt_a_mux_sel)
+        OP_A_REG_A:  bt_a_operand_o = rf_rdata_a_fwd;
+        OP_A_CURRPC: bt_a_operand_o = pc_id_i;
+        default:     bt_a_operand_o = pc_id_i;
+      endcase
+    end
 
-  // Immediate MUX for Operand B
-  always_comb begin : immediate_b_mux
-    unique case (imm_b_mux_sel)
-      IMM_B_I:         imm_b = imm_i_type;
-      IMM_B_S:         imm_b = imm_s_type;
-      IMM_B_B:         imm_b = imm_b_type;
-      IMM_B_U:         imm_b = imm_u_type;
-      IMM_B_J:         imm_b = imm_j_type;
-      IMM_B_INCR_PC:   imm_b = instr_is_compressed_i ? 32'h2 : 32'h4;
-      IMM_B_INCR_ADDR: imm_b = 32'h4;
-      default:         imm_b = 32'h4;
-    endcase
+    // Branch target ALU operand B mux
+    always_comb begin : bt_immediate_b_mux
+      unique case (bt_b_mux_sel)
+        IMM_B_I:         bt_b_operand_o = imm_i_type;
+        IMM_B_B:         bt_b_operand_o = imm_b_type;
+        IMM_B_J:         bt_b_operand_o = imm_j_type;
+        IMM_B_INCR_PC:   bt_b_operand_o = instr_is_compressed_i ? 32'h2 : 32'h4;
+        default:         bt_b_operand_o = instr_is_compressed_i ? 32'h2 : 32'h4;
+      endcase
+    end
+
+    // Reduced main ALU immediate MUX for Operand B
+    always_comb begin : immediate_b_mux
+      unique case (imm_b_mux_sel)
+        IMM_B_I:         imm_b = imm_i_type;
+        IMM_B_S:         imm_b = imm_s_type;
+        IMM_B_U:         imm_b = imm_u_type;
+        IMM_B_INCR_PC:   imm_b = instr_is_compressed_i ? 32'h2 : 32'h4;
+        IMM_B_INCR_ADDR: imm_b = 32'h4;
+        default:         imm_b = 32'h4;
+      endcase
+    end
+  end else begin : g_nobtalu
+    op_a_sel_e  unused_a_mux_sel;
+    imm_b_sel_e unused_b_mux_sel;
+
+    assign unused_a_mux_sel = bt_a_mux_sel;
+    assign unused_b_mux_sel = bt_b_mux_sel;
+    assign bt_a_operand_o   = '0;
+    assign bt_b_operand_o   = '0;
+
+    // Full main ALU immediate MUX for Operand B
+    always_comb begin : immediate_b_mux
+      unique case (imm_b_mux_sel)
+        IMM_B_I:         imm_b = imm_i_type;
+        IMM_B_S:         imm_b = imm_s_type;
+        IMM_B_B:         imm_b = imm_b_type;
+        IMM_B_U:         imm_b = imm_u_type;
+        IMM_B_J:         imm_b = imm_j_type;
+        IMM_B_INCR_PC:   imm_b = instr_is_compressed_i ? 32'h2 : 32'h4;
+        IMM_B_INCR_ADDR: imm_b = 32'h4;
+        default:         imm_b = 32'h4;
+      endcase
+    end
   end
 
   // ALU MUX for Operand B
@@ -343,7 +384,8 @@ module ibex_id_stage #(
       // immediates
       .imm_a_mux_sel_o                 ( imm_a_mux_sel        ),
       .imm_b_mux_sel_o                 ( imm_b_mux_sel_dec    ),
-      .jt_mux_sel_o                    ( jt_mux_sel_ex_o      ),
+      .bt_a_mux_sel_o                  ( bt_a_mux_sel         ),
+      .bt_b_mux_sel_o                  ( bt_b_mux_sel         ),
 
       .imm_i_type_o                    ( imm_i_type           ),
       .imm_s_type_o                    ( imm_s_type           ),
@@ -529,14 +571,6 @@ module ibex_id_stage #(
   assign alu_operand_a_ex_o          = alu_operand_a;
   assign alu_operand_b_ex_o          = alu_operand_b;
 
-  if (BranchTargetALU) begin : g_bt_operand_imm
-    // Branch target ALU sign-extends and inserts bottom 0 bit so only want the
-    // 'raw' B-type immediate bits.
-    assign bt_operand_imm_o = imm_b_type[12:1];
-  end else begin : g_no_bt_operand_imm
-    assign bt_operand_imm_o = '0;
-  end
-
   assign mult_en_ex_o                = mult_en_id;
   assign div_en_ex_o                 = div_en_id;
   assign multdiv_sel_ex_o            = multdiv_sel_dec;
@@ -637,8 +671,9 @@ module ibex_id_stage #(
             end
             jump_in_dec: begin
               // uncond branch operation
-              id_fsm_d      = MULTI_CYCLE;
-              stall_jump    = 1'b1;
+              // BTALU means jumps only need one cycle
+              id_fsm_d      = BranchTargetALU ? FIRST_CYCLE : MULTI_CYCLE;
+              stall_jump    = ~BranchTargetALU;
             end
             default: begin
               id_fsm_d      = FIRST_CYCLE;
@@ -853,14 +888,38 @@ module ibex_id_stage #(
 
   // Selectors must be known/valid.
   `ASSERT_KNOWN(IbexAluOpMuxSelKnown, alu_op_a_mux_sel, clk_i, !rst_ni)
-  `ASSERT(IbexImmBMuxSelValid, imm_b_mux_sel inside {
+  `ASSERT(IbexAluAOpMuxSelValid, alu_op_a_mux_sel inside {
+      OP_A_REG_A,
+      OP_A_FWD,
+      OP_A_CURRPC,
+      OP_A_IMM})
+  if (BranchTargetALU) begin : g_btalu_assertions
+    `ASSERT(IbexImmBMuxSelValid, imm_b_mux_sel inside {
+        IMM_B_I,
+        IMM_B_S,
+        IMM_B_U,
+        IMM_B_INCR_PC,
+        IMM_B_INCR_ADDR})
+  end else begin : g_nobtalu_assertions
+    `ASSERT(IbexImmBMuxSelValid, imm_b_mux_sel inside {
+        IMM_B_I,
+        IMM_B_S,
+        IMM_B_B,
+        IMM_B_U,
+        IMM_B_J,
+        IMM_B_INCR_PC,
+        IMM_B_INCR_ADDR})
+  end
+  `ASSERT_KNOWN(IbexBTAluAOpMuxSelKnown, bt_a_mux_sel, clk_i, !rst_ni)
+  `ASSERT(IbexBTAluAOpMuxSelValid, bt_a_mux_sel inside {
+      OP_A_REG_A,
+      OP_A_CURRPC})
+  `ASSERT_KNOWN(IbexBTAluBOpMuxSelKnown, bt_b_mux_sel, clk_i, !rst_ni)
+  `ASSERT(IbexBTAluBOpMuxSelValid, bt_b_mux_sel inside {
       IMM_B_I,
-      IMM_B_S,
       IMM_B_B,
-      IMM_B_U,
       IMM_B_J,
-      IMM_B_INCR_PC,
-      IMM_B_INCR_ADDR})
+      IMM_B_INCR_PC})
   `ASSERT(IbexRegfileWdataSelValid, rf_wdata_sel inside {
       RF_WD_EX,
       RF_WD_CSR})

@@ -47,7 +47,8 @@ module ibex_decoder #(
     // immediates
     output ibex_pkg::imm_a_sel_e  imm_a_mux_sel_o,       // immediate selection for operand a
     output ibex_pkg::imm_b_sel_e  imm_b_mux_sel_o,       // immediate selection for operand b
-    output ibex_pkg::jt_mux_sel_e jt_mux_sel_o,          // jump target selection
+    output ibex_pkg::op_a_sel_e   bt_a_mux_sel_o,        // branch target selection operand a
+    output ibex_pkg::imm_b_sel_e  bt_b_mux_sel_o,        // branch target selection operand b
     output logic [31:0]           imm_i_type_o,
     output logic [31:0]           imm_s_type_o,
     output logic [31:0]           imm_b_type_o,
@@ -212,8 +213,8 @@ module ibex_decoder #(
         jump_in_dec_o      = 1'b1;
 
         if (instr_first_cycle_i) begin
-          // Calculate jump target
-          rf_we            = 1'b0;
+          // Calculate jump target (and store PC + 4 if BranchTargetALU is configured)
+          rf_we            = BranchTargetALU;
           jump_set_o       = 1'b1;
         end else begin
           // Calculate and store PC+4
@@ -225,8 +226,8 @@ module ibex_decoder #(
         jump_in_dec_o      = 1'b1;
 
         if (instr_first_cycle_i) begin
-          // Calculate jump target
-          rf_we            = 1'b0;
+          // Calculate jump target (and store PC + 4 if BranchTargetALU is configured)
+          rf_we            = BranchTargetALU;
           jump_set_o       = 1'b1;
         end else begin
           // Calculate and store PC+4
@@ -548,7 +549,8 @@ module ibex_decoder #(
     imm_a_mux_sel_o    = IMM_A_ZERO;
     imm_b_mux_sel_o    = IMM_B_I;
 
-    jt_mux_sel_o       = JT_ALU;
+    bt_a_mux_sel_o     = OP_A_CURRPC;
+    bt_b_mux_sel_o     = IMM_B_I;
 
     multdiv_sel_o      = 1'b0;
 
@@ -562,10 +564,12 @@ module ibex_decoder #(
 
       OPCODE_JAL: begin // Jump and Link
         if (BranchTargetALU) begin
-          jt_mux_sel_o = JT_ALU;
+          bt_a_mux_sel_o = OP_A_CURRPC;
+          bt_b_mux_sel_o = IMM_B_J;
         end
 
-        if (instr_first_cycle_i) begin
+        // Jumps take two cycles without the BTALU
+        if (instr_first_cycle_i && !BranchTargetALU) begin
           // Calculate jump target
           alu_op_a_mux_sel_o  = OP_A_CURRPC;
           alu_op_b_mux_sel_o  = OP_B_IMM;
@@ -582,10 +586,12 @@ module ibex_decoder #(
 
       OPCODE_JALR: begin // Jump and Link Register
         if (BranchTargetALU) begin
-          jt_mux_sel_o = JT_ALU;
+          bt_a_mux_sel_o = OP_A_REG_A;
+          bt_b_mux_sel_o = IMM_B_I;
         end
 
-        if (instr_first_cycle_i) begin
+        // Jumps take two cycles without the BTALU
+        if (instr_first_cycle_i && !BranchTargetALU) begin
           // Calculate jump target
           alu_op_a_mux_sel_o  = OP_A_REG_A;
           alu_op_b_mux_sel_o  = OP_B_IMM;
@@ -617,7 +623,8 @@ module ibex_decoder #(
           // target ALU calculates the target (which is controlled in a seperate block below)
           alu_op_a_mux_sel_o  = OP_A_REG_A;
           alu_op_b_mux_sel_o  = OP_B_REG_B;
-          jt_mux_sel_o        = JT_BT_ALU;
+          bt_a_mux_sel_o      = OP_A_CURRPC;
+          bt_b_mux_sel_o      = IMM_B_B;
         end else begin
           // Without branch target ALU, a branch is a two-stage operation using the Main ALU in both
           // stages
@@ -757,10 +764,15 @@ module ibex_decoder #(
             alu_op_b_mux_sel_o = OP_B_IMM;
           end
           3'b001: begin
-            alu_op_a_mux_sel_o = OP_A_CURRPC;
-            alu_op_b_mux_sel_o = OP_B_IMM;
-            imm_b_mux_sel_o    = IMM_B_INCR_PC;
-            alu_operator_o     = ALU_ADD;
+            if (BranchTargetALU) begin
+              bt_a_mux_sel_o     = OP_A_CURRPC;
+              bt_b_mux_sel_o     = IMM_B_INCR_PC;
+            end else begin
+              alu_op_a_mux_sel_o = OP_A_CURRPC;
+              alu_op_b_mux_sel_o = OP_B_IMM;
+              imm_b_mux_sel_o    = IMM_B_INCR_PC;
+              alu_operator_o     = ALU_ADD;
+            end
           end
           default: ;
         endcase

@@ -62,7 +62,7 @@ module ibex_if_stage #(
     input logic                   icache_inval_i,
 
     // jump and branch target
-    input  logic [31:0]           jump_target_ex_i,         // jump target address
+    input  logic [31:0]           branch_target_ex_i,       // branch/jump target address
 
     // CSRs
     input  logic [31:0]           csr_mepc_i,               // PC to restore after handling
@@ -128,7 +128,7 @@ module ibex_if_stage #(
   always_comb begin : fetch_addr_mux
     unique case (pc_mux_i)
       PC_BOOT: fetch_addr_n = { boot_addr_i[31:8], 8'h80 };
-      PC_JUMP: fetch_addr_n = jump_target_ex_i;
+      PC_JUMP: fetch_addr_n = branch_target_ex_i;
       PC_EXC:  fetch_addr_n = exc_pc;                       // set PC to exception handler
       PC_ERET: fetch_addr_n = csr_mepc_i;                   // restore PC when returning from EXC
       PC_DRET: fetch_addr_n = csr_depc_i;

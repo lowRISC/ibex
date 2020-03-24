@@ -133,7 +133,7 @@ module ibex_core #(
   logic [31:0] lsu_addr_last;
 
   // Jump and branch target and decision (EX->IF)
-  logic [31:0] jump_target_ex;
+  logic [31:0] branch_target_ex;
   logic        branch_decision;
 
   // Core busy signals
@@ -166,8 +166,8 @@ module ibex_core #(
   logic [31:0] alu_operand_a_ex;
   logic [31:0] alu_operand_b_ex;
 
-  jt_mux_sel_e jt_mux_sel_ex;
-  logic [11:0] bt_operand_imm_ex;
+  logic [31:0] bt_a_operand;
+  logic [31:0] bt_b_operand;
 
   logic [31:0] alu_adder_result_ex;    // Used to forward computed address to LSU
   logic [31:0] result_ex;
@@ -386,8 +386,8 @@ module ibex_core #(
       .icache_enable_i          ( icache_enable          ),
       .icache_inval_i           ( icache_inval           ),
 
-      // jump targets
-      .jump_target_ex_i         ( jump_target_ex         ),
+      // branch targets
+      .branch_target_ex_i       ( branch_target_ex       ),
 
       // CSRs
       .csr_mepc_i               ( csr_mepc               ), // exception return address
@@ -463,8 +463,8 @@ module ibex_core #(
       .alu_operand_a_ex_o           ( alu_operand_a_ex         ),
       .alu_operand_b_ex_o           ( alu_operand_b_ex         ),
 
-      .jt_mux_sel_ex_o              ( jt_mux_sel_ex            ),
-      .bt_operand_imm_o             ( bt_operand_imm_ex        ),
+      .bt_a_operand_o               ( bt_a_operand             ),
+      .bt_b_operand_o               ( bt_b_operand             ),
 
       .mult_en_ex_o                 ( mult_en_ex               ),
       .div_en_ex_o                  ( div_en_ex                ),
@@ -571,9 +571,8 @@ module ibex_core #(
       .alu_operand_b_i            ( alu_operand_b_ex         ),
 
       // Branch target ALU signal from ID stage
-      .jt_mux_sel_i               ( jt_mux_sel_ex            ),
-      .bt_operand_imm_i           ( bt_operand_imm_ex        ),
-      .pc_id_i                    ( pc_id                    ),
+      .bt_a_operand_i             ( bt_a_operand             ),
+      .bt_b_operand_i             ( bt_b_operand             ),
 
       // Multipler/Divider signal from ID stage
       .multdiv_operator_i         ( multdiv_operator_ex      ),
@@ -589,7 +588,7 @@ module ibex_core #(
       .alu_adder_result_ex_o      ( alu_adder_result_ex      ), // to LSU
       .result_ex_o                ( result_ex                ), // to ID
 
-      .jump_target_o              ( jump_target_ex           ), // to IF
+      .branch_target_o            ( branch_target_ex         ), // to IF
       .branch_decision_o          ( branch_decision          ), // to ID
 
       .ex_valid_o                 ( ex_valid                 )
