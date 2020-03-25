@@ -556,10 +556,9 @@ def main():
         rtl_sim(sim_cmd, matched_list, seed, args.sim_opts,
                 output_dir, bin_dir, args.lsf_cmd, check_return_code)
 
-    # Compare RTL & ISS simulation result.;
+    # Compare RTL & ISS simulation result.
     if steps['compare']:
-        if not compare(matched_list, args.iss, args.o):
-            return RET_FAIL
+        compare(matched_list, args.iss, args.o)
 
     # Generate merged coverage directory and load it into appropriate GUI
     if steps['cov']:
