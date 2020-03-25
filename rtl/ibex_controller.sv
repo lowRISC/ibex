@@ -209,7 +209,7 @@ module ibex_controller #(
       exc_req_d | exc_req_lsu;
 
   // special request that can specifically occur during branch instructions
-  assign special_req_branch = (illegal_insn_d | instr_fetch_err) & (ctrl_fsm_cs != FLUSH);
+  assign special_req_branch = instr_fetch_err & (ctrl_fsm_cs != FLUSH);
 
   `ASSERT(SpecialReqBranchGivesSpecialReqAll,
     special_req_branch |-> special_req_all)
