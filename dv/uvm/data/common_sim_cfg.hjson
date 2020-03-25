@@ -44,7 +44,7 @@
   d: UVM_DEBUG
 
   // Default waves dump settings
-  dump_file:  waves.{dump}
+  dump_base:  waves
 
   // Top level simulation entities.
   sim_tops: ["-top {tb}"]
@@ -65,7 +65,7 @@
 
   // Default list of things to export to shell
   exports: [
-    DUMP_FILE: {dump_file}
+    DUMP_BASE: {dump_base}
     WAVES: {waves}
     DUT_TOP: {dut}
     TB_TOP: {tb}

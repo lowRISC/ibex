@@ -4,40 +4,40 @@
 
 # TCL file invoked from VCS's simv at run-time using this: -ucli -do <this file>
 
+set dump_waves 0
 if {[info exists ::env(WAVES)]} {
-# Use FSDB for dumping only if Verdi is set up
+    set dump_waves "$::env(WAVES)"
+}
 
-# Syntax: fsdbDumpvars [depth] [instance] [option]*
-##############################################################################
-# Option                     Description
-##############################################################################
-# +mda                       Dumps memory and MDA signals in all scopes.
-# +packedmda                 Dumps packed signals
-# +struct                    Dumps structs
-# +skip_cell_instance=mode  Enables or disables cell dumping
-# +strength                  Enables strength dumping
-# +parameter                 Dumps parameters
-# +power                     Dumps power-related signals
-# +trace_process             Dumps VHDL processes
-# +no_functions              Disables dumping of functions
-# +sva                       Dumps assertions
-# +Reg_Only                  Dumps only reg type signals
-# +IO_Only                   Dumps only IO port signals
-# +by_file=<filename>        File to specify objects to add
-# +all                       Dumps memories, MDA signals, structs, unions,power, and packed structs
-
-  if {$::env(WAVES) == 1} {
-    if { [info exists ::env(VERDI_HOME)] } {
-      fsdbDumpfile  $::env(DUMP_FILE)
-      fsdbDumpvars  0 $::env(TB_TOP) +all
-      fsdbDumpSVA   0 $::env(TB_TOP)
-    } else {
-      # Verdi is not set up, so use standard dumping format
-      set dump_file $::env(DUMP_FILE)
-      dump -file "${dump_file}"
-      dump -add { tb } -depth 0 -aggregates -scope "."
+if {"$dump_waves" == 1} {
+    # The basename (without extension) of the file where we should dump waves.
+    # Defaults to "waves".
+    set dump_base "waves"
+    if {[info exists ::(DUMP_BASE)]} {
+        set dump_base "$::env(DUMP_BASE)"
     }
-  }
+
+    # The name of the top-level testbench. Defaults to "tb" if not defined in
+    # environment
+    set tb_top "tb"
+    if {[info exists ::(TB_TOP)]} {
+        set tb_top "$::env(TB_TOP)"
+    }
+
+    if {[info exists ::env(VERDI_HOME)]} {
+        # Looks like we've got a Verdi licence. The fsdbDumpvars command tells
+        # VCS to dump everything: memories, MDA signals, structs, unions, power
+        # and packed structs.
+        puts "Dumping waves with VERDI to ${dump_base}.fsdb"
+        fsdbDumpfile  "${dump_base}.fsdb"
+        fsdbDumpvars  0 $tb_top +all
+        fsdbDumpSVA   0 $tb_top
+    } else {
+        # We don't have Verdi, so use standard dumping format (VCD+)
+        puts "Dumping waves in VCD+ format to ${dump_base}.vpd"
+        dump -file "${dump_base}.vpd"
+        dump -add "$tb_top" -depth 0 -aggregates -scope "."
+    }
 }
 
 run
