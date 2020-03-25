@@ -30,37 +30,14 @@
 # gcc_opts        : gcc compile options
 # --------------------------------------------------------------------------------
 
-- import: <riscv_dv_root>/yaml/base_testlist.yaml
+- import: <riscv_dv_root>/target/rv32imc/testlist.yaml
 
 
-- test: riscv_non_compressed_instr_test
+- test: riscv_b_ext_test
   description: >
-    Random instruction test without compressed instructions
+    Random instruction test with b extension
   iterations: 1
   gen_test: riscv_rand_instr_test
   gen_opts: >
-    +disable_compressed_instr=1
-  rtl_test: core_base_test
-
-
-- test: riscv_hint_instr_test
-  description: >
-    HINT instruction test, verify the processor can detect HINT instruction
-    treat it as NOP. No illegal instruction exception is expected
-  iterations: 2
-  gen_test: riscv_rand_instr_test
-  gen_opts: >
-    +hint_instr_ratio=5
-  rtl_test: core_base_test
-
-- test: riscv_pmp_test
-  description: >
-    Provide some PMP configuration parameters, and setup PMP CSRs appropriately
-  iterations: 2
-  gen_test: riscv_rand_instr_test
-  gen_opts: >
-    +pmp_randomize=0
-    +pmp_num_regions=1
-    +pmp_granularity=1
-    +pmp_region_0=L:0,A:NAPOT,X:1,W:1,R:1,ADDR:FFFFFFFF
+    +enable_b_extension=1
   rtl_test: core_base_test

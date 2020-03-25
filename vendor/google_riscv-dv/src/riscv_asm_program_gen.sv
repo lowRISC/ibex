@@ -877,7 +877,7 @@ class riscv_asm_program_gen extends uvm_object;
     if (SATP_MODE != BARE) begin
       instr_stream.push_back(".align 12");
     end else begin
-      instr_stream.push_back(".align 2");
+      instr_stream.push_back($sformatf(".align %d", cfg.tvec_alignment));
     end
     tvec_name = tvec.name();
     gen_section(get_label($sformatf("%0s_handler", tvec_name.tolower()), hart), instr);

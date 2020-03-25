@@ -20,6 +20,27 @@ class riscv_b_instr extends riscv_instr;
   rand riscv_reg_t rs3;
   bit has_rs3 = 1'b0;
 
+  constraint single_bit_shift_c {
+    if (category == SHIFT) {
+      imm inside {[0:31]};
+    }
+  }
+
+  constraint shuffle_c {
+    if (instr_name inside {SHFLI, UNSHFLI}) {
+      imm inside {[0:15]};
+    }
+  }
+
+  constraint or_combine_c {
+    if (instr_name inside {GORCI}) {
+      imm inside {[0:31]};
+    }
+    if (instr_name inside {GORCIW}) {
+      imm inside {[0:63]};
+    }
+  }
+
   `uvm_object_utils(riscv_b_instr)
 
   function new(string name = "");
@@ -82,42 +103,38 @@ class riscv_b_instr extends riscv_instr;
 
   // Convert the instruction to assembly code
   virtual function string convert2asm(string prefix = "");
-    string asm_str_super, asm_str;
-    asm_str_super = super.convert2asm(prefix);
+    string asm_str_final, asm_str;
     asm_str = format_string(get_instr_name(), MAX_INSTR_STR_LEN);
 
     case (format)
       I_FORMAT: begin
         if (instr_name inside {FSRI, FSRIW}) begin  // instr rd,rs1,rs3,imm
-          asm_str_super = $sformatf("%0s%0s, %0s, %0s, %0s", asm_str, rd.name(), rs1.name(),
+          asm_str_final = $sformatf("%0s%0s, %0s, %0s, %0s", asm_str, rd.name(), rs1.name(),
                                     rs3.name(), get_imm());
         end
       end
 
       R_FORMAT: begin  //instr rd rs1
-        if (instr_name inside {CLZW, CTZW, PCNTW, SEXT_B, SEXT_H, CLZ, CTZ, PCNT, BMATFLIP}) begin
-          asm_str_super = $sformatf("%0s%0s, %0s", asm_str, rd.name(), rs1.name());
-        end
-
-        if (instr_name inside {CRC32_B, CRC32_H, CRC32_W, CRC32C_B, CRC32C_H, CRC32C_W, CRC32_D,
+        if (instr_name inside {CLZW, CTZW, PCNTW, SEXT_B, SEXT_H, CLZ, CTZ, PCNT, BMATFLIP,
+                               CRC32_B, CRC32_H, CRC32_W, CRC32C_B, CRC32C_H, CRC32C_W, CRC32_D,
                                CRC32C_D}) begin
-          asm_str_super = $sformatf("%0s%0s, %0s", asm_str, rd.name(), rs1.name());
+          asm_str_final = $sformatf("%0s%0s, %0s", asm_str, rd.name(), rs1.name());
         end
       end
 
       R4_FORMAT: begin  // instr rd,rs1,rs2,rs3
-        asm_str_super = $sformatf("%0s%0s, %0s, %0s, %0s", asm_str, rd.name(), rs1.name(),
+        asm_str_final = $sformatf("%0s%0s, %0s, %0s, %0s", asm_str, rd.name(), rs1.name(),
                                   rs2.name(), rs3.name());
       end
       default: `uvm_info(`gfn, $sformatf("Unsupported format %0s", format.name()), UVM_LOW)
     endcase
 
-    if (comment != "") begin
-      asm_str = {asm_str, " #", comment};
-      return asm_str.tolower();
+    if (asm_str_final == "") begin
+      return super.convert2asm(prefix);
     end
 
-    return asm_str_super.tolower();
+    if (comment != "") asm_str_final = {asm_str, " #", comment};
+    return asm_str_final.tolower();
   endfunction
 
   function bit [6:0] get_opcode();
