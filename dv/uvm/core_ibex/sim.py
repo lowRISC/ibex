@@ -431,7 +431,7 @@ def gen_cov(base_dir, simulator, lsf_cmd):
         vdb_path = "%s/%s/rtl_sim/test.vdb" % (base_dir, entry.name)
         if 'seed' in entry.name:
             logging.info("Searching %s/%s for coverage database" %
-                          (base_dir, entry.name))
+                         (base_dir, entry.name))
             if os.path.exists(vdb_path):
                 dir_list.append(vdb_path)
     if dir_list == []:
@@ -563,7 +563,7 @@ def main():
 
     # Generate merged coverage directory and load it into appropriate GUI
     if steps['cov']:
-      gen_cov(args.o, args.simulator, args.lsf_cmd)
+        gen_cov(args.o, args.simulator, args.lsf_cmd)
 
     return RET_SUCCESS
 
