@@ -78,7 +78,10 @@ ifeq (${SIMULATOR},vcs)
 else ifeq (${SIMULATOR},ius)
 	COMPILE_OPTS += -defparam core_ibex_tb_top.dut.PMPNumRegions=${PMP_REGIONS}
 	COMPILE_OPTS += -defparam core_ibex_tb_top.dut.PMPGranularity=${PMP_GRANULARITY}
-# TODO(udinator) - support dsim and riviera
+else ifeq (&{SIMULATOR},riviera)
+	SIM_OPTS +=-g/core_ibex_tb_top/dut/PMPNumRegions=${PMP_REGIONS}
+	SIM_OPTS +=-g/core_ibex_tb_top/dut/PMPGranularity=${PMP_GRANULARITY}
+# TODO(udinator) - support dsim
 endif
 
 SHELL=/bin/bash

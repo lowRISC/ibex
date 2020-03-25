@@ -106,7 +106,7 @@
 
   sim:
     cmd: >
-      vsim -c <sim_opts> <cov_opts> -lib <out>/work +access +r+w -l <out>/logfile.log -do "run -all; endsim; quit -force" +ibex_tracer_file_base="trace_core"
+      vsim -c <sim_opts> <cov_opts> -sv_seed <seed> -lib <out>/work +access +r+w -l <out>/logfile.log -do "run -all; endsim; quit -force" +ibex_tracer_file_base="trace_core"
     cov_opts: >
       -acdb_file <out>/cov.acdb
 
