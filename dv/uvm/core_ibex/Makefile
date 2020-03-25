@@ -237,7 +237,7 @@ $(metadata)/instr_gen.gen.stamp: \
      ${CSR_OPTS} \
      --sim_opts="+uvm_set_inst_override=riscv_asm_program_gen,ibex_asm_program_gen,"uvm_test_top.asm_gen" \
                  +signature_addr=${SIGNATURE_ADDR} +pmp_num_regions=${PMP_REGIONS} \
-                 +pmp_granularity=${PMP_GRANULARITY}"
+                 +pmp_granularity=${PMP_GRANULARITY} +tvec_alignment=8"
 	$(call dump-vars,$(metadata)/gen-vars.mk,gen,$(gen-var-deps))
 	@touch $@
 
