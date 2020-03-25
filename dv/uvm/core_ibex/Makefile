@@ -366,7 +366,7 @@ $(metadata)/rtl_sim.run.stamp: \
 	 ${TEST_OPTS} \
 	 --simulator="${SIMULATOR}" --simulator_yaml=yaml/rtl_simulation.yaml \
 	 $(cov-arg) $(wave-arg) $(lsf-arg) \
-	 --sim_opts="+signature_addr=${SIGNATURE_ADDR}" ${SIM_OPTS}
+	 --sim_opts="+signature_addr=${SIGNATURE_ADDR} ${SIM_OPTS}"
 	@touch $@
 
 .PHONY: rtl_sim
