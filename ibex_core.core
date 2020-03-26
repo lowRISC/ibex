@@ -10,6 +10,7 @@ filesets:
     depend:
       - lowrisc:prim:assert
       - lowrisc:ibex:ibex_pkg
+      - lowrisc:ibex:ibex_icache
     files:
       - rtl/ibex_alu.sv
       - rtl/ibex_compressed_decoder.sv
@@ -19,7 +20,6 @@ filesets:
       - rtl/ibex_decoder.sv
       - rtl/ibex_ex_block.sv
       - rtl/ibex_fetch_fifo.sv
-      - rtl/ibex_icache.sv
       - rtl/ibex_id_stage.sv
       - rtl/ibex_if_stage.sv
       - rtl/ibex_load_store_unit.sv

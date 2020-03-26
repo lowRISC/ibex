@@ -6,8 +6,9 @@ name: "lowrisc:ibex:ibex_icache:0.1"
 description: "IBEX_ICACHE DV sim target"
 filesets:
   files_rtl:
+    depend:
+      - lowrisc:ibex:sim_shared
     files:
-      - shared/rtl/prim_generic_ram_1p.sv
       - rtl/ibex_icache.sv
     file_type: systemVerilogSource
 
