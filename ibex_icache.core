@@ -1,0 +1,19 @@
+CAPI=2:
+# Copyright lowRISC contributors.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+name: "lowrisc:ibex:ibex_icache:0.1"
+description: "IBEX_ICACHE DV sim target"
+filesets:
+  files_rtl:
+    files:
+      - shared/rtl/prim_generic_ram_1p.sv
+      - rtl/ibex_icache.sv
+    file_type: systemVerilogSource
+
+targets:
+  default: &default_target
+    filesets:
+      - files_rtl
+    toplevel: ibex_icache
+    default_tool: vcs
