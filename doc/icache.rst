@@ -215,15 +215,16 @@ Data is requested from the instruction memory with the ports prefixed by ``instr
 Note that there's one extra port on the I$, which doesn't appear at the ``ibex_core`` top-level.
 This is ``instr_pmp_err_i``.
 If the PMP block disallows a fetch for a certain address, it will squash the outgoing memory request entirely and set ``instr_pmp_err_i``.
-If that happens, the cache behaves as if the request was granted and stops making any further requests for that cache line.
+If that happens, the cache drops ``instr_req_o`` and stops making any further requests for that cache line.
 Note that it is possible for ``instr_gnt_i`` and ``instr_pmp_err_i`` to be high on the same cycle.
 In that case, the error signal takes precedence.
 
 Fetched instructions are returned to the core using ports ``ready_i``, ``valid_o``, ``rdata_o``, ``addr_o`` and ``err_o``.
-This interface uses ready/valid handshaking in the usual way (a transaction is signalled by ready and valid being high; if valid goes high, it will remain high and the other output signals will remain stable until the 
-transaction goes through).
+This interface uses ready/valid handshaking in the usual way (a transaction is signalled by ready and valid being high; if valid goes high, it will remain high and the other output signals will remain stable until the transaction goes through).
 The one exception is if ``branch_i`` is asserted, which will cause ``valid_o`` to de-assert.
-The ``rdata_o`` signal contains 32 bits of instruction data, which was fetched from ``addr_o``.
+The 32-bit wide ``rdata_o`` signal contains instruction data fetched from ``addr_o``.
+If there is a compressed instruction in the lower 16 bits, the upper 16 bits are unconstrained.
+This allows fetching an instruction from the top 16 bits of a memory, for example.
 The ``err_o`` signal will be high if the instruction fetch failed (either with ``instr_pmp_err_i`` or ``instr_err_i``); in this case ``rdata_o`` is not specified.
 
 The ``req_i`` signal tells the cache that the core is awake and will start requesting instructions soon.
