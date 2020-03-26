@@ -295,22 +295,16 @@ module ibex_core #(
   logic        rvfi_set_trap_pc_d;
   logic        rvfi_set_trap_pc_q;
   logic [31:0] rvfi_insn_id;
-  logic [4:0]  rvfi_rs1_addr_id;
   logic [4:0]  rvfi_rs1_addr_d;
   logic [4:0]  rvfi_rs1_addr_q;
-  logic [4:0]  rvfi_rs2_addr_id;
   logic [4:0]  rvfi_rs2_addr_d;
   logic [4:0]  rvfi_rs2_addr_q;
-  logic [4:0]  rvfi_rs3_addr_id;
   logic [4:0]  rvfi_rs3_addr_d;
   logic [31:0] rvfi_rs1_data_d;
-  logic [31:0] rvfi_rs1_data_id;
   logic [31:0] rvfi_rs1_data_q;
   logic [31:0] rvfi_rs2_data_d;
-  logic [31:0] rvfi_rs2_data_id;
   logic [31:0] rvfi_rs2_data_q;
   logic [31:0] rvfi_rs3_data_d;
-  logic [31:0] rvfi_rs3_data_id;
   logic [4:0]  rvfi_rd_addr_wb;
   logic [4:0]  rvfi_rd_addr_q;
   logic [4:0]  rvfi_rd_addr_d;
@@ -325,6 +319,8 @@ module ibex_core #(
   logic [31:0] rvfi_mem_wdata_q;
   logic [31:0] rvfi_mem_addr_d;
   logic [31:0] rvfi_mem_addr_q;
+  logic        rf_ren_a;
+  logic        rf_ren_b;
 `endif
 
   //////////////////////
@@ -558,6 +554,10 @@ module ibex_core #(
       .rf_rdata_a_i                 ( rf_rdata_a               ),
       .rf_raddr_b_o                 ( rf_raddr_b               ),
       .rf_rdata_b_i                 ( rf_rdata_b               ),
+`ifdef RVFI
+      .rf_ren_a_o                   ( rf_ren_a                 ),
+      .rf_ren_b_o                   ( rf_ren_b                 ),
+`endif
       .rf_waddr_id_o                ( rf_waddr_id              ),
       .rf_wdata_id_o                ( rf_wdata_id              ),
       .rf_we_id_o                   ( rf_we_id                 ),
@@ -782,12 +782,6 @@ module ibex_core #(
   // RF (Register File) //
   ////////////////////////
 `ifdef RVFI
-  assign rvfi_rs1_addr_id = rf_raddr_a;
-  assign rvfi_rs1_data_id = id_stage_i.rf_rdata_a_fwd;
-  assign rvfi_rs2_addr_id = rf_raddr_b;
-  assign rvfi_rs2_data_id = id_stage_i.rf_rdata_b_fwd;
-  assign rvfi_rs3_addr_id = rf_raddr_a;
-  assign rvfi_rs3_data_id = id_stage_i.rf_rdata_a_fwd;
   assign rvfi_rd_addr_wb  = rf_waddr_wb;
   assign rvfi_rd_wdata_wb = rf_we_wb ? rf_wdata_wb : rf_wdata_lsu;
   assign rvfi_rd_we_wb    = rf_we_wb | rf_we_lsu;
@@ -1182,10 +1176,10 @@ module ibex_core #(
   // Source register 3 is read in the second instruction cycle.
   always_comb begin
     if (instr_first_cycle_id) begin
-      rvfi_rs1_data_d = rvfi_rs1_data_id;
-      rvfi_rs1_addr_d = rvfi_rs1_addr_id;
-      rvfi_rs2_data_d = rvfi_rs2_data_id;
-      rvfi_rs2_addr_d = rvfi_rs2_addr_id;
+      rvfi_rs1_data_d = rf_ren_a ? multdiv_operand_a_ex : '0;
+      rvfi_rs1_addr_d = rf_ren_a ? rf_raddr_a : '0;
+      rvfi_rs2_data_d = rf_ren_b ? multdiv_operand_b_ex : '0;
+      rvfi_rs2_addr_d = rf_ren_b ? rf_raddr_b : '0;
       rvfi_rs3_data_d = '0;
       rvfi_rs3_addr_d = '0;
     end else begin
@@ -1193,8 +1187,8 @@ module ibex_core #(
       rvfi_rs1_addr_d = rvfi_rs1_addr_q;
       rvfi_rs2_data_d = rvfi_rs2_data_q;
       rvfi_rs2_addr_d = rvfi_rs2_addr_q;
-      rvfi_rs3_data_d = rvfi_rs3_data_id;
-      rvfi_rs3_addr_d = rvfi_rs3_addr_id;
+      rvfi_rs3_data_d = multdiv_operand_a_ex;
+      rvfi_rs3_addr_d = rf_raddr_a;
     end
   end
   always_ff @(posedge clk or negedge rst_ni) begin
