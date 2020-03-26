@@ -9,6 +9,6 @@
   upstream:
   {
     url: https://github.com/google/riscv-dv
-    rev: 5baf82a24347dae3cb71c8ab66a66494666d2291
+    rev: 76753158d940fffc53fbb92942ae5d1d768a7cdc
   }
 }

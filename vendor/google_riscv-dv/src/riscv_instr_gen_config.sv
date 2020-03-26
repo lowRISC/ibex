@@ -63,6 +63,11 @@ class riscv_instr_gen_config extends uvm_object;
   rand bit [1:0]         mstatus_vs;
   rand mtvec_mode_t      mtvec_mode;
 
+  // TVEC alignment
+  // This value is the log_2 of the byte-alignment of TVEC.BASE field
+  // As per RISC-V privileged spec, default will be set to 2 (4-byte aligned)
+  int tvec_alignment = 2;
+
   // Floating point rounding mode
   rand f_rounding_mode_t fcsr_rm;
 
@@ -433,6 +438,7 @@ class riscv_instr_gen_config extends uvm_object;
     `uvm_field_enum(riscv_reg_t, ra, UVM_DEFAULT)
     `uvm_field_enum(riscv_reg_t, sp, UVM_DEFAULT)
     `uvm_field_enum(riscv_reg_t, tp, UVM_DEFAULT)
+    `uvm_field_int(tvec_alignment, UVM_DEFAULT)
     `uvm_field_int(no_data_page, UVM_DEFAULT)
     `uvm_field_int(no_branch_jump, UVM_DEFAULT)
     `uvm_field_int(no_load_store, UVM_DEFAULT)
@@ -492,6 +498,7 @@ class riscv_instr_gen_config extends uvm_object;
     get_bool_arg_value("+enable_timer_irq=", enable_timer_irq);
     get_int_arg_value("+num_of_sub_program=", num_of_sub_program);
     get_int_arg_value("+instr_cnt=", instr_cnt);
+    get_int_arg_value("+tvec_alignment=", tvec_alignment);
     get_bool_arg_value("+no_ebreak=", no_ebreak);
     get_bool_arg_value("+no_dret=", no_dret);
     get_bool_arg_value("+no_wfi=", no_wfi);
