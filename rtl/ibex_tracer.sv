@@ -71,7 +71,6 @@ module ibex_tracer (
   logic        unused_rvfi_intr = rvfi_intr;
   logic [ 1:0] unused_rvfi_mode = rvfi_mode;
 
-  import ibex_pkg::*;
   import ibex_tracer_pkg::*;
 
   int          file_handle;
