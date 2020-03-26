@@ -148,6 +148,10 @@ module ibex_id_stage #(
     input  logic [31:0]               rf_rdata_a_i,
     output logic [4:0]                rf_raddr_b_o,
     input  logic [31:0]               rf_rdata_b_i,
+`ifdef RVFI
+    output logic                      rf_ren_a_o,
+    output logic                      rf_ren_b_o,
+`endif
 
     // Register file write (via writeback)
     output logic [4:0]                rf_waddr_id_o,
@@ -226,6 +230,11 @@ module ibex_id_stage #(
   rf_wd_sel_e  rf_wdata_sel;
   logic        rf_we_dec, rf_we_raw;
   logic        rf_ren_a, rf_ren_b;
+
+`ifdef RVFI
+  assign rf_ren_a_o = rf_ren_a;
+  assign rf_ren_b_o = rf_ren_b;
+`endif
 
   logic [31:0] rf_rdata_a_fwd;
   logic [31:0] rf_rdata_b_fwd;
