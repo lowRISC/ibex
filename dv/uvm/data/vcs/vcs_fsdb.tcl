@@ -4,6 +4,9 @@
 
 # TCL file invoked from VCS's simv at run-time using this: -ucli -do <this file>
 
+if {[info exists ::env(WAVES)]} {
+# Use FSDB for dumping only if Verdi is set up
+
 # Syntax: fsdbDumpvars [depth] [instance] [option]*
 ##############################################################################
 # Option                     Description
@@ -23,11 +26,17 @@
 # +by_file=<filename>        File to specify objects to add
 # +all                       Dumps memories, MDA signals, structs, unions,power, and packed structs
 
-if {[info exists ::env(WAVES)]} {
   if {$::env(WAVES) == 1} {
-    fsdbDumpfile  $::env(DUMP_FILE)
-    fsdbDumpvars  0 $::env(TB_TOP) +all
-    fsdbDumpSVA   0 $::env(TB_TOP)
+    if { [info exists ::env(VERDI_HOME)] } {
+      fsdbDumpfile  $::env(DUMP_FILE)
+      fsdbDumpvars  0 $::env(TB_TOP) +all
+      fsdbDumpSVA   0 $::env(TB_TOP)
+    } else {
+      # Verdi is not set up, so use standard dumping format
+      set dump_file $::env(DUMP_FILE)
+      dump -file "${dump_file}"
+      dump -add { tb } -depth 0 -aggregates -scope "."
+    }
   }
 }
 
