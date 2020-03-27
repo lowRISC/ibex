@@ -10,7 +10,7 @@ class ibex_icache_sanity_vseq extends ibex_icache_base_vseq;
   `uvm_object_new
 
   // A sanity sequence for the core agent
-  ibex_icache_sanity_seq core_seq;
+  ibex_icache_core_sanity_seq core_seq;
 
   task body();
     // TODO: This currently just drives the core sequence (which clearly isn't going to work!)

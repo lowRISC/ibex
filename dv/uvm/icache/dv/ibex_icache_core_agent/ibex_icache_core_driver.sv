@@ -2,8 +2,8 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class ibex_icache_driver extends dv_base_driver #(ibex_icache_item, ibex_icache_agent_cfg);
-  `uvm_component_utils(ibex_icache_driver)
+class ibex_icache_core_driver extends dv_base_driver #(ibex_icache_core_item, ibex_icache_core_agent_cfg);
+  `uvm_component_utils(ibex_icache_core_driver)
   `uvm_component_new
 
   // reset signals
@@ -18,9 +18,9 @@ class ibex_icache_driver extends dv_base_driver #(ibex_icache_item, ibex_icache_
       `uvm_info(`gfn, $sformatf("rcvd item:\n%0s", req.sprint()), UVM_HIGH)
 
       case (req.trans_type)
-        ICacheTransTypeBranch: drive_branch_trans(req);
-        ICacheTransTypeReq:    drive_req_trans(req);
-        default:               `uvm_fatal(`gfn, "Unknown transaction type")
+        ICacheCoreTransTypeBranch: drive_branch_trans(req);
+        ICacheCoreTransTypeReq:    drive_req_trans(req);
+        default:                   `uvm_fatal(`gfn, "Unknown transaction type")
       endcase
 
       `uvm_info(`gfn, "item sent", UVM_HIGH)
@@ -32,7 +32,7 @@ class ibex_icache_driver extends dv_base_driver #(ibex_icache_item, ibex_icache_
   //
   // This concurrently asserts branch with a given address for a cycle while doing the usual
   // (enable/disable, invalidate, read instructions).
-  virtual task automatic drive_branch_trans(ibex_icache_item req);
+  virtual task automatic drive_branch_trans(ibex_icache_core_item req);
     // Make sure that req is enabled (has no effect unless this is the first transaction)
     cfg.vif.req <= 1'b1;
 
@@ -48,7 +48,7 @@ class ibex_icache_driver extends dv_base_driver #(ibex_icache_item, ibex_icache_
   //
   // This lowers req for zero or more cycles, at the same time as setting the enable pin and (maybe)
   // pulsing the invalidate line. Once that is done, it reads zero or more instructions.
-  virtual task automatic drive_req_trans(ibex_icache_item req);
+  virtual task automatic drive_req_trans(ibex_icache_core_item req);
     int unsigned req_low_cycles;
     bit          allow_no_low_cycles;
 
