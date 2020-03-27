@@ -2,7 +2,7 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-interface ibex_icache_if (input clk);
+interface ibex_icache_core_if (input clk);
 
   // Set when core is enabled (and might request instructions soon)
   logic         req;
