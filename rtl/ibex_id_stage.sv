@@ -68,6 +68,11 @@ module ibex_id_stage #(
     output logic [31:0]               alu_operand_a_ex_o,
     output logic [31:0]               alu_operand_b_ex_o,
 
+    // Multicycle Operation Stage Register
+    input  logic                      imd_val_we_ex_i,
+    input  logic [33:0]               imd_val_d_ex_i,
+    output logic [33:0]               imd_val_q_ex_o,
+
     // Branch target ALU
     output logic [31:0]               bt_a_operand_o,
     output logic [31:0]               bt_b_operand_o,
@@ -227,6 +232,10 @@ module ibex_id_stage #(
   alu_op_e     alu_operator;
   op_a_sel_e   alu_op_a_mux_sel, alu_op_a_mux_sel_dec;
   op_b_sel_e   alu_op_b_mux_sel, alu_op_b_mux_sel_dec;
+  logic        alu_multicycle_dec;
+  logic        stall_alu;
+
+  logic [33:0] imd_val_q;
 
   op_a_sel_e   bt_a_mux_sel;
   imm_b_sel_e  bt_b_mux_sel;
@@ -341,6 +350,20 @@ module ibex_id_stage #(
   // ALU MUX for Operand B
   assign alu_operand_b = (alu_op_b_mux_sel == OP_B_IMM) ? imm_b : rf_rdata_b_fwd;
 
+  /////////////////////////////////////////
+  // Multicycle Operation Stage Register //
+  /////////////////////////////////////////
+
+  always_ff @(posedge clk_i or negedge rst_ni) begin : intermediate_val_reg
+    if (!rst_ni) begin
+      imd_val_q <= '0;
+    end else if (imd_val_we_ex_i) begin
+      imd_val_q <= imd_val_d_ex_i;
+    end
+  end
+
+  assign imd_val_q_ex_o = imd_val_q;
+
   ///////////////////////
   // Register File MUX //
   ///////////////////////
@@ -414,6 +437,7 @@ module ibex_id_stage #(
       .alu_operator_o                  ( alu_operator         ),
       .alu_op_a_mux_sel_o              ( alu_op_a_mux_sel_dec ),
       .alu_op_b_mux_sel_o              ( alu_op_b_mux_sel_dec ),
+      .alu_multicycle_o                ( alu_multicycle_dec   ),
 
       // MULT & DIV
       .mult_en_o                       ( mult_en_dec          ),
@@ -427,10 +451,10 @@ module ibex_id_stage #(
       .csr_op_o                        ( csr_op_o             ),
 
       // LSU
-      .data_req_o                      ( lsu_req_dec      ),
-      .data_we_o                       ( lsu_we           ),
-      .data_type_o                     ( lsu_type         ),
-      .data_sign_extension_o           ( lsu_sign_ext     ),
+      .data_req_o                      ( lsu_req_dec          ),
+      .data_we_o                       ( lsu_we               ),
+      .data_type_o                     ( lsu_type             ),
+      .data_sign_extension_o           ( lsu_sign_ext         ),
 
       // jump/branches
       .jump_in_dec_o                   ( jump_in_dec          ),
@@ -666,6 +690,7 @@ module ibex_id_stage #(
     stall_multdiv           = 1'b0;
     stall_jump              = 1'b0;
     stall_branch            = 1'b0;
+    stall_alu               = 1'b0;
     branch_set_d            = 1'b0;
     perf_branch_o           = 1'b0;
 
@@ -709,6 +734,11 @@ module ibex_id_stage #(
               id_fsm_d      = BranchTargetALU ? FIRST_CYCLE : MULTI_CYCLE;
               stall_jump    = ~BranchTargetALU;
             end
+            alu_multicycle_dec: begin
+              stall_alu     = 1'b1;
+              id_fsm_d      = MULTI_CYCLE;
+              rf_we_raw     = 1'b0;
+            end
             default: begin
               id_fsm_d      = FIRST_CYCLE;
             end
@@ -742,7 +772,8 @@ module ibex_id_stage #(
   `ASSERT(StallIDIfMulticycle, (id_fsm_q == FIRST_CYCLE) & (id_fsm_d == MULTI_CYCLE) |-> stall_id)
 
   // Stall ID/EX stage for reason that relates to instruction in ID/EX
-  assign stall_id = stall_ld_hz | stall_mem | stall_multdiv | stall_jump | stall_branch;
+  assign stall_id = stall_ld_hz | stall_mem | stall_multdiv | stall_jump | stall_branch |
+                      stall_alu;
 
   assign instr_done = ~stall_id & ~flush_id & instr_executing;
 
@@ -756,6 +787,7 @@ module ibex_id_stage #(
   // first cycle if it is stalled.
   assign instr_first_cycle      = instr_valid_i & (id_fsm_q == FIRST_CYCLE);
   // Used by RVFI to know when to capture register read data
+  // Used by ALU to access RS3 if ternary instruction.
   assign instr_first_cycle_id_o = instr_first_cycle;
 
   if (WritebackStage) begin : gen_stall_mem
