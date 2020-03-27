@@ -2,17 +2,16 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class ibex_icache_scoreboard extends dv_base_scoreboard #(
-    .CFG_T(ibex_icache_env_cfg),
-    .COV_T(ibex_icache_env_cov)
-  );
+class ibex_icache_scoreboard
+  extends dv_base_scoreboard #(.CFG_T(ibex_icache_env_cfg), .COV_T(ibex_icache_env_cov));
+
   `uvm_component_utils(ibex_icache_scoreboard)
 
   // local variables
 
   // TLM agent fifos
-  uvm_tlm_analysis_fifo #(ibex_icache_core_item)  core_fifo;
-  uvm_tlm_analysis_fifo #(ibex_mem_intf_seq_item) mem_fifo;
+  uvm_tlm_analysis_fifo #(ibex_icache_core_item)     core_fifo;
+  uvm_tlm_analysis_fifo #(ibex_icache_mem_resp_item) mem_fifo;
 
   `uvm_component_new
 
@@ -29,12 +28,12 @@ class ibex_icache_scoreboard extends dv_base_scoreboard #(
   task run_phase(uvm_phase phase);
     super.run_phase(phase);
     fork
-      process_ibex_icache_fifo();
-      process_ibex_mem_intf_slave_fifo();
+      process_core_fifo();
+      process_mem_fifo();
     join_none
   endtask
 
-  virtual task process_ibex_icache_fifo();
+  virtual task process_core_fifo();
     ibex_icache_core_item item;
     forever begin
       core_fifo.get(item);
@@ -42,8 +41,8 @@ class ibex_icache_scoreboard extends dv_base_scoreboard #(
     end
   endtask
 
-  virtual task process_ibex_mem_intf_slave_fifo();
-    ibex_mem_intf_seq_item item;
+  virtual task process_mem_fifo();
+    ibex_icache_mem_resp_item item;
     forever begin
       mem_fifo.get(item);
       `uvm_info(`gfn, $sformatf("received ibex_mem_intf_seq item:\n%0s", item.sprint()), UVM_HIGH)
