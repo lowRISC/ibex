@@ -9,8 +9,8 @@ filesets:
   files_rtl:
     depend:
       - lowrisc:prim:assert
+      - lowrisc:ibex:ibex_pkg
     files:
-      - rtl/ibex_pkg.sv
       - rtl/ibex_alu.sv
       - rtl/ibex_compressed_decoder.sv
       - rtl/ibex_controller.sv
