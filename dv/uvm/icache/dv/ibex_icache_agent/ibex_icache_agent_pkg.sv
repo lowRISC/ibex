@@ -8,6 +8,11 @@ package ibex_icache_agent_pkg;
   import dv_utils_pkg::*;
   import dv_lib_pkg::*;
 
+  typedef enum {
+    ICacheTransTypeBranch,
+    ICacheTransTypeReq
+  } ibex_icache_trans_type_e;
+
   // macro includes
   `include "uvm_macros.svh"
   `include "dv_macros.svh"
@@ -19,7 +24,7 @@ package ibex_icache_agent_pkg;
   typedef class ibex_icache_item;
   typedef class ibex_icache_agent_cfg;
 
-  // reuse dv_base_seqeuencer as is with the right parameter set
+  // reuse dv_base_sequencer as is with the right parameter set
   typedef dv_base_sequencer #(.ITEM_T(ibex_icache_item),
                               .CFG_T (ibex_icache_agent_cfg)) ibex_icache_sequencer;
 

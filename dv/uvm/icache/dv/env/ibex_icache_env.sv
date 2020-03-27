@@ -10,7 +10,7 @@ class ibex_icache_env extends dv_base_env #(
   );
   `uvm_component_utils(ibex_icache_env)
 
-  ibex_icache_agent m_ibex_icache_agent;
+  ibex_icache_agent         m_ibex_icache_agent;
   ibex_mem_intf_slave_agent m_ibex_mem_intf_slave_agent;
 
   `uvm_component_new
@@ -31,10 +31,10 @@ class ibex_icache_env extends dv_base_env #(
       m_ibex_mem_intf_slave_agent.monitor.addr_ph_port.connect(scoreboard.ibex_mem_intf_slave_fifo.analysis_export);
     end
     if (cfg.is_active && cfg.m_ibex_icache_agent_cfg.is_active) begin
-      virtual_sequencer.ibex_icache_sequencer_h = m_ibex_icache_agent.sequencer;
+      virtual_sequencer.core_sequencer_h = m_ibex_icache_agent.sequencer;
     end
     if (cfg.is_active && m_ibex_mem_intf_slave_agent.get_is_active()) begin
-      virtual_sequencer.ibex_mem_intf_slave_sequencer_h = m_ibex_mem_intf_slave_agent.sequencer;
+      virtual_sequencer.mem_sequencer_h = m_ibex_mem_intf_slave_agent.sequencer;
     end
   endfunction
 
