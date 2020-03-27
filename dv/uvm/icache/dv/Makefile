@@ -19,22 +19,22 @@ SEED=1
 
 ibex-top       := ../../../..
 dvsim-py       := $(ibex-top)/vendor/lowrisc_ip/dvsim/dvsim.py
-dvsim-std-args := --skip-ral --scratch-root $(ibex-top)/build -v h
+dvsim-std-args := --skip-ral --scratch-root $(scratch-root)
 
 waves-arg      := $(if $(filter-out 0,$(WAVES)),--waves,)
 verbosity-arg  := $(if $(VERBOSITY),--verbosity $(VERBOSITY),)
 seed-arg       := $(if $(SEED),--fixed-seed $(SEED),)
 
-dvsim-mk-args := $(waves-arg) $(verbosity-arg) $(seed-arg)
-run-dvsim     := $(dvsim-py) $(dvsim-std-args) $(dvsim-mk-args)
+dvsim-mk-args    := $(waves-arg) $(verbosity-arg) $(seed-arg)
+run-icache-dvsim := $(dvsim-py) ibex_icache_sim_cfg.hjson $(dvsim-std-args) $(dvsim-mk-args)
 
 .PHONY: all
 all: run
 
 .PHONY: just-build
 just-build:
-	$(run-dvsim) --build-only ibex_icache_sim_cfg.hjson
+	$(run-icache-dvsim) --build-only
 
 .PHONY: run
 run:
-	$(run-dvsim) ibex_icache_sim_cfg.hjson
+	$(run-icache-dvsim)
