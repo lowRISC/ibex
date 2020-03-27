@@ -241,6 +241,10 @@ This increment depends on the instruction data (visible at ``rdata_o``): if the 
 If the bottom bits of the instruction are ``2'b11`` then the instruction is considered to be uncompressed and the address will be incremented by 4.
 Since the contents of ``rdata_o`` are not specified if an instruction fetch has caused an error, the core must signal a branch before accepting another instruction after it sees ``err_o``.
 
+Because a single instruction can span two 32bit memory addresses, an extra signal (``err_plus2_o``) indicates when an error is caused by the second half of an unaligned uncompressed instruction.
+This signal is only valid when ``valid_o`` and ``err_o`` are set, and will only be set for uncompressed instructions.
+The core uses this signal to record the correct address in the ``mtval`` CSR upon an error.
+
 Since the address counter is not initialised on reset, the behaviour of the I$ is unspecified unless ``branch_i`` is asserted on or before the first cycle that ``req_i`` is asserted after reset.
 If that is not true, there's nothing to stop the cache fetching from random addresses.
 
