@@ -18,6 +18,7 @@
       - "vcs -f ibex_dv.f  -full64
          -l <out>/compile.log
          -sverilog -ntb_opts uvm-1.2
+         +define+UVM
          +define+UVM_REGEX_NO_DPI -timescale=1ns/10ps -licqueue
          -LDFLAGS '-Wl,--no-as-needed'
          -Mdir=<out>/vcs_simv.csrc
@@ -59,6 +60,7 @@
                 -genimage image
                 +incdir+$UVM_HOME/src
                 $UVM_HOME/src/uvm_pkg.sv
+                +define+UVM
                 +define+DSIM
                 +acc+rwb
                 -f ibex_dv.f
@@ -78,6 +80,7 @@
               -access +rwc
               -nclibdirpath <out>/ius
               -sv -uvm -uvmhome CDNS-1.2
+              +define+UVM
               -f ibex_dv.f
               -elaborate -licqueue
               -l <out>/ius/compile.log <cov_opts>"
@@ -101,6 +104,7 @@
       - "vlib <out>/work"
       - "vlog -work <out>/work
         +incdir+<ALDEC_PATH>/vlib/uvm-1.2/src
+        +define+UVM
         -l uvm_1_2
         -f ibex_dv.f"
 
@@ -114,6 +118,7 @@
   compile:
     cmd:
       - "qrun -f ibex_dv.f -uvmhome uvm-1.2
+              +define+UVM
               -svinputport=net
               -access=rw+/. -optimize
               -suppress 2583
