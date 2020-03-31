@@ -739,6 +739,7 @@ class core_ibex_debug_single_step_test extends core_ibex_directed_test;
     bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] counter = 0;
     bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] next_counter = 0;
     forever begin
+      clk_vif.wait_clks(2000);
       vseq.start_debug_single_seq();
       check_next_core_status(IN_DEBUG_MODE,
                              "Core did not enter debug mode after debug stimulus", 1000);
@@ -779,7 +780,6 @@ class core_ibex_debug_single_step_test extends core_ibex_directed_test;
         wait_ret("dret", 5000);
         if (counter === 0) break;
       end
-      clk_vif.wait_clks(2000);
     end
   endtask
 
