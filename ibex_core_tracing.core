@@ -42,6 +42,11 @@ parameters:
     default: true
     paramtype: vlogparam
 
+  RV32B:
+    datatype: bool
+    default: false
+    paramtype: vlogparam
+
   MultiplierImplementation:
     datatype: str
     paramtype: vlogparam

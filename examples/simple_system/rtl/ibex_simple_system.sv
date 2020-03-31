@@ -21,6 +21,7 @@ module ibex_simple_system (
 
   parameter bit RV32E                    = 1'b0;
   parameter bit RV32M                    = 1'b1;
+  parameter bit RV32B                    = 1'b0;
   parameter bit BranchTargetALU          = 1'b0;
   parameter bit WritebackStage           = 1'b0;
   parameter     MultiplierImplementation = "fast";
@@ -142,6 +143,7 @@ module ibex_simple_system (
       .DmExceptionAddr          ( 32'h00100000             ),
       .RV32E                    ( RV32E                    ),
       .RV32M                    ( RV32M                    ),
+      .RV32B                    ( RV32B                    ),
       .BranchTargetALU          ( BranchTargetALU          ),
       .WritebackStage           ( WritebackStage           ),
       .MultiplierImplementation ( MultiplierImplementation )
