@@ -17,6 +17,7 @@ module ibex_riscv_compliance (
 
   parameter bit RV32E                    = 1'b0;
   parameter bit RV32M                    = 1'b1;
+  parameter bit RV32B                    = 1'b0;
   parameter     MultiplierImplementation = "fast";
   parameter bit BranchTargetALU          = 1'b0;
   parameter bit WritebackStage           = 1'b0;
@@ -108,6 +109,7 @@ module ibex_riscv_compliance (
       .DmExceptionAddr(32'h00000000),
       .RV32E(RV32E),
       .RV32M(RV32M),
+      .RV32B(RV32B),
       .MultiplierImplementation(MultiplierImplementation),
       .BranchTargetALU(BranchTargetALU),
       .WritebackStage(WritebackStage)
