@@ -172,3 +172,4 @@ jobs:
       ibex_configs:
         - small-3cmult
         - maxperf-1cmult
+        - maxperf-bm-1cmult
