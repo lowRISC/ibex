@@ -15,10 +15,14 @@ small-3cmult:
   WritebackStage           : False
   MultiplierImplementation : "fast"
 
+# ===============================
+# * EXPERIMENTAL CONFIGURATIONS *
+# ===============================
+
 # Three-stage pipeline with additional branch traget ALU and 1 cycle multiplier
 # (2 cycles for mulh) so mul does not stall (mulh stall 1 cycles). This is the
 # maximum performance configuration.
-maxperf-1cmult:
+experimental-maxperf-1cmult:
   RV32E                    : False
   RV32M                    : True
   RV32B                    : False
@@ -27,7 +31,7 @@ maxperf-1cmult:
   MultiplierImplementation : "single-cycle"
 
 # maxpref-1cmult config above with bitmanip extension
-maxperf-bm-1cmult:
+experimental-maxperf-bm-1cmult:
   RV32E                    : False
   RV32M                    : True
   RV32B                    : True
