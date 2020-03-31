@@ -196,7 +196,7 @@ vars-prereq = $(if $(call vars-differ,$(1),$(2),$(3)),FORCE,)
 #
 # To do this variable tracking, we dump each of the variables to a Makefile
 # fragment and try to load it up the next time around.
-gen-var-deps := GEN_OPTS SIMULATOR RISCV_DV_OPTS CSR_OPTS \
+gen-var-deps := GEN_DIR GEN_OPTS SIMULATOR RISCV_DV_OPTS CSR_OPTS \
 	            SIGNATURE_ADDR PMP_REGIONS PMP_GRANULARITY TEST_OPTS
 
 # Load up the generation stage's saved variable values. If this fails, that's
