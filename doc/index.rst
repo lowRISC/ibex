@@ -24,6 +24,7 @@ Ibex User Manual
    rvfi
    verification
    examples
+   concierge
 
 
 .. toctree::
