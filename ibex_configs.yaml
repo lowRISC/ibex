@@ -10,6 +10,7 @@
 small-3cmult:
   RV32E                    : False
   RV32M                    : True
+  RV32B                    : False
   BranchTargetALU          : False
   WritebackStage           : False
   MultiplierImplementation : "fast"
@@ -20,6 +21,16 @@ small-3cmult:
 maxperf-1cmult:
   RV32E                    : False
   RV32M                    : True
+  RV32B                    : False
+  BranchTargetALU          : True
+  WritebackStage           : True
+  MultiplierImplementation : "single-cycle"
+
+# maxpref-1cmult config above with bitmanip extension
+maxperf-bm-1cmult:
+  RV32E                    : False
+  RV32M                    : True
+  RV32B                    : True
   BranchTargetALU          : True
   WritebackStage           : True
   MultiplierImplementation : "single-cycle"
