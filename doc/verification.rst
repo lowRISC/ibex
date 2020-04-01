@@ -78,7 +78,7 @@ The complete test list can be found in the file `dv/uvm/core_ibex/riscv_dv_exten
 Please note that verification is still a work in progress.
 
 Getting Started
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 Prerequisites & Environment Setup
 """""""""""""""""""""""""""""""""
@@ -257,4 +257,3 @@ The ``--skip-ral`` option is mandatory for building/simulating the Icache testbe
 have any CSRs, excluding this option will lead to build errors.
 ``--purge`` directs the tool to ``rm -rf`` the output directory before running the tool, this can be
 removed if not desired.
-
