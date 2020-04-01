@@ -77,6 +77,12 @@ parameters:
     default: false
     description: "Enables third pipeline stage (EXPERIMENTAL) [0/1]"
 
+  SecureIbex:
+    datatype: bool
+    paramtype: vlogparam
+    default: false
+    description: "Enables security hardening features (EXPERIMENTAL) [0/1]"
+
 targets:
   default:
     filesets:
@@ -100,6 +106,7 @@ targets:
       - BranchTargetALU
       - WritebackStage
       - MultiplierImplementation
+      - SecureIbex
     default_tool: verilator
     toplevel: ibex_core_tracing
     tools:

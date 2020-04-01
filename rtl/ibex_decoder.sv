@@ -35,6 +35,7 @@ module ibex_decoder #(
     output logic                 ecall_insn_o,          // syscall instr encountered
     output logic                 wfi_insn_o,            // wait for interrupt instr encountered
     output logic                 jump_set_o,            // jump taken set signal
+    input  logic                 branch_taken_i,        // registered branch decision
     output logic                 icache_inval_o,
 
     // from IF-ID pipeline register
@@ -655,26 +656,24 @@ module ibex_decoder #(
         endcase
 
         if (BranchTargetALU) begin
-          // With branch target ALU the main ALU evaluates the branch condition and the branch
-          // target ALU calculates the target (which is controlled in a seperate block below)
+          bt_a_mux_sel_o = OP_A_CURRPC;
+          // Not-taken branch will jump to next instruction (used in secure mode)
+          bt_b_mux_sel_o = branch_taken_i ? IMM_B_B : IMM_B_INCR_PC;
+        end
+
+        // Without branch target ALU, a branch is a two-stage operation using the Main ALU in both
+        // stages
+        if (instr_first_cycle_i) begin
+          // First evaluate the branch condition
           alu_op_a_mux_sel_o  = OP_A_REG_A;
           alu_op_b_mux_sel_o  = OP_B_REG_B;
-          bt_a_mux_sel_o      = OP_A_CURRPC;
-          bt_b_mux_sel_o      = IMM_B_B;
         end else begin
-          // Without branch target ALU, a branch is a two-stage operation using the Main ALU in both
-          // stages
-          if (instr_first_cycle_i) begin
-            // First evaluate the branch condition
-            alu_op_a_mux_sel_o  = OP_A_REG_A;
-            alu_op_b_mux_sel_o  = OP_B_REG_B;
-          end else begin
-            // Then calculate jump target
-            alu_op_a_mux_sel_o  = OP_A_CURRPC;
-            alu_op_b_mux_sel_o  = OP_B_IMM;
-            imm_b_mux_sel_o     = IMM_B_B;
-            alu_operator_o      = ALU_ADD;
-          end
+          // Then calculate jump target
+          alu_op_a_mux_sel_o  = OP_A_CURRPC;
+          alu_op_b_mux_sel_o  = OP_B_IMM;
+          // Not-taken branch will jump to next instruction (used in secure mode)
+          imm_b_mux_sel_o     = branch_taken_i ? IMM_B_B : IMM_B_INCR_PC;
+          alu_operator_o      = ALU_ADD;
         end
       end
 
