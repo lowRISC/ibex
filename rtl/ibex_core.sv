@@ -25,6 +25,7 @@ module ibex_core #(
     parameter bit          ICache                   = 1'b0,
     parameter bit          ICacheECC                = 1'b0,
     parameter bit          DbgTriggerEn             = 1'b0,
+    parameter bit          SecureIbex               = 1'b0,
     parameter int unsigned DmHaltAddr               = 32'h1A110800,
     parameter int unsigned DmExceptionAddr          = 32'h1A110808
 ) (
@@ -99,7 +100,8 @@ module ibex_core #(
 
   import ibex_pkg::*;
 
-  localparam int unsigned PMP_NUM_CHAN = 2;
+  localparam int unsigned PMP_NUM_CHAN  = 2;
+  localparam bit          DataIndTiming = SecureIbex;
 
   // IF/ID signals
   logic        instr_valid_id;
@@ -116,6 +118,7 @@ module ibex_core #(
   logic [31:0] pc_id;                  // Program counter in ID stage
   logic [31:0] pc_wb;                  // Program counter in WB stage
 
+  logic        data_ind_timing;
   logic        icache_enable;
   logic        icache_inval;
 
@@ -418,6 +421,7 @@ module ibex_core #(
       .RV32M           ( RV32M           ),
       .RV32B           ( RV32B           ),
       .BranchTargetALU ( BranchTargetALU ),
+      .DataIndTiming   ( DataIndTiming   ),
       .WritebackStage  ( WritebackStage  )
   ) id_stage_i (
       .clk_i                        ( clk                    ),
@@ -491,6 +495,7 @@ module ibex_core #(
       .priv_mode_i                  ( priv_mode_id             ),
       .csr_mstatus_tw_i             ( csr_mstatus_tw           ),
       .illegal_csr_insn_i           ( illegal_csr_insn_id      ),
+      .data_ind_timing_i            ( data_ind_timing          ),
 
       // LSU
       .lsu_req_o                    ( lsu_req                  ), // to load store unit
@@ -767,6 +772,7 @@ module ibex_core #(
 
   ibex_cs_registers #(
       .DbgTriggerEn     ( DbgTriggerEn     ),
+      .DataIndTiming    ( DataIndTiming    ),
       .ICache           ( ICache           ),
       .MHPMCounterNum   ( MHPMCounterNum   ),
       .MHPMCounterWidth ( MHPMCounterWidth ),
@@ -828,6 +834,7 @@ module ibex_core #(
       .pc_id_i                 ( pc_id                    ),
       .pc_wb_i                 ( pc_wb                    ),
 
+      .data_ind_timing_o       ( data_ind_timing          ),
       .icache_enable_o         ( icache_enable            ),
 
       .csr_save_if_i           ( csr_save_if              ),

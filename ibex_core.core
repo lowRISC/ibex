@@ -100,6 +100,12 @@ parameters:
     default: false
     description: "Enables third pipeline stage (EXPERIMENTAL)"
 
+  SecureIbex:
+    datatype: bool
+    paramtype: vlogparam
+    default: false
+    description: "Enables security hardening features (EXPERIMENTAL)"
+
 targets:
   default:
     filesets:
