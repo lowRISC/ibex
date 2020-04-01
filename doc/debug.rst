@@ -3,7 +3,7 @@
 Debug Support
 =============
 
-Ibex offers support for execution-based debug according to the RISC-V Debug Specification, version 0.13.
+Ibex offers support for execution-based debug according to the `RISC-V Debug Specification <https://riscv.org/specifications/debug-specification/>`_, version 0.13.
 
 
 .. note::
