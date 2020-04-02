@@ -66,7 +66,7 @@
                 -suppress EnumMustBePositive"
   sim:
     cmd: >
-      <DSIM> <sim_opts> -sv_seed <seed> -pli_lib <DSIM_LIB_PATH>/libuvm_dpi.so +acc+rwb -image image -work <out>/dsim <wave_opts>
+      <DSIM> <sim_opts> -sv_seed <seed> -pli_lib <DSIM_LIB_PATH>/libuvm_dpi.so +acc+rwb -image image -work <out>/dsim <wave_opts> +UVM_TESTNAME=<rtl_test> +bin=<binary> +ibex_tracer_file_base=<sim_dir>/trace_core -l <sim_dir>/sim.log
     wave_opts: >
       -waves waves.vcd
 
