@@ -614,6 +614,7 @@ module ibex_core #(
       .multdiv_operand_a_i      ( multdiv_operand_a_ex     ),
       .multdiv_operand_b_i      ( multdiv_operand_b_ex     ),
       .multdiv_ready_id_i       ( multdiv_ready_id         ),
+      .data_ind_timing_i        ( data_ind_timing          ),
 
       // Intermediate value register
       .imd_val_we_o             ( imd_val_we_ex            ),
