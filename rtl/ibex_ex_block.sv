@@ -38,6 +38,7 @@ module ibex_ex_block #(
     input  logic [31:0]           multdiv_operand_a_i,
     input  logic [31:0]           multdiv_operand_b_i,
     input  logic                  multdiv_ready_id_i,
+    input  logic                  data_ind_timing_i,
 
     // intermediate val reg
     output logic                  imd_val_we_o,
@@ -148,6 +149,7 @@ module ibex_ex_block #(
         .alu_adder_ext_i    ( alu_adder_result_ext  ),
         .alu_adder_i        ( alu_adder_result_ex_o ),
         .equal_to_zero_i    ( alu_is_equal_result   ),
+        .data_ind_timing_i  ( data_ind_timing_i     ),
         .valid_o            ( multdiv_valid         ),
         .alu_operand_a_o    ( multdiv_alu_operand_a ),
         .alu_operand_b_o    ( multdiv_alu_operand_b ),

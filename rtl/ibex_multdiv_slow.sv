@@ -26,6 +26,7 @@ module ibex_multdiv_slow
     input  logic [33:0]      alu_adder_ext_i,
     input  logic [31:0]      alu_adder_i,
     input  logic             equal_to_zero_i,
+    input  logic             data_ind_timing_i,
 
     output logic [32:0]      alu_operand_a_o,
     output logic [32:0]      alu_operand_b_o,
@@ -67,6 +68,7 @@ module ibex_multdiv_slow
   logic [31:0] op_numerator_q, op_numerator_d;
   logic        is_greater_equal;
   logic        div_change_sign, rem_change_sign;
+  logic        div_by_zero_d, div_by_zero_q;
   logic        multdiv_hold;
   logic        multdiv_en;
 
@@ -160,7 +162,7 @@ module ibex_multdiv_slow
   assign next_remainder = is_greater_equal ? res_adder_h[31:0]        : accum_window_q[31:0];
   assign next_quotient  = is_greater_equal ? op_a_shift_q | one_shift : op_a_shift_q;
 
-  assign div_change_sign  = sign_a ^ sign_b;
+  assign div_change_sign  = (sign_a ^ sign_b) & ~div_by_zero_q;
   assign rem_change_sign  = sign_a;
 
   always_comb begin
@@ -171,6 +173,7 @@ module ibex_multdiv_slow
     op_numerator_d   = op_numerator_q;
     md_state_d       = md_state_q;
     multdiv_hold     = 1'b0;
+    div_by_zero_d    = div_by_zero_q;
     if (mult_sel_i || div_sel_i) begin
       unique case(md_state_q)
         MD_IDLE: begin
@@ -180,7 +183,8 @@ module ibex_multdiv_slow
               accum_window_d = {       ~(op_a_ext[32]   &     op_b_i[0]),
                                          op_a_ext[31:0] & {32{op_b_i[0]}}  };
               op_b_shift_d   = op_b_ext >> 1;
-              md_state_d     = ((op_b_ext >> 1) == 0) ? MD_LAST : MD_COMP;
+              // Proceed with multiplication by 0/1 in data-independent time mode
+              md_state_d     = (!data_ind_timing_i && ((op_b_ext >> 1) == 0)) ? MD_LAST : MD_COMP;
             end
             MD_OP_MULH: begin
               op_a_shift_d   = op_a_ext;
@@ -191,15 +195,22 @@ module ibex_multdiv_slow
             end
             MD_OP_DIV: begin
               // Check if the denominator is 0
-              // quotient for division by 0
+              // quotient for division by 0 is specified to be -1
+              // Note with data-independent time option, the full divide operation will proceed as
+              // normal and will naturally return -1
               accum_window_d = {33{1'b1}};
-              md_state_d     = equal_to_zero_i ? MD_FINISH : MD_ABS_A;
+              md_state_d     = (!data_ind_timing_i && equal_to_zero_i) ? MD_FINISH : MD_ABS_A;
+              // Record that this is a div by zero to stop the sign change at the end of the
+              // division (in data_ind_timing mode).
+              div_by_zero_d  = equal_to_zero_i;
             end
             MD_OP_REM: begin
               // Check if the denominator is 0
-              // remainder for division by 0
+              // remainder for division by 0 is specified to be the numerator (operand a)
+              // Note with data-independent time option, the full divide operation will proceed as
+              // normal and will naturally return operand a
               accum_window_d = op_a_ext;
-              md_state_d     = equal_to_zero_i ? MD_FINISH : MD_ABS_A;
+              md_state_d     = (!data_ind_timing_i && equal_to_zero_i) ? MD_FINISH : MD_ABS_A;
             end
             default:;
           endcase
@@ -229,7 +240,10 @@ module ibex_multdiv_slow
               accum_window_d = res_adder_l;
               op_a_shift_d   = op_a_shift_q << 1;
               op_b_shift_d   = op_b_shift_q >> 1;
-              md_state_d     = ((op_b_shift_q >> 1) == 0) ? MD_LAST : MD_COMP;
+              // Multiplication is complete once op_b is zero, unless in data_ind_timing mode where
+              // the maximum possible shift-add operations will be completed regardless of op_b
+              md_state_d     = ((!data_ind_timing_i && (op_b_shift_d == 0)) ||
+                                (multdiv_count_q == 5'd1)) ? MD_LAST : MD_COMP;
             end
             MD_OP_MULH: begin
               accum_window_d = res_adder_h;
@@ -316,12 +330,14 @@ module ibex_multdiv_slow
       op_a_shift_q     <= 33'h0;
       op_numerator_q   <= 32'h0;
       md_state_q       <= MD_IDLE;
+      div_by_zero_q    <= 1'b0;
     end else if (multdiv_en) begin
       multdiv_count_q  <= multdiv_count_d;
       op_b_shift_q     <= op_b_shift_d;
       op_a_shift_q     <= op_a_shift_d;
       op_numerator_q   <= op_numerator_d;
       md_state_q       <= md_state_d;
+      div_by_zero_q    <= div_by_zero_d;
     end
   end
 
