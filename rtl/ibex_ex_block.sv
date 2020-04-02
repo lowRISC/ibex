@@ -147,7 +147,7 @@ module ibex_ex_block #(
         .op_b_i             ( multdiv_operand_b_i   ),
         .alu_adder_ext_i    ( alu_adder_result_ext  ),
         .alu_adder_i        ( alu_adder_result_ex_o ),
-        .equal_to_zero      ( alu_is_equal_result   ),
+        .equal_to_zero_i    ( alu_is_equal_result   ),
         .valid_o            ( multdiv_valid         ),
         .alu_operand_a_o    ( multdiv_alu_operand_a ),
         .alu_operand_b_o    ( multdiv_alu_operand_b ),
