@@ -72,31 +72,6 @@
     wave_opts: >
       -waves waves.vcd
 
-- tool: ius
-  compile:
-    cmd:
-      - "mkdir -p <out>/ius"
-      - "irun -work worklib
-              -access +rwc
-              -nclibdirpath <out>/ius
-              -sv -uvm -uvmhome CDNS-1.2
-              +define+UVM
-              -f ibex_dv.f
-              -elaborate -licqueue
-              -l <out>/ius/compile.log <cov_opts>"
-    cov_opts: >
-      -coverage all
-      -covfile cover.ccf
-  sim:
-    cmd: >
-      irun -R -nclibdirpath <out>/ius <sim_opts> -svseed <seed> -licqueue <wave_opts> <cov_opts>
-    cov_opts: >
-      -covoverwrite
-      -covworkdir <out>/cov_work
-      -covbaserun test
-    wave_opts: >
-      -input <cwd>/ius.tcl
-
 - tool: riviera
   env_var: ALDEC_PATH
   compile:

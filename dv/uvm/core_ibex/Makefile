@@ -75,9 +75,6 @@ endif
 ifeq (${SIMULATOR},vcs)
 	COMPILE_OPTS += -pvalue+core_ibex_tb_top.dut.PMPNumRegions=${PMP_REGIONS}
 	COMPILE_OPTS += -pvalue+core_ibex_tb_top.dut.PMPGranularity=${PMP_GRANULARITY}
-else ifeq (${SIMULATOR},ius)
-	COMPILE_OPTS += -defparam core_ibex_tb_top.dut.PMPNumRegions=${PMP_REGIONS}
-	COMPILE_OPTS += -defparam core_ibex_tb_top.dut.PMPGranularity=${PMP_GRANULARITY}
 else ifeq (&{SIMULATOR},riviera)
 	SIM_OPTS +=-g/core_ibex_tb_top/dut/PMPNumRegions=${PMP_REGIONS}
 	SIM_OPTS +=-g/core_ibex_tb_top/dut/PMPGranularity=${PMP_GRANULARITY}
