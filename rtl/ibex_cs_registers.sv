@@ -620,22 +620,19 @@ module ibex_cs_registers #(
 
   // CSR operation logic
   always_comb begin
-    csr_wreq = csr_op_en_i;
-
     unique case (csr_op_i)
       CSR_OP_WRITE: csr_wdata_int =  csr_wdata_i;
       CSR_OP_SET:   csr_wdata_int =  csr_wdata_i | csr_rdata_o;
       CSR_OP_CLEAR: csr_wdata_int = ~csr_wdata_i & csr_rdata_o;
-      CSR_OP_READ: begin
-        csr_wdata_int = csr_wdata_i;
-        csr_wreq      = 1'b0;
-      end
-      default: begin
-        csr_wdata_int = csr_wdata_i;
-        csr_wreq      = 1'b0;
-      end
+      CSR_OP_READ:  csr_wdata_int = csr_wdata_i;
+      default:      csr_wdata_int = csr_wdata_i;
     endcase
   end
+
+  assign csr_wreq = csr_op_en_i &
+    (csr_op_i inside {CSR_OP_WRITE,
+                      CSR_OP_SET,
+                      CSR_OP_CLEAR});
 
   // only write CSRs during one clock cycle
   assign csr_we_int  = csr_wreq & ~illegal_csr_insn_o;
