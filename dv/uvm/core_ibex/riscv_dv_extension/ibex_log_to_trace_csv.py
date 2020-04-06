@@ -89,9 +89,12 @@ def process_ibex_sim_log(ibex_log, csv, full_trace=1):
     log and save to a standard CSV format.
     """
     logging.info("Processing ibex log : %s" % ibex_log)
-    with open(ibex_log, "r") as log_fd, open(csv, "w") as csv_fd:
-        count = _process_ibex_sim_log_fd(log_fd, csv_fd,
-                                         True if full_trace else False)
+    try:
+        with open(ibex_log, "r") as log_fd, open(csv, "w") as csv_fd:
+            count = _process_ibex_sim_log_fd(log_fd, csv_fd,
+                                             True if full_trace else False)
+    except FileNotFoundError:
+        raise RuntimeError("Logfile %s not found" % ibex_log)
 
     logging.info("Processed instruction count : %d" % count)
     if not count:

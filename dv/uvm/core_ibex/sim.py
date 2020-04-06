@@ -351,9 +351,14 @@ def compare_test_run(test, idx, iss, output_dir, report):
     rtl_csv = os.path.join(rtl_dir, 'trace_core_00000000.csv')
     uvm_log = os.path.join(rtl_dir, 'sim.log')
 
-    # Convert the RTL log file to a trace CSV. On failure, this will raise an
-    # exception, so we can assume this passed.
-    process_ibex_sim_log(rtl_log, rtl_csv, 1)
+    try:
+        # Convert the RTL log file to a trace CSV.
+        process_ibex_sim_log(rtl_log, rtl_csv, 1)
+    except RuntimeError as e:
+        with open(report, 'a') as report_fd:
+            report_fd.write('Log processing failed: {}\n'.format(e))
+
+        return False
 
     # Have a look at the UVM log. We should write out a message on failure or
     # if we are stopping at this point.
