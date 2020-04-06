@@ -893,21 +893,21 @@ module ibex_id_stage #(
   ////////////////
 
   // Selectors must be known/valid.
-  `ASSERT_KNOWN(IbexAluOpMuxSelKnown, alu_op_a_mux_sel, clk_i, !rst_ni)
-  `ASSERT(IbexAluAOpMuxSelValid, alu_op_a_mux_sel inside {
+  `ASSERT_KNOWN_IF(IbexAluOpMuxSelKnown, alu_op_a_mux_sel, instr_valid_i)
+  `ASSERT(IbexAluAOpMuxSelValid, instr_valid_i |-> alu_op_a_mux_sel inside {
       OP_A_REG_A,
       OP_A_FWD,
       OP_A_CURRPC,
       OP_A_IMM})
   if (BranchTargetALU) begin : g_btalu_assertions
-    `ASSERT(IbexImmBMuxSelValid, imm_b_mux_sel inside {
+    `ASSERT(IbexImmBMuxSelValid, instr_valid_i |-> imm_b_mux_sel inside {
         IMM_B_I,
         IMM_B_S,
         IMM_B_U,
         IMM_B_INCR_PC,
         IMM_B_INCR_ADDR})
   end else begin : g_nobtalu_assertions
-    `ASSERT(IbexImmBMuxSelValid, imm_b_mux_sel inside {
+    `ASSERT(IbexImmBMuxSelValid, instr_valid_i |-> imm_b_mux_sel inside {
         IMM_B_I,
         IMM_B_S,
         IMM_B_B,
@@ -916,31 +916,31 @@ module ibex_id_stage #(
         IMM_B_INCR_PC,
         IMM_B_INCR_ADDR})
   end
-  `ASSERT_KNOWN(IbexBTAluAOpMuxSelKnown, bt_a_mux_sel, clk_i, !rst_ni)
-  `ASSERT(IbexBTAluAOpMuxSelValid, bt_a_mux_sel inside {
+  `ASSERT_KNOWN_IF(IbexBTAluAOpMuxSelKnown, bt_a_mux_sel, instr_valid_i)
+  `ASSERT(IbexBTAluAOpMuxSelValid, instr_valid_i |-> bt_a_mux_sel inside {
       OP_A_REG_A,
       OP_A_CURRPC})
-  `ASSERT_KNOWN(IbexBTAluBOpMuxSelKnown, bt_b_mux_sel, clk_i, !rst_ni)
-  `ASSERT(IbexBTAluBOpMuxSelValid, bt_b_mux_sel inside {
+  `ASSERT_KNOWN_IF(IbexBTAluBOpMuxSelKnown, bt_b_mux_sel, instr_valid_i)
+  `ASSERT(IbexBTAluBOpMuxSelValid, instr_valid_i |-> bt_b_mux_sel inside {
       IMM_B_I,
       IMM_B_B,
       IMM_B_J,
       IMM_B_INCR_PC})
-  `ASSERT(IbexRegfileWdataSelValid, rf_wdata_sel inside {
+  `ASSERT(IbexRegfileWdataSelValid, instr_valid_i |-> rf_wdata_sel inside {
       RF_WD_EX,
       RF_WD_CSR})
   `ASSERT_KNOWN(IbexWbStateKnown, id_fsm_q)
 
   // Branch decision must be valid when jumping.
-  `ASSERT(IbexBranchDecisionValid, branch_in_dec |-> !$isunknown(branch_decision_i))
+  `ASSERT_KNOWN_IF(IbexBranchDecisionValid, branch_decision_i, instr_valid_i)
 
   // Instruction delivered to ID stage can not contain X.
-  `ASSERT(IbexIdInstrKnown,
-      (instr_valid_i && !(illegal_c_insn_i || instr_fetch_err_i)) |-> !$isunknown(instr_rdata_i))
+  `ASSERT_KNOWN_IF(IbexIdInstrKnown, instr_rdata_i,
+      instr_valid_i && !(illegal_c_insn_i || instr_fetch_err_i))
 
   // Instruction delivered to ID stage can not contain X.
-  `ASSERT(IbexIdInstrALUKnown,
-      (instr_valid_i && !(illegal_c_insn_i || instr_fetch_err_i)) |-> !$isunknown(instr_rdata_alu_i))
+  `ASSERT_KNOWN_IF(IbexIdInstrALUKnown, instr_rdata_alu_i,
+      instr_valid_i && !(illegal_c_insn_i || instr_fetch_err_i))
 
   // Multicycle enable signals must be unique.
   `ASSERT(IbexMulticycleEnableUnique,
