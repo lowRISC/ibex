@@ -264,7 +264,7 @@ def run_sim_commands(command_list, use_lsf, check_return_code):
     # we have to create the output directories in advance.
     if use_lsf:
         cmds = []
-        for cmd, dirname in command_list:
+        for desc, cmd, dirname in command_list:
             os.makedirs(dirname, exist_ok=True)
             cmds.append(cmd)
         run_parallel_cmd(cmds, 600, check_return_code=check_return_code)
