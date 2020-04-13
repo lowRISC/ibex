@@ -15,6 +15,7 @@ filesets:
       - ibex_icache_core_item.sv: {is_include_file: true}
       - ibex_icache_core_agent_cfg.sv: {is_include_file: true}
       - ibex_icache_core_agent_cov.sv: {is_include_file: true}
+      - ibex_icache_core_sequencer.sv: {is_include_file: true}
       - ibex_icache_core_driver.sv: {is_include_file: true}
       - ibex_icache_core_monitor.sv: {is_include_file: true}
       - ibex_icache_core_agent.sv: {is_include_file: true}
