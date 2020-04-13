@@ -11,7 +11,7 @@ class ibex_icache_scoreboard
 
   // TLM agent fifos
   uvm_tlm_analysis_fifo #(ibex_icache_core_bus_item) core_fifo;
-  uvm_tlm_analysis_fifo #(ibex_icache_mem_resp_item) mem_fifo;
+  uvm_tlm_analysis_fifo #(ibex_icache_mem_bus_item)  mem_fifo;
 
   `uvm_component_new
 
@@ -42,10 +42,10 @@ class ibex_icache_scoreboard
   endtask
 
   virtual task process_mem_fifo();
-    ibex_icache_mem_resp_item item;
+    ibex_icache_mem_bus_item item;
     forever begin
       mem_fifo.get(item);
-      `uvm_info(`gfn, $sformatf("received ibex_mem_intf_seq item:\n%0s", item.sprint()), UVM_HIGH)
+      `uvm_info(`gfn, $sformatf("received mem transaction:\n%0s", item.sprint()), UVM_HIGH)
     end
   endtask
 
