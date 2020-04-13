@@ -13,12 +13,21 @@ package ibex_icache_core_agent_pkg;
     ICacheCoreTransTypeReq
   } ibex_icache_core_trans_type_e;
 
+  typedef enum {
+    ICacheCoreBusTransTypeBranch,
+    ICacheCoreBusTransTypeFetch,
+    ICacheCoreBusTransTypeInvalidate,
+    ICacheCoreBusTransTypeEnable,
+    ICacheCoreBusTransTypeBusy
+  } ibex_icache_core_bus_trans_type_e;
+
   // macro includes
   `include "uvm_macros.svh"
   `include "dv_macros.svh"
 
   // package sources
   `include "ibex_icache_core_item.sv"
+  `include "ibex_icache_core_bus_item.sv"
   `include "ibex_icache_core_agent_cfg.sv"
   `include "ibex_icache_core_agent_cov.sv"
   `include "ibex_icache_core_sequencer.sv"
