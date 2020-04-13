@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 class ibex_icache_mem_monitor
-  extends dv_base_monitor #(.ITEM_T (ibex_icache_mem_resp_item),
+  extends dv_base_monitor #(.ITEM_T (ibex_icache_mem_bus_item),
                             .CFG_T  (ibex_icache_mem_agent_cfg),
                             .COV_T  (ibex_icache_mem_agent_cov));
 
@@ -13,7 +13,7 @@ class ibex_icache_mem_monitor
   // the base class provides the following handles for use:
   // ibex_icache_mem_agent_cfg: cfg
   // ibex_icache_mem_agent_cov: cov
-  // uvm_analysis_port #(ibex_icache_resp_item): analysis_port
+  // uvm_analysis_port #(ibex_icache_mem_bus_item): analysis_port
 
   // Incoming requests. This gets hooked up to the sequencer to service requests
   uvm_analysis_port #(ibex_icache_mem_req_item) request_port;
@@ -32,6 +32,7 @@ class ibex_icache_mem_monitor
     fork
       collect_requests();
       collect_grants();
+      collect_responses();
     join
   endtask
 
@@ -69,6 +70,40 @@ class ibex_icache_mem_monitor
     end
   endtask
 
+  task automatic collect_responses();
+    ibex_icache_mem_bus_item bus_trans;
+
+    forever begin
+      // A response is signalled by either rvalid or pmp_err being true. Both are possible on the
+      // same cycle, corresponding to two different requests.
+      //
+      // Note that we're sampling on posedge clk. A PMP error that is signalled combinatorially as a
+      // response to a request will be spotted on the following clock cycle (the same time as the
+      // cache sees it).
+      if (cfg.vif.monitor_cb.pmp_err) begin
+        bus_trans = ibex_icache_mem_bus_item::type_id::create("bus_trans");
+        bus_trans.is_response = 1'b1;
+        bus_trans.address     = '0;
+        bus_trans.rdata       = '0;
+        bus_trans.err         = 0;
+        bus_trans.pmp_err     = 1'b1;
+        analysis_port.write(bus_trans);
+      end
+
+      if (cfg.vif.monitor_cb.rvalid) begin
+        bus_trans = ibex_icache_mem_bus_item::type_id::create("bus_trans");
+        bus_trans.is_response = 1'b1;
+        bus_trans.address     = '0;
+        bus_trans.rdata       = cfg.vif.monitor_cb.rdata;
+        bus_trans.err         = cfg.vif.monitor_cb.err;
+        bus_trans.pmp_err     = 0;
+        analysis_port.write(bus_trans);
+      end
+
+      @(cfg.vif.monitor_cb);
+    end
+  endtask
+
   // This is called immediately when an address is requested and is used to drive the PMP response
   function automatic void new_request(logic [31:0] addr);
     ibex_icache_mem_req_item item = new("item");
@@ -81,12 +116,22 @@ class ibex_icache_mem_monitor
 
   // This is called on a clock edge when an request is granted
   function automatic void new_grant(logic [31:0] addr);
-    ibex_icache_mem_req_item item = new("item");
+    ibex_icache_mem_req_item        item;
+    ibex_icache_mem_bus_item bus_trans;
 
+    item = ibex_icache_mem_req_item::type_id::create("item");
     item.is_grant = 1'b1;
-    item.address = addr;
+    item.address  = addr;
     `DV_CHECK_RANDOMIZE_FATAL(item)
     request_port.write(item);
+
+    bus_trans = ibex_icache_mem_bus_item::type_id::create("bus_trans");
+    bus_trans.is_response = 1'b0;
+    bus_trans.address     = addr;
+    bus_trans.rdata       = '0;
+    bus_trans.err         = 0;
+    bus_trans.pmp_err     = 0;
+    analysis_port.write(bus_trans);
   endfunction
 
 endclass

@@ -15,6 +15,7 @@ filesets:
       - ibex_icache_mem_agent_pkg.sv
       - ibex_icache_mem_req_item.sv: {is_include_file: true}
       - ibex_icache_mem_resp_item.sv: {is_include_file: true}
+      - ibex_icache_mem_bus_item.sv: {is_include_file: true}
       - ibex_icache_mem_agent_cfg.sv: {is_include_file: true}
       - ibex_icache_mem_agent_cov.sv: {is_include_file: true}
       - ibex_icache_mem_driver.sv: {is_include_file: true}

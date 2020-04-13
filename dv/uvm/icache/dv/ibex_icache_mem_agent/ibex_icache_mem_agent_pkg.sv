@@ -17,6 +17,7 @@ package ibex_icache_mem_agent_pkg;
   // package sources
   `include "ibex_icache_mem_req_item.sv"
   `include "ibex_icache_mem_resp_item.sv"
+  `include "ibex_icache_mem_bus_item.sv"
   `include "ibex_icache_mem_model.sv"
   `include "ibex_icache_mem_agent_cfg.sv"
   `include "ibex_icache_mem_agent_cov.sv"
