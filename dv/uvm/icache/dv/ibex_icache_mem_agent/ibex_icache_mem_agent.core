@@ -11,6 +11,7 @@ filesets:
       - lowrisc:dv:dv_lib
     files:
       - ibex_icache_mem_if.sv
+      - ibex_icache_mem_protocol_checker.sv
       - ibex_icache_mem_agent_pkg.sv
       - ibex_icache_mem_req_item.sv: {is_include_file: true}
       - ibex_icache_mem_resp_item.sv: {is_include_file: true}
