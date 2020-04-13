@@ -11,6 +11,7 @@ filesets:
       - lowrisc:dv:dv_lib
     files:
       - ibex_icache_core_if.sv
+      - ibex_icache_core_protocol_checker.sv
       - ibex_icache_core_agent_pkg.sv
       - ibex_icache_core_item.sv: {is_include_file: true}
       - ibex_icache_core_agent_cfg.sv: {is_include_file: true}

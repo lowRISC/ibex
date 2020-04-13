@@ -18,7 +18,7 @@ module tb;
   // interfaces
   clk_rst_if clk_rst_if(.clk(clk), .rst_n(rst_n));
 
-  ibex_icache_core_if core_if (.clk(clk));
+  ibex_icache_core_if core_if (.clk(clk), .rst_n(rst_n));
   ibex_icache_mem_if  mem_if  (.clk(clk));
 
   // dut
