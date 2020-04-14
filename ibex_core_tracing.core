@@ -103,6 +103,7 @@ targets:
       - SYNTHESIS=true
       - RV32M
       - RV32E
+      - RV32B
       - BranchTargetALU
       - WritebackStage
       - MultiplierImplementation
