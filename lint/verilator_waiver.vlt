@@ -16,6 +16,7 @@ lint_off -rule PINCONNECTEMPTY
 // 32 bits
 lint_off -rule WIDTH -file "*/rtl/ibex_core_tracing.sv" -match "*'RV32M'*"
 lint_off -rule WIDTH -file "*/rtl/ibex_core_tracing.sv" -match "*'RV32E'*"
+lint_off -rule WIDTH -file "*/rtl/ibex_core_tracing.sv" -match "*'RV32B'*"
 lint_off -rule WIDTH -file "*/rtl/ibex_core_tracing.sv" -match "*'BranchTargetALU'*"
 lint_off -rule WIDTH -file "*/rtl/ibex_core_tracing.sv" -match "*'WritebackStage'*"
 lint_off -rule WIDTH -file "*/rtl/ibex_core_tracing.sv" -match "*'SecureIbex'*"
