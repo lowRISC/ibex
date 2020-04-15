@@ -74,15 +74,18 @@ parameter logic [31:0] INSN_PMULHU  = { 7'b0000001, 10'b?, 3'b011, 5'b?, {OPCODE
 // RV32B
 // OPIMM
 // ZBB
-parameter logic [31:0] INSN_SLOI = { 7'b00100        , 10'b?, 3'b001, 5'b?, {OPCODE_OP_IMM} };
-parameter logic [31:0] INSN_SROI = { 7'b0010000      , 10'b?, 3'b101, 5'b?, {OPCODE_OP_IMM} };
-parameter logic [31:0] INSN_RORI = { 7'b0110000      , 10'b?, 3'b101, 5'b?, {OPCODE_OP_IMM} };
+parameter logic [31:0] INSN_SLOI = { 5'b00100        , 12'b?, 3'b001, 5'b?, {OPCODE_OP_IMM} };
+parameter logic [31:0] INSN_SROI = { 5'b00100        , 12'b?, 3'b101, 5'b?, {OPCODE_OP_IMM} };
+parameter logic [31:0] INSN_RORI = { 5'b01100        , 12'b?, 3'b101, 5'b?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_CLZ  = { 12'b011000000000, 5'b? , 3'b001, 5'b?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_CTZ  = { 12'b011000000001, 5'b? , 3'b001, 5'b?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_PCNT = { 12'b011000000010, 5'b? , 3'b001, 5'b?, {OPCODE_OP_IMM} };
-parameter logic [31:0] INSN_REV  = { 12'b011010011111, 5'b? , 3'b101, 5'b?, {OPCODE_OP_IMM} };
-parameter logic [31:0] INSN_REV8 = { 12'b011010011000, 5'b? , 3'b101, 5'b?, {OPCODE_OP_IMM} };
-parameter logic [31:0] INSN_ORCB = { 12'b001010000111, 5'b? , 3'b101, 5'b?, {OPCODE_OP_IMM} };
+parameter logic [31:0] INSN_REV  =
+    { 5'b01101, 2'b?, 5'b11111, 5'b? , 3'b101, 5'b?, {OPCODE_OP_IMM} };
+parameter logic [31:0] INSN_REV8 =
+    { 5'b01101, 2'b?, 5'b11000, 5'b? , 3'b101, 5'b?, {OPCODE_OP_IMM} };
+parameter logic [31:0] INSN_ORCB =
+    { 5'b00101, 2'b?, 5'b00111, 5'b? , 3'b101, 5'b?, {OPCODE_OP_IMM} };
 // ZBT
 parameter logic [31:0] INSN_FSRI = { 5'b?, 1'b1, 11'b?, 3'b101, 5'b?, {OPCODE_OP_IMM} };
 
