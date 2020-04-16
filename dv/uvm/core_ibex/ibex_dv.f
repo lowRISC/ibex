@@ -15,6 +15,7 @@ ${PRJ_DIR}/ibex/shared/rtl/prim_clock_gating.sv
 +incdir+${PRJ_DIR}/ibex/rtl
 ${PRJ_DIR}/ibex/shared/rtl/prim_assert.sv
 ${PRJ_DIR}/ibex/shared/rtl/prim_generic_ram_1p.sv
+${PRJ_DIR}/ibex/shared/rtl/prim_lfsr.sv
 ${PRJ_DIR}/ibex/shared/rtl/prim_secded_28_22_enc.sv
 ${PRJ_DIR}/ibex/shared/rtl/prim_secded_28_22_dec.sv
 ${PRJ_DIR}/ibex/shared/rtl/prim_secded_72_64_enc.sv
@@ -28,6 +29,7 @@ ${PRJ_DIR}/ibex/rtl/ibex_controller.sv
 ${PRJ_DIR}/ibex/rtl/ibex_cs_registers.sv
 ${PRJ_DIR}/ibex/rtl/ibex_counters.sv
 ${PRJ_DIR}/ibex/rtl/ibex_decoder.sv
+${PRJ_DIR}/ibex/rtl/ibex_dummy_instr.sv
 ${PRJ_DIR}/ibex/rtl/ibex_ex_block.sv
 ${PRJ_DIR}/ibex/rtl/ibex_wb_stage.sv
 ${PRJ_DIR}/ibex/rtl/ibex_id_stage.sv

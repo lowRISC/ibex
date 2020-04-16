@@ -9,6 +9,7 @@ filesets:
   files_rtl:
     depend:
       - lowrisc:prim:assert
+      - lowrisc:prim:lfsr
       - lowrisc:ibex:ibex_pkg
       - lowrisc:ibex:ibex_icache
     files:
@@ -28,6 +29,7 @@ filesets:
       - rtl/ibex_prefetch_buffer.sv
       - rtl/ibex_pmp.sv
       - rtl/ibex_wb_stage.sv
+      - rtl/ibex_dummy_instr.sv
       # XXX: Figure out the best way to switch these two implementations
       # dynamically on the target.
 #      - rtl/ibex_register_file_latch.sv # ASIC
