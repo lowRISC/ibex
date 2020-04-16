@@ -6,9 +6,14 @@ class ibex_icache_core_driver extends dv_base_driver #(ibex_icache_core_item, ib
   `uvm_component_utils(ibex_icache_core_driver)
   `uvm_component_new
 
+  // The current state of the enable pin: this is toggled by sequence items, but the current state
+  // is stored on the driver.
+  bit enable;
+
   // reset signals
   virtual task automatic reset_signals();
     cfg.vif.reset();
+    enable = 1'b0;
   endtask
 
   // drive trans received from sequencer
@@ -34,11 +39,15 @@ class ibex_icache_core_driver extends dv_base_driver #(ibex_icache_core_item, ib
   // (enable/disable, invalidate, read instructions).
   virtual task automatic drive_branch_trans(ibex_icache_core_item req);
     // Make sure that req is enabled (has no effect unless this is the first transaction)
-    cfg.vif.req <= 1'b1;
+    cfg.vif.driver_cb.req <= 1'b1;
+
+    // Toggle the enable state if necessary and drive its pin
+    if (req.toggle_enable)
+      enable = ~enable;
+    cfg.vif.driver_cb.enable <= enable;
 
     fork
         cfg.vif.branch_to(req.branch_addr);
-        if (req.toggle_enable) toggle_enable();
         if (req.invalidate) invalidate();
         read_insns(req.num_insns);
     join
@@ -62,17 +71,16 @@ class ibex_icache_core_driver extends dv_base_driver #(ibex_icache_core_item, ib
                                            [100:200]   :/ 2,
                                            [1000:1200] :/ 1 };)
 
+    // Toggle the enable state if necessary and drive its pin
+    if (req.toggle_enable)
+      enable = ~enable;
+    cfg.vif.driver_cb.enable <= enable;
+
     fork
         if (req_low_cycles > 0) lower_req(req_low_cycles);
-        if (req.toggle_enable) toggle_enable();
         if (req.invalidate) invalidate();
     join
     read_insns(req.num_insns);
-  endtask
-
-  // Toggle whether the cache is enabled
-  virtual task automatic toggle_enable();
-    cfg.vif.enable <= ~cfg.vif.enable;
   endtask
 
   // Read up to num_insns instructions from the cache, stopping early on an error
@@ -80,7 +88,7 @@ class ibex_icache_core_driver extends dv_base_driver #(ibex_icache_core_item, ib
     for (int i = 0; i < num_insns; i++) begin
       read_insn();
       // Spot any error and exit early
-      if (cfg.vif.err)
+      if (cfg.vif.driver_cb.err)
         break;
     end
   endtask
@@ -91,7 +99,7 @@ class ibex_icache_core_driver extends dv_base_driver #(ibex_icache_core_item, ib
 
     // Maybe (1 time in 10) wait for a valid signal before even considering asserting ready.
     if ($urandom_range(9) == 0)
-      wait (cfg.vif.valid);
+      wait (cfg.vif.driver_cb.valid);
 
     // Then pick how long we wait before asserting that we are ready.
     //
@@ -99,21 +107,21 @@ class ibex_icache_core_driver extends dv_base_driver #(ibex_icache_core_item, ib
     cfg.vif.wait_clks($urandom_range(3));
 
     // Assert ready and then wait until valid
-    cfg.vif.ready <= 1'b1;
+    cfg.vif.driver_cb.ready <= 1'b1;
     while (1'b1) begin
-      @(posedge cfg.vif.clk);
-      if (cfg.vif.valid)
+      @(cfg.vif.driver_cb);
+      if (cfg.vif.driver_cb.valid)
         break;
     end
 
-    cfg.vif.ready <= 1'b0;
+    cfg.vif.driver_cb.ready <= 1'b0;
   endtask
 
   // Lower the req line for the given number of cycles
   virtual task automatic lower_req(int unsigned num_cycles);
-    cfg.vif.req <= 1'b0;
-    repeat (num_cycles) @(posedge cfg.vif.clk);
-    cfg.vif.req <= 1'b1;
+    cfg.vif.driver_cb.req <= 1'b0;
+    repeat (num_cycles) @(cfg.vif.driver_cb);
+    cfg.vif.driver_cb.req <= 1'b1;
   endtask
 
   // Raise the invalidate line for a randomly chosen number of cycles > 0.
