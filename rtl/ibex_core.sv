@@ -104,10 +104,12 @@ module ibex_core #(
 
   import ibex_pkg::*;
 
-  localparam int unsigned PMP_NUM_CHAN  = 2;
-  localparam bit          DataIndTiming = SecureIbex;
+  localparam int unsigned PMP_NUM_CHAN      = 2;
+  localparam bit          DataIndTiming     = SecureIbex;
+  localparam bit          DummyInstructions = SecureIbex;
 
   // IF/ID signals
+  logic        dummy_instr_id;
   logic        instr_valid_id;
   logic        instr_new_id;
   logic [31:0] instr_rdata_id;                 // Instruction sampled inside IF stage
@@ -126,6 +128,10 @@ module ibex_core #(
   logic        imd_val_we_ex;
 
   logic        data_ind_timing;
+  logic        dummy_instr_en;
+  logic [2:0]  dummy_instr_mask;
+  logic        dummy_instr_seed_en;
+  logic [31:0] dummy_instr_seed;
   logic        icache_enable;
   logic        icache_inval;
 
@@ -364,10 +370,11 @@ module ibex_core #(
   //////////////
 
   ibex_if_stage #(
-      .DmHaltAddr       ( DmHaltAddr       ),
-      .DmExceptionAddr  ( DmExceptionAddr  ),
-      .ICache           ( ICache           ),
-      .ICacheECC        ( ICacheECC        )
+      .DmHaltAddr        ( DmHaltAddr        ),
+      .DmExceptionAddr   ( DmExceptionAddr   ),
+      .DummyInstructions ( DummyInstructions ),
+      .ICache            ( ICache            ),
+      .ICacheECC         ( ICacheECC         )
   ) if_stage_i (
       .clk_i                    ( clk                    ),
       .rst_ni                   ( rst_ni                 ),
@@ -394,6 +401,7 @@ module ibex_core #(
       .instr_fetch_err_o        ( instr_fetch_err        ),
       .instr_fetch_err_plus2_o  ( instr_fetch_err_plus2  ),
       .illegal_c_insn_id_o      ( illegal_c_insn_id      ),
+      .dummy_instr_id_o         ( dummy_instr_id         ),
       .pc_if_o                  ( pc_if                  ),
       .pc_id_o                  ( pc_id                  ),
 
@@ -403,6 +411,10 @@ module ibex_core #(
       .pc_mux_i                 ( pc_mux_id              ),
       .exc_pc_mux_i             ( exc_pc_mux_id          ),
       .exc_cause                ( exc_cause              ),
+      .dummy_instr_en_i         ( dummy_instr_en         ),
+      .dummy_instr_mask_i       ( dummy_instr_mask       ),
+      .dummy_instr_seed_en_i    ( dummy_instr_seed_en    ),
+      .dummy_instr_seed_i       ( dummy_instr_seed       ),
       .icache_enable_i          ( icache_enable          ),
       .icache_inval_i           ( icache_inval           ),
 
@@ -721,24 +733,26 @@ module ibex_core #(
   );
 
   ibex_register_file #(
-      .RV32E(RV32E),
-      .DataWidth(32)
+      .RV32E             (RV32E),
+      .DataWidth         (32),
+      .DummyInstructions (DummyInstructions)
   ) register_file_i (
-      .clk_i        ( clk_i        ),
-      .rst_ni       ( rst_ni       ),
+      .clk_i            ( clk_i          ),
+      .rst_ni           ( rst_ni         ),
 
-      .test_en_i    ( test_en_i    ),
+      .test_en_i        ( test_en_i      ),
+      .dummy_instr_id_i ( dummy_instr_id ),
 
       // Read port a
-      .raddr_a_i    ( rf_raddr_a   ),
-      .rdata_a_o    ( rf_rdata_a   ),
+      .raddr_a_i        ( rf_raddr_a     ),
+      .rdata_a_o        ( rf_rdata_a     ),
       // Read port b
-      .raddr_b_i    ( rf_raddr_b   ),
-      .rdata_b_o    ( rf_rdata_b   ),
+      .raddr_b_i        ( rf_raddr_b     ),
+      .rdata_b_o        ( rf_rdata_b     ),
       // write port
-      .waddr_a_i    ( rf_waddr_wb  ),
-      .wdata_a_i    ( rf_wdata_wb  ),
-      .we_a_i       ( rf_we_wb     )
+      .waddr_a_i        ( rf_waddr_wb    ),
+      .wdata_a_i        ( rf_wdata_wb    ),
+      .we_a_i           ( rf_we_wb       )
   );
 
   // Explict INC_ASSERT block to avoid unused signal lint warnings were asserts are not included
@@ -802,16 +816,17 @@ module ibex_core #(
   assign csr_addr   = csr_num_e'(csr_access ? alu_operand_b_ex[11:0] : 12'b0);
 
   ibex_cs_registers #(
-      .DbgTriggerEn     ( DbgTriggerEn     ),
-      .DataIndTiming    ( DataIndTiming    ),
-      .ICache           ( ICache           ),
-      .MHPMCounterNum   ( MHPMCounterNum   ),
-      .MHPMCounterWidth ( MHPMCounterWidth ),
-      .PMPEnable        ( PMPEnable        ),
-      .PMPGranularity   ( PMPGranularity   ),
-      .PMPNumRegions    ( PMPNumRegions    ),
-      .RV32E            ( RV32E            ),
-      .RV32M            ( RV32M            )
+      .DbgTriggerEn      ( DbgTriggerEn      ),
+      .DataIndTiming     ( DataIndTiming     ),
+      .DummyInstructions ( DummyInstructions ),
+      .ICache            ( ICache            ),
+      .MHPMCounterNum    ( MHPMCounterNum    ),
+      .MHPMCounterWidth  ( MHPMCounterWidth  ),
+      .PMPEnable         ( PMPEnable         ),
+      .PMPGranularity    ( PMPGranularity    ),
+      .PMPNumRegions     ( PMPNumRegions     ),
+      .RV32E             ( RV32E             ),
+      .RV32M             ( RV32M             )
   ) cs_registers_i (
       .clk_i                   ( clk                      ),
       .rst_ni                  ( rst_ni                   ),
@@ -866,6 +881,10 @@ module ibex_core #(
       .pc_wb_i                 ( pc_wb                    ),
 
       .data_ind_timing_o       ( data_ind_timing          ),
+      .dummy_instr_en_o        ( dummy_instr_en           ),
+      .dummy_instr_mask_o      ( dummy_instr_mask         ),
+      .dummy_instr_seed_en_o   ( dummy_instr_seed_en      ),
+      .dummy_instr_seed_o      ( dummy_instr_seed         ),
       .icache_enable_o         ( icache_enable            ),
 
       .csr_save_if_i           ( csr_save_if              ),
@@ -1010,7 +1029,8 @@ module ibex_core #(
     // awaiting instruction retirement and RF Write data/Mem read data whilst instruction is in WB
     // So first stage becomes valid when instruction leaves ID/EX stage and remains valid until
     // instruction leaves WB
-    assign rvfi_stage_valid_d[0] = instr_id_done | (rvfi_stage_valid[0] & ~instr_done_wb);
+    assign rvfi_stage_valid_d[0] = (instr_id_done & ~dummy_instr_id) |
+                                   (rvfi_stage_valid[0] & ~instr_done_wb);
     // Second stage is output stage so simple valid cycle after instruction leaves WB (and so has
     // retired)
     assign rvfi_stage_valid_d[1] = instr_done_wb;
@@ -1030,7 +1050,7 @@ module ibex_core #(
   end else begin
     // Without writeback stage first RVFI stage is output stage so simply valid the cycle after
     // instruction leaves ID/EX (and so has retired)
-    assign rvfi_stage_valid_d[0] = instr_id_done;
+    assign rvfi_stage_valid_d[0] = instr_id_done & ~dummy_instr_id;
     // Without writeback stage signal new instr_new_wb when instruction enters ID/EX to correctly
     // setup register write signals
     assign rvfi_instr_new_wb = instr_new_id;
