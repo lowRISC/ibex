@@ -18,8 +18,8 @@ class ibex_icache_scoreboard extends dv_base_scoreboard #(
 
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
-    ibex_icache_fifo = new("ibex_icache_fifo", this);
-    ibex_mem_intf_slave_fifo = new("ibex_mem_intf_slave_fifo", this);
+    core_fifo = new("core_fifo", this);
+    mem_fifo = new("mem_fifo", this);
   endfunction
 
   function void connect_phase(uvm_phase phase);
