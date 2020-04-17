@@ -12,6 +12,9 @@
  * Simultaneous write operations by both ports to the same address are to be avoided: The data
  * written to memory is not determined.
  */
+
+`include "prim_assert.sv"
+
 module ram_2p #(
     parameter int Depth = 128
 ) (
@@ -116,7 +119,7 @@ module ram_2p #(
   `endif
 
   `ifdef SRAM_INIT_FILE
-    localparam MEM_FILE = `"`SRAM_INIT_FILE`";
+    localparam MEM_FILE = `PRIM_STRINGIFY(`SRAM_INIT_FILE);
     initial begin
       $display("Initializing SRAM from %s", MEM_FILE);
       $readmemh(MEM_FILE, mem);
