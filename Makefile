@@ -38,7 +38,7 @@ sw-simple-hello: $(simple-system-program)
 
 .PHONY: $(simple-system-program)
 $(simple-system-program):
-	cd examples/sw/simple_system/hello_test && $(MAKE)
+	cd examples/sw/simple_system/hello_test && $(MAKE) CC=riscv64-unknown-elf-gcc
 
 Vibex_simple_system = \
       build/lowrisc_ibex_ibex_simple_system_0/sim-verilator/Vibex_simple_system
