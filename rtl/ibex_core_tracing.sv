@@ -86,8 +86,10 @@ module ibex_core_tracing #(
   logic [ 1:0] rvfi_ixl;
   logic [ 4:0] rvfi_rs1_addr;
   logic [ 4:0] rvfi_rs2_addr;
+  logic [ 4:0] rvfi_rs3_addr;
   logic [31:0] rvfi_rs1_rdata;
   logic [31:0] rvfi_rs2_rdata;
+  logic [31:0] rvfi_rs3_rdata;
   logic [ 4:0] rvfi_rd_addr;
   logic [31:0] rvfi_rd_wdata;
   logic [31:0] rvfi_pc_rdata;
@@ -160,8 +162,10 @@ module ibex_core_tracing #(
     .rvfi_ixl,
     .rvfi_rs1_addr,
     .rvfi_rs2_addr,
+    .rvfi_rs3_addr,
     .rvfi_rs1_rdata,
     .rvfi_rs2_rdata,
+    .rvfi_rs3_rdata,
     .rvfi_rd_addr,
     .rvfi_rd_wdata,
     .rvfi_pc_rdata,
@@ -192,8 +196,10 @@ module ibex_core_tracing #(
     .rvfi_ixl,
     .rvfi_rs1_addr,
     .rvfi_rs2_addr,
+    .rvfi_rs3_addr,
     .rvfi_rs1_rdata,
     .rvfi_rs2_rdata,
+    .rvfi_rs3_rdata,
     .rvfi_rd_addr,
     .rvfi_rd_wdata,
     .rvfi_pc_rdata,

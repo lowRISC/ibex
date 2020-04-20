@@ -50,8 +50,10 @@ module ibex_tracer #(
   input logic [ 1:0] rvfi_ixl,
   input logic [ 4:0] rvfi_rs1_addr,
   input logic [ 4:0] rvfi_rs2_addr,
+  input logic [ 4:0] rvfi_rs3_addr,
   input logic [31:0] rvfi_rs1_rdata,
   input logic [31:0] rvfi_rs2_rdata,
+  input logic [31:0] rvfi_rs3_rdata,
   input logic [ 4:0] rvfi_rd_addr,
   input logic [31:0] rvfi_rd_wdata,
   input logic [31:0] rvfi_pc_rdata,
@@ -65,10 +67,11 @@ module ibex_tracer #(
   import ibex_tracer_pkg::*;
 
   // Data items accessed during this instruction
-  localparam bit [3:0] RS1 = (1 << 0);
-  localparam bit [3:0] RS2 = (1 << 1);
-  localparam bit [3:0] RD  = (1 << 2);
-  localparam bit [3:0] MEM = (1 << 3);
+  localparam bit [4:0] RS1 = (1 << 0);
+  localparam bit [4:0] RS2 = (1 << 1);
+  localparam bit [4:0] RS3 = (1 << 2);
+  localparam bit [4:0] RD  = (1 << 3);
+  localparam bit [4:0] MEM = (1 << 4);
 
   // These signals are part of RVFI, but not used in this module currently.
   // Keep them as part of the interface to change the tracer more easily in the future. Assigning
@@ -85,7 +88,7 @@ module ibex_tracer #(
   bit [31*8-1:0] decoded_str;
 
   time           tstamp;
-  bit [3:0]      data_accessed;
+  logic [4:0]    data_accessed;
   bit            insn_is_compressed;
   bit            trace_enable_inst;    // pragma keep_net trace_enable_inst
   bit            trace_enable_reg;     // pragma keep_net trace_enable_reg
@@ -656,6 +659,24 @@ module ibex_tracer #(
     decoded_str = {mnemonic, get_fence_flags(rvfi_insn[27:24]), ",", get_fence_flags(rvfi_insn[23:20]), {14{8'h20}}};
   endfunction
 
+  function automatic void decode_r4c_insn(input bit[8*8-1:0] mnemonic);
+    data_accessed = RS1 | RS2 | RS3 | RD;
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rs2_addr), ",", get_reg_name(rvfi_rs1_addr), ",", get_reg_name(rvfi_rs3_addr), {8{8'h20}}}; 
+  endfunction
+
+  function automatic void decode_r4fs_insn(input bit[8*8-1:0] mnemonic);
+    data_accessed = RS1 | RS2 | RS3 | RD;
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rs1_addr), ",", get_reg_name(rvfi_rs3_addr), ",", get_reg_name(rvfi_rs2_addr), {8{8'h20}}}; 
+  endfunction
+
+  function automatic void decode_i_fs_insn( input bit[8*8-1:0] mnemonic);
+￼    // fsri
+￼    bit [7:0] shamt;
+￼    shamt = {2'b0, rvfi_insn[25:20]};
+￼    data_accessed = RS1 | RS3 | RD;
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rs1_addr), ",", get_reg_name(rvfi_rs3_addr), ",0x", to_hex2(shamt), {5{8'h20}}};
+￼  endfunction
+
   // trace write function
   function automatic void printbuffer_dumpline();
     tstamp = $time;
@@ -687,7 +708,7 @@ module ibex_tracer #(
 
   always_comb begin
     decoded_str = "";
-    data_accessed = 4'h0;
+    data_accessed = 5'h0;
 
     // Check for compressed instructions
     if (rvfi_insn[1:0] != 2'b11) begin
@@ -840,6 +861,12 @@ module ibex_tracer #(
         INSN_PCNT:      decode_r2_insn("pcnt    ");
         INSN_REV:       decode_r2_insn("rev     ");
         INSN_REV8:      decode_r2_insn("rev8    ");
+        // TERNARY BITMABIP INSTR
+        INSN_CMIX:     decode_r4c_insn("cmix    ");
+        INSN_CMOV:     decode_r4c_insn("cmov    ");
+        INSN_FSR:     decode_r4fs_insn("fsr     ");
+        INSN_FSL:     decode_r4fs_insn("fsl     ");
+        INSN_FSRI:    decode_i_fs_insn("fsri    ");
         default:       decode_mnemonic("INVALID ");
       endcase
     end
