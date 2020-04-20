@@ -27,7 +27,8 @@ module ibex_core #(
     parameter bit          DbgTriggerEn             = 1'b0,
     parameter bit          SecureIbex               = 1'b0,
     parameter int unsigned DmHaltAddr               = 32'h1A110800,
-    parameter int unsigned DmExceptionAddr          = 32'h1A110808
+    parameter int unsigned DmExceptionAddr          = 32'h1A110808,
+    parameter int unsigned HartId                   = 0
 ) (
     // Clock and Reset
     input  logic        clk_i,
@@ -35,7 +36,6 @@ module ibex_core #(
 
     input  logic        test_en_i,     // enable all clock gates for testing
 
-    input  logic [31:0] hart_id_i,
     input  logic [31:0] boot_addr_i,
 
     // Instruction memory interface
@@ -78,6 +78,7 @@ module ibex_core #(
     output logic        rvfi_halt,
     output logic        rvfi_intr,
     output logic [ 1:0] rvfi_mode,
+    output logic [ 1:0] rvfi_ixl,
     output logic [ 4:0] rvfi_rs1_addr,
     output logic [ 4:0] rvfi_rs2_addr,
     output logic [31:0] rvfi_rs1_rdata,
@@ -780,13 +781,12 @@ module ibex_core #(
       .PMPGranularity   ( PMPGranularity   ),
       .PMPNumRegions    ( PMPNumRegions    ),
       .RV32E            ( RV32E            ),
-      .RV32M            ( RV32M            )
+      .RV32M            ( RV32M            ),
+      .HartId           ( HartId           )
   ) cs_registers_i (
       .clk_i                   ( clk                      ),
       .rst_ni                  ( rst_ni                   ),
 
-      // Hart ID from outside
-      .hart_id_i               ( hart_id_i                ),
       .priv_mode_id_o          ( priv_mode_id             ),
       .priv_mode_if_o          ( priv_mode_if             ),
       .priv_mode_lsu_o         ( priv_mode_lsu            ),

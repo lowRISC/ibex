@@ -23,7 +23,8 @@ module ibex_core_tracing #(
     parameter bit          DbgTriggerEn             = 1'b0,
     parameter bit          SecureIbex               = 1'b0,
     parameter int unsigned DmHaltAddr               = 32'h1A110800,
-    parameter int unsigned DmExceptionAddr          = 32'h1A110808
+    parameter int unsigned DmExceptionAddr          = 32'h1A110808,
+    parameter int unsigned HartId                   = 0
 ) (
     // Clock and Reset
     input  logic        clk_i,
@@ -31,7 +32,6 @@ module ibex_core_tracing #(
 
     input  logic        test_en_i,     // enable all clock gates for testing
 
-    input  logic [31:0] hart_id_i,
     input  logic [31:0] boot_addr_i,
 
     // Instruction memory interface
@@ -83,6 +83,7 @@ module ibex_core_tracing #(
   logic        rvfi_halt;
   logic        rvfi_intr;
   logic [ 1:0] rvfi_mode;
+  logic [ 1:0] rvfi_ixl;
   logic [ 4:0] rvfi_rs1_addr;
   logic [ 4:0] rvfi_rs2_addr;
   logic [31:0] rvfi_rs1_rdata;
@@ -114,14 +115,14 @@ module ibex_core_tracing #(
     .WritebackStage           ( WritebackStage           ),
     .SecureIbex               ( SecureIbex               ),
     .DmHaltAddr               ( DmHaltAddr               ),
-    .DmExceptionAddr          ( DmExceptionAddr          )
+    .DmExceptionAddr          ( DmExceptionAddr          ),
+    .HartId                   ( HartId                   )
   ) u_ibex_core (
     .clk_i,
     .rst_ni,
 
     .test_en_i,
 
-    .hart_id_i,
     .boot_addr_i,
 
     .instr_req_o,
@@ -156,6 +157,7 @@ module ibex_core_tracing #(
     .rvfi_halt,
     .rvfi_intr,
     .rvfi_mode,
+    .rvfi_ixl,
     .rvfi_rs1_addr,
     .rvfi_rs2_addr,
     .rvfi_rs1_rdata,
@@ -174,12 +176,11 @@ module ibex_core_tracing #(
     .core_sleep_o
   );
 
-  ibex_tracer
-  u_ibex_tracer (
+  ibex_tracer #(
+    .HartId                   ( HartId                   )
+) u_ibex_tracer (
     .clk_i,
     .rst_ni,
-
-    .hart_id_i,
 
     .rvfi_valid,
     .rvfi_order,
@@ -188,6 +189,7 @@ module ibex_core_tracing #(
     .rvfi_halt,
     .rvfi_intr,
     .rvfi_mode,
+    .rvfi_ixl,
     .rvfi_rs1_addr,
     .rvfi_rs2_addr,
     .rvfi_rs1_rdata,
