@@ -875,7 +875,7 @@ module ibex_tracer (
         // MISC-MEM
         INSN_FENCE:      decode_fence();
         INSN_FENCEI:     decode_mnemonic("fence.i");
-        // RV32B
+        // RV32B - ZBB
         INSN_SLOI:       decode_i_shift_insn("sloi");
         INSN_SROI:       decode_i_shift_insn("sroi");
         INSN_RORI:       decode_i_shift_insn("rori");
@@ -899,7 +899,16 @@ module ibex_tracer (
         INSN_PCNT:       decode_r1_insn("pcnt");
         INSN_REV:        decode_r1_insn("rev");
         INSN_REV8:       decode_r1_insn("rev8");
-        // TERNARY BITMABIP INSTR
+        // RV32B - ZBS
+        INSN_SBCLRI:     decode_i_insn("sbclri");
+        INSN_SBSETI:     decode_i_insn("sbseti");
+        INSN_SBINVI:     decode_i_insn("sbinvi");
+        INSN_SBEXTI:     decode_i_insn("sbexti");
+        INSN_SBCLR:      decode_r_insn("sbclr");
+        INSN_SBSET:      decode_r_insn("sbset");
+        INSN_SBINV:      decode_r_insn("sbinv");
+        INSN_SBEXT:      decode_r_insn("sbext");
+        // RV32B - ZBT
         INSN_CMIX:       decode_r_cmixcmov_insn("cmix");
         INSN_CMOV:       decode_r_cmixcmov_insn("cmov");
         INSN_FSR:        decode_r_funnelshift_insn("fsr");

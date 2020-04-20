@@ -337,7 +337,10 @@ module ibex_decoder #(
           3'b001: begin
             unique case (instr[31:27])
               5'b0_0000: illegal_insn = 1'b0;                      // slli
-              5'b0_0100: illegal_insn = RV32B ? 1'b0 : 1'b1;       // sloi
+              5'b0_0100,                                           // sloi
+              5'b0_1001,                                           // sbclri
+              5'b0_0101,                                           // sbseti
+              5'b0_1101: illegal_insn = RV32B ? 1'b0 : 1'b1;       // sbinvi
               5'b0_1100: begin
                 unique case(instr[26:20])
                   7'b00_00000,                                     // clz
@@ -359,7 +362,8 @@ module ibex_decoder #(
                 5'b0_1000: illegal_insn = 1'b0;                    // srai
 
                 5'b0_0100,                                         // sroi
-                5'b0_1100: illegal_insn = RV32B ? 1'b0 : 1'b1;     // rori
+                5'b0_1100,                                         // rori
+                5'b0_1001: illegal_insn = RV32B ? 1'b0 : 1'b1;     // sbexti
 
                 5'b0_1101: begin
                   unique case(instr[24:20])
@@ -418,7 +422,12 @@ module ibex_decoder #(
             {7'b000_0101, 3'b111}, // maxu
             {7'b000_0100, 3'b100}, // pack
             {7'b010_0100, 3'b100}, // packu
-            {7'b000_0100, 3'b111}: illegal_insn = RV32B ? 1'b0 : 1'b1; // packh
+            {7'b000_0100, 3'b111}, // packh
+            // RV32B instructions (zbs)
+            {7'b010_0100, 3'b001}, // sbclr
+            {7'b001_0100, 3'b001}, // sbset
+            {7'b011_0100, 3'b001}, // sbinv
+            {7'b010_0100, 3'b101}: illegal_insn = RV32B ? 1'b0 : 1'b1; // sbext
 
             // supported RV32M instructions
             {7'b000_0001, 3'b000}: begin // mul
@@ -754,6 +763,9 @@ module ibex_decoder #(
               unique case (instr[31:27])
                 5'b0_0000: alu_operator_o = ALU_SLL;    // Shift Left Logical by Immediate
                 5'b0_0100: alu_operator_o = ALU_SLO;    // Shift Left Ones by Immediate
+                5'b0_1001: alu_operator_o = ALU_SBCLR;  // Clear bit specified by immediate
+                5'b0_0101: alu_operator_o = ALU_SBSET;  // Set bit specified by immediate
+                5'b0_1101: alu_operator_o = ALU_SBINV;  // Invert bit specified by immediate.
                 5'b0_1100: begin
                   unique case (instr[26:20])
                     7'b000_0000: alu_operator_o = ALU_CLZ;  // Count Leading Zeros
@@ -785,6 +797,7 @@ module ibex_decoder #(
                   5'b0_0000: alu_operator_o = ALU_SRL;   // Shift Right Logical by Immediate
                   5'b0_1000: alu_operator_o = ALU_SRA;   // Shift Right Arithmetically by Immediate
                   5'b0_0100: alu_operator_o = ALU_SRO;   // Shift Right Ones by Immediate
+                  5'b0_1001: alu_operator_o = ALU_SBEXT; // Extract bit specified by immediate.
                   5'b0_1100: begin
                     alu_operator_o = ALU_ROR;           // Rotate Right by Immediate
                     alu_multicycle_o = 1'b1;
@@ -906,6 +919,12 @@ module ibex_decoder #(
             {7'b010_0000, 3'b100}: if (RV32B) alu_operator_o = ALU_XNOR;  // Xnor
             {7'b010_0000, 3'b110}: if (RV32B) alu_operator_o = ALU_ORN;   // Orn
             {7'b010_0000, 3'b111}: if (RV32B) alu_operator_o = ALU_ANDN;  // Andn
+
+            // RV32B ALU_Operations (zbs)
+            {7'b010_0100, 3'b001}: if (RV32B) alu_operator_o = ALU_SBCLR;  // sbclr
+            {7'b001_0100, 3'b001}: if (RV32B) alu_operator_o = ALU_SBSET;  // sbset
+            {7'b011_0100, 3'b001}: if (RV32B) alu_operator_o = ALU_SBINV;  // sbinv
+            {7'b010_0100, 3'b101}: if (RV32B) alu_operator_o = ALU_SBEXT;  // sbext
 
             // supported RV32M instructions, all use the same ALU operation
             {7'b000_0001, 3'b000}, // mul

@@ -568,6 +568,7 @@ module ibex_core #(
       .ready_wb_i                   ( ready_wb                 ),
       .outstanding_load_wb_i        ( outstanding_load_wb      ),
       .outstanding_store_wb_i       ( outstanding_store_wb     ),
+
       // Performance Counters
       .perf_jump_o                  ( perf_jump                ),
       .perf_branch_o                ( perf_branch              ),

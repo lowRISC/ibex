@@ -96,16 +96,34 @@ module ibex_alu #(
   // The shifter structure consists of a 33-bit shifter: 32-bit operand + 1 bit extension for
   // arithmetic shifts and one-shift support.
   // Rotations and funnel shifts are implemented as multi-cycle instructions.
-  // For funnel shifs, operand_a_i is tied to rs1 in the first cycle and rs3 in the
-  // second cycle. operand_b_i is always tied to rs2.
+  // The shifter is also used for single-bit instructions as detailed below.
+  //
+  // Standard Shifts
+  // ===============
+  // For standard shift instructions, the direction of the shift is to the right by default. For
+  // left shifts, the signal shift_left signal is set. If so, the operand is initially reversed,
+  // shifted to the right by the specified amount and shifted back again. For arithmetic- and
+  // one-shifts the 33rd bit of the shifter operand can is set accordingly.
+  //
+  // Multicycle Shifts
+  // =================
+  //
+  // Rotation
+  // --------
+  // For rotations, the operand signals operand_a_i and operand_b_i are kept constant to rs1 and
+  // rs2 respectively.
   //
   // Rotation pseudocode:
   //   shift_amt = rs2 & 31;
   //   multicycle_result = (rs1 >> shift_amt) | (rs1 << (32 - shift_amt));
   //                       ^-- cycle 0 -----^ ^-- cycle 1 --------------^
   //
-  // For funnel shifts, the order of applying the shift amount or its complement is determined by
-  // bit [5] of shift_amt.
+  // Funnel Shifts
+  // -------------
+  // For funnel shifs, operand_a_i is tied to rs1 in the first cycle and rs3 in the
+  // second cycle. operand_b_i is always tied to rs2. The order of applying the shift amount or
+  // its complement is determined by bit [5] of shift_amt.
+  //
   // Funnel shift Pseudocode: (fsl)
   //  shift_amt = rs2 & 63;
   //  shift_amt_compl = 32 - shift_amt[4:0]
@@ -121,19 +139,30 @@ module ibex_alu #(
   //     multicycle_result = rs3
   //  else if (shift_amt == 0):
   //     multicycle_result = rs1.
+  //
+  // Single-Bit istructions
+  // ======================
+  // Single bit instructions operate on bit operand_b_i[4:0] of operand_a_i.
+
+  // The operations sbset, sbclr and sbinv are implemented by generation of a bit-mask using the
+  // shifter structure. This is done by left-shifting the operand 32'h1 by the required amount.
+  // The signal shift_sbmode multiplexes the shifter input and sets the signal shift_left.
+  // Further processing is taken care of by a separate structure.
+  //
+  // For sbext, the bit defined by operand_b_i[4:0] is to be returned. This is done by simply
+  // shifting operand_a_i to the right by the required amount and returning bit [0] of the result.
 
   logic       shift_left;
   logic       shift_ones;
   logic       shift_arith;
-  logic       shift_rot;
   logic       shift_funnel;
+  logic       shift_sbmode;
   logic       shift_none;
   logic       shift_op_rev;
   logic       shift_op_rev8;
   logic       shift_op_orc_b;
   logic [5:0] shift_amt;
   logic [5:0] shift_amt_compl; // complementary shift amount (32 - shift_amt)
-  logic       shift_multicycle;
 
   // bit shift_amt[5]: word swap bit: only considered for FSL/FSR.
   // if set, reverse operations in first and second cycle.
@@ -144,12 +173,18 @@ module ibex_alu #(
       (operand_b_i[5] && shift_funnel ? shift_amt_compl[4:0] : operand_b_i[4:0]) :
       (operand_b_i[5] && shift_funnel ? operand_b_i[4:0] : shift_amt_compl[4:0]);
 
+  // single-bit mode: shift
+  assign shift_sbmode = RV32B ? (operator_i == ALU_SBSET) || (operator_i == ALU_SBCLR) ||
+                                    (operator_i == ALU_SBINV) :
+                                1'b0;
+
   // left shift if this is:
   // * a standard left shift (slo, sll)
   // * a rol in the first cycle
   // * a ror in the second cycle
   // * fsl: without word-swap bit: first cycle, else: second cycle
   // * fsr: without word-swap bit: second cycle, else: first cycle
+  // * a single-bit instruction: sbclr, sbset, sbinv (excluding sbext)
   always_comb begin
     unique case (operator_i)
       ALU_SLL: shift_left = 1'b1;
@@ -162,21 +197,22 @@ module ibex_alu #(
           RV32B ? (shift_amt[5] ? instr_first_cycle_i : !instr_first_cycle_i) : 1'b0;
       default: shift_left = 1'b0;
     endcase
+    if (shift_sbmode) begin
+      shift_left = 1'b1;
+    end
   end
 
-  assign shift_ones     = RV32B ? (operator_i == ALU_SLO) || (operator_i == ALU_SRO) : 1'b0;
-  assign shift_arith    = (operator_i == ALU_SRA);
-  assign shift_rot      = RV32B ? (operator_i == ALU_ROL) || (operator_i == ALU_ROR) : 1'b0;
-  assign shift_funnel   = RV32B ? (operator_i == ALU_FSL) || (operator_i == ALU_FSR) : 1'b0;
-  assign shift_multicycle = shift_funnel || shift_rot;
+  assign shift_arith      = (operator_i == ALU_SRA);
+  assign shift_ones       = RV32B ? (operator_i == ALU_SLO) || (operator_i == ALU_SRO) : 1'b0;
+  assign shift_funnel     = RV32B ? (operator_i == ALU_FSL) || (operator_i == ALU_FSR) : 1'b0;
 
-  assign shift_none     = RV32B ? (operator_i == ALU_REV)  || (operator_i == ALU_REV8) ||
-                                      (operator_i == ALU_ORCB) :
-                                  1'b0;
+  assign shift_none       = RV32B ? (operator_i == ALU_REV)  || (operator_i == ALU_REV8) ||
+                                        (operator_i == ALU_ORCB) :
+                                    1'b0;
 
-  assign shift_op_rev   = RV32B ? (operator_i == ALU_REV) : 1'b0;
-  assign shift_op_rev8  = RV32B ? (operator_i == ALU_REV8) : 1'b0;
-  assign shift_op_orc_b = RV32B ? (operator_i == ALU_ORCB) : 1'b0;
+  assign shift_op_rev     = RV32B ? (operator_i == ALU_REV) : 1'b0;
+  assign shift_op_rev8    = RV32B ? (operator_i == ALU_REV8) : 1'b0;
+  assign shift_op_orc_b   = RV32B ? (operator_i == ALU_ORCB) : 1'b0;
 
   logic [31:0] shift_result;
   logic [32:0] shift_result_ext;
@@ -187,6 +223,13 @@ module ibex_alu #(
     // select bit reversed or normal input
     if (shift_op_rev || shift_left) begin
       shift_result = operand_a_rev;
+    end
+
+    // if this is a single bit instruction: we left-shift 32'h1 by shift_amt.
+    // the first reverse of the left-shift operation can be easily omitted, since we
+    // know the result of rev(32'h1).
+    if (shift_sbmode) begin
+      shift_result = 32'h8000_0000;
     end
 
     shift_result_ext = $signed({shift_ones || (shift_arith && shift_result[31]), shift_result})
@@ -292,6 +335,7 @@ module ibex_alu #(
   logic [31:0] bwlogic_result;
   logic [31:0] pack_result;
   logic [31:0] multicycle_result;
+  logic [31:0] singlebit_result;
 
   ///////////////////
   // Bitwise Logic //
@@ -300,8 +344,6 @@ module ibex_alu #(
   logic bwlogic_or;
   logic bwlogic_and;
   logic [31:0] bwlogic_operand_b;
-  logic [31:0] bwlogic_or_op_a;
-  logic [31:0] bwlogic_or_op_b;
   logic [31:0] bwlogic_or_result;
   logic [31:0] bwlogic_and_result;
   logic [31:0] bwlogic_xor_result;
@@ -315,18 +357,13 @@ module ibex_alu #(
       ALU_ORN,
       ALU_ANDN: bwlogic_op_b_negate = RV32B ? 1'b1 : 1'b0;
       ALU_CMIX: bwlogic_op_b_negate = RV32B ? !instr_first_cycle_i : 1'b0;
-      default: bwlogic_op_b_negate = 1'b0;
+      default:  bwlogic_op_b_negate = 1'b0;
     endcase
   end
 
   assign bwlogic_operand_b = bwlogic_op_b_negate ? operand_b_neg[32:1] : operand_b_i;
-  assign bwlogic_or_op_a = ((operator_i == ALU_CMIX) || shift_multicycle) ?
-                           imd_val_q_i : operand_a_i;
-  assign bwlogic_or_op_b = (operator_i == ALU_CMIX) ? bwlogic_and_result :
-                           shift_multicycle         ? shift_result       : bwlogic_operand_b;
 
-  assign bwlogic_or_result = bwlogic_or_op_a | bwlogic_or_op_b;
-
+  assign bwlogic_or_result  = operand_a_i | bwlogic_operand_b;
   assign bwlogic_and_result = operand_a_i & bwlogic_operand_b;
   assign bwlogic_xor_result = operand_a_i ^ bwlogic_operand_b;
 
@@ -363,7 +400,7 @@ module ibex_alu #(
         end
 
         ALU_CMIX: begin
-          multicycle_result = bwlogic_or_result;
+          multicycle_result = imd_val_q_i | bwlogic_and_result;
           imd_val_d_o = bwlogic_and_result;
           if (instr_first_cycle_i) begin
             imd_val_we_o = 1'b1;
@@ -377,7 +414,7 @@ module ibex_alu #(
           if (shift_amt[4:0] == 5'h0) begin
             multicycle_result = shift_amt[5] ? operand_a_i : imd_val_q_i;
           end else begin
-            multicycle_result = bwlogic_or_result;
+            multicycle_result = imd_val_q_i | shift_result;
           end
           imd_val_d_o = shift_result;
           if (instr_first_cycle_i) begin
@@ -391,6 +428,19 @@ module ibex_alu #(
           imd_val_we_o = 1'b0;
           multicycle_result = operand_a_i;
         end
+      endcase
+    end
+
+    /////////////////////////////
+    // Single-bit Instructions //
+    /////////////////////////////
+
+    always_comb begin
+      unique case (operator_i)
+        ALU_SBSET: singlebit_result = operand_a_i | shift_result;
+        ALU_SBCLR: singlebit_result = operand_a_i & ~shift_result;
+        ALU_SBINV: singlebit_result = operand_a_i ^ shift_result;
+        default:   singlebit_result = {31'h0, shift_result[0]}; // ALU_SBEXT
       endcase
     end
 
@@ -448,6 +498,7 @@ module ibex_alu #(
     assign bitcnt_result     = '0;
     assign pack_result       = '0;
     assign multicycle_result = '0;
+    assign singlebit_result  = '0;
     // RV32B support signals
     assign imd_val_d_o  = '0;
     assign imd_val_we_o = '0;
@@ -499,6 +550,10 @@ module ibex_alu #(
       ALU_CMIX, ALU_CMOV,
       ALU_FSL,  ALU_FSR,
       ALU_ROL,  ALU_ROR: result_o = multicycle_result;
+
+      // Single-Bit Bitmanip Operations (RV32B Ops)
+      ALU_SBSET, ALU_SBCLR,
+      ALU_SBINV, ALU_SBEXT: result_o = singlebit_result;
 
       default: ;
     endcase
