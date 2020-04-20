@@ -92,7 +92,8 @@ Parameters
 | ``RV32M``                    | bit         | 1          | M(ultiply) extension enable                                     |
 +------------------------------+-------------+------------+-----------------------------------------------------------------+
 | ``RV32B``                    | bit         | 0          | *EXPERIMENTAL* - B(itmanipulation) extension enable:            |
-|                              |             |            | Currently supported Z-extensions: Zbb (base)                    |
+|                              |             |            | Currently supported Z-extensions: Zbb (base), Zbs (single-bit)  |
+|                              |             |            | and Zbt (ternary)  |
 +------------------------------+-------------+------------+-----------------------------------------------------------------+
 | ``BranchTargetALU``          | bit         | 0          | *EXPERIMENTAL* - Enables branch target ALU removing a stall     |
 |                              |             |            | cycle from taken branches                                       |
