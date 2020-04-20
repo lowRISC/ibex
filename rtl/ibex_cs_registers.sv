@@ -22,14 +22,12 @@ module ibex_cs_registers #(
     parameter int unsigned PMPGranularity   = 0,
     parameter int unsigned PMPNumRegions    = 4,
     parameter bit          RV32E            = 0,
-    parameter bit          RV32M            = 0
+    parameter bit          RV32M            = 0,
+    parameter int unsigned HartId           = 32'h0
 ) (
     // Clock and Reset
     input  logic                 clk_i,
     input  logic                 rst_ni,
-
-    // Hart ID
-    input  logic [31:0]          hart_id_i,
 
     // Privilege mode
     output ibex_pkg::priv_lvl_e  priv_mode_id_o,
@@ -213,6 +211,7 @@ module ibex_cs_registers #(
   logic [31:0] tselect_rdata;
   logic [31:0] tmatch_control_rdata;
   logic [31:0] tmatch_value_rdata;
+  logic [31:0] tinfo_rdata;
 
   // CPU control bits
   CpuCtrl_t    cpuctrl_rdata, cpuctrl_wdata;
@@ -260,7 +259,7 @@ module ibex_cs_registers #(
 
     unique case (csr_addr_i)
       // mhartid: unique hardware thread id
-      CSR_MHARTID: csr_rdata_int = hart_id_i;
+      CSR_MHARTID: csr_rdata_int = HartId;
 
       // mstatus: always M-mode, contains IE bit
       CSR_MSTATUS: begin
@@ -404,6 +403,10 @@ module ibex_cs_registers #(
       end
       CSR_TDATA3: begin
         csr_rdata_int = '0;
+        illegal_csr   = ~DbgTriggerEn;
+      end
+      CSR_TINFO: begin
+        csr_rdata_int = tinfo_rdata;
         illegal_csr   = ~DbgTriggerEn;
       end
       CSR_MCONTEXT: begin
@@ -1023,7 +1026,8 @@ module ibex_cs_registers #(
                                    1'b0};             // load    : not supported
     // TDATA1 - address match value only
     assign tmatch_value_rdata = tmatch_value_q;
-
+    // TINFO - only one type, address match value 
+    assign tinfo_rdata = {16'h0000, 16'b00000000_00000100};
     // Breakpoint matching
     // We match against the next address, as the breakpoint must be taken before execution
     assign trigger_match_o = tmatch_control_q & (pc_if_i[31:0] == tmatch_value_q[31:0]);
