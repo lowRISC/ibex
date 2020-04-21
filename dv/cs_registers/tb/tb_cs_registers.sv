@@ -11,7 +11,8 @@ module tb_cs_registers #(
     parameter int unsigned PMPGranularity   = 0,
     parameter int unsigned PMPNumRegions    = 4,
     parameter bit          RV32E            = 0,
-    parameter bit          RV32M            = 0
+    parameter bit          RV32M            = 0,
+    parameter int unsigned Hartid           = 'h20
 ) (
     // Clock and Reset
     inout  wire                 clk_i,
@@ -21,7 +22,6 @@ module tb_cs_registers #(
 
   logic                 dpi_rst_ni;
   logic                 rst_ni;
-  logic [31:0]          hart_id_i;
 
   // Privilege mode
   ibex_pkg::priv_lvl_e  priv_mode_id_o;
@@ -132,7 +132,8 @@ module tb_cs_registers #(
     .PMPGranularity   (PMPGranularity),
     .PMPNumRegions    (PMPNumRegions),
     .RV32E            (RV32E),
-    .RV32M            (RV32M)
+    .RV32M            (RV32M),
+    .HartId           (Hartid)
   ) i_cs_regs (.*);
 
   // DPI calls
