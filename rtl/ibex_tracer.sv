@@ -4,30 +4,28 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * This tracer takes execution information from the RISC-V Verification Interface (RVFI) and
- * produces a text file with a human-readable trace.
+ * This tracer takes execution information from the RISC-V Verification Interface (RVFI)
+ * and produces a text file with a human-readable trace.
  *
  * All traced instructions are written to a log file. By default, the log file is named
- * traceNNNN.log, with NNNN being the 4 digit hart ID of the core being traced.
- *
- * The file name base, defaulting to "trace" can be set using the "traceFile"
- * plusarg passed to the simulation, e.g. "+traceFile=trace". The exact syntax
- * of passing plusargs to a simulation depends on the simulator.
+ * trace_NNNN.log, with NNNN being the 4 digit hart ID of the core being traced.
+ * The file name base can be set using the +trace_file=<name>argument. The exact syntax
+ * depends on the simulator.
  *
  * The trace contains produces 3 types of entries that can be enabled separately 
- * Instruction trace, enabled by trace_enable_inst consistes of the following entries:
+ * Instruction trace, enabled by +trace_i argument consists of the following entries:
  * - The simulation timestamp tttttttttttt uu
  * - The program counter      PC=0xiiiiiiii,
  * - The instruction code     0xcccccccc or 0xcccc, for compressed instruction
  * - The decoded instruction  in the specification format
- * Memory trace enabled by trace_enable_mem
+ * Memory trace enabled by +trace_m argument consists of the followign entries
  * - The simulation timestamp tttttttttttt uu
  * - The address written/read MW/MR=0xaaaaaaaa,
  * - The written/read value   0xvvvvvvvv
- * Register trace enabled by trace_enable_reg
+ * Register trace enabled by +trace_r argument consistst of the followign entries
  * - The simulation timestamp tttttttttttt uu
  * - The register changed     REG=x[0..31],
- * - The new value            0xvvvvvvvv
+ * - The new register value   0xvvvvvvvv
  *
  */
 module ibex_tracer #(
@@ -77,12 +75,17 @@ module ibex_tracer #(
   // Keep them as part of the interface to change the tracer more easily in the future. Assigning
   // these signals to unused_* signals marks them explicitly as unused, an annotation picked up by
   // linters, including Verilator lint.
+  logic          unused_rst_ni = rst_ni;
   logic [63:0]   unused_rvfi_order = rvfi_order;
   logic          unused_rvfi_trap = rvfi_trap;
   logic          unused_rvfi_halt = rvfi_halt;
   logic          unused_rvfi_intr = rvfi_intr;
   logic [ 1:0]   unused_rvfi_mode = rvfi_mode;
-
+  logic [ 1:0]   unused_rvfi_ixl  = rvfi_ixl;
+  logic [31:0]   unused_rvfi_rs1_rdata = rvfi_rs1_rdata;
+  logic [31:0]   unused_rvfi_rs2_rdata = rvfi_rs2_rdata;
+  logic [31:0]   unused_rvfi_rs3_rdata = rvfi_rs3_rdata;
+  
   int            file_handle;
   bit [16*8-1:0] file_name;
   bit [31*8-1:0] decoded_str;
@@ -98,11 +101,11 @@ module ibex_tracer #(
 `ifdef IXCOM_UXE
     $ixc_ctrl("gfifo", "$fwrite");
 `endif
-    trace_enable_inst = $test$plusargs("traceI") ? 1'b1 : 1'b0;
-    trace_enable_reg = $test$plusargs("traceR") ? 1'b1 : 1'b0;
-    trace_enable_mem = $test$plusargs("traceM") ? 1'b1 : 1'b0;
-    if( trace_enable_inst | trace_enable_reg | trace_enable_mem ) begin
-      if (!$value$plusargs("traceFile=%s", file_name)) file_name = "trace_";
+    trace_enable_inst = ($test$plusargs("trace_i") > 'd0) ? 1'b1 : 1'b0;
+    trace_enable_reg = ($test$plusargs("trace_r") > 'd0) ? 1'b1 : 1'b0;
+    trace_enable_mem = ($test$plusargs("trace_m") > 0) ? 1'b1 : 1'b0;
+    if (trace_enable_inst | trace_enable_reg | trace_enable_mem) begin
+      if (!$value$plusargs("trace_file=%s", file_name)) file_name = "trace_";
       file_handle[7:0]   = {4'h0,HartId[3:0]} + (HartId[3:0] > 4'h9 ? 8'h57 : 8'h30);
       file_handle[15:8]  = {4'h0,HartId[7:4]} + (HartId[7:4] > 4'h9 ? 8'h57 : 8'h30);
       file_handle[23:16] = {4'h0,HartId[11:8]} + (HartId[11:8] > 4'h9 ? 8'h57 : 8'h30);
@@ -119,43 +122,43 @@ module ibex_tracer #(
   end
 
   final begin
-    if( file_handle ) begin
-      $fclose( file_handle );
+    if (file_handle > 'd0) begin
+      $fclose (file_handle);
     end
   end
   
   // get 2 digit hex string
-  function automatic bit [2*8-1:0] to_hex2( input bit [7:0] val );
+  function automatic bit [2*8-1:0] to_hex2(input bit [7:0] val);
     bit [2*8-1:0] str;
-    str[15:8] = val[7:4] + (val[7:4] > 4'h9 ? 8'h57 : 8'h30);
-    str[7:0] = val[3:0] + (val[3:0] > 4'h9 ? 8'h57 : 8'h30);
+    str[15:8] = {4'h0,val[7:4]} + (val[7:4] > 4'h9 ? 8'h57 : 8'h30);
+    str[7:0] = {4'h0,val[3:0]} + (val[3:0] > 4'h9 ? 8'h57 : 8'h30);
     return str;
   endfunction
 
   // get 3 digit hex string
-  function automatic bit [3*8-1:0] to_hex3( input bit [11:0] val );
+  function automatic bit [3*8-1:0] to_hex3(input bit [11:0] val);
     bit [3*8-1:0] str;
-    str[23:16] = val[11:8] + (val[11:8] > 4'h9 ? 8'h57 : 8'h30);
-    str[15:8] = val[7:4] + (val[7:4] > 4'h9 ? 8'h57 : 8'h30);
-    str[7:0] = val[3:0] + (val[3:0] > 4'h9 ? 8'h57 : 8'h30);
+    str[23:16] = {4'h0,val[11:8]} + (val[11:8] > 4'h9 ? 8'h57 : 8'h30);
+    str[15:8] = {4'h0,val[7:4]} + (val[7:4] > 4'h9 ? 8'h57 : 8'h30);
+    str[7:0] = {4'h0,val[3:0]} + (val[3:0] > 4'h9 ? 8'h57 : 8'h30);
     return str;
   endfunction
 
   // get 5 digit hex string
-  function automatic bit [5*8-1:0] to_hex5( input bit [19:0] val );
+  function automatic bit [5*8-1:0] to_hex5(input bit [19:0] val);
     return {to_hex2(val[19:12]),to_hex3(val[11:0])};
   endfunction
 
   // get 8 digit hex string
-  function automatic bit [8*8-1:0] to_hex8( input bit [31:0] val );
+  function automatic bit [8*8-1:0] to_hex8(input bit [31:0] val);
     return {to_hex3(val[31:20]),to_hex2(val[19:12]),to_hex3(val[11:0])};
   endfunction
 
   // get 12b offset as string +/-0xddd
-  function automatic bit [6*8-1:0] to_offset12( input bit [11:0] val );
+  function automatic bit [6*8-1:0] to_offset12(input bit [11:0] val);
     bit [6*8-1:0] str;
     bit [11:0] off;
-    if( val[11] ) begin
+    if (val[11]) begin
       off = ~val + 1;
       str = {"-0x", to_hex3(off)};
     end else begin
@@ -165,14 +168,14 @@ module ibex_tracer #(
   endfunction
 
   // get 6b offset as string +/-0xdd
-  function automatic bit [5*8-1:0] to_offset6( input bit [5:0] val );
+  function automatic bit [5*8-1:0] to_offset6(input bit [5:0] val);
     bit [5*8-1:0] str;
     bit [5:0] off;
-    if( val[5] ) begin
+    if (val[5]) begin
       off = ~val + 1;
-      str = {"-0x", to_hex2(off)};
+      str = {"-0x", to_hex2({2'b00,off})};
     end else begin
-      str = {"+0x", to_hex2(val)};
+      str = {"+0x", to_hex2({2'b00,val})};
     end
     return str;
   endfunction
@@ -180,38 +183,39 @@ module ibex_tracer #(
   // Get a register name for a reg address.
   function automatic bit [3*8-1:0] get_reg_name(input bit [4:0] reg_addr);
     unique case (reg_addr)
-      5'd00 : return " x0";
-      5'd01 : return " x1";
-      5'd02 : return " x2";
-      5'd03 : return " x3";
-      5'd04 : return " x4";
-      5'd05 : return " x5";
-      5'd06 : return " x6";
-      5'd07 : return " x7";
-      5'd08 : return " x8";
-      5'd09 : return " x9";
-      5'd10 : return "x10";
-      5'd11 : return "x11";
-      5'd12 : return "x12";
-      5'd13 : return "x13";
-      5'd14 : return "x14";
-      5'd15 : return "x15";      
-      5'd16 : return "x16";
-      5'd17 : return "x17";
-      5'd18 : return "x18";
-      5'd19 : return "x19";
-      5'd20 : return "x20";
-      5'd21 : return "x21";
-      5'd22 : return "x22";
-      5'd23 : return "x23";
-      5'd24 : return "x24";
-      5'd25 : return "x25";
-      5'd26 : return "x26";
-      5'd27 : return "x27";
-      5'd28 : return "x28";
-      5'd29 : return "x29";
-      5'd30 : return "x30";
-      5'd31 : return "x31";
+      5'd00:   return " x0";
+      5'd01:   return " x1";
+      5'd02:   return " x2";
+      5'd03:   return " x3";
+      5'd04:   return " x4";
+      5'd05:   return " x5";
+      5'd06:   return " x6";
+      5'd07:   return " x7";
+      5'd08:   return " x8";
+      5'd09:   return " x9";
+      5'd10:   return "x10";
+      5'd11:   return "x11";
+      5'd12:   return "x12";
+      5'd13:   return "x13";
+      5'd14:   return "x14";
+      5'd15:   return "x15";      
+      5'd16:   return "x16";
+      5'd17:   return "x17";
+      5'd18:   return "x18";
+      5'd19:   return "x19";
+      5'd20:   return "x20";
+      5'd21:   return "x21";
+      5'd22:   return "x22";
+      5'd23:   return "x23";
+      5'd24:   return "x24";
+      5'd25:   return "x25";
+      5'd26:   return "x26";
+      5'd27:   return "x27";
+      5'd28:   return "x28";
+      5'd29:   return "x29";
+      5'd30:   return "x30";
+      5'd31:   return "x31";
+      default: return "x??";
     endcase
   endfunction
 
@@ -461,7 +465,7 @@ module ibex_tracer #(
       12'hf12: return "       marchid";
       12'hf13: return "        mimpid";
       12'hf14: return "       mhartid";
-      default: return {"0x",to_hex3(csr_addr)};
+      default: return{"         0x",to_hex3(csr_addr)};
     endcase
   endfunction
 
@@ -471,60 +475,67 @@ module ibex_tracer #(
 
   function automatic void decode_cjr_insn(input bit[8*8-1:0] mnemonic);
     if (rvfi_insn[12] == 1'b1) begin
-      data_accessed = RS1 | RD;  // C.JALR = jalr x1
+      data_accessed = RS1 | RD;  // JALR = jalr x1
     end else begin
-      data_accessed = RS1;       // C.JR   = jr x0
+      data_accessed = RS1;       // JR   = jr x0
     end
     decoded_str = {mnemonic, get_reg_name(rvfi_rs1_addr), {20{8'h20}}};
   endfunction
 
   function automatic void decode_cmv_insn(input bit[8*8-1:0] mnemonic);
     data_accessed = RS2 | RD; // RS1 == RD
-    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rs2_addr), {16{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",",
+        get_reg_name(rvfi_rs2_addr), {16{8'h20}}};
   endfunction
 
   function automatic void decode_cr_insn(input bit[8*8-1:0] mnemonic);
     data_accessed = RS2 | RD; // RS1 == RD
-    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rs2_addr), {12{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",",
+        get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rs2_addr), {12{8'h20}}};
   endfunction
 
   function automatic void decode_cli_insn(input bit[8*8-1:0] mnemonic);
     bit [5:0] imm;
     imm = {rvfi_insn[12], rvfi_insn[6:2]};
     data_accessed = RD;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", to_offset6(imm), {14{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",",
+        to_offset6(imm), {14{8'h20}}};
   endfunction
 
   function automatic void decode_caddi_insn(input bit[8*8-1:0] mnemonic);
     bit [5:0] nzimm;
     nzimm = {rvfi_insn[12], rvfi_insn[6:2]};
     data_accessed = RD;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rd_addr), ",", to_offset6(nzimm), {10{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",",
+        get_reg_name(rvfi_rd_addr), ",", to_offset6(nzimm), {10{8'h20}}};
   endfunction
 
   function automatic void decode_caddisp_insn(input bit[8*8-1:0] mnemonic);
     bit [11:0] nzimm;
-    if (rvfi_insn[0] == 1'b1) begin    // C.ADDI16SPN
+    if (rvfi_insn[0] == 1'b1) begin    // ADDI16SPN
       nzimm = {rvfi_insn[12], rvfi_insn[12], rvfi_insn[12], rvfi_insn[4:3], rvfi_insn[5], rvfi_insn[2], rvfi_insn[6], 4'b0};
-    end else begin                     // C.ADDI4SPN
+    end else begin                     // ADDI4SPN
       nzimm = {2'b00, rvfi_insn[10:7], rvfi_insn[12:11], rvfi_insn[5], rvfi_insn[6], 2'b00};
     end
     data_accessed = RD;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ", x2,", to_offset12(nzimm), {9{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ", x2,",
+        to_offset12(nzimm), {9{8'h20}}};
   endfunction
 
   function automatic void decode_clui_insn(input bit[8*8-1:0] mnemonic);
     bit [5:0] nzimm;
     nzimm = {rvfi_insn[12], rvfi_insn[6:2]};
     data_accessed = RD;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",0x", to_hex2(nzimm), {15{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",0x",
+        to_hex2({2'b00,nzimm}), {15{8'h20}}};
   endfunction
 
   function automatic void decode_clogi_insn(input bit[8*8-1:0] mnemonic);
-    bit [5:0] shamt;                   // C.ANDI, C.SRAI C.SRLI C.SLLI
+    bit [5:0] shamt;                   // ANDI, SRAI SRLI SLLI
     shamt = {rvfi_insn[12], rvfi_insn[6:2]};
     data_accessed = RD;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rd_addr), ",0x", to_hex2(shamt), {11{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",",
+        get_reg_name(rvfi_rd_addr), ",0x", to_hex2({2'b00,shamt}), {11{8'h20}}};
   endfunction
 
   function automatic void decode_cb_insn(input bit[8*8-1:0] mnemonic);
@@ -533,12 +544,13 @@ module ibex_tracer #(
     imm = {rvfi_insn[12], rvfi_insn[6:5], rvfi_insn[2], rvfi_insn[11:10], rvfi_insn[4:3]};
     target = rvfi_pc_rdata + 32'($signed({imm, 1'b0})); // cannot use rvfi_pc_wdata for branches
     data_accessed = RS1;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rs1_addr), ",0x", to_hex8(target), {9{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rs1_addr), ",0x",
+        to_hex8(target), {9{8'h20}}};
   endfunction
 
   function automatic void decode_cj_insn(input bit[8*8-1:0] mnemonic);
     if (rvfi_insn[15:13] == 3'b001) begin
-      data_accessed = RD;             // C.JAL = jal x1
+      data_accessed = RD;             // jal x1
     end
     decoded_str = {mnemonic, "0x", to_hex8(rvfi_pc_wdata), {13{8'h20}}};
   endfunction
@@ -546,54 +558,57 @@ module ibex_tracer #(
   function automatic void decode_cload_insn(input bit[8*8-1:0] mnemonic);
     bit [7:0] imm;
 
-    if (rvfi_insn[1:0] == OPCODE_C0) begin
-      // C.LW
+    if (rvfi_insn[1:0] == OPCODE_C0) begin // LW
       imm = {1'b0, rvfi_insn[5], rvfi_insn[12:10], rvfi_insn[6], 2'b00};
-    end else begin
-      // C.LWSP
+    end else begin                         // LWSP
       imm = {rvfi_insn[3:2], rvfi_insn[12], rvfi_insn[6:4], 2'b00};
     end
     data_accessed = RS1 | RD | MEM;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",0x", to_hex2(imm), "(", get_reg_name(rvfi_rs1_addr), ")", {10{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",0x",
+        to_hex2(imm), "(", get_reg_name(rvfi_rs1_addr), ")", {10{8'h20}}};
   endfunction
 
   function automatic void decode_cstore_insn(input bit[8*8-1:0] mnemonic);
     bit [7:0] imm;
-    if (rvfi_insn[1:0] == OPCODE_C0) begin
-      // C.SW
+    if (rvfi_insn[1:0] == OPCODE_C0) begin // SW
       imm = {1'b0, rvfi_insn[5], rvfi_insn[12:10], rvfi_insn[6], 2'b00};
-    end else begin
-      // C.SWSP
+    end else begin                         // SWSP
       imm = {rvfi_insn[8:7], rvfi_insn[12:9], 2'b00};
     end
     data_accessed = RS1 | RS2 | MEM;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rs2_addr), ",0x", to_hex2(imm),  "(", get_reg_name(rvfi_rs1_addr), ")", {10{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rs2_addr), ",0x",
+        to_hex2(imm),  "(", get_reg_name(rvfi_rs1_addr), ")", {10{8'h20}}};
   endfunction
 
   function automatic void decode_r_insn(input bit[8*8-1:0] mnemonic);
     data_accessed = RS1 | RS2 | RD;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rs1_addr), ",", get_reg_name(rvfi_rs2_addr), {12{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",",
+        get_reg_name(rvfi_rs1_addr), ",", get_reg_name(rvfi_rs2_addr), {12{8'h20}}};
   endfunction
 
   function automatic void decode_r2_insn(input bit[8*8-1:0] mnemonic);
     data_accessed = RS1 | RD;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rs1_addr), {16{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",",
+        get_reg_name(rvfi_rs1_addr), {16{8'h20}}};
   endfunction
 
   function automatic void decode_i_insn(input bit[8*8-1:0] mnemonic);
     data_accessed = RS1 | RD;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rs1_addr), ",", to_offset12(rvfi_insn[31:20]), {9{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",",
+        get_reg_name(rvfi_rs1_addr), ",", to_offset12(rvfi_insn[31:20]), {9{8'h20}}};
   endfunction
 
   function automatic void decode_i_log_insn(input bit[8*8-1:0] mnemonic);
     data_accessed = RS1 | RD;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rs1_addr), ",0x", to_hex3(rvfi_insn[31:20]), {10{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",",
+        get_reg_name(rvfi_rs1_addr), ",0x", to_hex3(rvfi_insn[31:20]), {10{8'h20}}};
   endfunction
 
   function automatic void decode_i_shift_insn(input bit[8*8-1:0] mnemonic);
     // SLLI, SRLI, SRAI
     data_accessed = RS1 | RD;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rs1_addr), ",0x", to_hex2({3'b000,rvfi_insn[24:20]}), {11{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",",
+        get_reg_name(rvfi_rs1_addr), ",0x", to_hex2({3'b000,rvfi_insn[24:20]}), {11{8'h20}}};
   endfunction
 
   function automatic void decode_i_jalr_insn(input bit[8*8-1:0] mnemonic);
@@ -602,12 +617,14 @@ module ibex_tracer #(
     end else begin
       data_accessed = RS1;             // JR
     end
-    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", to_offset12(rvfi_insn[31:20]), "(", get_reg_name(rvfi_rs1_addr), ")", {8{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",",
+        to_offset12(rvfi_insn[31:20]), "(", get_reg_name(rvfi_rs1_addr), ")", {8{8'h20}}};
   endfunction
 
   function automatic void decode_u_insn(input bit[8*8-1:0] mnemonic);
     data_accessed = RD;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",0x", to_hex5(rvfi_insn[31:12]), {12{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",0x",
+        to_hex5(rvfi_insn[31:12]), {12{8'h20}}};
   endfunction
 
   function automatic void decode_j_insn(input bit[8*8-1:0] mnemonic);
@@ -623,27 +640,32 @@ module ibex_tracer #(
     imm = {rvfi_insn[31], rvfi_insn[7], rvfi_insn[30:25], rvfi_insn[11:8], 1'b0};
     target = rvfi_pc_rdata + 32'($signed(imm)); // cannot use rvfi_pc_wdata for branches;
     data_accessed = RS1 | RS2;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rs1_addr), ",", get_reg_name(rvfi_rs2_addr), ",0x", to_hex8(target), {5{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rs1_addr), ",",
+        get_reg_name(rvfi_rs2_addr), ",0x", to_hex8(target), {5{8'h20}}};
   endfunction
 
   function automatic void decode_csr_insn(input bit[8*8-1:0] mnemonic);
     data_accessed = RD;
     if (!rvfi_insn[14]) begin
       data_accessed |= RS1;
-      decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_csr_name(rvfi_insn[31:20]), ",", get_reg_name(rvfi_rs1_addr), 8'h20};
+      decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",",
+          get_csr_name(rvfi_insn[31:20]), ",", get_reg_name(rvfi_rs1_addr), 8'h20};
     end else begin
-      decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_csr_name(rvfi_insn[31:20]), ",0x", to_hex2(rvfi_insn[19:15])};
+      decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",",
+          get_csr_name(rvfi_insn[31:20]), ",0x", to_hex2({3'b000,rvfi_insn[19:15]})};
     end
   endfunction
 
   function automatic void decode_load_insn(input bit[8*8-1:0] mnemonic);
     data_accessed = RD | RS1 | MEM;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", to_offset12(rvfi_insn[31:20]), "(", get_reg_name(rvfi_rs1_addr), ")", {8{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",",
+        to_offset12(rvfi_insn[31:20]), "(", get_reg_name(rvfi_rs1_addr), ")", {8{8'h20}}};
   endfunction
 
   function automatic void decode_store_insn(input bit[8*8-1:0] mnemonic);
     data_accessed = RS1 | RS2 | MEM;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rs2_addr), ",", to_offset12({rvfi_insn[31:25], rvfi_insn[11:7]}), "(", get_reg_name(rvfi_rs1_addr), ")", {8{8'h20}}};
+    decoded_str = {mnemonic, get_reg_name(rvfi_rs2_addr), ",",
+        to_offset12({rvfi_insn[31:25], rvfi_insn[11:7]}), "(", get_reg_name(rvfi_rs1_addr), ")", {8{8'h20}}};
   endfunction
 
   function automatic bit[4*8-1:0] get_fence_flags(input bit [3:0] bits);
@@ -656,46 +678,54 @@ module ibex_tracer #(
   endfunction
 
   function automatic void decode_fence(input bit[8*8-1:0] mnemonic);
-    decoded_str = {mnemonic, get_fence_flags(rvfi_insn[27:24]), ",", get_fence_flags(rvfi_insn[23:20]), {14{8'h20}}};
+    decoded_str = {mnemonic, get_fence_flags(rvfi_insn[27:24]), ",",
+        get_fence_flags(rvfi_insn[23:20]), {14{8'h20}}};
   endfunction
 
   function automatic void decode_r4c_insn(input bit[8*8-1:0] mnemonic);
     data_accessed = RS1 | RS2 | RS3 | RD;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rs2_addr), ",", get_reg_name(rvfi_rs1_addr), ",", get_reg_name(rvfi_rs3_addr), {8{8'h20}}}; 
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rs2_addr),
+        ",", get_reg_name(rvfi_rs1_addr), ",", get_reg_name(rvfi_rs3_addr), {8{8'h20}}}; 
   endfunction
 
   function automatic void decode_r4fs_insn(input bit[8*8-1:0] mnemonic);
     data_accessed = RS1 | RS2 | RS3 | RD;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rs1_addr), ",", get_reg_name(rvfi_rs3_addr), ",", get_reg_name(rvfi_rs2_addr), {8{8'h20}}}; 
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rs1_addr), 
+        ",", get_reg_name(rvfi_rs3_addr), ",", get_reg_name(rvfi_rs2_addr), {8{8'h20}}}; 
   endfunction
 
-  function automatic void decode_i_fs_insn( input bit[8*8-1:0] mnemonic);
-￼    // fsri
-￼    bit [7:0] shamt;
-￼    shamt = {2'b0, rvfi_insn[25:20]};
-￼    data_accessed = RS1 | RS3 | RD;
-    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rs1_addr), ",", get_reg_name(rvfi_rs3_addr), ",0x", to_hex2(shamt), {5{8'h20}}};
-￼  endfunction
+  function automatic void decode_i_fs_insn(input bit[8*8-1:0] mnemonic);
+    bit [5:0] shamt;
+    shamt = rvfi_insn[25:20];
+    data_accessed = RS1 | RS3 | RD;
+    decoded_str = {mnemonic, get_reg_name(rvfi_rd_addr), ",", get_reg_name(rvfi_rs1_addr),
+        ",", get_reg_name(rvfi_rs3_addr), ",0x", to_hex2({2'b00,shamt}), {7{8'h20}}};
+  endfunction
 
   // trace write function
   function automatic void printbuffer_dumpline();
     tstamp = $time;
-    if( trace_enable_inst ) begin
+    if (trace_enable_inst) begin
       if (insn_is_compressed) begin
-        $fwrite(file_handle, "%t PC=0x%8h,     0x%04h, %s\n", tstamp, rvfi_pc_rdata, rvfi_insn[15:0], decoded_str);
+        $fwrite(file_handle, "%t PC=0x%8h,     0x%04h, %s\n", 
+            tstamp, rvfi_pc_rdata, rvfi_insn[15:0], decoded_str);
       end else begin
-        $fwrite(file_handle, "%t PC=0x%8h, 0x%08x, %s\n", tstamp, rvfi_pc_rdata, rvfi_insn, decoded_str);
+        $fwrite(file_handle, "%t PC=0x%8h, 0x%08x, %s\n", 
+            tstamp, rvfi_pc_rdata, rvfi_insn, decoded_str);
       end
     end
-    if ( trace_enable_mem && (data_accessed & MEM) != 0 ) begin
+    if (trace_enable_mem && (data_accessed & MEM) != 0) begin
       if (rvfi_mem_wmask != 4'b000) begin
-        $fwrite(file_handle, "%t MW=0x%08x, 0x%08x\n", tstamp, rvfi_mem_addr, rvfi_mem_wdata);
+        $fwrite(file_handle, "%t MW=0x%08x, 0x%08x\n", 
+            tstamp, rvfi_mem_addr, rvfi_mem_wdata);
       end else if (rvfi_mem_rmask != 4'b000) begin     
-        $fwrite(file_handle, "%t MR=0x%08x, 0x%08x\n", tstamp, rvfi_mem_addr, rvfi_mem_rdata);
+        $fwrite(file_handle, "%t MR=0x%08x, 0x%08x\n", 
+            tstamp, rvfi_mem_addr, rvfi_mem_rdata);
       end
     end
-    if ( trace_enable_reg && (data_accessed & RD) != 0) begin
-      $fwrite(file_handle, "%t REG=%s, 0x%08x\n", tstamp, get_reg_name(rvfi_rd_addr), rvfi_rd_wdata);
+    if (trace_enable_reg && (data_accessed & RD) != 0) begin
+      $fwrite(file_handle, "%t REG=%s, 0x%08x\n", 
+          tstamp, get_reg_name(rvfi_rd_addr), rvfi_rd_wdata);
     end
   endfunction
 
@@ -707,7 +737,7 @@ module ibex_tracer #(
   end
 
   always_comb begin
-    decoded_str = "";
+    decoded_str = 'h0;
     data_accessed = 5'h0;
 
     // Check for compressed instructions
@@ -715,22 +745,29 @@ module ibex_tracer #(
       insn_is_compressed = 1;
       unique casez (rvfi_insn[15:0])
         // C0 Opcodes
-        INSN_CADDI4SPN:
+        INSN_CADDI4SPN: begin
                    decode_caddisp_insn("addi    ");
+        end
         INSN_CLW:    decode_cload_insn("lw      ");
         INSN_CSW:   decode_cstore_insn("sw      ");
         // C1 Opcodes
-        INSN_CADDI: if (rvfi_insn[11:2] == 10'h0)
+        INSN_CADDI: begin
+          if (rvfi_insn[11:2] == 10'h0) begin
                        decode_mnemonic("nop     ");
-                    else
+          end else begin
                      decode_caddi_insn("addi    ");
+          end
+        end
         INSN_CJAL:      decode_cj_insn("jal     ");
         INSN_CJ:        decode_cj_insn("j       ");
         INSN_CLI:      decode_cli_insn("li      ");
-        INSN_CLUI: if (rvfi_insn[11:7] == 5'h2)
+        INSN_CLUI: begin
+          if (rvfi_insn[11:7] == 5'h2) begin
                    decode_caddisp_insn("addi    ");
-                   else
+          end else begin
                       decode_clui_insn("lui     ");
+          end
+        end
         INSN_CSRLI:  decode_clogi_insn("srli    ");
         INSN_CSRAI:  decode_clogi_insn("srai    ");
         INSN_CANDI:  decode_clogi_insn("andi    ");
@@ -743,16 +780,22 @@ module ibex_tracer #(
         // C2 Opcodes
         INSN_CSLLI:  decode_clogi_insn("slli    ");
         INSN_CLWSP:  decode_cload_insn("lw      ");
-        INSN_CMV:  if (rvfi_insn[6:2] == 5'h0)
+        INSN_CMV: begin 
+          if (rvfi_insn[6:2] == 5'h0) begin
                        decode_cjr_insn("jr      ");
-                   else
+          end else begin
                        decode_cmv_insn("mv      ");
-        INSN_CADD: if (rvfi_insn[11:2] == 10'h0)
+          end
+        end
+        INSN_CADD: begin
+          if (rvfi_insn[11:2] == 10'h0) begin
                        decode_mnemonic("ebreak  ");
-                   else if (rvfi_insn[6:2] == 5'b0)
+          end else if (rvfi_insn[6:2] == 5'b0) begin
                        decode_cjr_insn("jalr    ");
-                   else
+          end else begin
                         decode_cr_insn("add     ");
+          end
+        end
         INSN_SWSP:  decode_cstore_insn("sw      ");
         default:       decode_mnemonic("INVALID ");
       endcase
@@ -762,14 +805,20 @@ module ibex_tracer #(
         // Regular opcodes
         INSN_LUI:        decode_u_insn("lui     ");
         INSN_AUIPC:      decode_u_insn("auipc   ");
-        INSN_JAL:   if (rvfi_insn[11:7] == 5'h0)     
+        INSN_JAL: begin
+          if (rvfi_insn[11:7] == 5'h0) begin     
                          decode_j_insn("j       ");
-                    else
+          end else begin
                          decode_j_insn("jal     ");
-        INSN_JALR:  if (rvfi_insn[11:7] == 5'h0)
+          end
+        end
+        INSN_JALR: begin
+          if (rvfi_insn[11:7] == 5'h0) begin
                     decode_i_jalr_insn("jr      ");
-                    else
+          end else begin
                     decode_i_jalr_insn("jalr    ");
+          end
+        end
         // BRANCH
         INSN_BEQ:        decode_b_insn("beq     ");
         INSN_BNE:        decode_b_insn("bne     ");
@@ -778,12 +827,15 @@ module ibex_tracer #(
         INSN_BLTU:       decode_b_insn("bltu    ");
         INSN_BGEU:       decode_b_insn("bgeu    ");
         // OPIMM
-        INSN_ADDI:   if ({rvfi_insn[31:15],rvfi_insn[11:7]} == 22'h0)
+        INSN_ADDI: begin
+          if ({rvfi_insn[31:15],rvfi_insn[11:7]} == 22'h0) begin
                        decode_mnemonic("nop     ");
-                     else if (rvfi_insn[31:20] == 12'h0)
+          end else if (rvfi_insn[31:20] == 12'h0) begin
                         decode_r2_insn("mv      ");
-                     else
+          end else begin
                          decode_i_insn("addi    ");
+          end
+        end
         INSN_SLTI:       decode_i_insn("slti    ");
         INSN_SLTIU:  decode_i_log_insn("sltiu   ");
         INSN_XORI:   decode_i_log_insn("xori    ");
