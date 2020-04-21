@@ -148,6 +148,9 @@ module ibex_ex_block #(
         .valid_o            ( multdiv_valid         ),
         .alu_operand_a_o    ( multdiv_alu_operand_a ),
         .alu_operand_b_o    ( multdiv_alu_operand_b ),
+        .imd_val_q_i        ( imd_val_q_i           ),
+        .imd_val_d_o        ( multdiv_imd_val_d     ),
+        .imd_val_we_o       ( multdiv_imd_val_we    ),
         .multdiv_ready_id_i ( multdiv_ready_id_i    ),
         .multdiv_result_o   ( multdiv_result        )
     );
