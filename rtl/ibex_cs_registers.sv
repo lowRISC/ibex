@@ -1033,10 +1033,11 @@ module ibex_cs_registers #(
     assign trigger_match_o = tmatch_control_q & (pc_if_i[31:0] == tmatch_value_q[31:0]);
 
   end else begin : gen_no_trigger_regs
-    assign tselect_rdata        = 'b0;
-    assign tmatch_control_rdata = 'b0;
-    assign tmatch_value_rdata   = 'b0;
-    assign trigger_match_o      = 'b0;
+    assign tselect_rdata        = 'h0;
+    assign tmatch_control_rdata = 'h0;
+    assign tmatch_value_rdata   = 'h0;
+    assign trigger_match_o      = 'h0;
+    assign tinfo_rdata          = 'h0;
   end
 
   // CPU control fields
