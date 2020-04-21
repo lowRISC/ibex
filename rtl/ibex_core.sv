@@ -993,6 +993,7 @@ module ibex_core #(
   assign rvfi_mem_wmask = rvfi_stage_mem_wmask[RVFI_STAGES-1];
   assign rvfi_mem_rdata = rvfi_stage_mem_rdata[RVFI_STAGES-1];
   assign rvfi_mem_wdata = rvfi_stage_mem_wdata[RVFI_STAGES-1];
+  assign rvfi_ixl       = 2'b01;
 
   if (WritebackStage) begin
     logic unused_instr_new_id;
