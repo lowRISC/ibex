@@ -389,11 +389,12 @@ post_compare: $(OUT-SEED)/regr.log
 
 ###############################################################################
 # Generate RISCV-DV functional coverage
+# TODO(udi) - add B extension
 fcov:
 	python3 ${GEN_DIR}/cov.py \
           --core ibex \
-          --dir ${OUT}/rtl_sim \
-          -o ${OUT}/fcov \
+          --dir ${OUT-SEED}/rtl_sim \
+          -o ${OUT-SEED}/fcov \
           --isa rv32imc \
           --custom_target riscv_dv_extension
 
