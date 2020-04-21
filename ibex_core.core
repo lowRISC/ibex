@@ -108,6 +108,12 @@ parameters:
     paramtype: vlogparam
     description: "Enables security hardening features (EXPERIMENTAL) [0/1]"
 
+  HartId:
+    datatype: int
+    default: 0
+    paramtype: vlogparam
+    description: "core hartid"
+
 targets:
   default:
     filesets:

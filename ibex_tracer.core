@@ -14,7 +14,19 @@ filesets:
       - rtl/ibex_tracer.sv
     file_type: systemVerilogSource
 
+  files_lint_verilator:
+    files:
+      - lint/verilator_waiver.vlt: {file_type: vlt}
+
+parameters:
+  HartId:
+    datatype: int
+    default: 0
+    paramtype: vlogparam
+    description: "core hartid"
+
 targets:
   default:
     filesets:
+      - tool_verilator ? (files_lint_verilator)
       - files_rtl
