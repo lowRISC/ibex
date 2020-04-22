@@ -12,7 +12,7 @@ module tb_cs_registers #(
     parameter int unsigned PMPNumRegions    = 4,
     parameter bit          RV32E            = 0,
     parameter bit          RV32M            = 0,
-    parameter int unsigned Hartid           = 'h20
+    parameter int unsigned HartId           = 'h20
 ) (
     // Clock and Reset
     inout  wire                 clk_i,
@@ -133,7 +133,7 @@ module tb_cs_registers #(
     .PMPNumRegions    (PMPNumRegions),
     .RV32E            (RV32E),
     .RV32M            (RV32M),
-    .HartId           (Hartid)
+    .HartId           (HartId)
   ) i_cs_regs (.*);
 
   // DPI calls
