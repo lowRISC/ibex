@@ -58,7 +58,7 @@ parameters:
     datatype: int
     paramtype: vlogparam
     default: 0
-    description: core hardid
+    description: core hart id
 
 targets:
   sim:
@@ -73,6 +73,7 @@ targets:
       - MultiplierImplementation
       - BranchTargetALU
       - WritebackStage
+      - HartId
     toplevel: ibex_riscv_compliance
     tools:
       verilator:
