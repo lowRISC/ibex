@@ -1,4 +1,4 @@
-CC ?= riscv64-unknown-elf-gcc
+CC ?= riscv32-unknown-elf-gcc
 IBEX_CONFIG ?= small-3cmult
 
 FUSESOC_CONFIG_OPTS = $(shell ./util/ibex_config.py $(IBEX_CONFIG) fusesoc_opts)
