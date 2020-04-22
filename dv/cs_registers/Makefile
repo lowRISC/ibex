@@ -27,7 +27,7 @@ TOOLDIR = $(subst bin/$(TOOL),,$(shell which $(TOOL)))
 ifeq ($(TOOL),vcs)
   INCLUDES += -I$(TOOLDIR)include
 else
-  INCLUDES += -I$(TOOLDIR)include/vltstd
+  INCLUDES += -I$(TOOLDIR)share/verilator/include/vltstd
 endif
 
 .PHONY: all clean
