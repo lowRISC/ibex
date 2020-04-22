@@ -21,7 +21,7 @@ module ibex_riscv_compliance (
   parameter     MultiplierImplementation = "fast";
   parameter bit BranchTargetALU          = 1'b0;
   parameter bit WritebackStage           = 1'b0;
-  parameter     HartId                   = 32'h20;
+  parameter     HartId                   = 32'h0;
   logic clk_sys, rst_sys_n;
 
   assign clk_sys = IO_CLK;
