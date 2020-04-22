@@ -13,14 +13,6 @@ class ibex_icache_sanity_vseq extends ibex_icache_base_vseq;
   ibex_icache_core_sanity_seq core_seq;
   ibex_icache_mem_resp_seq    mem_seq;
 
-  task pre_start();
-    super.pre_start();
-
-    // Temporary hack (working around problems with memory/PMP errors)
-    cfg.mem_agent_cfg.disable_pmp_errs = 1'b1;
-    cfg.mem_agent_cfg.disable_mem_errs = 1'b1;
-  endtask
-
   task body();
     // Start the core and memory sequences. We use fork/join_any so that we don't wait for the
     // memory sequence (which is reactive so will never finish).
