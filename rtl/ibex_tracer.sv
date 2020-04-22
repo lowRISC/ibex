@@ -9,7 +9,7 @@
  *
  * All traced instructions are written to a log file. By default, the log file is named
  * trace_NNNN.log, with NNNN being the 4 digit hart ID of the core being traced.
- * The file name base can be set using the +trace_file=<name>argument. The exact syntax
+ * The file name base can be set using the +trace_file=fname argument. The exact syntax
  * depends on the simulator.
  *
  * The trace contains produces 3 types of entries that can be enabled separately 
@@ -17,7 +17,7 @@
  * - The simulation timestamp tttttttttttt uu
  * - The program counter      PC=0xiiiiiiii,
  * - The instruction code     0xcccccccc or 0xcccc, for compressed instruction
- * - The decoded instruction  in the specification format
+ * - The decoded instruction  similar to 'objdump -Mnumeric' format with limitations
  * Memory trace enabled by +trace_m argument consists of the followign entries
  * - The simulation timestamp tttttttttttt uu
  * - The address written/read MW/MR=0xaaaaaaaa,
@@ -715,10 +715,10 @@ module ibex_tracer #(
       end
     end
     if (trace_enable_mem && (data_accessed & MEM) != 0) begin
-      if (rvfi_mem_wmask != 4'b000) begin
+      if (rvfi_mem_wmask != 4'b0000) begin
         $fwrite(file_handle, "%t MW=0x%08x, 0x%08x\n", 
             tstamp, rvfi_mem_addr, rvfi_mem_wdata);
-      end else if (rvfi_mem_rmask != 4'b000) begin     
+      end else if (rvfi_mem_rmask != 4'b0000) begin
         $fwrite(file_handle, "%t MR=0x%08x, 0x%08x\n", 
             tstamp, rvfi_mem_addr, rvfi_mem_rdata);
       end
