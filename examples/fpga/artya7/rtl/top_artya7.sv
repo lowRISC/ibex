@@ -43,14 +43,14 @@ module top_artya7 (
 
   ibex_core #(
      .DmHaltAddr(32'h00000000),
-     .DmExceptionAddr(32'h00000000)
+     .DmExceptionAddr(32'h00000000),
+     .HartId(32'h0)
   ) u_core (
      .clk_i                 (clk_sys),
      .rst_ni                (rst_sys_n),
 
      .test_en_i             ('b0),
 
-     .hart_id_i             (32'b0),
      // First instruction executed is at 0x0 + 0x80
      .boot_addr_i           (32'h00000000),
 
