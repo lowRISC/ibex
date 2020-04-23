@@ -57,6 +57,11 @@ parameters:
     paramtype: vlogparam
     default: 0
     description: Enables third pipeline stage (EXPERIMENTAL)
+  HartId:
+    datatype: int
+    paramtype: vlogparam
+    default: 0
+    description: core hart id
 
 targets:
   sim:
@@ -67,10 +72,12 @@ targets:
     parameters:
       - RV32M
       - RV32E
+      - RV32B
       - MultiplierImplementation
       - BranchTargetALU
       - WritebackStage
       - SRAM_INIT_FILE
+      - HartId
     toplevel: ibex_simple_system
     tools:
       vcs:
@@ -101,4 +108,3 @@ targets:
           # RAM primitives wider than 64bit (required for ECC) fail to build in
           # Verilator without increasing the unroll count (see Verilator#1266)
           - "--unroll-count 72"
-

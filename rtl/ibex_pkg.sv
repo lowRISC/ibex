@@ -316,16 +316,23 @@ typedef enum logic[11:0] {
   CSR_TDATA1    = 12'h7A1,
   CSR_TDATA2    = 12'h7A2,
   CSR_TDATA3    = 12'h7A3,
+  CSR_TINFO     = 12'h7A4,
   CSR_MCONTEXT  = 12'h7A8,
   CSR_SCONTEXT  = 12'h7AA,
 
   // Debug/trace
-  CSR_DCSR      = 12'h7b0,
-  CSR_DPC       = 12'h7b1,
+  CSR_DCSR      = 12'h7B0,
+  CSR_DPC       = 12'h7B1,
 
   // Debug
-  CSR_DSCRATCH0 = 12'h7b2, // optional
-  CSR_DSCRATCH1 = 12'h7b3, // optional
+  CSR_DSCRATCH0 = 12'h7B2, // optional
+  CSR_DSCRATCH1 = 12'h7B3, // optional
+
+  // Counter/Timers
+  CSR_CYCLE          = 12'hC00,
+  CSR_INSTRET        = 12'hC02,
+  CSR_CYCLEH         = 12'hC80,
+  CSR_INSTRETH       = 12'hC82,
 
   // Machine Counter/Timers
   CSR_MCOUNTINHIBIT  = 12'h320,

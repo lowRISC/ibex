@@ -1,3 +1,4 @@
+CC ?= riscv32-unknown-elf-gcc
 IBEX_CONFIG ?= small-3cmult
 
 FUSESOC_CONFIG_OPTS = $(shell ./util/ibex_config.py $(IBEX_CONFIG) fusesoc_opts)
@@ -49,7 +50,7 @@ $(Vibex_simple_system):
 
 run-simple-system: sw-simple-hello | $(Vibex_simple_system)
 	build/lowrisc_ibex_ibex_simple_system_0/sim-verilator/Vibex_simple_system \
-		--raminit=$(simple-system-program)
+		--raminit=$(simple-system-program) --trace +trace_i +trace_r +trace_m
 
 
 # Arty A7 FPGA example

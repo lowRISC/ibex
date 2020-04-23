@@ -25,7 +25,8 @@ module ibex_simple_system (
   parameter bit BranchTargetALU          = 1'b0;
   parameter bit WritebackStage           = 1'b0;
   parameter     MultiplierImplementation = "fast";
-
+  parameter     HartId                   = 32'h20;
+ 
   logic clk_sys = 1'b0, rst_sys_n;
 
   typedef enum {
@@ -146,14 +147,14 @@ module ibex_simple_system (
       .RV32B                    ( RV32B                    ),
       .BranchTargetALU          ( BranchTargetALU          ),
       .WritebackStage           ( WritebackStage           ),
-      .MultiplierImplementation ( MultiplierImplementation )
+      .MultiplierImplementation ( MultiplierImplementation ),
+      .HartId                   ( HartId                   )
     ) u_core (
       .clk_i                 (clk_sys),
       .rst_ni                (rst_sys_n),
 
-      .test_en_i             ('b0),
+      .test_en_i             (1'b0),
 
-      .hart_id_i             (32'b0),
       // First instruction executed is at 0x0 + 0x80
       .boot_addr_i           (32'h00100000),
 

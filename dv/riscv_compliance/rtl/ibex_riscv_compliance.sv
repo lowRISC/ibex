@@ -21,7 +21,7 @@ module ibex_riscv_compliance (
   parameter     MultiplierImplementation = "fast";
   parameter bit BranchTargetALU          = 1'b0;
   parameter bit WritebackStage           = 1'b0;
-
+  parameter     HartId                   = 32'h0;
   logic clk_sys, rst_sys_n;
 
   assign clk_sys = IO_CLK;
@@ -112,14 +112,14 @@ module ibex_riscv_compliance (
       .RV32B(RV32B),
       .MultiplierImplementation(MultiplierImplementation),
       .BranchTargetALU(BranchTargetALU),
-      .WritebackStage(WritebackStage)
+      .WritebackStage(WritebackStage),
+      .HartId(HartId)
     ) u_core (
       .clk_i                 (clk_sys),
       .rst_ni                (rst_sys_n),
 
       .test_en_i             ('b0),
 
-      .hart_id_i             (32'b0),
       // First instruction executed is at 0x0 + 0x80
       .boot_addr_i           (32'h00000000),
 

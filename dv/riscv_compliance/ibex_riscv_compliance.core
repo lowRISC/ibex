@@ -54,6 +54,11 @@ parameters:
     paramtype: vlogparam
     default: 0
     description: Enables third pipeline stage (EXPERIMENTAL)
+  HartId:
+    datatype: int
+    paramtype: vlogparam
+    default: 0
+    description: core hart id
 
 targets:
   sim:
@@ -68,6 +73,7 @@ targets:
       - MultiplierImplementation
       - BranchTargetALU
       - WritebackStage
+      - HartId
     toplevel: ibex_riscv_compliance
     tools:
       verilator:

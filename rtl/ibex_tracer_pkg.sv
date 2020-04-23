@@ -62,6 +62,10 @@ parameter logic [31:0] INSN_DRET    = { 12'b011110110010,         13'b0, {OPCODE
 parameter logic [31:0] INSN_WFI     = { 12'b000100000101,         13'b0, {OPCODE_SYSTEM} };
 
 // RV32M
+parameter logic [31:0] INSN_MUL     = { 7'b0000001, 10'b?, 3'b000, 5'b?, {OPCODE_OP} };
+parameter logic [31:0] INSN_MUH     = { 7'b0000001, 10'b?, 3'b001, 5'b?, {OPCODE_OP} };
+parameter logic [31:0] INSN_MULHSU  = { 7'b0000001, 10'b?, 3'b010, 5'b?, {OPCODE_OP} };
+parameter logic [31:0] INSN_MULHU   = { 7'b0000001, 10'b?, 3'b011, 5'b?, {OPCODE_OP} };
 parameter logic [31:0] INSN_DIV     = { 7'b0000001, 10'b?, 3'b100, 5'b?, {OPCODE_OP} };
 parameter logic [31:0] INSN_DIVU    = { 7'b0000001, 10'b?, 3'b101, 5'b?, {OPCODE_OP} };
 parameter logic [31:0] INSN_REM     = { 7'b0000001, 10'b?, 3'b110, 5'b?, {OPCODE_OP} };
@@ -112,8 +116,14 @@ parameter logic [31:0] INSN_FSL  = {5'b?, 2'b10, 10'b?, 3'b001, 5'b?, {OPCODE_OP
 parameter logic [31:0] INSN_FSR  = {5'b?, 2'b10, 10'b?, 3'b101, 5'b?, {OPCODE_OP} };
 
 // LOAD & STORE
-parameter logic [31:0] INSN_LOAD    = {25'b?,                            {OPCODE_LOAD } };
-parameter logic [31:0] INSN_STORE   = {25'b?,                            {OPCODE_STORE} };
+parameter logic [31:0] INSN_LB      = { 17'b?,             3'b000, 5'b?, {OPCODE_LOAD } };
+parameter logic [31:0] INSN_LH      = { 17'b?,             3'b001, 5'b?, {OPCODE_LOAD } };
+parameter logic [31:0] INSN_LW      = { 17'b?,             3'b010, 5'b?, {OPCODE_LOAD } };
+parameter logic [31:0] INSN_LBU     = { 17'b?,             3'b100, 5'b?, {OPCODE_LOAD } };
+parameter logic [31:0] INSN_LHU     = { 17'b?,             3'b101, 5'b?, {OPCODE_LOAD } };
+parameter logic [31:0] INSN_SB      = { 17'b?,             3'b000, 5'b?, {OPCODE_STORE} };
+parameter logic [31:0] INSN_SH      = { 17'b?,             3'b001, 5'b?, {OPCODE_STORE} };
+parameter logic [31:0] INSN_SW      = { 17'b?,             3'b010, 5'b?, {OPCODE_STORE} };
 
 // MISC-MEM
 parameter logic [31:0] INSN_FENCE   = { 17'b?,             3'b000, 5'b?, {OPCODE_MISC_MEM} };
@@ -128,11 +138,8 @@ parameter logic [15:0] INSN_CSW        = { 3'b110,       11'b?,                 
 // C1
 parameter logic [15:0] INSN_CADDI      = { 3'b000,       11'b?,                    {OPCODE_C1} };
 parameter logic [15:0] INSN_CJAL       = { 3'b001,       11'b?,                    {OPCODE_C1} };
-parameter logic [15:0] INSN_CJ         = { 3'b101,       11'b?,                    {OPCODE_C1} };
 parameter logic [15:0] INSN_CLI        = { 3'b010,       11'b?,                    {OPCODE_C1} };
-parameter logic [15:0] INSN_CLUI       = { 3'b011,       11'b?,                    {OPCODE_C1} };
-parameter logic [15:0] INSN_CBEQZ      = { 3'b110,       11'b?,                    {OPCODE_C1} };
-parameter logic [15:0] INSN_CBNEZ      = { 3'b111,       11'b?,                    {OPCODE_C1} };
+parameter logic [15:0] INSN_CLUI       = { 3'b011, 1'b?, 10'b?,                    {OPCODE_C1} };
 parameter logic [15:0] INSN_CSRLI      = { 3'b100, 1'b?, 2'b00, 8'b?,              {OPCODE_C1} };
 parameter logic [15:0] INSN_CSRAI      = { 3'b100, 1'b?, 2'b01, 8'b?,              {OPCODE_C1} };
 parameter logic [15:0] INSN_CANDI      = { 3'b100, 1'b?, 2'b10, 8'b?,              {OPCODE_C1} };
@@ -140,15 +147,15 @@ parameter logic [15:0] INSN_CSUB       = { 3'b100, 1'b0, 2'b11, 3'b?, 2'b00, 3'b
 parameter logic [15:0] INSN_CXOR       = { 3'b100, 1'b0, 2'b11, 3'b?, 2'b01, 3'b?, {OPCODE_C1} };
 parameter logic [15:0] INSN_COR        = { 3'b100, 1'b0, 2'b11, 3'b?, 2'b10, 3'b?, {OPCODE_C1} };
 parameter logic [15:0] INSN_CAND       = { 3'b100, 1'b0, 2'b11, 3'b?, 2'b11, 3'b?, {OPCODE_C1} };
+parameter logic [15:0] INSN_CJ         = { 3'b101,       11'b?,                    {OPCODE_C1} };
+parameter logic [15:0] INSN_CBEQZ      = { 3'b110,       11'b?,                    {OPCODE_C1} };
+parameter logic [15:0] INSN_CBNEZ      = { 3'b111,       11'b?,                    {OPCODE_C1} };
 
 // C2
 parameter logic [15:0] INSN_CSLLI      = { 3'b000,       11'b?,                    {OPCODE_C2} };
 parameter logic [15:0] INSN_CLWSP      = { 3'b010,       11'b?,                    {OPCODE_C2} };
-parameter logic [15:0] INSN_SWSP       = { 3'b110,       11'b?,                    {OPCODE_C2} };
 parameter logic [15:0] INSN_CMV        = { 3'b100, 1'b0, 10'b?,                    {OPCODE_C2} };
 parameter logic [15:0] INSN_CADD       = { 3'b100, 1'b1, 10'b?,                    {OPCODE_C2} };
-parameter logic [15:0] INSN_CEBREAK    = { 3'b100, 1'b1,        5'b0,  5'b0,       {OPCODE_C2} };
-parameter logic [15:0] INSN_CJR        = { 3'b100, 1'b0,        5'b?,  5'b0,       {OPCODE_C2} };
-parameter logic [15:0] INSN_CJALR      = { 3'b100, 1'b1,        5'b?,  5'b0,       {OPCODE_C2} };
+parameter logic [15:0] INSN_SWSP       = { 3'b110,       11'b?,                    {OPCODE_C2} };
 
 endpackage
