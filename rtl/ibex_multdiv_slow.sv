@@ -161,7 +161,7 @@ module ibex_multdiv_slow
       op_numerator_q   <= 32'h0;
       md_state_q       <= MD_IDLE;
     end else begin
-      if (~multdiv_hold) begin
+      if ((mult_en_i || div_en_i) && !multdiv_hold) begin
         multdiv_state_q  <= multdiv_state_d;
         op_b_shift_q     <= op_b_shift_d;
         op_a_shift_q     <= op_a_shift_d;

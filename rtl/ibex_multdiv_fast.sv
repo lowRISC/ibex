@@ -226,7 +226,7 @@ module ibex_multdiv_fast #(
       if (!rst_ni) begin
         mult_state_q <= MULL;
       end else begin
-        if (mult_en_i) begin
+        if (mult_en_internal) begin
           mult_state_q <= mult_state_d;
         end
       end
