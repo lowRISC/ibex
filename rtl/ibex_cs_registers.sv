@@ -39,6 +39,7 @@ module ibex_cs_registers #(
 
     // mtvec
     output logic [31:0]          csr_mtvec_o,
+    output logic [31:0]          csr_mtvecx_o,
     input  logic                 csr_mtvec_init_i,
     input  logic [31:0]          boot_addr_i,
 
@@ -55,9 +56,11 @@ module ibex_cs_registers #(
     input  logic                 irq_timer_i,
     input  logic                 irq_external_i,
     input  logic [14:0]          irq_fast_i,
+    input  logic [31:0]          irq_x_i,
     input  logic                 nmi_mode_i,
     output logic                 irq_pending_o,          // interrupt request pending
     output ibex_pkg::irqs_t      irqs_o,                 // interrupt requests qualified with mie
+    output logic [31:0]          irqs_x_o,               // custom interrupt requests qualified with miex
     output logic                 csr_mstatus_mie_o,
     output logic [31:0]          csr_mepc_o,
 
@@ -183,6 +186,11 @@ module ibex_cs_registers #(
   logic [31:0] dscratch0_q, dscratch0_d;
   logic [31:0] dscratch1_q, dscratch1_d;
 
+  // CLINTx
+  logic [31:0] miex_q, miex_d;
+  logic [31:0] mipx;
+  logic [31:0] mtvecx_q, mtvecx_d;
+
   // CSRs for recoverable NMIs
   // NOTE: these CSRS are nonstandard, see https://github.com/riscv/riscv-isa-manual/issues/261
   StatusStk_t  mstack_q, mstack_d;
@@ -252,6 +260,9 @@ module ibex_cs_registers #(
   assign mip.irq_timer    = irq_timer_i;
   assign mip.irq_external = irq_external_i;
   assign mip.irq_fast     = irq_fast_i;
+
+  // mipx CSR is purely combinational - must be able to re-enable the clock upon WFI
+  assign mipx = irq_x_i;
 
   // read logic
   always_comb begin
@@ -420,6 +431,11 @@ module ibex_cs_registers #(
         csr_rdata_int = {cpuctrl_rdata};
       end
 
+      // CLINTx
+      CSR_MIEX:   csr_rdata_int = miex_q;
+      CSR_MIPX:   csr_rdata_int = mipx;
+      CSR_MTVECX: csr_rdata_int = mtvecx_q;
+
       default: begin
         illegal_csr = 1'b1;
       end
@@ -450,6 +466,9 @@ module ibex_cs_registers #(
     mcountinhibit_we = 1'b0;
     mhpmcounter_we   = '0;
     mhpmcounterh_we  = '0;
+
+    miex_d       = miex_q;
+    mtvecx_d     = csr_mtvec_init_i ? {boot_addr_i[31:8], 6'b0, 2'b01} : mtvecx_q;
 
     if (csr_we_int) begin
       unique case (csr_addr_i)
@@ -546,6 +565,14 @@ module ibex_cs_registers #(
         CSR_MHPMCOUNTER28H, CSR_MHPMCOUNTER29H, CSR_MHPMCOUNTER30H, CSR_MHPMCOUNTER31H: begin
           mhpmcounterh_we[mhpmcounter_idx] = 1'b1;
         end
+
+        // CLINTx
+        CSR_MIEX: miex_d = csr_wdata_int;
+
+        // mtvecx
+        // mtvecx.MODE set to vectored
+        // mtvecx.BASE must be 256-byte aligned
+        CSR_MTVECX: mtvecx_d = {csr_wdata_int[31:8], 6'b0, 2'b01};
 
         default:;
       endcase
@@ -656,7 +683,14 @@ module ibex_cs_registers #(
   // Qualify incoming interrupt requests in mip CSR with mie CSR for controller and to re-enable
   // clock upon WFI (must be purely combinational).
   assign irqs_o        = mip & mie_q;
-  assign irq_pending_o = |irqs_o;
+  assign irq_pending_o = (|irqs_o) | (|irqs_x_o);
+
+  // Qualify incoming interrupt requests in mipx CSR with miex CSR for controller and to re-enable
+  // clock upon WFI (must be purely combinational).
+  assign irqs_x_o      = mipx & miex_q;
+
+  // directly output mtvecx to IF stage
+  assign csr_mtvecx_o = mtvecx_q;
 
   // actual registers
   always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -692,6 +726,9 @@ module ibex_cs_registers #(
       mstack_epc_q   <= '0;
       mstack_cause_q <= '0;
 
+      miex_q         <= '0;
+      mtvecx_q       <= 32'b01;
+
     end else begin
       // update CSRs
       priv_lvl_q     <= priv_lvl_d;
@@ -711,6 +748,8 @@ module ibex_cs_registers #(
       mstack_epc_q   <= mstack_epc_d;
       mstack_cause_q <= mstack_cause_d;
 
+      miex_q         <= miex_d;
+      mtvecx_q       <= mtvecx_d;
     end
   end
 

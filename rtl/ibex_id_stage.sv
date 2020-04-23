@@ -124,6 +124,9 @@ module ibex_id_stage #(
     input  ibex_pkg::irqs_t           irqs_i,
     input  logic                      irq_nm_i,
     output logic                      nmi_mode_o,
+    input  logic [31:0]               irqs_x_i,
+    output logic                      irq_x_ack_o,
+    output logic [4:0]                irq_x_ack_id_o,
 
     input  logic                      lsu_load_err_i,
     input  logic                      lsu_store_err_i,
@@ -559,6 +562,9 @@ module ibex_id_stage #(
       .csr_mtval_o                    ( csr_mtval_o             ),
       .priv_mode_i                    ( priv_mode_i             ),
       .csr_mstatus_tw_i               ( csr_mstatus_tw_i        ),
+      .irqs_x_i                       ( irqs_x_i                ),
+      .irq_x_ack_o                    ( irq_x_ack_o             ),
+      .irq_x_ack_id_o                 ( irq_x_ack_id_o          ),
 
       // Debug Signal
       .debug_mode_o                   ( debug_mode_o            ),

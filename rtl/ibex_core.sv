@@ -65,6 +65,9 @@ module ibex_core #(
     input  logic        irq_external_i,
     input  logic [14:0] irq_fast_i,
     input  logic        irq_nm_i,       // non-maskeable interrupt
+    input  logic [31:0] irq_x_i,
+    output logic        irq_x_ack_o,
+    output logic [4:0]  irq_x_ack_id_o,
 
     // Debug Interface
     input  logic        debug_req_i,
@@ -233,6 +236,7 @@ module ibex_core #(
   logic        irq_pending;
   logic        nmi_mode;
   irqs_t       irqs;
+  logic [31:0] irqs_x;
   logic        csr_mstatus_mie;
   logic [31:0] csr_mepc, csr_depc;
 
@@ -251,6 +255,7 @@ module ibex_core #(
   logic        csr_save_cause;
   logic        csr_mtvec_init;
   logic [31:0] csr_mtvec;
+  logic [31:0] csr_mtvecx;
   logic [31:0] csr_mtval;
   logic        csr_mstatus_tw;
   priv_lvl_e   priv_mode_id;
@@ -412,6 +417,7 @@ module ibex_core #(
       .csr_mepc_i               ( csr_mepc               ), // exception return address
       .csr_depc_i               ( csr_depc               ), // debug return address
       .csr_mtvec_i              ( csr_mtvec              ), // trap-vector base address
+      .csr_mtvecx_i             ( csr_mtvecx             ), // x trap-vector base address
       .csr_mtvec_init_o         ( csr_mtvec_init         ),
 
       // pipeline stalls
@@ -536,6 +542,9 @@ module ibex_core #(
       .irqs_i                       ( irqs                     ),
       .irq_nm_i                     ( irq_nm_i                 ),
       .nmi_mode_o                   ( nmi_mode                 ),
+      .irqs_x_i                     ( irqs_x                   ),
+      .irq_x_ack_o                  ( irq_x_ack_o              ),
+      .irq_x_ack_id_o               ( irq_x_ack_id_o           ),
 
       // Debug Signal
       .debug_mode_o                 ( debug_mode               ),
@@ -819,6 +828,7 @@ module ibex_core #(
 
       // mtvec
       .csr_mtvec_o             ( csr_mtvec                ),
+      .csr_mtvecx_o            ( csr_mtvecx               ),
       .csr_mtvec_init_i        ( csr_mtvec_init           ),
       .boot_addr_i             ( boot_addr_i              ),
 
@@ -835,9 +845,11 @@ module ibex_core #(
       .irq_timer_i             ( irq_timer_i              ),
       .irq_external_i          ( irq_external_i           ),
       .irq_fast_i              ( irq_fast_i               ),
+      .irq_x_i                 ( irq_x_i                  ),
       .nmi_mode_i              ( nmi_mode                 ),
       .irq_pending_o           ( irq_pending              ),
       .irqs_o                  ( irqs                     ),
+      .irqs_x_o                ( irqs_x                   ),
       .csr_mstatus_mie_o       ( csr_mstatus_mie          ),
       .csr_mstatus_tw_o        ( csr_mstatus_tw           ),
       .csr_mepc_o              ( csr_mepc                 ),
