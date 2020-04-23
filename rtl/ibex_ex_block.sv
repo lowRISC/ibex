@@ -60,7 +60,7 @@ module ibex_ex_block #(
   logic [33:0] alu_adder_result_ext;
   logic        alu_cmp_result, alu_is_equal_result;
   logic        multdiv_valid;
-  logic        multdiv_en;
+  logic        multdiv_sel;
   logic [31:0] alu_imd_val_d;
   logic        alu_imd_val_we;
   logic [33:0] multdiv_imd_val_d;
@@ -76,12 +76,12 @@ module ibex_ex_block #(
     from the multdiv_i module are eliminated
   */
   if (RV32M) begin : gen_multdiv_m
-    assign multdiv_en     = mult_en_i | div_en_i;
+    assign multdiv_sel = multdiv_sel_i;
   end else begin : gen_multdiv_no_m
-    assign multdiv_en     = 1'b0;
+    assign multdiv_sel = 1'b0;
   end
 
-  assign result_ex_o = multdiv_en ? multdiv_result : alu_result;
+  assign result_ex_o = multdiv_sel ? multdiv_result : alu_result;
 
   // branch handling
   assign branch_decision_o  = alu_cmp_result;
@@ -204,7 +204,9 @@ module ibex_ex_block #(
     );
   end
 
-  // ALU output valid in same cycle, multiplier/divider may require multiple cycles
-  assign ex_valid_o = multdiv_en ? multdiv_valid : !alu_imd_val_we;
+  // Multiplier/divider may require multiple cycles. The ALU output is valid in the same cycle
+  // unless the intermediate result register is being written (which indicates this isn't the
+  // final cycle of ALU operation).
+  assign ex_valid_o = multdiv_sel ? multdiv_valid : !alu_imd_val_we;
 
 endmodule
