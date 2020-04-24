@@ -894,8 +894,8 @@ module ibex_icache #(
   assign output_valid = skid_complete_instr |
                         // Output data available and, output stream aligned, or skid data available,
                         (data_valid & (~output_addr_q[1] | skid_valid_q |
-                         // or this is an unaligned compressed instruction
-                         (output_data[17:16] != 2'b11)));
+                                       // or this is an error or an unaligned compressed instruction
+                                       output_err | (output_data[17:16] != 2'b11)));
 
   // Update the address on branches and every time an instruction is driven
   assign output_addr_en = branch_i | (ready_i & valid_o);
@@ -945,8 +945,8 @@ module ibex_icache #(
   assign addr_o      = {output_addr_q, 1'b0};
   assign err_o       = (skid_valid_q & skid_err_q) | (~skid_complete_instr & output_err);
   // Error caused by the second half of a misaligned uncompressed instruction
-  assign err_plus2_o = output_addr_q[1] & output_err & ~skid_err_q &
-                       ~(output_data[17:16] != 2'b11);
+  // (only relevant when err_o is set)
+  assign err_plus2_o = skid_valid_q & ~skid_err_q;
 
   ///////////////////
   // Invalidations //
