@@ -36,7 +36,6 @@ compile: gen_sv_flist
 ifeq (${build_cmd},vlog)
 	cd ${sv_flist_gen_dir} && vlib work && ${build_cmd} ${build_opts}
 else
-	$(info sim: ${vlog})
 	cd ${sv_flist_gen_dir} && ${build_cmd} ${build_opts}
 endif
 
