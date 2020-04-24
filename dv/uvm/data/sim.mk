@@ -33,7 +33,12 @@ gen_sv_flist: pre_compile ral
 
 compile: gen_sv_flist
 	@echo "[make]: compile"
+ifeq (${build_cmd},vlog)
+	cd ${sv_flist_gen_dir} && vlib work && ${build_cmd} ${build_opts}
+else
+	$(info sim: ${vlog})
 	cd ${sv_flist_gen_dir} && ${build_cmd} ${build_opts}
+endif
 
 post_compile: compile
 	@echo "[make]: post_compile"
