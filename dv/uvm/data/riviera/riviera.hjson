@@ -76,7 +76,6 @@
     {
       name: riviera_xprop
       is_sim_mode: 1
-      # -xverbose  << add to see which modules does not have xprop enabled
       build_opts: []
     }
   ]
