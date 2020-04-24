@@ -15,8 +15,10 @@ module ibex_multdiv_slow
 (
     input  logic             clk_i,
     input  logic             rst_ni,
-    input  logic             mult_en_i,
-    input  logic             div_en_i,
+    input  logic             mult_en_i,  // dynamic enable signal, for FSM control
+    input  logic             div_en_i,   // dynamic enable signal, for FSM control
+    input  logic             mult_sel_i, // static decoder output, for data muxes
+    input  logic             div_sel_i,  // static decoder output, for data muxes
     input  ibex_pkg::md_op_e operator_i,
     input  logic  [1:0]      signed_mode_i,
     input  logic [31:0]      op_a_i,
@@ -78,7 +80,7 @@ module ibex_multdiv_slow
 
   always_comb begin
     alu_operand_a_o   = accum_window_q;
-    multdiv_result_o  = div_en_i ? accum_window_q[31:0] : res_adder_l;
+    multdiv_result_o  = div_sel_i ? accum_window_q[31:0] : res_adder_l;
 
     unique case(operator_i)
 
@@ -179,7 +181,7 @@ module ibex_multdiv_slow
     op_numerator_d   = op_numerator_q;
     md_state_d       = md_state_q;
     multdiv_hold     = 1'b0;
-    if (mult_en_i || div_en_i) begin
+    if (mult_sel_i || div_sel_i) begin
       unique case(md_state_q)
         MD_IDLE: begin
           unique case(operator_i)
@@ -302,8 +304,8 @@ module ibex_multdiv_slow
         default: begin
           md_state_d = MD_IDLE;
         end
-        endcase // md_state_q
-      end
+      endcase // md_state_q
+    end // (mult_sel_i || div_sel_i)
   end
 
   assign valid_o = (md_state_q == MD_FINISH) |

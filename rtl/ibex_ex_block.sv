@@ -30,9 +30,10 @@ module ibex_ex_block #(
 
     // Multiplier/Divider
     input  ibex_pkg::md_op_e      multdiv_operator_i,
-    input  logic                  mult_en_i,
-    input  logic                  div_en_i,
-    input  logic                  multdiv_sel_i,
+    input  logic                  mult_en_i,             // dynamic enable signal, for FSM control
+    input  logic                  div_en_i,              // dynamic enable signal, for FSM control
+    input  logic                  mult_sel_i,            // static decoder output, for data muxes
+    input  logic                  div_sel_i,             // static decoder output, for data muxes
     input  logic  [1:0]           multdiv_signed_mode_i,
     input  logic [31:0]           multdiv_operand_a_i,
     input  logic [31:0]           multdiv_operand_b_i,
@@ -66,22 +67,22 @@ module ibex_ex_block #(
   logic [33:0] multdiv_imd_val_d;
   logic        multdiv_imd_val_we;
 
-  // Intermediate Value Register Mux
-  assign imd_val_d_o  = multdiv_sel_i ? multdiv_imd_val_d : {2'b0, alu_imd_val_d};
-  assign imd_val_we_o = multdiv_sel_i ? multdiv_imd_val_we : alu_imd_val_we;
-
   /*
     The multdiv_i output is never selected if RV32M=0
     At synthesis time, all the combinational and sequential logic
     from the multdiv_i module are eliminated
   */
   if (RV32M) begin : gen_multdiv_m
-    assign multdiv_sel = multdiv_sel_i;
+    assign multdiv_sel = mult_sel_i | div_sel_i;
   end else begin : gen_multdiv_no_m
     assign multdiv_sel = 1'b0;
   end
 
-  assign result_ex_o = multdiv_sel ? multdiv_result : alu_result;
+  // Intermediate Value Register Mux
+  assign imd_val_d_o  = multdiv_sel ? multdiv_imd_val_d : {2'b0, alu_imd_val_d};
+  assign imd_val_we_o = multdiv_sel ? multdiv_imd_val_we : alu_imd_val_we;
+
+  assign result_ex_o  = multdiv_sel ? multdiv_result : alu_result;
 
   // branch handling
   assign branch_decision_o  = alu_cmp_result;
@@ -120,7 +121,7 @@ module ibex_ex_block #(
       .imd_val_d_o         ( alu_imd_val_d           ),
       .multdiv_operand_a_i ( multdiv_alu_operand_a   ),
       .multdiv_operand_b_i ( multdiv_alu_operand_b   ),
-      .multdiv_sel_i       ( multdiv_sel_i           ),
+      .multdiv_sel_i       ( multdiv_sel             ),
       .adder_result_o      ( alu_adder_result_ex_o   ),
       .adder_result_ext_o  ( alu_adder_result_ext    ),
       .result_o            ( alu_result              ),
@@ -138,6 +139,8 @@ module ibex_ex_block #(
         .rst_ni             ( rst_ni                ),
         .mult_en_i          ( mult_en_i             ),
         .div_en_i           ( div_en_i              ),
+        .mult_sel_i         ( mult_sel_i            ),
+        .div_sel_i          ( div_sel_i             ),
         .operator_i         ( multdiv_operator_i    ),
         .signed_mode_i      ( multdiv_signed_mode_i ),
         .op_a_i             ( multdiv_operand_a_i   ),
@@ -162,6 +165,8 @@ module ibex_ex_block #(
         .rst_ni                ( rst_ni                ),
         .mult_en_i             ( mult_en_i             ),
         .div_en_i              ( div_en_i              ),
+        .mult_sel_i            ( mult_sel_i            ),
+        .div_sel_i             ( div_sel_i             ),
         .operator_i            ( multdiv_operator_i    ),
         .signed_mode_i         ( multdiv_signed_mode_i ),
         .op_a_i                ( multdiv_operand_a_i   ),
@@ -186,6 +191,8 @@ module ibex_ex_block #(
         .rst_ni                ( rst_ni                ),
         .mult_en_i             ( mult_en_i             ),
         .div_en_i              ( div_en_i              ),
+        .mult_sel_i            ( mult_sel_i            ),
+        .div_sel_i             ( div_sel_i             ),
         .operator_i            ( multdiv_operator_i    ),
         .signed_mode_i         ( multdiv_signed_mode_i ),
         .op_a_i                ( multdiv_operand_a_i   ),

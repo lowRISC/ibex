@@ -78,9 +78,9 @@ module ibex_decoder #(
 
     // MULT & DIV
     output logic                 mult_en_o,             // perform integer multiplication
-    output logic                 div_en_o,              // perform integer division or
-                                                        // remainder
-    output logic                 multdiv_sel_o,
+    output logic                 div_en_o,              // perform integer division or remainder
+    output logic                 mult_sel_o,            // as above but static, for data muxes
+    output logic                 div_sel_o,             // as above but static, for data muxes
 
     output ibex_pkg::md_op_e     multdiv_operator_o,
     output logic [1:0]           multdiv_signed_mode_o,
@@ -176,38 +176,36 @@ module ibex_decoder #(
   /////////////
 
   always_comb begin
-    jump_in_dec_o               = 1'b0;
-    jump_set_o                  = 1'b0;
-    branch_in_dec_o             = 1'b0;
-    icache_inval_o              = 1'b0;
+    jump_in_dec_o         = 1'b0;
+    jump_set_o            = 1'b0;
+    branch_in_dec_o       = 1'b0;
+    icache_inval_o        = 1'b0;
 
-    mult_en_o                   = 1'b0;
-    div_en_o                    = 1'b0;
-    multdiv_operator_o          = MD_OP_MULL;
-    multdiv_signed_mode_o       = 2'b00;
+    multdiv_operator_o    = MD_OP_MULL;
+    multdiv_signed_mode_o = 2'b00;
 
-    rf_wdata_sel_o              = RF_WD_EX;
-    rf_we                       = 1'b0;
-    rf_ren_a_o                  = 1'b0;
-    rf_ren_b_o                  = 1'b0;
+    rf_wdata_sel_o        = RF_WD_EX;
+    rf_we                 = 1'b0;
+    rf_ren_a_o            = 1'b0;
+    rf_ren_b_o            = 1'b0;
 
-    csr_access_o                = 1'b0;
-    csr_illegal                 = 1'b0;
-    csr_op                      = CSR_OP_READ;
+    csr_access_o          = 1'b0;
+    csr_illegal           = 1'b0;
+    csr_op                = CSR_OP_READ;
 
-    data_we_o                   = 1'b0;
-    data_type_o                 = 2'b00;
-    data_sign_extension_o       = 1'b0;
-    data_req_o                  = 1'b0;
+    data_we_o             = 1'b0;
+    data_type_o           = 2'b00;
+    data_sign_extension_o = 1'b0;
+    data_req_o            = 1'b0;
 
-    illegal_insn                = 1'b0;
-    ebrk_insn_o                 = 1'b0;
-    mret_insn_o                 = 1'b0;
-    dret_insn_o                 = 1'b0;
-    ecall_insn_o                = 1'b0;
-    wfi_insn_o                  = 1'b0;
+    illegal_insn          = 1'b0;
+    ebrk_insn_o           = 1'b0;
+    mret_insn_o           = 1'b0;
+    dret_insn_o           = 1'b0;
+    ecall_insn_o          = 1'b0;
+    wfi_insn_o            = 1'b0;
 
-    opcode                      = opcode_e'(instr[6:0]);
+    opcode                = opcode_e'(instr[6:0]);
 
     unique case (opcode)
 
@@ -432,52 +430,44 @@ module ibex_decoder #(
             {7'b000_0100, 3'b001}, // shfl
             {7'b000_0100, 3'b101}: illegal_insn = RV32B ? 1'b0 : 1'b1; // unshfl
 
-            // supported RV32M instructions
+            // RV32M instructions
             {7'b000_0001, 3'b000}: begin // mul
               multdiv_operator_o    = MD_OP_MULL;
-              mult_en_o             = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b00;
               illegal_insn          = RV32M ? 1'b0 : 1'b1;
             end
             {7'b000_0001, 3'b001}: begin // mulh
               multdiv_operator_o    = MD_OP_MULH;
-              mult_en_o             = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b11;
               illegal_insn          = RV32M ? 1'b0 : 1'b1;
             end
             {7'b000_0001, 3'b010}: begin // mulhsu
               multdiv_operator_o    = MD_OP_MULH;
-              mult_en_o             = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b01;
               illegal_insn          = RV32M ? 1'b0 : 1'b1;
             end
             {7'b000_0001, 3'b011}: begin // mulhu
               multdiv_operator_o    = MD_OP_MULH;
-              mult_en_o             = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b00;
               illegal_insn          = RV32M ? 1'b0 : 1'b1;
             end
             {7'b000_0001, 3'b100}: begin // div
               multdiv_operator_o    = MD_OP_DIV;
-              div_en_o              = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b11;
               illegal_insn          = RV32M ? 1'b0 : 1'b1;
             end
             {7'b000_0001, 3'b101}: begin // divu
               multdiv_operator_o    = MD_OP_DIV;
-              div_en_o              = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b00;
               illegal_insn          = RV32M ? 1'b0 : 1'b1;
             end
             {7'b000_0001, 3'b110}: begin // rem
               multdiv_operator_o    = MD_OP_REM;
-              div_en_o              = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b11;
               illegal_insn          = RV32M ? 1'b0 : 1'b1;
             end
             {7'b000_0001, 3'b111}: begin // remu
               multdiv_operator_o    = MD_OP_REM;
-              div_en_o              = RV32M ? 1'b1 : 1'b0;
               multdiv_signed_mode_o = 2'b00;
               illegal_insn          = RV32M ? 1'b0 : 1'b1;
             end
@@ -589,8 +579,6 @@ module ibex_decoder #(
       rf_we           = 1'b0;
       data_req_o      = 1'b0;
       data_we_o       = 1'b0;
-      mult_en_o       = 1'b0;
-      div_en_o        = 1'b0;
       jump_in_dec_o   = 1'b0;
       jump_set_o      = 1'b0;
       branch_in_dec_o = 1'b0;
@@ -613,12 +601,13 @@ module ibex_decoder #(
     bt_a_mux_sel_o     = OP_A_CURRPC;
     bt_b_mux_sel_o     = IMM_B_I;
 
-    multdiv_sel_o      = 1'b0;
 
     opcode_alu         = opcode_e'(instr_alu[6:0]);
 
     use_rs3            = 1'b0;
     alu_multicycle_o   = 1'b0;
+    mult_sel_o         = 1'b0;
+    div_sel_o          = 1'b0;
 
     unique case (opcode_alu)
 
@@ -928,17 +917,38 @@ module ibex_decoder #(
             {7'b011_0100, 3'b001}: if (RV32B) alu_operator_o = ALU_SBINV;  // sbinv
             {7'b010_0100, 3'b101}: if (RV32B) alu_operator_o = ALU_SBEXT;  // sbext
 
-            // supported RV32M instructions, all use the same ALU operation
-            {7'b000_0001, 3'b000}, // mul
-            {7'b000_0001, 3'b001}, // mulh
-            {7'b000_0001, 3'b010}, // mulhsu
-            {7'b000_0001, 3'b011}, // mulhu
-            {7'b000_0001, 3'b100}, // div
-            {7'b000_0001, 3'b101}, // divu
-            {7'b000_0001, 3'b110}, // rem
+            // RV32M instructions, all use the same ALU operation
+            {7'b000_0001, 3'b000}: begin // mul
+              alu_operator_o = ALU_ADD;
+              mult_sel_o     = RV32M ? 1'b1 : 1'b0;
+            end
+            {7'b000_0001, 3'b001}: begin // mulh
+              alu_operator_o = ALU_ADD;
+              mult_sel_o     = RV32M ? 1'b1 : 1'b0;
+            end
+            {7'b000_0001, 3'b010}: begin // mulhsu
+              alu_operator_o = ALU_ADD;
+              mult_sel_o     = RV32M ? 1'b1 : 1'b0;
+            end
+            {7'b000_0001, 3'b011}: begin // mulhu
+              alu_operator_o = ALU_ADD;
+              mult_sel_o     = RV32M ? 1'b1 : 1'b0;
+            end
+            {7'b000_0001, 3'b100}: begin // div
+              alu_operator_o = ALU_ADD;
+              div_sel_o      = RV32M ? 1'b1 : 1'b0;
+            end
+            {7'b000_0001, 3'b101}: begin // divu
+              alu_operator_o = ALU_ADD;
+              div_sel_o      = RV32M ? 1'b1 : 1'b0;
+            end
+            {7'b000_0001, 3'b110}: begin // rem
+              alu_operator_o = ALU_ADD;
+              div_sel_o      = RV32M ? 1'b1 : 1'b0;
+            end
             {7'b000_0001, 3'b111}: begin // remu
-              multdiv_sel_o         = 1'b1;
-              alu_operator_o        = ALU_ADD;
+              alu_operator_o = ALU_ADD;
+              div_sel_o      = RV32M ? 1'b1 : 1'b0;
             end
 
             default: ;
@@ -998,6 +1008,10 @@ module ibex_decoder #(
       default: ;
     endcase
   end
+
+  // do not enable multdiv in case of illegal instruction exceptions
+  assign mult_en_o = illegal_insn ? 1'b0 : mult_sel_o;
+  assign div_en_o  = illegal_insn ? 1'b0 : div_sel_o;
 
   // make sure instructions accessing non-available registers in RV32E cause illegal
   // instruction exceptions
