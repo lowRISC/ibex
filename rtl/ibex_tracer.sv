@@ -441,7 +441,7 @@ module ibex_tracer (
     // fsri
     logic [5:0] shamt;
     shamt = {rvfi_insn[25:20]};
-    data_accessed = RS1 | RS3;
+    data_accessed = RS1 | RS3 | RD;
     decoded_str = $sformatf("%s\tx%0d,x%0d,x%0d,0x%0x", mnemonic, rvfi_rd_addr, rvfi_rs1_addr,
         rvfi_rs3_addr, shamt);
   endfunction
