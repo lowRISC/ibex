@@ -624,7 +624,7 @@ module ibex_icache #(
                                  // make a fill request once all data beats received
     assign fill_ram_req[fb]    = fill_busy_q[fb] & fill_rvd_cnt_q[fb][LINE_BEATS_W] &
                                  // unless the request hit, was non-allocating or got an error
-                                 ~fill_hit_q[fb] & fill_cache_q[fb] & ~|fill_err_q &
+                                 ~fill_hit_q[fb] & fill_cache_q[fb] & ~|fill_err_q[fb] &
                                  // or the request was already completed
                                  ~fill_ram_done_q[fb];
 
