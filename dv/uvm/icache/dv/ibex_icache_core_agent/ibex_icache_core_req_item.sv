@@ -45,9 +45,9 @@ class ibex_icache_core_req_item extends uvm_sequence_item;
   }
 
   constraint c_invalidate_dist {
-    // Poke the cache invalidate line one time in 500. This takes ages and we don't want to
+    // Poke the cache invalidate line one time in 50. This takes ages and we don't want to
     // accidentally spend most of the test waiting for invalidation.
-    invalidate dist { 0 :/ 499, 1 :/ 1 };
+    invalidate dist { 0 :/ 49, 1 :/ 1 };
   }
 
   constraint c_num_insns_dist {
