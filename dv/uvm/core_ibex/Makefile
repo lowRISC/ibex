@@ -40,7 +40,7 @@ ISS                 := ovpsim
 # ISS runtime options
 ISS_OPTS            :=
 # ISA
-ISA                 := rv32imc
+ISA                 := rv32imcb
 # Test name (default: full regression)
 TEST                := all
 TESTLIST            := riscv_dv_extension/testlist.yaml
@@ -394,7 +394,7 @@ fcov:
           --core ibex \
           --dir ${OUT-SEED}/rtl_sim \
           -o ${OUT-SEED}/fcov \
-          --isa rv32imc \
+          --isa rv32imcb \
           --custom_target riscv_dv_extension
 
 # Merge all output coverage directories into the <out>/rtl_sim directory
