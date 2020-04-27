@@ -10,7 +10,7 @@ class ibex_icache_core_sanity_seq extends ibex_icache_core_base_seq;
   `uvm_object_new
 
   rand int count;
-  constraint c_count { count > 0; count < 100; }
+  constraint c_count { count inside {[800:1000]}; }
 
   task body();
     // If this is set, the next request will be constrained to have trans_type
