@@ -55,9 +55,10 @@ typedef enum logic [5:0] {
   ALU_SLO,
   ALU_ROR,
   ALU_ROL,
-  ALU_REV,
-  ALU_REV8,
-  ALU_ORCB,
+  ALU_GREV,
+  ALU_GORC,
+  ALU_SHFL,
+  ALU_UNSHFL,
 
   // Comparisons
   ALU_LT,
