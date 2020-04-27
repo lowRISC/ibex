@@ -41,8 +41,13 @@ class ibex_icache_core_monitor extends dv_base_monitor #(
 
       // "Output" transactions
 
-      // Spot whether we've received some instruction data
-      if (cfg.vif.ready & cfg.vif.valid) begin
+      // Spot whether we've received some instruction data.
+      //
+      // Note that we ignore anything coming back when we have branch asserted. This can happen if
+      // timing happens to work out that way or (more likely) the cycle after we've read an error,
+      // when we can keep the ready line high but also assert branch, which means we will ignore
+      // what comes back on this cycle.
+      if (cfg.vif.ready & cfg.vif.valid & ~cfg.vif.branch) begin
         trans = ibex_icache_core_bus_item::type_id::create("trans");
         trans.trans_type = ICacheCoreBusTransTypeFetch;
         trans.address    = cfg.vif.addr;
