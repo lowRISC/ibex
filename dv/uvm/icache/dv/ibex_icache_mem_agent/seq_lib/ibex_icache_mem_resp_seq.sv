@@ -29,6 +29,7 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
         // address. The other fields are ignored.
         resp_item.is_grant = 1'b0;
         resp_item.err      = mem_model.is_pmp_error(req_item.address);
+        resp_item.address  = req_item.address;
         resp_item.rdata    = 'X;
 
       end else begin
@@ -42,6 +43,7 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
 
         resp_item.is_grant = 1'b1;
         resp_item.err      = mem_model.is_mem_error(req_item.address);
+        resp_item.address  = req_item.address;
         resp_item.rdata    = resp_item.err ? 'X : mem_model.read_data(req_item.address);
       end
 
