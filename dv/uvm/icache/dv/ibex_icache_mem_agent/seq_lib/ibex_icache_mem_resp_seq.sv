@@ -30,10 +30,6 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
         resp_item.is_grant = 1'b0;
         resp_item.err      = mem_model.is_pmp_error(req_item.address);
         resp_item.rdata    = 'X;
-        `uvm_info(`gfn,
-                  $sformatf("Seen request at address 0x%08h (PMP error? %0d)",
-                            req_item.address, resp_item.err),
-                  UVM_LOW)
 
       end else begin
         // If this is a grant, take any new seed then check the memory model for a (non-PMP) error
