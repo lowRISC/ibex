@@ -143,7 +143,7 @@ class ibex_icache_core_driver
   virtual task automatic invalidate();
     int unsigned num_cycles;
     `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(num_cycles,
-                                       num_cycles dist { 0 :/ 499, [1:20] :/ 1 };)
+                                       num_cycles dist { 1 :/ 10, [2:20] :/ 1 };)
     cfg.vif.invalidate_pulse(num_cycles);
   endtask
 

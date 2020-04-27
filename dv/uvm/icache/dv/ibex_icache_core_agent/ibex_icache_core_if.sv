@@ -84,7 +84,7 @@ interface ibex_icache_core_if (input clk, input rst_n);
   //
   // A one-cycle pulse will start an invalidation, but testing might want a longer pulse (which the
   // cache should support)
-  task automatic invalidate_pulse(int num_cycles);
+  task automatic invalidate_pulse(int unsigned num_cycles);
     driver_cb.invalidate <= 1'b1;
     wait_clks(num_cycles);
     driver_cb.invalidate <= 1'b0;
