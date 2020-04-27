@@ -18,6 +18,9 @@ class ibex_icache_mem_resp_item
   // If true, drive either a PMP error (if !is_grant) or respond later with a memory error.
   bit               err;
 
+  // The address of the memory response (only used for requests that trigger a PMP error)
+  bit [31:0]        address;
+
   // Only has an effect if is_grant. The number of cycles to wait between reading this from the
   // queue and responding with it.
   rand int unsigned delay;
@@ -42,6 +45,7 @@ class ibex_icache_mem_resp_item
   `uvm_object_utils_begin(ibex_icache_mem_resp_item)
     `uvm_field_int (is_grant, UVM_DEFAULT)
     `uvm_field_int (err,      UVM_DEFAULT)
+    `uvm_field_int (address,  UVM_DEFAULT | UVM_HEX)
     `uvm_field_int (delay,    UVM_DEFAULT)
     `uvm_field_int (rdata,    UVM_DEFAULT | UVM_HEX)
   `uvm_object_utils_end

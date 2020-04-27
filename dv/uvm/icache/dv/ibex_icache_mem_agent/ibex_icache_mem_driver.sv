@@ -18,7 +18,7 @@ class ibex_icache_mem_driver
   int unsigned max_grant_delay = 10;
 
   mailbox #(ibex_icache_mem_resp_item) rdata_queue;
-  bit                                  pmp_driven;
+  mailbox #(bit [31:0])                pmp_queue;
 
   `uvm_component_utils(ibex_icache_mem_driver)
   `uvm_component_new
@@ -26,7 +26,7 @@ class ibex_icache_mem_driver
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
     rdata_queue = new("rdata_queue");
-    pmp_driven  = 1'b0;
+    pmp_queue   = new("pmp_queue");
   endfunction
 
   virtual task reset_signals();
@@ -38,6 +38,7 @@ class ibex_icache_mem_driver
     fork
       drive_grant();
       take_requests();
+      drive_pmp();
       drive_responses();
     join
   endtask
@@ -72,11 +73,11 @@ class ibex_icache_mem_driver
 
       // Is this a request or a grant?
       if (!req.is_grant) begin
-        // If a request, we'll deal with it immediately, spawning a process that drives the PMP line
-        // until the request goes away.
-        fork
-          drive_pmp(req.err);
-        join_none
+        // If a request, it's ignored unless it causes a PMP error. In that case, we push the
+        // address onto pmp_queue.
+        if (req.err) begin
+          pmp_queue.put(req.address);
+        end
       end else begin
         // If a grant, we take a copy and add it to the response queue (handled by drive_responses)
         $cast(rsp, req.clone());
@@ -102,35 +103,33 @@ class ibex_icache_mem_driver
 
   // Drive the PMP line.
   //
-  // This task gets spawned by take_requests each time a new address comes in. The driver should
-  // have at most one instance running at once.
+  // This task samples from a "PMP" mailbox, which gets a new item from take_requests each time a
+  // new request comes in whose address would be squashed by the PMP.
   //
-  // If err is false, there is nothing to do. If err is true, it sets the PMP error flag and then
-  // waits until either req is de-asserted or the address changes, at which point it clears the flag
-  // and exits.
-  task automatic drive_pmp(bit err);
+  // Since this isn't synchronised with a clock edge, it's not really possible to avoid glitches and
+  // to only add items when the "right" address has arrived. Instead, this task gets the address
+  // that caused the error. As soon as req is low OR the address on the bus doesn't match, this
+  // driver clears the address and exits. The idea is that if stuff gets out of sync for a delta
+  // cycle or two, drive_pmp can discard items to catch up.
+  task automatic drive_pmp();
+    bit [31:0] address;
 
-    // This is a simple check to make sure that only one instance of the drive_pmp task is running
-    // at a time. If not, you'll have multiple drivers for the cfg.vif.pmp_err signal, which is
-    // probably going to be very confusing. The logic in the monitor's collect_requests() task is
-    // supposed to be in sync with this code so that this can't happen, but it can't hurt to make
-    // sure.
-    if (pmp_driven) begin
-      `uvm_error(`gfn, "drive_pmp is not re-entrant: bug in monitor?")
-      return;
+    forever begin
+      pmp_queue.get(address);
+
+      // The address we just got means "The req line should be high and the address should be this
+      // one. Squash the request with a PMP error".
+      //
+      // If the req line is low, or the address doesn't match, skip this item.
+      if ((!cfg.vif.req) || (cfg.vif.addr != address)) continue;
+
+      cfg.vif.pmp_err <= 1'b1;
+
+      // Wait for an address change or req to de-assert
+      @(negedge cfg.vif.req or cfg.vif.addr);
+
+      cfg.vif.pmp_err <= 1'b0;
     end
-
-    if (! err)
-      return;
-
-    pmp_driven = 1'b1;
-    cfg.vif.pmp_err <= 1'b1;
-
-    // Wait for an address change or req to de-assert
-    @(negedge cfg.vif.req or cfg.vif.addr);
-
-    cfg.vif.pmp_err <= 1'b0;
-    pmp_driven = 1'b0;
   endtask
 
 endclass
