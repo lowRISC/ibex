@@ -7,7 +7,6 @@ Utility functions common across dvsim.
 
 import logging as log
 import os
-import pprint
 import re
 import shlex
 import subprocess
@@ -63,7 +62,8 @@ def run_cmd_with_timeout(cmd, timeout=-1, exit_on_failure=1):
 
     if status != 0:
         log.error("cmd \"%s\" exited with status %d", cmd, status)
-        if exit_on_failure == 1: sys.exit(status)
+        if exit_on_failure == 1:
+            sys.exit(status)
 
     return (result, status)
 
@@ -90,8 +90,10 @@ def subst_wildcards(var, mdict, ignored_wildcards=[], ignore_error=False):
     If var has wildcards specified within {..}, find and substitute them.
     '''
     def subst(wildcard, mdict):
-        if wildcard in mdict.keys(): return mdict[wildcard]
-        else: return None
+        if wildcard in mdict.keys():
+            return mdict[wildcard]
+        else:
+            return None
 
     if "{eval_cmd}" in var:
         idx = var.find("{eval_cmd}") + 11
@@ -133,7 +135,8 @@ def subst_wildcards(var, mdict, ignored_wildcards=[], ignore_error=False):
                     else:
                         # Check if the wildcard exists as an environment variable
                         env_var = os.environ.get(item)
-                        if env_var is not None: subst_list[item] = env_var
+                        if env_var is not None:
+                            subst_list[item] = env_var
                         elif not ignore_error:
                             log.error(
                                 "Substitution for the wildcard \"%s\" not found",
@@ -206,17 +209,45 @@ def md_results_to_html(title, css_path, md_text):
 
 
 def htmc_color_pc_cells(text):
-    '''This function finds cells in a html table that contains a "%" sign. It then
-    uses the number in front if the % sign to color the cell based on the value
-    from a shade from red to green. These color styles are encoded in ./style.css
-    which is assumed to be accessible by the final webpage.
+    '''This function finds cells in a html table that contain numerical values
+    (and a few known strings) followed by a single space and an identifier.
+    Depending on the identifier, it shades the cell in a specific way. A set of
+    12 color palettes for setting those shades are encoded in ./style.css.
+    These are 'cna' (grey), 'c0' (red), 'c1' ... 'c10' (green). The shade 'cna'
+    is used for items that are maked as 'not applicable'. The shades 'c1' to
+    'c9' form a gradient from red to lime-green to indicate 'levels of
+    completeness'. 'cna' is used for greying out a box for 'not applicable'
+    items, 'c0' is for items that are considered risky (or not yet started) and
+    'c10' for items that have completed successfully, or that are
+    'in good standing'.
 
-    This function is now augmented to also take "E" or "W" as identifiers along
-    with "%". For example, '10 W' is indicative of 10 warnings, and will be color
-    coded with yellow. Likewise, "7 E" indicates 7 errors and will be color coded
-    with red. A value of 0 in both cases will be color coded with green.
+    These are the supported identifiers: %, %u, G, B, E, W, EN, WN.
+    The shading behavior for these is described below.
 
-    Note that a space between the value and the indicators (%, E, W) is mandatory.
+    %:  Coloured percentage, where the number in front of the '%' sign is mapped
+        to a color for the cell ranging from red ('c0') to green ('c10').
+    %u: Uncoloured percentage, where no markup is applied and '%u' is replaced
+        with '%' in the output.
+    G:  This stands for 'Good' and results in a green cell.
+    B:  This stands for 'Bad' and results in a red cell.
+    E:  This stands for 'Errors' and the cell is colored with red if the number
+        in front of the indicator is larger than 0. Otherwise the cell is
+        colored with green.
+    W:  This stands for 'Warnings' and the cell is colored with yellow ('c6')
+        if the number in front of the indicator is larger than 0. Otherwise
+        the cell is colored with green.
+    EN: This stands for 'Errors Negative', which behaves the same as 'E' except
+        that the cell is colored red if the number in front of the indicator is
+        negative.
+    WN: This stands for 'Warnings Negative', which behaves the same as 'W'
+        except that the cell is colored yellow if the number in front of the
+        indicator is negative.
+
+    N/A items can have any of the following indicators and need not be
+    preceeded with a numerical value:
+
+    '--', 'NA', 'N.A.', 'N.A', 'N/A', 'na', 'n.a.', 'n.a', 'n/a'
+
     '''
 
     # Replace <td> with <td class="color-class"> based on the fp
@@ -226,7 +257,7 @@ def htmc_color_pc_cells(text):
     def color_cell(cell, cclass, indicator="%"):
         op = cell.replace("<td", "<td class=\"" + cclass + "\"")
         # Remove the indicator.
-        op = re.sub(r"\s*" + indicator + "\s*", "", op)
+        op = re.sub(r"\s*" + indicator + r"\s*", "", op)
         return op
 
     # List of 'not applicable' identifiers.
@@ -234,12 +265,11 @@ def htmc_color_pc_cells(text):
     na_list_patterns = '|'.join(na_list)
 
     # List of floating point patterns: '0', '0.0' & '.0'
-    fp_patterns = "\d+|\d+\.\d+|\.\d+"
+    fp_patterns = r"[\+\-]?\d+\.?\d*"
 
     patterns = fp_patterns + '|' + na_list_patterns
-    indicators = "%|E|W"
-    match = re.findall(
-        r"(<td.*>\s*(" + patterns + ")\s+(" + indicators + ")\s*</td>)", text)
+    indicators = "%|%u|G|B|E|W|EN|WN"
+    match = re.findall(r"(<td.*>\s*(" + patterns + r")\s+(" + indicators + r")\s*</td>)", text)
     if len(match) > 0:
         subst_list = {}
         fp_nums = []
@@ -250,20 +280,23 @@ def htmc_color_pc_cells(text):
             fp_num = item[1]
             indicator = item[2]
             # Skip if fp_num is already processed.
-            if (fp_num, indicator) in fp_nums: continue
+            if (fp_num, indicator) in fp_nums:
+                continue
             fp_nums.append((fp_num, indicator))
-            if fp_num in na_list: subst = color_cell(cell, "cna", indicator)
+            if fp_num in na_list:
+                subst = color_cell(cell, "cna", indicator)
             else:
                 # Item is a fp num.
                 try:
                     fp = float(fp_num)
                 except ValueError:
-                    log.error("Percentage item \"%s\" in cell \"%s\" is not an " + \
+                    log.error("Percentage item \"%s\" in cell \"%s\" is not an "
                               "integer or a floating point number", fp_num, cell)
                     continue
+                # Percentage, colored.
                 if indicator == "%":
-                    # Item is a percentage.
-                    if fp >= 0.0 and fp < 10.0: subst = color_cell(cell, "c0")
+                    if fp >= 0.0 and fp < 10.0:
+                        subst = color_cell(cell, "c0")
                     elif fp >= 10.0 and fp < 20.0:
                         subst = color_cell(cell, "c1")
                     elif fp >= 20.0 and fp < 30.0:
@@ -284,14 +317,32 @@ def htmc_color_pc_cells(text):
                         subst = color_cell(cell, "c9")
                     elif fp >= 100.0:
                         subst = color_cell(cell, "c10")
-                else:
-                    # Item is a error or a warning num.
-                    # Use "c6" (yellow) for warnings and "c0" (red) for errors.
-                    if fp == 0:
+                # Percentage, uncolored.
+                elif indicator == "%u":
+                    subst = cell.replace("%u", "%")
+                # Good: green
+                elif indicator == "G":
+                    subst = color_cell(cell, "c10", indicator)
+                # Bad: red
+                elif indicator == "B":
+                    subst = color_cell(cell, "c0", indicator)
+                # Bad if positive: red for errors, yellow for warnings,
+                # otherwise green.
+                elif indicator in ["E", "W"]:
+                    if fp <= 0:
                         subst = color_cell(cell, "c10", indicator)
                     elif indicator == "W":
                         subst = color_cell(cell, "c6", indicator)
                     elif indicator == "E":
+                        subst = color_cell(cell, "c0", indicator)
+                # Bad if negative: red for errors, yellow for warnings,
+                # otherwise green.
+                elif indicator in ["EN", "WN"]:
+                    if fp >= 0:
+                        subst = color_cell(cell, "c10", indicator)
+                    elif indicator == "WN":
+                        subst = color_cell(cell, "c6", indicator)
+                    elif indicator == "EN":
                         subst = color_cell(cell, "c0", indicator)
             subst_list[cell] = subst
         for item in subst_list:

@@ -18,10 +18,12 @@ import logging as log
 import os
 import subprocess
 import sys
+from signal import SIGINT, signal
 
 import Deploy
 import LintCfg
 import SimCfg
+import SynCfg
 import utils
 
 # TODO: add dvsim_cfg.hjson to retrieve this info
@@ -99,6 +101,14 @@ def get_proj_root():
     return (proj_root)
 
 
+def sigint_handler(signal_received, frame):
+    # Kill processes and background jobs.
+    log.debug('SIGINT or CTRL-C detected. Exiting gracefully')
+    cfg.kill()
+    log.info('Exit due to SIGINT or CTRL-C ')
+    exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description=__doc__,
@@ -128,8 +138,17 @@ def main():
     parser.add_argument("-t",
                         "--tool",
                         default="",
-                        metavar="vcs|xcelium|ascentlint|...",
+                        metavar="vcs|xcelium|ascentlint|veriblelint|dc|...",
                         help="Override the tool that is set in hjson file")
+
+    parser.add_argument(
+        "-select_cfgs",
+        nargs="*",
+        default=[],
+        metavar="cfg1, cfg2, cfg3, ...",
+        help="""Specifies which cfg(s) of the master cfg shall be processed.
+                If this switch is not specified, dvsim will process all cfgs specified in
+                the master cfg list.""")
 
     parser.add_argument(
         "-sr",
@@ -335,11 +354,6 @@ def main():
         """By default, failing tests will be automatically be rerun with waves;
                 this option will prevent the rerun from being triggered""")
 
-    parser.add_argument("--skip-ral",
-                        default=False,
-                        action='store_true',
-                        help="""Skip the ral generation step.""")
-
     parser.add_argument("-v",
                         "--verbosity",
                         default="l",
@@ -347,12 +361,6 @@ def main():
                         help="""Set verbosity to none/low/medium/high/debug;
                                 This will override any setting added to any of the hjson files
                                 used for config""")
-
-    parser.add_argument("--email",
-                        nargs="+",
-                        default=[],
-                        metavar="",
-                        help="""email the report to specified addresses""")
 
     parser.add_argument(
         "--verbose",
@@ -444,9 +452,9 @@ def main():
 
     # Add timestamp to args that all downstream objects can use.
     # Static variables - indicate timestamp.
-    ts_format_long = "%A %B %d %Y %I:%M:%S%p %Z"
+    ts_format_long = "%A %B %d %Y %I:%M:%S%p UTC"
     ts_format = "%a.%m.%d.%y__%I.%M.%S%p"
-    curr_ts = datetime.datetime.now()
+    curr_ts = datetime.datetime.utcnow()
     timestamp_long = curr_ts.strftime(ts_format_long)
     timestamp = curr_ts.strftime(ts_format)
     setattr(args, "ts_format_long", ts_format_long)
@@ -477,12 +485,17 @@ def main():
     else:
         proj_root = get_proj_root()
 
+    global cfg
     # TODO: SimCfg item below implies DV - need to solve this once we add FPV
     # and other ASIC flow targets.
-    if args.tool == 'ascentlint':
+    if args.tool in ['ascentlint', 'veriblelint']:
         cfg = LintCfg.LintCfg(args.cfg, proj_root, args)
+    elif args.tool == 'dc':
+        cfg = SynCfg.SynCfg(args.cfg, proj_root, args)
     else:
         cfg = SimCfg.SimCfg(args.cfg, proj_root, args)
+    # Handle Ctrl-C exit.
+    signal(SIGINT, sigint_handler)
 
     # List items available for run if --list switch is passed, and exit.
     if args.list != []:
@@ -493,6 +506,7 @@ def main():
     # tool.
     if args.cov_analyze:
         cfg.cov_analyze()
+        cfg.deploy_objects()
         sys.exit(0)
 
     # Purge the scratch path if --purge option is set.

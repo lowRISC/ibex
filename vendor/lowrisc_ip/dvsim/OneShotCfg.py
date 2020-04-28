@@ -6,13 +6,14 @@ Class describing a one-shot build configuration object
 """
 
 import logging as log
+import os
 import sys
 from collections import OrderedDict
 
-from Deploy import *
+from Deploy import CompileOneShot
 from FlowCfg import FlowCfg
-from Modes import *
-from utils import *
+from Modes import BuildModes, Modes
+from utils import find_and_substitute_wildcards
 
 
 class OneShotCfg(FlowCfg):
@@ -24,10 +25,14 @@ class OneShotCfg(FlowCfg):
 
         # Options set from command line
         self.tool = args.tool
-        self.email = args.email
         self.verbose = args.verbose
+        self.flist_gen_cmd = ""
+        self.flist_gen_opts = []
+        self.sv_flist_gen_dir = ""
+        self.flist_file = ""
         self.build_cmd = ""
         self.build_opts = []
+        self.build_log = ""
         self.report_cmd = ""
         self.report_opts = []
         self.build_opts.extend(args.build_opts)
