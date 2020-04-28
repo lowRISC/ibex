@@ -5,16 +5,14 @@ r"""
 Class describing lint configuration object
 """
 
+import hjson
 import logging as log
-import sys
 from pathlib import Path
 
 from tabulate import tabulate
 
-from Deploy import *
-from Modes import *
 from OneShotCfg import OneShotCfg
-from utils import *
+from utils import subst_wildcards
 
 
 # helper function for printing messages
@@ -24,7 +22,6 @@ def _print_msg_list(msg_list_name, msg_list):
         md_results += "### %s\n" % msg_list_name
         md_results += "```\n"
         for msg in msg_list:
-            msg_parts = msg.split()
             md_results += msg + "\n\n"
         md_results += "```\n"
     return md_results
@@ -34,12 +31,24 @@ class LintCfg(OneShotCfg):
     """Derivative class for linting purposes.
     """
     def __init__(self, flow_cfg_file, proj_root, args):
+        # This is a lint-specific attribute
+        self.is_style_lint = ""
         super().__init__(flow_cfg_file, proj_root, args)
 
     def __post_init__(self):
         super().__post_init__()
+
+        # Convert to boolean
+        if self.is_style_lint == "True":
+            self.is_style_lint = True
+        else:
+            self.is_style_lint = False
+
         # Set the title for lint results.
-        self.results_title = self.name.upper() + " Lint Results"
+        if self.is_style_lint:
+            self.results_title = self.name.upper() + " Style Lint Results"
+        else:
+            self.results_title = self.name.upper() + " Lint Results"
 
     @staticmethod
     def create_instance(flow_cfg_file, proj_root, args):
@@ -52,8 +61,7 @@ class LintCfg(OneShotCfg):
         Gathers the aggregated results from all sub configs
         '''
 
-        # Generate results table for runs. Note that we build a simple md and
-        # a marked up md version here in parallel.
+        # Generate results table for runs.
         log.info("Create summary of lint results")
 
         results_str = "## " + self.results_title + " (Summary)\n\n"
@@ -118,8 +126,6 @@ class LintCfg(OneShotCfg):
         # '''
 
         # Generate results table for runs.
-        # Note that we build a simple md and a marked up md version
-        # here in parallel.
         results_str = "## " + self.results_title + "\n\n"
         results_str += "### " + self.timestamp_long + "\n"
         results_str += "### Lint Tool: " + self.tool.upper() + "\n\n"
@@ -200,7 +206,7 @@ class LintCfg(OneShotCfg):
                                              self.result["lint_errors"])
                 fail_msgs += _print_msg_list("Lint Warnings",
                                              self.result["lint_warnings"])
-                #fail_msgs += _print_msg_list("Lint Infos", results["lint_infos"])
+                # fail_msgs += _print_msg_list("Lint Infos", results["lint_infos"])
 
         if len(table) > 1:
             self.results_md = results_str + tabulate(

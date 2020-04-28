@@ -5,16 +5,14 @@ r"""Command-line tool to parse and process testplan Hjson into a data structure
     The data structure is used for expansion inline within DV plan documentation
     as well as for annotating the regression results.
 """
-import logging as log
 import os
 import sys
-from pathlib import PurePath
 
 import hjson
 import mistletoe
 from tabulate import tabulate
 
-from .class_defs import *
+from .class_defs import Testplan, TestplanEntry
 
 
 def parse_testplan(filename):
@@ -30,7 +28,8 @@ def parse_testplan(filename):
         if key == "import_testplans":
             imported_testplans = obj[key]
         elif key != "entries":
-            if key == "name": name = obj[key]
+            if key == "name":
+                name = obj[key]
             substitutions.append({key: obj[key]})
     for imported_testplan in imported_testplans:
         obj = merge_dicts(
@@ -38,7 +37,8 @@ def parse_testplan(filename):
 
     testplan = Testplan(name=name)
     for entry in obj["entries"]:
-        if not TestplanEntry.is_valid_entry(entry): sys.exit(1)
+        if not TestplanEntry.is_valid_entry(entry):
+            sys.exit(1)
         testplan_entry = TestplanEntry(name=entry["name"],
                                        desc=entry["desc"],
                                        milestone=entry["milestone"],
@@ -110,7 +110,7 @@ def gen_html_regr_results_table(testplan, regr_results, outbuf):
 def parse_regr_results(filename):
     obj = parse_hjson(filename)
     # TODO need additional syntax checks
-    if not "test_results" in obj.keys():
+    if "test_results" not in obj.keys():
         print("Error: key \'test_results\' not found")
         sys, exit(1)
     return obj
@@ -132,32 +132,43 @@ def parse_hjson(filename):
 
 
 def merge_dicts(list1, list2, use_list1_for_defaults=True):
-    '''merge 2 dicts into one
+    '''Merge 2 dicts into one
 
-    This funciton takes 2 dicts as args list1 and list2. It recursively merges list2 into
+    This function takes 2 dicts as args list1 and list2. It recursively merges list2 into
     list1 and returns list1. The recursion happens when the the value of a key in both lists
     is a dict. If the values of the same key in both lists (at the same tree level) are of
     dissimilar type, then there is a conflict and an error is thrown. If they are of the same
     scalar type, then the third arg "use_list1_for_defaults" is used to pick the final one.
     '''
-    for key in list2.keys():
-        if key in list1:
-            if type(list1[key]) is list and type(list2[key]) is list:
-                list1[key].extend(list2[key])
-            elif type(list1[key]) is dict and type(list2[key]) is dict:
-                list1[key] = merge_dicts(list1[key], list2[key])
-            elif (type(list1[key]) == type(list2[key])):
-                if not use_list1_for_defaults:
-                    list1[key] = list2[key]
-            else:
-                print("The type of value of key \"", key, "\" in list1: \"", \
-                      str(type(list1[key])), \
-                      "\" does not match the type of value in list2: \"", \
-                      str(type(list2[key])), \
-                      "\". The two lists cannot be merged.")
-                sys.exit(1)
-        else:
-            list1[key] = list2[key]
+    for key, item2 in list2.items():
+        item1 = list1.get(key)
+        if item1 is None:
+            list1[key] = item2
+            continue
+
+        # Both dictionaries have an entry for this key. Are they both lists? If
+        # so, append.
+        if isinstance(item1, list) and isinstance(item2, list):
+            list1[key] = item1 + item2
+            continue
+
+        # Are they both dictionaries? If so, recurse.
+        if isinstance(item1, dict) and isinstance(item2, dict):
+            merge_dicts(item1, item2)
+            continue
+
+        # We treat other types as atoms. If the types of the two items are
+        # equal pick one or the other (based on use_list1_for_defaults).
+        if isinstance(item1, type(item2)) and isinstance(item2, type(item1)):
+            list1[key] = item1 if use_list1_for_defaults else item2
+            continue
+
+        # Oh no! We can't merge this.
+        print("ERROR: Cannot merge dictionaries at key {!r} because items have "
+              "conflicting types ({} in 1st; {} in 2nd)."
+              .format(type(item1), type(item2)))
+        sys.exit(1)
+
     return list1
 
 

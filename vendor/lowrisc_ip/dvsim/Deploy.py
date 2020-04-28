@@ -1,23 +1,22 @@
 # Copyright lowRISC contributors.
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
-r"""
-Classes
-"""
 
 import logging as log
+import os
 import pprint
 import random
 import re
 import shlex
+import subprocess
 import sys
 import time
 from collections import OrderedDict
 
-import hjson
 from tabulate import tabulate
 
-from utils import *
+from sim_utils import get_cov_summary_table
+from utils import VERBOSE, find_and_substitute_wildcards, run_cmd
 
 
 class Deploy():
@@ -38,13 +37,16 @@ class Deploy():
     print_interval = 5
     max_parallel = 16
     max_odirs = 5
+    # Max jobs dispatched in one go.
+    slot_limit = 20
 
     def __self_str__(self):
         if log.getLogger().isEnabledFor(VERBOSE):
             return pprint.pformat(self.__dict__)
         else:
             ret = self.cmd
-            if self.sub != []: ret += "\nSub:\n" + str(self.sub)
+            if self.sub != []:
+                ret += "\nSub:\n" + str(self.sub)
             return ret
 
     def __str__(self):
@@ -101,13 +103,13 @@ class Deploy():
 
         ddict_keys = ddict.keys()
         for key in self.mandatory_cmd_attrs.keys():
-            if self.mandatory_cmd_attrs[key] == False:
+            if self.mandatory_cmd_attrs[key] is False:
                 if key in ddict_keys:
                     setattr(self, key, ddict[key])
                     self.mandatory_cmd_attrs[key] = True
 
         for key in self.mandatory_misc_attrs.keys():
-            if self.mandatory_misc_attrs[key] == False:
+            if self.mandatory_misc_attrs[key] is False:
                 if key in ddict_keys:
                     setattr(self, key, ddict[key])
                     self.mandatory_misc_attrs[key] = True
@@ -168,8 +170,14 @@ class Deploy():
         args = shlex.split(self.cmd)
         try:
             # If renew_odir flag is True - then move it.
-            if self.renew_odir: self.odir_limiter(odir=self.odir)
+            if self.renew_odir:
+                self.odir_limiter(odir=self.odir)
             os.system("mkdir -p " + self.odir)
+            # Dump all env variables for ease of debug.
+            with open(self.odir + "/env_vars", "w") as f:
+                for var in sorted(self.exports.keys()):
+                    f.write("{}={}\n".format(var, self.exports[var]))
+                f.close()
             os.system("ln -s " + self.odir + " " + self.sim_cfg.links['D'] +
                       '/' + self.odir_ln)
             f = open(self.log, "w")
@@ -184,7 +192,8 @@ class Deploy():
             Deploy.dispatch_counter += 1
         except IOError:
             log.error('IO Error: See %s', self.log)
-            if self.log_fd: self.log_fd.close()
+            if self.log_fd:
+                self.log_fd.close()
             self.status = "K"
 
     def odir_limiter(self, odir, max_odirs=-1):
@@ -225,7 +234,8 @@ class Deploy():
                 dirs = dirs.replace('\n', ' ')
                 list_dirs = dirs.split()
                 num_dirs = len(list_dirs)
-                if max_odirs == -1: max_odirs = self.max_odirs
+                if max_odirs == -1:
+                    max_odirs = self.max_odirs
                 num_rm_dirs = num_dirs - max_odirs
                 if num_rm_dirs > -1:
                     rm_dirs = run_cmd(find_cmd +
@@ -268,7 +278,8 @@ class Deploy():
                 self.status = "F"
 
             # Return if status is fail - no need to look for pass patterns.
-            if self.status == 'F': return
+            if self.status == 'F':
+                return
 
             # If fail patterns were not found, ensure pass patterns indeed were.
             for pass_pattern in self.pass_patterns:
@@ -284,7 +295,6 @@ class Deploy():
 
     # Recursively set sub-item's status if parent item fails
     def set_sub_status(self, status):
-        if self.sub == []: return
         for sub_item in self.sub:
             sub_item.status = status
             sub_item.set_sub_status(status)
@@ -297,13 +307,12 @@ class Deploy():
             new_link = self.sim_cfg.links[self.status] + "/" + self.odir_ln
             cmd = "ln -s " + self.odir + " " + new_link + "; "
             cmd += "rm " + old_link
-            try:
-                os.system(cmd)
-            except Exception as e:
+            if os.system(cmd):
                 log.error("Cmd \"%s\" could not be run", cmd)
 
     def get_status(self):
-        if self.status != "D": return
+        if self.status != "D":
+            return
         if self.process.poll() is not None:
             self.log_fd.close()
             self.set_status()
@@ -313,6 +322,39 @@ class Deploy():
             Deploy.dispatch_counter -= 1
             self.link_odir()
             del self.process
+
+    def kill(self):
+        '''Kill running processes.
+        '''
+        if self.status == "D" and self.process.poll() is None:
+            self.kill_remote_job()
+            self.process.kill()
+            if self.log_fd:
+                self.log_fd.close()
+            self.status = "K"
+        # recurisvely kill sub target
+        elif len(self.sub):
+            for item in self.sub:
+                item.kill()
+
+    def kill_remote_job(self):
+        '''
+        If jobs are run in remote server, need to use another command to kill them.
+        '''
+        # TODO: Currently only support lsf, may need to add support for GCP later.
+
+        # If use lsf, kill it by job ID.
+        if re.match("^bsub", self.sim_cfg.job_prefix):
+            # get job id from below string
+            # Job <xxxxxx> is submitted to default queue
+            grep_cmd = "grep -m 1 -E \'" + "^Job <" + "\' " + self.log
+            (status, rslt) = subprocess.getstatusoutput(grep_cmd)
+            if rslt != "":
+                job_id = rslt.split('Job <')[1].split('>')[0]
+                try:
+                    subprocess.run(["bkill", job_id], check=True)
+                except Exception as e:
+                    log.error("%s: Failed to run bkill\n", e)
 
     @staticmethod
     def increment_timer():
@@ -327,8 +369,10 @@ class Deploy():
 
         incr_hh = False
         Deploy.ss, incr_mm = _incr_ovf_60(Deploy.ss)
-        if incr_mm: Deploy.mm, incr_hh = _incr_ovf_60(Deploy.mm)
-        if incr_hh: Deploy.hh += 1
+        if incr_mm:
+            Deploy.mm, incr_hh = _incr_ovf_60(Deploy.mm)
+        if incr_hh:
+            Deploy.hh += 1
 
     @staticmethod
     def deploy(items):
@@ -430,7 +474,8 @@ class Deploy():
         while not all_done:
             # Get status of dispatched items.
             for item in dispatched_items:
-                if item.status == "D": item.get_status()
+                if item.status == "D":
+                    item.get_status()
                 if item.status != status[item.target][item]:
                     print_status_flag = True
                     if item.status != "D":
@@ -454,6 +499,8 @@ class Deploy():
             all_done = (len(queued_items) == 0)
             if not all_done:
                 num_slots = Deploy.max_parallel - Deploy.dispatch_counter
+                if num_slots > Deploy.slot_limit:
+                    num_slots = Deploy.slot_limit
                 if num_slots > 0:
                     if len(queued_items) > num_slots:
                         dispatch_items(queued_items[0:num_slots])
@@ -492,12 +539,6 @@ class CompileSim(Deploy):
             # tool srcs
             "tool_srcs": False,
             "tool_srcs_dir": False,
-
-            # RAL gen
-            "skip_ral": False,
-            "gen_ral_pkg_cmd": False,
-            "gen_ral_pkg_dir": False,
-            "gen_ral_pkg_opts": False,
 
             # Flist gen
             "sv_flist_gen_cmd": False,
@@ -559,10 +600,16 @@ class CompileOneShot(Deploy):
             "tool_srcs": False,
             "tool_srcs_dir": False,
 
+            # Flist gen
+            "sv_flist_gen_cmd": False,
+            "sv_flist_gen_dir": False,
+            "sv_flist_gen_opts": False,
+
             # Build
             "build_dir": False,
             "build_cmd": False,
             "build_opts": False,
+            "build_log": False,
 
             # Report processing
             "report_cmd": False,
@@ -674,7 +721,8 @@ class RunTest(Deploy):
         # first. If --fixed-seed <val> is also passed, the subsequent tests
         # (once the custom seeds are consumed) will be run with the fixed seed.
         if not RunTest.seeds:
-            if RunTest.fixed_seed: return RunTest.fixed_seed
+            if RunTest.fixed_seed:
+                return RunTest.fixed_seed
             for i in range(1000):
                 seed = random.getrandbits(32)
                 RunTest.seeds.append(seed)
@@ -744,6 +792,9 @@ class CovMerge(Deploy):
         if self.sim_cfg.cov_merge_previous:
             self.cov_db_dirs += prev_cov_db_dirs
 
+        # Append cov_db_dirs to the list of exports.
+        self.exports["cov_db_dirs"] = "\"{}\"".format(self.cov_db_dirs)
+
         # Call base class __post_init__ to do checks and substitutions
         super().__post_init__()
 
@@ -772,7 +823,7 @@ class CovReport(Deploy):
         self.mandatory_misc_attrs = {
             "cov_report_dir": False,
             "cov_merge_db_dir": False,
-            "cov_report_dashboard": False
+            "cov_report_txt": False
         }
 
         # Initialize
@@ -791,45 +842,19 @@ class CovReport(Deploy):
         super().get_status()
         # Once passed, extract the cov results summary from the dashboard.
         if self.status == "P":
-            try:
-                with open(self.cov_report_dashboard, 'r') as f:
-                    for line in f:
-                        match = re.match("total coverage summary", line,
-                                         re.IGNORECASE)
-                        if match:
-                            results = []
-                            # Metrics on the next line.
-                            line = f.readline().strip()
-                            results.append(line.split())
-                            # Values on the next.
-                            line = f.readline().strip()
-                            # Pretty up the values - add % sign for ease of post
-                            # processing.
-                            values = []
-                            for val in line.split():
-                                val += " %"
-                                values.append(val)
-                            # first row is coverage total
-                            self.cov_total = values[0]
-                            results.append(values)
-                            colalign = (("center", ) * len(values))
-                            self.cov_results = tabulate(results,
-                                                        headers="firstrow",
-                                                        tablefmt="pipe",
-                                                        colalign=colalign)
-                            break
+            results, self.cov_total, ex_msg = get_cov_summary_table(
+                self.cov_report_txt, self.sim_cfg.tool)
 
-            except Exception as e:
-                ex_msg = "Failed to parse \"{}\":\n{}".format(
-                    self.cov_report_dashboard, str(e))
+            if not ex_msg:
+                # Succeeded in obtaining the coverage data.
+                colalign = (("center", ) * len(results[0]))
+                self.cov_results = tabulate(results,
+                                            headers="firstrow",
+                                            tablefmt="pipe",
+                                            colalign=colalign)
+            else:
                 self.fail_msg += ex_msg
                 log.error(ex_msg)
-                self.status = "F"
-
-            if self.cov_results == "":
-                nf_msg = "Coverage summary not found in the reports dashboard!"
-                self.fail_msg += nf_msg
-                log.error(nf_msg)
                 self.status = "F"
 
         if self.status == "P":
@@ -851,6 +876,9 @@ class CovAnalyze(Deploy):
         self.fail_patterns = []
 
         self.mandatory_cmd_attrs = {
+            # tool srcs
+            "tool_srcs": False,
+            "tool_srcs_dir": False,
             "cov_analyze_cmd": False,
             "cov_analyze_opts": False
         }
