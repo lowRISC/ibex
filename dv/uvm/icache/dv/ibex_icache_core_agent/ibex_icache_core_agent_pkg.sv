@@ -26,7 +26,8 @@ package ibex_icache_core_agent_pkg;
   `include "dv_macros.svh"
 
   // package sources
-  `include "ibex_icache_core_item.sv"
+  `include "ibex_icache_core_req_item.sv"
+  `include "ibex_icache_core_rsp_item.sv"
   `include "ibex_icache_core_bus_item.sv"
   `include "ibex_icache_core_agent_cfg.sv"
   `include "ibex_icache_core_agent_cov.sv"
