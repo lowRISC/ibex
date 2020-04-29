@@ -404,8 +404,8 @@ cov:
 		--steps=cov \
 		${TEST_OPTS} \
 		--simulator="${SIMULATOR}" \
-		--o="${OUT}" \
-		--lsf_cmd="${LSF_CMD}";
+		$(lsf-arg) \
+		--o="${OUT}"
 	@if [ -d "test.vdb" ]; then \
 		mv -f test.vdb ${OUT}/rtl_sim/; \
 	fi
