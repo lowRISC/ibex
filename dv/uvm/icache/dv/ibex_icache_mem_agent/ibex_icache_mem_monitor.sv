@@ -74,29 +74,13 @@ class ibex_icache_mem_monitor
     ibex_icache_mem_bus_item bus_trans;
 
     forever begin
-      // A response is signalled by either rvalid or pmp_err being true. Both are possible on the
-      // same cycle, corresponding to two different requests.
-      //
-      // Note that we're sampling on posedge clk. A PMP error that is signalled combinatorially as a
-      // response to a request will be spotted on the following clock cycle (the same time as the
-      // cache sees it).
-      if (cfg.vif.monitor_cb.pmp_err) begin
-        bus_trans = ibex_icache_mem_bus_item::type_id::create("bus_trans");
-        bus_trans.is_response = 1'b1;
-        bus_trans.address     = '0;
-        bus_trans.rdata       = '0;
-        bus_trans.err         = 0;
-        bus_trans.pmp_err     = 1'b1;
-        analysis_port.write(bus_trans);
-      end
-
       if (cfg.vif.monitor_cb.rvalid) begin
         bus_trans = ibex_icache_mem_bus_item::type_id::create("bus_trans");
         bus_trans.is_response = 1'b1;
         bus_trans.address     = '0;
+        bus_trans.seed        = '0;
         bus_trans.rdata       = cfg.vif.monitor_cb.rdata;
         bus_trans.err         = cfg.vif.monitor_cb.err;
-        bus_trans.pmp_err     = 0;
         analysis_port.write(bus_trans);
       end
 
@@ -129,8 +113,8 @@ class ibex_icache_mem_monitor
     bus_trans.is_response = 1'b0;
     bus_trans.address     = addr;
     bus_trans.rdata       = '0;
+    bus_trans.seed        = item.seed;
     bus_trans.err         = 0;
-    bus_trans.pmp_err     = 0;
     analysis_port.write(bus_trans);
   endfunction
 
