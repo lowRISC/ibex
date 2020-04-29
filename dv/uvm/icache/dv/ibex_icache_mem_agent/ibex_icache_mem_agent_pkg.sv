@@ -12,7 +12,11 @@ package ibex_icache_mem_agent_pkg;
   `include "uvm_macros.svh"
   `include "dv_macros.svh"
 
-  // parameters
+  typedef enum {
+    ICacheMemNewSeed,
+    ICacheMemGrant,
+    ICacheMemResponse
+  } ibex_icache_mem_trans_type_e;
 
   // package sources
   `include "ibex_icache_mem_req_item.sv"

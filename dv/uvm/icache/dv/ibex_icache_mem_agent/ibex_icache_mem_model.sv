@@ -24,7 +24,6 @@
 class ibex_icache_mem_model #(parameter int unsigned BusWidth = 32)
   extends uvm_object;
 
-  protected bit [31:0] seed = 32'd0;
   protected bit        no_pmp_errs = 0;
   protected bit        no_mem_errs = 0;
 
@@ -34,49 +33,41 @@ class ibex_icache_mem_model #(parameter int unsigned BusWidth = 32)
   endfunction
 
   `uvm_object_utils_begin(ibex_icache_mem_model)
-     `uvm_field_int (seed,        UVM_DEFAULT | UVM_HEX)
      `uvm_field_int (no_pmp_errs, UVM_DEFAULT)
      `uvm_field_int (no_mem_errs, UVM_DEFAULT)
   `uvm_object_utils_end
 
-  function void set_seed(bit [31:0] new_seed);
-    seed = new_seed;
-  endfunction
-
   // Return true if reading from BusWidth bits from address should give an error
-  function automatic logic is_error(logic [31:0] address);
+  protected function automatic logic is_error(bit [31:0] seed, logic [31:0] address);
     logic [31:0] rng_lo, rng_hi, rng_w0, rng_w1;
     rng_lo = seed ^ 32'hdeadbeef;
     rng_w0 = 32'd1 << (32 - 3);
     rng_w1 = (~32'd0) - rng_lo;
     rng_hi = rng_lo + ((rng_w0 < rng_w1) ? rng_w0 : rng_w1);
 
-    return ranges_overlap(address, address + BusWidth / 8, rng_lo, rng_hi);
-  endfunction
+    // Return true iff [address, address + BusWidth / 8) and [rng_lo, rng_hi) have nonempty
+    // intersection.
+    return (address < rng_hi) && (rng_lo < address + BusWidth / 8);
 
-  // Return true iff [lo0, hi0) and [lo1, hi1) have nonempty intersection
-  function automatic logic ranges_overlap(logic [31:0] lo0, logic [31:0] hi0,
-                                          logic [31:0] lo1, logic [31:0] hi1);
-    return (lo0 < hi1) && (lo1 < hi0);
   endfunction
 
   // Return true if reading BusWidth bits from address should give a PMP error
-  function automatic logic is_pmp_error(logic [31:0] address);
-    return (! no_pmp_errs) && is_error(address ^ 32'h12344321);
+  function automatic logic is_pmp_error(bit [31:0] seed, logic [31:0] address);
+    return (! no_pmp_errs) && is_error(seed, address ^ 32'h12344321);
   endfunction
 
   // Return true if reading BusWidth bits from address should give a memory error
-  function automatic logic is_mem_error(logic [31:0] address);
-    return (! no_mem_errs) && is_error(address ^ 32'hf00dbeef);
+  function automatic logic is_mem_error(bit [31:0] seed, logic [31:0] address);
+    return (! no_mem_errs) && is_error(seed, address ^ 32'hf00dbeef);
   endfunction
 
   // Return true if reading BusWidth bits from address should give some sort of error
-  function automatic logic is_either_error(logic [31:0] address);
-    return is_pmp_error(address) || is_mem_error(address);
+  function automatic logic is_either_error(bit [31:0] seed, logic [31:0] address);
+    return is_pmp_error(seed, address) || is_mem_error(seed, address);
   endfunction
 
   // Return BusWidth bits of data from reading at address.
-  function automatic logic [BusWidth-1:0] read_data(logic [31:0] address);
+  function automatic logic [BusWidth-1:0] read_data(bit [31:0] seed, logic [31:0] address);
     logic [BusWidth-1:0] acc, word_data;
     int                  word_count, lo_idx, lo_bit;
     logic [29:0]         word_addr;
@@ -98,7 +89,7 @@ class ibex_icache_mem_model #(parameter int unsigned BusWidth = 32)
       // Note that the address sum might wrap (if we read off the top of memory), but that's not
       // really a problem.
       word_data = 0;
-      word_data[31:0] = read_word(word_addr + i[29:0]);
+      word_data[31:0] = read_word(seed, word_addr + i[29:0]);
 
       // The bottom valid byte in word_data is normally 0, but is positive if i is zero (the bottom)
       // word and the read was misaligned. In that case, it equals i & 3.
@@ -115,7 +106,7 @@ class ibex_icache_mem_model #(parameter int unsigned BusWidth = 32)
   endfunction
 
   // Read 32 bits of data from reading at word_address.
-  function automatic logic [31:0] read_word(logic [29:0] address);
+  function automatic logic [31:0] read_word(bit [31:0] seed, logic [29:0] address);
     return hash({2'b0, address} ^ seed);
   endfunction
 

@@ -6,11 +6,12 @@
 // memory.
 //
 // When a request first comes in (via a posedge on the req line), it immediately generates a
-// req_item with is_grant = 0. This is used by the driver to decide whether to generate a PMP error.
+// req_item with is_grant = 0. This is used by the sequence to tell the driver whether to generate a
+// PMP error. A req_item with is_grant = 0 may also have a seed update.
 //
 // Assuming that the request wasn't squashed by a PMP error, it will be granted on some later clock
 // edge. At that point, another req_item is generated with is_grant = 1. This is added to a queue in
-// the driver and will be serviced at some later point. This item may also have a seed update.
+// the driver and will be serviced at some later point.
 
 class ibex_icache_mem_req_item extends uvm_sequence_item;
 
