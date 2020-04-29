@@ -11,20 +11,20 @@ class ibex_icache_mem_bus_item extends uvm_sequence_item;
   // Is this a request or a response?
   logic        is_response;
 
-  // Request address (only valid for request transactions)
+  // Request address and possible new seed (only valid for request transactions)
   logic [31:0] address;
+  bit   [31:0] seed;
 
   // Response data and error flags (only valid for response transactions)
   logic [31:0] rdata;
   logic        err;
-  logic        pmp_err;
 
   `uvm_object_utils_begin(ibex_icache_mem_bus_item)
     `uvm_field_int(is_response, UVM_DEFAULT)
     `uvm_field_int(address,     UVM_DEFAULT | UVM_HEX)
+    `uvm_field_int(seed,        UVM_DEFAULT | UVM_HEX)
     `uvm_field_int(rdata,       UVM_DEFAULT | UVM_HEX)
     `uvm_field_int(err,         UVM_DEFAULT)
-    `uvm_field_int(pmp_err,     UVM_DEFAULT)
   `uvm_object_utils_end
 
   `uvm_object_new
