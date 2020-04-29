@@ -600,11 +600,12 @@ module ibex_icache #(
     // data output, and have data available to send.
     // Data is available if:
     // - The request hit in the cache
-    // - The request received an error (since a PMP error might not actually receive any data)
+    // - The current beat is an error (since a PMP error might not actually receive any data)
     // - Buffered data is available (fill_rvd_cnt_q is ahead of fill_out_cnt_q)
     // - Data is available from the bus this cycle (fill_rvd_arb)
     assign fill_out_req[fb]    = fill_busy_q[fb] & ~fill_stale_q[fb] & ~fill_out_done[fb] &
-                                 (fill_hit_ic1[fb] | fill_hit_q[fb] | (|fill_err_q[fb]) |
+                                 (fill_hit_ic1[fb] | fill_hit_q[fb] |
+                                  (fill_err_q[fb][fill_out_cnt_q[fb][LINE_BEATS_W-1:0]]) |
                                   (fill_rvd_beat[fb] > fill_out_cnt_q[fb]) | fill_rvd_arb[fb]);
 
     // Calculate when a beat of data is output. Any ECC error squashes the output that cycle.
