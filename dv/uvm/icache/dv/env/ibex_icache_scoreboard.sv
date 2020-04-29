@@ -133,14 +133,21 @@ class ibex_icache_scoreboard
       mem_fifo.get(item);
       `uvm_info(`gfn, $sformatf("received mem transaction:\n%0s", item.sprint()), UVM_HIGH)
 
-      if (item.is_response) begin
-        busy_check();
-        assert(mem_trans_count > 0);
-        mem_trans_count -= 1;
-      end else begin
-        mem_trans_count += 1;
-        if (item.seed != 32'd0) mem_seeds.push_back(item.seed);
-      end
+      case (item.trans_type)
+        ICacheMemNewSeed: begin
+          mem_seeds.push_back(item.data);
+        end
+
+        ICacheMemGrant: begin
+          mem_trans_count += 1;
+        end
+
+        ICacheMemResponse: begin
+          busy_check();
+          `DV_CHECK_FATAL(mem_trans_count > 0);
+          mem_trans_count -= 1;
+        end
+      endcase
     end
   endtask
 
@@ -321,12 +328,11 @@ class ibex_icache_scoreboard
     // compressed instruction, in which case we don't care about the top bits anyway.
     lo_bits_to_drop = 8 * (address - addr_lo);
 
-    mem_model.set_seed(seed);
-    rdata = mem_model.read_data(addr_lo) >> lo_bits_to_drop;
+    rdata = mem_model.read_data(seed, addr_lo) >> lo_bits_to_drop;
 
     return is_fetch_compatible_1(seen_insn_data,
                                  seen_err,
-                                 mem_model.is_either_error(addr_lo),
+                                 mem_model.is_either_error(seed, addr_lo),
                                  rdata[31:0],
                                  seed,
                                  chatty);
@@ -365,16 +371,14 @@ class ibex_icache_scoreboard
     lo_bits_to_drop = BusWidth - lo_bits_to_take;
 
     // Do the first read (from the low address) and shift right to drop the bits that we don't need.
-    mem_model.set_seed(seed_lo);
-    exp_err_lo = mem_model.is_either_error(addr_lo);
-    rdata      = mem_model.read_data(addr_lo) >> lo_bits_to_drop;
+    exp_err_lo = mem_model.is_either_error(seed_lo, addr_lo);
+    rdata      = mem_model.read_data(seed_lo, addr_lo) >> lo_bits_to_drop;
     exp_data   = rdata[31:0];
 
     // Now do the second read (from the upper address). Shift the result up by lo_bits_to_take,
     // which will discard some top bits. Then extract 32 bits and OR with what we have so far.
-    mem_model.set_seed(seed_hi);
-    exp_err_hi = mem_model.is_either_error(addr_hi);
-    rdata      = mem_model.read_data(addr_hi) << lo_bits_to_take;
+    exp_err_hi = mem_model.is_either_error(seed_hi, addr_hi);
+    rdata      = mem_model.read_data(seed_hi, addr_hi) << lo_bits_to_take;
     exp_data   = exp_data | rdata[31:0];
 
     return is_fetch_compatible_2(seen_insn_data, seen_err_plus2,
