@@ -192,6 +192,7 @@ module ibex_id_stage #(
   logic        branch_set, branch_set_d;
   logic        branch_taken;
   logic        jump_in_dec;
+  logic        jump_set_dec;
   logic        jump_set;
 
   logic        instr_first_cycle;
@@ -400,7 +401,7 @@ module ibex_id_stage #(
       .dret_insn_o                     ( dret_insn_dec        ),
       .ecall_insn_o                    ( ecall_insn_dec       ),
       .wfi_insn_o                      ( wfi_insn_dec         ),
-      .jump_set_o                      ( jump_set             ),
+      .jump_set_o                      ( jump_set_dec         ),
       .branch_taken_i                  ( branch_taken         ),
       .icache_inval_o                  ( icache_inval_o       ),
 
@@ -663,6 +664,7 @@ module ibex_id_stage #(
   // could generate needless prefetch buffer flushes and instruction fetches. ID/EX is designed such
   // that this shouldn't ever happen.
   `ASSERT(NeverDoubleBranch, branch_set |=> ~branch_set)
+  `ASSERT(NeverDoubleJump, jump_set |=> ~jump_set)
 
   ///////////////
   // ID-EX FSM //
@@ -692,6 +694,7 @@ module ibex_id_stage #(
     stall_branch            = 1'b0;
     stall_alu               = 1'b0;
     branch_set_d            = 1'b0;
+    jump_set                = 1'b0;
     perf_branch_o           = 1'b0;
 
     if (instr_executing) begin
@@ -733,6 +736,7 @@ module ibex_id_stage #(
               // BTALU means jumps only need one cycle
               id_fsm_d      = BranchTargetALU ? FIRST_CYCLE : MULTI_CYCLE;
               stall_jump    = ~BranchTargetALU;
+              jump_set      = jump_set_dec;
             end
             alu_multicycle_dec: begin
               stall_alu     = 1'b1;
