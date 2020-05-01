@@ -476,7 +476,7 @@ module ibex_load_store_unit
 
   assign data_or_pmp_err    = lsu_err_q | data_err_i | pmp_err_q;
   assign lsu_resp_valid_o   = (data_rvalid_i | pmp_err_q) & (ls_fsm_cs == IDLE);
-  assign lsu_rdata_valid_o  = lsu_resp_valid_o & ~data_we_q;
+  assign lsu_rdata_valid_o  = (ls_fsm_cs == IDLE) & data_rvalid_i & ~data_or_pmp_err & ~data_we_q;
 
   // output to register file
   assign lsu_rdata_o = data_rdata_ext;
