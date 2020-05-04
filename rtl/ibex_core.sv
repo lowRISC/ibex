@@ -1066,7 +1066,7 @@ module ibex_core #(
             rvfi_stage_halt[i]      <= '0;
             rvfi_stage_trap[i]      <= illegal_insn_id;
             rvfi_stage_intr[i]      <= rvfi_intr_d;
-            rvfi_stage_order[i]     <= rvfi_order + 64'(rvfi_valid);
+            rvfi_stage_order[i]     <= rvfi_stage_order[i] + 64'(rvfi_stage_valid_d[i]);
             rvfi_stage_insn[i]      <= rvfi_insn_id;
             rvfi_stage_mode[i]      <= {priv_mode_id};
             rvfi_stage_ixl[i]       <= CSR_MISA_MXL;
