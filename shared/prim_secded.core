@@ -2,20 +2,19 @@ CAPI=2:
 # Copyright lowRISC contributors.
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
-name: "lowrisc:ibex:ibex_icache:0.1"
-description: "IBEX_ICACHE DV sim target"
+
+name: "lowrisc:prim:secded:0.1"
+description: "SECDED ECC primitives"
 filesets:
   files_rtl:
-    depend:
-      - lowrisc:prim:secded
-      - lowrisc:prim:ram_1p
     files:
-      - rtl/ibex_icache.sv
+      - rtl/prim_secded_28_22_dec.sv
+      - rtl/prim_secded_28_22_enc.sv
+      - rtl/prim_secded_72_64_dec.sv
+      - rtl/prim_secded_72_64_enc.sv
     file_type: systemVerilogSource
 
 targets:
-  default: &default_target
+  default:
     filesets:
       - files_rtl
-    toplevel: ibex_icache
-    default_tool: vcs
