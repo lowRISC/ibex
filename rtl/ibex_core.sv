@@ -1105,7 +1105,6 @@ module ibex_core #(
             rvfi_stage_rs1_rdata[i] <= rvfi_stage_rs1_rdata[i-1];
             rvfi_stage_rs2_rdata[i] <= rvfi_stage_rs2_rdata[i-1];
             rvfi_stage_rs3_rdata[i] <= rvfi_stage_rs3_rdata[i-1];
-            rvfi_stage_rd_addr[i]   <= rvfi_stage_rd_addr[i-1];
             rvfi_stage_mem_wdata[i] <= rvfi_stage_mem_wdata[i-1];
             rvfi_stage_mem_addr[i]  <= rvfi_stage_mem_addr[i-1];
 
