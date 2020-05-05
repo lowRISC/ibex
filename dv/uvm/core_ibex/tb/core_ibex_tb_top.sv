@@ -30,6 +30,8 @@ module core_ibex_tb_top;
     .DmHaltAddr(`BOOT_ADDR + 'h0),
     .DmExceptionAddr(`BOOT_ADDR + 'h4),
     .PMPEnable(1'b1),
+    .BranchTargetALU(1'b1),
+    .WritebackStage(1'b1),
     .RV32B(1'b1)
   ) dut (
     .clk_i(clk),
