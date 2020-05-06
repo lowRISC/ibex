@@ -97,7 +97,7 @@ module ram_2p #(
   `ifdef VERILATOR
     // Task for loading 'mem' with SystemVerilog system task $readmemh()
     export "DPI-C" task simutil_verilator_memload;
-    // Function for setting a specific 32 bit element in |mem|
+    // Function for setting a specific element in |mem|
     // Returns 1 (true) for success, 0 (false) for errors.
     export "DPI-C" function simutil_verilator_set_mem;
 
@@ -106,14 +106,13 @@ module ram_2p #(
       $readmemh(file, mem);
     endtask
 
-    // TODO: Allow 'val' to have other widths than 32 bit
-    function int simutil_verilator_set_mem(input int index,
-                                           input logic[31:0] val);
+    function int simutil_verilator_set_mem(input int         index,
+                                           input bit [127:0] val);
       if (index >= Depth) begin
         return 0;
       end
 
-      mem[index] = val;
+      mem[index] = val[31:0];
       return 1;
     endfunction
   `endif
