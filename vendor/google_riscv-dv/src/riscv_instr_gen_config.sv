@@ -80,6 +80,11 @@ class riscv_instr_gen_config extends uvm_object;
   // Used by any DCSR operations inside of the debug rom.
   // Also used by the PMP generation.
   rand riscv_reg_t       scratch_reg;
+  // Reg used exclusively by the PMP exception handling routine.
+  // Can overlap with the other GPRs used in the random generation,
+  // as PMP exception handler is hardcoded and does not include any
+  // random instructions.
+  rand riscv_reg_t       pmp_reg;
   // Use a random register for stack pointer/thread pointer
   rand riscv_reg_t       sp;
   rand riscv_reg_t       tp;
@@ -395,9 +400,15 @@ class riscv_instr_gen_config extends uvm_object;
     scratch_reg != tp;
   }
 
+  constraint reserve_pmp_reg_c {
+    pmp_reg != ZERO;
+    pmp_reg != sp;
+    pmp_reg != tp;
+  }
+
   constraint gpr_c {
     foreach (gpr[i]) {
-      !(gpr[i] inside {sp, tp, scratch_reg, ZERO, RA, GP});
+      !(gpr[i] inside {sp, tp, scratch_reg, pmp_reg, ZERO, RA, GP});
     }
     unique {gpr};
   }

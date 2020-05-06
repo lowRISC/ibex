@@ -1054,6 +1054,9 @@ package riscv_instr_pkg;
     bit                   r;
     // RV32: the pmpaddr is the top 32 bits of a 34 bit PMP address
     // RV64: the pmpaddr is the top 54 bits of a 56 bit PMP address
+    bit [XLEN - 1 : 0]    addr;
+    // The offset from the address of <main> - automatically populated by the
+    // PMP generation routine.
     bit [XLEN - 1 : 0]    offset;
 `else
   typedef struct{
@@ -1065,6 +1068,9 @@ package riscv_instr_pkg;
     rand bit                   r;
     // RV32: the pmpaddr is the top 32 bits of a 34 bit PMP address
     // RV64: the pmpaddr is the top 54 bits of a 56 bit PMP address
+    bit [XLEN - 1 : 0]    addr;
+    // The offset from the address of <main> - automatically populated by the
+    // PMP generation routine.
     rand bit [XLEN - 1 : 0]    offset;
 `endif
   } pmp_cfg_reg_t;
