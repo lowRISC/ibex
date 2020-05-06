@@ -784,6 +784,9 @@ def load_config(args, cwd):
     elif args.target == "rv64imc":
       args.mabi = "lp64"
       args.isa  = "rv64imc"
+    elif args.target == "rv64imcb":
+      args.mabi = "lp64"
+      args.isa  = "rv64imcb"
     elif args.target == "rv64gc":
       args.mabi = "lp64"
       args.isa  = "rv64gc"

@@ -20,8 +20,10 @@ class riscv_instr_cov_item extends riscv_instr;
     NORMAL_VAL, MIN_VAL, MAX_VAL, ZERO_VAL
   } special_val_e;
 
+  rand riscv_reg_t      rs3;
   rand bit [XLEN-1:0]   rs1_value;
   rand bit [XLEN-1:0]   rs2_value;
+  rand bit [XLEN-1:0]   rs3_value;
   rand bit [XLEN-1:0]   rd_value;
   rand riscv_fpr_t      fs1;
   rand riscv_fpr_t      fs2;
@@ -42,6 +44,7 @@ class riscv_instr_cov_item extends riscv_instr;
   div_result_e          div_result;
   operand_sign_e        rs1_sign;
   operand_sign_e        rs2_sign;
+  operand_sign_e        rs3_sign;
   operand_sign_e        fs1_sign;
   operand_sign_e        fs2_sign;
   operand_sign_e        fs3_sign;
@@ -52,6 +55,7 @@ class riscv_instr_cov_item extends riscv_instr;
   hazard_e              lsu_hazard;
   special_val_e         rs1_special_val;
   special_val_e         rs2_special_val;
+  special_val_e         rs3_special_val;
   special_val_e         rd_special_val;
   special_val_e         imm_special_val;
   compare_result_e      compare_result;
@@ -67,6 +71,7 @@ class riscv_instr_cov_item extends riscv_instr;
     unaligned_pc = (pc[1:0] != 2'b00);
     rs1_sign = get_operand_sign(rs1_value);
     rs2_sign = get_operand_sign(rs2_value);
+    rs3_sign = get_operand_sign(rs3_value);
     rd_sign = get_operand_sign(rd_value);
     fs1_sign = get_operand_sign(fs1_value);
     fs2_sign = get_operand_sign(fs2_value);
@@ -76,6 +81,7 @@ class riscv_instr_cov_item extends riscv_instr;
     rs1_special_val = get_operand_special_val(rs1_value);
     rd_special_val = get_operand_special_val(rd_value);
     rs2_special_val = get_operand_special_val(rs2_value);
+    rs3_special_val = get_operand_special_val(rs3_value);
     if ((format != R_FORMAT) && (format != CR_FORMAT)) begin
       imm_special_val = get_imm_special_val(imm);
     end
@@ -195,12 +201,12 @@ class riscv_instr_cov_item extends riscv_instr;
     case(instr_name)
       BEQ    : is_branch_hit = (rs1_value == rs2_value);
       C_BEQZ : is_branch_hit = (rs1_value == 0);
-      BNE    : is_branch_hit = (rs1_value == rs2_value);
+      BNE    : is_branch_hit = (rs1_value != rs2_value);
       C_BNEZ : is_branch_hit = (rs1_value != 0);
       BLT    : is_branch_hit = ($signed(rs1_value) <  $signed(rs2_value));
-      BGE    : is_branch_hit = ($signed(rs1_value) >  $signed(rs2_value));
+      BGE    : is_branch_hit = ($signed(rs1_value) >=  $signed(rs2_value));
       BLTU   : is_branch_hit = (rs1_value < rs2_value);
-      BGEU   : is_branch_hit = (rs1_value > rs2_value);
+      BGEU   : is_branch_hit = (rs1_value >= rs2_value);
       default: `uvm_error(get_name(), $sformatf("Unexpected instr %0s", instr_name.name()))
     endcase
     return is_branch_hit;

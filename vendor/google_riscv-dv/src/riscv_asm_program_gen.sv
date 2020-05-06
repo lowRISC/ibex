@@ -1048,6 +1048,11 @@ class riscv_asm_program_gen extends uvm_object;
     string instr[$];
     gen_signature_handshake(instr, CORE_STATUS, INSTR_FAULT_EXCEPTION);
     gen_signature_handshake(.instr(instr), .signature_type(WRITE_CSR), .csr(MCAUSE));
+    if (cfg.pmp_cfg.enable_pmp_exception_handler) begin
+      cfg.pmp_cfg.gen_pmp_exception_routine({cfg.gpr, cfg.scratch_reg, cfg.pmp_reg},
+                                            INSTRUCTION_ACCESS_FAULT,
+                                            instr);
+    end
     pop_gpr_from_kernel_stack(MSTATUS, MSCRATCH, cfg.mstatus_mprv, cfg.sp, cfg.tp, instr);
     instr.push_back("mret");
     gen_section(get_label("instr_fault_handler", hart), instr);
@@ -1058,6 +1063,11 @@ class riscv_asm_program_gen extends uvm_object;
     string instr[$];
     gen_signature_handshake(instr, CORE_STATUS, LOAD_FAULT_EXCEPTION);
     gen_signature_handshake(.instr(instr), .signature_type(WRITE_CSR), .csr(MCAUSE));
+    if (cfg.pmp_cfg.enable_pmp_exception_handler) begin
+      cfg.pmp_cfg.gen_pmp_exception_routine({cfg.gpr, cfg.scratch_reg, cfg.pmp_reg},
+                                            LOAD_ACCESS_FAULT,
+                                            instr);
+    end
     pop_gpr_from_kernel_stack(MSTATUS, MSCRATCH, cfg.mstatus_mprv, cfg.sp, cfg.tp, instr);
     instr.push_back("mret");
     gen_section(get_label("load_fault_handler", hart), instr);
@@ -1068,6 +1078,11 @@ class riscv_asm_program_gen extends uvm_object;
     string instr[$];
     gen_signature_handshake(instr, CORE_STATUS, STORE_FAULT_EXCEPTION);
     gen_signature_handshake(.instr(instr), .signature_type(WRITE_CSR), .csr(MCAUSE));
+    if (cfg.pmp_cfg.enable_pmp_exception_handler) begin
+      cfg.pmp_cfg.gen_pmp_exception_routine({cfg.gpr, cfg.scratch_reg, cfg.pmp_reg},
+                                            STORE_AMO_ACCESS_FAULT,
+                                            instr);
+    end
     pop_gpr_from_kernel_stack(MSTATUS, MSCRATCH, cfg.mstatus_mprv, cfg.sp, cfg.tp, instr);
     instr.push_back("mret");
     gen_section(get_label("store_fault_handler", hart), instr);
