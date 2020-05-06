@@ -24,6 +24,7 @@
          -Mdir=<out>/vcs_simv.csrc
          -o <out>/vcs_simv
          -debug_access+pp
+         -xlrm uniq_prior_final
          -lca -kdb <cmp_opts> <wave_opts> <cov_opts>"
     cov_opts: >
       -cm line+tgl+assert+fsm+branch

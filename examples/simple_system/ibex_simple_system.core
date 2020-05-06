@@ -76,6 +76,7 @@ targets:
     tools:
       vcs:
         vcs_options:
+          - '-xlrm uniq_prior_final'
           - '-debug_access+r'
       verilator:
         mode: cc
