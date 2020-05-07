@@ -25,63 +25,46 @@ module ram_1p #(
 
   localparam int Aw = $clog2(Depth);
 
-  logic [31:0] mem [Depth];
-
   logic [Aw-1:0] addr_idx;
   assign addr_idx = addr_i[Aw-1+2:2];
   logic [31-Aw:0] unused_addr_parts;
   assign unused_addr_parts = {addr_i[31:Aw+2], addr_i[1:0]};
 
-  always @(posedge clk_i) begin
-    if (req_i) begin
-      if (we_i) begin
-        for (int i = 0; i < 4; i = i + 1) begin
-          if (be_i[i] == 1'b1) begin
-            mem[addr_idx][i*8 +: 8] <= wdata_i[i*8 +: 8];
-          end
-        end
-      end
-      rdata_o <= mem[addr_idx];
+  // Convert byte mask to SRAM bit mask.
+  logic [31:0] wmask;
+  always_comb begin
+    for (int i = 0 ; i < 4 ; i++) begin
+      // mask for read data
+      wmask[8*i+:8] = {8{be_i[i]}};
     end
   end
 
-  always_ff @(posedge clk_i or negedge rst_ni) begin
+  // |rvalid| in the bus module is an "ack", while prim_ram_1p associates the
+  // meaning "returned read data is valid" with this signal.
+  // Convert the RAM meaning to the meaning assumed by the bus module.
+  logic read_valid, we_q;
+  always_ff @(posedge clk_i, negedge rst_ni) begin
     if (!rst_ni) begin
-      rvalid_o <= '0;
+      we_q <= 1'b0;
     end else begin
-      rvalid_o <= req_i;
+      we_q <= we_i;
     end
   end
+  assign rvalid_o = read_valid | we_q;
 
-  `ifdef VERILATOR
-    // Task for loading 'mem' with SystemVerilog system task $readmemh()
-    export "DPI-C" task simutil_verilator_memload;
-    // Function for setting a specific 32 bit element in |mem|
-    // Returns 1 (true) for success, 0 (false) for errors.
-    export "DPI-C" function simutil_verilator_set_mem;
-
-    task simutil_verilator_memload;
-      input string file;
-      $readmemh(file, mem);
-    endtask
-
-    // TODO: Allow 'val' to have other widths than 32 bit
-    function int simutil_verilator_set_mem(input int index,
-                                           input logic[31:0] val);
-      if (index >= Depth) begin
-        return 0;
-      end
-
-      mem[index] = val;
-      return 1;
-    endfunction
-  `endif
-
-  `ifdef SRAM_INIT_FILE
-    localparam MEM_FILE = `PRIM_STRINGIFY(`SRAM_INIT_FILE);
-    initial begin
-      $display("Initializing SRAM from %s", MEM_FILE);
-      $readmemh(MEM_FILE, mem);
-    end
-  `endif
+  prim_generic_ram_1p #(
+      .Width(32),
+      .DataBitsPerMask(8),
+      .Depth(Depth)
+    ) u_ram (
+      .clk_i     (clk_i),
+      .rst_ni    (rst_ni),
+      .req_i     (req_i),
+      .write_i   (we_i),
+      .wmask_i   (wmask),
+      .addr_i    (addr_idx),
+      .wdata_i   (wdata_i),
+      .rvalid_o  (read_valid),
+      .rdata_o   (rdata_o)
+    );
 endmodule

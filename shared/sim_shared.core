@@ -8,6 +8,7 @@ filesets:
   files_sim_sv:
     depend:
       - lowrisc:prim:assert
+      - lowrisc:prim_generic:ram_1p
     files:
       - ./rtl/prim_clock_gating.sv
       - ./rtl/ram_1p.sv
