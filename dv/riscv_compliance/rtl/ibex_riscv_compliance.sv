@@ -42,8 +42,10 @@ module ibex_riscv_compliance (
     TestUtilDevice
   } bus_device_e;
 
-  localparam NrDevices = 2;
-  localparam NrHosts = 3;
+  localparam int unsigned NrDevices = 2;
+  localparam int unsigned NrHosts = 3;
+  // 64 kB RAM. Must be a power of 2. Check bus configuration below when changing.
+  localparam int unsigned RamSizeWords = 64*1024/4;
 
   // host and device signals
   logic           host_req    [NrHosts];
@@ -70,7 +72,7 @@ module ibex_riscv_compliance (
   logic [31:0] cfg_device_addr_base [NrDevices];
   logic [31:0] cfg_device_addr_mask [NrDevices];
   assign cfg_device_addr_base[Ram] = 32'h0;
-  assign cfg_device_addr_mask[Ram] = ~32'hFFFF; // 64 kB
+  assign cfg_device_addr_mask[Ram] = ~32'(RamSizeWords * 4 - 1);
   assign cfg_device_addr_base[TestUtilDevice] = 32'h20000;
   assign cfg_device_addr_mask[TestUtilDevice] = ~32'h3FF; // 1 kB
 
@@ -160,7 +162,7 @@ module ibex_riscv_compliance (
 
   // SRAM block for instruction and data storage
   ram_1p #(
-      .Depth(64*1024/4)
+      .Depth(RamSizeWords)
     ) u_ram (
       .clk_i    (clk_sys           ),
       .rst_ni   (rst_sys_n         ),
