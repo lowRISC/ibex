@@ -111,5 +111,5 @@
 
   // Project defaults for VCS
   vcs_cov_hier: "-cm_hier {tool_srcs_dir}/cover.cfg"
-  vcs_cov_excl_files: []
+  vcs_cov_excl_files: ["{tool_srcs_dir}/common_cov_excl.el"]
 }
