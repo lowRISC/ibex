@@ -225,7 +225,10 @@ def main():
                 lambda d, v: None, '/'),
         SimOpts('riviera_compile_opts', 'Riviera compile',
                 lambda p, v: None,
-                lambda d, v: '+define+' + d + '=' + v, '/')
+                lambda d, v: '+define+' + d + '=' + v, '/'),
+        SimOpts('ius_opts', 'Incisive compile',
+                lambda p, v: '-defparam ' + p + '=' + v,
+                lambda d, v: '-define ' + d + '=' + v, '.'),
     ]
 
     argparser = argparse.ArgumentParser(description=(

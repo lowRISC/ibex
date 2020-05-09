@@ -65,12 +65,21 @@ def gen_riviera_makefrag():
             'SIM_OPTS += {1}').format(riviera_compile_opts, riviera_sim_opts)
 
 
+def gen_ius_makefrag():
+    ius_compile_opts = run_ibex_config('ius_opts', [
+        '--ins_hier_path', 'core_ibex_tb_top',
+        '--string_define_prefix', 'IBEX_CFG_'
+    ])
+
+    return 'COMPILE_OPTS += {0}'.format(ius_compile_opts)
+
+
 def main():
     argparser = argparse.ArgumentParser(description=(
         'Generates a makefile fragment for use with the Ibex DV makefile that '
         'sets up sim specific variables'))
 
-    sim_fns = {'vcs': gen_vcs_makefrag, 'riviera': gen_riviera_makefrag}
+    sim_fns = {'vcs': gen_vcs_makefrag, 'riviera': gen_riviera_makefrag, 'ius': gen_ius_makefrag}
 
     argparser.add_argument('sim',
                            help='Name of the simulator',

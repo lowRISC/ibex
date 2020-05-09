@@ -52,6 +52,24 @@
     wave_opts: >
       -ucli -do <cwd>/vcs.tcl
 
+- tool: ius
+  compile:
+    cmd:
+      - "irun -64bit -access +rwc -f ibex_dv.f
+              -sv -uvm -vlog_ext +.vh -I.
+              -uvmhome CDNS-1.2
+              -define UVM_REGEX_NO_DPI
+              -timescale 1ns/10ps
+              -elaborate
+              -l <out>/compile.log <cmp_opts>"
+  sim:
+    cmd: >
+      irun -64bit -R <sim_opts> -svseed <seed> -svrnc rand_struct
+        +UVM_TESTNAME=<rtl_test>
+        +bin=<binary>
+        +ibex_tracer_file_base=<sim_dir>/trace_core
+        -l <sim_dir>/sim.log
+
 - tool: dsim
   env_var: DSIM,DSIM_LIB_PATH
   compile:

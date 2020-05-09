@@ -40,7 +40,12 @@ module core_ibex_tb_top;
   parameter bit RV32B                    = 1'b0;
   parameter bit BranchTargetALU          = 1'b0;
   parameter bit WritebackStage           = 1'b0;
-  parameter     MultiplierImplementation = `"`IBEX_CFG_MultiplierImplementation`";
+
+  // The LRM only allows '`"` to appear in macro expansions. It might be better pass a string
+  // directly as a define.
+  `define MultiplierImplementationVal `"IBEX_CFG_MultiplierImplementation`"
+  parameter     MultiplierImplementation = `MultiplierImplementationVal;
+
 
   ibex_core_tracing #(
     .DmHaltAddr               (`BOOT_ADDR + 'h0        ),
