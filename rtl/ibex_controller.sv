@@ -182,12 +182,14 @@ module ibex_controller #(
   // it is needed to break the path from ibex_cs_registers/illegal_csr_insn_o
   // to pc_set_o.  Clear when controller is in FLUSH so it won't remain set
   // once illegal instruction is handled.
+  // All terms in this expression are qualified by instr_valid_i
   assign illegal_insn_d = (illegal_insn_i | illegal_dret | illegal_umode) & (ctrl_fsm_cs != FLUSH);
 
   // exception requests
   // requests are flopped in exc_req_q.  This is cleared when controller is in
   // the FLUSH state so the cycle following exc_req_q won't remain set for an
   // exception request that has just been handled.
+  // All terms in this expression are qualified by instr_valid_i
   assign exc_req_d = (ecall_insn | ebrk_insn | illegal_insn_d | instr_fetch_err) &
                      (ctrl_fsm_cs != FLUSH);
 
@@ -205,10 +207,13 @@ module ibex_controller #(
   // request reasons that are relevant to a branch.
 
   // generic special request signal, applies to all instructions
+  // All terms in this expression are qualified by instr_valid_i except exc_req_lsu which can come
+  // from the Writeback stage with no instr_valid_i from the ID stage
   assign special_req_all = mret_insn | dret_insn | wfi_insn | csr_pipe_flush |
       exc_req_d | exc_req_lsu;
 
   // special request that can specifically occur during branch instructions
+  // All terms in this expression are qualified by instr_valid_i
   assign special_req_branch = instr_fetch_err & (ctrl_fsm_cs != FLUSH);
 
   `ASSERT(SpecialReqBranchGivesSpecialReqAll,
@@ -399,31 +404,29 @@ module ibex_controller #(
         // which helps timing.
         pc_mux_o = PC_JUMP;
 
-        if (instr_valid_i) begin
 
-          // get ready for special instructions, exceptions, pipeline flushes
-          if (special_req_all) begin
-            // Halt IF but don't flush ID. This leaves a valid instruction in
-            // ID so controller can determine appropriate action in the
-            // FLUSH state.
-            ctrl_fsm_ns = FLUSH;
-            halt_if     = 1'b1;
-          end
+        // Get ready for special instructions, exceptions, pipeline flushes
+        if (special_req_all) begin
+          // Halt IF but don't flush ID. This leaves a valid instruction in
+          // ID so controller can determine appropriate action in the
+          // FLUSH state.
+          ctrl_fsm_ns = FLUSH;
+          halt_if     = 1'b1;
+        end
 
-          if ((branch_set_i || jump_set_i) && ~special_req_branch) begin
-            pc_set_o       = 1'b1;
+        if ((branch_set_i || jump_set_i) && ~special_req_branch) begin
+          pc_set_o       = 1'b1;
 
-            perf_tbranch_o = branch_set_i;
-            perf_jump_o    = jump_set_i;
-          end
+          perf_tbranch_o = branch_set_i;
+          perf_jump_o    = jump_set_i;
+        end
 
-          // If entering debug mode or handling an IRQ the core needs to wait
-          // until the current instruction has finished executing. Stall IF
-          // during that time.
-          if ((enter_debug_mode || handle_irq) && stall) begin
-            halt_if = 1'b1;
-          end
-        end // instr_valid_i
+        // If entering debug mode or handling an IRQ the core needs to wait
+        // until the current instruction has finished executing. Stall IF
+        // during that time.
+        if ((enter_debug_mode || handle_irq) && stall) begin
+          halt_if = 1'b1;
+        end
 
         if (!stall && !special_req_all) begin
           if (enter_debug_mode) begin
