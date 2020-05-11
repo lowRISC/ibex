@@ -573,7 +573,7 @@ def iss_sim(test_list, output_dir, iss_list, iss_yaml, iss_opts,
             cmd += test['iss_opts']
           logging.info("Running %s sim: %s" % (iss, elf))
           if iss == "ovpsim":
-            run_cmd(cmd, timeout_s, check_return_code=False, debug_cmd = debug_cmd)
+            run_cmd(cmd, timeout_s, debug_cmd = debug_cmd)
           else:
             run_cmd(cmd, timeout_s, debug_cmd = debug_cmd)
           logging.debug(cmd)

@@ -417,17 +417,17 @@ class riscv_pmp_cfg extends uvm_object;
              // based on address match mode, branch to appropriate "handler" //
              //////////////////////////////////////////////////////////////////
              // pmpcfg[i].A == OFF
-             $sformatf("beqz x%0d, 20f", scratch_reg[4]),
+             $sformatf("beqz x%0d, 21f", scratch_reg[4]),
              // pmpcfg[i].A == TOR
              // scratch_reg[5] will contain pmpaddr[i-1]
              $sformatf("li x%0d, 1", scratch_reg[0]),
-             $sformatf("beq x%0d, x%0d, 21f", scratch_reg[4], scratch_reg[0]),
+             $sformatf("beq x%0d, x%0d, 22f", scratch_reg[4], scratch_reg[0]),
              // pmpcfg[i].A == NA4
              $sformatf("li x%0d, 2", scratch_reg[0]),
-             $sformatf("beq x%0d, x%0d, 25f", scratch_reg[4], scratch_reg[0]),
+             $sformatf("beq x%0d, x%0d, 26f", scratch_reg[4], scratch_reg[0]),
              // pmpcfg[i].A == NAPOT
              $sformatf("li x%0d, 3", scratch_reg[0]),
-             $sformatf("beq x%0d, x%0d, 27f", scratch_reg[4], scratch_reg[0]),
+             $sformatf("beq x%0d, x%0d, 28f", scratch_reg[4], scratch_reg[0]),
              // Error check, if no address modes match, something has gone wrong
              $sformatf("j test_done"),
              /////////////////////////////////////////////////////////////////
@@ -442,12 +442,27 @@ class riscv_pmp_cfg extends uvm_object;
              $sformatf("csrw 0x%0x, x%0d", MSCRATCH, scratch_reg[0]),
              // load number of pmp regions - loop limit
              $sformatf("li x%0d, %0d", scratch_reg[1], pmp_num_regions),
-             // if counter < pmp_num_regions => branch to beginning of loop
+             // if counter < pmp_num_regions => branch to beginning of loop,
+             // otherwise jump to the end of the loop.
              $sformatf("ble x%0d, x%0d, 19f", scratch_reg[1], scratch_reg[0]),
              $sformatf("j 0b"),
-             // if counter >= pmp_num_regions, jump to the end of the handler, as in M-mode,
-             // no PMP match means the access succeeds
-             $sformatf("19: j 34f")
+             // If we reach here, it means that no PMP entry has matched the request.
+             // If the request was made from S-mode or U-mode, jump immediately to <test_done>.
+             // To determine the privilege mode of the access, we must read xSTATUS.xPP.
+             //
+             // TODO(udinator) - need to update to support execution of this handler in S-mode.
+             $sformatf("19: csrr x%0d, 0x%0x", scratch_reg[0], MSTATUS),
+             // Get mstatus.MPP by rightshifting and leftshifting the full CSR value.
+             $sformatf("slli x%0d, x%0d, %0d", scratch_reg[0], scratch_reg[0], XLEN-13),
+             $sformatf("srli x%0d, x%0d, %0d", scratch_reg[0], scratch_reg[0], XLEN-2),
+             // If the MPP field is less than 2'b11 (e.g. S-mode, H-mode, or U-mode),
+             // jump to <test_done>.
+             // If the MPP field is set to M-mode jump to the end of the handler,
+             // otherwise jump to <test_done>.
+             $sformatf("li x%0d, 3", scratch_reg[1]),
+             $sformatf("beq x%0d, x%0d, 20f", scratch_reg[0], scratch_reg[1]),
+             $sformatf("j test_done"),
+             $sformatf("20: j 34f")
             };
 
     /////////////////////////////////////////////////
@@ -462,36 +477,35 @@ class riscv_pmp_cfg extends uvm_object;
 
     // Sub-section to deal with address matching mode OFF.
     // If entry is OFF, simply continue looping through other PMP CSR.
-    instr = {instr, "20: j 18b"};
+    instr = {instr, "21: j 18b"};
 
     // Sub-section to handle address matching mode TOR.
     instr = {instr,
 
-             $sformatf("21: csrr x%0d, 0x%0x", scratch_reg[0], MSCRATCH),
+             $sformatf("22: csrr x%0d, 0x%0x", scratch_reg[0], MSCRATCH),
              $sformatf("csrr x%0d, 0x%0x", scratch_reg[4], MTVAL),
              $sformatf("srli x%0d, x%0d, 2", scratch_reg[4], scratch_reg[4]),
              // If loop_counter==0, compare fault_addr to 0
-             $sformatf("bnez x%0d, 22f", scratch_reg[0]),
+             $sformatf("bnez x%0d, 23f", scratch_reg[0]),
              // If fault_addr < 0 : continue looping
              $sformatf("bltz x%0d, 18b", scratch_reg[4]),
-             $sformatf("j 23f"),
+             $sformatf("j 24f"),
              // If fault_addr < pmpaddr[i-1] : continue looping
-             $sformatf("22: bgtu x%0d, x%0d, 18b", scratch_reg[5], scratch_reg[4]),
+             $sformatf("23: bgtu x%0d, x%0d, 18b", scratch_reg[5], scratch_reg[4]),
              // If fault_addr >= pmpaddr[i] : continue looping
-             $sformatf("23: bleu x%0d, x%0d, 18b", scratch_reg[1], scratch_reg[4]),
+             $sformatf("24: bleu x%0d, x%0d, 18b", scratch_reg[1], scratch_reg[4]),
              // If we get here, there is a TOR match, if the entry is locked jump to
              // <test_done>, otherwise modify access bits and return
              $sformatf("andi x%0d, x%0d, 128", scratch_reg[4], scratch_reg[3]),
-             $sformatf("beqz x%0d, 24f", scratch_reg[4]),
+             $sformatf("beqz x%0d, 25f", scratch_reg[4]),
              $sformatf("j test_done"),
-             // TODO : update with correct label
-             $sformatf("24: j 29f")
+             $sformatf("25: j 30f")
             };
 
     // Sub-section to handle address matching mode NA4.
     // TODO(udinator) : add rv64 support
     instr = {instr,
-             $sformatf("25: csrr x%0d, 0x%0x", scratch_reg[0], MTVAL),
+             $sformatf("26: csrr x%0d, 0x%0x", scratch_reg[0], MTVAL),
              $sformatf("srli x%0d, x%0d, 2", scratch_reg[0], scratch_reg[0]),
              // Zero out pmpaddr[i][31:30]
              $sformatf("slli x%0d, x%0d, 2", scratch_reg[4], scratch_reg[1]),
@@ -502,15 +516,14 @@ class riscv_pmp_cfg extends uvm_object;
              // If we get here, there is an NA4 address match, jump to <test_done> if the
              // entry is locked, otherwise modify access bits
              $sformatf("andi x%0d, x%0d, 128", scratch_reg[4], scratch_reg[3]),
-             $sformatf("beqz x%0d, 26f", scratch_reg[4]),
+             $sformatf("beqz x%0d, 27f", scratch_reg[4]),
              $sformatf("j test_done"),
-             // TODO : update with correct label
-             $sformatf("26: j 29f")
+             $sformatf("27: j 30f")
             };
 
     // Sub-section to handle address matching mode NAPOT.
     instr = {instr,
-             $sformatf("27: csrr x%0d, 0x%0x", scratch_reg[0], MTVAL),
+             $sformatf("28: csrr x%0d, 0x%0x", scratch_reg[0], MTVAL),
              // get fault_addr[31:2]
              $sformatf("srli x%0d, x%0d, 2", scratch_reg[0], scratch_reg[0]),
              // mask the bottom pmp_granularity bits of fault_addr
@@ -529,23 +542,22 @@ class riscv_pmp_cfg extends uvm_object;
              $sformatf("andi x%0d, x%0d, 128", scratch_reg[4], scratch_reg[3]),
              $sformatf("beqz x%0d, 29f", scratch_reg[4]),
              $sformatf("j test_done"),
-             // TODO : update with correct label
-             $sformatf("28: j 29f")
+             $sformatf("29: j 30f")
            };
 
     // This case statement creates a bitmask that enables the correct access permissions
     // and ORs it with the 8-bit configuration fields.
     case (fault_type)
       INSTRUCTION_ACCESS_FAULT: begin
-        instr.push_back($sformatf("29: ori x%0d, x%0d, 4", scratch_reg[3], scratch_reg[3]));
+        instr.push_back($sformatf("30: ori x%0d, x%0d, 4", scratch_reg[3], scratch_reg[3]));
       end
       STORE_AMO_ACCESS_FAULT: begin
         // The combination of W:1 and R:0 is reserved, so if we are enabling write
         // permissions, also enable read permissions to adhere to the spec.
-        instr.push_back($sformatf("29: ori x%0d, x%0d, 3", scratch_reg[3], scratch_reg[3]));
+        instr.push_back($sformatf("30: ori x%0d, x%0d, 3", scratch_reg[3], scratch_reg[3]));
       end
       LOAD_ACCESS_FAULT: begin
-        instr.push_back($sformatf("29: ori x%0d, x%0d, 1", scratch_reg[3], scratch_reg[3]));
+        instr.push_back($sformatf("30: ori x%0d, x%0d, 1", scratch_reg[3], scratch_reg[3]));
       end
     endcase
     instr = {instr,
@@ -575,23 +587,23 @@ class riscv_pmp_cfg extends uvm_object;
              // All other scratch_reg[*] can be used.
              // scratch_reg[0] contains the index of the correct pmpcfg CSR.
              // We simply check the index and then write to the correct pmpcfg CSR based on its value.
-             $sformatf("beqz x%0d, 30f", scratch_reg[0]),
+             $sformatf("beqz x%0d, 31f", scratch_reg[0]),
              $sformatf("li x%0d, 1", scratch_reg[4]),
-             $sformatf("beq x%0d, x%0d, 31f", scratch_reg[0], scratch_reg[4]),
-             $sformatf("li x%0d, 2", scratch_reg[4]),
              $sformatf("beq x%0d, x%0d, 32f", scratch_reg[0], scratch_reg[4]),
-             $sformatf("li x%0d, 3", scratch_reg[4]),
+             $sformatf("li x%0d, 2", scratch_reg[4]),
              $sformatf("beq x%0d, x%0d, 33f", scratch_reg[0], scratch_reg[4]),
-             $sformatf("30: csrw 0x%0x, x%0d", PMPCFG0, scratch_reg[2]),
-             $sformatf("j 34f"),
-             $sformatf("31: csrw 0x%0x, x%0d", PMPCFG1, scratch_reg[2]),
-             $sformatf("j 34f"),
-             $sformatf("32: csrw 0x%0x, x%0d", PMPCFG2, scratch_reg[2]),
-             $sformatf("j 34f"),
-             $sformatf("33: csrw 0x%0x, x%0d", PMPCFG3, scratch_reg[2]),
+             $sformatf("li x%0d, 3", scratch_reg[4]),
+             $sformatf("beq x%0d, x%0d, 34f", scratch_reg[0], scratch_reg[4]),
+             $sformatf("31: csrw 0x%0x, x%0d", PMPCFG0, scratch_reg[2]),
+             $sformatf("j 35f"),
+             $sformatf("32: csrw 0x%0x, x%0d", PMPCFG1, scratch_reg[2]),
+             $sformatf("j 35f"),
+             $sformatf("33: csrw 0x%0x, x%0d", PMPCFG2, scratch_reg[2]),
+             $sformatf("j 35f"),
+             $sformatf("34: csrw 0x%0x, x%0d", PMPCFG3, scratch_reg[2]),
              // End the pmp handler with a labeled nop instruction, this provides a branch target
              // for the internal routine after it has "fixed" the pmp configuration CSR.
-             $sformatf("34: nop")
+             $sformatf("35: nop")
             };
 
   endfunction
