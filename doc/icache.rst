@@ -223,6 +223,7 @@ Fetched instructions are returned to the core using ports ``ready_i``, ``valid_o
 This interface uses a form of ready/valid handshaking.
 A transaction is signalled by ready and valid being high.
 If valid goes high, it will remain high and the other output signals will remain stable until the transaction goes through or is cancelled by ``branch_i`` being asserted.
+The only exception is after an error is passed to the core. Once that has happened, there is no constraint on the values of ``valid_o``, ``rdata_o``, ``addr_o``, ``err_o`` and ``err_plus2_o`` until the next time ``branch_i`` is asserted.
 There is no constraint on the behaviour of ``ready_i``.
 
 The 32-bit wide ``rdata_o`` signal contains instruction data fetched from ``addr_o``.
