@@ -4,13 +4,6 @@
 
 /**
  * Dual-port RAM with 1 cycle read/write delay, 32 bit words.
- *
- * The two ports are in Read-First Mode: when reading from and writing to the same address
- * simultaneously, the old content is returned, before the new content is written. New content
- * is made available to both ports with one cycle delay.
- *
- * Simultaneous write operations by both ports to the same address are to be avoided: The data
- * written to memory is not determined.
  */
 
 `include "prim_assert.sv"
@@ -40,8 +33,6 @@ module ram_2p #(
 
   localparam int Aw = $clog2(Depth);
 
-  logic [31:0] mem [Depth];
-
   logic [Aw-1:0] a_addr_idx;
   assign a_addr_idx = a_addr_i[Aw-1+2:2];
   logic [31-Aw:0] unused_a_addr_parts;
@@ -52,77 +43,45 @@ module ram_2p #(
   logic [31-Aw:0] unused_b_addr_parts;
   assign unused_b_addr_parts = {b_addr_i[31:Aw+2], b_addr_i[1:0]};
 
-  always @(posedge clk_i) begin
-    if (a_req_i) begin
-      if (a_we_i) begin
-        for (int i = 0; i < 4; i = i + 1) begin
-          if (a_be_i[i] == 1'b1) begin
-            mem[a_addr_idx][i*8 +: 8] <= a_wdata_i[i*8 +: 8];
-          end
-        end
-      end
-      a_rdata_o <= mem[a_addr_idx];
-    end
-  end
-
-  always @(posedge clk_i) begin
-    if (b_req_i) begin
-      if (b_we_i) begin
-        for (int i = 0; i < 4; i = i + 1) begin
-          if (b_be_i[i] == 1'b1) begin
-            mem[b_addr_idx][i*8 +: 8] <= b_wdata_i[i*8 +: 8];
-          end
-        end
-      end
-      b_rdata_o <= mem[b_addr_idx];
+  // Convert byte mask to SRAM bit mask.
+  logic [31:0] a_wmask;
+  logic [31:0] b_wmask;
+  always_comb begin
+    for (int i = 0 ; i < 4 ; i++) begin
+      // mask for read data
+      a_wmask[8*i+:8] = {8{a_be_i[i]}};
+      b_wmask[8*i+:8] = {8{b_be_i[i]}};
     end
   end
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       a_rvalid_o <= '0;
-    end else begin
-      a_rvalid_o <= a_req_i;
-    end
-  end
-
-  always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni) begin
       b_rvalid_o <= '0;
     end else begin
+      a_rvalid_o <= a_req_i;
       b_rvalid_o <= b_req_i;
     end
   end
 
-  `ifdef VERILATOR
-    // Task for loading 'mem' with SystemVerilog system task $readmemh()
-    export "DPI-C" task simutil_verilator_memload;
-    // Function for setting a specific 32 bit element in |mem|
-    // Returns 1 (true) for success, 0 (false) for errors.
-    export "DPI-C" function simutil_verilator_set_mem;
+  prim_ram_2p #(
+    .Width(32),
+    .Depth(Depth)
+  ) u_ram (
+    .clk_a_i   (clk_i),
+    .clk_b_i   (clk_i),
+    .a_req_i   (a_req_i),
+    .a_write_i (a_we_i),
+    .a_addr_i  (a_addr_idx),
+    .a_wdata_i (a_wdata_i),
+    .a_wmask_i (a_wmask),
+    .a_rdata_o (a_rdata_o),
+    .b_req_i   (b_req_i),
+    .b_write_i (b_we_i),
+    .b_wmask_i (b_wmask),
+    .b_addr_i  (b_addr_idx),
+    .b_wdata_i (b_wdata_i),
+    .b_rdata_o (b_rdata_o)
+  );
 
-    task simutil_verilator_memload;
-      input string file;
-      $readmemh(file, mem);
-    endtask
-
-    // TODO: Allow 'val' to have other widths than 32 bit
-    function int simutil_verilator_set_mem(input int index,
-                                           input logic[31:0] val);
-      if (index >= Depth) begin
-        return 0;
-      end
-
-      mem[index] = val;
-      return 1;
-    endfunction
-  `endif
-
-  `ifdef SRAM_INIT_FILE
-    localparam MEM_FILE = `PRIM_STRINGIFY(`SRAM_INIT_FILE);
-    initial begin
-      $display("Initializing SRAM from %s", MEM_FILE);
-      $readmemh(MEM_FILE, mem);
-    end
-  `endif
 endmodule

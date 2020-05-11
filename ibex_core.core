@@ -9,7 +9,9 @@ filesets:
   files_rtl:
     depend:
       - lowrisc:prim:assert
-      - lowrisc:prim:lfsr
+      # TODO: Only lfsr is needed. Replace with a more specific dependency
+      # once available.
+      - lowrisc:prim:all
       - lowrisc:ibex:ibex_pkg
       - lowrisc:ibex:ibex_icache
     files:
@@ -48,7 +50,7 @@ filesets:
 
   files_check_tool_requirements:
     depend:
-     - lowrisc:ibex:check_tool_requirements
+     - lowrisc:tool:check_tool_requirements
 
 parameters:
   RVFI:
