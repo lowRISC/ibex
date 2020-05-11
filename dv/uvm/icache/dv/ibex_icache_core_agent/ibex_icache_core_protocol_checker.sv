@@ -88,7 +88,7 @@ interface ibex_icache_core_protocol_checker (
     end
   end
 
-  `ASSERT(NoFetchWithoutAddr, req |-> (branch | has_addr), clk, !rst_n)
+  `ASSERT(NoFetchWithoutAddr, ready |-> (branch | has_addr), clk, !rst_n)
 
   // The err_plus2 signal means "this error was caused by the upper two bytes" and is only read when
   // both valid and err are true. It should never be set for compressed instructions (for them, the
