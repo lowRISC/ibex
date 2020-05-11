@@ -1,0 +1,32 @@
+CAPI=2:
+# Copyright lowRISC contributors.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+name: "lowrisc:lint:common:0.1"
+description: "Common waivers"
+filesets:
+  files_verilator:
+    files:
+      - tools/verilator/common.vlt
+    file_type: vlt
+
+  files_ascentlint:
+    files:
+      - tools/ascentlint/common.waiver: {file_type: waiver}
+      - tools/ascentlint/ascentlint-config.tcl: {file_type: tclSource}
+
+  files_veriblelint:
+    files:
+      - tools/veriblelint/rules.vbl: {file_type: veribleLintRules}
+
+  files_check_tool_requirements:
+    depend:
+     - lowrisc:tool:check_tool_requirements
+
+targets:
+  default: &default_target
+    filesets:
+      - tool_verilator   ? (files_verilator)
+      - tool_ascentlint  ? (files_ascentlint)
+      - tool_veriblelint ? (files_veriblelint)
+      - files_check_tool_requirements

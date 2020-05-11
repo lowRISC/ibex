@@ -17,7 +17,8 @@ int main(int argc, char **argv) {
   simctrl.SetTop(&top, &top.IO_CLK, &top.IO_RST_N,
                  VerilatorSimCtrlFlags::ResetPolarityNegative);
 
-  memutil.RegisterMemoryArea("ram", "TOP.ibex_simple_system.u_ram");
+  memutil.RegisterMemoryArea(
+      "ram", "TOP.ibex_simple_system.u_ram.u_ram.gen_generic.u_impl_generic");
   simctrl.RegisterExtension(&memutil);
 
   std::cout << "Simulation of Ibex" << std::endl

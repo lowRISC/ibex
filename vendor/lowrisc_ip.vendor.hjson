@@ -17,6 +17,12 @@
         {from: "hw/dv/sv/dv_utils",   to: "dv_utils"},
         {from: "hw/dv/verilator",     to: "dv_verilator"},
 
+        {from: "hw/ip/prim",          to: "prim"},
+        {from: "hw/ip/prim_generic",  to: "prim_generic"},
+        {from: "hw/ip/prim_xilinx",   to: "prim_xilinx"},
+
+        {from: "hw/lint",             to: "lint"},
+
         {from: "util/dvsim",          to: "dvsim"},
         {from: "util/uvmdvgen",       to: "uvmdvgen"},
     ]

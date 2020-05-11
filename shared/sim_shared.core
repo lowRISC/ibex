@@ -8,9 +8,10 @@ filesets:
   files_sim_sv:
     depend:
       - lowrisc:prim:assert
-      - lowrisc:prim_generic:ram_1p
+      - lowrisc:prim:ram_1p
+      - lowrisc:prim:ram_2p
+      - lowrisc:prim:clock_gating
     files:
-      - ./rtl/prim_clock_gating.sv
       - ./rtl/ram_1p.sv
       - ./rtl/ram_2p.sv
       - ./rtl/bus.sv
