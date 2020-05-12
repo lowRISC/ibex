@@ -991,6 +991,8 @@ module ibex_tracer (
         INSN_FSL:        decode_r_funnelshift_insn("fsl");
         INSN_FSRI:       decode_i_funnelshift_insn("fsri");
 
+        // RV32B - ZBF
+        INSN_BFP:        decode_r_insn("bfp");
         default:         decode_mnemonic("INVALID");
       endcase
     end
