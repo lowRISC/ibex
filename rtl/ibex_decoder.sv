@@ -405,7 +405,7 @@ module ibex_decoder #(
             {7'b000_0000, 3'b101},
             {7'b010_0000, 3'b101}: illegal_insn = 1'b0;
 
-            // supported RV32B instructions (zbb)
+            // RV32B zbb
             {7'b010_0000, 3'b111}, // andn
             {7'b010_0000, 3'b110}, // orn
             {7'b010_0000, 3'b100}, // xnor
@@ -420,11 +420,15 @@ module ibex_decoder #(
             {7'b000_0100, 3'b100}, // pack
             {7'b010_0100, 3'b100}, // packu
             {7'b000_0100, 3'b111}, // packh
-            // RV32B instructions (zbs)
+            // RV32B zbs
             {7'b010_0100, 3'b001}, // sbclr
             {7'b001_0100, 3'b001}, // sbset
             {7'b011_0100, 3'b001}, // sbinv
             {7'b010_0100, 3'b101}, // sbext
+            // RV32B zbe
+            {7'b010_0100, 3'b110}, // bdep
+            {7'b000_0100, 3'b110}, // bext
+            // RV32B zbp
             {7'b011_0100, 3'b101}, // grev
             {7'b001_0100, 3'b101}, // gorc
             {7'b000_0100, 3'b001}, // shfl
@@ -877,7 +881,7 @@ module ibex_decoder #(
             {7'b000_0000, 3'b101}: alu_operator_o = ALU_SRL;   // Shift Right Logical
             {7'b010_0000, 3'b101}: alu_operator_o = ALU_SRA;   // Shift Right Arithmetic
 
-            // RV32B ALU Operations
+            // RV32B zbb
             {7'b001_0000, 3'b001}: if (RV32B) alu_operator_o = ALU_SLO;   // Shift Left Ones
             {7'b001_0000, 3'b101}: if (RV32B) alu_operator_o = ALU_SRO;   // Shift Right Ones
             {7'b011_0000, 3'b001}: begin
@@ -905,18 +909,21 @@ module ibex_decoder #(
             {7'b010_0000, 3'b100}: if (RV32B) alu_operator_o = ALU_XNOR;   // Xnor
             {7'b010_0000, 3'b110}: if (RV32B) alu_operator_o = ALU_ORN;    // Orn
             {7'b010_0000, 3'b111}: if (RV32B) alu_operator_o = ALU_ANDN;   // Andn
+            // RV32B zbp
             {7'b011_0100, 3'b101}: if (RV32B) alu_operator_o = ALU_GREV;   // Grev
             {7'b001_0100, 3'b101}: if (RV32B) alu_operator_o = ALU_GORC;   // Grev
             {7'b000_0100, 3'b001}: if (RV32B) alu_operator_o = ALU_SHFL;   // Shfl
             {7'b000_0100, 3'b101}: if (RV32B) alu_operator_o = ALU_UNSHFL; // Unshfl
 
-
-            // RV32B ALU_Operations (zbs)
+            // RV32B zbs
             {7'b010_0100, 3'b001}: if (RV32B) alu_operator_o = ALU_SBCLR;  // sbclr
             {7'b001_0100, 3'b001}: if (RV32B) alu_operator_o = ALU_SBSET;  // sbset
             {7'b011_0100, 3'b001}: if (RV32B) alu_operator_o = ALU_SBINV;  // sbinv
             {7'b010_0100, 3'b101}: if (RV32B) alu_operator_o = ALU_SBEXT;  // sbext
 
+            // RV32B zbe
+            {7'b010_0100, 3'b110}: if (RV32B) alu_operator_o = ALU_BDEP;   // bdep
+            {7'b000_0100, 3'b110}: if (RV32B) alu_operator_o = ALU_BEXT;   // bext
             // RV32M instructions, all use the same ALU operation
             {7'b000_0001, 3'b000}: begin // mul
               alu_operator_o = ALU_ADD;
