@@ -237,6 +237,9 @@ parameter logic [31:0] INSN_CMOV = {5'b?, 2'b11, 10'b?, 3'b101, 5'b?, {OPCODE_OP
 parameter logic [31:0] INSN_FSL  = {5'b?, 2'b10, 10'b?, 3'b001, 5'b?, {OPCODE_OP} };
 parameter logic [31:0] INSN_FSR  = {5'b?, 2'b10, 10'b?, 3'b101, 5'b?, {OPCODE_OP} };
 
+// ZBF
+parameter logic [31:0] INSN_BFP  = {7'b0100100, 10'b?, 3'b111, 5'b?, {OPCODE_OP} };
+
 // LOAD & STORE
 parameter logic [31:0] INSN_LOAD    = {25'b?,                            {OPCODE_LOAD } };
 parameter logic [31:0] INSN_STORE   = {25'b?,                            {OPCODE_STORE} };
