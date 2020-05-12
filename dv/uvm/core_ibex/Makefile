@@ -81,6 +81,11 @@ else ifeq (&{SIMULATOR},riviera)
 # TODO(udinator) - support dsim
 endif
 
+# This expands to '@' if VERBOSE is 0 or not set, and to the empty
+# string otherwise. Prefix commands with it in order that they only
+# get printed when VERBOSE.
+verb = $(if $(filter-out 0,$(VERBOSE)),,@)
+
 SHELL=/bin/bash
 
 export PRJ_DIR:= $(realpath ../../../..)
@@ -222,8 +227,8 @@ risc-dv-files := $(shell find $(GEN_DIR) -type f)
 # runs, it starts by deleting any existing contents of $(OUT-SEED)/instr_gen.
 $(metadata)/instr_gen.gen.stamp: \
   $(gen-vars-prereq) $(risc-dv-files) $(TESTLIST) | $(metadata)
-	@rm -rf $(OUT-SEED)/instr_gen
-	@python3 ${GEN_DIR}/run.py \
+	$(verb)rm -rf $(OUT-SEED)/instr_gen
+	$(verb)python3 ${GEN_DIR}/run.py \
      --output=$(OUT-SEED)/instr_gen ${GEN_OPTS} \
      --steps=gen \
      --gen_timeout=${TIMEOUT} \
@@ -248,7 +253,7 @@ gen: $(metadata)/instr_gen.gen.stamp
 # doesn't depend on anything more than the instr_gen stage did.
 $(metadata)/instr_gen.compile.stamp: \
   $(metadata)/instr_gen.gen.stamp $(TESTLIST)
-	@python3 ${GEN_DIR}/run.py \
+	$(verb)python3 ${GEN_DIR}/run.py \
      --o=$(OUT-SEED)/instr_gen ${GEN_OPTS} \
      --steps=gcc_compile \
      ${TEST_OPTS} \
@@ -272,7 +277,7 @@ iss-vars-prereq = $(call vars-prereq,iss,running ISS,$(iss-var-deps))
 
 $(metadata)/instr_gen.iss.stamp: \
   $(iss-vars-prereq) $(TESTLIST) $(metadata)/instr_gen.compile.stamp
-	@python3 ${GEN_DIR}/run.py \
+	$(verb)python3 ${GEN_DIR}/run.py \
      --o=$(OUT-SEED)/instr_gen ${GEN_OPTS} \
      --steps=iss_sim \
      ${TEST_OPTS} \
@@ -322,7 +327,7 @@ $(OUT)/rtl_sim/.compile.stamp: \
   $(compile-vars-prereq) $(all-verilog) $(risc-dv-files) \
   sim.py yaml/rtl_simulation.yaml \
   | $(OUT)/rtl_sim
-	@./sim.py \
+	$(verb)./sim.py \
 	 --o=${OUT} \
 	 --steps=compile \
 	 ${COMMON_OPTS} \
@@ -358,7 +363,7 @@ $(metadata)/rtl_sim.run.stamp: \
   $(metadata)/rtl_sim.compile.stamp \
   $(metadata)/instr_gen.compile.stamp $(TESTLIST) \
   sim.py yaml/rtl_simulation.yaml
-	@./sim.py \
+	$(verb)./sim.py \
 	 --o=$(OUT-SEED) \
 	 --steps=sim \
 	 ${TEST_OPTS} \
@@ -375,8 +380,8 @@ rtl_sim: $(metadata)/rtl_sim.run.stamp
 $(OUT-SEED)/regr.log: \
   $(metadata)/instr_gen.iss.stamp \
   $(metadata)/rtl_sim.run.stamp $(TESTLIST)
-	@rm -f $@
-	@./sim.py \
+	$(verb)rm -f $@
+	$(verb)./sim.py \
      --o=$(OUT-SEED) \
      --steps=compare \
      ${TEST_OPTS} \
@@ -390,7 +395,7 @@ post_compare: $(OUT-SEED)/regr.log
 # Generate RISCV-DV functional coverage
 # TODO(udi) - add B extension
 fcov:
-	python3 ${GEN_DIR}/cov.py \
+	$(verb)python3 ${GEN_DIR}/cov.py \
           --core ibex \
           --dir ${OUT-SEED}/rtl_sim \
           -o ${OUT-SEED}/fcov \
@@ -399,8 +404,8 @@ fcov:
 
 # Merge all output coverage directories into the <out>/rtl_sim directory
 cov:
-	@rm -rf ${OUT}/rtl_sim/test.vdb
-	@./sim.py \
+	$(verb)rm -rf ${OUT}/rtl_sim/test.vdb
+	$(verb)./sim.py \
 		--steps=cov \
 		${TEST_OPTS} \
 		--simulator="${SIMULATOR}" \
