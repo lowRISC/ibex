@@ -101,7 +101,12 @@ typedef enum logic [5:0] {
   ALU_SBSET,
   ALU_SBCLR,
   ALU_SBINV,
-  ALU_SBEXT
+  ALU_SBEXT,
+
+  // Bit Extract / Deposit
+  // RV32B
+  ALU_BEXT,
+  ALU_BDEP
 } alu_op_e;
 
 typedef enum logic [1:0] {
