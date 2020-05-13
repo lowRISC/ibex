@@ -376,6 +376,7 @@ module ibex_alu #(
   logic [31:0] minmax_result;
   logic [5:0]  bitcnt_result;
   logic [31:0] pack_result;
+  logic [31:0] sext_result;
   logic [31:0] multicycle_result;
   logic [31:0] singlebit_result;
 
@@ -860,11 +861,20 @@ module ibex_alu #(
         default: pack_result = {operand_b_i[15:0], operand_a_i[15:0]};
       endcase
     end
+
+    //////////
+    // Sext //
+    //////////
+
+    assign sext_result = (operator_i == ALU_SEXTB) ?
+        { {24{operand_a_i[7]}}, operand_a_i[7:0]} : { {16{operand_a_i[15]}}, operand_a_i[15:0]};
+
   end else begin : g_no_alu_rvb
     // RV32B result signals
     assign minmax_result       = '0;
     assign bitcnt_result       = '0;
     assign pack_result         = '0;
+    assign sext_result         = '0;
     assign multicycle_result   = '0;
     assign singlebit_result    = '0;
     assign shuffle_result      = '0;
@@ -894,7 +904,7 @@ module ibex_alu #(
       // Shift Operations
       ALU_SLL,  ALU_SRL,
       ALU_SRA,
-      // RV32B Ops
+      // RV32B
       ALU_SLO,  ALU_SRO: result_o = shift_result;
 
       // Shuffle Operations (RV32B)
@@ -918,6 +928,9 @@ module ibex_alu #(
       ALU_PACK, ALU_PACKH,
       ALU_PACKU: result_o = pack_result;
 
+      // Sign-Extend (RV32B)
+      ALU_SEXTB, ALU_SEXTH: result_o = sext_result;
+
       // Ternary Bitmanip Operations (RV32B)
       ALU_CMIX, ALU_CMOV,
       ALU_FSL,  ALU_FSR,
@@ -927,14 +940,14 @@ module ibex_alu #(
       ALU_SBSET, ALU_SBCLR,
       ALU_SBINV, ALU_SBEXT: result_o = singlebit_result;
 
-      // Bit Extract / Deposit (RV32B Ops)
+      // Bit Extract / Deposit (RV32B)
       ALU_BDEP:  result_o = butterfly_result;
       ALU_BEXT:  result_o = invbutterfly_result;
 
-      // General Reverse / Or-combine (RV32B Ops)
+      // General Reverse / Or-combine (RV32B)
       ALU_GREV, ALU_GORC: result_o = butterfly_result;
 
-      // Bit Field Place
+      // Bit Field Place (RV32B)
       ALU_BFP: result_o = bfp_result;
 
       default: ;

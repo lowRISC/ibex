@@ -79,6 +79,11 @@ typedef enum logic [5:0] {
   ALU_PACKU,
   ALU_PACKH,
 
+  // Sign-Extend
+  // RV32B
+  ALU_SEXTB,
+  ALU_SEXTH,
+
   // Bitcounting
   // RV32B
   ALU_CLZ,

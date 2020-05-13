@@ -76,9 +76,15 @@ parameter logic [31:0] INSN_PMULHU  = { 7'b0000001, 10'b?, 3'b011, 5'b?, {OPCODE
 parameter logic [31:0] INSN_SLOI = { 5'b00100        , 12'b?, 3'b001, 5'b?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_SROI = { 5'b00100        , 12'b?, 3'b101, 5'b?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_RORI = { 5'b01100        , 12'b?, 3'b101, 5'b?, {OPCODE_OP_IMM} };
-parameter logic [31:0] INSN_CLZ  = { 12'b011000000000, 5'b? , 3'b001, 5'b?, {OPCODE_OP_IMM} };
-parameter logic [31:0] INSN_CTZ  = { 12'b011000000001, 5'b? , 3'b001, 5'b?, {OPCODE_OP_IMM} };
-parameter logic [31:0] INSN_PCNT = { 12'b011000000010, 5'b? , 3'b001, 5'b?, {OPCODE_OP_IMM} };
+parameter logic [31:0] INSN_CLZ  = { 12'b011000000000, 5'b?,  3'b001, 5'b?, {OPCODE_OP_IMM} };
+parameter logic [31:0] INSN_CTZ  = { 12'b011000000001, 5'b?,  3'b001, 5'b?, {OPCODE_OP_IMM} };
+parameter logic [31:0] INSN_PCNT = { 12'b011000000010, 5'b?,  3'b001, 5'b?, {OPCODE_OP_IMM} };
+parameter logic [31:0] INSN_SEXTB = { 12'b011000000100, 5'b?, 3'b001, 5'b?, {OPCODE_OP_IMM} };
+parameter logic [31:0] INSN_SEXTH = { 12'b011000000101, 5'b?, 3'b001, 5'b?, {OPCODE_OP_IMM} };
+// sext -- pseudoinstruction: andi rd, rs 255
+parameter logic [31:0] INSN_ZEXTB = { 4'b0000, 8'b11111111, 5'b?, 3'b111, 5'b?, {OPCODE_OP_IMM} };
+// sext -- pseudoinstruction: pack rd, rs zero
+parameter logic [31:0] INSN_ZEXTH = { 7'b0000100, 5'b00000, 5'b?, 3'b100, 5'b?, {OPCODE_OP} };
 
 parameter logic [31:0] INSN_SLO   = { 7'b0010000, 10'b?, 3'b001, 5'b?, {OPCODE_OP} };
 parameter logic [31:0] INSN_SRO   = { 7'b0010000, 10'b?, 3'b101, 5'b?, {OPCODE_OP} };
