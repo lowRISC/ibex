@@ -832,7 +832,16 @@ module ibex_tracer (
         INSN_SLTIU:      decode_i_insn("sltiu");
         INSN_XORI:       decode_i_insn("xori");
         INSN_ORI:        decode_i_insn("ori");
+        // Version 0.92 of the Bitmanip Extension defines the pseudo-instruction
+        // zext.b rd rs = andi rd, rs, 255.
+        // Currently instruction set simulators don't output this pseudo-instruction.
         INSN_ANDI:       decode_i_insn("andi");
+        // INSN_ANDI:begin
+          // casez (rvfi_insn)
+            // INSN_ZEXTB:  decode_r1_insn("zext.b");
+            // default:     decode_i_insn("andi");
+          // endcase
+        // end
         INSN_SLLI:       decode_i_shift_insn("slli");
         INSN_SRLI:       decode_i_shift_insn("srli");
         INSN_SRAI:       decode_i_shift_insn("srai");
@@ -890,12 +899,23 @@ module ibex_tracer (
         INSN_XNOR:       decode_r_insn("xnor");
         INSN_ORN:        decode_r_insn("orn");
         INSN_ANDN:       decode_r_insn("andn");
+        // Version 0.92 of the Bitmanip Extension defines the pseudo-instruction
+        // zext.h rd rs = pack rd, rs, zero.
+        // Currently instruction set simulators don't output this pseudo-instruction.
         INSN_PACK:       decode_r_insn("pack");
+        // INSN_PACK: begin
+          // casez (rvfi_insn)
+            // INSN_ZEXTH:  decode_r1_insn("zext.h");
+            // default:     decode_r_insn("pack");
+          // endcase
+        // end
         INSN_PACKH:      decode_r_insn("packh");
         INSN_PACKU:      decode_r_insn("packu");
         INSN_CLZ:        decode_r1_insn("clz");
         INSN_CTZ:        decode_r1_insn("ctz");
         INSN_PCNT:       decode_r1_insn("pcnt");
+        INSN_SEXTB:      decode_r1_insn("sext.b");
+        INSN_SEXTH:      decode_r1_insn("sext.h");
         // RV32B - ZBS
         INSN_SBCLRI:     decode_i_insn("sbclri");
         INSN_SBSETI:     decode_i_insn("sbseti");

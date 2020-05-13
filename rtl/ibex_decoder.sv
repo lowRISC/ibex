@@ -346,9 +346,12 @@ module ibex_decoder #(
               end
               5'b0_1100: begin
                 unique case(instr[26:20])
-                  7'b000_0000,                                     // clz
-                  7'b000_0001,                                     // ctz
-                  7'b000_0010: illegal_insn = RV32B ? 1'b0 : 1'b1; // pcnt
+                  7'b00_00000,                                     // clz
+                  7'b00_00001,                                     // ctz
+                  7'b00_00010,                                     // pcnt
+                  7'b00_00100,                                     // sext.b
+                  7'b00_00101: illegal_insn = RV32B ? 1'b0 : 1'b1; // sext.h
+
                   default: illegal_insn = 1'b1;
                 endcase
               end
@@ -768,9 +771,11 @@ module ibex_decoder #(
                 5'b0_0001: if (instr_alu[26] == 0) alu_operator_o = ALU_SHFL;
                 5'b0_1100: begin
                   unique case (instr_alu[26:20])
-                    7'b000_0000: alu_operator_o = ALU_CLZ;  // Count Leading Zeros
-                    7'b000_0001: alu_operator_o = ALU_CTZ;  // Count Trailing Zeros
-                    7'b000_0010: alu_operator_o = ALU_PCNT; // Count Set Bits
+                    7'b000_0000: alu_operator_o = ALU_CLZ;   // Count Leading Zeros
+                    7'b000_0001: alu_operator_o = ALU_CTZ;   // Count Trailing Zeros
+                    7'b000_0010: alu_operator_o = ALU_PCNT;  // Count Set Bits
+                    7'b000_0100: alu_operator_o = ALU_SEXTB; // Sign-extend Byte
+                    7'b000_0101: alu_operator_o = ALU_SEXTH; // Sign-extend Half-word
                     default: ;
                   endcase
                 end
