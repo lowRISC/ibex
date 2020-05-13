@@ -379,6 +379,7 @@ module ibex_alu #(
   logic [31:0] sext_result;
   logic [31:0] multicycle_result;
   logic [31:0] singlebit_result;
+  logic [31:0] clmul_result;
 
   if (RV32B) begin : g_alu_rvb
 
@@ -869,6 +870,94 @@ module ibex_alu #(
     assign sext_result = (operator_i == ALU_SEXTB) ?
         { {24{operand_a_i[7]}}, operand_a_i[7:0]} : { {16{operand_a_i[15]}}, operand_a_i[15:0]};
 
+    /////////////////////////
+    // Carry-less Multiply //
+    /////////////////////////
+
+    // Carry-less multiplication can be understood as multiplication based on
+    // the addition interpreted as the bit-wise xor operation.
+    //
+    // Example: 1101 X 1011 = 1111111:
+    //
+    //       1011 X 1101
+    //       -----------
+    //              1101
+    //         xor 1101
+    //         ---------
+    //             10111
+    //        xor 0000
+    //        ----------
+    //            010111
+    //       xor 1101
+    //       -----------
+    //           1111111
+    //
+    // Architectural details:
+    //         A 32 x 32-bit array
+    //         [ operand_b[i] ? (operand_a << i) : '0 for i in 0 ... 31 ]
+    //         is generated. The entries of the array are pairwise 'xor-ed'
+    //         together in a 5-stage binary tree.
+
+    logic clmul_rmode;
+    logic clmul_hmode;
+    logic [31:0] clmul_op_a;
+    logic [31:0] clmul_op_b;
+    logic [31:0] operand_b_rev;
+    logic [31:0] clmul_and_stage[32];
+    logic [31:0] clmul_xor_stage1[16];
+    logic [31:0] clmul_xor_stage2[8];
+    logic [31:0] clmul_xor_stage3[4];
+    logic [31:0] clmul_xor_stage4[2];
+
+    logic [31:0] clmul_result_raw;
+    logic [31:0] clmul_result_rev;
+
+    for (genvar i=0; i<32; i++) begin: gen_rev_operand_b
+      assign operand_b_rev[i] = operand_b_i[31-i];
+    end
+
+    assign clmul_rmode = operator_i == ALU_CLMULR;
+    assign clmul_hmode = operator_i == ALU_CLMULH;
+
+    assign clmul_op_a = clmul_rmode | clmul_hmode ? operand_a_rev : operand_a_i;
+    assign clmul_op_b = clmul_rmode | clmul_hmode ? operand_b_rev : operand_b_i;
+
+    for (genvar i=0; i<32; i++) begin : gen_clmul_and_op
+      assign clmul_and_stage[i] = clmul_op_b[i] ? clmul_op_a << i : '0;
+    end
+
+    for (genvar i=0; i<16; i++) begin : gen_clmul_xor_op_l1
+      assign clmul_xor_stage1[i] = clmul_and_stage[2*i] ^ clmul_and_stage[2*i+1];
+    end
+
+    for (genvar i=0; i<8; i++) begin : gen_clmul_xor_op_l2
+      assign clmul_xor_stage2[i] = clmul_xor_stage1[2*i] ^ clmul_xor_stage1[2*i+1];
+    end
+
+    for (genvar i=0; i<4; i++) begin : gen_clmul_xor_op_l3
+      assign clmul_xor_stage3[i] = clmul_xor_stage2[2*i] ^ clmul_xor_stage2[2*i+1];
+    end
+
+    for (genvar i=0; i<2; i++) begin : gen_clmul_xor_op_l4
+      assign clmul_xor_stage4[i] = clmul_xor_stage3[2*i] ^ clmul_xor_stage3[2*i+1];
+    end
+
+    assign clmul_result_raw = clmul_xor_stage4[0] ^ clmul_xor_stage4[1];
+
+    for (genvar i=0; i<32; i++) begin : gen_rev_clmul_result
+      assign clmul_result_rev[i] = clmul_result_raw[31-i];
+    end
+
+    // clmulr_result = rev(clmul(rev(a), rev(b)))
+    // clmulh_result = clmulr_result >> 1
+    always_comb begin
+      case(1'b1)
+        clmul_rmode: clmul_result = clmul_result_rev;
+        clmul_hmode: clmul_result = {1'b0, clmul_result_rev[31:1]};
+        default:     clmul_result = clmul_result_raw;
+      endcase
+    end
+
   end else begin : g_no_alu_rvb
     // RV32B result signals
     assign minmax_result       = '0;
@@ -880,6 +969,7 @@ module ibex_alu #(
     assign shuffle_result      = '0;
     assign butterfly_result    = '0;
     assign invbutterfly_result = '0;
+    assign clmul_result        = '0;
     // RV32B support signals
     assign imd_val_d_o         = '0;
     assign imd_val_we_o        = '0;
@@ -949,6 +1039,10 @@ module ibex_alu #(
 
       // Bit Field Place (RV32B)
       ALU_BFP: result_o = bfp_result;
+
+      // Carry-less Multiply Operations (RV32B Ops)
+      ALU_CLMUL, ALU_CLMULR,
+      ALU_CLMULH: result_o = clmul_result;
 
       default: ;
     endcase

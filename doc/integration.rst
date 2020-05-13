@@ -94,7 +94,8 @@ Parameters
 | ``RV32B``                    | bit         | 0          | *EXPERIMENTAL* - B(itmanipulation) extension enable:            |
 |                              |             |            | Currently supported Z-extensions: Zbb (base), Zbs (single-bit)  |
 |                              |             |            | Zbp (bit permutation), Zbe (bit extract/deposit),               |
-|                              |             |            | Zbf (bit-field place) and Zbt (ternary)                         |
+|                              |             |            | Zbf (bit-field place) Zbc (carry-less multiplication)
+|                              |             |            | and Zbt (ternary)                                               |
 +------------------------------+-------------+------------+-----------------------------------------------------------------+
 | ``BranchTargetALU``          | bit         | 0          | *EXPERIMENTAL* - Enables branch target ALU removing a stall     |
 |                              |             |            | cycle from taken branches                                       |

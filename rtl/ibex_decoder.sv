@@ -437,7 +437,11 @@ module ibex_decoder #(
             {7'b000_0100, 3'b001}, // shfl
             {7'b000_0100, 3'b101}, // unshfl
             // RV32B zbf
-            {7'b010_0100, 3'b111}: illegal_insn = RV32B ? 1'b0 : 1'b1; // bfp
+            {7'b010_0100, 3'b111}, // bfp
+            // RV32B zbc
+            {7'b000_0101, 3'b001}, // clmul
+            {7'b000_0101, 3'b010}, // clmulr
+            {7'b000_0101, 3'b011}: illegal_insn = RV32B ? 1'b0 : 1'b1; // clmulh
 
             // RV32M instructions
             {7'b000_0001, 3'b000}: begin // mul
@@ -928,6 +932,11 @@ module ibex_decoder #(
             {7'b001_0100, 3'b001}: if (RV32B) alu_operator_o = ALU_SBSET;  // sbset
             {7'b011_0100, 3'b001}: if (RV32B) alu_operator_o = ALU_SBINV;  // sbinv
             {7'b010_0100, 3'b101}: if (RV32B) alu_operator_o = ALU_SBEXT;  // sbext
+
+            // RV32B zbc
+            {7'b000_0101, 3'b001}: if (RV32B) alu_operator_o = ALU_CLMUL;  // clmul
+            {7'b000_0101, 3'b010}: if (RV32B) alu_operator_o = ALU_CLMULR; // clmulr
+            {7'b000_0101, 3'b011}: if (RV32B) alu_operator_o = ALU_CLMULH; // clmulh
 
             // RV32B zbe
             {7'b010_0100, 3'b110}: if (RV32B) alu_operator_o = ALU_BDEP;   // bdep
