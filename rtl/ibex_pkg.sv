@@ -115,7 +115,13 @@ typedef enum logic [5:0] {
 
   // Bit Field Place
   // RV32B
-  ALU_BFP
+  ALU_BFP,
+
+  // Carry-less Multiply
+  // RV32B
+  ALU_CLMUL,
+  ALU_CLMULR,
+  ALU_CLMULH
 } alu_op_e;
 
 typedef enum logic [1:0] {

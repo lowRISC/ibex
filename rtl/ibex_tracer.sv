@@ -1013,6 +1013,12 @@ module ibex_tracer (
 
         // RV32B - ZBF
         INSN_BFP:        decode_r_insn("bfp");
+
+        // RV32B - ZBC
+        INSN_CLMUL:      decode_r_insn("clmul");
+        INSN_CLMULR:     decode_r_insn("clmulr");
+        INSN_CLMULH:     decode_r_insn("clmulh");
+
         default:         decode_mnemonic("INVALID");
       endcase
     end
