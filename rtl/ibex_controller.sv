@@ -45,6 +45,7 @@ module ibex_controller #(
     // to prefetcher
     output logic                  instr_req_o,             // start fetching instructions
     output logic                  pc_set_o,                // jump to address set by pc_mux
+    output logic                  pc_set_spec_o,           // speculative branch
     output ibex_pkg::pc_sel_e     pc_mux_o,                // IF stage fetch address selector
                                                            // (boot, normal, exception...)
     output ibex_pkg::exc_pc_sel_e exc_pc_mux_o,            // IF stage selector for exception PC
@@ -58,6 +59,7 @@ module ibex_controller #(
 
     // jump/branch signals
     input  logic                  branch_set_i,            // branch taken set signal
+    input  logic                  branch_set_spec_i,       // speculative branch signal
     input  logic                  jump_set_i,              // jump taken set signal
 
     // interrupt signals
@@ -299,6 +301,7 @@ module ibex_controller #(
     // helping timing.
     pc_mux_o              = PC_BOOT;
     pc_set_o              = 1'b0;
+    pc_set_spec_o         = 1'b0;
 
     exc_pc_mux_o          = EXC_PC_IRQ;
     exc_cause_o           = EXC_CAUSE_INSN_ADDR_MISA; // = 6'h00
@@ -326,6 +329,7 @@ module ibex_controller #(
         instr_req_o   = 1'b0;
         pc_mux_o      = PC_BOOT;
         pc_set_o      = 1'b1;
+        pc_set_spec_o = 1'b1;
         if (fetch_enable_i) begin
           ctrl_fsm_ns = BOOT_SET;
         end
@@ -336,6 +340,7 @@ module ibex_controller #(
         instr_req_o   = 1'b1;
         pc_mux_o      = PC_BOOT;
         pc_set_o      = 1'b1;
+        pc_set_spec_o = 1'b1;
 
         ctrl_fsm_ns = FIRST_FETCH;
       end
@@ -414,11 +419,16 @@ module ibex_controller #(
           halt_if     = 1'b1;
         end
 
-        if ((branch_set_i || jump_set_i) && ~special_req_branch) begin
+        if ((branch_set_i || jump_set_i) && !special_req_branch) begin
           pc_set_o       = 1'b1;
 
           perf_tbranch_o = branch_set_i;
           perf_jump_o    = jump_set_i;
+        end
+
+        // pc_set signal excluding branch taken condition
+        if ((branch_set_spec_i || jump_set_i) && !special_req_branch) begin
+          pc_set_spec_o = 1'b1;
         end
 
         // If entering debug mode or handling an IRQ the core needs to wait
@@ -455,6 +465,7 @@ module ibex_controller #(
 
         if (handle_irq) begin
           pc_set_o         = 1'b1;
+          pc_set_spec_o    = 1'b1;
 
           csr_save_if_o    = 1'b1;
           csr_save_cause_o = 1'b1;
@@ -490,6 +501,7 @@ module ibex_controller #(
         if (debug_single_step_i || debug_req_i || trigger_match_i) begin
           flush_id         = 1'b1;
           pc_set_o         = 1'b1;
+          pc_set_spec_o    = 1'b1;
 
           csr_save_if_o    = 1'b1;
           debug_csr_save_o = 1'b1;
@@ -518,10 +530,11 @@ module ibex_controller #(
         //
         // for 1. do not update dcsr and dpc, for 2. do so [Debug Spec v0.13.2, p.39]
         // jump to debug exception handler in debug memory
-        flush_id     = 1'b1;
-        pc_mux_o     = PC_EXC;
-        pc_set_o     = 1'b1;
-        exc_pc_mux_o = EXC_PC_DBD;
+        flush_id      = 1'b1;
+        pc_mux_o      = PC_EXC;
+        pc_set_o      = 1'b1;
+        pc_set_spec_o = 1'b1;
+        exc_pc_mux_o  = EXC_PC_DBD;
 
         // update dcsr and dpc
         if (ebreak_into_debug && !debug_mode_q) begin // ebreak with forced entry
@@ -554,6 +567,7 @@ module ibex_controller #(
         // exc_req_lsu is high for one clock cycle only (in DECODE)
         if (exc_req_q || store_err_q || load_err_q) begin
           pc_set_o         = 1'b1;
+          pc_set_spec_o    = 1'b1;
           pc_mux_o         = PC_EXC;
           exc_pc_mux_o     = debug_mode_q ? EXC_PC_DBG_EXC : EXC_PC_EXC;
 
@@ -598,6 +612,7 @@ module ibex_controller #(
                * [Debug Spec v0.13.2, p.42]
                */
               pc_set_o         = 1'b0;
+              pc_set_spec_o    = 1'b0;
               csr_save_id_o    = 1'b0;
               csr_save_cause_o = 1'b0;
               ctrl_fsm_ns      = DBG_TAKEN_ID;
@@ -629,6 +644,7 @@ module ibex_controller #(
           if (mret_insn) begin
             pc_mux_o              = PC_ERET;
             pc_set_o              = 1'b1;
+            pc_set_spec_o         = 1'b1;
             csr_restore_mret_id_o = 1'b1;
             if (nmi_mode_q) begin
               nmi_mode_d          = 1'b0; // exit NMI mode
@@ -636,6 +652,7 @@ module ibex_controller #(
           end else if (dret_insn) begin
             pc_mux_o              = PC_DRET;
             pc_set_o              = 1'b1;
+            pc_set_spec_o         = 1'b1;
             debug_mode_d          = 1'b0;
             csr_restore_dret_id_o = 1'b1;
           end else if (wfi_insn) begin
@@ -720,5 +737,8 @@ module ibex_controller #(
   `ASSERT(IbexCtrlStateValid, ctrl_fsm_cs inside {
       RESET, BOOT_SET, WAIT_SLEEP, SLEEP, FIRST_FETCH, DECODE, FLUSH,
       IRQ_TAKEN, DBG_TAKEN_IF, DBG_TAKEN_ID})
+
+  // The speculative branch signal should be set whenever the actual branch signal is set
+  `ASSERT(IbexSpecImpliesSetPC, pc_set_o |-> pc_set_spec_o)
 
 endmodule
