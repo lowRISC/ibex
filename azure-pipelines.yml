@@ -154,6 +154,6 @@ jobs:
   - template : ci/ibex-rtl-ci-steps.yml
     parameters:
       ibex_configs:
-        - small-3cmult
-        - experimental-maxperf-1cmult
-        - experimental-maxperf-bm-1cmult
+        - small
+        - experimental-maxperf-pmp
+        - experimental-maxperf-pmp-bm
