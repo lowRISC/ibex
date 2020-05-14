@@ -4,3 +4,4 @@
 
 `include "ibex_icache_core_base_seq.sv"
 `include "ibex_icache_core_sanity_seq.sv"
+`include "ibex_icache_core_passthru_seq.sv"
