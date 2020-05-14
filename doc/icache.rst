@@ -247,6 +247,11 @@ On cycles where ``branch_i`` is not asserted, the address counter will be increm
 This increment depends on the instruction data (visible at ``rdata_o``): it will be 2 if the instruction is compressed and 4 otherwise.
 Since the contents of ``rdata_o`` are not specified if an instruction fetch has caused an error, the core must signal a branch before accepting another instruction after it sees ``err_o``.
 
+There is an additional branch signal ``branch_spec_i`` which is a speculative version of the actual branch signal.
+Internally, ``branch_spec_i`` is used to setup address multiplexing as it is available earlier in the cycle.
+In cases where ``branch_spec_i`` is high, but ``branch_i`` is low, any lookup that might have been made that cycle is suppressed.
+Note that if ``branch_i`` is high, ``branch_spec_i`` must also be high.
+
 Because a single instruction can span two 32bit memory addresses, an extra signal (``err_plus2_o``) indicates when an error is caused by the second half of an unaligned uncompressed instruction.
 This signal is only valid when ``valid_o`` and ``err_o`` are set, and will only be set for uncompressed instructions.
 The core uses this signal to record the correct address in the ``mtval`` CSR upon an error.

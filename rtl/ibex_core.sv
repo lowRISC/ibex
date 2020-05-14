@@ -139,6 +139,7 @@ module ibex_core #(
   logic        instr_first_cycle_id;
   logic        instr_valid_clear;
   logic        pc_set;
+  logic        pc_set_spec;
   pc_sel_e     pc_mux_id;                      // Mux selector for next PC
   exc_pc_sel_e exc_pc_mux_id;                  // Mux selector for exception PC
   exc_cause_e  exc_cause;                      // Exception cause
@@ -405,6 +406,7 @@ module ibex_core #(
       // control signals
       .instr_valid_clear_i      ( instr_valid_clear      ),
       .pc_set_i                 ( pc_set                 ),
+      .pc_set_spec_i            ( pc_set_spec            ),
       .pc_mux_i                 ( pc_mux_id              ),
       .exc_pc_mux_i             ( exc_pc_mux_id          ),
       .exc_cause                ( exc_cause              ),
@@ -473,6 +475,7 @@ module ibex_core #(
       .id_in_ready_o                ( id_in_ready              ),
       .instr_req_o                  ( instr_req_int            ),
       .pc_set_o                     ( pc_set                   ),
+      .pc_set_spec_o                ( pc_set_spec              ),
       .pc_mux_o                     ( pc_mux_id                ),
       .exc_pc_mux_o                 ( exc_pc_mux_id            ),
       .exc_cause_o                  ( exc_cause                ),

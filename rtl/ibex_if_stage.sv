@@ -56,6 +56,7 @@ module ibex_if_stage #(
     // control signals
     input  logic                  instr_valid_clear_i,      // clear instr valid bit in IF-ID
     input  logic                  pc_set_i,                 // set the PC to a new value
+    input  logic                  pc_set_spec_i,
     input  ibex_pkg::pc_sel_e     pc_mux_i,                 // selector for PC multiplexer
     input  ibex_pkg::exc_pc_sel_e exc_pc_mux_i,             // selects ISR address
     input  ibex_pkg::exc_cause_e  exc_cause,                // selects ISR address for
@@ -164,6 +165,7 @@ module ibex_if_stage #(
         .req_i             ( req_i                       ),
 
         .branch_i          ( branch_req                  ),
+        .branch_spec_i     ( pc_set_spec_i               ),
         .addr_i            ( {fetch_addr_n[31:1], 1'b0}  ),
 
         .ready_i           ( fetch_ready                 ),
@@ -194,6 +196,7 @@ module ibex_if_stage #(
         .req_i             ( req_i                       ),
 
         .branch_i          ( branch_req                  ),
+        .branch_spec_i     ( pc_set_spec_i               ),
         .addr_i            ( {fetch_addr_n[31:1], 1'b0}  ),
 
         .ready_i           ( fetch_ready                 ),

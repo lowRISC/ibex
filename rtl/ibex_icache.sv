@@ -31,6 +31,7 @@ module ibex_icache #(
 
     // Set the cache's address counter
     input  logic                branch_i,
+    input  logic                branch_spec_i,
     input  logic [31:0]         addr_i,
 
     // IF stage interface: Pass fetched instructions to the core
@@ -84,6 +85,7 @@ module ibex_icache #(
   logic [ADDR_W-1:0]                   prefetch_addr_d, prefetch_addr_q;
   logic                                prefetch_addr_en;
   // Cache pipelipe IC0 signals
+  logic                                branch_suppress;
   logic                                lookup_throttle;
   logic                                lookup_req_ic0;
   logic [ADDR_W-1:0]                   lookup_addr_ic0;
@@ -225,8 +227,8 @@ module ibex_icache #(
   assign lookup_throttle  = (fb_fill_level > FB_THRESHOLD[$clog2(NUM_FB)-1:0]);
 
   assign lookup_req_ic0   = req_i & ~&fill_busy_q & (branch_i | ~lookup_throttle) & ~ecc_write_req;
-  assign lookup_addr_ic0  = branch_i ? addr_i :
-                                       prefetch_addr_q;
+  assign lookup_addr_ic0  = branch_spec_i ? addr_i :
+                                            prefetch_addr_q;
   assign lookup_index_ic0 = lookup_addr_ic0[INDEX_HI:LINE_W];
 
   // Cache write
@@ -235,9 +237,13 @@ module ibex_icache #(
   assign fill_tag_ic0   = {(~inval_prog_q & ~ecc_write_req),fill_ram_req_addr[ADDR_W-1:INDEX_HI+1]};
   assign fill_wdata_ic0 = fill_ram_req_data;
 
+  // Suppress a new lookup on a not-taken branch (as the address will be incorrect)
+  assign branch_suppress   = branch_spec_i & ~branch_i;
+
   // Arbitrated signals - lookups have highest priority
-  assign lookup_grant_ic0  = lookup_req_ic0;
-  assign fill_grant_ic0    = fill_req_ic0 & ~lookup_req_ic0 & ~inval_prog_q & ~ecc_write_req;
+  assign lookup_grant_ic0  = lookup_req_ic0 & ~branch_suppress;
+  assign fill_grant_ic0    = fill_req_ic0 & (~lookup_req_ic0 | branch_suppress) & ~inval_prog_q &
+                             ~ecc_write_req;
   // Qualified lookup grant to mask ram signals in IC1 if access was not made
   assign lookup_actual_ic0 = lookup_grant_ic0 & icache_enable_i & ~inval_prog_q & ~start_inval;
 
