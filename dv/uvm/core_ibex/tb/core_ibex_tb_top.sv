@@ -26,42 +26,63 @@ module core_ibex_tb_top;
   // CSR access interface
   core_ibex_csr_if csr_if(.clk(clk));
 
+  // You cannot override string parameters in VCS via the command line so a `define is used instead
+  // that can be set from the command line. If no value has been specified this gives a default.
+  `ifndef IBEX_MULTIPLIER_IMPLEMENTATION
+    `define IBEX_MULTIPLIER_IMPLEMENTATION fast
+  `endif
+
+  parameter bit          PMPEnable       = 1'b0;
+  parameter int unsigned PMPGranularity  = 0;
+  parameter int unsigned PMPNumRegions   = 4;
+  parameter bit RV32E                    = 1'b0;
+  parameter bit RV32M                    = 1'b1;
+  parameter bit RV32B                    = 1'b0;
+  parameter bit BranchTargetALU          = 1'b0;
+  parameter bit WritebackStage           = 1'b0;
+  parameter     MultiplierImplementation = `"`IBEX_CFG_MultiplierImplementation`";
+
   ibex_core_tracing #(
-    .DmHaltAddr(`BOOT_ADDR + 'h0),
-    .DmExceptionAddr(`BOOT_ADDR + 'h4),
-    .PMPEnable(1'b1),
-    .BranchTargetALU(1'b1),
-    .WritebackStage(1'b1),
-    .RV32B(1'b1)
+    .DmHaltAddr               (`BOOT_ADDR + 'h0        ),
+    .DmExceptionAddr          (`BOOT_ADDR + 'h4        ),
+    .PMPEnable                (PMPEnable               ),
+    .PMPGranularity           (PMPGranularity          ),
+    .PMPNumRegions            (PMPNumRegions           ),
+    .RV32E                    (RV32E                   ),
+    .RV32M                    (RV32M                   ),
+    .RV32B                    (RV32B                   ),
+    .BranchTargetALU          (BranchTargetALU         ),
+    .WritebackStage           (WritebackStage          ),
+    .MultiplierImplementation (MultiplierImplementation)
   ) dut (
-    .clk_i(clk),
-    .rst_ni(rst_n),
-    .test_en_i(1'b1),
-    .hart_id_i(32'b0),
-    .boot_addr_i(`BOOT_ADDR), // align with spike boot address
-    .irq_software_i(irq_vif.irq_software),
-    .irq_timer_i(irq_vif.irq_timer),
-    .irq_external_i(irq_vif.irq_external),
-    .irq_fast_i(irq_vif.irq_fast),
-    .irq_nm_i(irq_vif.irq_nm),
-    .fetch_enable_i(dut_if.fetch_enable),
-    .debug_req_i(dut_if.debug_req),
-    .data_req_o(data_mem_vif.request),
-    .data_gnt_i(data_mem_vif.grant),
-    .data_rvalid_i(data_mem_vif.rvalid),
-    .data_addr_o(data_mem_vif.addr),
-    .data_we_o(data_mem_vif.we),
-    .data_be_o(data_mem_vif.be),
-    .data_rdata_i(data_mem_vif.rdata),
-    .data_wdata_o(data_mem_vif.wdata),
-    .data_err_i(data_mem_vif.error),
-    .instr_req_o(instr_mem_vif.request),
-    .instr_gnt_i(instr_mem_vif.grant),
-    .instr_rvalid_i(instr_mem_vif.rvalid),
-    .instr_addr_o(instr_mem_vif.addr),
-    .instr_rdata_i(instr_mem_vif.rdata),
-    .instr_err_i(instr_mem_vif.error),
-    .core_sleep_o(dut_if.core_sleep)
+    .clk_i          (clk                  ),
+    .rst_ni         (rst_n                ),
+    .test_en_i      (1'b1                 ),
+    .hart_id_i      (32'b0                ),
+    .boot_addr_i    (`BOOT_ADDR           ), // align with spike boot address
+    .irq_software_i (irq_vif.irq_software ),
+    .irq_timer_i    (irq_vif.irq_timer    ),
+    .irq_external_i (irq_vif.irq_external ),
+    .irq_fast_i     (irq_vif.irq_fast     ),
+    .irq_nm_i       (irq_vif.irq_nm       ),
+    .fetch_enable_i (dut_if.fetch_enable  ),
+    .debug_req_i    (dut_if.debug_req     ),
+    .data_req_o     (data_mem_vif.request ),
+    .data_gnt_i     (data_mem_vif.grant   ),
+    .data_rvalid_i  (data_mem_vif.rvalid  ),
+    .data_addr_o    (data_mem_vif.addr    ),
+    .data_we_o      (data_mem_vif.we      ),
+    .data_be_o      (data_mem_vif.be      ),
+    .data_rdata_i   (data_mem_vif.rdata   ),
+    .data_wdata_o   (data_mem_vif.wdata   ),
+    .data_err_i     (data_mem_vif.error   ),
+    .instr_req_o    (instr_mem_vif.request),
+    .instr_gnt_i    (instr_mem_vif.grant  ),
+    .instr_rvalid_i (instr_mem_vif.rvalid ),
+    .instr_addr_o   (instr_mem_vif.addr   ),
+    .instr_rdata_i  (instr_mem_vif.rdata  ),
+    .instr_err_i    (instr_mem_vif.error  ),
+    .core_sleep_o   (dut_if.core_sleep    )
   );
 
   // Data load/store vif connection
