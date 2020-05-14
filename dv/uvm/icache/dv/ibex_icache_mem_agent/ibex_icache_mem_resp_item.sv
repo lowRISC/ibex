@@ -9,6 +9,7 @@ class ibex_icache_mem_resp_item extends uvm_sequence_item;
   int unsigned min_response_delay = 0;
   int unsigned mid_response_delay = 5;
   int unsigned max_response_delay = 50;
+  int unsigned gap_between_seeds = 499;
 
   // True if this is a granted request. Otherwise, this is the first time we've seen an address (and
   // we might need to drive the PMP line).
@@ -40,7 +41,7 @@ class ibex_icache_mem_resp_item extends uvm_sequence_item;
 
   constraint c_seed_dist {
     seed dist {
-      32'd0            :/ 499,
+      32'd0            :/ gap_between_seeds,
       [1:32'hffffffff] :/ 1
     };
   }

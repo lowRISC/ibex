@@ -6,7 +6,12 @@
 
 class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
 
-  ibex_icache_mem_model #(.BusWidth (32)) mem_model;
+  // Knobs
+  //
+  // gap_between_seeds is the expected number of memory fetches between each seed update.
+  int unsigned gap_between_seeds = 499;
+
+  protected ibex_icache_mem_model #(.BusWidth (32)) mem_model;
 
   // We pick new seeds when we spot a request (rather than when we spot a grant) to ensure that
   // any given fetch corresponds to exactly one seed. Unfortunately, there's a race if these two
@@ -36,6 +41,9 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
   task body();
     ibex_icache_mem_req_item  req_item  = new("req_item");
     ibex_icache_mem_resp_item resp_item = new("resp_item");
+
+    // Set knob to control randomization
+    resp_item.gap_between_seeds = gap_between_seeds;
 
     forever begin
       // Wait for a transaction request.

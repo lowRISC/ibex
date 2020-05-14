@@ -36,7 +36,7 @@
             could check this, but the unconstrained branch addresses mean it's
             very unlikely to see much caching going on.'''
       milestone: V2
-      tests: []
+      tests: ["ibex_icache_passthru"]
     }
 
     {
