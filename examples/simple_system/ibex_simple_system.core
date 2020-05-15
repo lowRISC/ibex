@@ -78,7 +78,7 @@ parameters:
 
   PMPNumRegions:
     datatype: int
-    default: 0
+    default: 4
     paramtype: vlogparam
     description: "Number of PMP regions"
 
