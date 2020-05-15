@@ -48,11 +48,6 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
         // If this is a request (not a grant), take any new seed and then check the memory model for
         // a PMP error at this address. Add the address and its corresponding seed to the list of
         // pending grants.
-        if (req_item.seed != 32'd0) begin
-          `uvm_info(`gfn, $sformatf("New memory seed: 0x%08h", req_item.seed), UVM_HIGH)
-          cur_seed = req_item.seed;
-        end
-
         resp_item.is_grant = 1'b0;
         resp_item.err      = mem_model.is_pmp_error(cur_seed, req_item.address);
         resp_item.address  = req_item.address;
@@ -83,10 +78,17 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
         resp_item.rdata    = resp_item.err ? 'X : mem_model.read_data(gnt_seed, req_item.address);
       end
 
-      // Use the response item as an entry in the sequence, randomising any delay
+      // Use the response item as an entry in the sequence, randomising any delay and seed update
       start_item(resp_item);
       `DV_CHECK_RANDOMIZE_FATAL(resp_item)
       finish_item(resp_item);
+
+      // If this was a request (not a grant), and caused a seed update, update cur_seed. This seed
+      // update will apply immediately after this item.
+      if (!req_item.is_grant && resp_item.seed != 32'd0) begin
+        `uvm_info(`gfn, $sformatf("New memory seed: 0x%08h", resp_item.seed), UVM_HIGH)
+        cur_seed = resp_item.seed;
+      end
     end
   endtask
 
