@@ -61,7 +61,9 @@
               -define UVM_REGEX_NO_DPI
               -timescale 1ns/10ps
               -elaborate
-              -l <out>/compile.log <cmp_opts>"
+              -l <out>/compile.log <cmp_opts> <wave_opts>"
+    wave_opts: >
+      -access rwc -linedebug
   sim:
     cmd: >
       irun -64bit -R <sim_opts> -svseed <seed> -svrnc rand_struct
@@ -69,6 +71,11 @@
         +bin=<binary>
         +ibex_tracer_file_base=<sim_dir>/trace_core
         -l <sim_dir>/sim.log
+        <wave_opts>
+    wave_opts: >
+      -input @"database -open waves -shm -default"
+      -input @"probe -create -all -depth all"
+      -input @"run"
 
 - tool: dsim
   env_var: DSIM,DSIM_LIB_PATH
