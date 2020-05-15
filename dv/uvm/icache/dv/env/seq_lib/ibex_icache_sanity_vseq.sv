@@ -9,9 +9,10 @@ class ibex_icache_sanity_vseq extends ibex_icache_base_vseq;
   `uvm_object_utils(ibex_icache_sanity_vseq)
   `uvm_object_new
 
-  // A sanity sequence for the core agent and a basic slave sequence for the memory agent
-  ibex_icache_core_sanity_seq core_seq;
-  ibex_icache_mem_resp_seq    mem_seq;
+  // An un-specialized base sequence for the core agent and a basic slave sequence for the memory
+  // agent
+  ibex_icache_core_base_seq core_seq;
+  ibex_icache_mem_resp_seq  mem_seq;
 
   task body();
     // Start the core and memory sequences. We use fork/join_any so that we don't wait for the

@@ -12,6 +12,14 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
 
   `uvm_object_new
 
+  // If this is set, any branch target address should be within 64 bytes of base_addr and runs of
+  // instructions should have a maximum length of 100.
+  bit constrain_branches = 1'b0;
+
+  // If this bit is set, we will never enable the cache
+  bit force_disable = 1'b0;
+
+
   // Number of test items (note that a single test item may contain many instruction fetches)
   protected rand int count;
   constraint c_count { count inside {[800:1000]}; }
@@ -24,20 +32,13 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
   // the cache where to fetch from in the first place.
   protected bit force_branch = 1'b1;
 
-  // If this is set, any branch target address should be within 64 bytes of base_addr and runs of
-  // instructions should have a maximum length of 100.
-  protected bit constrain_branches = 1'b0;
-
   // A count of the number of instructions fetched since the last branch. This is only important
   // when constrain_branches is true, in which case we want to ensure that we don't fetch too much
   // in a straight line between branches.
   protected int unsigned insns_since_branch = 0;
 
-  // If this bit is set, we will never enable the cache
-  protected bit force_disable = 1'b0;
-
   virtual task body();
-    `uvm_fatal(`gtn, "Need to override this when you extend from this class!")
+    run_reqs();
   endtask
 
   // Generate and run a single item using class parameters
