@@ -693,10 +693,7 @@ module ibex_core #(
       .busy_o                ( lsu_busy            ),
 
       .perf_load_o           ( perf_load           ),
-      .perf_store_o          ( perf_store          ),
-
-      .illegal_insn_id_i     ( illegal_insn_id     ),
-      .instr_valid_id_i      ( instr_valid_id      )
+      .perf_store_o          ( perf_store          )
   );
 
   ibex_wb_stage #(
@@ -918,7 +915,7 @@ module ibex_core #(
       CSR_OP_SET,
       CSR_OP_CLEAR
       })
-  `ASSERT_KNOWN_IF(IbexCsrWdataIntKnown, cs_registers_i.csr_wdata_int, csr_access & instr_valid_id)
+  `ASSERT_KNOWN_IF(IbexCsrWdataIntKnown, cs_registers_i.csr_wdata_int, csr_op_en)
 
   if (PMPEnable) begin : g_pmp
     logic [33:0] pmp_req_addr [PMP_NUM_CHAN];

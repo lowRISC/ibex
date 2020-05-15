@@ -1000,7 +1000,8 @@ module ibex_id_stage #(
   `ASSERT_KNOWN(IbexWbStateKnown, id_fsm_q)
 
   // Branch decision must be valid when jumping.
-  `ASSERT_KNOWN_IF(IbexBranchDecisionValid, branch_decision_i, instr_valid_i)
+  `ASSERT_KNOWN_IF(IbexBranchDecisionValid, branch_decision_i,
+      instr_valid_i && !(illegal_csr_insn_i || instr_fetch_err_i))
 
   // Instruction delivered to ID stage can not contain X.
   `ASSERT_KNOWN_IF(IbexIdInstrKnown, instr_rdata_i,
