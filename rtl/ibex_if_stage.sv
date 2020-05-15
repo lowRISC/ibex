@@ -235,13 +235,13 @@ module ibex_if_stage #(
   logic        instr_is_compressed;
 
   ibex_compressed_decoder compressed_decoder_i (
-      .clk_i           ( clk_i               ),
-      .rst_ni          ( rst_ni              ),
-      .valid_i         ( fetch_valid         ),
-      .instr_i         ( fetch_rdata         ),
-      .instr_o         ( instr_decompressed  ),
-      .is_compressed_o ( instr_is_compressed ),
-      .illegal_instr_o ( illegal_c_insn      )
+      .clk_i           ( clk_i                    ),
+      .rst_ni          ( rst_ni                   ),
+      .valid_i         ( fetch_valid & ~fetch_err ),
+      .instr_i         ( fetch_rdata              ),
+      .instr_o         ( instr_decompressed       ),
+      .is_compressed_o ( instr_is_compressed      ),
+      .illegal_instr_o ( illegal_c_insn           )
   );
 
   // Dummy instruction insertion
