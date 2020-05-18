@@ -475,9 +475,7 @@ class riscv_b_instr extends riscv_instr;
                }) ||
            (ZBE inside {cfg.enable_bitmanip_groups} && instr_name inside {
                BEXT, BEXTW,
-               BDEP, BDEPW,
-               // TODO, spec 0.92 doesn't categorize these 2 instr in any group, put in ZBE for now
-               SEXT_B, SEXT_H
+               BDEP, BDEPW
                }) ||
            (ZBF inside {cfg.enable_bitmanip_groups} && instr_name inside {BFP, BFPW}) ||
            (ZBC inside {cfg.enable_bitmanip_groups} && instr_name inside {
@@ -492,7 +490,11 @@ class riscv_b_instr extends riscv_instr;
                }) ||
            (ZBT inside {cfg.enable_bitmanip_groups} && instr_name inside {
                CMOV, CMIX,
-               FSL, FSLW, FSR, FSRW, FSRI, FSRIW}));
+               FSL, FSLW, FSR, FSRW, FSRI, FSRIW}) ||
+           // TODO, spec 0.92 doesn't categorize these 2 instr, put them in ZB_TMP #572
+           (ZB_TMP inside {cfg.enable_bitmanip_groups} && instr_name inside {
+               SEXT_B, SEXT_H})
+           );
   endfunction
 
 endclass

@@ -1111,7 +1111,8 @@ package riscv_instr_pkg;
     ZBC,
     ZBR,
     ZBM,
-    ZBT
+    ZBT,
+    ZB_TMP // for uncategorized instructions
   } b_ext_group_t;
 
   `VECTOR_INCLUDE("riscv_instr_pkg_inc_variables.sv")
@@ -1298,6 +1299,28 @@ package riscv_instr_pkg;
     SYNCH, SYSTEM, COUNTER, CSR, CHANGELEVEL, TRAP, INTERRUPT, AMO
   };
 
+  function automatic void get_val(input string str, output bit [XLEN-1:0] val, input hex = 0);
+    if (str.len() > 2) begin
+      if (str.substr(0, 1) == "0x") begin
+        str = str.substr(2, str.len() -1);
+        val = str.atohex();
+        return;
+      end
+    end
+    if (hex) begin
+      val = str.atohex();
+    end else begin
+      if (str.substr(0, 0) == "-") begin
+        str = str.substr(1, str.len() - 1);
+        val = -str.atoi();
+      end else begin
+        val = str.atoi();
+      end
+    end
+    `uvm_info("riscv_instr_pkg", $sformatf("imm:%0s -> 0x%0x/%0d", str, val, $signed(val)),
+              UVM_FULL)
+  endfunction : get_val
+
   `include "riscv_vector_cfg.sv"
   `include "riscv_pmp_cfg.sv"
   typedef class riscv_instr;
@@ -1352,7 +1375,6 @@ package riscv_instr_pkg;
   `include "riscv_instr_sequence.sv"
   `include "riscv_asm_program_gen.sv"
   `include "riscv_debug_rom_gen.sv"
-  `include "riscv_instr_cov_item.sv"
   `include "riscv_instr_cover_group.sv"
   `include "user_extension.svh"
 

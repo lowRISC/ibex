@@ -357,7 +357,7 @@ class riscv_asm_program_gen extends uvm_object;
 
   // Generate the user stack section
   virtual function void gen_stack_section(int hart);
-	string hart_prefix_string = hart_prefix(hart);
+    string hart_prefix_string = hart_prefix(hart);
     if (cfg.use_push_data_section) begin
       instr_stream.push_back($sformatf(".pushsection .%0suser_stack,\"aw\",@progbits;",
                              hart_prefix_string));
@@ -383,7 +383,7 @@ class riscv_asm_program_gen extends uvm_object;
 
   // The kernal stack is used to save user program context before executing exception handling
   virtual function void gen_kernel_stack_section(int hart);
-	string hart_prefix_string = hart_prefix(hart);
+    string hart_prefix_string = hart_prefix(hart);
     if (cfg.use_push_data_section) begin
       instr_stream.push_back($sformatf(".pushsection .%0skernel_stack,\"aw\",@progbits;",
                              hart_prefix_string));

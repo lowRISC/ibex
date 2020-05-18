@@ -649,4 +649,6 @@ class riscv_instr extends uvm_object;
     imm_str = $sformatf("%0d", $signed(imm));
   endfunction
 
+  `include "isa/riscv_instr_cov.svh"
+
 endclass

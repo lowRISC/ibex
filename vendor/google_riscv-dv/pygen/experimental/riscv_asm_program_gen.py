@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import subprocess
 import random
 from bitstring import BitArray, BitStream
 import utils
@@ -209,6 +210,7 @@ class riscv_asm_program_gen:
     self.instr_stream.append(str)
 
   def print_instr_stream(self):
+    subprocess.run(["mkdir", "-p", "out"])
     f = open("./out/test.S", "w+")
     for s in self.instr_stream:
       if isinstance(s, list):

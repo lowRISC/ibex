@@ -329,7 +329,7 @@ class riscv_instr_base:
         return True
 
     def only_arithmetic_and_logical_c(category):
-      if category == "ARITHMETIC" or category == "LOGICAL" or
+      if category == "ARITHMETIC" or category == "LOGICAL" or  \
          category == "BRANCH" or category == "LOAD" or category == "STORE":
         return True
 
