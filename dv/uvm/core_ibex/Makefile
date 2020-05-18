@@ -97,7 +97,7 @@ COMMON_OPTS := $(if $(call equal,$(VERBOSE),1),--verbose,)
 
 # Options for all targets that depend on the tests we're running.
 TEST_OPTS := $(COMMON_OPTS) \
-             --seed=${SEED} \
+             --start_seed=${SEED} \
              --test="${TEST}" \
              --testlist=${TESTLIST} \
              --iterations=${ITERATIONS}
