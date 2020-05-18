@@ -245,7 +245,8 @@ class riscv_instr_gen_config extends uvm_object;
   bit                    enable_vector_extension;
   // Bit manipulation extension support
   bit                    enable_b_extension;
-  b_ext_group_t          enable_bitmanip_groups[] = {ZBB, ZBS, ZBP, ZBE, ZBF, ZBC, ZBR, ZBM, ZBT};
+  b_ext_group_t          enable_bitmanip_groups[] = {ZBB, ZBS, ZBP, ZBE, ZBF, ZBC, ZBR, ZBM, ZBT,
+                                                     ZB_TMP};
 
   //-----------------------------------------------------------------------------
   // Command line options for instruction distribution control

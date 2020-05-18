@@ -23,8 +23,20 @@
 `define SAMPLE(cg, val) \
   if (cg != null) cg.sample(val);
 
-`define INSTR_CG_BEGIN(INSTR_NAME) \
-  covergroup ``INSTR_NAME``_cg with function sample(riscv_instr_cov_item instr);
+// sample with type cast
+`define SAMPLE_W_TYPE(cg, val, typ = riscv_instr) \
+  if (cg != null) begin \
+    typ t; \
+    `DV_CHECK_FATAL($cast(t, val), $sformatf("Cannot cast %0s to %0s", `"val`", `"typ`"), \
+                    "riscv_instr_cover_group") \
+    cg.sample(t); \
+  end
+
+`define SAMPLE_F(cg, val) `SAMPLE_W_TYPE(cg, val, riscv_floating_point_instr)
+`define SAMPLE_B(cg, val) `SAMPLE_W_TYPE(cg, val, riscv_b_instr)
+
+`define INSTR_CG_BEGIN(INSTR_NAME, INSTR_CLASS = riscv_instr) \
+  covergroup ``INSTR_NAME``_cg with function sample(INSTR_CLASS instr);
 
 `define R_INSTR_CG_BEGIN(INSTR_NAME) \
   `INSTR_CG_BEGIN(INSTR_NAME) \
@@ -90,12 +102,6 @@
     cp_rs1_sign    : coverpoint instr.rs1_sign; \
     cp_rd_sign     : coverpoint instr.rd_sign; \
     cp_imm_sign    : coverpoint instr.imm_sign; \
-    `DV(cp_gpr_hazard : coverpoint instr.gpr_hazard;)
-
-`define B_I_INSTR_CG_BEGIN(INSTR_NAME) \
-  `INSTR_CG_BEGIN(INSTR_NAME) \
-    cp_rs1         : coverpoint instr.rs1; \
-    cp_rd          : coverpoint instr.rd; \
     `DV(cp_gpr_hazard : coverpoint instr.gpr_hazard;)
 
 `define U_INSTR_CG_BEGIN(INSTR_NAME) \
@@ -233,7 +239,7 @@
     }
 
 `define FP_R_INSTR_CG_BEGIN(INSTR_NAME) \
-  `INSTR_CG_BEGIN(INSTR_NAME) \
+  `INSTR_CG_BEGIN(INSTR_NAME, riscv_floating_point_instr) \
     cp_fs1         : coverpoint instr.fs1; \
     cp_fs2         : coverpoint instr.fs2; \
     cp_fd          : coverpoint instr.fd;  \
@@ -243,7 +249,7 @@
     `DV(cp_gpr_hazard : coverpoint instr.gpr_hazard;) \
 
 `define FP_R4_INSTR_CG_BEGIN(INSTR_NAME) \
-  `INSTR_CG_BEGIN(INSTR_NAME) \
+  `INSTR_CG_BEGIN(INSTR_NAME, riscv_floating_point_instr) \
     cp_fs1         : coverpoint instr.fs1; \
     cp_fs2         : coverpoint instr.fs2; \
     cp_fs3         : coverpoint instr.fs3; \
@@ -256,34 +262,39 @@
     `DV(cp_gpr_hazard : coverpoint instr.gpr_hazard;) \
 
 `define FSQRT_INSTR_CG_BEGIN(INSTR_NAME) \
-  `INSTR_CG_BEGIN(INSTR_NAME) \
+  `INSTR_CG_BEGIN(INSTR_NAME, riscv_floating_point_instr) \
     cp_fs1         : coverpoint instr.fs1; \
     cp_fd          : coverpoint instr.fd;  \
     cp_fs1_sign    : coverpoint instr.fs1_sign; \
     cp_fd_sign     : coverpoint instr.fd_sign; \
     `DV(cp_gpr_hazard : coverpoint instr.gpr_hazard;) \
 
+`define B_I_INSTR_CG_BEGIN(INSTR_NAME) \
+  `INSTR_CG_BEGIN(INSTR_NAME, riscv_b_instr) \
+    cp_rs1         : coverpoint instr.rs1; \
+    cp_rd          : coverpoint instr.rd; \
+    `DV(cp_gpr_hazard : coverpoint instr.gpr_hazard;)
+
 `define B_R_INSTR_CG_BEGIN(INSTR_NAME) \
-  `INSTR_CG_BEGIN(INSTR_NAME) \
+  `INSTR_CG_BEGIN(INSTR_NAME, riscv_b_instr) \
     cp_rs1         : coverpoint instr.rs1; \
     cp_rs2         : coverpoint instr.rs2; \
     cp_rd          : coverpoint instr.rd;  \
     `DV(cp_gpr_hazard : coverpoint instr.gpr_hazard;) \
 
 `define B_R_INSTR_NO_RS2_CG_BEGIN(INSTR_NAME) \
-  `INSTR_CG_BEGIN(INSTR_NAME) \
+  `INSTR_CG_BEGIN(INSTR_NAME, riscv_b_instr) \
     cp_rs1         : coverpoint instr.rs1; \
     cp_rd          : coverpoint instr.rd;  \
     `DV(cp_gpr_hazard : coverpoint instr.gpr_hazard;) \
 
 `define B_R4_INSTR_CG_BEGIN(INSTR_NAME) \
-  `INSTR_CG_BEGIN(INSTR_NAME) \
+  `INSTR_CG_BEGIN(INSTR_NAME, riscv_b_instr) \
     cp_rs1         : coverpoint instr.rs1; \
     cp_rs2         : coverpoint instr.rs2; \
     cp_rs3         : coverpoint instr.rs3; \
     cp_rd          : coverpoint instr.rd;  \
     `DV(cp_gpr_hazard : coverpoint instr.gpr_hazard;) \
-
 
 // only enable the coverpoint for a particular XLEN (32, 64, 128)
 `define ENABLE_CP_BY_XLEN(XLEN_VAL) \
@@ -306,8 +317,8 @@
 class riscv_instr_cover_group;
 
   riscv_instr_gen_config  cfg;
-  riscv_instr_cov_item    cur_instr;
-  riscv_instr_cov_item    pre_instr;
+  riscv_instr             cur_instr;
+  riscv_instr             pre_instr;
   riscv_instr_name_t      instr_list[$];
   int unsigned            instr_cnt;
   int unsigned            branch_instr_cnt;
@@ -526,7 +537,7 @@ class riscv_instr_cover_group;
   `CG_END
 
   // floating instructions
-  `INSTR_CG_BEGIN(flw)
+  `INSTR_CG_BEGIN(flw, riscv_floating_point_instr)
     cp_rs1         : coverpoint instr.rs1 {
       `DV(ignore_bins zero = {ZERO};)
     }
@@ -538,7 +549,7 @@ class riscv_instr_cover_group;
     })
   `CG_END
 
-  `INSTR_CG_BEGIN(fsw)
+  `INSTR_CG_BEGIN(fsw, riscv_floating_point_instr)
     cp_rs1         : coverpoint instr.rs1 {
         `DV(ignore_bins zero = {ZERO};)
     }
@@ -1006,13 +1017,13 @@ class riscv_instr_cover_group;
   `CSR_INSTR_CG_BEGIN(csrrci)
   `CG_END
 
-  covergroup rv32i_misc_cg with function sample(riscv_instr_cov_item instr);
+  covergroup rv32i_misc_cg with function sample(riscv_instr instr);
     cp_misc : coverpoint instr.instr_name {
       bins instr[] = {FENCE, FENCE_I, EBREAK, ECALL, MRET};
     }
   endgroup
 
-  covergroup wfi_cg with function sample(riscv_instr_cov_item instr);
+  covergroup wfi_cg with function sample(riscv_instr instr);
     cp_misc : coverpoint instr.instr_name {
       bins wfi = {WFI};
     }
@@ -1042,7 +1053,7 @@ class riscv_instr_cover_group;
 
   `R_INSTR_CG_BEGIN(divu)
     cp_div_result: coverpoint instr.div_result {
-      ignore_bins no_overflow = {riscv_instr_cov_item::DIV_OVERFLOW};
+      ignore_bins no_overflow = {riscv_instr::DIV_OVERFLOW};
     }
     cp_sign_cross: cross cp_rs1_sign, cp_rs2_sign;
   `CG_END
@@ -1054,7 +1065,7 @@ class riscv_instr_cover_group;
 
   `R_INSTR_CG_BEGIN(remu)
     cp_div_result: coverpoint instr.div_result {
-      ignore_bins no_overflow = {riscv_instr_cov_item::DIV_OVERFLOW};
+      ignore_bins no_overflow = {riscv_instr::DIV_OVERFLOW};
     }
     cp_sign_cross: cross cp_rs1_sign, cp_rs2_sign;
   `CG_END
@@ -1078,7 +1089,7 @@ class riscv_instr_cover_group;
 
   `R_INSTR_CG_BEGIN(divuw)
     cp_div_result: coverpoint instr.div_result {
-      ignore_bins no_overflow = {riscv_instr_cov_item::DIV_OVERFLOW};
+      ignore_bins no_overflow = {riscv_instr::DIV_OVERFLOW};
     }
     cp_div_zero  : coverpoint instr.rs2_value iff (instr.rs2_value[31:0] == 0) {
       bins zero     = {0};
@@ -1098,7 +1109,7 @@ class riscv_instr_cover_group;
 
   `R_INSTR_CG_BEGIN(remuw)
     cp_div_result: coverpoint instr.div_result {
-      ignore_bins no_overflow = {riscv_instr_cov_item::DIV_OVERFLOW};
+      ignore_bins no_overflow = {riscv_instr::DIV_OVERFLOW};
     }
     cp_div_zero  : coverpoint instr.rs2_value iff (instr.rs2_value[31:0] == 0) {
       bins zero     = {0};
@@ -1451,8 +1462,8 @@ class riscv_instr_cover_group;
   function new(riscv_instr_gen_config cfg);
     string opts;
     this.cfg = cfg;
-    cur_instr = riscv_instr_cov_item::type_id::create("cur_instr");
-    pre_instr = riscv_instr_cov_item::type_id::create("pre_instr");
+    cur_instr = riscv_instr::type_id::create("cur_instr");
+    pre_instr = riscv_instr::type_id::create("pre_instr");
     build_instr_list();
     `ifdef COMPLIANCE_MODE
       compliance_mode = 1;
@@ -1777,7 +1788,7 @@ class riscv_instr_cover_group;
     end
   endfunction
 
-  function void sample(riscv_instr_cov_item instr);
+  function void sample(riscv_instr instr);
     instr_cnt += 1;
     if (instr_cnt > 1) begin
       instr.check_hazard_condition(pre_instr);
@@ -1901,113 +1912,113 @@ class riscv_instr_cover_group;
       C_SUBW     : `SAMPLE(c_subw_cg, instr)
       C_ADDW     : `SAMPLE(c_addw_cg, instr)
       C_ADDIW    : `SAMPLE(c_addiw_cg, instr)
-      FLW        : `SAMPLE(flw_cg, instr)
-      FSW        : `SAMPLE(fsw_cg, instr)
-      FADD_S     : `SAMPLE(fadd_s_cg, instr)
-      FSUB_S     : `SAMPLE(fsub_s_cg, instr)
-      FMUL_S     : `SAMPLE(fmul_s_cg, instr)
-      FDIV_S     : `SAMPLE(fdiv_s_cg, instr)
-      FSQRT_S    : `SAMPLE(fsqrt_s_cg, instr)
-      FMIN_S     : `SAMPLE(fmin_s_cg, instr)
-      FMAX_S     : `SAMPLE(fmax_s_cg, instr)
-      FMADD_S    : `SAMPLE(fmadd_s_cg, instr)
-      FNMADD_S   : `SAMPLE(fnmadd_s_cg, instr)
-      FMSUB_S    : `SAMPLE(fmsub_s_cg, instr)
-      FNMSUB_S   : `SAMPLE(fnmsub_s_cg, instr)
+      FLW        : `SAMPLE_F(flw_cg, instr)
+      FSW        : `SAMPLE_F(fsw_cg, instr)
+      FADD_S     : `SAMPLE_F(fadd_s_cg, instr)
+      FSUB_S     : `SAMPLE_F(fsub_s_cg, instr)
+      FMUL_S     : `SAMPLE_F(fmul_s_cg, instr)
+      FDIV_S     : `SAMPLE_F(fdiv_s_cg, instr)
+      FSQRT_S    : `SAMPLE_F(fsqrt_s_cg, instr)
+      FMIN_S     : `SAMPLE_F(fmin_s_cg, instr)
+      FMAX_S     : `SAMPLE_F(fmax_s_cg, instr)
+      FMADD_S    : `SAMPLE_F(fmadd_s_cg, instr)
+      FNMADD_S   : `SAMPLE_F(fnmadd_s_cg, instr)
+      FMSUB_S    : `SAMPLE_F(fmsub_s_cg, instr)
+      FNMSUB_S   : `SAMPLE_F(fnmsub_s_cg, instr)
       // RV32B
-      CLZ        : `SAMPLE(clz_cg, instr)
-      CTZ        : `SAMPLE(ctz_cg, instr)
-      PCNT       : `SAMPLE(pcnt_cg, instr)
-      ANDN       : `SAMPLE(andn_cg, instr)
-      ORN        : `SAMPLE(orn_cg, instr)
-      XNOR       : `SAMPLE(xnor_cg, instr)
-      PACK       : `SAMPLE(pack_cg, instr)
-      PACKH      : `SAMPLE(packh_cg, instr)
-      MIN        : `SAMPLE(min_cg, instr)
-      MAX        : `SAMPLE(max_cg, instr)
-      MINU       : `SAMPLE(minu_cg, instr)
-      MAXU       : `SAMPLE(maxu_cg, instr)
-      SEXT_B     : `SAMPLE(sext_b_cg, instr)
-      SEXT_H     : `SAMPLE(sext_h_cg, instr)
-      SBSET      : `SAMPLE(sbset_cg, instr)
-      SBCLR      : `SAMPLE(sbclr_cg, instr)
-      SBINV      : `SAMPLE(sbinv_cg, instr)
-      SBEXT      : `SAMPLE(sbext_cg, instr)
-      SBSETI     : `SAMPLE(sbseti_cg, instr)
-      SBCLRI     : `SAMPLE(sbclri_cg, instr)
-      SBINVI     : `SAMPLE(sbinvi_cg, instr)
-      SBEXTI     : `SAMPLE(sbexti_cg, instr)
-      SLO        : `SAMPLE(slo_cg, instr)
-      SRO        : `SAMPLE(sro_cg, instr)
-      SLOI       : `SAMPLE(sloi_cg, instr)
-      SROI       : `SAMPLE(sroi_cg, instr)
-      ROR        : `SAMPLE(ror_cg, instr)
-      ROL        : `SAMPLE(rol_cg, instr)
-      RORI       : `SAMPLE(rori_cg, instr)
-      GREV       : `SAMPLE(grev_cg, instr)
-      GREVI      : `SAMPLE(grevi_cg, instr)
-      SHFLI      : `SAMPLE(shfli_cg, instr)
-      UNSHFLI    : `SAMPLE(unshfli_cg, instr)
-      SHFL       : `SAMPLE(shfl_cg, instr)
-      UNSHFL     : `SAMPLE(unshfl_cg, instr)
-      GORC       : `SAMPLE(gorc_cg, instr)
-      GORCI      : `SAMPLE(gorci_cg, instr)
-      BFP        : `SAMPLE(bfp_cg, instr)
-      BEXT       : `SAMPLE(bext_cg, instr)
-      BDEP       : `SAMPLE(bdep_cg, instr)
-      CLMUL      : `SAMPLE(clmul_cg, instr)
-      CLMULH     : `SAMPLE(clmulh_cg, instr)
-      CLMULR     : `SAMPLE(clmulr_cg, instr)
-      CRC32_B    : `SAMPLE(crc32_b_cg, instr)
-      CRC32_H    : `SAMPLE(crc32_h_cg, instr)
-      CRC32_W    : `SAMPLE(crc32_w_cg, instr)
-      CRC32C_B   : `SAMPLE(crc32c_b_cg, instr)
-      CRC32C_H   : `SAMPLE(crc32c_h_cg, instr)
-      CRC32C_W   : `SAMPLE(crc32c_w_cg, instr)
-      CMIX       : `SAMPLE(cmix_cg, instr)
-      CMOV       : `SAMPLE(cmov_cg, instr)
-      FSL        : `SAMPLE(fsl_cg, instr)
-      FSR        : `SAMPLE(fsr_cg, instr)
-      FSRI       : `SAMPLE(fsri_cg, instr)
+      CLZ        : `SAMPLE_B(clz_cg, instr)
+      CTZ        : `SAMPLE_B(ctz_cg, instr)
+      PCNT       : `SAMPLE_B(pcnt_cg, instr)
+      ANDN       : `SAMPLE_B(andn_cg, instr)
+      ORN        : `SAMPLE_B(orn_cg, instr)
+      XNOR       : `SAMPLE_B(xnor_cg, instr)
+      PACK       : `SAMPLE_B(pack_cg, instr)
+      PACKH      : `SAMPLE_B(packh_cg, instr)
+      MIN        : `SAMPLE_B(min_cg, instr)
+      MAX        : `SAMPLE_B(max_cg, instr)
+      MINU       : `SAMPLE_B(minu_cg, instr)
+      MAXU       : `SAMPLE_B(maxu_cg, instr)
+      SEXT_B     : `SAMPLE_B(sext_b_cg, instr)
+      SEXT_H     : `SAMPLE_B(sext_h_cg, instr)
+      SBSET      : `SAMPLE_B(sbset_cg, instr)
+      SBCLR      : `SAMPLE_B(sbclr_cg, instr)
+      SBINV      : `SAMPLE_B(sbinv_cg, instr)
+      SBEXT      : `SAMPLE_B(sbext_cg, instr)
+      SBSETI     : `SAMPLE_B(sbseti_cg, instr)
+      SBCLRI     : `SAMPLE_B(sbclri_cg, instr)
+      SBINVI     : `SAMPLE_B(sbinvi_cg, instr)
+      SBEXTI     : `SAMPLE_B(sbexti_cg, instr)
+      SLO        : `SAMPLE_B(slo_cg, instr)
+      SRO        : `SAMPLE_B(sro_cg, instr)
+      SLOI       : `SAMPLE_B(sloi_cg, instr)
+      SROI       : `SAMPLE_B(sroi_cg, instr)
+      ROR        : `SAMPLE_B(ror_cg, instr)
+      ROL        : `SAMPLE_B(rol_cg, instr)
+      RORI       : `SAMPLE_B(rori_cg, instr)
+      GREV       : `SAMPLE_B(grev_cg, instr)
+      GREVI      : `SAMPLE_B(grevi_cg, instr)
+      SHFLI      : `SAMPLE_B(shfli_cg, instr)
+      UNSHFLI    : `SAMPLE_B(unshfli_cg, instr)
+      SHFL       : `SAMPLE_B(shfl_cg, instr)
+      UNSHFL     : `SAMPLE_B(unshfl_cg, instr)
+      GORC       : `SAMPLE_B(gorc_cg, instr)
+      GORCI      : `SAMPLE_B(gorci_cg, instr)
+      BFP        : `SAMPLE_B(bfp_cg, instr)
+      BEXT       : `SAMPLE_B(bext_cg, instr)
+      BDEP       : `SAMPLE_B(bdep_cg, instr)
+      CLMUL      : `SAMPLE_B(clmul_cg, instr)
+      CLMULH     : `SAMPLE_B(clmulh_cg, instr)
+      CLMULR     : `SAMPLE_B(clmulr_cg, instr)
+      CRC32_B    : `SAMPLE_B(crc32_b_cg, instr)
+      CRC32_H    : `SAMPLE_B(crc32_h_cg, instr)
+      CRC32_W    : `SAMPLE_B(crc32_w_cg, instr)
+      CRC32C_B   : `SAMPLE_B(crc32c_b_cg, instr)
+      CRC32C_H   : `SAMPLE_B(crc32c_h_cg, instr)
+      CRC32C_W   : `SAMPLE_B(crc32c_w_cg, instr)
+      CMIX       : `SAMPLE_B(cmix_cg, instr)
+      CMOV       : `SAMPLE_B(cmov_cg, instr)
+      FSL        : `SAMPLE_B(fsl_cg, instr)
+      FSR        : `SAMPLE_B(fsr_cg, instr)
+      FSRI       : `SAMPLE_B(fsri_cg, instr)
       // RV64B
-      CLZW       : `SAMPLE(clzw_cg, instr)
-      CTZW       : `SAMPLE(ctzw_cg, instr)
-      PCNTW      : `SAMPLE(pcntw_cg, instr)
-      PACKW      : `SAMPLE(packw_cg, instr)
-      PACKUW     : `SAMPLE(packuw_cg, instr)
-      SLOW       : `SAMPLE(slow_cg, instr)
-      SROW       : `SAMPLE(srow_cg, instr)
-      SLOIW      : `SAMPLE(sloiw_cg, instr)
-      SROIW      : `SAMPLE(sroiw_cg, instr)
-      RORW       : `SAMPLE(rorw_cg, instr)
-      ROLW       : `SAMPLE(rolw_cg, instr)
-      RORIW      : `SAMPLE(roriw_cg, instr)
-      GREVW      : `SAMPLE(grevw_cg, instr)
-      GREVIW     : `SAMPLE(greviw_cg, instr)
-      SHFLW      : `SAMPLE(shflw_cg, instr)
-      UNSHFLW    : `SAMPLE(unshflw_cg, instr)
-      GORCW      : `SAMPLE(gorcw_cg, instr)
-      GORCIW     : `SAMPLE(gorciw_cg, instr)
-      BFPW       : `SAMPLE(bfpw_cg, instr)
-      BEXTW      : `SAMPLE(bextw_cg, instr)
-      BDEPW      : `SAMPLE(bdepw_cg, instr)
-      CLMULW     : `SAMPLE(clmulw_cg, instr)
-      CLMULHW    : `SAMPLE(clmulhw_cg, instr)
-      CLMULRW    : `SAMPLE(clmulrw_cg, instr)
-      CRC32_D    : `SAMPLE(crc32_d_cg, instr)
-      CRC32C_D   : `SAMPLE(crc32c_d_cg, instr)
-      BMATOR     : `SAMPLE(bmator_cg, instr)
-      BMATXOR    : `SAMPLE(bmatxor_cg, instr)
-      BMATFLIP   : `SAMPLE(bmatflip_cg, instr)
-      FSLW       : `SAMPLE(fslw_cg, instr)
-      FSRW       : `SAMPLE(fsrw_cg, instr)
-      FSRIW      : `SAMPLE(fsriw_cg, instr)
-      ADDWU      : `SAMPLE(addwu_cg, instr)
-      SUBWU      : `SAMPLE(subwu_cg, instr)
-      ADDIWU     : `SAMPLE(addiwu_cg, instr)
-      ADDU_W     : `SAMPLE(addu_w_cg, instr)
-      SUBU_W     : `SAMPLE(subu_w_cg, instr)
-      SLLIU_W    : `SAMPLE(slliu_w_cg, instr)
+      CLZW       : `SAMPLE_B(clzw_cg, instr)
+      CTZW       : `SAMPLE_B(ctzw_cg, instr)
+      PCNTW      : `SAMPLE_B(pcntw_cg, instr)
+      PACKW      : `SAMPLE_B(packw_cg, instr)
+      PACKUW     : `SAMPLE_B(packuw_cg, instr)
+      SLOW       : `SAMPLE_B(slow_cg, instr)
+      SROW       : `SAMPLE_B(srow_cg, instr)
+      SLOIW      : `SAMPLE_B(sloiw_cg, instr)
+      SROIW      : `SAMPLE_B(sroiw_cg, instr)
+      RORW       : `SAMPLE_B(rorw_cg, instr)
+      ROLW       : `SAMPLE_B(rolw_cg, instr)
+      RORIW      : `SAMPLE_B(roriw_cg, instr)
+      GREVW      : `SAMPLE_B(grevw_cg, instr)
+      GREVIW     : `SAMPLE_B(greviw_cg, instr)
+      SHFLW      : `SAMPLE_B(shflw_cg, instr)
+      UNSHFLW    : `SAMPLE_B(unshflw_cg, instr)
+      GORCW      : `SAMPLE_B(gorcw_cg, instr)
+      GORCIW     : `SAMPLE_B(gorciw_cg, instr)
+      BFPW       : `SAMPLE_B(bfpw_cg, instr)
+      BEXTW      : `SAMPLE_B(bextw_cg, instr)
+      BDEPW      : `SAMPLE_B(bdepw_cg, instr)
+      CLMULW     : `SAMPLE_B(clmulw_cg, instr)
+      CLMULHW    : `SAMPLE_B(clmulhw_cg, instr)
+      CLMULRW    : `SAMPLE_B(clmulrw_cg, instr)
+      CRC32_D    : `SAMPLE_B(crc32_d_cg, instr)
+      CRC32C_D   : `SAMPLE_B(crc32c_d_cg, instr)
+      BMATOR     : `SAMPLE_B(bmator_cg, instr)
+      BMATXOR    : `SAMPLE_B(bmatxor_cg, instr)
+      BMATFLIP   : `SAMPLE_B(bmatflip_cg, instr)
+      FSLW       : `SAMPLE_B(fslw_cg, instr)
+      FSRW       : `SAMPLE_B(fsrw_cg, instr)
+      FSRIW      : `SAMPLE_B(fsriw_cg, instr)
+      ADDWU      : `SAMPLE_B(addwu_cg, instr)
+      SUBWU      : `SAMPLE_B(subwu_cg, instr)
+      ADDIWU     : `SAMPLE_B(addiwu_cg, instr)
+      ADDU_W     : `SAMPLE_B(addu_w_cg, instr)
+      SUBU_W     : `SAMPLE_B(subu_w_cg, instr)
+      SLLIU_W    : `SAMPLE_B(slliu_w_cg, instr)
       `VECTOR_INCLUDE("riscv_instr_cover_group_inc_cg_sample.sv")
       default: begin
         if (instr.group == RV32I) begin
