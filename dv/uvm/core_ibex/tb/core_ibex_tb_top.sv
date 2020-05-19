@@ -43,7 +43,7 @@ module core_ibex_tb_top;
 
   // The LRM only allows '`"` to appear in macro expansions. It might be better pass a string
   // directly as a define.
-  `define MultiplierImplementationVal `"IBEX_CFG_MultiplierImplementation`"
+  `define MultiplierImplementationVal `"`IBEX_CFG_MultiplierImplementation`"
   parameter     MultiplierImplementation = `MultiplierImplementationVal;
 
 
