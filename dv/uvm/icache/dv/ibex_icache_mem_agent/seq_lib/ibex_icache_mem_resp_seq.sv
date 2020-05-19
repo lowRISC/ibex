@@ -19,10 +19,11 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
   // before the grant, we might accidentally handle the grant with the new seed rather than the
   // old one, which would cause confusion in the scoreboard.
   //
-  // To avoid this problem, we keep a FIFO of pending addresses along with their corresponding
-  // seeds. When a grant message comes in, we know that we can look up the correct seed there.
-  protected mailbox #(bit[63:0]) pending_grants;
-  protected bit [31:0]           cur_seed = 0;
+  // To avoid this problem, we keep a queue of pending addresses along with their corresponding
+  // seeds. When a grant message comes in, we know that we can look up the correct seed there,
+  // discarding results until we find it.
+  protected bit [63:0] pending_grants[$];
+  protected bit [31:0] cur_seed = 0;
 
   `uvm_object_utils(ibex_icache_mem_resp_seq)
   `uvm_object_new
@@ -35,8 +36,6 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
   task body();
     ibex_icache_mem_req_item  req_item  = new("req_item");
     ibex_icache_mem_resp_item resp_item = new("resp_item");
-
-    pending_grants = new("pending_grants");
 
     forever begin
       // Wait for a transaction request.
@@ -76,7 +75,7 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
     resp_item.err = mem_model.is_pmp_error(cur_seed, req_item.address);
 
     // Warn the "grant side" to expect this fetch
-    pending_grants.put({req_item.address, cur_seed});
+    pending_grants.push_back({req_item.address, cur_seed});
 
     // And finish the item
     finish_item(resp_item);
@@ -91,18 +90,27 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
     bit [63:0] gnt_data;
     bit [31:0] gnt_addr, gnt_seed;
 
-    // Search through the pending_grants mailbox to find the seed from the request that matched.
-    gnt_addr = req_item.address + 1;
-    while (pending_grants.num() > 0) begin
-      pending_grants.get(gnt_data);
-      {gnt_addr, gnt_seed} = gnt_data;
-      if (gnt_addr == req_item.address) break;
+    // Search through the pending_grants queue to find the seed from the request that matched. We
+    // search from the back, rather than the front. This avoids problems if there were requests for
+    // an address that never got granted: we always want the most recent request for this address.
+    int i, N;
+    N = pending_grants.size();
+    for (i = 0; i < N; i++) begin
+      {gnt_addr, gnt_seed} = pending_grants[N - 1 - i];
+      if (gnt_addr == req_item.address)
+        break;
     end
 
-    // If nothing went wrong, we should have found the right item and gnt_addr should now
-    // equal req_item.address
-    `DV_CHECK_FATAL(gnt_addr == req_item.address,
-                    $sformatf("No pending grant for address 0x%08h.", req_item.address))
+    // If i == N, we didn't find a hit. That's not supposed to happen.
+    `DV_CHECK_FATAL(i < N,
+                    $sformatf("No pending grant for address 0x%08h (%0d items in queue).",
+                              req_item.address, N))
+
+    // Otherwise, we have a hit at index N - 1 - i. Throw away all previous items in the queue. We
+    // don't throw away this item, because it's possible to end up with repeated addresses in the
+    // queue (if the cache asked for the same address twice in a row) and if we throw away the hit
+    // the first time, we can't find it for the second grant.
+    pending_grants = pending_grants[N - 1 - i:$];
 
     // Using the seed that we saw for the request, check the memory model for a (non-PMP) error
     // at this address. On success, look up the memory data too.
