@@ -346,11 +346,17 @@ module ibex_decoder #(
               end
               5'b0_1100: begin
                 unique case(instr[26:20])
-                  7'b00_00000,                                     // clz
-                  7'b00_00001,                                     // ctz
-                  7'b00_00010,                                     // pcnt
-                  7'b00_00100,                                     // sext.b
-                  7'b00_00101: illegal_insn = RV32B ? 1'b0 : 1'b1; // sext.h
+                  7'b000_0000,                                     // clz
+                  7'b000_0001,                                     // ctz
+                  7'b000_0010,                                     // pcnt
+                  7'b000_0100,                                     // sext.b
+                  7'b000_0101,                                     // sext.h
+                  7'b001_0000,                                     // crc32.b
+                  7'b001_0001,                                     // crc32.h
+                  7'b001_0010,                                     // crc32.w
+                  7'b001_1000,                                     // crc32c.b
+                  7'b001_1001,                                     // crc32c.h
+                  7'b001_1010: illegal_insn = RV32B ? 1'b0 : 1'b1; // crc32c.w
 
                   default: illegal_insn = 1'b1;
                 endcase
@@ -775,11 +781,35 @@ module ibex_decoder #(
                 5'b0_0001: if (instr_alu[26] == 0) alu_operator_o = ALU_SHFL;
                 5'b0_1100: begin
                   unique case (instr_alu[26:20])
-                    7'b000_0000: alu_operator_o = ALU_CLZ;   // Count Leading Zeros
-                    7'b000_0001: alu_operator_o = ALU_CTZ;   // Count Trailing Zeros
-                    7'b000_0010: alu_operator_o = ALU_PCNT;  // Count Set Bits
-                    7'b000_0100: alu_operator_o = ALU_SEXTB; // Sign-extend Byte
-                    7'b000_0101: alu_operator_o = ALU_SEXTH; // Sign-extend Half-word
+                    7'b000_0000: alu_operator_o = ALU_CLZ;      // clz
+                    7'b000_0001: alu_operator_o = ALU_CTZ;      // ctz
+                    7'b000_0010: alu_operator_o = ALU_PCNT;     // pcnt
+                    7'b000_0100: alu_operator_o = ALU_SEXTB;    // sext.b
+                    7'b000_0101: alu_operator_o = ALU_SEXTH;    // sext.h
+                    7'b001_0000: begin
+                      alu_operator_o = ALU_CRC32_B;  // crc32.b
+                      alu_multicycle_o = 1'b1;
+                    end
+                    7'b001_0001: begin
+                      alu_operator_o = ALU_CRC32_H;  // crc32.h
+                      alu_multicycle_o = 1'b1;
+                    end
+                    7'b001_0010: begin
+                      alu_operator_o = ALU_CRC32_W;  // crc32.w
+                      alu_multicycle_o = 1'b1;
+                    end
+                    7'b001_1000: begin
+                      alu_operator_o = ALU_CRC32C_B; // crc32c.b
+                      alu_multicycle_o = 1'b1;
+                    end
+                    7'b001_1001: begin
+                      alu_operator_o = ALU_CRC32C_H; // crc32c.h
+                      alu_multicycle_o = 1'b1;
+                    end
+                    7'b001_1010: begin
+                      alu_operator_o = ALU_CRC32C_W; // crc32c.w
+                      alu_multicycle_o = 1'b1;
+                    end
                     default: ;
                   endcase
                 end
