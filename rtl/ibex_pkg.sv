@@ -121,7 +121,15 @@ typedef enum logic [5:0] {
   // RV32B
   ALU_CLMUL,
   ALU_CLMULR,
-  ALU_CLMULH
+  ALU_CLMULH,
+
+  // Cyclic Redundancy Check
+  ALU_CRC32_B,
+  ALU_CRC32C_B,
+  ALU_CRC32_H,
+  ALU_CRC32C_H,
+  ALU_CRC32_W,
+  ALU_CRC32C_W
 } alu_op_e;
 
 typedef enum logic [1:0] {
