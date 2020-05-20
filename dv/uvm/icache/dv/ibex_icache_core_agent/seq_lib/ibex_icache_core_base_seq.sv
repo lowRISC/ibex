@@ -37,6 +37,9 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
   // in a straight line between branches.
   protected int unsigned insns_since_branch = 0;
 
+  // Whether the cache is enabled at the moment
+  protected bit cache_enabled = 1'b0;
+
   virtual task body();
     run_reqs();
   endtask
@@ -68,11 +71,19 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
        (constrain_branches && (req.trans_type != ICacheCoreTransTypeBranch)) ->
          num_insns <= 100 - insns_since_branch;
 
-       force_disable -> !toggle_enable;
+       force_disable -> enable == 1'b0;
+
+       // Toggle the cache enable line one time in 50. This should allow us a reasonable amount of
+       // time in each mode (note that each transaction here results in multiple instruction
+       // fetches)
+       enable dist { cache_enabled :/ 49, ~cache_enabled :/ 1 };
     )
 
     finish_item(req);
     get_response(rsp);
+
+    // Update whether we think the cache is enabled
+    cache_enabled = req.enable;
 
     // The next transaction must start with a branch if this one ended with an error
     force_branch = rsp.saw_error;

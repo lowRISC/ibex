@@ -9,14 +9,9 @@ class ibex_icache_core_driver
   `uvm_component_utils(ibex_icache_core_driver)
   `uvm_component_new
 
-  // The current state of the enable pin: this is toggled by sequence items, but the current state
-  // is stored on the driver.
-  bit enable;
-
   // reset signals
   virtual task automatic reset_signals();
     cfg.vif.reset();
-    enable = 1'b0;
   endtask
 
   // drive trans received from sequencer
@@ -52,10 +47,8 @@ class ibex_icache_core_driver
     // Make sure that req is enabled (has no effect unless this is the first transaction)
     cfg.vif.driver_cb.req <= 1'b1;
 
-    // Toggle the enable state if necessary and drive its pin
-    if (req.toggle_enable)
-      enable = ~enable;
-    cfg.vif.driver_cb.enable <= enable;
+    // Drive the enable state
+    cfg.vif.driver_cb.enable <= req.enable;
 
     fork
         cfg.vif.branch_to(req.branch_addr);
@@ -83,10 +76,8 @@ class ibex_icache_core_driver
                                            [100:200]   :/ 2,
                                            [1000:1200] :/ 1 };)
 
-    // Toggle the enable state if necessary and drive its pin
-    if (req.toggle_enable)
-      enable = ~enable;
-    cfg.vif.driver_cb.enable <= enable;
+    // Drive the enable state
+    cfg.vif.driver_cb.enable <= req.enable;
 
     fork
         if (req_low_cycles > 0) lower_req(req_low_cycles);
