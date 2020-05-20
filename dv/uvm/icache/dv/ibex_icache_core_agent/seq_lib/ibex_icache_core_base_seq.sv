@@ -16,9 +16,13 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
   // instructions should have a maximum length of 100.
   bit constrain_branches = 1'b0;
 
-  // If this bit is set, we will never enable the cache
-  bit force_disable = 1'b0;
+  // Should the cache be enabled for the first fetch? Probably only interesting if you also set
+  // const_enable.
+  bit initial_enable = 1'b0;
 
+  // If this bit is set, we will never change whether the cache is enabled from the initial_enable
+  // setting.
+  bit const_enable = 1'b0;
 
   // Number of test items (note that a single test item may contain many instruction fetches)
   protected rand int count;
@@ -38,9 +42,13 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
   protected int unsigned insns_since_branch = 0;
 
   // Whether the cache is enabled at the moment
-  protected bit cache_enabled = 1'b0;
+  protected bit cache_enabled;
 
   virtual task body();
+    // Set cache_enabled from initial_enable here (rather than at the declaration). This way, a user
+    // can set initial_enable after constructing the sequence, but before running it.
+    cache_enabled = initial_enable;
+
     run_reqs();
   endtask
 
@@ -71,7 +79,7 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
        (constrain_branches && (req.trans_type != ICacheCoreTransTypeBranch)) ->
          num_insns <= 100 - insns_since_branch;
 
-       force_disable -> enable == 1'b0;
+       const_enable -> enable == cache_enabled;
 
        // Toggle the cache enable line one time in 50. This should allow us a reasonable amount of
        // time in each mode (note that each transaction here results in multiple instruction
