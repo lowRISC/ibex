@@ -79,6 +79,7 @@
     cmd:
       - "vlib <out>/work"
       - "vlog -work <out>/work
+        <cmp_opts>
         +incdir+<ALDEC_PATH>/vlib/uvm-1.2/src
         +define+UVM
         -l uvm_1_2
