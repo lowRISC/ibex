@@ -11,8 +11,8 @@ class ibex_icache_core_req_item extends uvm_sequence_item;
   // ICacheCoreTransTypeBranch)
   rand bit [31:0]                    branch_addr;
 
-  // Whether the cache enable/disable should be toggled
-  rand bit                           toggle_enable;
+  // Whether the cache should be enabled
+  rand bit                           enable;
 
   // Whether to invalidate the cache
   rand bit                           invalidate;
@@ -38,12 +38,6 @@ class ibex_icache_core_req_item extends uvm_sequence_item;
     !branch_addr[0];
   }
 
-  constraint c_toggle_enable_dist {
-    // Toggle the cache enable line one time in 50. This should allow us a reasonable amount of time
-    // in each mode (note that each transaction here results in multiple instruction fetches)
-    toggle_enable dist { 0 :/ 49, 1 :/ 1 };
-  }
-
   constraint c_invalidate_dist {
     // Poke the cache invalidate line one time in 50. This takes ages and we don't want to
     // accidentally spend most of the test waiting for invalidation.
@@ -64,10 +58,10 @@ class ibex_icache_core_req_item extends uvm_sequence_item;
 
   `uvm_object_utils_begin(ibex_icache_core_req_item)
     `uvm_field_enum(ibex_icache_core_trans_type_e, trans_type, UVM_DEFAULT)
-    `uvm_field_int (branch_addr,   UVM_DEFAULT | UVM_HEX)
-    `uvm_field_int (toggle_enable, UVM_DEFAULT)
-    `uvm_field_int (invalidate,    UVM_DEFAULT)
-    `uvm_field_int (num_insns,     UVM_DEFAULT)
+    `uvm_field_int (branch_addr, UVM_DEFAULT | UVM_HEX)
+    `uvm_field_int (enable,      UVM_DEFAULT)
+    `uvm_field_int (invalidate,  UVM_DEFAULT)
+    `uvm_field_int (num_insns,   UVM_DEFAULT)
   `uvm_object_utils_end
 
   `uvm_object_new
