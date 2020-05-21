@@ -83,11 +83,15 @@ parameters:
     description: "Number of PMP regions"
 
 targets:
-  sim:
-    default_tool: verilator
+  default: &default_target
     filesets:
       - tool_verilator ? (files_verilator_waiver)
       - files_sim_verilator
+    toplevel: ibex_simple_system
+
+  sim:
+    <<: *default_target
+    default_tool: verilator
     parameters:
       - RV32M
       - RV32E
@@ -99,7 +103,6 @@ targets:
       - PMPGranularity
       - PMPNumRegions
       - SRAM_INIT_FILE
-    toplevel: ibex_simple_system
     tools:
       vcs:
         vcs_options:
