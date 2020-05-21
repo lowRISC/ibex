@@ -40,7 +40,10 @@ module core_ibex_tb_top;
   parameter bit RV32B                    = 1'b0;
   parameter bit BranchTargetALU          = 1'b0;
   parameter bit WritebackStage           = 1'b0;
-  parameter     MultiplierImplementation = `"`IBEX_CFG_MultiplierImplementation`";
+
+  // VCS has issues taking a string as a define, so we have to build up the string via the
+  // pre-processor.
+  parameter     MultiplierImplementation = `PRIM_STRINGIFY(`IBEX_CFG_MultiplierImplementation);
 
   ibex_core_tracing #(
     .DmHaltAddr               (`BOOT_ADDR + 'h0        ),
