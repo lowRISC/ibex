@@ -91,10 +91,10 @@ interface ibex_icache_core_protocol_checker (
   `ASSERT(Err2Stable,      unfinished_valid |=> $stable(err_plus2),   clk, !rst_n);
 
   `ASSERT(LoRDataStable,
-          unfinished_valid |=> $stable(rdata[15:0]),
+          unfinished_valid & ~err |=> $stable(rdata[15:0]),
           clk, !rst_n);
   `ASSERT(HiRDataStable,
-          unfinished_valid & (rdata[1:0] == 2'b11) |=> $stable(rdata[31:16]),
+          unfinished_valid & ~err & (rdata[1:0] == 2'b11) |=> $stable(rdata[31:16]),
           clk, !rst_n);
 
   // The err_plus2 signal means "this error was caused by the upper two bytes" and is only read when
