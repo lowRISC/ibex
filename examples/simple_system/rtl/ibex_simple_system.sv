@@ -249,12 +249,10 @@ module ibex_simple_system (
       .timer_intr_o   (timer_irq)
     );
 
-  // Expose the performance counter array so it's easy to access in
-  // a verilator siumulation
-  logic [63:0] mhpmcounter_vals [32] /*verilator public_flat*/;
+  export "DPI-C" function mhpmcounter_get;
 
-  for(genvar i = 0;i < 32; i = i + 1) begin
-      assign mhpmcounter_vals[i] = u_core.u_ibex_core.cs_registers_i.mhpmcounter[i];
-  end
+  function automatic longint mhpmcounter_get(int index);
+    return u_core.u_ibex_core.cs_registers_i.mhpmcounter[index];
+  endfunction
+
 endmodule
-
