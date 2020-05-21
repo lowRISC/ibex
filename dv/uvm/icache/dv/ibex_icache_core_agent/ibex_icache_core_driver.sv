@@ -112,15 +112,9 @@ class ibex_icache_core_driver
   virtual task automatic read_insn();
     int unsigned delay;
 
-    // TODO: The icache sometimes currently requires the ready signal before it asserts valid. This
-    //       is tracked by issue #850.
-    if (0) begin
-
-      // Maybe (1 time in 10) wait for a valid signal before even considering asserting ready.
-      if ($urandom_range(9) == 0)
-        wait (cfg.vif.driver_cb.valid);
-
-    end
+    // Maybe (1 time in 10) wait for a valid signal before even considering asserting ready.
+    if ($urandom_range(9) == 0)
+      wait (cfg.vif.driver_cb.valid);
 
     // Then pick how long we wait before asserting that we are ready.
     //
