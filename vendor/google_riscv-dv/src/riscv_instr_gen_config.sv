@@ -229,6 +229,8 @@ class riscv_instr_gen_config extends uvm_object;
   rand int               single_step_iterations;
   // Enable mstatus.tw bit - causes u-mode WFI to raise illegal instruction exceptions
   bit                    set_mstatus_tw;
+  // Enable users to set mstatus.mprv to enable privilege checks on memory accesses.
+  bit                    set_mstatus_mprv;
   // Stack space allocated to each program, need to be enough to store necessary context
   // Example: RA, SP, T0
   int                    min_stack_len_per_program = 10 * (XLEN/8);
@@ -324,9 +326,9 @@ class riscv_instr_gen_config extends uvm_object;
   }
 
   constraint mstatus_c {
-    // This is default disabled at setup phase. It can be enabled in the exception and interrupt
-    // handling routine
-    mstatus_mprv == 1'b0;
+    if (set_mstatus_mprv) {
+      mstatus_mprv == 1'b1;
+    }
     if (SATP_MODE == BARE) {
       mstatus_mxr == 0;
       mstatus_sum == 0;
@@ -492,6 +494,7 @@ class riscv_instr_gen_config extends uvm_object;
     `uvm_field_int(enable_debug_single_step, UVM_DEFAULT)
     `uvm_field_int(single_step_iterations, UVM_DEFAULT)
     `uvm_field_int(set_mstatus_tw, UVM_DEFAULT)
+    `uvm_field_int(set_mstatus_mprv, UVM_DEFAULT)
     `uvm_field_int(max_branch_step, UVM_DEFAULT)
     `uvm_field_int(max_directed_instr_stream_seq, UVM_DEFAULT)
     `uvm_field_int(enable_floating_point, UVM_DEFAULT)
@@ -551,6 +554,7 @@ class riscv_instr_gen_config extends uvm_object;
     get_bool_arg_value("+set_dcsr_ebreak=", set_dcsr_ebreak);
     get_bool_arg_value("+enable_debug_single_step=", enable_debug_single_step);
     get_bool_arg_value("+set_mstatus_tw=", set_mstatus_tw);
+    get_bool_arg_value("+set_mstatus_mprv=", set_mstatus_mprv);
     get_bool_arg_value("+enable_floating_point=", enable_floating_point);
     get_bool_arg_value("+enable_vector_extension=", enable_vector_extension);
     get_bool_arg_value("+enable_b_extension=", enable_b_extension);
