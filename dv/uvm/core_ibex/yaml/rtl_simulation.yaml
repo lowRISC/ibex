@@ -115,7 +115,6 @@
     cmd:
       - "xrun -64bit
               -q
-              -access +rwc
               -f ibex_dv.f
               -sv
               -uvm
@@ -124,7 +123,10 @@
               -elaborate
               -l <out>/compile.log
               -xmlibdirpath <out>
-              <cmp_opts>"
+              <cmp_opts>
+              <wave_opts>"
+    wave_opts: >
+      -access rwc -linedebug
   sim:
     cmd: >
       xrun -64bit
@@ -138,3 +140,8 @@
            +ibex_tracer_file_base=<sim_dir>/trace_core
            -nokey
            <sim_opts>
+           <wave_opts>
+    wave_opts: >
+      -input @"database -open <sim_dir>/waves -shm -default"
+      -input @"probe -create -all -depth all"
+      -input @"run"
