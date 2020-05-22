@@ -301,8 +301,9 @@ module ibex_icache #(
   for (genvar way = 0; way < NumWays; way++) begin : gen_rams
     // Tag RAM instantiation
     prim_ram_1p #(
-      .Width    (TAG_SIZE_ECC),
-      .Depth    (NUM_LINES)
+      .Width           (TAG_SIZE_ECC),
+      .Depth           (NUM_LINES),
+      .DataBitsPerMask (TAG_SIZE_ECC)
     ) tag_bank (
       .clk_i    (clk_i),
       .req_i    (tag_req_ic0 & tag_banks_ic0[way]),
@@ -314,8 +315,9 @@ module ibex_icache #(
     );
     // Data RAM instantiation
     prim_ram_1p #(
-      .Width    (LINE_SIZE_ECC),
-      .Depth    (NUM_LINES)
+      .Width           (LINE_SIZE_ECC),
+      .Depth           (NUM_LINES),
+      .DataBitsPerMask (LINE_SIZE_ECC)
     ) data_bank (
       .clk_i    (clk_i),
       .req_i    (data_req_ic0 & data_banks_ic0[way]),
