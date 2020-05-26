@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import argparse
-import collections
+import collections.abc
 import os
 import shlex
 import sys
@@ -39,7 +39,7 @@ def _verify_config(name, config_dict):
         ConfigException: An issue was found with config_dict
     """
 
-    if not isinstance(config_dict, collections.Mapping):
+    if not isinstance(config_dict, collections.abc.Mapping):
         raise ConfigException('Config ' + name +
                               ' must have dictionary giving parameters')
 
