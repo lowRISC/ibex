@@ -7,6 +7,9 @@ description: "${name.upper()} DV UVM environment"
 filesets:
   files_dv:
     depend:
+% if has_ral:
+      - lowrisc:dv:ralgen
+% endif
 % if is_cip:
       - lowrisc:dv:cip_lib
 % else:
@@ -15,16 +18,11 @@ filesets:
 % for agent in env_agents:
       - lowrisc:dv:${agent}_agent
 % endfor
-% if has_ral:
-      - lowrisc:dv:gen_ral_pkg
-% endif
     files:
       - ${name}_env_pkg.sv
       - ${name}_env_cfg.sv: {is_include_file: true}
       - ${name}_env_cov.sv: {is_include_file: true}
-% if env_agents != []:
       - ${name}_virtual_sequencer.sv: {is_include_file: true}
-% endif
       - ${name}_scoreboard.sv: {is_include_file: true}
       - ${name}_env.sv: {is_include_file: true}
       - seq_lib/${name}_vseq_list.sv: {is_include_file: true}
@@ -33,7 +31,20 @@ filesets:
       - seq_lib/${name}_sanity_vseq.sv: {is_include_file: true}
     file_type: systemVerilogSource
 
+% if has_ral:
+generate:
+  ral:
+    generator: ralgen
+    parameters:
+      name: ${name}
+      ip_hjson: ../../data/${name}.hjson
+% endif
+
 targets:
   default:
     filesets:
       - files_dv
+% if has_ral:
+    generate:
+      - ral
+% endif
