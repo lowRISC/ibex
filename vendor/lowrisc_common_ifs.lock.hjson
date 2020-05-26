@@ -9,7 +9,7 @@
   upstream:
   {
     url: https://github.com/lowRISC/opentitan
-    rev: 0d7f7ac755d4e00811257027dd814edb2afca050
+    rev: 249b4c316cd6626d13e17edd8a52ca60c004af96
     only_subdir: hw/dv/sv/common_ifs
   }
 }

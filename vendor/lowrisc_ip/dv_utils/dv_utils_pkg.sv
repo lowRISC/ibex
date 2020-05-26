@@ -25,7 +25,6 @@ package dv_utils_pkg;
   // typedef parameterized pins_if for ease of implementation for interrupts and alerts
   typedef virtual pins_if #(NUM_MAX_INTERRUPTS) intr_vif;
   typedef virtual pins_if #(1)                  devmode_vif;
-  typedef virtual pins_if #(1)                  tlul_assert_ctrl_vif;
 
   // interface direction / mode - Host or Device
   typedef enum bit {
@@ -75,6 +74,16 @@ package dv_utils_pkg;
   } host_req_type_e;
 
   string msg_id = "dv_utils_pkg";
+
+  // return the smaller value of 2 inputs
+  function automatic int min2(int a, int b);
+      return (a < b) ? a : b;
+  endfunction
+
+  // return the bigger value of 2 inputs
+  function automatic int max2(int a, int b);
+    return (a > b) ? a : b;
+  endfunction
 
   // Simple function to set max errors before quitting sim
   function automatic void set_max_quit_count(int n);

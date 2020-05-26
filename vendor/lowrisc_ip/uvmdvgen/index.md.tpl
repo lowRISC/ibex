@@ -19,8 +19,8 @@ ${'##'} Goals
   * Verify TileLink device protocol compliance with an SVA based testbench
 
 ${'##'} Current status
-* [Design & verification stage]({{< relref "doc/project/hw_dashboard" >}})
-  * [HW development stages]({{< relref "doc/project/hw_stages" >}})
+* [Design & verification stage]({{< relref "hw" >}})
+  * [HW development stages]({{< relref "doc/project/development_stages" >}})
 * [Simulation results](https://reports.opentitan.org/hw/ip/${name}/dv/latest/results.html)
 
 ${'##'} Design features
@@ -57,18 +57,17 @@ All common types and methods defined at the package level can be found in
 [list a few parameters, types & methods; no need to mention all]
 ```
 % if is_cip:
-
 ${'###'} TL_agent
 ${name.upper()} testbench instantiates (already handled in CIP base env) [tl_agent]({{< relref "hw/dv/sv/tl_agent/README.md" >}})
 which provides the ability to drive and independently monitor random traffic via
 TL host interface into ${name.upper()} device.
-% endif
 
+% endif
 % for agent in env_agents:
 ${'### '} ${agent.upper()} Agent
 [Describe here or add link to its README]
-% endfor
 
+% endfor
 ${'###'} UVC/agent 1
 [Describe here or add link to its README]
 
@@ -77,12 +76,11 @@ ${'###'} UVC/agent 2
 
 % if has_ral:
 ${'###'} UVM RAL Model
-The ${name.upper()} RAL model is created with the `hw/dv/tools/gen_ral_pkg.py` wrapper script at the start of the simulation automatically and is placed in the build area, along with a corresponding `fusesoc` core file.
-The wrapper script invokes the [regtool.py]({{< relref "util/reggen/README.md" >}}) script from within to generate the RAL model.
+The ${name.upper()} RAL model is created with the [`ralgen`]({{< relref "hw/dv/tools/ralgen/README.md" >}}) FuseSoC generator script automatically when the simulation is at the build stage.
 
-It can be created manually by running `make ral` command from the `dv` area.
+It can be created manually (separately) by running `make` in the the `hw/` area.
+
 % endif
-
 ${'###'} Reference models
 [Describe reference models in use if applicable, example: SHA256/HMAC]
 
