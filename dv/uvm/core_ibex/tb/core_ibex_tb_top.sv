@@ -32,12 +32,16 @@ module core_ibex_tb_top;
     `define IBEX_MULTIPLIER_IMPLEMENTATION fast
   `endif
 
+  `ifndef IBEX_CFG_RV32B
+    `define IBEX_CFG_RV32B ibex_pkg::RV32BNone
+  `endif
+
   parameter bit          PMPEnable       = 1'b0;
   parameter int unsigned PMPGranularity  = 0;
   parameter int unsigned PMPNumRegions   = 4;
   parameter bit RV32E                    = 1'b0;
   parameter bit RV32M                    = 1'b1;
-  parameter bit RV32B                    = 1'b0;
+  parameter ibex_pkg::rv32b_e RV32B      = `IBEX_CFG_RV32B;
   parameter bit BranchTargetALU          = 1'b0;
   parameter bit WritebackStage           = 1'b0;
 

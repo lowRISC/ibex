@@ -65,7 +65,7 @@ PMP_REGIONS         := 16
 # PMP Granularity
 PMP_GRANULARITY     := 0
 
-IBEX_CONFIG         := experimental-maxperf-pmp-bm
+IBEX_CONFIG         := experimental-maxperf-pmp-bmfull
 
 # TODO(udinator) - might need options for SAIL/Whisper/Spike
 ifeq (${ISS},ovpsim)

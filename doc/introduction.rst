@@ -46,6 +46,10 @@ In addition, the following instruction set extensions are available.
      - 2.0
      - optional
 
+   * - **B**: *EXPERIMENTAL* Standard Extension for Bit Manipulation Instructions
+     - 0.92
+     - optional
+
    * - **Zicsr**: Control and Status Register Instructions
      - 2.0
      - always enabled

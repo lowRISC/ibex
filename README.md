@@ -20,7 +20,7 @@ The options include different choices for the architecture of the multiplier uni
 The table below indicates performance, area and verification status for a few selected configurations.
 These are configurations on which lowRISC is focusing for performance evaluation and design verification (see [supported configs](ibex_configs.yaml)).
 
-| Config | "small" | "maxperf" | "maxperf-pmp-bm" |
+| Config | "small" | "maxperf" | "maxperf-pmp-bmfull" |
 | ------ | ------- | --------- | ---------------- |
 | Features | RV32IMC, 3 cycle mult | RV32IMC, 1 cycle mult, Branch target ALU, Writeback stage | RV32IMCB, 1 cycle mult, Branch target ALU, Writeback stage, 16 PMP regions |
 | Performance (Coremark/MHz) | 2.44 | 3.09 | 3.09 |

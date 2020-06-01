@@ -643,12 +643,22 @@
     +pmp_allow_addr_overlap=1
   rtl_test: core_ibex_base_test
 
-- test: riscv_bitmanip_test
+- test: riscv_bitmanip_full_test
   desc: >
-    Random instruction test with supported B extension instructions
+    Random instruction test with supported B extension instructions in full configuration
   iterations: 10
   gen_test: riscv_rand_instr_test
   gen_opts: >
     +enable_b_extension=1
-    +enable_bitmanip_groups=zbb,zbt,zbs,zbp,zbf,zbe,zbc,zbr
+    +enable_bitmanip_groups=zbb,zb_tmp,zbt,zbs,zbp,zbf,zbe,zbc,zbr
+  rtl_test: core_ibex_base_test
+
+- test: riscv_bitmanip_balanced_test
+  desc: >
+    Random instruction test with supported B extension instructions in balanced configuration
+  iterations: 10
+  gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +enable_b_extension=1
+    +enable_bitmanip_groups=zbb,zb_tmp,zbt,zbs,zbf
   rtl_test: core_ibex_base_test

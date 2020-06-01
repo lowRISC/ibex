@@ -36,10 +36,10 @@ parameters:
     description: "Enable the E ISA extension (reduced register set) [0/1]"
 
   RV32B:
-    datatype: int
-    paramtype: vlogparam
-    default: 0
-    description: "Enable the B ISA extension (bit manipulation EXPERIMENTAL) [0/1]"
+    datatype: str
+    default: ibex_pkg::RV32BNone
+    paramtype: vlogdefine
+    description: "Bitmanip implementation parameter enum. See ibex_pkg.sv (EXPERIMENTAL)"
 
   SRAM_INIT_FILE:
     datatype: str
