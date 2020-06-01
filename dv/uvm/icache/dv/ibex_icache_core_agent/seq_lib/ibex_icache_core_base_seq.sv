@@ -27,6 +27,17 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
   // If this bit is set, we will never invalidate the cache (useful for hit ratio tracking)
   bit no_invalidate = 1'b0;
 
+  // The expected number of items between each new memory seed when the cache is disabled. A new
+  // memory seed when the cache is disabled implies that the next time the cache is enabled, we must
+  // start an invalidation. As such, this shouldn't normally be set too low.
+  int unsigned gap_between_seeds = 49;
+
+  // The expected number of items between each invalidation. This shouldn't be too small because an
+  // invalidation takes ages and we don't want to accidentally spend most of the test waiting for
+  // invalidation.
+  int unsigned gap_between_invalidations = 49;
+
+
   // Number of test items (note that a single test item may contain many instruction fetches)
   protected rand int count;
   constraint c_count { count inside {[800:1000]}; }
@@ -46,6 +57,10 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
 
   // Whether the cache is enabled at the moment
   protected bit cache_enabled;
+
+  // Whether the cache must be invalidated next time it is enabled (because we changed the seed
+  // under its feet while it was disabled)
+  protected bit stale_seed = 0;
 
   virtual task body();
     // Set cache_enabled from initial_enable here (rather than at the declaration). This way, a user
@@ -91,6 +106,13 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
 
        // If no_invalidate is set, we shouldn't ever touch the invalidate line.
        no_invalidate -> invalidate == 1'b0;
+
+       // Start an invalidation every 1+gap_between_invalidations items.
+       invalidate dist { 1'b0 :/ gap_between_invalidations, 1'b1 :/ 1 };
+
+       // If we have seen a new seed since the last invalidation (which must have happened while the
+       // cache was disabled) and this item is enabled, force the cache to invalidate.
+       stale_seed && enable -> invalidate == 1'b1;
     )
 
     finish_item(req);
@@ -98,6 +120,11 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
 
     // Update whether we think the cache is enabled
     cache_enabled = req.enable;
+
+    // Update the stale_seed flag. It is cleared if we just invalidated and should be set if we
+    // didn't invalidate and picked a new seed.
+    if (req.invalidate) stale_seed = 0;
+    else if (req.new_seed != 0) stale_seed = 1;
 
     // The next transaction must start with a branch if this one ended with an error
     force_branch = rsp.saw_error;

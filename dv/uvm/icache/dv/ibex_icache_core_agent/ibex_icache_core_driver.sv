@@ -9,7 +9,16 @@ class ibex_icache_core_driver
   `uvm_component_utils(ibex_icache_core_driver)
   `uvm_component_new
 
-  // reset signals
+  // An analysis port that gets hooked up to the scoreboard and the memory agent. This isn't used to
+  // report on actual bus traffic (that's done by the monitor, as usual) but is used to report on
+  // new memory seeds, which don't in themselves cause any bus traffic.
+  uvm_analysis_port #(bit [31:0]) analysis_port;
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    analysis_port = new("analysis_port", this);
+  endfunction
+
   virtual task automatic reset_signals();
     cfg.vif.reset();
   endtask
@@ -53,6 +62,7 @@ class ibex_icache_core_driver
     fork
         cfg.vif.branch_to(req.branch_addr);
         if (req.invalidate) invalidate();
+        if (req.new_seed != 0) drive_new_seed(req.new_seed);
         read_insns(rsp, req.num_insns);
     join
   endtask
@@ -82,6 +92,7 @@ class ibex_icache_core_driver
     fork
         if (req_low_cycles > 0) lower_req(req_low_cycles);
         if (req.invalidate) invalidate();
+        if (req.new_seed != 0) drive_new_seed(req.new_seed);
     join
     read_insns(rsp, req.num_insns);
   endtask
@@ -136,6 +147,12 @@ class ibex_icache_core_driver
     `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(num_cycles,
                                        num_cycles dist { 1 :/ 10, [2:20] :/ 1 };)
     cfg.vif.invalidate_pulse(num_cycles);
+  endtask
+
+  // If this item specifies a new seed, tell the memory agent and the scoreboard.
+  task automatic drive_new_seed(bit [31:0] new_seed);
+    `DV_CHECK_FATAL(new_seed != 0);
+    analysis_port.write(new_seed);
   endtask
 
 endclass
