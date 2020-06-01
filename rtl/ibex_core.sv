@@ -108,6 +108,11 @@ module ibex_core #(
   localparam int unsigned PMP_NUM_CHAN      = 2;
   localparam bit          DataIndTiming     = SecureIbex;
   localparam bit          DummyInstructions = SecureIbex;
+  // Speculative branch option, trades-off performance against timing.
+  // Setting this to 1 eases branch target critical paths significantly but reduces performance
+  // by ~3% (based on Coremark/MHz score).
+  // Set by default in the max PMP config which has the tightest budget for branch target timing.
+  localparam bit          SpecBranch        = PMPEnable & (PMPNumRegions == 16);
 
   // IF/ID signals
   logic        dummy_instr_id;
@@ -449,6 +454,7 @@ module ibex_core #(
       .RV32B           ( RV32B           ),
       .BranchTargetALU ( BranchTargetALU ),
       .DataIndTiming   ( DataIndTiming   ),
+      .SpecBranch      ( SpecBranch      ),
       .WritebackStage  ( WritebackStage  )
   ) id_stage_i (
       .clk_i                        ( clk                      ),
