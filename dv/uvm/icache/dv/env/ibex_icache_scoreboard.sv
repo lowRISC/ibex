@@ -58,6 +58,49 @@ class ibex_icache_scoreboard
   // Track the current busy state
   bit          busy = 0;
 
+  // Track how well the cache is doing at caching stuff. The basic idea is that every fixed-size
+  // window of N instruction fetches, we look to see how many memory requests we've done. We only
+  // count fetches and memory requests when the cache is enabled. We reset the window if we see a
+  // cache invalidation and then only start counting again once we've seen the busy signal go low.
+  //
+  // If we get to the end of the window, suppose we've seen I instruction fetches and M words
+  // fetched from memory. With random memory data, the expected insns/word is 2*3/4 + 1*1/4 = 7/4.
+  // Thus, we define the dimensionless R = (M * 7/4) / I. If R == 1 then our cache hasn't helped at
+  // all. If R is large, something has gone horribly wrong. If R is small, our cache has avoided
+  // lots of lookups.
+  //
+  // We can get a lower-bound estimate of the cache hit rate we'd expect by tracking the addresses
+  // that we saw in our window (lowest and highest addresses fetched). Suppose this range contains K
+  // words and our cache is large enough to hold C words. Then we should expect to see lots of cache
+  // hits if K <= C and N >> C. ("We fetched enough from a small enough range").
+  //
+  // This check is intentionally very loose. We assume the cache is at least 1kB (the default
+  // configuration is 4kB), so C = 256 and we'll pick K = 250 (called max_window_width below). To
+  // pick N (called window_len below), note that 4/7 * C * 2 ~= 292, so we should expect to see an
+  // instruction repeated at least twice on average once we've seen N = 300 fetches. With perfect
+  // caching and each instruction fetched twice, you would expect an R of 0.5, so we will require R
+  // <= 2/3. With each instruction fetched twice, this corresponds to the cache having the second
+  // instruction half the time.
+  //
+  // Note that we also reset the window if we see an error. If this happens, it's easy to see "read
+  // amplification" where the cache reads a couple of fill buffers' worth of data and we only
+  // actually get one instruction.
+  protected int unsigned max_window_width = 250;
+  protected int unsigned window_len       = 300;
+
+  // The number of instructions seen in the current window.
+  protected int unsigned insns_in_window;
+
+  // The number of memory reads seen in the current window
+  protected int unsigned reads_in_window;
+
+  // Set if we've seen busy_o == 0 since the last invalidation (so we know that the cache isn't
+  // currently invalidating)
+  protected bit not_invalidating;
+
+  // Address range seen in the current window
+  protected bit [31:0] window_range_lo, window_range_hi;
+
   `uvm_component_new
 
   function void build_phase(uvm_phase phase);
@@ -70,6 +113,7 @@ class ibex_icache_scoreboard
 
   task run_phase(uvm_phase phase);
     super.run_phase(phase);
+    window_reset();
     fork
       process_core_fifo();
       process_mem_fifo();
@@ -118,11 +162,16 @@ class ibex_icache_scoreboard
 
     // Check the received data is compatible with one of our seeds
     check_compatible(item);
+
+    // Do any caching tracking for this fetch
+    window_take_insn(item.address, item.err);
   endtask
 
   task process_invalidate(ibex_icache_core_bus_item item);
     assert(mem_seeds.size > 0);
     invalidate_seed = mem_seeds.size - 1;
+
+    not_invalidating = 1'b0;
   endtask
 
   task process_enable(ibex_icache_core_bus_item item);
@@ -132,7 +181,10 @@ class ibex_icache_scoreboard
 
   task process_busy(ibex_icache_core_bus_item item);
     busy = item.busy;
-    if (!busy) busy_check();
+    if (!busy) begin
+      busy_check();
+      not_invalidating = 1'b1;
+    end
   endtask
 
   task process_mem_fifo();
@@ -143,6 +195,7 @@ class ibex_icache_scoreboard
 
       if (item.is_grant) begin
         mem_trans_count += 1;
+        window_take_mem_read();
       end else begin
         busy_check();
         `DV_CHECK_FATAL(mem_trans_count > 0);
@@ -507,5 +560,73 @@ class ibex_icache_scoreboard
                           mem_trans_count))
     end
   endtask
+
+  // Reset the caching tracking window
+  function automatic void window_reset();
+    insns_in_window = 0;
+    reads_in_window = 0;
+    not_invalidating = 1'b0;
+    window_range_lo = ~(31'b0);
+    window_range_hi = 0;
+  endfunction
+
+  // Is the caching tracking window is currently enabled?
+  function automatic bit window_enabled();
+    // The window is enabled if the cache is enabled and we know we're not still invalidating.
+    return enabled & not_invalidating;
+  endfunction
+
+  // Register an instruction fetch with the caching tracking window
+  function automatic void window_take_insn(bit [31:0] addr, bit err);
+    bit [31:0]   window_width;
+    int unsigned fetch_ratio_pc;
+
+    if (err) begin
+      window_reset();
+      return;
+    end
+
+    if (window_enabled()) begin
+      insns_in_window++;
+      if (addr < window_range_lo) window_range_lo = addr;
+      if (addr > window_range_hi) window_range_hi = addr;
+    end
+
+    if (insns_in_window < window_len) begin
+      return;
+    end
+
+    // We have a full window. Has the address range been sufficiently small? The fatal check is for
+    // the scoreboard logic: this should hold true as soon as we've seen an instruction.
+    `DV_CHECK_LE_FATAL(window_range_lo, window_range_hi);
+    window_width = (window_range_hi - window_range_lo + 3) / 4;
+
+    `uvm_info(`gfn,
+              $sformatf("Completed window with %0d insns and %0d reads, range [0x%08h, 0x%08h].",
+                        insns_in_window, reads_in_window, window_range_lo, window_range_hi),
+              UVM_HIGH)
+
+    if (window_width <= max_window_width) begin
+      // The range has been small enough, so we can actually check whether the caching is working.
+      // Calculate the R we've seen (as a percentage).
+      fetch_ratio_pc = (reads_in_window * 100 * 7 / 4) / insns_in_window;
+
+      `uvm_info(`gfn, $sformatf("Fetch ratio %0d%%", fetch_ratio_pc), UVM_HIGH)
+      `DV_CHECK(fetch_ratio_pc <= 67,
+                $sformatf({"Fetch ratio too high (%0d%%; max allowed 67%%) with ",
+                           "%0d instructions and address range [0x%08h, 0x%08h] ",
+                           "(window width %0d)"},
+                          fetch_ratio_pc, insns_in_window,
+                          window_range_lo, window_range_hi, window_width))
+    end
+
+    // Start the next window
+    window_reset();
+  endfunction
+
+  // Register a memory read with the caching tracking window
+  function automatic void window_take_mem_read();
+    if (window_enabled()) reads_in_window += 1;
+  endfunction
 
 endclass
