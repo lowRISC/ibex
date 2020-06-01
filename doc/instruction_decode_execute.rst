@@ -64,10 +64,46 @@ Other blocks use the ALU for the following tasks:
 * It computes memory addresses for loads and stores with a Reg + Imm calculation
 * The LSU uses it to increment addresses when performing two accesses to handle an unaligned access
 
-Support for the RISC-V Bitmanipulation Extension (Document Version 0.92, November 8, 2019) is enabled via the parameter ``RV32B``.
-This feature is *EXPERIMENTAL* and the details of its impact are not yet documented here.
-Currently the Zbb, Zbs, Zbp, Zbe, Zbf, Zbc, Zbr and Zbt sub-extensions are implemented.
-The rotate instructions `ror` and `rol` (Zbb), ternary instructions `cmov`, `cmix`, `fsl` and `fsr` as well as cyclic redundancy checks `crc32[c]` (Zbr) are completed in 2 cycles. All remaining instructions complete in one cycle.
+Bit Manipulation Extension
+  Support for the `RISC-V Bit Manipulation Extension (Document Version 0.92, November 8, 2019) <https://github.com/riscv/riscv-bitmanip/blob/master/bitmanip-0.92.pdf>`_ is enabled via the enumerated parameter ``RV32B`` defined in :file:`rtl/ibex_pkg.sv`.
+  This feature is *Experimental*.
+
+  There are two versions of the bit manipulation extension available:
+  The balanced implementation comprises a set of sub-extensions aiming for good benefits at a reasonable area overhead.
+  The full implementation comprises all 32 bit instructions defined in the extension.
+  The following table lists the implemented instructions in each version.
+  Multi-cycle instructions are completed in 2 cycles.
+  All remaining instructions complete in a single cycle.
+
+  +---------------------------+---------------+--------------------------+
+  | Z-Extension               | Version       | Multi-Cycle Instructions |
+  +===========================+===============+==========================+
+  | Zbb (Base)                | Balanced/Full | rol, ror[i]              |
+  +---------------------------+---------------+--------------------------+
+  | Zbs (Single-bit)          | Balanced/Full | None                     |
+  +---------------------------+---------------+--------------------------+
+  | Zbp (Permutation)         | Full          | None                     |
+  +---------------------------+---------------+--------------------------+
+  | Zbp (Bit extract/deposit) | Full          | All                      |
+  +---------------------------+---------------+--------------------------+
+  | Zbf (Bit-field place)     | Balanced/Full | All                      |
+  +---------------------------+---------------+--------------------------+
+  | Zbc (Carry-less multiply) | Full          | None                     |
+  +---------------------------+---------------+--------------------------+
+  | Zbr (Crc)                 | Full          | All                      |
+  +---------------------------+---------------+--------------------------+
+  | Zbt (Ternary)             | Balanced/Full | All                      |
+  +---------------------------+---------------+--------------------------+
+  | Zb_tmp (Temporary)*       | Balanced/Full | None                     |
+  +---------------------------+---------------+--------------------------+
+
+  * The sign-extend instructions `sext.b/sext.h` are defined but not yet classified in version 0.92 of the extension proposal.
+    Temporarily, they are assigned a separate Z-extension.
+
+  The implementation of the B-extension comes with an area overhead of 1.8 to 3.0 kGE for the balanced version and 6.0 to 8.7 kGE for the full version.
+  That corresponds to an approximate percentage increase in area of 9 to 14 % and 25 to 30 % for the balanced and full versions respectively.
+  The ranges correspond to synthesis results generated using relaxed and maximum frequency targets respectively.
+  The designs have been synthesized using Synopsys Design Compiler targeting TSMC 65 nm technology.
 
 
 .. _mult-div:

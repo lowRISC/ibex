@@ -159,4 +159,4 @@ jobs:
       ibex_configs:
         - small
         - experimental-maxperf-pmp
-        - experimental-maxperf-pmp-bm
+        - experimental-maxperf-pmp-bmfull

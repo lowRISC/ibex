@@ -9,27 +9,31 @@
 
 `include "prim_assert.sv"
 
+`ifndef RV32B
+  `define RV32B ibex_pkg::RV32BNone
+`endif
+
 /**
  * Top level module of the ibex RISC-V core
  */
 module ibex_core #(
-    parameter bit          PMPEnable                = 1'b0,
-    parameter int unsigned PMPGranularity           = 0,
-    parameter int unsigned PMPNumRegions            = 4,
-    parameter int unsigned MHPMCounterNum           = 0,
-    parameter int unsigned MHPMCounterWidth         = 40,
-    parameter bit          RV32E                    = 1'b0,
-    parameter bit          RV32M                    = 1'b1,
-    parameter bit          RV32B                    = 1'b0,
-    parameter bit          BranchTargetALU          = 1'b0,
-    parameter bit          WritebackStage           = 1'b0,
-    parameter              MultiplierImplementation = "fast",
-    parameter bit          ICache                   = 1'b0,
-    parameter bit          ICacheECC                = 1'b0,
-    parameter bit          DbgTriggerEn             = 1'b0,
-    parameter bit          SecureIbex               = 1'b0,
-    parameter int unsigned DmHaltAddr               = 32'h1A110800,
-    parameter int unsigned DmExceptionAddr          = 32'h1A110808
+    parameter bit               PMPEnable                = 1'b0,
+    parameter int unsigned      PMPGranularity           = 0,
+    parameter int unsigned      PMPNumRegions            = 4,
+    parameter int unsigned      MHPMCounterNum           = 0,
+    parameter int unsigned      MHPMCounterWidth         = 40,
+    parameter bit               RV32E                    = 1'b0,
+    parameter bit               RV32M                    = 1'b1,
+    parameter ibex_pkg::rv32b_e RV32B                    = `RV32B,
+    parameter bit               BranchTargetALU          = 1'b0,
+    parameter bit               WritebackStage           = 1'b0,
+    parameter                   MultiplierImplementation = "fast",
+    parameter bit               ICache                   = 1'b0,
+    parameter bit               ICacheECC                = 1'b0,
+    parameter bit               DbgTriggerEn             = 1'b0,
+    parameter bit               SecureIbex               = 1'b0,
+    parameter int unsigned      DmHaltAddr               = 32'h1A110800,
+    parameter int unsigned      DmExceptionAddr          = 32'h1A110808
 ) (
     // Clock and Reset
     input  logic        clk_i,
@@ -129,9 +133,9 @@ module ibex_core #(
   logic [31:0] pc_if;                          // Program counter in IF stage
   logic [31:0] pc_id;                          // Program counter in ID stage
   logic [31:0] pc_wb;                          // Program counter in WB stage
-  logic [33:0] imd_val_d_ex;                   // Intermediate register for multicycle Ops
-  logic [33:0] imd_val_q_ex;                   // Intermediate register for multicycle Ops
-  logic        imd_val_we_ex;
+  logic [33:0] imd_val_d_ex[2];                // Intermediate register for multicycle Ops
+  logic [33:0] imd_val_q_ex[2];                // Intermediate register for multicycle Ops
+  logic [1:0]  imd_val_we_ex;
 
   logic        data_ind_timing;
   logic        dummy_instr_en;

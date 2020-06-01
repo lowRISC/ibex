@@ -72,9 +72,10 @@ parameters:
     paramtype: vlogparam
 
   RV32B:
-    datatype: int
-    default: 0
-    paramtype: vlogparam
+    datatype: str
+    default: ibex_pkg::RV32BNone
+    paramtype: vlogdefine
+    description: "Bitmanip implementation parameter enum. See ibex_pkg.sv (EXPERIMENTAL)"
 
   MultiplierImplementation:
     datatype: str
