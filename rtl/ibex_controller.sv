@@ -94,6 +94,7 @@ module ibex_controller #(
     input  logic                  stall_id_i,
     input  logic                  stall_wb_i,
     output logic                  flush_id_o,
+    input  logic                  ready_wb_i,
 
     // performance monitors
     output logic                  perf_jump_o,             // we are executing a jump
@@ -482,8 +483,17 @@ module ibex_controller #(
           // Halt IF but don't flush ID. This leaves a valid instruction in
           // ID so controller can determine appropriate action in the
           // FLUSH state.
-          ctrl_fsm_ns = FLUSH;
-          halt_if     = 1'b1;
+          halt_if = 1'b1;
+
+          // Wait for the writeback stage to either be ready for a new instruction or raise its own
+          // exception before going to FLUSH. If the instruction in writeback raises an exception it
+          // must take priority over any exception from an instruction in ID/EX. Only once the
+          // writeback stage is ready can we be certain that won't happen. Without a writeback
+          // stage ready_wb_i == 1 so the FSM will always go directly to FLUSH.
+
+          if (ready_wb_i | wb_exception_o) begin
+            ctrl_fsm_ns = FLUSH;
+          end
         end
 
         if ((branch_set_i || jump_set_i) && !special_req_branch) begin
