@@ -589,6 +589,7 @@ module ibex_id_stage #(
       .stall_id_i                     ( stall_id                ),
       .stall_wb_i                     ( stall_wb                ),
       .flush_id_o                     ( flush_id                ),
+      .ready_wb_i                     ( ready_wb_i              ),
 
       // Performance Counters
       .perf_jump_o                    ( perf_jump_o             ),
