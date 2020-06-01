@@ -118,6 +118,15 @@ module ibex_controller #(
   logic exc_req_q, exc_req_d;
   logic illegal_insn_q, illegal_insn_d;
 
+  // Of the various exception/fault signals, which one takes priority in FLUSH and hence controls
+  // what happens next (setting exc_cause, csr_mtval etc)
+  logic instr_fetch_err_prio;
+  logic illegal_insn_prio;
+  logic ecall_insn_prio;
+  logic ebrk_insn_prio;
+  logic store_err_prio;
+  logic load_err_prio;
+
   logic stall;
   logic halt_if;
   logic flush_id;
@@ -224,12 +233,70 @@ module ibex_controller #(
   `ASSERT(SpecialReqAllGivesSpecialReqBranchIfBranchInst,
     special_req_all && (branch_set_i || jump_set_i) |-> special_req_branch)
 
-  if (WritebackStage) begin
+  // Exception/fault prioritisation is taken from Table 3.7 of Priviledged Spec v1.11
+  if (WritebackStage) begin : g_wb_exceptions
+    always_comb begin
+      instr_fetch_err_prio = 0;
+      illegal_insn_prio    = 0;
+      ecall_insn_prio      = 0;
+      ebrk_insn_prio       = 0;
+      store_err_prio       = 0;
+      load_err_prio        = 0;
+
+      // Note that with the writeback stage store/load errors occur on the instruction in writeback,
+      // all other exception/faults occur on the instruction in ID/EX. The faults from writeback
+      // must take priority as that instruction is architecurally ordered before the one in ID/EX.
+      if (store_err_q) begin
+        store_err_prio = 1'b1;
+      end else if (load_err_q) begin
+        load_err_prio  = 1'b1;
+      end else if (instr_fetch_err) begin
+        instr_fetch_err_prio = 1'b1;
+      end else if (illegal_insn_q) begin
+        illegal_insn_prio = 1'b1;
+      end else if (ecall_insn) begin
+        ecall_insn_prio = 1'b1;
+      end else if (ebrk_insn) begin
+        ebrk_insn_prio = 1'b1;
+      end
+    end
+
     // Instruction in writeback is generating an exception so instruction in ID must not execute
     assign wb_exception_o = load_err_q | store_err_q | load_err_i | store_err_i;
-  end else begin
+  end else begin : g_no_wb_exceptions
+    always_comb begin
+      instr_fetch_err_prio = 0;
+      illegal_insn_prio    = 0;
+      ecall_insn_prio      = 0;
+      ebrk_insn_prio       = 0;
+      store_err_prio       = 0;
+      load_err_prio        = 0;
+
+      if (instr_fetch_err) begin
+        instr_fetch_err_prio = 1'b1;
+      end else if (illegal_insn_q) begin
+        illegal_insn_prio = 1'b1;
+      end else if (ecall_insn) begin
+        ecall_insn_prio = 1'b1;
+      end else if (ebrk_insn) begin
+        ebrk_insn_prio = 1'b1;
+      end else if (store_err_q) begin
+        store_err_prio = 1'b1;
+      end else if (load_err_q) begin
+        load_err_prio  = 1'b1;
+      end
+    end
     assign wb_exception_o = 1'b0;
   end
+
+  `ASSERT_IF(IbexExceptionPrioOnehot,
+             $onehot({instr_fetch_err_prio,
+                      illegal_insn_prio,
+                      ecall_insn_prio,
+                      ebrk_insn_prio,
+                      store_err_prio,
+                      load_err_prio}),
+             (ctrl_fsm_cs == FLUSH) & exc_req_q);
 
   ////////////////
   // Interrupts //
@@ -583,62 +650,63 @@ module ibex_controller #(
 
           csr_save_cause_o = 1'b1;
 
-          // set exception registers, priorities according to Table 3.7 of Privileged Spec v1.11
-          if (instr_fetch_err) begin
-            exc_cause_o = EXC_CAUSE_INSTR_ACCESS_FAULT;
-            csr_mtval_o = instr_fetch_err_plus2_i ? (pc_id_i + 32'd2) : pc_id_i;
-
-          end else if (illegal_insn_q) begin
-            exc_cause_o = EXC_CAUSE_ILLEGAL_INSN;
-            csr_mtval_o = instr_is_compressed_i ? {16'b0, instr_compressed_i} : instr_i;
-
-          end else if (ecall_insn) begin
-            exc_cause_o = (priv_mode_i == PRIV_LVL_M) ? EXC_CAUSE_ECALL_MMODE :
-                                                        EXC_CAUSE_ECALL_UMODE;
-
-          end else if (ebrk_insn) begin
-            if (debug_mode_q | ebreak_into_debug) begin
-              /*
-               * EBREAK in debug mode re-enters debug mode
-               *
-               * "The only exception is EBREAK. When that is executed in Debug
-               * Mode, it halts the hart again but without updating dpc or
-               * dcsr." [Debug Spec v0.13.2, p.39]
-               */
-
-              /*
-               * dcsr.ebreakm == 1:
-               * "EBREAK instructions in M-mode enter Debug Mode."
-               * [Debug Spec v0.13.2, p.42]
-               */
-              pc_set_o         = 1'b0;
-              pc_set_spec_o    = 1'b0;
-              csr_save_id_o    = 1'b0;
-              csr_save_cause_o = 1'b0;
-              ctrl_fsm_ns      = DBG_TAKEN_ID;
-              flush_id         = 1'b0;
-            end else begin
-              /*
-               * "The EBREAK instruction is used by debuggers to cause control
-               * to be transferred back to a debugging environment. It
-               * generates a breakpoint exception and performs no other
-               * operation. [...] ECALL and EBREAK cause the receiving
-               * privilege mode's epc register to be set to the address of the
-               * ECALL or EBREAK instruction itself, not the address of the
-               * following instruction." [Privileged Spec v1.11, p.40]
-               */
-              exc_cause_o      = EXC_CAUSE_BREAKPOINT;
+          // Exception/fault prioritisation logic will have set exactly 1 X_prio signal
+          unique case (1'b1)
+            instr_fetch_err_prio: begin
+                exc_cause_o = EXC_CAUSE_INSTR_ACCESS_FAULT;
+                csr_mtval_o = instr_fetch_err_plus2_i ? (pc_id_i + 32'd2) : pc_id_i;
             end
+            illegal_insn_prio: begin
+              exc_cause_o = EXC_CAUSE_ILLEGAL_INSN;
+              csr_mtval_o = instr_is_compressed_i ? {16'b0, instr_compressed_i} : instr_i;
+            end
+            ecall_insn_prio: begin
+              exc_cause_o = (priv_mode_i == PRIV_LVL_M) ? EXC_CAUSE_ECALL_MMODE :
+                                                          EXC_CAUSE_ECALL_UMODE;
+            end
+            ebrk_insn_prio: begin
+              if (debug_mode_q | ebreak_into_debug) begin
+                /*
+                 * EBREAK in debug mode re-enters debug mode
+                 *
+                 * "The only exception is EBREAK. When that is executed in Debug
+                 * Mode, it halts the hart again but without updating dpc or
+                 * dcsr." [Debug Spec v0.13.2, p.39]
+                 */
 
-          end else if (store_err_q) begin
-            exc_cause_o = EXC_CAUSE_STORE_ACCESS_FAULT;
-            csr_mtval_o = lsu_addr_last_i;
-
-          end else begin // load_err_q
-            exc_cause_o = EXC_CAUSE_LOAD_ACCESS_FAULT;
-            csr_mtval_o = lsu_addr_last_i;
-          end
-
+                /*
+                 * dcsr.ebreakm == 1:
+                 * "EBREAK instructions in M-mode enter Debug Mode."
+                 * [Debug Spec v0.13.2, p.42]
+                 */
+                pc_set_o         = 1'b0;
+                pc_set_spec_o    = 1'b0;
+                csr_save_id_o    = 1'b0;
+                csr_save_cause_o = 1'b0;
+                ctrl_fsm_ns      = DBG_TAKEN_ID;
+                flush_id         = 1'b0;
+              end else begin
+                /*
+                 * "The EBREAK instruction is used by debuggers to cause control
+                 * to be transferred back to a debugging environment. It
+                 * generates a breakpoint exception and performs no other
+                 * operation. [...] ECALL and EBREAK cause the receiving
+                 * privilege mode's epc register to be set to the address of the
+                 * ECALL or EBREAK instruction itself, not the address of the
+                 * following instruction." [Privileged Spec v1.11, p.40]
+                 */
+                exc_cause_o      = EXC_CAUSE_BREAKPOINT;
+              end
+            end
+            store_err_prio: begin
+              exc_cause_o = EXC_CAUSE_STORE_ACCESS_FAULT;
+              csr_mtval_o = lsu_addr_last_i;
+            end
+            load_err_prio: begin
+              exc_cause_o = EXC_CAUSE_LOAD_ACCESS_FAULT;
+              csr_mtval_o = lsu_addr_last_i;
+            end
+          endcase
         end else begin
           // special instructions and pipeline flushes
           if (mret_insn) begin
