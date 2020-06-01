@@ -51,7 +51,7 @@
             cached by counting transactions on the instruction bus versus
             instructions fetched.'''
       milestone: V2
-      tests: []
+      tests: ["ibex_icache_caching"]
     }
 
     {

@@ -5,3 +5,4 @@
 `include "ibex_icache_base_vseq.sv"
 `include "ibex_icache_sanity_vseq.sv"
 `include "ibex_icache_passthru_vseq.sv"
+`include "ibex_icache_caching_vseq.sv"

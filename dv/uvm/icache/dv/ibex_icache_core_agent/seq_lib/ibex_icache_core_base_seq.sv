@@ -24,6 +24,9 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
   // setting.
   bit const_enable = 1'b0;
 
+  // If this bit is set, we will never invalidate the cache (useful for hit ratio tracking)
+  bit no_invalidate = 1'b0;
+
   // Number of test items (note that a single test item may contain many instruction fetches)
   protected rand int count;
   constraint c_count { count inside {[800:1000]}; }
@@ -85,6 +88,9 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
        // time in each mode (note that each transaction here results in multiple instruction
        // fetches)
        enable dist { cache_enabled :/ 49, ~cache_enabled :/ 1 };
+
+       // If no_invalidate is set, we shouldn't ever touch the invalidate line.
+       no_invalidate -> invalidate == 1'b0;
     )
 
     finish_item(req);
