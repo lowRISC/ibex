@@ -22,6 +22,7 @@ module ibex_id_stage #(
     parameter bit RV32B           = 0,
     parameter bit DataIndTiming   = 1'b0,
     parameter bit BranchTargetALU = 0,
+    parameter bit SpecBranch      = 0,
     parameter bit WritebackStage  = 0
 ) (
     input  logic                      clk_i,
@@ -747,7 +748,7 @@ module ibex_id_stage #(
               stall_branch  = (~BranchTargetALU & branch_decision_i) | data_ind_timing_i;
               branch_set_d  = branch_decision_i | data_ind_timing_i;
               // Speculative branch (excludes branch_decision_i)
-              branch_spec   = 1'b1;
+              branch_spec   = SpecBranch ? 1'b1 : branch_decision_i;
               perf_branch_o = 1'b1;
             end
             jump_in_dec: begin
