@@ -63,7 +63,7 @@
             and seed updates for the memory to try and hit any race conditions
             between the request tracking logic and the invalidation logic.'''
       milestone: V2
-      tests: []
+      tests: ["ibex_icache_invalidation"]
     }
 
     {
