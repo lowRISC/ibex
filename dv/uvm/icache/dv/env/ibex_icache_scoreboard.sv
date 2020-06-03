@@ -260,6 +260,15 @@ class ibex_icache_scoreboard
       return 1'b1;
     end
 
+    if (seen_err) begin
+      if (chatty) begin
+        `uvm_info(`gfn,
+                  $sformatf("Not seed 0x%08h: got unexpected error flag.", seed),
+                  UVM_MEDIUM)
+      end
+      return 0;
+    end
+
     is_compressed = exp_insn_data[1:0] != 2'b11;
     if (is_compressed) begin
       if (seen_insn_data[15:0] != exp_insn_data[15:0]) begin
@@ -282,15 +291,6 @@ class ibex_icache_scoreboard
         end
         return 0;
       end
-    end
-
-    if (seen_err) begin
-      if (chatty) begin
-        `uvm_info(`gfn,
-                  $sformatf("Not seed 0x%08h: got unexpected error flag.", seed),
-                  UVM_MEDIUM)
-      end
-      return 0;
     end
 
     // This seed matches, so we shouldn't have been called with the chatty flag set.
