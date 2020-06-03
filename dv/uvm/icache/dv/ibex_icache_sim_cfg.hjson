@@ -36,24 +36,28 @@
   uvm_test: ibex_icache_base_test
   uvm_test_seq: ibex_icache_base_vseq
 
+  run_opts: ["+test_timeout_ns=1000000000"]
+
   // List of test specifications.
   tests: [
     {
       name: ibex_icache_sanity
       uvm_test_seq: ibex_icache_sanity_vseq
-      run_opts: ["+test_timeout_ns=1000000000"]
     }
 
     {
       name: ibex_icache_passthru
       uvm_test_seq: ibex_icache_passthru_vseq
-      run_opts: ["+test_timeout_ns=1000000000"]
     }
 
     {
       name: ibex_icache_caching
       uvm_test_seq: ibex_icache_caching_vseq
-      run_opts: ["+test_timeout_ns=1000000000"]
+    }
+
+    {
+      name: ibex_icache_invalidation
+      uvm_test_seq: ibex_icache_invalidation_vseq
     }
   ]
 
@@ -63,7 +67,8 @@
       name: sanity
       tests: ["ibex_icache_sanity",
               "ibex_icache_passthru",
-              "ibex_icache_caching"]
+              "ibex_icache_caching",
+              "ibex_icache_invalidation"]
     }
   ]
 }
