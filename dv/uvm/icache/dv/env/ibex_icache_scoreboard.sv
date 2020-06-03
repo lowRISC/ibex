@@ -101,6 +101,15 @@ class ibex_icache_scoreboard
   // Address range seen in the current window
   protected bit [31:0] window_range_lo, window_range_hi;
 
+  // Set by check_compatible_1/check_compatible_2 on a hit. Gives the "age" of the seed
+  // corresponding to the last fetch. If the hit matched the most recent version of the seed, the
+  // "age" is zero. For the next most recent version, it's one and so on.
+  protected int unsigned last_fetch_age;
+
+  // The number of fetches that might have had an old seed and the number that actually did.
+  int unsigned possible_old_count = 0;
+  int unsigned actual_old_count = 0;
+
   `uvm_component_new
 
   function void build_phase(uvm_phase phase);
@@ -453,12 +462,12 @@ class ibex_icache_scoreboard
   function automatic bit check_compatible_1(logic [31:0] address,
                                             logic [31:0] seen_insn_data,
                                             logic        seen_err,
+                                            int unsigned min_idx,
                                             bit          chatty);
-    int unsigned min_idx = no_cache ? last_branch_seed : 0;
-    assert(min_idx < mem_seeds.size);
 
     for (int unsigned i = min_idx; i < mem_seeds.size; i++) begin
       if (is_seed_compatible_1(address, seen_insn_data, seen_err, mem_seeds[i], chatty)) begin
+        last_fetch_age = mem_seeds.size - 1 - i;
         return 1'b1;
       end
     end
@@ -471,16 +480,15 @@ class ibex_icache_scoreboard
   function automatic bit check_compatible_2(logic [31:0] address,
                                             logic [31:0] seen_insn_data,
                                             logic        seen_err_plus2,
+                                            int unsigned min_idx,
                                             bit          chatty);
 
     // We want to iterate over all pairs of seeds. We can do this with a nested pair of foreach
     // loops, but we expect that usually we'll get a hit on the "diagonal", so we check that first.
-    int unsigned min_idx = no_cache ? last_branch_seed : 0;
-    assert(min_idx < mem_seeds.size);
-
     for (int unsigned i = min_idx; i < mem_seeds.size; i++) begin
       if (is_seed_compatible_2(address, seen_insn_data, seen_err_plus2,
                                mem_seeds[i], mem_seeds[i], chatty)) begin
+        last_fetch_age = mem_seeds.size - 1 - i;
         return 1'b1;
       end
     end
@@ -489,6 +497,7 @@ class ibex_icache_scoreboard
         if (i != j) begin
           if (is_seed_compatible_2(address, seen_insn_data, seen_err_plus2,
                                    mem_seeds[i], mem_seeds[j], chatty)) begin
+            last_fetch_age = mem_seeds.size - 1 - (i < j ? i : j);
             return 1'b1;
           end
         end
@@ -501,17 +510,22 @@ class ibex_icache_scoreboard
     logic misaligned;
     logic good_bottom_word;
     logic uncompressed;
+    int unsigned min_idx;
 
     misaligned       = (item.address & 3) != 0;
     good_bottom_word = (~item.err) | item.err_plus2;
     uncompressed     = item.insn_data[1:0] == 2'b11;
 
+    min_idx          = no_cache ? last_branch_seed : 0;
+    `DV_CHECK_LT_FATAL(min_idx, mem_seeds.size);
+
     if (misaligned && good_bottom_word && uncompressed) begin
       // It looks like this was a misaligned fetch (so came from two fetches from memory) and the
       // bottom word's fetch succeeded, giving an uncompressed result (so we care about the upper
       // fetch).
-      if (!check_compatible_2(item.address, item.insn_data, item.err & item.err_plus2, 1'b0)) begin
-        void'(check_compatible_2(item.address, item.insn_data, item.err & item.err_plus2, 1'b1));
+      logic err = item.err & item.err_plus2;
+      if (!check_compatible_2(item.address, item.insn_data, err, min_idx, 1'b0)) begin
+        void'(check_compatible_2(item.address, item.insn_data, err, min_idx, 1'b1));
         `uvm_error(`gfn,
                    $sformatf("Fetch at address 0x%08h got data incompatible with available seeds.",
                              item.address));
@@ -520,13 +534,22 @@ class ibex_icache_scoreboard
       // The easier case: either the fetch was aligned, the lower word seems to have caused an error
       // or the bits in the lower word are a compressed instruction (so we don't care about the
       // upper 16 bits anyway).
-      if (!check_compatible_1(item.address, item.insn_data, item.err, 1'b0)) begin
-        void'(check_compatible_1(item.address, item.insn_data, item.err, 1'b1));
+      if (!check_compatible_1(item.address, item.insn_data, item.err, min_idx, 1'b0)) begin
+        void'(check_compatible_1(item.address, item.insn_data, item.err, min_idx, 1'b1));
         `uvm_error(`gfn,
                    $sformatf("Fetch at address 0x%08h got data incompatible with available seeds.",
                              item.address));
       end
     end
+
+    // All is well. The call to check_compatible_* will have set last_fetch_age. The maximum
+    // possible value is mem_seeds.size - 1 - min_idx. If this is positive, count whether we got a
+    // value corresponding to an old seed or not.
+    if (mem_seeds.size > min_idx + 1) begin
+      possible_old_count += 1;
+      if (last_fetch_age > 0) actual_old_count += 1;
+    end
+
   endtask
 
   // Check that the busy line isn't low when there are outstanding memory transactions

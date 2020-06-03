@@ -59,6 +59,12 @@
       name: ibex_icache_invalidation
       uvm_test_seq: ibex_icache_invalidation_vseq
     }
+
+    {
+      name: ibex_icache_oldval
+      uvm_test_seq: ibex_icache_oldval_vseq
+      uvm_test: ibex_icache_oldval_test
+    }
   ]
 
   // List of regressions.

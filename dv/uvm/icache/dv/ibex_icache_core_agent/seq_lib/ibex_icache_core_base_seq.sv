@@ -37,6 +37,9 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
   // invalidation.
   int unsigned gap_between_invalidations = 49;
 
+  // The expected number of items between enable/disable toggles.
+  int unsigned gap_between_toggle_enable = 49;
+
 
   // Number of test items (note that a single test item may contain many instruction fetches)
   protected rand int count;
@@ -102,7 +105,7 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
        // Toggle the cache enable line one time in 50. This should allow us a reasonable amount of
        // time in each mode (note that each transaction here results in multiple instruction
        // fetches)
-       enable dist { cache_enabled :/ 49, ~cache_enabled :/ 1 };
+       enable dist { cache_enabled :/ gap_between_toggle_enable, ~cache_enabled :/ 1 };
 
        // If no_invalidate is set, we shouldn't ever touch the invalidate line.
        no_invalidate -> invalidate == 1'b0;
