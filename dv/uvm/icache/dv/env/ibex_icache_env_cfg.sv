@@ -8,6 +8,12 @@ class ibex_icache_env_cfg extends dv_base_env_cfg;
   rand ibex_icache_core_agent_cfg   core_agent_cfg;
   rand ibex_icache_mem_agent_cfg    mem_agent_cfg;
 
+  // Force the clock frequency to 50MHz. The clock frequency doesn't really matter for ICache
+  // testing and 50MHz dumped waves are nice to read because clock edges are multiples of 10ns.
+  constraint clk_freq_50_c {
+    clk_freq_mhz == ClkFreq50Mhz;
+  }
+
   `uvm_object_utils_begin(ibex_icache_env_cfg)
     `uvm_field_object(core_agent_cfg, UVM_DEFAULT)
     `uvm_field_object(mem_agent_cfg,  UVM_DEFAULT)
