@@ -14,6 +14,8 @@ ${PRJ_DIR}/ibex/vendor/lowrisc_ip/prim/rtl/prim_assert.sv
 ${PRJ_DIR}/ibex/vendor/lowrisc_ip/prim/rtl/prim_lfsr.sv
 ${PRJ_DIR}/ibex/vendor/lowrisc_ip/prim/rtl/prim_secded_28_22_enc.sv
 ${PRJ_DIR}/ibex/vendor/lowrisc_ip/prim/rtl/prim_secded_28_22_dec.sv
+${PRJ_DIR}/ibex/vendor/lowrisc_ip/prim/rtl/prim_secded_39_32_enc.sv
+${PRJ_DIR}/ibex/vendor/lowrisc_ip/prim/rtl/prim_secded_39_32_dec.sv
 ${PRJ_DIR}/ibex/vendor/lowrisc_ip/prim/rtl/prim_secded_72_64_enc.sv
 ${PRJ_DIR}/ibex/vendor/lowrisc_ip/prim/rtl/prim_secded_72_64_dec.sv
 
