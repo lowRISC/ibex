@@ -104,6 +104,8 @@ module ibex_core #(
 
     // CPU Control Signals
     input  logic        fetch_enable_i,
+    output logic        alert_minor_o,
+    output logic        alert_major_o,
     output logic        core_sleep_o
 );
 
@@ -769,6 +771,22 @@ module ibex_core #(
       .wdata_a_i        ( rf_wdata_wb    ),
       .we_a_i           ( rf_we_wb       )
   );
+
+  ///////////////////
+  // Alert outputs //
+  ///////////////////
+
+  // Minor alert - core is in a recoverable state
+  // TODO add I$ ECC errors here
+  assign alert_minor_o = 1'b0;
+
+  // Major alert - core is unrecoverable
+  // TODO add fault detections here
+  assign alert_major_o = 1'b0;
+
+  `ASSERT_KNOWN(IbexAlertMinorX, alert_minor_o)
+  `ASSERT_KNOWN(IbexAlertMajorX, alert_major_o)
+
 
   // Explict INC_ASSERT block to avoid unused signal lint warnings were asserts are not included
   `ifdef INC_ASSERT

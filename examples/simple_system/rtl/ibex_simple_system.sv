@@ -196,6 +196,8 @@ module ibex_simple_system (
       .debug_req_i           ('b0),
 
       .fetch_enable_i        ('b1),
+      .alert_minor_o         (),
+      .alert_major_o         (),
       .core_sleep_o          ()
     );
 
