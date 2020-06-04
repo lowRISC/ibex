@@ -44,3 +44,10 @@ Other values of **dummy_instr_mask** are legal, but will have a less predictable
 The interval between instruction insertion is randomized in the core using an LFSR.
 Sofware can periodically re-seed this LFSR with true random numbers (if available) via the **secureseed** CSR.
 This will make the insertion interval of dummy instructions much harder for an attacker to predict.
+
+Register file ECC
+-----------------
+
+When Ibex is configured with the SecureIbex parameter, ECC checking is added to all reads of the register file.
+This can be useful to detect fault injection attacks since the register file covers a reasonably large area.
+No attempt is made to correct detected errors, but an external alert is raised for the system to take action.

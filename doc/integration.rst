@@ -170,10 +170,13 @@ Interfaces
 | ``alert_minor_o``       | 1                       | out | Core has detected a fault which it can |
 |                         |                         |     | safely recover from. Can be used by a  |
 |                         |                         |     | system to log errors over time and     |
-|                         |                         |     | detect tampering / attack.             |
+|                         |                         |     | detect tampering / attack. This signal |
+|                         |                         |     | is a pulse, one cycle per alert.       |
 +-------------------------+-------------------------+-----+----------------------------------------+
 | ``alert_major_o``       | 1                       | out | Core has detected a fault which cannot |
 |                         |                         |     | be recovered from. Can be used by a    |
 |                         |                         |     | system to reset the core and possibly  |
-|                         |                         |     | take other remedial action.            |
+|                         |                         |     | take other remedial action. This       |
+|                         |                         |     | signal is a pulse, but might be set    |
+|                         |                         |     | for multiple cycles per alert.         |
 +-------------------------+-------------------------+-----+----------------------------------------+
