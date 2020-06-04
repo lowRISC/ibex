@@ -32,6 +32,8 @@ class ibex_icache_env extends dv_base_env #(
     hb_objection = new("hb_objection");
     heartbeat    = new("heartbeat", this, hb_objection);
     hb_event     = new("hb_event");
+
+    cfg.clk_rst_vif.set_sole_clock();
   endfunction
 
   function void connect_phase(uvm_phase phase);
