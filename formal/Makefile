@@ -14,7 +14,7 @@ OUTDIR   := build
 # Source directory relative to this Makefile
 SRC_DIR  := ../rtl
 # Include directory relative to this Makefile
-INC_DIR  := ../shared/rtl
+INC_DIR  := ../vendor/lowrisc_ip/prim/rtl
 
 # SystemVerilog sources of Ibex
 SRCS_SV ?= $(SRC_DIR)/ibex_alu.sv 		\
