@@ -32,7 +32,7 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
 
   task pre_start();
     super.pre_start();
-    mem_model = new("mem_model", cfg.disable_pmp_errs, cfg.disable_mem_errs);
+    mem_model = new("mem_model", cfg.disable_pmp_errs, cfg.disable_mem_errs, cfg.mem_err_shift);
   endtask
 
   task body();

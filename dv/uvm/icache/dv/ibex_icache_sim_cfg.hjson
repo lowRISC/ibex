@@ -70,6 +70,12 @@
       name: ibex_icache_back_line
       uvm_test_seq: ibex_icache_back_line_vseq
     }
+
+    {
+      name: ibex_icache_many_errors
+      uvm_test_seq: ibex_icache_many_errors_vseq
+      uvm_test: ibex_icache_many_errors_test
+    }
   ]
 
   // List of regressions.
@@ -80,7 +86,8 @@
               "ibex_icache_passthru",
               "ibex_icache_caching",
               "ibex_icache_invalidation",
-              "ibex_icache_back_line"]
+              "ibex_icache_back_line",
+              "ibex_icache_many_errors"]
     }
   ]
 }
