@@ -2,7 +2,9 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 //
-module tb;
+module tb #(
+  parameter bit ICacheECC = 1'b0
+);
   // dep packages
   import uvm_pkg::*;
   import dv_utils_pkg::*;
@@ -22,7 +24,9 @@ module tb;
   ibex_icache_mem_if  mem_if  (.clk(clk), .rst_n(rst_n));
 
   // dut
-  ibex_icache dut (
+  ibex_icache #(
+    .ICacheECC (ICacheECC)
+  ) dut (
     .clk_i           (clk),
     .rst_ni          (rst_n),
 
