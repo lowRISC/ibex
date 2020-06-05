@@ -20,7 +20,7 @@ INC_DIR  := ../shared/rtl
 SRCS_SV ?= $(SRC_DIR)/ibex_alu.sv 		\
         $(SRC_DIR)/ibex_compressed_decoder.sv 	\
         $(SRC_DIR)/ibex_controller.sv 		\
-        $(SRC_DIR)/ibex_counters.sv     	\
+        $(SRC_DIR)/ibex_counter.sv     	\
         $(SRC_DIR)/ibex_cs_registers.sv 	\
         $(SRC_DIR)/ibex_decoder.sv 		\
         $(SRC_DIR)/ibex_ex_block.sv 		\
