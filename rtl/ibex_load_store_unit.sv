@@ -509,9 +509,6 @@ module ibex_load_store_unit
       IDLE, WAIT_GNT_MIS, WAIT_RVALID_MIS, WAIT_GNT,
       WAIT_RVALID_MIS_GNTS_DONE})
 
-  // Errors must only be sent together with rvalid.
-  `ASSERT(IbexDataErrWithoutRvalid, data_err_i |-> data_rvalid_i)
-
   // Address must not contain X when request is sent.
   `ASSERT(IbexDataAddrUnknown, data_req_o |-> !$isunknown(data_addr_o))
 
