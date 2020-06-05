@@ -74,7 +74,7 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
   endtask
 
   // Generate and run a single item using class parameters
-  protected task run_req(ibex_icache_core_req_item req, ibex_icache_core_rsp_item rsp);
+  protected virtual task run_req(ibex_icache_core_req_item req, ibex_icache_core_rsp_item rsp);
     start_item(req);
 
     if (constrain_branches && insns_since_branch >= 100)
