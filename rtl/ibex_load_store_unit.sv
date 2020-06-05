@@ -59,7 +59,6 @@ module ibex_load_store_unit
     output logic         load_err_o,
     output logic         store_err_o,
 
-    output logic         load_o,
     output logic         busy_o,
 
     output logic         perf_load_o,
@@ -494,7 +493,6 @@ module ibex_load_store_unit
   assign store_err_o   = data_or_pmp_err &  data_we_q & lsu_resp_valid_o;
 
   assign busy_o = (ls_fsm_cs != IDLE);
-  assign load_o = ~data_we_q;
 
   ////////////////
   // Assertions //
