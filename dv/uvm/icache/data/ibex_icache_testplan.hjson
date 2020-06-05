@@ -106,7 +106,7 @@
             error handling. Constrain branch targets as in the caching test so
             that we are actually caching something.'''
       milestone: V2
-      tests: []
+      tests: ["ibex_icache_many_errors"]
     }
 
     {

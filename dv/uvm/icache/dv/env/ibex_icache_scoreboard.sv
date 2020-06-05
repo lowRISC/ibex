@@ -117,7 +117,10 @@ class ibex_icache_scoreboard
     core_fifo = new("core_fifo", this);
     mem_fifo  = new("mem_fifo",  this);
     seed_fifo = new("seed_fifo", this);
-    mem_model = new("mem_model");
+    mem_model = new("mem_model",
+                    cfg.mem_agent_cfg.disable_pmp_errs,
+                    cfg.mem_agent_cfg.disable_mem_errs,
+                    cfg.mem_agent_cfg.mem_err_shift);
   endfunction
 
   task run_phase(uvm_phase phase);
