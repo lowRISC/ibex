@@ -91,6 +91,7 @@ module ibex_controller #(
     input  logic                  csr_mstatus_tw_i,
 
     // stall & flush signals
+    input  logic                  lsu_req_in_id_i,
     input  logic                  stall_id_i,
     input  logic                  stall_wb_i,
     output logic                  flush_id_o,
@@ -130,6 +131,7 @@ module ibex_controller #(
 
   logic stall;
   logic halt_if;
+  logic retain_id;
   logic flush_id;
   logic illegal_dret;
   logic illegal_umode;
@@ -379,6 +381,7 @@ module ibex_controller #(
     ctrl_busy_o           = 1'b1;
 
     halt_if               = 1'b0;
+    retain_id             = 1'b0;
     flush_id              = 1'b0;
 
     debug_csr_save_o      = 1'b0;
@@ -483,7 +486,7 @@ module ibex_controller #(
           // Halt IF but don't flush ID. This leaves a valid instruction in
           // ID so controller can determine appropriate action in the
           // FLUSH state.
-          halt_if = 1'b1;
+          retain_id = 1'b1;
 
           // Wait for the writeback stage to either be ready for a new instruction or raise its own
           // exception before going to FLUSH. If the instruction in writeback raises an exception it
@@ -511,11 +514,11 @@ module ibex_controller #(
         // If entering debug mode or handling an IRQ the core needs to wait
         // until the current instruction has finished executing. Stall IF
         // during that time.
-        if ((enter_debug_mode || handle_irq) && stall) begin
+        if ((enter_debug_mode || handle_irq) && (stall || lsu_req_in_id_i)) begin
           halt_if = 1'b1;
         end
 
-        if (!stall && !special_req_all) begin
+        if (!stall && !lsu_req_in_id_i && !special_req_all) begin
           if (enter_debug_mode) begin
             // enter debug mode
             ctrl_fsm_ns = DBG_TAKEN_IF;
@@ -777,14 +780,14 @@ module ibex_controller #(
   assign stall = stall_id_i | stall_wb_i;
 
   // signal to IF stage that ID stage is ready for next instr
-  assign id_in_ready_o       = ~stall & ~halt_if;
+  assign id_in_ready_o = ~stall & ~halt_if & ~retain_id;
 
   // kill instr in IF-ID pipeline reg that are done, or if a
   // multicycle instr causes an exception for example
-  // halt_if is another kind of stall, where the instr_valid bit must remain
+  // retain_id is another kind of stall, where the instr_valid bit must remain
   // set (unless flush_id is set also). It cannot be factored directly into
   // stall as this causes a combinational loop.
-  assign instr_valid_clear_o = ~(stall | halt_if) | flush_id;
+  assign instr_valid_clear_o = ~(stall | retain_id) | flush_id;
 
   // update registers
   always_ff @(posedge clk_i or negedge rst_ni) begin : update_regs
