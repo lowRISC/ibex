@@ -336,6 +336,12 @@ module ibex_id_stage #(
         default:         imm_b = 32'h4;
       endcase
     end
+    `ASSERT(IbexImmBMuxSelValid, instr_valid_i |-> imm_b_mux_sel inside {
+        IMM_B_I,
+        IMM_B_S,
+        IMM_B_U,
+        IMM_B_INCR_PC,
+        IMM_B_INCR_ADDR})
   end else begin : g_nobtalu
     op_a_sel_e  unused_a_mux_sel;
     imm_b_sel_e unused_b_mux_sel;
@@ -358,6 +364,14 @@ module ibex_id_stage #(
         default:         imm_b = 32'h4;
       endcase
     end
+    `ASSERT(IbexImmBMuxSelValid, instr_valid_i |-> imm_b_mux_sel inside {
+        IMM_B_I,
+        IMM_B_S,
+        IMM_B_B,
+        IMM_B_U,
+        IMM_B_J,
+        IMM_B_INCR_PC,
+        IMM_B_INCR_ADDR})
   end
 
   // ALU MUX for Operand B
@@ -988,23 +1002,6 @@ module ibex_id_stage #(
       OP_A_FWD,
       OP_A_CURRPC,
       OP_A_IMM})
-  if (BranchTargetALU) begin : g_btalu_assertions
-    `ASSERT(IbexImmBMuxSelValid, instr_valid_i |-> imm_b_mux_sel inside {
-        IMM_B_I,
-        IMM_B_S,
-        IMM_B_U,
-        IMM_B_INCR_PC,
-        IMM_B_INCR_ADDR})
-  end else begin : g_nobtalu_assertions
-    `ASSERT(IbexImmBMuxSelValid, instr_valid_i |-> imm_b_mux_sel inside {
-        IMM_B_I,
-        IMM_B_S,
-        IMM_B_B,
-        IMM_B_U,
-        IMM_B_J,
-        IMM_B_INCR_PC,
-        IMM_B_INCR_ADDR})
-  end
   `ASSERT_KNOWN_IF(IbexBTAluAOpMuxSelKnown, bt_a_mux_sel, instr_valid_i)
   `ASSERT(IbexBTAluAOpMuxSelValid, instr_valid_i |-> bt_a_mux_sel inside {
       OP_A_REG_A,
