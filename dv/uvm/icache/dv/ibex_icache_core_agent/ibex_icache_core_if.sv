@@ -111,4 +111,28 @@ interface ibex_icache_core_if (input clk, input rst_n);
     driver_cb.invalidate  <= 1'b0;
   endtask
 
+
+  // Coverage properties
+
+  // Spot a valid signal being cancelled. This happens when valid was high and the core hasn't taken
+  // the corresponding data, but we assert the branch line and the cache doesn't yet have the data
+  // at the requested address.
+  //
+  // We also track whether rdy was high on the cycle where the branch got cancelled, and pass it
+  // back to a covergroup.
+  sequence cancelled_valid;
+    @(posedge clk)
+      $rose(valid)
+      ##1
+      (valid & ~ready) [*0:$]
+      ##1
+      (branch, cover_cancelled_valid());
+  endsequence : cancelled_valid
+  cover property (cancelled_valid);
+
+  bit cancelled_valid_trig = 0;
+  function void cover_cancelled_valid();
+    cancelled_valid_trig = ~cancelled_valid_trig;
+  endfunction
+
 endinterface
