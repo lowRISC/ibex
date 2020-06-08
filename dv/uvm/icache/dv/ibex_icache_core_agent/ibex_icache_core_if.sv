@@ -9,6 +9,7 @@ interface ibex_icache_core_if (input clk, input rst_n);
 
   // Branch request
   logic         branch;
+  logic         branch_spec;
   logic [31:0]  branch_addr;
 
   // Passing instructions back to the core
@@ -37,6 +38,7 @@ interface ibex_icache_core_if (input clk, input rst_n);
     output req;
 
     output branch;
+    output branch_spec;
     output branch_addr;
 
     output ready;
@@ -51,6 +53,7 @@ interface ibex_icache_core_if (input clk, input rst_n);
   clocking monitor_cb @(posedge clk);
     input  req;
     input  branch;
+    input  branch_spec;
     input  branch_addr;
     input  ready;
     input  valid;
@@ -72,11 +75,13 @@ interface ibex_icache_core_if (input clk, input rst_n);
   // address.
   task automatic branch_to(logic [31:0] addr);
     driver_cb.branch      <= 1'b1;
+    driver_cb.branch_spec <= 1'b1;
     driver_cb.branch_addr <= addr;
 
     @(driver_cb);
 
     driver_cb.branch      <= 1'b0;
+    driver_cb.branch_spec <= 1'b0;
     driver_cb.branch_addr <= 'X;
   endtask
 
@@ -98,11 +103,12 @@ interface ibex_icache_core_if (input clk, input rst_n);
   // Reset all the signals from the core to the cache (the other direction is controlled by the
   // DUT)
   task automatic reset();
-    driver_cb.req        <= 1'b0;
-    driver_cb.branch     <= 1'b0;
-    driver_cb.ready      <= 1'b0;
-    driver_cb.enable     <= 1'b0;
-    driver_cb.invalidate <= 1'b0;
+    driver_cb.req         <= 1'b0;
+    driver_cb.branch      <= 1'b0;
+    driver_cb.branch_spec <= 1'b0;
+    driver_cb.ready       <= 1'b0;
+    driver_cb.enable      <= 1'b0;
+    driver_cb.invalidate  <= 1'b0;
   endtask
 
 endinterface
