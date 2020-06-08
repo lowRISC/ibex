@@ -84,6 +84,7 @@ class ibex_icache_mem_monitor
       if (cfg.vif.monitor_cb.req && cfg.vif.monitor_cb.gnt && !cfg.vif.monitor_cb.pmp_err) begin
         new_grant(cfg.vif.monitor_cb.addr);
       end
+      if (cfg.en_cov && cfg.vif.monitor_cb.gnt) cov.gnt_err_cg.sample(cfg.vif.monitor_cb.pmp_err);
 
       @(cfg.vif.monitor_cb);
     end
