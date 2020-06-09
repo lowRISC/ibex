@@ -19,10 +19,11 @@
 `include "prim_assert.sv"
 
 module ibex_decoder #(
-    parameter bit RV32E           = 0,
-    parameter bit RV32M           = 1,
-    parameter bit RV32B           = 0,
-    parameter bit BranchTargetALU = 0
+    parameter bit RV32E                 = 0,
+    parameter bit RV32M                 = 1,
+    parameter bit RV32B                 = 0,
+    parameter bit BranchTargetALU       = 0,
+    parameter bit PointerAuthentication = 0
 ) (
     input  logic                 clk_i,
     input  logic                 rst_ni,
@@ -99,7 +100,11 @@ module ibex_decoder #(
 
     // jump/branches
     output logic                 jump_in_dec_o,         // jump is being calculated in ALU
-    output logic                 branch_in_dec_o
+    output logic                 branch_in_dec_o,
+
+    // Pointer Authentication
+    output logic                 pac_en_dec_o,
+    output logic                 aut_en_dec_o
 );
 
   import ibex_pkg::*;
@@ -113,6 +118,9 @@ module ibex_decoder #(
   logic [31:0] instr_alu;
 
   logic        use_rs3;
+
+  logic        pa_use_rs3;
+  logic        pa_write_to_rs1;
 
   csr_op_e     csr_op;
 
@@ -141,10 +149,10 @@ module ibex_decoder #(
 
   // source registers
   assign rf_raddr_a_o = use_rs3 ? instr[`REG_S3] : instr[`REG_S1]; // rs3 / rs1
-  assign rf_raddr_b_o = instr[`REG_S2]; // rs2
+  assign rf_raddr_b_o = pa_use_rs3 ? instr[`REG_S3] : instr[`REG_S2]; // rs3 / rs2
 
   // destination register
-  assign rf_waddr_o   = instr[`REG_D]; // rd
+  assign rf_waddr_o   = pa_write_to_rs1 ? instr[`REG_S1] : instr[`REG_D]; // rs1 / rd
 
   ////////////////////
   // Register check //
@@ -204,6 +212,11 @@ module ibex_decoder #(
     dret_insn_o           = 1'b0;
     ecall_insn_o          = 1'b0;
     wfi_insn_o            = 1'b0;
+
+    pac_en_dec_o          = 1'b0;
+    aut_en_dec_o          = 1'b0;
+    pa_use_rs3            = 1'b0;
+    pa_write_to_rs1       = 1'b0;
 
     opcode                = opcode_e'(instr[6:0]);
 
@@ -578,6 +591,45 @@ module ibex_decoder #(
           illegal_insn = csr_illegal;
         end
 
+      end
+
+      ////////////////////////////
+      // Pointer Authentication //
+      ////////////////////////////
+
+      OPCODE_PA: begin // Custom Operations for Pointer Authentication
+        unique case (instr[14:12])
+          3'b000: begin // PAC
+            pac_en_dec_o   = (PointerAuthentication) ? 1'b1 : 1'b0;
+            rf_wdata_sel_o = RF_WD_PA;
+            rf_we          = 1'b1;
+            if (instr_first_cycle_i) begin
+              // First write magic number and LSBs of pointer to rs1
+              pa_write_to_rs1 = 1'b1;
+            end else begin
+              // Then write MSBs of pointer and pac to rd
+              pa_write_to_rs1 = 1'b0;
+            end
+            illegal_insn = (PointerAuthentication) ? 1'b0 : 1'b1;
+          end
+
+          3'b001: begin // AUT
+            aut_en_dec_o   = (PointerAuthentication) ? 1'b1 : 1'b0;
+            rf_wdata_sel_o = RF_WD_PA;
+            rf_we          = 1'b1;
+            if (instr_first_cycle_i) begin
+              // First read MSBs of pointer and pac from rs2
+              pa_use_rs3 = 1'b0;
+            end else begin
+              // Then read LSBs of pointer from rs1 and read context from rs3
+              pa_use_rs3 = 1'b1;
+            end
+            illegal_insn = (PointerAuthentication) ? 1'b0 : 1'b1;
+          end
+
+          default:
+            illegal_insn = 1'b1;
+        endcase
       end
       default: begin
         illegal_insn = 1'b1;
