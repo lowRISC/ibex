@@ -33,7 +33,8 @@ module ibex_core #(
     parameter bit               DbgTriggerEn             = 1'b0,
     parameter bit               SecureIbex               = 1'b0,
     parameter int unsigned      DmHaltAddr               = 32'h1A110800,
-    parameter int unsigned      DmExceptionAddr          = 32'h1A110808
+    parameter int unsigned      DmExceptionAddr          = 32'h1A110808,
+    parameter bit               PointerAuthentication    = 1'b0
 ) (
     // Clock and Reset
     input  logic        clk_i,
@@ -344,6 +345,16 @@ module ibex_core #(
   logic [31:0] rvfi_mem_addr_q;
 `endif
 
+  // Pointer Authentication
+  logic         pa_pac_en;
+  logic         pa_aut_en;
+  logic [31:0]  pa_data0;
+  logic [31:0]  pa_data1;
+  logic         pa_ready_id;
+  logic [31:0]  pa_result;
+  logic         pa_valid;
+  logic [127:0] csr_pa_key;
+
   //////////////////////
   // Clock management //
   //////////////////////
@@ -467,13 +478,14 @@ module ibex_core #(
   //////////////
 
   ibex_id_stage #(
-      .RV32E           ( RV32E           ),
-      .RV32M           ( RV32M           ),
-      .RV32B           ( RV32B           ),
-      .BranchTargetALU ( BranchTargetALU ),
-      .DataIndTiming   ( DataIndTiming   ),
-      .SpecBranch      ( SpecBranch      ),
-      .WritebackStage  ( WritebackStage  )
+      .RV32E                 ( RV32E                 ),
+      .RV32M                 ( RV32M                 ),
+      .RV32B                 ( RV32B                 ),
+      .BranchTargetALU       ( BranchTargetALU       ),
+      .DataIndTiming         ( DataIndTiming         ),
+      .SpecBranch            ( SpecBranch            ),
+      .WritebackStage        ( WritebackStage        ),
+      .PointerAuthentication ( PointerAuthentication )
   ) id_stage_i (
       .clk_i                        ( clk                      ),
       .rst_ni                       ( rst_ni                   ),
@@ -616,7 +628,16 @@ module ibex_core #(
       .perf_mul_wait_o              ( perf_mul_wait            ),
       .perf_div_wait_o              ( perf_div_wait            ),
       .instr_id_done_o              ( instr_id_done            ),
-      .instr_id_done_compressed_o   ( instr_id_done_compressed )
+      .instr_id_done_compressed_o   ( instr_id_done_compressed ),
+
+      // Pointer Authentication
+      .pac_en_dec_o                 ( pa_pac_en                ),
+      .aut_en_dec_o                 ( pa_aut_en                ),
+      .pa_data0_o                   ( pa_data0                 ),
+      .pa_data1_o                   ( pa_data1                 ),
+      .pa_ready_id_o                ( pa_ready_id              ),
+      .pa_result_i                  ( pa_result                ),
+      .pa_valid_i                   ( pa_valid                 )
   );
 
   // for RVFI only
@@ -906,17 +927,18 @@ module ibex_core #(
   assign csr_addr   = csr_num_e'(csr_access ? alu_operand_b_ex[11:0] : 12'b0);
 
   ibex_cs_registers #(
-      .DbgTriggerEn      ( DbgTriggerEn      ),
-      .DataIndTiming     ( DataIndTiming     ),
-      .DummyInstructions ( DummyInstructions ),
-      .ICache            ( ICache            ),
-      .MHPMCounterNum    ( MHPMCounterNum    ),
-      .MHPMCounterWidth  ( MHPMCounterWidth  ),
-      .PMPEnable         ( PMPEnable         ),
-      .PMPGranularity    ( PMPGranularity    ),
-      .PMPNumRegions     ( PMPNumRegions     ),
-      .RV32E             ( RV32E             ),
-      .RV32M             ( RV32M             )
+      .DbgTriggerEn          ( DbgTriggerEn          ),
+      .DataIndTiming         ( DataIndTiming         ),
+      .DummyInstructions     ( DummyInstructions     ),
+      .ICache                ( ICache                ),
+      .MHPMCounterNum        ( MHPMCounterNum        ),
+      .MHPMCounterWidth      ( MHPMCounterWidth      ),
+      .PMPEnable             ( PMPEnable             ),
+      .PMPGranularity        ( PMPGranularity        ),
+      .PMPNumRegions         ( PMPNumRegions         ),
+      .RV32E                 ( RV32E                 ),
+      .RV32M                 ( RV32M                 ),
+      .PointerAuthentication ( PointerAuthentication )
   ) cs_registers_i (
       .clk_i                   ( clk                      ),
       .rst_ni                  ( rst_ni                   ),
@@ -955,6 +977,9 @@ module ibex_core #(
       // PMP
       .csr_pmp_cfg_o           ( csr_pmp_cfg              ),
       .csr_pmp_addr_o          ( csr_pmp_addr             ),
+
+      // Pointer Authenticaiton
+      .csr_pa_key_o            ( csr_pa_key               ),
 
       // debug
       .csr_depc_o              ( csr_depc                 ),
@@ -1384,5 +1409,37 @@ module ibex_core #(
   end
 
 `endif
+
+  if (PointerAuthentication) begin : g_pa
+    ibex_pointer_authentication pointer_authentication_i (
+        .clk_i          ( clk          ),
+        .rst_ni         ( rst_ni       ),
+        .csr_pa_key_i   ( csr_pa_key   ),
+        .pac_en_i       ( pa_pac_en    ),
+        .aut_en_i       ( pa_aut_en    ),
+        .pa_data0_i     ( pa_data0     ),
+        .pa_data1_i     ( pa_data1     ),
+        .pa_ready_id_i  ( pa_ready_id  ),
+        .pa_result_o    ( pa_result    ),
+        .pa_valid_o     ( pa_valid     )
+    );
+  end else begin : g_no_pa
+    logic         unused_pa_pac_en;
+    logic         unused_pa_aut_en;
+    logic [31:0]  unused_pa_data0;
+    logic [31:0]  unused_pa_data1;
+    logic         unused_pa_ready_id;
+    logic [127:0] unused_csr_pa_key;
+    assign unused_pa_pac_en   = pa_pac_en;
+    assign unused_pa_aut_en   = pa_aut_en;
+    assign unused_pa_data0    = pa_data0;
+    assign unused_pa_data1    = pa_data1;
+    assign unused_pa_ready_id = pa_ready_id;
+    assign unused_csr_pa_key  = csr_pa_key;
+
+    // Output tieoff
+    assign pa_result = '0;
+    assign pa_valid  = '0;
+  end
 
 endmodule

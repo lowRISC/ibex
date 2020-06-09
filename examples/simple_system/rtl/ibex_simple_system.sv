@@ -34,6 +34,7 @@ module ibex_simple_system (
   parameter bit               WritebackStage           = 1'b0;
   parameter                   MultiplierImplementation = "fast";
   parameter                   SRAMInitFile             = "";
+  parameter bit               PointerAuthentication    = 1'b0;
 
   logic clk_sys = 1'b0, rst_sys_n;
 
@@ -159,7 +160,8 @@ module ibex_simple_system (
       .WritebackStage           ( WritebackStage           ),
       .MultiplierImplementation ( MultiplierImplementation ),
       .DmHaltAddr               ( 32'h00100000             ),
-      .DmExceptionAddr          ( 32'h00100000             )
+      .DmExceptionAddr          ( 32'h00100000             ),
+      .PointerAuthentication    ( PointerAuthentication    )
     ) u_core (
       .clk_i                 (clk_sys),
       .rst_ni                (rst_sys_n),

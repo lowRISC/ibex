@@ -13,17 +13,18 @@
 `include "prim_assert.sv"
 
 module ibex_cs_registers #(
-    parameter bit          DbgTriggerEn      = 0,
-    parameter bit          DataIndTiming     = 1'b0,
-    parameter bit          DummyInstructions = 1'b0,
-    parameter bit          ICache            = 1'b0,
-    parameter int unsigned MHPMCounterNum    = 10,
-    parameter int unsigned MHPMCounterWidth  = 40,
-    parameter bit          PMPEnable         = 0,
-    parameter int unsigned PMPGranularity    = 0,
-    parameter int unsigned PMPNumRegions     = 4,
-    parameter bit          RV32E             = 0,
-    parameter bit          RV32M             = 0
+    parameter bit          DbgTriggerEn          = 0,
+    parameter bit          DataIndTiming         = 1'b0,
+    parameter bit          DummyInstructions     = 1'b0,
+    parameter bit          ICache                = 1'b0,
+    parameter int unsigned MHPMCounterNum        = 10,
+    parameter int unsigned MHPMCounterWidth      = 40,
+    parameter bit          PMPEnable             = 0,
+    parameter int unsigned PMPGranularity        = 0,
+    parameter int unsigned PMPNumRegions         = 4,
+    parameter bit          RV32E                 = 0,
+    parameter bit          RV32M                 = 0,
+    parameter bit          PointerAuthentication = 0
 ) (
     // Clock and Reset
     input  logic                 clk_i,
@@ -65,6 +66,9 @@ module ibex_cs_registers #(
     // PMP
     output ibex_pkg::pmp_cfg_t   csr_pmp_cfg_o  [PMPNumRegions],
     output logic [33:0]          csr_pmp_addr_o [PMPNumRegions],
+
+    // Pointer Authentication
+    output logic [127:0]         csr_pa_key_o,
 
     // debug
     input  logic                 debug_mode_i,
@@ -198,6 +202,9 @@ module ibex_cs_registers #(
   // PMP Signals
   logic [31:0]                 pmp_addr_rdata  [PMP_MAX_REGIONS];
   logic [PMP_CFG_W-1:0]        pmp_cfg_rdata   [PMP_MAX_REGIONS];
+
+  // Key for Pointer Authentication
+  logic [127:0] pa_key;
 
   // Hardware performance monitor signals
   logic [31:0]                 mcountinhibit;
@@ -428,6 +435,11 @@ module ibex_cs_registers #(
 
       // Custom CSR for LFSR re-seeding (cannot be read)
       CSR_SECURESEED: begin
+        csr_rdata_int = '0;
+      end
+
+      // Custom CSR for Pointer Authentication (cannot be read)
+      CSR_PAKEY0, CSR_PAKEY1, CSR_PAKEY2, CSR_PAKEY3: begin
         csr_rdata_int = '0;
       end
 
@@ -854,6 +866,36 @@ module ibex_cs_registers #(
       assign csr_pmp_addr_o[i] = '0;
     end
   end
+
+  ////////////////////////////
+  // Pointer Authentication //
+  ////////////////////////////
+
+  if (PointerAuthentication) begin : g_pa_key
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        pa_key <= '0;
+      end else begin
+        if (csr_we_int && (csr_addr == CSR_PAKEY0)) begin
+          pa_key[31:0]   <= csr_wdata_int;
+        end
+        if (csr_we_int && (csr_addr == CSR_PAKEY1)) begin
+          pa_key[63:32]  <= csr_wdata_int;
+        end
+        if (csr_we_int && (csr_addr == CSR_PAKEY2)) begin
+          pa_key[95:64]  <= csr_wdata_int;
+        end
+        if (csr_we_int && (csr_addr == CSR_PAKEY3)) begin
+          pa_key[127:96] <= csr_wdata_int;
+        end
+      end
+    end
+  end else begin : g_no_pa_key
+    // Generate tieoff when PointerAuthentication is not configured
+    assign pa_key = '0;
+  end
+
+  assign csr_pa_key_o = pa_key;
 
   //////////////////////////
   //  Performance monitor //

@@ -37,6 +37,8 @@ filesets:
 #      - rtl/ibex_register_file_fpga.sv # FPGA
       - rtl/ibex_register_file_ff.sv # generic FF-based
       - rtl/ibex_core.sv
+      - rtl/ibex_pointer_authentication.sv
+      - rtl/ibex_cipher.sv
     file_type: systemVerilogSource
 
   files_lint_verilator:
@@ -129,6 +131,12 @@ parameters:
     default: 4
     paramtype: vlogparam
     description: "Number of PMP regions"
+
+  PointerAuthentication:
+    datatype: int
+    default: 0
+    paramtype: vlogparam
+    description: "Enable pointer authentication (EXPERIMENTAL) [0/1]"
 
 targets:
   default: &default_target

@@ -27,7 +27,8 @@ module ibex_core_tracing #(
     parameter bit               DbgTriggerEn             = 1'b0,
     parameter bit               SecureIbex               = 1'b0,
     parameter int unsigned      DmHaltAddr               = 32'h1A110800,
-    parameter int unsigned      DmExceptionAddr          = 32'h1A110808
+    parameter int unsigned      DmExceptionAddr          = 32'h1A110808,
+    parameter bit               PointerAuthentication    = 1'b0
 ) (
     // Clock and Reset
     input  logic        clk_i,
@@ -123,7 +124,8 @@ module ibex_core_tracing #(
     .WritebackStage           ( WritebackStage           ),
     .SecureIbex               ( SecureIbex               ),
     .DmHaltAddr               ( DmHaltAddr               ),
-    .DmExceptionAddr          ( DmExceptionAddr          )
+    .DmExceptionAddr          ( DmExceptionAddr          ),
+    .PointerAuthentication    ( PointerAuthentication    )
   ) u_ibex_core (
     .clk_i,
     .rst_ni,
