@@ -15,6 +15,7 @@ package ibex_pkg;
 
 typedef enum logic [6:0] {
   OPCODE_LOAD     = 7'h03,
+  OPCODE_PA       = 7'h0b,
   OPCODE_MISC_MEM = 7'h0f,
   OPCODE_OP_IMM   = 7'h13,
   OPCODE_AUIPC    = 7'h17,
@@ -215,9 +216,10 @@ typedef enum logic [2:0] {
 } imm_b_sel_e;
 
 // Regfile write data selection
-typedef enum logic {
+typedef enum logic [1:0] {
   RF_WD_EX,
-  RF_WD_CSR
+  RF_WD_CSR,
+  RF_WD_PA
 } rf_wd_sel_e;
 
 //////////////
@@ -457,7 +459,11 @@ typedef enum logic[11:0] {
   CSR_MHPMCOUNTER30H = 12'hB9E,
   CSR_MHPMCOUNTER31H = 12'hB9F,
   CSR_CPUCTRL        = 12'h7C0,
-  CSR_SECURESEED     = 12'h7C1
+  CSR_SECURESEED     = 12'h7C1,
+  CSR_PAKEY0         = 12'h7C2,
+  CSR_PAKEY1         = 12'h7C3,
+  CSR_PAKEY2         = 12'h7C4,
+  CSR_PAKEY3         = 12'h7C5
 } csr_num_e;
 
 // CSR pmp-related offsets

@@ -82,6 +82,12 @@ parameters:
     paramtype: vlogparam
     description: "Number of PMP regions"
 
+  PointerAuthentication:
+    datatype: int
+    default: 0
+    paramtype: vlogparam
+    description: "Enable pointer authentication (EXPERIMENTAL) [0/1]"
+
 targets:
   default: &default_target
     filesets:
@@ -103,6 +109,7 @@ targets:
       - PMPGranularity
       - PMPNumRegions
       - SRAM_INIT_FILE
+      - PointerAuthentication
     tools:
       vcs:
         vcs_options:

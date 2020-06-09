@@ -17,13 +17,14 @@
 `include "prim_assert.sv"
 
 module ibex_id_stage #(
-    parameter bit RV32E           = 0,
-    parameter bit RV32M           = 1,
-    parameter bit RV32B           = 0,
-    parameter bit DataIndTiming   = 1'b0,
-    parameter bit BranchTargetALU = 0,
-    parameter bit SpecBranch      = 0,
-    parameter bit WritebackStage  = 0
+    parameter bit RV32E                 = 0,
+    parameter bit RV32M                 = 1,
+    parameter bit RV32B                 = 0,
+    parameter bit DataIndTiming         = 1'b0,
+    parameter bit BranchTargetALU       = 0,
+    parameter bit SpecBranch            = 0,
+    parameter bit WritebackStage        = 0,
+    parameter bit PointerAuthentication = 0
 ) (
     input  logic                      clk_i,
     input  logic                      rst_ni,
@@ -177,7 +178,16 @@ module ibex_id_stage #(
     output logic                      perf_mul_wait_o,
     output logic                      perf_div_wait_o,
     output logic                      instr_id_done_o,
-    output logic                      instr_id_done_compressed_o
+    output logic                      instr_id_done_compressed_o,
+
+    // Pointer Authentication
+    output logic                      pac_en_dec_o,
+    output logic                      aut_en_dec_o,
+    output logic [31:0]               pa_data0_o,
+    output logic [31:0]               pa_data1_o,
+    output logic                      pa_ready_id_o,
+    input  logic [31:0]               pa_result_i,
+    input  logic                      pa_valid_i
 );
 
   import ibex_pkg::*;
@@ -274,6 +284,10 @@ module ibex_id_stage #(
 
   logic [31:0] alu_operand_a;
   logic [31:0] alu_operand_b;
+
+  // Pointer Authentication
+  logic        pa_en_dec;
+  logic        stall_pa;
 
   /////////////
   // LSU Mux //
@@ -401,6 +415,7 @@ module ibex_id_stage #(
     unique case (rf_wdata_sel)
       RF_WD_EX:  rf_wdata_id_o = result_ex_i;
       RF_WD_CSR: rf_wdata_id_o = csr_rdata_i;
+      RF_WD_PA:  rf_wdata_id_o = pa_result_i;
       default:   rf_wdata_id_o = result_ex_i;
     endcase;
   end
@@ -410,10 +425,11 @@ module ibex_id_stage #(
   /////////////
 
   ibex_decoder #(
-      .RV32E           ( RV32E           ),
-      .RV32M           ( RV32M           ),
-      .RV32B           ( RV32B           ),
-      .BranchTargetALU ( BranchTargetALU )
+      .RV32E                 ( RV32E                ),
+      .RV32M                 ( RV32M                ),
+      .RV32B                 ( RV32B                ),
+      .BranchTargetALU       ( BranchTargetALU      ),
+      .PointerAuthentication (PointerAuthentication )
   ) decoder_i (
       .clk_i                           ( clk_i                ),
       .rst_ni                          ( rst_ni               ),
@@ -484,7 +500,11 @@ module ibex_id_stage #(
 
       // jump/branches
       .jump_in_dec_o                   ( jump_in_dec          ),
-      .branch_in_dec_o                 ( branch_in_dec        )
+      .branch_in_dec_o                 ( branch_in_dec        ),
+
+      // Pointer Authentication
+      .pac_en_dec_o                    ( pac_en_dec_o         ),
+      .aut_en_dec_o                    ( aut_en_dec_o         )
   );
 
   /////////////////////////////////
@@ -638,6 +658,8 @@ module ibex_id_stage #(
   assign multdiv_operand_a_ex_o      = rf_rdata_a_fwd;
   assign multdiv_operand_b_ex_o      = rf_rdata_b_fwd;
 
+  assign pa_en_dec                   = pac_en_dec_o | aut_en_dec_o;
+
   ////////////////////////
   // Branch set control //
   ////////////////////////
@@ -723,6 +745,7 @@ module ibex_id_stage #(
     stall_jump              = 1'b0;
     stall_branch            = 1'b0;
     stall_alu               = 1'b0;
+    stall_pa                = 1'b0;
     branch_set_d            = 1'b0;
     branch_spec             = 1'b0;
     jump_set                = 1'b0;
@@ -776,6 +799,22 @@ module ibex_id_stage #(
               id_fsm_d      = MULTI_CYCLE;
               rf_we_raw     = 1'b0;
             end
+            pa_en_dec: begin
+              if (pac_en_dec_o) begin // PAC
+                if (ready_wb_i) begin
+                  id_fsm_d  = MULTI_CYCLE;
+                  rf_we_raw = 1'b1;
+                end else begin
+                  // Wait until the writeback stage is ready
+                  id_fsm_d  = FIRST_CYCLE;
+                  rf_we_raw = 1'b0;
+                end
+              end else begin // AUT
+                id_fsm_d    = MULTI_CYCLE;
+                rf_we_raw   = 1'b0;
+              end
+              stall_pa      = 1'b1;
+            end
             default: begin
               id_fsm_d      = FIRST_CYCLE;
             end
@@ -787,12 +826,17 @@ module ibex_id_stage #(
             rf_we_raw       = rf_we_dec & ex_valid_i;
           end
 
+          if (pa_en_dec) begin
+            rf_we_raw       = rf_we_dec & pa_valid_i;
+          end
+
           if (multicycle_done & ready_wb_i) begin
             id_fsm_d        = FIRST_CYCLE;
           end else begin
             stall_multdiv   = multdiv_en_dec;
             stall_branch    = branch_in_dec;
             stall_jump      = jump_in_dec;
+            stall_pa        = pa_en_dec;
           end
         end
 
@@ -805,12 +849,13 @@ module ibex_id_stage #(
 
   // Note for the two-stage configuration ready_wb_i is always set
   assign multdiv_ready_id_o = ready_wb_i;
+  assign pa_ready_id_o      = ready_wb_i;
 
   `ASSERT(StallIDIfMulticycle, (id_fsm_q == FIRST_CYCLE) & (id_fsm_d == MULTI_CYCLE) |-> stall_id)
 
   // Stall ID/EX stage for reason that relates to instruction in ID/EX
   assign stall_id = stall_ld_hz | stall_mem | stall_multdiv | stall_jump | stall_branch |
-                      stall_alu;
+                      stall_alu | stall_pa;
 
   assign instr_done = ~stall_id & ~flush_id & instr_executing;
 
@@ -833,7 +878,8 @@ module ibex_id_stage #(
 
     logic instr_kill;
 
-    assign multicycle_done = lsu_req_dec ? ~stall_mem : ex_valid_i;
+    assign multicycle_done = lsu_req_dec ? ~stall_mem :
+                               pa_en_dec ? pa_valid_i : ex_valid_i;
 
     // Is a memory access ongoing that isn't finishing this cycle
     assign outstanding_memory_access = (outstanding_load_wb_i | outstanding_store_wb_i) &
@@ -906,7 +952,7 @@ module ibex_id_stage #(
                               lsu_we      ? WB_INSTR_STORE :
                                             WB_INSTR_LOAD;
 
-    assign en_wb_o = instr_done;
+    assign en_wb_o = instr_done | (pac_en_dec_o & instr_first_cycle);
 
     assign instr_id_done_o = en_wb_o & ready_wb_i;
 
@@ -916,7 +962,8 @@ module ibex_id_stage #(
     assign perf_dside_wait_o = instr_valid_i & ~instr_kill & (outstanding_memory_access | stall_ld_hz);
   end else begin : gen_no_stall_mem
 
-    assign multicycle_done = lsu_req_dec ? lsu_resp_valid_i : ex_valid_i;
+    assign multicycle_done = lsu_req_dec ? lsu_resp_valid_i :
+                               pa_en_dec ? pa_valid_i       : ex_valid_i;
 
     assign data_req_allowed = instr_first_cycle;
 
@@ -976,6 +1023,9 @@ module ibex_id_stage #(
 
   assign instr_id_done_compressed_o = instr_id_done_o & instr_is_compressed_i;
 
+  assign pa_data0_o = rf_rdata_a_fwd;
+  assign pa_data1_o = rf_rdata_b_fwd;
+
   ////////////////
   // Assertions //
   ////////////////
@@ -999,7 +1049,8 @@ module ibex_id_stage #(
       IMM_B_INCR_PC})
   `ASSERT(IbexRegfileWdataSelValid, instr_valid_i |-> rf_wdata_sel inside {
       RF_WD_EX,
-      RF_WD_CSR})
+      RF_WD_CSR,
+      RF_WD_PA})
   `ASSERT_KNOWN(IbexWbStateKnown, id_fsm_q)
 
   // Branch decision must be valid when jumping.

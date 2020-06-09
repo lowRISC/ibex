@@ -83,6 +83,12 @@ parameters:
     paramtype: vlogparam
     description: "Number of PMP regions"
 
+  PointerAuthentication:
+    datatype: int
+    default: 0
+    paramtype: vlogparam
+    description: "Enable pointer authentication (EXPERIMENTAL) [0/1]"
+
 targets:
   sim:
     default_tool: verilator
@@ -99,6 +105,7 @@ targets:
       - PMPEnable
       - PMPGranularity
       - PMPNumRegions
+      - PointerAuthentication
     toplevel: ibex_riscv_compliance
     tools:
       verilator:
