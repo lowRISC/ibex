@@ -37,27 +37,24 @@ module gift (
   logic data_we, key_we;
 
   // Inter-module signal declaration
+
   logic [63:0] data_after_middle_rounds;
   logic [127:0] key_after_middle_rounds;
 
   round_index_e current_round_base;
 
-  //  Middle and output modules instantiation
+  //  Middle module instantiation
   gift_middle_rounds gift_middle_rounds_i (
-    .data_i(data_q),
-    .key_i(key_q),
+    .in_data_i(data_i),
+    .in_key_i(key_i),
+
+    .state_data_i(data_q),
+    .state_key_i(key_q),
 
     .round_base_i(current_round_base),
 
     .data_o(data_after_middle_rounds),
     .key_o(key_after_middle_rounds)
-  );
-
-  gift_output_round gift_output_round_i (
-    .data_i(data_q),
-    .key_i(key_q),
-
-    .data_o(data_o)
   );
 
   // Flip-flop
@@ -80,18 +77,13 @@ module gift (
   // FSM
   always_comb begin : gift_cipher_fsm
 
-    // Key management
-    key_we = 1'b0;
-    key_d = key_q;
 
-    // Data write enable
+    // Key and data write enable
+    key_we = 1'b0;
     data_we = 1'b0;
 
-    // Stored signals, arbitrarily set by default to the rectangle output
-    data_d = data_q;
-
     // Gift rectangle-specific signals
-    current_round_base = BASE_1;
+    current_round_base = BASE_INPUT;
 
     // Handshake signals
     in_ready_o = 1'b0;
@@ -104,10 +96,9 @@ module gift (
 
         // Take the new key, tweak and data into account
         key_we = 1'b1;
-        key_d = key_i;
-
         data_we = 1'b1;
-        data_d = data_i;
+
+        current_round_base = BASE_INPUT;
 
         // In this state, the cipher is ready to get data
         in_ready_o = 1'b1;
@@ -123,14 +114,8 @@ module gift (
       ROUNDS_INTERNAL_1: begin
 
         // Key update
-
         key_we = 1'b1;
-        key_d = key_after_middle_rounds;
-
         data_we = 1'b1;
-
-        // Take middle rounds outputs into account
-        data_d = data_after_middle_rounds;
 
         // Gift rectangle-specific signals
         current_round_base = BASE_1;
@@ -143,12 +128,7 @@ module gift (
 
         // Key update
         key_we = 1'b1;
-        key_d = key_after_middle_rounds;
-
         data_we = 1'b1;
-
-        // Take middle rounds outputs into account
-        data_d = data_after_middle_rounds;
 
         // Gift rectangle-specific signals
         current_round_base = BASE_2;
@@ -161,12 +141,7 @@ module gift (
 
         // Key update
         key_we = 1'b1;
-        key_d = key_after_middle_rounds;
-
         data_we = 1'b1;
-
-        // Take middle rounds outputs into account
-        data_d = data_after_middle_rounds;
 
         // Gift rectangle-specific signals
         current_round_base = BASE_3;
@@ -195,18 +170,18 @@ module gift (
           in_ready_o = 1'b1;
 
           if (in_valid_i) begin
-            // Select register input
+
+            current_round_base = BASE_INPUT;
+
             key_we = 1'b1;
             data_we = 1'b1;
-
-            data_d = data_i;
-            key_d = key_i;
 
             // State transition
             state_d = ROUNDS_INTERNAL_1;
 
           end else begin
             // Register input does not matter, keep its value
+
             key_we = 1'b0;
             data_we = 1'b0;
 
@@ -229,5 +204,9 @@ module gift (
       state_q <= state_d;
     end
   end
+
+  assign data_d = data_after_middle_rounds;
+  assign key_d = key_after_middle_rounds;
+  assign data_o = data_q;
 
 endmodule
