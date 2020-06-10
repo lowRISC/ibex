@@ -25,6 +25,7 @@ package gift_pkg;
   };
 
   typedef enum logic [1:0] {
+    BASE_INPUT,
     BASE_1,
     BASE_2,
     BASE_3
