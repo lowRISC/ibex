@@ -607,6 +607,9 @@ class ibex_icache_scoreboard
     bit [31:0]   window_width;
     int unsigned fetch_ratio_pc;
 
+    // Ignore instructions if this check is disabled in the configuration
+    if (cfg.disable_caching_ratio_test) return;
+
     if (err) begin
       window_reset();
       return;
