@@ -20,5 +20,6 @@ package ibex_icache_test_pkg;
   `include "ibex_icache_base_test.sv"
   `include "ibex_icache_oldval_test.sv"
   `include "ibex_icache_many_errors_test.sv"
+  `include "ibex_icache_ecc_test.sv"
 
 endpackage

@@ -118,7 +118,7 @@
             bit error. Check that the invalid cached data is correctly
             ignored.'''
       milestone: V2
-      tests: []
+      tests: ["ibex_icache_ecc"]
     }
 
     {
