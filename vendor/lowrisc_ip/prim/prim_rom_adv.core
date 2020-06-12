@@ -2,20 +2,19 @@ CAPI=2:
 # Copyright lowRISC contributors.
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
-name: "lowrisc:dv:csr_utils"
-description: "CSR utilities"
 
+name: "lowrisc:prim:rom_adv:0.1"
+description: "ROM primitive with advanced features"
 filesets:
-  files_dv:
+  files_rtl:
     depend:
-      - lowrisc:dv:dv_utils
-      - lowrisc:dv:dv_base_reg
+      - lowrisc:prim:assert
+      - lowrisc:prim:rom
     files:
-      - csr_utils_pkg.sv
-      - csr_seq_lib.sv: {is_include_file: true}
+      - rtl/prim_rom_adv.sv
     file_type: systemVerilogSource
 
 targets:
   default:
     filesets:
-      - files_dv
+      - files_rtl

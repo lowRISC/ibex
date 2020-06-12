@@ -90,8 +90,7 @@ class SimCfg(FlowCfg):
         self.tool = args.tool
         self.build_opts = []
         self.build_opts.extend(args.build_opts)
-        self.en_build_modes = []
-        self.en_build_modes.extend(args.build_modes)
+        self.en_build_modes = args.build_modes.copy()
         self.run_opts = []
         self.run_opts.extend(args.run_opts)
         self.en_run_modes = []
@@ -223,7 +222,7 @@ class SimCfg(FlowCfg):
 
             # Use the default build mode for tests that do not specify it
             if not hasattr(self, "build_mode"):
-                setattr(self, "build_mode", "default")
+                self.build_mode = 'default'
 
             self._process_exports()
 
@@ -257,16 +256,12 @@ class SimCfg(FlowCfg):
 
     def _create_objects(self):
         # Create build and run modes objects
-        build_modes = Modes.create_modes(BuildModes,
-                                         getattr(self, "build_modes"))
-        setattr(self, "build_modes", build_modes)
-
-        run_modes = Modes.create_modes(RunModes, getattr(self, "run_modes"))
-        setattr(self, "run_modes", run_modes)
+        self.build_modes = Modes.create_modes(BuildModes, self.build_modes)
+        self.run_modes = Modes.create_modes(RunModes, self.run_modes)
 
         # Walk through build modes enabled on the CLI and append the opts
         for en_build_mode in self.en_build_modes:
-            build_mode_obj = Modes.find_mode(en_build_mode, build_modes)
+            build_mode_obj = Modes.find_mode(en_build_mode, self.build_modes)
             if build_mode_obj is not None:
                 self.build_opts.extend(build_mode_obj.build_opts)
                 self.run_opts.extend(build_mode_obj.run_opts)
@@ -278,7 +273,7 @@ class SimCfg(FlowCfg):
 
         # Walk through run modes enabled on the CLI and append the opts
         for en_run_mode in self.en_run_modes:
-            run_mode_obj = Modes.find_mode(en_run_mode, run_modes)
+            run_mode_obj = Modes.find_mode(en_run_mode, self.run_modes)
             if run_mode_obj is not None:
                 self.run_opts.extend(run_mode_obj.run_opts)
             else:
@@ -288,8 +283,7 @@ class SimCfg(FlowCfg):
                 sys.exit(1)
 
         # Create tests from given list of items
-        tests = Tests.create_tests(getattr(self, "tests"), self)
-        setattr(self, "tests", tests)
+        self.tests = Tests.create_tests(self.tests, self)
 
         # Regressions
         # Parse testplan if provided.
@@ -299,9 +293,8 @@ class SimCfg(FlowCfg):
             self.regressions.extend(self.testplan.get_milestone_regressions())
 
         # Create regressions
-        regressions = Regressions.create_regressions(
-            getattr(self, "regressions"), self, tests)
-        setattr(self, "regressions", regressions)
+        self.regressions = Regressions.create_regressions(self.regressions,
+                                                          self, self.tests)
 
     def _print_list(self):
         for list_item in self.list_items:
@@ -417,6 +410,43 @@ class SimCfg(FlowCfg):
                       create_link_dirs_cmd)
             sys.exit(1)
 
+    def _expand_run_list(self, build_map):
+        '''Generate a list of tests to be run
+
+        For each test in tests, we add it test.reseed times. The ordering is
+        interleaved so that we run through all of the tests as soon as
+        possible. If there are multiple tests and they have different reseed
+        values, they are "fully interleaved" at the start (so if there are
+        tests A, B with reseed values of 5 and 2, respectively, then the list
+        will be ABABAAA).
+
+        build_map is a dictionary from build name to a CompileSim object. Each
+        test is added to the CompileSim item that it depends on (signifying
+        that the test should be built once the build on which it depends is
+        done).
+
+        cfg is a SimCfg object, passed to the RunTest constructor.
+
+        '''
+        tagged = []
+        for test in self.run_list:
+            for idx in range(test.reseed):
+                tagged.append((idx,
+                               test,
+                               RunTest(idx, test, self)))
+
+        # Stably sort the tagged list by the 1st coordinate
+        tagged.sort(key=lambda x: x[0])
+
+        # Now iterate over it again, adding tests to build_map (in the
+        # interleaved order) and collecting up the RunTest objects.
+        runs = []
+        for _, test, run in tagged:
+            build_map[test.build_mode].sub.append(run)
+            runs.append(run)
+
+        return runs
+
     def _create_deploy_objects(self):
         '''Create deploy objects from the build and run lists.
         '''
@@ -431,18 +461,12 @@ class SimCfg(FlowCfg):
             builds.append(item)
             build_map[build] = item
 
-        runs = []
-        for test in self.run_list:
-            for num in range(test.reseed):
-                item = RunTest(num, test, self)
-                if self.build_only is False:
-                    build_map[test.build_mode].sub.append(item)
-                runs.append(item)
-
         self.builds = builds
-        self.runs = runs
+        self.runs = ([]
+                     if self.build_only
+                     else self._expand_run_list(build_map))
         if self.run_only is True:
-            self.deploy = runs
+            self.deploy = self.runs
         else:
             self.deploy = builds
 
@@ -555,8 +579,7 @@ class SimCfg(FlowCfg):
 
         # Add path to testplan.
         if hasattr(self, "testplan_doc_path"):
-            testplan = "https://" + self.doc_server + '/' + getattr(
-                self, "testplan_doc_path")
+            testplan = "https://" + self.doc_server + '/' + self.testplan_doc_path
         else:
             testplan = "https://" + self.doc_server + '/' + self.rel_path
             testplan = testplan.replace("/dv", "/doc/dv_plan/#testplan")
@@ -583,8 +606,7 @@ class SimCfg(FlowCfg):
                     # Link the dashboard page using "cov_report_page" value.
                     if hasattr(self, "cov_report_page"):
                         results_str += "\n### [Coverage Dashboard]"
-                        results_str += "({})\n\n".format(
-                            getattr(self, "cov_report_page"))
+                        results_str += "({})\n\n".format(self.cov_report_page)
                     results_str += self.cov_report_deploy.cov_results
                     self.results_summary[
                         "Coverage"] = self.cov_report_deploy.cov_total

@@ -9,8 +9,6 @@ description: "Primitives"
 filesets:
   files_rtl:
     depend:
-      - lowrisc:prim:ram_2p # for prim_ram_2p_adv
-      - lowrisc:prim:secded # for prim_ram_2p_adv
       - lowrisc:prim:assert
       - lowrisc:prim:diff_decode # for prim_alert_sender/receiver
       - lowrisc:prim:pad_wrapper
@@ -45,8 +43,6 @@ filesets:
       - rtl/prim_subreg.sv
       - rtl/prim_subreg_ext.sv
       - rtl/prim_intr_hw.sv
-      - rtl/prim_ram_2p_adv.sv
-      - rtl/prim_ram_2p_async_adv.sv
     file_type: systemVerilogSource
 
   files_verilator_waiver:
