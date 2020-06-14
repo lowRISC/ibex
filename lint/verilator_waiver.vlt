@@ -113,7 +113,7 @@ lint_off -rule UNUSED -file "*/rtl/ibex_counters.sv" -match "*'counter_val_i'"
 // lint_off -rule UNUSED -file "*/rtl/ibex_counters.sv" -match "*'counterh_we_i'[28:*]*"
 // lint_off -rule UNUSED -file "*/rtl/ibex_counters.sv" -match "*'counter_we_i'[28:*]*"
 
-lint_off -rule UNUSED -file "*/rtl/ibex_counters.sv" -match "*counter_inc_i*"
+//lint_off -rule UNUSED -file "*/rtl/ibex_counters.sv" -match "*counter_inc_i*"
 lint_off -rule UNUSED -file "*/rtl/ibex_counters.sv" -match "*counterh_we_i*"
 lint_off -rule UNUSED -file "*/rtl/ibex_counters.sv" -match "*counter_we_i*"
 

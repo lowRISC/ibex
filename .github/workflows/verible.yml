@@ -1,0 +1,23 @@
+on: [push]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    name: Lint and Format Verilog source files with Verible (experimental)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Lint
+        uses: librecores/ci-fusesoc-action@master
+        with:
+          command: 'run'
+          core: 'lowrisc:ibex:ibex_core_tracing'
+          target: 'lint'
+          tool: veriblelint
+      - name: Format
+        uses: librecores/ci-fusesoc-action@master
+        with:
+          command: 'run'
+          core: 'lowrisc:ibex:ibex_core_tracing'
+          target: 'format'
+          tool: veribleformat
