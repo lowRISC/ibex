@@ -122,11 +122,9 @@ interface ibex_icache_core_if (input clk, input rst_n);
   // back to a covergroup.
   sequence cancelled_valid;
     @(posedge clk)
-      $rose(valid)
+      (valid & ~ready)
       ##1
-      (valid & ~ready) [*0:$]
-      ##1
-      (branch, cover_cancelled_valid());
+      (~valid, cover_cancelled_valid());
   endsequence : cancelled_valid
   cover property (cancelled_valid);
 
