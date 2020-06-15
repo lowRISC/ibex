@@ -20,9 +20,9 @@ class ibex_icache_core_back_line_seq extends ibex_icache_core_base_seq;
     // "back a bit" from the previous address.
     if (!req_phase) begin
       min_addr = base_addr;
-      max_addr = base_addr + 64;
+      max_addr = top_restricted_addr;
     end else begin
-      min_addr = last_branch - 16;
+      min_addr = last_branch < 16 ? 0 : last_branch - 16;
       max_addr = last_branch;
     end
 

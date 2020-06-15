@@ -48,6 +48,25 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
   // The base address used when constrain_branches is true.
   protected rand bit[31:0] base_addr;
 
+  // The top of the possible range of addresses used when constrain_branches is true. Set at the
+  // start of body().
+  protected bit [31:0] top_restricted_addr;
+
+  // Distribution for base_addr which adds extra weight to each end of the address space
+  constraint c_base_addr { base_addr dist { [0:15]                      :/ 1,
+                                            [16:32'hfffffff0]           :/ 2,
+                                            [32'hfffffff0:32'hffffffff] :/ 1 }; }
+
+  // Make sure that base_addr is even (otherwise you can fail to generate items if you pick a base
+  // addr of 32'hffffffff with constrained addresses enabled: the only address large enough is
+  // 32'hffffffff, but it doesn't have a zero bottom bit).
+  constraint c_base_addr_alignment {
+    // The branch address is always required to be half-word aligned. We don't bother conditioning
+    // this on the type of transaction because branch_addr is forced to be zero in anything but a
+    // branch transaction.
+    !base_addr[0];
+  }
+
   // If this is set, the next request should be constrained to have trans_type
   // ICacheCoreTransTypeBranch. It's initially 1 because the core must start with a branch to tell
   // the cache where to fetch from in the first place.
@@ -70,6 +89,10 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
     // can set initial_enable after constructing the sequence, but before running it.
     cache_enabled = initial_enable;
 
+    // If constrain_branches is true, any branch must land in [base_addr:(base_addr + 64)]. We need
+    // to make sure that this doesn't wrap, though.
+    top_restricted_addr = (base_addr <= (32'hffffffff - 64)) ? base_addr + 64 : 32'hffffffff;
+
     run_reqs();
   endtask
 
@@ -88,7 +111,15 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
 
        // If this is a branch and constrain_branches is true then constrain any branch target.
        (constrain_branches && (req.trans_type == ICacheCoreTransTypeBranch)) ->
-         req.branch_addr inside {[base_addr:(base_addr + 64)]};
+         req.branch_addr inside {[base_addr:top_restricted_addr]};
+
+       // If this is a branch and constrain_branches is false, we don't constrain the branch target,
+       // but we do weight the bottom and top of the address space a bit higher. This is a weaker
+       // version of the weighting that we place on base_addr.
+       (!constrain_branches && (req.trans_type == ICacheCoreTransTypeBranch)) ->
+         req.branch_addr dist { [0:63]                      :/ 1,
+                                [64:32'hffffffbf]           :/ 20,
+                                [32'hffffffc0:32'hffffffff] :/ 1 };
 
        // If this is a branch and constrain_branches is true, we can ask for up to 100 instructions
        // (independent of insns_since_branch)
