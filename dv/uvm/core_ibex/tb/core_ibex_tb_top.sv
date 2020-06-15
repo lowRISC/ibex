@@ -121,12 +121,12 @@ module core_ibex_tb_top;
   assign irq_vif.clock          = clk;
   assign irq_vif.reset          = ~rst_n;
   // Dut_if interface connections
-  assign dut_if.ecall           = dut.u_ibex_core.id_stage_i.ecall_insn_dec;
-  assign dut_if.wfi             = dut.u_ibex_core.id_stage_i.wfi_insn_dec;
-  assign dut_if.ebreak          = dut.u_ibex_core.id_stage_i.ebrk_insn;
-  assign dut_if.illegal_instr   = dut.u_ibex_core.id_stage_i.illegal_insn_dec;
-  assign dut_if.dret            = dut.u_ibex_core.id_stage_i.dret_insn_dec;
-  assign dut_if.mret            = dut.u_ibex_core.id_stage_i.mret_insn_dec;
+  assign dut_if.ecall           = dut.u_ibex_core.id_stage_i.controller_i.ecall_insn;
+  assign dut_if.wfi             = dut.u_ibex_core.id_stage_i.controller_i.wfi_insn;
+  assign dut_if.ebreak          = dut.u_ibex_core.id_stage_i.controller_i.ebrk_insn;
+  assign dut_if.illegal_instr   = dut.u_ibex_core.id_stage_i.controller_i.illegal_insn_d;
+  assign dut_if.dret            = dut.u_ibex_core.id_stage_i.controller_i.dret_insn;
+  assign dut_if.mret            = dut.u_ibex_core.id_stage_i.controller_i.mret_insn;
   assign dut_if.reset           = ~rst_n;
   assign dut_if.priv_mode       = dut.u_ibex_core.priv_mode_id;
   // CSR interface connections
