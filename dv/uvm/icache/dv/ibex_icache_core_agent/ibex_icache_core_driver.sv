@@ -59,11 +59,17 @@ class ibex_icache_core_driver
     // Drive the enable state
     cfg.vif.driver_cb.enable <= req.enable;
 
+    // Maybe drive the ready line high while the branch happens. This should have no effect, but is
+    // allowed by the interface so we should make sure it happens occasionally. The signal will be
+    // controlled properly by read_insns afterwards.
+    cfg.vif.driver_cb.ready <= $urandom_range(16) == 0;
+
     // Branch, invalidate and set new seed immediately. When the branch has finished, read num_insns
     // instructions and wiggle the branch_spec line until everything is done.
     fork
       begin
         cfg.vif.branch_to(req.branch_addr);
+        cfg.vif.driver_cb.ready <= 1'b0;
         fork
           read_insns(rsp, req.num_insns);
           drive_branch_spec();
