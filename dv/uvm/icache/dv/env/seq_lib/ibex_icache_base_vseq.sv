@@ -25,14 +25,25 @@ class ibex_icache_base_vseq
   ibex_icache_ecc_base_seq  ecc_tag_seqs[];
   ibex_icache_ecc_base_seq  ecc_data_seqs[];
 
+  // The number of transactions to run (passed to the core sequence). This gets randomised to
+  // something sensible by default, but can be overridden by setting it before starting the
+  // sequence.
+  rand int unsigned num_trans;
+  constraint c_num_trans { num_trans inside {[800:1000]}; }
+
   virtual task dut_init(string reset_kind = "HARD");
     super.dut_init();
   endtask
 
   virtual task pre_start();
     super.pre_start();
+
     `uvm_create_on(core_seq, p_sequencer.core_sequencer_h)
     `uvm_create_on(mem_seq, p_sequencer.mem_sequencer_h)
+
+    // Unlike the other sequences, the core sequence has a finite number of items. Set that to our
+    // number of transactions here.
+    core_seq.num_trans = num_trans;
 
     // If enable_ecc_errors then create any ECC sequences we need (one for each sequencer in
     // p_sequencer.ecc_tag_sequencers and p_sequencer.ecc_data_sequencers).

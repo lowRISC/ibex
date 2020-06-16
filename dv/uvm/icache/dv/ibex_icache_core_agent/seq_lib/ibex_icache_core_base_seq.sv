@@ -40,10 +40,11 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
   // The expected number of items between enable/disable toggles.
   int unsigned gap_between_toggle_enable = 49;
 
-
   // Number of test items (note that a single test item may contain many instruction fetches)
-  protected rand int count;
-  constraint c_count { count inside {[800:1000]}; }
+  //
+  // The default value is for convenience. This should be constrained by whatever virtual sequence
+  // is using the core sequence.
+  int unsigned num_trans = 1000;
 
   // The base address used when constrain_branches is true.
   protected rand bit[31:0] base_addr;
@@ -169,13 +170,13 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
                           req.num_insns);
   endtask
 
-  // Generate and run count items. Subclasses probably want to configure the parameters above before
+  // Generate and run num_trans items. Subclasses probably want to configure the parameters above before
   // running this.
   protected task run_reqs();
     req = ibex_icache_core_req_item::type_id::create("req");
     rsp = ibex_icache_core_rsp_item::type_id::create("rsp");
 
-    repeat (count - 1) begin
+    repeat (num_trans - 1) begin
       run_req(req, rsp);
     end
   endtask
