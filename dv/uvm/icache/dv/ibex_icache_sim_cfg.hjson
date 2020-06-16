@@ -79,7 +79,6 @@
     {
       name: ibex_icache_many_errors
       uvm_test_seq: ibex_icache_many_errors_vseq
-      uvm_test: ibex_icache_many_errors_test
     }
 
     {
