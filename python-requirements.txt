@@ -16,3 +16,6 @@ premailer
 
 # Recurse to get any requirements from riscv-dv
 -r vendor/google_riscv-dv/requirements.txt
+
+# Documentation build requirements
+-r doc/requirements.txt
