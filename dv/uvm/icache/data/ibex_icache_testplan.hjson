@@ -123,12 +123,12 @@
 
     {
       name: stress_all
-      desc: '''Run a pair of sequences back-to-back
+      desc: '''Run sequences back-to-back
 
             Tests are selected from the sequences above. With 50% probability,
             reset between the sequences.'''
       milestone: V2
-      tests: []
+      tests: ["ibex_icache_stress_all"]
     }
 
     {
