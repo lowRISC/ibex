@@ -17,4 +17,17 @@ class ibex_icache_ecc_vseq extends ibex_icache_caching_vseq;
     super.pre_start();
   endtask : pre_start
 
+  // Wrap the underlying body, setting the disable_caching_ratio_test flag to tell the scoreboard
+  // not to track cache hit ratios. This test corrupts data in the ICache's memory. The corruptions
+  // are spotted, and behave as if the cache missed. This (obviously) lowers the cache hit rate, so
+  // we don't want the test to make sure it's high enough.
+  virtual task body();
+    bit old_dcrt = p_sequencer.cfg.disable_caching_ratio_test;
+    p_sequencer.cfg.disable_caching_ratio_test = 1'b1;
+
+    super.body();
+
+    p_sequencer.cfg.disable_caching_ratio_test = old_dcrt;
+  endtask : body
+
 endclass : ibex_icache_ecc_vseq

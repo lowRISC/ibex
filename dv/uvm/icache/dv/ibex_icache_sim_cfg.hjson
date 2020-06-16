@@ -85,7 +85,6 @@
     {
       name: ibex_icache_ecc
       uvm_test_seq: ibex_icache_ecc_vseq
-      uvm_test: ibex_icache_ecc_test
     }
   ]
 
