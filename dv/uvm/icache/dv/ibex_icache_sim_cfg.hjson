@@ -58,7 +58,7 @@
   tests: [
     {
       name: ibex_icache_sanity
-      uvm_test_seq: ibex_icache_sanity_vseq
+      uvm_test_seq: ibex_icache_base_vseq
     }
 
     {
