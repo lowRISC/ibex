@@ -119,8 +119,7 @@ class ibex_icache_scoreboard
     seed_fifo = new("seed_fifo", this);
     mem_model = new("mem_model",
                     cfg.mem_agent_cfg.disable_pmp_errs,
-                    cfg.mem_agent_cfg.disable_mem_errs,
-                    cfg.mem_agent_cfg.mem_err_shift);
+                    cfg.mem_agent_cfg.disable_mem_errs);
   endfunction
 
   task run_phase(uvm_phase phase);
@@ -406,7 +405,8 @@ class ibex_icache_scoreboard
 
     return is_fetch_compatible_1(seen_insn_data,
                                  seen_err,
-                                 mem_model.is_either_error(seed, addr_lo),
+                                 mem_model.is_either_error(seed, addr_lo,
+                                                           cfg.mem_agent_cfg.mem_err_shift),
                                  rdata[31:0],
                                  seed,
                                  chatty);
@@ -445,13 +445,13 @@ class ibex_icache_scoreboard
     lo_bits_to_drop = BusWidth - lo_bits_to_take;
 
     // Do the first read (from the low address) and shift right to drop the bits that we don't need.
-    exp_err_lo = mem_model.is_either_error(seed_lo, addr_lo);
+    exp_err_lo = mem_model.is_either_error(seed_lo, addr_lo, cfg.mem_agent_cfg.mem_err_shift);
     rdata      = mem_model.read_data(seed_lo, addr_lo) >> lo_bits_to_drop;
     exp_data   = rdata[31:0];
 
     // Now do the second read (from the upper address). Shift the result up by lo_bits_to_take,
     // which will discard some top bits. Then extract 32 bits and OR with what we have so far.
-    exp_err_hi = mem_model.is_either_error(seed_hi, addr_hi);
+    exp_err_hi = mem_model.is_either_error(seed_hi, addr_hi, cfg.mem_agent_cfg.mem_err_shift);
     rdata      = mem_model.read_data(seed_hi, addr_hi) << lo_bits_to_take;
     exp_data   = exp_data | rdata[31:0];
 
