@@ -26,7 +26,7 @@ class ibex_icache_scoreboard
   ibex_icache_mem_model #(BusWidth) mem_model;
 
   // A queue of memory seeds.
-  bit [31:0]   mem_seeds[$];
+  bit [31:0]   mem_seeds[$] = {32'd0};
 
   // Tracks the next address we expect to see on a fetch. This gets reset to 'X, then is set to an
   // address after each branch transaction.
@@ -129,6 +129,7 @@ class ibex_icache_scoreboard
       process_core_fifo();
       process_mem_fifo();
       process_seed_fifo();
+      monitor_negedge_reset();
     join_none
   endtask
 
@@ -204,6 +205,9 @@ class ibex_icache_scoreboard
       mem_fifo.get(item);
       `uvm_info(`gfn, $sformatf("received mem transaction:\n%0s", item.sprint()), UVM_HIGH)
 
+      // Looks like we are in reset. Discard the item.
+      if (!cfg.clk_rst_vif.rst_n) continue;
+
       if (item.is_grant) begin
         mem_trans_count += 1;
         window_take_mem_read();
@@ -224,10 +228,27 @@ class ibex_icache_scoreboard
     end
   endtask
 
-  virtual function void reset(string kind = "HARD");
-    super.reset(kind);
+  // Trigger start_reset on every negedge of the reset line. Never returns.
+  task monitor_negedge_reset();
+    forever begin
+      @(negedge cfg.clk_rst_vif.rst_n) start_reset();
+    end
+  endtask
+
+  // A function called on negedge of rst_n (unlike reset(), from the base class, which is called on
+  // the following posedge and which we don't use)
+  function void start_reset();
+    window_reset();
     next_addr = 'X;
-    mem_seeds = {32'd0};
+
+    // Throw away any old seeds
+    invalidate_seed = mem_seeds.size - 1;
+    mem_seeds = mem_seeds[invalidate_seed:$];
+    invalidate_seed = 0;
+    last_branch_seed = 0;
+
+    // Forget about any pending bus transactions (they've been thrown away anyway)
+    mem_trans_count = 0;
   endfunction
 
   function void check_phase(uvm_phase phase);

@@ -24,8 +24,8 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
   // To avoid this problem, we keep a queue of pending addresses along with their corresponding
   // seeds. When a grant message comes in, we know that we can look up the correct seed there,
   // discarding results until we find it.
-  protected bit [63:0] pending_grants[$];
-  protected bit [31:0] cur_seed = 0;
+  bit [63:0] pending_grants[$];
+  bit [31:0] cur_seed = 0;
 
   `uvm_object_utils(ibex_icache_mem_resp_seq)
   `uvm_object_new
@@ -37,17 +37,25 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
 
   task body();
     ibex_icache_mem_req_item  req_item  = new("req_item");
+    ibex_icache_mem_req_item  req_item2 = new("req_item2");
     ibex_icache_mem_resp_item resp_item = new("resp_item");
 
     forever begin
-      // Wait for a transaction request.
-      p_sequencer.request_fifo.get(req_item);
+      // Wait for a transaction request. We use peek, handle the request, and then get (and drop)
+      // the item. This means that if our sequence is killed in the middle of handling it, the item
+      // will still be passed from the monitor to any later sequence.
+      p_sequencer.request_fifo.get_peek_export.peek(req_item);
 
       if (!req_item.is_grant) begin
         take_req(resp_item, req_item);
       end else begin
         take_gnt(resp_item, req_item);
       end
+
+      // Get and drop the request item now that we've dealt with it. As a sanity check, make sure
+      // that the two items match.
+      p_sequencer.request_fifo.get_peek_export.get(req_item2);
+      `DV_CHECK_EQ_FATAL(req_item, req_item2)
     end
   endtask
 

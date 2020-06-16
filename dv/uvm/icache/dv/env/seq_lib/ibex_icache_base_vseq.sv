@@ -78,6 +78,11 @@ class ibex_icache_base_vseq
       join
     join_any
 
+    // The core sequence has finished. Kill all the other sequences
+    mem_seq.kill();
+    foreach (ecc_tag_seqs[i]) ecc_tag_seqs[i].kill();
+    foreach (ecc_data_seqs[i]) ecc_data_seqs[i].kill();
+
   endtask : body
 
   // Randomize and then run a given (never ending) ECC sequence on the given sequencer. Returns
