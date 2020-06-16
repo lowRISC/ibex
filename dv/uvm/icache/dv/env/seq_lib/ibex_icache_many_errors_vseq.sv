@@ -17,4 +17,14 @@ class ibex_icache_many_errors_vseq extends ibex_icache_base_vseq;
 
   endtask : pre_start
 
+  // Increase the error rate (to roughly 50%) for this sequence.
+  virtual task body();
+    int unsigned old_shift = p_sequencer.cfg.mem_agent_cfg.mem_err_shift;
+    p_sequencer.cfg.mem_agent_cfg.mem_err_shift = 1;
+
+    super.body();
+
+    p_sequencer.cfg.mem_agent_cfg.mem_err_shift = old_shift;
+  endtask : body
+
 endclass : ibex_icache_many_errors_vseq
