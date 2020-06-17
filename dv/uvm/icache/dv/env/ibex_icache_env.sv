@@ -113,8 +113,8 @@ class ibex_icache_env extends dv_base_env #(
     // is triggered.
     heartbeat.start(hb_event);
     forever begin
-      // Every 2000 clocks, check the heartbeat monitor
-      cfg.core_agent_cfg.vif.wait_clks(2000);
+      // Every 2000 clocks, check the heartbeat monitor (not stopping early on reset)
+      cfg.core_agent_cfg.vif.wait_clks(2000, 1'b0);
       hb_event.trigger();
     end
   endtask

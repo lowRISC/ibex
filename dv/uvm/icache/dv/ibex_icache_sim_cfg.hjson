@@ -90,6 +90,11 @@
       name: ibex_icache_stress_all
       uvm_test_seq: ibex_icache_combo_vseq
     }
+
+    {
+      name: ibex_icache_stress_all_with_reset
+      uvm_test_seq: ibex_icache_reset_vseq
+    }
   ]
 
   // List of regressions.
@@ -103,7 +108,8 @@
               "ibex_icache_back_line",
               "ibex_icache_many_errors",
               "ibex_icache_ecc",
-              "ibex_icache_stress_all"]
+              "ibex_icache_stress_all",
+              "ibex_icache_stress_all_with_reset"]
     }
   ]
 }

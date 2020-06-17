@@ -27,6 +27,10 @@ class ibex_icache_combo_vseq
                         "ibex_icache_many_errors_vseq",
                         "ibex_icache_passthru_vseq"};
 
+  // If this is set, occasionally reset the DUT and start a new sequence at a time that the core
+  // sequence wouldn't normally expect.
+  bit random_reset = 1'b0;
+
   // How many sequences have we executed so far?
   int unsigned seqs_so_far = 0;
 
@@ -53,7 +57,13 @@ class ibex_icache_combo_vseq
       // little.
       trans_now = $urandom_range(50, 100);
 
-      should_reset = $urandom_range(0, 1);
+      // We don't need to reset if seq_idx == 0 (because we did a reset before starting this task).
+      // Otherwise, we always reset between sequences if random_reset is true. We'd always need to
+      // if we killed the previous sequence, and it's easier not to bother tracking properly. If
+      // random_reset is false (the usual back-to-back sequence test), we reset 1 time in 2.
+      if (seq_idx == 0) should_reset = 1'b0;
+      else if (random_reset) should_reset = 1'b1;
+      else should_reset = $urandom_range(0, 1);
 
       `uvm_info(`gfn,
                 $sformatf("Running sequence '%s' (%0d transactions; reset=%0d).",
@@ -70,12 +80,49 @@ class ibex_icache_combo_vseq
       child_seq.do_dut_init = should_reset;
       child_seq.prev_sequence = prev_seq;
 
-      child_seq.start(p_sequencer, this);
+      // The memory agent is careful to avoid consuming requests from its sequencer's request_fifo
+      // until it has handled them. This is important if we're not resetting (it essentially allows
+      // the sequence to change under the feet of the rest of the environment without it noticing),
+      // but we need to make sure we discard any pending requests on an actual reset. Do that here.
+      if (should_reset && seqs_so_far > 0) begin
+        p_sequencer.mem_sequencer_h.request_fifo.flush();
+      end
+
+      run_sequence();
 
       prev_seq = child_seq;
       trans_so_far += trans_now;
       seqs_so_far  += 1;
     end
   endtask : body
+
+  // Run a sequence. If random_reset = 0, this will run to completion. Otherwise, the sequence may
+  // be stopped early.
+  protected task run_sequence();
+    int unsigned cycles_till_reset;
+    bit          reached_timeout = 1'b0;
+
+    if (!random_reset) begin
+      child_seq.start(p_sequencer, this);
+    end else begin
+      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(cycles_till_reset,
+                                         cycles_till_reset dist {
+                                           [100:500]  :/ 1,
+                                           [501:1000] :/ 4
+                                         };)
+      fork
+        child_seq.start(p_sequencer, this);
+        begin
+          repeat (cycles_till_reset) @(cfg.clk_rst_vif.cb);
+          reached_timeout = 1'b1;
+        end
+      join_any
+    end
+
+    if (reached_timeout) child_seq.kill();
+
+    // Kill the timer process if it's still going.
+    disable fork;
+  endtask : run_sequence
 
 endclass : ibex_icache_combo_vseq
