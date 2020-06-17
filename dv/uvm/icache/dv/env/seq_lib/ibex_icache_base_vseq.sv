@@ -28,8 +28,7 @@ class ibex_icache_base_vseq
   // The number of transactions to run (passed to the core sequence). This gets randomised to
   // something sensible by default, but can be overridden by setting it before starting the
   // sequence.
-  rand int unsigned num_trans;
-  constraint c_num_trans { num_trans inside {[800:1000]}; }
+  constraint num_trans_c { num_trans inside {[800:1000]}; }
 
   virtual task dut_init(string reset_kind = "HARD");
     super.dut_init();
