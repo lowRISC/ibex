@@ -260,7 +260,7 @@ class ibex_icache_scoreboard
         if (chatty) begin
           `uvm_info(`gfn,
                     $sformatf("Not seed 0x%08h: expected seen_err but saw 0.", seed),
-                    UVM_MEDIUM)
+                    UVM_LOW)
         end
         return 0;
       end
@@ -276,7 +276,7 @@ class ibex_icache_scoreboard
       if (chatty) begin
         `uvm_info(`gfn,
                   $sformatf("Not seed 0x%08h: got unexpected error flag.", seed),
-                  UVM_MEDIUM)
+                  UVM_LOW)
       end
       return 0;
     end
@@ -289,7 +289,7 @@ class ibex_icache_scoreboard
                     $sformatf("Not seed 0x%08h (expected cmp 0x(%04h)%04h; saw 0x(%04h)%04h).",
                               seed, exp_insn_data[31:16], exp_insn_data[15:0],
                               seen_insn_data[31:16], seen_insn_data[15:0]),
-                    UVM_MEDIUM)
+                    UVM_LOW)
         end
         return 0;
       end
@@ -299,7 +299,7 @@ class ibex_icache_scoreboard
           `uvm_info(`gfn,
                     $sformatf("Not seed 0x%08h (expected uncomp 0x%08h; saw 0x%08h).",
                               seed, exp_insn_data, seen_insn_data),
-                    UVM_MEDIUM)
+                    UVM_LOW)
         end
         return 0;
       end
@@ -334,7 +334,7 @@ class ibex_icache_scoreboard
         `uvm_info(`gfn,
                   $sformatf("Not seeds 0x%08h/0x%08h (expected error in low word).",
                             seed_lo, seed_hi),
-                  UVM_MEDIUM)
+                  UVM_LOW)
       end
       return 0;
     end
@@ -344,7 +344,7 @@ class ibex_icache_scoreboard
         `uvm_info(`gfn,
                   $sformatf("Not seeds 0x%08h/0x%08h (exp/seen top errors %0d/%0d).",
                             seed_lo, seed_hi, exp_err_hi, seen_err_plus2),
-                  UVM_MEDIUM)
+                  UVM_LOW)
       end
       return 0;
     end
@@ -354,7 +354,7 @@ class ibex_icache_scoreboard
         `uvm_info(`gfn,
                   $sformatf("Match for seeds 0x%08h/0x%08h (seen upper error).",
                             seed_lo, seed_hi),
-                  UVM_MEDIUM)
+                  UVM_LOW)
       end
       return 1'b1;
     end
@@ -365,7 +365,7 @@ class ibex_icache_scoreboard
         `uvm_info(`gfn,
                   $sformatf("Not seeds 0x%08h/0x%08h (exp/seen data 0x%08h/0x%08h).",
                             seed_lo, seed_hi, exp_insn_data, seen_insn_data),
-                  UVM_MEDIUM)
+                  UVM_LOW)
       end
       return 0;
     end
