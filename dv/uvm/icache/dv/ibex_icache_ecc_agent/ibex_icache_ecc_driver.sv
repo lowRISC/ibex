@@ -16,7 +16,7 @@ class ibex_icache_ecc_driver
   virtual task get_and_drive();
     forever begin
       seq_item_port.get_next_item(req);
-      `uvm_info(`gfn, $sformatf("rcvd item:\n%0s", req.sprint()), UVM_LOW)
+      `uvm_info(`gfn, $sformatf("rcvd item:\n%0s", req.sprint()), UVM_HIGH)
 
       cfg.vif.wait_reads(req.delay);
       if (req.two_bits) begin
