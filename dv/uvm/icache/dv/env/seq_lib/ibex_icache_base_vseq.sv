@@ -30,10 +30,6 @@ class ibex_icache_base_vseq
   // sequence.
   constraint num_trans_c { num_trans inside {[800:1000]}; }
 
-  virtual task dut_init(string reset_kind = "HARD");
-    super.dut_init();
-  endtask
-
   virtual task pre_start();
     super.pre_start();
 
@@ -91,11 +87,6 @@ class ibex_icache_base_vseq
     fork begin
       seq.start(sqr);
     end join_none
-  endtask
-
-  virtual task dut_shutdown();
-    // check for pending ibex_icache operations and wait for them to complete
-    // TODO
   endtask
 
 endclass : ibex_icache_base_vseq
