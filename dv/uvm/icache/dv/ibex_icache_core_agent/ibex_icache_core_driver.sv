@@ -108,7 +108,8 @@ class ibex_icache_core_driver
     cfg.vif.driver_cb.enable <= req.enable;
 
     // Lower req, invalidate and set new seed immediately. After req_low_cycles cycles, start
-    // reading instructions. Wiggle the branch_spec line the whole time.
+    // reading instructions (providing there hasn't been a reset). Wiggle the branch_spec line the
+    // whole time.
     fork
       begin
         fork
@@ -116,7 +117,7 @@ class ibex_icache_core_driver
           if (req.invalidate) invalidate();
           if (req.new_seed != 0) drive_new_seed(req.new_seed);
         join
-        read_insns(rsp, req.num_insns);
+        if (cfg.vif.rst_n) read_insns(rsp, req.num_insns);
       end
       drive_branch_spec();
     join_any
@@ -136,6 +137,8 @@ class ibex_icache_core_driver
         rsp.saw_error = 1'b1;
         break;
       end
+      // Return early on reset
+      if (!cfg.vif.rst_n) break;
     end
   endtask
 
@@ -151,30 +154,34 @@ class ibex_icache_core_driver
   virtual task automatic read_insn();
     int unsigned delay;
 
-    // Maybe (1 time in 10) wait for a valid signal before even considering asserting ready.
-    if ($urandom_range(9) == 0)
-      wait (cfg.vif.driver_cb.valid);
+    // Maybe (1 time in 10) wait for a valid signal before even considering asserting ready. Stops
+    // early on reset.
+    if ($urandom_range(9) == 0) begin
+      cfg.vif.wait_valid();
+      if (!cfg.vif.rst_n)
+        return;
+    end
 
     // Then pick how long we wait before asserting that we are ready.
     //
     // TODO: Make this configurable and weight 0 more heavily.
     cfg.vif.wait_clks($urandom_range(3));
 
-    // Assert ready and then wait until valid
+    // Assert ready and then wait until valid. If we see a reset, we stop early
     cfg.vif.driver_cb.ready <= 1'b1;
     while (1'b1) begin
-      @(cfg.vif.driver_cb);
-      if (cfg.vif.driver_cb.valid)
+      @(cfg.vif.driver_cb or negedge cfg.vif.rst_n);
+      if (cfg.vif.driver_cb.valid || !cfg.vif.rst_n)
         break;
     end
 
     cfg.vif.driver_cb.ready <= 1'b0;
   endtask
 
-  // Lower the req line for the given number of cycles
+  // Lower the req line for the given number of cycles. Returns early on reset
   virtual task automatic lower_req(int unsigned num_cycles);
     cfg.vif.driver_cb.req <= 1'b0;
-    repeat (num_cycles) @(cfg.vif.driver_cb);
+    cfg.vif.wait_clks(num_cycles);
     cfg.vif.driver_cb.req <= 1'b1;
   endtask
 

@@ -138,7 +138,7 @@
             Tests are selected from the sequences above. Add occasional
             resets (in the middle of sequences)'''
       milestone: V2
-      tests: []
+      tests: ["ibex_icache_stress_all_with_reset"]
     }
   ]
 }
