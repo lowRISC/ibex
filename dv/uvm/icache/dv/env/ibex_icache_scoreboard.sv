@@ -604,7 +604,7 @@ class ibex_icache_scoreboard
 
   // Register an instruction fetch with the caching tracking window
   function automatic void window_take_insn(bit [31:0] addr, bit err);
-    bit [31:0]   window_width;
+    bit [32:0]   window_width;
     int unsigned fetch_ratio_pc;
 
     // Ignore instructions if this check is disabled in the configuration
@@ -628,14 +628,14 @@ class ibex_icache_scoreboard
     // We have a full window. Has the address range been sufficiently small? The fatal check is for
     // the scoreboard logic: this should hold true as soon as we've seen an instruction.
     `DV_CHECK_LE_FATAL(window_range_lo, window_range_hi);
-    window_width = (window_range_hi - window_range_lo + 3) / 4;
+    window_width = ({1'b0, window_range_hi} - {1'b0, window_range_lo} + 33'd3) / 4;
 
     `uvm_info(`gfn,
               $sformatf("Completed window with %0d insns and %0d reads, range [0x%08h, 0x%08h].",
                         insns_in_window, reads_in_window, window_range_lo, window_range_hi),
               UVM_HIGH)
 
-    if (window_width <= max_window_width) begin
+    if (window_width[31:0] <= max_window_width) begin
       // The range has been small enough, so we can actually check whether the caching is working.
       // Calculate the R we've seen (as a percentage).
       fetch_ratio_pc = (reads_in_window * 100 * 7 / 4) / insns_in_window;
@@ -646,7 +646,7 @@ class ibex_icache_scoreboard
                            "%0d instructions and address range [0x%08h, 0x%08h] ",
                            "(window width %0d)"},
                           fetch_ratio_pc, insns_in_window,
-                          window_range_lo, window_range_hi, window_width))
+                          window_range_lo, window_range_hi, window_width[31:0]))
     end
 
     // Start the next window
