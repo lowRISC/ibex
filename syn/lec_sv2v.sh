@@ -7,7 +7,8 @@
 # This script converts all SystemVerilog RTL files to Verilog
 # using sv2v and then runs LEC (Cadence Conformal) to check if
 # the generated Verilog is logically equivalent to the original
-# SystemVerilog.  This script is similar to:
+# SystemVerilog.  A similar script is used in OpenTitan, any updates 
+# or fixes here may need to be reflected in the OpenTitan script as well
 # https://github.com/lowRISC/opentitan/blob/master/util/syn_yosys.sh
 #
 # The following tools are required:
@@ -20,14 +21,14 @@
 #-------------------------------------------------------------------------
 # use fusesoc to generate files and file list
 #-------------------------------------------------------------------------
-rm -Rf build syn_out
+rm -Rf build lec_out
 fusesoc --cores-root .. run --tool=icarus --target=lint \
   --setup "lowrisc:ibex:ibex_core" > /dev/null 2>&1
 
-# copy all files to syn_out
-mkdir syn_out
-cp build/*/src/*/*.sv build/*/src/*/*/*.sv syn_out
-cd syn_out
+# copy all files to lec_out
+mkdir lec_out
+cp build/*/src/*/*.sv build/*/src/*/*/*.sv lec_out
+cd lec_out
 
 # copy file list and remove incdir, RVFI define, and sim-file
 egrep -v 'incdir|RVFI|simulator_ctrl' ../build/*/*/*.scr > flist_gold
@@ -47,13 +48,6 @@ for file in *.sv; do
   module=`basename -s .sv $file`
   sv2v --define=SYNTHESIS *_pkg.sv prim_assert.sv $file > ${module}.v
 done
-
-# TODO: sv2v currently converts '0 to 1'sb0 and '1 to 1'sb1. The latter
-# is wrong for multi-bit assignments. And the former causes LEC issues
-# if it drives multi-bit inputs (the upper bits of the inputs are undriven)
-# convert 1'sb0 to 'd0 and 1'sb1 to -'sd1 (note that -1 is all-ones)
-sed -i "s/(1'sb0)/('d0)/" *.v
-sed -i "s/(1'sb1)/(-'sd1)/" *.v
 
 # remove *pkg.v files (they are empty files and not needed)
 rm -f *_pkg.v prim_assert.v prim_util_memload.v
