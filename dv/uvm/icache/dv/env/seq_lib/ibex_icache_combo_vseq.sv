@@ -30,25 +30,11 @@ class ibex_icache_combo_vseq
   // How many sequences have we executed so far?
   int unsigned seqs_so_far = 0;
 
-  // State that needs ferrying between successive sequences: valid if seqs_so_far > 0
-  bit [63:0]   pending_grants[$];
-  bit [31:0]   cur_seed;
-
   // The child (virtual) sequence
   ibex_icache_base_vseq child_seq;
 
-  task pre_do (bit is_item);
-    super.pre_do(is_item);
-
-    // This is called after running pre_start in our child sequences (which means they have created
-    // their children), but before they start. If seqs_so_far > 0 then we need to update the
-    // grandchild memory sequence with pending_grants and cur_seed.
-    if (seqs_so_far > 0) begin
-      child_seq.mem_seq.pending_grants = pending_grants;
-      child_seq.mem_seq.cur_seed = cur_seed;
-    end
-
-  endtask : pre_do
+  // The previous sequence that we ran.
+  ibex_icache_base_vseq prev_seq = null;
 
   task body();
     int unsigned trans_so_far = 0;
@@ -82,18 +68,14 @@ class ibex_icache_combo_vseq
 
       child_seq.num_trans = trans_now;
       child_seq.do_dut_init = should_reset;
+      child_seq.prev_sequence = prev_seq;
 
       child_seq.start(p_sequencer, this);
 
-      // Once the sequence has finished, there might be some stray memory requests which haven't yet
-      // been granted. Grab them to pass to the next sequencer.
-      pending_grants = child_seq.mem_seq.pending_grants;
-      cur_seed       = child_seq.mem_seq.cur_seed;
-
+      prev_seq = child_seq;
       trans_so_far += trans_now;
       seqs_so_far  += 1;
     end
   endtask : body
-
 
 endclass : ibex_icache_combo_vseq
