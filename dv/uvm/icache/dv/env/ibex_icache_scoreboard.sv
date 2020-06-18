@@ -124,7 +124,7 @@ class ibex_icache_scoreboard
 
   task run_phase(uvm_phase phase);
     super.run_phase(phase);
-    window_reset();
+    tracking_reset();
     fork
       process_core_fifo();
       process_mem_fifo();
@@ -235,10 +235,8 @@ class ibex_icache_scoreboard
     end
   endtask
 
-  // A function called on negedge of rst_n (unlike reset(), from the base class, which is called on
-  // the following posedge and which we don't use)
+  // A function called on negedge of rst_n
   function void start_reset();
-    window_reset();
     next_addr = 'X;
 
     // Throw away any old seeds
@@ -249,6 +247,12 @@ class ibex_icache_scoreboard
 
     // Forget about any pending bus transactions (they've been thrown away anyway)
     mem_trans_count = 0;
+  endfunction
+
+  // Called on the posedge of rst_n which ends the reset period.
+  function void reset(string kind = "HARD");
+    super.reset(kind);
+    tracking_reset();
   endfunction
 
   function void check_phase(uvm_phase phase);
@@ -608,11 +612,17 @@ class ibex_icache_scoreboard
     end
   endtask
 
+  // Completely reset cache tracking, waiting for busy to drop to be certain that invalidation is
+  // done
+  function automatic void tracking_reset();
+    not_invalidating = 1'b0;
+    window_reset();
+  endfunction
+
   // Reset the caching tracking window
   function automatic void window_reset();
     insns_in_window = 0;
     reads_in_window = 0;
-    not_invalidating = 1'b0;
     window_range_lo = ~(31'b0);
     window_range_hi = 0;
   endfunction
@@ -628,10 +638,13 @@ class ibex_icache_scoreboard
     bit [32:0]   window_width;
     int unsigned fetch_ratio_pc;
 
-    // Ignore instructions if this check is disabled in the configuration
-    if (cfg.disable_caching_ratio_test) return;
-
-    if (err) begin
+    // Ignore instructions and reset the window if this check is disabled in the configuration.
+    // Resetting the window each time avoids cases where we run an ECC sequence for a while (where
+    // the check should be disabled), then switch to a normal sequence (where the check should be
+    // enabled) just before the window finishes.
+    //
+    // Similarly, bail on an error since that would significantly lower the cache hit ratio.
+    if (err || cfg.disable_caching_ratio_test) begin
       window_reset();
       return;
     end
