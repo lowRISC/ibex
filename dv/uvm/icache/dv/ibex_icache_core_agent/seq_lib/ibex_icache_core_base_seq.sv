@@ -12,6 +12,10 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
 
   `uvm_object_new
 
+  // Non-null if this is an item after the first in a "combo" run, which runs several of these
+  // sequences back-to-back. Must be set before pre_start to have any effect.
+  ibex_icache_core_base_seq prev_sequence = null;
+
   // If this is set, any branch target address should be within 64 bytes of base_addr and runs of
   // instructions should have a maximum length of 100.
   bit constrain_branches = 1'b0;
@@ -24,7 +28,11 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
   // setting.
   bit const_enable = 1'b0;
 
-  // If this bit is set, we will never invalidate the cache (useful for hit ratio tracking)
+  // If this bit is set, the next request will invalidate the cache.
+  bit must_invalidate = 1'b0;
+
+  // If this bit is set, we will never invalidate the cache (useful for hit ratio tracking), except
+  // if must_invalidate is set.
   bit no_invalidate = 1'b0;
 
   // The expected number of items between each new memory seed when the cache is disabled. A new
@@ -139,8 +147,12 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
        // fetches)
        enable dist { cache_enabled :/ gap_between_toggle_enable, ~cache_enabled :/ 1 };
 
-       // If no_invalidate is set, we shouldn't ever touch the invalidate line.
-       no_invalidate -> invalidate == 1'b0;
+       // If must_invalidate is set, we have to invalidate with this item.
+       must_invalidate -> invalidate == 1'b1;
+
+       // If no_invalidate is set, we shouldn't ever touch the invalidate line, unless
+       // must_invalidate is set (which will only apply once).
+       (no_invalidate && !must_invalidate) -> invalidate == 1'b0;
 
        // Start an invalidation every 1+gap_between_invalidations items.
        invalidate dist { 1'b0 :/ gap_between_invalidations, 1'b1 :/ 1 };
@@ -178,6 +190,9 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
 
     repeat (num_trans - 1) begin
       run_req(req, rsp);
+
+      // Always clear the must_invalidate flag after an item (it's a 1-shot thing)
+      must_invalidate = 1'b0;
     end
   endtask
 

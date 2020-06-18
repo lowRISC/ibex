@@ -6,7 +6,9 @@
 
 class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
 
-  // Knobs
+  // Non-null if this is an item after the first in a "combo" run, which runs several of these
+  // sequences back-to-back. Must be set before pre_start to have any effect.
+  ibex_icache_mem_resp_seq prev_sequence = null;
 
   protected ibex_icache_mem_model #(.BusWidth (32)) mem_model;
 
@@ -33,6 +35,12 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
   task pre_start();
     super.pre_start();
     mem_model = new("mem_model", cfg.disable_pmp_errs, cfg.disable_mem_errs);
+
+    // Take any pending grants and seed from a previous sequence
+    if (prev_sequence) begin
+      pending_grants = prev_sequence.pending_grants;
+      cur_seed = prev_sequence.cur_seed;
+    end
   endtask
 
   task body();

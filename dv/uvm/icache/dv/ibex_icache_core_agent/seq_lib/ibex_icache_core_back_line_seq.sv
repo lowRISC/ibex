@@ -39,9 +39,9 @@ class ibex_icache_core_back_line_seq extends ibex_icache_core_base_seq;
        // of jumping back when the cache isn't ready yet).
        num_insns <= 5;
 
-       // The cache should always be enabled and never invalidated
+       // The cache should always be enabled and never invalidated (unless must_invalidate is true)
        enable == 1'b1;
-       invalidate == 1'b0;
+       invalidate == must_invalidate;
     )
 
     finish_item(req);
