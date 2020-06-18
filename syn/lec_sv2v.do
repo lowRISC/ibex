@@ -2,7 +2,9 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-// LEC dofile for script lec_sv2v.sh.  This script is similar to:
+// LEC dofile for script lec_sv2v.sh.  A similar script is used in 
+// OpenTitan, any updates or fixes here may need to be reflected in the 
+// OpenTitan script as well:
 // https://github.com/lowRISC/opentitan/blob/master/hw/formal/lec_sv2v.do
 
 //-------------------------------------------------------------------------
