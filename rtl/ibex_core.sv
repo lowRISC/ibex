@@ -353,8 +353,17 @@ module ibex_core #(
       core_busy_q <= core_busy_d;
     end
   end
+  // capture fetch_enable_i in fetch_enable_q, once for ever
+  logic fetch_enable_q;
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      fetch_enable_q <= 1'b0;
+    end else if (fetch_enable_i) begin
+      fetch_enable_q <= 1'b1;
+    end
+  end
 
-  assign clock_en     = core_busy_q | debug_req_i | irq_pending | irq_nm_i;
+  assign clock_en     = fetch_enable_q & (core_busy_q | debug_req_i | irq_pending | irq_nm_i);
   assign core_sleep_o = ~clock_en;
 
   // main clock gate of the core
@@ -460,7 +469,6 @@ module ibex_core #(
       .rst_ni                       ( rst_ni                   ),
 
       // Processor Enable
-      .fetch_enable_i               ( fetch_enable_i           ),
       .ctrl_busy_o                  ( ctrl_busy                ),
       .illegal_insn_o               ( illegal_insn_id          ),
 
