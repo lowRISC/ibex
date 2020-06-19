@@ -19,7 +19,6 @@ filesets:
 targets:
   sim:
     parameters:
-      - ICacheECC
       - PRIM_DEFAULT_IMPL=prim_pkg::ImplBadbit
     filesets:
       - files_rtl
@@ -28,12 +27,6 @@ targets:
     default_tool: vcs
 
 parameters:
-  ICacheECC:
-    datatype: int
-    default: 0
-    paramtype: vlogparam
-    description: "Enable ECC protection in instruction cache"
-
   PRIM_DEFAULT_IMPL:
     datatype: str
     paramtype: vlogdefine
