@@ -9,8 +9,10 @@ filesets:
     depend:
       - lowrisc:dv:dv_utils
       - lowrisc:dv:dv_lib
+      - lowrisc:prim:assert
     files:
       - ibex_icache_ecc_if.sv
+      - ibex_icache_ecc_protocol_checker.sv
       - ibex_icache_ecc_agent_pkg.sv
       - ibex_icache_ecc_item.sv: {is_include_file: true}
       - ibex_icache_ecc_bus_item.sv: {is_include_file: true}

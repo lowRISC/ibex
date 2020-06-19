@@ -63,10 +63,12 @@ module prim_badbit_ram_1p #(
   logic [31:0] width;
   assign width = Width;
 
-  // Similarly, extend addr and sram_rdata (the un-fiddled value)
+  // Similarly, extend addr, wdata, wmask and sram_rdata (the un-fiddled value)
   logic [31:0]  addr;
-  logic [127:0] rdata;
+  logic [127:0] wdata, wmask, rdata;
   assign addr  = {{32-Aw{1'b0}}, addr_i};
+  assign wdata = {{128-Width{1'b0}}, wdata_i};
+  assign wmask = {{128-Width{1'b0}}, wmask_i};
   assign rdata = {{128-Width{1'b0}}, sram_rdata};
 
   // To inject errors, bind in an interface with bad_bit_mask as an output and assign one of the

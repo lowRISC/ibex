@@ -10,8 +10,14 @@ interface ibex_icache_ecc_if
    input logic          write_i,
    input logic [31:0]   width,
    input logic [31:0]   addr,
+   input logic [127:0]  wdata,
+   input logic [127:0]  wmask,
    input logic [127:0]  rdata,
+
    output logic [127:0] bad_bit_mask);
+
+  // SVA module
+  ibex_icache_ecc_protocol_checker checker_i (.*);
 
   // The address for the last monitored req transaction
   logic [31:0]  last_addr = 'x;
