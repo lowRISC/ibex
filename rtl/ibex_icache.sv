@@ -1015,4 +1015,8 @@ module ibex_icache #(
   `ASSERT_INIT(ecc_tag_param_legal, (TAG_SIZE <= 27))
   `ASSERT_INIT(ecc_data_param_legal, (LineSize <= 121))
 
+  // Lookups in the tag ram should always give a known result
+  `ASSERT_KNOWN(TagHitKnown,     lookup_valid_ic1 & tag_hit_ic1)
+  `ASSERT_KNOWN(TagInvalidKnown, lookup_valid_ic1 & tag_invalid_ic1)
+
 endmodule
