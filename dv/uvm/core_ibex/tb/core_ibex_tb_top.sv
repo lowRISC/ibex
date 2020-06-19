@@ -12,9 +12,9 @@ module core_ibex_tb_top;
   logic fetch_enable;
 
   clk_if         ibex_clk_if(.clk(clk), .rst_n(rst_n));
-  irq_if         irq_vif();
-  ibex_mem_intf  data_mem_vif();
-  ibex_mem_intf  instr_mem_vif();
+  irq_if         irq_vif(.clk(clk));
+  ibex_mem_intf  data_mem_vif(.clk(clk));
+  ibex_mem_intf  instr_mem_vif(.clk(clk));
 
 
   // DUT probe interface
@@ -89,10 +89,8 @@ module core_ibex_tb_top;
   );
 
   // Data load/store vif connection
-  assign data_mem_vif.clock     = clk;
   assign data_mem_vif.reset     = ~rst_n;
   // Instruction fetch vif connnection
-  assign instr_mem_vif.clock    = clk;
   assign instr_mem_vif.reset    = ~rst_n;
   assign instr_mem_vif.we       = 0;
   assign instr_mem_vif.be       = 0;
@@ -118,7 +116,6 @@ module core_ibex_tb_top;
   assign rvfi_if.mem_rdata      = dut.rvfi_mem_rdata;
   assign rvfi_if.mem_wdata      = dut.rvfi_mem_wdata;
   // Irq interface connections
-  assign irq_vif.clock          = clk;
   assign irq_vif.reset          = ~rst_n;
   // Dut_if interface connections
   assign dut_if.ecall           = dut.u_ibex_core.id_stage_i.controller_i.ecall_insn;
