@@ -57,7 +57,7 @@ cp ../rtl/prim_clock_gating.v .
 cp ../rtl/prim_clock_gating.v prim_clock_gating.sv
 
 #-------------------------------------------------------------------------
-# run LEC (generarted Verilog vs. original SystemVerilog)
+# run LEC (generated Verilog vs. original SystemVerilog)
 #-------------------------------------------------------------------------
 printf "\n\nLEC RESULTS:\n"
 
