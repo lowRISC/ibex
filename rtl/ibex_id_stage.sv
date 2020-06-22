@@ -814,12 +814,6 @@ module ibex_id_stage #(
 
   assign instr_done = ~stall_id & ~flush_id & instr_executing;
 
-  if (WritebackStage) begin
-    assign multicycle_done = lsu_req_dec ? ~stall_mem : ex_valid_i;
-  end else begin
-    assign multicycle_done = lsu_req_dec ? lsu_resp_valid_i : ex_valid_i;
-  end
-
   // Signal instruction in ID is in it's first cycle. It can remain in its
   // first cycle if it is stalled.
   assign instr_first_cycle      = instr_valid_i & (id_fsm_q == FIRST_CYCLE);
@@ -838,6 +832,8 @@ module ibex_id_stage #(
     logic outstanding_memory_access;
 
     logic instr_kill;
+
+    assign multicycle_done = lsu_req_dec ? ~stall_mem : ex_valid_i;
 
     // Is a memory access ongoing that isn't finishing this cycle
     assign outstanding_memory_access = (outstanding_load_wb_i | outstanding_store_wb_i) &
@@ -918,7 +914,9 @@ module ibex_id_stage #(
     assign stall_wb = en_wb_o & ~ready_wb_i;
 
     assign perf_dside_wait_o = instr_valid_i & ~instr_kill & (outstanding_memory_access | stall_ld_hz);
-  end else begin
+  end else begin : gen_no_stall_mem
+
+    assign multicycle_done = lsu_req_dec ? lsu_resp_valid_i : ex_valid_i;
 
     assign data_req_allowed = instr_first_cycle;
 
