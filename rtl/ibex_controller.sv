@@ -715,6 +715,7 @@ module ibex_controller #(
               exc_cause_o = EXC_CAUSE_LOAD_ACCESS_FAULT;
               csr_mtval_o = lsu_addr_last_i;
             end
+            default: ;
           endcase
         end else begin
           // special instructions and pipeline flushes

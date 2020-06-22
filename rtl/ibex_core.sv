@@ -778,7 +778,7 @@ module ibex_core #(
   assign outstanding_load_id  = id_stage_i.instr_executing & id_stage_i.lsu_req_dec & ~id_stage_i.lsu_we;
   assign outstanding_store_id = id_stage_i.instr_executing & id_stage_i.lsu_req_dec &  id_stage_i.lsu_we;
 
-  if (WritebackStage) begin
+  if (WritebackStage) begin : gen_wb_stage
     // When the writeback stage is present a load/store could be in ID or WB. A Load/store in ID can
     // see a response before it moves to WB when it is unaligned otherwise we should only see
     // a response when load/store is in WB.
@@ -790,7 +790,7 @@ module ibex_core #(
 
     // When writing back the result of a load, the load must have made it to writeback
     `ASSERT(NoMemRFWriteWithoutPendingLoad, rf_we_lsu |-> outstanding_load_wb, clk_i, !rst_ni)
-  end else begin
+  end else begin : gen_no_wb_stage
     // Without writeback stage only look into whether load or store is in ID to determine if
     // a response is expected.
     assign outstanding_load_resp  = outstanding_load_id;
@@ -975,33 +975,33 @@ module ibex_core #(
   // second stage. RVFI outputs are all straight from flops. So 2 stage pipeline requires a single
   // set of flops (instr_info => RVFI_out), 3 stage pipeline requires two sets (instr_info => wb
   // => RVFI_out)
-  localparam RVFI_STAGES = WritebackStage ? 2 : 1;
+  localparam int RVFI_STAGES = WritebackStage ? 2 : 1;
 
-  logic        rvfi_stage_valid     [RVFI_STAGES-1:0];
-  logic [63:0] rvfi_stage_order     [RVFI_STAGES-1:0];
-  logic [31:0] rvfi_stage_insn      [RVFI_STAGES-1:0];
-  logic        rvfi_stage_trap      [RVFI_STAGES-1:0];
-  logic        rvfi_stage_halt      [RVFI_STAGES-1:0];
-  logic        rvfi_stage_intr      [RVFI_STAGES-1:0];
-  logic [ 1:0] rvfi_stage_mode      [RVFI_STAGES-1:0];
-  logic [ 1:0] rvfi_stage_ixl       [RVFI_STAGES-1:0];
-  logic [ 4:0] rvfi_stage_rs1_addr  [RVFI_STAGES-1:0];
-  logic [ 4:0] rvfi_stage_rs2_addr  [RVFI_STAGES-1:0];
-  logic [ 4:0] rvfi_stage_rs3_addr  [RVFI_STAGES-1:0];
-  logic [31:0] rvfi_stage_rs1_rdata [RVFI_STAGES-1:0];
-  logic [31:0] rvfi_stage_rs2_rdata [RVFI_STAGES-1:0];
-  logic [31:0] rvfi_stage_rs3_rdata [RVFI_STAGES-1:0];
-  logic [ 4:0] rvfi_stage_rd_addr   [RVFI_STAGES-1:0];
-  logic [31:0] rvfi_stage_rd_wdata  [RVFI_STAGES-1:0];
-  logic [31:0] rvfi_stage_pc_rdata  [RVFI_STAGES-1:0];
-  logic [31:0] rvfi_stage_pc_wdata  [RVFI_STAGES-1:0];
-  logic [31:0] rvfi_stage_mem_addr  [RVFI_STAGES-1:0];
-  logic [ 3:0] rvfi_stage_mem_rmask [RVFI_STAGES-1:0];
-  logic [ 3:0] rvfi_stage_mem_wmask [RVFI_STAGES-1:0];
-  logic [31:0] rvfi_stage_mem_rdata [RVFI_STAGES-1:0];
-  logic [31:0] rvfi_stage_mem_wdata [RVFI_STAGES-1:0];
+  logic        rvfi_stage_valid     [RVFI_STAGES];
+  logic [63:0] rvfi_stage_order     [RVFI_STAGES];
+  logic [31:0] rvfi_stage_insn      [RVFI_STAGES];
+  logic        rvfi_stage_trap      [RVFI_STAGES];
+  logic        rvfi_stage_halt      [RVFI_STAGES];
+  logic        rvfi_stage_intr      [RVFI_STAGES];
+  logic [ 1:0] rvfi_stage_mode      [RVFI_STAGES];
+  logic [ 1:0] rvfi_stage_ixl       [RVFI_STAGES];
+  logic [ 4:0] rvfi_stage_rs1_addr  [RVFI_STAGES];
+  logic [ 4:0] rvfi_stage_rs2_addr  [RVFI_STAGES];
+  logic [ 4:0] rvfi_stage_rs3_addr  [RVFI_STAGES];
+  logic [31:0] rvfi_stage_rs1_rdata [RVFI_STAGES];
+  logic [31:0] rvfi_stage_rs2_rdata [RVFI_STAGES];
+  logic [31:0] rvfi_stage_rs3_rdata [RVFI_STAGES];
+  logic [ 4:0] rvfi_stage_rd_addr   [RVFI_STAGES];
+  logic [31:0] rvfi_stage_rd_wdata  [RVFI_STAGES];
+  logic [31:0] rvfi_stage_pc_rdata  [RVFI_STAGES];
+  logic [31:0] rvfi_stage_pc_wdata  [RVFI_STAGES];
+  logic [31:0] rvfi_stage_mem_addr  [RVFI_STAGES];
+  logic [ 3:0] rvfi_stage_mem_rmask [RVFI_STAGES];
+  logic [ 3:0] rvfi_stage_mem_wmask [RVFI_STAGES];
+  logic [31:0] rvfi_stage_mem_rdata [RVFI_STAGES];
+  logic [31:0] rvfi_stage_mem_wdata [RVFI_STAGES];
 
-  logic        rvfi_stage_valid_d   [RVFI_STAGES-1:0];
+  logic        rvfi_stage_valid_d   [RVFI_STAGES];
 
   assign rvfi_valid     = rvfi_stage_valid    [RVFI_STAGES-1];
   assign rvfi_order     = rvfi_stage_order    [RVFI_STAGES-1];
@@ -1027,7 +1027,7 @@ module ibex_core #(
   assign rvfi_mem_rdata = rvfi_stage_mem_rdata[RVFI_STAGES-1];
   assign rvfi_mem_wdata = rvfi_stage_mem_wdata[RVFI_STAGES-1];
 
-  if (WritebackStage) begin
+  if (WritebackStage) begin : gen_rvfi_wb_stage
     logic unused_instr_new_id;
 
     assign unused_instr_new_id = instr_new_id;
@@ -1054,7 +1054,7 @@ module ibex_core #(
         rvfi_instr_new_wb_q <= instr_id_done;
       end
     end
-  end else begin
+  end else begin : gen_rvfi_no_wb_stage
     // Without writeback stage first RVFI stage is output stage so simply valid the cycle after
     // instruction leaves ID/EX (and so has retired)
     assign rvfi_stage_valid_d[0] = instr_id_done & ~dummy_instr_id;
