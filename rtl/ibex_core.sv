@@ -621,8 +621,8 @@ module ibex_core #(
       .instr_id_done_compressed_o   ( instr_id_done_compressed ),
 
       // Pointer Authentication
-      .pac_en_dec_o                 ( pa_pac_en                ),
-      .aut_en_dec_o                 ( pa_aut_en                ),
+      .pac_en_id_o                  ( pa_pac_en                ),
+      .aut_en_id_o                  ( pa_aut_en                ),
       .pa_data0_o                   ( pa_data0                 ),
       .pa_data1_o                   ( pa_data1                 ),
       .pa_ready_id_o                ( pa_ready_id              ),
