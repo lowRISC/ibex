@@ -93,13 +93,15 @@ class core_ibex_vseq extends uvm_sequence;
     debug_seq_single_h.start(null);
   endtask
 
-  virtual task start_irq_raise_single_seq(bit no_nmi = 1'b0);
+  virtual task start_irq_raise_single_seq(bit no_nmi = 1'b0, bit no_fast = 1'b0);
     irq_raise_single_seq_h.no_nmi = no_nmi;
+    irq_raise_single_seq_h.no_fast = no_fast;
     irq_raise_single_seq_h.start(p_sequencer.irq_seqr);
   endtask
 
-  virtual task start_irq_raise_seq(bit no_nmi = 1'b0);
+  virtual task start_irq_raise_seq(bit no_nmi = 1'b0, bit no_fast = 1'b0);
     irq_raise_seq_h.no_nmi = no_nmi;
+    irq_raise_seq_h.no_fast = no_fast;
     irq_raise_seq_h.start(p_sequencer.irq_seqr);
   endtask
 

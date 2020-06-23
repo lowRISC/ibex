@@ -11,6 +11,7 @@ interface irq_if(input clk);
   logic        irq_nm;       // non-maskeable interrupt
 
   clocking driver_cb @(posedge clk);
+    default output negedge;
     input   reset;
     output  irq_software;
     output  irq_timer;
@@ -30,6 +31,10 @@ interface irq_if(input clk);
 
   task automatic wait_clks(input int num);
     repeat (num) @(posedge clk);
+  endtask
+
+  task automatic wait_neg_clks(input int num);
+    repeat (num) @(negedge clk);
   endtask
 
 endinterface

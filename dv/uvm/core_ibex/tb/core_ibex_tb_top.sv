@@ -20,6 +20,9 @@ module core_ibex_tb_top;
   // DUT probe interface
   core_ibex_dut_probe_if dut_if(.clk(clk));
 
+  // Instruction monitor interface
+  core_ibex_instr_monitor_if instr_monitor_if();
+
   // RVFI interface
   core_ibex_rvfi_if rvfi_if(.clk(clk));
 
@@ -93,53 +96,63 @@ module core_ibex_tb_top;
   );
 
   // Data load/store vif connection
-  assign data_mem_vif.reset     = ~rst_n;
+  assign data_mem_vif.reset                   = ~rst_n;
   // Instruction fetch vif connnection
-  assign instr_mem_vif.reset    = ~rst_n;
-  assign instr_mem_vif.we       = 0;
-  assign instr_mem_vif.be       = 0;
-  assign instr_mem_vif.wdata    = 0;
+  assign instr_mem_vif.reset                  = ~rst_n;
+  assign instr_mem_vif.we                     = 0;
+  assign instr_mem_vif.be                     = 0;
+  assign instr_mem_vif.wdata                  = 0;
   // RVFI interface connections
-  assign rvfi_if.valid          = dut.rvfi_valid;
-  assign rvfi_if.order          = dut.rvfi_order;
-  assign rvfi_if.insn           = dut.rvfi_insn;
-  assign rvfi_if.trap           = dut.rvfi_trap;
-  assign rvfi_if.intr           = dut.rvfi_intr;
-  assign rvfi_if.mode           = dut.rvfi_mode;
-  assign rvfi_if.ixl            = dut.rvfi_ixl;
-  assign rvfi_if.rs1_addr       = dut.rvfi_rs1_addr;
-  assign rvfi_if.rs2_addr       = dut.rvfi_rs2_addr;
-  assign rvfi_if.rs1_rdata      = dut.rvfi_rs1_rdata;
-  assign rvfi_if.rs2_rdata      = dut.rvfi_rs2_rdata;
-  assign rvfi_if.rd_addr        = dut.rvfi_rd_addr;
-  assign rvfi_if.rd_wdata       = dut.rvfi_rd_wdata;
-  assign rvfi_if.pc_rdata       = dut.rvfi_pc_rdata;
-  assign rvfi_if_pc_wdata       = dut.rvfi_pc_wdata;
-  assign rvfi_if.mem_addr       = dut.rvfi_mem_addr;
-  assign rvfi_if.mem_rmask      = dut.rvfi_mem_rmask;
-  assign rvfi_if.mem_rdata      = dut.rvfi_mem_rdata;
-  assign rvfi_if.mem_wdata      = dut.rvfi_mem_wdata;
+  assign rvfi_if.valid                        = dut.rvfi_valid;
+  assign rvfi_if.order                        = dut.rvfi_order;
+  assign rvfi_if.insn                         = dut.rvfi_insn;
+  assign rvfi_if.trap                         = dut.rvfi_trap;
+  assign rvfi_if.intr                         = dut.rvfi_intr;
+  assign rvfi_if.mode                         = dut.rvfi_mode;
+  assign rvfi_if.ixl                          = dut.rvfi_ixl;
+  assign rvfi_if.rs1_addr                     = dut.rvfi_rs1_addr;
+  assign rvfi_if.rs2_addr                     = dut.rvfi_rs2_addr;
+  assign rvfi_if.rs1_rdata                    = dut.rvfi_rs1_rdata;
+  assign rvfi_if.rs2_rdata                    = dut.rvfi_rs2_rdata;
+  assign rvfi_if.rd_addr                      = dut.rvfi_rd_addr;
+  assign rvfi_if.rd_wdata                     = dut.rvfi_rd_wdata;
+  assign rvfi_if.pc_rdata                     = dut.rvfi_pc_rdata;
+  assign rvfi_if_pc_wdata                     = dut.rvfi_pc_wdata;
+  assign rvfi_if.mem_addr                     = dut.rvfi_mem_addr;
+  assign rvfi_if.mem_rmask                    = dut.rvfi_mem_rmask;
+  assign rvfi_if.mem_rdata                    = dut.rvfi_mem_rdata;
+  assign rvfi_if.mem_wdata                    = dut.rvfi_mem_wdata;
   // Irq interface connections
-  assign irq_vif.reset          = ~rst_n;
+  assign irq_vif.reset                        = ~rst_n;
   // Dut_if interface connections
-  assign dut_if.ecall           = dut.u_ibex_core.id_stage_i.controller_i.ecall_insn;
-  assign dut_if.wfi             = dut.u_ibex_core.id_stage_i.controller_i.wfi_insn;
-  assign dut_if.ebreak          = dut.u_ibex_core.id_stage_i.controller_i.ebrk_insn;
-  assign dut_if.illegal_instr   = dut.u_ibex_core.id_stage_i.controller_i.illegal_insn_d;
-  assign dut_if.dret            = dut.u_ibex_core.id_stage_i.controller_i.dret_insn;
-  assign dut_if.mret            = dut.u_ibex_core.id_stage_i.controller_i.mret_insn;
-  assign dut_if.reset           = ~rst_n;
-  assign dut_if.priv_mode       = dut.u_ibex_core.priv_mode_id;
+  assign dut_if.ecall                         = dut.u_ibex_core.id_stage_i.controller_i.ecall_insn;
+  assign dut_if.wfi                           = dut.u_ibex_core.id_stage_i.controller_i.wfi_insn;
+  assign dut_if.ebreak                        = dut.u_ibex_core.id_stage_i.controller_i.ebrk_insn;
+  assign dut_if.illegal_instr                 = dut.u_ibex_core.id_stage_i.controller_i.illegal_insn_d;
+  assign dut_if.dret                          = dut.u_ibex_core.id_stage_i.controller_i.dret_insn;
+  assign dut_if.mret                          = dut.u_ibex_core.id_stage_i.controller_i.mret_insn;
+  assign dut_if.reset                         = ~rst_n;
+  assign dut_if.priv_mode                     = dut.u_ibex_core.priv_mode_id;
+  // Instruction monitor connections
+  assign instr_monitor_if.valid_id            = dut.u_ibex_core.id_stage_i.instr_valid_i;
+  assign instr_monitor_if.err_id              = dut.u_ibex_core.id_stage_i.controller_i.instr_fetch_err;
+  assign instr_monitor_if.is_compressed_id    = dut.u_ibex_core.id_stage_i.instr_is_compressed_i;
+  assign instr_monitor_if.instr_compressed_id = dut.u_ibex_core.id_stage_i.instr_rdata_c_i;
+  assign instr_monitor_if.instr_id            = dut.u_ibex_core.id_stage_i.instr_rdata_i;
   // CSR interface connections
-  assign csr_if.csr_access      = dut.u_ibex_core.csr_access;
-  assign csr_if.csr_addr        = dut.u_ibex_core.csr_addr;
-  assign csr_if.csr_wdata       = dut.u_ibex_core.csr_wdata;
-  assign csr_if.csr_rdata       = dut.u_ibex_core.csr_rdata;
-  assign csr_if.csr_op          = dut.u_ibex_core.csr_op;
+  assign csr_if.csr_access                    = dut.u_ibex_core.csr_access;
+  assign csr_if.csr_addr                      = dut.u_ibex_core.csr_addr;
+  assign csr_if.csr_wdata                     = dut.u_ibex_core.csr_wdata;
+  assign csr_if.csr_rdata                     = dut.u_ibex_core.csr_rdata;
+  assign csr_if.csr_op                        = dut.u_ibex_core.csr_op;
 
   initial begin
     uvm_config_db#(virtual clk_if)::set(null, "*", "clk_if", ibex_clk_if);
     uvm_config_db#(virtual core_ibex_dut_probe_if)::set(null, "*", "dut_if", dut_if);
+    uvm_config_db#(virtual core_ibex_instr_monitor_if)::set(null,
+                                                            "*",
+                                                            "instr_monitor_if",
+                                                            instr_monitor_if);
     uvm_config_db#(virtual core_ibex_csr_if)::set(null, "*", "csr_if", csr_if);
     uvm_config_db#(virtual core_ibex_rvfi_if)::set(null, "*", "rvfi_if", rvfi_if);
     uvm_config_db#(virtual ibex_mem_intf)::set(null, "*data_if_slave*", "vif", data_mem_vif);
