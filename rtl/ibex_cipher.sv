@@ -59,9 +59,9 @@ module ibex_cipher (
       end
 
       C_OUTPUT: begin
+        out_data_o  = data_q[31:0] ^ data_q[63:32];
+        out_valid_o = 1'b1;
         if (out_ready_i) begin
-          out_data_o  = data_q[31:0] ^ data_q[63:32];
-          out_valid_o = 1'b1;
           c_fsm_d     = C_INPUT;
         end
       end

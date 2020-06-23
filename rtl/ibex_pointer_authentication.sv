@@ -39,6 +39,11 @@ module ibex_pointer_authentication #(
   logic        cipher_out_ready;
   logic        cipher_out_valid;
 
+  logic [3:0]  unused_cipher_out_data;
+
+  // Avoid lint warning
+  assign unused_cipher_out_data = cipher_out_data[31:28];
+
   ibex_cipher ibex_cipher_i (
     .clk_i        ( clk_i            ),
     .rst_ni       ( rst_ni           ),
@@ -90,6 +95,7 @@ module ibex_pointer_authentication #(
       //                                  context,   MSBs of pointer, LSBs of pointer
       CIPHER_PAC_START: cipher_in_data = {pa_data1_i, msbs_pointer_d, pa_data0_i[27:0]};
       CIPHER_AUT_START: cipher_in_data = {pa_data1_i, msbs_pointer_q, pa_data0_i[27:0]};
+      default:          cipher_in_data = '0;
     endcase
   end
 
@@ -144,25 +150,25 @@ module ibex_pointer_authentication #(
           pac_en_i: begin
             if (pa_ready_id_i) begin
               cipher_out_ready = 1'b1;
-            end
-            if (cipher_out_ready && cipher_out_valid) begin
-              pa_result_sel    = PAC_DONE;
-              pa_valid_o       = 1'b1;
-              pa_fsm_d         = PA_IDLE;
+              if (cipher_out_valid) begin
+                pa_result_sel    = PAC_DONE;
+                pa_valid_o       = 1'b1;
+                pa_fsm_d         = PA_IDLE;
+              end
             end
           end
           aut_en_i: begin
             if (pa_ready_id_i) begin
               cipher_out_ready = 1'b1;
-            end
-            if (cipher_out_ready && cipher_out_valid) begin
-              if (pac_q == cipher_out_data[27:0]) begin // Authentication success
-                pa_result_sel  = AUT_SUCCESS;
-              end else begin // Authentication failure
-                pa_result_sel  = AUT_FAILURE;
+              if (cipher_out_valid) begin
+                if (pac_q == cipher_out_data[27:0]) begin // Authentication success
+                  pa_result_sel  = AUT_SUCCESS;
+                end else begin // Authentication failure
+                  pa_result_sel  = AUT_FAILURE;
+                end
+                pa_valid_o       = 1'b1;
+                pa_fsm_d         = PA_IDLE;
               end
-              pa_valid_o       = 1'b1;
-              pa_fsm_d         = PA_IDLE;
             end
           end
           default: begin
