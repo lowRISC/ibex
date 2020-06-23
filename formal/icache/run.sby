@@ -1,0 +1,19 @@
+# Copyright lowRISC contributors.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+[options]
+mode prove
+depth 3
+
+[engines]
+smtbmc boolector
+
+[script]
+read -sv @INPUT@
+
+# We don't care about the exact behaviour of the memories in the
+# design, so we should blackbox them.
+blackbox $abstract\prim_generic_ram_1p
+
+prep -top ibex_icache

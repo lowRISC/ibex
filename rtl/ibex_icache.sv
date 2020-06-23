@@ -1022,4 +1022,13 @@ module ibex_icache #(
   `ASSERT_KNOWN(TagHitKnown,     lookup_valid_ic1 & tag_hit_ic1)
   `ASSERT_KNOWN(TagInvalidKnown, lookup_valid_ic1 & tag_invalid_ic1)
 
+  // This is only used for the Yosys-based formal flow. Once we have working bind support, we can
+  // get rid of it.
+`ifdef FORMAL
+ `ifdef YOSYS
+  `include "formal_tb_frag.svh"
+ `endif
+`endif
+
+
 endmodule
