@@ -602,6 +602,8 @@ module ibex_decoder #(
       ////////////////////////////
 
       OPCODE_PA: begin // Custom Operations for Pointer Authentication
+        rf_ren_a_o = 1'b1;
+        rf_ren_b_o = 1'b1;
         unique case (instr[14:12])
           3'b000: begin // PAC
             pac_en_dec_o   = (PointerAuthentication) ? 1'b1 : 1'b0;

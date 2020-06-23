@@ -181,8 +181,8 @@ module ibex_id_stage #(
     output logic                      instr_id_done_compressed_o,
 
     // Pointer Authentication
-    output logic                      pac_en_dec_o,
-    output logic                      aut_en_dec_o,
+    output logic                      pac_en_id_o,
+    output logic                      aut_en_id_o,
     output logic [31:0]               pa_data0_o,
     output logic [31:0]               pa_data1_o,
     output logic                      pa_ready_id_o,
@@ -286,6 +286,8 @@ module ibex_id_stage #(
   logic [31:0] alu_operand_b;
 
   // Pointer Authentication
+  logic        pac_en_id, pac_en_dec;
+  logic        aut_en_id, aut_en_dec;
   logic        pa_en_dec;
   logic        stall_pa;
 
@@ -503,8 +505,8 @@ module ibex_id_stage #(
       .branch_in_dec_o                 ( branch_in_dec        ),
 
       // Pointer Authentication
-      .pac_en_dec_o                    ( pac_en_dec_o         ),
-      .aut_en_dec_o                    ( aut_en_dec_o         )
+      .pac_en_dec_o                    ( pac_en_dec           ),
+      .aut_en_dec_o                    ( aut_en_dec           )
   );
 
   /////////////////////////////////
@@ -634,6 +636,8 @@ module ibex_id_stage #(
   assign lsu_req         = instr_executing ? data_req_allowed & lsu_req_dec  : 1'b0;
   assign mult_en_id      = instr_executing ? mult_en_dec                     : 1'b0;
   assign div_en_id       = instr_executing ? div_en_dec                      : 1'b0;
+  assign pac_en_id       = instr_executing ? pac_en_dec                      : 1'b0;
+  assign aut_en_id       = instr_executing ? aut_en_dec                      : 1'b0;
 
   assign lsu_req_o               = lsu_req;
   assign lsu_we_o                = lsu_we;
@@ -658,7 +662,9 @@ module ibex_id_stage #(
   assign multdiv_operand_a_ex_o      = rf_rdata_a_fwd;
   assign multdiv_operand_b_ex_o      = rf_rdata_b_fwd;
 
-  assign pa_en_dec                   = pac_en_dec_o | aut_en_dec_o;
+  assign pa_en_dec                   = pac_en_dec | aut_en_dec;
+  assign pac_en_id_o                 = pac_en_id;
+  assign aut_en_id_o                 = aut_en_id;
 
   ////////////////////////
   // Branch set control //
@@ -800,7 +806,7 @@ module ibex_id_stage #(
               rf_we_raw     = 1'b0;
             end
             pa_en_dec: begin
-              if (pac_en_dec_o) begin // PAC
+              if (pac_en_dec) begin // PAC
                 if (ready_wb_i) begin
                   id_fsm_d  = MULTI_CYCLE;
                   rf_we_raw = 1'b1;
@@ -952,7 +958,7 @@ module ibex_id_stage #(
                               lsu_we      ? WB_INSTR_STORE :
                                             WB_INSTR_LOAD;
 
-    assign en_wb_o = instr_done | (pac_en_dec_o & instr_first_cycle);
+    assign en_wb_o = instr_done | (pac_en_dec & instr_first_cycle);
 
     assign instr_id_done_o = en_wb_o & ready_wb_i;
 
