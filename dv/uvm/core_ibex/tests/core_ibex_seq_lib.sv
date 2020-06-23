@@ -66,56 +66,76 @@ endclass
 
 // Interrupt sequences
 
-class irq_raise_seq extends core_base_seq#(irq_seq_item);
+class irq_base_seq extends core_base_seq #(irq_seq_item);
 
-  `uvm_object_utils(irq_raise_seq)
+  `uvm_object_utils(irq_base_seq)
   `uvm_object_new
+
   bit no_nmi;
+  bit no_fast;
 
   virtual task send_req();
     irq_seq_item irq;
-    irq = irq_seq_item::type_id::create($sformatf("irq_raise_single[%0d]", iteration_cnt));
+    irq = irq_seq_item::type_id::create($sformatf("irq_seq_item[%0d]", iteration_cnt));
     start_item(irq);
-    `DV_CHECK_RANDOMIZE_WITH_FATAL(irq, num_of_interrupt > 1; irq_nm == ~no_nmi;)
+    randomize_item(irq);
     finish_item(irq);
     get_response(irq);
   endtask
+
+  virtual function void randomize_item(irq_seq_item irq);
+    `uvm_fatal(`gfn, "This task must be implemented in extended irq sequences")
+  endfunction
 
 endclass
 
-class irq_raise_single_seq extends core_base_seq#(irq_seq_item);
+class irq_raise_seq extends irq_base_seq;
+
+  `uvm_object_utils(irq_raise_seq)
+  `uvm_object_new
+
+  bit no_nmi;
+  bit no_fast;
+
+  virtual function void randomize_item(irq_seq_item irq);
+    `DV_CHECK_RANDOMIZE_WITH_FATAL(irq, num_of_interrupt > 1;
+                                        irq_nm == ~no_nmi;
+                                        if (no_fast) {
+                                          irq_fast == '0;
+                                        })
+  endfunction
+
+endclass
+
+class irq_raise_single_seq extends irq_base_seq;
 
   `uvm_object_utils(irq_raise_single_seq)
   `uvm_object_new
-  bit no_nmi;
 
-  virtual task send_req();
-    irq_seq_item irq;
-    irq = irq_seq_item::type_id::create($sformatf("irq_raise_single[%0d]", iteration_cnt));
-    start_item(irq);
-    `DV_CHECK_RANDOMIZE_WITH_FATAL(irq, num_of_interrupt == 1; irq_nm == ~no_nmi;)
-    finish_item(irq);
-    get_response(irq);
-  endtask
+  bit no_nmi;
+  bit no_fast;
+
+  virtual function void randomize_item(irq_seq_item irq);
+    `DV_CHECK_RANDOMIZE_WITH_FATAL(irq, num_of_interrupt == 1;
+                                        irq_nm == ~no_nmi;
+                                        if (no_fast) {
+                                          irq_fast == '0;
+                                        })
+  endfunction
 
 endclass
 
 // Irq sequence to deassert all interrupt lines, since Ibex interrupts are level sensitive
-class irq_drop_seq extends core_base_seq#(irq_seq_item);
+class irq_drop_seq extends irq_base_seq;
 
   `uvm_object_utils(irq_drop_seq)
   `uvm_object_new
 
   // TODO(udinator) - for nested interrupt tests, test scenarios where a random number of interrupts
   // are dropped
-  virtual task send_req();
-    irq_seq_item irq;
-    irq = irq_seq_item::type_id::create($sformatf("irq_drop[%0d]", iteration_cnt));
-    start_item(irq);
+  virtual function void randomize_item(irq_seq_item irq);
     `DV_CHECK_RANDOMIZE_WITH_FATAL(irq, num_of_interrupt == 0;)
-    finish_item(irq);
-    get_response(irq);
-  endtask
+  endfunction
 
 endclass
 
@@ -126,6 +146,8 @@ class debug_seq extends core_base_seq#(irq_seq_item);
 
   `uvm_object_utils(debug_seq)
   `uvm_object_new
+
+  int unsigned drop_delay = 75;
 
   virtual task body();
     if (!uvm_config_db#(virtual core_ibex_dut_probe_if)::get(null, "", "dut_if", dut_vif)) begin
@@ -138,7 +160,7 @@ class debug_seq extends core_base_seq#(irq_seq_item);
   virtual task send_req();
     `uvm_info(get_full_name(), "Sending debug request", UVM_HIGH)
     dut_vif.dut_cb.debug_req <= 1'b1;
-    clk_vif.wait_clks(50);
+    clk_vif.wait_clks(drop_delay);
     dut_vif.dut_cb.debug_req <= 1'b0;
   endtask
 

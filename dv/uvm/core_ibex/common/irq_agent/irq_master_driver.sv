@@ -52,7 +52,7 @@ class irq_master_driver extends uvm_driver #(irq_seq_item);
         drive_seq_item(rsp);
         seq_item_port.item_done(rsp);
       end else begin
-        vif.wait_clks(1);
+        vif.wait_neg_clks(1);
       end
     end
   endtask : get_and_drive

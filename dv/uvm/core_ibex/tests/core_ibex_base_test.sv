@@ -8,6 +8,7 @@ class core_ibex_base_test extends uvm_test;
   core_ibex_env_cfg                               cfg;
   virtual clk_if                                  clk_vif;
   virtual core_ibex_dut_probe_if                  dut_vif;
+  virtual core_ibex_instr_monitor_if              instr_vif;
   virtual core_ibex_csr_if                        csr_vif;
   mem_model_pkg::mem_model                        mem;
   core_ibex_vseq                                  vseq;
@@ -39,13 +40,18 @@ class core_ibex_base_test extends uvm_test;
     super.build_phase(phase);
     $value$plusargs("timeout_in_cycles=%0d", timeout_in_cycles);
     if (!uvm_config_db#(virtual clk_if)::get(null, "", "clk_if", clk_vif)) begin
-      `uvm_fatal(get_full_name(), "Cannot get clk_if")
+      `uvm_fatal(`gfn, "Cannot get clk_if")
     end
     if (!uvm_config_db#(virtual core_ibex_dut_probe_if)::get(null, "", "dut_if", dut_vif)) begin
-      `uvm_fatal(get_full_name(), "Cannot get dut_if")
+      `uvm_fatal(`gfn, "Cannot get dut_if")
+    end
+    if (!uvm_config_db#(virtual core_ibex_instr_monitor_if)::get(null, "",
+                                                                 "instr_monitor_if",
+                                                                 instr_vif)) begin
+      `uvm_fatal(`gfn, "Cannot get instr_monitor_if")
     end
     if (!uvm_config_db#(virtual core_ibex_csr_if)::get(null, "", "csr_if", csr_vif)) begin
-      `uvm_fatal(get_full_name(), "Cannot get csr_if")
+      `uvm_fatal(`gfn, "Cannot get csr_if")
     end
     env = core_ibex_env::type_id::create("env", this);
     cfg = core_ibex_env_cfg::type_id::create("cfg", this);
