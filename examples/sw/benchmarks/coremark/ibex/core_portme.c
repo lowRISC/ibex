@@ -68,6 +68,8 @@ void pcount_read(uint32_t pcount_out[]) {
   PCOUNT_READ(mhpmcounter10, pcount_out[8]);
   PCOUNT_READ(mhpmcounter11, pcount_out[9]);
   PCOUNT_READ(mhpmcounter12, pcount_out[10]);
+  PCOUNT_READ(mhpmcounter13, pcount_out[11]);
+  PCOUNT_READ(mhpmcounter14, pcount_out[12]);
 }
 
 const char *pcount_names[] = {"Instructions Retired",
@@ -80,7 +82,9 @@ const char *pcount_names[] = {"Instructions Retired",
                               "Taken Branches",
                               "Compressed Instructions",
                               "Multiply Wait",
-                              "Divide Wait"};
+                              "Divide Wait",
+                              "PAC Instructions",
+                              "AUT Instructions"};
 
 const uint32_t pcount_num = sizeof(pcount_names) / sizeof(char *);
 

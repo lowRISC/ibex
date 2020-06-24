@@ -295,6 +295,8 @@ module ibex_core #(
   logic        perf_tbranch;
   logic        perf_load;
   logic        perf_store;
+  logic        perf_pac;
+  logic        perf_aut;
 
   // for RVFI
   logic        illegal_insn_id, unused_illegal_insn_id; // ID stage sees an illegal instruction
@@ -618,6 +620,8 @@ module ibex_core #(
       .perf_mul_wait_o              ( perf_mul_wait            ),
       .perf_div_wait_o              ( perf_div_wait            ),
       .instr_id_done_o              ( instr_id_done            ),
+      .perf_pac_o                   ( perf_pac                 ),
+      .perf_aut_o                   ( perf_aut                 ),
       .instr_id_done_compressed_o   ( instr_id_done_compressed ),
 
       // Pointer Authentication
@@ -938,7 +942,9 @@ module ibex_core #(
       .mem_store_i             ( perf_store               ),
       .dside_wait_i            ( perf_dside_wait          ),
       .mul_wait_i              ( perf_mul_wait            ),
-      .div_wait_i              ( perf_div_wait            )
+      .div_wait_i              ( perf_div_wait            ),
+      .pac_i                   ( perf_pac                 ),
+      .aut_i                   ( perf_aut                 )
   );
 
   // These assertions are in top-level as instr_valid_id required as the enable term

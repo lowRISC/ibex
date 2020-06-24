@@ -177,6 +177,8 @@ module ibex_id_stage #(
                                                          // access to finish before proceeding
     output logic                      perf_mul_wait_o,
     output logic                      perf_div_wait_o,
+    output logic                      perf_pac_o,
+    output logic                      perf_aut_o,
     output logic                      instr_id_done_o,
     output logic                      instr_id_done_compressed_o,
 
@@ -1030,6 +1032,9 @@ module ibex_id_stage #(
 
   assign perf_mul_wait_o = stall_multdiv & mult_en_dec;
   assign perf_div_wait_o = stall_multdiv & div_en_dec;
+
+  assign perf_pac_o      = instr_id_done_o & pac_en_id;
+  assign perf_aut_o      = instr_id_done_o & aut_en_id;
 
   assign instr_id_done_compressed_o = instr_id_done_o & instr_is_compressed_i;
 

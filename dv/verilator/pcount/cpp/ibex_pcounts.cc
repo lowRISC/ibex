@@ -30,7 +30,9 @@ const std::vector<std::string> ibex_counter_names = {
     "Taken Conditional Branches",
     "Compressed Instructions",
     "Multiply Wait",
-    "Divide Wait"};
+    "Divide Wait",
+    "PAC Instructions",
+    "AUT Instructions"};
 
 std::string ibex_pcount_string(bool csv) {
   char seperator = csv ? ',' : ':';
