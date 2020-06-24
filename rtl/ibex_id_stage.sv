@@ -964,7 +964,11 @@ module ibex_id_stage #(
 
     assign en_wb_o = instr_done | (pac_en_dec & instr_first_cycle);
 
-    assign instr_id_done_o = en_wb_o & ready_wb_i;
+    // PAC instruction writes to the register file twice, so when not taking stall_pa into consideration,
+    // instr_id_done_o is activated twice during the execution of an PAC instruction.
+    // Unfortunately it interferes with the implementation of counters and tracers for PAC instruction,
+    // so now we are using stall_pa to calculate instr_id_done_o.
+    assign instr_id_done_o = en_wb_o & ready_wb_i & ~stall_pa;
 
     // Stall ID/EX as instruction in ID/EX cannot proceed to writeback yet
     assign stall_wb = en_wb_o & ~ready_wb_i;
