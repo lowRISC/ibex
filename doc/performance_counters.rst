@@ -45,6 +45,10 @@ The following events can be monitored using the performance counters of Ibex.
 +--------------+------------------+---------------------------------------------------------+
 |           12 | NumCyclesDivWait | Cycles waiting for divide to complete                   |
 +--------------+------------------+---------------------------------------------------------+
+|           13 | NumPacInstrRet   | Number of pac instructions retired                      |
++--------------+------------------+---------------------------------------------------------+
+|           14 | NumAutInstrRet   | Number of aut instructions retired                      |
++--------------+------------------+---------------------------------------------------------+
 
 The event selector CSRs ``mhpmevent3`` - ``mhpmevent31`` define which of these events are counted by the event counters ``mhpmcounter3(h)`` - ``mhpmcounter31(h)``.
 If a specific bit in an event selector CSR is set to 1, this means that events with this ID are being counted by the counter associated with that selector CSR.
@@ -106,6 +110,10 @@ The association of events with the ``mphmcounter`` registers is hardwired as lis
 | ``mhpmcounter11(h)`` | 0xB0B (0xB8B)  |           11 | NumCyclesMulWait |
 +----------------------+----------------+--------------+------------------+
 | ``mhpmcounter12(h)`` | 0xB0C (0xB8C)  |           12 | NumCyclesDivWait |
++----------------------+----------------+--------------+------------------+
+| ``mhpmcounter13(h)`` | 0xB0D (0xB8D)  |           13 | NumPacInstrRet   |
++----------------------+----------------+--------------+------------------+
+| ``mhpmcounter14(h)`` | 0xB0E (0xB8E)  |           14 | NumAutInstrRet   |
 +----------------------+----------------+--------------+------------------+
 
 Similarly, the event selector CSRs are hardwired as follows.
