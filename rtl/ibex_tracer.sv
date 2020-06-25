@@ -1029,6 +1029,10 @@ module ibex_tracer (
         INSN_CRC32C_H:   decode_r1_insn("crc32c.h");
         INSN_CRC32C_W:   decode_r1_insn("crc32c.w");
 
+        // Custom Instructions Pointer Authentication
+        INSN_PAC:        decode_mnemonic("pac");
+        INSN_AUT:        decode_mnemonic("aut");
+
         default:         decode_mnemonic("INVALID");
       endcase
     end

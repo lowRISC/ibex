@@ -299,4 +299,8 @@ parameter logic [15:0] INSN_CEBREAK    = { 3'b100, 1'b1,        5'h0,  5'h0,    
 parameter logic [15:0] INSN_CJR        = { 3'b100, 1'b0,        5'h0,  5'h0,       {OPCODE_C2} };
 parameter logic [15:0] INSN_CJALR      = { 3'b100, 1'b1,        5'h?,  5'h0,       {OPCODE_C2} };
 
+// Custom Instructions for Pointer Authentication
+parameter logic [31:0] INSN_PAC = { 7'b0,       10'b?, 3'b000, 5'b?, {OPCODE_PA} };
+parameter logic [31:0] INSN_AUT = { 5'b?, 2'b0, 10'b?, 3'b001, 5'b?, {OPCODE_PA} };
+
 endpackage
