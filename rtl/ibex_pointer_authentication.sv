@@ -35,25 +35,26 @@ module ibex_pointer_authentication #(
   logic [63:0] cipher_in_data;
   logic        cipher_in_ready;
   logic        cipher_in_valid;
-  logic [31:0] cipher_out_data;
+  logic [63:0] cipher_out_data;
   logic        cipher_out_ready;
   logic        cipher_out_valid;
 
-  logic [3:0]  unused_cipher_out_data;
+  logic [35:0] unused_cipher_out_data;
 
   // Avoid lint warning
-  assign unused_cipher_out_data = cipher_out_data[31:28];
+  assign unused_cipher_out_data = cipher_out_data[63:28];
 
-  ibex_cipher ibex_cipher_i (
+  // Gift cipher module
+  gift gift_i (
     .clk_i        ( clk_i            ),
     .rst_ni       ( rst_ni           ),
-    .key_i        ( csr_pa_key_i     ),
-    .in_data_i    ( cipher_in_data   ),
+    .out_ready_i  ( cipher_out_ready ),
     .in_valid_i   ( cipher_in_valid  ),
+    .data_i       ( cipher_in_data   ),
+    .key_i        ( csr_pa_key_i     ),
     .in_ready_o   ( cipher_in_ready  ),
-    .out_data_o   ( cipher_out_data  ),
     .out_valid_o  ( cipher_out_valid ),
-    .out_ready_i  ( cipher_out_ready )
+    .data_o       ( cipher_out_data  )
   );
 
   typedef enum logic [1:0] {

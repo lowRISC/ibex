@@ -1,0 +1,24 @@
+CAPI=2:
+# Copyright lowRISC contributors.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+name: "lowrisc:gift:gift_cipher:0.1"
+description: "Gift cipher"
+
+filesets:
+  files_rtl:
+    depend:
+      - lowrisc:gift:gift_pkg
+    files:
+      - rtl/gift.sv
+      - rtl/gift_middle_rounds.sv
+      - rtl/gift_round.sv
+      - rtl/gift_update_key.sv
+    file_type: systemVerilogSource
+
+targets:
+  default: &default_target
+    filesets:
+      - files_rtl
+    toplevel: gift
+    default_tool: vcs
