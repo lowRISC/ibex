@@ -427,8 +427,11 @@ module ibex_icache #(
     assign ecc_err_ic1 = lookup_valid_ic1 & ((|data_err_ic1) | (|tag_err_ic1));
 
     // Error correction
-    // The way(s) producing the error will be invalidated in the next cycle.
-    assign ecc_correction_ways_d  = tag_err_ic1 | (tag_match_ic1 & {NumWays{|data_err_ic1}});
+    // All ways will be invalidated on a tag error to prevent X-propagation from data_err_ic1 on
+    // spurious hits. Also prevents the same line being allocated twice when there was a true
+    // hit and a spurious hit.
+    assign ecc_correction_ways_d  = {NumWays{|tag_err_ic1}} |
+                                    (tag_match_ic1 & {NumWays{|data_err_ic1}});
     assign ecc_correction_write_d = ecc_err_ic1;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
