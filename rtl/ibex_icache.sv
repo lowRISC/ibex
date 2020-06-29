@@ -1026,6 +1026,15 @@ module ibex_icache #(
   // get rid of it.
 `ifdef FORMAL
  `ifdef YOSYS
+  // Unfortunately, Yosys doesn't support passing unpacked arrays as ports. Explicitly pack up the
+  // signals we need.
+  logic [NUM_FB-1:0][ADDR_W-1:0] packed_fill_addr_q;
+  always_comb begin
+    for (int i = 0; i < NUM_FB; i++) begin
+      packed_fill_addr_q[i][ADDR_W-1:0] = fill_addr_q[i];
+    end
+  end
+
   `include "formal_tb_frag.svh"
  `endif
 `endif
