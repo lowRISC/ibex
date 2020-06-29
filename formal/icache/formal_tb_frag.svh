@@ -16,5 +16,11 @@ formal_tb #(
   .SpecRequest    (SpecRequest),
   .BranchCache    (BranchCache),
 
-  .NUM_FB         (NUM_FB)
+  .ADDR_W         (ADDR_W),
+  .NUM_FB         (NUM_FB),
+  .LINE_W         (LINE_W),
+  .BUS_BYTES      (BUS_BYTES),
+  .BUS_W          (BUS_W),
+  .LINE_BEATS     (LINE_BEATS),
+  .LINE_BEATS_W   (LINE_BEATS_W)
 ) tb_i (.*);
