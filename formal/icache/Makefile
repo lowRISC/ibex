@@ -13,13 +13,23 @@ build-root  := $(abspath ../../build/$(vlnv))
 
 fusesoc-params := --ICacheECC=$(ECC)
 
-fusesoc-run := fusesoc --cores-root=../.. run --build-root=$(build-root)
+# Since we have a hacky hook that runs sv2v in place on fusesoc's
+# copied source files, we have to generate different build roots for
+# the two flavours (otherwise bad things will happen if you run make
+# -j2)
+mk-build-root = $(abspath ../../build/$(vlnv)/$(1))
 
-.PHONY: all prove lint
-all: prove
+mk-fusesoc-cmd = \
+  fusesoc --cores-root=../.. \
+  run --build-root=$(call mk-build-root,$(1)) \
+  --target=$(1) \
+  $(core-name) $(fusesoc-params)
 
-prove:
-	$(fusesoc-run) $(core-name) $(fusesoc-params)
+.PHONY: all prove cover
+all: prove cover
+
+prove cover:
+	$(call mk-fusesoc-cmd,$@)
 
 lint:
 	mypy --strict sv2v_in_place.py

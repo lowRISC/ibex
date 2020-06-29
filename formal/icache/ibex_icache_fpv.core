@@ -50,7 +50,7 @@ parameters:
     description: "Enable ECC protection in instruction cache"
 
 targets:
-  default:
+  prove: &prove
     parameters:
       - ICacheECC
     hooks:
@@ -60,3 +60,14 @@ targets:
       - all
     toplevel: ibex_icache
     default_tool: symbiyosys
+    tools:
+      symbiyosys:
+        tasknames:
+        - prove
+
+  cover:
+    <<: *prove
+    tools:
+      symbiyosys:
+        tasknames:
+        - cover

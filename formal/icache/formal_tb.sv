@@ -131,6 +131,8 @@ module formal_tb #(
   `ASSUME(even_address, `IMPLIES(branch_i, ~addr_i[0]))
   // The branch_spec signal must be driven if branch is
   `ASSUME(gate_bs, `IMPLIES(branch_i, branch_spec_i))
+  // Ready will not be asserted when req_i is low
+  `ASSUME(ready_implies_req_i, `IMPLIES(ready_i, req_i))
 
   // Assumptions about the instruction bus
   //
@@ -221,6 +223,32 @@ module formal_tb #(
           `IMPLIES(f_addr_valid & ~err_o &
                    $past(valid_o & ~(ready_i | branch_i)) & (rdata_o[1:0] == 2'b11),
                    $stable(rdata_o[31:16])))
+
+  // Formal coverage points
+  //
+  // See a good result returned by the cache
+  `COVER(fetch_good_result, f_addr_valid & valid_o & ready_i & ~branch_i & ~err_o)
+
+  // See a bad result returned by the cache
+  `COVER(fetch_bad_result, f_addr_valid & valid_o & ready_i & ~branch_i & err_o)
+
+  // See a bad result for the upper word returned by the cache
+  `COVER(fetch_bad_result_2, f_addr_valid & valid_o & ready_i & ~branch_i & err_o & err_plus2_o)
+
+  // See 8 back-to-back fetches ("full throughput")
+  logic [31:0] f_b2b_counter;
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      f_b2b_counter <= 32'd0;
+    end else begin
+      if (valid_o & ready_i & ~branch_i) begin
+        f_b2b_counter <= f_b2b_counter + 32'd1;
+      end else begin
+        f_b2b_counter <= 32'd0;
+      end
+    end
+  end
+  `COVER(back_to_back_fetches, f_b2b_counter == 8);
 
   // Internal (induction) assertions
   //
