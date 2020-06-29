@@ -2,9 +2,16 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
+[tasks]
+prove pf
+cover cv
+
 [options]
-mode prove
-depth 3
+pf: mode prove
+pf: depth 3
+
+cv: mode cover
+cv: depth 32
 
 [engines]
 smtbmc boolector
@@ -12,8 +19,9 @@ smtbmc boolector
 [script]
 read -sv @INPUT@
 
-# We don't care about the exact behaviour of the memories in the
-# design, so we should blackbox them.
+# Our formal properties are currently just about control logic, which
+# isn't affected by the exact behaviour of the memories in the design.
+# Blackbox them.
 blackbox $abstract\prim_generic_ram_1p
 
 prep -top ibex_icache
