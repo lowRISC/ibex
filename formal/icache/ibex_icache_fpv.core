@@ -51,10 +51,12 @@ parameters:
 
 targets:
   default:
+    parameters:
+      - ICacheECC
     hooks:
       pre_build:
         - sv2v_in_place
     filesets:
       - all
-    toplevel: tb
+    toplevel: ibex_icache
     default_tool: symbiyosys
