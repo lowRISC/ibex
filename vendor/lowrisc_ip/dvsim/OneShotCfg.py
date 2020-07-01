@@ -58,6 +58,7 @@ class OneShotCfg(FlowCfg):
         self.build_modes = []
         self.run_modes = []
         self.regressions = []
+        self.max_msg_count = -1
 
         # Flow results
         self.result = OrderedDict()
@@ -73,7 +74,7 @@ class OneShotCfg(FlowCfg):
         self.links = {}
         self.build_list = []
         self.deploy = []
-
+        self.cov = args.cov
         # Parse the cfg_file file tree
         self.parse_flow_cfg(flow_cfg_file)
         self._post_parse_flow_cfg()
