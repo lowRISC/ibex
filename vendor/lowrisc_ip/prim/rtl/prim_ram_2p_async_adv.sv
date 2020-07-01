@@ -14,7 +14,6 @@
 // mask cannot be used and has to be tied to {Width{1'b1}}.
 
 `include "prim_assert.sv"
-`include "prim_util.svh"
 
 module prim_ram_2p_async_adv #(
   parameter  int Depth                = 512,
@@ -29,7 +28,7 @@ module prim_ram_2p_async_adv #(
   parameter  bit EnableInputPipeline  = 0, // Adds an input register (read latency +1)
   parameter  bit EnableOutputPipeline = 0, // Adds an output register (read latency +1)
 
-  localparam int Aw                   = vbits(Depth)
+  localparam int Aw                   = prim_util_pkg::vbits(Depth)
 ) (
   input clk_a_i,
   input clk_b_i,
@@ -57,6 +56,8 @@ module prim_ram_2p_async_adv #(
   // config
   input [CfgW-1:0] cfg_i
 );
+
+  logic [CfgW-1:0] unused_cfg = cfg_i;
 
   `ASSERT_INIT(CannotHaveEccAndParity_A, !(EnableParity && EnableECC))
 
