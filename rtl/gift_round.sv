@@ -17,6 +17,10 @@ module gift_round (
   logic [63:0] data_after_permut;
   logic [63:0] data_after_key;
 
+  // Avoid lint warning
+  logic [63:0] unused_data_after_permut;
+  logic [63:0] unused_data_after_key;
+
   gift_update_key i_gift_update_key (
     .key_i(key_i),
     .key_o(key_o)
@@ -58,5 +62,9 @@ module gift_round (
   end
 
   assign data_o = data_state;
+
+  // Avoid lint warning
+  assign unused_data_after_permut = data_after_permut;
+  assign unused_data_after_key    = data_after_key;
 
 endmodule

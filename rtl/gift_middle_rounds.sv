@@ -2,8 +2,6 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-import gift_pkg::*;
-
 module gift_middle_rounds (
 
     // Data and key coming directly from the cipher input
@@ -14,12 +12,13 @@ module gift_middle_rounds (
     input logic [63:0]    state_data_i,
     input logic [127:0]   state_key_i,
 
-    input round_index_e    round_base_i,
+    input gift_pkg::round_index_e round_base_i,
 
     output logic [63:0]   data_o,
     output logic [127:0]  key_o
 );
 
+  import gift_pkg::*;
 
   // Internal signals
 
