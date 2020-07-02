@@ -15,10 +15,10 @@
  * - Host (master) arbitration is strictly priority based.
  */
 module bus #(
-  parameter NrDevices    = 1,
-  parameter NrHosts      = 1,
-  parameter DataWidth    = 32,
-  parameter AddressWidth = 32
+  parameter int NrDevices    = 1,
+  parameter int NrHosts      = 1,
+  parameter int DataWidth    = 32,
+  parameter int AddressWidth = 32
 ) (
   input                           clk_i,
   input                           rst_ni,
