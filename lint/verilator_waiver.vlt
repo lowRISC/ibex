@@ -156,3 +156,9 @@ lint_off -rule UNOPTFLAT -file "*/rtl/ibex_cs_registers.sv" -match "*ibex_core.c
 // Temporary waivers until OpenTitan primitives are lint-clean
 // https://github.com/lowRISC/opentitan/issues/2313
 lint_off -file "*/lowrisc_prim_*/rtl/*.sv"
+
+// Signal unoptimizable: Feedback to clock or circular logic:
+// We use 2D packed arrays to hold data and keys for multpile cipher iterations:
+// data_states[i][:] is used to generate data_states[i+1][:] but there is no cicular logic.
+lint_off -rule UNOPTFLAT -file "*/rtl/gift_middle_rounds.sv" -match "*ibex_core.g_pa.pointer_authentication_i.gift_i.gift_middle_rounds_i.data_states*"
+lint_off -rule UNOPTFLAT -file "*/rtl/gift_middle_rounds.sv" -match "*ibex_core.g_pa.pointer_authentication_i.gift_i.gift_middle_rounds_i.key_states*"
