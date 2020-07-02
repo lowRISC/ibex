@@ -28,6 +28,10 @@ parameters:
     paramtype: vlogdefine
     default: true
 
+  RV_TRACE:
+    datatype: bool
+    paramtype: vlogdefine
+
   SYNTHESIS:
     datatype: bool
     paramtype: vlogdefine
@@ -119,6 +123,7 @@ targets:
       - files_lint
     parameters:
       - RVFI=true
+      - RV_TRACE=true
       - SYNTHESIS=true
       - RV32M
       - RV32E
@@ -149,6 +154,7 @@ targets:
       - files_rtl
     parameters:
       - SYNTHESIS=true
+      - RV_TRACE=true
       - RVFI=true
     default_tool: veribleformat
     toplevel: ibex_core
