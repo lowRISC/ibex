@@ -53,7 +53,7 @@ module timer #(
   assign timer_we = timer_req_i & timer_we_i;
 
   // mtime increments every cycle
-  assign mtime_inc = mtime_q + 64'b1;
+  assign mtime_inc = mtime_q + 64'd1;
 
   // Generate write data based on byte strobes
   for (genvar b = 0; b < DataWidth / 8; b++) begin : gen_byte_wdata

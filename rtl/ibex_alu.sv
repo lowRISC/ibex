@@ -622,17 +622,17 @@ module ibex_alu #(
       // Shuffle / Unshuffle //
       /////////////////////////
 
-      localparam logic [31:0] SHUFFLE_MASK_L [0:3] =
+      localparam logic [31:0] SHUFFLE_MASK_L [4] =
           '{32'h00ff_0000, 32'h0f00_0f00, 32'h3030_3030, 32'h4444_4444};
-      localparam logic [31:0] SHUFFLE_MASK_R [0:3] =
+      localparam logic [31:0] SHUFFLE_MASK_R [4] =
           '{32'h0000_ff00, 32'h00f0_00f0, 32'h0c0c_0c0c, 32'h2222_2222};
 
-      localparam logic [31:0] FLIP_MASK_L [0:3] =
+      localparam logic [31:0] FLIP_MASK_L [4] =
           '{32'h2200_1100, 32'h0044_0000, 32'h4411_0000, 32'h1100_0000};
-      localparam logic [31:0] FLIP_MASK_R [0:3] =
+      localparam logic [31:0] FLIP_MASK_R [4] =
           '{32'h0088_0044, 32'h0000_2200, 32'h0000_8822, 32'h0000_0088};
 
-      logic [31:0] SHUFFLE_MASK_NOT [0:3];
+      logic [31:0] SHUFFLE_MASK_NOT [4];
       for(genvar i = 0; i < 4; i++) begin : gen_shuffle_mask_not
         assign SHUFFLE_MASK_NOT[i] = ~(SHUFFLE_MASK_L[i] | SHUFFLE_MASK_R[i]);
       end
@@ -1047,7 +1047,7 @@ module ibex_alu #(
           default:     clmul_result = clmul_result_raw;
         endcase
       end
-    end else begin
+    end else begin : gen_alu_rvb_notfull
       assign shuffle_result       = '0;
       assign butterfly_result     = '0;
       assign invbutterfly_result  = '0;
