@@ -13,30 +13,30 @@ Signals implemented until now are shown in the table below:
 Trace Signals
 -------------
 
-+--------------------+---------------------+-------------------------------------------------------------+
-|   Signal Name      |          Bits       |                         Description                         |
-+====================+=====================+=============================================================+
-| rv_trace_itype     |           3         | 0: Final instruction in block is none of other itype codes; |
-|                    |                     | 1: Exception. An exception that traps occurred              |
-|                    |                     | following the final retired instruction in the block;       |
-|                    |                     | 2: Interrupt. An interrupt that traps occurred              |
-|                    |                     | following the final retired instruction in the block;       |
-|                    |                     | 3: Exception or interrupt return;  (not yet implemented)    |
-|                    |                     | 4: Nontaken branch;                                         |
-|                    |                     | 5: Taken branch;                                            |
-|                    |                     | 6: Uninferable jump                (not yet implemented)    |
-+--------------------+---------------------+-------------------------------------------------------------+
-| rv_trace_iaddr     |          32         | Contains the value of the address all the time.             |
-+--------------------+---------------------+-------------------------------------------------------------+
-| rv_trace_cause     |          7          | ucause/mcause CSR                                           |
-+--------------------+---------------------+-------------------------------------------------------------+
-| rv_trace_tval      |          32         | Associated trap value, e.g. address of                      |
-|                    |                     | exceptions, as written to the utval/mtval CSR               |
-+--------------------+---------------------+-------------------------------------------------------------+
-| rv_trace_priv      |          2          | Privilege level for all instructions retired on this cycle. |
-+--------------------+---------------------+-------------------------------------------------------------+
-| rv_trace_iretire   |          1          | The trace signals are valid (1), or not (0).                |                         
-+--------------------+---------------------+-------------------------------------------------------------+
++--------------------+----------+-------------------------------------------------------------+
+|   Signal Name      |   Bits   |                         Description                         |
++====================+==========+=============================================================+
+| rv_trace_itype     |    3     | 0: Final instruction in block is none of other itype codes; |
+|                    |          | 1: Exception. An exception that traps occurred              |
+|                    |          | following the final retired instruction in the block;       |
+|                    |          | 2: Interrupt. An interrupt that traps occurred              |
+|                    |          | following the final retired instruction in the block;       |
+|                    |          | 3: Exception or interrupt return;  (not yet implemented)    |
+|                    |          | 4: Nontaken branch;                                         |
+|                    |          | 5: Taken branch;                                            |
+|                    |          | 6: Uninferable jump                (not yet implemented)    |
++--------------------+----------+-------------------------------------------------------------+
+| rv_trace_iaddr     |   32     | Contains the value of the address all the time.             |
++--------------------+----------+-------------------------------------------------------------+
+| rv_trace_cause     |    7     | ucause/mcause CSR                                           |
++--------------------+----------+-------------------------------------------------------------+
+| rv_trace_tval      |   32     | Associated trap value, e.g. address of                      |
+|                    |          | exceptions, as written to the utval/mtval CSR               |
++--------------------+----------+-------------------------------------------------------------+
+| rv_trace_priv      |    2     | Privilege level for all instructions retired on this cycle. |
++--------------------+----------+-------------------------------------------------------------+
+| rv_trace_iretire   |    1     | The trace signals are valid (1), or not (0).                |                         
++--------------------+----------+-------------------------------------------------------------+
 
 Parameters
 ----------

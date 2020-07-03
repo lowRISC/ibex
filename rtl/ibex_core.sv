@@ -1333,6 +1333,9 @@ module ibex_core #(
   logic        rv_trace_iretire_stage [RV_TRACE_STAGES-1:0];
   logic [2:0]  rv_trace_itype_stage   [RV_TRACE_STAGES-1:0];
   logic [5:0]  rv_exc_cause_stage     [RV_TRACE_STAGES-1:0];
+  logic [ 1:0] rv_trace_priv_stage   [RV_TRACE_STAGES-1:0];
+
+  logic        rv_trace_iretire_d     [RV_TRACE_STAGES-1:0];
 
   always_comb begin
     // Is it the first inst in an interrupt?
@@ -1352,13 +1355,14 @@ module ibex_core #(
   end
 
   if (WritebackStage) begin
-    always_ff @(posedge clk or negedge rst_ni) begin
-      if (~rst_ni) begin
-        rv_trace_iretire <= 0;
-      end else begin
-        rv_trace_iretire_stage [RV_TRACE_STAGES-1] <= instr_done_wb;
-      end
-    end
+    assign rv_trace_iretire_d[0] = (instr_id_done & ~dummy_instr_id) |
+                                   (rv_trace_iretire_stage[0] & ~instr_done_wb);
+    assign rv_trace_iretire_d[1] = instr_done_wb;
+ 
+  end else begin
+    // Without writeback stage first stage is output stage so simply valid the cycle after
+    // instruction leaves ID/EX (and so has retired)
+    assign rv_trace_iretire_d[0] = instr_id_done & ~dummy_instr_id;
   end
 
   assign rv_trace_iretire = rv_trace_iretire_stage [RV_TRACE_STAGES-1];
@@ -1366,23 +1370,25 @@ module ibex_core #(
   assign rv_trace_itype   = rv_trace_itype_stage   [RV_TRACE_STAGES-1];
   assign rv_trace_cause   = { rv_exc_cause_stage   [RV_TRACE_STAGES-1] , csr_save_cause }; 
   assign rv_trace_tval    = rv_trace_tval_stage    [RV_TRACE_STAGES-1];
-  assign rv_trace_priv    = priv_mode_id; 
+  assign rv_trace_priv    = rv_trace_priv_stage    [RV_TRACE_STAGES-1];
 
   // staging signals which need it
   for (genvar i = 0;i < RV_TRACE_STAGES; i = i + 1) begin : g_rv_trace_stages
     always_ff @(posedge clk or negedge rst_ni) begin
       if (!rst_ni) begin
-        rv_trace_iaddr_stage[i]   <= 0; 
-        rv_trace_iretire_stage[i] <= 0;
-        rv_exc_cause_stage[i]     <= 0;
-        rv_trace_tval_stage[i]    <= 0;
+        rv_trace_iaddr_stage[i]   <= '0;  
+        rv_trace_iretire_stage[i] <=  0;
+        rv_exc_cause_stage[i]     <= '0; 
+        rv_trace_tval_stage[i]    <= '0; 
+        rv_trace_priv_stage[i]    <= {PRIV_LVL_M};
       end else begin
+        rv_trace_iretire_stage[i] <= rv_trace_iretire_d[i];
         if (i == 0) begin
-          if (instr_id_done) begin
-            rv_trace_iretire_stage[i]    <= ex_valid;
-            rv_trace_iaddr_stage[i]      <= pc_id;
-            rv_exc_cause_stage[i]        <= exc_cause;
-            rv_trace_tval_stage[i]       <= csr_mtval; 
+          if ( instr_id_done ) begin
+            rv_trace_iaddr_stage[i]  <= pc_id;
+            rv_exc_cause_stage[i]    <= exc_cause;
+            rv_trace_tval_stage[i]   <= csr_mtval; 
+            rv_trace_priv_stage[i]   <= {priv_mode_id};
             if ( pc_1st_in_trap == 1 ) begin
               rv_trace_itype_stage[i] <= 3'd1;
             end else if ( pc_1st_in_intr == 1 ) begin
@@ -1394,13 +1400,12 @@ module ibex_core #(
             end else begin
               rv_trace_itype_stage[i] <= 3'd0;
             end
-        end else if ( ~dummy_instr_id )
-            rv_trace_iretire_stage[i] <= 0;
+          end
         end else begin
           if (instr_done_wb) begin
             rv_trace_itype_stage[i]   <= rv_trace_itype_stage[i-1];
             rv_trace_iaddr_stage[i]   <= rv_trace_iaddr_stage[i-1];
-            rv_trace_iretire_stage[i] <= rv_trace_iretire_stage[i-1];
+            rv_trace_priv_stage[i]    <= rv_trace_priv_stage[i-1];
           end
         end
       end

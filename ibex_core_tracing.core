@@ -31,6 +31,7 @@ parameters:
   RV_TRACE:
     datatype: bool
     paramtype: vlogdefine
+    description: "RISC-V trace interface implementation"
 
   SYNTHESIS:
     datatype: bool
