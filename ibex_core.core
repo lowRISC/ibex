@@ -9,6 +9,7 @@ filesets:
   files_rtl:
     depend:
       - lowrisc:prim:assert
+      - lowrisc:prim:clock_gating
       # TODO: Only lfsr is needed. Replace with a more specific dependency
       # once available.
       - lowrisc:prim:all
