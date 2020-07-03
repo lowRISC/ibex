@@ -13,9 +13,6 @@ filesets:
       - rtl/ibex_core_tracing.sv
     file_type: systemVerilogSource
 
-  files_lint:
-    depend:
-      - lowrisc:ibex:sim_shared
 
   files_lint_verilator:
     files:
@@ -116,7 +113,6 @@ targets:
       # are applied, but not file-specific waivers.
       - tool_verilator ? (files_lint_verilator)
       - files_rtl
-      - files_lint
     parameters:
       - RVFI=true
       - SYNTHESIS=true
