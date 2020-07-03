@@ -114,7 +114,7 @@ module ibex_core #(
   localparam bit          DummyInstructions = SecureIbex;
   // Speculative branch option, trades-off performance against timing.
   // Setting this to 1 eases branch target critical paths significantly but reduces performance
-  // by ~3% (based on Coremark/MHz score).
+  // by ~3% (based on CoreMark/MHz score).
   // Set by default in the max PMP config which has the tightest budget for branch target timing.
   localparam bit          SpecBranch        = PMPEnable & (PMPNumRegions == 16);
 
