@@ -99,7 +99,7 @@ The simulator produces several output files
 Similar to the Verilator flow the Simple System simulator binary can be built using:
 
 ```
-fusesoc --cores-root=. run --target=sim --tool=vcs --setup --build lowrisc:ibex:ibex_simple_system --RV32M=1 --RV32E=0 --SRAM_INIT_FILE=`<sw_vmem_file>`
+fusesoc --cores-root=. run --target=sim --tool=vcs --setup --build lowrisc:ibex:ibex_simple_system --RV32M=1 --RV32E=0 --SRAMInitFile=`<sw_vmem_file>`
 ```
 
 `<sw_vmem_file>` should be a path to a vmem file built as described above, use
@@ -119,7 +119,7 @@ Pass `-gui` to use the DVE GUI.
 To build and run Simple System run:
 
 ```
-fusesoc --cores-root=. run --target=sim --tool=rivierapro lowrisc:ibex:ibex_simple_system --RV32M=1 --RV32E=0 --SRAM_INIT_FILE=<sw_vmem_file>
+fusesoc --cores-root=. run --target=sim --tool=rivierapro lowrisc:ibex:ibex_simple_system --RV32M=1 --RV32E=0 --SRAMInitFile=<sw_vmem_file>
 ```
 
 `<sw_vmem_file>` should be a path to a vmem file built as described above, use
