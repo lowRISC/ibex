@@ -166,3 +166,4 @@ targets:
       veribleformat:
         verible_format_args:
           - "--inplace"
+          - "--format_module_port_declarations=false"
