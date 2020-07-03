@@ -21,15 +21,15 @@ filesets:
 parameters:
   # XXX: This parameter needs to be absolute, or relative to the *.runs/synth_1
   # directory. It's best to pass it as absolute path when invoking fusesoc, e.g.
-  # --SRAM_INIT_FILE=$PWD/sw/led/led.vmem
+  # --SRAMInitFile=$PWD/sw/led/led.vmem
   # XXX: The VMEM file should be added to the sources of the Vivado project to
   # make the Vivado dependency tracking work. However this requires changes to
   # fusesoc first.
-  SRAM_INIT_FILE:
+  SRAMInitFile:
     datatype: str
     description: SRAM initialization file in vmem hex format
     default: "../../../../../examples/sw/led/led.vmem"
-    paramtype: vlogdefine
+    paramtype: vlogparam
 
   FPGA_XILINX:
     datatype: str
@@ -45,7 +45,7 @@ targets:
       - files_constraints
     toplevel: top_artya7
     parameters:
-      - SRAM_INIT_FILE
+      - SRAMInitFile
       - FPGA_XILINX
     tools:
       vivado:
