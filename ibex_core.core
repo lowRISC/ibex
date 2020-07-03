@@ -154,10 +154,6 @@ targets:
           # RAM primitives wider than 64bit (required for ECC) fail to build in
           # Verilator without increasing the unroll count (see Verilator#1266)
           - "--unroll-count 72"
-      veriblelint:
-        ruleset: default
-        rules:
-          - "-parameter-name-style"
   format:
     filesets:
       - files_rtl
