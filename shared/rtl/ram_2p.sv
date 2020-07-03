@@ -9,7 +9,8 @@
 `include "prim_assert.sv"
 
 module ram_2p #(
-    parameter int Depth = 128
+    parameter int Depth       = 128,
+    parameter     MemInitFile = ""
 ) (
     input               clk_i,
     input               rst_ni,
@@ -66,7 +67,8 @@ module ram_2p #(
 
   prim_ram_2p #(
     .Width(32),
-    .Depth(Depth)
+    .Depth(Depth),
+    .MemInitFile(MemInitFile)
   ) u_ram (
     .clk_a_i   (clk_i),
     .clk_b_i   (clk_i),
