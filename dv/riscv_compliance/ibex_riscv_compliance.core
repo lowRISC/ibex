@@ -42,11 +42,6 @@ parameters:
     paramtype: vlogdefine
     description: "Bitmanip implementation parameter enum. See ibex_pkg.sv (EXPERIMENTAL)"
 
-  SRAM_INIT_FILE:
-    datatype: str
-    paramtype: vlogdefine
-    description: "Path to a vmem file to initialize the RAM with"
-
   MultiplierImplementation:
     datatype: str
     paramtype: vlogparam
