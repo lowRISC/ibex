@@ -37,6 +37,12 @@ parameters:
     default: 1
     paramtype: vlogdefine
 
+  # For value definition, please see ip/prim/rtl/prim_pkg.sv
+  PRIM_DEFAULT_IMPL:
+    datatype: str
+    paramtype: vlogdefine
+    description: Primitives implementation to use, e.g. "prim_pkg::ImplGeneric".
+
 targets:
   synth:
     default_tool: vivado
@@ -47,6 +53,7 @@ targets:
     parameters:
       - SRAMInitFile
       - FPGA_XILINX
+      - PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx
     tools:
       vivado:
         part: "xc7a100tcsg324-1"  # Default to Arty A7-100
