@@ -97,7 +97,7 @@ jobs:
       fusesoc --version
       verilator --version
       riscv32-unknown-elf-gcc --version
-      verilog_lint --version
+      verible-verilog-lint --version
     displayName: Display environment
 
   # Verible lint/format is experimental so only run on default config for now,
