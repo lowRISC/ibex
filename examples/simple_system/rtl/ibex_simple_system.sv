@@ -32,6 +32,7 @@ module ibex_simple_system (
   parameter bit               BranchTargetALU          = 1'b0;
   parameter bit               WritebackStage           = 1'b0;
   parameter                   MultiplierImplementation = "fast";
+  parameter                   SRAMInitFile             = "";
 
   logic clk_sys = 1'b0, rst_sys_n;
 
@@ -198,7 +199,8 @@ module ibex_simple_system (
 
   // SRAM block for instruction and data storage
   ram_2p #(
-      .Depth(1024*1024/4)
+      .Depth(1024*1024/4),
+      .MemInitFile(SRAMInitFile)
     ) u_ram (
       .clk_i       (clk_sys),
       .rst_ni      (rst_sys_n),
