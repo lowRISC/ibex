@@ -9,6 +9,7 @@ filesets:
     depend:
       - lowrisc:prim:secded
       - lowrisc:prim:ram_1p
+      - lowrisc:prim:assert
     files:
       - rtl/ibex_icache.sv
     file_type: systemVerilogSource
