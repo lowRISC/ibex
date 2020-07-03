@@ -22,7 +22,6 @@ filesets:
       - ibex_simple_system.cc: { file_type: cppSource }
       - lint/verilator_waiver.vlt: {file_type: vlt}
 
-
 parameters:
   RV32M:
     datatype: int
@@ -89,10 +88,6 @@ targets:
       - tool_verilator ? (files_verilator)
       - files_sim
     toplevel: ibex_simple_system
-
-  sim:
-    <<: *default_target
-    default_tool: verilator
     parameters:
       - RV32M
       - RV32E
@@ -104,6 +99,22 @@ targets:
       - PMPGranularity
       - PMPNumRegions
       - SRAMInitFile
+
+  lint:
+    <<: *default_target
+    default_tool: verilator
+    tools:
+      verilator:
+        mode: lint-only
+        verilator_options:
+          - "-Wall"
+          # RAM primitives wider than 64bit (required for ECC) fail to build in
+          # Verilator without increasing the unroll count (see Verilator#1266)
+          - "--unroll-count 72"
+
+  sim:
+    <<: *default_target
+    default_tool: verilator
     tools:
       vcs:
         vcs_options:
@@ -134,4 +145,3 @@ targets:
           # RAM primitives wider than 64bit (required for ECC) fail to build in
           # Verilator without increasing the unroll count (see Verilator#1266)
           - "--unroll-count 72"
-
