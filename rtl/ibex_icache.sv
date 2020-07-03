@@ -56,9 +56,6 @@ module ibex_icache #(
     input  logic                icache_inval_i,
     output logic                busy_o
 );
-
-  // NOTE RTL IS DRAFT
-
   // Local constants
   localparam int unsigned ADDR_W       = 32;
   // Number of fill buffers (must be >= 2)
