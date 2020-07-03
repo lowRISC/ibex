@@ -149,3 +149,20 @@ jobs:
         - small
         - experimental-maxperf-pmp
         - experimental-maxperf-pmp-bmfull
+
+  # Run lint on simple system
+  - bash: |
+      fusesoc --cores-root . run --target=lint --tool=verilator lowrisc:ibex:ibex_simple_system
+      if [ $? != 0 ]; then
+        echo -n "##vso[task.logissue type=error]"
+        echo "Verilog lint with Verible failed. Run 'fusesoc --cores-root . run --target=lint --tool=verilator lowrisc:ibex:ibex_simple_system' to check and fix all errors."
+      fi
+    displayName: Run Verilator lint on simple system
+
+  - bash: |
+      fusesoc --cores-root . run --target=lint --tool=veriblelint lowrisc:ibex:ibex_simple_system
+      if [ $? != 0 ]; then
+        echo -n "##vso[task.logissue type=error]"
+        echo "Verilog lint with Verible failed. Run 'fusesoc --cores-root . run --target=lint --tool=verilator lowrisc:ibex:ibex_simple_system' to check and fix all errors."
+      fi
+    displayName: Run Verible lint on simple system
