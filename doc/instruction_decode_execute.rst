@@ -65,8 +65,8 @@ Other blocks use the ALU for the following tasks:
 * The LSU uses it to increment addresses when performing two accesses to handle an unaligned access
 
 Bit Manipulation Extension
-  Support for the `RISC-V Bit Manipulation Extension (Document Version 0.92, November 8, 2019) <https://github.com/riscv/riscv-bitmanip/blob/master/bitmanip-0.92.pdf>`_ is enabled via the enumerated parameter ``RV32B`` defined in :file:`rtl/ibex_pkg.sv`.
-  This feature is *Experimental*.
+  Support for the `RISC-V Bit Manipulation Extension (draft version 0.92 from November 8, 2019) <https://github.com/riscv/riscv-bitmanip/blob/master/bitmanip-0.92.pdf>`_ is optional. [#B_draft]_
+  It can be enabled via the enumerated parameter ``RV32B`` defined in :file:`rtl/ibex_pkg.sv`.
 
   There are two versions of the bit manipulation extension available:
   The balanced implementation comprises a set of sub-extensions aiming for good benefits at a reasonable area overhead.
@@ -75,30 +75,27 @@ Bit Manipulation Extension
   Multi-cycle instructions are completed in 2 cycles.
   All remaining instructions complete in a single cycle.
 
-  +---------------------------+---------------+--------------------------+
-  | Z-Extension               | Version       | Multi-Cycle Instructions |
-  +===========================+===============+==========================+
-  | Zbb (Base)                | Balanced/Full | rol, ror[i]              |
-  +---------------------------+---------------+--------------------------+
-  | Zbs (Single-bit)          | Balanced/Full | None                     |
-  +---------------------------+---------------+--------------------------+
-  | Zbp (Permutation)         | Full          | None                     |
-  +---------------------------+---------------+--------------------------+
-  | Zbp (Bit extract/deposit) | Full          | All                      |
-  +---------------------------+---------------+--------------------------+
-  | Zbf (Bit-field place)     | Balanced/Full | All                      |
-  +---------------------------+---------------+--------------------------+
-  | Zbc (Carry-less multiply) | Full          | None                     |
-  +---------------------------+---------------+--------------------------+
-  | Zbr (Crc)                 | Full          | All                      |
-  +---------------------------+---------------+--------------------------+
-  | Zbt (Ternary)             | Balanced/Full | All                      |
-  +---------------------------+---------------+--------------------------+
-  | Zb_tmp (Temporary)*       | Balanced/Full | None                     |
-  +---------------------------+---------------+--------------------------+
-
-  * The sign-extend instructions `sext.b/sext.h` are defined but not yet classified in version 0.92 of the extension proposal.
-    Temporarily, they are assigned a separate Z-extension.
+  +---------------------------------+---------------+--------------------------+
+  | Z-Extension                     | Version       | Multi-Cycle Instructions |
+  +=================================+===============+==========================+
+  | Zbb (Base)                      | Balanced/Full | rol, ror[i]              |
+  +---------------------------------+---------------+--------------------------+
+  | Zbs (Single-bit)                | Balanced/Full | None                     |
+  +---------------------------------+---------------+--------------------------+
+  | Zbp (Permutation)               | Full          | None                     |
+  +---------------------------------+---------------+--------------------------+
+  | Zbp (Bit extract/deposit)       | Full          | All                      |
+  +---------------------------------+---------------+--------------------------+
+  | Zbf (Bit-field place)           | Balanced/Full | All                      |
+  +---------------------------------+---------------+--------------------------+
+  | Zbc (Carry-less multiply)       | Full          | None                     |
+  +---------------------------------+---------------+--------------------------+
+  | Zbr (CRC)                       | Full          | All                      |
+  +---------------------------------+---------------+--------------------------+
+  | Zbt (Ternary)                   | Balanced/Full | All                      |
+  +---------------------------------+---------------+--------------------------+
+  | Zb_tmp (Temporary) [#B_zb_tmp]_ | Balanced/Full | None                     |
+  +---------------------------------+---------------+--------------------------+
 
   The implementation of the B-extension comes with an area overhead of 1.8 to 3.0 kGE for the balanced version and 6.0 to 8.7 kGE for the full version.
   That corresponds to an approximate percentage increase in area of 9 to 14 % and 25 to 30 % for the balanced and full versions respectively.
@@ -165,3 +162,14 @@ Source File: :file:`rtl/ibex_load_store_unit.sv`
 
 The Load-Store Unit (LSU) interfaces with main memory to perform load and store operations.
 See :ref:`load-store-unit` for more details.
+
+.. rubric:: Footnotes
+
+.. [#B_draft] Ibex fully implements draft version 0.92 of the RISC-V Bit Manipulation Extension.
+   This extension may change before being ratified as a standard by the RISC-V Foundation.
+   Ibex will be updated to match future versions of the specification.
+   Prior to ratification this may involve backwards incompatible changes.
+   Additionally, neither GCC or Clang have committed to maintaining support upstream for unratified versions of the specification.
+
+.. [#B_zb_tmp] The sign-extend instructions `sext.b/sext.h` are defined but not unambiguously categorized in draft version 0.92 of the extension.
+   Temporarily, they have been assigned a separate Z-extension (Zb_tmp) both in Ibex and the RISCV-DV random instruction generator used to verify the bit manipulation instructions in Ibex.
