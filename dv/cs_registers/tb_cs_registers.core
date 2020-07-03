@@ -30,11 +30,12 @@ filesets:
       - model/register_model.h
     file_type: user
 
-  files_sim_verilator:
+  files_verilator:
     depend:
       - lowrisc:dv_verilator:simutil_verilator
     files:
       - tb/tb_cs_registers.cc: { file_type: cppSource }
+      - lint/verilator_waiver.vlt: {file_type: vlt}
 
   files_sim:
     depend:
@@ -90,7 +91,7 @@ targets:
     toplevel: tb_cs_registers
     filesets:
       - files_sim
-      - files_sim_verilator
+      - tool_verilator ? (files_verilator)
     hooks:
       pre_build:
         - build_so

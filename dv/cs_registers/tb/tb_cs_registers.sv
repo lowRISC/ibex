@@ -3,15 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 module tb_cs_registers #(
-    parameter bit          DbgTriggerEn     = 0,
-    parameter bit          ICache           = 0,
+    parameter bit          DbgTriggerEn     = 1'b0,
+    parameter bit          ICache           = 1'b0,
     parameter int unsigned MHPMCounterNum   = 8,
     parameter int unsigned MHPMCounterWidth = 40,
-    parameter bit          PMPEnable        = 0,
+    parameter bit          PMPEnable        = 1'b0,
     parameter int unsigned PMPGranularity   = 0,
     parameter int unsigned PMPNumRegions    = 4,
-    parameter bit          RV32E            = 0,
-    parameter bit          RV32M            = 0
+    parameter bit          RV32E            = 1'b0,
+    parameter bit          RV32M            = 1'b0
 ) (
     // Clock and Reset
     inout  wire                 clk_i,
