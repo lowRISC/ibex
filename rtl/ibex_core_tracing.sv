@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 `ifndef RV32B
-  `define RV32B ibex_pkg::RV32BNone
+`define RV32B ibex_pkg::RV32BNone
 `endif
 
 /**
@@ -76,31 +76,31 @@ module ibex_core_tracing #(
   import ibex_pkg::*;
 
   // ibex_tracer relies on the signals from the RISC-V Formal Interface
-  `ifndef RVFI
-    $fatal("Fatal error: RVFI needs to be defined globally.");
-  `endif
+`ifndef RVFI
+  $fatal("Fatal error: RVFI needs to be defined globally.");
+`endif
 
-  logic        rvfi_valid;
+  logic rvfi_valid;
   logic [63:0] rvfi_order;
   logic [31:0] rvfi_insn;
-  logic        rvfi_trap;
-  logic        rvfi_halt;
-  logic        rvfi_intr;
-  logic [ 1:0] rvfi_mode;
-  logic [ 1:0] rvfi_ixl;
-  logic [ 4:0] rvfi_rs1_addr;
-  logic [ 4:0] rvfi_rs2_addr;
-  logic [ 4:0] rvfi_rs3_addr;
+  logic rvfi_trap;
+  logic rvfi_halt;
+  logic rvfi_intr;
+  logic [1:0] rvfi_mode;
+  logic [1:0] rvfi_ixl;
+  logic [4:0] rvfi_rs1_addr;
+  logic [4:0] rvfi_rs2_addr;
+  logic [4:0] rvfi_rs3_addr;
   logic [31:0] rvfi_rs1_rdata;
   logic [31:0] rvfi_rs2_rdata;
   logic [31:0] rvfi_rs3_rdata;
-  logic [ 4:0] rvfi_rd_addr;
+  logic [4:0] rvfi_rd_addr;
   logic [31:0] rvfi_rd_wdata;
   logic [31:0] rvfi_pc_rdata;
   logic [31:0] rvfi_pc_wdata;
   logic [31:0] rvfi_mem_addr;
-  logic [ 3:0] rvfi_mem_rmask;
-  logic [ 3:0] rvfi_mem_wmask;
+  logic [3:0] rvfi_mem_rmask;
+  logic [3:0] rvfi_mem_wmask;
   logic [31:0] rvfi_mem_rdata;
   logic [31:0] rvfi_mem_wdata;
 

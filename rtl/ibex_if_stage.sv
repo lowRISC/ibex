@@ -88,66 +88,66 @@ module ibex_if_stage #(
 
   import ibex_pkg::*;
 
-  logic              instr_valid_id_d, instr_valid_id_q;
-  logic              instr_new_id_d, instr_new_id_q;
+  logic instr_valid_id_d, instr_valid_id_q;
+  logic instr_new_id_d, instr_new_id_q;
 
   // prefetch buffer related signals
-  logic              prefetch_busy;
-  logic              branch_req;
-  logic       [31:0] fetch_addr_n;
+  logic prefetch_busy;
+  logic branch_req;
+  logic [31:0] fetch_addr_n;
 
-  logic              fetch_valid;
-  logic              fetch_ready;
-  logic       [31:0] fetch_rdata;
-  logic       [31:0] fetch_addr;
-  logic              fetch_err;
-  logic              fetch_err_plus2;
+  logic fetch_valid;
+  logic fetch_ready;
+  logic [31:0] fetch_rdata;
+  logic [31:0] fetch_addr;
+  logic fetch_err;
+  logic fetch_err_plus2;
 
-  logic       [31:0] exc_pc;
+  logic [31:0] exc_pc;
 
-  logic        [5:0] irq_id;
-  logic              unused_irq_bit;
+  logic [5:0] irq_id;
+  logic unused_irq_bit;
 
-  logic              if_id_pipe_reg_we; // IF-ID pipeline reg write enable
+  logic if_id_pipe_reg_we;  // IF-ID pipeline reg write enable
 
   // Dummy instruction signals
-  logic              fetch_valid_out;
-  logic              stall_dummy_instr;
-  logic [31:0]       instr_out;
-  logic              instr_is_compressed_out;
-  logic              illegal_c_instr_out;
-  logic              instr_err_out;
+  logic fetch_valid_out;
+  logic stall_dummy_instr;
+  logic [31:0] instr_out;
+  logic instr_is_compressed_out;
+  logic illegal_c_instr_out;
+  logic instr_err_out;
 
-  logic        [7:0] unused_boot_addr;
-  logic        [7:0] unused_csr_mtvec;
+  logic [7:0] unused_boot_addr;
+  logic [7:0] unused_csr_mtvec;
 
   assign unused_boot_addr = boot_addr_i[7:0];
   assign unused_csr_mtvec = csr_mtvec_i[7:0];
 
   // extract interrupt ID from exception cause
-  assign irq_id         = {exc_cause};
-  assign unused_irq_bit = irq_id[5];   // MSB distinguishes interrupts from exceptions
+  assign irq_id = {exc_cause};
+  assign unused_irq_bit = irq_id[5];  // MSB distinguishes interrupts from exceptions
 
   // exception PC selection mux
   always_comb begin : exc_pc_mux
     unique case (exc_pc_mux_i)
-      EXC_PC_EXC:     exc_pc = { csr_mtvec_i[31:8], 8'h00                    };
-      EXC_PC_IRQ:     exc_pc = { csr_mtvec_i[31:8], 1'b0, irq_id[4:0], 2'b00 };
-      EXC_PC_DBD:     exc_pc = DmHaltAddr;
+      EXC_PC_EXC: exc_pc = {csr_mtvec_i[31:8], 8'h00};
+      EXC_PC_IRQ: exc_pc = {csr_mtvec_i[31:8], 1'b0, irq_id[4:0], 2'b00};
+      EXC_PC_DBD: exc_pc = DmHaltAddr;
       EXC_PC_DBG_EXC: exc_pc = DmExceptionAddr;
-      default:        exc_pc = { csr_mtvec_i[31:8], 8'h00                    };
+      default: exc_pc = {csr_mtvec_i[31:8], 8'h00};
     endcase
   end
 
   // fetch address selection mux
   always_comb begin : fetch_addr_mux
     unique case (pc_mux_i)
-      PC_BOOT: fetch_addr_n = { boot_addr_i[31:8], 8'h80 };
+      PC_BOOT: fetch_addr_n = {boot_addr_i[31:8], 8'h80};
       PC_JUMP: fetch_addr_n = branch_target_ex_i;
-      PC_EXC:  fetch_addr_n = exc_pc;                       // set PC to exception handler
-      PC_ERET: fetch_addr_n = csr_mepc_i;                   // restore PC when returning from EXC
+      PC_EXC: fetch_addr_n = exc_pc;  // set PC to exception handler
+      PC_ERET: fetch_addr_n = csr_mepc_i;  // restore PC when returning from EXC
       PC_DRET: fetch_addr_n = csr_depc_i;
-      default: fetch_addr_n = { boot_addr_i[31:8], 8'h80 };
+      default: fetch_addr_n = {boot_addr_i[31:8], 8'h80};
     endcase
   end
 
@@ -218,15 +218,15 @@ module ibex_if_stage #(
     );
     // ICache tieoffs
     logic unused_icen, unused_icinv;
-    assign unused_icen  = icache_enable_i;
+    assign unused_icen = icache_enable_i;
     assign unused_icinv = icache_inval_i;
   end
 
-  assign branch_req  = pc_set_i;
+  assign branch_req = pc_set_i;
   assign fetch_ready = id_in_ready_i & ~stall_dummy_instr;
 
-  assign pc_if_o     = fetch_addr;
-  assign if_busy_o   = prefetch_busy;
+  assign pc_if_o = fetch_addr;
+  assign if_busy_o = prefetch_busy;
 
   // compressed instruction decoding, or more precisely compressed instruction
   // expander
@@ -234,8 +234,8 @@ module ibex_if_stage #(
   // since it does not matter where we decompress instructions, we do it here
   // to ease timing closure
   logic [31:0] instr_decompressed;
-  logic        illegal_c_insn;
-  logic        instr_is_compressed;
+  logic illegal_c_insn;
+  logic instr_is_compressed;
 
   ibex_compressed_decoder compressed_decoder_i (
       .clk_i           ( clk_i                    ),
@@ -249,7 +249,7 @@ module ibex_if_stage #(
 
   // Dummy instruction insertion
   if (DummyInstructions) begin : gen_dummy_instr
-    logic        insert_dummy_instr;
+    logic insert_dummy_instr;
     logic [31:0] dummy_instr_data;
 
     ibex_dummy_instr dummy_instr_i (
@@ -266,11 +266,11 @@ module ibex_if_stage #(
     );
 
     // Mux between actual instructions and dummy instructions
-    assign fetch_valid_out         = insert_dummy_instr | fetch_valid;
-    assign instr_out               = insert_dummy_instr ? dummy_instr_data : instr_decompressed;
+    assign fetch_valid_out = insert_dummy_instr | fetch_valid;
+    assign instr_out = insert_dummy_instr ? dummy_instr_data : instr_decompressed;
     assign instr_is_compressed_out = insert_dummy_instr ? 1'b0 : instr_is_compressed;
-    assign illegal_c_instr_out     = insert_dummy_instr ? 1'b0 : illegal_c_insn;
-    assign instr_err_out           = insert_dummy_instr ? 1'b0 : fetch_err;
+    assign illegal_c_instr_out = insert_dummy_instr ? 1'b0 : illegal_c_insn;
+    assign instr_err_out = insert_dummy_instr ? 1'b0 : fetch_err;
 
     // Stall the IF stage if we insert a dummy instruction. The dummy will execute between whatever
     // is currently in the ID stage and whatever is valid from the prefetch buffer this cycle. The
@@ -287,59 +287,59 @@ module ibex_if_stage #(
     end
 
   end else begin : gen_no_dummy_instr
-    logic        unused_dummy_en;
-    logic [2:0]  unused_dummy_mask;
-    logic        unused_dummy_seed_en;
+    logic unused_dummy_en;
+    logic [2:0] unused_dummy_mask;
+    logic unused_dummy_seed_en;
     logic [31:0] unused_dummy_seed;
 
-    assign unused_dummy_en         = dummy_instr_en_i;
-    assign unused_dummy_mask       = dummy_instr_mask_i;
-    assign unused_dummy_seed_en    = dummy_instr_seed_en_i;
-    assign unused_dummy_seed       = dummy_instr_seed_i;
-    assign fetch_valid_out         = fetch_valid;
-    assign instr_out               = instr_decompressed;
+    assign unused_dummy_en = dummy_instr_en_i;
+    assign unused_dummy_mask = dummy_instr_mask_i;
+    assign unused_dummy_seed_en = dummy_instr_seed_en_i;
+    assign unused_dummy_seed = dummy_instr_seed_i;
+    assign fetch_valid_out = fetch_valid;
+    assign instr_out = instr_decompressed;
     assign instr_is_compressed_out = instr_is_compressed;
-    assign illegal_c_instr_out     = illegal_c_insn;
-    assign instr_err_out           = fetch_err;
-    assign stall_dummy_instr       = 1'b0;
-    assign dummy_instr_id_o        = 1'b0;
+    assign illegal_c_instr_out = illegal_c_insn;
+    assign instr_err_out = fetch_err;
+    assign stall_dummy_instr = 1'b0;
+    assign dummy_instr_id_o = 1'b0;
   end
 
   // The ID stage becomes valid as soon as any instruction is registered in the ID stage flops.
   // Note that the current instruction is squashed by the incoming pc_set_i signal.
   // Valid is held until it is explicitly cleared (due to an instruction completing or an exception)
-  assign instr_valid_id_d = (fetch_valid_out & id_in_ready_i & ~pc_set_i) |
-                            (instr_valid_id_q & ~instr_valid_clear_i);
-  assign instr_new_id_d   = fetch_valid_out & id_in_ready_i;
+  assign instr_valid_id_d =
+      (fetch_valid_out & id_in_ready_i & ~pc_set_i) | (instr_valid_id_q & ~instr_valid_clear_i);
+  assign instr_new_id_d = fetch_valid_out & id_in_ready_i;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       instr_valid_id_q <= 1'b0;
-      instr_new_id_q   <= 1'b0;
+      instr_new_id_q <= 1'b0;
     end else begin
       instr_valid_id_q <= instr_valid_id_d;
-      instr_new_id_q   <= instr_new_id_d;
+      instr_new_id_q <= instr_new_id_d;
     end
   end
 
   assign instr_valid_id_o = instr_valid_id_q;
   // Signal when a new instruction enters the ID stage (only used for RVFI signalling).
-  assign instr_new_id_o   = instr_new_id_q;
+  assign instr_new_id_o = instr_new_id_q;
 
   // IF-ID pipeline registers, frozen when the ID stage is stalled
   assign if_id_pipe_reg_we = instr_new_id_d;
 
   always_ff @(posedge clk_i) begin
     if (if_id_pipe_reg_we) begin
-      instr_rdata_id_o         <= instr_out;
+      instr_rdata_id_o <= instr_out;
       // To reduce fan-out and help timing from the instr_rdata_id flops they are replicated.
-      instr_rdata_alu_id_o     <= instr_out;
-      instr_fetch_err_o        <= instr_err_out;
-      instr_fetch_err_plus2_o  <= fetch_err_plus2;
-      instr_rdata_c_id_o       <= fetch_rdata[15:0];
+      instr_rdata_alu_id_o <= instr_out;
+      instr_fetch_err_o <= instr_err_out;
+      instr_fetch_err_plus2_o <= fetch_err_plus2;
+      instr_rdata_c_id_o <= fetch_rdata[15:0];
       instr_is_compressed_id_o <= instr_is_compressed_out;
-      illegal_c_insn_id_o      <= illegal_c_instr_out;
-      pc_id_o                  <= pc_if_o;
+      illegal_c_insn_id_o <= illegal_c_instr_out;
+      pc_id_o <= pc_if_o;
     end
   end
 
@@ -349,12 +349,7 @@ module ibex_if_stage #(
 
   // Selectors must be known/valid.
   `ASSERT_KNOWN(IbexExcPcMuxKnown, exc_pc_mux_i)
-  `ASSERT(IbexPcMuxValid, pc_mux_i inside {
-      PC_BOOT,
-      PC_JUMP,
-      PC_EXC,
-      PC_ERET,
-      PC_DRET})
+  `ASSERT(IbexPcMuxValid, pc_mux_i inside {PC_BOOT, PC_JUMP, PC_EXC, PC_ERET, PC_DRET})
 
   // Boot address must be aligned to 256 bytes.
   `ASSERT(IbexBootAddrUnaligned, boot_addr_i[7:0] == 8'h00)

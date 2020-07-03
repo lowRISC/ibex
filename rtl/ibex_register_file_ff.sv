@@ -56,7 +56,7 @@ module ibex_register_file #(
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
         rf_reg_q[i] <= '0;
-      end else if(we_a_dec[i]) begin
+      end else if (we_a_dec[i]) begin
         rf_reg_q[i] <= wdata_a_i;
       end
     end
@@ -65,7 +65,7 @@ module ibex_register_file #(
   // With dummy instructions enabled, R0 behaves as a real register but will always return 0 for
   // real instructions.
   if (DummyInstructions) begin : g_dummy_r0
-    logic        we_r0_dummy;
+    logic we_r0_dummy;
     logic [31:0] rf_r0_q;
 
     // Write enable for dummy R0 register (waddr_a_i will always be 0 for dummy instructions)
@@ -90,7 +90,7 @@ module ibex_register_file #(
     assign rf_reg[0] = '0;
   end
 
-  assign rf_reg[NUM_WORDS-1:1] = rf_reg_q[NUM_WORDS-1:1];
+  assign rf_reg[NUM_WORDS - 1:1] = rf_reg_q[NUM_WORDS - 1:1];
 
   assign rdata_a_o = rf_reg[raddr_a_i];
   assign rdata_b_o = rf_reg[raddr_b_i];

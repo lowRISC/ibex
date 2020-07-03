@@ -60,14 +60,14 @@ module ibex_ex_block #(
 
   logic [32:0] multdiv_alu_operand_b, multdiv_alu_operand_a;
   logic [33:0] alu_adder_result_ext;
-  logic        alu_cmp_result, alu_is_equal_result;
-  logic        multdiv_valid;
-  logic        multdiv_sel;
+  logic alu_cmp_result, alu_is_equal_result;
+  logic multdiv_valid;
+  logic multdiv_sel;
   logic [31:0] alu_imd_val_q[2];
   logic [31:0] alu_imd_val_d[2];
-  logic [ 1:0] alu_imd_val_we;
+  logic [1:0] alu_imd_val_we;
   logic [33:0] multdiv_imd_val_d[2];
-  logic [ 1:0] multdiv_imd_val_we;
+  logic [1:0] multdiv_imd_val_we;
 
   /*
     The multdiv_i output is never selected if RV32M=0
@@ -83,20 +83,20 @@ module ibex_ex_block #(
   // Intermediate Value Register Mux
   assign imd_val_d_o[0] = multdiv_sel ? multdiv_imd_val_d[0] : {2'b0, alu_imd_val_d[0]};
   assign imd_val_d_o[1] = multdiv_sel ? multdiv_imd_val_d[1] : {2'b0, alu_imd_val_d[1]};
-  assign imd_val_we_o   = multdiv_sel ? multdiv_imd_val_we : alu_imd_val_we;
+  assign imd_val_we_o = multdiv_sel ? multdiv_imd_val_we : alu_imd_val_we;
 
   assign alu_imd_val_q = '{imd_val_q_i[0][31:0], imd_val_q_i[1][31:0]};
 
-  assign result_ex_o  = multdiv_sel ? multdiv_result : alu_result;
+  assign result_ex_o = multdiv_sel ? multdiv_result : alu_result;
 
   // branch handling
-  assign branch_decision_o  = alu_cmp_result;
+  assign branch_decision_o = alu_cmp_result;
 
   if (BranchTargetALU) begin : g_branch_target_alu
     logic [32:0] bt_alu_result;
-    logic        unused_bt_carry;
+    logic unused_bt_carry;
 
-    assign bt_alu_result   = bt_a_operand_i + bt_b_operand_i;
+    assign bt_alu_result = bt_a_operand_i + bt_b_operand_i;
 
     assign unused_bt_carry = bt_alu_result[32];
     assign branch_target_o = bt_alu_result[31:0];
@@ -190,7 +190,7 @@ module ibex_ex_block #(
         .valid_o               ( multdiv_valid         ),
         .multdiv_result_o      ( multdiv_result        )
     );
-  end else if (MultiplierImplementation == "single-cycle") begin: gen_multdiv_single_cycle
+  end else if (MultiplierImplementation == "single-cycle") begin : gen_multdiv_single_cycle
     ibex_multdiv_fast #(
         .SingleCycleMultiply(1)
     ) multdiv_i (

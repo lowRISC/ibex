@@ -41,28 +41,28 @@ module ibex_prefetch_buffer (
     output logic        busy_o
 );
 
-  localparam int unsigned NUM_REQS  = 2;
+  localparam int unsigned NUM_REQS = 2;
 
-  logic                branch_suppress;
-  logic                valid_new_req, valid_req;
-  logic                valid_req_d, valid_req_q;
-  logic                discard_req_d, discard_req_q;
-  logic                gnt_or_pmp_err, rvalid_or_pmp_err;
+  logic branch_suppress;
+  logic valid_new_req, valid_req;
+  logic valid_req_d, valid_req_q;
+  logic discard_req_d, discard_req_q;
+  logic gnt_or_pmp_err, rvalid_or_pmp_err;
   logic [NUM_REQS-1:0] rdata_outstanding_n, rdata_outstanding_s, rdata_outstanding_q;
   logic [NUM_REQS-1:0] branch_discard_n, branch_discard_s, branch_discard_q;
   logic [NUM_REQS-1:0] rdata_pmp_err_n, rdata_pmp_err_s, rdata_pmp_err_q;
   logic [NUM_REQS-1:0] rdata_outstanding_rev;
 
-  logic [31:0]         stored_addr_d, stored_addr_q;
-  logic                stored_addr_en;
-  logic [31:0]         fetch_addr_d, fetch_addr_q;
-  logic                fetch_addr_en;
-  logic [31:0]         instr_addr, instr_addr_w_aligned;
-  logic                instr_or_pmp_err;
+  logic [31:0] stored_addr_d, stored_addr_q;
+  logic stored_addr_en;
+  logic [31:0] fetch_addr_d, fetch_addr_q;
+  logic fetch_addr_en;
+  logic [31:0] instr_addr, instr_addr_w_aligned;
+  logic instr_or_pmp_err;
 
-  logic                fifo_valid;
-  logic                fifo_ready;
-  logic                fifo_clear;
+  logic fifo_valid;
+  logic fifo_ready;
+  logic fifo_clear;
   logic [NUM_REQS-1:0] fifo_busy;
 
   ////////////////////////////
@@ -86,7 +86,7 @@ module ibex_prefetch_buffer (
 
   // Reversed version of rdata_outstanding_q which can be overlaid with fifo fill state
   for (genvar i = 0; i < NUM_REQS; i++) begin : gen_rd_rev
-    assign rdata_outstanding_rev[i] = rdata_outstanding_q[NUM_REQS-1-i];
+    assign rdata_outstanding_rev[i] = rdata_outstanding_q[NUM_REQS - 1 - i];
   end
 
   // The fifo is ready to accept a new request if it is not full - including space reserved for
@@ -124,8 +124,8 @@ module ibex_prefetch_buffer (
   assign branch_suppress = branch_spec_i & ~branch_i;
 
   // Make a new request any time there is space in the FIFO, and space in the request queue
-  assign valid_new_req = ~branch_suppress & req_i & (fifo_ready | branch_i) &
-                         ~rdata_outstanding_q[NUM_REQS-1];
+  assign valid_new_req =
+      ~branch_suppress & req_i & (fifo_ready | branch_i) & ~rdata_outstanding_q[NUM_REQS - 1];
 
   assign valid_req = valid_req_q | valid_new_req;
 
@@ -189,9 +189,7 @@ module ibex_prefetch_buffer (
   end
 
   // Address mux
-  assign instr_addr = valid_req_q   ? stored_addr_q :
-                      branch_spec_i ? addr_i :
-                                      fetch_addr_q;
+  assign instr_addr = valid_req_q ? stored_addr_q : branch_spec_i ? addr_i : fetch_addr_q;
 
   assign instr_addr_w_aligned = {instr_addr[31:2], 2'b00};
 
@@ -204,39 +202,36 @@ module ibex_prefetch_buffer (
     if (i == 0) begin : g_req0
       // A request becomes outstanding once granted, and is cleared once the rvalid is received.
       // Outstanding requests shift down the queue towards entry 0.
-      assign rdata_outstanding_n[i] = (valid_req & gnt_or_pmp_err) |
-                                      rdata_outstanding_q[i];
+      assign rdata_outstanding_n[i] = (valid_req & gnt_or_pmp_err) | rdata_outstanding_q[i];
       // If a branch is received at any point while a request is outstanding, it must be tracked
       // to ensure we discard the data once received
-      assign branch_discard_n[i]    = (valid_req & gnt_or_pmp_err & discard_req_d) |
-                                      (branch_i & rdata_outstanding_q[i]) | branch_discard_q[i];
+      assign branch_discard_n[i] = (valid_req & gnt_or_pmp_err & discard_req_d) | (
+          branch_i & rdata_outstanding_q[i]) | branch_discard_q[i];
       // Record whether this request received a PMP error
-      assign rdata_pmp_err_n[i]     = (valid_req & ~rdata_outstanding_q[i] & instr_pmp_err_i) |
-                                      rdata_pmp_err_q[i];
+      assign rdata_pmp_err_n[i] = (valid_req & ~rdata_outstanding_q[i] & instr_pmp_err_i) |
+          rdata_pmp_err_q[i];
 
     end else begin : g_reqtop
-    // Entries > 0 consider the FIFO fill state to calculate their next state (by checking
-    // whether the previous entry is valid)
+      // Entries > 0 consider the FIFO fill state to calculate their next state (by checking
+      // whether the previous entry is valid)
 
-      assign rdata_outstanding_n[i] = (valid_req & gnt_or_pmp_err &
-                                       rdata_outstanding_q[i-1]) |
-                                      rdata_outstanding_q[i];
-      assign branch_discard_n[i]    = (valid_req & gnt_or_pmp_err & discard_req_d &
-                                       rdata_outstanding_q[i-1]) |
-                                      (branch_i & rdata_outstanding_q[i]) | branch_discard_q[i];
-      assign rdata_pmp_err_n[i]     = (valid_req & ~rdata_outstanding_q[i] & instr_pmp_err_i &
-                                       rdata_outstanding_q[i-1]) |
-                                      rdata_pmp_err_q[i];
+      assign rdata_outstanding_n[i] = (valid_req & gnt_or_pmp_err & rdata_outstanding_q[i - 1]) |
+          rdata_outstanding_q[i];
+      assign branch_discard_n[i] =
+          (valid_req & gnt_or_pmp_err & discard_req_d & rdata_outstanding_q[i - 1]) | (
+          branch_i & rdata_outstanding_q[i]) | branch_discard_q[i];
+      assign rdata_pmp_err_n[i] = (valid_req & ~rdata_outstanding_q[i] & instr_pmp_err_i &
+                                   rdata_outstanding_q[i - 1]) | rdata_pmp_err_q[i];
     end
   end
 
   // Shift the entries down on each instr_rvalid_i
-  assign rdata_outstanding_s = rvalid_or_pmp_err ? {1'b0,rdata_outstanding_n[NUM_REQS-1:1]} :
-                                                   rdata_outstanding_n;
-  assign branch_discard_s    = rvalid_or_pmp_err ? {1'b0,branch_discard_n[NUM_REQS-1:1]} :
-                                                   branch_discard_n;
-  assign rdata_pmp_err_s     = rvalid_or_pmp_err ? {1'b0,rdata_pmp_err_n[NUM_REQS-1:1]} :
-                                                   rdata_pmp_err_n;
+  assign rdata_outstanding_s =
+      rvalid_or_pmp_err ? {1'b0, rdata_outstanding_n[NUM_REQS - 1:1]} : rdata_outstanding_n;
+  assign branch_discard_s =
+      rvalid_or_pmp_err ? {1'b0, branch_discard_n[NUM_REQS - 1:1]} : branch_discard_n;
+  assign rdata_pmp_err_s =
+      rvalid_or_pmp_err ? {1'b0, rdata_pmp_err_n[NUM_REQS - 1:1]} : rdata_pmp_err_n;
 
   // Push a new entry to the FIFO once complete (and not cancelled by a branch)
   assign fifo_valid = rvalid_or_pmp_err & ~branch_discard_q[0];
@@ -247,17 +242,17 @@ module ibex_prefetch_buffer (
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      valid_req_q          <= 1'b0;
-      discard_req_q        <= 1'b0;
-      rdata_outstanding_q  <= 'b0;
-      branch_discard_q     <= 'b0;
-      rdata_pmp_err_q      <= 'b0;
+      valid_req_q <= 1'b0;
+      discard_req_q <= 1'b0;
+      rdata_outstanding_q <= 'b0;
+      branch_discard_q <= 'b0;
+      rdata_pmp_err_q <= 'b0;
     end else begin
-      valid_req_q          <= valid_req_d;
-      discard_req_q        <= discard_req_d;
-      rdata_outstanding_q  <= rdata_outstanding_s;
-      branch_discard_q     <= branch_discard_s;
-      rdata_pmp_err_q      <= rdata_pmp_err_s;
+      valid_req_q <= valid_req_d;
+      discard_req_q <= discard_req_d;
+      rdata_outstanding_q <= rdata_outstanding_s;
+      branch_discard_q <= branch_discard_s;
+      rdata_pmp_err_q <= rdata_pmp_err_s;
     end
   end
 
@@ -265,7 +260,7 @@ module ibex_prefetch_buffer (
   // Outputs //
   /////////////
 
-  assign instr_req_o  = valid_req;
+  assign instr_req_o = valid_req;
   assign instr_addr_o = instr_addr_w_aligned;
 
 endmodule

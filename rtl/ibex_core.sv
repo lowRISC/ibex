@@ -4,13 +4,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 `ifdef RISCV_FORMAL
-  `define RVFI
+`define RVFI
 `endif
 
 `include "prim_assert.sv"
 
 `ifndef RV32B
-  `define RV32B ibex_pkg::RV32BNone
+`define RV32B ibex_pkg::RV32BNone
 `endif
 
 /**
@@ -103,248 +103,248 @@ module ibex_core #(
 `endif
 
     // CPU Control Signals
-    input  logic        fetch_enable_i,
-    output logic        core_sleep_o
+    input  logic fetch_enable_i,
+    output logic core_sleep_o
 );
 
   import ibex_pkg::*;
 
-  localparam int unsigned PMP_NUM_CHAN      = 2;
-  localparam bit          DataIndTiming     = SecureIbex;
-  localparam bit          DummyInstructions = SecureIbex;
+  localparam int unsigned PMP_NUM_CHAN = 2;
+  localparam bit DataIndTiming = SecureIbex;
+  localparam bit DummyInstructions = SecureIbex;
   // Speculative branch option, trades-off performance against timing.
   // Setting this to 1 eases branch target critical paths significantly but reduces performance
   // by ~3% (based on Coremark/MHz score).
   // Set by default in the max PMP config which has the tightest budget for branch target timing.
-  localparam bit          SpecBranch        = PMPEnable & (PMPNumRegions == 16);
+  localparam bit SpecBranch = PMPEnable & (PMPNumRegions == 16);
 
   // IF/ID signals
-  logic        dummy_instr_id;
-  logic        instr_valid_id;
-  logic        instr_new_id;
-  logic [31:0] instr_rdata_id;                 // Instruction sampled inside IF stage
-  logic [31:0] instr_rdata_alu_id;             // Instruction sampled inside IF stage (replicated to ease
-                                               // fan-out)
-  logic [15:0] instr_rdata_c_id;               // Compressed instruction sampled inside IF stage
-  logic        instr_is_compressed_id;
-  logic        instr_fetch_err;                // Bus error on instr fetch
-  logic        instr_fetch_err_plus2;          // Instruction error is misaligned
-  logic        illegal_c_insn_id;              // Illegal compressed instruction sent to ID stage
-  logic [31:0] pc_if;                          // Program counter in IF stage
-  logic [31:0] pc_id;                          // Program counter in ID stage
-  logic [31:0] pc_wb;                          // Program counter in WB stage
-  logic [33:0] imd_val_d_ex[2];                // Intermediate register for multicycle Ops
-  logic [33:0] imd_val_q_ex[2];                // Intermediate register for multicycle Ops
-  logic [1:0]  imd_val_we_ex;
+  logic dummy_instr_id;
+  logic instr_valid_id;
+  logic instr_new_id;
+  logic [31:0] instr_rdata_id;  // Instruction sampled inside IF stage
+  logic [31:0] instr_rdata_alu_id;  // Instruction sampled inside IF stage (replicated to ease
+  // fan-out)
+  logic [15:0] instr_rdata_c_id;  // Compressed instruction sampled inside IF stage
+  logic instr_is_compressed_id;
+  logic instr_fetch_err;  // Bus error on instr fetch
+  logic instr_fetch_err_plus2;  // Instruction error is misaligned
+  logic illegal_c_insn_id;  // Illegal compressed instruction sent to ID stage
+  logic [31:0] pc_if;  // Program counter in IF stage
+  logic [31:0] pc_id;  // Program counter in ID stage
+  logic [31:0] pc_wb;  // Program counter in WB stage
+  logic [33:0] imd_val_d_ex[2];  // Intermediate register for multicycle Ops
+  logic [33:0] imd_val_q_ex[2];  // Intermediate register for multicycle Ops
+  logic [1:0] imd_val_we_ex;
 
-  logic        data_ind_timing;
-  logic        dummy_instr_en;
-  logic [2:0]  dummy_instr_mask;
-  logic        dummy_instr_seed_en;
+  logic data_ind_timing;
+  logic dummy_instr_en;
+  logic [2:0] dummy_instr_mask;
+  logic dummy_instr_seed_en;
   logic [31:0] dummy_instr_seed;
-  logic        icache_enable;
-  logic        icache_inval;
+  logic icache_enable;
+  logic icache_inval;
 
-  logic        instr_first_cycle_id;
-  logic        instr_valid_clear;
-  logic        pc_set;
-  logic        pc_set_spec;
-  pc_sel_e     pc_mux_id;                      // Mux selector for next PC
-  exc_pc_sel_e exc_pc_mux_id;                  // Mux selector for exception PC
-  exc_cause_e  exc_cause;                      // Exception cause
+  logic instr_first_cycle_id;
+  logic instr_valid_clear;
+  logic pc_set;
+  logic pc_set_spec;
+  pc_sel_e pc_mux_id;  // Mux selector for next PC
+  exc_pc_sel_e exc_pc_mux_id;  // Mux selector for exception PC
+  exc_cause_e exc_cause;  // Exception cause
 
-  logic        lsu_load_err;
-  logic        lsu_store_err;
+  logic lsu_load_err;
+  logic lsu_store_err;
 
   // LSU signals
-  logic        lsu_addr_incr_req;
+  logic lsu_addr_incr_req;
   logic [31:0] lsu_addr_last;
 
   // Jump and branch target and decision (EX->IF)
   logic [31:0] branch_target_ex;
-  logic        branch_decision;
+  logic branch_decision;
 
   // Core busy signals
-  logic        ctrl_busy;
-  logic        if_busy;
-  logic        lsu_busy;
-  logic        core_busy_d, core_busy_q;
+  logic ctrl_busy;
+  logic if_busy;
+  logic lsu_busy;
+  logic core_busy_d, core_busy_q;
 
   // Register File
-  logic [4:0]  rf_raddr_a;
+  logic [4:0] rf_raddr_a;
   logic [31:0] rf_rdata_a;
-  logic [4:0]  rf_raddr_b;
+  logic [4:0] rf_raddr_b;
   logic [31:0] rf_rdata_b;
-  logic [4:0]  rf_waddr_wb;
+  logic [4:0] rf_waddr_wb;
   logic [31:0] rf_wdata_wb;
   // Writeback register write data that can be used on the forwarding path (doesn't factor in memory
   // read data as this is too late for the forwarding path)
   logic [31:0] rf_wdata_fwd_wb;
   logic [31:0] rf_wdata_lsu;
-  logic        rf_we_wb;
-  logic        rf_we_lsu;
+  logic rf_we_wb;
+  logic rf_we_lsu;
 
-  logic [4:0]  rf_waddr_id;
+  logic [4:0] rf_waddr_id;
   logic [31:0] rf_wdata_id;
-  logic        rf_we_id;
+  logic rf_we_id;
 
   // ALU Control
-  alu_op_e     alu_operator_ex;
+  alu_op_e alu_operator_ex;
   logic [31:0] alu_operand_a_ex;
   logic [31:0] alu_operand_b_ex;
 
   logic [31:0] bt_a_operand;
   logic [31:0] bt_b_operand;
 
-  logic [31:0] alu_adder_result_ex;    // Used to forward computed address to LSU
+  logic [31:0] alu_adder_result_ex;  // Used to forward computed address to LSU
   logic [31:0] result_ex;
 
   // Multiplier Control
-  logic        mult_en_ex;
-  logic        div_en_ex;
-  logic        mult_sel_ex;
-  logic        div_sel_ex;
-  md_op_e      multdiv_operator_ex;
-  logic [1:0]  multdiv_signed_mode_ex;
+  logic mult_en_ex;
+  logic div_en_ex;
+  logic mult_sel_ex;
+  logic div_sel_ex;
+  md_op_e multdiv_operator_ex;
+  logic [1:0] multdiv_signed_mode_ex;
   logic [31:0] multdiv_operand_a_ex;
   logic [31:0] multdiv_operand_b_ex;
-  logic        multdiv_ready_id;
+  logic multdiv_ready_id;
 
   // CSR control
-  logic        csr_access;
-  csr_op_e     csr_op;
-  logic        csr_op_en;
-  csr_num_e    csr_addr;
+  logic csr_access;
+  csr_op_e csr_op;
+  logic csr_op_en;
+  csr_num_e csr_addr;
   logic [31:0] csr_rdata;
   logic [31:0] csr_wdata;
-  logic        illegal_csr_insn_id;    // CSR access to non-existent register,
-                                       // with wrong priviledge level,
-                                       // or missing write permissions
+  logic illegal_csr_insn_id;  // CSR access to non-existent register,
+  // with wrong priviledge level,
+  // or missing write permissions
 
   // Data Memory Control
-  logic        lsu_we;
-  logic [1:0]  lsu_type;
-  logic        lsu_sign_ext;
-  logic        lsu_req;
+  logic lsu_we;
+  logic [1:0] lsu_type;
+  logic lsu_sign_ext;
+  logic lsu_req;
   logic [31:0] lsu_wdata;
-  logic        lsu_req_done;
+  logic lsu_req_done;
 
   // stall control
-  logic        id_in_ready;
-  logic        ex_valid;
+  logic id_in_ready;
+  logic ex_valid;
 
-  logic        lsu_resp_valid;
+  logic lsu_resp_valid;
 
   // Signals between instruction core interface and pipe (if and id stages)
-  logic        instr_req_int;          // Id stage asserts a req to instruction core interface
+  logic instr_req_int;  // Id stage asserts a req to instruction core interface
 
   // Writeback stage
-  logic           en_wb;
+  logic en_wb;
   wb_instr_type_e instr_type_wb;
-  logic           ready_wb;
-  logic           rf_write_wb;
-  logic           outstanding_load_wb;
-  logic           outstanding_store_wb;
+  logic ready_wb;
+  logic rf_write_wb;
+  logic outstanding_load_wb;
+  logic outstanding_store_wb;
 
   // Interrupts
-  logic        irq_pending;
-  logic        nmi_mode;
-  irqs_t       irqs;
-  logic        csr_mstatus_mie;
+  logic irq_pending;
+  logic nmi_mode;
+  irqs_t irqs;
+  logic csr_mstatus_mie;
   logic [31:0] csr_mepc, csr_depc;
 
   // PMP signals
-  logic [33:0] csr_pmp_addr [PMPNumRegions];
-  pmp_cfg_t    csr_pmp_cfg  [PMPNumRegions];
-  logic        pmp_req_err  [PMP_NUM_CHAN];
-  logic        instr_req_out;
-  logic        data_req_out;
+  logic [33:0] csr_pmp_addr[PMPNumRegions];
+  pmp_cfg_t csr_pmp_cfg[PMPNumRegions];
+  logic pmp_req_err[PMP_NUM_CHAN];
+  logic instr_req_out;
+  logic data_req_out;
 
-  logic        csr_save_if;
-  logic        csr_save_id;
-  logic        csr_save_wb;
-  logic        csr_restore_mret_id;
-  logic        csr_restore_dret_id;
-  logic        csr_save_cause;
-  logic        csr_mtvec_init;
+  logic csr_save_if;
+  logic csr_save_id;
+  logic csr_save_wb;
+  logic csr_restore_mret_id;
+  logic csr_restore_dret_id;
+  logic csr_save_cause;
+  logic csr_mtvec_init;
   logic [31:0] csr_mtvec;
   logic [31:0] csr_mtval;
-  logic        csr_mstatus_tw;
-  priv_lvl_e   priv_mode_id;
-  priv_lvl_e   priv_mode_if;
-  priv_lvl_e   priv_mode_lsu;
+  logic csr_mstatus_tw;
+  priv_lvl_e priv_mode_id;
+  priv_lvl_e priv_mode_if;
+  priv_lvl_e priv_mode_lsu;
 
   // debug mode and dcsr configuration
-  logic        debug_mode;
-  dbg_cause_e  debug_cause;
-  logic        debug_csr_save;
-  logic        debug_single_step;
-  logic        debug_ebreakm;
-  logic        debug_ebreaku;
-  logic        trigger_match;
+  logic debug_mode;
+  dbg_cause_e debug_cause;
+  logic debug_csr_save;
+  logic debug_single_step;
+  logic debug_ebreakm;
+  logic debug_ebreaku;
+  logic trigger_match;
 
   // signals relating to instruction movements between pipeline stages
   // used by performance counters and RVFI
-  logic        instr_id_done;
-  logic        instr_id_done_compressed;
-  logic        instr_done_wb;
+  logic instr_id_done;
+  logic instr_id_done_compressed;
+  logic instr_done_wb;
 
-  logic        perf_iside_wait;
-  logic        perf_dside_wait;
-  logic        perf_mul_wait;
-  logic        perf_div_wait;
-  logic        perf_jump;
-  logic        perf_branch;
-  logic        perf_tbranch;
-  logic        perf_load;
-  logic        perf_store;
+  logic perf_iside_wait;
+  logic perf_dside_wait;
+  logic perf_mul_wait;
+  logic perf_div_wait;
+  logic perf_jump;
+  logic perf_branch;
+  logic perf_tbranch;
+  logic perf_load;
+  logic perf_store;
 
   // for RVFI
-  logic        illegal_insn_id, unused_illegal_insn_id; // ID stage sees an illegal instruction
+  logic illegal_insn_id, unused_illegal_insn_id;  // ID stage sees an illegal instruction
 
   // RISC-V Formal Interface signals
 `ifdef RVFI
-  logic        rvfi_instr_new_wb;
-  logic        rvfi_intr_d;
-  logic        rvfi_intr_q;
-  logic        rvfi_set_trap_pc_d;
-  logic        rvfi_set_trap_pc_q;
+  logic rvfi_instr_new_wb;
+  logic rvfi_intr_d;
+  logic rvfi_intr_q;
+  logic rvfi_set_trap_pc_d;
+  logic rvfi_set_trap_pc_q;
   logic [31:0] rvfi_insn_id;
-  logic [4:0]  rvfi_rs1_addr_d;
-  logic [4:0]  rvfi_rs1_addr_q;
-  logic [4:0]  rvfi_rs2_addr_d;
-  logic [4:0]  rvfi_rs2_addr_q;
-  logic [4:0]  rvfi_rs3_addr_d;
+  logic [4:0] rvfi_rs1_addr_d;
+  logic [4:0] rvfi_rs1_addr_q;
+  logic [4:0] rvfi_rs2_addr_d;
+  logic [4:0] rvfi_rs2_addr_q;
+  logic [4:0] rvfi_rs3_addr_d;
   logic [31:0] rvfi_rs1_data_d;
   logic [31:0] rvfi_rs1_data_q;
   logic [31:0] rvfi_rs2_data_d;
   logic [31:0] rvfi_rs2_data_q;
   logic [31:0] rvfi_rs3_data_d;
-  logic [4:0]  rvfi_rd_addr_wb;
-  logic [4:0]  rvfi_rd_addr_q;
-  logic [4:0]  rvfi_rd_addr_d;
+  logic [4:0] rvfi_rd_addr_wb;
+  logic [4:0] rvfi_rd_addr_q;
+  logic [4:0] rvfi_rd_addr_d;
   logic [31:0] rvfi_rd_wdata_wb;
   logic [31:0] rvfi_rd_wdata_d;
   logic [31:0] rvfi_rd_wdata_q;
-  logic        rvfi_rd_we_wb;
-  logic [3:0]  rvfi_mem_mask_int;
+  logic rvfi_rd_we_wb;
+  logic [3:0] rvfi_mem_mask_int;
   logic [31:0] rvfi_mem_rdata_d;
   logic [31:0] rvfi_mem_rdata_q;
   logic [31:0] rvfi_mem_wdata_d;
   logic [31:0] rvfi_mem_wdata_q;
   logic [31:0] rvfi_mem_addr_d;
   logic [31:0] rvfi_mem_addr_q;
-  logic        rf_ren_a;
-  logic        rf_ren_b;
+  logic rf_ren_a;
+  logic rf_ren_b;
 `endif
 
   //////////////////////
   // Clock management //
   //////////////////////
 
-  logic        clk;
+  logic clk;
 
-  logic        clock_en;
+  logic clock_en;
 
   // Before going to sleep, wait for I- and D-side
   // interfaces to finish ongoing operations.
@@ -367,7 +367,7 @@ module ibex_core #(
     end
   end
 
-  assign clock_en     = fetch_enable_q & (core_busy_q | debug_req_i | irq_pending | irq_nm_i);
+  assign clock_en = fetch_enable_q & (core_busy_q | debug_req_i | irq_pending | irq_nm_i);
   assign core_sleep_o = ~clock_en;
 
   // main clock gate of the core
@@ -771,7 +771,7 @@ module ibex_core #(
   );
 
   // Explict INC_ASSERT block to avoid unused signal lint warnings were asserts are not included
-  `ifdef INC_ASSERT
+`ifdef INC_ASSERT
   // Signals used for assertions only
   logic outstanding_load_resp;
   logic outstanding_store_resp;
@@ -779,41 +779,43 @@ module ibex_core #(
   logic outstanding_load_id;
   logic outstanding_store_id;
 
-  assign outstanding_load_id  = id_stage_i.instr_executing & id_stage_i.lsu_req_dec & ~id_stage_i.lsu_we;
-  assign outstanding_store_id = id_stage_i.instr_executing & id_stage_i.lsu_req_dec &  id_stage_i.lsu_we;
+  assign outstanding_load_id =
+      id_stage_i.instr_executing & id_stage_i.lsu_req_dec & ~id_stage_i.lsu_we;
+  assign outstanding_store_id =
+      id_stage_i.instr_executing & id_stage_i.lsu_req_dec & id_stage_i.lsu_we;
 
   if (WritebackStage) begin : gen_wb_stage
     // When the writeback stage is present a load/store could be in ID or WB. A Load/store in ID can
     // see a response before it moves to WB when it is unaligned otherwise we should only see
     // a response when load/store is in WB.
-    assign outstanding_load_resp  = outstanding_load_wb |
-      (outstanding_load_id  & load_store_unit_i.split_misaligned_access);
+    assign outstanding_load_resp =
+        outstanding_load_wb | (outstanding_load_id & load_store_unit_i.split_misaligned_access);
 
-    assign outstanding_store_resp = outstanding_store_wb |
-      (outstanding_store_id & load_store_unit_i.split_misaligned_access);
+    assign outstanding_store_resp =
+        outstanding_store_wb | (outstanding_store_id & load_store_unit_i.split_misaligned_access);
 
     // When writing back the result of a load, the load must have made it to writeback
     `ASSERT(NoMemRFWriteWithoutPendingLoad, rf_we_lsu |-> outstanding_load_wb, clk_i, !rst_ni)
   end else begin : gen_no_wb_stage
     // Without writeback stage only look into whether load or store is in ID to determine if
     // a response is expected.
-    assign outstanding_load_resp  = outstanding_load_id;
+    assign outstanding_load_resp = outstanding_load_id;
     assign outstanding_store_resp = outstanding_store_id;
 
     `ASSERT(NoMemRFWriteWithoutPendingLoad, rf_we_lsu |-> outstanding_load_id, clk_i, !rst_ni)
   end
 
   `ASSERT(NoMemResponseWithoutPendingAccess,
-    data_rvalid_i |-> outstanding_load_resp | outstanding_store_resp, clk_i, !rst_ni)
-  `endif
+          data_rvalid_i |-> outstanding_load_resp | outstanding_store_resp, clk_i, !rst_ni)
+`endif
 
   ////////////////////////
   // RF (Register File) //
   ////////////////////////
 `ifdef RVFI
-  assign rvfi_rd_addr_wb  = rf_waddr_wb;
+  assign rvfi_rd_addr_wb = rf_waddr_wb;
   assign rvfi_rd_wdata_wb = rf_we_wb ? rf_wdata_wb : rf_wdata_lsu;
-  assign rvfi_rd_we_wb    = rf_we_wb | rf_we_lsu;
+  assign rvfi_rd_we_wb = rf_we_wb | rf_we_lsu;
 `endif
 
 
@@ -821,8 +823,8 @@ module ibex_core #(
   // CSRs (Control and Status Registers) //
   /////////////////////////////////////////
 
-  assign csr_wdata  = alu_operand_a_ex;
-  assign csr_addr   = csr_num_e'(csr_access ? alu_operand_b_ex[11:0] : 12'b0);
+  assign csr_wdata = alu_operand_a_ex;
+  assign csr_addr = csr_num_e'(csr_access ? alu_operand_b_ex[11:0] : 12'b0);
 
   ibex_cs_registers #(
       .DbgTriggerEn      ( DbgTriggerEn      ),
@@ -921,23 +923,19 @@ module ibex_core #(
   );
 
   // These assertions are in top-level as instr_valid_id required as the enable term
-  `ASSERT(IbexCsrOpValid, instr_valid_id |-> csr_op inside {
-      CSR_OP_READ,
-      CSR_OP_WRITE,
-      CSR_OP_SET,
-      CSR_OP_CLEAR
-      })
+  `ASSERT(IbexCsrOpValid,
+          instr_valid_id |-> csr_op inside {CSR_OP_READ, CSR_OP_WRITE, CSR_OP_SET, CSR_OP_CLEAR})
   `ASSERT_KNOWN_IF(IbexCsrWdataIntKnown, cs_registers_i.csr_wdata_int, csr_op_en)
 
   if (PMPEnable) begin : g_pmp
-    logic [33:0] pmp_req_addr [PMP_NUM_CHAN];
-    pmp_req_e    pmp_req_type [PMP_NUM_CHAN];
-    priv_lvl_e   pmp_priv_lvl [PMP_NUM_CHAN];
+    logic [33:0] pmp_req_addr[PMP_NUM_CHAN];
+    pmp_req_e pmp_req_type[PMP_NUM_CHAN];
+    priv_lvl_e pmp_priv_lvl[PMP_NUM_CHAN];
 
-    assign pmp_req_addr[PMP_I] = {2'b00,instr_addr_o[31:0]};
+    assign pmp_req_addr[PMP_I] = {2'b00, instr_addr_o[31:0]};
     assign pmp_req_type[PMP_I] = PMP_ACC_EXEC;
     assign pmp_priv_lvl[PMP_I] = priv_mode_if;
-    assign pmp_req_addr[PMP_D] = {2'b00,data_addr_o[31:0]};
+    assign pmp_req_addr[PMP_D] = {2'b00, data_addr_o[31:0]};
     assign pmp_req_type[PMP_D] = data_we_o ? PMP_ACC_WRITE : PMP_ACC_READ;
     assign pmp_priv_lvl[PMP_D] = priv_mode_lsu;
 
@@ -960,8 +958,8 @@ module ibex_core #(
   end else begin : g_no_pmp
     // Unused signal tieoff
     priv_lvl_e unused_priv_lvl_if, unused_priv_lvl_ls;
-    logic [33:0] unused_csr_pmp_addr [PMPNumRegions];
-    pmp_cfg_t    unused_csr_pmp_cfg  [PMPNumRegions];
+    logic [33:0] unused_csr_pmp_addr[PMPNumRegions];
+    pmp_cfg_t unused_csr_pmp_cfg[PMPNumRegions];
     assign unused_priv_lvl_if = priv_mode_if;
     assign unused_priv_lvl_ls = priv_mode_lsu;
     assign unused_csr_pmp_addr = csr_pmp_addr;
@@ -981,55 +979,55 @@ module ibex_core #(
   // => RVFI_out)
   localparam int RVFI_STAGES = WritebackStage ? 2 : 1;
 
-  logic        rvfi_stage_valid     [RVFI_STAGES];
-  logic [63:0] rvfi_stage_order     [RVFI_STAGES];
-  logic [31:0] rvfi_stage_insn      [RVFI_STAGES];
-  logic        rvfi_stage_trap      [RVFI_STAGES];
-  logic        rvfi_stage_halt      [RVFI_STAGES];
-  logic        rvfi_stage_intr      [RVFI_STAGES];
-  logic [ 1:0] rvfi_stage_mode      [RVFI_STAGES];
-  logic [ 1:0] rvfi_stage_ixl       [RVFI_STAGES];
-  logic [ 4:0] rvfi_stage_rs1_addr  [RVFI_STAGES];
-  logic [ 4:0] rvfi_stage_rs2_addr  [RVFI_STAGES];
-  logic [ 4:0] rvfi_stage_rs3_addr  [RVFI_STAGES];
-  logic [31:0] rvfi_stage_rs1_rdata [RVFI_STAGES];
-  logic [31:0] rvfi_stage_rs2_rdata [RVFI_STAGES];
-  logic [31:0] rvfi_stage_rs3_rdata [RVFI_STAGES];
-  logic [ 4:0] rvfi_stage_rd_addr   [RVFI_STAGES];
-  logic [31:0] rvfi_stage_rd_wdata  [RVFI_STAGES];
-  logic [31:0] rvfi_stage_pc_rdata  [RVFI_STAGES];
-  logic [31:0] rvfi_stage_pc_wdata  [RVFI_STAGES];
-  logic [31:0] rvfi_stage_mem_addr  [RVFI_STAGES];
-  logic [ 3:0] rvfi_stage_mem_rmask [RVFI_STAGES];
-  logic [ 3:0] rvfi_stage_mem_wmask [RVFI_STAGES];
-  logic [31:0] rvfi_stage_mem_rdata [RVFI_STAGES];
-  logic [31:0] rvfi_stage_mem_wdata [RVFI_STAGES];
+  logic rvfi_stage_valid[RVFI_STAGES];
+  logic [63:0] rvfi_stage_order[RVFI_STAGES];
+  logic [31:0] rvfi_stage_insn[RVFI_STAGES];
+  logic rvfi_stage_trap[RVFI_STAGES];
+  logic rvfi_stage_halt[RVFI_STAGES];
+  logic rvfi_stage_intr[RVFI_STAGES];
+  logic [1:0] rvfi_stage_mode[RVFI_STAGES];
+  logic [1:0] rvfi_stage_ixl[RVFI_STAGES];
+  logic [4:0] rvfi_stage_rs1_addr[RVFI_STAGES];
+  logic [4:0] rvfi_stage_rs2_addr[RVFI_STAGES];
+  logic [4:0] rvfi_stage_rs3_addr[RVFI_STAGES];
+  logic [31:0] rvfi_stage_rs1_rdata[RVFI_STAGES];
+  logic [31:0] rvfi_stage_rs2_rdata[RVFI_STAGES];
+  logic [31:0] rvfi_stage_rs3_rdata[RVFI_STAGES];
+  logic [4:0] rvfi_stage_rd_addr[RVFI_STAGES];
+  logic [31:0] rvfi_stage_rd_wdata[RVFI_STAGES];
+  logic [31:0] rvfi_stage_pc_rdata[RVFI_STAGES];
+  logic [31:0] rvfi_stage_pc_wdata[RVFI_STAGES];
+  logic [31:0] rvfi_stage_mem_addr[RVFI_STAGES];
+  logic [3:0] rvfi_stage_mem_rmask[RVFI_STAGES];
+  logic [3:0] rvfi_stage_mem_wmask[RVFI_STAGES];
+  logic [31:0] rvfi_stage_mem_rdata[RVFI_STAGES];
+  logic [31:0] rvfi_stage_mem_wdata[RVFI_STAGES];
 
-  logic        rvfi_stage_valid_d   [RVFI_STAGES];
+  logic rvfi_stage_valid_d[RVFI_STAGES];
 
-  assign rvfi_valid     = rvfi_stage_valid    [RVFI_STAGES-1];
-  assign rvfi_order     = rvfi_stage_order    [RVFI_STAGES-1];
-  assign rvfi_insn      = rvfi_stage_insn     [RVFI_STAGES-1];
-  assign rvfi_trap      = rvfi_stage_trap     [RVFI_STAGES-1];
-  assign rvfi_halt      = rvfi_stage_halt     [RVFI_STAGES-1];
-  assign rvfi_intr      = rvfi_stage_intr     [RVFI_STAGES-1];
-  assign rvfi_mode      = rvfi_stage_mode     [RVFI_STAGES-1];
-  assign rvfi_ixl       = rvfi_stage_ixl      [RVFI_STAGES-1];
-  assign rvfi_rs1_addr  = rvfi_stage_rs1_addr [RVFI_STAGES-1];
-  assign rvfi_rs2_addr  = rvfi_stage_rs2_addr [RVFI_STAGES-1];
-  assign rvfi_rs3_addr  = rvfi_stage_rs3_addr [RVFI_STAGES-1];
-  assign rvfi_rs1_rdata = rvfi_stage_rs1_rdata[RVFI_STAGES-1];
-  assign rvfi_rs2_rdata = rvfi_stage_rs2_rdata[RVFI_STAGES-1];
-  assign rvfi_rs3_rdata = rvfi_stage_rs3_rdata[RVFI_STAGES-1];
-  assign rvfi_rd_addr   = rvfi_stage_rd_addr  [RVFI_STAGES-1];
-  assign rvfi_rd_wdata  = rvfi_stage_rd_wdata [RVFI_STAGES-1];
-  assign rvfi_pc_rdata  = rvfi_stage_pc_rdata [RVFI_STAGES-1];
-  assign rvfi_pc_wdata  = rvfi_stage_pc_wdata [RVFI_STAGES-1];
-  assign rvfi_mem_addr  = rvfi_stage_mem_addr [RVFI_STAGES-1];
-  assign rvfi_mem_rmask = rvfi_stage_mem_rmask[RVFI_STAGES-1];
-  assign rvfi_mem_wmask = rvfi_stage_mem_wmask[RVFI_STAGES-1];
-  assign rvfi_mem_rdata = rvfi_stage_mem_rdata[RVFI_STAGES-1];
-  assign rvfi_mem_wdata = rvfi_stage_mem_wdata[RVFI_STAGES-1];
+  assign rvfi_valid = rvfi_stage_valid[RVFI_STAGES - 1];
+  assign rvfi_order = rvfi_stage_order[RVFI_STAGES - 1];
+  assign rvfi_insn = rvfi_stage_insn[RVFI_STAGES - 1];
+  assign rvfi_trap = rvfi_stage_trap[RVFI_STAGES - 1];
+  assign rvfi_halt = rvfi_stage_halt[RVFI_STAGES - 1];
+  assign rvfi_intr = rvfi_stage_intr[RVFI_STAGES - 1];
+  assign rvfi_mode = rvfi_stage_mode[RVFI_STAGES - 1];
+  assign rvfi_ixl = rvfi_stage_ixl[RVFI_STAGES - 1];
+  assign rvfi_rs1_addr = rvfi_stage_rs1_addr[RVFI_STAGES - 1];
+  assign rvfi_rs2_addr = rvfi_stage_rs2_addr[RVFI_STAGES - 1];
+  assign rvfi_rs3_addr = rvfi_stage_rs3_addr[RVFI_STAGES - 1];
+  assign rvfi_rs1_rdata = rvfi_stage_rs1_rdata[RVFI_STAGES - 1];
+  assign rvfi_rs2_rdata = rvfi_stage_rs2_rdata[RVFI_STAGES - 1];
+  assign rvfi_rs3_rdata = rvfi_stage_rs3_rdata[RVFI_STAGES - 1];
+  assign rvfi_rd_addr = rvfi_stage_rd_addr[RVFI_STAGES - 1];
+  assign rvfi_rd_wdata = rvfi_stage_rd_wdata[RVFI_STAGES - 1];
+  assign rvfi_pc_rdata = rvfi_stage_pc_rdata[RVFI_STAGES - 1];
+  assign rvfi_pc_wdata = rvfi_stage_pc_wdata[RVFI_STAGES - 1];
+  assign rvfi_mem_addr = rvfi_stage_mem_addr[RVFI_STAGES - 1];
+  assign rvfi_mem_rmask = rvfi_stage_mem_rmask[RVFI_STAGES - 1];
+  assign rvfi_mem_wmask = rvfi_stage_mem_wmask[RVFI_STAGES - 1];
+  assign rvfi_mem_rdata = rvfi_stage_mem_rdata[RVFI_STAGES - 1];
+  assign rvfi_mem_wdata = rvfi_stage_mem_wdata[RVFI_STAGES - 1];
 
   if (WritebackStage) begin : gen_rvfi_wb_stage
     logic unused_instr_new_id;
@@ -1040,8 +1038,8 @@ module ibex_core #(
     // awaiting instruction retirement and RF Write data/Mem read data whilst instruction is in WB
     // So first stage becomes valid when instruction leaves ID/EX stage and remains valid until
     // instruction leaves WB
-    assign rvfi_stage_valid_d[0] = (instr_id_done & ~dummy_instr_id) |
-                                   (rvfi_stage_valid[0] & ~instr_done_wb);
+    assign rvfi_stage_valid_d[0] =
+        (instr_id_done & ~dummy_instr_id) | (rvfi_stage_valid[0] & ~instr_done_wb);
     // Second stage is output stage so simple valid cycle after instruction leaves WB (and so has
     // retired)
     assign rvfi_stage_valid_d[1] = instr_done_wb;
@@ -1067,88 +1065,88 @@ module ibex_core #(
     assign rvfi_instr_new_wb = instr_new_id;
   end
 
-  for (genvar i = 0;i < RVFI_STAGES; i = i + 1) begin : g_rvfi_stages
+  for (genvar i = 0; i < RVFI_STAGES; i = i + 1) begin : g_rvfi_stages
     always_ff @(posedge clk or negedge rst_ni) begin
       if (!rst_ni) begin
-        rvfi_stage_halt[i]      <= '0;
-        rvfi_stage_trap[i]      <= '0;
-        rvfi_stage_intr[i]      <= '0;
-        rvfi_stage_order[i]     <= '0;
-        rvfi_stage_insn[i]      <= '0;
-        rvfi_stage_mode[i]      <= {PRIV_LVL_M};
-        rvfi_stage_ixl[i]       <= CSR_MISA_MXL;
-        rvfi_stage_rs1_addr[i]  <= '0;
-        rvfi_stage_rs2_addr[i]  <= '0;
-        rvfi_stage_rs3_addr[i]  <= '0;
-        rvfi_stage_pc_rdata[i]  <= '0;
-        rvfi_stage_pc_wdata[i]  <= '0;
+        rvfi_stage_halt[i] <= '0;
+        rvfi_stage_trap[i] <= '0;
+        rvfi_stage_intr[i] <= '0;
+        rvfi_stage_order[i] <= '0;
+        rvfi_stage_insn[i] <= '0;
+        rvfi_stage_mode[i] <= {PRIV_LVL_M};
+        rvfi_stage_ixl[i] <= CSR_MISA_MXL;
+        rvfi_stage_rs1_addr[i] <= '0;
+        rvfi_stage_rs2_addr[i] <= '0;
+        rvfi_stage_rs3_addr[i] <= '0;
+        rvfi_stage_pc_rdata[i] <= '0;
+        rvfi_stage_pc_wdata[i] <= '0;
         rvfi_stage_mem_rmask[i] <= '0;
         rvfi_stage_mem_wmask[i] <= '0;
-        rvfi_stage_valid[i]     <= '0;
+        rvfi_stage_valid[i] <= '0;
         rvfi_stage_rs1_rdata[i] <= '0;
         rvfi_stage_rs2_rdata[i] <= '0;
         rvfi_stage_rs3_rdata[i] <= '0;
-        rvfi_stage_rd_wdata[i]  <= '0;
-        rvfi_stage_rd_addr[i]   <= '0;
+        rvfi_stage_rd_wdata[i] <= '0;
+        rvfi_stage_rd_addr[i] <= '0;
         rvfi_stage_mem_rdata[i] <= '0;
         rvfi_stage_mem_wdata[i] <= '0;
-        rvfi_stage_mem_addr[i]  <= '0;
+        rvfi_stage_mem_addr[i] <= '0;
       end else begin
         rvfi_stage_valid[i] <= rvfi_stage_valid_d[i];
 
         if (i == 0) begin
-          if(instr_id_done) begin
-            rvfi_stage_halt[i]      <= '0;
-            rvfi_stage_trap[i]      <= illegal_insn_id;
-            rvfi_stage_intr[i]      <= rvfi_intr_d;
-            rvfi_stage_order[i]     <= rvfi_stage_order[i] + 64'(rvfi_stage_valid_d[i]);
-            rvfi_stage_insn[i]      <= rvfi_insn_id;
-            rvfi_stage_mode[i]      <= {priv_mode_id};
-            rvfi_stage_ixl[i]       <= CSR_MISA_MXL;
-            rvfi_stage_rs1_addr[i]  <= rvfi_rs1_addr_d;
-            rvfi_stage_rs2_addr[i]  <= rvfi_rs2_addr_d;
-            rvfi_stage_rs3_addr[i]  <= rvfi_rs3_addr_d;
-            rvfi_stage_pc_rdata[i]  <= pc_id;
-            rvfi_stage_pc_wdata[i]  <= pc_set ? branch_target_ex : pc_if;
+          if (instr_id_done) begin
+            rvfi_stage_halt[i] <= '0;
+            rvfi_stage_trap[i] <= illegal_insn_id;
+            rvfi_stage_intr[i] <= rvfi_intr_d;
+            rvfi_stage_order[i] <= rvfi_stage_order[i] + 64'(rvfi_stage_valid_d[i]);
+            rvfi_stage_insn[i] <= rvfi_insn_id;
+            rvfi_stage_mode[i] <= {priv_mode_id};
+            rvfi_stage_ixl[i] <= CSR_MISA_MXL;
+            rvfi_stage_rs1_addr[i] <= rvfi_rs1_addr_d;
+            rvfi_stage_rs2_addr[i] <= rvfi_rs2_addr_d;
+            rvfi_stage_rs3_addr[i] <= rvfi_rs3_addr_d;
+            rvfi_stage_pc_rdata[i] <= pc_id;
+            rvfi_stage_pc_wdata[i] <= pc_set ? branch_target_ex : pc_if;
             rvfi_stage_mem_rmask[i] <= rvfi_mem_mask_int;
             rvfi_stage_mem_wmask[i] <= data_we_o ? rvfi_mem_mask_int : 4'b0000;
             rvfi_stage_rs1_rdata[i] <= rvfi_rs1_data_d;
             rvfi_stage_rs2_rdata[i] <= rvfi_rs2_data_d;
             rvfi_stage_rs3_rdata[i] <= rvfi_rs3_data_d;
-            rvfi_stage_rd_addr[i]   <= rvfi_rd_addr_d;
-            rvfi_stage_rd_wdata[i]  <= rvfi_rd_wdata_d;
+            rvfi_stage_rd_addr[i] <= rvfi_rd_addr_d;
+            rvfi_stage_rd_wdata[i] <= rvfi_rd_wdata_d;
             rvfi_stage_mem_rdata[i] <= rvfi_mem_rdata_d;
             rvfi_stage_mem_wdata[i] <= rvfi_mem_wdata_d;
-            rvfi_stage_mem_addr[i]  <= rvfi_mem_addr_d;
+            rvfi_stage_mem_addr[i] <= rvfi_mem_addr_d;
           end
         end else begin
-          if(instr_done_wb) begin
-            rvfi_stage_halt[i]      <= rvfi_stage_halt[i-1];
-            rvfi_stage_trap[i]      <= rvfi_stage_trap[i-1];
-            rvfi_stage_intr[i]      <= rvfi_stage_intr[i-1];
-            rvfi_stage_order[i]     <= rvfi_stage_order[i-1];
-            rvfi_stage_insn[i]      <= rvfi_stage_insn[i-1];
-            rvfi_stage_mode[i]      <= rvfi_stage_mode[i-1];
-            rvfi_stage_ixl[i]       <= rvfi_stage_ixl[i-1];
-            rvfi_stage_rs1_addr[i]  <= rvfi_stage_rs1_addr[i-1];
-            rvfi_stage_rs2_addr[i]  <= rvfi_stage_rs2_addr[i-1];
-            rvfi_stage_rs3_addr[i]  <= rvfi_stage_rs3_addr[i-1];
-            rvfi_stage_pc_rdata[i]  <= rvfi_stage_pc_rdata[i-1];
-            rvfi_stage_pc_wdata[i]  <= rvfi_stage_pc_wdata[i-1];
-            rvfi_stage_mem_rmask[i] <= rvfi_stage_mem_rmask[i-1];
-            rvfi_stage_mem_wmask[i] <= rvfi_stage_mem_wmask[i-1];
-            rvfi_stage_rs1_rdata[i] <= rvfi_stage_rs1_rdata[i-1];
-            rvfi_stage_rs2_rdata[i] <= rvfi_stage_rs2_rdata[i-1];
-            rvfi_stage_rs3_rdata[i] <= rvfi_stage_rs3_rdata[i-1];
-            rvfi_stage_mem_wdata[i] <= rvfi_stage_mem_wdata[i-1];
-            rvfi_stage_mem_addr[i]  <= rvfi_stage_mem_addr[i-1];
+          if (instr_done_wb) begin
+            rvfi_stage_halt[i] <= rvfi_stage_halt[i - 1];
+            rvfi_stage_trap[i] <= rvfi_stage_trap[i - 1];
+            rvfi_stage_intr[i] <= rvfi_stage_intr[i - 1];
+            rvfi_stage_order[i] <= rvfi_stage_order[i - 1];
+            rvfi_stage_insn[i] <= rvfi_stage_insn[i - 1];
+            rvfi_stage_mode[i] <= rvfi_stage_mode[i - 1];
+            rvfi_stage_ixl[i] <= rvfi_stage_ixl[i - 1];
+            rvfi_stage_rs1_addr[i] <= rvfi_stage_rs1_addr[i - 1];
+            rvfi_stage_rs2_addr[i] <= rvfi_stage_rs2_addr[i - 1];
+            rvfi_stage_rs3_addr[i] <= rvfi_stage_rs3_addr[i - 1];
+            rvfi_stage_pc_rdata[i] <= rvfi_stage_pc_rdata[i - 1];
+            rvfi_stage_pc_wdata[i] <= rvfi_stage_pc_wdata[i - 1];
+            rvfi_stage_mem_rmask[i] <= rvfi_stage_mem_rmask[i - 1];
+            rvfi_stage_mem_wmask[i] <= rvfi_stage_mem_wmask[i - 1];
+            rvfi_stage_rs1_rdata[i] <= rvfi_stage_rs1_rdata[i - 1];
+            rvfi_stage_rs2_rdata[i] <= rvfi_stage_rs2_rdata[i - 1];
+            rvfi_stage_rs3_rdata[i] <= rvfi_stage_rs3_rdata[i - 1];
+            rvfi_stage_mem_wdata[i] <= rvfi_stage_mem_wdata[i - 1];
+            rvfi_stage_mem_addr[i] <= rvfi_stage_mem_addr[i - 1];
 
             // For 2 RVFI_STAGES/Writeback Stage ignore first stage flops for rd_addr, rd_wdata and
             // mem_rdata. For RF write addr/data actual write happens in writeback so capture
             // address/data there. For mem_rdata that is only available from the writeback stage.
             // Previous stage flops still exist in RTL as they are used by the non writeback config
-            rvfi_stage_rd_addr[i]   <= rvfi_rd_addr_d;
-            rvfi_stage_rd_wdata[i]  <= rvfi_rd_wdata_d;
+            rvfi_stage_rd_addr[i] <= rvfi_rd_addr_d;
+            rvfi_stage_rd_wdata[i] <= rvfi_rd_wdata_d;
             rvfi_stage_mem_rdata[i] <= rvfi_mem_rdata_d;
           end
         end
@@ -1160,10 +1158,10 @@ module ibex_core #(
   // Memory adddress/write data available first cycle of ld/st instruction from register read
   always_comb begin
     if (instr_first_cycle_id) begin
-      rvfi_mem_addr_d  = alu_adder_result_ex;
+      rvfi_mem_addr_d = alu_adder_result_ex;
       rvfi_mem_wdata_d = lsu_wdata;
     end else begin
-      rvfi_mem_addr_d  = rvfi_mem_addr_q;
+      rvfi_mem_addr_d = rvfi_mem_addr_q;
       rvfi_mem_wdata_d = rvfi_mem_wdata_q;
     end
   end
@@ -1179,11 +1177,11 @@ module ibex_core #(
 
   always_ff @(posedge clk or negedge rst_ni) begin
     if (!rst_ni) begin
-      rvfi_mem_addr_q  <= '0;
+      rvfi_mem_addr_q <= '0;
       rvfi_mem_rdata_q <= '0;
       rvfi_mem_wdata_q <= '0;
     end else begin
-      rvfi_mem_addr_q  <= rvfi_mem_addr_d;
+      rvfi_mem_addr_q <= rvfi_mem_addr_d;
       rvfi_mem_rdata_q <= rvfi_mem_rdata_d;
       rvfi_mem_wdata_q <= rvfi_mem_wdata_d;
     end
@@ -1191,9 +1189,9 @@ module ibex_core #(
   // Byte enable based on data type
   always_comb begin
     unique case (lsu_type)
-      2'b00:   rvfi_mem_mask_int = 4'b1111;
-      2'b01:   rvfi_mem_mask_int = 4'b0011;
-      2'b10:   rvfi_mem_mask_int = 4'b0001;
+      2'b00: rvfi_mem_mask_int = 4'b1111;
+      2'b01: rvfi_mem_mask_int = 4'b0011;
+      2'b10: rvfi_mem_mask_int = 4'b0001;
       default: rvfi_mem_mask_int = 4'b0000;
     endcase
   end
@@ -1241,23 +1239,23 @@ module ibex_core #(
   end
 
   always_comb begin
-    if(rvfi_rd_we_wb) begin
+    if (rvfi_rd_we_wb) begin
       // Capture address/data of write to register file
-      rvfi_rd_addr_d  = rvfi_rd_addr_wb;
+      rvfi_rd_addr_d = rvfi_rd_addr_wb;
       // If writing to x0 zero write data as required by RVFI specification
-      if(rvfi_rd_addr_wb == 5'b0) begin
+      if (rvfi_rd_addr_wb == 5'b0) begin
         rvfi_rd_wdata_d = '0;
       end else begin
         rvfi_rd_wdata_d = rvfi_rd_wdata_wb;
       end
-    end else if(rvfi_instr_new_wb) begin
+    end else if (rvfi_instr_new_wb) begin
       // If no RF write but new instruction in Writeback (when present) or ID/EX (when no writeback
       // stage present) then zero RF write address/data as required by RVFI specification
-      rvfi_rd_addr_d  = '0;
+      rvfi_rd_addr_d = '0;
       rvfi_rd_wdata_d = '0;
     end else begin
       // Otherwise maintain previous value
-      rvfi_rd_addr_d  = rvfi_rd_addr_q;
+      rvfi_rd_addr_d = rvfi_rd_addr_q;
       rvfi_rd_wdata_d = rvfi_rd_wdata_q;
     end
   end
@@ -1266,11 +1264,11 @@ module ibex_core #(
   // then it is kept stable for the cycle.
   always_ff @(posedge clk or negedge rst_ni) begin
     if (!rst_ni) begin
-      rvfi_rd_addr_q    <= '0;
-      rvfi_rd_wdata_q   <= '0;
+      rvfi_rd_addr_q <= '0;
+      rvfi_rd_wdata_q <= '0;
     end else begin
-      rvfi_rd_addr_q    <= rvfi_rd_addr_d;
-      rvfi_rd_wdata_q   <= rvfi_rd_wdata_d;
+      rvfi_rd_addr_q <= rvfi_rd_addr_d;
+      rvfi_rd_wdata_q <= rvfi_rd_wdata_d;
     end
   end
 
@@ -1295,10 +1293,10 @@ module ibex_core #(
   always_ff @(posedge clk or negedge rst_ni) begin
     if (!rst_ni) begin
       rvfi_set_trap_pc_q <= 1'b0;
-      rvfi_intr_q        <= 1'b0;
+      rvfi_intr_q <= 1'b0;
     end else begin
       rvfi_set_trap_pc_q <= rvfi_set_trap_pc_d;
-      rvfi_intr_q        <= rvfi_intr_d;
+      rvfi_intr_q <= rvfi_intr_d;
     end
   end
 
