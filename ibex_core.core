@@ -10,9 +10,7 @@ filesets:
     depend:
       - lowrisc:prim:assert
       - lowrisc:prim:clock_gating
-      # TODO: Only lfsr is needed. Replace with a more specific dependency
-      # once available.
-      - lowrisc:prim:all
+      - lowrisc:prim:lfsr
       - lowrisc:ibex:ibex_pkg
       - lowrisc:ibex:ibex_icache
     files:
