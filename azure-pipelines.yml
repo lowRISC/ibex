@@ -155,7 +155,8 @@ jobs:
       fusesoc --cores-root . run --target=lint --tool=verilator lowrisc:ibex:ibex_simple_system
       if [ $? != 0 ]; then
         echo -n "##vso[task.logissue type=error]"
-        echo "Verilog lint with Verible failed. Run 'fusesoc --cores-root . run --target=lint --tool=verilator lowrisc:ibex:ibex_simple_system' to check and fix all errors."
+        echo "Verilog lint with Verilator failed. Run 'fusesoc --cores-root . run --target=lint --tool=verilator lowrisc:ibex:ibex_simple_system' to check and fix all errors."
+        exit 1
       fi
     displayName: Run Verilator lint on simple system
 
@@ -163,6 +164,7 @@ jobs:
       fusesoc --cores-root . run --target=lint --tool=veriblelint lowrisc:ibex:ibex_simple_system
       if [ $? != 0 ]; then
         echo -n "##vso[task.logissue type=error]"
-        echo "Verilog lint with Verible failed. Run 'fusesoc --cores-root . run --target=lint --tool=verilator lowrisc:ibex:ibex_simple_system' to check and fix all errors."
+        echo "Verilog lint with Verible failed. Run 'fusesoc --cores-root . run --target=lint --tool=veriblelint lowrisc:ibex:ibex_simple_system' to check and fix all errors."
+        exit 1
       fi
     displayName: Run Verible lint on simple system
