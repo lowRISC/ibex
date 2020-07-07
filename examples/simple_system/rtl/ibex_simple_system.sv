@@ -46,8 +46,8 @@ module ibex_simple_system (
     Timer
   } bus_device_e;
 
-  localparam NrDevices = 3;
-  localparam NrHosts = 1;
+  localparam int NrDevices = 3;
+  localparam int NrHosts = 1;
 
   // interrupts
   logic timer_irq;
