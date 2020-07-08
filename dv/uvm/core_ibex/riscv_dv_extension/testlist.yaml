@@ -535,11 +535,11 @@
     +require_signature_addr=1
     +gen_debug_section=1
     +no_ebreak=1
-    +no_branch_jump=1
+    +no_branch_jump=0
     +instr_cnt=10000
     +no_csr_instr=1
     +no_fence=1
-    +num_of_sub_program=0
+    +num_of_sub_program=2
     +randomize_csr=1
     +enable_debug_single_step=1
   rtl_test: core_ibex_debug_single_step_test
