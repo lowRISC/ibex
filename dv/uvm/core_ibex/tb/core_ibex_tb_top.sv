@@ -21,7 +21,7 @@ module core_ibex_tb_top;
   core_ibex_dut_probe_if dut_if(.clk(clk));
 
   // Instruction monitor interface
-  core_ibex_instr_monitor_if instr_monitor_if();
+  core_ibex_instr_monitor_if instr_monitor_if(.clk(clk));
 
   // RVFI interface
   core_ibex_rvfi_if rvfi_if(.clk(clk));
@@ -139,6 +139,9 @@ module core_ibex_tb_top;
   assign instr_monitor_if.is_compressed_id    = dut.u_ibex_core.id_stage_i.instr_is_compressed_i;
   assign instr_monitor_if.instr_compressed_id = dut.u_ibex_core.id_stage_i.instr_rdata_c_i;
   assign instr_monitor_if.instr_id            = dut.u_ibex_core.id_stage_i.instr_rdata_i;
+  assign instr_monitor_if.pc_id               = dut.u_ibex_core.pc_id;
+  assign instr_monitor_if.branch_taken_id     = dut.u_ibex_core.id_stage_i.controller_i.branch_set_i;
+  assign instr_monitor_if.branch_target_id    = dut.u_ibex_core.branch_target_ex;
   // CSR interface connections
   assign csr_if.csr_access                    = dut.u_ibex_core.csr_access;
   assign csr_if.csr_addr                      = dut.u_ibex_core.csr_addr;

@@ -483,7 +483,7 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
     bit [12:0]                                    system_imm;
     instr_t                                       instr_fields;
 
-    opcode      = ibex_pkg::opcode_e'(instr[6:0]);
+    opcode      = ibex_pkg::opcode_e`(instr[6:0]);
     funct3      = instr[14:12];
     funct7      = instr[31:25];
     system_imm  = instr[31:20];
@@ -658,16 +658,16 @@ class core_ibex_interrupt_instr_test extends core_ibex_directed_test;
     vseq.irq_raise_single_seq_h.max_interval = 0;
     forever begin
       // hold until we see a valid instruction in the ID stage of the pipeline.
-      wait (instr_vif.valid_id && !(instr_vif.err_id || dut_vif.illegal_instr));
+      wait (instr_vif.instr_cb.valid_id && !(instr_vif.instr_cb.err_id || dut_vif.illegal_instr));
 
       // We don't want to send fast interrupts, as due to the random setup of MIE,
       // there's no guarantee that the interrupt will actually be taken.
-      if (instr_vif.is_compressed_id) begin
-        if (decode_compressed_instr(instr_vif.instr_compressed_id)) begin
+      if (instr_vif.instr_cb.is_compressed_id) begin
+        if (decode_compressed_instr(instr_vif.instr_cb.instr_compressed_id)) begin
           send_irq_stimulus(.no_fast(1'b1));
         end
       end else begin
-        if (decode_instr(instr_vif.instr_id)) begin
+        if (decode_instr(instr_vif.instr_cb.instr_id)) begin
           send_irq_stimulus(.no_fast(1'b1));
         end
       end
@@ -829,21 +829,21 @@ class core_ibex_debug_instr_test extends core_ibex_directed_test;
     vseq.debug_seq_single_h.max_interval = 0;
     forever begin
       // hold until we see a valid instruction in the ID stage of the pipeline.
-      wait (instr_vif.valid_id && !(instr_vif.err_id || dut_vif.illegal_instr));
+      wait (instr_vif.instr_cb.valid_id && !(instr_vif.instr_cb.err_id || dut_vif.illegal_instr));
 
       // We don't want to send fast interrupts, as due to the random setup of MIE,
       // there's no guarantee that the interrupt will actually be taken.
-      if (instr_vif.is_compressed_id) begin
-        if (decode_compressed_instr(instr_vif.instr_compressed_id)) begin
+      if (instr_vif.instr_cb.is_compressed_id) begin
+        if (decode_compressed_instr(instr_vif.instr_cb.instr_compressed_id)) begin
           send_debug_stimulus(init_operating_mode,
                               $sformatf("Did not jump into debug mode after instruction[0x%0x]",
-                                        instr_vif.instr_compressed_id));
+                                        instr_vif.instr_cb.instr_compressed_id));
         end
       end else begin
-        if (decode_instr(instr_vif.instr_id)) begin
+        if (decode_instr(instr_vif.instr_cb.instr_id)) begin
           send_debug_stimulus(init_operating_mode,
                               $sformatf("Did not jump into debug mode after instruction[0x%0x]",
-                                        instr_vif.instr_id));
+                                        instr_vif.instr_cb.instr_id));
         end
       end
       clk_vif.wait_clks(1);
@@ -986,38 +986,85 @@ class core_ibex_debug_single_step_test extends core_ibex_directed_test;
   `uvm_component_new
 
   virtual task check_stimulus();
-    bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] ret_pc;
     bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] counter = 0;
     bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] next_counter = 0;
+    bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] ret_pc;
+    bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] curr_pc;
+    bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] next_pc;
+    bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] step_instr;
+    bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] branch_target;
+    bit                                           branch_taken;
+    bit                                           is_compressed;
+
     forever begin
       clk_vif.wait_clks(2000);
       vseq.start_debug_single_seq();
+      // perform the standard set of debug mode checks
       check_next_core_status(IN_DEBUG_MODE,
                              "Core did not enter debug mode after debug stimulus", 1000);
       check_priv_mode(PRIV_LVL_M);
       wait_for_csr_write(CSR_DPC, 500);
       ret_pc = signature_data;
       wait_for_csr_write(CSR_DSCRATCH0, 500);
-      next_counter = signature_data;
+      counter = signature_data;
       wait_for_csr_write(CSR_DCSR, 1000);
       check_dcsr_prv(init_operating_mode);
       check_dcsr_cause(DBG_CAUSE_HALTREQ);
       `DV_CHECK_EQ_FATAL(signature_data[2], 1'b1, "dcsr.step is not set")
+      // wait for the DRET instruction indicating return out of debug mode.
       wait_ret("dret", 5000);
-      // now we loop on the counter until we are done single stepping
+      ret_pc = instr_vif.instr_cb.pc_id;
+      // wait for the instruction after dret to log its PC and other information.
+      wait (instr_vif.instr_cb.pc_id != ret_pc &&
+            instr_vif.instr_cb.valid_id &&
+            !dut_vif.dut_cb.dret);
+      curr_pc = instr_vif.instr_cb.pc_id;
+      step_instr = instr_vif.instr_cb.instr_id;
+      is_compressed = instr_vif.instr_cb.is_compressed_id;
+      branch_taken  = instr_vif.instr_cb.branch_taken_id;
+      // need to zero the bottom bit of branch_target to prevent unaligned addresses.
+      branch_target = instr_vif.instr_cb.branch_target_id;
+      branch_target[0] = 1'b0;
+      // After the first DRET, the next <counter> instructions will cause a transition
+      // into debug mode, as the core will single-step over all of them.
+      //
+      // Now we loop on the counter until we are done single stepping
       while (counter >= 0) begin
-        counter = next_counter;
         check_next_core_status(IN_DEBUG_MODE,
                                "Core did not enter debug mode after debug stimulus", 1000);
         check_priv_mode(PRIV_LVL_M);
         wait_for_csr_write(CSR_DPC, 500);
-        if (signature_data - ret_pc !== 'h2 &&
-            signature_data - ret_pc !== 'h4) begin
-          `uvm_fatal(`gfn,
-                     $sformatf("DPC value [0x%0x] is not the next instruction after ret_pc [0x%0x]",
-                     signature_data, ret_pc))
-        end
         ret_pc = signature_data;
+        // checks depend whether the interrupt instruction is a branch/jump.
+        // we can also assume the instruction is valid as this test disables illegal instructions.
+        case (ibex_pkg::opcode_e`(step_instr[6:0]))
+          OPCODE_JAL, OPCODE_JALR: begin
+            `DV_CHECK_EQ_FATAL(branch_target, ret_pc,
+              $sformatf("DPC value[0x%0x] does not match jump target[0x%0x] at PC[0x%0x]",
+                        ret_pc, branch_target, curr_pc))
+          end
+          OPCODE_BRANCH: begin
+            // first check whether branch is actually taken
+            if (branch_taken) begin
+              `DV_CHECK_EQ_FATAL(branch_target, ret_pc,
+                $sformatf("DPC value[0x%0x] does not match branch target[0x%0x] at PC[0x%0x]",
+                          ret_pc, branch_target, curr_pc))
+            end else begin
+              // branch is not taken
+              next_pc = (is_compressed) ? curr_pc + 2 : curr_pc + 4;
+              `DV_CHECK_EQ_FATAL(next_pc, ret_pc,
+                $sformatf("DPC value[0x%0x] does not match expected next PC[0x%0x] at PC[0x%0x]",
+                          ret_pc, next_pc, curr_pc))
+            end
+          end
+          // all other instructions
+          default: begin
+            next_pc = (is_compressed) ? curr_pc + 2 : curr_pc + 4;
+            `DV_CHECK_EQ_FATAL(next_pc, ret_pc,
+              $sformatf("DPC value[0x%0x] does not match expected next PC[0x%0x] at PC[0x%0x]",
+                        ret_pc, next_pc, curr_pc))
+          end
+        endcase
         wait_for_csr_write(CSR_DSCRATCH0, 500);
         next_counter = signature_data;
         wait_for_csr_write(CSR_DCSR, 500);
@@ -1029,7 +1076,21 @@ class core_ibex_debug_single_step_test extends core_ibex_directed_test;
           `DV_CHECK_EQ_FATAL(signature_data[2], 1'b1, "dcsr.step is not set")
         end
         wait_ret("dret", 5000);
-        if (counter === 0) break;
+        ret_pc = instr_vif.instr_cb.pc_id;
+        if (counter == 0) break;
+        // wait until Ibex steps to the next instruction.
+        wait (instr_vif.instr_cb.pc_id != ret_pc &&
+              instr_vif.instr_cb.valid_id &&
+              !dut_vif.dut_cb.dret);
+        // log information about this instruction
+        curr_pc = instr_vif.instr_cb.pc_id;
+        step_instr = instr_vif.instr_cb.instr_id;
+        is_compressed = instr_vif.instr_cb.is_compressed_id;
+        branch_taken  = instr_vif.instr_cb.branch_taken_id;
+        // need to zero the bottom bit of branch_target to prevent unaligned addresses.
+        branch_target = instr_vif.instr_cb.branch_target_id;
+        branch_target[0] = 1'b0;
+        counter = next_counter;
       end
     end
   endtask
