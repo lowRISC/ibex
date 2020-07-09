@@ -695,10 +695,9 @@ module ibex_id_stage #(
 
   end
 
-  // Unless the first branch/jump was predicted holding branch_set/jump_set high for more than one
-  // cycle may not cause a functional issue but could generate needless prefetch buffer flushes and
-  // instruction fetches. ID/EX is designed such that this shouldn't ever happen for non-predicted
-  // branches.
+  // Holding branch_set/jump_set high for more than one cycle should not cause a functional issue.
+  // However it could generate needless prefetch buffer flushes and instruction fetches. The ID/EX
+  // designs ensures that this never happens for non-predicted branches.
   `ASSERT(NeverDoubleBranch, branch_set & ~instr_bp_taken_i |=> ~branch_set)
   `ASSERT(NeverDoubleJump, jump_set & ~instr_bp_taken_i |=> ~jump_set)
 

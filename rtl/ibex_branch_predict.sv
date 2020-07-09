@@ -5,14 +5,14 @@
 /**
  * Branch Predictor
  *
- * This implements static branch prediction. It takes an instruction and it's PC and determines if
+ * This implements static branch prediction. It takes an instruction and its PC and determines if
  * it's a branch or a jump and calculates its target. For jumps it will always predict taken. For
  * branches it will predict taken if the PC offset is negative.
  *
  * This handles both compressed and uncompressed instructions. Compressed instructions must be in
  * the lower 16-bits of instr.
  *
- * The predictor is entirely combinitorial but takes clk/rst_n signals for use by assertions.
+ * The predictor is entirely combinational but takes clk/rst_n signals for use by assertions.
  */
 
 `include "prim_assert.sv"
@@ -88,7 +88,7 @@ module ibex_branch_predict (
     endcase
   end
 
-  `ASSERT_IF(BranchInsTypeOnehot, $onehot0({instr_j, instr_b, instr_cj, instr_cb}), fetch_valid_i);
+  `ASSERT_IF(BranchInsTypeOneHot, $onehot0({instr_j, instr_b, instr_cj, instr_cb}), fetch_valid_i);
 
   // Determine branch prediction, taken if offset is negative
   assign instr_b_taken = (instr_b & imm_b_type[31]) | (instr_cb & imm_cb_type[31]);
