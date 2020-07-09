@@ -877,7 +877,8 @@ module ibex_id_stage #(
     //   precise exceptions)
     // * There is a load/store request not being granted or which is unaligned and waiting to issue
     //   a second request (needs to stay in ID for the address calculation)
-    assign stall_mem = instr_valid_i & (outstanding_memory_access | (lsu_req_dec & ~lsu_req_done_i));
+    assign stall_mem = instr_valid_i &
+                       (outstanding_memory_access | (lsu_req_dec & ~lsu_req_done_i));
 
     // If we stall a load in ID for any reason, it must not make an LSU request
     // (otherwide we might issue two requests for the same instruction)
@@ -915,7 +916,8 @@ module ibex_id_stage #(
     // Stall ID/EX as instruction in ID/EX cannot proceed to writeback yet
     assign stall_wb = en_wb_o & ~ready_wb_i;
 
-    assign perf_dside_wait_o = instr_valid_i & ~instr_kill & (outstanding_memory_access | stall_ld_hz);
+    assign perf_dside_wait_o = instr_valid_i & ~instr_kill &
+                               (outstanding_memory_access | stall_ld_hz);
   end else begin : gen_no_stall_mem
 
     assign multicycle_done = lsu_req_dec ? lsu_resp_valid_i : ex_valid_i;
