@@ -123,7 +123,7 @@ Pass `-gui` to use the DVE GUI.
 To build and run Simple System run:
 
 ```
-fusesoc --cores-root=. run --target=sim --tool=rivierapro lowrisc:ibex:ibex_simple_system --RV32M=1 --RV32E=0 --SRAMInitFile=<sw_vmem_file>
+fusesoc --cores-root=. run --target=sim --tool=rivierapro lowrisc:ibex:ibex_simple_system --RV32M=1 --RV32E=0 --SRAMInitFile=\"$(readlink -f <sw_vmem_file>)\"
 ```
 
 `<sw_vmem_file>` should be a path to a vmem file built as described above, use
