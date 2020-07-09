@@ -29,8 +29,7 @@ module ibex_controller #(
 
     // instr from IF-ID pipeline stage
     input  logic                  instr_valid_i,           // instr is valid
-    input  logic [31:0]           instr_i,                 // instr data (uncompressed if compressed
-                                                           // otherwise raw data) for mtval
+    input  logic [31:0]           instr_i,                 // uncompressed instr data for mtval
     input  logic [15:0]           instr_compressed_i,      // instr compressed data for mtval
     input  logic                  instr_is_compressed_i,   // instr is compressed
     input  logic                  instr_bp_taken_i,        // instr was predicted taken branch
@@ -62,9 +61,11 @@ module ibex_controller #(
     output logic                  wb_exception_o,          // Instruction in WB taking an exception
 
     // jump/branch signals
-    input  logic                  branch_set_i,            // branch taken set signal
-    input  logic                  branch_set_spec_i,       // speculative branch signal
-    input  logic                  branch_not_set_i,        // branch was not taken
+    input  logic                  branch_set_i,            // branch set signal (branch definitely
+                                                           // taken)
+    input  logic                  branch_set_spec_i,       // speculative branch signal (branch
+                                                           // may be taken)
+    input  logic                  branch_not_set_i,        // branch is definitely not taken
     input  logic                  jump_set_i,              // jump taken set signal
 
     // interrupt signals
@@ -372,9 +373,9 @@ module ibex_controller #(
     // below always set pc_mux and exc_pc_mux but only set pc_set if certain conditions are met.
     // This avoid having to factor those conditions into the pc_mux and exc_pc_mux select signals
     // helping timing.
-    pc_mux_o              = PC_BOOT;
-    pc_set_o              = 1'b0;
-    pc_set_spec_o         = 1'b0;
+    pc_mux_o               = PC_BOOT;
+    pc_set_o               = 1'b0;
+    pc_set_spec_o          = 1'b0;
     nt_branch_mispredict_o = 1'b0;
 
     exc_pc_mux_o           = EXC_PC_IRQ;
@@ -384,9 +385,9 @@ module ibex_controller #(
 
     ctrl_busy_o            = 1'b1;
 
-    halt_if               = 1'b0;
-    retain_id             = 1'b0;
-    flush_id              = 1'b0;
+    halt_if                = 1'b0;
+    retain_id              = 1'b0;
+    flush_id               = 1'b0;
 
     debug_csr_save_o       = 1'b0;
     debug_cause_o          = DBG_CAUSE_EBREAK;
@@ -501,7 +502,7 @@ module ibex_controller #(
         end
 
         if (!special_req_branch) begin
-          if ((branch_set_i || jump_set_i)) begin
+          if (branch_set_i || jump_set_i) begin
             // Only set the PC if the branch predictor hasn't already done the branch for us
             pc_set_o       = BranchPredictor ? ~instr_bp_taken_i : 1'b1;
 

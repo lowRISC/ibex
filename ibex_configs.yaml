@@ -77,7 +77,7 @@ experimental-maxperf-pmp-bmfull:
   PMPGranularity           : 0
   PMPNumRegions            : 16
 
-# experimental-maxperf with branch predictor switched on, this exists to allow
+# experimental-maxperf with branch predictor switched on. This exists to allow
 # easy use of Ibex with the branch predictor in particular for CI runs. The
 # branch predictor will be enabled in all the 'maxperf' configs after further
 # development.

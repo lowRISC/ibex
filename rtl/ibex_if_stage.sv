@@ -125,7 +125,6 @@ module ibex_if_stage #(
   logic              if_id_pipe_reg_we; // IF-ID pipeline reg write enable
 
   // Dummy instruction signals
-  //logic              fetch_valid_out;
   logic              stall_dummy_instr;
   logic [31:0]       instr_out;
   logic              instr_is_compressed_out;
@@ -171,11 +170,9 @@ module ibex_if_stage #(
       PC_EXC:  fetch_addr_n = exc_pc;                       // set PC to exception handler
       PC_ERET: fetch_addr_n = csr_mepc_i;                   // restore PC when returning from EXC
       PC_DRET: fetch_addr_n = csr_depc_i;
-      // Without branch predictor will never get pc_mux_internal == PC_BP, still handle no branch
+      // Without branch predictor will never get pc_mux_internal == PC_BP. We still handle no branch
       // predictor case here to ensure redundant mux logic isn't synthesised.
-      PC_BP:   begin
-        fetch_addr_n = BranchPredictor ? predict_branch_pc : { boot_addr_i[31:8], 8'h80 };
-      end
+      PC_BP:   fetch_addr_n = BranchPredictor ? predict_branch_pc : { boot_addr_i[31:8], 8'h80 };
       default: fetch_addr_n = { boot_addr_i[31:8], 8'h80 };
     endcase
   end
@@ -255,12 +252,6 @@ module ibex_if_stage #(
     assign unused_icinv = icache_inval_i;
   end
 
-  // For predicted branches only set branch_req when the ID/EX stage is ready to accept the branch
-  // instruction. Otherwise the branch instruction ends up getting flush out of the IF stage by the
-  // branch_req and is lost. Whilst it is possible to begin fetching the predicted branch without
-  // flushing the branch instruction from IF this adds design complexity and for situations where
-  // ID/EX stage stalls are common more timely fetching of branches is likely to have limited
-  // performance impact.
   assign branch_req  = pc_set_i | predict_branch_taken;
   assign branch_spec = pc_set_spec_i | predict_branch_taken;
 
@@ -305,7 +296,6 @@ module ibex_if_stage #(
     );
 
     // Mux between actual instructions and dummy instructions
-    //assign fetch_valid_out         = insert_dummy_instr | if_instr_valid;
     assign instr_out               = insert_dummy_instr ? dummy_instr_data : instr_decompressed;
     assign instr_is_compressed_out = insert_dummy_instr ? 1'b0 : instr_is_compressed;
     assign illegal_c_instr_out     = insert_dummy_instr ? 1'b0 : illegal_c_insn;
@@ -335,7 +325,6 @@ module ibex_if_stage #(
     assign unused_dummy_mask       = dummy_instr_mask_i;
     assign unused_dummy_seed_en    = dummy_instr_seed_en_i;
     assign unused_dummy_seed       = dummy_instr_seed_i;
-    //assign fetch_valid_out         = fetch_valid;
     assign instr_out               = instr_decompressed;
     assign instr_is_compressed_out = instr_is_compressed;
     assign illegal_c_instr_out     = illegal_c_insn;
@@ -426,16 +415,17 @@ module ibex_if_stage #(
     end
 
     // When branch prediction is enabled a skid buffer between the IF and ID/EX stage is introduced.
-    // If an instruction in IF is predicted to be a branch and ID/EX is not ready the instruction is
-    // moved to the skid buffer which becomes the output of the IF stage until the ID/EX stage
-    // accepts the instruction. The skid buffer is required as otherwise the ID/EX ready signal is
-    // coupled to the instr_req_o output which produces a feedthrough path from data_gnt_i ->
-    // instr_req_o (which needs to be avoided as for some interconnects this will result in
-    // a combinational loop).
+    // If an instruction in IF is predicted to be a taken branch and ID/EX is not ready the
+    // instruction in IF is moved to the skid buffer which becomes the output of the IF stage until
+    // the ID/EX stage accepts the instruction. The skid buffer is required as otherwise the ID/EX
+    // ready signal is coupled to the instr_req_o output which produces a feedthrough path from
+    // data_gnt_i -> instr_req_o (which needs to be avoided as for some interconnects this will
+    // result in a combinational loop).
 
     assign instr_skid_en = predicted_branch & ~id_in_ready_i & ~instr_skid_valid_q;
 
-    assign instr_skid_valid_d = (instr_skid_valid_q & ~id_in_ready_i & ~stall_dummy_instr) | instr_skid_en;
+    assign instr_skid_valid_d = (instr_skid_valid_q & ~id_in_ready_i & ~stall_dummy_instr) |
+                                instr_skid_en;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin

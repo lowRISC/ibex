@@ -11,7 +11,7 @@
  */
 module ibex_prefetch_buffer #(
   parameter bit BranchPredictor = 1'b0
-)(
+) (
     input  logic        clk_i,
     input  logic        rst_ni,
 
@@ -252,7 +252,8 @@ module ibex_prefetch_buffer #(
       // If a branch is received at any point while a request is outstanding, it must be tracked
       // to ensure we discard the data once received
       assign branch_discard_n[i]    = (valid_req & gnt_or_pmp_err & discard_req_d) |
-                                      (branch_or_mispredict & rdata_outstanding_q[i]) | branch_discard_q[i];
+                                      (branch_or_mispredict & rdata_outstanding_q[i]) |
+                                      branch_discard_q[i];
       // Record whether this request received a PMP error
       assign rdata_pmp_err_n[i]     = (valid_req & ~rdata_outstanding_q[i] & instr_pmp_err_i) |
                                       rdata_pmp_err_q[i];
@@ -266,7 +267,8 @@ module ibex_prefetch_buffer #(
                                       rdata_outstanding_q[i];
       assign branch_discard_n[i]    = (valid_req & gnt_or_pmp_err & discard_req_d &
                                        rdata_outstanding_q[i-1]) |
-                                      (branch_or_mispredict & rdata_outstanding_q[i]) | branch_discard_q[i];
+                                      (branch_or_mispredict & rdata_outstanding_q[i]) |
+                                      branch_discard_q[i];
       assign rdata_pmp_err_n[i]     = (valid_req & ~rdata_outstanding_q[i] & instr_pmp_err_i &
                                        rdata_outstanding_q[i-1]) |
                                       rdata_pmp_err_q[i];

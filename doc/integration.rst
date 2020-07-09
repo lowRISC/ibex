@@ -23,6 +23,7 @@ Instantiation Template
       .RegFile          ( ibex_pkg::RegFileFF ),
       .ICache           ( 0                   ),
       .ICacheECC        ( 0                   ),
+      .BranchPrediction ( 0                   ),
       .SecureIbex       ( 0                   ),
       .DbgTriggerEn     ( 0                   ),
       .DmHaltAddr       ( 32'h1A110800        ),
@@ -118,6 +119,8 @@ Parameters
 +------------------------------+---------------------+------------+-----------------------------------------------------------------------+
 | ``ICacheECC``                | bit                 | 0          | *EXPERIMENTAL* Enable SECDED ECC protection in ICache (if             |
 |                              |                     |            | ICache == 1)                                                          |
++------------------------------+---------------------+------------+-----------------------------------------------------------------------+
+| ``BranchPrediction``         | bit                 | 0          | *EXPERIMENTAL* Enable Static branch prediction                        |
 +------------------------------+---------------------+------------+-----------------------------------------------------------------------+
 | ``SecureIbex``               | bit                 | 0          | *EXPERIMENTAL* Enable various additional features targeting           |
 |                              |                     |            | secure code execution.                                                |
