@@ -123,8 +123,8 @@ module ibex_core #(
   logic        instr_valid_id;
   logic        instr_new_id;
   logic [31:0] instr_rdata_id;                 // Instruction sampled inside IF stage
-  logic [31:0] instr_rdata_alu_id;             // Instruction sampled inside IF stage (replicated to ease
-                                               // fan-out)
+  logic [31:0] instr_rdata_alu_id;             // Instruction sampled inside IF stage (replicated to
+                                               // ease fan-out)
   logic [15:0] instr_rdata_c_id;               // Compressed instruction sampled inside IF stage
   logic        instr_is_compressed_id;
   logic        instr_fetch_err;                // Bus error on instr fetch
@@ -779,8 +779,10 @@ module ibex_core #(
   logic outstanding_load_id;
   logic outstanding_store_id;
 
-  assign outstanding_load_id  = id_stage_i.instr_executing & id_stage_i.lsu_req_dec & ~id_stage_i.lsu_we;
-  assign outstanding_store_id = id_stage_i.instr_executing & id_stage_i.lsu_req_dec &  id_stage_i.lsu_we;
+  assign outstanding_load_id  = id_stage_i.instr_executing & id_stage_i.lsu_req_dec &
+                                ~id_stage_i.lsu_we;
+  assign outstanding_store_id = id_stage_i.instr_executing & id_stage_i.lsu_req_dec &
+                                id_stage_i.lsu_we;
 
   if (WritebackStage) begin : gen_wb_stage
     // When the writeback stage is present a load/store could be in ID or WB. A Load/store in ID can
