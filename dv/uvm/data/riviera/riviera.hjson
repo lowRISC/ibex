@@ -11,7 +11,8 @@
 
   build_opts: ["-sv",
                "-timescale 1ns/1ps",
-               "-uvmver 1.2",
+               "+incdir+\"{ALDEC_PATH}/vlib/uvm-1.2/src\"",
+               "\"{ALDEC_PATH}/vlib/uvm-1.2/src/uvm_pkg.sv\"",
                "-f {sv_flist}"]
 
   run_opts:   ["-sv_seed={seed}",
@@ -20,6 +21,7 @@
                "-lib {sv_flist_gen_dir}/work",
                "+UVM_TESTNAME={uvm_test}",
                "+UVM_TEST_SEQ={uvm_test_seq}",
+               "-sv_lib \"{ALDEC_PATH}/bin/uvm_1_2_dpi\""
                "-do {tool_srcs_dir}/riviera_run.do"]
 
   // Coverage related.
