@@ -483,7 +483,7 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
     bit [12:0]                                    system_imm;
     instr_t                                       instr_fields;
 
-    opcode      = instr[6:0];
+    opcode      = ibex_pkg::opcode_e'(instr[6:0]);
     funct3      = instr[14:12];
     funct7      = instr[31:25];
     system_imm  = instr[31:20];
