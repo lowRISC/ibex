@@ -15,14 +15,14 @@ package ibex_mem_intf_agent_pkg;
   `include "uvm_macros.svh"
   `include "ibex_mem_intf_seq_item.sv"
 
-  typedef uvm_sequencer#(ibex_mem_intf_seq_item) ibex_mem_intf_master_sequencer;
+  typedef uvm_sequencer#(ibex_mem_intf_seq_item) ibex_mem_intf_request_sequencer;
 
   `include "ibex_mem_intf_monitor.sv"
-  `include "ibex_mem_intf_slave_driver.sv"
-  `include "ibex_mem_intf_slave_sequencer.sv"
-  `include "ibex_mem_intf_slave_seq_lib.sv"
-  `include "ibex_mem_intf_slave_agent.sv"
-  `include "ibex_mem_intf_master_driver.sv"
-  `include "ibex_mem_intf_master_agent.sv"
+  `include "ibex_mem_intf_response_driver.sv"
+  `include "ibex_mem_intf_response_sequencer.sv"
+  `include "ibex_mem_intf_response_seq_lib.sv"
+  `include "ibex_mem_intf_response_agent.sv"
+  `include "ibex_mem_intf_request_driver.sv"
+  `include "ibex_mem_intf_request_agent.sv"
 
 endpackage

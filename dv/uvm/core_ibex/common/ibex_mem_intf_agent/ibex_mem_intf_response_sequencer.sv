@@ -3,15 +3,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-// CLASS: ibex_mem_intf_slave_sequencer
+// CLASS: ibex_mem_intf_response_sequencer
 //------------------------------------------------------------------------------
 
-class ibex_mem_intf_slave_sequencer extends uvm_sequencer #(ibex_mem_intf_seq_item);
+class ibex_mem_intf_response_sequencer extends uvm_sequencer #(ibex_mem_intf_seq_item);
 
-  // TLM port to peek the address phase from the slave monitor
+  // TLM port to peek the address phase from the response monitor
   uvm_tlm_analysis_fifo #(ibex_mem_intf_seq_item) addr_ph_port;
 
-  `uvm_component_utils(ibex_mem_intf_slave_sequencer)
+  `uvm_component_utils(ibex_mem_intf_response_sequencer)
 
   function new (string name, uvm_component parent);
     super.new(name, parent);
@@ -23,4 +23,4 @@ class ibex_mem_intf_slave_sequencer extends uvm_sequencer #(ibex_mem_intf_seq_it
     addr_ph_port.flush();
   endfunction
 
-endclass : ibex_mem_intf_slave_sequencer
+endclass : ibex_mem_intf_response_sequencer

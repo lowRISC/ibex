@@ -155,8 +155,8 @@ module core_ibex_tb_top;
                                                             instr_monitor_if);
     uvm_config_db#(virtual core_ibex_csr_if)::set(null, "*", "csr_if", csr_if);
     uvm_config_db#(virtual core_ibex_rvfi_if)::set(null, "*", "rvfi_if", rvfi_if);
-    uvm_config_db#(virtual ibex_mem_intf)::set(null, "*data_if_slave*", "vif", data_mem_vif);
-    uvm_config_db#(virtual ibex_mem_intf)::set(null, "*instr_if_slave*", "vif", instr_mem_vif);
+    uvm_config_db#(virtual ibex_mem_intf)::set(null, "*data_if_response*", "vif", data_mem_vif);
+    uvm_config_db#(virtual ibex_mem_intf)::set(null, "*instr_if_response*", "vif", instr_mem_vif);
     uvm_config_db#(virtual irq_if)::set(null, "*", "vif", irq_vif);
     run_test();
   end

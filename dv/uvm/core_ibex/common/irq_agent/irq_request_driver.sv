@@ -2,12 +2,11 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class irq_master_driver extends uvm_driver #(irq_seq_item);
+class irq_request_driver extends uvm_driver #(irq_seq_item);
 
   // The virtual interface used to drive and view HDL signals.
   protected virtual irq_if vif;
-
-  `uvm_component_utils(irq_master_driver)
+`uvm_component_utils(irq_request_driver)
   `uvm_component_new
 
   function void build_phase(uvm_phase phase);
@@ -78,5 +77,5 @@ class irq_master_driver extends uvm_driver #(irq_seq_item);
     vif.driver_cb.irq_nm       <= '0;
   endtask : drive_reset_value
 
-endclass : irq_master_driver
+endclass : irq_request_driver
 
