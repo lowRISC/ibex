@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-// SEQUENCE: ibex_mem_intf_slave_seq
+// SEQUENCE: ibex_mem_intf_response_seq
 //------------------------------------------------------------------------------
 
-class ibex_mem_intf_slave_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
+class ibex_mem_intf_response_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
 
   int                     max_rvalid_delay = 20;
   int                     min_rvalid_delay = 0;
@@ -18,8 +18,8 @@ class ibex_mem_intf_slave_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
   bit                     error_synch = 1'b1;
   bit                     is_dmem_seq = 1'b0;
 
-  `uvm_object_utils(ibex_mem_intf_slave_seq)
-  `uvm_declare_p_sequencer(ibex_mem_intf_slave_sequencer)
+  `uvm_object_utils(ibex_mem_intf_response_seq)
+  `uvm_declare_p_sequencer(ibex_mem_intf_response_sequencer)
   `uvm_object_new
 
   virtual task body();
@@ -47,7 +47,7 @@ class ibex_mem_intf_slave_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
         };
         error == enable_error;
       }) begin
-        `uvm_fatal(`gfn, "Cannot randomize slave request")
+        `uvm_fatal(`gfn, "Cannot randomize response request")
       end
       enable_error = 1'b0;
       error_synch = 1'b1;
@@ -92,4 +92,4 @@ class ibex_mem_intf_slave_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
     return this.error_synch;
   endfunction
 
-endclass : ibex_mem_intf_slave_seq
+endclass : ibex_mem_intf_response_seq

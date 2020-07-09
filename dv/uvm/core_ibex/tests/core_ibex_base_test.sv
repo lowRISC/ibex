@@ -65,7 +65,7 @@ class core_ibex_base_test extends uvm_test;
 
   virtual function void connect_phase(uvm_phase phase);
     super.connect_phase(phase);
-    env.data_if_slave_agent.monitor.item_collected_port.connect(
+    env.data_if_response_agent.monitor.item_collected_port.connect(
       this.item_collected_port.analysis_export);
     env.irq_agent.monitor.irq_port.connect(this.irq_collected_port.analysis_export);
   endfunction

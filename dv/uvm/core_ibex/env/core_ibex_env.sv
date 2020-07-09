@@ -7,9 +7,9 @@
 // ---------------------------------------------
 class core_ibex_env extends uvm_env;
 
-  ibex_mem_intf_slave_agent   data_if_slave_agent;
-  ibex_mem_intf_slave_agent   instr_if_slave_agent;
-  irq_master_agent            irq_agent;
+  ibex_mem_intf_response_agent   data_if_response_agent;
+  ibex_mem_intf_response_agent   instr_if_response_agent;
+  irq_request_agent            irq_agent;
   core_ibex_vseqr             vseqr;
   core_ibex_env_cfg           cfg;
 
@@ -21,25 +21,25 @@ class core_ibex_env extends uvm_env;
     if (!uvm_config_db#(core_ibex_env_cfg)::get(this, "", "cfg", cfg)) begin
       `uvm_fatal(get_full_name(), "Cannot get cfg")
     end
-    data_if_slave_agent = ibex_mem_intf_slave_agent::type_id::
-                          create("data_if_slave_agent", this);
-    instr_if_slave_agent = ibex_mem_intf_slave_agent::type_id::
-                           create("instr_if_slave_agent", this);
-    irq_agent = irq_master_agent::type_id::create("irq_agent", this);
+    data_if_response_agent = ibex_mem_intf_response_agent::type_id::
+                          create("data_if_response_agent", this);
+    instr_if_response_agent = ibex_mem_intf_response_agent::type_id::
+                           create("instr_if_response_agent", this);
+    irq_agent = irq_request_agent::type_id::create("irq_agent", this);
     // Create virtual sequencer
     vseqr = core_ibex_vseqr::type_id::create("vseqr", this);
   endfunction : build_phase
 
   function void connect_phase(uvm_phase phase);
     super.connect_phase(phase);
-    vseqr.data_if_seqr = data_if_slave_agent.sequencer;
-    vseqr.instr_if_seqr = instr_if_slave_agent.sequencer;
+    vseqr.data_if_seqr = data_if_response_agent.sequencer;
+    vseqr.instr_if_seqr = instr_if_response_agent.sequencer;
     vseqr.irq_seqr = irq_agent.sequencer;
   endfunction : connect_phase
 
   function void reset();
-    data_if_slave_agent.reset();
-    instr_if_slave_agent.reset();
+    data_if_response_agent.reset();
+    instr_if_response_agent.reset();
   endfunction
 
 endclass

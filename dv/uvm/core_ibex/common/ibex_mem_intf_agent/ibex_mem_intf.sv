@@ -20,7 +20,7 @@ interface ibex_mem_intf#(
   logic [DATA_WIDTH-1:0]   rdata;
   logic                    error;
 
-  clocking host_driver_cb @(posedge clk);
+  clocking request_driver_cb @(posedge clk);
     input   reset;
     output  request;
     input   grant;
@@ -33,7 +33,7 @@ interface ibex_mem_intf#(
     input   error;
   endclocking
 
-  clocking device_driver_cb @(posedge clk);
+  clocking response_driver_cb @(posedge clk);
     input   reset;
     input   request;
     output  grant;

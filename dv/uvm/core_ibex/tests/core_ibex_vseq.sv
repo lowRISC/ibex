@@ -8,8 +8,8 @@
 
 class core_ibex_vseq extends uvm_sequence;
 
-  ibex_mem_intf_slave_seq                       instr_intf_seq;
-  ibex_mem_intf_slave_seq                       data_intf_seq;
+  ibex_mem_intf_response_seq                       instr_intf_seq;
+  ibex_mem_intf_response_seq                       data_intf_seq;
   mem_model_pkg::mem_model                      mem;
   irq_raise_seq                                 irq_raise_seq_h;
   irq_raise_single_seq                          irq_raise_single_seq_h;
@@ -24,8 +24,8 @@ class core_ibex_vseq extends uvm_sequence;
   `uvm_object_new
 
   virtual task body();
-    instr_intf_seq = ibex_mem_intf_slave_seq::type_id::create("instr_intf_seq");
-    data_intf_seq  = ibex_mem_intf_slave_seq::type_id::create("data_intf_seq");
+    instr_intf_seq = ibex_mem_intf_response_seq::type_id::create("instr_intf_seq");
+    data_intf_seq  = ibex_mem_intf_response_seq::type_id::create("data_intf_seq");
     data_intf_seq.is_dmem_seq = 1'b1;
     if (cfg.enable_irq_single_seq) begin
       irq_raise_single_seq_h = irq_raise_single_seq::type_id::create("irq_single_seq_h");
