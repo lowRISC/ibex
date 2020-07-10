@@ -14,6 +14,7 @@ small:
   RegFile                  : "ibex_pkg::RegFileFF"
   BranchTargetALU          : 0
   WritebackStage           : 0
+  BranchPredictor          : 0
   PMPEnable                : 0
   PMPGranularity           : 0
   PMPNumRegions            : 4
@@ -32,6 +33,7 @@ experimental-maxperf:
   RegFile                  : "ibex_pkg::RegFileFF"
   BranchTargetALU          : 1
   WritebackStage           : 1
+  BranchPredictor          : 0
   PMPEnable                : 0
   PMPGranularity           : 0
   PMPNumRegions            : 4
@@ -44,6 +46,7 @@ experimental-maxperf-pmp:
   RegFile                  : "ibex_pkg::RegFileFF"
   BranchTargetALU          : 1
   WritebackStage           : 1
+  BranchPredictor          : 0
   PMPEnable                : 1
   PMPGranularity           : 0
   PMPNumRegions            : 16
@@ -56,6 +59,7 @@ experimental-maxperf-pmp-bmbalanced:
   RegFile                  : "ibex_pkg::RegFileFF"
   BranchTargetALU          : 1
   WritebackStage           : 1
+  BranchPredictor          : 0
   PMPEnable                : 1
   PMPGranularity           : 0
   PMPNumRegions            : 16
@@ -68,7 +72,24 @@ experimental-maxperf-pmp-bmfull:
   RegFile                  : "ibex_pkg::RegFileFF"
   BranchTargetALU          : 1
   WritebackStage           : 1
+  BranchPredictor          : 0
   PMPEnable                : 1
   PMPGranularity           : 0
   PMPNumRegions            : 16
+
+# experimental-maxperf with branch predictor switched on, this exists to allow
+# easy use of Ibex with the branch predictor in particular for CI runs. The
+# branch predictor will be enabled in all the 'maxperf' configs after further
+# development.
+experimental-branch-predictor:
+  RV32E                    : 0
+  RV32M                    : "ibex_pkg::RV32MSingleCycle"
+  RV32B                    : "ibex_pkg::RV32BNone"
+  RegFile                  : "ibex_pkg::RegFileFF"
+  BranchTargetALU          : 1
+  WritebackStage           : 1
+  BranchPredictor          : 1
+  PMPEnable                : 0
+  PMPGranularity           : 0
+  PMPNumRegions            : 4
 

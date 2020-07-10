@@ -252,7 +252,8 @@ typedef enum logic [2:0] {
   PC_JUMP,
   PC_EXC,
   PC_ERET,
-  PC_DRET
+  PC_DRET,
+  PC_BP
 } pc_sel_e;
 
 // Exception PC mux selection

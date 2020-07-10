@@ -34,6 +34,7 @@ ${PRJ_DIR}/rtl/ibex_pkg.sv
 ${PRJ_DIR}/rtl/ibex_tracer_pkg.sv
 ${PRJ_DIR}/rtl/ibex_tracer.sv
 ${PRJ_DIR}/rtl/ibex_alu.sv
+${PRJ_DIR}/rtl/ibex_branch_predict.sv
 ${PRJ_DIR}/rtl/ibex_compressed_decoder.sv
 ${PRJ_DIR}/rtl/ibex_controller.sv
 ${PRJ_DIR}/rtl/ibex_cs_registers.sv

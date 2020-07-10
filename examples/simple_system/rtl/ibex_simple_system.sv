@@ -45,6 +45,7 @@ module ibex_simple_system (
   parameter ibex_pkg::regfile_e RegFile                  = `RegFile;
   parameter bit                 BranchTargetALU          = 1'b0;
   parameter bit                 WritebackStage           = 1'b0;
+  parameter bit                 BranchPredictor          = 1'b0;
   parameter                     SRAMInitFile             = "";
 
   logic clk_sys = 1'b0, rst_sys_n;
@@ -170,6 +171,7 @@ module ibex_simple_system (
       .RegFile         ( RegFile         ),
       .BranchTargetALU ( BranchTargetALU ),
       .WritebackStage  ( WritebackStage  ),
+      .BranchPredictor ( BranchPredictor ),
       .DmHaltAddr      ( 32'h00100000    ),
       .DmExceptionAddr ( 32'h00100000    )
     ) u_core (

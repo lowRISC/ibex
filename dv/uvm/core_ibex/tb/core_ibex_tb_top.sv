@@ -54,6 +54,7 @@ module core_ibex_tb_top;
   parameter ibex_pkg::regfile_e RegFile  = `IBEX_CFG_RegFile;
   parameter bit BranchTargetALU          = 1'b0;
   parameter bit WritebackStage           = 1'b0;
+  parameter bit BranchPredictor          = 1'b0;
 
   ibex_core_tracing #(
     .DmHaltAddr      (`BOOT_ADDR + 'h0 ),
@@ -66,7 +67,8 @@ module core_ibex_tb_top;
     .RV32B           (RV32B            ),
     .RegFile         (RegFile          ),
     .BranchTargetALU (BranchTargetALU  ),
-    .WritebackStage  (WritebackStage   )
+    .WritebackStage  (WritebackStage   ),
+    .BranchPredictor (BranchPredictor  )
   ) dut (
     .clk_i          (clk                  ),
     .rst_ni         (rst_n                ),

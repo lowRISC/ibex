@@ -15,6 +15,7 @@ filesets:
       - lowrisc:ibex:ibex_icache
     files:
       - rtl/ibex_alu.sv
+      - rtl/ibex_branch_predict.sv
       - rtl/ibex_compressed_decoder.sv
       - rtl/ibex_controller.sv
       - rtl/ibex_cs_registers.sv
@@ -110,6 +111,12 @@ parameters:
     default: 0
     paramtype: vlogparam
     description: "Enables third pipeline stage (EXPERIMENTAL) [0/1]"
+
+  BranchPredictor:
+    datatype: int
+    paramtype: vlogparam
+    default: 0
+    description: "Enables static branch prediction (EXPERIMENTAL)"
 
   SecureIbex:
     datatype: int

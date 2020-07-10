@@ -74,6 +74,12 @@ parameters:
     paramtype: vlogparam
     description: "Enables security hardening features (EXPERIMENTAL) [0/1]"
 
+  BranchPredictor:
+    datatype: int
+    paramtype: vlogparam
+    default: 0
+    description: "Enables static branch prediction (EXPERIMENTAL)"
+
   PMPEnable:
     datatype: int
     default: 0
@@ -107,6 +113,7 @@ targets:
       - BranchTargetALU
       - WritebackStage
       - SecureIbex
+      - BranchPredictor
       - PMPEnable
       - PMPGranularity
       - PMPNumRegions
