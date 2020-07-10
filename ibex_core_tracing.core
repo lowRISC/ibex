@@ -71,6 +71,12 @@ parameters:
     paramtype: vlogparam
     description: "Enables third pipeline stage (EXPERIMENTAL) [0/1]"
 
+  BranchPredictor:
+    datatype: int
+    paramtype: vlogparam
+    default: 0
+    description: "Enables static branch prediction (EXPERIMENTAL)"
+
   SecureIbex:
     datatype: int
     default: 0
@@ -114,6 +120,7 @@ targets:
       - RegFile
       - BranchTargetALU
       - WritebackStage
+      - BranchPredictor
       - SecureIbex
       - PMPEnable
       - PMPGranularity

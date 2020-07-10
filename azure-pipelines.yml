@@ -95,6 +95,7 @@ jobs:
         - small
         - experimental-maxperf-pmp
         - experimental-maxperf-pmp-bmfull
+        - experimental-branch-predictor
 
   # Run lint on simple system
   - bash: |
