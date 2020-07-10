@@ -62,6 +62,32 @@ seedcrc          : 0xe9f5
 Correct operation validated. See README.md for run and reporting rules.
 ```
 
+### Choice of ISA string
+
+Different ISAs (to choose different RISC-V ISA extensions) can be selected by
+passing the desired ISA string into `RV_ISA` when invoking make.
+
+```
+make -C ./examples/sw/bencharmsk/coremark clean
+make -C ./examples/sw/benchmarks/coremark RV_ISA=rv32imc
+```
+
+This will build CoreMark using the 'C' extension (compressed instructions).
+
+When changing `RV_ISA`, you must clean out any old build with `make clean` and
+rebuild.
+
+The following ISA strings give the best performance for the Ibex configurations
+listed in the README:
+
+| Config               | Best ISA |
+|----------------------|----------|
+| "small"              | rv32im   |
+| "maxperf"            | rv32im   |
+| "maxperf-pmp-bmfull" | rv32imcb |
+
+### CoreMark score
+
 A CoreMark score is given as the number of iterations executed per second. The
 CoreMark binary is hard-coded to execute 10 iterations (see
 `examples/sw/benchmarks/coremark/Makefile` if you wish to alter this).  To obtain
