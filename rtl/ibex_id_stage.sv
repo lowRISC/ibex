@@ -206,7 +206,6 @@ module ibex_id_stage #(
   logic        controller_run;
   logic        stall_ld_hz;
   logic        stall_mem;
-  logic        lsu_req_in_id;
   logic        stall_multdiv;
   logic        stall_branch;
   logic        stall_jump;
@@ -597,8 +596,6 @@ module ibex_id_stage #(
       .debug_ebreaku_i                ( debug_ebreaku_i         ),
       .trigger_match_i                ( trigger_match_i         ),
 
-      // stall signals
-      .lsu_req_in_id_i                ( lsu_req_in_id           ),
       .stall_id_i                     ( stall_id                ),
       .stall_wb_i                     ( stall_wb                ),
       .flush_id_o                     ( flush_id                ),
@@ -883,10 +880,6 @@ module ibex_id_stage #(
     `ASSERT(IbexStallMemNoRequest,
       instr_valid_i & lsu_req_dec & ~instr_done |-> ~lsu_req_done_i)
 
-    // Indicate to the controller that an lsu req is in ID stage - we cannot handle interrupts or
-    // debug requests until the load/store completes
-    assign lsu_req_in_id = instr_valid_i & lsu_req_dec;
-
     assign rf_rd_a_wb_match = (rf_waddr_wb_i == rf_raddr_a_o) & |rf_raddr_a_o;
     assign rf_rd_b_wb_match = (rf_waddr_wb_i == rf_raddr_b_o) & |rf_raddr_b_o;
 
@@ -931,7 +924,6 @@ module ibex_id_stage #(
 
     // No load hazards without Writeback Stage
     assign stall_ld_hz   = 1'b0;
-    assign lsu_req_in_id = 1'b0;
 
     // Without writeback stage any valid instruction that hasn't seen an error will execute
     assign instr_executing = instr_valid_i & ~instr_fetch_err_i & controller_run;
