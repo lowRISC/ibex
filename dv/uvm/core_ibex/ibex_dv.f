@@ -62,9 +62,11 @@ ${PRJ_DIR}/ibex/vendor/google_riscv-dv/src/riscv_signature_pkg.sv
 +incdir+${PRJ_DIR}/ibex/dv/uvm/core_ibex/common/ibex_mem_intf_agent
 +incdir+${PRJ_DIR}/ibex/dv/uvm/core_ibex/common/irq_agent
 +incdir+${PRJ_DIR}/ibex/dv/uvm/core_ibex/common/mem_model
-+incdir+${PRJ_DIR}/ibex/dv/uvm/core_ibex/common/utils
-${PRJ_DIR}/ibex/dv/uvm/core_ibex/common/utils/clk_if.sv
-${PRJ_DIR}/ibex/dv/uvm/core_ibex/common/utils/dv_utils_pkg.sv
++incdir+${PRJ_DIR}/ibex/vendor/lowrisc_ip/dv_utils
+${PRJ_DIR}/ibex/dv/uvm/top_pkg/top_pkg.sv
+${PRJ_DIR}/ibex/vendor/lowrisc_ip/common_ifs/clk_rst_if.sv
+${PRJ_DIR}/ibex/vendor/lowrisc_ip/common_ifs/pins_if.sv
+${PRJ_DIR}/ibex/vendor/lowrisc_ip/dv_utils/dv_utils_pkg.sv
 ${PRJ_DIR}/ibex/dv/uvm/core_ibex/common/mem_model/mem_model_pkg.sv
 ${PRJ_DIR}/ibex/dv/uvm/core_ibex/common/ibex_mem_intf_agent/ibex_mem_intf.sv
 ${PRJ_DIR}/ibex/dv/uvm/core_ibex/common/ibex_mem_intf_agent/ibex_mem_intf_agent_pkg.sv
