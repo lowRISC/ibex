@@ -483,7 +483,7 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
     bit [12:0]                                    system_imm;
     instr_t                                       instr_fields;
 
-    opcode      = ibex_pkg::opcode_e`(instr[6:0]);
+    opcode      = ibex_pkg::opcode_e'(instr[6:0]);
     funct3      = instr[14:12];
     funct7      = instr[31:25];
     system_imm  = instr[31:20];
@@ -1037,7 +1037,7 @@ class core_ibex_debug_single_step_test extends core_ibex_directed_test;
         ret_pc = signature_data;
         // checks depend whether the interrupt instruction is a branch/jump.
         // we can also assume the instruction is valid as this test disables illegal instructions.
-        case (ibex_pkg::opcode_e`(step_instr[6:0]))
+        case (ibex_pkg::opcode_e'(step_instr[6:0]))
           OPCODE_JAL, OPCODE_JALR: begin
             `DV_CHECK_EQ_FATAL(branch_target, ret_pc,
               $sformatf("DPC value[0x%0x] does not match jump target[0x%0x] at PC[0x%0x]",
