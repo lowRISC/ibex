@@ -11,7 +11,7 @@ class core_base_seq #(type REQ = uvm_sequence_item) extends uvm_sequence#(REQ);
   int unsigned       iteration_cnt;
   int unsigned       max_interval;
   int unsigned       max_delay = 500;
-  virtual clk_if     clk_vif;
+  virtual clk_rst_if clk_vif;
   bit                is_started;
   bit                stop_seq;
   bit                seq_finished;
@@ -31,7 +31,7 @@ class core_base_seq #(type REQ = uvm_sequence_item) extends uvm_sequence#(REQ);
   }
 
   virtual task body();
-    if(!uvm_config_db#(virtual clk_if)::get(null, "", "clk_if", clk_vif)) begin
+    if(!uvm_config_db#(virtual clk_rst_if)::get(null, "", "clk_if", clk_vif)) begin
        `uvm_fatal(get_full_name(), "Cannot get clk_if")
     end
     `DV_CHECK_MEMBER_RANDOMIZE_FATAL(delay)

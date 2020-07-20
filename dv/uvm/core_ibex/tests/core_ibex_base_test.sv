@@ -6,7 +6,7 @@ class core_ibex_base_test extends uvm_test;
 
   core_ibex_env                                   env;
   core_ibex_env_cfg                               cfg;
-  virtual clk_if                                  clk_vif;
+  virtual clk_rst_if                              clk_vif;
   virtual core_ibex_dut_probe_if                  dut_vif;
   virtual core_ibex_instr_monitor_if              instr_vif;
   virtual core_ibex_csr_if                        csr_vif;
@@ -39,7 +39,7 @@ class core_ibex_base_test extends uvm_test;
   virtual function void build_phase(uvm_phase phase);
     super.build_phase(phase);
     $value$plusargs("timeout_in_cycles=%0d", timeout_in_cycles);
-    if (!uvm_config_db#(virtual clk_if)::get(null, "", "clk_if", clk_vif)) begin
+    if (!uvm_config_db#(virtual clk_rst_if)::get(null, "", "clk_if", clk_vif)) begin
       `uvm_fatal(`gfn, "Cannot get clk_if")
     end
     if (!uvm_config_db#(virtual core_ibex_dut_probe_if)::get(null, "", "dut_if", dut_vif)) begin

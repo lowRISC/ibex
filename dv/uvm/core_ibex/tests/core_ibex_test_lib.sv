@@ -48,7 +48,7 @@ class core_ibex_reset_test extends core_ibex_base_test;
       fork
         begin
           dut_vif.dut_cb.fetch_enable <= 1'b0;
-          clk_vif.reset();
+          clk_vif.apply_reset(.reset_width_clks (100));
         end
         begin
           clk_vif.wait_clks(1);

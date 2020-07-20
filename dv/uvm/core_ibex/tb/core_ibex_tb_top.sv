@@ -11,7 +11,7 @@ module core_ibex_tb_top;
   wire rst_n;
   logic fetch_enable;
 
-  clk_if         ibex_clk_if(.clk(clk), .rst_n(rst_n));
+  clk_rst_if     ibex_clk_if(.clk(clk), .rst_n(rst_n));
   irq_if         irq_vif(.clk(clk));
   ibex_mem_intf  data_mem_vif(.clk(clk));
   ibex_mem_intf  instr_mem_vif(.clk(clk));
@@ -150,7 +150,14 @@ module core_ibex_tb_top;
   assign csr_if.csr_op                        = dut.u_ibex_core.csr_op;
 
   initial begin
-    uvm_config_db#(virtual clk_if)::set(null, "*", "clk_if", ibex_clk_if);
+    // Drive the clock and reset lines. Reset everything and start the clock at the beginning of
+    // time
+    ibex_clk_if.set_active();
+    fork
+      ibex_clk_if.apply_reset(.reset_width_clks (100));
+    join_none
+
+    uvm_config_db#(virtual clk_rst_if)::set(null, "*", "clk_if", ibex_clk_if);
     uvm_config_db#(virtual core_ibex_dut_probe_if)::set(null, "*", "dut_if", dut_if);
     uvm_config_db#(virtual core_ibex_instr_monitor_if)::set(null,
                                                             "*",
