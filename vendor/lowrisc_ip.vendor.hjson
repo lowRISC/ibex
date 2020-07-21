@@ -14,9 +14,17 @@
         {from: "hw/dv/sv/common_ifs",  to: "common_ifs"},
         {from: "hw/dv/sv/csr_utils",   to: "csr_utils"},
         {from: "hw/dv/sv/dv_lib",      to: "dv_lib"},
-        {from: "hw/dv/sv/dv_utils",    to: "dv_utils"},
         {from: "hw/dv/sv/dv_base_reg", to: "dv_base_reg"},
         {from: "hw/dv/verilator",      to: "dv_verilator"},
+
+        // We apply a patch to the top_pkg core file name when vendoring in
+        // dv_utils (which allows us to have an Ibex-specific core file for the
+        // top-level defines).
+        {
+            from:      "hw/dv/sv/dv_utils",
+            to:        "dv_utils",
+            patch_dir: "dv_utils",
+        },
 
         {from: "hw/ip/prim",           to: "prim"},
         {from: "hw/ip/prim_generic",   to: "prim_generic"},
@@ -27,4 +35,6 @@
         {from: "util/dvsim",           to: "dvsim"},
         {from: "util/uvmdvgen",        to: "uvmdvgen"},
     ]
+
+    patch_dir: "patches/lowrisc_ip"
 }
