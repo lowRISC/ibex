@@ -3,8 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Simple wrappers around dvsim.py to avoid needing long command lines. This
-# doesn't do any dependency tracking (as you might expect in a Makefile) because
-# the dvsim infrastructure doesn't support it.
+# doesn't do any dependency tracking (as you might expect in a Makefile).
 
 # Set WAVES to 1 to get wave dumps
 WAVES=0
@@ -16,34 +15,35 @@ COVERAGE=0
 # --verbosity parameter, overriding whatever was set in the hjson file.
 VERBOSITY=
 
-# Specify the seed for the test to run. If this is empty, dvsim.py will pick
-# random seeds. By default, we make runs reproducible, so force the seed.
-SEED=1
+# The number of seeds to run for each selected test. Defaults to 1.
+RESEED=1
 
-#SIMULATOR
-SIMULATOR=vcs
+# Specify the seed for the test to run. If this is empty, dvsim.py
+# will pick random seeds. By default, we make runs reproducible, so
+# force the seed if RESEED is 1.
+default-seed := 123
+SEED=$(if $(filter 1,$(RESEED)),$(default-seed),)
+
+# Specify which tests to run. Defaults to the empty string, which
+# means dvsim will run its default (the "sanity" suite).
+TESTS=
 
 ibex-top       := ../../../..
 scratch-root   := $(ibex-top)/build
 dvsim-py       := $(ibex-top)/vendor/lowrisc_ip/dvsim/dvsim.py
-dvsim-std-args := --scratch-root $(scratch-root) --tool $(SIMULATOR)
+dvsim-std-args := --scratch-root $(scratch-root)
 
 waves-arg      := $(if $(filter-out 0,$(WAVES)),--waves,)
 coverage-arg   := $(if $(filter-out 0,$(COVERAGE)),-c,)
 verbosity-arg  := $(if $(VERBOSITY),--verbosity $(VERBOSITY),)
+reseed-arg     := --reseed $(RESEED)
 seed-arg       := $(if $(SEED),--fixed-seed $(SEED),)
+tests-arg      := $(if $(TESTS),--items $(TESTS))
 
-dvsim-mk-args    := $(waves-arg) $(coverage-arg) $(verbosity-arg) $(seed-arg)
-run-icache-dvsim := $(dvsim-py) ibex_icache_sim_cfg.hjson $(dvsim-std-args) $(dvsim-mk-args)
-
-
-.PHONY: all
-all: run
-
-.PHONY: just-build
-just-build:
-	$(run-icache-dvsim) --build-only
+dvsim-mk-args := \
+  $(waves-arg) $(coverage-arg) $(verbosity-arg) \
+  $(reseed-arg) $(seed-arg) $(tests-arg)
 
 .PHONY: run
 run:
-	$(run-icache-dvsim)
+	$(dvsim-py) ibex_icache_sim_cfg.hjson $(dvsim-std-args) $(dvsim-mk-args)
