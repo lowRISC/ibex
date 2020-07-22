@@ -22,22 +22,24 @@ class ibex_icache_scoreboard
   // A memory model. Note that the model is stateful (because of the seed). Since we need to try out
   // different seeds to check whether a fetch was correct, we need our own instance, rather than a
   // handle to the model used by the agent. The actual seed inside mem_model is ephemeral: we keep
-  // track of state in mem_seeds, below.
+  // track of state in mem_states, below.
   ibex_icache_mem_model #(BusWidth) mem_model;
 
-  // A queue of memory seeds.
-  bit [31:0]   mem_seeds[$] = {32'd0};
+  // A queue of memory seeds, together with their associated mem_err_shift values. This gets a new
+  // item every time we read a value from seed_fifo, and we store the associated mem_err_shift at
+  // that point.
+  bit [63:0]   mem_states[$] = {};
 
   // Tracks the next address we expect to see on a fetch. This gets reset to 'X, then is set to an
   // address after each branch transaction.
   logic [31:0] next_addr;
 
   // This counter is used for tracking invalidations. When we see an invalidation happen, we set
-  // this to the index of the last seed in mem_seeds. When the next branch happens, we clear out
+  // this to the index of the last seed in mem_states. When the next branch happens, we clear out
   // memory seeds up to that index.
   int unsigned invalidate_seed = 0;
 
-  // This counter points to the index (in mem_seeds) of the seed that was in use when the last
+  // This counter points to the index (in mem_states) of the seed that was in use when the last
   // branch happened. If the cache is supposed to be disabled, a fetch is only allowed to return
   // data corresponding to that seed or later.
   int unsigned last_branch_seed = 0;
@@ -124,6 +126,8 @@ class ibex_icache_scoreboard
 
   task run_phase(uvm_phase phase);
     super.run_phase(phase);
+
+    mem_states.push_back({32'd0, cfg.mem_agent_cfg.mem_err_shift});
     tracking_reset();
     fork
       process_core_fifo();
@@ -154,13 +158,13 @@ class ibex_icache_scoreboard
 
     if (invalidate_seed > 0) begin
       // We've seen an invalidate signal recently. Clear out any expired seeds.
-      assert(invalidate_seed < mem_seeds.size);
-      mem_seeds = mem_seeds[invalidate_seed:$];
+      assert(invalidate_seed < mem_states.size);
+      mem_states = mem_states[invalidate_seed:$];
       invalidate_seed = 0;
     end
 
-    assert(mem_seeds.size > 0);
-    last_branch_seed = mem_seeds.size - 1;
+    assert(mem_states.size > 0);
+    last_branch_seed = mem_states.size - 1;
 
     if (!enabled) no_cache = 1'b1;
   endtask
@@ -180,8 +184,8 @@ class ibex_icache_scoreboard
   endtask
 
   task process_invalidate(ibex_icache_core_bus_item item);
-    assert(mem_seeds.size > 0);
-    invalidate_seed = mem_seeds.size - 1;
+    assert(mem_states.size > 0);
+    invalidate_seed = mem_states.size - 1;
 
     not_invalidating = 1'b0;
   endtask
@@ -223,8 +227,11 @@ class ibex_icache_scoreboard
     int unsigned seed;
     forever begin
       seed_fifo.get(seed);
-      `uvm_info(`gfn, $sformatf("received new seed: %08h", seed), UVM_HIGH)
-      mem_seeds.push_back(seed);
+      `uvm_info(`gfn,
+                $sformatf("received new seed: %08h; mem_err_shift: %0d",
+                          seed, cfg.mem_agent_cfg.mem_err_shift),
+                UVM_HIGH)
+      mem_states.push_back({seed, cfg.mem_agent_cfg.mem_err_shift});
     end
   endtask
 
@@ -240,8 +247,8 @@ class ibex_icache_scoreboard
     next_addr = 'X;
 
     // Throw away any old seeds
-    invalidate_seed = mem_seeds.size - 1;
-    mem_seeds = mem_seeds[invalidate_seed:$];
+    invalidate_seed = mem_states.size - 1;
+    mem_states = mem_states[invalidate_seed:$];
     invalidate_seed = 0;
     last_branch_seed = 0;
 
@@ -404,11 +411,11 @@ class ibex_icache_scoreboard
   // Do a single read from the memory model, rounding down the address and re-aligning the returned
   // data if necessary. Use is_fetch_compatible_1 to decide whether the result seen is compatible
   // with the seed.
-  function automatic logic is_seed_compatible_1(logic [31:0] address,
-                                                logic [31:0] seen_insn_data,
-                                                logic        seen_err,
-                                                bit [31:0]   seed,
-                                                bit          chatty);
+  function automatic logic is_state_compatible_1(logic [31:0] address,
+                                                 logic [31:0] seen_insn_data,
+                                                 logic        seen_err,
+                                                 bit [63:0]   mem_state,
+                                                 bit          chatty);
     int                bus_shift;
     logic [31:0]       addr_lo;
     int unsigned       lo_bits_to_drop;
@@ -416,6 +423,9 @@ class ibex_icache_scoreboard
     logic              retval;
 
     bit [BusWidth-1:0] rdata;
+
+    bit [31:0]         seed;
+    int unsigned       mem_err_shift;      
 
     bus_shift = $clog2(BusWidth / 8);
     addr_lo = (address >> bus_shift) << bus_shift;
@@ -426,12 +436,12 @@ class ibex_icache_scoreboard
     // compressed instruction, in which case we don't care about the top bits anyway.
     lo_bits_to_drop = 8 * (address - addr_lo);
 
+    {seed, mem_err_shift} = mem_state;
     rdata = mem_model.read_data(seed, addr_lo) >> lo_bits_to_drop;
 
     return is_fetch_compatible_1(seen_insn_data,
                                  seen_err,
-                                 mem_model.is_either_error(seed, addr_lo,
-                                                           cfg.mem_agent_cfg.mem_err_shift),
+                                 mem_model.is_either_error(seed, addr_lo, mem_err_shift),
                                  rdata[31:0],
                                  seed,
                                  chatty);
@@ -440,13 +450,13 @@ class ibex_icache_scoreboard
   // Do a pair of reads from the memory model with the given pair of seeds to model a misaligned
   // access. Glue together the results and pass them to is_fetch_compatible_2 to decide whether the
   // result seen is compatible with the given pair of seeds.
-  function automatic logic is_seed_compatible_2(logic [31:0] address,
-                                                logic [31:0] seen_insn_data,
-                                                logic        seen_err_plus2,
+  function automatic logic is_state_compatible_2(logic [31:0] address,
+                                                 logic [31:0] seen_insn_data,
+                                                 logic        seen_err_plus2,
 
-                                                bit [31:0]   seed_lo,
-                                                bit [31:0]   seed_hi,
-                                                bit          chatty);
+                                                 bit [63:0]   mem_state_lo,
+                                                 bit [63:0]   mem_state_hi,
+                                                 bit          chatty);
     int          bus_shift;
     logic [31:0] addr_lo, addr_hi;
 
@@ -455,6 +465,9 @@ class ibex_icache_scoreboard
     bit [BusWidth-1:0] rdata;
 
     int unsigned lo_bits_to_take, lo_bits_to_drop;
+
+    bit [31:0]         seed_lo, seed_hi;
+    int unsigned       mem_err_shift_lo, mem_err_shift_hi;
 
     bus_shift = $clog2(BusWidth / 8);
     addr_lo = (address >> bus_shift) << bus_shift;
@@ -469,14 +482,17 @@ class ibex_icache_scoreboard
     lo_bits_to_take = 8 * (address - addr_lo);
     lo_bits_to_drop = BusWidth - lo_bits_to_take;
 
+    {seed_lo, mem_err_shift_lo} = mem_state_lo;
+    {seed_hi, mem_err_shift_hi} = mem_state_hi;
+
     // Do the first read (from the low address) and shift right to drop the bits that we don't need.
-    exp_err_lo = mem_model.is_either_error(seed_lo, addr_lo, cfg.mem_agent_cfg.mem_err_shift);
+    exp_err_lo = mem_model.is_either_error(seed_lo, addr_lo, mem_err_shift_lo);
     rdata      = mem_model.read_data(seed_lo, addr_lo) >> lo_bits_to_drop;
     exp_data   = rdata[31:0];
 
     // Now do the second read (from the upper address). Shift the result up by lo_bits_to_take,
     // which will discard some top bits. Then extract 32 bits and OR with what we have so far.
-    exp_err_hi = mem_model.is_either_error(seed_hi, addr_hi, cfg.mem_agent_cfg.mem_err_shift);
+    exp_err_hi = mem_model.is_either_error(seed_hi, addr_hi, mem_err_shift_hi);
     rdata      = mem_model.read_data(seed_hi, addr_hi) << lo_bits_to_take;
     exp_data   = exp_data | rdata[31:0];
 
@@ -485,17 +501,17 @@ class ibex_icache_scoreboard
                                  seed_lo, seed_hi, chatty);
   endfunction
 
-  // The logic to check whether a fetch that's been seen is compatible with some seed that's visible
-  // at the moment.
+  // The logic to check whether a fetch that's been seen is compatible with some memory state that's
+  // visible at the moment.
   function automatic bit check_compatible_1(logic [31:0] address,
                                             logic [31:0] seen_insn_data,
                                             logic        seen_err,
                                             int unsigned min_idx,
                                             bit          chatty);
 
-    for (int unsigned i = min_idx; i < mem_seeds.size; i++) begin
-      if (is_seed_compatible_1(address, seen_insn_data, seen_err, mem_seeds[i], chatty)) begin
-        last_fetch_age = mem_seeds.size - 1 - i;
+    for (int unsigned i = min_idx; i < mem_states.size; i++) begin
+      if (is_state_compatible_1(address, seen_insn_data, seen_err, mem_states[i], chatty)) begin
+        last_fetch_age = mem_states.size - 1 - i;
         return 1'b1;
       end
     end
@@ -503,29 +519,29 @@ class ibex_icache_scoreboard
     return 1'b0;
   endfunction
 
-  // The logic to check whether a fetch that's been seen is compatible with some pair of seeds that
-  // are visible at the moment.
+  // The logic to check whether a fetch that's been seen is compatible with some pair of memory
+  // states that are visible at the moment.
   function automatic bit check_compatible_2(logic [31:0] address,
                                             logic [31:0] seen_insn_data,
                                             logic        seen_err_plus2,
                                             int unsigned min_idx,
                                             bit          chatty);
 
-    // We want to iterate over all pairs of seeds. We can do this with a nested pair of foreach
+    // We want to iterate over all pairs of states. We can do this with a nested pair of foreach
     // loops, but we expect that usually we'll get a hit on the "diagonal", so we check that first.
-    for (int unsigned i = min_idx; i < mem_seeds.size; i++) begin
-      if (is_seed_compatible_2(address, seen_insn_data, seen_err_plus2,
-                               mem_seeds[i], mem_seeds[i], chatty)) begin
-        last_fetch_age = mem_seeds.size - 1 - i;
+    for (int unsigned i = min_idx; i < mem_states.size; i++) begin
+      if (is_state_compatible_2(address, seen_insn_data, seen_err_plus2,
+                                mem_states[i], mem_states[i], chatty)) begin
+        last_fetch_age = mem_states.size - 1 - i;
         return 1'b1;
       end
     end
-    for (int unsigned i = min_idx; i < mem_seeds.size; i++) begin
-      for (int unsigned j = min_idx; j < mem_seeds.size; j++) begin
+    for (int unsigned i = min_idx; i < mem_states.size; i++) begin
+      for (int unsigned j = min_idx; j < mem_states.size; j++) begin
         if (i != j) begin
-          if (is_seed_compatible_2(address, seen_insn_data, seen_err_plus2,
-                                   mem_seeds[i], mem_seeds[j], chatty)) begin
-            last_fetch_age = mem_seeds.size - 1 - (i < j ? i : j);
+          if (is_state_compatible_2(address, seen_insn_data, seen_err_plus2,
+                                    mem_states[i], mem_states[j], chatty)) begin
+            last_fetch_age = mem_states.size - 1 - (i < j ? i : j);
             return 1'b1;
           end
         end
@@ -540,12 +556,26 @@ class ibex_icache_scoreboard
     logic uncompressed;
     int unsigned min_idx;
 
+    bit [31:0]   last_seed;
+    int unsigned last_mem_err_shift;
+
     misaligned       = (item.address & 3) != 0;
     good_bottom_word = (~item.err) | item.err_plus2;
     uncompressed     = item.insn_data[1:0] == 2'b11;
 
     min_idx          = no_cache ? last_branch_seed : 0;
-    `DV_CHECK_LT_FATAL(min_idx, mem_seeds.size);
+    `DV_CHECK_LT_FATAL(min_idx, mem_states.size);
+
+    // If the current value of mem_err_shift in the configuration object doesn't match the back of
+    // mem_states, append a fake entry with the same seed, but the current mem_err_shift.
+    {last_seed, last_mem_err_shift} = mem_states[mem_states.size() - 1];
+    if (last_mem_err_shift != cfg.mem_agent_cfg.mem_err_shift) begin
+      `uvm_info(`gfn,
+                $sformatf("Change of mem_err_shift (%0d -> %0d) with no new seed.",
+                          last_mem_err_shift, cfg.mem_agent_cfg.mem_err_shift),
+                UVM_HIGH)
+      mem_states.push_back({last_seed, cfg.mem_agent_cfg.mem_err_shift});
+    end
 
     if (misaligned && good_bottom_word && uncompressed) begin
       // It looks like this was a misaligned fetch (so came from two fetches from memory) and the
@@ -571,9 +601,9 @@ class ibex_icache_scoreboard
     end
 
     // All is well. The call to check_compatible_* will have set last_fetch_age. The maximum
-    // possible value is mem_seeds.size - 1 - min_idx. If this is positive, count whether we got a
+    // possible value is mem_states.size - 1 - min_idx. If this is positive, count whether we got a
     // value corresponding to an old seed or not.
-    if (mem_seeds.size > min_idx + 1) begin
+    if (mem_states.size > min_idx + 1) begin
       possible_old_count += 1;
       if (last_fetch_age > 0) actual_old_count += 1;
     end
