@@ -143,12 +143,16 @@ To do so, we would just need to monitor fetches in the memory agent as well as s
 ## Building and running tests
 
 Tests are built and run with the [`dvsim`](https://github.com/lowRISC/ibex/tree/master/vendor/lowrisc_ip/dvsim) tool (vendored in from the OpenTitan project).
-To run a basic sanity test:
+To ensure output files end up in the right place without ugly command lines, this is wrapped up in a Makefile.
+To run the test suite, run:
 
 ```console
-$ cd dv/uvm/icache/dv
-$ dvsim.py icache_sim_cfg.hjson -i ibex_icache_sanity
+$ make -C dv/uvm/icache/dv
 ```
+
+For more complicated use cases (enabling wave dumps, coverage, specific seeds), there are some options in the Makefile.
+For very specific use cases, you'll need to run dvsim.py directly.
+The easiest way to get an initial command to edit is to run `make -n`.
 
 ## Testplan
 
