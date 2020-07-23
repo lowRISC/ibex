@@ -15,6 +15,7 @@
         {from: "hw/dv/sv/csr_utils",   to: "csr_utils"},
         {from: "hw/dv/sv/dv_lib",      to: "dv_lib"},
         {from: "hw/dv/sv/dv_base_reg", to: "dv_base_reg"},
+        {from: "hw/dv/sv/mem_model",   to: "mem_model"},
         {from: "hw/dv/verilator",      to: "dv_verilator"},
 
         // We apply a patch to the top_pkg core file name when vendoring in
