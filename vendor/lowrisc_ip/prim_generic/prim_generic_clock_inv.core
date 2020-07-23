@@ -3,15 +3,15 @@ CAPI=2:
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-name: "lowrisc:prim_generic:ram_2p"
-description: "prim"
+name: "lowrisc:prim_generic:clock_inv"
+description: "Clock inverter with scanmode bypass mux"
 filesets:
   files_rtl:
     depend:
       - lowrisc:prim:assert
-      - lowrisc:prim:util_memload
+      - lowrisc:prim:clock_mux2
     files:
-      - rtl/prim_generic_ram_2p.sv
+      - rtl/prim_generic_clock_inv.sv
     file_type: systemVerilogSource
 
   files_verilator_waiver:
@@ -19,7 +19,7 @@ filesets:
       # common waivers
       - lowrisc:lint:common
     files:
-      - lint/prim_generic_ram_2p.vlt
+      # - lint/prim_generic_clock_inv.vlt
     file_type: vlt
 
   files_ascentlint_waiver:
@@ -27,7 +27,7 @@ filesets:
       # common waivers
       - lowrisc:lint:common
     files:
-      - lint/prim_generic_ram_2p.waiver
+      # - lint/prim_generic_clock_inv.waiver
     file_type: waiver
 
   files_veriblelint_waiver:

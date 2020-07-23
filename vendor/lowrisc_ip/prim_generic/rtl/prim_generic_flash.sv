@@ -77,20 +77,20 @@ module prim_generic_flash #(
   flash_ctrl_pkg::flash_part_e part_q;
 
   prim_fifo_sync #(
-      .Width  (AddrW + $bits(flash_ctrl_pkg::flash_part_e)),
-      .Pass   (0),
-      .Depth  (2)
+    .Width   (AddrW + $bits(flash_ctrl_pkg::flash_part_e)),
+    .Pass    (0),
+    .Depth   (2)
   ) i_slice (
     .clk_i,
     .rst_ni,
-    .clr_i  (1'b0),
-    .wvalid (rd_i),
-    .wready (),
-    .wdata  ({part_i, addr_i}),
-    .depth  (),
-    .rvalid (rd_q),
-    .rready (hold_cmd), //whenver command is held, pop
-    .rdata  ({part_q, addr_q})
+    .clr_i   (1'b0),
+    .wvalid_i(rd_i),
+    .wready_o(),
+    .wdata_i ({part_i, addr_i}),
+    .depth_o (),
+    .rvalid_o(rd_q),
+    .rready_i(hold_cmd), //whenver command is held, pop
+    .rdata_o ({part_q, addr_q})
   );
 
 
@@ -102,7 +102,7 @@ module prim_generic_flash #(
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       held_addr <= '0;
-      held_part <= flash_ctrl_pkg::DataPart;
+      held_part <= flash_ctrl_pkg::FlashPartData;
       held_wdata <= '0;
     end else if (hold_cmd) begin
       held_addr <= rd_q ? addr_q : addr_i;
@@ -155,7 +155,7 @@ module prim_generic_flash #(
     mem_req          = 'h0;
     mem_wr           = 'h0;
     mem_addr         = 'h0;
-    mem_part         = flash_ctrl_pkg::DataPart;
+    mem_part         = flash_ctrl_pkg::FlashPartData;
     mem_wdata        = 'h0;
     time_cnt_inc     = 1'h0;
     time_cnt_clr     = 1'h0;
@@ -291,7 +291,7 @@ module prim_generic_flash #(
     .DataBitsPerMask(DataWidth)
   ) u_mem (
     .clk_i,
-    .req_i    (mem_req & (mem_part == flash_ctrl_pkg::DataPart)),
+    .req_i    (mem_req & (mem_part == flash_ctrl_pkg::FlashPartData)),
     .write_i  (mem_wr),
     .addr_i   (mem_addr),
     .wdata_i  (mem_wdata),
@@ -305,7 +305,7 @@ module prim_generic_flash #(
     .DataBitsPerMask(DataWidth)
   ) u_info_mem (
     .clk_i,
-    .req_i    (mem_req & (mem_part == flash_ctrl_pkg::InfoPart)),
+    .req_i    (mem_req & (mem_part == flash_ctrl_pkg::FlashPartInfo)),
     .write_i  (mem_wr),
     .addr_i   (mem_addr[0 +: InfoAddrW]),
     .wdata_i  (mem_wdata),
@@ -313,6 +313,6 @@ module prim_generic_flash #(
     .rdata_o  (rd_data_info)
   );
 
-  assign rd_data_o = held_part == flash_ctrl_pkg::DataPart ? rd_data_main : rd_data_info;
+  assign rd_data_o = held_part == flash_ctrl_pkg::FlashPartData ? rd_data_main : rd_data_info;
 
 endmodule // prim_generic_flash
