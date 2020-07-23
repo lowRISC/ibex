@@ -159,7 +159,19 @@ const privileged_reg_t implemented_csr[] = {
     DCSR,             // Debug control and status register
     DPC,              // Debug PC
     DSCRATCH0,        // Debug scratch register 0
-    DSCRATCH1         // Debug scratch register 1
+    DSCRATCH1,        // Debug scratch register 1
+    TSELECT,          // Trigger select register
+    TDATA1,           // Trigger data register 1
+    TDATA2,           // Trigger data register 2
+    TDATA3,           // Trigger data register 3
+    MCONTEXT,         // Machine context register
+    SCONTEXT          // Supervisor context register
+};
+
+// Implementation-specific custom CSRs
+const bit [11:0] custom_csr[] = {
+  12'h7C0,    // cpuctrl    - CPU control register
+  12'h7C1     // secureseed - Security feature random seed register
 };
 
 // --------------------------------------------------------------------------
