@@ -8,7 +8,7 @@ description: "DV Memory Model"
 filesets:
   files_dv:
     depend:
-      - lowrisc:dv:dv_utils
+      - lowrisc:constants:top_pkg
     files:
       - mem_model_pkg.sv
       - mem_model.sv: {is_include_file: true}
