@@ -261,12 +261,12 @@ class riscv_vector_instr extends riscv_floating_point_instr;
     }
     // 7.8.3 For vector indexed segment loads, the destination vector register groups
     // cannot overlap the source vectorregister group (specied by vs2), nor can they
-    // overlap the mask register if maske
-    if (format == VLX_FORMAT) {
+    // overlap the mask register if masked
+    // AMO instruction uses indexed address mode
+    if (format inside {VLX_FORMAT, VAMO_FORMAT}) {
       vd != vs2;
     }
   }
-
 
   `uvm_object_utils(riscv_vector_instr)
   `uvm_object_new
@@ -419,6 +419,15 @@ class riscv_vector_instr extends riscv_floating_point_instr;
         end else begin
           asm_str = $sformatf("%0s %0s,(%0s),%0s", get_instr_name(),
                                                    vs3.name(), rs1.name(), vs2.name());
+        end
+      end
+      VAMO_FORMAT: begin
+        if (wd) begin
+          asm_str = $sformatf("%0s %0s,(%0s),%0s,%0s", get_instr_name(), vd.name(),
+                                                   rs1.name(), vs2.name(), vd.name());
+        end else begin
+          asm_str = $sformatf("%0s x0,(%0s),%0s,%0s", get_instr_name(),
+                                                  rs1.name(), vs2.name(), vs3.name());
         end
       end
       default: begin

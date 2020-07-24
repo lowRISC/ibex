@@ -519,7 +519,7 @@ class riscv_load_store_rand_addr_instr_stream extends riscv_load_store_base_inst
 
 endclass
 
-class riscv_vector_stride_load_store_instr_stream extends riscv_mem_access_stream;
+class riscv_vector_load_store_instr_stream extends riscv_mem_access_stream;
 
   typedef enum {B_ALIGNMENT, H_ALIGNMENT, W_ALIGNMENT, E_ALIGNMENT} alignment_e;
   typedef enum {UNIT_STRIDED, STRIDED, INDEXED} address_mode_e;
@@ -573,7 +573,7 @@ class riscv_vector_stride_load_store_instr_stream extends riscv_mem_access_strea
   int max_load_store_addr;
   riscv_vector_instr load_store_instr;
 
-  `uvm_object_utils(riscv_vector_stride_load_store_instr_stream)
+  `uvm_object_utils(riscv_vector_load_store_instr_stream)
   `uvm_object_new
 
   virtual function int get_addr_alignment_mask(int alignment_bytes);
@@ -590,6 +590,7 @@ class riscv_vector_stride_load_store_instr_stream extends riscv_mem_access_strea
     if (address_mode == STRIDED) begin
       instr_list.push_front(get_init_gpr_instr(rs2_reg, stride_byte_offset));
     end else if (address_mode == INDEXED) begin
+      // TODO: Support different index address for each element
       add_init_vector_gpr_instr(vs2_reg, index_addr);
     end
     super.post_randomize();

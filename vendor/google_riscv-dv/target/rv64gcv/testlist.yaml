@@ -74,8 +74,23 @@
     +num_of_sub_program=0
     +enable_floating_point=1
     +enable_vector_extension=1
-    +directed_instr_0=riscv_vector_stride_load_store_instr_stream,4
-    +enable_fault_only_first_load=1
+    +directed_instr_0=riscv_vector_load_store_instr_stream,10
+    +no_branch_jump=1
+    +boot_mode=m
+    +no_csr_instr=1
+  iterations: 5
+  gen_test: riscv_instr_base_test
+  rtl_test: core_base_test
+
+- test: riscv_vector_amo_test
+  description: >
+    Vector AMO random test
+  gen_opts: >
+    +instr_cnt=10000
+    +num_of_sub_program=0
+    +enable_floating_point=1
+    +enable_vector_extension=1
+    +directed_instr_0=riscv_vector_amo_instr_stream,10
     +no_branch_jump=1
     +boot_mode=m
     +no_csr_instr=1
