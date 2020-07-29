@@ -78,8 +78,10 @@ The core occupies an area of roughly 18.9 kGE when using the latch-based registe
 FPGA Synthesis
 --------------
 
-FPGA synthesis is supported for Ibex when the flip-flop based register file is used.
-Since latches are not well supported on FPGAs, it is crucial to select the flip-flop based register file.
+FPGA Synthesis is supported for Ibex.
+The FPGA-optimized register file implementation should be used.
+The flip-flop based register file is also compatible with FPGA synthesis, however it may result in significantly higher resource utilization.
+Since latches are not well supported on FPGAs, the latch-based register file should not be used.
 
 Contents
 --------
