@@ -1459,7 +1459,7 @@ module ibex_cs_registers #(
   ibex_csr #(
     .Width      (32),
     .ShadowCopy (1'b0),
-    .ResetValue ('0)
+    .ResetValue ({32{1'b1}})
   ) u_miex_csr (
     .clk_i      (clk_i),
     .rst_ni     (rst_ni),
