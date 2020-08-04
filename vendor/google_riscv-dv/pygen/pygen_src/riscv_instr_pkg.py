@@ -12,6 +12,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 """
 
+import logging
 from enum import Enum, auto
 from bitstring import BitArray
 from pygen_src.target.rv32i import riscv_core_setting as rcs
@@ -1160,6 +1161,23 @@ class all_categories(Enum):
     INTERRUPT = auto()
     AMO = auto()
 
+def get_val(in_string, hexa=0):
+    if len(in_string) > 2:
+        if "0x" in in_string:
+            out_val = hex(int(in_string, base=16))
+            return out_val
+        if hexa:
+            out_val = hex(int(in_string, base=16))
+        else:
+            out_val = int(in_string)
+            logging.info("riscv_instr_pkg: imm: {} -> {}".format(in_string, out_val))
+        return out_val
+
+class hazard_e(Enum):
+    NO_HAZARD = 0
+    RAW_HAZARD = auto()
+    WAR_HAZARD = auto()
+    WAW_HAZARD = auto()
 
 class riscv_instr_pkg:
     def __init__(self):
@@ -1191,7 +1209,7 @@ class riscv_instr_pkg:
         formatted_str = length * " "
         if (int(length) < len(string)):
             return string
-        formatted_str = string + formatted_str[0: (int(length) - len(string) - 1)]
+        formatted_str = string + formatted_str[0: (int(length) - len(string))]
         return formatted_str
 
     def format_data(self, data, byte_per_group = 4):
@@ -1201,6 +1219,12 @@ class riscv_instr_pkg:
                 string = string + ", 0x"
             string = string + f"{hex(data[i])}"
         return string
+
+    def push_gpr_to_kernel_stack(self, status, scratch, mprv, sp, tp, instr):
+        pass
+
+    def pop_gpr_from_kernel_stack(self, status, scratch, mprv, sp, tp, instr):
+        pass
 
 
 pkg_ins = riscv_instr_pkg()

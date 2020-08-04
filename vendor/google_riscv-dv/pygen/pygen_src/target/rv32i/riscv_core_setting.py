@@ -16,7 +16,7 @@ XLEN = 32
 implemented_csr = ['MVENDORID', 'MARCHID', 'MIMPID', 'MHARTID', 'MSTATUS', 'MISA', 'MIE',
                    'MTVEC', 'MCOUNTEREN', 'MSCRATCH', 'MEPC', 'MCAUSE', 'MTVAL', 'MIP']
 
-SATP_MODE = ['BARE']
+SATP_MODE = 'BARE'
 
 supported_isa = ['RV32I']
 
