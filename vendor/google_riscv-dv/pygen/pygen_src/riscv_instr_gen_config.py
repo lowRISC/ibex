@@ -63,7 +63,14 @@ class riscv_instr_gen_config:
 
         self.fcsr_rm = list(map(lambda csr_rm: csr_rm.name, f_rounding_mode_t))
         self.enable_sfence = 0
-        self.gpr = vsc.rand_list_t(vsc.enum_t(riscv_reg_t), sz =4)
+        self.gpr = []
+
+        # Helper fields for gpr
+        self.gpr0 = vsc.rand_enum_t(riscv_reg_t)
+        self.gpr1 = vsc.rand_enum_t(riscv_reg_t)
+        self.gpr2 = vsc.rand_enum_t(riscv_reg_t)
+        self.gpr3 = vsc.rand_enum_t(riscv_reg_t)
+
         self.scratch_reg = vsc.rand_enum_t(riscv_reg_t)
         self.pmp_reg = vsc.rand_enum_t(riscv_reg_t)
         self.sp = vsc.rand_enum_t(riscv_reg_t)
@@ -154,7 +161,15 @@ class riscv_instr_gen_config:
 
     @vsc.constraint
     def gpr_c(self):
-        pass  # TODO
+        self.gpr0.not_inside(vsc.rangelist(self.sp, self.tp, self.scratch_reg, self.pmp_reg,
+                                           riscv_reg_t.ZERO, riscv_reg_t.RA, riscv_reg_t.GP))
+        self.gpr1.not_inside(vsc.rangelist(self.sp, self.tp, self.scratch_reg, self.pmp_reg,
+                                           riscv_reg_t.ZERO, riscv_reg_t.RA, riscv_reg_t.GP))
+        self.gpr2.not_inside(vsc.rangelist(self.sp, self.tp, self.scratch_reg, self.pmp_reg,
+                                           riscv_reg_t.ZERO, riscv_reg_t.RA, riscv_reg_t.GP))
+        self.gpr3.not_inside(vsc.rangelist(self.sp, self.tp, self.scratch_reg, self.pmp_reg,
+                                           riscv_reg_t.ZERO, riscv_reg_t.RA, riscv_reg_t.GP))
+        vsc.unique(self.gpr0, self.gpr1, self.gpr2, self.gpr3)
 
     def check_setting(self):
         support_64b = 0
@@ -221,6 +236,9 @@ class riscv_instr_gen_config:
             self.s_mode_interrupt_delegation[j] = 0
 
     def pre_randomize(self):
+        # Clearing the contents of self.gpr after each randomization.
+        # As it is being extended in post_randomize function.
+        self.gpr.clear()
         for x in rcs.supported_privileged_mode:
             if(x == "SUPERVISOR_MODE"):
                 self.support_supervisor_mode = 1
@@ -229,6 +247,9 @@ class riscv_instr_gen_config:
         pass
 
     def post_randomize(self):
+        # Temporary fix for gpr_c constraint.
+        self.gpr.extend((self.gpr0, self.gpr1, self.gpr2, self.gpr3))
+
         self.reserved_regs.append(self.tp)
         self.reserved_regs.append(self.sp)
         self.reserved_regs.append(self.scratch_reg)
@@ -252,7 +273,7 @@ class riscv_instr_gen_config:
         for mode in self.init_privileged_mode:
             if mode == "MACHINE_MODE":
                 continue
-            elif mode == 'SUPERVISOR_MODE':
+            if mode == 'SUPERVISOR_MODE':
                 invalid_lvl.append('M')
                 logging.info("supr_mode---")
                 logging.debug(invalid_lvl)
@@ -295,8 +316,10 @@ def parse_args():
     parse.add_argument('--no_ebreak', help = 'no_ebreak', choices = [0, 1], type = int, default = 1)
     parse.add_argument('--no_dret', help = 'no_dret', choices = [0, 1], type = int, default = 1)
     parse.add_argument('--no_wfi', help = 'no_wfi', choices = [0, 1], type = int, default = 1)
+
+    # TODO : Enabling no_branch_jump default to 1 for now.
     parse.add_argument('--no_branch_jump', help = 'no_branch_jump',
-                       choices = [0, 1], type = int, default = 0)
+                       choices = [0, 1], type = int, default = 1)
     parse.add_argument('--no_load_store', help = 'no_load_store',
                        choices = [0, 1], type = int, default = 0)
     parse.add_argument('--no_csr_instr', help = 'no_csr_instr',

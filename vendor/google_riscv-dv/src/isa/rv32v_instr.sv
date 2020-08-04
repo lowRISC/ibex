@@ -298,3 +298,27 @@
 `DEFINE_VA_INSTR(VSUXSEGH_V, VSX_FORMAT, STORE, RVV, {}, "zvlsseg")
 `DEFINE_VA_INSTR(VSUXSEGW_V, VSX_FORMAT, STORE, RVV, {}, "zvlsseg")
 `DEFINE_VA_INSTR(VSUXSEGE_V, VSX_FORMAT, STORE, RVV, {}, "zvlsseg")
+
+// -------------------------------------------------------------------------
+//  Section 8. Vector AMO Operations (Zvamo)
+// -------------------------------------------------------------------------
+// 32-bit vector AMOs
+`DEFINE_VA_INSTR(VAMOSWAPW_V, VAMO_FORMAT, AMO, RVV, {}, "zvamo")
+`DEFINE_VA_INSTR(VAMOADDW_V, VAMO_FORMAT, AMO, RVV, {}, "zvamo")
+`DEFINE_VA_INSTR(VAMOXORW_V, VAMO_FORMAT, AMO, RVV, {}, "zvamo")
+`DEFINE_VA_INSTR(VAMOANDW_V, VAMO_FORMAT, AMO, RVV, {}, "zvamo")
+`DEFINE_VA_INSTR(VAMOORW_V, VAMO_FORMAT, AMO, RVV, {}, "zvamo")
+`DEFINE_VA_INSTR(VAMOMINW_V, VAMO_FORMAT, AMO, RVV, {}, "zvamo")
+`DEFINE_VA_INSTR(VAMOMAXW_V, VAMO_FORMAT, AMO, RVV, {}, "zvamo")
+`DEFINE_VA_INSTR(VAMOMINUW_V, VAMO_FORMAT, AMO, RVV, {}, "zvamo")
+`DEFINE_VA_INSTR(VAMOMAXUW_V, VAMO_FORMAT, AMO, RVV, {}, "zvamo")
+// SEW-bit vector AMOs
+`DEFINE_VA_INSTR(VAMOSWAPE_V, VAMO_FORMAT, AMO, RVV, {}, "zvamo")
+`DEFINE_VA_INSTR(VAMOADDE_V, VAMO_FORMAT, AMO, RVV, {}, "zvamo")
+`DEFINE_VA_INSTR(VAMOXORE_V, VAMO_FORMAT, AMO, RVV, {}, "zvamo")
+`DEFINE_VA_INSTR(VAMOANDE_V, VAMO_FORMAT, AMO, RVV, {}, "zvamo")
+`DEFINE_VA_INSTR(VAMOORE_V, VAMO_FORMAT, AMO, RVV, {}, "zvamo")
+`DEFINE_VA_INSTR(VAMOMINE_V, VAMO_FORMAT, AMO, RVV, {}, "zvamo")
+`DEFINE_VA_INSTR(VAMOMAXE_V, VAMO_FORMAT, AMO, RVV, {}, "zvamo")
+`DEFINE_VA_INSTR(VAMOMINUE_V, VAMO_FORMAT, AMO, RVV, {}, "zvamo")
+`DEFINE_VA_INSTR(VAMOMAXUE_V, VAMO_FORMAT, AMO, RVV, {}, "zvamo")

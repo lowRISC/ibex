@@ -740,6 +740,8 @@ class riscv_asm_program_gen extends uvm_object;
     trap_vector_init(hart);
     // Setup PMP CSRs
     setup_pmp(hart);
+    // Generate PMPADDR write test sequence
+    gen_pmp_csr_write(hart);
     // Initialize PTE (link page table based on their real physical address)
     if(cfg.virtual_addr_translation_on) begin
       page_table_list.process_page_table(instr);
@@ -828,6 +830,17 @@ class riscv_asm_program_gen extends uvm_object;
       cfg.pmp_cfg.setup_pmp();
       cfg.pmp_cfg.gen_pmp_instr('{cfg.scratch_reg, cfg.gpr[0]}, instr);
       gen_section(get_label("pmp_setup", hart), instr);
+    end
+  endfunction
+
+  // Generates a directed stream of instructions to write random values to all supported
+  // pmpaddr CSRs to test write accessibility.
+  // The original CSR values are restored afterwards.
+  virtual function void gen_pmp_csr_write(int hart);
+    string instr[$];
+    if (riscv_instr_pkg::support_pmp && cfg.pmp_cfg.enable_write_pmp_csr) begin
+      cfg.pmp_cfg.gen_pmp_write_test({cfg.scratch_reg, cfg.pmp_reg}, instr);
+      gen_section(get_label("pmp_csr_write_test", hart), instr);
     end
   endfunction
 

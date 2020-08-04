@@ -641,6 +641,7 @@ package riscv_instr_pkg;
     VLHUFF_V,
     VLWUFF_V,
     VLEFF_V,
+    // Segmented load/store instruction
     VLSEGE_V,
     VSSEGE_V,
     VLSEGB_V,
@@ -685,6 +686,27 @@ package riscv_instr_pkg;
     VSUXSEGH_V,
     VSUXSEGW_V,
     VSUXSEGE_V,
+    // Vector AMO instruction
+    // 32-bit vector AMOs
+    VAMOSWAPW_V,
+    VAMOADDW_V,
+    VAMOXORW_V,
+    VAMOANDW_V,
+    VAMOORW_V,
+    VAMOMINW_V,
+    VAMOMAXW_V,
+    VAMOMINUW_V,
+    VAMOMAXUW_V,
+    // SEW-bit vector AMOs
+    VAMOSWAPE_V,
+    VAMOADDE_V,
+    VAMOXORE_V,
+    VAMOANDE_V,
+    VAMOORE_V,
+    VAMOMINE_V,
+    VAMOMAXE_V,
+    VAMOMINUE_V,
+    VAMOMAXUE_V,
     // Supervisor instruction
     DRET,
     MRET,
@@ -747,7 +769,8 @@ package riscv_instr_pkg;
     VLX_FORMAT,
     VSX_FORMAT,
     VLS_FORMAT,
-    VSS_FORMAT
+    VSS_FORMAT,
+    VAMO_FORMAT
   } riscv_instr_format_t;
 
 

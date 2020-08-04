@@ -183,7 +183,7 @@ class riscv_vector_instr extends riscv_floating_point_instr;
   // Vector register numbers accessed by the segment load or store would increment
   // cannot past 31
   constraint nfields_c {
-    if (sub_extension == "zvlsseg") {
+    if (check_sub_extension(sub_extension, "zvlsseg")) {
       if (m_cfg.vector_cfg.vtype.vlmul < 8) {
         (nfields + 1) * m_cfg.vector_cfg.vtype.vlmul <= 8;
         if (category == LOAD) {
@@ -261,12 +261,12 @@ class riscv_vector_instr extends riscv_floating_point_instr;
     }
     // 7.8.3 For vector indexed segment loads, the destination vector register groups
     // cannot overlap the source vectorregister group (specied by vs2), nor can they
-    // overlap the mask register if maske
-    if (format == VLX_FORMAT) {
+    // overlap the mask register if masked
+    // AMO instruction uses indexed address mode
+    if (format inside {VLX_FORMAT, VAMO_FORMAT}) {
       vd != vs2;
     }
   }
-
 
   `uvm_object_utils(riscv_vector_instr)
   `uvm_object_new
@@ -421,6 +421,15 @@ class riscv_vector_instr extends riscv_floating_point_instr;
                                                    vs3.name(), rs1.name(), vs2.name());
         end
       end
+      VAMO_FORMAT: begin
+        if (wd) begin
+          asm_str = $sformatf("%0s %0s,(%0s),%0s,%0s", get_instr_name(), vd.name(),
+                                                   rs1.name(), vs2.name(), vd.name());
+        end else begin
+          asm_str = $sformatf("%0s x0,(%0s),%0s,%0s", get_instr_name(),
+                                                  rs1.name(), vs2.name(), vs3.name());
+        end
+      end
       default: begin
         `uvm_fatal(`gfn, $sformatf("Unsupported format %0s", format.name()))
       end
@@ -495,5 +504,9 @@ class riscv_vector_instr extends riscv_floating_point_instr;
     string suffix = instr_name.substr(prefix.len(), instr_name.len() - 1);
     return $sformatf("%0s%0d%0s", prefix, nfields + 1, suffix);
   endfunction
-
+  
+  function bit check_sub_extension(string s, string literal);
+    return s == literal;
+  endfunction
+  
 endclass : riscv_vector_instr
