@@ -297,6 +297,8 @@
       lsb: 0
 
 # CPUCTRL
+#
+# TODO : change fields to WARL type once SecureIbex parameter is enabled
 - csr: cpuctrl
   description: >
     CPU control register (custom)
@@ -304,33 +306,33 @@
   privilege_mode: M
   rv32:
     - field_name: dumm_instr_mask
-      - description: >
-          Mask to control frequency of dummy instruction insertion
-      - type: WARL
-      - reset_val: 0
-      - msb: 5
-      - lsb: 3
+      description: >
+        Mask to control frequency of dummy instruction insertion
+      type: R
+      reset_val: 0
+      msb: 5
+      lsb: 3
     - field_name: dummy_instr_en
-      - description: >
-          Enable or disable dummy instruction insertion
-      - type: WARL
-      - reset_val: 0
-      - msb: 2
-      - lsb: 2
+      description: >
+        Enable or disable dummy instruction insertion
+      type: R
+      reset_val: 0
+      msb: 2
+      lsb: 2
     - field_name: data_ind_timing
-      - description: >
-          Enable or disable data-independent timing features
-      - type: WARL
-      - reset_val: 0
-      - msb: 1
-      - lsb: 1
+      description: >
+        Enable or disable data-independent timing features
+      type: R
+      reset_val: 0
+      msb: 1
+      lsb: 1
     - field_name: icache_enable
-      - description: >
-          Enable or disable the instruction cache
-      - type: WARL
-      - reset_val: 0
-      - msb: 0
-      - lsb: 0
+      description: >
+        Enable or disable the instruction cache
+      type: R
+      reset_val: 0
+      msb: 0
+      lsb: 0
 
 # SECURESEED
 - csr: secureseed
@@ -340,9 +342,9 @@
   privilege_mode: M
   rv32:
     - field_name: secureseed
-      - description: >
-          New seed value (write-only), reads always return 0.
-      - type: WARL
-      - reset_val: 0
-      - msb: 31
-      - lsb: 0
+      description: >
+        New seed value (write-only), reads always return 0.
+      type: R
+      reset_val: 0
+      msb: 31
+      lsb: 0
