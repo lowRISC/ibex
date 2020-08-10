@@ -21,3 +21,4 @@
 --override riscvOVPsim/cpu/defaultsemihost=F
 --override riscvOVPsim/cpu/wfi_is_nop=T
 --override riscvOVPsim/cpu/tval_ii_code=T
+--addressbits 34
