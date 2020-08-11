@@ -21,7 +21,7 @@ The table below indicates performance, area and verification status for a few se
 These are configurations on which lowRISC is focusing for performance evaluation and design verification (see [supported configs](ibex_configs.yaml)).
 
 | Config | "micro" | "small" | "maxperf" | "maxperf-pmp-bmfull" |
-| ------ | ------- | --------- | ---------------- |
+| ------ | ------- | --------| ----------| -------------------- |
 | Features | RV32EC | RV32IMC, 3 cycle mult | RV32IMC, 1 cycle mult, Branch target ALU, Writeback stage | RV32IMCB, 1 cycle mult, Branch target ALU, Writeback stage, 16 PMP regions |
 | Performance (CoreMark/MHz) | 0.904 | 2.47 | 3.13 | 3.05 |
 | Area - Yosys (kGE) | 17.44 | 26.06 | 35.64 | 58.74 |
