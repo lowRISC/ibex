@@ -5,19 +5,18 @@ r"""
 Class describing simulation configuration object
 """
 
+import logging as log
 import os
 import shutil
 import subprocess
 import sys
 from collections import OrderedDict
 
-import logging as log
-from tabulate import tabulate
-
-from Deploy import CompileSim, CovAnalyze, CovMerge, CovReport, RunTest, Deploy
+from Deploy import CompileSim, CovAnalyze, CovMerge, CovReport, Deploy, RunTest
 from FlowCfg import FlowCfg
 from Modes import BuildModes, Modes, Regressions, RunModes, Tests
-from testplanner import testplan_utils
+from tabulate import tabulate
+from testplanner import class_defs, testplan_utils
 from utils import VERBOSE, find_and_substitute_wildcards
 
 
@@ -62,8 +61,7 @@ def resolve_dump_format(tool, dump):
         # they know what they're doing.
         if fmts is not None and dump not in fmts:
             log.error('Chosen tool ({}) does not support wave '
-                      'dumping format {!r}.'
-                      .format(tool, dump))
+                      'dumping format {!r}.'.format(tool, dump))
             sys.exit(1)
 
         return dump
@@ -165,8 +163,7 @@ class SimCfg(FlowCfg):
         self.cov_deploys = []
 
         # Parse the cfg_file file tree
-        self.parse_flow_cfg(flow_cfg_file)
-        self._post_parse_flow_cfg()
+        self._parse_flow_cfg(flow_cfg_file)
 
         # Choose a dump format now. Note that this has to happen after parsing
         # the configuration format because our choice might depend on the
@@ -205,8 +202,9 @@ class SimCfg(FlowCfg):
             # file. That's ok if this is a primary config (where the
             # sub-configurations can choose tools themselves), but not otherwise.
             if self.tool is None:
-                log.error('Config file does not specify a default tool, '
-                          'and there was no --tool argument on the command line.')
+                log.error(
+                    'Config file does not specify a default tool, '
+                    'and there was no --tool argument on the command line.')
                 sys.exit(1)
 
             # Print info:
@@ -291,10 +289,13 @@ class SimCfg(FlowCfg):
             self.testplan = testplan_utils.parse_testplan(self.testplan)
             # Extract tests in each milestone and add them as regression target.
             self.regressions.extend(self.testplan.get_milestone_regressions())
+        else:
+            # Create a dummy testplan with no entries.
+            self.testplan = class_defs.Testplan(name=self.name)
 
         # Create regressions
-        self.regressions = Regressions.create_regressions(self.regressions,
-                                                          self, self.tests)
+        self.regressions = Regressions.create_regressions(
+            self.regressions, self, self.tests)
 
     def _print_list(self):
         for list_item in self.list_items:
@@ -424,16 +425,11 @@ class SimCfg(FlowCfg):
         test is added to the CompileSim item that it depends on (signifying
         that the test should be built once the build on which it depends is
         done).
-
-        cfg is a SimCfg object, passed to the RunTest constructor.
-
         '''
         tagged = []
         for test in self.run_list:
             for idx in range(test.reseed):
-                tagged.append((idx,
-                               test,
-                               RunTest(idx, test, self)))
+                tagged.append((idx, test, RunTest(idx, test, self)))
 
         # Stably sort the tagged list by the 1st coordinate
         tagged.sort(key=lambda x: x[0])
@@ -454,21 +450,38 @@ class SimCfg(FlowCfg):
         # Create the build and run list first
         self._create_build_and_run_list()
 
-        builds = []
+        self.builds = []
         build_map = {}
-        for build in self.build_list:
-            item = CompileSim(build, self)
-            builds.append(item)
-            build_map[build] = item
+        for build_mode_obj in self.build_list:
+            new_build = CompileSim(build_mode_obj, self)
 
-        self.builds = builds
+            # It is possible for tests to supply different build modes, but
+            # those builds may differ only under specific circumstances, such
+            # as coverage being enabled. If coverage is not enabled, then they
+            # may be completely identical. In that case, we can save compute
+            # resources by removing the extra duplicated builds. We discard the
+            # new_build if it is equivalent to an existing one.
+            is_unique = True
+            for build in self.builds:
+                if build.is_equivalent_job(new_build):
+                    new_build = build
+                    is_unique = False
+                    break
+
+            if is_unique:
+                self.builds.append(new_build)
+            build_map[build_mode_obj] = new_build
+
+        # Update all tests to use the updated (uniquified) build modes.
+        for test in self.run_list:
+            if test.build_mode.name != build_map[test.build_mode].name:
+                test.build_mode = Modes.find_mode(
+                    build_map[test.build_mode].name, self.build_modes)
+
         self.runs = ([]
-                     if self.build_only
-                     else self._expand_run_list(build_map))
-        if self.run_only is True:
-            self.deploy = self.runs
-        else:
-            self.deploy = builds
+                     if self.build_only else self._expand_run_list(build_map))
+
+        self.deploy = self.runs if self.run_only else self.builds
 
         # Create cov_merge and cov_report objects
         if self.cov:
@@ -579,21 +592,24 @@ class SimCfg(FlowCfg):
         if self.revision_string:
             results_str += "### " + self.revision_string + "\n"
 
-        # Add path to testplan.
-        if hasattr(self, "testplan_doc_path"):
-            testplan = "https://" + self.doc_server + '/' + self.testplan_doc_path
-        else:
-            testplan = "https://" + self.doc_server + '/' + self.rel_path
-            testplan = testplan.replace("/dv", "/doc/dv_plan/#testplan")
+        # Add path to testplan, only if it has entries (i.e., its not dummy).
+        if self.testplan.entries:
+            if hasattr(self, "testplan_doc_path"):
+                testplan = "https://{}/{}".format(self.doc_server,
+                                                  self.testplan_doc_path)
+            else:
+                testplan = "https://{}/{}".format(self.doc_server,
+                                                  self.rel_path)
+                testplan = testplan.replace("/dv", "/doc/dv_plan/#testplan")
 
-        results_str += "### [Testplan](" + testplan + ")\n"
+            results_str += "### [Testplan](" + testplan + ")\n"
+
         results_str += "### Simulator: " + self.tool.upper() + "\n\n"
 
         if regr_results == []:
             results_str += "No results to display.\n"
 
         else:
-            # TODO: check if testplan is not null?
             # Map regr results to the testplan entries.
             results_str += self.testplan.results_table(
                 regr_results=regr_results,
@@ -608,7 +624,12 @@ class SimCfg(FlowCfg):
                     # Link the dashboard page using "cov_report_page" value.
                     if hasattr(self, "cov_report_page"):
                         results_str += "\n### [Coverage Dashboard]"
-                        results_str += "({})\n\n".format(self.cov_report_page)
+                        if self.args.publish:
+                            cov_report_page_path = "cov_report"
+                        else:
+                            cov_report_page_path = self.cov_report_dir
+                        cov_report_page_path += "/" + self.cov_report_page
+                        results_str += "({})\n\n".format(cov_report_page_path)
                     results_str += self.cov_report_deploy.cov_results
                     self.results_summary[
                         "Coverage"] = self.cov_report_deploy.cov_total
@@ -670,7 +691,7 @@ class SimCfg(FlowCfg):
             log.info("Publishing coverage results to %s",
                      results_server_dir_url)
             cmd = (self.results_server_cmd + " -m cp -R " +
-                   self.cov_report_deploy.cov_report_dir + " " + self.results_server_dir)
+                   self.cov_report_dir + " " + self.results_server_dir)
             try:
                 cmd_output = subprocess.run(args=cmd,
                                             shell=True,
