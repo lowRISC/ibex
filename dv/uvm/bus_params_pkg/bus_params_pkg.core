@@ -10,12 +10,12 @@ CAPI=2:
 # confused if both are used at once.
 #
 
-name: "lowrisc:ibex:top_pkg"
+name: "lowrisc:ibex:bus_params_pkg"
 description: "Top-level constants for Ibex, used by DV code"
 filesets:
   files_rtl:
     files:
-      - top_pkg.sv
+      - bus_params_pkg.sv
     file_type: systemVerilogSource
 
 targets:

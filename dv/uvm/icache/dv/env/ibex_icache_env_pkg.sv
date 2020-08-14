@@ -5,7 +5,7 @@
 package ibex_icache_env_pkg;
   // dep packages
   import uvm_pkg::*;
-  import top_pkg::*;
+  import bus_params_pkg::*;
   import dv_utils_pkg::*;
   import ibex_icache_core_agent_pkg::*;
   import ibex_icache_mem_agent_pkg::*;

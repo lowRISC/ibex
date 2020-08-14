@@ -8,10 +8,11 @@ import os
 
 from mako.template import Template
 from pkg_resources import resource_filename
+from uvmdvgen import VENDOR_DEFAULT
 
 
 def gen_env(name, is_cip, has_ral, has_interrupts, has_alerts, env_agents,
-            root_dir, add_makefile):
+            root_dir, add_makefile, vendor):
     # yapf: disable
     # 4-tuple - sub-path, ip name, class name, file ext
     env_srcs = [('dv/env',          name + '_', 'env_cfg',            '.sv'),
@@ -25,8 +26,9 @@ def gen_env(name, is_cip, has_ral, has_interrupts, has_alerts, env_agents,
                 ('dv/env/seq_lib',  name + '_', 'sanity_vseq',        '.sv'),
                 ('dv/env/seq_lib',  name + '_', 'common_vseq',        '.sv'),
                 ('dv/env/seq_lib',  name + '_', 'vseq_list',          '.sv'),
-                ('dv/tb',           '',         'tb',                 '.sv'),
-                ('dv/tb',           name + '_', 'bind',               '.sv'),
+                ('dv',              '',         'tb',                 '.sv'),
+                ('dv/sva',          name + '_', 'bind',               '.sv'),
+                ('dv/sva',          name + '_', 'sva',               '.core'),
                 ('dv/tests',        name + '_', 'base_test',          '.sv'),
                 ('dv/tests',        name + '_', 'test_pkg',           '.sv'),
                 ('dv/tests',        name + '_', 'test',               '.core'),
@@ -38,6 +40,13 @@ def gen_env(name, is_cip, has_ral, has_interrupts, has_alerts, env_agents,
                 ('data',            name + '_', 'testplan',           '.hjson'),
                 ('dv',              name + '_', 'sim',                '.core')]
     # yapf: enable
+
+    if vendor != VENDOR_DEFAULT and env_agents != []:
+        env_core_path = root_dir + "/dv/env/" + name + "_env.core"
+        print(
+            "WARNING: Both, --vendor and --env-agents switches are supplied "
+            "on the command line. Please check the VLNV names of the "
+            "dependent agents in the generated {} file.".format(env_core_path))
 
     for tup in env_srcs:
         path_dir = root_dir + '/' + tup[0]
@@ -70,6 +79,7 @@ def gen_env(name, is_cip, has_ral, has_interrupts, has_alerts, env_agents,
                                has_ral=has_ral,
                                has_interrupts=has_interrupts,
                                has_alerts=has_alerts,
-                               env_agents=env_agents))
+                               env_agents=env_agents,
+                               vendor=vendor))
             except:
                 log.error(exceptions.text_error_template().render())

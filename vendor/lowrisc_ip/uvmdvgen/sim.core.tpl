@@ -2,21 +2,19 @@ CAPI=2:
 # Copyright lowRISC contributors.
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
-name: "lowrisc:dv:${name}_sim:0.1"
+name: "${vendor}:dv:${name}_sim:0.1"
 description: "${name.upper()} DV sim target"
 filesets:
   files_rtl:
     depend:
-      - lowrisc:ip:${name}:0.1
-    files:
-      - tb/${name}_bind.sv
-    file_type: systemVerilogSource
+      - ${vendor}:ip:${name}
 
   files_dv:
     depend:
-      - lowrisc:dv:${name}_test
+      - ${vendor}:dv:${name}_test
+      - ${vendor}:dv:${name}_sva
     files:
-      - tb/tb.sv
+      - tb.sv
     file_type: systemVerilogSource
 
 targets:
