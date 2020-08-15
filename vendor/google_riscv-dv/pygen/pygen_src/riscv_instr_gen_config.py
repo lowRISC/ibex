@@ -317,9 +317,8 @@ def parse_args():
     parse.add_argument('--no_dret', help = 'no_dret', choices = [0, 1], type = int, default = 1)
     parse.add_argument('--no_wfi', help = 'no_wfi', choices = [0, 1], type = int, default = 1)
 
-    # TODO : Enabling no_branch_jump default to 1 for now.
     parse.add_argument('--no_branch_jump', help = 'no_branch_jump',
-                       choices = [0, 1], type = int, default = 1)
+                       choices = [0, 1], type = int, default = 0)
     parse.add_argument('--no_load_store', help = 'no_load_store',
                        choices = [0, 1], type = int, default = 0)
     parse.add_argument('--no_csr_instr', help = 'no_csr_instr',
