@@ -7,7 +7,8 @@
 
 variables:
   VERILATOR_VERSION: 4.032
-  RISCV_TOOLCHAIN_TAR_VERSION: 20200323-1
+  RISCV_TOOLCHAIN_TAR_VERSION: 20200626-1
+  RISCV_TOOLCHAIN_TAR_VARIANT: lowrisc-toolchain-gcc-rv32imcb
   RISCV_COMPLIANCE_GIT_VERSION: 844c6660ef3f0d9b96957991109dfd80cc4938e2
   VERIBLE_VERSION: v0.0-493-g617b404
 
@@ -82,7 +83,7 @@ jobs:
     displayName: Install Verible
 
   - bash: |
-      export TOOLCHAIN_URL=https://github.com/lowRISC/lowrisc-toolchains/releases/download/${RISCV_TOOLCHAIN_TAR_VERSION}/lowrisc-toolchain-gcc-rv32imc-${RISCV_TOOLCHAIN_TAR_VERSION}.tar.xz
+      export TOOLCHAIN_URL=https://github.com/lowRISC/lowrisc-toolchains/releases/download/${RISCV_TOOLCHAIN_TAR_VERSION}/${RISCV_TOOLCHAIN_TAR_VARIANT}-${RISCV_TOOLCHAIN_TAR_VERSION}.tar.xz
       mkdir -p build/toolchain
       curl -Ls -o build/toolchain/rv32-toolchain.tar.xz $TOOLCHAIN_URL
       sudo mkdir -p /tools/riscv && sudo chmod 777 /tools/riscv
