@@ -14,10 +14,10 @@
 `include "prim_assert.sv"
 
 module ibex_decoder #(
-    parameter bit RV32E                = 0,
-    parameter bit RV32M                = 1,
-    parameter bit BranchTargetALU      = 0,
-    parameter ibex_pkg::rv32b_e RV32B  = ibex_pkg::RV32BNone
+    parameter bit RV32E               = 0,
+    parameter ibex_pkg::rv32m_e RV32M = ibex_pkg::RV32MFast,
+    parameter ibex_pkg::rv32b_e RV32B = ibex_pkg::RV32BNone,
+    parameter bit BranchTargetALU     = 0
 ) (
     input  logic                 clk_i,
     input  logic                 rst_ni,
@@ -486,42 +486,42 @@ module ibex_decoder #(
             {7'b000_0001, 3'b000}: begin // mul
               multdiv_operator_o    = MD_OP_MULL;
               multdiv_signed_mode_o = 2'b00;
-              illegal_insn          = RV32M ? 1'b0 : 1'b1;
+              illegal_insn          = (RV32M == RV32MNone) ? 1'b1 : 1'b0;
             end
             {7'b000_0001, 3'b001}: begin // mulh
               multdiv_operator_o    = MD_OP_MULH;
               multdiv_signed_mode_o = 2'b11;
-              illegal_insn          = RV32M ? 1'b0 : 1'b1;
+              illegal_insn          = (RV32M == RV32MNone) ? 1'b1 : 1'b0;
             end
             {7'b000_0001, 3'b010}: begin // mulhsu
               multdiv_operator_o    = MD_OP_MULH;
               multdiv_signed_mode_o = 2'b01;
-              illegal_insn          = RV32M ? 1'b0 : 1'b1;
+              illegal_insn          = (RV32M == RV32MNone) ? 1'b1 : 1'b0;
             end
             {7'b000_0001, 3'b011}: begin // mulhu
               multdiv_operator_o    = MD_OP_MULH;
               multdiv_signed_mode_o = 2'b00;
-              illegal_insn          = RV32M ? 1'b0 : 1'b1;
+              illegal_insn          = (RV32M == RV32MNone) ? 1'b1 : 1'b0;
             end
             {7'b000_0001, 3'b100}: begin // div
               multdiv_operator_o    = MD_OP_DIV;
               multdiv_signed_mode_o = 2'b11;
-              illegal_insn          = RV32M ? 1'b0 : 1'b1;
+              illegal_insn          = (RV32M == RV32MNone) ? 1'b1 : 1'b0;
             end
             {7'b000_0001, 3'b101}: begin // divu
               multdiv_operator_o    = MD_OP_DIV;
               multdiv_signed_mode_o = 2'b00;
-              illegal_insn          = RV32M ? 1'b0 : 1'b1;
+              illegal_insn          = (RV32M == RV32MNone) ? 1'b1 : 1'b0;
             end
             {7'b000_0001, 3'b110}: begin // rem
               multdiv_operator_o    = MD_OP_REM;
               multdiv_signed_mode_o = 2'b11;
-              illegal_insn          = RV32M ? 1'b0 : 1'b1;
+              illegal_insn          = (RV32M == RV32MNone) ? 1'b1 : 1'b0;
             end
             {7'b000_0001, 3'b111}: begin // remu
               multdiv_operator_o    = MD_OP_REM;
               multdiv_signed_mode_o = 2'b00;
-              illegal_insn          = RV32M ? 1'b0 : 1'b1;
+              illegal_insn          = (RV32M == RV32MNone) ? 1'b1 : 1'b0;
             end
             default: begin
               illegal_insn = 1'b1;
@@ -1037,35 +1037,35 @@ module ibex_decoder #(
             // RV32M instructions, all use the same ALU operation
             {7'b000_0001, 3'b000}: begin // mul
               alu_operator_o = ALU_ADD;
-              mult_sel_o     = RV32M ? 1'b1 : 1'b0;
+              mult_sel_o     = (RV32M == RV32MNone) ? 1'b0 : 1'b1;
             end
             {7'b000_0001, 3'b001}: begin // mulh
               alu_operator_o = ALU_ADD;
-              mult_sel_o     = RV32M ? 1'b1 : 1'b0;
+              mult_sel_o     = (RV32M == RV32MNone) ? 1'b0 : 1'b1;
             end
             {7'b000_0001, 3'b010}: begin // mulhsu
               alu_operator_o = ALU_ADD;
-              mult_sel_o     = RV32M ? 1'b1 : 1'b0;
+              mult_sel_o     = (RV32M == RV32MNone) ? 1'b0 : 1'b1;
             end
             {7'b000_0001, 3'b011}: begin // mulhu
               alu_operator_o = ALU_ADD;
-              mult_sel_o     = RV32M ? 1'b1 : 1'b0;
+              mult_sel_o     = (RV32M == RV32MNone) ? 1'b0 : 1'b1;
             end
             {7'b000_0001, 3'b100}: begin // div
               alu_operator_o = ALU_ADD;
-              div_sel_o      = RV32M ? 1'b1 : 1'b0;
+              div_sel_o      = (RV32M == RV32MNone) ? 1'b0 : 1'b1;
             end
             {7'b000_0001, 3'b101}: begin // divu
               alu_operator_o = ALU_ADD;
-              div_sel_o      = RV32M ? 1'b1 : 1'b0;
+              div_sel_o      = (RV32M == RV32MNone) ? 1'b0 : 1'b1;
             end
             {7'b000_0001, 3'b110}: begin // rem
               alu_operator_o = ALU_ADD;
-              div_sel_o      = RV32M ? 1'b1 : 1'b0;
+              div_sel_o      = (RV32M == RV32MNone) ? 1'b0 : 1'b1;
             end
             {7'b000_0001, 3'b111}: begin // remu
               alu_operator_o = ALU_ADD;
-              div_sel_o      = RV32M ? 1'b1 : 1'b0;
+              div_sel_o      = (RV32M == RV32MNone) ? 1'b0 : 1'b1;
             end
 
             default: ;

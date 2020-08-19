@@ -2,6 +2,10 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
+`ifndef RV32M
+  `define RV32M ibex_pkg::RV32MFast
+`endif
+
 `ifndef RV32B
   `define RV32B ibex_pkg::RV32BNone
 `endif
@@ -28,11 +32,10 @@ module ibex_simple_system (
   parameter int unsigned      PMPGranularity           = 0;
   parameter int unsigned      PMPNumRegions            = 4;
   parameter bit               RV32E                    = 1'b0;
-  parameter bit               RV32M                    = 1'b1;
+  parameter ibex_pkg::rv32m_e RV32M                    = `RV32M;
   parameter ibex_pkg::rv32b_e RV32B                    = `RV32B;
   parameter bit               BranchTargetALU          = 1'b0;
   parameter bit               WritebackStage           = 1'b0;
-  parameter                   MultiplierImplementation = "fast";
   parameter                   SRAMInitFile             = "";
 
   logic clk_sys = 1'b0, rst_sys_n;
@@ -147,19 +150,18 @@ module ibex_simple_system (
   );
 
   ibex_core_tracing #(
-      .SecureIbex               ( SecureIbex               ),
-      .PMPEnable                ( PMPEnable                ),
-      .PMPGranularity           ( PMPGranularity           ),
-      .PMPNumRegions            ( PMPNumRegions            ),
-      .MHPMCounterNum           ( 29                       ),
-      .RV32E                    ( RV32E                    ),
-      .RV32M                    ( RV32M                    ),
-      .RV32B                    ( RV32B                    ),
-      .BranchTargetALU          ( BranchTargetALU          ),
-      .WritebackStage           ( WritebackStage           ),
-      .MultiplierImplementation ( MultiplierImplementation ),
-      .DmHaltAddr               ( 32'h00100000             ),
-      .DmExceptionAddr          ( 32'h00100000             )
+      .SecureIbex      ( SecureIbex      ),
+      .PMPEnable       ( PMPEnable       ),
+      .PMPGranularity  ( PMPGranularity  ),
+      .PMPNumRegions   ( PMPNumRegions   ),
+      .MHPMCounterNum  ( 29              ),
+      .RV32E           ( RV32E           ),
+      .RV32M           ( RV32M           ),
+      .RV32B           ( RV32B           ),
+      .BranchTargetALU ( BranchTargetALU ),
+      .WritebackStage  ( WritebackStage  ),
+      .DmHaltAddr      ( 32'h00100000    ),
+      .DmExceptionAddr ( 32'h00100000    )
     ) u_core (
       .clk_i                 (clk_sys),
       .rst_ni                (rst_sys_n),

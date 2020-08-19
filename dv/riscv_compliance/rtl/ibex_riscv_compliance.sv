@@ -19,9 +19,8 @@ module ibex_riscv_compliance (
   parameter int unsigned PMPGranularity  = 0;
   parameter int unsigned PMPNumRegions   = 4;
   parameter bit RV32E                    = 1'b0;
-  parameter bit RV32M                    = 1'b1;
+  parameter ibex_pkg::rv32m_e RV32M      = ibex_pkg::RV32MFast;
   parameter ibex_pkg::rv32b_e RV32B      = ibex_pkg::RV32BNone;
-  parameter     MultiplierImplementation = "fast";
   parameter bit BranchTargetALU          = 1'b0;
   parameter bit WritebackStage           = 1'b0;
 
@@ -110,17 +109,16 @@ module ibex_riscv_compliance (
   );
 
   ibex_core_tracing #(
-      .PMPEnable                (PMPEnable               ),
-      .PMPGranularity           (PMPGranularity          ),
-      .PMPNumRegions            (PMPNumRegions           ),
-      .RV32E                    (RV32E                   ),
-      .RV32M                    (RV32M                   ),
-      .RV32B                    (RV32B                   ),
-      .MultiplierImplementation (MultiplierImplementation),
-      .BranchTargetALU          (BranchTargetALU         ),
-      .WritebackStage           (WritebackStage          ),
-      .DmHaltAddr               (32'h00000000            ),
-      .DmExceptionAddr          (32'h00000000            )
+      .PMPEnable       (PMPEnable       ),
+      .PMPGranularity  (PMPGranularity  ),
+      .PMPNumRegions   (PMPNumRegions   ),
+      .RV32E           (RV32E           ),
+      .RV32M           (RV32M           ),
+      .RV32B           (RV32B           ),
+      .BranchTargetALU (BranchTargetALU ),
+      .WritebackStage  (WritebackStage  ),
+      .DmHaltAddr      (32'h00000000    ),
+      .DmExceptionAddr (32'h00000000    )
     ) u_core (
       .clk_i          (clk_sys           ),
       .rst_ni         (rst_sys_n         ),

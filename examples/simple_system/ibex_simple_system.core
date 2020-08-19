@@ -23,17 +23,17 @@ filesets:
       - lint/verilator_waiver.vlt: {file_type: vlt}
 
 parameters:
-  RV32M:
-    datatype: int
-    paramtype: vlogparam
-    default: 1
-    description: "Enable the M ISA extension (hardware multiply/divide) [0/1]"
-
   RV32E:
     datatype: int
     paramtype: vlogparam
     default: 0
     description: "Enable the E ISA extension (reduced register set) [0/1]"
+
+  RV32M:
+    datatype: str
+    default: ibex_pkg::RV32MFast
+    paramtype: vlogdefine
+    description: "RV32M implementation parameter enum. See the ibex_pkg::rv32m_e enum in ibex_pkg.sv for permitted values."
 
   RV32B:
     datatype: str
@@ -45,12 +45,6 @@ parameters:
     datatype: str
     paramtype: vlogparam
     description: "Path to a vmem file to initialize the RAM with"
-
-  MultiplierImplementation:
-    datatype: str
-    paramtype: vlogparam
-    description: "Multiplier implementation. Valid values: fast, slow, single-cycle"
-    default: "fast"
 
   BranchTargetALU:
     datatype: int
@@ -95,10 +89,9 @@ targets:
       - files_sim
     toplevel: ibex_simple_system
     parameters:
-      - RV32M
       - RV32E
+      - RV32M
       - RV32B
-      - MultiplierImplementation
       - BranchTargetALU
       - WritebackStage
       - SecureIbex

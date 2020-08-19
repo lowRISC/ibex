@@ -116,10 +116,12 @@ The Multiplier/Divider (MULT/DIV) is a state machine driven block to perform mul
 The fast and slow versions differ in multiplier only. All versions implement the same form of long division algorithm. The ALU block is used by the long division algorithm in all versions.
 
 Multiplier
-  The multiplier can be implemented in three variants controlled via the parameter ``MultiplierImplementation``.
+  The multiplier can be implemented in three variants controlled via the enumerated parameter ``RV32M`` defined in :file:`rtl/ibex_pkg.sv`.
 
   Single-Cycle Multiplier
-    This implementation is chosen by setting the ``MultiplierImplementation`` parameter to "single-cycle". The single-cycle multiplier makes use of three parallel multiplier units, designed to be mapped to hardware multiplier primitives on FPGAs. It is therefore the **first choice for FPGA synthesis**.
+    This implementation is chosen by setting the ``RV32M`` parameter to "ibex_pkg::RV32MSingleCycle".
+    The single-cycle multiplier makes use of three parallel multiplier units, designed to be mapped to hardware multiplier primitives on FPGAs.
+    It is therefore the **first choice for FPGA synthesis**.
 
     - Using three parallel 17-bit x 17-bit multiplication units and a 34-bit accumulator, it completes a MUL instruction in 1 cycle. MULH is completed in 2 cycles.
     - This MAC is internal to the mult/div block (no external ALU use).
@@ -127,7 +129,8 @@ Multiplier
     - ASIC synthesis has not yet been tested but is expected to consume 3-4x the area of the fast multiplier for ASIC.
 
   Fast Multi-Cycle Multiplier
-    This implementation is chosen by setting the ``MultiplierImplementation`` parameter to "fast". The fast multi-cycle multiplier provides a reasonable trade-off between area and performance. It is the **first choice for ASIC synthesis**.
+    This implementation is chosen by setting the ``RV32M`` parameter to "ibex_pkg::RV32MFast".
+    The fast multi-cycle multiplier provides a reasonable trade-off between area and performance. It is the **first choice for ASIC synthesis**.
 
     - Completes multiply in 3-4 cycles using a MAC (multiply accumulate) which is capable of a 17-bit x 17-bit multiplication with a 34-bit accumulator.
     - A MUL instruction takes 3 cycles, MULH takes 4.
@@ -136,7 +139,7 @@ Multiplier
     - In some cases it may be desirable to replace this with a specific implementation such as an explicit gate level implementation.
 
   Slow Multi-Cycle Multiplier
-    To select the slow multi-cycle multiplier, set the ``MultiplierImplementation`` parameter to "slow".
+    To select the slow multi-cycle multiplier, set the ``RV32M`` parameter to "ibex_pkg::RV32MSlow".
 
     - Completes multiply in clog2(``op_b``) + 1 cycles (for MUL) or 33 cycles (for MULH) using a Baugh-Wooley multiplier.
     - The ALU block is used to compute additions.
@@ -148,6 +151,8 @@ Divider
     - Cycle 1: Compute absolute value of operand A (or return result on divide by 0)
     - Cycle 2: Compute absolute value of operand B
     - Cycles 4 - 36: Perform long division as described here: https://en.wikipedia.org/wiki/Division_algorithm#Integer_division_(unsigned)_with_remainder.
+
+By setting the ``RV32M`` parameter to "ibex_pkg::RV32MNone", the M-extension can be disabled completely.
 
 Control and Status Register Block (CSR)
 ---------------------------------------
