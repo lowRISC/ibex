@@ -13,23 +13,22 @@
  * Top level module of the ibex RISC-V core
  */
 module ibex_core #(
-    parameter bit               PMPEnable                = 1'b0,
-    parameter int unsigned      PMPGranularity           = 0,
-    parameter int unsigned      PMPNumRegions            = 4,
-    parameter int unsigned      MHPMCounterNum           = 0,
-    parameter int unsigned      MHPMCounterWidth         = 40,
-    parameter bit               RV32E                    = 1'b0,
-    parameter bit               RV32M                    = 1'b1,
-    parameter ibex_pkg::rv32b_e RV32B                    = ibex_pkg::RV32BNone,
-    parameter bit               BranchTargetALU          = 1'b0,
-    parameter bit               WritebackStage           = 1'b0,
-    parameter                   MultiplierImplementation = "fast",
-    parameter bit               ICache                   = 1'b0,
-    parameter bit               ICacheECC                = 1'b0,
-    parameter bit               DbgTriggerEn             = 1'b0,
-    parameter bit               SecureIbex               = 1'b0,
-    parameter int unsigned      DmHaltAddr               = 32'h1A110800,
-    parameter int unsigned      DmExceptionAddr          = 32'h1A110808
+    parameter bit               PMPEnable        = 1'b0,
+    parameter int unsigned      PMPGranularity   = 0,
+    parameter int unsigned      PMPNumRegions    = 4,
+    parameter int unsigned      MHPMCounterNum   = 0,
+    parameter int unsigned      MHPMCounterWidth = 40,
+    parameter bit               RV32E            = 1'b0,
+    parameter ibex_pkg::rv32m_e RV32M            = ibex_pkg::RV32MFast,
+    parameter ibex_pkg::rv32b_e RV32B            = ibex_pkg::RV32BNone,
+    parameter bit               BranchTargetALU  = 1'b0,
+    parameter bit               WritebackStage   = 1'b0,
+    parameter bit               ICache           = 1'b0,
+    parameter bit               ICacheECC        = 1'b0,
+    parameter bit               DbgTriggerEn     = 1'b0,
+    parameter bit               SecureIbex       = 1'b0,
+    parameter int unsigned      DmHaltAddr       = 32'h1A110800,
+    parameter int unsigned      DmExceptionAddr  = 32'h1A110808
 ) (
     // Clock and Reset
     input  logic        clk_i,
@@ -624,8 +623,7 @@ module ibex_core #(
   ibex_ex_block #(
       .RV32M                    ( RV32M                    ),
       .RV32B                    ( RV32B                    ),
-      .BranchTargetALU          ( BranchTargetALU          ),
-      .MultiplierImplementation ( MultiplierImplementation )
+      .BranchTargetALU          ( BranchTargetALU          )
   ) ex_block_i (
       .clk_i                    ( clk                      ),
       .rst_ni                   ( rst_ni                   ),

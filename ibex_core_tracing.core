@@ -30,21 +30,16 @@ parameters:
     paramtype: vlogparam
 
   RV32M:
-    datatype: int
-    default: 1
-    paramtype: vlogparam
+    datatype: str
+    default: ibex_pkg::RV32MFast
+    paramtype: vlogdefine
+    description: "RV32M implementation parameter enum. See the ibex_pkg::rv32m_e enum in ibex_pkg.sv for permitted values."
 
   RV32B:
     datatype: str
     default: ibex_pkg::RV32BNone
     paramtype: vlogdefine
     description: "Bitmanip implementation parameter enum. See the ibex_pkg::rv32b_e enum in ibex_pkg.sv for permitted values."
-
-  MultiplierImplementation:
-    datatype: str
-    paramtype: vlogparam
-    description: "Multiplier implementation. Valid values: fast, slow, single-cycle"
-    default: "fast"
 
   ICache:
     datatype: int
@@ -107,12 +102,11 @@ targets:
     parameters:
       - RVFI=true
       - SYNTHESIS=true
-      - RV32M
       - RV32E
+      - RV32M
       - RV32B
       - BranchTargetALU
       - WritebackStage
-      - MultiplierImplementation
       - SecureIbex
       - PMPEnable
       - PMPGranularity

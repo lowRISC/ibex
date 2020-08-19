@@ -31,8 +31,8 @@ module core_ibex_tb_top;
 
   // You cannot override string parameters in VCS via the command line so a `define is used instead
   // that can be set from the command line. If no value has been specified this gives a default.
-  `ifndef IBEX_MULTIPLIER_IMPLEMENTATION
-    `define IBEX_MULTIPLIER_IMPLEMENTATION fast
+  `ifndef IBEX_CFG_RV32M
+    `define IBEX_CFG_RV32M ibex_pkg::RV32MFast
   `endif
 
   `ifndef IBEX_CFG_RV32B
@@ -43,27 +43,22 @@ module core_ibex_tb_top;
   parameter int unsigned PMPGranularity  = 0;
   parameter int unsigned PMPNumRegions   = 4;
   parameter bit RV32E                    = 1'b0;
-  parameter bit RV32M                    = 1'b1;
+  parameter ibex_pkg::rv32m_e RV32M      = `IBEX_CFG_RV32M;
   parameter ibex_pkg::rv32b_e RV32B      = `IBEX_CFG_RV32B;
   parameter bit BranchTargetALU          = 1'b0;
   parameter bit WritebackStage           = 1'b0;
 
-  // VCS has issues taking a string as a define, so we have to build up the string via the
-  // pre-processor.
-  parameter     MultiplierImplementation = `PRIM_STRINGIFY(`IBEX_CFG_MultiplierImplementation);
-
   ibex_core_tracing #(
-    .DmHaltAddr               (`BOOT_ADDR + 'h0        ),
-    .DmExceptionAddr          (`BOOT_ADDR + 'h4        ),
-    .PMPEnable                (PMPEnable               ),
-    .PMPGranularity           (PMPGranularity          ),
-    .PMPNumRegions            (PMPNumRegions           ),
-    .RV32E                    (RV32E                   ),
-    .RV32M                    (RV32M                   ),
-    .RV32B                    (RV32B                   ),
-    .BranchTargetALU          (BranchTargetALU         ),
-    .WritebackStage           (WritebackStage          ),
-    .MultiplierImplementation (MultiplierImplementation)
+    .DmHaltAddr      (`BOOT_ADDR + 'h0 ),
+    .DmExceptionAddr (`BOOT_ADDR + 'h4 ),
+    .PMPEnable       (PMPEnable        ),
+    .PMPGranularity  (PMPGranularity   ),
+    .PMPNumRegions   (PMPNumRegions    ),
+    .RV32E           (RV32E            ),
+    .RV32M           (RV32M            ),
+    .RV32B           (RV32B            ),
+    .BranchTargetALU (BranchTargetALU  ),
+    .WritebackStage  (WritebackStage   )
   ) dut (
     .clk_i          (clk                  ),
     .rst_ni         (rst_n                ),

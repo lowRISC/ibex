@@ -8,9 +8,16 @@
  */
 package ibex_pkg;
 
-/////////////////////////
-// RV32B Paramter Enum //
-/////////////////////////
+/////////////////////
+// Parameter Enums //
+/////////////////////
+
+typedef enum integer {
+  RV32MNone        = 0,
+  RV32MSlow        = 1,
+  RV32MFast        = 2,
+  RV32MSingleCycle = 3
+} rv32m_e;
 
 typedef enum integer {
   RV32BNone     = 0,

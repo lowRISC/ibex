@@ -18,7 +18,7 @@
 
 module ibex_id_stage #(
     parameter bit               RV32E           = 0,
-    parameter bit               RV32M           = 1,
+    parameter ibex_pkg::rv32m_e RV32M           = ibex_pkg::RV32MFast,
     parameter ibex_pkg::rv32b_e RV32B           = ibex_pkg::RV32BNone,
     parameter bit               DataIndTiming   = 1'b0,
     parameter bit               BranchTargetALU = 0,
