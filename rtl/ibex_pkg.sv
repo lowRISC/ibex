@@ -13,9 +13,9 @@ package ibex_pkg;
 /////////////////////////
 
 typedef enum integer {
-  RV32BNone,
-  RV32BBalanced,
-  RV32BFull
+  RV32BNone     = 0,
+  RV32BBalanced = 1,
+  RV32BFull     = 2
 } rv32b_e;
 
 /////////////

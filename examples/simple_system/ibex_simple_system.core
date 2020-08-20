@@ -39,7 +39,7 @@ parameters:
     datatype: str
     default: ibex_pkg::RV32BNone
     paramtype: vlogdefine
-    description: "Bitmanip implementation parameter enum. See ibex_pkg.sv (EXPERIMENTAL)"
+    description: "Bitmanip implementation parameter enum. See the ibex_pkg::rv32b_e enum in ibex_pkg.sv for permitted values."
 
   SRAMInitFile:
     datatype: str
