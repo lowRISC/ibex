@@ -17,6 +17,7 @@ set_flow_bool_var ibex_branch_target_alu 0 "Enable branch target ALU in Ibex"
 set_flow_bool_var ibex_writeback_stage 0 "Enable writeback stage in Ibex"
 set_flow_var ibex_bitmanip 0 "Bitmanip extenion setting for Ibex (see ibex_pkg::rv32b_e for permitted values. Enum names are not supported in Yosys.)"
 set_flow_var ibex_multiplier 2 "Multiplier extension setting for Ibex (see ibex_pkg::rv32m_e for permitted values. Enum names are not supported in Yosys.)"
+set_flow_var ibex_regfile 2 "Register file implementation selection for Ibex (see ibex_pkg::regfile_e for permitted values. Enum names are not supported in Yosys.)"
 
 source $lr_synth_config_file
 

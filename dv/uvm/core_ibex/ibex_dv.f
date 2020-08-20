@@ -51,6 +51,8 @@ ${PRJ_DIR}/rtl/ibex_multdiv_fast.sv
 ${PRJ_DIR}/rtl/ibex_prefetch_buffer.sv
 ${PRJ_DIR}/rtl/ibex_fetch_fifo.sv
 ${PRJ_DIR}/rtl/ibex_register_file_ff.sv
+${PRJ_DIR}/rtl/ibex_register_file_fpga.sv
+${PRJ_DIR}/rtl/ibex_register_file_latch.sv
 ${PRJ_DIR}/rtl/ibex_pmp.sv
 ${PRJ_DIR}/rtl/ibex_core.sv
 ${PRJ_DIR}/rtl/ibex_core_tracing.sv

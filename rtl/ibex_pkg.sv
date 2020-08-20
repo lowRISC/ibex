@@ -13,6 +13,12 @@ package ibex_pkg;
 /////////////////////
 
 typedef enum integer {
+  RegFileFF    = 0,
+  RegFileFPGA  = 1,
+  RegFileLatch = 2
+} regfile_e;
+
+typedef enum integer {
   RV32MNone        = 0,
   RV32MSlow        = 1,
   RV32MFast        = 2,

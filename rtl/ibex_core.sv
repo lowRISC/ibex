@@ -13,22 +13,23 @@
  * Top level module of the ibex RISC-V core
  */
 module ibex_core #(
-    parameter bit               PMPEnable        = 1'b0,
-    parameter int unsigned      PMPGranularity   = 0,
-    parameter int unsigned      PMPNumRegions    = 4,
-    parameter int unsigned      MHPMCounterNum   = 0,
-    parameter int unsigned      MHPMCounterWidth = 40,
-    parameter bit               RV32E            = 1'b0,
-    parameter ibex_pkg::rv32m_e RV32M            = ibex_pkg::RV32MFast,
-    parameter ibex_pkg::rv32b_e RV32B            = ibex_pkg::RV32BNone,
-    parameter bit               BranchTargetALU  = 1'b0,
-    parameter bit               WritebackStage   = 1'b0,
-    parameter bit               ICache           = 1'b0,
-    parameter bit               ICacheECC        = 1'b0,
-    parameter bit               DbgTriggerEn     = 1'b0,
-    parameter bit               SecureIbex       = 1'b0,
-    parameter int unsigned      DmHaltAddr       = 32'h1A110800,
-    parameter int unsigned      DmExceptionAddr  = 32'h1A110808
+    parameter bit                 PMPEnable        = 1'b0,
+    parameter int unsigned        PMPGranularity   = 0,
+    parameter int unsigned        PMPNumRegions    = 4,
+    parameter int unsigned        MHPMCounterNum   = 0,
+    parameter int unsigned        MHPMCounterWidth = 40,
+    parameter bit                 RV32E            = 1'b0,
+    parameter ibex_pkg::rv32m_e   RV32M            = ibex_pkg::RV32MFast,
+    parameter ibex_pkg::rv32b_e   RV32B            = ibex_pkg::RV32BNone,
+    parameter ibex_pkg::regfile_e RegFile          = ibex_pkg::RegFileFF,
+    parameter bit                 BranchTargetALU  = 1'b0,
+    parameter bit                 WritebackStage   = 1'b0,
+    parameter bit                 ICache           = 1'b0,
+    parameter bit                 ICacheECC        = 1'b0,
+    parameter bit                 DbgTriggerEn     = 1'b0,
+    parameter bit                 SecureIbex       = 1'b0,
+    parameter int unsigned        DmHaltAddr       = 32'h1A110800,
+    parameter int unsigned        DmExceptionAddr  = 32'h1A110808
 ) (
     // Clock and Reset
     input  logic        clk_i,
@@ -809,28 +810,67 @@ module ibex_core #(
     assign rf_ecc_err_comb         = 1'b0;
   end
 
-  ibex_register_file #(
-      .RV32E             (RV32E),
-      .DataWidth         (RegFileDataWidth),
-      .DummyInstructions (DummyInstructions)
-  ) register_file_i (
-      .clk_i            ( clk_i           ),
-      .rst_ni           ( rst_ni          ),
+  if (RegFile == RegFileFF) begin : gen_regfile_ff
+    ibex_register_file_ff #(
+        .RV32E             ( RV32E             ),
+        .DataWidth         ( RegFileDataWidth  ),
+        .DummyInstructions ( DummyInstructions )
+    ) register_file_i (
+        .clk_i            ( clk_i           ),
+        .rst_ni           ( rst_ni          ),
 
-      .test_en_i        ( test_en_i       ),
-      .dummy_instr_id_i ( dummy_instr_id  ),
+        .test_en_i        ( test_en_i       ),
+        .dummy_instr_id_i ( dummy_instr_id  ),
 
-      // Read port a
-      .raddr_a_i        ( rf_raddr_a      ),
-      .rdata_a_o        ( rf_rdata_a_ecc  ),
-      // Read port b
-      .raddr_b_i        ( rf_raddr_b      ),
-      .rdata_b_o        ( rf_rdata_b_ecc  ),
-      // write port
-      .waddr_a_i        ( rf_waddr_wb     ),
-      .wdata_a_i        ( rf_wdata_wb_ecc ),
-      .we_a_i           ( rf_we_wb        )
-  );
+        .raddr_a_i        ( rf_raddr_a      ),
+        .rdata_a_o        ( rf_rdata_a_ecc  ),
+        .raddr_b_i        ( rf_raddr_b      ),
+        .rdata_b_o        ( rf_rdata_b_ecc  ),
+        .waddr_a_i        ( rf_waddr_wb     ),
+        .wdata_a_i        ( rf_wdata_wb_ecc ),
+        .we_a_i           ( rf_we_wb        )
+    );
+  end else if (RegFile == RegFileFPGA) begin : gen_regfile_fpga
+    ibex_register_file_fpga #(
+        .RV32E             ( RV32E             ),
+        .DataWidth         ( RegFileDataWidth  ),
+        .DummyInstructions ( DummyInstructions )
+    ) register_file_i (
+        .clk_i            ( clk_i           ),
+        .rst_ni           ( rst_ni          ),
+
+        .test_en_i        ( test_en_i       ),
+        .dummy_instr_id_i ( dummy_instr_id  ),
+
+        .raddr_a_i        ( rf_raddr_a      ),
+        .rdata_a_o        ( rf_rdata_a_ecc  ),
+        .raddr_b_i        ( rf_raddr_b      ),
+        .rdata_b_o        ( rf_rdata_b_ecc  ),
+        .waddr_a_i        ( rf_waddr_wb     ),
+        .wdata_a_i        ( rf_wdata_wb_ecc ),
+        .we_a_i           ( rf_we_wb        )
+    );
+  end else if (RegFile == RegFileLatch) begin : gen_regfile_latch
+    ibex_register_file_latch #(
+        .RV32E             ( RV32E             ),
+        .DataWidth         ( RegFileDataWidth  ),
+        .DummyInstructions ( DummyInstructions )
+    ) register_file_i (
+        .clk_i            ( clk_i           ),
+        .rst_ni           ( rst_ni          ),
+
+        .test_en_i        ( test_en_i       ),
+        .dummy_instr_id_i ( dummy_instr_id  ),
+
+        .raddr_a_i        ( rf_raddr_a      ),
+        .rdata_a_o        ( rf_rdata_a_ecc  ),
+        .raddr_b_i        ( rf_raddr_b      ),
+        .rdata_b_o        ( rf_rdata_b_ecc  ),
+        .waddr_a_i        ( rf_waddr_wb     ),
+        .wdata_a_i        ( rf_wdata_wb_ecc ),
+        .we_a_i           ( rf_we_wb        )
+    );
+  end
 
   ///////////////////
   // Alert outputs //
