@@ -80,7 +80,7 @@ verb = $(if $(filter-out 0,$(VERBOSE)),,@)
 
 SHELL=/bin/bash
 
-export PRJ_DIR:= $(realpath ../../../..)
+export PRJ_DIR:= $(realpath ../../..)
 
 all: sim
 
@@ -139,7 +139,7 @@ sim-cfg-mk = $(OUT)/.sim-cfg.mk
 # MAKE_RESTARTS, which is defined on re-runs. Phew!
 ifndef MAKE_RESTARTS
 $(sim-cfg-mk): FORCE | $(OUT)
-	@./sim_makefrag_gen.py $(SIMULATOR) $(IBEX_CONFIG) $(PRJ_DIR)/ibex $@
+	@./sim_makefrag_gen.py $(SIMULATOR) $(IBEX_CONFIG) $(PRJ_DIR) $@
 endif
 
 include $(sim-cfg-mk)
