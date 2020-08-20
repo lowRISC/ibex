@@ -14,6 +14,10 @@
   `define RV32B ibex_pkg::RV32BNone
 `endif
 
+`ifndef RegFile
+  `define RegFile ibex_pkg::RegFileFF
+`endif
+
 /**
  * Ibex simple system
  *
@@ -31,16 +35,17 @@ module ibex_simple_system (
   input IO_RST_N
 );
 
-  parameter bit               SecureIbex               = 1'b0;
-  parameter bit               PMPEnable                = 1'b0;
-  parameter int unsigned      PMPGranularity           = 0;
-  parameter int unsigned      PMPNumRegions            = 4;
-  parameter bit               RV32E                    = 1'b0;
-  parameter ibex_pkg::rv32m_e RV32M                    = `RV32M;
-  parameter ibex_pkg::rv32b_e RV32B                    = `RV32B;
-  parameter bit               BranchTargetALU          = 1'b0;
-  parameter bit               WritebackStage           = 1'b0;
-  parameter                   SRAMInitFile             = "";
+  parameter bit                 SecureIbex               = 1'b0;
+  parameter bit                 PMPEnable                = 1'b0;
+  parameter int unsigned        PMPGranularity           = 0;
+  parameter int unsigned        PMPNumRegions            = 4;
+  parameter bit                 RV32E                    = 1'b0;
+  parameter ibex_pkg::rv32m_e   RV32M                    = `RV32M;
+  parameter ibex_pkg::rv32b_e   RV32B                    = `RV32B;
+  parameter ibex_pkg::regfile_e RegFile                  = `RegFile;
+  parameter bit                 BranchTargetALU          = 1'b0;
+  parameter bit                 WritebackStage           = 1'b0;
+  parameter                     SRAMInitFile             = "";
 
   logic clk_sys = 1'b0, rst_sys_n;
 
@@ -162,6 +167,7 @@ module ibex_simple_system (
       .RV32E           ( RV32E           ),
       .RV32M           ( RV32M           ),
       .RV32B           ( RV32B           ),
+      .RegFile         ( RegFile         ),
       .BranchTargetALU ( BranchTargetALU ),
       .WritebackStage  ( WritebackStage  ),
       .DmHaltAddr      ( 32'h00100000    ),

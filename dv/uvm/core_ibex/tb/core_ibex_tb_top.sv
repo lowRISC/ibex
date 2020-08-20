@@ -41,12 +41,17 @@ module core_ibex_tb_top;
     `define IBEX_CFG_RV32B ibex_pkg::RV32BNone
   `endif
 
+  `ifndef IBEX_CFG_RegFile
+    `define IBEX_CFG_RegFile ibex_pkg::RegFileFF
+  `endif
+
   parameter bit          PMPEnable       = 1'b0;
   parameter int unsigned PMPGranularity  = 0;
   parameter int unsigned PMPNumRegions   = 4;
   parameter bit RV32E                    = 1'b0;
   parameter ibex_pkg::rv32m_e RV32M      = `IBEX_CFG_RV32M;
   parameter ibex_pkg::rv32b_e RV32B      = `IBEX_CFG_RV32B;
+  parameter ibex_pkg::regfile_e RegFile  = `IBEX_CFG_RegFile;
   parameter bit BranchTargetALU          = 1'b0;
   parameter bit WritebackStage           = 1'b0;
 
@@ -59,6 +64,7 @@ module core_ibex_tb_top;
     .RV32E           (RV32E            ),
     .RV32M           (RV32M            ),
     .RV32B           (RV32B            ),
+    .RegFile         (RegFile          ),
     .BranchTargetALU (BranchTargetALU  ),
     .WritebackStage  (WritebackStage   )
   ) dut (

@@ -22,13 +22,6 @@ lint_off -rule WIDTH -file "*/rtl/ibex_core_tracing.sv" -match "*'WritebackStage
 lint_off -rule WIDTH -file "*/rtl/ibex_core_tracing.sv" -match "*'SecureIbex'*"
 lint_off -rule WIDTH -file "*/rtl/ibex_core_tracing.sv" -match "*'PMPEnable'*"
 
-// Filename 'ibex_register_file_ff' does not match MODULE name: ibex_register_file
-// ibex_register_file_ff and ibex_register_file_latch provide two
-// implementation choices for the same module.
-lint_off -rule DECLFILENAME -file "*/rtl/ibex_register_file_ff.sv"
-lint_off -rule DECLFILENAME -file "*/rtl/ibex_register_file_latch.sv"
-lint_off -rule DECLFILENAME -file "*/rtl/ibex_register_file_fpga.sv"
-
 // Bits of signal are not used: shift_amt_compl[5]
 // cleaner to write all bits even if not all are used
 lint_off -rule UNUSED -file "*/rtl/ibex_alu.sv" -match "*'shift_amt_compl'[5]*"

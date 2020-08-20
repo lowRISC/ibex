@@ -42,7 +42,7 @@ The decoder takes uncompressed instruction data and issues appropriate control s
 
 Register File
 -------------
-Source Files: :file:`rtl/ibex_register_file_ff.sv` :file:`rtl/ibex_register_file_latch.sv`
+Source Files: :file:`rtl/ibex_register_file_ff.sv` :file:`rtl/ibex_register_file_fpga.sv` :file:`rtl/ibex_register_file_latch.sv`
 
 See :ref:`register-file` for more details.
 
