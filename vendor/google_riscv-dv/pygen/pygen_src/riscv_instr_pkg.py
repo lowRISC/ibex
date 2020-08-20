@@ -24,7 +24,7 @@ class mem_region_t:
     xwr = auto()
 
 
-class satp_mode_t(Enum):
+class satp_mode_t(IntEnum):
     BARE = 0b0000
     SV32 = 0b0001
     SV39 = 0b1000
@@ -33,7 +33,7 @@ class satp_mode_t(Enum):
     SV64 = 0b1011
 
 
-class f_rounding_mode_t(Enum):
+class f_rounding_mode_t(IntEnum):
     RNE = 0b000
     RTZ = 0b001
     RDN = 0b010
@@ -41,26 +41,26 @@ class f_rounding_mode_t(Enum):
     RMM = 0b100
 
 
-class mtvec_mode_t(Enum):
+class mtvec_mode_t(IntEnum):
     DIRECT = 0b00
     VECTORED = 0b01
 
 
-class imm_t(Enum):
+class imm_t(IntEnum):
     IMM = 0
     UIMM = auto()
     NZUIMM = auto()
     NZIMM = auto()
 
 
-class privileged_mode_t(Enum):
+class privileged_mode_t(IntEnum):
     USER_MODE = 0b00
     SUPERVISOR_MODE = 0b01
     RESERVED_MODE = 0b10
     MACHINE_MODE = 0b11
 
 
-class riscv_instr_group_t(Enum):
+class riscv_instr_group_t(IntEnum):
     RV32I = 0
     RV64I = auto()
     RV32M = auto()
@@ -85,7 +85,7 @@ class riscv_instr_group_t(Enum):
     RV64X = auto()
 
 
-class riscv_instr_name_t(Enum):
+class riscv_instr_name_t(IntEnum):
     LUI = 0
     AUIPC = auto()
     JAL = auto()
@@ -595,7 +595,7 @@ class riscv_reg_t(IntEnum):
     T6 = auto()
 
 
-class riscv_fpr_t(Enum):
+class riscv_fpr_t(IntEnum):
     FT0 = 0
     FT1 = auto()
     FT2 = auto()
@@ -630,7 +630,7 @@ class riscv_fpr_t(Enum):
     FT11 = auto()
 
 
-class riscv_vreg_t(Enum):
+class riscv_vreg_t(IntEnum):
     V0 = 0
     V1 = auto()
     V2 = auto()
@@ -665,7 +665,7 @@ class riscv_vreg_t(Enum):
     V31 = auto()
 
 
-class riscv_instr_format_t(Enum):
+class riscv_instr_format_t(IntEnum):
     J_FORMAT = 0
     U_FORMAT = auto()
     I_FORMAT = auto()
@@ -689,7 +689,7 @@ class riscv_instr_format_t(Enum):
     VS_FORMAT = auto()
 
 
-class va_variant_t(Enum):
+class va_variant_t(IntEnum):
     VV = 0
     VI = auto()
     VX = auto()
@@ -705,7 +705,7 @@ class va_variant_t(Enum):
     VM = auto()
 
 
-class riscv_instr_category_t(Enum):
+class riscv_instr_category_t(IntEnum):
     LOAD = 0
     STORE = auto()
     SHIFT = auto()
@@ -727,7 +727,7 @@ class riscv_instr_category_t(Enum):
 # typedef bit[11:0] riscv_csr_t;
 
 
-class privileged_reg_t(Enum):
+class privileged_reg_t(IntEnum):
     USTATUS = 0x000
     UIE = 0x004
     UTVEC = 0x005
@@ -958,7 +958,7 @@ class privileged_reg_t(Enum):
     VLENB = 0xC22
 
 
-class privileged_reg_fld_t(Enum):
+class privileged_reg_fld_t(IntEnum):
     RSVD = 0
     MXL = auto()
     EXTENSION = auto()
@@ -967,30 +967,30 @@ class privileged_reg_fld_t(Enum):
     PPN = auto()
 
 
-class privileged_level_t(Enum):
+class privileged_level_t(IntEnum):
     M_LEVEL = 0b11
     S_LEVEL = 0b01
     U_LEVEL = 0b00
 
 
-class reg_field_access_t(Enum):
+class reg_field_access_t(IntEnum):
     WPRI = 0
     WLRL = auto()
     WARL = auto()
 
 
-class riscv_pseudo_instr_name_t(Enum):
+class riscv_pseudo_instr_name_t(IntEnum):
     LI = 0
     LA = auto()
 
 
-class data_pattern_t(Enum):
+class data_pattern_t(IntEnum):
     RAND_DATA = 0
     ALL_ZERO = auto()
     INCR_VAL = auto()
 
 
-class pte_permission_t(Enum):
+class pte_permission_t(IntEnum):
     NEXT_LEVEL_PAGE = 0b000
     READ_ONLY_PAGE = 0b001
     READ_WRITE_PAGE = 0b011
@@ -999,7 +999,7 @@ class pte_permission_t(Enum):
     R_W_EXECUTE_PAGE = 0b111
 
 
-class interrupt_cause_t(Enum):
+class interrupt_cause_t(IntEnum):
     U_SOFTWARE_INTR = 0x0
     S_SOFTWARE_INTR = 0x1
     M_SOFTWARE_INTR = 0x3
@@ -1011,7 +1011,7 @@ class interrupt_cause_t(Enum):
     M_EXTERNAL_INTR = 0xB
 
 
-class exception_cause_t(Enum):
+class exception_cause_t(IntEnum):
     INSTRUCTION_ADDRESS_MISALIGNED = 0x0
     INSTRUCTION_ACCESS_FAULT = 0x1
     ILLEGAL_INSTRUCTION = 0x2
@@ -1028,7 +1028,7 @@ class exception_cause_t(Enum):
     STORE_AMO_PAGE_FAULT = 0xF
 
 
-class misa_ext_t(Enum):
+class misa_ext_t(IntEnum):
     MISA_EXT_A = 0
     MISA_EXT_B = auto()
     MISA_EXT_C = auto()
@@ -1070,6 +1070,15 @@ class hazard_e(IntEnum):
 class branch_hazard_e(IntEnum):
     NO_HAZARD = 0
     RAW_HAZARD = auto()
+
+
+# RV32I_MISC covergroup instructions
+class rv32i_misc_instrs(IntEnum):
+    FENCE = 0
+    FENCE_I = auto()
+    EBREAK = auto()
+    ECALL = auto()
+    MRET = auto()
 
 # Ignore RAW_HAZARD for store lsu hazard
 class store_lsu_hazard_e(IntEnum):

@@ -178,6 +178,7 @@ class riscv_instr_cover_group:
 
     '''TODO: covergroup inheritance is broken at the moment. The workaround 
     will be switched back to the inheritance approach once it gets fixed'''
+
     # @vsc.covergroup
     # class lb_cg(load_instr_cg):
     #     def __init__(self, instr):
@@ -1049,8 +1050,8 @@ class riscv_instr_cover_group:
                                               cp_t=vsc.enum_t(operand_sign_e))
             self.cp_branch_hit = vsc.coverpoint(lambda: instr.branch_hit,
                                                 bins={
+                                                    "Non-taken": vsc.bin(0),
                                                     "Taken"    : vsc.bin(1),
-                                                    "Non-taken": vsc.bin(0)
                                                 }
                                                 )
             self.cp_sign_cross = vsc.cross([self.cp_rs1_sign,
@@ -1334,17 +1335,73 @@ class riscv_instr_cover_group:
             self.cp_align = vsc.cross([self.cp_imm_align, self.cp_rs1_align])
             self.cp_ras = vsc.cross([self.cp_rs1_link, self.cp_rd_link])
 
+    '''CSR instructions'''
+
+    @vsc.covergroup
+    class csrrw_cg(object):
+        def __init__(self, instr):
+            super().__init__()
+
+            self.cp_rd = vsc.coverpoint(lambda: instr.rd,
+                                        cp_t=vsc.enum_t(riscv_reg_t))
+            self.cp_gpr_hazard = vsc.coverpoint(lambda: instr.gpr_hazard,
+                                                cp_t=vsc.enum_t(hazard_e))
+            self.cp_rs1 = vsc.coverpoint(lambda: instr.rs1,
+                                         cp_t=vsc.enum_t(riscv_reg_t))
+
+    @vsc.covergroup
+    class opcode_cg(object):
+        def __init__(self, instr):
+            super().__init__()
+
+            self.cp_opcode = vsc.coverpoint(lambda: instr.binary[7:2],
+                                            bins={
+                                                "a": vsc.bin_array([], [0, 31])
+                                            }
+                                            )
+
+    @vsc.covergroup
+    class rv32i_misc_cg(object):
+        def __init__(self, instr):
+            super().__init__()
+
+            self.cp_misc = vsc.coverpoint(lambda: instr.instr,
+                                          cp_t=vsc.enum_t(rv32i_misc_instrs))
+
+    @vsc.covergroup
+    class mepc_alignment_cg(object):
+        def __init__(self, instr):
+            super().__init__()
+
+            self.cp_align = vsc.coverpoint(lambda: instr.rd_value[2:0],
+                                           bins={
+                                               "Zero": vsc.bin(0),
+                                               "Two" : vsc.bin(2)
+                                           }
+                                           )
+
     def sample(self, instr):
         self.instr_cnt += 1
         if self.instr_cnt > 1:
             instr.check_hazard_condition(self.pre_instr)
-        # TODO: sampling based on the instruction binary
+        # TODO: sampling for hint, compressed, and illegal_compressed insts
+        if instr.binary[2:0] == 3:
+            opcode_cg = self.opcode_cg(instr)
+            opcode_cg.sample()
         try:
             cg = eval("self." + instr.instr.name.lower() + "_cg")(instr)
             cg.sample()
         except Exception:
             logging.info("Covergroup for instr {} is not supported yet".format(
                 instr.instr.name))
+        if instr.group.name == "RV32I":
+            rv32i_misc_cg = self.rv32i_misc_cg(instr)
+            rv32i_misc_cg.sample()
+        if instr.category.name == "CSR":
+            # MEPC
+            if instr.csr == 833:
+                mepc_alignment_cg = self.mepc_alignment_cg(instr)
+                mepc_alignment_cg.sample()
         self.pre_instr = instr
 
     def reset(self):

@@ -16,7 +16,7 @@ import random
 from collections import defaultdict
 from pygen_src.riscv_instr_stream import riscv_rand_instr_stream
 from pygen_src.riscv_instr_gen_config import cfg
-from pygen_src.riscv_instr_pkg import pkg_ins
+from pygen_src.riscv_instr_pkg import pkg_ins, riscv_instr_category_t
 
 
 class riscv_instr_sequence:
@@ -117,7 +117,7 @@ class riscv_instr_sequence:
             self.branch_idx[i] = random.randint(1, cfg.max_branch_step)
 
         while(j < len(self.instr_stream.instr_list)):
-            if((self.instr_stream.instr_list[j].category.name == "BRANCH") and
+            if((self.instr_stream.instr_list[j].category == riscv_instr_category_t.BRANCH) and
                     (not self.instr_stream.instr_list[j].branch_assigned) and
                     (not self.instr_stream.instr_list[j].is_illegal_instr)):
                 '''
