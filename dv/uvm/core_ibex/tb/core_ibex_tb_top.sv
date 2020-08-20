@@ -29,8 +29,10 @@ module core_ibex_tb_top;
   // CSR access interface
   core_ibex_csr_if csr_if(.clk(clk));
 
-  // You cannot override string parameters in VCS via the command line so a `define is used instead
-  // that can be set from the command line. If no value has been specified this gives a default.
+  // VCS does not support overriding enum and string parameters via command line. Instead, a
+  // `define is used that can be set from the command line. If no value has been specified, this
+  // gives a default. Other simulators don't take the detour via `define and can override the
+  // corresponding parameters directly.
   `ifndef IBEX_CFG_RV32M
     `define IBEX_CFG_RV32M ibex_pkg::RV32MFast
   `endif
