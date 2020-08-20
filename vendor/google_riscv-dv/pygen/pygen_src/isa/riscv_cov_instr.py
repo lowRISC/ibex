@@ -63,7 +63,6 @@ class riscv_cov_instr:
     def __init__(self):
         # Program counter (PC) of the instruction
         self.pc = vsc.bit_t(rcs.XLEN)
-            rcs.XLEN)  # Program counter (PC) of the instruction
         self.instr = None
         # self.gpr = None  # destination operand of the instruction
         self.binary = vsc.bit_t(32)  # Instruction binary

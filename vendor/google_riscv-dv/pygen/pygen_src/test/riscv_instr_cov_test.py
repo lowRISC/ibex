@@ -116,6 +116,8 @@ class riscv_instr_cov_test:
         file.write(tabulate(table, headers, tablefmt="grid",
                             numalign="center", stralign="center"))
         file.close()
+        # Write in xml format to be read by pyucis-viewer (visualization)
+        vsc.write_coverage_db("cov_db.xml")
 
     def post_process_trace(self):
         pass
