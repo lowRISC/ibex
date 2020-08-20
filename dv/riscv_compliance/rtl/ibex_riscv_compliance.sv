@@ -20,7 +20,7 @@ module ibex_riscv_compliance (
   parameter int unsigned PMPNumRegions   = 4;
   parameter bit RV32E                    = 1'b0;
   parameter bit RV32M                    = 1'b1;
-  parameter bit RV32B                    = 1'b0;
+  parameter ibex_pkg::rv32b_e RV32B      = ibex_pkg::RV32BNone;
   parameter     MultiplierImplementation = "fast";
   parameter bit BranchTargetALU          = 1'b0;
   parameter bit WritebackStage           = 1'b0;

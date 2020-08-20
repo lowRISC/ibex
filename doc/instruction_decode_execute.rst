@@ -67,10 +67,13 @@ Other blocks use the ALU for the following tasks:
 Bit Manipulation Extension
   Support for the `RISC-V Bit Manipulation Extension (draft version 0.92 from November 8, 2019) <https://github.com/riscv/riscv-bitmanip/blob/master/bitmanip-0.92.pdf>`_ is optional. [#B_draft]_
   It can be enabled via the enumerated parameter ``RV32B`` defined in :file:`rtl/ibex_pkg.sv`.
+  By default, this parameter is set to "ibex_pkg::RV32BNone" to disable the bit manipulation extension.
 
   There are two versions of the bit manipulation extension available:
   The balanced implementation comprises a set of sub-extensions aiming for good benefits at a reasonable area overhead.
+  It can be selected by setting the ``RV32B`` parameter to "ibex_pkg::RV32BBalanced".
   The full implementation comprises all 32 bit instructions defined in the extension.
+  This version can be selected by setting the ``RV32B`` parameter to "ibex_pkg::RV32BFull".
   The following table lists the implemented instructions in each version.
   Multi-cycle instructions are completed in 2 cycles.
   All remaining instructions complete in a single cycle.
@@ -84,7 +87,7 @@ Bit Manipulation Extension
   +---------------------------------+---------------+--------------------------+
   | Zbp (Permutation)               | Full          | None                     |
   +---------------------------------+---------------+--------------------------+
-  | Zbp (Bit extract/deposit)       | Full          | All                      |
+  | Zbe (Bit extract/deposit)       | Full          | All                      |
   +---------------------------------+---------------+--------------------------+
   | Zbf (Bit-field place)           | Balanced/Full | All                      |
   +---------------------------------+---------------+--------------------------+

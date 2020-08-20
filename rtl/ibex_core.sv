@@ -9,10 +9,6 @@
 
 `include "prim_assert.sv"
 
-`ifndef RV32B
-  `define RV32B ibex_pkg::RV32BNone
-`endif
-
 /**
  * Top level module of the ibex RISC-V core
  */
@@ -24,7 +20,7 @@ module ibex_core #(
     parameter int unsigned      MHPMCounterWidth         = 40,
     parameter bit               RV32E                    = 1'b0,
     parameter bit               RV32M                    = 1'b1,
-    parameter ibex_pkg::rv32b_e RV32B                    = `RV32B,
+    parameter ibex_pkg::rv32b_e RV32B                    = ibex_pkg::RV32BNone,
     parameter bit               BranchTargetALU          = 1'b0,
     parameter bit               WritebackStage           = 1'b0,
     parameter                   MultiplierImplementation = "fast",

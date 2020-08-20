@@ -93,11 +93,10 @@ Parameters
 +------------------------------+-------------------+------------+-----------------------------------------------------------------+
 | ``RV32M``                    | bit               | 1          | M(ultiply) extension enable                                     |
 +------------------------------+-------------------+------------+-----------------------------------------------------------------+
-| ``RV32B``                    | ibex_pkg::rv32b_e | RV32BNone  | *EXPERIMENTAL* - B(itmanipulation) extension select:            |
-|                              |                   |            | "RV32BNone": No B-extension                                     |
-|                              |                   |            | "RV32BBalanced": Sub-extensions Zbb, Zbs, Zbf and               |
-|                              |                   |            | Zbt                                                             |
-|                              |                   |            | "RV32Full": All sub-extensions                                  |
+| ``RV32B``                    | ibex_pkg::rv32b_e | RV32BNone  | B(itmanipulation) extension select:                             |
+|                              |                   |            | "ibex_pkg::RV32BNone": No B-extension                           |
+|                              |                   |            | "ibex_pkg::RV32BBalanced": Sub-extensions Zbb, Zbs, Zbf and Zbt |
+|                              |                   |            | "ibex_pkg::RV32Full": All sub-extensions                        |
 +------------------------------+-------------------+------------+-----------------------------------------------------------------+
 | ``BranchTargetALU``          | bit               | 0          | *EXPERIMENTAL* - Enables branch target ALU removing a stall     |
 |                              |                   |            | cycle from taken branches                                       |
