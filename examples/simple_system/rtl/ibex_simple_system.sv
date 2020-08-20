@@ -2,6 +2,10 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
+// VCS does not support overriding enum and string parameters via command line. Instead, a `define
+// is used that can be set from the command line. If no value has been specified, this gives a
+// default. Other simulators don't take the detour via `define and can override the corresponding
+// parameters directly.
 `ifndef RV32M
   `define RV32M ibex_pkg::RV32MFast
 `endif
