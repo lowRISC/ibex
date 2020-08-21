@@ -43,7 +43,7 @@ module top_artya7 (
 
 
   ibex_core #(
-     .RegFile(RegFileFPGA),
+     .RegFile(ibex_pkg::RegFileFPGA),
      .DmHaltAddr(32'h00000000),
      .DmExceptionAddr(32'h00000000)
   ) u_core (
