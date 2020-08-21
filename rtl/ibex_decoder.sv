@@ -535,11 +535,9 @@ module ibex_decoder #(
       /////////////
 
       OPCODE_MISC_MEM: begin
-        // For now, treat the FENCE (funct3 == 000) instruction as a NOP.  This may not be correct
-        // in a system with caches and should be revisited.
-        // FENCE.I will flush the IF stage and prefetch buffer (or ICache) but nothing else.
         unique case (instr[14:12])
           3'b000: begin
+            // FENCE is treated as a NOP since all memory operations are already strictly ordered.
             rf_we           = 1'b0;
           end
           3'b001: begin
@@ -1078,16 +1076,15 @@ module ibex_decoder #(
       /////////////
 
       OPCODE_MISC_MEM: begin
-        // For now, treat the FENCE (funct3 == 000) instruction as a NOP.  This may not be correct
-        // in a system with caches and should be revisited.
-        // FENCE.I will flush the IF stage and prefetch buffer but nothing else.
         unique case (instr_alu[14:12])
           3'b000: begin
+            // FENCE is treated as a NOP since all memory operations are already strictly ordered.
             alu_operator_o     = ALU_ADD; // nop
             alu_op_a_mux_sel_o = OP_A_REG_A;
             alu_op_b_mux_sel_o = OP_B_IMM;
           end
           3'b001: begin
+            // FENCE.I will flush the IF stage, prefetch buffer and ICache if present.
             if (BranchTargetALU) begin
               bt_a_mux_sel_o     = OP_A_CURRPC;
               bt_b_mux_sel_o     = IMM_B_INCR_PC;
