@@ -337,7 +337,6 @@ module ibex_controller #(
     else if (irqs_i.irq_fast[ 7]) mfip_id = 4'd7;
     else if (irqs_i.irq_fast[ 6]) mfip_id = 4'd6;
     else if (irqs_i.irq_fast[ 5]) mfip_id = 4'd5;
-    else if (irqs_i.irq_fast[ 5]) mfip_id = 4'd5;
     else if (irqs_i.irq_fast[ 4]) mfip_id = 4'd4;
     else if (irqs_i.irq_fast[ 3]) mfip_id = 4'd3;
     else if (irqs_i.irq_fast[ 2]) mfip_id = 4'd2;
