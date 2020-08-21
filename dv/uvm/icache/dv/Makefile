@@ -24,6 +24,9 @@ RESEED=1
 default-seed := 123
 SEED=$(if $(filter 1,$(RESEED)),$(default-seed),)
 
+# Extra arguments passed to dvsim
+DVSIM_EXTRA_ARGS=
+
 # Specify which tests to run. Defaults to the empty string, which
 # means dvsim will run its default (the "sanity" suite).
 TESTS=
@@ -46,4 +49,5 @@ dvsim-mk-args := \
 
 .PHONY: run
 run:
-	$(dvsim-py) ibex_icache_sim_cfg.hjson $(dvsim-std-args) $(dvsim-mk-args)
+	$(dvsim-py) ibex_icache_sim_cfg.hjson $(dvsim-std-args) $(dvsim-mk-args) \
+	  $(DVSIM_EXTRA_ARGS)
