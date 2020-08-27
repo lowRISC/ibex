@@ -387,9 +387,6 @@ module ibex_if_stage #(
   // Boot address must be aligned to 256 bytes.
   `ASSERT(IbexBootAddrUnaligned, boot_addr_i[7:0] == 8'h00)
 
-  // Errors must only be sent together with rvalid.
-  `ASSERT(IbexInstrErrWithoutRvalid, instr_err_i |-> instr_rvalid_i)
-
   // Address must not contain X when request is sent.
   `ASSERT(IbexInstrAddrUnknown, instr_req_o |-> !$isunknown(instr_addr_o))
 
