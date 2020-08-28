@@ -12,7 +12,7 @@ filesets:
       - lowrisc:ibex:ibex_icache
       - lowrisc:prim:assert
     files:
-      - run.sby : {file_type: sbyConfig}
+      - run.sby.j2 : {file_type: sbyConfigTemplate}
       - formal_tb_frag.svh : {file_type: systemVerilogSource, is_include_file: true}
       - formal_tb.sv : {file_type: systemVerilogSource}
       - sv2v_in_place.py : { copyto: sv2v_in_place.py }
