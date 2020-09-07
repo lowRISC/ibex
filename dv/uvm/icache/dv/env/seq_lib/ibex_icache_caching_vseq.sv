@@ -15,8 +15,8 @@ class ibex_icache_caching_vseq extends ibex_icache_base_vseq;
     core_seq.initial_enable     = 1'b1;
     core_seq.const_enable       = 1'b1;
 
-    // Don't invalidate the cache (since that will lower the hit rate)
-    core_seq.no_invalidate = 1'b1;
+    // Try not to invalidate the cache (since that will lower the hit rate)
+    core_seq.avoid_invalidation = 1'b1;
 
   endtask : pre_start
 

@@ -16,8 +16,8 @@ class ibex_icache_oldval_vseq extends ibex_icache_base_vseq;
     // Increase the frequency of cache enable/disable toggling
     core_seq.gap_between_toggle_enable = 2;
 
-    // Don't invalidate the cache (we want old values!)
-    core_seq.no_invalidate = 1'b1;
+    // Avoid invalidating the cache (we want old values!)
+    core_seq.avoid_invalidation = 1'b1;
 
   endtask : pre_start
 
