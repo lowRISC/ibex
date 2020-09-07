@@ -33,7 +33,7 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
 
   // If this bit is set, we will never invalidate the cache (useful for hit ratio tracking), except
   // if must_invalidate is set.
-  bit no_invalidate = 1'b0;
+  bit avoid_invalidation = 1'b0;
 
   // The expected number of items between each new memory seed when the cache is disabled. A new
   // memory seed when the cache is disabled implies that the next time the cache is enabled, we must
@@ -150,9 +150,8 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
        // If must_invalidate is set, we have to invalidate with this item.
        must_invalidate -> invalidate == 1'b1;
 
-       // If no_invalidate is set, we shouldn't ever touch the invalidate line, unless
-       // must_invalidate is set (which will only apply once).
-       (no_invalidate && !must_invalidate) -> invalidate == 1'b0;
+       // If avoid_invalidation is set, we won't touch the invalidate line, unless we have to.
+       (avoid_invalidation && !(must_invalidate || (stale_seed && enable))) -> invalidate == 1'b0;
 
        // Start an invalidation every 1+gap_between_invalidations items.
        invalidate dist { 1'b0 :/ gap_between_invalidations, 1'b1 :/ 1 };
