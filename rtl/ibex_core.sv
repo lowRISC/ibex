@@ -107,7 +107,7 @@ module ibex_core #(
     // Trace port according to the RISC-V Trace Specification v1.0
     output logic [2:0]  rv_trace_itype,
     output logic [31:0] rv_trace_iaddr,
-    output logic [6:0]  rv_trace_cause,
+    output logic [5:0]  rv_trace_cause,
     output logic [31:0] rv_trace_tval,
     output logic [1:0]  rv_trace_priv, 
     output logic        rv_trace_iretire,
@@ -347,12 +347,6 @@ module ibex_core #(
   logic [31:0] rvfi_mem_addr_q;
   logic        rf_ren_a;
   logic        rf_ren_b;
-`endif
-
-  // RISC-V Trace Interface signals
-`ifdef RV_TRACE
-  logic pc_1st_in_intr;
-  logic pc_1st_in_trap;
 `endif
 
 
@@ -1328,32 +1322,17 @@ module ibex_core #(
 
   localparam RV_TRACE_STAGES = WritebackStage ? 2 : 1;
 
-  logic [31:0] rv_trace_iaddr_stage   [RV_TRACE_STAGES-1:0];
-  logic [31:0] rv_trace_tval_stage    [RV_TRACE_STAGES-1:0];
-  logic        rv_trace_iretire_stage [RV_TRACE_STAGES-1:0];
-  logic [2:0]  rv_trace_itype_stage   [RV_TRACE_STAGES-1:0];
-  logic [5:0]  rv_exc_cause_stage     [RV_TRACE_STAGES-1:0];
-  logic [ 1:0] rv_trace_priv_stage   [RV_TRACE_STAGES-1:0];
+  logic [31:0] rv_trace_iaddr_stage    [RV_TRACE_STAGES-1:0];
+  logic [31:0] rv_trace_tval_stage     [RV_TRACE_STAGES-1:0];
+  logic        rv_trace_iretire_stage  [RV_TRACE_STAGES-1:0];
+  logic [2:0]  rv_trace_itype_stage    [RV_TRACE_STAGES-1:0];
+  logic [5:0]  rv_trace_cause_stage    [RV_TRACE_STAGES-1:0];
+  logic [1:0]  rv_trace_priv_stage     [RV_TRACE_STAGES-1:0];
 
-  logic        rv_trace_iretire_d     [RV_TRACE_STAGES-1:0];
-
-  always_comb begin
-    // Is it the first inst in an interrupt?
-    if ( pc_set && ( pc_mux_id == PC_EXC ) && ( exc_pc_mux_id == EXC_PC_IRQ ) ) begin 
-      pc_1st_in_intr = 1'b1;
-    end else begin
-      pc_1st_in_intr = 1'b0;
-    end
-    // Is it the first inst in a trap?
-    if ( pc_set && ( pc_mux_id == PC_EXC ) && ( exc_pc_mux_id == EXC_PC_EXC ) ) begin
-      // PC is set to enter a trap handler
-      pc_1st_in_trap = 1'b1;
-    end else begin
-      pc_1st_in_trap = 1'b0;
-    end
-
-  end
-
+  logic        rv_trace_iretire_d      [RV_TRACE_STAGES-1:0];
+  logic        rv_trace_perf_branch_d  [RV_TRACE_STAGES-1:0];
+  logic        rv_trace_perf_tbranch_d [RV_TRACE_STAGES-1:0];
+   
   if (WritebackStage) begin
     assign rv_trace_iretire_d[0] = (instr_id_done & ~dummy_instr_id) |
                                    (rv_trace_iretire_stage[0] & ~instr_done_wb);
@@ -1368,7 +1347,7 @@ module ibex_core #(
   assign rv_trace_iretire = rv_trace_iretire_stage [RV_TRACE_STAGES-1];
   assign rv_trace_iaddr   = rv_trace_iaddr_stage   [RV_TRACE_STAGES-1];
   assign rv_trace_itype   = rv_trace_itype_stage   [RV_TRACE_STAGES-1];
-  assign rv_trace_cause   = { rv_exc_cause_stage   [RV_TRACE_STAGES-1] , csr_save_cause }; 
+  assign rv_trace_cause   = rv_trace_cause_stage   [RV_TRACE_STAGES-1]; 
   assign rv_trace_tval    = rv_trace_tval_stage    [RV_TRACE_STAGES-1];
   assign rv_trace_priv    = rv_trace_priv_stage    [RV_TRACE_STAGES-1];
 
@@ -1378,40 +1357,52 @@ module ibex_core #(
       if (!rst_ni) begin
         rv_trace_iaddr_stage[i]   <= '0;  
         rv_trace_iretire_stage[i] <=  0;
-        rv_exc_cause_stage[i]     <= '0; 
+        rv_trace_itype_stage[i]   <= '0;
+        rv_trace_cause_stage[i]   <= '0; 
         rv_trace_tval_stage[i]    <= '0; 
-        rv_trace_priv_stage[i]    <= {PRIV_LVL_M};
+        rv_trace_priv_stage[i]    <= PRIV_LVL_M;
+	rv_trace_perf_branch_d[i] <= 0;
+	rv_trace_perf_tbranch_d[i]<= 0;
       end else begin
         rv_trace_iretire_stage[i] <= rv_trace_iretire_d[i];
-        if (i == 0) begin
-          if ( instr_id_done ) begin
-            rv_trace_iaddr_stage[i]  <= pc_id;
-            rv_exc_cause_stage[i]    <= exc_cause;
-            rv_trace_tval_stage[i]   <= csr_mtval; 
-            rv_trace_priv_stage[i]   <= {priv_mode_id};
-            if ( pc_1st_in_trap == 1 ) begin
-              rv_trace_itype_stage[i] <= 3'd1;
-            end else if ( pc_1st_in_intr == 1 ) begin
-              rv_trace_itype_stage[i] <= 3'd2;
-            end else if ( perf_tbranch == 1 ) begin
-              rv_trace_itype_stage[i] <= 3'd5;
-            end else if ( ( perf_branch == 1 ) && ( perf_tbranch == 0 ) ) begin
-              rv_trace_itype_stage[i] <= 3'd4;
-            end else begin
-              rv_trace_itype_stage[i] <= 3'd0;
-            end
-          end
-        end else begin
-          if (instr_done_wb) begin
-            rv_trace_itype_stage[i]   <= rv_trace_itype_stage[i-1];
-            rv_trace_iaddr_stage[i]   <= rv_trace_iaddr_stage[i-1];
-            rv_trace_priv_stage[i]    <= rv_trace_priv_stage[i-1];
-          end
-        end
-      end
-    end
-  end
+	rv_trace_cause_stage[i]   <= exc_cause;
 
+	if ( rv_trace_perf_tbranch_d[i] == 1 ) begin
+          rv_trace_itype_stage[i] <= 3'd5;
+        end else if ( rv_trace_perf_branch_d[i] == 1 ) begin
+          rv_trace_itype_stage[i] <= 3'd4;
+        end else if ( pc_mux_id == PC_ERET ) begin // return from interrupt
+              rv_trace_itype_stage[i] <= 3'd3; 
+        end else if ( exc_cause > 0 ) begin
+          if ( exc_cause[5] == 1 ) begin // => inter
+            rv_trace_itype_stage[i] <= 3'd2;
+          end else begin // => exce
+            rv_trace_itype_stage[i] <= 3'd1;
+          end 
+        end else begin
+	  rv_trace_itype_stage[i] <= 3'd0; 
+        end
+        if (i == 0) begin
+          if (instr_id_done) begin
+            rv_trace_iaddr_stage[i]    <= pc_id;
+            rv_trace_tval_stage[i]     <= csr_mtval; 
+            rv_trace_priv_stage[i]     <= priv_mode_id;
+            rv_trace_itype_stage[i]    <= 3'd0;
+	    rv_trace_perf_branch_d[i]  <= perf_branch;
+            rv_trace_perf_tbranch_d[i] <= perf_tbranch; 
+	  end // if instr_id_done   
+	end else begin // i!=0
+          if(instr_done_wb) begin
+	    rv_trace_itype_stage[i] <= rv_trace_itype_stage[i-1];
+            rv_trace_iaddr_stage[i] <= rv_trace_iaddr_stage[i-1];
+            rv_trace_priv_stage[i]  <= rv_trace_priv_stage [i-1];
+            rv_trace_cause_stage[i] <= rv_trace_cause_stage[i-1];
+	  end
+        end // else: !if(i == 0)
+	
+      end 
+    end    
+  end 
 `endif
 
 endmodule

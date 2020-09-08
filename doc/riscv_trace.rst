@@ -26,12 +26,12 @@ Trace Signals
 |                    |          | 5: Taken branch;                                            |
 |                    |          | 6: Uninferable jump                (not yet implemented)    |
 +--------------------+----------+-------------------------------------------------------------+
-| rv_trace_iaddr     |   32     | Contains the value of the address all the time.             |
+| rv_trace_iaddr     |   32     | Address of the retired instruction                          |
 +--------------------+----------+-------------------------------------------------------------+
-| rv_trace_cause     |    7     | ucause/mcause CSR                                           |
+| rv_trace_cause     |    6     | Interrupt or exception cause                                |
 +--------------------+----------+-------------------------------------------------------------+
 | rv_trace_tval      |   32     | Associated trap value, e.g. address of                      |
-|                    |          | exceptions, as written to the utval/mtval CSR               |
+|                    |          | exceptions, as written to the mtval CSR                     |
 +--------------------+----------+-------------------------------------------------------------+
 | rv_trace_priv      |    2     | Privilege level for all instructions retired on this cycle. |
 +--------------------+----------+-------------------------------------------------------------+

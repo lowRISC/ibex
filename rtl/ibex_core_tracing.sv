@@ -68,7 +68,7 @@ module ibex_core_tracing #(
     // riscv_trace_spec signals 
     output logic [2:0]  rv_trace_itype,
     output logic [31:0] rv_trace_iaddr,
-    output logic [6:0]  rv_trace_cause,
+    output logic [5:0]  rv_trace_cause,
     output logic [31:0] rv_trace_tval,
     output logic [1:0]  rv_trace_priv, 
     output logic        rv_trace_iretire,
