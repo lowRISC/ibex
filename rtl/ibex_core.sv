@@ -1322,12 +1322,12 @@ module ibex_core #(
 
   localparam RV_TRACE_STAGES = WritebackStage ? 2 : 1;
 
-  logic [31:0] rv_trace_iaddr_stage    [RV_TRACE_STAGES-1:0];
-  logic [31:0] rv_trace_tval_stage     [RV_TRACE_STAGES-1:0];
-  logic        rv_trace_iretire_stage  [RV_TRACE_STAGES-1:0];
-  logic [2:0]  rv_trace_itype_stage    [RV_TRACE_STAGES-1:0];
-  logic [5:0]  rv_trace_cause_stage    [RV_TRACE_STAGES-1:0];
-  logic [1:0]  rv_trace_priv_stage     [RV_TRACE_STAGES-1:0];
+  logic [31:0]     rv_trace_iaddr_stage    [RV_TRACE_STAGES-1:0];
+  logic [31:0]     rv_trace_tval_stage     [RV_TRACE_STAGES-1:0];
+  logic            rv_trace_iretire_stage  [RV_TRACE_STAGES-1:0];
+  rv_trace_type_e  rv_trace_itype_stage    [RV_TRACE_STAGES-1:0];
+  logic [5:0]      rv_trace_cause_stage    [RV_TRACE_STAGES-1:0];
+  logic [1:0]      rv_trace_priv_stage     [RV_TRACE_STAGES-1:0];
 
   logic        rv_trace_iretire_d      [RV_TRACE_STAGES-1:0];
   logic        rv_trace_perf_branch_d  [RV_TRACE_STAGES-1:0];
@@ -1368,19 +1368,19 @@ module ibex_core #(
 	rv_trace_cause_stage[i]   <= exc_cause;
 
 	if ( rv_trace_perf_tbranch_d[i] == 1 ) begin
-          rv_trace_itype_stage[i] <= 3'd5;
+          rv_trace_itype_stage[i] <= RV_TRACE_ITYPE_T_BRAN;
         end else if ( rv_trace_perf_branch_d[i] == 1 ) begin
-          rv_trace_itype_stage[i] <= 3'd4;
+          rv_trace_itype_stage[i] <= RV_TRACE_ITYPE_N_BRAN;
         end else if ( pc_mux_id == PC_ERET ) begin // return from interrupt
-              rv_trace_itype_stage[i] <= 3'd3; 
+          rv_trace_itype_stage[i] <= RV_TRACE_ITYPE_IE_RET; 
         end else if ( exc_cause > 0 ) begin
           if ( exc_cause[5] == 1 ) begin // => inter
-            rv_trace_itype_stage[i] <= 3'd2;
+            rv_trace_itype_stage[i] <= RV_TRACE_ITYPE_INTER;
           end else begin // => exce
-            rv_trace_itype_stage[i] <= 3'd1;
+            rv_trace_itype_stage[i] <= RV_TRACE_ITYPE_EXCEP;
           end 
         end else begin
-	  rv_trace_itype_stage[i] <= 3'd0; 
+	  rv_trace_itype_stage[i] <= RV_TRACE_ITYPE_OTHER; 
         end
         if (i == 0) begin
           if (instr_id_done) begin

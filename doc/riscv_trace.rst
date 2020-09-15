@@ -21,7 +21,7 @@ Trace Signals
 |                    |          | following the final retired instruction in the block;       |
 |                    |          | 2: Interrupt. An interrupt that traps occurred              |
 |                    |          | following the final retired instruction in the block;       |
-|                    |          | 3: Exception or interrupt return;  (not yet implemented)    |
+|                    |          | 3: Exception or interrupt return;                           |
 |                    |          | 4: Nontaken branch;                                         |
 |                    |          | 5: Taken branch;                                            |
 |                    |          | 6: Uninferable jump                (not yet implemented)    |

@@ -491,4 +491,15 @@ parameter int unsigned CSR_MEIX_BIT      = 11;
 parameter int unsigned CSR_MFIX_BIT_LOW  = 16;
 parameter int unsigned CSR_MFIX_BIT_HIGH = 30;
 
+// RV_TRACE types of address discontinuity
+typedef enum logic [2:0] {
+  RV_TRACE_ITYPE_OTHER   = 3'd0,
+  RV_TRACE_ITYPE_EXCEP   = 3'd1,
+  RV_TRACE_ITYPE_INTER   = 3'd2,
+  RV_TRACE_ITYPE_IE_RET  = 3'd3,
+  RV_TRACE_ITYPE_N_BRAN  = 3'd4,
+  RV_TRACE_ITYPE_T_BRAN  = 3'd5,
+  RV_TRACE_ITYPE_N_INF_J = 3'd6
+} rv_trace_type_e;
+   
 endpackage
