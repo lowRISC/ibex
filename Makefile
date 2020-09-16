@@ -114,4 +114,4 @@ test-cfg:
 
 .PHONY: python-lint
 python-lint:
-	mypy --strict util
+	$(MAKE) -C util lint
