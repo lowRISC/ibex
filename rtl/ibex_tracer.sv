@@ -391,9 +391,7 @@ module ibex_tracer (
       12'd899: return "mibound";
       12'd900: return "mdbase";
       12'd901: return "mdbound";
-      12'd800: return "mucounteren";
-      12'd801: return "mscounteren";
-      12'd802: return "mhcounteren";
+      12'd800: return "mcountinhibit";
       default: return $sformatf("0x%x", csr_addr);
     endcase
   endfunction
