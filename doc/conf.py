@@ -33,6 +33,7 @@ numfig_format = {'figure': 'Figure %s', 'table': 'Table %s', 'code-block': 'List
 extensions = [
     'sphinxcontrib.wavedrom',
     'sphinx.ext.todo',
+    'sphinx_verilog_domain',
 ]
 
 wavedrom_html_jsinline = False
