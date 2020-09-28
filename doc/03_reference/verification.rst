@@ -1,6 +1,10 @@
 Verification
 ============
 
+.. todo::
+
+  This section needs to be split into a HOWTO-style user/developer guide, and reference information on the testbench structure.
+
 Ibex Core
 ---------
 
