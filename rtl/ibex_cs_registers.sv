@@ -14,6 +14,7 @@
 
 module ibex_cs_registers #(
     parameter bit               DbgTriggerEn      = 0,
+    parameter int unsigned      DbgHwBreakNum     = 1,
     parameter bit               DataIndTiming     = 1'b0,
     parameter bit               DummyInstructions = 1'b0,
     parameter bit               ICache            = 1'b0,
@@ -1199,75 +1200,109 @@ module ibex_cs_registers #(
   /////////////////////////////
 
   if (DbgTriggerEn) begin : gen_trigger_regs
+    localparam int unsigned DbgHwNumLen = DbgHwBreakNum > 1 ? $clog2(DbgHwBreakNum) : 1;
     // Register values
-    logic        tmatch_control_d, tmatch_control_q;
-    logic [31:0] tmatch_value_d, tmatch_value_q;
+    logic [DbgHwNumLen-1:0]   tselect_d, tselect_q;
+    logic                     tmatch_control_d;
+    logic [DbgHwBreakNum-1:0] tmatch_control_q;
+    logic [31:0]              tmatch_value_d;
+    logic [31:0]              tmatch_value_q[DbgHwBreakNum];
     // Write enables
-    logic tmatch_control_we;
-    logic tmatch_value_we;
+    logic                     tselect_we;
+    logic [DbgHwBreakNum-1:0] tmatch_control_we;
+    logic [DbgHwBreakNum-1:0] tmatch_value_we;
+    // Trigger comparison result
+    logic [DbgHwBreakNum-1:0] trigger_match;
 
     // Write select
-    assign tmatch_control_we = csr_we_int & debug_mode_i & (csr_addr_i == CSR_TDATA1);
-    assign tmatch_value_we   = csr_we_int & debug_mode_i & (csr_addr_i == CSR_TDATA2);
+    assign tselect_we = csr_we_int & debug_mode_i & (csr_addr_i == CSR_TSELECT);
+    for (genvar i = 0; i < DbgHwBreakNum; i++) begin : g_dbg_tmatch_we
+      assign tmatch_control_we[i] = (i[DbgHwNumLen-1:0] == tselect_q) & csr_we_int & debug_mode_i &
+                                    (csr_addr_i == CSR_TDATA1);
+      assign tmatch_value_we[i]   = (i[DbgHwNumLen-1:0] == tselect_q) & csr_we_int & debug_mode_i &
+                                    (csr_addr_i == CSR_TDATA2);
+    end
 
+    // Debug interface tests the available number of triggers by writing and reading the trigger
+    // select register. Only allow changes to the register if it is within the supported region.
+    assign tselect_d = (csr_wdata_int < DbgHwBreakNum) ? csr_wdata_int[DbgHwNumLen-1:0] :
+                                                         DbgHwBreakNum-1;
     // tmatch_control is enabled when the execute bit is set
     assign tmatch_control_d = csr_wdata_int[2];
     assign tmatch_value_d   = csr_wdata_int[31:0];
 
     // Registers
     ibex_csr #(
-      .Width      (1),
+      .Width      (DbgHwNumLen),
       .ShadowCopy (1'b0),
       .ResetValue ('0)
-    ) u_tmatch_control_csr (
+    ) u_tselect_csr (
       .clk_i      (clk_i),
       .rst_ni     (rst_ni),
-      .wr_data_i  (tmatch_control_d),
-      .wr_en_i    (tmatch_control_we),
-      .rd_data_o  (tmatch_control_q),
+      .wr_data_i  (tselect_d),
+      .wr_en_i    (tselect_we),
+      .rd_data_o  (tselect_q),
       .rd_error_o ()
     );
 
-    ibex_csr #(
-      .Width      (32),
-      .ShadowCopy (1'b0),
-      .ResetValue ('0)
-    ) u_tmatch_value_csr (
-      .clk_i      (clk_i),
-      .rst_ni     (rst_ni),
-      .wr_data_i  (tmatch_value_d),
-      .wr_en_i    (tmatch_value_we),
-      .rd_data_o  (tmatch_value_q),
-      .rd_error_o ()
+    for (genvar i = 0; i < DbgHwBreakNum; i++) begin : g_dbg_tmatch_reg
+      ibex_csr #(
+        .Width      (1),
+        .ShadowCopy (1'b0),
+        .ResetValue ('0)
+      ) u_tmatch_control_csr (
+        .clk_i      (clk_i),
+        .rst_ni     (rst_ni),
+        .wr_data_i  (tmatch_control_d),
+        .wr_en_i    (tmatch_control_we[i]),
+        .rd_data_o  (tmatch_control_q[i]),
+        .rd_error_o ()
     );
+
+      ibex_csr #(
+        .Width      (32),
+        .ShadowCopy (1'b0),
+        .ResetValue ('0)
+      ) u_tmatch_value_csr (
+        .clk_i      (clk_i),
+        .rst_ni     (rst_ni),
+        .wr_data_i  (tmatch_value_d),
+        .wr_en_i    (tmatch_value_we[i]),
+        .rd_data_o  (tmatch_value_q[i]),
+        .rd_error_o ()
+      );
+    end
 
     // Assign read data
-    // TSELECT - only one supported
-    assign tselect_rdata = 'b0;
+    // TSELECT - number of supported triggers defined by parameter DbgHwBreakNum
+    assign tselect_rdata = {'b0, tselect_q};
     // TDATA0 - only support simple address matching
-    assign tmatch_control_rdata = {4'h2,              // type    : address/data match
-                                   1'b1,              // dmode   : access from D mode only
-                                   6'h00,             // maskmax : exact match only
-                                   1'b0,              // hit     : not supported
-                                   1'b0,              // select  : address match only
-                                   1'b0,              // timing  : match before execution
-                                   2'b00,             // sizelo  : match any access
-                                   4'h1,              // action  : enter debug mode
-                                   1'b0,              // chain   : not supported
-                                   4'h0,              // match   : simple match
-                                   1'b1,              // m       : match in m-mode
-                                   1'b0,              // 0       : zero
-                                   1'b0,              // s       : not supported
-                                   1'b1,              // u       : match in u-mode
-                                   tmatch_control_q,  // execute : match instruction address
-                                   1'b0,              // store   : not supported
-                                   1'b0};             // load    : not supported
+    assign tmatch_control_rdata = {4'h2,                         // type    : address/data match
+                                   1'b1,                         // dmode   : access from D mode only
+                                   6'h00,                        // maskmax : exact match only
+                                   1'b0,                         // hit     : not supported
+                                   1'b0,                         // select  : address match only
+                                   1'b0,                         // timing  : match before execution
+                                   2'b00,                        // sizelo  : match any access
+                                   4'h1,                         // action  : enter debug mode
+                                   1'b0,                         // chain   : not supported
+                                   4'h0,                         // match   : simple match
+                                   1'b1,                         // m       : match in m-mode
+                                   1'b0,                         // 0       : zero
+                                   1'b0,                         // s       : not supported
+                                   1'b1,                         // u       : match in u-mode
+                                   tmatch_control_q[tselect_q],  // execute : match instruction address
+                                   1'b0,                         // store   : not supported
+                                   1'b0};                        // load    : not supported
     // TDATA1 - address match value only
-    assign tmatch_value_rdata = tmatch_value_q;
+    assign tmatch_value_rdata = tmatch_value_q[tselect_q];
 
     // Breakpoint matching
     // We match against the next address, as the breakpoint must be taken before execution
-    assign trigger_match_o = tmatch_control_q & (pc_if_i[31:0] == tmatch_value_q[31:0]);
+    for (genvar i = 0; i < DbgHwBreakNum; i++) begin : g_dbg_trigger_match
+      assign trigger_match[i] = tmatch_control_q[i] & (pc_if_i[31:0] == tmatch_value_q[i]);
+    end
+    assign trigger_match_o = |trigger_match;
 
   end else begin : gen_no_trigger_regs
     assign tselect_rdata        = 'b0;
