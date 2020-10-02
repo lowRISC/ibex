@@ -84,6 +84,7 @@
       - "mkdir -p <out>/dsim"
       - "<DSIM> -sv -work <out>/dsim
                 -genimage image
+                -timescale 1ns/1ps
                 +incdir+$UVM_HOME/src
                 $UVM_HOME/src/uvm_pkg.sv
                 +define+UVM

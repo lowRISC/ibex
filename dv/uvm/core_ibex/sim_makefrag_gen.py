@@ -88,6 +88,14 @@ def gen_xlm_makefrag():
 
     return 'COMPILE_OPTS += {0}'.format(xlm_compile_opts)
 
+def gen_dsim_makefrag():
+    dsim_compile_opts = run_ibex_config('dsim_compile_opts', [
+        '--ins_hier_path', 'core_ibex_tb_top',
+        '--string_define_prefix', 'IBEX_CFG_'
+    ])
+
+    return 'COMPILE_OPTS += {0}'.format(gen_dsim_makefrag)
+
 
 def main():
     argparser = argparse.ArgumentParser(description=(
@@ -98,7 +106,8 @@ def main():
         'vcs': gen_vcs_makefrag,
         'riviera': gen_riviera_makefrag,
         'xlm': gen_xlm_makefrag,
-        'questa': gen_questa_makefrag
+        'questa': gen_questa_makefrag,
+        'dsim': gen_dsim_makefrag
         }
 
     argparser.add_argument('sim',
