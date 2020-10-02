@@ -235,6 +235,9 @@ def main():
         SimOpts('xlm_opts', 'Xcelium compile',
                 lambda p, v: '-defparam ' + p + '=' + v,
                 lambda d, v: '-define ' + d + '=' + v, '.'),
+        SimOpts('dsim_compile_opts', 'DSim compile',
+                lambda p, v: '+define+' + p + '=' + v,
+                lambda d, v: None, '/'),
     ]
 
     argparser = argparse.ArgumentParser(description=(
