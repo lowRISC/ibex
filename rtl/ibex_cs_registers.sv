@@ -227,6 +227,9 @@ module ibex_cs_registers #(
   logic [31:0] mhpmcounter_incr;
   logic [31:0] mhpmevent [32];
   logic  [4:0] mhpmcounter_idx;
+  logic        unused_mhpmcounter_we_1;
+  logic        unused_mhpmcounterh_we_1;
+  logic        unused_mhpmcounter_incr_1;
 
   // Debug / trigger registers
   logic [31:0] tselect_rdata;
@@ -1157,20 +1160,27 @@ module ibex_cs_registers #(
   );
 
   // reserved:
-  assign mhpmcounter[1] = '0;
+  assign mhpmcounter[1]            = '0;
+  assign unused_mhpmcounter_we_1   = mhpmcounter_we[1];
+  assign unused_mhpmcounterh_we_1  = mhpmcounterh_we[1];
+  assign unused_mhpmcounter_incr_1 = mhpmcounter_incr[1];
 
-  for (genvar cnt=0; cnt < MHPMCounterNum; cnt++) begin : gen_cntrs
-    ibex_counter #(
-      .CounterWidth(MHPMCounterWidth)
-    ) mcounters_variable_i (
-      .clk_i(clk_i),
-      .rst_ni(rst_ni),
-      .counter_inc_i(mhpmcounter_incr[cnt+3] & ~mcountinhibit[cnt+3]),
-      .counterh_we_i(mhpmcounterh_we[cnt+3]),
-      .counter_we_i(mhpmcounter_we[cnt+3]),
-      .counter_val_i(csr_wdata_int),
-      .counter_val_o(mhpmcounter[cnt+3])
-    );
+  for (genvar cnt=0; cnt < 29; cnt++) begin : gen_cntrs
+    if (cnt < MHPMCounterNum) begin : gen_imp
+      ibex_counter #(
+        .CounterWidth(MHPMCounterWidth)
+      ) mcounters_variable_i (
+        .clk_i(clk_i),
+        .rst_ni(rst_ni),
+        .counter_inc_i(mhpmcounter_incr[cnt+3] & ~mcountinhibit[cnt+3]),
+        .counterh_we_i(mhpmcounterh_we[cnt+3]),
+        .counter_we_i(mhpmcounter_we[cnt+3]),
+        .counter_val_i(csr_wdata_int),
+        .counter_val_o(mhpmcounter[cnt+3])
+      );
+    end else begin : gen_unimp
+      assign mhpmcounter[cnt+3] = '0;
+    end
   end
 
   if(MHPMCounterNum < 29) begin : g_mcountinhibit_reduced
