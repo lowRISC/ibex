@@ -52,6 +52,9 @@ The interval between instruction insertion is randomized in the core using an LF
 Sofware can periodically re-seed this LFSR with true random numbers (if available) via the **secureseed** CSR.
 This will make the insertion interval of dummy instructions much harder for an attacker to predict.
 
+Note that the dummy instruction feature inserts multiply and divide instructions.
+The core must be configured with a multiplier (`RV32M != ibex_pkg::RV32MNone`) or errors will occur using this feature.
+
 Register file ECC
 -----------------
 
