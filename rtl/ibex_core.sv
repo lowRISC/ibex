@@ -1432,6 +1432,10 @@ module ibex_core #(
     end
   end
 
+`else
+  logic unused_instr_new_id, unused_instr_done_wb;
+  assign unused_instr_new_id = instr_new_id;
+  assign unused_instr_done_wb = instr_done_wb;
 `endif
 
   // Certain parameter combinations are not supported

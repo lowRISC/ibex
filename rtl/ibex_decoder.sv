@@ -106,6 +106,7 @@ module ibex_decoder #(
 
   logic [31:0] instr;
   logic [31:0] instr_alu;
+  logic [9:0]  unused_instr_alu;
   // Source/Destination register instruction index
   logic [4:0] instr_rs1;
   logic [4:0] instr_rs2;
@@ -140,13 +141,18 @@ module ibex_decoder #(
   // immediate for CSR manipulation (zero extended)
   assign zimm_rs1_type_o = { 27'b0, instr_rs1 }; // rs1
 
-  // the use of rs3 is known one cycle ahead.
-  always_ff  @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni) begin
-      use_rs3_q <= 1'b0;
-    end else begin
-      use_rs3_q <= use_rs3_d;
+  if (RV32B != RV32BNone) begin : gen_rs3_flop
+    // the use of rs3 is known one cycle ahead.
+    always_ff  @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        use_rs3_q <= 1'b0;
+      end else begin
+        use_rs3_q <= use_rs3_d;
+      end
     end
+  end else begin : gen_no_rs3_flop
+    // always zero
+    assign use_rs3_q = use_rs3_d;
   end
 
   // source registers
@@ -1135,6 +1141,9 @@ module ibex_decoder #(
 
   // do not propgate regfile write enable if non-available registers are accessed in RV32E
   assign rf_we_o = rf_we & ~illegal_reg_rv32e;
+
+  // Not all bits are used
+  assign unused_instr_alu = {instr_alu[19:15],instr_alu[11:7]};
 
   ////////////////
   // Assertions //

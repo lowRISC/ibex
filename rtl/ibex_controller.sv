@@ -304,7 +304,7 @@ module ibex_controller #(
                       ebrk_insn_prio,
                       store_err_prio,
                       load_err_prio}),
-             (ctrl_fsm_cs == FLUSH) & exc_req_q);
+             (ctrl_fsm_cs == FLUSH) & exc_req_q)
 
   ////////////////
   // Interrupts //
@@ -833,7 +833,7 @@ module ibex_controller #(
   // Assertions //
   ////////////////
 
-  `ASSERT(AlwaysInstrClearOnMispredict, nt_branch_mispredict_o -> instr_valid_clear_o);
+  `ASSERT(AlwaysInstrClearOnMispredict, nt_branch_mispredict_o -> instr_valid_clear_o)
 
   // Selectors must be known/valid.
   `ASSERT(IbexCtrlStateValid, ctrl_fsm_cs inside {
