@@ -408,6 +408,8 @@ module ibex_decoder #(
                     illegal_insn = 1'b0;                                              // gorci
                   end else if (instr[24:20] == 5'b00111) begin
                     illegal_insn = (RV32B == RV32BBalanced) ? 1'b0 : 1'b1;            // orc.b
+                  end else begin
+                    illegal_insn = 1'b1;
                   end
                 end
                 5'b0_0001: begin
