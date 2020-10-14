@@ -532,6 +532,9 @@ module ibex_cs_registers #(
             dcsr_d.prv = PRIV_LVL_M;
           end
 
+          // Read-only for SW
+          dcsr_d.cause = dcsr_q.cause;
+
           // currently not supported:
           dcsr_d.nmip = 1'b0;
           dcsr_d.mprven = 1'b0;
