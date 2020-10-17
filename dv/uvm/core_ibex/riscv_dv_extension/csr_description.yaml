@@ -329,7 +329,7 @@
     - field_name: icache_enable
       description: >
         Enable or disable the instruction cache
-      type: R
+      type: WARL
       reset_val: 0
       msb: 0
       lsb: 0

@@ -36,7 +36,7 @@ COV                 := 0
 # RTL simulator
 SIMULATOR           := vcs
 # ISS (spike, ovpsim)
-ISS                 := ovpsim
+ISS                 := spike
 # ISS runtime options
 ISS_OPTS            :=
 # ISA
@@ -65,7 +65,7 @@ PMP_REGIONS         := 16
 # PMP Granularity
 PMP_GRANULARITY     := 0
 
-IBEX_CONFIG         := experimental-maxperf-pmp-bmfull
+IBEX_CONFIG         := experimental-maxperf-pmp-bmfull-icache
 
 # TODO(udinator) - might need options for SAIL/Whisper/Spike
 ifeq (${ISS},ovpsim)
