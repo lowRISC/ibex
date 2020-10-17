@@ -74,7 +74,7 @@ Testplan
 """"""""
 
 The goal of this bench is to fully verify the Ibex core with 100%
-coverage. This includes testing all RV32IMC instructions, privileged
+coverage. This includes testing all RV32IMCB instructions, privileged
 spec compliance, exception and interrupt testing, Debug Mode operation etc.
 The complete test list can be found in the file `dv/uvm/core_ibex/riscv_dv_extension/testlist.yaml
 <https://github.com/lowRISC/ibex/blob/master/dv/uvm/core_ibex/riscv_dv_extension/testlist.yaml>`_.
@@ -92,8 +92,8 @@ In order to run the co-simulation flow, you'll need:
 - A SystemVerilog simulator that supports UVM. The flow is currently
   tested with VCS.
 
-- A RISC-V instruction set simulator. For example, Spike_ or
-  OVPsim_. Note that Spike must be configured with
+- A RISC-V instruction set simulator, such as Spike_ or OVPsim_.
+  Note that Spike must be configured with
   ``--enable-commitlog`` and ``--enable-misaligned``. The commit log
   is needed to track the instructions that were executed and
   ``--enable-misaligned`` tells Spike to simulate a core that
@@ -101,6 +101,8 @@ In order to run the co-simulation flow, you'll need:
   trap handler).
   In addition, Spike does not support the `RISC-V Bit Manipulation Extension <bitmanip_>`_  (Bitmanip) by default.
   To support this draft extension implemented in Ibex, the `riscv-bitmanip branch <Spike_>`_ of Spike needs to be used.
+  If it is desired to simulate the core with the Icache enabled, a lowRISC-specific branch
+  of Spike must be used, `found here <https://github.com/lowRISC/riscv-isa-sim/tree/ibex>`_.
 
 - A working RISC-V toolchain (to compile / assemble the generated programs before simulating them).
   Either download a `pre-built toolchain <riscv-toolchain-releases_>`_ (quicker) or download and build the `RISC-V GNU compiler toolchain <riscv-toolchain-source_>`_.

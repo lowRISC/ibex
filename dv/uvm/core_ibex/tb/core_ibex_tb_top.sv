@@ -54,6 +54,8 @@ module core_ibex_tb_top;
   parameter ibex_pkg::regfile_e RegFile  = `IBEX_CFG_RegFile;
   parameter bit BranchTargetALU          = 1'b0;
   parameter bit WritebackStage           = 1'b0;
+  parameter bit ICache                   = 1'b0;
+  parameter bit ICacheECC                = 1'b0;
   parameter bit BranchPredictor          = 1'b0;
 
   ibex_core_tracing #(
@@ -68,6 +70,8 @@ module core_ibex_tb_top;
     .RegFile         (RegFile          ),
     .BranchTargetALU (BranchTargetALU  ),
     .WritebackStage  (WritebackStage   ),
+    .ICache          (ICache           ),
+    .ICacheECC       (ICacheECC        ),
     .BranchPredictor (BranchPredictor  )
   ) dut (
     .clk_i          (clk                  ),
