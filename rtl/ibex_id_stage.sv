@@ -167,6 +167,7 @@ module ibex_id_stage #(
 
     output  logic                     en_wb_o,
     output  ibex_pkg::wb_instr_type_e instr_type_wb_o,
+    output  logic                     instr_perf_count_id_o,
     input logic                       ready_wb_i,
     input logic                       outstanding_load_wb_i,
     input logic                       outstanding_store_wb_i,
@@ -179,8 +180,7 @@ module ibex_id_stage #(
                                                          // access to finish before proceeding
     output logic                      perf_mul_wait_o,
     output logic                      perf_div_wait_o,
-    output logic                      instr_id_done_o,
-    output logic                      instr_id_done_compressed_o
+    output logic                      instr_id_done_o
 );
 
   import ibex_pkg::*;
@@ -917,8 +917,6 @@ module ibex_id_stage #(
                               lsu_we      ? WB_INSTR_STORE :
                                             WB_INSTR_LOAD;
 
-    assign en_wb_o = instr_done;
-
     assign instr_id_done_o = en_wb_o & ready_wb_i;
 
     // Stall ID/EX as instruction in ID/EX cannot proceed to writeback yet
@@ -977,14 +975,20 @@ module ibex_id_stage #(
 
     assign perf_dside_wait_o = instr_executing & lsu_req_dec & ~lsu_resp_valid_i;
 
-    assign en_wb_o         = 1'b0;
     assign instr_id_done_o = instr_done;
   end
 
+  // Signal which instructions to count as retired in minstret, all traps along with ebrk and
+  // ecall instructions are not counted.
+  assign instr_perf_count_id_o = ~ebrk_insn & ~ecall_insn_dec & ~illegal_insn_dec &
+      ~illegal_csr_insn_i & ~instr_fetch_err_i;
+
+  // An instruction is ready to move to the writeback stage (or retire if there is no writeback
+  // stage)
+  assign en_wb_o = instr_done;
+
   assign perf_mul_wait_o = stall_multdiv & mult_en_dec;
   assign perf_div_wait_o = stall_multdiv & div_en_dec;
-
-  assign instr_id_done_compressed_o = instr_id_done_o & instr_is_compressed_i;
 
   ////////////////
   // Assertions //

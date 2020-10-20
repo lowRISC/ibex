@@ -131,6 +131,7 @@ module ibex_core #(
                                                // ease fan-out)
   logic [15:0] instr_rdata_c_id;               // Compressed instruction sampled inside IF stage
   logic        instr_is_compressed_id;
+  logic        instr_perf_count_id;
   logic        instr_bp_taken_id;
   logic        instr_fetch_err;                // Bus error on instr fetch
   logic        instr_fetch_err_plus2;          // Instruction error is misaligned
@@ -246,6 +247,7 @@ module ibex_core #(
   logic        ex_valid;
 
   logic        lsu_resp_valid;
+  logic        lsu_resp_err;
 
   // Signals between instruction core interface and pipe (if and id stages)
   logic        instr_req_int;          // Id stage asserts a req to instruction core interface
@@ -298,9 +300,10 @@ module ibex_core #(
   // signals relating to instruction movements between pipeline stages
   // used by performance counters and RVFI
   logic        instr_id_done;
-  logic        instr_id_done_compressed;
   logic        instr_done_wb;
 
+  logic        perf_instr_ret_wb;
+  logic        perf_instr_ret_compressed_wb;
   logic        perf_iside_wait;
   logic        perf_dside_wait;
   logic        perf_mul_wait;
@@ -616,6 +619,7 @@ module ibex_core #(
 
       .en_wb_o                      ( en_wb                    ),
       .instr_type_wb_o              ( instr_type_wb            ),
+      .instr_perf_count_id_o        ( instr_perf_count_id      ),
       .ready_wb_i                   ( ready_wb                 ),
       .outstanding_load_wb_i        ( outstanding_load_wb      ),
       .outstanding_store_wb_i       ( outstanding_store_wb     ),
@@ -627,8 +631,7 @@ module ibex_core #(
       .perf_dside_wait_o            ( perf_dside_wait          ),
       .perf_mul_wait_o              ( perf_mul_wait            ),
       .perf_div_wait_o              ( perf_div_wait            ),
-      .instr_id_done_o              ( instr_id_done            ),
-      .instr_id_done_compressed_o   ( instr_id_done_compressed )
+      .instr_id_done_o              ( instr_id_done            )
   );
 
   // for RVFI only
@@ -683,7 +686,8 @@ module ibex_core #(
   // Load/store unit //
   /////////////////////
 
-  assign data_req_o = data_req_out & ~pmp_req_err[PMP_D];
+  assign data_req_o   = data_req_out & ~pmp_req_err[PMP_D];
+  assign lsu_resp_err = lsu_load_err | lsu_store_err;
 
   ibex_load_store_unit load_store_unit_i (
       .clk_i                 ( clk                 ),
@@ -734,34 +738,39 @@ module ibex_core #(
   ibex_wb_stage #(
     .WritebackStage ( WritebackStage )
   ) wb_stage_i (
-    .clk_i                      ( clk                      ),
-    .rst_ni                     ( rst_ni                   ),
-    .en_wb_i                    ( en_wb                    ),
-    .instr_type_wb_i            ( instr_type_wb            ),
-    .pc_id_i                    ( pc_id                    ),
+    .clk_i                          ( clk                          ),
+    .rst_ni                         ( rst_ni                       ),
+    .en_wb_i                        ( en_wb                        ),
+    .instr_type_wb_i                ( instr_type_wb                ),
+    .pc_id_i                        ( pc_id                        ),
+    .instr_is_compressed_id_i       ( instr_is_compressed_id       ),
+    .instr_perf_count_id_i          ( instr_perf_count_id          ),
 
-    .ready_wb_o                 ( ready_wb                 ),
-    .rf_write_wb_o              ( rf_write_wb              ),
-    .outstanding_load_wb_o      ( outstanding_load_wb      ),
-    .outstanding_store_wb_o     ( outstanding_store_wb     ),
-    .pc_wb_o                    ( pc_wb                    ),
+    .ready_wb_o                     ( ready_wb                     ),
+    .rf_write_wb_o                  ( rf_write_wb                  ),
+    .outstanding_load_wb_o          ( outstanding_load_wb          ),
+    .outstanding_store_wb_o         ( outstanding_store_wb         ),
+    .pc_wb_o                        ( pc_wb                        ),
+    .perf_instr_ret_wb_o            ( perf_instr_ret_wb            ),
+    .perf_instr_ret_compressed_wb_o ( perf_instr_ret_compressed_wb ),
 
-    .rf_waddr_id_i              ( rf_waddr_id              ),
-    .rf_wdata_id_i              ( rf_wdata_id              ),
-    .rf_we_id_i                 ( rf_we_id                 ),
+    .rf_waddr_id_i                  ( rf_waddr_id                  ),
+    .rf_wdata_id_i                  ( rf_wdata_id                  ),
+    .rf_we_id_i                     ( rf_we_id                     ),
 
-    .rf_wdata_lsu_i             ( rf_wdata_lsu             ),
-    .rf_we_lsu_i                ( rf_we_lsu                ),
+    .rf_wdata_lsu_i                 ( rf_wdata_lsu                 ),
+    .rf_we_lsu_i                    ( rf_we_lsu                    ),
 
-    .rf_wdata_fwd_wb_o          ( rf_wdata_fwd_wb          ),
+    .rf_wdata_fwd_wb_o              ( rf_wdata_fwd_wb              ),
 
-    .rf_waddr_wb_o              ( rf_waddr_wb              ),
-    .rf_wdata_wb_o              ( rf_wdata_wb              ),
-    .rf_we_wb_o                 ( rf_we_wb                 ),
+    .rf_waddr_wb_o                  ( rf_waddr_wb                  ),
+    .rf_wdata_wb_o                  ( rf_wdata_wb                  ),
+    .rf_we_wb_o                     ( rf_we_wb                     ),
 
-    .lsu_resp_valid_i           ( lsu_resp_valid           ),
+    .lsu_resp_valid_i               ( lsu_resp_valid               ),
+    .lsu_resp_err_i                 ( lsu_resp_err                 ),
 
-    .instr_done_wb_o            ( instr_done_wb            )
+    .instr_done_wb_o                ( instr_done_wb                )
   );
 
   ///////////////////////
@@ -970,88 +979,88 @@ module ibex_core #(
       .RV32E             ( RV32E             ),
       .RV32M             ( RV32M             )
   ) cs_registers_i (
-      .clk_i                   ( clk                      ),
-      .rst_ni                  ( rst_ni                   ),
+      .clk_i                   ( clk                          ),
+      .rst_ni                  ( rst_ni                       ),
 
       // Hart ID from outside
-      .hart_id_i               ( hart_id_i                ),
-      .priv_mode_id_o          ( priv_mode_id             ),
-      .priv_mode_if_o          ( priv_mode_if             ),
-      .priv_mode_lsu_o         ( priv_mode_lsu            ),
+      .hart_id_i               ( hart_id_i                    ),
+      .priv_mode_id_o          ( priv_mode_id                 ),
+      .priv_mode_if_o          ( priv_mode_if                 ),
+      .priv_mode_lsu_o         ( priv_mode_lsu                ),
 
       // mtvec
-      .csr_mtvec_o             ( csr_mtvec                ),
-      .csr_mtvec_init_i        ( csr_mtvec_init           ),
-      .boot_addr_i             ( boot_addr_i              ),
+      .csr_mtvec_o             ( csr_mtvec                    ),
+      .csr_mtvec_init_i        ( csr_mtvec_init               ),
+      .boot_addr_i             ( boot_addr_i                  ),
 
-      // Interface to CSRs     ( SRAM like                )
-      .csr_access_i            ( csr_access               ),
-      .csr_addr_i              ( csr_addr                 ),
-      .csr_wdata_i             ( csr_wdata                ),
-      .csr_op_i                ( csr_op                   ),
-      .csr_op_en_i             ( csr_op_en                ),
-      .csr_rdata_o             ( csr_rdata                ),
+      // Interface to CSRs     ( SRAM like                    )
+      .csr_access_i            ( csr_access                   ),
+      .csr_addr_i              ( csr_addr                     ),
+      .csr_wdata_i             ( csr_wdata                    ),
+      .csr_op_i                ( csr_op                       ),
+      .csr_op_en_i             ( csr_op_en                    ),
+      .csr_rdata_o             ( csr_rdata                    ),
 
       // Interrupt related control signals
-      .irq_software_i          ( irq_software_i           ),
-      .irq_timer_i             ( irq_timer_i              ),
-      .irq_external_i          ( irq_external_i           ),
-      .irq_fast_i              ( irq_fast_i               ),
-      .nmi_mode_i              ( nmi_mode                 ),
-      .irq_pending_o           ( irq_pending              ),
-      .irqs_o                  ( irqs                     ),
-      .csr_mstatus_mie_o       ( csr_mstatus_mie          ),
-      .csr_mstatus_tw_o        ( csr_mstatus_tw           ),
-      .csr_mepc_o              ( csr_mepc                 ),
+      .irq_software_i          ( irq_software_i               ),
+      .irq_timer_i             ( irq_timer_i                  ),
+      .irq_external_i          ( irq_external_i               ),
+      .irq_fast_i              ( irq_fast_i                   ),
+      .nmi_mode_i              ( nmi_mode                     ),
+      .irq_pending_o           ( irq_pending                  ),
+      .irqs_o                  ( irqs                         ),
+      .csr_mstatus_mie_o       ( csr_mstatus_mie              ),
+      .csr_mstatus_tw_o        ( csr_mstatus_tw               ),
+      .csr_mepc_o              ( csr_mepc                     ),
 
       // PMP
-      .csr_pmp_cfg_o           ( csr_pmp_cfg              ),
-      .csr_pmp_addr_o          ( csr_pmp_addr             ),
+      .csr_pmp_cfg_o           ( csr_pmp_cfg                  ),
+      .csr_pmp_addr_o          ( csr_pmp_addr                 ),
 
       // debug
-      .csr_depc_o              ( csr_depc                 ),
-      .debug_mode_i            ( debug_mode               ),
-      .debug_cause_i           ( debug_cause              ),
-      .debug_csr_save_i        ( debug_csr_save           ),
-      .debug_single_step_o     ( debug_single_step        ),
-      .debug_ebreakm_o         ( debug_ebreakm            ),
-      .debug_ebreaku_o         ( debug_ebreaku            ),
-      .trigger_match_o         ( trigger_match            ),
+      .csr_depc_o              ( csr_depc                     ),
+      .debug_mode_i            ( debug_mode                   ),
+      .debug_cause_i           ( debug_cause                  ),
+      .debug_csr_save_i        ( debug_csr_save               ),
+      .debug_single_step_o     ( debug_single_step            ),
+      .debug_ebreakm_o         ( debug_ebreakm                ),
+      .debug_ebreaku_o         ( debug_ebreaku                ),
+      .trigger_match_o         ( trigger_match                ),
 
-      .pc_if_i                 ( pc_if                    ),
-      .pc_id_i                 ( pc_id                    ),
-      .pc_wb_i                 ( pc_wb                    ),
+      .pc_if_i                 ( pc_if                        ),
+      .pc_id_i                 ( pc_id                        ),
+      .pc_wb_i                 ( pc_wb                        ),
 
-      .data_ind_timing_o       ( data_ind_timing          ),
-      .dummy_instr_en_o        ( dummy_instr_en           ),
-      .dummy_instr_mask_o      ( dummy_instr_mask         ),
-      .dummy_instr_seed_en_o   ( dummy_instr_seed_en      ),
-      .dummy_instr_seed_o      ( dummy_instr_seed         ),
-      .icache_enable_o         ( icache_enable            ),
-      .csr_shadow_err_o        ( csr_shadow_err           ),
+      .data_ind_timing_o       ( data_ind_timing              ),
+      .dummy_instr_en_o        ( dummy_instr_en               ),
+      .dummy_instr_mask_o      ( dummy_instr_mask             ),
+      .dummy_instr_seed_en_o   ( dummy_instr_seed_en          ),
+      .dummy_instr_seed_o      ( dummy_instr_seed             ),
+      .icache_enable_o         ( icache_enable                ),
+      .csr_shadow_err_o        ( csr_shadow_err               ),
 
-      .csr_save_if_i           ( csr_save_if              ),
-      .csr_save_id_i           ( csr_save_id              ),
-      .csr_save_wb_i           ( csr_save_wb              ),
-      .csr_restore_mret_i      ( csr_restore_mret_id      ),
-      .csr_restore_dret_i      ( csr_restore_dret_id      ),
-      .csr_save_cause_i        ( csr_save_cause           ),
-      .csr_mcause_i            ( exc_cause                ),
-      .csr_mtval_i             ( csr_mtval                ),
-      .illegal_csr_insn_o      ( illegal_csr_insn_id      ),
+      .csr_save_if_i           ( csr_save_if                  ),
+      .csr_save_id_i           ( csr_save_id                  ),
+      .csr_save_wb_i           ( csr_save_wb                  ),
+      .csr_restore_mret_i      ( csr_restore_mret_id          ),
+      .csr_restore_dret_i      ( csr_restore_dret_id          ),
+      .csr_save_cause_i        ( csr_save_cause               ),
+      .csr_mcause_i            ( exc_cause                    ),
+      .csr_mtval_i             ( csr_mtval                    ),
+      .illegal_csr_insn_o      ( illegal_csr_insn_id          ),
 
       // performance counter related signals
-      .instr_ret_i             ( instr_id_done            ),
-      .instr_ret_compressed_i  ( instr_id_done_compressed ),
-      .iside_wait_i            ( perf_iside_wait          ),
-      .jump_i                  ( perf_jump                ),
-      .branch_i                ( perf_branch              ),
-      .branch_taken_i          ( perf_tbranch             ),
-      .mem_load_i              ( perf_load                ),
-      .mem_store_i             ( perf_store               ),
-      .dside_wait_i            ( perf_dside_wait          ),
-      .mul_wait_i              ( perf_mul_wait            ),
-      .div_wait_i              ( perf_div_wait            )
+      .instr_ret_i             ( perf_instr_ret_wb            ),
+      .instr_ret_compressed_i  ( perf_instr_ret_compressed_wb ),
+      .iside_wait_i            ( perf_iside_wait              ),
+      .jump_i                  ( perf_jump                    ),
+      .branch_i                ( perf_branch                  ),
+      .branch_taken_i          ( perf_tbranch                 ),
+      .mem_load_i              ( perf_load                    ),
+      .mem_store_i             ( perf_store                   ),
+      .dside_wait_i            ( perf_dside_wait              ),
+      .mul_wait_i              ( perf_mul_wait                ),
+      .div_wait_i              ( perf_div_wait                )
   );
 
   // These assertions are in top-level as instr_valid_id required as the enable term
