@@ -17,6 +17,7 @@ module ibex_cs_registers #(
     parameter int unsigned      DbgHwBreakNum     = 1,
     parameter bit               DataIndTiming     = 1'b0,
     parameter bit               DummyInstructions = 1'b0,
+    parameter bit               ShadowCSR         = 1'b0,
     parameter bit               ICache            = 1'b0,
     parameter int unsigned      MHPMCounterNum    = 10,
     parameter int unsigned      MHPMCounterWidth  = 40,
@@ -88,6 +89,7 @@ module ibex_cs_registers #(
     output logic                 dummy_instr_seed_en_o,
     output logic [31:0]          dummy_instr_seed_o,
     output logic                 icache_enable_o,
+    output logic                 csr_shadow_err_o,
 
     // Exception save/restore
     input  logic                 csr_save_if_i,
@@ -179,6 +181,7 @@ module ibex_cs_registers #(
   // CSRs
   priv_lvl_e   priv_lvl_q, priv_lvl_d;
   status_t     mstatus_q, mstatus_d;
+  logic        mstatus_err;
   logic        mstatus_en;
   irqs_t       mie_q, mie_d;
   logic        mie_en;
@@ -191,6 +194,7 @@ module ibex_cs_registers #(
   logic [31:0] mtval_q, mtval_d;
   logic        mtval_en;
   logic [31:0] mtvec_q, mtvec_d;
+  logic        mtvec_err;
   logic        mtvec_en;
   irqs_t       mip;
   dcsr_t       dcsr_q, dcsr_d;
@@ -211,6 +215,7 @@ module ibex_cs_registers #(
   // PMP Signals
   logic [31:0]                 pmp_addr_rdata  [PMP_MAX_REGIONS];
   logic [PMP_CFG_W-1:0]        pmp_cfg_rdata   [PMP_MAX_REGIONS];
+  logic                        pmp_csr_err;
 
   // Hardware performance monitor signals
   logic [31:0]                 mcountinhibit;
@@ -239,6 +244,7 @@ module ibex_cs_registers #(
   // CPU control bits
   cpu_ctrl_t   cpuctrl_q, cpuctrl_d, cpuctrl_wdata;
   logic        cpuctrl_we;
+  logic        cpuctrl_err;
 
   // CSR update logic
   logic [31:0] csr_wdata_int;
@@ -734,7 +740,7 @@ module ibex_cs_registers #(
                                           tw:   1'b0};
   ibex_csr #(
     .Width      ($bits(status_t)),
-    .ShadowCopy (1'b0),
+    .ShadowCopy (ShadowCSR),
     .ResetValue ({MSTATUS_RST_VAL})
   ) u_mstatus_csr (
     .clk_i      (clk_i),
@@ -742,7 +748,7 @@ module ibex_cs_registers #(
     .wr_data_i  ({mstatus_d}),
     .wr_en_i    (mstatus_en),
     .rd_data_o  (mstatus_q),
-    .rd_error_o ()
+    .rd_error_o (mstatus_err)
   );
 
   // MEPC
@@ -822,7 +828,7 @@ module ibex_cs_registers #(
   // MTVEC
   ibex_csr #(
     .Width      (32),
-    .ShadowCopy (1'b0),
+    .ShadowCopy (ShadowCSR),
     .ResetValue (32'd1)
   ) u_mtvec_csr (
     .clk_i      (clk_i),
@@ -830,7 +836,7 @@ module ibex_cs_registers #(
     .wr_data_i  (mtvec_d),
     .wr_en_i    (mtvec_en),
     .rd_data_o  (mtvec_q),
-    .rd_error_o ()
+    .rd_error_o (mtvec_err)
   );
 
   // DCSR
@@ -950,7 +956,9 @@ module ibex_cs_registers #(
     pmp_cfg_t                    pmp_cfg_wdata   [PMPNumRegions];
     logic [31:0]                 pmp_addr        [PMPNumRegions];
     logic [PMPNumRegions-1:0]    pmp_cfg_we;
+    logic [PMPNumRegions-1:0]    pmp_cfg_err;
     logic [PMPNumRegions-1:0]    pmp_addr_we;
+    logic [PMPNumRegions-1:0]    pmp_addr_err;
 
     // Expanded / qualified register read data
     for (genvar i = 0; i < PMP_MAX_REGIONS; i++) begin : g_exp_rd_data
@@ -1023,7 +1031,7 @@ module ibex_cs_registers #(
 
       ibex_csr #(
         .Width      ($bits(pmp_cfg_t)),
-        .ShadowCopy (1'b0),
+        .ShadowCopy (ShadowCSR),
         .ResetValue ('0)
       ) u_pmp_cfg_csr (
         .clk_i      (clk_i),
@@ -1031,7 +1039,7 @@ module ibex_cs_registers #(
         .wr_data_i  ({pmp_cfg_wdata[i]}),
         .wr_en_i    (pmp_cfg_we[i]),
         .rd_data_o  (pmp_cfg[i]),
-        .rd_error_o ()
+        .rd_error_o (pmp_cfg_err[i])
       );
 
       // --------------------------
@@ -1048,7 +1056,7 @@ module ibex_cs_registers #(
 
       ibex_csr #(
         .Width      (32),
-        .ShadowCopy (1'b0),
+        .ShadowCopy (ShadowCSR),
         .ResetValue ('0)
       ) u_pmp_addr_csr (
         .clk_i      (clk_i),
@@ -1056,12 +1064,14 @@ module ibex_cs_registers #(
         .wr_data_i  (csr_wdata_int),
         .wr_en_i    (pmp_addr_we[i]),
         .rd_data_o  (pmp_addr[i]),
-        .rd_error_o ()
+        .rd_error_o (pmp_addr_err[i])
       );
 
       assign csr_pmp_cfg_o[i]  = pmp_cfg[i];
       assign csr_pmp_addr_o[i] = {pmp_addr[i],2'b00};
     end
+
+    assign pmp_csr_err = (|pmp_cfg_err) | (|pmp_addr_err);
 
   end else begin : g_no_pmp_tieoffs
     // Generate tieoffs when PMP is not configured
@@ -1073,6 +1083,7 @@ module ibex_cs_registers #(
       assign csr_pmp_cfg_o[i]  = pmp_cfg_t'(1'b0);
       assign csr_pmp_addr_o[i] = '0;
     end
+    assign pmp_csr_err = 1'b0;
   end
 
   //////////////////////////
@@ -1387,7 +1398,7 @@ module ibex_cs_registers #(
 
   ibex_csr #(
     .Width      ($bits(cpu_ctrl_t)),
-    .ShadowCopy (1'b0),
+    .ShadowCopy (ShadowCSR),
     .ResetValue ('0)
   ) u_cpuctrl_csr (
     .clk_i      (clk_i),
@@ -1395,8 +1406,10 @@ module ibex_cs_registers #(
     .wr_data_i  ({cpuctrl_d}),
     .wr_en_i    (cpuctrl_we),
     .rd_data_o  (cpuctrl_q),
-    .rd_error_o ()
+    .rd_error_o (cpuctrl_err)
   );
+
+  assign csr_shadow_err_o = mstatus_err | mtvec_err | pmp_csr_err | cpuctrl_err;
 
   ////////////////
   // Assertions //

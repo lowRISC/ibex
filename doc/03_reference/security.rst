@@ -69,3 +69,10 @@ This adds a check that the PC driven from the IF stage has not been modified.
 A check is asserted that the current IF stage PC equals the previous PC plus the correct increment.
 The check is disabled after branches and after reset.
 If a mismatch is detected, a major alert is signaled.
+
+Shadow CSRs
+-----------
+
+Certain critical CSRs (`mstatus`, `mtvec`, `cpuctrl`, `pmpcfg` and `pmpaddr`) have extra glitch detection enabled.
+This creates a second copy of the register which stores a complemented version of the main CSR data.
+A constant check is made that the two copies are consistent, and a major alert is signalled if not.
