@@ -113,6 +113,7 @@ module ibex_core #(
   localparam bit          DataIndTiming     = SecureIbex;
   localparam bit          DummyInstructions = SecureIbex;
   localparam bit          PCIncrCheck       = SecureIbex;
+  localparam bit          ShadowCSR         = SecureIbex;
   // Speculative branch option, trades-off performance against timing.
   // Setting this to 1 eases branch target critical paths significantly but reduces performance
   // by ~3% (based on CoreMark/MHz score).
@@ -149,6 +150,7 @@ module ibex_core #(
   logic        icache_enable;
   logic        icache_inval;
   logic        pc_mismatch_alert;
+  logic        csr_shadow_err;
 
   logic        instr_first_cycle_id;
   logic        instr_valid_clear;
@@ -892,7 +894,7 @@ module ibex_core #(
   assign alert_minor_o = 1'b0;
 
   // Major alert - core is unrecoverable
-  assign alert_major_o = rf_ecc_err_comb | pc_mismatch_alert;
+  assign alert_major_o = rf_ecc_err_comb | pc_mismatch_alert | csr_shadow_err;
 
   `ASSERT_KNOWN(IbexAlertMinorX, alert_minor_o)
   `ASSERT_KNOWN(IbexAlertMajorX, alert_major_o)
@@ -958,6 +960,7 @@ module ibex_core #(
       .DbgHwBreakNum     ( DbgHwBreakNum     ),
       .DataIndTiming     ( DataIndTiming     ),
       .DummyInstructions ( DummyInstructions ),
+      .ShadowCSR         ( ShadowCSR         ),
       .ICache            ( ICache            ),
       .MHPMCounterNum    ( MHPMCounterNum    ),
       .MHPMCounterWidth  ( MHPMCounterWidth  ),
@@ -1025,6 +1028,7 @@ module ibex_core #(
       .dummy_instr_seed_en_o   ( dummy_instr_seed_en      ),
       .dummy_instr_seed_o      ( dummy_instr_seed         ),
       .icache_enable_o         ( icache_enable            ),
+      .csr_shadow_err_o        ( csr_shadow_err           ),
 
       .csr_save_if_i           ( csr_save_if              ),
       .csr_save_id_i           ( csr_save_id              ),
