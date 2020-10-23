@@ -230,8 +230,6 @@ Instruction Cache
 Overview
 ^^^^^^^^
 
-NOTE: Icache verification, as well as documentation, is still in very early stages.
-
 Due to the complexity of the instruction cache, a separate testbench is used to
 ensure that full verification and coverage closure is performed on this module.
 This testbench is located at `dv/uvm/icache/dv
