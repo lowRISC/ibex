@@ -18,9 +18,15 @@ implemented_csr = ['MVENDORID', 'MARCHID', 'MIMPID', 'MHARTID', 'MSTATUS', 'MISA
 
 SATP_MODE = 'BARE'
 
-supported_isa = ['RV32I']
+supported_isa = ['RV32I', 'RV32M', 'RV32C']
 
 supported_privileged_mode = ['MACHINE_MODE']
+
+supported_interrupt_mode = ['DIRECT', 'VECTORED']
+
+max_interrupt_vector_num = 16
+
+support_debug_mode = 0
 
 NUM_HARTS = 1
 
@@ -30,7 +36,27 @@ unsupported_instr = []
 
 support_umode_trap = 0
 
+support_sfence = 0
+
+support_unaligned_load_store = 1
+
 # GPR Setting
 NUM_FLOAT_GPR = 32
 NUM_GPR = 32
 NUM_VEC_GPR = 32
+
+VECTOR_EXTENSION_ENABLE = 0
+
+VLEN = 512
+
+ELEN = 32
+
+SELEN = 0
+
+MAX_MUL = 8
+
+implemented_interrupt = ['M_SOFTWARE_INTR', 'M_TIMER_INTR', 'M_EXTERNAL_INTR']
+
+implemented_exception = ['INSTRUCTION_ACCESS_FAULT', 'ILLEGAL_INSTRUCTION',
+                         'BREAKPOINT', 'LOAD_ADDRESS_MISALIGNED', 'LOAD_ACCESS_FAULT',
+                         'ECALL_MMODE']
