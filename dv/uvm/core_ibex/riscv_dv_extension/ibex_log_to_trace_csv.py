@@ -22,7 +22,7 @@ try:
     from riscv_trace_csv import (RiscvInstructionTraceCsv,
                                  RiscvInstructionTraceEntry,
                                  get_imm_hex_val)
-    from lib import RET_FATAL, gpr_to_abi, sint_to_hex
+    from lib import RET_FATAL, gpr_to_abi, sint_to_hex, convert_pseudo_instr
     import logging
 
 finally:
@@ -33,7 +33,9 @@ INSTR_RE = \
     re.compile(r"^\s*(?P<time>\d+)\s+(?P<cycle>\d+)\s+(?P<pc>[0-9a-f]+)\s+"
                r"(?P<bin>[0-9a-f]+)\s+(?P<instr>\S+\s+\S+)\s*")
 RD_RE = re.compile(r"(x(?P<rd>[1-9]\d*)=0x(?P<rd_val>[0-9a-f]+))")
-ADDR_RE = re.compile(r"(?P<imm>[\-0-9]+?)\((?P<rs1>.*)\)")
+ADDR_RE = re.compile(r"(?P<rd>[a-z0-9]+?),"
+                     r"(?P<imm>[\-0-9]+?)"
+                     r"\((?P<rs1>[a-z0-9]+)\)")
 
 
 def _process_ibex_sim_log_fd(log_fd, csv_fd, full_trace=True):
@@ -60,27 +62,26 @@ def _process_ibex_sim_log_fd(log_fd, csv_fd, full_trace=True):
 
         # Extract instruction information
         m = INSTR_RE.search(line)
-        if m:
-            instr_cnt += 1
-            # Write the extracted instruction to a csvcol buffer file
-            trace_entry = RiscvInstructionTraceEntry()
-            trace_entry.instr_str = m.group("instr")
-            trace_entry.instr = m.group("instr").split()[0]
-            trace_entry.pc = m.group("pc")
-            trace_entry.binary = m.group("bin")
-            if full_trace:
-                # Convert the operands into ABI format for
-                # the functional coverage flow
-                operands = m.group("instr").split()[1]
-                trace_entry.operand = convert_operands_to_abi(operands)
-                process_trace(trace_entry)
+        if m is None:
+            continue
+
+        instr_cnt += 1
+        # Write the extracted instruction to a csvcol buffer file
+        trace_entry = RiscvInstructionTraceEntry()
+        trace_entry.instr_str = m.group("instr")
+        trace_entry.instr = m.group("instr").split()[0]
+        trace_entry.pc = m.group("pc")
+        trace_entry.binary = m.group("bin")
+        if full_trace:
+            expand_trace_entry(trace_entry, m.group("instr").split()[1])
 
         c = RD_RE.search(line)
         if c:
-            trace_entry.gpr.append('{}:{}'
-                                   .format(gpr_to_abi("x%0s" % c.group("rd")),
-                                           c.group("rd_val")))
-            trace_csv.write_trace_entry(trace_entry)
+            abi_name = gpr_to_abi("x{}".format(c.group("rd")))
+            gpr_entry = "{}:{}".format(abi_name, c.group("rd_val"))
+            trace_entry.gpr.append(gpr_entry)
+
+        trace_csv.write_trace_entry(trace_entry)
 
     return instr_cnt
 
@@ -131,29 +132,44 @@ def convert_operands_to_abi(operand_str):
     return ",".join(operand_list)
 
 
-def process_trace(trace):
-    """ Process instruction trace """
-    process_imm(trace)
-    if trace.instr == 'jalr':
-        n = ADDR_RE.search(trace.operand)
-        if n:
-            trace.imm = get_imm_hex_val(n.group("imm"))
+def expand_trace_entry(trace, operands):
+    '''Expands a CSV trace entry for a single instruction.
+
+    Operands are added to the CSV entry, converting from the raw
+    register naming scheme (x0, x1, etc...) to ABI naming (a1, s1, etc...).
+
+    '''
+    operands = process_imm(trace.instr, trace.pc, operands)
+    trace.instr, operands = \
+        convert_pseudo_instr(trace.instr, operands, trace.binary)
+
+    # process any instructions of the form:
+    # <instr> <reg> <imm>(<reg>)
+    n = ADDR_RE.search(operands)
+    if n:
+        trace.imm = get_imm_hex_val(n.group("imm"))
+        operands = ','.join([n.group("rd"), n.group("rs1"), n.group("imm")])
+
+    # Convert the operands into ABI format for the function coverage flow,
+    # and store them into the CSV trace entry.
+    trace.operand = convert_operands_to_abi(operands)
 
 
-def process_imm(trace):
+def process_imm(instr_name, pc, operands):
     """Process imm to follow RISC-V standard convention"""
-    if trace.instr in ['beq', 'bne', 'blt', 'bge', 'bltu', 'bgeu', 'c.beqz',
-                       'c.bnez', 'beqz', 'bnez', 'bgez', 'bltz', 'blez',
-                       'bgtz', 'c.j', 'j', 'c.jal', 'jal']:
-        idx = trace.operand.rfind(',')
-        if idx == -1:
-            imm = trace.operand
-            imm = str(sint_to_hex(int(imm, 16) - int(trace.pc, 16)))
-            trace.operand = imm
-        else:
-            imm = trace.operand[idx + 1:]
-            imm = str(sint_to_hex(int(imm, 16) - int(trace.pc, 16)))
-            trace.operand = trace.operand[0:idx + 1] + imm
+    if instr_name not in ['beq', 'bne', 'blt', 'bge', 'bltu', 'bgeu', 'c.beqz',
+                          'c.bnez', 'beqz', 'bnez', 'bgez', 'bltz', 'blez',
+                          'bgtz', 'c.j', 'j', 'c.jal', 'jal']:
+        return operands
+
+    idx = operands.rfind(',')
+    if idx == -1:
+        imm = operands
+        return str(sint_to_hex(int(imm, 16) - int(pc, 16)))
+
+    imm = operands[idx + 1:]
+    imm = str(sint_to_hex(int(imm, 16) - int(pc, 16)))
+    return operands[0:idx + 1] + imm
 
 
 def check_ibex_uvm_log(uvm_log, core_name, test_name, report, write=True):
