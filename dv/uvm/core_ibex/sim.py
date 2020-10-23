@@ -618,7 +618,8 @@ def main():
 
     # Compare RTL & ISS simulation result.
     if steps['compare']:
-        compare(matched_list, args.iss, args.o)
+        if not compare(matched_list, args.iss, args.o):
+            return RET_FAIL
 
     # Generate merged coverage directory and load it into appropriate GUI
     if steps['cov']:
