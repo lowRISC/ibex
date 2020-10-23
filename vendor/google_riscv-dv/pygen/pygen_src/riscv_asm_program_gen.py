@@ -12,18 +12,22 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
 """
 
-import subprocess
 import logging
 import random
 import copy
 import sys
+import vsc
 from bitstring import BitArray
+from importlib import import_module
 from pygen_src.riscv_instr_sequence import riscv_instr_sequence
-from pygen_src.riscv_instr_pkg import pkg_ins, privileged_reg_t, privileged_mode_t, mtvec_mode_t
-from pygen_src.riscv_instr_gen_config import cfg, args, args_dict
-from pygen_src.target.rv32i import riscv_core_setting as rcs
-from pygen_src.riscv_instr_stream import riscv_rand_instr_stream
+from pygen_src.riscv_instr_pkg import (pkg_ins, privileged_reg_t,
+                                       privileged_mode_t, mtvec_mode_t,
+                                       misa_ext_t, riscv_instr_group_t)
+from pygen_src.riscv_instr_gen_config import cfg
+from pygen_src.riscv_data_page_gen import riscv_data_page_gen
 from pygen_src.riscv_utils import factory
+rcs = import_module("pygen_src.target." + cfg.argv.target + ".riscv_core_setting")
+
 '''
     RISC-V assembly program generator
 
@@ -42,6 +46,7 @@ class riscv_asm_program_gen:
         self.page_table_list = []
         self.main_program = []
         self.sub_program = []
+        self.data_page_gen = None
 
     # Main function to generate the whole program
 
@@ -116,8 +121,8 @@ class riscv_asm_program_gen:
             self.gen_program_end(hart)
             for hart in range(cfg.num_of_harts):
                 self.gen_data_page_begin(hart)
-                if(cfg.no_data_page):
-                    self.gen_data_page()
+                if not cfg.no_data_page:
+                    self.gen_data_page(hart)
 
                     if((hart == 0) and ("RV32A" in rcs.supported_isa)):
                         self.gen_data_page(hart, amo = 1)
@@ -137,7 +142,7 @@ class riscv_asm_program_gen:
         self.gen_all_trap_handler(hart)
         for mode in rcs.supported_privileged_mode:
             self.gen_interrupt_handler_section(mode, hart)
-
+        self.instr_stream.append(pkg_ins.get_label("kernel_instr_end: nop", hart))
         self.gen_kernel_stack_section(hart)
 
     def gen_kernel_program(self, hart, seq):
@@ -185,7 +190,9 @@ class riscv_asm_program_gen:
             self.instr_stream.append(".align 6; .global fromhost; fromhost: .dword 0;")
 
     def gen_data_page(self, hart, is_kernel = 0, amo = 0):
-        pass
+        self.data_page_gen = riscv_data_page_gen()
+        self.data_page_gen.gen_data_page(hart, cfg.data_page_pattern, is_kernel, amo)
+        self.instr_stream.extend(self.data_page_gen.data_page_str)
 
     def gen_stack_section(self, hart):
         hart_prefix_string = pkg_ins.hart_prefix(hart)
@@ -201,7 +208,7 @@ class riscv_asm_program_gen:
             self.instr_stream.append(".align 2")
 
         self.instr_stream.append(pkg_ins.get_label("user_stack_start:", hart))
-        self.instr_stream.append(".rept {}".format(cfg.kernel_stack_len - 1))
+        self.instr_stream.append(".rept {}".format(cfg.stack_len - 1))
         self.instr_stream.append(".{}byte 0x0".format(rcs.XLEN // 8))
         self.instr_stream.append(".endr")
         self.instr_stream.append(pkg_ins.get_label("user_stack_end:", hart))
@@ -250,11 +257,57 @@ class riscv_asm_program_gen:
             string = pkg_ins.indent + "j main"
             self.instr_stream.append(string)
 
+    # Setup MISA based on supported extensions
     def setup_misa(self):
-        # TO DO
-        misa = 0b01000000
-        self.instr_stream.append("{}li x{}, {}".format(pkg_ins.indent, cfg.gpr[0].value, hex(misa)))
-        self.instr_stream.append("{}csrw misa, x{}".format(pkg_ins.indent, cfg.gpr[0].value))
+        misa = vsc.bit_t(rcs.XLEN)
+        if rcs.XLEN == 32:
+            misa[rcs.XLEN - 1:rcs.XLEN - 2] = 1
+        elif rcs.XLEN == 64:
+            misa[rcs.XLEN - 1:rcs.XLEN - 2] = 2
+        else:
+            misa[rcs.XLEN - 1:rcs.XLEN - 2] = 3
+        if cfg.check_misa_init_val:
+            self.instr_stream.append("{}csrr x15, {}".format(pkg_ins.indent,
+                                      hex(privileged_reg_t.MISA)))
+        for i in range(len(rcs.supported_isa)):
+            if rcs.supported_isa[i] in [riscv_instr_group_t.RV32C.name,
+                                        riscv_instr_group_t.RV64C.name,
+                                        riscv_instr_group_t.RV128C.name]:
+                misa[misa_ext_t.MISA_EXT_C] = 1
+            elif rcs.supported_isa[i] in [riscv_instr_group_t.RV32I.name,
+                                          riscv_instr_group_t.RV64I.name,
+                                          riscv_instr_group_t.RV128I.name]:
+                misa[misa_ext_t.MISA_EXT_I] = 1
+            elif rcs.supported_isa[i] in [riscv_instr_group_t.RV32M.name,
+                                          riscv_instr_group_t.RV64M.name]:
+                misa[misa_ext_t.MISA_EXT_M] = 1
+            elif rcs.supported_isa[i] in [riscv_instr_group_t.RV32A.name,
+                                          riscv_instr_group_t.RV64A.name]:
+                misa[misa_ext_t.MISA_EXT_A] = 1
+            elif rcs.supported_isa[i] in [riscv_instr_group_t.RV32B.name,
+                                          riscv_instr_group_t.RV64B.name]:
+                misa[misa_ext_t.MISA_EXT_B] = 1
+            elif rcs.supported_isa[i] in [riscv_instr_group_t.RV32F.name,
+                                          riscv_instr_group_t.RV64F.name,
+                                          riscv_instr_group_t.RV32FC.name]:
+                misa[misa_ext_t.MISA_EXT_F] = 1
+            elif rcs.supported_isa[i] in [riscv_instr_group_t.RV32D.name,
+                                          riscv_instr_group_t.RV64D.name,
+                                          riscv_instr_group_t.RV32DC.name]:
+                misa[misa_ext_t.MISA_EXT_D] = 1
+            elif rcs.supported_isa[i] in [riscv_instr_group_t.RVV.name]:
+                misa[misa_ext_t.MISA_EXT_V] = 1
+            elif rcs.supported_isa[i] in [riscv_instr_group_t.RV32X.name,
+                                          riscv_instr_group_t.RV64X.name]:
+                misa[misa_ext_t.MISA_EXT_X] = 1
+            else:
+                logging.error("{} is not yet supported".format(rcs.supported_isa[i]))
+        if privileged_mode_t.SUPERVISOR_MODE.name in rcs.supported_privileged_mode:
+            misa[misa_ext_t.MISA_EXT_S] = 1
+        self.instr_stream.append("{}li x{}, {}".format(pkg_ins.indent, cfg.gpr[0].value,
+                                hex(misa.get_val())))
+        self.instr_stream.append("{}csrw {}, x{}".format(pkg_ins.indent,
+                                hex(privileged_reg_t.MISA), cfg.gpr[0].value))
 
     def core_is_initialized(self):
         pass
@@ -264,26 +317,24 @@ class riscv_asm_program_gen:
 
     def init_gpr(self):
         reg_val = BitArray(uint = 0, length = pkg_ins.DATA_WIDTH)
-        dist_lst = []
-
-        for dist_val in range(5):
-            if dist_val == 0:
+        # TODO Map the function with PyVSC std::randomize()
+        for i in range(rcs.NUM_GPR):
+            if i in [cfg.sp.value, cfg.tp.value]:
+                continue
+            if i == 0:
                 reg_val = BitArray(hex='0x0')
-            elif dist_val == 1:
+            elif i == 1:
                 reg_val = BitArray(hex='0x80000000')
-            elif dist_val == 2:
+            elif i == 2:
                 temp = random.randrange(0x1, 0xf)
                 reg_val = BitArray(hex(temp), length=32)
-            elif dist_val == 3:
+            elif i == 3:
                 temp = random.randrange(0x10, 0xefffffff)
                 reg_val = BitArray(hex(temp), length=32)
             else:
                 temp = random.randrange(0xf0000000, 0xffffffff)
                 reg_val = BitArray(hex(temp), length=32)
-            dist_lst.append(reg_val)
-
-        for i in range(32):
-            init_string = "{}li x{}, {}".format(pkg_ins.indent, i, random.choice(dist_lst))
+            init_string = "{}li x{}, {}".format(pkg_ins.indent, i, reg_val)
             self.instr_stream.append(init_string)
 
     def init_floating_point_gpr(self):
@@ -325,7 +376,7 @@ class riscv_asm_program_gen:
         string.append("la x{}, {}kernel_stack_end".format(cfg.tp.value, pkg_ins.hart_prefix(hart)))
         self.gen_section(pkg_ins.get_label("kernel_sp", hart), string)
 
-        if(not cfg.no_delegation and (cfg.init_privileged_mode != "MACHINE_MODE")):
+        if not cfg.no_delegation and (cfg.init_privileged_mode != privileged_mode_t.MACHINE_MODE):
             self.gen_delegation(hart)
         self.trap_vector_init(hart)
         self.setup_pmp(hart)
@@ -436,6 +487,16 @@ class riscv_asm_program_gen:
             # TODO
             pkg_ins.push_gpr_to_kernel_stack(
                 status, scratch, cfg.mstatus_mprv, cfg.sp, cfg.tp, instr)
+            # Checking xStatus can be optional if ISS (like spike) has different implementation of
+            # certain fields compared with the RTL processor.
+            if cfg.check_xstatus:
+                instr.append("csrr x{}, {} # {}".format(
+                    cfg.gpr[0].value, hex(status.value), status.name))
+            instr.append("csrr x{}, {} # {}\n".format(cfg.gpr[0].value, hex(cause.value),
+                         cause.name) +
+                         "{}srli x{}, x{}, {}\n".format(pkg_ins.indent, cfg.gpr[0].value,
+                         cfg.gpr[0].value, rcs.XLEN - 1) + "{}bne x{}, x0, {}{}mode_instr_handler"
+                         .format(pkg_ins.indent, cfg.gpr[0].value, pkg_ins.hart_prefix(hart), mode))
         # The trap handler will occupy one 4KB page, it will be allocated one entry in
         # the page table with a specific privileged mode.
 
@@ -448,6 +509,10 @@ class riscv_asm_program_gen:
         self.gen_section(pkg_ins.get_label("{}_handler".format(tvec_name.lower()), hart), instr)
 
         # TODO Exception handler
+        instr = []
+        if cfg.mtvec_mode == mtvec_mode_t.VECTORED:
+            pkg_ins.push_gpr_to_kernel_stack(
+                status, scratch, cfg.mstatus_mprv, cfg.sp, cfg.tp, instr)
 
     def gen_interrupt_vector_table(self, hart, mode, status, cause, ie,
                                    ip, scratch, instr):
@@ -546,7 +611,7 @@ class riscv_asm_program_gen:
                                                                                  ip.name)]
         interrupt_handler_instr.extend(to_extend_interrupt_hanlder_instr)
         self.gen_plic_section(interrupt_handler_instr)
-        pkg_ins.pop_gpr_from_kernel_stack(status.name, scratch.name, cfg.mstatus_mprv,
+        pkg_ins.pop_gpr_from_kernel_stack(status, scratch, cfg.mstatus_mprv,
                                           cfg.sp, cfg.tp, interrupt_handler_instr)
         interrupt_handler_instr.append("%0sret;" % (mode_prefix))
 
@@ -555,7 +620,7 @@ class riscv_asm_program_gen:
         else:
             self.instr_stream.append(".align 2")
 
-        self.gen_section(pkg_ins.get_label("%0smode_intr_handler" %
+        self.gen_section(pkg_ins.get_label("%0smode_instr_handler" %
                                            (mode_prefix), hart), interrupt_handler_instr)
 
     def format_section(self, instr):
@@ -574,8 +639,7 @@ class riscv_asm_program_gen:
         pass
 
     def gen_test_file(self, test_name):
-        subprocess.run(["mkdir", "-p", "out/asm_tests"])
-        file = open("./out/asm_tests/{}".format(test_name), "w+")
+        file = open(test_name, "w+")
         for items in self.instr_stream:
             file.write("{}\n".format(items))
 
@@ -596,17 +660,18 @@ class riscv_asm_program_gen:
             arg = "directed_instr_{}".format(i)
             stream_name_opts = "stream_name_{}".format(i)
             stream_freq_opts = "stream_freq_{}".format(i)
-            if(arg in args):
-                val = args_dict[arg]
+            if cfg.args_dict[arg]:
+                val = cfg.args_dict[arg]
                 opts = val.split(",")
-                if(len(opts) != 2):
+                if len(opts) != 2:
                     logging.critical(
                         "Incorrect directed instruction format : %0s, expect: name,ratio", val)
+                    sys.exit(1)
                 else:
                     self.add_directed_instr_stream(opts[0], int(opts[1]))
-            elif(stream_name_opts in args and stream_freq_opts in args):
-                stream_name = args_dict[stream_name_opts]
-                stream_freq = args_dict[stream_freq_opts]
+            elif cfg.args_dict[stream_name_opts] and cfg.args_dict[stream_freq_opts]:
+                stream_name = cfg.args_dict[stream_name_opts]
+                stream_freq = cfg.args_dict[stream_freq_opts]
                 self.add_directed_instr_stream(stream_name, stream_freq)
 
     def generate_directed_instr_stream(self, hart = 0, label = "", original_instr_cnt = 0,
@@ -629,7 +694,7 @@ class riscv_asm_program_gen:
                 if(object_h is None):
                     logging.critical("Cannot create instr stream %0s", name)
                     sys.exit(1)
-                new_instr_stream = copy.copy(object_h)
+                new_instr_stream = copy.deepcopy(object_h)
                 if(new_instr_stream):
                     new_instr_stream.hart = hart
                     new_instr_stream.label = "{}_{}".format(label, idx)

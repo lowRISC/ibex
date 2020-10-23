@@ -21,16 +21,16 @@
 parameter int XLEN = 32;
 
 // Parameter for SATP mode, set to BARE if address translation is not supported
-parameter satp_mode_t SATP_MODE = BARE;
+parameter satp_mode_t SATP_MODE = SV32;
 
 // Supported Privileged mode
-privileged_mode_t supported_privileged_mode[] = {MACHINE_MODE};
+privileged_mode_t supported_privileged_mode[] = {MACHINE_MODE, USER_MODE};
 
 // Unsupported instructions
 riscv_instr_name_t unsupported_instr[];
 
 // ISA supported by the processor
-riscv_instr_group_t supported_isa[$] = {RV32I, RV32M, RV32C, RV32B};
+riscv_instr_group_t supported_isa[$] = {RV32I, RV32M, RV32C};
 
 // Interrupt mode support
 mtvec_mode_t supported_interrupt_mode[$] = {DIRECT, VECTORED};
