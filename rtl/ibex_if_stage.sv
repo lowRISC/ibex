@@ -214,6 +214,10 @@ module ibex_if_stage #(
         .icache_inval_i    ( icache_inval_i              ),
         .busy_o            ( prefetch_busy               )
     );
+    // Branch predictor tie-offs (which are unused when the instruction cache is enabled)
+    logic unused_nt_branch_mispredict, unused_predicted_branch;
+    assign unused_nt_branch_mispredict  = nt_branch_mispredict_i;
+    assign unused_predicted_branch = predicted_branch;
   end else begin : gen_prefetch_buffer
     // prefetch buffer, caches a fixed number of instructions
     ibex_prefetch_buffer #(
