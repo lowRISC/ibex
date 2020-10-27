@@ -24,6 +24,8 @@ module ibex_riscv_compliance (
   parameter ibex_pkg::regfile_e RegFile = ibex_pkg::RegFileFF;
   parameter bit BranchTargetALU         = 1'b0;
   parameter bit WritebackStage          = 1'b0;
+  parameter bit ICache                  = 1'b0;
+  parameter bit ICacheECC               = 1'b0;
   parameter bit BranchPredictor         = 1'b0;
 
   logic clk_sys, rst_sys_n;
@@ -120,6 +122,8 @@ module ibex_riscv_compliance (
       .RegFile         (RegFile         ),
       .BranchTargetALU (BranchTargetALU ),
       .WritebackStage  (WritebackStage  ),
+      .ICache          (ICache          ),
+      .ICacheECC       (ICacheECC       ),
       .BranchPredictor (BranchPredictor ),
       .DmHaltAddr      (32'h00000000    ),
       .DmExceptionAddr (32'h00000000    )
