@@ -6,7 +6,7 @@
 # Quote values to ensure they are parsed as string (version numbers might
 # end up as float otherwise).
 variables:
-  VERILATOR_VERSION: "4.032"
+  VERILATOR_VERSION: "4.040"
   RISCV_TOOLCHAIN_TAR_VERSION: "20200626-1"
   RISCV_TOOLCHAIN_TAR_VARIANT: "lowrisc-toolchain-gcc-rv32imcb"
   RISCV_COMPLIANCE_GIT_VERSION: "844c6660ef3f0d9b96957991109dfd80cc4938e2"
