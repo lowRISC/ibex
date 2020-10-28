@@ -304,7 +304,7 @@ def run_sim_commands(command_list, use_lsf):
     for desc, cmd, dirname in command_list:
         os.makedirs(dirname, exist_ok=True)
         logging.info("Running " + desc)
-        run_cmd(cmd, 300, check_return_code=True)
+        run_cmd(cmd, 600, check_return_code=True)
 
 
 def rtl_sim(sim_cmd, test_list, seed_gen, opts,
