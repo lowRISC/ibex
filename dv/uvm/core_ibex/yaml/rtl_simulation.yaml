@@ -136,6 +136,7 @@
               -q
               -f ibex_dv.f
               -sv
+              -licqueue
               -uvm
               -uvmhome CDNS-1.2
               -define UVM_REGEX_NO_DPI
@@ -152,6 +153,7 @@
            -R
            -xmlibdirpath <out>
            -l <sim_dir>/sim.log
+           -licqueue
            -svseed <seed>
            -svrnc rand_struct
            +UVM_TESTNAME=<rtl_test>
@@ -162,5 +164,5 @@
            <wave_opts>
     wave_opts: >
       -input @"database -open <sim_dir>/waves -shm -default"
-      -input @"probe -create -all -depth all"
+      -input @"probe -create core_ibex_tb_top -all -depth all -variables"
       -input @"run"

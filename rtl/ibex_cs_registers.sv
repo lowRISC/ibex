@@ -1285,7 +1285,9 @@ module ibex_cs_registers #(
 
     // Assign read data
     // TSELECT - number of supported triggers defined by parameter DbgHwBreakNum
-    assign tselect_rdata = {'b0, tselect_q};
+    localparam int unsigned TSelectRdataPadlen = DbgHwNumLen >= 32 ? 0 : (32 - DbgHwNumLen);
+    assign tselect_rdata = {{TSelectRdataPadlen{1'b0}}, tselect_q};
+
     // TDATA0 - only support simple address matching
     assign tmatch_control_rdata = {4'h2,                         // type    : address/data match
                                    1'b1,                         // dmode   : access from D mode only

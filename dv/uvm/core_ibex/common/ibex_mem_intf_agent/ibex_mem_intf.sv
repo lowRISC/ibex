@@ -9,16 +9,16 @@ interface ibex_mem_intf#(
   input clk
 );
 
-  logic                    reset;
-  logic                    request;
-  logic                    grant;
-  logic [ADDR_WIDTH-1:0]   addr;
-  logic                    we;
-  logic [DATA_WIDTH/8-1:0] be;
-  logic                    rvalid;
-  logic [DATA_WIDTH-1:0]   wdata;
-  logic [DATA_WIDTH-1:0]   rdata;
-  logic                    error;
+  wire                     reset;
+  wire                     request;
+  wire                     grant;
+  wire  [ADDR_WIDTH-1:0]   addr;
+  wire                     we;
+  wire  [DATA_WIDTH/8-1:0] be;
+  wire                     rvalid;
+  wire  [DATA_WIDTH-1:0]   wdata;
+  wire  [DATA_WIDTH-1:0]   rdata;
+  wire                     error;
 
   clocking request_driver_cb @(posedge clk);
     input   reset;
