@@ -14,9 +14,9 @@ module tb_cs_registers #(
     parameter ibex_pkg::rv32m_e RV32M            = ibex_pkg::RV32MFast
 ) (
     // Clock and Reset
-    inout  wire                 clk_i,
-    inout  wire                 in_rst_ni,
-    output wire                 test_passed_o
+    inout  logic                clk_i,
+    inout  logic                in_rst_ni,
+    output logic                test_passed_o
 );
 
   logic                 dpi_rst_ni;

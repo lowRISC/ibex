@@ -50,11 +50,11 @@ module ibex_simple_system (
 
   logic clk_sys = 1'b0, rst_sys_n;
 
-  typedef enum {
+  typedef enum logic {
     CoreD
   } bus_host_e;
 
-  typedef enum {
+  typedef enum logic[1:0] {
     Ram,
     SimCtrl,
     Timer
@@ -117,7 +117,7 @@ module ibex_simple_system (
       #8
       rst_sys_n = 1'b1;
     end
-    always begin
+    always_comb begin
       #1 clk_sys = 1'b0;
       #1 clk_sys = 1'b1;
     end
