@@ -756,7 +756,7 @@ def parse_args(cwd):
 
     parser.add_argument("--target", type=str, default="rv32imc",
                         help="Run the generator with pre-defined targets: \
-                            rv32imc, rv32i, rv64imc, rv64gc")
+                            rv32imc, rv32i, rv32imfdc, rv64imc, rv64gc")
     parser.add_argument("-o", "--output", type=str,
                         help="Output directory name", dest="o")
     parser.add_argument("-tl", "--testlist", type=str, default="",
@@ -918,6 +918,9 @@ def load_config(args, cwd):
         if args.target == "rv32imc":
             args.mabi = "ilp32"
             args.isa = "rv32imc"
+        elif args.target == "rv32imfdc":
+            args.mabi = "ilp32"
+            args.isa = "rv32imfdc"
         elif args.target == "rv32imc_sv32":
             args.mabi = "ilp32"
             args.isa = "rv32imc"
