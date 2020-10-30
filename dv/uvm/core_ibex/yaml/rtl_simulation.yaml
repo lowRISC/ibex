@@ -25,6 +25,7 @@
          -o <out>/vcs_simv
          -debug_access+pp
          -xlrm uniq_prior_final
+         -CFLAGS '--std=c99 -fno-extended-identifiers'
          -lca -kdb <cmp_opts> <wave_opts> <cov_opts>"
     cov_opts: >
       -cm line+tgl+assert+fsm+branch
