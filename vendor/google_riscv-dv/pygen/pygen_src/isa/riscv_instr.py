@@ -111,11 +111,9 @@ class riscv_instr:
                 self.imm[11:6] == 0
 
     @classmethod
-    def register(cls, instr_name):
-        logging.info("Registering %s", instr_name.name)
-        cls.instr_registry[instr_name] = 1
-        if instr_name is None:
-            print("\n")
+    def register(cls, instr_name, instr_group):
+        logging.info("Registering {}".format(instr_name.name))
+        cls.instr_registry[instr_name] = instr_group
         return 1
 
     @classmethod
@@ -123,10 +121,10 @@ class riscv_instr:
         cls.instr_names.clear()
         cls.instr_group.clear()
         cls.instr_category.clear()
-        for instr_name, values in cls.instr_registry.items():
+        for instr_name, instr_group in cls.instr_registry.items():
             if instr_name in rcs.unsupported_instr:
                 continue
-            instr_inst = cls.create_instr(instr_name)
+            instr_inst = cls.create_instr(instr_name, instr_group)
             cls.instr_template[instr_name] = instr_inst
 
             if not instr_inst.is_supported(cfg):
@@ -153,10 +151,13 @@ class riscv_instr:
         cls.create_csr_filter(cfg)
 
     @classmethod
-    def create_instr(cls, instr_name):
-        # Importing get_object here to eliminate the Cyclic dependency for DEFINE_INSTR
-        from pygen_src.riscv_utils import get_object
-        instr_inst = get_object(instr_name)
+    def create_instr(cls, instr_name, instr_group):
+        try:
+            module_name = import_module("pygen_src.isa." + instr_group.name.lower() + "_instr")
+            instr_inst = eval("module_name.riscv_" + instr_name.name + "_instr()")
+        except Exception:
+            logging.critical("Failed to create instr: {}".format(instr_name.name))
+            sys.exit(1)
         return instr_inst
 
     def is_supported(self, cfg):
