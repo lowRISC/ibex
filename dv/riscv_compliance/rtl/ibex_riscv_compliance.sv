@@ -34,13 +34,13 @@ module ibex_riscv_compliance (
   assign rst_sys_n = IO_RST_N;
 
   // Bus hosts, ordered in decreasing priority
-  typedef enum {
+  typedef enum logic[1:0] {
     TestUtilHost,
     CoreD,
     CoreI
   } bus_host_e;
 
-  typedef enum {
+  typedef enum logic {
     Ram,
     TestUtilDevice
   } bus_device_e;

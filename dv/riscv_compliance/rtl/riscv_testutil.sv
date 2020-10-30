@@ -72,6 +72,7 @@ module riscv_testutil (
         ADDR_SET_END_SIGNATURE: begin
           end_signature_addr_d = dev_wdata_i;
         end
+        default: ;
       endcase
     end
   end
@@ -144,6 +145,8 @@ module riscv_testutil (
         $display("Terminating simulation by software request.");
         $finish;
       end
+
+      default: ;
     endcase
   end
 

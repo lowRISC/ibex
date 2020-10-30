@@ -148,7 +148,7 @@ interface ibex_icache_core_if (input clk, input rst_n);
   cover property (cancelled_valid);
 
   bit cancelled_valid_trig = 0;
-  function void cover_cancelled_valid();
+  function automatic void cover_cancelled_valid();
     cancelled_valid_trig = ~cancelled_valid_trig;
   endfunction
 
