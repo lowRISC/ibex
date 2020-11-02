@@ -119,7 +119,7 @@ module ibex_simple_system (
       #8
       rst_sys_n = 1'b1;
     end
-    always_comb begin
+    always begin
       #1 clk_sys = 1'b0;
       #1 clk_sys = 1'b1;
     end
