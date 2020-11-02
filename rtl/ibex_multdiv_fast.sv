@@ -249,7 +249,7 @@ module ibex_multdiv_fast #(
       end
     end
 
-    assign unused_mult1_res_uns = mult1_res[33:32];
+    assign unused_mult1_res_uns = mult1_res_uns[33:32];
 
     // States must be knwon/valid.
     `ASSERT_KNOWN(IbexMultStateKnown, mult_state_q)
