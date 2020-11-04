@@ -21,6 +21,8 @@ interface core_ibex_instr_monitor_if #(
   logic [DATA_WIDTH-1:0]  pc_id;
   logic                   branch_taken_id;
   logic [DATA_WIDTH-1:0]  branch_target_id;
+  logic                   stall_id;
+  logic                   jump_set_id;
 
   clocking instr_cb @(posedge clk);
     input valid_id;
@@ -31,6 +33,8 @@ interface core_ibex_instr_monitor_if #(
     input pc_id;
     input branch_taken_id;
     input branch_target_id;
+    input stall_id;
+    input jump_set_id;
   endclocking
 
 endinterface
