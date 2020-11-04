@@ -985,6 +985,28 @@ class core_ibex_debug_single_step_test extends core_ibex_directed_test;
   `uvm_component_utils(core_ibex_debug_single_step_test)
   `uvm_component_new
 
+  // Waits until PC has changed from `cur_pc` and continues waiting until PC two steps ahead from
+  // `cur_pc` can be determined.
+  //
+  // cur_pc -> a_pc -> b_pc
+  //                    ^
+  //                    |
+  //
+  // This will wait until instruction execution is at `a_pc` and keep waiting until it is clear what
+  // `b_pc` will be.
+  virtual task wait_for_pc_change(bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] cur_pc);
+    // Wait for instruction PC to change then continuing waiting whilst it's stalled, immediately
+    // stop waiting if a branch is taken or a jump is set (the PC following `cur_pc` will be
+    // available the same cycle this happens). If `cur_pc` is a branch that isn't taken this will
+    // be resolved when the branch is unstalled (i.e. `branch_taken_id` won't be set and the branch
+    // definitely isn't taken).
+    wait (instr_vif.instr_cb.pc_id != cur_pc     &&
+          instr_vif.instr_cb.valid_id            &&
+          (!instr_vif.instr_cb.stall_id       ||
+           instr_vif.instr_cb.branch_taken_id ||
+           instr_vif.instr_cb.jump_set_id));
+  endtask
+
   virtual task check_stimulus();
     bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] counter = 0;
     bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] next_counter = 0;
@@ -1015,9 +1037,8 @@ class core_ibex_debug_single_step_test extends core_ibex_directed_test;
       wait_ret("dret", 5000);
       ret_pc = instr_vif.instr_cb.pc_id;
       // wait for the instruction after dret to log its PC and other information.
-      wait (instr_vif.instr_cb.pc_id != ret_pc &&
-            instr_vif.instr_cb.valid_id &&
-            !dut_vif.dut_cb.dret);
+      wait(!dut_vif.dut_cb.dret);
+      wait_for_pc_change(ret_pc);
       curr_pc = instr_vif.instr_cb.pc_id;
       step_instr = instr_vif.instr_cb.instr_id;
       is_compressed = instr_vif.instr_cb.is_compressed_id;
@@ -1079,9 +1100,8 @@ class core_ibex_debug_single_step_test extends core_ibex_directed_test;
         ret_pc = instr_vif.instr_cb.pc_id;
         if (counter == 0) break;
         // wait until Ibex steps to the next instruction.
-        wait (instr_vif.instr_cb.pc_id != ret_pc &&
-              instr_vif.instr_cb.valid_id &&
-              !dut_vif.dut_cb.dret);
+        wait(!dut_vif.dut_cb.dret);
+        wait_for_pc_change(ret_pc);
         // log information about this instruction
         curr_pc = instr_vif.instr_cb.pc_id;
         step_instr = instr_vif.instr_cb.instr_id;
