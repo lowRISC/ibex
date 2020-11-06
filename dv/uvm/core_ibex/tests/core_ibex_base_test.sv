@@ -210,7 +210,7 @@ class core_ibex_base_test extends uvm_test;
       end
     join_any
     // Will only get here if we successfully beat the timeout period
-    disable wait_timeout;
+    disable fork;
     run.drop_objection(this);
   endtask
 
@@ -234,7 +234,7 @@ class core_ibex_base_test extends uvm_test;
       end
     join_any
     // Will only get here if we successfully beat the timeout period
-    disable wait_timeout;
+    disable fork;
     run.drop_objection(this);
   endtask
 

@@ -35,7 +35,7 @@ class ibex_mem_intf_response_driver extends uvm_driver #(ibex_mem_intf_seq_item)
         wait (vif.response_driver_cb.reset === 1'b1);
       join_any
       // Will only be reached after mid-test reset
-      disable drive_stimulus;
+      disable fork;
       handle_reset();
     end
   endtask : run_phase

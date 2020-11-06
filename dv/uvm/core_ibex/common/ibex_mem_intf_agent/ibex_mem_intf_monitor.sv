@@ -36,7 +36,7 @@ class ibex_mem_intf_monitor extends uvm_monitor;
         wait (vif.monitor_cb.reset === 1'b1);
       join_any
       // Will only reach this point when mid-test reset is asserted
-      disable check_mem_intf;
+      disable fork;
       handle_reset();
     end
   endtask : run_phase

@@ -348,7 +348,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
       end
     join_any
     // Will only get here if dret successfully detected within timeout period
-    disable ret_timeout;
+    disable fork;
     run.drop_objection(this);
   endtask
 
@@ -400,17 +400,13 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
           // Should be extended by derived classes.
           // DO NOT use this test class directly.
           fork
-            begin : stimulus
-              check_stimulus();
-            end : stimulus
-            begin
-              wait (dut_vif.dut_cb.ecall === 1'b1);
-              disable stimulus;
-              if (run.get_objection_count(this) > 1) begin
-                run.drop_objection(this);
-              end
-            end
-          join
+            check_stimulus();
+          join_none
+          wait (dut_vif.dut_cb.ecall === 1'b1);
+          disable fork;
+          if (run.get_objection_count(this) > 1) begin
+            run.drop_objection(this);
+          end
         end
       end
     join_none
@@ -743,9 +739,9 @@ class core_ibex_irq_in_debug_test extends core_ibex_directed_test;
         end
         begin
           clk_vif.wait_clks(100);
-          disable wait_irq;
         end
-      join
+      join_any
+      disable fork;
       vseq.start_irq_drop_seq();
       wait_ret("dret", 5000);
       clk_vif.wait_clks($urandom_range(250, 500));
@@ -1196,7 +1192,7 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
               clk_vif.wait_clks(750);
             end
           join_any
-          disable imem_fork;
+          disable fork;
         end
       join
       if (latched_imem_err === 1'b0) begin
