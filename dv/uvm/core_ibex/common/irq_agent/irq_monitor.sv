@@ -29,7 +29,7 @@ class irq_monitor extends uvm_monitor;
         wait (vif.monitor_cb.reset === 1'b1);
       join_any
       // Will only reach here on mid-test reset
-      disable monitor_irq;
+      disable fork;
     end
   endtask : run_phase
 

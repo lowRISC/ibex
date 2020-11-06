@@ -24,7 +24,7 @@ class irq_request_driver extends uvm_driver #(irq_seq_item);
         wait (vif.driver_cb.reset === 1'b1);
       join_any
       // Will only reach here on mid-test reset
-      disable drive_irq;
+      disable fork;
       handle_reset();
     end
   endtask : run_phase
