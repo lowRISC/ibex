@@ -55,8 +55,8 @@ module ibex_pmp #(
     end
     // Address mask for NA matching
     for (genvar b = PMPGranularity+2; b < 34; b++) begin : g_bitmask
-      if (b == PMPGranularity+2) begin : g_bit0
-        // Always mask bit (G+2) for NAPOT
+      if (b == 2) begin : g_bit0
+        // Always mask bit 2 for NAPOT
         assign region_addr_mask[r][b] = (csr_pmp_cfg_i[r].mode != PMP_MODE_NAPOT);
       end else begin : g_others
         // We will mask this bit if it is within the programmed granule
@@ -65,7 +65,7 @@ module ibex_pmp #(
         //                  | This bit pos is the top of the mask, all lower bits set
         // thus mask = 1111 0000
         assign region_addr_mask[r][b] = (csr_pmp_cfg_i[r].mode != PMP_MODE_NAPOT) |
-                                        ~&csr_pmp_addr_i[r][b-1:PMPGranularity+2];
+                                        ~&csr_pmp_addr_i[r][b-1:PMPGranularity+1];
       end
     end
   end
