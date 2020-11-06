@@ -210,6 +210,12 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
     // there are multiple irqs asserted at once.
     irq_valid = get_max_valid_irq_id(irq);
     `uvm_info(`gfn, $sformatf("irq_id: 0x%0x", irq_id), UVM_LOW)
+    // Check if the test already ended and drop the irq request if so. The ecall can cause the irq
+    // checks to fail if we continue driving interrupts.
+    if (dut_vif.dut_cb.ecall === 1'b1) begin
+      irq_valid = 1'b0;
+    end
+
     // If the interrupt is maskable, and the corresponding bit in MIE is not set, skip the next
     // checks, as it means the interrupt in question is not enabled by Ibex, and drop the interrupt
     // lines to avoid locking up the simulation.
