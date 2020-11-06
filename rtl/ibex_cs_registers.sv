@@ -120,6 +120,7 @@ module ibex_cs_registers #(
   import ibex_pkg::*;
 
   localparam int unsigned RV32MEnabled = (RV32M == RV32MNone) ? 0 : 1;
+  localparam int unsigned PMPAddrWidth = (PMPGranularity > 0) ? 33 - PMPGranularity : 32;
 
   // misa
   localparam logic [31:0] MISA_VALUE =
@@ -954,7 +955,7 @@ module ibex_cs_registers #(
   if (PMPEnable) begin : g_pmp_registers
     pmp_cfg_t                    pmp_cfg         [PMPNumRegions];
     pmp_cfg_t                    pmp_cfg_wdata   [PMPNumRegions];
-    logic [31:0]                 pmp_addr        [PMPNumRegions];
+    logic [PMPAddrWidth-1:0]     pmp_addr        [PMPNumRegions];
     logic [PMPNumRegions-1:0]    pmp_cfg_we;
     logic [PMPNumRegions-1:0]    pmp_cfg_err;
     logic [PMPNumRegions-1:0]    pmp_addr_we;
@@ -985,13 +986,12 @@ module ibex_cs_registers #(
         end else begin : g_pmp_g2
           // For G >= 2, bits are masked to one or zero depending on the mode
           always_comb begin
-            pmp_addr_rdata[i] = pmp_addr[i];
+            // In NAPOT mode, bits [G-2:0] must read as one
+            pmp_addr_rdata[i] = {pmp_addr[i], {PMPGranularity-1{1'b1}}};
+
             if ((pmp_cfg[i].mode == PMP_MODE_OFF) || (pmp_cfg[i].mode == PMP_MODE_TOR)) begin
               // In TOR or OFF mode, bits [G-1:0] must read as zero
               pmp_addr_rdata[i][PMPGranularity-1:0] = '0;
-            end else if (pmp_cfg[i].mode == PMP_MODE_NAPOT) begin
-              // In NAPOT mode, bits [G-2:0] must read as one
-              pmp_addr_rdata[i][PMPGranularity-2:0] = '1;
             end
           end
         end
@@ -1055,20 +1055,20 @@ module ibex_cs_registers #(
       end
 
       ibex_csr #(
-        .Width      (32),
+        .Width      (PMPAddrWidth),
         .ShadowCopy (ShadowCSR),
         .ResetValue ('0)
       ) u_pmp_addr_csr (
         .clk_i      (clk_i),
         .rst_ni     (rst_ni),
-        .wr_data_i  (csr_wdata_int),
+        .wr_data_i  (csr_wdata_int[31-:PMPAddrWidth]),
         .wr_en_i    (pmp_addr_we[i]),
         .rd_data_o  (pmp_addr[i]),
         .rd_error_o (pmp_addr_err[i])
       );
 
       assign csr_pmp_cfg_o[i]  = pmp_cfg[i];
-      assign csr_pmp_addr_o[i] = {pmp_addr[i],2'b00};
+      assign csr_pmp_addr_o[i] = {pmp_addr_rdata[i], 2'b00};
     end
 
     assign pmp_csr_err = (|pmp_cfg_err) | (|pmp_addr_err);
