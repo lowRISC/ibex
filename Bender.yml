@@ -1,6 +1,5 @@
 package: 
   name: ibex
-  authors: []
 
 sources:
   - include_dirs:
@@ -27,14 +26,15 @@ sources:
       - rtl/ibex_core.sv
       - shared/rtl/prim_assert.sv
   - target: rtl
+    defines: {RVFI: true}
     files:
       - rtl/ibex_pkg.sv
       - rtl/ibex_tracer_pkg.sv
       - rtl/ibex_tracer.sv
       - rtl/ibex_core_tracing.sv
-  - target: all(rtl, tsmc55, gf22)
+  - target: any(rtl, tsmc55, gf22)
     files: 
       - rtl/ibex_register_file_latch.sv
-  - target: all(xilinx)
+  - target: xilinx
     files:
       - rtl/ibex_register_file_fpga.sv
