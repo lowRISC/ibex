@@ -13,7 +13,6 @@ formal_tb #(
   .ICacheECC      (ICacheECC),
   .LineSize       (LineSize),
   .NumWays        (NumWays),
-  .SpecRequest    (SpecRequest),
   .BranchCache    (BranchCache),
 
   .ADDR_W         (ADDR_W),

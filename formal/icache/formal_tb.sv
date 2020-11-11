@@ -22,7 +22,6 @@ module formal_tb #(
   parameter bit          ICacheECC      = 1'b0,
   parameter int unsigned LineSize       = 64,
   parameter int unsigned NumWays        = 2,
-  parameter bit          SpecRequest    = 1'b0,
   parameter bit          BranchCache    = 1'b0,
 
   // Internal parameters / localparams
