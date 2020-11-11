@@ -17,8 +17,6 @@ module ibex_icache #(
   parameter bit          ICacheECC      = 1'b0,
   parameter int unsigned LineSize       = 64,
   parameter int unsigned NumWays        = 2,
-  // Always make speculative bus requests in parallel with lookups
-  parameter bit          SpecRequest    = 1'b0,
   // Only cache branch targets
   parameter bit          BranchCache    = 1'b0
 ) (
@@ -146,7 +144,7 @@ module ibex_icache #(
   logic [NUM_FB-1:0]                   fill_ext_req, fill_rvd_exp, fill_ram_req, fill_out_req;
   logic [NUM_FB-1:0]                   fill_data_sel, fill_data_reg, fill_data_hit, fill_data_rvd;
   logic [NUM_FB-1:0][LINE_BEATS_W-1:0] fill_ext_off, fill_rvd_off;
-  logic [NUM_FB-1:0][LINE_BEATS_W:0]   fill_rvd_beat;
+  logic [NUM_FB-1:0][LINE_BEATS_W:0]   fill_ext_beat, fill_rvd_beat;
   logic [NUM_FB-1:0]                   fill_ext_arb, fill_ram_arb, fill_out_arb;
   logic [NUM_FB-1:0]                   fill_rvd_arb;
   logic [NUM_FB-1:0]                   fill_entry_en;
@@ -517,7 +515,8 @@ module ibex_icache #(
   // Allocate a new buffer for every granted lookup
   assign fill_new_alloc = lookup_grant_ic0;
   // Track whether a speculative external request was made from IC0, and whether it was granted
-  assign fill_spec_req  = (SpecRequest | branch_i) & ~|fill_ext_req;
+  // Speculative requests are only made for branches, or if the cache is disabled
+  assign fill_spec_req  = (~icache_enable_i | branch_i) & ~|fill_ext_req;
   assign fill_spec_done = fill_spec_req & gnt_not_pmp_err;
   assign fill_spec_hold = fill_spec_req & ~gnt_or_pmp_err;
 
@@ -587,8 +586,10 @@ module ibex_icache #(
                                   fill_hit_ic1[fb] | fill_hit_q[fb] |
                                   // external requests will stop once any PMP error is received
                                   fill_err_q[fb][fill_ext_off[fb]] |
-                                  // cancel if the line is stale and won't be cached
-                                  (~fill_cache_q[fb] & (branch_i | fill_stale_q[fb]))) &
+                                  // cancel if the line won't be cached and, it is stale
+                                  (~fill_cache_q[fb] & (branch_i | fill_stale_q[fb] |
+                                   // or we're already at the end of the line
+                                                        fill_ext_beat[fb][LINE_BEATS_W]))) &
                                  // can't cancel while we are waiting for a grant on the bus
                                  ~fill_ext_hold_q[fb];
     // Track whether this fill buffer expects to receive beats of data
@@ -646,10 +647,11 @@ module ibex_icache #(
 
     // When we branch into the middle of a line, the output count will not start from zero. This
     // beat count is used to know which incoming rdata beats are relevant.
+    assign fill_ext_beat[fb]   = {1'b0,fill_addr_q[fb][LINE_W-1:BUS_W]} +
+                                 fill_ext_cnt_q[fb][LINE_BEATS_W:0];
+    assign fill_ext_off[fb]    = fill_ext_beat[fb][LINE_BEATS_W-1:0];
     assign fill_rvd_beat[fb]   = {1'b0,fill_addr_q[fb][LINE_W-1:BUS_W]} +
                                  fill_rvd_cnt_q[fb][LINE_BEATS_W:0];
-    assign fill_ext_off[fb]    = fill_addr_q[fb][LINE_W-1:BUS_W] +
-                                 fill_ext_cnt_q[fb][LINE_BEATS_W-1:0];
     assign fill_rvd_off[fb]    = fill_rvd_beat[fb][LINE_BEATS_W-1:0];
 
     /////////////////////////////
@@ -826,7 +828,7 @@ module ibex_icache #(
   // External requests //
   ///////////////////////
 
-  assign instr_req  = ((SpecRequest | branch_i) & lookup_grant_ic0) |
+  assign instr_req  = ((~icache_enable_i | branch_i) & lookup_grant_ic0) |
                       (|fill_ext_req);
 
   assign instr_addr = |fill_ext_req ? fill_ext_req_addr :
