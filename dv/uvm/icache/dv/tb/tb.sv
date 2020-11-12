@@ -25,32 +25,34 @@ module tb #(parameter bit ICacheECC = 1'b0);
   ibex_icache #(
     .ICacheECC (ICacheECC)
   ) dut (
-    .clk_i           (clk),
-    .rst_ni          (rst_n),
+    .clk_i               (clk),
+    .rst_ni              (rst_n),
 
     // Connect icache <-> core interface
-    .req_i           (core_if.req),
-    .branch_i        (core_if.branch),
-    .branch_spec_i   (core_if.branch_spec),
-    .addr_i          (core_if.branch_addr),
-    .ready_i         (core_if.ready),
-    .valid_o         (core_if.valid),
-    .rdata_o         (core_if.rdata),
-    .addr_o          (core_if.addr),
-    .err_o           (core_if.err),
-    .err_plus2_o     (core_if.err_plus2),
-    .icache_enable_i (core_if.enable),
-    .icache_inval_i  (core_if.invalidate),
-    .busy_o          (core_if.busy),
+    .req_i               (core_if.req),
+    .branch_i            (core_if.branch),
+    .branch_spec_i       (core_if.branch_spec),
+    .predicted_branch_i  (1'b0),
+    .branch_mispredict_i (1'b0),
+    .addr_i              (core_if.branch_addr),
+    .ready_i             (core_if.ready),
+    .valid_o             (core_if.valid),
+    .rdata_o             (core_if.rdata),
+    .addr_o              (core_if.addr),
+    .err_o               (core_if.err),
+    .err_plus2_o         (core_if.err_plus2),
+    .icache_enable_i     (core_if.enable),
+    .icache_inval_i      (core_if.invalidate),
+    .busy_o              (core_if.busy),
 
     // Connect icache <-> instruction bus interface
-    .instr_req_o     (mem_if.req),
-    .instr_gnt_i     (mem_if.gnt),
-    .instr_addr_o    (mem_if.addr),
-    .instr_rdata_i   (mem_if.rdata),
-    .instr_err_i     (mem_if.err),
-    .instr_pmp_err_i (mem_if.pmp_err),
-    .instr_rvalid_i  (mem_if.rvalid)
+    .instr_req_o         (mem_if.req),
+    .instr_gnt_i         (mem_if.gnt),
+    .instr_addr_o        (mem_if.addr),
+    .instr_rdata_i       (mem_if.rdata),
+    .instr_err_i         (mem_if.err),
+    .instr_pmp_err_i     (mem_if.pmp_err),
+    .instr_rvalid_i      (mem_if.rvalid)
   );
 
   // If the ICacheECC parameter is set in the DUT, generate another interface for each tag ram and
