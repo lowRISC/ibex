@@ -89,20 +89,17 @@ Prerequisites & Environment Setup
 
 In order to run the co-simulation flow, you'll need:
 
-- A SystemVerilog simulator that supports UVM. The flow is currently
-  tested with VCS.
+- A SystemVerilog simulator that supports UVM.
+  The flow is currently tested with VCS.
 
 - A RISC-V instruction set simulator, such as Spike_ or OVPsim_.
-  Note that Spike must be configured with
-  ``--enable-commitlog`` and ``--enable-misaligned``. The commit log
-  is needed to track the instructions that were executed and
-  ``--enable-misaligned`` tells Spike to simulate a core that
-  handles misaligned accesses in hardware (rather than jumping to a
-  trap handler).
-  In addition, Spike does not support the `RISC-V Bit Manipulation Extension <bitmanip_>`_  (Bitmanip) by default.
-  To support this draft extension implemented in Ibex, the `riscv-bitmanip branch <Spike_>`_ of Spike needs to be used.
-  If it is desired to simulate the core with the Icache enabled, a lowRISC-specific branch
-  of Spike must be used, `found here <https://github.com/lowRISC/riscv-isa-sim/tree/ibex>`_.
+  Note that when building Spike the ``--enable-commitlog`` and ``--enable-misaligned`` options must be passed to the ``configure`` script.
+  ``--enable-commitlog`` is needed to produce log output to track the instructions that were executed.
+  ``--enable-misaligned`` tells Spike to simulate a core that handles misaligned accesses in hardware (rather than jumping to a trap handler).
+  If it is desired to simulate the core with the Icache enabled, a `lowRISC-specific branch of Spike <https://github.com/lowRISC/riscv-isa-sim/tree/ibex>`_ must be used.
+  Ibex supports v0.92 of the Bitmanip specification.
+  The ``master`` branch of Spike_ and OVPSim_ may support a different version.
+  It is recommended the `lowRISC-specific branch of Spike <https://github.com/lowRISC/riscv-isa-sim/tree/ibex>`_ is used when using a configuration with Bitmanip to ensure the simulated version of the Bitmanip specification matches with the RTL implemented version.
 
 - A working RISC-V toolchain (to compile / assemble the generated programs before simulating them).
   Either download a `pre-built toolchain <riscv-toolchain-releases_>`_ (quicker) or download and build the `RISC-V GNU compiler toolchain <riscv-toolchain-source_>`_.
@@ -123,7 +120,7 @@ to tell the RISCV-DV code where to find them:
 (Obviously, you only need to set ``SPIKE_PATH`` or ``OVPSIM_PATH`` if
 you have installed the corresponding instruction set simulator)
 
-.. _Spike: https://github.com/riscv/riscv-isa-sim/tree/riscv-bitmanip
+.. _Spike: https://github.com/riscv/riscv-isa-sim
 .. _OVPsim: https://github.com/riscv/riscv-ovpsim
 .. _riscv-toolchain-source: https://github.com/riscv/riscv-gnu-toolchain
 .. _riscv-toolchain-releases: https://github.com/lowRISC/lowrisc-toolchains/releases
