@@ -485,8 +485,8 @@ module ibex_if_stage #(
 
     assign instr_bp_taken_o = instr_bp_taken_q;
 
-    `ASSERT(NoPredictSkid, instr_skid_valid_q |-> ~predict_branch_taken);
-    `ASSERT(NoPredictIllegal, predict_branch_taken |-> ~illegal_c_insn);
+    `ASSERT(NoPredictSkid, instr_skid_valid_q |-> ~predict_branch_taken)
+    `ASSERT(NoPredictIllegal, predict_branch_taken |-> ~illegal_c_insn)
   end else begin : g_no_branch_predictor
     assign instr_bp_taken_o     = 1'b0;
     assign predict_branch_taken = 1'b0;
