@@ -827,7 +827,7 @@ module ibex_icache #(
   ///////////////////////
 
   assign instr_req  = ((SpecRequest | branch_i) & lookup_grant_ic0) |
-                      |fill_ext_req;
+                      (|fill_ext_req);
 
   assign instr_addr = |fill_ext_req ? fill_ext_req_addr :
                                       lookup_addr_ic0[ADDR_W-1:BUS_W];
