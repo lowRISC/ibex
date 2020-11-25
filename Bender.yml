@@ -1,31 +1,42 @@
 package: 
   name: ibex
 
+dependencies:
+  tech_cells_generic: { git: "git@github.com:pulp-platform/tech_cells_generic.git", version: 0.2.2 }
+
 sources:
   - target: not(rtl)
     include_dirs:
       - rtl
       - shared/rtl
     files:
+      # Source files grouped in levels. Files in level 0 have no dependencies on files in this
+      # package. Files in level 1 only depend on files in level 0, files in level 2 on files in
+      # levels 1 and 0, etc. Files within a level are ordered alphabetically.
+      # Level 0
       - rtl/ibex_pkg.sv
+      - shared/rtl/prim_assert.sv
+      # Level 1
       - rtl/ibex_alu.sv
       - rtl/ibex_compressed_decoder.sv
       - rtl/ibex_controller.sv
-      - rtl/ibex_cs_registers.sv
       - rtl/ibex_counters.sv
       - rtl/ibex_decoder.sv
+      - rtl/ibex_fetch_fifo.sv
+      - rtl/ibex_load_store_unit.sv
+      - rtl/ibex_multdiv_fast.sv
+      - rtl/ibex_multdiv_slow.sv
+      - rtl/ibex_pmp.sv
+      - rtl/ibex_wb_stage.sv
+      # Level 2
+      - rtl/ibex_cs_registers.sv
       - rtl/ibex_ex_block.sv
       - rtl/ibex_id_stage.sv
-      - rtl/ibex_if_stage.sv
-      - rtl/ibex_wb_stage.sv
-      - rtl/ibex_load_store_unit.sv
-      - rtl/ibex_multdiv_slow.sv
-      - rtl/ibex_multdiv_fast.sv
       - rtl/ibex_prefetch_buffer.sv
-      - rtl/ibex_fetch_fifo.sv
-      - rtl/ibex_pmp.sv
+      # Level 3
+      - rtl/ibex_if_stage.sv
+      # Level 4
       - rtl/ibex_core.sv
-      - shared/rtl/prim_assert.sv
   - target: rtl
     include_dirs:
       - rtl
@@ -33,28 +44,34 @@ sources:
     defines: 
       RVFI: true
     files:
+      # Level 0
       - rtl/ibex_pkg.sv
-      - rtl/ibex_tracer_pkg.sv
-      - rtl/ibex_tracer.sv
-      - rtl/ibex_core_tracing.sv
+      - shared/rtl/prim_assert.sv
+      # Level 1
       - rtl/ibex_alu.sv
       - rtl/ibex_compressed_decoder.sv
       - rtl/ibex_controller.sv
-      - rtl/ibex_cs_registers.sv
       - rtl/ibex_counters.sv
       - rtl/ibex_decoder.sv
+      - rtl/ibex_fetch_fifo.sv
+      - rtl/ibex_load_store_unit.sv
+      - rtl/ibex_multdiv_fast.sv
+      - rtl/ibex_multdiv_slow.sv
+      - rtl/ibex_pmp.sv
+      - rtl/ibex_tracer_pkg.sv
+      - rtl/ibex_wb_stage.sv
+      # Level 2
+      - rtl/ibex_cs_registers.sv
       - rtl/ibex_ex_block.sv
       - rtl/ibex_id_stage.sv
-      - rtl/ibex_if_stage.sv
-      - rtl/ibex_wb_stage.sv
-      - rtl/ibex_load_store_unit.sv
-      - rtl/ibex_multdiv_slow.sv
-      - rtl/ibex_multdiv_fast.sv
       - rtl/ibex_prefetch_buffer.sv
-      - rtl/ibex_fetch_fifo.sv
-      - rtl/ibex_pmp.sv
+      - rtl/ibex_tracer.sv
+      # Level 3
+      - rtl/ibex_if_stage.sv
+      # Level 4
       - rtl/ibex_core.sv
-      - shared/rtl/prim_assert.sv
+      # Level 5
+      - rtl/ibex_core_tracing.sv
   - target: any(rtl, tsmc55, gf22)
     files: 
       - rtl/ibex_register_file_latch.sv
