@@ -12,6 +12,9 @@
 `define IS_ONE_HOT(expr, width) \
   !((expr) & ((expr) - {{(width)-1{1'b0}}, 1'b1}))
 
+`define ASSUME_ZERO_IN_RESET(name) \
+  `ASSUME(name``_zero_in_reset, `IMPLIES(!rst_ni, ~|(name)), clk_i, 1'b0)
+
 module formal_tb #(
   // DUT parameters
   parameter int unsigned BusWidth       = 32,
