@@ -257,13 +257,18 @@ def main():
                            default=get_config_file_location())
 
     arg_subparser = argparser.add_subparsers(
-        title='output type',
-        help='Format to output the configuration parameters in')
+        help='Format to output the configuration parameters in',
+        dest='output_fn',
+        metavar='output_type')
 
     for outputter in outputters:
         outputter.setup_args(arg_subparser)
 
     args = argparser.parse_args()
+
+    if args.output_fn is None:
+        print('ERROR: No output format specified.')
+        sys.exit(1)
 
     try:
         config_file = open(args.config_filename)
