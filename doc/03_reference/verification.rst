@@ -51,7 +51,7 @@ Memory Model
 """"""""""""
 
 The code is vendored from OpenTitan and can be found in the
-`vendor/lowrisc_ip/mem_model <https://github.com/lowRISC/ibex/tree/master/vendor/lowrisc_ip/mem_model>`_
+`vendor/lowrisc_ip/dv/sv/mem_model <https://github.com/lowRISC/ibex/tree/master/vendor/lowrisc_ip/dv/sv/mem_model>`_
 directory.
 The testbench instantiates a single instance of this memory model that it loads the compiled
 assembly test program into at the beginning of each test.
@@ -253,7 +253,7 @@ the Ibex repository:
 
 .. code-block:: bash
 
-   ./vendor/lowrisc_ip/dvsim/dvsim.py dv/uvm/icache/dv/ibex_icache_sim_cfg.hjson --build-only
+   ./vendor/lowrisc_ip/util/dvsim/dvsim.py dv/uvm/icache/dv/ibex_icache_sim_cfg.hjson --build-only
    --skip-ral --purge --sr sim_out
 
 Specify the intended output directory using either the ``--sr`` or ``-scratch-root`` option.
