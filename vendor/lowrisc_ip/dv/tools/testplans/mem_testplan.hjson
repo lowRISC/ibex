@@ -1,0 +1,31 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+{
+  entries: [
+    {
+      name: mem_walk
+      desc: '''
+            Verify accessibility of all memories in the design.
+            - Run the standard UVM mem walk sequence on all memories in the RAL model.
+            - It is mandatory to run this test from all available interfaces the
+              memories are accessible from.
+            '''
+      milestone: V1
+      tests: ["{name}{intf}_mem_walk"]
+    }
+    {
+      name: mem_partial_access
+      desc: '''
+            Verify partial-accessibility of all memories in the design.
+            - Do partial reads and writes into the memories and verify the outcome for
+              correctness.
+            - Also test outstanding access on memories
+            '''
+      milestone: V1
+      tests: ["{name}{intf}_mem_partial_access"]
+    }
+    // TODO: add mem access with reset
+  ]
+}
+
