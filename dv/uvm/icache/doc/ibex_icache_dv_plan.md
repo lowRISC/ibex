@@ -20,7 +20,7 @@ The ICache design is documented in the [Instruction Cache](https://ibex-core.rea
 
 ## Testbench architecture
 
-The testbench is built using the [DV_LIB testbench architecture](https://github.com/lowRISC/ibex/tree/master/vendor/lowrisc_ip/dv_lib/).
+The testbench is built using the [DV_LIB testbench architecture](https://github.com/lowRISC/ibex/tree/master/vendor/lowrisc_ip/dv/sv/dv_lib/).
 
 The testbench intentionally avoids knowing detailed information about the cache's performance characteristics (for example, cache size, line size or number of ways).
 This means that the testbench cannot compare the DUT with a reference model, nor can it model the exact requests that the DUT will make of instruction memory: the whole point of a cache is that it might avoid an instruction fetch.
@@ -86,7 +86,7 @@ The sole sequence causes occasional 1- or 2-bit errors, injected by XORing valid
 
 The top level testbench is located at [`dv/uvm/icache/dv/tb/tb.sv`](https://github.com/lowRISC/ibex/blob/master/dv/uvm/icache/dv/tb/tb.sv). It instantiates the `ibex_icache` DUT module whose source is at [`rtl/ibex_icache.sv`](https://github.com/lowRISC/ibex/blob/master/rtl/ibex_icache.sv).
 In addition, it instantiates the following interfaces, connects them to the DUT and sets their handle into `uvm_config_db`:
-* Clock and reset interface ([`vendor/lowrisc_ip/common_ifs`](https://github.com/lowRISC/ibex/tree/master/vendor/lowrisc_ip/common_ifs))
+* Clock and reset interface ([`vendor/lowrisc_ip/dv/sv/common_ifs`](https://github.com/lowRISC/ibex/tree/master/vendor/lowrisc_ip/dv/sv/common_ifs))
 * Core interface ([`dv/uvm/icache/dv/ibex_icache_core_agent/ibex_icache_core_if.sv`](https://github.com/lowRISC/ibex/blob/master/dv/uvm/icache/dv/ibex_icache_core_agent/ibex_icache_core_if.sv))
 * Memory interface ([`dv/uvm/icache/dv/ibex_icache_mem_agent/ibex_icache_mem_if.sv`](https://github.com/lowRISC/ibex/blob/master/dv/uvm/icache/dv/ibex_icache_mem_agent/ibex_icache_mem_if.sv))
 * ECC interfaces ([`dv/uvm/icache/dv/ibex_icache_ecc_agent/ibex_icache_ecc_if.sv`](https://github.com/lowRISC/ibex/blob/master/dv/uvm/icache/dv/ibex_icache_ecc_agent/ibex_icache_ecc_if.sv))
@@ -142,7 +142,7 @@ To do so, we would just need to monitor fetches in the memory agent as well as s
 
 ## Building and running tests
 
-Tests are built and run with the [`dvsim`](https://github.com/lowRISC/ibex/tree/master/vendor/lowrisc_ip/dvsim) tool (vendored in from the OpenTitan project).
+Tests are built and run with the [`dvsim`](https://github.com/lowRISC/ibex/tree/master/vendor/lowrisc_ip/util/dvsim) tool (vendored in from the OpenTitan project).
 To ensure output files end up in the right place without ugly command lines, this is wrapped up in a Makefile.
 To run the test suite, run:
 

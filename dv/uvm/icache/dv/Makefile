@@ -30,7 +30,7 @@ TESTS=
 
 ibex-top       := ../../../..
 scratch-root   := $(ibex-top)/build
-dvsim-py       := $(ibex-top)/vendor/lowrisc_ip/dvsim/dvsim.py
+dvsim-py       := $(ibex-top)/vendor/lowrisc_ip/util/dvsim/dvsim.py
 dvsim-std-args := --scratch-root $(scratch-root)
 
 waves-arg      := $(if $(filter-out 0,$(WAVES)),--waves,)
