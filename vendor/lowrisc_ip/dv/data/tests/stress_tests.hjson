@@ -1,0 +1,22 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+{
+  tests: [
+    {
+      name: "{name}_stress_all"
+      uvm_test_seq: "{name}_stress_all_vseq"
+      // 10ms
+      run_opts: ["+test_timeout_ns=10000000000"]
+    }
+
+    {
+      name: "{name}_stress_all_with_rand_reset"
+      uvm_test_seq: "{name}_common_vseq"
+      run_opts: ["+run_stress_all_with_rand_reset",
+                 // 10ms
+                 "+test_timeout_ns=10000000000",
+                 "+stress_seq={name}_stress_all_vseq"]
+    }
+  ]
+}

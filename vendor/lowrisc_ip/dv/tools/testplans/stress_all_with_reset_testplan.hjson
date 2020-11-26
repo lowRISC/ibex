@@ -1,0 +1,15 @@
+// Copyright lowRISC contributors.
+// Licensed under the Apache License, Version 2.0, see LICENSE for details.
+// SPDX-License-Identifier: Apache-2.0
+{
+  entries: [
+    {
+      name: stress_all_with_rand_reset
+      desc: '''This test runs 3 parallel threads - stress_all, tl_errors and random reset.
+            After reset is asserted, the test will read and check all valid CSR registers.
+            '''
+      milestone: V2
+      tests: ["{name}_stress_all_with_rand_reset"]
+    }
+  ]
+}
