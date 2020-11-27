@@ -20,7 +20,7 @@ class ibex_icache_combo_vseq
   // "ibex_icache_oldval_vseq": that sequence is for a specific test, which has a slightly different
   // checker.
   string seq_names[] = {"ibex_icache_back_line_vseq",
-                        "ibex_icache_base_vseq", // for sanity test
+                        "ibex_icache_base_vseq", // for smoke test
                         "ibex_icache_caching_vseq",
                         "ibex_icache_ecc_vseq",
                         "ibex_icache_invalidation_vseq",

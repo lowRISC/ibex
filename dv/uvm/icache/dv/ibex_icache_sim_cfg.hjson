@@ -57,7 +57,7 @@
   // List of test specifications.
   tests: [
     {
-      name: ibex_icache_sanity
+      name: ibex_icache_smoke
       uvm_test_seq: ibex_icache_base_vseq
     }
 
@@ -112,7 +112,7 @@
   regressions: [
     {
       name: smoke
-      tests: ["ibex_icache_sanity",
+      tests: ["ibex_icache_smoke",
               "ibex_icache_passthru",
               "ibex_icache_caching",
               "ibex_icache_invalidation",

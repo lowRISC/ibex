@@ -60,8 +60,8 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
         take_gnt(resp_item, req_item);
       end
 
-      // Get and drop the request item now that we've dealt with it. As a sanity check, make sure
-      // that the two items match.
+      // Get and drop the request item now that we've dealt with it. To check that nothing has gone
+      // wrong, make sure that the two items match.
       p_sequencer.request_fifo.get_peek_export.get(req_item2);
       `DV_CHECK_EQ_FATAL(req_item, req_item2)
     end
