@@ -39,8 +39,6 @@ class ibex_icache_base_vseq
   constraint num_trans_c { num_trans inside {[800:1000]}; }
 
   virtual task pre_start();
-    super.pre_start();
-
     `uvm_create_on(core_seq, p_sequencer.core_sequencer_h)
     `uvm_create_on(mem_seq, p_sequencer.mem_sequencer_h)
 
@@ -74,6 +72,8 @@ class ibex_icache_base_vseq
     foreach (ecc_data_seqs[i]) begin
       `uvm_create_on(ecc_data_seqs[i], p_sequencer.ecc_data_sequencers[i])
     end
+
+    super.pre_start();
   endtask : pre_start
 
   virtual task body();
@@ -116,6 +116,11 @@ class ibex_icache_base_vseq
     fork begin
       seq.start(sqr);
     end join_none
+  endtask
+
+  // Clear any interface signals that must be cleared before resetting the DUT.
+  virtual task reset_ifs();
+    core_seq.reset_ifs();
   endtask
 
 endclass : ibex_icache_base_vseq

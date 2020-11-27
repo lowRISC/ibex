@@ -57,13 +57,21 @@ class ibex_icache_combo_vseq
       // little.
       trans_now = $urandom_range(50, 100);
 
-      // We don't need to reset if seq_idx == 0 (because we did a reset before starting this task).
-      // Otherwise, we always reset between sequences if random_reset is true. We'd always need to
-      // if we killed the previous sequence, and it's easier not to bother tracking properly. If
-      // random_reset is false (the usual back-to-back sequence test), we reset 1 time in 2.
-      if (seq_idx == 0) should_reset = 1'b0;
+      // We don't need to reset if trans_so_far == 0 (because we did a reset before starting this
+      // task). Otherwise, we always reset between sequences if random_reset is true. We'd always
+      // need to if we killed the previous sequence, and it's easier not to bother tracking
+      // properly. If random_reset is false (the usual back-to-back sequence test), we reset 1 time
+      // in 2.
+      if (trans_so_far == 0) should_reset = 1'b0;
       else if (random_reset) should_reset = 1'b1;
       else should_reset = $urandom_range(0, 1);
+
+      // If we are resetting and trans_so_far > 0, we still have a (stopped) previous child
+      // sequence. Tell it to reset its interfaces now, clearing signals, to make sure that no
+      // sensitive input signal is high when the DUT goes into reset.
+      if (trans_so_far > 0 && should_reset) begin
+        child_seq.reset_ifs();
+      end
 
       `uvm_info(`gfn,
                 $sformatf("Running sequence '%s' (%0d transactions; reset=%0d).",

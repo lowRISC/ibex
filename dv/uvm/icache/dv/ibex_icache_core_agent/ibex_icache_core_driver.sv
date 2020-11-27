@@ -178,11 +178,11 @@ class ibex_icache_core_driver
     cfg.vif.driver_cb.ready <= 1'b0;
   endtask
 
-  // Lower the req line for the given number of cycles. Returns early on reset
+  // Lower the req line for the given number of cycles. Returns early on reset, leaving req low.
   virtual task automatic lower_req(int unsigned num_cycles);
     cfg.vif.driver_cb.req <= 1'b0;
     cfg.vif.wait_clks(num_cycles);
-    cfg.vif.driver_cb.req <= 1'b1;
+    if (cfg.vif.rst_n) cfg.vif.driver_cb.req <= 1'b1;
   endtask
 
   // Raise the invalidate line for a randomly chosen number of cycles > 0.

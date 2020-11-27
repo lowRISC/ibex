@@ -40,6 +40,10 @@ interface ibex_icache_core_protocol_checker (
   // don't care about it because the core should never do it.
   `ASSERT(NoReadyWithoutReq, !req |-> !ready, clk, !rst_n)
 
+  // The core may not assert 'req' when the cache is in reset (instr_req_o isn't conditioned on
+  // rst_n, so doing so would cause the cache to make spurious requests on the instruction bus).
+  `ASSERT(NoReqInReset, req |-> rst_n, clk, 1'b0)
+
   // The 'branch' and 'branch_addr' ports
   //
   // The branch signal tells the cache to redirect. There's no real requirement on when it can be
