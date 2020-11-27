@@ -146,11 +146,11 @@ def make_config(args, proj_root):
     # the tool by reading the config file. At the moment, this forces a
     # simulation target (TODO?)
     factories = {
-        'ascentlint'  : LintCfg.LintCfg,
-        'veriblelint' : LintCfg.LintCfg,
-        'verilator'   : LintCfg.LintCfg,
-        'dc'          : SynCfg.SynCfg,
-        'jaspergold'  : FpvCfg.FpvCfg
+        'ascentlint': LintCfg.LintCfg,
+        'veriblelint': LintCfg.LintCfg,
+        'verilator': LintCfg.LintCfg,
+        'dc': SynCfg.SynCfg,
+        'jaspergold': FpvCfg.FpvCfg
     }
 
     factory = factories.get(args.tool, SimCfg.SimCfg)
@@ -235,9 +235,9 @@ def parse_args():
     whatg.add_argument("-i",
                        "--items",
                        nargs="*",
-                       default=["sanity"],
+                       default=["smoke"],
                        help=('Specify the regressions or tests to run. '
-                             'Defaults to "sanity", but can be a '
+                             'Defaults to "smoke", but can be a '
                              'space separated list of test or regression '
                              'names.'))
 
@@ -351,7 +351,9 @@ def parse_args():
                             'applied to each simulation run.'))
 
     rung.add_argument("--profile", "-p",
+                      nargs="?",
                       choices=['time', 'mem'],
+                      const="time",
                       metavar="P",
                       help=('Turn on simulation profiling (where P is time '
                             'or mem).'))
@@ -367,12 +369,11 @@ def parse_args():
                             "enabled."))
 
     rung.add_argument("--verbosity", "-v",
-                      default="l",
                       choices=['n', 'l', 'm', 'h', 'd'],
                       metavar='V',
-                      help=('Set UVM verbosity to none (n), low (l; the '
-                            'default), medium (m), high (h) or debug (d). '
-                            'This overrides any setting in the config files.'))
+                      help=('Set tool/simulation verbosity to none (n), low '
+                            '(l), medium (m), high (h) or debug (d). '
+                            'The default value is set in config files.'))
 
     seedg = parser.add_argument_group('Test seeds')
 
@@ -410,16 +411,15 @@ def parse_args():
     waveg = parser.add_argument_group('Dumping waves')
 
     waveg.add_argument("--waves", "-w",
-                       action='store_true',
-                       help="Enable dumping of waves")
-
-    waveg.add_argument("-d",
-                       "--dump",
-                       choices=["fsdb", "shm", "vpd"],
-                       help=("Format to dump waves for simulation. The default "
-                             "format depends on the tool. With VCS, this "
-                             "defaults to fsdb if Verdi is installed, else "
-                             "vpd. With Xcelium, defaults to shm."))
+                       nargs="?",
+                       choices=["default", "fsdb", "shm", "vpd", "vcd", "evcd",
+                                "fst"],
+                       const="default",
+                       help=("Enable dumping of waves. It takes an optional "
+                             "argument to pick the desired wave format. If "
+                             "the optional argument is not supplied, it picks "
+                             "whatever is the default for the chosen tool. "
+                             "By default, dumping waves is not enabled."))
 
     waveg.add_argument("--max-waves", "-mw",
                        type=int,
@@ -468,7 +468,6 @@ def parse_args():
     dvg.add_argument("--verbose",
                      nargs="?",
                      choices=['default', 'debug'],
-                     default=None,
                      const="default",
                      metavar="D",
                      help=('With no argument, print verbose dvsim tool '

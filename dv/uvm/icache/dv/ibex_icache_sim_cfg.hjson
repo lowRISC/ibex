@@ -23,7 +23,7 @@
   // Import additional common sim cfg files.
   import_cfgs: [
       // Project wide common sim cfg file
-      "{proj_root}/vendor/lowrisc_ip/dv/data/common_sim_cfg.hjson"
+      "{proj_root}/vendor/lowrisc_ip/dv/tools/dvsim/common_sim_cfg.hjson"
   ]
 
   build_modes: [
@@ -111,7 +111,7 @@
   // List of regressions.
   regressions: [
     {
-      name: sanity
+      name: smoke
       tests: ["ibex_icache_sanity",
               "ibex_icache_passthru",
               "ibex_icache_caching",

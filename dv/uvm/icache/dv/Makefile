@@ -25,7 +25,7 @@ default-seed := 123
 SEED=$(if $(filter 1,$(RESEED)),$(default-seed),)
 
 # Specify which tests to run. Defaults to the empty string, which
-# means dvsim will run its default (the "sanity" suite).
+# means dvsim will run its default (the "smoke" suite of tests).
 TESTS=
 
 ibex-top       := ../../../..

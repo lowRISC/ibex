@@ -16,15 +16,12 @@ from Deploy import Deploy
 from utils import VERBOSE, md_results_to_html, parse_hjson, subst_wildcards
 
 # A set of fields that can be overridden on the command line.
-_CMDLINE_FIELDS = {'tool'}
+_CMDLINE_FIELDS = {'tool', 'verbosity'}
 
 
 # Interface class for extensions.
 class FlowCfg():
     def __str__(self):
-        return pprint.pformat(self.__dict__)
-
-    def __repr__(self):
         return pprint.pformat(self.__dict__)
 
     def __init__(self, flow_cfg_file, proj_root, args):
@@ -381,25 +378,6 @@ class FlowCfg():
         else:
             log.error("Override key \"%s\" not found in the cfg!", ov_name)
             sys.exit(1)
-
-    def _process_exports(self):
-        # Convert 'exports' to dict
-        exports_dict = {}
-        if self.exports != []:
-            for item in self.exports:
-                if type(item) is dict:
-                    exports_dict.update(item)
-                elif type(item) is str:
-                    [key, value] = item.split(':', 1)
-                    if type(key) is not str:
-                        key = str(key)
-                    if type(value) is not str:
-                        value = str(value)
-                    exports_dict.update({key.strip(): value.strip()})
-                else:
-                    log.error("Type error in \"exports\": %s", str(item))
-                    sys.exit(1)
-        self.exports = exports_dict
 
     def _purge(self):
         '''Purge the existing scratch areas in preperation for the new run.'''

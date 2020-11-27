@@ -7,7 +7,7 @@ format into a data structure that can be used for:
 * Expanding the testplan inline within the DV plan as a table
 * Annotating the regression results with testplan entries for a document driven DV execution
 
-Please see [DV methodology]({{< relref "doc/ug/dv_methodology.md#documentation" >}})
+Please see [DV methodology]({{< relref "doc/ug/dv_methodology/index.md#documentation" >}})
 for more details on the rationale and motivation for writing and maintaining testplans
 in a machine-parsable format (`Hjson`).
 This document will focus on the anatomy of a Hjson testplan, list of features supported
@@ -21,8 +21,8 @@ intent of a planned test:
 * **name: name of the planned test**
 
     This is a single `lower_snake_case` string that succinctly describes the intended
-    feature being tested. As an example, a basic sanity test which is typically the
-    first test written on a brand new testbench would be simply named `sanity`.
+    feature being tested. As an example, a smoke test which is typically the
+    first test written on a brand new testbench would be simply named `smoke`.
 
 * **milestone: verification milestone**
 
@@ -172,7 +172,7 @@ In addition, see the [UART DV Plan]({{< relref "hw/ip/uart/doc/dv_plan" >}}) for
 real 'production' example of inline expansion of an imported testplan as a table
 within the DV Plan document.
 The [UART testplan](https://github.com/lowRISC/opentitan/blob/master/hw/ip/uart/data/uart_testplan.hjson)
-imports the shared testplans located at `hw/dv/tools/testplans` area.
+imports the shared testplans located at `hw/dv/tools/dvsim/testplans` area.
 
 ### Limitations
 

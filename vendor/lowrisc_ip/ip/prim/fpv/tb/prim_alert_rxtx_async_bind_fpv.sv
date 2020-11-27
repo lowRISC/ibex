@@ -18,8 +18,9 @@ module prim_alert_rxtx_async_bind_fpv;
     .alert_err_pi,
     .alert_err_ni,
     .alert_skew_i,
-    .alert_i,
-    .ping_en_i,
+    .alert_req_i,
+    .alert_ack_o,
+    .ping_req_i,
     .ping_ok_o,
     .integ_fail_o,
     .alert_o

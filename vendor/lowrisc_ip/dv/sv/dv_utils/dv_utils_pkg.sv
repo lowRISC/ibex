@@ -85,6 +85,17 @@ package dv_utils_pkg;
     return (a > b) ? a : b;
   endfunction
 
+  // get absolute value of the input. Usage: absolute(val) or absolute(a - b)
+  function automatic uint absolute(int val);
+    return val >= 0 ? val : -val;
+  endfunction
+
+  // endian swap
+  function automatic logic [31:0] endian_swap(logic [31:0] data);
+    return {<<8{data}};
+  endfunction
+
+`ifdef UVM
   // Simple function to set max errors before quitting sim
   function automatic void set_max_quit_count(int n);
     uvm_report_server report_server = uvm_report_server::get_server();
@@ -121,16 +132,6 @@ package dv_utils_pkg;
     end
   endfunction
 
-  // get absolute value of the input. Usage: absolute(val) or absolute(a - b)
-  function automatic uint absolute(int val);
-    return val >= 0 ? val : -val;
-  endfunction
-
-  // endian swap
-  function automatic logic [31:0] endian_swap(logic [31:0] data);
-    return {<<8{data}};
-  endfunction
-
   // create a sequence by name and return the handle of uvm_sequence
   function automatic uvm_sequence create_seq_by_name(string seq_name);
     uvm_object      obj;
@@ -149,8 +150,29 @@ package dv_utils_pkg;
     end
     return seq;
   endfunction
+`endif
+
+  // Returns the hierarchical path to the interface / module N levels up.
+  //
+  // Meant to be invoked inside a module or interface.
+  // hier:        String input of the interface / module, typically $sformatf("%m").
+  // n_levels_up: Integer number of levels up the hierarchy to omit.
+  //              Example: if (hier = tb.dut.foo.bar, n_levels_up = 2), then return tb.dut
+  function automatic string get_parent_hier(string hier, int n_levels_up = 1);
+    int idx;
+    int level;
+    if (n_levels_up <= 0) return hier;
+    for (idx = hier.len() - 1; idx >= 0; idx--) begin
+      if (hier[idx] == ".") level++;
+      if (level == n_levels_up) break;
+    end
+    return (hier.substr(0, idx - 1));
+  endfunction
 
   // sources
+`ifdef UVM
   `include "dv_report_server.sv"
+  `include "dv_vif_wrap.sv"
+`endif
 
 endpackage
