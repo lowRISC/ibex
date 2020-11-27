@@ -40,7 +40,7 @@ module prim_present_tb;
   localparam bit Decrypt = 1'b1;
 
   // this parameter is required for the DPI model.
-  localparam KeySize80 = (KeyWidth == 80);
+  localparam bit KeySize80 = (KeyWidth == 80);
 
 
 //////////////////////////////////////////////////////
@@ -51,11 +51,18 @@ module prim_present_tb;
   // Same scheme used for key_in, data_out, key_out.
   logic [1:0][NumRounds-1:0][DataWidth-1:0] data_in;
   logic [1:0][NumRounds-1:0][KeyWidth-1 :0] key_in;
+  logic [1:0][NumRounds-1:0][4:0]           idx_in;
   logic [1:0][NumRounds-1:0][DataWidth-1:0] data_out;
   logic [1:0][NumRounds-1:0][KeyWidth-1 :0] key_out;
+  logic [1:0][NumRounds-1:0][4:0]           idx_out;
 
   for (genvar j = 0; j < 2; j++) begin : gen_encrypt_decrypt
     for (genvar k = 0; k < NumRounds; k++) begin : gen_duts
+      if (j == 0) begin : gen_encrypt
+        assign idx_in[j][k] = 5'd1;
+      end else begin : gen_decrypt
+        assign idx_in[j][k] = 5'(k+1);
+      end
       prim_present #(
         .DataWidth  ( DataWidth ),
         .KeyWidth   ( KeyWidth  ),
@@ -64,8 +71,10 @@ module prim_present_tb;
       ) dut (
         .data_i     ( data_in[j][k]  ),
         .key_i      ( key_in[j][k]   ),
+        .idx_i      ( idx_in[j][k]   ),
         .data_o     ( data_out[j][k] ),
-        .key_o      ( key_out[j][k]  )
+        .key_o      ( key_out[j][k]  ),
+        .idx_o      ( idx_out[j][k]  )
       );
     end
   end
@@ -77,8 +86,8 @@ module prim_present_tb;
 
   // Top level API task that should be called to run a full pass
   // of encryption and decryption on some input data and key.
-  task test_present(bit [DataWidth-1:0] plaintext,
-                    bit [KeyWidth-1:0]  key);
+  task automatic test_present(bit [DataWidth-1:0] plaintext,
+                              bit [KeyWidth-1:0]  key);
 
     bit [NumRounds:0][63:0] key_schedule;
     bit [NumRounds-1:0][DataWidth-1:0] encrypted_text;
@@ -97,10 +106,10 @@ module prim_present_tb;
 
   // Helper task to drive plaintext and key into each encryption instance.
   // Calls a subroutine to perform checks on the outputs (once they are available).
-  task check_encryption(input bit [DataWidth-1:0]                 plaintext,
-                        input bit [KeyWidth-1:0]                  key,
-                        input bit [NumRounds:0][63:0]             key_schedule,
-                        output bit [NumRounds-1:0][DataWidth-1:0] expected_ciphertext);
+  task automatic check_encryption(input bit [DataWidth-1:0]                 plaintext,
+                                  input bit [KeyWidth-1:0]                  key,
+                                  input bit [NumRounds:0][63:0]             key_schedule,
+                                  output bit [NumRounds-1:0][DataWidth-1:0] expected_ciphertext);
 
     // Drive input into encryption instances.
     for (int unsigned i = 0; i < NumRounds; i++) begin
@@ -122,9 +131,9 @@ module prim_present_tb;
 
   // Helper task to drive ciphertext and key into each decryption instance.
   // Calls a subroutine to perform checks on the outputs (once they are available).
-  task check_decryption(input bit [NumRounds-1:0][DataWidth-1:0]  ciphertext,
-                        input bit [KeyWidth-1:0]                  key,
-                        input bit [NumRounds-1:0][KeyWidth-1:0]   decryption_keys);
+  task automatic check_decryption(input bit [NumRounds-1:0][DataWidth-1:0]  ciphertext,
+                                  input bit [KeyWidth-1:0]                  key,
+                                  input bit [NumRounds-1:0][KeyWidth-1:0]   decryption_keys);
 
     // the expected plaintext after decryption will be provided by the C model.
     bit [NumRounds-1:0][DataWidth-1:0] expected_plaintext;
@@ -161,11 +170,11 @@ module prim_present_tb;
   //
   // If any comparison error is seen, this task short-circuits immediately,
   // printing out some debug information and the correct failure signature.
-  task check_output(input bit [NumRounds-1:0][63:0]           expected_key,
-                    input bit [NumRounds-1:0][DataWidth-1:0]  expected_text,
-                    input bit [NumRounds-1:0][KeyWidth-1:0]   actual_key,
-                    input bit [NumRounds-1:0][DataWidth-1:0]  actual_data,
-                    input string msg);
+  task automatic check_output(input bit [NumRounds-1:0][63:0]           expected_key,
+                              input bit [NumRounds-1:0][DataWidth-1:0]  expected_text,
+                              input bit [NumRounds-1:0][KeyWidth-1:0]   actual_key,
+                              input bit [NumRounds-1:0][DataWidth-1:0]  actual_data,
+                              input string msg);
 
     bit error = 1'b0;
 

@@ -1,0 +1,29 @@
+--- a/dvsim/common_sim_cfg.hjson
++++ b/dvsim/common_sim_cfg.hjson
+@@ -2,13 +2,13 @@
+ // Licensed under the Apache License, Version 2.0, see LICENSE for details.
+ // SPDX-License-Identifier: Apache-2.0
+ {
+   // Where to find DV code
+-  dv_root:          "{proj_root}/hw/dv"
++  dv_root:          "{proj_root}/vendor/lowrisc_ip/dv"
+ 
+   flow:             sim
+   flow_makefile:    "{dv_root}/tools/dvsim/sim.mk"
+ 
+-  import_cfgs:      ["{proj_root}/hw/data/common_project_cfg.hjson",
++  import_cfgs:      ["{proj_root}/dv/uvm/common_project_cfg.hjson",
+                      "{dv_root}/tools/dvsim/common_modes.hjson",
+                      "{dv_root}/tools/dvsim/fusesoc.hjson",
+                      "{dv_root}/tools/dvsim/{tool}.hjson"]
+--- a/dvsim/fusesoc.hjson
++++ b/dvsim/fusesoc.hjson
+@@ -10,7 +10,7 @@
+                        "--target=sim",
+                        "--build-root={build_dir}",
+                        "--setup {fusesoc_core}"]
+-  fusesoc_cores_root_dirs: ["--cores-root {proj_root}/hw"]
++  fusesoc_cores_root_dirs: ["--cores-root {proj_root}"]
+   sv_flist_gen_dir:   "{build_dir}/sim-vcs"
+   sv_flist:           "{sv_flist_gen_dir}/{fusesoc_core_}.scr"
+ }

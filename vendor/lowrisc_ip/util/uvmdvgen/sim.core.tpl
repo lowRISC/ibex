@@ -18,9 +18,13 @@ filesets:
     file_type: systemVerilogSource
 
 targets:
-  sim:
+  sim: &sim_target
     toplevel: tb
     filesets:
       - files_rtl
       - files_dv
     default_tool: vcs
+
+  # TODO: add a lint check cfg in `hw/top_earlgrey/lint/top_earlgrey_dv_lint_cfgs.hjson`
+  lint:
+    <<: *sim_target
