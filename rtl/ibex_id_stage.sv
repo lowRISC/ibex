@@ -776,10 +776,8 @@ module ibex_id_stage #(
               perf_branch_o = 1'b1;
             end
             jump_in_dec: begin
-              // uncond branch operation
-              // BTALU means jumps only need one cycle
-              id_fsm_d      = BranchTargetALU ? FIRST_CYCLE : MULTI_CYCLE;
-              stall_jump    = ~BranchTargetALU;
+              id_fsm_d      = MULTI_CYCLE;
+              stall_jump    = 1'b1;
               jump_set      = jump_set_dec;
             end
             alu_multicycle_dec: begin
