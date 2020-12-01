@@ -57,21 +57,12 @@ case "$ID-$VERSION_ID" in
 
       # Python dependencies
       #
-      # Installing six is a workaround for pip dependency resolution: six is
-      # already installed as system package with a version below the required
-      # one. Explicitly installing six through pip gets us a supported version.
-      #
       # Updating pip and setuptools is required to have these tools properly
       # parse Python-version metadata, which some packages uses to specify that
       # an older version of a package must be used for a certain Python version.
       # If that information is not read, pip installs the latest version, which
       # then fails to run.
-      $SUDO_CMD pip3 install -U pip six
-
-      # There's been a bit of a kerfuffle about setuptools version 50, which
-      # breaks importing distutils on Debian/Ubuntu systems. Make sure we don't
-      # pick it up until the dust has settled and things work again.
-      $SUDO_CMD pip3 install -U 'setuptools < 50.0.0'
+      $SUDO_CMD pip3 install -U pip setuptools
 
       $SUDO_CMD pip3 install -U -r python-requirements.txt
 
