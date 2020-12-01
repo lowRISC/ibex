@@ -31,7 +31,7 @@ for file in ../rtl/*.sv; do
   sv2v \
     --define=SYNTHESIS \
     ../rtl/*_pkg.sv \
-    -I../vendor/lowrisc_ip/prim/rtl \
+    -I../vendor/lowrisc_ip/ip/prim/rtl \
     $file \
     > $LR_SYNTH_OUT_DIR/generated/${module}.v
 done
