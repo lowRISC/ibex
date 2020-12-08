@@ -1,5 +1,5 @@
 ---
-name: question
+name: Ask a question related to Ibex
 title: Ask a question related to Ibex
 about: Do you have a question about (the use of) Ibex?
 labels: Type:Question
