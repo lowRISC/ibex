@@ -1,5 +1,5 @@
 ---
-name: bug
+name: Report a bug in Ibex
 title: Report a bug in Ibex
 about: Have you found a bug in Ibex or associated tooling?
 labels: Type:Bug
