@@ -8,19 +8,22 @@ sources:
   - target: not(rtl)
     include_dirs:
       - rtl
-      - shared/rtl
+      - vendor/lowrisc_ip/ip/prim/rtl
+
     files:
       # Source files grouped in levels. Files in level 0 have no dependencies on files in this
       # package. Files in level 1 only depend on files in level 0, files in level 2 on files in
       # levels 1 and 0, etc. Files within a level are ordered alphabetically.
       # Level 0
       - rtl/ibex_pkg.sv
-      - shared/rtl/prim_assert.sv
+      - rtl/ibex_register_file_ff.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_assert.sv
       # Level 1
       - rtl/ibex_alu.sv
       - rtl/ibex_compressed_decoder.sv
       - rtl/ibex_controller.sv
-      - rtl/ibex_counters.sv
+      - rtl/ibex_counter.sv
+      - rtl/ibex_csr.sv
       - rtl/ibex_decoder.sv
       - rtl/ibex_fetch_fifo.sv
       - rtl/ibex_load_store_unit.sv
@@ -40,18 +43,20 @@ sources:
   - target: rtl
     include_dirs:
       - rtl
-      - shared/rtl
+      - vendor/lowrisc_ip/ip/prim/rtl
     defines: 
       RVFI: true
     files:
       # Level 0
       - rtl/ibex_pkg.sv
-      - shared/rtl/prim_assert.sv
+      - rtl/ibex_register_file_ff.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_assert.sv
       # Level 1
       - rtl/ibex_alu.sv
       - rtl/ibex_compressed_decoder.sv
       - rtl/ibex_controller.sv
-      - rtl/ibex_counters.sv
+      - rtl/ibex_counter.sv
+      - rtl/ibex_csr.sv
       - rtl/ibex_decoder.sv
       - rtl/ibex_fetch_fifo.sv
       - rtl/ibex_load_store_unit.sv
