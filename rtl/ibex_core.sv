@@ -391,7 +391,7 @@ module ibex_core #(
   // main clock gate of the core
   // generates all clocks except the one for the debug unit which is
   // independent
-  cluster_clock_gating core_clock_gate_i (
+  tc_clk_gating core_clock_gate_i (
       .clk_i     ( clk_i           ),
       .en_i      ( clock_en        ),
       .test_en_i ( test_en_i       ),
