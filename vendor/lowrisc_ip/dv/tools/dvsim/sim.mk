@@ -5,100 +5,97 @@
 .DEFAULT_GOAL := all
 
 LOCK_TOOL_SRCS_DIR ?= flock --timeout 3600 ${tool_srcs_dir} --command
-LOCK_SW_BUILD ?= flock --timeout 3600 ${sw_build_dir} --command
+LOCK_SW_BUILD_DIR  ?= flock --timeout 3600 ${sw_build_dir} --command
 
 all: build run
 
 ###############################
 ## sim build and run targets ##
 ###############################
-build: compile_result
+build: build_result
 
 prep_tool_srcs:
 	@echo "[make]: prep_tool_srcs"
 	mkdir -p ${tool_srcs_dir}
+ifneq (${tool_srcs},)
 	${LOCK_TOOL_SRCS_DIR} "cp -Ru ${tool_srcs} ${tool_srcs_dir}/."
+endif
 
-pre_compile: prep_tool_srcs
-	@echo "[make]: pre_compile"
+pre_build: prep_tool_srcs
+	@echo "[make]: pre_build"
 	mkdir -p ${build_dir}
+ifneq (${pre_build_cmds},)
+	cd ${build_dir} && ${pre_build_cmds}
+endif
 
-gen_sv_flist: pre_compile
+gen_sv_flist: pre_build
 	@echo "[make]: gen_sv_flist"
+ifneq (${sv_flist_gen_cmd},)
 	cd ${build_dir} && ${sv_flist_gen_cmd} ${sv_flist_gen_opts}
+endif
 
-compile: gen_sv_flist
-	@echo "[make]: compile"
+build_tb: gen_sv_flist
+	@echo "[make]: build the testbench"
 	cd ${sv_flist_gen_dir} && ${build_cmd} ${build_opts}
 
-post_compile: compile
-	@echo "[make]: post_compile"
+post_build: build_tb
+	@echo "[make]: post_build"
+ifneq (${post_build_cmds},)
+	cd ${build_dir} && ${post_build_cmds}
+endif
 
-compile_result: post_compile
-	@echo "[make]: compile_result"
+build_result: post_build
+	@echo "[make]: build_result"
 
 run: run_result
 
 pre_run: prep_tool_srcs
 	@echo "[make]: pre_run"
 	mkdir -p ${run_dir}
-ifneq (${sw_test},)
-	mkdir -p ${sw_build_dir}
+ifneq (${pre_run_cmds},)
+	cd ${run_dir} && ${pre_run_cmds}
 endif
 
+.ONESHELL:
 sw_build: pre_run
 	@echo "[make]: sw_build"
-ifneq (${sw_test},)
+ifneq (${sw_images},)
+	set -e
+	mkdir -p ${sw_build_dir}
 	# Initialize meson build system.
-	${LOCK_SW_BUILD} "cd ${proj_root} && \
+	${LOCK_SW_BUILD_DIR} "cd ${proj_root} && \
 		BUILD_ROOT=${sw_build_dir} ${proj_root}/meson_init.sh"
-	# Compile boot rom code and generate the image.
-	${LOCK_SW_BUILD} "ninja -C ${sw_build_dir}/build-out \
-		sw/device/boot_rom/boot_rom_export_${sw_build_device}"
-	# Extract the boot rom logs.
-	${proj_root}/util/device_sw_utils/extract_sw_logs.py \
-		-e "${sw_build_dir}/build-out/sw/device/boot_rom/boot_rom_${sw_build_device}.elf" \
-		-f .logs.fields -r .rodata .chip_info \
-		-n "rom" -o "${run_dir}"
-	# Copy over the boot rom image to the run_dir.
-	cp ${sw_build_dir}/build-out/sw/device/boot_rom/boot_rom_${sw_build_device}.32.vmem \
-		${run_dir}/rom.vmem
-	cp ${sw_build_dir}/build-out/sw/device/boot_rom/boot_rom_${sw_build_device}.elf \
-		${run_dir}/rom.elf
 
-ifeq (${sw_test_is_prebuilt},1)
-	# Copy over the sw test image and related sources to the run_dir.
-	cp ${proj_root}/${sw_test}.64.vmem ${run_dir}/sw.vmem
-	# Optionally, assume that ${sw_test}_logs.txt exists and copy over to the run_dir.
-	# Ignore copy error if it actually doesn't exist. Likewise for ${sw_test}_rodata.txt.
-	-cp ${proj_root}/${sw_test}_logs.txt ${run_dir}/sw_logs.txt
-	-cp ${proj_root}/${sw_test}_rodata.txt ${run_dir}/sw_rodata.txt
-
-else
-	# Compile the sw test code and generate the image.
-	${LOCK_SW_BUILD} "ninja -C ${sw_build_dir}/build-out \
-		${sw_test}_export_${sw_build_device}"
-	# Convert sw image to frame format
-	# TODO only needed for loading sw image through SPI. Can enhance this later
-	${LOCK_SW_BUILD} "ninja -C ${sw_build_dir}/build-out sw/host/spiflash/spiflash_export"
-	${LOCK_SW_BUILD} "${sw_build_dir}/build-bin/sw/host/spiflash/spiflash --input \
-		${sw_build_dir}/build-bin/${sw_test}_${sw_build_device}.bin \
-		--dump-frames=${run_dir}/sw.frames.bin"
-	${LOCK_SW_BUILD} "srec_cat ${run_dir}/sw.frames.bin --binary \
-		--offset 0x0 --byte-swap 4 --fill 0xff -within ${run_dir}/sw.frames.bin -binary -range-pad 4 \
-		--output ${run_dir}/sw.frames.vmem --vmem"
-	# Extract the sw test logs.
-	${proj_root}/util/device_sw_utils/extract_sw_logs.py \
-		-e "${sw_build_dir}/build-out/${sw_test}_${sw_build_device}.elf" \
-		-f .logs.fields -r .rodata \
-		-n "sw" -o "${run_dir}"
-	# Copy over the sw test image to the run_dir.
-	cp ${sw_build_dir}/build-out/${sw_test}_${sw_build_device}.64.vmem ${run_dir}/sw.vmem
-	cp ${sw_build_dir}/build-out/${sw_test}_${sw_build_device}.elf ${run_dir}/sw.elf
+	# Loop through the list of sw_images and invoke meson on each item.
+	# `sw_images` is a space-separated list of tests to be built into an image.
+	# Optionally, each item in the list can have additional metadata / flags using
+	# the delimiter ':'. The format is as follows:
+	# <path-to-sw-test>:<index>:<flag1>:<flag2>
+	#
+	# If no delimiter is detected, then the full string is considered to be the
+	# <path-to-sw-test>. If 1 delimiter is detected, then it must be <path-to-sw-
+	# test> followed by <index>. The <flag> is considered optional.
+	@for sw_image in ${sw_images}; do \
+		image=`echo $$sw_image | cut -d: -f 1`;  \
+		index=`echo $$sw_image | cut -d: -f 2`; \
+		flags=(`echo $$sw_image | cut -d: -f 3- --output-delimiter " "`); \
+		if [[ -z $$image ]]; then \
+			echo "ERROR: SW image \"$$sw_image\" is malformed."; \
+			echo "Expected format: path-to-sw-test:index:optional-flags."; \
+			exit 1; \
+		fi; \
+		if [[ $${flags[@]} =~ "prebuilt" ]]; then \
+			echo "SW image \"$$image\" is prebuilt - copying sources."; \
+			target_dir=`dirname ${sw_build_dir}/build-bin/$$image`; \
+			mkdir -p $$target_dir; \
+			cp ${proj_root}/$$image* $$target_dir/.; \
+		else \
+			echo "Building SW image \"$$image\"."; \
+			target="$$image""_export_${sw_build_device}"; \
+			${LOCK_SW_BUILD_DIR} "ninja -C ${sw_build_dir}/build-out $$target"; \
+		fi; \
+	done;
 endif
-
-endif
-
 
 simulate: sw_build
 	@echo "[make]: simulate"
@@ -106,6 +103,9 @@ simulate: sw_build
 
 post_run: simulate
 	@echo "[make]: post_run"
+ifneq (${post_run_cmds},)
+	cd ${run_dir} && ${post_run_cmds}
+endif
 
 run_result: post_run
 	@echo "[make]: run_result"
@@ -119,29 +119,43 @@ debug_waves:
 ############################
 ## coverage rated targets ##
 ############################
+cov_unr_build: gen_sv_flist
+	@echo "[make]: cov_unr_build"
+	cd ${sv_flist_gen_dir} && ${cov_unr_build_cmd} ${cov_unr_build_opts}
+
+cov_unr: cov_unr_build
+	@echo "[make]: cov_unr"
+	cd ${sv_flist_gen_dir} && ${cov_unr_run_cmd} ${cov_unr_run_opts}
+
 # Merge coverage if there are multiple builds.
 cov_merge:
 	@echo "[make]: cov_merge"
 	${cov_merge_cmd} ${cov_merge_opts}
-
-# Open coverage tool to review and create report or exclusion file.
-cov_analyze: prep_tool_srcs
-	@echo "[make]: cov_analyze"
-	${cov_analyze_cmd} ${cov_analyze_opts}
 
 # Generate coverage reports.
 cov_report:
 	@echo "[make]: cov_report"
 	${cov_report_cmd} ${cov_report_opts}
 
+# Open coverage tool to review and create report or exclusion file.
+cov_analyze: prep_tool_srcs
+	@echo "[make]: cov_analyze"
+	${cov_analyze_cmd} ${cov_analyze_opts}
+
 .PHONY: build \
-	run \
-	reg \
-	pre_compile \
-	compile \
-	post_compile \
-	compile_result \
-	pre_run \
-	simulate \
-	post_run \
-	run_result
+				prep_tool_srcs \
+				pre_build \
+				gen_sv_flist \
+				build_tb \
+				post_build \
+				build_result \
+				run \
+				pre_run \
+				sw_build \
+				simulate \
+				post_run \
+				run_result \
+				debug_waves \
+				cov_merge \
+				cov_analyze \
+				cov_report

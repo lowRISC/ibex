@@ -2,11 +2,11 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 {
-  // Where to find DV code
-  dv_root:          "{proj_root}/vendor/lowrisc_ip/dv"
-
   flow:             sim
   flow_makefile:    "{dv_root}/tools/dvsim/sim.mk"
+
+  // Where to find DV code
+  dv_root:          "{proj_root}/vendor/lowrisc_ip/dv"
 
   import_cfgs:      ["{proj_root}/dv/uvm/common_project_cfg.hjson",
                      "{dv_root}/tools/dvsim/common_modes.hjson",
@@ -17,7 +17,7 @@
   build_dir:          "{scratch_path}/{build_mode}"
   run_dir_name:       "{index}.{test}"
   run_dir:            "{scratch_path}/{run_dir_name}/out"
-  sw_build_dir:       "{scratch_path}/sw"
+  sw_build_dir:       "{scratch_path}"
   sw_root_dir:        "{proj_root}/sw"
 
   // pass and fail patterns
@@ -41,6 +41,7 @@
   expand_uvm_verbosity_l: UVM_LOW
   expand_uvm_verbosity_m: UVM_MEDIUM
   expand_uvm_verbosity_h: UVM_HIGH
+  expand_uvm_verbosity_f: UVM_FULL
   expand_uvm_verbosity_d: UVM_DEBUG
 
   // Default simulation verbosity (l => UVM_LOW). Can be overridden by
@@ -53,12 +54,10 @@
   dut_instance: "{tb}.dut"
 
   // Top level simulation entities.
-  sim_tops: ["-top {tb}"]
+  sim_tops: ["{tb}"]
 
   // Default build and run opts
-  build_opts: [// List multiple tops for the simulation
-               "{sim_tops}",
-               // Standard UVM defines
+  build_opts: [// Standard UVM defines
                "+define+UVM",
                "+define+UVM_NO_DEPRECATED",
                "+define+UVM_REGEX_NO_DPI",
@@ -71,6 +70,7 @@
 
   // Default list of things to export to shell
   exports: [
+    { SCRATCH_BASE_PATH: "{scratch_base_path}" },
     { TOOL_SRCS_DIR: "{tool_srcs_dir}" },
     { SIMULATOR: "{tool}" },
     { WAVES: "{waves}" },
@@ -104,7 +104,7 @@
   // By default, two regressions are made available - "all" and "nightly". Both
   // run all available tests for the DUT. "nightly" enables coverage as well.
   // The 'tests' key is set to an empty list, which indicates "run everything".
-  // Test sets can enable sim modes, which are a set of build_opts and run_opts
+  // Regressions can enable sim modes, which are a set of build_opts and run_opts
   // that are grouped together. These are appended to the build modes used by the
   // tests.
   regressions: [
@@ -138,6 +138,7 @@
 
   // Project defaults for VCS
   vcs_cov_cfg_file: "{{build_mode}_vcs_cov_cfg_file}"
+  vcs_unr_cfg_file: "{tool_srcs_dir}/unr.cfg"
   vcs_cov_excl_files: ["{tool_srcs_dir}/common_cov_excl.el"]
 
   // Build-specific coverage cfg files for VCS.

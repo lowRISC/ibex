@@ -33,24 +33,7 @@ class dv_report_server extends uvm_default_report_server;
 
     // Print final test pass-fail - external tool can use this signature for test status
     // Treat UVM_WARNINGs as a sign of test failure since it could silently result in false pass
-    if ((num_uvm_warning + num_uvm_error + num_uvm_fatal) == 0) begin
-      $display("\nTEST PASSED CHECKS");
-      $display(" _____         _                                  _ _ ");
-      $display("|_   _|__  ___| |_   _ __   __ _ ___ ___  ___  __| | |");
-      $display("  | |/ _ \\/ __| __| | '_ \\ / _` / __/ __|/ _ \\/ _` | |");
-      $display("  | |  __/\\__ \\ |_  | |_) | (_| \\__ \\__ \\  __/ (_| |_|");
-      $display("  |_|\\___||___/\\__| | .__/ \\__,_|___/___/\\___|\\__,_(_)");
-      $display("                    |_|                               \n");
-    end
-    else begin
-      $display("\nTEST FAILED CHECKS");
-      $display(" _____         _      __       _ _          _ _ ");
-      $display("|_   _|__  ___| |_   / _| __ _(_) | ___  __| | |");
-      $display("  | |/ _ \\/ __| __| | |_ / _` | | |/ _ \\/ _` | |");
-      $display("  | |  __/\\__ \\ |_  |  _| (_| | | |  __/ (_| |_|");
-      $display("  |_|\\___||___/\\__| |_|  \\__,_|_|_|\\___|\\__,_(_)\n");
-    end
-
+    dv_test_status_pkg::dv_test_status((num_uvm_warning + num_uvm_error + num_uvm_fatal) == 0);
   endfunction
 
   // Override default messaging format to standard "pretty" format for all testbenches
@@ -69,7 +52,7 @@ class dv_report_server extends uvm_default_report_server;
       string        file_line;
 
       if (show_file_line && filename != "") begin
-        if (!show_file_path) filename = get_no_hier_filename(filename);
+        if (!show_file_path) filename = str_utils_pkg::str_path_basename(filename);
         file_line = $sformatf("(%0s:%0d) ", filename, line);
       end
       obj_name = {obj_name, ((obj_name != "") ? " " : "")};
@@ -77,14 +60,6 @@ class dv_report_server extends uvm_default_report_server;
                                           severity.name(), $realtime, id, message);
       return compose_report_message;
     end
-  endfunction
-
-  // get we don't really want the full path to the filename
-  // this should be reasonably lightweight
-  local function string get_no_hier_filename(string filename);
-    int idx;
-    for (idx = filename.len() - 1; idx >= 0; idx--) if (filename[idx] == "/") break;
-    return (filename.substr(idx + 1, filename.len() - 1));
   endfunction
 
 endclass

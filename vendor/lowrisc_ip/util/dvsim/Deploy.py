@@ -39,6 +39,11 @@ class Deploy():
     # Max jobs dispatched in one go.
     slot_limit = 20
 
+    # List of variable names that are to be treated as "list of commands".
+    # This tells `construct_cmd` that these vars are lists that need to
+    # be joined with '&&' instead of a space.
+    cmds_list_vars = []
+
     def __self_str__(self):
         if log.getLogger().isEnabledFor(VERBOSE):
             return pprint.pformat(self.__dict__)
@@ -197,7 +202,10 @@ class Deploy():
                 pretty_value = []
                 for item in value:
                     pretty_value.append(item.strip())
-                value = " ".join(pretty_value)
+                # Join attributes that are list of commands with '&&' to chain
+                # them together when executed as a Make target's recipe.
+                separator = " && " if attr in self.cmds_list_vars else " "
+                value = separator.join(pretty_value)
             if type(value) is bool:
                 value = int(value)
             if type(value) is str:
@@ -247,6 +255,14 @@ class Deploy():
         # replace the values in the shell's env vars if the keys match.
         exports = os.environ.copy()
         exports.update(self.exports)
+
+        # Clear the magic MAKEFLAGS variable from exports if necessary. This
+        # variable is used by recursive Make calls to pass variables from one
+        # level to the next. Here, self.cmd is a call to Make but it's
+        # logically a top-level invocation: we don't want to pollute the flow's
+        # Makefile with Make variables from any wrapper that called dvsim.
+        if 'MAKEFLAGS' in exports:
+            del exports['MAKEFLAGS']
 
         args = shlex.split(self.cmd)
         try:
@@ -626,6 +642,8 @@ class CompileSim(Deploy):
     # Register all builds with the class
     items = []
 
+    cmds_list_vars = ["pre_build_cmds", "post_build_cmds"]
+
     def __init__(self, build_mode, sim_cfg):
         # Initialize common vars.
         super().__init__(sim_cfg)
@@ -646,8 +664,10 @@ class CompileSim(Deploy):
 
             # Build
             "build_dir": False,
+            "pre_build_cmds": False,
             "build_cmd": False,
-            "build_opts": False
+            "build_opts": False,
+            "post_build_cmds": False,
         })
 
         self.mandatory_misc_attrs.update({
@@ -743,6 +763,8 @@ class RunTest(Deploy):
     # Register all runs with the class
     items = []
 
+    cmds_list_vars = ["pre_run_cmds", "post_run_cmds"]
+
     def __init__(self, index, test, sim_cfg):
         # Initialize common vars.
         super().__init__(sim_cfg)
@@ -755,18 +777,17 @@ class RunTest(Deploy):
             # tool srcs
             "tool_srcs": False,
             "tool_srcs_dir": False,
-
             "proj_root": False,
             "uvm_test": False,
             "uvm_test_seq": False,
-            "run_opts": False,
-            "sw_test": False,
-            "sw_test_is_prebuilt": False,
+            "sw_images": False,
             "sw_build_device": False,
             "sw_build_dir": False,
             "run_dir": False,
+            "pre_run_cmds": False,
             "run_cmd": False,
-            "run_opts": False
+            "run_opts": False,
+            "post_run_cmds": False,
         })
 
         self.mandatory_misc_attrs.update({
@@ -828,6 +849,55 @@ class RunTest(Deploy):
                 seed = random.getrandbits(32)
                 RunTest.seeds.append(seed)
         return RunTest.seeds.pop(0)
+
+
+class CovUnr(Deploy):
+    """
+    Abstraction for coverage UNR flow.
+    """
+
+    # Register all builds with the class
+    items = []
+
+    def __init__(self, sim_cfg):
+        # Initialize common vars.
+        super().__init__(sim_cfg)
+
+        self.target = "cov_unr"
+        self.mandatory_cmd_attrs.update({
+            # tool srcs
+            "tool_srcs": False,
+            "tool_srcs_dir": False,
+
+            # Need to generate filelist based on build mode
+            "sv_flist_gen_cmd": False,
+            "sv_flist_gen_dir": False,
+            "sv_flist_gen_opts": False,
+            "build_dir": False,
+            "cov_unr_build_cmd": False,
+            "cov_unr_build_opts": False,
+            "cov_unr_run_cmd": False,
+            "cov_unr_run_opts": False
+        })
+
+        self.mandatory_misc_attrs.update({
+            "cov_unr_dir": False,
+            "build_fail_patterns": False
+        })
+
+        super().parse_dict(sim_cfg.__dict__)
+        self.__post_init__()
+
+        self.pass_patterns = []
+        # Reuse fail_patterns from sim build
+        self.fail_patterns = self.build_fail_patterns
+
+        # Start fail message construction
+        self.fail_msg = "\n**COV_UNR:** {}<br>\n".format(self.name)
+        log_sub_path = self.log.replace(self.sim_cfg.scratch_path + '/', '')
+        self.fail_msg += "**LOG:** $scratch_path/{}<br>\n".format(log_sub_path)
+
+        CovUnr.items.append(self)
 
 
 class CovMerge(Deploy):
