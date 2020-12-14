@@ -37,6 +37,8 @@
             patch_dir: "dv_tools"
         },
 
+        {from: "hw/dv/sv/str_utils",   to: "dv/sv/str_utils"},
+
         {from: "hw/dv/verilator",      to: "dv/verilator"},
 
         {from: "hw/ip/prim",           to: "ip/prim"},
