@@ -37,4 +37,4 @@ package ibex_icache_core_agent_pkg;
   `include "ibex_icache_core_agent.sv"
   `include "ibex_icache_core_seq_list.sv"
 
-endpackage: ibex_icache_core_agent_pkg
+endpackage : ibex_icache_core_agent_pkg

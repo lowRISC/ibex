@@ -10,15 +10,16 @@
 
 `include "prim_assert.sv"
 
-interface ibex_icache_ecc_protocol_checker
-  (input logic         clk_i,
-   input logic         req_i,
-   input logic         write_i,
-   input logic [31:0]  width,
-   input logic [31:0]  addr,
-   input logic [127:0] wdata,
-   input logic [127:0] wmask,
-   input logic [127:0] rdata);
+interface ibex_icache_ecc_protocol_checker (
+  input logic         clk_i,
+  input logic         req_i,
+  input logic         write_i,
+  input logic [ 31:0] width,
+  input logic [ 31:0] addr,
+  input logic [127:0] wdata,
+  input logic [127:0] wmask,
+  input logic [127:0] rdata
+);
 
   // The req line should never be unknown. Note that we have no reset signal here, so we assert this
   // is true at all times (fortunately, it seems that the DUT holds req low when in reset).
@@ -30,8 +31,8 @@ interface ibex_icache_ecc_protocol_checker
   // If there is a request with write_i high, the address and write mask should be known, and so
   // should any data to be written. We don't require the address to be known for reads: reading
   // rubbish is fine, so long as we ignore it later.
-  `ASSERT_KNOWN_IF(AddrKnown,  addr,          req_i & write_i, clk_i, 0)
-  `ASSERT_KNOWN_IF(WMaskKnown, wmask,         req_i & write_i, clk_i, 0)
+  `ASSERT_KNOWN_IF(AddrKnown, addr, req_i & write_i, clk_i, 0)
+  `ASSERT_KNOWN_IF(WMaskKnown, wmask, req_i & write_i, clk_i, 0)
   `ASSERT_KNOWN_IF(WDataKnown, wdata & wmask, req_i & write_i, clk_i, 0)
 
 endinterface

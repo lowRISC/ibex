@@ -17,11 +17,11 @@ module ibex_register_file_fpga #(
   parameter bit          DummyInstructions = 0
 ) (
   // Clock and Reset
-  input  logic                 clk_i,
-  input  logic                 rst_ni,
+  input logic clk_i,
+  input logic rst_ni,
 
-  input  logic                 test_en_i,
-  input  logic                 dummy_instr_id_i,
+  input logic test_en_i,
+  input logic dummy_instr_id_i,
 
   //Read port R1
   input  logic [          4:0] raddr_a_i,
@@ -36,10 +36,10 @@ module ibex_register_file_fpga #(
 );
 
   localparam int ADDR_WIDTH = RV32E ? 4 : 5;
-  localparam int NUM_WORDS  = 2**ADDR_WIDTH;
+  localparam int NUM_WORDS = 2 ** ADDR_WIDTH;
 
   logic [DataWidth-1:0] mem[NUM_WORDS];
-  logic we; // write enable if writing to any register other than R0
+  logic we;  // write enable if writing to any register other than R0
 
   // async_read a
   assign rdata_a_o = (raddr_a_i == '0) ? '0 : mem[raddr_a_i];

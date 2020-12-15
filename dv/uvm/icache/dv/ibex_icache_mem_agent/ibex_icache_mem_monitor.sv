@@ -2,10 +2,11 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class ibex_icache_mem_monitor
-  extends dv_base_monitor #(.ITEM_T (ibex_icache_mem_bus_item),
-                            .CFG_T  (ibex_icache_mem_agent_cfg),
-                            .COV_T  (ibex_icache_mem_agent_cov));
+class ibex_icache_mem_monitor extends dv_base_monitor#(
+  .ITEM_T(ibex_icache_mem_bus_item),
+  .CFG_T (ibex_icache_mem_agent_cfg),
+  .COV_T (ibex_icache_mem_agent_cov)
+);
 
   `uvm_component_utils(ibex_icache_mem_monitor)
   `uvm_component_new
@@ -95,7 +96,7 @@ class ibex_icache_mem_monitor
 
     forever begin
       if (cfg.vif.monitor_cb.rvalid) begin
-        bus_trans = ibex_icache_mem_bus_item::type_id::create("bus_trans");
+        bus_trans          = ibex_icache_mem_bus_item::type_id::create("bus_trans");
         bus_trans.is_grant = 1'b0;
         bus_trans.data     = cfg.vif.monitor_cb.rdata;
         bus_trans.err      = cfg.vif.monitor_cb.err;
@@ -111,7 +112,7 @@ class ibex_icache_mem_monitor
     ibex_icache_mem_req_item item = new("item");
 
     item.is_grant = 1'b0;
-    item.address = addr;
+    item.address  = addr;
     request_port.write(item);
   endfunction
 
@@ -122,10 +123,10 @@ class ibex_icache_mem_monitor
 
     item = ibex_icache_mem_req_item::type_id::create("item");
     item.is_grant = 1'b1;
-    item.address  = addr;
+    item.address = addr;
     request_port.write(item);
 
-    bus_trans = ibex_icache_mem_bus_item::type_id::create("bus_trans");
+    bus_trans          = ibex_icache_mem_bus_item::type_id::create("bus_trans");
     bus_trans.is_grant = 1'b1;
     bus_trans.data     = addr;
     bus_trans.err      = 0;

@@ -15,10 +15,10 @@ module prim_keccak_fpv #(
   output logic [Width-1:0] state_o
 );
 
-  localparam int W        = Width/25;
-  localparam int L        = $clog2(W);
-  localparam int NumRound = 12 + 2*L; // Keccak-f only
-  localparam int RndW     = $clog2(NumRound+1);
+  localparam int W = Width / 25;
+  localparam int L = $clog2(W);
+  localparam int NumRound = 12 + 2 * L;  // Keccak-f only
+  localparam int RndW = $clog2(NumRound + 1);
   logic [RndW-1:0] round;
   logic active;
   logic [Width-1:0] state, state_d;
@@ -26,30 +26,30 @@ module prim_keccak_fpv #(
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) state <= '0;
     else if (valid_i) state <= state_i;
-    else if (active)  state <= state_d;
+    else if (active) state <= state_d;
   end
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) round <= '0;
     else if (valid_i) round <= '0;
-    else if (active)  round <= round + 1'b 1;
+    else if (active) round <= round + 1'b1;
   end
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni) active <= 1'b 0;
-    else if (valid_i) active <= 1'b 1;
-    else if (round == (NumRound -1)) active <= 1'b 0;
+    if (!rst_ni) active <= 1'b0;
+    else if (valid_i) active <= 1'b1;
+    else if (round == (NumRound - 1)) active <= 1'b0;
   end
 
-  assign done_o = (round == NumRound);
+  assign done_o  = (round == NumRound);
   assign state_o = state;
 
   prim_keccak #(
-    .Width (Width)
+    .Width(Width)
   ) u_keccak (
-    .rnd_i  (round),
-    .s_i    (state),
-    .s_o    (state_d)
+    .rnd_i(round),
+    .s_i  (state),
+    .s_o  (state_d)
   );
 
 
@@ -57,12 +57,12 @@ module prim_keccak_fpv #(
   `ASSUME_FPV(ValidValid_A, active |-> !valid_i)
 
   // Test with value 0
-  logic [1599:0] data_0 ;
+  logic [1599:0] data_0;
   always_comb begin
     data_0 = '0;
     // SHA3-256 ==> r : 1088
-    data_0[1087] = 1'b 1;
-    data_0[2:0] = 3'b 110;
+    data_0[1087] = 1'b1;
+    data_0[2:0] = 3'b110;
   end
   logic [255:0] digest_0;
   // Big-Endian a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a

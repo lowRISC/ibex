@@ -20,9 +20,9 @@ module prim_subreg_ext #(
   output logic [DW-1:0] qs
 );
 
-  assign qs = d;
-  assign q = wd;
-  assign qe = we;
+  assign qs  = d;
+  assign q   = wd;
+  assign qe  = we;
   assign qre = re;
 
 endmodule

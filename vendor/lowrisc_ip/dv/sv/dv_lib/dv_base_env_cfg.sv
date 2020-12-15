@@ -2,40 +2,45 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class dv_base_env_cfg #(type RAL_T = dv_base_reg_block) extends uvm_object;
+class dv_base_env_cfg #(
+  type RAL_T = dv_base_reg_block
+) extends uvm_object;
 
-  bit is_active         = 1;
-  bit en_scb            = 1; // can be changed at run-time
-  bit en_scb_tl_err_chk = 1;
-  bit en_scb_mem_chk    = 1;
-  bit en_cov            = 1;
-  bit has_ral           = 1;
-  bit under_reset       = 0;
+  bit      is_active         = 1;
+  bit      en_scb            = 1;  // can be changed at run-time
+  bit      en_scb_tl_err_chk = 1;
+  bit      en_scb_mem_chk    = 1;
+  bit      en_cov            = 1;
+  bit      has_ral           = 1;
+  bit      under_reset       = 0;
 
   // bit to configure all uvcs with zero delays to create high bw test
   rand bit zero_delays;
 
   // set zero_delays 40% of the time
   constraint zero_delays_c {
-    zero_delays dist {1'b0 := 6, 1'b1 := 4};
+    zero_delays dist {
+      1'b0 := 6,
+      1'b1 := 4
+    };
   }
 
   // reg model & q of valid csr addresses
-  RAL_T                             ral;
-  dv_base_reg_block                 ral_models[$];
-  bit [bus_params_pkg::BUS_AW-1:0]  csr_addrs[$];
-  addr_range_t                      mem_ranges[$];
+  RAL_T                            ral;
+  dv_base_reg_block                ral_models[$];
+  bit [bus_params_pkg::BUS_AW-1:0] csr_addrs[$];
+  addr_range_t                     mem_ranges[$];
 
   // clk_rst_if & freq
-  virtual clk_rst_if  clk_rst_vif;
-  rand clk_freq_mhz_e clk_freq_mhz;
+  virtual clk_rst_if               clk_rst_vif;
+  rand clk_freq_mhz_e              clk_freq_mhz;
 
-  `uvm_object_param_utils_begin(dv_base_env_cfg #(RAL_T))
-    `uvm_field_int   (is_active,                    UVM_DEFAULT)
-    `uvm_field_int   (en_scb,                       UVM_DEFAULT)
-    `uvm_field_int   (en_cov,                       UVM_DEFAULT)
-    `uvm_field_int   (zero_delays,                  UVM_DEFAULT)
-    `uvm_field_enum  (clk_freq_mhz_e, clk_freq_mhz, UVM_DEFAULT)
+  `uvm_object_param_utils_begin(dv_base_env_cfg#(RAL_T))
+    `uvm_field_int(is_active, UVM_DEFAULT)
+    `uvm_field_int(en_scb, UVM_DEFAULT)
+    `uvm_field_int(en_cov, UVM_DEFAULT)
+    `uvm_field_int(zero_delays, UVM_DEFAULT)
+    `uvm_field_enum(clk_freq_mhz_e, clk_freq_mhz, UVM_DEFAULT)
   `uvm_object_utils_end
 
   `uvm_object_new

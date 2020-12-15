@@ -10,7 +10,7 @@ class ibex_icache_back_line_vseq extends ibex_icache_base_vseq;
   virtual task pre_start();
     uvm_factory        f;
     uvm_object_wrapper wrapper;
-    string             base_name, back_name, old_name, inst_path;
+    string base_name, back_name, old_name, inst_path;
 
     // The base class creates a sequence for the core and memory agents in its pre_start method. We
     // want to override its decision and use a different sequence for the core. To do so, we use the

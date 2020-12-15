@@ -24,55 +24,55 @@
 `include "prim_assert.sv"
 
 module prim_ram_1p_scr #(
-  parameter  int Depth                = 512, // Needs to be a power of 2 if NumAddrScrRounds > 0.
-  parameter  int Width                = 256, // Needs to be Byte aligned for parity
-  parameter  int DataBitsPerMask      = 8,   // Currently only 8 is supported
-  parameter  int CfgWidth             = 8,   // WTC, RTC, etc
+  parameter int Depth           = 512,  // Needs to be a power of 2 if NumAddrScrRounds > 0.
+  parameter int Width           = 256,  // Needs to be Byte aligned for parity
+  parameter int DataBitsPerMask = 8,  // Currently only 8 is supported
+  parameter int CfgWidth        = 8,  // WTC, RTC, etc
 
   // Scrambling parameters. Note that this needs to be low-latency, hence we have to keep the
   // amount of cipher rounds low. PRINCE has 5 half rounds in its original form, which corresponds
   // to 2*5 + 1 effective rounds. Setting this to 2 halves this to approximately 5 effective rounds.
-  parameter  int NumPrinceRoundsHalf  = 2,   // Number of PRINCE half rounds, can be [1..5]
+  parameter int NumPrinceRoundsHalf = 2,  // Number of PRINCE half rounds, can be [1..5]
   // Number of extra intra-Byte diffusion rounds. Setting this to 0 disables intra-Byte diffusion.
-  parameter  int NumByteScrRounds     = 2,
+  parameter int NumByteScrRounds    = 2,
   // Number of address scrambling rounds. Setting this to 0 disables address scrambling.
-  parameter  int NumAddrScrRounds     = 2,
+  parameter int NumAddrScrRounds    = 2,
   // If set to 1, the same 64bit key stream is replicated if the data port is wider than 64bit.
   // If set to 0, the cipher primitive is replicated, and together with a wider nonce input,
   // a unique keystream is generated for the full data width.
-  parameter  bit ReplicateKeyStream   = 1'b0,
+  parameter bit ReplicateKeyStream  = 1'b0,
 
   // Derived parameters
-  localparam int AddrWidth            = prim_util_pkg::vbits(Depth),
+  localparam int AddrWidth    = prim_util_pkg::vbits(Depth),
   // Depending on the data width, we need to instantiate multiple parallel cipher primitives to
   // create a keystream that is wide enough (PRINCE has a block size of 64bit)
-  localparam int NumParScr            = (ReplicateKeyStream) ? 1 : (Width + 63) / 64,
-  localparam int NumParKeystr         = (ReplicateKeyStream) ? (Width + 63) / 64 : 1,
+  localparam int NumParScr    = (ReplicateKeyStream) ? 1 : (Width + 63) / 64,
+  localparam int NumParKeystr = (ReplicateKeyStream) ? (Width + 63) / 64 : 1,
   // This is given by the PRINCE cipher primitive. All parallel cipher modules
   // use the same key, but they use a different IV
-  localparam int DataKeyWidth         = 128,
+  localparam int DataKeyWidth = 128,
   // Each 64 bit scrambling primitive requires a 64bit IV
-  localparam int NonceWidth           = 64 * NumParScr
+  localparam int NonceWidth   = 64 * NumParScr
 ) (
-  input                             clk_i,
-  input                             rst_ni,
+  input clk_i,
+  input rst_ni,
 
-  input        [DataKeyWidth-1:0]   key_i,
-  input        [NonceWidth-1:0]     nonce_i,
+  input [DataKeyWidth-1:0] key_i,
+  input [  NonceWidth-1:0] nonce_i,
 
   // Interface to TL-UL SRAM adapter
-  input                             req_i,
-  input                             write_i,
-  input        [AddrWidth-1:0]      addr_i,
-  input        [Width-1:0]          wdata_i,
-  input        [Width-1:0]          wmask_i,  // Needs to be Byte-aligned for parity
-  output logic [Width-1:0]          rdata_o,
-  output logic                      rvalid_o, // Read response (rdata_o) is valid
-  output logic [1:0]                rerror_o, // Bit1: Uncorrectable, Bit0: Correctable
-  output logic [AddrWidth-1:0]      raddr_o,  // Read address for error reporting.
+  input                        req_i,
+  input                        write_i,
+  input        [AddrWidth-1:0] addr_i,
+  input        [    Width-1:0] wdata_i,
+  input        [    Width-1:0] wmask_i,  // Needs to be Byte-aligned for parity
+  output logic [    Width-1:0] rdata_o,
+  output logic                 rvalid_o,  // Read response (rdata_o) is valid
+  output logic [          1:0] rerror_o,  // Bit1: Uncorrectable, Bit0: Correctable
+  output logic [AddrWidth-1:0] raddr_o,  // Read address for error reporting.
 
   // config
-  input [CfgWidth-1:0]              cfg_i
+  input [CfgWidth-1:0] cfg_i
 );
 
   //////////////////////
@@ -80,7 +80,7 @@ module prim_ram_1p_scr #(
   //////////////////////
 
   // The depth needs to be a power of 2 in case address scrambling is turned on
-  `ASSERT_INIT(DepthPow2Check_A, NumAddrScrRounds <= '0 || 2**$clog2(Depth) == Depth)
+  `ASSERT_INIT(DepthPow2Check_A, NumAddrScrRounds <= '0 || 2 ** $clog2(Depth) == Depth)
 
   /////////////////////////////////////////
   // Pending Write and Address Registers //
@@ -88,7 +88,7 @@ module prim_ram_1p_scr #(
 
   // Read / write strobes
   logic read_en, write_en;
-  assign read_en = req_i & ~write_i;
+  assign read_en  = req_i & ~write_i;
   assign write_en = req_i & write_i;
 
   // Writes are delayed by one cycle, such the same keystream generation primitive (prim_prince) can
@@ -99,10 +99,9 @@ module prim_ram_1p_scr #(
   // data from the write holding register.
   logic macro_write;
   logic write_pending_d, write_pending_q;
-  assign write_pending_d =
-      (write_en)                ? 1'b1            : // Set new write request
-      (macro_write)             ? 1'b0            : // Clear pending request when writing to memory
-                                  write_pending_q;  // Keep pending write request alive
+  assign write_pending_d = (write_en) ? 1'b1 :  // Set new write request
+  (macro_write) ? 1'b0 :  // Clear pending request when writing to memory
+  write_pending_q;  // Keep pending write request alive
 
   logic collision_d, collision_q;
   logic [AddrWidth-1:0] waddr_q;
@@ -129,17 +128,17 @@ module prim_ram_1p_scr #(
   logic [AddrWidth-1:0] addr_scr;
   if (NumAddrScrRounds > 0) begin : gen_addr_scr
     prim_subst_perm #(
-      .DataWidth ( AddrWidth        ),
-      .NumRounds ( NumAddrScrRounds ),
-      .Decrypt   ( 0                )
+      .DataWidth(AddrWidth),
+      .NumRounds(NumAddrScrRounds),
+      .Decrypt  (0)
     ) i_prim_subst_perm (
-      .data_i ( addr_mux ),
+      .data_i(addr_mux),
       // Since the counter mode concatenates {nonce_i[NonceWidth-1-AddrWidth:0], addr_i} to form
       // the IV, the upper AddrWidth bits of the nonce are not used and can be used for address
       // scrambling. In cases where N parallel PRINCE blocks are used due to a data
       // width > 64bit, N*AddrWidth nonce bits are left dangling.
-      .key_i  ( nonce_i[NonceWidth - 1 : NonceWidth - AddrWidth] ),
-      .data_o ( addr_scr )
+      .key_i (nonce_i[NonceWidth-1 : NonceWidth-AddrWidth]),
+      .data_o(addr_scr)
     );
   end else begin : gen_no_addr_scr
     assign addr_scr = addr_mux;
@@ -160,32 +159,32 @@ module prim_ram_1p_scr #(
   logic [NumParScr*64-1:0] keystream;
   for (genvar k = 0; k < NumParScr; k++) begin : gen_par_scr
     prim_prince #(
-      .DataWidth      (64),
-      .KeyWidth       (128),
-      .NumRoundsHalf  (NumPrinceRoundsHalf),
-      .UseOldKeySched (1'b0),
-      .HalfwayDataReg (1'b1), // instantiate a register halfway in the primitive
-      .HalfwayKeyReg  (1'b0)  // no need to instantiate a key register as the key remains static
+      .DataWidth(64),
+      .KeyWidth(128),
+      .NumRoundsHalf(NumPrinceRoundsHalf),
+      .UseOldKeySched(1'b0),
+      .HalfwayDataReg(1'b1),  // instantiate a register halfway in the primitive
+      .HalfwayKeyReg(1'b0)  // no need to instantiate a key register as the key remains static
     ) u_prim_prince (
       .clk_i,
       .rst_ni,
-      .valid_i ( req_i ),
+      .valid_i(req_i),
       // The IV is composed of a nonce and the row address
-      .data_i  ( {nonce_i[k * (64 - AddrWidth) +: (64 - AddrWidth)], addr_i} ),
+      .data_i ({nonce_i[k*(64-AddrWidth)+:(64-AddrWidth)], addr_i}),
       // All parallel scramblers use the same key
       .key_i,
       // Since we operate in counter mode, this can always be set to encryption mode
-      .dec_i   ( 1'b0 ),
+      .dec_i  (1'b0),
       // Output keystream to be XOR'ed
-      .data_o  ( keystream[k * 64 +: 64] ),
-      .valid_o ( )
+      .data_o (keystream[k*64+:64]),
+      .valid_o()
     );
 
     // Unread unused bits from keystream
-    if (k == NumParKeystr-1 && (Width % 64) > 0) begin : gen_unread_last
+    if (k == NumParKeystr - 1 && (Width % 64) > 0) begin : gen_unread_last
       localparam int UnusedWidth = 64 - (Width % 64);
       logic [UnusedWidth-1:0] unused_keystream;
-      assign unused_keystream = keystream[(k+1) * 64 - 1 -: UnusedWidth];
+      assign unused_keystream = keystream[(k+1)*64-1-:UnusedWidth];
     end
   end
 
@@ -209,20 +208,20 @@ module prim_ram_1p_scr #(
   // Write path. Note that since this does not fan out into the interconnect, the write path is not
   // as critical as the read path below in terms of timing.
   logic [Width-1:0] wdata_scr_d, wdata_scr_q, wdata_q;
-  for (genvar k = 0; k < Width/8; k++) begin : gen_diffuse_wdata
+  for (genvar k = 0; k < Width / 8; k++) begin : gen_diffuse_wdata
     // Apply the keystream first
     logic [7:0] wdata_xor;
-    assign wdata_xor = wdata_q[k*8 +: 8] ^ keystream_repl[k*8 +: 8];
+    assign wdata_xor = wdata_q[k*8+:8] ^ keystream_repl[k*8+:8];
 
     // Byte aligned diffusion using a substitution / permutation network
     prim_subst_perm #(
-      .DataWidth ( 8                ),
-      .NumRounds ( NumByteScrRounds ),
-      .Decrypt   ( 0                )
+      .DataWidth(8),
+      .NumRounds(NumByteScrRounds),
+      .Decrypt  (0)
     ) i_prim_subst_perm (
-      .data_i ( wdata_xor             ),
-      .key_i  ( '0                    ),
-      .data_o ( wdata_scr_d[k*8 +: 8] )
+      .data_i(wdata_xor),
+      .key_i ('0),
+      .data_o(wdata_scr_d[k*8+:8])
     );
   end
 
@@ -230,21 +229,21 @@ module prim_ram_1p_scr #(
   // hide the combinational delay of the PRINCE primitive behind the propagation delay of the
   // SRAM and the Byte diffusion.
   logic [Width-1:0] rdata_scr, rdata;
-  for (genvar k = 0; k < Width/8; k++) begin : gen_undiffuse_rdata
+  for (genvar k = 0; k < Width / 8; k++) begin : gen_undiffuse_rdata
     // Reverse diffusion first
     logic [7:0] rdata_xor;
     prim_subst_perm #(
-      .DataWidth ( 8                ),
-      .NumRounds ( NumByteScrRounds ),
-      .Decrypt   ( 1                )
+      .DataWidth(8),
+      .NumRounds(NumByteScrRounds),
+      .Decrypt  (1)
     ) i_prim_subst_perm (
-      .data_i ( rdata_scr[k*8 +: 8]  ),
-      .key_i  ( '0                   ),
-      .data_o ( rdata_xor            )
+      .data_i(rdata_scr[k*8+:8]),
+      .key_i ('0),
+      .data_o(rdata_xor)
     );
 
     // Apply Keystream, replicate it if needed
-    assign rdata[k*8 +: 8] = rdata_xor ^ keystream_repl[k*8 +: 8];
+    assign rdata[k*8+:8] = rdata_xor ^ keystream_repl[k*8+:8];
   end
 
   ////////////////////////////////////////////////
@@ -280,9 +279,9 @@ module prim_ram_1p_scr #(
   assign rvalid_o = rvalid_q;
 
   // In case of a collision, we forward the write data from the unscrambled holding register
-  assign rdata_o = (collision_q) ? wdata_q   : // forward pending (unscrambled) write data
-                   (rvalid_q)    ? rdata     : // regular reads
-                                   '0;         // tie to zero otherwise
+  assign rdata_o = (collision_q) ? wdata_q :  // forward pending (unscrambled) write data
+  (rvalid_q) ? rdata :  // regular reads
+  '0;  // tie to zero otherwise
 
   ///////////////
   // Registers //
@@ -327,19 +326,19 @@ module prim_ram_1p_scr #(
     .DataBitsPerMask(DataBitsPerMask),
     .CfgW(CfgWidth),
     .EnableECC(1'b0),
-    .EnableParity(1'b1), // We are using Byte parity
+    .EnableParity(1'b1),  // We are using Byte parity
     .EnableInputPipeline(1'b0),
     .EnableOutputPipeline(1'b0)
   ) u_prim_ram_1p_adv (
     .clk_i,
     .rst_ni,
-    .req_i    ( macro_req   ),
-    .write_i  ( macro_write ),
-    .addr_i   ( addr_scr    ),
-    .wdata_i  ( wdata_scr   ),
-    .wmask_i  ( wmask_q     ),
-    .rdata_o  ( rdata_scr   ),
-    .rvalid_o ( ),
+    .req_i   (macro_req),
+    .write_i (macro_write),
+    .addr_i  (addr_scr),
+    .wdata_i (wdata_scr),
+    .wmask_i (wmask_q),
+    .rdata_o (rdata_scr),
+    .rvalid_o(),
     .rerror_o,
     .cfg_i
   );

@@ -16,31 +16,31 @@
 `include "prim_assert.sv"
 
 module prim_ram_1p_adv #(
-  parameter  int Depth                = 512,
-  parameter  int Width                = 32,
-  parameter  int DataBitsPerMask      = 1,  // Number of data bits per bit of write mask
-  parameter  int CfgW                 = 8,  // WTC, RTC, etc
-  parameter      MemInitFile          = "", // VMEM file to initialize the memory with
+  parameter int Depth           = 512,
+  parameter int Width           = 32,
+  parameter int DataBitsPerMask = 1,  // Number of data bits per bit of write mask
+  parameter int CfgW            = 8,  // WTC, RTC, etc
+  parameter     MemInitFile     = "",  // VMEM file to initialize the memory with
 
   // Configurations
-  parameter  bit EnableECC            = 0, // Enables per-word ECC
-  parameter  bit EnableParity         = 0, // Enables per-Byte Parity
-  parameter  bit EnableInputPipeline  = 0, // Adds an input register (read latency +1)
-  parameter  bit EnableOutputPipeline = 0, // Adds an output register (read latency +1)
+  parameter bit EnableECC            = 0,  // Enables per-word ECC
+  parameter bit EnableParity         = 0,  // Enables per-Byte Parity
+  parameter bit EnableInputPipeline  = 0,  // Adds an input register (read latency +1)
+  parameter bit EnableOutputPipeline = 0,  // Adds an output register (read latency +1)
 
-  localparam int Aw                   = prim_util_pkg::vbits(Depth)
+  localparam int Aw = prim_util_pkg::vbits(Depth)
 ) (
   input clk_i,
   input rst_ni,
 
-  input                      req_i,
-  input                      write_i,
-  input        [Aw-1:0]      addr_i,
-  input        [Width-1:0]   wdata_i,
-  input        [Width-1:0]   wmask_i,
-  output logic [Width-1:0]   rdata_o,
-  output logic               rvalid_o, // read response (rdata_o) is valid
-  output logic [1:0]         rerror_o, // Bit1: Uncorrectable, Bit0: Correctable
+  input                    req_i,
+  input                    write_i,
+  input        [   Aw-1:0] addr_i,
+  input        [Width-1:0] wdata_i,
+  input        [Width-1:0] wmask_i,
+  output logic [Width-1:0] rdata_o,
+  output logic             rvalid_o,  // read response (rdata_o) is valid
+  output logic [      1:0] rerror_o,  // Bit1: Uncorrectable, Bit0: Correctable
 
   // config
   input [CfgW-1:0] cfg_i
@@ -70,31 +70,31 @@ module prim_ram_1p_adv #(
   // RAM Primitive Instance //
   ////////////////////////////
 
-  logic                    req_q,    req_d ;
-  logic                    write_q,  write_d ;
-  logic [Aw-1:0]           addr_q,   addr_d ;
-  logic [TotalWidth-1:0]   wdata_q,  wdata_d ;
-  logic [TotalWidth-1:0]   wmask_q,  wmask_d ;
-  logic                    rvalid_q, rvalid_d, rvalid_sram ;
-  logic [Width-1:0]        rdata_q,  rdata_d ;
-  logic [TotalWidth-1:0]   rdata_sram ;
-  logic [1:0]              rerror_q, rerror_d ;
+  logic req_q, req_d;
+  logic write_q, write_d;
+  logic [Aw-1:0] addr_q, addr_d;
+  logic [TotalWidth-1:0] wdata_q, wdata_d;
+  logic [TotalWidth-1:0] wmask_q, wmask_d;
+  logic rvalid_q, rvalid_d, rvalid_sram;
+  logic [Width-1:0] rdata_q, rdata_d;
+  logic [TotalWidth-1:0] rdata_sram;
+  logic [1:0] rerror_q, rerror_d;
 
   prim_ram_1p #(
-    .MemInitFile     (MemInitFile),
+    .MemInitFile(MemInitFile),
 
-    .Width           (TotalWidth),
-    .Depth           (Depth),
-    .DataBitsPerMask (LocalDataBitsPerMask)
+    .Width          (TotalWidth),
+    .Depth          (Depth),
+    .DataBitsPerMask(LocalDataBitsPerMask)
   ) u_mem (
     .clk_i,
 
-    .req_i    (req_q),
-    .write_i  (write_q),
-    .addr_i   (addr_q),
-    .wdata_i  (wdata_q),
-    .wmask_i  (wmask_q),
-    .rdata_o  (rdata_sram)
+    .req_i  (req_q),
+    .write_i(write_q),
+    .addr_i (addr_q),
+    .wdata_i(wdata_q),
+    .wmask_i(wmask_q),
+    .rdata_o(rdata_sram)
   );
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -105,12 +105,12 @@ module prim_ram_1p_adv #(
     end
   end
 
-  assign req_d              = req_i;
-  assign write_d            = write_i;
-  assign addr_d             = addr_i;
-  assign rvalid_o           = rvalid_q;
-  assign rdata_o            = rdata_q;
-  assign rerror_o           = rerror_q;
+  assign req_d    = req_i;
+  assign write_d  = write_i;
+  assign addr_d   = addr_i;
+  assign rvalid_o = rvalid_q;
+  assign rdata_o  = rdata_q;
+  assign rerror_o = rerror_q;
 
   /////////////////////////////
   // ECC / Parity Generation //
@@ -124,26 +124,31 @@ module prim_ram_1p_adv #(
     `ASSERT_INIT(SecDecWidth_A, Width inside {16, 32})
 
     // the wmask is constantly set to 1 in this case
-    `ASSERT(OnlyWordWritePossibleWithEccPortA_A, req_i |->
-          wmask_i == {Width{1'b1}})
+    `ASSERT(OnlyWordWritePossibleWithEccPortA_A, req_i |-> wmask_i == {Width{1'b1}})
 
     assign wmask_d = {TotalWidth{1'b1}};
 
     if (Width == 16) begin : gen_secded_22_16
-      prim_secded_22_16_enc u_enc (.in(wdata_i), .out(wdata_d));
+      prim_secded_22_16_enc u_enc (
+        .in (wdata_i),
+        .out(wdata_d)
+      );
       prim_secded_22_16_dec u_dec (
-        .in         (rdata_sram),
-        .d_o        (rdata_d[0+:Width]),
-        .syndrome_o ( ),
-        .err_o      (rerror_d)
+        .in        (rdata_sram),
+        .d_o       (rdata_d[0+:Width]),
+        .syndrome_o(),
+        .err_o     (rerror_d)
       );
     end else if (Width == 32) begin : gen_secded_39_32
-      prim_secded_39_32_enc u_enc (.in(wdata_i), .out(wdata_d));
+      prim_secded_39_32_enc u_enc (
+        .in (wdata_i),
+        .out(wdata_d)
+      );
       prim_secded_39_32_dec u_dec (
-        .in         (rdata_sram),
-        .d_o        (rdata_d[0+:Width]),
-        .syndrome_o ( ),
-        .err_o      (rerror_d)
+        .in        (rdata_sram),
+        .d_o       (rdata_d[0+:Width]),
+        .syndrome_o(),
+        .err_o     (rerror_d)
       );
     end
 
@@ -157,21 +162,21 @@ module prim_ram_1p_adv #(
       wmask_d[0+:Width] = wmask_i;
       wdata_d[0+:Width] = wdata_i;
 
-      for (int i = 0; i < Width/8; i ++) begin
+      for (int i = 0; i < Width / 8; i++) begin
         // parity generation (odd parity)
-        wdata_d[Width + i] = ~(^wdata_i[i*8 +: 8]);
-        wmask_d[Width + i] = &wmask_i[i*8 +: 8];
+        wdata_d[Width+i] = ~(^wdata_i[i*8+:8]);
+        wmask_d[Width+i] = &wmask_i[i*8+:8];
         // parity decoding (errors are always uncorrectable)
-        rerror_d[1] |= ~(^{rdata_sram[i*8 +: 8], rdata_sram[Width + i]});
+        rerror_d[1] |= ~(^{rdata_sram[i*8+:8], rdata_sram[Width+i]});
       end
       // tie to zero if the read data is not valid
       rerror_d &= {2{rvalid_sram}};
     end
 
-    assign rdata_d  = rdata_sram[0+:Width];
+    assign rdata_d = rdata_sram[0+:Width];
   end else begin : gen_nosecded_noparity
-    assign wmask_d = wmask_i;
-    assign wdata_d = wdata_i;
+    assign wmask_d  = wmask_i;
+    assign wdata_d  = wdata_i;
 
     assign rdata_d  = rdata_sram[0+:Width];
     assign rerror_d = '0;

@@ -28,36 +28,36 @@
 
 module prim_lfsr #(
   // Lfsr Type, can be FIB_XNOR or GAL_XOR
-  parameter                    LfsrType     = "GAL_XOR",
+  parameter                                               LfsrType     = "GAL_XOR",
   // Lfsr width
-  parameter int unsigned       LfsrDw       = 32,
+  parameter int unsigned                                  LfsrDw       = 32,
   // Width of the entropy input to be XOR'd into state (lfsr_q[EntropyDw-1:0])
-  parameter int unsigned       EntropyDw    =  8,
+  parameter int unsigned                                  EntropyDw    = 8,
   // Width of output tap (from lfsr_q[StateOutDw-1:0])
-  parameter int unsigned       StateOutDw   =  8,
+  parameter int unsigned                                  StateOutDw   = 8,
   // Lfsr reset state, must be nonzero!
-  parameter logic [LfsrDw-1:0] DefaultSeed  = LfsrDw'(1),
+  parameter logic        [LfsrDw-1:0]                     DefaultSeed  = LfsrDw'(1),
   // Custom polynomial coeffs
-  parameter logic [LfsrDw-1:0] CustomCoeffs = '0,
+  parameter logic        [LfsrDw-1:0]                     CustomCoeffs = '0,
   // If StatePermEn is set to 1, the custom permutation specified via StatePerm is applied
   // to the state output, in order to break linear shifting patterns of the LFSR.
-  parameter bit                      StatePermEn = 1'b0,
-  parameter logic [LfsrDw-1:0][$clog2(LfsrDw)-1:0] StatePerm = '0,
+  parameter bit                                           StatePermEn  = 1'b0,
+  parameter logic        [LfsrDw-1:0][$clog2(LfsrDw)-1:0] StatePerm    = '0,
   // Enable this for DV, disable this for long LFSRs in FPV
-  parameter bit                MaxLenSVA    = 1'b1,
+  parameter bit                                           MaxLenSVA    = 1'b1,
   // Can be disabled in cases where seed and entropy
   // inputs are unused in order to not distort coverage
   // (the SVA will be unreachable in such cases)
-  parameter bit                LockupSVA    = 1'b1,
-  parameter bit                ExtSeedSVA   = 1'b1
+  parameter bit                                           LockupSVA    = 1'b1,
+  parameter bit                                           ExtSeedSVA   = 1'b1
 ) (
-  input                         clk_i,
-  input                         rst_ni,
-  input                         seed_en_i, // load external seed into the state (takes precedence)
-  input        [LfsrDw-1:0]     seed_i,    // external seed input
-  input                         lfsr_en_i, // enables the LFSR
-  input        [EntropyDw-1:0]  entropy_i, // additional entropy to be XOR'ed into the state
-  output logic [StateOutDw-1:0] state_o    // (partial) LFSR state output
+  input clk_i,
+  input rst_ni,
+  input seed_en_i,  // load external seed into the state (takes precedence)
+  input [LfsrDw-1:0] seed_i,  // external seed input
+  input lfsr_en_i,  // enables the LFSR
+  input [EntropyDw-1:0] entropy_i,  // additional entropy to be XOR'ed into the state
+  output logic [StateOutDw-1:0] state_o  // (partial) LFSR state output
 );
 
   // automatically generated with get-lfsr-coeffs.py script
@@ -311,8 +311,8 @@ module prim_lfsr #(
     end else begin : gen_lut
       assign coeffs = GAL_XOR_COEFFS[LfsrDw-GAL_XOR_LUT_OFF][LfsrDw-1:0];
       // check that the most significant bit of polynomial is 1
-      `ASSERT_INIT(MinLfsrWidth_A, LfsrDw >= $low(GAL_XOR_COEFFS)+GAL_XOR_LUT_OFF)
-      `ASSERT_INIT(MaxLfsrWidth_A, LfsrDw <= $high(GAL_XOR_COEFFS)+GAL_XOR_LUT_OFF)
+      `ASSERT_INIT(MinLfsrWidth_A, LfsrDw >= $low(GAL_XOR_COEFFS) + GAL_XOR_LUT_OFF)
+      `ASSERT_INIT(MaxLfsrWidth_A, LfsrDw <= $high(GAL_XOR_COEFFS) + GAL_XOR_LUT_OFF)
     end
 
     // calculate next state using internal XOR feedback and entropy input
@@ -325,9 +325,9 @@ module prim_lfsr #(
     `ASSERT_INIT(DefaultSeedNzCheck_A, |DefaultSeed)
 
 
-  ////////////////////
-  // Fibonacci XNOR //
-  ////////////////////
+    ////////////////////
+    // Fibonacci XNOR //
+    ////////////////////
   end else if (64'(LfsrType) == "FIB_XNOR") begin : gen_fib_xnor
 
     // if custom polynomial is provided
@@ -336,8 +336,8 @@ module prim_lfsr #(
     end else begin : gen_lut
       assign coeffs = FIB_XNOR_COEFFS[LfsrDw-FIB_XNOR_LUT_OFF][LfsrDw-1:0];
       // check that the most significant bit of polynomial is 1
-      `ASSERT_INIT(MinLfsrWidth_A, LfsrDw >= $low(FIB_XNOR_COEFFS)+FIB_XNOR_LUT_OFF)
-      `ASSERT_INIT(MaxLfsrWidth_A, LfsrDw <= $high(FIB_XNOR_COEFFS)+FIB_XNOR_LUT_OFF)
+      `ASSERT_INIT(MinLfsrWidth_A, LfsrDw >= $low(FIB_XNOR_COEFFS) + FIB_XNOR_LUT_OFF)
+      `ASSERT_INIT(MaxLfsrWidth_A, LfsrDw <= $high(FIB_XNOR_COEFFS) + FIB_XNOR_LUT_OFF)
     end
 
     // calculate next state using external XNOR feedback and entropy input
@@ -350,9 +350,9 @@ module prim_lfsr #(
     `ASSERT_INIT(DefaultSeedNzCheck_A, !(&DefaultSeed))
 
 
-  /////////////
-  // Unknown //
-  /////////////
+    /////////////
+    // Unknown //
+    /////////////
   end else begin : gen_unknown_type
     `ASSERT_INIT(UnknownLfsrType_A, 0)
   end
@@ -372,7 +372,7 @@ module prim_lfsr #(
       assign state_o[k] = lfsr_q[StatePerm[k]];
     end
   end else begin : gen_no_state_perm
-    assign state_o  = lfsr_q[StateOutDw-1:0];
+    assign state_o = lfsr_q[StateOutDw-1:0];
   end
 
   always_ff @(posedge clk_i or negedge rst_ni) begin : p_reg
@@ -390,12 +390,11 @@ module prim_lfsr #(
 
   `ASSERT_KNOWN(DataKnownO_A, state_o)
 
-// the code below is not meant to be synthesized,
-// but it is intended to be used in simulation and FPV
+  // the code below is not meant to be synthesized,
+  // but it is intended to be used in simulation and FPV
 `ifndef SYNTHESIS
-  function automatic logic[LfsrDw-1:0] compute_next_state(logic[LfsrDw-1:0]    lfsrcoeffs,
-                                                          logic[EntropyDw-1:0] entropy,
-                                                          logic[LfsrDw-1:0]    state);
+  function automatic logic [LfsrDw-1:0] compute_next_state(
+      logic [LfsrDw-1:0] lfsrcoeffs, logic [EntropyDw-1:0] entropy, logic [LfsrDw-1:0] state);
     logic state0;
 
     // Galois XOR
@@ -404,11 +403,11 @@ module prim_lfsr #(
         state = DefaultSeed;
       end else begin
         state0 = state[0];
-        state = state >> 1;
+        state  = state >> 1;
         if (state0) state ^= lfsrcoeffs;
         state ^= LfsrDw'(entropy);
       end
-    // Fibonacci XNOR
+      // Fibonacci XNOR
     end else if (64'(LfsrType) == "FIB_XNOR") begin
       if (&state) begin
         state = DefaultSeed;
@@ -426,8 +425,10 @@ module prim_lfsr #(
   endfunction : compute_next_state
 
   // check whether next state is computed correctly
-  `ASSERT(NextStateCheck_A, lfsr_en_i && !seed_en_i |=> lfsr_q ==
-    compute_next_state(coeffs, $past(entropy_i,1), $past(lfsr_q,1)))
+  `ASSERT(NextStateCheck_A,
+          lfsr_en_i && !seed_en_i |=> lfsr_q == compute_next_state(
+              coeffs, $past(entropy_i, 1), $past(lfsr_q, 1)
+          ))
 
   // Only check this if enabled.
   if (StatePermEn) begin : gen_perm_check
@@ -485,7 +486,7 @@ module prim_lfsr #(
     logic perturbed_d, perturbed_q;
     logic [LfsrDw-1:0] cmp_val;
 
-    assign cmp_val = {{(LfsrDw-1){1'b1}}, 1'b0}; // 2**LfsrDw-2
+    assign cmp_val = {{(LfsrDw - 1) {1'b1}}, 1'b0};  // 2**LfsrDw-2
     assign cnt_d = (lfsr_en_i && lockup)             ? '0           :
                    (lfsr_en_i && (cnt_q == cmp_val)) ? '0           :
                    (lfsr_en_i)                       ? cnt_q + 1'b1 :
@@ -503,10 +504,10 @@ module prim_lfsr #(
       end
     end
 
-    `ASSERT(MaximalLengthCheck0_A, cnt_q == 0 |-> lfsr_q == DefaultSeed,
-        clk_i, !rst_ni || perturbed_q)
-    `ASSERT(MaximalLengthCheck1_A, cnt_q != 0 |-> lfsr_q != DefaultSeed,
-        clk_i, !rst_ni || perturbed_q)
+    `ASSERT(MaximalLengthCheck0_A, cnt_q == 0 |-> lfsr_q == DefaultSeed, clk_i,
+            !rst_ni || perturbed_q)
+    `ASSERT(MaximalLengthCheck1_A, cnt_q != 0 |-> lfsr_q != DefaultSeed, clk_i,
+            !rst_ni || perturbed_q)
 `endif
   end
 

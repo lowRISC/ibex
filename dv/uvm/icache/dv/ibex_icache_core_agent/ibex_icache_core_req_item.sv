@@ -48,9 +48,16 @@ class ibex_icache_core_req_item extends uvm_sequence_item;
     // they won't look any different from the tail end of branch transactions from the cache's point
     // of view.
     if (trans_type == ICacheCoreTransTypeBranch)
-      num_insns dist { 0 :/ 5, [1:20] :/ 20, [21:100] :/ 1 };
+    num_insns dist {
+      0          :/ 5,
+      [1 : 20]   :/ 20,
+      [21 : 100] :/ 1
+    };
     else
-      num_insns dist { 0 :/ 1, [1:20] :/ 20 };
+    num_insns dist {
+      0        :/ 1,
+      [1 : 20] :/ 20
+    };
   }
 
   constraint c_new_seed_dist {
@@ -58,16 +65,19 @@ class ibex_icache_core_req_item extends uvm_sequence_item;
     // sensitivity). If we aren't starting an invalidation, we mustn't pick a new seed if the cache
     // is enabled (because that could cause multi-way hits). If the cache isn't enabled, pick a new
     // seed sometimes.
-    new_seed dist { 0 :/ 1, [1:32'hffffffff] :/ (invalidate ? 1000 : enable ? 0 : 1) };
+    new_seed dist {
+      0                  :/ 1,
+      [1 : 32'hffffffff] :/ (invalidate ? 1000 : enable ? 0 : 1)
+    };
   }
 
   `uvm_object_utils_begin(ibex_icache_core_req_item)
     `uvm_field_enum(ibex_icache_core_trans_type_e, trans_type, UVM_DEFAULT)
-    `uvm_field_int (branch_addr, UVM_DEFAULT | UVM_HEX)
-    `uvm_field_int (enable,      UVM_DEFAULT)
-    `uvm_field_int (invalidate,  UVM_DEFAULT)
-    `uvm_field_int (num_insns,   UVM_DEFAULT)
-    `uvm_field_int (new_seed,    UVM_DEFAULT | UVM_HEX)
+    `uvm_field_int(branch_addr, UVM_DEFAULT | UVM_HEX)
+    `uvm_field_int(enable, UVM_DEFAULT)
+    `uvm_field_int(invalidate, UVM_DEFAULT)
+    `uvm_field_int(num_insns, UVM_DEFAULT)
+    `uvm_field_int(new_seed, UVM_DEFAULT | UVM_HEX)
   `uvm_object_utils_end
 
   `uvm_object_new

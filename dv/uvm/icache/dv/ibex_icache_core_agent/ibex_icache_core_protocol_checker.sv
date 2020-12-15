@@ -11,26 +11,26 @@
 `include "prim_assert.sv"
 
 interface ibex_icache_core_protocol_checker (
-   input        clk,
-   input        rst_n,
+  input clk,
+  input rst_n,
 
-   input        req,
+  input req,
 
-   input        branch,
-   input        branch_spec,
-   input [31:0] branch_addr,
+  input        branch,
+  input        branch_spec,
+  input [31:0] branch_addr,
 
-   input        ready,
-   input        valid,
-   input [31:0] rdata,
-   input [31:0] addr,
-   input        err,
-   input        err_plus2,
+  input        ready,
+  input        valid,
+  input [31:0] rdata,
+  input [31:0] addr,
+  input        err,
+  input        err_plus2,
 
-   input        enable,
-   input        invalidate,
+  input enable,
+  input invalidate,
 
-   input        busy
+  input busy
 );
 
   // The 'req' port
@@ -66,7 +66,7 @@ interface ibex_icache_core_protocol_checker (
   // set on branches and cleared when the core receives an error.
   logic has_addr;
   always @(posedge clk or negedge rst_n) begin
-    if (! rst_n) begin
+    if (!rst_n) begin
       has_addr <= 1'b0;
     end else begin
       if (branch) begin
@@ -95,33 +95,28 @@ interface ibex_icache_core_protocol_checker (
   logic unfinished_valid;
   assign unfinished_valid = has_addr & valid & ~(ready | branch);
 
-  `ASSERT(ValidUntilReady, unfinished_valid |=> valid,                clk, !rst_n);
-  `ASSERT(AddrStable,      unfinished_valid |=> $stable(addr),        clk, !rst_n);
-  `ASSERT(ErrStable,       unfinished_valid |=> $stable(err),         clk, !rst_n);
-  `ASSERT(Err2Stable,      unfinished_valid |=> $stable(err_plus2),   clk, !rst_n);
+  `ASSERT(ValidUntilReady, unfinished_valid |=> valid, clk, !rst_n);
+  `ASSERT(AddrStable, unfinished_valid |=> $stable(addr), clk, !rst_n);
+  `ASSERT(ErrStable, unfinished_valid |=> $stable(err), clk, !rst_n);
+  `ASSERT(Err2Stable, unfinished_valid |=> $stable(err_plus2), clk, !rst_n);
 
-  `ASSERT(LoRDataStable,
-          unfinished_valid & ~err |=> $stable(rdata[15:0]),
-          clk, !rst_n);
-  `ASSERT(HiRDataStable,
-          unfinished_valid & ~err & (rdata[1:0] == 2'b11) |=> $stable(rdata[31:16]),
+  `ASSERT(LoRDataStable, unfinished_valid & ~err |=> $stable(rdata[15:0]), clk, !rst_n);
+  `ASSERT(HiRDataStable, unfinished_valid & ~err & (rdata[1:0] == 2'b11) |=> $stable(rdata[31:16]),
           clk, !rst_n);
 
   // The err_plus2 signal means "this error was caused by the upper two bytes" and is only read when
   // both valid and err are true. It should never be set for compressed instructions (for them, the
   // contents of the upper two bytes are ignored).
-  `ASSERT(ErrPlus2ImpliesUncompressed,
-          valid & err & err_plus2 |-> rdata[1:0] == 2'b11,
-          clk, !rst_n)
+  `ASSERT(ErrPlus2ImpliesUncompressed, valid & err & err_plus2 |-> rdata[1:0] == 2'b11, clk, !rst_n)
 
   // KNOWN assertions:
 
   // Control lines from the core (req, branch, ready, enable, invalidate) must always have a known
   // value
-  `ASSERT_KNOWN(ReqKnown,        req,        clk, !rst_n)
-  `ASSERT_KNOWN(BranchKnown,     branch,     clk, !rst_n)
-  `ASSERT_KNOWN(ReadyKnown,      ready,      clk, !rst_n)
-  `ASSERT_KNOWN(EnableKnown,     enable,     clk, !rst_n)
+  `ASSERT_KNOWN(ReqKnown, req, clk, !rst_n)
+  `ASSERT_KNOWN(BranchKnown, branch, clk, !rst_n)
+  `ASSERT_KNOWN(ReadyKnown, ready, clk, !rst_n)
+  `ASSERT_KNOWN(EnableKnown, enable, clk, !rst_n)
   `ASSERT_KNOWN(InvalidateKnown, invalidate, clk, !rst_n)
 
   // The branch_addr value must be known if branch is high
@@ -139,8 +134,8 @@ interface ibex_icache_core_protocol_checker (
   // The address of a response and its error flag must be known if valid is high (these checks are
   // also gated by has_addr because otherwise the assertion would trigger even if valid was allowed
   // to be 'X). The err_plus2 flag must be known if err is set.
-  `ASSERT_KNOWN_IF(RespAddrKnown, addr,      has_addr & valid,       clk, !rst_n)
-  `ASSERT_KNOWN_IF(ErrKnown,      err,       has_addr & valid,       clk, !rst_n)
+  `ASSERT_KNOWN_IF(RespAddrKnown, addr, has_addr & valid, clk, !rst_n)
+  `ASSERT_KNOWN_IF(ErrKnown, err, has_addr & valid, clk, !rst_n)
   `ASSERT_KNOWN_IF(ErrPlus2Known, err_plus2, has_addr & valid & err, clk, !rst_n)
 
   // The lower 16 bits of a response must be known if valid is high and err is not
@@ -148,10 +143,8 @@ interface ibex_icache_core_protocol_checker (
 
   // The upper 16 bits of a response must be known if valid is high, err is not and the instruction
   // is not compressed.
-  `ASSERT_KNOWN_IF(HiRDataKnown,
-                   rdata[31:16],
-                   has_addr & valid & ~err & (rdata[1:0] == 2'b11),
-                   clk, !rst_n)
+  `ASSERT_KNOWN_IF(HiRDataKnown, rdata[31:16], has_addr & valid & ~err & (rdata[1:0] == 2'b11), clk,
+                   !rst_n)
 
   // The busy signal must always have a known value
   `ASSERT_KNOWN(BusyKnown, busy, clk, !rst_n)

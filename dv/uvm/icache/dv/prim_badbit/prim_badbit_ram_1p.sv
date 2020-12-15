@@ -11,39 +11,39 @@
 `include "prim_assert.sv"
 
 module prim_badbit_ram_1p #(
-  parameter  int Width           = 32,   // bit
-  parameter  int Depth           = 128,
-  parameter  int DataBitsPerMask = 1,    // Number of data bits per bit of write mask
-  parameter      MemInitFile     = "",   // VMEM file to initialize the memory with
+  parameter int Width           = 32,  // bit
+  parameter int Depth           = 128,
+  parameter int DataBitsPerMask = 1,  // Number of data bits per bit of write mask
+  parameter     MemInitFile     = "",  // VMEM file to initialize the memory with
 
-  localparam int Aw              = $clog2(Depth)  // derived parameter
+  localparam int Aw = $clog2(Depth)  // derived parameter
 ) (
-  input  logic             clk_i,
+  input logic clk_i,
 
   input  logic             req_i,
   input  logic             write_i,
-  input  logic [Aw-1:0]    addr_i,
+  input  logic [   Aw-1:0] addr_i,
   input  logic [Width-1:0] wdata_i,
   input  logic [Width-1:0] wmask_i,
-  output logic [Width-1:0] rdata_o // Read data. Data is returned one cycle after req_i is high.
+  output logic [Width-1:0] rdata_o  // Read data. Data is returned one cycle after req_i is high.
 );
 
   logic [Width-1:0] sram_rdata;
 
   prim_generic_ram_1p #(
-    .Width           (Width),
-    .Depth           (Depth),
-    .DataBitsPerMask (DataBitsPerMask),
-    .MemInitFile     (MemInitFile)
+    .Width          (Width),
+    .Depth          (Depth),
+    .DataBitsPerMask(DataBitsPerMask),
+    .MemInitFile    (MemInitFile)
   ) u_mem (
-    .clk_i   (clk_i),
+    .clk_i(clk_i),
 
-    .req_i   (req_i),
-    .write_i (write_i),
-    .addr_i  (addr_i),
-    .wdata_i (wdata_i),
-    .wmask_i (wmask_i),
-    .rdata_o (sram_rdata)
+    .req_i  (req_i),
+    .write_i(write_i),
+    .addr_i (addr_i),
+    .wdata_i(wdata_i),
+    .wmask_i(wmask_i),
+    .rdata_o(sram_rdata)
   );
 
   // This module doesn't work with Verilator (because of the wired-or). Because we define the
@@ -64,12 +64,12 @@ module prim_badbit_ram_1p #(
   assign width = Width;
 
   // Similarly, extend addr, wdata, wmask and sram_rdata (the un-fiddled value)
-  logic [31:0]  addr;
+  logic [31:0] addr;
   logic [127:0] wdata, wmask, rdata;
-  assign addr  = {{32-Aw{1'b0}}, addr_i};
-  assign wdata = {{128-Width{1'b0}}, wdata_i};
-  assign wmask = {{128-Width{1'b0}}, wmask_i};
-  assign rdata = {{128-Width{1'b0}}, sram_rdata};
+  assign addr  = {{32 - Aw{1'b0}}, addr_i};
+  assign wdata = {{128 - Width{1'b0}}, wdata_i};
+  assign wmask = {{128 - Width{1'b0}}, wmask_i};
+  assign rdata = {{128 - Width{1'b0}}, sram_rdata};
 
   // To inject errors, bind in an interface with bad_bit_mask as an output and assign one of the
   // bits in bad_bit_mask[Width-1:0] to one. The wired-OR together with an assignment to zero means
@@ -78,6 +78,6 @@ module prim_badbit_ram_1p #(
   assign bad_bit_mask = 128'b0;
 
   assign rdata_o = sram_rdata ^ bad_bit_mask;
-`endif // VERILATOR
+`endif  // VERILATOR
 
 endmodule

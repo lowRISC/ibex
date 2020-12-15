@@ -2,10 +2,11 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class ibex_icache_core_driver
-  extends dv_base_driver #(.ITEM_T     (ibex_icache_core_req_item),
-                           .RSP_ITEM_T (ibex_icache_core_rsp_item),
-                           .CFG_T      (ibex_icache_core_agent_cfg));
+class ibex_icache_core_driver extends dv_base_driver#(
+  .ITEM_T    (ibex_icache_core_req_item),
+  .RSP_ITEM_T(ibex_icache_core_rsp_item),
+  .CFG_T     (ibex_icache_core_agent_cfg)
+);
   `uvm_component_utils(ibex_icache_core_driver)
   `uvm_component_new
 
@@ -51,8 +52,7 @@ class ibex_icache_core_driver
   //
   // This concurrently asserts branch with a given address for a cycle while doing the usual
   // (enable/disable, invalidate, read instructions).
-  task automatic drive_branch_trans(ibex_icache_core_rsp_item rsp,
-                                    ibex_icache_core_req_item req);
+  task automatic drive_branch_trans(ibex_icache_core_rsp_item rsp, ibex_icache_core_req_item req);
     // Make sure that req is enabled (has no effect unless this is the first transaction)
     cfg.vif.driver_cb.req <= 1'b1;
 
@@ -89,8 +89,7 @@ class ibex_icache_core_driver
   //
   // This lowers req for zero or more cycles, at the same time as setting the enable pin and (maybe)
   // pulsing the invalidate line. Once that is done, it reads zero or more instructions.
-  task automatic drive_req_trans(ibex_icache_core_rsp_item rsp,
-                                 ibex_icache_core_req_item req);
+  task automatic drive_req_trans(ibex_icache_core_rsp_item rsp, ibex_icache_core_req_item req);
     int unsigned req_low_cycles;
     bit          allow_no_low_cycles;
 
@@ -99,10 +98,11 @@ class ibex_icache_core_driver
     allow_no_low_cycles = req.num_insns > 0;
     `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(req_low_cycles,
                                        req_low_cycles dist {
-                                           0           :/ (allow_no_low_cycles ? 20 : 0),
-                                           [1:33]      :/ 5,
-                                           [100:200]   :/ 2,
-                                           [1000:1200] :/ 1 };)
+                                         0             :/ (allow_no_low_cycles ? 20 : 0),
+                                         [1 : 33]      :/ 5,
+                                         [100 : 200]   :/ 2,
+                                         [1000 : 1200] :/ 1
+                                       };)
 
     // Drive the enable state
     cfg.vif.driver_cb.enable <= req.enable;
@@ -158,8 +158,7 @@ class ibex_icache_core_driver
     // early on reset.
     if ($urandom_range(9) == 0) begin
       cfg.vif.wait_valid();
-      if (!cfg.vif.rst_n)
-        return;
+      if (!cfg.vif.rst_n) return;
     end
 
     // Then pick how long we wait before asserting that we are ready.
@@ -171,8 +170,7 @@ class ibex_icache_core_driver
     cfg.vif.driver_cb.ready <= 1'b1;
     while (1'b1) begin
       @(cfg.vif.driver_cb or negedge cfg.vif.rst_n);
-      if (cfg.vif.driver_cb.valid || !cfg.vif.rst_n)
-        break;
+      if (cfg.vif.driver_cb.valid || !cfg.vif.rst_n) break;
     end
 
     cfg.vif.driver_cb.ready <= 1'b0;
@@ -188,8 +186,12 @@ class ibex_icache_core_driver
   // Raise the invalidate line for a randomly chosen number of cycles > 0.
   virtual task automatic invalidate();
     int unsigned num_cycles;
-    `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(num_cycles,
-                                       num_cycles dist { 1 :/ 10, [2:20] :/ 1 };)
+    `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(
+    num_cycles,
+    num_cycles dist {
+      1        :/ 10,
+      [2 : 20] :/ 1
+    };)
     cfg.vif.invalidate_pulse(num_cycles);
   endtask
 

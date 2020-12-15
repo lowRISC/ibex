@@ -14,9 +14,9 @@ class ibex_asm_program_gen extends riscv_asm_program_gen;
   virtual function void gen_program_header();
     // Override the cfg value, below fields are not supported by ibex
     cfg.mstatus_mprv = 0;
-    cfg.mstatus_mxr  = 0;
-    cfg.mstatus_sum  = 0;
-    cfg.mstatus_tvm  = 0;
+    cfg.mstatus_mxr = 0;
+    cfg.mstatus_sum = 0;
+    cfg.mstatus_tvm = 0;
     // Disable below fields checking against spike as spike implementation is different compared
     // with ibex.
     cfg.check_misa_init_val = 1'b0;

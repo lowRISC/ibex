@@ -9,7 +9,7 @@
 // https://github.com/lowRISC/ibex/issues/893
 
 `ifndef PRIM_DEFAULT_IMPL
-  `define PRIM_DEFAULT_IMPL prim_pkg::ImplGeneric
+`define PRIM_DEFAULT_IMPL prim_pkg::ImplGeneric
 `endif
 
 module prim_clock_gating (
@@ -21,13 +21,9 @@ module prim_clock_gating (
   parameter prim_pkg::impl_e Impl = `PRIM_DEFAULT_IMPL;
 
   if (Impl == prim_pkg::ImplGeneric) begin : gen_generic
-    prim_generic_clock_gating u_impl_generic (
-      .*
-    );
+    prim_generic_clock_gating u_impl_generic (.*);
   end else if (Impl == prim_pkg::ImplXilinx) begin : gen_xilinx
-    prim_xilinx_clock_gating u_impl_xilinx (
-      .*
-    );
+    prim_xilinx_clock_gating u_impl_xilinx (.*);
   end else begin : gen_failure
     // TODO: Find code that works across tools and causes a compile failure
   end

@@ -20,35 +20,35 @@ module bus #(
   parameter int DataWidth    = 32,
   parameter int AddressWidth = 32
 ) (
-  input                           clk_i,
-  input                           rst_ni,
+  input clk_i,
+  input rst_ni,
 
   // Hosts (masters)
-  input                           host_req_i    [NrHosts],
-  output logic                    host_gnt_o    [NrHosts],
+  input        host_req_i[NrHosts],
+  output logic host_gnt_o[NrHosts],
 
-  input        [AddressWidth-1:0] host_addr_i   [NrHosts],
-  input                           host_we_i     [NrHosts],
-  input        [ DataWidth/8-1:0] host_be_i     [NrHosts],
-  input        [   DataWidth-1:0] host_wdata_i  [NrHosts],
-  output logic                    host_rvalid_o [NrHosts],
-  output logic [   DataWidth-1:0] host_rdata_o  [NrHosts],
-  output logic                    host_err_o    [NrHosts],
+  input        [AddressWidth-1:0] host_addr_i  [NrHosts],
+  input                           host_we_i    [NrHosts],
+  input        [ DataWidth/8-1:0] host_be_i    [NrHosts],
+  input        [   DataWidth-1:0] host_wdata_i [NrHosts],
+  output logic                    host_rvalid_o[NrHosts],
+  output logic [   DataWidth-1:0] host_rdata_o [NrHosts],
+  output logic                    host_err_o   [NrHosts],
 
   // Devices (slaves)
-  output logic                    device_req_o    [NrDevices],
+  output logic device_req_o[NrDevices],
 
-  output logic [AddressWidth-1:0] device_addr_o   [NrDevices],
-  output logic                    device_we_o     [NrDevices],
-  output logic [ DataWidth/8-1:0] device_be_o     [NrDevices],
-  output logic [   DataWidth-1:0] device_wdata_o  [NrDevices],
-  input                           device_rvalid_i [NrDevices],
-  input        [   DataWidth-1:0] device_rdata_i  [NrDevices],
-  input                           device_err_i    [NrDevices],
+  output logic [AddressWidth-1:0] device_addr_o  [NrDevices],
+  output logic                    device_we_o    [NrDevices],
+  output logic [ DataWidth/8-1:0] device_be_o    [NrDevices],
+  output logic [   DataWidth-1:0] device_wdata_o [NrDevices],
+  input                           device_rvalid_i[NrDevices],
+  input        [   DataWidth-1:0] device_rdata_i [NrDevices],
+  input                           device_err_i   [NrDevices],
 
   // Device address map
-  input        [AddressWidth-1:0] cfg_device_addr_base [NrDevices],
-  input        [AddressWidth-1:0] cfg_device_addr_mask [NrDevices]
+  input [AddressWidth-1:0] cfg_device_addr_base[NrDevices],
+  input [AddressWidth-1:0] cfg_device_addr_mask[NrDevices]
 );
 
   localparam int unsigned NumBitsHostSel = NrHosts > 1 ? $clog2(NrHosts) : 1;
@@ -77,14 +77,14 @@ module bus #(
   end
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
-     if (!rst_ni) begin
-        host_sel_resp <= '0;
-        device_sel_resp <= '0;
-     end else begin
-        // Responses are always expected 1 cycle after the request
-        device_sel_resp <= device_sel_req;
-        host_sel_resp <= host_sel_req;
-     end
+    if (!rst_ni) begin
+      host_sel_resp   <= '0;
+      device_sel_resp <= '0;
+    end else begin
+      // Responses are always expected 1 cycle after the request
+      device_sel_resp <= device_sel_req;
+      host_sel_resp   <= host_sel_req;
+    end
   end
 
   always_comb begin

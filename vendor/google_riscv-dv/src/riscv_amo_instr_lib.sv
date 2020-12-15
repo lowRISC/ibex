@@ -17,45 +17,31 @@
 // Base class for AMO instruction stream
 class riscv_amo_base_instr_stream extends riscv_mem_access_stream;
 
-  rand int unsigned  num_amo;
-  rand int unsigned  num_mixed_instr;
-  rand int           offset[];
-  rand riscv_reg_t   rs1_reg[];
-  rand int           num_of_rs1_reg;
-  int unsigned       data_page_id;
-  int unsigned       max_offset;
+  rand int unsigned num_amo;
+  rand int unsigned num_mixed_instr;
+  rand int          offset[];
+  rand riscv_reg_t  rs1_reg[];
+  rand int          num_of_rs1_reg;
+  int unsigned      data_page_id;
+  int unsigned      max_offset;
 
   // User can specify a small group of available registers to generate various hazard condition
-  rand riscv_reg_t   avail_regs[];
+  rand riscv_reg_t  avail_regs[];
 
-  constraint num_of_rs1_reg_c {
-    num_of_rs1_reg == 1;
-  }
+  constraint num_of_rs1_reg_c {num_of_rs1_reg == 1;}
 
   constraint rs1_c {
     solve num_of_rs1_reg before rs1_reg;
     rs1_reg.size() == num_of_rs1_reg;
     offset.size() == num_of_rs1_reg;
-    foreach (rs1_reg[i]) {
-      !(rs1_reg[i] inside {cfg.reserved_regs, reserved_rd, ZERO});
-    }
+    foreach (rs1_reg[i]) {!(rs1_reg[i] inside {cfg.reserved_regs, reserved_rd, ZERO});}
     unique {rs1_reg};
   }
 
-  constraint addr_range_c {
-    foreach (offset[i]) {
-      offset[i] inside {[0 : max_offset - 1]};
-    }
-  }
+  constraint addr_range_c {foreach (offset[i]) {offset[i] inside {[0 : max_offset - 1]};}}
 
   constraint aligned_amo_c {
-    foreach (offset[i]) {
-      if (XLEN == 32) {
-        offset[i] % 4 == 0;
-      } else {
-        offset[i] % 8 == 0;
-      }
-    }
+    foreach (offset[i]) {if (XLEN == 32) {offset[i] % 4 == 0;} else {offset[i] % 8 == 0;}}
   }
 
   `uvm_object_utils(riscv_amo_base_instr_stream)
@@ -102,7 +88,7 @@ class riscv_lr_sc_instr_stream extends riscv_amo_base_instr_stream;
 
   constraint legal_c {
     num_amo == 1;
-    num_mixed_instr inside {[0:15]};
+    num_mixed_instr inside {[0 : 15]};
   }
 
   `uvm_object_utils(riscv_lr_sc_instr_stream)
@@ -125,25 +111,23 @@ class riscv_lr_sc_instr_stream extends riscv_amo_base_instr_stream;
     lr_instr = riscv_instr::get_rand_instr(.include_instr({allowed_lr_instr}));
     sc_instr = riscv_instr::get_rand_instr(.include_instr({allowed_sc_instr}));
     `DV_CHECK_RANDOMIZE_WITH_FATAL(lr_instr,
-      rs1 == rs1_reg[0];
+                                   rs1 == rs1_reg[0];
       if (reserved_rd.size() > 0) {
         !(rd inside {reserved_rd});
       }
       if (cfg.reserved_regs.size() > 0) {
         !(rd inside {cfg.reserved_regs});
       }
-      rd != rs1_reg[0];
-    )
+      rd != rs1_reg[0];)
     `DV_CHECK_RANDOMIZE_WITH_FATAL(sc_instr,
-      rs1 == rs1_reg[0];
+                                   rs1 == rs1_reg[0];
       if (reserved_rd.size() > 0) {
         !(rd inside {reserved_rd});
       }
       if (cfg.reserved_regs.size() > 0) {
         !(rd inside {cfg.reserved_regs});
       }
-      rd != rs1_reg[0];
-    )
+      rd != rs1_reg[0];)
     instr_list.push_back(lr_instr);
     instr_list.push_back(sc_instr);
   endfunction
@@ -195,15 +179,14 @@ class riscv_amo_instr_stream extends riscv_amo_base_instr_stream;
     foreach (amo_instr[i]) begin
       amo_instr[i] = riscv_instr::get_rand_instr(.include_category({AMO}));
       `DV_CHECK_RANDOMIZE_WITH_FATAL(amo_instr[i],
-        if (reserved_rd.size() > 0) {
+                                     if (reserved_rd.size() > 0) {
           !(rd inside {reserved_rd});
         }
         if (cfg.reserved_regs.size() > 0) {
           !(rd inside {cfg.reserved_regs});
         }
         rs1 inside {rs1_reg};
-        !(rd inside {rs1_reg});
-      )
+        !(rd inside {rs1_reg});)
       instr_list.push_front(amo_instr[i]);
     end
   endfunction
@@ -222,9 +205,18 @@ class riscv_vector_amo_instr_stream extends riscv_vector_load_store_instr_stream
   `uvm_object_new
 
   virtual function void add_element_vec_load_stores();
-    allowed_instr = {VAMOSWAPE_V, VAMOADDE_V, VAMOXORE_V,
-                     VAMOANDE_V, VAMOORE_V, VAMOMINE_V,
-                     VAMOMAXE_V, VAMOMINUE_V, VAMOMAXUE_V, allowed_instr};
+    allowed_instr = {
+      VAMOSWAPE_V,
+      VAMOADDE_V,
+      VAMOXORE_V,
+      VAMOANDE_V,
+      VAMOORE_V,
+      VAMOMINE_V,
+      VAMOMAXE_V,
+      VAMOMINUE_V,
+      VAMOMAXUE_V,
+      allowed_instr
+    };
   endfunction
 
 endclass : riscv_vector_amo_instr_stream

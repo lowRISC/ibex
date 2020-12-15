@@ -15,8 +15,10 @@ package ibex_icache_ecc_agent_pkg;
   typedef class ibex_icache_ecc_item;
   typedef class ibex_icache_ecc_agent_cfg;
 
-  typedef dv_base_sequencer #(.ITEM_T(ibex_icache_ecc_item),
-                              .CFG_T (ibex_icache_ecc_agent_cfg)) ibex_icache_ecc_sequencer;
+  typedef dv_base_sequencer#(
+    .ITEM_T(ibex_icache_ecc_item),
+    .CFG_T (ibex_icache_ecc_agent_cfg)
+  ) ibex_icache_ecc_sequencer;
 
   // package sources
   `include "ibex_icache_ecc_item.sv"
@@ -27,4 +29,4 @@ package ibex_icache_ecc_agent_pkg;
   `include "ibex_icache_ecc_agent.sv"
   `include "ibex_icache_ecc_seq_list.sv"
 
-endpackage: ibex_icache_ecc_agent_pkg
+endpackage : ibex_icache_ecc_agent_pkg

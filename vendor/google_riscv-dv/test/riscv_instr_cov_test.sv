@@ -3,14 +3,14 @@ class riscv_instr_cov_test extends uvm_test;
 
   typedef uvm_enum_wrapper#(riscv_instr_name_t) instr_enum;
 
-  riscv_instr_gen_config    cfg;
-  riscv_instr_cover_group   instr_cg;
-  string                    trace_csv[$];
-  string                    trace[string];
-  int unsigned              entry_cnt;
-  int unsigned              total_entry_cnt;
-  int unsigned              skipped_cnt;
-  int unsigned              unexpected_illegal_instr_cnt;
+  riscv_instr_gen_config  cfg;
+  riscv_instr_cover_group instr_cg;
+  string                  trace_csv[$];
+  string                  trace[string];
+  int unsigned            entry_cnt;
+  int unsigned            total_entry_cnt;
+  int unsigned            skipped_cnt;
+  int unsigned            unexpected_illegal_instr_cnt;
 
   `uvm_component_utils(riscv_instr_cov_test)
   `uvm_component_new
@@ -23,7 +23,7 @@ class riscv_instr_cov_test extends uvm_test;
     string header[$];
     string entry[$];
     int fd;
-    while(1) begin
+    while (1) begin
       args = {$sformatf("trace_csv_%0d", i), "=%s"};
       if ($value$plusargs(args, csv)) begin
         trace_csv.push_back(csv);
@@ -42,7 +42,7 @@ class riscv_instr_cov_test extends uvm_test;
       bit expect_illegal_instr;
       entry_cnt = 0;
       instr_cg.reset();
-      if (uvm_is_match("*illegal*", trace_csv[i]) || uvm_is_match("*unknown*", trace_csv[i]) ) begin
+      if (uvm_is_match("*illegal*", trace_csv[i]) || uvm_is_match("*unknown*", trace_csv[i])) begin
         expect_illegal_instr = 1;
       end
       `uvm_info(`gfn, $sformatf("Processing CSV trace[%0d]: %s", i, trace_csv[i]), UVM_LOW)
@@ -56,32 +56,39 @@ class riscv_instr_cov_test extends uvm_test;
           `uvm_info(`gfn, $sformatf("Skipping empty trace file: %0s", trace_csv[i]), UVM_LOW)
           continue;
         end
-        while ($fgets(line, fd)) begin
+        while ($fgets(
+            line, fd
+        )) begin
           split_string(line, ",", entry);
           if (entry.size() != header.size()) begin
-            `uvm_info(`gfn, $sformatf("Skipping malformed entry[%0d] : %0s", entry_cnt, line), UVM_LOW)
+            `uvm_info(`gfn, $sformatf("Skipping malformed entry[%0d] : %0s", entry_cnt, line),
+                      UVM_LOW)
             skipped_cnt += 1;
           end else begin
             trace["csv_entry"] = line;
             `uvm_info("", "----------------------------------------------------------", UVM_HIGH)
             foreach (header[j]) begin
               trace[header[j]] = entry[j];
-              if (header[j].substr(0,2) != "pad") begin
+              if (header[j].substr(0, 2) != "pad") begin
                 `uvm_info("", $sformatf("%0s=%0s", header[j], entry[j]), UVM_HIGH)
               end
             end
             post_process_trace();
             if (trace["instr"] inside {"li", "ret", "la"}) continue;
-            if (uvm_is_match("amo*",trace["instr"]) ||
-                uvm_is_match("lr*" ,trace["instr"]) ||
-                uvm_is_match("sc*" ,trace["instr"])) begin
+            if (uvm_is_match(
+                    "amo*", trace["instr"]
+                ) || uvm_is_match(
+                    "lr*", trace["instr"]
+                ) || uvm_is_match(
+                    "sc*", trace["instr"]
+                )) begin
               // TODO: Enable functional coverage for AMO test
               continue;
             end
-            if (!sample()) begin
+            if (!sample ()) begin
               if (!expect_illegal_instr) begin
-               `uvm_error(`gfn, $sformatf("Found unexpected illegal instr: %0s [%0s]",
-                                          trace["instr"], line))
+                `uvm_error(`gfn, $sformatf(
+                           "Found unexpected illegal instr: %0s [%0s]", trace["instr"], line))
                 unexpected_illegal_instr_cnt++;
               end
             end
@@ -91,15 +98,21 @@ class riscv_instr_cov_test extends uvm_test;
       end else begin
         `uvm_error(`gfn, $sformatf("%0s cannot be openned", trace_csv[i]))
       end
-      `uvm_info(`gfn, $sformatf("[%s] : %0d instructions processed",
-                      trace_csv[i], entry_cnt), UVM_LOW)
+      `uvm_info(`gfn, $sformatf("[%s] : %0d instructions processed", trace_csv[i], entry_cnt),
+                UVM_LOW)
       total_entry_cnt += entry_cnt;
     end
-    `uvm_info(`gfn, $sformatf("Finished processing %0d trace CSV, %0d instructions",
-                     trace_csv.size(), total_entry_cnt), UVM_LOW)
+    `uvm_info(`gfn, $sformatf(
+              "Finished processing %0d trace CSV, %0d instructions",
+              trace_csv.size(),
+              total_entry_cnt
+              ), UVM_LOW)
     if ((skipped_cnt > 0) || (unexpected_illegal_instr_cnt > 0)) begin
-      `uvm_error(`gfn, $sformatf("%0d instructions skipped, %0d illegal instruction",
-                       skipped_cnt, unexpected_illegal_instr_cnt))
+      `uvm_error(`gfn, $sformatf(
+                 "%0d instructions skipped, %0d illegal instruction",
+                 skipped_cnt,
+                 unexpected_illegal_instr_cnt
+                 ))
 
     end else begin
       `uvm_info(`gfn, "TEST PASSED", UVM_NONE);
@@ -109,14 +122,14 @@ class riscv_instr_cov_test extends uvm_test;
   virtual function void post_process_trace();
   endfunction
 
-  function void fatal (string str);
+  function void fatal(string str);
     `uvm_info(`gfn, str, UVM_NONE);
     if ($test$plusargs("stop_on_first_error")) begin
       `uvm_fatal(`gfn, "Errors: *. Warnings: * (written by riscv_instr_cov.sv)")
     end
   endfunction
 
-  function bit sample();
+  function bit sample ();
     riscv_instr_name_t instr_name;
     bit [XLEN-1:0] binary;
     get_val(trace["binary"], binary, .hex(1));
@@ -141,8 +154,8 @@ class riscv_instr_cov_test extends uvm_test;
         return 1'b1;
       end
     end
-    `uvm_info(`gfn, $sformatf("Cannot find opcode: %0s",
-                              process_instr_name(trace["instr"])), UVM_LOW)
+    `uvm_info(`gfn, $sformatf("Cannot find opcode: %0s", process_instr_name(trace["instr"])),
+              UVM_LOW)
   endfunction
 
   virtual function void assign_trace_info_to_instr(riscv_instr instr);
@@ -181,8 +194,8 @@ class riscv_instr_cov_test extends uvm_test;
 
     case (instr_name)
       // rename to new name as ovpsim still uses old name
-     "FMV_S_X": instr_name = "FMV_W_X";
-     "FMV_X_S": instr_name = "FMV_X_W";
+      "FMV_S_X": instr_name = "FMV_W_X";
+      "FMV_X_S": instr_name = "FMV_X_W";
       // convert Pseudoinstructions
       // fmv.s rd, rs fsgnj.s rd, rs, rs Copy single-precision register
       // fabs.s rd, rs fsgnjx.s rd, rs, rs Single-precision absolute value
@@ -190,13 +203,13 @@ class riscv_instr_cov_test extends uvm_test;
       // fmv.d rd, rs fsgnj.d rd, rs, rs Copy double-precision register
       // fabs.d rd, rs fsgnjx.d rd, rs, rs Double-precision absolute value
       // fneg.d rd, rs fsgnjn.d rd, rs, rs Double-precision negate
-      "FMV_S":  instr_name = "FSGNJ_S";
-      "FABS_S": instr_name = "FSGNJX_S";
-      "FNEG_S": instr_name = "FSGNJN_S";
-      "FMV_D":  instr_name = "FSGNJ_D";
-      "FABS_D": instr_name = "FSGNJX_D";
-      "FNEG_D": instr_name = "FSGNJN_D";
-      default: ;
+      "FMV_S":   instr_name = "FSGNJ_S";
+      "FABS_S":  instr_name = "FSGNJX_S";
+      "FNEG_S":  instr_name = "FSGNJN_S";
+      "FMV_D":   instr_name = "FSGNJ_D";
+      "FABS_D":  instr_name = "FSGNJX_D";
+      "FNEG_D":  instr_name = "FSGNJN_D";
+      default:   ;
     endcase
 
     return instr_name;
@@ -216,7 +229,7 @@ class riscv_instr_cov_test extends uvm_test;
       end else begin
         tmp_str = {tmp_str, str[i]};
       end
-      if (i == str.len()-1) begin
+      if (i == str.len() - 1) begin
         result.push_back(tmp_str);
       end
       i++;
@@ -227,9 +240,13 @@ class riscv_instr_cov_test extends uvm_test;
     uvm_report_server rs;
     int error_count;
     rs = uvm_report_server::get_server();
-    error_count = rs.get_severity_count(UVM_WARNING) +
-                  rs.get_severity_count(UVM_ERROR) +
-                  rs.get_severity_count(UVM_FATAL);
+    error_count = rs.get_severity_count(
+        UVM_WARNING
+    ) + rs.get_severity_count(
+        UVM_ERROR
+    ) + rs.get_severity_count(
+        UVM_FATAL
+    );
     if (error_count == 0) begin
       `uvm_info("", "TEST PASSED", UVM_NONE);
     end else begin

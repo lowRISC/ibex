@@ -5,9 +5,9 @@
 // Register slice conforming to Comportibility guide.
 
 module prim_subreg #(
-  parameter int            DW       = 32  ,
+  parameter int            DW       = 32,
   parameter                SWACCESS = "RW",  // {RW, RO, WO, W1C, W1S, W0C, RC}
-  parameter logic [DW-1:0] RESVAL   = '0     // Reset value
+  parameter logic [DW-1:0] RESVAL   = '0  // Reset value
 ) (
   input clk_i,
   input rst_ni,
@@ -31,8 +31,8 @@ module prim_subreg #(
   logic [DW-1:0] wr_data;
 
   prim_subreg_arb #(
-    .DW       ( DW       ),
-    .SWACCESS ( SWACCESS )
+    .DW      (DW),
+    .SWACCESS(SWACCESS)
   ) wr_en_data_arb (
     .we,
     .wd,

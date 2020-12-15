@@ -7,15 +7,15 @@
 
 
 module prim_xilinx_pad_wrapper #(
-  parameter int Variant  =  0, // currently ignored
+  parameter int Variant  = 0,  // currently ignored
   parameter int AttrDw   = 10,
-  parameter bit WarlOnly =  0  // If set to 1, no pad is instantiated and only warl_o is driven
+  parameter bit WarlOnly = 0  // If set to 1, no pad is instantiated and only warl_o is driven
 ) (
-  inout wire         inout_io, // bidirectional pad
-  output logic       in_o,     // input data
-  input              ie_i,     // input enable
-  input              out_i,    // output data
-  input              oe_i,     // output enable
+  inout  wire               inout_io,  // bidirectional pad
+  output logic              in_o,  // input data
+  input                     ie_i,  // input enable
+  input                     out_i,  // output data
+  input                     oe_i,  // output enable
   // additional attributes
   input        [AttrDw-1:0] attr_i,
   output logic [AttrDw-1:0] warl_o
@@ -38,10 +38,10 @@ module prim_xilinx_pad_wrapper #(
     assign in_o     = 1'b0;
 
     logic [AttrDw-1:0] unused_attr;
-    logic  unused_ie, unused_oe, unused_out, unused_inout;
-    assign unused_ie   = ie_i;
-    assign unused_oe   = oe_i;
-    assign unused_out  = out_i;
+    logic unused_ie, unused_oe, unused_out, unused_inout;
+    assign unused_ie = ie_i;
+    assign unused_oe = oe_i;
+    assign unused_out = out_i;
     assign unused_attr = attr_i;
     assign unused_inout = inout_io;
   end else begin : gen_pad
@@ -57,21 +57,21 @@ module prim_xilinx_pad_wrapper #(
 
     // input inversion and buffer
     logic in;
-    assign in_o     = (ie_i) ? inv ^ in : 1'bz;
+    assign in_o = (ie_i) ? inv ^ in : 1'bz;
 
     // virtual open drain emulation
     logic oe_n, out;
-    assign out      = out_i ^ inv;
+    assign out  = out_i ^ inv;
     // oe_n = 0: enable driver
     // oe_n = 1: disable driver
-    assign oe_n     = ~oe_i | (out & od);
+    assign oe_n = ~oe_i | (out & od);
 
     // driver
     IOBUF i_iobuf (
-      .T  ( oe_n     ),
-      .I  ( out      ),
-      .O  ( in       ),
-      .IO ( inout_io )
+      .T (oe_n),
+      .I (out),
+      .O (in),
+      .IO(inout_io)
     );
   end
 

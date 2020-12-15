@@ -4,9 +4,9 @@
 
 class irq_request_agent extends uvm_agent;
 
-  irq_request_driver     driver;
-  irq_request_sequencer  sequencer;
-  irq_monitor         monitor;
+  irq_request_driver    driver;
+  irq_request_sequencer sequencer;
+  irq_monitor           monitor;
 
   `uvm_component_utils(irq_request_agent)
   `uvm_component_new

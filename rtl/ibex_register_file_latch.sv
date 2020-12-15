@@ -12,34 +12,34 @@
  * register file when targeting ASIC synthesis or event-based simulators.
  */
 module ibex_register_file_latch #(
-    parameter bit          RV32E             = 0,
-    parameter int unsigned DataWidth         = 32,
-    parameter bit          DummyInstructions = 0
+  parameter bit          RV32E             = 0,
+  parameter int unsigned DataWidth         = 32,
+  parameter bit          DummyInstructions = 0
 ) (
-    // Clock and Reset
-    input  logic                 clk_i,
-    input  logic                 rst_ni,
+  // Clock and Reset
+  input logic clk_i,
+  input logic rst_ni,
 
-    input  logic                 test_en_i,
-    input  logic                 dummy_instr_id_i,
+  input logic test_en_i,
+  input logic dummy_instr_id_i,
 
-    //Read port R1
-    input  logic [4:0]           raddr_a_i,
-    output logic [DataWidth-1:0] rdata_a_o,
+  //Read port R1
+  input  logic [          4:0] raddr_a_i,
+  output logic [DataWidth-1:0] rdata_a_o,
 
-    //Read port R2
-    input  logic [4:0]           raddr_b_i,
-    output logic [DataWidth-1:0] rdata_b_o,
+  //Read port R2
+  input  logic [          4:0] raddr_b_i,
+  output logic [DataWidth-1:0] rdata_b_o,
 
-    // Write port W1
-    input  logic [4:0]           waddr_a_i,
-    input  logic [DataWidth-1:0] wdata_a_i,
-    input  logic                 we_a_i
+  // Write port W1
+  input logic [          4:0] waddr_a_i,
+  input logic [DataWidth-1:0] wdata_a_i,
+  input logic                 we_a_i
 
 );
 
   localparam int unsigned ADDR_WIDTH = RV32E ? 4 : 5;
-  localparam int unsigned NUM_WORDS  = 2**ADDR_WIDTH;
+  localparam int unsigned NUM_WORDS = 2 ** ADDR_WIDTH;
 
   logic [DataWidth-1:0] mem[NUM_WORDS];
 
@@ -68,17 +68,17 @@ module ibex_register_file_latch #(
   ///////////
   // Global clock gating
   prim_clock_gating cg_we_global (
-      .clk_i     ( clk_i     ),
-      .en_i      ( we_a_i    ),
-      .test_en_i ( test_en_i ),
-      .clk_o     ( clk_int   )
+    .clk_i    (clk_i),
+    .en_i     (we_a_i),
+    .test_en_i(test_en_i),
+    .clk_o    (clk_int)
   );
 
   // Sample input data
   // Use clk_int here, since otherwise we don't want to write anything anyway.
   always_ff @(posedge clk_int or negedge rst_ni) begin : sample_wdata
     if (!rst_ni) begin
-      wdata_a_q   <= '0;
+      wdata_a_q <= '0;
     end else begin
       if (we_a_i) begin
         wdata_a_q <= wdata_a_i;
@@ -100,10 +100,10 @@ module ibex_register_file_latch #(
   // Individual clock gating (if integrated clock-gating cells are available)
   for (genvar x = 1; x < NUM_WORDS; x++) begin : gen_cg_word_iter
     prim_clock_gating cg_i (
-        .clk_i     ( clk_int           ),
-        .en_i      ( waddr_onehot_a[x] ),
-        .test_en_i ( test_en_i         ),
-        .clk_o     ( mem_clocks[x]     )
+      .clk_i    (clk_int),
+      .en_i     (waddr_onehot_a[x]),
+      .test_en_i(test_en_i),
+      .clk_o    (mem_clocks[x])
     );
   end
 
@@ -130,10 +130,10 @@ module ibex_register_file_latch #(
 
     // R0 clock gate
     prim_clock_gating cg_i (
-        .clk_i     ( clk_int     ),
-        .en_i      ( we_r0_dummy ),
-        .test_en_i ( test_en_i   ),
-        .clk_o     ( r0_clock    )
+      .clk_i    (clk_int),
+      .en_i     (we_r0_dummy),
+      .test_en_i(test_en_i),
+      .clk_o    (r0_clock)
     );
 
     always_latch begin : latch_wdata

@@ -2,9 +2,10 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class ibex_icache_ecc_driver
-  extends dv_base_driver #(.ITEM_T (ibex_icache_ecc_item),
-                           .CFG_T  (ibex_icache_ecc_agent_cfg));
+class ibex_icache_ecc_driver extends dv_base_driver#(
+  .ITEM_T(ibex_icache_ecc_item),
+  .CFG_T (ibex_icache_ecc_agent_cfg)
+);
 
   `uvm_component_utils(ibex_icache_ecc_driver)
   `uvm_component_new

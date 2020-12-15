@@ -9,7 +9,7 @@ class csr_excl_item extends uvm_object;
   `uvm_object_utils(csr_excl_item)
 
   typedef struct {
-    int             csr_test_type;
+    int csr_test_type;
     csr_excl_type_e csr_excl_type;
   } csr_excl_s;
   local csr_excl_s exclusions[string];
@@ -22,8 +22,7 @@ class csr_excl_item extends uvm_object;
   // end up inadvertently matching more that what was desired. Examples:
   // To exclude ral.ctrl.tx field from writes, obj can be "ral.ctrl.tx" or "*.ctrl.tx"; passing
   // "*.tx" might be too generic
-  virtual function void add_excl(string obj,
-                                 csr_excl_type_e csr_excl_type,
+  virtual function void add_excl(string obj, csr_excl_type_e csr_excl_type,
                                  csr_test_type_e csr_test_type = CsrAllTests);
     bit [2:0] val = CsrNoExcl;
     bit [NUM_CSR_TESTS-1:0] test = CsrInvalidTest;
@@ -41,8 +40,7 @@ class csr_excl_item extends uvm_object;
   // supplied exclusion type
   // arg uvm_object obj: given blk, csr or field
   // arg csr_excl_type_e csr_excl_type: exclusion type
-  function bit is_excl(uvm_object obj,
-                       csr_excl_type_e csr_excl_type,
+  function bit is_excl(uvm_object obj, csr_excl_type_e csr_excl_type,
                        csr_test_type_e csr_test_type);
     uvm_reg_block blk;
     uvm_reg       csr;
@@ -66,24 +64,29 @@ class csr_excl_item extends uvm_object;
 
   // check if applied string obj has a match in existing exclusions lookup in defined csr_test_type
   // function is to not be called externally
-  local function bit has_excl(string obj,
-                     csr_excl_type_e csr_excl_type,
-                     csr_test_type_e csr_test_type);
+  local function bit has_excl(string obj, csr_excl_type_e csr_excl_type,
+                              csr_test_type_e csr_test_type);
     // check if obj exists verbatim
     if (exclusions.exists(obj)) begin
-      `uvm_info(`gfn, $sformatf("has_excl: found exact excl match for %0s: %0s",
-                                obj, exclusions[obj].csr_excl_type.name()), UVM_DEBUG)
+      `uvm_info(`gfn, $sformatf(
+                "has_excl: found exact excl match for %0s: %0s",
+                obj,
+                exclusions[obj].csr_excl_type.name()
+                ), UVM_DEBUG)
       // check if bit(s) corresponding to csr_excl_type are set in defined csr_test_type
       if ((exclusions[obj].csr_test_type & csr_test_type) != CsrInvalidTest) begin
         if ((exclusions[obj].csr_excl_type & csr_excl_type) != CsrNoExcl) return 1'b1;
       end
-    end
-    else begin
+    end else begin
       // attempt glob style matching
       foreach (exclusions[str]) begin
         if (!uvm_re_match(str, obj)) begin
-          `uvm_info(`gfn, $sformatf("has_excl: found glob excl match for %0s(%0s): %0s",
-                                    obj, str, exclusions[str].csr_excl_type.name()), UVM_DEBUG)
+          `uvm_info(`gfn, $sformatf(
+                    "has_excl: found glob excl match for %0s(%0s): %0s",
+                    obj,
+                    str,
+                    exclusions[str].csr_excl_type.name()
+                    ), UVM_DEBUG)
           // check if bit(s) corresponding to csr_excl_type are set in defined csr_test_type
           if ((exclusions[str].csr_test_type & csr_test_type) != CsrInvalidTest) begin
             if ((exclusions[str].csr_excl_type & csr_excl_type) != CsrNoExcl) return 1'b1;
@@ -99,12 +102,16 @@ class csr_excl_item extends uvm_object;
     string test_names;
     for (int i = NUM_CSR_TESTS - 1; i >= 0; i--) begin
       csr_test_type_e csr_test = csr_test_type_e'(1 << i);
-      test_names = {test_names, csr_test.name(),  (i > 0) ? " " : ""};
+      test_names = {test_names, csr_test.name(), (i > 0) ? " " : ""};
     end
     foreach (exclusions[item]) begin
-      `uvm_info(`gfn, $sformatf("CSR/field [%0s] excluded with %0s in csr_tests: {%s} = {%0b}",
-                                item, exclusions[item].csr_excl_type.name(), test_names,
-                                exclusions[item].csr_test_type), verbosity)
+      `uvm_info(`gfn, $sformatf(
+                "CSR/field [%0s] excluded with %0s in csr_tests: {%s} = {%0b}",
+                item,
+                exclusions[item].csr_excl_type.name(),
+                test_names,
+                exclusions[item].csr_test_type
+                ), verbosity)
     end
   endfunction
 

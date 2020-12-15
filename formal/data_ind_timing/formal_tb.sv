@@ -7,34 +7,34 @@
 `include "prim_assert.sv"
 
 module formal_tb (
-   // Top-level ports
-    input  logic             clk_i,
-    input  logic             rst_ni,
-    input  logic             mult_en_i,  // dynamic enable signal, for FSM control
-    input  logic             div_en_i,   // dynamic enable signal, for FSM control
-    input  logic             mult_sel_i, // static decoder input, for data muxes
-    input  logic             div_sel_i,  // static decoder input, for data muxes
-    input  ibex_pkg::md_op_e operator_i,
-    input  logic       [1:0] signed_mode_i,
-    input  logic      [31:0] op_a_i,
-    input  logic      [31:0] op_b_i,
-    input  logic      [33:0] alu_adder_ext_i,
-    input  logic      [31:0] alu_adder_i,
-    input  logic             equal_to_zero_i,
-    input  logic             data_ind_timing_i,
+  // Top-level ports
+  input logic                    clk_i,
+  input logic                    rst_ni,
+  input logic                    mult_en_i,  // dynamic enable signal, for FSM control
+  input logic                    div_en_i,  // dynamic enable signal, for FSM control
+  input logic                    mult_sel_i,  // static decoder input, for data muxes
+  input logic                    div_sel_i,  // static decoder input, for data muxes
+  input ibex_pkg::md_op_e        operator_i,
+  input logic             [ 1:0] signed_mode_i,
+  input logic             [31:0] op_a_i,
+  input logic             [31:0] op_b_i,
+  input logic             [33:0] alu_adder_ext_i,
+  input logic             [31:0] alu_adder_i,
+  input logic                    equal_to_zero_i,
+  input logic                    data_ind_timing_i,
 
-    input logic      [32:0]  alu_operand_a_o,
-    input logic      [32:0]  alu_operand_b_o,
+  input logic [32:0] alu_operand_a_o,
+  input logic [32:0] alu_operand_b_o,
 
-    input logic      [33:0]  imd_val_q_i[1:0],
-    input logic      [33:0]  imd_val_d_o[1:0],
-    input logic       [1:0]  imd_val_we_o,
+  input logic [33:0] imd_val_q_i [1:0],
+  input logic [33:0] imd_val_d_o [1:0],
+  input logic [ 1:0] imd_val_we_o,
 
-    input  logic             multdiv_ready_id_i,
+  input logic multdiv_ready_id_i,
 
-    input logic      [31:0]  multdiv_result_o,
+  input logic [31:0] multdiv_result_o,
 
-    input logic              valid_o
+  input logic valid_o
 );
 
   import ibex_pkg::*;

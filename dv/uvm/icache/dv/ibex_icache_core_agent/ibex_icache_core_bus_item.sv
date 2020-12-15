@@ -27,12 +27,12 @@ class ibex_icache_core_bus_item extends uvm_sequence_item;
 
   `uvm_object_utils_begin(ibex_icache_core_bus_item)
     `uvm_field_enum(ibex_icache_core_bus_trans_type_e, trans_type, UVM_DEFAULT)
-    `uvm_field_int(address,   UVM_DEFAULT | UVM_HEX)
+    `uvm_field_int(address, UVM_DEFAULT | UVM_HEX)
     `uvm_field_int(insn_data, UVM_DEFAULT | UVM_HEX)
-    `uvm_field_int(err,       UVM_DEFAULT)
+    `uvm_field_int(err, UVM_DEFAULT)
     `uvm_field_int(err_plus2, UVM_DEFAULT)
-    `uvm_field_int(enable,    UVM_DEFAULT)
-    `uvm_field_int(busy,      UVM_DEFAULT)
+    `uvm_field_int(enable, UVM_DEFAULT)
+    `uvm_field_int(busy, UVM_DEFAULT)
   `uvm_object_utils_end
 
   `uvm_object_new

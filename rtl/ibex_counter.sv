@@ -1,8 +1,8 @@
 module ibex_counter #(
   parameter int CounterWidth = 32
 ) (
-  input  logic        clk_i,
-  input  logic        rst_ni,
+  input logic clk_i,
+  input logic rst_ni,
 
   input  logic        counter_inc_i,
   input  logic        counterh_we_i,
@@ -11,9 +11,9 @@ module ibex_counter #(
   output logic [63:0] counter_val_o
 );
 
-  logic [63:0]             counter;
+  logic [            63:0] counter;
   logic [CounterWidth-1:0] counter_upd;
-  logic [63:0]             counter_load;
+  logic [            63:0] counter_load;
   logic                    we;
   logic [CounterWidth-1:0] counter_d;
 
@@ -23,19 +23,19 @@ module ibex_counter #(
     // Write
     we = counter_we_i | counterh_we_i;
     counter_load[63:32] = counter[63:32];
-    counter_load[31:0]  = counter_val_i;
+    counter_load[31:0] = counter_val_i;
     if (counterh_we_i) begin
       counter_load[63:32] = counter_val_i;
       counter_load[31:0]  = counter[31:0];
     end
 
     // Increment
-    counter_upd = counter[CounterWidth-1:0] + {{CounterWidth-1{1'b0}},1'b1};
+    counter_upd = counter[CounterWidth-1:0] + {{CounterWidth - 1{1'b0}}, 1'b1};
 
     // Next value logic
     if (we) begin
       counter_d = counter_load[CounterWidth-1:0];
-    end else if (counter_inc_i)begin
+    end else if (counter_inc_i) begin
       counter_d = counter_upd[CounterWidth-1:0];
     end else begin
       counter_d = counter[CounterWidth-1:0];
@@ -44,7 +44,7 @@ module ibex_counter #(
 
 `ifdef FPGA_XILINX
   // Set DSP pragma for supported xilinx FPGAs
-  localparam int DspPragma = CounterWidth < 49  ? "yes" : "no";
+  localparam int DspPragma = CounterWidth < 49 ? "yes" : "no";
   (* use_dsp = DspPragma *) logic [CounterWidth-1:0] counter_q;
 
   // DSP output register requires synchronous reset.

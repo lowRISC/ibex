@@ -17,18 +17,18 @@
 
 class riscv_vector_cfg extends uvm_object;
 
-  rand vtype_t           vtype;
-  rand bit [XLEN-1:0]    vl;
-  rand bit [XLEN-1:0]    vstart;
-  rand vxrm_t            vxrm;
-  rand bit               vxsat;
-  riscv_vreg_t           reserved_vregs[$];
+  rand vtype_t        vtype;
+  rand bit [XLEN-1:0] vl;
+  rand bit [XLEN-1:0] vstart;
+  rand vxrm_t         vxrm;
+  rand bit            vxsat;
+  riscv_vreg_t        reserved_vregs[$];
 
   // Allowed effective element width based on the LMUL setting
-  int unsigned           legal_eew[$];
+  int unsigned        legal_eew[$];
 
   // Allow only vector instructions from the random sequences
-  rand bit only_vec_instr;
+  rand bit            only_vec_instr;
   constraint only_vec_instr_c {soft only_vec_instr == 0;}
 
   // Allow vector floating-point instructions (Allows vtype.vsew to be set <16 or >32).
@@ -66,14 +66,14 @@ class riscv_vector_cfg extends uvm_object;
   constraint legal_c {
     solve vtype before vl;
     solve vl before vstart;
-    vstart inside {[0:vl]};
-    vl inside {[1:VLEN/vtype.vsew]};
+    vstart inside {[0 : vl]};
+    vl inside {[1 : VLEN / vtype.vsew]};
   }
 
   // Basic constraint for initial bringup
   constraint bringup_c {
     vstart == 0;
-    vl == VLEN/vtype.vsew;
+    vl == VLEN / vtype.vsew;
     vtype.vediv == 1;
   }
 
@@ -82,12 +82,8 @@ class riscv_vector_cfg extends uvm_object;
   constraint vlmul_c {
     vtype.vlmul inside {1, 2, 4, 8};
     vtype.vlmul <= MAX_LMUL;
-    if (vec_narrowing_widening) {
-      (vtype.vlmul < 8) || (vtype.fractional_lmul == 1'b1);
-    }
-    if (vec_quad_widening) {
-      (vtype.vlmul < 4) || (vtype.fractional_lmul == 1'b1);
-    }
+    if (vec_narrowing_widening) {(vtype.vlmul < 8) || (vtype.fractional_lmul == 1'b1);}
+    if (vec_quad_widening) {(vtype.vlmul < 4) || (vtype.fractional_lmul == 1'b1);}
   }
 
   constraint vsew_c {
@@ -99,9 +95,7 @@ class riscv_vector_cfg extends uvm_object;
     if (vec_quad_widening) {vtype.vsew < (ELEN >> 1);}
   }
 
-  constraint vseg_c {
-    enable_zvlsseg -> (vtype.vlmul < 8);
-  }
+  constraint vseg_c {enable_zvlsseg -> (vtype.vlmul < 8);}
 
   constraint vdeiv_c {
     vtype.vediv inside {1, 2, 4, 8};
@@ -117,13 +111,13 @@ class riscv_vector_cfg extends uvm_object;
     `uvm_field_queue_int(legal_eew, UVM_DEFAULT)
     `uvm_field_int(vl, UVM_DEFAULT)
     `uvm_field_int(vstart, UVM_DEFAULT)
-    `uvm_field_enum(vxrm_t,vxrm, UVM_DEFAULT)
+    `uvm_field_enum(vxrm_t, vxrm, UVM_DEFAULT)
     `uvm_field_int(vxsat, UVM_DEFAULT)
     `uvm_field_int(enable_zvlsseg, UVM_DEFAULT)
     `uvm_field_int(enable_fault_only_first_load, UVM_DEFAULT)
   `uvm_object_utils_end
 
-  function new (string name = "");
+  function new(string name = "");
     super.new(name);
     if ($value$plusargs("enable_zvlsseg=%0d", enable_zvlsseg)) begin
       enable_zvlsseg.rand_mode(0);
@@ -146,7 +140,7 @@ class riscv_vector_cfg extends uvm_object;
       end else begin
         temp_eew = real'(vtype.vsew) * emul * real'(vtype.vlmul);
       end
-      if (temp_eew inside {[8:1024]}) begin
+      if (temp_eew inside {[8 : 1024]}) begin
         legal_eew.push_back(int'(temp_eew));
       end
       `uvm_info(`gfn, $sformatf("Checking emul: %.2f", emul), UVM_LOW)

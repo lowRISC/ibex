@@ -6,7 +6,7 @@ class ibex_icache_many_errors_vseq extends ibex_icache_base_vseq;
 
   `uvm_object_utils(ibex_icache_many_errors_vseq)
 
-  function new (string name="");
+  function new(string name = "");
     super.new(name);
 
     // Increase the error rate (to roughly 50%) for this sequence.

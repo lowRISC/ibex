@@ -130,19 +130,15 @@ module prim_gf_mult #(
 
 
   // GF(2^Width) * x
-  function automatic logic [Width-1:0] gf_mult2(
-    logic [Width-1:0] operand
-  );
+  function automatic logic [Width-1:0] gf_mult2(logic [Width-1:0] operand);
     logic [Width-1:0] mult_out;
     mult_out = operand[Width-1] ? (operand << 1) ^ IPoly : (operand << 1);
     return mult_out;
   endfunction
 
   // Matrix generate step
-  function automatic logic [StagesPerCycle-1:0][Width-1:0] gen_matrix(
-    logic [Width-1:0] seed,
-    logic init
-  );
+  function automatic logic [StagesPerCycle-1:0][Width-1:0] gen_matrix(logic [Width-1:0] seed,
+                                                                          logic init);
     logic [StagesPerCycle-1:0][Width-1:0] matrix_out;
 
     matrix_out[0] = init ? seed : gf_mult2(seed);
@@ -154,18 +150,16 @@ module prim_gf_mult #(
   endfunction
 
   // Galois multiply step
-  function automatic logic [Width-1:0] gf_mult(
-    logic [StagesPerCycle-1:0][Width-1:0] matrix,
-    logic [StagesPerCycle-1:0] operand
-  );
+  function automatic logic [Width-1:0] gf_mult(logic [StagesPerCycle-1:0][Width-1:0] matrix,
+                                                 logic [StagesPerCycle-1:0] operand);
     logic [Width-1:0] mult_out;
     logic [Width-1:0] add_vector;
     mult_out = '0;
     for (int i = 0; i < StagesPerCycle; i++) begin
       add_vector = operand[i] ? matrix[i] : '0;
-      mult_out = mult_out ^ add_vector;
+      mult_out   = mult_out ^ add_vector;
     end
     return mult_out;
-  endfunction // gf_mult
+  endfunction  // gf_mult
 
-endmodule // prim_gf_mult
+endmodule  // prim_gf_mult

@@ -14,8 +14,8 @@ class ibex_icache_ecc_bus_item extends uvm_sequence_item;
   logic [127:0] sram_rdata;
 
   `uvm_object_utils_begin(ibex_icache_ecc_bus_item)
-    `uvm_field_int (bad_bit_mask, UVM_DEFAULT | UVM_HEX)
-    `uvm_field_int (sram_rdata,   UVM_DEFAULT | UVM_HEX)
+    `uvm_field_int(bad_bit_mask, UVM_DEFAULT | UVM_HEX)
+    `uvm_field_int(sram_rdata, UVM_DEFAULT | UVM_HEX)
   `uvm_object_utils_end
 
   `uvm_object_new

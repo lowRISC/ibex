@@ -10,14 +10,14 @@
 module prim_generic_usb_diff_rx #(
   parameter int CalibW = 32
 ) (
-  input wire         input_pi,      // differential input
-  input wire         input_ni,      // differential input
-  input              input_en_i,    // input buffer enable
-  input              core_pok_i,    // core power indication at VCC level
-  input              pullup_p_en_i, // pullup enable for P
-  input              pullup_n_en_i, // pullup enable for N
-  input [CalibW-1:0] calibration_i, // calibration input
-  output logic       input_o        // output of differential input buffer
+  input  wire               input_pi,  // differential input
+  input  wire               input_ni,  // differential input
+  input                     input_en_i,  // input buffer enable
+  input                     core_pok_i,  // core power indication at VCC level
+  input                     pullup_p_en_i,  // pullup enable for P
+  input                     pullup_n_en_i,  // pullup enable for N
+  input        [CalibW-1:0] calibration_i,  // calibration input
+  output logic              input_o  // output of differential input buffer
 );
 
   assign input_o = (input_en_i) ? input_pi & ~input_ni : 1'b0;

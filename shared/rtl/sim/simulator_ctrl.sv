@@ -26,8 +26,8 @@ module simulator_ctrl #(
   // simulation is running).
   parameter bit    FlushOnChar = 1
 ) (
-  input               clk_i,
-  input               rst_ni,
+  input clk_i,
+  input rst_ni,
 
   input               req_i,
   input               we_i,
@@ -58,7 +58,7 @@ module simulator_ctrl #(
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (~rst_ni) begin
-      rvalid_o <= 0;
+      rvalid_o   <= 0;
       sim_finish <= 'b0;
     end else begin
       // Immeditely respond to any request
@@ -70,7 +70,7 @@ module simulator_ctrl #(
             if (be_i[0]) begin
               $fwrite(log_fd, "%c", wdata_i[7:0]);
 
-              if(FlushOnChar) begin
+              if (FlushOnChar) begin
                 $fflush(log_fd);
               end
             end

@@ -2,12 +2,12 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class ibex_icache_mem_agent extends dv_base_agent #(
-  .CFG_T          (ibex_icache_mem_agent_cfg),
-  .DRIVER_T       (ibex_icache_mem_driver),
-  .SEQUENCER_T    (ibex_icache_mem_sequencer),
-  .MONITOR_T      (ibex_icache_mem_monitor),
-  .COV_T          (ibex_icache_mem_agent_cov)
+class ibex_icache_mem_agent extends dv_base_agent#(
+  .CFG_T      (ibex_icache_mem_agent_cfg),
+  .DRIVER_T   (ibex_icache_mem_driver),
+  .SEQUENCER_T(ibex_icache_mem_sequencer),
+  .MONITOR_T  (ibex_icache_mem_monitor),
+  .COV_T      (ibex_icache_mem_agent_cov)
 );
 
   `uvm_component_utils(ibex_icache_mem_agent)

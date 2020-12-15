@@ -18,13 +18,13 @@
 `include "prim_assert.sv"
 
 module ibex_branch_predict (
-  input  logic clk_i,
-  input  logic rst_ni,
+  input logic clk_i,
+  input logic rst_ni,
 
   // Instruction from fetch stage
-  input  logic [31:0] fetch_rdata_i,
-  input  logic [31:0] fetch_pc_i,
-  input  logic        fetch_valid_i,
+  input logic [31:0] fetch_rdata_i,
+  input logic [31:0] fetch_pc_i,
+  input logic        fetch_valid_i,
 
   // Prediction for supplied instruction
   output logic        predict_branch_taken_o,
@@ -55,15 +55,26 @@ module ibex_branch_predict (
   // target
 
   // Uncompressed immediates
-  assign imm_j_type = { {12{instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0 };
-  assign imm_b_type = { {19{instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0 };
+  assign imm_j_type = {{12{instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0};
+  assign imm_b_type = {{19{instr[31]}}, instr[31], instr[7], instr[30:25], instr[11:8], 1'b0};
 
   // Compressed immediates
-  assign imm_cj_type = { {20{instr[12]}}, instr[12], instr[8], instr[10:9], instr[6], instr[7],
-    instr[2], instr[11], instr[5:3], 1'b0 };
+  assign imm_cj_type = {
+    {20{instr[12]}},
+    instr[12],
+    instr[8],
+    instr[10:9],
+    instr[6],
+    instr[7],
+    instr[2],
+    instr[11],
+    instr[5:3],
+    1'b0
+  };
 
-  assign imm_cb_type = { {23{instr[12]}}, instr[12], instr[6:5], instr[2], instr[11:10],
-    instr[4:3], 1'b0};
+  assign imm_cb_type = {
+    {23{instr[12]}}, instr[12], instr[6:5], instr[2], instr[11:10], instr[4:3], 1'b0
+  };
 
   // Determine if the instruction is a branch or a jump
 
@@ -80,11 +91,11 @@ module ibex_branch_predict (
     branch_imm = imm_b_type;
 
     unique case (1'b1)
-      instr_j  : branch_imm = imm_j_type;
-      instr_b  : branch_imm = imm_b_type;
-      instr_cj : branch_imm = imm_cj_type;
-      instr_cb : branch_imm = imm_cb_type;
-      default : ;
+      instr_j:  branch_imm = imm_j_type;
+      instr_b:  branch_imm = imm_b_type;
+      instr_cj: branch_imm = imm_cj_type;
+      instr_cb: branch_imm = imm_cb_type;
+      default:  ;
     endcase
   end
 

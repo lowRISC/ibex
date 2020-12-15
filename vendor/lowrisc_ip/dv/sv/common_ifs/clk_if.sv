@@ -8,7 +8,9 @@
 //
 //------------------------------------------------------------------------------
 
-interface clk_if(input logic clk);
+interface clk_if (
+  input logic clk
+);
 
   clocking cb @(posedge clk);
   endclocking

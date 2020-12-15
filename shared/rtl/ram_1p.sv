@@ -9,19 +9,19 @@
 `include "prim_assert.sv"
 
 module ram_1p #(
-    parameter int Depth       = 128,
-    parameter     MemInitFile = ""
+  parameter int Depth       = 128,
+  parameter     MemInitFile = ""
 ) (
-    input               clk_i,
-    input               rst_ni,
+  input clk_i,
+  input rst_ni,
 
-    input               req_i,
-    input               we_i,
-    input        [ 3:0] be_i,
-    input        [31:0] addr_i,
-    input        [31:0] wdata_i,
-    output logic        rvalid_o,
-    output logic [31:0] rdata_o
+  input               req_i,
+  input               we_i,
+  input        [ 3:0] be_i,
+  input        [31:0] addr_i,
+  input        [31:0] wdata_i,
+  output logic        rvalid_o,
+  output logic [31:0] rdata_o
 );
 
   localparam int Aw = $clog2(Depth);
@@ -34,7 +34,7 @@ module ram_1p #(
   // Convert byte mask to SRAM bit mask.
   logic [31:0] wmask;
   always_comb begin
-    for (int i = 0 ; i < 4 ; i++) begin
+    for (int i = 0; i < 4; i++) begin
       // mask for read data
       wmask[8*i+:8] = {8{be_i[i]}};
     end
@@ -52,17 +52,17 @@ module ram_1p #(
   end
 
   prim_ram_1p #(
-      .Width(32),
-      .DataBitsPerMask(8),
-      .Depth(Depth),
-      .MemInitFile(MemInitFile)
-    ) u_ram (
-      .clk_i     (clk_i),
-      .req_i     (req_i),
-      .write_i   (we_i),
-      .wmask_i   (wmask),
-      .addr_i    (addr_idx),
-      .wdata_i   (wdata_i),
-      .rdata_o   (rdata_o)
-    );
+    .Width(32),
+    .DataBitsPerMask(8),
+    .Depth(Depth),
+    .MemInitFile(MemInitFile)
+  ) u_ram (
+    .clk_i  (clk_i),
+    .req_i  (req_i),
+    .write_i(we_i),
+    .wmask_i(wmask),
+    .addr_i (addr_idx),
+    .wdata_i(wdata_i),
+    .rdata_o(rdata_o)
+  );
 endmodule

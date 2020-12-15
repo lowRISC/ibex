@@ -2,11 +2,13 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class dv_base_seq #(type REQ         = uvm_sequence_item,
-                    type RSP         = REQ,
-                    type CFG_T       = dv_base_agent_cfg,
-                    type SEQUENCER_T = dv_base_sequencer) extends uvm_sequence#(REQ, RSP);
-  `uvm_object_param_utils(dv_base_seq #(REQ, RSP, CFG_T, SEQUENCER_T))
+class dv_base_seq #(
+  type REQ         = uvm_sequence_item,
+  type RSP         = REQ,
+  type CFG_T       = dv_base_agent_cfg,
+  type SEQUENCER_T = dv_base_sequencer
+) extends uvm_sequence#(REQ, RSP);
+  `uvm_object_param_utils(dv_base_seq#(REQ, RSP, CFG_T, SEQUENCER_T))
   `uvm_declare_p_sequencer(SEQUENCER_T)
 
   CFG_T cfg;

@@ -20,7 +20,7 @@ module prim_clock_div #(
   if (Divisor == 2) begin : gen_div2
     logic q_p, q_n;
 
-    prim_flop # (
+    prim_flop #(
       .Width(1),
       .ResetValue(ResetValue)
     ) u_div2 (
@@ -30,7 +30,7 @@ module prim_clock_div #(
       .q_o(q_p)
     );
 
-    prim_clock_inv # (
+    prim_clock_inv #(
       .HasScanMode(1'b0)
     ) u_inv (
       .clk_i(q_p),
@@ -53,7 +53,7 @@ module prim_clock_div #(
       if (!rst_ni) begin
         cnt <= '0;
         clk_int <= ResetValue;
-      end else if (cnt == ToggleCnt-1) begin
+      end else if (cnt == ToggleCnt - 1) begin
         cnt <= '0;
         clk_int <= ~clk_o;
       end else begin
@@ -71,8 +71,8 @@ module prim_clock_div #(
   ) u_clk_mux (
     .clk0_i(clk_int),
     .clk1_i(clk_i),
-    .sel_i(test_en_i),
-    .clk_o(clk_muxed)
+    .sel_i (test_en_i),
+    .clk_o (clk_muxed)
   );
 
   // anchor point for constraints

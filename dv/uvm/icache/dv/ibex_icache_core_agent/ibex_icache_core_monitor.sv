@@ -2,11 +2,11 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class ibex_icache_core_monitor extends dv_base_monitor #(
-    .ITEM_T (ibex_icache_core_bus_item),
-    .CFG_T  (ibex_icache_core_agent_cfg),
-    .COV_T  (ibex_icache_core_agent_cov)
-  );
+class ibex_icache_core_monitor extends dv_base_monitor#(
+  .ITEM_T(ibex_icache_core_bus_item),
+  .CFG_T (ibex_icache_core_agent_cfg),
+  .COV_T (ibex_icache_core_agent_cov)
+);
   `uvm_component_utils(ibex_icache_core_monitor)
 
   // the base class provides the following handles for use:
@@ -34,11 +34,11 @@ class ibex_icache_core_monitor extends dv_base_monitor #(
 
   // collect transactions forever - already forked in dv_base_moditor::run_phase
   virtual protected task collect_trans(uvm_phase phase);
-    ibex_icache_core_bus_item trans;
-    logic                     last_inval = 0;
-    logic                     last_enable = 0;
-    logic                     last_busy = 0;
-    logic [31:0]              last_addr = 'x;
+    ibex_icache_core_bus_item        trans;
+    logic                            last_inval = 0;
+    logic                            last_enable = 0;
+    logic                            last_busy = 0;
+    logic                     [31:0] last_addr = 'x;
 
     forever begin
       // Collect events on positive clock edges. We collect "outputs" from the cache first, and then
@@ -57,7 +57,7 @@ class ibex_icache_core_monitor extends dv_base_monitor #(
       // when we can keep the ready line high but also assert branch, which means we will ignore
       // what comes back on this cycle.
       if (cfg.vif.ready & cfg.vif.valid & ~cfg.vif.branch) begin
-        trans = ibex_icache_core_bus_item::type_id::create("trans");
+        trans            = ibex_icache_core_bus_item::type_id::create("trans");
         trans.trans_type = ICacheCoreBusTransTypeFetch;
         trans.address    = cfg.vif.addr;
         trans.insn_data  = cfg.vif.rdata;
@@ -76,7 +76,7 @@ class ibex_icache_core_monitor extends dv_base_monitor #(
 
       // Spot edges on the enable pin
       if (cfg.vif.enable != last_enable) begin
-        trans = ibex_icache_core_bus_item::type_id::create("trans");
+        trans            = ibex_icache_core_bus_item::type_id::create("trans");
         trans.trans_type = ICacheCoreBusTransTypeEnable;
         trans.address    = 0;
         trans.insn_data  = 0;
@@ -90,7 +90,7 @@ class ibex_icache_core_monitor extends dv_base_monitor #(
 
       // Spot edges on the busy pin
       if (cfg.vif.busy != last_busy) begin
-        trans = ibex_icache_core_bus_item::type_id::create("trans");
+        trans            = ibex_icache_core_bus_item::type_id::create("trans");
         trans.trans_type = ICacheCoreBusTransTypeBusy;
         trans.address    = 0;
         trans.insn_data  = 0;
@@ -107,7 +107,7 @@ class ibex_icache_core_monitor extends dv_base_monitor #(
       // Firstly, spot any branch event. There is no handshaking here: there is a branch event on
       // this cycle if the 'branch' signal is high.
       if (cfg.vif.branch) begin
-        trans = ibex_icache_core_bus_item::type_id::create("trans");
+        trans            = ibex_icache_core_bus_item::type_id::create("trans");
         trans.trans_type = ICacheCoreBusTransTypeBranch;
         trans.address    = cfg.vif.branch_addr;
         trans.insn_data  = 0;
@@ -129,7 +129,7 @@ class ibex_icache_core_monitor extends dv_base_monitor #(
       // Spot invalidate signals. These can last for several cycles, but we only care about the
       // first cycle, so we track the last value to spot posedges.
       if (cfg.vif.invalidate && !last_inval) begin
-        trans = ibex_icache_core_bus_item::type_id::create("trans");
+        trans            = ibex_icache_core_bus_item::type_id::create("trans");
         trans.trans_type = ICacheCoreBusTransTypeInvalidate;
         trans.address    = 0;
         trans.insn_data  = 0;

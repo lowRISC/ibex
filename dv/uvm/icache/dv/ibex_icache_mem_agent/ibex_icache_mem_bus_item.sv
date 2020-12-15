@@ -20,8 +20,8 @@ class ibex_icache_mem_bus_item extends uvm_sequence_item;
 
   `uvm_object_utils_begin(ibex_icache_mem_bus_item)
     `uvm_field_int(is_grant, UVM_DEFAULT)
-    `uvm_field_int(data,     UVM_DEFAULT | UVM_HEX)
-    `uvm_field_int(err,      UVM_DEFAULT)
+    `uvm_field_int(data, UVM_DEFAULT | UVM_HEX)
+    `uvm_field_int(err, UVM_DEFAULT)
   `uvm_object_utils_end
 
   `uvm_object_new

@@ -2,38 +2,38 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class dv_base_vseq #(type RAL_T               = dv_base_reg_block,
-                     type CFG_T               = dv_base_env_cfg,
-                     type COV_T               = dv_base_env_cov,
-                     type VIRTUAL_SEQUENCER_T = dv_base_virtual_sequencer) extends uvm_sequence;
-  `uvm_object_param_utils(dv_base_vseq #(RAL_T, CFG_T, COV_T, VIRTUAL_SEQUENCER_T))
+class dv_base_vseq #(
+  type RAL_T               = dv_base_reg_block,
+  type CFG_T               = dv_base_env_cfg,
+  type COV_T               = dv_base_env_cov,
+  type VIRTUAL_SEQUENCER_T = dv_base_virtual_sequencer
+) extends uvm_sequence;
+  `uvm_object_param_utils(dv_base_vseq#(RAL_T, CFG_T, COV_T, VIRTUAL_SEQUENCER_T))
   `uvm_declare_p_sequencer(VIRTUAL_SEQUENCER_T)
 
   // number of iterations to run the test seq - please override constraint in extended vseq
   // randomization for this is disabled in pre_start since we don't want to re-randomize it again
   rand uint num_trans;
 
-  constraint num_trans_c {
-    num_trans inside {[1:20]};
-  }
+  constraint num_trans_c {num_trans inside {[1 : 20]};}
 
   // handles for ease of op
-  CFG_T   cfg;
-  RAL_T   ral;
-  COV_T   cov;
+  CFG_T cfg;
+  RAL_T ral;
+  COV_T cov;
 
   // knobs to enable pre_start routines
-  bit do_dut_init       = 1'b1;
-  bit do_apply_reset    = 1'b1;
-  bit do_wait_for_reset = 1'b1;
+  bit   do_dut_init                        = 1'b1;
+  bit   do_apply_reset                     = 1'b1;
+  bit   do_wait_for_reset                  = 1'b1;
 
   // knobs to enable post_start routines
-  bit do_dut_shutdown   = 1'b1;
+  bit   do_dut_shutdown                    = 1'b1;
 
   // various knobs to enable certain routines
   // this knob allows user to disable assertions in csr_hw_reset before random write sequence,
   // the assertions will turn back on after the hw reset deasserted
-  bit enable_asserts_in_hw_reset_rand_wr  = 1'b1;
+  bit   enable_asserts_in_hw_reset_rand_wr = 1'b1;
 
   `uvm_object_new
 
@@ -78,7 +78,7 @@ class dv_base_vseq #(type RAL_T               = dv_base_reg_block,
    * startup, reset and shutdown related tasks
    */
   virtual task dut_init(string reset_kind = "HARD");
-    if (do_apply_reset)         apply_reset(reset_kind);
+    if (do_apply_reset) apply_reset(reset_kind);
     else if (do_wait_for_reset) wait_for_reset(reset_kind);
     // delay after reset for tl agent check seq_item_port empty
     #1ps;
@@ -96,8 +96,7 @@ class dv_base_vseq #(type RAL_T               = dv_base_reg_block,
     end
   endtask
 
-  virtual task wait_for_reset(string reset_kind     = "HARD",
-                              bit wait_for_assert   = 1,
+  virtual task wait_for_reset(string reset_kind = "HARD", bit wait_for_assert = 1,
                               bit wait_for_deassert = 1);
     if (wait_for_assert) begin
       `uvm_info(`gfn, "waiting for rst_n assertion...", UVM_MEDIUM)
@@ -121,9 +120,8 @@ class dv_base_vseq #(type RAL_T               = dv_base_reg_block,
   // arg csr_excl: this is the csr exclusion object that maintains the list of exclusions
   // the same object handle is to be passed to csr sequences in csr_seq_lib so that they can query
   // those exclusions
-  virtual function void add_csr_exclusions(string           csr_test_type,
-                                           csr_excl_item    csr_excl,
-                                           string           scope = "ral");
+  virtual function void add_csr_exclusions(string csr_test_type, csr_excl_item csr_excl,
+                                           string scope = "ral");
     `uvm_info(`gfn, "no exclusion item added from this function", UVM_DEBUG)
   endfunction
 
@@ -152,8 +150,8 @@ class dv_base_vseq #(type RAL_T               = dv_base_reg_block,
 
     // run the csr seq
     for (int i = 1; i <= num_times; i++) begin
-      `uvm_info(`gfn, $sformatf("running csr %0s vseq iteration %0d/%0d",
-                                csr_test_type, i, num_times), UVM_LOW)
+      `uvm_info(`gfn, $sformatf(
+                "running csr %0s vseq iteration %0d/%0d", csr_test_type, i, num_times), UVM_LOW)
       run_csr_vseq(.csr_test_type(csr_test_type), .csr_excl(csr_excl));
     end
   endtask
@@ -163,11 +161,9 @@ class dv_base_vseq #(type RAL_T               = dv_base_reg_block,
   // arg csr_excl: csr exclusion object - needs to be created and exclusions set before call
   // arg num_test_csrs:instead of testing the entire ral model or passing test chunk info via
   // plusarg, provide ability to set a random number of csrs to test from higher level sequence
-  virtual task run_csr_vseq(string          csr_test_type = "",
-                            csr_excl_item   csr_excl = null,
-                            int             num_test_csrs = 0,
-                            bit             do_rand_wr_and_reset = 1);
-    csr_base_seq  m_csr_seq;
+  virtual task run_csr_vseq(string csr_test_type = "", csr_excl_item csr_excl = null,
+                            int num_test_csrs = 0, bit do_rand_wr_and_reset = 1);
+    csr_base_seq m_csr_seq;
 
     // env needs to have a ral instance
     `DV_CHECK_EQ_FATAL(cfg.has_ral, 1'b1)
@@ -175,11 +171,11 @@ class dv_base_vseq #(type RAL_T               = dv_base_reg_block,
     // check which csr test type
     case (csr_test_type)
       "hw_reset": csr_base_seq::type_id::set_type_override(csr_hw_reset_seq::get_type());
-      "rw"      : csr_base_seq::type_id::set_type_override(csr_rw_seq::get_type());
+      "rw":       csr_base_seq::type_id::set_type_override(csr_rw_seq::get_type());
       "bit_bash": csr_base_seq::type_id::set_type_override(csr_bit_bash_seq::get_type());
       "aliasing": csr_base_seq::type_id::set_type_override(csr_aliasing_seq::get_type());
       "mem_walk": csr_base_seq::type_id::set_type_override(csr_mem_walk_seq::get_type());
-      default   : `uvm_fatal(`gfn, $sformatf("specified opt is invalid: +csr_%0s", csr_test_type))
+      default:    `uvm_fatal(`gfn, $sformatf("specified opt is invalid: +csr_%0s", csr_test_type))
     endcase
 
     // if hw_reset test, then write all CSRs first and reset the whole dut

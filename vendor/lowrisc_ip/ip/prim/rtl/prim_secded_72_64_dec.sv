@@ -7,8 +7,8 @@
 module prim_secded_72_64_dec (
   input        [71:0] in,
   output logic [63:0] d_o,
-  output logic [7:0] syndrome_o,
-  output logic [1:0] err_o
+  output logic [ 7:0] syndrome_o,
+  output logic [ 1:0] err_o
 );
 
   logic single_error;
@@ -115,7 +115,7 @@ module prim_secded_72_64_dec (
 
   // err_o calc. bit0: single error, bit1: double error
   assign single_error = ^syndrome_o;
-  assign err_o[0] =  single_error;
+  assign err_o[0] = single_error;
   assign err_o[1] = ~single_error & (|syndrome_o);
 endmodule
 

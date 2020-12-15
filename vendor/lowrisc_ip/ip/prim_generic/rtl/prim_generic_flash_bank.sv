@@ -6,9 +6,9 @@
 //
 
 module prim_generic_flash_bank #(
-  parameter int InfosPerBank  = 1,   // info pages per bank
-  parameter int PagesPerBank  = 256, // data pages per bank
-  parameter int WordsPerPage  = 256, // words per page
+  parameter int InfosPerBank  = 1,  // info pages per bank
+  parameter int PagesPerBank  = 256,  // data pages per bank
+  parameter int WordsPerPage  = 256,  // words per page
   parameter int DataWidth     = 32,  // bits per word
   parameter int MetaDataWidth = 12,  // this is a temporary parameter to work around ECC issues
 
@@ -17,24 +17,24 @@ module prim_generic_flash_bank #(
   localparam int WordW = $clog2(WordsPerPage),
   localparam int AddrW = PageW + WordW
 ) (
-  input                              clk_i,
-  input                              rst_ni,
-  input                              rd_i,
-  input                              prog_i,
-  input                              prog_last_i,
+  input                                               clk_i,
+  input                                               rst_ni,
+  input                                               rd_i,
+  input                                               prog_i,
+  input                                               prog_last_i,
   // the generic model does not make use of program types
-  input flash_ctrl_pkg::flash_prog_e prog_type_i,
-  input                              pg_erase_i,
-  input                              bk_erase_i,
-  input [AddrW-1:0]                  addr_i,
-  input flash_ctrl_pkg::flash_part_e part_i,
-  input [DataWidth-1:0]              prog_data_i,
-  output logic                       ack_o,
-  output logic                       done_o,
-  output logic [DataWidth-1:0]       rd_data_o,
-  output logic                       init_busy_o,
-  input                              flash_power_ready_h_i,
-  input                              flash_power_down_h_i
+  input  flash_ctrl_pkg::flash_prog_e                 prog_type_i,
+  input                                               pg_erase_i,
+  input                                               bk_erase_i,
+  input                               [    AddrW-1:0] addr_i,
+  input  flash_ctrl_pkg::flash_part_e                 part_i,
+  input                               [DataWidth-1:0] prog_data_i,
+  output logic                                        ack_o,
+  output logic                                        done_o,
+  output logic                        [DataWidth-1:0] rd_data_o,
+  output logic                                        init_busy_o,
+  input                                               flash_power_ready_h_i,
+  input                                               flash_power_down_h_i
 );
 
   // Emulated flash macro values
@@ -45,45 +45,45 @@ module prim_generic_flash_bank #(
   localparam int InitCycles = 100;
 
   // Locally derived values
-  localparam int WordsPerBank  = PagesPerBank * WordsPerPage;
+  localparam int WordsPerBank = PagesPerBank * WordsPerPage;
   localparam int WordsPerInfoBank = InfosPerBank * WordsPerPage;
   localparam int InfoAddrW = $clog2(WordsPerInfoBank);
 
   typedef enum logic [2:0] {
-    StReset    = 'h0,
-    StInit     = 'h1,
-    StIdle     = 'h2,
-    StRead     = 'h3,
-    StProg     = 'h4,
-    StErase    = 'h5
+    StReset = 'h0,
+    StInit  = 'h1,
+    StIdle  = 'h2,
+    StRead  = 'h3,
+    StProg  = 'h4,
+    StErase = 'h5
   } state_e;
 
   state_e st_q, st_d;
 
-  logic [31:0]              time_cnt;
-  logic [31:0]              index_cnt;
-  logic                     time_cnt_inc ,time_cnt_clr, time_cnt_set1;
-  logic                     index_cnt_inc, index_cnt_clr;
-  logic [31:0]              index_limit_q, index_limit_d;
-  logic [31:0]              time_limit_q, time_limit_d;
-  logic                     prog_pend_q, prog_pend_d;
-  logic                     mem_req;
-  logic                     mem_wr;
-  logic [DataWidth-1:0]     mem_wdata;
-  logic [AddrW-1:0]         mem_addr;
-  flash_ctrl_pkg::flash_part_e mem_part;
+  logic [31:0] time_cnt;
+  logic [31:0] index_cnt;
+  logic time_cnt_inc, time_cnt_clr, time_cnt_set1;
+  logic index_cnt_inc, index_cnt_clr;
+  logic [31:0] index_limit_q, index_limit_d;
+  logic [31:0] time_limit_q, time_limit_d;
+  logic prog_pend_q, prog_pend_d;
+  logic                                        mem_req;
+  logic                                        mem_wr;
+  logic                        [DataWidth-1:0] mem_wdata;
+  logic                        [    AddrW-1:0] mem_addr;
+  flash_ctrl_pkg::flash_part_e                 mem_part;
 
   // insert a fifo here to break the large fanout from inputs to memories on reads
   typedef struct packed {
-    logic                        rd;
-    logic                        prog;
-    logic                        prog_last;
+    logic rd;
+    logic prog;
+    logic prog_last;
     flash_ctrl_pkg::flash_prog_e prog_type;
-    logic                        pg_erase;
-    logic                        bk_erase;
-    logic [AddrW-1:0]            addr;
+    logic pg_erase;
+    logic bk_erase;
+    logic [AddrW-1:0] addr;
     flash_ctrl_pkg::flash_part_e part;
-    logic [DataWidth-1:0]        prog_data;
+    logic [DataWidth-1:0] prog_data;
   } cmd_payload_t;
 
   cmd_payload_t cmd_d, cmd_q;
@@ -116,12 +116,12 @@ module prim_generic_flash_bank #(
   logic wvalid;
   logic ack;
   assign wvalid = (rd_i | prog_i | pg_erase_i | bk_erase_i) & !init_busy_o;
-  assign ack_o = ack & !init_busy_o;
+  assign ack_o  = ack & !init_busy_o;
 
   prim_fifo_sync #(
-    .Width   ($bits(cmd_payload_t)),
-    .Pass    (0),
-    .Depth   (2)
+    .Width($bits(cmd_payload_t)),
+    .Pass (0),
+    .Depth(2)
   ) u_cmd_fifo (
     .clk_i,
     .rst_ni,
@@ -211,25 +211,25 @@ module prim_generic_flash_bank #(
 
   always_comb begin
     // state
-    st_d             = st_q;
+    st_d          = st_q;
 
     // internally consumed signals
-    index_limit_d    = index_limit_q;
-    time_limit_d     = time_limit_q;
-    prog_pend_d      = prog_pend_q;
-    mem_req          = '0;
-    mem_wr           = '0;
-    mem_wdata        = '0;
-    time_cnt_inc     = '0;
-    time_cnt_clr     = '0;
-    time_cnt_set1    = '0;
-    index_cnt_inc    = '0;
-    index_cnt_clr    = '0;
+    index_limit_d = index_limit_q;
+    time_limit_d  = time_limit_q;
+    prog_pend_d   = prog_pend_q;
+    mem_req       = '0;
+    mem_wr        = '0;
+    mem_wdata     = '0;
+    time_cnt_inc  = '0;
+    time_cnt_clr  = '0;
+    time_cnt_set1 = '0;
+    index_cnt_inc = '0;
+    index_cnt_clr = '0;
 
     // i/o
-    init_busy_o      = '0;
-    pop_cmd          = '0;
-    done_o           = '0;
+    init_busy_o   = '0;
+    pop_cmd       = '0;
+    done_o        = '0;
 
     unique case (st_q)
       StReset: begin
@@ -333,14 +333,14 @@ module prim_generic_flash_bank #(
         st_d = StIdle;
       end
 
-    endcase // unique case (st_q)
+    endcase  // unique case (st_q)
 
     // Emulate power down and power loss behavior
     if (!flash_power_ready_h_i || flash_power_down_h_i) begin
       st_d = StReset;
     end
 
-  end // always_comb
+  end  // always_comb
 
   localparam int MemWidth = DataWidth - MetaDataWidth;
 
@@ -354,12 +354,12 @@ module prim_generic_flash_bank #(
     .DataBitsPerMask(MemWidth)
   ) u_mem (
     .clk_i,
-    .req_i    (mem_req & (mem_part == flash_ctrl_pkg::FlashPartData)),
-    .write_i  (mem_wr),
-    .addr_i   (mem_addr),
-    .wdata_i  (mem_wdata[MemWidth-1:0]),
-    .wmask_i  ({MemWidth{1'b1}}),
-    .rdata_o  (rd_nom_data_main)
+    .req_i  (mem_req & (mem_part == flash_ctrl_pkg::FlashPartData)),
+    .write_i(mem_wr),
+    .addr_i (mem_addr),
+    .wdata_i(mem_wdata[MemWidth-1:0]),
+    .wmask_i({MemWidth{1'b1}}),
+    .rdata_o(rd_nom_data_main)
   );
 
   prim_ram_1p #(
@@ -368,12 +368,12 @@ module prim_generic_flash_bank #(
     .DataBitsPerMask(MetaDataWidth)
   ) u_mem_meta (
     .clk_i,
-    .req_i    (mem_req & (mem_part == flash_ctrl_pkg::FlashPartData)),
-    .write_i  (mem_wr),
-    .addr_i   (mem_addr),
-    .wdata_i  (mem_wdata[MemWidth +: MetaDataWidth]),
-    .wmask_i  ({MetaDataWidth{1'b1}}),
-    .rdata_o  (rd_meta_data_main)
+    .req_i  (mem_req & (mem_part == flash_ctrl_pkg::FlashPartData)),
+    .write_i(mem_wr),
+    .addr_i (mem_addr),
+    .wdata_i(mem_wdata[MemWidth+:MetaDataWidth]),
+    .wmask_i({MetaDataWidth{1'b1}}),
+    .rdata_o(rd_meta_data_main)
   );
 
   prim_ram_1p #(
@@ -382,12 +382,12 @@ module prim_generic_flash_bank #(
     .DataBitsPerMask(MemWidth)
   ) u_info_mem (
     .clk_i,
-    .req_i    (mem_req & (mem_part == flash_ctrl_pkg::FlashPartInfo)),
-    .write_i  (mem_wr),
-    .addr_i   (mem_addr[0 +: InfoAddrW]),
-    .wdata_i  (mem_wdata[MemWidth-1:0]),
-    .wmask_i  ({MemWidth{1'b1}}),
-    .rdata_o  (rd_nom_data_info)
+    .req_i  (mem_req & (mem_part == flash_ctrl_pkg::FlashPartInfo)),
+    .write_i(mem_wr),
+    .addr_i (mem_addr[0+:InfoAddrW]),
+    .wdata_i(mem_wdata[MemWidth-1:0]),
+    .wmask_i({MemWidth{1'b1}}),
+    .rdata_o(rd_nom_data_info)
   );
 
   prim_ram_1p #(
@@ -396,12 +396,12 @@ module prim_generic_flash_bank #(
     .DataBitsPerMask(MetaDataWidth)
   ) u_info_mem_meta (
     .clk_i,
-    .req_i    (mem_req & (mem_part == flash_ctrl_pkg::FlashPartInfo)),
-    .write_i  (mem_wr),
-    .addr_i   (mem_addr[0 +: InfoAddrW]),
-    .wdata_i  (mem_wdata[MemWidth +: MetaDataWidth]),
-    .wmask_i  ({MetaDataWidth{1'b1}}),
-    .rdata_o  (rd_meta_data_info)
+    .req_i  (mem_req & (mem_part == flash_ctrl_pkg::FlashPartInfo)),
+    .write_i(mem_wr),
+    .addr_i (mem_addr[0+:InfoAddrW]),
+    .wdata_i(mem_wdata[MemWidth+:MetaDataWidth]),
+    .wmask_i({MetaDataWidth{1'b1}}),
+    .rdata_o(rd_meta_data_info)
   );
 
   assign rd_data_main = {rd_meta_data_main, rd_nom_data_main};
@@ -412,4 +412,4 @@ module prim_generic_flash_bank #(
   assign unused_prog_type = cmd_q.prog_type;
 
 
-endmodule // prim_generic_flash
+endmodule  // prim_generic_flash

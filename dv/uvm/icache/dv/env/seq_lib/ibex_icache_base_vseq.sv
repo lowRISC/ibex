@@ -2,12 +2,11 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class ibex_icache_base_vseq
-  extends dv_base_vseq #(
-    .CFG_T               (ibex_icache_env_cfg),
-    .COV_T               (ibex_icache_env_cov),
-    .VIRTUAL_SEQUENCER_T (ibex_icache_virtual_sequencer)
-  );
+class ibex_icache_base_vseq extends dv_base_vseq#(
+  .CFG_T              (ibex_icache_env_cfg),
+  .COV_T              (ibex_icache_env_cov),
+  .VIRTUAL_SEQUENCER_T(ibex_icache_virtual_sequencer)
+);
   `uvm_object_utils(ibex_icache_base_vseq)
   `uvm_object_new
 
@@ -27,16 +26,16 @@ class ibex_icache_base_vseq
   // Subclasses should override pre_start, call this super to construct the sequence, and then set
   // any control knobs they need.
   ibex_icache_core_base_seq core_seq;
-  ibex_icache_mem_resp_seq  mem_seq;
+  ibex_icache_mem_resp_seq mem_seq;
 
   // ECC sequences. The arrays are created in pre_start and are nonempty if ECC errors are enabled.
-  ibex_icache_ecc_base_seq  ecc_tag_seqs[];
-  ibex_icache_ecc_base_seq  ecc_data_seqs[];
+  ibex_icache_ecc_base_seq ecc_tag_seqs[];
+  ibex_icache_ecc_base_seq ecc_data_seqs[];
 
   // The number of transactions to run (passed to the core sequence). This gets randomised to
   // something sensible by default, but can be overridden by setting it before starting the
   // sequence.
-  constraint num_trans_c { num_trans inside {[800:1000]}; }
+  constraint num_trans_c {num_trans inside {[800 : 1000]};}
 
   virtual task pre_start();
     `uvm_create_on(core_seq, p_sequencer.core_sequencer_h)
@@ -49,7 +48,7 @@ class ibex_icache_base_vseq
     if (prev_sequence != null) begin
       // If there was a previous sequence, pass it down to core_seq and mem_seq
       core_seq.prev_sequence = prev_sequence.core_seq;
-      mem_seq.prev_sequence = prev_sequence.mem_seq;
+      mem_seq.prev_sequence  = prev_sequence.mem_seq;
 
       // If the new memory sequence will change mem_err_shift, we need to tell the core to
       // invalidate at the start of its sequence.
@@ -113,9 +112,11 @@ class ibex_icache_base_vseq
   // immediately (so you can start sequences in a loop).
   protected task start_ecc_body(ibex_icache_ecc_base_seq seq, ibex_icache_ecc_sequencer sqr);
     `DV_CHECK_RANDOMIZE_FATAL(seq);
-    fork begin
-      seq.start(sqr);
-    end join_none
+    fork
+      begin
+        seq.start(sqr);
+      end
+    join_none
   endtask
 
   // Clear any interface signals that must be cleared before resetting the DUT.

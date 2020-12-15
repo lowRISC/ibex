@@ -10,12 +10,13 @@
 //    (2) PMP_ERR: This can be set as a result of taking a bad request.
 //    (3) RDATA:   This gets set with response data some time after granting a request.
 
-class ibex_icache_mem_driver
-  extends dv_base_driver #(.ITEM_T (ibex_icache_mem_resp_item),
-                           .CFG_T  (ibex_icache_mem_agent_cfg));
+class ibex_icache_mem_driver extends dv_base_driver#(
+  .ITEM_T(ibex_icache_mem_resp_item),
+  .CFG_T (ibex_icache_mem_agent_cfg)
+);
 
-  int unsigned min_grant_delay = 0;
-  int unsigned max_grant_delay = 10;
+  int unsigned                         min_grant_delay = 0;
+  int unsigned                         max_grant_delay = 10;
 
   mailbox #(ibex_icache_mem_resp_item) rdata_queue;
   mailbox #(bit [32:0])                req_queue;
@@ -25,19 +26,19 @@ class ibex_icache_mem_driver
 
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
-    rdata_queue   = new("rdata_queue");
-    req_queue     = new("req_queue");
+    rdata_queue = new("rdata_queue");
+    req_queue   = new("req_queue");
   endfunction
 
   virtual task reset_signals();
-    ibex_icache_mem_resp_item resp;
-    bit [32:0]                req;
+    ibex_icache_mem_resp_item        resp;
+    bit                       [32:0] req;
 
     cfg.vif.reset();
 
     // Flush mailboxes of pending requests and responses
-    while (req_queue.try_get(req)) ;
-    while (rdata_queue.try_get(resp)) ;
+    while (req_queue.try_get(req));
+    while (rdata_queue.try_get(resp));
 
   endtask
 
@@ -60,11 +61,11 @@ class ibex_icache_mem_driver
       // Pick a number of cycles for the grant line to be low
       `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(gnt_delay,
                                          gnt_delay dist {
-                                           min_grant_delay                         :/ 3,
-                                           [min_grant_delay+1 : max_grant_delay-1] :/ 1,
-                                           max_grant_delay                         :/ 1
+                                           min_grant_delay                             :/ 3,
+                                           [min_grant_delay + 1 : max_grant_delay - 1] :/ 1,
+                                           max_grant_delay                             :/ 1
                                          };)
-      repeat(gnt_delay) @(cfg.vif.driver_cb);
+      repeat (gnt_delay) @(cfg.vif.driver_cb);
 
       // Set the grant line high for a cycle then go around again. Note that the grant line will be
       // high for two consecutive cycles if gnt_delay is 0.

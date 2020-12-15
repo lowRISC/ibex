@@ -2,12 +2,12 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class ibex_icache_core_base_seq extends dv_base_seq #(
-    .REQ         (ibex_icache_core_req_item),
-    .RSP         (ibex_icache_core_rsp_item),
-    .CFG_T       (ibex_icache_core_agent_cfg),
-    .SEQUENCER_T (ibex_icache_core_sequencer)
-  );
+class ibex_icache_core_base_seq extends dv_base_seq#(
+  .REQ        (ibex_icache_core_req_item),
+  .RSP        (ibex_icache_core_rsp_item),
+  .CFG_T      (ibex_icache_core_agent_cfg),
+  .SEQUENCER_T(ibex_icache_core_sequencer)
+);
   `uvm_object_utils(ibex_icache_core_base_seq)
 
   `uvm_object_new
@@ -55,16 +55,20 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
   int unsigned num_trans = 1000;
 
   // The base address used when constrain_branches is true.
-  protected rand bit[31:0] base_addr;
+  protected rand bit [31:0] base_addr;
 
   // The top of the possible range of addresses used when constrain_branches is true. Set at the
   // start of body().
   protected bit [31:0] top_restricted_addr;
 
   // Distribution for base_addr which adds extra weight to each end of the address space
-  constraint c_base_addr { base_addr dist { [0:15]                      :/ 1,
-                                            [16:32'hfffffff0]           :/ 2,
-                                            [32'hfffffff0:32'hffffffff] :/ 1 }; }
+  constraint c_base_addr {
+    base_addr dist {
+      [0 : 15]                      :/ 1,
+      [16 : 32'hfffffff0]           :/ 2,
+      [32'hfffffff0 : 32'hffffffff] :/ 1
+    };
+  }
 
   // Make sure that base_addr is even (otherwise you can fail to generate items if you pick a base
   // addr of 32'hffffffff with constrained addresses enabled: the only address large enough is
@@ -109,13 +113,11 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
   protected virtual task run_req(ibex_icache_core_req_item req, ibex_icache_core_rsp_item rsp);
     start_item(req);
 
-    if (constrain_branches && insns_since_branch >= 100)
-      force_branch = 1'b1;
+    if (constrain_branches && insns_since_branch >= 100) force_branch = 1'b1;
 
-    `DV_CHECK_RANDOMIZE_WITH_FATAL(
-       req,
+    `DV_CHECK_RANDOMIZE_WITH_FATAL(req,
 
-       // Force a branch if necessary
+                                   // Force a branch if necessary
        force_branch -> req.trans_type == ICacheCoreTransTypeBranch;
 
        // If this is a branch and constrain_branches is true then constrain any branch target.
@@ -158,8 +160,7 @@ class ibex_icache_core_base_seq extends dv_base_seq #(
 
        // If we have seen a new seed since the last invalidation (which must have happened while the
        // cache was disabled) and this item is enabled, force the cache to invalidate.
-       stale_seed && enable -> invalidate == 1'b1;
-    )
+       stale_seed && enable -> invalidate == 1'b1;)
 
     finish_item(req);
     get_response(rsp);

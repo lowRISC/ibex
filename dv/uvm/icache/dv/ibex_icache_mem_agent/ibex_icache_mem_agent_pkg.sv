@@ -25,4 +25,4 @@ package ibex_icache_mem_agent_pkg;
   `include "ibex_icache_mem_agent.sv"
   `include "ibex_icache_mem_seq_list.sv"
 
-endpackage: ibex_icache_mem_agent_pkg
+endpackage : ibex_icache_mem_agent_pkg

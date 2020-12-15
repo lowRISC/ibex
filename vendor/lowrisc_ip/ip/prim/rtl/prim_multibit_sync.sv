@@ -39,24 +39,24 @@
 
 module prim_multibit_sync #(
   // Width of the multibit signal.
-  parameter int               Width = 8,
+  parameter int               Width      = 8,
   // Number of cycles the synchronized multi-bit signal needs to
   // be stable until it is relased to the output. Each check adds
   // a comparator and an additional delay register.
-  parameter int               NumChecks = 1,
+  parameter int               NumChecks  = 1,
   // Reset value of the multibit signal.
   parameter logic [Width-1:0] ResetValue = '0
 ) (
   input clk_i,
   input rst_ni,
-  input  logic [Width-1:0] data_i,
+  input logic [Width-1:0] data_i,
   output logic [Width-1:0] data_o
 );
 
   `ASSERT_INIT(NumChecks_A, NumChecks >= 1)
 
   // First, synchronize the input data to this clock domain.
-  logic [NumChecks:0][Width-1:0]   data_check_d;
+  logic [  NumChecks:0][Width-1:0] data_check_d;
   logic [NumChecks-1:0][Width-1:0] data_check_q;
 
   prim_generic_flop_2sync #(
@@ -78,9 +78,7 @@ module prim_multibit_sync #(
     assign checks[k] = (data_check_d[k] == data_check_d[NumChecks]);
     // Output is only allowed to change when all checks have passed.
     `ASSERT(StableCheck_A,
-          data_o != $past(data_o)
-          |->
-          $past(data_check_d[k]) == $past(data_check_d[NumChecks]))
+            data_o != $past(data_o) |-> $past(data_check_d[k]) == $past(data_check_d[NumChecks]))
   end : gen_checks
 
   // Only propagate to output register if all checks have passed.

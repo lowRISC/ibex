@@ -2,26 +2,26 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class irq_request_driver extends uvm_driver #(irq_seq_item);
+class irq_request_driver extends uvm_driver#(irq_seq_item);
 
   // The virtual interface used to drive and view HDL signals.
   protected virtual irq_if vif;
-`uvm_component_utils(irq_request_driver)
+  `uvm_component_utils(irq_request_driver)
   `uvm_component_new
 
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
     if (!uvm_config_db#(virtual irq_if)::get(this, "", "vif", vif)) begin
-      `uvm_fatal("NOVIF",{"virtual interface must be set for: ",get_full_name(),".vif"});
+      `uvm_fatal("NOVIF", {"virtual interface must be set for: ", get_full_name(), ".vif"});
     end
-  endfunction: build_phase
+  endfunction : build_phase
 
   virtual task run_phase(uvm_phase phase);
     reset_signals();
     forever begin
       fork : drive_irq
         get_and_drive();
-        wait (vif.driver_cb.reset === 1'b1);
+        wait(vif.driver_cb.reset === 1'b1);
       join_any
       // Will only reach here on mid-test reset
       disable fork;
@@ -42,7 +42,7 @@ class irq_request_driver extends uvm_driver #(irq_seq_item);
   endtask
 
   virtual protected task get_and_drive();
-    wait (vif.driver_cb.reset === 1'b0);
+    wait(vif.driver_cb.reset === 1'b0);
     forever begin
       seq_item_port.try_next_item(req);
       if (req != null) begin
@@ -61,7 +61,7 @@ class irq_request_driver extends uvm_driver #(irq_seq_item);
     drive_reset_value();
   endtask : reset_signals
 
-  virtual protected task drive_seq_item (irq_seq_item trans);
+  virtual protected task drive_seq_item(irq_seq_item trans);
     vif.driver_cb.irq_software <= trans.irq_software;
     vif.driver_cb.irq_timer    <= trans.irq_timer;
     vif.driver_cb.irq_external <= trans.irq_external;

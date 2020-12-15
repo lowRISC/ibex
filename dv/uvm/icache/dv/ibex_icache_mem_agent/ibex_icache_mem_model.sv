@@ -21,7 +21,9 @@
 //
 // [1] https://burtleburtle.net/bob/hash/integer.html
 
-class ibex_icache_mem_model #(parameter int unsigned BusWidth = 32) extends uvm_object;
+class ibex_icache_mem_model #(
+  parameter int unsigned BusWidth = 32
+) extends uvm_object;
 
   // If set, disable PMP errors
   protected bit no_pmp_errs;
@@ -29,23 +31,21 @@ class ibex_icache_mem_model #(parameter int unsigned BusWidth = 32) extends uvm_
   // If set, disable memory errors
   protected bit no_mem_errs;
 
-  function new(string       name="",
-               bit          disable_pmp_errs=0,
-               bit          disable_mem_errs=0);
+  function new(string name = "", bit disable_pmp_errs = 0, bit disable_mem_errs = 0);
     no_pmp_errs = disable_pmp_errs;
     no_mem_errs = disable_mem_errs;
   endfunction
 
   `uvm_object_utils_begin(ibex_icache_mem_model)
-    `uvm_field_int (no_pmp_errs, UVM_DEFAULT)
-    `uvm_field_int (no_mem_errs, UVM_DEFAULT)
+    `uvm_field_int(no_pmp_errs, UVM_DEFAULT)
+    `uvm_field_int(no_mem_errs, UVM_DEFAULT)
   `uvm_object_utils_end
 
   // Return true if reading BusWidth bits from address intersects with the error range given by the
   // current seed. The error range has a length of (1/2^error_shift) times the size of the address
   // space.
-  protected function automatic logic
-  is_error(bit [31:0] seed, logic [31:0] address, int unsigned error_shift);
+  protected function automatic logic is_error(bit [31:0] seed, logic [31:0] address,
+                                              int unsigned error_shift);
 
     logic [31:0] rng_lo, rng_hi, rng_w0, rng_w1;
     rng_lo = seed ^ 32'hdeadbeef;
@@ -61,24 +61,25 @@ class ibex_icache_mem_model #(parameter int unsigned BusWidth = 32) extends uvm_
 
   // Return true if reading BusWidth bits from address should give a PMP error
   function automatic logic is_pmp_error(bit [31:0] seed, logic [31:0] addr, int unsigned err_shift);
-    return (! no_pmp_errs) && is_error(seed, addr ^ 32'h12344321, err_shift);
+    return (!no_pmp_errs) && is_error(seed, addr ^ 32'h12344321, err_shift);
   endfunction
 
   // Return true if reading BusWidth bits from address should give a memory error
   function automatic logic is_mem_error(bit [31:0] seed, logic [31:0] addr, int unsigned err_shift);
-    return (! no_mem_errs) && is_error(seed, addr ^ 32'hf00dbeef, err_shift);
+    return (!no_mem_errs) && is_error(seed, addr ^ 32'hf00dbeef, err_shift);
   endfunction
 
   // Return true if reading BusWidth bits from address should give some sort of error
-  function automatic logic is_either_error(bit [31:0] seed, logic [31:0] addr, int unsigned err_shift);
+  function automatic logic is_either_error(bit [31:0] seed, logic [31:0] addr,
+                                           int unsigned err_shift);
     return is_pmp_error(seed, addr, err_shift) || is_mem_error(seed, addr, err_shift);
   endfunction
 
   // Return BusWidth bits of data from reading at address.
   function automatic logic [BusWidth-1:0] read_data(bit [31:0] seed, logic [31:0] address);
     logic [BusWidth-1:0] acc, word_data;
-    int                  word_count, lo_idx, lo_bit;
-    logic [29:0]         word_addr;
+    int word_count, lo_idx, lo_bit;
+    logic [29:0] word_addr;
 
     // The number of 32-bit words we have to read is the number of words in BusWidth, plus one if
     // the address is not word-aligned.

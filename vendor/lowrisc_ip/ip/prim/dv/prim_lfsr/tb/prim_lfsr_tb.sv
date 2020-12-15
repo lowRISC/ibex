@@ -7,36 +7,36 @@
 
 module prim_lfsr_tb;
 
-//////////////////////////////////////////////////////
-// config
-//////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////
+  // config
+  //////////////////////////////////////////////////////
 
-// this can be overriden on the command line
-// supported types are GAL_XOR, FIB_XNOR
+  // this can be overriden on the command line
+  // supported types are GAL_XOR, FIB_XNOR
 `ifdef LFSR_TYPE
-  localparam string           LfsrType   = `LFSR_TYPE;
+  localparam string LfsrType = `LFSR_TYPE;
 `else
-  localparam string           LfsrType   = "GAL_XOR";
+  localparam string LfsrType = "GAL_XOR";
 `endif
 `ifdef MIN_LFSR_DW
-  localparam int unsigned     MinLfsrDw  = `MIN_LFSR_DW;
+  localparam int unsigned MinLfsrDw = `MIN_LFSR_DW;
 `else
-  localparam int unsigned     MinLfsrDw  = 4;
+  localparam int unsigned MinLfsrDw = 4;
 `endif
 `ifdef MAX_LFSR_DW
-  localparam int unsigned     MaxLfsrDw  = `MAX_LFSR_DW;
+  localparam int unsigned MaxLfsrDw = `MAX_LFSR_DW;
 `else
-  localparam int unsigned     MaxLfsrDw  = 32;
+  localparam int unsigned MaxLfsrDw = 32;
 `endif
 
   // leave this constant
-  localparam logic SEED       = 1'b1;
+  localparam logic SEED = 1'b1;
 
-  localparam time  ClkPeriod  = 10000;
+  localparam time ClkPeriod = 10000;
 
-//////////////////////////////////////////////////////
-// clock
-//////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////
+  // clock
+  //////////////////////////////////////////////////////
 
   wire clk, rst_n;
 
@@ -45,9 +45,9 @@ module prim_lfsr_tb;
     .rst_n
   );
 
-//////////////////////////////////////////////////////
-// DUTs
-//////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////
+  // DUTs
+  //////////////////////////////////////////////////////
 
   // The StatePerm below is only defined for LFSRs up to 256bit wide.
   `ASSERT_INIT(MaxStateSizeCheck_A, MaxLfsrDw < 256)
@@ -128,26 +128,26 @@ module prim_lfsr_tb;
     };
 
     prim_lfsr #(
-      .LfsrType    ( LfsrType ),
-      .LfsrDw      ( k        ),
-      .EntropyDw   ( 1        ),
-      .StateOutDw  ( k        ),
-      .DefaultSeed ( k'(SEED) ),
+      .LfsrType   (LfsrType),
+      .LfsrDw     (k),
+      .EntropyDw  (1),
+      .StateOutDw (k),
+      .DefaultSeed(k'(SEED)),
       // The case where this is disabled is already tested with FPV.
       // Hence we cover the enabled case with custom permutations
       // in this testbench.
-      .StatePermEn ( 1'b1     ),
-      .StatePerm   ( StatePerm[MaxLfsrDw-1:0] ),
+      .StatePermEn(1'b1),
+      .StatePerm  (StatePerm[MaxLfsrDw-1:0]),
       // Enable internal max length check.
-      .MaxLenSVA   ( 1'b1     )
+      .MaxLenSVA  (1'b1)
     ) i_prim_lfsr (
-      .clk_i         ( clk                 ),
-      .rst_ni        ( rst_n               ),
-      .seed_en_i     ( 1'b0                ),
-      .seed_i        ( '0                  ),
-      .lfsr_en_i     ( lfsr_en[k]          ),
-      .entropy_i     ( 1'b0                ),
-      .state_o       ( state_out[k][k-1:0] )
+      .clk_i    (clk),
+      .rst_ni   (rst_n),
+      .seed_en_i(1'b0),
+      .seed_i   ('0),
+      .lfsr_en_i(lfsr_en[k]),
+      .entropy_i(1'b0),
+      .state_o  (state_out[k][k-1:0])
     );
 
     if (k < MaxLfsrDw) begin : gen_tie_off
@@ -155,12 +155,12 @@ module prim_lfsr_tb;
     end
 
     // calculate period of LFSR:
-    assign lfsr_periods[k] = MaxLfsrDw'({{(k-1){1'b1}}, 1'b0});
+    assign lfsr_periods[k] = MaxLfsrDw'({{(k - 1) {1'b1}}, 1'b0});
   end
 
-//////////////////////////////////////////////////////
-// stimuli application / response checking
-//////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////
+  // stimuli application / response checking
+  //////////////////////////////////////////////////////
 
   initial begin : p_stimuli
     lfsr_en = '0;
@@ -170,8 +170,8 @@ module prim_lfsr_tb;
     main_clk.set_active();
     main_clk.apply_reset();
 
-    $display("LFSR maxlen test started for %s (%0d bit to %0d bit).",
-        LfsrType, MinLfsrDw, MaxLfsrDw);
+    $display("LFSR maxlen test started for %s (%0d bit to %0d bit).", LfsrType, MinLfsrDw,
+             MaxLfsrDw);
 
     main_clk.wait_clks(10);
 
@@ -179,7 +179,7 @@ module prim_lfsr_tb;
     lfsr_en = '1;
 
     $display("Running for 2**%0d-1 cycles...", MaxLfsrDw);
-    for (longint unsigned k = 0; k <= lfsr_periods[MaxLfsrDw]; k++ ) begin
+    for (longint unsigned k = 0; k <= lfsr_periods[MaxLfsrDw]; k++) begin
 
       main_clk.wait_clks(1);
 
@@ -210,8 +210,7 @@ module prim_lfsr_tb;
     end
 
     if (!err) begin
-      $display("All LFSRs from %0d bit to %0d have maximum length!",
-          MinLfsrDw, MaxLfsrDw);
+      $display("All LFSRs from %0d bit to %0d have maximum length!", MinLfsrDw, MaxLfsrDw);
       // signature for makefile
       $display("TEST PASSED CHECKS");
     end else begin

@@ -16,13 +16,12 @@ class dv_base_reg_block extends uvm_reg_block;
   // This is set by compute_addr_mask(), which must run after locking the model.
   protected uvm_reg_addr_t addr_mask[uvm_reg_map];
 
-  function new (string name = "", int has_coverage = UVM_NO_COVERAGE);
+  function new(string name = "", int has_coverage = UVM_NO_COVERAGE);
     super.new(name, has_coverage);
   endfunction
 
   // provide build function to supply base addr
-  virtual function void build(uvm_reg_addr_t base_addr,
-                              csr_excl_item csr_excl = null);
+  virtual function void build(uvm_reg_addr_t base_addr, csr_excl_item csr_excl = null);
     `uvm_fatal(`gfn, "this method is not supposed to be called directly!")
   endfunction
 
@@ -42,8 +41,8 @@ class dv_base_reg_block extends uvm_reg_block;
     uvm_reg csr = get_reg_by_name(csr_name);
     `downcast(get_dv_base_reg_by_name, csr)
     if (check_csr_exist) begin
-      `DV_CHECK_NE_FATAL(get_dv_base_reg_by_name, null,
-                         $sformatf("%0s does not exist in block %0s",csr_name, get_name()))
+      `DV_CHECK_NE_FATAL(get_dv_base_reg_by_name, null, $sformatf(
+                         "%0s does not exist in block %0s", csr_name, get_name()))
     end
   endfunction
 
@@ -79,10 +78,10 @@ class dv_base_reg_block extends uvm_reg_block;
   // max2(biggest_reg_offset+reg_size, biggest_mem_offset+mem_size) and then round up to 2**N
   protected function void compute_addr_mask(uvm_reg_map map);
     uvm_reg_addr_t max_addr, max_offset;
-    uvm_reg_block  blocks[$];
-    uvm_reg        regs[$];
-    uvm_mem        mems[$];
-    int unsigned   alignment;
+    uvm_reg_block blocks    [$];
+    uvm_reg       regs      [$];
+    uvm_mem       mems      [$];
+    int unsigned  alignment;
 
     // TODO: assume IP only contains 1 reg block, find a better way to handle chip-level and IP
     // with multiple reg blocks
@@ -114,7 +113,7 @@ class dv_base_reg_block extends uvm_reg_block;
     max_offset = max_addr - map.get_base_addr();
 
     // Set alignment to be ceil(log2(biggest_offset))
-    alignment = 0;
+    alignment  = 0;
     while (max_offset > 0) begin
       alignment++;
       max_offset = max_offset >> 1;
@@ -176,8 +175,7 @@ class dv_base_reg_block extends uvm_reg_block;
   // Get the absolute address (in the default register map) for the given offset. For example, if
   // the base address is 'h100 and offset is 'h13, this will return 'h113 ('h110 if word_aligned is
   // set).
-  function uvm_reg_addr_t get_addr_from_offset(uvm_reg_addr_t byte_offset,
-                                               bit word_aligned = 1'b1,
+  function uvm_reg_addr_t get_addr_from_offset(uvm_reg_addr_t byte_offset, bit word_aligned = 1'b1,
                                                uvm_reg_map map = null);
     if (map == null) map = get_default_map();
     return (word_aligned ? get_word_aligned_addr(byte_offset) : byte_offset) + map.get_base_addr();

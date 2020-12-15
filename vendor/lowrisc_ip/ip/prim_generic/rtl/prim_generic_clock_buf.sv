@@ -11,4 +11,4 @@ module prim_generic_clock_buf (
 
   assign clk_o = clk_i;
 
-endmodule // prim_generic_clock_buf
+endmodule  // prim_generic_clock_buf

@@ -8,7 +8,9 @@
  * Covergroups may also be wrapped inside helper classes if needed.
  */
 
-class ibex_icache_env_cov extends dv_base_env_cov #(.CFG_T (ibex_icache_env_cfg));
+class ibex_icache_env_cov extends dv_base_env_cov#(
+  .CFG_T(ibex_icache_env_cfg)
+);
 
   `uvm_component_utils(ibex_icache_env_cov)
 

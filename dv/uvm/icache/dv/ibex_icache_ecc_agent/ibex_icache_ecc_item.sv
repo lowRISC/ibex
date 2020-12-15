@@ -19,10 +19,10 @@ class ibex_icache_ecc_item extends uvm_sequence_item;
   rand int unsigned delay;
 
   `uvm_object_utils_begin(ibex_icache_ecc_item)
-    `uvm_field_int (two_bits, UVM_DEFAULT)
-    `uvm_field_int (bit_pos0, UVM_DEFAULT)
-    `uvm_field_int (bit_pos1, UVM_DEFAULT)
-    `uvm_field_int (delay,    UVM_DEFAULT)
+    `uvm_field_int(two_bits, UVM_DEFAULT)
+    `uvm_field_int(bit_pos0, UVM_DEFAULT)
+    `uvm_field_int(bit_pos1, UVM_DEFAULT)
+    `uvm_field_int(delay, UVM_DEFAULT)
   `uvm_object_utils_end
 
   `uvm_object_new

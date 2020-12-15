@@ -9,27 +9,27 @@
 `include "prim_assert.sv"
 
 module ram_2p #(
-    parameter int Depth       = 128,
-    parameter     MemInitFile = ""
+  parameter int Depth       = 128,
+  parameter     MemInitFile = ""
 ) (
-    input               clk_i,
-    input               rst_ni,
+  input clk_i,
+  input rst_ni,
 
-    input               a_req_i,
-    input               a_we_i,
-    input        [ 3:0] a_be_i,
-    input        [31:0] a_addr_i,
-    input        [31:0] a_wdata_i,
-    output logic        a_rvalid_o,
-    output logic [31:0] a_rdata_o,
+  input               a_req_i,
+  input               a_we_i,
+  input        [ 3:0] a_be_i,
+  input        [31:0] a_addr_i,
+  input        [31:0] a_wdata_i,
+  output logic        a_rvalid_o,
+  output logic [31:0] a_rdata_o,
 
-    input               b_req_i,
-    input               b_we_i,
-    input        [ 3:0] b_be_i,
-    input        [31:0] b_addr_i,
-    input        [31:0] b_wdata_i,
-    output logic        b_rvalid_o,
-    output logic [31:0] b_rdata_o
+  input               b_req_i,
+  input               b_we_i,
+  input        [ 3:0] b_be_i,
+  input        [31:0] b_addr_i,
+  input        [31:0] b_wdata_i,
+  output logic        b_rvalid_o,
+  output logic [31:0] b_rdata_o
 );
 
   localparam int Aw = $clog2(Depth);
@@ -48,7 +48,7 @@ module ram_2p #(
   logic [31:0] a_wmask;
   logic [31:0] b_wmask;
   always_comb begin
-    for (int i = 0 ; i < 4 ; i++) begin
+    for (int i = 0; i < 4; i++) begin
       // mask for read data
       a_wmask[8*i+:8] = {8{a_be_i[i]}};
       b_wmask[8*i+:8] = {8{b_be_i[i]}};
@@ -70,20 +70,20 @@ module ram_2p #(
     .Depth(Depth),
     .MemInitFile(MemInitFile)
   ) u_ram (
-    .clk_a_i   (clk_i),
-    .clk_b_i   (clk_i),
-    .a_req_i   (a_req_i),
-    .a_write_i (a_we_i),
-    .a_addr_i  (a_addr_idx),
-    .a_wdata_i (a_wdata_i),
-    .a_wmask_i (a_wmask),
-    .a_rdata_o (a_rdata_o),
-    .b_req_i   (b_req_i),
-    .b_write_i (b_we_i),
-    .b_wmask_i (b_wmask),
-    .b_addr_i  (b_addr_idx),
-    .b_wdata_i (b_wdata_i),
-    .b_rdata_o (b_rdata_o)
+    .clk_a_i  (clk_i),
+    .clk_b_i  (clk_i),
+    .a_req_i  (a_req_i),
+    .a_write_i(a_we_i),
+    .a_addr_i (a_addr_idx),
+    .a_wdata_i(a_wdata_i),
+    .a_wmask_i(a_wmask),
+    .a_rdata_o(a_rdata_o),
+    .b_req_i  (b_req_i),
+    .b_write_i(b_we_i),
+    .b_wmask_i(b_wmask),
+    .b_addr_i (b_addr_idx),
+    .b_wdata_i(b_wdata_i),
+    .b_rdata_o(b_rdata_o)
   );
 
 endmodule

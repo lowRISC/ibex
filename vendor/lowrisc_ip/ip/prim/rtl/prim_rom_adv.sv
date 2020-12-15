@@ -8,22 +8,22 @@
 
 module prim_rom_adv #(
   // Parameters passed on the the ROM primitive.
-  parameter  int Width       = 32,
-  parameter  int Depth       = 2048, // 8kB default
-  parameter      MemInitFile = "", // VMEM file to initialize the memory with
+  parameter int Width       = 32,
+  parameter int Depth       = 2048,  // 8kB default
+  parameter     MemInitFile = "",  // VMEM file to initialize the memory with
 
-  parameter  int CfgW        = 8,     // WTC, RTC, etc
+  parameter int CfgW = 8,  // WTC, RTC, etc
 
-  localparam int Aw          = $clog2(Depth)
+  localparam int Aw = $clog2(Depth)
 ) (
   input  logic             clk_i,
   input  logic             rst_ni,
   input  logic             req_i,
-  input  logic [Aw-1:0]    addr_i,
+  input  logic [   Aw-1:0] addr_i,
   output logic             rvalid_o,
   output logic [Width-1:0] rdata_o,
 
-  input        [CfgW-1:0]  cfg_i
+  input [CfgW-1:0] cfg_i
 );
 
   // We will eventually use cfg_i for RTC/WTC or other memory parameters.

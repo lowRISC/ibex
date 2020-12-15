@@ -3,34 +3,34 @@
 // SPDX-License-Identifier: Apache-2.0
 
 module tb_cs_registers #(
-    parameter bit               DbgTriggerEn     = 1'b0,
-    parameter bit               ICache           = 1'b0,
-    parameter int unsigned      MHPMCounterNum   = 8,
-    parameter int unsigned      MHPMCounterWidth = 40,
-    parameter bit               PMPEnable        = 1'b0,
-    parameter int unsigned      PMPGranularity   = 0,
-    parameter int unsigned      PMPNumRegions    = 4,
-    parameter bit               RV32E            = 1'b0,
-    parameter ibex_pkg::rv32m_e RV32M            = ibex_pkg::RV32MFast
+  parameter bit               DbgTriggerEn     = 1'b0,
+  parameter bit               ICache           = 1'b0,
+  parameter int unsigned      MHPMCounterNum   = 8,
+  parameter int unsigned      MHPMCounterWidth = 40,
+  parameter bit               PMPEnable        = 1'b0,
+  parameter int unsigned      PMPGranularity   = 0,
+  parameter int unsigned      PMPNumRegions    = 4,
+  parameter bit               RV32E            = 1'b0,
+  parameter ibex_pkg::rv32m_e RV32M            = ibex_pkg::RV32MFast
 ) (
-    // Clock and Reset
-    inout  logic                clk_i,
-    inout  logic                in_rst_ni,
-    output logic                test_passed_o
+  // Clock and Reset
+  inout  logic clk_i,
+  inout  logic in_rst_ni,
+  output logic test_passed_o
 );
 
-  logic                 dpi_rst_ni;
-  logic                 rst_ni;
+  logic                      dpi_rst_ni;
+  logic                      rst_ni;
 
   // Interface to registers (SRAM like)
-  logic                 csr_access_i;
-  ibex_pkg::csr_num_e   csr_addr_i;
-  logic [31:0]          csr_wdata_i;
-  ibex_pkg::csr_op_e    csr_op_i;
-  logic                 csr_op_en_i;
-  logic [31:0]          csr_rdata_o;
+  logic                      csr_access_i;
+  ibex_pkg::csr_num_e        csr_addr_i;
+  logic               [31:0] csr_wdata_i;
+  ibex_pkg::csr_op_e         csr_op_i;
+  logic                      csr_op_en_i;
+  logic               [31:0] csr_rdata_o;
 
-  logic                 illegal_csr_insn_o;
+  logic                      illegal_csr_insn_o;
 
   //-----------------
   // Reset generation
@@ -47,8 +47,7 @@ module tb_cs_registers #(
   initial begin
     local_clk_i = 1'b0;
     while (1) begin
-      #10
-      local_clk_i = !local_clk_i;
+      #10 local_clk_i = !local_clk_i;
     end
   end
   assign clk_i = local_clk_i;
@@ -57,24 +56,24 @@ module tb_cs_registers #(
 
   /* verilator lint_off PINMISSING */
   ibex_cs_registers #(
-    .DbgTriggerEn     (DbgTriggerEn),
-    .MHPMCounterNum   (MHPMCounterNum),
-    .MHPMCounterWidth (MHPMCounterWidth),
-    .PMPEnable        (PMPEnable),
-    .PMPGranularity   (PMPGranularity),
-    .PMPNumRegions    (PMPNumRegions),
-    .RV32E            (RV32E),
-    .RV32M            (RV32M)
+    .DbgTriggerEn    (DbgTriggerEn),
+    .MHPMCounterNum  (MHPMCounterNum),
+    .MHPMCounterWidth(MHPMCounterWidth),
+    .PMPEnable       (PMPEnable),
+    .PMPGranularity  (PMPGranularity),
+    .PMPNumRegions   (PMPNumRegions),
+    .RV32E           (RV32E),
+    .RV32M           (RV32M)
   ) i_cs_regs (
-    .clk_i              (clk_i),
-    .rst_ni             (rst_ni),
-    .csr_access_i       (csr_access_i),
-    .csr_addr_i         (csr_addr_i),
-    .csr_wdata_i        (csr_wdata_i),
-    .csr_op_i           (csr_op_i),
-    .csr_op_en_i        (csr_op_en_i),
-    .csr_rdata_o        (csr_rdata_o),
-    .illegal_csr_insn_o (illegal_csr_insn_o)
+    .clk_i             (clk_i),
+    .rst_ni            (rst_ni),
+    .csr_access_i      (csr_access_i),
+    .csr_addr_i        (csr_addr_i),
+    .csr_wdata_i       (csr_wdata_i),
+    .csr_op_i          (csr_op_i),
+    .csr_op_en_i       (csr_op_en_i),
+    .csr_rdata_o       (csr_rdata_o),
+    .illegal_csr_insn_o(illegal_csr_insn_o)
   );
   /* verilator lint_on PINMISSING */
 
@@ -84,12 +83,11 @@ module tb_cs_registers #(
   bit [31:0] seed;
 
   initial begin
-    if (!$value$plusargs ("ntb_random_seed=%d", seed)) begin
+    if (!$value$plusargs("ntb_random_seed=%d", seed)) begin
       seed = 32'd0;
     end
-    env_dpi::env_initial(seed,
-        PMPEnable, PMPGranularity, PMPNumRegions,
-        MHPMCounterNum, MHPMCounterWidth);
+    env_dpi::env_initial(seed, PMPEnable, PMPGranularity, PMPNumRegions, MHPMCounterNum,
+                         MHPMCounterWidth);
   end
 
   final begin
@@ -109,20 +107,9 @@ module tb_cs_registers #(
   assign test_passed_o = test_passed;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
-    reg_dpi::monitor_tick("reg_driver",
-                          rst_ni,
-                          illegal_csr_insn_o,
-                          csr_access_i,
-                          csr_op_i,
-                          csr_op_en_i,
-                          csr_addr_i,
-                          csr_wdata_i,
-                          csr_rdata_o);
-    reg_dpi::driver_tick("reg_driver",
-                         csr_access_i,
-                         csr_op_i,
-                         csr_op_en_i,
-                         csr_addr_i,
+    reg_dpi::monitor_tick("reg_driver", rst_ni, illegal_csr_insn_o, csr_access_i, csr_op_i,
+                          csr_op_en_i, csr_addr_i, csr_wdata_i, csr_rdata_o);
+    reg_dpi::driver_tick("reg_driver", csr_access_i, csr_op_i, csr_op_en_i, csr_addr_i,
                          csr_wdata_i);
   end
 

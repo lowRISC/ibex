@@ -8,24 +8,22 @@ class dv_base_reg extends uvm_reg;
   // hence, backdoor write isn't available
   local bit is_ext_reg;
 
-  local dv_base_reg    locked_regs[$];
+  local dv_base_reg locked_regs[$];
   local uvm_reg_data_t staged_shadow_val, committed_val, shadowed_val;
-  local bit            is_shadowed;
-  local bit            shadow_wr_staged; // stage the first shadow reg write
-  local bit            shadow_update_err;
-  local bit            en_shadow_wr = 1;
+  local bit is_shadowed;
+  local bit shadow_wr_staged;  // stage the first shadow reg write
+  local bit shadow_update_err;
+  local bit en_shadow_wr = 1;
 
   // atomic_shadow_wr: semaphore to guarantee atomicity of the two writes for shadowed registers.
   // In case a parallel thread writing a different value to the same reg causing an update_err
-  semaphore            atomic_shadow_wr;
+  semaphore atomic_shadow_wr;
 
   // atomic_en_shadow_wr: semaphore to guarantee setting or resetting en_shadow_wr is unchanged
   // through the 1st/2nd (or both) writes
-  semaphore            atomic_en_shadow_wr;
+  semaphore atomic_en_shadow_wr;
 
-  function new(string       name = "",
-               int unsigned n_bits,
-               int          has_coverage);
+  function new(string name = "", int unsigned n_bits, int has_coverage);
     super.new(name, n_bits, has_coverage);
     atomic_en_shadow_wr = new(1);
     atomic_shadow_wr    = new(1);
@@ -65,7 +63,7 @@ class dv_base_reg extends uvm_reg;
   endfunction
 
   function bit is_staged();
-     return shadow_wr_staged;
+    return shadow_wr_staged;
   endfunction
 
   // if enable register is set to 1, the locked registers will be set to RO access
@@ -95,9 +93,10 @@ class dv_base_reg extends uvm_reg;
   function void set_en_shadow_wr(bit val);
     // do not update en_shadow_wr if shadow register write is in process
     if ((en_shadow_wr ^ val) && shadow_wr_staged) begin
-      `uvm_info(`gfn,
-          $sformatf("unable to %0s en_shadow_wr because register already completed first write",
-          val ? "set" : "clear"), UVM_HIGH)
+      `uvm_info(`gfn, $sformatf(
+                "unable to %0s en_shadow_wr because register already completed first write",
+                val ? "set" : "clear"
+                ), UVM_HIGH)
       return;
     end
     en_shadow_wr = val;
@@ -115,8 +114,8 @@ class dv_base_reg extends uvm_reg;
     uvm_reg_data_t mask = (1'b1 << (get_msb_pos() + 1)) - 1;
     uvm_reg_data_t shadowed_val_temp = (~shadowed_val) & mask;
     uvm_reg_data_t committed_val_temp = committed_val & mask;
-    `uvm_info(`gfn, $sformatf("shadow_val %0h, commmit_val %0h", shadowed_val_temp,
-                              committed_val_temp), UVM_DEBUG)
+    `uvm_info(`gfn, $sformatf(
+              "shadow_val %0h, commmit_val %0h", shadowed_val_temp, committed_val_temp), UVM_DEBUG)
     return shadowed_val_temp != committed_val_temp;
   endfunction
 
@@ -139,10 +138,11 @@ class dv_base_reg extends uvm_reg;
     if (is_shadowed) begin
       // first write
       if (!shadow_wr_staged) begin
-        shadow_wr_staged = 1;
+        shadow_wr_staged  = 1;
         staged_shadow_val = rw.value[0];
         return;
-      end begin
+      end
+      begin
         // second write
         shadow_wr_staged = 0;
         if (staged_shadow_val != rw.value[0]) begin
@@ -160,8 +160,8 @@ class dv_base_reg extends uvm_reg;
         // rw.value is a dynamic array
         "W1C": if (rw.value[0][0] == 1'b1) set_locked_regs_access("RO");
         "W0C": if (rw.value[0][0] == 1'b0) set_locked_regs_access("RO");
-        "RO": ; // if RO, it's updated by design, need to predict in scb
-        default:`uvm_fatal(`gfn, $sformatf("enable register invalid access %s", field_access))
+        "RO": ;  // if RO, it's updated by design, need to predict in scb
+        default: `uvm_fatal(`gfn, $sformatf("enable register invalid access %s", field_access))
       endcase
     end
   endtask
@@ -181,15 +181,11 @@ class dv_base_reg extends uvm_reg;
 
   // if it is a shadowed register, and is enabled to write it twice, this task will write the
   // register twice with the same value and address.
-  virtual task write(output uvm_status_e     status,
-                     input uvm_reg_data_t    value,
-                     input uvm_path_e        path = UVM_DEFAULT_PATH,
-                     input uvm_reg_map       map = null,
-                     input uvm_sequence_base parent=null,
-                     input int               prior = -1,
-                     input uvm_object        extension = null,
-                     input string            fname = "",
-                     input int               lineno = 0);
+  virtual task write(output uvm_status_e status, input uvm_reg_data_t value,
+                     input uvm_path_e path = UVM_DEFAULT_PATH, input uvm_reg_map map = null,
+                     input uvm_sequence_base parent = null, input int prior = -1,
+                     input uvm_object extension = null, input string fname = "",
+                     input int lineno = 0);
     if (is_shadowed) atomic_shadow_wr.get(1);
     super.write(status, value, path, map, parent, prior, extension, fname, lineno);
     if (is_shadowed && en_shadow_wr) begin
@@ -200,25 +196,24 @@ class dv_base_reg extends uvm_reg;
 
   // override do_predict function to support shadow_reg:
   // skip predict if it is shadow_reg's first write, or second write with an update_err
-  virtual function void do_predict (uvm_reg_item      rw,
-                                    uvm_predict_e     kind = UVM_PREDICT_DIRECT,
-                                    uvm_reg_byte_en_t be = -1);
+  virtual function void do_predict(uvm_reg_item rw, uvm_predict_e kind = UVM_PREDICT_DIRECT,
+                                   uvm_reg_byte_en_t be = -1);
     if (is_shadowed && (shadow_wr_staged || shadow_update_err) && kind != UVM_PREDICT_READ) begin
-      `uvm_info(`gfn,
-                $sformatf("skip predict csr %s: due to shadow_reg_first_wr=%0b or update_err=%0b",
-                          get_name(), shadow_wr_staged, shadow_update_err), UVM_HIGH)
+      `uvm_info(`gfn, $sformatf(
+                "skip predict csr %s: due to shadow_reg_first_wr=%0b or update_err=%0b",
+                get_name(),
+                shadow_wr_staged,
+                shadow_update_err
+                ), UVM_HIGH)
       return;
     end
     super.do_predict(rw, kind, be);
   endfunction
 
-  virtual task poke (output uvm_status_e     status,
-                     input  uvm_reg_data_t   value,
-                     input string            kind = "BkdrRegPathRtl",
-                     input uvm_sequence_base parent = null,
-                     input uvm_object        extension = null,
-                     input string            fname = "",
-                     input int               lineno = 0);
+  virtual task poke(output uvm_status_e status, input uvm_reg_data_t value,
+                    input string kind = "BkdrRegPathRtl", input uvm_sequence_base parent = null,
+                    input uvm_object extension = null, input string fname = "",
+                    input int lineno = 0);
     if (kind == "BkdrRegPathRtlShadow") shadowed_val = value;
     else if (kind == "BkdrRegPathRtlCommitted") committed_val = value;
     super.poke(status, value, kind, parent, extension, fname, lineno);

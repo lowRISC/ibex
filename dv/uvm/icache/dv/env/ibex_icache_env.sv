@@ -2,24 +2,24 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class ibex_icache_env extends dv_base_env #(
-    .CFG_T              (ibex_icache_env_cfg),
-    .COV_T              (ibex_icache_env_cov),
-    .VIRTUAL_SEQUENCER_T(ibex_icache_virtual_sequencer),
-    .SCOREBOARD_T       (ibex_icache_scoreboard)
-  );
+class ibex_icache_env extends dv_base_env#(
+  .CFG_T              (ibex_icache_env_cfg),
+  .COV_T              (ibex_icache_env_cov),
+  .VIRTUAL_SEQUENCER_T(ibex_icache_virtual_sequencer),
+  .SCOREBOARD_T       (ibex_icache_scoreboard)
+);
   `uvm_component_utils(ibex_icache_env)
 
-  ibex_icache_core_agent core_agent;
-  ibex_icache_mem_agent  mem_agent;
+  ibex_icache_core_agent  core_agent;
+  ibex_icache_mem_agent   mem_agent;
 
-  ibex_icache_ecc_agent  ecc_tag_agents[];
-  ibex_icache_ecc_agent  ecc_data_agents[];
+  ibex_icache_ecc_agent   ecc_tag_agents[];
+  ibex_icache_ecc_agent   ecc_data_agents[];
 
   // Heartbeat tracking
-  uvm_callbacks_objection           hb_objection;
-  uvm_heartbeat                     heartbeat;
-  uvm_event                         hb_event;
+  uvm_callbacks_objection hb_objection;
+  uvm_heartbeat           heartbeat;
+  uvm_event               hb_event;
 
   `uvm_component_new
 
@@ -36,17 +36,19 @@ class ibex_icache_env extends dv_base_env #(
     // them (the test called create_ecc_agent_cfgs in its build_phase method), so we just have to
     // make an agent for each config. In practice, there will be the same number of tag and data
     // agents, but this code doesn't really care.
-    ecc_tag_agents  = new[cfg.ecc_tag_agent_cfgs.size()];
+    ecc_tag_agents = new[cfg.ecc_tag_agent_cfgs.size()];
     for (int unsigned i = 0; i < cfg.ecc_tag_agent_cfgs.size(); i++) begin
       string tname = $sformatf("ecc_tag_agents[%0d]", i);
       ecc_tag_agents[i] = ibex_icache_ecc_agent::type_id::create(tname, this);
-      uvm_config_db#(ibex_icache_ecc_agent_cfg)::set(this, {tname, "*"}, "cfg", cfg.ecc_tag_agent_cfgs[i]);
+      uvm_config_db#(ibex_icache_ecc_agent_cfg)::set(this, {tname, "*"}, "cfg",
+                                                     cfg.ecc_tag_agent_cfgs[i]);
     end
-    ecc_data_agents  = new[cfg.ecc_data_agent_cfgs.size()];
+    ecc_data_agents = new[cfg.ecc_data_agent_cfgs.size()];
     for (int unsigned i = 0; i < cfg.ecc_data_agent_cfgs.size(); i++) begin
       string dname = $sformatf("ecc_data_agents[%0d]", i);
       ecc_data_agents[i] = ibex_icache_ecc_agent::type_id::create(dname, this);
-      uvm_config_db#(ibex_icache_ecc_agent_cfg)::set(this, {dname, "*"}, "cfg", cfg.ecc_data_agent_cfgs[i]);
+      uvm_config_db#(ibex_icache_ecc_agent_cfg)::set(this, {dname, "*"}, "cfg",
+                                                     cfg.ecc_data_agent_cfgs[i]);
     end
 
     hb_objection = new("hb_objection");

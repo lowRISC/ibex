@@ -26,23 +26,23 @@ interface clk_rst_if #(
   import uvm_pkg::*;
 `endif
 
-  bit drive_clk;              // enable clk generation
-  logic o_clk;                // output clk
+  bit drive_clk;  // enable clk generation
+  logic o_clk;  // output clk
 
-  bit drive_rst_n;            // enable rst_n generation
-  logic o_rst_n;              // output rst_n
+  bit drive_rst_n;  // enable rst_n generation
+  logic o_rst_n;  // output rst_n
 
   // clk params
-  bit clk_gate      = 1'b0;   // clk gate signal
-  int clk_period_ps = 20_000; // 50MHz default
-  real clk_freq_mhz = 50;     // 50MHz default
-  int duty_cycle    = 50;     // 50% default
-  int max_jitter_ps = 1000;   // 1ns default
-  bit recompute     = 1'b1;   // compute half periods when period/freq/duty are changed
-  int clk_hi_ps;              // half period hi in ps
-  int clk_lo_ps;              // half period lo in ps
-  int jitter_chance_pc = 0;   // jitter chance in percentage on clock edge - disabled by default
-  bit sole_clock = 1'b0;      // if true, this is the only clock in the system
+  bit clk_gate = 1'b0;  // clk gate signal
+  int clk_period_ps = 20_000;  // 50MHz default
+  real clk_freq_mhz = 50;  // 50MHz default
+  int duty_cycle = 50;  // 50% default
+  int max_jitter_ps = 1000;  // 1ns default
+  bit recompute = 1'b1;  // compute half periods when period/freq/duty are changed
+  int clk_hi_ps;  // half period hi in ps
+  int clk_lo_ps;  // half period lo in ps
+  int jitter_chance_pc = 0;  // jitter chance in percentage on clock edge - disabled by default
+  bit sole_clock = 1'b0;  // if true, this is the only clock in the system
 
   // use IfName as a part of msgs to indicate which clk_rst_vif instance
   string msg_id = {"clk_rst_if::", IfName};
@@ -85,10 +85,9 @@ interface clk_rst_if #(
   function automatic void set_active(bit drive_clk_val = 1'b1, bit drive_rst_n_val = 1'b1);
     time t = $time;
     if (t == 0) begin
-      drive_clk = drive_clk_val;
+      drive_clk   = drive_clk_val;
       drive_rst_n = drive_rst_n_val;
-    end
-    else begin
+    end else begin
 `ifdef VERILATOR
       $error({msg_id, "this function can only be called at t=0"});
 `else
@@ -106,7 +105,7 @@ interface clk_rst_if #(
 
   // set the duty cycle (1-99)
   function automatic void set_duty_cycle(int duty);
-    if (!(duty inside {[1:99]})) begin
+    if (!(duty inside {[1 : 99]})) begin
 `ifdef VERILATOR
       $error({msg_id, $sformatf("duty cycle %0d is not inside [1:99]", duty)});
 `else
@@ -114,7 +113,7 @@ interface clk_rst_if #(
 `endif
     end
     duty_cycle = duty;
-    recompute = 1'b1;
+    recompute  = 1'b1;
   endfunction
 
   // set maximum jitter in ps
@@ -125,7 +124,7 @@ interface clk_rst_if #(
   // set jitter chance in percentage (0 - 100)
   // 0 - dont add any jitter; 100 - add jitter on every clock edge
   function automatic void set_jitter_chance_pc(int jitter_chance);
-    if (!(jitter_chance inside {[0:100]})) begin
+    if (!(jitter_chance inside {[0 : 100]})) begin
 `ifdef VERILATOR
       $error({msg_id, $sformatf("jitter_chance %0d is not inside [0:100]", jitter_chance)});
 `else
@@ -158,15 +157,15 @@ interface clk_rst_if #(
     int jitter_ps;
     if ($urandom_range(1, 100) <= jitter_chance_pc) begin
 `ifndef VERILATOR
-      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(jitter_ps,
-          jitter_ps inside {[-1*max_jitter_ps:max_jitter_ps]};, "", msg_id)
+      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(
+          jitter_ps, jitter_ps inside {[-1 * max_jitter_ps : max_jitter_ps]};, "", msg_id)
 `endif
       clk_hi_ps += jitter_ps;
     end
     if ($urandom_range(1, 100) <= jitter_chance_pc) begin
 `ifndef VERILATOR
-      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(jitter_ps,
-          jitter_ps inside {[-1*max_jitter_ps:max_jitter_ps]};, "", msg_id)
+      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(
+          jitter_ps, jitter_ps inside {[-1 * max_jitter_ps : max_jitter_ps]};, "", msg_id)
 `endif
       clk_lo_ps += jitter_ps;
     end
@@ -186,10 +185,8 @@ interface clk_rst_if #(
   // 3 - clk gated when reset asserted
   // Note: for power on reset, please ensure pre_reset_dly_clks is set to 0
   // TODO #2338 issue workaround - $urandom call moved from default argument value to function body
-  task automatic apply_reset(int pre_reset_dly_clks   = 0,
-                             integer reset_width_clks = 'x,
-                             int post_reset_dly_clks  = 0,
-                             int rst_n_scheme         = 1);
+  task automatic apply_reset(int pre_reset_dly_clks = 0, integer reset_width_clks = 'x,
+                             int post_reset_dly_clks = 0, int rst_n_scheme = 1);
     int dly_ps;
     if ($isunknown(reset_width_clks)) reset_width_clks = $urandom_range(4, 20);
     dly_ps = $urandom_range(0, clk_period_ps);
@@ -239,7 +236,7 @@ interface clk_rst_if #(
         #1ps;
         o_clk = 1'b0;
 
-        done = 1'b1;
+        done  = 1'b1;
       end
       while (!done) #(clk_period_ps * 1ps);
     join
@@ -263,7 +260,7 @@ interface clk_rst_if #(
     end
   end
 
-  assign clk   = drive_clk   ? o_clk   : 1'bz;
+  assign clk   = drive_clk ? o_clk : 1'bz;
   assign rst_n = drive_rst_n ? o_rst_n : 1'bz;
 
 endinterface

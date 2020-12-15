@@ -4,9 +4,6 @@
 
 package rst_dpi;
 
-  import "DPI-C"
-  function void rst_tick (
-    input  string     name,
-    output bit        rst_n);
+  import "DPI-C" function void rst_tick(input string name, output bit rst_n);
 
 endpackage

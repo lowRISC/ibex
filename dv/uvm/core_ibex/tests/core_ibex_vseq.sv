@@ -8,8 +8,8 @@
 
 class core_ibex_vseq extends uvm_sequence;
 
-  ibex_mem_intf_response_seq                       instr_intf_seq;
-  ibex_mem_intf_response_seq                       data_intf_seq;
+  ibex_mem_intf_response_seq                    instr_intf_seq;
+  ibex_mem_intf_response_seq                    data_intf_seq;
   mem_model_pkg::mem_model                      mem;
   irq_raise_seq                                 irq_raise_seq_h;
   irq_raise_single_seq                          irq_raise_single_seq_h;
@@ -17,7 +17,7 @@ class core_ibex_vseq extends uvm_sequence;
   debug_seq                                     debug_seq_stress_h;
   debug_seq                                     debug_seq_single_h;
   core_ibex_env_cfg                             cfg;
-  bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0]  data;
+  bit [ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] data;
 
   `uvm_object_utils(core_ibex_vseq)
   `uvm_declare_p_sequencer(core_ibex_vseqr)
@@ -25,7 +25,7 @@ class core_ibex_vseq extends uvm_sequence;
 
   virtual task body();
     instr_intf_seq = ibex_mem_intf_response_seq::type_id::create("instr_intf_seq");
-    data_intf_seq  = ibex_mem_intf_response_seq::type_id::create("data_intf_seq");
+    data_intf_seq = ibex_mem_intf_response_seq::type_id::create("data_intf_seq");
     data_intf_seq.is_dmem_seq = 1'b1;
     if (cfg.enable_irq_single_seq) begin
       irq_raise_single_seq_h = irq_raise_single_seq::type_id::create("irq_single_seq_h");
@@ -75,7 +75,7 @@ class core_ibex_vseq extends uvm_sequence;
       if (irq_raise_seq_h.is_started) irq_raise_seq_h.stop();
     end
     if (cfg.enable_irq_single_seq || cfg.enable_irq_multiple_seq) begin
-      if (irq_drop_seq_h.is_started)   irq_drop_seq_h.stop();
+      if (irq_drop_seq_h.is_started) irq_drop_seq_h.stop();
     end
     if (cfg.enable_debug_seq) begin
       if (debug_seq_stress_h.is_started) debug_seq_stress_h.stop();
@@ -94,13 +94,13 @@ class core_ibex_vseq extends uvm_sequence;
   endtask
 
   virtual task start_irq_raise_single_seq(bit no_nmi = 1'b0, bit no_fast = 1'b0);
-    irq_raise_single_seq_h.no_nmi = no_nmi;
+    irq_raise_single_seq_h.no_nmi  = no_nmi;
     irq_raise_single_seq_h.no_fast = no_fast;
     irq_raise_single_seq_h.start(p_sequencer.irq_seqr);
   endtask
 
   virtual task start_irq_raise_seq(bit no_nmi = 1'b0, bit no_fast = 1'b0);
-    irq_raise_seq_h.no_nmi = no_nmi;
+    irq_raise_seq_h.no_nmi  = no_nmi;
     irq_raise_seq_h.no_fast = no_fast;
     irq_raise_seq_h.start(p_sequencer.irq_seqr);
   endtask

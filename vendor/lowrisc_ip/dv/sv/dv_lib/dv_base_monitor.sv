@@ -2,10 +2,12 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class dv_base_monitor #(type ITEM_T = uvm_sequence_item,
-                        type CFG_T  = dv_base_agent_cfg,
-                        type COV_T  = dv_base_agent_cov) extends uvm_monitor;
-  `uvm_component_param_utils(dv_base_monitor #(ITEM_T, CFG_T, COV_T))
+class dv_base_monitor #(
+  type ITEM_T = uvm_sequence_item,
+  type CFG_T  = dv_base_agent_cfg,
+  type COV_T  = dv_base_agent_cov
+) extends uvm_monitor;
+  `uvm_component_param_utils(dv_base_monitor#(ITEM_T, CFG_T, COV_T))
 
   CFG_T cfg;
   COV_T cov;
@@ -56,8 +58,8 @@ class dv_base_monitor #(type ITEM_T = uvm_sequence_item,
   // and restarts the timer. This ensures that there is sufficient drain time to allow the
   // simulation to end gracefully. It raises and drops the objection at the appropriate times.
   virtual task watchdog_ok_to_end(uvm_phase run_phase);
-    bit objection_raised;
-    bit watchdog_done;
+    bit  objection_raised;
+    bit  watchdog_done;
     uint watchdog_restart_count = 1;
 
     forever begin
@@ -69,10 +71,11 @@ class dv_base_monitor #(type ITEM_T = uvm_sequence_item,
 
       // Start the timer only when ok_to_end is asserted.
       wait(ok_to_end);
-      `uvm_info(`gfn, $sformatf("watchdog_ok_to_end: starting the timer (count: %0d)",
-                                watchdog_restart_count++), UVM_MEDIUM)
+      `uvm_info(`gfn, $sformatf(
+                "watchdog_ok_to_end: starting the timer (count: %0d)", watchdog_restart_count++),
+                UVM_MEDIUM)
       fork
-        begin: isolation_fork
+        begin : isolation_fork
           fork
             begin
               watchdog_done = 1'b0;
@@ -82,7 +85,7 @@ class dv_base_monitor #(type ITEM_T = uvm_sequence_item,
             @(ok_to_end);
           join_any
           disable fork;
-        end: isolation_fork
+        end : isolation_fork
       join
 
       // The #0 delay ensures that we sample the stabilized value of ok_to_end in the condition

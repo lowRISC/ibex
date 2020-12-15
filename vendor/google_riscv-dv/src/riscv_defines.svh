@@ -48,7 +48,7 @@
     endfunction \
   endclass
 
- `define VA_INSTR_BODY(instr_n, instr_format, instr_category, instr_group, vav, ext = "") \
+`define VA_INSTR_BODY(instr_n, instr_format, instr_category, instr_group, vav, ext = "") \
     static bit valid = riscv_instr::register(instr_n);  \
     `uvm_object_utils(riscv_``instr_n``_instr)  \
     function new(string name = "");  \

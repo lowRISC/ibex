@@ -2,10 +2,10 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class ibex_icache_base_test extends dv_base_test #(
-    .CFG_T(ibex_icache_env_cfg),
-    .ENV_T(ibex_icache_env)
-  );
+class ibex_icache_base_test extends dv_base_test#(
+  .CFG_T(ibex_icache_env_cfg),
+  .ENV_T(ibex_icache_env)
+);
 
   `uvm_component_utils(ibex_icache_base_test)
   `uvm_component_new

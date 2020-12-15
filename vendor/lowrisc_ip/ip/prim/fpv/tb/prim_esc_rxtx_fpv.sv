@@ -29,26 +29,26 @@ module prim_esc_rxtx_fpv
 
   assign esc_rx_in.resp_p = esc_rx_out.resp_p ^ resp_err_pi;
   assign esc_rx_in.resp_n = esc_rx_out.resp_n ^ resp_err_ni;
-  assign esc_tx_in.esc_p  = esc_tx_out.esc_p  ^ esc_err_pi;
-  assign esc_tx_in.esc_n  = esc_tx_out.esc_n  ^ esc_err_ni;
+  assign esc_tx_in.esc_p  = esc_tx_out.esc_p ^ esc_err_pi;
+  assign esc_tx_in.esc_n  = esc_tx_out.esc_n ^ esc_err_ni;
 
   prim_esc_sender i_prim_esc_sender (
-    .clk_i        ,
-    .rst_ni       ,
-    .ping_req_i   ,
-    .ping_ok_o    ,
-    .integ_fail_o ,
-    .esc_req_i    ,
-    .esc_rx_i     ( esc_rx_in  ),
-    .esc_tx_o     ( esc_tx_out )
+    .clk_i,
+    .rst_ni,
+    .ping_req_i,
+    .ping_ok_o,
+    .integ_fail_o,
+    .esc_req_i,
+    .esc_rx_i(esc_rx_in),
+    .esc_tx_o(esc_tx_out)
   );
 
   prim_esc_receiver i_prim_esc_receiver (
-    .clk_i    ,
-    .rst_ni   ,
-    .esc_en_o ,
-    .esc_rx_o     ( esc_rx_out ),
-    .esc_tx_i     ( esc_tx_in  )
+    .clk_i,
+    .rst_ni,
+    .esc_en_o,
+    .esc_rx_o(esc_rx_out),
+    .esc_tx_i(esc_tx_in)
   );
 
 endmodule : prim_esc_rxtx_fpv

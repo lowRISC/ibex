@@ -89,8 +89,9 @@ class riscv_b_instr extends riscv_instr;
     case (format)
       I_FORMAT: begin
         if (instr_name inside {FSRI, FSRIW}) begin  // instr rd,rs1,rs3,imm
-          asm_str_final = $sformatf("%0s%0s, %0s, %0s, %0s", asm_str, rd.name(), rs1.name(),
-                                    rs3.name(), get_imm());
+          asm_str_final = $sformatf(
+              "%0s%0s, %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), rs3.name(), get_imm()
+          );
         end
       end
 
@@ -101,8 +102,9 @@ class riscv_b_instr extends riscv_instr;
       end
 
       R4_FORMAT: begin  // instr rd,rs1,rs2,rs3
-        asm_str_final = $sformatf("%0s%0s, %0s, %0s, %0s", asm_str, rd.name(), rs1.name(),
-                                  rs2.name(), rs3.name());
+        asm_str_final = $sformatf(
+            "%0s%0s, %0s, %0s, %0s", asm_str, rd.name(), rs1.name(), rs2.name(), rs3.name()
+        );
       end
       default: `uvm_info(`gfn, $sformatf("Unsupported format %0s", format.name()), UVM_LOW)
     endcase
@@ -117,24 +119,27 @@ class riscv_b_instr extends riscv_instr;
 
   function bit [6:0] get_opcode();
     case (instr_name) inside
-      ANDN, ORN, XNOR, GORC, SLO, SRO, ROL, ROR, SBCLR, SBSET, SBINV, SBEXT,
-          GREV: get_opcode = 7'b0110011;
-      SLOI, SROI, RORI, SBCLRI, SBSETI, SBINVI, SBEXTI, GORCI, GREVI, CMIX, CMOV,
-          FSL: get_opcode = 7'b0010011;
+      ANDN, ORN, XNOR, GORC, SLO, SRO, ROL, ROR, SBCLR, SBSET, SBINV, SBEXT, GREV:
+      get_opcode = 7'b0110011;
+      SLOI, SROI, RORI, SBCLRI, SBSETI, SBINVI, SBEXTI, GORCI, GREVI, CMIX, CMOV, FSL:
+      get_opcode = 7'b0010011;
       FSR, FSRI, CLZ, CTZ, PCNT, BMATFLIP, SEXT_B, SEXT_H, CRC32_B, CRC32_H, CRC32_W, CRC32C_B,
-          CRC32C_H: get_opcode = 7'b0010011;
+          CRC32C_H:
+      get_opcode = 7'b0010011;
       CRC32C_W, CRC32_D, CRC32C_D: get_opcode = 7'b0010011;
       CLMUL, CLMULR, CLMULH, MIN, MAX, MINU, MAXU, SHFL, UNSHFL, BDEP, BEXT, PACK, PACKU, BMATOR,
-          BMATXOR, PACKH, BFP: get_opcode = 7'b0110011;
+          BMATXOR, PACKH, BFP:
+      get_opcode = 7'b0110011;
       SHFLI, UNSHFLI: get_opcode = 7'b0010011;
       ADDIWU, SLLIU_W: get_opcode = 7'b0011011;
       ADDWU, SUBWU, ADDU_W, SUBU_W, SLOW, SROW, ROLW, RORW, SBCLRW, SBSETW, SBINVW, SBEXTW, GORCW,
-          GREVW: get_opcode = 7'b0111011;
+          GREVW:
+      get_opcode = 7'b0111011;
       SLOIW, SROIW, RORIW, SBCLRIW, SBSETIW, SBINVIW, GORCIW, GREVIW: get_opcode = 7'b0011011;
       FSLW, FSRW: get_opcode = 7'b0111011;
       FSRIW, CLZW, CTZW, PCNTW: get_opcode = 7'b0011011;
-      CLMULW, CLMULRW, CLMULHW, SHFLW, UNSHFLW, BDEPW, BEXTW, PACKW, PACKUW,
-          BFPW: get_opcode = 7'b0111011;
+      CLMULW, CLMULRW, CLMULHW, SHFLW, UNSHFLW, BDEPW, BEXTW, PACKW, PACKUW, BFPW:
+      get_opcode = 7'b0111011;
       default: get_opcode = super.get_opcode();
     endcase
   endfunction
@@ -334,27 +339,27 @@ class riscv_b_instr extends riscv_instr;
 
   function bit [4:0] get_func5();
     case (instr_name) inside
-      SLOI: get_func5 = 5'b00100;
-      SROI: get_func5 = 5'b00100;
-      RORI: get_func5 = 5'b01100;
+      SLOI:   get_func5 = 5'b00100;
+      SROI:   get_func5 = 5'b00100;
+      RORI:   get_func5 = 5'b01100;
       SBCLRI: get_func5 = 5'b01001;
       SBSETI: get_func5 = 5'b01001;
       SBINVI: get_func5 = 5'b01101;
       SBEXTI: get_func5 = 5'b01001;
-      GORCI: get_func5 = 5'b00101;
-      GREVI: get_func5 = 5'b01101;
+      GORCI:  get_func5 = 5'b00101;
+      GREVI:  get_func5 = 5'b01101;
 
-      CLZW: get_func5 = 5'b00000;
-      CTZW: get_func5 = 5'b00001;
+      CLZW:  get_func5 = 5'b00000;
+      CTZW:  get_func5 = 5'b00001;
       PCNTW: get_func5 = 5'b00010;
 
-      CRC32_B: get_func5 = 5'b10000;
-      CRC32_H: get_func5 = 5'b10001;
-      CRC32_W: get_func5 = 5'b10010;
+      CRC32_B:  get_func5 = 5'b10000;
+      CRC32_H:  get_func5 = 5'b10001;
+      CRC32_W:  get_func5 = 5'b10010;
       CRC32C_B: get_func5 = 5'b11000;
       CRC32C_H: get_func5 = 5'b11001;
       CRC32C_W: get_func5 = 5'b11010;
-      CRC32_D: get_func5 = 5'b10011;
+      CRC32_D:  get_func5 = 5'b10011;
       CRC32C_D: get_func5 = 5'b11011;
 
       CLZ: get_func5 = 5'b00000;
@@ -387,23 +392,26 @@ class riscv_b_instr extends riscv_instr;
       R_FORMAT: begin
         if ((category inside {LOGICAL}) && (group == RV32B)) begin
           if (instr_name inside {SEXT_B, SEXT_H}) begin
-            binary =
-                $sformatf("%8h", {get_func7(), get_func5(), rs1, get_func3(), rd, get_opcode()});
+            binary = $sformatf(
+                "%8h", {get_func7(), get_func5(), rs1, get_func3(), rd, get_opcode()}
+            );
           end
         end
 
         if ((category inside {ARITHMETIC}) && (group == RV32B)) begin
           if (instr_name inside {CRC32_B, CRC32_H, CRC32_W, CRC32C_B, CRC32C_H, CRC32C_W, CLZ, CTZ,
                                  PCNT}) begin
-            binary =
-                $sformatf("%8h", {get_func7(), get_func5(), rs1, get_func3(), rd, get_opcode()});
+            binary = $sformatf(
+                "%8h", {get_func7(), get_func5(), rs1, get_func3(), rd, get_opcode()}
+            );
           end
         end
 
         if ((category inside {ARITHMETIC}) && (group == RV64B)) begin
           if (instr_name inside {CLZW, CTZW, PCNTW, CRC32_D, CRC32C_D, BMATFLIP}) begin
-            binary =
-                $sformatf("%8h", {get_func7(), get_func5(), rs1, get_func3(), rd, get_opcode()});
+            binary = $sformatf(
+                "%8h", {get_func7(), get_func5(), rs1, get_func3(), rd, get_opcode()}
+            );
           end
         end
       end
@@ -443,7 +451,7 @@ class riscv_b_instr extends riscv_instr;
   virtual function void do_copy(uvm_object rhs);
     riscv_b_instr rhs_;
     super.copy(rhs);
-    assert($cast(rhs_, rhs));
+    assert ($cast(rhs_, rhs));
     this.rs3 = rhs_.rs3;
     this.has_rs3 = rhs_.has_rs3;
   endfunction : do_copy
@@ -491,16 +499,14 @@ class riscv_b_instr extends riscv_instr;
            (ZBT inside {cfg.enable_bitmanip_groups} && instr_name inside {
                CMOV, CMIX,
                FSL, FSLW, FSR, FSRW, FSRI, FSRIW}) ||
-           // TODO, spec 0.92 doesn't categorize these 2 instr, put them in ZB_TMP #572
-           (ZB_TMP inside {cfg.enable_bitmanip_groups} && instr_name inside {
-               SEXT_B, SEXT_H})
-           );
+    // TODO, spec 0.92 doesn't categorize these 2 instr, put them in ZB_TMP #572
+    (ZB_TMP inside {cfg.enable_bitmanip_groups} && instr_name inside {SEXT_B, SEXT_H}));
   endfunction
 
   // coverage related functons
   virtual function void update_src_regs(string operands[$]);
     // handle special I_FORMAT (FSRI, FSRIW) and R4_FORMAT
-    case(format)
+    case (format)
       I_FORMAT: begin
         if (instr_name inside {FSRI, FSRIW}) begin
           `DV_CHECK_FATAL(operands.size() == 4, instr_name)

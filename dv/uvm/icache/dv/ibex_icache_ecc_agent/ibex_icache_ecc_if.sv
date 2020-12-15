@@ -4,23 +4,24 @@
 
 // An interface that gets bound into a badbit_ram_1p with .*
 
-interface ibex_icache_ecc_if
-  (input logic          clk_i,
-   input logic          req_i,
-   input logic          write_i,
-   input logic [31:0]   width,
-   input logic [31:0]   addr,
-   input logic [127:0]  wdata,
-   input logic [127:0]  wmask,
-   input logic [127:0]  rdata,
+interface ibex_icache_ecc_if (
+  input logic         clk_i,
+  input logic         req_i,
+  input logic         write_i,
+  input logic [ 31:0] width,
+  input logic [ 31:0] addr,
+  input logic [127:0] wdata,
+  input logic [127:0] wmask,
+  input logic [127:0] rdata,
 
-   output logic [127:0] bad_bit_mask);
+  output logic [127:0] bad_bit_mask
+);
 
   // SVA module
   ibex_icache_ecc_protocol_checker checker_i (.*);
 
   // The address for the last monitored req transaction
-  logic [31:0]  last_addr = 'x;
+  logic [31:0] last_addr = 'x;
 
   bit rst_n = 1'b1;
 

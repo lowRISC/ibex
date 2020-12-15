@@ -7,7 +7,7 @@ class ibex_icache_core_back_line_seq extends ibex_icache_core_base_seq;
   `uvm_object_utils(ibex_icache_core_back_line_seq)
   `uvm_object_new
 
-  bit        req_phase = 0;
+  bit        req_phase    = 0;
   bit [31:0] last_branch;
 
   protected virtual task run_req(ibex_icache_core_req_item req, ibex_icache_core_rsp_item rsp);
@@ -26,10 +26,9 @@ class ibex_icache_core_back_line_seq extends ibex_icache_core_base_seq;
       max_addr = last_branch;
     end
 
-    `DV_CHECK_RANDOMIZE_WITH_FATAL(
-       req,
+    `DV_CHECK_RANDOMIZE_WITH_FATAL(req,
 
-       // Lots of branches!
+                                   // Lots of branches!
        req.trans_type == ICacheCoreTransTypeBranch;
 
        // Constrain branch targets
@@ -41,14 +40,13 @@ class ibex_icache_core_back_line_seq extends ibex_icache_core_base_seq;
 
        // The cache should always be enabled and never invalidated (unless must_invalidate is true)
        enable == 1'b1;
-       invalidate == must_invalidate;
-    )
+       invalidate == must_invalidate;)
 
     finish_item(req);
     get_response(rsp);
 
     last_branch = req.branch_addr;
-    req_phase = !req_phase;
+    req_phase   = !req_phase;
   endtask
 
 endclass : ibex_icache_core_back_line_seq

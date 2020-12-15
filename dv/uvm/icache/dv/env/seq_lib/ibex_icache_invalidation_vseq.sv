@@ -18,7 +18,7 @@ class ibex_icache_invalidation_vseq extends ibex_icache_base_vseq;
     // Invalidate the cache occasionally. This test is all about checking that invalidation works,
     // so we don't want it too small, but it only makes sense if we actually have some gaps between
     // our "bouts of invalidation".
-    core_seq.gap_between_seeds = 19;
+    core_seq.gap_between_seeds  = 19;
 
   endtask : pre_start
 

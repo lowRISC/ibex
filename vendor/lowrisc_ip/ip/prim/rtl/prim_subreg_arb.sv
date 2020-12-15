@@ -5,7 +5,7 @@
 // Write enable and data arbitration logic for register slice conforming to Comportibility guide.
 
 module prim_subreg_arb #(
-  parameter int DW       = 32  ,
+  parameter int DW       = 32,
   parameter     SWACCESS = "RW"  // {RW, RO, WO, W1C, W1S, W0C, RC}
 ) (
   // From SW: valid for RW, WO, W1C, W1S, W0C, RC.
@@ -27,7 +27,7 @@ module prim_subreg_arb #(
 
   if ((SWACCESS == "RW") || (SWACCESS == "WO")) begin : gen_w
     assign wr_en   = we | de;
-    assign wr_data = (we == 1'b1) ? wd : d; // SW higher priority
+    assign wr_data = (we == 1'b1) ? wd : d;  // SW higher priority
     // Unused q - Prevent lint errors.
     logic [DW-1:0] unused_q;
     assign unused_q = q;
@@ -59,7 +59,7 @@ module prim_subreg_arb #(
   end else if (SWACCESS == "RC") begin : gen_rc
     // This swtype is not recommended but exists for compatibility.
     // WARN: we signal is actually read signal not write enable.
-    assign wr_en  = we | de;
+    assign wr_en   = we | de;
     assign wr_data = (de ? d : q) & (we ? '0 : '1);
     // Unused wd - Prevent lint errors.
     logic [DW-1:0] unused_wd;

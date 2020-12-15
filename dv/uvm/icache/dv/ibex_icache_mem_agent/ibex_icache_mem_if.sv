@@ -2,8 +2,10 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-interface ibex_icache_mem_if (input clk,
-                              input rst_n);
+interface ibex_icache_mem_if (
+  input clk,
+  input rst_n
+);
 
   // Requests
   logic        req;

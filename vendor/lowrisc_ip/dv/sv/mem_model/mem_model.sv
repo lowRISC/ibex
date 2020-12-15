@@ -2,9 +2,11 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class mem_model #(int AddrWidth = bus_params_pkg::BUS_AW,
-                  int DataWidth = bus_params_pkg::BUS_DW,
-                  int MaskWidth = bus_params_pkg::BUS_DBW) extends uvm_object;
+class mem_model #(
+  int AddrWidth = bus_params_pkg::BUS_AW,
+  int DataWidth = bus_params_pkg::BUS_DW,
+  int MaskWidth = bus_params_pkg::BUS_DBW
+) extends uvm_object;
 
   typedef bit [AddrWidth-1:0] mem_addr_t;
   typedef bit [DataWidth-1:0] mem_data_t;
@@ -33,13 +35,17 @@ class mem_model #(int AddrWidth = bus_params_pkg::BUS_AW,
   endfunction
 
   function void write_byte(mem_addr_t addr, bit [7:0] data);
-   `uvm_info(`gfn, $sformatf("Write Mem : Addr[0x%0h], Data[0x%0h]", addr, data), UVM_HIGH)
+    `uvm_info(`gfn, $sformatf("Write Mem : Addr[0x%0h], Data[0x%0h]", addr, data), UVM_HIGH)
     system_memory[addr] = data;
   endfunction
 
   function void compare_byte(mem_addr_t addr, bit [7:0] act_data);
-   `uvm_info(`gfn, $sformatf("Compare Mem : Addr[0x%0h], Act Data[0x%0h], Exp Data[0x%0h]",
-                             addr, act_data, system_memory[addr]), UVM_HIGH)
+    `uvm_info(`gfn, $sformatf(
+              "Compare Mem : Addr[0x%0h], Act Data[0x%0h], Exp Data[0x%0h]",
+              addr,
+              act_data,
+              system_memory[addr]
+              ), UVM_HIGH)
     system_memory[addr] = act_data;
     `DV_CHECK_EQ(act_data, system_memory[addr], $sformatf("addr 0x%0h read out mismatch", addr))
   endfunction
@@ -60,8 +66,8 @@ class mem_model #(int AddrWidth = bus_params_pkg::BUS_AW,
     mem_data_t data;
     for (int i = DataWidth / 8 - 1; i >= 0; i--) begin
       data = data << 8;
-      if (mask[MaskWidth - 1]) data[7:0] = read_byte(addr + i);
-      else                     data[7:0] = 0;
+      if (mask[MaskWidth-1]) data[7:0] = read_byte(addr + i);
+      else data[7:0] = 0;
       mask = mask << 1;
     end
     return data;
@@ -74,10 +80,10 @@ class mem_model #(int AddrWidth = bus_params_pkg::BUS_AW,
       if (mask[0]) begin
         compare_byte(addr + i, byte_data);
       end else begin
-        `DV_CHECK_EQ(byte_data, 0,
-                     $sformatf("addr 0x%0h masked data aren't 0, mask 0x%0h", addr, mask))
+        `DV_CHECK_EQ(byte_data, 0, $sformatf(
+                     "addr 0x%0h masked data aren't 0, mask 0x%0h", addr, mask))
       end
-      act_data = act_data>> 8;
+      act_data = act_data >> 8;
       mask = mask >> 1;
     end
   endfunction

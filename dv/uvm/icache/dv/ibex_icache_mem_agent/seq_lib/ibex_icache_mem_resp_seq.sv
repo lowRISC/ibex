@@ -10,7 +10,7 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
   // sequences back-to-back. Must be set before pre_start to have any effect.
   ibex_icache_mem_resp_seq prev_sequence = null;
 
-  protected ibex_icache_mem_model #(.BusWidth (32)) mem_model;
+  protected ibex_icache_mem_model #(.BusWidth(32)) mem_model;
 
   // We pick new seeds when we spot a request (rather than when we spot a grant) to ensure that
   // any given fetch corresponds to exactly one seed. Unfortunately, there's a race if these two
@@ -44,7 +44,7 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
   endtask
 
   task body();
-    ibex_icache_mem_req_item  req_item  = new("req_item");
+    ibex_icache_mem_req_item  req_item = new("req_item");
     ibex_icache_mem_req_item  req_item2 = new("req_item2");
     ibex_icache_mem_resp_item resp_item = new("resp_item");
 
@@ -73,14 +73,15 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
   // Start and randomize the response then take any new seed that comes out. Finally, fill in the
   // err signal based on the current seed.
   //
-  task automatic take_req(ibex_icache_mem_resp_item resp_item,
-                          ibex_icache_mem_req_item  req_item);
+  task automatic take_req(ibex_icache_mem_resp_item resp_item, ibex_icache_mem_req_item req_item);
     bit [31:0] tmp_seed;
 
     // Consume any new seeds. These will have been pushed into the sequencer's seed_fifo by the core
     // agent. Any new seed will apply to this request and all future requests (we need tmp_seed here
     // because otherwise the first failed call to try_get will trash the value we got).
-    while(p_sequencer.seed_fifo.try_get(tmp_seed)) begin
+    while (p_sequencer.seed_fifo.try_get(
+        tmp_seed
+    )) begin
       cur_seed = tmp_seed;
       `uvm_info(`gfn, $sformatf("New memory seed: 0x%08h", cur_seed), UVM_HIGH)
     end
@@ -101,8 +102,7 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
 
   // Deal with a "grant" event (the memory system has granted a memory request from the cache and
   // added the request to its internal pipeline)
-  task automatic take_gnt(ibex_icache_mem_resp_item resp_item,
-                          ibex_icache_mem_req_item  req_item);
+  task automatic take_gnt(ibex_icache_mem_resp_item resp_item, ibex_icache_mem_req_item req_item);
 
     bit [63:0] gnt_data;
     bit [31:0] gnt_addr, gnt_seed;
@@ -113,21 +113,20 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
     int i, N;
     N = pending_grants.size();
     for (i = 0; i < N; i++) begin
-      {gnt_addr, gnt_seed} = pending_grants[N - 1 - i];
-      if (gnt_addr == req_item.address)
-        break;
+      {gnt_addr, gnt_seed} = pending_grants[N-1-i];
+      if (gnt_addr == req_item.address) break;
     end
 
     // If i == N, we didn't find a hit. That's not supposed to happen.
-    `DV_CHECK_FATAL(i < N,
-                    $sformatf("No pending grant for address 0x%08h (%0d items in queue).",
-                              req_item.address, N))
+    `DV_CHECK_FATAL(i < N, $sformatf(
+                    "No pending grant for address 0x%08h (%0d items in queue).", req_item.address, N
+                    ))
 
     // Otherwise, we have a hit at index N - 1 - i. Throw away all previous items in the queue. We
     // don't throw away this item, because it's possible to end up with repeated addresses in the
     // queue (if the cache asked for the same address twice in a row) and if we throw away the hit
     // the first time, we can't find it for the second grant.
-    pending_grants = pending_grants[N - 1 - i:$];
+    pending_grants     = pending_grants[N-1-i:$];
 
     // Using the seed that we saw for the request, check the memory model for a (non-PMP) error
     // at this address. On success, look up the memory data too.

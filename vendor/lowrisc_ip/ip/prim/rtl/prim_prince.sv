@@ -24,25 +24,25 @@
 
 `include "prim_assert.sv"
 module prim_prince #(
-  parameter int DataWidth     = 64,
-  parameter int KeyWidth      = 128,
+  parameter int DataWidth      = 64,
+  parameter int KeyWidth       = 128,
   // The construction is reflective. Total number of rounds is 2*NumRoundsHalf + 2
-  parameter int NumRoundsHalf = 5,
+  parameter int NumRoundsHalf  = 5,
   // This primitive uses the new key schedule proposed in https://eprint.iacr.org/2014/656.pdf
   // Setting this parameter to 1 falls back to the original key schedule.
   parameter bit UseOldKeySched = 1'b0,
   // This instantiates a data register halfway in the primitive.
   parameter bit HalfwayDataReg = 1'b0,
   // This instantiates a key register halfway in the primitive.
-  parameter bit HalfwayKeyReg = 1'b0
+  parameter bit HalfwayKeyReg  = 1'b0
 ) (
-  input                        clk_i,
-  input                        rst_ni,
+  input clk_i,
+  input rst_ni,
 
   input                        valid_i,
   input        [DataWidth-1:0] data_i,
-  input        [KeyWidth-1:0]  key_i,
-  input                        dec_i,   // set to 1 for decryption
+  input        [ KeyWidth-1:0] key_i,
+  input                        dec_i,  // set to 1 for decryption
   output logic                 valid_o,
   output logic [DataWidth-1:0] data_o
 );
@@ -59,9 +59,9 @@ module prim_prince #(
 
     // modify key for decryption
     if (dec_i) begin
-      k0          = k0_prime_d;
-      k0_prime_d  = key_i[DataWidth-1:0];
-      k1_d       ^= prim_cipher_pkg::PRINCE_ALPHA_CONST[DataWidth-1:0];
+      k0         = k0_prime_d;
+      k0_prime_d = key_i[DataWidth-1:0];
+      k1_d ^= prim_cipher_pkg::PRINCE_ALPHA_CONST[DataWidth-1:0];
     end
   end
 
@@ -120,19 +120,23 @@ module prim_prince #(
     logic [DataWidth-1:0] data_state_round;
     if (DataWidth == 64) begin : gen_fwd_d64
       always_comb begin : p_fwd_d64
-        data_state_round = prim_cipher_pkg::sbox4_64bit(data_state[k-1],
-            prim_cipher_pkg::PRINCE_SBOX4);
+        data_state_round = prim_cipher_pkg::sbox4_64bit(
+            data_state[k-1], prim_cipher_pkg::PRINCE_SBOX4
+        );
         data_state_round = prim_cipher_pkg::prince_mult_prime_64bit(data_state_round);
-        data_state_round = prim_cipher_pkg::prince_shiftrows_64bit(data_state_round,
-            prim_cipher_pkg::PRINCE_SHIFT_ROWS64);
+        data_state_round = prim_cipher_pkg::prince_shiftrows_64bit(
+            data_state_round, prim_cipher_pkg::PRINCE_SHIFT_ROWS64
+        );
       end
     end else begin : gen_fwd_d32
       always_comb begin : p_fwd_d32
-        data_state_round = prim_cipher_pkg::sbox4_32bit(data_state[k-1],
-            prim_cipher_pkg::PRINCE_SBOX4);
+        data_state_round = prim_cipher_pkg::sbox4_32bit(
+            data_state[k-1], prim_cipher_pkg::PRINCE_SBOX4
+        );
         data_state_round = prim_cipher_pkg::prince_mult_prime_32bit(data_state_round);
-        data_state_round = prim_cipher_pkg::prince_shiftrows_32bit(data_state_round,
-            prim_cipher_pkg::PRINCE_SHIFT_ROWS64);
+        data_state_round = prim_cipher_pkg::prince_shiftrows_32bit(
+            data_state_round, prim_cipher_pkg::PRINCE_SHIFT_ROWS64
+        );
       end
     end
     logic [DataWidth-1:0] data_state_xor;
@@ -140,9 +144,9 @@ module prim_prince #(
                             prim_cipher_pkg::PRINCE_ROUND_CONST[k][DataWidth-1:0];
     // improved keyschedule proposed by https://eprint.iacr.org/2014/656.pdf
     if (k % 2 == 1) begin : gen_fwd_key_odd
-      assign data_state[k]  = data_state_xor ^ k0_new_d;
+      assign data_state[k] = data_state_xor ^ k0_new_d;
     end else begin : gen_fwd_key_even
-      assign data_state[k]  = data_state_xor ^ k1_d;
+      assign data_state[k] = data_state_xor ^ k1_d;
     end
   end
 
@@ -150,19 +154,23 @@ module prim_prince #(
   logic [DataWidth-1:0] data_state_middle_d, data_state_middle_q, data_state_middle;
   if (DataWidth == 64) begin : gen_middle_d64
     always_comb begin : p_middle_d64
-      data_state_middle_d = prim_cipher_pkg::sbox4_64bit(data_state[NumRoundsHalf],
-          prim_cipher_pkg::PRINCE_SBOX4);
+      data_state_middle_d = prim_cipher_pkg::sbox4_64bit(
+          data_state[NumRoundsHalf], prim_cipher_pkg::PRINCE_SBOX4
+      );
       data_state_middle = prim_cipher_pkg::prince_mult_prime_64bit(data_state_middle_q);
-      data_state_middle = prim_cipher_pkg::sbox4_64bit(data_state_middle,
-          prim_cipher_pkg::PRINCE_SBOX4_INV);
+      data_state_middle = prim_cipher_pkg::sbox4_64bit(
+          data_state_middle, prim_cipher_pkg::PRINCE_SBOX4_INV
+      );
     end
   end else begin : gen_middle_d32
     always_comb begin : p_middle_d32
-      data_state_middle_d = prim_cipher_pkg::sbox4_32bit(data_state_middle[NumRoundsHalf],
-          prim_cipher_pkg::PRINCE_SBOX4);
+      data_state_middle_d = prim_cipher_pkg::sbox4_32bit(
+          data_state_middle[NumRoundsHalf], prim_cipher_pkg::PRINCE_SBOX4
+      );
       data_state_middle = prim_cipher_pkg::prince_mult_prime_32bit(data_state_middle_q);
-      data_state_middle = prim_cipher_pkg::sbox4_32bit(data_state_middle,
-          prim_cipher_pkg::PRINCE_SBOX4_INV);
+      data_state_middle = prim_cipher_pkg::sbox4_32bit(
+          data_state_middle, prim_cipher_pkg::PRINCE_SBOX4_INV
+      );
     end
   end
 
@@ -204,27 +212,30 @@ module prim_prince #(
     logic [DataWidth-1:0] data_state_bwd;
     if (DataWidth == 64) begin : gen_bwd_d64
       always_comb begin : p_bwd_d64
-        data_state_bwd = prim_cipher_pkg::prince_shiftrows_64bit(data_state_xor1,
-            prim_cipher_pkg::PRINCE_SHIFT_ROWS64_INV);
+        data_state_bwd = prim_cipher_pkg::prince_shiftrows_64bit(
+            data_state_xor1, prim_cipher_pkg::PRINCE_SHIFT_ROWS64_INV
+        );
         data_state_bwd = prim_cipher_pkg::prince_mult_prime_64bit(data_state_bwd);
-        data_state[NumRoundsHalf+k+1] = prim_cipher_pkg::sbox4_64bit(data_state_bwd,
-            prim_cipher_pkg::PRINCE_SBOX4_INV);
+        data_state[NumRoundsHalf+k+1] = prim_cipher_pkg::sbox4_64bit(
+            data_state_bwd, prim_cipher_pkg::PRINCE_SBOX4_INV
+        );
       end
     end else begin : gen_bwd_d32
       always_comb begin : p_bwd_d32
-        data_state_bwd = prim_cipher_pkg::prince_shiftrows_32bit(data_state_xor1,
-            prim_cipher_pkg::PRINCE_SHIFT_ROWS64_INV);
+        data_state_bwd = prim_cipher_pkg::prince_shiftrows_32bit(
+            data_state_xor1, prim_cipher_pkg::PRINCE_SHIFT_ROWS64_INV
+        );
         data_state_bwd = prim_cipher_pkg::prince_mult_prime_32bit(data_state_bwd);
-        data_state[NumRoundsHalf+k+1] = prim_cipher_pkg::sbox4_32bit(data_state_bwd,
-            prim_cipher_pkg::PRINCE_SBOX4_INV);
+        data_state[NumRoundsHalf+k+1] = prim_cipher_pkg::sbox4_32bit(
+            data_state_bwd, prim_cipher_pkg::PRINCE_SBOX4_INV
+        );
       end
     end
   end
 
   // post-rounds
   always_comb begin : p_post_round_xor
-    data_o  = data_state[2*NumRoundsHalf+1] ^
-              prim_cipher_pkg::PRINCE_ROUND_CONST[11][DataWidth-1:0];
+    data_o = data_state[2*NumRoundsHalf+1] ^ prim_cipher_pkg::PRINCE_ROUND_CONST[11][DataWidth-1:0];
     data_o ^= k1_q;
     data_o ^= k0_prime_q;
   end
@@ -233,8 +244,8 @@ module prim_prince #(
   // assertions //
   ////////////////
 
-  `ASSERT_INIT(SupportedWidths_A, (DataWidth == 64 && KeyWidth == 128) ||
-                                  (DataWidth == 32 && KeyWidth == 64))
+  `ASSERT_INIT(SupportedWidths_A,
+               (DataWidth == 64 && KeyWidth == 128) || (DataWidth == 32 && KeyWidth == 64))
   `ASSERT_INIT(SupportedNumRounds_A, NumRoundsHalf > 0 && NumRoundsHalf < 6)
 
 

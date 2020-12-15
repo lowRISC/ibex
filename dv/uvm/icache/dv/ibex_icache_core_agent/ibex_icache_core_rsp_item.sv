@@ -11,7 +11,7 @@ class ibex_icache_core_rsp_item extends uvm_sequence_item;
   bit saw_error;
 
   `uvm_object_utils_begin(ibex_icache_core_rsp_item)
-    `uvm_field_int (saw_error, UVM_DEFAULT)
+    `uvm_field_int(saw_error, UVM_DEFAULT)
   `uvm_object_utils_end
 
   `uvm_object_new

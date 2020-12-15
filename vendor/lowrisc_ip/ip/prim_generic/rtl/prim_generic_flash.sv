@@ -6,10 +6,10 @@
 //
 
 module prim_generic_flash #(
-  parameter int NumBanks      = 2,   // number of banks
-  parameter int InfosPerBank  = 1,   // info pages per bank
-  parameter int PagesPerBank  = 256, // data pages per bank
-  parameter int WordsPerPage  = 256, // words per page
+  parameter int NumBanks      = 2,  // number of banks
+  parameter int InfosPerBank  = 1,  // info pages per bank
+  parameter int PagesPerBank  = 256,  // data pages per bank
+  parameter int WordsPerPage  = 256,  // words per page
   parameter int DataWidth     = 32,  // bits per word
   parameter int MetaDataWidth = 12,  // metadata such as ECC
   parameter int TestModeWidth = 2
@@ -84,4 +84,4 @@ module prim_generic_flash #(
   assign unused_tms = tms_i;
   assign tdo_o = '0;
 
-endmodule // prim_generic_flash
+endmodule  // prim_generic_flash

@@ -21,22 +21,31 @@ class ibex_icache_oldval_test extends ibex_icache_base_test;
 
     super.check_phase(phase);
 
-    actual = env.scoreboard.actual_old_count;
+    actual   = env.scoreboard.actual_old_count;
     possible = env.scoreboard.possible_old_count;
 
-    `DV_CHECK(possible >= 1000,
-              $sformatf({"After an oldval test, we only saw %0d points where we ",
-                         "could have returned an old value."},
-                        possible))
+    `DV_CHECK(possible >= 1000, $sformatf(
+              {
+                "After an oldval test, we only saw %0d points where we ",
+                "could have returned an old value."
+              },
+              possible
+              ))
 
     // Calculate a percentage to report with a decimal place (especially helpful if we fail).
     `DV_CHECK_LE_FATAL(actual, possible);
     frac4 = (1000 * actual + (possible / 2)) / possible;
 
-    `DV_CHECK(frac4 >= 50,
-              $sformatf({"After an oldval test with %0d possible points for an old value, we got ",
-                         "one %0d times (%0d.%0d%%). This is less than the 5% minimum threshold."},
-                        possible, actual, frac4 / 10, frac4 % 10))
+    `DV_CHECK(frac4 >= 50, $sformatf(
+              {
+                "After an oldval test with %0d possible points for an old value, we got ",
+                "one %0d times (%0d.%0d%%). This is less than the 5% minimum threshold."
+              },
+              possible,
+              actual,
+              frac4 / 10,
+              frac4 % 10
+              ))
 
   endfunction : check_phase
 

@@ -15,12 +15,12 @@
 
 class ibex_icache_mem_req_item extends uvm_sequence_item;
 
-  bit               is_grant;
-  logic [31:0]      address;
+  bit          is_grant;
+  logic [31:0] address;
 
   `uvm_object_utils_begin(ibex_icache_mem_req_item)
-    `uvm_field_int (is_grant, UVM_DEFAULT)
-    `uvm_field_int (address,  UVM_DEFAULT | UVM_HEX)
+    `uvm_field_int(is_grant, UVM_DEFAULT)
+    `uvm_field_int(address, UVM_DEFAULT | UVM_HEX)
   `uvm_object_utils_end
 
   `uvm_object_new

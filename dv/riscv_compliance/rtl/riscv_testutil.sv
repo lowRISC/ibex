@@ -21,15 +21,15 @@
  * "SIGNATURE: ".
  */
 module riscv_testutil (
-  input               clk_i,
-  input               rst_ni,
+  input clk_i,
+  input rst_ni,
 
   // bus device (slave) interface
-  input               dev_req_i,
-  input               dev_we_i,
-  input        [31:0] dev_addr_i,
-  input        [31:0] dev_wdata_i,
-  input        [ 3:0] dev_be_i,
+  input        dev_req_i,
+  input        dev_we_i,
+  input [31:0] dev_addr_i,
+  input [31:0] dev_wdata_i,
+  input [ 3:0] dev_be_i,
 
   output logic        dev_rvalid_o,
   output logic [31:0] dev_rdata_o,
@@ -79,7 +79,7 @@ module riscv_testutil (
 
   always_ff @(posedge clk_i) begin
     begin_signature_addr_q <= begin_signature_addr_d;
-    end_signature_addr_q <= end_signature_addr_d;
+    end_signature_addr_q   <= end_signature_addr_d;
   end
 
   // all responses are in the next cycle
@@ -108,7 +108,10 @@ module riscv_testutil (
   // ======= FSM: Read signature from memory and dump it to STDOUT ======= //
 
   typedef enum logic [1:0] {
-    WAIT, READ, READ_FINISH, TERMINATE
+    WAIT,
+    READ,
+    READ_FINISH,
+    TERMINATE
   } readsig_state_e;
 
   readsig_state_e state_q, state_d;
@@ -119,8 +122,8 @@ module riscv_testutil (
     unique case (state_q)
       WAIT: begin
         if (read_signature_and_terminate) begin
-          $display("Reading signature from 0x%x to 0x%x",
-              begin_signature_addr_q, end_signature_addr_q);
+          $display("Reading signature from 0x%x to 0x%x", begin_signature_addr_q,
+                   end_signature_addr_q);
           state_d = READ;
           read_addr_d = begin_signature_addr_q;
         end
@@ -153,7 +156,7 @@ module riscv_testutil (
   // These are the address and read request bits, respectively of the
   // TestUtilHost master port.
   assign host_addr_o = read_addr_q;
-  assign host_req_o = (state_q == READ);
+  assign host_req_o  = (state_q == READ);
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin

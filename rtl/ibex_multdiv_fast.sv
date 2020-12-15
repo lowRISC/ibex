@@ -15,34 +15,34 @@
 `include "prim_assert.sv"
 
 module ibex_multdiv_fast #(
-    parameter ibex_pkg::rv32m_e RV32M = ibex_pkg::RV32MFast
-  ) (
-    input  logic             clk_i,
-    input  logic             rst_ni,
-    input  logic             mult_en_i,  // dynamic enable signal, for FSM control
-    input  logic             div_en_i,   // dynamic enable signal, for FSM control
-    input  logic             mult_sel_i, // static decoder output, for data muxes
-    input  logic             div_sel_i,  // static decoder output, for data muxes
-    input  ibex_pkg::md_op_e operator_i,
-    input  logic  [1:0]      signed_mode_i,
-    input  logic [31:0]      op_a_i,
-    input  logic [31:0]      op_b_i,
-    input  logic [33:0]      alu_adder_ext_i,
-    input  logic [31:0]      alu_adder_i,
-    input  logic             equal_to_zero_i,
-    input  logic             data_ind_timing_i,
+  parameter ibex_pkg::rv32m_e RV32M = ibex_pkg::RV32MFast
+) (
+  input logic                    clk_i,
+  input logic                    rst_ni,
+  input logic                    mult_en_i,  // dynamic enable signal, for FSM control
+  input logic                    div_en_i,  // dynamic enable signal, for FSM control
+  input logic                    mult_sel_i,  // static decoder output, for data muxes
+  input logic                    div_sel_i,  // static decoder output, for data muxes
+  input ibex_pkg::md_op_e        operator_i,
+  input logic             [ 1:0] signed_mode_i,
+  input logic             [31:0] op_a_i,
+  input logic             [31:0] op_b_i,
+  input logic             [33:0] alu_adder_ext_i,
+  input logic             [31:0] alu_adder_i,
+  input logic                    equal_to_zero_i,
+  input logic                    data_ind_timing_i,
 
-    output logic [32:0]      alu_operand_a_o,
-    output logic [32:0]      alu_operand_b_o,
+  output logic [32:0] alu_operand_a_o,
+  output logic [32:0] alu_operand_b_o,
 
-    input  logic [33:0]      imd_val_q_i[2],
-    output logic [33:0]      imd_val_d_o[2],
-    output logic [1:0]       imd_val_we_o,
+  input  logic [33:0] imd_val_q_i [2],
+  output logic [33:0] imd_val_d_o [2],
+  output logic [ 1:0] imd_val_we_o,
 
-    input  logic             multdiv_ready_id_i,
+  input logic multdiv_ready_id_i,
 
-    output logic [31:0]      multdiv_result_o,
-    output logic             valid_o
+  output logic [31:0] multdiv_result_o,
+  output logic        valid_o
 );
 
   import ibex_pkg::*;
@@ -51,9 +51,9 @@ module ibex_multdiv_fast #(
   logic signed [34:0] mac_res_signed;
   logic        [34:0] mac_res_ext;
   logic        [33:0] accum;
-  logic        sign_a, sign_b;
-  logic        mult_valid;
-  logic        signed_mult;
+  logic sign_a, sign_b;
+  logic mult_valid;
+  logic signed_mult;
 
   // Results that become intermediate value depending on whether mul or div is being calculated
   logic [33:0] mac_res_d, op_remainder_d;
@@ -61,9 +61,9 @@ module ibex_multdiv_fast #(
   logic [33:0] mac_res;
 
   // Divider signals
-  logic        div_sign_a, div_sign_b;
-  logic        is_greater_equal;
-  logic        div_change_sign, rem_change_sign;
+  logic div_sign_a, div_sign_b;
+  logic is_greater_equal;
+  logic div_change_sign, rem_change_sign;
   logic [31:0] one_shift;
   logic [31:0] op_denominator_q;
   logic [31:0] op_numerator_q;
@@ -75,39 +75,45 @@ module ibex_multdiv_fast #(
   logic [32:0] next_quotient;
   logic [31:0] res_adder_h;
   logic        div_valid;
-  logic [ 4:0] div_counter_q, div_counter_d;
-  logic        multdiv_en;
-  logic        mult_hold;
-  logic        div_hold;
-  logic        div_by_zero_d, div_by_zero_q;
+  logic [4:0] div_counter_q, div_counter_d;
+  logic multdiv_en;
+  logic mult_hold;
+  logic div_hold;
+  logic div_by_zero_d, div_by_zero_q;
 
-  logic        mult_en_internal;
-  logic        div_en_internal;
+  logic mult_en_internal;
+  logic div_en_internal;
 
   typedef enum logic [2:0] {
-    MD_IDLE, MD_ABS_A, MD_ABS_B, MD_COMP, MD_LAST, MD_CHANGE_SIGN, MD_FINISH
+    MD_IDLE,
+    MD_ABS_A,
+    MD_ABS_B,
+    MD_COMP,
+    MD_LAST,
+    MD_CHANGE_SIGN,
+    MD_FINISH
   } md_fsm_e;
   md_fsm_e md_state_q, md_state_d;
 
   logic unused_mult_sel_i;
   assign unused_mult_sel_i = mult_sel_i;
 
-  assign mult_en_internal = mult_en_i & ~mult_hold;
-  assign div_en_internal  = div_en_i & ~div_hold;
+  assign mult_en_internal  = mult_en_i & ~mult_hold;
+  assign div_en_internal   = div_en_i & ~div_hold;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
-      div_counter_q    <= '0;
-      md_state_q       <= MD_IDLE;
-      op_numerator_q   <= '0;
-      op_quotient_q    <= '0;
-      div_by_zero_q    <= '0;
+      div_counter_q  <= '0;
+      md_state_q     <= MD_IDLE;
+      op_numerator_q <= '0;
+      op_quotient_q  <= '0;
+      div_by_zero_q  <= '0;
     end else if (div_en_internal) begin
-      div_counter_q    <= div_counter_d;
-      op_numerator_q   <= op_numerator_d;
-      op_quotient_q    <= op_quotient_d;
-      md_state_q       <= md_state_d;
-      div_by_zero_q    <= div_by_zero_d;
+      div_counter_q  <= div_counter_d;
+      op_numerator_q <= op_numerator_d;
+      op_quotient_q  <= op_quotient_d;
+      md_state_q     <= md_state_d;
+      div_by_zero_q  <= div_by_zero_d;
     end
   end
 
@@ -129,28 +135,29 @@ module ibex_multdiv_fast #(
   logic unused_mac_res_ext;
   assign unused_mac_res_ext = mac_res_ext[34];
 
-  assign signed_mult      = (signed_mode_i != 2'b00);
-  assign multdiv_result_o = div_sel_i ? imd_val_q_i[0][31:0] : mac_res_d[31:0];
+  assign signed_mult        = (signed_mode_i != 2'b00);
+  assign multdiv_result_o   = div_sel_i ? imd_val_q_i[0][31:0] : mac_res_d[31:0];
 
   // The single cycle multiplier uses three 17 bit multipliers to compute MUL instructions in a
   // single cycle and MULH instructions in two cycles.
   if (RV32M == RV32MSingleCycle) begin : gen_mult_single_cycle
 
     typedef enum logic {
-      MULL, MULH
+      MULL,
+      MULH
     } mult_fsm_e;
     mult_fsm_e mult_state_q, mult_state_d;
 
     logic signed [33:0] mult1_res, mult2_res, mult3_res;
-    logic [33:0]        mult1_res_uns;
-    logic [33:32]       unused_mult1_res_uns;
-    logic [15:0]        mult1_op_a, mult1_op_b;
-    logic [15:0]        mult2_op_a, mult2_op_b;
-    logic [15:0]        mult3_op_a, mult3_op_b;
-    logic               mult1_sign_a, mult1_sign_b;
-    logic               mult2_sign_a, mult2_sign_b;
-    logic               mult3_sign_a, mult3_sign_b;
-    logic [33:0]        summand1, summand2, summand3;
+    logic [ 33:0] mult1_res_uns;
+    logic [33:32] unused_mult1_res_uns;
+    logic [15:0] mult1_op_a, mult1_op_b;
+    logic [15:0] mult2_op_a, mult2_op_b;
+    logic [15:0] mult3_op_a, mult3_op_b;
+    logic mult1_sign_a, mult1_sign_b;
+    logic mult2_sign_a, mult2_sign_b;
+    logic mult3_sign_a, mult3_sign_b;
+    logic [33:0] summand1, summand2, summand3;
 
     assign mult1_res = $signed({mult1_sign_a, mult1_op_a}) * $signed({mult1_sign_b, mult1_op_b});
     assign mult2_res = $signed({mult2_sign_a, mult2_op_a}) * $signed({mult2_sign_b, mult2_op_b});
@@ -158,9 +165,9 @@ module ibex_multdiv_fast #(
 
     assign mac_res_signed = $signed(summand1) + $signed(summand2) + $signed(summand3);
 
-    assign mult1_res_uns  = $unsigned(mult1_res);
-    assign mac_res_ext    = $unsigned(mac_res_signed);
-    assign mac_res        = mac_res_ext[33:0];
+    assign mult1_res_uns = $unsigned(mult1_res);
+    assign mac_res_ext = $unsigned(mac_res_signed);
+    assign mac_res = mac_res_ext[33:0];
 
     assign sign_a = signed_mode_i[0] & op_a_i[31];
     assign sign_b = signed_mode_i[1] & op_b_i[31];
@@ -236,7 +243,7 @@ module ibex_multdiv_fast #(
           mult_state_d = MULL;
         end
 
-      endcase // mult_state_q
+      endcase  // mult_state_q
     end
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -254,14 +261,17 @@ module ibex_multdiv_fast #(
     // States must be knwon/valid.
     `ASSERT_KNOWN(IbexMultStateKnown, mult_state_q)
 
-  // The fast multiplier uses one 17 bit multiplier to compute MUL instructions in 3 cycles
-  // and MULH instructions in 4 cycles.
+    // The fast multiplier uses one 17 bit multiplier to compute MUL instructions in 3 cycles
+    // and MULH instructions in 4 cycles.
   end else begin : gen_mult_fast
     logic [15:0] mult_op_a;
     logic [15:0] mult_op_b;
 
     typedef enum logic [1:0] {
-      ALBL, ALBH, AHBL, AHBH
+      ALBL,
+      ALBH,
+      AHBL,
+      AHBH
     } mult_fsm_e;
     mult_fsm_e mult_state_q, mult_state_d;
 
@@ -269,10 +279,15 @@ module ibex_multdiv_fast #(
     // 1. The 2 MSBs of the multiplicants are always equal, and
     // 2. The 16 MSBs of the addend (accum[33:18]) are always equal.
     // Thus, it is safe to ignore mac_res_ext[34].
-    assign mac_res_signed =
-        $signed({sign_a, mult_op_a}) * $signed({sign_b, mult_op_b}) + $signed(accum);
-    assign mac_res_ext    = $unsigned(mac_res_signed);
-    assign mac_res        = mac_res_ext[33:0];
+    assign mac_res_signed = $signed(
+        {sign_a, mult_op_a}
+    ) * $signed(
+        {sign_b, mult_op_b}
+    ) + $signed(
+        accum
+    );
+    assign mac_res_ext = $unsigned(mac_res_signed);
+    assign mac_res = mac_res_ext[33:0];
 
     always_comb begin
       mult_op_a    = op_a_i[`OP_L];
@@ -289,12 +304,12 @@ module ibex_multdiv_fast #(
 
         ALBL: begin
           // al*bl
-          mult_op_a = op_a_i[`OP_L];
-          mult_op_b = op_b_i[`OP_L];
-          sign_a    = 1'b0;
-          sign_b    = 1'b0;
-          accum     = '0;
-          mac_res_d = mac_res;
+          mult_op_a    = op_a_i[`OP_L];
+          mult_op_b    = op_b_i[`OP_L];
+          sign_a       = 1'b0;
+          sign_b       = 1'b0;
+          accum        = '0;
+          mac_res_d    = mac_res;
           mult_state_d = ALBH;
         end
 
@@ -356,7 +371,7 @@ module ibex_multdiv_fast #(
         default: begin
           mult_state_d = ALBL;
         end
-      endcase // mult_state_q
+      endcase  // mult_state_q
     end
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -372,18 +387,23 @@ module ibex_multdiv_fast #(
     // States must be knwon/valid.
     `ASSERT_KNOWN(IbexMultStateKnown, mult_state_q)
 
-  end // gen_mult_fast
+  end  // gen_mult_fast
 
   // Divider
-  assign res_adder_h    = alu_adder_ext_i[32:1];
+  assign res_adder_h = alu_adder_ext_i[32:1];
   logic [1:0] unused_alu_adder_ext;
-  assign unused_alu_adder_ext = {alu_adder_ext_i[33],alu_adder_ext_i[0]};
+  assign unused_alu_adder_ext = {alu_adder_ext_i[33], alu_adder_ext_i[0]};
 
   assign next_remainder = is_greater_equal ? res_adder_h[31:0] : imd_val_q_i[0][31:0];
-  assign next_quotient  = is_greater_equal ? {1'b0, op_quotient_q} | {1'b0, one_shift} :
-                                             {1'b0, op_quotient_q};
+  assign next_quotient = is_greater_equal ? {
+    1'b0, op_quotient_q
+  } | {
+    1'b0, one_shift
+  } : {
+    1'b0, op_quotient_q
+  };
 
-  assign one_shift      = {31'b0, 1'b1} << div_counter_q;
+  assign one_shift = {31'b0, 1'b1} << div_counter_q;
 
   // The adder in the ALU computes alu_operand_a_o + alu_operand_b_o which means
   // Remainder - Divisor. If Remainder - Divisor >= 0, is_greater_equal is equal to 1,
@@ -409,13 +429,13 @@ module ibex_multdiv_fast #(
     md_state_d       = md_state_q;
     op_numerator_d   = op_numerator_q;
     op_denominator_d = op_denominator_q;
-    alu_operand_a_o  = {32'h0  , 1'b1};
+    alu_operand_a_o  = {32'h0, 1'b1};
     alu_operand_b_o  = {~op_b_i, 1'b1};
     div_valid        = 1'b0;
     div_hold         = 1'b0;
     div_by_zero_d    = div_by_zero_q;
 
-    unique case(md_state_q)
+    unique case (md_state_q)
       MD_IDLE: begin
         if (operator_i == MD_OP_DIV) begin
           // Check if the Denominator is 0
@@ -436,9 +456,9 @@ module ibex_multdiv_fast #(
           md_state_d     = (!data_ind_timing_i && equal_to_zero_i) ? MD_FINISH : MD_ABS_A;
         end
         // 0 - B = 0 iff B == 0
-        alu_operand_a_o  = {32'h0  , 1'b1};
-        alu_operand_b_o  = {~op_b_i, 1'b1};
-        div_counter_d    = 5'd31;
+        alu_operand_a_o = {32'h0, 1'b1};
+        alu_operand_b_o = {~op_b_i, 1'b1};
+        div_counter_d   = 5'd31;
       end
 
       MD_ABS_A: begin
@@ -449,28 +469,28 @@ module ibex_multdiv_fast #(
         md_state_d      = MD_ABS_B;
         div_counter_d   = 5'd31;
         // ABS(A) = 0 - A
-        alu_operand_a_o = {32'h0  , 1'b1};
+        alu_operand_a_o = {32'h0, 1'b1};
         alu_operand_b_o = {~op_a_i, 1'b1};
       end
 
       MD_ABS_B: begin
         // remainder
-        op_remainder_d   = { 33'h0, op_numerator_q[31]};
+        op_remainder_d   = {33'h0, op_numerator_q[31]};
         // B abs value
         op_denominator_d = div_sign_b ? alu_adder_i : op_b_i;
         md_state_d       = MD_COMP;
         div_counter_d    = 5'd31;
         // ABS(B) = 0 - B
-        alu_operand_a_o  = {32'h0  , 1'b1};
+        alu_operand_a_o  = {32'h0, 1'b1};
         alu_operand_b_o  = {~op_b_i, 1'b1};
       end
 
       MD_COMP: begin
-        op_remainder_d  = {1'b0, next_remainder[31:0], op_numerator_q[div_counter_d]};
-        op_quotient_d   = next_quotient[31:0];
-        md_state_d      = (div_counter_q == 5'd1) ? MD_LAST : MD_COMP;
+        op_remainder_d = {1'b0, next_remainder[31:0], op_numerator_q[div_counter_d]};
+        op_quotient_d = next_quotient[31:0];
+        md_state_d = (div_counter_q == 5'd1) ? MD_LAST : MD_COMP;
         // Division
-        alu_operand_a_o = {imd_val_q_i[0][31:0], 1'b1}; // it contains the remainder
+        alu_operand_a_o = {imd_val_q_i[0][31:0], 1'b1};  // it contains the remainder
         alu_operand_b_o = {~op_denominator_q[31:0], 1'b1};  // -denominator two's compliment
       end
 
@@ -484,22 +504,22 @@ module ibex_multdiv_fast #(
           op_remainder_d = {2'b0, next_remainder[31:0]};
         end
         // Division
-        alu_operand_a_o  = {imd_val_q_i[0][31:0], 1'b1}; // it contains the remainder
-        alu_operand_b_o  = {~op_denominator_q[31:0], 1'b1};  // -denominator two's compliment
+        alu_operand_a_o = {imd_val_q_i[0][31:0], 1'b1};  // it contains the remainder
+        alu_operand_b_o = {~op_denominator_q[31:0], 1'b1};  // -denominator two's compliment
 
         md_state_d = MD_CHANGE_SIGN;
       end
 
       MD_CHANGE_SIGN: begin
-        md_state_d  = MD_FINISH;
+        md_state_d = MD_FINISH;
         if (operator_i == MD_OP_DIV) begin
           op_remainder_d = (div_change_sign) ? {2'h0, alu_adder_i} : imd_val_q_i[0];
         end else begin
           op_remainder_d = (rem_change_sign) ? {2'h0, alu_adder_i} : imd_val_q_i[0];
         end
         // ABS(Quotient) = 0 - Quotient (or Remainder)
-        alu_operand_a_o  = {32'h0  , 1'b1};
-        alu_operand_b_o  = {~imd_val_q_i[0][31:0], 1'b1};
+        alu_operand_a_o = {32'h0, 1'b1};
+        alu_operand_b_o = {~imd_val_q_i[0][31:0], 1'b1};
       end
 
       MD_FINISH: begin
@@ -507,25 +527,26 @@ module ibex_multdiv_fast #(
         // Note no state transition will occur if div_hold is set
         md_state_d = MD_IDLE;
         div_hold   = ~multdiv_ready_id_i;
-        div_valid   = 1'b1;
+        div_valid  = 1'b1;
       end
 
       default: begin
         md_state_d = MD_IDLE;
       end
-    endcase // md_state_q
+    endcase  // md_state_q
   end
 
   assign valid_o = mult_valid | div_valid;
 
   // States must be knwon/valid.
-  `ASSERT(IbexMultDivStateValid, md_state_q inside {
+  `ASSERT(IbexMultDivStateValid,
+          md_state_q inside {
       MD_IDLE, MD_ABS_A, MD_ABS_B, MD_COMP, MD_LAST, MD_CHANGE_SIGN, MD_FINISH})
 
 `ifdef FORMAL
-  `ifdef YOSYS
-    `include "formal_tb_frag.svh"
-  `endif
+`ifdef YOSYS
+  `include "formal_tb_frag.svh"
+`endif
 `endif
 
-endmodule // ibex_mult
+endmodule  // ibex_mult

@@ -2,16 +2,18 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-class dv_base_env #(type CFG_T               = dv_base_env_cfg,
-                    type VIRTUAL_SEQUENCER_T = dv_base_virtual_sequencer,
-                    type SCOREBOARD_T        = dv_base_scoreboard,
-                    type COV_T               = dv_base_env_cov) extends uvm_env;
-  `uvm_component_param_utils(dv_base_env #(CFG_T, VIRTUAL_SEQUENCER_T, SCOREBOARD_T, COV_T))
+class dv_base_env #(
+  type CFG_T               = dv_base_env_cfg,
+  type VIRTUAL_SEQUENCER_T = dv_base_virtual_sequencer,
+  type SCOREBOARD_T        = dv_base_scoreboard,
+  type COV_T               = dv_base_env_cov
+) extends uvm_env;
+  `uvm_component_param_utils(dv_base_env#(CFG_T, VIRTUAL_SEQUENCER_T, SCOREBOARD_T, COV_T))
 
-  CFG_T                      cfg;
-  VIRTUAL_SEQUENCER_T        virtual_sequencer;
-  SCOREBOARD_T               scoreboard;
-  COV_T                      cov;
+  CFG_T               cfg;
+  VIRTUAL_SEQUENCER_T virtual_sequencer;
+  SCOREBOARD_T        scoreboard;
+  COV_T               cov;
 
   `uvm_component_new
 

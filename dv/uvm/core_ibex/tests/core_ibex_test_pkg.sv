@@ -15,11 +15,11 @@ package core_ibex_test_pkg;
   import ibex_pkg::*;
 
   typedef struct {
-    ibex_pkg::opcode_e  opcode;
-    bit [2:0]           funct3;
-    bit [6:0]           funct7;
+    ibex_pkg::opcode_e opcode;
+    bit [2:0] funct3;
+    bit [6:0] funct7;
     // 12-bit immediate, used only for SYSTEM instructions
-    bit [11:0]          system_imm;
+    bit [11:0] system_imm;
   } instr_t;
 
   `include "core_ibex_report_server.sv"
