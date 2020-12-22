@@ -1,10 +1,16 @@
-package: 
+package:
   name: ibex
 
 dependencies:
   tech_cells_generic: { git: "git@github.com:pulp-platform/tech_cells_generic.git", version: 0.2.2 }
 
 sources:
+  - target: synthesis
+    files:
+      - rtl/ibex_register_file_latch.sv
+  - target: xilinx
+    files:
+      - rtl/ibex_register_file_fpga.sv
   - target: not(rtl)
     include_dirs:
       - rtl
@@ -16,7 +22,6 @@ sources:
       # levels 1 and 0, etc. Files within a level are ordered alphabetically.
       # Level 0
       - rtl/ibex_pkg.sv
-      - rtl/ibex_register_file_ff.sv
       - vendor/lowrisc_ip/ip/prim/rtl/prim_assert.sv
       # Level 1
       - rtl/ibex_alu.sv
@@ -44,7 +49,7 @@ sources:
     include_dirs:
       - rtl
       - vendor/lowrisc_ip/ip/prim/rtl
-    defines: 
+    defines:
       RVFI: true
     files:
       # Level 0
@@ -77,9 +82,3 @@ sources:
       - rtl/ibex_core.sv
       # Level 5
       - rtl/ibex_core_tracing.sv
-  - target: any(rtl, tsmc55, gf22)
-    files: 
-      - rtl/ibex_register_file_latch.sv
-  - target: xilinx
-    files:
-      - rtl/ibex_register_file_fpga.sv
