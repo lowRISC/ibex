@@ -71,6 +71,9 @@ module ibex_core #(
     output logic        irq_x_ack_o,
     output logic [4:0]  irq_x_ack_id_o,
 
+    // External performance counters
+    input  logic [15:0] external_perf_i, // Bind to zero if unused
+
     // Debug Interface
     input  logic        debug_req_i,
 
@@ -1073,7 +1076,8 @@ module ibex_core #(
       .mem_store_i             ( perf_store                   ),
       .dside_wait_i            ( perf_dside_wait              ),
       .mul_wait_i              ( perf_mul_wait                ),
-      .div_wait_i              ( perf_div_wait                )
+      .div_wait_i              ( perf_div_wait                ),
+      .external_perf_i         ( external_perf_i              )
   );
 
   // These assertions are in top-level as instr_valid_id required as the enable term

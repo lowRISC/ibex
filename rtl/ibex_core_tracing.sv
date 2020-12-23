@@ -65,6 +65,8 @@ module ibex_core_tracing #(
     output logic        irq_x_ack_o,
     output logic [4:0]  irq_x_ack_id_o,
 
+    input  logic [15:0] external_perf_i,
+
     // Debug Interface
     input  logic        debug_req_i,
 
@@ -161,6 +163,8 @@ module ibex_core_tracing #(
     .irq_x_i,
     .irq_x_ack_o,
     .irq_x_ack_id_o,
+
+    .external_perf_i,
 
     .debug_req_i,
 
