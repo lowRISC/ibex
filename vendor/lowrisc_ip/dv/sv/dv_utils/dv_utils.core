@@ -12,6 +12,8 @@ filesets:
       - lowrisc:dv:common_ifs
       - lowrisc:prim:assert:0.1
       - lowrisc:ibex:bus_params_pkg
+      - lowrisc:dv:str_utils
+      - lowrisc:dv:dv_test_status
     files:
       - dv_utils_pkg.sv
       - dv_report_server.sv: {is_include_file: true}

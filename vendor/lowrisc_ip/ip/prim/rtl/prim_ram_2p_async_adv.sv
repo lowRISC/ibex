@@ -5,8 +5,8 @@
 // Asynchronous Dual-Port SRAM Wrapper
 //
 // Supported configurations:
-// - ECC for 32b wide memories with no write mask
-//   (Width == 32 && DataBitsPerMask == 32).
+// - ECC for 32b and 64b wide memories with no write mask
+//   (Width == 32 or Width == 64, DataBitsPerMask is ignored).
 // - Byte parity if Width is a multiple of 8 bit and write masks have Byte
 //   granularity (DataBitsPerMask == 8).
 //
@@ -62,11 +62,6 @@ module prim_ram_2p_async_adv #(
 
   `ASSERT_INIT(CannotHaveEccAndParity_A, !(EnableParity && EnableECC))
 
-  // While we require DataBitsPerMask to be per Byte (8) at the interface in case Byte parity is
-  // enabled, we need to switch this to a per-bit mask locally such that we can individually enable
-  // the parity bits to be written alongside the data.
-  localparam int LocalDataBitsPerMask = (EnableParity) ? 1 : DataBitsPerMask;
-
   // Calculate ECC width
   localparam int ParWidth  = (EnableParity) ? Width/8 :
                              (!EnableECC)   ? 0 :
@@ -77,6 +72,13 @@ module prim_ram_2p_async_adv #(
                              (Width <= 120) ? 8 : 8 ;
   localparam int TotalWidth = Width + ParWidth;
 
+  // If byte parity is enabled, the write enable bits are used to write memory colums
+  // with 8 + 1 = 9 bit width (data plus corresponding parity bit).
+  // If ECC is enabled, the DataBitsPerMask is ignored.
+  localparam int LocalDataBitsPerMask = (EnableParity) ? 9          :
+                                        (EnableECC)    ? TotalWidth :
+                                                         DataBitsPerMask;
+
   ////////////////////////////
   // RAM Primitive Instance //
   ////////////////////////////
@@ -86,7 +88,7 @@ module prim_ram_2p_async_adv #(
   logic [Aw-1:0]           a_addr_q,   a_addr_d ;
   logic [TotalWidth-1:0]   a_wdata_q,  a_wdata_d ;
   logic [TotalWidth-1:0]   a_wmask_q,  a_wmask_d ;
-  logic                    a_rvalid_q, a_rvalid_d, a_rvalid_sram ;
+  logic                    a_rvalid_q, a_rvalid_d, a_rvalid_sram_q ;
   logic [Width-1:0]        a_rdata_q,  a_rdata_d ;
   logic [TotalWidth-1:0]   a_rdata_sram ;
   logic [1:0]              a_rerror_q, a_rerror_d ;
@@ -96,7 +98,7 @@ module prim_ram_2p_async_adv #(
   logic [Aw-1:0]           b_addr_q,   b_addr_d ;
   logic [TotalWidth-1:0]   b_wdata_q,  b_wdata_d ;
   logic [TotalWidth-1:0]   b_wmask_q,  b_wmask_d ;
-  logic                    b_rvalid_q, b_rvalid_d, b_rvalid_sram ;
+  logic                    b_rvalid_q, b_rvalid_d, b_rvalid_sram_q ;
   logic [Width-1:0]        b_rdata_q,  b_rdata_d ;
   logic [TotalWidth-1:0]   b_rdata_sram ;
   logic [1:0]              b_rerror_q, b_rerror_d ;
@@ -128,16 +130,16 @@ module prim_ram_2p_async_adv #(
 
   always_ff @(posedge clk_a_i or negedge rst_a_ni) begin
     if (!rst_a_ni) begin
-      a_rvalid_sram <= 1'b0;
+      a_rvalid_sram_q <= 1'b0;
     end else begin
-      a_rvalid_sram <= a_req_q & ~a_write_q;
+      a_rvalid_sram_q <= a_req_q & ~a_write_q;
     end
   end
   always_ff @(posedge clk_b_i or negedge rst_b_ni) begin
     if (!rst_b_ni) begin
-      b_rvalid_sram <= 1'b0;
+      b_rvalid_sram_q <= 1'b0;
     end else begin
-      b_rvalid_sram <= b_req_q & ~b_write_q;
+      b_rvalid_sram_q <= b_req_q & ~b_write_q;
     end
   end
 
@@ -197,28 +199,27 @@ module prim_ram_2p_async_adv #(
     always_comb begin : p_parity
       a_rerror_d = '0;
       b_rerror_d = '0;
-      a_wmask_d[0+:Width] = a_wmask_i;
-      b_wmask_d[0+:Width] = b_wmask_i;
-      a_wdata_d[0+:Width] = a_wdata_i;
-      b_wdata_d[0+:Width] = b_wdata_i;
-
       for (int i = 0; i < Width/8; i ++) begin
-        // parity generation (odd parity)
-        a_wdata_d[Width + i] = ~(^a_wdata_i[i*8 +: 8]);
-        b_wdata_d[Width + i] = ~(^b_wdata_i[i*8 +: 8]);
-        a_wmask_d[Width + i] = &a_wmask_i[i*8 +: 8];
-        b_wmask_d[Width + i] = &b_wmask_i[i*8 +: 8];
-        // parity decoding (errors are always uncorrectable)
-        a_rerror_d[1] |= ~(^{a_rdata_sram[i*8 +: 8], a_rdata_sram[Width + i]});
-        b_rerror_d[1] |= ~(^{b_rdata_sram[i*8 +: 8], b_rdata_sram[Width + i]});
-      end
-      // tie to zero if the read data is not valid
-      a_rerror_d &= {2{a_rvalid_sram}};
-      b_rerror_d &= {2{b_rvalid_sram}};
-    end
+        // Data mapping. We have to make 8+1 = 9 bit groups
+        // that have the same write enable such that FPGA tools
+        // can map this correctly to BRAM resources.
+        a_wmask_d[i*9 +: 8] = a_wmask_i[i*8 +: 8];
+        a_wdata_d[i*9 +: 8] = a_wdata_i[i*8 +: 8];
+        a_rdata_d[i*8 +: 8] = a_rdata_sram[i*9 +: 8];
+        b_wmask_d[i*9 +: 8] = b_wmask_i[i*8 +: 8];
+        b_wdata_d[i*9 +: 8] = b_wdata_i[i*8 +: 8];
+        b_rdata_d[i*8 +: 8] = b_rdata_sram[i*9 +: 8];
 
-    assign a_rdata_d  = a_rdata_sram[0+:Width];
-    assign b_rdata_d  = b_rdata_sram[0+:Width];
+        // parity generation (odd parity)
+        a_wdata_d[i*9 + 8] = ~(^a_wdata_i[i*8 +: 8]);
+        a_wmask_d[i*9 + 8] = &a_wmask_i[i*8 +: 8];
+        b_wdata_d[i*9 + 8] = ~(^b_wdata_i[i*8 +: 8]);
+        b_wmask_d[i*9 + 8] = &b_wmask_i[i*8 +: 8];
+        // parity decoding (errors are always uncorrectable)
+        a_rerror_d[1] |= ~(^{a_rdata_sram[i*9 +: 8], a_rdata_sram[i*9 + 8]});
+        b_rerror_d[1] |= ~(^{b_rdata_sram[i*9 +: 8], b_rdata_sram[i*9 + 8]});
+      end
+    end
   end else begin : gen_nosecded_noparity
     assign a_wmask_d  = a_wmask_i;
     assign b_wmask_d  = b_wmask_i;
@@ -230,8 +231,8 @@ module prim_ram_2p_async_adv #(
     assign b_rerror_d = '0;
   end
 
-  assign a_rvalid_d = a_rvalid_sram;
-  assign b_rvalid_d = b_rvalid_sram;
+  assign a_rvalid_d = a_rvalid_sram_q;
+  assign b_rvalid_d = b_rvalid_sram_q;
 
   /////////////////////////////////////
   // Input/Output Pipeline Registers //
@@ -293,7 +294,8 @@ module prim_ram_2p_async_adv #(
       end else begin
         a_rvalid_q <= a_rvalid_d;
         a_rdata_q  <= a_rdata_d;
-        a_rerror_q <= a_rerror_d;
+        // tie to zero if the read data is not valid
+        a_rerror_q <= a_rerror_d & {2{a_rvalid_d}};
       end
     end
     always_ff @(posedge clk_b_i or negedge rst_b_ni) begin
@@ -304,17 +306,20 @@ module prim_ram_2p_async_adv #(
       end else begin
         b_rvalid_q <= b_rvalid_d;
         b_rdata_q  <= b_rdata_d;
-        b_rerror_q <= b_rerror_d;
+        // tie to zero if the read data is not valid
+        b_rerror_q <= b_rerror_d & {2{b_rvalid_d}};
       end
     end
   end else begin : gen_dirconnect_output
     assign a_rvalid_q = a_rvalid_d;
     assign a_rdata_q  = a_rdata_d;
-    assign a_rerror_q = a_rerror_d;
+    // tie to zero if the read data is not valid
+    assign a_rerror_q = a_rerror_d & {2{a_rvalid_d}};
 
     assign b_rvalid_q = b_rvalid_d;
     assign b_rdata_q  = b_rdata_d;
-    assign b_rerror_q = b_rerror_d;
+    // tie to zero if the read data is not valid
+    assign b_rerror_q = b_rerror_d & {2{b_rvalid_d}};
   end
 
 endmodule : prim_ram_2p_async_adv

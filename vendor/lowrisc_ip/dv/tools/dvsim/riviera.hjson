@@ -5,14 +5,13 @@
   build_cmd:  "vlib work && {job_prefix} vlog"
   run_cmd:    "{job_prefix} vsim"
 
-  // Indicate the tool specific helper sources - these are copied over to the
-  // {tool_srcs_dir} before running the simulation.
-  tool_srcs:  ["{dv_root}/tools/riviera/*"]
-
-  build_opts: ["-sv",
-               "-timescale 1ns/1ps",
-               "-uvmver 1.2",
-               "-f {sv_flist}"]
+  build_opts: ["-timescale 1ns/1ps",
+               "+incdir+\"{RIVIERA_HOME}/vlib/uvm-1.2/src\"",
+               "\"{RIVIERA_HOME}/vlib/uvm-1.2/src/uvm_pkg.sv\"",
+               "-f {sv_flist}",
+               // List multiple tops for the simulation. Prepend each top level with `-top`.
+               "{eval_cmd} echo {sim_tops} | sed -E 's/(\\S+)/-top \\1/g'",
+              ]
 
   run_opts:   ["-sv_seed={seed}",
                "-c",
@@ -20,6 +19,7 @@
                "-lib {sv_flist_gen_dir}/work",
                "+UVM_TESTNAME={uvm_test}",
                "+UVM_TEST_SEQ={uvm_test_seq}",
+               "-sv_lib \"{RIVIERA_HOME}/bin/uvm_1_2_dpi\"",
                "-do {run_script}"]
 
 
@@ -27,7 +27,7 @@
   supported_wave_formats: []
 
   // Default tcl script used when running the sim. Override if needed.
-  run_script: "{tool_srcs_dir}/riviera_run.do"
+  run_script: "{dv_root}/tools/riviera/riviera_run.do"
 
   // Coverage related.
   // TODO: These options have to be filled in.
@@ -41,20 +41,20 @@
   // Merging coverage.
   // "cov_db_dirs" is a special variable that appends all build directories in use.
   // It is constructed by the tool itself.
-  cov_merge_dir:    "{scratch_base_path}/cov_merge"
+  cov_merge_dir:    "{scratch_path}/cov_merge"
   cov_merge_db_dir: ""
   cov_merge_cmd:    ""
   cov_merge_opts:   []
 
   // Generate covreage reports in text as well as html.
-  cov_report_dir:       "{scratch_base_path}/cov_report"
+  cov_report_dir:       "{scratch_path}/cov_report"
   cov_report_cmd:       ""
   cov_report_opts:      []
   cov_report_dashboard: ""
 
   // Analyzing coverage - this is done by invoking --cov-analyze switch. It opens up the
   // GUI for visual analysis.
-  cov_analyze_dir:  "{scratch_base_path}/cov_analyze"
+  cov_analyze_dir:  "{scratch_path}/cov_analyze"
   cov_analyze_cmd:  ""
   cov_analyze_opts: []
 
@@ -85,6 +85,13 @@
       name: riviera_xprop
       is_sim_mode: 1
       build_opts: []
+    }
+    // TODO: Add build and run options to enable zero delay loop detection.
+    {
+      name: riviera_loopdetect
+      is_sim_mode: 1
+      build_opts: []
+      run_opts:   []
     }
   ]
 }

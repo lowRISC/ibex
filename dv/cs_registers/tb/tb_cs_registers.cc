@@ -13,10 +13,14 @@ int main(int argc, char **argv) {
 
 
   // Get pass / fail from Verilator
-  int retcode = simctrl.Exec(argc, argv);
-  if (!retcode) {
-    // Get pass / fail from testbench
-    retcode = !top.test_passed_o;
+  auto pr = simctrl.Exec(argc, argv);
+  int ret_code = pr.first;
+  bool ran_simulation = pr.second;
+
+  if (ret_code != 0 || !ran_simulation) {
+    return ret_code;
   }
-  return retcode;
+
+  // Get pass / fail from testbench
+  return !top.test_passed_o;
 }
