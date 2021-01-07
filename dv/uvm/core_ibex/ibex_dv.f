@@ -67,9 +67,12 @@ ${PRJ_DIR}/vendor/google_riscv-dv/src/riscv_signature_pkg.sv
 +incdir+${PRJ_DIR}/dv/uvm/core_ibex/common/irq_agent
 +incdir+${PRJ_DIR}/vendor/lowrisc_ip/dv/sv/mem_model
 +incdir+${PRJ_DIR}/vendor/lowrisc_ip/dv/sv/dv_utils
++incdir+${PRJ_DIR}/vendor/lowrisc_ip/dv/sv/str_utils
 ${PRJ_DIR}/dv/uvm/bus_params_pkg/bus_params_pkg.sv
 ${PRJ_DIR}/vendor/lowrisc_ip/dv/sv/common_ifs/clk_rst_if.sv
 ${PRJ_DIR}/vendor/lowrisc_ip/dv/sv/common_ifs/pins_if.sv
+${PRJ_DIR}/vendor/lowrisc_ip/dv/sv/str_utils/str_utils_pkg.sv
+${PRJ_DIR}/vendor/lowrisc_ip/dv/sv/dv_utils/dv_test_status_pkg.sv
 ${PRJ_DIR}/vendor/lowrisc_ip/dv/sv/dv_utils/dv_utils_pkg.sv
 ${PRJ_DIR}/vendor/lowrisc_ip/dv/sv/mem_model/mem_model_pkg.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/common/ibex_mem_intf_agent/ibex_mem_intf.sv

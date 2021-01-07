@@ -18,5 +18,5 @@ int main(int argc, char **argv) {
       "TOP.ibex_riscv_compliance.u_ram.u_ram.gen_generic.u_impl_generic");
   simctrl.RegisterExtension(&memutil);
 
-  return simctrl.Exec(argc, argv);
+  return simctrl.Exec(argc, argv).first;
 }
