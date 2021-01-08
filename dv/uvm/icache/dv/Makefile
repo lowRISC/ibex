@@ -44,11 +44,6 @@ dvsim-mk-args := \
   $(waves-arg) $(coverage-arg) $(verbosity-arg) \
   $(reseed-arg) $(seed-arg) $(tests-arg)
 
-run-cmd := $(dvsim-py) ibex_icache_sim_cfg.hjson $(dvsim-std-args) $(dvsim-mk-args)
-
-# Clear MAKEFLAGS when running dvsim.py: it contains an internal call
-# to Make and things get confused if they are set.
 .PHONY: run
 run:
-	@echo $(run-cmd)
-	@env MAKEFLAGS= $(run-cmd)
+	$(dvsim-py) ibex_icache_sim_cfg.hjson $(dvsim-std-args) $(dvsim-mk-args)
