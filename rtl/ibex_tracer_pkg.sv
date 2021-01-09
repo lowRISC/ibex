@@ -23,7 +23,6 @@ parameter logic [31:0] INSN_BLT     = { 17'h?,             3'b100, 5'h?, {OPCODE
 parameter logic [31:0] INSN_BGE     = { 17'h?,             3'b101, 5'h?, {OPCODE_BRANCH} };
 parameter logic [31:0] INSN_BLTU    = { 17'h?,             3'b110, 5'h?, {OPCODE_BRANCH} };
 parameter logic [31:0] INSN_BGEU    = { 17'h?,             3'b111, 5'h?, {OPCODE_BRANCH} };
-parameter logic [31:0] INSN_BALL    = { 17'h?,             3'b010, 5'h?, {OPCODE_BRANCH} };
 
 // OPIMM
 parameter logic [31:0] INSN_ADDI    = { 17'h?,             3'b000, 5'h?, {OPCODE_OP_IMM} };
