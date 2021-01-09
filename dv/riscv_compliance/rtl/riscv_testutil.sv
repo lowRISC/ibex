@@ -116,6 +116,7 @@ module riscv_testutil (
   logic [31:0] read_addr_d, read_addr_q;
   always_comb begin
     state_d = state_q;
+    read_addr_d = read_addr_q;
     unique case (state_q)
       WAIT: begin
         if (read_signature_and_terminate) begin
