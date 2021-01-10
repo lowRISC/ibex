@@ -26,6 +26,8 @@ module top_artya7 (
 
   // debug functionality is optional
   localparam DBG = 1;
+  localparam int unsigned DbgHwBreakNum = (DBG == 1) ? 2 : 0;
+  localparam bit DbgTriggerEn = (DBG == 1) ? 1'b1 : 1'b0;
 
   logic clk_sys, rst_sys_n, rst_core_n;
 
@@ -72,6 +74,8 @@ module top_artya7 (
 
   ibex_core #(
      .RegFile(ibex_pkg::RegFileFPGA),
+     .DbgTriggerEn(DbgTriggerEn),
+     .DbgHwBreakNum(DbgHwBreakNum),
      .DmHaltAddr(DEBUG_START + dm::HaltAddress),
      .DmExceptionAddr(DEBUG_START + dm::ExceptionAddress)
   ) u_core (
