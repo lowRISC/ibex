@@ -268,11 +268,12 @@ module ibex_core #(
   logic [31:0] csr_mepc, csr_depc;
 
   // PMP signals
-  logic [33:0] csr_pmp_addr [PMPNumRegions];
-  pmp_cfg_t    csr_pmp_cfg  [PMPNumRegions];
-  logic        pmp_req_err  [PMP_NUM_CHAN];
-  logic        instr_req_out;
-  logic        data_req_out;
+  logic [33:0]  csr_pmp_addr [PMPNumRegions];
+  pmp_cfg_t     csr_pmp_cfg  [PMPNumRegions];
+  pmp_mseccfg_t csr_pmp_mseccfg;
+  logic         pmp_req_err  [PMP_NUM_CHAN];
+  logic         instr_req_out;
+  logic         data_req_out;
 
   logic        csr_save_if;
   logic        csr_save_id;
@@ -1017,6 +1018,7 @@ module ibex_core #(
       // PMP
       .csr_pmp_cfg_o           ( csr_pmp_cfg                  ),
       .csr_pmp_addr_o          ( csr_pmp_addr                 ),
+      .csr_pmp_mseccfg_o       ( csr_pmp_mseccfg              ),
 
       // debug
       .csr_depc_o              ( csr_depc                     ),
@@ -1086,30 +1088,33 @@ module ibex_core #(
     assign pmp_priv_lvl[PMP_D] = priv_mode_lsu;
 
     ibex_pmp #(
-        .PMPGranularity        ( PMPGranularity ),
-        .PMPNumChan            ( PMP_NUM_CHAN   ),
-        .PMPNumRegions         ( PMPNumRegions  )
+        .PMPGranularity        ( PMPGranularity  ),
+        .PMPNumChan            ( PMP_NUM_CHAN    ),
+        .PMPNumRegions         ( PMPNumRegions   )
     ) pmp_i (
-        .clk_i                 ( clk            ),
-        .rst_ni                ( rst_ni         ),
+        .clk_i                 ( clk             ),
+        .rst_ni                ( rst_ni          ),
         // Interface to CSRs
-        .csr_pmp_cfg_i         ( csr_pmp_cfg    ),
-        .csr_pmp_addr_i        ( csr_pmp_addr   ),
-        .priv_mode_i           ( pmp_priv_lvl   ),
+        .csr_pmp_cfg_i         ( csr_pmp_cfg     ),
+        .csr_pmp_addr_i        ( csr_pmp_addr    ),
+        .csr_pmp_mseccfg_i     ( csr_pmp_mseccfg ),
+        .priv_mode_i           ( pmp_priv_lvl    ),
         // Access checking channels
-        .pmp_req_addr_i        ( pmp_req_addr   ),
-        .pmp_req_type_i        ( pmp_req_type   ),
-        .pmp_req_err_o         ( pmp_req_err    )
+        .pmp_req_addr_i        ( pmp_req_addr    ),
+        .pmp_req_type_i        ( pmp_req_type    ),
+        .pmp_req_err_o         ( pmp_req_err     )
     );
   end else begin : g_no_pmp
     // Unused signal tieoff
     priv_lvl_e unused_priv_lvl_if, unused_priv_lvl_ls;
     logic [33:0] unused_csr_pmp_addr [PMPNumRegions];
     pmp_cfg_t    unused_csr_pmp_cfg  [PMPNumRegions];
+    pmp_mseccfg_t unused_csr_pmp_mseccfg;
     assign unused_priv_lvl_if = priv_mode_if;
     assign unused_priv_lvl_ls = priv_mode_lsu;
     assign unused_csr_pmp_addr = csr_pmp_addr;
     assign unused_csr_pmp_cfg = csr_pmp_cfg;
+    assign unused_csr_pmp_mseccfg = csr_pmp_mseccfg;
 
     // Output tieoff
     assign pmp_req_err[PMP_I] = 1'b0;

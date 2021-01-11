@@ -66,8 +66,9 @@ module ibex_cs_registers #(
     output logic [31:0]          csr_mepc_o,
 
     // PMP
-    output ibex_pkg::pmp_cfg_t   csr_pmp_cfg_o  [PMPNumRegions],
-    output logic [33:0]          csr_pmp_addr_o [PMPNumRegions],
+    output ibex_pkg::pmp_cfg_t     csr_pmp_cfg_o  [PMPNumRegions],
+    output logic [33:0]            csr_pmp_addr_o [PMPNumRegions],
+    output ibex_pkg::pmp_mseccfg_t csr_pmp_mseccfg_o,
 
     // debug
     input  logic                 debug_mode_i,
@@ -220,6 +221,7 @@ module ibex_cs_registers #(
   logic [31:0]                 pmp_addr_rdata  [PMP_MAX_REGIONS];
   logic [PMP_CFG_W-1:0]        pmp_cfg_rdata   [PMP_MAX_REGIONS];
   logic                        pmp_csr_err;
+  pmp_mseccfg_t                pmp_mseccfg;
 
   // Hardware performance monitor signals
   logic [31:0]                 mcountinhibit;
@@ -338,6 +340,13 @@ module ibex_cs_registers #(
         csr_rdata_int[CSR_MTIX_BIT]                       = mip.irq_timer;
         csr_rdata_int[CSR_MEIX_BIT]                       = mip.irq_external;
         csr_rdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mip.irq_fast;
+      end
+
+      CSR_MSECCFG: begin
+        csr_rdata_int                       = '0;
+        csr_rdata_int[CSR_MSECCFG_MML_BIT]  = pmp_mseccfg.mml;
+        csr_rdata_int[CSR_MSECCFG_MMWP_BIT] = pmp_mseccfg.mmwp;
+        csr_rdata_int[CSR_MSECCFG_RLB_BIT]  = pmp_mseccfg.rlb;
       end
 
       // PMP registers
@@ -956,13 +965,18 @@ module ibex_cs_registers #(
   // -----------------
 
   if (PMPEnable) begin : g_pmp_registers
+    pmp_mseccfg_t                pmp_mseccfg_q, pmp_mseccfg_d;
+    logic                        pmp_mseccfg_we;
+    logic                        pmp_mseccfg_err;
     pmp_cfg_t                    pmp_cfg         [PMPNumRegions];
+    logic [PMPNumRegions-1:0]    pmp_cfg_locked;
     pmp_cfg_t                    pmp_cfg_wdata   [PMPNumRegions];
     logic [PMPAddrWidth-1:0]     pmp_addr        [PMPNumRegions];
     logic [PMPNumRegions-1:0]    pmp_cfg_we;
     logic [PMPNumRegions-1:0]    pmp_cfg_err;
     logic [PMPNumRegions-1:0]    pmp_addr_we;
     logic [PMPNumRegions-1:0]    pmp_addr_err;
+    logic                        any_pmp_entry_locked;
 
     // Expanded / qualified register read data
     for (genvar i = 0; i < PMP_MAX_REGIONS; i++) begin : g_exp_rd_data
@@ -1011,7 +1025,7 @@ module ibex_cs_registers #(
       // -------------------------
       // Instantiate cfg registers
       // -------------------------
-      assign pmp_cfg_we[i] = csr_we_int & ~pmp_cfg[i].lock &
+      assign pmp_cfg_we[i] = csr_we_int & ~pmp_cfg_locked[i] &
                              (csr_addr == (CSR_OFF_PMP_CFG + (i[11:0] >> 2)));
 
       // Select the correct WDATA (each CSR contains 4 CFG fields, each with 2 RES bits)
@@ -1028,8 +1042,10 @@ module ibex_cs_registers #(
         endcase
       end
       assign pmp_cfg_wdata[i].exec  = csr_wdata_int[(i%4)*PMP_CFG_W+2];
-      // W = 1, R = 0 is a reserved combination. For now, we force W to 0 if R == 0
-      assign pmp_cfg_wdata[i].write = &csr_wdata_int[(i%4)*PMP_CFG_W+:2];
+      // When MSECCFG.MML is unset, W = 1, R = 0 is a reserved combination, so force W to 0 if R ==
+      // 0. Otherwise allow all possible values to be written.
+      assign pmp_cfg_wdata[i].write = pmp_mseccfg_q.mml ? csr_wdata_int[(i%4)*PMP_CFG_W+1] :
+                                                          &csr_wdata_int[(i%4)*PMP_CFG_W+:2];
       assign pmp_cfg_wdata[i].read  = csr_wdata_int[(i%4)*PMP_CFG_W];
 
       ibex_csr #(
@@ -1045,15 +1061,19 @@ module ibex_cs_registers #(
         .rd_error_o (pmp_cfg_err[i])
       );
 
+      // MSECCFG.RLB allows the lock bit to be bypassed (allowing cfg writes when MSECCFG.RLB is
+      // set).
+      assign pmp_cfg_locked[i] = pmp_cfg[i].lock & ~pmp_mseccfg_q.rlb;
+
       // --------------------------
       // Instantiate addr registers
       // --------------------------
       if (i < PMPNumRegions - 1) begin : g_lower
-        assign pmp_addr_we[i] = csr_we_int & ~pmp_cfg[i].lock &
-                                (~pmp_cfg[i+1].lock | (pmp_cfg[i+1].mode != PMP_MODE_TOR)) &
+        assign pmp_addr_we[i] = csr_we_int & ~pmp_cfg_locked[i] &
+                                (~pmp_cfg_locked[i+1] | (pmp_cfg[i+1].mode != PMP_MODE_TOR)) &
                                 (csr_addr == (CSR_OFF_PMP_ADDR + i[11:0]));
       end else begin : g_upper
-        assign pmp_addr_we[i] = csr_we_int & ~pmp_cfg[i].lock &
+        assign pmp_addr_we[i] = csr_we_int & ~pmp_cfg_locked[i] &
                                 (csr_addr == (CSR_OFF_PMP_ADDR + i[11:0]));
       end
 
@@ -1074,7 +1094,35 @@ module ibex_cs_registers #(
       assign csr_pmp_addr_o[i] = {pmp_addr_rdata[i], 2'b00};
     end
 
-    assign pmp_csr_err = (|pmp_cfg_err) | (|pmp_addr_err);
+    assign pmp_mseccfg_we = csr_we_int & (csr_addr == CSR_MSECCFG);
+
+    // MSECCFG.MML/MSECCFG.MMWP cannot be unset once set
+    assign pmp_mseccfg_d.mml  = pmp_mseccfg_q.mml  ? 1'b1 : csr_wdata_int[CSR_MSECCFG_MML_BIT];
+    assign pmp_mseccfg_d.mmwp = pmp_mseccfg_q.mmwp ? 1'b1 : csr_wdata_int[CSR_MSECCFG_MMWP_BIT];
+
+    // pmp_cfg_locked factors in MSECCFG.RLB so any_pmp_entry_locked will only be set if MSECCFG.RLB
+    // is unset
+    assign any_pmp_entry_locked = |pmp_cfg_locked;
+
+    // When any PMP entry is locked (A PMP entry has the L bit set and MSECCFG.RLB is unset),
+    // MSECCFG.RLB cannot be set again
+    assign pmp_mseccfg_d.rlb = any_pmp_entry_locked ? 1'b0 : csr_wdata_int[CSR_MSECCFG_RLB_BIT];
+
+    ibex_csr #(
+      .Width      ($bits(pmp_mseccfg_t)),
+      .ShadowCopy (ShadowCSR),
+      .ResetValue ('0)
+    ) u_pmp_mseccfg (
+      .clk_i      (clk_i),
+      .rst_ni     (rst_ni),
+      .wr_data_i  (pmp_mseccfg_d),
+      .wr_en_i    (pmp_mseccfg_we),
+      .rd_data_o  (pmp_mseccfg_q),
+      .rd_error_o (pmp_mseccfg_err)
+    );
+
+    assign pmp_csr_err = (|pmp_cfg_err) | (|pmp_addr_err) | pmp_mseccfg_err;
+    assign pmp_mseccfg = pmp_mseccfg_q;
 
   end else begin : g_no_pmp_tieoffs
     // Generate tieoffs when PMP is not configured
@@ -1087,7 +1135,10 @@ module ibex_cs_registers #(
       assign csr_pmp_addr_o[i] = '0;
     end
     assign pmp_csr_err = 1'b0;
+    assign pmp_mseccfg = '0;
   end
+
+  assign csr_pmp_mseccfg_o = pmp_mseccfg;
 
   //////////////////////////
   //  Performance monitor //
