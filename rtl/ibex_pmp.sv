@@ -64,8 +64,13 @@ module ibex_pmp #(
         //                  ^
         //                  | This bit pos is the top of the mask, all lower bits set
         // thus mask = 1111 0000
-        assign region_addr_mask[r][b] = (csr_pmp_cfg_i[r].mode != PMP_MODE_NAPOT) |
-                                        ~&csr_pmp_addr_i[r][b-1:PMPGranularity+1];
+        if (PMPGranularity == 0) begin : g_region_addr_mask_zero_granularity
+          assign region_addr_mask[r][b] = (csr_pmp_cfg_i[r].mode != PMP_MODE_NAPOT) |
+                                          ~&csr_pmp_addr_i[r][b-1:2];
+        end else begin : g_region_addr_mask_other_granularity
+          assign region_addr_mask[r][b] = (csr_pmp_cfg_i[r].mode != PMP_MODE_NAPOT) |
+                                          ~&csr_pmp_addr_i[r][b-1:PMPGranularity+1];
+        end
       end
     end
   end
