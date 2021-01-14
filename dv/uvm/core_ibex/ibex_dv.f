@@ -65,6 +65,7 @@ ${PRJ_DIR}/vendor/google_riscv-dv/src/riscv_signature_pkg.sv
 +incdir+${PRJ_DIR}/dv/uvm/core_ibex/tests
 +incdir+${PRJ_DIR}/dv/uvm/core_ibex/common/ibex_mem_intf_agent
 +incdir+${PRJ_DIR}/dv/uvm/core_ibex/common/irq_agent
++incdir+${PRJ_DIR}/dv/fcov
 +incdir+${PRJ_DIR}/vendor/lowrisc_ip/dv/sv/mem_model
 +incdir+${PRJ_DIR}/vendor/lowrisc_ip/dv/sv/dv_utils
 +incdir+${PRJ_DIR}/vendor/lowrisc_ip/dv/sv/str_utils
@@ -85,4 +86,6 @@ ${PRJ_DIR}/dv/uvm/core_ibex/env/core_ibex_rvfi_if.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/env/core_ibex_csr_if.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/env/core_ibex_env_pkg.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/tests/core_ibex_test_pkg.sv
+${PRJ_DIR}/dv/uvm/core_ibex/fcov/core_ibex_fcov_if.sv
+${PRJ_DIR}/dv/uvm/core_ibex/fcov/core_ibex_fcov_bind.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/tb/core_ibex_tb_top.sv

@@ -12,6 +12,7 @@
  */
 
 `include "prim_assert.sv"
+`include "dv_fcov_macros.svh"
 
 module ibex_wb_stage #(
   parameter bit WritebackStage = 1'b0
@@ -171,6 +172,8 @@ module ibex_wb_stage #(
   // from here) or the LSU (RF writes for load data)
   assign rf_wdata_wb_o = rf_wdata_wb_mux_we[0] ? rf_wdata_wb_mux[0] : rf_wdata_wb_mux[1];
   assign rf_we_wb_o    = |rf_wdata_wb_mux_we;
+
+  `FCOV_SIGNAL_GEN_IF(logic, wb_valid, g_writeback_stage.wb_valid_q, WritebackStage)
 
   `ASSERT(RFWriteFromOneSourceOnly, $onehot0(rf_wdata_wb_mux_we))
 endmodule
