@@ -4,6 +4,7 @@
 
 #include "base_register.h"
 
+#include <cassert>
 #include <iostream>
 
 BaseRegister::BaseRegister(
@@ -32,8 +33,8 @@ uint32_t BaseRegister::RegisterClear(uint32_t newval) {
   return read_value;
 }
 
-bool BaseRegister::MatchAddr(uint32_t addr) {
-  return (addr == register_address_);
+bool BaseRegister::MatchAddr(uint32_t addr, uint32_t addr_mask) {
+  return ((addr & addr_mask) == (register_address_ & addr_mask));
 }
 
 bool BaseRegister::ProcessTransaction(bool *match, RegisterTransaction *trans) {
@@ -82,7 +83,62 @@ uint32_t BaseRegister::RegisterRead() { return register_value_; }
 
 uint32_t BaseRegister::GetLockMask() { return 0; }
 
+BaseRegister *BaseRegister::GetRegisterFromMap(uint32_t addr) {
+  for (auto &reg : *map_pointer_) {
+    if (reg->MatchAddr(addr)) {
+      return reg.get();
+    }
+  }
+
+  return nullptr;
+}
+
+MSeccfgRegister::MSeccfgRegister(
+    uint32_t addr, std::vector<std::unique_ptr<BaseRegister>> *map_pointer)
+    : BaseRegister(addr, map_pointer) {}
+
+bool MSeccfgRegister::AnyPmpCfgsLocked() {
+  for (auto &reg : *map_pointer_) {
+    // Iterate through PMPCfgX CSRs, returning true is any has a lock bit set
+    if (reg->MatchAddr(kCSRPMPCfg0, 0xfffffffc)) {
+      if ((reg->RegisterRead() & 0x80808080) != 0) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+uint32_t MSeccfgRegister::GetLockMask() {
+  uint32_t lock_mask = 0xFFFFFFF8;
+
+  // When RLB == 0 and any PMPCfgX has a lock bit set RLB must remain 0
+  if (AnyPmpCfgsLocked() && ((register_value_ & kMSeccfgRlb) == 0)) {
+    lock_mask |= kMSeccfgRlb;
+  }
+
+  // Once set MMWP cannot be unset
+  if (register_value_ & kMSeccfgMmwp) {
+    lock_mask |= kMSeccfgMmwp;
+  }
+
+  // Once set MML cannot be unset
+  if (register_value_ & kMSeccfgMml) {
+    lock_mask |= kMSeccfgMml;
+  }
+
+  return lock_mask;
+}
+
 uint32_t PmpCfgRegister::GetLockMask() {
+  BaseRegister *mseccfg = GetRegisterFromMap(kCSRMSeccfg);
+  assert(mseccfg);
+
+  if (mseccfg->RegisterRead() & kMSeccfgRlb) {
+    return 0;
+  }
+
   uint32_t lock_mask = 0;
   if (register_value_ & 0x80)
     lock_mask |= 0xFF;
@@ -98,44 +154,53 @@ uint32_t PmpCfgRegister::GetLockMask() {
 uint32_t PmpCfgRegister::RegisterWrite(uint32_t newval) {
   uint32_t lock_mask = GetLockMask();
   uint32_t read_value = register_value_;
+
   register_value_ &= lock_mask;
   register_value_ |= (newval & ~lock_mask);
-  register_value_ &= raz_mask_;
-  for (int i = 0; i < 4; i++) {
-    // Reserved check, W = 1, R = 0
-    if (((register_value_ >> (8 * i)) & 0x3) == 0x2) {
-      register_value_ &= ~(0x3 << (8 * i));
-    }
-  }
+  register_value_ = HandleReservedVals(register_value_);
+
   return read_value;
 }
 
 uint32_t PmpCfgRegister::RegisterSet(uint32_t newval) {
   uint32_t lock_mask = GetLockMask();
   uint32_t read_value = register_value_;
+
   register_value_ |= (newval & ~lock_mask);
-  register_value_ &= raz_mask_;
-  for (int i = 0; i < 4; i++) {
-    // Reserved check, W = 1, R = 0
-    if (((register_value_ >> (8 * i)) & 0x3) == 0x2) {
-      register_value_ &= ~(0x3 << (8 * i));
-    }
-  }
+  register_value_ = HandleReservedVals(register_value_);
+
   return read_value;
 }
 
 uint32_t PmpCfgRegister::RegisterClear(uint32_t newval) {
   uint32_t lock_mask = GetLockMask();
   uint32_t read_value = register_value_;
+
   register_value_ &= (~newval | lock_mask);
-  register_value_ &= raz_mask_;
+  register_value_ = HandleReservedVals(register_value_);
+
+  return read_value;
+}
+
+uint32_t PmpCfgRegister::HandleReservedVals(uint32_t cfg_val) {
+  BaseRegister *mseccfg = GetRegisterFromMap(kCSRMSeccfg);
+  assert(mseccfg);
+
+  cfg_val &= raz_mask_;
+
+  if (mseccfg->RegisterRead() & kMSeccfgMml) {
+    // No reserved L/R/W/X values when MML Set
+    return cfg_val;
+  }
+
   for (int i = 0; i < 4; i++) {
     // Reserved check, W = 1, R = 0
-    if (((register_value_ >> (8 * i)) & 0x3) == 0x2) {
-      register_value_ &= ~(0x3 << (8 * i));
+    if (((cfg_val >> (8 * i)) & 0x3) == 0x2) {
+      cfg_val &= ~(0x3 << (8 * i));
     }
   }
-  return read_value;
+
+  return cfg_val;
 }
 
 uint32_t PmpAddrRegister::GetLockMask() {

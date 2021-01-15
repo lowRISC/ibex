@@ -15,6 +15,11 @@ enum CSRegisterAddr : int {
 #include "csr_listing.def"
 };
 
+// Individual bits for MSECCFG CSR
+const int kMSeccfgMml = 0x1;
+const int kMSeccfgMmwp = 0x2;
+const int kMSeccfgRlb = 0x4;
+
 // Create an indexable array of all CSR addresses
 static const uint16_t CSRAddresses[] = {
 #define CSR(reg, addr) addr,
