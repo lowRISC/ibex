@@ -33,6 +33,11 @@ module tb_cs_registers #(
 
   logic                 illegal_csr_insn_o;
 
+  logic                 csr_access_d;
+  ibex_pkg::csr_num_e   csr_addr_d;
+  logic [31:0]          csr_wdata_d;
+  ibex_pkg::csr_op_e    csr_op_d;
+  logic                 csr_op_en_d;
   //-----------------
   // Reset generation
   //-----------------
@@ -121,12 +126,26 @@ module tb_cs_registers #(
                           csr_addr_i,
                           csr_wdata_i,
                           csr_rdata_o);
+
     reg_dpi::driver_tick("reg_driver",
-                         csr_access_i,
-                         csr_op_i,
-                         csr_op_en_i,
-                         csr_addr_i,
-                         csr_wdata_i);
+                         csr_access_d,
+                         csr_op_d,
+                         csr_op_en_d,
+                         csr_addr_d,
+                         csr_wdata_d);
+
+    // Use NBA to drive inputs to ensure correct scheduling.
+    // This always_ff block will be executed on the positive edge of the clock with undefined order
+    // vs all other always_ff triggered on the positive edge of the clock. If `driver_tick` drives
+    // the inputs directly some of the always_ff blocks will see the old version of the inputs and
+    // others will see the new version depending on scheduling order. This schedules all the inputs
+    // to be NBA updates to avoid the race condition (in effect acting like any other always_ff
+    // block with the _d values being computed via DPI rather than combinational logic).
+    csr_access_i <= csr_access_d;
+    csr_addr_i <= csr_addr_d;
+    csr_wdata_i <= csr_wdata_d;
+    csr_op_i <= csr_op_d;
+    csr_op_en_i <= csr_op_en_d;
   end
 
 endmodule
