@@ -26,13 +26,30 @@ class BaseRegister {
   virtual uint32_t RegisterClear(uint32_t newval);
   virtual uint32_t RegisterRead();
   virtual bool ProcessTransaction(bool *match, RegisterTransaction *trans);
-  virtual bool MatchAddr(uint32_t addr);
+  virtual bool MatchAddr(uint32_t addr, uint32_t addr_mask = 0xFFFFFFFF);
   virtual uint32_t GetLockMask();
 
  protected:
   uint32_t register_value_;
   uint32_t register_address_;
   std::vector<std::unique_ptr<BaseRegister>> *map_pointer_;
+  BaseRegister *GetRegisterFromMap(uint32_t addr);
+};
+
+/**
+ * Machine Security Configuration class
+ *
+ * Has special behaviour for when bits are locked so requires a custom
+ * `GetLockMask` implementation
+ */
+class MSeccfgRegister : public BaseRegister {
+ public:
+  MSeccfgRegister(uint32_t addr,
+                  std::vector<std::unique_ptr<BaseRegister>> *map_pointer);
+  uint32_t GetLockMask();
+
+ private:
+  bool AnyPmpCfgsLocked();
 };
 
 /**
@@ -48,6 +65,7 @@ class PmpCfgRegister : public BaseRegister {
   uint32_t RegisterClear(uint32_t newval);
 
  private:
+  uint32_t HandleReservedVals(uint32_t cfg_val);
   const uint32_t raz_mask_ = 0x9F9F9F9F;
 };
 
