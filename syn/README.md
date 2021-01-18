@@ -31,8 +31,9 @@ The following must be installed:
 * Yosys - https://github.com/YosysHQ/yosys
 * OpenSTA - https://github.com/The-OpenROAD-Project/OpenSTA
 
-A standard cell library is also required in the liberty (.lib) format. The
-following Open Libraries can be used:
+The flow was tested with yosys 0.9 and OpenSTA 2.2 but may work with other
+versions.  A standard cell library is also required in the liberty (.lib)
+format. The following Open Libraries can be used:
 
 * Nangate45 - https://github.com/The-OpenROAD-Project/OpenROAD-flow/tree/master/flow/platforms/nangate45
 
