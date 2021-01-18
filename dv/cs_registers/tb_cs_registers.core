@@ -124,3 +124,4 @@ targets:
           - '-CFLAGS "-std=c++14 -Wall -DTOPLEVEL_NAME=tb_cs_registers -DVM_TRACE_FMT_FST -g"'
           - '-LDFLAGS "-pthread -lutil -lelf"'
           - "-Wall"
+          - '-Wno-fatal' # Do not fail on (style) issues, only warn about them.
