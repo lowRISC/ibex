@@ -59,6 +59,7 @@ module tb_cs_registers #(
   /* verilator lint_off PINMISSING */
   ibex_cs_registers #(
     .DbgTriggerEn     (DbgTriggerEn),
+    .ICache           (ICache),
     .MHPMCounterNum   (MHPMCounterNum),
     .MHPMCounterWidth (MHPMCounterWidth),
     .PMPEnable        (PMPEnable),
