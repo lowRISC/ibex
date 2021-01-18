@@ -11,7 +11,8 @@ module tb_cs_registers #(
     parameter int unsigned      PMPGranularity   = 0,
     parameter int unsigned      PMPNumRegions    = 4,
     parameter bit               RV32E            = 1'b0,
-    parameter ibex_pkg::rv32m_e RV32M            = ibex_pkg::RV32MFast
+    parameter ibex_pkg::rv32m_e RV32M            = ibex_pkg::RV32MFast,
+    parameter ibex_pkg::rv32b_e RV32B            = ibex_pkg::RV32BNone
 ) (
     // Clock and Reset
     inout  logic                clk_i,
@@ -64,7 +65,8 @@ module tb_cs_registers #(
     .PMPGranularity   (PMPGranularity),
     .PMPNumRegions    (PMPNumRegions),
     .RV32E            (RV32E),
-    .RV32M            (RV32M)
+    .RV32M            (RV32M),
+    .RV32B            (RV32B)
   ) i_cs_regs (
     .clk_i              (clk_i),
     .rst_ni             (rst_ni),
