@@ -25,7 +25,8 @@ module ibex_cs_registers #(
     parameter int unsigned      PMPGranularity    = 0,
     parameter int unsigned      PMPNumRegions     = 4,
     parameter bit               RV32E             = 0,
-    parameter ibex_pkg::rv32m_e RV32M             = ibex_pkg::RV32MFast
+    parameter ibex_pkg::rv32m_e RV32M             = ibex_pkg::RV32MFast,
+    parameter ibex_pkg::rv32b_e RV32B             = ibex_pkg::RV32BNone
 ) (
     // Clock and Reset
     input  logic                 clk_i,
@@ -119,12 +120,14 @@ module ibex_cs_registers #(
 
   import ibex_pkg::*;
 
+  localparam int unsigned RV32BEnabled = (RV32B == RV32BNone) ? 0 : 1;
   localparam int unsigned RV32MEnabled = (RV32M == RV32MNone) ? 0 : 1;
   localparam int unsigned PMPAddrWidth = (PMPGranularity > 0) ? 33 - PMPGranularity : 32;
 
   // misa
   localparam logic [31:0] MISA_VALUE =
       (0                 <<  0)  // A - Atomic Instructions extension
+    | (RV32BEnabled      <<  1)  // B - Bit-Manipulation extension
     | (1                 <<  2)  // C - Compressed extension
     | (0                 <<  3)  // D - Double precision floating-point extension
     | (32'(RV32E)        <<  4)  // E - RV32E base ISA

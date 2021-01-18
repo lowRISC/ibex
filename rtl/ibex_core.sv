@@ -977,7 +977,8 @@ module ibex_core #(
       .PMPGranularity    ( PMPGranularity    ),
       .PMPNumRegions     ( PMPNumRegions     ),
       .RV32E             ( RV32E             ),
-      .RV32M             ( RV32M             )
+      .RV32M             ( RV32M             ),
+      .RV32B             ( RV32B             )
   ) cs_registers_i (
       .clk_i                   ( clk                          ),
       .rst_ni                  ( rst_ni                       ),
