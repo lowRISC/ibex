@@ -139,7 +139,7 @@ parameter logic [31:0] INSN_REV2_H =
 parameter logic [31:0] INSN_REV_H =
     { 5'b01101, 2'h?, 5'b01111, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_REV16 =
-    { 5'b01101, 2'h?, 5'b01000, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
+    { 5'b01101, 2'h?, 5'b10000, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_REV8 =
     { 5'b01101, 2'h?, 5'b11000, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_REV4 =
@@ -172,7 +172,7 @@ parameter logic [31:0] INSN_ORC2_H =
 parameter logic [31:0] INSN_ORC_H =
     { 5'b00101, 2'h?, 5'b01111, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_ORC16 =
-    { 5'b00101, 2'h?, 5'b01000, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
+    { 5'b00101, 2'h?, 5'b10000, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_ORC8 =
     { 5'b00101, 2'h?, 5'b11000, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_ORC4 =
