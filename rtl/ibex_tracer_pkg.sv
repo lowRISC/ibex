@@ -185,48 +185,48 @@ parameter logic [31:0] INSN_ORC =
 parameter logic [31:0] INSN_SHFLI = { 6'b000010, 11'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
 // shfli -- pseudo-instructions
 parameter logic [31:0] INSN_ZIP_N =
-    { 5'b00010, 3'h?, 4'b0001, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b0001, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_ZIP2_B =
-    { 5'b00010, 3'h?, 4'b0010, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b0010, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_ZIP_B =
-    { 5'b00010, 3'h?, 4'b0011, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b0011, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_ZIP4_H =
-    { 5'b00010, 3'h?, 4'b0100, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b0100, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_ZIP2_H =
-    { 5'b00010, 3'h?, 4'b0110, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b0110, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_ZIP_H =
-    { 5'b00010, 3'h?, 4'b0111, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b0111, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_ZIP8 =
-    { 5'b00010, 3'h?, 4'b1000, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b1000, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_ZIP4 =
-    { 5'b00010, 3'h?, 4'b1100, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b1100, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_ZIP2 =
-    { 5'b00010, 3'h?, 4'b1110, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b1110, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_ZIP =
-    { 5'b00010, 3'h?, 4'b1111, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b1111, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
 // unshfli
 parameter logic [31:0] INSN_UNSHFLI = { 6'b000010, 11'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
 // unshfli -- pseudo-instructions
 parameter logic [31:0] INSN_UNZIP_N =
-    { 5'b00010, 3'h?, 4'b0001, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b0001, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_UNZIP2_B =
-    { 5'b00010, 3'h?, 4'b0010, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b0010, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_UNZIP_B =
-    { 5'b00010, 3'h?, 4'b0011, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b0011, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_UNZIP4_H =
-    { 5'b00010, 3'h?, 4'b0100, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b0100, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_UNZIP2_H =
-    { 5'b00010, 3'h?, 4'b0110, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b0110, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_UNZIP_H =
-    { 5'b00010, 3'h?, 4'b0111, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b0111, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_UNZIP8 =
-    { 5'b00010, 3'h?, 4'b1000, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b1000, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_UNZIP4 =
-    { 5'b00010, 3'h?, 4'b1100, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b1100, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_UNZIP2 =
-    { 5'b00010, 3'h?, 4'b1110, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b1110, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
 parameter logic [31:0] INSN_UNZIP =
-    { 5'b00010, 3'h?, 4'b1111, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
+    { 6'b000010, 2'h?, 4'b1111, 5'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
 
 parameter logic [31:0] INSN_GREV   = { 7'b0110100, 10'h?, 3'b101, 5'h?, {OPCODE_OP} };
 parameter logic [31:0] INSN_GORC   = { 7'b0010100, 10'h?, 3'b101, 5'h?, {OPCODE_OP} };
