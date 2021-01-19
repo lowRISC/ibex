@@ -75,6 +75,10 @@ module ibex_controller #(
                                                            // mie CSR
     input  logic                  irq_nm_i,                // non-maskeable interrupt
     output logic                  nmi_mode_o,              // core executing NMI handler
+    input  logic [31:0]           irqs_x_i,                // x interrupt requests qualified with
+                                                           // miex CSR
+    output logic                  irq_x_ack_o,             // to ext. int controller
+    output logic [4:0]            irq_x_ack_id_o,          // to ext. int controller
 
     // debug signals
     input  logic                  debug_req_i,
@@ -149,6 +153,8 @@ module ibex_controller #(
 
   logic [3:0] mfip_id;
   logic       unused_irq_timer;
+
+  logic [4:0] irq_x_id;
 
   logic ecall_insn;
   logic mret_insn;
@@ -353,6 +359,42 @@ module ibex_controller #(
 
   assign unused_irq_timer = irqs_i.irq_timer;
 
+  // generate ID of custom interrupts, highest priority to highest ID
+  always_comb begin : gen_irq_x_id
+    if      (irqs_x_i[31]) irq_x_id = 5'd31;
+    else if (irqs_x_i[30]) irq_x_id = 5'd30;
+    else if (irqs_x_i[29]) irq_x_id = 5'd29;
+    else if (irqs_x_i[28]) irq_x_id = 5'd28;
+    else if (irqs_x_i[27]) irq_x_id = 5'd27;
+    else if (irqs_x_i[26]) irq_x_id = 5'd26;
+    else if (irqs_x_i[25]) irq_x_id = 5'd25;
+    else if (irqs_x_i[24]) irq_x_id = 5'd24;
+    else if (irqs_x_i[23]) irq_x_id = 5'd23;
+    else if (irqs_x_i[22]) irq_x_id = 5'd22;
+    else if (irqs_x_i[21]) irq_x_id = 5'd21;
+    else if (irqs_x_i[20]) irq_x_id = 5'd20;
+    else if (irqs_x_i[19]) irq_x_id = 5'd19;
+    else if (irqs_x_i[18]) irq_x_id = 5'd18;
+    else if (irqs_x_i[17]) irq_x_id = 5'd17;
+    else if (irqs_x_i[16]) irq_x_id = 5'd16;
+    else if (irqs_x_i[15]) irq_x_id = 5'd15;
+    else if (irqs_x_i[14]) irq_x_id = 5'd14;
+    else if (irqs_x_i[13]) irq_x_id = 5'd13;
+    else if (irqs_x_i[12]) irq_x_id = 5'd12;
+    else if (irqs_x_i[11]) irq_x_id = 5'd11;
+    else if (irqs_x_i[10]) irq_x_id = 5'd10;
+    else if (irqs_x_i[ 9]) irq_x_id = 5'd9;
+    else if (irqs_x_i[ 8]) irq_x_id = 5'd8;
+    else if (irqs_x_i[ 7]) irq_x_id = 5'd7;
+    else if (irqs_x_i[ 6]) irq_x_id = 5'd6;
+    else if (irqs_x_i[ 5]) irq_x_id = 5'd5;
+    else if (irqs_x_i[ 4]) irq_x_id = 5'd4;
+    else if (irqs_x_i[ 3]) irq_x_id = 5'd3;
+    else if (irqs_x_i[ 2]) irq_x_id = 5'd2;
+    else if (irqs_x_i[ 1]) irq_x_id = 5'd1;
+    else                   irq_x_id = 5'd0;
+  end
+
   /////////////////////
   // Core controller //
   /////////////////////
@@ -398,6 +440,9 @@ module ibex_controller #(
     perf_jump_o            = 1'b0;
 
     controller_run_o       = 1'b0;
+
+    irq_x_ack_o            = 1'b0;
+    irq_x_ack_id_o         = 5'b0;
 
     unique case (ctrl_fsm_cs)
       RESET: begin
@@ -569,6 +614,13 @@ module ibex_controller #(
           if (irq_nm_i && !nmi_mode_q) begin
             exc_cause_o = EXC_CAUSE_IRQ_NM;
             nmi_mode_d  = 1'b1; // enter NMI mode
+          end else if (irqs_x_i != 32'b0) begin
+            // generate exception cause ID from fast interrupt ID:
+            // - first bit distinguishes interrupts from exceptions,
+            exc_cause_o    = exc_cause_e'({1'b1, irq_x_id});
+            exc_pc_mux_o   = EXC_PC_IRQ_X;
+            irq_x_ack_o    = 1'b1;
+            irq_x_ack_id_o = irq_x_id;
           end else if (irqs_i.irq_fast != 15'b0) begin
             // generate exception cause ID from fast interrupt ID:
             // - first bit distinguishes interrupts from exceptions,

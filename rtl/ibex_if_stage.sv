@@ -83,6 +83,7 @@ module ibex_if_stage #(
     input  logic [31:0]           csr_depc_i,               // PC to restore after handling
                                                             // the debug request
     input  logic [31:0]           csr_mtvec_i,              // base PC to jump to on exception
+    input  logic [31:0]           csr_mtvecx_i,             // base PC to jump to on x interrupts
     output logic                  csr_mtvec_init_o,         // tell CS regfile to init mtvec
 
     // pipeline stall
@@ -139,9 +140,11 @@ module ibex_if_stage #(
 
   logic        [7:0] unused_boot_addr;
   logic        [7:0] unused_csr_mtvec;
+  logic        [7:0] unused_csr_mtvecx;
 
   assign unused_boot_addr = boot_addr_i[7:0];
   assign unused_csr_mtvec = csr_mtvec_i[7:0];
+  assign unused_csr_mtvecx = csr_mtvecx_i[7:0];
 
   // extract interrupt ID from exception cause
   assign irq_id         = {exc_cause};
@@ -152,6 +155,7 @@ module ibex_if_stage #(
     unique case (exc_pc_mux_i)
       EXC_PC_EXC:     exc_pc = { csr_mtvec_i[31:8], 8'h00                    };
       EXC_PC_IRQ:     exc_pc = { csr_mtvec_i[31:8], 1'b0, irq_id[4:0], 2'b00 };
+      EXC_PC_IRQ_X:   exc_pc = { csr_mtvecx_i[31:8],1'b0, irq_id[4:0], 2'b00 };
       EXC_PC_DBD:     exc_pc = DmHaltAddr;
       EXC_PC_DBG_EXC: exc_pc = DmExceptionAddr;
       default:        exc_pc = { csr_mtvec_i[31:8], 8'h00                    };
