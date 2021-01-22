@@ -1225,6 +1225,8 @@ module ibex_cs_registers #(
 
   if (DbgTriggerEn) begin : gen_trigger_regs
     localparam int unsigned DbgHwNumLen = DbgHwBreakNum > 1 ? $clog2(DbgHwBreakNum) : 1;
+    localparam bit [DbgHwNumLen-1:0] MaxTselect = DbgHwBreakNum[DbgHwNumLen-1:0] - '1;
+
     // Register values
     logic [DbgHwNumLen-1:0]   tselect_d, tselect_q;
     logic                     tmatch_control_d;
@@ -1250,7 +1252,7 @@ module ibex_cs_registers #(
     // Debug interface tests the available number of triggers by writing and reading the trigger
     // select register. Only allow changes to the register if it is within the supported region.
     assign tselect_d = (csr_wdata_int < DbgHwBreakNum) ? csr_wdata_int[DbgHwNumLen-1:0] :
-                                                         DbgHwBreakNum-1;
+                                                         MaxTselect;
     // tmatch_control is enabled when the execute bit is set
     assign tmatch_control_d = csr_wdata_int[2];
     assign tmatch_value_d   = csr_wdata_int[31:0];
