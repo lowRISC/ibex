@@ -11,7 +11,7 @@ ibex:
     rtl/ibex_compressed_decoder.sv,
     rtl/ibex_controller.sv,
     rtl/ibex_counter.sv,
-    rtl/ibex_csr,
+    rtl/ibex_csr.sv,
     rtl/ibex_decoder.sv,
     rtl/ibex_fetch_fifo.sv,
     rtl/ibex_load_store_unit.sv,
