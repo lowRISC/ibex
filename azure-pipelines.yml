@@ -86,6 +86,7 @@ jobs:
       git clone https://github.com/riscv/riscv-compliance.git
       cd riscv-compliance
       git checkout "$RISCV_COMPLIANCE_GIT_VERSION"
+      git worktree add ../riscv-compliance-v2 --detach "$RISCV_COMPLIANCE_GIT_VERSION2"
     displayName: Get RISC-V Compliance test suite
 
   # Run Ibex RTL CI per supported configuration
