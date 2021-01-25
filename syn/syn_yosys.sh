@@ -32,6 +32,7 @@ for file in ../rtl/*.sv; do
     --define=SYNTHESIS \
     ../rtl/*_pkg.sv \
     -I../vendor/lowrisc_ip/ip/prim/rtl \
+    -I../dv/fcov \
     $file \
     > $LR_SYNTH_OUT_DIR/generated/${module}.v
 done
