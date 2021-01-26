@@ -56,7 +56,7 @@ The environment variables that must be set in `syn_setup.sh` are
 
 # Running the synthesis flow
 
-Once `syn_setup.sh` has been created the `syn_yosys.sh` will run the entire
+Once `syn_setup.sh` has been created, call `syn_yosys.sh` to run the entire
 flow. All outputs are placed under the `syn/syn_out` directory with the prefix
 `ibex_` with the current date/time forming the rest of the name, e.g.
 `syn/syn_out/ibex_06_01_2020_11_19_15`
