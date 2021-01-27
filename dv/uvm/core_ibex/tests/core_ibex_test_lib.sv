@@ -328,6 +328,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
     run.raise_objection(this);
     fork
       begin
+        priv_lvl_e tgt_mode;
         case (ret)
           "dret": begin
             wait (dut_vif.dut_cb.dret === 1'b1);
@@ -339,7 +340,8 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
             `uvm_fatal(`gfn, $sformatf("Invalid xRET instruction %0s", ret))
           end
         endcase
-        wait (dut_vif.dut_cb.priv_mode === select_mode());
+        tgt_mode = select_mode();
+        wait (dut_vif.dut_cb.priv_mode === tgt_mode);
       end
       begin : ret_timeout
         clk_vif.wait_clks(timeout);
