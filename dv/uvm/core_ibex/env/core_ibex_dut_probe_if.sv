@@ -13,6 +13,8 @@ interface core_ibex_dut_probe_if(input logic clk);
   logic                 mret;
   logic                 fetch_enable;
   logic                 core_sleep;
+  logic                 alert_minor;
+  logic                 alert_major;
   logic                 debug_req;
   ibex_pkg::priv_lvl_e  priv_mode;
 
@@ -27,6 +29,8 @@ interface core_ibex_dut_probe_if(input logic clk);
     input dret;
     input mret;
     input core_sleep;
+    input alert_minor;
+    input alert_major;
     input priv_mode;
   endclocking
 
