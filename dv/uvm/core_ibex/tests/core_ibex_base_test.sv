@@ -23,7 +23,7 @@ class core_ibex_base_test extends uvm_test;
   bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0]    signature_data;
   uvm_tlm_analysis_fifo #(ibex_mem_intf_seq_item) item_collected_port;
   uvm_tlm_analysis_fifo #(irq_seq_item)           irq_collected_port;
-  uvm_phase                                       run;
+  uvm_phase                                       cur_run_phase;
 
   `uvm_component_utils(core_ibex_base_test)
 
@@ -73,13 +73,14 @@ class core_ibex_base_test extends uvm_test;
   virtual task run_phase(uvm_phase phase);
     enable_irq_seq = cfg.enable_irq_single_seq || cfg.enable_irq_multiple_seq;
     phase.raise_objection(this);
-    run = phase;
+    cur_run_phase = phase;
     dut_vif.dut_cb.fetch_enable <= 1'b0;
     clk_vif.wait_clks(100);
     load_binary_to_mem();
     dut_vif.dut_cb.fetch_enable <= 1'b1;
     send_stimulus();
     wait_for_test_done();
+    cur_run_phase = null;
     phase.drop_objection(this);
   endtask
 
@@ -195,7 +196,7 @@ class core_ibex_base_test extends uvm_test;
   // type, throws uvm_error on mismatch
   virtual task check_next_core_status(core_status_t core_status, string error_msg = "",
                                       int timeout = 9999999);
-    run.raise_objection(this);
+    cur_run_phase.raise_objection(this);
     fork
       begin
         wait_for_mem_txn(cfg.signature_addr, CORE_STATUS);
@@ -211,13 +212,13 @@ class core_ibex_base_test extends uvm_test;
     join_any
     // Will only get here if we successfully beat the timeout period
     disable fork;
-    run.drop_objection(this);
+    cur_run_phase.drop_objection(this);
   endtask
 
   // Waits for a write to the address of the specified CSR and retrieves the csr data
   virtual task wait_for_csr_write(csr_num_e csr, int timeout = 9999999);
     bit [11:0] csr_addr;
-    run.raise_objection(this);
+    cur_run_phase.raise_objection(this);
     fork
       begin
         do begin
@@ -235,7 +236,7 @@ class core_ibex_base_test extends uvm_test;
     join_any
     // Will only get here if we successfully beat the timeout period
     disable fork;
-    run.drop_objection(this);
+    cur_run_phase.drop_objection(this);
   endtask
 
   // Waits until the next time the given core_status is written to the signature address
