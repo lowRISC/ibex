@@ -103,7 +103,7 @@ class core_ibex_base_test extends uvm_test;
   function void load_binary_to_mem();
     string      bin;
     bit [7:0]   r8;
-    bit [31:0]  addr = `BOOT_ADDR;
+    bit [31:0]  addr = 32'h`BOOT_ADDR;
     int         f_bin;
     void'($value$plusargs("bin=%0s", bin));
     if (bin == "")
