@@ -76,16 +76,19 @@ module core_ibex_tb_top;
   ) dut (
     .clk_i          (clk                  ),
     .rst_ni         (rst_n                ),
+
     .test_en_i      (1'b0                 ),
+
     .hart_id_i      (32'b0                ),
     .boot_addr_i    (32'h`BOOT_ADDR       ), // align with spike boot address
-    .irq_software_i (irq_vif.irq_software ),
-    .irq_timer_i    (irq_vif.irq_timer    ),
-    .irq_external_i (irq_vif.irq_external ),
-    .irq_fast_i     (irq_vif.irq_fast     ),
-    .irq_nm_i       (irq_vif.irq_nm       ),
-    .fetch_enable_i (dut_if.fetch_enable  ),
-    .debug_req_i    (dut_if.debug_req     ),
+
+    .instr_req_o    (instr_mem_vif.request),
+    .instr_gnt_i    (instr_mem_vif.grant  ),
+    .instr_rvalid_i (instr_mem_vif.rvalid ),
+    .instr_addr_o   (instr_mem_vif.addr   ),
+    .instr_rdata_i  (instr_mem_vif.rdata  ),
+    .instr_err_i    (instr_mem_vif.error  ),
+
     .data_req_o     (data_mem_vif.request ),
     .data_gnt_i     (data_mem_vif.grant   ),
     .data_rvalid_i  (data_mem_vif.rvalid  ),
@@ -95,12 +98,18 @@ module core_ibex_tb_top;
     .data_rdata_i   (data_mem_vif.rdata   ),
     .data_wdata_o   (data_mem_vif.wdata   ),
     .data_err_i     (data_mem_vif.error   ),
-    .instr_req_o    (instr_mem_vif.request),
-    .instr_gnt_i    (instr_mem_vif.grant  ),
-    .instr_rvalid_i (instr_mem_vif.rvalid ),
-    .instr_addr_o   (instr_mem_vif.addr   ),
-    .instr_rdata_i  (instr_mem_vif.rdata  ),
-    .instr_err_i    (instr_mem_vif.error  ),
+
+    .irq_software_i (irq_vif.irq_software ),
+    .irq_timer_i    (irq_vif.irq_timer    ),
+    .irq_external_i (irq_vif.irq_external ),
+    .irq_fast_i     (irq_vif.irq_fast     ),
+    .irq_nm_i       (irq_vif.irq_nm       ),
+
+    .debug_req_i    (dut_if.debug_req     ),
+
+    .fetch_enable_i (dut_if.fetch_enable  ),
+    .alert_minor_o  (dut_if.alert_minor   ),
+    .alert_major_o  (dut_if.alert_major   ),
     .core_sleep_o   (dut_if.core_sleep    )
   );
 
