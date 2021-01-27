@@ -325,7 +325,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
 
   // Task that waits for xRET to be asserted within a certain number of cycles
   virtual task wait_ret(string ret, int timeout);
-    run.raise_objection(this);
+    cur_run_phase.raise_objection(this);
     fork
       begin
         priv_lvl_e tgt_mode;
@@ -351,7 +351,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
     join_any
     // Will only get here if dret successfully detected within timeout period
     disable fork;
-    run.drop_objection(this);
+    cur_run_phase.drop_objection(this);
   endtask
 
   virtual function void check_priv_mode(priv_lvl_e mode);
@@ -406,8 +406,8 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
           join_none
           wait (dut_vif.dut_cb.ecall === 1'b1);
           disable fork;
-          if (run.get_objection_count(this) > 1) begin
-            run.drop_objection(this);
+          if (cur_run_phase.get_objection_count(this) > 1) begin
+            cur_run_phase.drop_objection(this);
           end
         end
       end
@@ -1198,7 +1198,7 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
         end
       join
       if (latched_imem_err === 1'b0) begin
-        run.drop_objection(this);
+        cur_run_phase.drop_objection(this);
         inject_imem_error();
       end
     end while (latched_imem_err === 1'b0);
