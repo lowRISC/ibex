@@ -59,8 +59,8 @@ module core_ibex_tb_top;
   parameter bit BranchPredictor          = 1'b0;
 
   ibex_core_tracing #(
-    .DmHaltAddr      (`BOOT_ADDR + 'h0 ),
-    .DmExceptionAddr (`BOOT_ADDR + 'h4 ),
+    .DmHaltAddr      (32'h`BOOT_ADDR + 'h0 ),
+    .DmExceptionAddr (32'h`BOOT_ADDR + 'h4 ),
     .PMPEnable       (PMPEnable        ),
     .PMPGranularity  (PMPGranularity   ),
     .PMPNumRegions   (PMPNumRegions    ),
@@ -78,7 +78,7 @@ module core_ibex_tb_top;
     .rst_ni         (rst_n                ),
     .test_en_i      (1'b0                 ),
     .hart_id_i      (32'b0                ),
-    .boot_addr_i    (`BOOT_ADDR           ), // align with spike boot address
+    .boot_addr_i    (32'h`BOOT_ADDR       ), // align with spike boot address
     .irq_software_i (irq_vif.irq_software ),
     .irq_timer_i    (irq_vif.irq_timer    ),
     .irq_external_i (irq_vif.irq_external ),
