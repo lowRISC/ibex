@@ -172,36 +172,50 @@ def process_imm(instr_name, pc, operands):
     return operands[0:idx + 1] + imm
 
 
-def check_ibex_uvm_log(uvm_log, core_name, test_name, report, write=True):
+def check_ibex_uvm_log(uvm_log):
     """Process Ibex UVM simulation log.
 
-    This function will be used when a test disables the normal post_compare
-    step. Process the UVM simulation log produced by the test to check for
-    correctness
+    Process the UVM simulation log produced by the test to check for
+    correctness, reports failure if an explicit error or failure is seen in the
+    log or there's no explicit pass.
 
     Args:
       uvm_log:   the uvm simulation log
-      core_name: the name of the core
-      test_name: name of the test being checked
-      report:    the output report file
-      write:     enables writing to the log file. If equal to 'onfail',
-                 write when the test fails. Otherwise (true, but not the
-                 string 'onfail'), write unconditionally.
 
     Returns:
-      A boolean indicating whether the test passed or failed based on the
-      signature
+      A tuple of (passed, log_out).
+      `passed` indicates whether the test passed or failed based on the
+      log.
+      `log_out` a list of relevant lines from the log that may indicate the
+      source of the failure, if `passed` is true it will be empty.
 
     """
     passed = False
     failed = False
 
+    log_out = []
+
     with open(uvm_log, "r") as log:
+        # Simulation log has report summary at the end, which references
+        # 'UVM_ERROR' which can cause false failures. The summary appears after
+        # the test result so ignore any lines after the test result is seen for
+        # 'UVM_ERROR' checking. If the loop terminated immediately when a test
+        # result was seen it would miss issues where the test result is
+        # (erronously) repeated multiple times with different results.
+        test_result_seen = False
+
         for line in log:
+            if ('UVM_ERROR' in line or 'UVM_FATAL' in line) \
+                    and not test_result_seen:
+                log_out.append(line)
+                failed = True
+
             if 'RISC-V UVM TEST PASSED' in line:
+                test_result_seen = True
                 passed = True
 
             if 'RISC-V UVM TEST FAILED' in line:
+                test_result_seen = True
                 failed = True
                 break
 
@@ -210,19 +224,7 @@ def check_ibex_uvm_log(uvm_log, core_name, test_name, report, write=True):
     if failed:
         passed = False
 
-    if write:
-        fd = open(report, "a+") if report else sys.stdout
-
-        fd.write("%s uvm log : %s\n" % (core_name, uvm_log))
-        if passed:
-            fd.write("%s : [PASSED]\n\n" % test_name)
-        elif failed:
-            fd.write("%s : [FAILED]\n\n" % test_name)
-
-        if report:
-            fd.close()
-
-    return passed
+    return (passed, log_out)
 
 
 def main():
