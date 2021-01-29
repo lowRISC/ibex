@@ -368,6 +368,9 @@ def compare_test_run(test, idx, iss, output_dir, report):
     logging.info("Comparing %s/DUT sim result : %s" % (iss, elf))
 
     with open(report, 'a') as report_fd:
+        test_name_idx = '{}.{}'.format(test_name, idx)
+        test_underline = '-' * len(test_name_idx)
+        report_fd.write('\n{}\n{}\n'.format(test_name_idx, test_underline))
         report_fd.write('Test binary: {}\n'.format(elf))
 
     rtl_dir = os.path.join(output_dir, 'rtl_sim',
@@ -380,21 +383,30 @@ def compare_test_run(test, idx, iss, output_dir, report):
     try:
         # Convert the RTL log file to a trace CSV.
         process_ibex_sim_log(rtl_log, rtl_csv, 1)
-    except RuntimeError as e:
+    except (OSError, RuntimeError) as e:
         with open(report, 'a') as report_fd:
-            report_fd.write('Log processing failed: {}\n'.format(e))
+            report_fd.write('[FAILED]: Log processing failed: {}\n'.format(e))
 
         return False
 
     # Have a look at the UVM log. We should write out a message on failure or
     # if we are stopping at this point.
     no_post_compare = test.get('no_post_compare')
-    if not check_ibex_uvm_log(uvm_log, "ibex", test_name, report,
-                              write=(True if no_post_compare else 'onfail')):
-        return False
+    uvm_pass, uvm_log_lines = check_ibex_uvm_log(uvm_log)
 
-    if no_post_compare:
-        return True
+    with open(report, 'a') as report_fd:
+        report_fd.write('sim log: {}\n'.format(uvm_log))
+
+        if not uvm_pass:
+            for line in uvm_log_lines:
+                report_fd.write(line)
+            report_fd.write('[FAILED]: sim error seen\n')
+
+            return False
+
+        if no_post_compare:
+            report_fd.write('[PASSED]\n')
+            return True
 
     # There were no UVM errors. Process the log file from the ISS.
     iss_dir = os.path.join(output_dir, 'instr_gen', '{}_sim'.format(iss))
@@ -402,11 +414,17 @@ def compare_test_run(test, idx, iss, output_dir, report):
     iss_log = os.path.join(iss_dir, '{}.{}.log'.format(test_name, idx))
     iss_csv = os.path.join(iss_dir, '{}.{}.csv'.format(test_name, idx))
 
-    if iss == "spike":
-        process_spike_sim_log(iss_log, iss_csv)
-    else:
-        assert iss == 'ovpsim'  # (should be checked by argparse)
-        process_ovpsim_sim_log(iss_log, iss_csv)
+    try:
+        if iss == "spike":
+            process_spike_sim_log(iss_log, iss_csv)
+        else:
+            assert iss == 'ovpsim'  # (should be checked by argparse)
+            process_ovpsim_sim_log(iss_log, iss_csv)
+    except (OSError, RuntimeError) as e:
+        with open(report, 'a') as report_fd:
+            report_fd.write('[FAILED]: Log processing failed: {}\n'.format(e))
+
+        return False
 
     compare_result = \
         compare_trace_csv(rtl_csv, iss_csv, "ibex", iss, report,
@@ -436,7 +454,7 @@ def compare(test_list, iss, output_dir):
             else:
                 fails += 1
 
-    summary = "{} PASSED, {} FAILED".format(passes, fails)
+    summary = "\n{} PASSED, {} FAILED".format(passes, fails)
     with open(report, 'a') as report_fd:
         report_fd.write(summary + '\n')
 
