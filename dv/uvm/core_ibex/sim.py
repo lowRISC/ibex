@@ -363,7 +363,7 @@ def compare_test_run(test, idx, iss, output_dir, report):
     '''
     test_name = test['test']
     elf = os.path.join(output_dir,
-                       'instr_gen/asm_tests/{}.{}.o'.format(test_name, idx))
+                       'instr_gen/asm_test/{}.{}.o'.format(test_name, idx))
 
     logging.info("Comparing %s/DUT sim result : %s" % (iss, elf))
 
@@ -586,7 +586,7 @@ def main():
 
     # Create the output directory
     output_dir = ("%s/rtl_sim" % args.o)
-    bin_dir = ("%s/instr_gen/asm_tests" % args.o)
+    bin_dir = ("%s/instr_gen/asm_test" % args.o)
     subprocess.run(["mkdir", "-p", output_dir])
 
     steps = {

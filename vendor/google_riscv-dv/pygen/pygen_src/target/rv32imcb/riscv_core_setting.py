@@ -18,17 +18,18 @@ from pygen_src.riscv_instr_pkg import (privileged_reg_t, interrupt_cause_t,
 
 XLEN = 32
 
-implemented_csr = [privileged_reg_t.MVENDORID, privileged_reg_t.MARCHID, privileged_reg_t.MIMPID,
-                   privileged_reg_t.MHARTID, privileged_reg_t.MSTATUS,
-                   privileged_reg_t.MISA, privileged_reg_t.MIE,
-                   privileged_reg_t.MTVEC, privileged_reg_t.MCOUNTEREN, privileged_reg_t.MSCRATCH,
+implemented_csr = [privileged_reg_t.MVENDORID, privileged_reg_t.MARCHID,
+                   privileged_reg_t.MIMPID, privileged_reg_t.MHARTID,
+                   privileged_reg_t.MSTATUS, privileged_reg_t.MISA,
+                   privileged_reg_t.MIE, privileged_reg_t.MTVEC,
+                   privileged_reg_t.MCOUNTEREN, privileged_reg_t.MSCRATCH,
                    privileged_reg_t.MEPC, privileged_reg_t.MCAUSE,
                    privileged_reg_t.MTVAL, privileged_reg_t.MIP]
 
 SATP_MODE = satp_mode_t.BARE
 
 supported_isa = [riscv_instr_group_t.RV32I, riscv_instr_group_t.RV32M,
-                 riscv_instr_group_t.RV32C]
+                 riscv_instr_group_t.RV32C, riscv_instr_group_t.RV32B]
 
 supported_privileged_mode = [privileged_mode_t.MACHINE_MODE]
 
@@ -61,9 +62,9 @@ VLEN = 512
 
 ELEN = 32
 
-SELEN = 0
+SELEN = 8
 
-MAX_MUL = 8
+MAX_LMUL = 8
 
 implemented_interrupt = [interrupt_cause_t.M_SOFTWARE_INTR,
                          interrupt_cause_t.M_TIMER_INTR,
@@ -71,6 +72,7 @@ implemented_interrupt = [interrupt_cause_t.M_SOFTWARE_INTR,
 
 implemented_exception = [exception_cause_t.INSTRUCTION_ACCESS_FAULT,
                          exception_cause_t.ILLEGAL_INSTRUCTION,
-                         exception_cause_t.BREAKPOINT, exception_cause_t.LOAD_ADDRESS_MISALIGNED,
+                         exception_cause_t.BREAKPOINT,
+                         exception_cause_t.LOAD_ADDRESS_MISALIGNED,
                          exception_cause_t.LOAD_ACCESS_FAULT,
                          exception_cause_t.ECALL_MMODE]
