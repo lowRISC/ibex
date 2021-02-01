@@ -539,7 +539,7 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
         // explicitly set is_seen to 0 and return on WFI instructions,
         // as if we don't interrupt them, every test will timeout.
         if (funct3 == 3'b000 && system_imm == 12'h105) begin
-          return 0;
+          return 1;
         end else if (funct3 == 3'b000 && system_imm != 12'h001) begin
           // raise is_seen if ecall/mret/dret is detected,
           // we exclude them for now (this leads to nested traps).
@@ -655,12 +655,19 @@ class core_ibex_interrupt_instr_test extends core_ibex_directed_test;
     vseq.irq_raise_single_seq_h.max_delay = 0;
     vseq.irq_raise_single_seq_h.max_interval = 0;
     forever begin
-      // hold until we see a valid instruction in the ID stage of the pipeline.
-      wait (instr_vif.instr_cb.valid_id && !(instr_vif.instr_cb.err_id || dut_vif.illegal_instr));
+      // hold until we see a valid instruction in the ID stage of the pipeline or the core goes to
+      // sleep
+      wait ((instr_vif.instr_cb.valid_id && !(instr_vif.instr_cb.err_id || dut_vif.illegal_instr))
+        || dut_vif.core_sleep);
 
       // We don't want to send fast interrupts, as due to the random setup of MIE,
       // there's no guarantee that the interrupt will actually be taken.
-      if (instr_vif.instr_cb.is_compressed_id) begin
+      if (dut_vif.core_sleep) begin
+        // Testbench waits for 50 clocks before calling check_stimulus. If a WFI is executed during
+        // these 50 clocks the test would sleep forever, so if the core enters sleep send irq
+        // stimulus to wake it up.
+        send_irq_stimulus(.no_fast(1'b1));
+      end else if (instr_vif.instr_cb.is_compressed_id) begin
         if (decode_compressed_instr(instr_vif.instr_cb.instr_compressed_id)) begin
           send_irq_stimulus(.no_fast(1'b1));
         end
@@ -826,12 +833,18 @@ class core_ibex_debug_instr_test extends core_ibex_directed_test;
     vseq.debug_seq_single_h.max_delay = 0;
     vseq.debug_seq_single_h.max_interval = 0;
     forever begin
-      // hold until we see a valid instruction in the ID stage of the pipeline.
-      wait (instr_vif.instr_cb.valid_id && !(instr_vif.instr_cb.err_id || dut_vif.illegal_instr));
+      // hold until we see a valid instruction in the ID stage of the pipeline or the core goes to
+      // sleep
+      wait ((instr_vif.instr_cb.valid_id && !(instr_vif.instr_cb.err_id || dut_vif.illegal_instr)) || dut_vif.core_sleep);
 
-      // We don't want to send fast interrupts, as due to the random setup of MIE,
-      // there's no guarantee that the interrupt will actually be taken.
-      if (instr_vif.instr_cb.is_compressed_id) begin
+      if (dut_vif.core_sleep) begin
+        // Testbench waits for 50 clocks before calling check_stimulus. If a WFI is executed during
+        // these 50 clocks the test would sleep forever, so if the core enters sleep send debug
+        // stimulus to wake it up.
+        send_debug_stimulus(init_operating_mode,
+                            $sformatf("Did not jump into debug mode after instruction[0x%0x]",
+                                      instr_vif.instr_cb.instr_compressed_id));
+      end else if (instr_vif.instr_cb.is_compressed_id) begin
         if (decode_compressed_instr(instr_vif.instr_cb.instr_compressed_id)) begin
           send_debug_stimulus(init_operating_mode,
                               $sformatf("Did not jump into debug mode after instruction[0x%0x]",
