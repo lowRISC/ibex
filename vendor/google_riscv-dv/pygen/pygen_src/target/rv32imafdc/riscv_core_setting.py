@@ -18,9 +18,9 @@ from pygen_src.riscv_instr_pkg import (privileged_reg_t, interrupt_cause_t,
 
 XLEN = 32
 
-implemented_csr = [privileged_reg_t.MVENDORID, privileged_reg_t.MARCHID, privileged_reg_t.MIMPID,
-                   privileged_reg_t.MHARTID, privileged_reg_t.MSTATUS,
-                   privileged_reg_t.MISA, privileged_reg_t.MIE,
+implemented_csr = [privileged_reg_t.MVENDORID, privileged_reg_t.MARCHID,
+                   privileged_reg_t.MIMPID, privileged_reg_t.MHARTID,
+                   privileged_reg_t.MSTATUS, privileged_reg_t.MISA, privileged_reg_t.MIE,
                    privileged_reg_t.MTVEC, privileged_reg_t.MCOUNTEREN, privileged_reg_t.MSCRATCH,
                    privileged_reg_t.MEPC, privileged_reg_t.MCAUSE,
                    privileged_reg_t.MTVAL, privileged_reg_t.MIP]
@@ -28,7 +28,9 @@ implemented_csr = [privileged_reg_t.MVENDORID, privileged_reg_t.MARCHID, privile
 SATP_MODE = satp_mode_t.BARE
 
 supported_isa = [riscv_instr_group_t.RV32I, riscv_instr_group_t.RV32M,
-                 riscv_instr_group_t.RV32C]
+                 riscv_instr_group_t.RV32C, riscv_instr_group_t.RV32F,
+                 riscv_instr_group_t.RV32FC, riscv_instr_group_t.RV32D,
+                 riscv_instr_group_t.RV32DC, riscv_instr_group_t.RV32A]
 
 supported_privileged_mode = [privileged_mode_t.MACHINE_MODE]
 
@@ -50,9 +52,10 @@ support_sfence = 0
 
 support_unaligned_load_store = 1
 
-# GPR Setting
 NUM_FLOAT_GPR = 32
+
 NUM_GPR = 32
+
 NUM_VEC_GPR = 32
 
 VECTOR_EXTENSION_ENABLE = 0
@@ -71,6 +74,7 @@ implemented_interrupt = [interrupt_cause_t.M_SOFTWARE_INTR,
 
 implemented_exception = [exception_cause_t.INSTRUCTION_ACCESS_FAULT,
                          exception_cause_t.ILLEGAL_INSTRUCTION,
-                         exception_cause_t.BREAKPOINT, exception_cause_t.LOAD_ADDRESS_MISALIGNED,
+                         exception_cause_t.BREAKPOINT,
+                         exception_cause_t.LOAD_ADDRESS_MISALIGNED,
                          exception_cause_t.LOAD_ACCESS_FAULT,
                          exception_cause_t.ECALL_MMODE]
