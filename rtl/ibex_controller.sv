@@ -144,7 +144,8 @@ module ibex_controller #(
   logic exc_req_lsu;
   logic special_req_all;
   logic special_req_branch;
-  logic enter_debug_mode;
+  logic enter_debug_mode_d;
+  logic enter_debug_mode_q;
   logic ebreak_into_debug;
   logic handle_irq;
 
@@ -317,8 +318,8 @@ module ibex_controller #(
   // due to a recently flushed IF (or a delay in an instruction returning from
   // memory) before it has had anything to single step.
   // Also enter debug mode on a trigger match (hardware breakpoint)
-  assign enter_debug_mode = (debug_req_i | (debug_single_step_i & instr_valid_i) |
-                             trigger_match_i) & ~debug_mode_q;
+  assign enter_debug_mode_d = (debug_req_i | (debug_single_step_i & instr_valid_i) |
+                               trigger_match_i) & ~debug_mode_q;
 
   // Set when an ebreak should enter debug mode rather than jump to exception
   // handler
@@ -461,7 +462,7 @@ module ibex_controller #(
         end
 
         // enter debug mode
-        if (enter_debug_mode) begin
+        if (enter_debug_mode_d) begin
           ctrl_fsm_ns = DBG_TAKEN_IF;
           // Halt IF only for now, ID will be flushed in DBG_TAKEN_IF as the
           // ID state is needed for correct debug mode entry
@@ -530,12 +531,12 @@ module ibex_controller #(
         // If entering debug mode or handling an IRQ the core needs to wait
         // until the current instruction has finished executing. Stall IF
         // during that time.
-        if ((enter_debug_mode || handle_irq) && stall) begin
+        if ((enter_debug_mode_d || handle_irq) && stall) begin
           halt_if = 1'b1;
         end
 
         if (!stall && !special_req_all) begin
-          if (enter_debug_mode) begin
+          if (enter_debug_mode_d) begin
             // enter debug mode
             ctrl_fsm_ns = DBG_TAKEN_IF;
             // Halt IF only for now, ID will be flushed in DBG_TAKEN_IF as the
@@ -594,26 +595,24 @@ module ibex_controller #(
 
         // enter debug mode and save PC in IF to dpc
         // jump to debug exception handler in debug memory
-        if (debug_single_step_i || debug_req_i || trigger_match_i) begin
-          flush_id         = 1'b1;
-          pc_set_o         = 1'b1;
-          pc_set_spec_o    = 1'b1;
+        flush_id         = 1'b1;
+        pc_set_o         = 1'b1;
+        pc_set_spec_o    = 1'b1;
 
-          csr_save_if_o    = 1'b1;
-          debug_csr_save_o = 1'b1;
+        csr_save_if_o    = 1'b1;
+        debug_csr_save_o = 1'b1;
 
-          csr_save_cause_o = 1'b1;
-          if (trigger_match_i) begin
-            debug_cause_o = DBG_CAUSE_TRIGGER;
-          end else if (debug_single_step_i) begin
-            debug_cause_o = DBG_CAUSE_STEP;
-          end else begin
-            debug_cause_o = DBG_CAUSE_HALTREQ;
-          end
-
-          // enter debug mode
-          debug_mode_d = 1'b1;
+        csr_save_cause_o = 1'b1;
+        if (trigger_match_i) begin
+          debug_cause_o = DBG_CAUSE_TRIGGER;
+        end else if (debug_single_step_i) begin
+          debug_cause_o = DBG_CAUSE_STEP;
+        end else begin
+          debug_cause_o = DBG_CAUSE_HALTREQ;
         end
+
+        // enter debug mode
+        debug_mode_d = 1'b1;
 
         ctrl_fsm_ns  = DECODE;
       end
@@ -770,7 +769,7 @@ module ibex_controller #(
         // If an EBREAK instruction is causing us to enter debug mode on the
         // same cycle as a debug_req or single step, honor the EBREAK and
         // proceed to DBG_TAKEN_ID.
-        if (enter_debug_mode && !(ebrk_insn_prio && ebreak_into_debug)) begin
+        if (enter_debug_mode_q && !(ebrk_insn_prio && ebreak_into_debug)) begin
           ctrl_fsm_ns = DBG_TAKEN_IF;
         end
       end // FLUSH
@@ -812,21 +811,23 @@ module ibex_controller #(
   // update registers
   always_ff @(posedge clk_i or negedge rst_ni) begin : update_regs
     if (!rst_ni) begin
-      ctrl_fsm_cs    <= RESET;
-      nmi_mode_q     <= 1'b0;
-      debug_mode_q   <= 1'b0;
-      load_err_q     <= 1'b0;
-      store_err_q    <= 1'b0;
-      exc_req_q      <= 1'b0;
-      illegal_insn_q <= 1'b0;
+      ctrl_fsm_cs        <= RESET;
+      nmi_mode_q         <= 1'b0;
+      debug_mode_q       <= 1'b0;
+      enter_debug_mode_q <= 1'b0;
+      load_err_q         <= 1'b0;
+      store_err_q        <= 1'b0;
+      exc_req_q          <= 1'b0;
+      illegal_insn_q     <= 1'b0;
     end else begin
-      ctrl_fsm_cs    <= ctrl_fsm_ns;
-      nmi_mode_q     <= nmi_mode_d;
-      debug_mode_q   <= debug_mode_d;
-      load_err_q     <= load_err_d;
-      store_err_q    <= store_err_d;
-      exc_req_q      <= exc_req_d;
-      illegal_insn_q <= illegal_insn_d;
+      ctrl_fsm_cs        <= ctrl_fsm_ns;
+      nmi_mode_q         <= nmi_mode_d;
+      debug_mode_q       <= debug_mode_d;
+      enter_debug_mode_q <= enter_debug_mode_d;
+      load_err_q         <= load_err_d;
+      store_err_q        <= store_err_d;
+      exc_req_q          <= exc_req_d;
+      illegal_insn_q     <= illegal_insn_d;
     end
   end
 
