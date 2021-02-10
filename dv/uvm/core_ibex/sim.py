@@ -376,22 +376,10 @@ def compare_test_run(test, idx, iss, output_dir, report):
     rtl_dir = os.path.join(output_dir, 'rtl_sim',
                            '{}.{}'.format(test_name, idx))
 
-    rtl_log = os.path.join(rtl_dir, 'trace_core_00000000.log')
-    rtl_csv = os.path.join(rtl_dir, 'trace_core_00000000.csv')
     uvm_log = os.path.join(rtl_dir, 'sim.log')
 
-    try:
-        # Convert the RTL log file to a trace CSV.
-        process_ibex_sim_log(rtl_log, rtl_csv, 1)
-    except (OSError, RuntimeError) as e:
-        with open(report, 'a') as report_fd:
-            report_fd.write('[FAILED]: Log processing failed: {}\n'.format(e))
-
-        return False
-
-    # Have a look at the UVM log. We should write out a message on failure or
-    # if we are stopping at this point.
-    no_post_compare = test.get('no_post_compare')
+    # Have a look at the UVM log. Report a failure if an issue is seen in the
+    # log.
     uvm_pass, uvm_log_lines = check_ibex_uvm_log(uvm_log)
 
     with open(report, 'a') as report_fd:
@@ -404,9 +392,26 @@ def compare_test_run(test, idx, iss, output_dir, report):
 
             return False
 
-        if no_post_compare:
-            report_fd.write('[PASSED]\n')
-            return True
+    rtl_log = os.path.join(rtl_dir, 'trace_core_00000000.log')
+    rtl_csv = os.path.join(rtl_dir, 'trace_core_00000000.csv')
+
+    try:
+        # Convert the RTL log file to a trace CSV.
+        process_ibex_sim_log(rtl_log, rtl_csv, 1)
+    except (OSError, RuntimeError) as e:
+        with open(report, 'a') as report_fd:
+            report_fd.write('[FAILED]: Log processing failed: {}\n'.format(e))
+
+        return False
+
+    no_post_compare = test.get('no_post_compare', False)
+    assert isinstance(no_post_compare, bool)
+
+    # no_post_compare skips the final ISS v RTL log check, so if we've reached
+    # here we're done when no_post_compare is set.
+    if no_post_compare:
+        report_fd.write('[PASSED]\n')
+        return True
 
     # There were no UVM errors. Process the log file from the ISS.
     iss_dir = os.path.join(output_dir, 'instr_gen', '{}_sim'.format(iss))
