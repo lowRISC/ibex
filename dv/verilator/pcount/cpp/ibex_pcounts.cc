@@ -10,7 +10,7 @@
 #include <svdpi.h>
 
 extern "C" {
-extern long long mhpmcounter_get(int index);
+extern unsigned long long mhpmcounter_get(int index);
 }
 
 #include "ibex_pcounts.h"
