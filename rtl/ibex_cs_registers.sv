@@ -1284,6 +1284,9 @@ module ibex_cs_registers #(
     logic [DbgHwBreakNum-1:0] tmatch_control_q;
     logic [31:0]              tmatch_value_d;
     logic [31:0]              tmatch_value_q[DbgHwBreakNum];
+    logic                     selected_tmatch_control;
+    logic [31:0]              selected_tmatch_value;
+
     // Write enables
     logic                     tselect_we;
     logic [DbgHwBreakNum-1:0] tmatch_control_we;
@@ -1355,26 +1358,35 @@ module ibex_cs_registers #(
     localparam int unsigned TSelectRdataPadlen = DbgHwNumLen >= 32 ? 0 : (32 - DbgHwNumLen);
     assign tselect_rdata = {{TSelectRdataPadlen{1'b0}}, tselect_q};
 
+    if (DbgHwBreakNum > 1) begin : g_dbg_tmatch_multiple_select
+      assign selected_tmatch_control = tmatch_control_q[tselect_q];
+      assign selected_tmatch_value   = tmatch_value_q[tselect_q];
+    end else begin : g_dbg_tmatch_single_select
+      assign selected_tmatch_control = tmatch_control_q[0];
+      assign selected_tmatch_value   = tmatch_value_q[0];
+    end
+
     // TDATA0 - only support simple address matching
-    assign tmatch_control_rdata = {4'h2,                         // type    : address/data match
-                                   1'b1,                         // dmode   : access from D mode only
-                                   6'h00,                        // maskmax : exact match only
-                                   1'b0,                         // hit     : not supported
-                                   1'b0,                         // select  : address match only
-                                   1'b0,                         // timing  : match before execution
-                                   2'b00,                        // sizelo  : match any access
-                                   4'h1,                         // action  : enter debug mode
-                                   1'b0,                         // chain   : not supported
-                                   4'h0,                         // match   : simple match
-                                   1'b1,                         // m       : match in m-mode
-                                   1'b0,                         // 0       : zero
-                                   1'b0,                         // s       : not supported
-                                   1'b1,                         // u       : match in u-mode
-                                   tmatch_control_q[tselect_q],  // execute : match instruction address
-                                   1'b0,                         // store   : not supported
-                                   1'b0};                        // load    : not supported
+    assign tmatch_control_rdata = {4'h2,                    // type    : address/data match
+                                   1'b1,                    // dmode   : access from D mode only
+                                   6'h00,                   // maskmax : exact match only
+                                   1'b0,                    // hit     : not supported
+                                   1'b0,                    // select  : address match only
+                                   1'b0,                    // timing  : match before execution
+                                   2'b00,                   // sizelo  : match any access
+                                   4'h1,                    // action  : enter debug mode
+                                   1'b0,                    // chain   : not supported
+                                   4'h0,                    // match   : simple match
+                                   1'b1,                    // m       : match in m-mode
+                                   1'b0,                    // 0       : zero
+                                   1'b0,                    // s       : not supported
+                                   1'b1,                    // u       : match in u-mode
+                                   selected_tmatch_control, // execute : match instruction address
+                                   1'b0,                    // store   : not supported
+                                   1'b0};                   // load    : not supported
+
     // TDATA1 - address match value only
-    assign tmatch_value_rdata = tmatch_value_q[tselect_q];
+    assign tmatch_value_rdata = selected_tmatch_value;
 
     // Breakpoint matching
     // We match against the next address, as the breakpoint must be taken before execution
