@@ -212,6 +212,7 @@ module ibex_simple_system (
       .irq_nm_i              (1'b0),
 
       .debug_req_i           ('b0),
+      .crash_dump_o          (),
 
       .fetch_enable_i        ('b1),
       .alert_minor_o         (),

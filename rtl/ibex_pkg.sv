@@ -8,6 +8,17 @@
  */
 package ibex_pkg;
 
+////////////////
+// IO Structs //
+////////////////
+
+typedef struct packed {
+  logic [31:0] current_pc;
+  logic [31:0] next_pc;
+  logic [31:0] last_data_addr;
+  logic [31:0] exception_addr;
+} crash_dump_t;
+
 /////////////////////
 // Parameter Enums //
 /////////////////////
