@@ -481,7 +481,7 @@
   iterations: 5
   no_iss: 1
   rtl_test: core_ibex_csr_test
-  no_post_compare: 1
+  no_post_compare: true
 
 - test: riscv_unaligned_load_store_test
   description: >
