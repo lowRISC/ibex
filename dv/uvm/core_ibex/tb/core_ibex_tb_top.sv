@@ -106,6 +106,7 @@ module core_ibex_tb_top;
     .irq_nm_i       (irq_vif.irq_nm       ),
 
     .debug_req_i    (dut_if.debug_req     ),
+    .crash_dump_o   (                     ),
 
     .fetch_enable_i (dut_if.fetch_enable  ),
     .alert_minor_o  (dut_if.alert_minor   ),
