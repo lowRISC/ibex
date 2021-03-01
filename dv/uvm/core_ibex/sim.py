@@ -478,13 +478,16 @@ def gen_cov(base_dir, simulator, lsf_cmd):
     """
     # Compile a list of all output seed-###/rtl_sim/test.vdb directories
     dir_list = []
-    for entry in os.scandir(base_dir):
-        vdb_path = "%s/%s/rtl_sim/test.vdb" % (base_dir, entry.name)
-        if 'seed' in entry.name:
-            logging.info("Searching %s/%s for coverage database" %
-                         (base_dir, entry.name))
-            if os.path.exists(vdb_path):
-                dir_list.append(vdb_path)
+
+    # All generated coverage databases will be named "test.vdb"
+    vdb_dir_name = "test.vdb"
+
+    for path, dirs, files in os.walk(base_dir):
+        if vdb_dir_name in dirs:
+            vdb_path = os.path.join(path, vdb_dir_name)
+            logging.info("Found coverage database at %s" % vdb_path)
+            dir_list.append(vdb_path)
+
     if dir_list == []:
         logging.info("No coverage data available, exiting...")
         sys.exit(RET_SUCCESS)
