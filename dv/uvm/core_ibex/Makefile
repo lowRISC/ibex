@@ -92,7 +92,7 @@ all: sim
 
 instr: iss_sim
 
-sim: post_compare cov
+sim: post_compare gen_cov
 
 .PHONY: clean
 clean:
@@ -417,7 +417,8 @@ post_compare: $(OUT-SEED)/regr.log
 ###############################################################################
 # Generate RISCV-DV functional coverage
 # TODO(udi) - add B extension
-fcov:
+.PHONY: riscv_dv_cov
+riscv_dv_fcov:
 	$(verb)python3 ${GEN_DIR}/cov.py \
           --core ibex \
           --dir ${OUT-SEED}/rtl_sim \
@@ -426,7 +427,10 @@ fcov:
           --custom_target riscv_dv_extension
 
 # Merge all output coverage directories into the <out>/rtl_sim directory
-cov:
+#
+# Any coverage databases generated from the riscv_dv_fcov target will be merged as well.
+.PHONY: gen_cov
+gen_cov: riscv_dv_fcov
 	$(verb)rm -rf $(OUT-DIR)rtl_sim/test.vdb
 	$(verb)./sim.py \
 		--steps=cov \
