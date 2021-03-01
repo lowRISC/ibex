@@ -70,7 +70,7 @@ ${PRJ_DIR}/vendor/google_riscv-dv/src/riscv_signature_pkg.sv
 +incdir+${PRJ_DIR}/dv/uvm/core_ibex/tests
 +incdir+${PRJ_DIR}/dv/uvm/core_ibex/common/ibex_mem_intf_agent
 +incdir+${PRJ_DIR}/dv/uvm/core_ibex/common/irq_agent
-+incdir+${PRJ_DIR}/dv/fcov
++incdir+${PRJ_DIR}/fcov
 +incdir+${PRJ_DIR}/vendor/lowrisc_ip/dv/sv/mem_model
 +incdir+${PRJ_DIR}/vendor/lowrisc_ip/dv/sv/dv_utils
 +incdir+${PRJ_DIR}/vendor/lowrisc_ip/dv/sv/str_utils
