@@ -10,7 +10,7 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
   input priv_lvl_e priv_mode_if,
   input priv_lvl_e priv_mode_lsu
 );
-  `include "dv_macros.svh"
+  `include "dv_fcov_macros.svh"
   import uvm_pkg::*;
 
   typedef enum {
@@ -96,7 +96,7 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
   covergroup uarch_cg @(posedge clk_i);
     type_option.strobe = 1;
 
-    `DV_FCOV_EXPR_SEEN(cp_insn_unstalled, instruction_unstalled.triggered)
+    `DV_FCOV_EXPR_SEEN(insn_unstalled, instruction_unstalled.triggered)
 
     cp_insn_category_id: coverpoint id_instr_category;
 
@@ -116,10 +116,10 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     cp_priv_mode_if: coverpoint priv_mode_if;
     cp_prov_mode_lsu: coverpoint priv_mode_lsu;
 
-    `DV_FCOV_EXPR_SEEN(cp_interrupt_taken, id_stage_i.controller_i.fcov_interrupt_taken)
-    `DV_FCOV_EXPR_SEEN(cp_debug_entry_if, id_stage_i.controller_i.fcov_debug_entry_if)
-    `DV_FCOV_EXPR_SEEN(cp_debug_entry_id, id_stage_i.controller_i.fcov_debug_entry_id)
-    `DV_FCOV_EXPR_SEEN(cp_pipe_flush, id_stage_i.controller_i.fcov_pipe_flush)
+    `DV_FCOV_EXPR_SEEN(interrupt_taken, id_stage_i.controller_i.fcov_interrupt_taken)
+    `DV_FCOV_EXPR_SEEN(debug_entry_if, id_stage_i.controller_i.fcov_debug_entry_if)
+    `DV_FCOV_EXPR_SEEN(debug_entry_id, id_stage_i.controller_i.fcov_debug_entry_id)
+    `DV_FCOV_EXPR_SEEN(pipe_flush, id_stage_i.controller_i.fcov_pipe_flush)
 
     wb_reg_hz_instr_cross: cross cp_insn_category_id, cp_wb_reg_hz;
     stall_cross: cross cp_insn_category_id, cp_stall_type_id;
@@ -137,5 +137,5 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
    void'($value$plusargs("enable_uarch_cov=%d", en_uarch_cov));
   end
 
-  `DV_INSTANTIATE_CG(uarch_cg, en_uarch_cov)
+  `DV_FCOV_INSTANTIATE_CG(uarch_cg, en_uarch_cov)
 endinterface
