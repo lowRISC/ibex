@@ -62,7 +62,8 @@
                "+define+UVM_REGEX_NO_DPI",
                "+define+UVM_REG_ADDR_WIDTH={tl_aw}",
                "+define+UVM_REG_DATA_WIDTH={tl_dw}",
-               "+define+UVM_REG_BYTENABLE_WIDTH={tl_dbw}"]
+               "+define+UVM_REG_BYTENABLE_WIDTH={tl_dbw}",
+               "+define+SIMULATION"]
 
   run_opts: ["+UVM_NO_RELNOTES",
              "+UVM_VERBOSITY={expand_uvm_verbosity_{verbosity}}"]
@@ -110,6 +111,8 @@
       name: smoke
       tests: []
       reseed: 1
+      // Knob used to configure an existing test / vseq to have a shorter runtime.
+      run_opts: ["+smoke_test=1"]
     }
 
     {

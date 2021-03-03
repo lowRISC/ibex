@@ -6,16 +6,15 @@ import datetime
 import logging as log
 import os
 import pprint
-from shutil import which
 import subprocess
 import sys
+from shutil import which
 
 import hjson
-
 from CfgJson import set_target_attribute
-from Deploy import Deploy
-from utils import (VERBOSE, md_results_to_html,
-                   subst_wildcards, find_and_substitute_wildcards)
+from Scheduler import Scheduler
+from utils import (VERBOSE, find_and_substitute_wildcards, md_results_to_html,
+                   rm_path, subst_wildcards)
 
 
 # Interface class for extensions.
@@ -25,7 +24,6 @@ class FlowCfg():
     The constructor expects some parsed hjson data. Create these objects with
     the factory function in CfgFactory.py, which loads the hjson data and picks
     a subclass of FlowCfg based on its contents.
-
     '''
 
     # Set in subclasses. This is the key that must be used in an hjson file to
@@ -69,8 +67,9 @@ class FlowCfg():
         # a special key 'use_cfgs' within the hjson cfg.
         self.is_primary_cfg = False
 
-        # For a primary cfg, it is the aggregated list of all deploy objects under self.cfgs.
-        # For a non-primary cfg, it is the list of items slated for dispatch.
+        # For a primary cfg, it is the aggregated list of all deploy objects
+        # under self.cfgs. For a non-primary cfg, it is the list of items
+        # slated for dispatch.
         self.deploy = []
 
         # Timestamp
@@ -87,7 +86,8 @@ class FlowCfg():
         self.results_server_prefix = ""
         self.results_server_url_prefix = ""
         self.results_server_cmd = ""
-        self.css_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "style.css")
+        self.css_file = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), "style.css")
         self.results_server_path = ""
         self.results_server_dir = ""
         self.results_server_html = ""
@@ -147,10 +147,7 @@ class FlowCfg():
 
         '''
         for key, value in hjson_data.items():
-            set_target_attribute(self.flow_cfg_file,
-                                 self.__dict__,
-                                 key,
-                                 value)
+            set_target_attribute(self.flow_cfg_file, self.__dict__, key, value)
 
     def _expand(self):
         '''Called to expand wildcards after merging hjson
@@ -188,29 +185,20 @@ class FlowCfg():
         # don't yet support heterogeneous primary configurations.
         if type(self) is not type(new_instance):
             log.error("{}: Loading child configuration at {!r}, but the "
-                      "resulting flow types don't match: ({} vs. {})."
-                      .format(self.flow_cfg_file,
-                              flow_cfg_file,
-                              type(self).__name__,
-                              type(new_instance).__name__))
+                      "resulting flow types don't match: ({} vs. {}).".format(
+                          self.flow_cfg_file, flow_cfg_file,
+                          type(self).__name__,
+                          type(new_instance).__name__))
             sys.exit(1)
 
         return new_instance
-
-    def kill(self):
-        '''kill running processes and jobs gracefully
-        '''
-        for item in self.deploy:
-            item.kill()
 
     def _load_child_cfg(self, entry, mk_config):
         '''Load a child configuration for a primary cfg'''
         if type(entry) is str:
             # Treat this as a file entry. Substitute wildcards in cfg_file
             # files since we need to process them right away.
-            cfg_file = subst_wildcards(entry,
-                                       self.__dict__,
-                                       ignore_error=True)
+            cfg_file = subst_wildcards(entry, self.__dict__, ignore_error=True)
             self.cfgs.append(self.create_instance(mk_config, cfg_file))
 
         elif type(entry) is dict:
@@ -221,13 +209,8 @@ class FlowCfg():
             self.cfgs.append(self.create_instance(mk_config, temp_cfg_file))
 
             # Delete the temp_cfg_file once the instance is created
-            try:
-                log.log(VERBOSE, "Deleting temp cfg file:\n%s",
-                        temp_cfg_file)
-                os.system("/bin/rm -rf " + temp_cfg_file)
-            except IOError:
-                log.error("Failed to remove temp cfg file:\n%s",
-                          temp_cfg_file)
+            log.log(VERBOSE, "Deleting temp cfg file:\n%s", temp_cfg_file)
+            rm_path(temp_cfg_file, ignore_error=True)
 
         else:
             log.error(
@@ -245,14 +228,13 @@ class FlowCfg():
 
         name = idict["name"] if "name" in idict.keys() else None
         if not name:
-            log.error("In-line entry in use_cfgs list does not contain "
-                      "a \"name\" key (will be skipped!):\n%s",
-                      idict)
+            log.error("In-line entry in use_cfgs list does not contain a "
+                      "\"name\" key (will be skipped!):\n%s", idict)
             return None
 
         # Check if temp cfg file already exists
-        temp_cfg_file = (self.scratch_root + "/." + self.branch + "__" +
-                         name + "_cfg.hjson")
+        temp_cfg_file = (self.scratch_root + "/." + self.branch + "__" + name +
+                         "_cfg.hjson")
 
         # Create the file and dump the dict as hjson
         log.log(VERBOSE, "Dumping inline cfg \"%s\" in hjson to:\n%s", name,
@@ -262,8 +244,7 @@ class FlowCfg():
                 f.write(hjson.dumps(idict, for_json=True))
         except Exception as e:
             log.error("Failed to hjson-dump temp cfg file\"%s\" for \"%s\""
-                      "(will be skipped!) due to:\n%s",
-                      temp_cfg_file, name, e)
+                      "(will be skipped!) due to:\n%s", temp_cfg_file, name, e)
             return None
 
         # Return the temp cfg file created
@@ -277,28 +258,28 @@ class FlowCfg():
         if hasattr(self, "overrides"):
             overrides = getattr(self, "overrides")
             if type(overrides) is not list:
-                log.error(
-                    "The type of key \"overrides\" is %s - it should be a list",
-                    type(overrides))
+                log.error("The type of key \"overrides\" is %s - it should be "
+                          "a list", type(overrides))
                 sys.exit(1)
 
             # Process override one by one
             for item in overrides:
-                if type(item) is dict and set(item.keys()) == {"name", "value"}:
+                if type(item) is dict and set(
+                        item.keys()) == {"name", "value"}:
                     ov_name = item["name"]
                     ov_value = item["value"]
                     if ov_name not in overrides_dict.keys():
                         overrides_dict[ov_name] = ov_value
                         self._do_override(ov_name, ov_value)
                     else:
-                        log.error(
-                            "Override for key \"%s\" already exists!\nOld: %s\nNew: %s",
-                            ov_name, overrides_dict[ov_name], ov_value)
+                        log.error("Override for key \"%s\" already exists!\n"
+                                  "Old: %s\nNew: %s", ov_name,
+                                  overrides_dict[ov_name], ov_value)
                         sys.exit(1)
                 else:
-                    log.error("\"overrides\" is a list of dicts with {\"name\": <name>, "
-                              "\"value\": <value>} pairs. Found this instead:\n%s",
-                              str(item))
+                    log.error("\"overrides\" is a list of dicts with "
+                              "{\"name\": <name>, \"value\": <value>} pairs. "
+                              "Found this instead:\n%s", str(item))
                     sys.exit(1)
 
     def _do_override(self, ov_name, ov_value):
@@ -310,8 +291,8 @@ class FlowCfg():
                           ov_name, orig_value, ov_value)
                 setattr(self, ov_name, ov_value)
             else:
-                log.error("The type of override value \"%s\" for \"%s\" mismatches "
-                          "the type of original value \"%s\"",
+                log.error("The type of override value \"%s\" for \"%s\" "
+                          "mismatches the type of original value \"%s\"",
                           ov_value, ov_name, orig_value)
                 sys.exit(1)
         else:
@@ -323,24 +304,22 @@ class FlowCfg():
         return
 
     def purge(self):
-        '''Public facing API for _purge().
-        '''
+        '''Public facing API for _purge().'''
         for item in self.cfgs:
             item._purge()
 
     def _print_list(self):
-        '''Print the list of available items that can be kicked off.
-        '''
+        '''Print the list of available items that can be kicked off.'''
         return
 
     def print_list(self):
-        '''Public facing API for _print_list().
-        '''
+        '''Public facing API for _print_list().'''
+
         for item in self.cfgs:
             item._print_list()
 
     def prune_selected_cfgs(self):
-        '''Prune the list of configs for a primary config file'''
+        '''Prune the list of configs for a primary config file.'''
 
         # This should run after self.cfgs has been set
         assert self.cfgs
@@ -352,9 +331,9 @@ class FlowCfg():
         # If the user passed --select-cfgs, but this isn't a primary config
         # file, we should probably complain.
         if not self.is_primary_cfg:
-            log.error('The configuration file at {!r} is not a primary config, '
-                      'but --select-cfgs was passed on the command line.'
-                      .format(self.flow_cfg_file))
+            log.error('The configuration file at {!r} is not a primary '
+                      'config, but --select-cfgs was passed on the command '
+                      'line.'.format(self.flow_cfg_file))
             sys.exit(1)
 
         # Filter configurations
@@ -362,8 +341,8 @@ class FlowCfg():
 
     def _create_deploy_objects(self):
         '''Create deploy objects from items that were passed on for being run.
-        The deploy objects for build and run are created from the objects that were
-        created from the create_objects() method.
+        The deploy objects for build and run are created from the objects that
+        were created from the create_objects() method.
         '''
         return
 
@@ -371,33 +350,39 @@ class FlowCfg():
         '''Public facing API for _create_deploy_objects().
         '''
         self.prune_selected_cfgs()
-        if self.is_primary_cfg:
-            self.deploy = []
-            for item in self.cfgs:
-                item._create_deploy_objects()
-                self.deploy.extend(item.deploy)
-        else:
-            self._create_deploy_objects()
+        for item in self.cfgs:
+            item._create_deploy_objects()
 
     def deploy_objects(self):
-        '''Public facing API for deploying all available objects.'''
-        Deploy.deploy(self.deploy)
+        '''Public facing API for deploying all available objects.
 
-    def _gen_results(self, fmt="md"):
+        Runs each job and returns a map from item to status.
         '''
-        The function is called after the regression has completed. It collates the
-        status of all run targets and generates a dict. It parses the testplan and
-        maps the generated result to the testplan entries to generate a final table
-        (list). It also prints the full list of failures for debug / triage. The
-        final result is in markdown format.
+        deploy = []
+        for item in self.cfgs:
+            deploy.extend(item.deploy)
+        return Scheduler(deploy).run()
+
+    def _gen_results(self, results):
+        '''
+        The function is called after the regression has completed. It collates
+        the status of all run targets and generates a dict. It parses the
+        testplan and maps the generated result to the testplan entries to
+        generate a final table (list). It also prints the full list of failures
+        for debug / triage. The final result is in markdown format.
+
+        results should be a dictionary mapping deployed item to result.
         '''
         return
 
-    def gen_results(self):
+    def gen_results(self, results):
         '''Public facing API for _gen_results().
+
+        results should be a dictionary mapping deployed item to result.
+
         '''
         for item in self.cfgs:
-            result = item._gen_results()
+            result = item._gen_results(results)
             log.info("[results]: [%s]:\n%s\n", item.name, result)
             log.info("[scratch_path]: [%s] [%s]", item.name, item.scratch_path)
             self.errors_seen |= item.errors_seen
@@ -425,7 +410,8 @@ class FlowCfg():
             gen_results = self.email_summary_md or self.results_summary_md
         else:
             gen_results = self.email_results_md or self.results_md
-        results_html = md_results_to_html(self.results_title, self.css_file, gen_results)
+        results_html = md_results_to_html(self.results_title, self.css_file,
+                                          gen_results)
         results_html_file = self.scratch_root + "/email.html"
         f = open(results_html_file, 'w')
         f.write(results_html)
@@ -434,15 +420,16 @@ class FlowCfg():
 
     def _publish_results(self):
         '''Publish results to the opentitan web server.
+
         Results are uploaded to {results_server_path}/latest/results.
-        If the 'latest' directory exists, then it is renamed to its 'timestamp' directory.
-        If the list of directories in this area is > 14, then the oldest entry is removed.
-        Links to the last 7 regression results are appended at the end if the results page.
+        If the 'latest' directory exists, then it is renamed to its 'timestamp'
+        directory. If the list of directories in this area is > 14, then the
+        oldest entry is removed. Links to the last 7 regression results are
+        appended at the end if the results page.
         '''
         if which('gsutil') is None or which('gcloud') is None:
-            log.error(
-                "Google cloud SDK not installed! Cannot access the results server"
-            )
+            log.error("Google cloud SDK not installed! Cannot access the "
+                      "results server")
             return
 
         # Construct the paths
@@ -552,16 +539,17 @@ class FlowCfg():
 
         # Publish the results page.
         # First, write the results html file temporarily to the scratch area.
-        results_html_file = self.scratch_path + "/results_" + self.timestamp + ".html"
+        results_html_file = self.scratch_path + "/results_" + self.timestamp + \
+            ".html"
         f = open(results_html_file, 'w')
         f.write(
-            md_results_to_html(self.results_title, self.css_file, publish_results_md))
+            md_results_to_html(self.results_title, self.css_file,
+                               publish_results_md))
         f.close()
-        rm_cmd += "/bin/rm -rf " + results_html_file + "; "
 
         log.info("Publishing results to %s", results_page_url)
         cmd = (self.results_server_cmd + " cp " + results_html_file + " " +
-               self.results_server_page + "; " + rm_cmd)
+               self.results_server_page)
         log.log(VERBOSE, cmd)
         try:
             cmd_output = subprocess.run(args=cmd,
@@ -571,9 +559,11 @@ class FlowCfg():
             log.log(VERBOSE, cmd_output.stdout.decode("utf-8"))
         except Exception as e:
             log.error("%s: Failed to publish results:\n\"%s\"", e, str(cmd))
+        rm_path(results_html_file)
 
     def publish_results(self):
-        '''Public facing API for publishing results to the opentitan web server.
+        '''Public facing API for publishing results to the opentitan web
+        server.
         '''
         for item in self.cfgs:
             item._publish_results()
@@ -582,7 +572,8 @@ class FlowCfg():
             self.publish_results_summary()
 
     def publish_results_summary(self):
-        '''Public facing API for publishing md format results to the opentitan web server.
+        '''Public facing API for publishing md format results to the opentitan
+        web server.
         '''
         results_html_file = "summary_" + self.timestamp + ".html"
         results_page_url = self.results_summary_server_page.replace(
@@ -592,13 +583,13 @@ class FlowCfg():
         # First, write the results html file temporarily to the scratch area.
         f = open(results_html_file, 'w')
         f.write(
-            md_results_to_html(self.results_title, self.css_file, self.results_summary_md))
+            md_results_to_html(self.results_title, self.css_file,
+                               self.results_summary_md))
         f.close()
-        rm_cmd = "/bin/rm -rf " + results_html_file + "; "
 
         log.info("Publishing results summary to %s", results_page_url)
         cmd = (self.results_server_cmd + " cp " + results_html_file + " " +
-               self.results_summary_server_page + "; " + rm_cmd)
+               self.results_summary_server_page)
         log.log(VERBOSE, cmd)
         try:
             cmd_output = subprocess.run(args=cmd,
@@ -608,6 +599,7 @@ class FlowCfg():
             log.log(VERBOSE, cmd_output.stdout.decode("utf-8"))
         except Exception as e:
             log.error("%s: Failed to publish results:\n\"%s\"", e, str(cmd))
+        rm_path(results_html_file)
 
     def has_errors(self):
         return self.errors_seen

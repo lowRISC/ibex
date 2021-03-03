@@ -12,14 +12,13 @@ import subprocess
 import sys
 from collections import OrderedDict
 
-from Deploy import (CompileSim, CovAnalyze, CovMerge, CovReport, CovUnr,
-                    Deploy, RunTest)
+from Deploy import CompileSim, CovAnalyze, CovMerge, CovReport, CovUnr, RunTest
 from FlowCfg import FlowCfg
 from Modes import BuildModes, Modes, Regressions, RunModes, Tests
 from tabulate import tabulate
-from utils import VERBOSE
-
-from testplanner import class_defs, testplan_utils
+from testplanner.class_defs import Testplan, TestResult
+from testplanner.testplan_utils import parse_testplan
+from utils import VERBOSE, rm_path
 
 
 def pick_wave_format(fmts):
@@ -40,6 +39,46 @@ def pick_wave_format(fmts):
         return pick_wave_format(fmts[1:])
 
     return fmt
+
+
+class Results:
+    '''An object wrapping up a table of results for some tests
+
+    self.table is a list of TestResult objects, each of which
+    corresponds to one or more runs of the test with a given name.
+
+    self.fail_msgs is a list of error messages, one per failing run.
+
+    '''
+    def __init__(self, items, results):
+        self.table = []
+        self.fail_msgs = []
+
+        self._name_to_row = {}
+        for item in items:
+            self._add_item(item, results)
+
+    def _add_item(self, item, results):
+        '''Recursively add a single item to the table of results'''
+        status = results[item]
+        if status == "F":
+            self.fail_msgs.append(item.fail_msg)
+
+        # Runs get added to the table directly
+        if item.target == "run":
+            self._add_run(item, status)
+
+    def _add_run(self, item, status):
+        '''Add an entry to table for item'''
+        row = self._name_to_row.get(item.name)
+        if row is None:
+            row = TestResult(item.name)
+            self.table.append(row)
+            self._name_to_row[item.name] = row
+
+        if status == 'P':
+            row.passing += 1
+        row.total += 1
 
 
 class SimCfg(FlowCfg):
@@ -85,10 +124,6 @@ class SimCfg(FlowCfg):
         self.verbose = args.verbose
         self.dry_run = args.dry_run
         self.map_full_testplan = args.map_full_testplan
-
-        # Disable cov if --build-only is passed.
-        if self.build_only:
-            self.cov = False
 
         # Set default sim modes for unpacking
         if args.waves is not None:
@@ -139,10 +174,6 @@ class SimCfg(FlowCfg):
         self.cov_merge_deploy = None
         self.cov_report_deploy = None
         self.results_summary = OrderedDict()
-
-        # If is_primary_cfg is set, then each cfg will have its own cov_deploy.
-        # Maintain an array of those in cov_deploys.
-        self.cov_deploys = []
 
         super().__init__(flow_cfg_file, hjson_data, args, mk_config)
 
@@ -244,22 +275,11 @@ class SimCfg(FlowCfg):
 
         return self.waves
 
-    def kill(self):
-        '''kill running processes and jobs gracefully
-        '''
-        super().kill()
-        for item in self.cov_deploys:
-            item.kill()
-
     # Purge the output directories. This operates on self.
     def _purge(self):
-        if self.scratch_path:
-            try:
-                log.info("Purging scratch path %s", self.scratch_path)
-                os.system("/bin/rm -rf " + self.scratch_path)
-            except IOError:
-                log.error('Failed to purge scratch directory %s',
-                          self.scratch_path)
+        assert self.scratch_path
+        log.info("Purging scratch path %s", self.scratch_path)
+        rm_path(self.scratch_path)
 
     def _create_objects(self):
         # Create build and run modes objects
@@ -303,12 +323,12 @@ class SimCfg(FlowCfg):
         # Regressions
         # Parse testplan if provided.
         if self.testplan != "":
-            self.testplan = testplan_utils.parse_testplan(self.testplan)
+            self.testplan = parse_testplan(self.testplan)
             # Extract tests in each milestone and add them as regression target.
             self.regressions.extend(self.testplan.get_milestone_regressions())
         else:
             # Create a dummy testplan with no entries.
-            self.testplan = class_defs.Testplan(name=self.name)
+            self.testplan = Testplan(name=self.name)
 
         # Create regressions
         self.regressions = Regressions.create_regressions(
@@ -415,21 +435,9 @@ class SimCfg(FlowCfg):
     def _create_dirs(self):
         '''Create initial set of directories
         '''
-        # Invoking system calls has a performance penalty.
-        # Construct a single command line chained with '&&' to invoke
-        # the system call only once, rather than multiple times.
-        create_link_dirs_cmd = ""
         for link in self.links.keys():
-            create_link_dirs_cmd += "/bin/rm -rf " + self.links[link] + " && "
-            create_link_dirs_cmd += "mkdir -p " + self.links[link] + " && "
-        create_link_dirs_cmd += " true"
-
-        try:
-            os.system(create_link_dirs_cmd)
-        except IOError:
-            log.error("Error running when running the cmd \"%s\"",
-                      create_link_dirs_cmd)
-            sys.exit(1)
+            rm_path(self.links[link])
+            os.makedirs(self.links[link])
 
     def _expand_run_list(self, build_map):
         '''Generate a list of tests to be run
@@ -441,27 +449,27 @@ class SimCfg(FlowCfg):
         tests A, B with reseed values of 5 and 2, respectively, then the list
         will be ABABAAA).
 
-        build_map is a dictionary from build name to a CompileSim object. Each
-        test is added to the CompileSim item that it depends on (signifying
-        that the test should be built once the build on which it depends is
-        done).
+        build_map is either None or a dictionary from build name to a
+        CompileSim object. If None, this means that we're in "run only" mode,
+        so there are no builds involved at all. Otherwise, the build_mode of
+        each appears in the map to signify the test's dependency on its
+        corresponding CompileSim item (test cannot run until it has been
+        compiled).
+
         '''
         tagged = []
         for test in self.run_list:
+            build_job = (build_map[test.build_mode]
+                         if build_map is not None else None)
             for idx in range(test.reseed):
-                tagged.append((idx, test, RunTest(idx, test, self)))
+                tagged.append((idx, RunTest(idx, test, build_job, self)))
 
         # Stably sort the tagged list by the 1st coordinate
         tagged.sort(key=lambda x: x[0])
 
-        # Now iterate over it again, adding tests to build_map (in the
-        # interleaved order) and collecting up the RunTest objects.
-        runs = []
-        for _, test, run in tagged:
-            build_map[test.build_mode].sub.append(run)
-            runs.append(run)
-
-        return runs
+        # Return the sorted list of RunTest objects, discarding the indices by
+        # which we sorted it.
+        return [run for _, run in tagged]
 
     def _create_deploy_objects(self):
         '''Create deploy objects from the build and run lists.
@@ -476,11 +484,12 @@ class SimCfg(FlowCfg):
             new_build = CompileSim(build_mode_obj, self)
 
             # It is possible for tests to supply different build modes, but
-            # those builds may differ only under specific circumstances, such
-            # as coverage being enabled. If coverage is not enabled, then they
-            # may be completely identical. In that case, we can save compute
-            # resources by removing the extra duplicated builds. We discard the
-            # new_build if it is equivalent to an existing one.
+            # those builds may differ only under specific circumstances,
+            # such as coverage being enabled. If coverage is not enabled,
+            # then they may be completely identical. In that case, we can
+            # save compute resources by removing the extra duplicated
+            # builds. We discard the new_build if it is equivalent to an
+            # existing one.
             is_unique = True
             for build in self.builds:
                 if build.is_equivalent_job(new_build):
@@ -498,42 +507,24 @@ class SimCfg(FlowCfg):
                 test.build_mode = Modes.find_mode(
                     build_map[test.build_mode].name, self.build_modes)
 
+        if self.run_only:
+            self.builds = []
+            build_map = None
+
         self.runs = ([]
                      if self.build_only else self._expand_run_list(build_map))
 
-        self.deploy = self.runs if self.run_only else self.builds
+        self.deploy = self.builds + self.runs
 
-        # Create cov_merge and cov_report objects
-        if self.cov:
-            self.cov_merge_deploy = CovMerge(self)
-            self.cov_report_deploy = CovReport(self)
-            self.cov_merge_deploy.sub.append(self.cov_report_deploy)
+        # Create cov_merge and cov_report objects, so long as we've got at
+        # least one run to do.
+        if self.cov and self.runs:
+            self.cov_merge_deploy = CovMerge(self.runs, self)
+            self.cov_report_deploy = CovReport(self.cov_merge_deploy, self)
+            self.deploy += [self.cov_merge_deploy, self.cov_report_deploy]
 
         # Create initial set of directories before kicking off the regression.
         self._create_dirs()
-
-    def create_deploy_objects(self):
-        '''Public facing API for _create_deploy_objects().
-        '''
-        super().create_deploy_objects()
-
-        # Also, create cov_deploys
-        if self.cov:
-            for item in self.cfgs:
-                if item.cov:
-                    self.cov_deploys.append(item.cov_merge_deploy)
-
-    # deploy additional commands as needed. We do this separated for coverage
-    # since that needs to happen at the end.
-    def deploy_objects(self):
-        '''This is a public facing API, so we use "self.cfgs" instead of self.
-        '''
-        # Invoke the base class method to run the regression.
-        super().deploy_objects()
-
-        # If coverage is enabled, then deploy the coverage tasks.
-        if self.cov:
-            Deploy.deploy(self.cov_deploys)
 
     def _cov_analyze(self):
         '''Use the last regression coverage data to open up the GUI tool to
@@ -571,7 +562,7 @@ class SimCfg(FlowCfg):
         for item in self.cfgs:
             item._cov_unr()
 
-    def _gen_results(self):
+    def _gen_results(self, run_results):
         '''
         The function is called after the regression has completed. It collates the
         status of all run targets and generates a dict. It parses the testplan and
@@ -581,50 +572,11 @@ class SimCfg(FlowCfg):
         result is in markdown format.
         '''
 
-        # TODO: add support for html
-        def retrieve_result(name, results):
-            for item in results:
-                if name == item["name"]:
-                    return item
-            return None
-
-        def gen_results_sub(items, results, fail_msgs):
-            '''
-            Generate the results table from the test runs (builds are ignored).
-            The table has 3 columns - name, passing and total as a list of dicts.
-            This is populated for all tests. The number of passing and total is
-            in reference to the number of iterations or reseeds for that test.
-            This list of dicts is directly consumed by the Testplan::results_table
-            method for testplan mapping / annotation.
-            '''
-            for item in items:
-                if item.status == "F":
-                    fail_msgs += item.fail_msg
-
-                # Generate results table for runs.
-                if item.target == "run":
-                    result = retrieve_result(item.name, results)
-                    if result is None:
-                        result = {"name": item.name, "passing": 0, "total": 0}
-                        results.append(result)
-                    if item.status == "P":
-                        result["passing"] += 1
-                    result["total"] += 1
-                (results, fail_msgs) = gen_results_sub(item.sub, results,
-                                                       fail_msgs)
-            return (results, fail_msgs)
-
-        regr_results = []
-        fail_msgs = ""
         deployed_items = self.deploy
-        if self.cov:
-            deployed_items.append(self.cov_merge_deploy)
-        (regr_results, fail_msgs) = gen_results_sub(deployed_items,
-                                                    regr_results, fail_msgs)
+        results = Results(deployed_items, run_results)
 
-        # Add title if there are indeed failures
-        if fail_msgs != "":
-            fail_msgs = "\n## List of Failures\n" + fail_msgs
+        # Set a flag if anything failed
+        if results.fail_msgs:
             self.errors_seen = True
 
         # Generate results table for runs.
@@ -648,20 +600,21 @@ class SimCfg(FlowCfg):
 
         results_str += "### Simulator: " + self.tool.upper() + "\n\n"
 
-        if regr_results == []:
+        if not results.table:
             results_str += "No results to display.\n"
 
         else:
             # Map regr results to the testplan entries.
             results_str += self.testplan.results_table(
-                regr_results=regr_results,
+                test_results=results.table,
                 map_full_testplan=self.map_full_testplan)
             results_str += "\n"
             self.results_summary = self.testplan.results_summary
 
             # Append coverage results of coverage was enabled.
-            if self.cov:
-                if self.cov_report_deploy.status == "P":
+            if self.cov_report_deploy is not None:
+                report_status = run_results[self.cov_report_deploy]
+                if report_status == "P":
                     results_str += "\n## Coverage Results\n"
                     # Link the dashboard page using "cov_report_page" value.
                     if hasattr(self, "cov_report_page"):
@@ -683,41 +636,48 @@ class SimCfg(FlowCfg):
                 self.results_summary["Name"])
 
         # Append failures for triage
-        self.results_md = results_str + fail_msgs
-        results_str += fail_msgs
+        if results.fail_msgs:
+            fail_msgs = "\n## List of Failures\n" + ''.join(results.fail_msgs)
+            results_str += fail_msgs
+
+        self.results_md = results_str
 
         # Write results to the scratch area
-        results_file = self.scratch_path + "/results_" + self.timestamp + ".md"
-        with open(results_file, 'w') as f:
-            f.write(self.results_md)
+        results_path = self.scratch_path + "/results_" + self.timestamp + ".md"
+        with open(results_path, 'w') as results_file:
+            results_file.write(self.results_md)
 
-        log.log(VERBOSE, "[results page]: [%s] [%s]", self.name, results_file)
+        # Return only the tables
+        log.log(VERBOSE, "[results page]: [%s] [%s]", self.name, results_path)
         return results_str
 
     def gen_results_summary(self):
 
         # sim summary result has 5 columns from each SimCfg.results_summary
         header = ["Name", "Passing", "Total", "Pass Rate"]
-        if self.cov:
+        if self.cov_report_deploy is not None:
             header.append('Coverage')
-        table = [header]
+        table = []
         colalign = ("center", ) * len(header)
         for item in self.cfgs:
             row = []
             for title in item.results_summary:
                 row.append(item.results_summary[title])
-            if row == []:
-                continue
-            table.append(row)
+            if row:
+                table.append(row)
         self.results_summary_md = "## " + self.results_title + " (Summary)\n"
         self.results_summary_md += "### " + self.timestamp_long + "\n"
         if self.revision:
             self.results_summary_md += "### " + self.revision + "\n"
         self.results_summary_md += "### Branch: " + self.branch + "\n"
-        self.results_summary_md += tabulate(table,
-                                            headers="firstrow",
-                                            tablefmt="pipe",
-                                            colalign=colalign)
+        if table:
+            self.results_summary_md += tabulate(table,
+                                                headers=header,
+                                                tablefmt="pipe",
+                                                colalign=colalign)
+        else:
+            self.results_summary_md += "\nNo results to display.\n"
+
         print(self.results_summary_md)
         return self.results_summary_md
 
@@ -725,7 +685,7 @@ class SimCfg(FlowCfg):
         '''Publish coverage results to the opentitan web server.'''
         super()._publish_results()
 
-        if self.cov:
+        if self.cov_report_deploy is not None:
             results_server_dir_url = self.results_server_dir.replace(
                 self.results_server_prefix, self.results_server_url_prefix)
 
