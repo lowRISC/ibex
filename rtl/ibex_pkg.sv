@@ -358,6 +358,7 @@ typedef enum logic[11:0] {
   CSR_MISA      = 12'h301,
   CSR_MIE       = 12'h304,
   CSR_MTVEC     = 12'h305,
+  CSR_MCOUNTEREN= 12'h306,
 
   // Machine trap handling
   CSR_MSCRATCH  = 12'h340,
