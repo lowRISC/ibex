@@ -319,6 +319,12 @@ module ibex_cs_registers #(
         csr_rdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = mie_q.irq_fast;
       end
 
+      // mcounteren: machine counter enable
+      CSR_MCOUNTEREN: begin
+        csr_rdata_int = '0;
+        illegal_csr   = ~DbgTriggerEn;
+      end
+
       CSR_MSCRATCH: csr_rdata_int = mscratch_q;
 
       // mtvec: trap-vector base address
