@@ -353,6 +353,7 @@ $(OUT-DIR)rtl_sim/.compile.stamp: \
 	$(verb)./sim.py \
 	 --o=$(OUT-DIR) \
 	 --steps=compile \
+	 --ibex_config=$(IBEX_CONFIG) \
 	 ${COMMON_OPTS} \
 	 --simulator="${SIMULATOR}" --simulator_yaml=yaml/rtl_simulation.yaml \
 	 $(cov-arg) $(wave-arg) $(lsf-arg) \
@@ -389,6 +390,7 @@ $(metadata)/rtl_sim.run.stamp: \
 	$(verb)./sim.py \
 	 --o=$(OUT-SEED) \
 	 --steps=sim \
+	 --ibex_config=$(IBEX_CONFIG) \
 	 ${TEST_OPTS} \
 	 --simulator="${SIMULATOR}" --simulator_yaml=yaml/rtl_simulation.yaml \
 	 $(cov-arg) $(wave-arg) $(lsf-arg) \
@@ -407,6 +409,7 @@ $(OUT-SEED)/regr.log: \
 	$(verb)./sim.py \
      --o=$(OUT-SEED) \
      --steps=compare \
+     --ibex_config=$(IBEX_CONFIG) \
      ${TEST_OPTS} \
      --simulator="${SIMULATOR}" \
      --iss="${ISS}"

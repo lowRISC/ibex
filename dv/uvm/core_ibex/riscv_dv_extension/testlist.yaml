@@ -642,6 +642,8 @@
     +pmp_max_offset=00024000
     +enable_write_pmp_csr=1
   rtl_test: core_ibex_base_test
+  rtl_params:
+    PMPEnable: 1
 
 - test: riscv_pmp_disable_all_regions_test
   desc: >
@@ -671,6 +673,8 @@
     +pmp_region_15=X:0,W:0,R:0
     +enable_write_pmp_csr=1
   rtl_test: core_ibex_base_test
+  rtl_params:
+    PMPEnable: 1
 
 - test: riscv_pmp_out_of_bounds_test
   desc: >
@@ -685,6 +689,8 @@
     +enable_write_pmp_csr=1
     +directed_instr_0=riscv_load_store_rand_addr_instr_stream,50
   rtl_test: core_ibex_base_test
+  rtl_params:
+    PMPEnable: 1
 
 - test: riscv_pmp_full_random_test
   desc: >
@@ -701,6 +707,8 @@
     +pmp_allow_addr_overlap=1
     +enable_write_pmp_csr=1
   rtl_test: core_ibex_base_test
+  rtl_params:
+    PMPEnable: 1
 
 - test: riscv_bitmanip_full_test
   desc: >
@@ -711,6 +719,8 @@
     +enable_b_extension=1
     +enable_bitmanip_groups=zbb,zb_tmp,zbt,zbs,zbp,zbf,zbe,zbc,zbr
   rtl_test: core_ibex_base_test
+  rtl_params:
+    RV32B: "ibex_pkg::RV32BFull"
 
 - test: riscv_bitmanip_balanced_test
   desc: >
@@ -721,3 +731,5 @@
     +enable_b_extension=1
     +enable_bitmanip_groups=zbb,zb_tmp,zbt,zbs,zbf
   rtl_test: core_ibex_base_test
+  rtl_params:
+    RV32B: ["ibex_pkg::RV32BFull", "ibex_pkg::RV32BBalanced"]
