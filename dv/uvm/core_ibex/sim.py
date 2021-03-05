@@ -31,6 +31,7 @@ _OLD_SYS_PATH = sys.path
 # as it started.
 try:
     sys.path = ([os.path.join(_CORE_IBEX, 'riscv_dv_extension'),
+                 os.path.join(_IBEX_ROOT, 'util'),
                  os.path.join(_RISCV_DV_ROOT, 'scripts')] +
                 sys.path)
 
@@ -44,6 +45,8 @@ try:
     from instr_trace_compare import compare_trace_csv
 
     from ibex_log_to_trace_csv import process_ibex_sim_log, check_ibex_uvm_log
+
+    from ibex_config import parse_config
 
 finally:
     sys.path = _OLD_SYS_PATH
@@ -188,6 +191,75 @@ def get_simulator_cmd(simulator, yaml_path, enables):
     return ([subst_cmd(arg, enables, entry['compile'], env_vars)
              for arg in entry['compile']['cmd']],
             subst_cmd(entry['sim']['cmd'], enables, entry['sim'], env_vars))
+
+
+def filter_tests_by_config(cfg, test_list):
+    '''Filter out any unsupported tests from being executed.
+
+    This function will parse the set of RTL parameters required by a given
+    test (if any) and ensure that those parameters are supported by the
+    selected core config.
+
+    Doing this allows the run flow to be smarter about running regressions
+    with different configs (useful for CI flows).
+
+    Arguments:
+
+        cfg: string name of the ibex config being tested, should match a
+             config name from ibex_configs.yaml.
+
+        test_list: list of test entry objects parsed from the YAML testlist
+
+    Returns:
+
+        filtered_test_list: a list of test entry objects, filtered such that
+                            all tests incompatible with the specified ibex
+                            config have been removed.
+
+                            e.g. if the "small" config has been specified, this
+                            function will filter out all tests that require
+                            B-extension and PMP parameters
+    '''
+    filtered_test_list = []
+    config = parse_config(cfg, os.path.join(_IBEX_ROOT, "ibex_configs.yaml"))
+
+    for test in test_list:
+        if "rtl_params" in test:
+            param_dict = test['rtl_params']
+            matching_params = False
+            for p, p_val in param_dict.items():
+                config_val = config.get(p, None)
+                # Throw an error if required RTL parameters in the testlist
+                # have been formatted incorrectly (typos, wrong parameters, etc)
+                if config_val is None:
+                    logging.error('parameter % not found in config %' % (p, cfg))
+                    sys.exit(RET_FAIL)
+                else:
+                    # Ibex has some enum parameters, so as a result some tests
+                    # are able to run with several of these parameter values
+                    # (like bitmanipulation tests).
+                    # If this is the case, the testlist will specify all legal
+                    # enum values, check if any of them match the config.
+                    if isinstance(p_val, list):
+                        matching_params = (config_val in p_val)
+                    else:
+                        matching_params = (p_val == config_val)
+
+                    # If there is any parameter mismatch, we can terminate
+                    # immediately and exclude the test from being executed
+                    if not matching_params:
+                        break
+
+            if matching_params:
+                filtered_test_list.append(test)
+            else:
+                logging.info("""Cannot run test %s with config %s due to
+                                mismatching RTL parameter requirements %s""" %
+                             (test['test'], cfg, param_dict))
+        else:
+            filtered_test_list.append(test)
+
+    return filtered_test_list
 
 
 def rtl_compile(compile_cmds, output_dir, lsf_cmd, opts):
@@ -559,6 +631,10 @@ def main():
     parser.add_argument("--lsf_cmd", type=str,
                         help=("LSF command. Run locally if lsf "
                               "command is not specified"))
+    parser.add_argument("--ibex_config", type=str,
+                        help=("Name of the Ibex config being tested. "
+                              "Should be a valid config name from "
+                              "ibex_configs.yaml"))
 
     sg = (parser.
           add_argument_group('Seeds and iterations',
@@ -629,6 +705,8 @@ def main():
         if not matched_list:
             raise RuntimeError("Cannot find %s in %s" %
                                (args.test, args.testlist))
+
+        matched_list = filter_tests_by_config(args.ibex_config, matched_list);
 
     # Compile TB
     if steps['compile']:
