@@ -65,14 +65,15 @@ module ibex_icache #(
   // Request throttling threshold
   localparam int unsigned FB_THRESHOLD = NUM_FB - 2;
   // Derived parameters
-  localparam int unsigned LINE_SIZE_ECC   = ICacheECC ? (LineSize + 8) : LineSize;
   localparam int unsigned LINE_SIZE_BYTES = LineSize/8;
   localparam int unsigned LINE_W          = $clog2(LINE_SIZE_BYTES);
+  localparam int unsigned BUS_SIZE_ECC    = ICacheECC ? (BusWidth + 7) : BusWidth;
   localparam int unsigned BUS_BYTES       = BusWidth/8;
   localparam int unsigned BUS_W           = $clog2(BUS_BYTES);
   localparam int unsigned LINE_BEATS      = LINE_SIZE_BYTES / BUS_BYTES;
   localparam int unsigned LINE_BEATS_W    = $clog2(LINE_BEATS);
   localparam int unsigned NUM_LINES       = CacheSizeBytes / NumWays / LINE_SIZE_BYTES;
+  localparam int unsigned LINE_SIZE_ECC   = BUS_SIZE_ECC * LINE_BEATS;
   localparam int unsigned INDEX_W         = $clog2(NUM_LINES);
   localparam int unsigned INDEX_HI        = INDEX_W + LINE_W - 1;
   localparam int unsigned TAG_SIZE        = ADDR_W - INDEX_W - LINE_W + 1; // 1 valid bit
@@ -111,7 +112,8 @@ module ibex_icache #(
   // Cache pipelipe IC1 signals
   logic [TAG_SIZE_ECC-1:0]             tag_rdata_ic1  [NumWays];
   logic [LINE_SIZE_ECC-1:0]            data_rdata_ic1 [NumWays];
-  logic [LINE_SIZE_ECC-1:0]            hit_data_ic1;
+  logic [LINE_SIZE_ECC-1:0]            hit_data_ecc_ic1;
+  logic [LineSize-1:0]                 hit_data_ic1;
   logic                                lookup_valid_ic1;
   logic [ADDR_W-1:INDEX_HI+1]          lookup_addr_ic1;
   logic [NumWays-1:0]                  tag_match_ic1;
@@ -316,10 +318,12 @@ module ibex_icache #(
     assign tag_wdata_ic0 = {tag_ecc_output_padded[27:22],tag_ecc_output_padded[TAG_SIZE-1:0]};
 
     // Dataram ECC
-    prim_secded_72_64_enc data_ecc_enc (
-      .in  (fill_wdata_ic0),
-      .out (data_wdata_ic0)
-    );
+    for (genvar bank = 0; bank < LINE_BEATS; bank ++) begin : gen_ecc_banks
+      prim_secded_39_32_enc data_ecc_enc (
+        .in  (fill_wdata_ic0[bank*BusWidth+:BusWidth]),
+        .out (data_wdata_ic0[bank*BUS_SIZE_ECC+:BUS_SIZE_ECC])
+      );
+    end
 
   end else begin : gen_noecc_wdata
     assign tag_wdata_ic0  = fill_tag_ic0;
@@ -393,10 +397,10 @@ module ibex_icache #(
 
   // Hit data mux
   always_comb begin
-    hit_data_ic1 = 'b0;
+    hit_data_ecc_ic1 = 'b0;
     for (int way = 0; way < NumWays; way++) begin
       if (tag_match_ic1[way]) begin
-        hit_data_ic1 |= data_rdata_ic1[way];
+        hit_data_ecc_ic1 |= data_rdata_ic1[way];
       end
     end
   end
@@ -424,11 +428,11 @@ module ibex_icache #(
 
   // ECC checking logic
   if (ICacheECC) begin : gen_data_ecc_checking
-    logic [NumWays-1:0] tag_err_ic1;
-    logic [1:0]         data_err_ic1;
-    logic               ecc_correction_write_d, ecc_correction_write_q;
-    logic [NumWays-1:0] ecc_correction_ways_d, ecc_correction_ways_q;
-    logic [INDEX_W-1:0] lookup_index_ic1, ecc_correction_index_q;
+    logic [NumWays-1:0]      tag_err_ic1;
+    logic [LINE_BEATS*2-1:0] data_err_ic1;
+    logic                    ecc_correction_write_d, ecc_correction_write_q;
+    logic [NumWays-1:0]      ecc_correction_ways_d, ecc_correction_ways_q;
+    logic [INDEX_W-1:0]      lookup_index_ic1, ecc_correction_index_q;
 
     // Tag ECC checking
     for (genvar way = 0; way < NumWays; way++) begin : gen_tag_ecc
@@ -451,12 +455,17 @@ module ibex_icache #(
 
     // Data ECC checking
     // Note - could generate for all ways and mux after
-    prim_secded_72_64_dec data_ecc_dec (
-      .in         (hit_data_ic1),
-      .d_o        (),
-      .syndrome_o (),
-      .err_o      (data_err_ic1)
-    );
+    for (genvar bank = 0; bank < LINE_BEATS; bank++) begin : gen_ecc_banks
+      prim_secded_39_32_dec data_ecc_dec (
+        .in         (hit_data_ecc_ic1[bank*BUS_SIZE_ECC+:BUS_SIZE_ECC]),
+        .d_o        (),
+        .syndrome_o (),
+        .err_o      (data_err_ic1[bank*2+:2])
+      );
+
+      assign hit_data_ic1[bank*BusWidth+:BusWidth] = hit_data_ecc_ic1[bank*BUS_SIZE_ECC+:BusWidth];
+
+    end
 
     assign ecc_err_ic1 = lookup_valid_ic1 & ((|data_err_ic1) | (|tag_err_ic1));
 
@@ -500,6 +509,7 @@ module ibex_icache #(
     assign ecc_write_req   = 1'b0;
     assign ecc_write_ways  = '0;
     assign ecc_write_index = '0;
+    assign hit_data_ic1    = hit_data_ecc_ic1;
   end
 
   ///////////////////////////////
@@ -785,7 +795,7 @@ module ibex_icache #(
 
     // Data either comes from the cache or the bus. If there was an ECC error, we must take
     // the incoming bus data since the cache hit data is corrupted.
-    assign fill_data_d[fb] = fill_hit_ic1[fb] ? hit_data_ic1[LineSize-1:0] :
+    assign fill_data_d[fb] = fill_hit_ic1[fb] ? hit_data_ic1 :
                                                 {LINE_BEATS{instr_rdata_i}};
 
     for (genvar b = 0; b < LINE_BEATS; b++) begin : gen_data_buf
@@ -884,7 +894,7 @@ module ibex_icache #(
   ////////////////////////
 
   // Mux between line-width data sources
-  assign line_data = |fill_data_hit ? hit_data_ic1[LineSize-1:0] : fill_out_data;
+  assign line_data = |fill_data_hit ? hit_data_ic1 : fill_out_data;
   assign line_err  = |fill_data_hit ? {LINE_BEATS{1'b0}} : fill_out_err;
 
   // Mux the relevant beat of line data, based on the output address
@@ -1062,7 +1072,7 @@ module ibex_icache #(
 
   // ECC primitives will need to be changed for different sizes
   `ASSERT_INIT(ecc_tag_param_legal, (TAG_SIZE <= 27))
-  `ASSERT_INIT(ecc_data_param_legal, (LineSize <= 121))
+  `ASSERT_INIT(ecc_data_param_legal, !ICacheECC || (BusWidth == 32))
 
   // Lookups in the tag ram should always give a known result
   `ASSERT_KNOWN(TagHitKnown,     lookup_valid_ic1 & tag_hit_ic1)
