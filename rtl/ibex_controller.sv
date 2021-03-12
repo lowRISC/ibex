@@ -316,9 +316,10 @@ module ibex_controller #(
   // memory) before it has had anything to single step.
   // Also enter debug mode on a trigger match (hardware breakpoint)
 
-  // Set `do_single_step_q` when a valid instruction is seen outside of debug mode. The first valid
-  // instruction on debug mode entry will clear it. Hold its value when there is no valid
-  // instruction so `do_single_step_d` remains asserted until debug mode is entered.
+  // Set `do_single_step_q` when a valid instruction is seen outside of debug mode and core is in
+  // single step mode. The first valid instruction on debug mode entry will clear it. Hold its value
+  // when there is no valid instruction so `do_single_step_d` remains asserted until debug mode is
+  // entered.
   assign do_single_step_d = instr_valid_i ? ~debug_mode_q & debug_single_step_i : do_single_step_q;
   // Enter debug mode due to:
   // * external `debug_req_i`
