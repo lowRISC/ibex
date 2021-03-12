@@ -8,7 +8,6 @@ class dv_base_reg extends uvm_reg;
   // hence, backdoor write isn't available
   local bit is_ext_reg;
 
-  local dv_base_reg    locked_regs[$];
   local uvm_reg_data_t staged_shadow_val, committed_val, shadowed_val;
   local bit            is_shadowed;
   local bit            shadow_wr_staged; // stage the first shadow reg write
@@ -36,59 +35,101 @@ class dv_base_reg extends uvm_reg;
   endfunction : new
 
   function void get_dv_base_reg_fields(ref dv_base_reg_field dv_fields[$]);
-    uvm_reg_field ral_fields[$];
-    get_fields(ral_fields);
-    foreach (ral_fields[i]) `downcast(dv_fields[i], ral_fields[i])
+    foreach (m_fields[i]) `downcast(dv_fields[i], m_fields[i])
   endfunction
 
   // get_n_bits will return number of all the bits in the csr
   // while this function will return actual number of bits used in reg field
   function uint get_n_used_bits();
-    uvm_reg_field fields[$];
-    get_fields(fields);
-    foreach (fields[i]) get_n_used_bits += fields[i].get_n_bits();
+    foreach (m_fields[i]) get_n_used_bits += m_fields[i].get_n_bits();
   endfunction
 
   // loop all the fields to find the msb position of this reg
   function uint get_msb_pos();
-    uvm_reg_field fields[$];
-    get_fields(fields);
-    foreach (fields[i]) begin
-      uint field_msb_pos = fields[i].get_lsb_pos() + fields[i].get_n_bits() - 1;
+    foreach (m_fields[i]) begin
+      uint field_msb_pos = m_fields[i].get_lsb_pos() + m_fields[i].get_n_bits() - 1;
       if (field_msb_pos > get_msb_pos) get_msb_pos = field_msb_pos;
     end
   endfunction
 
-  // if the register is an enable reg, it will add controlled registers in the queue
-  function void add_locked_reg(dv_base_reg locked_reg);
-    locked_regs.push_back(locked_reg);
+  virtual function dv_base_reg_field get_dv_base_reg_field_by_name(string fld_name,
+                                                                   bit check_fld_exist = 1'b1);
+    uvm_reg_field fld = get_field_by_name(fld_name);
+    dv_base_reg_field dv_fld;
+
+    `downcast(dv_fld, fld)
+    if (check_fld_exist) begin
+      `DV_CHECK_NE_FATAL(dv_fld, null,
+                         $sformatf("%0s does not exist in reg %0s", fld_name, get_full_name()))
+    end
+    return dv_fld;
   endfunction
 
-  function bit is_inside_locked_regs(dv_base_reg csr);
-    if (csr inside {locked_regs}) return 1;
-    else                          return 0;
+  // this function can only be called when this reg is intr_state reg
+  // Example: ral.intr_state.get_intr_pins_exp_value(). And it returns value of
+  // intr_state & intr_enable, which represents value of interrupt pins
+  virtual function uvm_reg_data_t get_intr_pins_exp_value();
+    uvm_reg_block blk = get_parent();
+    uvm_reg       intr_enable_csr;
+    string        intr_enable_csr_name;
+    bit           is_intr_state_csr = !(uvm_re_match("intr_state*", get_name()));
+
+    `DV_CHECK_EQ_FATAL(is_intr_state_csr, 1)
+
+    // intr_enable and intr_state have the same suffix
+    intr_enable_csr_name = str_utils_pkg::str_replace(get_name(), "state", "enable");
+
+    intr_enable_csr = blk.get_reg_by_name(intr_enable_csr_name);
+
+    // some interrupts may not have intr_enable
+    if (intr_enable_csr != null) begin
+      return get_mirrored_value() & intr_enable_csr.get_mirrored_value();
+    end else begin
+      return get_mirrored_value();
+    end
   endfunction
 
-  function bit is_enable_reg();
-    return (locked_regs.size() > 0);
+  // Wen reg/fld can lock specific groups of fields' write acces. The lockable fields are called
+  // lockable flds.
+  function void add_lockable_reg_or_fld(uvm_object lockable_obj);
+    dv_base_reg_field wen_fld;
+    `DV_CHECK_FATAL(m_fields.size(), 1, "This register has more than one field.\
+                    Please use register field's add_lockable_reg_or_fld() method instead.")
+    `downcast(wen_fld, m_fields[0])
+    wen_fld.add_lockable_reg_or_fld(lockable_obj);
+  endfunction
+
+  // Returns true if this register/field can lock the specified register/field, else return false.
+  function bit locks_reg_or_fld(uvm_object obj);
+    dv_base_reg_field wen_fld;
+    `DV_CHECK_FATAL(m_fields.size(), 1, "This register has more than one field.\
+                    Please use register field's locks_reg_or_fld() method instead.")
+    `downcast(wen_fld, m_fields[0])
+    return wen_fld.locks_reg_or_fld(obj);
+  endfunction
+
+  // Even though user can add lockable register or field via `add_lockable_reg_or_fld` method, the
+  // get_lockable_flds function will always return a queue of lockable fields.
+  function void get_lockable_flds(ref dv_base_reg_field lockable_flds_q[$]);
+    dv_base_reg_field wen_fld;
+    `DV_CHECK_FATAL(m_fields.size(), 1, "This register has more than one field.\
+                    Please use register field's get_lockable_flds() method instead.")
+    `downcast(wen_fld, m_fields[0])
+    wen_fld.get_lockable_flds(lockable_flds_q);
+  endfunction
+
+  // The register is a write enable register (wen_reg) if its fields are wen_flds.
+  function bit is_wen_reg();
+    foreach (m_fields[i]) begin
+      dv_base_reg_field fld;
+      `downcast(fld, m_fields[i])
+      if (fld.is_wen_fld()) return 1;
+    end
+    return 0;
   endfunction
 
   function bit is_staged();
      return shadow_wr_staged;
-  endfunction
-
-  // if enable register is set to 1, the locked registers will be set to RO access
-  // once enable register is reset to 0, the locked registers will be set back to original access
-  function void set_locked_regs_access(string access = "original_access");
-    foreach (locked_regs[i]) begin
-      dv_base_reg_field locked_fields[$];
-      locked_regs[i].get_dv_base_reg_fields(locked_fields);
-      foreach (locked_fields[i]) locked_fields[i].set_locked_fields_access(access);
-    end
-  endfunction
-
-  function void get_locked_regs(ref dv_base_reg locked_regs_q[$]);
-    locked_regs_q = locked_regs;
   endfunction
 
   // is_shadowed bit is only one-time programmable
@@ -134,8 +175,8 @@ class dv_base_reg extends uvm_reg;
   endfunction
 
   // post_write callback to handle special regs:
-  // - shadow register, enable reg won't be updated until the second write has no error
-  // - enable register, if enable_reg is disabled, change access policy to all the locked_regs
+  // - shadow register: shadow reg won't be updated until the second write has no error
+  // - lock register: if wen_fld is set to 0, change access policy to all the lockable_flds
   // TODO: create an `enable_field_access_policy` variable and set the template code during
   // automation.
   virtual task post_write(uvm_reg_item rw);
@@ -162,17 +203,23 @@ class dv_base_reg extends uvm_reg;
         shadowed_val  = ~committed_val;
       end
     end
-    if (is_enable_reg()) begin
-      get_dv_base_reg_fields(fields);
-      field_access = fields[0].get_access();
-      case (field_access)
-        // rw.value is a dynamic array
-        // discussed in issue #1922: enable register is standarized to W0C or RO (if HW has write
-        // access).
-        "W0C": if (rw.value[0][0] == 1'b0) set_locked_regs_access("RO");
-        "RO": ; // if RO, it's updated by design, need to predict in scb
-        default:`uvm_fatal(`gfn, $sformatf("enable register invalid access %s", field_access))
-      endcase
+    if (is_wen_reg()) begin
+      foreach (m_fields[i]) begin
+        dv_base_reg_field fld;
+        `downcast(fld, m_fields[i])
+        if (fld.is_wen_fld()) begin
+          // rw.value is a dynamic array
+          uvm_reg_data_t field_val = rw.value[0] & fld.get_field_mask();
+          field_access = fld.get_access();
+          case (field_access)
+            // discussed in issue #1922: enable register is standarized to W0C or RO (if HW has
+            // write access).
+            "W0C": if (field_val == 1'b0) fld.set_lockable_flds_access(1);
+            "RO": ; // if RO, it's updated by design, need to predict in scb
+            default:`uvm_fatal(`gfn, $sformatf("lock register invalid access %s", field_access))
+          endcase
+        end
+      end
     end
   endtask
 

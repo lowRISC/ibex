@@ -78,6 +78,7 @@ module core_ibex_tb_top;
     .rst_ni         (rst_n                ),
 
     .test_en_i      (1'b0                 ),
+    .ram_cfg_i      (1'b0                 ),
 
     .hart_id_i      (32'b0                ),
     .boot_addr_i    (32'h`BOOT_ADDR       ), // align with spike boot address

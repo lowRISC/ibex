@@ -28,6 +28,7 @@ ${PRJ_DIR}/vendor/lowrisc_ip/ip/prim/rtl/prim_secded_72_64_dec.sv
 // wrappers around the prim_* modules to instantiate the prim_generic_* ones,
 // see https://github.com/lowRISC/ibex/issues/893.
 ${PRJ_DIR}/dv/uvm/core_ibex/common/prim/prim_pkg.sv
+${PRJ_DIR}/vendor/lowrisc_ip/ip/prim/rtl/prim_ram_1p_pkg.sv
 ${PRJ_DIR}/vendor/lowrisc_ip/ip/prim_generic/rtl/prim_generic_ram_1p.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/common/prim/prim_ram_1p.sv
 ${PRJ_DIR}/vendor/lowrisc_ip/ip/prim_generic/rtl/prim_generic_clock_gating.sv

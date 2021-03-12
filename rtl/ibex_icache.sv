@@ -22,40 +22,41 @@ module ibex_icache #(
   parameter bit          BranchCache     = 1'b0
 ) (
     // Clock and reset
-    input  logic                clk_i,
-    input  logic                rst_ni,
+    input  logic                         clk_i,
+    input  logic                         rst_ni,
 
     // Signal that the core would like instructions
-    input  logic                req_i,
+    input  logic                         req_i,
 
     // Set the cache's address counter
-    input  logic                branch_i,
-    input  logic                branch_spec_i,
-    input  logic                predicted_branch_i,
-    input  logic                branch_mispredict_i,
-    input  logic [31:0]         addr_i,
+    input  logic                         branch_i,
+    input  logic                         branch_spec_i,
+    input  logic                         predicted_branch_i,
+    input  logic                         branch_mispredict_i,
+    input  logic [31:0]                  addr_i,
 
     // IF stage interface: Pass fetched instructions to the core
-    input  logic                ready_i,
-    output logic                valid_o,
-    output logic [31:0]         rdata_o,
-    output logic [31:0]         addr_o,
-    output logic                err_o,
-    output logic                err_plus2_o,
+    input  logic                         ready_i,
+    output logic                         valid_o,
+    output logic [31:0]                  rdata_o,
+    output logic [31:0]                  addr_o,
+    output logic                         err_o,
+    output logic                         err_plus2_o,
 
     // Instruction memory / interconnect interface: Fetch instruction data from memory
-    output logic                instr_req_o,
-    input  logic                instr_gnt_i,
-    output logic [31:0]         instr_addr_o,
-    input  logic [BusWidth-1:0] instr_rdata_i,
-    input  logic                instr_err_i,
-    input  logic                instr_pmp_err_i,
-    input  logic                instr_rvalid_i,
+    output logic                         instr_req_o,
+    input  logic                         instr_gnt_i,
+    output logic [31:0]                  instr_addr_o,
+    input  logic [BusWidth-1:0]          instr_rdata_i,
+    input  logic                         instr_err_i,
+    input  logic                         instr_pmp_err_i,
+    input  logic                         instr_rvalid_i,
 
     // Cache status
-    input  logic                icache_enable_i,
-    input  logic                icache_inval_i,
-    output logic                busy_o
+    input  prim_ram_1p_pkg::ram_1p_cfg_t ram_cfg_i,
+    input  logic                         icache_enable_i,
+    input  logic                         icache_inval_i,
+    output logic                         busy_o
 );
   // Local constants
   localparam int unsigned ADDR_W       = 32;
@@ -338,6 +339,7 @@ module ibex_icache #(
     ) tag_bank (
       .clk_i    (clk_i),
       .req_i    (tag_req_ic0 & tag_banks_ic0[way]),
+      .cfg_i    (ram_cfg_i),
       .write_i  (tag_write_ic0),
       .wmask_i  ({TAG_SIZE_ECC{1'b1}}),
       .addr_i   (tag_index_ic0),
@@ -352,6 +354,7 @@ module ibex_icache #(
     ) data_bank (
       .clk_i    (clk_i),
       .req_i    (data_req_ic0 & data_banks_ic0[way]),
+      .cfg_i    (ram_cfg_i),
       .write_i  (data_write_ic0),
       .wmask_i  ({LINE_SIZE_ECC{1'b1}}),
       .addr_i   (data_index_ic0),
