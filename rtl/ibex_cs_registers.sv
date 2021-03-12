@@ -564,6 +564,9 @@ module ibex_cs_registers #(
           // Read-only for SW
           dcsr_d.cause = dcsr_q.cause;
 
+          // Interrupts always disabled during single stepping
+          dcsr_d.stepie = 1'b0;
+
           // currently not supported:
           dcsr_d.nmip = 1'b0;
           dcsr_d.mprven = 1'b0;
