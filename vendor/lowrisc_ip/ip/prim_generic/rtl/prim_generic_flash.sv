@@ -151,6 +151,7 @@ module prim_generic_flash #(
     .addr_o(cfg_addr),
     .wdata_o(cfg_wdata),
     .wmask_o(),
+    .intg_error_o(),
     .rdata_i(cfg_rdata),
     .rvalid_i(cfg_rvalid),
     .rerror_i('0)
@@ -166,7 +167,8 @@ module prim_generic_flash #(
     .addr_i(cfg_addr),
     .wdata_i(cfg_wdata),
     .wmask_i({32{1'b1}}),
-    .rdata_o(cfg_rdata)
+    .rdata_o(cfg_rdata),
+    .cfg_i('0)
   );
 
   lc_ctrl_pkg::lc_tx_t unused_bist_enable;

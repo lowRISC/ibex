@@ -38,6 +38,7 @@ module prim_badbit_ram_1p #(
   ) u_mem (
     .clk_i   (clk_i),
 
+    .cfg_i   ('0),
     .req_i   (req_i),
     .write_i (write_i),
     .addr_i  (addr_i),

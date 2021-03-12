@@ -41,6 +41,7 @@ module tb #(parameter bit ICacheECC = 1'b0);
     .addr_o              (core_if.addr),
     .err_o               (core_if.err),
     .err_plus2_o         (core_if.err_plus2),
+    .ram_cfg_i           ('0),
     .icache_enable_i     (core_if.enable),
     .icache_inval_i      (core_if.invalidate),
     .busy_o              (core_if.busy),

@@ -58,6 +58,7 @@ module ram_1p #(
       .MemInitFile(MemInitFile)
     ) u_ram (
       .clk_i     (clk_i),
+      .cfg_i     ('0),
       .req_i     (req_i),
       .write_i   (we_i),
       .wmask_i   (wmask),
