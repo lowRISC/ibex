@@ -407,6 +407,7 @@
   sim_opts: >
     +require_signature_addr=1
     +enable_irq_multiple_seq=1
+    +enable_irq_nmi_seq=1
     +enable_nested_irq=1
   compare_opts:
     compare_final_value_only: 1

@@ -897,16 +897,16 @@ class core_ibex_nested_irq_test extends core_ibex_directed_test;
     forever begin
       send_irq_stimulus_start(1'b1, 1'b0, valid_irq);
       if (valid_irq) begin
-        initial_irq_delay = vseq.irq_raise_seq_h.max_delay;
-        vseq.irq_raise_seq_h.max_delay = 0;
+        initial_irq_delay = vseq.irq_raise_nmi_seq_h.max_delay;
+        vseq.irq_raise_nmi_seq_h.max_delay = 0;
         // Send nested interrupt after the checks of the first interrupt have finished
         in_nested_trap = 1'b1;
         // wait until we are setting mstatus.mie to 1'b1 to send the next set of interrupts
         wait (csr_vif.csr_cb.csr_access === 1'b1 &&
              csr_vif.csr_cb.csr_addr === CSR_MSTATUS &&
              csr_vif.csr_cb.csr_op != CSR_OP_READ);
-        send_irq_stimulus(1'b0);
-        vseq.irq_raise_seq_h.max_delay = initial_irq_delay;
+        send_nmi_stimulus();
+        vseq.irq_raise_nmi_seq_h.max_delay = initial_irq_delay;
         in_nested_trap = 1'b0;
         send_irq_stimulus_end();
       end
