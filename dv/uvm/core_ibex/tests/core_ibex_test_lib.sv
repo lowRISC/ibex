@@ -195,6 +195,19 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
     check_next_core_status(INITIALIZED, "Core initialization handshake failure", 5000);
   endtask
 
+  function bit determine_irq_from_txn();
+    bit irq_valid;
+
+    irq = {irq_txn.irq_nm, irq_txn.irq_fast, 4'b0, irq_txn.irq_external, 3'b0,
+           irq_txn.irq_timer, 3'b0, irq_txn.irq_software, 3'b0};
+    `uvm_info(`gfn, $sformatf("irq: 0x%0x", irq), UVM_LOW)
+
+    irq_valid = get_max_valid_irq_id(irq);
+    `uvm_info(`gfn, $sformatf("irq_id: 0x%0x", irq_id), UVM_LOW)
+
+    return irq_valid;
+  endfunction
+
   virtual task send_irq_stimulus_start(input bit no_nmi,
                                        input bit no_fast,
                                        output bit ret_val);
@@ -203,25 +216,27 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
     if (cfg.enable_irq_single_seq)        vseq.start_irq_raise_single_seq(no_nmi, no_fast);
     else if (cfg.enable_irq_multiple_seq) vseq.start_irq_raise_seq(no_nmi, no_fast);
     irq_collected_port.get(irq_txn);
-    irq = {irq_txn.irq_nm, irq_txn.irq_fast, 4'b0, irq_txn.irq_external, 3'b0,
-           irq_txn.irq_timer, 3'b0, irq_txn.irq_software, 3'b0};
-    `uvm_info(`gfn, $sformatf("irq: 0x%0x", irq), UVM_LOW)
     // Get the bit position of the highest priority interrupt - ibex will only handle this one if
     // there are multiple irqs asserted at once.
-    irq_valid = get_max_valid_irq_id(irq);
-    `uvm_info(`gfn, $sformatf("irq_id: 0x%0x", irq_id), UVM_LOW)
+    irq_valid = determine_irq_from_txn();
     // If the interrupt is maskable, and the corresponding bit in MIE is not set, skip the next
     // checks, as it means the interrupt in question is not enabled by Ibex, and drop the interrupt
     // lines to avoid locking up the simulation.
     if (!irq_valid) begin
       vseq.start_irq_drop_seq();
       irq_collected_port.get(irq_txn);
-      irq = {irq_txn.irq_nm, irq_txn.irq_fast, 4'b0, irq_txn.irq_external, 3'b0,
-             irq_txn.irq_timer, 3'b0, irq_txn.irq_software, 3'b0};
+      determine_irq_from_txn();
       `DV_CHECK_EQ_FATAL(irq, 0, "Interrupt lines have not been dropped")
       ret_val = irq_valid;
       return;
     end
+
+    check_irq_handle();
+
+    ret_val = irq_valid;
+  endtask
+
+  virtual task check_irq_handle();
     check_next_core_status(HANDLING_IRQ, "Core did not jump to vectored interrupt handler", 750);
     check_priv_mode(PRIV_LVL_M);
     operating_mode = dut_vif.dut_cb.priv_mode;
@@ -250,8 +265,6 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
       `DV_CHECK_EQ_FATAL(mip[irq_id], 1'b1,
           $sformatf("mip[%0d] is not set, but core responded to corresponding interrupt", irq_id))
     end
-    ret_val = irq_valid;
-    return;
   endtask
 
   virtual task send_irq_stimulus_end();
@@ -323,25 +336,30 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
     join_none
   endtask
 
+  // Task that waits for xRET to be asserted, with no timeout or objection
+  virtual task wait_ret_raw(string ret);
+      priv_lvl_e tgt_mode;
+      case (ret)
+        "dret": begin
+          wait (dut_vif.dut_cb.dret === 1'b1);
+        end
+        "mret": begin
+          wait (dut_vif.dut_cb.mret === 1'b1);
+        end
+        default: begin
+          `uvm_fatal(`gfn, $sformatf("Invalid xRET instruction %0s", ret))
+        end
+      endcase
+      tgt_mode = select_mode();
+      wait (dut_vif.dut_cb.priv_mode === tgt_mode);
+  endtask
+
   // Task that waits for xRET to be asserted within a certain number of cycles
   virtual task wait_ret(string ret, int timeout);
     cur_run_phase.raise_objection(this);
     fork
       begin
-        priv_lvl_e tgt_mode;
-        case (ret)
-          "dret": begin
-            wait (dut_vif.dut_cb.dret === 1'b1);
-          end
-          "mret": begin
-            wait (dut_vif.dut_cb.mret === 1'b1);
-          end
-          default: begin
-            `uvm_fatal(`gfn, $sformatf("Invalid xRET instruction %0s", ret))
-          end
-        endcase
-        tgt_mode = select_mode();
-        wait (dut_vif.dut_cb.priv_mode === tgt_mode);
+        wait_ret_raw(ret);
       end
       begin : ret_timeout
         clk_vif.wait_clks(timeout);
