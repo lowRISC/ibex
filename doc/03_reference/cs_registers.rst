@@ -264,7 +264,7 @@ Reset Value: ``0x0000_0000_0000_0000``
 +------+-----------------------------------------------------------------------------------------------------------------------------------+
 | 1    | **Machine Mode Whitelist Policy (MMWP):** If set default policy for PMP is deny for M-Mode accesses that don't match a PMP region |
 +------+-----------------------------------------------------------------------------------------------------------------------------------+
-| 0    | **Machine Mode Lockdown (MML):** Alters behaviour of ``pmpcfgX`` bits                                                               |
+| 0    | **Machine Mode Lockdown (MML):** Alters behaviour of ``pmpcfgX`` bits                                                             |
 +------+-----------------------------------------------------------------------------------------------------------------------------------+
 
 ``mseccfg`` is specified in the Trusted Execution Environment (TEE) working group proposal :download:`PMP Enhancements for memory access and execution prevention on Machine mode <../03_reference/pdfs/riscv-epmp.pdf>`, which gives the full details of it's functionality including the new PMP behaviour when ``mseccfg.MML`` is set.
