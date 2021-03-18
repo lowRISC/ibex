@@ -9,6 +9,7 @@
 #endif
 
 CSR(MSeccfg, 0x390)
+CSR(MSeccfgh, 0x391)
 CSR(PMPCfg0, 0x3A0)
 CSR(PMPCfg1, 0x3A1)
 CSR(PMPCfg2, 0x3A2)
