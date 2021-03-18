@@ -211,10 +211,20 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
   virtual task send_irq_stimulus_start(input bit no_nmi,
                                        input bit no_fast,
                                        output bit ret_val);
-    bit irq_valid;
     // send the interrupt
     if (cfg.enable_irq_single_seq)        vseq.start_irq_raise_single_seq(no_nmi, no_fast);
     else if (cfg.enable_irq_multiple_seq) vseq.start_irq_raise_seq(no_nmi, no_fast);
+
+    send_irq_stimulus_inner(ret_val);
+  endtask
+
+  virtual task send_nmi_stimulus_start(output bit ret_val);
+    vseq.start_nmi_raise_seq();
+    send_irq_stimulus_inner(ret_val);
+  endtask
+
+  virtual task send_irq_stimulus_inner(output bit ret_val);
+    bit irq_valid;
     irq_collected_port.get(irq_txn);
     // Get the bit position of the highest priority interrupt - ibex will only handle this one if
     // there are multiple irqs asserted at once.
@@ -286,6 +296,12 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
   virtual task send_irq_stimulus(bit no_nmi = 1'b0, bit no_fast = 1'b0);
     bit ret_val;
     send_irq_stimulus_start(no_nmi, no_fast, ret_val);
+    if (ret_val) send_irq_stimulus_end();
+  endtask
+
+  virtual task send_nmi_stimulus();
+    bit ret_val;
+    send_nmi_stimulus_start(ret_val);
     if (ret_val) send_irq_stimulus_end();
   endtask
 

@@ -99,7 +99,9 @@ class irq_raise_seq extends irq_base_seq;
 
   virtual function void randomize_item(irq_seq_item irq);
     `DV_CHECK_RANDOMIZE_WITH_FATAL(irq, num_of_interrupt > 1;
-                                        irq_nm == ~no_nmi;
+                                        if (no_nmi) {
+                                          irq_nm == 0;
+                                        }
                                         if (no_fast) {
                                           irq_fast == '0;
                                         })
@@ -117,10 +119,24 @@ class irq_raise_single_seq extends irq_base_seq;
 
   virtual function void randomize_item(irq_seq_item irq);
     `DV_CHECK_RANDOMIZE_WITH_FATAL(irq, num_of_interrupt == 1;
-                                        irq_nm == ~no_nmi;
+                                        if (no_nmi) {
+                                          irq_nm == 0;
+                                        }
                                         if (no_fast) {
                                           irq_fast == '0;
                                         })
+  endfunction
+
+endclass
+
+class irq_raise_nmi_seq extends irq_base_seq;
+
+  `uvm_object_utils(irq_raise_nmi_seq)
+  `uvm_object_new
+
+  virtual function void randomize_item(irq_seq_item irq);
+    `DV_CHECK_RANDOMIZE_WITH_FATAL(irq, num_of_interrupt == 1;
+                                        irq_nm == 1;)
   endfunction
 
 endclass

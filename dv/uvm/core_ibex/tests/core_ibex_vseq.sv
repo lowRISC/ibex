@@ -13,6 +13,7 @@ class core_ibex_vseq extends uvm_sequence;
   mem_model_pkg::mem_model                      mem;
   irq_raise_seq                                 irq_raise_seq_h;
   irq_raise_single_seq                          irq_raise_single_seq_h;
+  irq_raise_nmi_seq                             irq_raise_nmi_seq_h;
   irq_drop_seq                                  irq_drop_seq_h;
   debug_seq                                     debug_seq_stress_h;
   debug_seq                                     debug_seq_single_h;
@@ -41,7 +42,14 @@ class core_ibex_vseq extends uvm_sequence;
       irq_raise_seq_h.max_delay = 500;
       irq_raise_seq_h.interval = 0;
     end
-    if (cfg.enable_irq_single_seq || cfg.enable_irq_multiple_seq) begin
+    if (cfg.enable_irq_nmi_seq) begin
+      irq_raise_nmi_seq_h = irq_raise_nmi_seq::type_id::create("irq_raise_nmi_seq_h");
+      irq_raise_nmi_seq_h.num_of_iterations = 1;
+      irq_raise_nmi_seq_h.max_interval = 1;
+      irq_raise_nmi_seq_h.max_delay = 500;
+      irq_raise_nmi_seq_h.interval = 0;
+    end
+    if (cfg.enable_irq_single_seq || cfg.enable_irq_multiple_seq || cfg.enable_irq_nmi_seq) begin
       irq_drop_seq_h = irq_drop_seq::type_id::create("irq_drop_seq_h");
       irq_drop_seq_h.num_of_iterations = 1;
       irq_drop_seq_h.max_interval = 1;
@@ -105,8 +113,13 @@ class core_ibex_vseq extends uvm_sequence;
     irq_raise_seq_h.start(p_sequencer.irq_seqr);
   endtask
 
+  virtual task start_nmi_raise_seq();
+    irq_raise_nmi_seq_h.start(p_sequencer.irq_seqr);
+  endtask
+
   virtual task start_irq_drop_seq();
     irq_drop_seq_h.start(p_sequencer.irq_seqr);
   endtask
+
 
 endclass
