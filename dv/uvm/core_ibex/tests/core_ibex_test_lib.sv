@@ -764,29 +764,89 @@ class core_ibex_irq_in_debug_test extends core_ibex_directed_test;
 
   virtual task check_stimulus();
     bit detected_irq = 1'b0;
+    bit seen_dret = 1'b0;
+    bit irq_valid = 1'b0;
+
     forever begin
       // Drive core into debug mode
       vseq.start_debug_single_seq();
       check_next_core_status(IN_DEBUG_MODE, "Core did not enter debug mode properly", 1000);
       check_priv_mode(PRIV_LVL_M);
       wait_for_csr_write(CSR_DCSR, 500);
-      check_dcsr_prv(operating_mode);
+      check_dcsr_prv(init_operating_mode);
       check_dcsr_cause(DBG_CAUSE_HALTREQ);
-      clk_vif.wait_clks($urandom_range(25, 50));
-      // Raise interrupts while the core is in debug mode
-      vseq.start_irq_raise_seq();
+
+      seen_dret = 1'b0;
+      detected_irq = 1'b0;
+      irq_valid = 1'b0;
+
+      // Test will generate an IRQ whilst in debug mode, depending on the random delay on the IRQ it
+      // may remain enabled when DRET is executed (so the IRQ should be taken). The fork below
+      // splits into three, one process stimulates the IRQ and waits for the DRET. The others check
+      // for the IRQ being handled during debug and deal with the IRQ remained asserted after DRET
+      // case.
       fork
         begin : wait_irq
-          wait_for_core_status(HANDLING_IRQ);
-          `uvm_fatal(`gfn, "Core is handling interrupt detected in debug mode")
+          // Get IRQ raise transaction from IRQ monitor
+          irq_collected_port.get(irq_txn);
+          irq_valid = determine_irq_from_txn();
+          detected_irq = 1'b1;
+
+          if (!seen_dret) begin
+            // If the DRET hasn't been seen yet await IRQ handler, if it is seen before this process
+            // is disabled there is an error.
+            wait_for_core_status(HANDLING_IRQ);
+            `uvm_fatal(`gfn, "Core is handling interrupt detected in debug mode")
+          end
         end
-        begin
+        begin : wait_dret
+          wait_ret_raw("dret");
+          seen_dret = 1'b1;
+
+          wait (detected_irq);
+
+          // If execution reaches this point the DRET has been seen whilst an IRQ id raised.
+          // Disable `wait_irq` at this point as it's no longer an error for the interrupt handler
+          // to execute
+          disable wait_irq;
+
+          `uvm_info(`gfn, "dret seen before IRQ dropped", UVM_LOW)
+
+          if (irq_valid) begin
+            // IRQ isn't disabled so IRQ will get handled
+            `uvm_info(`gfn, "IRQ is enabled, interrupt should be taken", UVM_LOW)
+            check_irq_handle();
+            send_irq_stimulus_end();
+          end else begin
+            `uvm_info(`gfn, "IRQ is disabled, no interrupt should be taken", UVM_LOW)
+            // IRQ is disabled so just drop IRQ
+            vseq.start_irq_drop_seq();
+            irq_collected_port.get(irq_txn);
+          end
+        end
+        begin : dbg_irq_stimulate
+          // Raise interrupts while the core is in debug mode
+          vseq.start_irq_raise_seq();
           clk_vif.wait_clks(100);
+          if (!seen_dret) begin
+            // Reached end of wait and DRET not seen, so core remains in debug mode. Disable
+            // `wait_dret` and `wait_irq` as we're dropping the IRQ now
+            disable wait_dret;
+            disable wait_irq;
+
+            if (detected_irq) begin
+              // Drop the IRQ if one was raised
+              vseq.start_irq_drop_seq();
+            end
+
+            // Wait for DRET
+            wait_ret("dret", 5000);
+            // Get IRQ drop transaction from IRQ monitor
+            irq_collected_port.get(irq_txn);
+          end
         end
-      join_any
-      disable fork;
-      vseq.start_irq_drop_seq();
-      wait_ret("dret", 5000);
+      join
+
       clk_vif.wait_clks($urandom_range(250, 500));
     end
   endtask
