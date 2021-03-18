@@ -6,6 +6,7 @@ class core_ibex_env_cfg extends uvm_object;
 
   bit       enable_irq_single_seq;
   bit       enable_irq_multiple_seq;
+  bit       enable_irq_nmi_seq;
   bit       enable_nested_irq;
   bit       enable_debug_seq;
   bit[31:0] max_interval;
@@ -16,6 +17,7 @@ class core_ibex_env_cfg extends uvm_object;
   `uvm_object_utils_begin(core_ibex_env_cfg)
     `uvm_field_int(enable_irq_single_seq,   UVM_DEFAULT)
     `uvm_field_int(enable_irq_multiple_seq,   UVM_DEFAULT)
+    `uvm_field_int(enable_irq_nmi_seq,   UVM_DEFAULT)
     `uvm_field_int(enable_nested_irq, UVM_DEFAULT)
     `uvm_field_int(enable_debug_seq, UVM_DEFAULT)
     `uvm_field_int(max_interval, UVM_DEFAULT)
@@ -27,6 +29,7 @@ class core_ibex_env_cfg extends uvm_object;
     super.new(name);
     void'($value$plusargs("enable_irq_single_seq=%0d", enable_irq_single_seq));
     void'($value$plusargs("enable_irq_multiple_seq=%0d", enable_irq_multiple_seq));
+    void'($value$plusargs("enable_irq_nmi_seq=%0d", enable_irq_nmi_seq));
     void'($value$plusargs("enable_nested_irq=%0d", enable_nested_irq));
     void'($value$plusargs("enable_debug_seq=%0d", enable_debug_seq));
     void'($value$plusargs("max_interval=%0d", max_interval));
