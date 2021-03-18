@@ -349,10 +349,22 @@ module ibex_cs_registers #(
       end
 
       CSR_MSECCFG: begin
-        csr_rdata_int                       = '0;
-        csr_rdata_int[CSR_MSECCFG_MML_BIT]  = pmp_mseccfg.mml;
-        csr_rdata_int[CSR_MSECCFG_MMWP_BIT] = pmp_mseccfg.mmwp;
-        csr_rdata_int[CSR_MSECCFG_RLB_BIT]  = pmp_mseccfg.rlb;
+        if (PMPEnable) begin
+          csr_rdata_int                       = '0;
+          csr_rdata_int[CSR_MSECCFG_MML_BIT]  = pmp_mseccfg.mml;
+          csr_rdata_int[CSR_MSECCFG_MMWP_BIT] = pmp_mseccfg.mmwp;
+          csr_rdata_int[CSR_MSECCFG_RLB_BIT]  = pmp_mseccfg.rlb;
+        end else begin
+          illegal_csr = 1'b1;
+        end
+      end
+
+      CSR_MSECCFGH: begin
+        if (PMPEnable) begin
+          csr_rdata_int = '0;
+        end else begin
+          illegal_csr = 1'b1;
+        end
       end
 
       // PMP registers

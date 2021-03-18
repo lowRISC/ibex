@@ -9,6 +9,8 @@
 RegisterModel::RegisterModel(SimCtrl *sc, CSRParams *params) : simctrl_(sc) {
   register_map_.push_back(
       std::make_unique<MSeccfgRegister>(kCSRMSeccfg, &register_map_));
+  register_map_.push_back(
+      std::make_unique<NonImpRegister>(kCSRMSeccfgh, &register_map_));
   // Instantiate all the registers
   for (unsigned int i = 0; i < 4; i++) {
     uint32_t reg_addr = 0x3A0 + i;
