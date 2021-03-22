@@ -2,33 +2,32 @@ CAPI=2:
 # Copyright lowRISC contributors.
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
-name: "lowrisc:ibex:ibex_riscv_compliance:0.1"
-description: "Ibex simulation for RISC-V compliance testing (using Verilator)"
+name: "lowrisc:ibex:ibex_top_tracing:0.1"
+description: "Ibex, a small RV32 CPU core with tracing enabled"
 filesets:
-  files_sim_verilator:
+  files_rtl:
     depend:
-      - lowrisc:dv_verilator:memutil_verilator
-      - lowrisc:dv_verilator:simutil_verilator
-      - lowrisc:ibex:ibex_top_tracing
-      - lowrisc:ibex:sim_shared
-
+      - lowrisc:ibex:ibex_top
+      - lowrisc:ibex:ibex_tracer
     files:
-      - rtl/ibex_riscv_compliance.sv
-      - ibex_riscv_compliance.cc: { file_type: cppSource }
-      - rtl/riscv_testutil.sv
+      - rtl/ibex_top_tracing.sv
     file_type: systemVerilogSource
 
-  files_verilator_waiver:
-    files:
-      - lint/verilator_waiver.vlt: {file_type: vlt}
-
-
 parameters:
+  # The tracer uses the RISC-V Formal Interface (RVFI) to collect trace signals.
+  RVFI:
+    datatype: bool
+    paramtype: vlogdefine
+    default: true
+
+  SYNTHESIS:
+    datatype: bool
+    paramtype: vlogdefine
+
   RV32E:
     datatype: int
-    paramtype: vlogparam
     default: 0
-    description: "Enable the E ISA extension (reduced register set) [0/1]"
+    paramtype: vlogparam
 
   RV32M:
     datatype: str
@@ -62,21 +61,27 @@ parameters:
 
   BranchTargetALU:
     datatype: int
-    paramtype: vlogparam
     default: 0
-    description: "Enables separate branch target ALU (increasing branch performance EXPERIMENTAL)"
+    paramtype: vlogparam
+    description: "Enables separate branch target ALU (increasing branch performance EXPERIMENTAL) [0/1]"
 
   WritebackStage:
     datatype: int
-    paramtype: vlogparam
     default: 0
-    description: "Enables third pipeline stage (EXPERIMENTAL)"
+    paramtype: vlogparam
+    description: "Enables third pipeline stage (EXPERIMENTAL) [0/1]"
 
   BranchPredictor:
     datatype: int
     paramtype: vlogparam
     default: 0
     description: "Enables static branch prediction (EXPERIMENTAL)"
+
+  SecureIbex:
+    datatype: int
+    default: 0
+    paramtype: vlogparam
+    description: "Enables security hardening features (EXPERIMENTAL) [0/1]"
 
   PMPEnable:
     datatype: int
@@ -97,12 +102,18 @@ parameters:
     description: "Number of PMP regions"
 
 targets:
-  sim:
-    default_tool: verilator
+  default: &default_target
     filesets:
-      - tool_verilator ? (files_verilator_waiver)
-      - files_sim_verilator
+      - files_rtl
     parameters:
+      - RVFI=true
+    toplevel: ibex_top_tracing
+
+  lint:
+    <<: *default_target
+    parameters:
+      - RVFI=true
+      - SYNTHESIS=true
       - RV32E
       - RV32M
       - RV32B
@@ -112,21 +123,28 @@ targets:
       - BranchTargetALU
       - WritebackStage
       - BranchPredictor
+      - SecureIbex
       - PMPEnable
       - PMPGranularity
       - PMPNumRegions
-    toplevel: ibex_riscv_compliance
+    default_tool: verilator
     tools:
       verilator:
-        mode: cc
+        mode: lint-only
         verilator_options:
-          # Disabling tracing reduces compile times but doesn't have a
-          # huge influence on runtime performance.
-          - '--trace'
-          - '--trace-fst' # this requires -DVM_TRACE_FMT_FST in CFLAGS below!
-          - '--trace-structs'
-          - '--trace-params'
-          - '--trace-max-array 1024'
-          - '-CFLAGS "-std=c++11 -Wall -DVM_TRACE_FMT_FST -DTOPLEVEL_NAME=ibex_riscv_compliance -g"'
-          - '-LDFLAGS "-pthread -lutil -lelf"'
           - "-Wall"
+          # RAM primitives wider than 64bit (required for ECC) fail to build in
+          # Verilator without increasing the unroll count (see Verilator#1266)
+          - "--unroll-count 72"
+  format:
+    filesets:
+      - files_rtl
+    parameters:
+      - SYNTHESIS=true
+      - RVFI=true
+    default_tool: veribleformat
+    toplevel: ibex_top_tracing
+    tools:
+      veribleformat:
+        verible_format_args:
+          - "--inplace"

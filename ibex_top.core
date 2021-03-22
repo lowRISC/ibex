@@ -2,26 +2,46 @@ CAPI=2:
 # Copyright lowRISC contributors.
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
-name: "lowrisc:ibex:ibex_core_tracing:0.1"
-description: "Ibex, a small RV32 CPU core with tracing enabled"
+name: "lowrisc:ibex:ibex_top:0.1"
+description: "Ibex, a small RV32 CPU core"
+
 filesets:
   files_rtl:
     depend:
+      - lowrisc:ibex:ibex_pkg
       - lowrisc:ibex:ibex_core
-      - lowrisc:ibex:ibex_tracer
     files:
-      - rtl/ibex_core_tracing.sv
+      - rtl/ibex_register_file_ff.sv # generic FF-based
+      - rtl/ibex_register_file_fpga.sv # FPGA
+      - rtl/ibex_register_file_latch.sv # ASIC
+      - rtl/ibex_top.sv
     file_type: systemVerilogSource
 
+  files_lint_verilator:
+    files:
+      - lint/verilator_waiver.vlt: {file_type: vlt}
+
+  files_lint_verible:
+    files:
+      - lint/verible_waiver.vbw: {file_type: veribleLintWaiver}
+
+  files_check_tool_requirements:
+    depend:
+     - lowrisc:tool:check_tool_requirements
+
 parameters:
-  # The tracer uses the RISC-V Formal Interface (RVFI) to collect trace signals.
   RVFI:
     datatype: bool
     paramtype: vlogdefine
-    default: true
 
   SYNTHESIS:
     datatype: bool
+    paramtype: vlogdefine
+
+  FPGA_XILINX:
+    datatype: bool
+    description: Identifies Xilinx FPGA targets to set DSP pragmas for performance counters.
+    default: false
     paramtype: vlogdefine
 
   RV32E:
@@ -104,29 +124,18 @@ parameters:
 targets:
   default: &default_target
     filesets:
+      - tool_verilator ? (files_lint_verilator)
+      - tool_veriblelint ? (files_lint_verible)
       - files_rtl
+      - files_check_tool_requirements
+    toplevel: ibex_top
     parameters:
-      - RVFI=true
-    toplevel: ibex_core_tracing
-
+      - tool_vivado ? (FPGA_XILINX=true)
   lint:
     <<: *default_target
     parameters:
-      - RVFI=true
       - SYNTHESIS=true
-      - RV32E
-      - RV32M
-      - RV32B
-      - RegFile
-      - ICache
-      - ICacheECC
-      - BranchTargetALU
-      - WritebackStage
-      - BranchPredictor
-      - SecureIbex
-      - PMPEnable
-      - PMPGranularity
-      - PMPNumRegions
+      - RVFI=true
     default_tool: verilator
     tools:
       verilator:
@@ -143,8 +152,9 @@ targets:
       - SYNTHESIS=true
       - RVFI=true
     default_tool: veribleformat
-    toplevel: ibex_core
+    toplevel: ibex_top
     tools:
       veribleformat:
         verible_format_args:
           - "--inplace"
+

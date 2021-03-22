@@ -3,7 +3,7 @@ CAPI=2:
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 name: "lowrisc:ibex:ibex_core:0.1"
-description: "Ibex, a small RV32 CPU core"
+description: "Ibex CPU Core Components"
 
 filesets:
   files_rtl:
@@ -34,9 +34,6 @@ filesets:
       - rtl/ibex_pmp.sv
       - rtl/ibex_wb_stage.sv
       - rtl/ibex_dummy_instr.sv
-      - rtl/ibex_register_file_ff.sv # generic FF-based
-      - rtl/ibex_register_file_fpga.sv # FPGA
-      - rtl/ibex_register_file_latch.sv # ASIC
       - rtl/ibex_core.sv
     file_type: systemVerilogSource
 

@@ -112,7 +112,7 @@ module ibex_riscv_compliance (
     .cfg_device_addr_mask
   );
 
-  ibex_core_tracing #(
+  ibex_top_tracing #(
       .PMPEnable       (PMPEnable       ),
       .PMPGranularity  (PMPGranularity  ),
       .PMPNumRegions   (PMPNumRegions   ),
@@ -127,7 +127,7 @@ module ibex_riscv_compliance (
       .BranchPredictor (BranchPredictor ),
       .DmHaltAddr      (32'h00000000    ),
       .DmExceptionAddr (32'h00000000    )
-    ) u_core (
+    ) u_top (
       .clk_i          (clk_sys           ),
       .rst_ni         (rst_sys_n         ),
 

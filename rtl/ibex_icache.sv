@@ -10,9 +10,12 @@
 
 `include "prim_assert.sv"
 
-module ibex_icache #(
+module ibex_icache import ibex_pkg::*; #(
   parameter bit          BranchPredictor = 1'b0,
   parameter bit          ICacheECC       = 1'b0,
+  parameter int unsigned BusSizeECC      = BUS_SIZE,
+  parameter int unsigned TagSizeECC      = IC_TAG_SIZE,
+  parameter int unsigned LineSizeECC     = IC_LINE_SIZE,
   // Only cache branch targets
   parameter bit          BranchCache     = 1'b0
 ) (
@@ -42,28 +45,33 @@ module ibex_icache #(
     output logic                           instr_req_o,
     input  logic                           instr_gnt_i,
     output logic [31:0]                    instr_addr_o,
-    input  logic [ibex_pkg::BUS_WIDTH-1:0] instr_rdata_i,
+    input  logic [BUS_SIZE-1:0]            instr_rdata_i,
     input  logic                           instr_err_i,
     input  logic                           instr_pmp_err_i,
     input  logic                           instr_rvalid_i,
 
+    // RAM IO
+    output logic [IC_NUM_WAYS-1:0]         ic_tag_req_o,
+    output logic                           ic_tag_write_o,
+    output logic [IC_INDEX_W-1:0]          ic_tag_addr_o,
+    output logic [TagSizeECC-1:0]          ic_tag_wdata_o,
+    input  logic [TagSizeECC-1:0]          ic_tag_rdata_i [IC_NUM_WAYS],
+    output logic [IC_NUM_WAYS-1:0]         ic_data_req_o,
+    output logic                           ic_data_write_o,
+    output logic [IC_INDEX_W-1:0]          ic_data_addr_o,
+    output logic [LineSizeECC-1:0]         ic_data_wdata_o,
+    input  logic [LineSizeECC-1:0]         ic_data_rdata_i [IC_NUM_WAYS],
+
     // Cache status
-    input  prim_ram_1p_pkg::ram_1p_cfg_t   ram_cfg_i,
     input  logic                           icache_enable_i,
     input  logic                           icache_inval_i,
     output logic                           busy_o
 );
 
-  import ibex_pkg::*;
-
   // Number of fill buffers (must be >= 2)
   localparam int unsigned NUM_FB        = 4;
   // Request throttling threshold
   localparam int unsigned FB_THRESHOLD  = NUM_FB - 2;
-  // Derived parameters
-  localparam int unsigned BUS_SIZE_ECC  = ICacheECC ? (BUS_WIDTH + 7) : BUS_WIDTH;
-  localparam int unsigned LINE_SIZE_ECC = BUS_SIZE_ECC * IC_LINE_BEATS;
-  localparam int unsigned TAG_SIZE_ECC  = ICacheECC ? (IC_TAG_SIZE + 6) : IC_TAG_SIZE;
 
   // Prefetch signals
   logic [ADDR_W-1:0]                      lookup_addr_aligned;
@@ -88,16 +96,16 @@ module ibex_icache #(
   logic [IC_INDEX_W-1:0]                  tag_index_ic0;
   logic [IC_NUM_WAYS-1:0]                 tag_banks_ic0;
   logic                                   tag_write_ic0;
-  logic [TAG_SIZE_ECC-1:0]                tag_wdata_ic0;
+  logic [TagSizeECC-1:0]                  tag_wdata_ic0;
   logic                                   data_req_ic0;
   logic [IC_INDEX_W-1:0]                  data_index_ic0;
   logic [IC_NUM_WAYS-1:0]                 data_banks_ic0;
   logic                                   data_write_ic0;
-  logic [LINE_SIZE_ECC-1:0]               data_wdata_ic0;
+  logic [LineSizeECC-1:0]                 data_wdata_ic0;
   // Cache pipelipe IC1 signals
-  logic [TAG_SIZE_ECC-1:0]                tag_rdata_ic1  [IC_NUM_WAYS];
-  logic [LINE_SIZE_ECC-1:0]               data_rdata_ic1 [IC_NUM_WAYS];
-  logic [LINE_SIZE_ECC-1:0]               hit_data_ecc_ic1;
+  logic [TagSizeECC-1:0]                  tag_rdata_ic1  [IC_NUM_WAYS];
+  logic [LineSizeECC-1:0]                 data_rdata_ic1 [IC_NUM_WAYS];
+  logic [LineSizeECC-1:0]                 hit_data_ecc_ic1;
   logic [IC_LINE_SIZE-1:0]                hit_data_ic1;
   logic                                   lookup_valid_ic1;
   logic [ADDR_W-1:IC_INDEX_HI+1]          lookup_addr_ic1;
@@ -307,8 +315,8 @@ module ibex_icache #(
     // Dataram ECC
     for (genvar bank = 0; bank < IC_LINE_BEATS; bank++) begin : gen_ecc_banks
       prim_secded_39_32_enc data_ecc_enc (
-        .in  (fill_wdata_ic0[bank*BUS_WIDTH+:BUS_WIDTH]),
-        .out (data_wdata_ic0[bank*BUS_SIZE_ECC+:BUS_SIZE_ECC])
+        .in  (fill_wdata_ic0[bank*BUS_SIZE+:BUS_SIZE]),
+        .out (data_wdata_ic0[bank*BusSizeECC+:BusSizeECC])
       );
     end
 
@@ -321,38 +329,23 @@ module ibex_icache #(
   // IC0 -> IC1 //
   ////////////////
 
-  for (genvar way = 0; way < IC_NUM_WAYS; way++) begin : gen_rams
-    // Tag RAM instantiation
-    prim_ram_1p #(
-      .Width           (TAG_SIZE_ECC),
-      .Depth           (IC_NUM_LINES),
-      .DataBitsPerMask (TAG_SIZE_ECC)
-    ) tag_bank (
-      .clk_i    (clk_i),
-      .req_i    (tag_req_ic0 & tag_banks_ic0[way]),
-      .cfg_i    (ram_cfg_i),
-      .write_i  (tag_write_ic0),
-      .wmask_i  ({TAG_SIZE_ECC{1'b1}}),
-      .addr_i   (tag_index_ic0),
-      .wdata_i  (tag_wdata_ic0),
-      .rdata_o  (tag_rdata_ic1[way])
-    );
-    // Data RAM instantiation
-    prim_ram_1p #(
-      .Width           (LINE_SIZE_ECC),
-      .Depth           (IC_NUM_LINES),
-      .DataBitsPerMask (LINE_SIZE_ECC)
-    ) data_bank (
-      .clk_i    (clk_i),
-      .req_i    (data_req_ic0 & data_banks_ic0[way]),
-      .cfg_i    (ram_cfg_i),
-      .write_i  (data_write_ic0),
-      .wmask_i  ({LINE_SIZE_ECC{1'b1}}),
-      .addr_i   (data_index_ic0),
-      .wdata_i  (data_wdata_ic0),
-      .rdata_o  (data_rdata_ic1[way])
-    );
-  end
+  // Tag RAMs outputs
+  assign ic_tag_req_o    = {IC_NUM_WAYS{tag_req_ic0}} & tag_banks_ic0;
+  assign ic_tag_write_o  = tag_write_ic0;
+  assign ic_tag_addr_o   = tag_index_ic0;
+  assign ic_tag_wdata_o  = tag_wdata_ic0;
+
+  // Tag RAMs inputs
+  assign tag_rdata_ic1   = ic_tag_rdata_i;
+
+  // Data RAMs outputs
+  assign ic_data_req_o   = {IC_NUM_WAYS{data_req_ic0}} & data_banks_ic0;
+  assign ic_data_write_o = data_write_ic0;
+  assign ic_data_addr_o  = data_index_ic0;
+  assign ic_data_wdata_o = data_wdata_ic0;
+
+  // Data RAMs inputs
+  assign data_rdata_ic1  = ic_data_rdata_i;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
@@ -427,7 +420,7 @@ module ibex_icache #(
       logic [27:0] tag_rdata_padded_ic1;
 
       // Expand the tag rdata with extra padding if the tag size is less than the maximum
-      assign tag_rdata_padded_ic1 = {tag_rdata_ic1[way][TAG_SIZE_ECC-1-:6],
+      assign tag_rdata_padded_ic1 = {tag_rdata_ic1[way][TagSizeECC-1-:6],
                                      {22-IC_TAG_SIZE{1'b0}},
                                      tag_rdata_ic1[way][IC_TAG_SIZE-1:0]};
 
@@ -444,14 +437,14 @@ module ibex_icache #(
     // Note - could generate for all ways and mux after
     for (genvar bank = 0; bank < IC_LINE_BEATS; bank++) begin : gen_ecc_banks
       prim_secded_39_32_dec data_ecc_dec (
-        .in         (hit_data_ecc_ic1[bank*BUS_SIZE_ECC+:BUS_SIZE_ECC]),
+        .in         (hit_data_ecc_ic1[bank*BusSizeECC+:BusSizeECC]),
         .d_o        (),
         .syndrome_o (),
         .err_o      (data_err_ic1[bank*2+:2])
       );
 
-      assign hit_data_ic1[bank*BUS_WIDTH+:BUS_WIDTH] =
-          hit_data_ecc_ic1[bank*BUS_SIZE_ECC+:BUS_WIDTH];
+      assign hit_data_ic1[bank*BUS_SIZE+:BUS_SIZE] =
+          hit_data_ecc_ic1[bank*BusSizeECC+:BUS_SIZE];
 
     end
 
@@ -817,7 +810,7 @@ module ibex_icache #(
 
       always_ff @(posedge clk_i) begin
         if (fill_data_en[fb][b]) begin
-          fill_data_q[fb][b*BUS_WIDTH+:BUS_WIDTH] <= fill_data_d[fb][b*BUS_WIDTH+:BUS_WIDTH];
+          fill_data_q[fb][b*BUS_SIZE+:BUS_SIZE] <= fill_data_d[fb][b*BUS_SIZE+:BUS_SIZE];
         end
       end
 
@@ -983,7 +976,7 @@ module ibex_icache #(
     end
   end
 
-  // Mux the data from BUS_WIDTH to halfword
+  // Mux the data from BUS_SIZE to halfword
   // This muxing realigns data when instruction words are split across BUS_W e.g.
   // word 1 |----|*h1*|
   // word 0 |*h0*|----| --> |*h1*|*h0*|
@@ -1061,7 +1054,7 @@ module ibex_icache #(
 
   // ECC primitives will need to be changed for different sizes
   `ASSERT_INIT(ecc_tag_param_legal, (IC_TAG_SIZE <= 27))
-  `ASSERT_INIT(ecc_data_param_legal, !ICacheECC || (BUS_WIDTH == 32))
+  `ASSERT_INIT(ecc_data_param_legal, !ICacheECC || (BUS_SIZE == 32))
 
   // Lookups in the tag ram should always give a known result
   `ASSERT_KNOWN(TagHitKnown,     lookup_valid_ic1 & tag_hit_ic1)
