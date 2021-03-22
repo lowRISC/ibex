@@ -58,7 +58,7 @@ module core_ibex_tb_top;
   parameter bit ICacheECC                = 1'b0;
   parameter bit BranchPredictor          = 1'b0;
 
-  ibex_core_tracing #(
+  ibex_top_tracing #(
     .DmHaltAddr      (32'h`BOOT_ADDR + 'h0 ),
     .DmExceptionAddr (32'h`BOOT_ADDR + 'h4 ),
     .PMPEnable       (PMPEnable        ),
@@ -78,7 +78,7 @@ module core_ibex_tb_top;
     .rst_ni         (rst_n                ),
 
     .test_en_i      (1'b0                 ),
-    .ram_cfg_i      (1'b0                 ),
+    .ram_cfg_i      ('b0                  ),
 
     .hart_id_i      (32'b0                ),
     .boot_addr_i    (32'h`BOOT_ADDR       ), // align with spike boot address
@@ -145,31 +145,31 @@ module core_ibex_tb_top;
   // Irq interface connections
   assign irq_vif.reset                        = ~rst_n;
   // Dut_if interface connections
-  assign dut_if.ecall                         = dut.u_ibex_core.id_stage_i.controller_i.ecall_insn;
-  assign dut_if.wfi                           = dut.u_ibex_core.id_stage_i.controller_i.wfi_insn;
-  assign dut_if.ebreak                        = dut.u_ibex_core.id_stage_i.controller_i.ebrk_insn;
-  assign dut_if.illegal_instr                 = dut.u_ibex_core.id_stage_i.controller_i.illegal_insn_d;
-  assign dut_if.dret                          = dut.u_ibex_core.id_stage_i.controller_i.dret_insn;
-  assign dut_if.mret                          = dut.u_ibex_core.id_stage_i.controller_i.mret_insn;
+  assign dut_if.ecall                         = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.ecall_insn;
+  assign dut_if.wfi                           = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.wfi_insn;
+  assign dut_if.ebreak                        = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.ebrk_insn;
+  assign dut_if.illegal_instr                 = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.illegal_insn_d;
+  assign dut_if.dret                          = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.dret_insn;
+  assign dut_if.mret                          = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.mret_insn;
   assign dut_if.reset                         = ~rst_n;
-  assign dut_if.priv_mode                     = dut.u_ibex_core.priv_mode_id;
+  assign dut_if.priv_mode                     = dut.u_ibex_top.u_ibex_core.priv_mode_id;
   // Instruction monitor connections
-  assign instr_monitor_if.valid_id            = dut.u_ibex_core.id_stage_i.instr_valid_i;
-  assign instr_monitor_if.err_id              = dut.u_ibex_core.id_stage_i.controller_i.instr_fetch_err;
-  assign instr_monitor_if.is_compressed_id    = dut.u_ibex_core.id_stage_i.instr_is_compressed_i;
-  assign instr_monitor_if.instr_compressed_id = dut.u_ibex_core.id_stage_i.instr_rdata_c_i;
-  assign instr_monitor_if.instr_id            = dut.u_ibex_core.id_stage_i.instr_rdata_i;
-  assign instr_monitor_if.pc_id               = dut.u_ibex_core.pc_id;
-  assign instr_monitor_if.branch_taken_id     = dut.u_ibex_core.id_stage_i.controller_i.branch_set_i;
-  assign instr_monitor_if.branch_target_id    = dut.u_ibex_core.branch_target_ex;
-  assign instr_monitor_if.stall_id            = dut.u_ibex_core.id_stage_i.stall_id;
-  assign instr_monitor_if.jump_set_id         = dut.u_ibex_core.id_stage_i.jump_set;
+  assign instr_monitor_if.valid_id            = dut.u_ibex_top.u_ibex_core.id_stage_i.instr_valid_i;
+  assign instr_monitor_if.err_id              = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.instr_fetch_err;
+  assign instr_monitor_if.is_compressed_id    = dut.u_ibex_top.u_ibex_core.id_stage_i.instr_is_compressed_i;
+  assign instr_monitor_if.instr_compressed_id = dut.u_ibex_top.u_ibex_core.id_stage_i.instr_rdata_c_i;
+  assign instr_monitor_if.instr_id            = dut.u_ibex_top.u_ibex_core.id_stage_i.instr_rdata_i;
+  assign instr_monitor_if.pc_id               = dut.u_ibex_top.u_ibex_core.pc_id;
+  assign instr_monitor_if.branch_taken_id     = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.branch_set_i;
+  assign instr_monitor_if.branch_target_id    = dut.u_ibex_top.u_ibex_core.branch_target_ex;
+  assign instr_monitor_if.stall_id            = dut.u_ibex_top.u_ibex_core.id_stage_i.stall_id;
+  assign instr_monitor_if.jump_set_id         = dut.u_ibex_top.u_ibex_core.id_stage_i.jump_set;
   // CSR interface connections
-  assign csr_if.csr_access                    = dut.u_ibex_core.csr_access;
-  assign csr_if.csr_addr                      = dut.u_ibex_core.csr_addr;
-  assign csr_if.csr_wdata                     = dut.u_ibex_core.csr_wdata;
-  assign csr_if.csr_rdata                     = dut.u_ibex_core.csr_rdata;
-  assign csr_if.csr_op                        = dut.u_ibex_core.csr_op;
+  assign csr_if.csr_access                    = dut.u_ibex_top.u_ibex_core.csr_access;
+  assign csr_if.csr_addr                      = dut.u_ibex_top.u_ibex_core.csr_addr;
+  assign csr_if.csr_wdata                     = dut.u_ibex_top.u_ibex_core.csr_wdata;
+  assign csr_if.csr_rdata                     = dut.u_ibex_top.u_ibex_core.csr_rdata;
+  assign csr_if.csr_op                        = dut.u_ibex_top.u_ibex_core.csr_op;
 
   initial begin
     // Drive the clock and reset lines. Reset everything and start the clock at the beginning of

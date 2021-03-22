@@ -19,6 +19,14 @@ typedef struct packed {
   logic [31:0] exception_addr;
 } crash_dump_t;
 
+typedef struct packed {
+  logic        dummy_instr_id;
+  logic [4:0]  raddr_a;
+  logic [4:0]  waddr_a;
+  logic        we_a;
+  logic [4:0]  raddr_b;
+} core2rf_t;
+
 /////////////////////
 // Parameter Enums //
 /////////////////////
