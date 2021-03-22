@@ -706,7 +706,7 @@ def main():
             raise RuntimeError("Cannot find %s in %s" %
                                (args.test, args.testlist))
 
-        matched_list = filter_tests_by_config(args.ibex_config, matched_list);
+        matched_list = filter_tests_by_config(args.ibex_config, matched_list)
 
     # Compile TB
     if steps['compile']:
