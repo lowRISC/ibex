@@ -11,6 +11,9 @@ git+https://github.com/lowRISC/fusesoc.git@ot
 pyyaml
 mako
 
+# Needed for RISCOF based RISC-V compliance check
+riscof
+
 # Needed by dvsim.py (not actually used in Ibex)
 hjson
 mistletoe>=0.7.2

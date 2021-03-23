@@ -32,16 +32,16 @@ case "$ID-$VERSION_ID" in
     $SUDO_CMD sh -c "echo 'deb http://download.opensuse.org/repositories/home:/phiwag:/edatools/xUbuntu_$VERSION_ID/ /' > /etc/apt/sources.list.d/edatools.list"
     $SUDO_CMD apt-get update
 
+    # Uninstall distribution-provided version to get a newer version through pip
+    $SUDO_CMD apt-get remove -y python3-yaml
+
     # Packaged dependencies
-    # Install python3-yaml through apt to get a version with libyaml bindings,
-    # which is significantly faster than the pure Python version.
     $SUDO_CMD apt-get install -y \
         device-tree-compiler \
         python3 \
         python3-pip \
         python3-setuptools \
         python3-wheel \
-        python3-yaml \
         srecord \
         zlib1g-dev \
         git \

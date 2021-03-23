@@ -65,3 +65,17 @@ steps:
         done
         exit $fail
       displayName: Run RISC-V Compliance test for Ibex RV32IMC for ${{ config }}
+
+    - bash: |
+        # Run compliance test suite
+        export IBEX_SIMULATOR=$PWD/build/lowrisc_ibex_ibex_riscv_compliance_0.1/sim-verilator/Vibex_riscv_compliance
+        export RISCV_PREFIX=riscv32-unknown-elf-
+        riscof run --config dv/riscof/config.ini --suite build/riscv-compliance-v2/riscv-test-suite --no-browser
+        if [ $? != 0 ]; then
+          echo -n "##vso[task.logissue type=error]"
+          echo "RISCOF compliance test suite failure. Ignoring exit condition."
+          exit 0
+        fi
+
+      displayName: Run RISC-V Compliance Version 2 test for Ibex RV32IMC for ${{ config }}
+      continueOnError: true
