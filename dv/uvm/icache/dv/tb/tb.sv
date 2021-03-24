@@ -60,7 +60,7 @@ module tb #(parameter bit ICacheECC = 1'b0);
   // each data ram, binding them into the RAMs themselves. ECC tests can use these to insert errors
   // into memory lookups.
   generate if (dut.ICacheECC) begin : gen_ecc
-    for (genvar w = 0; w < dut.NumWays; w++) begin : gen_ecc_ifs
+    for (genvar w = 0; w < ibex_pkg::IC_NUM_WAYS; w++) begin : gen_ecc_ifs
       bind dut.gen_rams[w].tag_bank.gen_badbit.u_impl_badbit  ibex_icache_ecc_if tag_bank_if (.*);
       bind dut.gen_rams[w].data_bank.gen_badbit.u_impl_badbit ibex_icache_ecc_if data_bank_if (.*);
 
@@ -93,7 +93,7 @@ module tb #(parameter bit ICacheECC = 1'b0);
 
     // Record the number of (ECC) ways in the config database. The top-level environment's config
     // will use this to decide how many agents to create.
-    uvm_config_db#(int unsigned)::set(null, "*", "num_ecc_ways", dut.ICacheECC ? dut.NumWays : 0);
+    uvm_config_db#(int unsigned)::set(null, "*", "num_ecc_ways", dut.ICacheECC ? ibex_pkg::IC_NUM_WAYS : 0);
 
     $timeformat(-12, 0, " ps", 12);
     run_test();
