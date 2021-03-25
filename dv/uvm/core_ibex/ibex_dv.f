@@ -54,6 +54,7 @@ ${PRJ_DIR}/rtl/ibex_id_stage.sv
 ${PRJ_DIR}/rtl/ibex_icache.sv
 ${PRJ_DIR}/rtl/ibex_if_stage.sv
 ${PRJ_DIR}/rtl/ibex_load_store_unit.sv
+${PRJ_DIR}/rtl/ibex_lockstep.sv
 ${PRJ_DIR}/rtl/ibex_multdiv_slow.sv
 ${PRJ_DIR}/rtl/ibex_multdiv_fast.sv
 ${PRJ_DIR}/rtl/ibex_prefetch_buffer.sv
