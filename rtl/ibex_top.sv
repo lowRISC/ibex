@@ -109,6 +109,7 @@ module ibex_top #(
 
   import ibex_pkg::*;
 
+  localparam bit          Lockstep          = SecureIbex;
   localparam bit          DummyInstructions = SecureIbex;
   localparam bit          RegFileECC        = SecureIbex;
   localparam int unsigned RegFileDataWidth  = RegFileECC ? 32 + 7 : 32;
@@ -143,6 +144,9 @@ module ibex_top #(
   logic [IC_INDEX_W-1:0]       ic_data_addr;
   logic [LineSizeECC-1:0]      ic_data_wdata;
   logic [LineSizeECC-1:0]      ic_data_rdata [IC_NUM_WAYS];
+  // Alert signals
+  logic                        core_alert_major, core_alert_minor;
+  logic                        lockstep_alert_major, lockstep_alert_minor;
 
   /////////////////////
   // Main clock gate //
@@ -284,8 +288,8 @@ module ibex_top #(
     .rvfi_mem_wdata,
 `endif
 
-    .alert_minor_o,
-    .alert_major_o,
+    .alert_minor_o (core_alert_minor),
+    .alert_major_o (core_alert_major),
     .core_busy_o (core_busy_d)
   );
 
@@ -407,5 +411,105 @@ module ibex_top #(
     assign ic_data_rdata     = '{default:'b0};
 
   end
+
+  // Redundant lockstep core implementation
+  if (Lockstep) begin : gen_lockstep
+    ibex_lockstep #(
+      .PMPEnable         ( PMPEnable         ),
+      .PMPGranularity    ( PMPGranularity    ),
+      .PMPNumRegions     ( PMPNumRegions     ),
+      .MHPMCounterNum    ( MHPMCounterNum    ),
+      .MHPMCounterWidth  ( MHPMCounterWidth  ),
+      .RV32E             ( RV32E             ),
+      .RV32M             ( RV32M             ),
+      .RV32B             ( RV32B             ),
+      .BranchTargetALU   ( BranchTargetALU   ),
+      .ICache            ( ICache            ),
+      .ICacheECC         ( ICacheECC         ),
+      .BusSizeECC        ( BusSizeECC        ),
+      .TagSizeECC        ( TagSizeECC        ),
+      .LineSizeECC       ( LineSizeECC       ),
+      .BranchPredictor   ( BranchPredictor   ),
+      .DbgTriggerEn      ( DbgTriggerEn      ),
+      .DbgHwBreakNum     ( DbgHwBreakNum     ),
+      .WritebackStage    ( WritebackStage    ),
+      .SecureIbex        ( SecureIbex        ),
+      .DummyInstructions ( DummyInstructions ),
+      .RegFileECC        ( RegFileECC        ),
+      .RegFileDataWidth  ( RegFileDataWidth  ),
+      .DmHaltAddr        ( DmHaltAddr        ),
+      .DmExceptionAddr   ( DmExceptionAddr   )
+    ) u_ibex_lockstep (
+      .clk_i             (clk),
+      .rst_ni            (rst_ni),
+
+      .hart_id_i         (hart_id_i),
+      .boot_addr_i       (boot_addr_i),
+
+      .instr_req_i       (instr_req_o),
+      .instr_gnt_i       (instr_gnt_i),
+      .instr_rvalid_i    (instr_rvalid_i),
+      .instr_addr_i      (instr_addr_o),
+      .instr_rdata_i     (instr_rdata_i),
+      .instr_err_i       (instr_err_i),
+
+      .data_req_i        (data_req_o),
+      .data_gnt_i        (data_gnt_i),
+      .data_rvalid_i     (data_rvalid_i),
+      .data_we_i         (data_we_o),
+      .data_be_i         (data_be_o),
+      .data_addr_i       (data_addr_o),
+      .data_wdata_i      (data_wdata_o),
+      .data_rdata_i      (data_rdata_i),
+      .data_err_i        (data_err_i),
+
+      .dummy_instr_id_i  (dummy_instr_id),
+      .rf_raddr_a_i      (rf_raddr_a),
+      .rf_raddr_b_i      (rf_raddr_b),
+      .rf_waddr_wb_i     (rf_waddr_wb),
+      .rf_we_wb_i        (rf_we_wb),
+      .rf_wdata_wb_ecc_i (rf_wdata_wb_ecc),
+      .rf_rdata_a_ecc_i  (rf_rdata_a_ecc),
+      .rf_rdata_b_ecc_i  (rf_rdata_b_ecc),
+
+      .ic_tag_req_i      (ic_tag_req),
+      .ic_tag_write_i    (ic_tag_write),
+      .ic_tag_addr_i     (ic_tag_addr),
+      .ic_tag_wdata_i    (ic_tag_wdata),
+      .ic_tag_rdata_i    (ic_tag_rdata),
+      .ic_data_req_i     (ic_data_req),
+      .ic_data_write_i   (ic_data_write),
+      .ic_data_addr_i    (ic_data_addr),
+      .ic_data_wdata_i   (ic_data_wdata),
+      .ic_data_rdata_i   (ic_data_rdata),
+
+      .irq_software_i    (irq_software_i),
+      .irq_timer_i       (irq_timer_i),
+      .irq_external_i    (irq_external_i),
+      .irq_fast_i        (irq_fast_i),
+      .irq_nm_i          (irq_nm_i),
+      .irq_pending_i     (irq_pending),
+
+      .debug_req_i       (debug_req_i),
+      .crash_dump_i      (crash_dump_o),
+
+      .alert_minor_o     (lockstep_alert_minor),
+      .alert_major_o     (lockstep_alert_major),
+      .core_busy_i       (core_busy_d)
+    );
+  end else begin : gen_no_lockstep
+    assign lockstep_alert_major = 1'b0;
+    assign lockstep_alert_minor = 1'b0;
+  end
+
+  // TODO - need a config to reset all registers before the lockstep alert can be used
+  logic unused_lockstep_alert_major;
+  assign unused_lockstep_alert_major = lockstep_alert_major;
+
+  assign alert_major_o = core_alert_major;// | lockstep_alert_major;
+  assign alert_minor_o = core_alert_minor | lockstep_alert_minor;
+
+  `ASSERT_KNOWN(IbexAlertMinorX, alert_minor_o)
+  `ASSERT_KNOWN(IbexAlertMajorX, alert_major_o)
 
 endmodule

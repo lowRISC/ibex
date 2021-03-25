@@ -136,7 +136,7 @@ module ibex_core import ibex_pkg::*; #(
   localparam int unsigned PMP_NUM_CHAN      = 2;
   localparam bit          DataIndTiming     = SecureIbex;
   localparam bit          PCIncrCheck       = SecureIbex;
-  localparam bit          ShadowCSR         = SecureIbex;
+  localparam bit          ShadowCSR         = 1'b0;
   // Speculative branch option, trades-off performance against timing.
   // Setting this to 1 eases branch target critical paths significantly but reduces performance
   // by ~3% (based on CoreMark/MHz score).
@@ -854,9 +854,6 @@ module ibex_core import ibex_pkg::*; #(
 
   // Major alert - core is unrecoverable
   assign alert_major_o = rf_ecc_err_comb | pc_mismatch_alert | csr_shadow_err;
-
-  `ASSERT_KNOWN(IbexAlertMinorX, alert_minor_o)
-  `ASSERT_KNOWN(IbexAlertMajorX, alert_major_o)
 
   // Explict INC_ASSERT block to avoid unused signal lint warnings were asserts are not included
   `ifdef INC_ASSERT

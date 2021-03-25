@@ -4,6 +4,9 @@ Core Integration
 ================
 
 The main module is named ``ibex_top`` and can be found in ``ibex_top.sv``.
+Note that the core logic is split-out from the register file and RAMs under ``ibex_top``.
+This is to facilitate a dual-core lockstep implementation (see :ref:`security`).
+
 Below, the instantiation template is given and the parameters and interfaces are described.
 
 Instantiation Template
