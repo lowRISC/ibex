@@ -1055,19 +1055,47 @@ class core_ibex_debug_ebreakmu_test extends core_ibex_directed_test;
   `uvm_component_utils(core_ibex_debug_ebreakmu_test)
   `uvm_component_new
 
+  bit seen_ebreak;
+
+  virtual task send_stimulus();
+    seen_ebreak = 0;
+    fork
+      begin : detect_ebreak
+        wait (dut_vif.dut_cb.ebreak === 1'b1);
+        seen_ebreak = 1;
+      end
+      begin : run_stimulus
+        core_ibex_directed_test::send_stimulus();
+      end
+    join
+  endtask
+
   virtual task check_stimulus();
-    // send a single debug request after core initialization to configure dcsr
-    vseq.start_debug_single_seq();
-    check_next_core_status(IN_DEBUG_MODE,
-                           "Core did not enter debug mode after debug_req stimulus", 2000);
-    check_priv_mode(PRIV_LVL_M);
-    // Read dcsr and verify the appropriate ebreak(m/s/u) bit has been set based on the prv field,
-    // as well as the cause field
-    wait_for_csr_write(CSR_DCSR, 500);
-    check_dcsr_prv(init_operating_mode);
-    check_dcsr_ebreak();
-    check_dcsr_cause(DBG_CAUSE_HALTREQ);
-    wait_ret("dret", 5000);
+    fork begin
+      fork
+        begin : dbg_setup
+          // send a single debug request after core initialization to configure dcsr
+          vseq.start_debug_single_seq();
+          check_next_core_status(IN_DEBUG_MODE,
+                                 "Core did not enter debug mode after debug_req stimulus", 2000);
+          check_priv_mode(PRIV_LVL_M);
+          // Read dcsr and verify the appropriate ebreak(m/s/u) bit has been set based on the prv field,
+          // as well as the cause field
+          wait_for_csr_write(CSR_DCSR, 500);
+          check_dcsr_prv(init_operating_mode);
+          check_dcsr_ebreak();
+          check_dcsr_cause(DBG_CAUSE_HALTREQ);
+          wait_ret("dret", 5000);
+        end
+        begin : detect_ebreak
+          wait (seen_ebreak == 1);
+          `uvm_fatal(`gfn, {"EBreak seen whilst doing initial debug initialization, KNOWN FAILURE ",
+            "SEE https://github.com/lowRISC/ibex/issues/1313"})
+        end
+      join_any
+      disable fork;
+    end join
+
     forever begin
       wait (dut_vif.dut_cb.ebreak === 1'b1);
       check_next_core_status(IN_DEBUG_MODE,
