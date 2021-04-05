@@ -30,14 +30,16 @@ class ibex_icache_env_cfg extends dv_base_env_cfg;
     `uvm_field_array_object(ecc_data_agent_cfgs, UVM_DEFAULT)
   `uvm_object_utils_end
 
-  `uvm_object_new
+  function new (string name="");
+    super.new(name);
+    has_ral = 1'b0;  // The ICache has no RAL model
+  endfunction
 
   virtual function void initialize(bit [BUS_AW-1:0] csr_base_addr = '1);
+    super.initialize(csr_base_addr);
+
     core_agent_cfg = ibex_icache_core_agent_cfg::type_id::create("core_agent_cfg");
     mem_agent_cfg  = ibex_icache_mem_agent_cfg::type_id::create ("mem_agent_cfg");
-    // Note this is a hack - super.initialize() cannot be called without triggering a lot of
-    // issues due to missing RAL bits
-    is_initialized = 1;
   endfunction
 
   // Create tag and data ECC agents for each way. If ECC is disabled, this should still be called,
