@@ -2,9 +2,7 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-import logging as log
 import os
-import re
 import shlex
 import subprocess
 
@@ -81,15 +79,9 @@ class LocalLauncher(Launcher):
             return 'D'
 
         self.exit_code = self.process.returncode
-        status = 'P' if self._has_passed() else 'F'
-
-        self._post_finish(status)
+        status, err_msg = self._check_status()
+        self._post_finish(status, err_msg)
         return status
-
-    def _post_finish(self, status):
-        super()._post_finish(status)
-        self._close_process()
-        self.process = None
 
     def kill(self):
         '''Kill the running process.
@@ -99,7 +91,6 @@ class LocalLauncher(Launcher):
 
         '''
         assert self.process is not None
-        self.kill_remote_job()
 
         # Try to kill the running process. Send SIGTERM first, wait a bit,
         # and then send SIGKILL if it didn't work.
@@ -109,7 +100,12 @@ class LocalLauncher(Launcher):
         except subprocess.TimeoutExpired:
             self.process.kill()
 
-        self._post_finish('K')
+        self._post_finish('K', 'Job killed!')
+
+    def _post_finish(self, status, err_msg):
+        super()._post_finish(status, err_msg)
+        self._close_process()
+        self.process = None
 
     def _close_process(self):
         '''Close the file descriptors associated with the process.'''
@@ -117,23 +113,3 @@ class LocalLauncher(Launcher):
         assert self.process
         if self.process.stdout:
             self.process.stdout.close()
-
-    def kill_remote_job(self):
-        '''
-        If jobs are run in remote server, need to use another command to kill them.
-        '''
-        # TODO: Currently only support lsf, may need to add support for GCP later.
-
-        # If use lsf, kill it by job ID.
-        if re.match("^bsub", self.deploy.sim_cfg.job_prefix):
-            # get job id from below string
-            # Job <xxxxxx> is submitted to default queue
-            grep_cmd = "grep -m 1 -E \'" + "^Job <" + "\' " + \
-                self.deploy.get_log_path()
-            (status, rslt) = subprocess.getstatusoutput(grep_cmd)
-            if rslt != "":
-                job_id = rslt.split('Job <')[1].split('>')[0]
-                try:
-                    subprocess.run(["bkill", job_id], check=True)
-                except Exception as e:
-                    log.error("%s: Failed to run bkill\n", e)

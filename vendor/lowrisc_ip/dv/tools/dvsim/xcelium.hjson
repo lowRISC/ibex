@@ -5,7 +5,7 @@
   build_cmd:  "{job_prefix} xrun"
   run_cmd:    "{job_prefix} xrun"
 
-  build_opts: ["-elaborate -64bit -access +r -sv",
+  build_opts: ["-elaborate -64bit -sv",
                "-licqueue",
                // TODO: duplicate primitives between OT and Ibex #1231
                "-ALLOWREDEFINITION",
@@ -119,14 +119,49 @@
                      "-init {xcelium_common_excl_file}",
                      " {eval_cmd} echo {xcelium_cov_refine_files} | sed -E 's/(\\S+)/-load_refinement \\1/g' "]
 
+  cov_unr_dir:     "{scratch_path}/cov_unr"
+
+  // not needed we can reuse the last build snapshot
+  cov_unr_build_opts:[]
+  cov_unr_build_cmd:[]
+
+  cov_unr_run_cmd: "{job_prefix} xrun"
+
+
+  cov_unr_run_opts: [// use xrun in UNR mode
+                     "-unr",
+                     // JasperGold switch (use formal)
+                     "-jg",
+                     // use the same snapshot as used for regression
+                     "-r {tb}",
+                     // pointer to the merged coverage data from the regression
+                     "-covdb {cov_merge_db_dir}",
+                     // what metrics to use
+                     "-jg_coverage {cov_metrics}",
+                     "-64bit",
+                     "-xmlibdirname {build_dir}/xcelium.d",
+                     // overwrite previous results
+                     "-covoverwrite",
+                     "-inst_top {dut_instance}",
+                     // UNR Configurations
+                     "-input {xcelium_unr_cfg_file} "]
+
+
   // pass and fail patterns
   build_fail_patterns: ["\\*E.*$"]
   run_fail_patterns:   ["\\*E.*$"] // Null pointer error
 
   build_modes: [
     {
+      name: xcelium_gui
+      is_sim_mode: 1
+      build_opts: ["-createdebugdb", "-access +c"]
+      run_opts: ["-gui"]
+    }
+    {
       name: xcelium_waves
       is_sim_mode: 1
+      build_opts: ["-access +c"]
     }
     {
       name: xcelium_cov
@@ -137,7 +172,9 @@
                    "-covdut {dut}",
                    // Set the coverage configuration file
                    "-covfile {xcelium_cov_cfg_file}"]
-      run_opts:   [// Coverage database output location.
+      run_opts:   [// Put the coverage model (*.ucm) and the database (*.ucd) together.
+                   "-covmodeldir {cov_db_test_dir}",
+                   // Coverage database output location.
                    "-covworkdir {cov_work_dir}",
                    // Set the scope to the build mode name.
                    "-covscope {build_mode}",

@@ -25,14 +25,87 @@ class Launcher:
     launcher object holds an instance of the deploy object.
     """
 
+    # Type of launcher used as string.
+    variant = None
+
+    # Points to the python virtual env area.
+    pyvenv = None
+
     # If a history of previous invocations is to be maintained, then keep no
     # more than this many directories.
     max_odirs = 5
+
+    # Flag indicating the workspace preparation steps are complete.
+    workspace_prepared = False
+    workspace_prepared_for_cfg = set()
+
+    @staticmethod
+    def set_pyvenv(project):
+        '''Activate a python virtualenv if available.
+
+        The env variable <PROJECT>_PYTHON_VENV if set, points to the path
+        containing the python virtualenv created specifically for this
+        project. We can activate it if needed, before launching jobs using
+        external compute machines.
+
+        This is not applicable when running jobs locally on the user's machine.
+        '''
+
+        if Launcher.pyvenv is not None:
+            return
+
+        # If project-specific python virtualenv path is set, then activate it
+        # before running downstream tools. This is more relevant when not
+        # launching locally, but on external machines in a compute farm, which
+        # may not have access to the default python installation area on the
+        # host machine.
+        #
+        # The code below allows each launcher variant to set its own virtualenv
+        # because the loading / activating mechanism could be different between
+        # them.
+        Launcher.pyvenv = os.environ.get("{}_PYVENV_{}".format(
+            project.upper(), Launcher.variant.upper()))
+
+        if not Launcher.pyvenv:
+            Launcher.pyvenv = os.environ.get("{}_PYVENV".format(
+                project.upper()))
+
+    @staticmethod
+    def prepare_workspace(project, repo_top, args):
+        '''Prepare the workspace based on the chosen launcher's needs.
+
+        This is done once for the entire duration for the flow run.
+        'project' is the name of the project.
+        'repo_top' is the path to the repository.
+        'args' are the command line args passed to dvsim.
+        '''
+        pass
+
+    @staticmethod
+    def prepare_workspace_for_cfg(cfg):
+        '''Prepare the workspace for a cfg.
+
+        This is invoked once for each cfg.
+        'cfg' is the flow configuration object.
+        '''
+        pass
 
     def __str__(self):
         return self.deploy.full_name + ":launcher"
 
     def __init__(self, deploy):
+        cfg = deploy.sim_cfg
+
+        # One-time preparation of the workspace.
+        if not Launcher.workspace_prepared:
+            self.prepare_workspace(cfg.project, cfg.proj_root, cfg.args)
+            Launcher.workspace_prepared = True
+
+        # One-time preparation of the workspace, specific to the cfg.
+        if cfg not in Launcher.workspace_prepared_for_cfg:
+            self.prepare_workspace_for_cfg(cfg)
+            Launcher.workspace_prepared_for_cfg.add(cfg)
+
         # Store the deploy object handle.
         self.deploy = deploy
 
@@ -46,7 +119,7 @@ class Launcher:
         # create a new one.
         self.renew_odir = False
 
-        # Construct failure message if the test fails.
+        # Error message if the job fails.
         self.fail_msg = "\n**{!r}:** {!r}<br>\n".format(
             self.deploy.target.upper(), self.deploy.qual_name)
         self.fail_msg += "**LOG:** {}<br>\n".format(self.deploy.get_log_path())
@@ -58,6 +131,28 @@ class Launcher:
         if self.renew_odir:
             clean_odirs(odir=self.deploy.odir, max_odirs=self.max_odirs)
         os.makedirs(self.deploy.odir, exist_ok=True)
+
+    def _link_odir(self, status):
+        """Soft-links the job's directory based on job's status.
+
+        The dispatched, passed and failed directories in the scratch area
+        provide a quick way to get to the job that was executed.
+        """
+
+        dest = Path(self.deploy.sim_cfg.links[status], self.deploy.qual_name)
+
+        # If dest exists, then atomically remove it and link the odir again.
+        while True:
+            try:
+                os.symlink(self.deploy.odir, dest)
+                break
+            except FileExistsError:
+                rm_path(dest)
+
+        # Delete the symlink from dispatched directory if it exists.
+        if status != "D":
+            old = Path(self.deploy.sim_cfg.links['D'], self.deploy.qual_name)
+            rm_path(old)
 
     def _dump_env_vars(self, exports):
         """Write env vars to a file for ease of debug.
@@ -95,22 +190,10 @@ class Launcher:
         self._pre_launch()
         self._do_launch()
 
-    def _post_finish(self, status):
-        """Do post-completion activities, such as preparing the results.
-
-        Must be invoked by poll().
-        """
-
-        assert status in ['P', 'F', 'K']
-        if status in ['P', 'F']:
-            self._link_odir(status)
-        self.deploy.post_finish(status)
-        log.debug("Item %s has completed execution: %s", self, status)
-
     def poll(self):
         """Poll the launched job for completion.
 
-        Invokes _has_passed() and _post_finish() when the job completes.
+        Invokes _check_status() and _post_finish() when the job completes.
         """
 
         raise NotImplementedError()
@@ -120,18 +203,13 @@ class Launcher:
 
         raise NotImplementedError()
 
-    def _has_passed(self):
+    def _check_status(self):
         """Determine the outcome of the job (P/F if it ran to completion).
 
-        Return True if the job passed, False otherwise. This is called by
-        poll() just after the job finishes.
+        Returns (status, err_msg) extracted from the log, where the status is
+        "P" if the it passed, "F" otherwise. This is invoked by poll() just
+        after the job finishes.
         """
-        def log_fail_msg(msg):
-            """Logs the fail msg to the final report."""
-
-            self.fail_msg += msg
-            log.log(VERBOSE, msg)
-
         def _find_patterns(patterns, line):
             """Helper function that returns the pattern if any of the given
             patterns is found, else None."""
@@ -149,11 +227,12 @@ class Launcher:
             return ''.join(lines[pos:pos + num - 1]).strip()
 
         if self.deploy.dry_run:
-            return True
+            return "P", None
 
         # Only one fail pattern needs to be seen.
         failed = False
         chk_failed = bool(self.deploy.fail_patterns)
+        err_msg = None
 
         # All pass patterns need to be seen, so we replicate the list and remove
         # patterns as we encounter them.
@@ -161,12 +240,13 @@ class Launcher:
         chk_passed = bool(pass_patterns) and (self.exit_code == 0)
 
         try:
-            with open(self.deploy.get_log_path(), "r", encoding="UTF-8") as f:
+            with open(self.deploy.get_log_path(), "r", encoding="UTF-8",
+                      errors="surrogateescape") as f:
                 lines = f.readlines()
         except OSError as e:
-            log_fail_msg("Error opening file {}:\n{}".format(
-                self.deploy.get_log_path(), e))
-            return False
+            err_msg = "Error opening file {}:\n{}".format(
+                self.deploy.get_log_path(), e)
+            return "F", err_msg
 
         if chk_failed or chk_passed:
             for cnt, line in enumerate(lines):
@@ -174,8 +254,7 @@ class Launcher:
                     if _find_patterns(self.deploy.fail_patterns,
                                       line) is not None:
                         # Print 4 additional lines to help debug more easily.
-                        log_fail_msg("```\n{}\n```\n".format(
-                            _get_n_lines(cnt, 5)))
+                        err_msg = "```\n{}\n```\n".format(_get_n_lines(cnt, 5))
                         failed = True
                         chk_failed = False
                         chk_passed = False
@@ -188,45 +267,49 @@ class Launcher:
 
         # If failed, then nothing else to do. Just return.
         if failed:
-            return False
+            assert err_msg is not None
+            return "F", err_msg
 
         # If no fail patterns were seen, but the job returned with non-zero
         # exit code for whatever reason, then show the last 10 lines of the log
         # as the failure message, which might help with the debug.
         if self.exit_code != 0:
-            msg = ''.join(lines[-10:]).strip()
-            log_fail_msg("Job returned non-zero exit code. "
-                         "Last 10 lines:\n```\n{}\n```\n".format(msg))
-            return False
+            err_msg = ("Job returned non-zero exit code:\nLast 10 lines:\n"
+                       "```\n{}\n```\n")
+            err_msg = err_msg.format(''.join(lines[-10:]).strip())
+            return "F", err_msg
 
         # Ensure all pass patterns were seen.
         if chk_passed:
-            msg = ''.join(lines[-10:]).strip()
-            log_fail_msg("One or more pass patterns not found:\n{}\n"
-                         "Last 10 lines:\n```\n{}\n```\n".format(
-                             pass_patterns, msg))
-            return False
+            err_msg = ("Some pass patterns missing:\n{}\nLast 10 lines:\n"
+                       "```\n{}\n```\n")
+            err_msg = err_msg.format(pass_patterns,
+                                     ''.join(lines[-10:]).strip())
+            return "F", err_msg
 
-        return True
+        assert err_msg is None
+        return "P", None
 
-    def _link_odir(self, status):
-        """Soft-links the job's directory based on job's status.
+    def _post_finish(self, status, err_msg):
+        """Do post-completion activities, such as preparing the results.
 
-        The dispatched, passed and failed directories in the scratch area
-        provide a quick way to get to the job that was executed.
+        Must be invoked by poll(), after the job outcome is determined.
         """
 
-        dest = Path(self.deploy.sim_cfg.links[status], self.deploy.qual_name)
+        assert status in ['P', 'F', 'K']
+        if status in ['P', 'F']:
+            self._link_odir(status)
+        self.deploy.post_finish(status)
+        log.debug("Item %s has completed execution: %s", self, status)
+        if status != "P":
+            self._log_fail_msg(err_msg)
 
-        # If dest exists, then atomically remove it and link the odir again.
-        while True:
-            try:
-                os.symlink(self.deploy.odir, dest)
-                break
-            except FileExistsError:
-                rm_path(dest)
+    def _log_fail_msg(self, msg):
+        """Logs the fail msg for the final report.
 
-        # Delete the symlink from dispatched directory if it exists.
-        if status != "D":
-            old = Path(self.deploy.sim_cfg.links['D'], self.deploy.qual_name)
-            rm_path(old)
+        Invoked in _post_finish() only if the job did not pass.
+        """
+
+        assert msg is not None
+        self.fail_msg += msg
+        log.log(VERBOSE, msg)

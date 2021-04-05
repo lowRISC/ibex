@@ -165,7 +165,7 @@ def _subst_wildcards(var, mdict, ignored, ignore_error, seen):
             # command and we're done.
             cmd_matches = list(wildcard_re.finditer(cmd))
             if not cmd_matches:
-                var = var[:idx] + run_cmd(cmd)
+                var = var[:match.start()] + run_cmd(cmd)
                 continue
 
             # Otherwise, check that each of them is ignored, or that
@@ -536,19 +536,23 @@ def rm_path(path, ignore_error=False):
     operation is raised, else it is ignored.
     '''
 
+    exc = None
     try:
-        if os.path.islink(path):
-            os.remove(path)
-        elif os.path.isdir(path):
-            shutil.rmtree(path)
-        else:
-            os.remove(path)
+        os.remove(path)
     except FileNotFoundError:
         pass
+    except IsADirectoryError:
+        try:
+            shutil.rmtree(path)
+        except OSError as e:
+            exc = e
     except OSError as e:
-        log.error("Failed to remove {}:\n{}.".format(path, e))
+        exc = e
+
+    if exc:
+        log.error("Failed to remove {}:\n{}.".format(path, exc))
         if not ignore_error:
-            raise e
+            raise exc
 
 
 def clean_odirs(odir, max_odirs, ts_format=TS_FORMAT):
@@ -575,8 +579,7 @@ def clean_odirs(odir, max_odirs, ts_format=TS_FORMAT):
                   key=os.path.getctime,
                   reverse=True)
 
-    for old in dirs[max_odirs - 1:]:
-        if os.path.exists(old):
-            shutil.rmtree(old, ignore_errors=True)
+    for old in dirs[max(0, max_odirs - 1):]:
+        shutil.rmtree(old, ignore_errors=True)
 
-    return dirs[0:max_odirs - 2]
+    return [] if max_odirs == 0 else dirs[:max_odirs - 1]

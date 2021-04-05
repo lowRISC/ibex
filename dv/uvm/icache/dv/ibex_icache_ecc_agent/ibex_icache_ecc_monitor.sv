@@ -3,8 +3,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 class ibex_icache_ecc_monitor extends dv_base_monitor #(
-    .ITEM_T (ibex_icache_ecc_bus_item),
-    .CFG_T  (ibex_icache_ecc_agent_cfg)
+    .ITEM_T     (ibex_icache_ecc_bus_item),
+    .REQ_ITEM_T (ibex_icache_ecc_item),
+    .RSP_ITEM_T (ibex_icache_ecc_item),
+    .CFG_T      (ibex_icache_ecc_agent_cfg)
   );
   `uvm_component_utils(ibex_icache_ecc_monitor)
 

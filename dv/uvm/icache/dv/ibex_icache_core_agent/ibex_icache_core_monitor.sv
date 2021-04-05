@@ -3,9 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 class ibex_icache_core_monitor extends dv_base_monitor #(
-    .ITEM_T (ibex_icache_core_bus_item),
-    .CFG_T  (ibex_icache_core_agent_cfg),
-    .COV_T  (ibex_icache_core_agent_cov)
+    .ITEM_T     (ibex_icache_core_bus_item),
+    .REQ_ITEM_T (ibex_icache_core_req_item),
+    .RSP_ITEM_T (ibex_icache_core_rsp_item),
+    .CFG_T      (ibex_icache_core_agent_cfg),
+    .COV_T      (ibex_icache_core_agent_cov)
   );
   `uvm_component_utils(ibex_icache_core_monitor)
 

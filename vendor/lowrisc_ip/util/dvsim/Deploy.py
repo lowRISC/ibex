@@ -5,8 +5,9 @@
 import logging as log
 import pprint
 import random
+import shlex
 
-from LocalLauncher import LocalLauncher
+from LauncherFactory import get_launcher
 from sim_utils import get_cov_summary_table
 from tabulate import tabulate
 from utils import (VERBOSE, clean_odirs, find_and_substitute_wildcards,
@@ -25,6 +26,15 @@ class Deploy():
     # This tells '_construct_cmd' that these vars are lists that need to
     # be joined with '&&' instead of a space.
     cmds_list_vars = []
+
+    # Represents the weight with which a job of this target is scheduled. These
+    # initial weights set for each of the targets below are roughly inversely
+    # proportional to their average runtimes. These are subject to change in
+    # future. Lower the runtime, the higher chance the it gets scheduled. It is
+    # useful to customize this only in case of targets that may coexist at a
+    # time.
+    # TODO: Allow these to be set in the HJson.
+    weight = 1
 
     def __str__(self):
         return (pprint.pformat(self.__dict__)
@@ -64,7 +74,7 @@ class Deploy():
 
         # Create the launcher object. Launcher retains the handle to self for
         # lookup & callbacks.
-        self.launcher = LocalLauncher(self)
+        self.launcher = get_launcher(self)
 
     def _define_attrs(self):
         """Defines the attributes this instance needs to have.
@@ -133,6 +143,16 @@ class Deploy():
         # 'aes:default', 'uart:default' builds.
         self.full_name = self.sim_cfg.name + ":" + self.qual_name
 
+        # Job name is used to group the job by cfg and target.
+        self.job_name = "{}_{}".format(self.sim_cfg.name, self.target)
+
+        # Input directories (other than self) this job depends on.
+        self.input_dirs = []
+
+        # Directories touched by this job. These directories are marked
+        # becuase they are used by dependent jobs as input.
+        self.output_dirs = [self.odir]
+
         # Pass and fail patterns.
         self.pass_patterns = []
         self.fail_patterns = []
@@ -144,13 +164,13 @@ class Deploy():
         """
         for attr in self.mandatory_cmd_attrs.keys():
             if self.mandatory_cmd_attrs[attr] is False:
-                raise AttributeError("Attribute \"{!r}\" not found for "
-                                     "\"{!r}\".".format(attr, self.name))
+                raise AttributeError("Attribute {!r} not found for "
+                                     "{!r}.".format(attr, self.name))
 
         for attr in self.mandatory_misc_attrs.keys():
             if self.mandatory_misc_attrs[attr] is False:
-                raise AttributeError("Attribute \"{!r}\" not found for "
-                                     "\"{!r}\".".format(attr, self.name))
+                raise AttributeError("Attribute {!r} not found for "
+                                     "{!r}.".format(attr, self.name))
 
     def _subst_vars(self, ignored_subst_vars=[]):
         """Recursively search and replace substitution variables.
@@ -183,25 +203,22 @@ class Deploy():
     def _construct_cmd(self):
         """Construct the command that will eventually be launched."""
 
-        cmd = "make -f " + self.flow_makefile + " " + self.target
+        args = ["make", "-f", self.flow_makefile, self.target]
         if self.dry_run is True:
-            cmd += " -n"
+            args += ["-n"]
         for attr in sorted(self.mandatory_cmd_attrs.keys()):
             value = getattr(self, attr)
             if type(value) is list:
-                pretty_value = []
-                for item in value:
-                    pretty_value.append(item.strip())
                 # Join attributes that are list of commands with '&&' to chain
                 # them together when executed as a Make target's recipe.
                 separator = " && " if attr in self.cmds_list_vars else " "
-                value = separator.join(pretty_value)
+                value = separator.join(item.strip() for item in value)
             if type(value) is bool:
                 value = int(value)
             if type(value) is str:
                 value = value.strip()
-            cmd += " " + attr + "=\"" + str(value) + "\""
-        return cmd
+            args += ["{}={}".format(attr, shlex.quote(value))]
+        return " ".join(args)
 
     def is_equivalent_job(self, item):
         """Checks if job that would be dispatched with 'item' is equivalent to
@@ -262,6 +279,7 @@ class CompileSim(Deploy):
 
     target = "build"
     cmds_list_vars = ["pre_build_cmds", "post_build_cmds"]
+    weight = 5
 
     def __init__(self, build_mode, sim_cfg):
         self.build_mode_obj = build_mode
@@ -298,12 +316,16 @@ class CompileSim(Deploy):
 
         # 'build_mode' is used as a substitution variable in the HJson.
         self.build_mode = self.name
+        self.job_name = "{}_{}_{}".format(self.sim_cfg.name, self.target,
+                                          self.build_mode)
+        if self.sim_cfg.cov:
+            self.output_dirs += [self.cov_db_dir]
         self.pass_patterns = self.build_pass_patterns
         self.fail_patterns = self.build_fail_patterns
 
     def pre_launch(self):
         # Delete old coverage database directories before building again. We
-        # need to do this becuase build directory is not 'renewed'.
+        # need to do this because the build directory is not 'renewed'.
         rm_path(self.cov_db_dir)
 
 
@@ -340,12 +362,19 @@ class CompileOneShot(Deploy):
             "report_opts": False
         })
 
+        self.mandatory_misc_attrs.update({
+            "build_fail_patterns": False
+        })
+
     def _set_attrs(self):
         super()._extract_attrs(self.build_mode_obj.__dict__)
         super()._set_attrs()
 
         # 'build_mode' is used as a substitution variable in the HJson.
         self.build_mode = self.name
+        self.job_name = "{}_{}_{}".format(self.sim_cfg.name, self.target,
+                                          self.build_mode)
+        self.fail_patterns = self.build_fail_patterns
 
 
 class RunTest(Deploy):
@@ -365,6 +394,10 @@ class RunTest(Deploy):
 
         if build_job is not None:
             self.dependencies.append(build_job)
+
+        # We did something wrong if build_mode is not the same as the build_job
+        # arg's name.
+        assert self.build_mode == build_job.name
 
         self.launcher.renew_odir = True
 
@@ -402,8 +435,15 @@ class RunTest(Deploy):
         self.build_mode = self.test_obj.build_mode.name
         self.qual_name = self.run_dir_name + "." + str(self.seed)
         self.full_name = self.sim_cfg.name + ":" + self.qual_name
-        self.pass_patterns = self.run_pass_patterns
-        self.fail_patterns = self.run_fail_patterns
+        self.job_name = "{}_{}_{}".format(self.sim_cfg.name, self.target,
+                                          self.build_mode)
+        if self.sim_cfg.cov:
+            self.output_dirs += [self.cov_db_test_dir]
+
+        # In GUI mode, the log file is not updated; hence, nothing to check.
+        if not self.sim_cfg.gui:
+            self.pass_patterns = self.run_pass_patterns
+            self.fail_patterns = self.run_fail_patterns
 
     def post_finish(self, status):
         if status != 'P':
@@ -451,6 +491,7 @@ class CovUnr(Deploy):
 
         self.mandatory_misc_attrs.update({
             "cov_unr_dir": False,
+            "cov_merge_db_dir": False,
             "build_fail_patterns": False
         })
 
@@ -458,6 +499,7 @@ class CovUnr(Deploy):
         super()._set_attrs()
         self.qual_name = self.target
         self.full_name = self.sim_cfg.name + ":" + self.qual_name
+        self.input_dirs += [self.cov_merge_db_dir]
 
         # Reuse the build_fail_patterns set in the HJson.
         self.fail_patterns = self.build_fail_patterns
@@ -467,6 +509,7 @@ class CovMerge(Deploy):
     """Abstraction for merging coverage databases."""
 
     target = "cov_merge"
+    weight = 10
 
     def __init__(self, run_items, sim_cfg):
         # Construct the cov_db_dirs right away from the run_items. This is a
@@ -495,8 +538,7 @@ class CovMerge(Deploy):
         self.needs_all_dependencies_passing = False
 
         # Append cov_db_dirs to the list of exports.
-        self.exports["cov_db_dirs"] = "\"{}\"".format(" ".join(
-            self.cov_db_dirs))
+        self.exports["cov_db_dirs"] = shlex.quote(" ".join(self.cov_db_dirs))
 
     def _define_attrs(self):
         super()._define_attrs()
@@ -517,12 +559,15 @@ class CovMerge(Deploy):
 
         # For merging coverage db, the precise output dir is set in the HJson.
         self.odir = self.cov_merge_db_dir
+        self.input_dirs += self.cov_db_dirs
+        self.output_dirs = [self.odir]
 
 
 class CovReport(Deploy):
     """Abstraction for coverage report generation. """
 
     target = "cov_report"
+    weight = 10
 
     def __init__(self, merge_job, sim_cfg):
         super().__init__(sim_cfg)
@@ -584,6 +629,8 @@ class CovAnalyze(Deploy):
     target = "cov_analyze"
 
     def __init__(self, sim_cfg):
+        # Enforce GUI mode for coverage analysis.
+        sim_cfg.gui = True
         super().__init__(sim_cfg)
 
     def _define_attrs(self):
@@ -604,3 +651,4 @@ class CovAnalyze(Deploy):
         super()._set_attrs()
         self.qual_name = self.target
         self.full_name = self.sim_cfg.name + ":" + self.qual_name
+        self.input_dirs += [self.cov_merge_db_dir]

@@ -29,9 +29,10 @@ import sys
 import textwrap
 from pathlib import Path
 
+import Launcher
+import LauncherFactory
 from CfgFactory import make_cfg
 from Deploy import RunTest
-from Launcher import Launcher
 from Scheduler import Scheduler
 from Timer import Timer
 from utils import (TS_FORMAT, TS_FORMAT_LONG, VERBOSE, rm_path,
@@ -312,6 +313,11 @@ def parse_args():
                       help=('Prepend this string when running each tool '
                             'command.'))
 
+    disg.add_argument("--local",
+                      action='store_true',
+                      help=('Force jobs to be dispatched locally onto user\'s '
+                            'machine.'))
+
     disg.add_argument("--remote",
                       action='store_true',
                       help=('Trigger copying of the repo to scratch area.'))
@@ -395,6 +401,11 @@ def parse_args():
                         metavar="MODE",
                         help=('The options for each build_mode in this list '
                               'are applied to all build and run targets.'))
+
+    disg.add_argument("--gui",
+                      action='store_true',
+                      help=('Run the flow in interactive mode instead of the '
+                            'batch mode.'))
 
     rung = parser.add_argument_group('Options for running')
 
@@ -637,7 +648,8 @@ def main():
     # Register the common deploy settings.
     Timer.print_interval = args.print_interval
     Scheduler.max_parallel = args.max_parallel
-    Launcher.max_odirs = args.max_odirs
+    Launcher.Launcher.max_odirs = args.max_odirs
+    LauncherFactory.set_launcher_type(args.local)
 
     # Build infrastructure from hjson file and create the list of items to
     # be deployed.
