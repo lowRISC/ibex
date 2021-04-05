@@ -6,8 +6,8 @@
 
   entries: [
     {
-      name: sanity
-      desc: '''Basic sanity test for icache
+      name: smoke
+      desc: '''Basic smoke test for icache
 
             Make a series of requests with unconstrained addresses, branching
             occasionally and disabling the request line occasionally (modelling
@@ -18,7 +18,7 @@
             self-check tests are run for all the tests described below, as well
             as any extra tests they describe).'''
       milestone: V1
-      tests: ["ibex_icache_sanity"]
+      tests: ["ibex_icache_smoke"]
     }
 
     {
@@ -32,7 +32,7 @@
             changes reasonably frequent.
 
             If any data is wrongly cached, the scoreboard in this test should
-            probably spot it happening. Note that the sanity test theoretically
+            probably spot it happening. Note that the smoke test theoretically
             could check this, but the unconstrained branch addresses mean it's
             very unlikely to see much caching going on.'''
       milestone: V2
