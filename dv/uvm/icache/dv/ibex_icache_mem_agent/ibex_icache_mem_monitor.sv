@@ -3,9 +3,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 class ibex_icache_mem_monitor
-  extends dv_base_monitor #(.ITEM_T (ibex_icache_mem_bus_item),
-                            .CFG_T  (ibex_icache_mem_agent_cfg),
-                            .COV_T  (ibex_icache_mem_agent_cov));
+  extends dv_base_monitor #(.ITEM_T     (ibex_icache_mem_bus_item),
+                            .REQ_ITEM_T (ibex_icache_mem_resp_item),
+                            .RSP_ITEM_T (ibex_icache_mem_resp_item),
+                            .CFG_T      (ibex_icache_mem_agent_cfg),
+                            .COV_T      (ibex_icache_mem_agent_cov));
 
   `uvm_component_utils(ibex_icache_mem_monitor)
   `uvm_component_new

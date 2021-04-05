@@ -126,6 +126,8 @@ class SimCfg(FlowCfg):
         self.map_full_testplan = args.map_full_testplan
 
         # Set default sim modes for unpacking
+        if args.gui:
+            self.en_build_modes.append("gui")
         if args.waves is not None:
             self.en_build_modes.append("waves")
         if self.cov is True:
@@ -449,22 +451,16 @@ class SimCfg(FlowCfg):
         tests A, B with reseed values of 5 and 2, respectively, then the list
         will be ABABAAA).
 
-        build_map is either None or a dictionary from build name to a
-        CompileSim object. If None, this means that we're in "run only" mode,
-        so there are no builds involved at all. Otherwise, the build_mode of
-        each appears in the map to signify the test's dependency on its
-        corresponding CompileSim item (test cannot run until it has been
-        compiled).
-
+        build_map is a dictionary mapping a build mode to a CompileSim object.
         '''
         tagged = []
+
         for test in self.run_list:
-            build_job = (build_map[test.build_mode]
-                         if build_map is not None else None)
+            build_job = build_map[test.build_mode]
             for idx in range(test.reseed):
                 tagged.append((idx, RunTest(idx, test, build_job, self)))
 
-        # Stably sort the tagged list by the 1st coordinate
+        # Stably sort the tagged list by the 1st coordinate.
         tagged.sort(key=lambda x: x[0])
 
         # Return the sorted list of RunTest objects, discarding the indices by
@@ -507,21 +503,30 @@ class SimCfg(FlowCfg):
                 test.build_mode = Modes.find_mode(
                     build_map[test.build_mode].name, self.build_modes)
 
-        if self.run_only:
-            self.builds = []
-            build_map = None
-
         self.runs = ([]
                      if self.build_only else self._expand_run_list(build_map))
 
-        self.deploy = self.builds + self.runs
+        # In GUI mode, only allow one test to run.
+        if self.gui and len(self.runs) > 1:
+            self.runs = self.runs[:1]
+            log.warning("In GUI mode, only one test is allowed to run. "
+                        "Picking {}".format(self.runs[0].full_name))
 
-        # Create cov_merge and cov_report objects, so long as we've got at
-        # least one run to do.
-        if self.cov and self.runs:
-            self.cov_merge_deploy = CovMerge(self.runs, self)
-            self.cov_report_deploy = CovReport(self.cov_merge_deploy, self)
-            self.deploy += [self.cov_merge_deploy, self.cov_report_deploy]
+        # Add builds to the list of things to run, only if --run-only switch
+        # is not passed.
+        self.deploy = []
+        if not self.run_only:
+            self.deploy += self.builds
+
+        if not self.build_only:
+            self.deploy += self.runs
+
+            # Create cov_merge and cov_report objects, so long as we've got at
+            # least one run to do.
+            if self.cov and self.runs:
+                self.cov_merge_deploy = CovMerge(self.runs, self)
+                self.cov_report_deploy = CovReport(self.cov_merge_deploy, self)
+                self.deploy += [self.cov_merge_deploy, self.cov_report_deploy]
 
         # Create initial set of directories before kicking off the regression.
         self._create_dirs()
@@ -547,8 +552,8 @@ class SimCfg(FlowCfg):
         coverage exclusions.
         '''
         # TODO, Only support VCS
-        if self.tool != 'vcs':
-            log.error("Currently only support VCS for coverage UNR")
+        if self.tool not in ['vcs', 'xcelium']:
+            log.error("Only VCS and Xcelium are supported for the UNR flow.")
             sys.exit(1)
         # Create initial set of directories, such as dispatched, passed etc.
         self._create_dirs()

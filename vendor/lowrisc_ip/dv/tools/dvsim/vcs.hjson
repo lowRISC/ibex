@@ -11,12 +11,16 @@
                "-Mdir={build_ex}.csrc",
                "-o {build_ex}",
                "-f {sv_flist}",
+               // Enable LCA features. It does not require separate licenses.
+               "-lca",
                // List multiple tops for the simulation. Prepend each top level with `-top`.
                "{eval_cmd} echo {sim_tops} | sed -E 's/(\\S+)/-top \\1/g'",
                "+incdir+{build_dir}",
                // Turn on warnings for non-void functions called with return values ignored
                "+warn=SV-NFIVC",
                "+warn=noUII-L",
+               // Disable unnecessary LCA warning.
+               "+warn=noLCA_FEATURES_ENABLED",
                // Below option required for $error/$fatal system calls
                "-assert svaext",
                // Force unique and priority to evaluate compliance checking only on the stable
@@ -29,7 +33,7 @@
                // otherwise. The double-escaped quotes are because this needs to go inside a string
                // that gets passed to Make (stripping one level of quotes), and then needs to
                // result in an argument with an embedded space (the other one).
-               "-CFLAGS \\\"--std=c99 -fno-extended-identifiers\\\"",
+               "-CFLAGS --std=c99 -CFLAGS -fno-extended-identifiers",
                // C++11 standard is enforced for all sources, including the DPI-C constructs.
                // TODO, may need to update to c++14 to meet our requirements
                // Refer to https://docs.opentitan.org/doc/ug/install_instructions
@@ -192,7 +196,7 @@
 
   // Vars that need to exported to the env.
   exports: [
-    { FLEXLM_DIAGNOSTICS: 4 },
+    { VCS_LICENSE_WAIT: 1 },
     { VCS_ARCH_OVERRIDE: "linux" },
     { VCS_LIC_EXPIRE_WARNING: 1 }
   ]
@@ -217,6 +221,12 @@
   run_fail_patterns:   ["^Error-.*$"] // Null pointer error
 
   build_modes: [
+    {
+      name: vcs_gui
+      is_sim_mode: 1
+      build_opts: ["-debug_access+all+reverse"]
+      run_opts: ["-gui", "-l {run_dir}/simv.log"]
+    }
     {
       name: vcs_waves
       is_sim_mode: 1

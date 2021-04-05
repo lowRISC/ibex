@@ -72,6 +72,7 @@
   exports: [
     { dv_root: "{dv_root}" },
     { SIMULATOR: "{tool}" },
+    { GUI: "{gui}"},
     { WAVES: "{waves}" },
     { DUT_TOP: "{dut}" },
     { TB_TOP: "{tb}" },
@@ -142,6 +143,7 @@
   // Project defaults for Xcelium
   xcelium_cov_cfg_file: "{dv_root}/tools/xcelium/xcelium.ccf"
   xcelium_cov_refine_files: []
+  xcelium_unr_cfg_file:  "{dv_root}/tools/xcelium/unr.cfg"
   xcelium_common_excl_file: ["{dv_root}/tools/xcelium/exclude.tcl"]
 
   // Build-specific coverage cfg files for Xcelium.

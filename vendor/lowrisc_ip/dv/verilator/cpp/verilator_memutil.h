@@ -1,11 +1,11 @@
 // Copyright lowRISC contributors.
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
-
-#pragma once
+#ifndef OPENTITAN_HW_DV_VERILATOR_CPP_VERILATOR_MEMUTIL_H_
+#define OPENTITAN_HW_DV_VERILATOR_CPP_VERILATOR_MEMUTIL_H_
 
 //
-// A wrapper class that converts a VerilatorMemutil into a SimCtrlExtension
+// A wrapper class that converts a DpiMemutil into a SimCtrlExtension
 //
 
 #include <memory>
@@ -26,17 +26,15 @@ class VerilatorMemUtil : public SimCtrlExtension {
   // Get underlying DpiMemUtil object
   DpiMemUtil *GetUnderlying() { return mem_util_; }
 
-  // Pass-thru functions to underlying object
-  bool RegisterMemoryArea(const std::string name, const std::string location,
-                          size_t width_bit, const MemAreaLoc *addr_loc) {
-    return mem_util_->RegisterMemoryArea(name, location, width_bit, addr_loc);
-  }
-
-  bool RegisterMemoryArea(const std::string name, const std::string location) {
-    return mem_util_->RegisterMemoryArea(name, location);
+  // Pass-thru function to underlying object
+  void RegisterMemoryArea(const std::string &name, uint32_t base,
+                          const MemArea *mem_area) {
+    return mem_util_->RegisterMemoryArea(name, base, mem_area);
   }
 
  private:
   DpiMemUtil *mem_util_;
   std::unique_ptr<DpiMemUtil> allocation_;
 };
+
+#endif  // OPENTITAN_HW_DV_VERILATOR_CPP_VERILATOR_MEMUTIL_H_
