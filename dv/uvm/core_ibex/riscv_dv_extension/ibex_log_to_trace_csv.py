@@ -205,7 +205,7 @@ def check_ibex_uvm_log(uvm_log):
         test_result_seen = False
 
         for line in log:
-            if ('UVM_ERROR' in line or 'UVM_FATAL' in line) \
+            if ('UVM_ERROR' in line or 'UVM_FATAL' in line or 'Error' in line) \
                     and not test_result_seen:
                 log_out.append(line)
                 failed = True
