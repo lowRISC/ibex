@@ -39,27 +39,29 @@
 #      - ...
 
 
+# TODO: Enable multiple configurations for CSR test. MISA read value will depend
+# on whether B and M are available. https://github.com/lowRISC/ibex/issues/1333
 # Ibex MISA CSR
-- csr: misa
-  description: >
-    Machine ISA Register
-  address: 0x301
-  privilege_mode: M
-  rv32:
-    - field_name: MXL
-      description: >
-        Encodes native base ISA width
-      type: R
-      reset_val: 1
-      msb: 31
-      lsb: 30
-    - field_name: Extensions
-      description: >
-          Encodes all supported ISA extensions
-      type: R
-      reset_val: 0x101106
-      msb: 25
-      lsb: 0
+#- csr: misa
+#  description: >
+#    Machine ISA Register
+#  address: 0x301
+#  privilege_mode: M
+#  rv32:
+#    - field_name: MXL
+#      description: >
+#        Encodes native base ISA width
+#      type: R
+#      reset_val: 1
+#      msb: 31
+#      lsb: 30
+#    - field_name: Extensions
+#      description: >
+#          Encodes all supported ISA extensions
+#      type: R
+#      reset_val: 0x101106
+#      msb: 25
+#      lsb: 0
 
 # Ibex's implementation of MHARTID is read-only
 # MHARTID
