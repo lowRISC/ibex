@@ -7,6 +7,8 @@
   `define RVFI
 `endif
 
+`include "prim_assert.sv"
+
 /**
  * Top level module of the ibex RISC-V core
  */
