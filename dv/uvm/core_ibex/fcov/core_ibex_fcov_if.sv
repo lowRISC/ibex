@@ -214,7 +214,7 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     if (!rst_ni) begin
       // First cycle out of reset there is no last stall, use valid bit to deal with this case
       id_stall_type_last_valid <= 1'b0;
-      id_stall_type_last       <= 1'b0;
+      id_stall_type_last       <= IdStallTypeNone;
       instr_unstalled_last     <= 1'b0;
       id_instr_category_last   <= InstrCategoryNone;
     end else begin
