@@ -132,6 +132,7 @@ module ibex_top_tracing #(
     .rst_ni,
 
     .test_en_i,
+    .scan_rst_ni('0),
     .ram_cfg_i,
 
     .hart_id_i,

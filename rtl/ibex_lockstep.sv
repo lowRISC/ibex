@@ -88,7 +88,9 @@ module ibex_lockstep import ibex_pkg::*; #(
 
     output logic                         alert_minor_o,
     output logic                         alert_major_o,
-    input  logic                         core_busy_i
+    input  logic                         core_busy_i,
+    input  logic                         test_en_i,
+    input  logic                         scan_rst_ni
 );
 
   localparam int unsigned LockstepOffsetW = $clog2(LockstepOffset);
@@ -118,7 +120,7 @@ module ibex_lockstep import ibex_pkg::*; #(
     end
   end
 
-  assign rst_shadow_n = rst_shadow_set_q;
+  assign rst_shadow_n = test_en_i ? scan_rst_ni : rst_shadow_set_q;
 
   //////////////////
   // Input delays //
