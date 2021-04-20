@@ -626,7 +626,7 @@ module ibex_top #(
           .out_o(ic_tag_rdata_local[k][j])
         );
       end
-      for (genvar j = 0; j < TagSizeECC; j++) begin : gen_data_bufs
+      for (genvar j = 0; j < LineSizeECC; j++) begin : gen_data_bufs
         prim_buf u_prim_buf (
           .in_i(ic_data_rdata[k][j]),
           .out_o(ic_data_rdata_local[k][j])
