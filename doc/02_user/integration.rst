@@ -165,7 +165,7 @@ Interfaces
 |                         |                         |     | test control of reset.                 |
 +-------------------------+-------------------------+-----+----------------------------------------+
 | ``scan_rst_ni``         | 1                       | in  | Test controlled reset.  If DFT not     |
-|                         |                         |     | used, tie off to 0.                    |
+|                         |                         |     | used, tie off to 1.                    |
 +-------------------------+-------------------------+-----+----------------------------------------+
 | ``ram_cfg_i``           | 10                      | in  | RAM configuration inputs, routed to    |
 |                         |                         |     | the icache RAMs                        |

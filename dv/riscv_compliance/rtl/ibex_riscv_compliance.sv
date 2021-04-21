@@ -132,6 +132,7 @@ module ibex_riscv_compliance (
       .rst_ni         (rst_sys_n         ),
 
       .test_en_i      ('b0               ),
+      .scan_rst_ni    (1'b1              ),
       .ram_cfg_i      ('b0               ),
 
       .hart_id_i      (32'b0             ),
