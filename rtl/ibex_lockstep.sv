@@ -100,9 +100,9 @@ module ibex_lockstep import ibex_pkg::*; #(
   //////////////////////
 
   logic [LockstepOffsetW-1:0] rst_shadow_cnt_d, rst_shadow_cnt_q;
-  logic                       rst_shadow_set_d, rst_shadow_set_q;
   // Internally generated resets cause IMPERFECTSCH warnings
   /* verilator lint_off IMPERFECTSCH */
+  logic                       rst_shadow_set_d, rst_shadow_set_q;
   logic                       rst_shadow_n;
   /* verilator lint_on IMPERFECTSCH */
 

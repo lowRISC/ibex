@@ -78,6 +78,7 @@ module core_ibex_tb_top;
     .rst_ni         (rst_n                ),
 
     .test_en_i      (1'b0                 ),
+    .scan_rst_ni    (1'b1                 ),
     .ram_cfg_i      ('b0                  ),
 
     .hart_id_i      (32'b0                ),
