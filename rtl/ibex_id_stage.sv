@@ -183,6 +183,10 @@ module ibex_id_stage #(
                                                          // access to finish before proceeding
     output logic                      perf_mul_wait_o,
     output logic                      perf_div_wait_o,
+    output logic                      perf_acc_offload_o,
+    output logic                      perf_acc_writeback_o,
+    output logic                      perf_acc_offload_wait_o,
+    output logic                      perf_acc_writeback_wait_o,
     output logic                      instr_id_done_o,
 
     output logic [4:0]                instr_rs1_id_o,
@@ -471,6 +475,12 @@ module ibex_id_stage #(
     // `instr_executing` guarantees that.
     assign acc_x_q_valid_o = acc_insn_spec & instr_executing & ~flush_id;
 
+    // Performance counters
+    assign perf_acc_offload_o        = acc_dispatch_o;
+    assign perf_acc_writeback_o      = acc_writeback_o;
+    assign perf_acc_writeback_wait_o = stall_acc_wb;
+    assign perf_acc_offload_wait_o   = stall_acc_offl;
+
     // Registers
     always_ff @(posedge clk_i or negedge rst_ni) begin : xintf_offl_fsm_flop
       if (!rst_ni) begin
@@ -546,7 +556,11 @@ module ibex_id_stage #(
     assign rf_wdata_sel    = rf_wdata_sel_dec;
     assign rf_waddr_id_o   = rf_waddr_dec;
     assign stall_acc_wb    = 1'b0;
-    // TODO
+
+    assign perf_acc_offload_o        = 1'b0;
+    assign perf_acc_writeback_o      = 1'b0;
+    assign perf_acc_writeback_wait_o = 1'b0;
+    assign perf_acc_offload_wait_o   = 1'b0;
   end
 
   // Misaligned loads/stores result in two aligned loads/stores, compute second address

@@ -358,6 +358,10 @@ module ibex_core import ibex_pkg::*; #(
   logic        perf_tbranch;
   logic        perf_load;
   logic        perf_store;
+  logic        perf_acc_offload;
+  logic        perf_acc_writeback;
+  logic        perf_acc_offload_wait;
+  logic        perf_acc_writeback_wait;
 
   logic [4:0]  instr_rs1_id;
   logic [4:0]  instr_rs2_id;
@@ -665,6 +669,10 @@ module ibex_core import ibex_pkg::*; #(
       .perf_dside_wait_o            ( perf_dside_wait          ),
       .perf_mul_wait_o              ( perf_mul_wait            ),
       .perf_div_wait_o              ( perf_div_wait            ),
+      .perf_acc_offload_o           ( perf_acc_offload         ),
+      .perf_acc_writeback_o         ( perf_acc_writeback       ),
+      .perf_acc_offload_wait_o      ( perf_acc_offload_wait    ),
+      .perf_acc_writeback_wait_o    ( perf_acc_writeback_wait  ),
       .instr_id_done_o              ( instr_id_done            ),
 
       .instr_rs1_id_o               ( instr_rs1_id             ),
@@ -1067,7 +1075,11 @@ module ibex_core import ibex_pkg::*; #(
       .mem_store_i             ( perf_store                   ),
       .dside_wait_i            ( perf_dside_wait              ),
       .mul_wait_i              ( perf_mul_wait                ),
-      .div_wait_i              ( perf_div_wait                )
+      .div_wait_i              ( perf_div_wait                ),
+      .acc_offload_i           ( perf_acc_offload             ),
+      .acc_writeback_i         ( perf_acc_writeback           ),
+      .acc_offload_wait_i      ( perf_acc_offload_wait        ),
+      .acc_writeback_wait_i    ( perf_acc_writeback_wait      )
   );
 
   // These assertions are in top-level as instr_valid_id required as the enable term
