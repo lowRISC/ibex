@@ -406,8 +406,8 @@ module ibex_id_stage #(
     // stall_acc_wb -> combinational loop. there is probably a better way to do
     // this.
     assign stall_acc_wb =
-        wfi_insn_dec ? |scoreboard_q : ((scoreboard_q[rf_raddr_a_o] && rf_ren_a) ||
-                                        (scoreboard_q[rf_raddr_b_o] && rf_ren_b) ||
+        wfi_insn_dec ? |scoreboard_q : ((scoreboard_q[rf_raddr_a_o] && rf_ren_a_dec) ||
+                                        (scoreboard_q[rf_raddr_b_o] && rf_ren_b_dec) ||
                                         (scoreboard_q[rf_waddr_dec] && rf_we_dec)) &&
                                        !acc_insn_spec;
 
