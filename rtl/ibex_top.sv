@@ -75,7 +75,12 @@ module ibex_top #(
     input  logic                         debug_req_i,
     output ibex_pkg::crash_dump_t        crash_dump_o,
 
-    // RISC-V Extension Interface
+    // RISC-V Extension Interface REIv0.1_32T.
+    // `acc_x` denotes the accelerator-agnostic instruction offloading channel.
+    // Subchannel `q`: Request channel. Used to initiate an offloading request.
+    // Subchannel `k`: Ack channel. Carries instruction metadata for correct handling by the
+    // core.
+    // Subchannel `p`: Response channel. Carries the accelerator response data.
     output logic                         acc_x_q_valid_o,
     input  logic                         acc_x_q_ready_i,
     output logic [31:0]                  acc_x_q_instr_data_o,
@@ -567,7 +572,7 @@ module ibex_top #(
     logic [31:0]                  acc_x_q_rs1_local;
     logic [31:0]                  acc_x_q_rs2_local;
     logic [31:0]                  acc_x_q_rs3_local;
-    logic [ 2:0]                  acc_x_q_rs_valid_local;
+    logic [2:0]                   acc_x_q_rs_valid_local;
     logic                         acc_x_q_rd_clean_local;
     logic                         acc_x_k_writeback_local;
     logic                         acc_x_k_is_mem_op_local;
