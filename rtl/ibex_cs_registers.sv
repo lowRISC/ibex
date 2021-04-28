@@ -1206,7 +1206,6 @@ module ibex_cs_registers #(
     mhpmcounter_incr[14] = acc_writeback_i;        // offloaded instruction writeback
     mhpmcounter_incr[15] = acc_offload_wait_i;     // core waiting to offload instruction
     mhpmcounter_incr[16] = acc_writeback_wait_i;   // core waiting to resolve wb conflict
-
   end
 
   // event selector (hardwired, 0 means no event)

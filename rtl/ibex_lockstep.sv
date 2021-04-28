@@ -94,7 +94,7 @@ module ibex_lockstep import ibex_pkg::*; #(
     input  logic [31:0]                  acc_x_q_rs1_i,
     input  logic [31:0]                  acc_x_q_rs2_i,
     input  logic [31:0]                  acc_x_q_rs3_i,
-    input  logic [ 2:0]                  acc_x_q_rs_valid_i,
+    input  logic [2:0]                   acc_x_q_rs_valid_i,
     input  logic                         acc_x_q_rd_clean_i,
     input  logic                         acc_x_k_writeback_i,
     input  logic                         acc_x_k_is_mem_op_i,
@@ -163,6 +163,9 @@ module ibex_lockstep import ibex_pkg::*; #(
     logic [14:0]                 irq_fast;
     logic                        irq_nm;
     logic                        debug_req;
+  } delayed_inputs_t;
+
+  typedef struct packed {
     logic                        acc_x_q_ready;
     logic                        acc_x_k_writeback;
     logic                        acc_x_k_is_mem_op;
@@ -171,13 +174,15 @@ module ibex_lockstep import ibex_pkg::*; #(
     logic [4:0]                  acc_x_p_rd;
     logic [31:0]                 acc_x_p_data;
     logic                        acc_x_p_error;
-  } delayed_inputs_t;
+  } delayed_acc_inputs_t;
 
-  delayed_inputs_t [LockstepOffset-1:0] shadow_inputs_q;
-  delayed_inputs_t                      shadow_inputs_in;
+  delayed_inputs_t [LockstepOffset-1:0]     shadow_inputs_q;
+  delayed_inputs_t                          shadow_inputs_in;
+  delayed_acc_inputs_t [LockstepOffset-1:0] shadow_acc_inputs_q;
+  delayed_acc_inputs_t                      shadow_acc_inputs_in;
   // Packed arrays must be dealt with separately
-  logic [TagSizeECC-1:0]                shadow_tag_rdata_q [IC_NUM_WAYS][LockstepOffset];
-  logic [LineSizeECC-1:0]               shadow_data_rdata_q [IC_NUM_WAYS][LockstepOffset];
+  logic [TagSizeECC-1:0]                    shadow_tag_rdata_q [IC_NUM_WAYS][LockstepOffset];
+  logic [LineSizeECC-1:0]                   shadow_data_rdata_q [IC_NUM_WAYS][LockstepOffset];
 
   // Assign the inputs to the delay structure
   assign shadow_inputs_in.instr_gnt         = instr_gnt_i;
@@ -196,14 +201,15 @@ module ibex_lockstep import ibex_pkg::*; #(
   assign shadow_inputs_in.irq_fast          = irq_fast_i;
   assign shadow_inputs_in.irq_nm            = irq_nm_i;
   assign shadow_inputs_in.debug_req         = debug_req_i;
-  assign shadow_inputs_in.acc_x_q_ready     = acc_x_q_ready_i;
-  assign shadow_inputs_in.acc_x_k_writeback = acc_x_k_writeback_i;
-  assign shadow_inputs_in.acc_x_k_is_mem_op = acc_x_k_is_mem_op_i;
-  assign shadow_inputs_in.acc_x_k_accept    = acc_x_k_accept_i;
-  assign shadow_inputs_in.acc_x_p_valid     = acc_x_p_valid_i;
-  assign shadow_inputs_in.acc_x_p_rd        = acc_x_p_rd_i;
-  assign shadow_inputs_in.acc_x_p_data      = acc_x_p_data_i;
-  assign shadow_inputs_in.acc_x_p_error     = acc_x_p_error_i;
+
+  assign shadow_acc_inputs_in.acc_x_q_ready     = acc_x_q_ready_i;
+  assign shadow_acc_inputs_in.acc_x_k_writeback = acc_x_k_writeback_i;
+  assign shadow_acc_inputs_in.acc_x_k_is_mem_op = acc_x_k_is_mem_op_i;
+  assign shadow_acc_inputs_in.acc_x_k_accept    = acc_x_k_accept_i;
+  assign shadow_acc_inputs_in.acc_x_p_valid     = acc_x_p_valid_i;
+  assign shadow_acc_inputs_in.acc_x_p_rd        = acc_x_p_rd_i;
+  assign shadow_acc_inputs_in.acc_x_p_data      = acc_x_p_data_i;
+  assign shadow_acc_inputs_in.acc_x_p_error     = acc_x_p_error_i;
 
   // Delay the inputs
   always_ff @(posedge clk_i) begin
@@ -215,6 +221,21 @@ module ibex_lockstep import ibex_pkg::*; #(
     shadow_inputs_q[LockstepOffset-1]     <= shadow_inputs_in;
     shadow_tag_rdata_q[LockstepOffset-1]  <= ic_tag_rdata_i;
     shadow_data_rdata_q[LockstepOffset-1] <= ic_data_rdata_i;
+  end
+
+  if (XInterface) begin : gen_delayed_acc_inputs
+    always_ff @(posedge clk_i) begin
+      for (int unsigned i = 0; i < LockstepOffset-1; i++) begin
+        shadow_acc_inputs_q[i] <= shadow_acc_inputs_q[i+1];
+      end
+      shadow_acc_inputs_q[LockstepOffset-1] <= shadow_acc_inputs_in;
+    end
+  end else begin : gen_no_delayed_acc_inputs
+    delayed_acc_inputs_t [LockstepOffset-2:0] unused_shadow_acc_inputs_q;
+    for (genvar i = 0; i < LockstepOffset-1; i++) begin : gen_assign_unused_acc_inputs_q
+      assign unused_shadow_acc_inputs_q[i] = shadow_acc_inputs_q[i+1];
+    end
+    assign shadow_acc_inputs_q[0] = shadow_acc_inputs_in;
   end
 
   ///////////////////
@@ -244,20 +265,26 @@ module ibex_lockstep import ibex_pkg::*; #(
     logic [IC_INDEX_W-1:0]       ic_data_addr;
     logic [LineSizeECC-1:0]      ic_data_wdata;
     logic                        irq_pending;
+    crash_dump_t                 crash_dump;
+    logic                        core_busy;
+  } delayed_outputs_t;
+
+  typedef struct packed {
     logic                        acc_x_q_valid;
     logic [31:0]                 acc_x_q_instr_data;
     logic [31:0]                 acc_x_q_rs1;
     logic [31:0]                 acc_x_q_rs2;
     logic [31:0]                 acc_x_q_rs3;
-    logic [ 2:0]                 acc_x_q_rs_valid;
+    logic [2:0]                  acc_x_q_rs_valid;
     logic                        acc_x_q_rd_clean;
     logic                        acc_x_p_ready;
-    crash_dump_t                 crash_dump;
-    logic                        core_busy;
-  } delayed_outputs_t;
+  } delayed_acc_outputs_t;
 
   delayed_outputs_t [LockstepOffset-1:0] core_outputs_q;
   delayed_outputs_t                      core_outputs_in, shadow_outputs;
+
+  delayed_acc_outputs_t [LockstepOffset-1:0] core_acc_outputs_q;
+  delayed_acc_outputs_t                      core_acc_outputs_in, shadow_acc_outputs;
 
   // Assign core outputs to the structure
   assign core_outputs_in.instr_req          = instr_req_i;
@@ -283,15 +310,16 @@ module ibex_lockstep import ibex_pkg::*; #(
   assign core_outputs_in.ic_data_wdata      = ic_data_wdata_i;
   assign core_outputs_in.irq_pending        = irq_pending_i;
   assign core_outputs_in.crash_dump         = crash_dump_i;
-  assign core_outputs_in.acc_x_q_valid      = acc_x_q_valid_i;
-  assign core_outputs_in.acc_x_q_instr_data = acc_x_q_instr_data_i;
-  assign core_outputs_in.acc_x_q_rs1        = acc_x_q_rs1_i;
-  assign core_outputs_in.acc_x_q_rs2        = acc_x_q_rs2_i;
-  assign core_outputs_in.acc_x_q_rs3        = acc_x_q_rs3_i;
-  assign core_outputs_in.acc_x_q_rs_valid   = acc_x_q_rs_valid_i;
-  assign core_outputs_in.acc_x_q_rd_clean   = acc_x_q_rd_clean_i;
-  assign core_outputs_in.acc_x_p_ready      = acc_x_p_ready_i;
-  assign core_outputs_in.core_busy          = core_busy_i;
+
+  assign core_acc_outputs_in.acc_x_q_valid      = acc_x_q_valid_i;
+  assign core_acc_outputs_in.acc_x_q_instr_data = acc_x_q_instr_data_i;
+  assign core_acc_outputs_in.acc_x_q_rs1        = acc_x_q_rs1_i;
+  assign core_acc_outputs_in.acc_x_q_rs2        = acc_x_q_rs2_i;
+  assign core_acc_outputs_in.acc_x_q_rs3        = acc_x_q_rs3_i;
+  assign core_acc_outputs_in.acc_x_q_rs_valid   = acc_x_q_rs_valid_i;
+  assign core_acc_outputs_in.acc_x_q_rd_clean   = acc_x_q_rd_clean_i;
+  assign core_acc_outputs_in.acc_x_p_ready      = acc_x_p_ready_i;
+  assign core_acc_outputs_in.core_busy          = core_busy_i;
 
   // Delay the outputs
   always_ff @(posedge clk_i) begin
@@ -300,6 +328,23 @@ module ibex_lockstep import ibex_pkg::*; #(
     end
     core_outputs_q[LockstepOffset-1] <= core_outputs_in;
   end
+
+  if (XInterface) begin : gen_delayed_acc_outputs
+    always_ff @(posedge clk_i) begin
+      for (int unsigned i = 0; i < LockstepOffset-1; i++) begin
+        core_acc_outputs_q[i] <= core_acc_outputs_q[i+1];
+      end
+      core_acc_outputs_q[LockstepOffset-1] <= core_acc_outputs_in;
+    end
+  end else begin : gen_no_delayed_acc_outputs
+    delayed_acc_outputs_t [LockstepOffset-2:0] unused_core_acc_outputs_q;
+    for (genvar i = 0; i < LockstepOffset-1; i++) begin : gen_assign_unused_acc_outputs_q
+      assign unused_core_acc_outputs_q[i] = core_acc_outputs_q[i+1];
+    end
+    assign core_acc_outputs_q[0] = core_acc_outputs_in;
+  end
+
+
 
   ///////////////////////////////
   // Shadow core instantiation //
@@ -385,23 +430,23 @@ module ibex_lockstep import ibex_pkg::*; #(
     .irq_nm_i             (shadow_inputs_q[0].irq_nm),
     .irq_pending_o        (shadow_outputs.irq_pending),
 
-    .acc_x_q_valid_o      (shadow_outputs.acc_x_q_valid),
-    .acc_x_q_ready_i      (shadow_inputs_q[0].acc_x_q_ready),
-    .acc_x_q_instr_data_o (shadow_outputs.acc_x_q_instr_data),
-    .acc_x_q_rs1_o        (shadow_outputs.acc_x_q_rs1),
-    .acc_x_q_rs2_o        (shadow_outputs.acc_x_q_rs2),
-    .acc_x_q_rs3_o        (shadow_outputs.acc_x_q_rs3),
-    .acc_x_q_rs_valid_o   (shadow_outputs.acc_x_q_rs_valid),
-    .acc_x_q_rd_clean_o   (shadow_outputs.acc_x_q_rd_clean),
-    .acc_x_k_writeback_i  (shadow_inputs_q[0].acc_x_k_writeback),
-    .acc_x_k_is_mem_op_i  (shadow_inputs_q[0].acc_x_k_is_mem_op),
-    .acc_x_k_accept_i     (shadow_inputs_q[0].acc_x_k_accept),
+    .acc_x_q_valid_o      (shadow_acc_outputs.acc_x_q_valid),
+    .acc_x_q_ready_i      (shadow_acc_inputs_q[0].acc_x_q_ready),
+    .acc_x_q_instr_data_o (shadow_acc_outputs.acc_x_q_instr_data),
+    .acc_x_q_rs1_o        (shadow_acc_outputs.acc_x_q_rs1),
+    .acc_x_q_rs2_o        (shadow_acc_outputs.acc_x_q_rs2),
+    .acc_x_q_rs3_o        (shadow_acc_outputs.acc_x_q_rs3),
+    .acc_x_q_rs_valid_o   (shadow_acc_outputs.acc_x_q_rs_valid),
+    .acc_x_q_rd_clean_o   (shadow_acc_outputs.acc_x_q_rd_clean),
+    .acc_x_k_writeback_i  (shadow_acc_inputs_q[0].acc_x_k_writeback),
+    .acc_x_k_is_mem_op_i  (shadow_acc_inputs_q[0].acc_x_k_is_mem_op),
+    .acc_x_k_accept_i     (shadow_acc_inputs_q[0].acc_x_k_accept),
 
-    .acc_x_p_valid_i      (shadow_inputs_q[0].acc_x_p_valid),
-    .acc_x_p_ready_o      (shadow_outputs.acc_x_p_ready),
-    .acc_x_p_rd_i         (shadow_inputs_q[0].acc_x_p_rd),
-    .acc_x_p_data_i       (shadow_inputs_q[0].acc_x_p_data),
-    .acc_x_p_error_i      (shadow_inputs_q[0].acc_x_p_error),
+    .acc_x_p_valid_i      (shadow_acc_inputs_q[0].acc_x_p_valid),
+    .acc_x_p_ready_o      (shadow_acc_outputs.acc_x_p_ready),
+    .acc_x_p_rd_i         (shadow_acc_inputs_q[0].acc_x_p_rd),
+    .acc_x_p_data_i       (shadow_acc_inputs_q[0].acc_x_p_data),
+    .acc_x_p_error_i      (shadow_acc_inputs_q[0].acc_x_p_error),
 
     .debug_req_i          (shadow_inputs_q[0].debug_req),
     .crash_dump_o         (shadow_outputs.crash_dump),
@@ -442,10 +487,12 @@ module ibex_lockstep import ibex_pkg::*; #(
   /////////////////////////
 
   logic outputs_mismatch;
+  logic outputs_acc_mismatch;
 
   // TODO evaluate the timing here - might need to register shadow_outputs
-  assign outputs_mismatch = rst_shadow_n & (shadow_outputs != core_outputs_q[0]);
-  assign alert_major_o    = outputs_mismatch | shadow_alert_major;
-  assign alert_minor_o    = shadow_alert_minor;
+  assign outputs_mismatch     = rst_shadow_n & (shadow_outputs != core_outputs_q[0]);
+  assign outputs_acc_mismatch = rst_shadow_n & (shadow_acc_outputs != core_acc_outputs_q[0]);
+  assign alert_major_o        = outputs_acc_mismatch | outputs_mismatch | shadow_alert_major;
+  assign alert_minor_o        = shadow_alert_minor;
 
 endmodule

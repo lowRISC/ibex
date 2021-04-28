@@ -107,7 +107,7 @@ module ibex_core import ibex_pkg::*; #(
     output logic [31:0]                  acc_x_q_rs1_o,
     output logic [31:0]                  acc_x_q_rs2_o,
     output logic [31:0]                  acc_x_q_rs3_o,
-    output logic [ 2:0]                  acc_x_q_rs_valid_o,
+    output logic [2:0]                   acc_x_q_rs_valid_o,
     output logic                         acc_x_q_rd_clean_o,
     input  logic                         acc_x_k_writeback_i,
     input  logic                         acc_x_k_is_mem_op_i,
@@ -675,11 +675,6 @@ module ibex_core import ibex_pkg::*; #(
       .perf_acc_writeback_wait_o    ( perf_acc_writeback_wait  ),
       .instr_id_done_o              ( instr_id_done            ),
 
-      .instr_rs1_id_o               ( instr_rs1_id             ),
-      .instr_rs2_id_o               ( instr_rs2_id             ),
-      .instr_rs3_id_o               ( instr_rs3_id             ),
-      .instr_rd_id_o                ( instr_rd_id              ),
-
       // RISC-V Extension Interface
       .acc_x_q_valid_o              ( acc_x_q_valid_o          ),
       .acc_x_q_ready_i              ( acc_x_q_ready_i          ),
@@ -697,8 +692,13 @@ module ibex_core import ibex_pkg::*; #(
       .acc_x_p_ready_o              ( acc_x_p_ready_o          ),
       .acc_x_p_rd_i                 ( acc_x_p_rd_i             ),
       .acc_x_p_data_i               ( acc_x_p_data_i           ),
-      .acc_x_p_error_i              ( acc_x_p_error_i          )
+      .acc_x_p_error_i              ( acc_x_p_error_i          ),
 
+      // For RVI in combination with RISC-V Extension Interface.
+      .instr_rs1_id_o               ( instr_rs1_id             ),
+      .instr_rs2_id_o               ( instr_rs2_id             ),
+      .instr_rs3_id_o               ( instr_rs3_id             ),
+      .instr_rd_id_o                ( instr_rd_id              )
   );
 
   // for RVFI only
@@ -1175,9 +1175,9 @@ module ibex_core import ibex_pkg::*; #(
   logic [31:0] rvfi_offl_rs1_rdata[32];
   logic [31:0] rvfi_offl_rs2_rdata[32];
   logic [31:0] rvfi_offl_rs3_rdata[32];
-  logic [ 4:0] rvfi_offl_rs1_addr[32];
-  logic [ 4:0] rvfi_offl_rs2_addr[32];
-  logic [ 4:0] rvfi_offl_rs3_addr[32];
+  logic [4:0]  rvfi_offl_rs1_addr[32];
+  logic [4:0]  rvfi_offl_rs2_addr[32];
+  logic [4:0]  rvfi_offl_rs3_addr[32];
   logic [31:0] rvfi_offl_insn[32];
   logic [31:0] rvfi_offl_pc_rdata[32];
   logic [31:0] rvfi_offl_pc_wdata[32];
