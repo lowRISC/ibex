@@ -6,6 +6,7 @@ import logging as log
 import pprint
 import random
 import shlex
+from pathlib import Path
 
 from LauncherFactory import get_launcher
 from sim_utils import get_cov_summary_table
@@ -143,8 +144,11 @@ class Deploy():
         # 'aes:default', 'uart:default' builds.
         self.full_name = self.sim_cfg.name + ":" + self.qual_name
 
-        # Job name is used to group the job by cfg and target.
-        self.job_name = "{}_{}".format(self.sim_cfg.name, self.target)
+        # Job name is used to group the job by cfg and target. The scratch path
+        # directory name is assumed to be uniquified, in case there are more
+        # than one sim_cfgs with the same name.
+        self.job_name = "{}_{}".format(
+            Path(self.sim_cfg.scratch_path).name, self.target)
 
         # Input directories (other than self) this job depends on.
         self.input_dirs = []
@@ -203,9 +207,9 @@ class Deploy():
     def _construct_cmd(self):
         """Construct the command that will eventually be launched."""
 
-        args = ["make", "-f", self.flow_makefile, self.target]
+        cmd = "make -f {} {}".format(self.flow_makefile, self.target)
         if self.dry_run is True:
-            args += ["-n"]
+            cmd += " -n"
         for attr in sorted(self.mandatory_cmd_attrs.keys()):
             value = getattr(self, attr)
             if type(value) is list:
@@ -217,8 +221,8 @@ class Deploy():
                 value = int(value)
             if type(value) is str:
                 value = value.strip()
-            args += ["{}={}".format(attr, shlex.quote(value))]
-        return " ".join(args)
+            cmd += " {}={}".format(attr, shlex.quote(value))
+        return cmd
 
     def is_equivalent_job(self, item):
         """Checks if job that would be dispatched with 'item' is equivalent to
@@ -316,8 +320,7 @@ class CompileSim(Deploy):
 
         # 'build_mode' is used as a substitution variable in the HJson.
         self.build_mode = self.name
-        self.job_name = "{}_{}_{}".format(self.sim_cfg.name, self.target,
-                                          self.build_mode)
+        self.job_name += f"_{self.build_mode}"
         if self.sim_cfg.cov:
             self.output_dirs += [self.cov_db_dir]
         self.pass_patterns = self.build_pass_patterns
@@ -362,9 +365,7 @@ class CompileOneShot(Deploy):
             "report_opts": False
         })
 
-        self.mandatory_misc_attrs.update({
-            "build_fail_patterns": False
-        })
+        self.mandatory_misc_attrs.update({"build_fail_patterns": False})
 
     def _set_attrs(self):
         super()._extract_attrs(self.build_mode_obj.__dict__)
@@ -372,8 +373,7 @@ class CompileOneShot(Deploy):
 
         # 'build_mode' is used as a substitution variable in the HJson.
         self.build_mode = self.name
-        self.job_name = "{}_{}_{}".format(self.sim_cfg.name, self.target,
-                                          self.build_mode)
+        self.job_name += f"_{self.build_mode}"
         self.fail_patterns = self.build_fail_patterns
 
 
@@ -435,8 +435,7 @@ class RunTest(Deploy):
         self.build_mode = self.test_obj.build_mode.name
         self.qual_name = self.run_dir_name + "." + str(self.seed)
         self.full_name = self.sim_cfg.name + ":" + self.qual_name
-        self.job_name = "{}_{}_{}".format(self.sim_cfg.name, self.target,
-                                          self.build_mode)
+        self.job_name += f"_{self.build_mode}"
         if self.sim_cfg.cov:
             self.output_dirs += [self.cov_db_test_dir]
 

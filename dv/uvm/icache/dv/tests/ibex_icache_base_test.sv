@@ -22,8 +22,6 @@ class ibex_icache_base_test extends dv_base_test #(
 
     super.build_phase(phase);
 
-    cfg.has_ral = 1'b0;
-
     // Create config objects for each of the ECC agents. We can't do that in the config object
     // itself (because that's not a component, so doesn't have access to the uvm_config_db).
     cfg.create_ecc_agent_cfgs(num_ecc_ways);
@@ -34,4 +32,3 @@ class ibex_icache_base_test extends dv_base_test #(
   // the run_phase; as such, nothing more needs to be done
 
 endclass : ibex_icache_base_test
-
