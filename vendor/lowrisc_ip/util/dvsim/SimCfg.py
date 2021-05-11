@@ -5,6 +5,7 @@ r"""
 Class describing simulation configuration object
 """
 
+import collections
 import logging as log
 import os
 import shutil
@@ -15,10 +16,16 @@ from collections import OrderedDict
 from Deploy import CompileSim, CovAnalyze, CovMerge, CovReport, CovUnr, RunTest
 from FlowCfg import FlowCfg
 from Modes import BuildModes, Modes, Regressions, RunModes, Tests
+from SimResults import SimResults
 from tabulate import tabulate
-from testplanner.class_defs import Testplan, TestResult
+from testplanner.class_defs import Testplan
 from testplanner.testplan_utils import parse_testplan
 from utils import VERBOSE, rm_path
+
+
+# This affects the bucketizer failure report.
+_MAX_UNIQUE_TESTS = 5
+_MAX_TEST_RESEEDS = 2
 
 
 def pick_wave_format(fmts):
@@ -39,46 +46,6 @@ def pick_wave_format(fmts):
         return pick_wave_format(fmts[1:])
 
     return fmt
-
-
-class Results:
-    '''An object wrapping up a table of results for some tests
-
-    self.table is a list of TestResult objects, each of which
-    corresponds to one or more runs of the test with a given name.
-
-    self.fail_msgs is a list of error messages, one per failing run.
-
-    '''
-    def __init__(self, items, results):
-        self.table = []
-        self.fail_msgs = []
-
-        self._name_to_row = {}
-        for item in items:
-            self._add_item(item, results)
-
-    def _add_item(self, item, results):
-        '''Recursively add a single item to the table of results'''
-        status = results[item]
-        if status == "F":
-            self.fail_msgs.append(item.launcher.fail_msg)
-
-        # Runs get added to the table directly
-        if item.target == "run":
-            self._add_run(item, status)
-
-    def _add_run(self, item, status):
-        '''Add an entry to table for item'''
-        row = self._name_to_row.get(item.name)
-        if row is None:
-            row = TestResult(item.name)
-            self.table.append(row)
-            self._name_to_row[item.name] = row
-
-        if status == 'P':
-            row.passing += 1
-        row.total += 1
 
 
 class SimCfg(FlowCfg):
@@ -576,13 +543,69 @@ class SimCfg(FlowCfg):
         is enabled, then the summary coverage report is also generated. The final
         result is in markdown format.
         '''
+        def indent_by(level):
+            return " " * (4 * level)
+
+        def create_failure_message(test, line, context):
+            message = [f"{indent_by(2)}* {test.qual_name}\\"]
+            if line:
+                message.append(
+                    f"{indent_by(2)}  Line {line}, in log " +
+                    test.get_log_path())
+            else:
+                message.append(f"{indent_by(2)} Log {test.get_log_path()}")
+            if context:
+                message.append("")
+                lines = [f"{indent_by(4)}{c.rstrip()}" for c in context]
+                message.extend(lines)
+            message.append("")
+            return message
+
+        def create_bucket_report(buckets):
+            """Creates a report based on the given buckets.
+
+            The buckets are sorted by descending number of failures. Within
+            buckets this also group tests by unqualified name, and just a few
+            failures are shown per unqualified name.
+
+            Args:
+              buckets: A dictionary by bucket containing triples
+                (test, line, context).
+
+            Returns:
+              A list of text lines for the report.
+            """
+            by_tests = sorted(buckets.items(),
+                              key=lambda i: len(i[1]),
+                              reverse=True)
+            fail_msgs = ["\n## Failure Buckets", ""]
+            for bucket, tests in by_tests:
+                fail_msgs.append(f"* `{bucket}` has {len(tests)} failures:")
+                unique_tests = collections.defaultdict(list)
+                for (test, line, context) in tests:
+                    unique_tests[test.name].append((test, line, context))
+                for name, test_reseeds in list(unique_tests.items())[
+                        :_MAX_UNIQUE_TESTS]:
+                    fail_msgs.append(f"{indent_by(1)}* Test {name} has "
+                                     f"{len(test_reseeds)} failures.")
+                    for test, line, context in test_reseeds[:_MAX_TEST_RESEEDS]:
+                        fail_msgs.extend(
+                            create_failure_message(test, line, context))
+                    if len(test_reseeds) > _MAX_TEST_RESEEDS:
+                        fail_msgs.append(
+                            f"{indent_by(2)}* ... and "
+                            f"{len(test_reseeds) - _MAX_TEST_RESEEDS} "
+                            "more failures.")
+                if len(unique_tests) > _MAX_UNIQUE_TESTS:
+                    fail_msgs.append(
+                        f"{indent_by(1)}* ... and "
+                        f"{len(unique_tests) - _MAX_UNIQUE_TESTS} more tests.")
+
+            fail_msgs.append("")
+            return fail_msgs
 
         deployed_items = self.deploy
-        results = Results(deployed_items, run_results)
-
-        # Set a flag if anything failed
-        if results.fail_msgs:
-            self.errors_seen = True
+        results = SimResults(deployed_items, run_results)
 
         # Generate results table for runs.
         results_str = "## " + self.results_title + "\n"
@@ -616,7 +639,7 @@ class SimCfg(FlowCfg):
             results_str += "\n"
             self.results_summary = self.testplan.results_summary
 
-            # Append coverage results of coverage was enabled.
+            # Append coverage results if coverage was enabled.
             if self.cov_report_deploy is not None:
                 report_status = run_results[self.cov_report_deploy]
                 if report_status == "P":
@@ -640,10 +663,9 @@ class SimCfg(FlowCfg):
             self.results_summary["Name"] = self._get_results_page_link(
                 self.results_summary["Name"])
 
-        # Append failures for triage
-        if results.fail_msgs:
-            fail_msgs = "\n## List of Failures\n" + ''.join(results.fail_msgs)
-            results_str += fail_msgs
+        if results.buckets:
+            self.errors_seen = True
+            results_str += "\n".join(create_bucket_report(results.buckets))
 
         self.results_md = results_str
 
@@ -657,32 +679,45 @@ class SimCfg(FlowCfg):
         return results_str
 
     def gen_results_summary(self):
+        '''Generate the summary results table.
 
-        # sim summary result has 5 columns from each SimCfg.results_summary
-        header = ["Name", "Passing", "Total", "Pass Rate"]
-        if self.cov_report_deploy is not None:
-            header.append('Coverage')
-        table = []
-        colalign = ("center", ) * len(header)
-        for item in self.cfgs:
-            row = []
-            for title in item.results_summary:
-                row.append(item.results_summary[title])
-            if row:
-                table.append(row)
-        self.results_summary_md = "## " + self.results_title + " (Summary)\n"
-        self.results_summary_md += "### " + self.timestamp_long + "\n"
+        This method is specific to the primary cfg. It summarizes the results
+        from each individual cfg in a markdown table.
+
+        Prints the generated summary markdown text to stdout and returns it.
+        '''
+
+        lines = [f"## {self.results_title} (Summary)"]
+        lines += [f"### {self.timestamp_long}"]
         if self.revision:
-            self.results_summary_md += "### " + self.revision + "\n"
-        self.results_summary_md += "### Branch: " + self.branch + "\n"
-        if table:
-            self.results_summary_md += tabulate(table,
-                                                headers=header,
-                                                tablefmt="pipe",
-                                                colalign=colalign)
-        else:
-            self.results_summary_md += "\nNo results to display.\n"
+            lines += [f"### {self.revision}"]
+        lines += [f"### Branch: {self.branch}"]
 
+        table = []
+        header = []
+        for cfg in self.cfgs:
+            row = cfg.results_summary.values()
+            if row:
+                # If header is set, ensure its the same for all cfgs.
+                if header:
+                    assert header == cfg.results_summary.keys()
+                else:
+                    header = cfg.results_summary.keys()
+                table.append(row)
+
+        if table:
+            assert header
+            colalign = ("center", ) * len(header)
+            table_txt = tabulate(table,
+                                 headers=header,
+                                 tablefmt="pipe",
+                                 colalign=colalign)
+            lines += ["", table_txt, ""]
+
+        else:
+            lines += ["\nNo results to display.\n"]
+
+        self.results_summary_md = "\n".join(lines)
         print(self.results_summary_md)
         return self.results_summary_md
 

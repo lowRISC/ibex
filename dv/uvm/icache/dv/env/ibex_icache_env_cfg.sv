@@ -32,10 +32,10 @@ class ibex_icache_env_cfg extends dv_base_env_cfg;
 
   function new (string name="");
     super.new(name);
-    has_ral = 1'b0;  // The ICache has no RAL model
   endfunction
 
   virtual function void initialize(bit [BUS_AW-1:0] csr_base_addr = '1);
+    ral_model_names = {}; // The ICache has no RAL model
     super.initialize(csr_base_addr);
 
     core_agent_cfg = ibex_icache_core_agent_cfg::type_id::create("core_agent_cfg");

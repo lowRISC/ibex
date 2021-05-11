@@ -2,9 +2,11 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
+import collections
 import logging as log
 import os
 import re
+import sys
 from pathlib import Path
 
 from utils import VERBOSE, clean_odirs, rm_path
@@ -13,6 +15,20 @@ from utils import VERBOSE, clean_odirs, rm_path
 class LauncherError(Exception):
     def __init__(self, msg):
         self.msg = msg
+
+
+class ErrorMessage(
+        collections.namedtuple(
+            'ErrorMessage',
+            ['line_number', 'message', 'context'],
+        )):
+    """Contains error-related information.
+
+    This support classification of failures into buckets. The message field
+    is used to generate the bucket, and context contains a list of lines in
+    the failing log that can be useful for quick diagnostics.
+    """
+    pass
 
 
 class Launcher:
@@ -27,6 +43,15 @@ class Launcher:
 
     # Type of launcher used as string.
     variant = None
+
+    # Max jobs running at one time
+    max_parallel = sys.maxsize
+
+    # Max jobs polled at one time
+    max_poll = 10000
+
+    # Poll job's completion status every this many seconds
+    poll_freq = 1
 
     # Points to the python virtual env area.
     pyvenv = None
@@ -119,11 +144,6 @@ class Launcher:
         # create a new one.
         self.renew_odir = False
 
-        # Error message if the job fails.
-        self.fail_msg = "\n**{!r}:** {!r}<br>\n".format(
-            self.deploy.target.upper(), self.deploy.qual_name)
-        self.fail_msg += "**LOG:** {}<br>\n".format(self.deploy.get_log_path())
-
     def _make_odir(self):
         """Create the output directory."""
 
@@ -208,7 +228,8 @@ class Launcher:
 
         Returns (status, err_msg) extracted from the log, where the status is
         "P" if the it passed, "F" otherwise. This is invoked by poll() just
-        after the job finishes.
+        after the job finishes. err_msg is an instance of the named tuple
+        ErrorMessage.
         """
         def _find_patterns(patterns, line):
             """Helper function that returns the pattern if any of the given
@@ -221,18 +242,11 @@ class Launcher:
                     return pattern
             return None
 
-        def _get_n_lines(pos, num):
-            "Helper function that returns next N lines starting at pos index."
-
-            return ''.join(lines[pos:pos + num - 1]).strip()
-
         if self.deploy.dry_run:
             return "P", None
 
         # Only one fail pattern needs to be seen.
-        failed = False
         chk_failed = bool(self.deploy.fail_patterns)
-        err_msg = None
 
         # All pass patterns need to be seen, so we replicate the list and remove
         # patterns as we encounter them.
@@ -240,60 +254,57 @@ class Launcher:
         chk_passed = bool(pass_patterns) and (self.exit_code == 0)
 
         try:
-            with open(self.deploy.get_log_path(), "r", encoding="UTF-8",
+            with open(self.deploy.get_log_path(),
+                      "r",
+                      encoding="UTF-8",
                       errors="surrogateescape") as f:
                 lines = f.readlines()
         except OSError as e:
-            err_msg = "Error opening file {}:\n{}".format(
-                self.deploy.get_log_path(), e)
-            return "F", err_msg
+            return "F", ErrorMessage(
+                line_number=None,
+                message="Error opening file {}:\n{}".format(
+                    self.deploy.get_log_path(), e),
+                context=[],
+            )
 
         if chk_failed or chk_passed:
             for cnt, line in enumerate(lines):
                 if chk_failed:
-                    if _find_patterns(self.deploy.fail_patterns,
-                                      line) is not None:
-                        # Print 4 additional lines to help debug more easily.
-                        err_msg = "```\n{}\n```\n".format(_get_n_lines(cnt, 5))
-                        failed = True
-                        chk_failed = False
-                        chk_passed = False
+                    if _find_patterns(self.deploy.fail_patterns, line):
+                        # If failed, then nothing else to do. Just return.
+                        # Privide some extra lines for context.
+                        return "F", ErrorMessage(line_number=cnt + 1,
+                                                 message=line.strip(),
+                                                 context=lines[cnt:cnt + 5])
 
                 if chk_passed:
                     pattern = _find_patterns(pass_patterns, line)
-                    if pattern is not None:
+                    if pattern:
                         pass_patterns.remove(pattern)
                         chk_passed = bool(pass_patterns)
-
-        # If failed, then nothing else to do. Just return.
-        if failed:
-            assert err_msg is not None
-            return "F", err_msg
 
         # If no fail patterns were seen, but the job returned with non-zero
         # exit code for whatever reason, then show the last 10 lines of the log
         # as the failure message, which might help with the debug.
         if self.exit_code != 0:
-            err_msg = ("Job returned non-zero exit code:\nLast 10 lines:\n"
-                       "```\n{}\n```\n")
-            err_msg = err_msg.format(''.join(lines[-10:]).strip())
-            return "F", err_msg
-
-        # Ensure all pass patterns were seen.
+            return "F", ErrorMessage(line_number=None,
+                                     message="Job returned non-zero exit code",
+                                     context=lines[-10:])
         if chk_passed:
-            err_msg = ("Some pass patterns missing:\n{}\nLast 10 lines:\n"
-                       "```\n{}\n```\n")
-            err_msg = err_msg.format(pass_patterns,
-                                     ''.join(lines[-10:]).strip())
-            return "F", err_msg
-
-        assert err_msg is None
+            return "F", ErrorMessage(
+                line_number=None,
+                message=f"Some pass patterns missing: {pass_patterns}",
+                context=lines[-10:],
+            )
         return "P", None
 
     def _post_finish(self, status, err_msg):
         """Do post-completion activities, such as preparing the results.
 
         Must be invoked by poll(), after the job outcome is determined.
+
+        status is the status of the job, either 'P', 'F' or 'K'.
+        err_msg is an instance of the named tuple ErrorMessage.
         """
 
         assert status in ['P', 'F', 'K']
@@ -302,14 +313,6 @@ class Launcher:
         self.deploy.post_finish(status)
         log.debug("Item %s has completed execution: %s", self, status)
         if status != "P":
-            self._log_fail_msg(err_msg)
-
-    def _log_fail_msg(self, msg):
-        """Logs the fail msg for the final report.
-
-        Invoked in _post_finish() only if the job did not pass.
-        """
-
-        assert msg is not None
-        self.fail_msg += msg
-        log.log(VERBOSE, msg)
+            assert err_msg and isinstance(err_msg, ErrorMessage)
+            self.fail_msg = err_msg
+            log.log(VERBOSE, err_msg.message)

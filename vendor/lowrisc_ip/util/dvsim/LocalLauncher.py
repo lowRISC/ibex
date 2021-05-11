@@ -6,7 +6,7 @@ import os
 import shlex
 import subprocess
 
-from Launcher import Launcher, LauncherError
+from Launcher import ErrorMessage, Launcher, LauncherError
 
 
 class LocalLauncher(Launcher):
@@ -42,7 +42,6 @@ class LocalLauncher(Launcher):
 
         self._dump_env_vars(exports)
 
-        args = shlex.split(self.deploy.cmd)
         try:
             f = open(self.deploy.get_log_path(),
                      "w",
@@ -50,7 +49,7 @@ class LocalLauncher(Launcher):
                      errors="surrogateescape")
             f.write("[Executing]:\n{}\n\n".format(self.deploy.cmd))
             f.flush()
-            self.process = subprocess.Popen(args,
+            self.process = subprocess.Popen(shlex.split(self.deploy.cmd),
                                             bufsize=4096,
                                             universal_newlines=True,
                                             stdout=f,
@@ -100,7 +99,9 @@ class LocalLauncher(Launcher):
         except subprocess.TimeoutExpired:
             self.process.kill()
 
-        self._post_finish('K', 'Job killed!')
+        self._post_finish('K', ErrorMessage(line_number=None,
+                                            message='Job killed!',
+                                            context=[]))
 
     def _post_finish(self, status, err_msg):
         super()._post_finish(status, err_msg)

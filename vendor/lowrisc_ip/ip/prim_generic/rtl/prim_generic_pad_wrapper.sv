@@ -7,87 +7,93 @@
 
 `include "prim_assert.sv"
 
-module prim_generic_pad_wrapper #(
-  parameter int Variant  =  0, // currently ignored
-  parameter int AttrDw   = 10,
-  parameter bit WarlOnly =  0  // If set to 1, no pad is instantiated and only warl_o is driven
+module prim_generic_pad_wrapper
+  import prim_pad_wrapper_pkg::*;
+#(
+  // These parameters are ignored in this model.
+  parameter pad_type_e PadType = BidirStd,
+  parameter scan_role_e ScanRole = NoScan
 ) (
+  // This is only used for scanmode (not used in generic models)
+  input              clk_scan_i,
+  input              scanmode_i,
+  // Power sequencing signals (not used in generic models)
+  input pad_pok_t    pok_i,
+  // Main Pad signals
   inout wire         inout_io, // bidirectional pad
   output logic       in_o,     // input data
+  output logic       in_raw_o, // uninverted output data
   input              ie_i,     // input enable
   input              out_i,    // output data
   input              oe_i,     // output enable
-  // additional attributes
-  input        [AttrDw-1:0] attr_i,
-  output logic [AttrDw-1:0] warl_o
+  input pad_attr_t   attr_i    // additional pad attributes
 );
 
-  // Supported attributes:
-  // [x] Bit   0: input/output inversion,
-  // [x] Bit   1: Virtual open drain enable.
-  // [x] Bit   2: Pull enable.
-  // [x] Bit   3: Pull select (0: pull down, 1: pull up).
-  // [x] Bit   4: Keeper enable.
-  // [ ] Bit   5: Schmitt trigger enable.
-  // [ ] Bit   6: Slew rate (0: slow, 1: fast).
-  // [x] Bit 7/8: Drive strength (00: weakest, 11: strongest).
-  // [ ] Bit   9: Reserved.
-  assign warl_o = AttrDw'(10'h19F);
+  // analog pads cannot have a scan role.
+  `ASSERT_INIT(AnalogNoScan_A, PadType != AnalogIn0 || ScanRole == NoScan)
 
-  if (WarlOnly) begin : gen_warl
-    assign inout_io = 1'bz;
-    assign in_o     = 1'b0;
+  // not all signals are used here.
+  logic unused_sigs;
+  assign unused_sigs = ^{attr_i.slew_rate,
+                         attr_i.drive_strength[3:1],
+                         attr_i.od_en,
+                         attr_i.schmitt_en,
+                         scanmode_i,
+                         pok_i};
 
-    logic [AttrDw-1:0] unused_attr;
-    logic  unused_ie, unused_oe, unused_out, unused_inout;
-    assign unused_ie   = ie_i;
-    assign unused_oe   = oe_i;
-    assign unused_out  = out_i;
-    assign unused_attr = attr_i;
-    assign unused_inout = inout_io;
-  end else begin : gen_pad
-    // get pad attributes
-    logic unused_sm, kp, unused_sr, ps, pe, od, inv;
-    typedef enum logic [1:0] {DRIVE_00  = 2'b00,
-                              DRIVE_01  = 2'b01,
-                              DRIVE_10  = 2'b10,
-                              DRIVE_11  = 2'b11} drv_e;
-    drv_e drv;
-    assign {drv, unused_sr, unused_sm, kp, ps, pe, od, inv} = attr_i[8:0];
+  if (PadType == InputStd) begin : gen_input_only
+    logic unused_in_sigs;
+    assign unused_in_sigs = ^{out_i,
+                              oe_i,
+                              attr_i.virt_od_en,
+                              attr_i.drive_strength};
 
-    if (AttrDw > 9) begin : gen_unused_attr
-      logic [AttrDw-9-1:0] unused_attr;
-      assign unused_attr = attr_i[AttrDw-1:9];
-    end
-
+    assign in_raw_o = (ie_i) ? inout_io  : 1'bz;
     // input inversion
-    logic in;
-    assign in     = inv ^ inout_io;
+    assign in_o = attr_i.invert ^ in_raw_o;
+
+  // pulls are not supported by verilator
+  `ifndef VERILATOR
+    // pullup / pulldown termination
+    assign (weak0, weak1) inout_io = attr_i.pull_en ? attr_i.pull_select : 1'bz;
+  `endif
+  end else if (PadType == BidirTol ||
+               PadType == BidirOd ||
+               PadType == BidirStd) begin : gen_bidir
+
+    assign in_raw_o = (ie_i) ? inout_io  : 1'bz;
+    // input inversion
+    assign in_o = attr_i.invert ^ in_raw_o;
 
     // virtual open drain emulation
     logic oe, out;
-    assign out      = out_i ^ inv;
-    assign oe       = oe_i & ((od & ~out) | ~od);
+    assign out = out_i ^ attr_i.invert;
+    assign oe  = oe_i & ((attr_i.virt_od_en & ~out) | ~attr_i.virt_od_en);
 
-  // driving strength attributes are not supported by verilator
-`ifdef VERILATOR
+  // drive strength attributes are not supported by verilator
+  `ifdef VERILATOR
     assign inout_io = (oe)   ? out : 1'bz;
-    // received data driver
-    assign in_o     = (ie_i) ? in  : 1'bz;
-`else
+  `else
     // different driver types
-    assign (strong0, strong1) inout_io = (oe && drv != DRIVE_00) ? out : 1'bz;
-    assign (pull0, pull1)     inout_io = (oe && drv == DRIVE_00) ? out : 1'bz;
+    assign (strong0, strong1) inout_io = (oe && attr_i.drive_strength[0]) ? out : 1'bz;
+    assign (pull0, pull1)     inout_io = (oe && !attr_i.drive_strength[0]) ? out : 1'bz;
     // pullup / pulldown termination
-    assign (weak0, weak1)     inout_io = pe ? ps : 1'bz;
+    assign (weak0, weak1)     inout_io = attr_i.pull_en ? attr_i.pull_select : 1'bz;
     // fake trireg emulation
-    assign (weak0, weak1)     inout_io = (kp) ? inout_io : 1'bz;
-    // received data driver
-    assign in_o     = (ie_i) ? in  : 1'bz;
-`endif
-  end
+    assign (weak0, weak1)     inout_io = (attr_i.keep_en) ? inout_io : 1'bz;
+  `endif
+  end else if (PadType == AnalogIn0) begin : gen_analog0
 
-  // assertions
-  `ASSERT_INIT(AttrDwCheck_A, AttrDw >= 9)
+    logic unused_ana_sigs;
+    assign unused_ana_sigs = ^{attr_i, out_i, oe_i, ie_i};
+
+    assign in_o = inout_io;
+    assign in_raw_o = inout_io;
+
+  end else begin : gen_invalid_config
+    // this should throw link warnings in elaboration
+    assert_static_in_generate_config_not_available
+        assert_static_in_generate_config_not_available();
+  end
 
 endmodule : prim_generic_pad_wrapper

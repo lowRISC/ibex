@@ -64,7 +64,7 @@ class ${name}_scoreboard extends dv_base_scoreboard #(
 % endfor
 % if is_cip:
 
-  virtual task process_tl_access(tl_seq_item item, tl_channels_e channel = DataChannel);
+  virtual task process_tl_access(tl_seq_item item, tl_channels_e channel, string ral_name);
     uvm_reg csr;
     bit     do_read_check   = 1'b1;
     bit     write           = item.is_write();
@@ -76,7 +76,7 @@ class ${name}_scoreboard extends dv_base_scoreboard #(
     bit data_phase_write  = (write && channel == DataChannel);
 
     // if access was to a valid csr, get the csr handle
-    if (csr_addr inside {cfg.csr_addrs}) begin
+    if (csr_addr inside {cfg.csr_addrs[ral_name]}) begin
       csr = ral.default_map.get_reg_by_offset(csr_addr);
       `DV_CHECK_NE_FATAL(csr, null)
     end

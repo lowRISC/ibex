@@ -17,12 +17,14 @@ filesets:
       - lowrisc:prim:clock_mux2
       - lowrisc:prim:buf
       - lowrisc:prim:flop
+      - lowrisc:prim:flop_en
       - lowrisc:prim:flop_2sync
       - lowrisc:prim:arbiter
       - lowrisc:prim:fifo
       - lowrisc:prim:alert
       - lowrisc:prim:subreg
       - lowrisc:prim:cipher
+      - lowrisc:prim:xor2
     files:
       - rtl/prim_clock_gating_sync.sv
       - rtl/prim_esc_pkg.sv

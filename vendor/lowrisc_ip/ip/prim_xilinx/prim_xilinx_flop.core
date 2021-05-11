@@ -4,7 +4,7 @@ CAPI=2:
 # SPDX-License-Identifier: Apache-2.0
 
 name: "lowrisc:prim_xilinx:flop"
-description: "generic flop"
+description: "Xilinx flop"
 filesets:
   files_rtl:
     files:

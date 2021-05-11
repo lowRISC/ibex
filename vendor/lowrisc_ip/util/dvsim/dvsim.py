@@ -31,18 +31,15 @@ from pathlib import Path
 
 import Launcher
 import LauncherFactory
+import LocalLauncher
 from CfgFactory import make_cfg
 from Deploy import RunTest
-from Scheduler import Scheduler
 from Timer import Timer
 from utils import (TS_FORMAT, TS_FORMAT_LONG, VERBOSE, rm_path,
                    run_cmd_with_timeout)
 
 # TODO: add dvsim_cfg.hjson to retrieve this info
 version = 0.1
-
-# By default, all build and run artifacts go here.
-DEFAULT_SCRATCH_ROOT = os.getcwd() + "/scratch"
 
 # The different categories that can be passed to the --list argument.
 _LIST_CATEGORIES = ["build_modes", "run_modes", "tests", "regressions"]
@@ -51,13 +48,14 @@ _LIST_CATEGORIES = ["build_modes", "run_modes", "tests", "regressions"]
 # Function to resolve the scratch root directory among the available options:
 # If set on the command line, then use that as a preference.
 # Else, check if $SCRATCH_ROOT env variable exists and is a directory.
-# Else use the default (<cwd>/scratch)
+# Else use the default (<proj_root>/scratch)
 # Try to create the directory if it does not already exist.
-def resolve_scratch_root(arg_scratch_root):
+def resolve_scratch_root(arg_scratch_root, proj_root):
+    default_scratch_root = proj_root + "/scratch"
     scratch_root = os.environ.get('SCRATCH_ROOT')
     if not arg_scratch_root:
         if scratch_root is None:
-            arg_scratch_root = DEFAULT_SCRATCH_ROOT
+            arg_scratch_root = default_scratch_root
         else:
             # Scratch space could be mounted in a filesystem (such as NFS) on a network drive.
             # If the network is down, it could cause the access access check to hang. So run a
@@ -68,7 +66,7 @@ def resolve_scratch_root(arg_scratch_root):
             if status == 0 and out != "":
                 arg_scratch_root = scratch_root
             else:
-                arg_scratch_root = DEFAULT_SCRATCH_ROOT
+                arg_scratch_root = default_scratch_root
                 log.warning(
                     "Env variable $SCRATCH_ROOT=\"{}\" is not accessible.\n"
                     "Using \"{}\" instead.".format(scratch_root,
@@ -329,7 +327,8 @@ def parse_args():
                       help=('Run only up to N builds/tests at a time. '
                             'Default value 16, unless the DVSIM_MAX_PARALLEL '
                             'environment variable is set, in which case that '
-                            'is used.'))
+                            'is used. Only applicable when launching jobs '
+                            'locally.'))
 
     pathg = parser.add_argument_group('File management')
 
@@ -618,9 +617,9 @@ def main():
     if args.publish:
         args.map_full_testplan = True
 
-    args.scratch_root = resolve_scratch_root(args.scratch_root)
     args.branch = resolve_branch(args.branch)
     proj_root_src, proj_root = resolve_proj_root(args)
+    args.scratch_root = resolve_scratch_root(args.scratch_root, proj_root)
     log.info("[proj_root]: %s", proj_root)
 
     # Create an empty FUSESOC_IGNORE file in scratch_root. This ensures that
@@ -647,7 +646,7 @@ def main():
 
     # Register the common deploy settings.
     Timer.print_interval = args.print_interval
-    Scheduler.max_parallel = args.max_parallel
+    LocalLauncher.LocalLauncher.max_parallel = args.max_parallel
     Launcher.Launcher.max_odirs = args.max_odirs
     LauncherFactory.set_launcher_type(args.local)
 
