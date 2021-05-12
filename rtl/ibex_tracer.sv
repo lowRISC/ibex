@@ -907,6 +907,10 @@ module ibex_tracer (
         // MISC-MEM
         INSN_FENCE:      decode_fence();
         INSN_FENCEI:     decode_mnemonic("fence.i");
+        // RV32B - ZBA
+        INSN_SH1ADD:     decode_r_insn("sh1add");
+        INSN_SH2ADD:     decode_r_insn("sh2add");
+        INSN_SH3ADD:     decode_r_insn("sh3add");
         // RV32B - ZBB
         INSN_SLOI:       decode_i_shift_insn("sloi");
         INSN_SROI:       decode_i_shift_insn("sroi");

@@ -101,6 +101,12 @@ package ibex_pkg;
     ALU_SHFL,
     ALU_UNSHFL,
 
+    // Address Calculations
+    // RV32B
+    ALU_SH1ADD,
+    ALU_SH2ADD,
+    ALU_SH3ADD,
+
     // Comparisons
     ALU_LT,
     ALU_LTU,

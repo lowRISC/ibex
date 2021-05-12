@@ -462,6 +462,10 @@ module ibex_decoder #(
             {7'b000_0000, 3'b101},
             {7'b010_0000, 3'b101}: illegal_insn = 1'b0;
 
+            // RV32B zba
+            {7'b001_0000, 3'b010}, // sh1add
+            {7'b001_0000, 3'b100}, // sh2add
+            {7'b001_0000, 3'b110}, // sh3add
             // RV32B zbb
             {7'b010_0000, 3'b111}, // andn
             {7'b010_0000, 3'b110}, // orn
@@ -1012,6 +1016,11 @@ module ibex_decoder #(
             {7'b010_0000, 3'b100}: if (RV32B != RV32BNone) alu_operator_o = ALU_XNOR;   // xnor
             {7'b010_0000, 3'b110}: if (RV32B != RV32BNone) alu_operator_o = ALU_ORN;    // orn
             {7'b010_0000, 3'b111}: if (RV32B != RV32BNone) alu_operator_o = ALU_ANDN;   // andn
+
+            // RV32B zba
+            {7'b001_0000, 3'b010}: if (RV32B != RV32BNone) alu_operator_o = ALU_SH1ADD; // sh1add
+            {7'b001_0000, 3'b100}: if (RV32B != RV32BNone) alu_operator_o = ALU_SH2ADD; // sh2add
+            {7'b001_0000, 3'b110}: if (RV32B != RV32BNone) alu_operator_o = ALU_SH3ADD; // sh3add
 
             // RV32B zbs
             {7'b010_0100, 3'b001}: if (RV32B != RV32BNone) alu_operator_o = ALU_SBCLR;  // sbclr

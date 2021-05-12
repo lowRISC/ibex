@@ -71,6 +71,11 @@ package ibex_tracer_pkg;
   parameter logic [31:0] INSN_PMULHU  = { 7'b0000001, 10'h?, 3'b011, 5'h?, {OPCODE_OP} };
 
   // RV32B
+  // ZBA
+  parameter logic [31:0] INSN_SH1ADD = { 7'b0010000, 10'h?, 3'b010, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_SH2ADD = { 7'b0010000, 10'h?, 3'b100, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_SH3ADD = { 7'b0010000, 10'h?, 3'b110, 5'h?, {OPCODE_OP} };
+
   // ZBB
   parameter logic [31:0] INSN_SLOI = { 5'b00100        , 12'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
   // Only log2(XLEN) bits of the immediate are used. For RV32, this means only the bits in
