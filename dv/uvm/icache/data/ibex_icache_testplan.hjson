@@ -4,7 +4,7 @@
 {
   name: "ibex_icache"
 
-  entries: [
+  testpoints: [
     {
       name: smoke
       desc: '''Basic smoke test for icache
