@@ -96,6 +96,12 @@ parameters:
     paramtype: vlogparam
     description: "Number of PMP regions"
 
+  SecureIbex:
+    datatype: int
+    paramtype: vlogparam
+    default: 0
+    description: "Enables security hardening features (EXPERIMENTAL) [0/1]"
+
 targets:
   sim:
     default_tool: verilator
@@ -115,6 +121,7 @@ targets:
       - PMPEnable
       - PMPGranularity
       - PMPNumRegions
+      - SecureIbex
     toplevel: ibex_riscv_compliance
     tools:
       verilator:

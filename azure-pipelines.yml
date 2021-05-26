@@ -97,7 +97,7 @@ jobs:
         - small
         - experimental-maxperf-pmp
         - experimental-maxperf-pmp-bmfull
-        - experimental-maxperf-pmp-bmfull-icache
+        - opentitan
         - experimental-branch-predictor
 
   # Run lint on simple system
