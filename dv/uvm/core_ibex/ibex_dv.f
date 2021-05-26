@@ -33,6 +33,8 @@ ${PRJ_DIR}/vendor/lowrisc_ip/ip/prim_generic/rtl/prim_generic_ram_1p.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/common/prim/prim_ram_1p.sv
 ${PRJ_DIR}/vendor/lowrisc_ip/ip/prim_generic/rtl/prim_generic_clock_gating.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/common/prim/prim_clock_gating.sv
+${PRJ_DIR}/vendor/lowrisc_ip/ip/prim_generic/rtl/prim_generic_buf.sv
+${PRJ_DIR}/dv/uvm/core_ibex/common/prim/prim_buf.sv
 
 // ibex CORE RTL files
 +incdir+${PRJ_DIR}/rtl

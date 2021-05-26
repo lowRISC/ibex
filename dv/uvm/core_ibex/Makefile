@@ -65,7 +65,7 @@ PMP_REGIONS         := 16
 # PMP Granularity
 PMP_GRANULARITY     := 0
 
-IBEX_CONFIG         := experimental-maxperf-pmp-bmfull-icache
+IBEX_CONFIG         := opentitan
 
 # TODO(udinator) - might need options for SAIL/Whisper/Spike
 ifeq (${ISS},ovpsim)
