@@ -18,6 +18,10 @@ Please `file an issue <https://github.com/lowRISC/ibex/issues>`_ if you experien
 To run the UVM testbench a RTL simulator which supports SystemVerilog and UVM 1.2 is required.
 The `documentation of riscv-dv <https://github.com/google/riscv-dv#prerequisites>`_ contains a list of supported simulators.
 
+To compile code that runs on Ibex, you'll need a RISC-V toolchain.
+This isn't part of the core as such, but is necessary for verification.
+See the :doc:`Verification <../03_reference/verification>` section of the Reference Guide for more details about which toolchains the project currently uses for testing.
+
 Tools with known issues
 -----------------------
 
