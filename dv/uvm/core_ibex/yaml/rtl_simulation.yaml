@@ -107,14 +107,12 @@
       - "vlib <out>/work"
       - "vlog -work <out>/work
         <cmp_opts>
-        +incdir+<ALDEC_PATH>/vlib/uvm-1.2/src
+        -uvmver 1.2
         +define+UVM
-        -l uvm_1_2
         -f ibex_dv.f"
-
   sim:
     cmd: >
-      vsim -c <sim_opts> <cov_opts> -sv_seed <seed> -lib <out>/work +access +r+w +UVM_TESTNAME=<rtl_test> +bin=<binary> +ibex_tracer_file_base="<sim_dir>/trace_core" -l <sim_dir>/sim.log -do "run -all; endsim; quit -force"
+      vsim -c <sim_opts> <cov_opts> -sv_seed <seed> -lib <out>/work +UVM_TESTNAME=<rtl_test> +bin=<binary> +ibex_tracer_file_base="<sim_dir>/trace_core" -l <sim_dir>/sim.log -do "run -all; endsim; quit -force"
     cov_opts: >
       -acdb_file <out>/cov.acdb
 
