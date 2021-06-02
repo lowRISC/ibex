@@ -284,12 +284,13 @@ def rtl_compile(compile_cmds, output_dir, lsf_cmd, opts):
         run_cmd(cmd)
 
 
-def get_test_sim_cmd(base_cmd, test, idx, output_dir, bin_dir, lsf_cmd):
+def get_test_sim_cmd(base_cmd, test, idx, seed, output_dir, bin_dir, lsf_cmd):
     '''Generate the command that runs a test iteration in the simulator
 
     base_cmd is the command to use before any test-specific substitutions. test
     is a dictionary describing the test (originally read from the testlist YAML
-    file). idx is the test iteration (an integer).
+    file). idx is the test iteration (an integer) and seed is the corresponding
+    seed.
 
     output_dir is the directory below which the test results will be written.
     bin_dir is the directory containing compiled binaries. lsf_cmd (if not
@@ -299,13 +300,14 @@ def get_test_sim_cmd(base_cmd, test, idx, output_dir, bin_dir, lsf_cmd):
     cmd is the command to run and dirname is the directory in which to run it.
 
     '''
-    sim_cmd = (base_cmd + ' ' + test['sim_opts'].replace('\n', ' ')
+    it_cmd = subst_vars(base_cmd, {'seed': str(seed)})
+    sim_cmd = (it_cmd + ' ' + test['sim_opts'].replace('\n', ' ')
                if "sim_opts" in test
-               else base_cmd)
+               else it_cmd)
 
     test_name = test['test']
 
-    sim_dir = os.path.join(output_dir, '{}.{}'.format(test_name, idx))
+    sim_dir = os.path.join(output_dir, '{}.{}'.format(test_name, seed))
     binary = os.path.join(bin_dir, '{}_{}.bin'.format(test_name, idx))
     desc = '{} with {}'.format(test['rtl_test'], binary)
 
@@ -400,22 +402,21 @@ def rtl_sim(sim_cmd, test_list,
     cmd_list = []
     for test in test_list:
         for i in range(test['iterations']):
-            it_cmd = subst_vars(sim_cmd, {'seed': str(start_seed + i)})
-            cmd_list.append(get_test_sim_cmd(it_cmd, test, i,
+            cmd_list.append(get_test_sim_cmd(sim_cmd, test, i, start_seed + i,
                                              output_dir, bin_dir, lsf_cmd))
 
     run_sim_commands(cmd_list, lsf_cmd is not None)
 
 
-def compare_test_run(test, idx, iss, output_dir, report):
+def compare_test_run(test, idx, seed, iss, output_dir, report):
     '''Compare results for a single run of a single test
 
     Here, test is a dictionary describing the test (read from the testlist YAML
-    file). idx is the iteration index. iss is the chosen instruction set
-    simulator (currently supported: spike and ovpsim). output_dir is the base
-    output directory (which should contain logs from both the ISS and the test
-    run itself). report is the path to the regression report file we're
-    writing.
+    file). idx is the iteration index and seed is the corresponding seed. iss
+    is the chosen instruction set simulator (currently supported: spike and
+    ovpsim). output_dir is the base output directory (which should contain logs
+    from both the ISS and the test run itself). report is the path to the
+    regression report file we're writing.
 
     Returns True if the test run passed and False otherwise.
 
@@ -433,7 +434,7 @@ def compare_test_run(test, idx, iss, output_dir, report):
         report_fd.write('Test binary: {}\n'.format(elf))
 
         rtl_dir = os.path.join(output_dir, 'rtl_sim',
-                               '{}.{}'.format(test_name, idx))
+                               '{}.{}'.format(test_name, seed))
 
         uvm_log = os.path.join(rtl_dir, 'sim.log')
 
@@ -496,13 +497,13 @@ def compare_test_run(test, idx, iss, output_dir, report):
     return compare_result.startswith('[PASSED]')
 
 
-def compare(test_list, iss, output_dir):
+def compare(test_list, iss, start_seed, output_dir):
     """Compare RTL & ISS simulation reult
 
     Here, test_list is a list of tests read from the testlist YAML file. iss is
-    the instruction set simulator that was used (must be 'spike' or 'ovpsim')
-    and output_dir is the output directory which contains the results and where
-    we'll write the regression log.
+    the instruction set simulator that was used (must be 'spike' or 'ovpsim').
+    start_seed is the seed for index zero. output_dir is the output directory
+    which contains the results and where we'll write the regression log.
 
     """
     report = os.path.join(output_dir, 'regr.log')
@@ -510,7 +511,8 @@ def compare(test_list, iss, output_dir):
     fails = 0
     for test in test_list:
         for idx in range(test['iterations']):
-            if compare_test_run(test, idx, iss, output_dir, report):
+            if compare_test_run(test, idx,
+                                start_seed + idx, iss, output_dir, report):
                 passes += 1
             else:
                 fails += 1
@@ -692,7 +694,7 @@ def main():
 
     # Compare RTL & ISS simulation result.
     if steps['compare']:
-        if not compare(matched_list, args.iss, args.o):
+        if not compare(matched_list, args.iss, args.start_seed, args.o):
             return RET_FAIL
 
     # Generate merged coverage directory and load it into appropriate GUI
