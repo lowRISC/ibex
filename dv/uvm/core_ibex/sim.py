@@ -40,12 +40,6 @@ try:
                      setup_logging, RET_SUCCESS, RET_FAIL)
     import logging
 
-    from spike_log_to_trace_csv import process_spike_sim_log
-    from ovpsim_log_to_trace_csv import process_ovpsim_sim_log
-    from instr_trace_compare import compare_trace_csv
-
-    from ibex_log_to_trace_csv import process_ibex_sim_log, check_ibex_uvm_log
-
     from ibex_config import parse_config
 
 finally:
@@ -408,125 +402,6 @@ def rtl_sim(sim_cmd, test_list,
     run_sim_commands(cmd_list, lsf_cmd is not None)
 
 
-def compare_test_run(test, idx, seed, iss, output_dir, report):
-    '''Compare results for a single run of a single test
-
-    Here, test is a dictionary describing the test (read from the testlist YAML
-    file). idx is the iteration index and seed is the corresponding seed. iss
-    is the chosen instruction set simulator (currently supported: spike and
-    ovpsim). output_dir is the base output directory (which should contain logs
-    from both the ISS and the test run itself). report is the path to the
-    regression report file we're writing.
-
-    Returns True if the test run passed and False otherwise.
-
-    '''
-    with open(report, 'a') as report_fd:
-        test_name = test['test']
-        elf = os.path.join(output_dir,
-                           'instr_gen/asm_test/{}_{}.o'.format(test_name, idx))
-
-        logging.info("Comparing %s/DUT sim result : %s" % (iss, elf))
-
-        test_name_idx = '{}.{}'.format(test_name, idx)
-        test_underline = '-' * len(test_name_idx)
-        report_fd.write('\n{}\n{}\n'.format(test_name_idx, test_underline))
-        report_fd.write('Test binary: {}\n'.format(elf))
-
-        rtl_dir = os.path.join(output_dir, 'rtl_sim',
-                               '{}.{}'.format(test_name, seed))
-
-        uvm_log = os.path.join(rtl_dir, 'sim.log')
-
-        # Have a look at the UVM log. Report a failure if an issue is seen in the
-        # log.
-        uvm_pass, uvm_log_lines = check_ibex_uvm_log(uvm_log)
-
-        report_fd.write('sim log: {}\n'.format(uvm_log))
-
-        if not uvm_pass:
-            for line in uvm_log_lines:
-                report_fd.write(line)
-            report_fd.write('[FAILED]: sim error seen\n')
-
-            return False
-
-        rtl_log = os.path.join(rtl_dir, 'trace_core_00000000.log')
-        rtl_csv = os.path.join(rtl_dir, 'trace_core_00000000.csv')
-
-        try:
-            # Convert the RTL log file to a trace CSV.
-            process_ibex_sim_log(rtl_log, rtl_csv, 1)
-        except (OSError, RuntimeError) as e:
-            report_fd.write('[FAILED]: Log processing failed: {}\n'.format(e))
-
-            return False
-
-        no_post_compare = test.get('no_post_compare', False)
-        assert isinstance(no_post_compare, bool)
-
-        # no_post_compare skips the final ISS v RTL log check, so if we've reached
-        # here we're done when no_post_compare is set.
-        if no_post_compare:
-            report_fd.write('[PASSED]\n')
-            return True
-
-        # There were no UVM errors. Process the log file from the ISS.
-        iss_dir = os.path.join(output_dir, 'instr_gen', '{}_sim'.format(iss))
-
-        iss_log = os.path.join(iss_dir, '{}.{}.log'.format(test_name, idx))
-        iss_csv = os.path.join(iss_dir, '{}.{}.csv'.format(test_name, idx))
-
-        try:
-            if iss == "spike":
-                process_spike_sim_log(iss_log, iss_csv)
-            else:
-                assert iss == 'ovpsim'  # (should be checked by argparse)
-                process_ovpsim_sim_log(iss_log, iss_csv)
-        except (OSError, RuntimeError) as e:
-            report_fd.write('[FAILED]: Log processing failed: {}\n'.format(e))
-
-            return False
-
-    compare_result = \
-        compare_trace_csv(rtl_csv, iss_csv, "ibex", iss, report,
-                          **test.get('compare_opts', {}))
-
-    # Rather oddly, compare_result is a string. The comparison passed if it
-    # starts with '[PASSED]'.
-    return compare_result.startswith('[PASSED]')
-
-
-def compare(test_list, iss, start_seed, output_dir):
-    """Compare RTL & ISS simulation reult
-
-    Here, test_list is a list of tests read from the testlist YAML file. iss is
-    the instruction set simulator that was used (must be 'spike' or 'ovpsim').
-    start_seed is the seed for index zero. output_dir is the output directory
-    which contains the results and where we'll write the regression log.
-
-    """
-    report = os.path.join(output_dir, 'regr.log')
-    passes = 0
-    fails = 0
-    for test in test_list:
-        for idx in range(test['iterations']):
-            if compare_test_run(test, idx,
-                                start_seed + idx, iss, output_dir, report):
-                passes += 1
-            else:
-                fails += 1
-
-    summary = "\n{} PASSED, {} FAILED".format(passes, fails)
-    with open(report, 'a') as report_fd:
-        report_fd.write(summary + '\n')
-
-    logging.info(summary)
-    logging.info("RTL & ISS regression report at {}".format(report))
-
-    return fails == 0
-
-
 #TODO(udinator) - support DSim, and Riviera
 def gen_cov(base_dir, simulator, lsf_cmd):
     """Generate a merged coverage directory.
@@ -616,7 +491,7 @@ def main():
     parser.add_argument("--en_wave", action='store_true',
                         help="Enable waveform dump")
     parser.add_argument("--steps", type=str, default="all",
-                        help="Run steps: compile,sim,compare,cov")
+                        help="Run steps: compile,sim,cov")
     parser.add_argument("--lsf_cmd", type=str,
                         help=("LSF command. Run locally if lsf "
                               "command is not specified"))
@@ -658,7 +533,6 @@ def main():
     steps = {
         'compile': args.steps == "all" or 'compile' in args.steps,
         'sim': args.steps == "all" or 'sim' in args.steps,
-        'compare': args.steps == "all" or 'compare' in args.steps,
         'cov': args.steps == "all" or 'cov' in args.steps
     }
 
@@ -674,7 +548,12 @@ def main():
         compile_cmds, sim_cmd = get_simulator_cmd(args.simulator,
                                                   args.simulator_yaml, enables)
 
-    if steps['sim'] or steps['compare']:
+    # Compile TB
+    if steps['compile']:
+        rtl_compile(compile_cmds, output_dir, args.lsf_cmd, args.cmp_opts)
+
+    # Run RTL simulation
+    if steps['sim']:
         process_regression_list(args.testlist, args.test, args.iterations or 0,
                                 matched_list, _RISCV_DV_ROOT)
         if not matched_list:
@@ -683,19 +562,8 @@ def main():
 
         matched_list = filter_tests_by_config(args.ibex_config, matched_list)
 
-    # Compile TB
-    if steps['compile']:
-        rtl_compile(compile_cmds, output_dir, args.lsf_cmd, args.cmp_opts)
-
-    # Run RTL simulation
-    if steps['sim']:
         rtl_sim(sim_cmd, matched_list, args.start_seed,
                 args.sim_opts, output_dir, bin_dir, args.lsf_cmd)
-
-    # Compare RTL & ISS simulation result.
-    if steps['compare']:
-        if not compare(matched_list, args.iss, args.start_seed, args.o):
-            return RET_FAIL
 
     # Generate merged coverage directory and load it into appropriate GUI
     if steps['cov']:
