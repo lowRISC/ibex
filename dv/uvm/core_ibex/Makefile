@@ -211,6 +211,18 @@ FORCE:
 vars-prereq = $(if $(call vars-differ,$(1),$(2),$(3)),FORCE,)
 
 ###############################################################################
+# Get a list of tests and seeds
+#
+# Run list_tests.py to list the things we need to run in the format
+# TESTNAME.SEED and store it in a variable.
+tests-and-seeds := \
+  $(shell ./list_tests.py \
+	--start_seed $(SEED) \
+	--test "$(TEST)" \
+	--iterations $(ITERATIONS) \
+	--ibex-config $(IBEX_CONFIG))
+
+###############################################################################
 # Generate random instructions
 #
 # This depends on the vendored in code in $(GEN_DIR). It also depends on the
@@ -402,17 +414,36 @@ rtl_sim: $(metadata)/rtl_sim.run.stamp
 
 ###############################################################################
 # Compare ISS and RTL sim results
-$(OUT-SEED)/regr.log: \
-  $(metadata)/instr_gen.iss.stamp \
-  $(metadata)/rtl_sim.run.stamp $(TESTLIST)
-	$(verb)rm -f $@
-	$(verb)./sim.py \
-     --o=$(OUT-SEED) \
-     --steps=compare \
-     --ibex_config=$(IBEX_CONFIG) \
-     ${TEST_OPTS} \
-     --simulator="${SIMULATOR}" \
-     --iss="${ISS}"
+#
+# For a given TEST/SEED pair, the ISS and RTL logs appear at:
+#
+#   $(OUT-SEED)/instr_gen/$(ISS)_sim/$(TEST).$(SEED).log
+#   $(OUT-SEED)/rtl_sim/$(TEST).$(SEED)/trace_core_00000000.log
+#
+# The comparison script compares these and writes to a result file at
+#
+#   $(OUT-SEED)/rtl_sim/$(TEST).$(SEED)/comparison-result.txt
+#
+# with PASSED or FAILED, depending.
+
+rtl-sim-dirs := $(addprefix $(OUT-SEED)/rtl_sim/,$(tests-and-seeds))
+comp-results := $(addsuffix /comparison-result.txt,$(rtl-sim-dirs))
+
+$(comp-results): \
+  %/comparison-result.txt: \
+  compare.py $(metadata)/instr_gen.iss.stamp $(metadata)/rtl_sim.run.stamp
+	@echo Comparing traces for $*
+	$(verb)./compare.py \
+      --iss $(ISS) \
+      --iss-log-dir $(OUT-SEED)/instr_gen/$(ISS)_sim \
+      --start-seed $(SEED) \
+      --test-dot-seed "$(notdir $*)" \
+      --output $@ \
+      --rtl-log-dir $(OUT-SEED)/rtl_sim/$(notdir $*)
+
+$(OUT-SEED)/regr.log: collect_results.py $(comp-results)
+	@echo "Collecting up results (report at $@)"
+	$(verb)./collect_results.py -o $@ $(comp-results)
 
 .PHONY: post_compare
 post_compare: $(OUT-SEED)/regr.log
