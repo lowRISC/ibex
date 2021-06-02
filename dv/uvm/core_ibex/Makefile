@@ -452,7 +452,7 @@ post_compare: $(OUT-SEED)/regr.log
 # Generate RISCV-DV functional coverage
 # TODO(udi) - add B extension
 .PHONY: riscv_dv_cov
-riscv_dv_fcov:
+riscv_dv_fcov: $(metadata)/rtl_sim.run.stamp
 	$(verb)python3 ${GEN_DIR}/cov.py \
           --core ibex \
           --dir ${OUT-SEED}/rtl_sim \
