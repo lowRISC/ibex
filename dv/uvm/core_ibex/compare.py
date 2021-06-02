@@ -11,7 +11,9 @@ import argparse
 import os
 import re
 import sys
-from typing import Dict, List, Optional, TextIO, Tuple
+from typing import Dict, Optional, TextIO, Tuple
+
+from test_entry import TestEntry, get_test_entry
 
 _CORE_IBEX = os.path.normpath(os.path.join(os.path.dirname(__file__)))
 _IBEX_ROOT = os.path.normpath(os.path.join(_CORE_IBEX, '../../..'))
@@ -24,7 +26,6 @@ try:
     sys.path = ([os.path.join(_CORE_IBEX, 'riscv_dv_extension'),
                  os.path.join(_RISCV_DV_ROOT, 'scripts')] +
                 sys.path)
-    from lib import process_regression_list  # type: ignore
 
     from spike_log_to_trace_csv import process_spike_sim_log  # type: ignore
     from ovpsim_log_to_trace_csv import process_ovpsim_sim_log  # type: ignore
@@ -35,8 +36,7 @@ try:
 finally:
     sys.path = _OLD_SYS_PATH
 
-_TestEntry = Dict[str, object]
-_TestEntries = List[_TestEntry]
+
 _TestAndSeed = Tuple[str, int]
 _CompareResult = Tuple[bool, Optional[str], Dict[str, str]]
 
@@ -53,18 +53,7 @@ def read_test_dot_seed(arg: str) -> _TestAndSeed:
     return (match.group(1), int(match.group(2), 10))
 
 
-def get_test_entry(testname: str) -> _TestEntry:
-    matched_list = []  # type: _TestEntries
-    testlist = os.path.join(_CORE_IBEX, 'riscv_dv_extension', 'testlist.yaml')
-    process_regression_list(testlist, 'all', 0, matched_list, _RISCV_DV_ROOT)
-
-    for entry in matched_list:
-        if entry['test'] == testname:
-            return entry
-    raise RuntimeError('No matching test entry for {!r}'.format(testname))
-
-
-def compare_test_run(test: _TestEntry,
+def compare_test_run(test: TestEntry,
                      idx: int,
                      seed: int,
                      rtl_log_dir: str,

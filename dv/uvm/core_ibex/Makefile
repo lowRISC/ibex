@@ -365,7 +365,6 @@ $(OUT-DIR)rtl_sim/.compile.stamp: \
 	$(verb)./sim.py \
 	 --o=$(OUT-DIR) \
 	 --steps=compile \
-	 --ibex_config=$(IBEX_CONFIG) \
 	 ${COMMON_OPTS} \
 	 --simulator="${SIMULATOR}" --simulator_yaml=yaml/rtl_simulation.yaml \
 	 $(cov-arg) $(wave-arg) $(lsf-arg) \
@@ -393,24 +392,28 @@ $(metadata)/rtl_sim.compile.stamp: \
 	cp -r $(OUT-DIR)rtl_sim $(OUT-SEED)
 	@touch $@
 
-# This rule actually runs the simulation. It depends on the copied-in testbench
-# and also on us having already compiled the test programs.
-$(metadata)/rtl_sim.run.stamp: \
+rtl-sim-dirs := $(addprefix $(OUT-SEED)/rtl_sim/,$(tests-and-seeds))
+rtl-sim-logs := $(addsuffix /sim.log,$(rtl-sim-dirs))
+
+$(rtl-sim-logs): \
+  %/sim.log: \
   $(metadata)/rtl_sim.compile.stamp \
-  $(metadata)/instr_gen.compile.stamp $(TESTLIST) \
-  sim.py yaml/rtl_simulation.yaml
-	$(verb)./sim.py \
-	 --o=$(OUT-SEED) \
-	 --steps=sim \
-	 --ibex_config=$(IBEX_CONFIG) \
-	 ${TEST_OPTS} \
-	 --simulator="${SIMULATOR}" --simulator_yaml=yaml/rtl_simulation.yaml \
-	 $(cov-arg) $(wave-arg) $(lsf-arg) \
-	 --sim_opts="+signature_addr=${SIGNATURE_ADDR} ${SIM_OPTS}"
-	@touch $@
+  $(metadata)/instr_gen.compile.stamp \
+  run_rtl.py
+	@echo Running RTL simulation at $@
+	$(verb)mkdir -p $(@D)
+	$(verb)./run_rtl.py \
+	  --simulator $(SIMULATOR) \
+	  --simulator_yaml yaml/rtl_simulation.yaml \
+	  $(cov-arg) $(wave-arg) $(lsf-arg) \
+	  --start-seed $(SEED) \
+      --sim-opts="+signature_addr=${SIGNATURE_ADDR} ${SIM_OPTS}" \
+	  --test-dot-seed $(notdir $*) \
+	  --bin-dir $(OUT-SEED)/instr_gen/asm_test \
+	  --rtl-sim-dir $(OUT-SEED)/rtl_sim
 
 .PHONY: rtl_sim
-rtl_sim: $(metadata)/rtl_sim.run.stamp
+rtl_sim: $(rtl-sim-logs)
 
 ###############################################################################
 # Compare ISS and RTL sim results
@@ -426,12 +429,11 @@ rtl_sim: $(metadata)/rtl_sim.run.stamp
 #
 # with PASSED or FAILED, depending.
 
-rtl-sim-dirs := $(addprefix $(OUT-SEED)/rtl_sim/,$(tests-and-seeds))
 comp-results := $(addsuffix /comparison-result.txt,$(rtl-sim-dirs))
 
 $(comp-results): \
   %/comparison-result.txt: \
-  compare.py $(metadata)/instr_gen.iss.stamp $(metadata)/rtl_sim.run.stamp
+  compare.py $(metadata)/instr_gen.iss.stamp $(rtl-sim-logs)
 	@echo Comparing traces for $*
 	$(verb)./compare.py \
       --iss $(ISS) \
@@ -452,7 +454,7 @@ post_compare: $(OUT-SEED)/regr.log
 # Generate RISCV-DV functional coverage
 # TODO(udi) - add B extension
 .PHONY: riscv_dv_cov
-riscv_dv_fcov: $(metadata)/rtl_sim.run.stamp
+riscv_dv_fcov: $(rtl-sim-logs)
 	$(verb)python3 ${GEN_DIR}/cov.py \
           --core ibex \
           --dir ${OUT-SEED}/rtl_sim \
@@ -466,12 +468,7 @@ riscv_dv_fcov: $(metadata)/rtl_sim.run.stamp
 .PHONY: gen_cov
 gen_cov: riscv_dv_fcov
 	$(verb)rm -rf $(OUT-DIR)rtl_sim/test.vdb
-	$(verb)./sim.py \
-		--steps=cov \
-		${TEST_OPTS} \
-		--simulator="${SIMULATOR}" \
-		$(lsf-arg) \
-		--o="$(OUT-DIR)"
+	$(verb)./sim.py --steps=cov --simulator="${SIMULATOR}" $(lsf-arg) --o="$(OUT-DIR)"
 	@if [ -d "test.vdb" ]; then \
 		mv -f test.vdb $(OUT-DIR)rtl_sim/; \
 	fi
