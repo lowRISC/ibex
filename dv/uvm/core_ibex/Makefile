@@ -92,7 +92,7 @@ all: sim
 
 instr: iss_sim
 
-sim: post_compare gen_cov
+sim: post_compare $(if $(filter 1,$(COV)),gen_cov,)
 
 .PHONY: clean
 clean:
