@@ -16,5 +16,7 @@ hjson
 mistletoe>=0.7.2
 premailer
 
+junit_xml
+
 # Recurse to get any requirements from riscv-dv
 -r vendor/google_riscv-dv/requirements.txt

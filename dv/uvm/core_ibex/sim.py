@@ -21,6 +21,9 @@ import os
 import random
 import subprocess
 import sys
+import collections
+import io
+import junit_xml
 
 _CORE_IBEX = os.path.normpath(os.path.join(os.path.dirname(__file__)))
 _IBEX_ROOT = os.path.normpath(os.path.join(_CORE_IBEX, '../../..'))
@@ -421,8 +424,20 @@ def rtl_sim(sim_cmd, test_list, seed_gen, opts,
 
     run_sim_commands(cmd_list, lsf_cmd is not None)
 
+TestRunResult = collections.namedtuple('TestRunResult',
+        ['test_name', # Name of test
+         'test_idx', # Index of test
+         'binary', # Path to test binary
+         'sim_log', # Path to RTL simulation log
+         'rtl_trace', # Path to RTL ibex trace CSV
+         'iss_trace', # Path to spike trace CSV. This will be None if test
+                      # doesn't require an ISS comparison.
+         'passed', # True if test passed
+         'failure_message'] # Message describing failure, includes a
+                            #'[FAILED]: XXXX' line at the end
+    )
 
-def compare_test_run(test, idx, iss, output_dir, report):
+def compare_test_run(test, idx, iss, output_dir):
     '''Compare results for a single run of a single test
 
     Here, test is a dictionary describing the test (read from the testlist YAML
@@ -435,83 +450,238 @@ def compare_test_run(test, idx, iss, output_dir, report):
     Returns True if the test run passed and False otherwise.
 
     '''
-    with open(report, 'a') as report_fd:
-        test_name = test['test']
-        elf = os.path.join(output_dir,
-                           'instr_gen/asm_test/{}_{}.o'.format(test_name, idx))
+    test_name = test['test']
+    elf = os.path.join(output_dir,
+                       'instr_gen/asm_test/{}_{}.o'.format(test_name, idx))
 
-        logging.info("Comparing %s/DUT sim result : %s" % (iss, elf))
+    logging.info("Comparing %s/DUT sim result : %s" % (iss, elf))
 
-        test_name_idx = '{}.{}'.format(test_name, idx)
-        test_underline = '-' * len(test_name_idx)
-        report_fd.write('\n{}\n{}\n'.format(test_name_idx, test_underline))
-        report_fd.write('Test binary: {}\n'.format(elf))
+    test_name_idx = '{}.{}'.format(test_name, idx)
+    test_underline = '-' * len(test_name_idx)
 
-        rtl_dir = os.path.join(output_dir, 'rtl_sim',
-                               '{}.{}'.format(test_name, idx))
+    rtl_dir = os.path.join(output_dir, 'rtl_sim',
+                           '{}.{}'.format(test_name, idx))
 
-        uvm_log = os.path.join(rtl_dir, 'sim.log')
+    uvm_log = os.path.join(rtl_dir, 'sim.log')
 
-        # Have a look at the UVM log. Report a failure if an issue is seen in the
-        # log.
-        uvm_pass, uvm_log_lines = check_ibex_uvm_log(uvm_log)
+    rtl_log = os.path.join(rtl_dir, 'trace_core_00000000.log')
+    rtl_csv = os.path.join(rtl_dir, 'trace_core_00000000.csv')
 
-        report_fd.write('sim log: {}\n'.format(uvm_log))
+    no_post_compare = test.get('no_post_compare', False)
+    assert isinstance(no_post_compare, bool)
 
-        if not uvm_pass:
-            for line in uvm_log_lines:
-                report_fd.write(line)
-            report_fd.write('[FAILED]: sim error seen\n')
-
-            return False
-
-        rtl_log = os.path.join(rtl_dir, 'trace_core_00000000.log')
-        rtl_csv = os.path.join(rtl_dir, 'trace_core_00000000.csv')
-
-        try:
-            # Convert the RTL log file to a trace CSV.
-            process_ibex_sim_log(rtl_log, rtl_csv, 1)
-        except (OSError, RuntimeError) as e:
-            report_fd.write('[FAILED]: Log processing failed: {}\n'.format(e))
-
-            return False
-
-        no_post_compare = test.get('no_post_compare', False)
-        assert isinstance(no_post_compare, bool)
-
-        # no_post_compare skips the final ISS v RTL log check, so if we've reached
-        # here we're done when no_post_compare is set.
-        if no_post_compare:
-            report_fd.write('[PASSED]\n')
-            return True
-
+    # Add ISS trace path to run_result if RTL/ISS post compare is requested.
+    if no_post_compare:
+        iss_csv = None
+    else:
         # There were no UVM errors. Process the log file from the ISS.
         iss_dir = os.path.join(output_dir, 'instr_gen', '{}_sim'.format(iss))
 
         iss_log = os.path.join(iss_dir, '{}.{}.log'.format(test_name, idx))
         iss_csv = os.path.join(iss_dir, '{}.{}.csv'.format(test_name, idx))
 
-        try:
-            if iss == "spike":
-                process_spike_sim_log(iss_log, iss_csv)
-            else:
-                assert iss == 'ovpsim'  # (should be checked by argparse)
-                process_ovpsim_sim_log(iss_log, iss_csv)
-        except (OSError, RuntimeError) as e:
-            report_fd.write('[FAILED]: Log processing failed: {}\n'.format(e))
+    run_result = TestRunResult(test_name = test_name, test_idx = idx,
+            binary = elf, sim_log = uvm_log, rtl_trace = rtl_csv,
+            iss_trace = iss_csv, passed = False, failure_message='')
 
-            return False
+    # Have a look at the UVM log. Report a failure if an issue is seen in the
+    # log.
+    try:
+        uvm_pass, uvm_log_lines = check_ibex_uvm_log(uvm_log)
+    except IOError as e:
+        failure_message = str(e)
+        failure_message += '\n[FAILED] Could not open simulation log'
+        run_result = run_result._replace(failure_message = failure_message)
 
-    compare_result = \
-        compare_trace_csv(rtl_csv, iss_csv, "ibex", iss, report,
-                          **test.get('compare_opts', {}))
+        return run_result
 
-    # Rather oddly, compare_result is a string. The comparison passed if it
-    # starts with '[PASSED]'.
-    return compare_result.startswith('[PASSED]')
+    if not uvm_pass:
+        failure_message = '\n'.join(uvm_log_lines)
+        failure_message += '\n[FAILED]: sim error seen'
+        run_result = run_result._replace(failure_message = failure_message)
+
+        return run_result
+
+    try:
+        # Convert the RTL log file to a trace CSV.
+        process_ibex_sim_log(rtl_log, rtl_csv, 1)
+    except (OSError, RuntimeError) as e:
+        run_result = run_result._replace(failure_message =
+                '[FAILED]: Log processing failed: {}'.format(e))
+
+        return run_result
+
+    # no_post_compare skips the final ISS v RTL log check, so if we've reached
+    # here we're done when no_post_compare is set.
+    if no_post_compare:
+        run_result = run_result._replace(passed = True)
+        return run_result
+
+    try:
+        if iss == "spike":
+            process_spike_sim_log(iss_log, iss_csv)
+        else:
+            assert iss == 'ovpsim'  # (should be checked by argparse)
+            process_ovpsim_sim_log(iss_log, iss_csv)
+    except (OSError, RuntimeError) as e:
+        run_result = run_result._replace(failure_message =
+                '[FAILED]: Log processing failed: {}'.format(e))
+
+        return run_result
+
+    with io.StringIO() as compare_log:
+        compare_result = \
+            compare_trace_csv(rtl_csv, iss_csv, "ibex", iss, compare_log,
+                              **test.get('compare_opts', {}))
+
+        # Rather oddly, compare_result is a string. The comparison passed if it
+        # starts with '[PASSED]'.
+        if compare_result.startswith('[PASSED]'):
+            run_result = run_result._replace(passed = True)
+        else:
+            run_result = run_result._replace(failure_message =
+                    compare_log.getvalue())
+
+    return run_result
+
+def output_run_result_text(run_result, report):
+    with open(report, 'a') as report_fd:
+        test_name_idx = f'{run_result.test_name}.{run_result.test_idx}'
+        test_underline = '-' * len(test_name_idx)
+        report_fd.write(f'\n{test_name_idx}\n{test_underline}\n')
+
+        report_fd.write(f'Test binary: {run_result.binary}\n')
+        report_fd.write(f'sim log: {run_result.sim_log}\n')
+        report_fd.write(f'RTL trace: {run_result.rtl_trace}\n')
+
+        if (run_result.iss_trace):
+            report_fd.write(f'ISS trace: {run_result.rtl_trace}\n')
+
+        if (run_result.passed):
+            report_fd.write('[PASSED]\n')
+        else:
+            report_fd.write(f'{run_result.failure_message}\n')
+
+def output_run_results_junit_xml(run_results, junit_xml_filename):
+    test_suite_cases = {}
+
+    for run_result in run_results:
+        if run_result.test_name not in test_suite_cases:
+            test_suite_cases[run_result.test_name] = []
+
+        test_case = junit_xml.TestCase(
+                f'{run_result.test_name}.{run_result.test_idx}')
+
+        test_case.stdout = f'Test binary: {run_result.binary}\n' \
+            f'sim log: {run_result.sim_log}\n' \
+            f'RTL trace: {run_result.rtl_trace}\n'
+
+        if (run_result.iss_trace):
+            test_case.stdout += f'ISS trace: {run_result.rtl_trace}\n'
+
+        if not run_result.passed:
+            test_case.add_failure_info(output = run_result.failure_message)
+
+        test_suite_cases[run_result.test_name].append(test_case)
+
+    test_suites = [junit_xml.TestSuite(test_suite_name, test_cases) for
+            test_suite_name, test_cases in test_suite_cases.items()]
+
+    with open(junit_xml_filename, 'w') as junit_xml_file:
+        junit_string = junit_xml.to_xml_report_string(test_suites)
+        junit_xml_file.write(junit_string)
+        logging.info(f"JUnit XML\n{junit_string}")
+
+#def compare_test_run(test, idx, iss, output_dir, report):
+#    '''Compare results for a single run of a single test
+#
+#    Here, test is a dictionary describing the test (read from the testlist YAML
+#    file). idx is the iteration index. iss is the chosen instruction set
+#    simulator (currently supported: spike and ovpsim). output_dir is the base
+#    output directory (which should contain logs from both the ISS and the test
+#    run itself). report is the path to the regression report file we're
+#    writing.
+#
+#    Returns True if the test run passed and False otherwise.
+#
+#    '''
+#    with open(report, 'a') as report_fd:
+#        test_name = test['test']
+#        elf = os.path.join(output_dir,
+#                           'instr_gen/asm_test/{}_{}.o'.format(test_name, idx))
+#
+#        logging.info("Comparing %s/DUT sim result : %s" % (iss, elf))
+#
+#        test_name_idx = '{}.{}'.format(test_name, idx)
+#        test_underline = '-' * len(test_name_idx)
+#        report_fd.write('\n{}\n{}\n'.format(test_name_idx, test_underline))
+#        report_fd.write('Test binary: {}\n'.format(elf))
+#
+#        rtl_dir = os.path.join(output_dir, 'rtl_sim',
+#                               '{}.{}'.format(test_name, idx))
+#
+#        uvm_log = os.path.join(rtl_dir, 'sim.log')
+#
+#        # Have a look at the UVM log. Report a failure if an issue is seen in the
+#        # log.
+#        uvm_pass, uvm_log_lines = check_ibex_uvm_log(uvm_log)
+#
+#        report_fd.write('sim log: {}\n'.format(uvm_log))
+#
+#        if not uvm_pass:
+#            for line in uvm_log_lines:
+#                report_fd.write(line)
+#            report_fd.write('[FAILED]: sim error seen\n')
+#
+#            return False
+#
+#        rtl_log = os.path.join(rtl_dir, 'trace_core_00000000.log')
+#        rtl_csv = os.path.join(rtl_dir, 'trace_core_00000000.csv')
+#
+#        try:
+#            # Convert the RTL log file to a trace CSV.
+#            process_ibex_sim_log(rtl_log, rtl_csv, 1)
+#        except (OSError, RuntimeError) as e:
+#            report_fd.write('[FAILED]: Log processing failed: {}\n'.format(e))
+#
+#            return False
+#
+#        no_post_compare = test.get('no_post_compare', False)
+#        assert isinstance(no_post_compare, bool)
+#
+#        # no_post_compare skips the final ISS v RTL log check, so if we've reached
+#        # here we're done when no_post_compare is set.
+#        if no_post_compare:
+#            report_fd.write('[PASSED]\n')
+#            return True
+#
+#        # There were no UVM errors. Process the log file from the ISS.
+#        iss_dir = os.path.join(output_dir, 'instr_gen', '{}_sim'.format(iss))
+#
+#        iss_log = os.path.join(iss_dir, '{}.{}.log'.format(test_name, idx))
+#        iss_csv = os.path.join(iss_dir, '{}.{}.csv'.format(test_name, idx))
+#
+#        try:
+#            if iss == "spike":
+#                process_spike_sim_log(iss_log, iss_csv)
+#            else:
+#                assert iss == 'ovpsim'  # (should be checked by argparse)
+#                process_ovpsim_sim_log(iss_log, iss_csv)
+#        except (OSError, RuntimeError) as e:
+#            report_fd.write('[FAILED]: Log processing failed: {}\n'.format(e))
+#
+#            return False
+#
+#    compare_result = \
+#        compare_trace_csv(rtl_csv, iss_csv, "ibex", iss, report,
+#                          **test.get('compare_opts', {}))
+#
+#    # Rather oddly, compare_result is a string. The comparison passed if it
+#    # starts with '[PASSED]'.
+#    return compare_result.startswith('[PASSED]')
 
 
-def compare(test_list, iss, output_dir):
+def compare(test_list, iss, output_dir, verbose_pass=True):
     """Compare RTL & ISS simulation reult
 
     Here, test_list is a list of tests read from the testlist YAML file. iss is
@@ -521,14 +691,24 @@ def compare(test_list, iss, output_dir):
 
     """
     report = os.path.join(output_dir, 'regr.log')
+    junit_xml_filename = os.path.join(output_dir, 'regr_junit.xml')
     passes = 0
     fails = 0
+    run_results = []
+
     for test in test_list:
         for idx in range(test['iterations']):
-            if compare_test_run(test, idx, iss, output_dir, report):
+            run_result = compare_test_run(test, idx, iss, output_dir)
+            if run_result.passed:
                 passes += 1
             else:
                 fails += 1
+            run_results.append(run_result)
+
+            if verbose_pass or not run_result.passed:
+                output_run_result_text(run_result, report)
+
+    output_run_results_junit_xml(run_results, junit_xml_filename)
 
     summary = "\n{} PASSED, {} FAILED".format(passes, fails)
     with open(report, 'a') as report_fd:
@@ -536,6 +716,7 @@ def compare(test_list, iss, output_dir):
 
     logging.info(summary)
     logging.info("RTL & ISS regression report at {}".format(report))
+    logging.info("JUnit report at {}".format(junit_xml_filename))
 
     return fails == 0
 

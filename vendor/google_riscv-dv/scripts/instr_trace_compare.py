@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 from riscv_trace_csv import *
 
 
-def compare_trace_csv(csv1, csv2, name1, name2, log,
+def compare_trace_csv(csv1, csv2, name1, name2, log_fd,
                       in_order_mode=1,
                       coalescing_limit=0,
                       verbose=0,
@@ -40,13 +40,8 @@ def compare_trace_csv(csv1, csv2, name1, name2, log,
     if compare_final_value_only:
         in_order_mode = 0
 
-    if log:
-        fd = open(log, 'a+')
-    else:
-        fd = sys.stdout
-
-    fd.write("{} : {}\n".format(name1, csv1))
-    fd.write("{} : {}\n".format(name2, csv2))
+    if not log_fd:
+        log_fd = sys.stdout
 
     with open(csv1, "r") as fd1, open(csv2, "r") as fd2:
         instr_trace_1 = []
@@ -81,19 +76,19 @@ def compare_trace_csv(csv1, csv2, name1, name2, log,
                 # Check if the GPR update is the same between trace 1 and 2
                 if gpr_state_change_2 == 0:
                     mismatch_cnt += 1
-                    fd.write("Mismatch[{}]:\n[{}] {} : {}\n".format(
+                    log_fd.write("Mismatch[{}]:\n[{}] {} : {}\n".format(
                       mismatch_cnt, trace_1_index, name1,trace.get_trace_string()))
-                    fd.write("{} instructions left in trace {}\n".format(
+                    log_fd.write("{} instructions left in trace {}\n".format(
                       len(instr_trace_1) - trace_1_index + 1, name1))
                 elif len(trace.gpr) != len(
                         instr_trace_2[trace_2_index - 1].gpr):
                     mismatch_cnt += 1
                     # print first few mismatches
                     if mismatch_cnt <= mismatch_print_limit:
-                        fd.write("Mismatch[{}]:\n{}[{}] : {}\n".format(
+                        log_fd.write("Mismatch[{}]:\n{}[{}] : {}\n".format(
                           mismatch_cnt, name1, trace_2_index - 1,
                           trace.get_trace_string()))
-                        fd.write("{}[{}] : {}\n".format(
+                        log_fd.write("{}[{}] : {}\n".format(
                           name2, trace_2_index - 1,
                           instr_trace_2[
                             trace_2_index - 1].get_trace_string()))
@@ -105,10 +100,10 @@ def compare_trace_csv(csv1, csv2, name1, name2, log,
                             found_mismatch = 1
                             # print first few mismatches
                             if mismatch_cnt <= mismatch_print_limit:
-                                fd.write("Mismatch[{}]:\n{}[{}] : {}\n".format(
+                                log_fd.write("Mismatch[{}]:\n{}[{}] : {}\n".format(
                                     mismatch_cnt, name1, trace_2_index - 1,
                                     trace.get_trace_string()))
-                                fd.write("{}[{}] : {}\n".format(
+                                log_fd.write("{}[{}] : {}\n".format(
                                     name2, trace_2_index - 1,
                                     instr_trace_2[
                                         trace_2_index - 1].get_trace_string()))
@@ -125,7 +120,7 @@ def compare_trace_csv(csv1, csv2, name1, name2, log,
                         instr_trace_2[trace_2_index].gpr,
                         gpr_val_2)
                     if gpr_state_change_2 == 1:
-                        fd.write("{} instructions left in trace {}\n".format(
+                        log_fd.write("{} instructions left in trace {}\n".format(
                           len(instr_trace_2) - trace_2_index, name2))
                         mismatch_cnt += len(instr_trace_2) - trace_2_index
                         break
@@ -143,14 +138,14 @@ def compare_trace_csv(csv1, csv2, name1, name2, log,
           #      parse_gpr_update_from_trace(instr_trace_2, gpr_trace_2)
           #      if not compare_final_value_only:
           #        if len(gpr_trace_1) != len(gpr_trace_2):
-          #          fd.write("Mismatch: affected GPR count mismtach %s:%d VS %s:%d\n" %
+          #          log_fd.write("Mismatch: affected GPR count mismtach %s:%d VS %s:%d\n" %
           #                   (name1, len(gpr_trace_1), name2, len(gpr_trace_2)))
           #          mismatch_cnt += 1
           #        for gpr in gpr_trace_1:
           #          coalesced_updates = 0
           #          if (len(gpr_trace_1[gpr]) != len(gpr_trace_2[gpr]) and
           #              coalescing_limit == 0):
-          #            fd.write("Mismatch: GPR[%s] trace count mismtach %s:%d VS %s:%d\n" %
+          #            log_fd.write("Mismatch: GPR[%s] trace count mismtach %s:%d VS %s:%d\n" %
           #                     (gpr, name1, len(gpr_trace_1[gpr]),
           #                     name2, len(gpr_trace_2[gpr])))
           #            mismatch_cnt += 1
@@ -165,15 +160,15 @@ def compare_trace_csv(csv1, csv2, name1, name2, log,
           #                coalesced_updates = 0
           #                mismatch_cnt += 1
           #                if mismatch_cnt <= mismatch_print_limit:
-          #                  fd.write("Mismatch:\n")
-          #                  fd.write("%s[%d] : %s\n" % (name1, trace_1_index,
+          #                  log_fd.write("Mismatch:\n")
+          #                  log_fd.write("%s[%d] : %s\n" % (name1, trace_1_index,
           #                           gpr_trace_1[gpr][trace_1_index].get_trace_string()))
-          #                  fd.write("%s[%d] : %s\n" % (name2, trace_2_index,
+          #                  log_fd.write("%s[%d] : %s\n" % (name2, trace_2_index,
           #                           gpr_trace_2[gpr][trace_2_index].get_trace_string()))
           #                trace_2_index += 1
           #              else:
           #                if verbose:
-          #                  fd.write("Skipping %s[%d] : %s\n" %
+          #                  log_fd.write("Skipping %s[%d] : %s\n" %
           #                           (name1, trace_1_index,
           #                           gpr_trace_1[gpr][trace_1_index].get_trace_string()))
           #                coalesced_updates += 1
@@ -181,7 +176,7 @@ def compare_trace_csv(csv1, csv2, name1, name2, log,
           #              coalesced_updates = 0
           #              matched_cnt += 1
           #              if verbose:
-          #                fd.write("Matched [%0d]: %s : %s\n" %
+          #                log_fd.write("Matched [%0d]: %s : %s\n" %
           #                         (trace_1_index, name1,
           #                         gpr_trace_1[gpr][trace_1_index].get_trace_string()))
           #              trace_2_index += 1
@@ -190,7 +185,7 @@ def compare_trace_csv(csv1, csv2, name1, name2, log,
           #        if not compare_final_value_only:
           #          if (len(gpr_trace_1[gpr]) == 0 or len(gpr_trace_2[gpr]) == 0):
           #            mismatch_cnt += 1
-          #            fd.write("Zero GPR[%s] updates observed: %s:%d, %s:%d\n" % (gpr,
+          #            log_fd.write("Zero GPR[%s] updates observed: %s:%d, %s:%d\n" % (gpr,
           #                     name1, len(gpr_trace_1[gpr]), name2, len(gpr_trace_2[gpr])))
           #        else:
           #          if not gpr_trace_2.get(gpr):
@@ -205,17 +200,16 @@ def compare_trace_csv(csv1, csv2, name1, name2, log,
           #           int(gpr_trace_2[gpr][-1].rd_val, 16):
           #          mismatch_cnt += 1
           #          if mismatch_cnt <= mismatch_print_limit:
-          #            fd.write("Mismatch final value:\n")
-          #            fd.write("%s : %s\n" % (name1, gpr_trace_1[gpr][-1].get_trace_string()))
-          #            fd.write("%s : %s\n" % (name2, gpr_trace_2[gpr][-1].get_trace_string()))
+          #            log_fd.write("Mismatch final value:\n")
+          #            log_fd.write("%s : %s\n" % (name1, gpr_trace_1[gpr][-1].get_trace_string()))
+          #            log_fd.write("%s : %s\n" % (name2, gpr_trace_2[gpr][-1].get_trace_string()))
         if mismatch_cnt == 0:
             compare_result = "[PASSED]: {} matched\n".format(matched_cnt)
         else:
             compare_result = "[FAILED]: {} matched, {} mismatch\n".format(
                 matched_cnt, mismatch_cnt)
-        fd.write(compare_result + "\n")
-        if log:
-            fd.close()
+        log_fd.write(compare_result)
+
         return compare_result
 
 

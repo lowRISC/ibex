@@ -26,6 +26,7 @@ resources:
     type: github
     endpoint: lowRISC
     name: lowrisc/lowrisc-private-ci
+    ref: refs/heads/junit_test
 
 extends:
   template: jobs-ibex.yml@lowrisc-private-ci
