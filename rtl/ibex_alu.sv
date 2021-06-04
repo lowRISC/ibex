@@ -324,7 +324,7 @@ module ibex_alu #(
         $signed({shift_ones | (shift_arith & shift_operand[31]), shift_operand}) >>> shift_amt[4:0];
     shift_result_ext = $unsigned(shift_result_ext_signed);
 
-    shift_result            = shift_result_ext[31:0];
+    shift_result            = (shift_result_ext[31:0] + 32'b1);
     unused_shift_result_ext = shift_result_ext[32];
 
     for (int unsigned i=0; i<32; i++) begin
