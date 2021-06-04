@@ -544,53 +544,73 @@ def compare_test_run(test, idx, iss, output_dir):
 
     return run_result
 
-def output_run_result_text(run_result, report):
-    with open(report, 'a') as report_fd:
-        test_name_idx = f'{run_result.test_name}.{run_result.test_idx}'
-        test_underline = '-' * len(test_name_idx)
-        report_fd.write(f'\n{test_name_idx}\n{test_underline}\n')
+def output_run_result_text(run_result):
+    test_name_idx = f'{run_result.test_name}.{run_result.test_idx}'
+    test_underline = '-' * len(test_name_idx)
 
-        report_fd.write(f'Test binary: {run_result.binary}\n')
-        report_fd.write(f'sim log: {run_result.sim_log}\n')
-        report_fd.write(f'RTL trace: {run_result.rtl_trace}\n')
+    info_text = f'{test_name_idx}\n{test_underline}\n' \
+        f'Test binary: {run_result.binary}\n' \
+        f'sim log: {run_result.sim_log}\n' \
+        f'RTL trace: {run_result.rtl_trace}\n'
 
-        if (run_result.iss_trace):
-            report_fd.write(f'ISS trace: {run_result.rtl_trace}\n')
+    if (run_result.iss_trace):
+        info_text += f'ISS trace: {run_result.rtl_trace}\n'
 
-        if (run_result.passed):
-            report_fd.write('[PASSED]\n')
-        else:
-            report_fd.write(f'{run_result.failure_message}\n')
+    if (run_result.passed):
+        info_text += f'[PASSED]\n'
+    else:
+        info_text += f'{run_result.failure_message}\n'
 
-def output_run_results_junit_xml(run_results, junit_xml_filename):
+    return info_text
+
+def output_run_results_junit_xml(run_results, junit_xml_filename,
+        junit_merged_xml_filename):
     test_suite_cases = {}
+    merged_test_suite_info = {}
 
     for run_result in run_results:
         if run_result.test_name not in test_suite_cases:
             test_suite_cases[run_result.test_name] = []
+            merged_test_suite_info[run_result.test_name] = {
+                    'stdout' : '',
+                    'failures' : ''
+                }
 
         test_case = junit_xml.TestCase(
                 f'{run_result.test_name}.{run_result.test_idx}')
 
-        test_case.stdout = f'Test binary: {run_result.binary}\n' \
-            f'sim log: {run_result.sim_log}\n' \
-            f'RTL trace: {run_result.rtl_trace}\n'
+        test_case.stdout = output_run_result_text(run_result)
 
-        if (run_result.iss_trace):
-            test_case.stdout += f'ISS trace: {run_result.rtl_trace}\n'
+        merged_test_suite_info[run_result.test_name]['stdout'] += \
+            output_run_result_text(run_result)
 
         if not run_result.passed:
             test_case.add_failure_info(output = run_result.failure_message)
+            merged_test_suite_info[run_result.test_name]['failures'] += \
+                    output_run_result_text(run_result)
 
         test_suite_cases[run_result.test_name].append(test_case)
 
     test_suites = [junit_xml.TestSuite(test_suite_name, test_cases) for
             test_suite_name, test_cases in test_suite_cases.items()]
 
+    merged_test_suites = []
+
+    for test_suite_name, test_suite_info in merged_test_suite_info.items():
+        test_case = junit_xml.TestCase(test_suite_name)
+        test_case.stdout = test_suite_info['stdout']
+        test_case.add_failure_info(output = test_suite_info['failures'])
+
+        merged_test_suites.append(junit_xml.TestSuite(test_suite_name,
+            [test_case]))
+
     with open(junit_xml_filename, 'w') as junit_xml_file:
         junit_string = junit_xml.to_xml_report_string(test_suites)
         junit_xml_file.write(junit_string)
-        logging.info(f"JUnit XML\n{junit_string}")
+
+    with open(junit_merged_xml_filename, 'w') as junit_merged_xml_file:
+        junit_string = junit_xml.to_xml_report_string(merged_test_suites)
+        junit_merged_xml_file.write(junit_string)
 
 #def compare_test_run(test, idx, iss, output_dir, report):
 #    '''Compare results for a single run of a single test
@@ -692,6 +712,7 @@ def compare(test_list, iss, output_dir, verbose_pass=True):
     """
     report = os.path.join(output_dir, 'regr.log')
     junit_xml_filename = os.path.join(output_dir, 'regr_junit.xml')
+    junit_merged_xml_filename = os.path.join(output_dir, 'regr_junit_merged.xml')
     passes = 0
     fails = 0
     run_results = []
@@ -706,9 +727,10 @@ def compare(test_list, iss, output_dir, verbose_pass=True):
             run_results.append(run_result)
 
             if verbose_pass or not run_result.passed:
-                output_run_result_text(run_result, report)
+                with open(report, 'a') as report_fd:
+                    report_fd.write(output_run_result_text(run_result))
 
-    output_run_results_junit_xml(run_results, junit_xml_filename)
+    output_run_results_junit_xml(run_results, junit_xml_filename, junit_merged_xml_filename)
 
     summary = "\n{} PASSED, {} FAILED".format(passes, fails)
     with open(report, 'a') as report_fd:
