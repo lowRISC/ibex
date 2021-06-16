@@ -86,6 +86,7 @@ module ibex_lockstep import ibex_pkg::*; #(
     input  logic                         debug_req_i,
     input  crash_dump_t                  crash_dump_i,
 
+    input  logic                         fetch_enable_i,
     output logic                         alert_minor_o,
     output logic                         alert_major_o,
     input  logic                         core_busy_i,
@@ -143,6 +144,7 @@ module ibex_lockstep import ibex_pkg::*; #(
     logic [14:0]                 irq_fast;
     logic                        irq_nm;
     logic                        debug_req;
+    logic                        fetch_enable;
   } delayed_inputs_t;
 
   delayed_inputs_t [LockstepOffset-1:0] shadow_inputs_q;
@@ -168,6 +170,7 @@ module ibex_lockstep import ibex_pkg::*; #(
   assign shadow_inputs_in.irq_fast       = irq_fast_i;
   assign shadow_inputs_in.irq_nm         = irq_nm_i;
   assign shadow_inputs_in.debug_req      = debug_req_i;
+  assign shadow_inputs_in.fetch_enable   = fetch_enable_i;
 
   // Delay the inputs
   always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -368,6 +371,7 @@ module ibex_lockstep import ibex_pkg::*; #(
     .rvfi_mem_wdata    (),
 `endif
 
+    .fetch_enable_i    (shadow_inputs_q[0].fetch_enable),
     .alert_minor_o     (shadow_alert_minor),
     .alert_major_o     (shadow_alert_major),
     .core_busy_o       (shadow_outputs.core_busy)

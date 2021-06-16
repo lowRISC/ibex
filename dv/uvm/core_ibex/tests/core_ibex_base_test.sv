@@ -126,10 +126,13 @@ class core_ibex_base_test extends uvm_test;
         wait (dut_vif.ecall === 1'b1);
         vseq.stop();
         `uvm_info(`gfn, "ECALL instruction is detected, test done", UVM_LOW)
-        // De-assert fetch enable to finish the test
-        dut_vif.dut_cb.fetch_enable <= 1'b0;
         fork
-          check_perf_stats();
+          begin
+            check_perf_stats();
+            // De-assert fetch enable to finish the test
+            clk_vif.wait_clks(10);
+            dut_vif.dut_cb.fetch_enable <= 1'b0;
+          end
           // Wait some time for the remaining instruction to finish
           clk_vif.wait_clks(3000);
         join

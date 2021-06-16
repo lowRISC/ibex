@@ -187,12 +187,9 @@ Interfaces
 +-------------------------+------------------------------------------------------------------------+
 | ``crash_dump_o``        | A set of signals that can be captured on reset to aid crash debugging. |
 +-------------------------+-------------------------+-----+----------------------------------------+
-| ``fetch_enable_i``      | 1                       | in  | When it comes out of reset, the core   |
-|                         |                         |     | will not start fetching and executing  |
-|                         |                         |     | instructions until it sees this pin    |
-|                         |                         |     | set to 1'b1. Once started, it will     |
-|                         |                         |     | continue until the next reset,         |
-|                         |                         |     | regardless of the value of this pin.   |
+| ``fetch_enable_i``      | 1                       | in  | Allow the core to fetch instructions.  |
+|                         |                         |     | If this bit is set low, the core will  |
+|                         |                         |     | pause fetching new instructions.       |
 +-------------------------+-------------------------+-----+----------------------------------------+
 | ``core_sleep_o``        | 1                       | out | Core in WFI with no outstanding data   |
 |                         |                         |     | or instruction accesses. Deasserts     |
