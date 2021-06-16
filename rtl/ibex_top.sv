@@ -126,7 +126,6 @@ module ibex_top #(
   // Clock signals
   logic                        clk;
   logic                        core_busy_d, core_busy_q;
-  logic                        fetch_enable_q;
   logic                        clock_en;
   logic                        irq_pending;
   // Core <-> Register file signals
@@ -165,16 +164,7 @@ module ibex_top #(
     end
   end
 
-  // capture fetch_enable_i in fetch_enable_q, once for ever
-  always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni) begin
-      fetch_enable_q <= 1'b0;
-    end else if (fetch_enable_i) begin
-      fetch_enable_q <= 1'b1;
-    end
-  end
-
-  assign clock_en     = fetch_enable_q & (core_busy_q | debug_req_i | irq_pending | irq_nm_i);
+  assign clock_en     = core_busy_q | debug_req_i | irq_pending | irq_nm_i;
   assign core_sleep_o = ~clock_en;
 
   prim_clock_gating core_clock_gate_i (
@@ -293,6 +283,7 @@ module ibex_top #(
     .rvfi_mem_wdata,
 `endif
 
+    .fetch_enable_i,
     .alert_minor_o (core_alert_minor),
     .alert_major_o (core_alert_major),
     .core_busy_o (core_busy_d)
@@ -466,6 +457,7 @@ module ibex_top #(
       irq_pending,
       debug_req_i,
       crash_dump_o,
+      fetch_enable_i,
       core_busy_d
     });
 
@@ -518,6 +510,7 @@ module ibex_top #(
 
     logic                         debug_req_local;
     crash_dump_t                  crash_dump_local;
+    logic                         fetch_enable_local;
 
     logic                         core_busy_local;
 
@@ -563,6 +556,7 @@ module ibex_top #(
       irq_pending,
       debug_req_i,
       crash_dump_o,
+      fetch_enable_i,
       core_busy_d
     };
 
@@ -608,6 +602,7 @@ module ibex_top #(
       irq_pending_local,
       debug_req_local,
       crash_dump_local,
+      fetch_enable_local,
       core_busy_local
     } = buf_out;
 
@@ -716,6 +711,7 @@ module ibex_top #(
       .debug_req_i       (debug_req_local),
       .crash_dump_i      (crash_dump_local),
 
+      .fetch_enable_i    (fetch_enable_local),
       .alert_minor_o     (lockstep_alert_minor_local),
       .alert_major_o     (lockstep_alert_major_local),
       .core_busy_i       (core_busy_local),

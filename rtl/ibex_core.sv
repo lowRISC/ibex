@@ -128,6 +128,7 @@ module ibex_core import ibex_pkg::*; #(
 `endif
 
     // CPU Control Signals
+    input  logic                         fetch_enable_i,
     output logic                         alert_minor_o,
     output logic                         alert_major_o,
     output logic                         core_busy_o
@@ -272,6 +273,7 @@ module ibex_core import ibex_pkg::*; #(
 
   // Signals between instruction core interface and pipe (if and id stages)
   logic        instr_req_int;          // Id stage asserts a req to instruction core interface
+  logic        instr_req_gated;
 
   // Writeback stage
   logic           en_wb;
@@ -400,7 +402,7 @@ module ibex_core import ibex_pkg::*; #(
       .rst_ni                   ( rst_ni                 ),
 
       .boot_addr_i              ( boot_addr_i            ),
-      .req_i                    ( instr_req_int          ), // instruction request control
+      .req_i                    ( instr_req_gated        ), // instruction request control
 
       // instruction cache interface
       .instr_req_o              ( instr_req_out          ),
@@ -474,6 +476,9 @@ module ibex_core import ibex_pkg::*; #(
 
   // Qualify the instruction request with PMP error
   assign instr_req_o = instr_req_out & ~pmp_req_err[PMP_I];
+
+  // fetch_enable_i can be used to stop the core fetching new instructions
+  assign instr_req_gated = instr_req_int & fetch_enable_i;
 
   //////////////
   // ID stage //
