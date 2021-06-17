@@ -300,7 +300,6 @@
 
 # CPUCTRL
 #
-# TODO : change fields to WARL type once SecureIbex parameter is enabled
 - csr: cpuctrl
   description: >
     CPU control register (custom)
@@ -310,21 +309,21 @@
     - field_name: dumm_instr_mask
       description: >
         Mask to control frequency of dummy instruction insertion
-      type: R
+      type: WARL
       reset_val: 0
       msb: 5
       lsb: 3
     - field_name: dummy_instr_en
       description: >
         Enable or disable dummy instruction insertion
-      type: R
+      type: WARL
       reset_val: 0
       msb: 2
       lsb: 2
     - field_name: data_ind_timing
       description: >
         Enable or disable data-independent timing features
-      type: R
+      type: WARL
       reset_val: 0
       msb: 1
       lsb: 1
