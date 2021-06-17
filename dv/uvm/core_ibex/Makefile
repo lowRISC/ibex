@@ -318,6 +318,7 @@ $(metadata)/instr_gen.iss.stamp: \
      ${TEST_OPTS} \
      --iss="${ISS}" \
      --iss_opts="${ISS_OPTS}" \
+     --isa="${ISA}" \
      ${RISCV_DV_OPTS}
 	$(call dump-vars,$(metadata)/iss-vars.mk,iss,$(iss-var-deps))
 	@touch $@
