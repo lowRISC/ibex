@@ -170,15 +170,23 @@ module ibex_lockstep import ibex_pkg::*; #(
   assign shadow_inputs_in.debug_req      = debug_req_i;
 
   // Delay the inputs
-  always_ff @(posedge clk_i) begin
-    for (int unsigned i = 0; i < LockstepOffset-1; i++) begin
-      shadow_inputs_q[i]     <= shadow_inputs_q[i+1];
-      shadow_tag_rdata_q[i]  <= shadow_tag_rdata_q[i+1];
-      shadow_data_rdata_q[i] <= shadow_data_rdata_q[i+1];
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      for (int unsigned i = 0; i < LockstepOffset; i++) begin
+        shadow_inputs_q[i]     <= delayed_inputs_t'('0);
+        shadow_tag_rdata_q[i]  <= '{default:0};
+        shadow_data_rdata_q[i] <= '{default:0};
+      end
+    end else begin
+      for (int unsigned i = 0; i < LockstepOffset-1; i++) begin
+        shadow_inputs_q[i]     <= shadow_inputs_q[i+1];
+        shadow_tag_rdata_q[i]  <= shadow_tag_rdata_q[i+1];
+        shadow_data_rdata_q[i] <= shadow_data_rdata_q[i+1];
+      end
+      shadow_inputs_q[LockstepOffset-1]     <= shadow_inputs_in;
+      shadow_tag_rdata_q[LockstepOffset-1]  <= ic_tag_rdata_i;
+      shadow_data_rdata_q[LockstepOffset-1] <= ic_data_rdata_i;
     end
-    shadow_inputs_q[LockstepOffset-1]     <= shadow_inputs_in;
-    shadow_tag_rdata_q[LockstepOffset-1]  <= ic_tag_rdata_i;
-    shadow_data_rdata_q[LockstepOffset-1] <= ic_data_rdata_i;
   end
 
   ///////////////////
