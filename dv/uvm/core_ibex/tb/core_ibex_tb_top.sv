@@ -9,7 +9,6 @@ module core_ibex_tb_top;
 
   wire clk;
   wire rst_n;
-  logic fetch_enable;
 
   clk_rst_if     ibex_clk_if(.clk(clk), .rst_n(rst_n));
   irq_if         irq_vif(.clk(clk));
