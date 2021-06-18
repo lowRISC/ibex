@@ -5,6 +5,7 @@
 
 import argparse
 import sys
+from typing import TextIO
 
 
 def parse_log(path: str) -> bool:
@@ -22,6 +23,18 @@ def parse_log(path: str) -> bool:
     raise RuntimeError('Strange first line ({!r})'.format(first_line))
 
 
+def dump_log(path: str, dest: TextIO) -> None:
+    print('\nLog at {}:'.format(path), file=dest)
+    with open(path, 'r') as fd:
+        for line in fd:
+            dest.write('> ' + line)
+
+
+def box_comment(line: str) -> str:
+    hr = '#' * 80
+    return hr + '\n# ' + line + '\n' + hr
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--output', '-o', required=True)
@@ -29,8 +42,8 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    fail_count = 0
-    pass_count = 0
+    bad_logs = []
+    good_logs = []
     for log_path in args.log:
         try:
             passed = parse_log(log_path)
@@ -40,17 +53,29 @@ def main() -> int:
             passed = False
 
         if passed:
-            pass_count += 1
+            good_logs.append(log_path)
         else:
-            fail_count += 1
+            bad_logs.append(log_path)
 
-    msg = '{} PASSED, {} FAILED'.format(pass_count, fail_count)
+    msg = '{} PASSED, {} FAILED'.format(len(good_logs), len(bad_logs))
     with open(args.output, 'w', encoding='UTF-8') as outfile:
         print(msg, file=outfile)
+        if bad_logs:
+            print('\n\n' + box_comment('Details of failing tests'),
+                  file=outfile)
+            for log_path in bad_logs:
+                dump_log(log_path, outfile)
+
+        if good_logs:
+            print('\n\n' + box_comment('Details of passing tests'),
+                  file=outfile)
+            for log_path in good_logs:
+                dump_log(log_path, outfile)
+
     print(msg)
 
     # Succeed if no tests failed
-    return 1 if fail_count else 0
+    return 1 if bad_logs else 0
 
 
 if __name__ == '__main__':
