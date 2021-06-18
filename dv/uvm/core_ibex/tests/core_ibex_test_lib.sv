@@ -724,7 +724,6 @@ class core_ibex_irq_wfi_test extends core_ibex_directed_test;
 
   virtual task check_stimulus();
     forever begin
-      wait (dut_vif.dut_cb.wfi === 1'b1);
       wait (dut_vif.dut_cb.core_sleep === 1'b1);
       send_irq_stimulus();
     end
