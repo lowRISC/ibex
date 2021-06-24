@@ -426,17 +426,18 @@ rtl_sim: $(rtl-sim-logs)
 #
 # The comparison script compares these and writes to a result file at
 #
-#   $(OUT-SEED)/rtl_sim/$(TEST).$(SEED)/comparison-result.txt
+#   $(OUT-SEED)/rtl_sim/$(TEST).$(SEED)/test-result.yml
 #
 # with PASSED or FAILED, depending.
 
-comp-results := $(addsuffix /comparison-result.txt,$(rtl-sim-dirs))
+comp-results := $(addsuffix /test-result.yml,$(rtl-sim-dirs))
 
 $(comp-results): \
-  %/comparison-result.txt: \
+  %/test-result.yml: \
   compare.py $(metadata)/instr_gen.iss.stamp $(rtl-sim-logs)
 	@echo Comparing traces for $*
 	$(verb)./compare.py \
+      --instr-gen-bin-dir $(OUT-SEED)/instr_gen/asm_test \
       --iss $(ISS) \
       --iss-log-dir $(OUT-SEED)/instr_gen/$(ISS)_sim \
       --start-seed $(SEED) \
@@ -446,7 +447,7 @@ $(comp-results): \
 
 $(OUT-SEED)/regr.log: collect_results.py $(comp-results)
 	@echo "Collecting up results (report at $@)"
-	$(verb)./collect_results.py -o $@ $(comp-results)
+	$(verb)./collect_results.py -o $(@D) $(comp-results)
 
 .PHONY: post_compare
 post_compare: $(OUT-SEED)/regr.log
