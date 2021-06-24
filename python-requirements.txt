@@ -10,6 +10,7 @@ git+https://github.com/lowRISC/fusesoc.git@ot
 
 pyyaml
 mako
+junit-xml
 
 # Needed by dvsim.py (not actually used in Ibex)
 hjson
