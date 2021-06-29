@@ -48,7 +48,6 @@
         <out>/vcs_simv +vcs+lic+wait <sim_opts> <wave_opts> <cov_opts>
           +ntb_random_seed=<seed> +UVM_TESTNAME=<rtl_test> +bin=<binary>
           +ibex_tracer_file_base=<sim_dir>/trace_core
-          -l <sim_dir>/sim.log
     cov_opts: >
       -cm line+tgl+assert+fsm+branch
       -cm_dir <out>/test.vdb
