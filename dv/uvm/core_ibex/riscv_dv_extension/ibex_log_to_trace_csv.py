@@ -207,7 +207,7 @@ def check_ibex_uvm_log(uvm_log):
         for line in log:
             if ('UVM_ERROR' in line or 'UVM_FATAL' in line or 'Error' in line) \
                     and not test_result_seen:
-                log_out.append(line)
+                log_out.append(line.strip())
                 failed = True
 
             if 'RISC-V UVM TEST PASSED' in line:

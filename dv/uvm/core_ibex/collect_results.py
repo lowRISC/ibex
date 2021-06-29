@@ -90,9 +90,11 @@ def gen_test_run_result_text(test_run_result: TestRunResult) -> str:
         info_lines.append(f'Comparison log: {test_run_result.comparison_log}')
 
     if (test_run_result.passed):
+        info_lines.append('')
         info_lines.append('[PASSED]')
     else:
-        info_lines.append(f'{test_run_result.failure_message}')
+        info_lines.append('')
+        info_lines.append(test_run_result.failure_message)
 
     return '\n'.join(info_lines) + '\n'
 
@@ -148,7 +150,7 @@ def output_run_results_junit_xml(passing_tests: List[TestRunResult],
         test_case = junit_xml.TestCase(f'{trr.name}.{trr.seed}')
         test_case.stdout = result_text
 
-        merged['stdout'] += result_text
+        merged['stdout'] += result_text + '\n'
 
         if not trr.passed:
             test_case.add_failure_info(output=result_text)
