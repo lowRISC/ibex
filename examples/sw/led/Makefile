@@ -12,8 +12,8 @@ SRCS = $(PROGRAM).c
 
 CC = riscv32-unknown-elf-gcc
 
-OBJCOPY ?= $(subst gcc,objcopy,$(wordlist 1,1,$(CC)))
-OBJDUMP ?= $(subst gcc,objdump,$(wordlist 1,1,$(CC)))
+OBJCOPY ?= $(patsubst %gcc, %objcopy, $(CC))
+OBJDUMP ?= $(patsubst %gcc, %objdump, $(CC))
 
 LINKER_SCRIPT ?= link.ld
 CRT ?= crt0.S

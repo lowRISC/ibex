@@ -21,8 +21,8 @@ ASM_SRCS = $(filter %.S, $(SRCS))
 
 CC = riscv32-unknown-elf-gcc
 
-OBJCOPY ?= $(subst gcc,objcopy,$(wordlist 1,1,$(CC)))
-OBJDUMP ?= $(subst gcc,objdump,$(wordlist 1,1,$(CC)))
+OBJCOPY ?= $(patsubst %gcc, %objcopy, $(CC))
+OBJDUMP ?= $(patsubst %gcc, %objdump, $(CC))
 
 LINKER_SCRIPT ?= $(COMMON_DIR)/link.ld
 CRT ?= $(COMMON_DIR)/crt0.S
