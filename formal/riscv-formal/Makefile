@@ -72,7 +72,7 @@ $(GEN_V): $(OUTDIR)%.v: $(SRC_DIR)%.sv $(PKGS) | $(OUTDIR)
 # Combine multiple Verilog sources into one Ibex Verilog file
 # Disable "M" extension
 $(IBEX_OUT): $(GEN_V) $(PRIM_CLOCK)
-	yosys -p "read_verilog -sv $(PRIM_CLOCK) $(GEN_V)"                 \
+	yosys -p "read_verilog $(PRIM_CLOCK) $(GEN_V)"                     \
 	      -p "chparam -set RV32M 0 ibex_top"                           \
 	      -p "chparam -set WritebackStage $(IBEX_ENABLE_WB) ibex_top"  \
 	      -p "synth -top ibex_top"                                     \
