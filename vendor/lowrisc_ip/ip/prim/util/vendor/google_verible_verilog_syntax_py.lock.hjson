@@ -8,7 +8,8 @@
 {
   upstream:
   {
-    url: /home/philipp/src/opentitan
-    rev: ac9c600eaca9c43d882ff83a012fc275635b2ede
+    url: https://github.com/google/verible.git
+    rev: ed1f3a9577047b801854fb36dd14ebe0aecbdddc
+    only_subdir: verilog/tools/syntax/export_json_examples
   }
 }
