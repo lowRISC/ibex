@@ -6,29 +6,40 @@ module prim_generic_otp
   import prim_otp_pkg::*;
 #(
   // Native OTP word size. This determines the size_i granule.
-  parameter  int Width       = 16,
-  parameter  int Depth       = 1024,
+  parameter  int Width         = 16,
+  parameter  int Depth         = 1024,
   // This determines the maximum number of native words that
   // can be transferred accross the interface in one cycle.
-  parameter  int SizeWidth   = 2,
+  parameter  int SizeWidth     = 2,
   // Width of the power sequencing signal.
-  parameter  int PwrSeqWidth = 2,
+  parameter  int PwrSeqWidth   = 2,
   // Number of Test TL-UL words
-  parameter  int TlDepth     = 16,
+  parameter  int TlDepth       = 16,
+  // Width of vendor-specific test control signal
+  parameter  int TestCtrlWidth = 8,
   // Derived parameters
-  localparam int AddrWidth   = prim_util_pkg::vbits(Depth),
-  localparam int IfWidth     = 2**SizeWidth*Width,
+  localparam int AddrWidth     = prim_util_pkg::vbits(Depth),
+  localparam int IfWidth       = 2**SizeWidth*Width,
   // VMEM file to initialize the memory with
-  parameter      MemInitFile = ""
+  parameter      MemInitFile   = ""
 ) (
   input                          clk_i,
   input                          rst_ni,
   // Macro-specific power sequencing signals to/from AST
   output logic [PwrSeqWidth-1:0] pwr_seq_o,
   input        [PwrSeqWidth-1:0] pwr_seq_h_i,
+  // External programming voltage
+  inout wire                     ext_voltage_io,
   // Test interface
+  input [TestCtrlWidth-1:0]      test_ctrl_i,
   input  tlul_pkg::tl_h2d_t      test_tl_i,
   output tlul_pkg::tl_d2h_t      test_tl_o,
+  // Other DFT signals
+  input lc_ctrl_pkg::lc_tx_t     scanmode_i,  // Scan Mode input
+  input                          scan_en_i,   // Scan Shift
+  input                          scan_rst_ni, // Scan Reset
+  // Alert indication
+  output ast_pkg::ast_dif_t      otp_alert_src_o,
   // Ready valid handshake for read/write command
   output logic                   ready_o,
   input                          valid_i,
@@ -39,19 +50,13 @@ module prim_generic_otp
   // Response channel
   output logic                   valid_o,
   output logic [IfWidth-1:0]     rdata_o,
-  output err_e                   err_o,
-  // External programming voltage
-  inout wire ext_voltage_io, //TODO enable it after the change in prim_otp file
-  input ext_voltage_en_i, // TODO
-  //// alert indication
-  //////////////////////////
-  output ast_pkg::ast_dif_t otp_alert_src_o,
-
-  // Scan
-  input lc_ctrl_pkg::lc_tx_t scanmode_i,  // Scan Mode input
-  input scan_en_i,  // Scan Shift
-  input scan_rst_ni  // Scan Reset
+  output err_e                   err_o
 );
+
+  // This is only restricted by the supported ECC poly further
+  // below, and is straightforward to extend, if needed.
+  localparam int EccWidth = 6;
+  `ASSERT_INIT(SecDecWidth_A, Width == 16)
 
   // Not supported in open-source emulation model.
   logic [PwrSeqWidth-1:0] unused_pwr_seq_h;
@@ -60,8 +65,8 @@ module prim_generic_otp
 
   wire unused_ext_voltage;
   assign unused_ext_voltage = ext_voltage_io;
-  logic unused_ext_voltage_en;
-  assign unused_ext_voltage_en = ext_voltage_en_i;
+  logic unused_test_ctrl_i;
+  assign unused_test_ctrl_i = ^test_ctrl_i;
 
   logic unused_scan;
   assign unused_scan = ^{scanmode_i, scan_en_i, scan_rst_ni};
@@ -160,18 +165,18 @@ module prim_generic_otp
   logic valid_d, valid_q;
   logic req, wren, rvalid;
   logic [1:0] rerror;
-  logic [Width-1:0] rdata_d;
-  logic [2**SizeWidth-1:0][Width-1:0] rdata_q, wdata_q;
   logic [AddrWidth-1:0] addr_q;
   logic [SizeWidth-1:0] size_q;
   logic [SizeWidth-1:0] cnt_d, cnt_q;
   logic cnt_clr, cnt_en;
+  logic read_ecc_on;
+  logic wdata_inconsistent;
+
 
   assign cnt_d = (cnt_clr) ? '0           :
                  (cnt_en)  ? cnt_q + 1'b1 : cnt_q;
 
   assign valid_o = valid_q;
-  assign rdata_o = rdata_q;
   assign err_o   = err_q;
 
   always_comb begin : p_fsm
@@ -184,6 +189,7 @@ module prim_generic_otp
     wren    = 1'b0;
     cnt_clr = 1'b0;
     cnt_en  = 1'b0;
+    read_ecc_on = 1'b1;
 
     unique case (state_q)
       // Wait here until we receive an initialization command.
@@ -193,10 +199,6 @@ module prim_generic_otp
         if (valid_i) begin
           if (cmd_i == Init) begin
             state_d = InitSt;
-          end else begin
-            // Invalid commands get caught here
-            valid_d = 1'b1;
-            err_d = MacroError;
           end
         end
       end
@@ -216,11 +218,7 @@ module prim_generic_otp
           unique case (cmd_i)
             Read:  state_d = ReadSt;
             Write: state_d = WriteCheckSt;
-            default:  begin
-              // Invalid commands get caught here
-              valid_d = 1'b1;
-              err_d = MacroError;
-            end
+            default: ;
           endcase // cmd_i
         end
       end
@@ -252,37 +250,39 @@ module prim_generic_otp
           end
         end
       end
-      // First, perform a blank check.
+      // First, read out to perform the write blank check and
+      // read-modify-write operation.
       WriteCheckSt: begin
         state_d = WriteWaitSt;
         req     = 1'b1;
+        // Register raw memory contents without correction
+        read_ecc_on = 1'b0;
       end
       // Wait for readout to complete first.
-      // If the write data would clear an already programmed bit, or if we got an uncorrectable
-      // ECC error, the check has failed and we abort the write at this point.
       WriteWaitSt: begin
+        // Register raw memory contents without correction
+        read_ecc_on = 1'b0;
         if (rvalid) begin
           cnt_en = 1'b1;
-          // TODO: this blank check needs to be extended to account for the ECC bits as well.
-          if (rerror[1] || (rdata_d & wdata_q[cnt_q]) != rdata_d) begin
-            state_d = IdleSt;
-            valid_d = 1'b1;
-            err_d = MacroWriteBlankError;
+
+          if (cnt_q == size_q) begin
+            cnt_clr = 1'b1;
+            state_d = WriteSt;
           end else begin
-            if (cnt_q == size_q) begin
-              cnt_clr = 1'b1;
-              state_d = WriteSt;
-            end else begin
-              state_d = WriteCheckSt;
-            end
+            state_d = WriteCheckSt;
           end
         end
       end
-      // Now that the write check was successful, we can write all native words in one go.
+      // If the write data attempts to clear an already programmed bit,
+      // the MacroWriteBlankError needs to be asserted.
       WriteSt: begin
         req = 1'b1;
         wren = 1'b1;
         cnt_en = 1'b1;
+        if (wdata_inconsistent) begin
+          err_d = MacroWriteBlankError;
+        end
+
         if (cnt_q == size_q) begin
           valid_d = 1'b1;
           state_d = IdleSt;
@@ -301,27 +301,59 @@ module prim_generic_otp
   logic [AddrWidth-1:0] addr;
   assign addr = addr_q + AddrWidth'(cnt_q);
 
+  logic [Width-1:0] rdata_corr;
+  logic [Width+EccWidth-1:0] rdata_d, wdata_ecc, rdata_ecc, wdata_rmw;
+  logic [2**SizeWidth-1:0][Width-1:0] wdata_q, rdata_reshaped;
+  logic [2**SizeWidth-1:0][Width+EccWidth-1:0] rdata_q;
+
+  // Use a standard Hamming ECC for OTP.
+  prim_secded_hamming_22_16_enc u_enc (
+    .data_i(wdata_q[cnt_q]),
+    .data_o(wdata_ecc)
+  );
+
+  prim_secded_hamming_22_16_dec u_dec (
+    .data_i     (rdata_ecc),
+    .data_o     (rdata_corr),
+    .syndrome_o ( ),
+    .err_o      (rerror)
+  );
+
+  assign rdata_d = (read_ecc_on) ? {{EccWidth{1'b0}}, rdata_corr}
+                                 : rdata_ecc;
+
+  // Read-modify-write (OTP can only set bits to 1, but not clear to 0).
+  assign wdata_rmw = wdata_ecc | rdata_q[cnt_q];
+  // This indicates if the write data is inconsistent (i.e., if the operation attempts to
+  // clear an already programmed bit to zero).
+  assign wdata_inconsistent = (rdata_q[cnt_q] & wdata_ecc) != rdata_q[cnt_q];
+
+  // Output data without ECC bits.
+  always_comb begin : p_output_map
+    for (int k = 0; k < 2**SizeWidth; k++) begin
+      rdata_reshaped[k] = rdata_q[k][Width-1:0];
+    end
+    rdata_o = rdata_reshaped;
+  end
+
   prim_ram_1p_adv #(
     .Depth                (Depth),
-    .Width                (Width),
+    .Width                (Width + EccWidth),
     .MemInitFile          (MemInitFile),
-    .EnableECC            (1'b1),
     .EnableInputPipeline  (1),
-    .EnableOutputPipeline (1),
-    // Use a standard Hamming ECC for OTP.
-    .HammingECC           (1)
+    .EnableOutputPipeline (1)
   ) u_prim_ram_1p_adv (
     .clk_i,
     .rst_ni,
-    .req_i    ( req            ),
-    .write_i  ( wren           ),
-    .addr_i   ( addr           ),
-    .wdata_i  ( wdata_q[cnt_q] ),
-    .wmask_i  ( {Width{1'b1}}  ),
-    .rdata_o  ( rdata_d        ),
-    .rvalid_o ( rvalid         ),
-    .rerror_o ( rerror         ),
-    .cfg_i    ( '0             )
+    .req_i    ( req                    ),
+    .write_i  ( wren                   ),
+    .addr_i   ( addr                   ),
+    .wdata_i  ( wdata_rmw              ),
+    .wmask_i  ( {Width+EccWidth{1'b1}} ),
+    .rdata_o  ( rdata_ecc              ),
+    .rvalid_o ( rvalid                 ),
+    .rerror_o (                        ),
+    .cfg_i    ( '0                     )
   );
 
   // Currently it is assumed that no wrap arounds can occur.
@@ -368,5 +400,14 @@ module prim_generic_otp
       end
     end
   end
+
+  ////////////////
+  // Assertions //
+  ////////////////
+
+  // Check that the otp_ctrl FSMs only issue legal commands to the wrapper.
+  `ASSERT(CheckCommands0_A, state_q == ResetSt && valid_i && ready_o |-> cmd_i == Init)
+  `ASSERT(CheckCommands1_A, state_q != ResetSt && valid_i && ready_o |-> cmd_i inside {Read, Write})
+
 
 endmodule : prim_generic_otp
