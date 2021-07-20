@@ -308,10 +308,20 @@ class Testplan():
                 os.path.join(self_path, os.pardir, os.pardir))
 
         obj = Testplan._parse_hjson(filename)
+
+        parsed = set()
         imported_testplans = obj.get("import_testplans", [])
-        for imported_testplan in imported_testplans:
-            path = os.path.join(repo_top, imported_testplan)
-            obj = _merge_dicts(obj, self._parse_hjson(path))
+        while imported_testplans:
+            testplan = imported_testplans.pop(0)
+            if testplan in parsed:
+                print(f"Error: encountered the testplan {testplan} again, "
+                      "which was already parsed. Please check for circular "
+                      "dependencies.")
+                sys.exit(1)
+            parsed.add(testplan)
+            data = self._parse_hjson(os.path.join(repo_top, testplan))
+            imported_testplans.extend(data.get("import_testplans", []))
+            obj = _merge_dicts(obj, data)
 
         self.name = obj.get("name")
 
@@ -347,7 +357,7 @@ class Testplan():
         regressions = defaultdict(set)
         for tp in self.testpoints:
             if tp.milestone in tp.milestones[1:]:
-                regressions[tp.milestone].union({t for t in tp.tests if t})
+                regressions[tp.milestone].update({t for t in tp.tests if t})
 
         # Build regressions dict into a hjson like data structure
         return [{
@@ -355,46 +365,57 @@ class Testplan():
             "tests": list(regressions[ms])
         } for ms in regressions]
 
-    def get_testplan_table(self, fmt="md"):
+    def get_testplan_table(self, fmt="pipe"):
         """Generate testplan table from hjson testplan.
 
-        fmt is either 'md' or 'html'.
+        fmt is either 'pipe' (markdown) or 'html'. 'pipe' is the name used by
+        tabulate to generate a markdown formatted table.
         """
-        assert fmt in ["md", "html"]
+        assert fmt in ["pipe", "html"]
+
+        def _fmt_text(text, fmt):
+            return mistletoe.markdown(text) if fmt == "html" else text
 
         if self.testpoints:
-            text = "### Testpoints\n\n"
+            lines = [_fmt_text("\n### Testpoints\n", fmt)]
             header = ["Milestone", "Name", "Tests", "Description"]
             colalign = ("center", "center", "left", "left")
             table = []
             for tp in self.testpoints:
-                desc = tp.desc.strip()
-                tests = "\\\n".join(tp.tests)
+                desc = _fmt_text(tp.desc.strip(), fmt)
+                # TODO(astanin/python-tabulate#126): Tabulate does not
+                # convert \n's to line-breaks.
+                tests = "<br>\n".join(tp.tests)
                 table.append([tp.milestone, tp.name, tests, desc])
-            text += tabulate(table,
-                             headers=header,
-                             tablefmt=fmt,
-                             colalign=colalign)
-            text += "\n"
+            lines += [
+                tabulate(table,
+                         headers=header,
+                         tablefmt=fmt,
+                         colalign=colalign)
+            ]
 
         if self.covergroups:
-            text += "\n### Covergroups\n\n"
+            lines += [_fmt_text("\n### Covergroups\n", fmt)]
             header = ["Name", "Description"]
             colalign = ("center", "left")
             table = []
             for covergroup in self.covergroups:
-                desc = covergroup.desc.strip()
+                desc = _fmt_text(covergroup.desc.strip(), fmt)
                 table.append([covergroup.name, desc])
-            text += tabulate(table,
-                             headers=header,
-                             tablefmt="pipe",
-                             colalign=colalign)
-            text += "\n"
+            lines += [
+                tabulate(table,
+                         headers=header,
+                         tablefmt=fmt,
+                         colalign=colalign)
+            ]
 
+        text = "\n".join(lines)
         if fmt == "html":
-            text = self.get_dv_style_css() + mistletoe.markdown(text)
+            text = self.get_dv_style_css() + text
             text = text.replace("<table>", "<table class=\"dv\">")
 
+            # Tabulate does not support HTML tags.
+            text = text.replace("&lt;", "<").replace("&gt;", ">")
         return text
 
     def map_test_results(self, test_results):
@@ -614,6 +635,8 @@ class Testplan():
 
         The data extracted from the sim_results table HJson file is mapped into
         a test results, test progress, covergroup progress and coverage tables.
+
+        fmt is either 'md' (markdown) or 'html'.
         """
         assert fmt in ["md", "html"]
         sim_results = Testplan._parse_hjson(sim_results_file)

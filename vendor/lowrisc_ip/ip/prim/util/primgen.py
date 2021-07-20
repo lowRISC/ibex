@@ -1,14 +1,20 @@
+#!/usr/bin/env python3
 # Copyright lowRISC contributors.
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
 import os
+import sys
+
+# Make vendored packages available in the search path.
+sys.path.append('vendor')
+
 import re
 import shutil
-import sys
 
 import yaml
 from mako.template import Template
+
 
 try:
     from yaml import CSafeLoader as YamlLoader, CSafeDumper as YamlDumper
@@ -84,29 +90,76 @@ def _top_module_file(core_files, module_name):
             return file
 
 
-def _parse_module_header(generic_impl_filepath, module_name):
-    """ Parse a SystemVerilog file to extract the 'module' header
+def _parse_module_header_verible(generic_impl_filepath, module_name):
+    """ Parse a SystemVerilog file to extract the 'module' header using Verible
 
-    Return a dict with the following entries:
-    - module_header: the whole module header (including the 'module' keyword)
-    - package_import_declaration: import declarations
-    - parameter_port_list: parameter/localparam declarations in the header
-    - ports: the list of ports. The portlist can be ANSI or non-ANSI style (with
-      or without signal declarations; see the SV spec for details).
+    Implementation of _parse_module_header() which uses verible-verilog-syntax
+    to do the parsing. This is the primary implementation and is used when
+    supported Verible version is available.
+
+    See _parse_module_header() for API details.
     """
 
-    # TODO: Evaluate different Python SV parsers and use one instead of this
-    # beautiful regex. A more complete parser would ignore comments, for
-    # example, or properly handle matching parentheses ... Or write a minimal
-    # parser that can parse the module header.
-    #
-    # Initial evaluations:
-    # - https://github.com/PyHDI/Pyverilog:
-    #   requires Icarus and Python 3.6
-    # - https://kevinpt.github.io/hdlparse/:
-    #   Didn't do anything in my tests.
-    # - https://github.com/sepandhaghighi/verilogparser:
-    #   Doesn't support SystemVerilog
+    from google_verible_verilog_syntax_py.verible_verilog_syntax import VeribleVerilogSyntax, PreOrderTreeIterator
+
+    parser = VeribleVerilogSyntax()
+
+    data = parser.parse_file(generic_impl_filepath, options={"skip_null": True})
+    if data.errors:
+        for err in data.errors:
+            print(f'Verible: {err.phase} error in line {err.line} column {err.column}'
+                  + (': {err.message}' if err.message else '.'))
+        # Intentionally not raising an exception here.
+        # There are chances that Verible recovered from errors.
+    if not data.tree:
+        raise ValueError(f"Unable to parse {generic_impl_filepath!r}.")
+
+    module = data.tree.find({"tag": "kModuleDeclaration"})
+    header = module.find({"tag": "kModuleHeader"})
+    if not header:
+        raise ValueError("Unable to extract module header from %s." %
+                         (generic_impl_filepath, ))
+
+    name = header.find({"tag": ["SymbolIdentifier", "EscapedIdentifier"]},
+                       iter_=PreOrderTreeIterator)
+    if not name:
+        raise ValueError("Unable to extract module name from %s." %
+                         (generic_impl_filepath, ))
+
+    imports = header.find_all({"tag": "kPackageImportDeclaration"})
+
+    parameters_list = header.find({"tag": "kFormalParameterList"})
+    parameters = set()
+    if parameters_list:
+        for parameter in parameters_list.iter_find_all({"tag":
+                                                        "kParamDeclaration"}):
+            if parameter.find({"tag": "parameter"}):
+                parameter_id = parameter.find({"tag": ["SymbolIdentifier",
+                                                       "EscapedIdentifier"]})
+                parameters.add(parameter_id.text)
+
+    ports = header.find({"tag": "kPortDeclarationList"})
+
+    return {
+        'module_header': header.text,
+        'package_import_declaration': '\n'.join([i.text for i in imports]),
+        'parameter_port_list':
+            parameters_list.text if parameters_list else '',
+        'ports': ports.text if ports else '',
+        'parameters': parameters,
+        'parser': 'Verible'
+    }
+
+
+def _parse_module_header_fallback(generic_impl_filepath, module_name):
+    """ Parse a SystemVerilog file to extract the 'module' header using RegExp
+
+    Legacy implementation of _parse_module_header() using regular expressions.
+    It is not as robust as Verible-backed implementation, but doesn't need
+    Verible to work.
+
+    See _parse_module_header() for API details.
+    """
 
     # Grammar fragments from the SV2017 spec:
     #
@@ -155,7 +208,8 @@ def _parse_module_header(generic_impl_filepath, module_name):
         'ports':
         matches.group('ports').strip() or '',
         'parameters':
-        _parse_parameter_port_list(parameter_port_list)
+        _parse_parameter_port_list(parameter_port_list),
+        'parser': 'Fallback (regex)'
     }
 
 
@@ -195,6 +249,26 @@ def _parse_parameter_port_list(parameter_port_list):
     for m in re_params.finditer(parameter_port_list):
         parameters.add(m.group('name'))
     return parameters
+
+
+def _parse_module_header(generic_impl_filepath, module_name):
+    """ Parse a SystemVerilog file to extract the 'module' header
+
+    Return a dict with the following entries:
+    - module_header: the whole module header (including the 'module' keyword)
+    - package_import_declaration: import declarations
+    - parameter_port_list: parameter/localparam declarations in the header
+    - ports: the list of ports. The portlist can be ANSI or non-ANSI style (with
+      or without signal declarations; see the SV spec for details).
+    - parser: parser used to extract the data.
+    """
+
+    try:
+        return _parse_module_header_verible(generic_impl_filepath, module_name)
+    except Exception as e:
+        print(e)
+        print(f"Verible parser failed, using regex fallback instead.")
+        return _parse_module_header_fallback(generic_impl_filepath, module_name)
 
 
 def _check_gapi(gapi):
@@ -331,11 +405,12 @@ def _generate_abstract_impl(gapi):
         module_header_imports=generic_hdr['package_import_declaration'],
         module_header_params=generic_hdr['parameter_port_list'],
         module_header_ports=generic_hdr['ports'],
-        num_techlibs= len(techlibs),
+        num_techlibs=len(techlibs),
         # Creating the code to instantiate the primitives in the Mako templating
         # language is tricky to do; do it in Python instead.
         instances=_create_instances(prim_name, techlibs,
-                                    generic_hdr['parameters']))
+                                    generic_hdr['parameters']),
+        parser_info=generic_hdr['parser'])
     abstract_prim_sv_filepath = 'prim_%s.sv' % (prim_name)
     with open(abstract_prim_sv_filepath, 'w') as f:
         f.write(abstract_prim_sv)
