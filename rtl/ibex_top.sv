@@ -115,6 +115,7 @@ module ibex_top #(
   import ibex_pkg::*;
 
   localparam bit          Lockstep          = SecureIbex;
+  localparam bit          ResetAll          = Lockstep;
   localparam bit          DummyInstructions = SecureIbex;
   localparam bit          RegFileECC        = SecureIbex;
   localparam int unsigned RegFileDataWidth  = RegFileECC ? 32 + 7 : 32;
@@ -197,6 +198,7 @@ module ibex_top #(
     .DbgTriggerEn      ( DbgTriggerEn      ),
     .DbgHwBreakNum     ( DbgHwBreakNum     ),
     .WritebackStage    ( WritebackStage    ),
+    .ResetAll          ( ResetAll          ),
     .SecureIbex        ( SecureIbex        ),
     .DummyInstructions ( DummyInstructions ),
     .RegFileECC        ( RegFileECC        ),
@@ -651,6 +653,7 @@ module ibex_top #(
       .DbgTriggerEn      ( DbgTriggerEn      ),
       .DbgHwBreakNum     ( DbgHwBreakNum     ),
       .WritebackStage    ( WritebackStage    ),
+      .ResetAll          ( ResetAll          ),
       .SecureIbex        ( SecureIbex        ),
       .DummyInstructions ( DummyInstructions ),
       .RegFileECC        ( RegFileECC        ),
@@ -737,11 +740,7 @@ module ibex_top #(
     assign unused_scan = scan_rst_ni;
   end
 
-  // TODO - need a config to reset all registers before the lockstep alert can be used
-  logic unused_lockstep_alert_major;
-  assign unused_lockstep_alert_major = lockstep_alert_major;
-
-  assign alert_major_o = core_alert_major;// | lockstep_alert_major;
+  assign alert_major_o = core_alert_major | lockstep_alert_major;
   assign alert_minor_o = core_alert_minor | lockstep_alert_minor;
 
   `ASSERT_KNOWN(IbexAlertMinorX, alert_minor_o)

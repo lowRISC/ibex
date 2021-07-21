@@ -2,6 +2,8 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
+`include "prim_assert.sv"
+
 module core_ibex_tb_top;
 
   import uvm_pkg::*;
@@ -116,6 +118,9 @@ module core_ibex_tb_top;
     .alert_major_o  (dut_if.alert_major   ),
     .core_sleep_o   (dut_if.core_sleep    )
   );
+
+  // We should never see any alerts triggered in normal testing
+  `ASSERT(NoAlertsTriggered, clk, !rst_n, !dut_if.alert_minor && !dut_if.alert_major)
 
   // Data load/store vif connection
   assign data_mem_vif.reset                   = ~rst_n;
