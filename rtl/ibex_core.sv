@@ -31,6 +31,7 @@ module ibex_core import ibex_pkg::*; #(
     parameter bit          BranchPredictor   = 1'b0,
     parameter bit          DbgTriggerEn      = 1'b0,
     parameter int unsigned DbgHwBreakNum     = 1,
+    parameter bit          ResetAll          = 1'b0,
     parameter bit          SecureIbex        = 1'b0,
     parameter bit          DummyInstructions = 1'b0,
     parameter bit          RegFileECC        = 1'b0,
@@ -396,6 +397,7 @@ module ibex_core import ibex_pkg::*; #(
       .TagSizeECC        ( TagSizeECC        ),
       .LineSizeECC       ( LineSizeECC       ),
       .PCIncrCheck       ( PCIncrCheck       ),
+      .ResetAll          ( ResetAll          ),
       .BranchPredictor   ( BranchPredictor   )
   ) if_stage_i (
       .clk_i                    ( clk_i                  ),
@@ -742,6 +744,7 @@ module ibex_core import ibex_pkg::*; #(
   );
 
   ibex_wb_stage #(
+    .ResetAll       ( ResetAll       ),
     .WritebackStage ( WritebackStage )
   ) wb_stage_i (
     .clk_i                          ( clk_i                        ),
