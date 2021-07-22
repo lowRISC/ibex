@@ -1158,7 +1158,7 @@ module ibex_core import ibex_pkg::*; #(
     assign rvfi_instr_new_wb = rvfi_instr_new_wb_q;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
-      if (~rst_ni) begin
+      if (!rst_ni) begin
         rvfi_instr_new_wb_q <= 0;
       end else begin
         rvfi_instr_new_wb_q <= instr_id_done;
