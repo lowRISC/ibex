@@ -476,7 +476,7 @@ module ibex_cs_registers #(
 
       // Custom CSR for controlling CPU features
       CSR_CPUCTRL: begin
-        csr_rdata_int = {{32-$bits(cpu_ctrl_t){1'b0}},cpuctrl_q};
+        csr_rdata_int = {{32 - $bits(cpu_ctrl_t) {1'b0}}, cpuctrl_q};
       end
 
       // Custom CSR for LFSR re-seeding (cannot be read)
@@ -1018,7 +1018,7 @@ module ibex_cs_registers #(
           // For G >= 2, bits are masked to one or zero depending on the mode
           always_comb begin
             // In NAPOT mode, bits [G-2:0] must read as one
-            pmp_addr_rdata[i] = {pmp_addr[i], {PMPGranularity-1{1'b1}}};
+            pmp_addr_rdata[i] = {pmp_addr[i], {PMPGranularity - 1{1'b1}}};
 
             if ((pmp_cfg[i].mode == PMP_MODE_OFF) || (pmp_cfg[i].mode == PMP_MODE_TOR)) begin
               // In TOR or OFF mode, bits [G-1:0] must read as zero
@@ -1172,7 +1172,7 @@ module ibex_cs_registers #(
   always_comb begin : gen_mhpmcounter_incr
 
     // Assign inactive counters (first to prevent latch inference)
-    for (int unsigned i=0; i<32; i++) begin : gen_mhpmcounter_incr_inactive
+    for (int unsigned i = 0; i < 32; i++) begin : gen_mhpmcounter_incr_inactive
       mhpmcounter_incr[i] = 1'b0;
     end
 
@@ -1200,14 +1200,14 @@ module ibex_cs_registers #(
   always_comb begin : gen_mhpmevent
 
     // activate all
-    for (int i=0; i<32; i++) begin : gen_mhpmevent_active
+    for (int i = 0; i < 32; i++) begin : gen_mhpmevent_active
       mhpmevent[i]    =   '0;
       mhpmevent[i][i] = 1'b1;
     end
 
     // deactivate
     mhpmevent[1] = '0; // not existing, reserved
-    for (int unsigned i=3+MHPMCounterNum; i<32; i++) begin : gen_mhpmevent_inactive
+    for (int unsigned i = 3 + MHPMCounterNum; i < 32; i++) begin : gen_mhpmevent_inactive
       mhpmevent[i] = '0;
     end
   end
@@ -1244,7 +1244,7 @@ module ibex_cs_registers #(
   assign unused_mhpmcounterh_we_1  = mhpmcounterh_we[1];
   assign unused_mhpmcounter_incr_1 = mhpmcounter_incr[1];
 
-  for (genvar cnt=0; cnt < 29; cnt++) begin : gen_cntrs
+  for (genvar cnt = 0; cnt < 29; cnt++) begin : gen_cntrs
     if (cnt < MHPMCounterNum) begin : gen_imp
       ibex_counter #(
         .CounterWidth(MHPMCounterWidth)
@@ -1262,12 +1262,12 @@ module ibex_cs_registers #(
     end
   end
 
-  if(MHPMCounterNum < 29) begin : g_mcountinhibit_reduced
+  if (MHPMCounterNum < 29) begin : g_mcountinhibit_reduced
     logic [29-MHPMCounterNum-1:0] unused_mhphcounter_we;
     logic [29-MHPMCounterNum-1:0] unused_mhphcounterh_we;
     logic [29-MHPMCounterNum-1:0] unused_mhphcounter_incr;
 
-    assign mcountinhibit = {{29-MHPMCounterNum{1'b1}}, mcountinhibit_q};
+    assign mcountinhibit = {{29 - MHPMCounterNum{1'b1}}, mcountinhibit_q};
     // Lint tieoffs for unused bits
     assign unused_mhphcounter_we   = mhpmcounter_we[31:MHPMCounterNum+3];
     assign unused_mhphcounterh_we  = mhpmcounterh_we[31:MHPMCounterNum+3];

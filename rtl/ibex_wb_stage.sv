@@ -61,7 +61,7 @@ module ibex_wb_stage #(
   logic [31:0] rf_wdata_wb_mux    [2];
   logic [1:0]  rf_wdata_wb_mux_we;
 
-  if(WritebackStage) begin : g_writeback_stage
+  if (WritebackStage) begin : g_writeback_stage
     logic [31:0]    rf_wdata_wb_q;
     logic           rf_we_wb_q;
     logic [4:0]     rf_waddr_wb_q;
@@ -86,7 +86,7 @@ module ibex_wb_stage #(
     assign wb_done = (wb_instr_type_q == WB_INSTR_OTHER) | lsu_resp_valid_i;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
-      if(~rst_ni) begin
+      if (~rst_ni) begin
         wb_valid_q <= 1'b0;
       end else begin
         wb_valid_q <= wb_valid_d;

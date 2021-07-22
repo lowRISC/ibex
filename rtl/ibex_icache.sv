@@ -590,7 +590,7 @@ module ibex_icache import ibex_pkg::*; #(
     fb_fill_level = '0;
     for (int i = 0; i < NUM_FB; i++) begin
       if (fill_busy_q[i] & ~fill_stale_q[i]) begin
-        fb_fill_level += {{$clog2(NUM_FB)-1{1'b0}},1'b1};
+        fb_fill_level += {{$clog2(NUM_FB) - 1{1'b0}}, 1'b1};
       end
     end
   end
@@ -1103,7 +1103,7 @@ module ibex_icache import ibex_pkg::*; #(
 
   always_comb begin
     output_data_hi = '0;
-    for (int i = 0; i < IC_OUTPUT_BEATS-1; i++) begin
+    for (int i = 0; i < IC_OUTPUT_BEATS - 1; i++) begin
       if (output_addr_q[BUS_W-1:1] == i[BUS_W-2:0]) begin
         output_data_hi |= output_data[(i+1)*16+:16];
       end

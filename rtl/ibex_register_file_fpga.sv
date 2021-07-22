@@ -36,7 +36,7 @@ module ibex_register_file_fpga #(
 );
 
   localparam int ADDR_WIDTH = RV32E ? 4 : 5;
-  localparam int NUM_WORDS  = 2**ADDR_WIDTH;
+  localparam int NUM_WORDS = 2 ** ADDR_WIDTH;
 
   logic [DataWidth-1:0] mem[NUM_WORDS];
   logic we; // write enable if writing to any register other than R0
