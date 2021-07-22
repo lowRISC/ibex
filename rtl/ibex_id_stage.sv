@@ -421,81 +421,81 @@ module ibex_id_stage #(
   /////////////
 
   ibex_decoder #(
-      .RV32E           ( RV32E           ),
-      .RV32M           ( RV32M           ),
-      .RV32B           ( RV32B           ),
-      .BranchTargetALU ( BranchTargetALU )
+    .RV32E          (RV32E),
+    .RV32M          (RV32M),
+    .RV32B          (RV32B),
+    .BranchTargetALU(BranchTargetALU)
   ) decoder_i (
-      .clk_i                           ( clk_i                ),
-      .rst_ni                          ( rst_ni               ),
+    .clk_i (clk_i),
+    .rst_ni(rst_ni),
 
-      // controller
-      .illegal_insn_o                  ( illegal_insn_dec     ),
-      .ebrk_insn_o                     ( ebrk_insn            ),
-      .mret_insn_o                     ( mret_insn_dec        ),
-      .dret_insn_o                     ( dret_insn_dec        ),
-      .ecall_insn_o                    ( ecall_insn_dec       ),
-      .wfi_insn_o                      ( wfi_insn_dec         ),
-      .jump_set_o                      ( jump_set_dec         ),
-      .branch_taken_i                  ( branch_taken         ),
-      .icache_inval_o                  ( icache_inval_o       ),
+    // controller
+    .illegal_insn_o(illegal_insn_dec),
+    .ebrk_insn_o   (ebrk_insn),
+    .mret_insn_o   (mret_insn_dec),
+    .dret_insn_o   (dret_insn_dec),
+    .ecall_insn_o  (ecall_insn_dec),
+    .wfi_insn_o    (wfi_insn_dec),
+    .jump_set_o    (jump_set_dec),
+    .branch_taken_i(branch_taken),
+    .icache_inval_o(icache_inval_o),
 
-      // from IF-ID pipeline register
-      .instr_first_cycle_i             ( instr_first_cycle    ),
-      .instr_rdata_i                   ( instr_rdata_i        ),
-      .instr_rdata_alu_i               ( instr_rdata_alu_i    ),
-      .illegal_c_insn_i                ( illegal_c_insn_i     ),
+    // from IF-ID pipeline register
+    .instr_first_cycle_i(instr_first_cycle),
+    .instr_rdata_i      (instr_rdata_i),
+    .instr_rdata_alu_i  (instr_rdata_alu_i),
+    .illegal_c_insn_i   (illegal_c_insn_i),
 
-      // immediates
-      .imm_a_mux_sel_o                 ( imm_a_mux_sel        ),
-      .imm_b_mux_sel_o                 ( imm_b_mux_sel_dec    ),
-      .bt_a_mux_sel_o                  ( bt_a_mux_sel         ),
-      .bt_b_mux_sel_o                  ( bt_b_mux_sel         ),
+    // immediates
+    .imm_a_mux_sel_o(imm_a_mux_sel),
+    .imm_b_mux_sel_o(imm_b_mux_sel_dec),
+    .bt_a_mux_sel_o (bt_a_mux_sel),
+    .bt_b_mux_sel_o (bt_b_mux_sel),
 
-      .imm_i_type_o                    ( imm_i_type           ),
-      .imm_s_type_o                    ( imm_s_type           ),
-      .imm_b_type_o                    ( imm_b_type           ),
-      .imm_u_type_o                    ( imm_u_type           ),
-      .imm_j_type_o                    ( imm_j_type           ),
-      .zimm_rs1_type_o                 ( zimm_rs1_type        ),
+    .imm_i_type_o   (imm_i_type),
+    .imm_s_type_o   (imm_s_type),
+    .imm_b_type_o   (imm_b_type),
+    .imm_u_type_o   (imm_u_type),
+    .imm_j_type_o   (imm_j_type),
+    .zimm_rs1_type_o(zimm_rs1_type),
 
-      // register file
-      .rf_wdata_sel_o                  ( rf_wdata_sel         ),
-      .rf_we_o                         ( rf_we_dec            ),
+    // register file
+    .rf_wdata_sel_o(rf_wdata_sel),
+    .rf_we_o       (rf_we_dec),
 
-      .rf_raddr_a_o                    ( rf_raddr_a_o         ),
-      .rf_raddr_b_o                    ( rf_raddr_b_o         ),
-      .rf_waddr_o                      ( rf_waddr_id_o        ),
-      .rf_ren_a_o                      ( rf_ren_a_dec         ),
-      .rf_ren_b_o                      ( rf_ren_b_dec         ),
+    .rf_raddr_a_o(rf_raddr_a_o),
+    .rf_raddr_b_o(rf_raddr_b_o),
+    .rf_waddr_o  (rf_waddr_id_o),
+    .rf_ren_a_o  (rf_ren_a_dec),
+    .rf_ren_b_o  (rf_ren_b_dec),
 
-      // ALU
-      .alu_operator_o                  ( alu_operator         ),
-      .alu_op_a_mux_sel_o              ( alu_op_a_mux_sel_dec ),
-      .alu_op_b_mux_sel_o              ( alu_op_b_mux_sel_dec ),
-      .alu_multicycle_o                ( alu_multicycle_dec   ),
+    // ALU
+    .alu_operator_o    (alu_operator),
+    .alu_op_a_mux_sel_o(alu_op_a_mux_sel_dec),
+    .alu_op_b_mux_sel_o(alu_op_b_mux_sel_dec),
+    .alu_multicycle_o  (alu_multicycle_dec),
 
-      // MULT & DIV
-      .mult_en_o                       ( mult_en_dec          ),
-      .div_en_o                        ( div_en_dec           ),
-      .mult_sel_o                      ( mult_sel_ex_o        ),
-      .div_sel_o                       ( div_sel_ex_o         ),
-      .multdiv_operator_o              ( multdiv_operator     ),
-      .multdiv_signed_mode_o           ( multdiv_signed_mode  ),
+    // MULT & DIV
+    .mult_en_o            (mult_en_dec),
+    .div_en_o             (div_en_dec),
+    .mult_sel_o           (mult_sel_ex_o),
+    .div_sel_o            (div_sel_ex_o),
+    .multdiv_operator_o   (multdiv_operator),
+    .multdiv_signed_mode_o(multdiv_signed_mode),
 
-      // CSRs
-      .csr_access_o                    ( csr_access_o         ),
-      .csr_op_o                        ( csr_op_o             ),
+    // CSRs
+    .csr_access_o(csr_access_o),
+    .csr_op_o    (csr_op_o),
 
-      // LSU
-      .data_req_o                      ( lsu_req_dec          ),
-      .data_we_o                       ( lsu_we               ),
-      .data_type_o                     ( lsu_type             ),
-      .data_sign_extension_o           ( lsu_sign_ext         ),
+    // LSU
+    .data_req_o           (lsu_req_dec),
+    .data_we_o            (lsu_we),
+    .data_type_o          (lsu_type),
+    .data_sign_extension_o(lsu_sign_ext),
 
-      // jump/branches
-      .jump_in_dec_o                   ( jump_in_dec          ),
-      .branch_in_dec_o                 ( branch_in_dec        )
+    // jump/branches
+    .jump_in_dec_o  (jump_in_dec),
+    .branch_in_dec_o(branch_in_dec)
   );
 
   /////////////////////////////////
@@ -531,95 +531,95 @@ module ibex_id_stage #(
   assign illegal_insn_o = instr_valid_i & (illegal_insn_dec | illegal_csr_insn_i);
 
   ibex_controller #(
-    .WritebackStage  ( WritebackStage  ),
-    .BranchPredictor ( BranchPredictor )
+    .WritebackStage (WritebackStage),
+    .BranchPredictor(BranchPredictor)
   ) controller_i (
-      .clk_i                          ( clk_i                   ),
-      .rst_ni                         ( rst_ni                  ),
+    .clk_i (clk_i),
+    .rst_ni(rst_ni),
 
-      .ctrl_busy_o                    ( ctrl_busy_o             ),
+    .ctrl_busy_o(ctrl_busy_o),
 
-      // decoder related signals
-      .illegal_insn_i                 ( illegal_insn_o          ),
-      .ecall_insn_i                   ( ecall_insn_dec          ),
-      .mret_insn_i                    ( mret_insn_dec           ),
-      .dret_insn_i                    ( dret_insn_dec           ),
-      .wfi_insn_i                     ( wfi_insn_dec            ),
-      .ebrk_insn_i                    ( ebrk_insn               ),
-      .csr_pipe_flush_i               ( csr_pipe_flush          ),
+    // decoder related signals
+    .illegal_insn_i  (illegal_insn_o),
+    .ecall_insn_i    (ecall_insn_dec),
+    .mret_insn_i     (mret_insn_dec),
+    .dret_insn_i     (dret_insn_dec),
+    .wfi_insn_i      (wfi_insn_dec),
+    .ebrk_insn_i     (ebrk_insn),
+    .csr_pipe_flush_i(csr_pipe_flush),
 
-      // from IF-ID pipeline
-      .instr_valid_i                  ( instr_valid_i           ),
-      .instr_i                        ( instr_rdata_i           ),
-      .instr_compressed_i             ( instr_rdata_c_i         ),
-      .instr_is_compressed_i          ( instr_is_compressed_i   ),
-      .instr_bp_taken_i               ( instr_bp_taken_i        ),
-      .instr_fetch_err_i              ( instr_fetch_err_i       ),
-      .instr_fetch_err_plus2_i        ( instr_fetch_err_plus2_i ),
-      .pc_id_i                        ( pc_id_i                 ),
+    // from IF-ID pipeline
+    .instr_valid_i          (instr_valid_i),
+    .instr_i                (instr_rdata_i),
+    .instr_compressed_i     (instr_rdata_c_i),
+    .instr_is_compressed_i  (instr_is_compressed_i),
+    .instr_bp_taken_i       (instr_bp_taken_i),
+    .instr_fetch_err_i      (instr_fetch_err_i),
+    .instr_fetch_err_plus2_i(instr_fetch_err_plus2_i),
+    .pc_id_i                (pc_id_i),
 
-      // to IF-ID pipeline
-      .instr_valid_clear_o            ( instr_valid_clear_o     ),
-      .id_in_ready_o                  ( id_in_ready_o           ),
-      .controller_run_o               ( controller_run          ),
+    // to IF-ID pipeline
+    .instr_valid_clear_o(instr_valid_clear_o),
+    .id_in_ready_o      (id_in_ready_o),
+    .controller_run_o   (controller_run),
 
-      // to prefetcher
-      .instr_req_o                    ( instr_req_o             ),
-      .pc_set_o                       ( pc_set_o                ),
-      .pc_set_spec_o                  ( pc_set_spec_o           ),
-      .pc_mux_o                       ( pc_mux_o                ),
-      .nt_branch_mispredict_o         ( nt_branch_mispredict_o  ),
-      .exc_pc_mux_o                   ( exc_pc_mux_o            ),
-      .exc_cause_o                    ( exc_cause_o             ),
+    // to prefetcher
+    .instr_req_o           (instr_req_o),
+    .pc_set_o              (pc_set_o),
+    .pc_set_spec_o         (pc_set_spec_o),
+    .pc_mux_o              (pc_mux_o),
+    .nt_branch_mispredict_o(nt_branch_mispredict_o),
+    .exc_pc_mux_o          (exc_pc_mux_o),
+    .exc_cause_o           (exc_cause_o),
 
-      // LSU
-      .lsu_addr_last_i                ( lsu_addr_last_i         ),
-      .load_err_i                     ( lsu_load_err_i          ),
-      .store_err_i                    ( lsu_store_err_i         ),
-      .wb_exception_o                 ( wb_exception            ),
+    // LSU
+    .lsu_addr_last_i(lsu_addr_last_i),
+    .load_err_i     (lsu_load_err_i),
+    .store_err_i    (lsu_store_err_i),
+    .wb_exception_o (wb_exception),
 
-      // jump/branch control
-      .branch_set_i                   ( branch_set              ),
-      .branch_set_spec_i              ( branch_set_spec         ),
-      .branch_not_set_i               ( branch_not_set          ),
-      .jump_set_i                     ( jump_set                ),
+    // jump/branch control
+    .branch_set_i     (branch_set),
+    .branch_set_spec_i(branch_set_spec),
+    .branch_not_set_i (branch_not_set),
+    .jump_set_i       (jump_set),
 
-      // interrupt signals
-      .csr_mstatus_mie_i              ( csr_mstatus_mie_i       ),
-      .irq_pending_i                  ( irq_pending_i           ),
-      .irqs_i                         ( irqs_i                  ),
-      .irq_nm_i                       ( irq_nm_i                ),
-      .nmi_mode_o                     ( nmi_mode_o              ),
+    // interrupt signals
+    .csr_mstatus_mie_i(csr_mstatus_mie_i),
+    .irq_pending_i    (irq_pending_i),
+    .irqs_i           (irqs_i),
+    .irq_nm_i         (irq_nm_i),
+    .nmi_mode_o       (nmi_mode_o),
 
-      // CSR Controller Signals
-      .csr_save_if_o                  ( csr_save_if_o           ),
-      .csr_save_id_o                  ( csr_save_id_o           ),
-      .csr_save_wb_o                  ( csr_save_wb_o           ),
-      .csr_restore_mret_id_o          ( csr_restore_mret_id_o   ),
-      .csr_restore_dret_id_o          ( csr_restore_dret_id_o   ),
-      .csr_save_cause_o               ( csr_save_cause_o        ),
-      .csr_mtval_o                    ( csr_mtval_o             ),
-      .priv_mode_i                    ( priv_mode_i             ),
-      .csr_mstatus_tw_i               ( csr_mstatus_tw_i        ),
+    // CSR Controller Signals
+    .csr_save_if_o        (csr_save_if_o),
+    .csr_save_id_o        (csr_save_id_o),
+    .csr_save_wb_o        (csr_save_wb_o),
+    .csr_restore_mret_id_o(csr_restore_mret_id_o),
+    .csr_restore_dret_id_o(csr_restore_dret_id_o),
+    .csr_save_cause_o     (csr_save_cause_o),
+    .csr_mtval_o          (csr_mtval_o),
+    .priv_mode_i          (priv_mode_i),
+    .csr_mstatus_tw_i     (csr_mstatus_tw_i),
 
-      // Debug Signal
-      .debug_mode_o                   ( debug_mode_o            ),
-      .debug_cause_o                  ( debug_cause_o           ),
-      .debug_csr_save_o               ( debug_csr_save_o        ),
-      .debug_req_i                    ( debug_req_i             ),
-      .debug_single_step_i            ( debug_single_step_i     ),
-      .debug_ebreakm_i                ( debug_ebreakm_i         ),
-      .debug_ebreaku_i                ( debug_ebreaku_i         ),
-      .trigger_match_i                ( trigger_match_i         ),
+    // Debug Signal
+    .debug_mode_o       (debug_mode_o),
+    .debug_cause_o      (debug_cause_o),
+    .debug_csr_save_o   (debug_csr_save_o),
+    .debug_req_i        (debug_req_i),
+    .debug_single_step_i(debug_single_step_i),
+    .debug_ebreakm_i    (debug_ebreakm_i),
+    .debug_ebreaku_i    (debug_ebreaku_i),
+    .trigger_match_i    (trigger_match_i),
 
-      .stall_id_i                     ( stall_id                ),
-      .stall_wb_i                     ( stall_wb                ),
-      .flush_id_o                     ( flush_id                ),
-      .ready_wb_i                     ( ready_wb_i              ),
+    .stall_id_i(stall_id),
+    .stall_wb_i(stall_wb),
+    .flush_id_o(flush_id),
+    .ready_wb_i(ready_wb_i),
 
-      // Performance Counters
-      .perf_jump_o                    ( perf_jump_o             ),
-      .perf_tbranch_o                 ( perf_tbranch_o          )
+    // Performance Counters
+    .perf_jump_o   (perf_jump_o),
+    .perf_tbranch_o(perf_tbranch_o)
   );
 
   assign multdiv_en_dec   = mult_en_dec | div_en_dec;
