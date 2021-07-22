@@ -388,7 +388,7 @@ module ibex_id_stage #(
   // Multicycle Operation Stage Register //
   /////////////////////////////////////////
 
-  for (genvar i=0; i<2; i++) begin : gen_intermediate_val_reg
+  for (genvar i = 0; i < 2; i++) begin : gen_intermediate_val_reg
     always_ff @(posedge clk_i or negedge rst_ni) begin : intermediate_val_reg
       if (!rst_ni) begin
         imd_val_q[i] <= '0;

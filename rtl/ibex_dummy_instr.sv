@@ -116,31 +116,31 @@ module ibex_dummy_instr import ibex_pkg::*; #(
   // Encode instruction
   always_comb begin
     unique case (lfsr_data.instr_type)
-      DUMMY_ADD : begin
+      DUMMY_ADD: begin
         dummy_set    = 7'b0000000;
         dummy_opcode = 3'b000;
       end
-      DUMMY_MUL : begin
+      DUMMY_MUL: begin
         dummy_set    = 7'b0000001;
         dummy_opcode = 3'b000;
       end
-      DUMMY_DIV : begin
+      DUMMY_DIV: begin
         dummy_set    = 7'b0000001;
         dummy_opcode = 3'b100;
       end
-      DUMMY_AND : begin
+      DUMMY_AND: begin
         dummy_set    = 7'b0000000;
         dummy_opcode = 3'b111;
       end
-      default : begin
+      default: begin
         dummy_set    = 7'b0000000;
         dummy_opcode = 3'b000;
       end
     endcase
   end
 
-  //                    SET       RS2            RS1            OP           RD
-  assign dummy_instr = {dummy_set,lfsr_data.op_b,lfsr_data.op_a,dummy_opcode,5'h00,7'h33};
+  //                    SET        RS2             RS1             OP            RD
+  assign dummy_instr = {dummy_set, lfsr_data.op_b, lfsr_data.op_a, dummy_opcode, 5'h00, 7'h33};
 
   // Assign outputs
   assign insert_dummy_instr_o = insert_dummy_instr;

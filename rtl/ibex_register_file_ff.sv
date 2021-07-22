@@ -47,7 +47,7 @@ module ibex_register_file_ff #(
 
   always_comb begin : we_a_decoder
     for (int unsigned i = 1; i < NUM_WORDS; i++) begin
-      we_a_dec[i] = (waddr_a_i == 5'(i)) ?  we_a_i : 1'b0;
+      we_a_dec[i] = (waddr_a_i == 5'(i)) ? we_a_i : 1'b0;
     end
   end
 
@@ -56,7 +56,7 @@ module ibex_register_file_ff #(
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
         rf_reg_q[i] <= '0;
-      end else if(we_a_dec[i]) begin
+      end else if (we_a_dec[i]) begin
         rf_reg_q[i] <= wdata_a_i;
       end
     end

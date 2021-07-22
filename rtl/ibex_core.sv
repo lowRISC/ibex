@@ -1173,7 +1173,7 @@ module ibex_core import ibex_pkg::*; #(
     assign rvfi_instr_new_wb = instr_new_id;
   end
 
-  for (genvar i = 0;i < RVFI_STAGES; i = i + 1) begin : g_rvfi_stages
+  for (genvar i = 0; i < RVFI_STAGES; i = i + 1) begin : g_rvfi_stages
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
         rvfi_stage_halt[i]      <= '0;
@@ -1203,7 +1203,7 @@ module ibex_core import ibex_pkg::*; #(
         rvfi_stage_valid[i] <= rvfi_stage_valid_d[i];
 
         if (i == 0) begin
-          if(instr_id_done) begin
+          if (instr_id_done) begin
             rvfi_stage_halt[i]      <= '0;
             rvfi_stage_trap[i]      <= illegal_insn_id;
             rvfi_stage_intr[i]      <= rvfi_intr_d;
@@ -1228,7 +1228,7 @@ module ibex_core import ibex_pkg::*; #(
             rvfi_stage_mem_addr[i]  <= rvfi_mem_addr_d;
           end
         end else begin
-          if(instr_done_wb) begin
+          if (instr_done_wb) begin
             rvfi_stage_halt[i]      <= rvfi_stage_halt[i-1];
             rvfi_stage_trap[i]      <= rvfi_stage_trap[i-1];
             rvfi_stage_intr[i]      <= rvfi_stage_intr[i-1];
@@ -1347,16 +1347,16 @@ module ibex_core import ibex_pkg::*; #(
   end
 
   always_comb begin
-    if(rvfi_rd_we_wb) begin
+    if (rvfi_rd_we_wb) begin
       // Capture address/data of write to register file
-      rvfi_rd_addr_d  = rvfi_rd_addr_wb;
+      rvfi_rd_addr_d = rvfi_rd_addr_wb;
       // If writing to x0 zero write data as required by RVFI specification
-      if(rvfi_rd_addr_wb == 5'b0) begin
+      if (rvfi_rd_addr_wb == 5'b0) begin
         rvfi_rd_wdata_d = '0;
       end else begin
         rvfi_rd_wdata_d = rvfi_rd_wdata_wb;
       end
-    end else if(rvfi_instr_new_wb) begin
+    end else if (rvfi_instr_new_wb) begin
       // If no RF write but new instruction in Writeback (when present) or ID/EX (when no writeback
       // stage present) then zero RF write address/data as required by RVFI specification
       rvfi_rd_addr_d  = '0;

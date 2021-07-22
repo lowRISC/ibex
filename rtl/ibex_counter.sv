@@ -30,12 +30,12 @@ module ibex_counter #(
     end
 
     // Increment
-    counter_upd = counter[CounterWidth-1:0] + {{CounterWidth-1{1'b0}},1'b1};
+    counter_upd = counter[CounterWidth-1:0] + {{CounterWidth - 1{1'b0}}, 1'b1};
 
     // Next value logic
     if (we) begin
       counter_d = counter_load[CounterWidth-1:0];
-    end else if (counter_inc_i)begin
+    end else if (counter_inc_i) begin
       counter_d = counter_upd[CounterWidth-1:0];
     end else begin
       counter_d = counter[CounterWidth-1:0];
@@ -44,7 +44,7 @@ module ibex_counter #(
 
 `ifdef FPGA_XILINX
   // Set DSP pragma for supported xilinx FPGAs
-  localparam int DspPragma = CounterWidth < 49  ? "yes" : "no";
+  localparam int DspPragma = CounterWidth < 49 ? "yes" : "no";
   (* use_dsp = DspPragma *) logic [CounterWidth-1:0] counter_q;
 
   // DSP output register requires synchronous reset.

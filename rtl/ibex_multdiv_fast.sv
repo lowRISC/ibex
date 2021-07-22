@@ -415,7 +415,7 @@ module ibex_multdiv_fast #(
     div_hold         = 1'b0;
     div_by_zero_d    = div_by_zero_q;
 
-    unique case(md_state_q)
+    unique case (md_state_q)
       MD_IDLE: begin
         if (operator_i == MD_OP_DIV) begin
           // Check if the Denominator is 0

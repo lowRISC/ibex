@@ -190,13 +190,13 @@ module ibex_lockstep import ibex_pkg::*; #(
       data_rdata_intg_q  <= '0;
       for (int unsigned i = 0; i < LockstepOffset; i++) begin
         shadow_inputs_q[i]     <= delayed_inputs_t'('0);
-        shadow_tag_rdata_q[i]  <= '{default:0};
-        shadow_data_rdata_q[i] <= '{default:0};
+        shadow_tag_rdata_q[i]  <= '{default: 0};
+        shadow_data_rdata_q[i] <= '{default: 0};
       end
     end else begin
       instr_rdata_intg_q <= instr_rdata_intg_i;
       data_rdata_intg_q  <= data_rdata_intg_i;
-      for (int unsigned i = 0; i < LockstepOffset-1; i++) begin
+      for (int unsigned i = 0; i < LockstepOffset - 1; i++) begin
         shadow_inputs_q[i]     <= shadow_inputs_q[i+1];
         shadow_tag_rdata_q[i]  <= shadow_tag_rdata_q[i+1];
         shadow_data_rdata_q[i] <= shadow_data_rdata_q[i+1];
@@ -302,7 +302,7 @@ module ibex_lockstep import ibex_pkg::*; #(
 
   // Delay the outputs
   always_ff @(posedge clk_i) begin
-    for (int unsigned i = 0; i < OutputsOffset-1; i++) begin
+    for (int unsigned i = 0; i < OutputsOffset - 1; i++) begin
       core_outputs_q[i] <= core_outputs_q[i+1];
     end
     core_outputs_q[OutputsOffset-1] <= core_outputs_in;

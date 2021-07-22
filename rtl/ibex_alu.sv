@@ -75,10 +75,10 @@ module ibex_alu #(
   // prepare operand b
   assign operand_b_neg = {operand_b_i,1'b0} ^ {33{1'b1}};
   always_comb begin
-    unique case(1'b1)
+    unique case (1'b1)
       multdiv_sel_i:     adder_in_b = multdiv_operand_b_i;
       adder_op_b_negate: adder_in_b = operand_b_neg;
-      default :          adder_in_b = {operand_b_i, 1'b0};
+      default:           adder_in_b = {operand_b_i, 1'b0};
     endcase
   end
 
@@ -248,7 +248,7 @@ module ibex_alu #(
   assign bfp_len = {~(|operand_b_i[27:24]), operand_b_i[27:24]}; // len = 0 encodes for len = 16
   assign bfp_off = operand_b_i[20:16];
   assign bfp_mask = (RV32B != RV32BNone) ? ~(32'hffff_ffff << bfp_len) : '0;
-  for (genvar i=0; i<32; i++) begin : gen_rev_bfp_mask
+  for (genvar i = 0; i < 32; i++) begin : gen_rev_bfp_mask
     assign bfp_mask_rev[i] = bfp_mask[31-i];
   end
 
@@ -262,7 +262,7 @@ module ibex_alu #(
 
   always_comb begin
     if (bfp_op) begin
-      shift_amt[4:0] = bfp_off ; // length field of bfp control word
+      shift_amt[4:0] = bfp_off;  // length field of bfp control word
     end else begin
       shift_amt[4:0] = instr_first_cycle_i ?
           (operand_b_i[5] && shift_funnel ? shift_amt_compl[4:0] : operand_b_i[4:0]) :
@@ -327,7 +327,7 @@ module ibex_alu #(
     shift_result            = shift_result_ext[31:0];
     unused_shift_result_ext = shift_result_ext[32];
 
-    for (int unsigned i=0; i<32; i++) begin
+    for (int unsigned i = 0; i < 32; i++) begin
       shift_result_rev[i] = shift_result[31-i];
     end
 
@@ -436,7 +436,7 @@ module ibex_alu #(
     assign zbe_op = (operator_i == ALU_BEXT) | (operator_i == ALU_BDEP);
 
     always_comb begin
-      case(1'b1)
+      case (1'b1)
         zbe_op:      bitcnt_bits = operand_b_i;
         bitcnt_cz:   bitcnt_bits = bitcnt_bit_mask & ~bitcnt_mask_op; // clz / ctz
         default:     bitcnt_bits = operand_a_i; // pcnt
@@ -487,19 +487,19 @@ module ibex_alu #(
     always_comb begin
       bitcnt_partial = '{default: '0};
       // stage 1
-      for (int unsigned i=1; i<32; i+=2) begin
+      for (int unsigned i = 1; i < 32; i += 2) begin
         bitcnt_partial[i] = {5'h0, bitcnt_bits[i]} + {5'h0, bitcnt_bits[i-1]};
       end
       // stage 2
-      for (int unsigned i=3; i<32; i+=4) begin
+      for (int unsigned i = 3; i < 32; i += 4) begin
         bitcnt_partial[i] = bitcnt_partial[i-2] + bitcnt_partial[i];
       end
       // stage 3
-      for (int unsigned i=7; i<32; i+=8) begin
+      for (int unsigned i = 7; i < 32; i += 8) begin
         bitcnt_partial[i] = bitcnt_partial[i-4] + bitcnt_partial[i];
       end
       // stage 4
-      for (int unsigned i=15; i <32; i+=16) begin
+      for (int unsigned i = 15; i < 32; i += 16) begin
         bitcnt_partial[i] = bitcnt_partial[i-8] + bitcnt_partial[i];
       end
       // stage 5
@@ -510,17 +510,17 @@ module ibex_alu #(
       bitcnt_partial[23] = bitcnt_partial[15] + bitcnt_partial[23];
 
       // stage 6
-      for (int unsigned i=11; i<32; i+=8) begin
+      for (int unsigned i = 11; i < 32; i += 8) begin
         bitcnt_partial[i] = bitcnt_partial[i-4] + bitcnt_partial[i];
       end
 
       // stage 7
-      for (int unsigned i=5; i<32; i+=4) begin
+      for (int unsigned i = 5; i < 32; i += 4) begin
         bitcnt_partial[i] = bitcnt_partial[i-2] + bitcnt_partial[i];
       end
       // stage 8
       bitcnt_partial[0] = {5'h0, bitcnt_bits[0]};
-      for (int unsigned i=2; i<32; i+=2) begin
+      for (int unsigned i = 2; i < 32; i += 2) begin
         bitcnt_partial[i] = bitcnt_partial[i-1] + {5'h0, bitcnt_bits[i]};
       end
     end
@@ -761,23 +761,23 @@ module ibex_alu #(
 
       // first cycle
       // Store partial bitcnts
-      for (genvar i=0; i<32; i++) begin : gen_bitcnt_reg_in_lsb
+      for (genvar i = 0; i < 32; i++) begin : gen_bitcnt_reg_in_lsb
         assign bitcnt_partial_lsb_d[i] = bitcnt_partial[i][0];
       end
 
-      for (genvar i=0; i<16; i++) begin : gen_bitcnt_reg_in_b1
+      for (genvar i = 0; i < 16; i++) begin : gen_bitcnt_reg_in_b1
         assign bitcnt_partial_msb_d[i] = bitcnt_partial[2*i+1][1];
       end
 
-      for (genvar i=0; i<8; i++) begin : gen_bitcnt_reg_in_b2
+      for (genvar i = 0; i < 8; i++) begin : gen_bitcnt_reg_in_b2
         assign bitcnt_partial_msb_d[16+i] = bitcnt_partial[4*i+3][2];
       end
 
-      for (genvar i=0; i<4; i++) begin : gen_bitcnt_reg_in_b3
+      for (genvar i = 0; i < 4; i++) begin : gen_bitcnt_reg_in_b3
         assign bitcnt_partial_msb_d[24+i] = bitcnt_partial[8*i+7][3];
       end
 
-      for (genvar i=0; i<2; i++) begin : gen_bitcnt_reg_in_b4
+      for (genvar i = 0; i < 2; i++) begin : gen_bitcnt_reg_in_b4
         assign bitcnt_partial_msb_d[28+i] = bitcnt_partial[16*i+15][4];
       end
 
@@ -789,23 +789,23 @@ module ibex_alu #(
       always_comb begin
         bitcnt_partial_q = '{default: '0};
 
-        for (int unsigned i=0; i<32; i++) begin : gen_bitcnt_reg_out_lsb
+        for (int unsigned i = 0; i < 32; i++) begin : gen_bitcnt_reg_out_lsb
           bitcnt_partial_q[i][0] = imd_val_q_i[0][i];
         end
 
-        for (int unsigned i=0; i<16; i++) begin : gen_bitcnt_reg_out_b1
+        for (int unsigned i = 0; i < 16; i++) begin : gen_bitcnt_reg_out_b1
           bitcnt_partial_q[2*i+1][1] = imd_val_q_i[1][i];
         end
 
-        for (int unsigned i=0; i<8; i++) begin : gen_bitcnt_reg_out_b2
+        for (int unsigned i = 0; i < 8; i++) begin : gen_bitcnt_reg_out_b2
           bitcnt_partial_q[4*i+3][2] = imd_val_q_i[1][16+i];
         end
 
-        for (int unsigned i=0; i<4; i++) begin : gen_bitcnt_reg_out_b3
+        for (int unsigned i = 0; i < 4; i++) begin : gen_bitcnt_reg_out_b3
           bitcnt_partial_q[8*i+7][3] = imd_val_q_i[1][24+i];
         end
 
-        for (int unsigned i=0; i<2; i++) begin : gen_bitcnt_reg_out_b4
+        for (int unsigned i = 0; i < 2; i++) begin : gen_bitcnt_reg_out_b4
           bitcnt_partial_q[16*i+15][4] = imd_val_q_i[1][28+i];
         end
 
@@ -821,7 +821,7 @@ module ibex_alu #(
       `define _N(stg) (16 >> stg)
 
       // bext / bdep control bit generation
-      for (genvar stg=0; stg<5; stg++) begin : gen_butterfly_ctrl_stage
+      for (genvar stg = 0; stg < 5; stg++) begin : gen_butterfly_ctrl_stage
         // number of segs: 2** stg
         for (genvar seg=0; seg<2**stg; seg++) begin : gen_butterfly_ctrl
 
@@ -841,7 +841,7 @@ module ibex_alu #(
       end
       `undef _N
 
-      for (genvar stg=0; stg<5; stg++) begin : gen_butterfly_not
+      for (genvar stg = 0; stg < 5; stg++) begin : gen_butterfly_not
         assign butterfly_mask_not[stg] =
             ~(butterfly_mask_l[stg] | butterfly_mask_r[stg]);
       end
@@ -970,7 +970,7 @@ module ibex_alu #(
 
       logic [31:0] clmul_result_raw;
 
-      for (genvar i=0; i<32; i++) begin: gen_rev_operand_b
+      for (genvar i = 0; i < 32; i++) begin : gen_rev_operand_b
         assign operand_b_rev[i] = operand_b_i[31-i];
       end
 
@@ -1007,7 +1007,7 @@ module ibex_alu #(
       assign crc_mu_rev = crc_cpoly ? CRC32C_MU_REV : CRC32_MU_REV;
 
       always_comb begin
-        unique case(1'b1)
+        unique case (1'b1)
           crc_bmode: crc_operand = {operand_a_i[7:0], 24'h0};
           crc_hmode: crc_operand = {operand_a_i[15:0], 16'h0};
           default:   crc_operand = operand_a_i;
@@ -1025,36 +1025,36 @@ module ibex_alu #(
         end
       end
 
-      for (genvar i=0; i<32; i++) begin : gen_clmul_and_op
+      for (genvar i = 0; i < 32; i++) begin : gen_clmul_and_op
         assign clmul_and_stage[i] = clmul_op_b[i] ? clmul_op_a << i : '0;
       end
 
-      for (genvar i=0; i<16; i++) begin : gen_clmul_xor_op_l1
+      for (genvar i = 0; i < 16; i++) begin : gen_clmul_xor_op_l1
         assign clmul_xor_stage1[i] = clmul_and_stage[2*i] ^ clmul_and_stage[2*i+1];
       end
 
-      for (genvar i=0; i<8; i++) begin : gen_clmul_xor_op_l2
+      for (genvar i = 0; i < 8; i++) begin : gen_clmul_xor_op_l2
         assign clmul_xor_stage2[i] = clmul_xor_stage1[2*i] ^ clmul_xor_stage1[2*i+1];
       end
 
-      for (genvar i=0; i<4; i++) begin : gen_clmul_xor_op_l3
+      for (genvar i = 0; i < 4; i++) begin : gen_clmul_xor_op_l3
         assign clmul_xor_stage3[i] = clmul_xor_stage2[2*i] ^ clmul_xor_stage2[2*i+1];
       end
 
-      for (genvar i=0; i<2; i++) begin : gen_clmul_xor_op_l4
+      for (genvar i = 0; i < 2; i++) begin : gen_clmul_xor_op_l4
         assign clmul_xor_stage4[i] = clmul_xor_stage3[2*i] ^ clmul_xor_stage3[2*i+1];
       end
 
       assign clmul_result_raw = clmul_xor_stage4[0] ^ clmul_xor_stage4[1];
 
-      for (genvar i=0; i<32; i++) begin : gen_rev_clmul_result
+      for (genvar i = 0; i < 32; i++) begin : gen_rev_clmul_result
         assign clmul_result_rev[i] = clmul_result_raw[31-i];
       end
 
       // clmulr_result = rev(clmul(rev(a), rev(b)))
       // clmulh_result = clmulr_result >> 1
       always_comb begin
-        case(1'b1)
+        case (1'b1)
           clmul_rmode: clmul_result = clmul_result_rev;
           clmul_hmode: clmul_result = {1'b0, clmul_result_rev[31:1]};
           default:     clmul_result = clmul_result_raw;
@@ -1123,7 +1123,7 @@ module ibex_alu #(
         ALU_CRC32_H, ALU_CRC32C_H,
         ALU_CRC32_B, ALU_CRC32C_B: begin
           if (RV32B == RV32BFull) begin
-            unique case(1'b1)
+            unique case (1'b1)
               crc_bmode: multicycle_result = clmul_result_rev ^ (operand_a_i >> 8);
               crc_hmode: multicycle_result = clmul_result_rev ^ (operand_a_i >> 16);
               default:   multicycle_result = clmul_result_rev;

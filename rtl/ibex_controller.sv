@@ -691,8 +691,8 @@ module ibex_controller #(
           // Exception/fault prioritisation logic will have set exactly 1 X_prio signal
           unique case (1'b1)
             instr_fetch_err_prio: begin
-                exc_cause_o = EXC_CAUSE_INSTR_ACCESS_FAULT;
-                csr_mtval_o = instr_fetch_err_plus2_i ? (pc_id_i + 32'd2) : pc_id_i;
+              exc_cause_o = EXC_CAUSE_INSTR_ACCESS_FAULT;
+              csr_mtval_o = instr_fetch_err_plus2_i ? (pc_id_i + 32'd2) : pc_id_i;
             end
             illegal_insn_prio: begin
               exc_cause_o = EXC_CAUSE_ILLEGAL_INSN;
