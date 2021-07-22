@@ -20,53 +20,53 @@ module ibex_icache import ibex_pkg::*; #(
   // Only cache branch targets
   parameter bit          BranchCache     = 1'b0
 ) (
-    // Clock and reset
-    input  logic                           clk_i,
-    input  logic                           rst_ni,
+  // Clock and reset
+  input  logic                           clk_i,
+  input  logic                           rst_ni,
 
-    // Signal that the core would like instructions
-    input  logic                           req_i,
+  // Signal that the core would like instructions
+  input  logic                           req_i,
 
-    // Set the cache's address counter
-    input  logic                           branch_i,
-    input  logic                           branch_spec_i,
-    input  logic                           predicted_branch_i,
-    input  logic                           branch_mispredict_i,
-    input  logic [31:0]                    addr_i,
+  // Set the cache's address counter
+  input  logic                           branch_i,
+  input  logic                           branch_spec_i,
+  input  logic                           predicted_branch_i,
+  input  logic                           branch_mispredict_i,
+  input  logic [31:0]                    addr_i,
 
-    // IF stage interface: Pass fetched instructions to the core
-    input  logic                           ready_i,
-    output logic                           valid_o,
-    output logic [31:0]                    rdata_o,
-    output logic [31:0]                    addr_o,
-    output logic                           err_o,
-    output logic                           err_plus2_o,
+  // IF stage interface: Pass fetched instructions to the core
+  input  logic                           ready_i,
+  output logic                           valid_o,
+  output logic [31:0]                    rdata_o,
+  output logic [31:0]                    addr_o,
+  output logic                           err_o,
+  output logic                           err_plus2_o,
 
-    // Instruction memory / interconnect interface: Fetch instruction data from memory
-    output logic                           instr_req_o,
-    input  logic                           instr_gnt_i,
-    output logic [31:0]                    instr_addr_o,
-    input  logic [BUS_SIZE-1:0]            instr_rdata_i,
-    input  logic                           instr_err_i,
-    input  logic                           instr_pmp_err_i,
-    input  logic                           instr_rvalid_i,
+  // Instruction memory / interconnect interface: Fetch instruction data from memory
+  output logic                           instr_req_o,
+  input  logic                           instr_gnt_i,
+  output logic [31:0]                    instr_addr_o,
+  input  logic [BUS_SIZE-1:0]            instr_rdata_i,
+  input  logic                           instr_err_i,
+  input  logic                           instr_pmp_err_i,
+  input  logic                           instr_rvalid_i,
 
-    // RAM IO
-    output logic [IC_NUM_WAYS-1:0]         ic_tag_req_o,
-    output logic                           ic_tag_write_o,
-    output logic [IC_INDEX_W-1:0]          ic_tag_addr_o,
-    output logic [TagSizeECC-1:0]          ic_tag_wdata_o,
-    input  logic [TagSizeECC-1:0]          ic_tag_rdata_i [IC_NUM_WAYS],
-    output logic [IC_NUM_WAYS-1:0]         ic_data_req_o,
-    output logic                           ic_data_write_o,
-    output logic [IC_INDEX_W-1:0]          ic_data_addr_o,
-    output logic [LineSizeECC-1:0]         ic_data_wdata_o,
-    input  logic [LineSizeECC-1:0]         ic_data_rdata_i [IC_NUM_WAYS],
+  // RAM IO
+  output logic [IC_NUM_WAYS-1:0]         ic_tag_req_o,
+  output logic                           ic_tag_write_o,
+  output logic [IC_INDEX_W-1:0]          ic_tag_addr_o,
+  output logic [TagSizeECC-1:0]          ic_tag_wdata_o,
+  input  logic [TagSizeECC-1:0]          ic_tag_rdata_i [IC_NUM_WAYS],
+  output logic [IC_NUM_WAYS-1:0]         ic_data_req_o,
+  output logic                           ic_data_write_o,
+  output logic [IC_INDEX_W-1:0]          ic_data_addr_o,
+  output logic [LineSizeECC-1:0]         ic_data_wdata_o,
+  input  logic [LineSizeECC-1:0]         ic_data_rdata_i [IC_NUM_WAYS],
 
-    // Cache status
-    input  logic                           icache_enable_i,
-    input  logic                           icache_inval_i,
-    output logic                           busy_o
+  // Cache status
+  input  logic                           icache_enable_i,
+  input  logic                           icache_inval_i,
+  output logic                           busy_o
 );
 
   // Number of fill buffers (must be >= 2)

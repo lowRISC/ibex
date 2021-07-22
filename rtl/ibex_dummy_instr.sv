@@ -12,21 +12,21 @@ module ibex_dummy_instr import ibex_pkg::*; #(
     parameter lfsr_seed_t RndCnstLfsrSeed = RndCnstLfsrSeedDefault,
     parameter lfsr_perm_t RndCnstLfsrPerm = RndCnstLfsrPermDefault
 ) (
-    // Clock and reset
-    input  logic        clk_i,
-    input  logic        rst_ni,
+  // Clock and reset
+  input  logic        clk_i,
+  input  logic        rst_ni,
 
-    // Interface to CSRs
-    input  logic        dummy_instr_en_i,
-    input  logic [2:0]  dummy_instr_mask_i,
-    input  logic        dummy_instr_seed_en_i,
-    input  logic [31:0] dummy_instr_seed_i,
+  // Interface to CSRs
+  input  logic        dummy_instr_en_i,
+  input  logic [2:0]  dummy_instr_mask_i,
+  input  logic        dummy_instr_seed_en_i,
+  input  logic [31:0] dummy_instr_seed_i,
 
-    // Interface to IF stage
-    input  logic        fetch_valid_i,
-    input  logic        id_in_ready_i,
-    output logic        insert_dummy_instr_o,
-    output logic [31:0] dummy_instr_data_o
+  // Interface to IF stage
+  input  logic        fetch_valid_i,
+  input  logic        id_in_ready_i,
+  output logic        insert_dummy_instr_o,
+  output logic [31:0] dummy_instr_data_o
 );
 
   localparam int unsigned TIMEOUT_CNT_W = 5;
