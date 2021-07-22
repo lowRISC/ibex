@@ -318,13 +318,13 @@ module ibex_if_stage import ibex_pkg::*; #(
   logic        instr_is_compressed;
 
   ibex_compressed_decoder compressed_decoder_i (
-      .clk_i           ( clk_i                    ),
-      .rst_ni          ( rst_ni                   ),
-      .valid_i         ( fetch_valid & ~fetch_err ),
-      .instr_i         ( if_instr_rdata           ),
-      .instr_o         ( instr_decompressed       ),
-      .is_compressed_o ( instr_is_compressed      ),
-      .illegal_instr_o ( illegal_c_insn           )
+    .clk_i          (clk_i),
+    .rst_ni         (rst_ni),
+    .valid_i        (fetch_valid & ~fetch_err),
+    .instr_i        (if_instr_rdata),
+    .instr_o        (instr_decompressed),
+    .is_compressed_o(instr_is_compressed),
+    .illegal_instr_o(illegal_c_insn)
   );
 
   // Dummy instruction insertion
@@ -336,16 +336,16 @@ module ibex_if_stage import ibex_pkg::*; #(
       .RndCnstLfsrSeed (RndCnstLfsrSeed),
       .RndCnstLfsrPerm (RndCnstLfsrPerm)
     ) dummy_instr_i (
-      .clk_i                 ( clk_i                 ),
-      .rst_ni                ( rst_ni                ),
-      .dummy_instr_en_i      ( dummy_instr_en_i      ),
-      .dummy_instr_mask_i    ( dummy_instr_mask_i    ),
-      .dummy_instr_seed_en_i ( dummy_instr_seed_en_i ),
-      .dummy_instr_seed_i    ( dummy_instr_seed_i    ),
-      .fetch_valid_i         ( fetch_valid           ),
-      .id_in_ready_i         ( id_in_ready_i         ),
-      .insert_dummy_instr_o  ( insert_dummy_instr    ),
-      .dummy_instr_data_o    ( dummy_instr_data      )
+      .clk_i                (clk_i),
+      .rst_ni               (rst_ni),
+      .dummy_instr_en_i     (dummy_instr_en_i),
+      .dummy_instr_mask_i   (dummy_instr_mask_i),
+      .dummy_instr_seed_en_i(dummy_instr_seed_en_i),
+      .dummy_instr_seed_i   (dummy_instr_seed_i),
+      .fetch_valid_i        (fetch_valid),
+      .id_in_ready_i        (id_in_ready_i),
+      .insert_dummy_instr_o (insert_dummy_instr),
+      .dummy_instr_data_o   (dummy_instr_data)
     );
 
     // Mux between actual instructions and dummy instructions
@@ -548,14 +548,14 @@ module ibex_if_stage import ibex_pkg::*; #(
     end
 
     ibex_branch_predict branch_predict_i (
-      .clk_i                  ( clk_i                    ),
-      .rst_ni                 ( rst_ni                   ),
-      .fetch_rdata_i          ( fetch_rdata              ),
-      .fetch_pc_i             ( fetch_addr               ),
-      .fetch_valid_i          ( fetch_valid              ),
+      .clk_i        (clk_i),
+      .rst_ni       (rst_ni),
+      .fetch_rdata_i(fetch_rdata),
+      .fetch_pc_i   (fetch_addr),
+      .fetch_valid_i(fetch_valid),
 
-      .predict_branch_taken_o ( predict_branch_taken_raw ),
-      .predict_branch_pc_o    ( predict_branch_pc        )
+      .predict_branch_taken_o(predict_branch_taken_raw),
+      .predict_branch_pc_o   (predict_branch_pc)
     );
 
     // If there is an instruction in the skid buffer there must be no branch prediction.

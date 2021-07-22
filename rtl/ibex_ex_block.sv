@@ -115,22 +115,22 @@ module ibex_ex_block #(
 
   ibex_alu #(
     .RV32B(RV32B)
-  ) alu_i                  (
-      .operator_i          ( alu_operator_i          ),
-      .operand_a_i         ( alu_operand_a_i         ),
-      .operand_b_i         ( alu_operand_b_i         ),
-      .instr_first_cycle_i ( alu_instr_first_cycle_i ),
-      .imd_val_q_i         ( alu_imd_val_q           ),
-      .imd_val_we_o        ( alu_imd_val_we          ),
-      .imd_val_d_o         ( alu_imd_val_d           ),
-      .multdiv_operand_a_i ( multdiv_alu_operand_a   ),
-      .multdiv_operand_b_i ( multdiv_alu_operand_b   ),
-      .multdiv_sel_i       ( multdiv_sel             ),
-      .adder_result_o      ( alu_adder_result_ex_o   ),
-      .adder_result_ext_o  ( alu_adder_result_ext    ),
-      .result_o            ( alu_result              ),
-      .comparison_result_o ( alu_cmp_result          ),
-      .is_equal_result_o   ( alu_is_equal_result     )
+  ) alu_i (
+    .operator_i         (alu_operator_i),
+    .operand_a_i        (alu_operand_a_i),
+    .operand_b_i        (alu_operand_b_i),
+    .instr_first_cycle_i(alu_instr_first_cycle_i),
+    .imd_val_q_i        (alu_imd_val_q),
+    .imd_val_we_o       (alu_imd_val_we),
+    .imd_val_d_o        (alu_imd_val_d),
+    .multdiv_operand_a_i(multdiv_alu_operand_a),
+    .multdiv_operand_b_i(multdiv_alu_operand_b),
+    .multdiv_sel_i      (multdiv_sel),
+    .adder_result_o     (alu_adder_result_ex_o),
+    .adder_result_ext_o (alu_adder_result_ext),
+    .result_o           (alu_result),
+    .comparison_result_o(alu_cmp_result),
+    .is_equal_result_o  (alu_is_equal_result)
   );
 
   ////////////////
@@ -139,55 +139,55 @@ module ibex_ex_block #(
 
   if (RV32M == RV32MSlow) begin : gen_multdiv_slow
     ibex_multdiv_slow multdiv_i (
-        .clk_i              ( clk_i                 ),
-        .rst_ni             ( rst_ni                ),
-        .mult_en_i          ( mult_en_i             ),
-        .div_en_i           ( div_en_i              ),
-        .mult_sel_i         ( mult_sel_i            ),
-        .div_sel_i          ( div_sel_i             ),
-        .operator_i         ( multdiv_operator_i    ),
-        .signed_mode_i      ( multdiv_signed_mode_i ),
-        .op_a_i             ( multdiv_operand_a_i   ),
-        .op_b_i             ( multdiv_operand_b_i   ),
-        .alu_adder_ext_i    ( alu_adder_result_ext  ),
-        .alu_adder_i        ( alu_adder_result_ex_o ),
-        .equal_to_zero_i    ( alu_is_equal_result   ),
-        .data_ind_timing_i  ( data_ind_timing_i     ),
-        .valid_o            ( multdiv_valid         ),
-        .alu_operand_a_o    ( multdiv_alu_operand_a ),
-        .alu_operand_b_o    ( multdiv_alu_operand_b ),
-        .imd_val_q_i        ( imd_val_q_i           ),
-        .imd_val_d_o        ( multdiv_imd_val_d     ),
-        .imd_val_we_o       ( multdiv_imd_val_we    ),
-        .multdiv_ready_id_i ( multdiv_ready_id_i    ),
-        .multdiv_result_o   ( multdiv_result        )
+      .clk_i             (clk_i),
+      .rst_ni            (rst_ni),
+      .mult_en_i         (mult_en_i),
+      .div_en_i          (div_en_i),
+      .mult_sel_i        (mult_sel_i),
+      .div_sel_i         (div_sel_i),
+      .operator_i        (multdiv_operator_i),
+      .signed_mode_i     (multdiv_signed_mode_i),
+      .op_a_i            (multdiv_operand_a_i),
+      .op_b_i            (multdiv_operand_b_i),
+      .alu_adder_ext_i   (alu_adder_result_ext),
+      .alu_adder_i       (alu_adder_result_ex_o),
+      .equal_to_zero_i   (alu_is_equal_result),
+      .data_ind_timing_i (data_ind_timing_i),
+      .valid_o           (multdiv_valid),
+      .alu_operand_a_o   (multdiv_alu_operand_a),
+      .alu_operand_b_o   (multdiv_alu_operand_b),
+      .imd_val_q_i       (imd_val_q_i),
+      .imd_val_d_o       (multdiv_imd_val_d),
+      .imd_val_we_o      (multdiv_imd_val_we),
+      .multdiv_ready_id_i(multdiv_ready_id_i),
+      .multdiv_result_o  (multdiv_result)
     );
   end else if (RV32M == RV32MFast || RV32M == RV32MSingleCycle) begin : gen_multdiv_fast
-    ibex_multdiv_fast #     (
-        .RV32M ( RV32M )
-    ) multdiv_i             (
-        .clk_i              ( clk_i                 ),
-        .rst_ni             ( rst_ni                ),
-        .mult_en_i          ( mult_en_i             ),
-        .div_en_i           ( div_en_i              ),
-        .mult_sel_i         ( mult_sel_i            ),
-        .div_sel_i          ( div_sel_i             ),
-        .operator_i         ( multdiv_operator_i    ),
-        .signed_mode_i      ( multdiv_signed_mode_i ),
-        .op_a_i             ( multdiv_operand_a_i   ),
-        .op_b_i             ( multdiv_operand_b_i   ),
-        .alu_operand_a_o    ( multdiv_alu_operand_a ),
-        .alu_operand_b_o    ( multdiv_alu_operand_b ),
-        .alu_adder_ext_i    ( alu_adder_result_ext  ),
-        .alu_adder_i        ( alu_adder_result_ex_o ),
-        .equal_to_zero_i    ( alu_is_equal_result   ),
-        .data_ind_timing_i  ( data_ind_timing_i     ),
-        .imd_val_q_i        ( imd_val_q_i           ),
-        .imd_val_d_o        ( multdiv_imd_val_d     ),
-        .imd_val_we_o       ( multdiv_imd_val_we    ),
-        .multdiv_ready_id_i ( multdiv_ready_id_i    ),
-        .valid_o            ( multdiv_valid         ),
-        .multdiv_result_o   ( multdiv_result        )
+    ibex_multdiv_fast #(
+      .RV32M(RV32M)
+    ) multdiv_i (
+      .clk_i             (clk_i),
+      .rst_ni            (rst_ni),
+      .mult_en_i         (mult_en_i),
+      .div_en_i          (div_en_i),
+      .mult_sel_i        (mult_sel_i),
+      .div_sel_i         (div_sel_i),
+      .operator_i        (multdiv_operator_i),
+      .signed_mode_i     (multdiv_signed_mode_i),
+      .op_a_i            (multdiv_operand_a_i),
+      .op_b_i            (multdiv_operand_b_i),
+      .alu_operand_a_o   (multdiv_alu_operand_a),
+      .alu_operand_b_o   (multdiv_alu_operand_b),
+      .alu_adder_ext_i   (alu_adder_result_ext),
+      .alu_adder_i       (alu_adder_result_ex_o),
+      .equal_to_zero_i   (alu_is_equal_result),
+      .data_ind_timing_i (data_ind_timing_i),
+      .imd_val_q_i       (imd_val_q_i),
+      .imd_val_d_o       (multdiv_imd_val_d),
+      .imd_val_we_o      (multdiv_imd_val_we),
+      .multdiv_ready_id_i(multdiv_ready_id_i),
+      .valid_o           (multdiv_valid),
+      .multdiv_result_o  (multdiv_result)
     );
   end
 

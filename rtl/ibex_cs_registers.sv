@@ -769,30 +769,30 @@ module ibex_cs_registers #(
                                           mprv: 1'b0,
                                           tw:   1'b0};
   ibex_csr #(
-    .Width      ($bits(status_t)),
-    .ShadowCopy (ShadowCSR),
-    .ResetValue ({MSTATUS_RST_VAL})
+    .Width     ($bits(status_t)),
+    .ShadowCopy(ShadowCSR),
+    .ResetValue({MSTATUS_RST_VAL})
   ) u_mstatus_csr (
-    .clk_i      (clk_i),
-    .rst_ni     (rst_ni),
-    .wr_data_i  ({mstatus_d}),
-    .wr_en_i    (mstatus_en),
-    .rd_data_o  (mstatus_q),
-    .rd_error_o (mstatus_err)
+    .clk_i     (clk_i),
+    .rst_ni    (rst_ni),
+    .wr_data_i ({mstatus_d}),
+    .wr_en_i   (mstatus_en),
+    .rd_data_o (mstatus_q),
+    .rd_error_o(mstatus_err)
   );
 
   // MEPC
   ibex_csr #(
-    .Width      (32),
-    .ShadowCopy (1'b0),
-    .ResetValue ('0)
+    .Width     (32),
+    .ShadowCopy(1'b0),
+    .ResetValue('0)
   ) u_mepc_csr (
-    .clk_i      (clk_i),
-    .rst_ni     (rst_ni),
-    .wr_data_i  (mepc_d),
-    .wr_en_i    (mepc_en),
-    .rd_data_o  (mepc_q),
-    .rd_error_o ()
+    .clk_i     (clk_i),
+    .rst_ni    (rst_ni),
+    .wr_data_i (mepc_d),
+    .wr_en_i   (mepc_en),
+    .rd_data_o (mepc_q),
+    .rd_error_o()
   );
 
   // MIE
@@ -801,180 +801,177 @@ module ibex_cs_registers #(
   assign mie_d.irq_external = csr_wdata_int[CSR_MEIX_BIT];
   assign mie_d.irq_fast     = csr_wdata_int[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW];
   ibex_csr #(
-    .Width      ($bits(irqs_t)),
-    .ShadowCopy (1'b0),
-    .ResetValue ('0)
+    .Width     ($bits(irqs_t)),
+    .ShadowCopy(1'b0),
+    .ResetValue('0)
   ) u_mie_csr (
-    .clk_i      (clk_i),
-    .rst_ni     (rst_ni),
-    .wr_data_i  ({mie_d}),
-    .wr_en_i    (mie_en),
-    .rd_data_o  (mie_q),
-    .rd_error_o ()
+    .clk_i     (clk_i),
+    .rst_ni    (rst_ni),
+    .wr_data_i ({mie_d}),
+    .wr_en_i   (mie_en),
+    .rd_data_o (mie_q),
+    .rd_error_o()
   );
 
   // MSCRATCH
   ibex_csr #(
-    .Width      (32),
-    .ShadowCopy (1'b0),
-    .ResetValue ('0)
+    .Width     (32),
+    .ShadowCopy(1'b0),
+    .ResetValue('0)
   ) u_mscratch_csr (
-    .clk_i      (clk_i),
-    .rst_ni     (rst_ni),
-    .wr_data_i  (csr_wdata_int),
-    .wr_en_i    (mscratch_en),
-    .rd_data_o  (mscratch_q),
-    .rd_error_o ()
+    .clk_i     (clk_i),
+    .rst_ni    (rst_ni),
+    .wr_data_i (csr_wdata_int),
+    .wr_en_i   (mscratch_en),
+    .rd_data_o (mscratch_q),
+    .rd_error_o()
   );
 
   // MCAUSE
   ibex_csr #(
-    .Width      (6),
-    .ShadowCopy (1'b0),
-    .ResetValue ('0)
+    .Width     (6),
+    .ShadowCopy(1'b0),
+    .ResetValue('0)
   ) u_mcause_csr (
-    .clk_i      (clk_i),
-    .rst_ni     (rst_ni),
-    .wr_data_i  (mcause_d),
-    .wr_en_i    (mcause_en),
-    .rd_data_o  (mcause_q),
-    .rd_error_o ()
+    .clk_i     (clk_i),
+    .rst_ni    (rst_ni),
+    .wr_data_i (mcause_d),
+    .wr_en_i   (mcause_en),
+    .rd_data_o (mcause_q),
+    .rd_error_o()
   );
 
   // MTVAL
   ibex_csr #(
-    .Width      (32),
-    .ShadowCopy (1'b0),
-    .ResetValue ('0)
+    .Width     (32),
+    .ShadowCopy(1'b0),
+    .ResetValue('0)
   ) u_mtval_csr (
-    .clk_i      (clk_i),
-    .rst_ni     (rst_ni),
-    .wr_data_i  (mtval_d),
-    .wr_en_i    (mtval_en),
-    .rd_data_o  (mtval_q),
-    .rd_error_o ()
+    .clk_i     (clk_i),
+    .rst_ni    (rst_ni),
+    .wr_data_i (mtval_d),
+    .wr_en_i   (mtval_en),
+    .rd_data_o (mtval_q),
+    .rd_error_o()
   );
 
   // MTVEC
   ibex_csr #(
-    .Width      (32),
-    .ShadowCopy (ShadowCSR),
-    .ResetValue (32'd1)
+    .Width     (32),
+    .ShadowCopy(ShadowCSR),
+    .ResetValue(32'd1)
   ) u_mtvec_csr (
-    .clk_i      (clk_i),
-    .rst_ni     (rst_ni),
-    .wr_data_i  (mtvec_d),
-    .wr_en_i    (mtvec_en),
-    .rd_data_o  (mtvec_q),
-    .rd_error_o (mtvec_err)
+    .clk_i     (clk_i),
+    .rst_ni    (rst_ni),
+    .wr_data_i (mtvec_d),
+    .wr_en_i   (mtvec_en),
+    .rd_data_o (mtvec_q),
+    .rd_error_o(mtvec_err)
   );
 
   // DCSR
   localparam dcsr_t DCSR_RESET_VAL = '{
       xdebugver: XDEBUGVER_STD,
-      cause:     DBG_CAUSE_NONE, // 3'h0
-      prv:       PRIV_LVL_M,
-      default:   '0
+      cause: DBG_CAUSE_NONE,  // 3'h0
+      prv: PRIV_LVL_M,
+      default: '0
   };
   ibex_csr #(
-    .Width      ($bits(dcsr_t)),
-    .ShadowCopy (1'b0),
-    .ResetValue ({DCSR_RESET_VAL})
+    .Width     ($bits(dcsr_t)),
+    .ShadowCopy(1'b0),
+    .ResetValue({DCSR_RESET_VAL})
   ) u_dcsr_csr (
-    .clk_i      (clk_i),
-    .rst_ni     (rst_ni),
-    .wr_data_i  ({dcsr_d}),
-    .wr_en_i    (dcsr_en),
-    .rd_data_o  (dcsr_q),
-    .rd_error_o ()
+    .clk_i     (clk_i),
+    .rst_ni    (rst_ni),
+    .wr_data_i ({dcsr_d}),
+    .wr_en_i   (dcsr_en),
+    .rd_data_o (dcsr_q),
+    .rd_error_o()
   );
 
   // DEPC
   ibex_csr #(
-    .Width      (32),
-    .ShadowCopy (1'b0),
-    .ResetValue ('0)
+    .Width     (32),
+    .ShadowCopy(1'b0),
+    .ResetValue('0)
   ) u_depc_csr (
-    .clk_i      (clk_i),
-    .rst_ni     (rst_ni),
-    .wr_data_i  (depc_d),
-    .wr_en_i    (depc_en),
-    .rd_data_o  (depc_q),
-    .rd_error_o ()
+    .clk_i     (clk_i),
+    .rst_ni    (rst_ni),
+    .wr_data_i (depc_d),
+    .wr_en_i   (depc_en),
+    .rd_data_o (depc_q),
+    .rd_error_o()
   );
 
   // DSCRATCH0
   ibex_csr #(
-    .Width      (32),
-    .ShadowCopy (1'b0),
-    .ResetValue ('0)
+    .Width     (32),
+    .ShadowCopy(1'b0),
+    .ResetValue('0)
   ) u_dscratch0_csr (
-    .clk_i      (clk_i),
-    .rst_ni     (rst_ni),
-    .wr_data_i  (csr_wdata_int),
-    .wr_en_i    (dscratch0_en),
-    .rd_data_o  (dscratch0_q),
-    .rd_error_o ()
+    .clk_i     (clk_i),
+    .rst_ni    (rst_ni),
+    .wr_data_i (csr_wdata_int),
+    .wr_en_i   (dscratch0_en),
+    .rd_data_o (dscratch0_q),
+    .rd_error_o()
   );
 
   // DSCRATCH1
   ibex_csr #(
-    .Width      (32),
-    .ShadowCopy (1'b0),
-    .ResetValue ('0)
+    .Width     (32),
+    .ShadowCopy(1'b0),
+    .ResetValue('0)
   ) u_dscratch1_csr (
-    .clk_i      (clk_i),
-    .rst_ni     (rst_ni),
-    .wr_data_i  (csr_wdata_int),
-    .wr_en_i    (dscratch1_en),
-    .rd_data_o  (dscratch1_q),
-    .rd_error_o ()
+    .clk_i     (clk_i),
+    .rst_ni    (rst_ni),
+    .wr_data_i (csr_wdata_int),
+    .wr_en_i   (dscratch1_en),
+    .rd_data_o (dscratch1_q),
+    .rd_error_o()
   );
 
   // MSTACK
-  localparam status_stk_t MSTACK_RESET_VAL = '{
-      mpie: 1'b1,
-      mpp:  PRIV_LVL_U
-  };
+  localparam status_stk_t MSTACK_RESET_VAL = '{mpie: 1'b1, mpp: PRIV_LVL_U};
   ibex_csr #(
-    .Width      ($bits(status_stk_t)),
-    .ShadowCopy (1'b0),
-    .ResetValue ({MSTACK_RESET_VAL})
+    .Width     ($bits(status_stk_t)),
+    .ShadowCopy(1'b0),
+    .ResetValue({MSTACK_RESET_VAL})
   ) u_mstack_csr (
-    .clk_i      (clk_i),
-    .rst_ni     (rst_ni),
-    .wr_data_i  ({mstack_d}),
-    .wr_en_i    (mstack_en),
-    .rd_data_o  (mstack_q),
-    .rd_error_o ()
+    .clk_i     (clk_i),
+    .rst_ni    (rst_ni),
+    .wr_data_i ({mstack_d}),
+    .wr_en_i   (mstack_en),
+    .rd_data_o (mstack_q),
+    .rd_error_o()
   );
 
   // MSTACK_EPC
   ibex_csr #(
-    .Width      (32),
-    .ShadowCopy (1'b0),
-    .ResetValue ('0)
+    .Width     (32),
+    .ShadowCopy(1'b0),
+    .ResetValue('0)
   ) u_mstack_epc_csr (
-    .clk_i      (clk_i),
-    .rst_ni     (rst_ni),
-    .wr_data_i  (mstack_epc_d),
-    .wr_en_i    (mstack_en),
-    .rd_data_o  (mstack_epc_q),
-    .rd_error_o ()
+    .clk_i     (clk_i),
+    .rst_ni    (rst_ni),
+    .wr_data_i (mstack_epc_d),
+    .wr_en_i   (mstack_en),
+    .rd_data_o (mstack_epc_q),
+    .rd_error_o()
   );
 
   // MSTACK_CAUSE
   ibex_csr #(
-    .Width      (6),
-    .ShadowCopy (1'b0),
-    .ResetValue ('0)
+    .Width     (6),
+    .ShadowCopy(1'b0),
+    .ResetValue('0)
   ) u_mstack_cause_csr (
-    .clk_i      (clk_i),
-    .rst_ni     (rst_ni),
-    .wr_data_i  (mstack_cause_d),
-    .wr_en_i    (mstack_en),
-    .rd_data_o  (mstack_cause_q),
-    .rd_error_o ()
+    .clk_i     (clk_i),
+    .rst_ni    (rst_ni),
+    .wr_data_i (mstack_cause_d),
+    .wr_en_i   (mstack_en),
+    .rd_data_o (mstack_cause_q),
+    .rd_error_o()
   );
 
   // -----------------
@@ -1066,16 +1063,16 @@ module ibex_cs_registers #(
       assign pmp_cfg_wdata[i].read  = csr_wdata_int[(i%4)*PMP_CFG_W];
 
       ibex_csr #(
-        .Width      ($bits(pmp_cfg_t)),
-        .ShadowCopy (ShadowCSR),
-        .ResetValue ('0)
+        .Width     ($bits(pmp_cfg_t)),
+        .ShadowCopy(ShadowCSR),
+        .ResetValue('0)
       ) u_pmp_cfg_csr (
-        .clk_i      (clk_i),
-        .rst_ni     (rst_ni),
-        .wr_data_i  ({pmp_cfg_wdata[i]}),
-        .wr_en_i    (pmp_cfg_we[i]),
-        .rd_data_o  (pmp_cfg[i]),
-        .rd_error_o (pmp_cfg_err[i])
+        .clk_i     (clk_i),
+        .rst_ni    (rst_ni),
+        .wr_data_i ({pmp_cfg_wdata[i]}),
+        .wr_en_i   (pmp_cfg_we[i]),
+        .rd_data_o (pmp_cfg[i]),
+        .rd_error_o(pmp_cfg_err[i])
       );
 
       // MSECCFG.RLB allows the lock bit to be bypassed (allowing cfg writes when MSECCFG.RLB is
@@ -1095,16 +1092,16 @@ module ibex_cs_registers #(
       end
 
       ibex_csr #(
-        .Width      (PMPAddrWidth),
-        .ShadowCopy (ShadowCSR),
-        .ResetValue ('0)
+        .Width     (PMPAddrWidth),
+        .ShadowCopy(ShadowCSR),
+        .ResetValue('0)
       ) u_pmp_addr_csr (
-        .clk_i      (clk_i),
-        .rst_ni     (rst_ni),
-        .wr_data_i  (csr_wdata_int[31-:PMPAddrWidth]),
-        .wr_en_i    (pmp_addr_we[i]),
-        .rd_data_o  (pmp_addr[i]),
-        .rd_error_o (pmp_addr_err[i])
+        .clk_i     (clk_i),
+        .rst_ni    (rst_ni),
+        .wr_data_i (csr_wdata_int[31-:PMPAddrWidth]),
+        .wr_en_i   (pmp_addr_we[i]),
+        .rd_data_o (pmp_addr[i]),
+        .rd_error_o(pmp_addr_err[i])
       );
 
       assign csr_pmp_cfg_o[i]  = pmp_cfg[i];
@@ -1126,16 +1123,16 @@ module ibex_cs_registers #(
     assign pmp_mseccfg_d.rlb = any_pmp_entry_locked ? 1'b0 : csr_wdata_int[CSR_MSECCFG_RLB_BIT];
 
     ibex_csr #(
-      .Width      ($bits(pmp_mseccfg_t)),
-      .ShadowCopy (ShadowCSR),
-      .ResetValue ('0)
+      .Width     ($bits(pmp_mseccfg_t)),
+      .ShadowCopy(ShadowCSR),
+      .ResetValue('0)
     ) u_pmp_mseccfg (
-      .clk_i      (clk_i),
-      .rst_ni     (rst_ni),
-      .wr_data_i  (pmp_mseccfg_d),
-      .wr_en_i    (pmp_mseccfg_we),
-      .rd_data_o  (pmp_mseccfg_q),
-      .rd_error_o (pmp_mseccfg_err)
+      .clk_i     (clk_i),
+      .rst_ni    (rst_ni),
+      .wr_data_i (pmp_mseccfg_d),
+      .wr_en_i   (pmp_mseccfg_we),
+      .rd_data_o (pmp_mseccfg_q),
+      .rd_error_o(pmp_mseccfg_err)
     );
 
     assign pmp_csr_err = (|pmp_cfg_err) | (|pmp_addr_err) | pmp_mseccfg_err;
@@ -1331,43 +1328,43 @@ module ibex_cs_registers #(
 
     // Registers
     ibex_csr #(
-      .Width      (DbgHwNumLen),
-      .ShadowCopy (1'b0),
-      .ResetValue ('0)
+      .Width     (DbgHwNumLen),
+      .ShadowCopy(1'b0),
+      .ResetValue('0)
     ) u_tselect_csr (
-      .clk_i      (clk_i),
-      .rst_ni     (rst_ni),
-      .wr_data_i  (tselect_d),
-      .wr_en_i    (tselect_we),
-      .rd_data_o  (tselect_q),
-      .rd_error_o ()
+      .clk_i     (clk_i),
+      .rst_ni    (rst_ni),
+      .wr_data_i (tselect_d),
+      .wr_en_i   (tselect_we),
+      .rd_data_o (tselect_q),
+      .rd_error_o()
     );
 
     for (genvar i = 0; i < DbgHwBreakNum; i++) begin : g_dbg_tmatch_reg
       ibex_csr #(
-        .Width      (1),
-        .ShadowCopy (1'b0),
-        .ResetValue ('0)
+        .Width     (1),
+        .ShadowCopy(1'b0),
+        .ResetValue('0)
       ) u_tmatch_control_csr (
-        .clk_i      (clk_i),
-        .rst_ni     (rst_ni),
-        .wr_data_i  (tmatch_control_d),
-        .wr_en_i    (tmatch_control_we[i]),
-        .rd_data_o  (tmatch_control_q[i]),
-        .rd_error_o ()
-    );
+        .clk_i     (clk_i),
+        .rst_ni    (rst_ni),
+        .wr_data_i (tmatch_control_d),
+        .wr_en_i   (tmatch_control_we[i]),
+        .rd_data_o (tmatch_control_q[i]),
+        .rd_error_o()
+      );
 
       ibex_csr #(
-        .Width      (32),
-        .ShadowCopy (1'b0),
-        .ResetValue ('0)
+        .Width     (32),
+        .ShadowCopy(1'b0),
+        .ResetValue('0)
       ) u_tmatch_value_csr (
-        .clk_i      (clk_i),
-        .rst_ni     (rst_ni),
-        .wr_data_i  (tmatch_value_d),
-        .wr_en_i    (tmatch_value_we[i]),
-        .rd_data_o  (tmatch_value_q[i]),
-        .rd_error_o ()
+        .clk_i     (clk_i),
+        .rst_ni    (rst_ni),
+        .wr_data_i (tmatch_value_d),
+        .wr_en_i   (tmatch_value_we[i]),
+        .rd_data_o (tmatch_value_q[i]),
+        .rd_error_o()
       );
     end
 
@@ -1483,16 +1480,16 @@ module ibex_cs_registers #(
   assign icache_enable_o = cpuctrl_q.icache_enable;
 
   ibex_csr #(
-    .Width      ($bits(cpu_ctrl_t)),
-    .ShadowCopy (ShadowCSR),
-    .ResetValue ('0)
+    .Width     ($bits(cpu_ctrl_t)),
+    .ShadowCopy(ShadowCSR),
+    .ResetValue('0)
   ) u_cpuctrl_csr (
-    .clk_i      (clk_i),
-    .rst_ni     (rst_ni),
-    .wr_data_i  ({cpuctrl_d}),
-    .wr_en_i    (cpuctrl_we),
-    .rd_data_o  (cpuctrl_q),
-    .rd_error_o (cpuctrl_err)
+    .clk_i     (clk_i),
+    .rst_ni    (rst_ni),
+    .wr_data_i ({cpuctrl_d}),
+    .wr_en_i   (cpuctrl_we),
+    .rd_data_o (cpuctrl_q),
+    .rd_error_o(cpuctrl_err)
   );
 
   assign csr_shadow_err_o = mstatus_err | mtvec_err | pmp_csr_err | cpuctrl_err;
