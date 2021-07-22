@@ -13,37 +13,37 @@ module ibex_prefetch_buffer #(
   parameter bit BranchPredictor = 1'b0,
   parameter bit ResetAll        = 1'b0
 ) (
-    input  logic        clk_i,
-    input  logic        rst_ni,
+  input  logic        clk_i,
+  input  logic        rst_ni,
 
-    input  logic        req_i,
+  input  logic        req_i,
 
-    input  logic        branch_i,
-    input  logic        branch_spec_i,
-    input  logic        predicted_branch_i,
-    input  logic        branch_mispredict_i,
-    input  logic [31:0] addr_i,
-
-
-    input  logic        ready_i,
-    output logic        valid_o,
-    output logic [31:0] rdata_o,
-    output logic [31:0] addr_o,
-    output logic        err_o,
-    output logic        err_plus2_o,
+  input  logic        branch_i,
+  input  logic        branch_spec_i,
+  input  logic        predicted_branch_i,
+  input  logic        branch_mispredict_i,
+  input  logic [31:0] addr_i,
 
 
-    // goes to instruction memory / instruction cache
-    output logic        instr_req_o,
-    input  logic        instr_gnt_i,
-    output logic [31:0] instr_addr_o,
-    input  logic [31:0] instr_rdata_i,
-    input  logic        instr_err_i,
-    input  logic        instr_pmp_err_i,
-    input  logic        instr_rvalid_i,
+  input  logic        ready_i,
+  output logic        valid_o,
+  output logic [31:0] rdata_o,
+  output logic [31:0] addr_o,
+  output logic        err_o,
+  output logic        err_plus2_o,
 
-    // Prefetch Buffer Status
-    output logic        busy_o
+
+  // goes to instruction memory / instruction cache
+  output logic        instr_req_o,
+  input  logic        instr_gnt_i,
+  output logic [31:0] instr_addr_o,
+  input  logic [31:0] instr_rdata_i,
+  input  logic        instr_err_i,
+  input  logic        instr_pmp_err_i,
+  input  logic        instr_rvalid_i,
+
+  // Prefetch Buffer Status
+  output logic        busy_o
 );
 
   localparam int unsigned NUM_REQS  = 2;

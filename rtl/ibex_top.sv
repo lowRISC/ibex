@@ -13,108 +13,108 @@
  * Top level module of the ibex RISC-V core
  */
 module ibex_top import ibex_pkg::*; #(
-    parameter bit          PMPEnable        = 1'b0,
-    parameter int unsigned PMPGranularity   = 0,
-    parameter int unsigned PMPNumRegions    = 4,
-    parameter int unsigned MHPMCounterNum   = 0,
-    parameter int unsigned MHPMCounterWidth = 40,
-    parameter bit          RV32E            = 1'b0,
-    parameter rv32m_e      RV32M            = RV32MFast,
-    parameter rv32b_e      RV32B            = RV32BNone,
-    parameter regfile_e    RegFile          = RegFileFF,
-    parameter bit          BranchTargetALU  = 1'b0,
-    parameter bit          WritebackStage   = 1'b0,
-    parameter bit          ICache           = 1'b0,
-    parameter bit          ICacheECC        = 1'b0,
-    parameter bit          BranchPredictor  = 1'b0,
-    parameter bit          DbgTriggerEn     = 1'b0,
-    parameter int unsigned DbgHwBreakNum    = 1,
-    parameter bit          SecureIbex       = 1'b0,
-    parameter lfsr_seed_t  RndCnstLfsrSeed  = RndCnstLfsrSeedDefault,
-    parameter lfsr_perm_t  RndCnstLfsrPerm  = RndCnstLfsrPermDefault,
-    parameter int unsigned DmHaltAddr       = 32'h1A110800,
-    parameter int unsigned DmExceptionAddr  = 32'h1A110808
+  parameter bit          PMPEnable        = 1'b0,
+  parameter int unsigned PMPGranularity   = 0,
+  parameter int unsigned PMPNumRegions    = 4,
+  parameter int unsigned MHPMCounterNum   = 0,
+  parameter int unsigned MHPMCounterWidth = 40,
+  parameter bit          RV32E            = 1'b0,
+  parameter rv32m_e      RV32M            = RV32MFast,
+  parameter rv32b_e      RV32B            = RV32BNone,
+  parameter regfile_e    RegFile          = RegFileFF,
+  parameter bit          BranchTargetALU  = 1'b0,
+  parameter bit          WritebackStage   = 1'b0,
+  parameter bit          ICache           = 1'b0,
+  parameter bit          ICacheECC        = 1'b0,
+  parameter bit          BranchPredictor  = 1'b0,
+  parameter bit          DbgTriggerEn     = 1'b0,
+  parameter int unsigned DbgHwBreakNum    = 1,
+  parameter bit          SecureIbex       = 1'b0,
+  parameter lfsr_seed_t  RndCnstLfsrSeed  = RndCnstLfsrSeedDefault,
+  parameter lfsr_perm_t  RndCnstLfsrPerm  = RndCnstLfsrPermDefault,
+  parameter int unsigned DmHaltAddr       = 32'h1A110800,
+  parameter int unsigned DmExceptionAddr  = 32'h1A110808
 ) (
-    // Clock and Reset
-    input  logic                         clk_i,
-    input  logic                         rst_ni,
+  // Clock and Reset
+  input  logic                         clk_i,
+  input  logic                         rst_ni,
 
-    input  logic                         test_en_i,     // enable all clock gates for testing
-    input  prim_ram_1p_pkg::ram_1p_cfg_t ram_cfg_i,
+  input  logic                         test_en_i,     // enable all clock gates for testing
+  input  prim_ram_1p_pkg::ram_1p_cfg_t ram_cfg_i,
 
-    input  logic [31:0]                  hart_id_i,
-    input  logic [31:0]                  boot_addr_i,
+  input  logic [31:0]                  hart_id_i,
+  input  logic [31:0]                  boot_addr_i,
 
-    // Instruction memory interface
-    output logic                         instr_req_o,
-    input  logic                         instr_gnt_i,
-    input  logic                         instr_rvalid_i,
-    output logic [31:0]                  instr_addr_o,
-    input  logic [31:0]                  instr_rdata_i,
-    input  logic [6:0]                   instr_rdata_intg_i,
-    input  logic                         instr_err_i,
+  // Instruction memory interface
+  output logic                         instr_req_o,
+  input  logic                         instr_gnt_i,
+  input  logic                         instr_rvalid_i,
+  output logic [31:0]                  instr_addr_o,
+  input  logic [31:0]                  instr_rdata_i,
+  input  logic [6:0]                   instr_rdata_intg_i,
+  input  logic                         instr_err_i,
 
-    // Data memory interface
-    output logic                         data_req_o,
-    input  logic                         data_gnt_i,
-    input  logic                         data_rvalid_i,
-    output logic                         data_we_o,
-    output logic [3:0]                   data_be_o,
-    output logic [31:0]                  data_addr_o,
-    output logic [31:0]                  data_wdata_o,
-    output logic [6:0]                   data_wdata_intg_o,
-    input  logic [31:0]                  data_rdata_i,
-    input  logic [6:0]                   data_rdata_intg_i,
-    input  logic                         data_err_i,
+  // Data memory interface
+  output logic                         data_req_o,
+  input  logic                         data_gnt_i,
+  input  logic                         data_rvalid_i,
+  output logic                         data_we_o,
+  output logic [3:0]                   data_be_o,
+  output logic [31:0]                  data_addr_o,
+  output logic [31:0]                  data_wdata_o,
+  output logic [6:0]                   data_wdata_intg_o,
+  input  logic [31:0]                  data_rdata_i,
+  input  logic [6:0]                   data_rdata_intg_i,
+  input  logic                         data_err_i,
 
-    // Interrupt inputs
-    input  logic                         irq_software_i,
-    input  logic                         irq_timer_i,
-    input  logic                         irq_external_i,
-    input  logic [14:0]                  irq_fast_i,
-    input  logic                         irq_nm_i,       // non-maskeable interrupt
+  // Interrupt inputs
+  input  logic                         irq_software_i,
+  input  logic                         irq_timer_i,
+  input  logic                         irq_external_i,
+  input  logic [14:0]                  irq_fast_i,
+  input  logic                         irq_nm_i,       // non-maskeable interrupt
 
-    // Debug Interface
-    input  logic                         debug_req_i,
-    output crash_dump_t                  crash_dump_o,
+  // Debug Interface
+  input  logic                         debug_req_i,
+  output crash_dump_t                  crash_dump_o,
 
-    // RISC-V Formal Interface
-    // Does not comply with the coding standards of _i/_o suffixes, but follows
-    // the convention of RISC-V Formal Interface Specification.
+  // RISC-V Formal Interface
+  // Does not comply with the coding standards of _i/_o suffixes, but follows
+  // the convention of RISC-V Formal Interface Specification.
 `ifdef RVFI
-    output logic                         rvfi_valid,
-    output logic [63:0]                  rvfi_order,
-    output logic [31:0]                  rvfi_insn,
-    output logic                         rvfi_trap,
-    output logic                         rvfi_halt,
-    output logic                         rvfi_intr,
-    output logic [ 1:0]                  rvfi_mode,
-    output logic [ 1:0]                  rvfi_ixl,
-    output logic [ 4:0]                  rvfi_rs1_addr,
-    output logic [ 4:0]                  rvfi_rs2_addr,
-    output logic [ 4:0]                  rvfi_rs3_addr,
-    output logic [31:0]                  rvfi_rs1_rdata,
-    output logic [31:0]                  rvfi_rs2_rdata,
-    output logic [31:0]                  rvfi_rs3_rdata,
-    output logic [ 4:0]                  rvfi_rd_addr,
-    output logic [31:0]                  rvfi_rd_wdata,
-    output logic [31:0]                  rvfi_pc_rdata,
-    output logic [31:0]                  rvfi_pc_wdata,
-    output logic [31:0]                  rvfi_mem_addr,
-    output logic [ 3:0]                  rvfi_mem_rmask,
-    output logic [ 3:0]                  rvfi_mem_wmask,
-    output logic [31:0]                  rvfi_mem_rdata,
-    output logic [31:0]                  rvfi_mem_wdata,
+  output logic                         rvfi_valid,
+  output logic [63:0]                  rvfi_order,
+  output logic [31:0]                  rvfi_insn,
+  output logic                         rvfi_trap,
+  output logic                         rvfi_halt,
+  output logic                         rvfi_intr,
+  output logic [ 1:0]                  rvfi_mode,
+  output logic [ 1:0]                  rvfi_ixl,
+  output logic [ 4:0]                  rvfi_rs1_addr,
+  output logic [ 4:0]                  rvfi_rs2_addr,
+  output logic [ 4:0]                  rvfi_rs3_addr,
+  output logic [31:0]                  rvfi_rs1_rdata,
+  output logic [31:0]                  rvfi_rs2_rdata,
+  output logic [31:0]                  rvfi_rs3_rdata,
+  output logic [ 4:0]                  rvfi_rd_addr,
+  output logic [31:0]                  rvfi_rd_wdata,
+  output logic [31:0]                  rvfi_pc_rdata,
+  output logic [31:0]                  rvfi_pc_wdata,
+  output logic [31:0]                  rvfi_mem_addr,
+  output logic [ 3:0]                  rvfi_mem_rmask,
+  output logic [ 3:0]                  rvfi_mem_wmask,
+  output logic [31:0]                  rvfi_mem_rdata,
+  output logic [31:0]                  rvfi_mem_wdata,
 `endif
 
-    // CPU Control Signals
-    input  logic                         fetch_enable_i,
-    output logic                         alert_minor_o,
-    output logic                         alert_major_o,
-    output logic                         core_sleep_o,
+  // CPU Control Signals
+  input  logic                         fetch_enable_i,
+  output logic                         alert_minor_o,
+  output logic                         alert_major_o,
+  output logic                         core_sleep_o,
 
-    // DFT bypass controls
-    input logic                          scan_rst_ni
+  // DFT bypass controls
+  input logic                          scan_rst_ni
 );
 
   localparam bit          Lockstep          = SecureIbex;
