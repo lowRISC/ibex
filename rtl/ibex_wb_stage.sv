@@ -99,7 +99,7 @@ module ibex_wb_stage #(
           rf_we_wb_q      <= '0;
           rf_waddr_wb_q   <= '0;
           rf_wdata_wb_q   <= '0;
-          wb_instr_type_q <= '0;
+          wb_instr_type_q <= wb_instr_type_e'(0);
           wb_pc_q         <= '0;
           wb_compressed_q <= '0;
           wb_count_q      <= '0;
