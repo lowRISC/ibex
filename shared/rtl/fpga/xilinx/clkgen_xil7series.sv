@@ -30,7 +30,8 @@ module clkgen_xil7series (
     .CLKFBOUT_PHASE       (0.000),
     .CLKOUT0_DIVIDE       (24),
     .CLKOUT0_PHASE        (0.000),
-    .CLKOUT0_DUTY_CYCLE   (0.500)
+    .CLKOUT0_DUTY_CYCLE   (0.500),
+    .CLKIN1_PERIOD        (10)
   ) pll (
     .CLKFBOUT            (clk_fb_unbuf),
     .CLKOUT0             (clk_50_unbuf),
