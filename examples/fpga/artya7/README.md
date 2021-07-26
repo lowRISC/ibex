@@ -73,6 +73,17 @@ Please see [CoreMark README](https://github.com/lowRISC/ibex/blob/master/example
 fusesoc --cores-root=. run --target=synth --setup --build lowrisc:ibex:top_artya7 --part xc7a100tcsg324-1 --SRAMInitFile=examples/sw/benchmarks/coremark/coremark.vmem
 ```
 
+#### Power Analysis Using Vivado
+
+Setting `FPGAPowerAnalysis` parameter to 1 allows user to run a power analysis using Vivado.
+It uses a post-implementation functional simulation on Vivado to log switching activity.
+This switching activity is then used to generate a detailed power report.
+In order to use it with CoreMark run the command below
+
+```
+fusesoc --cores-root=. run --target=synth --setup --build lowrisc:ibex:top_artya7 --part xc7a100tcsg324-1 --SRAMInitFile=examples/sw/benchmarks/coremark/coremark.vmem --FPGAPowerAnalysis=1
+```
+
 ## Program
 
 After the board is connected to the computer it can be programmed with:
