@@ -120,7 +120,7 @@ module core_ibex_tb_top;
   );
 
   // We should never see any alerts triggered in normal testing
-  `ASSERT(NoAlertsTriggered, clk, !rst_n, !dut_if.alert_minor && !dut_if.alert_major)
+  `ASSERT(NoAlertsTriggered, !dut_if.alert_minor && !dut_if.alert_major, clk, !rst_n)
 
   // Data load/store vif connection
   assign data_mem_vif.reset                   = ~rst_n;
