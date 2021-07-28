@@ -96,6 +96,8 @@ module ibex_lockstep import ibex_pkg::*; #(
 );
 
   localparam int unsigned LockstepOffsetW = $clog2(LockstepOffset);
+  // Core outputs are delayed for an extra cycle due to shadow output registers
+  localparam int unsigned OutputsOffset = LockstepOffset + 1;
 
   //////////////////////
   // Reset generation //
@@ -105,7 +107,7 @@ module ibex_lockstep import ibex_pkg::*; #(
   // Internally generated resets cause IMPERFECTSCH warnings
   /* verilator lint_off IMPERFECTSCH */
   logic                       rst_shadow_set_d, rst_shadow_set_q;
-  logic                       rst_shadow_n;
+  logic                       rst_shadow_n, enable_cmp_q;
   /* verilator lint_on IMPERFECTSCH */
 
   assign rst_shadow_set_d = (rst_shadow_cnt_q == LockstepOffsetW'(LockstepOffset - 1));
@@ -116,9 +118,11 @@ module ibex_lockstep import ibex_pkg::*; #(
     if (!rst_ni) begin
       rst_shadow_cnt_q <= '0;
       rst_shadow_set_q <= '0;
+      enable_cmp_q     <= '0;
     end else begin
       rst_shadow_cnt_q <= rst_shadow_cnt_d;
       rst_shadow_set_q <= rst_shadow_set_d;
+      enable_cmp_q     <= rst_shadow_set_q;
     end
   end
 
@@ -224,8 +228,9 @@ module ibex_lockstep import ibex_pkg::*; #(
     logic                        core_busy;
   } delayed_outputs_t;
 
-  delayed_outputs_t [LockstepOffset-1:0] core_outputs_q;
-  delayed_outputs_t                      core_outputs_in, shadow_outputs;
+  delayed_outputs_t [OutputsOffset-1:0]  core_outputs_q;
+  delayed_outputs_t                      core_outputs_in;
+  delayed_outputs_t                      shadow_outputs_d, shadow_outputs_q;
 
   // Assign core outputs to the structure
   assign core_outputs_in.instr_req       = instr_req_i;
@@ -255,10 +260,10 @@ module ibex_lockstep import ibex_pkg::*; #(
 
   // Delay the outputs
   always_ff @(posedge clk_i) begin
-    for (int unsigned i = 0; i < LockstepOffset-1; i++) begin
+    for (int unsigned i = 0; i < OutputsOffset-1; i++) begin
       core_outputs_q[i] <= core_outputs_q[i+1];
     end
-    core_outputs_q[LockstepOffset-1] <= core_outputs_in;
+    core_outputs_q[OutputsOffset-1] <= core_outputs_in;
   end
 
   ///////////////////////////////
@@ -300,41 +305,41 @@ module ibex_lockstep import ibex_pkg::*; #(
     .hart_id_i         (hart_id_i),
     .boot_addr_i       (boot_addr_i),
 
-    .instr_req_o       (shadow_outputs.instr_req),
+    .instr_req_o       (shadow_outputs_d.instr_req),
     .instr_gnt_i       (shadow_inputs_q[0].instr_gnt),
     .instr_rvalid_i    (shadow_inputs_q[0].instr_rvalid),
-    .instr_addr_o      (shadow_outputs.instr_addr),
+    .instr_addr_o      (shadow_outputs_d.instr_addr),
     .instr_rdata_i     (shadow_inputs_q[0].instr_rdata),
     .instr_err_i       (shadow_inputs_q[0].instr_err),
 
-    .data_req_o        (shadow_outputs.data_req),
+    .data_req_o        (shadow_outputs_d.data_req),
     .data_gnt_i        (shadow_inputs_q[0].data_gnt),
     .data_rvalid_i     (shadow_inputs_q[0].data_rvalid),
-    .data_we_o         (shadow_outputs.data_we),
-    .data_be_o         (shadow_outputs.data_be),
-    .data_addr_o       (shadow_outputs.data_addr),
-    .data_wdata_o      (shadow_outputs.data_wdata),
+    .data_we_o         (shadow_outputs_d.data_we),
+    .data_be_o         (shadow_outputs_d.data_be),
+    .data_addr_o       (shadow_outputs_d.data_addr),
+    .data_wdata_o      (shadow_outputs_d.data_wdata),
     .data_rdata_i      (shadow_inputs_q[0].data_rdata),
     .data_err_i        (shadow_inputs_q[0].data_err),
 
-    .dummy_instr_id_o  (shadow_outputs.dummy_instr_id),
-    .rf_raddr_a_o      (shadow_outputs.rf_raddr_a),
-    .rf_raddr_b_o      (shadow_outputs.rf_raddr_b),
-    .rf_waddr_wb_o     (shadow_outputs.rf_waddr_wb),
-    .rf_we_wb_o        (shadow_outputs.rf_we_wb),
-    .rf_wdata_wb_ecc_o (shadow_outputs.rf_wdata_wb_ecc),
+    .dummy_instr_id_o  (shadow_outputs_d.dummy_instr_id),
+    .rf_raddr_a_o      (shadow_outputs_d.rf_raddr_a),
+    .rf_raddr_b_o      (shadow_outputs_d.rf_raddr_b),
+    .rf_waddr_wb_o     (shadow_outputs_d.rf_waddr_wb),
+    .rf_we_wb_o        (shadow_outputs_d.rf_we_wb),
+    .rf_wdata_wb_ecc_o (shadow_outputs_d.rf_wdata_wb_ecc),
     .rf_rdata_a_ecc_i  (shadow_inputs_q[0].rf_rdata_a_ecc),
     .rf_rdata_b_ecc_i  (shadow_inputs_q[0].rf_rdata_b_ecc),
 
-    .ic_tag_req_o      (shadow_outputs.ic_tag_req),
-    .ic_tag_write_o    (shadow_outputs.ic_tag_write),
-    .ic_tag_addr_o     (shadow_outputs.ic_tag_addr),
-    .ic_tag_wdata_o    (shadow_outputs.ic_tag_wdata),
+    .ic_tag_req_o      (shadow_outputs_d.ic_tag_req),
+    .ic_tag_write_o    (shadow_outputs_d.ic_tag_write),
+    .ic_tag_addr_o     (shadow_outputs_d.ic_tag_addr),
+    .ic_tag_wdata_o    (shadow_outputs_d.ic_tag_wdata),
     .ic_tag_rdata_i    (shadow_tag_rdata_q[0]),
-    .ic_data_req_o     (shadow_outputs.ic_data_req),
-    .ic_data_write_o   (shadow_outputs.ic_data_write),
-    .ic_data_addr_o    (shadow_outputs.ic_data_addr),
-    .ic_data_wdata_o   (shadow_outputs.ic_data_wdata),
+    .ic_data_req_o     (shadow_outputs_d.ic_data_req),
+    .ic_data_write_o   (shadow_outputs_d.ic_data_write),
+    .ic_data_addr_o    (shadow_outputs_d.ic_data_addr),
+    .ic_data_wdata_o   (shadow_outputs_d.ic_data_wdata),
     .ic_data_rdata_i   (shadow_data_rdata_q[0]),
 
     .irq_software_i    (shadow_inputs_q[0].irq_software),
@@ -342,10 +347,10 @@ module ibex_lockstep import ibex_pkg::*; #(
     .irq_external_i    (shadow_inputs_q[0].irq_external),
     .irq_fast_i        (shadow_inputs_q[0].irq_fast),
     .irq_nm_i          (shadow_inputs_q[0].irq_nm),
-    .irq_pending_o     (shadow_outputs.irq_pending),
+    .irq_pending_o     (shadow_outputs_d.irq_pending),
 
     .debug_req_i       (shadow_inputs_q[0].debug_req),
-    .crash_dump_o      (shadow_outputs.crash_dump),
+    .crash_dump_o      (shadow_outputs_d.crash_dump),
 
 `ifdef RVFI
     .rvfi_valid        (),
@@ -376,8 +381,13 @@ module ibex_lockstep import ibex_pkg::*; #(
     .fetch_enable_i    (shadow_inputs_q[0].fetch_enable),
     .alert_minor_o     (shadow_alert_minor),
     .alert_major_o     (shadow_alert_major),
-    .core_busy_o       (shadow_outputs.core_busy)
+    .core_busy_o       (shadow_outputs_d.core_busy)
   );
+
+  // Register the shadow core outputs
+  always_ff @(posedge clk_i) begin
+    shadow_outputs_q <= shadow_outputs_d;
+  end
 
   /////////////////////////
   // Compare the outputs //
@@ -385,8 +395,7 @@ module ibex_lockstep import ibex_pkg::*; #(
 
   logic outputs_mismatch;
 
-  // TODO evaluate the timing here - might need to register shadow_outputs
-  assign outputs_mismatch = rst_shadow_n & (shadow_outputs != core_outputs_q[0]);
+  assign outputs_mismatch = enable_cmp_q & (shadow_outputs_q != core_outputs_q[0]);
   assign alert_major_o    = outputs_mismatch | shadow_alert_major;
   assign alert_minor_o    = shadow_alert_minor;
 
