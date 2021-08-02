@@ -846,7 +846,6 @@ module ibex_core import ibex_pkg::*; #(
     assign rf_ecc_err_comb         = 1'b0;
   end
 
-
   ///////////////////////
   // Crash dump output //
   ///////////////////////

@@ -49,6 +49,7 @@ class ibex_mem_intf_request_driver extends uvm_driver #(ibex_mem_intf_seq_item);
       vif.request_driver_cb.request        <= 'h0;
       vif.request_driver_cb.addr           <= 'hz;
       vif.request_driver_cb.wdata          <= 'hz;
+      vif.request_driver_cb.wintg          <= 'hz;
       vif.request_driver_cb.be             <= 'bz;
       vif.request_driver_cb.we             <= 'bz;
     end
@@ -63,11 +64,13 @@ class ibex_mem_intf_request_driver extends uvm_driver #(ibex_mem_intf_seq_item);
     vif.request_driver_cb.be      <= trans.be;
     vif.request_driver_cb.we      <= trans.read_write;
     vif.request_driver_cb.wdata   <= trans.data;
+    vif.request_driver_cb.wintg   <= trans.intg;
     wait (vif.request_driver_cb.grant === 1'b1);
     vif.wait_clks(1);
     vif.request_driver_cb.request <= 'h0;
     vif.request_driver_cb.addr    <= 'hz;
     vif.request_driver_cb.wdata   <= 'hz;
+    vif.request_driver_cb.wintg   <= 'hz;
     vif.request_driver_cb.be      <= 'bz;
     vif.request_driver_cb.we      <= 'bz;
     rdata_queue.put(trans);
@@ -81,6 +84,7 @@ class ibex_mem_intf_request_driver extends uvm_driver #(ibex_mem_intf_seq_item);
       while(vif.rvalid !== 1'b1) vif.wait_clks(1);
       if(tr.read_write == READ)
         tr.data = vif.request_driver_cb.rdata;
+        tr.intg = vif.request_driver_cb.rintg;
       seq_item_port.put_response(tr);
     end
   endtask : collect_response

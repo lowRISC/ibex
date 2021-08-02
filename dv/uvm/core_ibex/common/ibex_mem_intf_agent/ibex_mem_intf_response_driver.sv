@@ -59,6 +59,7 @@ class ibex_mem_intf_response_driver extends uvm_driver #(ibex_mem_intf_seq_item)
     vif.response_driver_cb.rvalid  <= 1'b0;
     vif.response_driver_cb.grant   <= 1'b0;
     vif.response_driver_cb.rdata   <= 'b0;
+    vif.response_driver_cb.rintg   <= 'b0;
     vif.response_driver_cb.error   <= 1'b0;
   endtask : reset_signals
 
@@ -113,7 +114,8 @@ class ibex_mem_intf_response_driver extends uvm_driver #(ibex_mem_intf_seq_item)
       vif.wait_clks(1);
       vif.response_driver_cb.rvalid <=  1'b0;
       vif.response_driver_cb.rdata  <= 'x;
-      vif.response_driver_cb.error  <= 1'b0;
+      vif.response_driver_cb.rintg  <= 'x;
+      vif.response_driver_cb.error  <= 'x;
       rdata_queue.get(tr);
       if(vif.response_driver_cb.reset) continue;
       vif.wait_clks(tr.rvalid_delay);
@@ -121,6 +123,7 @@ class ibex_mem_intf_response_driver extends uvm_driver #(ibex_mem_intf_seq_item)
         vif.response_driver_cb.rvalid <=  1'b1;
         vif.response_driver_cb.error  <=  tr.error;
         vif.response_driver_cb.rdata  <=  tr.data;
+        vif.response_driver_cb.rintg  <=  tr.intg;
       end
     end
   endtask : send_read_data

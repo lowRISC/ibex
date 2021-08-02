@@ -53,6 +53,7 @@ module top_artya7 (
      .instr_rvalid_i        (instr_rvalid),
      .instr_addr_o          (instr_addr),
      .instr_rdata_i         (instr_rdata),
+     .instr_rdata_intg_i    ('0),
      .instr_err_i           ('b0),
 
      .data_req_o            (data_req),
@@ -62,7 +63,9 @@ module top_artya7 (
      .data_be_o             (data_be),
      .data_addr_o           (data_addr),
      .data_wdata_o          (data_wdata),
+     .data_wdata_intg_o     (),
      .data_rdata_i          (data_rdata),
+     .data_rdata_intg_i     ('0),
      .data_err_i            ('b0),
 
      .irq_software_i        (1'b0),

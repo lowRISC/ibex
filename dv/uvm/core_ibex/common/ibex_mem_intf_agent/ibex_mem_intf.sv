@@ -4,7 +4,8 @@
 
 interface ibex_mem_intf#(
   parameter int ADDR_WIDTH = 32,
-  parameter int DATA_WIDTH = 32
+  parameter int DATA_WIDTH = 32,
+  parameter int INTG_WIDTH = 7
 ) (
   input clk
 );
@@ -17,7 +18,9 @@ interface ibex_mem_intf#(
   wire  [DATA_WIDTH/8-1:0] be;
   wire                     rvalid;
   wire  [DATA_WIDTH-1:0]   wdata;
+  wire  [INTG_WIDTH-1:0]   wintg;
   wire  [DATA_WIDTH-1:0]   rdata;
+  wire  [INTG_WIDTH-1:0]   rintg;
   wire                     error;
 
   clocking request_driver_cb @(posedge clk);
@@ -29,7 +32,9 @@ interface ibex_mem_intf#(
     output  be;
     input   rvalid;
     output  wdata;
+    output  wintg;
     input   rdata;
+    input   rintg;
     input   error;
   endclocking
 
@@ -42,7 +47,9 @@ interface ibex_mem_intf#(
     input   be;
     output  rvalid;
     input   wdata;
+    input   wintg;
     output  rdata;
+    output  rintg;
     output  error;
   endclocking
 
@@ -55,7 +62,9 @@ interface ibex_mem_intf#(
     input be;
     input rvalid;
     input wdata;
+    input wintg;
     input rdata;
+    input rintg;
     input error;
   endclocking
 
