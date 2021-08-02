@@ -31,6 +31,7 @@ class ibex_mem_intf_response_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
       bit [ADDR_WIDTH-1:0] aligned_addr;
       bit [DATA_WIDTH-1:0] rand_data;
       bit [DATA_WIDTH-1:0] read_data;
+      bit [INTG_WIDTH-1:0] read_intg;
       p_sequencer.addr_ph_port.get(item);
       req = ibex_mem_intf_seq_item::type_id::create("req");
       error_synch = 1'b0;
@@ -38,6 +39,7 @@ class ibex_mem_intf_response_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
         addr       == item.addr;
         read_write == item.read_write;
         data       == item.data;
+        intg       == item.intg;
         be         == item.be;
         rvalid_delay dist {
           min_rvalid_delay                                  :/ 5,
@@ -69,6 +71,8 @@ class ibex_mem_intf_response_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
           end
         end
       end
+      // Add correct integrity bits
+      {req.intg, req.data} = prim_secded_pkg::prim_secded_39_32_enc(req.data);
       `uvm_info(get_full_name(), $sformatf("Response transfer:\n%0s", req.sprint()), UVM_HIGH)
       start_item(req);
       finish_item(req);

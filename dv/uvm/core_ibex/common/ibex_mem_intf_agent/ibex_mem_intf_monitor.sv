@@ -60,6 +60,7 @@ class ibex_mem_intf_monitor extends uvm_monitor;
       if(vif.monitor_cb.we) begin
         trans_collected.read_write = WRITE;
         trans_collected.data = vif.monitor_cb.wdata;
+        trans_collected.intg = vif.monitor_cb.wintg;
       end else begin
         trans_collected.read_write = READ;
       end
@@ -81,6 +82,7 @@ class ibex_mem_intf_monitor extends uvm_monitor;
         vif.wait_clks(1);
       while(vif.monitor_cb.rvalid === 0);
       trans_collected.data = vif.monitor_cb.rdata;
+      trans_collected.intg = vif.monitor_cb.rintg;
       item_collected_port.write(trans_collected);
     end
   endtask : collect_data_phase

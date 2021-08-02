@@ -9,6 +9,7 @@ package ibex_mem_intf_agent_pkg;
 
   parameter int DATA_WIDTH = 32;
   parameter int ADDR_WIDTH = 32;
+  parameter int INTG_WIDTH = 7;
 
   typedef enum { READ, WRITE } rw_e;
 

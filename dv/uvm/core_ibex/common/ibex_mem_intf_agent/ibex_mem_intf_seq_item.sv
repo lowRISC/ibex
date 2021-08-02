@@ -11,6 +11,7 @@ class ibex_mem_intf_seq_item extends uvm_sequence_item;
   rand bit [ADDR_WIDTH-1:0]     addr;
   rand rw_e                     read_write;
   rand bit [DATA_WIDTH-1:0]     data;
+  rand bit [INTG_WIDTH-1:0]     intg;
   rand bit [DATA_WIDTH/8-1:0]   be;
   rand bit [3:0]                gnt_delay;
   rand bit [3:0]                req_delay;
@@ -22,6 +23,7 @@ class ibex_mem_intf_seq_item extends uvm_sequence_item;
     `uvm_field_enum     (rw_e, read_write, UVM_DEFAULT)
     `uvm_field_int      (be,               UVM_DEFAULT)
     `uvm_field_int      (data,             UVM_DEFAULT)
+    `uvm_field_int      (intg,             UVM_DEFAULT)
     `uvm_field_int      (gnt_delay,        UVM_DEFAULT)
     `uvm_field_int      (rvalid_delay,     UVM_DEFAULT)
     `uvm_field_int      (error,            UVM_DEFAULT)
