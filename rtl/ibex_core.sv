@@ -126,6 +126,8 @@ module ibex_core import ibex_pkg::*; #(
     output logic [ 3:0]                  rvfi_mem_wmask,
     output logic [31:0]                  rvfi_mem_rdata,
     output logic [31:0]                  rvfi_mem_wdata,
+    output irqs_t                        rvfi_ext_mip,
+    output logic                         rvfi_ext_debug_req,
 `endif
 
     // CPU Control Signals
@@ -1108,6 +1110,11 @@ module ibex_core import ibex_pkg::*; #(
   logic [31:0] rvfi_stage_mem_rdata [RVFI_STAGES];
   logic [31:0] rvfi_stage_mem_wdata [RVFI_STAGES];
 
+  // RVFI extension for co-simulation support
+  // debug_req and MIP captured at IF -> ID transition so one extra stage
+  ibex_pkg::irqs_t rvfi_ext_stage_mip       [RVFI_STAGES+1];
+  logic            rvfi_ext_stage_debug_req [RVFI_STAGES+1];
+
   logic        rvfi_stage_valid_d   [RVFI_STAGES];
 
   assign rvfi_valid     = rvfi_stage_valid    [RVFI_STAGES-1];
@@ -1133,6 +1140,9 @@ module ibex_core import ibex_pkg::*; #(
   assign rvfi_mem_wmask = rvfi_stage_mem_wmask[RVFI_STAGES-1];
   assign rvfi_mem_rdata = rvfi_stage_mem_rdata[RVFI_STAGES-1];
   assign rvfi_mem_wdata = rvfi_stage_mem_wdata[RVFI_STAGES-1];
+
+  assign rvfi_ext_mip       = rvfi_ext_stage_mip      [RVFI_STAGES];
+  assign rvfi_ext_debug_req = rvfi_ext_stage_debug_req[RVFI_STAGES];
 
   if (WritebackStage) begin : gen_rvfi_wb_stage
     logic unused_instr_new_id;
@@ -1170,6 +1180,16 @@ module ibex_core import ibex_pkg::*; #(
     assign rvfi_instr_new_wb = instr_new_id;
   end
 
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      rvfi_ext_stage_mip[0]       <= '0;
+      rvfi_ext_stage_debug_req[0] <= 0;
+    end else if (if_stage_i.instr_valid_id_d & if_stage_i.instr_new_id_d) begin
+      rvfi_ext_stage_mip[0]       <= cs_registers_i.mip;
+      rvfi_ext_stage_debug_req[0] <= debug_req_i;
+    end
+  end
+
   for (genvar i = 0;i < RVFI_STAGES; i = i + 1) begin : g_rvfi_stages
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
@@ -1202,7 +1222,8 @@ module ibex_core import ibex_pkg::*; #(
         if (i == 0) begin
           if(instr_id_done) begin
             rvfi_stage_halt[i]      <= '0;
-            rvfi_stage_trap[i]      <= illegal_insn_id;
+            // TODO: Sort this out for writeback stage
+            rvfi_stage_trap[i]      <= (illegal_insn_id | id_stage_i.controller_i.exc_req_d | id_stage_i.controller_i.exc_req_lsu);
             rvfi_stage_intr[i]      <= rvfi_intr_d;
             rvfi_stage_order[i]     <= rvfi_stage_order[i] + 64'(rvfi_stage_valid_d[i]);
             rvfi_stage_insn[i]      <= rvfi_insn_id;
@@ -1223,6 +1244,9 @@ module ibex_core import ibex_pkg::*; #(
             rvfi_stage_mem_rdata[i] <= rvfi_mem_rdata_d;
             rvfi_stage_mem_wdata[i] <= rvfi_mem_wdata_d;
             rvfi_stage_mem_addr[i]  <= rvfi_mem_addr_d;
+
+            rvfi_ext_stage_mip[i+1]       <= rvfi_ext_stage_mip[i];
+            rvfi_ext_stage_debug_req[i+1] <= rvfi_ext_stage_debug_req[i];
           end
         end else begin
           if(instr_done_wb) begin
@@ -1253,6 +1277,9 @@ module ibex_core import ibex_pkg::*; #(
             rvfi_stage_rd_addr[i]   <= rvfi_rd_addr_d;
             rvfi_stage_rd_wdata[i]  <= rvfi_rd_wdata_d;
             rvfi_stage_mem_rdata[i] <= rvfi_mem_rdata_d;
+
+            rvfi_ext_stage_mip[i+1]       <= rvfi_ext_stage_mip[i];
+            rvfi_ext_stage_debug_req[i+1] <= rvfi_ext_stage_debug_req[i];
           end
         end
       end

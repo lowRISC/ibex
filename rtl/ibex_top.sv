@@ -100,6 +100,8 @@ module ibex_top #(
     output logic [ 3:0]                  rvfi_mem_wmask,
     output logic [31:0]                  rvfi_mem_rdata,
     output logic [31:0]                  rvfi_mem_wdata,
+    output ibex_pkg::irqs_t              rvfi_ext_mip,
+    output logic                         rvfi_ext_debug_req,
 `endif
 
     // CPU Control Signals
@@ -283,6 +285,8 @@ module ibex_top #(
     .rvfi_mem_wmask,
     .rvfi_mem_rdata,
     .rvfi_mem_wdata,
+    .rvfi_ext_mip,
+    .rvfi_ext_debug_req,
 `endif
 
     .fetch_enable_i,

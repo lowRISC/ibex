@@ -18,6 +18,7 @@ filesets:
       - lowrisc:dv_verilator:memutil_verilator
       - lowrisc:dv_verilator:simutil_verilator
       - lowrisc:dv_verilator:ibex_pcounts
+      - lowrisc:dv:cosim_dpi
     files:
       - ibex_simple_system.cc: { file_type: cppSource }
       - lint/verilator_waiver.vlt: {file_type: vlt}
@@ -163,8 +164,8 @@ targets:
           - '--trace-structs'
           - '--trace-params'
           - '--trace-max-array 1024'
-          - '-CFLAGS "-std=c++11 -Wall -DVM_TRACE_FMT_FST -DTOPLEVEL_NAME=ibex_simple_system -g"'
-          - '-LDFLAGS "-pthread -lutil -lelf"'
+          - '-CFLAGS "-std=c++11 -Wall -DVM_TRACE_FMT_FST -DTOPLEVEL_NAME=ibex_simple_system -g -I/home/greg/work/riscv/riscv-isa-sim/riscv -I/home/greg/work/riscv/riscv-isa-sim/softfloat -I/home/greg/work/riscv/riscv-isa-sim/build"'
+          - '-LDFLAGS "-pthread -lutil -lelf -L/home/greg/work/riscv/riscv-isa-sim/build/  -g  -lriscv -lsoftfloat -lfdt -ldisasm -ldl"'
           - "-Wall"
           - "-Wwarn-IMPERFECTSCH"
           # RAM primitives wider than 64bit (required for ECC) fail to build in

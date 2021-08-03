@@ -286,4 +286,42 @@ module ibex_simple_system (
     return u_top.u_ibex_top.u_ibex_core.cs_registers_i.mhpmcounter[index];
   endfunction
 
+  import "DPI-C" function chandle get_spike_cosim;
+
+  chandle cosim_handle;
+
+  initial begin
+    cosim_handle = get_spike_cosim();
+  end
+
+  logic [31:0] ibex_mip;
+  logic [31:0] insn_cnt;
+
+  always_comb begin
+    ibex_mip = '0;
+    ibex_mip[ibex_pkg::CSR_MSIX_BIT] = u_top.rvfi_ext_mip.irq_software;
+    ibex_mip[ibex_pkg::CSR_MTIX_BIT] = u_top.rvfi_ext_mip.irq_timer;
+    ibex_mip[ibex_pkg::CSR_MEIX_BIT] = u_top.rvfi_ext_mip.irq_external;
+    ibex_mip[ibex_pkg::CSR_MFIX_BIT_HIGH:ibex_pkg::CSR_MFIX_BIT_LOW] = u_top.rvfi_ext_mip.irq_fast;
+  end
+
+  always @(posedge IO_CLK or negedge IO_RST_N) begin
+    if (!IO_RST_N) begin
+      insn_cnt <= '0;
+    end else if (u_top.rvfi_valid & !u_top.rvfi_trap) begin
+      riscv_cosim_set_mip(cosim_handle, ibex_mip);
+      riscv_cosim_set_debug_req(cosim_handle, u_top.rvfi_ext_debug_req);
+      if (riscv_cosim_step(cosim_handle, u_top.rvfi_rd_addr, u_top.rvfi_rd_wdata,
+                           u_top.rvfi_pc_rdata) == 0)
+      begin
+        $display("Cosim mismatch at time %t instruction %d", $time(), insn_cnt);
+        for (int i = 0;i < riscv_cosim_get_num_errs(cosim_handle); ++i) begin
+          $display(riscv_cosim_get_err(cosim_handle, i));
+        end
+        riscv_cosim_clear_errs(cosim_handle);
+      end
+
+      insn_cnt <= insn_cnt + 1'b1;
+    end
+  end
 endmodule
