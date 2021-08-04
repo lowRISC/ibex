@@ -8,8 +8,6 @@
 #error Define CSR
 #endif
 
-CSR(MSeccfg, 0x390)
-CSR(MSeccfgh, 0x391)
 CSR(PMPCfg0, 0x3A0)
 CSR(PMPCfg1, 0x3A1)
 CSR(PMPCfg2, 0x3A2)
@@ -60,6 +58,8 @@ CSR(MHPMEvent28, 0x33C)
 CSR(MHPMEvent29, 0x33D)
 CSR(MHPMEvent30, 0x33E)
 CSR(MHPMEvent31, 0x33F)
+CSR(MSeccfg, 0x747)
+CSR(MSeccfgh, 0x757)
 CSR(MCycle, 0xB00)
 CSR(MInstret, 0xB02)
 CSR(MHPMCounter3, 0xB03)
