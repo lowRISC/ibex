@@ -32,6 +32,8 @@ module ibex_core import ibex_pkg::*; #(
     parameter bit          DbgTriggerEn      = 1'b0,
     parameter int unsigned DbgHwBreakNum     = 1,
     parameter bit          ResetAll          = 1'b0,
+    parameter lfsr_seed_t  RndCnstLfsrSeed   = RndCnstLfsrSeedDefault,
+    parameter lfsr_perm_t  RndCnstLfsrPerm   = RndCnstLfsrPermDefault,
     parameter bit          SecureIbex        = 1'b0,
     parameter bit          DummyInstructions = 1'b0,
     parameter bit          RegFileECC        = 1'b0,
@@ -398,6 +400,8 @@ module ibex_core import ibex_pkg::*; #(
       .LineSizeECC       ( LineSizeECC       ),
       .PCIncrCheck       ( PCIncrCheck       ),
       .ResetAll          ( ResetAll          ),
+      .RndCnstLfsrSeed   ( RndCnstLfsrSeed   ),
+      .RndCnstLfsrPerm   ( RndCnstLfsrPerm   ),
       .BranchPredictor   ( BranchPredictor   )
   ) if_stage_i (
       .clk_i                    ( clk_i                  ),

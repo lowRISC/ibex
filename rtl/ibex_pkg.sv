@@ -558,4 +558,14 @@ parameter int unsigned CSR_MSECCFG_MML_BIT  = 0;
 parameter int unsigned CSR_MSECCFG_MMWP_BIT = 1;
 parameter int unsigned CSR_MSECCFG_RLB_BIT  = 2;
 
+// These LFSR parameters have been generated with
+// $ opentitan/util/design/gen-lfsr-seed.py --width 32 --seed 2480124384 --prefix ""
+parameter int LfsrWidth = 32;
+typedef logic [LfsrWidth-1:0] lfsr_seed_t;
+typedef logic [LfsrWidth-1:0][$clog2(LfsrWidth)-1:0] lfsr_perm_t;
+parameter lfsr_seed_t RndCnstLfsrSeedDefault = 32'hac533bf4;
+parameter lfsr_perm_t RndCnstLfsrPermDefault = {
+  160'h1e35ecba467fd1b12e958152c04fa43878a8daed
+};
+
 endpackage
