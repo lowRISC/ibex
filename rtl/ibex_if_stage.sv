@@ -23,6 +23,8 @@ module ibex_if_stage import ibex_pkg::*; #(
     parameter int unsigned LineSizeECC       = IC_LINE_SIZE,
     parameter bit          PCIncrCheck       = 1'b0,
     parameter bit          ResetAll          = 1'b0,
+    parameter lfsr_seed_t  RndCnstLfsrSeed   = RndCnstLfsrSeedDefault,
+    parameter lfsr_perm_t  RndCnstLfsrPerm   = RndCnstLfsrPermDefault,
     parameter bit          BranchPredictor   = 1'b0
 ) (
     input  logic                         clk_i,
@@ -330,7 +332,10 @@ module ibex_if_stage import ibex_pkg::*; #(
     logic        insert_dummy_instr;
     logic [31:0] dummy_instr_data;
 
-    ibex_dummy_instr dummy_instr_i (
+    ibex_dummy_instr #(
+      .RndCnstLfsrSeed (RndCnstLfsrSeed),
+      .RndCnstLfsrPerm (RndCnstLfsrPerm)
+    ) dummy_instr_i (
       .clk_i                 ( clk_i                 ),
       .rst_ni                ( rst_ni                ),
       .dummy_instr_en_i      ( dummy_instr_en_i      ),

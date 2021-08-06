@@ -12,26 +12,28 @@
 /**
  * Top level module of the ibex RISC-V core
  */
-module ibex_top #(
-    parameter bit                 PMPEnable        = 1'b0,
-    parameter int unsigned        PMPGranularity   = 0,
-    parameter int unsigned        PMPNumRegions    = 4,
-    parameter int unsigned        MHPMCounterNum   = 0,
-    parameter int unsigned        MHPMCounterWidth = 40,
-    parameter bit                 RV32E            = 1'b0,
-    parameter ibex_pkg::rv32m_e   RV32M            = ibex_pkg::RV32MFast,
-    parameter ibex_pkg::rv32b_e   RV32B            = ibex_pkg::RV32BNone,
-    parameter ibex_pkg::regfile_e RegFile          = ibex_pkg::RegFileFF,
-    parameter bit                 BranchTargetALU  = 1'b0,
-    parameter bit                 WritebackStage   = 1'b0,
-    parameter bit                 ICache           = 1'b0,
-    parameter bit                 ICacheECC        = 1'b0,
-    parameter bit                 BranchPredictor  = 1'b0,
-    parameter bit                 DbgTriggerEn     = 1'b0,
-    parameter int unsigned        DbgHwBreakNum    = 1,
-    parameter bit                 SecureIbex       = 1'b0,
-    parameter int unsigned        DmHaltAddr       = 32'h1A110800,
-    parameter int unsigned        DmExceptionAddr  = 32'h1A110808
+module ibex_top import ibex_pkg::*; #(
+    parameter bit          PMPEnable        = 1'b0,
+    parameter int unsigned PMPGranularity   = 0,
+    parameter int unsigned PMPNumRegions    = 4,
+    parameter int unsigned MHPMCounterNum   = 0,
+    parameter int unsigned MHPMCounterWidth = 40,
+    parameter bit          RV32E            = 1'b0,
+    parameter rv32m_e      RV32M            = RV32MFast,
+    parameter rv32b_e      RV32B            = RV32BNone,
+    parameter regfile_e    RegFile          = RegFileFF,
+    parameter bit          BranchTargetALU  = 1'b0,
+    parameter bit          WritebackStage   = 1'b0,
+    parameter bit          ICache           = 1'b0,
+    parameter bit          ICacheECC        = 1'b0,
+    parameter bit          BranchPredictor  = 1'b0,
+    parameter bit          DbgTriggerEn     = 1'b0,
+    parameter int unsigned DbgHwBreakNum    = 1,
+    parameter bit          SecureIbex       = 1'b0,
+    parameter lfsr_seed_t  RndCnstLfsrSeed  = RndCnstLfsrSeedDefault,
+    parameter lfsr_perm_t  RndCnstLfsrPerm  = RndCnstLfsrPermDefault,
+    parameter int unsigned DmHaltAddr       = 32'h1A110800,
+    parameter int unsigned DmExceptionAddr  = 32'h1A110808
 ) (
     // Clock and Reset
     input  logic                         clk_i,
@@ -71,7 +73,7 @@ module ibex_top #(
 
     // Debug Interface
     input  logic                         debug_req_i,
-    output ibex_pkg::crash_dump_t        crash_dump_o,
+    output crash_dump_t                  crash_dump_o,
 
     // RISC-V Formal Interface
     // Does not comply with the coding standards of _i/_o suffixes, but follows
@@ -111,8 +113,6 @@ module ibex_top #(
     // DFT bypass controls
     input logic                          scan_rst_ni
 );
-
-  import ibex_pkg::*;
 
   localparam bit          Lockstep          = SecureIbex;
   localparam bit          ResetAll          = Lockstep;
@@ -199,6 +199,8 @@ module ibex_top #(
     .DbgHwBreakNum     ( DbgHwBreakNum     ),
     .WritebackStage    ( WritebackStage    ),
     .ResetAll          ( ResetAll          ),
+    .RndCnstLfsrSeed   ( RndCnstLfsrSeed   ),
+    .RndCnstLfsrPerm   ( RndCnstLfsrPerm   ),
     .SecureIbex        ( SecureIbex        ),
     .DummyInstructions ( DummyInstructions ),
     .RegFileECC        ( RegFileECC        ),
@@ -648,6 +650,8 @@ module ibex_top #(
       .DbgHwBreakNum     ( DbgHwBreakNum     ),
       .WritebackStage    ( WritebackStage    ),
       .ResetAll          ( ResetAll          ),
+      .RndCnstLfsrSeed   ( RndCnstLfsrSeed   ),
+      .RndCnstLfsrPerm   ( RndCnstLfsrPerm   ),
       .SecureIbex        ( SecureIbex        ),
       .DummyInstructions ( DummyInstructions ),
       .RegFileECC        ( RegFileECC        ),

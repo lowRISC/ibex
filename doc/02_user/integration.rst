@@ -15,22 +15,24 @@ Instantiation Template
 .. code-block:: verilog
 
   ibex_top #(
-      .PMPEnable        ( 0                   ),
-      .PMPGranularity   ( 0                   ),
-      .PMPNumRegions    ( 4                   ),
-      .MHPMCounterNum   ( 0                   ),
-      .MHPMCounterWidth ( 40                  ),
-      .RV32E            ( 0                   ),
-      .RV32M            ( ibex_pkg::RV32MFast ),
-      .RV32B            ( ibex_pkg::RV32BNone ),
-      .RegFile          ( ibex_pkg::RegFileFF ),
-      .ICache           ( 0                   ),
-      .ICacheECC        ( 0                   ),
-      .BranchPrediction ( 0                   ),
-      .SecureIbex       ( 0                   ),
-      .DbgTriggerEn     ( 0                   ),
-      .DmHaltAddr       ( 32'h1A110800        ),
-      .DmExceptionAddr  ( 32'h1A110808        )
+      .PMPEnable        ( 0                                ),
+      .PMPGranularity   ( 0                                ),
+      .PMPNumRegions    ( 4                                ),
+      .MHPMCounterNum   ( 0                                ),
+      .MHPMCounterWidth ( 40                               ),
+      .RV32E            ( 0                                ),
+      .RV32M            ( ibex_pkg::RV32MFast              ),
+      .RV32B            ( ibex_pkg::RV32BNone              ),
+      .RegFile          ( ibex_pkg::RegFileFF              ),
+      .ICache           ( 0                                ),
+      .ICacheECC        ( 0                                ),
+      .BranchPrediction ( 0                                ),
+      .SecureIbex       ( 0                                ),
+      .RndCnstLfsrSeed  ( ibex_pkg::RndCnstLfsrSeedDefault ),
+      .RndCnstLfsrPerm  ( ibex_pkg::RndCnstLfsrPermDefault ),
+      .DbgTriggerEn     ( 0                                ),
+      .DmHaltAddr       ( 32'h1A110800                     ),
+      .DmExceptionAddr  ( 32'h1A110808                     )
   ) u_top (
       // Clock and reset
       .clk_i          (),
@@ -131,6 +133,12 @@ Parameters
 | ``SecureIbex``               | bit                 | 0          | *EXPERIMENTAL* Enable various additional features targeting           |
 |                              |                     |            | secure code execution. Note: SecureIbex == 1'b1 and                   |
 |                              |                     |            | RV32M == ibex_pkg::RV32MNone is an illegal combination.               |
++------------------------------+---------------------+------------+-----------------------------------------------------------------------+
+| ``RndCnstLfsrSeed``          | lfsr_seed_t         | see above  | Set the starting seed of the LFSR used to generate dummy instructions |
+|                              |                     |            | (only relevant when SecureIbex == 1'b1)                               |
++------------------------------+---------------------+------------+-----------------------------------------------------------------------+
+| ``RndCnstLfsrPerm``          | lfsr_perm_t         | see above  | Set the permutation applied to the output of the LFSR used to         |
+|                              |                     |            | generate dummy instructions (only relevant when SecureIbex == 1'b1)   |
 +------------------------------+---------------------+------------+-----------------------------------------------------------------------+
 | ``DbgTriggerEn``             | bit                 | 0          | Enable debug trigger support (one trigger only)                       |
 +------------------------------+---------------------+------------+-----------------------------------------------------------------------+
