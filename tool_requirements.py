@@ -10,5 +10,9 @@ __TOOL_REQUIREMENTS__ = {
     'vcs': {
         'min_version': '2020.03-SP2',
         'as_needed': True
-    }
+    },
+    'vivado': {
+        'min_version': '2020.2',
+        'as_needed': True
+    },
 }
