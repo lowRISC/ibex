@@ -60,6 +60,7 @@ module ibex_controller #(
   input  logic                  load_err_i,
   input  logic                  store_err_i,
   output logic                  wb_exception_o,          // Instruction in WB taking an exception
+  output logic                  id_exception_o,          // Instruction in ID taking an exception
 
   // jump/branch signals
   input  logic                  branch_set_i,            // branch set signal (branch definitely
@@ -222,6 +223,7 @@ module ibex_controller #(
   // LSU exception requests
   assign exc_req_lsu = store_err_i | load_err_i;
 
+  assign id_exception_o = exc_req_d;
 
   // special requests: special instructions, pipeline flushes, exceptions...
   // All terms in these expressions are qualified by instr_valid_i except exc_req_lsu which can come

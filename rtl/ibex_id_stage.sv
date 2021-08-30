@@ -195,6 +195,7 @@ module ibex_id_stage #(
   logic        wfi_insn_dec;
 
   logic        wb_exception;
+  logic        id_exception;
 
   logic        branch_in_dec;
   logic        branch_spec, branch_set_spec, branch_set_raw_spec;
@@ -577,6 +578,7 @@ module ibex_id_stage #(
     .load_err_i     (lsu_load_err_i),
     .store_err_i    (lsu_store_err_i),
     .wb_exception_o (wb_exception),
+    .id_exception_o (id_exception),
 
     // jump/branch control
     .branch_set_i     (branch_set),
@@ -906,6 +908,7 @@ module ibex_id_stage #(
     // - There was an error on instruction fetch
     assign instr_kill = instr_fetch_err_i |
                         wb_exception      |
+                        id_exception      |
                         ~controller_run;
 
     // With writeback stage instructions must be prevented from executing if there is:
@@ -1023,6 +1026,7 @@ module ibex_id_stage #(
     logic unused_outstanding_store_wb;
     logic unused_wb_exception;
     logic [31:0] unused_rf_wdata_fwd_wb;
+    logic unused_id_exception;
 
     assign unused_data_req_done_ex     = lsu_req_done_i;
     assign unused_rf_waddr_wb          = rf_waddr_wb_i;
@@ -1031,6 +1035,7 @@ module ibex_id_stage #(
     assign unused_outstanding_store_wb = outstanding_store_wb_i;
     assign unused_wb_exception         = wb_exception;
     assign unused_rf_wdata_fwd_wb      = rf_wdata_fwd_wb_i;
+    assign unused_id_exception         = id_exception;
 
     assign instr_type_wb_o = WB_INSTR_OTHER;
     assign stall_wb        = 1'b0;
