@@ -106,17 +106,19 @@ module ibex_cs_registers #(
                                                         // with wrong priviledge level, or
                                                         // missing write permissions
   // Performance Counters
-  input  logic                 instr_ret_i,            // instr retired in ID/EX stage
-  input  logic                 instr_ret_compressed_i, // compressed instr retired
-  input  logic                 iside_wait_i,           // core waiting for the iside
-  input  logic                 jump_i,                 // jump instr seen (j, jr, jal, jalr)
-  input  logic                 branch_i,               // branch instr seen (bf, bnf)
-  input  logic                 branch_taken_i,         // branch was taken
-  input  logic                 mem_load_i,             // load from memory in this cycle
-  input  logic                 mem_store_i,            // store to memory in this cycle
-  input  logic                 dside_wait_i,           // core waiting for the dside
-  input  logic                 mul_wait_i,             // core waiting for multiply
-  input  logic                 div_wait_i              // core waiting for divide
+  input  logic                 instr_ret_i,                 // instr retired in ID/EX stage
+  input  logic                 instr_ret_compressed_i,      // compressed instr retired
+  input  logic                 instr_ret_spec_i,            // speculative instr_ret_i
+  input  logic                 instr_ret_compressed_spec_i, // speculative instr_ret_compressed_i
+  input  logic                 iside_wait_i,                // core waiting for the iside
+  input  logic                 jump_i,                      // jump instr seen (j, jr, jal, jalr)
+  input  logic                 branch_i,                    // branch instr seen (bf, bnf)
+  input  logic                 branch_taken_i,              // branch was taken
+  input  logic                 mem_load_i,                  // load from memory in this cycle
+  input  logic                 mem_store_i,                 // store to memory in this cycle
+  input  logic                 dside_wait_i,                // core waiting for the dside
+  input  logic                 mul_wait_i,                  // core waiting for multiply
+  input  logic                 div_wait_i                   // core waiting for divide
 );
 
   import ibex_pkg::*;
@@ -241,6 +243,8 @@ module ibex_cs_registers #(
   logic        unused_mhpmcounter_we_1;
   logic        unused_mhpmcounterh_we_1;
   logic        unused_mhpmcounter_incr_1;
+
+  logic [63:0] minstret_next, minstret_raw;
 
   // Debug / trigger registers
   logic [31:0] tselect_rdata;
@@ -1228,12 +1232,15 @@ module ibex_cs_registers #(
     .counterh_we_i(mhpmcounterh_we[0]),
     .counter_we_i(mhpmcounter_we[0]),
     .counter_val_i(csr_wdata_int),
-    .counter_val_o(mhpmcounter[0])
+    .counter_val_o(mhpmcounter[0]),
+    .counter_val_upd_o()
   );
+
 
   // minstret
   ibex_counter #(
-    .CounterWidth(64)
+    .CounterWidth(64),
+    .ProvideValUpd(1)
   ) minstret_counter_i (
     .clk_i(clk_i),
     .rst_ni(rst_ni),
@@ -1241,8 +1248,18 @@ module ibex_cs_registers #(
     .counterh_we_i(mhpmcounterh_we[2]),
     .counter_we_i(mhpmcounter_we[2]),
     .counter_val_i(csr_wdata_int),
-    .counter_val_o(mhpmcounter[2])
+    .counter_val_o(minstret_raw),
+    .counter_val_upd_o(minstret_next)
   );
+
+  // Where the writeback stage is present instruction in ID observing value of minstret must take
+  // into account any instruction in the writeback stage. If one is present the incremented value of
+  // minstret is used. A speculative version of the signal is used to aid timing. When the writeback
+  // stage sees an exception (so the speculative signal is incorrect) the ID stage will be flushed
+  // so the incorrect value doesn't matter. A similar behaviour is required for the compressed
+  // instruction retired counter below. When the writeback stage isn't present the speculative
+  // signals are always 0.
+  assign mhpmcounter[2] = instr_ret_spec_i & ~mcountinhibit[2] ? minstret_next : minstret_raw;
 
   // reserved:
   assign mhpmcounter[1]            = '0;
@@ -1250,21 +1267,46 @@ module ibex_cs_registers #(
   assign unused_mhpmcounterh_we_1  = mhpmcounterh_we[1];
   assign unused_mhpmcounter_incr_1 = mhpmcounter_incr[1];
 
-  for (genvar cnt = 0; cnt < 29; cnt++) begin : gen_cntrs
-    if (cnt < MHPMCounterNum) begin : gen_imp
+  // Iterate through optionally included counters (MHPMCounterNum controls how many are included)
+  for (genvar i = 0; i < 29; i++) begin : gen_cntrs
+    localparam int Cnt = i + 3;
+
+    if (i < MHPMCounterNum) begin : gen_imp
+      logic [63:0] mhpmcounter_raw, mhpmcounter_next;
+
       ibex_counter #(
-        .CounterWidth(MHPMCounterWidth)
+        .CounterWidth(MHPMCounterWidth),
+        .ProvideValUpd(Cnt == 10)
       ) mcounters_variable_i (
         .clk_i(clk_i),
         .rst_ni(rst_ni),
-        .counter_inc_i(mhpmcounter_incr[cnt+3] & ~mcountinhibit[cnt+3]),
-        .counterh_we_i(mhpmcounterh_we[cnt+3]),
-        .counter_we_i(mhpmcounter_we[cnt+3]),
+        .counter_inc_i(mhpmcounter_incr[Cnt] & ~mcountinhibit[Cnt]),
+        .counterh_we_i(mhpmcounterh_we[Cnt]),
+        .counter_we_i(mhpmcounter_we[Cnt]),
         .counter_val_i(csr_wdata_int),
-        .counter_val_o(mhpmcounter[cnt+3])
+        .counter_val_o(mhpmcounter_raw),
+        .counter_val_upd_o(mhpmcounter_next)
       );
+
+      if (Cnt == 10) begin : gen_compressed_instr_cnt
+        // Special behaviour for reading compressed instruction retired counter, see comment on
+        // `mhpmcounter[2]` above for further information.
+        assign mhpmcounter[Cnt] =
+          instr_ret_compressed_spec_i & ~mcountinhibit[Cnt] ? mhpmcounter_next:
+                                                              mhpmcounter_raw;
+      end else begin : gen_other_cnts
+        logic [63:0] unused_mhpmcounter_next;
+        // All other counters just see the raw counter value directly.
+        assign mhpmcounter[Cnt] = mhpmcounter_raw;
+        assign unused_mhpmcounter_next = mhpmcounter_next;
+      end
     end else begin : gen_unimp
-      assign mhpmcounter[cnt+3] = '0;
+      assign mhpmcounter[Cnt] = '0;
+
+      if (Cnt == 10) begin : gen_no_compressed_instr_cnt
+        logic unused_instr_ret_compressed_spec_i;
+        assign unused_instr_ret_compressed_spec_i = instr_ret_compressed_spec_i;
+      end
     end
   end
 

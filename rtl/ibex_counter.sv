@@ -1,5 +1,9 @@
 module ibex_counter #(
-  parameter int CounterWidth = 32
+  parameter int CounterWidth = 32,
+  // When set `counter_val_upd_o` provides an incremented version of the counter value, otherwise
+  // the output is hard-wired to 0. This is required to allow Xilinx DSP inference to work
+  // correctly. When `ProvideValUpd` is set no DSPs are inferred.
+  parameter bit ProvideValUpd = 0
 ) (
   input  logic        clk_i,
   input  logic        rst_ni,
@@ -8,7 +12,8 @@ module ibex_counter #(
   input  logic        counterh_we_i,
   input  logic        counter_we_i,
   input  logic [31:0] counter_val_i,
-  output logic [63:0] counter_val_o
+  output logic [63:0] counter_val_o,
+  output logic [63:0] counter_val_upd_o
 );
 
   logic [63:0]             counter;
@@ -17,9 +22,11 @@ module ibex_counter #(
   logic                    we;
   logic [CounterWidth-1:0] counter_d;
 
+  // Increment
+  assign counter_upd = counter[CounterWidth-1:0] + {{CounterWidth - 1{1'b0}}, 1'b1};
+
   // Update
   always_comb begin
-
     // Write
     we = counter_we_i | counterh_we_i;
     counter_load[63:32] = counter[63:32];
@@ -28,9 +35,6 @@ module ibex_counter #(
       counter_load[63:32] = counter_val_i;
       counter_load[31:0]  = counter[31:0];
     end
-
-    // Increment
-    counter_upd = counter[CounterWidth-1:0] + {{CounterWidth - 1{1'b0}}, 1'b1};
 
     // Next value logic
     if (we) begin
@@ -67,11 +71,24 @@ module ibex_counter #(
   if (CounterWidth < 64) begin : g_counter_narrow
     logic [63:CounterWidth] unused_counter_load;
 
-    assign counter[CounterWidth-1:0] = counter_q;
-    assign counter[63:CounterWidth]  = '0;
-    assign unused_counter_load       = counter_load[63:CounterWidth];
+    assign counter[CounterWidth-1:0]           = counter_q;
+    assign counter[63:CounterWidth]            = '0;
+
+    if (ProvideValUpd) begin : g_counter_val_upd_o
+      assign counter_val_upd_o[CounterWidth-1:0] = counter_upd;
+    end else begin : g_no_counter_val_upd_o
+      assign counter_val_upd_o[CounterWidth-1:0] = '0;
+    end
+    assign counter_val_upd_o[63:CounterWidth]  = '0;
+    assign unused_counter_load                 = counter_load[63:CounterWidth];
   end else begin : g_counter_full
-    assign counter = counter_q;
+    assign counter           = counter_q;
+
+    if (ProvideValUpd) begin : g_counter_val_upd_o
+      assign counter_val_upd_o = counter_upd;
+    end else begin : g_no_counter_val_upd_o
+      assign counter_val_upd_o = '0;
+    end
   end
 
   assign counter_val_o = counter;
