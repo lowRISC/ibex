@@ -330,6 +330,8 @@ module ibex_core import ibex_pkg::*; #(
 
   logic        perf_instr_ret_wb;
   logic        perf_instr_ret_compressed_wb;
+  logic        perf_instr_ret_wb_spec;
+  logic        perf_instr_ret_compressed_wb_spec;
   logic        perf_iside_wait;
   logic        perf_dside_wait;
   logic        perf_mul_wait;
@@ -759,13 +761,15 @@ module ibex_core import ibex_pkg::*; #(
     .instr_is_compressed_id_i(instr_is_compressed_id),
     .instr_perf_count_id_i   (instr_perf_count_id),
 
-    .ready_wb_o                    (ready_wb),
-    .rf_write_wb_o                 (rf_write_wb),
-    .outstanding_load_wb_o         (outstanding_load_wb),
-    .outstanding_store_wb_o        (outstanding_store_wb),
-    .pc_wb_o                       (pc_wb),
-    .perf_instr_ret_wb_o           (perf_instr_ret_wb),
-    .perf_instr_ret_compressed_wb_o(perf_instr_ret_compressed_wb),
+    .ready_wb_o                         (ready_wb),
+    .rf_write_wb_o                      (rf_write_wb),
+    .outstanding_load_wb_o              (outstanding_load_wb),
+    .outstanding_store_wb_o             (outstanding_store_wb),
+    .pc_wb_o                            (pc_wb),
+    .perf_instr_ret_wb_o                (perf_instr_ret_wb),
+    .perf_instr_ret_compressed_wb_o     (perf_instr_ret_compressed_wb),
+    .perf_instr_ret_wb_spec_o           (perf_instr_ret_wb_spec),
+    .perf_instr_ret_compressed_wb_spec_o(perf_instr_ret_compressed_wb_spec),
 
     .rf_waddr_id_i(rf_waddr_id),
     .rf_wdata_id_i(rf_wdata_id),
@@ -1010,17 +1014,19 @@ module ibex_core import ibex_pkg::*; #(
     .illegal_csr_insn_o(illegal_csr_insn_id),
 
     // performance counter related signals
-    .instr_ret_i           (perf_instr_ret_wb),
-    .instr_ret_compressed_i(perf_instr_ret_compressed_wb),
-    .iside_wait_i          (perf_iside_wait),
-    .jump_i                (perf_jump),
-    .branch_i              (perf_branch),
-    .branch_taken_i        (perf_tbranch),
-    .mem_load_i            (perf_load),
-    .mem_store_i           (perf_store),
-    .dside_wait_i          (perf_dside_wait),
-    .mul_wait_i            (perf_mul_wait),
-    .div_wait_i            (perf_div_wait)
+    .instr_ret_i                (perf_instr_ret_wb),
+    .instr_ret_compressed_i     (perf_instr_ret_compressed_wb),
+    .instr_ret_spec_i           (perf_instr_ret_wb_spec),
+    .instr_ret_compressed_spec_i(perf_instr_ret_compressed_wb_spec),
+    .iside_wait_i               (perf_iside_wait),
+    .jump_i                     (perf_jump),
+    .branch_i                   (perf_branch),
+    .branch_taken_i             (perf_tbranch),
+    .mem_load_i                 (perf_load),
+    .mem_store_i                (perf_store),
+    .dside_wait_i               (perf_dside_wait),
+    .mul_wait_i                 (perf_mul_wait),
+    .div_wait_i                 (perf_div_wait)
   );
 
   // These assertions are in top-level as instr_valid_id required as the enable term
