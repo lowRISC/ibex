@@ -19,14 +19,13 @@ How to run RISC-V Compliance on Ibex
    - Verilator
    - fusesoc
    - srecord (for `srec_cat`)
-   - A RV32 compiler    # Toolchain provided with ibex will work
+   - A RV32 compiler
 
    On Ubuntu/Debian, install the required tools like this:
 
    ```sh
-   sudo apt-get install srecord python3-pip
+   sudo apt-get install srecord python3-pip libelf-dev
    pip3 install --user -U fusesoc
-   sudo apt install libelf-dev
    ```
 
    We recommend installing Verilator from source as versions from Linux
