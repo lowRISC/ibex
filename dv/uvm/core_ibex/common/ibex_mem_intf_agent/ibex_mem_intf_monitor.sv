@@ -10,7 +10,7 @@ class ibex_mem_intf_monitor extends uvm_monitor;
 
   protected virtual ibex_mem_intf vif;
 
-  mailbox #(ibex_mem_intf_seq_item)          collect_data_queue;
+  mailbox #(ibex_mem_intf_seq_item)          collect_response_queue;
   uvm_analysis_port#(ibex_mem_intf_seq_item) item_collected_port;
   uvm_analysis_port#(ibex_mem_intf_seq_item) addr_ph_port;
 
@@ -21,7 +21,7 @@ class ibex_mem_intf_monitor extends uvm_monitor;
     super.build_phase(phase);
     item_collected_port = new("item_collected_port", this);
     addr_ph_port = new("addr_ph_port_monitor", this);
-    collect_data_queue = new();
+    collect_response_queue = new();
     if(!uvm_config_db#(virtual ibex_mem_intf)::get(this, "", "vif", vif)) begin
        `uvm_fatal("NOVIF",{"virtual interface must be set for: ",get_full_name(),".vif"});
     end
@@ -32,7 +32,7 @@ class ibex_mem_intf_monitor extends uvm_monitor;
     forever begin
       fork : check_mem_intf
         collect_address_phase();
-        collect_data_phase();
+        collect_response_phase();
         wait (vif.monitor_cb.reset === 1'b1);
       join_any
       // Will only reach this point when mid-test reset is asserted
@@ -44,7 +44,7 @@ class ibex_mem_intf_monitor extends uvm_monitor;
   virtual protected task handle_reset();
     ibex_mem_intf_seq_item mailbox_result;
     // Clear the mailbox of any content
-    while (collect_data_queue.try_get(mailbox_result));
+    while (collect_response_queue.try_get(mailbox_result));
     wait (vif.monitor_cb.reset === 1'b0);
   endtask
 
@@ -66,25 +66,27 @@ class ibex_mem_intf_monitor extends uvm_monitor;
       end
       addr_ph_port.write(trans_collected);
       `uvm_info(get_full_name(),"Send through addr_ph_port", UVM_HIGH)
-      if(trans_collected.read_write == WRITE)
-        item_collected_port.write(trans_collected);
-      else
-        collect_data_queue.put(trans_collected);
+      collect_response_queue.put(trans_collected);
       vif.wait_clks(1);
     end
   endtask : collect_address_phase
 
-  virtual protected task collect_data_phase();
+  virtual protected task collect_response_phase();
     ibex_mem_intf_seq_item trans_collected;
     forever begin
-      collect_data_queue.get(trans_collected);
+      collect_response_queue.get(trans_collected);
       do
         vif.wait_clks(1);
       while(vif.monitor_cb.rvalid === 0);
-      trans_collected.data = vif.monitor_cb.rdata;
-      trans_collected.intg = vif.monitor_cb.rintg;
+
+      if (trans_collected.read_write == READ) begin
+        trans_collected.data = vif.monitor_cb.rdata;
+        trans_collected.intg = vif.monitor_cb.rintg;
+      end
+
+      trans_collected.error = vif.monitor_cb.error;
       item_collected_port.write(trans_collected);
     end
-  endtask : collect_data_phase
+  endtask : collect_response_phase
 
 endclass : ibex_mem_intf_monitor
