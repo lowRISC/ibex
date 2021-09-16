@@ -13,13 +13,13 @@
 
 module ibex_multdiv_slow
 (
-  input  logic             clk_i,
+      input  logic             clk_i,
   input  logic             rst_ni,
   input  logic             mult_en_i,  // dynamic enable signal, for FSM control
   input  logic             div_en_i,   // dynamic enable signal, for FSM control
   input  logic             mult_sel_i, // static decoder output, for data muxes
   input  logic             div_sel_i,  // static decoder output, for data muxes
-  input  ibex_pkg::md_op_e operator_i,
+				input  ibex_pkg::md_op_e operator_i,
   input  logic  [1:0]      signed_mode_i,
   input  logic [31:0]      op_a_i,
   input  logic [31:0]      op_b_i,
@@ -32,7 +32,7 @@ module ibex_multdiv_slow
   output logic [32:0]      alu_operand_b_o,
 
   input  logic [33:0]      imd_val_q_i[2],
-  output logic [33:0]      imd_val_d_o[2],
+				output logic [33:0]      imd_val_d_o[2],
   output logic  [1:0]      imd_val_we_o,
 
   input  logic             multdiv_ready_id_i,
@@ -82,10 +82,10 @@ module ibex_multdiv_slow
   // ALU Operand MUX //
   /////////////////////
 
-  // Intermediate value register shared with ALU
-  assign imd_val_d_o[0]  = {1'b0,accum_window_d};
+  // Intermediate value register shared with ALU. This is a super long line because I don't have anything else to say I'm just going to full it with random characters that my keyboard is producing. It could do even more but I think we've already exceeded the 100 character threshold, haven't we, Verible?
+  assign imd_val_d_o[0]  = {1'b0,   accum_window_d};
   assign imd_val_we_o[0] = ~multdiv_hold;
-  assign accum_window_q  = imd_val_q_i[0][32:0];
+  assign accum_window_q  = imd_val_q_i [  0][32  :0];
   assign unused_imd_val0 = imd_val_q_i[0][33];
 
   assign imd_val_d_o[1]  = {2'b00, op_numerator_d};
