@@ -430,7 +430,6 @@
     +no_csr_instr=0
     +no_ebreak=1
     +no_fence=0
-    +no_wfi=0
     +directed_instr_0=riscv_load_store_rand_instr_stream,40
     +directed_instr_1=riscv_load_store_hazard_instr_stream,40
   rtl_test: core_ibex_interrupt_instr_test
@@ -482,6 +481,8 @@
   iterations: 5
   no_iss: 1
   rtl_test: core_ibex_csr_test
+  sim_opts: >
+    +disable_cosim=1
   no_post_compare: true
 
 - test: riscv_unaligned_load_store_test
@@ -712,6 +713,8 @@
     #  rtl_params:
     #    PMPEnable: 1
 
+  # Disable cosim for bitmanip tests for now as Ibex implements a different
+  # version of the spec compared to the Spike version used for the cosim.
 - test: riscv_bitmanip_full_test
   desc: >
     Random instruction test with supported B extension instructions in full configuration
@@ -720,6 +723,7 @@
   gen_opts: >
     +enable_b_extension=1
     +enable_bitmanip_groups=zbb,zb_tmp,zbt,zbs,zbp,zbf,zbe,zbc,zbr
+    +disable_cosim=1
   rtl_test: core_ibex_base_test
   rtl_params:
     RV32B: "ibex_pkg::RV32BFull"
@@ -732,6 +736,7 @@
   gen_opts: >
     +enable_b_extension=1
     +enable_bitmanip_groups=zbb,zb_tmp,zbt,zbs,zbf
+    +disable_cosim=1
   rtl_test: core_ibex_base_test
   rtl_params:
     RV32B: ["ibex_pkg::RV32BFull", "ibex_pkg::RV32BBalanced"]

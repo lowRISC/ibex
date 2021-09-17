@@ -9,6 +9,7 @@ class core_ibex_env_cfg extends uvm_object;
   bit       enable_irq_nmi_seq;
   bit       enable_nested_irq;
   bit       enable_debug_seq;
+  bit       disable_cosim;
   bit[31:0] max_interval;
   bit       require_signature_addr;
   string    signature_addr_str;
@@ -20,6 +21,7 @@ class core_ibex_env_cfg extends uvm_object;
     `uvm_field_int(enable_irq_nmi_seq,   UVM_DEFAULT)
     `uvm_field_int(enable_nested_irq, UVM_DEFAULT)
     `uvm_field_int(enable_debug_seq, UVM_DEFAULT)
+    `uvm_field_int(disable_cosim, UVM_DEFAULT)
     `uvm_field_int(max_interval, UVM_DEFAULT)
     `uvm_field_int(require_signature_addr, UVM_DEFAULT)
     `uvm_field_int(signature_addr, UVM_DEFAULT)
@@ -32,6 +34,7 @@ class core_ibex_env_cfg extends uvm_object;
     void'($value$plusargs("enable_irq_nmi_seq=%0d", enable_irq_nmi_seq));
     void'($value$plusargs("enable_nested_irq=%0d", enable_nested_irq));
     void'($value$plusargs("enable_debug_seq=%0d", enable_debug_seq));
+    void'($value$plusargs("disable_cosim=%0d", disable_cosim));
     void'($value$plusargs("max_interval=%0d", max_interval));
     void'($value$plusargs("require_signature_addr=%0d", require_signature_addr));
     void'($value$plusargs("signature_addr=%s", signature_addr_str));

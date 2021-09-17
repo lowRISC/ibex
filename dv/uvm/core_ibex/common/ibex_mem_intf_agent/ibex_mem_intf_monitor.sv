@@ -53,8 +53,10 @@ class ibex_mem_intf_monitor extends uvm_monitor;
     forever begin
       trans_collected = ibex_mem_intf_seq_item::type_id::create("trans_collected");
       while(!(vif.monitor_cb.request && vif.monitor_cb.grant)) vif.wait_clks(1);
-      trans_collected.addr = vif.monitor_cb.addr;
-      trans_collected.be   = vif.monitor_cb.be;
+      trans_collected.addr              = vif.monitor_cb.addr;
+      trans_collected.be                = vif.monitor_cb.be;
+      trans_collected.misaligned_first  = vif.monitor_cb.misaligned_first;
+      trans_collected.misaligned_second = vif.monitor_cb.misaligned_second;
       `uvm_info(get_full_name(), $sformatf("Detect request with address: %0x",
                 trans_collected.addr), UVM_HIGH)
       if(vif.monitor_cb.we) begin

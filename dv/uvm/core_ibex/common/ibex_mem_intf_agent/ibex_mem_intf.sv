@@ -22,6 +22,8 @@ interface ibex_mem_intf#(
   wire  [DATA_WIDTH-1:0]   rdata;
   wire  [INTG_WIDTH-1:0]   rintg;
   wire                     error;
+  wire                     misaligned_first;
+  wire                     misaligned_second;
 
   clocking request_driver_cb @(posedge clk);
     input   reset;
@@ -66,6 +68,8 @@ interface ibex_mem_intf#(
     input rdata;
     input rintg;
     input error;
+    input misaligned_first;
+    input misaligned_second;
   endclocking
 
   task automatic wait_clks(input int num);
