@@ -353,7 +353,7 @@ module ibex_controller #(
   always_comb begin : gen_mfip_id
     mfip_id = 4'd0;
 
-    for (int i = 14;i >= 0; i--) begin
+    for (int i = 14; i >= 0; i--) begin
       if (irqs_i.irq_fast[i]) begin
         mfip_id = i[3:0];
       end
@@ -935,5 +935,13 @@ module ibex_controller #(
     // If there's a pending exception req that doesn't need a PC set we must not see one
     `ASSERT(IbexNoPCSetOnSpecialReqIfNotExpected,
       exception_req_pending && !expect_exception_pc_set |-> ~pc_set_o)
+  `endif
+
+  `ifdef RVFI
+    // Workaround for internal verilator error when using hierarchical refers to calcuate this
+    // directly in ibex_core
+    logic rvfi_flush_next;
+
+    assign rvfi_flush_next = ctrl_fsm_ns == FLUSH;
   `endif
 endmodule

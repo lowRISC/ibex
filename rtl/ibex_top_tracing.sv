@@ -110,6 +110,22 @@ module ibex_top_tracing import ibex_pkg::*; #(
   logic [ 3:0] rvfi_mem_wmask;
   logic [31:0] rvfi_mem_rdata;
   logic [31:0] rvfi_mem_wdata;
+  logic [31:0] rvfi_ext_mip;
+  logic        rvfi_ext_nmi;
+  logic        rvfi_ext_debug_req;
+  logic [63:0] rvfi_ext_mcycle;
+
+  logic [31:0] unused_rvfi_ext_mip;
+  logic        unused_rvfi_ext_nmi;
+  logic        unused_rvfi_ext_debug_req;
+  logic [63:0] unused_rvfi_ext_mcycle;
+
+  // Tracer doesn't use these signals, though other modules may probe down into tracer to observe
+  // them.
+  assign unused_rvfi_ext_mip = rvfi_ext_mip;
+  assign unused_rvfi_ext_nmi = rvfi_ext_nmi;
+  assign unused_rvfi_ext_debug_req = rvfi_ext_debug_req;
+  assign unused_rvfi_ext_mcycle = rvfi_ext_mcycle;
 
   ibex_top #(
     .PMPEnable        ( PMPEnable        ),
@@ -196,6 +212,10 @@ module ibex_top_tracing import ibex_pkg::*; #(
     .rvfi_mem_wmask,
     .rvfi_mem_rdata,
     .rvfi_mem_wdata,
+    .rvfi_ext_mip,
+    .rvfi_ext_nmi,
+    .rvfi_ext_debug_req,
+    .rvfi_ext_mcycle,
 
     .fetch_enable_i,
     .alert_minor_o,
