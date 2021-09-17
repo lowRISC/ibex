@@ -202,7 +202,7 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
            irq_txn.irq_timer, 3'b0, irq_txn.irq_software, 3'b0};
     `uvm_info(`gfn, $sformatf("irq: 0x%0x", irq), UVM_LOW)
 
-    irq_valid = get_max_valid_irq_id(irq);
+    irq_valid = get_valid_irq_id(irq);
     `uvm_info(`gfn, $sformatf("irq_id: 0x%0x", irq_id), UVM_LOW)
 
     return irq_valid;
@@ -305,22 +305,43 @@ class core_ibex_debug_intr_basic_test extends core_ibex_base_test;
     if (ret_val) send_irq_stimulus_end();
   endtask
 
-  function int get_max_valid_irq_id(bit [irq_agent_pkg::DATA_WIDTH-1:0] irq);
+  function int get_valid_irq_id(bit [irq_agent_pkg::DATA_WIDTH-1:0] irq);
     int i;
+    bit have_irq = 1'b0;
     // Ibex implementation of MIE does not mask NM interrupts, so need to check this separately
     if (irq[irq_agent_pkg::DATA_WIDTH - 1]) begin
       irq_id = irq_agent_pkg::DATA_WIDTH - 1;
       return 1;
     end
-    for (i = irq_agent_pkg::DATA_WIDTH - 2; i >= 0; i = i - 1) begin
-      // Ensure that irq is active and unmasked by the core
+    for (i = irq_agent_pkg::DATA_WIDTH - 2; i >= 16; i = i - 1) begin
+      // Fast interrupts (IDs 30-16) are prioritised with the lowest ID first, but any fast
+      // interrupt has priority over other interrupts.
       if (irq[i] == 1'b1 && core_init_mie[i] == 1'b1) begin
         irq_id = i;
-        return 1;
-        break;
+        have_irq = 1'b1;
       end
     end
-    return 0;
+
+    if (!have_irq) begin
+      // If there was no enabled fast interrupt, check the other interrupts
+      if (irq[11] && core_init_mie[11]) begin
+        // External interrupt
+        irq_id = 11;
+        have_irq = 1'b1;
+      end else if (irq[3] && core_init_mie[3]) begin
+        // Software interrupt
+        irq_id = 3;
+        have_irq = 1'b1;
+      end else if (irq[7] && core_init_mie[7]) begin
+        // Timer interrupt
+        irq_id = 7;
+        have_irq = 1'b1;
+      end
+
+      // Other interrupt IDs aren't implemented in Ibex
+    end
+
+    return have_irq;
   endfunction
 
   virtual task check_mcause(bit irq_or_exc, bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-2:0] cause);
