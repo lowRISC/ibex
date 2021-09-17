@@ -128,6 +128,10 @@ module ibex_core import ibex_pkg::*; #(
   output logic [ 3:0]                  rvfi_mem_wmask,
   output logic [31:0]                  rvfi_mem_rdata,
   output logic [31:0]                  rvfi_mem_wdata,
+  output logic [31:0]                  rvfi_ext_mip,
+  output logic                         rvfi_ext_nmi,
+  output logic                         rvfi_ext_debug_req,
+  output logic [63:0]                  rvfi_ext_mcycle,
 `endif
 
   // CPU Control Signals
@@ -344,40 +348,6 @@ module ibex_core import ibex_pkg::*; #(
 
   // for RVFI
   logic        illegal_insn_id, unused_illegal_insn_id; // ID stage sees an illegal instruction
-
-  // RISC-V Formal Interface signals
-`ifdef RVFI
-  logic        rvfi_instr_new_wb;
-  logic        rvfi_intr_d;
-  logic        rvfi_intr_q;
-  logic        rvfi_set_trap_pc_d;
-  logic        rvfi_set_trap_pc_q;
-  logic [31:0] rvfi_insn_id;
-  logic [4:0]  rvfi_rs1_addr_d;
-  logic [4:0]  rvfi_rs1_addr_q;
-  logic [4:0]  rvfi_rs2_addr_d;
-  logic [4:0]  rvfi_rs2_addr_q;
-  logic [4:0]  rvfi_rs3_addr_d;
-  logic [31:0] rvfi_rs1_data_d;
-  logic [31:0] rvfi_rs1_data_q;
-  logic [31:0] rvfi_rs2_data_d;
-  logic [31:0] rvfi_rs2_data_q;
-  logic [31:0] rvfi_rs3_data_d;
-  logic [4:0]  rvfi_rd_addr_wb;
-  logic [4:0]  rvfi_rd_addr_q;
-  logic [4:0]  rvfi_rd_addr_d;
-  logic [31:0] rvfi_rd_wdata_wb;
-  logic [31:0] rvfi_rd_wdata_d;
-  logic [31:0] rvfi_rd_wdata_q;
-  logic        rvfi_rd_we_wb;
-  logic [3:0]  rvfi_mem_mask_int;
-  logic [31:0] rvfi_mem_rdata_d;
-  logic [31:0] rvfi_mem_rdata_q;
-  logic [31:0] rvfi_mem_wdata_d;
-  logic [31:0] rvfi_mem_wdata_q;
-  logic [31:0] rvfi_mem_addr_d;
-  logic [31:0] rvfi_mem_addr_q;
-`endif
 
   //////////////////////
   // Clock management //
@@ -913,9 +883,6 @@ module ibex_core import ibex_pkg::*; #(
   // RF (Register File) //
   ////////////////////////
 `ifdef RVFI
-  assign rvfi_rd_addr_wb  = rf_waddr_wb;
-  assign rvfi_rd_wdata_wb = rf_we_wb ? rf_wdata_wb : rf_wdata_lsu;
-  assign rvfi_rd_we_wb    = rf_we_wb | rf_we_lsu;
 `endif
 
 
@@ -1117,6 +1084,59 @@ module ibex_core import ibex_pkg::*; #(
   logic [31:0] rvfi_stage_mem_rdata [RVFI_STAGES];
   logic [31:0] rvfi_stage_mem_wdata [RVFI_STAGES];
 
+  logic        rvfi_instr_new_wb;
+  logic        rvfi_intr_d;
+  logic        rvfi_intr_q;
+  logic        rvfi_set_trap_pc_d;
+  logic        rvfi_set_trap_pc_q;
+  logic [31:0] rvfi_insn_id;
+  logic [4:0]  rvfi_rs1_addr_d;
+  logic [4:0]  rvfi_rs1_addr_q;
+  logic [4:0]  rvfi_rs2_addr_d;
+  logic [4:0]  rvfi_rs2_addr_q;
+  logic [4:0]  rvfi_rs3_addr_d;
+  logic [31:0] rvfi_rs1_data_d;
+  logic [31:0] rvfi_rs1_data_q;
+  logic [31:0] rvfi_rs2_data_d;
+  logic [31:0] rvfi_rs2_data_q;
+  logic [31:0] rvfi_rs3_data_d;
+  logic [4:0]  rvfi_rd_addr_wb;
+  logic [4:0]  rvfi_rd_addr_q;
+  logic [4:0]  rvfi_rd_addr_d;
+  logic [31:0] rvfi_rd_wdata_wb;
+  logic [31:0] rvfi_rd_wdata_d;
+  logic [31:0] rvfi_rd_wdata_q;
+  logic        rvfi_rd_we_wb;
+  logic [3:0]  rvfi_mem_mask_int;
+  logic [31:0] rvfi_mem_rdata_d;
+  logic [31:0] rvfi_mem_rdata_q;
+  logic [31:0] rvfi_mem_wdata_d;
+  logic [31:0] rvfi_mem_wdata_q;
+  logic [31:0] rvfi_mem_addr_d;
+  logic [31:0] rvfi_mem_addr_q;
+  logic        rvfi_trap_id;
+  logic        rvfi_trap_wb;
+  logic [63:0] rvfi_stage_order_d;
+  logic        rvfi_id_done;
+  logic        rvfi_wb_done;
+
+  logic            new_debug_req;
+  logic            new_nmi;
+  logic            new_irq;
+  ibex_pkg::irqs_t captured_mip;
+  logic            captured_nmi;
+  logic            captured_debug_req;
+  logic            captured_valid;
+
+  // RVFI extension for co-simulation support
+  // debug_req and MIP captured at IF -> ID transition so one extra stage
+  ibex_pkg::irqs_t rvfi_ext_stage_mip          [RVFI_STAGES+1];
+  logic            rvfi_ext_stage_nmi          [RVFI_STAGES+1];
+  logic            rvfi_ext_stage_debug_req    [RVFI_STAGES+1];
+  logic [63:0]     rvfi_ext_stage_mcycle       [RVFI_STAGES];
+
+
+
   logic        rvfi_stage_valid_d   [RVFI_STAGES];
 
   assign rvfi_valid     = rvfi_stage_valid    [RVFI_STAGES-1];
@@ -1143,6 +1163,34 @@ module ibex_core import ibex_pkg::*; #(
   assign rvfi_mem_rdata = rvfi_stage_mem_rdata[RVFI_STAGES-1];
   assign rvfi_mem_wdata = rvfi_stage_mem_wdata[RVFI_STAGES-1];
 
+  assign rvfi_rd_addr_wb  = rf_waddr_wb;
+  assign rvfi_rd_wdata_wb = rf_we_wb ? rf_wdata_wb : rf_wdata_lsu;
+  assign rvfi_rd_we_wb    = rf_we_wb | rf_we_lsu;
+
+  always_comb begin
+    // Use always_comb instead of continuous assign so first assign can set 0 as default everywhere
+    // that is overridden by more specific settings.
+    rvfi_ext_mip                                     = '0;
+    rvfi_ext_mip[CSR_MSIX_BIT]                       = rvfi_ext_stage_mip[RVFI_STAGES].irq_software;
+    rvfi_ext_mip[CSR_MTIX_BIT]                       = rvfi_ext_stage_mip[RVFI_STAGES].irq_timer;
+    rvfi_ext_mip[CSR_MEIX_BIT]                       = rvfi_ext_stage_mip[RVFI_STAGES].irq_external;
+    rvfi_ext_mip[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = rvfi_ext_stage_mip[RVFI_STAGES].irq_fast;
+  end
+
+  assign rvfi_ext_nmi       = rvfi_ext_stage_nmi[RVFI_STAGES];
+  assign rvfi_ext_debug_req = rvfi_ext_stage_debug_req[RVFI_STAGES];
+  assign rvfi_ext_mcycle    = rvfi_ext_stage_mcycle[RVFI_STAGES-1];
+
+  // When an instruction takes a trap the `rvfi_trap` signal will be set. Instructions that take
+  // traps flush the pipeline so ordinarily wouldn't be seen to be retire. The RVFI tracking
+  // pipeline is kept going for flushed instructions that trapped so they are still visible on the
+  // RVFI interface.
+
+  // Factor in exceptions taken in ID so RVFI tracking picks up flushed instructions that took
+  // a trap
+  assign rvfi_id_done = instr_id_done | (id_stage_i.controller_i.rvfi_flush_next &
+                                         id_stage_i.controller_i.id_exception_o);
+
   if (WritebackStage) begin : gen_rvfi_wb_stage
     logic unused_instr_new_id;
 
@@ -1152,91 +1200,181 @@ module ibex_core import ibex_pkg::*; #(
     // awaiting instruction retirement and RF Write data/Mem read data whilst instruction is in WB
     // So first stage becomes valid when instruction leaves ID/EX stage and remains valid until
     // instruction leaves WB
-    assign rvfi_stage_valid_d[0] = (instr_id_done & ~dummy_instr_id) |
-                                   (rvfi_stage_valid[0] & ~instr_done_wb);
+    assign rvfi_stage_valid_d[0] = (rvfi_id_done & ~dummy_instr_id) |
+                                   (rvfi_stage_valid[0] & ~rvfi_wb_done);
     // Second stage is output stage so simple valid cycle after instruction leaves WB (and so has
     // retired)
-    assign rvfi_stage_valid_d[1] = instr_done_wb;
+    assign rvfi_stage_valid_d[1] = rvfi_wb_done;
 
     // Signal new instruction in WB cycle after instruction leaves ID/EX (to enter WB)
     logic rvfi_instr_new_wb_q;
 
-    assign rvfi_instr_new_wb = rvfi_instr_new_wb_q;
+    // Signal new instruction in WB either when one has just entered or when a trap is progressing
+    // through the tracking pipeline
+    assign rvfi_instr_new_wb = rvfi_instr_new_wb_q | (rvfi_stage_valid[0] & rvfi_stage_trap[0]);
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
         rvfi_instr_new_wb_q <= 0;
       end else begin
-        rvfi_instr_new_wb_q <= instr_id_done;
+        rvfi_instr_new_wb_q <= rvfi_id_done;
       end
     end
+
+    assign rvfi_trap_id = id_stage_i.controller_i.id_exception_o;
+    assign rvfi_trap_wb = id_stage_i.controller_i.exc_req_lsu;
+    // WB is instantly done in the tracking pipeline when a trap is progress through the pipeline
+    assign rvfi_wb_done = instr_done_wb | (rvfi_stage_valid[0] & rvfi_stage_trap[0]);
   end else begin : gen_rvfi_no_wb_stage
     // Without writeback stage first RVFI stage is output stage so simply valid the cycle after
     // instruction leaves ID/EX (and so has retired)
-    assign rvfi_stage_valid_d[0] = instr_id_done & ~dummy_instr_id;
+    assign rvfi_stage_valid_d[0] = rvfi_id_done & ~dummy_instr_id;
     // Without writeback stage signal new instr_new_wb when instruction enters ID/EX to correctly
     // setup register write signals
     assign rvfi_instr_new_wb = instr_new_id;
+    assign rvfi_trap_id = id_stage_i.controller_i.exc_req_d | id_stage_i.controller_i.exc_req_lsu;
+    assign rvfi_trap_wb = 1'b0;
+    assign rvfi_wb_done = instr_done_wb;
+  end
+
+  assign rvfi_stage_order_d = dummy_instr_id ? rvfi_stage_order[0] : rvfi_stage_order[0] + 64'd1;
+
+  // For interrupts and debug Ibex will take the relevant trap as soon as whatever instruction in ID
+  // finishes or immediately if the ID stage is empty. The rvfi_ext interface provides the DV
+  // environment with information about the irq/debug_req/nmi state that applies to a particular
+  // instruction.
+  //
+  // When a irq/debug_req/nmi appears the ID stage will finish whatever instruction it is currently
+  // executing (if any) then take the trap the cycle after that instruction leaves the ID stage. The
+  // trap taken depends upon the state of irq/debug_req/nmi on that cycle. In the cycles following
+  // that before the first instruction of the trap handler enters the ID stage the state of
+  // irq/debug_req/nmi could change but this has no effect on the trap handler (e.g. a higher
+  // priority interrupt might appear but this wouldn't stop the lower priority interrupt trap
+  // handler executing first as it's already being fetched). To provide the DV environment with the
+  // correct information for it to verify execution we need to capture the irq/debug_req/nmi state
+  // the cycle the trap decision is made. Which the captured_X signals below do.
+  //
+  // The new_X signals take the raw irq/debug_req/nmi inputs and factor in the enable terms required
+  // to determine if a trap will actually happen.
+  //
+  // These signals and the comment above are referred to in the documentation (cosim.rst). If
+  // altering the names or meanings of these signals or this comment please adjust the documentation
+  // appropriately.
+  assign new_debug_req = (debug_req_i & ~debug_mode);
+  assign new_nmi = irq_nm_i & ~nmi_mode & ~debug_mode;
+  assign new_irq = irq_pending_o & csr_mstatus_mie & ~nmi_mode & ~debug_mode;
+
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      captured_valid     <= 1'b0;
+      captured_mip       <= '0;
+      captured_nmi       <= 1'b0;
+      captured_debug_req <= 1'b0;
+    end else  begin
+      // Capture when ID stage has emptied out and something occurs that will cause a trap and we
+      // haven't yet captured
+      if (~instr_valid_id & (new_debug_req | new_irq | new_nmi) & ~captured_valid) begin
+        captured_valid     <= 1'b1;
+        captured_nmi       <= irq_nm_i;
+        captured_mip       <= cs_registers_i.mip;
+        captured_debug_req <= debug_req_i;
+      end
+
+      // Capture cleared out as soon as a new instruction appears in ID
+      if (if_stage_i.instr_valid_id_d) begin
+        captured_valid <= 1'b0;
+      end
+    end
+  end
+
+  // Pass the captured irq/debug_req/nmi state to the rvfi_ext interface tracking pipeline.
+  //
+  // To correctly capture we need to factor in various enable terms, should there be a fault in this
+  // logic we won't tell the DV environment about a trap that should have been taken. So if there's
+  // no valid capture we grab the raw values of the irq/debug_req/nmi inputs whatever they are and
+  // the DV environment will see if a trap should have been taken but wasn't.
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      rvfi_ext_stage_mip[0]       <= '0;
+      rvfi_ext_stage_nmi[0]       <= '0;
+      rvfi_ext_stage_debug_req[0] <= '0;
+    end else if (if_stage_i.instr_valid_id_d & if_stage_i.instr_new_id_d) begin
+      rvfi_ext_stage_mip[0]       <= instr_valid_id | ~captured_valid ? cs_registers_i.mip :
+                                                                        captured_mip;
+      rvfi_ext_stage_nmi[0]       <= instr_valid_id | ~captured_valid ? irq_nm_i :
+                                                                        captured_nmi;
+      rvfi_ext_stage_debug_req[0] <= instr_valid_id | ~captured_valid ? debug_req_i        :
+                                                                        captured_debug_req;
+    end
   end
 
   for (genvar i = 0; i < RVFI_STAGES; i = i + 1) begin : g_rvfi_stages
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
-        rvfi_stage_halt[i]      <= '0;
-        rvfi_stage_trap[i]      <= '0;
-        rvfi_stage_intr[i]      <= '0;
-        rvfi_stage_order[i]     <= '0;
-        rvfi_stage_insn[i]      <= '0;
-        rvfi_stage_mode[i]      <= {PRIV_LVL_M};
-        rvfi_stage_ixl[i]       <= CSR_MISA_MXL;
-        rvfi_stage_rs1_addr[i]  <= '0;
-        rvfi_stage_rs2_addr[i]  <= '0;
-        rvfi_stage_rs3_addr[i]  <= '0;
-        rvfi_stage_pc_rdata[i]  <= '0;
-        rvfi_stage_pc_wdata[i]  <= '0;
-        rvfi_stage_mem_rmask[i] <= '0;
-        rvfi_stage_mem_wmask[i] <= '0;
-        rvfi_stage_valid[i]     <= '0;
-        rvfi_stage_rs1_rdata[i] <= '0;
-        rvfi_stage_rs2_rdata[i] <= '0;
-        rvfi_stage_rs3_rdata[i] <= '0;
-        rvfi_stage_rd_wdata[i]  <= '0;
-        rvfi_stage_rd_addr[i]   <= '0;
-        rvfi_stage_mem_rdata[i] <= '0;
-        rvfi_stage_mem_wdata[i] <= '0;
-        rvfi_stage_mem_addr[i]  <= '0;
+        rvfi_stage_halt[i]            <= '0;
+        rvfi_stage_trap[i]            <= '0;
+        rvfi_stage_intr[i]            <= '0;
+        rvfi_stage_order[i]           <= '0;
+        rvfi_stage_insn[i]            <= '0;
+        rvfi_stage_mode[i]            <= {PRIV_LVL_M};
+        rvfi_stage_ixl[i]             <= CSR_MISA_MXL;
+        rvfi_stage_rs1_addr[i]        <= '0;
+        rvfi_stage_rs2_addr[i]        <= '0;
+        rvfi_stage_rs3_addr[i]        <= '0;
+        rvfi_stage_pc_rdata[i]        <= '0;
+        rvfi_stage_pc_wdata[i]        <= '0;
+        rvfi_stage_mem_rmask[i]       <= '0;
+        rvfi_stage_mem_wmask[i]       <= '0;
+        rvfi_stage_valid[i]           <= '0;
+        rvfi_stage_rs1_rdata[i]       <= '0;
+        rvfi_stage_rs2_rdata[i]       <= '0;
+        rvfi_stage_rs3_rdata[i]       <= '0;
+        rvfi_stage_rd_wdata[i]        <= '0;
+        rvfi_stage_rd_addr[i]         <= '0;
+        rvfi_stage_mem_rdata[i]       <= '0;
+        rvfi_stage_mem_wdata[i]       <= '0;
+        rvfi_stage_mem_addr[i]        <= '0;
+        rvfi_ext_stage_mip[i+1]       <= '0;
+        rvfi_ext_stage_nmi[i+1]       <= '0;
+        rvfi_ext_stage_debug_req[i+1] <= '0;
+        rvfi_ext_stage_mcycle[i]      <= '0;
       end else begin
         rvfi_stage_valid[i] <= rvfi_stage_valid_d[i];
 
         if (i == 0) begin
-          if (instr_id_done) begin
+          if (rvfi_id_done) begin
             rvfi_stage_halt[i]      <= '0;
-            rvfi_stage_trap[i]      <= illegal_insn_id;
-            rvfi_stage_intr[i]      <= rvfi_intr_d;
-            rvfi_stage_order[i]     <= rvfi_stage_order[i] + 64'(rvfi_stage_valid_d[i]);
-            rvfi_stage_insn[i]      <= rvfi_insn_id;
-            rvfi_stage_mode[i]      <= {priv_mode_id};
-            rvfi_stage_ixl[i]       <= CSR_MISA_MXL;
-            rvfi_stage_rs1_addr[i]  <= rvfi_rs1_addr_d;
-            rvfi_stage_rs2_addr[i]  <= rvfi_rs2_addr_d;
-            rvfi_stage_rs3_addr[i]  <= rvfi_rs3_addr_d;
-            rvfi_stage_pc_rdata[i]  <= pc_id;
-            rvfi_stage_pc_wdata[i]  <= pc_set ? branch_target_ex : pc_if;
-            rvfi_stage_mem_rmask[i] <= rvfi_mem_mask_int;
-            rvfi_stage_mem_wmask[i] <= data_we_o ? rvfi_mem_mask_int : 4'b0000;
-            rvfi_stage_rs1_rdata[i] <= rvfi_rs1_data_d;
-            rvfi_stage_rs2_rdata[i] <= rvfi_rs2_data_d;
-            rvfi_stage_rs3_rdata[i] <= rvfi_rs3_data_d;
-            rvfi_stage_rd_addr[i]   <= rvfi_rd_addr_d;
-            rvfi_stage_rd_wdata[i]  <= rvfi_rd_wdata_d;
-            rvfi_stage_mem_rdata[i] <= rvfi_mem_rdata_d;
-            rvfi_stage_mem_wdata[i] <= rvfi_mem_wdata_d;
-            rvfi_stage_mem_addr[i]  <= rvfi_mem_addr_d;
+            // TODO: Sort this out for writeback stage
+            rvfi_stage_trap[i]            <= rvfi_trap_id;
+            rvfi_stage_intr[i]            <= rvfi_intr_d;
+            rvfi_stage_order[i]           <= rvfi_stage_order_d;
+            rvfi_stage_insn[i]            <= rvfi_insn_id;
+            rvfi_stage_mode[i]            <= {priv_mode_id};
+            rvfi_stage_ixl[i]             <= CSR_MISA_MXL;
+            rvfi_stage_rs1_addr[i]        <= rvfi_rs1_addr_d;
+            rvfi_stage_rs2_addr[i]        <= rvfi_rs2_addr_d;
+            rvfi_stage_rs3_addr[i]        <= rvfi_rs3_addr_d;
+            rvfi_stage_pc_rdata[i]        <= pc_id;
+            rvfi_stage_pc_wdata[i]        <= pc_set ? branch_target_ex : pc_if;
+            rvfi_stage_mem_rmask[i]       <= rvfi_mem_mask_int;
+            rvfi_stage_mem_wmask[i]       <= data_we_o ? rvfi_mem_mask_int : 4'b0000;
+            rvfi_stage_rs1_rdata[i]       <= rvfi_rs1_data_d;
+            rvfi_stage_rs2_rdata[i]       <= rvfi_rs2_data_d;
+            rvfi_stage_rs3_rdata[i]       <= rvfi_rs3_data_d;
+            rvfi_stage_rd_addr[i]         <= rvfi_rd_addr_d;
+            rvfi_stage_rd_wdata[i]        <= rvfi_rd_wdata_d;
+            rvfi_stage_mem_rdata[i]       <= rvfi_mem_rdata_d;
+            rvfi_stage_mem_wdata[i]       <= rvfi_mem_wdata_d;
+            rvfi_stage_mem_addr[i]        <= rvfi_mem_addr_d;
+            rvfi_ext_stage_mip[i+1]       <= rvfi_ext_stage_mip[i];
+            rvfi_ext_stage_nmi[i+1]       <= rvfi_ext_stage_nmi[i];
+            rvfi_ext_stage_debug_req[i+1] <= rvfi_ext_stage_debug_req[i];
+            rvfi_ext_stage_mcycle[i]      <= cs_registers_i.mcycle_counter_i.counter_val_o;
           end
         end else begin
-          if (instr_done_wb) begin
+          if (rvfi_wb_done) begin
             rvfi_stage_halt[i]      <= rvfi_stage_halt[i-1];
-            rvfi_stage_trap[i]      <= rvfi_stage_trap[i-1];
+            rvfi_stage_trap[i]      <= rvfi_stage_trap[i-1] | rvfi_trap_wb;
             rvfi_stage_intr[i]      <= rvfi_stage_intr[i-1];
             rvfi_stage_order[i]     <= rvfi_stage_order[i-1];
             rvfi_stage_insn[i]      <= rvfi_stage_insn[i-1];
@@ -1262,6 +1400,11 @@ module ibex_core import ibex_pkg::*; #(
             rvfi_stage_rd_addr[i]   <= rvfi_rd_addr_d;
             rvfi_stage_rd_wdata[i]  <= rvfi_rd_wdata_d;
             rvfi_stage_mem_rdata[i] <= rvfi_mem_rdata_d;
+
+            rvfi_ext_stage_mip[i+1]       <= rvfi_ext_stage_mip[i];
+            rvfi_ext_stage_nmi[i+1]       <= rvfi_ext_stage_nmi[i];
+            rvfi_ext_stage_debug_req[i+1] <= rvfi_ext_stage_debug_req[i];
+            rvfi_ext_stage_mcycle[i]      <= rvfi_ext_stage_mcycle[i-1];
           end
         end
       end
@@ -1398,7 +1541,7 @@ module ibex_core import ibex_pkg::*; #(
         (exc_pc_mux_id == EXC_PC_EXC || exc_pc_mux_id == EXC_PC_IRQ)) begin
       // PC is set to enter a trap handler
       rvfi_set_trap_pc_d = 1'b1;
-    end else if (rvfi_set_trap_pc_q && instr_id_done) begin
+    end else if (rvfi_set_trap_pc_q && rvfi_id_done) begin
       // first instruction has been executed after PC is set to trap handler
       rvfi_set_trap_pc_d = 1'b0;
     end
