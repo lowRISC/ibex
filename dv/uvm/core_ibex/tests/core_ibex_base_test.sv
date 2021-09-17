@@ -6,6 +6,9 @@ class core_ibex_base_test extends uvm_test;
 
   core_ibex_env                                   env;
   core_ibex_env_cfg                               cfg;
+`ifdef INC_IBEX_COSIM
+  core_ibex_cosim_cfg                             cosim_cfg;
+`endif
   virtual clk_rst_if                              clk_vif;
   virtual core_ibex_dut_probe_if                  dut_vif;
   virtual core_ibex_instr_monitor_if              instr_vif;
@@ -37,6 +40,8 @@ class core_ibex_base_test extends uvm_test;
   endfunction
 
   virtual function void build_phase(uvm_phase phase);
+    string cosim_log_file;
+
     super.build_phase(phase);
     $value$plusargs("timeout_in_cycles=%0d", timeout_in_cycles);
     if (!uvm_config_db#(virtual clk_rst_if)::get(null, "", "clk_if", clk_vif)) begin
@@ -55,6 +60,19 @@ class core_ibex_base_test extends uvm_test;
     end
     env = core_ibex_env::type_id::create("env", this);
     cfg = core_ibex_env_cfg::type_id::create("cfg", this);
+
+`ifdef INC_IBEX_COSIM
+    cosim_cfg = core_ibex_cosim_cfg::type_id::create("cosim_cfg", this);
+    cosim_cfg.start_pc = {{32'h`BOOT_ADDR}[31:8], 8'h80};
+    cosim_cfg.start_mtvec = {{32'h`BOOT_ADDR}[31:8], 8'h1};
+    // TODO: Turn on when not using icache
+    cosim_cfg.probe_imem_for_errs = 1'b0;
+    void'($value$plusargs("cosim_log_file=%0s", cosim_log_file));
+    cosim_cfg.log_file = cosim_log_file;
+
+    uvm_config_db#(core_ibex_cosim_cfg)::set(null, "*cosim_agent*", "cosim_cfg", cosim_cfg);
+`endif
+
     uvm_config_db#(core_ibex_env_cfg)::set(this, "*", "cfg", cfg);
     mem = mem_model_pkg::mem_model#()::type_id::create("mem");
     // Create virtual sequence and assign memory handle
@@ -116,6 +134,11 @@ class core_ibex_base_test extends uvm_test;
     while ($fread(r8,f_bin)) begin
       `uvm_info(`gfn, $sformatf("Init mem [0x%h] = 0x%0h", addr, r8), UVM_FULL)
       mem.write(addr, r8);
+`ifdef INC_IBEX_COSIM
+      if (env.cosim_agent != null) begin
+        env.cosim_agent.write_mem_byte(addr, r8);
+      end
+`endif
       addr++;
     end
   endfunction

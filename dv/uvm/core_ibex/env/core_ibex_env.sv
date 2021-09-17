@@ -9,9 +9,12 @@ class core_ibex_env extends uvm_env;
 
   ibex_mem_intf_response_agent   data_if_response_agent;
   ibex_mem_intf_response_agent   instr_if_response_agent;
-  irq_request_agent            irq_agent;
-  core_ibex_vseqr             vseqr;
-  core_ibex_env_cfg           cfg;
+  irq_request_agent              irq_agent;
+`ifdef INC_IBEX_COSIM
+  ibex_cosim_agent               cosim_agent;
+`endif
+  core_ibex_vseqr                vseqr;
+  core_ibex_env_cfg              cfg;
 
   `uvm_component_utils(core_ibex_env)
   `uvm_component_new
@@ -26,6 +29,14 @@ class core_ibex_env extends uvm_env;
     instr_if_response_agent = ibex_mem_intf_response_agent::type_id::
                            create("instr_if_response_agent", this);
     irq_agent = irq_request_agent::type_id::create("irq_agent", this);
+
+`ifdef INC_IBEX_COSIM
+    if (!cfg.disable_cosim) begin
+      cosim_agent = ibex_cosim_agent::type_id::create("cosim_agent", this);
+    end else begin
+      cosim_agent = null;
+    end
+`endif
     // Create virtual sequencer
     vseqr = core_ibex_vseqr::type_id::create("vseqr", this);
   endfunction : build_phase
@@ -35,6 +46,15 @@ class core_ibex_env extends uvm_env;
     vseqr.data_if_seqr = data_if_response_agent.sequencer;
     vseqr.instr_if_seqr = instr_if_response_agent.sequencer;
     vseqr.irq_seqr = irq_agent.sequencer;
+
+`ifdef INC_IBEX_COSIM
+    if (cosim_agent != null) begin
+      data_if_response_agent.monitor.item_collected_port.connect(
+        cosim_agent.dmem_port);
+      instr_if_response_agent.monitor.item_collected_port.connect(
+        cosim_agent.imem_port);
+    end
+`endif
   endfunction : connect_phase
 
   function void reset();

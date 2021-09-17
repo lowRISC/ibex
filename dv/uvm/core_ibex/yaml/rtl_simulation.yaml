@@ -17,6 +17,7 @@
 # As a result, passing -fno-extended-identifiers tells G++ to pretend that
 # everything is ASCII, preventing strange compilation errors.
 - tool: vcs
+  env_var: IBEX_COSIM_ISS_ROOT,IBEX_ROOT
   compile:
     cmd:
       - "vcs -f ibex_dv.f  -full64
@@ -31,7 +32,7 @@
          -debug_access+pp
          -xlrm uniq_prior_final
          -CFLAGS '--std=c99 -fno-extended-identifiers'
-         -lca -kdb <cmp_opts> <wave_opts> <cov_opts>"
+         -lca -kdb <cmp_opts> <wave_opts> <cov_opts> <cosim_opts>"
     cov_opts: >
       -cm line+tgl+assert+fsm+branch
       -cm_tgl portsonly
@@ -42,12 +43,20 @@
       -cm_hier cover.cfg
     wave_opts: >
       -debug_access+all -ucli -do vcs.tcl
+    cosim_opts: >
+      -f ibex_dv_cosim_dpi.f
+      +define+INC_IBEX_COSIM
+      -LDFLAGS '-L<IBEX_COSIM_ISS_ROOT>/lib/'
+      -CFLAGS '-I<IBEX_COSIM_ISS_ROOT>/include/riscv -I<IBEX_COSIM_ISS_ROOT>/include/softfloat'
+      -CFLAGS '-I<IBEX_COSIM_ISS_ROOT>/include/fesvr -I<IBEX_ROOT>/dv/cosim'
+      -lriscv -lsoftfloat -lfdt -ldl -ldisasm -lstdc++
   sim:
     cmd: >
       env SIM_DIR=<sim_dir>
         <out>/vcs_simv +vcs+lic+wait <sim_opts> <wave_opts> <cov_opts>
           +ntb_random_seed=<seed> +UVM_TESTNAME=<rtl_test> +bin=<binary>
           +ibex_tracer_file_base=<sim_dir>/trace_core
+          +cosim_log_file=<sim_dir>/spike_cosim.log
     cov_opts: >
       -cm line+tgl+assert+fsm+branch
       -cm_dir <out>/test.vdb

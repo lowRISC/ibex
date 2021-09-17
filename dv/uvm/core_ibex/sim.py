@@ -153,6 +153,8 @@ def main():
                         help="Enable coverage dump")
     parser.add_argument("--en_wave", action='store_true',
                         help="Enable waveform dump")
+    parser.add_argument("--en_cosim", action='store_true',
+                        help="Enable cosimulation")
     parser.add_argument("--steps", type=str, default="all",
                         help="Run steps: compile,cov")
     parser.add_argument("--lsf_cmd", type=str,
@@ -182,7 +184,8 @@ def main():
     if steps['compile']:
         enables = {
             'cov_opts': args.en_cov,
-            'wave_opts': args.en_wave
+            'wave_opts': args.en_wave,
+            'cosim_opts': args.en_cosim
         }
         compile_cmds, sim_cmd = get_simulator_cmd(args.simulator,
                                                   args.simulator_yaml, enables)

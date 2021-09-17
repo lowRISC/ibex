@@ -17,16 +17,20 @@ class ibex_mem_intf_seq_item extends uvm_sequence_item;
   rand bit [3:0]                req_delay;
   rand bit [5:0]                rvalid_delay;
   rand bit                      error;
+       bit                      misaligned_first;
+       bit                      misaligned_second;
 
   `uvm_object_utils_begin(ibex_mem_intf_seq_item)
-    `uvm_field_int      (addr,             UVM_DEFAULT)
-    `uvm_field_enum     (rw_e, read_write, UVM_DEFAULT)
-    `uvm_field_int      (be,               UVM_DEFAULT)
+    `uvm_field_int      (addr,              UVM_DEFAULT)
+    `uvm_field_enum     (rw_e, read_write,  UVM_DEFAULT)
+    `uvm_field_int      (be,                UVM_DEFAULT)
     `uvm_field_int      (data,             UVM_DEFAULT)
     `uvm_field_int      (intg,             UVM_DEFAULT)
-    `uvm_field_int      (gnt_delay,        UVM_DEFAULT)
-    `uvm_field_int      (rvalid_delay,     UVM_DEFAULT)
-    `uvm_field_int      (error,            UVM_DEFAULT)
+    `uvm_field_int      (gnt_delay,         UVM_DEFAULT)
+    `uvm_field_int      (rvalid_delay,      UVM_DEFAULT)
+    `uvm_field_int      (error,             UVM_DEFAULT)
+    `uvm_field_int      (misaligned_first,  UVM_DEFAULT)
+    `uvm_field_int      (misaligned_second, UVM_DEFAULT)
   `uvm_object_utils_end
 
   `uvm_object_new

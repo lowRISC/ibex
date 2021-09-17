@@ -4,6 +4,17 @@
 
 GEN_DIR             := $(realpath ../../../vendor/google_riscv-dv)
 TOOLCHAIN           := ${RISCV_TOOLCHAIN}
+export IBEX_ROOT	  := $(realpath ../../../)
+
+ifeq ($(COSIM),1)
+ifndef IBEX_COSIM_ISS_ROOT
+$(error IBEX_COSIM_ISS_ROOT must be set to the root of a suitable spike build if COSIM=1)
+else
+# Spike builds a libsoftfloat.so shared library that the simulator binary needs.
+# Set LD_LIBRARY_PATH so it can be found.
+export LD_LIBRARY_PATH := $(IBEX_COSIM_ISS_ROOT)/lib/:${LD_LIBRARY_PATH}
+endif
+endif
 
 # Explicitly ask for the bash shell
 SHELL                := bash
@@ -349,7 +360,7 @@ all-verilog = \
   $(shell find ../../../rtl -name '*.v' -o -name '*.sv' -o -name '*.svh') \
   $(shell find ../.. -name '*.v' -o -name '*.sv' -o -name '*.svh')
 
-compile-var-deps := COMMON_OPTS SIMULATOR COV WAVES COMPILE_OPTS
+compile-var-deps := COMMON_OPTS SIMULATOR COV WAVES COMPILE_OPTS COSIM
 -include $(OUT-DIR)rtl_sim/.compile-vars.mk
 compile-vars-prereq = $(call vars-prereq,comp,compiling TB,$(compile-var-deps))
 
@@ -357,6 +368,7 @@ $(call dump-vars-match,$(compile-var-deps),comp)
 
 cov-arg := $(if $(call equal,$(COV),1),--en_cov,)
 wave-arg := $(if $(call equal,$(WAVES),1),--en_wave,)
+cosim-arg := $(if $(call equal,$(COSIM),1),--en_cosim,)
 lsf-arg := $(if $(LSF_CMD),--lsf_cmd="$(LSF_CMD)",)
 
 $(OUT-DIR)rtl_sim/.compile.stamp: \
@@ -368,7 +380,7 @@ $(OUT-DIR)rtl_sim/.compile.stamp: \
 	 --steps=compile \
 	 ${COMMON_OPTS} \
 	 --simulator="${SIMULATOR}" --simulator_yaml=yaml/rtl_simulation.yaml \
-	 $(cov-arg) $(wave-arg) $(lsf-arg) \
+	 $(cov-arg) $(wave-arg) $(cosim-arg) $(lsf-arg) \
 	 --cmp_opts="${COMPILE_OPTS}"
 	$(call dump-vars,$(OUT-DIR)rtl_sim/.compile-vars.mk,comp,$(compile-var-deps))
 	@touch $@

@@ -13,6 +13,7 @@ package core_ibex_test_pkg;
   import irq_agent_pkg::*;
   import riscv_signature_pkg::*;
   import ibex_pkg::*;
+  import ibex_cosim_agent_pkg::*;
 
   typedef struct {
     ibex_pkg::opcode_e  opcode;
