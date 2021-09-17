@@ -349,23 +349,15 @@ module ibex_controller #(
   assign handle_irq = ~debug_mode_q & ~nmi_mode_q &
       (irq_nm_i | (irq_pending_i & csr_mstatus_mie_i));
 
-  // generate ID of fast interrupts, highest priority to highest ID
+  // generate ID of fast interrupts, highest priority to lowest ID
   always_comb begin : gen_mfip_id
-    if      (irqs_i.irq_fast[14]) mfip_id = 4'd14;
-    else if (irqs_i.irq_fast[13]) mfip_id = 4'd13;
-    else if (irqs_i.irq_fast[12]) mfip_id = 4'd12;
-    else if (irqs_i.irq_fast[11]) mfip_id = 4'd11;
-    else if (irqs_i.irq_fast[10]) mfip_id = 4'd10;
-    else if (irqs_i.irq_fast[ 9]) mfip_id = 4'd9;
-    else if (irqs_i.irq_fast[ 8]) mfip_id = 4'd8;
-    else if (irqs_i.irq_fast[ 7]) mfip_id = 4'd7;
-    else if (irqs_i.irq_fast[ 6]) mfip_id = 4'd6;
-    else if (irqs_i.irq_fast[ 5]) mfip_id = 4'd5;
-    else if (irqs_i.irq_fast[ 4]) mfip_id = 4'd4;
-    else if (irqs_i.irq_fast[ 3]) mfip_id = 4'd3;
-    else if (irqs_i.irq_fast[ 2]) mfip_id = 4'd2;
-    else if (irqs_i.irq_fast[ 1]) mfip_id = 4'd1;
-    else                          mfip_id = 4'd0;
+    mfip_id = 4'd0;
+
+    for (int i = 14;i >= 0; i--) begin
+      if (irqs_i.irq_fast[i]) begin
+        mfip_id = i[3:0];
+      end
+    end
   end
 
   assign unused_irq_timer = irqs_i.irq_timer;
