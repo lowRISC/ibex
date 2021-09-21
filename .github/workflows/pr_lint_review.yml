@@ -42,7 +42,7 @@ jobs:
       - run: |
           unzip event.json.zip
       - name: Run Verible linter action
-        uses: chipsalliance/verible-linter-action@v1.1
+        uses: chipsalliance/verible-linter-action@v1.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           suggest_fixes: 'false'
