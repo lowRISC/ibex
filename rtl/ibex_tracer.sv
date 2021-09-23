@@ -490,7 +490,7 @@ module ibex_tracer (
              rvfi_insn[30:25], rvfi_insn[11:8], 1'b0 });
     branch_target = rvfi_pc_rdata + imm;
 
-    data_accessed = RS1 | RS2 | RD;
+    data_accessed = RS1 | RS2;
     decoded_str = $sformatf("%s\tx%0d,x%0d,%0x",
                             mnemonic, rvfi_rs1_addr, rvfi_rs2_addr, branch_target);
   endfunction
