@@ -129,6 +129,8 @@ module ibex_top_tracing import ibex_pkg::*; #(
     .DbgHwBreakNum    ( DbgHwBreakNum    ),
     .WritebackStage   ( WritebackStage   ),
     .SecureIbex       ( SecureIbex       ),
+    .RndCnstLfsrSeed  ( RndCnstLfsrSeed  ),
+    .RndCnstLfsrPerm  ( RndCnstLfsrPerm  ),
     .DmHaltAddr       ( DmHaltAddr       ),
     .DmExceptionAddr  ( DmExceptionAddr  )
   ) u_ibex_top (
