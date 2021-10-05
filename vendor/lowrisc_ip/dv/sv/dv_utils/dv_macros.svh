@@ -409,6 +409,24 @@
   end
 `endif
 
+// This macro converts a string input from plusarg to an enum variable
+// ENUM_: the name of enum type
+// PLUSARG_: the name of the plusargs, which is also the name of the enum variable
+// CHECK_EXIST_: set to 1, `$value$plusargs()` should return true
+`ifndef DV_GET_ENUM_PLUSARG
+`define DV_GET_ENUM_PLUSARG(ENUM_, PLUSARG_, CHECK_EXIST_ = 0, ID_ = `gfn) \
+  begin \
+    string str; \
+    if ($value$plusargs("``PLUSARG_``=%0s", str)) begin \
+      if (!uvm_enum_wrapper#(ENUM_)::from_name(str, PLUSARG_)) begin \
+        `uvm_fatal(ID_, $sformatf("Cannot find %s from enum ``ENUM_``", PLUSARG_.name)) \
+      end \
+    end else if (CHECK_EXIST_) begin \
+      `uvm_fatal(ID_, "Can't find plusargs ``PLUSARG_``") \
+    end \
+  end
+`endif
+
 // Enable / disable assertions at a module hierarchy identified by LABEL_.
 //
 // This goes in conjunction with `DV_ASSERT_CTRL() macro above, but is invoked in the entity that is
@@ -492,3 +510,18 @@
 `endif
 
 `endif // UVM
+
+// Macros for constrain clk with common frequencies
+// constrain clock to run at 24Mhz - 100Mhz and use higher weights on 24, 25, 48, 50, 100
+`ifndef DV_COMMON_CLK_CONSTRAINT
+`define DV_COMMON_CLK_CONSTRAINT(FREQ_) \
+  FREQ_ dist { \
+    [24:25] :/ 2, \
+    [26:47] :/ 1, \
+    [48:50] :/ 2, \
+    [51:95] :/ 1, \
+    96      :/ 1, \
+    [97:99] :/ 1, \
+    100     :/ 1  \
+  };
+`endif

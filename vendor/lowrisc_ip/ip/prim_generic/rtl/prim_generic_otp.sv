@@ -16,12 +16,17 @@ module prim_generic_otp
   // Number of Test TL-UL words
   parameter  int TlDepth       = 16,
   // Width of vendor-specific test control signal
-  parameter  int TestCtrlWidth = 8,
+  parameter  int TestCtrlWidth   = 32,
+  parameter  int TestStatusWidth = 32,
+  parameter  int TestVectWidth   = 8,
   // Derived parameters
   localparam int AddrWidth     = prim_util_pkg::vbits(Depth),
   localparam int IfWidth       = 2**SizeWidth*Width,
   // VMEM file to initialize the memory with
-  parameter      MemInitFile   = ""
+  parameter      MemInitFile   = "",
+  // Vendor test partition offset and size (both in bytes)
+  parameter  int VendorTestOffset,
+  parameter  int VendorTestSize
 ) (
   input                          clk_i,
   input                          rst_ni,
@@ -30,10 +35,12 @@ module prim_generic_otp
   input        [PwrSeqWidth-1:0] pwr_seq_h_i,
   // External programming voltage
   inout wire                     ext_voltage_io,
-  // Test interface
-  input [TestCtrlWidth-1:0]      test_ctrl_i,
-  input  tlul_pkg::tl_h2d_t      test_tl_i,
-  output tlul_pkg::tl_d2h_t      test_tl_o,
+  // Test interfaces
+  input        [TestCtrlWidth-1:0]   test_ctrl_i,
+  output logic [TestStatusWidth-1:0] test_status_o,
+  output logic [TestVectWidth-1:0]   test_vect_o,
+  input  tlul_pkg::tl_h2d_t          test_tl_i,
+  output tlul_pkg::tl_d2h_t          test_tl_o,
   // Other DFT signals
   input lc_ctrl_pkg::lc_tx_t     scanmode_i,  // Scan Mode input
   input                          scan_en_i,   // Scan Shift
@@ -72,6 +79,9 @@ module prim_generic_otp
   assign unused_scan = ^{scanmode_i, scan_en_i, scan_rst_ni};
 
   assign otp_alert_src_o = '{p: '0, n: '1};
+
+  assign test_vect_o = '0;
+  assign test_status_o = '0;
 
   ////////////////////////////////////
   // TL-UL Test Interface Emulation //

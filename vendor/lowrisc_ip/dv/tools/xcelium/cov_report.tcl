@@ -3,22 +3,18 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Generate reports for the merged coverage in HTML and text format.
-
-# Set the input merged coverage database directory using the env var 'cov_merge_db_dir'.
-# The supplied env var may have quotes or spaces that needs to be trimmed.
-set cov_merge_db_dir [string trim $::env(cov_merge_db_dir) " \""]
+#
+# This file is passed to IMC using the -exec switch. Ensure that the merged coverage database, the
+# exclusion script and the coverage refinement files are passed to the IMC invocation using the
+# -load, -init and -load_refinement switches respectively (whichever ones are applicable).
 
 # Set the output directory for the reports database using the env var 'cov_report_dir'.
 # The supplied env var may have quotes or spaces that needs to be trimmed.
-set cov_report_dir [string trim $::env(cov_report_dir) " \""]
+set cov_report_dir [string trim $::env(cov_report_dir) " \"'"]
 
 # Set the DUT name.
 set dut [string trim $::env(DUT_TOP)]
 set dut_uc [string toupper $dut]
-set dut_instance [string trim $::env(dut_instance)]
-
-# Load the merged coverage database.
-load -run $cov_merge_db_dir
 
 # Generate the text report (summary is sufficient).
 report -summary \
@@ -35,7 +31,6 @@ report -summary \
   -type \
   -all \
   -metrics covergroup \
-  -kind abstract \
   -source off \
   -out $cov_report_dir/cov_report_cg.txt
 

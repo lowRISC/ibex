@@ -131,7 +131,6 @@ module prim_alert_sender
     AlertHsPhase2,
     PingHsPhase1,
     PingHsPhase2,
-    SigInt,
     Pause0,
     Pause1
     } state_e;
@@ -234,34 +233,22 @@ module prim_alert_sender
       Pause0: begin
         state_d = Pause1;
       end
-
       // clear and ack alert request if it was set
       Pause1: begin
         state_d = Idle;
       end
-
-      // we have a signal integrity issue at one of
-      // the incoming diff pairs. this condition is
-      // signalled by setting the output diffpair
-      // to the same value and continuously toggling
-      // them.
-      SigInt: begin
-        state_d  = Idle;
-        if (sigint_detected) begin
-          state_d  = SigInt;
-          alert_pd = ~alert_pq;
-          alert_nd = ~alert_pq;
-        end
-      end
       // catch parasitic states
       default : state_d = Idle;
     endcase
-    // bail out if a signal integrity issue has been detected
-    if (sigint_detected && (state_q != SigInt)) begin
-      state_d   = SigInt;
+
+    // we have a signal integrity issue at one of the incoming diff pairs. this condition is
+    // signalled by setting the output diffpair to zero. If the sigint has disappeared, we clear
+    // the ping request state of this sender and go back to idle.
+    if (sigint_detected) begin
+      state_d   = Idle;
       alert_pd  = 1'b0;
       alert_nd  = 1'b0;
-      ping_clr  = 1'b0;
+      ping_clr  = 1'b1;
       alert_clr = 1'b0;
     end
   end
@@ -296,15 +283,28 @@ module prim_alert_sender
   // assertions //
   ////////////////
 
+// however, since we use sequence constructs below, we need to wrap the entire block again.
+// typically, the ASSERT macros already contain this INC_ASSERT macro.
+`ifdef INC_ASSERT
   // check whether all outputs have a good known state after reset
   `ASSERT_KNOWN(AlertPKnownO_A, alert_tx_o)
 
   if (AsyncOn) begin : gen_async_assert
+    sequence PingSigInt_S;
+      alert_rx_i.ping_p == alert_rx_i.ping_n [*2];
+    endsequence
+    sequence AckSigInt_S;
+      alert_rx_i.ping_p == alert_rx_i.ping_n [*2];
+    endsequence
     // check propagation of sigint issues to output within three cycles
-    `ASSERT(SigIntPing_A, alert_rx_i.ping_p == alert_rx_i.ping_n [*2] |->
+    // shift sequence to the right to avoid reset effects.
+    `ASSERT(SigIntPing_A, ##1 PingSigInt_S |->
         ##3 alert_tx_o.alert_p == alert_tx_o.alert_n)
-    `ASSERT(SigIntAck_A,  alert_rx_i.ack_p == alert_rx_i.ack_n   [*2] |->
+    `ASSERT(SigIntAck_A, ##1 AckSigInt_S |->
         ##3 alert_tx_o.alert_p == alert_tx_o.alert_n)
+    // Test in-band FSM reset request (via signal integrity error)
+    `ASSERT(InBandInitFsm_A, PingSigInt_S or AckSigInt_S |-> ##3 state_q == Idle)
+    `ASSERT(InBandInitPing_A, PingSigInt_S or AckSigInt_S |-> ##3 !ping_set_q)
     // output must be driven diff unless sigint issue detected
     `ASSERT(DiffEncoding_A, (alert_rx_i.ack_p ^ alert_rx_i.ack_n) &&
         (alert_rx_i.ping_p ^ alert_rx_i.ping_n) |->
@@ -318,11 +318,20 @@ module prim_alert_sender
         (alert_rx_i.ping_p ^ alert_rx_i.ping_n) ##2 state_q == Idle |=>
         $rose(alert_tx_o.alert_p), clk_i, !rst_ni || (alert_tx_o.alert_p == alert_tx_o.alert_n))
   end else begin : gen_sync_assert
+    sequence PingSigInt_S;
+      alert_rx_i.ping_p == alert_rx_i.ping_n;
+    endsequence
+    sequence AckSigInt_S;
+      alert_rx_i.ping_p == alert_rx_i.ping_n;
+    endsequence
     // check propagation of sigint issues to output within one cycle
-    `ASSERT(SigIntPing_A, alert_rx_i.ping_p == alert_rx_i.ping_n |=>
+    `ASSERT(SigIntPing_A, PingSigInt_S |=>
         alert_tx_o.alert_p == alert_tx_o.alert_n)
-    `ASSERT(SigIntAck_A,  alert_rx_i.ack_p == alert_rx_i.ack_n   |=>
+    `ASSERT(SigIntAck_A,  AckSigInt_S |=>
         alert_tx_o.alert_p == alert_tx_o.alert_n)
+    // Test in-band FSM reset request (via signal integrity error)
+    `ASSERT(InBandInitFsm_A, PingSigInt_S or AckSigInt_S |=> state_q == Idle)
+    `ASSERT(InBandInitPing_A, PingSigInt_S or AckSigInt_S |=> !ping_set_q)
     // output must be driven diff unless sigint issue detected
     `ASSERT(DiffEncoding_A, (alert_rx_i.ack_p ^ alert_rx_i.ack_n) &&
         (alert_rx_i.ping_p ^ alert_rx_i.ping_n) |=> alert_tx_o.alert_p ^ alert_tx_o.alert_n)
@@ -355,5 +364,6 @@ module prim_alert_sender
   // if alert_test_i is true, handshakes should be continuously repeated
   `ASSERT(AlertTestHs_A, alert_test_i && state_q == Idle |=> $rose(alert_tx_o.alert_p),
       clk_i, !rst_ni || (alert_tx_o.alert_p == alert_tx_o.alert_n))
+`endif
 
 endmodule : prim_alert_sender

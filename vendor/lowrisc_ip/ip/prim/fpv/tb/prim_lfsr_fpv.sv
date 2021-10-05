@@ -20,8 +20,8 @@ module prim_lfsr_fpv #(
   localparam int unsigned GalMaxGtFibMax  = GalXorMaxLfsrDw > FibXnorMaxLfsrDw,
   localparam int unsigned MaxLfsrDw       = GalXorMaxLfsrDw * GalMaxGtFibMax +
                                             FibXnorMaxLfsrDw * (1 - GalMaxGtFibMax),
-  localparam int unsigned NumDuts         = FibXnorMaxLfsrDw - FibXnorMinLfsrDw + 1 +
-                                            GalXorMaxLfsrDw - GalXorMinLfsrDw + 1
+  localparam int unsigned NumDuts         = 2*(FibXnorMaxLfsrDw - FibXnorMinLfsrDw + 1) +
+                                            2*(GalXorMaxLfsrDw - GalXorMinLfsrDw + 1)
 ) (
   input                                      clk_i,
   input                                      rst_ni,
@@ -33,7 +33,7 @@ module prim_lfsr_fpv #(
 );
 
   for (genvar k = GalXorMinLfsrDw; k <= GalXorMaxLfsrDw; k++) begin : gen_gal_xor_duts
-    localparam int unsigned idx = k - GalXorMinLfsrDw;
+    localparam int unsigned Idx = k - GalXorMinLfsrDw;
     prim_lfsr #(.LfsrType("GAL_XOR"),
       .LfsrDw      ( k          ),
       .EntropyDw   ( EntropyDw  ),
@@ -41,19 +41,43 @@ module prim_lfsr_fpv #(
       .DefaultSeed ( 1          ),
       // disabled for large LFSRs since this becomes prohibitive in runtime
       .MaxLenSVA   ( k <= MaxLenSVAThresh )
-    ) i_prim_lfsr (
+    ) u_prim_lfsr (
       .clk_i,
       .rst_ni,
-      .seed_en_i ( load_ext_en_i[idx]  ),
-      .seed_i    ( k'(seed_ext_i[idx]) ),
-      .lfsr_en_i ( lfsr_en_i[idx]      ),
-      .entropy_i ( entropy_i[idx]      ),
-      .state_o   ( state_o[idx]        )
+      .seed_en_i ( load_ext_en_i[Idx]  ),
+      .seed_i    ( k'(seed_ext_i[Idx]) ),
+      .lfsr_en_i ( lfsr_en_i[Idx]      ),
+      .entropy_i ( entropy_i[Idx]      ),
+      .state_o   ( state_o[Idx]        )
+    );
+  end
+
+  // same as above but with non-linear output enabled.
+  // only power-of-two widths are allowed.
+  for (genvar k = 16; k <= GalXorMaxLfsrDw; k = k*2)
+  begin : gen_gal_xor_duts_nonlinear
+    localparam int unsigned Idx = k - GalXorMinLfsrDw;
+    prim_lfsr #(.LfsrType("GAL_XOR"),
+      .LfsrDw      ( k          ),
+      .EntropyDw   ( EntropyDw  ),
+      .StateOutDw  ( StateOutDw ),
+      .DefaultSeed ( 1          ),
+      // disabled for large LFSRs since this becomes prohibitive in runtime
+      .MaxLenSVA   ( k <= MaxLenSVAThresh ),
+      .NonLinearOut (1)
+    ) u_prim_lfsr (
+      .clk_i,
+      .rst_ni,
+      .seed_en_i ( load_ext_en_i[Idx]  ),
+      .seed_i    ( k'(seed_ext_i[Idx]) ),
+      .lfsr_en_i ( lfsr_en_i[Idx]      ),
+      .entropy_i ( entropy_i[Idx]      ),
+      .state_o   ( state_o[Idx]        )
     );
   end
 
   for (genvar k = FibXnorMinLfsrDw; k <= FibXnorMaxLfsrDw; k++) begin : gen_fib_xnor_duts
-    localparam int unsigned idx = k - FibXnorMinLfsrDw + GalXorMaxLfsrDw - GalXorMinLfsrDw + 1;
+    localparam int unsigned Idx = k - FibXnorMinLfsrDw + GalXorMaxLfsrDw - GalXorMinLfsrDw + 1;
     prim_lfsr #(.LfsrType("FIB_XNOR"),
       .LfsrDw      ( k          ),
       .EntropyDw   ( EntropyDw  ),
@@ -61,14 +85,38 @@ module prim_lfsr_fpv #(
       .DefaultSeed ( 1          ),
       // disabled for large LFSRs since this becomes prohibitive in runtime
       .MaxLenSVA   ( k <= MaxLenSVAThresh )
-    ) i_prim_lfsr (
+    ) u_prim_lfsr (
       .clk_i,
       .rst_ni,
-      .seed_en_i ( load_ext_en_i[idx]  ),
-      .seed_i    ( k'(seed_ext_i[idx]) ),
-      .lfsr_en_i ( lfsr_en_i[idx]      ),
-      .entropy_i ( entropy_i[idx]      ),
-      .state_o   ( state_o[idx]        )
+      .seed_en_i ( load_ext_en_i[Idx]  ),
+      .seed_i    ( k'(seed_ext_i[Idx]) ),
+      .lfsr_en_i ( lfsr_en_i[Idx]      ),
+      .entropy_i ( entropy_i[Idx]      ),
+      .state_o   ( state_o[Idx]        )
+    );
+  end
+
+  // same as above but with non-linear output enabled.
+  // only power-of-two widths are allowed.
+  for (genvar k = 16; k <= FibXnorMaxLfsrDw; k = k*2)
+  begin : gen_fib_xnor_duts_nonlinear
+    localparam int unsigned Idx = k - FibXnorMinLfsrDw + GalXorMaxLfsrDw - GalXorMinLfsrDw + 1;
+    prim_lfsr #(.LfsrType("FIB_XNOR"),
+      .LfsrDw      ( k          ),
+      .EntropyDw   ( EntropyDw  ),
+      .StateOutDw  ( StateOutDw ),
+      .DefaultSeed ( 1          ),
+      // disabled for large LFSRs since this becomes prohibitive in runtime
+      .MaxLenSVA   ( k <= MaxLenSVAThresh ),
+      .NonLinearOut (1)
+    ) u_prim_lfsr (
+      .clk_i,
+      .rst_ni,
+      .seed_en_i ( load_ext_en_i[Idx]  ),
+      .seed_i    ( k'(seed_ext_i[Idx]) ),
+      .lfsr_en_i ( lfsr_en_i[Idx]      ),
+      .entropy_i ( entropy_i[Idx]      ),
+      .state_o   ( state_o[Idx]        )
     );
   end
 

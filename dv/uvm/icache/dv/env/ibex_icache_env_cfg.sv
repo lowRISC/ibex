@@ -14,7 +14,7 @@ class ibex_icache_env_cfg extends dv_base_env_cfg;
   // Force the clock frequency to 50MHz. The clock frequency doesn't really matter for ICache
   // testing and 50MHz dumped waves are nice to read because clock edges are multiples of 10ns.
   constraint clk_freq_50_c {
-    clk_freq_mhz == ClkFreq50Mhz;
+    clk_freq_mhz == 50;
   }
 
   // Config objects for ECC components (see create_ecc_agent_cfgs). Since these are created after

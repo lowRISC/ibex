@@ -49,7 +49,7 @@ module prim_esc_receiver
   input           clk_i,
   input           rst_ni,
   // escalation enable
-  output logic    esc_en_o,
+  output logic    esc_req_o,
   // escalation / ping response
   output esc_rx_t esc_rx_o,
   // escalation output diff pair
@@ -90,7 +90,7 @@ module prim_esc_receiver
   // Ping Monitor Counter / Auto Escalation //
   ////////////////////////////////////////////
 
-  logic ping_en, esc_en;
+  logic ping_en, esc_req;
   logic [1:0][TimeoutCntDw-1:0] cnt_q;
 
   for (genvar k = 0; k < 2; k++) begin : gen_timeout_cnt
@@ -117,9 +117,9 @@ module prim_esc_receiver
   // - requested via the escalation sender/receiver path,
   // - the ping monitor timeout is reached,
   // - the two ping monitor counters are in an inconsistent state.
-  assign esc_en_o = esc_en      ||
-                    (&cnt_q[0]) ||
-                    (cnt_q[0] != cnt_q[1]);
+  assign esc_req_o = esc_req     ||
+                     (&cnt_q[0]) ||
+                     (cnt_q[0] != cnt_q[1]);
 
   /////////////////
   // RX/TX Logic //
@@ -149,7 +149,7 @@ module prim_esc_receiver
     state_d  = state_q;
     resp_pd  = 1'b0;
     resp_nd  = 1'b1;
-    esc_en   = 1'b0;
+    esc_req  = 1'b0;
     ping_en  = 1'b0;
 
     unique case (state_q)
@@ -157,29 +157,31 @@ module prim_esc_receiver
       Idle: begin
         if (esc_level) begin
           state_d = Check;
-          resp_pd = 1'b1;
-          resp_nd = 1'b0;
+          resp_pd = ~resp_pq;
+          resp_nd = resp_pq;
         end
       end
       // we decide here whether this is only a ping request or
       // whether this is an escalation enable
       Check: begin
         state_d = PingResp;
+        resp_pd = ~resp_pq;
+        resp_nd = resp_pq;
         if (esc_level) begin
           state_d  = EscResp;
-          esc_en   = 1'b1;
+          esc_req  = 1'b1;
         end
       end
       // finish ping response. in case esc_level is again asserted,
       // we got an escalation signal (pings cannot occur back to back)
       PingResp: begin
         state_d = Idle;
-        resp_pd = 1'b1;
-        resp_nd = 1'b0;
+        resp_pd = ~resp_pq;
+        resp_nd = resp_pq;
         ping_en = 1'b1;
         if (esc_level) begin
           state_d  = EscResp;
-          esc_en   = 1'b1;
+          esc_req  = 1'b1;
         end
       end
       // we have got an escalation enable pulse,
@@ -190,7 +192,7 @@ module prim_esc_receiver
           state_d  = EscResp;
           resp_pd  = ~resp_pq;
           resp_nd  = resp_pq;
-          esc_en   = 1'b1;
+          esc_req  = 1'b1;
         end
       end
       // we have a signal integrity issue at one of
@@ -200,6 +202,7 @@ module prim_esc_receiver
       // toggling them.
       SigInt: begin
         state_d = Idle;
+        esc_req = 1'b1;
         if (sigint_detected) begin
           state_d = SigInt;
           resp_pd = ~resp_pq;
@@ -235,18 +238,20 @@ module prim_esc_receiver
   ////////////////
 
   // check whether all outputs have a good known state after reset
-  `ASSERT_KNOWN(EscEnKnownO_A, esc_en_o)
+  `ASSERT_KNOWN(EscEnKnownO_A, esc_req_o)
   `ASSERT_KNOWN(RespPKnownO_A, esc_rx_o)
 
   `ASSERT(SigIntCheck0_A, esc_tx_i.esc_p == esc_tx_i.esc_n |=>
-      esc_rx_o.resp_p == esc_rx_o.resp_n, clk_i, !rst_ni)
+      esc_rx_o.resp_p == esc_rx_o.resp_n)
   `ASSERT(SigIntCheck1_A, esc_tx_i.esc_p == esc_tx_i.esc_n |=> state_q == SigInt)
+  // auto-escalate in case of signal integrity issue
+  `ASSERT(SigIntCheck2_A, esc_tx_i.esc_p == esc_tx_i.esc_n |=> esc_req_o)
   // correct diff encoding
   `ASSERT(DiffEncCheck_A, esc_tx_i.esc_p ^ esc_tx_i.esc_n |=>
       esc_rx_o.resp_p ^ esc_rx_o.resp_n)
-  // disable in case of ping integrity issue
-  `ASSERT(PingRespCheck_A, $rose(esc_tx_i.esc_p) |=> $fell(esc_tx_i.esc_p) |->
-      $rose(esc_rx_o.resp_p) |=> $fell(esc_rx_o.resp_p),
+  // disable in case of signal integrity issue
+  `ASSERT(PingRespCheck_A, state_q == Idle ##1 $rose(esc_tx_i.esc_p) ##1 $fell(esc_tx_i.esc_p) |->
+      $rose(esc_rx_o.resp_p) ##1 $fell(esc_rx_o.resp_p),
       clk_i, !rst_ni || (esc_tx_i.esc_p == esc_tx_i.esc_n))
   // escalation response needs to continuously toggle
   `ASSERT(EscRespCheck_A, esc_tx_i.esc_p && $past(esc_tx_i.esc_p) &&
@@ -254,10 +259,10 @@ module prim_esc_receiver
       |=> esc_rx_o.resp_p != $past(esc_rx_o.resp_p))
   // detect escalation pulse
   `ASSERT(EscEnCheck_A, esc_tx_i.esc_p && (esc_tx_i.esc_p ^ esc_tx_i.esc_n) && state_q != SigInt
-      |=> esc_tx_i.esc_p && (esc_tx_i.esc_p ^ esc_tx_i.esc_n) |-> esc_en_o)
+      ##1 esc_tx_i.esc_p && (esc_tx_i.esc_p ^ esc_tx_i.esc_n) |-> esc_req_o)
   // make sure the counter does not wrap around
   `ASSERT(EscCntWrap_A, &cnt_q[0] |=> cnt_q[0] != 0)
   // if the counter expires, escalation should be asserted
-  `ASSERT(EscCntEsc_A, &cnt_q[0] |-> esc_en_o)
+  `ASSERT(EscCntEsc_A, &cnt_q[0] |-> esc_req_o)
 
 endmodule : prim_esc_receiver
