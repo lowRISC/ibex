@@ -157,7 +157,7 @@ def get_proj_root():
             "But this command has failed:\n"
             "{}".format(' '.join(cmd), result.stderr.decode("utf-8")))
         sys.exit(1)
-    return (proj_root)
+    return proj_root
 
 
 def resolve_proj_root(args):
@@ -249,6 +249,19 @@ def wrapped_docstring():
         paras.append('\n'.join(para))
 
     return '\n\n'.join(textwrap.fill(p) for p in paras)
+
+
+def parse_reseed_multiplier(as_str: str) -> float:
+    '''Parse the argument for --reseed-multiplier'''
+    try:
+        ret = float(as_str)
+    except ValueError:
+        raise argparse.ArgumentTypeError('Invalid reseed multiplier: {!r}. '
+                                         'Must be a float.'
+                                         .format(as_str))
+    if ret <= 0:
+        raise argparse.ArgumentTypeError('Reseed multiplier must be positive.')
+    return ret
 
 
 def parse_args():
@@ -484,7 +497,7 @@ def parse_args():
 
     seedg.add_argument("--reseed-multiplier",
                        "-rx",
-                       type=int,
+                       type=parse_reseed_multiplier,
                        default=1,
                        metavar="N",
                        help=('Scale each reseed value in the test '

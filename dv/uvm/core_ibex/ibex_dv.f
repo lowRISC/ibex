@@ -16,6 +16,7 @@
 // Shared lowRISC code
 +incdir+${PRJ_DIR}/vendor/lowrisc_ip/ip/prim/rtl
 ${PRJ_DIR}/vendor/lowrisc_ip/ip/prim/rtl/prim_assert.sv
+${PRJ_DIR}/vendor/lowrisc_ip/ip/prim/rtl/prim_cipher_pkg.sv
 ${PRJ_DIR}/vendor/lowrisc_ip/ip/prim/rtl/prim_lfsr.sv
 ${PRJ_DIR}/vendor/lowrisc_ip/ip/prim/rtl/prim_secded_28_22_enc.sv
 ${PRJ_DIR}/vendor/lowrisc_ip/ip/prim/rtl/prim_secded_28_22_dec.sv

@@ -8,19 +8,16 @@ class dv_base_reg extends uvm_reg;
   // hence, backdoor write isn't available
   local bit is_ext_reg;
 
-  local uvm_reg_data_t staged_shadow_val, committed_val, shadowed_val;
   local bit            is_shadowed;
   local bit            shadow_wr_staged; // stage the first shadow reg write
   local bit            shadow_update_err;
-  local bit            en_shadow_wr = 1;
-  // In certain shadow reg (e.g. in AES), fatal error can lock write access
+  local bit            backdoor_write_shadow_val; // flag to avoid predict `shadow_wr_staged`
+  // Update internal shadow committed and shadowed values when register access is not `RW`.
+  local bit            do_update_shadow_vals;
+  // In certain shadow reg (e.g. in AES), fatal error can lock write access.
   local bit            shadow_fatal_lock;
   local string         update_err_alert_name;
   local string         storage_err_alert_name;
-
-  // atomic_shadow_wr: semaphore to guarantee atomicity of the two writes for shadowed registers.
-  // In case a parallel thread writing a different value to the same reg causing an update_err
-  semaphore            atomic_shadow_wr;
 
   // atomic_en_shadow_wr: semaphore to guarantee setting or resetting en_shadow_wr is unchanged
   // through the 1st/2nd (or both) writes
@@ -31,11 +28,14 @@ class dv_base_reg extends uvm_reg;
                int          has_coverage);
     super.new(name, n_bits, has_coverage);
     atomic_en_shadow_wr = new(1);
-    atomic_shadow_wr    = new(1);
   endfunction : new
 
   function void get_dv_base_reg_fields(ref dv_base_reg_field dv_fields[$]);
     foreach (m_fields[i]) `downcast(dv_fields[i], m_fields[i])
+  endfunction
+
+  function dv_base_reg_block get_dv_base_reg_block();
+    `downcast(get_dv_base_reg_block, get_parent())
   endfunction
 
   // get_n_bits will return number of all the bits in the csr
@@ -63,6 +63,15 @@ class dv_base_reg extends uvm_reg;
                          $sformatf("%0s does not exist in reg %0s", fld_name, get_full_name()))
     end
     return dv_fld;
+  endfunction
+
+  // Return a mask of valid bits in the register.
+  virtual function uvm_reg_data_t get_reg_mask();
+    dv_base_reg_field flds[$];
+    this.get_dv_base_reg_fields(flds);
+    foreach (flds[i]) begin
+      get_reg_mask |= flds[i].get_field_mask();
+    end
   endfunction
 
   // this function can only be called when this reg is intr_state reg
@@ -138,19 +147,12 @@ class dv_base_reg extends uvm_reg;
     is_shadowed = 1;
   endfunction
 
-  function uvm_reg_data_t get_staged_shadow_val();
-    return staged_shadow_val;
-  endfunction
-
-  function void set_en_shadow_wr(bit val);
-    // do not update en_shadow_wr if shadow register write is in process
-    if ((en_shadow_wr ^ val) && shadow_wr_staged) begin
-      `uvm_info(`gfn,
-          $sformatf("unable to %0s en_shadow_wr because register already completed first write",
-          val ? "set" : "clear"), UVM_HIGH)
-      return;
+  // A helper function for shadow register or field read to clear the `shadow_wr_staged` flag.
+  virtual function void clear_shadow_wr_staged();
+    if (is_shadowed) begin
+      if (shadow_wr_staged) `uvm_info(`gfn, "clear shadow_wr_staged", UVM_HIGH)
+      shadow_wr_staged = 0;
     end
-    en_shadow_wr = val;
   endfunction
 
   function bit get_is_shadowed();
@@ -162,53 +164,71 @@ class dv_base_reg extends uvm_reg;
   endfunction
 
   function bit get_shadow_storage_err();
-    uvm_reg_data_t mask = (1'b1 << (get_msb_pos() + 1)) - 1;
-    uvm_reg_data_t shadowed_val_temp = (~shadowed_val) & mask;
-    uvm_reg_data_t committed_val_temp = committed_val & mask;
-    `uvm_info(`gfn, $sformatf("shadow_val %0h, commmit_val %0h", shadowed_val_temp,
-                              committed_val_temp), UVM_DEBUG)
-    return shadowed_val_temp != committed_val_temp;
+    dv_base_reg_field flds[$];
+    this.get_dv_base_reg_fields(flds);
+    foreach (flds[i]) begin
+      get_shadow_storage_err |= flds[i].get_shadow_storage_err();
+    end
   endfunction
 
   virtual function void clear_shadow_update_err();
     shadow_update_err = 0;
   endfunction
 
-  // post_write callback to handle special regs:
+  // do_predict callback to handle special regs. This function doesn't update mirror values, but
+  // update local variables used for the special regs.
   // - shadow register: shadow reg won't be updated until the second write has no error
   // - lock register: if wen_fld is set to 0, change access policy to all the lockable_flds
   // TODO: create an `enable_field_access_policy` variable and set the template code during
   // automation.
-  virtual task post_write(uvm_reg_item rw);
-    dv_base_reg_field fields[$];
+  virtual function void pre_do_predict(uvm_reg_item rw, uvm_predict_e kind);
 
-    // no need to update shadow value or access type if access is not OK, as access is aborted
-    if (rw.status != UVM_IS_OK) return;
+    // Skip updating shadow value or access type if:
+    // 1). Access is not OK, as access is aborted.
+    // 2). The operation is not write.
+    // 3). The update is triggered by backdoor poke.
+    if (rw.status != UVM_IS_OK || kind != UVM_PREDICT_WRITE || backdoor_write_shadow_val) return;
 
     if (is_shadowed && !shadow_fatal_lock) begin
-      // first write
-      if (!shadow_wr_staged) begin
-        shadow_wr_staged = 1;
-        // rw.value is a dynamic array
-        staged_shadow_val = rw.value[0];
-        return;
-      end begin
-        // second write
-        shadow_wr_staged = 0;
-        if (staged_shadow_val != rw.value[0]) begin
-          shadow_update_err = 1;
-          return;
+      dv_base_reg_field flds[$];
+      this.get_dv_base_reg_fields(flds);
+
+      foreach (flds[i]) begin
+        // `rw.value` is a dynamic array.
+        uvm_reg_data_t wr_data = get_field_val(flds[i], rw.value[0]);
+
+        // Skip updating shadow value or access type for this field if:
+        // 1). A storage error is triggered, which means the field is locked to error status.
+        // 2). The register is "RO". This condition is used to cover enable register locks shadowed
+        // register's write access.
+        if (flds[i].get_shadow_storage_err() || flds[i].get_access() == "RO") continue;
+
+        // first write
+        if (!shadow_wr_staged) begin
+          flds[i].update_staged_val(wr_data);
+          continue;
+        end begin
+          // second write
+          if (flds[i].get_staged_val() == wr_data) begin
+             flds[i].update_committed_val(wr_data);
+             flds[i].update_shadowed_val(~wr_data);
+          end else begin
+            shadow_update_err = 1;
+          end
         end
-        committed_val = staged_shadow_val;
-        shadowed_val  = ~committed_val;
       end
+      if (!shadow_wr_staged) shadow_wr_staged = 1;
+      else shadow_wr_staged = 0;
+
+      // Update committed and shadowed values if the field access is not "RW".
+      // Used for register with special access policy such as `RW1S`.
+      if (!shadow_wr_staged && flds[0].get_access() != "RW") do_update_shadow_vals = 1;
     end
-    lock_lockable_flds(rw.value[0]);
-  endtask
+  endfunction
 
   // shadow register read will clear its phase tracker
   virtual task post_read(uvm_reg_item rw);
-    if (is_shadowed) shadow_wr_staged = 0;
+    if (rw.status == UVM_IS_OK) clear_shadow_wr_staged();
   endtask
 
   virtual function void set_is_ext_reg(bit is_ext);
@@ -219,42 +239,45 @@ class dv_base_reg extends uvm_reg;
     return is_ext_reg;
   endfunction
 
-  // if it is a shadowed register, and is enabled to write it twice, this task will write the
-  // register twice with the same value and address.
-  virtual task write(output uvm_status_e     status,
-                     input uvm_reg_data_t    value,
-                     input uvm_path_e        path = UVM_DEFAULT_PATH,
-                     input uvm_reg_map       map = null,
-                     input uvm_sequence_base parent=null,
-                     input int               prior = -1,
-                     input uvm_object        extension = null,
-                     input string            fname = "",
-                     input int               lineno = 0);
-    if (is_shadowed) atomic_shadow_wr.get(1);
-    super.write(status, value, path, map, parent, prior, extension, fname, lineno);
-    if (is_shadowed && en_shadow_wr) begin
-      super.write(status, value, path, map, parent, prior, extension, fname, lineno);
-    end
-    if (is_shadowed) atomic_shadow_wr.put(1);
-  endtask
-
   // Override do_predict function to support shadow_reg.
   // Skip predict in one of the following conditions:
   // 1). It is shadow_reg's first write.
-  // 2). It is shadow_reg's second write with an update_err.
   // 2). The shadow_reg is locked due to fatal storage error and it is not a backdoor write.
-
+  // Note that if shadow_register write has update error, we only update the value with correct
+  // fields.
   virtual function void do_predict(uvm_reg_item      rw,
                                    uvm_predict_e     kind = UVM_PREDICT_DIRECT,
                                    uvm_reg_byte_en_t be = -1);
-    if (is_shadowed && kind != UVM_PREDICT_READ && (shadow_wr_staged || shadow_update_err ||
-        (shadow_fatal_lock && rw.path != UVM_BACKDOOR))) begin
-      `uvm_info(`gfn, $sformatf(
-          "skip predict %s: due to shadow_reg_first_wr=%0b, update_err=%0b, shadow_fatal_lock=%0b",
-          get_name(), shadow_wr_staged, shadow_update_err, shadow_fatal_lock), UVM_HIGH)
-      return;
+    pre_do_predict(rw, kind);
+    if (is_shadowed && kind != UVM_PREDICT_READ) begin
+      if (shadow_wr_staged || (shadow_fatal_lock && rw.path != UVM_BACKDOOR)) begin
+        `uvm_info(`gfn, $sformatf(
+            "skip predict %s: due to shadow_reg_first_wr=%0b, shadow_fatal_lock=%0b",
+            get_name(), shadow_wr_staged, shadow_fatal_lock), UVM_HIGH)
+        return;
+      end else begin
+        `uvm_info(`gfn, $sformatf(
+            "Shadow reg %0s has update error, update rw.value from %0h to %0h",
+            get_name(), rw.value[0], get_committed_val()), UVM_HIGH)
+        rw.value[0] = get_committed_val();
+      end
     end
     super.do_predict(rw, kind, be);
+
+    // For register with special access policies, update committed and shadowed value again with
+    // the actual predicted value.
+    if (do_update_shadow_vals) begin
+      dv_base_reg_field flds[$];
+      this.get_dv_base_reg_fields(flds);
+      foreach (flds[i]) begin
+        if (!flds[i].get_shadow_storage_err()) begin
+          flds[i].update_committed_val(`gmv(flds[i]));
+          flds[i].update_shadowed_val(~`gmv(flds[i]));
+        end
+      end
+      do_update_shadow_vals = 0;
+    end
+    lock_lockable_flds(rw.value[0]);
   endfunction
 
   // This function is used for wen_reg to lock its lockable flds by changing the lockable flds'
@@ -287,31 +310,35 @@ class dv_base_reg extends uvm_reg;
                     input uvm_object        extension = null,
                     input string            fname = "",
                     input int               lineno = 0);
-    if (kind == "BkdrRegPathRtlShadow") shadowed_val = value;
-    else if (kind == "BkdrRegPathRtlCommitted") committed_val = value;
 
+    dv_base_reg_field flds[$];
+    this.get_dv_base_reg_fields(flds);
+    foreach (flds[i]) begin
+      if (kind == "BkdrRegPathRtlShadow") begin
+        flds[i].update_shadowed_val(get_field_val(flds[i], value));
+        backdoor_write_shadow_val = 1;
+      end else if (kind == "BkdrRegPathRtlCommitted") begin
+        flds[i].update_committed_val(get_field_val(flds[i], value));
+        backdoor_write_shadow_val = 1;
+      end
+    end
     super.poke(status, value, kind, parent, extension, fname, lineno);
+    backdoor_write_shadow_val = 0;
   endtask
+
+  virtual function uvm_reg_data_t get_committed_val();
+    dv_base_reg_field flds[$];
+    this.get_dv_base_reg_fields(flds);
+    foreach (flds[i]) begin
+      get_committed_val |= flds[i].get_committed_val() << flds[i].get_lsb_pos();
+    end
+  endfunction
 
   // Callback function to update shadowed values according to specific design.
   // Should only be called after post-write.
   // If a shadow reg is locked due to fatal error, this function will return without updates
   virtual function void update_shadowed_val(uvm_reg_data_t val, bit do_predict = 1);
-    if (shadow_fatal_lock) return;
-    if (shadow_wr_staged) begin
-      // update value after first write
-      staged_shadow_val = val;
-    end else begin
-      // update value after second write
-      if (staged_shadow_val != val) begin
-        shadow_update_err = 1;
-      end else begin
-        shadow_update_err = 0;
-        committed_val     = staged_shadow_val;
-        shadowed_val      = ~committed_val;
-      end
-    end
-    if (do_predict) void'(predict(val));
+    // TODO: find a better way to support for AES.
   endfunction
 
   virtual function void reset(string kind = "HARD");
@@ -320,12 +347,8 @@ class dv_base_reg extends uvm_reg;
       shadow_update_err = 0;
       shadow_wr_staged  = 0;
       shadow_fatal_lock = 0;
-      committed_val     = get_mirrored_value();
-      shadowed_val      = ~committed_val;
       // in case reset is issued during shadowed writes
-      void'(atomic_shadow_wr.try_get(1));
       void'(atomic_en_shadow_wr.try_get(1));
-      atomic_shadow_wr.put(1);
       atomic_en_shadow_wr.put(1);
     end
   endfunction
@@ -339,13 +362,11 @@ class dv_base_reg extends uvm_reg;
   endfunction
 
   function string get_update_err_alert_name();
-    string parent_name = this.get_parent().get_name();
-
     // block level alert name is input alert name from hjson
     if (get_parent().get_parent() == null) return update_err_alert_name;
 
-    // top-level alert name is ${block_name} + alert name from hjson
-    return ($sformatf("%0s_%0s", parent_name, update_err_alert_name));
+    // top-level alert name is ${ip_name} + alert name from hjson
+    return ($sformatf("%0s_%0s", get_dv_base_reg_block().get_ip_name(), update_err_alert_name));
   endfunction
 
   function void lock_shadow_reg();
@@ -357,13 +378,13 @@ class dv_base_reg extends uvm_reg;
   endfunction
 
   function string get_storage_err_alert_name();
-    string parent_name = this.get_parent().get_name();
+    string ip_name;
 
     // block level alert name is input alert name from hjson
     if (get_parent().get_parent() == null) return storage_err_alert_name;
 
-    // top-level alert name is ${block_name} + alert name from hjson
-    return ($sformatf("%0s_%0s", parent_name, storage_err_alert_name));
+    // top-level alert name is ${ip_name} + alert name from hjson
+    return ($sformatf("%0s_%0s", get_dv_base_reg_block().get_ip_name(), storage_err_alert_name));
   endfunction
 
 endclass

@@ -177,7 +177,7 @@ class Testpoint(Element):
             self.test_results = [Result(name=self.name, passing=0, total=0)]
 
 
-class Testplan():
+class Testplan:
     """The full testplan
 
     The list of Testpoints and Covergroups make up the testplan.
@@ -192,7 +192,7 @@ class Testplan():
         try:
             return hjson.load(open(filename, 'rU'))
         except IOError as e:
-            print(f"IO Error when opening fie {filename}\n{e}")
+            print(f"IO Error when opening file {filename}\n{e}")
         except hjson.scanner.HjsonDecodeError as e:
             print(f"Error: Unable to decode HJSON with file {filename}:\n{e}")
         sys.exit(1)
@@ -287,8 +287,9 @@ class Testplan():
         self.progress = {}
         for key in Testpoint.milestones:
             self.progress[key] = {
-                "written": 0,
                 "total": 0,
+                "written": 0,
+                "passing": 0,
                 "progress": 0.0,
             }
 
@@ -440,6 +441,8 @@ class Testplan():
                 # Compute the testplan progress.
                 self.progress[ms]["total"] += 1
                 if tr.total != 0:
+                    if tr.passing == tr.total:
+                        self.progress[ms]["passing"] += 1
                     self.progress[ms]["written"] += 1
 
                 # Compute the milestone total & the grand total.
@@ -500,7 +503,7 @@ class Testplan():
                 self.progress.pop(ms)
                 continue
 
-            stat["progress"] = self._get_percentage(stat["written"],
+            stat["progress"] = self._get_percentage(stat["passing"],
                                                     stat["total"])
 
         self.test_results_mapped = True
@@ -527,8 +530,9 @@ class Testplan():
                 written += 1
 
         self.progress["Covergroups"] = {
-            "written": written,
             "total": total,
+            "written": written,
+            "passing": written,
             "progress": self._get_percentage(written, total),
         }
 

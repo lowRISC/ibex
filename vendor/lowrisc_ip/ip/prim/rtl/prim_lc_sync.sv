@@ -19,7 +19,10 @@ module prim_lc_sync #(
   // This instantiates the synchronizer flops if set to 1.
   // In special cases where the receiver is in the same clock domain as the sender,
   // this can be set to 0. However, it is recommended to leave this at 1.
-  parameter bit AsyncOn = 1
+  parameter bit AsyncOn = 1,
+  // 0: reset value is lc_ctrl_pkg::Off
+  // 1: reset value is lc_ctrl_pkg::On
+  parameter bit ResetValueIsOn = 0
 ) (
   input                                       clk_i,
   input                                       rst_ni,
@@ -27,13 +30,16 @@ module prim_lc_sync #(
   output lc_ctrl_pkg::lc_tx_t [NumCopies-1:0] lc_en_o
 );
 
+  localparam lc_ctrl_pkg::lc_tx_t ResetValue = (ResetValueIsOn) ? lc_ctrl_pkg::On :
+                                                                  lc_ctrl_pkg::Off;
+
   `ASSERT_INIT(NumCopiesMustBeGreaterZero_A, NumCopies > 0)
 
   logic [lc_ctrl_pkg::TxWidth-1:0] lc_en;
   if (AsyncOn) begin : gen_flops
     prim_flop_2sync #(
       .Width(lc_ctrl_pkg::TxWidth),
-      .ResetValue(lc_ctrl_pkg::TxWidth'(lc_ctrl_pkg::Off))
+      .ResetValue(lc_ctrl_pkg::TxWidth'(ResetValue))
     ) u_prim_flop_2sync (
       .clk_i,
       .rst_ni,
@@ -68,20 +74,22 @@ module prim_lc_sync #(
 
   // If the multibit signal is in a transient state, we expect it
   // to be stable again within one clock cycle.
-  `ASSERT(CheckTransients_A,
+  // DV will exclude these three assertions by name, thus added a module name prefix to make it
+  // harder to accidentally replicate in other modules.
+  `ASSERT(PrimLcSyncCheckTransients_A,
       !(lc_en_i inside {lc_ctrl_pkg::On, lc_ctrl_pkg::Off})
       |=>
       (lc_en_i inside {lc_ctrl_pkg::On, lc_ctrl_pkg::Off}))
 
   // If a signal departs from passive state, we expect it to move to the active state
   // with only one transient cycle in between.
-  `ASSERT(CheckTransients0_A,
+  `ASSERT(PrimLcSyncCheckTransients0_A,
       $past(lc_en_i == lc_ctrl_pkg::Off) &&
       !(lc_en_i inside {lc_ctrl_pkg::On, lc_ctrl_pkg::Off})
       |=>
       (lc_en_i == lc_ctrl_pkg::On))
 
-  `ASSERT(CheckTransients1_A,
+  `ASSERT(PrimLcSyncCheckTransients1_A,
       $past(lc_en_i == lc_ctrl_pkg::On) &&
       !(lc_en_i inside {lc_ctrl_pkg::On, lc_ctrl_pkg::Off})
       |=>
