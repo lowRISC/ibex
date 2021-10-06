@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Development version of edalize until all our changes are upstream
-git+https://github.com/lowRISC/edalize.git@ot
+git+https://github.com/lowRISC/edalize.git@ot-dev
 
 # Development version with OT-specific changes
 git+https://github.com/lowRISC/fusesoc.git@ot
