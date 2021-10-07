@@ -23,17 +23,19 @@
   // Import additional common sim cfg files.
   import_cfgs: [
       // Project wide common sim cfg file
-      "{proj_root}/vendor/lowrisc_ip/dv/tools/dvsim/common_sim_cfg.hjson"
+      "{proj_root}/vendor/lowrisc_ip/dv/tools/dvsim/common_sim_cfg.hjson",
+      "{proj_root}/vendor/lowrisc_ip/dv/verilator/memutil_dpi_scrambled_opts.hjson"
   ]
 
   build_modes: [
     {
       name: default
-      en_build_modes: ["{tool}_icache_ecc"]
+      en_build_modes: ["{tool}_icache_ecc",
+                       "{tool}_memutil_dpi_scrambled_build_opts"]
     }
     {
       name: vcs_icache_ecc
-      build_opts: ["-gv tb.ICacheECC=1"]
+      build_opts: ["-gv tb.ICacheECC=1 -gv tb.ICacheScramble=0"]
     }
     {
       name: riviera_icache_ecc

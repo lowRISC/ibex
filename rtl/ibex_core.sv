@@ -88,6 +88,7 @@ module ibex_core import ibex_pkg::*; #(
   output logic [IC_INDEX_W-1:0]        ic_data_addr_o,
   output logic [LineSizeECC-1:0]       ic_data_wdata_o,
   input  logic [LineSizeECC-1:0]       ic_data_rdata_i [IC_NUM_WAYS],
+  input  logic                         ic_scr_key_valid_i,
 
   // Interrupt inputs
   input  logic                         irq_software_i,
@@ -138,6 +139,7 @@ module ibex_core import ibex_pkg::*; #(
   input  logic                         fetch_enable_i,
   output logic                         alert_minor_o,
   output logic                         alert_major_o,
+  output logic                         icache_inval_o,
   output logic                         core_busy_o
 );
 
@@ -383,16 +385,17 @@ module ibex_core import ibex_pkg::*; #(
     .instr_rdata_i  (instr_rdata_i),
     .instr_err_i    (instr_err_i),
 
-    .ic_tag_req_o   (ic_tag_req_o),
-    .ic_tag_write_o (ic_tag_write_o),
-    .ic_tag_addr_o  (ic_tag_addr_o),
-    .ic_tag_wdata_o (ic_tag_wdata_o),
-    .ic_tag_rdata_i (ic_tag_rdata_i),
-    .ic_data_req_o  (ic_data_req_o),
-    .ic_data_write_o(ic_data_write_o),
-    .ic_data_addr_o (ic_data_addr_o),
-    .ic_data_wdata_o(ic_data_wdata_o),
-    .ic_data_rdata_i(ic_data_rdata_i),
+    .ic_tag_req_o      (ic_tag_req_o),
+    .ic_tag_write_o    (ic_tag_write_o),
+    .ic_tag_addr_o     (ic_tag_addr_o),
+    .ic_tag_wdata_o    (ic_tag_wdata_o),
+    .ic_tag_rdata_i    (ic_tag_rdata_i),
+    .ic_data_req_o     (ic_data_req_o),
+    .ic_data_write_o   (ic_data_write_o),
+    .ic_data_addr_o    (ic_data_addr_o),
+    .ic_data_wdata_o   (ic_data_wdata_o),
+    .ic_data_rdata_i   (ic_data_rdata_i),
+    .ic_scr_key_valid_i(ic_scr_key_valid_i),
 
     // outputs to ID stage
     .instr_valid_id_o        (instr_valid_id),
@@ -608,6 +611,7 @@ module ibex_core import ibex_pkg::*; #(
     .instr_id_done_o  (instr_id_done)
   );
 
+  assign icache_inval_o = icache_inval;
   // for RVFI only
   assign unused_illegal_insn_id = illegal_insn_id;
 
