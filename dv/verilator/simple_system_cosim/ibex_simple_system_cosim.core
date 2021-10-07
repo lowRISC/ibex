@@ -100,6 +100,12 @@ parameters:
     paramtype: vlogparam
     description: "Number of PMP regions"
 
+  ICacheScramble:
+    datatype: int
+    default: 0
+    paramtype: vlogparam
+    description: "Enables ICache scrambling feature (EXPERIMENTAL) [0/1]"
+
 targets:
   default: &default_target
     filesets:
@@ -119,6 +125,7 @@ targets:
       - PMPEnable
       - PMPGranularity
       - PMPNumRegions
+      - ICacheScramble
       - SRAMInitFile
 
   lint:

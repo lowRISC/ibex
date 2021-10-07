@@ -5,23 +5,22 @@ CAPI=2:
 name: "lowrisc:ibex:ibex_riscv_compliance:0.1"
 description: "Ibex simulation for RISC-V compliance testing (using Verilator)"
 filesets:
-  files_sim_verilator:
+  files_sim:
     depend:
-      - lowrisc:dv_verilator:memutil_verilator
-      - lowrisc:dv_verilator:simutil_verilator
       - lowrisc:ibex:ibex_top_tracing
       - lowrisc:ibex:sim_shared
-
     files:
       - rtl/ibex_riscv_compliance.sv
-      - ibex_riscv_compliance.cc: { file_type: cppSource }
       - rtl/riscv_testutil.sv
     file_type: systemVerilogSource
 
-  files_verilator_waiver:
+  files_verilator:
+    depend:
+      - lowrisc:dv_verilator:memutil_verilator
+      - lowrisc:dv_verilator:simutil_verilator
     files:
+      - ibex_riscv_compliance.cc: { file_type: cppSource }
       - lint/verilator_waiver.vlt: {file_type: vlt}
-
 
 parameters:
   RV32E:
@@ -102,12 +101,18 @@ parameters:
     default: 0
     description: "Enables security hardening features (EXPERIMENTAL) [0/1]"
 
+  ICacheScramble:
+    datatype: int
+    paramtype: vlogparam
+    default: 0
+    description: "Enables ICache scrambling feature (EXPERIMENTAL) [0/1]"
+
 targets:
   sim:
     default_tool: verilator
     filesets:
-      - tool_verilator ? (files_verilator_waiver)
-      - files_sim_verilator
+      - files_sim
+      - tool_verilator ? (files_verilator)
     parameters:
       - RV32E
       - RV32M
@@ -122,6 +127,7 @@ targets:
       - PMPGranularity
       - PMPNumRegions
       - SecureIbex
+      - ICacheScramble
     toplevel: ibex_riscv_compliance
     tools:
       verilator:

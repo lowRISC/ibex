@@ -26,6 +26,7 @@ Instantiation Template
       .RegFile          ( ibex_pkg::RegFileFF              ),
       .ICache           ( 0                                ),
       .ICacheECC        ( 0                                ),
+      .ICacheScramble   ( 0                                ),
       .BranchPrediction ( 0                                ),
       .SecureIbex       ( 0                                ),
       .RndCnstLfsrSeed  ( ibex_pkg::RndCnstLfsrSeedDefault ),
@@ -131,6 +132,9 @@ Parameters
 | ``ICacheECC``                | bit                 | 0          | *EXPERIMENTAL* Enable SECDED ECC protection in ICache (if             |
 |                              |                     |            | ICache == 1)                                                          |
 +------------------------------+---------------------+------------+-----------------------------------------------------------------------+
+| ``ICacheScramble``           | bit                 | 0          | *EXPERIMENTAL* Enabling this parameter replaces tag and data RAMs of  |
+|                              |                     |            |  ICache with scrambling RAM primitives.                               |
++------------------------------+---------------------+------------+-----------------------------------------------------------------------+
 | ``BranchPrediction``         | bit                 | 0          | *EXPERIMENTAL* Enable Static branch prediction                        |
 +------------------------------+---------------------+------------+-----------------------------------------------------------------------+
 | ``SecureIbex``               | bit                 | 0          | *EXPERIMENTAL* Enable various additional features targeting           |
@@ -193,6 +197,8 @@ Interfaces
 | ``data_*``              | Load-store unit interface, see :ref:`load-store-unit`                  |
 +-------------------------+------------------------------------------------------------------------+
 | ``irq_*``               | Interrupt inputs, see :ref:`exceptions-interrupts`                     |
++-------------------------+-------------------------+-----+----------------------------------------+
+| ``scramble_*``          | Scrambling key interface, see :ref:`icache`                            |
 +-------------------------+------------------------------------------------------------------------+
 | ``debug_*``             | Debug interface, see :ref:`debug-support`                              |
 +-------------------------+------------------------------------------------------------------------+

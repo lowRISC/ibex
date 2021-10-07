@@ -15,6 +15,7 @@ filesets:
   files_dv:
     depend:
       - lowrisc:dv:ibex_icache_test
+      - lowrisc:prim:ram_1p_scr
     files:
       - tb/tb.sv
     file_type: systemVerilogSource
