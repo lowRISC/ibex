@@ -715,28 +715,28 @@
 
   # Disable cosim for bitmanip tests for now as Ibex implements a different
   # version of the spec compared to the Spike version used for the cosim.
-- test: riscv_bitmanip_full_test
-  desc: >
-    Random instruction test with supported B extension instructions in full configuration
-  iterations: 10
-  gen_test: riscv_rand_instr_test
-  gen_opts: >
-    +enable_b_extension=1
-    +enable_bitmanip_groups=zbb,zb_tmp,zbt,zbs,zbp,zbf,zbe,zbc,zbr
-    +disable_cosim=1
-  rtl_test: core_ibex_base_test
-  rtl_params:
-    RV32B: "ibex_pkg::RV32BFull"
-
-- test: riscv_bitmanip_balanced_test
-  desc: >
-    Random instruction test with supported B extension instructions in balanced configuration
-  iterations: 10
-  gen_test: riscv_rand_instr_test
-  gen_opts: >
-    +enable_b_extension=1
-    +enable_bitmanip_groups=zbb,zb_tmp,zbt,zbs,zbf
-    +disable_cosim=1
-  rtl_test: core_ibex_base_test
-  rtl_params:
-    RV32B: ["ibex_pkg::RV32BFull", "ibex_pkg::RV32BBalanced"]
+  #- test: riscv_bitmanip_full_test
+  #  desc: >
+  #    Random instruction test with supported B extension instructions in full configuration
+  #  iterations: 10
+  #  gen_test: riscv_rand_instr_test
+  #  gen_opts: >
+  #    +enable_b_extension=1
+  #    +enable_bitmanip_groups=zbb,zb_tmp,zbt,zbs,zbp,zbf,zbe,zbc,zbr
+  #    +disable_cosim=1
+  #  rtl_test: core_ibex_base_test
+  #  rtl_params:
+  #    RV32B: "ibex_pkg::RV32BFull"
+  #
+  #- test: riscv_bitmanip_balanced_test
+  #  desc: >
+  #    Random instruction test with supported B extension instructions in balanced configuration
+  #  iterations: 10
+  #  gen_test: riscv_rand_instr_test
+  #  gen_opts: >
+  #    +enable_b_extension=1
+  #    +enable_bitmanip_groups=zbb,zb_tmp,zbt,zbs,zbf
+  #    +disable_cosim=1
+  #  rtl_test: core_ibex_base_test
+  #  rtl_params:
+  #    RV32B: ["ibex_pkg::RV32BFull", "ibex_pkg::RV32BBalanced"]
