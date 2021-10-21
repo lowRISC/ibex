@@ -222,8 +222,14 @@ bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data, uint32_t pc,
   pending_iside_error = false;
 
   // Errors may have been generated outside of step() (e.g. in
-  // check_mem_access()), return false if there are any.
-  return errors.size() == 0;
+  // check_mem_access()). Only increment insn_cnt and return true if there are
+  // no errors
+  if (errors.size() == 0) {
+    insn_cnt++;
+    return true;
+  }
+
+  return false;
 }
 
 bool SpikeCosim::check_gpr_write(const commit_log_reg_t::value_type &reg_change,
@@ -538,3 +544,5 @@ bool SpikeCosim::pc_is_mret(uint32_t pc) {
 
   return insn == 0x30200073;
 }
+
+int SpikeCosim::get_insn_cnt() { return insn_cnt; }

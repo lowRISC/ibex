@@ -54,6 +54,8 @@ class SpikeCosim : public simif_t, public Cosim {
 
   void on_csr_write(const commit_log_reg_t::value_type &reg_change);
 
+  int insn_cnt;
+
  public:
   SpikeCosim(uint32_t start_pc, uint32_t start_mtvec,
              const std::string &trace_log_path, bool secure_ibex,
@@ -87,6 +89,7 @@ class SpikeCosim : public simif_t, public Cosim {
   void set_iside_error(uint32_t addr) override;
   const std::vector<std::string> &get_errors() override;
   void clear_errors() override;
+  int get_insn_cnt() override;
 };
 
 #endif  // SPIKE_COSIM_H_
