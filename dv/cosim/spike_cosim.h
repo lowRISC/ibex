@@ -6,10 +6,10 @@
 #define SPIKE_COSIM_H_
 
 #include "cosim.h"
-#include "devices.h"
-#include "log_file.h"
-#include "processor.h"
-#include "simif.h"
+#include "riscv/devices.h"
+#include "riscv/log_file.h"
+#include "riscv/processor.h"
+#include "riscv/simif.h"
 
 #include <stdint.h>
 #include <deque>
