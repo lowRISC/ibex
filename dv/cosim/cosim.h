@@ -132,6 +132,10 @@ class Cosim {
 
   // Clear internal vector of error descriptions
   virtual void clear_errors() = 0;
+
+  // Returns a count of instructions executed by co-simulator and DUT without
+  // failures.
+  virtual int get_insn_cnt() = 0;
 };
 
 #endif  // COSIM_H_

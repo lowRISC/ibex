@@ -224,6 +224,9 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
   function void final_phase(uvm_phase phase);
     super.final_phase(phase);
 
+    `uvm_info(`gfn, $sformatf("Co-simulation matched %d instructions",
+                                riscv_cosim_get_insn_cnt(cosim_handle)), UVM_LOW)
+
     if (cosim_handle) begin
       spike_cosim_release(cosim_handle);
     end
