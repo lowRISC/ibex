@@ -6,7 +6,7 @@ Co-simulation System
 Overview
 --------
 
-The Ibex UVM DV environment contains a co-simulation system.
+A co-simulation system is provided that can run in either the Ibex UVM DV environment or with Simple System.
 This system runs a RISC-V ISS (currently only Spike is supported) in lockstep with an Ibex core.
 All instructions executed by Ibex and memory transactions generated are checked against the behaviour of the ISS.
 This system supports memory errors, interrupt and debug requests which are observed in the RTL simulation and forwarded to the ISS so the ISS and RTL remain in sync.
@@ -30,12 +30,15 @@ Follow the Spike build instructions to build and install Spike.
 The build will install multiple header files and libraries, it is recommended a custom install location (using ``--prefix=<path>`` with ``configure``) is used to avoid cluttering system directories.
 The ``--enable-commitlog`` and ``--enable-misaligned`` options must be passed to ``configure``.
 
-Once built, the ``IBEX_COSIM_ISS_ROOT`` environment variable must be set to the Spike root install directory (as given by ``--prefix=<path>`` to ``configure``) in order to build the UVM DV environment with co-simulation support.
+Once built, the ``IBEX_COSIM_ISS_ROOT`` environment variable must be set to the Spike root install directory (as given by ``--prefix=<path>`` to ``configure``) in order to build either the UVM DV environment or Simple System with co-simulation support.
 
 To build/run the UVM DV environment with the co-simulator add the ``COSIM=1`` argument to the make command.
+To build Simple System with the co-simulator build the ``lowrisc:ibex:ibex_simple_system_cosim`` core.
 
 Quick Build and Run Instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Build and install the co-simulator
 
 .. code-block:: bash
 
@@ -48,15 +51,37 @@ Quick Build and Run Instructions
   cd build
 
   # Configure and build spike
-  ../configure --enable-commitlog --enable-misaligned --prefix=/tools/spike-ibex-cosim
-  make -j8 install
+  ../configure --enable-commitlog --enable-misaligned --prefix=/opt/spike-cosim
+  sudo make -j8 install
 
-  # Setup IBEX_COSIM_ISS_ROOT to allow DV flow to use co-simulation
-  export IBEX_COSIM_ISS_ROOT=/tools/spike-ibex-cosim
+  # Setup IBEX_COSIM_ISS_ROOT so build flow can find the co-simulator
+  export IBEX_COSIM_ISS_ROOT=/opt/spike-cosim
+
+Run the UVM DV regression with co-simulation enabled
+
+.. code-block:: bash
 
   # Run regression with co-simulation enabled
   cd <ibex_area>/dv/uvm/core_ibex
   make COSIM=1
+
+Build and run Simple System with the co-simulation enabled
+
+.. code-block:: bash
+
+  # Build simulator
+  fusesoc --cores-root=. run --target=sim --setup --build lowrisc:ibex:ibex_simple_system_cosim --RV32E=0 --RV32M=ibex_pkg::RV32MFast
+
+  # Build coremark test binary, with performance counter dump disabled. The
+  # co-simulator system doesn't produce matching performance counters in spike so
+  # any read of those CSRs results in a mismatch and a failure.
+  make -C ./examples/sw/benchmarks/coremark SUPPRESS_PCOUNT_DUMP=1
+
+  # Spike's libsoftfloat.so needs to be accessible so add it to LD_LIBRARY_PATH
+  export LD_LIBRARY_PATH=/opt/spike-cosim/lib:$LD_LIBRARY_PATH
+
+  # Run coremark binary with co-simulation checking
+  build/lowrisc_ibex_ibex_simple_system_cosim_0/sim-verilator/Vibex_simple_system --meminit=ram,examples/sw/benchmarks/coremark/coremark.elf
 
 Co-simulation details
 ----------------------
