@@ -3,12 +3,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "spike_cosim.h"
-#include "config.h"
-#include "decode.h"
-#include "devices.h"
-#include "log_file.h"
-#include "processor.h"
-#include "simif.h"
+#include "riscv/config.h"
+#include "riscv/decode.h"
+#include "riscv/devices.h"
+#include "riscv/log_file.h"
+#include "riscv/processor.h"
+#include "riscv/simif.h"
 
 #include <cassert>
 #include <iostream>
@@ -17,7 +17,7 @@
 SpikeCosim::SpikeCosim(uint32_t start_pc, uint32_t start_mtvec,
                        const std::string &trace_log_path, bool secure_ibex,
                        bool icache_en)
-    : pending_iside_error(false), nmi_mode(false) {
+    : nmi_mode(false), pending_iside_error(false) {
   FILE *log_file = nullptr;
   if (trace_log_path.length() != 0) {
     log = std::make_unique<log_file_t>(trace_log_path.c_str());

@@ -47,8 +47,9 @@
       -f ibex_dv_cosim_dpi.f
       +define+INC_IBEX_COSIM
       -LDFLAGS '-L<IBEX_COSIM_ISS_ROOT>/lib/'
-      -CFLAGS '-I<IBEX_COSIM_ISS_ROOT>/include/riscv -I<IBEX_COSIM_ISS_ROOT>/include/softfloat'
-      -CFLAGS '-I<IBEX_COSIM_ISS_ROOT>/include/fesvr -I<IBEX_ROOT>/dv/cosim'
+      -CFLAGS '-I<IBEX_COSIM_ISS_ROOT>/include'
+      -CFLAGS '-I<IBEX_COSIM_ISS_ROOT>/include/softfloat'
+      -CFLAGS '-I<IBEX_ROOT>/dv/cosim'
       -lriscv -lsoftfloat -lfdt -ldl -ldisasm -lstdc++
   sim:
     cmd: >
