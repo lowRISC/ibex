@@ -32,6 +32,8 @@ module core_ibex_tb_top;
 
   core_ibex_ifetch_if ifetch_if(.clk(clk));
 
+  core_ibex_ifetch_pmp_if ifetch_pmp_if(.clk(clk));
+
   // VCS does not support overriding enum and string parameters via command line. Instead, a
   // `define is used that can be set from the command line. If no value has been specified, this
   // gives a default. Other simulators don't take the detour via `define and can override the
@@ -209,6 +211,11 @@ module core_ibex_tb_top;
   assign ifetch_if.fetch_err       = dut.u_ibex_top.u_ibex_core.if_stage_i.fetch_err;
   assign ifetch_if.fetch_err_plus2 = dut.u_ibex_top.u_ibex_core.if_stage_i.fetch_err_plus2;
 
+  assign ifetch_pmp_if.reset         = ~dut.u_ibex_top.u_ibex_core.if_stage_i.rst_ni;
+  assign ifetch_pmp_if.fetch_valid   = dut.u_ibex_top.u_ibex_core.instr_req_out;
+  assign ifetch_pmp_if.fetch_addr    = dut.u_ibex_top.u_ibex_core.instr_addr_o;
+  assign ifetch_pmp_if.fetch_pmp_err = dut.u_ibex_top.u_ibex_core.pmp_req_err[ibex_pkg::PMP_I];
+
   assign data_mem_vif.misaligned_first =
     dut.u_ibex_top.u_ibex_core.load_store_unit_i.handle_misaligned_d |
     ((dut.u_ibex_top.u_ibex_core.load_store_unit_i.lsu_type_i == 2'b01) &
@@ -237,6 +244,7 @@ module core_ibex_tb_top;
     uvm_config_db#(virtual ibex_mem_intf)::set(null, "*instr_if_response*", "vif", instr_mem_vif);
     uvm_config_db#(virtual irq_if)::set(null, "*", "vif", irq_vif);
     uvm_config_db#(virtual core_ibex_ifetch_if)::set(null, "*", "ifetch_if", ifetch_if);
+    uvm_config_db#(virtual core_ibex_ifetch_pmp_if)::set(null, "*", "ifetch_pmp_if", ifetch_pmp_if);
     run_test();
   end
 

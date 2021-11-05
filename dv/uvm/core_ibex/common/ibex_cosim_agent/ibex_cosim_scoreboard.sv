@@ -10,14 +10,16 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
 
   core_ibex_cosim_cfg cfg;
 
-  uvm_tlm_analysis_fifo #(ibex_rvfi_seq_item)     rvfi_port;
-  uvm_tlm_analysis_fifo #(ibex_mem_intf_seq_item) dmem_port;
-  uvm_tlm_analysis_fifo #(ibex_mem_intf_seq_item) imem_port;
-  uvm_tlm_analysis_fifo #(ibex_ifetch_seq_item)   ifetch_port;
+  uvm_tlm_analysis_fifo #(ibex_rvfi_seq_item)       rvfi_port;
+  uvm_tlm_analysis_fifo #(ibex_mem_intf_seq_item)   dmem_port;
+  uvm_tlm_analysis_fifo #(ibex_mem_intf_seq_item)   imem_port;
+  uvm_tlm_analysis_fifo #(ibex_ifetch_seq_item)     ifetch_port;
+  uvm_tlm_analysis_fifo #(ibex_ifetch_pmp_seq_item) ifetch_pmp_port;
 
   virtual core_ibex_instr_monitor_if              instr_vif;
 
   bit failed_iside_accesses [bit[31:0]];
+  bit iside_pmp_failure     [bit[31:0]];
 
   typedef struct {
     bit [63:0] order;
@@ -31,11 +33,12 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
   function new(string name="", uvm_component parent=null);
     super.new(name, parent);
 
-    rvfi_port    = new("rvfi_port", this);
-    dmem_port    = new("dmem_port", this);
-    imem_port    = new("imem_port", this);
-    ifetch_port  = new("ifetch_port", this);
-    cosim_handle = null;
+    rvfi_port       = new("rvfi_port", this);
+    dmem_port       = new("dmem_port", this);
+    imem_port       = new("imem_port", this);
+    ifetch_port     = new("ifetch_port", this);
+    ifetch_pmp_port = new("ifetch_pmp_port", this);
+    cosim_handle    = null;
   endfunction
 
   function void build_phase(uvm_phase phase);
@@ -70,8 +73,12 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
           if (cfg.probe_imem_for_errs) begin
             run_cosim_imem();
           end else begin
-            run_cosim_ifetch();
+            fork
+              run_cosim_ifetch();
+              run_cosim_ifetch_pmp();
+            join_any
           end
+
           wait (instr_vif.instr_cb.reset === 1'b1);
         join_any
         disable fork;
@@ -182,29 +189,51 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
     end
   endtask: run_cosim_ifetch
 
+  task run_cosim_ifetch_pmp();
+    ibex_ifetch_pmp_seq_item ifetch_pmp;
+
+    // Keep track of which addresses have seen PMP failures.
+    forever begin
+      ifetch_pmp_port.get(ifetch_pmp);
+
+      if (ifetch_pmp.fetch_pmp_err) begin
+        iside_pmp_failure[ifetch_pmp.fetch_addr] = 1'b1;
+      end else begin
+        if (iside_pmp_failure.exists(ifetch_pmp.fetch_addr)) begin
+          iside_pmp_failure.delete(ifetch_pmp.fetch_addr);
+        end
+      end
+    end
+  endtask
+
   task run_cosim_imem_errors();
     bit [63:0] latest_order = 64'hffffffff_ffffffff;
     bit [31:0] aligned_addr;
+    bit [31:0] aligned_next_addr;
     forever begin
       // Wait for new instruction to appear in ID stage
       wait (instr_vif.instr_cb.valid_id &&
             instr_vif.instr_cb.instr_new_id &&
             latest_order != instr_vif.instr_cb.rvfi_order_id);
-      // Determine if instruction comes from an address that has seen an error. If an error was seen
-      // add the instruction order ID and address to iside_error_queue
-      aligned_addr = instr_vif.instr_cb.pc_id & 32'hfffffffc;
+      // Determine if the instruction comes from an address that has seen an error that wasn't a PMP
+      // error (the icache records both PMP errors and fetch errors with the same error bits). If a
+      // fetch error was seen add the instruction order ID and address to iside_error_queue.
+      aligned_addr      = instr_vif.instr_cb.pc_id & 32'hfffffffc;
+      aligned_next_addr = aligned_addr + 32'd4;
 
-      if (failed_iside_accesses.exists(instr_vif.instr_cb.pc_id & 32'hfffffffc)) begin
+      if (failed_iside_accesses.exists(aligned_addr) && !iside_pmp_failure.exists(aligned_addr))
+      begin
         iside_error_queue.push_back('{order : instr_vif.instr_cb.rvfi_order_id,
-                                      addr  : instr_vif.instr_cb.pc_id & 32'hfffffffc});
+                                      addr  : aligned_addr});
       end else if (!instr_vif.instr_cb.is_compressed_id &&
                    (instr_vif.instr_cb.pc_id & 32'h3) != 0 &&
-                   failed_iside_accesses.exists((instr_vif.instr_cb.pc_id + 32'd4) & 32'hfffffffc))
+                   failed_iside_accesses.exists(aligned_next_addr) &&
+                   !iside_pmp_failure.exists(aligned_next_addr))
       begin
         // Where an instruction crosses a 32-bit boundary, check if an error was seen on the other
         // side of the boundary
         iside_error_queue.push_back('{order : instr_vif.instr_cb.rvfi_order_id,
-                                      addr  : (instr_vif.instr_cb.pc_id + 32'd4) & 32'hfffffffc});
+                                      addr  : aligned_next_addr});
       end
 
       latest_order = instr_vif.instr_cb.rvfi_order_id;
