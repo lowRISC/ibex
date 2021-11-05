@@ -46,17 +46,20 @@ bool SpikeCosim::mmio_load(reg_t addr, size_t len, uint8_t *bytes) {
 
   bool dut_error = false;
 
-  // Incoming access may be an iside or dside access. Calculate 32-bit aligned
-  // address and current 32-bit aligned PC to help determine which.
+  // Incoming access may be an iside or dside access. Use PC to help determine
+  // which.
+  uint32_t pc = processor->get_state()->pc;
   uint32_t aligned_addr = addr & 0xfffffffc;
-  uint32_t aligned_pc = processor->get_state()->pc & 0xfffffffc;
 
   if (pending_iside_error && (aligned_addr == pending_iside_err_addr)) {
     // Check if the incoming access is subject to an iside error, in which case
     // assume it's an iside access and produce an error.
     pending_iside_error = false;
     dut_error = true;
-  } else if (aligned_pc != aligned_addr && (aligned_pc + 4) != aligned_addr) {
+  } else if (addr < pc || addr >= (pc + 8)) {
+    // Spike may attempt to access up to 8-bytes from the PC when fetching, so
+    // only check as a dside access when it falls outside that range.
+
     // Otherwise check if the aligned PC matches with the aligned address or an
     // incremented aligned PC (to capture the unaligned 4-byte instruction
     // case). Assume a successful iside access if either of these checks are
