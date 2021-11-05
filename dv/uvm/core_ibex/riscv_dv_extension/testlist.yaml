@@ -731,7 +731,6 @@
     +enable_zbs_extension=1
     +enable_b_extension=1
     +enable_bitmanip_groups=zbe,zbf,zbp,zbr,zbt
-    +disable_cosim=1
   rtl_test: core_ibex_base_test
   rtl_params:
     RV32B: "ibex_pkg::RV32BFull"
@@ -748,7 +747,6 @@
     +enable_zbs_extension=1
     +enable_b_extension=1
     +enable_bitmanip_groups=zbf,zbp,zbr,zbt
-    +disable_cosim=1
   rtl_test: core_ibex_base_test
   rtl_params:
     RV32B: ["ibex_pkg::RV32BFull", "ibex_pkg::RV32BOTEarlGrey"]
@@ -764,7 +762,6 @@
     +enable_zbs_extension=1
     +enable_b_extension=1
     +enable_bitmanip_groups=zbf,zbt
-    +disable_cosim=1
   rtl_test: core_ibex_base_test
   rtl_params:
     RV32B: ["ibex_pkg::RV32BFull", "ibex_pkg::RV32BOTEarlGrey", "ibex_pkg::RV32BBalanced"]

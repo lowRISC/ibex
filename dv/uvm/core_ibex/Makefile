@@ -12,6 +12,7 @@ $(error IBEX_COSIM_ISS_ROOT must be set to the root of a suitable spike build if
 else
 # Spike builds a libsoftfloat.so shared library that the simulator binary needs.
 # Set LD_LIBRARY_PATH so it can be found.
+$(info Cosim active)
 export LD_LIBRARY_PATH := $(IBEX_COSIM_ISS_ROOT)/lib/:${LD_LIBRARY_PATH}
 endif
 endif
