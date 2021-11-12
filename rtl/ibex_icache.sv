@@ -11,7 +11,6 @@
 `include "prim_assert.sv"
 
 module ibex_icache import ibex_pkg::*; #(
-  parameter bit          BranchPredictor = 1'b0,
   parameter bit          ICacheECC       = 1'b0,
   parameter bit          ResetAll        = 1'b0,
   parameter int unsigned BusSizeECC      = BUS_SIZE,
@@ -30,8 +29,8 @@ module ibex_icache import ibex_pkg::*; #(
   // Set the cache's address counter
   input  logic                           branch_i,
   input  logic                           branch_spec_i,
-  input  logic                           predicted_branch_i,
   input  logic                           branch_mispredict_i,
+  input  logic [31:0]                    mispredict_addr_i,
   input  logic [31:0]                    addr_i,
 
   // IF stage interface: Pass fetched instructions to the core
@@ -76,7 +75,6 @@ module ibex_icache import ibex_pkg::*; #(
 
   // Prefetch signals
   logic [ADDR_W-1:0]                      lookup_addr_aligned;
-  logic [ADDR_W-1:0]                      branch_mispredict_addr;
   logic [ADDR_W-1:0]                      prefetch_addr_d, prefetch_addr_q;
   logic                                   prefetch_addr_en;
   logic                                   branch_or_mispredict;
@@ -198,41 +196,6 @@ module ibex_icache import ibex_pkg::*; #(
   // Instruction prefetch //
   //////////////////////////
 
-  if (BranchPredictor) begin : g_branch_predictor
-    // Where the branch predictor is present record what address followed a predicted branch.  If
-    // that branch is predicted taken but mispredicted (so not-taken) this is used to resume on
-    // the not-taken code path.
-    logic [31:0] branch_mispredict_addr_q;
-    logic        branch_mispredict_addr_en;
-
-    assign branch_mispredict_addr_en = branch_i & predicted_branch_i;
-
-    if (ResetAll) begin : g_branch_misp_ra
-      always_ff @(posedge clk_i or negedge rst_ni) begin
-        if (!rst_ni) begin
-          branch_mispredict_addr_q <= '0;
-        end else if (branch_mispredict_addr_en) begin
-          branch_mispredict_addr_q <= {output_addr_incr, 1'b0};
-        end
-      end
-    end else begin : g_branch_misp_nr
-      always_ff @(posedge clk_i) begin
-        if (branch_mispredict_addr_en) begin
-          branch_mispredict_addr_q <= {output_addr_incr, 1'b0};
-        end
-      end
-    end
-
-    assign branch_mispredict_addr = branch_mispredict_addr_q;
-
-  end else begin : g_no_branch_predictor
-    logic        unused_predicted_branch;
-
-    assign unused_predicted_branch   = predicted_branch_i;
-
-    assign branch_mispredict_addr = '0;
-  end
-
   assign branch_or_mispredict = branch_i | branch_mispredict_i;
 
   assign lookup_addr_aligned = {lookup_addr_ic0[ADDR_W-1:IC_LINE_W], {IC_LINE_W{1'b0}}};
@@ -247,7 +210,7 @@ module ibex_icache import ibex_pkg::*; #(
       lookup_grant_ic0 ? (lookup_addr_aligned +
                           {{ADDR_W-IC_LINE_W-1{1'b0}}, 1'b1, {IC_LINE_W{1'b0}}}) :
       branch_i         ? addr_i :
-                         branch_mispredict_addr;
+                         mispredict_addr_i;
 
   assign prefetch_addr_en    = branch_or_mispredict | lookup_grant_ic0;
 
@@ -277,7 +240,7 @@ module ibex_icache import ibex_pkg::*; #(
   assign lookup_req_ic0   = req_i & ~&fill_busy_q & (branch_or_mispredict | ~lookup_throttle) &
                             ~ecc_write_req;
   assign lookup_addr_ic0  = branch_spec_i       ? addr_i :
-                            branch_mispredict_i ? branch_mispredict_addr :
+                            branch_mispredict_i ? mispredict_addr_i :
                                                   prefetch_addr_q;
   assign lookup_index_ic0 = lookup_addr_ic0[IC_INDEX_HI:IC_LINE_W];
 
@@ -1068,7 +1031,7 @@ module ibex_icache import ibex_pkg::*; #(
 
   // Redirect the address on branches or mispredicts
   assign output_addr_d = branch_i            ? addr_i[31:1] :
-                         branch_mispredict_i ? branch_mispredict_addr[31:1] :
+                         branch_mispredict_i ? mispredict_addr_i[31:1] :
                                                output_addr_incr;
 
   if (ResetAll) begin : g_output_addr_ra

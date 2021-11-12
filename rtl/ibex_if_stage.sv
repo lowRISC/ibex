@@ -82,6 +82,7 @@ module ibex_if_stage import ibex_pkg::*; #(
   input  pc_sel_e                     pc_mux_i,                 // selector for PC multiplexer
   input  logic                        nt_branch_mispredict_i,   // Not-taken branch in ID/EX was
                                                                 // mispredicted (predicted taken)
+  input  logic [31:0]                 nt_branch_addr_i,         // Not-taken branch address in ID/EX
   input  exc_pc_sel_e                 exc_pc_mux_i,             // selects ISR address
   input  exc_cause_e                  exc_cause,                // selects ISR address for
                                                                 // vectorized interrupt lines
@@ -118,7 +119,6 @@ module ibex_if_stage import ibex_pkg::*; #(
   logic              prefetch_busy;
   logic              branch_req;
   logic              branch_spec;
-  logic              predicted_branch;
   logic       [31:0] fetch_addr_n;
   logic              unused_fetch_addr_n0;
 
@@ -200,7 +200,6 @@ module ibex_if_stage import ibex_pkg::*; #(
   if (ICache) begin : gen_icache
     // Full I-Cache option
     ibex_icache #(
-      .BranchPredictor (BranchPredictor),
       .ICacheECC       (ICacheECC),
       .ResetAll        (ResetAll),
       .BusSizeECC      (BusSizeECC),
@@ -214,8 +213,8 @@ module ibex_if_stage import ibex_pkg::*; #(
 
         .branch_i            ( branch_req                 ),
         .branch_spec_i       ( branch_spec                ),
-        .predicted_branch_i  ( predicted_branch           ),
         .branch_mispredict_i ( nt_branch_mispredict_i     ),
+        .mispredict_addr_i   ( nt_branch_addr_i           ),
         .addr_i              ( {fetch_addr_n[31:1], 1'b0} ),
 
         .ready_i             ( fetch_ready                ),
@@ -251,7 +250,6 @@ module ibex_if_stage import ibex_pkg::*; #(
   end else begin : gen_prefetch_buffer
     // prefetch buffer, caches a fixed number of instructions
     ibex_prefetch_buffer #(
-      .BranchPredictor (BranchPredictor),
       .ResetAll        (ResetAll)
     ) prefetch_buffer_i (
         .clk_i               ( clk_i                      ),
@@ -261,8 +259,8 @@ module ibex_if_stage import ibex_pkg::*; #(
 
         .branch_i            ( branch_req                 ),
         .branch_spec_i       ( branch_spec                ),
-        .predicted_branch_i  ( predicted_branch           ),
         .branch_mispredict_i ( nt_branch_mispredict_i     ),
+        .mispredict_addr_i   ( nt_branch_addr_i           ),
         .addr_i              ( {fetch_addr_n[31:1], 1'b0} ),
 
         .ready_i             ( fetch_ready                ),
@@ -512,7 +510,7 @@ module ibex_if_stage import ibex_pkg::*; #(
     // data_gnt_i -> instr_req_o (which needs to be avoided as for some interconnects this will
     // result in a combinational loop).
 
-    assign instr_skid_en = predicted_branch & ~id_in_ready_i & ~instr_skid_valid_q;
+    assign instr_skid_en = predict_branch_taken & ~pc_set_i & ~id_in_ready_i & ~instr_skid_valid_q;
 
     assign instr_skid_valid_d = (instr_skid_valid_q & ~id_in_ready_i & ~stall_dummy_instr) |
                                 instr_skid_en;
@@ -564,10 +562,7 @@ module ibex_if_stage import ibex_pkg::*; #(
     // Do not branch predict on instruction errors.
     assign predict_branch_taken = predict_branch_taken_raw & ~instr_skid_valid_q & ~fetch_err;
 
-    // pc_set_i takes precendence over branch prediction
-    assign predicted_branch = predict_branch_taken & ~pc_set_i;
-
-    assign if_instr_valid   = fetch_valid | instr_skid_valid_q;
+    assign if_instr_valid   = fetch_valid | (instr_skid_valid_q & ~nt_branch_mispredict_i);
     assign if_instr_rdata   = instr_skid_valid_q ? instr_skid_data_q : fetch_rdata;
     assign if_instr_addr    = instr_skid_valid_q ? instr_skid_addr_q : fetch_addr;
 
@@ -585,7 +580,6 @@ module ibex_if_stage import ibex_pkg::*; #(
   end else begin : g_no_branch_predictor
     assign instr_bp_taken_o     = 1'b0;
     assign predict_branch_taken = 1'b0;
-    assign predicted_branch     = 1'b0;
     assign predict_branch_pc    = 32'b0;
 
     assign if_instr_valid = fetch_valid;
@@ -637,6 +631,11 @@ module ibex_if_stage import ibex_pkg::*; #(
     logic mispredicted, mispredicted_d, mispredicted_q;
 
     assign next_pc = fetch_addr + (instr_is_compressed_out ? 32'd2 : 32'd4);
+
+    logic predicted_branch;
+
+    // pc_set_i takes precendence over branch prediction
+    assign predicted_branch = predict_branch_taken & ~pc_set_i;
 
     always_comb begin
       predicted_branch_live_d = predicted_branch_live_q;

@@ -187,6 +187,7 @@ module ibex_core import ibex_pkg::*; #(
   logic        pc_set;
   logic        pc_set_spec;
   logic        nt_branch_mispredict;
+  logic [31:0] nt_branch_addr;
   pc_sel_e     pc_mux_id;                      // Mux selector for next PC
   exc_pc_sel_e exc_pc_mux_id;                  // Mux selector for exception PC
   exc_cause_e  exc_cause;                      // Exception cause
@@ -434,6 +435,7 @@ module ibex_core import ibex_pkg::*; #(
 
     // branch targets
     .branch_target_ex_i(branch_target_ex),
+    .nt_branch_addr_i  (nt_branch_addr),
 
     // CSRs
     .csr_mepc_i      (csr_mepc),  // exception return address
@@ -499,6 +501,7 @@ module ibex_core import ibex_pkg::*; #(
     .pc_set_spec_o         (pc_set_spec),
     .pc_mux_o              (pc_mux_id),
     .nt_branch_mispredict_o(nt_branch_mispredict),
+    .nt_branch_addr_o      (nt_branch_addr),
     .exc_pc_mux_o          (exc_pc_mux_id),
     .exc_cause_o           (exc_cause),
     .icache_inval_o        (icache_inval),
