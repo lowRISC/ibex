@@ -8,8 +8,8 @@ module ic_top import ibex_pkg::*; #(parameter bit ICacheECC = 1'b0) (
     input  logic                           req_i,
     input  logic                           branch_i,
     input  logic                           branch_spec_i,
-    input  logic                           predicted_branch_i,
     input  logic                           branch_mispredict_i,
+    input  logic [31:0]                    mispredict_addr_i,
     input  logic [31:0]                    addr_i,
     input  logic                           ready_i,
     output logic                           valid_o,
@@ -60,8 +60,8 @@ module ic_top import ibex_pkg::*; #(parameter bit ICacheECC = 1'b0) (
 
       .branch_i            ( branch_i                   ),
       .branch_spec_i       ( branch_spec_i              ),
-      .predicted_branch_i  ( predicted_branch_i         ),
       .branch_mispredict_i ( branch_mispredict_i        ),
+      .mispredict_addr_i   ( mispredict_addr_i          ),
       .addr_i              ( addr_i                     ),
 
       .ready_i             ( ready_i                    ),

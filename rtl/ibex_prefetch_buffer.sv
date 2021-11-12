@@ -10,7 +10,6 @@
  * paths to the instruction cache.
  */
 module ibex_prefetch_buffer #(
-  parameter bit BranchPredictor = 1'b0,
   parameter bit ResetAll        = 1'b0
 ) (
   input  logic        clk_i,
@@ -20,8 +19,8 @@ module ibex_prefetch_buffer #(
 
   input  logic        branch_i,
   input  logic        branch_spec_i,
-  input  logic        predicted_branch_i,
   input  logic        branch_mispredict_i,
+  input  logic [31:0] mispredict_addr_i,
   input  logic [31:0] addr_i,
 
 
@@ -62,7 +61,6 @@ module ibex_prefetch_buffer #(
   logic                stored_addr_en;
   logic [31:0]         fetch_addr_d, fetch_addr_q;
   logic                fetch_addr_en;
-  logic [31:0]         branch_mispredict_addr;
   logic [31:0]         instr_addr, instr_addr_w_aligned;
   logic                instr_or_pmp_err;
 
@@ -73,8 +71,6 @@ module ibex_prefetch_buffer #(
   logic [NUM_REQS-1:0] fifo_busy;
 
   logic                valid_raw;
-
-  logic [31:0]         addr_next;
 
   logic                branch_or_mispredict;
 
@@ -128,7 +124,6 @@ module ibex_prefetch_buffer #(
       .out_ready_i           ( ready_i           ),
       .out_rdata_o           ( rdata_o           ),
       .out_addr_o            ( addr_o            ),
-      .out_addr_next_o       ( addr_next         ),
       .out_err_o             ( err_o             ),
       .out_err_plus2_o       ( err_plus2_o       )
   );
@@ -198,50 +193,13 @@ module ibex_prefetch_buffer #(
       end
     end
   end
-
-  if (BranchPredictor) begin : g_branch_predictor
-    // Where the branch predictor is present record what address followed a predicted branch.  If
-    // that branch is predicted taken but mispredicted (so not-taken) this is used to resume on
-    // the not-taken code path.
-    logic [31:0] branch_mispredict_addr_q;
-    logic        branch_mispredict_addr_en;
-
-    assign branch_mispredict_addr_en = branch_i & predicted_branch_i;
-
-    if (ResetAll) begin : g_branch_misp_addr_ra
-      always_ff @(posedge clk_i or negedge rst_ni) begin
-        if (!rst_ni) begin
-          branch_mispredict_addr_q <= '0;
-        end else if (branch_mispredict_addr_en) begin
-          branch_mispredict_addr_q <= addr_next;
-        end
-      end
-    end else begin : g_branch_misp_addr_nr
-      always_ff @(posedge clk_i) begin
-        if (branch_mispredict_addr_en) begin
-          branch_mispredict_addr_q <= addr_next;
-        end
-      end
-    end
-
-    assign branch_mispredict_addr = branch_mispredict_addr_q;
-  end else begin : g_no_branch_predictor
-    logic        unused_predicted_branch;
-    logic [31:0] unused_addr_next;
-
-    assign unused_predicted_branch = predicted_branch_i;
-    assign unused_addr_next        = addr_next;
-
-    assign branch_mispredict_addr = '0;
-  end
-
   // 2. fetch_addr_q
 
   // Update on a branch or as soon as a request is issued
   assign fetch_addr_en = branch_or_mispredict | (valid_new_req & ~valid_req_q);
 
   assign fetch_addr_d = (branch_i            ? addr_i :
-                         branch_mispredict_i ? {branch_mispredict_addr[31:2], 2'b00} :
+                         branch_mispredict_i ? {mispredict_addr_i[31:2], 2'b00} :
                                                {fetch_addr_q[31:2], 2'b00}) +
                         // Current address + 4
                         {{29{1'b0}},(valid_new_req & ~valid_req_q),2'b00};
@@ -265,7 +223,7 @@ module ibex_prefetch_buffer #(
   // Address mux
   assign instr_addr = valid_req_q         ? stored_addr_q :
                       branch_spec_i       ? addr_i :
-                      branch_mispredict_i ? branch_mispredict_addr :
+                      branch_mispredict_i ? mispredict_addr_i :
                                             fetch_addr_q;
 
   assign instr_addr_w_aligned = {instr_addr[31:2], 2'b00};
@@ -318,7 +276,7 @@ module ibex_prefetch_buffer #(
   // Push a new entry to the FIFO once complete (and not cancelled by a branch)
   assign fifo_valid = rvalid_or_pmp_err & ~branch_discard_q[0];
 
-  assign fifo_addr = branch_i ? addr_i : branch_mispredict_addr;
+  assign fifo_addr = branch_i ? addr_i : mispredict_addr_i;
 
   ///////////////
   // Registers //

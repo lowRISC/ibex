@@ -54,6 +54,7 @@ module ibex_id_stage #(
   output logic                      pc_set_spec_o,
   output ibex_pkg::pc_sel_e         pc_mux_o,
   output logic                      nt_branch_mispredict_o,
+  output logic [31:0]               nt_branch_addr_o,
   output ibex_pkg::exc_pc_sel_e     exc_pc_mux_o,
   output ibex_pkg::exc_cause_e      exc_cause_o,
 
@@ -737,6 +738,16 @@ module ibex_id_stage #(
   // designs ensures that this never happens for non-predicted branches.
   `ASSERT(NeverDoubleBranch, branch_set & ~instr_bp_taken_i |=> ~branch_set)
   `ASSERT(NeverDoubleJump, jump_set & ~instr_bp_taken_i |=> ~jump_set)
+
+  //////////////////////////////
+  // Branch not-taken address //
+  //////////////////////////////
+
+  if (BranchPredictor) begin : g_calc_nt_addr
+    assign nt_branch_addr_o = pc_id_i + (instr_is_compressed_i ? 32'd2 : 32'd4);
+  end else begin : g_n_calc_nt_addr
+    assign nt_branch_addr_o = 32'd0;
+  end
 
   ///////////////
   // ID-EX FSM //
