@@ -141,15 +141,10 @@ module ibex_core import ibex_pkg::*; #(
   output logic                         core_busy_o
 );
 
-  localparam int unsigned PMP_NUM_CHAN      = 2;
+  localparam int unsigned PMP_NUM_CHAN      = 3;
   localparam bit          DataIndTiming     = SecureIbex;
   localparam bit          PCIncrCheck       = SecureIbex;
   localparam bit          ShadowCSR         = 1'b0;
-  // Speculative branch option, trades-off performance against timing.
-  // Setting this to 1 eases branch target critical paths significantly but reduces performance
-  // by ~3% (based on CoreMark/MHz score).
-  // Set by default in the max PMP config which has the tightest budget for branch target timing.
-  localparam bit          SpecBranch        = PMPEnable & (PMPNumRegions == 16);
 
   // IF/ID signals
   logic        dummy_instr_id;
@@ -185,7 +180,6 @@ module ibex_core import ibex_pkg::*; #(
   logic        instr_first_cycle_id;
   logic        instr_valid_clear;
   logic        pc_set;
-  logic        pc_set_spec;
   logic        nt_branch_mispredict;
   logic [31:0] nt_branch_addr;
   pc_sel_e     pc_mux_id;                      // Mux selector for next PC
@@ -302,7 +296,6 @@ module ibex_core import ibex_pkg::*; #(
   pmp_cfg_t     csr_pmp_cfg  [PMPNumRegions];
   pmp_mseccfg_t csr_pmp_mseccfg;
   logic         pmp_req_err  [PMP_NUM_CHAN];
-  logic         instr_req_out;
   logic         data_req_out;
 
   logic        csr_save_if;
@@ -316,7 +309,6 @@ module ibex_core import ibex_pkg::*; #(
   logic [31:0] csr_mtval;
   logic        csr_mstatus_tw;
   priv_lvl_e   priv_mode_id;
-  priv_lvl_e   priv_mode_if;
   priv_lvl_e   priv_mode_lsu;
 
   // debug mode and dcsr configuration
@@ -384,13 +376,12 @@ module ibex_core import ibex_pkg::*; #(
     .req_i      (instr_req_gated),  // instruction request control
 
     // instruction cache interface
-    .instr_req_o    (instr_req_out),
+    .instr_req_o    (instr_req_o),
     .instr_addr_o   (instr_addr_o),
     .instr_gnt_i    (instr_gnt_i),
     .instr_rvalid_i (instr_rvalid_i),
     .instr_rdata_i  (instr_rdata_i),
     .instr_err_i    (instr_err_i),
-    .instr_pmp_err_i(pmp_req_err[PMP_I]),
 
     .ic_tag_req_o   (ic_tag_req_o),
     .ic_tag_write_o (ic_tag_write_o),
@@ -417,11 +408,12 @@ module ibex_core import ibex_pkg::*; #(
     .dummy_instr_id_o        (dummy_instr_id),
     .pc_if_o                 (pc_if),
     .pc_id_o                 (pc_id),
+    .pmp_err_if_i            (pmp_req_err[PMP_I]),
+    .pmp_err_if_plus2_i      (pmp_req_err[PMP_I2]),
 
     // control signals
     .instr_valid_clear_i   (instr_valid_clear),
     .pc_set_i              (pc_set),
-    .pc_set_spec_i         (pc_set_spec),
     .pc_mux_i              (pc_mux_id),
     .nt_branch_mispredict_i(nt_branch_mispredict),
     .exc_pc_mux_i          (exc_pc_mux_id),
@@ -454,9 +446,6 @@ module ibex_core import ibex_pkg::*; #(
   // available
   assign perf_iside_wait = id_in_ready & ~instr_valid_id;
 
-  // Qualify the instruction request with PMP error
-  assign instr_req_o = instr_req_out & ~pmp_req_err[PMP_I];
-
   // fetch_enable_i can be used to stop the core fetching new instructions
   assign instr_req_gated = instr_req_int & fetch_enable_i;
 
@@ -470,7 +459,6 @@ module ibex_core import ibex_pkg::*; #(
     .RV32B          (RV32B),
     .BranchTargetALU(BranchTargetALU),
     .DataIndTiming  (DataIndTiming),
-    .SpecBranch     (SpecBranch),
     .WritebackStage (WritebackStage),
     .BranchPredictor(BranchPredictor)
   ) id_stage_i (
@@ -498,7 +486,6 @@ module ibex_core import ibex_pkg::*; #(
     .id_in_ready_o         (id_in_ready),
     .instr_req_o           (instr_req_int),
     .pc_set_o              (pc_set),
-    .pc_set_spec_o         (pc_set_spec),
     .pc_mux_o              (pc_mux_id),
     .nt_branch_mispredict_o(nt_branch_mispredict),
     .nt_branch_addr_o      (nt_branch_addr),
@@ -918,7 +905,6 @@ module ibex_core import ibex_pkg::*; #(
     // Hart ID from outside
     .hart_id_i      (hart_id_i),
     .priv_mode_id_o (priv_mode_id),
-    .priv_mode_if_o (priv_mode_if),
     .priv_mode_lsu_o(priv_mode_lsu),
 
     // mtvec
@@ -1013,12 +999,15 @@ module ibex_core import ibex_pkg::*; #(
     pmp_req_e    pmp_req_type [PMP_NUM_CHAN];
     priv_lvl_e   pmp_priv_lvl [PMP_NUM_CHAN];
 
-    assign pmp_req_addr[PMP_I] = {2'b00, instr_addr_o[31:0]};
-    assign pmp_req_type[PMP_I] = PMP_ACC_EXEC;
-    assign pmp_priv_lvl[PMP_I] = priv_mode_if;
-    assign pmp_req_addr[PMP_D] = {2'b00, data_addr_o[31:0]};
-    assign pmp_req_type[PMP_D] = data_we_o ? PMP_ACC_WRITE : PMP_ACC_READ;
-    assign pmp_priv_lvl[PMP_D] = priv_mode_lsu;
+    assign pmp_req_addr[PMP_I]  = {2'b00, pc_if};
+    assign pmp_req_type[PMP_I]  = PMP_ACC_EXEC;
+    assign pmp_priv_lvl[PMP_I]  = priv_mode_id;
+    assign pmp_req_addr[PMP_I2] = {2'b00, (pc_if + 32'd2)};
+    assign pmp_req_type[PMP_I2] = PMP_ACC_EXEC;
+    assign pmp_priv_lvl[PMP_I2] = priv_mode_id;
+    assign pmp_req_addr[PMP_D]  = {2'b00, data_addr_o[31:0]};
+    assign pmp_req_type[PMP_D]  = data_we_o ? PMP_ACC_WRITE : PMP_ACC_READ;
+    assign pmp_priv_lvl[PMP_D]  = priv_mode_lsu;
 
     ibex_pmp #(
       .PMPGranularity(PMPGranularity),
@@ -1039,19 +1028,19 @@ module ibex_core import ibex_pkg::*; #(
     );
   end else begin : g_no_pmp
     // Unused signal tieoff
-    priv_lvl_e unused_priv_lvl_if, unused_priv_lvl_ls;
+    priv_lvl_e unused_priv_lvl_ls;
     logic [33:0] unused_csr_pmp_addr [PMPNumRegions];
     pmp_cfg_t    unused_csr_pmp_cfg  [PMPNumRegions];
     pmp_mseccfg_t unused_csr_pmp_mseccfg;
-    assign unused_priv_lvl_if = priv_mode_if;
     assign unused_priv_lvl_ls = priv_mode_lsu;
     assign unused_csr_pmp_addr = csr_pmp_addr;
     assign unused_csr_pmp_cfg = csr_pmp_cfg;
     assign unused_csr_pmp_mseccfg = csr_pmp_mseccfg;
 
     // Output tieoff
-    assign pmp_req_err[PMP_I] = 1'b0;
-    assign pmp_req_err[PMP_D] = 1'b0;
+    assign pmp_req_err[PMP_I]  = 1'b0;
+    assign pmp_req_err[PMP_I2] = 1'b0;
+    assign pmp_req_err[PMP_D]  = 1'b0;
   end
 
 `ifdef RVFI

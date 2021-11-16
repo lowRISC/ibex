@@ -17,7 +17,6 @@ interface ibex_icache_core_protocol_checker (
    input        req,
 
    input        branch,
-   input        branch_spec,
    input [31:0] branch_addr,
 
    input        ready,
@@ -49,11 +48,6 @@ interface ibex_icache_core_protocol_checker (
   // The branch signal tells the cache to redirect. There's no real requirement on when it can be
   // asserted, but the address must be 16-bit aligned (i.e. the bottom bit must be zero).
   `ASSERT(BranchAddrAligned, branch |-> !branch_addr[0], clk, !rst_n)
-
-  // The 'branch' and 'branch_spec' ports
-  //
-  // The branch_spec signal is used in internal muxing and must be true if branch is true.
-  `ASSERT(BranchImpliesSpec, branch |-> branch_spec, clk, !rst_n)
 
   // The main instruction interface
 

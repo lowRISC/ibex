@@ -40,7 +40,6 @@ module ibex_if_stage import ibex_pkg::*; #(
   input  logic                        instr_rvalid_i,
   input  logic [31:0]                 instr_rdata_i,
   input  logic                        instr_err_i,
-  input  logic                        instr_pmp_err_i,
 
   // ICache RAM IO
   output logic [IC_NUM_WAYS-1:0]      ic_tag_req_o,
@@ -74,11 +73,12 @@ module ibex_if_stage import ibex_pkg::*; #(
   output logic                        dummy_instr_id_o,         // Instruction is a dummy
   output logic [31:0]                 pc_if_o,
   output logic [31:0]                 pc_id_o,
+  input  logic                        pmp_err_if_i,
+  input  logic                        pmp_err_if_plus2_i,
 
   // control signals
   input  logic                        instr_valid_clear_i,      // clear instr valid bit in IF-ID
   input  logic                        pc_set_i,                 // set the PC to a new value
-  input  logic                        pc_set_spec_i,
   input  pc_sel_e                     pc_mux_i,                 // selector for PC multiplexer
   input  logic                        nt_branch_mispredict_i,   // Not-taken branch in ID/EX was
                                                                 // mispredicted (predicted taken)
@@ -118,7 +118,6 @@ module ibex_if_stage import ibex_pkg::*; #(
   // prefetch buffer related signals
   logic              prefetch_busy;
   logic              branch_req;
-  logic              branch_spec;
   logic       [31:0] fetch_addr_n;
   logic              unused_fetch_addr_n0;
 
@@ -129,10 +128,17 @@ module ibex_if_stage import ibex_pkg::*; #(
   logic              fetch_err;
   logic              fetch_err_plus2;
 
+  logic [31:0]       instr_decompressed;
+  logic              illegal_c_insn;
+  logic              instr_is_compressed;
+
   logic              if_instr_valid;
   logic       [31:0] if_instr_rdata;
   logic       [31:0] if_instr_addr;
+  logic              if_instr_bus_err;
+  logic              if_instr_pmp_err;
   logic              if_instr_err;
+  logic              if_instr_err_plus2;
 
   logic       [31:0] exc_pc;
 
@@ -212,7 +218,6 @@ module ibex_if_stage import ibex_pkg::*; #(
         .req_i               ( req_i                      ),
 
         .branch_i            ( branch_req                 ),
-        .branch_spec_i       ( branch_spec                ),
         .branch_mispredict_i ( nt_branch_mispredict_i     ),
         .mispredict_addr_i   ( nt_branch_addr_i           ),
         .addr_i              ( {fetch_addr_n[31:1], 1'b0} ),
@@ -230,7 +235,6 @@ module ibex_if_stage import ibex_pkg::*; #(
         .instr_rvalid_i      ( instr_rvalid_i             ),
         .instr_rdata_i       ( instr_rdata_i              ),
         .instr_err_i         ( instr_err_i                ),
-        .instr_pmp_err_i     ( instr_pmp_err_i            ),
 
         .ic_tag_req_o        ( ic_tag_req_o               ),
         .ic_tag_write_o      ( ic_tag_write_o             ),
@@ -258,7 +262,6 @@ module ibex_if_stage import ibex_pkg::*; #(
         .req_i               ( req_i                      ),
 
         .branch_i            ( branch_req                 ),
-        .branch_spec_i       ( branch_spec                ),
         .branch_mispredict_i ( nt_branch_mispredict_i     ),
         .mispredict_addr_i   ( nt_branch_addr_i           ),
         .addr_i              ( {fetch_addr_n[31:1], 1'b0} ),
@@ -276,7 +279,6 @@ module ibex_if_stage import ibex_pkg::*; #(
         .instr_rvalid_i      ( instr_rvalid_i             ),
         .instr_rdata_i       ( instr_rdata_i              ),
         .instr_err_i         ( instr_err_i                ),
-        .instr_pmp_err_i     ( instr_pmp_err_i            ),
 
         .busy_o              ( prefetch_busy              )
     );
@@ -301,20 +303,28 @@ module ibex_if_stage import ibex_pkg::*; #(
   assign unused_fetch_addr_n0 = fetch_addr_n[0];
 
   assign branch_req  = pc_set_i | predict_branch_taken;
-  assign branch_spec = pc_set_spec_i | predict_branch_taken;
 
   assign pc_if_o     = if_instr_addr;
   assign if_busy_o   = prefetch_busy;
+
+  // PMP errors
+  // An error can come from the instruction address, or the next instruction address for unaligned,
+  // uncompressed instructions.
+  assign if_instr_pmp_err = pmp_err_if_i |
+                            (if_instr_addr[2] & ~instr_is_compressed & pmp_err_if_plus2_i);
+
+  // Combine bus errors and pmp errors
+  assign if_instr_err = if_instr_bus_err | if_instr_pmp_err;
+
+  // Capture the second half of the address for errors on the second part of an instruction
+  assign if_instr_err_plus2 = ((if_instr_addr[2] & ~instr_is_compressed & pmp_err_if_plus2_i) |
+                               fetch_err_plus2) & ~pmp_err_if_i;
 
   // compressed instruction decoding, or more precisely compressed instruction
   // expander
   //
   // since it does not matter where we decompress instructions, we do it here
   // to ease timing closure
-  logic [31:0] instr_decompressed;
-  logic        illegal_c_insn;
-  logic        instr_is_compressed;
-
   ibex_compressed_decoder compressed_decoder_i (
     .clk_i          (clk_i),
     .rst_ni         (rst_ni),
@@ -424,7 +434,7 @@ module ibex_if_stage import ibex_pkg::*; #(
         // To reduce fan-out and help timing from the instr_rdata_id flops they are replicated.
         instr_rdata_alu_id_o     <= instr_out;
         instr_fetch_err_o        <= instr_err_out;
-        instr_fetch_err_plus2_o  <= fetch_err_plus2;
+        instr_fetch_err_plus2_o  <= if_instr_err_plus2;
         instr_rdata_c_id_o       <= if_instr_rdata[15:0];
         instr_is_compressed_id_o <= instr_is_compressed_out;
         illegal_c_insn_id_o      <= illegal_c_instr_out;
@@ -438,7 +448,7 @@ module ibex_if_stage import ibex_pkg::*; #(
         // To reduce fan-out and help timing from the instr_rdata_id flops they are replicated.
         instr_rdata_alu_id_o     <= instr_out;
         instr_fetch_err_o        <= instr_err_out;
-        instr_fetch_err_plus2_o  <= fetch_err_plus2;
+        instr_fetch_err_plus2_o  <= if_instr_err_plus2;
         instr_rdata_c_id_o       <= if_instr_rdata[15:0];
         instr_is_compressed_id_o <= instr_is_compressed_out;
         illegal_c_insn_id_o      <= illegal_c_instr_out;
@@ -455,7 +465,7 @@ module ibex_if_stage import ibex_pkg::*; #(
     // Do not check for sequential increase after a branch, jump, exception, interrupt or debug
     // request, all of which will set branch_req. Also do not check after reset or for dummys.
     assign prev_instr_seq_d = (prev_instr_seq_q | instr_new_id_d) &
-        ~branch_req & ~stall_dummy_instr;
+        ~branch_req & ~if_instr_err & ~stall_dummy_instr;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
@@ -465,8 +475,7 @@ module ibex_if_stage import ibex_pkg::*; #(
       end
     end
 
-    assign prev_instr_addr_incr = pc_id_o + ((instr_is_compressed_id_o && !instr_fetch_err_o) ?
-                                             32'd2 : 32'd4);
+    assign prev_instr_addr_incr = pc_id_o + (instr_is_compressed_id_o ? 32'd2 : 32'd4);
 
     // Check that the address equals the previous address +2/+4
     assign pc_mismatch_alert_o = prev_instr_seq_q & (pc_if_o != prev_instr_addr_incr);
@@ -568,7 +577,7 @@ module ibex_if_stage import ibex_pkg::*; #(
 
     // Don't branch predict on instruction error so only instructions without errors end up in the
     // skid buffer.
-    assign if_instr_err     = ~instr_skid_valid_q & fetch_err;
+    assign if_instr_bus_err = ~instr_skid_valid_q & fetch_err;
     assign instr_bp_taken_d = instr_skid_valid_q ? instr_skid_bp_taken_q : predict_branch_taken;
 
     assign fetch_ready = id_in_ready_i & ~stall_dummy_instr & ~instr_skid_valid_q;
@@ -585,7 +594,7 @@ module ibex_if_stage import ibex_pkg::*; #(
     assign if_instr_valid = fetch_valid;
     assign if_instr_rdata = fetch_rdata;
     assign if_instr_addr  = fetch_addr;
-    assign if_instr_err   = fetch_err;
+    assign if_instr_bus_err = fetch_err;
     assign fetch_ready = id_in_ready_i & ~stall_dummy_instr;
   end
 

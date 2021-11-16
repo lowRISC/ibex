@@ -18,17 +18,14 @@ interface ibex_icache_mem_protocol_checker (
   input        gnt,
   input [31:0] addr,
 
-  input        pmp_err,
-
   input        rvalid,
   input [31:0] rdata,
   input        err
 );
 
-  // The req, gnt, pmp_err and rvalid lines should always be known
+  // The req, gnt and rvalid lines should always be known
   `ASSERT_KNOWN(ReqKnown,    req,     clk, !rst_n)
   `ASSERT_KNOWN(GntKnown,    gnt,     clk, !rst_n)
-  `ASSERT_KNOWN(PmpErrKnown, pmp_err, clk, !rst_n)
   `ASSERT_KNOWN(RvalidKnown, rvalid,  clk, !rst_n)
 
   // The addr value should be known when req is asserted
@@ -40,8 +37,8 @@ interface ibex_icache_mem_protocol_checker (
   `ASSERT_KNOWN_IF(RDataKnown, rdata, rvalid & ~err, clk, !rst_n)
 
   // The 'req' signal starts a request and shouldn't drop again until granted. Similarly, requested
-  // address must be stable until the request is granted or cancelled by a PMP error.
-  `ASSERT(ReqUntilGrant, req & ~(gnt | pmp_err) |=> req,           clk, !rst_n)
-  `ASSERT(AddrStable,    req & ~(gnt | pmp_err) |=> $stable(addr), clk, !rst_n)
+  // address must be stable until the request is granted.
+  `ASSERT(ReqUntilGrant, req & ~gnt |=> req,           clk, !rst_n)
+  `ASSERT(AddrStable,    req & ~gnt |=> $stable(addr), clk, !rst_n)
 
 endinterface

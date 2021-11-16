@@ -10,9 +10,6 @@ interface ibex_icache_mem_if (input clk,
   logic        gnt;
   logic [31:0] addr;
 
-  // PMP errors
-  logic        pmp_err;
-
   // Response
   logic        rvalid;
   logic [31:0] rdata;
@@ -24,7 +21,6 @@ interface ibex_icache_mem_if (input clk,
 
     output gnt;
 
-    output pmp_err;
     output rvalid;
     output rdata;
     output err;
@@ -35,8 +31,6 @@ interface ibex_icache_mem_if (input clk,
     input req;
     input gnt;
     input addr;
-
-    input pmp_err;
 
     input rvalid;
     input rdata;
@@ -51,7 +45,6 @@ interface ibex_icache_mem_if (input clk,
   // the DUT).
   task automatic reset();
     driver_cb.rvalid  <= 1'b0;
-    driver_cb.pmp_err <= 1'b0;
     driver_cb.gnt     <= 1'b0;
   endtask
 

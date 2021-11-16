@@ -41,9 +41,6 @@ class ibex_icache_mem_monitor
   // The collect_requests monitor is in charge of spotting changes to instr_addr_o when the req
   // line is high
   //
-  // This must collect the "I have a new address request" immediately, rather than at the next clock
-  // edge, to make sure that a PMP error can be signalled in the same cycle.
-  //
   // Note that it's possible the underlying memory seed will change after the request has been seen.
   // We don't try to spot this, and instead report the error state based on the seed when the
   // request appeared.
@@ -76,17 +73,15 @@ class ibex_icache_mem_monitor
     end
   endtask
 
-  // The collect_grants monitor is in charge of spotting granted requests which haven't been
-  // squashed by a PMP error, passing them back to the driver ("Hey, you granted this. Time to
-  // service it!")
+  // The collect_grants monitor is in charge of spotting granted requests, passing them back to the
+  // driver ("Hey, you granted this. Time to service it!")
   task automatic collect_grants();
     logic pending_req = 1'b0;
 
     forever begin
-      if (cfg.vif.monitor_cb.req && cfg.vif.monitor_cb.gnt && !cfg.vif.monitor_cb.pmp_err) begin
+      if (cfg.vif.monitor_cb.req && cfg.vif.monitor_cb.gnt) begin
         new_grant(cfg.vif.monitor_cb.addr);
       end
-      if (cfg.en_cov && cfg.vif.monitor_cb.gnt) cov.gnt_err_cg.sample(cfg.vif.monitor_cb.pmp_err);
 
       @(cfg.vif.monitor_cb);
     end
@@ -108,7 +103,7 @@ class ibex_icache_mem_monitor
     end
   endtask
 
-  // This is called immediately when an address is requested and is used to drive the PMP response.
+  // This is called immediately when an address is requested.
   function automatic void new_request(logic [31:0] addr);
     ibex_icache_mem_req_item item = new("item");
 

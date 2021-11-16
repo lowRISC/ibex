@@ -23,7 +23,6 @@ module ibex_id_stage #(
   parameter ibex_pkg::rv32b_e RV32B           = ibex_pkg::RV32BNone,
   parameter bit               DataIndTiming   = 1'b0,
   parameter bit               BranchTargetALU = 0,
-  parameter bit               SpecBranch      = 0,
   parameter bit               WritebackStage  = 0,
   parameter bit               BranchPredictor = 0
 ) (
@@ -51,7 +50,6 @@ module ibex_id_stage #(
 
   // IF and ID stage signals
   output logic                      pc_set_o,
-  output logic                      pc_set_spec_o,
   output ibex_pkg::pc_sel_e         pc_mux_o,
   output logic                      nt_branch_mispredict_o,
   output logic [31:0]               nt_branch_addr_o,
@@ -199,7 +197,6 @@ module ibex_id_stage #(
   logic        id_exception;
 
   logic        branch_in_dec;
-  logic        branch_spec, branch_set_spec, branch_set_raw_spec;
   logic        branch_set, branch_set_raw, branch_set_raw_d;
   logic        branch_jump_set_done_q, branch_jump_set_done_d;
   logic        branch_not_set;
@@ -568,7 +565,6 @@ module ibex_id_stage #(
     // to prefetcher
     .instr_req_o           (instr_req_o),
     .pc_set_o              (pc_set_o),
-    .pc_set_spec_o         (pc_set_spec_o),
     .pc_mux_o              (pc_mux_o),
     .nt_branch_mispredict_o(nt_branch_mispredict_o),
     .exc_pc_mux_o          (exc_pc_mux_o),
@@ -583,7 +579,6 @@ module ibex_id_stage #(
 
     // jump/branch control
     .branch_set_i     (branch_set),
-    .branch_set_spec_i(branch_set_spec),
     .branch_not_set_i (branch_not_set),
     .jump_set_i       (jump_set),
 
@@ -662,7 +657,6 @@ module ibex_id_stage #(
     // Branch set fed straight to controller with branch target ALU
     // (condition pass/fail used same cycle as generated instruction request)
     assign branch_set_raw      = branch_set_raw_d;
-    assign branch_set_raw_spec = branch_spec;
   end else begin : g_branch_set_flop
     // Branch set flopped without branch target ALU, or in fixed time execution mode
     // (condition pass/fail used next cycle where branch target is calculated)
@@ -682,9 +676,6 @@ module ibex_id_stage #(
     assign branch_set_raw      = (BranchTargetALU && !data_ind_timing_i) ? branch_set_raw_d :
                                                                            branch_set_raw_q;
 
-    // Use the speculative branch signal when BTALU is enabled
-    assign branch_set_raw_spec = (BranchTargetALU && !data_ind_timing_i) ? branch_spec :
-                                                                           branch_set_raw_q;
   end
 
   // Track whether the current instruction in ID/EX has done a branch or jump set.
@@ -708,7 +699,6 @@ module ibex_id_stage #(
   // needless extra IF flushes and fetches.
   assign jump_set        = jump_set_raw        & ~branch_jump_set_done_q;
   assign branch_set      = branch_set_raw      & ~branch_jump_set_done_q;
-  assign branch_set_spec = branch_set_raw_spec & ~branch_jump_set_done_q;
 
   // Branch condition is calculated in the first cycle and flopped for use in the second cycle
   // (only used in fixed time execution mode to determine branch destination).
@@ -777,7 +767,6 @@ module ibex_id_stage #(
     stall_branch            = 1'b0;
     stall_alu               = 1'b0;
     branch_set_raw_d        = 1'b0;
-    branch_spec             = 1'b0;
     branch_not_set          = 1'b0;
     jump_set_raw            = 1'b0;
     perf_branch_o           = 1'b0;
@@ -819,8 +808,6 @@ module ibex_id_stage #(
                 branch_not_set = ~branch_decision_i;
               end
 
-              // Speculative branch (excludes branch_decision_i)
-              branch_spec   = SpecBranch ? 1'b1 : branch_decision_i;
               perf_branch_o = 1'b1;
             end
             jump_in_dec: begin

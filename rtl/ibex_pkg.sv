@@ -348,8 +348,9 @@ package ibex_pkg;
   parameter int unsigned PMP_CFG_W            = 8;
 
   // PMP acces type
-  parameter int unsigned PMP_I = 0;
-  parameter int unsigned PMP_D = 1;
+  parameter int unsigned PMP_I  = 0;
+  parameter int unsigned PMP_I2 = 1;
+  parameter int unsigned PMP_D  = 2;
 
   typedef enum logic [1:0] {
     PMP_ACC_EXEC    = 2'b00,
