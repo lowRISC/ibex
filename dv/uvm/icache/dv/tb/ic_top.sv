@@ -7,7 +7,6 @@ module ic_top import ibex_pkg::*; #(parameter bit ICacheECC = 1'b0) (
     input  logic                           rst_ni,
     input  logic                           req_i,
     input  logic                           branch_i,
-    input  logic                           branch_spec_i,
     input  logic                           branch_mispredict_i,
     input  logic [31:0]                    mispredict_addr_i,
     input  logic [31:0]                    addr_i,
@@ -22,7 +21,6 @@ module ic_top import ibex_pkg::*; #(parameter bit ICacheECC = 1'b0) (
     output logic [31:0]                    instr_addr_o,
     input  logic [BUS_SIZE-1:0]            instr_rdata_i,
     input  logic                           instr_err_i,
-    input  logic                           instr_pmp_err_i,
     input  logic                           instr_rvalid_i,
 
     input  logic                           icache_enable_i,
@@ -59,7 +57,6 @@ module ic_top import ibex_pkg::*; #(parameter bit ICacheECC = 1'b0) (
       .req_i               ( req_i                      ),
 
       .branch_i            ( branch_i                   ),
-      .branch_spec_i       ( branch_spec_i              ),
       .branch_mispredict_i ( branch_mispredict_i        ),
       .mispredict_addr_i   ( mispredict_addr_i          ),
       .addr_i              ( addr_i                     ),
@@ -77,7 +74,6 @@ module ic_top import ibex_pkg::*; #(parameter bit ICacheECC = 1'b0) (
       .instr_rvalid_i      ( instr_rvalid_i             ),
       .instr_rdata_i       ( instr_rdata_i              ),
       .instr_err_i         ( instr_err_i                ),
-      .instr_pmp_err_i     ( instr_pmp_err_i            ),
 
       .ic_tag_req_o        ( ic_tag_req                 ),
       .ic_tag_write_o      ( ic_tag_write               ),

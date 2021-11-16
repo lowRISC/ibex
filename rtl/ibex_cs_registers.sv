@@ -37,7 +37,6 @@ module ibex_cs_registers #(
 
   // Privilege mode
   output ibex_pkg::priv_lvl_e  priv_mode_id_o,
-  output ibex_pkg::priv_lvl_e  priv_mode_if_o,
   output ibex_pkg::priv_lvl_e  priv_mode_lsu_o,
   output logic                 csr_mstatus_tw_o,
 
@@ -729,8 +728,6 @@ module ibex_cs_registers #(
 
   // Send current priv level to the decoder
   assign priv_mode_id_o = priv_lvl_q;
-  // New instruction fetches need to account for updates to priv_lvl_q this cycle
-  assign priv_mode_if_o = priv_lvl_d;
   // Load/store instructions must factor in MPRV for PMP checking
   assign priv_mode_lsu_o = mstatus_q.mprv ? mstatus_q.mpp : priv_lvl_q;
 

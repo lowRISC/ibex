@@ -31,7 +31,6 @@ module tb #(parameter bit ICacheECC = 1'b0);
     // Connect icache <-> core interface
     .req_i               (core_if.req),
     .branch_i            (core_if.branch),
-    .branch_spec_i       (core_if.branch_spec),
     .branch_mispredict_i (1'b0),
     .mispredict_addr_i   (32'b0),
     .addr_i              (core_if.branch_addr),
@@ -51,7 +50,6 @@ module tb #(parameter bit ICacheECC = 1'b0);
     .instr_addr_o        (mem_if.addr),
     .instr_rdata_i       (mem_if.rdata),
     .instr_err_i         (mem_if.err),
-    .instr_pmp_err_i     (mem_if.pmp_err),
     .instr_rvalid_i      (mem_if.rvalid)
   );
 

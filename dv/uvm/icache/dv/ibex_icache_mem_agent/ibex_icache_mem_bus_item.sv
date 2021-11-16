@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // A transaction item that represents something happening on the memory bus. A 'request' is
-// initiated by the cache and comes with an address. A 'response' comes from the memory system
-// (including possibly the PMP checker). It comes with data and error flags.
+// initiated by the cache and comes with an address. A 'response' comes from the memory system.
+// It comes with data and error flags.
 
 class ibex_icache_mem_bus_item extends uvm_sequence_item;
 

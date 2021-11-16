@@ -9,7 +9,6 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
   input rst_ni,
 
   input priv_lvl_e priv_mode_id,
-  input priv_lvl_e priv_mode_if,
   input priv_lvl_e priv_mode_lsu
 );
   `include "dv_fcov_macros.svh"
@@ -244,9 +243,6 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     cp_branch_not_taken: coverpoint id_stage_i.fcov_branch_not_taken;
 
     cp_priv_mode_id: coverpoint priv_mode_id {
-      illegal_bins illegal = {PRIV_LVL_H, PRIV_LVL_S};
-    }
-    cp_priv_mode_if: coverpoint priv_mode_if {
       illegal_bins illegal = {PRIV_LVL_H, PRIV_LVL_S};
     }
     cp_priv_mode_lsu: coverpoint priv_mode_lsu {

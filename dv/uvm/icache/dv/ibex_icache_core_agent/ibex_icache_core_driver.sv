@@ -65,23 +65,20 @@ class ibex_icache_core_driver
     cfg.vif.driver_cb.ready <= $urandom_range(16) == 0;
 
     // Branch, invalidate and set new seed immediately. When the branch has finished, read num_insns
-    // instructions and wiggle the branch_spec line until everything is done.
+    // instructions until everything is done.
     fork
       begin
         cfg.vif.branch_to(req.branch_addr);
         cfg.vif.driver_cb.ready <= 1'b0;
         fork
           read_insns(rsp, req.num_insns);
-          drive_branch_spec();
         join_any
       end
       if (req.invalidate) invalidate();
       if (req.new_seed != 0) drive_new_seed(req.new_seed);
     join
 
-    // Kill the drive_branch_spec process and reset branch_spec if necessary.
     disable fork;
-    cfg.vif.driver_cb.branch_spec <= 0;
 
   endtask
 
@@ -108,8 +105,7 @@ class ibex_icache_core_driver
     cfg.vif.driver_cb.enable <= req.enable;
 
     // Lower req, invalidate and set new seed immediately. After req_low_cycles cycles, start
-    // reading instructions (providing there hasn't been a reset). Wiggle the branch_spec line the
-    // whole time.
+    // reading instructions (providing there hasn't been a reset).
     fork
       begin
         fork
@@ -119,12 +115,9 @@ class ibex_icache_core_driver
         join
         if (cfg.vif.rst_n) read_insns(rsp, req.num_insns);
       end
-      drive_branch_spec();
     join_any
 
-    // Kill the drive_branch_spec process and reset branch_spec if necessary.
     disable fork;
-    cfg.vif.driver_cb.branch_spec <= 0;
   endtask
 
   // Read up to num_insns instructions from the cache, stopping early on an error. If there was an
@@ -139,14 +132,6 @@ class ibex_icache_core_driver
       end
       // Return early on reset
       if (!cfg.vif.rst_n) break;
-    end
-  endtask
-
-  // Randomly drive the branch_spec line one cycle in 64. Never returns.
-  task automatic drive_branch_spec();
-    forever begin
-      cfg.vif.driver_cb.branch_spec <= $urandom_range(64) == 0;
-      @(cfg.vif.driver_cb);
     end
   endtask
 

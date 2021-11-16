@@ -123,11 +123,6 @@ class ibex_icache_core_monitor extends dv_base_monitor #(
         if (cfg.en_cov) cov.branch_dest_cg.sample(cfg.vif.branch_addr);
       end
 
-      // If coverage is enabled, spot when the branch spec line is high
-      if (cfg.en_cov && cfg.vif.branch_spec) begin
-        cov.branch_spec_cg.sample(cfg.vif.branch);
-      end
-
       // Spot invalidate signals. These can last for several cycles, but we only care about the
       // first cycle, so we track the last value to spot posedges.
       if (cfg.vif.invalidate && !last_inval) begin
