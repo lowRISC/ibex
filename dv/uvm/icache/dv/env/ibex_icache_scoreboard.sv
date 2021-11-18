@@ -188,6 +188,7 @@ class ibex_icache_scoreboard
     invalidate_seed = mem_states.size - 1;
 
     not_invalidating = 1'b0;
+    window_reset();
   endtask
 
   task process_enable(ibex_icache_core_bus_item item);
