@@ -50,6 +50,13 @@ package ibex_pkg;
     RV32BFull     = 2
   } rv32b_e;
 
+  typedef enum integer {
+      RV32ZkNone     = 0,
+      RV32Zbkb       = 1,
+      RV32Zkn        = 2,
+      RV32Zks        = 3
+    } rv32zk_e;
+
   /////////////
   // Opcodes //
   /////////////
@@ -73,7 +80,7 @@ package ibex_pkg;
   // ALU operations //
   ////////////////////
 
-  typedef enum logic [5:0] {
+  typedef enum logic [6:0] {
     // Arithmetics
     ALU_ADD,
     ALU_SUB,
@@ -176,7 +183,19 @@ package ibex_pkg;
     ALU_CRC32_H,
     ALU_CRC32C_H,
     ALU_CRC32_W,
-    ALU_CRC32C_W
+    ALU_CRC32C_W,
+
+    // Zkn/Zks
+    ZKN_SHA256SUM0,
+    ZKN_SHA256SUM1,
+    ZKN_SHA256SIG0,
+    ZKN_SHA256SIG1,
+    ZKN_SHA512SUM0R,
+    ZKN_SHA512SUM1R,
+    ZKN_SHA512SIG0L,
+    ZKN_SHA512SIG1L,
+    ZKN_SHA512SIG0H,
+    ZKN_SHA512SIG1H
   } alu_op_e;
 
   typedef enum logic [1:0] {
@@ -186,7 +205,6 @@ package ibex_pkg;
     MD_OP_DIV,
     MD_OP_REM
   } md_op_e;
-
 
   //////////////////////////////////
   // Control and status registers //
