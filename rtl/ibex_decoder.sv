@@ -457,6 +457,8 @@ module ibex_decoder #(
         rf_we           = 1'b1;
         if ({instr[26], instr[13:12]} == {1'b1, 2'b01}) begin
           illegal_insn = (RV32B != RV32BNone) ? 1'b0 : 1'b1; // cmix / cmov / fsl / fsr
+        end else if ({instr[29:28],instr[25], instr[14:12]} == {3'b101, 3'b000}) begin
+          illegal_insn = (RV32Zk == RV32Zkn) ? 1'b0 : 1'b1; // aes32ds / aes32dsm / aes32es / aes32esm
         end else begin
           unique case ({instr[31:25], instr[14:12]})
             // RV32I ALU operations
@@ -1072,6 +1074,24 @@ module ibex_decoder #(
             {7'b010_1011, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA512SIG1L; // sha512_sig1l
             {7'b010_1110, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA512SIG0H; // sha512_sig0h
             {7'b010_1111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA512SIG1H; // sha512_sig1h
+
+            // RV32Zk zkde
+            {7'b001_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB0; // aes32esb0
+            {7'b011_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB1; // aes32esb1
+            {7'b101_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB2; // aes32esb2
+            {7'b111_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB3; // aes32esb3
+            {7'b001_0011, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESMB0; // aes32esmb0
+            {7'b011_0011, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESMB1; // aes32esmb1
+            {7'b101_0011, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESMB2; // aes32esmb2
+            {7'b111_0011, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESMB3; // aes32esmb3
+            {7'b001_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB0; // aes32dsb0
+            {7'b011_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB1; // aes32dsb1
+            {7'b101_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB2; // aes32dsb2
+            {7'b111_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB3; // aes32dsb3
+            {7'b001_0111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSMB0; // aes32dsmb0
+            {7'b011_0111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSMB1; // aes32dsmb1
+            {7'b101_0111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSMB2; // aes32dsmb2
+            {7'b111_0111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSMB3; // aes32dsmb3
 
             // RV32M instructions, all use the same ALU operation
             {7'b000_0001, 3'b000}: begin // mul
