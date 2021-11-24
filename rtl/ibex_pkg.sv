@@ -211,7 +211,19 @@ package ibex_pkg;
     ZKN_AES32ESMB0,
     ZKN_AES32ESMB1,
     ZKN_AES32ESMB2,
-    ZKN_AES32ESMB3
+    ZKN_AES32ESMB3,
+
+    //Zks
+    ZKS_SM4EDB0,
+    ZKS_SM4EDB1,
+    ZKS_SM4EDB2,
+    ZKS_SM4EDB3,
+    ZKS_SM4KSB0,
+    ZKS_SM4KSB1,
+    ZKS_SM4KSB2,
+    ZKS_SM4KSB3,
+    ZKS_SM3P0,
+    ZKS_SM3P1
   } alu_op_e;
 
   typedef enum logic [1:0] {

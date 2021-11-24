@@ -394,6 +394,8 @@ module ibex_decoder #(
                   7'b000_0001,                                                         // sha256sum1
                   7'b000_0010,                                                         // sha256sig0
                   7'b000_0011: illegal_insn = (RV32Zk == RV32Zkn) ? 1'b0 : 1'b1;       // sha256sig1
+                  7'b000_1000,                                                         // sm3p0
+                  7'b000_1001: illegal_insn = (RV32Zk == RV32Zks) ? 1'b0 : 1'b1;       // sm3p1
                   default: illegal_insn = 1'b1;
                 endcase
               end
@@ -457,8 +459,10 @@ module ibex_decoder #(
         rf_we           = 1'b1;
         if ({instr[26], instr[13:12]} == {1'b1, 2'b01}) begin
           illegal_insn = (RV32B != RV32BNone) ? 1'b0 : 1'b1; // cmix / cmov / fsl / fsr
-        end else if ({instr[29:28],instr[25], instr[14:12]} == {3'b101, 3'b000}) begin
+        end else if ({instr[29:28],instr[25], instr[14:12]} == {3'b10__1, 3'b000}) begin
           illegal_insn = (RV32Zk == RV32Zkn) ? 1'b0 : 1'b1; // aes32ds / aes32dsm / aes32es / aes32esm
+        end else if ({instr[29:27],instr[25], instr[14:12]} == {4'b110_0, 3'b000}) begin
+          illegal_insn = (RV32Zk == RV32Zks) ? 1'b0 : 1'b1; // sm4ed / sm4ks
         end else begin
           unique case ({instr[31:25], instr[14:12]})
             // RV32I ALU operations
@@ -881,12 +885,14 @@ module ibex_decoder #(
                   default: ;
                 endcase
               end
-              5'b0_0010: begin                                                         // Zk, zkh
+              5'b0_0010: begin                                                         // Zk, zkh,zks
                 unique case (instr_alu[26:20])
                   7'b000_0000: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA256SUM0; // sha256sum0
                   7'b000_0001: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA256SUM1; // sha256sum1
                   7'b000_0010: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA256SIG0; // sha256sig0
                   7'b000_0011: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA256SIG1; // sha256sig1
+                  7'b000_1000: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM3P0;      // sm3p0
+                  7'b000_1001: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM3P1;      // sm3p1
                   default:     alu_operator_o = ALU_SLL;
                 endcase
               end
@@ -1075,23 +1081,33 @@ module ibex_decoder #(
             {7'b010_1110, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA512SIG0H; // sha512_sig0h
             {7'b010_1111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA512SIG1H; // sha512_sig1h
 
-            // RV32Zk zkde
-            {7'b001_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB0; // aes32esb0
-            {7'b011_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB1; // aes32esb1
-            {7'b101_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB2; // aes32esb2
-            {7'b111_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB3; // aes32esb3
+            // RV32Zk zkned
+            {7'b001_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB0;  // aes32esb0
+            {7'b011_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB1;  // aes32esb1
+            {7'b101_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB2;  // aes32esb2
+            {7'b111_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB3;  // aes32esb3
             {7'b001_0011, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESMB0; // aes32esmb0
             {7'b011_0011, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESMB1; // aes32esmb1
             {7'b101_0011, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESMB2; // aes32esmb2
             {7'b111_0011, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESMB3; // aes32esmb3
-            {7'b001_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB0; // aes32dsb0
-            {7'b011_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB1; // aes32dsb1
-            {7'b101_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB2; // aes32dsb2
-            {7'b111_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB3; // aes32dsb3
+            {7'b001_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB0;  // aes32dsb0
+            {7'b011_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB1;  // aes32dsb1
+            {7'b101_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB2;  // aes32dsb2
+            {7'b111_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB3;  // aes32dsb3
             {7'b001_0111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSMB0; // aes32dsmb0
             {7'b011_0111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSMB1; // aes32dsmb1
             {7'b101_0111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSMB2; // aes32dsmb2
             {7'b111_0111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSMB3; // aes32dsmb3
+
+            // RV32Zk zks
+            {7'b001_1000, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4EDB0; // sm4edb0
+            {7'b011_1000, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4EDB1; // sm4edb1
+            {7'b101_1000, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4EDB2; // sm4edb2
+            {7'b111_1000, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4EDB3; // sm4edb3
+            {7'b001_1010, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4KSB0; // sm4ksb0
+            {7'b011_1010, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4KSB1; // sm4ksb1
+            {7'b101_1010, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4KSB2; // sm4ksb2
+            {7'b111_1010, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4KSB3; // sm4ksb3
 
             // RV32M instructions, all use the same ALU operation
             {7'b000_0001, 3'b000}: begin // mul
