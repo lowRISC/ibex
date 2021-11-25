@@ -18,6 +18,7 @@ module ibex_zk #(
 );
   import ibex_pkg::*;
 `define RORI32(a,b) ((a >> b) | (a << 32-b))
+`define ROLI32(a,b) ((a << b) | (a >> 32-b))
 `define SRLI32(a,b) ((a >> b)              )
 `define SLLI32(a,b) ((a << b)              )
 
@@ -37,6 +38,9 @@ function automatic logic [7:0] xtimeN(logic [7:0] a, logic [3:0] b);
              (b[3] ? xtime2(xtime2(xtime2(a))): 0) ;
     return xtimeN;
 endfunction
+
+  logic        zkn_val;
+  logic [31:0] zkn_result;
 
   if (RV32Zk == RV32Zkn) begin : gen_zkn
     logic bs0, bs1, bs2, bs3; //byte select in aes instructions
@@ -133,11 +137,11 @@ endfunction
     assign sha512_sig1h = `SLLI32(operand_a_i, 3)^`SRLI32(operand_a_i, 6)^`SRLI32(operand_a_i,19)^
                           `SRLI32(operand_b_i,29)                        ^`SLLI32(operand_b_i,13);
 
-    assign zk_val_o     = |{sha256_sum0_sel, sha256_sum1_sel, sha256_sig0_sel, sha256_sig1_sel,
+    assign zkn_val      = |{sha256_sum0_sel, sha256_sum1_sel, sha256_sig0_sel, sha256_sig1_sel,
                            sha512_sum0r_sel, sha512_sum1r_sel,
                            sha512_sig0l_sel, sha512_sig1l_sel,
                            sha512_sig0h_sel, sha512_sig1h_sel, aes32_sel};
-    assign result_o     = {32{aes32_sel       }} & (rotated ^ operand_a_i) |
+    assign zkn_result   = {32{aes32_sel       }} & (rotated ^ operand_a_i) |
                           {32{sha256_sig0_sel }} & sha256_sig0  |
                           {32{sha256_sig1_sel }} & sha256_sig1  |
                           {32{sha256_sum0_sel }} & sha256_sum0  |
@@ -148,9 +152,80 @@ endfunction
                           {32{sha512_sig0h_sel}} & sha512_sig0h |
                           {32{sha512_sig1l_sel}} & sha512_sig1l |
                           {32{sha512_sig1h_sel}} & sha512_sig1h ;
+  end else begin : no_gen_zkn
+    assign zkn_val    =  1'b0;
+    assign zkn_result = 32'd0;
   end
 
+  logic        zks_val;
+  logic [31:0] zks_result;
+  if (RV32Zk == RV32Zks) begin : gen_zks
+    logic  sm4ed_sel, sm4ks_sel, sm3p0_sel, sm3p1_sel;
+    assign sm4ed_sel = (operator_i == ZKS_SM4EDB0) || (operator_i == ZKS_SM4EDB2) ||
+                       (operator_i == ZKS_SM4EDB1) || (operator_i == ZKS_SM4EDB3) ;
+    assign sm4ks_sel = (operator_i == ZKS_SM4KSB0) || (operator_i == ZKS_SM4KSB2) ||
+                       (operator_i == ZKS_SM4KSB1) || (operator_i == ZKS_SM4KSB3) ;
+    assign sm3p0_sel = (operator_i == ZKS_SM3P0);
+    assign sm3p1_sel = (operator_i == ZKS_SM3P1);
+
+    logic zks_bs0, zks_bs1, zks_bs2, zks_bs3; //byte select in aes instructions
+    assign zks_bs0 = (operator_i == ZKS_SM4EDB0) || (operator_i == ZKS_SM4KSB0) ;
+    assign zks_bs1 = (operator_i == ZKS_SM4EDB1) || (operator_i == ZKS_SM4KSB1) ;
+    assign zks_bs2 = (operator_i == ZKS_SM4EDB2) || (operator_i == ZKS_SM4KSB2) ;
+    assign zks_bs3 = (operator_i == ZKS_SM4EDB3) || (operator_i == ZKS_SM4KSB3) ;
+    logic  [7:0] sbox_in;
+    assign       sbox_in = {8{zks_bs0}} & operand_b_i[ 7: 0] |
+                           {8{zks_bs1}} & operand_b_i[15: 8] |
+                           {8{zks_bs2}} & operand_b_i[23:16] |
+                           {8{zks_bs3}} & operand_b_i[31:24] ;
+    logic [ 7:0] sm4_sbox_out;
+    // Submodule - SBox
+    ibex_sm4_sbox ism4_sbox (
+      .in (sbox_in),
+      .fx (sm4_sbox_out)
+    );
+
+    logic [31:0] s;
+    assign s     = {24'b0, sm4_sbox_out};
+
+    // ED Instruction
+    logic [31:0] ed1, ed2;
+    assign ed1   = s   ^  (s           <<  8) ^ (s << 2) ^ (s << 18);
+    assign ed2   = ed1 ^ ((s & 32'h3F) << 26) ^ ((s & 32'hC0) << 10);
+
+    // KS Instruction
+    logic [31:0] ks1, ks2;
+    assign ks1   = s   ^ ((s & 32'h07) << 29) ^ ((s & 32'hFE) <<  7);
+    assign ks2   = ks1 ^ ((s & 32'h01) << 23) ^ ((s & 32'hF8) << 13);
+
+    // Rotate and XOR result
+    logic [31:0] rot_in, rot_out, sm4;
+    assign rot_in  = sm4ks_sel ? ks2 : ed2;
+    assign rot_out = {32{zks_bs0}} & {rot_in                      } |
+                     {32{zks_bs1}} & {rot_in[23:0], rot_in[31:24] } |
+                     {32{zks_bs2}} & {rot_in[15:0], rot_in[31:16] } |
+                     {32{zks_bs3}} & {rot_in[ 7:0], rot_in[31: 8] } ;
+    assign sm4     = rot_out ^ operand_a_i ;
+
+    logic [31:0] sm3_p0, sm3_p1;
+    assign sm3_p0  = operand_a_i ^ `ROLI32(operand_a_i,  9) ^ `ROLI32(operand_a_i,17);
+    assign sm3_p1  = operand_a_i ^ `ROLI32(operand_a_i, 15) ^ `ROLI32(operand_a_i,23);
+
+    assign zks_val    =|{sm4ed_sel, sm4ks_sel, sm3p0_sel, sm3p1_sel};
+    assign zks_result = {32{sm4ed_sel}} & sm4    |
+                        {32{sm4ks_sel}} & sm4    |
+                        {32{sm3p0_sel}} & sm3_p0 |
+                        {32{sm3p1_sel}} & sm3_p1 ;
+  end else begin : no_gen_zks
+    assign zks_val    =  1'b0;
+    assign zks_result = 32'd0;
+  end
+
+  assign zk_val_o = zkn_val   || zks_val;
+  assign result_o = zkn_result | zks_result;
+
 `undef RORI32
+`undef ROLI32
 `undef SRLI32
 `undef SLLI32
 
