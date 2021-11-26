@@ -185,6 +185,24 @@ package ibex_pkg;
     ALU_CRC32_W,
     ALU_CRC32C_W,
 
+    // Zbkb
+    ZKB_RORI,
+    ZKB_BREV8,
+    ZKB_REV8,
+    ZKB_ZIP,
+    ZKB_UNZIP,
+    ZKB_ROR,
+    ZKB_ROL,
+    ZKB_ANDN,
+    ZKB_ORN,
+    ZKB_XNOR,
+    ZKB_PACK,
+    ZKB_PACKH,
+    ZKB_CLMUL,
+    ZKB_CLMULH,
+    ZKB_XPERM8,
+    ZKB_XPERM4,
+
     // Zkn
     ZKN_SHA256SUM0,
     ZKN_SHA256SUM1,

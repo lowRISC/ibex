@@ -5,6 +5,14 @@
 
 /**
  * AES Sbox unit
+ * This modified version is based on the optimised AES structure proposed by Boyar & Peralta [BoPe12].
+ * AES S-Boxes are broken into a nonlinear middle layer and two linear top and bottom layers.
+ * The middle layer perform non-linear field inversion which is used for both forward and inverse S-boxes.
+ *
+ * [BoPe12] Boyar J., Peralta R. "A Small Depth-16 Circuit for the AES
+ *     S-Box." Proc.SEC 2012. IFIP AICT 376. Springer, pp. 287-298 (2012)
+ *     DOI: https://doi.org/10.1007/978-3-642-30436-1_24
+ *     Preprint: https://eprint.iacr.org/2011/332.pdf
  */
 module ibex_aes_sbox (
 input  logic       fw,
