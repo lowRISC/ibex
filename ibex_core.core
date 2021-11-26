@@ -37,6 +37,7 @@ filesets:
       - rtl/ibex_zk.sv
       - rtl/ibex_aes_sbox.sv
       - rtl/ibex_sm4_sbox.sv
+      - rtl/ibex_poly16_mul.sv
       - rtl/ibex_core.sv
     file_type: systemVerilogSource
 

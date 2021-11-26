@@ -4,7 +4,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * Zk Extension unit
+ * Zk Extension unit: An implemenation for the RISC-V Cryptography Extension.
  */
 module ibex_zk #(
   parameter ibex_pkg::rv32zk_e RV32Zk = ibex_pkg::RV32ZkNone
@@ -22,6 +22,59 @@ module ibex_zk #(
 `define SRLI32(a,b) ((a >> b)              )
 `define SLLI32(a,b) ((a << b)              )
 
+// 32-bit Barrel Right Rotation
+function automatic logic [31:0] ror32(logic [31:0] x, logic [4:0] amt);
+    logic [31:0] ro, l8, l4, l2, l1, l0;
+    assign l0 = x;
+    assign l1 = ({32{amt[0]}} & {l0[   0], l0[31: 1]}) | ({32{!amt[0]}} & l0[31:0]);
+    assign l2 = ({32{amt[1]}} & {l1[ 1:0], l1[31: 2]}) | ({32{!amt[1]}} & l1[31:0]);
+    assign l4 = ({32{amt[2]}} & {l2[ 3:0], l2[31: 4]}) | ({32{!amt[2]}} & l2[31:0]);
+    assign l8 = ({32{amt[3]}} & {l4[ 7:0], l4[31: 8]}) | ({32{!amt[3]}} & l4[31:0]);
+    assign ro = ({32{amt[4]}} & {l8[15:0], l8[31:16]}) | ({32{!amt[4]}} & l8[31:0]);
+    return ro;
+endfunction
+
+// 32-bit Barrel Left Rotation
+function automatic logic [31:0] rol32(logic [31:0] x, logic [4:0] amt);
+    logic [31:0] ro, l8, l4, l2, l1, l0;
+    assign l0 = x;
+    assign l1 = ({32{amt[0]}} & {l0[30:0], l0[31   ]}) | ({32{!amt[0]}} & l0[31:0]);
+    assign l2 = ({32{amt[1]}} & {l1[29:0], l1[31:30]}) | ({32{!amt[1]}} & l1[31:0]);
+    assign l4 = ({32{amt[2]}} & {l2[27:0], l2[31:28]}) | ({32{!amt[2]}} & l2[31:0]);
+    assign l8 = ({32{amt[3]}} & {l4[23:0], l4[31:24]}) | ({32{!amt[3]}} & l4[31:0]);
+    assign ro = ({32{amt[4]}} & {l8[15:0], l8[31:16]}) | ({32{!amt[4]}} & l8[31:0]);
+    return ro;
+endfunction
+
+// reverse 8 bits
+function automatic logic [7:0] rev8(logic [7:0] x);
+    logic [7:0]  rb;
+    for (int i = 0;  i < 8; i = i + 1) begin
+        assign rb[i] = x[8-i-1];
+    end
+    return rb;
+endfunction
+
+// 32-bit Zip
+function automatic logic [31:0] zip32(logic [31:0] x);
+    logic [15:0] zh, zl;
+    for (int i = 0;  i < 16; i = i + 1) begin
+        assign zh[i] = x[2*i + 1];
+        assign zl[i] = x[2*i    ];
+    end
+    return {zh, zl};
+endfunction
+
+// 32-bit UnZip
+function automatic logic [31:0] unzip32(logic [31:0] x);
+    logic [31:0] uz;
+    for (int i = 0;  i < 16; i = i + 1) begin
+        assign uz[2*i  ] = x[i];
+        assign uz[2*i+1] = x[i+16];
+    end
+    return uz;
+endfunction
+
 // Multiply by 2 in GF(2^8) modulo 8'h1b
 function automatic logic [7:0] xtime2(logic [7:0] a);
     logic [7:0] xtime2;
@@ -38,6 +91,137 @@ function automatic logic [7:0] xtimeN(logic [7:0] a, logic [3:0] b);
              (b[3] ? xtime2(xtime2(xtime2(a))): 0) ;
     return xtimeN;
 endfunction
+
+  logic        zkb_val;
+  logic [31:0] zkb_result;
+  if (RV32Zk != RV32ZkNone) begin : gen_zkb
+    logic ror_sel, rol_sel, rori_sel, andn_sel, orn_sel, xnor_sel;
+    logic pack_sel, packh_sel, brev8_sel, rev8_sel, zip_sel, unzip_sel;
+    logic clmull_sel, clmulh_sel, xperm8_sel, xperm4_sel;
+    assign    ror_sel = (operator_i == ZKB_ROR);
+    assign    rol_sel = (operator_i == ZKB_ROL);
+    assign   rori_sel = (operator_i == ZKB_RORI);
+    assign   andn_sel = (operator_i == ZKB_ANDN);
+    assign    orn_sel = (operator_i == ZKB_ORN);
+    assign   xnor_sel = (operator_i == ZKB_XNOR);
+    assign   pack_sel = (operator_i == ZKB_PACK);
+    assign  packh_sel = (operator_i == ZKB_PACKH);
+    assign  brev8_sel = (operator_i == ZKB_BREV8);
+    assign   rev8_sel = (operator_i == ZKB_REV8);
+    assign    zip_sel = (operator_i == ZKB_ZIP);
+    assign  unzip_sel = (operator_i == ZKB_UNZIP);
+    assign clmull_sel = (operator_i == ZKB_CLMUL );
+    assign clmulh_sel = (operator_i == ZKB_CLMULH);
+    assign xperm8_sel = (operator_i == ZKB_XPERM8);
+    assign xperm4_sel = (operator_i == ZKB_XPERM4);
+
+    logic [ 4:0] shamt;
+    assign shamt  = operand_b_i[4:0];
+
+    logic [31:0] wror, wrol, wandn, worn, wxnor, wpack, wpackh;
+    assign wror   = ror32(operand_a_i, shamt);
+    assign wrol   = rol32(operand_a_i, shamt);
+    assign wandn  = operand_a_i & (~operand_b_i);
+    assign worn   = operand_a_i | (~operand_b_i);
+    assign wxnor  = operand_a_i ^ (~operand_b_i);
+    assign wpack  = {       operand_b_i[15:0], operand_a_i[15:0]};
+    assign wpackh = {16'd0, operand_b_i[ 7:0], operand_a_i[ 7:0]};
+
+    logic [ 7:0] rs1_b0, rs1_b1, rs1_b2, rs1_b3;
+    assign rs1_b0  = operand_a_i[ 7: 0];
+    assign rs1_b1  = operand_a_i[15: 8];
+    assign rs1_b2  = operand_a_i[23:16];
+    assign rs1_b3  = operand_a_i[31:24];
+
+    logic [ 7:0] brev8_0, brev8_1, brev8_2, brev8_3;
+    assign brev8_0 = rev8(rs1_b0);
+    assign brev8_1 = rev8(rs1_b1);
+    assign brev8_2 = rev8(rs1_b2);
+    assign brev8_3 = rev8(rs1_b3);
+
+    logic [31:0] wbrev8, wrev8;
+    assign wbrev8  = {brev8_3, brev8_2, brev8_1, brev8_0};
+    assign wrev8   = {rs1_b0,  rs1_b1,  rs1_b2,  rs1_b3};
+
+    logic [31:0] wzip, wunzip;
+    assign wzip   = zip32(  operand_a_i);
+    assign wunzip = unzip32(operand_a_i);
+
+    // Xperm instructions
+    // indexable access 4-bit LUT.
+    logic [ 3:0] lut_4b [7:0];
+    logic [31:0] wxperm4;
+    for(genvar i = 0; i < 8; i = i + 1) begin : gen_lut_xperm4
+      // generate table.
+      assign lut_4b[i] = operand_a_i[4*i+:4];
+
+      logic [2:0] lut_8idx;
+      assign lut_8idx   = operand_b_i[4*i+:3];
+
+      logic [3:0] lut4_out;
+      assign lut4_out = lut_4b[lut_8idx];
+      assign wxperm4[i*4+:4]  = operand_b_i[4*i+3] ? 4'b0000 : lut4_out;
+    end
+
+   // indexable access 8-bit LUT.
+    logic [ 7:0] lut_8b [3:0];
+    logic [31:0] wxperm8;
+    for(genvar i = 0; i < 4; i = i + 1) begin : gen_lut_xperm8
+      // generate table.
+      assign lut_8b[i] = operand_a_i[8*i+:8];
+
+      logic [1:0] lut_4idx;
+      assign lut_4idx   = operand_b_i[8*i+:2];
+
+      logic [7:0] lut8_out;
+      assign lut8_out = lut_8b[lut_4idx];
+      assign wxperm8[i*8+:8]  = |{operand_b_i[8*i+7:8*i+2]} ? 8'd0 : lut8_out;
+    end
+
+    // clmul instructions
+    logic [15:0] lhs0, rhs0, lhs1, rhs1, lhs2, rhs2;
+    assign lhs0 = clmulh_sel? operand_a_i[31:16] : operand_a_i[15: 0];
+    assign rhs0 = clmulh_sel? operand_b_i[31:16] : operand_b_i[15: 0];
+
+    assign lhs1 = operand_a_i[15: 0];
+    assign rhs1 = operand_b_i[31:16];
+
+    assign lhs2 = operand_a_i[31:16];
+    assign rhs2 = operand_b_i[15: 0];
+
+    logic [31:0]  polymul0, polymul1, polymul2;
+    ibex_poly16_mul mul16_ins0(lhs0, rhs0, polymul0);
+    ibex_poly16_mul mul16_ins1(lhs1, rhs1, polymul1);
+    ibex_poly16_mul mul16_ins2(lhs2, rhs2, polymul2);
+
+    logic [31:0] wclmull, wclmulh, clmulm;
+    assign clmulm  = polymul1 ^ polymul2;
+    assign wclmulh = {polymul0[31:16], (polymul0[15: 0] ^ clmulm[31:16])                 };
+    assign wclmull = {                 (polymul0[31:16] ^ clmulm[15: 0]), polymul0[15: 0]};
+
+    assign zkb_val    = |{ror_sel, rol_sel, rori_sel, andn_sel, orn_sel, xnor_sel,
+                          pack_sel, packh_sel, brev8_sel, rev8_sel, zip_sel, unzip_sel,
+                          clmull_sel, clmulh_sel, xperm8_sel, xperm4_sel};
+    assign zkb_result = {32{   ror_sel}} & wror    |
+                        {32{   rol_sel}} & wrol    |
+                        {32{  rori_sel}} & wror    |
+                        {32{  andn_sel}} & wandn   |
+                        {32{   orn_sel}} & worn    |
+                        {32{  xnor_sel}} & wxnor   |
+                        {32{  pack_sel}} & wpack   |
+                        {32{ packh_sel}} & wpackh  |
+                        {32{ brev8_sel}} & wbrev8  |
+                        {32{  rev8_sel}} & wrev8   |
+                        {32{   zip_sel}} & wzip    |
+                        {32{ unzip_sel}} & wunzip  |
+                        {32{clmull_sel}} & wclmull |
+                        {32{clmulh_sel}} & wclmulh |
+                        {32{xperm8_sel}} & wxperm8 |
+                        {32{xperm4_sel}} & wxperm4 ;
+  end else begin : no_gen_zkb
+    assign zkb_val    =  1'b0;
+    assign zkb_result = 32'd0;
+  end
 
   logic        zkn_val;
   logic [31:0] zkn_result;
@@ -221,8 +405,8 @@ endfunction
     assign zks_result = 32'd0;
   end
 
-  assign zk_val_o = zkn_val   || zks_val;
-  assign result_o = zkn_result | zks_result;
+  assign zk_val_o = zkb_val   || zkn_val   || zks_val;
+  assign result_o = zkb_result | zkn_result | zks_result;
 
 `undef RORI32
 `undef ROLI32
