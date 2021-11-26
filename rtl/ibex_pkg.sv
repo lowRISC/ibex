@@ -150,10 +150,10 @@ package ibex_pkg;
 
     // Single-Bit Operations
     // RV32B
-    ALU_SBSET,
-    ALU_SBCLR,
-    ALU_SBINV,
-    ALU_SBEXT,
+    ALU_BSET,
+    ALU_BCLR,
+    ALU_BINV,
+    ALU_BEXT,
 
     // Bit Compress / Decompress
     // RV32B

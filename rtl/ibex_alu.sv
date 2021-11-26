@@ -227,12 +227,12 @@ module ibex_alu #(
   // =======================
   // Single bit instructions operate on bit operand_b_i[4:0] of operand_a_i.
 
-  // The operations sbset, sbclr and sbinv are implemented by generation of a bit-mask using the
+  // The operations bset, bclr and binv are implemented by generation of a bit-mask using the
   // shifter structure. This is done by left-shifting the operand 32'h1 by the required amount.
   // The signal shift_sbmode multiplexes the shifter input and sets the signal shift_left.
   // Further processing is taken care of by a separate structure.
   //
-  // For sbext, the bit defined by operand_b_i[4:0] is to be returned. This is done by simply
+  // For bext, the bit defined by operand_b_i[4:0] is to be returned. This is done by simply
   // shifting operand_a_i to the right by the required amount and returning bit [0] of the result.
   //
   // Bit-Field Place
@@ -291,7 +291,7 @@ module ibex_alu #(
 
   // single-bit mode: shift
   assign shift_sbmode = (RV32B != RV32BNone) ?
-      (operator_i == ALU_SBSET) | (operator_i == ALU_SBCLR) | (operator_i == ALU_SBINV) : 1'b0;
+      (operator_i == ALU_BSET) | (operator_i == ALU_BCLR) | (operator_i == ALU_BINV) : 1'b0;
 
   // left shift if this is:
   // * a standard left shift (slo, sll)
@@ -299,7 +299,7 @@ module ibex_alu #(
   // * a ror in the second cycle
   // * fsl: without word-swap bit: first cycle, else: second cycle
   // * fsr: without word-swap bit: second cycle, else: first cycle
-  // * a single-bit instruction: sbclr, sbset, sbinv (excluding sbext)
+  // * a single-bit instruction: bclr, bset, binv (excluding bext)
   // * bfp: bfp_mask << bfp_off
   always_comb begin
     unique case (operator_i)
@@ -580,10 +580,10 @@ module ibex_alu #(
 
     always_comb begin
       unique case (operator_i)
-        ALU_SBSET: singlebit_result = operand_a_i | shift_result;
-        ALU_SBCLR: singlebit_result = operand_a_i & ~shift_result;
-        ALU_SBINV: singlebit_result = operand_a_i ^ shift_result;
-        default:   singlebit_result = {31'h0, shift_result[0]}; // ALU_SBEXT
+        ALU_BSET: singlebit_result = operand_a_i | shift_result;
+        ALU_BCLR: singlebit_result = operand_a_i & ~shift_result;
+        ALU_BINV: singlebit_result = operand_a_i ^ shift_result;
+        default:  singlebit_result = {31'h0, shift_result[0]}; // ALU_BEXT
       endcase
     end
 
@@ -1272,8 +1272,8 @@ module ibex_alu #(
       ALU_BCOMPRESS, ALU_BDECOMPRESS: result_o = multicycle_result;
 
       // Single-Bit Bitmanip Operations (RV32B)
-      ALU_SBSET, ALU_SBCLR,
-      ALU_SBINV, ALU_SBEXT: result_o = singlebit_result;
+      ALU_BSET, ALU_BCLR,
+      ALU_BINV, ALU_BEXT: result_o = singlebit_result;
 
       // General Reverse / Or-combine (RV32B)
       ALU_GREV, ALU_GORC: result_o = rev_result;

@@ -112,17 +112,17 @@ package ibex_tracer_pkg;
   parameter logic [31:0] INSN_PACKH = { 7'b0000100, 10'h?, 3'b111, 5'h?, {OPCODE_OP} };
 
   // ZBS
-  parameter logic [31:0] INSN_SBCLRI = { 5'b01001, 12'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
-  parameter logic [31:0] INSN_SBSETI = { 5'b00101, 12'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
-  parameter logic [31:0] INSN_SBINVI = { 5'b01101, 12'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
+  parameter logic [31:0] INSN_BCLRI = { 5'b01001, 12'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
+  parameter logic [31:0] INSN_BSETI = { 5'b00101, 12'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
+  parameter logic [31:0] INSN_BINVI = { 5'b01101, 12'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
   // Only log2(XLEN) bits of the immediate are used. For RV32, this means only the bits in
-  // instr[24:20] are effectively used. Whenever instr[26] is set, sbexti is instead decoded as fsri.
-  parameter logic [31:0] INSN_SBEXTI = { 5'b01001, 1'b0, 11'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
+  // instr[24:20] are effectively used. Whenever instr[26] is set, bexti is instead decoded as fsri.
+  parameter logic [31:0] INSN_BEXTI = { 5'b01001, 1'b0, 11'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
 
-  parameter logic [31:0] INSN_SBCLR = { 7'b0100100, 10'h?, 3'b001, 5'h?, {OPCODE_OP} };
-  parameter logic [31:0] INSN_SBSET = { 7'b0010100, 10'h?, 3'b001, 5'h?, {OPCODE_OP} };
-  parameter logic [31:0] INSN_SBINV = { 7'b0110100, 10'h?, 3'b001, 5'h?, {OPCODE_OP} };
-  parameter logic [31:0] INSN_SBEXT = { 7'b0100100, 10'h?, 3'b101, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_BCLR = { 7'b0100100, 10'h?, 3'b001, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_BSET = { 7'b0010100, 10'h?, 3'b001, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_BINV = { 7'b0110100, 10'h?, 3'b001, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_BEXT = { 7'b0100100, 10'h?, 3'b101, 5'h?, {OPCODE_OP} };
 
   // ZBP
   // grevi
