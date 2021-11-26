@@ -855,9 +855,12 @@ module ibex_tracer (
         INSN_SLTIU:      decode_i_insn("sltiu");
         INSN_XORI:       decode_i_insn("xori");
         INSN_ORI:        decode_i_insn("ori");
-        // Version 0.92 of the Bitmanip Extension defines the pseudo-instruction
-        // zext.b rd rs = andi rd, rs, 255.
-        // Currently instruction set simulators don't output this pseudo-instruction.
+        // Unlike the ratified v.1.0.0 bitmanip extension, the v.0.94 draft extension continues to
+        // define the pseudo-instruction
+        //   zext.b rd rs = andi rd, rs, 255.
+        // However, for now the tracer doesn't emit this due to a lack of support in the LLVM and
+        // GCC toolchains. Enabling this functionality when the time is right is tracked in
+        // https://github.com/lowRISC/ibex/issues/1228
         INSN_ANDI:       decode_i_insn("andi");
         // INSN_ANDI:begin
           // casez (rvfi_insn)
@@ -922,9 +925,11 @@ module ibex_tracer (
         INSN_XNOR:       decode_r_insn("xnor");
         INSN_ORN:        decode_r_insn("orn");
         INSN_ANDN:       decode_r_insn("andn");
-        // Version 0.92 of the Bitmanip Extension defines the pseudo-instruction
-        // zext.h rd rs = pack rd, rs, zero.
-        // Currently instruction set simulators don't output this pseudo-instruction.
+        // The ratified v.1.0.0 bitmanip extension defines the pseudo-instruction
+        //   zext.h rd rs = pack rd, rs, zero.
+        // However, for now the tracer doesn't emit this due to a lack of support in the LLVM and
+        // GCC toolchains. Enabling this functionality when the time is right is tracked in
+        // https://github.com/lowRISC/ibex/issues/1228
         INSN_PACK:       decode_r_insn("pack");
         // INSN_PACK: begin
           // casez (rvfi_insn)
