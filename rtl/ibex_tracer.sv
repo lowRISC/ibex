@@ -953,8 +953,8 @@ module ibex_tracer (
         INSN_SBINV:      decode_r_insn("sbinv");
         INSN_SBEXT:      decode_r_insn("sbext");
         // RV32B - ZBE
-        INSN_BDEP:       decode_r_insn("bdep");
-        INSN_BEXT:       decode_r_insn("bext");
+        INSN_BDECOMPRESS: decode_r_insn("bdecompress");
+        INSN_BCOMPRESS:   decode_r_insn("bcompress");
         // RV32B - ZBP
         INSN_GREV:       decode_r_insn("grev");
         INSN_GREVI: begin

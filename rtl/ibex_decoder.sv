@@ -489,8 +489,8 @@ module ibex_decoder #(
             // RV32B zbf
             {7'b010_0100, 3'b111}: illegal_insn = (RV32B != RV32BNone) ? 1'b0 : 1'b1; // bfp
             // RV32B zbe
-            {7'b010_0100, 3'b110}, // bdep
-            {7'b000_0100, 3'b110}, // bext
+            {7'b010_0100, 3'b110}, // bdecompress
+            {7'b000_0100, 3'b110}, // bcompress
             // RV32B zbp
             {7'b011_0100, 3'b101}, // grev
             {7'b001_0100, 3'b101}, // gorc
@@ -1045,13 +1045,13 @@ module ibex_decoder #(
             // RV32B zbe
             {7'b010_0100, 3'b110}: begin
               if (RV32B == RV32BFull) begin
-                alu_operator_o = ALU_BDEP;   // bdep
+                alu_operator_o = ALU_BDECOMPRESS; // bdecompress
                 alu_multicycle_o = 1'b1;
               end
             end
             {7'b000_0100, 3'b110}: begin
               if (RV32B == RV32BFull) begin
-                alu_operator_o = ALU_BEXT;   // bext
+                alu_operator_o = ALU_BCOMPRESS;   // bcompress
                 alu_multicycle_o = 1'b1;
               end
             end
