@@ -912,11 +912,7 @@ module ibex_tracer (
         INSN_SH2ADD:     decode_r_insn("sh2add");
         INSN_SH3ADD:     decode_r_insn("sh3add");
         // RV32B - ZBB
-        INSN_SLOI:       decode_i_shift_insn("sloi");
-        INSN_SROI:       decode_i_shift_insn("sroi");
         INSN_RORI:       decode_i_shift_insn("rori");
-        INSN_SLO:        decode_r_insn("slo");
-        INSN_SRO:        decode_r_insn("sro");
         INSN_ROL:        decode_r_insn("rol");
         INSN_ROR:        decode_r_insn("ror");
         INSN_MIN:        decode_r_insn("min");
@@ -940,7 +936,7 @@ module ibex_tracer (
         INSN_PACKU:      decode_r_insn("packu");
         INSN_CLZ:        decode_r1_insn("clz");
         INSN_CTZ:        decode_r1_insn("ctz");
-        INSN_PCNT:       decode_r1_insn("pcnt");
+        INSN_CPOP:       decode_r1_insn("cpop");
         INSN_SEXTB:      decode_r1_insn("sext.b");
         INSN_SEXTH:      decode_r1_insn("sext.h");
         // RV32B - ZBS
@@ -1030,6 +1026,10 @@ module ibex_tracer (
             default:       decode_i_insn("unshfli");
           endcase
         end
+        INSN_SLO:        decode_r_insn("slo");
+        INSN_SRO:        decode_r_insn("sro");
+        INSN_SLOI:       decode_i_shift_insn("sloi");
+        INSN_SROI:       decode_i_shift_insn("sroi");
 
         // RV32B - ZBT
         INSN_CMIX:       decode_r_cmixcmov_insn("cmix");

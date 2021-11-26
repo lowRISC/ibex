@@ -97,8 +97,6 @@ Bit Manipulation Extension
   +---------------------------------+---------------+--------------------------+
   | Zbt (Ternary)                   | Balanced/Full | All                      |
   +---------------------------------+---------------+--------------------------+
-  | Zb_tmp (Temporary) [#B_zb_tmp]_ | Balanced/Full | None                     |
-  +---------------------------------+---------------+--------------------------+
 
   The implementation of the B-extension comes with an area overhead of 1.8 to 3.0 kGE for the balanced version and 6.0 to 8.7 kGE for the full version.
   That corresponds to an approximate percentage increase in area of 9 to 14 % and 25 to 30 % for the balanced and full versions respectively.
@@ -178,6 +176,3 @@ See :ref:`load-store-unit` for more details.
    Ibex will be updated to match future versions of the specification.
    Prior to ratification this may involve backwards incompatible changes.
    Additionally, neither GCC or Clang have committed to maintaining support upstream for unratified versions of the specification.
-
-.. [#B_zb_tmp] The sign-extend instructions `sext.b/sext.h` are defined but not unambiguously categorized in draft version 0.92 of the extension.
-   Temporarily, they have been assigned a separate Z-extension (Zb_tmp) both in Ibex and the RISCV-DV random instruction generator used to verify the bit manipulation instructions in Ibex.

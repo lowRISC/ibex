@@ -362,7 +362,7 @@ module ibex_decoder #(
           3'b001: begin
             unique case (instr[31:27])
               5'b0_0000: illegal_insn = (instr[26:25] == 2'b00) ? 1'b0 : 1'b1;        // slli
-              5'b0_0100,                                                              // sloi
+              5'b0_0100: illegal_insn = (RV32B == RV32BFull) ? 1'b0 : 1'b1;           // sloi
               5'b0_1001,                                                              // bclri
               5'b0_0101,                                                              // bseti
               5'b0_1101: illegal_insn = (RV32B != RV32BNone) ? 1'b0 : 1'b1;           // binvi
@@ -375,7 +375,7 @@ module ibex_decoder #(
                 unique case(instr[26:20])
                   7'b000_0000,                                                         // clz
                   7'b000_0001,                                                         // ctz
-                  7'b000_0010,                                                         // pcnt
+                  7'b000_0010,                                                         // cpop
                   7'b000_0100,                                                         // sext.b
                   7'b000_0101: illegal_insn = (RV32B != RV32BNone) ? 1'b0 : 1'b1;      // sext.h
                   7'b001_0000,                                                         // crc32.b
@@ -400,20 +400,17 @@ module ibex_decoder #(
                 5'b0_0000,                                                             // srli
                 5'b0_1000: illegal_insn = (instr[26:25] == 2'b00) ? 1'b0 : 1'b1;       // srai
 
-                5'b0_0100,                                                             // sroi
+                5'b0_0100: illegal_insn = (RV32B == RV32BFull) ? 1'b0 : 1'b1;          // sroi
                 5'b0_1100,                                                             // rori
                 5'b0_1001: illegal_insn = (RV32B != RV32BNone) ? 1'b0 : 1'b1;          // bexti
 
                 5'b0_1101: begin
                   if ((RV32B == RV32BFull)) begin
                     illegal_insn = 1'b0;                                               // grevi
+                  end else if (RV32B == RV32BBalanced) begin
+                    illegal_insn = (instr[24:20] == 5'b11000) ? 1'b0 : 1'b1;           // rev8
                   end else begin
-                    unique case (instr[24:20])
-                      5'b11111,                                                        // rev
-                      5'b11000: illegal_insn = (RV32B == RV32BBalanced) ? 1'b0 : 1'b1; // rev8
-
-                      default: illegal_insn = 1'b1;
-                    endcase
+                    illegal_insn = 1'b1;
                   end
                 end
                 5'b0_0101: begin
@@ -470,13 +467,11 @@ module ibex_decoder #(
             {7'b010_0000, 3'b111}, // andn
             {7'b010_0000, 3'b110}, // orn
             {7'b010_0000, 3'b100}, // xnor
-            {7'b001_0000, 3'b001}, // slo
-            {7'b001_0000, 3'b101}, // sro
             {7'b011_0000, 3'b001}, // rol
             {7'b011_0000, 3'b101}, // ror
             {7'b000_0101, 3'b100}, // min
-            {7'b000_0101, 3'b101}, // max
-            {7'b000_0101, 3'b110}, // minu
+            {7'b000_0101, 3'b110}, // max
+            {7'b000_0101, 3'b101}, // minu
             {7'b000_0101, 3'b111}, // maxu
             {7'b000_0100, 3'b100}, // pack
             {7'b010_0100, 3'b100}, // packu
@@ -496,6 +491,8 @@ module ibex_decoder #(
             {7'b001_0100, 3'b101}, // gorc
             {7'b000_0100, 3'b001}, // shfl
             {7'b000_0100, 3'b101}, // unshfl
+            {7'b001_0000, 3'b001}, // slo
+            {7'b001_0000, 3'b101}, // sro
             // RV32B zbc
             {7'b000_0101, 3'b001}, // clmul
             {7'b000_0101, 3'b010}, // clmulr
@@ -823,7 +820,8 @@ module ibex_decoder #(
             if (RV32B != RV32BNone) begin
               unique case (instr_alu[31:27])
                 5'b0_0000: alu_operator_o = ALU_SLL;    // Shift Left Logical by Immediate
-                5'b0_0100: alu_operator_o = ALU_SLO;    // Shift Left Ones by Immediate
+                // Shift Left Ones by Immediate
+                5'b0_0100: if (RV32B == RV32BFull) alu_operator_o = ALU_SLO;
                 5'b0_1001: alu_operator_o = ALU_BCLR; // Clear bit specified by immediate
                 5'b0_0101: alu_operator_o = ALU_BSET; // Set bit specified by immediate
                 5'b0_1101: alu_operator_o = ALU_BINV; // Invert bit specified by immediate.
@@ -833,7 +831,7 @@ module ibex_decoder #(
                   unique case (instr_alu[26:20])
                     7'b000_0000: alu_operator_o = ALU_CLZ;   // clz
                     7'b000_0001: alu_operator_o = ALU_CTZ;   // ctz
-                    7'b000_0010: alu_operator_o = ALU_PCNT;  // pcnt
+                    7'b000_0010: alu_operator_o = ALU_CPOP;  // cpop
                     7'b000_0100: alu_operator_o = ALU_SEXTB; // sext.b
                     7'b000_0101: alu_operator_o = ALU_SEXTH; // sext.h
                     7'b001_0000: begin
@@ -897,7 +895,8 @@ module ibex_decoder #(
                 unique case (instr_alu[31:27])
                   5'b0_0000: alu_operator_o = ALU_SRL;   // Shift Right Logical by Immediate
                   5'b0_1000: alu_operator_o = ALU_SRA;   // Shift Right Arithmetically by Immediate
-                  5'b0_0100: alu_operator_o = ALU_SRO;   // Shift Right Ones by Immediate
+                  // Shift Right Ones by Immediate
+                  5'b0_0100: if (RV32B == RV32BFull) alu_operator_o = ALU_SRO;
                   5'b0_1001: alu_operator_o = ALU_BEXT;  // Extract bit specified by immediate.
                   5'b0_1100: begin
                     alu_operator_o = ALU_ROR;            // Rotate Right by Immediate
@@ -989,8 +988,6 @@ module ibex_decoder #(
             {7'b010_0000, 3'b101}: alu_operator_o = ALU_SRA;   // Shift Right Arithmetic
 
             // RV32B ALU Operations
-            {7'b001_0000, 3'b001}: if (RV32B != RV32BNone) alu_operator_o = ALU_SLO;   // slo
-            {7'b001_0000, 3'b101}: if (RV32B != RV32BNone) alu_operator_o = ALU_SRO;   // sro
             {7'b011_0000, 3'b001}: begin
               if (RV32B != RV32BNone) begin
                 alu_operator_o = ALU_ROL;   // rol
@@ -1005,8 +1002,8 @@ module ibex_decoder #(
             end
 
             {7'b000_0101, 3'b100}: if (RV32B != RV32BNone) alu_operator_o = ALU_MIN;    // min
-            {7'b000_0101, 3'b101}: if (RV32B != RV32BNone) alu_operator_o = ALU_MAX;    // max
-            {7'b000_0101, 3'b110}: if (RV32B != RV32BNone) alu_operator_o = ALU_MINU;   // minu
+            {7'b000_0101, 3'b110}: if (RV32B != RV32BNone) alu_operator_o = ALU_MAX;    // max
+            {7'b000_0101, 3'b101}: if (RV32B != RV32BNone) alu_operator_o = ALU_MINU;   // minu
             {7'b000_0101, 3'b111}: if (RV32B != RV32BNone) alu_operator_o = ALU_MAXU;   // maxu
 
             {7'b000_0100, 3'b100}: if (RV32B != RV32BNone) alu_operator_o = ALU_PACK;   // pack
@@ -1036,6 +1033,8 @@ module ibex_decoder #(
             {7'b001_0100, 3'b101}: if (RV32B != RV32BNone) alu_operator_o = ALU_GORC;   // grev
             {7'b000_0100, 3'b001}: if (RV32B == RV32BFull) alu_operator_o = ALU_SHFL;   // shfl
             {7'b000_0100, 3'b101}: if (RV32B == RV32BFull) alu_operator_o = ALU_UNSHFL; // unshfl
+            {7'b001_0000, 3'b001}: if (RV32B == RV32BFull) alu_operator_o = ALU_SLO;    // slo
+            {7'b001_0000, 3'b101}: if (RV32B == RV32BFull) alu_operator_o = ALU_SRO;    // sro
 
             // RV32B zbc
             {7'b000_0101, 3'b001}: if (RV32B == RV32BFull) alu_operator_o = ALU_CLMUL;  // clmul
