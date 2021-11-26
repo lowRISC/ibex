@@ -135,7 +135,7 @@ package ibex_pkg;
     // RV32B
     ALU_CLZ,
     ALU_CTZ,
-    ALU_PCNT,
+    ALU_CPOP,
 
     // Set lower than
     ALU_SLT,

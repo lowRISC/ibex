@@ -304,7 +304,7 @@ module ibex_alu #(
   always_comb begin
     unique case (operator_i)
       ALU_SLL: shift_left = 1'b1;
-      ALU_SLO,
+      ALU_SLO: shift_left = (RV32B == RV32BFull) ? 1'b1 : 1'b0;
       ALU_BFP: shift_left = (RV32B != RV32BNone) ? 1'b1 : 1'b0;
       ALU_ROL: shift_left = (RV32B != RV32BNone) ? instr_first_cycle_i : 0;
       ALU_ROR: shift_left = (RV32B != RV32BNone) ? ~instr_first_cycle_i : 0;
@@ -321,7 +321,7 @@ module ibex_alu #(
 
   assign shift_arith  = (operator_i == ALU_SRA);
   assign shift_ones   =
-      (RV32B != RV32BNone) ? (operator_i == ALU_SLO) | (operator_i == ALU_SRO) : 1'b0;
+      (RV32B == RV32BFull) ? (operator_i == ALU_SLO) | (operator_i == ALU_SRO) : 1'b0;
   assign shift_funnel =
       (RV32B != RV32BNone) ? (operator_i == ALU_FSL) | (operator_i == ALU_FSR) : 1'b0;
 
@@ -417,7 +417,7 @@ module ibex_alu #(
     // The bit-counter structure computes the number of set bits in its operand. Partial results
     // (from left to right) are needed to compute the control masks for computation of
     // bcompress/bdecompress by the butterfly network, if implemented.
-    // For pcnt, clz and ctz, only the end result is used.
+    // For cpop, clz and ctz, only the end result is used.
 
     logic        zbe_op;
     logic        bitcnt_ctz;
@@ -458,7 +458,7 @@ module ibex_alu #(
       case (1'b1)
         zbe_op:      bitcnt_bits = operand_b_i;
         bitcnt_cz:   bitcnt_bits = bitcnt_bit_mask & ~bitcnt_mask_op; // clz / ctz
-        default:     bitcnt_bits = operand_a_i; // pcnt
+        default:     bitcnt_bits = operand_a_i; // cpop
       endcase
     end
 
@@ -591,16 +591,16 @@ module ibex_alu #(
     // General Reverse and Or-combine //
     ////////////////////////////////////
 
-    // Only a subset of the General reverse and or-combine instructions are implemented in the
-    // balanced version of the B extension. Currently rev, rev8 and orc.b are supported in the
-    // base extension.
+    // Only a subset of the general reverse and or-combine instructions are implemented in the
+    // balanced version of the B extension. Currently rev8 (shift_amt = 5'b11000) and orc.b
+    // (shift_amt = 5'b00111) are supported in the base extension.
 
     logic [4:0] zbp_shift_amt;
     logic gorc_op;
 
     assign gorc_op = (operator_i == ALU_GORC);
-    assign zbp_shift_amt[2:0] = (RV32B == RV32BFull) ? shift_amt[2:0] : {3{&shift_amt[2:0]}};
-    assign zbp_shift_amt[4:3] = (RV32B == RV32BFull) ? shift_amt[4:3] : {2{&shift_amt[4:3]}};
+    assign zbp_shift_amt[2:0] = (RV32B == RV32BFull) ? shift_amt[2:0] : {3{shift_amt[0]}};
+    assign zbp_shift_amt[4:3] = (RV32B == RV32BFull) ? shift_amt[4:3] : {2{shift_amt[3]}};
 
     always_comb begin
       rev_result = operand_a_i;
@@ -1250,7 +1250,7 @@ module ibex_alu #(
 
       // Bitcount Operations (RV32B)
       ALU_CLZ, ALU_CTZ,
-      ALU_PCNT: result_o = {26'h0, bitcnt_result};
+      ALU_CPOP: result_o = {26'h0, bitcnt_result};
 
       // Pack Operations (RV32B)
       ALU_PACK, ALU_PACKH,
