@@ -944,14 +944,14 @@ module ibex_tracer (
         INSN_SEXTB:      decode_r1_insn("sext.b");
         INSN_SEXTH:      decode_r1_insn("sext.h");
         // RV32B - ZBS
-        INSN_SBCLRI:     decode_i_insn("sbclri");
-        INSN_SBSETI:     decode_i_insn("sbseti");
-        INSN_SBINVI:     decode_i_insn("sbinvi");
-        INSN_SBEXTI:     decode_i_insn("sbexti");
-        INSN_SBCLR:      decode_r_insn("sbclr");
-        INSN_SBSET:      decode_r_insn("sbset");
-        INSN_SBINV:      decode_r_insn("sbinv");
-        INSN_SBEXT:      decode_r_insn("sbext");
+        INSN_BCLRI:     decode_i_insn("bclri");
+        INSN_BSETI:     decode_i_insn("bseti");
+        INSN_BINVI:     decode_i_insn("binvi");
+        INSN_BEXTI:     decode_i_insn("bexti");
+        INSN_BCLR:      decode_r_insn("bclr");
+        INSN_BSET:      decode_r_insn("bset");
+        INSN_BINV:      decode_r_insn("binv");
+        INSN_BEXT:      decode_r_insn("bext");
         // RV32B - ZBE
         INSN_BDECOMPRESS: decode_r_insn("bdecompress");
         INSN_BCOMPRESS:   decode_r_insn("bcompress");
