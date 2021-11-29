@@ -5,8 +5,7 @@
 // ------------------- W A R N I N G: A U T O - G E N E R A T E D   C O D E !! -------------------//
 // PLEASE DO NOT HAND-EDIT THIS FILE. IT HAS BEEN AUTO-GENERATED WITH THE FOLLOWING COMMAND:
 //
-//    hw/ip/prim/util/generate_prim_mubi_pkg.py hw/ip/prim/data/prim_mubi_pkg.sv.tpl >
-//                                              hw/ip/prim/rtl/prim_mubi_pkg.sv
+//    util/design/gen-mubi.py
 //
 // This package defines common multibit signal types, active high and active low values and
 // the corresponding functions to test whether the values are set or not.
@@ -19,50 +18,47 @@ package prim_mubi_pkg;
 
   parameter int MuBi4Width = 4;
   typedef enum logic [MuBi4Width-1:0] {
-    MuBi4Hi = 4'h5, // enabled
-    MuBi4Lo = 4'hA  // disabled
-  } mubi4_e;
+    MuBi4True = 4'hA, // enabled
+    MuBi4False = 4'h5  // disabled
+  } mubi4_t;
 
-  // make a typedef such that this can be used as an intersignal type as well
-  typedef mubi4_e mubi4_t;
+  // Test whether the value is supplied is one of the valid enumerations
+  function automatic logic mubi4_test_invalid(mubi4_t val);
+    return ~(val inside {MuBi4True, MuBi4False});
+  endfunction : mubi4_test_invalid
 
-  // Return the multibit value to signal "enabled".
-  function automatic mubi4_e mubi4_hi_value();
-    return MuBi4Hi;
-  endfunction : mubi4_hi_value
-
-  // Return the multibit value to signal "disabled".
-  function automatic mubi4_e mubi4_lo_value();
-    return MuBi4Lo;
-  endfunction : mubi4_lo_value
+  // Convert a 1 input value to a mubi output
+  function automatic mubi4_t mubi4_bool_to_mubi(logic val);
+    return (val ? MuBi4True : MuBi4False);
+  endfunction : mubi4_bool_to_mubi
 
   // Test whether the multibit value signals an "enabled" condition.
   // The strict version of this function requires
-  // the multibit value to equal Hi.
-  function automatic logic mubi4_tst_hi_strict(mubi4_e val);
-    return MuBi4Hi == val;
-  endfunction : mubi4_tst_hi_strict
+  // the multibit value to equal True.
+  function automatic logic mubi4_test_true_strict(mubi4_t val);
+    return MuBi4True == val;
+  endfunction : mubi4_test_true_strict
 
   // Test whether the multibit value signals a "disabled" condition.
   // The strict version of this function requires
-  // the multibit value to equal Lo.
-  function automatic logic mubi4_tst_lo_strict(mubi4_e val);
-    return MuBi4Lo == val;
-  endfunction : mubi4_tst_lo_strict
+  // the multibit value to equal False.
+  function automatic logic mubi4_test_false_strict(mubi4_t val);
+    return MuBi4False == val;
+  endfunction : mubi4_test_false_strict
 
   // Test whether the multibit value signals an "enabled" condition.
   // The loose version of this function interprets all
-  // values other than Lo as "enabled".
-  function automatic logic mubi4_tst_hi_loose(mubi4_e val);
-    return MuBi4Lo != val;
-  endfunction : mubi4_tst_hi_loose
+  // values other than False as "enabled".
+  function automatic logic mubi4_test_true_loose(mubi4_t val);
+    return MuBi4False != val;
+  endfunction : mubi4_test_true_loose
 
   // Test whether the multibit value signals a "disabled" condition.
   // The loose version of this function interprets all
-  // values other than Hi as "disabled".
-  function automatic logic mubi4_tst_lo_loose(mubi4_e val);
-    return MuBi4Hi != val;
-  endfunction : mubi4_tst_lo_loose
+  // values other than True as "disabled".
+  function automatic logic mubi4_test_false_loose(mubi4_t val);
+    return MuBi4True != val;
+  endfunction : mubi4_test_false_loose
 
 
   // Performs a logical OR operation between two multibit values.
@@ -76,7 +72,7 @@ package prim_mubi_pkg;
   // !act | act  | act
   // act  | act  | act
   //
-  function automatic mubi4_e mubi4_or(mubi4_e a, mubi4_e b, mubi4_e act);
+  function automatic mubi4_t mubi4_or(mubi4_t a, mubi4_t b, mubi4_t act);
     logic [MuBi4Width-1:0] a_in, b_in, act_in, out;
     a_in = a;
     b_in = b;
@@ -88,7 +84,7 @@ package prim_mubi_pkg;
         out[k] = a_in[k] && b_in[k];
       end
     end
-    return mubi4_e'(out);
+    return mubi4_t'(out);
   endfunction : mubi4_or
 
   // Performs a logical AND operation between two multibit values.
@@ -102,7 +98,7 @@ package prim_mubi_pkg;
   // !act | act  | !act
   // act  | act  | act
   //
-  function automatic mubi4_e mubi4_and(mubi4_e a, mubi4_e b, mubi4_e act);
+  function automatic mubi4_t mubi4_and(mubi4_t a, mubi4_t b, mubi4_t act);
     logic [MuBi4Width-1:0] a_in, b_in, act_in, out;
     a_in = a;
     b_in = b;
@@ -114,35 +110,35 @@ package prim_mubi_pkg;
         out[k] = a_in[k] || b_in[k];
       end
     end
-    return mubi4_e'(out);
+    return mubi4_t'(out);
   endfunction : mubi4_and
 
   // Performs a logical OR operation between two multibit values.
-  // This treats "Hi" as logical 1, and all other values are
+  // This treats "True" as logical 1, and all other values are
   // treated as 0.
-  function automatic mubi4_e mubi4_or_hi(mubi4_e a, mubi4_e b);
-    return mubi4_or(a, b, MuBi4Hi);
+  function automatic mubi4_t mubi4_or_hi(mubi4_t a, mubi4_t b);
+    return mubi4_or(a, b, MuBi4True);
   endfunction : mubi4_or_hi
 
   // Performs a logical AND operation between two multibit values.
-  // This treats "Hi" as logical 1, and all other values are
+  // This treats "True" as logical 1, and all other values are
   // treated as 0.
-  function automatic mubi4_e mubi4_and_hi(mubi4_e a, mubi4_e b);
-    return mubi4_and(a, b, MuBi4Hi);
+  function automatic mubi4_t mubi4_and_hi(mubi4_t a, mubi4_t b);
+    return mubi4_and(a, b, MuBi4True);
   endfunction : mubi4_and_hi
 
   // Performs a logical OR operation between two multibit values.
-  // This treats "Lo" as logical 1, and all other values are
+  // This treats "False" as logical 1, and all other values are
   // treated as 0.
-  function automatic mubi4_e mubi4_or_lo(mubi4_e a, mubi4_e b);
-    return mubi4_or(a, b, MuBi4Lo);
+  function automatic mubi4_t mubi4_or_lo(mubi4_t a, mubi4_t b);
+    return mubi4_or(a, b, MuBi4False);
   endfunction : mubi4_or_lo
 
   // Performs a logical AND operation between two multibit values.
-  // Tlos treats "Lo" as logical 1, and all other values are
+  // Tlos treats "False" as logical 1, and all other values are
   // treated as 0.
-  function automatic mubi4_e mubi4_and_lo(mubi4_e a, mubi4_e b);
-    return mubi4_and(a, b, MuBi4Lo);
+  function automatic mubi4_t mubi4_and_lo(mubi4_t a, mubi4_t b);
+    return mubi4_and(a, b, MuBi4False);
   endfunction : mubi4_and_lo
 
   //////////////////////////////////////////////
@@ -151,50 +147,47 @@ package prim_mubi_pkg;
 
   parameter int MuBi8Width = 8;
   typedef enum logic [MuBi8Width-1:0] {
-    MuBi8Hi = 8'hA5, // enabled
-    MuBi8Lo = 8'h5A  // disabled
-  } mubi8_e;
+    MuBi8True = 8'h5A, // enabled
+    MuBi8False = 8'hA5  // disabled
+  } mubi8_t;
 
-  // make a typedef such that this can be used as an intersignal type as well
-  typedef mubi8_e mubi8_t;
+  // Test whether the value is supplied is one of the valid enumerations
+  function automatic logic mubi8_test_invalid(mubi8_t val);
+    return ~(val inside {MuBi8True, MuBi8False});
+  endfunction : mubi8_test_invalid
 
-  // Return the multibit value to signal "enabled".
-  function automatic mubi8_e mubi8_hi_value();
-    return MuBi8Hi;
-  endfunction : mubi8_hi_value
-
-  // Return the multibit value to signal "disabled".
-  function automatic mubi8_e mubi8_lo_value();
-    return MuBi8Lo;
-  endfunction : mubi8_lo_value
+  // Convert a 1 input value to a mubi output
+  function automatic mubi8_t mubi8_bool_to_mubi(logic val);
+    return (val ? MuBi8True : MuBi8False);
+  endfunction : mubi8_bool_to_mubi
 
   // Test whether the multibit value signals an "enabled" condition.
   // The strict version of this function requires
-  // the multibit value to equal Hi.
-  function automatic logic mubi8_tst_hi_strict(mubi8_e val);
-    return MuBi8Hi == val;
-  endfunction : mubi8_tst_hi_strict
+  // the multibit value to equal True.
+  function automatic logic mubi8_test_true_strict(mubi8_t val);
+    return MuBi8True == val;
+  endfunction : mubi8_test_true_strict
 
   // Test whether the multibit value signals a "disabled" condition.
   // The strict version of this function requires
-  // the multibit value to equal Lo.
-  function automatic logic mubi8_tst_lo_strict(mubi8_e val);
-    return MuBi8Lo == val;
-  endfunction : mubi8_tst_lo_strict
+  // the multibit value to equal False.
+  function automatic logic mubi8_test_false_strict(mubi8_t val);
+    return MuBi8False == val;
+  endfunction : mubi8_test_false_strict
 
   // Test whether the multibit value signals an "enabled" condition.
   // The loose version of this function interprets all
-  // values other than Lo as "enabled".
-  function automatic logic mubi8_tst_hi_loose(mubi8_e val);
-    return MuBi8Lo != val;
-  endfunction : mubi8_tst_hi_loose
+  // values other than False as "enabled".
+  function automatic logic mubi8_test_true_loose(mubi8_t val);
+    return MuBi8False != val;
+  endfunction : mubi8_test_true_loose
 
   // Test whether the multibit value signals a "disabled" condition.
   // The loose version of this function interprets all
-  // values other than Hi as "disabled".
-  function automatic logic mubi8_tst_lo_loose(mubi8_e val);
-    return MuBi8Hi != val;
-  endfunction : mubi8_tst_lo_loose
+  // values other than True as "disabled".
+  function automatic logic mubi8_test_false_loose(mubi8_t val);
+    return MuBi8True != val;
+  endfunction : mubi8_test_false_loose
 
 
   // Performs a logical OR operation between two multibit values.
@@ -208,7 +201,7 @@ package prim_mubi_pkg;
   // !act | act  | act
   // act  | act  | act
   //
-  function automatic mubi8_e mubi8_or(mubi8_e a, mubi8_e b, mubi8_e act);
+  function automatic mubi8_t mubi8_or(mubi8_t a, mubi8_t b, mubi8_t act);
     logic [MuBi8Width-1:0] a_in, b_in, act_in, out;
     a_in = a;
     b_in = b;
@@ -220,7 +213,7 @@ package prim_mubi_pkg;
         out[k] = a_in[k] && b_in[k];
       end
     end
-    return mubi8_e'(out);
+    return mubi8_t'(out);
   endfunction : mubi8_or
 
   // Performs a logical AND operation between two multibit values.
@@ -234,7 +227,7 @@ package prim_mubi_pkg;
   // !act | act  | !act
   // act  | act  | act
   //
-  function automatic mubi8_e mubi8_and(mubi8_e a, mubi8_e b, mubi8_e act);
+  function automatic mubi8_t mubi8_and(mubi8_t a, mubi8_t b, mubi8_t act);
     logic [MuBi8Width-1:0] a_in, b_in, act_in, out;
     a_in = a;
     b_in = b;
@@ -246,35 +239,35 @@ package prim_mubi_pkg;
         out[k] = a_in[k] || b_in[k];
       end
     end
-    return mubi8_e'(out);
+    return mubi8_t'(out);
   endfunction : mubi8_and
 
   // Performs a logical OR operation between two multibit values.
-  // This treats "Hi" as logical 1, and all other values are
+  // This treats "True" as logical 1, and all other values are
   // treated as 0.
-  function automatic mubi8_e mubi8_or_hi(mubi8_e a, mubi8_e b);
-    return mubi8_or(a, b, MuBi8Hi);
+  function automatic mubi8_t mubi8_or_hi(mubi8_t a, mubi8_t b);
+    return mubi8_or(a, b, MuBi8True);
   endfunction : mubi8_or_hi
 
   // Performs a logical AND operation between two multibit values.
-  // This treats "Hi" as logical 1, and all other values are
+  // This treats "True" as logical 1, and all other values are
   // treated as 0.
-  function automatic mubi8_e mubi8_and_hi(mubi8_e a, mubi8_e b);
-    return mubi8_and(a, b, MuBi8Hi);
+  function automatic mubi8_t mubi8_and_hi(mubi8_t a, mubi8_t b);
+    return mubi8_and(a, b, MuBi8True);
   endfunction : mubi8_and_hi
 
   // Performs a logical OR operation between two multibit values.
-  // This treats "Lo" as logical 1, and all other values are
+  // This treats "False" as logical 1, and all other values are
   // treated as 0.
-  function automatic mubi8_e mubi8_or_lo(mubi8_e a, mubi8_e b);
-    return mubi8_or(a, b, MuBi8Lo);
+  function automatic mubi8_t mubi8_or_lo(mubi8_t a, mubi8_t b);
+    return mubi8_or(a, b, MuBi8False);
   endfunction : mubi8_or_lo
 
   // Performs a logical AND operation between two multibit values.
-  // Tlos treats "Lo" as logical 1, and all other values are
+  // Tlos treats "False" as logical 1, and all other values are
   // treated as 0.
-  function automatic mubi8_e mubi8_and_lo(mubi8_e a, mubi8_e b);
-    return mubi8_and(a, b, MuBi8Lo);
+  function automatic mubi8_t mubi8_and_lo(mubi8_t a, mubi8_t b);
+    return mubi8_and(a, b, MuBi8False);
   endfunction : mubi8_and_lo
 
   //////////////////////////////////////////////
@@ -283,50 +276,47 @@ package prim_mubi_pkg;
 
   parameter int MuBi12Width = 12;
   typedef enum logic [MuBi12Width-1:0] {
-    MuBi12Hi = 12'h5A5, // enabled
-    MuBi12Lo = 12'hA5A  // disabled
-  } mubi12_e;
+    MuBi12True = 12'hA5A, // enabled
+    MuBi12False = 12'h5A5  // disabled
+  } mubi12_t;
 
-  // make a typedef such that this can be used as an intersignal type as well
-  typedef mubi12_e mubi12_t;
+  // Test whether the value is supplied is one of the valid enumerations
+  function automatic logic mubi12_test_invalid(mubi12_t val);
+    return ~(val inside {MuBi12True, MuBi12False});
+  endfunction : mubi12_test_invalid
 
-  // Return the multibit value to signal "enabled".
-  function automatic mubi12_e mubi12_hi_value();
-    return MuBi12Hi;
-  endfunction : mubi12_hi_value
-
-  // Return the multibit value to signal "disabled".
-  function automatic mubi12_e mubi12_lo_value();
-    return MuBi12Lo;
-  endfunction : mubi12_lo_value
+  // Convert a 1 input value to a mubi output
+  function automatic mubi12_t mubi12_bool_to_mubi(logic val);
+    return (val ? MuBi12True : MuBi12False);
+  endfunction : mubi12_bool_to_mubi
 
   // Test whether the multibit value signals an "enabled" condition.
   // The strict version of this function requires
-  // the multibit value to equal Hi.
-  function automatic logic mubi12_tst_hi_strict(mubi12_e val);
-    return MuBi12Hi == val;
-  endfunction : mubi12_tst_hi_strict
+  // the multibit value to equal True.
+  function automatic logic mubi12_test_true_strict(mubi12_t val);
+    return MuBi12True == val;
+  endfunction : mubi12_test_true_strict
 
   // Test whether the multibit value signals a "disabled" condition.
   // The strict version of this function requires
-  // the multibit value to equal Lo.
-  function automatic logic mubi12_tst_lo_strict(mubi12_e val);
-    return MuBi12Lo == val;
-  endfunction : mubi12_tst_lo_strict
+  // the multibit value to equal False.
+  function automatic logic mubi12_test_false_strict(mubi12_t val);
+    return MuBi12False == val;
+  endfunction : mubi12_test_false_strict
 
   // Test whether the multibit value signals an "enabled" condition.
   // The loose version of this function interprets all
-  // values other than Lo as "enabled".
-  function automatic logic mubi12_tst_hi_loose(mubi12_e val);
-    return MuBi12Lo != val;
-  endfunction : mubi12_tst_hi_loose
+  // values other than False as "enabled".
+  function automatic logic mubi12_test_true_loose(mubi12_t val);
+    return MuBi12False != val;
+  endfunction : mubi12_test_true_loose
 
   // Test whether the multibit value signals a "disabled" condition.
   // The loose version of this function interprets all
-  // values other than Hi as "disabled".
-  function automatic logic mubi12_tst_lo_loose(mubi12_e val);
-    return MuBi12Hi != val;
-  endfunction : mubi12_tst_lo_loose
+  // values other than True as "disabled".
+  function automatic logic mubi12_test_false_loose(mubi12_t val);
+    return MuBi12True != val;
+  endfunction : mubi12_test_false_loose
 
 
   // Performs a logical OR operation between two multibit values.
@@ -340,7 +330,7 @@ package prim_mubi_pkg;
   // !act | act  | act
   // act  | act  | act
   //
-  function automatic mubi12_e mubi12_or(mubi12_e a, mubi12_e b, mubi12_e act);
+  function automatic mubi12_t mubi12_or(mubi12_t a, mubi12_t b, mubi12_t act);
     logic [MuBi12Width-1:0] a_in, b_in, act_in, out;
     a_in = a;
     b_in = b;
@@ -352,7 +342,7 @@ package prim_mubi_pkg;
         out[k] = a_in[k] && b_in[k];
       end
     end
-    return mubi12_e'(out);
+    return mubi12_t'(out);
   endfunction : mubi12_or
 
   // Performs a logical AND operation between two multibit values.
@@ -366,7 +356,7 @@ package prim_mubi_pkg;
   // !act | act  | !act
   // act  | act  | act
   //
-  function automatic mubi12_e mubi12_and(mubi12_e a, mubi12_e b, mubi12_e act);
+  function automatic mubi12_t mubi12_and(mubi12_t a, mubi12_t b, mubi12_t act);
     logic [MuBi12Width-1:0] a_in, b_in, act_in, out;
     a_in = a;
     b_in = b;
@@ -378,35 +368,35 @@ package prim_mubi_pkg;
         out[k] = a_in[k] || b_in[k];
       end
     end
-    return mubi12_e'(out);
+    return mubi12_t'(out);
   endfunction : mubi12_and
 
   // Performs a logical OR operation between two multibit values.
-  // This treats "Hi" as logical 1, and all other values are
+  // This treats "True" as logical 1, and all other values are
   // treated as 0.
-  function automatic mubi12_e mubi12_or_hi(mubi12_e a, mubi12_e b);
-    return mubi12_or(a, b, MuBi12Hi);
+  function automatic mubi12_t mubi12_or_hi(mubi12_t a, mubi12_t b);
+    return mubi12_or(a, b, MuBi12True);
   endfunction : mubi12_or_hi
 
   // Performs a logical AND operation between two multibit values.
-  // This treats "Hi" as logical 1, and all other values are
+  // This treats "True" as logical 1, and all other values are
   // treated as 0.
-  function automatic mubi12_e mubi12_and_hi(mubi12_e a, mubi12_e b);
-    return mubi12_and(a, b, MuBi12Hi);
+  function automatic mubi12_t mubi12_and_hi(mubi12_t a, mubi12_t b);
+    return mubi12_and(a, b, MuBi12True);
   endfunction : mubi12_and_hi
 
   // Performs a logical OR operation between two multibit values.
-  // This treats "Lo" as logical 1, and all other values are
+  // This treats "False" as logical 1, and all other values are
   // treated as 0.
-  function automatic mubi12_e mubi12_or_lo(mubi12_e a, mubi12_e b);
-    return mubi12_or(a, b, MuBi12Lo);
+  function automatic mubi12_t mubi12_or_lo(mubi12_t a, mubi12_t b);
+    return mubi12_or(a, b, MuBi12False);
   endfunction : mubi12_or_lo
 
   // Performs a logical AND operation between two multibit values.
-  // Tlos treats "Lo" as logical 1, and all other values are
+  // Tlos treats "False" as logical 1, and all other values are
   // treated as 0.
-  function automatic mubi12_e mubi12_and_lo(mubi12_e a, mubi12_e b);
-    return mubi12_and(a, b, MuBi12Lo);
+  function automatic mubi12_t mubi12_and_lo(mubi12_t a, mubi12_t b);
+    return mubi12_and(a, b, MuBi12False);
   endfunction : mubi12_and_lo
 
   //////////////////////////////////////////////
@@ -415,50 +405,47 @@ package prim_mubi_pkg;
 
   parameter int MuBi16Width = 16;
   typedef enum logic [MuBi16Width-1:0] {
-    MuBi16Hi = 16'hA5A5, // enabled
-    MuBi16Lo = 16'h5A5A  // disabled
-  } mubi16_e;
+    MuBi16True = 16'h5A5A, // enabled
+    MuBi16False = 16'hA5A5  // disabled
+  } mubi16_t;
 
-  // make a typedef such that this can be used as an intersignal type as well
-  typedef mubi16_e mubi16_t;
+  // Test whether the value is supplied is one of the valid enumerations
+  function automatic logic mubi16_test_invalid(mubi16_t val);
+    return ~(val inside {MuBi16True, MuBi16False});
+  endfunction : mubi16_test_invalid
 
-  // Return the multibit value to signal "enabled".
-  function automatic mubi16_e mubi16_hi_value();
-    return MuBi16Hi;
-  endfunction : mubi16_hi_value
-
-  // Return the multibit value to signal "disabled".
-  function automatic mubi16_e mubi16_lo_value();
-    return MuBi16Lo;
-  endfunction : mubi16_lo_value
+  // Convert a 1 input value to a mubi output
+  function automatic mubi16_t mubi16_bool_to_mubi(logic val);
+    return (val ? MuBi16True : MuBi16False);
+  endfunction : mubi16_bool_to_mubi
 
   // Test whether the multibit value signals an "enabled" condition.
   // The strict version of this function requires
-  // the multibit value to equal Hi.
-  function automatic logic mubi16_tst_hi_strict(mubi16_e val);
-    return MuBi16Hi == val;
-  endfunction : mubi16_tst_hi_strict
+  // the multibit value to equal True.
+  function automatic logic mubi16_test_true_strict(mubi16_t val);
+    return MuBi16True == val;
+  endfunction : mubi16_test_true_strict
 
   // Test whether the multibit value signals a "disabled" condition.
   // The strict version of this function requires
-  // the multibit value to equal Lo.
-  function automatic logic mubi16_tst_lo_strict(mubi16_e val);
-    return MuBi16Lo == val;
-  endfunction : mubi16_tst_lo_strict
+  // the multibit value to equal False.
+  function automatic logic mubi16_test_false_strict(mubi16_t val);
+    return MuBi16False == val;
+  endfunction : mubi16_test_false_strict
 
   // Test whether the multibit value signals an "enabled" condition.
   // The loose version of this function interprets all
-  // values other than Lo as "enabled".
-  function automatic logic mubi16_tst_hi_loose(mubi16_e val);
-    return MuBi16Lo != val;
-  endfunction : mubi16_tst_hi_loose
+  // values other than False as "enabled".
+  function automatic logic mubi16_test_true_loose(mubi16_t val);
+    return MuBi16False != val;
+  endfunction : mubi16_test_true_loose
 
   // Test whether the multibit value signals a "disabled" condition.
   // The loose version of this function interprets all
-  // values other than Hi as "disabled".
-  function automatic logic mubi16_tst_lo_loose(mubi16_e val);
-    return MuBi16Hi != val;
-  endfunction : mubi16_tst_lo_loose
+  // values other than True as "disabled".
+  function automatic logic mubi16_test_false_loose(mubi16_t val);
+    return MuBi16True != val;
+  endfunction : mubi16_test_false_loose
 
 
   // Performs a logical OR operation between two multibit values.
@@ -472,7 +459,7 @@ package prim_mubi_pkg;
   // !act | act  | act
   // act  | act  | act
   //
-  function automatic mubi16_e mubi16_or(mubi16_e a, mubi16_e b, mubi16_e act);
+  function automatic mubi16_t mubi16_or(mubi16_t a, mubi16_t b, mubi16_t act);
     logic [MuBi16Width-1:0] a_in, b_in, act_in, out;
     a_in = a;
     b_in = b;
@@ -484,7 +471,7 @@ package prim_mubi_pkg;
         out[k] = a_in[k] && b_in[k];
       end
     end
-    return mubi16_e'(out);
+    return mubi16_t'(out);
   endfunction : mubi16_or
 
   // Performs a logical AND operation between two multibit values.
@@ -498,7 +485,7 @@ package prim_mubi_pkg;
   // !act | act  | !act
   // act  | act  | act
   //
-  function automatic mubi16_e mubi16_and(mubi16_e a, mubi16_e b, mubi16_e act);
+  function automatic mubi16_t mubi16_and(mubi16_t a, mubi16_t b, mubi16_t act);
     logic [MuBi16Width-1:0] a_in, b_in, act_in, out;
     a_in = a;
     b_in = b;
@@ -510,36 +497,35 @@ package prim_mubi_pkg;
         out[k] = a_in[k] || b_in[k];
       end
     end
-    return mubi16_e'(out);
+    return mubi16_t'(out);
   endfunction : mubi16_and
 
   // Performs a logical OR operation between two multibit values.
-  // This treats "Hi" as logical 1, and all other values are
+  // This treats "True" as logical 1, and all other values are
   // treated as 0.
-  function automatic mubi16_e mubi16_or_hi(mubi16_e a, mubi16_e b);
-    return mubi16_or(a, b, MuBi16Hi);
+  function automatic mubi16_t mubi16_or_hi(mubi16_t a, mubi16_t b);
+    return mubi16_or(a, b, MuBi16True);
   endfunction : mubi16_or_hi
 
   // Performs a logical AND operation between two multibit values.
-  // This treats "Hi" as logical 1, and all other values are
+  // This treats "True" as logical 1, and all other values are
   // treated as 0.
-  function automatic mubi16_e mubi16_and_hi(mubi16_e a, mubi16_e b);
-    return mubi16_and(a, b, MuBi16Hi);
+  function automatic mubi16_t mubi16_and_hi(mubi16_t a, mubi16_t b);
+    return mubi16_and(a, b, MuBi16True);
   endfunction : mubi16_and_hi
 
   // Performs a logical OR operation between two multibit values.
-  // This treats "Lo" as logical 1, and all other values are
+  // This treats "False" as logical 1, and all other values are
   // treated as 0.
-  function automatic mubi16_e mubi16_or_lo(mubi16_e a, mubi16_e b);
-    return mubi16_or(a, b, MuBi16Lo);
+  function automatic mubi16_t mubi16_or_lo(mubi16_t a, mubi16_t b);
+    return mubi16_or(a, b, MuBi16False);
   endfunction : mubi16_or_lo
 
   // Performs a logical AND operation between two multibit values.
-  // Tlos treats "Lo" as logical 1, and all other values are
+  // Tlos treats "False" as logical 1, and all other values are
   // treated as 0.
-  function automatic mubi16_e mubi16_and_lo(mubi16_e a, mubi16_e b);
-    return mubi16_and(a, b, MuBi16Lo);
+  function automatic mubi16_t mubi16_and_lo(mubi16_t a, mubi16_t b);
+    return mubi16_and(a, b, MuBi16False);
   endfunction : mubi16_and_lo
 
 endpackage : prim_mubi_pkg
-

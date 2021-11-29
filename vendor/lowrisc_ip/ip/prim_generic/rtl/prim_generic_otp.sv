@@ -25,8 +25,8 @@ module prim_generic_otp
   // VMEM file to initialize the memory with
   parameter      MemInitFile   = "",
   // Vendor test partition offset and size (both in bytes)
-  parameter  int VendorTestOffset,
-  parameter  int VendorTestSize
+  parameter  int VendorTestOffset = 0,
+  parameter  int VendorTestSize   = 0
 ) (
   input                          clk_i,
   input                          rst_ni,
@@ -42,7 +42,7 @@ module prim_generic_otp
   input  tlul_pkg::tl_h2d_t          test_tl_i,
   output tlul_pkg::tl_d2h_t          test_tl_o,
   // Other DFT signals
-  input lc_ctrl_pkg::lc_tx_t     scanmode_i,  // Scan Mode input
+  input prim_mubi_pkg::mubi4_t   scanmode_i,  // Scan Mode input
   input                          scan_en_i,   // Scan Shift
   input                          scan_rst_ni, // Scan Reset
   // Alert indication
@@ -59,6 +59,8 @@ module prim_generic_otp
   output logic [IfWidth-1:0]     rdata_o,
   output err_e                   err_o
 );
+
+  import prim_mubi_pkg::MuBi4False;
 
   // This is only restricted by the supported ECC poly further
   // below, and is straightforward to extend, if needed.
@@ -107,7 +109,7 @@ module prim_generic_otp
     .rst_ni,
     .tl_i        ( test_tl_i          ),
     .tl_o        ( test_tl_o          ),
-    .en_ifetch_i ( tlul_pkg::InstrDis ),
+    .en_ifetch_i ( MuBi4False         ),
     .req_o       ( tlul_req           ),
     .gnt_i       ( tlul_req           ),
     .we_o        ( tlul_wren          ),

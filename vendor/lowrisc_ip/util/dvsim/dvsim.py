@@ -127,14 +127,16 @@ def resolve_branch(branch):
     argument is the branch name to use. Otherwise it is None and we use git to
     find the name of the current branch in the working directory.
 
+    Note, as this name will be used to generate output files any forward slashes
+    are replaced with single dashes to avoid being interpreted as directory hierarchy.
     '''
 
     if branch is not None:
-        return branch
+        return branch.replace("/", "-")
 
     result = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"],
                             stdout=subprocess.PIPE)
-    branch = result.stdout.decode("utf-8").strip()
+    branch = result.stdout.decode("utf-8").strip().replace("/", "-")
     if not branch:
         log.warning("Failed to find current git branch. "
                     "Setting it to \"default\"")
@@ -692,7 +694,7 @@ def main():
         sys.exit(0)
 
     # Deploy the builds and runs
-    if args.items != []:
+    if args.items:
         # Create deploy objects.
         cfg.create_deploy_objects()
         results = cfg.deploy_objects()
@@ -705,7 +707,8 @@ def main():
             cfg.publish_results()
 
     else:
-        log.info("No items specified to be run.")
+        log.error("Nothing to run!")
+        sys.exit(1)
 
     # Exit with non-zero status if there were errors or failures.
     if cfg.has_errors():

@@ -53,14 +53,30 @@ module prim_subreg
     end
   end
 
+  logic wr_en_buf;
+  prim_buf #(
+    .Width(1)
+  ) u_wr_en_buf (
+    .in_i(wr_en),
+    .out_o(wr_en_buf)
+  );
+
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       q <= RESVAL;
-    end else if (wr_en) begin
+    end else if (wr_en_buf) begin
       q <= wr_data;
     end
   end
 
-  assign qs = q;
+  logic [DW-1:0] q_buf;
+  prim_buf #(
+    .Width(DW)
+  ) u_q_buf (
+    .in_i(q),
+    .out_o(q_buf)
+  );
+
+  assign qs = q_buf;
 
 endmodule
