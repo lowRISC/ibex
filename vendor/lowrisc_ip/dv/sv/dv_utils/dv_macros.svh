@@ -76,6 +76,10 @@
   `define DV_STRINGIFY(I_) `"I_`"
 `endif
 
+`ifndef DUT_HIER_STR
+  `define DUT_HIER_STR `DV_STRINGIFY(`DUT_HIER)
+`endif
+
 // Common check macros used by DV_CHECK error and fatal macros.
 // Note: Should not be called by user code
 `ifndef DV_CHECK
@@ -390,7 +394,7 @@
 // SCOPE_ : Hierarchical string path to the testbench where this macro is invoked, example: %m.
 // ID_    : Identifier string used for UVM logs.
 `ifndef DV_ASSERT_CTRL
-`define DV_ASSERT_CTRL(LABEL_, HIER_, LEVELS_ = 0, SCOPE_ = "", ID_ = "%m") \
+`define DV_ASSERT_CTRL(LABEL_, HIER_, LEVELS_ = 0, SCOPE_ = "", ID_ = $sformatf("%m")) \
   initial begin \
     bit assert_en; \
     forever begin \
