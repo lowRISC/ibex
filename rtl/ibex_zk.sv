@@ -57,6 +57,16 @@ endfunction
 
 // 32-bit Zip
 function automatic logic [31:0] zip32(logic [31:0] x);
+    logic [31:0] uz;
+    for (int i = 0;  i < 16; i = i + 1) begin
+        assign uz[2*i  ] = x[i];
+        assign uz[2*i+1] = x[i+16];
+    end
+    return uz;
+endfunction
+
+// 32-bit UnZip
+function automatic logic [31:0] unzip32(logic [31:0] x);
     logic [15:0] zh, zl;
     for (int i = 0;  i < 16; i = i + 1) begin
         assign zh[i] = x[2*i + 1];
@@ -65,15 +75,6 @@ function automatic logic [31:0] zip32(logic [31:0] x);
     return {zh, zl};
 endfunction
 
-// 32-bit UnZip
-function automatic logic [31:0] unzip32(logic [31:0] x);
-    logic [31:0] uz;
-    for (int i = 0;  i < 16; i = i + 1) begin
-        assign uz[2*i  ] = x[i];
-        assign uz[2*i+1] = x[i+16];
-    end
-    return uz;
-endfunction
 
 // Multiply by 2 in GF(2^8) modulo 8'h1b
 function automatic logic [7:0] xtime2(logic [7:0] a);
