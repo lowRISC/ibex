@@ -14,8 +14,8 @@
   `define RV32B ibex_pkg::RV32BNone
 `endif
 
-`ifndef RV32B
-  `define RV32B ibex_pkg::RV32ZkNone
+`ifndef RV32Zk
+  `define RV32Zk ibex_pkg::RV32ZkNone
 `endif
 
 `ifndef RegFile
