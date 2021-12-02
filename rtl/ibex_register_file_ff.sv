@@ -11,9 +11,10 @@
  * targeting FPGA synthesis or Verilator simulation.
  */
 module ibex_register_file_ff #(
-  parameter bit          RV32E             = 0,
-  parameter int unsigned DataWidth         = 32,
-  parameter bit          DummyInstructions = 0
+  parameter bit                   RV32E             = 0,
+  parameter int unsigned          DataWidth         = 32,
+  parameter bit                   DummyInstructions = 0,
+  parameter logic [DataWidth-1:0] WordZeroVal       = '0
 ) (
   // Clock and Reset
   input  logic                 clk_i,
@@ -55,7 +56,7 @@ module ibex_register_file_ff #(
   for (genvar i = 1; i < NUM_WORDS; i++) begin : g_rf_flops
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
-        rf_reg_q[i] <= '0;
+        rf_reg_q[i] <= WordZeroVal;
       end else if (we_a_dec[i]) begin
         rf_reg_q[i] <= wdata_a_i;
       end
@@ -73,21 +74,21 @@ module ibex_register_file_ff #(
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
-        rf_r0_q <= '0;
+        rf_r0_q <= WordZeroVal;
       end else if (we_r0_dummy) begin
         rf_r0_q <= wdata_a_i;
       end
     end
 
     // Output the dummy data for dummy instructions, otherwise R0 reads as zero
-    assign rf_reg[0] = dummy_instr_id_i ? rf_r0_q : '0;
+    assign rf_reg[0] = dummy_instr_id_i ? rf_r0_q : WordZeroVal;
 
   end else begin : g_normal_r0
     logic unused_dummy_instr_id;
     assign unused_dummy_instr_id = dummy_instr_id_i;
 
     // R0 is nil
-    assign rf_reg[0] = '0;
+    assign rf_reg[0] = WordZeroVal;
   end
 
   assign rf_reg[NUM_WORDS-1:1] = rf_reg_q[NUM_WORDS-1:1];
