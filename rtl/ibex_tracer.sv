@@ -1031,6 +1031,9 @@ module ibex_tracer (
             default:       decode_i_insn("unshfli");
           endcase
         end
+        INSN_XPERM_N:    decode_r_insn("xperm_n");
+        INSN_XPERM_B:    decode_r_insn("xperm_b");
+        INSN_XPERM_H:    decode_r_insn("xperm_h");
         INSN_SLO:        decode_r_insn("slo");
         INSN_SRO:        decode_r_insn("sro");
         INSN_SLOI:       decode_i_shift_insn("sloi");

@@ -246,6 +246,10 @@ package ibex_tracer_pkg;
   parameter logic [31:0] INSN_SHFL   = { 7'b0000100, 10'h?, 3'b001, 5'h?, {OPCODE_OP} };
   parameter logic [31:0] INSN_UNSHFL = { 7'b0000100, 10'h?, 3'b101, 5'h?, {OPCODE_OP} };
 
+  parameter logic [31:0] INSN_XPERM_N = { 7'b0010100, 10'h?, 3'b010, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_XPERM_B = { 7'b0010100, 10'h?, 3'b100, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_XPERM_H = { 7'b0010100, 10'h?, 3'b110, 5'h?, {OPCODE_OP} };
+
   parameter logic [31:0] INSN_SLO    = { 7'b0010000, 10'h?, 3'b001, 5'h?, {OPCODE_OP} };
   parameter logic [31:0] INSN_SRO    = { 7'b0010000, 10'h?, 3'b101, 5'h?, {OPCODE_OP} };
   parameter logic [31:0] INSN_SLOI   = { 5'b00100        , 12'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
