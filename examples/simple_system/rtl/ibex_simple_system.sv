@@ -14,8 +14,8 @@
   `define RV32B ibex_pkg::RV32BNone
 `endif
 
-`ifndef RV32Zk
-  `define RV32Zk ibex_pkg::RV32ZkNone
+`ifndef RV32ZK
+  `define RV32ZK ibex_pkg::RV32ZkNone
 `endif
 
 `ifndef RegFile
@@ -46,7 +46,7 @@ module ibex_simple_system (
   parameter bit                 RV32E                    = 1'b0;
   parameter ibex_pkg::rv32m_e   RV32M                    = `RV32M;
   parameter ibex_pkg::rv32b_e   RV32B                    = `RV32B;
-  parameter ibex_pkg::rv32zk_e  RV32Zk                   = `RV32Zk;
+  parameter ibex_pkg::rv32zk_e  RV32Zk                   = `RV32ZK;
   parameter ibex_pkg::regfile_e RegFile                  = `RegFile;
   parameter bit                 BranchTargetALU          = 1'b0;
   parameter bit                 WritebackStage           = 1'b0;
