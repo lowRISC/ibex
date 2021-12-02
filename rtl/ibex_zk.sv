@@ -150,7 +150,7 @@ endfunction
 
     // Xperm instructions
     // indexable access 4-bit LUT.
-    logic [ 3:0] lut_4b [7:0];
+    logic [ 3:0] lut_4b [8];
     logic [31:0] wxperm4;
     for(genvar i = 0; i < 8; i = i + 1) begin : gen_lut_xperm4
       // generate table.
@@ -165,7 +165,7 @@ endfunction
     end
 
    // indexable access 8-bit LUT.
-    logic [ 7:0] lut_8b [3:0];
+    logic [ 7:0] lut_8b [4];
     logic [31:0] wxperm8;
     for(genvar i = 0; i < 4; i = i + 1) begin : gen_lut_xperm8
       // generate table.
@@ -191,9 +191,9 @@ endfunction
     assign rhs2 = operand_b_i[15: 0];
 
     logic [31:0]  polymul0, polymul1, polymul2;
-    ibex_poly16_mul mul16_ins0(lhs0, rhs0, polymul0);
-    ibex_poly16_mul mul16_ins1(lhs1, rhs1, polymul1);
-    ibex_poly16_mul mul16_ins2(lhs2, rhs2, polymul2);
+    ibex_poly16_mul mul16_ins0(.a(lhs0), .b(rhs0), .r(polymul0));
+    ibex_poly16_mul mul16_ins1(.a(lhs1), .b(rhs1), .r(polymul1));
+    ibex_poly16_mul mul16_ins2(.a(lhs2), .b(rhs2), .r(polymul2));
 
     logic [31:0] wclmull, wclmulh, clmulm;
     assign clmulm  = polymul1 ^ polymul2;
@@ -219,7 +219,7 @@ endfunction
                         {32{clmulh_sel}} & wclmulh |
                         {32{xperm8_sel}} & wxperm8 |
                         {32{xperm4_sel}} & wxperm4 ;
-  end else begin : no_gen_zkb
+  end else begin : gen_no_zkb
     assign zkb_val    =  1'b0;
     assign zkb_result = 32'd0;
   end
@@ -301,10 +301,14 @@ endfunction
 
 
     logic[31:0]  sha256_sum0, sha256_sum1, sha256_sig0, sha256_sig1;
-    assign sha256_sig0  = `RORI32(operand_a_i, 7) ^ `RORI32(operand_a_i,18) ^ `SRLI32(operand_a_i, 3);
-    assign sha256_sig1  = `RORI32(operand_a_i,17) ^ `RORI32(operand_a_i,19) ^ `SRLI32(operand_a_i,10);
-    assign sha256_sum0  = `RORI32(operand_a_i, 2) ^ `RORI32(operand_a_i,13) ^ `RORI32(operand_a_i,22);
-    assign sha256_sum1  = `RORI32(operand_a_i, 6) ^ `RORI32(operand_a_i,11) ^ `RORI32(operand_a_i,25);
+    assign sha256_sig0 = `RORI32(operand_a_i, 7) ^ `RORI32(operand_a_i,18) ^
+                         `SRLI32(operand_a_i, 3);
+    assign sha256_sig1 = `RORI32(operand_a_i,17) ^ `RORI32(operand_a_i,19) ^
+                         `SRLI32(operand_a_i,10);
+    assign sha256_sum0 = `RORI32(operand_a_i, 2) ^ `RORI32(operand_a_i,13) ^
+                         `RORI32(operand_a_i,22);
+    assign sha256_sum1 = `RORI32(operand_a_i, 6) ^ `RORI32(operand_a_i,11) ^
+                         `RORI32(operand_a_i,25);
 
     logic[31:0]  sha512_sum0r, sha512_sum1r;
     logic[31:0]  sha512_sig0l, sha512_sig1l;
@@ -337,7 +341,7 @@ endfunction
                           {32{sha512_sig0h_sel}} & sha512_sig0h |
                           {32{sha512_sig1l_sel}} & sha512_sig1l |
                           {32{sha512_sig1h_sel}} & sha512_sig1h ;
-  end else begin : no_gen_zkn
+  end else begin : gen_no_zkn
     assign zkn_val    =  1'b0;
     assign zkn_result = 32'd0;
   end
@@ -401,7 +405,7 @@ endfunction
                         {32{sm4ks_sel}} & sm4    |
                         {32{sm3p0_sel}} & sm3_p0 |
                         {32{sm3p1_sel}} & sm3_p1 ;
-  end else begin : no_gen_zks
+  end else begin : gen_no_zks
     assign zks_val    =  1'b0;
     assign zks_result = 32'd0;
   end

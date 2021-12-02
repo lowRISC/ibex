@@ -368,9 +368,13 @@ module ibex_decoder #(
               5'b0_0101,                                                              // sbseti
               5'b0_1101: illegal_insn = (RV32B != RV32BNone) ? 1'b0 : 1'b1;           // sbinvi
               5'b0_0001: if (instr[26] == 1'b0) begin
-                if      (RV32B  == RV32BFull ) illegal_insn = 1'b0;                   // shfl
-                else if (RV32Zk != RV32ZkNone) illegal_insn = (instr[25:20] == 6'b00_1111) ? 1'b0 : 1'b1; //zip
-                else illegal_insn = 1'b1;
+                if (RV32B == RV32BFull ) begin
+                  illegal_insn = 1'b0;                                                // shfl
+                end else if (RV32Zk != RV32ZkNone) begin
+                  illegal_insn = (instr[25:20] == 6'b00_1111) ? 1'b0 : 1'b1;          //zip
+                end else begin
+                  illegal_insn = 1'b1;
+                end
               end else begin
                 illegal_insn = 1'b1;
               end
@@ -443,9 +447,13 @@ module ibex_decoder #(
                 end
                 5'b0_0001: begin
                   if (instr[26] == 1'b0) begin
-                    if      (RV32B  == RV32BFull ) illegal_insn = 1'b0;               // unshfl
-                    else if (RV32Zk != RV32ZkNone) illegal_insn = (instr[25:20] == 6'b00_1111) ? 1'b0 : 1'b1; //unzip
-                    else illegal_insn = 1'b1;
+                    if (RV32B  == RV32BFull ) begin
+                      illegal_insn = 1'b0;                                             // unshfl
+                    end else if (RV32Zk != RV32ZkNone) begin
+                      illegal_insn = (instr[25:20] == 6'b00_1111) ? 1'b0 : 1'b1;       //unzip
+                    end else begin
+                      illegal_insn = 1'b1;
+                    end
                   end else begin
                     illegal_insn = 1'b1;
                   end
@@ -467,7 +475,7 @@ module ibex_decoder #(
         if ({instr[26], instr[13:12]} == {1'b1, 2'b01}) begin
           illegal_insn = (RV32B != RV32BNone) ? 1'b0 : 1'b1; // cmix / cmov / fsl / fsr
         end else if ({instr[29:28],instr[25], instr[14:12]} == {3'b10__1, 3'b000}) begin
-          illegal_insn = (RV32Zk == RV32Zkn) ? 1'b0 : 1'b1; // aes32ds / aes32dsm / aes32es / aes32esm
+          illegal_insn = (RV32Zk == RV32Zkn) ? 1'b0 : 1'b1; // aes32ds/es aes32dsm/esm
         end else if ({instr[29:27],instr[25], instr[14:12]} == {4'b110_0, 3'b000}) begin
           illegal_insn = (RV32Zk == RV32Zks) ? 1'b0 : 1'b1; // sm4ed / sm4ks
         end else begin
@@ -857,64 +865,76 @@ module ibex_decoder #(
           3'b111: alu_operator_o = ALU_AND;  // And with Immediate
 
           3'b001: begin
-            unique case (instr_alu[31:27])
-              5'b0_0000: alu_operator_o = ALU_SLL;    // Shift Left Logical by Immediate
-              5'b0_0100: if (RV32B != RV32BNone) alu_operator_o = ALU_SLO  ;  // Shift Left Ones by Immediate
-              5'b0_1001: if (RV32B != RV32BNone) alu_operator_o = ALU_SBCLR;  // Clear bit specified by immediate
-              5'b0_0101: if (RV32B != RV32BNone) alu_operator_o = ALU_SBSET;  // Set bit specified by immediate
-              5'b0_1101: if (RV32B != RV32BNone) alu_operator_o = ALU_SBINV;  // Invert bit specified by immediate.
-              5'b0_0001: if (instr_alu[26] == 0) begin
-                 if (RV32B == RV32BFull)        alu_operator_o = ALU_SHFL;    // Shuffle with Immediate Control Value
-                 else if (RV32Zk != RV32ZkNone) alu_operator_o = (instr[25:20] == 6'b00_1111) ? ZKB_ZIP : ALU_SLL; //zbk_zip
-                 else                           alu_operator_o = ALU_SLL;
-              end
-              5'b0_1100: begin
-                unique case (instr_alu[26:20])
-                  7'b000_0000: if (RV32B != RV32BNone) alu_operator_o = ALU_CLZ  ; // clz
-                  7'b000_0001: if (RV32B != RV32BNone) alu_operator_o = ALU_CTZ  ; // ctz
-                  7'b000_0010: if (RV32B != RV32BNone) alu_operator_o = ALU_PCNT ; // pcnt
-                  7'b000_0100: if (RV32B != RV32BNone) alu_operator_o = ALU_SEXTB; // sext.b
-                  7'b000_0101: if (RV32B != RV32BNone) alu_operator_o = ALU_SEXTH; // sext.h
-                  7'b001_0000: if (RV32B == RV32BFull) begin
-                    alu_operator_o   = ALU_CRC32_B;  // crc32.b
-                    alu_multicycle_o = 1'b1;
-                  end
-                  7'b001_0001: if (RV32B == RV32BFull) begin
-                    alu_operator_o   = ALU_CRC32_H;  // crc32.h
-                    alu_multicycle_o = 1'b1;
-                  end
-                  7'b001_0010: if (RV32B == RV32BFull) begin
-                    alu_operator_o   = ALU_CRC32_W;  // crc32.w
-                    alu_multicycle_o = 1'b1;
-                  end
-                  7'b001_1000: if (RV32B == RV32BFull) begin
-                    alu_operator_o   = ALU_CRC32C_B; // crc32c.b
-                    alu_multicycle_o = 1'b1;
-                  end
-                  7'b001_1001: if (RV32B == RV32BFull) begin
-                    alu_operator_o   = ALU_CRC32C_H; // crc32c.h
-                    alu_multicycle_o = 1'b1;
-                  end
-                  7'b001_1010: if (RV32B == RV32BFull) begin
-                    alu_operator_o   = ALU_CRC32C_W; // crc32c.w
-                    alu_multicycle_o = 1'b1;
-                  end
-                  default: ;
-                endcase
-              end
-              5'b0_0010: begin                                                         // Zk, zkh,zks
-                unique case (instr_alu[26:20])
-                  7'b000_0000: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA256SUM0; // sha256sum0
-                  7'b000_0001: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA256SUM1; // sha256sum1
-                  7'b000_0010: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA256SIG0; // sha256sig0
-                  7'b000_0011: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA256SIG1; // sha256sig1
-                  7'b000_1000: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM3P0;      // sm3p0
-                  7'b000_1001: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM3P1;      // sm3p1
-                  default:     alu_operator_o = ALU_SLL;
-                endcase
-              end
+            if (RV32B != RV32BNone) begin
+              unique case (instr_alu[31:27])
+                5'b0_0000: alu_operator_o = ALU_SLL;    // Shift Left Logical by Immediate
+                5'b0_0100: alu_operator_o = ALU_SLO  ;  // Shift Left Ones by Immediate
+                5'b0_1001: alu_operator_o = ALU_SBCLR;  // Clear bit specified by immediate
+                5'b0_0101: alu_operator_o = ALU_SBSET;  // Set bit specified by immediate
+                5'b0_1101: alu_operator_o = ALU_SBINV;  // Invert bit specified by immediate.
+
+                // Shuffle with Immediate Control Value
+                5'b0_0001: if (instr_alu[26] == 0) alu_operator_o = ALU_SHFL;
+                5'b0_1100: begin
+                  unique case (instr_alu[26:20])
+                    7'b000_0000: alu_operator_o = ALU_CLZ  ; // clz
+                    7'b000_0001: alu_operator_o = ALU_CTZ  ; // ctz
+                    7'b000_0010: alu_operator_o = ALU_PCNT ; // pcnt
+                    7'b000_0100: alu_operator_o = ALU_SEXTB; // sext.b
+                    7'b000_0101: alu_operator_o = ALU_SEXTH; // sext.h
+                    7'b001_0000: if (RV32B == RV32BFull) begin
+                      alu_operator_o   = ALU_CRC32_B;  // crc32.b
+                      alu_multicycle_o = 1'b1;
+                    end
+                    7'b001_0001: if (RV32B == RV32BFull) begin
+                      alu_operator_o   = ALU_CRC32_H;  // crc32.h
+                      alu_multicycle_o = 1'b1;
+                    end
+                    7'b001_0010: if (RV32B == RV32BFull) begin
+                      alu_operator_o   = ALU_CRC32_W;  // crc32.w
+                      alu_multicycle_o = 1'b1;
+                    end
+                    7'b001_1000: if (RV32B == RV32BFull) begin
+                      alu_operator_o   = ALU_CRC32C_B; // crc32c.b
+                      alu_multicycle_o = 1'b1;
+                    end
+                    7'b001_1001: if (RV32B == RV32BFull) begin
+                      alu_operator_o   = ALU_CRC32C_H; // crc32c.h
+                      alu_multicycle_o = 1'b1;
+                    end
+                    7'b001_1010: if (RV32B == RV32BFull) begin
+                      alu_operator_o   = ALU_CRC32C_W; // crc32c.w
+                      alu_multicycle_o = 1'b1;
+                    end
+                    default: ;
+                  endcase
+                end
+
+                default: alu_operator_o = ALU_SLL; // Shift Left Logical by Immediate
+              endcase
+            end else if (RV32Zk != RV32ZkNone) begin
+              unique case (instr_alu[31:27])
+                5'b0_0001: if (instr[26:20] == 7'b000_1111) alu_operator_o = ZKB_ZIP;//zbk_zip
+                5'b0_0010: begin  // zkn, zks
+                  unique case (instr_alu[26:20])
+                    // sha256sum0
+                    7'b000_0000: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA256SUM0;
+                    // sha256sum1
+                    7'b000_0001: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA256SUM1;
+                    // sha256sig0
+                    7'b000_0010: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA256SIG0;
+                    // sha256sig1
+                    7'b000_0011: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA256SIG1;
+                    // sm3p0
+                    7'b000_1000: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM3P0;
+                    // sm3p1
+                    7'b000_1001: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM3P1;
+                    default:     alu_operator_o = ALU_SLL;
+                  endcase
+                end
               default: alu_operator_o = ALU_SLL; // Shift Left Logical by Immediate
-            endcase
+              endcase
+            end
           end
 
           3'b101: begin
@@ -966,7 +986,6 @@ module ibex_decoder #(
               endcase
             end
           end
-
           default: ;
         endcase
       end
@@ -1037,7 +1056,7 @@ module ibex_decoder #(
             {7'b011_0000, 3'b001}: begin
               if (RV32B != RV32BNone) begin
                 alu_operator_o = ALU_ROL;   // rol
-                alu_multicycle_o = 1'b1;                
+                alu_multicycle_o = 1'b1;
               end else if ((RV32Zk != RV32ZkNone)) begin
                 alu_operator_o = ZKB_ROL;   // zbk_rol
               end
@@ -1124,44 +1143,58 @@ module ibex_decoder #(
             end
 
             // RV32Zk zbk
-            {7'b001_0100, 3'b100}: if (RV32Zk != RV32ZkNone) alu_operator_o = ZKB_XPERM8; // xperm8
-            {7'b001_0100, 3'b010}: if (RV32Zk != RV32ZkNone) alu_operator_o = ZKB_XPERM4; // xperm4
+            // xperm8
+            {7'b001_0100, 3'b100}: if (RV32Zk != RV32ZkNone) alu_operator_o = ZKB_XPERM8;
+            // xperm4
+            {7'b001_0100, 3'b010}: if (RV32Zk != RV32ZkNone) alu_operator_o = ZKB_XPERM4;
 
             // RV32Zk zkh
-            {7'b010_1000, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA512SUM0R; // sha512_sum0r
-            {7'b010_1001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA512SUM1R; // sha512_sum1r
-            {7'b010_1010, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA512SIG0L; // sha512_sig0l
-            {7'b010_1011, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA512SIG1L; // sha512_sig1l
-            {7'b010_1110, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA512SIG0H; // sha512_sig0h
-            {7'b010_1111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA512SIG1H; // sha512_sig1h
+            // sha512_sum0r
+            {7'b010_1000, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA512SUM0R;
+            // sha512_sum1r
+            {7'b010_1001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA512SUM1R;
+            // sha512_sig0l
+            {7'b010_1010, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA512SIG0L;
+            // sha512_sig1l
+            {7'b010_1011, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA512SIG1L;
+            // sha512_sig0h
+            {7'b010_1110, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA512SIG0H;
+            // sha512_sig1h
+            {7'b010_1111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_SHA512SIG1H;
 
             // RV32Zk zkned
-            {7'b001_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB0;  // aes32esb0
-            {7'b011_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB1;  // aes32esb1
-            {7'b101_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB2;  // aes32esb2
-            {7'b111_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB3;  // aes32esb3
-            {7'b001_0011, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESMB0; // aes32esmb0
-            {7'b011_0011, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESMB1; // aes32esmb1
-            {7'b101_0011, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESMB2; // aes32esmb2
-            {7'b111_0011, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESMB3; // aes32esmb3
-            {7'b001_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB0;  // aes32dsb0
-            {7'b011_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB1;  // aes32dsb1
-            {7'b101_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB2;  // aes32dsb2
-            {7'b111_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB3;  // aes32dsb3
-            {7'b001_0111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSMB0; // aes32dsmb0
-            {7'b011_0111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSMB1; // aes32dsmb1
-            {7'b101_0111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSMB2; // aes32dsmb2
-            {7'b111_0111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSMB3; // aes32dsmb3
+            // aes32es
+            {7'b001_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB0;
+            {7'b011_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB1;
+            {7'b101_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB2;
+            {7'b111_0001, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESB3;
+            // aes32esm
+            {7'b001_0011, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESMB0;
+            {7'b011_0011, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESMB1;
+            {7'b101_0011, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESMB2;
+            {7'b111_0011, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32ESMB3;
+            // aes32dsb0
+            {7'b001_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB0;
+            {7'b011_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB1;
+            {7'b101_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB2;
+            {7'b111_0101, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSB3;
+             // aes32dsmb0
+            {7'b001_0111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSMB0;
+            {7'b011_0111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSMB1;
+            {7'b101_0111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSMB2;
+            {7'b111_0111, 3'b000}: if (RV32Zk == RV32Zkn) alu_operator_o = ZKN_AES32DSMB3;
 
             // RV32Zk zks
-            {7'b001_1000, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4EDB0; // sm4edb0
-            {7'b011_1000, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4EDB1; // sm4edb1
-            {7'b101_1000, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4EDB2; // sm4edb2
-            {7'b111_1000, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4EDB3; // sm4edb3
-            {7'b001_1010, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4KSB0; // sm4ksb0
-            {7'b011_1010, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4KSB1; // sm4ksb1
-            {7'b101_1010, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4KSB2; // sm4ksb2
-            {7'b111_1010, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4KSB3; // sm4ksb3
+            // sm4edb0
+            {7'b001_1000, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4EDB0;
+            {7'b011_1000, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4EDB1;
+            {7'b101_1000, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4EDB2;
+            {7'b111_1000, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4EDB3;
+            // sm4ksb0
+            {7'b001_1010, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4KSB0;
+            {7'b011_1010, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4KSB1;
+            {7'b101_1010, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4KSB2;
+            {7'b111_1010, 3'b000}: if (RV32Zk == RV32Zks) alu_operator_o = ZKS_SM4KSB3;
 
             // RV32M instructions, all use the same ALU operation
             {7'b000_0001, 3'b000}: begin // mul
