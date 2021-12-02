@@ -72,7 +72,7 @@ class ibex_mem_intf_response_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
         end
       end
       // Add correct integrity bits
-      {req.intg, req.data} = prim_secded_pkg::prim_secded_39_32_enc(req.data);
+      {req.intg, req.data} = prim_secded_pkg::prim_secded_inv_39_32_enc(req.data);
       `uvm_info(get_full_name(), $sformatf("Response transfer:\n%0s", req.sprint()), UVM_HIGH)
       start_item(req);
       finish_item(req);

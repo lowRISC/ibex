@@ -12,9 +12,10 @@
  * FPGA architectures, it will produce RAM32M primitives. Other vendors have not yet been tested.
  */
 module ibex_register_file_fpga #(
-  parameter bit          RV32E             = 0,
-  parameter int unsigned DataWidth         = 32,
-  parameter bit          DummyInstructions = 0
+    parameter bit                   RV32E             = 0,
+    parameter int unsigned          DataWidth         = 32,
+    parameter bit                   DummyInstructions = 0,
+    parameter logic [DataWidth-1:0] WordZeroVal       = '0
 ) (
   // Clock and Reset
   input  logic                 clk_i,
@@ -55,6 +56,13 @@ module ibex_register_file_fpga #(
       mem[waddr_a_i] <= wdata_a_i;
     end
   end : sync_write
+
+  // Make sure we initialize the BRAM with the correct register reset value.
+  initial begin
+    for (int k = 0; k < NUM_WORDS; k++) begin
+      mem[k] = WordZeroVal;
+    end
+  end
 
   // Reset not used in this register file version
   logic unused_rst_ni;
