@@ -148,6 +148,9 @@ module ibex_ex_block #(
     .result_o           (zke_result),
     .zk_val_o           (zke_val)
     );
+  end else begin : no_gen_Zkn
+  assign zke_result = 32'd0;
+  assign zke_val    =  1'b0;
   end
 
   ////////////////
