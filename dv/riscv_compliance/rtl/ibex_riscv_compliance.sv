@@ -11,10 +11,6 @@
  * clock).
  */
 
-`ifndef RV32Zk
-  `define RV32Zk ibex_pkg::RV32ZkNone
-`endif
-
 module ibex_riscv_compliance (
   input IO_CLK,
   input IO_RST_N
@@ -26,7 +22,7 @@ module ibex_riscv_compliance (
   parameter bit RV32E                   = 1'b0;
   parameter ibex_pkg::rv32m_e RV32M     = ibex_pkg::RV32MFast;
   parameter ibex_pkg::rv32b_e RV32B     = ibex_pkg::RV32BNone;
-  parameter ibex_pkg::rv32zk_e RV32Zk   = `RV32Zk;
+  parameter ibex_pkg::rv32zk_e RV32Zk   = ibex_pkg::RV32ZkNone;
 
   parameter ibex_pkg::regfile_e RegFile = ibex_pkg::RegFileFF;
   parameter bit BranchTargetALU         = 1'b0;
