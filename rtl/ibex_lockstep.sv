@@ -216,14 +216,14 @@ module ibex_lockstep import ibex_pkg::*; #(
   logic [31:0] unused_wdata;
 
   // Checks on incoming data
-  prim_secded_39_32_dec u_instr_intg_dec (
+  prim_secded_inv_39_32_dec u_instr_intg_dec (
     .data_i     ({instr_rdata_intg_q, shadow_inputs_q[LockstepOffset-1].instr_rdata}),
     .data_o     (),
     .syndrome_o (),
     .err_o      (instr_intg_err)
   );
 
-  prim_secded_39_32_dec u_data_intg_dec (
+  prim_secded_inv_39_32_dec u_data_intg_dec (
     .data_i     ({data_rdata_intg_q, shadow_inputs_q[LockstepOffset-1].data_rdata}),
     .data_o     (),
     .syndrome_o (),
@@ -234,7 +234,7 @@ module ibex_lockstep import ibex_pkg::*; #(
                         (shadow_inputs_q[LockstepOffset-1].data_rvalid  & |data_intg_err);
 
   // Generate integrity bits
-  prim_secded_39_32_enc u_data_gen (
+  prim_secded_inv_39_32_enc u_data_gen (
     .data_i (data_wdata_i),
     .data_o ({data_wdata_intg_o, unused_wdata})
   );
