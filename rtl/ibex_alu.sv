@@ -403,6 +403,7 @@ module ibex_alu #(
   logic [31:0] singlebit_result;
   logic [31:0] rev_result;
   logic [31:0] shuffle_result;
+  logic [31:0] xperm_result;
   logic [31:0] butterfly_result;
   logic [31:0] invbutterfly_result;
   logic [31:0] clmul_result;
@@ -723,6 +724,96 @@ module ibex_alu #(
               ((shuffle_result >> 21) & FLIP_MASK_R[3]);
         end
       end
+
+      //////////////
+      // Crossbar //
+      //////////////
+      // The crossbar permutation instructions xperm.[nbh] (Zbp) can be implemented using 8
+      // parallel 4-bit-wide, 8-input crossbars. Basically, we permute the 8 nibbles of operand_a_i
+      // based on operand_b_i.
+
+      // Generate selector indices and valid signals.
+      // - sel_n[x] indicates which nibble of operand_a_i is selected for output nibble x.
+      // - vld_n[x] indicates if the selection is valid.
+      logic  [7:0][2:0] sel_n; // nibbles
+      logic  [7:0]      vld_n; // nibbles
+      logic  [3:0][1:0] sel_b; // bytes
+      logic  [3:0]      vld_b; // bytes
+      logic  [1:0][0:0] sel_h; // half words
+      logic  [1:0]      vld_h; // half words
+
+      // Per nibble, 3 bits are needed for the selection. Other bits must be zero.
+      // sel_n bit mask: 32'b0111_0111_0111_0111_0111_0111_0111_0111
+      // vld_n bit mask: 32'b1000_1000_1000_1000_1000_1000_1000_1000
+      for (genvar i = 0; i < 8; i++) begin : gen_sel_vld_n
+        assign sel_n[i] =   operand_b_i[i*4     +: 3];
+        assign vld_n[i] = ~|operand_b_i[i*4 + 3 +: 1];
+      end
+
+      // Per byte, 2 bits are needed for the selection. Other bits must be zero.
+      // sel_b bit mask: 32'b0000_0011_0000_0011_0000_0011_0000_0011
+      // vld_b bit mask: 32'b1111_1100_1111_1100_1111_1100_1111_1100
+      for (genvar i = 0; i < 4; i++) begin : gen_sel_vld_b
+        assign sel_b[i] =   operand_b_i[i*8     +: 2];
+        assign vld_b[i] = ~|operand_b_i[i*8 + 2 +: 6];
+      end
+
+      // Per half word, 1 bit is needed for the selection only. All other bits must be zero.
+      // sel_h bit mask: 32'b0000_0000_0000_0001_0000_0000_0000_0001
+      // vld_h bit mask: 32'b1111_1111_1111_1110_1111_1111_1111_1110
+      for (genvar i = 0; i < 2; i++) begin : gen_sel_vld_h
+        assign sel_h[i] =   operand_b_i[i*16     +: 1];
+        assign vld_h[i] = ~|operand_b_i[i*16 + 1 +: 15];
+      end
+
+      // Convert selector indices and valid signals to control the nibble-based
+      // crossbar logic.
+      logic [7:0][2:0] sel;
+      logic [7:0]      vld;
+      always_comb begin
+        unique case (operator_i)
+          ALU_XPERM_N: begin
+            // No conversion needed.
+            sel = sel_n;
+            vld = vld_n;
+          end
+
+          ALU_XPERM_B: begin
+            // Convert byte to nibble indicies.
+            for (int b = 0; b < 4; b++) begin
+              sel[b*2 +  0] =   {sel_b[b], 1'b0};
+              sel[b*2 +  1] =   {sel_b[b], 1'b1};
+              vld[b*2 +: 2] = {2{vld_b[b]}};
+            end
+          end
+
+          ALU_XPERM_H: begin
+            // Convert half-word to nibble indices.
+            for (int h = 0; h < 2; h++) begin
+              sel[h*4 +  0] =   {sel_h[h], 2'b00};
+              sel[h*4 +  1] =   {sel_h[h], 2'b01};
+              sel[h*4 +  2] =   {sel_h[h], 2'b10};
+              sel[h*4 +  3] =   {sel_h[h], 2'b11};
+              vld[h*4 +: 4] = {4{vld_h[h]}};
+            end
+          end
+
+          default: begin
+            // Tie valid to zero to disable the crossbar unless we need it.
+            sel = sel_n;
+            vld = '0;
+          end
+        endcase
+      end
+
+      // The actual nibble-based crossbar logic.
+      logic [7:0][3:0] val_n;
+      logic [7:0][3:0] xperm_n;
+      assign val_n = operand_a_i;
+      for (genvar i = 0; i < 8; i++) begin : gen_xperm_n
+        assign xperm_n[i] = vld[i] ? val_n[sel[i]] : '0;
+      end
+      assign xperm_result = xperm_n;
 
       ///////////////
       // Butterfly //
@@ -1083,6 +1174,7 @@ module ibex_alu #(
       logic [31:0] unused_imd_val_q_1;
       assign unused_imd_val_q_1   = imd_val_q_i[1];
       assign shuffle_result       = '0;
+      assign xperm_result         = '0;
       assign butterfly_result     = '0;
       assign invbutterfly_result  = '0;
       assign clmul_result         = '0;
@@ -1201,6 +1293,7 @@ module ibex_alu #(
     assign singlebit_result    = '0;
     assign rev_result          = '0;
     assign shuffle_result      = '0;
+    assign xperm_result        = '0;
     assign butterfly_result    = '0;
     assign invbutterfly_result = '0;
     assign clmul_result        = '0;
@@ -1237,6 +1330,9 @@ module ibex_alu #(
 
       // Shuffle Operations (RV32B)
       ALU_SHFL, ALU_UNSHFL: result_o = shuffle_result;
+
+      // Crossbar Permutation Operations (RV32B)
+      ALU_XPERM_N, ALU_XPERM_B, ALU_XPERM_H: result_o = xperm_result;
 
       // Comparison Operations
       ALU_EQ,   ALU_NE,

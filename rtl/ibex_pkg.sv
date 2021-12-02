@@ -73,7 +73,7 @@ package ibex_pkg;
   // ALU operations //
   ////////////////////
 
-  typedef enum logic [5:0] {
+  typedef enum logic [6:0] {
     // Arithmetics
     ALU_ADD,
     ALU_SUB,
@@ -100,6 +100,9 @@ package ibex_pkg;
     ALU_GORC,
     ALU_SHFL,
     ALU_UNSHFL,
+    ALU_XPERM_N,
+    ALU_XPERM_B,
+    ALU_XPERM_H,
 
     // Address Calculations
     // RV32B
