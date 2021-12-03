@@ -11,7 +11,7 @@ small:
   RV32E                    : 0
   RV32M                    : "ibex_pkg::RV32MFast"
   RV32B                    : "ibex_pkg::RV32BNone"
-  RV32Zk                   : "ibex_pkg::RV32ZkNone"
+  RV32K                    : "ibex_pkg::RV32ZkNone"
   RegFile                  : "ibex_pkg::RegFileFF"
   BranchTargetALU          : 0
   WritebackStage           : 0
@@ -28,7 +28,7 @@ opentitan:
   RV32E                    : 0
   RV32M                    : "ibex_pkg::RV32MSingleCycle"
   RV32B                    : "ibex_pkg::RV32BNone"
-  RV32Zk                   : "ibex_pkg::RV32ZkNone"
+  RV32K                    : "ibex_pkg::RV32ZkNone"
   RegFile                  : "ibex_pkg::RegFileFF"
   BranchTargetALU          : 1
   WritebackStage           : 1
@@ -51,7 +51,7 @@ experimental-maxperf:
   RV32E                    : 0
   RV32M                    : "ibex_pkg::RV32MSingleCycle"
   RV32B                    : "ibex_pkg::RV32BNone"
-  RV32Zk                   : "ibex_pkg::RV32ZkNone"
+  RV32K                    : "ibex_pkg::RV32ZkNone"
   RegFile                  : "ibex_pkg::RegFileFF"
   BranchTargetALU          : 1
   WritebackStage           : 1
@@ -68,7 +68,7 @@ experimental-maxperf-pmp:
   RV32E                    : 0
   RV32M                    : "ibex_pkg::RV32MSingleCycle"
   RV32B                    : "ibex_pkg::RV32BNone"
-  RV32Zk                   : "ibex_pkg::RV32ZkNone"
+  RV32K                    : "ibex_pkg::RV32ZkNone"
   RegFile                  : "ibex_pkg::RegFileFF"
   BranchTargetALU          : 1
   WritebackStage           : 1
@@ -85,7 +85,7 @@ experimental-maxperf-pmp-bmbalanced:
   RV32E                    : 0
   RV32M                    : "ibex_pkg::RV32MSingleCycle"
   RV32B                    : "ibex_pkg::RV32BBalanced"
-  RV32Zk                   : "ibex_pkg::RV32ZkNone"
+  RV32K                    : "ibex_pkg::RV32ZkNone"
   RegFile                  : "ibex_pkg::RegFileFF"
   BranchTargetALU          : 1
   WritebackStage           : 1
@@ -102,7 +102,7 @@ experimental-maxperf-pmp-bmfull:
   RV32E                    : 0
   RV32M                    : "ibex_pkg::RV32MSingleCycle"
   RV32B                    : "ibex_pkg::RV32BFull"
-  RV32Zk                   : "ibex_pkg::RV32ZkNone"
+  RV32K                    : "ibex_pkg::RV32ZkNone"
   RegFile                  : "ibex_pkg::RegFileFF"
   BranchTargetALU          : 1
   WritebackStage           : 1
@@ -119,7 +119,7 @@ experimental-maxperf-pmp-zkn:
   RV32E                    : 0
   RV32M                    : "ibex_pkg::RV32MSingleCycle"
   RV32B                    : "ibex_pkg::RV32BNone"
-  RV32Zk                   : "ibex_pkg::RV32Zkn"
+  RV32K                    : "ibex_pkg::RV32Zkn"
   RegFile                  : "ibex_pkg::RegFileFF"
   BranchTargetALU          : 1
   WritebackStage           : 1
@@ -136,7 +136,7 @@ experimental-maxperf-pmp-zks:
   RV32E                    : 0
   RV32M                    : "ibex_pkg::RV32MSingleCycle"
   RV32B                    : "ibex_pkg::RV32BNone"
-  RV32Zk                   : "ibex_pkg::RV32Zks"
+  RV32K                    : "ibex_pkg::RV32Zks"
   RegFile                  : "ibex_pkg::RegFileFF"
   BranchTargetALU          : 1
   WritebackStage           : 1
@@ -154,7 +154,7 @@ experimental-maxperf-pmp-bmfull-icache:
   RV32E                    : 0
   RV32M                    : "ibex_pkg::RV32MSingleCycle"
   RV32B                    : "ibex_pkg::RV32BFull"
-  RV32Zk                   : "ibex_pkg::RV32ZkNone"
+  RV32K                    : "ibex_pkg::RV32ZkNone"
   RegFile                  : "ibex_pkg::RegFileFF"
   BranchTargetALU          : 1
   WritebackStage           : 1
@@ -174,7 +174,7 @@ experimental-branch-predictor:
   RV32E                    : 0
   RV32M                    : "ibex_pkg::RV32MSingleCycle"
   RV32B                    : "ibex_pkg::RV32BNone"
-  RV32Zk                   : "ibex_pkg::RV32ZkNone"
+  RV32K                    : "ibex_pkg::RV32ZkNone"
   RegFile                  : "ibex_pkg::RegFileFF"
   BranchTargetALU          : 1
   WritebackStage           : 1

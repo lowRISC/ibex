@@ -85,11 +85,11 @@ parameters:
     paramtype: vlogdefine
     description: "Bitmanip implementation parameter enum. See the ibex_pkg::rv32b_e enum in ibex_pkg.sv for permitted values."
 
-  RV32Zk:
+  RV32K:
     datatype: str
     default: ibex_pkg::RV32ZkNone
     paramtype: vlogdefine
-    description: "Zk cryptography extension implementation parameter enum. See the ibex_pkg::rv32zk_e enum in ibex_pkg.sv for permitted values."
+    description: "Cryptography extension implementation parameter enum. See the ibex_pkg::rv32zk_e enum in ibex_pkg.sv for permitted values."
 
   RegFile:
     datatype: str
