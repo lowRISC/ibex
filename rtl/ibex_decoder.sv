@@ -868,7 +868,7 @@ module ibex_decoder #(
             if (RV32B != RV32BNone) begin
               unique case (instr_alu[31:27])
                 5'b0_0000: alu_operator_o = ALU_SLL;    // Shift Left Logical by Immediate
-                5'b0_0100: alu_operator_o = ALU_SLO  ;  // Shift Left Ones by Immediate
+                5'b0_0100: alu_operator_o = ALU_SLO;    // Shift Left Ones by Immediate
                 5'b0_1001: alu_operator_o = ALU_SBCLR;  // Clear bit specified by immediate
                 5'b0_0101: alu_operator_o = ALU_SBSET;  // Set bit specified by immediate
                 5'b0_1101: alu_operator_o = ALU_SBINV;  // Invert bit specified by immediate.
@@ -877,9 +877,9 @@ module ibex_decoder #(
                 5'b0_0001: if (instr_alu[26] == 0) alu_operator_o = ALU_SHFL;
                 5'b0_1100: begin
                   unique case (instr_alu[26:20])
-                    7'b000_0000: alu_operator_o = ALU_CLZ  ; // clz
-                    7'b000_0001: alu_operator_o = ALU_CTZ  ; // ctz
-                    7'b000_0010: alu_operator_o = ALU_PCNT ; // pcnt
+                    7'b000_0000: alu_operator_o = ALU_CLZ;   // clz
+                    7'b000_0001: alu_operator_o = ALU_CTZ;   // ctz
+                    7'b000_0010: alu_operator_o = ALU_PCNT;  // pcnt
                     7'b000_0100: alu_operator_o = ALU_SEXTB; // sext.b
                     7'b000_0101: alu_operator_o = ALU_SEXTH; // sext.h
                     7'b001_0000: if (RV32B == RV32BFull) begin
@@ -910,7 +910,7 @@ module ibex_decoder #(
                   endcase
                 end
 
-                default: alu_operator_o = ALU_SLL; // Shift Left Logical by Immediate
+                default: ;
               endcase
             end else if (RV32Zk != RV32ZkNone) begin
               unique case (instr_alu[31:27])
@@ -932,8 +932,10 @@ module ibex_decoder #(
                     default:     alu_operator_o = ALU_SLL;
                   endcase
                 end
-              default: alu_operator_o = ALU_SLL; // Shift Left Logical by Immediate
+              default: alu_operator_o = ALU_SLL;
               endcase
+            end else begin
+              alu_operator_o = ALU_SLL; // Shift Left Logical by Immediate
             end
           end
 

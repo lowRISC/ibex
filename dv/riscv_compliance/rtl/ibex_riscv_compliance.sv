@@ -123,7 +123,7 @@ module ibex_riscv_compliance (
       .RV32E           (RV32E           ),
       .RV32M           (RV32M           ),
       .RV32B           (RV32B           ),
-      .RV32Zk          ( RV32Zk         ),
+      .RV32Zk          (RV32Zk          ),
       .RegFile         (RegFile         ),
       .BranchTargetALU (BranchTargetALU ),
       .WritebackStage  (WritebackStage  ),
