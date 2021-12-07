@@ -51,7 +51,14 @@ ISS                 := spike
 # ISS runtime options
 ISS_OPTS            :=
 # ISA
-ISA                 := rv32imcb
+# Both an updated compiler and ISS are required to verify the bitmanip v.1.00
+# and draft v.0.93 extensions. For now, disable the bitmanip tests and verify
+# RV32IMC only.
+# For details, refer to https://github.com/lowRISC/ibex/issues/1470
+#ISA                 := rv32imcb
+#ISA_ISS             := rv32imc_Zba_Zbb_Zbc_Zbs_Xbitmanip
+ISA                 := rv32imc
+ISA_ISS             := rv32imc
 # Test name (default: full regression)
 TEST                := all
 TESTLIST            := riscv_dv_extension/testlist.yaml
@@ -125,7 +132,6 @@ CSR_OPTS=--csr_yaml=${CSR_FILE} \
          --end_signature_addr=${SIGNATURE_ADDR}
 
 RISCV_DV_OPTS=--custom_target=riscv_dv_extension \
-              --isa="${ISA}" \
               --mabi=ilp32 \
 
 # To avoid cluttering the output directory with stamp files, we place them in
@@ -244,7 +250,7 @@ tests-and-seeds := \
 #
 # To do this variable tracking, we dump each of the variables to a Makefile
 # fragment and try to load it up the next time around.
-gen-var-deps := GEN_OPTS SIMULATOR RISCV_DV_OPTS CSR_OPTS \
+gen-var-deps := GEN_OPTS SIMULATOR RISCV_DV_OPTS ISA CSR_OPTS \
 	            SIGNATURE_ADDR PMP_REGIONS PMP_GRANULARITY TEST_OPTS
 
 # Load up the generation stage's saved variable values. If this fails, that's
@@ -281,6 +287,7 @@ $(metadata)/instr_gen.gen.stamp: \
      --lsf_cmd="${LSF_CMD}" \
      --simulator="${SIMULATOR}" \
      ${RISCV_DV_OPTS} \
+     --isa=${ISA} \
      ${TEST_OPTS} \
      ${CSR_OPTS} \
      --sim_opts="+uvm_set_inst_override=riscv_asm_program_gen,ibex_asm_program_gen,"uvm_test_top.asm_gen" \
@@ -304,7 +311,8 @@ $(metadata)/instr_gen.compile.stamp: \
      --steps=gcc_compile \
      ${TEST_OPTS} \
      --gcc_opts=-mno-strict-align \
-     ${RISCV_DV_OPTS} && \
+     ${RISCV_DV_OPTS} \
+     --isa=${ISA} && \
 	  touch $@
 
 .PHONY: gcc_compile
@@ -329,7 +337,7 @@ $(metadata)/instr_gen.iss.stamp: \
      ${TEST_OPTS} \
      --iss="${ISS}" \
      --iss_opts="${ISS_OPTS}" \
-     --isa="${ISA}" \
+     --isa="${ISA_ISS}" \
      ${RISCV_DV_OPTS}
 	$(call dump-vars,$(metadata)/iss-vars.mk,iss,$(iss-var-deps))
 	@touch $@

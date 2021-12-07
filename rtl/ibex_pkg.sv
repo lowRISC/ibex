@@ -107,6 +107,9 @@ package ibex_pkg;
     ALU_GORC,
     ALU_SHFL,
     ALU_UNSHFL,
+    ALU_XPERM_N,
+    ALU_XPERM_B,
+    ALU_XPERM_H,
 
     // Address Calculations
     // RV32B
@@ -142,7 +145,7 @@ package ibex_pkg;
     // RV32B
     ALU_CLZ,
     ALU_CTZ,
-    ALU_PCNT,
+    ALU_CPOP,
 
     // Set lower than
     ALU_SLT,
@@ -157,15 +160,15 @@ package ibex_pkg;
 
     // Single-Bit Operations
     // RV32B
-    ALU_SBSET,
-    ALU_SBCLR,
-    ALU_SBINV,
-    ALU_SBEXT,
-
-    // Bit Extract / Deposit
-    // RV32B
+    ALU_BSET,
+    ALU_BCLR,
+    ALU_BINV,
     ALU_BEXT,
-    ALU_BDEP,
+
+    // Bit Compress / Decompress
+    // RV32B
+    ALU_BCOMPRESS,
+    ALU_BDECOMPRESS,
 
     // Bit Field Place
     // RV32B

@@ -227,12 +227,12 @@ module ibex_alu #(
   // =======================
   // Single bit instructions operate on bit operand_b_i[4:0] of operand_a_i.
 
-  // The operations sbset, sbclr and sbinv are implemented by generation of a bit-mask using the
+  // The operations bset, bclr and binv are implemented by generation of a bit-mask using the
   // shifter structure. This is done by left-shifting the operand 32'h1 by the required amount.
   // The signal shift_sbmode multiplexes the shifter input and sets the signal shift_left.
   // Further processing is taken care of by a separate structure.
   //
-  // For sbext, the bit defined by operand_b_i[4:0] is to be returned. This is done by simply
+  // For bext, the bit defined by operand_b_i[4:0] is to be returned. This is done by simply
   // shifting operand_a_i to the right by the required amount and returning bit [0] of the result.
   //
   // Bit-Field Place
@@ -291,7 +291,7 @@ module ibex_alu #(
 
   // single-bit mode: shift
   assign shift_sbmode = (RV32B != RV32BNone) ?
-      (operator_i == ALU_SBSET) | (operator_i == ALU_SBCLR) | (operator_i == ALU_SBINV) : 1'b0;
+      (operator_i == ALU_BSET) | (operator_i == ALU_BCLR) | (operator_i == ALU_BINV) : 1'b0;
 
   // left shift if this is:
   // * a standard left shift (slo, sll)
@@ -299,12 +299,12 @@ module ibex_alu #(
   // * a ror in the second cycle
   // * fsl: without word-swap bit: first cycle, else: second cycle
   // * fsr: without word-swap bit: second cycle, else: first cycle
-  // * a single-bit instruction: sbclr, sbset, sbinv (excluding sbext)
+  // * a single-bit instruction: bclr, bset, binv (excluding bext)
   // * bfp: bfp_mask << bfp_off
   always_comb begin
     unique case (operator_i)
       ALU_SLL: shift_left = 1'b1;
-      ALU_SLO,
+      ALU_SLO: shift_left = (RV32B == RV32BFull) ? 1'b1 : 1'b0;
       ALU_BFP: shift_left = (RV32B != RV32BNone) ? 1'b1 : 1'b0;
       ALU_ROL: shift_left = (RV32B != RV32BNone) ? instr_first_cycle_i : 0;
       ALU_ROR: shift_left = (RV32B != RV32BNone) ? ~instr_first_cycle_i : 0;
@@ -321,7 +321,7 @@ module ibex_alu #(
 
   assign shift_arith  = (operator_i == ALU_SRA);
   assign shift_ones   =
-      (RV32B != RV32BNone) ? (operator_i == ALU_SLO) | (operator_i == ALU_SRO) : 1'b0;
+      (RV32B == RV32BFull) ? (operator_i == ALU_SLO) | (operator_i == ALU_SRO) : 1'b0;
   assign shift_funnel =
       (RV32B != RV32BNone) ? (operator_i == ALU_FSL) | (operator_i == ALU_FSR) : 1'b0;
 
@@ -403,6 +403,7 @@ module ibex_alu #(
   logic [31:0] singlebit_result;
   logic [31:0] rev_result;
   logic [31:0] shuffle_result;
+  logic [31:0] xperm_result;
   logic [31:0] butterfly_result;
   logic [31:0] invbutterfly_result;
   logic [31:0] clmul_result;
@@ -415,9 +416,9 @@ module ibex_alu #(
     /////////////////
 
     // The bit-counter structure computes the number of set bits in its operand. Partial results
-    // (from left to right) are needed to compute the control masks for computation of bext/bdep
-    // by the butterfly network, if implemented.
-    // For pcnt, clz and ctz, only the end result is used.
+    // (from left to right) are needed to compute the control masks for computation of
+    // bcompress/bdecompress by the butterfly network, if implemented.
+    // For cpop, clz and ctz, only the end result is used.
 
     logic        zbe_op;
     logic        bitcnt_ctz;
@@ -452,13 +453,13 @@ module ibex_alu #(
       bitcnt_bit_mask = ~bitcnt_bit_mask;
     end
 
-    assign zbe_op = (operator_i == ALU_BEXT) | (operator_i == ALU_BDEP);
+    assign zbe_op = (operator_i == ALU_BCOMPRESS) | (operator_i == ALU_BDECOMPRESS);
 
     always_comb begin
       case (1'b1)
         zbe_op:      bitcnt_bits = operand_b_i;
         bitcnt_cz:   bitcnt_bits = bitcnt_bit_mask & ~bitcnt_mask_op; // clz / ctz
-        default:     bitcnt_bits = operand_a_i; // pcnt
+        default:     bitcnt_bits = operand_a_i; // cpop
       endcase
     end
 
@@ -580,10 +581,10 @@ module ibex_alu #(
 
     always_comb begin
       unique case (operator_i)
-        ALU_SBSET: singlebit_result = operand_a_i | shift_result;
-        ALU_SBCLR: singlebit_result = operand_a_i & ~shift_result;
-        ALU_SBINV: singlebit_result = operand_a_i ^ shift_result;
-        default:   singlebit_result = {31'h0, shift_result[0]}; // ALU_SBEXT
+        ALU_BSET: singlebit_result = operand_a_i | shift_result;
+        ALU_BCLR: singlebit_result = operand_a_i & ~shift_result;
+        ALU_BINV: singlebit_result = operand_a_i ^ shift_result;
+        default:  singlebit_result = {31'h0, shift_result[0]}; // ALU_BEXT
       endcase
     end
 
@@ -591,16 +592,16 @@ module ibex_alu #(
     // General Reverse and Or-combine //
     ////////////////////////////////////
 
-    // Only a subset of the General reverse and or-combine instructions are implemented in the
-    // balanced version of the B extension. Currently rev, rev8 and orc.b are supported in the
-    // base extension.
+    // Only a subset of the general reverse and or-combine instructions are implemented in the
+    // balanced version of the B extension. Currently rev8 (shift_amt = 5'b11000) and orc.b
+    // (shift_amt = 5'b00111) are supported in the base extension.
 
     logic [4:0] zbp_shift_amt;
     logic gorc_op;
 
     assign gorc_op = (operator_i == ALU_GORC);
-    assign zbp_shift_amt[2:0] = (RV32B == RV32BFull) ? shift_amt[2:0] : {3{&shift_amt[2:0]}};
-    assign zbp_shift_amt[4:3] = (RV32B == RV32BFull) ? shift_amt[4:3] : {2{&shift_amt[4:3]}};
+    assign zbp_shift_amt[2:0] = (RV32B == RV32BFull) ? shift_amt[2:0] : {3{shift_amt[0]}};
+    assign zbp_shift_amt[4:3] = (RV32B == RV32BFull) ? shift_amt[4:3] : {2{shift_amt[3]}};
 
     always_comb begin
       rev_result = operand_a_i;
@@ -724,25 +725,115 @@ module ibex_alu #(
         end
       end
 
+      //////////////
+      // Crossbar //
+      //////////////
+      // The crossbar permutation instructions xperm.[nbh] (Zbp) can be implemented using 8
+      // parallel 4-bit-wide, 8-input crossbars. Basically, we permute the 8 nibbles of operand_a_i
+      // based on operand_b_i.
+
+      // Generate selector indices and valid signals.
+      // - sel_n[x] indicates which nibble of operand_a_i is selected for output nibble x.
+      // - vld_n[x] indicates if the selection is valid.
+      logic  [7:0][2:0] sel_n; // nibbles
+      logic  [7:0]      vld_n; // nibbles
+      logic  [3:0][1:0] sel_b; // bytes
+      logic  [3:0]      vld_b; // bytes
+      logic  [1:0][0:0] sel_h; // half words
+      logic  [1:0]      vld_h; // half words
+
+      // Per nibble, 3 bits are needed for the selection. Other bits must be zero.
+      // sel_n bit mask: 32'b0111_0111_0111_0111_0111_0111_0111_0111
+      // vld_n bit mask: 32'b1000_1000_1000_1000_1000_1000_1000_1000
+      for (genvar i = 0; i < 8; i++) begin : gen_sel_vld_n
+        assign sel_n[i] =   operand_b_i[i*4     +: 3];
+        assign vld_n[i] = ~|operand_b_i[i*4 + 3 +: 1];
+      end
+
+      // Per byte, 2 bits are needed for the selection. Other bits must be zero.
+      // sel_b bit mask: 32'b0000_0011_0000_0011_0000_0011_0000_0011
+      // vld_b bit mask: 32'b1111_1100_1111_1100_1111_1100_1111_1100
+      for (genvar i = 0; i < 4; i++) begin : gen_sel_vld_b
+        assign sel_b[i] =   operand_b_i[i*8     +: 2];
+        assign vld_b[i] = ~|operand_b_i[i*8 + 2 +: 6];
+      end
+
+      // Per half word, 1 bit is needed for the selection only. All other bits must be zero.
+      // sel_h bit mask: 32'b0000_0000_0000_0001_0000_0000_0000_0001
+      // vld_h bit mask: 32'b1111_1111_1111_1110_1111_1111_1111_1110
+      for (genvar i = 0; i < 2; i++) begin : gen_sel_vld_h
+        assign sel_h[i] =   operand_b_i[i*16     +: 1];
+        assign vld_h[i] = ~|operand_b_i[i*16 + 1 +: 15];
+      end
+
+      // Convert selector indices and valid signals to control the nibble-based
+      // crossbar logic.
+      logic [7:0][2:0] sel;
+      logic [7:0]      vld;
+      always_comb begin
+        unique case (operator_i)
+          ALU_XPERM_N: begin
+            // No conversion needed.
+            sel = sel_n;
+            vld = vld_n;
+          end
+
+          ALU_XPERM_B: begin
+            // Convert byte to nibble indicies.
+            for (int b = 0; b < 4; b++) begin
+              sel[b*2 +  0] =   {sel_b[b], 1'b0};
+              sel[b*2 +  1] =   {sel_b[b], 1'b1};
+              vld[b*2 +: 2] = {2{vld_b[b]}};
+            end
+          end
+
+          ALU_XPERM_H: begin
+            // Convert half-word to nibble indices.
+            for (int h = 0; h < 2; h++) begin
+              sel[h*4 +  0] =   {sel_h[h], 2'b00};
+              sel[h*4 +  1] =   {sel_h[h], 2'b01};
+              sel[h*4 +  2] =   {sel_h[h], 2'b10};
+              sel[h*4 +  3] =   {sel_h[h], 2'b11};
+              vld[h*4 +: 4] = {4{vld_h[h]}};
+            end
+          end
+
+          default: begin
+            // Tie valid to zero to disable the crossbar unless we need it.
+            sel = sel_n;
+            vld = '0;
+          end
+        endcase
+      end
+
+      // The actual nibble-based crossbar logic.
+      logic [7:0][3:0] val_n;
+      logic [7:0][3:0] xperm_n;
+      assign val_n = operand_a_i;
+      for (genvar i = 0; i < 8; i++) begin : gen_xperm_n
+        assign xperm_n[i] = vld[i] ? val_n[sel[i]] : '0;
+      end
+      assign xperm_result = xperm_n;
+
       ///////////////
       // Butterfly //
       ///////////////
 
-      // The butterfly / inverse butterfly network executing bext/bdep (zbe) instructions.
-      // For bdep, the control bits mask of a local left region is generated by
-      // the inverse of a n-bit left rotate and complement upon wrap (LROTC) operation by the number
-      // of ones in the deposit bitmask to the right of the segment. n hereby denotes the width
-      // of the according segment. The bitmask for a pertaining local right region is equal to the
-      // corresponding local left region. Bext uses an analogue inverse process.
+      // The butterfly / inverse butterfly network executing bcompress/bdecompress (zbe)
+      // instructions. For bdecompress, the control bits mask of a local left region is generated
+      // by the inverse of a n-bit left rotate and complement upon wrap (LROTC) operation by the
+      // number of ones in the deposit bitmask to the right of the segment. n hereby denotes the
+      // width of the according segment. The bitmask for a pertaining local right region is equal
+      // to the corresponding local left region. Bcompress uses an analogue inverse process.
       // Consider the following 8-bit example.  For details, see Hilewitz et al. "Fast Bit Gather,
       // Bit Scatter and Bit Permuation Instructions for Commodity Microprocessors", (2008).
       //
-      // The bext/bdep instructions are completed in 2 cycles. In the first cycle, the control
-      // bitmask is prepared by executing the parallel prefix bit count. In the second cycle,
-      // the bit swapping is executed according to the control masks.
+      // The bcompress/bdecompress instructions are completed in 2 cycles. In the first cycle, the
+      // control bitmask is prepared by executing the parallel prefix bit count. In the second
+      // cycle, the bit swapping is executed according to the control masks.
 
       // 8-bit example:  (Hilewitz et al.)
-      // Consider the instruction bdep operand_a_i deposit_mask
+      // Consider the instruction bdecompress operand_a_i deposit_mask
       // Let operand_a_i = 8'babcd_efgh
       //    deposit_mask = 8'b1010_1101
       //
@@ -839,7 +930,7 @@ module ibex_alu #(
       // number of bits in local r = 32 / 2**(stage + 1) = 16/2**stage
       `define _N(stg) (16 >> stg)
 
-      // bext / bdep control bit generation
+      // bcompress / bdecompress control bit generation
       for (genvar stg = 0; stg < 5; stg++) begin : gen_butterfly_ctrl_stage
         // number of segs: 2** stg
         for (genvar seg=0; seg<2**stg; seg++) begin : gen_butterfly_ctrl
@@ -1083,6 +1174,7 @@ module ibex_alu #(
       logic [31:0] unused_imd_val_q_1;
       assign unused_imd_val_q_1   = imd_val_q_i[1];
       assign shuffle_result       = '0;
+      assign xperm_result         = '0;
       assign butterfly_result     = '0;
       assign invbutterfly_result  = '0;
       assign clmul_result         = '0;
@@ -1097,7 +1189,7 @@ module ibex_alu #(
     //////////////////////////////////////
     // Multicycle Bitmanip Instructions //
     //////////////////////////////////////
-    // Ternary instructions + Shift Rotations + Bit extract/deposit + CRC
+    // Ternary instructions + Shift Rotations + Bit Compress/Decompress + CRC
     // For ternary instructions (zbt), operand_a_i is tied to rs1 in the first cycle and rs3 in the
     // second cycle. operand_b_i is always tied to rs2.
 
@@ -1160,9 +1252,10 @@ module ibex_alu #(
           end
         end
 
-        ALU_BEXT, ALU_BDEP: begin
+        ALU_BCOMPRESS, ALU_BDECOMPRESS: begin
           if (RV32B == RV32BFull) begin
-            multicycle_result = (operator_i == ALU_BDEP) ? butterfly_result : invbutterfly_result;
+            multicycle_result = (operator_i == ALU_BDECOMPRESS) ? butterfly_result :
+                                                                  invbutterfly_result;
             imd_val_d_o = '{bitcnt_partial_lsb_d, bitcnt_partial_msb_d};
             if (instr_first_cycle_i) begin
               imd_val_we_o = 2'b11;
@@ -1200,6 +1293,7 @@ module ibex_alu #(
     assign singlebit_result    = '0;
     assign rev_result          = '0;
     assign shuffle_result      = '0;
+    assign xperm_result        = '0;
     assign butterfly_result    = '0;
     assign invbutterfly_result = '0;
     assign clmul_result        = '0;
@@ -1237,6 +1331,9 @@ module ibex_alu #(
       // Shuffle Operations (RV32B)
       ALU_SHFL, ALU_UNSHFL: result_o = shuffle_result;
 
+      // Crossbar Permutation Operations (RV32B)
+      ALU_XPERM_N, ALU_XPERM_B, ALU_XPERM_H: result_o = xperm_result;
+
       // Comparison Operations
       ALU_EQ,   ALU_NE,
       ALU_GE,   ALU_GEU,
@@ -1249,7 +1346,7 @@ module ibex_alu #(
 
       // Bitcount Operations (RV32B)
       ALU_CLZ, ALU_CTZ,
-      ALU_PCNT: result_o = {26'h0, bitcnt_result};
+      ALU_CPOP: result_o = {26'h0, bitcnt_result};
 
       // Pack Operations (RV32B)
       ALU_PACK, ALU_PACKH,
@@ -1267,12 +1364,12 @@ module ibex_alu #(
       ALU_CRC32_W, ALU_CRC32C_W,
       ALU_CRC32_H, ALU_CRC32C_H,
       ALU_CRC32_B, ALU_CRC32C_B,
-      // Bit Extract / Deposit (RV32B)
-      ALU_BEXT, ALU_BDEP: result_o = multicycle_result;
+      // Bit Compress / Decompress (RV32B)
+      ALU_BCOMPRESS, ALU_BDECOMPRESS: result_o = multicycle_result;
 
       // Single-Bit Bitmanip Operations (RV32B)
-      ALU_SBSET, ALU_SBCLR,
-      ALU_SBINV, ALU_SBEXT: result_o = singlebit_result;
+      ALU_BSET, ALU_BCLR,
+      ALU_BINV, ALU_BEXT: result_o = singlebit_result;
 
       // General Reverse / Or-combine (RV32B)
       ALU_GREV, ALU_GORC: result_o = rev_result;

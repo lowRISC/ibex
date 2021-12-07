@@ -77,32 +77,31 @@ package ibex_tracer_pkg;
   parameter logic [31:0] INSN_SH3ADD = { 7'b0010000, 10'h?, 3'b110, 5'h?, {OPCODE_OP} };
 
   // ZBB
-  parameter logic [31:0] INSN_SLOI = { 5'b00100        , 12'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
   // Only log2(XLEN) bits of the immediate are used. For RV32, this means only the bits in
   // instr[24:20] are effectively used. Whenever instr[26] is set, sroi/rori is instead decoded as
   // fsri.
-  parameter logic [31:0] INSN_SROI = { 5'b00100  , 1'b0, 11'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
   parameter logic [31:0] INSN_RORI = { 5'b01100  , 1'b0, 11'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
   parameter logic [31:0] INSN_CLZ  = { 12'b011000000000, 5'h?,  3'b001, 5'h?, {OPCODE_OP_IMM} };
   parameter logic [31:0] INSN_CTZ  = { 12'b011000000001, 5'h?,  3'b001, 5'h?, {OPCODE_OP_IMM} };
-  parameter logic [31:0] INSN_PCNT = { 12'b011000000010, 5'h?,  3'b001, 5'h?, {OPCODE_OP_IMM} };
+  parameter logic [31:0] INSN_CPOP = { 12'b011000000010, 5'h?,  3'b001, 5'h?, {OPCODE_OP_IMM} };
   parameter logic [31:0] INSN_SEXTB = { 12'b011000000100, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
   parameter logic [31:0] INSN_SEXTH = { 12'b011000000101, 5'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
-  // The ZEXT.B and ZEXT.H pseudo-instructions are currently not emitted by the tracer due to a lack
-  // of support in the LLVM and GCC toolchains. Enabling this functionality when the time is right is
-  // tracked in https://github.com/lowRISC/ibex/issues/1228
-  // sext -- pseudoinstruction: andi rd, rs 255
-  // parameter logic [31:0] INSN_ZEXTB = { 4'b0000, 8'b11111111, 5'h?, 3'b111, 5'h?, {OPCODE_OP_IMM} };
-  // sext -- pseudoinstruction: pack rd, rs zero
+
+  // The zext.h and zext.b pseudo-instructions are defined in the ratified v.1.0.0 and draft v.0.94
+  // specifications of the bitmanip extension, respectively. They are currently not emitted by the
+  // tracer due to a lack of support in the LLVM and GCC toolchains. Enabling this functionality
+  // when the time is right is tracked in https://github.com/lowRISC/ibex/issues/1228
+  // zext.b -- pseudo-instruction: andi rd, rs 255
+  // parameter logic [31:0] INSN_ZEXTB =
+  //     { 4'b0000, 8'b11111111, 5'h?, 3'b111, 5'h?, {OPCODE_OP_IMM} };
+  // zext.h -- pseudo-instruction: pack rd, rs zero
   // parameter logic [31:0] INSN_ZEXTH = { 7'b0000100, 5'b00000, 5'h?, 3'b100, 5'h?, {OPCODE_OP} };
 
-  parameter logic [31:0] INSN_SLO   = { 7'b0010000, 10'h?, 3'b001, 5'h?, {OPCODE_OP} };
-  parameter logic [31:0] INSN_SRO   = { 7'b0010000, 10'h?, 3'b101, 5'h?, {OPCODE_OP} };
   parameter logic [31:0] INSN_ROL   = { 7'b0110000, 10'h?, 3'b001, 5'h?, {OPCODE_OP} };
   parameter logic [31:0] INSN_ROR   = { 7'b0110000, 10'h?, 3'b101, 5'h?, {OPCODE_OP} };
   parameter logic [31:0] INSN_MIN   = { 7'b0000101, 10'h?, 3'b100, 5'h?, {OPCODE_OP} };
-  parameter logic [31:0] INSN_MAX   = { 7'b0000101, 10'h?, 3'b101, 5'h?, {OPCODE_OP} };
-  parameter logic [31:0] INSN_MINU  = { 7'b0000101, 10'h?, 3'b110, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_MAX   = { 7'b0000101, 10'h?, 3'b110, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_MINU  = { 7'b0000101, 10'h?, 3'b101, 5'h?, {OPCODE_OP} };
   parameter logic [31:0] INSN_MAXU  = { 7'b0000101, 10'h?, 3'b111, 5'h?, {OPCODE_OP} };
   parameter logic [31:0] INSN_XNOR  = { 7'b0100000, 10'h?, 3'b100, 5'h?, {OPCODE_OP} };
   parameter logic [31:0] INSN_ORN   = { 7'b0100000, 10'h?, 3'b110, 5'h?, {OPCODE_OP} };
@@ -112,17 +111,17 @@ package ibex_tracer_pkg;
   parameter logic [31:0] INSN_PACKH = { 7'b0000100, 10'h?, 3'b111, 5'h?, {OPCODE_OP} };
 
   // ZBS
-  parameter logic [31:0] INSN_SBCLRI = { 5'b01001, 12'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
-  parameter logic [31:0] INSN_SBSETI = { 5'b00101, 12'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
-  parameter logic [31:0] INSN_SBINVI = { 5'b01101, 12'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
+  parameter logic [31:0] INSN_BCLRI = { 5'b01001, 12'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
+  parameter logic [31:0] INSN_BSETI = { 5'b00101, 12'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
+  parameter logic [31:0] INSN_BINVI = { 5'b01101, 12'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
   // Only log2(XLEN) bits of the immediate are used. For RV32, this means only the bits in
-  // instr[24:20] are effectively used. Whenever instr[26] is set, sbexti is instead decoded as fsri.
-  parameter logic [31:0] INSN_SBEXTI = { 5'b01001, 1'b0, 11'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
+  // instr[24:20] are effectively used. Whenever instr[26] is set, bexti is instead decoded as fsri.
+  parameter logic [31:0] INSN_BEXTI = { 5'b01001, 1'b0, 11'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
 
-  parameter logic [31:0] INSN_SBCLR = { 7'b0100100, 10'h?, 3'b001, 5'h?, {OPCODE_OP} };
-  parameter logic [31:0] INSN_SBSET = { 7'b0010100, 10'h?, 3'b001, 5'h?, {OPCODE_OP} };
-  parameter logic [31:0] INSN_SBINV = { 7'b0110100, 10'h?, 3'b001, 5'h?, {OPCODE_OP} };
-  parameter logic [31:0] INSN_SBEXT = { 7'b0100100, 10'h?, 3'b101, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_BCLR = { 7'b0100100, 10'h?, 3'b001, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_BSET = { 7'b0010100, 10'h?, 3'b001, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_BINV = { 7'b0110100, 10'h?, 3'b001, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_BEXT = { 7'b0100100, 10'h?, 3'b101, 5'h?, {OPCODE_OP} };
 
   // ZBP
   // grevi
@@ -247,9 +246,21 @@ package ibex_tracer_pkg;
   parameter logic [31:0] INSN_SHFL   = { 7'b0000100, 10'h?, 3'b001, 5'h?, {OPCODE_OP} };
   parameter logic [31:0] INSN_UNSHFL = { 7'b0000100, 10'h?, 3'b101, 5'h?, {OPCODE_OP} };
 
+  parameter logic [31:0] INSN_XPERM_N = { 7'b0010100, 10'h?, 3'b010, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_XPERM_B = { 7'b0010100, 10'h?, 3'b100, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_XPERM_H = { 7'b0010100, 10'h?, 3'b110, 5'h?, {OPCODE_OP} };
+
+  parameter logic [31:0] INSN_SLO    = { 7'b0010000, 10'h?, 3'b001, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_SRO    = { 7'b0010000, 10'h?, 3'b101, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_SLOI   = { 5'b00100        , 12'h?, 3'b001, 5'h?, {OPCODE_OP_IMM} };
+  // Only log2(XLEN) bits of the immediate are used. For RV32, this means only the bits in
+  // instr[24:20] are effectively used. Whenever instr[26] is set, sroi/rori is instead decoded as
+  // fsri.
+  parameter logic [31:0] INSN_SROI   = { 5'b00100  , 1'b0, 11'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
+
   // ZBE
-  parameter logic [31:0] INSN_BDEP = {7'b0100100, 10'h?, 3'b110, 5'h?, {OPCODE_OP} };
-  parameter logic [31:0] INSN_BEXT = {7'b0000100, 10'h?, 3'b110, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_BDECOMPRESS = {7'b0100100, 10'h?, 3'b110, 5'h?, {OPCODE_OP} };
+  parameter logic [31:0] INSN_BCOMPRESS   = {7'b0000100, 10'h?, 3'b110, 5'h?, {OPCODE_OP} };
 
   // ZBT
   parameter logic [31:0] INSN_FSRI = { 5'h?, 1'b1, 11'h?, 3'b101, 5'h?, {OPCODE_OP_IMM} };
