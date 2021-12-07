@@ -25,24 +25,24 @@ module ibex_zk #(
 // 32-bit Barrel Right Rotation
 function automatic logic [31:0] ror32(logic [31:0] x, logic [4:0] amt);
     logic [31:0] ro, l8, l4, l2, l1, l0;
-    assign l0 = x;
-    assign l1 = ({32{amt[0]}} & {l0[   0], l0[31: 1]}) | ({32{!amt[0]}} & l0[31:0]);
-    assign l2 = ({32{amt[1]}} & {l1[ 1:0], l1[31: 2]}) | ({32{!amt[1]}} & l1[31:0]);
-    assign l4 = ({32{amt[2]}} & {l2[ 3:0], l2[31: 4]}) | ({32{!amt[2]}} & l2[31:0]);
-    assign l8 = ({32{amt[3]}} & {l4[ 7:0], l4[31: 8]}) | ({32{!amt[3]}} & l4[31:0]);
-    assign ro = ({32{amt[4]}} & {l8[15:0], l8[31:16]}) | ({32{!amt[4]}} & l8[31:0]);
+    l0 = x;
+    l1 = ({32{amt[0]}} & {l0[   0], l0[31: 1]}) | ({32{!amt[0]}} & l0[31:0]);
+    l2 = ({32{amt[1]}} & {l1[ 1:0], l1[31: 2]}) | ({32{!amt[1]}} & l1[31:0]);
+    l4 = ({32{amt[2]}} & {l2[ 3:0], l2[31: 4]}) | ({32{!amt[2]}} & l2[31:0]);
+    l8 = ({32{amt[3]}} & {l4[ 7:0], l4[31: 8]}) | ({32{!amt[3]}} & l4[31:0]);
+    ro = ({32{amt[4]}} & {l8[15:0], l8[31:16]}) | ({32{!amt[4]}} & l8[31:0]);
     return ro;
 endfunction
 
 // 32-bit Barrel Left Rotation
 function automatic logic [31:0] rol32(logic [31:0] x, logic [4:0] amt);
     logic [31:0] ro, l8, l4, l2, l1, l0;
-    assign l0 = x;
-    assign l1 = ({32{amt[0]}} & {l0[30:0], l0[31   ]}) | ({32{!amt[0]}} & l0[31:0]);
-    assign l2 = ({32{amt[1]}} & {l1[29:0], l1[31:30]}) | ({32{!amt[1]}} & l1[31:0]);
-    assign l4 = ({32{amt[2]}} & {l2[27:0], l2[31:28]}) | ({32{!amt[2]}} & l2[31:0]);
-    assign l8 = ({32{amt[3]}} & {l4[23:0], l4[31:24]}) | ({32{!amt[3]}} & l4[31:0]);
-    assign ro = ({32{amt[4]}} & {l8[15:0], l8[31:16]}) | ({32{!amt[4]}} & l8[31:0]);
+    l0 = x;
+    l1 = ({32{amt[0]}} & {l0[30:0], l0[31   ]}) | ({32{!amt[0]}} & l0[31:0]);
+    l2 = ({32{amt[1]}} & {l1[29:0], l1[31:30]}) | ({32{!amt[1]}} & l1[31:0]);
+    l4 = ({32{amt[2]}} & {l2[27:0], l2[31:28]}) | ({32{!amt[2]}} & l2[31:0]);
+    l8 = ({32{amt[3]}} & {l4[23:0], l4[31:24]}) | ({32{!amt[3]}} & l4[31:0]);
+    ro = ({32{amt[4]}} & {l8[15:0], l8[31:16]}) | ({32{!amt[4]}} & l8[31:0]);
     return ro;
 endfunction
 
@@ -50,7 +50,7 @@ endfunction
 function automatic logic [7:0] rev8(logic [7:0] x);
     logic [7:0]  rb;
     for (int i = 0;  i < 8; i = i + 1) begin
-        assign rb[i] = x[8-i-1];
+        rb[i] = x[8-i-1];
     end
     return rb;
 endfunction
@@ -59,8 +59,8 @@ endfunction
 function automatic logic [31:0] zip32(logic [31:0] x);
     logic [31:0] uz;
     for (int i = 0;  i < 16; i = i + 1) begin
-        assign uz[2*i  ] = x[i];
-        assign uz[2*i+1] = x[i+16];
+        uz[2*i  ] = x[i];
+        uz[2*i+1] = x[i+16];
     end
     return uz;
 endfunction
@@ -69,8 +69,8 @@ endfunction
 function automatic logic [31:0] unzip32(logic [31:0] x);
     logic [15:0] zh, zl;
     for (int i = 0;  i < 16; i = i + 1) begin
-        assign zh[i] = x[2*i + 1];
-        assign zl[i] = x[2*i    ];
+        zh[i] = x[2*i + 1];
+        zl[i] = x[2*i    ];
     end
     return {zh, zl};
 endfunction
@@ -78,19 +78,19 @@ endfunction
 
 // Multiply by 2 in GF(2^8) modulo 8'h1b
 function automatic logic [7:0] xtime2(logic [7:0] a);
-    logic [7:0] xtime2;
-    xtime2  = {a[6:0],1'b0} ^ (a[7] ? 8'h1b : 8'b0 );
-    return xtime2;
+    logic [7:0] x2;
+    x2  = {a[6:0],1'b0} ^ (a[7] ? 8'h1b : 8'b0 );
+    return x2;
 endfunction
 
 // Paired down multiply by X in GF(2^8)
 function automatic logic [7:0] xtimeN(logic [7:0] a, logic [3:0] b);
-    logic [7:0] xtimeN;
-    xtimeN = (b[0] ?                      a   : 0) ^
-             (b[1] ? xtime2(              a)  : 0) ^
-             (b[2] ? xtime2(xtime2(       a)) : 0) ^
-             (b[3] ? xtime2(xtime2(xtime2(a))): 0) ;
-    return xtimeN;
+    logic [7:0] xn;
+    xn = (b[0] ?                      a   : 0) ^
+         (b[1] ? xtime2(              a)  : 0) ^
+         (b[2] ? xtime2(xtime2(       a)) : 0) ^
+         (b[3] ? xtime2(xtime2(xtime2(a))): 0) ;
+    return xn;
 endfunction
 
   logic        zkb_val;
