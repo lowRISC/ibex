@@ -528,8 +528,8 @@ module ibex_decoder #(
             {7'b001_0100, 3'b110}: illegal_insn = (RV32B == RV32BFull) ? 1'b0 : 1'b1; // xperm.h
             // RV32B zbp & RV32Zk zbk
             {7'b001_0100, 3'b010}, // xperm.n/xperm4
-            {7'b001_0100, 3'b100}: illegal_insn = ((RV32B  == RV32BFull ) ||
-                                                   (RV32Zk != RV32ZkNone)) ? 1'b0 : 1'b1;// xperm.b/xperm8
+            {7'b001_0100, 3'b100}: illegal_insn = ((RV32B  == RV32BFull ) ||   // xperm.b/xperm8
+                                                   (RV32Zk != RV32ZkNone)) ? 1'b0 : 1'b1;
             // RV32B zbc
             {7'b000_0101, 3'b001}, // clmul
             {7'b000_0101, 3'b011}: illegal_insn = ((RV32B  == RV32BFull ) ||
