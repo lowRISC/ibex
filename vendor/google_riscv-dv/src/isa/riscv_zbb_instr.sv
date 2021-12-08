@@ -31,7 +31,8 @@ class riscv_zbb_instr extends riscv_instr;
       end
 
       I_FORMAT: begin
-        if (instr_name inside { CLZ, CLZW, CTZ, CTZW, CPOP, CPOPW, ORC_B, SEXT_B, SEXT_H, REV8 }) begin
+        if (instr_name inside { CLZ, CLZW, CTZ, CTZW, CPOP, CPOPW, ORC_B, SEXT_B, SEXT_H, REV8 })
+        begin
           has_imm = 1'b0;
         end
       end
@@ -193,14 +194,16 @@ class riscv_zbb_instr extends riscv_instr;
       I_FORMAT: begin
         case (instr_name) inside
           CLZ, CLZW, CPOP, CPOPW, CTZ, CTZW, ORC_B, REV8, SEXT_B, SEXT_H: begin
-            binary = $sformatf("%8h", {get_func7(), get_func5(), rs1, get_func3(), rd, get_opcode()});
+            binary = $sformatf("%8h", {get_func7(), get_func5(), rs1, get_func3(), rd,
+                                       get_opcode()});
           end
           RORIW: begin
             binary = $sformatf("%8h", {get_func7(), imm[5:0], rs1, get_func3(), rd, get_opcode()});
           end
           RORI: begin
             // set bit 0 of funct7 only if rv64 and shamt[MSB] is set
-            binary = $sformatf("%8h", {(get_func7() | (is_rv64() && imm[5])), imm[4:0], rs1, get_func3(), rd, get_opcode()});
+            binary = $sformatf("%8h", {(get_func7() | (is_rv64() && imm[5])), imm[4:0], rs1,
+                                        get_func3(), rd, get_opcode()});
           end
         endcase
       end
