@@ -83,7 +83,8 @@ class riscv_zbs_instr extends riscv_instr;
       I_FORMAT : begin
         case (instr_name) inside
           BCLRI, BEXTI, BINVI, BSETI : begin
-            binary = $sformatf("%8h", {(get_func7() | (is_rv64() && imm[5])), imm[4:0], rs1, get_func3(), rd, get_opcode()});
+            binary = $sformatf("%8h", {(get_func7() | (is_rv64() && imm[5])), imm[4:0], rs1,
+                                        get_func3(), rd, get_opcode()});
           end
         endcase
       end
