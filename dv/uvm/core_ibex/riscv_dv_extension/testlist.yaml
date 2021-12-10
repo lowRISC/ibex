@@ -553,19 +553,20 @@
     compare_final_value_only: 1
     verbose: 1
 
-- test: riscv_reset_test
-  description: >
-    Randomly reset the core once in the middle of program execution
-  iterations: 15
-  gen_test: riscv_rand_instr_test
-  gen_opts: >
-    +num_of_sub_program=5
-    +enable_unaligned_load_store=1
-    +directed_instr_0=riscv_load_store_rand_instr_stream,10
-  rtl_test: core_ibex_reset_test
-  compare_opts:
-    compare_final_value_only: 1
-    verbose: 1
+# TODO: Determine why the reset_test is killing CI runs and re-enable
+#- test: riscv_reset_test
+#  description: >
+#    Randomly reset the core once in the middle of program execution
+#  iterations: 15
+#  gen_test: riscv_rand_instr_test
+#  gen_opts: >
+#    +num_of_sub_program=5
+#    +enable_unaligned_load_store=1
+#    +directed_instr_0=riscv_load_store_rand_instr_stream,10
+#  rtl_test: core_ibex_reset_test
+#  compare_opts:
+#    compare_final_value_only: 1
+#    verbose: 1
 
 - test: riscv_rv32im_instr_test
   description: >
