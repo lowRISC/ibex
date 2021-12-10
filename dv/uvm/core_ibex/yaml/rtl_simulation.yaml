@@ -55,7 +55,8 @@
     cmd: >
       env SIM_DIR=<sim_dir>
         <out>/vcs_simv +vcs+lic+wait <sim_opts> <wave_opts> <cov_opts>
-          +ntb_random_seed=<seed> +UVM_TESTNAME=<rtl_test> +bin=<binary>
+          +ntb_random_seed=<seed> +UVM_TESTNAME=<rtl_test>
+          +UVM_VERBOSITY=UVM_LOW +bin=<binary>
           +ibex_tracer_file_base=<sim_dir>/trace_core
           +cosim_log_file=<sim_dir>/spike_cosim.log
     cov_opts: >
@@ -83,7 +84,7 @@
               -l <out>/compile.log <cmp_opts>"
   sim:
     cmd: >
-      vsim -64 -c <cov_opts> -do "run -a; quit -f" +designfile -f <out>/top.list <sim_opts>  -sv_seed <seed> +access +r+w +UVM_TESTNAME=<rtl_test> +bin=<binary> +ibex_tracer_file_base="<sim_dir>/trace_core" -l <sim_dir>/sim.log
+      vsim -64 -c <cov_opts> -do "run -a; quit -f" +designfile -f <out>/top.list <sim_opts>  -sv_seed <seed> +access +r+w +UVM_TESTNAME=<rtl_test> +UVM_VERBOSITY=UVM_LOW +bin=<binary> +ibex_tracer_file_base="<sim_dir>/trace_core" -l <sim_dir>/sim.log
     cov_opts: >
       -do "coverage save -onexit <out>/cov.ucdb;"
 
@@ -105,7 +106,7 @@
                 -suppress EnumMustBePositive"
   sim:
     cmd: >
-      <DSIM> <sim_opts> -sv_seed <seed> -pli_lib <DSIM_LIB_PATH>/libuvm_dpi.so +acc+rwb -image image -work <out>/dsim <wave_opts> +UVM_TESTNAME=<rtl_test> +bin=<binary> +ibex_tracer_file_base=<sim_dir>/trace_core -l <sim_dir>/sim.log
+      <DSIM> <sim_opts> -sv_seed <seed> -pli_lib <DSIM_LIB_PATH>/libuvm_dpi.so +acc+rwb -image image -work <out>/dsim <wave_opts> +UVM_TESTNAME=<rtl_test> +UVM_VERBOSITY=UVM_LOW +bin=<binary> +ibex_tracer_file_base=<sim_dir>/trace_core -l <sim_dir>/sim.log
     wave_opts: >
       -waves waves.vcd
 
@@ -121,7 +122,7 @@
         -f ibex_dv.f"
   sim:
     cmd: >
-      vsim -c <sim_opts> <cov_opts> -sv_seed <seed> -lib <out>/work +UVM_TESTNAME=<rtl_test> +bin=<binary> +ibex_tracer_file_base="<sim_dir>/trace_core" -l <sim_dir>/sim.log -do "run -all; endsim; quit -force"
+      vsim -c <sim_opts> <cov_opts> -sv_seed <seed> -lib <out>/work +UVM_TESTNAME=<rtl_test> +UVM_VERBOSITY=UVM_LOW +bin=<binary> +ibex_tracer_file_base="<sim_dir>/trace_core" -l <sim_dir>/sim.log -do "run -all; endsim; quit -force"
     cov_opts: >
       -acdb_file <out>/cov.acdb
 
@@ -172,6 +173,7 @@
            -svseed <seed>
            -svrnc rand_struct
            +UVM_TESTNAME=<rtl_test>
+           +UVM_VERBOSITY=UVM_LOW
            +bin=<binary>
            +ibex_tracer_file_base=<sim_dir>/trace_core
            -nokey
