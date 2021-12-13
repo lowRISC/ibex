@@ -278,10 +278,10 @@ module ibex_icache import ibex_pkg::*; #(
     // Reuse the same ecc encoding module for larger cache sizes by padding with zeros
     logic [21:0]             tag_ecc_input_padded;
     logic [27:0]             tag_ecc_output_padded;
-    logic [22-IC_TAG_SIZE:0] tag_ecc_output_unused;
+    logic [22-IC_TAG_SIZE:0] unused_tag_ecc_output;
 
     assign tag_ecc_input_padded  = {{22-IC_TAG_SIZE{1'b0}},fill_tag_ic0};
-    assign tag_ecc_output_unused = tag_ecc_output_padded[21:IC_TAG_SIZE-1];
+    assign unused_tag_ecc_output = tag_ecc_output_padded[21:IC_TAG_SIZE-1];
 
     prim_secded_inv_28_22_enc tag_ecc_enc (
       .data_i (tag_ecc_input_padded),
@@ -911,7 +911,7 @@ module ibex_icache import ibex_pkg::*; #(
   always_comb begin
     line_data_muxed = '0;
     line_err_muxed  = 1'b0;
-    for (int i = 0; i < IC_LINE_BEATS; i++) begin
+    for (int unsigned i = 0; i < IC_LINE_BEATS; i++) begin
       // When data has been skidded, the output address is behind by one
       if ((output_addr_q[IC_LINE_W-1:BUS_W] + {{IC_LINE_BEATS_W-1{1'b0}},skid_valid_q}) ==
           i[IC_LINE_BEATS_W-1:0]) begin
@@ -1034,7 +1034,7 @@ module ibex_icache import ibex_pkg::*; #(
   //        31   15   0     31   15   0
   always_comb begin
     output_data_lo = '0;
-    for (int i = 0; i < IC_OUTPUT_BEATS; i++) begin
+    for (int unsigned i = 0; i < IC_OUTPUT_BEATS; i++) begin
       if (output_addr_q[BUS_W-1:1] == i[BUS_W-2:0]) begin
         output_data_lo |= output_data[i*16+:16];
       end
@@ -1043,7 +1043,7 @@ module ibex_icache import ibex_pkg::*; #(
 
   always_comb begin
     output_data_hi = '0;
-    for (int i = 0; i < IC_OUTPUT_BEATS - 1; i++) begin
+    for (int unsigned i = 0; i < IC_OUTPUT_BEATS - 1; i++) begin
       if (output_addr_q[BUS_W-1:1] == i[BUS_W-2:0]) begin
         output_data_hi |= output_data[(i+1)*16+:16];
       end
