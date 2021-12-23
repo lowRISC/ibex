@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Development version of edalize until all our changes are upstream
-git+https://github.com/lowRISC/edalize.git@ot
+# FIXME: Restore original fork after UHDM support is merged
+git+https://github.com/antmicro/edalize.git@rk/ibex-uhdm-support
 
 # Development version with OT-specific changes
 git+https://github.com/lowRISC/fusesoc.git@ot
