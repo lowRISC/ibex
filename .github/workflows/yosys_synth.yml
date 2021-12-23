@@ -31,20 +31,24 @@ jobs:
       - uses: robinraju/release-downloader@v1.3
         with:
           repository: "antmicro/yosys-uhdm-plugin-integration"
-          fileName: "yosys-uhdm-integration-*"
+          fileName: "*"
           latest: true
           tarBall: true
 
       - name: Extract yosys and UHDM plugin
         run: |
             tar -xzf yosys-uhdm-integration-*.tar.gz
-            echo "$GITHUB_WORKSPACE/image" >> $GITHUB_PATH
-
+            echo "$GITHUB_WORKSPACE/image/bin" >> $GITHUB_PATH
 
       - name: Get memory file for Ibex
         run: |
             # TODO: Build it from source
             wget https://raw.githubusercontent.com/antmicro/yosys-uhdm-plugin-integration/master/uhdm-tests/ibex/led.vmem
+
+      - name: Display environment
+        run: |
+          ls -l
+          echo $PATH
 
       - name: Build & Test
         run: |
@@ -54,4 +58,4 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: lowrisc_ibex_top_artya7_surelog_0.1.edif
-          path: UHDM-integration-tests/build/lowrisc_ibex_top_artya7_surelog_0.1/synth-yosys/lowrisc_ibex_top_artya7_surelog_0.1.edif
+          path: build/lowrisc_ibex_top_artya7_surelog_0.1/synth-yosys/lowrisc_ibex_top_artya7_surelog_0.1.edif
