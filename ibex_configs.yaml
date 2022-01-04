@@ -27,7 +27,7 @@ small:
 opentitan:
   RV32E                    : 0
   RV32M                    : "ibex_pkg::RV32MSingleCycle"
-  RV32B                    : "ibex_pkg::RV32BNone"
+  RV32B                    : "ibex_pkg::RV32BOTEarlGrey"
   RV32K                    : "ibex_pkg::RV32ZkNone"
   RegFile                  : "ibex_pkg::RegFileFF"
   BranchTargetALU          : 1

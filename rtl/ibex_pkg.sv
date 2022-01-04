@@ -45,9 +45,10 @@ package ibex_pkg;
   } rv32m_e;
 
   typedef enum integer {
-    RV32BNone     = 0,
-    RV32BBalanced = 1,
-    RV32BFull     = 2
+    RV32BNone       = 0,
+    RV32BBalanced   = 1,
+    RV32BOTEarlGrey = 2,
+    RV32BFull       = 3
   } rv32b_e;
 
   typedef enum integer {
@@ -415,8 +416,9 @@ package ibex_pkg;
   parameter int unsigned PMP_CFG_W            = 8;
 
   // PMP acces type
-  parameter int unsigned PMP_I = 0;
-  parameter int unsigned PMP_D = 1;
+  parameter int unsigned PMP_I  = 0;
+  parameter int unsigned PMP_I2 = 1;
+  parameter int unsigned PMP_D  = 2;
 
   typedef enum logic [1:0] {
     PMP_ACC_EXEC    = 2'b00,

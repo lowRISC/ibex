@@ -34,7 +34,7 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
 
   task pre_start();
     super.pre_start();
-    mem_model = new("mem_model", cfg.disable_pmp_errs, cfg.disable_mem_errs);
+    mem_model = new("mem_model", cfg.disable_mem_errs);
 
     // Take any pending grants and seed from a previous sequence
     if (prev_sequence) begin
@@ -91,7 +91,7 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
     resp_item.is_grant = 1'b0;
     resp_item.address  = req_item.address;
     resp_item.rdata    = 'X;
-    resp_item.err = mem_model.is_pmp_error(cur_seed, req_item.address, cfg.mem_err_shift);
+    resp_item.err = 1'b0;
 
     start_item(resp_item);
     `DV_CHECK_RANDOMIZE_FATAL(resp_item)
@@ -129,7 +129,7 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
     // the first time, we can't find it for the second grant.
     pending_grants = pending_grants[N - 1 - i:$];
 
-    // Using the seed that we saw for the request, check the memory model for a (non-PMP) error
+    // Using the seed that we saw for the request, check the memory model for an error
     // at this address. On success, look up the memory data too.
     resp_item.is_grant = 1'b1;
     resp_item.err      = mem_model.is_mem_error(gnt_seed, req_item.address, cfg.mem_err_shift);

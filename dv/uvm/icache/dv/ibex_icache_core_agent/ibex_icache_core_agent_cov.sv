@@ -51,19 +51,12 @@ class ibex_icache_core_agent_cov extends dv_base_agent_cov #(ibex_icache_core_ag
     coverpoint ready;
   endgroup : cancelled_valid_cg
 
-  // Track the combination of branch_spec and branch. The branch signal implies branch_spec, but the
-  // converse is not true. This covergroup is sampled when branch_spec is high.
-  covergroup branch_spec_cg with function sample (bit branch);
-    coverpoint branch;
-  endgroup : branch_spec_cg
-
   function new(string name, uvm_component parent);
     super.new(name, parent);
     inc_fetch_cg = new();
     branch_dest_cg = new();
     fetch_cg = new();
     cancelled_valid_cg = new();
-    branch_spec_cg = new();
   endfunction : new
 
   // Called on an "incrementing" pair of fetches: two fetches with no branch in between. addr0/addr1

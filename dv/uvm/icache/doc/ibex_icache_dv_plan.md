@@ -72,10 +72,10 @@ The memory agent emulates the instruction bus, supplying data to the cache.
 This must be deterministic (in order for the scoreboard to tell whether the cache fetched the right data), but must also be able to change with time (in order to check invalidation works correctly).
 To support this, the memory contents are modelled with a 32-bit seed value.
 
-The architectural state of the instruction bus and memory (contents at each address; PMP ranges; ranges that will cause a memory error) are all derived from this seed.
+The architectural state of the instruction bus and memory (contents at each address; ranges that will cause a memory error) are all derived from this seed.
 The precise functions can be found in [`dv/uvm/icache/dv/ibex_icache_mem_agent/ibex_icache_mem_model.sv`](https://github.com/lowRISC/ibex/blob/master/dv/uvm/icache/dv/ibex_icache_mem_agent/ibex_icache_mem_model.sv).
 
-The memory agent is an active slave, responding to instruction fetches from the cache with either a PMP error (on the same cycle as the request) or instruction data (with an in-order request pipeline).
+The memory agent is an active slave, responding to instruction fetches from the cache with instruction data (with an in-order request pipeline).
 
 #### ECC Agent
 

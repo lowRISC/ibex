@@ -4,16 +4,9 @@
 
 // A simple "memory model" governed by a single seed
 //
-// We pick a contiguous PMP range that covers ~1/8 of the address space. Set
-//
-//    pmp_lo = seed ^ 32'hdeadbeef
-//    pmp_hi = pmp_lo + min(32'd1 << (32 - 3), (~32'd0) - pmp_lo)
-//
-// then the disallowed PMP range will be [pmp_lo, pmp_hi].
-//
 // We'd like errors to be sparsely distributed in the address space, with 1/128 chance of any given
 // address causing an error. We should probably do something more sensible, but for now let's XOR
-// the address with something else (32'hf00dbeef) and pass it to the PMP calculation.
+// the address with something else (32'hf00dbeef).
 //
 // For the memory content hash function, we use the first example from [1] (explicitly
 // public-domain), except that we have 30+32 = 62 bits of input, which we just XOR together
@@ -23,21 +16,15 @@
 
 class ibex_icache_mem_model #(parameter int unsigned BusWidth = 32) extends uvm_object;
 
-  // If set, disable PMP errors
-  protected bit no_pmp_errs;
-
   // If set, disable memory errors
   protected bit no_mem_errs;
 
   function new(string       name="",
-               bit          disable_pmp_errs=0,
                bit          disable_mem_errs=0);
-    no_pmp_errs = disable_pmp_errs;
     no_mem_errs = disable_mem_errs;
   endfunction
 
   `uvm_object_utils_begin(ibex_icache_mem_model)
-    `uvm_field_int (no_pmp_errs, UVM_DEFAULT)
     `uvm_field_int (no_mem_errs, UVM_DEFAULT)
   `uvm_object_utils_end
 
@@ -59,19 +46,9 @@ class ibex_icache_mem_model #(parameter int unsigned BusWidth = 32) extends uvm_
 
   endfunction
 
-  // Return true if reading BusWidth bits from address should give a PMP error
-  function automatic logic is_pmp_error(bit [31:0] seed, logic [31:0] addr, int unsigned err_shift);
-    return (! no_pmp_errs) && is_error(seed, addr ^ 32'h12344321, err_shift);
-  endfunction
-
   // Return true if reading BusWidth bits from address should give a memory error
   function automatic logic is_mem_error(bit [31:0] seed, logic [31:0] addr, int unsigned err_shift);
     return (! no_mem_errs) && is_error(seed, addr ^ 32'hf00dbeef, err_shift);
-  endfunction
-
-  // Return true if reading BusWidth bits from address should give some sort of error
-  function automatic logic is_either_error(bit [31:0] seed, logic [31:0] addr, int unsigned err_shift);
-    return is_pmp_error(seed, addr, err_shift) || is_mem_error(seed, addr, err_shift);
   endfunction
 
   // Return BusWidth bits of data from reading at address.

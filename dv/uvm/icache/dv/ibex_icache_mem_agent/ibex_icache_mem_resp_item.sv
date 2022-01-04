@@ -10,14 +10,13 @@ class ibex_icache_mem_resp_item extends uvm_sequence_item;
   int unsigned mid_response_delay = 5;
   int unsigned max_response_delay = 50;
 
-  // True if this is a granted request. Otherwise, this is the first time we've seen an address (and
-  // we might need to drive the PMP line).
+  // True if this is a granted request. Otherwise, this is the first time we've seen an address.
   bit               is_grant;
 
-  // If true, drive either a PMP error (if !is_grant) or respond later with a memory error.
+  // If true, respond with a memory error.
   bit               err;
 
-  // The address of the memory response (only used for requests that trigger a PMP error)
+  // The address of the memory response.
   bit [31:0]        address;
 
   // Only has an effect if is_grant. The number of cycles to wait between reading this from the

@@ -310,16 +310,12 @@ module ibex_top import ibex_pkg::*; #(
   // Register file Instantiation //
   /////////////////////////////////
 
-  // We're using an inverted Hsiao code, hence we need to reset
-  // the regfile ECC bits to 1.
-  localparam logic [RegFileDataWidth-1:0] WordZeroVal = RegFileDataWidth'({7'h7f, 32'h0});
-
   if (RegFile == RegFileFF) begin : gen_regfile_ff
     ibex_register_file_ff #(
       .RV32E            (RV32E),
       .DataWidth        (RegFileDataWidth),
       .DummyInstructions(DummyInstructions),
-      .WordZeroVal      (WordZeroVal)
+      .WordZeroVal      (RegFileDataWidth'(prim_secded_pkg::SecdedInv3932ZeroWord))
     ) register_file_i (
       .clk_i (clk),
       .rst_ni(rst_ni),
@@ -340,7 +336,7 @@ module ibex_top import ibex_pkg::*; #(
       .RV32E            (RV32E),
       .DataWidth        (RegFileDataWidth),
       .DummyInstructions(DummyInstructions),
-      .WordZeroVal      (WordZeroVal)
+      .WordZeroVal      (RegFileDataWidth'(prim_secded_pkg::SecdedInv3932ZeroWord))
     ) register_file_i (
       .clk_i (clk),
       .rst_ni(rst_ni),
@@ -361,7 +357,7 @@ module ibex_top import ibex_pkg::*; #(
       .RV32E            (RV32E),
       .DataWidth        (RegFileDataWidth),
       .DummyInstructions(DummyInstructions),
-      .WordZeroVal      (WordZeroVal)
+      .WordZeroVal      (RegFileDataWidth'(prim_secded_pkg::SecdedInv3932ZeroWord))
     ) register_file_i (
       .clk_i (clk),
       .rst_ni(rst_ni),

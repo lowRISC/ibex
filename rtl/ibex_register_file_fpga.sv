@@ -51,7 +51,12 @@ module ibex_register_file_fpga #(
   // we select
   assign we = (waddr_a_i == '0) ? 1'b0 : we_a_i;
 
-  always_ff @(posedge clk_i) begin : sync_write
+  // Note that the SystemVerilog LRM requires variables on the LHS of assignments within
+  // "always_ff" to not be written to by any other process. However, to enable the initialization
+  // of the inferred RAM32M primitives with non-zero values, below "initial" procedure is needed.
+  // Therefore, we use "always" instead of the generally preferred "always_ff" for the synchronous
+  // write procedure.
+  always @(posedge clk_i) begin : sync_write
     if (we == 1'b1) begin
       mem[waddr_a_i] <= wdata_a_i;
     end
