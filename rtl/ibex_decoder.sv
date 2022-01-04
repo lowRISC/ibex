@@ -535,18 +535,16 @@ module ibex_decoder #(
                                                    (RV32Zk != RV32ZkNone)) ? 1'b0 : 1'b1;
             // RV32B zbc
             {7'b000_0101, 3'b001}, // clmul
-            {7'b000_0101, 3'b011}: illegal_insn = ((RV32B  == RV32BFull ) || 
+            {7'b000_0101, 3'b011}: illegal_insn = ((RV32B  == RV32BFull ) ||
                                                    (RV32B == RV32BOTEarlGrey) ||
                                                    (RV32Zk != RV32ZkNone)) ? 1'b0 : 1'b1; // clmulh
             // RV32B zbc
             {7'b000_0101, 3'b010}: begin // clmulr
               illegal_insn = (RV32B == RV32BOTEarlGrey || RV32B == RV32BFull) ? 1'b0 : 1'b1;
             end
-            
             // RV32B zbe
             {7'b010_0100, 3'b110}, // bdecompress
             {7'b000_0100, 3'b110}: illegal_insn = (RV32B == RV32BFull) ? 1'b0 : 1'b1; // bcompress
-            
             // RV32Zk zkh
             {7'b010_1000, 3'b000}, // sha512_sum0r
             {7'b010_1001, 3'b000}, // sha512_sum1r
@@ -1157,7 +1155,6 @@ module ibex_decoder #(
             {7'b001_0100, 3'b110}: begin
               if (RV32B == RV32BOTEarlGrey || RV32B == RV32BFull) alu_operator_o = ALU_XPERM_H;
             end
-              
             // RV32B zbp & RV32K zkb
             {7'b001_0100, 3'b010}: begin
               if (RV32B == RV32BOTEarlGrey || RV32B == RV32BFull) alu_operator_o = ALU_XPERM_N;
@@ -1167,7 +1164,6 @@ module ibex_decoder #(
               if (RV32B == RV32BOTEarlGrey || RV32B == RV32BFull) alu_operator_o = ALU_XPERM_B;
               else if (RV32Zk != RV32ZkNone) alu_operator_o = ZKB_XPERM8;  // xperm8
             end
-
             // RV32B zbc & RV32K zkb
             {7'b000_0101, 3'b001}: begin
               if (RV32B == RV32BOTEarlGrey || RV32B == RV32BFull) alu_operator_o = ALU_CLMUL;
