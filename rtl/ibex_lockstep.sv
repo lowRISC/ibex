@@ -108,6 +108,12 @@ module ibex_lockstep import ibex_pkg::*; #(
   // Reset generation //
   //////////////////////
 
+  // Upon reset, the comparison is stopped and the shadow core is reset, both immediately. A
+  // counter is started. After LockstepOffset clock cycles:
+  // - The counter is stopped.
+  // - The reset of the shadow core is synchronously released.
+  // The comparison is started in the following clock cycle.
+
   logic [LockstepOffsetW-1:0] rst_shadow_cnt_d, rst_shadow_cnt_q;
   // Internally generated resets cause IMPERFECTSCH warnings
   /* verilator lint_off IMPERFECTSCH */
