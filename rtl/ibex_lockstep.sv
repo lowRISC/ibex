@@ -128,16 +128,33 @@ module ibex_lockstep import ibex_pkg::*; #(
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       rst_shadow_cnt_q <= '0;
-      rst_shadow_set_q <= '0;
       enable_cmp_q     <= '0;
     end else begin
       rst_shadow_cnt_q <= rst_shadow_cnt_d;
-      rst_shadow_set_q <= rst_shadow_set_d;
       enable_cmp_q     <= rst_shadow_set_q;
     end
   end
 
-  assign rst_shadow_n = test_en_i ? scan_rst_ni : rst_shadow_set_q;
+  // The primitives below are used to place size-only constraints in order to prevent
+  // synthesis optimizations and preserve anchor points for constraining backend tools.
+  prim_flop #(
+    .Width(1),
+    .ResetValue(1'b0)
+  ) u_prim_rst_shadow_set_flop (
+    .clk_i (clk_i),
+    .rst_ni(rst_ni),
+    .d_i   (rst_shadow_set_d),
+    .q_o   (rst_shadow_set_q)
+  );
+
+  prim_clock_mux2 #(
+    .NoFpgaBufG(1'b1)
+  ) u_prim_rst_shadow_n_mux2 (
+    .clk0_i(rst_shadow_set_q),
+    .clk1_i(scan_rst_ni),
+    .sel_i (test_en_i),
+    .clk_o (rst_shadow_n)
+  );
 
   //////////////////
   // Input delays //
