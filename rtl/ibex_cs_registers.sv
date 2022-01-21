@@ -986,6 +986,13 @@ module ibex_cs_registers #(
   // -----------------
 
   if (PMPEnable) begin : g_pmp_registers
+    // PMP reset values
+    `ifdef IBEX_CUSTOM_PMP_RESET_VALUES
+      `include "ibex_pmp_reset.svh"
+    `else
+      `include "ibex_pmp_reset_default.svh"
+    `endif
+
     pmp_mseccfg_t                pmp_mseccfg_q, pmp_mseccfg_d;
     logic                        pmp_mseccfg_we;
     logic                        pmp_mseccfg_err;
@@ -1072,7 +1079,7 @@ module ibex_cs_registers #(
       ibex_csr #(
         .Width     ($bits(pmp_cfg_t)),
         .ShadowCopy(ShadowCSR),
-        .ResetValue('0)
+        .ResetValue(pmp_cfg_rst[i])
       ) u_pmp_cfg_csr (
         .clk_i     (clk_i),
         .rst_ni    (rst_ni),
@@ -1101,7 +1108,7 @@ module ibex_cs_registers #(
       ibex_csr #(
         .Width     (PMPAddrWidth),
         .ShadowCopy(ShadowCSR),
-        .ResetValue('0)
+        .ResetValue(pmp_addr_rst[i][33-:PMPAddrWidth])
       ) u_pmp_addr_csr (
         .clk_i     (clk_i),
         .rst_ni    (rst_ni),
@@ -1110,6 +1117,8 @@ module ibex_cs_registers #(
         .rd_data_o (pmp_addr[i]),
         .rd_error_o(pmp_addr_err[i])
       );
+
+      `ASSERT_INIT(PMPAddrRstLowBitsZero_A, pmp_addr_rst[i][33-PMPAddrWidth:0] == '0)
 
       assign csr_pmp_cfg_o[i]  = pmp_cfg[i];
       assign csr_pmp_addr_o[i] = {pmp_addr_rdata[i], 2'b00};
@@ -1132,7 +1141,7 @@ module ibex_cs_registers #(
     ibex_csr #(
       .Width     ($bits(pmp_mseccfg_t)),
       .ShadowCopy(ShadowCSR),
-      .ResetValue('0)
+      .ResetValue(pmp_mseccfg_rst)
     ) u_pmp_mseccfg (
       .clk_i     (clk_i),
       .rst_ni    (rst_ni),
