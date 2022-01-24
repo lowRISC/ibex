@@ -92,6 +92,7 @@ module ibex_lockstep import ibex_pkg::*; #(
 
   input  logic                         debug_req_i,
   input  crash_dump_t                  crash_dump_i,
+  input  logic                         double_fault_seen_i,
 
   input  logic                         fetch_enable_i,
   output logic                         alert_minor_o,
@@ -294,6 +295,7 @@ module ibex_lockstep import ibex_pkg::*; #(
     logic [LineSizeECC-1:0]      ic_data_wdata;
     logic                        irq_pending;
     crash_dump_t                 crash_dump;
+    logic                        double_fault_seen;
     logic                        icache_inval;
     logic                        core_busy;
   } delayed_outputs_t;
@@ -303,31 +305,32 @@ module ibex_lockstep import ibex_pkg::*; #(
   delayed_outputs_t                      shadow_outputs_d, shadow_outputs_q;
 
   // Assign core outputs to the structure
-  assign core_outputs_in.instr_req       = instr_req_i;
-  assign core_outputs_in.instr_addr      = instr_addr_i;
-  assign core_outputs_in.data_req        = data_req_i;
-  assign core_outputs_in.data_we         = data_we_i;
-  assign core_outputs_in.data_be         = data_be_i;
-  assign core_outputs_in.data_addr       = data_addr_i;
-  assign core_outputs_in.data_wdata      = data_wdata_i;
-  assign core_outputs_in.dummy_instr_id  = dummy_instr_id_i;
-  assign core_outputs_in.rf_raddr_a      = rf_raddr_a_i;
-  assign core_outputs_in.rf_raddr_b      = rf_raddr_b_i;
-  assign core_outputs_in.rf_waddr_wb     = rf_waddr_wb_i;
-  assign core_outputs_in.rf_we_wb        = rf_we_wb_i;
-  assign core_outputs_in.rf_wdata_wb_ecc = rf_wdata_wb_ecc_i;
-  assign core_outputs_in.ic_tag_req      = ic_tag_req_i;
-  assign core_outputs_in.ic_tag_write    = ic_tag_write_i;
-  assign core_outputs_in.ic_tag_addr     = ic_tag_addr_i;
-  assign core_outputs_in.ic_tag_wdata    = ic_tag_wdata_i;
-  assign core_outputs_in.ic_data_req     = ic_data_req_i;
-  assign core_outputs_in.ic_data_write   = ic_data_write_i;
-  assign core_outputs_in.ic_data_addr    = ic_data_addr_i;
-  assign core_outputs_in.ic_data_wdata   = ic_data_wdata_i;
-  assign core_outputs_in.irq_pending     = irq_pending_i;
-  assign core_outputs_in.crash_dump      = crash_dump_i;
-  assign core_outputs_in.icache_inval    = icache_inval_i;
-  assign core_outputs_in.core_busy       = core_busy_i;
+  assign core_outputs_in.instr_req           = instr_req_i;
+  assign core_outputs_in.instr_addr          = instr_addr_i;
+  assign core_outputs_in.data_req            = data_req_i;
+  assign core_outputs_in.data_we             = data_we_i;
+  assign core_outputs_in.data_be             = data_be_i;
+  assign core_outputs_in.data_addr           = data_addr_i;
+  assign core_outputs_in.data_wdata          = data_wdata_i;
+  assign core_outputs_in.dummy_instr_id      = dummy_instr_id_i;
+  assign core_outputs_in.rf_raddr_a          = rf_raddr_a_i;
+  assign core_outputs_in.rf_raddr_b          = rf_raddr_b_i;
+  assign core_outputs_in.rf_waddr_wb         = rf_waddr_wb_i;
+  assign core_outputs_in.rf_we_wb            = rf_we_wb_i;
+  assign core_outputs_in.rf_wdata_wb_ecc     = rf_wdata_wb_ecc_i;
+  assign core_outputs_in.ic_tag_req          = ic_tag_req_i;
+  assign core_outputs_in.ic_tag_write        = ic_tag_write_i;
+  assign core_outputs_in.ic_tag_addr         = ic_tag_addr_i;
+  assign core_outputs_in.ic_tag_wdata        = ic_tag_wdata_i;
+  assign core_outputs_in.ic_data_req         = ic_data_req_i;
+  assign core_outputs_in.ic_data_write       = ic_data_write_i;
+  assign core_outputs_in.ic_data_addr        = ic_data_addr_i;
+  assign core_outputs_in.ic_data_wdata       = ic_data_wdata_i;
+  assign core_outputs_in.irq_pending         = irq_pending_i;
+  assign core_outputs_in.crash_dump          = crash_dump_i;
+  assign core_outputs_in.double_fault_seen   = double_fault_seen_i;
+  assign core_outputs_in.icache_inval        = icache_inval_i;
+  assign core_outputs_in.core_busy           = core_busy_i;
 
   // Delay the outputs
   always_ff @(posedge clk_i) begin
@@ -372,59 +375,60 @@ module ibex_lockstep import ibex_pkg::*; #(
     .DmHaltAddr        ( DmHaltAddr        ),
     .DmExceptionAddr   ( DmExceptionAddr   )
   ) u_shadow_core (
-    .clk_i              (clk_i),
-    .rst_ni             (rst_shadow_n),
+    .clk_i               (clk_i),
+    .rst_ni              (rst_shadow_n),
 
-    .hart_id_i          (hart_id_i),
-    .boot_addr_i        (boot_addr_i),
+    .hart_id_i           (hart_id_i),
+    .boot_addr_i         (boot_addr_i),
 
-    .instr_req_o        (shadow_outputs_d.instr_req),
-    .instr_gnt_i        (shadow_inputs_q[0].instr_gnt),
-    .instr_rvalid_i     (shadow_inputs_q[0].instr_rvalid),
-    .instr_addr_o       (shadow_outputs_d.instr_addr),
-    .instr_rdata_i      (shadow_inputs_q[0].instr_rdata),
-    .instr_err_i        (shadow_inputs_q[0].instr_err),
+    .instr_req_o         (shadow_outputs_d.instr_req),
+    .instr_gnt_i         (shadow_inputs_q[0].instr_gnt),
+    .instr_rvalid_i      (shadow_inputs_q[0].instr_rvalid),
+    .instr_addr_o        (shadow_outputs_d.instr_addr),
+    .instr_rdata_i       (shadow_inputs_q[0].instr_rdata),
+    .instr_err_i         (shadow_inputs_q[0].instr_err),
 
-    .data_req_o         (shadow_outputs_d.data_req),
-    .data_gnt_i         (shadow_inputs_q[0].data_gnt),
-    .data_rvalid_i      (shadow_inputs_q[0].data_rvalid),
-    .data_we_o          (shadow_outputs_d.data_we),
-    .data_be_o          (shadow_outputs_d.data_be),
-    .data_addr_o        (shadow_outputs_d.data_addr),
-    .data_wdata_o       (shadow_outputs_d.data_wdata),
-    .data_rdata_i       (shadow_inputs_q[0].data_rdata),
-    .data_err_i         (shadow_inputs_q[0].data_err),
+    .data_req_o          (shadow_outputs_d.data_req),
+    .data_gnt_i          (shadow_inputs_q[0].data_gnt),
+    .data_rvalid_i       (shadow_inputs_q[0].data_rvalid),
+    .data_we_o           (shadow_outputs_d.data_we),
+    .data_be_o           (shadow_outputs_d.data_be),
+    .data_addr_o         (shadow_outputs_d.data_addr),
+    .data_wdata_o        (shadow_outputs_d.data_wdata),
+    .data_rdata_i        (shadow_inputs_q[0].data_rdata),
+    .data_err_i          (shadow_inputs_q[0].data_err),
 
-    .dummy_instr_id_o   (shadow_outputs_d.dummy_instr_id),
-    .rf_raddr_a_o       (shadow_outputs_d.rf_raddr_a),
-    .rf_raddr_b_o       (shadow_outputs_d.rf_raddr_b),
-    .rf_waddr_wb_o      (shadow_outputs_d.rf_waddr_wb),
-    .rf_we_wb_o         (shadow_outputs_d.rf_we_wb),
-    .rf_wdata_wb_ecc_o  (shadow_outputs_d.rf_wdata_wb_ecc),
-    .rf_rdata_a_ecc_i   (shadow_inputs_q[0].rf_rdata_a_ecc),
-    .rf_rdata_b_ecc_i   (shadow_inputs_q[0].rf_rdata_b_ecc),
+    .dummy_instr_id_o    (shadow_outputs_d.dummy_instr_id),
+    .rf_raddr_a_o        (shadow_outputs_d.rf_raddr_a),
+    .rf_raddr_b_o        (shadow_outputs_d.rf_raddr_b),
+    .rf_waddr_wb_o       (shadow_outputs_d.rf_waddr_wb),
+    .rf_we_wb_o          (shadow_outputs_d.rf_we_wb),
+    .rf_wdata_wb_ecc_o   (shadow_outputs_d.rf_wdata_wb_ecc),
+    .rf_rdata_a_ecc_i    (shadow_inputs_q[0].rf_rdata_a_ecc),
+    .rf_rdata_b_ecc_i    (shadow_inputs_q[0].rf_rdata_b_ecc),
 
-    .ic_tag_req_o       (shadow_outputs_d.ic_tag_req),
-    .ic_tag_write_o     (shadow_outputs_d.ic_tag_write),
-    .ic_tag_addr_o      (shadow_outputs_d.ic_tag_addr),
-    .ic_tag_wdata_o     (shadow_outputs_d.ic_tag_wdata),
-    .ic_tag_rdata_i     (shadow_tag_rdata_q[0]),
-    .ic_data_req_o      (shadow_outputs_d.ic_data_req),
-    .ic_data_write_o    (shadow_outputs_d.ic_data_write),
-    .ic_data_addr_o     (shadow_outputs_d.ic_data_addr),
-    .ic_data_wdata_o    (shadow_outputs_d.ic_data_wdata),
-    .ic_data_rdata_i    (shadow_data_rdata_q[0]),
-    .ic_scr_key_valid_i (shadow_inputs_q[0].ic_scr_key_valid),
+    .ic_tag_req_o        (shadow_outputs_d.ic_tag_req),
+    .ic_tag_write_o      (shadow_outputs_d.ic_tag_write),
+    .ic_tag_addr_o       (shadow_outputs_d.ic_tag_addr),
+    .ic_tag_wdata_o      (shadow_outputs_d.ic_tag_wdata),
+    .ic_tag_rdata_i      (shadow_tag_rdata_q[0]),
+    .ic_data_req_o       (shadow_outputs_d.ic_data_req),
+    .ic_data_write_o     (shadow_outputs_d.ic_data_write),
+    .ic_data_addr_o      (shadow_outputs_d.ic_data_addr),
+    .ic_data_wdata_o     (shadow_outputs_d.ic_data_wdata),
+    .ic_data_rdata_i     (shadow_data_rdata_q[0]),
+    .ic_scr_key_valid_i  (shadow_inputs_q[0].ic_scr_key_valid),
 
-    .irq_software_i     (shadow_inputs_q[0].irq_software),
-    .irq_timer_i        (shadow_inputs_q[0].irq_timer),
-    .irq_external_i     (shadow_inputs_q[0].irq_external),
-    .irq_fast_i         (shadow_inputs_q[0].irq_fast),
-    .irq_nm_i           (shadow_inputs_q[0].irq_nm),
-    .irq_pending_o      (shadow_outputs_d.irq_pending),
+    .irq_software_i      (shadow_inputs_q[0].irq_software),
+    .irq_timer_i         (shadow_inputs_q[0].irq_timer),
+    .irq_external_i      (shadow_inputs_q[0].irq_external),
+    .irq_fast_i          (shadow_inputs_q[0].irq_fast),
+    .irq_nm_i            (shadow_inputs_q[0].irq_nm),
+    .irq_pending_o       (shadow_outputs_d.irq_pending),
 
-    .debug_req_i        (shadow_inputs_q[0].debug_req),
-    .crash_dump_o       (shadow_outputs_d.crash_dump),
+    .debug_req_i         (shadow_inputs_q[0].debug_req),
+    .crash_dump_o        (shadow_outputs_d.crash_dump),
+    .double_fault_seen_o (shadow_outputs_d.double_fault_seen),
 
 `ifdef RVFI
     .rvfi_valid         (),

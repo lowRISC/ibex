@@ -203,6 +203,8 @@ Interfaces
 | ``debug_*``             | Debug interface, see :ref:`debug-support`                              |
 +-------------------------+------------------------------------------------------------------------+
 | ``crash_dump_o``        | A set of signals that can be captured on reset to aid crash debugging. |
++-------------------------+------------------------------------------------------------------------+
+| ``double_fault_seen_o`` | A double fault was observed, see :ref:`double-fault-detect`            |
 +-------------------------+-------------------------+-----+----------------------------------------+
 | ``fetch_enable_i``      | 1                       | in  | Allow the core to fetch instructions.  |
 |                         |                         |     | If this bit is set low, the core will  |

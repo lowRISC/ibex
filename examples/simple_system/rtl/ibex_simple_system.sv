@@ -225,6 +225,7 @@ module ibex_simple_system (
 
       .debug_req_i           ('b0),
       .crash_dump_o          (),
+      .double_fault_seen_o   (),
 
       .fetch_enable_i        ('b1),
       .alert_minor_o         (),
