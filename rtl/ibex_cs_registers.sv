@@ -104,6 +104,7 @@ module ibex_cs_registers #(
   output logic                 illegal_csr_insn_o,     // access to non-existent CSR,
                                                         // with wrong priviledge level, or
                                                         // missing write permissions
+  output logic                 double_fault_seen_o,
   // Performance Counters
   input  logic                 instr_ret_i,                 // instr retired in ID/EX stage
   input  logic                 instr_ret_compressed_i,      // compressed instr retired
@@ -175,6 +176,8 @@ module ibex_cs_registers #(
 
   // CPU control register fields
   typedef struct packed {
+    logic        double_fault_seen;
+    logic        sync_exc_seen;
     logic [2:0]  dummy_instr_mask;
     logic        dummy_instr_en;
     logic        data_ind_timing;
@@ -251,7 +254,7 @@ module ibex_cs_registers #(
   logic [31:0] tmatch_value_rdata;
 
   // CPU control bits
-  cpu_ctrl_t   cpuctrl_q, cpuctrl_d, cpuctrl_wdata;
+  cpu_ctrl_t   cpuctrl_q, cpuctrl_d, cpuctrl_wdata_raw, cpuctrl_wdata;
   logic        cpuctrl_we;
   logic        cpuctrl_err;
 
@@ -537,6 +540,9 @@ module ibex_cs_registers #(
     mhpmcounterh_we  = '0;
 
     cpuctrl_we       = 1'b0;
+    cpuctrl_d        = cpuctrl_q;
+
+    double_fault_seen_o = 1'b0;
 
     if (csr_we_int) begin
       unique case (csr_addr_i)
@@ -635,7 +641,10 @@ module ibex_cs_registers #(
           mhpmcounterh_we[mhpmcounter_idx] = 1'b1;
         end
 
-        CSR_CPUCTRL: cpuctrl_we = 1'b1;
+        CSR_CPUCTRL: begin
+          cpuctrl_d  = cpuctrl_wdata;
+          cpuctrl_we = 1'b1;
+        end
 
         default:;
       endcase
@@ -685,6 +694,16 @@ module ibex_cs_registers #(
           mcause_d       = {csr_mcause_i};
           // save previous status for recoverable NMI
           mstack_en      = 1'b1;
+
+          if (!csr_mcause_i[5]) begin
+            cpuctrl_we = 1'b1;
+
+            cpuctrl_d.sync_exc_seen = 1'b1;
+            if (cpuctrl_q.sync_exc_seen) begin
+              double_fault_seen_o         = 1'b1;
+              cpuctrl_d.double_fault_seen = 1'b1;
+            end
+          end
         end
       end // csr_save_cause_i
 
@@ -696,6 +715,9 @@ module ibex_cs_registers #(
         priv_lvl_d     = mstatus_q.mpp;
         mstatus_en     = 1'b1;
         mstatus_d.mie  = mstatus_q.mpie; // re-enable interrupts
+
+        cpuctrl_we              = 1'b1;
+        cpuctrl_d.sync_exc_seen = 1'b0;
 
         if (nmi_mode_i) begin
           // when returning from an NMI restore state from mstack CSR
@@ -1476,27 +1498,27 @@ module ibex_cs_registers #(
   //////////////////////////
 
   // Cast register write data
-  assign cpuctrl_wdata = cpu_ctrl_t'(csr_wdata_int[$bits(cpu_ctrl_t)-1:0]);
+  assign cpuctrl_wdata_raw = cpu_ctrl_t'(csr_wdata_int[$bits(cpu_ctrl_t)-1:0]);
 
   // Generate fixed time execution bit
   if (DataIndTiming) begin : gen_dit
-    assign cpuctrl_d.data_ind_timing = cpuctrl_wdata.data_ind_timing;
+    assign cpuctrl_wdata.data_ind_timing = cpuctrl_wdata_raw.data_ind_timing;
 
   end else begin : gen_no_dit
     // tieoff for the unused bit
     logic unused_dit;
-    assign unused_dit = cpuctrl_wdata.data_ind_timing;
+    assign unused_dit = cpuctrl_wdata_raw.data_ind_timing;
 
     // field will always read as zero if not configured
-    assign cpuctrl_d.data_ind_timing = 1'b0;
+    assign cpuctrl_wdata.data_ind_timing = 1'b0;
   end
 
   assign data_ind_timing_o = cpuctrl_q.data_ind_timing;
 
   // Generate dummy instruction signals
   if (DummyInstructions) begin : gen_dummy
-    assign cpuctrl_d.dummy_instr_en   = cpuctrl_wdata.dummy_instr_en;
-    assign cpuctrl_d.dummy_instr_mask = cpuctrl_wdata.dummy_instr_mask;
+    assign cpuctrl_wdata.dummy_instr_en   = cpuctrl_wdata_raw.dummy_instr_en;
+    assign cpuctrl_wdata.dummy_instr_mask = cpuctrl_wdata_raw.dummy_instr_mask;
 
     // Signal a write to the seed register
     assign dummy_instr_seed_en_o = csr_we_int && (csr_addr == CSR_SECURESEED);
@@ -1506,12 +1528,12 @@ module ibex_cs_registers #(
     // tieoff for the unused bit
     logic       unused_dummy_en;
     logic [2:0] unused_dummy_mask;
-    assign unused_dummy_en   = cpuctrl_wdata.dummy_instr_en;
-    assign unused_dummy_mask = cpuctrl_wdata.dummy_instr_mask;
+    assign unused_dummy_en   = cpuctrl_wdata_raw.dummy_instr_en;
+    assign unused_dummy_mask = cpuctrl_wdata_raw.dummy_instr_mask;
 
     // field will always read as zero if not configured
-    assign cpuctrl_d.dummy_instr_en   = 1'b0;
-    assign cpuctrl_d.dummy_instr_mask = 3'b000;
+    assign cpuctrl_wdata.dummy_instr_en   = 1'b0;
+    assign cpuctrl_wdata.dummy_instr_mask = 3'b000;
     assign dummy_instr_seed_en_o      = 1'b0;
     assign dummy_instr_seed_o         = '0;
   end
@@ -1521,15 +1543,18 @@ module ibex_cs_registers #(
 
   // Generate icache enable bit
   if (ICache) begin : gen_icache_enable
-    assign cpuctrl_d.icache_enable = cpuctrl_wdata.icache_enable;
+    assign cpuctrl_wdata.icache_enable = cpuctrl_wdata_raw.icache_enable;
   end else begin : gen_no_icache
     // tieoff for the unused icen bit
     logic unused_icen;
-    assign unused_icen = cpuctrl_wdata.icache_enable;
+    assign unused_icen = cpuctrl_wdata_raw.icache_enable;
 
     // icen field will always read as zero if ICache not configured
-    assign cpuctrl_d.icache_enable = 1'b0;
+    assign cpuctrl_wdata.icache_enable = 1'b0;
   end
+
+  assign cpuctrl_wdata.double_fault_seen = cpuctrl_wdata_raw.double_fault_seen;
+  assign cpuctrl_wdata.sync_exc_seen     = cpuctrl_wdata_raw.sync_exc_seen;
 
   assign icache_enable_o = cpuctrl_q.icache_enable;
 

@@ -80,6 +80,7 @@ module ibex_top_tracing import ibex_pkg::*; #(
   // Debug Interface
   input  logic                         debug_req_i,
   output crash_dump_t                  crash_dump_o,
+  output logic                         double_fault_seen_o,
 
   // CPU Control Signals
   input  logic                         fetch_enable_i,
@@ -201,6 +202,7 @@ module ibex_top_tracing import ibex_pkg::*; #(
 
     .debug_req_i,
     .crash_dump_o,
+    .double_fault_seen_o,
 
     .rvfi_valid,
     .rvfi_order,

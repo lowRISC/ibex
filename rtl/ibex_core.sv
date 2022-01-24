@@ -101,6 +101,7 @@ module ibex_core import ibex_pkg::*; #(
   // Debug Interface
   input  logic                         debug_req_i,
   output crash_dump_t                  crash_dump_o,
+  output logic                         double_fault_seen_o,
 
   // RISC-V Formal Interface
   // Does not comply with the coding standards of _i/_o suffixes, but follows
@@ -972,6 +973,8 @@ module ibex_core import ibex_pkg::*; #(
     .csr_mcause_i      (exc_cause),
     .csr_mtval_i       (csr_mtval),
     .illegal_csr_insn_o(illegal_csr_insn_id),
+
+    .double_fault_seen_o,
 
     // performance counter related signals
     .instr_ret_i                (perf_instr_ret_wb),

@@ -87,6 +87,7 @@ module ibex_top import ibex_pkg::*; #(
   // Debug Interface
   input  logic                         debug_req_i,
   output crash_dump_t                  crash_dump_o,
+  output logic                         double_fault_seen_o,
 
   // RISC-V Formal Interface
   // Does not comply with the coding standards of _i/_o suffixes, but follows
@@ -287,6 +288,7 @@ module ibex_top import ibex_pkg::*; #(
 
     .debug_req_i,
     .crash_dump_o,
+    .double_fault_seen_o,
 
 `ifdef RVFI
     .rvfi_valid,
@@ -592,6 +594,7 @@ module ibex_top import ibex_pkg::*; #(
       irq_pending,
       debug_req_i,
       crash_dump_o,
+      double_fault_seen_o,
       fetch_enable_i,
       icache_inval,
       core_busy_d
@@ -650,6 +653,7 @@ module ibex_top import ibex_pkg::*; #(
 
     logic                         debug_req_local;
     crash_dump_t                  crash_dump_local;
+    logic                         double_fault_seen_local;
     logic                         fetch_enable_local;
 
     logic                         icache_inval_local;
@@ -700,6 +704,7 @@ module ibex_top import ibex_pkg::*; #(
       irq_pending,
       debug_req_i,
       crash_dump_o,
+      double_fault_seen_o,
       fetch_enable_i,
       icache_inval,
       core_busy_d
@@ -750,6 +755,7 @@ module ibex_top import ibex_pkg::*; #(
       irq_pending_local,
       debug_req_local,
       crash_dump_local,
+      double_fault_seen_local,
       fetch_enable_local,
       icache_inval_local,
       core_busy_local
@@ -860,6 +866,7 @@ module ibex_top import ibex_pkg::*; #(
 
       .debug_req_i        (debug_req_local),
       .crash_dump_i       (crash_dump_local),
+      .double_fault_seen_i(double_fault_seen_local),
 
       .fetch_enable_i     (fetch_enable_local),
       .alert_minor_o      (lockstep_alert_minor_local),
