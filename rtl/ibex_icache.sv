@@ -276,7 +276,7 @@ module ibex_icache import ibex_pkg::*; #(
 
   // Append ECC checkbits to write data if required
   if (ICacheECC) begin : gen_ecc_wdata
-
+    // SEC_CM: ICACHE.MEM.INTEGRITY
     // Tagram ECC
     // Reuse the same ecc encoding module for larger cache sizes by padding with zeros
     logic [21:0]             tag_ecc_input_padded;
@@ -401,6 +401,7 @@ module ibex_icache import ibex_pkg::*; #(
 
   // ECC checking logic
   if (ICacheECC) begin : gen_data_ecc_checking
+    // SEC_CM: ICACHE.MEM.INTEGRITY
     logic [IC_NUM_WAYS-1:0]     tag_err_ic1;
     logic [IC_LINE_BEATS*2-1:0] data_err_ic1;
     logic                       ecc_correction_write_d, ecc_correction_write_q;
