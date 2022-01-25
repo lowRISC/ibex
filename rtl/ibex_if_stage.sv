@@ -357,6 +357,7 @@ module ibex_if_stage import ibex_pkg::*; #(
 
   // Dummy instruction insertion
   if (DummyInstructions) begin : gen_dummy_instr
+    // SEC_CM: CTRL_FLOW.UNPREDICTABLE
     logic        insert_dummy_instr;
     logic [31:0] dummy_instr_data;
 
@@ -479,6 +480,7 @@ module ibex_if_stage import ibex_pkg::*; #(
 
   // Check for expected increments of the PC when security hardening enabled
   if (PCIncrCheck) begin : g_secure_pc
+    // SEC_CM: PC.CTRL_FLOW.CONSISTENCY
     logic [31:0] prev_instr_addr_incr, prev_instr_addr_incr_buf;
     logic        prev_instr_seq_q, prev_instr_seq_d;
 
