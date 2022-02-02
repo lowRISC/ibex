@@ -2,7 +2,8 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef SIMPLE_SYSTEM_COMMON_H__
+#ifndef SIMPLE_SYSTEM_COMMON_H_
+#define SIMPLE_SYSTEM_COMMON_H_
 
 #include <stdint.h>
 
@@ -11,6 +12,28 @@
 #define DEV_WRITE(addr, val) (*((volatile uint32_t *)(addr)) = val)
 #define DEV_READ(addr, val) (*((volatile uint32_t *)(addr)))
 #define PCOUNT_READ(name, dst) asm volatile("csrr %0, " #name ";" : "=r"(dst))
+
+/**
+ * Ibex exception IDs.
+ */
+typedef enum exception_id {
+  kInstructionMisaligned = 0,
+  kInstructionAccessFault = 1,
+  kInstructionIllegalFault = 2,
+  kBreakpoint = 3,
+  kLoadAccessFault = 5,
+  kStoreAccessFault = 7,
+  kECall = 11,
+} exception_id_t;
+
+/**
+ * Default exception handler.
+ *
+ * Please note that the default implementation has `weak` attribute, so
+ * that different tests/examples can override this handler.
+ */
+__attribute__((aligned(4), interrupt))
+void simple_exc_handler(void);
 
 /**
  * Writes character to simulator out log. Signature matches c stdlib function
@@ -85,4 +108,17 @@ void timer_disable(void);
  */
 uint64_t get_elapsed_time(void);
 
-#endif
+/**
+ * Returns exception cause ID.
+ */
+unsigned int get_mcause(void);
+
+/**
+ * Calculates and sets the load/store exception return address.
+ *
+ * The return address depends on the type of the instruction that caused the
+ * exception (normal or compressed).
+ */
+void set_load_store_exception_retaddr(void);
+
+#endif  // SIMPLE_SYSTEM_COMMON_H_

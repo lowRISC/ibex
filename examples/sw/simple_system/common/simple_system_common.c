@@ -4,6 +4,11 @@
 
 #include "simple_system_common.h"
 
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "ibex_registers.h"
+
 int putchar(int c) {
   DEV_WRITE(SIM_CTRL_BASE + SIM_CTRL_OUT, (unsigned char)c);
 
@@ -114,11 +119,13 @@ void pcount_enable(int enable) {
   asm volatile("csrw  0x320, %0\n" : : "r"(inhibit_val));
 }
 
-unsigned int get_mepc() {
+static unsigned int get_mepc() {
   uint32_t result;
   __asm__ volatile("csrr %0, mepc;" : "=r"(result));
   return result;
 }
+
+static void set_mepc(uint32_t mepc) { CSR_WRITE(CSR_REG_MEPC, mepc); }
 
 unsigned int get_mcause() {
   uint32_t result;
@@ -132,7 +139,7 @@ unsigned int get_mtval() {
   return result;
 }
 
-void simple_exc_handler(void) {
+__attribute__((weak)) void simple_exc_handler(void) {
   puts("EXCEPTION!!!\n");
   puts("============\n");
   puts("MEPC:   0x");
@@ -194,4 +201,26 @@ void simple_timer_handler(void) __attribute__((interrupt));
 void simple_timer_handler(void) {
   increment_timecmp(time_increment);
   time_elapsed++;
+}
+
+void set_load_store_exception_retaddr(void) {
+  uint32_t mepc = get_mepc();
+  puthex(mepc);
+  puts(" <- mepc (Load fault exception handler)\n");
+
+  // Check if the two least significant bits of the instruction are b11 (0x3),
+  // which means that the trapped instruction is not compressed
+  // (32bits = 4bytes), otherwise (16bits = 2bytes).
+  //
+  // NOTE:
+  // with RISC-V "c" (compressed instructions extension), 32bit
+  // instructions can start on 16bit boundary.
+  //
+  // Please see:
+  // "“C” Standard Extension for Compressed Instructions, Version 2.0",
+  // section 16.1.
+  uint32_t fault_instruction = *((uint32_t *)mepc);
+  bool not_compressed = (fault_instruction & 0x3) == 0x3;
+  mepc = not_compressed ? (mepc + 4) : (mepc + 2);
+  set_mepc(mepc);
 }
