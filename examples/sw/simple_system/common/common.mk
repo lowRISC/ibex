@@ -10,12 +10,7 @@ INCS := -I$(COMMON_DIR)
 # ARCH = rv32im # to disable compressed instructions
 ARCH ?= rv32imc
 
-ifdef PROGRAM
-PROGRAM_C := $(PROGRAM).c
-endif
-
-SRCS = $(COMMON_SRCS) $(PROGRAM_C) $(EXTRA_SRCS)
-
+SRCS = $(COMMON_SRCS) $(EXTRA_SRCS)
 C_SRCS = $(filter %.c, $(SRCS))
 ASM_SRCS = $(filter %.S, $(SRCS))
 
@@ -34,7 +29,7 @@ OBJS := ${C_SRCS:.c=.o} ${ASM_SRCS:.S=.o} ${CRT:.S=.o}
 DEPS = $(OBJS:%.o=%.d)
 
 ifdef PROGRAM
-OUTFILES := $(PROGRAM).elf $(PROGRAM).vmem $(PROGRAM).bin
+OUTFILES := $(PROGRAM:=.elf) $(PROGRAM:=.vmem) $(PROGRAM:=.bin)
 else
 OUTFILES := $(OBJS)
 endif
@@ -42,11 +37,11 @@ endif
 all: $(OUTFILES)
 
 ifdef PROGRAM
-$(PROGRAM).elf: $(OBJS) $(LINKER_SCRIPT)
-	$(CC) $(CFLAGS) -T $(LINKER_SCRIPT) $(OBJS) -o $@ $(LIBS)
+%.elf: %.o $(OBJS) $(LINKER_SCRIPT)
+	$(CC) $(CFLAGS) -T $(LINKER_SCRIPT) $< $(OBJS) -o $@ $(LIBS)
 
 .PHONY: disassemble
-disassemble: $(PROGRAM).dis
+disassemble: $(PROGRAM:=.dis)
 endif
 
 %.dis: %.elf
