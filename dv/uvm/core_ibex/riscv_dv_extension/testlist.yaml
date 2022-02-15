@@ -719,52 +719,52 @@
 # Both an updated compiler and ISS are required to verify the bitmanip v.1.00
 # and draft v.0.93 extensions. For now, disable the bitmanip tests.
 # For details, refer to https://github.com/lowRISC/ibex/issues/1470
-#- test: riscv_bitmanip_full_test
-#  desc: >
-#    Random instruction test with supported B extension instructions in full configuration
-#  iterations: 10
-#  gen_test: riscv_rand_instr_test
-#  gen_opts: >
-#    +enable_zba_extension=1
-#    +enable_zbb_extension=1
-#    +enable_zbc_extension=1
-#    +enable_zbs_extension=1
-#    +enable_b_extension=1
-#    +enable_bitmanip_groups=zbe,zbf,zbp,zbr,zbt
-#    +disable_cosim=1
-#  rtl_test: core_ibex_base_test
-#  rtl_params:
-#    RV32B: "ibex_pkg::RV32BFull"
-#
-#- test: riscv_bitmanip_otearlgrey_test
-#  desc: >
-#    Random instruction test with supported B extension instructions in OTEarlGrey configuration
-#  iterations: 10
-#  gen_test: riscv_rand_instr_test
-#  gen_opts: >
-#    +enable_zba_extension=1
-#    +enable_zbb_extension=1
-#    +enable_zbc_extension=1
-#    +enable_zbs_extension=1
-#    +enable_b_extension=1
-#    +enable_bitmanip_groups=zbf,zbp,zbr,zbt
-#    +disable_cosim=1
-#  rtl_test: core_ibex_base_test
-#  rtl_params:
-#    RV32B: ["ibex_pkg::RV32BFull", "ibex_pkg::RV32BOTEarlGrey"]
-#
-#- test: riscv_bitmanip_balanced_test
-#  desc: >
-#    Random instruction test with supported B extension instructions in balanced configuration
-#  iterations: 10
-#  gen_test: riscv_rand_instr_test
-#  gen_opts: >
-#    +enable_zba_extension=1
-#    +enable_zbb_extension=1
-#    +enable_zbs_extension=1
-#    +enable_b_extension=1
-#    +enable_bitmanip_groups=zbf,zbt
-#    +disable_cosim=1
-#  rtl_test: core_ibex_base_test
-#  rtl_params:
-#    RV32B: ["ibex_pkg::RV32BFull", "ibex_pkg::RV32BOTEarlGrey", "ibex_pkg::RV32BBalanced"]
+- test: riscv_bitmanip_full_test
+  desc: >
+    Random instruction test with supported B extension instructions in full configuration
+  iterations: 10
+  gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +enable_zba_extension=1
+    +enable_zbb_extension=1
+    +enable_zbc_extension=1
+    +enable_zbs_extension=1
+    +enable_b_extension=1
+    +enable_bitmanip_groups=zbe,zbf,zbp,zbr,zbt
+    +disable_cosim=1
+  rtl_test: core_ibex_base_test
+  rtl_params:
+    RV32B: "ibex_pkg::RV32BFull"
+
+- test: riscv_bitmanip_otearlgrey_test
+  desc: >
+    Random instruction test with supported B extension instructions in OTEarlGrey configuration
+  iterations: 10
+  gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +enable_zba_extension=1
+    +enable_zbb_extension=1
+    +enable_zbc_extension=1
+    +enable_zbs_extension=1
+    +enable_b_extension=1
+    +enable_bitmanip_groups=zbf,zbp,zbr,zbt
+    +disable_cosim=1
+  rtl_test: core_ibex_base_test
+  rtl_params:
+    RV32B: ["ibex_pkg::RV32BFull", "ibex_pkg::RV32BOTEarlGrey"]
+
+- test: riscv_bitmanip_balanced_test
+  desc: >
+    Random instruction test with supported B extension instructions in balanced configuration
+  iterations: 10
+  gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +enable_zba_extension=1
+    +enable_zbb_extension=1
+    +enable_zbs_extension=1
+    +enable_b_extension=1
+    +enable_bitmanip_groups=zbf,zbt
+    +disable_cosim=1
+  rtl_test: core_ibex_base_test
+  rtl_params:
+    RV32B: ["ibex_pkg::RV32BFull", "ibex_pkg::RV32BOTEarlGrey", "ibex_pkg::RV32BBalanced"]
