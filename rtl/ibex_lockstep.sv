@@ -117,16 +117,17 @@ module ibex_lockstep import ibex_pkg::*; #(
   // - The reset of the shadow core is synchronously released.
   // The comparison is started in the following clock cycle.
 
-  logic [LockstepOffsetW-1:0] rst_shadow_cnt_d, rst_shadow_cnt_q;
+  logic [LockstepOffsetW-1:0] rst_shadow_cnt_d, rst_shadow_cnt_q, rst_shadow_cnt_incr;
   // Internally generated resets cause IMPERFECTSCH warnings
   /* verilator lint_off IMPERFECTSCH */
   logic                       rst_shadow_set_d, rst_shadow_set_q;
   logic                       rst_shadow_n, enable_cmp_q;
   /* verilator lint_on IMPERFECTSCH */
 
+  assign rst_shadow_cnt_incr = rst_shadow_cnt_q + LockstepOffsetW'(1);
+
   assign rst_shadow_set_d = (rst_shadow_cnt_q == LockstepOffsetW'(LockstepOffset - 1));
-  assign rst_shadow_cnt_d = rst_shadow_set_d ? rst_shadow_cnt_q :
-                                               (rst_shadow_cnt_q + LockstepOffsetW'(1));
+  assign rst_shadow_cnt_d = rst_shadow_set_d ? rst_shadow_cnt_q : rst_shadow_cnt_incr;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
