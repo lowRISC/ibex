@@ -51,14 +51,8 @@ ISS                 := spike
 # ISS runtime options
 ISS_OPTS            :=
 # ISA
-# Both an updated compiler and ISS are required to verify the bitmanip v.1.00
-# and draft v.0.93 extensions. For now, disable the bitmanip tests and verify
-# RV32IMC only.
-# For details, refer to https://github.com/lowRISC/ibex/issues/1470
-#ISA                 := rv32imcb
-#ISA_ISS             := rv32imc_Zba_Zbb_Zbc_Zbs_Xbitmanip
-ISA                 := rv32imc
-ISA_ISS             := rv32imc
+ISA                 := rv32imcb
+ISA_ISS             := rv32imc_Zba_Zbb_Zbc_Zbs_Xbitmanip
 # Test name (default: full regression)
 TEST                := all
 TESTLIST            := riscv_dv_extension/testlist.yaml
