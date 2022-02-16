@@ -32,7 +32,14 @@
          -debug_access+pp
          -xlrm uniq_prior_final
          -CFLAGS '--std=c99 -fno-extended-identifiers'
-         -lca -kdb <cmp_opts> <wave_opts> <cov_opts> <cosim_opts>"
+         -lca -kdb
+         -f ibex_dv_cosim_dpi.f
+         +define+INC_IBEX_COSIM
+         -LDFLAGS '<SPIKE_LDFLAGS>'
+         -CFLAGS '<SPIKE_CFLAGS>'
+         -CFLAGS '-I<IBEX_ROOT>/dv/cosim'
+         <SPIKE_LIBS> -lstdc++
+         <cmp_opts> <wave_opts> <cov_opts>"
     cov_opts: >
       -cm line+tgl+assert+fsm+branch
       -cm_tgl portsonly
@@ -43,13 +50,6 @@
       -cm_hier cover.cfg
     wave_opts: >
       -debug_access+all -ucli -do vcs.tcl
-    cosim_opts: >
-      -f ibex_dv_cosim_dpi.f
-      +define+INC_IBEX_COSIM
-      -LDFLAGS '<SPIKE_LDFLAGS>'
-      -CFLAGS '<SPIKE_CFLAGS>'
-      -CFLAGS '-I<IBEX_ROOT>/dv/cosim'
-      <SPIKE_LIBS> -lstdc++
   sim:
     cmd: >
       env SIM_DIR=<sim_dir>

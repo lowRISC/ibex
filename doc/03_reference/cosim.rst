@@ -32,7 +32,7 @@ The ``--enable-commitlog`` and ``--enable-misaligned`` options must be passed to
 We recommend using a custom install location (using ``--prefix=<path>`` with ``configure``) to avoid cluttering system directories.
 Note that, if you do this, you will also need to add an entry to ``PKG_CONFIG_PATH`` so that ``pkg-config`` can tell us how to build against the installed Spike libraries.
 
-To build/run the UVM DV environment with the co-simulator, add the ``COSIM=1`` argument to the make command.
+The UVM DV environment is always built with the co-simulator.
 To build Simple System with the co-simulator, build the ``lowrisc:ibex:ibex_simple_system_cosim`` core.
 
 Quick Build and Run Instructions
@@ -60,7 +60,6 @@ Run the UVM DV regression with co-simulation enabled
 
   # Run regression with co-simulation enabled
   cd <ibex_area>/dv/uvm/core_ibex
-  make COSIM=1
 
 Build and run Simple System with the co-simulation enabled
 

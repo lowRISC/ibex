@@ -359,7 +359,7 @@ all-verilog = \
   $(shell find ../../../rtl -name '*.v' -o -name '*.sv' -o -name '*.svh') \
   $(shell find ../.. -name '*.v' -o -name '*.sv' -o -name '*.svh')
 
-compile-var-deps := COMMON_OPTS SIMULATOR COV WAVES COMPILE_OPTS COSIM
+compile-var-deps := COMMON_OPTS SIMULATOR COV WAVES COMPILE_OPTS
 -include $(OUT-DIR)rtl_sim/.compile-vars.mk
 compile-vars-prereq = $(call vars-prereq,comp,compiling TB,$(compile-var-deps))
 
@@ -367,7 +367,6 @@ $(call dump-vars-match,$(compile-var-deps),comp)
 
 cov-arg := $(if $(call equal,$(COV),1),--en_cov,)
 wave-arg := $(if $(call equal,$(WAVES),1),--en_wave,)
-cosim-arg := $(if $(call equal,$(COSIM),1),--en_cosim,)
 lsf-arg := $(if $(LSF_CMD),--lsf_cmd="$(LSF_CMD)",)
 
 # Extract LDFLAGS and "LIBS" for the vcs build from pkg-config. VCS expects
@@ -376,8 +375,8 @@ lsf-arg := $(if $(LSF_CMD),--lsf_cmd="$(LSF_CMD)",)
 # themselves, you're supposed to pass them directly (-lfoo). Split things out
 # here to make sense of them.
 SPIKE_PCS      := riscv-riscv riscv-disasm riscv-fdt
-SPIKE_CFLAGS   := $(if $(cosim-arg),$(shell pkg-config --cflags $(SPIKE_PCS) || echo FAIL),)
-SPIKE_ALL_LIBS := $(if $(cosim-arg),$(shell pkg-config --libs $(SPIKE_PCS) || echo FAIL),)
+SPIKE_CFLAGS   := $(shell pkg-config --cflags $(SPIKE_PCS) || echo FAIL)
+SPIKE_ALL_LIBS := $(shell pkg-config --libs $(SPIKE_PCS) || echo FAIL)
 SPIKE_LIBS     := $(filter -l%,$(SPIKE_ALL_LIBS))
 SPIKE_LDFLAGS  := $(filter-out -l%,$(SPIKE_ALL_LIBS))
 check-spike-pkgconfig := \
@@ -400,7 +399,7 @@ $(OUT-DIR)rtl_sim/.compile.stamp: \
 	    --steps=compile \
 	    ${COMMON_OPTS} \
 	    --simulator="${SIMULATOR}" --simulator_yaml=yaml/rtl_simulation.yaml \
-	    $(cov-arg) $(wave-arg) $(cosim-arg) $(lsf-arg) \
+	    $(cov-arg) $(wave-arg) $(lsf-arg) \
 	    --cmp_opts="${COMPILE_OPTS}"
 	$(call dump-vars,$(OUT-DIR)rtl_sim/.compile-vars.mk,comp,$(compile-var-deps))
 	@touch $@
