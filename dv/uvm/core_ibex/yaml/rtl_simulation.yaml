@@ -17,7 +17,7 @@
 # As a result, passing -fno-extended-identifiers tells G++ to pretend that
 # everything is ASCII, preventing strange compilation errors.
 - tool: vcs
-  env_var: IBEX_COSIM_ISS_ROOT,IBEX_ROOT
+  env_var: SPIKE_CFLAGS,SPIKE_LDFLAGS,SPIKE_LIBS,IBEX_ROOT
   compile:
     cmd:
       - "vcs -f <core_ibex>/ibex_dv.f  -full64
@@ -46,11 +46,10 @@
     cosim_opts: >
       -f <core_ibex>/ibex_dv_cosim_dpi.f
       +define+INC_IBEX_COSIM
-      -LDFLAGS '-L<IBEX_COSIM_ISS_ROOT>/lib/'
-      -CFLAGS '-I<IBEX_COSIM_ISS_ROOT>/include'
-      -CFLAGS '-I<IBEX_COSIM_ISS_ROOT>/include/softfloat'
+      -LDFLAGS '<SPIKE_LDFLAGS>'
+      -CFLAGS '<SPIKE_CFLAGS>'
       -CFLAGS '-I<IBEX_ROOT>/dv/cosim'
-      -lriscv -lsoftfloat -lfdt -ldl -ldisasm -lstdc++
+      <SPIKE_LIBS> -lstdc++
   sim:
     cmd: >
       env SIM_DIR=<sim_dir>
