@@ -49,13 +49,13 @@ void riscv_cosim_notify_dside_access(Cosim *cosim, svBit store,
   assert(cosim);
 
   cosim->notify_dside_access(
-      DSideAccessInfo{.store = store,
+      DSideAccessInfo{.store = store != 0,
                       .data = data[0],
                       .addr = addr[0],
                       .be = be[0],
-                      .error = error,
-                      .misaligned_first = misaligned_first,
-                      .misaligned_second = misaligned_second});
+                      .error = error != 0,
+                      .misaligned_first = misaligned_first != 0,
+                      .misaligned_second = misaligned_second != 0});
 }
 
 void riscv_cosim_set_iside_error(Cosim *cosim, svBitVecVal *addr) {
