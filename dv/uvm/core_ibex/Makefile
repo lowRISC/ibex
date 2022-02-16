@@ -8,16 +8,6 @@ GEN_DIR             := $(realpath ../../../vendor/google_riscv-dv)
 TOOLCHAIN           := ${RISCV_TOOLCHAIN}
 export IBEX_ROOT    := $(realpath ../../../)
 
-ifeq ($(COSIM),1)
-ifndef IBEX_COSIM_ISS_ROOT
-$(error IBEX_COSIM_ISS_ROOT must be set to the root of a suitable spike build if COSIM=1)
-else
-# Spike builds a libsoftfloat.so shared library that the simulator binary needs.
-# Set LD_LIBRARY_PATH so it can be found.
-export LD_LIBRARY_PATH := $(IBEX_COSIM_ISS_ROOT)/lib/:${LD_LIBRARY_PATH}
-endif
-endif
-
 # Explicitly ask for the bash shell
 SHELL                := bash
 
