@@ -6,16 +6,6 @@ GEN_DIR             := $(realpath ../../../vendor/google_riscv-dv)
 TOOLCHAIN           := ${RISCV_TOOLCHAIN}
 export IBEX_ROOT	:= $(realpath ../../../)
 
-ifeq ($(COSIM),1)
-ifndef IBEX_COSIM_ISS_ROOT
-$(error IBEX_COSIM_ISS_ROOT must be set to the root of a suitable spike build if COSIM=1)
-else
-# Spike builds a libsoftfloat.so shared library that the simulator binary needs.
-# Set LD_LIBRARY_PATH so it can be found.
-export LD_LIBRARY_PATH := $(IBEX_COSIM_ISS_ROOT)/lib/:${LD_LIBRARY_PATH}
-endif
-endif
-
 # Explicitly ask for the bash shell
 SHELL                := bash
 
@@ -380,17 +370,38 @@ wave-arg := $(if $(call equal,$(WAVES),1),--en_wave,)
 cosim-arg := $(if $(call equal,$(COSIM),1),--en_cosim,)
 lsf-arg := $(if $(LSF_CMD),--lsf_cmd="$(LSF_CMD)",)
 
+# Extract LDFLAGS and "LIBS" for the vcs build from pkg-config. VCS expects
+# most things to be supplied with -LDFLAGS arguments, but unfortunately these
+# come before the object files that are being linked. To add libraries
+# themselves, you're supposed to pass them directly (-lfoo). Split things out
+# here to make sense of them.
+SPIKE_PCS      := riscv-riscv riscv-disasm riscv-fdt
+SPIKE_CFLAGS   := $(if $(cosim-arg),$(shell pkg-config --cflags $(SPIKE_PCS) || echo FAIL),)
+SPIKE_ALL_LIBS := $(if $(cosim-arg),$(shell pkg-config --libs $(SPIKE_PCS) || echo FAIL),)
+SPIKE_LIBS     := $(filter -l%,$(SPIKE_ALL_LIBS))
+SPIKE_LDFLAGS  := $(filter-out -l%,$(SPIKE_ALL_LIBS))
+check-spike-pkgconfig := \
+  if [ x'$(SPIKE_CFLAGS)' == xFAIL -o x'$(SPIKE_ALL_LIBS)' == xFAIL ]; then \
+	  echo >&2 "Failed to find Spike pkg-config packages."; \
+      exit 1; \
+  fi
+
 $(OUT-DIR)rtl_sim/.compile.stamp: \
   $(compile-vars-prereq) $(all-verilog) $(risc-dv-files) \
   sim.py yaml/rtl_simulation.yaml \
   | $(OUT-DIR)rtl_sim
-	$(verb)./sim.py \
-	 --o=$(OUT-DIR) \
-	 --steps=compile \
-	 ${COMMON_OPTS} \
-	 --simulator="${SIMULATOR}" --simulator_yaml=yaml/rtl_simulation.yaml \
-	 $(cov-arg) $(wave-arg) $(cosim-arg) $(lsf-arg) \
-	 --cmp_opts="${COMPILE_OPTS}"
+	@$(check-spike-pkgconfig)
+	$(verb)env \
+	  SPIKE_CFLAGS="$(SPIKE_CFLAGS)" \
+	  SPIKE_LDFLAGS="$(SPIKE_LDFLAGS)" \
+	  SPIKE_LIBS="$(SPIKE_LIBS)" \
+	  ./sim.py \
+	    --o=$(OUT-DIR) \
+	    --steps=compile \
+	    ${COMMON_OPTS} \
+	    --simulator="${SIMULATOR}" --simulator_yaml=yaml/rtl_simulation.yaml \
+	    $(cov-arg) $(wave-arg) $(cosim-arg) $(lsf-arg) \
+	    --cmp_opts="${COMPILE_OPTS}"
 	$(call dump-vars,$(OUT-DIR)rtl_sim/.compile-vars.mk,comp,$(compile-var-deps))
 	@touch $@
 
@@ -422,17 +433,22 @@ $(rtl-sim-logs): \
   $(metadata)/rtl_sim.compile.stamp \
   $(metadata)/instr_gen.compile.stamp \
   run_rtl.py
+	@$(check-spike-pkgconfig)
 	@echo Running RTL simulation at $@
 	$(verb)mkdir -p $(@D)
-	$(verb)./run_rtl.py \
-	  --simulator $(SIMULATOR) \
-	  --simulator_yaml yaml/rtl_simulation.yaml \
-	  $(cov-arg) $(wave-arg) $(lsf-arg) \
-	  --start-seed $(SEED) \
-      --sim-opts="+signature_addr=${SIGNATURE_ADDR} ${SIM_OPTS}" \
-	  --test-dot-seed $(notdir $*) \
-	  --bin-dir $(OUT-SEED)/instr_gen/asm_test \
-	  --rtl-sim-dir $(OUT-SEED)/rtl_sim
+	$(verb)env \
+	  SPIKE_CFLAGS="$(SPIKE_CFLAGS)" \
+	  SPIKE_LDFLAGS="$(SPIKE_LDFLAGS)" \
+	  SPIKE_LIBS="$(SPIKE_LIBS)" \
+	  ./run_rtl.py \
+	    --simulator $(SIMULATOR) \
+	    --simulator_yaml yaml/rtl_simulation.yaml \
+	    $(cov-arg) $(wave-arg) $(lsf-arg) \
+	    --start-seed $(SEED) \
+	    --sim-opts="+signature_addr=${SIGNATURE_ADDR} ${SIM_OPTS}" \
+	    --test-dot-seed $(notdir $*) \
+	    --bin-dir $(OUT-SEED)/instr_gen/asm_test \
+	    --rtl-sim-dir $(OUT-SEED)/rtl_sim
 
 .PHONY: rtl_sim
 rtl_sim: $(rtl-sim-logs)
@@ -492,8 +508,14 @@ riscv_dv_fcov: $(rtl-sim-logs)
 # Any coverage databases generated from the riscv_dv_fcov target will be merged as well.
 .PHONY: gen_cov
 gen_cov: riscv_dv_fcov
+	@$(check-spike-pkgconfig)
 	$(verb)rm -rf $(OUT-DIR)rtl_sim/test.vdb
-	$(verb)./sim.py --steps=cov --simulator="${SIMULATOR}" $(lsf-arg) --o="$(OUT-DIR)"
+	$(verb)env \
+	  SPIKE_CFLAGS="$(SPIKE_CFLAGS)" \
+	  SPIKE_LDFLAGS="$(SPIKE_LDFLAGS)" \
+	  SPIKE_LIBS="$(SPIKE_LIBS)" \
+	  ./sim.py \
+	    --steps=cov --simulator="${SIMULATOR}" $(lsf-arg) --o="$(OUT-DIR)"
 	@if [ -d "test.vdb" ]; then \
 		mv -f test.vdb $(OUT-DIR)rtl_sim/; \
 	fi
