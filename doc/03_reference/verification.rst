@@ -208,9 +208,6 @@ The entirety of this flow is controlled by the Makefile found at
    # Compile and run RTL simulation
    make TEST=xxx compile,rtl_sim
 
-   # Use a different ISS (default is spike)
-   make ... ISS=ovpsim
-
    # Run a full regression with coverage
    make COV=1
 
