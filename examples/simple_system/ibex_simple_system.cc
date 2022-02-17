@@ -43,19 +43,20 @@ std::string SimpleSystem::GetIsaString() const {
   if (top.ibex_simple_system->RV32M)
     extensions += "m";
 
-  // See the equivalent get_isa_string() function in core_ibex_base_test.sv for
-  // an explanation of the different ISA strings
   switch (top.ibex_simple_system->RV32B) {
     case 0:  // RV32BNone
       break;
 
     case 1:  // RV32BBalanced
-      extensions += "_Zba_Zbb_Zbs_Xbitmanip";
+      extensions += "_Zba_Zbb_Zbs_XZbf_XZbt";
       break;
 
     case 2:  // RV32BOTEarlGrey
+      extensions += "_Zba_Zbb_Zbc_Zbs_XZbf_XZbp_XZbr_XZbt";
+      break;
+
     case 3:  // RV32BFull
-      extensions += "_Zba_Zbb_Zbc_Zbs_Xbitmanip";
+      extensions += "_Zba_Zbb_Zbc_Zbs_XZbe_XZbf_XZbp_XZbr_XZbt";
       break;
   }
 
