@@ -53,13 +53,21 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
       `uvm_fatal(`gfn, "Cannot get instr_monitor_if")
     end
 
+    init_cosim();
+  endfunction : build_phase
+
+  protected function void init_cosim();
+    if (cosim_handle) begin
+      spike_cosim_release(cosim_handle);
+    end
+
     // TODO: Ensure log file on reset gets append rather than overwrite?
-    cosim_handle = spike_cosim_init(cfg.start_pc, cfg.start_mtvec, cfg.log_file);
+    cosim_handle = spike_cosim_init(cfg.isa_string, cfg.start_pc, cfg.start_mtvec, cfg.log_file);
 
     if (cosim_handle == null) begin
       `uvm_fatal(`gfn, "Could not initialise cosim")
     end
-  endfunction : build_phase
+  endfunction
 
   virtual task run_phase(uvm_phase phase);
     wait (instr_vif.instr_cb.reset === 1'b0);
@@ -262,11 +270,7 @@ class ibex_cosim_scoreboard extends uvm_scoreboard;
   endfunction : final_phase
 
   task handle_reset();
-    if (cosim_handle) begin
-      spike_cosim_release(cosim_handle);
-    end
-
-    cosim_handle = spike_cosim_init(cfg.start_pc, cfg.start_mtvec, cfg.log_file);
+    init_cosim();
     wait (instr_vif.instr_cb.reset === 1'b0);
   endtask
 endclass : ibex_cosim_scoreboard

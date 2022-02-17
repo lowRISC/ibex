@@ -39,6 +39,44 @@ class core_ibex_base_test extends uvm_test;
     irq_collected_port  = new("irq_collected_port_test", this);
   endfunction
 
+  function string get_isa_string();
+    bit     RV32E;
+    rv32m_e RV32M;
+    rv32b_e RV32B;
+    string  isa;
+
+    if (!uvm_config_db#(bit)::get(null, "", "RV32E", RV32E)) begin
+      `uvm_fatal(`gfn, "Cannot get RV32E parameter")
+    end
+    if (!uvm_config_db#(rv32m_e)::get(null, "", "RV32M", RV32M)) begin
+      `uvm_fatal(`gfn, "Cannot get RV32M parameter")
+    end
+    if (!uvm_config_db#(rv32b_e)::get(null, "", "RV32B", RV32B)) begin
+      `uvm_fatal(`gfn, "Cannot get RV32B parameter")
+    end
+
+    // Construct the right ISA string for the cosimulator by looking at top-level testbench
+    // parameters.
+    //
+    // Note that the bitmanip extensions from the v0.93 spec (Zbe, Zbf, Zbp, Zbr, Zbt) are all
+    // contained in "Xbitmanip" for Spike at the moment. The specific parts used are listed in
+    // comments below.
+    isa = {"rv32", RV32E ? "e" : "i", "c"};
+    if (RV32M != RV32MNone) isa = {isa, "m"};
+    case (RV32B)
+      RV32BNone:
+        ;
+      RV32BBalanced:
+        isa = {isa, "_Zba_Zbb_Zbs_Xbitmanip"}; // + Zbf, Zbt
+      RV32BOTEarlGrey:
+        isa = {isa, "_Zba_Zbb_Zbc_Zbs_Xbitmanip"}; // + Zbf, Zbp, Zbr, Zbt
+      RV32BFull:
+        isa = {isa, "_Zba_Zbb_Zbc_Zbs_Xbitmanip"}; // + Zbe, Zbf, Zbp, Zbr, Zbt
+    endcase
+
+    return isa;
+  endfunction
+
   virtual function void build_phase(uvm_phase phase);
     string cosim_log_file;
 
@@ -63,6 +101,8 @@ class core_ibex_base_test extends uvm_test;
 
 `ifdef INC_IBEX_COSIM
     cosim_cfg = core_ibex_cosim_cfg::type_id::create("cosim_cfg", this);
+
+    cosim_cfg.isa_string = get_isa_string();
     cosim_cfg.start_pc = {{32'h`BOOT_ADDR}[31:8], 8'h80};
     cosim_cfg.start_mtvec = {{32'h`BOOT_ADDR}[31:8], 8'h1};
     // TODO: Turn on when not using icache

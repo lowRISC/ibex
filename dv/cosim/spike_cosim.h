@@ -68,9 +68,9 @@ class SpikeCosim : public simif_t, public Cosim {
   int insn_cnt;
 
  public:
-  SpikeCosim(uint32_t start_pc, uint32_t start_mtvec,
-             const std::string &trace_log_path, bool secure_ibex,
-             bool icache_en);
+  SpikeCosim(const std::string &isa_string, uint32_t start_pc,
+             uint32_t start_mtvec, const std::string &trace_log_path,
+             bool secure_ibex, bool icache_en);
 
   // simif_t implementation
   virtual char *addr_to_mem(reg_t addr) override;

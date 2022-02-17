@@ -14,9 +14,9 @@
 #include <iostream>
 #include <sstream>
 
-SpikeCosim::SpikeCosim(uint32_t start_pc, uint32_t start_mtvec,
-                       const std::string &trace_log_path, bool secure_ibex,
-                       bool icache_en)
+SpikeCosim::SpikeCosim(const std::string &isa_string, uint32_t start_pc,
+                       uint32_t start_mtvec, const std::string &trace_log_path,
+                       bool secure_ibex, bool icache_en)
     : nmi_mode(false), pending_iside_error(false) {
   FILE *log_file = nullptr;
   if (trace_log_path.length() != 0) {
@@ -24,9 +24,9 @@ SpikeCosim::SpikeCosim(uint32_t start_pc, uint32_t start_mtvec,
     log_file = log->get();
   }
 
-  processor = std::make_unique<processor_t>("RV32IMC", "MU", DEFAULT_VARCH,
-                                            this, 0, false, log_file, nullptr,
-                                            secure_ibex, icache_en);
+  processor = std::make_unique<processor_t>(
+      isa_string.c_str(), "MU", DEFAULT_VARCH, this, 0, false, log_file,
+      nullptr, secure_ibex, icache_en);
 
   processor->set_mmu_capability(IMPL_MMU_SBARE);
   processor->get_state()->pc = start_pc;
