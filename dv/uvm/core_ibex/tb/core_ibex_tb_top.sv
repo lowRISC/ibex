@@ -254,6 +254,12 @@ module core_ibex_tb_top;
     uvm_config_db#(virtual irq_if)::set(null, "*", "vif", irq_vif);
     uvm_config_db#(virtual core_ibex_ifetch_if)::set(null, "*", "ifetch_if", ifetch_if);
     uvm_config_db#(virtual core_ibex_ifetch_pmp_if)::set(null, "*", "ifetch_pmp_if", ifetch_pmp_if);
+
+    // Expose ISA config parameters to UVM DB
+    uvm_config_db#(bit)::set(null, "*", "RV32E", RV32E);
+    uvm_config_db#(ibex_pkg::rv32m_e)::set(null, "*", "RV32M", RV32M);
+    uvm_config_db#(ibex_pkg::rv32b_e)::set(null, "*", "RV32B", RV32B);
+
     run_test();
   end
 

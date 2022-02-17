@@ -30,8 +30,9 @@ class SimpleSystemCosim : public SimpleSystem {
       return ret_code;
     }
 
-    _cosim = std::make_unique<SpikeCosim>(
-        0x100080, 0x100001, "simple_system_cosim.log", false, false);
+    _cosim =
+        std::make_unique<SpikeCosim>(GetIsaString(), 0x100080, 0x100001,
+                                     "simple_system_cosim.log", false, false);
 
     _cosim->add_memory(0x100000, 1024 * 1024);
     _cosim->add_memory(0x20000, 4096);
