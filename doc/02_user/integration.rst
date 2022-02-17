@@ -112,7 +112,8 @@ Parameters
 +------------------------------+---------------------+------------+-----------------------------------------------------------------------+
 | ``RV32B``                    | ibex_pkg::rv32b_e   | RV32BNone  | B(itmanipulation) extension select:                                   |
 |                              |                     |            | "ibex_pkg::RV32BNone": No B-extension                                 |
-|                              |                     |            | "ibex_pkg::RV32BBalanced": Sub-extensions Zbb, Zbs, Zbf and Zbt       |
+|                              |                     |            | "ibex_pkg::RV32BBalanced": Sub-extensions Zba, Zbb, Zbs, Zbf and Zbt  |
+|                              |                     |            | "ibex_pkg::RV32BOTEarlGrey": All sub-extensions except Zbe            |
 |                              |                     |            | "ibex_pkg::RV32BFull": All sub-extensions                             |
 +------------------------------+---------------------+------------+-----------------------------------------------------------------------+
 | ``RegFile``                  | ibex_pkg::regfile_e | RegFileFF  | Register file implementation select:                                  |
