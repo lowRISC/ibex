@@ -4,20 +4,20 @@
 
 // Interface to probe DUT internal signal
 interface core_ibex_dut_probe_if(input logic clk);
-  logic                 reset;
-  logic                 illegal_instr;
-  logic                 ecall;
-  logic                 wfi;
-  logic                 ebreak;
-  logic                 dret;
-  logic                 mret;
-  logic                 fetch_enable;
-  logic                 core_sleep;
-  logic                 alert_minor;
-  logic                 alert_major_internal;
-  logic                 alert_major_bus;
-  logic                 debug_req;
-  ibex_pkg::priv_lvl_e  priv_mode;
+  logic                    reset;
+  logic                    illegal_instr;
+  logic                    ecall;
+  logic                    wfi;
+  logic                    ebreak;
+  logic                    dret;
+  logic                    mret;
+  ibex_pkg::fetch_enable_t fetch_enable;
+  logic                    core_sleep;
+  logic                    alert_minor;
+  logic                    alert_major_internal;
+  logic                    alert_major_bus;
+  logic                    debug_req;
+  ibex_pkg::priv_lvl_e     priv_mode;
 
   clocking dut_cb @(posedge clk);
     output fetch_enable;

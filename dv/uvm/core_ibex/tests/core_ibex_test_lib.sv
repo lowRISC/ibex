@@ -47,7 +47,7 @@ class core_ibex_reset_test extends core_ibex_base_test;
       clk_vif.wait_clks($urandom_range(0, 50000));
       fork
         begin
-          dut_vif.dut_cb.fetch_enable <= 1'b0;
+          dut_vif.dut_cb.fetch_enable <= ibex_pkg::FetchEnableOff;
           clk_vif.apply_reset(.reset_width_clks (100));
         end
         begin
@@ -61,7 +61,7 @@ class core_ibex_reset_test extends core_ibex_base_test;
         end
       join
       // Assert fetch_enable to have the core start executing from boot address
-      dut_vif.dut_cb.fetch_enable <= 1'b1;
+      dut_vif.dut_cb.fetch_enable <= ibex_pkg::FetchEnableOn;
     end
   endtask
 

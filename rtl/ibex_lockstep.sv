@@ -94,7 +94,7 @@ module ibex_lockstep import ibex_pkg::*; #(
   input  crash_dump_t                  crash_dump_i,
   input  logic                         double_fault_seen_i,
 
-  input  logic                         fetch_enable_i,
+  input  fetch_enable_t                fetch_enable_i,
   output logic                         alert_minor_o,
   output logic                         alert_major_internal_o,
   output logic                         alert_major_bus_o,
@@ -182,7 +182,7 @@ module ibex_lockstep import ibex_pkg::*; #(
     logic [14:0]                 irq_fast;
     logic                        irq_nm;
     logic                        debug_req;
-    logic                        fetch_enable;
+    fetch_enable_t               fetch_enable;
     logic                        ic_scr_key_valid;
   } delayed_inputs_t;
 
