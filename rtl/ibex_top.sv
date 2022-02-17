@@ -123,7 +123,7 @@ module ibex_top import ibex_pkg::*; #(
 `endif
 
   // CPU Control Signals
-  input  logic                         fetch_enable_i,
+  input  fetch_enable_t                fetch_enable_i,
   output logic                         alert_minor_o,
   output logic                         alert_major_internal_o,
   output logic                         alert_major_bus_o,
@@ -182,6 +182,8 @@ module ibex_top import ibex_pkg::*; #(
   logic                         scramble_key_valid_d, scramble_key_valid_q;
   logic                         scramble_req_d, scramble_req_q;
 
+  fetch_enable_t fetch_enable_buf;
+
   /////////////////////
   // Main clock gate //
   /////////////////////
@@ -207,6 +209,12 @@ module ibex_top import ibex_pkg::*; #(
   ////////////////////////
   // Core instantiation //
   ////////////////////////
+
+  // Buffer fetch_enable_i to prevent synthesis optimising away multi-bit signal
+  prim_buf #(.Width($bits(fetch_enable_t))) u_fetch_enable_buf (
+    .in_i (fetch_enable_i),
+    .out_o(fetch_enable_buf)
+  );
 
   ibex_core #(
     .PMPEnable        (PMPEnable),
@@ -322,7 +330,7 @@ module ibex_top import ibex_pkg::*; #(
     .rvfi_ext_mcycle,
 `endif
 
-    .fetch_enable_i,
+    .fetch_enable_i(fetch_enable_buf),
     .alert_minor_o (core_alert_minor),
     .alert_major_o (core_alert_major),
     .icache_inval_o(icache_inval),
@@ -656,7 +664,7 @@ module ibex_top import ibex_pkg::*; #(
     logic                         debug_req_local;
     crash_dump_t                  crash_dump_local;
     logic                         double_fault_seen_local;
-    logic                         fetch_enable_local;
+    fetch_enable_t                fetch_enable_local;
 
     logic                         icache_inval_local;
     logic                         core_busy_local;

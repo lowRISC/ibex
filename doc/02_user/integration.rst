@@ -208,9 +208,12 @@ Interfaces
 +----------------------------+------------------------------------------------------------------------+
 | ``double_fault_seen_o``    | A double fault was observed, see :ref:`double-fault-detect`            |
 +----------------------------+-------------------------+-----+----------------------------------------+
-| ``fetch_enable_i``         | 1                       | in  | Allow the core to fetch instructions.  |
+| ``fetch_enable_i``         | 4                       | in  | Allow the core to fetch instructions.  |
 |                            |                         |     | If this bit is set low, the core will  |
-|                            |                         |     | pause fetching new instructions.       |
+|                            |                         |     | pause fetching new instructions. A     |
+|                            |                         |     | multi-bit encoding scheme is used. See |
+|                            |                         |     | `FetchEnableOn` / `FetchEnableOff` in  |
+|                            |                         |     | :file:`rtl/ibex_pkg.sv`                |
 +----------------------------+-------------------------+-----+----------------------------------------+
 | ``core_sleep_o``           | 1                       | out | Core in WFI with no outstanding data   |
 |                            |                         |     | or instruction accesses. Deasserts     |
