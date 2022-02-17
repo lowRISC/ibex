@@ -96,7 +96,8 @@ module ibex_lockstep import ibex_pkg::*; #(
 
   input  logic                         fetch_enable_i,
   output logic                         alert_minor_o,
-  output logic                         alert_major_o,
+  output logic                         alert_major_internal_o,
+  output logic                         alert_major_bus_o,
   input  logic                         icache_inval_i,
   input  logic                         core_busy_i,
   input  logic                         test_en_i,
@@ -479,8 +480,9 @@ module ibex_lockstep import ibex_pkg::*; #(
 
   logic outputs_mismatch;
 
-  assign outputs_mismatch = enable_cmp_q & (shadow_outputs_q != core_outputs_q[0]);
-  assign alert_major_o    = outputs_mismatch | shadow_alert_major | bus_intg_err;
-  assign alert_minor_o    = shadow_alert_minor;
+  assign outputs_mismatch       = enable_cmp_q & (shadow_outputs_q != core_outputs_q[0]);
+  assign alert_major_internal_o = outputs_mismatch | shadow_alert_major;
+  assign alert_major_bus_o      = bus_intg_err;
+  assign alert_minor_o          = shadow_alert_minor;
 
 endmodule
