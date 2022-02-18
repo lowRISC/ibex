@@ -1399,3 +1399,18 @@ class core_ibex_invalid_csr_test extends core_ibex_directed_test;
   endtask
 
 endclass
+
+class core_mem_err_test extends core_ibex_directed_test;
+  memory_error_seq memory_error_seq_h;
+
+  `uvm_component_utils(core_mem_err_test)
+  `uvm_component_new
+
+  virtual task send_stimulus();
+    memory_error_seq_h = memory_error_seq::type_id::create("memory_error_seq_h");
+    memory_error_seq_h.vseq.cfg = cfg;
+    memory_error_seq_h.vseq.mem = mem;
+    memory_error_seq_h.start(env.vseqr);
+  endtask: send_stimulus
+
+endclass: core_mem_err_test

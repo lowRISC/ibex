@@ -23,8 +23,11 @@ package core_ibex_test_pkg;
     bit [11:0]          system_imm;
   } instr_t;
 
+  typedef class core_ibex_vseq;
+
   `include "core_ibex_report_server.sv"
   `include "core_ibex_seq_lib.sv"
+  `include "core_ibex_new_seq_lib.sv"
   `include "core_ibex_vseq.sv"
   `include "core_ibex_base_test.sv"
   `include "core_ibex_test_lib.sv"
