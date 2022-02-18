@@ -22,12 +22,15 @@ class core_ibex_vseq extends uvm_sequence;
 
   `uvm_object_utils(core_ibex_vseq)
   `uvm_declare_p_sequencer(core_ibex_vseqr)
-  `uvm_object_new
 
-  virtual task body();
+  function new (string name = "");
+    super.new(name);
     instr_intf_seq = ibex_mem_intf_response_seq::type_id::create("instr_intf_seq");
     data_intf_seq  = ibex_mem_intf_response_seq::type_id::create("data_intf_seq");
     data_intf_seq.is_dmem_seq = 1'b1;
+  endfunction
+
+  virtual task body();
     if (cfg.enable_irq_single_seq) begin
       irq_raise_single_seq_h = irq_raise_single_seq::type_id::create("irq_single_seq_h");
       irq_raise_single_seq_h.num_of_iterations = 1;
