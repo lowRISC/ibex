@@ -158,8 +158,8 @@ module ibex_top import ibex_pkg::*; #(
   logic [4:0]                  rf_waddr_wb;
   logic                        rf_we_wb;
   logic [RegFileDataWidth-1:0] rf_wdata_wb_ecc;
-  logic [RegFileDataWidth-1:0] rf_rdata_a_ecc;
-  logic [RegFileDataWidth-1:0] rf_rdata_b_ecc;
+  logic [RegFileDataWidth-1:0] rf_rdata_a_ecc, rf_rdata_a_ecc_buf;
+  logic [RegFileDataWidth-1:0] rf_rdata_b_ecc, rf_rdata_b_ecc_buf;
   // Core <-> RAMs signals
   logic [IC_NUM_WAYS-1:0]      ic_tag_req;
   logic                        ic_tag_write;
@@ -210,10 +210,20 @@ module ibex_top import ibex_pkg::*; #(
   // Core instantiation //
   ////////////////////////
 
-  // Buffer fetch_enable_i to prevent synthesis optimising away multi-bit signal
+  // Buffer security critical signals to prevent synthesis optimisation removing them
   prim_buf #(.Width($bits(fetch_enable_t))) u_fetch_enable_buf (
     .in_i (fetch_enable_i),
     .out_o(fetch_enable_buf)
+  );
+
+  prim_buf #(.Width(RegFileDataWidth)) u_rf_rdata_a_ecc_buf (
+    .in_i (rf_rdata_a_ecc),
+    .out_o(rf_rdata_a_ecc_buf)
+  );
+
+  prim_buf #(.Width(RegFileDataWidth)) u_rf_rdata_b_ecc_buf (
+    .in_i (rf_rdata_b_ecc),
+    .out_o(rf_rdata_b_ecc_buf)
   );
 
   ibex_core #(
@@ -274,8 +284,8 @@ module ibex_top import ibex_pkg::*; #(
     .rf_waddr_wb_o    (rf_waddr_wb),
     .rf_we_wb_o       (rf_we_wb),
     .rf_wdata_wb_ecc_o(rf_wdata_wb_ecc),
-    .rf_rdata_a_ecc_i (rf_rdata_a_ecc),
-    .rf_rdata_b_ecc_i (rf_rdata_b_ecc),
+    .rf_rdata_a_ecc_i (rf_rdata_a_ecc_buf),
+    .rf_rdata_b_ecc_i (rf_rdata_b_ecc_buf),
 
     .ic_tag_req_o      (ic_tag_req),
     .ic_tag_write_o    (ic_tag_write),
