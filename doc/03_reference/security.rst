@@ -31,6 +31,11 @@ Note that data memory operations to unaligned addresses might result in multiple
 This in turn could expose information about the address as a timing side-channel.
 It is therefore recommended to stick to aligned memory accesses when using this feature for critical code regions.
 
+When Ibex is configured to use an instruction cache, stalls on instruction fetch can see variable latency (depending on whether or not they hit in the cache).
+Software that has need of data independent timing may wish to disable the instruction cache to avoid this or to carefully analyse execution to determine if variable latency introduced by the cache causes unacceptable leakage.
+The instruction cache is controlled by the **icache_enable** bit in the **cpuctrl** register.
+Precise details of fetch timing will depend upon the memory system Ibex is connected to.
+
 Dummy Instruction Insertion
 ---------------------------
 
