@@ -22,6 +22,7 @@ package ibex_mem_intf_agent_pkg;
   `include "ibex_mem_intf_response_driver.sv"
   `include "ibex_mem_intf_response_sequencer.sv"
   `include "ibex_mem_intf_response_seq_lib.sv"
+  `include "ibex_mem_intf_response_agent_cfg.sv"
   `include "ibex_mem_intf_response_agent.sv"
   `include "ibex_mem_intf_request_driver.sv"
   `include "ibex_mem_intf_request_agent.sv"

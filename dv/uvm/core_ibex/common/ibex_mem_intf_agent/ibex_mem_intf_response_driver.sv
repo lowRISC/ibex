@@ -8,7 +8,7 @@
 
 class ibex_mem_intf_response_driver extends uvm_driver #(ibex_mem_intf_seq_item);
 
-  protected virtual ibex_mem_intf vif;
+  virtual ibex_mem_intf vif;
 
   int unsigned min_grant_delay = 0;
   int unsigned max_grant_delay = 10;
@@ -21,8 +21,6 @@ class ibex_mem_intf_response_driver extends uvm_driver #(ibex_mem_intf_seq_item)
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
     rdata_queue = new();
-    if(!uvm_config_db#(virtual ibex_mem_intf)::get(this, "", "vif", vif))
-      `uvm_fatal("NOVIF",{"virtual interface must be set for: ",get_full_name(),".vif"});
   endfunction: build_phase
 
   virtual task run_phase(uvm_phase phase);
