@@ -34,7 +34,8 @@ class ibex_mem_intf_response_agent extends uvm_agent;
       driver.seq_item_port.connect(sequencer.seq_item_export);
       monitor.addr_ph_port.connect(sequencer.addr_ph_port.analysis_export);
     end
-    driver.vif = cfg.vif;
+    driver.cfg = cfg;
+    sequencer.cfg = cfg;
   endfunction : connect_phase
 
   function void reset();
