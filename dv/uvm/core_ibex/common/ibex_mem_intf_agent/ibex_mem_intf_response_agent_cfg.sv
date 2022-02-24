@@ -13,11 +13,17 @@ class ibex_mem_intf_response_agent_cfg extends uvm_object;
 
   // delay between request and grant
   int unsigned gnt_delay_min = 0;
-  int unsigned gnt_delay_max = 1000;
+  int unsigned gnt_delay_max = 10;
+  // Pick the weight assigned to choosing medium and long gaps between request and grant
+  int unsigned gnt_pick_medium_speed_weight = 1;
+  int unsigned gnt_pick_slow_speed_weight = 1;
 
   // delay between grant and rvalid
-  int unsigned valid_delay_min = 1;
-  int unsigned valid_delay_max = 1000;
+  int unsigned valid_delay_min = 0;
+  int unsigned valid_delay_max = 20;
+  // Pick the weight assigned to choosing medium and long gaps between grant and rvalid
+  int unsigned valid_pick_medium_speed_weight = 1;
+  int unsigned valid_pick_slow_speed_weight = 1;
 
   // Enables/disable all protocol delays.
   rand bit zero_delays;

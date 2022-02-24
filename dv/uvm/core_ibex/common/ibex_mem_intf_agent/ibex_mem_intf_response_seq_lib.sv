@@ -8,15 +8,13 @@
 
 class ibex_mem_intf_response_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
 
-  int                     max_rvalid_delay = 20;
-  int                     min_rvalid_delay = 0;
-  ibex_mem_intf_seq_item  item;
-  mem_model               m_mem;
-  bit                     enable_error = 1'b0;
+  ibex_mem_intf_seq_item item;
+  mem_model              m_mem;
+  bit                    enable_error = 1'b0;
   // Used to ensure that whenever inject_error() is called, the very next transaction will inject an
   // error, and that enable_error will not be flipped back to 0 immediately
-  bit                     error_synch = 1'b1;
-  bit                     is_dmem_seq = 1'b0;
+  bit                    error_synch = 1'b1;
+  bit                    is_dmem_seq = 1'b0;
 
   `uvm_object_utils(ibex_mem_intf_response_seq)
   `uvm_declare_p_sequencer(ibex_mem_intf_response_sequencer)
@@ -41,12 +39,18 @@ class ibex_mem_intf_response_seq extends uvm_sequence #(ibex_mem_intf_seq_item);
         data       == item.data;
         intg       == item.intg;
         be         == item.be;
-        rvalid_delay dist {
-          min_rvalid_delay                                  :/ 5,
-          [min_rvalid_delay + 1 : max_rvalid_delay / 2 - 1] :/ 3,
-          [max_rvalid_delay / 2 : max_rvalid_delay - 1]     :/ 1,
-          max_rvalid_delay                                  :/ 1
-        };
+        if (p_sequencer.cfg.zero_delays) {
+          rvalid_delay == 0;
+        } else {
+          rvalid_delay dist {
+            p_sequencer.cfg.valid_delay_min                                                  :/ 5,
+            [p_sequencer.cfg.valid_delay_min + 1 : p_sequencer.cfg.valid_delay_max / 2 - 1]  :/ 3,
+            [p_sequencer.cfg.valid_delay_max / 2 : p_sequencer.cfg.valid_delay_max - 1]
+            :/ p_sequencer.cfg.valid_pick_medium_speed_weight,
+            p_sequencer.cfg.valid_delay_max
+            :/  p_sequencer.cfg.valid_pick_slow_speed_weight
+          };
+        }
         error == enable_error;
       }) begin
         `uvm_fatal(`gfn, "Cannot randomize response request")
