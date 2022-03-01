@@ -1400,17 +1400,23 @@ class core_ibex_invalid_csr_test extends core_ibex_directed_test;
 
 endclass
 
-class core_mem_err_test extends core_ibex_directed_test;
-  memory_error_seq memory_error_seq_h;
+class core_ibex_fetch_en_chk_test extends core_ibex_directed_test;
 
-  `uvm_component_utils(core_mem_err_test)
+  `uvm_component_utils(core_ibex_fetch_en_chk_test)
   `uvm_component_new
 
   virtual task send_stimulus();
-    memory_error_seq_h = memory_error_seq::type_id::create("memory_error_seq_h");
-    memory_error_seq_h.vseq.cfg = cfg;
-    memory_error_seq_h.vseq.mem = mem;
-    memory_error_seq_h.start(env.vseqr);
-  endtask: send_stimulus
+    fetch_enable_seq fetch_enable_seq_h;
+    fetch_enable_seq_h = fetch_enable_seq::type_id::create("fetch_enable_seq_h", this);
+    `uvm_info(`gfn, "Running core_ibex_fetch_en_chk_test", UVM_LOW)
+    fork
+      begin
+        vseq.start(env.vseqr);
+      end
+      begin
+        fetch_enable_seq_h.start(env.vseqr);
+      end
+    join_any
+  endtask
 
-endclass: core_mem_err_test
+endclass

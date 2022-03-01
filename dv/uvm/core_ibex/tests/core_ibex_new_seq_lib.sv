@@ -225,3 +225,38 @@ class memory_error_seq extends core_base_new_seq#(irq_seq_item);
   endtask
 
 endclass: memory_error_seq
+
+class fetch_enable_seq extends core_base_new_seq#(irq_seq_item);
+
+  `uvm_object_utils(fetch_enable_seq)
+  `uvm_object_new
+
+  ibex_pkg::fetch_enable_t fetch_enable;
+  int unsigned on_bias_pc = 50;
+  int max_delay = 500;
+  int min_delay = 75;
+  rand int unsigned off_delay = 0;
+
+  virtual task body();
+    dut_vif.dut_cb.fetch_enable <= ibex_pkg::FetchEnableOn;
+    if(off_delay == 0) begin
+      `DV_CHECK_MEMBER_RANDOMIZE_WITH_FATAL(off_delay,
+                                            off_delay inside {[min_delay : max_delay]};)
+    end
+    super.body();
+  endtask
+
+  virtual task send_req();
+    `uvm_info(get_full_name(), "Sending fetch enable request", UVM_LOW)
+    `DV_CHECK_MEMBER_RANDOMIZE_WITH_FATAL(fetch_enable,
+                                          fetch_enable dist {ibex_pkg::FetchEnableOn :/ on_bias_pc,
+                                                             [0:15] :/ 100 - on_bias_pc};
+                                         )
+    `uvm_info(`gfn, $sformatf("fetch_enable = %d", fetch_enable), UVM_LOW)
+    dut_vif.dut_cb.fetch_enable <= fetch_enable;
+    clk_vif.wait_clks(off_delay);
+    dut_vif.dut_cb.fetch_enable <= ibex_pkg::FetchEnableOn;
+
+  endtask
+
+endclass
