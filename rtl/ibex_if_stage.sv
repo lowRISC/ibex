@@ -301,6 +301,23 @@ module ibex_if_stage import ibex_pkg::*; #(
     assign ic_data_write_o       = 'b0;
     assign ic_data_addr_o        = 'b0;
     assign ic_data_wdata_o       = 'b0;
+
+`ifndef SYNTHESIS
+    // If we don't instantiate an icache and this is a simulation then we have a problem because the
+    // simulator might discard the icache module entirely, including some DPI exports that it
+    // implies. This then causes problems for linking against C++ testbench code that expected them.
+    // As a slightly ugly hack, let's define the DPI functions here (the real versions are defined
+    // in prim_util_get_scramble_params.svh)
+    export "DPI-C" function simutil_get_scramble_key;
+    export "DPI-C" function simutil_get_scramble_nonce;
+    function automatic int simutil_get_scramble_key(output bit [127:0] val);
+      return 0;
+    endfunction
+    function automatic int simutil_get_scramble_nonce(output bit [319:0] nonce);
+      return 0;
+    endfunction
+`endif
+
   end
 
   assign unused_fetch_addr_n0 = fetch_addr_n[0];
