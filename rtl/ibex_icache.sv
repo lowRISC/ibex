@@ -64,7 +64,8 @@ module ibex_icache import ibex_pkg::*; #(
   // Cache status
   input  logic                           icache_enable_i,
   input  logic                           icache_inval_i,
-  output logic                           busy_o
+  output logic                           busy_o,
+  output logic                           ecc_error_o
 );
 
   // Number of fill buffers (must be >= 2)
@@ -506,12 +507,15 @@ module ibex_icache import ibex_pkg::*; #(
     assign ecc_write_ways  = ecc_correction_ways_q;
     assign ecc_write_index = ecc_correction_index_q;
 
+    assign ecc_error_o = ecc_err_ic1;
   end else begin : gen_no_data_ecc
     assign ecc_err_ic1     = 1'b0;
     assign ecc_write_req   = 1'b0;
     assign ecc_write_ways  = '0;
     assign ecc_write_index = '0;
     assign hit_data_ic1    = hit_data_ecc_ic1;
+
+    assign ecc_error_o = 1'b0;
   end
 
   ///////////////////////////////

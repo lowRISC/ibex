@@ -105,7 +105,9 @@ module ic_top import ibex_pkg::*; #(
 
       .icache_enable_i     ( icache_enable_i            ),
       .icache_inval_i      ( icache_inval_i             ),
-      .busy_o              ( busy_o                     )
+      .busy_o              ( busy_o                     ),
+      // TODO: Probe this and verify functionality
+      .ecc_error_o         (                            )
   );
 
   ///////////////////////////////

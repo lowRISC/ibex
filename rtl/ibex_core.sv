@@ -181,6 +181,7 @@ module ibex_core import ibex_pkg::*; #(
   logic [31:0] dummy_instr_seed;
   logic        icache_enable;
   logic        icache_inval;
+  logic        icache_ecc_error;
   logic        pc_mismatch_alert;
   logic        csr_shadow_err;
 
@@ -432,6 +433,7 @@ module ibex_core import ibex_pkg::*; #(
     .dummy_instr_seed_i    (dummy_instr_seed),
     .icache_enable_i       (icache_enable),
     .icache_inval_i        (icache_inval),
+    .icache_ecc_error_o    (icache_ecc_error),
 
     // branch targets
     .branch_target_ex_i(branch_target_ex),
@@ -852,8 +854,7 @@ module ibex_core import ibex_pkg::*; #(
   ///////////////////
 
   // Minor alert - core is in a recoverable state
-  // TODO add I$ ECC errors here
-  assign alert_minor_o = 1'b0;
+  assign alert_minor_o = icache_ecc_error;
 
   // Major alert - core is unrecoverable
   assign alert_major_o = rf_ecc_err_comb | pc_mismatch_alert | csr_shadow_err;
