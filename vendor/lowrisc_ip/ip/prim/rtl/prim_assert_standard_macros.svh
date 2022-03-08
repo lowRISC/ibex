@@ -21,19 +21,24 @@
                         (__name), (__prop));                                         \
 `else                                                                                \
   initial begin                                                                      \
-    // #9017: Avoid race condition between the evaluation of assertion and `__prop`. \
-    //                                                                               \
-    // According to IEEE 1800-2017 SystemVerilog LRM, immediate assertions, unlike   \
-    // concurrent assertions are evaluated in the active region set, as opposed to   \
-    // the observed region. They are hence, susceptible to race conditions           \
-    // (described in section 4.8). The #0 is an acceptable workaround for this.      \
-    #0;                                                                              \
     __name: assert (__prop)                                                          \
       else begin                                                                     \
         `ASSERT_ERROR(__name)                                                        \
       end                                                                            \
   end                                                                                \
 `endif
+
+`define ASSERT_INIT_NET(__name, __prop)                                                   \
+  initial begin                                                                      \
+    // When a net is assigned with a value, the assignment is evaluated after        \
+    // initial in Xcelium. Add 1ps delay to check value after the assignment is      \
+    // completed.                                                                    \
+    #1ps;                                                                            \
+    __name: assert (__prop)                                                          \
+      else begin                                                                     \
+        `ASSERT_ERROR(__name)                                                        \
+      end                                                                            \
+  end                                                                                \
 
 `define ASSERT_FINAL(__name, __prop)                                         \
   final begin                                                                \

@@ -94,6 +94,10 @@
                "-error=TMPO",
                // Class objects must not hide other class members due to same name
                "-error=SV-OHCM",
+               // ENUMASSIGN issues can cause LEC warnings later down the road (see #10083
+               // and #10952 for context). The warning is therefore promoted to an error
+               // in simulations in order to catch this as early as possible.
+               "-error=ENUMASSIGN"
                ]
 
   run_opts:   ["-licqueue",
@@ -254,6 +258,12 @@
                    "-debug_access"]
     }
     {
+      name: vcs_waves_off
+      is_sim_mode: 1
+      build_opts: [// disable dumping assertion failures to improve runtime performance
+                   "-assert novpi+dbgopt"]
+    }
+    {
       name: vcs_cov
       is_sim_mode: 1
       build_opts: [// Enable the required cov metrics
@@ -274,7 +284,10 @@
                    // Ignore warnings about not applying cm_glitch to path and FSM
                    "+warn=noVCM-OPTIGN",
                    // Coverage database output location
-                   "-cm_dir {cov_db_dir}"]
+                   "-cm_dir {cov_db_dir}",
+                   // The following option is to improve runtime performance
+                   "-Xkeyopt=rtopt"
+                   ]
 
       run_opts:   [// Enable the required cov metrics
                    "-cm {cov_metrics}",

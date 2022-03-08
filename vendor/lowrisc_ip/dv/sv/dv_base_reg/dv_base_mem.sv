@@ -11,6 +11,15 @@ class dv_base_mem extends uvm_mem;
   // if mem doesn't support partial write, doing that will result d_error = 1
   local bit mem_partial_write_support;
 
+  // Modifies the expectation of writes / reads to RO / WO mem. By default it should be an error
+  // response, but some implementations may choose to just ignore it.
+  local bit write_to_ro_mem_ok;
+  local bit read_to_wo_mem_ok;
+
+  // if data integrity is passthru, mem stores integrity along with data but it won't check the
+  // data integrity
+  local bit data_intg_passthru;
+
   function new(string           name,
                longint unsigned size,
                int unsigned     n_bits,
@@ -27,6 +36,30 @@ class dv_base_mem extends uvm_mem;
   function bit get_mem_partial_write_support();
     return mem_partial_write_support;
   endfunction : get_mem_partial_write_support
+
+  function void set_data_intg_passthru(bit enable);
+    data_intg_passthru = enable;
+  endfunction : set_data_intg_passthru
+
+  function bit get_data_intg_passthru();
+    return data_intg_passthru;
+  endfunction : get_data_intg_passthru
+
+  function void set_write_to_ro_mem_ok(bit ok);
+    write_to_ro_mem_ok = ok;
+  endfunction
+
+  function bit get_write_to_ro_mem_ok();
+    return write_to_ro_mem_ok;
+  endfunction
+
+  function void set_read_to_wo_mem_ok(bit ok);
+    read_to_wo_mem_ok = ok;
+  endfunction
+
+  function bit get_read_to_wo_mem_ok();
+    return read_to_wo_mem_ok;
+  endfunction
 
   // rewrite this function to support "WO" access type for mem
   function void configure(uvm_reg_block  parent,

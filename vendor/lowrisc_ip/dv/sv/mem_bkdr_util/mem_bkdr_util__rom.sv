@@ -72,7 +72,8 @@ virtual function void rom_encrypt_write32_integ(logic [bus_params_pkg::BUS_AW-1:
                                                 logic [31:0]                       data,
                                                 logic [SRAM_KEY_WIDTH-1:0]         key,
                                                 logic [SRAM_BLOCK_WIDTH-1:0]       nonce,
-                                                bit                                scramble_data);
+                                                bit                                scramble_data,
+                                                bit   [38:0]                       flip_bits = 0);
   logic [bus_params_pkg::BUS_AW-1:0] bus_addr = '0;
   logic [38:0]                       integ_data;
   logic [38:0]                       scrambled_data;
@@ -95,12 +96,15 @@ virtual function void rom_encrypt_write32_integ(logic [bus_params_pkg::BUS_AW-1:
 
   if(scramble_data) begin
     // Calculate the integrity constant
-    integ_data = prim_secded_pkg::prim_secded_39_32_enc(data);
+    integ_data = prim_secded_pkg::prim_secded_inv_39_32_enc(data);
+
+    // flip some bits to inject integrity fault
+    integ_data ^= flip_bits;
   
     // Calculate the scrambled data
     wdata_arr = {<<{integ_data}};
     wdata_arr = sram_scrambler_pkg::encrypt_sram_data(
-        wdata_arr, 39, 0, rom_addr, addr_width, key_arr, nonce_arr
+        wdata_arr, 39, 39, rom_addr, addr_width, key_arr, nonce_arr
     );
     scrambled_data = {<<{wdata_arr}};
   end
@@ -115,8 +119,6 @@ virtual function void rom_encrypt_write32_integ(logic [bus_params_pkg::BUS_AW-1:
   for (int i = 0; i < addr_width; i++) begin
     bus_addr[addr_lsb + i] = scrambled_addr[i];
   end
-
   // Write the scrambled data to memory
   write39integ(bus_addr, scrambled_data);
 endfunction
-
