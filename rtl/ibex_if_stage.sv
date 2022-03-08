@@ -87,12 +87,13 @@ module ibex_if_stage import ibex_pkg::*; #(
   input  exc_pc_sel_e                 exc_pc_mux_i,             // selects ISR address
   input  exc_cause_e                  exc_cause,                // selects ISR address for
                                                                 // vectorized interrupt lines
-  input logic                         dummy_instr_en_i,
-  input logic [2:0]                   dummy_instr_mask_i,
-  input logic                         dummy_instr_seed_en_i,
-  input logic [31:0]                  dummy_instr_seed_i,
-  input logic                         icache_enable_i,
-  input logic                         icache_inval_i,
+  input  logic                        dummy_instr_en_i,
+  input  logic [2:0]                  dummy_instr_mask_i,
+  input  logic                        dummy_instr_seed_en_i,
+  input  logic [31:0]                 dummy_instr_seed_i,
+  input  logic                        icache_enable_i,
+  input  logic                        icache_inval_i,
+  output logic                        icache_ecc_error_o,
 
   // jump and branch target
   input  logic [31:0]                 branch_target_ex_i,       // branch/jump target address
@@ -251,7 +252,8 @@ module ibex_if_stage import ibex_pkg::*; #(
 
         .icache_enable_i     ( icache_enable_i            ),
         .icache_inval_i      ( icache_inval_i             ),
-        .busy_o              ( prefetch_busy              )
+        .busy_o              ( prefetch_busy              ),
+        .ecc_error_o         ( icache_ecc_error_o         )
     );
   end else begin : gen_prefetch_buffer
     // prefetch buffer, caches a fixed number of instructions
@@ -301,6 +303,7 @@ module ibex_if_stage import ibex_pkg::*; #(
     assign ic_data_write_o       = 'b0;
     assign ic_data_addr_o        = 'b0;
     assign ic_data_wdata_o       = 'b0;
+    assign icache_ecc_error_o    = 'b0;
 
 `ifndef SYNTHESIS
     // If we don't instantiate an icache and this is a simulation then we have a problem because the
@@ -317,7 +320,6 @@ module ibex_if_stage import ibex_pkg::*; #(
       return 0;
     endfunction
 `endif
-
   end
 
   assign unused_fetch_addr_n0 = fetch_addr_n[0];
