@@ -33,6 +33,16 @@
          `PRIM_STRINGIFY(__name));                                                       \
 `endif
 
+// This macro is suitable for conditionally triggering lint errors, e.g., if a Sec parameter takes
+// on a non-default value. This may be required for pre-silicon/FPGA evaluation but we don't want
+// to allow this for tapeout.
+`define ASSERT_STATIC_LINT_ERROR(__name, __prop)     \
+  localparam int __name = (__prop) ? 1 : 2;          \
+  always_comb begin                                  \
+    logic unused_assert_static_lint_error;           \
+    unused_assert_static_lint_error = __name'(1'b1); \
+  end
+
 // The basic helper macros are actually defined in "implementation headers". The macros should do
 // the same thing in each case (except for the dummy flavour), but in a way that the respective
 // tools support.
@@ -46,6 +56,8 @@
 //                glitches.
 //
 //  ASSERT_INIT:  Assertion in initial block. Can be used for things like parameter checking.
+//
+//  ASSERT_INIT_NET: Assertion in initial block. Can be used for initial value of a net.
 //
 //  ASSERT_FINAL: Assertion in final block. Can be used for things like queues being empty at end of
 //                sim, all credits returned at end of sim, state machines in idle at end of sim.
@@ -127,5 +139,7 @@
 `ifdef FPV_ON                                                                               \
    `COVER(__name, __prop, __clk, __rst)                                                     \
 `endif
+
+`include "prim_assert_sec_cm.svh"
 
 `endif // PRIM_ASSERT_SV

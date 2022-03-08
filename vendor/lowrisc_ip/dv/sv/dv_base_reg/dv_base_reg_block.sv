@@ -6,6 +6,20 @@
 class dv_base_reg_block extends uvm_reg_block;
   `uvm_object_utils(dv_base_reg_block)
 
+  // The default addr, data and byte widths.
+  //
+  // The UVM reg data structures are built on `UVM_REG_ADDR|DATA|BYTEENABLE_WIDTH settings which
+  // are compile time, i.e. fixed for all RAL models across the project. What if we have multiple
+  // RAL models that have different width needs? The solution is to let the UVM data structures be
+  // created with large enough widths to accommodate a heterogeneous set of RAL models, and use
+  // these runtime settings below instead, to perform associated computations. Values retrieved
+  // for comparisons, such as uvm_reg::get_mirrored_value() may return data that is wider than
+  // needed. It would then be upto the testbench to cast it to the appropriate width if necessary.
+  // TODO: These are ideally passed via `build` method.
+  uint addr_width = `UVM_REG_ADDR_WIDTH;
+  uint data_width = `UVM_REG_DATA_WIDTH;
+  uint be_width = `UVM_REG_BYTENABLE_WIDTH;
+
   // Since an IP may contains more than one reg block we construct reg_block name as
   // {ip_name}_{reg_interface_name}.
   // All the reg_blocks in the IP share the same alert. In top-level, We construct the alert
@@ -29,6 +43,19 @@ class dv_base_reg_block extends uvm_reg_block;
 
   addr_range_t mapped_addr_ranges[$];
 
+  // Indicates whether accesses to unmapped regions of this block returns an error response (0).
+  protected bit unmapped_access_ok;
+
+  // Indicates whether byte writes are supported (enabled by default).
+  // TODO: Remove this in future - this is really a property of the physical interface that is used
+  // to access design through this RAL model (a.k.a, the map & adapter), and not the RAL model
+  // itself. This information should be sought using uvm_reg_adapter::supports_byte_enable instead.
+  // This is added for ease of rv_dm testbench development.
+  protected bit supports_byte_enable = 1'b1;
+
+  // Custom RAL models may support sub-word CSR writes smaller than CSR width.
+  protected bit supports_sub_word_csr_writes = 1'b0;
+
   bit has_unmapped_addrs;
   addr_range_t unmapped_addr_ranges[$];
 
@@ -50,6 +77,30 @@ class dv_base_reg_block extends uvm_reg_block;
   // Returns the CSR exclusion item attached to the block.
   virtual function csr_excl_item get_excl_item();
     return csr_excl;
+  endfunction
+
+  function void set_unmapped_access_ok(bit ok);
+    unmapped_access_ok = ok;
+  endfunction
+
+  function bit get_unmapped_access_ok();
+    return unmapped_access_ok;
+  endfunction
+
+  function void set_supports_byte_enable(bit enable);
+    supports_byte_enable = enable;
+  endfunction
+
+  function bit get_supports_byte_enable();
+    return supports_byte_enable;
+  endfunction
+
+  function void set_supports_sub_word_csr_writes(bit enable);
+    supports_sub_word_csr_writes = enable;
+  endfunction
+
+  function bit get_supports_sub_word_csr_writes();
+    return supports_sub_word_csr_writes;
   endfunction
 
   // provide build function to supply base addr
@@ -133,6 +184,7 @@ class dv_base_reg_block extends uvm_reg_block;
     foreach (csrs[i]) begin
       csr_addrs.push_back(csrs[i].get_address());
     end
+    `uvm_info(`gfn, $sformatf("csr_addrs: %0p", csr_addrs), UVM_HIGH)
   endfunction
 
   // Internal function, used to get a list of all valid memory ranges
@@ -146,6 +198,7 @@ class dv_base_reg_block extends uvm_reg_block;
                              mems[i].get_size() * mems[i].get_n_bytes() - 1;
       mem_ranges.push_back(mem_range);
     end
+    `uvm_info(`gfn, $sformatf("mem_ranges: %0p", mem_ranges), UVM_HIGH)
   endfunction
 
   // Used to get a list of all valid address ranges covered by this reg block
@@ -169,7 +222,7 @@ class dv_base_reg_block extends uvm_reg_block;
 
     // Sort the mapped address ranges in ascending order based on the start_addr of each range
     mapped_addr_ranges.sort(m) with (m.start_addr);
-
+    `uvm_info(`gfn, $sformatf("mapped_addr_ranges: %0p", mapped_addr_ranges), UVM_HIGH)
   endfunction
 
   // Used to get a list of all invalid address ranges in this reg block
@@ -216,6 +269,7 @@ class dv_base_reg_block extends uvm_reg_block;
       end
     end
     has_unmapped_addrs = (unmapped_addr_ranges.size() > 0);
+    `uvm_info(`gfn, $sformatf("unmapped_addr_ranges: %0p", unmapped_addr_ranges), UVM_HIGH)
   endfunction
 
   // Return the offset of the highest byte contained in either a register or a memory
@@ -258,24 +312,26 @@ class dv_base_reg_block extends uvm_reg_block;
 
   // Set the base address for the given register map
   //
-  // Check that base_addr is aligned as required by the register block. If the supplied base_addr is
-  // the "magic" address '1, randomly pick an appropriately aligned base address and set it for the
-  // specified map.
-  function void set_base_addr(uvm_reg_addr_t base_addr = '1, uvm_reg_map map = null);
+  // Checks if the provided base_addr is aligned as required by the register block. If
+  // randomize_base_addr arg is set, then the base_addr arg is ignored - the function randomizes and
+  // sets the base_addr itself.
+  function void set_base_addr(uvm_reg_addr_t base_addr, uvm_reg_map map = null,
+                              bit randomize_base_addr = 0);
     uvm_reg_addr_t mask;
 
     if (map == null) map = get_default_map();
     mask = get_addr_mask(map);
 
-
-    // If base_addr is '1, randomly pick an aligned base address
-    if (base_addr == '1) begin
-      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(base_addr, (base_addr & mask) == '0;)
+    // If randomize_base_addr is set, randomly pick an aligned base address.
+    if (randomize_base_addr) begin
+      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(base_addr,
+                                         (base_addr & mask) == '0;
+                                         base_addr >> addr_width == 0;)
+    end else begin
+      `DV_CHECK_FATAL((base_addr & mask) == '0)
+      `DV_CHECK_FATAL((base_addr >> addr_width) == '0)
     end
 
-    // Check base addr alignment (which should be guaranteed if we just picked it, but needs
-    // checking if not).
-    `DV_CHECK_FATAL((base_addr & mask) == '0)
     `uvm_info(`gfn, $sformatf("Setting register base address to 0x%0h", base_addr), UVM_HIGH)
     map.set_base_addr(base_addr);
   endfunction
@@ -286,7 +342,7 @@ class dv_base_reg_block extends uvm_reg_block;
   // This is useful if you have a possibly misaligned address and you want to know whether it hits a
   // register (since get_reg_by_offset needs the aligned address for the start of the register).
   function uvm_reg_addr_t get_word_aligned_addr(uvm_reg_addr_t byte_addr);
-    uvm_reg_addr_t shift = $clog2(`UVM_REG_BYTENABLE_WIDTH);
+    uvm_reg_addr_t shift = $clog2(be_width);
     return (byte_addr >> shift) << shift;
   endfunction
 
@@ -309,4 +365,11 @@ class dv_base_reg_block extends uvm_reg_block;
                                 .map(map));
   endfunction
 
+  // Set default map for this block and all its sub-blocks.
+  function void set_default_map_w_subblks(uvm_reg_map map);
+    dv_base_reg_block subblks[$];
+    set_default_map(map);
+    get_dv_base_reg_blocks(subblks);
+    foreach (subblks[i]) subblks[i].set_default_map_w_subblks(map);
+  endfunction
 endclass

@@ -23,9 +23,9 @@
 class csr_base_seq extends uvm_reg_sequence #(uvm_sequence #(uvm_reg_item));
   `uvm_object_utils(csr_base_seq)
 
-  uvm_reg_block   models[string];
-  uvm_reg         all_csrs[$];
-  uvm_reg         test_csrs[$];
+  dv_base_reg_block models[$];
+  uvm_reg           all_csrs[$];
+  uvm_reg           test_csrs[$];
 
   // By default, assume external checker (example, scoreboard) is turned off. If that is the case,
   // then writes are followed by call to predict function to update the mirrored value. Reads are
@@ -81,8 +81,8 @@ class csr_base_seq extends uvm_reg_sequence #(uvm_sequence #(uvm_reg_item));
     end
 
     if (!(test_csr_chunk inside {[1:num_csr_chunks]})) begin
-      `uvm_fatal(`gtn, $sformatf({{"invalid opt +test_csr_chunk=%0d, +num_csr_chunks=%0d "},
-                                  {"(1 <= test_csr_chunk <= num_csr_chunks)"}},
+      `uvm_fatal(`gtn, $sformatf({{"Invalid opt +test_csr_chunk=%0d, +num_csr_chunks=%0d "},
+                                  {"(1 <= test_csr_chunk <= num_csr_chunks)."}},
                                   test_csr_chunk, num_csr_chunks))
     end
     chunk_size = (num_test_csrs != 0) ? num_test_csrs : (all_csrs.size / num_csr_chunks + 1);
@@ -92,11 +92,11 @@ class csr_base_seq extends uvm_reg_sequence #(uvm_sequence #(uvm_reg_item));
       end_idx = all_csrs.size() - 1;
 
     test_csrs = all_csrs[start_idx:end_idx];
-    `uvm_info(`gtn, $sformatf("testing %0d csrs [%0d - %0d] in all supplied models",
-                    test_csrs.size(), start_idx, end_idx), UVM_MEDIUM)
+    `uvm_info(`gtn, $sformatf("Testing %0d csrs [%0d - %0d] in all supplied models.",
+                              test_csrs.size(), start_idx, end_idx), UVM_MEDIUM)
     foreach (test_csrs[i]) begin
-      `uvm_info(`gtn, $sformatf("test_csrs list: %0s, reset: 0x%0x", test_csrs[i].get_full_name(),
-                                 test_csrs[i].get_mirrored_value()), UVM_HIGH)
+      `uvm_info(`gtn, $sformatf("Testing CSR %0s, reset: 0x%0x.", test_csrs[i].get_full_name(),
+                                test_csrs[i].get_mirrored_value()), UVM_HIGH)
     end
     test_csrs.shuffle();
   endfunction
@@ -142,15 +142,18 @@ class csr_hw_reset_seq extends csr_base_seq;
                                 test_csrs[i].get_full_name()), UVM_MEDIUM)
 
       compare_mask = get_mask_excl_fields(test_csrs[i], CsrExclInitCheck, CsrHwResetTest);
-      // Read twice, one from backdoor, the other from frontdoor.
-      // Reading from backdoor can ensure that we deposit value into the storage rather than just
-      // a net. If we mistakenly deposit to a net, reset can't clear it and this check will fail.
-      csr_rd_check(.ptr           (test_csrs[i]),
-                   .backdoor      (1),
-                   .compare       (!external_checker),
-                   .compare_vs_ral(1'b1),
-                   .compare_mask  (compare_mask));
-      // same read but using frontdoor
+      // Read CSR twice, one from backdoor (if path available), the other from frontdoor.
+      if (test_csrs[i].has_hdl_path()) begin
+        // Reading from backdoor can ensure that we deposit value into the storage rather than just
+        // a net. If we mistakenly deposit to a net, reset can't clear it and this check will fail.
+        csr_rd_check(.ptr           (test_csrs[i]),
+                     .backdoor      (1),
+                     .compare       (!external_checker),
+                     .compare_vs_ral(1'b1),
+                     .compare_mask  (compare_mask));
+      end
+
+      // Read and check value via frontdoor.
       csr_rd_check(.ptr           (test_csrs[i]),
                    .backdoor      (0),
                    .blocking      (0),
@@ -178,18 +181,21 @@ class csr_write_seq extends csr_base_seq;
     uvm_reg_data_t wdata;
 
     // check all hdl paths are valid
+    // TODO: Move this check to env::end_of_elaboration_phase instead. Regular tests may also choose
+    // to access CSRs via backdoor.
     if (!test_backdoor_path_done) begin
-      bkdr_reg_path_e path_kind;
-      uvm_reg_mem_hdl_paths_seq hdl_check_seq;
-      hdl_check_seq = uvm_reg_mem_hdl_paths_seq::type_id::create("hdl_check_seq");
-
-      // add all the supported path types
-      do begin
-        hdl_check_seq.abstractions.push_back(path_kind.name);
-        path_kind = path_kind.next;
-      end while (path_kind != path_kind.first);
-
       foreach (models[i]) begin
+        bkdr_reg_path_e path_kind;
+        uvm_reg_mem_hdl_paths_seq hdl_check_seq;
+
+        hdl_check_seq = uvm_reg_mem_hdl_paths_seq::type_id::create("hdl_check_seq");
+        do begin
+          // Test the HDL paths for correctness if they exist.
+          if (models[i].has_hdl_path(path_kind.name)) begin
+            hdl_check_seq.abstractions.push_back(path_kind.name);
+          end
+          path_kind = path_kind.next;
+        end while (path_kind != path_kind.first);
         hdl_check_seq.model = models[i];
         hdl_check_seq.start(null);
       end
@@ -213,9 +219,8 @@ class csr_write_seq extends csr_base_seq;
       wdata = get_csr_wdata_with_write_excl(test_csrs[i], wdata, CsrHwResetTest);
 
       `downcast(dv_csr, test_csrs[i])
-      if (en_rand_backdoor_write && !dv_csr.get_is_ext_reg()) begin
-        `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(backdoor,
-                                           backdoor dist {0 :/ 7, 1 :/ 3};)
+      if (en_rand_backdoor_write && test_csrs[i].has_hdl_path() && !dv_csr.get_is_ext_reg()) begin
+        `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(backdoor, backdoor dist {0 :/ 7, 1 :/ 3};)
       end
 
       if (backdoor) begin
@@ -258,9 +263,20 @@ class csr_rw_seq extends csr_base_seq;
   virtual task body();
     foreach (test_csrs[i]) begin
       uvm_reg_data_t wdata;
-      uvm_reg_data_t compare_mask;
       uvm_reg_field  test_fields[$];
       dv_base_reg    test_dv_csr;
+      bit            supports_byte_enable;
+      bit            do_field_rd_check;
+
+      // The test_csrs list may be jumbled from different RAL models. Hence, we find at runtime, if
+      // the interface supports byte_accesses.
+      begin
+        uvm_reg_map map = test_csrs[i].get_default_map();
+        uvm_reg_adapter adapter = map.get_adapter();
+        if (adapter != null) begin
+          supports_byte_enable = adapter.supports_byte_enable;
+        end
+      end
 
       // check if parent block or register is excluded from write
       if (is_excl(test_csrs[i], CsrExclWrite, CsrRwTest)) begin
@@ -290,10 +306,13 @@ class csr_rw_seq extends csr_base_seq;
       `downcast(test_dv_csr, test_csrs[i])
       if (test_dv_csr.get_is_shadowed) wait_no_outstanding_access();
 
+      `DV_CHECK_STD_RANDOMIZE_WITH_FATAL(do_field_rd_check,
+          !supports_byte_enable -> !do_field_rd_check;)
       do_check_csr_or_field_rd(.csr(test_csrs[i]),
                               .blocking(0),
                               .compare(!external_checker),
                               .compare_vs_ral(1),
+                              .do_csr_field_rd_check(do_field_rd_check),
                               .csr_excl_type(CsrExclWriteCheck),
                               .csr_test_type(CsrRwTest));
 
@@ -498,6 +517,7 @@ class csr_mem_walk_seq extends csr_base_seq;
   virtual task body();
     mem_walk_seq = uvm_mem_walk_seq::type_id::create("mem_walk_seq");
     foreach (models[i]) begin
+      `uvm_info(`gfn, $sformatf("Testing model %0s", models[i].get_full_name()), UVM_LOW)
       mem_walk_seq.model = models[i];
       mem_walk_seq.start(null);
     end

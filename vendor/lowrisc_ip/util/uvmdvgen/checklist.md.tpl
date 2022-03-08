@@ -78,11 +78,17 @@ Security      | [SEC_RND_CNST][]        | Not Started |
 
 <%text>### D2S</%text>
 
- Type         | Item                    | Resolution  | Note/Collaterals
---------------|-------------------------|-------------|------------------
-Security      | [SEC_CM_IMPLEMENTED][]  | Not Started |
+ Type         | Item                         | Resolution  | Note/Collaterals
+--------------|------------------------------|-------------|------------------
+Security      | [SEC_CM_ASSETS_LISTED][]     | Not Started |
+Security      | [SEC_CM_IMPLEMENTED][]       | Not Started |
+Security      | [SEC_CM_RTL_REVIEWED][]      | Not Started |
+Security      | [SEC_CM_COUNCIL_REVIEWED][]  | Not Started |
 
-[SEC_CM_IMPLEMENTED]:   {{<relref "/doc/project/checklist.md#sec_cm_implemented" >}}
+[SEC_CM_ASSETS_LISTED]:    {{<relref "/doc/project/checklist.md#sec_cm_assets_listed" >}}
+[SEC_CM_IMPLEMENTED]:      {{<relref "/doc/project/checklist.md#sec_cm_implemented" >}}
+[SEC_CM_RTL_REVIEWED]:     {{<relref "/doc/project/checklist.md#sec_cm_rtl_reviewed" >}}
+[SEC_CM_COUNCIL_REVIEWED]: {{<relref "/doc/project/checklist.md#sec_cm_council_reviewed" >}}
 
 <%text>### D3</%text>
 
@@ -98,7 +104,6 @@ Review        | [REVIEW_SW_CSR][]       | Not Started |
 Review        | [REVIEW_SW_FATAL_ERR][] | Not Started |
 Review        | [REVIEW_SW_CHANGE][]    | Not Started |
 Review        | [REVIEW_SW_ERRATA][]    | Not Started |
-Security      | [SEC_CM_IMPLEMENTED][]  | Not Started |
 Security      | [SEC_NON_RESET_FLOPS][] | Not Started |
 Security      | [SEC_SHADOW_REGS][]     | Not Started |
 Review        | Reviewer(s)             | Not Started |
@@ -222,9 +227,15 @@ Review        | [V3_CHECKLIST_SCOPED][]                 | Not Started |
 
  Type         | Item                                    | Resolution  | Note/Collaterals
 --------------|-----------------------------------------|-------------|------------------
-Tests         | [SEC_CM_VERIFIED][]                     | Not Started |
+Documentation | [SEC_CM_TESTPLAN_COMPLETED][]           | Not Started |
+Tests         | [FPV_SEC_CM_VERIFIED][]                 | Not Started |
+Tests         | [SIM_SEC_CM_VERIFIED][]                 | Not Started |
+Review        | [SEC_CM_DV_REVIEWED][]                  | Not Started |
 
-[SEC_CM_VERIFIED]:                    {{<relref "/doc/project/checklist.md#sec_cm_verified" >}}
+[SEC_CM_TESTPLAN_COMPLETED]:          {{<relref "/doc/project/checklist.md#sec_cm_testplan_completed" >}}
+[FPV_SEC_CM_VERIFIED]:                {{<relref "/doc/project/checklist.md#fpv_sec_cm_verified" >}}
+[SIM_SEC_CM_VERIFIED]:                {{<relref "/doc/project/checklist.md#sim_sec_cm_verified" >}}
+[SEC_CM_DV_REVIEWED]:                 {{<relref "/doc/project/checklist.md#sec_cm_dv_reviewed" >}}
 
 <%text>### V3</%text>
 

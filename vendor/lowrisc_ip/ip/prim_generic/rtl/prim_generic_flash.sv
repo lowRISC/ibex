@@ -13,7 +13,6 @@ module prim_generic_flash #(
   parameter int PagesPerBank   = 256,// data pages per bank
   parameter int WordsPerPage   = 256,// words per page
   parameter int DataWidth      = 32, // bits per word
-  parameter int MetaDataWidth  = 12, // metadata such as ECC
   parameter int TestModeWidth  = 2
 ) (
   input clk_i,
@@ -38,6 +37,9 @@ module prim_generic_flash #(
   output ast_pkg::ast_dif_t fl_alert_src_o,
   input tlul_pkg::tl_h2d_t tl_i,
   output tlul_pkg::tl_d2h_t tl_o,
+  // Observability
+  input ast_pkg::ast_obs_ctrl_t obs_ctrl_i,
+  output logic [7:0] fla_obs_o,
   input  devmode_i
 );
 
@@ -59,9 +61,6 @@ module prim_generic_flash #(
   assign prog_type_avail_o[flash_ctrl_pkg::FlashProgRepair] = 1'b1;
 
   for (genvar bank = 0; bank < NumBanks; bank++) begin : gen_prim_flash_banks
-    logic erase_suspend_req;
-    assign erase_suspend_req = flash_req_i[bank].erase_suspend_req &
-                               (flash_req_i[bank].pg_erase_req | flash_req_i[bank].bk_erase_req);
 
     prim_generic_flash_bank #(
       .InfosPerBank(InfosPerBank),
@@ -69,8 +68,7 @@ module prim_generic_flash #(
       .InfoTypesWidth(InfoTypesWidth),
       .PagesPerBank(PagesPerBank),
       .WordsPerPage(WordsPerPage),
-      .DataWidth(DataWidth),
-      .MetaDataWidth(MetaDataWidth)
+      .DataWidth(DataWidth)
     ) u_prim_flash_bank (
       .clk_i,
       .rst_ni,
@@ -80,7 +78,7 @@ module prim_generic_flash #(
       .prog_type_i(flash_req_i[bank].prog_type),
       .pg_erase_i(flash_req_i[bank].pg_erase_req),
       .bk_erase_i(flash_req_i[bank].bk_erase_req),
-      .erase_suspend_req_i(erase_suspend_req),
+      .erase_suspend_req_i(flash_req_i[bank].erase_suspend_req),
       .he_i(flash_req_i[bank].he),
       .addr_i(flash_req_i[bank].addr),
       .part_i(flash_req_i[bank].part),
@@ -180,7 +178,9 @@ module prim_generic_flash #(
   // default alert assignments
   assign fl_alert_src_o = '{p: '0, n: '1};
 
-
+  logic unused_obs;
+  assign unused_obs = |obs_ctrl_i;
+  assign fla_obs_o = '0;
 
 
 endmodule // prim_generic_flash

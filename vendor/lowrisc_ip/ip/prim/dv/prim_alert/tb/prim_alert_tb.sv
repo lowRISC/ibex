@@ -144,28 +144,25 @@ module prim_alert_tb;
 
     // Sequence 1). Alert request sequence.
     for (int num_trans = 1; num_trans <= 10; num_trans++) begin
-      automatic int rand_wait_init_trig = $urandom_range(2, WaitAlertHandshakeDone + 10);
-      alert_req = 1;
       fork
         begin
+          main_clk.wait_clks($urandom_range(MinHandshakeWait, 10));
+          alert_req = 1;
           `DV_SPINWAIT(wait (alert_ack == 1);, , , "Wait for alert_ack timeout");
           alert_req = 0;
           main_clk.wait_clks(WaitAlertHandshakeDone);
         end
         begin
-          main_clk.wait_clks(rand_wait_init_trig);
-          init_trig = prim_mubi_pkg::MuBi4True;
+          if ($urandom_range(0, 1)) begin
+            main_clk.wait_clks($urandom_range(MinHandshakeWait, 10));
+            init_trig = prim_mubi_pkg::MuBi4True;
+            main_clk.wait_clks($urandom_range(1, 10));
+            init_trig = prim_mubi_pkg::MuBi4False;
+            main_clk.wait_clks(WaitAlertInitDone);
+          end
         end
-      join_any
-      disable fork;
+      join
 
-      // Clean up sequence in case alert init or dut init was triggered.
-      main_clk.wait_clks($urandom_range(1, 10));
-      if (init_trig == prim_mubi_pkg::MuBi4True) begin
-        alert_req = 0;
-        init_trig = prim_mubi_pkg::MuBi4False;
-        main_clk.wait_clks(WaitAlertInitDone);
-      end
       if (IsFatal) begin
         // For fatal alert, ensure alert keeps firing until reset.
         // If only alert_init is triggered, alert_sender side still expect fatal alert to fire.
@@ -195,30 +192,26 @@ module prim_alert_tb;
     $display("[prim_alert_seq] Alert test sequence finished!");
 
     // Sequence 3) Ping request sequence.
-    // Loop the ping request twice to cover the alert_rx.ping_p/n toggle coverage.
-    for (int i = 0; i < 2; i++) begin
-      int rand_wait_init_trig = $urandom_range(1, WaitAlertHandshakeDone + 10);
-      main_clk.wait_clks($urandom_range(MinHandshakeWait, 10));
-      ping_req = 1;
+    for (int num_trans = 0; num_trans < 10; num_trans++) begin
       fork
         begin
+          main_clk.wait_clks($urandom_range(MinHandshakeWait, 10));
+          ping_req = 1;
           `DV_SPINWAIT(wait (ping_ok == 1);, , , "Wait for ping_ok timeout");
           ping_req = 0;
           main_clk.wait_clks(WaitCycle + WaitAlertHandshakeDone);
         end
         begin
-          main_clk.wait_clks(rand_wait_init_trig);
-          init_trig = prim_mubi_pkg::MuBi4True;
+          if ($urandom_range(0, 1)) begin
+            main_clk.wait_clks($urandom_range(1, WaitAlertHandshakeDone + 10));
+            init_trig = prim_mubi_pkg::MuBi4True;
+            main_clk.wait_clks($urandom_range(0, 10));
+            init_trig = prim_mubi_pkg::MuBi4False;
+            main_clk.wait_clks(WaitAlertInitDone);
+          end
         end
-      join_any
-      disable fork;
-      if (init_trig == prim_mubi_pkg::MuBi4True) begin
-        ping_req = 0;
-        main_clk.wait_clks($urandom_range(0, 10));
-        init_trig = prim_mubi_pkg::MuBi4False;
-        main_clk.wait_clks(WaitAlertInitDone);
-      end
-      $display($sformatf("[prim_alert_seq] Ping request sequence[%0d] finished!", i));
+      join
+      $display($sformatf("[prim_alert_seq] Ping request sequence[%0d] finished!", num_trans));
     end
 
     // Sequence 4) `Ack_p/n` integrity check sequence.

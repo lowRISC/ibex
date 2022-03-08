@@ -15,6 +15,12 @@
 module prim_mubi4_sender
   import prim_mubi_pkg::*;
 #(
+  // This flops the output if set to 1.
+  // In special cases where the sender is in the same clock domain as the receiver,
+  // this can be set to 0. However, it is recommended to leave this at 1.
+  parameter bit AsyncOn = 1,
+  // Enable anchor buffer
+  parameter bit EnSecBuf = 0,
   // Reset value for the sender flops
   parameter mubi4_t ResetValue = MuBi4False
 ) (
@@ -24,18 +30,57 @@ module prim_mubi4_sender
   output mubi4_t mubi_o
 );
 
-  logic [MuBi4Width-1:0] mubi, mubi_out;
+  logic [MuBi4Width-1:0] mubi, mubi_int, mubi_out;
   assign mubi = MuBi4Width'(mubi_i);
 
-  prim_flop #(
-    .Width(MuBi4Width),
-    .ResetValue(MuBi4Width'(ResetValue))
-  ) u_prim_flop (
-    .clk_i,
-    .rst_ni,
-    .d_i   ( mubi     ),
-    .q_o   ( mubi_out )
-  );
+  // first generation block decides whether a flop should be present
+  if (AsyncOn) begin : gen_flops
+    prim_flop #(
+      .Width(MuBi4Width),
+      .ResetValue(MuBi4Width'(ResetValue))
+    ) u_prim_flop (
+      .clk_i,
+      .rst_ni,
+      .d_i   ( mubi     ),
+      .q_o   ( mubi_int )
+    );
+  end else begin : gen_no_flops
+    assign mubi_int = mubi;
+
+    // This unused companion logic helps remove lint errors
+    // for modules where clock and reset are used for assertions only
+    // This logic will be removed for sythesis since it is unloaded.
+    mubi4_t unused_logic;
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+         unused_logic <= MuBi4False;
+      end else begin
+         unused_logic <= mubi_i;
+      end
+    end
+  end
+
+  // second generation block determines output buffer type
+  // 1. If EnSecBuf -> always leads to a sec buffer regardless of first block
+  // 2. If not EnSecBuf and not AsyncOn -> use normal buffer
+  // 3. If not EnSecBuf and AsyncOn -> feed through
+  if (EnSecBuf) begin : gen_sec_buf
+    prim_sec_anchor_buf #(
+      .Width(4)
+    ) u_prim_sec_buf (
+      .in_i(mubi_int),
+      .out_o(mubi_out)
+    );
+  end else if (!AsyncOn) begin : gen_prim_buf
+    prim_buf #(
+      .Width(4)
+    ) u_prim_buf (
+      .in_i(mubi_int),
+      .out_o(mubi_out)
+    );
+  end else begin : gen_feedthru
+    assign mubi_out = mubi_int;
+  end
 
   assign mubi_o = mubi4_t'(mubi_out);
 

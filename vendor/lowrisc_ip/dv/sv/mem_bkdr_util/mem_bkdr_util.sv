@@ -57,8 +57,11 @@ class mem_bkdr_util extends uvm_object;
   event writememh_event;
 
   // Initialize the class instance.
+  // `extra_bits_per_subword` is the width any additional metadata that is not captured in secded
+  // package.
   function new(string name = "", string path, int unsigned depth,
-               longint unsigned n_bits, err_detection_e err_detection_scheme);
+               longint unsigned n_bits, err_detection_e err_detection_scheme,
+               int extra_bits_per_subword = 0);
 
     bit res;
     super.new(name);
@@ -79,7 +82,8 @@ class mem_bkdr_util extends uvm_object;
       prim_secded_e secded_eds = prim_secded_e'(err_detection_scheme);
       int non_ecc_bits_per_subword = get_ecc_data_width(secded_eds);
       int ecc_bits_per_subword = get_ecc_parity_width(secded_eds);
-      int bits_per_subword = non_ecc_bits_per_subword + ecc_bits_per_subword;
+      int bits_per_subword = non_ecc_bits_per_subword + ecc_bits_per_subword +
+                             extra_bits_per_subword;
       int subwords_per_word;
 
       // We shouldn't truncate the actual data word. This check ensures that err_detection_scheme
@@ -252,6 +256,59 @@ class mem_bkdr_util extends uvm_object;
     return {read128(addr + 16), read128(addr)};
   endfunction
 
+  // Returns data with correctly computed ECC.
+  virtual function uvm_hdl_data_t get_ecc_computed_data(uvm_hdl_data_t data);
+    case (err_detection_scheme)
+      ErrDetectionNone: ;
+      Ecc_22_16: begin
+        data = prim_secded_pkg::prim_secded_22_16_enc(data[15:0]);
+      end
+      EccHamming_22_16: begin
+        data = prim_secded_pkg::prim_secded_hamming_22_16_enc(data[15:0]);
+      end
+      Ecc_39_32: begin
+        data = prim_secded_pkg::prim_secded_39_32_enc(data[31:0]);
+      end
+      EccHamming_39_32: begin
+        data = prim_secded_pkg::prim_secded_hamming_39_32_enc(data[31:0]);
+      end
+      Ecc_72_64: begin
+        data = prim_secded_pkg::prim_secded_72_64_enc(data[63:0]);
+      end
+      EccHamming_72_64: begin
+        data = prim_secded_pkg::prim_secded_hamming_72_64_enc(data[63:0]);
+      end
+      EccHamming_76_68: begin
+        data = prim_secded_pkg::prim_secded_hamming_76_68_enc(data[67:0]);
+      end
+      EccInv_22_16: begin
+        data = prim_secded_pkg::prim_secded_inv_22_16_enc(data[15:0]);
+      end
+      EccInvHamming_22_16: begin
+        data = prim_secded_pkg::prim_secded_inv_hamming_22_16_enc(data[15:0]);
+      end
+      EccInv_39_32: begin
+        data = prim_secded_pkg::prim_secded_inv_39_32_enc(data[31:0]);
+      end
+      EccInvHamming_39_32: begin
+        data = prim_secded_pkg::prim_secded_inv_hamming_39_32_enc(data[31:0]);
+      end
+      EccInv_72_64: begin
+        data = prim_secded_pkg::prim_secded_inv_72_64_enc(data[63:0]);
+      end
+      EccInvHamming_72_64: begin
+        data = prim_secded_pkg::prim_secded_inv_hamming_72_64_enc(data[63:0]);
+      end
+      EccInvHamming_76_68: begin
+        data = prim_secded_pkg::prim_secded_inv_hamming_76_68_enc(data[67:0]);
+      end
+      default: begin
+        `uvm_fatal(`gfn, $sformatf("ECC scheme %0s is unsupported.", err_detection_scheme))
+      end
+    endcase
+    return data;
+  endfunction
+
   // Write the entire word at the given address with the specified data.
   //
   // addr is the byte address starting at offset 0. Mask the upper address bits as needed before
@@ -263,7 +320,7 @@ class mem_bkdr_util extends uvm_object;
     uint32_t index;
     if (!check_addr_valid(addr)) return;
     index = addr >> addr_lsb;
-    res   = uvm_hdl_deposit($sformatf("%0s[%0d]", path, index), data);
+    res = uvm_hdl_deposit($sformatf("%0s[%0d]", path, index), data);
     `DV_CHECK_EQ(res, 1, $sformatf("uvm_hdl_deposit failed at index %0d", index))
   endfunction
 
@@ -289,55 +346,13 @@ class mem_bkdr_util extends uvm_object;
       return;
     end
 
+    // Update the byte index with the new value.
     rw_data[byte_idx * 8 +: 8] = data;
-    case (err_detection_scheme)
-      ErrDetectionNone: ;
-      Ecc_22_16: begin
-        rw_data = prim_secded_pkg::prim_secded_22_16_enc(rw_data[15:0]);
-      end
-      EccHamming_22_16: begin
-        rw_data = prim_secded_pkg::prim_secded_hamming_22_16_enc(rw_data[15:0]);
-      end
-      Ecc_39_32: begin
-        rw_data = prim_secded_pkg::prim_secded_39_32_enc(rw_data[31:0]);
-      end
-      EccHamming_39_32: begin
-        rw_data = prim_secded_pkg::prim_secded_hamming_39_32_enc(rw_data[31:0]);
-      end
-      Ecc_72_64: begin
-        rw_data = prim_secded_pkg::prim_secded_72_64_enc(rw_data[63:0]);
-      end
-      EccHamming_72_64: begin
-        rw_data = prim_secded_pkg::prim_secded_hamming_72_64_enc(rw_data[63:0]);
-      end
-      EccHamming_76_68: begin
-        rw_data = prim_secded_pkg::prim_secded_hamming_76_68_enc(rw_data[63:0]);
-      end
-      EccInv_22_16: begin
-        rw_data = prim_secded_pkg::prim_secded_inv_22_16_enc(rw_data[15:0]);
-      end
-      EccInvHamming_22_16: begin
-        rw_data = prim_secded_pkg::prim_secded_inv_hamming_22_16_enc(rw_data[15:0]);
-      end
-      EccInv_39_32: begin
-        rw_data = prim_secded_pkg::prim_secded_inv_39_32_enc(rw_data[31:0]);
-      end
-      EccInvHamming_39_32: begin
-        rw_data = prim_secded_pkg::prim_secded_inv_hamming_39_32_enc(rw_data[31:0]);
-      end
-      EccInv_72_64: begin
-        rw_data = prim_secded_pkg::prim_secded_inv_72_64_enc(rw_data[63:0]);
-      end
-      EccInvHamming_72_64: begin
-        rw_data = prim_secded_pkg::prim_secded_inv_hamming_72_64_enc(rw_data[63:0]);
-      end
-      EccInvHamming_76_68: begin
-        rw_data = prim_secded_pkg::prim_secded_inv_hamming_76_68_enc(rw_data[63:0]);
-      end
-      default: begin
-        `uvm_error(`gfn, $sformatf("ECC scheme %0s is unsupported.", err_detection_scheme))
-      end
-    endcase
+
+    // Compute & set the new ECC value.
+    rw_data = get_ecc_computed_data(rw_data);
+
+    // Write the whole array back to the memory.
     write(addr, rw_data);
   endfunction
 
@@ -481,43 +496,50 @@ class mem_bkdr_util extends uvm_object;
     ->writememh_event;
   endfunction
 
-  // print mem
+  // Print the contents of the memory.
   virtual function void print_mem();
+    `uvm_info(`gfn, "Print memory", UVM_LOW)
     for (int i = 0; i < depth; i++) begin
-      `uvm_info(`gfn, $sformatf("mem[%0d] = 0x%0h", i, read(i)), UVM_LOW)
+      uvm_hdl_data_t data = read(i * bytes_per_word);
+      `uvm_info(`gfn, $sformatf("mem[%0d] = 0x%0h", i, data), UVM_LOW)
     end
   endfunction
 
-  // clear or set memory
+  // Clear the memory to all 0s.
   virtual function void clear_mem();
     `uvm_info(`gfn, "Clear memory", UVM_LOW)
-    for (int i = 0; i < size_bytes; i++) begin
-      write8(i, '0);
+    for (int i = 0; i < depth; i++) begin
+      uvm_hdl_data_t data = '{default:0};
+      write(i * bytes_per_word, data);
     end
   endfunction
 
+  // Set the memory to all 1s.
   virtual function void set_mem();
     `uvm_info(`gfn, "Set memory", UVM_LOW)
-    for (int i = 0; i < size_bytes; i++) begin
-      write8(i, '1);
+    for (int i = 0; i < depth; i++) begin
+      uvm_hdl_data_t data = '{default:1};
+      write(i * bytes_per_word, data);
     end
   endfunction
 
-  // randomize the memory
+  // Randomize the memory with correct ECC.
   virtual function void randomize_mem();
-    logic [7:0] rand_val;
     `uvm_info(`gfn, "Randomizing mem contents", UVM_LOW)
-    for (int i = 0; i < size_bytes; i++) begin
-      `DV_CHECK_STD_RANDOMIZE_FATAL(rand_val, "Randomization failed!", path)
-      write8(i, rand_val);
+    for (int i = 0; i < depth; i++) begin
+      uvm_hdl_data_t data;
+      `DV_CHECK_STD_RANDOMIZE_FATAL(data, "Randomization failed!", path)
+      data = get_ecc_computed_data(data);
+      write(i * bytes_per_word, data);
     end
   endfunction
 
-  // invalidate the memory.
+  // Invalidate the memory.
   virtual function void invalidate_mem();
     `uvm_info(`gfn, "Invalidating (Xs) mem contents", UVM_LOW)
-    for (int i = 0; i < size_bytes; i++) begin
-      write8(i, 'x);
+    for (int i = 0; i < depth; i++) begin
+      uvm_hdl_data_t data;
+      write(i * bytes_per_word, data);
     end
   endfunction
 
