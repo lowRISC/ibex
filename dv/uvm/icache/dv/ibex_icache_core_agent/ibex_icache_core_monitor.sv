@@ -142,7 +142,7 @@ class ibex_icache_core_monitor extends dv_base_monitor #(
 
   protected task process_cancelled_valid();
     forever begin
-      @(cfg.vif.cancelled_valid);
+      @(cfg.vif.cancelled_valid_trig);
       cov.cancelled_valid_cg.sample(cfg.vif.ready);
     end
   endtask

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 module tb #(
- parameter bit ICacheECC = 1'b0,
+ parameter bit ICacheECC = 1'b1,
  parameter bit ICacheScramble = 1'b0
  );
   // dep packages
@@ -69,7 +69,7 @@ module tb #(
   // If the ICacheECC parameter is set in the DUT, generate another interface for each tag ram and
   // each data ram, binding them into the RAMs themselves. ECC tests can use these to insert errors
   // into memory lookups.
-  generate if (dut.ICacheECC) begin : gen_ecc
+  generate if (ICacheECC) begin : gen_ecc
     for (genvar w = 0; w < ibex_pkg::IC_NUM_WAYS; w++) begin : gen_ecc_ifs
       bind dut.gen_rams[w].tag_bank.u_prim_ram_1p_adv.u_mem.gen_badbit.u_impl_badbit
             ibex_icache_ecc_if tag_bank_if (.*);
