@@ -442,7 +442,12 @@ module ibex_icache import ibex_pkg::*; #(
 
     end
 
-    assign ecc_err_ic1 = lookup_valid_ic1 & ((|data_err_ic1) | (|tag_err_ic1));
+    // Tag ECC across all ways is always expected to be correct so the check does not need to be
+    // qualified by hit or tag valid. Initial (invalid with correct ECC) tags are written on reset
+    // and all further tag writes produce correct ECC. For data ECC no initialisation is done on
+    // reset so unused data (in particular those ways that don't have a valid tag) may have
+    // incorrect ECC. We only check data ECC where tags indicate it is valid and we have hit on it.
+    assign ecc_err_ic1 = lookup_valid_ic1 & (((|data_err_ic1) & tag_hit_ic1) | (|tag_err_ic1));
 
     // Error correction
     // All ways will be invalidated on a tag error to prevent X-propagation from data_err_ic1 on
