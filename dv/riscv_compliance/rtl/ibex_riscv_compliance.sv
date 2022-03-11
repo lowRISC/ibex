@@ -63,6 +63,9 @@ module ibex_riscv_compliance (
   logic [31:0]    host_rdata  [NrHosts];
   logic           host_err    [NrHosts];
 
+  logic [6:0]     ibex_data_rdata_intg;
+  logic [6:0]     ibex_instr_rdata_intg;
+
   // devices (slaves)
   logic           device_req    [NrDevices];
   logic [31:0]    device_addr   [NrDevices];
@@ -113,6 +116,24 @@ module ibex_riscv_compliance (
     .cfg_device_addr_mask
   );
 
+  if (SecureIbex) begin : g_mem_rdata_ecc
+    logic [31:0] unused_data_rdata;
+    logic [31:0] unused_instr_rdata;
+
+    prim_secded_inv_39_32_enc u_data_rdata_intg_gen (
+      .data_i (host_rdata[CoreD]),
+      .data_o ({ibex_data_rdata_intg, unused_data_rdata})
+    );
+
+    prim_secded_inv_39_32_enc u_instr_rdata_intg_gen (
+      .data_i (host_rdata[CoreI]),
+      .data_o ({ibex_instr_rdata_intg, unused_instr_rdata})
+    );
+  end else begin : g_no_mem_rdata_ecc
+    assign ibex_data_rdata_intg = '0;
+    assign ibex_instr_rdata_intg = '0;
+  end
+
   ibex_top_tracing #(
       .PMPEnable       (PMPEnable       ),
       .PMPGranularity  (PMPGranularity  ),
@@ -147,7 +168,7 @@ module ibex_riscv_compliance (
       .instr_rvalid_i         (host_rvalid[CoreI]     ),
       .instr_addr_o           (host_addr[CoreI]       ),
       .instr_rdata_i          (host_rdata[CoreI]      ),
-      .instr_rdata_intg_i     ('0                     ),
+      .instr_rdata_intg_i     (ibex_instr_rdata_intg  ),
       .instr_err_i            (host_err[CoreI]        ),
 
       .data_req_o             (host_req[CoreD]        ),
@@ -159,7 +180,7 @@ module ibex_riscv_compliance (
       .data_wdata_o           (host_wdata[CoreD]      ),
       .data_wdata_intg_o      (                       ),
       .data_rdata_i           (host_rdata[CoreD]      ),
-      .data_rdata_intg_i      ('0                     ),
+      .data_rdata_intg_i      (ibex_data_rdata_intg   ),
       .data_err_i             (host_err[CoreD]        ),
 
       .irq_software_i         (1'b0                   ),
