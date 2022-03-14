@@ -8,9 +8,6 @@ filesets:
   files_rtl:
     depend:
       - lowrisc:ibex:ibex_icache:0.1
-    files:
-      - tb/ic_top.sv
-    file_type: systemVerilogSource
 
   files_dv:
     depend:
