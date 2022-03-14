@@ -11,6 +11,8 @@ class ibex_icache_env_cfg extends dv_base_env_cfg;
   rand ibex_icache_core_agent_cfg   core_agent_cfg;
   rand ibex_icache_mem_agent_cfg    mem_agent_cfg;
 
+  rand scrambling_key_agent_cfg     scrambling_key_cfg;
+
   // Force the clock frequency to 50MHz. The clock frequency doesn't really matter for ICache
   // testing and 50MHz dumped waves are nice to read because clock edges are multiples of 10ns.
   constraint clk_freq_50_c {
@@ -38,8 +40,10 @@ class ibex_icache_env_cfg extends dv_base_env_cfg;
     ral_model_names = {}; // The ICache has no RAL model
     super.initialize(csr_base_addr);
 
-    core_agent_cfg = ibex_icache_core_agent_cfg::type_id::create("core_agent_cfg");
-    mem_agent_cfg  = ibex_icache_mem_agent_cfg::type_id::create ("mem_agent_cfg");
+    core_agent_cfg     = ibex_icache_core_agent_cfg::type_id::create("core_agent_cfg");
+    mem_agent_cfg      = ibex_icache_mem_agent_cfg::type_id::create ("mem_agent_cfg");
+    scrambling_key_cfg = scrambling_key_agent_cfg::type_id::create("scrambling_key_cfg");
+
   endfunction
 
   // Create tag and data ECC agents for each way. If ECC is disabled, this should still be called,

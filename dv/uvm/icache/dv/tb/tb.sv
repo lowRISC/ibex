@@ -4,7 +4,7 @@
 //
 module tb #(
  parameter bit ICacheECC = 1'b1,
- parameter bit ICacheScramble = 1'b0
+ parameter bit ICacheScramble = 1'b1
  );
   // dep packages
   import uvm_pkg::*;
@@ -24,7 +24,7 @@ module tb #(
   ibex_icache_core_if core_if (.clk(clk), .rst_n(rst_n));
   ibex_icache_mem_if  mem_if  (.clk(clk), .rst_n(rst_n));
 
-  logic         scramble_key_valid, scramble_req;
+  bit         scramble_key_valid, scramble_req;
   logic [127:0] scramble_key;
   logic [63:0]  scramble_nonce;
 
@@ -95,28 +95,30 @@ module tb #(
   end
   endgenerate
 
-  always @(posedge scramble_req) begin
-      scramble_key_valid   = 1'b0;
-      #(20 * $urandom_range(1, 10))
-      scramble_key   = {$urandom(),$urandom(),$urandom(),$urandom()};
-      scramble_nonce = {$urandom(),$urandom()};
-      scramble_key_valid = 1'b1;
-      #20
-      scramble_key_valid = 1'b0;
-  end
+  // Initiate push pull interface for the OTP<->OTBN connections
+  push_pull_if #(
+    .DeviceDataWidth(194)
+  ) scrambling_key_if (
+    .clk(clk),
+    .rst_n(rst_n)
+  );
+
+  // scrambling Key interface assignments
+  assign scrambling_key_if.req         = scramble_req;
+  // key, nonce, seed_valid all driven by push_pull Device interface
+  assign {scramble_key, scramble_nonce, scramble_key_valid} = scrambling_key_if.d_data;
 
   initial begin
     // drive clk and rst_n from clk_if
     clk_rst_if.set_active();
-    scramble_key   = {$urandom(),$urandom(),$urandom(),$urandom()};
-    scramble_nonce = {$urandom(),$urandom()};
-    scramble_key_valid   = 1'b0;
 
     // Store virtual interfaces into the UVM config database. ECC interfaces are done separately
     // above because otherwise you have to repeat the (verbose) generate loop.
     uvm_config_db#(virtual clk_rst_if)::set(null, "*.env", "clk_rst_vif", clk_rst_if);
     uvm_config_db#(virtual ibex_icache_core_if)::set(null, "*.env.core_agent*", "vif", core_if);
     uvm_config_db#(virtual ibex_icache_mem_if)::set(null, "*.env.mem_agent*", "vif", mem_if);
+    uvm_config_db#(scrambling_key_vif)::set(
+      null, "*.env.scrambling_key_agent*", "vif", scrambling_key_if);
 
     // Record the number of (ECC) ways in the config database. The top-level environment's config
     // will use this to decide how many agents to create.

@@ -10,6 +10,7 @@ package ibex_icache_env_pkg;
   import ibex_icache_core_agent_pkg::*;
   import ibex_icache_mem_agent_pkg::*;
   import ibex_icache_ecc_agent_pkg::*;
+  import push_pull_agent_pkg::*;
   import dv_lib_pkg::*;
 
   // macro includes
@@ -21,6 +22,10 @@ package ibex_icache_env_pkg;
   // types
 
   // functions
+
+  typedef push_pull_agent#(.DeviceDataWidth(194)) scrambling_key_agent;
+  typedef push_pull_agent_cfg#(.DeviceDataWidth(194)) scrambling_key_agent_cfg;
+  typedef virtual push_pull_if#(.DeviceDataWidth(194)) scrambling_key_vif;
 
   // package sources
   `include "ibex_icache_env_cfg.sv"
