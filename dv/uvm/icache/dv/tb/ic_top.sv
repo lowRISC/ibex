@@ -126,7 +126,7 @@ module ic_top import ibex_pkg::*; #(
       if (!rst_ni) begin
         scramble_key_q       <= 128'hDDDDDDDDEEEEEEEEAAAAAAAADDDDDDDD;
         scramble_nonce_q     <= 64'hBBBBEEEEEEEEFFFF;
-      end else if (scramble_key_valid_i) begin
+      end else if (scramble_key_valid_i && scramble_req_q) begin
         scramble_key_q       <= scramble_key_i;
         scramble_nonce_q     <= scramble_nonce_i;
       end
@@ -135,7 +135,7 @@ module ic_top import ibex_pkg::*; #(
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
         scramble_key_valid_q <= 1'b1;
-        scramble_req_q       <= '0;
+        scramble_req_q       <= 1'b0;
       end else begin
         scramble_key_valid_q <= scramble_key_valid_d;
         scramble_req_q       <= scramble_req_d;

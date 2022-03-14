@@ -12,6 +12,8 @@ class ibex_icache_env extends dv_base_env #(
 
   ibex_icache_core_agent core_agent;
   ibex_icache_mem_agent  mem_agent;
+  scrambling_key_agent   scrambling_key_agent_h;
+
 
   ibex_icache_ecc_agent  ecc_tag_agents[];
   ibex_icache_ecc_agent  ecc_data_agents[];
@@ -31,6 +33,11 @@ class ibex_icache_env extends dv_base_env #(
 
     mem_agent = ibex_icache_mem_agent::type_id::create("mem_agent", this);
     uvm_config_db#(ibex_icache_mem_agent_cfg)::set(this, "mem_agent*", "cfg", cfg.mem_agent_cfg);
+    scrambling_key_agent_h = scrambling_key_agent::type_id::create("scrambling_key_agent_h", this);
+    uvm_config_db#(scrambling_key_agent_cfg)::set(this, "scrambling_key_agent_h", "cfg",
+                                                  cfg.scrambling_key_cfg);
+    cfg.scrambling_key_cfg.agent_type = push_pull_agent_pkg::PullAgent;
+    cfg.scrambling_key_cfg.if_mode = dv_utils_pkg::Device;
 
     // If ECC is enabled, create ECC agents for the RAMs. We have already created config objects for
     // them (the test called create_ecc_agent_cfgs in its build_phase method), so we just have to
