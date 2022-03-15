@@ -54,11 +54,7 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
       // will still be passed from the monitor to any later sequence.
       p_sequencer.request_fifo.get_peek_export.peek(req_item);
 
-      if (!req_item.is_grant) begin
-        take_req(resp_item, req_item);
-      end else begin
-        take_gnt(resp_item, req_item);
-      end
+      take_gnt(resp_item, req_item);
 
       // Get and drop the request item now that we've dealt with it. To check that nothing has gone
       // wrong, make sure that the two items match.
@@ -75,15 +71,7 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
   //
   task automatic take_req(ibex_icache_mem_resp_item resp_item,
                           ibex_icache_mem_req_item  req_item);
-    bit [31:0] tmp_seed;
 
-    // Consume any new seeds. These will have been pushed into the sequencer's seed_fifo by the core
-    // agent. Any new seed will apply to this request and all future requests (we need tmp_seed here
-    // because otherwise the first failed call to try_get will trash the value we got).
-    while(p_sequencer.seed_fifo.try_get(tmp_seed)) begin
-      cur_seed = tmp_seed;
-      `uvm_info(`gfn, $sformatf("New memory seed: 0x%08h", cur_seed), UVM_HIGH)
-    end
 
     // Warn the "grant side" to expect this fetch
     pending_grants.push_back({req_item.address, cur_seed});
@@ -104,37 +92,22 @@ class ibex_icache_mem_resp_seq extends ibex_icache_mem_base_seq;
   task automatic take_gnt(ibex_icache_mem_resp_item resp_item,
                           ibex_icache_mem_req_item  req_item);
 
-    bit [63:0] gnt_data;
-    bit [31:0] gnt_addr, gnt_seed;
+    bit [31:0] tmp_seed;
 
-    // Search through the pending_grants queue to find the seed from the request that matched. We
-    // search from the back, rather than the front. This avoids problems if there were requests for
-    // an address that never got granted: we always want the most recent request for this address.
-    int i, N;
-    N = pending_grants.size();
-    for (i = 0; i < N; i++) begin
-      {gnt_addr, gnt_seed} = pending_grants[N - 1 - i];
-      if (gnt_addr == req_item.address)
-        break;
+    // Consume any new seeds. These will have been pushed into the sequencer's seed_fifo by the core
+    // agent. Any new seed will apply to this request and all future requests (we need tmp_seed here
+    // because otherwise the first failed call to try_get will trash the value we got).
+    while(p_sequencer.seed_fifo.try_get(tmp_seed)) begin
+      cur_seed = tmp_seed;
+      `uvm_info(`gfn, $sformatf("New memory seed: 0x%08h", cur_seed), UVM_HIGH)
     end
-
-    // If i == N, we didn't find a hit. That's not supposed to happen.
-    `DV_CHECK_FATAL(i < N,
-                    $sformatf("No pending grant for address 0x%08h (%0d items in queue).",
-                              req_item.address, N))
-
-    // Otherwise, we have a hit at index N - 1 - i. Throw away all previous items in the queue. We
-    // don't throw away this item, because it's possible to end up with repeated addresses in the
-    // queue (if the cache asked for the same address twice in a row) and if we throw away the hit
-    // the first time, we can't find it for the second grant.
-    pending_grants = pending_grants[N - 1 - i:$];
 
     // Using the seed that we saw for the request, check the memory model for an error
     // at this address. On success, look up the memory data too.
     resp_item.is_grant = 1'b1;
-    resp_item.err      = mem_model.is_mem_error(gnt_seed, req_item.address, cfg.mem_err_shift);
+    resp_item.err      = mem_model.is_mem_error(cur_seed, req_item.address, cfg.mem_err_shift);
     resp_item.address  = req_item.address;
-    resp_item.rdata    = resp_item.err ? 'X : mem_model.read_data(gnt_seed, req_item.address);
+    resp_item.rdata    = resp_item.err ? 'X : mem_model.read_data(cur_seed, req_item.address);
 
     // Use the response item as an entry in the sequence, randomising any delay
     start_item(resp_item);
