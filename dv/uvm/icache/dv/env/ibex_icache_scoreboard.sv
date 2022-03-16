@@ -66,10 +66,13 @@ class ibex_icache_scoreboard
   // cache invalidation and then only start counting again once we've seen the busy signal go low.
   //
   // If we get to the end of the window, suppose we've seen I instruction fetches and M words
-  // fetched from memory. With random memory data, the expected insns/word is 2*3/4 + 1*1/4 = 7/4.
-  // Thus, we define the dimensionless R = (M * 7/4) / I. If R == 1 then our cache hasn't helped at
-  // all. If R is large, something has gone horribly wrong. If R is small, our cache has avoided
-  // lots of lookups.
+  // fetched from memory. With random memory data, the expected insns/word is
+  // (1/4*1 + 3/4(1/4*3/2+3/4*2)) = 53/32. (1 in 4 instructions is a fully uncompressed instruction
+  // and the other three times, it could be 2 fully compressed instructions or 1 compressed and 1
+  // uncompressed instruction. The kind of instruction is based on last two bits in the insn_data
+  // field). Thus, we define the dimensionless R = (M * 53/32) / I. If R == 1 then our cache hasn't
+  // helped at all. If R is large, something has gone horribly wrong. If R is small, our cache has
+  // avoided lots of lookups.
   //
   // We can get a lower-bound estimate of the cache hit rate we'd expect by tracking the addresses
   // that we saw in our window (lowest and highest addresses fetched). Suppose this range contains K
@@ -78,8 +81,8 @@ class ibex_icache_scoreboard
   //
   // This check is intentionally very loose. We assume the cache is at least 1kB (the default
   // configuration is 4kB), so C = 256 and we'll pick K = 250 (called max_window_width below). To
-  // pick N (called window_len below), note that 4/7 * C * 2 ~= 292, so we should expect to see an
-  // instruction repeated at least twice on average once we've seen N = 300 fetches. With perfect
+  // pick N (called window_len below), note that 53/32 * C * 2 ~= 848, so we should expect to see an
+  // instruction repeated at least twice on average once we've seen N = 850 fetches. With perfect
   // caching and each instruction fetched twice, you would expect an R of 0.5, so we will require R
   // <= 2/3. With each instruction fetched twice, this corresponds to the cache having the second
   // instruction half the time.
@@ -88,7 +91,7 @@ class ibex_icache_scoreboard
   // amplification" where the cache reads a couple of fill buffers' worth of data and we only
   // actually get one instruction.
   protected int unsigned max_window_width = 250;
-  protected int unsigned window_len       = 300;
+  protected int unsigned window_len       = 850;
 
   // The number of instructions seen in the current window.
   protected int unsigned insns_in_window;
@@ -701,7 +704,7 @@ class ibex_icache_scoreboard
     if (window_width[31:0] <= max_window_width) begin
       // The range has been small enough, so we can actually check whether the caching is working.
       // Calculate the R we've seen (as a percentage).
-      fetch_ratio_pc = (reads_in_window * 100 * 7 / 4) / insns_in_window;
+      fetch_ratio_pc = (reads_in_window * 100 * 53 / 32) / insns_in_window;
 
       `uvm_info(`gfn, $sformatf("Fetch ratio %0d%%", fetch_ratio_pc), UVM_HIGH)
       `DV_CHECK(fetch_ratio_pc <= 67,
