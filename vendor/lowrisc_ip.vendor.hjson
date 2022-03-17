@@ -31,6 +31,11 @@
             to:        "dv/sv/dv_utils",
             patch_dir: "dv_utils",
         },
+        {
+            from:      "hw/dv/sv/push_pull_agent",
+            to:        "dv/sv/push_pull_agent",
+            patch_dir: "push_pull_agent",
+        },
         // We have to apply a patch to the vendored files from hw/dv/tools
         // because they contain OpenTitan specific paths.
         {
