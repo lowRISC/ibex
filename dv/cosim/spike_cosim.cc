@@ -14,6 +14,20 @@
 #include <iostream>
 #include <sstream>
 
+// For a short time, we're going to support building against version
+// ibex-cosim-v0.1 (ec46119, the first version of Spike against which this was
+// developed) and also ibex-cosim-v0.2 (20a886c). Unfortunately, they've got
+// different APIs and spike doesn't expose a version string.
+//
+// However, a bit of digging around finds some defines that have been added
+// between the two versions.
+//
+// TODO: Once there's been a bit of a window to avoid a complete flag day,
+//       remove this ugly hack!
+#ifndef MSTATUSH_GVA
+#define OLD_SPIKE
+#endif
+
 SpikeCosim::SpikeCosim(const std::string &isa_string, uint32_t start_pc,
                        uint32_t start_mtvec, const std::string &trace_log_path,
                        bool secure_ibex, bool icache_en)
@@ -24,9 +38,17 @@ SpikeCosim::SpikeCosim(const std::string &isa_string, uint32_t start_pc,
     log_file = log->get();
   }
 
+#ifdef OLD_SPIKE
   processor = std::make_unique<processor_t>(
       isa_string.c_str(), "MU", DEFAULT_VARCH, this, 0, false, log_file,
       nullptr, secure_ibex, icache_en);
+#else
+  processor =
+      std::make_unique<processor_t>(isa_string.c_str(), "MU", DEFAULT_VARCH,
+                                    this, 0, false, log_file, std::cerr);
+
+  processor->set_ibex_flags(secure_ibex, icache_en);
+#endif
 
   processor->set_mmu_capability(IMPL_MMU_SBARE);
   processor->get_state()->pc = start_pc;
@@ -326,7 +348,11 @@ void SpikeCosim::set_debug_req(bool debug_req) {
 }
 
 void SpikeCosim::set_mcycle(uint64_t mcycle) {
+#ifdef OLD_SPIKE
   processor->get_state()->mcycle = mcycle;
+#else
+  processor->get_state()->mcycle->write(mcycle);
+#endif
 }
 
 void SpikeCosim::notify_dside_access(const DSideAccessInfo &access_info) {
