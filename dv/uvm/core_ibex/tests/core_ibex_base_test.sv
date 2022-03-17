@@ -61,8 +61,9 @@ class core_ibex_base_test extends uvm_test;
     // Note that the bitmanip extensions from the v0.93 spec (Zbe, Zbf, Zbp, Zbr, Zbt) are all
     // contained in "Xbitmanip" for Spike at the moment. The specific parts used are listed in
     // comments below.
-    isa = {"rv32", RV32E ? "e" : "i", "c"};
+    isa = {"rv32", RV32E ? "e" : "i"};
     if (RV32M != RV32MNone) isa = {isa, "m"};
+    isa = {isa, "c"};
     case (RV32B)
       RV32BNone:
         ;
