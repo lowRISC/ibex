@@ -201,34 +201,6 @@ module tb #(
     );
   end
 
-  // If the ICacheECC parameter is set in the DUT, generate another interface for each tag ram and
-  // each data ram, binding them into the RAMs themselves. ECC tests can use these to insert errors
-  // into memory lookups.
-  generate if (ICacheECC) begin : gen_ecc
-    for (genvar w = 0; w < ibex_pkg::IC_NUM_WAYS; w++) begin : gen_ecc_ifs
-      bind gen_rams[w].tag_bank.u_prim_ram_1p_adv.u_mem.gen_badbit.u_impl_badbit
-            ibex_icache_ecc_if tag_bank_if (.*);
-      bind gen_rams[w].data_bank.u_prim_ram_1p_adv.u_mem.gen_badbit.u_impl_badbit
-            ibex_icache_ecc_if data_bank_if (.*);
-
-      initial begin
-        uvm_config_db#(virtual ibex_icache_ecc_if)::
-          set(null,
-              $sformatf("*.env.ecc_tag_agents[%0d]*", w),
-              "vif",
-              gen_rams[w].tag_bank.u_prim_ram_1p_adv.
-              u_mem.gen_badbit.u_impl_badbit.tag_bank_if);
-
-        uvm_config_db#(virtual ibex_icache_ecc_if)::
-          set(null,
-              $sformatf("*.env.ecc_data_agents[%0d]*", w),
-              "vif",
-              gen_rams[w].data_bank.u_prim_ram_1p_adv.
-              u_mem.gen_badbit.u_impl_badbit.data_bank_if);
-      end
-    end
-  end
-  endgenerate
 
   // Initiate push pull interface for the OTP<->OTBN connections
   push_pull_if #(

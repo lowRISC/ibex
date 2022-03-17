@@ -10,7 +10,6 @@ filesets:
       - lowrisc:dv:dv_lib
       - lowrisc:dv:ibex_icache_core_agent
       - lowrisc:dv:ibex_icache_mem_agent
-      - lowrisc:dv:ibex_icache_ecc_agent
       - lowrisc:dv:push_pull_agent
       - lowrisc:ibex:bus_params_pkg
     files:
