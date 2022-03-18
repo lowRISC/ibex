@@ -109,12 +109,6 @@ module ibex_controller #(
 );
   import ibex_pkg::*;
 
-  // FSM state encoding
-  typedef enum logic [3:0] {
-    RESET, BOOT_SET, WAIT_SLEEP, SLEEP, FIRST_FETCH, DECODE, FLUSH,
-    IRQ_TAKEN, DBG_TAKEN_IF, DBG_TAKEN_ID
-  } ctrl_fsm_e;
-
   ctrl_fsm_e ctrl_fsm_cs, ctrl_fsm_ns;
 
   logic nmi_mode_q, nmi_mode_d;
@@ -137,8 +131,6 @@ module ibex_controller #(
   logic halt_if;
   logic retain_id;
   logic flush_id;
-  logic illegal_dret;
-  logic illegal_umode;
   logic exc_req_lsu;
   logic special_req;
   logic special_req_pc_change;
@@ -193,21 +185,14 @@ module ibex_controller #(
   assign csr_pipe_flush  = csr_pipe_flush_i  & instr_valid_i;
   assign instr_fetch_err = instr_fetch_err_i & instr_valid_i;
 
-  // "Executing DRET outside of Debug Mode causes an illegal instruction exception."
-  // [Debug Spec v0.13.2, p.41]
-  assign illegal_dret = dret_insn & ~debug_mode_q;
-
-  // Some instructions can only be executed in M-Mode
-  assign illegal_umode = (priv_mode_i != PRIV_LVL_M) &
-                         // MRET must be in M-Mode. TW means trap WFI to M-Mode.
-                         (mret_insn | (csr_mstatus_tw_i & wfi_insn));
-
   // This is recorded in the illegal_insn_q flop to help timing.  Specifically
   // it is needed to break the path from ibex_cs_registers/illegal_csr_insn_o
   // to pc_set_o.  Clear when controller is in FLUSH so it won't remain set
   // once illegal instruction is handled.
-  // All terms in this expression are qualified by instr_valid_i
-  assign illegal_insn_d = (illegal_insn_i | illegal_dret | illegal_umode) & (ctrl_fsm_cs != FLUSH);
+  // illegal_insn_i only set when instr_valid_i is set.
+  assign illegal_insn_d = illegal_insn_i & (ctrl_fsm_cs != FLUSH);
+
+  `ASSERT(IllegalInsnOnlyIfInsnValid, illegal_insn_i |-> instr_valid_i)
 
   // exception requests
   // requests are flopped in exc_req_q.  This is cleared when controller is in

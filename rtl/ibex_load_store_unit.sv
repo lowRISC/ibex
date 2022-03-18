@@ -551,6 +551,8 @@ module ibex_load_store_unit #(
 
   `DV_FCOV_SIGNAL(logic, ls_error_exception, (load_err_o | store_err_o) & ~pmp_err_q)
   `DV_FCOV_SIGNAL(logic, ls_pmp_exception, (load_err_o | store_err_o) & pmp_err_q)
+  `DV_FCOV_SIGNAL(logic, ls_first_req, lsu_req_i & (ls_fsm_cs == IDLE))
+  `DV_FCOV_SIGNAL(logic, ls_second_req, (ls_fsm_cs inside {WAIT_GNT, WAIT_RVALID_MIS}) & data_req_o & addr_incr_req_o)
 
   ////////////////
   // Assertions //

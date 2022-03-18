@@ -271,6 +271,20 @@ package ibex_pkg;
     RF_WD_CSR
   } rf_wd_sel_e;
 
+  // Controller FSM state encoding
+  typedef enum logic [3:0] {
+    RESET,
+    BOOT_SET,
+    WAIT_SLEEP,
+    SLEEP,
+    FIRST_FETCH,
+    DECODE,
+    FLUSH,
+    IRQ_TAKEN,
+    DBG_TAKEN_IF,
+    DBG_TAKEN_ID
+  } ctrl_fsm_e;
+
   //////////////
   // IF stage //
   //////////////
