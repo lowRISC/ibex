@@ -24,11 +24,8 @@ cd build
 # Installs in /opt/spike-cosim
 sudo make -j8 install
 
-# Setup IBEX_COSIM_ISS_ROOT for fusesoc build below
-export IBEX_COSIM_ISS_ROOT=/opt/spike-cosim
-
-# Spike's libsoftfloat.so needs to be accessible so add it to LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=/opt/spike-cosim/lib:$LD_LIBRARY_PATH
+# Setup PKG_CONFIG_PATH so pkg-config can find libs and cflags for the cosim
+export PKG_CONFIG_PATH=/opt/spike-cosim/lib/pkgconfig:$PKG_CONFIG_PATH
 
 # Switch to a checkout of the Ibex repository
 cd <ibex_repo>
