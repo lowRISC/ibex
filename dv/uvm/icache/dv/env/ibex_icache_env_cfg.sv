@@ -12,6 +12,7 @@ class ibex_icache_env_cfg extends dv_base_env_cfg;
   rand ibex_icache_mem_agent_cfg    mem_agent_cfg;
 
   rand scrambling_key_agent_cfg     scrambling_key_cfg;
+  ibex_icache_ram_vif ram_if;
 
   // Force the clock frequency to 50MHz. The clock frequency doesn't really matter for ICache
   // testing and 50MHz dumped waves are nice to read because clock edges are multiples of 10ns.

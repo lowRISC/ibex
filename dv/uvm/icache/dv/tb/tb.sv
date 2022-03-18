@@ -24,7 +24,7 @@ module tb #(
   ibex_icache_core_if core_if (.clk(clk), .rst_n(rst_n));
   ibex_icache_mem_if  mem_if  (.clk(clk), .rst_n(rst_n));
 
-  bit         scramble_key_valid, scramble_req;
+  bit           scramble_key_valid, scramble_req;
   logic [127:0] scramble_key;
   logic [63:0]  scramble_nonce;
 
@@ -33,17 +33,15 @@ module tb #(
   localparam int unsigned TagSizeECC  = ICacheECC ? (IC_TAG_SIZE + 6) : IC_TAG_SIZE;
   localparam int unsigned NumAddrScrRounds  = 2;
   localparam int unsigned NumDiffRounds     = NumAddrScrRounds;
-  // RAM IO
-  logic [IC_NUM_WAYS-1:0]         ic_tag_req;
-  logic                           ic_tag_write;
-  logic [IC_INDEX_W-1:0]          ic_tag_addr;
-  logic [TagSizeECC-1:0]          ic_tag_wdata;
-  logic [TagSizeECC-1:0]          ic_tag_rdata [IC_NUM_WAYS];
-  logic [IC_NUM_WAYS-1:0]         ic_data_req;
-  logic                           ic_data_write;
-  logic [IC_INDEX_W-1:0]          ic_data_addr;
-  logic [LineSizeECC-1:0]         ic_data_wdata;
-  logic [LineSizeECC-1:0]         ic_data_rdata [IC_NUM_WAYS];
+
+  ibex_icache_ram_if #(
+    .TagSizeECC(TagSizeECC),
+    .LineSizeECC(LineSizeECC)
+  ) ram_if (
+    .clk(clk),
+    .rst_n(rst_n)
+  );
+
   // Scramble signals
   logic [SCRAMBLE_KEY_W-1:0]      scramble_key_q, scramble_key_d;
   logic [SCRAMBLE_NONCE_W-1:0]    scramble_nonce_q, scramble_nonce_d;
@@ -84,20 +82,20 @@ module tb #(
       .instr_rdata_i       ( mem_if.rdata               ),
       .instr_err_i         ( mem_if.err                 ),
 
-      .ic_tag_req_o        ( ic_tag_req                 ),
-      .ic_tag_write_o      ( ic_tag_write               ),
-      .ic_tag_addr_o       ( ic_tag_addr                ),
-      .ic_tag_wdata_o      ( ic_tag_wdata               ),
-      .ic_tag_rdata_i      ( ic_tag_rdata               ),
-      .ic_data_req_o       ( ic_data_req                ),
-      .ic_data_write_o     ( ic_data_write              ),
-      .ic_data_addr_o      ( ic_data_addr               ),
-      .ic_data_wdata_o     ( ic_data_wdata              ),
-      .ic_data_rdata_i     ( ic_data_rdata              ),
+      .ic_tag_req_o        ( ram_if.ic_tag_req          ),
+      .ic_tag_write_o      ( ram_if.ic_tag_write        ),
+      .ic_tag_addr_o       ( ram_if.ic_tag_addr         ),
+      .ic_tag_wdata_o      ( ram_if.ic_tag_wdata        ),
+      .ic_tag_rdata_i      ( ram_if.ic_tag_rdata_o      ),
+      .ic_data_req_o       ( ram_if.ic_data_req         ),
+      .ic_data_write_o     ( ram_if.ic_data_write       ),
+      .ic_data_addr_o      ( ram_if.ic_data_addr        ),
+      .ic_data_wdata_o     ( ram_if.ic_data_wdata       ),
+      .ic_data_rdata_i     ( ram_if.ic_data_rdata_o     ),
       .ic_scr_key_valid_i  ( scramble_key_valid_q       ),
 
       // TODO: Probe this and verify functionality
-      .ecc_error_o         (                            )
+      .ecc_error_o         ( ram_if.ecc_err             )
   );
 
   // Scramble key valid starts with OTP returning new valid key and stays high
@@ -150,17 +148,17 @@ module tb #(
       .key_i       (scramble_key_q),
       .nonce_i     (scramble_nonce_q),
 
-      .req_i       (ic_tag_req[way]),
+      .req_i       (ram_if.ic_tag_req[way]),
 
       .gnt_o       (),
-      .write_i     (ic_tag_write),
-      .addr_i      (ic_tag_addr),
-      .wdata_i     (ic_tag_wdata),
+      .write_i     (ram_if.ic_tag_write),
+      .addr_i      (ram_if.ic_tag_addr),
+      .wdata_i     (ram_if.ic_tag_wdata),
       .wmask_i     ({TagSizeECC{1'b1}}),
       .intg_error_i(1'b0),
 
-      .rdata_o     (ic_tag_rdata[way]),
-      .rvalid_o    (),
+      .rdata_o     (ram_if.ic_tag_rdata_in[way]),
+      .rvalid_o    (ram_if.ic_tag_rvalid[way]),
       .raddr_o     (),
       .rerror_o    (),
       .cfg_i       ('0)
@@ -184,17 +182,17 @@ module tb #(
       .key_i       (scramble_key_q),
       .nonce_i     (scramble_nonce_q),
 
-      .req_i       (ic_data_req[way]),
+      .req_i       (ram_if.ic_data_req[way]),
 
       .gnt_o       (),
-      .write_i     (ic_data_write),
-      .addr_i      (ic_data_addr),
-      .wdata_i     (ic_data_wdata),
+      .write_i     (ram_if.ic_data_write),
+      .addr_i      (ram_if.ic_data_addr),
+      .wdata_i     (ram_if.ic_data_wdata),
       .wmask_i     ({LineSizeECC{1'b1}}),
       .intg_error_i(1'b0),
 
-      .rdata_o     (ic_data_rdata[way]),
-      .rvalid_o    (),
+      .rdata_o     (ram_if.ic_data_rdata_in[way]),
+      .rvalid_o    (ram_if.ic_data_rvalid[way]),
       .raddr_o     (),
       .rerror_o    (),
       .cfg_i       ('0)
@@ -230,6 +228,7 @@ module tb #(
     // Record the number of (ECC) ways in the config database. The top-level environment's config
     // will use this to decide how many agents to create.
     uvm_config_db#(int unsigned)::set(null, "*", "num_ecc_ways", dut.ICacheECC ? ibex_pkg::IC_NUM_WAYS : 0);
+    uvm_config_db#(ibex_icache_ram_vif)::set(null, "*.env*", "vif", ram_if);
 
     $timeformat(-12, 0, " ps", 12);
     run_test();

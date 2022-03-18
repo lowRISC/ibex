@@ -40,6 +40,10 @@ class ibex_icache_env extends dv_base_env #(
     hb_event     = new("hb_event");
 
     cfg.clk_rst_vif.set_sole_clock();
+    if (!uvm_config_db#(ibex_icache_ram_vif)::get(this, "", "vif", cfg.ram_if)) begin
+      `uvm_fatal(`gfn, "failed to get ibex_icache_ram_vif handle from uvm_config_db")
+    end
+
   endfunction
 
   function void connect_phase(uvm_phase phase);
