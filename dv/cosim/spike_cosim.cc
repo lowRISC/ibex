@@ -351,7 +351,11 @@ void SpikeCosim::set_mcycle(uint64_t mcycle) {
 #ifdef OLD_SPIKE
   processor->get_state()->mcycle = mcycle;
 #else
-  processor->get_state()->mcycle->write(mcycle);
+  // TODO: Spike decrements mcycle on write to hack around an issue it has with
+  // correctly writing minstret. Preferably this write would use a backdoor
+  // access and avoid that decrement but backdoor access isn't part of the
+  // public CSR interface.
+  processor->get_state()->mcycle->write(mcycle + 1);
 #endif
 }
 
