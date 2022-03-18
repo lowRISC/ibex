@@ -14,6 +14,7 @@ filesets:
       - lowrisc:ibex:bus_params_pkg
     files:
       - ibex_icache_env_pkg.sv
+      - ibex_icache_ram_if.sv
       - ibex_icache_env_cfg.sv: {is_include_file: true}
       - ibex_icache_env_cov.sv: {is_include_file: true}
       - ibex_icache_virtual_sequencer.sv: {is_include_file: true}

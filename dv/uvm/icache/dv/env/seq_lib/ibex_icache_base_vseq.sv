@@ -11,9 +11,6 @@ class ibex_icache_base_vseq
   `uvm_object_utils(ibex_icache_base_vseq)
   `uvm_object_new
 
-  // Should we generate ECC errors in the underlying SRAM objects?
-  bit enable_ecc_errors = 0;
-
   // The mem_err_shift parameter to use for the memory model with this sequence. Gets written to the
   // sequencer's config when the sequence runs.
   int unsigned mem_err_shift = 3;
@@ -69,16 +66,11 @@ class ibex_icache_base_vseq
         core_seq.start(p_sequencer.core_sequencer_h);
       end
 
-      // These sequences will never end. We wrap them all up together in a fork/join so that we can
-      // fork/join_none any ECC sequences (which yield immediately so that we can start them in a
-      // loop), but still have a process that never yields, to use as a child for the surrounding
-      // fork/join_any.
-      fork
-        begin
-          `DV_CHECK_RANDOMIZE_FATAL(mem_seq)
-          mem_seq.start(p_sequencer.mem_sequencer_h);
-        end
-      join
+      begin
+        // This sequence will never end.
+        `DV_CHECK_RANDOMIZE_FATAL(mem_seq)
+        mem_seq.start(p_sequencer.mem_sequencer_h);
+      end
     join_any
 
     // The core sequence has finished. Kill all the other sequences
