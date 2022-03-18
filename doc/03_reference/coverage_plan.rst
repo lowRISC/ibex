@@ -61,6 +61,7 @@ Some categories are just a single instruction, which is named without further de
 * ``MRET``
 * ``DRET``
 * ``WFI``
+* ``FENCE``
 * ``FENCE.I``
 * **FetchError** - Any instruction that saw a fetch error.
 * **CompressedIllegal** - Any compressed instruction with an illegal encoding.
@@ -130,11 +131,11 @@ State Specific Behaviour
 """"""""""""""""""""""""
 Some instructions will behave differently depending upon the state of the processor (e.g. the privilege level the instruction executes at, CSR settings or whether the processor is in debug mode).
 
-* Instruction illegal in U Mode (cover execution in U and M mode).
+* Instruction illegal in U Mode.
 
-  * ``MRET``
-  * ``WFI``
-  * Access to M-mode CSR.
+  * ``MRET`` - ``cp_mret_in_umode``
+  * ``WFI`` - ``cp_wfi_in_umode``
+  * Read and write to M-mode CSR - Covered by crosses ``csr_wr_priv_cross`` and ``csr_rd_only_priv_cross```
 
 * Debug mode instructions (cover execution in and out of debug mode).
 
@@ -214,21 +215,22 @@ Furthermore they can all occur together and must be appropriately prioritised (c
 
 PMP
 ^^^
-* Each region configured with different matching modes.
+* ``cp_region_mode`` - Each region configured with different matching modes.
 
   * Off
   * TOR
   * NA4
   * NAPOT
 
-* Each region configured with all possible permissions including locked/unlocked.
+* ``cp_region_priv_bits`` - Each region configured with all possible permissions including locked/unlocked.
 
   * Different permissions with MML enabled and disabled, separate cover points for R/W/X/L values with and without MML.
 
 * Access fail & pass.
 
   * All combinations of unaligned access split across a boundary, both halves pass, neither pass, just the first passes, just the second passes.
-  * Higher priority entry allows access that lower priority entry prevents.
+    * Two possible boundary splits; across a 32-bit boundary within a region or a boundary between PMP regions.
+  * ``cp_pmp_iside_region_override`` /  ``cp_pmp_dside_region_override`` - Higher priority entry allows access that lower priority entry prevents.
   * Compressed instruction access (16-bit) passes PMP but 32-bit access at same address crosses PMP region boundary.
 
 * Each field of mssecfg enabled/disabled with relevant functionality tested.
@@ -247,20 +249,25 @@ PMP
 
     * Try to disable when enabled.
 
-  * Access close to PMP region modification that allows/disallows that access.
+* Access close to PMP region modification that allows/disallows that access.
 
 CSRs
 ^^^^
 Basic read/write functionality must be tested on all implemented CSRs.
 
-* Read from CSR.
-* Write to CSR.
+* ``cp_csr_read_only`` - Read from CSR.
+* ``cp_csr_write`` -  Write to CSR.
 
   * Write to read only CSR.
+    Covered by ensuring ``cp_csr_write`` is seen for read-only CSRs
 
 * Write illegal/unsupported value to WARL field.
-* Access to CSR disallowed due to privilege level/debug mode.
-* Read and write from/to an unimplemented CSR
+* ``csr_read_only_priv_cross``, ``csr_write_priv_cross``, ``csr_read_only_debug_cross``, ``csr_write_debug_cross`` - Crosses of reads and writes to CSRs from different privilege levels/debug mode.
+
+  * Access to CSR disallowed due to privilege levels/debug mode
+    Covered by ensuring within the crosses
+
+* ``cp_invalid_read_only`` / ``cp_invalid_write`` - Read and write from/to an unimplemented CSR
 
 CSRs addresses do not need to be crossed with the variety of CSR instructions as these all use the same basic read & write interface into ``ibex_cs_registers``.
 Coverage of the above points will be sampled at the ``ibex_cs_registers`` interface (as opposed to sampling CSR instructions).
@@ -274,6 +281,7 @@ Various points of interest do not fit into the categories above.
 * Double fault.
 * Awake from sleep.
 * Interrupt/Debug whilst entering sleep.
+* Enabling/Disabling ICache.
 
 Cross Coverage
 --------------
@@ -311,4 +319,6 @@ There must be a documented reason a particular bin is added to the illegal or ig
 
   * Large cross to cover all possibilities of combinations between interrupt, debug and exceptions for all instruction categories across all stall behaviours.
 
-* PMP regions x permissions x access fail/pass
+* PMP regions x permissions x access fail/pass x privilege level
+
+  * Two crosses, one for each PMP channel (instruction and data).
