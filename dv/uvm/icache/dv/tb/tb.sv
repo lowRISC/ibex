@@ -61,8 +61,6 @@ module tb #(
       .req_i               ( core_if.req                ),
 
       .branch_i            ( core_if.branch             ),
-      .branch_mispredict_i ( 1'b0                       ),
-      .mispredict_addr_i   ( 32'b0                      ),
       .addr_i              ( core_if.branch_addr        ),
 
       .ready_i             ( core_if.ready              ),
