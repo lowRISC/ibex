@@ -128,6 +128,10 @@ module ibex_if_stage import ibex_pkg::*; #(
   logic       [31:0] fetch_addr_n;
   logic              unused_fetch_addr_n0;
 
+  logic              prefetch_branch;
+  logic [31:0]       prefetch_addr;
+
+  logic              fetch_valid_raw;
   logic              fetch_valid;
   logic              fetch_ready;
   logic       [31:0] fetch_rdata;
@@ -241,6 +245,20 @@ module ibex_if_stage import ibex_pkg::*; #(
   assign instr_err        = instr_intg_err | instr_bus_err_i;
   assign instr_intg_err_o = instr_intg_err & instr_rvalid_i;
 
+  // There are two possible "branch please" signals that are computed in the IF stage: branch_req
+  // and nt_branch_mispredict_i. These should be mutually exclusive (see the NoMispredBranch
+  // assertion), so we can just OR the signals together.
+  assign prefetch_branch = branch_req | nt_branch_mispredict_i;
+  assign prefetch_addr   = branch_req ? {fetch_addr_n[31:1], 1'b0} : nt_branch_addr_i;
+
+  // The fetch_valid signal that comes out of the icache or prefetch buffer should be squashed if we
+  // had a misprediction.
+  assign fetch_valid = fetch_valid_raw & ~nt_branch_mispredict_i;
+
+  // We should never see a mispredict and an incoming branch on the same cycle. The mispredict also
+  // cancels any predicted branch so overall branch_req must be low.
+  `ASSERT(NoMispredBranch, nt_branch_mispredict_i |-> ~branch_req)
+
   if (ICache) begin : gen_icache
     // Full I-Cache option
     ibex_icache #(
@@ -255,13 +273,13 @@ module ibex_if_stage import ibex_pkg::*; #(
 
         .req_i               ( req_i                      ),
 
-        .branch_i            ( branch_req                 ),
-        .branch_mispredict_i ( nt_branch_mispredict_i     ),
-        .mispredict_addr_i   ( nt_branch_addr_i           ),
-        .addr_i              ( {fetch_addr_n[31:1], 1'b0} ),
+        .branch_i            ( prefetch_branch            ),
+        .branch_mispredict_i ( 1'b0                       ),
+        .mispredict_addr_i   ( '0                         ),
+        .addr_i              ( prefetch_addr              ),
 
         .ready_i             ( fetch_ready                ),
-        .valid_o             ( fetch_valid                ),
+        .valid_o             ( fetch_valid_raw            ),
         .rdata_o             ( fetch_rdata                ),
         .addr_o              ( fetch_addr                 ),
         .err_o               ( fetch_err                  ),
@@ -301,13 +319,13 @@ module ibex_if_stage import ibex_pkg::*; #(
 
         .req_i               ( req_i                      ),
 
-        .branch_i            ( branch_req                 ),
-        .branch_mispredict_i ( nt_branch_mispredict_i     ),
-        .mispredict_addr_i   ( nt_branch_addr_i           ),
-        .addr_i              ( {fetch_addr_n[31:1], 1'b0} ),
+        .branch_i            ( prefetch_branch            ),
+        .branch_mispredict_i ( 1'b0                       ),
+        .mispredict_addr_i   ( '0                         ),
+        .addr_i              ( prefetch_addr              ),
 
         .ready_i             ( fetch_ready                ),
-        .valid_o             ( fetch_valid                ),
+        .valid_o             ( fetch_valid_raw            ),
         .rdata_o             ( fetch_rdata                ),
         .addr_o              ( fetch_addr                 ),
         .err_o               ( fetch_err                  ),
@@ -759,9 +777,6 @@ module ibex_if_stage import ibex_pkg::*; #(
     // following cycle core signal that that branch has mispredicted).
     `ASSERT(MispredictSingleCycle,
       nt_branch_mispredict_i & ~(fetch_valid & fetch_ready) |=> ~nt_branch_mispredict_i)
-    // Note that we should never see a mispredict and an incoming branch on the same cycle.
-    // The mispredict also cancels any predicted branch so overall branch_req must be low.
-    `ASSERT(NoMispredBranch, nt_branch_mispredict_i |-> ~branch_req)
 `endif
 
   end else begin : g_no_branch_predictor_asserts
