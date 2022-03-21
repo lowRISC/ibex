@@ -178,12 +178,14 @@ module ibex_if_stage import ibex_pkg::*; #(
 
   // exception PC selection mux
   always_comb begin : exc_pc_mux
+    exc_pc = {csr_mtvec_i[31:8], 8'h00};
+
     unique case (exc_pc_mux_i)
       EXC_PC_EXC:     exc_pc = { csr_mtvec_i[31:8], 8'h00                    };
       EXC_PC_IRQ:     exc_pc = { csr_mtvec_i[31:8], 1'b0, irq_id[4:0], 2'b00 };
       EXC_PC_DBD:     exc_pc = DmHaltAddr;
       EXC_PC_DBG_EXC: exc_pc = DmExceptionAddr;
-      default:        exc_pc = { csr_mtvec_i[31:8], 8'h00                    };
+      default: ;
     endcase
   end
 
@@ -194,6 +196,8 @@ module ibex_if_stage import ibex_pkg::*; #(
 
   // fetch address selection mux
   always_comb begin : fetch_addr_mux
+    fetch_addr_n = {boot_addr_i[31:8], 8'h80};
+
     unique case (pc_mux_internal)
       PC_BOOT: fetch_addr_n = { boot_addr_i[31:8], 8'h80 };
       PC_JUMP: fetch_addr_n = branch_target_ex_i;
@@ -203,7 +207,7 @@ module ibex_if_stage import ibex_pkg::*; #(
       // Without branch predictor will never get pc_mux_internal == PC_BP. We still handle no branch
       // predictor case here to ensure redundant mux logic isn't synthesised.
       PC_BP:   fetch_addr_n = BranchPredictor ? predict_branch_pc : { boot_addr_i[31:8], 8'h80 };
-      default: fetch_addr_n = { boot_addr_i[31:8], 8'h80 };
+      default: ;
     endcase
   end
 

@@ -115,6 +115,8 @@ module ibex_load_store_unit #(
   ///////////////////
 
   always_comb begin
+    data_be = 4'b0000;
+
     unique case (lsu_type_i) // Data type 00 Word, 01 Half word, 11,10 byte
       2'b00: begin // Writing a word
         if (!handle_misaligned_q) begin // first part of potentially misaligned transaction
@@ -123,7 +125,7 @@ module ibex_load_store_unit #(
             2'b01:   data_be = 4'b1110;
             2'b10:   data_be = 4'b1100;
             2'b11:   data_be = 4'b1000;
-            default: data_be = 4'b1111;
+            default: ;
           endcase // case (data_offset)
         end else begin // second part of misaligned transaction
           unique case (data_offset)
@@ -131,7 +133,7 @@ module ibex_load_store_unit #(
             2'b01:   data_be = 4'b0001;
             2'b10:   data_be = 4'b0011;
             2'b11:   data_be = 4'b0111;
-            default: data_be = 4'b1111;
+            default: ;
           endcase // case (data_offset)
         end
       end
@@ -143,7 +145,7 @@ module ibex_load_store_unit #(
             2'b01:   data_be = 4'b0110;
             2'b10:   data_be = 4'b1100;
             2'b11:   data_be = 4'b1000;
-            default: data_be = 4'b1111;
+            default: ;
           endcase // case (data_offset)
         end else begin // second part of misaligned transaction
           data_be = 4'b0001;
@@ -157,11 +159,11 @@ module ibex_load_store_unit #(
           2'b01:   data_be = 4'b0010;
           2'b10:   data_be = 4'b0100;
           2'b11:   data_be = 4'b1000;
-          default: data_be = 4'b1111;
+          default: ;
         endcase // case (data_offset)
       end
 
-      default:     data_be = 4'b1111;
+      default: ;
     endcase // case (lsu_type_i)
   end
 
@@ -172,12 +174,13 @@ module ibex_load_store_unit #(
   // prepare data to be written to the memory
   // we handle misaligned accesses, half word and byte accesses here
   always_comb begin
+    data_wdata = lsu_wdata_i[31:0];
     unique case (data_offset)
       2'b00:   data_wdata =  lsu_wdata_i[31:0];
       2'b01:   data_wdata = {lsu_wdata_i[23:0], lsu_wdata_i[31:24]};
       2'b10:   data_wdata = {lsu_wdata_i[15:0], lsu_wdata_i[31:16]};
       2'b11:   data_wdata = {lsu_wdata_i[ 7:0], lsu_wdata_i[31: 8]};
-      default: data_wdata =  lsu_wdata_i[31:0];
+      default: ;
     endcase // case (data_offset)
   end
 
