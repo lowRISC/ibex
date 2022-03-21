@@ -320,8 +320,6 @@ module ibex_if_stage import ibex_pkg::*; #(
         .req_i               ( req_i                      ),
 
         .branch_i            ( prefetch_branch            ),
-        .branch_mispredict_i ( 1'b0                       ),
-        .mispredict_addr_i   ( '0                         ),
         .addr_i              ( prefetch_addr              ),
 
         .ready_i             ( fetch_ready                ),
