@@ -195,7 +195,7 @@ module ibex_core import ibex_pkg::*; #(
   logic [31:0] nt_branch_addr;
   pc_sel_e     pc_mux_id;                      // Mux selector for next PC
   exc_pc_sel_e exc_pc_mux_id;                  // Mux selector for exception PC
-  exc_cause_e  exc_cause;                      // Exception cause
+  exc_cause_t  exc_cause;                      // Exception cause
 
   logic        instr_intg_err;
   logic        lsu_load_err;
@@ -496,7 +496,8 @@ module ibex_core import ibex_pkg::*; #(
     .BranchTargetALU(BranchTargetALU),
     .DataIndTiming  (DataIndTiming),
     .WritebackStage (WritebackStage),
-    .BranchPredictor(BranchPredictor)
+    .BranchPredictor(BranchPredictor),
+    .MemECC         (MemECC)
   ) id_stage_i (
     .clk_i (clk_i),
     .rst_ni(rst_ni),
@@ -587,8 +588,9 @@ module ibex_core import ibex_pkg::*; #(
     .lsu_addr_incr_req_i(lsu_addr_incr_req),
     .lsu_addr_last_i    (lsu_addr_last),
 
-    .lsu_load_err_i (lsu_load_err),
-    .lsu_store_err_i(lsu_store_err),
+    .lsu_load_err_i     (lsu_load_err),
+    .lsu_load_intg_err_i(lsu_load_intg_err),
+    .lsu_store_err_i    (lsu_store_err),
 
     // Interrupt Signals
     .csr_mstatus_mie_i(csr_mstatus_mie),
