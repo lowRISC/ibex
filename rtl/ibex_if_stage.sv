@@ -88,7 +88,7 @@ module ibex_if_stage import ibex_pkg::*; #(
                                                                 // mispredicted (predicted taken)
   input  logic [31:0]                 nt_branch_addr_i,         // Not-taken branch address in ID/EX
   input  exc_pc_sel_e                 exc_pc_mux_i,             // selects ISR address
-  input  exc_cause_e                  exc_cause,                // selects ISR address for
+  input  exc_cause_t                  exc_cause,                // selects ISR address for
                                                                 // vectorized interrupt lines
   input  logic                        dummy_instr_en_i,
   input  logic [2:0]                  dummy_instr_mask_i,
@@ -149,9 +149,6 @@ module ibex_if_stage import ibex_pkg::*; #(
 
   logic       [31:0] exc_pc;
 
-  logic        [5:0] irq_id;
-  logic              unused_irq_bit;
-
   logic              if_id_pipe_reg_we; // IF-ID pipeline reg write enable
 
   // Dummy instruction signals
@@ -164,26 +161,34 @@ module ibex_if_stage import ibex_pkg::*; #(
   logic              predict_branch_taken;
   logic       [31:0] predict_branch_pc;
 
+  logic        [4:0] irq_vec;
+
   ibex_pkg::pc_sel_e pc_mux_internal;
 
   logic        [7:0] unused_boot_addr;
   logic        [7:0] unused_csr_mtvec;
+  logic              unused_exc_cause;
 
   assign unused_boot_addr = boot_addr_i[7:0];
   assign unused_csr_mtvec = csr_mtvec_i[7:0];
 
-  // extract interrupt ID from exception cause
-  assign irq_id         = {exc_cause};
-  assign unused_irq_bit = irq_id[5];   // MSB distinguishes interrupts from exceptions
+  assign unused_exc_cause = |{exc_cause.irq_ext, exc_cause.irq_int};
 
   // exception PC selection mux
   always_comb begin : exc_pc_mux
+    irq_vec = exc_cause.lower_cause;
+
+    if (exc_cause.irq_int) begin
+      // All internal interrupts go to the NMI vector
+      irq_vec = ExcCauseIrqNm.lower_cause;
+    end
+
     unique case (exc_pc_mux_i)
-      EXC_PC_EXC:     exc_pc = { csr_mtvec_i[31:8], 8'h00                    };
-      EXC_PC_IRQ:     exc_pc = { csr_mtvec_i[31:8], 1'b0, irq_id[4:0], 2'b00 };
+      EXC_PC_EXC:     exc_pc = { csr_mtvec_i[31:8], 8'h00                };
+      EXC_PC_IRQ:     exc_pc = { csr_mtvec_i[31:8], 1'b0, irq_vec, 2'b00 };
       EXC_PC_DBD:     exc_pc = DmHaltAddr;
       EXC_PC_DBG_EXC: exc_pc = DmExceptionAddr;
-      default:        exc_pc = { csr_mtvec_i[31:8], 8'h00                    };
+      default:        exc_pc = { csr_mtvec_i[31:8], 8'h00                };
     endcase
   end
 

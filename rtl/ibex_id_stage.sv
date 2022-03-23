@@ -24,7 +24,8 @@ module ibex_id_stage #(
   parameter bit               DataIndTiming   = 1'b0,
   parameter bit               BranchTargetALU = 0,
   parameter bit               WritebackStage  = 0,
-  parameter bit               BranchPredictor = 0
+  parameter bit               BranchPredictor = 0,
+  parameter bit               MemECC          = 1'b0
 ) (
   input  logic                      clk_i,
   input  logic                      rst_ni,
@@ -54,7 +55,7 @@ module ibex_id_stage #(
   output logic                      nt_branch_mispredict_o,
   output logic [31:0]               nt_branch_addr_o,
   output ibex_pkg::exc_pc_sel_e     exc_pc_mux_o,
-  output ibex_pkg::exc_cause_e      exc_cause_o,
+  output ibex_pkg::exc_cause_t      exc_cause_o,
 
   input  logic                      illegal_c_insn_i,
   input  logic                      instr_fetch_err_i,
@@ -130,6 +131,7 @@ module ibex_id_stage #(
 
   input  logic                      lsu_load_err_i,
   input  logic                      lsu_store_err_i,
+  input  logic                      lsu_load_intg_err_i,
 
   // Debug Signal
   output logic                      debug_mode_o,
@@ -542,7 +544,8 @@ module ibex_id_stage #(
 
   ibex_controller #(
     .WritebackStage (WritebackStage),
-    .BranchPredictor(BranchPredictor)
+    .BranchPredictor(BranchPredictor),
+    .MemECC(MemECC)
   ) controller_i (
     .clk_i (clk_i),
     .rst_ni(rst_ni),
@@ -584,6 +587,7 @@ module ibex_id_stage #(
     // LSU
     .lsu_addr_last_i(lsu_addr_last_i),
     .load_err_i     (lsu_load_err_i),
+    .load_intg_err_i(lsu_load_intg_err_i),
     .store_err_i    (lsu_store_err_i),
     .wb_exception_o (wb_exception),
     .id_exception_o (id_exception),
@@ -597,7 +601,7 @@ module ibex_id_stage #(
     .csr_mstatus_mie_i(csr_mstatus_mie_i),
     .irq_pending_i    (irq_pending_i),
     .irqs_i           (irqs_i),
-    .irq_nm_i         (irq_nm_i),
+    .irq_nm_ext_i     (irq_nm_i),
     .nmi_mode_o       (nmi_mode_o),
 
     // CSR Controller Signals

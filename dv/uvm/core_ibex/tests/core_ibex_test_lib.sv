@@ -493,7 +493,7 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
     check_next_core_status(HANDLING_EXCEPTION, "Core did not jump to vectored exception handler", 1000);
     check_priv_mode(PRIV_LVL_M);
     check_next_core_status(ILLEGAL_INSTR_EXCEPTION, exception_msg, 1000);
-    check_mcause(1'b0, EXC_CAUSE_ILLEGAL_INSN);
+    check_mcause(1'b0, ExcCauseIllegalInsn);
     wait_ret("mret", 1500);
   endtask
 
@@ -1310,7 +1310,7 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
   virtual task check_dmem_fault();
     bit[ibex_mem_intf_agent_pkg::DATA_WIDTH-1:0] mcause;
     core_status_t mem_status;
-    ibex_pkg::exc_cause_e exc_type;
+    ibex_pkg::exc_cause_t exc_type;
     // Don't impose a timeout period for dmem check, since dmem errors injected by the sequence are
     // not guaranteed to be reflected in RTL state until the next memory instruction is executed,
     // and the frequency of which is not controllable by the testbench
@@ -1320,11 +1320,11 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
     wait_for_mem_txn(cfg.signature_addr, CORE_STATUS);
     mem_status = core_status_t'(signature_data_q.pop_front());
     if (mem_status == LOAD_FAULT_EXCEPTION) begin
-      exc_type = EXC_CAUSE_LOAD_ACCESS_FAULT;
+      exc_type = ExcCauseLoadAccessFault;
     end else if (mem_status == STORE_FAULT_EXCEPTION) begin
-      exc_type = EXC_CAUSE_STORE_ACCESS_FAULT;
+      exc_type = ExcCauseStoreAccessFault;
     end
-    check_mcause(1'b0, exc_type);
+    check_mcause(1'b0, exc_type.lower_cause);
     wait (dut_vif.dut_cb.mret === 1'b1);
     `uvm_info(`gfn, "exiting mem fault checker", UVM_LOW)
   endtask
@@ -1332,7 +1332,7 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
   virtual task check_imem_fault();
     bit latched_imem_err = 1'b0;
     core_status_t mem_status;
-    ibex_pkg::exc_cause_e exc_type;
+    ibex_pkg::exc_cause_t exc_type;
     // Need to account for case where imem_error is asserted during an instruction fetch that gets
     // killed - due to jumps and control flow changes
     do begin
@@ -1359,8 +1359,8 @@ class core_ibex_mem_error_test extends core_ibex_directed_test;
     end while (latched_imem_err === 1'b0);
     check_next_core_status(INSTR_FAULT_EXCEPTION,
                            "Core did not register correct memory fault type", 500);
-    exc_type = EXC_CAUSE_INSTR_ACCESS_FAULT;
-    check_mcause(1'b0, exc_type);
+    exc_type = ExcCauseInstrAccessFault;
+    check_mcause(1'b0, exc_type.lower_cause);
     wait (dut_vif.dut_cb.mret === 1'b1);
     `uvm_info(`gfn, "exiting mem fault checker", UVM_LOW)
   endtask
