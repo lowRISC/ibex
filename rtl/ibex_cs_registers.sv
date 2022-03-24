@@ -265,8 +265,10 @@ module ibex_cs_registers #(
   logic        csr_wr;
 
   // Access violation signals
+  logic        dbg_csr;
   logic        illegal_csr;
   logic        illegal_csr_priv;
+  logic        illegal_csr_dbg;
   logic        illegal_csr_write;
 
   logic [7:0]  unused_boot_addr;
@@ -283,10 +285,12 @@ module ibex_cs_registers #(
   assign unused_csr_addr    = csr_addr[7:5];
   assign mhpmcounter_idx    = csr_addr[4:0];
 
+  assign illegal_csr_dbg    = dbg_csr & ~debug_mode_i;
   // See RISC-V Privileged Specification, version 1.11, Section 2.1
   assign illegal_csr_priv   = (csr_addr[9:8] > {priv_lvl_q});
   assign illegal_csr_write  = (csr_addr[11:10] == 2'b11) && csr_wr;
-  assign illegal_csr_insn_o = csr_access_i & (illegal_csr | illegal_csr_write | illegal_csr_priv);
+  assign illegal_csr_insn_o = csr_access_i & (illegal_csr | illegal_csr_write | illegal_csr_priv |
+                                              illegal_csr_dbg);
 
   // mip CSR is purely combinational - must be able to re-enable the clock upon WFI
   assign mip.irq_software = irq_software_i;
@@ -298,6 +302,7 @@ module ibex_cs_registers #(
   always_comb begin
     csr_rdata_int = '0;
     illegal_csr   = 1'b0;
+    dbg_csr       = 1'b0;
 
     unique case (csr_addr_i)
       // mvendorid: encoding of manufacturer/provider
@@ -406,19 +411,19 @@ module ibex_cs_registers #(
 
       CSR_DCSR: begin
         csr_rdata_int = dcsr_q;
-        illegal_csr = ~debug_mode_i;
+        dbg_csr       = 1'b1;
       end
       CSR_DPC: begin
         csr_rdata_int = depc_q;
-        illegal_csr = ~debug_mode_i;
+        dbg_csr       = 1'b1;
       end
       CSR_DSCRATCH0: begin
         csr_rdata_int = dscratch0_q;
-        illegal_csr = ~debug_mode_i;
+        dbg_csr       = 1'b1;
       end
       CSR_DSCRATCH1: begin
         csr_rdata_int = dscratch1_q;
-        illegal_csr = ~debug_mode_i;
+        dbg_csr       = 1'b1;
       end
 
       // machine counter/timers
