@@ -3,13 +3,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 `include "prim_assert.sv"
+`include "core_ibex_csr_categories.svh"
 
 interface core_ibex_fcov_if import ibex_pkg::*; (
   input clk_i,
   input rst_ni,
 
   input priv_lvl_e priv_mode_id,
-  input priv_lvl_e priv_mode_lsu
+  input priv_lvl_e priv_mode_lsu,
+
+  input debug_mode,
+
+  input fcov_csr_read_only,
+  input fcov_csr_write
 );
   `include "dv_fcov_macros.svh"
   import uvm_pkg::*;
@@ -22,7 +28,6 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     InstrCategoryJump,
     InstrCategoryLoad,
     InstrCategoryStore,
-    InstrCategoryOther,
     InstrCategoryCSRAccess,
     InstrCategoryEBreakDbg,
     InstrCategoryEBreakExc,
@@ -30,13 +35,19 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     InstrCategoryMRet,
     InstrCategoryDRet,
     InstrCategoryWFI,
+    InstrCategoryFence,
     InstrCategoryFenceI,
     InstrCategoryNone,
     InstrCategoryFetchError,
     InstrCategoryCompressedIllegal,
     InstrCategoryUncompressedIllegal,
     InstrCategoryCSRIllegal,
-    InstrCategoryOtherIllegal
+    InstrCategoryPrivIllegal,
+    InstrCategoryOtherIllegal,
+    // Category not in coverage plan, it should never be seen. An instruction given the Other
+    // category should either be classified under an existing category or a new category should be
+    // created as appropriate.
+    InstrCategoryOther
   } instr_category_e;
 
   typedef enum {
@@ -99,9 +110,10 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
         end
       end
       ibex_pkg::OPCODE_MISC_MEM: begin
-        if (id_stage_i.instr_rdata_i[14:12] == 3'b001) begin
-          id_instr_category = InstrCategoryFenceI;
-        end
+        case (id_stage_i.instr_rdata_i[14:12])
+          3'b000: id_instr_category = InstrCategoryFence;
+          3'b001: id_instr_category = InstrCategoryFenceI;
+        endcase
       end
       default: id_instr_category = InstrCategoryOther;
     endcase
@@ -114,9 +126,17 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
       end else if (id_stage_i.illegal_insn_dec) begin
         id_instr_category = InstrCategoryUncompressedIllegal;
       end else if (id_stage_i.illegal_csr_insn_i) begin
-        id_instr_category = InstrCategoryCSRIllegal;
+        if (cs_registers_i.illegal_csr_priv || cs_registers_i.illegal_csr_dbg) begin
+          id_instr_category = InstrCategoryPrivIllegal;
+        end else begin
+          id_instr_category = InstrCategoryCSRIllegal;
+        end
       end else if (id_stage_i.illegal_insn_o) begin
-        id_instr_category = InstrCategoryOtherIllegal;
+        if (id_stage_i.illegal_dret_insn || id_stage_i.illegal_umode_insn) begin
+          id_instr_category = InstrCategoryPrivIllegal;
+        end else begin
+          id_instr_category = InstrCategoryOtherIllegal;
+        end
       end
     end else begin
       id_instr_category = InstrCategoryNone;
@@ -199,6 +219,63 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     end
   end
 
+  // IF specific state enum
+  typedef enum {
+    IFStageFullAndFetching,
+    IFStageFullAndIdle,
+    IFStageEmptyAndFetching,
+    IFStageEmptyAndIdle
+  } if_stage_state_e;
+
+  // ID/EX and WB have the same state enum
+  typedef enum {
+    PipeStageFullAndStalled,
+    PipeStageFullAndUnstalled,
+    PipeStageEmpty
+  } pipe_stage_state_e;
+
+  if_stage_state_e   if_stage_state;
+  pipe_stage_state_e id_stage_state;
+  pipe_stage_state_e wb_stage_state;
+
+  always_comb begin
+    if_stage_state = IFStageEmptyAndIdle;
+
+    if (if_stage_i.if_instr_valid) begin
+      if (if_stage_i.req_i) begin
+        if_stage_state = IFStageFullAndFetching;
+      end else begin
+        if_stage_state = IFStageFullAndIdle;
+      end
+    end else if(if_stage_i.req_i) begin
+      if_stage_state = IFStageEmptyAndFetching;
+    end
+  end
+
+  always_comb begin
+    id_stage_state = PipeStageEmpty;
+
+    if (id_stage_i.instr_valid_i) begin
+      if (id_stage_i.id_in_ready_o) begin
+        id_stage_state = PipeStageFullAndUnstalled;
+      end else begin
+        id_stage_state = PipeStageFullAndStalled;
+      end
+    end
+  end
+
+  always_comb begin
+    wb_stage_state = PipeStageEmpty;
+
+    if (wb_stage_i.fcov_wb_valid) begin
+      if (wb_stage_i.ready_wb_o) begin
+        wb_stage_state = PipeStageFullAndUnstalled;
+      end else begin
+        wb_stage_state = PipeStageFullAndStalled;
+      end
+    end
+  end
+
   logic            instr_unstalled;
   logic            instr_unstalled_last;
   logic            id_stall_type_last_valid;
@@ -229,12 +306,22 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     id_stall_type_last_valid;
 
   covergroup uarch_cg @(posedge clk_i);
-    cp_instr_category_id: coverpoint id_instr_category;
+    cp_id_instr_category: coverpoint id_instr_category {
+      // Not certain if InstrCategoryOtherIllegal can occur. Put it in illegal_bins for now and
+      // revisit if any issues are seen
+      illegal_bins illegal = {InstrCategoryOther, InstrCategoryOtherIllegal};
+    }
+
+    cp_id_instr_category_last: coverpoint id_instr_category_last {
+      // Not certain if InstrCategoryOtherIllegal can occur. Put it in illegal_bins for now and
+      // revisit if any issues are seen
+      illegal_bins illegal = {InstrCategoryOther, InstrCategoryOtherIllegal};
+    }
+
     cp_stall_type_id: coverpoint id_stall_type;
 
-    cp_wb_reg_hz: coverpoint id_stage_i.fcov_rf_rd_wb_hz;
-    cp_wb_load_hz: coverpoint id_stage_i.fcov_rf_rd_wb_hz &&
-                              wb_stage_i.outstanding_load_wb_o;
+    cp_wb_reg_no_load_hz: coverpoint id_stage_i.fcov_rf_rd_wb_hz &&
+                                     !wb_stage_i.outstanding_load_wb_o;
 
     cp_ls_error_exception: coverpoint load_store_unit_i.fcov_ls_error_exception;
     cp_ls_pmp_exception: coverpoint load_store_unit_i.fcov_ls_pmp_exception;
@@ -249,65 +336,139 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
       illegal_bins illegal = {PRIV_LVL_H, PRIV_LVL_S};
     }
 
+    cp_if_stage_state : coverpoint if_stage_state;
+    cp_id_stage_state : coverpoint id_stage_state;
+    cp_wb_stage_state : coverpoint wb_stage_state;
+
+    // TODO: MRET/WFI in debug mode?
+    // Specific cover points for these as `id_instr_category` will be InstrCategoryPrivIllegal when
+    // executing these instructions in U-mode.
+    `DV_FCOV_EXPR_SEEN(mret_in_umode, id_stage_i.mret_insn_dec && priv_mode_id == PRIV_LVL_U)
+    `DV_FCOV_EXPR_SEEN(wfi_in_umode, id_stage_i.wfi_insn_dec && priv_mode_id == PRIV_LVL_U)
+
     cp_irq_pending: coverpoint id_stage_i.irq_pending_i | id_stage_i.irq_nm_i;
     cp_debug_req: coverpoint id_stage_i.controller_i.fcov_debug_req;
+
+    cp_csr_read_only: coverpoint cs_registers_i.csr_addr_i iff (fcov_csr_read_only) {
+      ignore_bins ignore = {`IGNORED_CSRS};
+    }
+
+    cp_csr_write: coverpoint cs_registers_i.csr_addr_i iff (fcov_csr_write) {
+      ignore_bins ignore = {`IGNORED_CSRS};
+    }
+
+    `DV_FCOV_EXPR_SEEN(csr_invalid_read_only, fcov_csr_read_only && cs_registers_i.illegal_csr)
+    `DV_FCOV_EXPR_SEEN(csr_invalid_write, fcov_csr_write && cs_registers_i.illegal_csr)
+
+    cp_debug_mode: coverpoint debug_mode;
 
     `DV_FCOV_EXPR_SEEN(interrupt_taken, id_stage_i.controller_i.fcov_interrupt_taken)
     `DV_FCOV_EXPR_SEEN(debug_entry_if, id_stage_i.controller_i.fcov_debug_entry_if)
     `DV_FCOV_EXPR_SEEN(debug_entry_id, id_stage_i.controller_i.fcov_debug_entry_id)
     `DV_FCOV_EXPR_SEEN(pipe_flush, id_stage_i.controller_i.fcov_pipe_flush)
 
-    priv_mode_instr_cross: cross cp_priv_mode_id, cp_instr_category_id;
+    cp_controller_fsm: coverpoint id_stage_i.controller_i.ctrl_fsm_cs {
+      bins out_of_reset = (RESET => BOOT_SET);
+      bins out_of_boot_set = (BOOT_SET => FIRST_FETCH);
+      bins out_of_first_fetch[] = (FIRST_FETCH => DECODE, IRQ_TAKEN, DBG_TAKEN_IF);
+      bins out_of_decode[] = (DECODE => FLUSH, DBG_TAKEN_IF, IRQ_TAKEN);
+      bins out_of_irq_taken = (IRQ_TAKEN => DECODE);
+      bins out_of_debug_taken_if = (DBG_TAKEN_IF => DECODE);
+      bins out_of_debug_taken_id = (DBG_TAKEN_ID => DECODE);
+      bins out_of_flush[] = (FLUSH => DECODE, DBG_TAKEN_ID, WAIT_SLEEP, IRQ_TAKEN, DBG_TAKEN_IF);
+      bins out_of_wait_sleep = (WAIT_SLEEP => SLEEP);
+      bins out_of_sleep = (SLEEP => FIRST_FETCH);
+      // TODO: VCS does not implement default sequence so illegal_bins will be empty
+      illegal_bins illegal_transitions = default sequence;
+    }
 
-    stall_cross: cross cp_instr_category_id, cp_stall_type_id {
+    priv_mode_instr_cross: cross cp_priv_mode_id, cp_id_instr_category;
+
+    stall_cross: cross cp_id_instr_category, cp_stall_type_id {
       illegal_bins illegal =
         // Only Div, Mul, Branch and Jump instructions can see an instruction stall
-        (!binsof(cp_instr_category_id) intersect {InstrCategoryDiv, InstrCategoryMul,
+        (!binsof(cp_id_instr_category) intersect {InstrCategoryDiv, InstrCategoryMul,
                                                  InstrCategoryBranch, InstrCategoryJump} &&
          binsof(cp_stall_type_id) intersect {IdStallTypeInstr})
     ||
         // Only ALU, Mul, Div, Branch, Jump, Load, Store and CSR Access can see a load hazard stall
-        (!binsof(cp_instr_category_id) intersect {InstrCategoryALU, InstrCategoryMul,
+        (!binsof(cp_id_instr_category) intersect {InstrCategoryALU, InstrCategoryMul,
                                                  InstrCategoryDiv, InstrCategoryBranch,
                                                  InstrCategoryJump, InstrCategoryLoad,
                                                  InstrCategoryStore, InstrCategoryCSRAccess} &&
          binsof(cp_stall_type_id) intersect {IdStallTypeLdHz});
     }
 
-    wb_reg_hz_instr_cross: cross cp_instr_category_id, cp_wb_reg_hz;
-
-    pipe_cross: cross cp_instr_category_id, if_stage_i.if_instr_valid,
-                      wb_stage_i.fcov_wb_valid;
-
-    interrupt_taken_instr_cross: cross cp_interrupt_taken, instr_unstalled_last, id_instr_category_last {
-      illegal_bins illegal = binsof(instr_unstalled_last) intersect {0} &&
-        binsof(id_instr_category_last) intersect {InstrCategoryDiv};
+    wb_reg_no_load_hz_instr_cross: cross cp_id_instr_category, cp_wb_reg_no_load_hz {
+      // Only ALU, Mul, Div, Branch, Jump, Load, Store and CSRAccess instructions can see a WB
+      // register hazard
+      illegal_bins illegal =
+        !binsof(cp_id_instr_category) intersect {InstrCategoryALU, InstrCategoryMul,
+          InstrCategoryDiv, InstrCategoryBranch, InstrCategoryJump, InstrCategoryLoad,
+          InstrCategoryStore, InstrCategoryCSRAccess}                                  &&
+        binsof(cp_wb_reg_no_load_hz) intersect {1'b1};
     }
 
-    debug_entry_if_instr_cross: cross cp_debug_entry_if, instr_unstalled_last, id_instr_category_last;
-    pipe_flush_instr_cross: cross cp_pipe_flush, instr_unstalled, cp_instr_category_id;
+    pipe_cross: cross cp_id_instr_category, cp_if_stage_state, cp_id_stage_state, wb_stage_state {
+      // When ID stage is empty instruction category must be none
+      illegal_bins illegal = !binsof(cp_id_instr_category) intersect {InstrCategoryNone} &&
+        binsof(cp_id_stage_state) intersect {PipeStageEmpty};
+    }
+
+    interrupt_taken_instr_cross: cross cp_interrupt_taken, instr_unstalled_last,
+      cp_id_instr_category_last;
+
+    debug_instruction_cross: cross cp_debug_mode, cp_id_instr_category;
+
+    debug_entry_if_instr_cross: cross cp_debug_entry_if, instr_unstalled_last,
+      cp_id_instr_category_last;
+    pipe_flush_instr_cross: cross cp_pipe_flush, instr_unstalled, cp_id_instr_category;
 
     exception_stall_instr_cross: cross cp_ls_pmp_exception, cp_ls_error_exception,
-      cp_instr_category_id, cp_stall_type_id, instr_unstalled, cp_irq_pending, cp_debug_req {
+      cp_id_instr_category, cp_stall_type_id, instr_unstalled, cp_irq_pending, cp_debug_req {
       illegal_bins illegal =
         // Only Div, Mul, Branch and Jump instructions can see an instruction stall
-        (!binsof(cp_instr_category_id) intersect {InstrCategoryDiv, InstrCategoryMul,
+        (!binsof(cp_id_instr_category) intersect {InstrCategoryDiv, InstrCategoryMul,
                                                  InstrCategoryBranch, InstrCategoryJump} &&
          binsof(cp_stall_type_id) intersect {IdStallTypeInstr})
     ||
         // Only ALU, Mul, Div, Branch, Jump, Load, Store and CSR Access can see a load hazard stall
-        (!binsof(cp_instr_category_id) intersect {InstrCategoryALU, InstrCategoryMul,
+        (!binsof(cp_id_instr_category) intersect {InstrCategoryALU, InstrCategoryMul,
                                                  InstrCategoryDiv, InstrCategoryBranch,
                                                  InstrCategoryJump, InstrCategoryLoad,
                                                  InstrCategoryStore, InstrCategoryCSRAccess} &&
          binsof(cp_stall_type_id) intersect {IdStallTypeLdHz});
+
+      // Cannot have a memory stall when we see an LS exception unless it is a load or store
+      // instruction
+      illegal_bins mem_stall_illegal =
+        (!binsof(cp_id_instr_category) intersect {InstrCategoryLoad, InstrCategoryStore} &&
+         binsof(cp_stall_type_id) intersect {IdStallTypeMem}) with
+        (cp_ls_pmp_exception == 1'b1 || cp_ls_error_exception == 1'b1);
+
+      // When pipeline has unstalled stall type will always be none
+      illegal_bins unstalled_illegal =
+        !binsof(cp_stall_type_id) intersect {IdStallTypeNone} with (instr_unstalled == 1'b1);
+    }
+
+    csr_read_only_priv_cross: cross cp_csr_read_only, cp_priv_mode_id;
+    csr_write_priv_cross: cross cp_csr_write, cp_priv_mode_id;
+
+    csr_read_only_debug_cross: cross cp_csr_read_only, cp_debug_mode {
+      // Only care about specific debug CSRs
+      ignore_bins ignore = !binsof(cp_csr_read_only) intersect {`DEBUG_CSRS};
+    }
+
+    csr_write_debug_cross: cross cp_csr_write, cp_debug_mode {
+      // Only care about specific debug CSRs
+      ignore_bins ignore = !binsof(cp_csr_write) intersect {`DEBUG_CSRS};
     }
   endgroup
 
   bit en_uarch_cov;
 
   initial begin
-   void'($value$plusargs("enable_uarch_cov=%d", en_uarch_cov));
+   void'($value$plusargs("enable_ibex_fcov=%d", en_uarch_cov));
   end
 
   `DV_FCOV_INSTANTIATE_CG(uarch_cg, en_uarch_cov)
