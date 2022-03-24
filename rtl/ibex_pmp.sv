@@ -39,6 +39,7 @@ module ibex_pmp #(
   logic [PMPNumChan-1:0][PMPNumRegions-1:0]   region_match_all;
   logic [PMPNumChan-1:0][PMPNumRegions-1:0]   region_basic_perm_check;
   logic [PMPNumChan-1:0][PMPNumRegions-1:0]   region_mml_perm_check;
+  logic [PMPNumChan-1:0][PMPNumRegions-1:0]   region_orig_perm_check;
   logic [PMPNumChan-1:0]                      access_fault;
 
 
@@ -109,6 +110,14 @@ module ibex_pmp #(
           ((pmp_req_type_i[c] == PMP_ACC_WRITE) & csr_pmp_cfg_i[r].write) |
           ((pmp_req_type_i[c] == PMP_ACC_READ)  & csr_pmp_cfg_i[r].read);
 
+      // Compute permissions checks that apply when MSECCFG.MML is unset. This is the original PMP
+      // behaviour before Smepmp was added.
+      assign region_orig_perm_check[c][r] = (priv_mode_i[c] == PRIV_LVL_M) ?
+          // For M-mode, any region which matches with the L-bit clear, or with sufficient
+          // access permissions will be allowed
+          (~csr_pmp_cfg_i[r].lock | region_basic_perm_check[c][r]) :
+          // For other modes, the lock bit doesn't matter
+          region_basic_perm_check[c][r];
 
       // Compute permission checks that apply when MSECCFG.MML is set.
       always_comb begin
@@ -155,20 +164,15 @@ module ibex_pmp #(
       access_fault[c] = csr_pmp_mseccfg_i.mmwp | (priv_mode_i[c] != PRIV_LVL_M);
 
       // PMP entries are statically prioritized, from 0 to N-1
-      // The lowest-numbered PMP entry which matches an address determines accessability
+      // The lowest-numbered PMP entry which matches an address determines accessibility
       for (int r = PMPNumRegions - 1; r >= 0; r--) begin
         if (region_match_all[c][r]) begin
           if (csr_pmp_mseccfg_i.mml) begin
             // When MSECCFG.MML is set use MML specific permission check
             access_fault[c] = ~region_mml_perm_check[c][r];
           end else begin
-            // Otherwise use original PMP behaviour
-            access_fault[c] = (priv_mode_i[c] == PRIV_LVL_M) ?
-                // For M-mode, any region which matches with the L-bit clear, or with sufficient
-                // access permissions will be allowed
-                (csr_pmp_cfg_i[r].lock & ~region_basic_perm_check[c][r]) :
-                // For other modes, the lock bit doesn't matter
-                ~region_basic_perm_check[c][r];
+            // Otherwise use original (non Smepmp) PMP behaviour
+            access_fault[c] = ~region_orig_perm_check[c][r];
           end
         end
       end
