@@ -8,6 +8,7 @@
 `endif
 
 `include "prim_assert.sv"
+`include "dv_fcov_macros.svh"
 
 /**
  * Top level module of the ibex RISC-V core
@@ -1604,4 +1605,62 @@ module ibex_core import ibex_pkg::*; #(
   // Certain parameter combinations are not supported
   `ASSERT_INIT(IllegalParamSecure, !(SecureIbex && (RV32M == RV32MNone)))
 
+
+  //////////
+  // FCOV //
+  //////////
+
+  // fcov signals for CSR access. These are complicated by illegal accesses. Where an access is
+  // legal `csr_op_en` signals the operation occurring, but this is deasserted where an access is
+  // illegal. Instead `illegal_insn_id` confirms the instruction is taking an illegal instruction
+  // exception.
+  // All CSR operations perform a read, `CSR_OP_READ` is the only one that only performs a read
+  `DV_FCOV_SIGNAL(logic, csr_read_only,
+      (csr_op == CSR_OP_READ) && csr_access && (csr_op_en || illegal_insn_id))
+  `DV_FCOV_SIGNAL(logic, csr_write,
+      cs_registers_i.csr_wr && csr_access && (csr_op_en || illegal_insn_id))
+
+  if (PMPEnable) begin : g_pmp_fcov_signals
+    logic [PMPNumRegions-1:0] fcov_pmp_region_ichan_priority;
+    logic [PMPNumRegions-1:0] fcov_pmp_region_ichan2_priority;
+    logic [PMPNumRegions-1:0] fcov_pmp_region_dchan_priority;
+
+    logic unused_fcov_pmp_region_priority;
+
+    assign unused_fcov_pmp_region_priority = ^{fcov_pmp_region_ichan_priority,
+                                               fcov_pmp_region_ichan2_priority,
+                                               fcov_pmp_region_dchan_priority};
+
+    for (genvar i_region = 0; i_region < PMPNumRegions; i_region += 1) begin : g_pmp_region_fcov
+      `DV_FCOV_SIGNAL(logic, pmp_region_ichan_access,
+          g_pmp.pmp_i.region_match_all[PMP_I][i_region] & if_stage_i.if_id_pipe_reg_we)
+      `DV_FCOV_SIGNAL(logic, pmp_region_ichan2_access,
+          g_pmp.pmp_i.region_match_all[PMP_I2][i_region] & if_stage_i.if_id_pipe_reg_we)
+      `DV_FCOV_SIGNAL(logic, pmp_region_dchan_access,
+          g_pmp.pmp_i.region_match_all[PMP_D][i_region] & data_req_out)
+
+      if (i_region > 0) begin : g_region_priority
+        assign fcov_pmp_region_ichan_priority[i_region] =
+          g_pmp.pmp_i.region_match_all[PMP_I][i_region] &
+          ~|g_pmp.pmp_i.region_match_all[PMP_I][i_region-1:0];
+
+        assign fcov_pmp_region_ichan2_priority[i_region] =
+          g_pmp.pmp_i.region_match_all[PMP_I2][i_region] &
+          ~|g_pmp.pmp_i.region_match_all[PMP_I2][i_region-1:0];
+
+        assign fcov_pmp_region_dchan_priority[i_region] =
+          g_pmp.pmp_i.region_match_all[PMP_D][i_region] &
+          ~|g_pmp.pmp_i.region_match_all[PMP_D][i_region-1:0];
+      end else begin : g_region_highest_priority
+        assign fcov_pmp_region_ichan_priority[i_region] =
+          g_pmp.pmp_i.region_match_all[PMP_I][i_region];
+
+        assign fcov_pmp_region_ichan2_priority[i_region] =
+          g_pmp.pmp_i.region_match_all[PMP_I2][i_region];
+
+        assign fcov_pmp_region_dchan_priority[i_region] =
+          g_pmp.pmp_i.region_match_all[PMP_D][i_region];
+      end
+    end
+  end
 endmodule

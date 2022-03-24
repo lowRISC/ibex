@@ -65,7 +65,7 @@
       -cm_log /dev/null
       -assert nopostproc
       -cm_name test_<test_name>_<iteration>
-      +enable_uarch_cov=1
+      +enable_ibex_fcov=1
     wave_opts: >
       -ucli -do <cwd>/vcs.tcl
 
