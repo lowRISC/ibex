@@ -187,6 +187,8 @@ module ibex_id_stage #(
 
   // Decoder/Controller, ID stage internal signals
   logic        illegal_insn_dec;
+  logic        illegal_dret_insn;
+  logic        illegal_umode_insn;
   logic        ebrk_insn;
   logic        mret_insn_dec;
   logic        dret_insn_dec;
@@ -527,7 +529,16 @@ module ibex_id_stage #(
   // Controller //
   ////////////////
 
-  assign illegal_insn_o = instr_valid_i & (illegal_insn_dec | illegal_csr_insn_i);
+  // "Executing DRET outside of Debug Mode causes an illegal instruction exception."
+  // [Debug Spec v0.13.2, p.41]
+  assign illegal_dret_insn  = dret_insn_dec & ~debug_mode_o;
+  // Some instructions can only be executed in M-Mode
+  assign illegal_umode_insn = (priv_mode_i != PRIV_LVL_M) &
+                              // MRET must be in M-Mode. TW means trap WFI to M-Mode.
+                              (mret_insn_dec | (csr_mstatus_tw_i & wfi_insn_dec));
+
+  assign illegal_insn_o = instr_valid_i &
+      (illegal_insn_dec | illegal_csr_insn_i | illegal_dret_insn | illegal_umode_insn);
 
   ibex_controller #(
     .WritebackStage (WritebackStage),
@@ -598,7 +609,6 @@ module ibex_id_stage #(
     .csr_save_cause_o     (csr_save_cause_o),
     .csr_mtval_o          (csr_mtval_o),
     .priv_mode_i          (priv_mode_i),
-    .csr_mstatus_tw_i     (csr_mstatus_tw_i),
 
     // Debug Signal
     .debug_mode_o       (debug_mode_o),
