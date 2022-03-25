@@ -32,7 +32,7 @@ Instructions
 
 Categories
 """"""""""
-``cp_instr_category_id``
+``cp_id_instr_category``
 
 Instructions can be grouped into a number of categories.
 Each category exercises different data and control paths in the core.
@@ -105,11 +105,12 @@ Privilege Level
 Ibex can operate at either the M (machine) or U (user) privilege levels.
 Different aspects of the Ibex microarchitecture can be using different privilege levels at once.
 
-* ``cp_priv_mode_if`` - Privilege level of IF stage instruction.
 * ``cp_priv_mode_id`` - Privilege level of ID/EX stage instruction.
 * ``cp_priv_mode_lsu`` - Privilege level of LSU operation (ID/EX privilege level modified by ``mstatus.mprv`` and ``mstatus.mpp`` settings).
 
 Note that the privilege level of the instruction in WB isn't retained by the microarchitecture and is not relevant to coverage.
+The privilege level of the IF instruction is effectively unknown.
+The instruction is checked when moving from IF to ID/EX against the ID stage privilege level to check if execution is permitted by PMP.
 Any instruction that reaches WB can be considered bound to retire and any relevant checks and functionality altered by the privilege mode is dealt with at an earlier stage.
 
 Hazards
@@ -133,14 +134,14 @@ Some instructions will behave differently depending upon the state of the proces
 
 * Instruction illegal in U Mode.
 
-  * ``MRET`` - ``cp_mret_in_umode``
-  * ``WFI`` - ``cp_wfi_in_umode``
-  * Read and write to M-mode CSR - Covered by crosses ``csr_wr_priv_cross`` and ``csr_rd_only_priv_cross```
+  * ``cp_mret_in_umode`` - ``MRET``
+  * ``cp_wfi_in_umode`` - ``WFI``
+  * Read and write to M-mode CSR - Covered by crosses ``csr_write_priv_cross`` and ``csr_read_only_priv_cross```
 
 * Debug mode instructions (cover execution in and out of debug mode).
 
   * ``DRET``
-  * Access to debug CSRs.
+  * ``csr_read_only_debug_cross``, ``csr_write_debug_cross`` - Access to debug CSRs.
 
     * ``dcsr``
     * ``dpc``
@@ -148,16 +149,16 @@ Some instructions will behave differently depending upon the state of the proces
     * ``dscratch1``
 
   * Access to trigger CSRs (also possible in M mode: cover execution in M mode, debug mode and U mode).
+    Covered by ``csr_read_only_debug_cross``, ``csr_write_debug_cross``, ``csr_read_only_priv_cross``, ``csr_write_priv_cross``.
 
     * ``tselect``
     * ``tdata1``
     * ``tdata2``
     * ``tdata3``
-    * ``mcontext``
-    * ``scontext``
 
 * Loads/stores with ``mstatus.mprv`` set and unset.
 * EBreak behaviour in U/M mode with different ``dcsr.ebreakm`` / ``dcsr.ebreaku`` settings.
+  Covered by ``priv_mode_instr_cross``
 
 Pipeline State
 ^^^^^^^^^^^^^^
@@ -169,7 +170,7 @@ Each pipeline stage has some associated state.
 * ``cp_id_stage_state`` - ID stage full and stalled, full and unstalled, or empty.
 * Controller (within ID stage) state machine states
 
-  * Possible transitions between these states.
+  * ``cp_controller_fsm`` - Possible transitions between these states.
     Those marked with a '*' are of particular interest and should be crossed with instruction categories and other coverpoints as appropriate to fully explore the transitions.
 
     * ``RESET`` -> ``BOOT_SET``
@@ -229,8 +230,10 @@ PMP
 * Access fail & pass.
 
   * All combinations of unaligned access split across a boundary, both halves pass, neither pass, just the first passes, just the second passes.
+
     * Two possible boundary splits; across a 32-bit boundary within a region or a boundary between PMP regions.
-  * ``cp_pmp_iside_region_override`` /  ``cp_pmp_dside_region_override`` - Higher priority entry allows access that lower priority entry prevents.
+
+  * ``cp_pmp_iside_region_override``, ``cp_pmp_iside2_region_override``, ``cp_pmp_dside_region_override`` - Higher priority entry allows access that lower priority entry prevents.
   * Compressed instruction access (16-bit) passes PMP but 32-bit access at same address crosses PMP region boundary.
 
 * Each field of mssecfg enabled/disabled with relevant functionality tested.
@@ -267,7 +270,7 @@ Basic read/write functionality must be tested on all implemented CSRs.
   * Access to CSR disallowed due to privilege levels/debug mode
     Covered by ensuring within the crosses
 
-* ``cp_invalid_read_only`` / ``cp_invalid_write`` - Read and write from/to an unimplemented CSR
+* ``cp_invalid_read_only``, ``cp_invalid_write`` - Read and write from/to an unimplemented CSR
 
 CSRs addresses do not need to be crossed with the variety of CSR instructions as these all use the same basic read & write interface into ``ibex_cs_registers``.
 Coverage of the above points will be sampled at the ``ibex_cs_registers`` interface (as opposed to sampling CSR instructions).
@@ -276,10 +279,9 @@ Miscellaneous
 ^^^^^^^^^^^^^
 Various points of interest do not fit into the categories above.
 
-* Instruction unstalled - Cover the cycle an instruction is unstalled having just been stalled.
-* Stalled awaiting an instruction fetch.
+* ``instr_unstalled`` - Instruction unstalled - Cover the cycle an instruction is unstalled having just been stalled.
 * Double fault.
-* Awake from sleep.
+* Awake from sleep due to interrupt or debug
 * Interrupt/Debug whilst entering sleep.
 * Enabling/Disabling ICache.
 
@@ -287,6 +289,7 @@ Cross Coverage
 --------------
 Much of the more complex behaviour lies at the combination of the individual microarchitectural behaviours above.
 Cross coverage is used to capture that.
+Crosses listed below are ones that don't already fit into the above categories.
 There are some broad crosses containing many bins aiming to capture all combinations of some generalised behaviours as well as some more specific ones to capture all combinations of behaviours focused on a particular area.
 
 Cross coverage will be intentionally broad.
@@ -295,30 +298,32 @@ Where it is proving hard to hit particular bins they will be reviewed in more de
 Excluded bins will either become illegal bins (where they are impossible to hit, so a failure will be seen if they are hit) or ignore bins (where they don't factor into coverage statistics).
 There must be a documented reason a particular bin is added to the illegal or ignore bins.
 
-* All combinations of privilege levels across IF, ID/EX and LSU
-* Instruction Categories x Pipeline stage states across IF, ID/EX and WB
+* ``pipe_cross`` - Instruction Categories x Pipeline stage states across IF, ID/EX and WB
 
   * Covers all possibilities of instruction combinations that could fill the pipeline. State only for IF/WB suffices to cover this as all the interesting per instruction behaviour occurs in ID/EX.
   * All bins containing instruction categories other than **None** ignored when ID/EX stage is empty.
 
-* Instructions Categories x ID/EX Privilege level
-* Instruction Categories x Stall Categories
+* ``priv_mode_instr_cross`` - Instructions Categories x ID/EX Privilege level
+* ``stall_cross`` - Instruction Categories x Stall Categories
 
   * Illegal bins will be used to exclude instruction and stall categories that cannot occur.
 
-* Instruction Categories x Hazards
-* Instruction Categories x Debug Mode
-* Instruction Categories x IF/WB full or empty
+* ``wb_reg_no_load_hz_instr_cross`` - Instruction Categories x Hazards
+
+  * ``stall_cross`` covers the RAW load hazard (as it produces a LdHz stall).
+  * RAW hazard between load/store requires no cross coverage as it's only seen for load and store instructions so the single coverpoint suffices.
+
+* ``debug_instruction_cross`` - Instruction Categories x Debug Mode
 * Instruction Categories x Controller state transitions of interest
-* Interrupt taken/Debug mode entry/Pipe flush x instruction unstalled x instruction category
+* ``interrupt_taken_instr_cross``, ``debug_entry_if_instr_cross``, ``pipe_flush_instr_cross`` - Interrupt taken/Debug mode entry/Pipe flush x instruction unstalled x instruction category
 
   * Three separate cross coverage groups: one for interrupt, debug and pipe flush.
   * Covers all instruction categories being interrupted/entering debug mode/flushing the pipeline both where this occurs during a stall and when it occurs just when they've unstalled.
 
-* PMP exception x load/store error exception x instruction category x stall type x unstalled x irq pending x debug req
+* ``exception_stall_instr_cross`` - PMP exception x load/store error exception x instruction category x stall type x unstalled x irq pending x debug req
 
   * Large cross to cover all possibilities of combinations between interrupt, debug and exceptions for all instruction categories across all stall behaviours.
 
-* PMP regions x permissions x access fail/pass x privilege level
+* ``pmp_iside_priv_bits_cross``, ``pmp_iside2_priv_bits_cross``, ``pmp_dside_priv_bits_cross``, PMP regions x permissions x access fail/pass x privilege level
 
-  * Two crosses, one for each PMP channel (instruction and data).
+  * Three crosses, one for each PMP channel (instruction, instruction 2 and data).
