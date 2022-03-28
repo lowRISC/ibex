@@ -168,7 +168,6 @@
       xrun -64bit
            -R
            -xmlibdirpath <out>
-           -l <sim_dir>/sim.log
            -licqueue
            -svseed <seed>
            -svrnc rand_struct
