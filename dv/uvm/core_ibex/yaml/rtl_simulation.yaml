@@ -146,6 +146,7 @@
 
 
 - tool: xlm
+  env_var: dv_root, DUT_TOP
   compile:
     cmd:
       - "xrun -64bit
@@ -160,7 +161,12 @@
               -l <out>/compile.log
               -xmlibdirpath <out>
               <cmp_opts>
+              <cov_opts>
               <wave_opts>"
+    cov_opts: >
+      -coverage all
+      -covfile <dv_root>/tools/xcelium/cover.ccf
+      -nowarn COVDEF
     wave_opts: >
       -access rwc -linedebug
   sim:
@@ -177,7 +183,14 @@
            +ibex_tracer_file_base=<sim_dir>/trace_core
            -nokey
            <sim_opts>
+           <cov_opts>
            <wave_opts>
+    cov_opts: >
+      -covmodeldir <out>/coverage/default/<seed>
+      -covworkdir <out>/coverage
+      -covscope default
+      -covtest <seed>
+      +enable_ibex_fcov=1
     wave_opts: >
       -input @"database -open <sim_dir>/waves -shm -default"
       -input @"probe -create core_ibex_tb_top -all -depth all -variables"
