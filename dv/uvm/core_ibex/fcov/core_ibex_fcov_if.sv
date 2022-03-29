@@ -306,6 +306,9 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     id_stall_type_last_valid;
 
   covergroup uarch_cg @(posedge clk_i);
+    option.per_instance = 1;
+    option.name = "uarch_cg";
+
     cp_id_instr_category: coverpoint id_instr_category {
       // Not certain if InstrCategoryOtherIllegal can occur. Put it in illegal_bins for now and
       // revisit if any issues are seen

@@ -4,7 +4,7 @@
 
 GEN_DIR             := $(realpath ../../../vendor/google_riscv-dv)
 TOOLCHAIN           := ${RISCV_TOOLCHAIN}
-export IBEX_ROOT	  := $(realpath ../../../)
+export IBEX_ROOT	:= $(realpath ../../../)
 
 ifeq ($(COSIM),1)
 ifndef IBEX_COSIM_ISS_ROOT
@@ -32,7 +32,14 @@ SEED                := $(shell echo $$RANDOM)
 # here. Most generated stuff actually goes in $(OUT)/seed-$(SEED), which allows
 # us to run multiple times without deleting existing results.
 OUT                 := out
-OUT-SEED            := $(OUT)/seed-$(SEED)
+export OUT-SEED     := $(OUT)/seed-$(SEED)
+
+# Needed for tcl files that are used with Cadence tools.
+export dv_root := $(realpath ../../../vendor/lowrisc_ip/dv)
+export DUT_TOP := dut
+export cov_merge_dir := $(OUT-SEED)/cov_merge
+export cov_merge_db_dir := $(cov_merge_dir)/merged
+export cov_report_dir := $(OUT-SEED)/cov_report
 
 # Run time options for the instruction generator
 GEN_OPTS            :=

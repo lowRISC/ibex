@@ -27,6 +27,7 @@ from sim_cmd import get_simulator_cmd
 _CORE_IBEX = os.path.normpath(os.path.join(os.path.dirname(__file__)))
 _IBEX_ROOT = os.path.normpath(os.path.join(_CORE_IBEX, '../../..'))
 _RISCV_DV_ROOT = os.path.join(_IBEX_ROOT, 'vendor/google_riscv-dv')
+_XCELIUM_SCRIPTS = os.path.join(_IBEX_ROOT, 'vendor/lowrisc_ip/dv/tools/xcelium')
 _OLD_SYS_PATH = sys.path
 
 # Import riscv_trace_csv and lib from _DV_SCRIPTS before putting sys.path back
@@ -106,14 +107,20 @@ def gen_cov(base_dir, simulator, lsf_cmd):
     # All generated coverage databases will be named "test.vdb"
     vdb_dir_name = "test.vdb"
 
-    for path, dirs, files in os.walk(base_dir):
-        if vdb_dir_name in dirs:
-            vdb_path = os.path.join(path, vdb_dir_name)
-            logging.info("Found coverage database at %s" % vdb_path)
-            dir_list.append(vdb_path)
+    # Copy our existing environment variables to find our unique out folder.
+    my_env = os.environ.copy()
+    for path, dirs, files in os.walk(my_env['OUT-SEED']):
+        for file in files:
+            if file.endswith(".ucd") and simulator == 'xlm':
+                logging.info("Found coverage database (ucd) at %s" % path)
+                dir_list.append(path)
+            if vdb_dir_name in dirs and simulator == 'vcs':
+                vdb_path = os.path.join(path, vdb_dir_name)
+                logging.info("Found coverage database (vdb) at %s" % vdb_path)
+                dir_list.append(vdb_path)
 
     if dir_list == []:
-        logging.info("No coverage data available, exiting...")
+        logging.info(f"No coverage data available for {simulator}, exiting...")
         sys.exit(RET_SUCCESS)
 
     if simulator == 'vcs':
@@ -125,6 +132,35 @@ def gen_cov(base_dir, simulator, lsf_cmd):
         if lsf_cmd is not None:
             cov_cmd = lsf_cmd + ' ' + cov_cmd
         run_cmd(cov_cmd)
+    elif simulator == 'xlm':
+        # Get all needed directories for merge and report stages.
+        cov_dirs = {
+            'cov_merge_dir': my_env['cov_merge_dir'],
+            'cov_merge_db_dir': my_env['cov_merge_dir'],
+            'cov_merge_report': my_env['cov_merge_dir'],
+        }
+
+        # Create the mentioned directories.
+        for d in cov_dirs.values():
+            os.makedirs(d, exist_ok=True)
+
+        # The merge TCL code uses a glob to find all available scopes and
+        # previous runs. In order to actually get the databases we need to
+        # go up once so that the "*" finds the directory we've seen.
+        cov_dirs['cov_db_dirs'] = ' '.join([os.path.join(d, '..')
+                                            for d in dir_list])
+        my_env.update(cov_dirs)
+
+        # First do the merge
+        imc_cmd = ["imc", "-64bit", "-licqueue"]
+        cov_merge_tcl = os.path.join(_XCELIUM_SCRIPTS, "cov_merge.tcl")
+        subprocess.run(imc_cmd + ["-exec", cov_merge_tcl],
+                       env=my_env)
+        # Then do the reporting
+        cov_report_tcl = os.path.join(_XCELIUM_SCRIPTS, "cov_report.tcl")
+        subprocess.run(imc_cmd + ["-load", cov_dirs['cov_merge_db_dir'],
+                                  "-exec", cov_report_tcl],
+                       env=my_env)
     else:
         logging.error("%s is an unsuported simulator! Exiting..." % simulator)
         sys.exit(RET_FAIL)
