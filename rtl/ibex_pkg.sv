@@ -51,6 +51,13 @@ package ibex_pkg;
     RV32BFull       = 3
   } rv32b_e;
 
+  typedef enum integer {
+      RV32ZkNone     = 0,
+      RV32Zbkb       = 1,
+      RV32Zkn        = 2,
+      RV32Zks        = 3
+    } rv32zk_e;
+
   /////////////
   // Opcodes //
   /////////////
@@ -180,7 +187,65 @@ package ibex_pkg;
     ALU_CRC32_H,
     ALU_CRC32C_H,
     ALU_CRC32_W,
-    ALU_CRC32C_W
+    ALU_CRC32C_W,
+
+    // Zbkb
+    ZKB_RORI,
+    ZKB_BREV8,
+    ZKB_REV8,
+    ZKB_ZIP,
+    ZKB_UNZIP,
+    ZKB_ROR,
+    ZKB_ROL,
+    ZKB_ANDN,
+    ZKB_ORN,
+    ZKB_XNOR,
+    ZKB_PACK,
+    ZKB_PACKH,
+    ZKB_CLMUL,
+    ZKB_CLMULH,
+    ZKB_XPERM8,
+    ZKB_XPERM4,
+
+    // Zkn
+    ZKN_SHA256SUM0,
+    ZKN_SHA256SUM1,
+    ZKN_SHA256SIG0,
+    ZKN_SHA256SIG1,
+    ZKN_SHA512SUM0R,
+    ZKN_SHA512SUM1R,
+    ZKN_SHA512SIG0L,
+    ZKN_SHA512SIG1L,
+    ZKN_SHA512SIG0H,
+    ZKN_SHA512SIG1H,
+    ZKN_AES32DSB0,
+    ZKN_AES32DSB1,
+    ZKN_AES32DSB2,
+    ZKN_AES32DSB3,
+    ZKN_AES32DSMB0,
+    ZKN_AES32DSMB1,
+    ZKN_AES32DSMB2,
+    ZKN_AES32DSMB3,
+    ZKN_AES32ESB0,
+    ZKN_AES32ESB1,
+    ZKN_AES32ESB2,
+    ZKN_AES32ESB3,
+    ZKN_AES32ESMB0,
+    ZKN_AES32ESMB1,
+    ZKN_AES32ESMB2,
+    ZKN_AES32ESMB3,
+
+    //Zks
+    ZKS_SM4EDB0,
+    ZKS_SM4EDB1,
+    ZKS_SM4EDB2,
+    ZKS_SM4EDB3,
+    ZKS_SM4KSB0,
+    ZKS_SM4KSB1,
+    ZKS_SM4KSB2,
+    ZKS_SM4KSB3,
+    ZKS_SM3P0,
+    ZKS_SM3P1
   } alu_op_e;
 
   typedef enum logic [1:0] {
@@ -190,7 +255,6 @@ package ibex_pkg;
     MD_OP_DIV,
     MD_OP_REM
   } md_op_e;
-
 
   //////////////////////////////////
   // Control and status registers //

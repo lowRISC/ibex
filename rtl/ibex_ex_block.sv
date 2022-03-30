@@ -9,9 +9,10 @@
  * Execution block: Hosts ALU and MUL/DIV unit
  */
 module ibex_ex_block #(
-  parameter ibex_pkg::rv32m_e RV32M           = ibex_pkg::RV32MFast,
-  parameter ibex_pkg::rv32b_e RV32B           = ibex_pkg::RV32BNone,
-  parameter bit               BranchTargetALU = 0
+  parameter ibex_pkg::rv32m_e  RV32M           = ibex_pkg::RV32MFast,
+  parameter ibex_pkg::rv32b_e  RV32B           = ibex_pkg::RV32BNone,
+  parameter ibex_pkg::rv32zk_e RV32Zk          = ibex_pkg::RV32ZkNone,
+  parameter bit                BranchTargetALU = 0
 ) (
   input  logic                  clk_i,
   input  logic                  rst_ni,
@@ -55,11 +56,12 @@ module ibex_ex_block #(
 
   import ibex_pkg::*;
 
-  logic [31:0] alu_result, multdiv_result;
+  logic [31:0] alu_result, zke_result, multdiv_result;
 
   logic [32:0] multdiv_alu_operand_b, multdiv_alu_operand_a;
   logic [33:0] alu_adder_result_ext;
   logic        alu_cmp_result, alu_is_equal_result;
+  logic        zke_val;
   logic        multdiv_valid;
   logic        multdiv_sel;
   logic [31:0] alu_imd_val_q[2];
@@ -86,7 +88,7 @@ module ibex_ex_block #(
 
   assign alu_imd_val_q = '{imd_val_q_i[0][31:0], imd_val_q_i[1][31:0]};
 
-  assign result_ex_o  = multdiv_sel ? multdiv_result : alu_result;
+  assign result_ex_o  = multdiv_sel ? multdiv_result : (zke_val ? zke_result : alu_result);
 
   // branch handling
   assign branch_decision_o  = alu_cmp_result;
@@ -132,6 +134,24 @@ module ibex_ex_block #(
     .comparison_result_o(alu_cmp_result),
     .is_equal_result_o  (alu_is_equal_result)
   );
+
+  //////////////////
+  // Zk Extension //
+  //////////////////
+  if (RV32Zk != RV32ZkNone) begin : gen_Zkn
+  ibex_zk #(
+    .RV32Zk(RV32Zk)
+  ) zkn_i (
+    .operator_i         (alu_operator_i),
+    .operand_a_i        (alu_operand_a_i),
+    .operand_b_i        (alu_operand_b_i),
+    .result_o           (zke_result),
+    .zk_val_o           (zke_val)
+    );
+  end else begin : gen_no_Zkn
+  assign zke_result = 32'd0;
+  assign zke_val    =  1'b0;
+  end
 
   ////////////////
   // Multiplier //
