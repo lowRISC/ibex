@@ -482,6 +482,7 @@ riscv_dv_fcov: $(rtl-sim-logs)
           --core ibex \
           --dir ${OUT-SEED}/rtl_sim \
           -o ${OUT-SEED}/fcov \
+          --simulator "${SIMULATOR}" \
           --isa rv32imcb \
           --custom_target riscv_dv_extension
 
