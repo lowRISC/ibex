@@ -186,10 +186,10 @@
            <cov_opts>
            <wave_opts>
     cov_opts: >
-      -covmodeldir <out>/coverage/default/<seed>
+      -covmodeldir <out>/coverage/default/<test_name>.<seed>
       -covworkdir <out>/coverage
       -covscope default
-      -covtest <seed>
+      -covtest <test_name>.<seed>
       +enable_ibex_fcov=1
     wave_opts: >
       -input @"database -open <sim_dir>/waves -shm -default"
