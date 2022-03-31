@@ -23,6 +23,7 @@ import argparse
 import datetime
 import logging as log
 import os
+import random
 import shlex
 import subprocess
 import sys
@@ -259,8 +260,7 @@ def parse_reseed_multiplier(as_str: str) -> float:
         ret = float(as_str)
     except ValueError:
         raise argparse.ArgumentTypeError('Invalid reseed multiplier: {!r}. '
-                                         'Must be a float.'
-                                         .format(as_str))
+                                         'Must be a float.'.format(as_str))
     if ret <= 0:
         raise argparse.ArgumentTypeError('Reseed multiplier must be positive.')
     return ret
@@ -285,7 +285,7 @@ def parse_args():
         help=("Explicitly set the tool to use. This is "
               "optional for running simulations (where it can "
               "be set in an .hjson file), but is required for "
-              "other flows. Possible tools include: vcs, "
+              "other flows. Possible tools include: vcs, questa,"
               "xcelium, ascentlint, verixcdc, veriblelint, verilator, dc."))
 
     parser.add_argument("--list",
@@ -472,7 +472,16 @@ def parse_args():
                             '(l), medium (m), high (h), full (f) or debug (d).'
                             ' The default value is set in config files.'))
 
-    seedg = parser.add_argument_group('Test seeds')
+    seedg = parser.add_argument_group('Build / test seeds')
+
+    seedg.add_argument("--build-seed",
+                       nargs="?",
+                       type=int,
+                       const=random.getrandbits(32),
+                       metavar="S",
+                       help=('Randomize the build. Uses the seed value passed '
+                             'an additional argument, else it randomly picks '
+                             'a 32-bit unsigned integer.'))
 
     seedg.add_argument("--seeds",
                        "-s",
@@ -652,8 +661,9 @@ def main():
     setattr(args, "timestamp_long", curr_ts.strftime(TS_FORMAT_LONG))
     setattr(args, "timestamp", curr_ts.strftime(TS_FORMAT))
 
-    # Register the seeds from command line with RunTest class.
+    # Register the seeds from command line with the RunTest class.
     RunTest.seeds = args.seeds
+
     # If we are fixing a seed value, no point in tests having multiple reseeds.
     if args.fixed_seed:
         args.reseed = 1

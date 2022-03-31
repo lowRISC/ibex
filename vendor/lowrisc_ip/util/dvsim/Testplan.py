@@ -17,6 +17,7 @@ from tabulate import tabulate
 
 class Result:
     '''The results for a single test'''
+
     def __init__(self, name, passing=0, total=0):
         self.name = name
         self.passing = passing
@@ -138,6 +139,12 @@ class Testpoint(Element):
         # testpoint.
         self.test_results = []
 
+        # If tests key is set to ["N/A"], then don't map this testpoint to the
+        # simulation results.
+        self.not_mapped = False
+        if self.tests == ["N/A"]:
+            self.not_mapped = True
+
     def __str__(self):
         return super().__str__() + (f"  Milestone: {self.milestone}\n"
                                     f"  Tests: {self.tests}\n")
@@ -192,6 +199,17 @@ class Testpoint(Element):
         self.tests is an empty list, indicate 0/1 passing so that it is
         factored into the final total.
         """
+        # If no written tests were indicated for this testpoint, then reuse
+        # the testpoint name to count towards "not run".
+        if not self.tests:
+            self.test_results = [Result(name=self.name, passing=0, total=0)]
+            return
+
+        # Skip if this testpoint is not meant to be mapped to the simulation
+        # results.
+        if self.not_mapped:
+            return
+
         for tr in test_results:
             assert isinstance(tr, Result)
             if tr.name in self.tests:
@@ -204,11 +222,6 @@ class Testpoint(Element):
         for test in self.tests:
             if test not in tests_mapped:
                 self.test_results.append(Result(name=test, passing=0, total=0))
-
-        # If no written tests were indicated for this testpoint, then reuse
-        # the testpoint name to count towards "not run".
-        if not self.tests:
-            self.test_results = [Result(name=self.name, passing=0, total=0)]
 
 
 class Testplan:
@@ -450,6 +463,8 @@ class Testplan:
     def get_milestone_regressions(self):
         regressions = defaultdict(set)
         for tp in self.testpoints:
+            if tp.not_mapped:
+                continue
             if tp.milestone in tp.milestones[1:]:
                 regressions[tp.milestone].update({t for t in tp.tests if t})
 
@@ -467,39 +482,54 @@ class Testplan:
         """
         assert fmt in ["pipe", "html"]
 
-        def _fmt_text(text, fmt):
-            return mistletoe.markdown(text) if fmt == "html" else text
+        # Map between the requested format and a pair (tabfmt, formatter) where
+        # tabfmt is the "tablefmt" argument for tabulate.tabulate and formatter
+        # converts the input Markdown text to something we can pass to the
+        # formatter.
+        fmt_configs = {
+            # For Markdown output, we pass the input text straight through
+            'pipe': ('pipe', lambda x: x),
+            # For HTML output, we convert the Markdown to HTML using the
+            # mistletoe library. The tablefmt argument should be 'unsafehtml'
+            # in this case because this already escapes things like '<' and
+            # don't want to double-escape them when tabulating.
+            'html': ('unsafehtml', mistletoe.markdown)
+        }
+        tabfmt, formatter = fmt_configs[fmt]
 
         if self.testpoints:
-            lines = [_fmt_text("\n### Testpoints\n", fmt)]
+            lines = [formatter("\n### Testpoints\n")]
             header = ["Milestone", "Name", "Tests", "Description"]
             colalign = ("center", "center", "left", "left")
             table = []
             for tp in self.testpoints:
-                desc = _fmt_text(tp.desc.strip(), fmt)
-                # TODO(astanin/python-tabulate#126): Tabulate does not
-                # convert \n's to line-breaks.
+                desc = formatter(tp.desc.strip())
+
+                # tests is a list of strings. We want to insert them into a
+                # table and (conveniently) we can put one on each line in both
+                # Markdown and HTML mode by interspersing with '<br>' tags.
                 tests = "<br>\n".join(tp.tests)
+
                 table.append([tp.milestone, tp.name, tests, desc])
             lines += [
                 tabulate(table,
                          headers=header,
-                         tablefmt=fmt,
+                         tablefmt=tabfmt,
                          colalign=colalign)
             ]
 
         if self.covergroups:
-            lines += [_fmt_text("\n### Covergroups\n", fmt)]
+            lines += [formatter("\n### Covergroups\n")]
             header = ["Name", "Description"]
             colalign = ("center", "left")
             table = []
             for covergroup in self.covergroups:
-                desc = _fmt_text(covergroup.desc.strip(), fmt)
+                desc = formatter(covergroup.desc.strip())
                 table.append([covergroup.name, desc])
             lines += [
                 tabulate(table,
                          headers=header,
-                         tablefmt=fmt,
+                         tablefmt=tabfmt,
                          colalign=colalign)
             ]
 
@@ -527,6 +557,9 @@ class Testplan:
             """
             ms = testpoint.milestone
             for tr in testpoint.test_results:
+                if not tr:
+                    continue
+
                 if tr.name in tests_seen:
                     continue
 

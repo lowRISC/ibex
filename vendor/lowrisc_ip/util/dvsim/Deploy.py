@@ -298,6 +298,7 @@ class CompileSim(Deploy):
 
     def __init__(self, build_mode, sim_cfg):
         self.build_mode_obj = build_mode
+        self.seed = sim_cfg.build_seed
         super().__init__(sim_cfg)
 
     def _define_attrs(self):
