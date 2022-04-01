@@ -285,7 +285,7 @@ Basic read/write functionality must be tested on all implemented CSRs.
   * Access to CSR disallowed due to privilege levels/debug mode
     Covered by ensuring within the crosses
 
-* ``cp_invalid_read_only``, ``cp_invalid_write`` - Read and write from/to an unimplemented CSR
+* Read and write from/to an unimplemented CSR
 
 CSRs addresses do not need to be crossed with the variety of CSR instructions as these all use the same basic read & write interface into ``ibex_cs_registers``.
 Coverage of the above points will be sampled at the ``ibex_cs_registers`` interface (as opposed to sampling CSR instructions).
