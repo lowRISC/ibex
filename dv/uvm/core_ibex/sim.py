@@ -136,8 +136,8 @@ def gen_cov(base_dir, simulator, lsf_cmd):
         # Get all needed directories for merge and report stages.
         cov_dirs = {
             'cov_merge_dir': my_env['cov_merge_dir'],
-            'cov_merge_db_dir': my_env['cov_merge_dir'],
-            'cov_merge_report': my_env['cov_merge_dir'],
+            'cov_merge_db_dir': my_env['cov_merge_db_dir'],
+            'cov_report_dir': my_env['cov_report_dir'],
         }
 
         # Create the mentioned directories.
