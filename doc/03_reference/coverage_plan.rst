@@ -212,7 +212,22 @@ Furthermore they can all occur together and must be appropriately prioritised (c
 * External debug request.
 * Instruction executed when debug single step enabled.
 * Instruction matches hardware trigger point.
+
+  * Instruction matching trigger point causes exception
+
 * Ibex operating in debug mode.
+* Debug and Interrupt whilst sleeping with WFI
+
+  * Cover with global interrupts enabled and disabled
+  * Cover with specific interrupt enabled and disabled (Should exit sleep when
+    interrupt is enabled but global interrupts set to disabled, should continue
+    sleeping when both are disabled).
+
+* Debug and interrupt occurring whilst entering WFI
+
+  * Covering period between WFI entering ID/EX stage and going into sleep
+
+* Double fault
 
 PMP
 ^^^
@@ -280,9 +295,6 @@ Miscellaneous
 Various points of interest do not fit into the categories above.
 
 * ``instr_unstalled`` - Instruction unstalled - Cover the cycle an instruction is unstalled having just been stalled.
-* Double fault.
-* Awake from sleep due to interrupt or debug
-* Interrupt/Debug whilst entering sleep.
 * Enabling/Disabling ICache.
 
 Cross Coverage
