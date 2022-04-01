@@ -135,11 +135,21 @@
               -uvmhome CDNS-1.2
               -elaborate
               -l <out>/compile.log <cmp_opts>
+              <cov_opts>
               -xmlibdirpath <out>"
+    cov_opts: >
+      -coverage all
+      -covfile <cwd>/../lowrisc_ip/dv/tools/xcelium/cover.ccf
+      -nowarn COVDEF
   sim:
     cmd: >
-      xrun -R -xmlibdirpath <out> <sim_opts> -svseed <seed> -svrnc rand_struct -nokey
-
+      xrun -R -xmlibdirpath <out> <sim_opts> <cov_opts> -svseed <seed> -svrnc rand_struct -nokey
+    cov_opts: >
+          -covmodeldir <out>/riscv-dv/<test_id>.<seed>
+          -covworkdir <out>
+          -covscope riscv-dv
+          -covtest <test_id>.<seed>
+          +enable_ibex_fcov=1
 - tool: pyflow
   sim:
     cmd: >
