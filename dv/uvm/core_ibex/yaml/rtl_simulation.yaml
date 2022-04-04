@@ -165,7 +165,6 @@
               <wave_opts>"
     cov_opts: >
       -coverage all
-      -covfile <dv_root>/tools/xcelium/cover.ccf
       -nowarn COVDEF
     wave_opts: >
       -access rwc -linedebug
