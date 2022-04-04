@@ -483,6 +483,7 @@ riscv_dv_fcov: $(rtl-sim-logs)
           --dir ${OUT-SEED}/rtl_sim \
           -o ${OUT-SEED}/fcov \
           --simulator "${SIMULATOR}" \
+          --opts "--gen_timeout 1000" \
           --isa rv32imcb \
           --custom_target riscv_dv_extension
 
