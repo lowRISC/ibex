@@ -1641,6 +1641,14 @@ module ibex_core import ibex_pkg::*; #(
           g_pmp.pmp_i.region_match_all[PMP_I2][i_region] & if_stage_i.if_id_pipe_reg_we)
       `DV_FCOV_SIGNAL(logic, pmp_region_dchan_access,
           g_pmp.pmp_i.region_match_all[PMP_D][i_region] & data_req_out)
+      // pmp_cfg[5:6] is reserved and because of that the width of it inside cs_registers module
+      // is 6-bit.
+      // TODO: Cover writes to the reserved bits
+      `DV_FCOV_SIGNAL(logic, warl_check_pmpcfg,
+          fcov_csr_write &&
+          (cs_registers_i.g_pmp_registers.g_pmp_csrs[i_region].u_pmp_cfg_csr.wr_data_i !=
+          {cs_registers_i.csr_wdata_int[(i_region%4)*PMP_CFG_W+:5],
+           cs_registers_i.csr_wdata_int[(i_region%4)*PMP_CFG_W+7]}))
 
       if (i_region > 0) begin : g_region_priority
         assign fcov_pmp_region_ichan_priority[i_region] =

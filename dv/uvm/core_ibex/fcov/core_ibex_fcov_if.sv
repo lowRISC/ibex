@@ -349,6 +349,45 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     `DV_FCOV_EXPR_SEEN(mret_in_umode, id_stage_i.mret_insn_dec && priv_mode_id == PRIV_LVL_U)
     `DV_FCOV_EXPR_SEEN(wfi_in_umode, id_stage_i.wfi_insn_dec && priv_mode_id == PRIV_LVL_U)
 
+    // Unsupported writes to WARL type CSRs
+    `DV_FCOV_EXPR_SEEN(warl_check_mstatus,
+                       fcov_csr_write &&
+                       (cs_registers_i.u_mstatus_csr.wr_data_i !=
+                       cs_registers_i.csr_wdata_int))
+
+    `DV_FCOV_EXPR_SEEN(warl_check_mie,
+                       fcov_csr_write &&
+                       (cs_registers_i.u_mie_csr.wr_data_i !=
+                       cs_registers_i.csr_wdata_int))
+
+    `DV_FCOV_EXPR_SEEN(warl_check_mtvec,
+                       fcov_csr_write &&
+                       (cs_registers_i.u_mtvec_csr.wr_data_i !=
+                       cs_registers_i.csr_wdata_int))
+
+    `DV_FCOV_EXPR_SEEN(warl_check_mepc,
+                       fcov_csr_write &&
+                       (cs_registers_i.u_mepc_csr.wr_data_i !=
+                       cs_registers_i.csr_wdata_int))
+
+    `DV_FCOV_EXPR_SEEN(warl_check_mtval,
+                       fcov_csr_write &&
+                       (cs_registers_i.u_mtval_csr.wr_data_i !=
+                       cs_registers_i.csr_wdata_int))
+
+    `DV_FCOV_EXPR_SEEN(warl_check_dcsr,
+                       fcov_csr_write &&
+                       (cs_registers_i.u_dcsr_csr.wr_data_i !=
+                       cs_registers_i.csr_wdata_int))
+
+    `DV_FCOV_EXPR_SEEN(warl_check_cpuctrl,
+                       fcov_csr_write &&
+                       (cs_registers_i.u_cpuctrl_csr.wr_data_i !=
+                       cs_registers_i.csr_wdata_int))
+
+    `DV_FCOV_EXPR_SEEN(double_fault, cs_registers_i.cpuctrl_d.double_fault_seen)
+    `DV_FCOV_EXPR_SEEN(icache_enable, cs_registers_i.cpuctrl_d.icache_enable)
+
     cp_irq_pending: coverpoint id_stage_i.irq_pending_i | id_stage_i.irq_nm_i;
     cp_debug_req: coverpoint id_stage_i.controller_i.fcov_debug_req;
 
@@ -358,6 +397,15 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
 
     cp_csr_write: coverpoint cs_registers_i.csr_addr_i iff (fcov_csr_write) {
       ignore_bins ignore = {`IGNORED_CSRS};
+    }
+
+    // All CSR operations perform a read so we don't need to specify the CSR operation.
+    cp_ignored_csrs: coverpoint cs_registers_i.csr_addr_i iff (id_stage_i.csr_access_o) {
+      bins unimplemented_csrs_read = {`NOT_IMPLEMENTED_CSRS};
+    }
+
+    cp_ignored_csrs_w: coverpoint cs_registers_i.csr_addr_i iff (fcov_csr_write) {
+      bins unimplemented_csrs_written = {`NOT_IMPLEMENTED_CSRS};
     }
 
     `DV_FCOV_EXPR_SEEN(csr_invalid_read_only, fcov_csr_read_only && cs_registers_i.illegal_csr)
