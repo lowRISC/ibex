@@ -77,6 +77,7 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
   assign pmp_iside2_req_err = pmp_req_err[PMP_I2];
   assign pmp_dside_req_err  = pmp_req_err[PMP_D];
 
+  logic [PMPNumRegions-1:0] current_priv_perm_check;
   bit en_pmp_fcov;
 
   initial begin
@@ -232,6 +233,16 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
       `DV_FCOV_INSTANTIATE_CG(pmp_region_cg, en_pmp_fcov)
     end
 
+    // Current Priv means the privilege level of Instruction channels and Ibex in general. Note that
+    // the privilege level of PMP data channel can be set something different than this using MSTATUS.MPRV
+    // and MSTATUS.MPP.
+    logic pmp_current_priv_req_err;
+    assign pmp_current_priv_req_err =
+      g_pmp.pmp_i.access_fault_check(csr_pmp_mseccfg.mmwp,
+                                     g_pmp.pmp_i.region_match_all[PMP_D],
+                                     cs_registers_i.priv_mode_id_o,
+                                     current_priv_perm_check);
+
     covergroup pmp_top_cg @(posedge clk_i);
       option.per_instance = 1;
       option.name = "pmp_top_cg";
@@ -246,6 +257,22 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
 
       cp_pmp_dside_region_override :
         coverpoint g_pmp.pmp_i.g_access_check[PMP_D].fcov_pmp_region_override iff (data_req_out);
+
+      cp_mprv: coverpoint cs_registers_i.mstatus_q.mprv;
+
+      mprv_effect_cross: cross cp_mprv, cs_registers_i.mstatus_q.mpp,
+                               cs_registers_i.priv_mode_id_o, pmp_current_priv_req_err,
+                               pmp_dside_req_err iff
+                                 (id_stage_i.instr_rdata_i[6:0] inside
+                                    {ibex_pkg::OPCODE_LOAD, ibex_pkg::OPCODE_STORE}){
+        // If MPRV is set to 0, system priv lvl and lsu priv lvl has to be same.
+        illegal_bins illegal_mprv =
+          binsof(cp_mprv) intersect {1'b0} with (pmp_current_priv_req_err != pmp_dside_req_err);
+        // Ibex does not support H or S mode.
+        ignore_bins unsupported_priv_lvl =
+          binsof(cs_registers_i.mstatus_q.mpp) intersect {PRIV_LVL_H, PRIV_LVL_S} ||
+          binsof(cs_registers_i.priv_mode_id_o) intersect {PRIV_LVL_H, PRIV_LVL_S};
+      }
     endgroup
 
     `DV_FCOV_INSTANTIATE_CG(pmp_top_cg, en_pmp_fcov)
