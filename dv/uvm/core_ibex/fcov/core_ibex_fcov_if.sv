@@ -276,6 +276,40 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     end
   end
 
+  // Keep track of previous data addr of Store to catch RAW hazard caused by STORE->LOAD
+  logic [31:0]     prev_store_addr;
+  logic [31:0]     data_addr_incr;
+  logic [31:0]     curr_data_addr;
+  logic            raw_hz;
+
+  always @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      prev_store_addr <= 1'b0;
+    end else if (load_store_unit_i.data_we_o) begin
+      // It does not matter if the store we executed before load is misaligned or not. Because
+      // even if it is misaligned, we would catch the "corrected" version (2nd access) before
+      // doing the RAW hazard check.
+      prev_store_addr <= load_store_unit_i.data_addr_o;
+    end
+  end
+
+  // Calculate the corrected version of the new data addr at the same time while LOAD instruction
+  // gets decoded.
+  always_comb begin
+    if (load_store_unit_i.split_misaligned_access) begin
+      data_addr_incr = load_store_unit_i.data_addr + 4;
+      curr_data_addr = {data_addr_incr[2+:30],2'b00};
+    end else begin
+      curr_data_addr = load_store_unit_i.data_addr;
+    end
+  end
+
+  // If we have LOAD at ID/EX stage and STORE at WB stage, compare the calculated address for LOAD
+  // and the saved STORE address. If they are matching we would have RAW hazard.
+  assign raw_hz = id_stage_i.instr_type_wb_o == WB_INSTR_STORE &&
+                  id_instr_category == InstrCategoryLoad &&
+                  prev_store_addr == curr_data_addr;
+
   logic            instr_unstalled;
   logic            instr_unstalled_last;
   logic            id_stall_type_last_valid;
@@ -325,6 +359,10 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
 
     cp_wb_reg_no_load_hz: coverpoint id_stage_i.fcov_rf_rd_wb_hz &&
                                      !wb_stage_i.outstanding_load_wb_o;
+
+    cp_mem_raw_hz: coverpoint raw_hz;
+
+    cp_mprv: coverpoint cs_registers_i.mstatus_q.mprv;
 
     cp_ls_error_exception: coverpoint load_store_unit_i.fcov_ls_error_exception;
     cp_ls_pmp_exception: coverpoint load_store_unit_i.fcov_ls_pmp_exception;
