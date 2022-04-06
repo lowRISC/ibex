@@ -98,6 +98,10 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
       covergroup pmp_region_cg @(posedge clk_i);
         option.per_instance = 1;
         option.name = "pmp_region_cg";
+
+        cp_warl_check_pmpcfg : coverpoint
+          g_pmp_fcov_signals.g_pmp_region_fcov[i_region].fcov_warl_check_pmpcfg;
+
         cp_region_mode : coverpoint csr_pmp_cfg[i_region].mode;
 
         cp_region_priv_bits : coverpoint pmp_region_priv_bits {
