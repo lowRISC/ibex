@@ -118,7 +118,11 @@ module ibex_cs_registers #(
   input  logic                 mem_store_i,                 // store to memory in this cycle
   input  logic                 dside_wait_i,                // core waiting for the dside
   input  logic                 mul_wait_i,                  // core waiting for multiply
-  input  logic                 div_wait_i                   // core waiting for divide
+  input  logic                 div_wait_i,                  // core waiting for divide
+  // For X-Interface
+  output logic [5:0]           ecs_rd_o,
+  input  logic [5:0]           ecs_wr_i,
+  input  logic [2:0]           ecs_wen_i
 );
 
   import ibex_pkg::*;
@@ -129,26 +133,30 @@ module ibex_cs_registers #(
 
   // misa
   localparam logic [31:0] MISA_VALUE =
-      (0                 <<  0)  // A - Atomic Instructions extension
-    | (RV32BEnabled      <<  1)  // B - Bit-Manipulation extension
-    | (1                 <<  2)  // C - Compressed extension
-    | (0                 <<  3)  // D - Double precision floating-point extension
-    | (32'(RV32E)        <<  4)  // E - RV32E base ISA
-    | (0                 <<  5)  // F - Single precision floating-point extension
-    | (32'(!RV32E)       <<  8)  // I - RV32I/64I/128I base ISA
-    | (RV32MEnabled      << 12)  // M - Integer Multiply/Divide extension
-    | (0                 << 13)  // N - User level interrupts supported
-    | (0                 << 18)  // S - Supervisor mode implemented
-    | (1                 << 20)  // U - User mode implemented
-    | (0                 << 23)  // X - Non-standard extensions present
-    | (32'(CSR_MISA_MXL) << 30); // M-XLEN
+      (0                 <<  0)      // A - Atomic Instructions extension
+    | (RV32BEnabled      <<  1)      // B - Bit-Manipulation extension
+    | (1                 <<  2)      // C - Compressed extension
+    | (0                 <<  3)      // D - Double precision floating-point extension
+    | (32'(RV32E)        <<  4)      // E - RV32E base ISA
+    | (0                 <<  5)      // F - Single precision floating-point extension
+    | (32'(!RV32E)       <<  8)      // I - RV32I/64I/128I base ISA
+    | (RV32MEnabled      << 12)      // M - Integer Multiply/Divide extension
+    | (0                 << 13)      // N - User level interrupts supported
+    | (0                 << 18)      // S - Supervisor mode implemented
+    | (1                 << 20)      // U - User mode implemented
+    | (0                 << 23)      // X - Non-standard extensions present
+    | (32'(CSR_MISA_MXL) << 30)      // M-XLEN
+    | (XInterface ? X_MISA : 32'b0); // X-Interface MISA
 
   typedef struct packed {
-    logic      mie;
-    logic      mpie;
-    priv_lvl_e mpp;
-    logic      mprv;
-    logic      tw;
+    logic       mie;
+    logic       mpie;
+    logic [1:0] vs;
+    priv_lvl_e  mpp;
+    logic [1:0] fs;
+    logic [1:0] xs;
+    logic       mprv;
+    logic       tw;
   } status_t;
 
   typedef struct packed {
@@ -319,7 +327,10 @@ module ibex_cs_registers #(
         csr_rdata_int                                                   = '0;
         csr_rdata_int[CSR_MSTATUS_MIE_BIT]                              = mstatus_q.mie;
         csr_rdata_int[CSR_MSTATUS_MPIE_BIT]                             = mstatus_q.mpie;
+        csr_rdata_int[CSR_MSTATUS_VS_BIT_HIGH:CSR_MSTATUS_VS_BIT_LOW]   = mstatus_q.vs;
         csr_rdata_int[CSR_MSTATUS_MPP_BIT_HIGH:CSR_MSTATUS_MPP_BIT_LOW] = mstatus_q.mpp;
+        csr_rdata_int[CSR_MSTATUS_FS_BIT_HIGH:CSR_MSTATUS_FS_BIT_LOW]   = mstatus_q.fs;
+        csr_rdata_int[CSR_MSTATUS_XS_BIT_HIGH:CSR_MSTATUS_XS_BIT_LOW]   = mstatus_q.xs;
         csr_rdata_int[CSR_MSTATUS_MPRV_BIT]                             = mstatus_q.mprv;
         csr_rdata_int[CSR_MSTATUS_TW_BIT]                               = mstatus_q.tw;
       end
@@ -561,7 +572,10 @@ module ibex_cs_registers #(
           mstatus_d    = '{
               mie:  csr_wdata_int[CSR_MSTATUS_MIE_BIT],
               mpie: csr_wdata_int[CSR_MSTATUS_MPIE_BIT],
+              vs:   csr_wdata_int[CSR_MSTATUS_VS_BIT_HIGH:CSR_MSTATUS_VS_BIT_LOW],
               mpp:  priv_lvl_e'(csr_wdata_int[CSR_MSTATUS_MPP_BIT_HIGH:CSR_MSTATUS_MPP_BIT_LOW]),
+              fs:   csr_wdata_int[CSR_MSTATUS_FS_BIT_HIGH:CSR_MSTATUS_FS_BIT_LOW],
+              xs:   mstatus_q.xs,
               mprv: csr_wdata_int[CSR_MSTATUS_MPRV_BIT],
               tw:   csr_wdata_int[CSR_MSTATUS_TW_BIT]
           };
@@ -658,6 +672,11 @@ module ibex_cs_registers #(
         default:;
       endcase
     end
+
+    // Extension Context Status write from X-Interface
+    if (ecs_wen_i[2]) mstatus_d.xs = ecs_wr_i[5:4];
+    if (ecs_wen_i[1]) mstatus_d.fs = ecs_wr_i[3:2];
+    if (ecs_wen_i[0]) mstatus_d.vs = ecs_wr_i[1:0];
 
     // exception controller gets priority over other writes
     unique case (1'b1)
@@ -807,7 +826,10 @@ module ibex_cs_registers #(
   // MSTATUS
   localparam status_t MSTATUS_RST_VAL = '{mie:  1'b0,
                                           mpie: 1'b1,
+                                          vs:   2'b0,
                                           mpp:  PRIV_LVL_U,
+                                          fs:   2'b0,
+                                          xs:   X_ECS_XS,
                                           mprv: 1'b0,
                                           tw:   1'b0};
   ibex_csr #(
@@ -1587,6 +1609,12 @@ module ibex_cs_registers #(
   );
 
   assign csr_shadow_err_o = mstatus_err | mtvec_err | pmp_csr_err | cpuctrl_err;
+
+  /////////////////
+  // X-Interface //
+  /////////////////
+
+  assign ecs_rd_o = {mstatus_q.xs, mstatus_q.fs, mstatus_q.vs};
 
   ////////////////
   // Assertions //

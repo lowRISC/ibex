@@ -589,8 +589,14 @@ package ibex_pkg;
   // CSR status bits
   parameter int unsigned CSR_MSTATUS_MIE_BIT      = 3;
   parameter int unsigned CSR_MSTATUS_MPIE_BIT     = 7;
+  parameter int unsigned CSR_MSTATUS_VS_BIT_LOW   = 9;
+  parameter int unsigned CSR_MSTATUS_VS_BIT_HIGH  = 10;
   parameter int unsigned CSR_MSTATUS_MPP_BIT_LOW  = 11;
   parameter int unsigned CSR_MSTATUS_MPP_BIT_HIGH = 12;
+  parameter int unsigned CSR_MSTATUS_FS_BIT_LOW   = 13;
+  parameter int unsigned CSR_MSTATUS_FS_BIT_HIGH  = 14;
+  parameter int unsigned CSR_MSTATUS_XS_BIT_LOW   = 15;
+  parameter int unsigned CSR_MSTATUS_XS_BIT_HIGH  = 16;
   parameter int unsigned CSR_MSTATUS_MPRV_BIT     = 17;
   parameter int unsigned CSR_MSTATUS_TW_BIT       = 21;
 

@@ -385,6 +385,11 @@ module ibex_core import ibex_pkg::*; #(
   // for RVFI
   logic        illegal_insn_id, unused_illegal_insn_id; // ID stage sees an illegal instruction
 
+  // ECS Signals for X-Interface
+  logic [5:0]  ecs_rd;
+  logic [5:0]  ecs_wr;
+  logic [2:0]  ecs_wen;
+
   //////////////////////
   // Clock management //
   //////////////////////
@@ -535,7 +540,9 @@ module ibex_core import ibex_pkg::*; #(
     .DataIndTiming  (DataIndTiming),
     .WritebackStage (WritebackStage),
     .BranchPredictor(BranchPredictor),
-    .MemECC         (MemECC)
+    .MemECC         (MemECC),
+    .XInterface     (XInterface),
+    .MemInterface   (MemInterface)
   ) id_stage_i (
     .clk_i (clk_i),
     .rst_ni(rst_ni),
@@ -546,6 +553,7 @@ module ibex_core import ibex_pkg::*; #(
 
     // from/to IF-ID pipeline register
     .instr_valid_i        (instr_valid_id),
+    .instr_new_i          (instr_new_id),
     .instr_rdata_i        (instr_rdata_id),
     .instr_rdata_alu_i    (instr_rdata_alu_id),
     .instr_rdata_c_i      (instr_rdata_c_id),
@@ -681,7 +689,37 @@ module ibex_core import ibex_pkg::*; #(
     .perf_dside_wait_o(perf_dside_wait),
     .perf_mul_wait_o  (perf_mul_wait),
     .perf_div_wait_o  (perf_div_wait),
-    .instr_id_done_o  (instr_id_done)
+    .instr_id_done_o  (instr_id_done),
+
+    // Extend context status, from/to CSR
+    .ecs_rd_i (ecs_rd),
+    .ecs_wr_o (ecs_wr),
+    .ecs_wen_o(ecs_wen),
+
+    // Issue Interface
+    .x_issue_valid_o(x_issue_valid_o),
+    .x_issue_ready_i(x_issue_ready_i),
+    .x_issue_req_o  (x_issue_req_o),
+    .x_issue_resp_i (x_issue_resp_i),
+
+    // Commit Interface
+    .x_commit_valid_o(x_commit_valid_o),
+    .x_commit_o      (x_commit_o),
+
+    // Memory Interface
+    .x_mem_valid_i(x_mem_valid_i),
+    .x_mem_ready_o(x_mem_ready_o),
+    .x_mem_req_i  (x_mem_req_i),
+    .x_mem_resp_o (x_mem_resp_o),
+
+    // Memory Result Interface
+    .x_mem_result_valid_o(x_mem_result_valid_o),
+    .x_mem_result_o      (x_mem_result_o),
+
+    // Result Interface
+    .x_result_valid_i(x_result_valid_i),
+    .x_result_ready_o(x_result_ready_o),
+    .x_result_i      (x_result_i)
   );
 
   assign icache_inval_o = icache_inval;
@@ -1067,7 +1105,12 @@ module ibex_core import ibex_pkg::*; #(
     .mem_store_i                (perf_store),
     .dside_wait_i               (perf_dside_wait),
     .mul_wait_i                 (perf_mul_wait),
-    .div_wait_i                 (perf_div_wait)
+    .div_wait_i                 (perf_div_wait),
+
+    // Extend context status, from/to X-Interface (ID stage)
+    .ecs_rd_o (ecs_rd),
+    .ecs_wr_i (ecs_wr),
+    .ecs_wen_i(ecs_wen)
   );
 
   // These assertions are in top-level as instr_valid_id required as the enable term
@@ -1702,44 +1745,4 @@ module ibex_core import ibex_pkg::*; #(
       end
     end
   end
-
-  // For this version only compressed interface is implemented.
-  // Signals from other interfaces are unused.
-
-  // Issue Interface
-  logic          unused_x_issue_ready;
-  x_issue_resp_t unused_x_issue_resp;
-
-  assign unused_x_issue_ready = x_issue_ready_i;
-  assign unused_x_issue_resp  = x_issue_resp_i;
-
-  assign x_issue_valid_o = 'b0;
-  assign x_issue_req_o   = 'b0;
-
-  // Commit Interface
-  assign x_commit_valid_o = 'b0;
-  assign x_commit_o       = 'b0;
-
-  // Memory Interface
-  logic       unused_x_mem_valid;
-  x_mem_req_t unused_x_mem_req;
-
-  assign unused_x_mem_valid = x_mem_valid_i;
-  assign unused_x_mem_req   = x_mem_req_i;
-
-  assign x_mem_ready_o = 'b0;
-  assign x_mem_resp_o  = 'b0;
-
-  // Memory Result Interface
-  assign x_mem_result_valid_o = 'b0;
-  assign x_mem_result_o       = 'b0;
-
-  // Result Interface
-  logic      unused_x_result_valid;
-  x_result_t unused_x_result;
-
-  assign unused_x_result_valid = x_result_valid_i;
-  assign unused_x_result       = x_result_i;
-
-  assign x_result_ready_o = 'b0;
 endmodule

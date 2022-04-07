@@ -105,8 +105,12 @@ module ibex_controller #(
   // performance monitors
   output logic                  perf_jump_o,             // we are executing a jump
                                                          // instruction (j, jr, jal, jalr)
-  output logic                  perf_tbranch_o           // we are executing a taken branch
+  output logic                  perf_tbranch_o,          // we are executing a taken branch
                                                          // instruction
+
+  // X-Interface exception signal
+  input  logic                  x_result_exc_i,
+  input  logic [5:0]            x_result_exccode_i
 );
   import ibex_pkg::*;
 
@@ -118,6 +122,10 @@ module ibex_controller #(
   logic store_err_q, store_err_d;
   logic exc_req_q, exc_req_d;
   logic illegal_insn_q, illegal_insn_d;
+
+  logic                 x_result_exc_q;
+  ibex_pkg::exc_cause_t x_result_exccode_q, x_result_exccode_d;
+  ibex_pkg::priv_lvl_e  priv_mode;
 
   // Of the various exception/fault signals, which one takes priority in FLUSH and hence controls
   // what happens next (setting exc_cause, csr_mtval etc)
@@ -192,6 +200,12 @@ module ibex_controller #(
   assign csr_pipe_flush  = csr_pipe_flush_i  & instr_valid_i;
   assign instr_fetch_err = instr_fetch_err_i & instr_valid_i;
 
+  assign x_result_exccode_d = '{
+      irq_ext:     x_result_exccode_i[5],
+      irq_int:     1'b0,
+      lower_cause: x_result_exccode_i[4:0]
+  };
+
   // This is recorded in the illegal_insn_q flop to help timing.  Specifically
   // it is needed to break the path from ibex_cs_registers/illegal_csr_insn_o
   // to pc_set_o.  Clear when controller is in FLUSH so it won't remain set
@@ -212,7 +226,7 @@ module ibex_controller #(
   // LSU exception requests
   assign exc_req_lsu = store_err_i | load_err_i;
 
-  assign id_exception_o = exc_req_d;
+  assign id_exception_o = exc_req_d | x_result_exc_i;
 
   // special requests: special instructions, pipeline flushes, exceptions...
   // All terms in these expressions are qualified by instr_valid_i except exc_req_lsu which can come
@@ -223,7 +237,7 @@ module ibex_controller #(
   assign special_req_flush_only = wfi_insn | csr_pipe_flush;
 
   // These special requests cause a change in PC
-  assign special_req_pc_change = mret_insn | dret_insn | exc_req_d | exc_req_lsu;
+  assign special_req_pc_change = mret_insn | dret_insn | exc_req_d | exc_req_lsu | x_result_exc_i;
 
   // generic special request signal, applies to all instructions
   assign special_req = special_req_pc_change | special_req_flush_only;
@@ -240,11 +254,39 @@ module ibex_controller #(
       ebrk_insn_prio       = 0;
       store_err_prio       = 0;
       load_err_prio        = 0;
+      priv_mode            = priv_mode_i;
 
       // Note that with the writeback stage store/load errors occur on the instruction in writeback,
       // all other exception/faults occur on the instruction in ID/EX. The faults from writeback
       // must take priority as that instruction is architecurally ordered before the one in ID/EX.
-      if (store_err_q) begin
+      if (x_result_exc_q) begin
+        unique case (x_result_exccode_q)
+          ExcCauseInstrAccessFault : begin
+            instr_fetch_err_prio = 1'b1;
+          end
+          ExcCauseIllegalInsn : begin
+            illegal_insn_prio = 1'b1;
+          end
+          ExcCauseBreakpoint : begin
+            ebrk_insn_prio = 1'b1;
+          end
+          ExcCauseLoadAccessFault : begin
+            load_err_prio  = 1'b1;
+          end
+          ExcCauseStoreAccessFault : begin
+            store_err_prio = 1'b1;
+          end
+          ExcCauseEcallUMode : begin
+            ecall_insn_prio = 1'b1;
+            priv_mode       = PRIV_LVL_U;
+          end
+          ExcCauseEcallMMode : begin
+            ecall_insn_prio = 1'b1;
+            priv_mode       = PRIV_LVL_M;
+          end
+          default:;
+        endcase
+      end else if (store_err_q) begin
         store_err_prio = 1'b1;
       end else if (load_err_q) begin
         load_err_prio  = 1'b1;
@@ -269,8 +311,36 @@ module ibex_controller #(
       ebrk_insn_prio       = 0;
       store_err_prio       = 0;
       load_err_prio        = 0;
+      priv_mode            = priv_mode_i;
 
-      if (instr_fetch_err) begin
+      if (x_result_exc_q) begin
+        unique case (x_result_exccode_q)
+          ExcCauseInstrAccessFault : begin
+            instr_fetch_err_prio = 1'b1;
+          end
+          ExcCauseIllegalInsn : begin
+            illegal_insn_prio = 1'b1;
+          end
+          ExcCauseBreakpoint : begin
+            ebrk_insn_prio = 1'b1;
+          end
+          ExcCauseLoadAccessFault : begin
+            load_err_prio  = 1'b1;
+          end
+          ExcCauseStoreAccessFault : begin
+            store_err_prio = 1'b1;
+          end
+          ExcCauseEcallUMode : begin
+            ecall_insn_prio = 1'b1;
+            priv_mode       = PRIV_LVL_U;
+          end
+          ExcCauseEcallMMode : begin
+            ecall_insn_prio = 1'b1;
+            priv_mode       = PRIV_LVL_M;
+          end
+          default:;
+        endcase
+      end else if (instr_fetch_err) begin
         instr_fetch_err_prio = 1'b1;
       end else if (illegal_insn_q) begin
         illegal_insn_prio = 1'b1;
@@ -389,9 +459,9 @@ module ibex_controller #(
 
   // Set when an ebreak should enter debug mode rather than jump to exception
   // handler
-  assign ebreak_into_debug = priv_mode_i == PRIV_LVL_M ? debug_ebreakm_i :
-                             priv_mode_i == PRIV_LVL_U ? debug_ebreaku_i :
-                                                         1'b0;
+  assign ebreak_into_debug = priv_mode == PRIV_LVL_M ? debug_ebreakm_i :
+                             priv_mode == PRIV_LVL_U ? debug_ebreaku_i :
+                                                       1'b0;
 
   // NMI can be produced from an external (irq_nm_i top level input) or an internal (within
   // ibex_core) source. For internal sources the cause is specified via irq_nm_int_cause.
@@ -741,8 +811,8 @@ module ibex_controller #(
               csr_mtval_o = instr_is_compressed_i ? {16'b0, instr_compressed_i} : instr_i;
             end
             ecall_insn_prio: begin
-              exc_cause_o = (priv_mode_i == PRIV_LVL_M) ? ExcCauseEcallMMode :
-                                                          ExcCauseEcallUMode;
+              exc_cause_o = (priv_mode == PRIV_LVL_M) ? ExcCauseEcallMMode :
+                                                        ExcCauseEcallUMode;
             end
             ebrk_insn_prio: begin
               if (debug_mode_q | ebreak_into_debug) begin
@@ -869,6 +939,8 @@ module ibex_controller #(
       store_err_q             <= 1'b0;
       exc_req_q               <= 1'b0;
       illegal_insn_q          <= 1'b0;
+      x_result_exc_q          <= 1'b0;
+      x_result_exccode_q      <= ExcCauseInsnAddrMisa;
     end else begin
       ctrl_fsm_cs             <= ctrl_fsm_ns;
       nmi_mode_q              <= nmi_mode_d;
@@ -879,6 +951,8 @@ module ibex_controller #(
       store_err_q             <= store_err_d;
       exc_req_q               <= exc_req_d;
       illegal_insn_q          <= illegal_insn_d;
+      x_result_exc_q          <= x_result_exc_i;
+      x_result_exccode_q      <= x_result_exccode_d;
     end
   end
 

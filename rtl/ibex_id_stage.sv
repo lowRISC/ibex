@@ -25,7 +25,9 @@ module ibex_id_stage #(
   parameter bit               BranchTargetALU = 0,
   parameter bit               WritebackStage  = 0,
   parameter bit               BranchPredictor = 0,
-  parameter bit               MemECC          = 1'b0
+  parameter bit               MemECC          = 1'b0,
+  parameter bit               XInterface      = 1'b1,
+  parameter bit               MemInterface    = 1'b0
 ) (
   input  logic                      clk_i,
   input  logic                      rst_ni,
@@ -35,6 +37,7 @@ module ibex_id_stage #(
 
   // Interface to IF stage
   input  logic                      instr_valid_i,
+  input  logic                      instr_new_i,
   input  logic [31:0]               instr_rdata_i,         // from IF-ID pipeline registers
   input  logic [31:0]               instr_rdata_alu_i,     // from IF-ID pipeline registers
   input  logic [15:0]               instr_rdata_c_i,       // from IF-ID pipeline registers
@@ -182,13 +185,45 @@ module ibex_id_stage #(
                                                         // access to finish before proceeding
   output logic                      perf_mul_wait_o,
   output logic                      perf_div_wait_o,
-  output logic                      instr_id_done_o
+  output logic                      instr_id_done_o,
+
+  // X-Interface Signals
+  // ECS Signals
+  input  logic [5:0]                ecs_rd_i,
+  output logic [5:0]                ecs_wr_o,
+  output logic [2:0]                ecs_wen_o,
+
+  // Issue Interface
+  output logic                      x_issue_valid_o,
+  input  logic                      x_issue_ready_i,
+  output x_issue_req_t              x_issue_req_o,
+  input  x_issue_resp_t             x_issue_resp_i,
+
+  // Commit Interface
+  output logic                      x_commit_valid_o,
+  output x_commit_t                 x_commit_o,
+
+  // Memory Interface
+  input  logic                      x_mem_valid_i,
+  output logic                      x_mem_ready_o,
+  input  x_mem_req_t                x_mem_req_i,
+  output x_mem_resp_t               x_mem_resp_o,
+
+  // Memory Result Interface
+  output logic                      x_mem_result_valid_o,
+  output x_mem_result_t             x_mem_result_o,
+
+  // Result Interface
+  input  logic                      x_result_valid_i,
+  output logic                      x_result_ready_o,
+  input  x_result_t                 x_result_i
 );
 
   import ibex_pkg::*;
 
   // Decoder/Controller, ID stage internal signals
   logic        illegal_insn_dec;
+  logic        illegal_insn_id;
   logic        illegal_dret_insn;
   logic        illegal_umode_insn;
   logic        ebrk_insn;
@@ -219,10 +254,21 @@ module ibex_id_stage #(
   logic        stall_multdiv;
   logic        stall_branch;
   logic        stall_jump;
+  logic        stall_offl;
+  logic        stall_external;
+  logic        external_data_hz;
   logic        stall_id;
   logic        stall_wb;
   logic        flush_id;
   logic        multicycle_done;
+
+  // X-Interface signals
+  logic        x_issue_candidate;
+  logic        x_issue_use_rs3;
+  logic        imd_val_we_x_issue;
+  logic        x_result_wb_en;
+  logic        x_result_exc;
+  logic [5:0]  x_result_exccode;
 
   // Immediate decoding and sign extension
   logic [31:0] imm_i_type;
@@ -246,8 +292,10 @@ module ibex_id_stage #(
   assign rf_ren_a = instr_valid_i & ~instr_fetch_err_i & ~illegal_insn_o & rf_ren_a_dec;
   assign rf_ren_b = instr_valid_i & ~instr_fetch_err_i & ~illegal_insn_o & rf_ren_b_dec;
 
-  assign rf_ren_a_o = rf_ren_a;
-  assign rf_ren_b_o = rf_ren_b;
+  assign rf_ren_a_o = rf_ren_a | x_issue_candidate;
+  assign rf_ren_b_o = rf_ren_b | x_issue_candidate;
+
+  logic [4:0]  rf_waddr_dec;
 
   logic [31:0] rf_rdata_a_fwd;
   logic [31:0] rf_rdata_b_fwd;
@@ -259,7 +307,7 @@ module ibex_id_stage #(
   logic        alu_multicycle_dec;
   logic        stall_alu;
 
-  logic [33:0] imd_val_q[2];
+  logic [33:0] imd_val_d[2], imd_val_q[2];
 
   op_a_sel_e   bt_a_mux_sel;
   imm_b_sel_e  bt_b_mux_sel;
@@ -391,12 +439,38 @@ module ibex_id_stage #(
   // Multicycle Operation Stage Register //
   /////////////////////////////////////////
 
+  // The multicycle operation register is shared for
+  // - Integer Multiplications (Ex Block)
+  // - Integer Divisions (Ex Block)
+  // - Multicycle ALU Operations (Ex Block)
+  // - Latching register contents for offloading ternary operations with 3 RF read ports
+
+  always_comb begin
+    imd_val_d = imd_val_q;
+    unique case(1'b1)
+      |imd_val_we_ex_i: begin
+        if (imd_val_we_ex_i[0]) begin
+          imd_val_d[0] = imd_val_d_ex_i[0];
+        end
+        if (imd_val_we_ex_i[1]) begin
+          imd_val_d[1] = imd_val_d_ex_i[1];
+        end
+      end
+      imd_val_we_x_issue: begin
+        imd_val_d[0] = {2'b00, rf_rdata_a_i};
+      end
+      default: begin
+        imd_val_d = imd_val_q;
+      end
+    endcase
+  end
+
   for (genvar i = 0; i < 2; i++) begin : gen_intermediate_val_reg
     always_ff @(posedge clk_i or negedge rst_ni) begin : intermediate_val_reg
       if (!rst_ni) begin
         imd_val_q[i] <= '0;
-      end else if (imd_val_we_ex_i[i]) begin
-        imd_val_q[i] <= imd_val_d_ex_i[i];
+      end else begin
+        imd_val_q[i] <= imd_val_d[i];
       end
     end
   end
@@ -408,14 +482,14 @@ module ibex_id_stage #(
   ///////////////////////
 
   // Suppress register write if there is an illegal CSR access or instruction is not executing
-  assign rf_we_id_o = rf_we_raw & instr_executing & ~illegal_csr_insn_i;
+  assign rf_we_id_o = (rf_we_raw & instr_executing & ~illegal_csr_insn_i) | x_result_wb_en;
 
   // Register file write data mux
   always_comb begin : rf_wdata_id_mux
     unique case (rf_wdata_sel)
-      RF_WD_EX:  rf_wdata_id_o = result_ex_i;
-      RF_WD_CSR: rf_wdata_id_o = csr_rdata_i;
-      default:   rf_wdata_id_o = result_ex_i;
+      RF_WD_EX:  rf_wdata_mux = result_ex_i;
+      RF_WD_CSR: rf_wdata_mux = csr_rdata_i;
+      default:   rf_wdata_mux = result_ex_i;
     endcase
   end
 
@@ -468,7 +542,7 @@ module ibex_id_stage #(
 
     .rf_raddr_a_o(rf_raddr_a_o),
     .rf_raddr_b_o(rf_raddr_b_o),
-    .rf_waddr_o  (rf_waddr_id_o),
+    .rf_waddr_o  (rf_waddr_dec),
     .rf_ren_a_o  (rf_ren_a_dec),
     .rf_ren_b_o  (rf_ren_b_dec),
 
@@ -498,7 +572,10 @@ module ibex_id_stage #(
 
     // jump/branches
     .jump_in_dec_o  (jump_in_dec),
-    .branch_in_dec_o(branch_in_dec)
+    .branch_in_dec_o(branch_in_dec),
+
+    // X-Interface
+    .x_use_rs3_i(x_issue_use_rs3)
   );
 
   /////////////////////////////////
@@ -540,7 +617,7 @@ module ibex_id_stage #(
                               (mret_insn_dec | (csr_mstatus_tw_i & wfi_insn_dec));
 
   assign illegal_insn_o = instr_valid_i &
-      (illegal_insn_dec | illegal_csr_insn_i | illegal_dret_insn | illegal_umode_insn);
+      (illegal_insn_id | illegal_dret_insn | illegal_umode_insn);
 
   ibex_controller #(
     .WritebackStage (WritebackStage),
@@ -631,7 +708,10 @@ module ibex_id_stage #(
 
     // Performance Counters
     .perf_jump_o   (perf_jump_o),
-    .perf_tbranch_o(perf_tbranch_o)
+    .perf_tbranch_o(perf_tbranch_o),
+
+    .x_result_exc_i    (x_result_exc),
+    .x_result_exccode_i(x_result_exccode)
   );
 
   assign multdiv_en_dec   = mult_en_dec | div_en_dec;
@@ -875,13 +955,14 @@ module ibex_id_stage #(
   // Stall ID/EX stage for reason that relates to instruction in ID/EX, update assertion below if
   // modifying this.
   assign stall_id = stall_ld_hz | stall_mem | stall_multdiv | stall_jump | stall_branch |
-                      stall_alu;
+                    stall_alu | stall_offl | stall_external;
 
   // Generally illegal instructions have no reason to stall, however they must still stall waiting
   // for outstanding memory requests so exceptions related to them take priority over the illegal
   // instruction exception.
   `ASSERT(IllegalInsnStallMustBeMemStall, illegal_insn_o & stall_id |-> stall_mem &
-    ~(stall_ld_hz | stall_multdiv | stall_jump | stall_branch | stall_alu))
+    ~(stall_ld_hz | stall_multdiv | stall_jump | stall_branch |
+      stall_alu | stall_offl | stall_external))
 
   assign instr_done = ~stall_id & ~flush_id & instr_executing;
 
@@ -945,11 +1026,13 @@ module ibex_id_stage #(
     assign instr_executing_spec = instr_valid_i      &
                                   ~instr_fetch_err_i &
                                   controller_run     &
+                                  ~external_data_hz  &
                                   ~stall_ld_hz;
 
     assign instr_executing = instr_valid_i              &
                              ~instr_kill                &
                              ~stall_ld_hz               &
+                             ~stall_external            &
                              ~outstanding_memory_access;
 
     `ASSERT(IbexExecutingSpecIfExecuting, instr_executing |-> instr_executing_spec)
@@ -992,9 +1075,9 @@ module ibex_id_stage #(
 
     assign stall_ld_hz = outstanding_load_wb_i & (rf_rd_a_hz | rf_rd_b_hz);
 
-    assign instr_type_wb_o = ~lsu_req_dec ? WB_INSTR_OTHER :
-                              lsu_we      ? WB_INSTR_STORE :
-                                            WB_INSTR_LOAD;
+    assign instr_type_wb_o = (~lsu_req_dec | x_result_wb_en) ? WB_INSTR_OTHER :
+                               lsu_we                        ? WB_INSTR_STORE :
+                                                               WB_INSTR_LOAD;
 
     assign instr_id_done_o = en_wb_o & ready_wb_i;
 
@@ -1017,8 +1100,14 @@ module ibex_id_stage #(
     assign stall_ld_hz   = 1'b0;
 
     // Without writeback stage any valid instruction that hasn't seen an error will execute
-    assign instr_executing_spec = instr_valid_i & ~instr_fetch_err_i & controller_run;
-    assign instr_executing = instr_executing_spec;
+    assign instr_executing_spec = instr_valid_i      &
+                                  ~instr_fetch_err_i &
+                                  ~external_data_hz  &
+                                  controller_run;
+    assign instr_executing      = instr_valid_i      &
+                                  ~instr_fetch_err_i &
+                                  ~stall_external    &
+                                  controller_run;
 
     `ASSERT(IbexStallIfValidInstrNotExecuting,
       instr_valid_i & ~instr_fetch_err_i & ~instr_executing & controller_run |-> stall_id)
@@ -1062,15 +1151,395 @@ module ibex_id_stage #(
 
   // Signal which instructions to count as retired in minstret, all traps along with ebrk and
   // ecall instructions are not counted.
-  assign instr_perf_count_id_o = ~ebrk_insn & ~ecall_insn_dec & ~illegal_insn_dec &
-      ~illegal_csr_insn_i & ~instr_fetch_err_i;
+  assign instr_perf_count_id_o = ~ebrk_insn & ~ecall_insn_dec &
+      ~illegal_insn_id & ~instr_fetch_err_i;
 
   // An instruction is ready to move to the writeback stage (or retire if there is no writeback
   // stage)
-  assign en_wb_o = instr_done;
+  assign en_wb_o = (instr_done & ~x_issue_candidate) | x_result_wb_en;
 
   assign perf_mul_wait_o = stall_multdiv & mult_en_dec;
   assign perf_div_wait_o = stall_multdiv & div_en_dec;
+
+  /////////////////////////
+  // X-Interface Support //
+  /////////////////////////
+
+  if (XInterface) begin : x_interface
+    // signal to reset scoreboard and issue-commit buffer
+    logic  x_exc_rst;
+    assign x_exc_rst = x_result_exc; // Memory interface not supported yet
+
+    /////////////////////
+    // Issue Interface //
+    /////////////////////
+
+    // control signals
+    logic x_issue_fin_d, x_issue_fin_q;
+    logic x_issue_handshake;
+    // stall signals
+    logic stall_external_raw;
+    // registerfile related signals
+    logic                x_issue_rd_clean;
+    logic [4:0]          x_issue_rd_addr;
+    logic                x_issue_rs_a_valid;
+    logic                x_issue_rs_a_valid_raw;
+    logic                x_issue_rs_b_valid;
+    logic                x_issue_rs_b_valid_raw;
+    logic [X_NUM_RS-1:0] x_issue_rs_valid;
+    logic [4:0]          x_issue_rs_a_addr;
+    logic [4:0]          x_issue_rs_b_addr;
+    // register values
+    logic [X_RFR_WIDTH-1:0] x_issue_rs_value[X_NUM_RS-1:0];
+    // id signals from issue-commit buffer
+    logic [X_ID_WIDTH-1:0] x_issue_id;
+    logic                  x_issue_id_valid;
+    // respond signals
+    logic x_issue_accept;
+    logic x_issue_wb;
+    logic x_issue_ls;
+    logic x_issue_ecsw;
+    logic x_issue_exc;
+    logic unused_x_issue_dw;
+    logic unused_x_issue_dr;
+
+    assign x_issue_handshake = x_issue_valid_o & x_issue_ready_i;
+
+    // An instruction is an offload candidate for issue interface when:
+    // 1. It can not be recognized by the decoder, or
+    // 2. It access an illegal address in CSR.
+    assign x_issue_candidate = illegal_insn_dec | illegal_csr_insn_i;
+
+    // Output a valid signal when:
+    // 1. There is a valid instruction in pipeline register, and
+    // 2. The instruction is an offload candidate, and
+    // 3. The current handshake has not completed, and
+    // 4. The destination register is valid, and
+    // 5. There is an ID available in the buffer.
+    assign x_issue_valid_o = instr_valid_i & x_issue_candidate & ~x_issue_fin_q &
+                             x_issue_rd_clean & x_issue_id_valid;
+
+    // 1. A transaction is finished when handshake is completed this cycle.
+    // 2. A new transaction might be initiated when a new instruction is in the pipeline register.
+    assign x_issue_fin_d = x_issue_handshake | (x_issue_fin_q & ~instr_new_i);
+
+    // When offloading instruction, pipeline will stall if:
+    // 1. Waiting for the ready signal from X-Interface, or
+    // 2. Waiting for valid ID available or destination register to be clean
+    assign stall_offl = (x_issue_valid_o & ~x_issue_ready_i) |
+                        (instr_valid_i & x_issue_candidate & ~x_issue_fin_q &
+                        ~(x_issue_rd_clean & x_issue_id_valid));
+    // Outstanding external instruction cause pipeline stall when:
+    // 1. Instruction is valid, and
+    // 2. There is one or more outstanding external signals, and
+    // 3. The instruction in this cycle can be recognized by the core.
+    assign stall_external = instr_valid_i & stall_external_raw & ~x_issue_candidate;
+    // Indicates if the instruction can run if there is no exception
+    // for preceding instruction, used in instr_executing_spec signal.
+    assign external_data_hz = instr_valid_i & |x_issue_rs_valid_raw & ~x_issue_candidate;
+
+    // Interface output request signals
+    assign x_issue_req_o.instr     = instr_rdata_i;
+    assign x_issue_req_o.mode      = priv_mode_i;
+    assign x_issue_req_o.id        = x_issue_id;
+    assign x_issue_req_o.rs        = x_issue_rs_value;
+    assign x_issue_req_o.rs_valid  = x_issue_rs_valid;
+    assign x_issue_req_o.ecs       = ecs_rd_i;
+    assign x_issue_req_o.ecs_valid = 1'b1;
+
+    // Interface respond signals, to issue-commit buffer
+    assign x_issue_accept    = x_issue_resp_i.accept & x_issue_handshake;
+    assign x_issue_wb        = x_issue_resp_i.writeback;
+    assign x_issue_ls        = x_issue_resp_i.loadstore;
+    assign x_issue_ecsw      = x_issue_resp_i.ecswrite;
+    assign x_issue_exc       = x_issue_resp_i.exc;
+    assign unused_x_issue_dw = x_issue_resp_i.dualwrite;
+    assign unused_x_issue_dr = x_issue_resp_i.dualread;
+    // An instruction is invalid only if it is not accepted by issue interface.
+    assign illegal_insn_id   = ~x_issue_accept;
+
+    // Register address inputs for scoreboard
+    assign x_issue_rs_a_addr = rf_raddr_a_o;
+    assign x_issue_rs_b_addr = rf_raddr_b_o;
+    assign x_issue_rd_addr   = rf_waddr_dec;
+
+    // RF read block.
+    if (X_NUM_RS == 2) begin
+      // 2 source operands
+      assign x_issue_rs_value[0] = rf_rdata_a_fwd;
+      assign x_issue_rs_value[1] = rf_rdata_b_fwd;
+
+      assign x_issue_rs_valid[0] = x_issue_rs_valid_raw[0];
+      assign x_issue_rs_valid[1] = x_issue_rs_valid_raw[1];
+
+      assign x_issue_use_rs3     = 1'b0;
+      assign imd_val_we_x_issue  = 1'b0;
+    end else begin
+      // 3 source operands
+      typedef enum logic { ISSUE_IDLE, ISSUE_GET_RS3 } x_issue_fsm_e;
+      x_issue_fsm_e x_issue_fsm_q, x_issue_fsm_d;
+
+      logic x_issue_rs1_fin;
+      assign x_issue_rs1_fin = instr_valid_i & x_issue_candidate & ~x_issue_fin_q &
+                               x_issue_rs_a_valid;
+      
+      if (WritebackStage) begin
+        assign x_issue_rs_a_valid = x_issue_rs_a_valid_raw & ~(rf_rd_a_hz & outstanding_load_wb_i);
+        assign x_issue_rs_b_valid = x_issue_rs_a_valid_raw & ~(rf_rd_b_hz & outstanding_load_wb_i);
+      end else begin
+        assign x_issue_rs_a_valid = x_issue_rs_a_valid_raw;
+        assign x_issue_rs_b_valid = x_issue_rs_a_valid_raw;
+      end
+
+      always_comb begin
+        x_issue_fsm_d = x_issue_fsm_q;
+
+        x_issue_rs_value[0] = rf_rdata_a_fwd;
+        x_issue_rs_value[1] = rf_rdata_b_fwd;
+        x_issue_rs_value[2] = rf_rdata_a_fwd;
+
+        acc_x_q_rs_valid_o[0] = 1'b0;
+        acc_x_q_rs_valid_o[1] = 1'b0;
+        acc_x_q_rs_valid_o[2] = 1'b0;
+
+        x_issue_use_rs3 = 1'b0;
+        imd_val_we_x_issue = 1'b0;
+
+        unique case (x_issue_fsm_q)
+          ISSUE_IDLE: begin
+            x_issue_rs_valid[0] = x_issue_rs_a_valid;
+            x_issue_rs_valid[1] = x_issue_rs_b_valid;
+            x_issue_rs_valid[2] = 1'b0;
+            if (x_issue_rs1_fin & ~x_issue_handshake) begin
+              x_issue_fsm_d      = ISSUE_GET_RS3;
+              imd_val_we_x_issue = 1'b1;
+            end
+          end
+
+          ISSUE_GET_RS3: begin
+            // rs1 is latched in itermediate value register
+            x_issue_use_rs3     = 1'b1;
+            x_issue_rs_value[0] = imd_val_q[0][31:0];
+            x_issue_rs_valid[0] = 1'b1;
+            x_issue_rs_valid[1] = x_issue_rs_b_valid;
+            x_issue_rs_valid[2] = x_issue_rs_a_valid;
+            if (x_issue_handshake) begin
+              x_issue_fsm_d = ISSUE_IDLE;
+            end
+          end
+          default: begin
+            x_issue_fsm_d = ISSUE_IDLE;
+          end
+        endcase
+      end
+
+      always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni) begin
+          x_issue_fin_q <= 1'b0;
+        end else begin
+          x_issue_fin_q <= x_issue_fin_d;
+        end
+      end
+    end
+
+    // Flip-Flops
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        x_issue_fsm_q <= ISSUE_IDLE;
+      end else begin
+        x_issue_fsm_q <= x_issue_fsm_d;
+      end
+    end
+
+    //////////////////////
+    // Commit Interface //
+    //////////////////////
+    logic [X_ID_WIDTH-1:0] x_commit_id;
+    logic                  x_commit_kill;
+    // The signals are generated from the buffer
+    assign x_commit_o.id          = x_commit_id;
+    assign x_commit_o.commit_kill = x_commit_kill;
+
+    //////////////////////
+    // Result Interface //
+    //////////////////////
+    logic [X_ID_WIDTH-1:0]       x_result_id;
+    logic [X_RFW_WIDTH-1:0]      x_result_data;
+    logic [4:0]                  x_result_rd;
+    logic [X_RFW_WIDTH/XLEN-1:0] x_result_we;
+    logic [5:0]                  x_result_ecsdata;
+    logic [2:0]                  x_result_ecswe;
+    logic                        unused_x_result_dbg;
+    logic                        x_result_handshake;
+    logic                        x_result_wb_addr;
+    logic                        x_result_wb_data;
+
+    // Input result signals
+    assign x_result_id      = x_result_i.id;
+    assign x_result_data    = x_result_i.data;
+    assign x_result_rd      = x_result_i.rd;
+    assign x_result_we      = x_result_i.we;
+    assign x_result_ecsdata = x_result_i.ecsdata;
+    assign x_result_ecswe   = x_result_i.ecswe;
+    assign x_result_exc     = x_result_i.exc & x_result_valid_i;
+    assign x_result_exccode = x_result_i.exccode;
+
+    // Handshake signal
+    assign x_result_ready_o = x_result_valid_i & ready_wb_i;
+    // Writeback, dual write not supported now
+    assign x_result_wb_en   = x_result_ready_o & x_result_we;
+    assign x_result_wb_addr = x_result_rd;
+    assign x_result_wb_data = x_result_data;
+    // Multiplexers for writeback
+    assign rf_waddr_id_o    = x_result_wb_en ? x_result_wb_addr : rf_waddr_dec;
+    assign rf_wdata_id_o    = x_result_wb_en ? x_result_wb_data : rf_wdata_mux;
+    // ECS signals
+    assign ecs_wen_o        = x_result_ready_o ? x_result_ecswe : 3'b0;
+    assign ecs_wr_o         = x_result_ecsdata;
+
+    assign unused_x_result_dbg = x_result_i.dbg;
+
+    ////////////////////////////////////////
+    // Memory and Memory Result Interface //
+    ////////////////////////////////////////
+    logic       unused_x_mem_valid;
+    x_mem_req_t unused_x_mem_req;
+
+    assign unused_x_mem_valid = x_mem_valid_i;
+    assign unused_x_mem_req   = x_mem_req_i;
+
+    assign x_mem_ready_o        = '0;
+    assign x_mem_resp_o         = '0;
+    assign x_mem_result_valid_o = '0;
+    assign x_mem_result_o       = '0;
+
+    logic [X_ID_WIDTH-1:0] mem_id;
+    logic                  mem_result_fin;
+    logic [X_ID_WIDTH-1:0] mem_result_id;
+
+    assign mem_id         = '0;
+    assign mem_result_fin = '0;
+    assign mem_result_id  = '0;
+
+    logic unused_mem_commit;
+
+    /////////////////
+    // SCORE BOARD //
+    /////////////////
+    logic [31:0] scoreboard_d, scoreboard_q;
+
+    // Get the validity and cleanness of source and destination registers
+    assign x_issue_rs_a_valid_raw = ~scoreboard_q[x_issue_rs_a_addr];
+    assign x_issue_rs_b_valid_raw = ~scoreboard_q[x_issue_rs_b_addr];
+    assign x_issue_rd_clean       = ~scoreboard_q[x_issue_rd_addr];
+
+    // Set and reset the bits in the scoreboard
+    always_comb begin
+      scoreboard_d = scoreboard_q;
+      if (x_issue_accept) begin
+        scoreboard_d[x_issue_rd_addr] = x_issue_wb;
+      end
+      if (x_result_wb_en) begin
+        scoreboard_d[x_result_wb_addr] = 1'b0;
+      end
+      if (x_exc_rst) begin
+        scoreboard_d = '0;
+      end
+      scoreboard_d[0] = 1'b0;
+    end
+
+    // Registers for scoreboard
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        scoreboard_q <= '0;
+      end else begin
+        scoreboard_q <= scoreboard_d;
+      end
+    end
+
+    /////////////////////////
+    // ISSUE-COMMIT BUFFER //
+    /////////////////////////
+
+    ibex_xif_issue_commit_buffer #(
+      .IdrWidth(X_ID_WIDTH-1)
+    ) issue_commit_buffer_i (
+      .clk_i (clk_i),
+      .rst_ni(rst_ni),
+      // reset all issued and not committed instructions
+      .exc_rst_i(x_exc_rst),
+      // issue interface
+      .issue_id_o      (x_issue_id),
+      .issue_id_valid_o(x_issue_id_valid),
+      .issue_accept_i  (x_issue_accept),
+      .issue_wb_i      (x_issue_wb),
+      .issue_ls_i      (x_issue_ls),
+      .issue_ecsw_i    (x_issue_ecsw),
+      .issue_exc_i     (x_issue_exc),
+      // cpu task stall because of outstanding external instructions ocuppying id/ex stage
+      .stall_external_o(stall_external_raw),
+      // commit interface
+      .commit_valid_o(x_commit_valid_o),
+      .commit_id_o   (x_commit_id),
+      .commit_kill_o (x_commit_kill),
+      // memory interface
+      .mem_id_i    (mem_id),
+      .mem_commit_o(use_mem_commit),
+      // memory result interface
+      .mem_result_fin_i(mem_result_fin),
+      .mem_result_id_i (mem_result_id),
+      // result interface
+      .result_fin_i (x_result_ready_o),
+      .result_id_i  (x_result_id)
+    );
+
+  end else begin : no_x_interface
+    // unused I/Os
+    logic [5:0]    unused_ecs_rd;
+    logic          unused_x_issue_ready;
+    x_issue_resp_t unused_x_issue_resp;
+    logic          unused_x_mem_valid;
+    x_mem_req_t    unused_x_mem_req;
+    logic          unused_x_result_valid;
+    x_result_t     unused_x_result;
+    logic          unused_instr_new;
+
+    assign unused_ecs_rd         = ecs_rd_i;
+    assign unused_x_issue_ready  = x_issue_ready_i;
+    assign unused_x_issue_resp   = x_issue_resp_i;
+    assign unused_x_mem_valid    = x_mem_valid_i;
+    assign unused_x_mem_req      = x_mem_req_i;
+    assign unused_x_result_valid = x_result_valid_i;
+    assign unused_x_result       = x_result_i;
+    assign unused_instr_new      = instr_new_i;
+
+    assign ecs_wr_o             = '0;
+    assign ecs_wen_o            = '0;
+    assign x_issue_valid_o      = '0;
+    assign x_issue_req_o        = '0;
+    assign x_commit_valid_o     = '0;
+    assign x_commit_o           = '0;
+    assign x_result_ready_o     = '0;
+    assign x_mem_ready_o        = '0;
+    assign x_mem_resp_o         = '0;
+    assign x_mem_result_valid_o = '0;
+    assign x_mem_result_o       = '0;
+
+    // X-Interface signals that needs to be set to 0
+    assign x_issue_candidate  = '0;
+    assign stall_offl         = '0;
+    assign stall_external     = '0;
+    assign external_data_hz   = '0;
+    assign x_issue_use_rs3    = '0;
+    assign imd_val_we_x_issue = '0;
+    assign x_result_wb_en     = '0;
+    assign x_result_exc       = '0;
+    assign x_result_exccode   = '0;
+
+    // wire connections
+    assign illegal_insn_id = illegal_insn_dec | illegal_csr_insn_i;
+    assign rf_waddr_id_o   = rf_waddr_dec;
+  end
 
   //////////
   // FCOV //
@@ -1124,6 +1593,11 @@ module ibex_id_stage #(
   // Multicycle enable signals must be unique.
   `ASSERT(IbexMulticycleEnableUnique,
       $onehot0({lsu_req_dec, multdiv_en_dec, branch_in_dec, jump_in_dec}))
+
+
+  // Multicycle stage register enable must be unique.
+  `ASSERT(IbexMulticycleStageRegEnableUnique,
+      $onehot0({|imd_val_we_ex_i, imd_val_we_x_issue}))
 
   // Duplicated instruction flops must match
   // === as DV environment can produce instructions with Xs in, so must use precise match that
