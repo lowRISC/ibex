@@ -324,9 +324,10 @@ $(metadata)/.instr_gen.run.stamp: \
 	@sed -i $(REGEX_EMPTY_LINES) $(INSTR_GEN_RUN_COMMANDS)
 	$(verb)./construct_makefile.py \
 	         --output=$(OUT-SEED)/instr_gen/run.mk \
-	         --test_cmds=$(INSTR_GEN_RUN_COMMANDS)
-	export RISCV_DV_ROOT
-	@$(MAKE) -f $(OUT-SEED)/instr_gen/run.mk all
+	         --test_cmds=$(INSTR_GEN_RUN_COMMANDS) \
+	         --discard_stdstreams
+	@export RISCV_DV_ROOT
+	@$(MAKE) -s -f $(OUT-SEED)/instr_gen/run.mk all
 	@ # Bookkeeping
 	@touch $@
 
@@ -381,7 +382,7 @@ $(metadata)/.iss.run.stamp: \
 	$(verb)./construct_makefile.py \
 	         --output=$(OUT-SEED)/instr_gen/iss.mk \
 	         --test_cmds=$(ISS_COMMANDS)
-	@$(MAKE) -f $(OUT-SEED)/instr_gen/iss.mk all
+	@$(MAKE) -s -f $(OUT-SEED)/instr_gen/iss.mk all
 	@ # Bookkeeping
 	$(call dump-vars,$(metadata)/.iss.vars.mk,iss,$(iss-var-deps))
 	@touch $@
