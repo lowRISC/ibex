@@ -42,7 +42,9 @@ module ibex_core import ibex_pkg::*; #(
   parameter bit          MemECC            = 1'b0,
   parameter int unsigned MemDataWidth      = MemECC ? 32 + 7 : 32,
   parameter int unsigned DmHaltAddr        = 32'h1A110800,
-  parameter int unsigned DmExceptionAddr   = 32'h1A110808
+  parameter int unsigned DmExceptionAddr   = 32'h1A110808,
+  parameter bit          XInterface        = 1'b1,
+  parameter bit          MemInterface      = 1'b0
 ) (
   // Clock and Reset
   input  logic                         clk_i,
@@ -148,7 +150,34 @@ module ibex_core import ibex_pkg::*; #(
   output logic                         alert_major_internal_o,
   output logic                         alert_major_bus_o,
   output logic                         icache_inval_o,
-  output logic                         core_busy_o
+  output logic                         core_busy_o,
+
+  // X-Interface Signals
+  // Compressed Interface
+  output logic                         x_compressed_valid_o,
+  input  logic                         x_compressed_ready_i,
+  output x_compressed_req_t            x_compressed_req_o,
+  input  x_compressed_resp_t           x_compressed_resp_i,
+  // Issue Interface
+  output logic                         x_issue_valid_o,
+  input  logic                         x_issue_ready_i,
+  output x_issue_req_t                 x_issue_req_o,
+  input  x_issue_resp_t                x_issue_resp_i,
+  // Commit Interface
+  output logic                         x_commit_valid_o,
+  output x_commit_t                    x_commit_o,
+  // Memory Interface
+  input  logic                         x_mem_valid_i,
+  output logic                         x_mem_ready_o,
+  input  x_mem_req_t                   x_mem_req_i,
+  output x_mem_resp_t                  x_mem_resp_o,
+  // Memory Result Interface
+  output logic                         x_mem_result_valid_o,
+  output x_mem_result_t                x_mem_result_o,
+  // Result Interface
+  input  logic                         x_result_valid_i,
+  output logic                         x_result_ready_o,
+  input  x_result_t                    x_result_i
 );
 
   localparam int unsigned PMP_NUM_CHAN      = 3;
@@ -383,7 +412,8 @@ module ibex_core import ibex_pkg::*; #(
     .RndCnstLfsrPerm  (RndCnstLfsrPerm),
     .BranchPredictor  (BranchPredictor),
     .MemECC           (MemECC),
-    .MemDataWidth     (MemDataWidth)
+    .MemDataWidth     (MemDataWidth),
+    .XInterface       (XInterface)
   ) if_stage_i (
     .clk_i (clk_i),
     .rst_ni(rst_ni),
@@ -458,7 +488,14 @@ module ibex_core import ibex_pkg::*; #(
     .id_in_ready_i(id_in_ready),
 
     .pc_mismatch_alert_o(pc_mismatch_alert),
-    .if_busy_o          (if_busy)
+    .if_busy_o          (if_busy),
+
+    // commit interface signals
+    .priv_mode_i         (priv_mode_id),
+    .x_compressed_valid_o(x_compressed_valid_o),
+    .x_compressed_ready_i(x_compressed_ready_i),
+    .x_compressed_req_o  (x_compressed_req_o),
+    .x_compressed_resp_i (x_compressed_resp_i)
   );
 
   // Core is waiting for the ISide when ID/EX stage is ready for a new instruction but none are
@@ -1665,4 +1702,44 @@ module ibex_core import ibex_pkg::*; #(
       end
     end
   end
+
+  // For this version only compressed interface is implemented.
+  // Signals from other interfaces are unused.
+
+  // Issue Interface
+  logic          unused_x_issue_ready;
+  x_issue_resp_t unused_x_issue_resp;
+
+  assign unused_x_issue_ready = x_issue_ready_i;
+  assign unused_x_issue_resp  = x_issue_resp_i;
+
+  assign x_issue_valid_o = 'b0;
+  assign x_issue_req_o   = 'b0;
+
+  // Commit Interface
+  assign x_commit_valid_o = 'b0;
+  assign x_commit_o       = 'b0;
+
+  // Memory Interface
+  logic       unused_x_mem_valid;
+  x_mem_req_t unused_x_mem_req;
+
+  assign unused_x_mem_valid = x_mem_valid_i;
+  assign unused_x_mem_req   = x_mem_req_i;
+
+  assign x_mem_ready_o = 'b0;
+  assign x_mem_resp_o  = 'b0;
+
+  // Memory Result Interface
+  assign x_mem_result_valid_o = 'b0;
+  assign x_mem_result_o       = 'b0;
+
+  // Result Interface
+  logic      unused_x_result_valid;
+  x_result_t unused_x_result;
+
+  assign unused_x_result_valid = x_result_valid_i;
+  assign unused_x_result       = x_result_i;
+
+  assign x_result_ready_o = 'b0;
 endmodule

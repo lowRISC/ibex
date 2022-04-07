@@ -35,6 +35,8 @@ module ibex_top import ibex_pkg::*; #(
   parameter lfsr_perm_t  RndCnstLfsrPerm  = RndCnstLfsrPermDefault,
   parameter int unsigned DmHaltAddr       = 32'h1A110800,
   parameter int unsigned DmExceptionAddr  = 32'h1A110808,
+  parameter bit          XInterface       = 1'b1,
+  parameter bit          MemInterface     = 1'b0,
   // Default seed and nonce for scrambling
   parameter logic [SCRAMBLE_KEY_W-1:0]   RndCnstIbexKey   = RndCnstIbexKeyDefault,
   parameter logic [SCRAMBLE_NONCE_W-1:0] RndCnstIbexNonce = RndCnstIbexNonceDefault
@@ -130,7 +132,34 @@ module ibex_top import ibex_pkg::*; #(
   output logic                         core_sleep_o,
 
   // DFT bypass controls
-  input logic                          scan_rst_ni
+  input logic                          scan_rst_ni,
+
+  // X-Interface Signals
+  // Compressed Interface
+  output logic                         x_compressed_valid_o,
+  input  logic                         x_compressed_ready_i,
+  output x_compressed_req_t            x_compressed_req_o,
+  input  x_compressed_resp_t           x_compressed_resp_i,
+  // Issue Interface
+  output logic                         x_issue_valid_o,
+  input  logic                         x_issue_ready_i,
+  output x_issue_req_t                 x_issue_req_o,
+  input  x_issue_resp_t                x_issue_resp_i,
+  // Commit Interface
+  output logic                         x_commit_valid_o,
+  output x_commit_t                    x_commit_o,
+  // Memory Interface
+  input  logic                         x_mem_valid_i,
+  output logic                         x_mem_ready_o,
+  input  x_mem_req_t                   x_mem_req_i,
+  output x_mem_resp_t                  x_mem_resp_o,
+  // Memory Result Interface
+  output logic                         x_mem_result_valid_o,
+  output x_mem_result_t                x_mem_result_o,
+  // Result Interface
+  input  logic                         x_result_valid_i,
+  output logic                         x_result_ready_o,
+  input  x_result_t                    x_result_i
 );
 
   localparam bit          Lockstep          = SecureIbex;
@@ -278,7 +307,9 @@ module ibex_top import ibex_pkg::*; #(
     .MemECC           (MemECC),
     .MemDataWidth     (MemDataWidth),
     .DmHaltAddr       (DmHaltAddr),
-    .DmExceptionAddr  (DmExceptionAddr)
+    .DmExceptionAddr  (DmExceptionAddr),
+    .XInterface       (XInterface),
+    .MemInterface     (MemInterface)
   ) u_ibex_core (
     .clk_i(clk),
     .rst_ni,
@@ -370,7 +401,27 @@ module ibex_top import ibex_pkg::*; #(
     .alert_major_internal_o(core_alert_major_internal),
     .alert_major_bus_o     (core_alert_major_bus),
     .icache_inval_o        (icache_inval),
-    .core_busy_o           (core_busy_d)
+    .core_busy_o           (core_busy_d),
+
+    .x_compressed_valid_o(x_compressed_valid_o),
+    .x_compressed_ready_i(x_compressed_ready_i),
+    .x_compressed_req_o  (x_compressed_req_o),
+    .x_compressed_resp_i (x_compressed_resp_i),
+    .x_issue_valid_o     (x_issue_valid_o),
+    .x_issue_ready_i     (x_issue_ready_i),
+    .x_issue_req_o       (x_issue_req_o),
+    .x_issue_resp_i      (x_issue_resp_i),
+    .x_commit_valid_o    (x_commit_valid_o),
+    .x_commit_o          (x_commit_o),
+    .x_mem_valid_i       (x_mem_valid_i),
+    .x_mem_ready_o       (x_mem_ready_o),
+    .x_mem_req_i         (x_mem_req_i),
+    .x_mem_resp_o        (x_mem_resp_o),
+    .x_mem_result_valid_o(x_mem_result_valid_o),
+    .x_mem_result_o      (x_mem_result_o),
+    .x_result_valid_i    (x_result_valid_i),
+    .x_result_ready_o    (x_result_ready_o),
+    .x_result_i          (x_result_i)
   );
 
   /////////////////////////////////
