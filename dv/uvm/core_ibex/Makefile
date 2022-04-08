@@ -132,7 +132,7 @@ CSR_OPTS=--csr_yaml=${CSR_FILE} \
          --isa="${ISA}" \
          --end_signature_addr=${SIGNATURE_ADDR}
 
-RISCV_DV_OPTS=--custom_target=riscv_dv_extension \
+RISCV_DV_OPTS=--custom_target=$(realpath riscv_dv_extension)\
               --mabi=ilp32 \
 
 # To avoid cluttering the output directory with stamp files, we place them in
@@ -240,32 +240,34 @@ tests-and-seeds := \
             --iterations $(ITERATIONS) \
             --ibex-config $(IBEX_CONFIG))
 
+REGEX_EMPTY_LINES := '/^$$/d'
 
 ###############################################################################
-# Generate random instructions
+###############################################################################
+# Build the Random Instruction Generator
 #
 # This depends on the vendored in code in $(GEN_DIR). It also depends on the
 # values of some variables (we want to regenerate things if, for example, the
 # simulator changes). Since we're writing out to $(OUT-SEED), we don't have to
 # depend on the value of SEED. However, we do have to make sure that the
-# variables whose names are listed in $(gen-var-deps) haven't changed.
+# variables whose names are listed in $(instr-gen-build-var-deps) haven't changed.
 #
 # To do this variable tracking, we dump each of the variables to a Makefile
 # fragment and try to load it up the next time around.
-gen-var-deps := GEN_OPTS SIMULATOR RISCV_DV_OPTS ISA CSR_OPTS \
-                SIGNATURE_ADDR PMP_REGIONS PMP_GRANULARITY TEST_OPTS
+instr-gen-build-var-deps := GEN_OPTS SIMULATOR RISCV_DV_OPTS ISA CSR_OPTS \
+                            SIGNATURE_ADDR PMP_REGIONS PMP_GRANULARITY TEST_OPTS
 
 # Load up the generation stage's saved variable values. If this fails, that's
 # no problem: we'll assume that the previous run either doesn't exist or
 # something went wrong.
--include $(metadata)/gen-vars.mk
+-include $(metadata)/.instr_gen.build.vars.mk
 
-# gen-vars-prereq is empty if every variable in gen-var-deps matches the last run,
-# otherwise it is set to FORCE (which will force a recompile). Note that we
-# define it with '=', not ':=', so we don't evaluate it if we're not trying to
-# run the gen target.
-gen-vars-prereq = \
-  $(call vars-prereq,gen,building instruction generator,$(gen-var-deps))
+# instr-gen-build-vars-prereq is empty if every variable in
+# instr-gen-build-var-deps matches the last run, otherwise it is set to FORCE
+# (which will force a recompile). Note that we define it with '=', not ':=',
+# so we don't evaluate it if we're not trying to run the gen target.
+instr-gen-build-vars-prereq = \
+  $(call vars-prereq,gen,building instruction generator,$(instr-gen-build-var-deps))
 
 # A variable containing a file list for the riscv-dv vendored-in module.
 # Depending on these files gives a safe over-approximation that will ensure we
@@ -276,38 +278,68 @@ gen-vars-prereq = \
 # than running it for every target otherwise.
 risc-dv-files := $(shell find $(GEN_DIR) -type f)
 
-# This actually runs the instruction generator. Note that the rule depends on
-# the (phony) FORCE target if any variables have changed. If the rule actually
-# runs, it starts by deleting any existing contents of $(OUT-SEED)/instr_gen.
-$(metadata)/instr_gen.gen.stamp: \
-  $(gen-vars-prereq) $(risc-dv-files) $(TESTLIST) | $(metadata)
+# Note that the rule depends on the (phony) FORCE target if any variables have
+# changed. If the rule actually runs, it starts by deleting any existing
+# contents of $(OUT-SEED)/instr_gen.
+$(metadata)/.instr_gen.build.stamp: \
+  $(instr-gen-build-vars-prereq) $(risc-dv-files) | $(metadata)
 	$(verb)rm -rf $(OUT-SEED)/instr_gen
 	$(verb)python3 ${GEN_DIR}/run.py \
+	       --co --steps=gen \
 	       --output=$(OUT-SEED)/instr_gen ${GEN_OPTS} \
-	       --steps=gen \
-	       --gen_timeout=${TIMEOUT} \
-	       --lsf_cmd="${LSF_CMD}" \
 	       --simulator="${SIMULATOR}" \
 	       ${RISCV_DV_OPTS} \
 	       --isa=${ISA} \
+	       ${CSR_OPTS}
+	$(call dump-vars,$(metadata)/.instr_gen.build.vars.mk,gen,$(instr-gen-build-var-deps))
+	@touch $@
+
+.PHONY: instr_gen_build
+instr_gen_build: $(metadata)/.instr_gen.build.stamp
+
+###############################################################################
+# Run the random instruction generator
+#
+RISCV_DV_ROOT := $(GEN_DIR)
+INSTR_GEN_RUN_COMMANDS := $(shell mktemp)
+$(metadata)/.instr_gen.run.stamp: \
+  $(metadata)/.instr_gen.build.stamp \
+  $(TESTLIST) | $(metadata)
+	$(verb)rm -rf $(OUT-SEED)/instr_gen/asm_test
+	@ # Generate the commands to be run into $(INSTR_GEN_RUN_COMMANDS)
+	$(verb)python3 ${GEN_DIR}/run.py \
+	       --so --steps=gen \
+	       --output=$(OUT-SEED)/instr_gen ${GEN_OPTS} \
+	       --lsf_cmd="${LSF_CMD}" \
+	       --simulator="${SIMULATOR}" \
+	       --isa=${ISA} \
+	       ${RISCV_DV_OPTS} \
 	       ${TEST_OPTS} \
 	       ${CSR_OPTS} \
 	       --sim_opts="+uvm_set_inst_override=riscv_asm_program_gen,ibex_asm_program_gen,"uvm_test_top.asm_gen" \
 	                   +signature_addr=${SIGNATURE_ADDR} +pmp_num_regions=${PMP_REGIONS} \
-	                   +pmp_granularity=${PMP_GRANULARITY} +tvec_alignment=8"
-	$(call dump-vars,$(metadata)/gen-vars.mk,gen,$(gen-var-deps))
+	                   +pmp_granularity=${PMP_GRANULARITY} +tvec_alignment=8" \
+	       --debug $(INSTR_GEN_RUN_COMMANDS) # Write all the commands to execute into here...
+	@ # Construct the sub-makefile from the commands, then call it
+	@sed -i $(REGEX_EMPTY_LINES) $(INSTR_GEN_RUN_COMMANDS)
+	$(verb)./construct_makefile.py \
+	         --output=$(OUT-SEED)/instr_gen/run.mk \
+	         --test_cmds=$(INSTR_GEN_RUN_COMMANDS)
+	export RISCV_DV_ROOT
+	@$(MAKE) -f $(OUT-SEED)/instr_gen/run.mk all
+	@ # Bookkeeping
 	@touch $@
 
-.PHONY: gen
-gen: $(metadata)/instr_gen.gen.stamp
+.PHONY: instr_gen_run
+instr_gen_run: $(metadata)/.instr_gen.run.stamp
 
 ###############################################################################
 # Compile the generated assembly programs
 #
 # We don't explicitly track dependencies on the RISCV toolchain, so this
 # doesn't depend on anything more than the instr_gen stage did.
-$(metadata)/instr_gen.compile.stamp: \
-  $(metadata)/instr_gen.gen.stamp $(TESTLIST)
+$(metadata)/.instr_gen.compile_tests.stamp: \
+  $(metadata)/.instr_gen.run.stamp $(TESTLIST)
 	$(verb)python3 ${GEN_DIR}/run.py \
 	       --o=$(OUT-SEED)/instr_gen ${GEN_OPTS} \
 	       --steps=gcc_compile \
@@ -317,8 +349,8 @@ $(metadata)/instr_gen.compile.stamp: \
 	       --isa=${ISA} && \
 	touch $@
 
-.PHONY: gcc_compile
-gcc_compile: $(metadata)/instr_gen.compile.stamp
+.PHONY: instr_gen_compile
+instr_gen_compile: $(metadata)/.instr_gen.compile_tests.stamp
 
 ###############################################################################
 # Run the instruction set simulator
@@ -328,11 +360,13 @@ gcc_compile: $(metadata)/instr_gen.compile.stamp
 # ISS and ISS_OPTS variables do affect the output, so we need to dump them. See
 # the 'gen' stage for more verbose explanations of how this works.
 iss-var-deps := ISS ISS_OPTS
--include $(metadata)/iss-vars.mk
+-include $(metadata)/.iss.vars.mk
 iss-vars-prereq = $(call vars-prereq,iss,running ISS,$(iss-var-deps))
 
-$(metadata)/instr_gen.iss.stamp: \
-  $(iss-vars-prereq) $(TESTLIST) $(metadata)/instr_gen.compile.stamp
+ISS_COMMANDS := $(shell mktemp)
+$(metadata)/.iss.run.stamp: \
+  $(metadata)/.instr_gen.compile_tests.stamp $(iss-vars-prereq) $(TESTLIST)
+	@ # Generate the commands to be run into $(ISS_COMMANDS)
 	$(verb)python3 ${GEN_DIR}/run.py \
 	       --o=$(OUT-SEED)/instr_gen ${GEN_OPTS} \
 	       --steps=iss_sim \
@@ -340,12 +374,20 @@ $(metadata)/instr_gen.iss.stamp: \
 	       --iss="${ISS}" \
 	       --iss_opts="${ISS_OPTS}" \
 	       --isa="${ISA_ISS}" \
-	       ${RISCV_DV_OPTS}
-	$(call dump-vars,$(metadata)/iss-vars.mk,iss,$(iss-var-deps))
+	       ${RISCV_DV_OPTS} \
+	       --debug $(ISS_COMMANDS) # Write all the commands to execute into here...
+	@ # Construct the sub-makefile from the commands, then call it
+	@sed -i $(REGEX_EMPTY_LINES) $(ISS_COMMANDS)
+	$(verb)./construct_makefile.py \
+	         --output=$(OUT-SEED)/instr_gen/iss.mk \
+	         --test_cmds=$(ISS_COMMANDS)
+	@$(MAKE) -f $(OUT-SEED)/instr_gen/iss.mk all
+	@ # Bookkeeping
+	$(call dump-vars,$(metadata)/.iss.vars.mk,iss,$(iss-var-deps))
 	@touch $@
 
-.PHONY: iss_sim
-iss_sim: $(metadata)/instr_gen.iss.stamp
+.PHONY: iss_run
+iss_run: $(metadata)/.iss.run.stamp
 
 
 ###############################################################################
@@ -355,7 +397,7 @@ iss_sim: $(metadata)/instr_gen.iss.stamp
 # doesn't depend on which test we're running!
 #
 # It does, however, depend on various variables. These are listed in
-# compile-var-deps. See the 'gen' stage for more verbose explanations of how
+# tb-compile-var-deps. See the 'gen' stage for more verbose explanations of how
 # the variable dumping works.
 #
 # The compiled ibex testbench (obviously!) also depends on the design and the
@@ -370,19 +412,19 @@ all-verilog = \
   $(shell find ../../../rtl -name '*.v' -o -name '*.sv' -o -name '*.svh') \
   $(shell find ../.. -name '*.v' -o -name '*.sv' -o -name '*.svh')
 
-compile-var-deps := COMMON_OPTS SIMULATOR COV WAVES COMPILE_OPTS COSIM
--include $(OUT-DIR)rtl_sim/.compile-vars.mk
-compile-vars-prereq = $(call vars-prereq,comp,compiling TB,$(compile-var-deps))
+tb-compile-var-deps := COMMON_OPTS SIMULATOR COV WAVES COMPILE_OPTS COSIM
+-include $(OUT-DIR)rtl_sim/.rtl.tb_compile.vars.mk
+tb-compile-vars-prereq = $(call vars-prereq,comp,compiling TB,$(tb-compile-var-deps))
 
-$(call dump-vars-match,$(compile-var-deps),comp)
+$(call dump-vars-match,$(tb-compile-var-deps),comp)
 
 cov-arg := $(if $(call equal,$(COV),1),--en_cov,)
 wave-arg := $(if $(call equal,$(WAVES),1),--en_wave,)
 cosim-arg := $(if $(call equal,$(COSIM),1),--en_cosim,)
 lsf-arg := $(if $(LSF_CMD),--lsf_cmd="$(LSF_CMD)",)
 
-$(OUT-DIR)rtl_sim/.compile.stamp: \
-  $(compile-vars-prereq) $(all-verilog) $(risc-dv-files) \
+$(OUT-DIR)rtl_sim/.rtl.tb_compile.stamp: \
+  $(tb-compile-vars-prereq) $(all-verilog) $(risc-dv-files) \
   sim.py yaml/rtl_simulation.yaml \
   | $(OUT-DIR)rtl_sim
 	$(verb)./sim.py \
@@ -392,11 +434,11 @@ $(OUT-DIR)rtl_sim/.compile.stamp: \
 	         --simulator="${SIMULATOR}" --simulator_yaml=yaml/rtl_simulation.yaml \
 	         $(cov-arg) $(wave-arg) $(cosim-arg) $(lsf-arg) \
 	         --cmp_opts="${COMPILE_OPTS}"
-	$(call dump-vars,$(OUT-DIR)rtl_sim/.compile-vars.mk,comp,$(compile-var-deps))
+	$(call dump-vars,$(OUT-DIR)rtl_sim/.rtl.tb_compile-vars.mk,comp,$(tb-compile-var-deps))
 	@touch $@
 
-.PHONY: compile
-compile: $(OUT-DIR)rtl_sim/.compile.stamp
+.PHONY: rtl_tb_compile
+rtl_tb_compile: $(OUT-DIR)rtl_sim/.rtl.tb_compile.stamp
 
 ###############################################################################
 # Run ibex RTL simulation with generated programs
@@ -406,11 +448,12 @@ compile: $(OUT-DIR)rtl_sim/.compile.stamp
 # running the test) dependent on having the right variables. That way, we'll
 # correctly delete the sim directory and re-copy it if necessary.
 #
-# Note that the variables we depend on are gen-vars-prereq. We also depend on
-# COV and WAVES, but these dependencies will come for free from the dependency
-# on the compiled TB.
-$(metadata)/rtl_sim.compile.stamp: \
-  $(gen-vars-prereq) $(risc-dv-files) $(OUT-DIR)rtl_sim/.compile.stamp
+# Note that the variables we depend on are instr-gen-build-vars-prereq.
+# We also depend on COV and WAVES, but these dependencies will come for free
+# from the dependency on the compiled TB.
+$(metadata)/.rtl.tb_compile.stamp: \
+  $(OUT-DIR)rtl_sim/.rtl.tb_compile.stamp \
+  $(instr-gen-build-vars-prereq) $(risc-dv-files)
 	rm -rf $(OUT-SEED)/rtl_sim
 	cp -r $(OUT-DIR)rtl_sim $(OUT-SEED)
 	@touch $@
@@ -420,8 +463,8 @@ rtl-sim-logs := $(addsuffix /sim.log,$(rtl-sim-dirs))
 
 $(rtl-sim-logs): \
   %/sim.log: \
-  $(metadata)/rtl_sim.compile.stamp \
-  $(metadata)/instr_gen.compile.stamp \
+  $(metadata)/.rtl.tb_compile.stamp \
+  $(metadata)/.instr_gen.compile_tests.stamp \
   run_rtl.py
 	@echo Running RTL simulation at $@
 	$(verb)mkdir -p $(@D)
@@ -435,8 +478,8 @@ $(rtl-sim-logs): \
 	         --bin-dir $(OUT-SEED)/instr_gen/asm_test \
 	         --rtl-sim-dir $(OUT-SEED)/rtl_sim
 
-.PHONY: rtl_sim
-rtl_sim: $(rtl-sim-logs)
+.PHONY: rtl_sim_run
+rtl_sim_run: $(rtl-sim-logs)
 
 ###############################################################################
 # Compare ISS and RTL sim results
@@ -456,7 +499,8 @@ comp-results := $(addsuffix /test-result.yml,$(rtl-sim-dirs))
 
 $(comp-results): \
   %/test-result.yml: \
-  compare.py $(metadata)/instr_gen.iss.stamp $(rtl-sim-logs)
+  $(metadata)/.iss.run.stamp \
+  $(rtl-sim-logs) compare.py
 	@echo Comparing traces for $*
 	$(verb)./compare.py \
 	         --instr-gen-bin-dir $(OUT-SEED)/instr_gen/asm_test \
