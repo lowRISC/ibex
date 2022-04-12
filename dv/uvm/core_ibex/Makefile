@@ -390,30 +390,42 @@ cov-arg := $(if $(call equal,$(COV),1),--en_cov,)
 wave-arg := $(if $(call equal,$(WAVES),1),--en_wave,)
 cosim-arg := $(if $(call equal,$(COSIM),1),--en_cosim,)
 
-# Extract LDFLAGS and "LIBS" for the vcs build from pkg-config. VCS expects
-# most things to be supplied with -LDFLAGS arguments, but unfortunately these
-# come before the object files that are being linked. To add libraries
-# themselves, you're supposed to pass them directly (-lfoo). Split things out
-# here to make sense of them.
-SPIKE_PCS      := riscv-riscv riscv-disasm riscv-fdt
-SPIKE_CFLAGS   := $(if $(cosim-arg),$(shell pkg-config --cflags $(SPIKE_PCS) || echo FAIL),)
-SPIKE_ALL_LIBS := $(if $(cosim-arg),$(shell pkg-config --libs $(SPIKE_PCS) || echo FAIL),)
-SPIKE_LIBS     := $(filter -l%,$(SPIKE_ALL_LIBS))
-SPIKE_LDFLAGS  := $(filter-out -l%,$(SPIKE_ALL_LIBS))
-check-spike-pkgconfig := \
-  if [ x'$(SPIKE_CFLAGS)' == xFAIL -o x'$(SPIKE_ALL_LIBS)' == xFAIL ]; then \
-	  echo >&2 "Failed to find Spike pkg-config packages."; \
-      exit 1; \
-  fi
+# We need to the different simulators to link against the built ISS correctly
+# for cosimulation. This requires some finesse-ing.
+# Extract CFLAGS,LDFLAGS and LIBS from pkg-config. Allow the simulator yaml file
+# to format them appropriately for each simulator.
+# - VCS expects most things to be supplied with -LDFLAGS arguments, but
+# unfortunately these come before the object files that are being linked. To add
+# libraries themselves, you're supposed to pass them directly (-lfoo). Split
+# things out here to make sense of them.
+# - Xcelium expects CFLAGS, includes, and libs to be passed directly to xrun.
+# However, linker flags are to be passed using -Wld. This can be finnicky, so
+# using the alternate -Xlinker style simplifies things.
+SPIKE_PCS          := riscv-riscv riscv-disasm riscv-fdt
+ifeq ($(COSIM),1)
+	_check-spike-pkgconfig := $(shell pkg-config --exists $(SPIKE_PCS); echo $$?)
+  ifeq ($(_check-spike-pkgconfig), 0)
+    SPIKE_CFLAGS_I     := $(shell pkg-config --cflags-only-I $(SPIKE_PCS))
+    SPIKE_CFLAGS_OTHER := $(shell pkg-config --cflags-only-other $(SPIKE_PCS))
+    SPIKE_LIBS_lowerL  := $(shell pkg-config --libs-only-l $(SPIKE_PCS))
+    SPIKE_LIBS_upperL  := $(shell pkg-config --libs-only-L $(SPIKE_PCS))
+    SPIKE_LIBS_OTHER   := $(shell pkg-config --libs-only-other $(SPIKE_PCS))
+    # Formatting
+    SPIKE_LIBS_FMT     := $(shell echo $(SPIKE_LIBS_OTHER) | sed 's_-Wl,__' )
+    # $(info $(SPIKE_LIBS_FMT))
+  else
+    $(error "Failed to find Spike pkg-config packages. Did you set the PKG_CONFIG_PATH correctly?")
+  endif
+endif
 
 $(OUT-DIR)rtl_sim/.rtl.tb_compile.stamp: \
   $(tb-compile-vars-prereq) $(all-verilog) $(risc-dv-files) \
   sim.py yaml/rtl_simulation.yaml \
   | $(OUT-DIR)rtl_sim
 	$(verb)env \
-	  SPIKE_CFLAGS="$(SPIKE_CFLAGS)" \
-	  SPIKE_LDFLAGS="$(SPIKE_LDFLAGS)" \
-	  SPIKE_LIBS="$(SPIKE_LIBS)" \
+	  SPIKE_CFLAGS="$(SPIKE_CFLAGS_I) $(SPIKE_CFLAGS_OTHER)" \
+	  SPIKE_LIBS="$(SPIKE_LIBS_lowerL) $(SPIKE_LIBS_upperL)" \
+	  SPIKE_LDFLAGS="$(SPIKE_LIBS_FMT)" \
 	  ./sim.py \
 	    --o=$(OUT-DIR) \
 	    --steps=compile \
@@ -456,9 +468,9 @@ $(rtl-sim-logs): \
 	@echo Running RTL simulation at $@
 	$(verb)mkdir -p $(@D)
 	$(verb)env \
-	  SPIKE_CFLAGS="$(SPIKE_CFLAGS)" \
-	  SPIKE_LDFLAGS="$(SPIKE_LDFLAGS)" \
-	  SPIKE_LIBS="$(SPIKE_LIBS)" \
+	  SPIKE_CFLAGS="$(SPIKE_CFLAGS_I) $(SPIKE_CFLAGS_OTHER)" \
+	  SPIKE_LIBS="$(SPIKE_LIBS_lowerL) $(SPIKE_LIBS_upperL)" \
+	  SPIKE_LDFLAGS="$(SPIKE_LIBS_FMT)" \
 	  ./run_rtl.py \
 	    --simulator $(SIMULATOR) \
 	    --simulator_yaml yaml/rtl_simulation.yaml \
@@ -535,9 +547,9 @@ $(metadata)/.cov.merge.stamp: \
 	$(metadata)/.cov.gen_fcov.stamp
 	$(verb)rm -rf $(OUT-DIR)rtl_sim/test.vdb
 	$(verb)env \
-	  SPIKE_CFLAGS="$(SPIKE_CFLAGS)" \
-	  SPIKE_LDFLAGS="$(SPIKE_LDFLAGS)" \
-	  SPIKE_LIBS="$(SPIKE_LIBS)" \
+	  SPIKE_CFLAGS="$(SPIKE_CFLAGS_I) $(SPIKE_CFLAGS_OTHER)" \
+	  SPIKE_LIBS="$(SPIKE_LIBS_lowerL) $(SPIKE_LIBS_upperL)" \
+	  SPIKE_LDFLAGS="$(SPIKE_LIBS_FMT)" \
 	  ./sim.py \
 	    --steps=cov --simulator="${SIMULATOR}" --o="$(OUT-DIR)"
 	@if [ -d "test.vdb" ]; then \

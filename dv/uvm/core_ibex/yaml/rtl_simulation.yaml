@@ -145,7 +145,7 @@
 
 
 - tool: xlm
-  env_var: dv_root, DUT_TOP
+  env_var: dv_root, DUT_TOP, SPIKE_CFLAGS,SPIKE_LDFLAGS,SPIKE_LIBS,IBEX_ROOT
   compile:
     cmd:
       - "xrun -64bit
@@ -159,14 +159,19 @@
               -elaborate
               -l <out>/compile.log
               -xmlibdirpath <out>
-              <cmp_opts>
-              <cov_opts>
-              <wave_opts>"
+              <cmp_opts> <cov_opts> <wave_opts> <cosim_opts>"
     cov_opts: >
       -coverage all
       -nowarn COVDEF
     wave_opts: >
       -access rwc -linedebug
+    cosim_opts: >
+      -f ibex_dv_cosim_dpi.f
+      +define+INC_IBEX_COSIM
+      <SPIKE_CFLAGS> <SPIKE_LIBS>
+      -Wld,'-Xlinker <SPIKE_LDFLAGS>'
+      -I<IBEX_ROOT>/dv/cosim
+      -lstdc++
   sim:
     cmd: >
       xrun -64bit
@@ -179,6 +184,7 @@
            +UVM_VERBOSITY=UVM_LOW
            +bin=<binary>
            +ibex_tracer_file_base=<sim_dir>/trace_core
+           +cosim_log_file=<sim_dir>/spike_cosim.log
            -nokey
            <sim_opts>
            <cov_opts>
