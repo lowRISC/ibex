@@ -101,6 +101,7 @@ module ibex_register_file_latch #(
     end
   end
 
+  // SEC_CM: DATA_REG_SW.GLITCH_DETECT
   // This checks for spurious WE strobes on the regfile.
   if (WrenCheck) begin : gen_wren_check
     // Buffer the decoded write enable bits so that the checker

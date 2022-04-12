@@ -55,6 +55,7 @@ module ibex_register_file_fpga #(
   // we select
   assign we = (waddr_a_i == '0) ? 1'b0 : we_a_i;
 
+  // SEC_CM: DATA_REG_SW.GLITCH_DETECT
   // This checks for spurious WE strobes on the regfile.
   if (WrenCheck) begin : gen_wren_check
     // Since the FPGA uses a memory macro, there is only one write-enable strobe to check.
