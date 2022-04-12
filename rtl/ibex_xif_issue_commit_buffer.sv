@@ -97,6 +97,7 @@ module ibex_xif_issue_commit_buffer import ibex_pkg::*; #(
                           ~(writeback_q[commit_id_q-1] | loadstore_q[commit_id_q-1] |
                             ecswrite_q[commit_id_q-1] | exc_q[commit_id_q-1]);
   assign commit_valid_o = commit_ready & ~all_committed;
+  assign commit_kill_o  = commit_valid_o;
   assign commit_id_d    = commit_valid_o ? commit_id_q + 1 : commit_id_q;
   assign commit_id_o    = {{X_ID_WIDTH-IdWidth{1'b0}}, commit_id_q};
 

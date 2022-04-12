@@ -1402,26 +1402,33 @@ module ibex_id_stage #(
     ////////////////////////////////////////
     // Memory and Memory Result Interface //
     ////////////////////////////////////////
+    
+    // Scoreboard Signals
+    logic [X_ID_WIDTH-1:0] x_mem_id;
+    logic                  x_mem_commit;
+    logic                  x_mem_result_fin;
+    logic [X_ID_WIDTH-1:0] x_mem_result_id;
+
+    // Assign inputs
     logic       unused_x_mem_valid;
     x_mem_req_t unused_x_mem_req;
 
     assign unused_x_mem_valid = x_mem_valid_i;
     assign unused_x_mem_req   = x_mem_req_i;
 
+    // Zero outputs
     assign x_mem_ready_o        = '0;
     assign x_mem_resp_o         = '0;
     assign x_mem_result_valid_o = '0;
     assign x_mem_result_o       = '0;
 
-    logic [X_ID_WIDTH-1:0] mem_id;
-    logic                  mem_result_fin;
-    logic [X_ID_WIDTH-1:0] mem_result_id;
+    // Signals from/to scoreboard
+    assign x_mem_id         = '0;
+    assign x_mem_result_fin = '0;
+    assign x_mem_result_id  = '0;
 
-    assign mem_id         = '0;
-    assign mem_result_fin = '0;
-    assign mem_result_id  = '0;
-
-    logic unused_mem_commit;
+    logic  unused_mem_commit;
+    assign unused_mem_commit = x_mem_commit;
 
     /////////////////
     // SCORE BOARD //
@@ -1483,8 +1490,8 @@ module ibex_id_stage #(
       .commit_id_o   (x_commit_id),
       .commit_kill_o (x_commit_kill),
       // memory interface
-      .mem_id_i    (mem_id),
-      .mem_commit_o(use_mem_commit),
+      .mem_id_i    (x_mem_id),
+      .mem_commit_o(x_mem_commit),
       // memory result interface
       .mem_result_fin_i(mem_result_fin),
       .mem_result_id_i (mem_result_id),
