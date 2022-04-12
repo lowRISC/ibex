@@ -106,8 +106,8 @@ class core_ibex_base_test extends uvm_test;
     cosim_cfg = core_ibex_cosim_cfg::type_id::create("cosim_cfg", this);
 
     cosim_cfg.isa_string = get_isa_string();
-    cosim_cfg.start_pc = {{32'h`BOOT_ADDR}[31:8], 8'h80};
-    cosim_cfg.start_mtvec = {{32'h`BOOT_ADDR}[31:8], 8'h1};
+    cosim_cfg.start_pc =    ((32'h`BOOT_ADDR & ~(32'h0000_00FF)) | 8'h80);
+    cosim_cfg.start_mtvec = ((32'h`BOOT_ADDR & ~(32'h0000_00FF)) | 8'h01);
     // TODO: Turn on when not using icache
     cosim_cfg.probe_imem_for_errs = 1'b0;
     void'($value$plusargs("cosim_log_file=%0s", cosim_log_file));
