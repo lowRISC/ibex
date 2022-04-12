@@ -352,6 +352,9 @@ module ibex_core import ibex_pkg::*; #(
   logic [31:0] csr_mtval;
   logic        csr_mstatus_tw;
   priv_lvl_e   priv_mode_id;
+  priv_lvl_e   priv_mode_lsu_csr;
+  priv_lvl_e   priv_mode_lsu_xif;
+  logic        priv_mode_lsu_xif_en;
   priv_lvl_e   priv_mode_lsu;
 
   // debug mode and dcsr configuration
@@ -629,6 +632,7 @@ module ibex_core import ibex_pkg::*; #(
     .lsu_type_o    (lsu_type),  // to load store unit
     .lsu_sign_ext_o(lsu_sign_ext),  // to load store unit
     .lsu_wdata_o   (lsu_wdata),  // to load store unit
+    .lsu_rdata_i   (rf_wdata_lsu),
     .lsu_req_done_i(lsu_req_done),  // from load store unit
 
     .lsu_addr_incr_req_i(lsu_addr_incr_req),
@@ -695,6 +699,10 @@ module ibex_core import ibex_pkg::*; #(
     .ecs_rd_i (ecs_rd),
     .ecs_wr_o (ecs_wr),
     .ecs_wen_o(ecs_wen),
+
+    // X-Interface LSU privilege signal, to PMP
+    .priv_mode_lsu_xif_o   (priv_mode_lsu_xif),
+    .priv_mode_lsu_xif_en_o(priv_mode_lsu_xif_en),
 
     // Issue Interface
     .x_issue_valid_o(x_issue_valid_o),
@@ -866,7 +874,9 @@ module ibex_core import ibex_pkg::*; #(
     .lsu_resp_valid_i(lsu_resp_valid),
     .lsu_resp_err_i  (lsu_resp_err),
 
-    .instr_done_wb_o(instr_done_wb)
+    .instr_done_wb_o(instr_done_wb),
+
+    .x_mem_result_valid_i(x_mem_result_valid_o)
   );
 
   /////////////////////////////
@@ -1026,7 +1036,7 @@ module ibex_core import ibex_pkg::*; #(
     // Hart ID from outside
     .hart_id_i      (hart_id_i),
     .priv_mode_id_o (priv_mode_id),
-    .priv_mode_lsu_o(priv_mode_lsu),
+    .priv_mode_lsu_o(priv_mode_lsu_csr),
 
     // mtvec
     .csr_mtvec_o     (csr_mtvec),
@@ -1112,6 +1122,9 @@ module ibex_core import ibex_pkg::*; #(
     .ecs_wr_i (ecs_wr),
     .ecs_wen_i(ecs_wen)
   );
+
+  // Multiplex between external and internal signals
+  assign priv_mode_lsu = priv_mode_lsu_xif_en ? priv_mode_lsu_xif : priv_mode_lsu_csr;
 
   // These assertions are in top-level as instr_valid_id required as the enable term
   `ASSERT(IbexCsrOpValid, instr_valid_id |-> csr_op inside {

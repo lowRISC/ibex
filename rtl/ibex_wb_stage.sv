@@ -50,10 +50,12 @@ module ibex_wb_stage #(
   output logic [31:0]              rf_wdata_wb_o,
   output logic                     rf_we_wb_o,
 
-  input logic                      lsu_resp_valid_i,
-  input logic                      lsu_resp_err_i,
+  input  logic                     lsu_resp_valid_i,
+  input  logic                     lsu_resp_err_i,
 
-  output logic                     instr_done_wb_o
+  output logic                     instr_done_wb_o,
+
+  input  logic                     x_mem_result_valid_i
 );
 
   import ibex_pkg::*;
@@ -200,7 +202,7 @@ module ibex_wb_stage #(
   end
 
   assign rf_wdata_wb_mux[1]    = rf_wdata_lsu_i;
-  assign rf_wdata_wb_mux_we[1] = rf_we_lsu_i;
+  assign rf_wdata_wb_mux_we[1] = rf_we_lsu_i & x_mem_result_valid_i;
 
   // RF write data can come from ID results (all RF writes that aren't because of loads will come
   // from here) or the LSU (RF writes for load data)

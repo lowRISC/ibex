@@ -124,6 +124,7 @@ module ibex_id_stage #(
 
   input  logic                      lsu_addr_incr_req_i,
   input  logic [31:0]               lsu_addr_last_i,
+  input  logic [31:0]               lsu_rdata_i,
 
   // Interrupt signals
   input  logic                      csr_mstatus_mie_i,
@@ -192,6 +193,10 @@ module ibex_id_stage #(
   input  logic [5:0]                ecs_rd_i,
   output logic [5:0]                ecs_wr_o,
   output logic [2:0]                ecs_wen_o,
+
+  // Privilege mode output
+  output ibex_pkg::priv_lvl_e       priv_mode_lsu_xif_o,
+  output logic                      priv_mode_lsu_xif_en_o,
 
   // Issue Interface
   output logic                      x_issue_valid_o,
@@ -720,11 +725,6 @@ module ibex_id_stage #(
   assign mult_en_id      = instr_executing ? mult_en_dec                     : 1'b0;
   assign div_en_id       = instr_executing ? div_en_dec                      : 1'b0;
 
-  assign lsu_req_o               = lsu_req;
-  assign lsu_we_o                = lsu_we;
-  assign lsu_type_o              = lsu_type;
-  assign lsu_sign_ext_o          = lsu_sign_ext;
-  assign lsu_wdata_o             = rf_rdata_b_fwd;
   // csr_op_en_o is set when CSR access should actually happen.
   // csv_access_o is set when CSR access instruction is present and is used to compute whether a CSR
   // access is illegal. A combinational loop would be created if csr_op_en_o was used along (as
@@ -732,8 +732,6 @@ module ibex_id_stage #(
   assign csr_op_en_o             = csr_access_o & instr_executing & instr_id_done_o;
 
   assign alu_operator_ex_o           = alu_operator;
-  assign alu_operand_a_ex_o          = alu_operand_a;
-  assign alu_operand_b_ex_o          = alu_operand_b;
 
   assign mult_en_ex_o                = mult_en_id;
   assign div_en_ex_o                 = div_en_id;
@@ -1409,26 +1407,147 @@ module ibex_id_stage #(
     logic                  x_mem_result_fin;
     logic [X_ID_WIDTH-1:0] x_mem_result_id;
 
-    // Assign inputs
-    logic       unused_x_mem_valid;
-    x_mem_req_t unused_x_mem_req;
+    if (MemInterface) begin
+      logic [31:0]            x_mem_addr;
+      logic                   x_mem_we;
+      logic [1:0]             x_mem_size;
+      logic [1:0]             x_mem_type;
+      logic [X_MEM_WIDTH-1:0] x_mem_wdata;
+      logic                   x_mem_last_d, x_mem_last_q;
+      logic                   x_mem_spec;
+      logic [X_ID_WIDTH-1:0]  x_mem_id_q;
+      logic                   x_mem_lsu_req;
 
-    assign unused_x_mem_valid = x_mem_valid_i;
-    assign unused_x_mem_req   = x_mem_req_i;
+      typedef enum logic { MEM_IDLE, MEM_LSU_REQ, MEM_WAIT_RESULT } x_mem_fsm_e;
+      x_mem_fsm_e x_mem_fsm_q, x_mem_fsm_d;
 
-    // Zero outputs
-    assign x_mem_ready_o        = '0;
-    assign x_mem_resp_o         = '0;
-    assign x_mem_result_valid_o = '0;
-    assign x_mem_result_o       = '0;
+      // Input request signals
+      assign x_mem_id     = x_mem_req_i.id;
+      assign x_mem_addr   = x_mem_req_i.addr;
+      assign x_mem_we     = x_mem_req_i.we;
+      assign x_mem_size   = x_mem_req_i.size;
+      assign x_mem_wdata  = x_mem_req_i.wdata;
+      assign x_mem_last_d = x_mem_req_i.last;
+      assign x_mem_spec   = x_mem_req_i.spec;
 
-    // Signals from/to scoreboard
-    assign x_mem_id         = '0;
-    assign x_mem_result_fin = '0;
-    assign x_mem_result_id  = '0;
+      // LSU privillege level
+      assign priv_mode_lsu_xif_o    = x_mem_req_i.mode;
+      assign priv_mode_lsu_xif_en_o = 1'b1;
 
-    logic  unused_mem_commit;
-    assign unused_mem_commit = x_mem_commit;
+      // Output respond signals
+      // Load and store exceptions supportted now are bus errors,
+      // the signals of which are transmitted through memory result interface. 
+      assign x_mem_resp_o.exc     = 1'b0;
+      assign x_mem_resp_o.exccode = '0;
+      assign x_mem_resp_o.dbg     = 1'b0;
+
+      // Output memory result signals
+      assign x_mem_result_id      = x_mem_id_q;
+      assign x_mem_result_o.id    = x_mem_id_q;
+      assign x_mem_result_o.rdata = lsu_rdata_i;
+      assign x_mem_result_o.err   = lsu_load_err_i | lsu_store_err_i | lsu_load_intg_err_i;
+      assign x_mem_result_o.dbg   = 1'b0;
+
+      // Different definition in Ibex and X-Interface
+      assign x_mem_type = {~x_mem_size[1], x_mem_size[0]};
+
+      // LSU signals
+      assign lsu_req_o      = x_mem_lsu_req | lsu_req;
+      assign lsu_we_o       = x_mem_lsu_req ? x_mem_we    : lsu_we;
+      assign lsu_type_o     = x_mem_lsu_req ? x_mem_type  : lsu_type;
+      assign lsu_sign_ext_o = x_mem_lsu_req ? 1'b0        : lsu_sign_ext;
+      assign lsu_wdata_o    = x_mem_lsu_req ? x_mem_wdata : rf_rdata_b_fwd;
+
+      // LSU address signals
+      assign alu_operand_a_ex_o = x_mem_lsu_req ? x_mem_addr : alu_operand_a;
+      assign alu_operand_b_ex_o = x_mem_lsu_req ? (lsu_addr_incr_req_i ? 32'h4 : 32'h0) :
+                                                  alu_operand_b;
+      
+      // State mechine for memory and memory result interface
+      typedef enum logic { MEM_IDLE, MEM_LSU_REQ, MEM_WAIT_RESULT } x_mem_fsm_e;
+      x_mem_fsm_e x_mem_fsm_q, x_mem_fsm_d;
+
+      always_comb begin
+        x_mem_fsm_d          = x_mem_fsm_q;
+        x_mem_ready_o        = 1'b0;
+        x_mem_result_valid_o = 1'b0;
+        x_mem_result_fin     = 1'b0;
+        x_mem_lsu_req        = 1'b0;
+
+        unique case (x_mem_fsm_q)
+          MEM_IDLE: begin
+            if (x_mem_valid_i & (~x_mem_spec | x_mem_commit)) begin
+              x_mem_fsm_d   = MEM_LSU_REQ;
+              x_mem_lsu_req = 1'b1;
+              if (lsu_req_done_i) begin
+                x_mem_fsm_d   = MEM_WAIT_RESULT;
+                x_mem_ready_o = 1'b1;
+              end
+            end
+          end
+
+          MEM_LSU_REQ: begin
+            x_mem_lsu_req = 1'b1;
+            if (lsu_req_done_i) begin
+              x_mem_fsm_d   = MEM_WAIT_RESULT;
+              x_mem_ready_o = 1'b1;
+            end
+          end
+
+          MEM_WAIT_RESULT: begin
+            if (lsu_resp_valid_i) begin
+              x_mem_fsm_d          = MEM_IDLE;
+              x_mem_result_valid_o = 1'b1;
+              if (x_mem_last_q) begin
+                x_mem_result_fin = 1'b1;
+              end
+            end
+          end
+
+          default: begin
+            x_issue_fsm_d = MEM_IDLE;
+          end
+        endcase
+      end
+    end else begin
+      // Assign inputs
+      logic       unused_x_mem_valid;
+      x_mem_req_t unused_x_mem_req;
+
+      assign unused_x_mem_valid = x_mem_valid_i;
+      assign unused_x_mem_req   = x_mem_req_i;
+
+      // Zero outputs
+      assign x_mem_ready_o        = '0;
+      assign x_mem_resp_o         = '0;
+      assign x_mem_result_valid_o = '0;
+      assign x_mem_result_o       = '0;
+
+      // Signals from/to scoreboard
+      assign x_mem_id         = '0;
+      assign x_mem_result_fin = '0;
+      assign x_mem_result_id  = '0;
+
+      logic  unused_mem_commit;
+      logic  unused_lsu_rdata;
+      assign unused_mem_commit = x_mem_commit;
+      assign unused_lsu_rdata  = lsu_rdata_i;
+
+      // LSU signals
+      assign lsu_req_o      = lsu_req;
+      assign lsu_we_o       = lsu_we;
+      assign lsu_type_o     = lsu_type;
+      assign lsu_sign_ext_o = lsu_sign_ext;
+      assign lsu_wdata_o    = rf_rdata_b_fwd;
+      
+      // Execution block signals
+      assign alu_operand_a_ex_o = alu_operand_a;
+      assign alu_operand_b_ex_o = alu_operand_b;
+
+      // LSU privillege level
+      assign priv_mode_lsu_xif_o    = '0;
+      assign priv_mode_lsu_xif_en_o = 1'b0;
+    end
 
     /////////////////
     // SCORE BOARD //
@@ -1510,6 +1629,7 @@ module ibex_id_stage #(
     logic          unused_x_result_valid;
     x_result_t     unused_x_result;
     logic          unused_instr_new;
+    logic          unused_lsu_rdata;
 
     assign unused_ecs_rd         = ecs_rd_i;
     assign unused_x_issue_ready  = x_issue_ready_i;
@@ -1519,6 +1639,7 @@ module ibex_id_stage #(
     assign unused_x_result_valid = x_result_valid_i;
     assign unused_x_result       = x_result_i;
     assign unused_instr_new      = instr_new_i;
+    assign unused_lsu_rdata      = lsu_rdata_i;
 
     assign ecs_wr_o             = '0;
     assign ecs_wen_o            = '0;
@@ -1544,8 +1665,18 @@ module ibex_id_stage #(
     assign x_result_exccode   = '0;
 
     // wire connections
-    assign illegal_insn_id = illegal_insn_dec | illegal_csr_insn_i;
-    assign rf_waddr_id_o   = rf_waddr_dec;
+    assign illegal_insn_id        = illegal_insn_dec | illegal_csr_insn_i;
+    assign rf_waddr_id_o          = rf_waddr_dec;
+    assign rf_wdata_id_o          = rf_wdata_mux;
+    assign lsu_req_o              = lsu_req;
+    assign lsu_we_o               = lsu_we;
+    assign lsu_type_o             = lsu_type;
+    assign lsu_sign_ext_o         = lsu_sign_ext;
+    assign lsu_wdata_o            = rf_rdata_b_fwd;
+    assign alu_operand_a_ex_o     = alu_operand_a;
+    assign alu_operand_b_ex_o     = alu_operand_b;
+    assign priv_mode_lsu_xif_o    = '0;
+    assign priv_mode_lsu_xif_en_o = 1'b0;
   end
 
   //////////
@@ -1610,6 +1741,10 @@ module ibex_id_stage #(
   // === as DV environment can produce instructions with Xs in, so must use precise match that
   // includes Xs
   `ASSERT(IbexDuplicateInstrMatch, instr_valid_i |-> instr_rdata_i === instr_rdata_alu_i)
+
+  // LSU enable must be unique.
+  `ASSERT(LoadStoreUnitEnableUnique,
+      $onehot0({x_mem_lsu_req, lsu_req}))
 
   `ifdef CHECK_MISALIGNED
   `ASSERT(IbexMisalignedMemoryAccess, !lsu_addr_incr_req_i)
