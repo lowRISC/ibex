@@ -337,14 +337,15 @@ instr_gen_run: $(metadata)/.instr_gen.run.stamp
 # We don't explicitly track dependencies on the RISCV toolchain, so this
 # doesn't depend on anything more than the instr_gen stage did.
 $(metadata)/.instr_gen.compile_tests.stamp: \
-  $(metadata)/.instr_gen.run.stamp $(TESTLIST)
-	$(verb)python3 ${GEN_DIR}/run.py \
-	       --o=$(OUT-SEED)/instr_gen \
-	       --steps=gcc_compile \
-	       ${TEST_OPTS} \
-	       --gcc_opts=-mno-strict-align \
-	       ${_RISCV_DV_OPTS} \
-	       --isa=${ISA} && \
+  $(metadata)/.instr_gen.run.stamp \
+  scripts/compile-generated-tests.py
+	$(verb)scripts/compile-generated-tests.py \
+	  $(verb-arg)                             \
+	  --output $(OUT-SEED)/instr_gen          \
+	  --isa $(ISA)                            \
+	  --test $(TEST)                          \
+	  --start-seed $(SEED)                    \
+	  --iterations $(ITERATIONS)
 	touch $@
 
 .PHONY: instr_gen_compile
