@@ -22,8 +22,6 @@ import os
 import subprocess
 import sys
 
-from scripts.sim_cmd import get_simulator_cmd
-
 _CORE_IBEX = os.path.normpath(os.path.join(os.path.dirname(__file__)))
 _IBEX_ROOT = os.path.normpath(os.path.join(_CORE_IBEX, '../../..'))
 _RISCV_DV_ROOT = os.path.join(_IBEX_ROOT, 'vendor/google_riscv-dv')
@@ -43,44 +41,6 @@ try:
 
 finally:
     sys.path = _OLD_SYS_PATH
-
-
-def subst_vars(string, var_dict):
-    '''Apply substitutions in var_dict to string
-
-    If var_dict[K] = V, then <K> will be replaced with V in string.'''
-    for key, value in var_dict.items():
-        string = string.replace('<{}>'.format(key), value)
-    return string
-
-
-def rtl_compile(compile_cmds, output_dir, lsf_cmd):
-    """Compile the testbench RTL
-
-    compile_cmds is a list of commands (each a string), which will have <out>
-    substituted. Running them in sequence should compile the testbench.
-
-    output_dir is the directory in which to generate the testbench (usually
-    something like 'out/rtl_sim'). This will be substituted for <out> in the
-    commands.
-
-    If lsf_cmd is not None, it should be a string to prefix onto commands to
-    run them through LSF. Here, this is not used for parallelism, but might
-    still be needed for licence servers.
-
-    """
-    logging.info("Compiling TB")
-    for cmd in compile_cmds:
-        cmd = subst_vars(cmd, {'out': output_dir})
-
-        if lsf_cmd is not None:
-            cmd = lsf_cmd + ' ' + cmd
-
-        logging.debug("Compile command: %s" % cmd)
-
-        # Note that we don't use run_parallel_cmd here: the commands in
-        # compile_cmds need to be run serially.
-        run_cmd(cmd)
 
 
 #TODO(udinator) - support DSim, and Riviera
@@ -203,14 +163,9 @@ def main():
 
     # Compile TB
     if steps['compile']:
-        enables = {
-            'cov_opts': args.en_cov,
-            'wave_opts': args.en_wave,
-            'cosim_opts': args.en_cosim
-        }
-        compile_cmds, sim_cmd = get_simulator_cmd(args.simulator, enables)
-
-        rtl_compile(compile_cmds, output_dir, args.lsf_cmd)
+        raise RuntimeError('TB compilation is no longer supported by this '
+                           'script: use compile-tb.py.')
+        exit(1)
 
     # Generate merged coverage directory and load it into appropriate GUI
     if steps['cov']:

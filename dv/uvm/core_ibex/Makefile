@@ -396,14 +396,13 @@ cosim-arg := $(if $(call equal,$(COSIM),1),--en_cosim,)
 
 $(OUT-DIR)rtl_sim/.rtl.tb_compile.stamp: \
   $(tb-compile-vars-prereq) $(all-verilog) $(risc-dv-files) \
-  sim.py yaml/rtl_simulation.yaml \
+  scripts/compile-tb.py yaml/rtl_simulation.yaml \
   | $(OUT-DIR)rtl_sim
-	$(verb)./sim.py \
-	         --o=$(OUT-DIR) \
-	         --steps=compile \
-	         ${COMMON_OPTS} \
-	         --simulator="${SIMULATOR}" \
-	         $(cov-arg) $(wave-arg) $(cosim-arg)
+	$(verb)scripts/compile-tb.py           \
+	  $(verb-arg)                          \
+	  --output=$(OUT-DIR)                  \
+	  --simulator=$(SIMULATOR)             \
+	  $(cov-arg) $(wave-arg) $(cosim-arg)
 	$(call dump-vars,$(OUT-DIR)rtl_sim/.rtl.tb_compile.vars.mk,comp,$(tb-compile-var-deps))
 	@touch $@
 

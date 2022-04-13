@@ -15,16 +15,37 @@ RISCV_DV_ROOT = os.path.normpath(os.path.join(IBEX_ROOT,
                                               'vendor/google_riscv-dv'))
 
 
-def run_one(verbose: bool, cmd: List[str]) -> int:
+def run_one(verbose: bool,
+            cmd: List[str],
+            discard_stdstreams: bool = False) -> int:
+    '''Run a command, returning its return code
+
+    If verbose is true, print the command to stderr first (a bit like bash -x).
+
+    If discard_stdstreams is true, redirect stdout and stderr in the subprocess
+    to /dev/null. This seems a bit crazy, but makes sense for EDA tools that
+    have a '-l' argument that takes a path to which they write a copy of
+    everything that was going out on stdout/stderr.
+
+    '''
+    stdstream_dest = None
+    shell_redirection = ''
+    if discard_stdstreams:
+        stdstream_dest = subprocess.DEVNULL
+        shell_redirection = ' >/dev/null 2>&1'
+
     if verbose:
         # The equivalent of bash -x
-        print('+ ' + ' '.join(shlex.quote(w) for w in cmd),
-              file=sys.stderr)
+        cmd_str = ' '.join(shlex.quote(w) for w in cmd) + shell_redirection
+        print('+ ' + cmd_str, file=sys.stderr)
 
     # Passing close_fds=False ensures that if cmd is a call to Make then we'll
     # pass through the jobserver fds. If you don't do this, you get a warning
     # starting "warning: jobserver unavailable".
-    return subprocess.run(cmd, close_fds=False).returncode
+    return subprocess.run(cmd,
+                          stdout=stdstream_dest,
+                          stderr=stdstream_dest,
+                          close_fds=False).returncode
 
 
 def start_riscv_dv_run_cmd(verbose: bool):
