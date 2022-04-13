@@ -53,8 +53,6 @@ COV                 := 0
 SIMULATOR           := vcs
 # ISS (spike, ovpsim)
 ISS                 := spike
-# ISS runtime options
-ISS_OPTS            :=
 # ISA
 ISA                 := rv32imcb
 ISA_ISS             := rv32imc_Zba_Zbb_Zbc_Zbs_Xbitmanip
@@ -81,12 +79,6 @@ PMP_REGIONS         := 16
 PMP_GRANULARITY     := 0
 
 IBEX_CONFIG         := opentitan
-
-# TODO(udinator) - might need options for SAIL/Whisper/Spike
-ifeq (${ISS},ovpsim)
-  ISS_OPTS += --override riscvOVPsim/cpu/PMP_registers=${PMP_REGIONS}
-  ISS_OPTS += --override riscvOVPsim/cpu/PMP_grain=${PMP_GRANULARITY}
-endif
 
 # A version of $(OUT) with a trailing '/'. The point is that this will
 # never match the name of a phony targets like "sim" (which causes
@@ -131,9 +123,6 @@ TEST_OPTS := $(COMMON_OPTS) \
 CSR_OPTS=--csr_yaml=${CSR_FILE} \
          --isa="${ISA}" \
          --end_signature_addr=${SIGNATURE_ADDR}
-
-_RISCV_DV_OPTS=--custom_target=$(realpath riscv_dv_extension)\
-               --mabi=ilp32 \
 
 # To avoid cluttering the output directory with stamp files, we place them in
 # $(metadata).
@@ -356,32 +345,27 @@ instr_gen_compile: $(metadata)/.instr_gen.compile_tests.stamp
 #
 # This (obviously) depends on having compiled the generated programs, so we
 # don't have to worry about variables that affect the 'gen' stage. However, the
-# ISS and ISS_OPTS variables do affect the output, so we need to dump them. See
-# the 'gen' stage for more verbose explanations of how this works.
-iss-var-deps := ISS ISS_OPTS
+# ISS variable does affect the output, so we need to dump it. See the 'gen'
+# stage for more verbose explanations of how this works.
+iss-var-deps := ISS
 -include $(metadata)/.iss.vars.mk
 iss-vars-prereq = $(call vars-prereq,iss,running ISS,$(iss-var-deps))
 
 ISS_COMMANDS := $(shell mktemp)
 $(metadata)/.iss.run.stamp: \
-  $(metadata)/.instr_gen.compile_tests.stamp $(iss-vars-prereq) $(TESTLIST)
-	@ # Generate the commands to be run into $(ISS_COMMANDS)
-	$(verb)python3 ${GEN_DIR}/run.py \
-	       --o=$(OUT-SEED)/instr_gen \
-	       --steps=iss_sim \
-	       ${TEST_OPTS} \
-	       --iss="${ISS}" \
-	       --iss_opts="${ISS_OPTS}" \
-	       --isa="${ISA_ISS}" \
-	       ${_RISCV_DV_OPTS} \
-	       --debug $(ISS_COMMANDS) # Write all the commands to execute into here...
-	@ # Construct the sub-makefile from the commands, then call it
-	$(verb)./scripts/construct_makefile.py \
-	         --output=$(OUT-SEED)/instr_gen/iss.mk \
-	         --test_cmds=$(ISS_COMMANDS)
-	@$(MAKE) -s -f $(OUT-SEED)/instr_gen/iss.mk all
-	@ # Bookkeeping
-	$(call dump-vars,$(metadata)/.iss.vars.mk,iss,$(iss-var-deps))
+  $(metadata)/.instr_gen.compile_tests.stamp $(iss-vars-prereq) \
+  $(TESTLIST) \
+  scripts/construct_makefile.py scripts/run-iss.py | $(metadata)
+	+$(verb)scripts/run-iss.py             \
+	  $(verb-arg)                          \
+	  --iss=$(ISS)                         \
+	  --output=$(OUT-SEED)/instr_gen       \
+	  --isa=$(ISA_ISS)                     \
+	  --test $(TEST)                       \
+	  --start-seed $(SEED)                 \
+	  --iterations $(ITERATIONS)           \
+	  --pmp-num-regions $(PMP_REGIONS)     \
+	  --pmp-granularity $(PMP_GRANULARITY)
 	@touch $@
 
 .PHONY: iss_run
