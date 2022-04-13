@@ -128,8 +128,8 @@ CSR_OPTS=--csr_yaml=${CSR_FILE} \
          --isa="${ISA}" \
          --end_signature_addr=${SIGNATURE_ADDR}
 
-RISCV_DV_OPTS=--custom_target=$(realpath riscv_dv_extension)\
-              --mabi=ilp32 \
+_RISCV_DV_OPTS=--custom_target=$(realpath riscv_dv_extension)\
+               --mabi=ilp32 \
 
 # To avoid cluttering the output directory with stamp files, we place them in
 # $(metadata).
@@ -250,7 +250,7 @@ REGEX_EMPTY_LINES := '/^$$/d'
 #
 # To do this variable tracking, we dump each of the variables to a Makefile
 # fragment and try to load it up the next time around.
-instr-gen-build-var-deps := SIMULATOR RISCV_DV_OPTS ISA CSR_OPTS \
+instr-gen-build-var-deps := SIMULATOR ISA CSR_OPTS \
                             SIGNATURE_ADDR PMP_REGIONS PMP_GRANULARITY TEST_OPTS
 # Since we're writing out to $(OUT-SEED), we don't have to depend on the value
 # of SEED. However, we do have to make sure that the variables listed have not
@@ -294,7 +294,7 @@ $(metadata)/.instr_gen.build.stamp: \
 	       --co --steps=gen \
 	       --output=$(OUT-SEED)/instr_gen \
 	       --simulator="${SIMULATOR}" \
-	       ${RISCV_DV_OPTS} \
+	       ${_RISCV_DV_OPTS} \
 	       --isa=${ISA} \
 	       ${CSR_OPTS}
 	$(call dump-vars,$(metadata)/.instr_gen.build.vars.mk,gen,$(instr-gen-build-var-deps))
@@ -318,7 +318,7 @@ $(metadata)/.instr_gen.run.stamp: \
 	       --output=$(OUT-SEED)/instr_gen \
 	       --simulator="${SIMULATOR}" \
 	       --isa=${ISA} \
-	       ${RISCV_DV_OPTS} \
+	       ${_RISCV_DV_OPTS} \
 	       ${TEST_OPTS} \
 	       ${CSR_OPTS} \
 	       --sim_opts="+uvm_set_inst_override=riscv_asm_program_gen,ibex_asm_program_gen,"uvm_test_top.asm_gen" \
@@ -351,7 +351,7 @@ $(metadata)/.instr_gen.compile_tests.stamp: \
 	       --steps=gcc_compile \
 	       ${TEST_OPTS} \
 	       --gcc_opts=-mno-strict-align \
-	       ${RISCV_DV_OPTS} \
+	       ${_RISCV_DV_OPTS} \
 	       --isa=${ISA} && \
 	touch $@
 
@@ -380,7 +380,7 @@ $(metadata)/.iss.run.stamp: \
 	       --iss="${ISS}" \
 	       --iss_opts="${ISS_OPTS}" \
 	       --isa="${ISA_ISS}" \
-	       ${RISCV_DV_OPTS} \
+	       ${_RISCV_DV_OPTS} \
 	       --debug $(ISS_COMMANDS) # Write all the commands to execute into here...
 	@ # Construct the sub-makefile from the commands, then call it
 	@sed -i $(REGEX_EMPTY_LINES) $(ISS_COMMANDS)
