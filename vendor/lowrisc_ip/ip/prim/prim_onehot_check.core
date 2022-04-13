@@ -2,15 +2,16 @@ CAPI=2:
 # Copyright lowRISC contributors.
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
-name: "lowrisc:prim:cdc_rand_delay"
-description: "CDC random delay module for DV"
 
+name: "lowrisc:prim:onehot_check"
+description: "One-hot encoding checker"
 filesets:
   files_rtl:
     depend:
+      - lowrisc:prim:util
       - lowrisc:prim:assert
     files:
-      - rtl/prim_cdc_rand_delay.sv
+      - rtl/prim_onehot_check.sv
     file_type: systemVerilogSource
 
   files_verilator_waiver:
@@ -18,7 +19,7 @@ filesets:
       # common waivers
       - lowrisc:lint:common
     files:
-      - lint/prim_cdc_rand_delay.vlt
+      - lint/prim_onehot_check.vlt
     file_type: vlt
 
   files_ascentlint_waiver:
@@ -26,7 +27,7 @@ filesets:
       # common waivers
       - lowrisc:lint:common
     files:
-      #- lint/prim_cdc_rand_delay.waiver
+      - lint/prim_onehot_check.waiver
     file_type: waiver
 
   files_veriblelint_waiver:
@@ -36,12 +37,13 @@ filesets:
 
 targets:
   default:
-    tools:
-      verilator:
-        verilator_options:
-          - '-DDISABLE_PRIM_CDC_RAND_DELAY'
+    filesets:
+      - tool_verilator   ? (files_verilator_waiver)
+      - tool_ascentlint  ? (files_ascentlint_waiver)
+      - tool_veriblelint ? (files_veriblelint_waiver)
+      - files_rtl
+
+  formal:
     filesets:
       - files_rtl
-      - tool_verilator    ? (files_verilator_waiver)
-      - tool_ascentlint   ? (files_ascentlint_waiver)
-      - tool_veriblelint  ? (files_verilator_waiver)
+    toplevel: prim_onehot_check
