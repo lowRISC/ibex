@@ -66,8 +66,6 @@ VERBOSE             :=
 # Number of iterations for each test, assign a non-zero value to override the
 # iteration count in the test list
 ITERATIONS          := 0
-# LSF CMD
-LSF_CMD             :=
 # Generator timeout limit in seconds
 TIMEOUT             := 1800
 # Privileged CSR YAML description file
@@ -318,7 +316,6 @@ $(metadata)/.instr_gen.run.stamp: \
 	$(verb)python3 ${GEN_DIR}/run.py \
 	       --so --steps=gen \
 	       --output=$(OUT-SEED)/instr_gen \
-	       --lsf_cmd="${LSF_CMD}" \
 	       --simulator="${SIMULATOR}" \
 	       --isa=${ISA} \
 	       ${RISCV_DV_OPTS} \
@@ -430,7 +427,6 @@ $(call dump-vars-match,$(tb-compile-var-deps),comp)
 cov-arg := $(if $(call equal,$(COV),1),--en_cov,)
 wave-arg := $(if $(call equal,$(WAVES),1),--en_wave,)
 cosim-arg := $(if $(call equal,$(COSIM),1),--en_cosim,)
-lsf-arg := $(if $(LSF_CMD),--lsf_cmd="$(LSF_CMD)",)
 
 $(OUT-DIR)rtl_sim/.rtl.tb_compile.stamp: \
   $(tb-compile-vars-prereq) $(all-verilog) $(risc-dv-files) \
@@ -441,7 +437,7 @@ $(OUT-DIR)rtl_sim/.rtl.tb_compile.stamp: \
 	         --steps=compile \
 	         ${COMMON_OPTS} \
 	         --simulator="${SIMULATOR}" --simulator_yaml=yaml/rtl_simulation.yaml \
-	         $(cov-arg) $(wave-arg) $(cosim-arg) $(lsf-arg) \
+	         $(cov-arg) $(wave-arg) $(cosim-arg) \
 	         --cmp_opts="${COMPILE_OPTS}"
 	$(call dump-vars,$(OUT-DIR)rtl_sim/.rtl.tb_compile.vars.mk,comp,$(tb-compile-var-deps))
 	@touch $@
@@ -480,7 +476,7 @@ $(rtl-sim-logs): \
 	$(verb)./run_rtl.py \
 	         --simulator $(SIMULATOR) \
 	         --simulator_yaml yaml/rtl_simulation.yaml \
-	         $(cov-arg) $(wave-arg) $(lsf-arg) \
+	         $(cov-arg) $(wave-arg) \
 	         --start-seed $(SEED) \
 	         --sim-opts="+signature_addr=${SIGNATURE_ADDR} ${SIM_OPTS}" \
 	         --test-dot-seed $(notdir $*) \
@@ -552,7 +548,7 @@ riscv_dv_fcov: $(metadata)/.cov.gen_fcov.stamp
 $(metadata)/.cov.merge.stamp: \
 	$(metadata)/.cov.gen_fcov.stamp
 	$(verb)rm -rf $(OUT-DIR)rtl_sim/test.vdb
-	$(verb)./sim.py --steps=cov --simulator="${SIMULATOR}" $(lsf-arg) --o="$(OUT-DIR)"
+	$(verb)./sim.py --steps=cov --simulator="${SIMULATOR}" --o="$(OUT-DIR)"
 	@if [ -d "test.vdb" ]; then \
 	     mv -f test.vdb $(OUT-DIR)rtl_sim/; \
 	fi
