@@ -43,8 +43,6 @@ export cov_merge_dir := $(OUT-SEED)/cov_merge
 export cov_merge_db_dir := $(cov_merge_dir)/merged
 export cov_report_dir := $(OUT-SEED)/cov_report
 
-# Run time options for ibex RTL simulation
-SIM_OPTS            :=
 # Enable waveform dumping
 WAVES               := 1
 # Enable coverage dump
@@ -157,10 +155,6 @@ $(sim-cfg-mk): FORCE | $(OUT-DIR)
 endif
 
 include $(sim-cfg-mk)
-
-.PHONY: test-cfg
-test-cfg:
-	@echo "SIM_OPTS" $(SIM_OPTS)
 
 ###############################################################################
 # Utility functions.
@@ -448,7 +442,7 @@ $(rtl-sim-logs): \
 	         --simulator $(SIMULATOR) \
 	         $(cov-arg) $(wave-arg) \
 	         --start-seed $(SEED) \
-	         --sim-opts="+signature_addr=${SIGNATURE_ADDR} ${SIM_OPTS}" \
+	         --sim-opts="+signature_addr=${SIGNATURE_ADDR}" \
 	         --test-dot-seed $(notdir $*) \
 	         --bin-dir $(OUT-SEED)/instr_gen/asm_test \
 	         --rtl-sim-dir $(OUT-SEED)/rtl_sim
