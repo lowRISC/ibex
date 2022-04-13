@@ -17,7 +17,8 @@ RISCV_DV_ROOT = os.path.normpath(os.path.join(IBEX_ROOT,
 
 def run_one(verbose: bool,
             cmd: List[str],
-            discard_stdstreams: bool = False) -> int:
+            discard_stdstreams: bool = False,
+            env: Dict[str, str] = None) -> int:
     '''Run a command, returning its return code
 
     If verbose is true, print the command to stderr first (a bit like bash -x).
@@ -45,7 +46,8 @@ def run_one(verbose: bool,
     return subprocess.run(cmd,
                           stdout=stdstream_dest,
                           stderr=stdstream_dest,
-                          close_fds=False).returncode
+                          close_fds=False,
+                          env=env).returncode
 
 
 def start_riscv_dv_run_cmd(verbose: bool):
