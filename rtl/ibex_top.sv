@@ -403,25 +403,25 @@ module ibex_top import ibex_pkg::*; #(
     .icache_inval_o        (icache_inval),
     .core_busy_o           (core_busy_d),
 
-    .x_compressed_valid_o(x_compressed_valid_o),
-    .x_compressed_ready_i(x_compressed_ready_i),
-    .x_compressed_req_o  (x_compressed_req_o),
-    .x_compressed_resp_i (x_compressed_resp_i),
-    .x_issue_valid_o     (x_issue_valid_o),
-    .x_issue_ready_i     (x_issue_ready_i),
-    .x_issue_req_o       (x_issue_req_o),
-    .x_issue_resp_i      (x_issue_resp_i),
-    .x_commit_valid_o    (x_commit_valid_o),
-    .x_commit_o          (x_commit_o),
-    .x_mem_valid_i       (x_mem_valid_i),
-    .x_mem_ready_o       (x_mem_ready_o),
-    .x_mem_req_i         (x_mem_req_i),
-    .x_mem_resp_o        (x_mem_resp_o),
-    .x_mem_result_valid_o(x_mem_result_valid_o),
-    .x_mem_result_o      (x_mem_result_o),
-    .x_result_valid_i    (x_result_valid_i),
-    .x_result_ready_o    (x_result_ready_o),
-    .x_result_i          (x_result_i)
+    .x_compressed_valid_o,
+    .x_compressed_ready_i,
+    .x_compressed_req_o,
+    .x_compressed_resp_i,
+    .x_issue_valid_o,
+    .x_issue_ready_i,
+    .x_issue_req_o,
+    .x_issue_resp_i,
+    .x_commit_valid_o,
+    .x_commit_o,
+    .x_mem_valid_i,
+    .x_mem_ready_o,
+    .x_mem_req_i,
+    .x_mem_resp_o,
+    .x_mem_result_valid_o,
+    .x_mem_result_o,
+    .x_result_valid_i,
+    .x_result_ready_o,
+    .x_result_i
   );
 
   /////////////////////////////////
@@ -706,6 +706,25 @@ module ibex_top import ibex_pkg::*; #(
       double_fault_seen_o,
       fetch_enable_i,
       icache_inval,
+      x_compressed_valid_o,
+      x_compressed_ready_i,
+      x_compressed_req_o,
+      x_compressed_resp_i,
+      x_issue_valid_o,
+      x_issue_ready_i,
+      x_issue_req_o,
+      x_issue_resp_i,
+      x_commit_valid_o,
+      x_commit_o,
+      x_mem_valid_i,
+      x_mem_ready_o,
+      x_mem_req_i,
+      x_mem_resp_o,
+      x_mem_result_valid_o,
+      x_mem_result_o,
+      x_result_valid_i,
+      x_result_ready_o,
+      x_result_i,
       core_busy_d
     });
 
@@ -765,6 +784,26 @@ module ibex_top import ibex_pkg::*; #(
     logic                         icache_inval_local;
     logic                         core_busy_local;
 
+    logic                         x_compressed_valid_local;
+    logic                         x_compressed_ready_local;
+    x_compressed_req_t            x_compressed_req_local;
+    x_compressed_resp_t           x_compressed_resp_local;
+    logic                         x_issue_valid_local;
+    logic                         x_issue_ready_local;
+    x_issue_req_t                 x_issue_req_local;
+    x_issue_resp_t                x_issue_resp_local;
+    logic                         x_commit_valid_local;
+    x_commit_t                    x_commit_local;
+    logic                         x_mem_valid_local;
+    logic                         x_mem_ready_local;
+    x_mem_req_t                   x_mem_req_local;
+    x_mem_resp_t                  x_mem_resp_local;
+    logic                         x_mem_result_valid_local;
+    x_mem_result_t                x_mem_result_local;
+    logic                         x_result_valid_local;
+    logic                         x_result_ready_local;
+    x_result_t                    x_result_local;
+
     assign buf_in = {
       hart_id_i,
       boot_addr_i,
@@ -811,6 +850,25 @@ module ibex_top import ibex_pkg::*; #(
       double_fault_seen_o,
       fetch_enable_i,
       icache_inval,
+      x_compressed_valid_o,
+      x_compressed_ready_i,
+      x_compressed_req_o,
+      x_compressed_resp_i,
+      x_issue_valid_o,
+      x_issue_ready_i,
+      x_issue_req_o,
+      x_issue_resp_i,
+      x_commit_valid_o,
+      x_commit_o,
+      x_mem_valid_i,
+      x_mem_ready_o,
+      x_mem_req_i,
+      x_mem_resp_o,
+      x_mem_result_valid_o,
+      x_mem_result_o,
+      x_result_valid_i,
+      x_result_ready_o,
+      x_result_i,
       core_busy_d
     };
 
@@ -860,6 +918,25 @@ module ibex_top import ibex_pkg::*; #(
       double_fault_seen_local,
       fetch_enable_local,
       icache_inval_local,
+      x_compressed_valid_local,
+      x_compressed_ready_local,
+      x_compressed_req_local,
+      x_compressed_resp_local,
+      x_issue_valid_local,
+      x_issue_ready_local,
+      x_issue_req_local,
+      x_issue_resp_local,
+      x_commit_valid_local,
+      x_commit_local,
+      x_mem_valid_local,
+      x_mem_ready_local,
+      x_mem_req_local,
+      x_mem_resp_local,
+      x_mem_result_valid_local,
+      x_mem_result_local,
+      x_result_valid_local,
+      x_result_ready_local,
+      x_result_local,
       core_busy_local
     } = buf_out;
 
@@ -913,7 +990,9 @@ module ibex_top import ibex_pkg::*; #(
       .RegFileDataWidth (RegFileDataWidth),
       .MemECC           (MemECC),
       .DmHaltAddr       (DmHaltAddr),
-      .DmExceptionAddr  (DmExceptionAddr)
+      .DmExceptionAddr  (DmExceptionAddr),
+      .XInterface       (XInterface),
+      .MemInterface     (MemInterface)
     ) u_ibex_lockstep (
       .clk_i                  (clk),
       .rst_ni                 (rst_ni),
@@ -977,7 +1056,27 @@ module ibex_top import ibex_pkg::*; #(
       .icache_inval_i         (icache_inval_local),
       .core_busy_i            (core_busy_local),
       .test_en_i              (test_en_i),
-      .scan_rst_ni            (scan_rst_ni)
+      .scan_rst_ni            (scan_rst_ni),
+
+      .x_compressed_valid_i   (x_compressed_valid_local),
+      .x_compressed_ready_i   (x_compressed_ready_local),
+      .x_compressed_req_i     (x_compressed_req_local),
+      .x_compressed_resp_i    (x_compressed_resp_local),
+      .x_issue_valid_i        (x_issue_valid_local),
+      .x_issue_ready_i        (x_issue_ready_local),
+      .x_issue_req_i          (x_issue_req_local),
+      .x_issue_resp_i         (x_issue_resp_local),
+      .x_commit_valid_i       (x_commit_valid_local),
+      .x_commit_i             (x_commit_local),
+      .x_mem_valid_i          (x_mem_valid_local),
+      .x_mem_ready_i          (x_mem_ready_local),
+      .x_mem_req_i            (x_mem_req_local),
+      .x_mem_resp_i           (x_mem_resp_local),
+      .x_mem_result_valid_i   (x_mem_result_valid_local),
+      .x_mem_result_i         (x_mem_result_local),
+      .x_result_valid_i       (x_result_valid_local),
+      .x_result_ready_i       (x_result_ready_local),
+      .x_result_i             (x_result_local)
     );
 
     prim_buf u_prim_buf_alert_minor (

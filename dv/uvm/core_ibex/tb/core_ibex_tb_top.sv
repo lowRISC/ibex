@@ -65,6 +65,8 @@ module core_ibex_tb_top;
   parameter bit BranchPredictor          = 1'b0;
   parameter bit SecureIbex               = 1'b0;
   parameter bit ICacheScramble           = 1'b0;
+  parameter bit XInterface               = 1'b1;
+  parameter bit MemInterface             = 1'b1;
 
   ibex_top_tracing #(
     .DmHaltAddr      (32'h`BOOT_ADDR + 'h0 ),
@@ -82,7 +84,9 @@ module core_ibex_tb_top;
     .ICacheECC       (ICacheECC        ),
     .SecureIbex      (SecureIbex       ),
     .ICacheScramble  (ICacheScramble   ),
-    .BranchPredictor (BranchPredictor  )
+    .BranchPredictor (BranchPredictor  ),
+    .XInterface      (XInterface       ),
+    .MemInterface    (MemInterface     )
   ) dut (
     .clk_i                  (clk                        ),
     .rst_ni                 (rst_n                      ),
@@ -133,7 +137,27 @@ module core_ibex_tb_top;
     .alert_minor_o          (dut_if.alert_minor         ),
     .alert_major_internal_o (dut_if.alert_major_internal),
     .alert_major_bus_o      (dut_if.alert_major_bus     ),
-    .core_sleep_o           (dut_if.core_sleep          )
+    .core_sleep_o           (dut_if.core_sleep          ),
+
+    .x_compressed_valid_o   (                           ),
+    .x_compressed_ready_i   (1'b0                       ),
+    .x_compressed_req_o     (                           ),
+    .x_compressed_resp_i    ('b0                        ),
+    .x_issue_valid_o        (                           ),
+    .x_issue_ready_i        (1'b0                       ),
+    .x_issue_req_o          (                           ),
+    .x_issue_resp_i         ('b0                        ),
+    .x_commit_valid_o       (                           ),
+    .x_commit_o             (                           ),
+    .x_mem_valid_i          (1'b0                       ),
+    .x_mem_ready_o          (                           ),
+    .x_mem_req_i            ('b0                        ),
+    .x_mem_resp_o           (                           ),
+    .x_mem_result_valid_o   (                           ),
+    .x_mem_result_o         (                           ),
+    .x_result_valid_i       (1'b0                       ),
+    .x_result_ready_o       (                           ),
+    .x_result_i             ('b0                        )
   );
 
   // We should never see any alerts triggered in normal testing

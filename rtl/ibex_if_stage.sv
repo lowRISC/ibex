@@ -151,6 +151,7 @@ module ibex_if_stage import ibex_pkg::*; #(
   logic              illegal_c_insn, illegal_c_insn_dec;
   logic              instr_is_compressed;
 
+  logic              if_instr_comp_valid;
   logic              if_instr_valid;
   logic       [31:0] if_instr_rdata;
   logic       [31:0] if_instr_addr;
@@ -662,10 +663,10 @@ module ibex_if_stage import ibex_pkg::*; #(
     // Do not branch predict on instruction errors.
     assign predict_branch_taken = predict_branch_taken_raw & ~instr_skid_valid_q & ~fetch_err;
 
-    assign if_instr_valid   = (fetch_valid | (instr_skid_valid_q & ~nt_branch_mispredict_i)) &
-                              ~stall_offl;
-    assign if_instr_rdata   = instr_skid_valid_q ? instr_skid_data_q : fetch_rdata;
-    assign if_instr_addr    = instr_skid_valid_q ? instr_skid_addr_q : fetch_addr;
+    assign if_instr_comp_valid  = fetch_valid | (instr_skid_valid_q & ~nt_branch_mispredict_i);
+    assign if_instr_valid       = if_instr_comp_valid & ~stall_offl;
+    assign if_instr_rdata       = instr_skid_valid_q ? instr_skid_data_q : fetch_rdata;
+    assign if_instr_addr        = instr_skid_valid_q ? instr_skid_addr_q : fetch_addr;
 
     // Don't branch predict on instruction error so only instructions without errors end up in the
     // skid buffer.
@@ -683,11 +684,12 @@ module ibex_if_stage import ibex_pkg::*; #(
     assign predict_branch_taken = 1'b0;
     assign predict_branch_pc    = 32'b0;
 
-    assign if_instr_valid = fetch_valid & ~stall_offl;
-    assign if_instr_rdata = fetch_rdata;
-    assign if_instr_addr  = fetch_addr;
-    assign if_instr_bus_err = fetch_err;
-    assign fetch_ready = id_in_ready_i & ~stall_dummy_instr & ~stall_offl;
+    assign if_instr_comp_valid = fetch_valid;
+    assign if_instr_valid      = if_instr_comp_valid & ~stall_offl;
+    assign if_instr_rdata      = fetch_rdata;
+    assign if_instr_addr       = fetch_addr;
+    assign if_instr_bus_err    = fetch_err;
+    assign fetch_ready         = id_in_ready_i & ~stall_dummy_instr & ~stall_offl;
   end
 
   /////////////////////////
@@ -695,33 +697,35 @@ module ibex_if_stage import ibex_pkg::*; #(
   /////////////////////////
 
   if (XInterface) begin : compressed_interface
-    logic               x_compressed_handshake;
-    logic               x_compressed_fin_d, x_compressed_fin_q;
-    logic               fetch_ready_q;
+    logic               x_compressed_handshake_d, x_compressed_handshake_q;
+    logic               x_compressed_new_d, x_compressed_new_q;
+    logic               instr_new_if_d, instr_new_if_q;
     x_compressed_resp_t x_compressed_resp_q, x_compressed_resp;
 
     // Output a valid signal when:
-    // 1. There is a valid instruction fetched from prefetch buffer, and
-    // 2. There is not any branch jump, and
+    // 1. There is a valid compressed instruction, and
+    // 2. There is not any branch jump to flush the instruction, and
     // 3. The instruction is illegal in compressed decoder, and
-    // 4. The current handshake has not completed.
-    assign x_compressed_valid_o   = fetch_valid & ~pc_set_i &
-                                    illegal_c_insn_dec &
-                                    ~x_compressed_fin_q;
+    // 4. There is a instruction with its handshake not completed.
+    assign x_compressed_valid_o   = if_instr_comp_valid &
+                                    ~pc_set_i           &
+                                    illegal_c_insn_dec  &
+                                    x_compressed_new_d;
 
-    assign x_compressed_handshake = x_compressed_valid_o & x_compressed_ready_i;
-    assign stall_offl             = x_compressed_valid_o & ~x_compressed_ready_i;
+    assign x_compressed_handshake_d = x_compressed_valid_o & x_compressed_ready_i;
+    assign stall_offl               = x_compressed_valid_o & ~x_compressed_ready_i;
 
-    // 1. Respond is set valid when handshake is completed this cycle.
-    // 2. Respond is set invalid when IF stage is ready for fetching a new instruction at last cycle.
-    assign x_compressed_fin_d = x_compressed_handshake | (x_compressed_fin_q & ~fetch_ready_q);
+    assign instr_new_if_d = id_in_ready_i & ~stall_dummy_instr & ~stall_offl;
 
-    assign x_compressed_resp  = x_compressed_handshake ? x_compressed_resp_i :
-                                                         x_compressed_resp_q;
-    assign illegal_c_insn     = x_compressed_fin_d     ? x_compressed_resp.accept :
-                                                         illegal_c_insn_dec;
-    assign instr_decompressed = x_compressed_fin_d     ? x_compressed_resp.instr :
-                                                         instr_decompressed_dec;
+    // The instruction is a instruction with its handshake not completed when:
+    // 1. It is the first cycle of this instruction.
+    // 2. It was a instruction with its handshake not completed last cycle,
+    // and handshake does not occur at last cycle.
+    assign x_compressed_new_d = instr_new_if_q | (x_compressed_new_q & ~x_compressed_handshake_q);
+
+    assign x_compressed_resp  = x_compressed_handshake_d ? x_compressed_resp_i : x_compressed_resp_q;
+    assign illegal_c_insn     = ~x_compressed_resp.accept & illegal_c_insn_dec;
+    assign instr_decompressed = illegal_c_insn_dec ? x_compressed_resp.instr : instr_decompressed_dec;
 
     // Interface output request signals
     assign x_compressed_req_o.instr = if_instr_rdata[15:0];
@@ -731,11 +735,13 @@ module ibex_if_stage import ibex_pkg::*; #(
     // Control signal pipeline
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
-        x_compressed_fin_q <= 1'b0;
-        fetch_ready_q      <= 1'b1;
+        x_compressed_handshake_q <= 1'b0;
+        x_compressed_new_q       <= 1'b0;
+        instr_new_if_q           <= 1'b0;
       end else begin
-        x_compressed_fin_q <= x_compressed_fin_d;
-        fetch_ready_q      <= fetch_ready;
+        x_compressed_handshake_q <= x_compressed_handshake_d;
+        x_compressed_new_q       <= x_compressed_new_d;
+        instr_new_if_q           <= instr_new_if_d;
       end
     end
 
@@ -743,13 +749,13 @@ module ibex_if_stage import ibex_pkg::*; #(
       always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
           x_compressed_resp_q <= '0;
-        end else if (handshake) begin
+        end else if (x_compressed_handshake_d) begin
           x_compressed_resp_q <= x_compressed_resp_i;
         end
       end
     end else begin : g_compressed_resp_nr
       always_ff @(posedge clk_i) begin
-        if (handshake) begin
+        if (x_compressed_handshake_d) begin
           x_compressed_resp_q <= x_compressed_resp_i;
         end
       end
