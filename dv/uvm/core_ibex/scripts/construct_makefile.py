@@ -4,14 +4,26 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import argparse
-import os
 import sys
 
 
-_CORE_IBEX = os.path.normpath(os.path.join(os.path.dirname(__file__)))
-_IBEX_ROOT = os.path.normpath(os.path.join(_CORE_IBEX, '../../..'))
-_RISCV_DV_ROOT = os.path.join(_IBEX_ROOT, 'vendor/google_riscv-dv')
-_OLD_SYS_PATH = sys.path
+def transform(discard_stdstreams: bool,
+              cmdlist_path: str,
+              makefile_path: str) -> None:
+    '''Transform a list of commands to a Makefile'''
+    # Many commands come with a logfile argument, however some capture the
+    # stdout/stderr to a file. Handle both cases to ensure the logs are tidy.
+    tail = '\n'
+    if discard_stdstreams:
+        tail = ' >/dev/null 2>&1' + tail
+
+    with open(cmdlist_path) as f, \
+         open(makefile_path, 'w', encoding='UTF-8') as outfile:
+        for i, line in enumerate(f):
+            outfile.write(f'{i}:\n')
+            outfile.write('\t' + line.strip() + tail)
+        outfile.write(f'CMDS := $(shell seq 0 {i})\n')
+        outfile.write('all: $(CMDS)')
 
 
 def main() -> int:
@@ -30,20 +42,7 @@ def main() -> int:
                         help='Redirect stdstreams to /dev/null')
     args = parser.parse_args()
 
-    # Many commands come with a logfile argument, however some capture the
-    # stdout/stderr to a file. Handle both cases to ensure the logs are tidy.
-    tail = '\n'
-    if args.discard_stdstreams:
-        tail = ' >/dev/null 2>&1' + tail
-
-    with open(args.test_cmds) as f, \
-         open(args.output, 'w', encoding='UTF-8') as outfile:
-        for i, line in enumerate(f):
-            outfile.write(f'{i}:\n')
-            outfile.write('\t' + line.strip() + tail)
-        outfile.write(f'CMDS := $(shell seq 0 {i})\n')
-        outfile.write('all: $(CMDS)')
-
+    transform(args.discard_stdstreams, args.test_cmds, args.output)
     return 0
 
 
