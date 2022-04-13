@@ -7,10 +7,11 @@ import subprocess
 import sys
 from typing import Tuple
 
-from scripts.sim_cmd import get_simulator_cmd
-from scripts.test_entry import get_test_entry
+from sim_cmd import get_simulator_cmd
+from scripts_lib import subst_vars
+from test_entry import get_test_entry
 
-_CORE_IBEX = os.path.normpath(os.path.join(os.path.dirname(__file__)))
+_CORE_IBEX = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
 
 _TestAndSeed = Tuple[str, int]
 
@@ -25,15 +26,6 @@ def read_test_dot_seed(arg: str) -> _TestAndSeed:
                                          .format(arg))
 
     return (match.group(1), int(match.group(2), 10))
-
-
-def subst_vars(string, var_dict):
-    '''Apply substitutions in var_dict to string
-
-    If var_dict[K] = V, then <K> will be replaced with V in string.'''
-    for key, value in var_dict.items():
-        string = string.replace('<{}>'.format(key), value)
-    return string
 
 
 def get_test_sim_cmd(base_cmd, test, idx, seed, sim_dir, bin_dir, lsf_cmd):
@@ -88,6 +80,7 @@ def main() -> int:
     parser.add_argument('--simulator', required=True)
     parser.add_argument("--en_cov", action='store_true')
     parser.add_argument("--en_wave", action='store_true')
+    parser.add_argument('--signature-addr', required=True)
     parser.add_argument('--start-seed', type=int, required=True)
     parser.add_argument('--test-dot-seed',
                         type=read_test_dot_seed,
@@ -95,7 +88,6 @@ def main() -> int:
     parser.add_argument('--lsf-cmd')
     parser.add_argument('--bin-dir', required=True)
     parser.add_argument('--rtl-sim-dir', required=True)
-    parser.add_argument('--sim-opts', default='')
 
     args = parser.parse_args()
 
@@ -117,11 +109,13 @@ def main() -> int:
     }
     _, base_cmd = get_simulator_cmd(args.simulator, enables)
 
+    sim_opts = f'+signature_addr={args.signature_addr}'
+
     # Specialize base_cmd with the right directories and simulator options
     sim_cmd = subst_vars(base_cmd,
                          {
                              'out': args.rtl_sim_dir,
-                             'sim_opts': args.sim_opts,
+                             'sim_opts': sim_opts,
                              'cwd': _CORE_IBEX,
                          })
 

@@ -7,7 +7,7 @@ import os
 import shlex
 import subprocess
 import sys
-from typing import List
+from typing import Dict, List
 
 THIS_DIR = os.path.dirname(__file__)
 IBEX_ROOT = os.path.join(THIS_DIR, 4 * '../')
@@ -66,3 +66,12 @@ def start_riscv_dv_run_cmd(verbose: bool):
         cmd.append('--verbose')
 
     return cmd
+
+
+def subst_vars(string: str, var_dict: Dict[str, str]) -> str:
+    '''Apply substitutions in var_dict to string
+
+    If var_dict[K] = V, then <K> will be replaced with V in string.'''
+    for key, value in var_dict.items():
+        string = string.replace('<{}>'.format(key), value)
+    return string

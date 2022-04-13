@@ -434,17 +434,17 @@ $(rtl-sim-logs): \
   %/sim.log: \
   $(metadata)/.rtl.tb_compile.stamp \
   $(metadata)/.instr_gen.compile_tests.stamp \
-  run_rtl.py
+  scripts/run-rtl.py
 	@echo Running RTL simulation at $@
 	$(verb)mkdir -p $(@D)
-	$(verb)./run_rtl.py \
-	         --simulator $(SIMULATOR) \
-	         $(cov-arg) $(wave-arg) \
-	         --start-seed $(SEED) \
-	         --sim-opts="+signature_addr=${SIGNATURE_ADDR}" \
-	         --test-dot-seed $(notdir $*) \
-	         --bin-dir $(OUT-SEED)/instr_gen/asm_test \
-	         --rtl-sim-dir $(OUT-SEED)/rtl_sim
+	$(verb)scripts/run-rtl.py                  \
+	  --simulator $(SIMULATOR)                 \
+	  $(cov-arg) $(wave-arg)                   \
+	  --start-seed $(SEED)                     \
+	  --signature-addr $(SIGNATURE_ADDR)       \
+	  --test-dot-seed $(notdir $*)             \
+	  --bin-dir $(OUT-SEED)/instr_gen/asm_test \
+	  --rtl-sim-dir $(OUT-SEED)/rtl_sim
 
 .PHONY: rtl_sim_run
 rtl_sim_run: $(rtl-sim-logs)
