@@ -8,8 +8,8 @@ import junit_xml
 import os.path
 import sys
 import yaml
-from test_run_result import (TestRunResult, test_run_result_fields,
-                             check_test_run_result)
+from scripts.test_run_result import (TestRunResult, test_run_result_fields,
+                                     check_test_run_result)
 from typing import List, TextIO
 
 

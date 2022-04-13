@@ -13,8 +13,8 @@ import re
 import sys
 from typing import Dict, Optional, TextIO, Tuple, Union
 
-from test_entry import TestEntry, get_test_entry
-from test_run_result import TestRunResult
+from scripts.test_entry import TestEntry, get_test_entry
+from scripts.test_run_result import TestRunResult
 
 _CORE_IBEX = os.path.normpath(os.path.join(os.path.dirname(__file__)))
 _IBEX_ROOT = os.path.normpath(os.path.join(_CORE_IBEX, '../../..'))

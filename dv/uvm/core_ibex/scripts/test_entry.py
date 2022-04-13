@@ -2,8 +2,8 @@ import os
 import sys
 from typing import Dict, List
 
-_CORE_IBEX = os.path.normpath(os.path.join(os.path.dirname(__file__)))
-_IBEX_ROOT = os.path.normpath(os.path.join(_CORE_IBEX, '../../..'))
+_CORE_IBEX = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
+_IBEX_ROOT = os.path.normpath(os.path.join(_CORE_IBEX, 3 * '../'))
 _RISCV_DV_ROOT = os.path.join(_IBEX_ROOT, 'vendor/google_riscv-dv')
 _OLD_SYS_PATH = sys.path
 
