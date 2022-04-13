@@ -7,8 +7,8 @@ import subprocess
 import sys
 from typing import Tuple
 
-from sim_cmd import get_simulator_cmd
-from test_entry import get_test_entry
+from scripts.sim_cmd import get_simulator_cmd
+from scripts.test_entry import get_test_entry
 
 _CORE_IBEX = os.path.normpath(os.path.join(os.path.dirname(__file__)))
 

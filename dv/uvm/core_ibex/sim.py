@@ -22,7 +22,7 @@ import os
 import subprocess
 import sys
 
-from sim_cmd import get_simulator_cmd
+from scripts.sim_cmd import get_simulator_cmd
 
 _CORE_IBEX = os.path.normpath(os.path.join(os.path.dirname(__file__)))
 _IBEX_ROOT = os.path.normpath(os.path.join(_CORE_IBEX, '../../..'))

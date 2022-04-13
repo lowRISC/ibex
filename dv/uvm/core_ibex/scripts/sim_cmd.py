@@ -2,8 +2,8 @@ import logging
 import os
 import sys
 
-_CORE_IBEX = os.path.normpath(os.path.join(os.path.dirname(__file__)))
-_IBEX_ROOT = os.path.normpath(os.path.join(_CORE_IBEX, '../../..'))
+_THIS_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__)))
+_IBEX_ROOT = os.path.normpath(os.path.join(_THIS_DIR, '../../../..'))
 _RISCV_DV_ROOT = os.path.join(_IBEX_ROOT, 'vendor/google_riscv-dv')
 _OLD_SYS_PATH = sys.path
 
