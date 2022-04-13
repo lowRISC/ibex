@@ -176,11 +176,6 @@ def main():
                         help="Output directory name")
     parser.add_argument("--simulator", type=str, default="vcs",
                         help="RTL simulator to use (default: vcs)")
-    parser.add_argument("--simulator_yaml",
-                        help="RTL simulator setting YAML",
-                        default=os.path.join(_CORE_IBEX,
-                                             'yaml',
-                                             'rtl_simulation.yaml'))
     parser.add_argument("-v", "--verbose", dest="verbose", action="store_true",
                         help="Verbose logging")
     parser.add_argument("--cmp_opts", type=str, default="",
@@ -223,8 +218,7 @@ def main():
             'wave_opts': args.en_wave,
             'cosim_opts': args.en_cosim
         }
-        compile_cmds, sim_cmd = get_simulator_cmd(args.simulator,
-                                                  args.simulator_yaml, enables)
+        compile_cmds, sim_cmd = get_simulator_cmd(args.simulator, enables)
 
         rtl_compile(compile_cmds, output_dir, args.lsf_cmd, args.cmp_opts)
 

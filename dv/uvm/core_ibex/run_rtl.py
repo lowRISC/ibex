@@ -86,7 +86,6 @@ def get_test_sim_cmd(base_cmd, test, idx, seed, sim_dir, bin_dir, lsf_cmd):
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--simulator', required=True)
-    parser.add_argument("--simulator_yaml", required=True)
     parser.add_argument("--en_cov", action='store_true')
     parser.add_argument("--en_wave", action='store_true')
     parser.add_argument('--start-seed', type=int, required=True)
@@ -116,8 +115,7 @@ def main() -> int:
         'cov_opts': args.en_cov,
         'wave_opts': args.en_wave
     }
-    _, base_cmd = get_simulator_cmd(args.simulator,
-                                    args.simulator_yaml, enables)
+    _, base_cmd = get_simulator_cmd(args.simulator, enables)
 
     # Specialize base_cmd with the right directories and simulator options
     sim_cmd = subst_vars(base_cmd,

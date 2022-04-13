@@ -86,8 +86,11 @@ def subst_cmd(cmd, enable_dict, opts_dict, env_vars):
     return subst_env_vars(cmd, env_vars).replace('\n', ' ')
 
 
-def get_yaml_for_simulator(simulator, yaml_path):
-    '''Read yaml at yaml_path and find entry for simulator'''
+def get_yaml_for_simulator(simulator):
+    '''Get the entry for the simulator in RTL simulation yaml'''
+    yaml_dir = os.path.normpath(os.path.join(_THIS_DIR, '../yaml'))
+    yaml_path = os.path.join(yaml_dir, 'rtl_simulation.yaml')
+
     logging.info("Processing simulator setup file : %s" % yaml_path)
     for entry in read_yaml(yaml_path):
         if entry.get('tool') == simulator:
@@ -96,11 +99,10 @@ def get_yaml_for_simulator(simulator, yaml_path):
     raise RuntimeError("Cannot find RTL simulator {}".format(simulator))
 
 
-def get_simulator_cmd(simulator, yaml_path, enables):
+def get_simulator_cmd(simulator, enables):
     '''Get compile and run commands for the testbench
 
-    simulator is the name of the simulator to use. yaml_path is the path to a
-    yaml file describing various command line options. enables is a dictionary
+    simulator is the name of the simulator to use. enables is a dictionary
     keyed by option names with boolean values: true if the option is enabled.
 
     Returns (compile_cmds, sim_cmd), which are the simulator commands to
@@ -108,7 +110,7 @@ def get_simulator_cmd(simulator, yaml_path, enables):
     strings (multiple commands); sim_cmd is a single string.
 
     '''
-    entry = get_yaml_for_simulator(simulator, yaml_path)
+    entry = get_yaml_for_simulator(simulator)
     env_vars = entry.get('env_var', '')
 
     return ([subst_cmd(arg, enables, entry['compile'], env_vars)

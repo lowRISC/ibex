@@ -411,7 +411,7 @@ $(OUT-DIR)rtl_sim/.rtl.tb_compile.stamp: \
 	         --o=$(OUT-DIR) \
 	         --steps=compile \
 	         ${COMMON_OPTS} \
-	         --simulator="${SIMULATOR}" --simulator_yaml=yaml/rtl_simulation.yaml \
+	         --simulator="${SIMULATOR}" \
 	         $(cov-arg) $(wave-arg) $(cosim-arg) \
 	         --cmp_opts="${COMPILE_OPTS}"
 	$(call dump-vars,$(OUT-DIR)rtl_sim/.rtl.tb_compile.vars.mk,comp,$(tb-compile-var-deps))
@@ -450,7 +450,6 @@ $(rtl-sim-logs): \
 	$(verb)mkdir -p $(@D)
 	$(verb)./run_rtl.py \
 	         --simulator $(SIMULATOR) \
-	         --simulator_yaml yaml/rtl_simulation.yaml \
 	         $(cov-arg) $(wave-arg) \
 	         --start-seed $(SEED) \
 	         --sim-opts="+signature_addr=${SIGNATURE_ADDR} ${SIM_OPTS}" \
