@@ -236,8 +236,6 @@ tests-and-seeds := \
             --iterations $(ITERATIONS) \
             --ibex-config $(IBEX_CONFIG))
 
-REGEX_EMPTY_LINES := '/^$$/d'
-
 ###############################################################################
 ###############################################################################
 # Build the Random Instruction Generator
@@ -326,7 +324,6 @@ $(metadata)/.instr_gen.run.stamp: \
 	                   +pmp_granularity=${PMP_GRANULARITY} +tvec_alignment=8" \
 	       --debug $(INSTR_GEN_RUN_COMMANDS) # Write all the commands to execute into here...
 	@ # Construct the sub-makefile from the commands, then call it
-	@sed -i $(REGEX_EMPTY_LINES) $(INSTR_GEN_RUN_COMMANDS)
 	$(verb)./scripts/construct_makefile.py \
 	         --output=$(OUT-SEED)/instr_gen/run.mk \
 	         --test_cmds=$(INSTR_GEN_RUN_COMMANDS) \
@@ -383,7 +380,6 @@ $(metadata)/.iss.run.stamp: \
 	       ${_RISCV_DV_OPTS} \
 	       --debug $(ISS_COMMANDS) # Write all the commands to execute into here...
 	@ # Construct the sub-makefile from the commands, then call it
-	@sed -i $(REGEX_EMPTY_LINES) $(ISS_COMMANDS)
 	$(verb)./scripts/construct_makefile.py \
 	         --output=$(OUT-SEED)/instr_gen/iss.mk \
 	         --test_cmds=$(ISS_COMMANDS)
