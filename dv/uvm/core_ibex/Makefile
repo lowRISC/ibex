@@ -99,6 +99,10 @@ OUT-DIR := $(dir $(OUT)/)
 # get printed when VERBOSE.
 verb = $(if $(filter-out 0,$(VERBOSE)),,@)
 
+# Like verb, but expands to --verbose if we're in verbose mode (used
+# for running sub-commands)
+verb-arg = $(if $(filter-out 0,$(VERBOSE)),--verbose,)
+
 SHELL=/bin/bash
 
 export PRJ_DIR:= $(realpath ../../..)
@@ -286,15 +290,15 @@ risc-dv-files := $(shell find $(GEN_DIR) -type f)
 # than running it for every target otherwise.
 
 $(metadata)/.instr_gen.build.stamp: \
-  $(instr-gen-build-vars-prereq) $(risc-dv-files) | $(metadata)
+  $(instr-gen-build-vars-prereq) \
+  $(risc-dv-files) scripts/build-instr-gen.py | $(metadata)
 	$(verb)rm -rf $(OUT-SEED)/instr_gen
-	$(verb)python3 ${GEN_DIR}/run.py \
-	       --co --steps=gen \
-	       --output=$(OUT-SEED)/instr_gen \
-	       --simulator="${SIMULATOR}" \
-	       ${_RISCV_DV_OPTS} \
-	       --isa=${ISA} \
-	       ${CSR_OPTS}
+	$(verb)scripts/build-instr-gen.py        \
+	  $(verb-arg)                            \
+	  --simulator $(SIMULATOR)               \
+	  --end-signature-addr $(SIGNATURE_ADDR) \
+	  --output $(OUT-SEED)/instr_gen         \
+	  --isa $(ISA)
 	$(call dump-vars,$(metadata)/.instr_gen.build.vars.mk,gen,$(instr-gen-build-var-deps))
 	@touch $@
 
