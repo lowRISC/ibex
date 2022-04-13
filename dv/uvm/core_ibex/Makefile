@@ -440,7 +440,7 @@ $(OUT-DIR)rtl_sim/.rtl.tb_compile.stamp: \
 	         --simulator="${SIMULATOR}" --simulator_yaml=yaml/rtl_simulation.yaml \
 	         $(cov-arg) $(wave-arg) $(cosim-arg) $(lsf-arg) \
 	         --cmp_opts="${COMPILE_OPTS}"
-	$(call dump-vars,$(OUT-DIR)rtl_sim/.rtl.tb_compile-vars.mk,comp,$(tb-compile-var-deps))
+	$(call dump-vars,$(OUT-DIR)rtl_sim/.rtl.tb_compile.vars.mk,comp,$(tb-compile-var-deps))
 	@touch $@
 
 .PHONY: rtl_tb_compile
