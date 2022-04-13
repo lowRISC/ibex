@@ -97,7 +97,8 @@ verb-arg = $(if $(filter-out 0,$(VERBOSE)),--verbose,)
 
 SHELL=/bin/bash
 
-export PRJ_DIR:= $(realpath ../../..)
+export PRJ_DIR        := $(realpath ../../..)
+export LOWRISC_IP_DIR := $(realpath ${PRJ_DIR}/vendor/lowrisc_ip)
 
 all: sim
 
