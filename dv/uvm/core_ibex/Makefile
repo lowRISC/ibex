@@ -33,15 +33,12 @@ SEED                := $(shell echo $$RANDOM)
 # This is the top-level output directory. Everything we generate goes in
 # here. Most generated stuff actually goes in $(OUT)/seed-$(SEED), which allows
 # us to run multiple times without deleting existing results.
-OUT                 := out
-export OUT-SEED     := $(OUT)/seed-$(SEED)
+OUT      := out
+OUT-SEED := $(OUT)/seed-$(SEED)
 
 # Needed for tcl files that are used with Cadence tools.
 export dv_root := $(realpath ../../../vendor/lowrisc_ip/dv)
 export DUT_TOP := dut
-export cov_merge_dir := $(OUT-SEED)/cov_merge
-export cov_merge_db_dir := $(cov_merge_dir)/merged
-export cov_report_dir := $(OUT-SEED)/cov_report
 
 # Enable waveform dumping
 WAVES               := 1
@@ -507,14 +504,15 @@ riscv_dv_fcov: $(metadata)/.cov.gen_fcov.stamp
 ###############################################################################
 # Merge all output coverage directories into the <out>/rtl_sim directory
 #
-# Any coverage databases generated from the riscv_dv_fcov target will be merged as well.
+# Any coverage databases generated from the riscv_dv_fcov target will be merged
+# as well.
 $(metadata)/.cov.merge.stamp: \
-	$(metadata)/.cov.gen_fcov.stamp
-	$(verb)rm -rf $(OUT-DIR)rtl_sim/test.vdb
-	$(verb)./sim.py --steps=cov --simulator="${SIMULATOR}" --o="$(OUT-DIR)"
-	@if [ -d "test.vdb" ]; then \
-	     mv -f test.vdb $(OUT-DIR)rtl_sim/; \
-	fi
+  $(metadata)/.cov.gen_fcov.stamp \
+  scripts/merge-cov.py
+	$(verb)scripts/merge-cov.py    \
+	  $(verb-arg)                  \
+	  --working-dir=$(OUT-SEED)    \
+	  --simulator=$(SIMULATOR)
 	@ # Bookkeeping
 	@touch $@
 
