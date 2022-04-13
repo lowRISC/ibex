@@ -312,29 +312,20 @@ RISCV_DV_ROOT := $(GEN_DIR)
 INSTR_GEN_RUN_COMMANDS := $(shell mktemp)
 $(metadata)/.instr_gen.run.stamp: \
   $(metadata)/.instr_gen.build.stamp \
-  $(TESTLIST) | $(metadata)
+  $(TESTLIST) \
+  scripts/construct_makefile.py scripts/run-instr-gen.py | $(metadata)
 	$(verb)rm -rf $(OUT-SEED)/instr_gen/asm_test
-	@ # Generate the commands to be run into $(INSTR_GEN_RUN_COMMANDS)
-	$(verb)python3 ${GEN_DIR}/run.py \
-	       --so --steps=gen \
-	       --output=$(OUT-SEED)/instr_gen \
-	       --simulator="${SIMULATOR}" \
-	       --isa=${ISA} \
-	       ${_RISCV_DV_OPTS} \
-	       ${TEST_OPTS} \
-	       ${CSR_OPTS} \
-	       --sim_opts="+uvm_set_inst_override=riscv_asm_program_gen,ibex_asm_program_gen,"uvm_test_top.asm_gen" \
-	                   +signature_addr=${SIGNATURE_ADDR} +pmp_num_regions=${PMP_REGIONS} \
-	                   +pmp_granularity=${PMP_GRANULARITY} +tvec_alignment=8" \
-	       --debug $(INSTR_GEN_RUN_COMMANDS) # Write all the commands to execute into here...
-	@ # Construct the sub-makefile from the commands, then call it
-	$(verb)./scripts/construct_makefile.py \
-	         --output=$(OUT-SEED)/instr_gen/run.mk \
-	         --test_cmds=$(INSTR_GEN_RUN_COMMANDS) \
-	         --discard_stdstreams
-	@export RISCV_DV_ROOT
-	@$(MAKE) -s -f $(OUT-SEED)/instr_gen/run.mk all
-	@ # Bookkeeping
+	+$(verb)scripts/run-instr-gen.py         \
+	  $(verb-arg)                            \
+	  --simulator $(SIMULATOR)               \
+	  --end-signature-addr $(SIGNATURE_ADDR) \
+	  --output $(OUT-SEED)/instr_gen         \
+	  --isa $(ISA)                           \
+	  --test $(TEST)                         \
+	  --start-seed $(SEED)                   \
+	  --iterations $(ITERATIONS)             \
+	  --pmp-num-regions $(PMP_REGIONS)       \
+	  --pmp-granularity $(PMP_GRANULARITY)
 	@touch $@
 
 .PHONY: instr_gen_run
