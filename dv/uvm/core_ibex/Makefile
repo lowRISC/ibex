@@ -327,7 +327,7 @@ $(metadata)/.instr_gen.run.stamp: \
 	       --debug $(INSTR_GEN_RUN_COMMANDS) # Write all the commands to execute into here...
 	@ # Construct the sub-makefile from the commands, then call it
 	@sed -i $(REGEX_EMPTY_LINES) $(INSTR_GEN_RUN_COMMANDS)
-	$(verb)./construct_makefile.py \
+	$(verb)./scripts/construct_makefile.py \
 	         --output=$(OUT-SEED)/instr_gen/run.mk \
 	         --test_cmds=$(INSTR_GEN_RUN_COMMANDS) \
 	         --discard_stdstreams
@@ -384,7 +384,7 @@ $(metadata)/.iss.run.stamp: \
 	       --debug $(ISS_COMMANDS) # Write all the commands to execute into here...
 	@ # Construct the sub-makefile from the commands, then call it
 	@sed -i $(REGEX_EMPTY_LINES) $(ISS_COMMANDS)
-	$(verb)./construct_makefile.py \
+	$(verb)./scripts/construct_makefile.py \
 	         --output=$(OUT-SEED)/instr_gen/iss.mk \
 	         --test_cmds=$(ISS_COMMANDS)
 	@$(MAKE) -s -f $(OUT-SEED)/instr_gen/iss.mk all
