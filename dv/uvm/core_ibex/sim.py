@@ -54,12 +54,11 @@ def subst_vars(string, var_dict):
     return string
 
 
-def rtl_compile(compile_cmds, output_dir, lsf_cmd, opts):
+def rtl_compile(compile_cmds, output_dir, lsf_cmd):
     """Compile the testbench RTL
 
     compile_cmds is a list of commands (each a string), which will have <out>
-    and <cmp_opts> substituted. Running them in sequence should compile the
-    testbench.
+    substituted. Running them in sequence should compile the testbench.
 
     output_dir is the directory in which to generate the testbench (usually
     something like 'out/rtl_sim'). This will be substituted for <out> in the
@@ -69,17 +68,10 @@ def rtl_compile(compile_cmds, output_dir, lsf_cmd, opts):
     run them through LSF. Here, this is not used for parallelism, but might
     still be needed for licence servers.
 
-    opts is a string giving extra compilation options. This is substituted for
-    <cmp_opts> in the commands.
-
     """
     logging.info("Compiling TB")
     for cmd in compile_cmds:
-        cmd = subst_vars(cmd,
-                         {
-                             'out': output_dir,
-                             'cmp_opts': opts
-                         })
+        cmd = subst_vars(cmd, {'out': output_dir})
 
         if lsf_cmd is not None:
             cmd = lsf_cmd + ' ' + cmd
@@ -178,8 +170,6 @@ def main():
                         help="RTL simulator to use (default: vcs)")
     parser.add_argument("-v", "--verbose", dest="verbose", action="store_true",
                         help="Verbose logging")
-    parser.add_argument("--cmp_opts", type=str, default="",
-                        help="Compile options for the generator")
     parser.add_argument("--en_cov", action='store_true',
                         help="Enable coverage dump")
     parser.add_argument("--en_wave", action='store_true',
@@ -220,7 +210,7 @@ def main():
         }
         compile_cmds, sim_cmd = get_simulator_cmd(args.simulator, enables)
 
-        rtl_compile(compile_cmds, output_dir, args.lsf_cmd, args.cmp_opts)
+        rtl_compile(compile_cmds, output_dir, args.lsf_cmd)
 
     # Generate merged coverage directory and load it into appropriate GUI
     if steps['cov']:
