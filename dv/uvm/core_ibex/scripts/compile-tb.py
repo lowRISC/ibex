@@ -8,18 +8,8 @@ import argparse
 import os
 import sys
 
-
-from scripts_lib import run_one
+from scripts_lib import run_one, subst_vars
 from sim_cmd import get_simulator_cmd
-
-
-def subst_vars(string, var_dict):
-    '''Apply substitutions in var_dict to string
-
-    If var_dict[K] = V, then <K> will be replaced with V in string.'''
-    for key, value in var_dict.items():
-        string = string.replace('<{}>'.format(key), value)
-    return string
 
 
 def main() -> int:
