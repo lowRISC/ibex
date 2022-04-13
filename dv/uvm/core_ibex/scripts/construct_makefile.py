@@ -19,10 +19,17 @@ def transform(discard_stdstreams: bool,
 
     with open(cmdlist_path) as f, \
          open(makefile_path, 'w', encoding='UTF-8') as outfile:
-        for i, line in enumerate(f):
-            outfile.write(f'{i}:\n')
+        ctr = 0
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+
+            outfile.write(f'{ctr}:\n')
             outfile.write('\t' + line.strip() + tail)
-        outfile.write(f'CMDS := $(shell seq 0 {i})\n')
+            ctr += 1
+
+        outfile.write(f'CMDS := $(shell seq 0 {ctr - 1})\n')
         outfile.write('all: $(CMDS)')
 
 
