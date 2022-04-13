@@ -41,8 +41,6 @@ export cov_merge_dir := $(OUT-SEED)/cov_merge
 export cov_merge_db_dir := $(cov_merge_dir)/merged
 export cov_report_dir := $(OUT-SEED)/cov_report
 
-# Run time options for the instruction generator
-GEN_OPTS            :=
 # Compile time options for ibex RTL simulation
 COMPILE_OPTS        +=
 # Run time options for ibex RTL simulation
@@ -247,9 +245,14 @@ REGEX_EMPTY_LINES := '/^$$/d'
 # Build the Random Instruction Generator
 #
 # This depends on the vendored in code in $(GEN_DIR). It also depends on the
-# values of the following Makefile variables (we want to regenerate things if,
-# for example, the simulator changes).
-instr-gen-build-var-deps := GEN_OPTS SIMULATOR RISCV_DV_OPTS ISA CSR_OPTS \
+# values of some variables (we want to regenerate things if, for example, the
+# simulator changes). Since we're writing out to $(OUT-SEED), we don't have to
+# depend on the value of SEED. However, we do have to make sure that the
+# variables whose names are listed in $(instr-gen-build-var-deps) haven't changed.
+#
+# To do this variable tracking, we dump each of the variables to a Makefile
+# fragment and try to load it up the next time around.
+instr-gen-build-var-deps := SIMULATOR RISCV_DV_OPTS ISA CSR_OPTS \
                             SIGNATURE_ADDR PMP_REGIONS PMP_GRANULARITY TEST_OPTS
 # Since we're writing out to $(OUT-SEED), we don't have to depend on the value
 # of SEED. However, we do have to make sure that the variables listed have not
@@ -291,7 +294,7 @@ $(metadata)/.instr_gen.build.stamp: \
 	$(verb)rm -rf $(OUT-SEED)/instr_gen
 	$(verb)python3 ${GEN_DIR}/run.py \
 	       --co --steps=gen \
-	       --output=$(OUT-SEED)/instr_gen ${GEN_OPTS} \
+	       --output=$(OUT-SEED)/instr_gen \
 	       --simulator="${SIMULATOR}" \
 	       ${RISCV_DV_OPTS} \
 	       --isa=${ISA} \
@@ -314,7 +317,7 @@ $(metadata)/.instr_gen.run.stamp: \
 	@ # Generate the commands to be run into $(INSTR_GEN_RUN_COMMANDS)
 	$(verb)python3 ${GEN_DIR}/run.py \
 	       --so --steps=gen \
-	       --output=$(OUT-SEED)/instr_gen ${GEN_OPTS} \
+	       --output=$(OUT-SEED)/instr_gen \
 	       --lsf_cmd="${LSF_CMD}" \
 	       --simulator="${SIMULATOR}" \
 	       --isa=${ISA} \
@@ -347,7 +350,7 @@ instr_gen_run: $(metadata)/.instr_gen.run.stamp
 $(metadata)/.instr_gen.compile_tests.stamp: \
   $(metadata)/.instr_gen.run.stamp $(TESTLIST)
 	$(verb)python3 ${GEN_DIR}/run.py \
-	       --o=$(OUT-SEED)/instr_gen ${GEN_OPTS} \
+	       --o=$(OUT-SEED)/instr_gen \
 	       --steps=gcc_compile \
 	       ${TEST_OPTS} \
 	       --gcc_opts=-mno-strict-align \
@@ -374,7 +377,7 @@ $(metadata)/.iss.run.stamp: \
   $(metadata)/.instr_gen.compile_tests.stamp $(iss-vars-prereq) $(TESTLIST)
 	@ # Generate the commands to be run into $(ISS_COMMANDS)
 	$(verb)python3 ${GEN_DIR}/run.py \
-	       --o=$(OUT-SEED)/instr_gen ${GEN_OPTS} \
+	       --o=$(OUT-SEED)/instr_gen \
 	       --steps=iss_sim \
 	       ${TEST_OPTS} \
 	       --iss="${ISS}" \
