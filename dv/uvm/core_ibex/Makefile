@@ -215,7 +215,7 @@ FORCE:
 # might print a message to the console explaining why we're rebuilding TGT).
 #
 # Call it as $(call vars-prereq,X,TGT,VS)
-vars-prereq = $(if $(call vars-differ,$(1),$(2),$(3)),FORCE,)
+vars-prereq = $(if $(call vars-differ,$(call strip,$(1)),$(2),$(3)),FORCE,)
 
 ###############################################################################
 # Get a list of tests and seeds
