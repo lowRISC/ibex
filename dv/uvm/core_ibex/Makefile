@@ -276,7 +276,6 @@ risc-dv-files := $(shell find $(GEN_DIR) -type f)
 $(metadata)/.instr_gen.build.stamp: \
   $(instr-gen-build-vars-prereq) \
   $(risc-dv-files) scripts/build-instr-gen.py | $(metadata)
-	$(verb)rm -rf $(OUT-SEED)/instr_gen
 	$(verb)scripts/build-instr-gen.py        \
 	  $(verb-arg)                            \
 	  --simulator $(SIMULATOR)               \
