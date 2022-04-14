@@ -362,6 +362,7 @@ $(metadata)/.iss.run.stamp: \
 	  --iterations $(ITERATIONS)           \
 	  --pmp-num-regions $(PMP_REGIONS)     \
 	  --pmp-granularity $(PMP_GRANULARITY)
+	$(call dump-vars,$(metadata)/.iss.vars.mk,iss,$(iss-var-deps))
 	@touch $@
 
 .PHONY: iss_run
