@@ -390,8 +390,8 @@ cov-arg := $(if $(call equal,$(COV),1),--en_cov,)
 wave-arg := $(if $(call equal,$(WAVES),1),--en_wave,)
 cosim-arg := $(if $(call equal,$(COSIM),1),--en_cosim,)
 
-# We need to the different simulators to link against the built ISS correctly
-# for cosimulation. This requires some finesse-ing.
+# We need the different simulators to link against the ISS correctly
+# for cosimulation when building the tb. This requires some finesse-ing.
 # Extract CFLAGS,LDFLAGS and LIBS from pkg-config. Allow the simulator yaml file
 # to format them appropriately for each simulator.
 # - VCS expects most things to be supplied with -LDFLAGS arguments, but
