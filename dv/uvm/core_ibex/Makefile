@@ -235,13 +235,8 @@ tests-and-seeds := \
 # Build the Random Instruction Generator
 #
 # This depends on the vendored in code in $(GEN_DIR). It also depends on the
-# values of some variables (we want to regenerate things if, for example, the
-# simulator changes). Since we're writing out to $(OUT-SEED), we don't have to
-# depend on the value of SEED. However, we do have to make sure that the
-# variables whose names are listed in $(instr-gen-build-var-deps) haven't changed.
-#
-# To do this variable tracking, we dump each of the variables to a Makefile
-# fragment and try to load it up the next time around.
+# values of the following Makefile variables (we want to regenerate things if,
+# for example, the simulator changes).
 instr-gen-build-var-deps := SIMULATOR ISA CSR_OPTS \
                             SIGNATURE_ADDR PMP_REGIONS PMP_GRANULARITY TEST_OPTS
 # Since we're writing out to $(OUT-SEED), we don't have to depend on the value
