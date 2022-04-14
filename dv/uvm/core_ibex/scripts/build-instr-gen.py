@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import argparse
+import shutil
 import sys
 
 from scripts_lib import run_one, start_riscv_dv_run_cmd
@@ -19,6 +20,12 @@ def main() -> int:
     parser.add_argument('--isa', required=True)
 
     args = parser.parse_args()
+
+    # Delete the output directory if it existed to ensure a clear build
+    try:
+        shutil.rmtree(args.output)
+    except FileNotFoundError:
+        pass
 
     cmd = (start_riscv_dv_run_cmd(args.verbose) +
            ['--co', '--steps=gen',
