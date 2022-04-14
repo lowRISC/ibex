@@ -467,11 +467,7 @@ $(rtl-sim-logs): \
   run_rtl.py
 	@echo Running RTL simulation at $@
 	$(verb)mkdir -p $(@D)
-	$(verb)env \
-	  SPIKE_CFLAGS="$(SPIKE_CFLAGS_I) $(SPIKE_CFLAGS_OTHER)" \
-	  SPIKE_LIBS="$(SPIKE_LIBS_lowerL) $(SPIKE_LIBS_upperL)" \
-	  SPIKE_LDFLAGS="$(SPIKE_LIBS_FMT)" \
-	  ./run_rtl.py \
+	$(verb)./run_rtl.py \
 	    --simulator $(SIMULATOR) \
 	    --simulator_yaml yaml/rtl_simulation.yaml \
 	    $(cov-arg) $(wave-arg) \
@@ -544,13 +540,9 @@ riscv_dv_fcov: $(metadata)/.cov.gen_fcov.stamp
 #
 # Any coverage databases generated from the riscv_dv_fcov target will be merged as well.
 $(metadata)/.cov.merge.stamp: \
-	$(metadata)/.cov.gen_fcov.stamp
+  $(metadata)/.cov.gen_fcov.stamp
 	$(verb)rm -rf $(OUT-DIR)rtl_sim/test.vdb
-	$(verb)env \
-	  SPIKE_CFLAGS="$(SPIKE_CFLAGS_I) $(SPIKE_CFLAGS_OTHER)" \
-	  SPIKE_LIBS="$(SPIKE_LIBS_lowerL) $(SPIKE_LIBS_upperL)" \
-	  SPIKE_LDFLAGS="$(SPIKE_LIBS_FMT)" \
-	  ./sim.py \
+	$(verb)./sim.py \
 	    --steps=cov --simulator="${SIMULATOR}" --o="$(OUT-DIR)"
 	@if [ -d "test.vdb" ]; then \
 	     mv -f test.vdb $(OUT-DIR)rtl_sim/; \
