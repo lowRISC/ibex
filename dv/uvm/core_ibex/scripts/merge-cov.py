@@ -47,7 +47,7 @@ def merge_cov_vcs(cov_dir: str, verbose: bool, cov_dirs: Set[str]) -> int:
             '-log', os.path.join(cov_dir, 'merge.log'),
             '-dir'] +
            list(cov_dirs))
-    return run_one(verbose, cmd, discard_stdstreams=True)
+    return run_one(verbose, cmd, redirect_stdstreams='/dev/null')
 
 
 def merge_cov_xlm(cov_dir: str, verbose: bool, cov_dirs: Set[str]) -> int:

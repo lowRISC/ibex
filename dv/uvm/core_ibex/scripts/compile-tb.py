@@ -42,7 +42,7 @@ def main() -> int:
                              'cmp_opts': args.compile_opts
                          })
         retcode = run_one(args.verbose, ['sh', '-c', cmd],
-                          discard_stdstreams=True)
+                          redirect_stdstreams='/dev/null')
         if retcode:
             return retcode
 
