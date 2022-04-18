@@ -132,7 +132,8 @@ metadata := $(OUT-SEED)/.metadata
 # targets. To ensure the directory has been built, add a order-only dependency
 # (with the pipe symbol before it) on the directory name and add the directory
 # to this list.
-gen-dirs := $(OUT-DIR) $(OUT-SEED) $(metadata) $(OUT-DIR)rtl_sim
+gen-dirs := \
+  $(OUT-DIR) $(OUT-SEED) $(metadata) $(OUT-DIR)rtl_sim $(OUT-DIR)instr_gen
 
 $(gen-dirs): %:
 	mkdir -p $@
@@ -237,35 +238,35 @@ tests-and-seeds := \
 # values of the following Makefile variables (we want to regenerate things if,
 # for example, the simulator changes).
 instr-gen-build-var-deps := SIMULATOR ISA CSR_OPTS \
-                            SIGNATURE_ADDR PMP_REGIONS PMP_GRANULARITY TEST_OPTS
-# Since we're writing out to $(OUT-SEED), we don't have to depend on the value
-# of SEED. However, we do have to make sure that the variables listed have not
-# changed.
+                            SIGNATURE_ADDR PMP_REGIONS PMP_GRANULARITY
 # To achieve this variable tracking, we dump each of the variables to a Makefile
 # fragment and try to load it up the next time around. This done with the
 # utility function "dump-vars" at the end of the recipe.
 #
-# To create the dependency, we must do the following two things before each target...
+# To create the dependency, we must do the following two things before each
+# target:
 #
 # First, load up the saved variable values from the last time around. If this
-# fails, it's no problem: we'll assume that the previous run either doesn't exist
-# or something went wrong.
--include $(metadata)/.instr_gen.build.vars.mk
+# fails, it's no problem: we'll assume that the previous run either doesn't
+# exist or something went wrong.
+ig-build-vars-path := $(OUT-DIR).instr-gen-build.vars.mk
+-include $(ig-build-vars-path)
 
-# Next, compare the current variables to those we just loaded.
-# This uses the utility function "vars-prereq". It creates a variable which
-# evaluates to the (phony) FORCE if the two sets of variables do not match.
+# Next, compare the current variables to those we just loaded. This uses the
+# utility function "vars-prereq". It creates a variable which evaluates to the
+# (phony) FORCE if the two sets of variables do not match.
+#
+# Note that we define it with '=', not ':=', so we don't evaluate if we're not
+# trying to run the instr_gen_build target.
 instr-gen-build-vars-prereq = \
   $(call vars-prereq, \
      gen, \
      building instruction generator, \
      $(instr-gen-build-var-deps))
-# Note that we define it with '=', not ':=', so we don't evaluate if we're not
-# trying to run the instr_gen_build target.
 
 # Finally, $(instr-gen-build-vars-prereq) becomes a dependency of our target.
 
-risc-dv-files := $(shell find $(GEN_DIR) -type f)
+riscv-dv-files := $(shell find $(GEN_DIR) -type f)
 # A variable containing a file list for the riscv-dv vendored-in module.
 # Depending on these files gives a safe over-approximation that will ensure we
 # rebuild things if that module changes.
@@ -273,20 +274,20 @@ risc-dv-files := $(shell find $(GEN_DIR) -type f)
 # command exactly once. Wasteful if we're trying to make clean, but much better
 # than running it for every target otherwise.
 
-$(metadata)/.instr_gen.build.stamp: \
+$(OUT-DIR)instr_gen/.compile.stamp: \
   $(instr-gen-build-vars-prereq) \
-  $(risc-dv-files) scripts/build-instr-gen.py | $(metadata)
+  $(riscv-dv-files) scripts/build-instr-gen.py | $(OUT-DIR)instr_gen
 	$(verb)scripts/build-instr-gen.py        \
 	  $(verb-arg)                            \
 	  --simulator $(SIMULATOR)               \
 	  --end-signature-addr $(SIGNATURE_ADDR) \
-	  --output $(OUT-SEED)/instr_gen         \
+	  --output $(OUT-DIR)instr_gen           \
 	  --isa $(ISA)
-	$(call dump-vars,$(metadata)/.instr_gen.build.vars.mk,gen,$(instr-gen-build-var-deps))
+	$(call dump-vars,$(ig-build-vars-path),gen,$(instr-gen-build-var-deps))
 	@touch $@
 
 .PHONY: instr_gen_build
-instr_gen_build: $(metadata)/.instr_gen.build.stamp
+instr_gen_build: $(OUT-DIR)instr_gen/.compile.stamp
 
 ###############################################################################
 # Run the random instruction generator
@@ -294,7 +295,7 @@ instr_gen_build: $(metadata)/.instr_gen.build.stamp
 RISCV_DV_ROOT := $(GEN_DIR)
 INSTR_GEN_RUN_COMMANDS := $(shell mktemp)
 $(metadata)/.instr_gen.run.stamp: \
-  $(metadata)/.instr_gen.build.stamp \
+  $(OUT-DIR)instr_gen/.compile.stamp \
   $(TESTLIST) \
   scripts/construct_makefile.py scripts/run-instr-gen.py | $(metadata)
 	$(verb)rm -rf $(OUT-SEED)/instr_gen/asm_test
@@ -302,6 +303,7 @@ $(metadata)/.instr_gen.run.stamp: \
 	  $(verb-arg)                            \
 	  --simulator $(SIMULATOR)               \
 	  --end-signature-addr $(SIGNATURE_ADDR) \
+	  --gen-build-dir $(OUT-DIR)instr_gen    \
 	  --output $(OUT-SEED)/instr_gen         \
 	  --isa $(ISA)                           \
 	  --test $(TEST)                         \
@@ -370,8 +372,8 @@ iss_run: $(metadata)/.iss.run.stamp
 ###############################################################################
 # Compile ibex core TB
 #
-# Note that (unlike everything else) this doesn't depend on the seed: the DUT
-# doesn't depend on which test we're running!
+# Note that this doesn't depend on the seed: the DUT doesn't depend on which
+# test we're running!
 #
 # It does, however, depend on various variables. These are listed in
 # tb-compile-var-deps. See the 'gen' stage for more verbose explanations of how
