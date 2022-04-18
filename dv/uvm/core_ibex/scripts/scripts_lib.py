@@ -7,7 +7,7 @@ import os
 import shlex
 import subprocess
 import sys
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 THIS_DIR = os.path.dirname(__file__)
 IBEX_ROOT = os.path.join(THIS_DIR, 4 * '../')
@@ -17,37 +17,43 @@ RISCV_DV_ROOT = os.path.normpath(os.path.join(IBEX_ROOT,
 
 def run_one(verbose: bool,
             cmd: List[str],
-            discard_stdstreams: bool = False,
+            redirect_stdstreams: Optional[str] = None,
             env: Dict[str, str] = None) -> int:
     '''Run a command, returning its return code
 
     If verbose is true, print the command to stderr first (a bit like bash -x).
 
-    If discard_stdstreams is true, redirect stdout and stderr in the subprocess
-    to /dev/null. This seems a bit crazy, but makes sense for EDA tools that
-    have a '-l' argument that takes a path to which they write a copy of
-    everything that was going out on stdout/stderr.
+    If redirect_stdstreams is true, redirect the stdout and stderr of the
+    subprocess to the given path.
 
     '''
-    stdstream_dest = None
-    shell_redirection = ''
-    if discard_stdstreams:
-        stdstream_dest = subprocess.DEVNULL
-        shell_redirection = ' >/dev/null 2>&1'
-
     if verbose:
         # The equivalent of bash -x
-        cmd_str = ' '.join(shlex.quote(w) for w in cmd) + shell_redirection
+        cmd_str = ' '.join(shlex.quote(w) for w in cmd)
+        if redirect_stdstreams is not None:
+            cmd_str += f' >{shlex.quote(redirect_stdstreams)} 2>&1'
+
         print('+ ' + cmd_str, file=sys.stderr)
 
-    # Passing close_fds=False ensures that if cmd is a call to Make then we'll
-    # pass through the jobserver fds. If you don't do this, you get a warning
-    # starting "warning: jobserver unavailable".
-    return subprocess.run(cmd,
-                          stdout=stdstream_dest,
-                          stderr=stdstream_dest,
-                          close_fds=False,
-                          env=env).returncode
+    stdstream_dest = None
+    if redirect_stdstreams is not None:
+        if redirect_stdstreams == '/dev/null':
+            stdstream_dest = subprocess.DEVNULL
+        else:
+            stdstream_dest = open(redirect_stdstreams, 'wb')
+
+    try:
+        # Passing close_fds=False ensures that if cmd is a call to Make then
+        # we'll pass through the jobserver fds. If you don't do this, you get a
+        # warning starting "warning: jobserver unavailable".
+        return subprocess.run(cmd,
+                              stdout=stdstream_dest,
+                              stderr=stdstream_dest,
+                              close_fds=False,
+                              env=env).returncode
+    finally:
+        if stdstream_dest not in [None, subprocess.DEVNULL]:
+            stdstream_dest.close()
 
 
 def start_riscv_dv_run_cmd(verbose: bool):
