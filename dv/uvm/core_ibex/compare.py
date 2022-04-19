@@ -9,10 +9,10 @@ A script to compare an ISS and RTL run to make sure nothing has diverged.
 
 import argparse
 import os
-import re
 import sys
 from typing import Dict, Optional, TextIO, Tuple, Union
 
+from scripts.scripts_lib import read_test_dot_seed
 from scripts.test_entry import TestEntry, get_test_entry
 from scripts.test_run_result import TestRunResult
 
@@ -38,20 +38,7 @@ finally:
     sys.path = _OLD_SYS_PATH
 
 
-_TestAndSeed = Tuple[str, int]
 _CompareResult = Tuple[bool, Optional[str], Dict[str, str]]
-
-
-def read_test_dot_seed(arg: str) -> _TestAndSeed:
-    '''Read a value for --test-dot-seed'''
-
-    match = re.match(r'([^.]+)\.([0-9]+)$', arg)
-    if match is None:
-        raise argparse.ArgumentTypeError('Bad --test-dot-seed ({}): '
-                                         'should be of the form TEST.SEED.'
-                                         .format(arg))
-
-    return (match.group(1), int(match.group(2), 10))
 
 
 def compare_test_run(test: TestEntry,
