@@ -120,8 +120,8 @@ def compare_test_run(test: TestEntry,
         return TestRunResult(**kv_data)
 
     # There were no UVM errors. Process the log file from the ISS.
-    iss_log = os.path.join(iss_log_dir, '{}.{}.log'.format(test_name, idx))
-    iss_csv = os.path.join(iss_log_dir, '{}.{}.csv'.format(test_name, idx))
+    iss_log = os.path.join(iss_log_dir, '{}.{}.log'.format(test_name, seed))
+    iss_csv = os.path.join(iss_log_dir, '{}.{}.csv'.format(test_name, seed))
 
     kv_data['iss_trace'] = iss_log
     kv_data['iss_trace_csv'] = iss_csv

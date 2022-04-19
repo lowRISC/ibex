@@ -132,8 +132,10 @@ metadata := $(OUT-SEED)/.metadata
 # targets. To ensure the directory has been built, add a order-only dependency
 # (with the pipe symbol before it) on the directory name and add the directory
 # to this list.
-gen-dirs := \
-  $(OUT-DIR) $(OUT-SEED) $(metadata) $(OUT-DIR)rtl_sim $(OUT-DIR)instr_gen
+gen-dirs :=                                         \
+  $(OUT-DIR) $(OUT-SEED)                            \
+  $(metadata) $(OUT-DIR)rtl_sim $(OUT-DIR)instr_gen \
+  $(OUT-SEED)/$(ISS)
 
 $(gen-dirs): %:
 	mkdir -p $@
@@ -340,33 +342,27 @@ instr_gen_compile: $(metadata)/.instr_gen.compile_tests.stamp
 # Run the instruction set simulator
 #
 # This (obviously) depends on having compiled the generated programs, so we
-# don't have to worry about variables that affect the 'gen' stage. However, the
-# ISS variable does affect the output, so we need to dump it. See the 'gen'
-# stage for more verbose explanations of how this works.
-iss-var-deps := ISS
--include $(metadata)/.iss.vars.mk
-iss-vars-prereq = $(call vars-prereq,iss,running ISS,$(iss-var-deps))
+# don't have to worry about variables that affect the 'gen' stage. The only
+# other variable that's going to affect things is the actual choice of ISS. We
+# cheat and include it in the path.
 
-ISS_COMMANDS := $(shell mktemp)
-$(metadata)/.iss.run.stamp: \
-  $(metadata)/.instr_gen.compile_tests.stamp $(iss-vars-prereq) \
-  $(TESTLIST) \
-  scripts/construct_makefile.py scripts/run-iss.py | $(metadata)
-	+$(verb)scripts/run-iss.py             \
+iss-sim-logs := $(foreach ts,$(tests-and-seeds),$(OUT-SEED)/$(ISS)/$(ts).log)
+
+$(iss-sim-logs): \
+  $(OUT-SEED)/$(ISS)/%.log: \
+  $(metadata)/.instr_gen.compile_tests.stamp \
+  $(TESTLIST) scripts/run-iss.py | $(OUT-SEED)/$(ISS)
+	$(verb)scripts/run-iss.py              \
 	  $(verb-arg)                          \
 	  --iss=$(ISS)                         \
-	  --output=$(OUT-SEED)/instr_gen       \
-	  --isa=$(ISA_ISS)                     \
-	  --test $(TEST)                       \
+	  --test-dot-seed $*                   \
 	  --start-seed $(SEED)                 \
-	  --iterations $(ITERATIONS)           \
-	  --pmp-num-regions $(PMP_REGIONS)     \
-	  --pmp-granularity $(PMP_GRANULARITY)
-	$(call dump-vars,$(metadata)/.iss.vars.mk,iss,$(iss-var-deps))
-	@touch $@
+	  --gen-dir=$(OUT-SEED)/instr_gen      \
+	  --run-dir=$(@D)                      \
+	  --isa=$(ISA_ISS)
 
 .PHONY: iss_run
-iss_run: $(metadata)/.iss.run.stamp
+iss_run: $(iss-sim-logs)
 
 
 ###############################################################################
@@ -463,7 +459,7 @@ rtl_sim_run: $(rtl-sim-logs)
 #
 # For a given TEST/SEED pair, the ISS and RTL logs appear at:
 #
-#   $(OUT-SEED)/instr_gen/$(ISS)_sim/$(TEST).$(SEED).log
+#   $(OUT-SEED)/$(ISS)/$(TEST).$(SEED).log
 #   $(OUT-SEED)/rtl_sim/$(TEST).$(SEED)/trace_core_00000000.log
 #
 # The comparison script compares these and writes to a result file at
@@ -476,13 +472,13 @@ comp-results := $(addsuffix /test-result.yml,$(rtl-sim-dirs))
 
 $(comp-results): \
   %/test-result.yml: \
-  $(metadata)/.iss.run.stamp \
+  $(iss-sim-logs) \
   $(rtl-sim-logs) compare.py
 	@echo Comparing traces for $*
 	$(verb)./compare.py \
 	         --instr-gen-bin-dir $(OUT-SEED)/instr_gen/asm_test \
 	         --iss $(ISS) \
-	         --iss-log-dir $(OUT-SEED)/instr_gen/$(ISS)_sim \
+	         --iss-log-dir $(OUT-SEED)/$(ISS) \
 	         --start-seed $(SEED) \
 	         --test-dot-seed "$(notdir $*)" \
 	         --output $@ \
