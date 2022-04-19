@@ -3,16 +3,20 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
+import argparse
 import os
+import re
 import shlex
 import subprocess
 import sys
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 THIS_DIR = os.path.dirname(__file__)
 IBEX_ROOT = os.path.join(THIS_DIR, 4 * '../')
 RISCV_DV_ROOT = os.path.normpath(os.path.join(IBEX_ROOT,
                                               'vendor/google_riscv-dv'))
+
+TestAndSeed = Tuple[str, int]
 
 
 def run_one(verbose: bool,
@@ -83,3 +87,15 @@ def subst_vars(string: str, var_dict: Dict[str, str]) -> str:
     for key, value in var_dict.items():
         string = string.replace('<{}>'.format(key), value)
     return string
+
+
+def read_test_dot_seed(arg: str) -> TestAndSeed:
+    '''Read a value for --test-dot-seed'''
+
+    match = re.match(r'([^.]+)\.([0-9]+)$', arg)
+    if match is None:
+        raise argparse.ArgumentTypeError('Bad --test-dot-seed ({}): '
+                                         'should be of the form TEST.SEED.'
+                                         .format(arg))
+
+    return (match.group(1), int(match.group(2), 10))

@@ -2,30 +2,14 @@
 
 import argparse
 import os
-import re
 import subprocess
 import sys
-from typing import Tuple
 
 from sim_cmd import get_simulator_cmd
-from scripts_lib import subst_vars
+from scripts_lib import read_test_dot_seed, subst_vars
 from test_entry import get_test_entry
 
 _CORE_IBEX = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
-
-_TestAndSeed = Tuple[str, int]
-
-
-def read_test_dot_seed(arg: str) -> _TestAndSeed:
-    '''Read a value for --test-dot-seed'''
-
-    match = re.match(r'([^.]+)\.([0-9]+)$', arg)
-    if match is None:
-        raise argparse.ArgumentTypeError('Bad --test-dot-seed ({}): '
-                                         'should be of the form TEST.SEED.'
-                                         .format(arg))
-
-    return (match.group(1), int(match.group(2), 10))
 
 
 def get_test_sim_cmd(base_cmd, test, idx, seed, sim_dir, bin_dir, lsf_cmd):
