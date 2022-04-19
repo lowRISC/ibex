@@ -323,20 +323,28 @@ instr_gen_run: $(metadata)/.instr_gen.run.stamp
 #
 # We don't explicitly track dependencies on the RISCV toolchain, so this
 # doesn't depend on anything more than the instr_gen stage did.
-$(metadata)/.instr_gen.compile_tests.stamp: \
+#
+# Note that the compilation step generates a .o file and then uses
+# objcopy to create a .bin. The ISS run uses the .o and the RTL run
+# uses the .bin. In the Makefile, we just track the .bin to represent
+# both.
+
+test-bins := $(foreach ts,$(tests-and-seeds),$(OUT-SEED)/instr_gen/$(ts).bin)
+
+$(test-bins): \
+  $(OUT-SEED)/instr_gen/%.bin: \
   $(metadata)/.instr_gen.run.stamp \
-  scripts/compile-generated-tests.py
-	$(verb)scripts/compile-generated-tests.py \
-	  $(verb-arg)                             \
-	  --output $(OUT-SEED)/instr_gen          \
-	  --isa $(ISA)                            \
-	  --test $(TEST)                          \
-	  --start-seed $(SEED)                    \
-	  --iterations $(ITERATIONS)
-	touch $@
+  scripts/compile-generated-test.py
+	$(verb)scripts/compile-generated-test.py     \
+	  $(verb-arg)                                \
+	  --output $@                                \
+	  --isa $(ISA)                               \
+	  --input-dir $(OUT-SEED)/instr_gen/asm_test \
+	  --test-dot-seed $*                         \
+	  --start-seed $(SEED)
 
 .PHONY: instr_gen_compile
-instr_gen_compile: $(metadata)/.instr_gen.compile_tests.stamp
+instr_gen_compile: $(test-bins)
 
 ###############################################################################
 # Run the instruction set simulator
@@ -350,15 +358,13 @@ iss-sim-logs := $(foreach ts,$(tests-and-seeds),$(OUT-SEED)/$(ISS)/$(ts).log)
 
 $(iss-sim-logs): \
   $(OUT-SEED)/$(ISS)/%.log: \
-  $(metadata)/.instr_gen.compile_tests.stamp \
+  $(OUT-SEED)/instr_gen/%.bin \
   $(TESTLIST) scripts/run-iss.py | $(OUT-SEED)/$(ISS)
 	$(verb)scripts/run-iss.py              \
 	  $(verb-arg)                          \
 	  --iss=$(ISS)                         \
-	  --test-dot-seed $*                   \
-	  --start-seed $(SEED)                 \
-	  --gen-dir=$(OUT-SEED)/instr_gen      \
-	  --run-dir=$(@D)                      \
+	  --input=$(OUT-SEED)/instr_gen/$*.o   \
+	  --output=$@                          \
 	  --isa=$(ISA_ISS)
 
 .PHONY: iss_run
@@ -435,20 +441,19 @@ rtl-sim-dirs := $(addprefix $(OUT-SEED)/rtl_sim/,$(tests-and-seeds))
 rtl-sim-logs := $(addsuffix /sim.log,$(rtl-sim-dirs))
 
 $(rtl-sim-logs): \
-  %/sim.log: \
+  $(OUT-SEED)/rtl_sim/%/sim.log:  \
   $(metadata)/.rtl.tb_compile.stamp \
-  $(metadata)/.instr_gen.compile_tests.stamp \
+  $(OUT-SEED)/instr_gen/%.bin       \
   scripts/run-rtl.py
 	@echo Running RTL simulation at $@
 	$(verb)mkdir -p $(@D)
-	$(verb)scripts/run-rtl.py                  \
-	  --simulator $(SIMULATOR)                 \
-	  $(cov-arg) $(wave-arg)                   \
-	  --start-seed $(SEED)                     \
-	  --signature-addr $(SIGNATURE_ADDR)       \
-	  --test-dot-seed $(notdir $*)             \
-	  --bin-dir $(OUT-SEED)/instr_gen/asm_test \
-	  --rtl-sim-dir $(OUT-SEED)/rtl_sim        \
+	$(verb)scripts/run-rtl.py               \
+	  --simulator $(SIMULATOR)              \
+	  $(cov-arg) $(wave-arg)                \
+	  --signature-addr $(SIGNATURE_ADDR)    \
+	  --test-dot-seed $*                    \
+	  --binary $(OUT-SEED)/instr_gen/$*.bin \
+	  --rtl-sim-dir $(OUT-SEED)/rtl_sim     \
 	  --sim-opts "$(SIM_OPTS)"
 
 .PHONY: rtl_sim_run
