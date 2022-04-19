@@ -12,7 +12,7 @@ from test_entry import get_test_entry
 _CORE_IBEX = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
 
 
-def get_test_sim_cmd(base_cmd, test, binary, seed, sim_dir, lsf_cmd):
+def get_test_sim_cmd(base_cmd, test, binary, seed, sim_dir):
     '''Generate the command that runs a test iteration in the simulator
 
     base_cmd is the command to use before any test-specific substitutions. test
@@ -20,8 +20,7 @@ def get_test_sim_cmd(base_cmd, test, binary, seed, sim_dir, lsf_cmd):
     file). binary is the path to the binary for the test. seed is the seed to
     use.
 
-    sim_dir is the directory to which the test results will be written. lsf_cmd
-    (if not None) is a string that runs bsub to submit the task on LSF.
+    sim_dir is the directory to which the test results will be written.
 
     Returns the command to run.
 
@@ -49,9 +48,6 @@ def get_test_sim_cmd(base_cmd, test, binary, seed, sim_dir, lsf_cmd):
                            'expected binary at {!r}.'
                            .format(seed, test_name, binary))
 
-    if lsf_cmd is not None:
-        sim_cmd = lsf_cmd + ' ' + sim_cmd
-
     return sim_cmd
 
 
@@ -64,7 +60,6 @@ def main() -> int:
     parser.add_argument('--test-dot-seed',
                         type=read_test_dot_seed,
                         required=True)
-    parser.add_argument('--lsf-cmd')
     parser.add_argument('--binary', required=True)
     parser.add_argument('--rtl-sim-dir', required=True)
     parser.add_argument('--sim-opts')
@@ -96,8 +91,8 @@ def main() -> int:
     # Specialize base_cmd for this specific test
     test_sim_dir = os.path.join(args.rtl_sim_dir,
                                 '{}.{}'.format(testname, seed))
-    test_cmd = get_test_sim_cmd(sim_cmd, entry, args.binary, seed,
-                                test_sim_dir, args.lsf_cmd)
+    test_cmd = get_test_sim_cmd(sim_cmd, entry,
+                                args.binary, seed, test_sim_dir)
 
     # Run test_cmd (it's a string, so we have to call out to the shell to do
     # so). Note that we don't capture the success or failure of the subprocess:
