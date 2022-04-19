@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import argparse
+import os
 import shutil
 import sys
 
@@ -21,11 +22,15 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    # Delete the output directory if it existed to ensure a clear build
+    # Delete the output directory if it existed to ensure a clean build, then
+    # create it. (The creation step is needed so that we can write our log file
+    # in the directory from the outset).
     try:
         shutil.rmtree(args.output)
     except FileNotFoundError:
         pass
+
+    os.makedirs(args.output, exist_ok=True)
 
     cmd = (start_riscv_dv_run_cmd(args.verbose) +
            ['--co', '--steps=gen',
@@ -34,7 +39,8 @@ def main() -> int:
             '--isa', args.isa,
             '--end_signature_addr', args.end_signature_addr])
 
-    return run_one(args.verbose, cmd)
+    log_path = os.path.join(args.output, 'build.log')
+    return run_one(args.verbose, cmd, redirect_stdstreams=log_path)
 
 
 if __name__ == '__main__':
