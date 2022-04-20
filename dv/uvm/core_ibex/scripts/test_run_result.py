@@ -8,7 +8,6 @@ import collections
 # None.
 test_run_result_fields = [
          'name',  # Name of test
-         'idx',  # Index of test
          'seed',  # Seed of test
          'binary',  # Path to test binary
          'uvm_log',  # Path to UVM DV simulation log
@@ -28,7 +27,6 @@ TestRunResult = collections.namedtuple('TestRunResult', test_run_result_fields)
 
 def check_test_run_result(trr: TestRunResult):
     assert (trr.name is not None and isinstance(trr.name, str))
-    assert (trr.idx is not None and isinstance(trr.idx, int))
     assert (trr.seed is not None and isinstance(trr.seed, int))
     assert (trr.binary is None or isinstance(trr.binary, str))
     assert (trr.uvm_log is None or isinstance(trr.uvm_log, str))

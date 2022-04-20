@@ -33,8 +33,7 @@ def main() -> int:
 
     core_ibex = os.path.normpath(os.path.join(THIS_DIR, '..'))
 
-    output_dir = os.path.join(args.output, 'rtl_sim')
-    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(args.output, exist_ok=True)
 
     enables = {
         'cov_opts': args.en_cov,
@@ -47,7 +46,7 @@ def main() -> int:
         cmd = subst_vars(pre_cmd,
                          {
                              'core_ibex': core_ibex,
-                             'out': output_dir,
+                             'out': args.output,
                              'cmp_opts': get_compile_opts(args.ibex_config,
                                                           args.simulator)
                          })

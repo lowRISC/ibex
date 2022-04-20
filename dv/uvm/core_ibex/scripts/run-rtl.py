@@ -97,7 +97,7 @@ def main() -> int:
     # so). Note that we don't capture the success or failure of the subprocess:
     # if something goes horribly wrong, we assume we won't have a matching
     # trace.
-    sim_log = os.path.join(args.out_dir, 'sim.log')
+    sim_log = os.path.join(args.out_dir, 'rtl.log')
     os.makedirs(args.out_dir, exist_ok=True)
     with open(sim_log, 'wb') as sim_fd:
         subprocess.run(test_cmd, shell=True, stdout=sim_fd, stderr=sim_fd)
