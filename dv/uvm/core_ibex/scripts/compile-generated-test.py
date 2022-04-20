@@ -16,10 +16,10 @@ from scripts_lib import read_test_dot_seed, start_riscv_dv_run_cmd, run_one
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--verbose', action='store_true')
+    parser.add_argument('--input', required=True)
     parser.add_argument('--output', required=True)
     parser.add_argument('--isa', required=True)
 
-    parser.add_argument('--input-dir', required=True)
     parser.add_argument('--test-dot-seed',
                         type=read_test_dot_seed, required=True)
 
@@ -31,12 +31,9 @@ def main() -> int:
         raise RuntimeError("Output argument must end with .bin: "
                            f"got {args.output!r}")
     out_base = args.output[:-4]
-    out_riscv_dv_path = out_base + '.riscv-dv.log'
+    out_riscv_dv_path = os.path.join(os.path.dirname(args.output),
+                                     'compile.riscv-dv.log')
     out_obj_path = out_base + '.o'
-
-    src_file = os.path.join(args.input_dir, f'{testname}.{seed}.S')
-    if not os.path.exists(src_file):
-        raise RuntimeError(f'No such input file: {src_file!r}.')
 
     # Run riscv-dv to get a list of commands that it would run to try to
     # compile and convert the files in question. These will need some massaging
@@ -72,7 +69,7 @@ def main() -> int:
     # our call to riscv-dv, which should let us find all the things that matter
     # easily.
     rewrites = [
-        (f"{placeholder}/asm_test/{testname}_0.S", src_file),
+        (f"{placeholder}/asm_test/{testname}_0.S", args.input),
         (f"{placeholder}/asm_test/{testname}_0.o", out_obj_path),
         (f"{placeholder}/asm_test/{testname}_0.bin", args.output)
     ]

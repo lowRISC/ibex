@@ -50,14 +50,12 @@ def main() -> int:
     sim_opts_str = ' '.join('+{}={}'.format(k, v)
                             for k, v in sim_opts_dict.items())
 
-    output_pfx = os.path.join(args.output_dir, f'{testname}.{seed}')
-
-    riscv_dv_log = output_pfx + '.riscv-dv.log'
-    gen_log = output_pfx + '.gen.log'
-    gen_asm = output_pfx + '.S'
-
     # Ensure that the output directory actually exists
     os.makedirs(args.output_dir, exist_ok=True)
+
+    riscv_dv_log = os.path.join(args.output_dir, 'gen.riscv-dv.log')
+    gen_log = os.path.join(args.output_dir, 'gen.log')
+    gen_asm = os.path.join(args.output_dir, 'test.S')
 
     with tempfile.TemporaryDirectory() as td:
         orig_list = os.path.join(td, 'cmds.list')
