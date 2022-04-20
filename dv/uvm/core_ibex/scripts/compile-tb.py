@@ -8,6 +8,7 @@ import argparse
 import os
 import sys
 
+from ibex_cmd import get_compile_opts
 from scripts_lib import run_one, subst_vars
 from sim_cmd import get_simulator_cmd
 
@@ -16,12 +17,12 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--verbose', action='store_true')
 
+    parser.add_argument('--ibex-config', required=True)
     parser.add_argument('--output', required=True)
     parser.add_argument('--simulator', required=True)
     parser.add_argument('--en_cov', action='store_true')
     parser.add_argument('--en_wave', action='store_true')
     parser.add_argument('--en_cosim', action='store_true')
-    parser.add_argument('--compile-opts', default='')
 
     args = parser.parse_args()
 
@@ -39,7 +40,8 @@ def main() -> int:
         cmd = subst_vars(pre_cmd,
                          {
                              'out': output_dir,
-                             'cmp_opts': args.compile_opts
+                             'cmp_opts': get_compile_opts(args.ibex_config,
+                                                          args.simulator)
                          })
         retcode = run_one(args.verbose, ['sh', '-c', cmd],
                           redirect_stdstreams='/dev/null')
