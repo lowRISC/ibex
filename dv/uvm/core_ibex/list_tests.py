@@ -6,7 +6,7 @@
 import argparse
 import os
 import sys
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple
 
 _CORE_IBEX = os.path.normpath(os.path.join(os.path.dirname(__file__)))
 _IBEX_ROOT = os.path.normpath(os.path.join(_CORE_IBEX, '../../..'))
@@ -94,6 +94,50 @@ def filter_tests_by_config(cfg: str, test_list: _TestEntries) -> _TestEntries:
     return filtered_test_list
 
 
+def get_tests_and_counts(ibex_config: str,
+                         test: Optional[str],
+                         iterations: Optional[int]) -> List[Tuple[str, int]]:
+    '''Get a list of tests and the number of iterations to run of each
+
+    ibex_config should be the name of the Ibex configuration to be tested.
+
+    If test is provided, it gives the test or tests (as a comma separated
+    string) to narrow to. Use the special name "all" to run all the tests.
+
+    If iterations is provided, it should be a positive number and overrides the
+    number of iterations for each test.
+
+    '''
+    if iterations is not None and iterations <= 0:
+        raise ValueError('iterations should be positive if set')
+
+    rv_test = test if test is not None else 'all'
+    rv_iterations = iterations or 0
+
+    # Get all the tests that match the test argument, scaling as necessary with
+    # the iterations argument.
+    matched_list = []  # type: _TestEntries
+    testlist = os.path.join(_CORE_IBEX, 'riscv_dv_extension', 'testlist.yaml')
+    process_regression_list(testlist, rv_test, rv_iterations,
+                            matched_list, _RISCV_DV_ROOT)
+    if not matched_list:
+        raise RuntimeError("Cannot find {} in {}".format(test, testlist))
+
+    # Filter tests by the chosen configuration
+    matched_list = filter_tests_by_config(ibex_config, matched_list)
+
+    # Convert to desired output format (and check for well-formedness)
+    ret = []
+    for test in matched_list:
+        name = test['test']
+        iterations = test['iterations']
+        assert isinstance(name, str) and isinstance(iterations, int)
+        assert iterations > 0
+        ret.append((name, iterations))
+
+    return ret
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--start_seed', type=int, default=1)
@@ -107,24 +151,9 @@ def main() -> int:
     if args.start_seed < 0:
         raise RuntimeError('Bad --start_seed argument: must be non-negative')
 
-    # Get all the tests that match --test, scaling as necessary with the
-    # --iterations argument.
-    matched_list = []  # type: _TestEntries
-    testlist = os.path.join(_CORE_IBEX, 'riscv_dv_extension', 'testlist.yaml')
-    process_regression_list(testlist, args.test, args.iterations,
-                            matched_list, _RISCV_DV_ROOT)
-    if not matched_list:
-        raise RuntimeError("Cannot find {} in {}".format(args.test, testlist))
-
-    # Filter tests by the chosen configuration
-    matched_list = filter_tests_by_config(args.ibex_config, matched_list)
-
-    # Print the tests crossed by seeds, one to a line, in the format TEST.SEED.
-    for test in matched_list:
-        name = test['test']
-        iterations = test['iterations']
-        assert isinstance(name, str) and isinstance(iterations, int)
-        assert iterations > 0
+    for name, iterations in get_tests_and_counts(args.ibex_config,
+                                                 args.test,
+                                                 args.iterations):
         for iteration in range(iterations):
             print('{}.{}'.format(name, args.start_seed + iteration))
 
