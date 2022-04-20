@@ -180,6 +180,7 @@
            +UVM_VERBOSITY=UVM_LOW
            +bin=<binary>
            +ibex_tracer_file_base=<sim_dir>/trace_core
+           -l <sim_dir>/xrun.log
            -nokey
            <sim_opts>
            <cov_opts>
