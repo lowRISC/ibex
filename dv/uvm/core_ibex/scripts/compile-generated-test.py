@@ -22,18 +22,10 @@ def main() -> int:
     parser.add_argument('--input-dir', required=True)
     parser.add_argument('--test-dot-seed',
                         type=read_test_dot_seed, required=True)
-    parser.add_argument('--start-seed', type=int, required=True)
 
     args = parser.parse_args()
 
-    if args.start_seed < 0:
-        raise RuntimeError('Invalid start seed: {}'.format(args.start_seed))
     testname, seed = args.test_dot_seed
-    if seed < args.start_seed:
-        raise RuntimeError('Start seed is greater than test seed '
-                           f'({args.start_seed} > {seed}).')
-
-    iteration = seed - args.start_seed
 
     if not args.output.endswith('.bin'):
         raise RuntimeError("Output argument must end with .bin: "
@@ -42,7 +34,7 @@ def main() -> int:
     out_riscv_dv_path = out_base + '.riscv-dv.log'
     out_obj_path = out_base + '.o'
 
-    src_file = os.path.join(args.input_dir, f'{testname}_{iteration}.S')
+    src_file = os.path.join(args.input_dir, f'{testname}.{seed}.S')
     if not os.path.exists(src_file):
         raise RuntimeError(f'No such input file: {src_file!r}.')
 
