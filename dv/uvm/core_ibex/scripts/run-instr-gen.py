@@ -6,12 +6,14 @@
 
 import argparse
 import os
+import re
 import shlex
+import shutil
 import sys
 import tempfile
+from typing import List
 
-import construct_makefile
-from scripts_lib import start_riscv_dv_run_cmd, run_one
+from scripts_lib import read_test_dot_seed, start_riscv_dv_run_cmd, run_one
 
 
 def main() -> int:
@@ -19,18 +21,19 @@ def main() -> int:
     parser.add_argument('--verbose', action='store_true')
     parser.add_argument('--simulator', required=True)
     parser.add_argument('--end-signature-addr', required=True)
+    parser.add_argument('--output-dir', required=True)
     parser.add_argument('--gen-build-dir', required=True)
-    parser.add_argument('--output', required=True)
     parser.add_argument('--isa', required=True)
 
-    parser.add_argument('--test', required=True)
-    parser.add_argument('--start-seed', type=int, required=True)
-    parser.add_argument('--iterations', type=int, required=True)
+    parser.add_argument('--test-dot-seed',
+                        type=read_test_dot_seed, required=True)
 
     parser.add_argument('--pmp-num-regions', type=int, required=True)
     parser.add_argument('--pmp-granularity', type=int, required=True)
 
     args = parser.parse_args()
+
+    testname, seed = args.test_dot_seed
 
     inst_overrides = [
         'riscv_asm_program_gen',
@@ -47,106 +50,162 @@ def main() -> int:
     sim_opts_str = ' '.join('+{}={}'.format(k, v)
                             for k, v in sim_opts_dict.items())
 
-    output_makefile = os.path.join(args.output, 'run.mk')
+    output_pfx = os.path.join(args.output_dir, f'{testname}.{seed}')
+
+    riscv_dv_log = output_pfx + '.riscv-dv.log'
+    gen_log = output_pfx + '.gen.log'
+    gen_asm = output_pfx + '.S'
+
+    # Ensure that the output directory actually exists
+    os.makedirs(args.output_dir, exist_ok=True)
 
     with tempfile.TemporaryDirectory() as td:
-        orig_list = os.path.join(td, 'orig-cmds.list')
-        reloc_list = os.path.join(td, 'reloc-cmds.list')
+        orig_list = os.path.join(td, 'cmds.list')
+
+        placeholder = os.path.join(td, '@@PLACEHOLDER@@')
 
         cmd = (start_riscv_dv_run_cmd(args.verbose) +
                ['--so', '--steps=gen',
-                '--output', args.output,
+                '--output', placeholder,
                 '--simulator', args.simulator,
                 '--isa', args.isa,
-                '--test', args.test,
-                '--start_seed', str(args.start_seed),
-                '--iterations', str(args.iterations),
+                '--test', testname,
+                '--start_seed', str(seed),
+                '--iterations', '1',
                 '--sim_opts', sim_opts_str,
                 '--debug', orig_list])
 
-        # Run riscv-dv to generate a bunch of commands
-        gen_retcode = run_one(args.verbose, cmd)
+        # Run riscv-dv to generate commands. This is rather chatty, so redirect
+        # its output to a log file.
+        gen_retcode = run_one(args.verbose, cmd,
+                              redirect_stdstreams=riscv_dv_log)
         if gen_retcode:
             return gen_retcode
 
         # Those commands assume the riscv-dv directory layout, where the build
         # and run directories are the same. Transform each of the commands as
         # necessary to point at the built generator
-        reloc_commands(args.simulator, args.output, args.gen_build_dir,
-                       orig_list, reloc_list)
+        cmds = reloc_commands(placeholder,
+                              args.gen_build_dir,
+                              td,
+                              args.simulator,
+                              testname,
+                              orig_list)
 
-        # Convert the final command list to a Makefile
-        construct_makefile.transform(True, reloc_list, output_makefile)
+        # Run the commands in sequence to create "test_0.S" and "gen.log" in
+        # the temporary directory.
+        ret = 0
+        for cmd in cmds:
+            ret = run_one(args.verbose, cmd, redirect_stdstreams='/dev/null')
+            if ret != 0:
+                break
 
-    # Finally, run Make to run those commands
-    cmd = ['make', '-f', output_makefile, 'all']
-    if not args.verbose:
-        cmd.append('-s')
+        td_gen_log = os.path.join(td, 'gen.log')
+        td_gen_asm = os.path.join(td, 'test_0.S')
 
-    return run_one(args.verbose, cmd)
+        # At this point, we might have a "gen.log" in the temporary directory.
+        # Copy it back if so. If not, check that ret is nonzero.
+        if os.path.exists(td_gen_log):
+            shutil.copy(td_gen_log, gen_log)
+        elif ret == 0:
+            raise RuntimeError('Generation commands exited with zero status '
+                               'but left no gen.log in scratch directory.')
+
+        # If we failed, exit now (rather than copying the .S file across)
+        if ret != 0:
+            return ret
+
+        # We succeeded. Check there is indeed a test_0.S in the temporary
+        # directory and copy it back.
+        if not os.path.exists(td_gen_asm):
+            raise RuntimeError('Generation commands exited with zero status '
+                               'but left no test_0.S in scratch directory.')
+
+        shutil.copy(td_gen_asm, gen_asm)
+
+    return 0
 
 
-def reloc_commands(simulator: str, run_dir: str, build_dir: str,
-                   src: str, dst: str) -> None:
-    '''Reads all the lines in src and "relocate" them to dst.
+def reloc_commands(placeholder_dir: str,
+                   build_dir: str,
+                   scratch_dir: str,
+                   simulator: str,
+                   testname: str,
+                   src: str) -> List[List[str]]:
+    '''Reads the (one) line in src and apply relocations to it
 
-    More precisely, try to find paths in these lines that refer to things that
-    were actually built as part of the build step (compiling the instruction
-    generator) and switch those paths over to point at the correct directory.
+    The result should be a series of commands that build a single test into
+    scratch_dir/test_0.S, dumping a log into scratch_dir/gen.log.
 
     '''
-    with open(src) as src_file, open(dst, 'w') as dst_file:
+    ret = []
+    with open(src) as src_file:
         for line in src_file:
             line = line.strip()
             if not line:
                 continue
 
-            parts = shlex.split(line)
-            reloc_parts = [reloc_word(simulator, run_dir, build_dir, w)
-                           for w in parts]
-            reloc_line = ' '.join([shlex.quote(w) for w in reloc_parts])
-            print(reloc_line, file=dst_file)
+            ret.append([reloc_word(simulator,
+                                   placeholder_dir, build_dir,
+                                   scratch_dir, testname, w)
+                        for w in shlex.split(line)])
+    return ret
 
 
-def reloc_word(simulator: str, run_dir: str, build_dir: str, word: str) -> str:
-    '''Helper function for reloc_commands that relocates just one word
-
-    This is a bit of a hack, made necessary because riscv-dv doesn't really
-    support building the instruction generator in a different directory from
-    where we run it.
-
-    '''
-    reloc_basenames = {
+def reloc_word(simulator: str,
+               placeholder_dir: str, build_dir: str, scratch_dir: str,
+               testname: str, word: str) -> str:
+    '''Helper function for reloc_commands that relocates just one word'''
+    sim_relocs = {
         'vcs': [
-            # The VCS binary
-            'vcs_simv'
+            # The VCS-generated binary
+            (os.path.join(placeholder_dir, 'vcs_simv'),
+             os.path.join(build_dir, 'vcs_simv'))
         ],
         'xlm': [
             # For Xcelium, the build directory gets passed as the
-            # "-xmlibdirpath" argument. The basename there will be "instr_gen".
-            'instr_gen'
+            # "-xmlibdirpath" argument.
+            (placeholder_dir, build_dir)
         ]
     }
+    always_relocs = [
+        # The generated test. Since riscv-dv expects to make more than one of
+        # them, this gets supplied as a plusarg with just the test name (with
+        # no seed suffix).
+        (os.path.join(placeholder_dir, 'asm_test', testname),
+         os.path.join(scratch_dir, 'test')),
 
-    basename = os.path.basename(word)
-    if basename not in reloc_basenames[simulator]:
-        # This doesn't look like a file we care about tracking
-        return word
+        # The log file for generation itself
+        (os.path.join(placeholder_dir, f'sim_{testname}_0.log'),
+         os.path.join(scratch_dir, 'gen.log'))
+    ]
 
-    abs_word = os.path.abspath(word)
-    abs_rundir = os.path.abspath(run_dir)
+    # Special handling for plusargs with filenames, which end up looking
+    # something like +my_argument=foo/bar/baz.
+    match = re.match(r'(\+[A-Za-z0-9_]+=)(.*)', word)
+    if match is not None:
+        pre = match.group(1)
+        post = match.group(2)
+    else:
+        pre = ''
+        post = word
 
-    common_path = os.path.commonpath([abs_word, abs_rundir])
-    if common_path != abs_rundir:
-        # The file wasn't in the run_dir tree.
-        return word
+    abs_post = os.path.abspath(post)
 
-    # Avoid a path like "a/b/c/." if abs_word happens to equal abs_rundir
-    if abs_word == abs_rundir:
-        return build_dir
+    for orig, reloc in sim_relocs[simulator] + always_relocs:
+        abs_orig = os.path.abspath(orig)
+        if abs_orig == abs_post:
+            post = reloc
+            break
 
-    rel_word = os.path.relpath(abs_word, abs_rundir)
-    return os.path.join(build_dir, rel_word)
+    reloc = pre + post
+
+    # Check there's no remaining occurrence of the placeholder
+    if placeholder_dir in reloc:
+        raise RuntimeError('Failed to replace an occurrence of the '
+                           f'placeholder in {word} (got {reloc})')
+
+    return reloc
 
 
 if __name__ == '__main__':

@@ -294,29 +294,26 @@ instr_gen_build: $(OUT-DIR)instr_gen/.compile.stamp
 ###############################################################################
 # Run the random instruction generator
 #
-RISCV_DV_ROOT := $(GEN_DIR)
-INSTR_GEN_RUN_COMMANDS := $(shell mktemp)
-$(metadata)/.instr_gen.run.stamp: \
+test-asms := $(foreach ts,$(tests-and-seeds),$(OUT-SEED)/instr_gen/$(ts).S)
+
+$(test-asms): \
+  $(OUT-SEED)/instr_gen/%.S: \
   $(OUT-DIR)instr_gen/.compile.stamp \
   $(TESTLIST) \
-  scripts/construct_makefile.py scripts/run-instr-gen.py | $(metadata)
-	$(verb)rm -rf $(OUT-SEED)/instr_gen/asm_test
-	+$(verb)scripts/run-instr-gen.py         \
+  scripts/run-instr-gen.py | $(metadata)
+	$(verb)scripts/run-instr-gen.py          \
 	  $(verb-arg)                            \
 	  --simulator $(SIMULATOR)               \
 	  --end-signature-addr $(SIGNATURE_ADDR) \
+	  --output-dir $(@D)                     \
 	  --gen-build-dir $(OUT-DIR)instr_gen    \
-	  --output $(OUT-SEED)/instr_gen         \
 	  --isa $(ISA)                           \
-	  --test $(TEST)                         \
-	  --start-seed $(SEED)                   \
-	  --iterations $(ITERATIONS)             \
+	  --test-dot-seed $*                     \
 	  --pmp-num-regions $(PMP_REGIONS)       \
 	  --pmp-granularity $(PMP_GRANULARITY)
-	@touch $@
 
 .PHONY: instr_gen_run
-instr_gen_run: $(metadata)/.instr_gen.run.stamp
+instr_gen_run: $(test-asms)
 
 ###############################################################################
 # Compile the generated assembly programs
@@ -333,15 +330,14 @@ test-bins := $(foreach ts,$(tests-and-seeds),$(OUT-SEED)/instr_gen/$(ts).bin)
 
 $(test-bins): \
   $(OUT-SEED)/instr_gen/%.bin: \
-  $(metadata)/.instr_gen.run.stamp \
+  $(OUT-SEED)/instr_gen/%.S \
   scripts/compile-generated-test.py
-	$(verb)scripts/compile-generated-test.py     \
-	  $(verb-arg)                                \
-	  --output $@                                \
-	  --isa $(ISA)                               \
-	  --input-dir $(OUT-SEED)/instr_gen/asm_test \
-	  --test-dot-seed $*                         \
-	  --start-seed $(SEED)
+	$(verb)scripts/compile-generated-test.py \
+	  $(verb-arg)                            \
+	  --output $@                            \
+	  --isa $(ISA)                           \
+	  --input-dir $(OUT-SEED)/instr_gen      \
+	  --test-dot-seed $*
 
 .PHONY: instr_gen_compile
 instr_gen_compile: $(test-bins)
