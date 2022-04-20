@@ -105,16 +105,6 @@ sim: post_compare $(if $(filter 1,$(COV)),merge_cov,)
 clean:
 	rm -rf $(OUT-DIR)
 
-# Common options for all targets
-COMMON_OPTS := $(if $(call equal,$(VERBOSE),1),--verbose,)
-
-# Options for all targets that depend on the tests we're running.
-TEST_OPTS := $(COMMON_OPTS) \
-             --start_seed=${SEED} \
-             --test="${TEST}" \
-             --testlist=${TESTLIST} \
-             --iterations=${ITERATIONS}
-
 # Options used for privileged CSR test generation
 CSR_OPTS=--csr_yaml=${CSR_FILE} \
          --isa="${ISA}" \
@@ -360,7 +350,7 @@ all-verilog = \
   $(shell find ../../../rtl -name '*.v' -o -name '*.sv' -o -name '*.svh') \
   $(shell find ../.. -name '*.v' -o -name '*.sv' -o -name '*.svh')
 
-tb-compile-var-deps := COMMON_OPTS SIMULATOR COV WAVES COSIM
+tb-compile-var-deps := SIMULATOR COV WAVES COSIM
 -include $(OUT-DIR)rtl_sim/.rtl.tb_compile.vars.mk
 tb-compile-vars-prereq = $(call vars-prereq,comp,compiling TB,$(tb-compile-var-deps))
 
