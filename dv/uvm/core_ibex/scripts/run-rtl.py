@@ -62,6 +62,7 @@ def main() -> int:
                         required=True)
     parser.add_argument('--binary', required=True)
     parser.add_argument('--rtl-sim-dir', required=True)
+    parser.add_argument('--out-dir', required=True)
     parser.add_argument('--sim-opts')
 
     args = parser.parse_args()
@@ -89,16 +90,15 @@ def main() -> int:
                          })
 
     # Specialize base_cmd for this specific test
-    test_sim_dir = os.path.join(args.rtl_sim_dir,
-                                '{}.{}'.format(testname, seed))
     test_cmd = get_test_sim_cmd(sim_cmd, entry,
-                                args.binary, seed, test_sim_dir)
+                                args.binary, seed, args.out_dir)
 
     # Run test_cmd (it's a string, so we have to call out to the shell to do
     # so). Note that we don't capture the success or failure of the subprocess:
     # if something goes horribly wrong, we assume we won't have a matching
     # trace.
-    sim_log = os.path.join(test_sim_dir, 'sim.log')
+    sim_log = os.path.join(args.out_dir, 'sim.log')
+    os.makedirs(args.out_dir, exist_ok=True)
     with open(sim_log, 'wb') as sim_fd:
         subprocess.run(test_cmd, shell=True, stdout=sim_fd, stderr=sim_fd)
 
