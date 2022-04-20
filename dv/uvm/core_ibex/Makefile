@@ -417,29 +417,14 @@ rtl_tb_compile: $(OUT-DIR)rtl_sim/.rtl.tb_compile.stamp
 
 ###############################################################################
 # Run ibex RTL simulation with generated programs
-#
-# Because we compile a TB once rather than for each seed, we have to copy in
-# that directory before we start. We make this step (rather than actually
-# running the test) dependent on having the right variables. That way, we'll
-# correctly delete the sim directory and re-copy it if necessary.
-#
-# Note that the variables we depend on are instr-gen-build-vars-prereq.
-# We also depend on COV and WAVES, but these dependencies will come for free
-# from the dependency on the compiled TB.
-$(metadata)/.rtl.tb_compile.stamp: \
-  $(OUT-DIR)rtl_sim/.rtl.tb_compile.stamp \
-  $(instr-gen-build-vars-prereq) $(risc-dv-files)
-	rm -rf $(OUT-SEED)/rtl_sim
-	cp -r $(OUT-DIR)rtl_sim $(OUT-SEED)
-	@touch $@
 
 rtl-sim-dirs := $(addprefix $(OUT-SEED)/rtl_sim/,$(tests-and-seeds))
 rtl-sim-logs := $(addsuffix /sim.log,$(rtl-sim-dirs))
 
 $(rtl-sim-logs): \
-  $(OUT-SEED)/rtl_sim/%/sim.log:  \
-  $(metadata)/.rtl.tb_compile.stamp \
-  $(OUT-SEED)/instr_gen/%.bin       \
+  $(OUT-SEED)/rtl_sim/%/sim.log:          \
+  $(OUT-DIR)rtl_sim/.rtl.tb_compile.stamp \
+  $(OUT-SEED)/instr_gen/%.bin             \
   scripts/run-rtl.py
 	@echo Running RTL simulation at $@
 	$(verb)mkdir -p $(@D)
@@ -449,7 +434,8 @@ $(rtl-sim-logs): \
 	  --signature-addr $(SIGNATURE_ADDR)    \
 	  --test-dot-seed $*                    \
 	  --binary $(OUT-SEED)/instr_gen/$*.bin \
-	  --rtl-sim-dir $(OUT-SEED)/rtl_sim     \
+	  --rtl-sim-dir $(OUT-DIR)rtl_sim       \
+	  --out-dir $(OUT-SEED)/rtl_sim/$*      \
 	  --sim-opts "$(SIM_OPTS)"
 
 .PHONY: rtl_sim_run
