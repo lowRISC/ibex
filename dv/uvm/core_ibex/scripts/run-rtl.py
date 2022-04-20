@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 
+from ibex_cmd import get_sim_opts
 from sim_cmd import get_simulator_cmd
 from scripts_lib import read_test_dot_seed, subst_vars
 from test_entry import get_test_entry
@@ -53,6 +54,7 @@ def get_test_sim_cmd(base_cmd, test, binary, seed, sim_dir):
 
 def main() -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument('--ibex-config', required=True)
     parser.add_argument('--simulator', required=True)
     parser.add_argument("--en_cov", action='store_true')
     parser.add_argument("--en_wave", action='store_true')
@@ -63,7 +65,6 @@ def main() -> int:
     parser.add_argument('--binary', required=True)
     parser.add_argument('--rtl-sim-dir', required=True)
     parser.add_argument('--out-dir', required=True)
-    parser.add_argument('--sim-opts')
 
     args = parser.parse_args()
 
@@ -77,9 +78,8 @@ def main() -> int:
     }
     _, base_cmd = get_simulator_cmd(args.simulator, enables)
 
-    sim_opts = f'+signature_addr={args.signature_addr}'
-    if args.sim_opts:
-        sim_opts += ' ' + args.sim_opts
+    sim_opts = (f'+signature_addr={args.signature_addr} ' +
+                get_sim_opts(args.ibex_config, args.simulator))
 
     # Specialize base_cmd with the right directories and simulator options
     sim_cmd = subst_vars(base_cmd,
