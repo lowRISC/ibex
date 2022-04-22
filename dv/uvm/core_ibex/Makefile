@@ -40,6 +40,8 @@ OUT-SEED := $(OUT)/seed-$(SEED)
 export dv_root := $(realpath ../../../vendor/lowrisc_ip/dv)
 export DUT_TOP := dut
 
+# Compile time options for ibex RTL simulation
+COMPILE_OPTS        +=
 # Run time options for ibex RTL simulation
 SIM_OPTS            :=
 # Enable waveform dumping
@@ -157,6 +159,7 @@ include $(sim-cfg-mk)
 
 .PHONY: test-cfg
 test-cfg:
+	@echo "COMPILE_OPTS" $(COMPILE_OPTS)
 	@echo "SIM_OPTS" $(SIM_OPTS)
 
 ###############################################################################
@@ -387,7 +390,7 @@ all-verilog = \
   $(shell find ../../../rtl -name '*.v' -o -name '*.sv' -o -name '*.svh') \
   $(shell find ../.. -name '*.v' -o -name '*.sv' -o -name '*.svh')
 
-tb-compile-var-deps := COMMON_OPTS SIMULATOR COV WAVES COSIM
+tb-compile-var-deps := COMMON_OPTS SIMULATOR COV WAVES COMPILE_OPTS COSIM
 -include $(OUT-DIR)rtl_sim/.rtl.tb_compile.vars.mk
 tb-compile-vars-prereq = $(call vars-prereq,comp,compiling TB,$(tb-compile-var-deps))
 
@@ -405,7 +408,8 @@ $(OUT-DIR)rtl_sim/.rtl.tb_compile.stamp: \
 	  $(verb-arg)                          \
 	  --output=$(OUT-DIR)                  \
 	  --simulator=$(SIMULATOR)             \
-	  $(cov-arg) $(wave-arg) $(cosim-arg)
+	  $(cov-arg) $(wave-arg) $(cosim-arg)  \
+	  --compile-opts="$(COMPILE_OPTS)"
 	$(call dump-vars,$(OUT-DIR)rtl_sim/.rtl.tb_compile.vars.mk,comp,$(tb-compile-var-deps))
 	@touch $@
 

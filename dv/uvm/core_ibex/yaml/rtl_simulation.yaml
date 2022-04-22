@@ -32,7 +32,7 @@
          -debug_access+pp
          -xlrm uniq_prior_final
          -CFLAGS '--std=c99 -fno-extended-identifiers'
-         -lca -kdb <wave_opts> <cov_opts> <cosim_opts>"
+         -lca -kdb <cmp_opts> <wave_opts> <cov_opts> <cosim_opts>"
     cov_opts: >
       -cm line+tgl+assert+fsm+branch
       -cm_tgl portsonly
@@ -81,7 +81,7 @@
               +define+UVM
               -timescale \"1 ns / 1 ps \"
               -writetoplevels <out>/top.list
-              -l <out>/compile.log"
+              -l <out>/compile.log <cmp_opts>"
   sim:
     cmd: >
       vsim -64 -c <cov_opts> -do "run -a; quit -f" +designfile -f <out>/top.list <sim_opts>  -sv_seed <seed> +access +r+w +UVM_TESTNAME=<rtl_test> +UVM_VERBOSITY=UVM_LOW +bin=<binary> +ibex_tracer_file_base="<sim_dir>/trace_core" -l <sim_dir>/sim.log
@@ -116,6 +116,7 @@
     cmd:
       - "vlib <out>/work"
       - "vlog -work <out>/work
+        <cmp_opts>
         -uvmver 1.2
         +define+UVM
         -f ibex_dv.f"
@@ -159,6 +160,7 @@
               -elaborate
               -l <out>/compile.log
               -xmlibdirpath <out>
+              <cmp_opts>
               <cov_opts>
               <wave_opts>"
     cov_opts: >

@@ -21,6 +21,7 @@ def main() -> int:
     parser.add_argument('--en_cov', action='store_true')
     parser.add_argument('--en_wave', action='store_true')
     parser.add_argument('--en_cosim', action='store_true')
+    parser.add_argument('--compile-opts', default='')
 
     args = parser.parse_args()
 
@@ -35,7 +36,11 @@ def main() -> int:
     compile_cmds, _ = get_simulator_cmd(args.simulator, enables)
 
     for pre_cmd in compile_cmds:
-        cmd = subst_vars(pre_cmd, {'out': output_dir})
+        cmd = subst_vars(pre_cmd,
+                         {
+                             'out': output_dir,
+                             'cmp_opts': args.compile_opts
+                         })
         retcode = run_one(args.verbose, ['sh', '-c', cmd],
                           discard_stdstreams=True)
         if retcode:
