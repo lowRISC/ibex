@@ -40,6 +40,8 @@ OUT-SEED := $(OUT)/seed-$(SEED)
 export dv_root := $(realpath ../../../vendor/lowrisc_ip/dv)
 export DUT_TOP := dut
 
+# Run time options for ibex RTL simulation
+SIM_OPTS            :=
 # Enable waveform dumping
 WAVES               := 1
 # Enable coverage dump
@@ -152,6 +154,10 @@ $(sim-cfg-mk): FORCE | $(OUT-DIR)
 endif
 
 include $(sim-cfg-mk)
+
+.PHONY: test-cfg
+test-cfg:
+	@echo "SIM_OPTS" $(SIM_OPTS)
 
 ###############################################################################
 # Utility functions.
@@ -441,7 +447,8 @@ $(rtl-sim-logs): \
 	  --signature-addr $(SIGNATURE_ADDR)       \
 	  --test-dot-seed $(notdir $*)             \
 	  --bin-dir $(OUT-SEED)/instr_gen/asm_test \
-	  --rtl-sim-dir $(OUT-SEED)/rtl_sim
+	  --rtl-sim-dir $(OUT-SEED)/rtl_sim        \
+	  --sim-opts "$(SIM_OPTS)"
 
 .PHONY: rtl_sim_run
 rtl_sim_run: $(rtl-sim-logs)
