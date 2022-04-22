@@ -155,7 +155,7 @@ proper interrupt handler, entered Debug Mode properly, updated any CSRs correctl
 handshaking mechanism provided by the RISCV-DV instruction generator is heavily used, which
 effectively allows the core to send status information to the testbench during program execution for
 any analysis that is required to increase verification effectiveness.
-This mechanism is explained in detail at https://github.com/google/riscv-dv/blob/master/HANDSHAKE.md.
+This mechanism is explained in detail at https://github.com/google/riscv-dv/blob/master/docs/source/handshake.rst.
 As a sidenote, the signature address that this testbench uses for the handshaking is ``0x8ffffffc``.
 Additionally, as is mentioned in the RISCV-DV documentation of this handshake, a small set of API
 tasks are provided in `dv/uvm/core_ibex/tests/core_ibex_base_test.sv
