@@ -9,7 +9,7 @@ import os
 import sys
 
 from ibex_cmd import get_compile_opts
-from scripts_lib import run_one, subst_vars
+from scripts_lib import THIS_DIR, run_one, subst_vars
 from sim_cmd import get_simulator_cmd
 
 
@@ -26,6 +26,13 @@ def main() -> int:
 
     args = parser.parse_args()
 
+    expected_env_vars = ['PRJ_DIR', 'LOWRISC_IP_DIR']
+    for var in expected_env_vars:
+        if os.getenv(var) is None:
+            raise RuntimeError(f'The environment variable {var!r} is not set.')
+
+    core_ibex = os.path.normpath(os.path.join(THIS_DIR, '..'))
+
     output_dir = os.path.join(args.output, 'rtl_sim')
     os.makedirs(output_dir, exist_ok=True)
 
@@ -39,6 +46,7 @@ def main() -> int:
     for pre_cmd in compile_cmds:
         cmd = subst_vars(pre_cmd,
                          {
+                             'core_ibex': core_ibex,
                              'out': output_dir,
                              'cmp_opts': get_compile_opts(args.ibex_config,
                                                           args.simulator)
