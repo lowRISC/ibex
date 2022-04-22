@@ -88,6 +88,7 @@ def main() -> int:
     parser.add_argument('--lsf-cmd')
     parser.add_argument('--bin-dir', required=True)
     parser.add_argument('--rtl-sim-dir', required=True)
+    parser.add_argument('--sim-opts')
 
     args = parser.parse_args()
 
@@ -110,6 +111,8 @@ def main() -> int:
     _, base_cmd = get_simulator_cmd(args.simulator, enables)
 
     sim_opts = f'+signature_addr={args.signature_addr}'
+    if args.sim_opts:
+        sim_opts += ' ' + args.sim_opts
 
     # Specialize base_cmd with the right directories and simulator options
     sim_cmd = subst_vars(base_cmd,
