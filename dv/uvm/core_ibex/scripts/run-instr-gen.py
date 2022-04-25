@@ -53,9 +53,8 @@ def main() -> int:
     # Ensure that the output directory actually exists
     os.makedirs(args.output_dir, exist_ok=True)
 
-    riscv_dv_log = os.path.join(args.output_dir, 'gen.riscv-dv.log')
-    gen_log = os.path.join(args.output_dir, 'gen.log')
-    gen_asm = os.path.join(args.output_dir, 'test.S')
+    riscv_dv_log = os.path.join(args.output_dir,
+                                f'{testname}.{seed}.riscv-dv.log')
 
     with tempfile.TemporaryDirectory() as td:
         orig_list = os.path.join(td, 'cmds.list')
@@ -98,28 +97,15 @@ def main() -> int:
             if ret != 0:
                 break
 
-        td_gen_log = os.path.join(td, 'gen.log')
-        td_gen_asm = os.path.join(td, 'test_0.S')
+        test_file_copies = {
+            'riscv_csr_test': [('riscv_csr_test_0.S', 'test.S', False)]
+        }
+        default_file_copies = [('gen.log', 'gen.log', True),
+                               ('test_0.S', 'test.S', False)]
 
-        # At this point, we might have a "gen.log" in the temporary directory.
-        # Copy it back if so. If not, check that ret is nonzero.
-        if os.path.exists(td_gen_log):
-            shutil.copy(td_gen_log, gen_log)
-        elif ret == 0:
-            raise RuntimeError('Generation commands exited with zero status '
-                               'but left no gen.log in scratch directory.')
+        file_copies = test_file_copies.get(testname, default_file_copies)
 
-        # If we failed, exit now (rather than copying the .S file across)
-        if ret != 0:
-            return ret
-
-        # We succeeded. Check there is indeed a test_0.S in the temporary
-        # directory and copy it back.
-        if not os.path.exists(td_gen_asm):
-            raise RuntimeError('Generation commands exited with zero status '
-                               'but left no test_0.S in scratch directory.')
-
-        shutil.copy(td_gen_asm, gen_asm)
+        do_file_copies(td, args.output_dir, file_copies, ret != 0)
 
     return 0
 
@@ -173,6 +159,17 @@ def reloc_word(simulator: str,
         (os.path.join(placeholder_dir, 'asm_test', testname),
          os.path.join(scratch_dir, 'test')),
 
+        # The asm_test directory. Annoyingly, the riscv_csr_test flow works
+        # differently from the others and runs gen_csr_test.py, which has an
+        # --out argument pointing here. More annoyingly still, it will write a
+        # file there called `riscv_csr_test_0.S` which we'll have to move as a
+        # tidy-up step at the end.
+        #
+        # Note that this needs to come after the relocation above, because that
+        # renames the underlying file as well.
+        (os.path.join(placeholder_dir, 'asm_test'),
+         os.path.join(scratch_dir)),
+
         # The log file for generation itself
         (os.path.join(placeholder_dir, f'sim_{testname}_0.log'),
          os.path.join(scratch_dir, 'gen.log'))
@@ -206,5 +203,33 @@ def reloc_word(simulator: str,
     return reloc
 
 
+def do_file_copies(src_dir, dst_dir, copy_rules, run_failed):
+    '''Copy files back from src_dir to dst_dir, following copy_rules.
+
+    These rules are a list of triples (src_name, dst_name, copy_on_fail). Here,
+    the names are appended to src_dir and dst_dir to get source and destination
+    paths. If a run failed, rules where copy_on_fail is False get ignored. If a
+    run succeeded, we raise an error if a rule's source path doesn't point at a
+    file that exists.
+
+    '''
+    for src_name, dst_name, copy_on_fail in copy_rules:
+        if run_failed and not copy_on_fail:
+            continue
+
+        src_path = os.path.join(src_dir, src_name)
+        dst_path = os.path.join(dst_dir, dst_name)
+
+        if os.path.exists(src_path):
+            shutil.copy(src_path, dst_path)
+        elif not run_failed:
+            raise RuntimeError(f'Generation commands exited with zero status '
+                               f'but left no {src_name} in scratch directory.')
+
+
 if __name__ == '__main__':
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except Exception as e:
+        print(f'ERROR: {e}', file=sys.stderr)
+        sys.exit(1)
