@@ -35,6 +35,7 @@ module ibex_top import ibex_pkg::*; #(
   parameter lfsr_perm_t  RndCnstLfsrPerm  = RndCnstLfsrPermDefault,
   parameter int unsigned DmHaltAddr       = 32'h1A110800,
   parameter int unsigned DmExceptionAddr  = 32'h1A110808,
+  parameter bit          XInterface       = 1'b1,
   // Default seed and nonce for scrambling
   parameter logic [SCRAMBLE_KEY_W-1:0]   RndCnstIbexKey   = RndCnstIbexKeyDefault,
   parameter logic [SCRAMBLE_NONCE_W-1:0] RndCnstIbexNonce = RndCnstIbexNonceDefault
@@ -130,7 +131,14 @@ module ibex_top import ibex_pkg::*; #(
   output logic                         core_sleep_o,
 
   // DFT bypass controls
-  input logic                          scan_rst_ni
+  input logic                          scan_rst_ni,
+
+  // X-Interface Signals
+  // Compressed Interface
+  output logic                         x_compressed_valid_o,
+  input  logic                         x_compressed_ready_i,
+  output x_compressed_req_t            x_compressed_req_o,
+  input  x_compressed_resp_t           x_compressed_resp_i
 );
 
   localparam bit          Lockstep          = SecureIbex;
@@ -278,7 +286,8 @@ module ibex_top import ibex_pkg::*; #(
     .MemECC           (MemECC),
     .MemDataWidth     (MemDataWidth),
     .DmHaltAddr       (DmHaltAddr),
-    .DmExceptionAddr  (DmExceptionAddr)
+    .DmExceptionAddr  (DmExceptionAddr),
+    .XInterface       (XInterface)
   ) u_ibex_core (
     .clk_i(clk),
     .rst_ni,
@@ -370,7 +379,12 @@ module ibex_top import ibex_pkg::*; #(
     .alert_major_internal_o(core_alert_major_internal),
     .alert_major_bus_o     (core_alert_major_bus),
     .icache_inval_o        (icache_inval),
-    .core_busy_o           (core_busy_d)
+    .core_busy_o           (core_busy_d),
+
+    .x_compressed_valid_o,
+    .x_compressed_ready_i,
+    .x_compressed_req_o,
+    .x_compressed_resp_i
   );
 
   /////////////////////////////////
@@ -655,6 +669,10 @@ module ibex_top import ibex_pkg::*; #(
       double_fault_seen_o,
       fetch_enable_i,
       icache_inval,
+      x_compressed_valid_o,
+      x_compressed_ready_i,
+      x_compressed_req_o,
+      x_compressed_resp_i,
       core_busy_d
     });
 
@@ -714,6 +732,11 @@ module ibex_top import ibex_pkg::*; #(
     logic                         icache_inval_local;
     logic                         core_busy_local;
 
+    logic                         x_compressed_valid_local;
+    logic                         x_compressed_ready_local;
+    x_compressed_req_t            x_compressed_req_local;
+    x_compressed_resp_t           x_compressed_resp_local;
+
     assign buf_in = {
       hart_id_i,
       boot_addr_i,
@@ -760,6 +783,10 @@ module ibex_top import ibex_pkg::*; #(
       double_fault_seen_o,
       fetch_enable_i,
       icache_inval,
+      x_compressed_valid_o,
+      x_compressed_ready_i,
+      x_compressed_req_o,
+      x_compressed_resp_i,
       core_busy_d
     };
 
@@ -809,6 +836,10 @@ module ibex_top import ibex_pkg::*; #(
       double_fault_seen_local,
       fetch_enable_local,
       icache_inval_local,
+      x_compressed_valid_local,
+      x_compressed_ready_local,
+      x_compressed_req_local,
+      x_compressed_resp_local,
       core_busy_local
     } = buf_out;
 
@@ -862,7 +893,8 @@ module ibex_top import ibex_pkg::*; #(
       .RegFileDataWidth (RegFileDataWidth),
       .MemECC           (MemECC),
       .DmHaltAddr       (DmHaltAddr),
-      .DmExceptionAddr  (DmExceptionAddr)
+      .DmExceptionAddr  (DmExceptionAddr),
+      .XInterface       (XInterface)
     ) u_ibex_lockstep (
       .clk_i                  (clk),
       .rst_ni                 (rst_ni),
@@ -926,7 +958,12 @@ module ibex_top import ibex_pkg::*; #(
       .icache_inval_i         (icache_inval_local),
       .core_busy_i            (core_busy_local),
       .test_en_i              (test_en_i),
-      .scan_rst_ni            (scan_rst_ni)
+      .scan_rst_ni            (scan_rst_ni),
+
+      .x_compressed_valid_i   (x_compressed_valid_local),
+      .x_compressed_ready_i   (x_compressed_ready_local),
+      .x_compressed_req_i     (x_compressed_req_local),
+      .x_compressed_resp_i    (x_compressed_resp_local)
     );
 
     prim_buf u_prim_buf_alert_minor (

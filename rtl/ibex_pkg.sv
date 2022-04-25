@@ -650,4 +650,22 @@ package ibex_pkg;
   // `ibex_core` may need adjusting.
   parameter fetch_enable_t FetchEnableOn  = 4'b1001;
   parameter fetch_enable_t FetchEnableOff = 4'b0110;
+
+  /////////////////
+  // X-Interface //
+  /////////////////
+
+  parameter int unsigned X_ID_WIDTH  = 4;
+
+  typedef struct packed {
+    logic [15:0]           instr;
+    priv_lvl_e             mode;
+    logic [X_ID_WIDTH-1:0] id;
+  } x_compressed_req_t;
+
+  typedef struct packed {
+    logic [31:0] instr;
+    logic        accept;
+  } x_compressed_resp_t;
+  
 endpackage

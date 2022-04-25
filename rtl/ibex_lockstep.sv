@@ -38,7 +38,8 @@ module ibex_lockstep import ibex_pkg::*; #(
   parameter bit          MemECC            = 1'b0,
   parameter int unsigned MemDataWidth      = MemECC ? 32 + 7 : 32,
   parameter int unsigned DmHaltAddr        = 32'h1A110800,
-  parameter int unsigned DmExceptionAddr   = 32'h1A110808
+  parameter int unsigned DmExceptionAddr   = 32'h1A110808,
+  parameter bit          XInterface        = 1'b1
 ) (
   input  logic                         clk_i,
   input  logic                         rst_ni,
@@ -102,7 +103,12 @@ module ibex_lockstep import ibex_pkg::*; #(
   input  logic                         icache_inval_i,
   input  logic                         core_busy_i,
   input  logic                         test_en_i,
-  input  logic                         scan_rst_ni
+  input  logic                         scan_rst_ni,
+
+  input  logic                         x_compressed_valid_i,
+  input  logic                         x_compressed_ready_i,
+  input  x_compressed_req_t            x_compressed_req_i,
+  input  x_compressed_resp_t           x_compressed_resp_i
 );
 
   localparam int unsigned LockstepOffsetW = $clog2(LockstepOffset);
@@ -185,6 +191,8 @@ module ibex_lockstep import ibex_pkg::*; #(
     logic                        debug_req;
     fetch_enable_t               fetch_enable;
     logic                        ic_scr_key_valid;
+    logic                        x_compressed_ready;
+    x_compressed_resp_t          x_compressed_resp;
   } delayed_inputs_t;
 
   delayed_inputs_t [LockstepOffset-1:0] shadow_inputs_q;
@@ -194,24 +202,26 @@ module ibex_lockstep import ibex_pkg::*; #(
   logic [LineSizeECC-1:0]               shadow_data_rdata_q [IC_NUM_WAYS][LockstepOffset];
 
   // Assign the inputs to the delay structure
-  assign shadow_inputs_in.instr_gnt        = instr_gnt_i;
-  assign shadow_inputs_in.instr_rvalid     = instr_rvalid_i;
-  assign shadow_inputs_in.instr_rdata      = instr_rdata_i;
-  assign shadow_inputs_in.instr_err        = instr_err_i;
-  assign shadow_inputs_in.data_gnt         = data_gnt_i;
-  assign shadow_inputs_in.data_rvalid      = data_rvalid_i;
-  assign shadow_inputs_in.data_rdata       = data_rdata_i;
-  assign shadow_inputs_in.data_err         = data_err_i;
-  assign shadow_inputs_in.rf_rdata_a_ecc   = rf_rdata_a_ecc_i;
-  assign shadow_inputs_in.rf_rdata_b_ecc   = rf_rdata_b_ecc_i;
-  assign shadow_inputs_in.irq_software     = irq_software_i;
-  assign shadow_inputs_in.irq_timer        = irq_timer_i;
-  assign shadow_inputs_in.irq_external     = irq_external_i;
-  assign shadow_inputs_in.irq_fast         = irq_fast_i;
-  assign shadow_inputs_in.irq_nm           = irq_nm_i;
-  assign shadow_inputs_in.debug_req        = debug_req_i;
-  assign shadow_inputs_in.fetch_enable     = fetch_enable_i;
-  assign shadow_inputs_in.ic_scr_key_valid = ic_scr_key_valid_i;
+  assign shadow_inputs_in.instr_gnt          = instr_gnt_i;
+  assign shadow_inputs_in.instr_rvalid       = instr_rvalid_i;
+  assign shadow_inputs_in.instr_rdata        = instr_rdata_i;
+  assign shadow_inputs_in.instr_err          = instr_err_i;
+  assign shadow_inputs_in.data_gnt           = data_gnt_i;
+  assign shadow_inputs_in.data_rvalid        = data_rvalid_i;
+  assign shadow_inputs_in.data_rdata         = data_rdata_i;
+  assign shadow_inputs_in.data_err           = data_err_i;
+  assign shadow_inputs_in.rf_rdata_a_ecc     = rf_rdata_a_ecc_i;
+  assign shadow_inputs_in.rf_rdata_b_ecc     = rf_rdata_b_ecc_i;
+  assign shadow_inputs_in.irq_software       = irq_software_i;
+  assign shadow_inputs_in.irq_timer          = irq_timer_i;
+  assign shadow_inputs_in.irq_external       = irq_external_i;
+  assign shadow_inputs_in.irq_fast           = irq_fast_i;
+  assign shadow_inputs_in.irq_nm             = irq_nm_i;
+  assign shadow_inputs_in.debug_req          = debug_req_i;
+  assign shadow_inputs_in.fetch_enable       = fetch_enable_i;
+  assign shadow_inputs_in.ic_scr_key_valid   = ic_scr_key_valid_i;
+  assign shadow_inputs_in.x_compressed_ready = x_compressed_ready_i;
+  assign shadow_inputs_in.x_compressed_resp  = x_compressed_resp_i;
 
   // Delay the inputs
   always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -264,6 +274,8 @@ module ibex_lockstep import ibex_pkg::*; #(
     logic                        double_fault_seen;
     logic                        icache_inval;
     logic                        core_busy;
+    logic                        x_compressed_valid;
+    x_compressed_req_t           x_compressed_req;
   } delayed_outputs_t;
 
   delayed_outputs_t [OutputsOffset-1:0]  core_outputs_q;
@@ -297,6 +309,8 @@ module ibex_lockstep import ibex_pkg::*; #(
   assign core_outputs_in.double_fault_seen   = double_fault_seen_i;
   assign core_outputs_in.icache_inval        = icache_inval_i;
   assign core_outputs_in.core_busy           = core_busy_i;
+  assign core_outputs_in.x_compressed_valid  = x_compressed_valid_i;
+  assign core_outputs_in.x_compressed_req    = x_compressed_req_i;
 
   // Delay the outputs
   always_ff @(posedge clk_i) begin
@@ -341,7 +355,8 @@ module ibex_lockstep import ibex_pkg::*; #(
     .MemECC            ( MemECC            ),
     .MemDataWidth      ( MemDataWidth      ),
     .DmHaltAddr        ( DmHaltAddr        ),
-    .DmExceptionAddr   ( DmExceptionAddr   )
+    .DmExceptionAddr   ( DmExceptionAddr   ),
+    .XInterface        ( XInterface        )
   ) u_shadow_core (
     .clk_i               (clk_i),
     .rst_ni              (rst_shadow_n),
@@ -433,7 +448,12 @@ module ibex_lockstep import ibex_pkg::*; #(
     .alert_major_internal_o (shadow_alert_major_internal),
     .alert_major_bus_o      (shadow_alert_major_bus),
     .icache_inval_o         (shadow_outputs_d.icache_inval),
-    .core_busy_o            (shadow_outputs_d.core_busy)
+    .core_busy_o            (shadow_outputs_d.core_busy),
+
+    .x_compressed_valid_o   (shadow_outputs_d.x_compressed_valid),
+    .x_compressed_ready_i   (shadow_inputs_q[0].x_compressed_ready),
+    .x_compressed_req_o     (shadow_outputs_d.x_compressed_req),
+    .x_compressed_resp_i    (shadow_inputs_q[0].x_compressed_resp)
   );
 
   // Register the shadow core outputs
