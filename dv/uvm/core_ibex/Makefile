@@ -56,9 +56,9 @@ TEST                := all
 TESTLIST            := riscv_dv_extension/testlist.yaml
 # Verbose logging
 VERBOSE             :=
-# Number of iterations for each test, assign a non-zero value to override the
+# Number of iterations for each test, assign a non-empty value to override the
 # iteration count in the test list
-ITERATIONS          := 0
+ITERATIONS          :=
 # Generator timeout limit in seconds
 TIMEOUT             := 1800
 # Privileged CSR YAML description file
@@ -200,7 +200,7 @@ tests-and-seeds := \
   $(shell ./list_tests.py \
             --start_seed $(SEED) \
             --test "$(TEST)" \
-            --iterations $(ITERATIONS) \
+            $(if $(ITERATIONS),--iterations $(ITERATIONS),) \
             --ibex-config $(IBEX_CONFIG))
 
 ###############################################################################

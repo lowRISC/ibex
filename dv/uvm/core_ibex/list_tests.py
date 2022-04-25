@@ -142,12 +142,12 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--start_seed', type=int, default=1)
     parser.add_argument('--test', required=True)
-    parser.add_argument('--iterations', type=int, default=0)
+    parser.add_argument('--iterations', type=int)
     parser.add_argument('--ibex-config', required=True)
 
     args = parser.parse_args()
-    if args.iterations < 0:
-        raise RuntimeError('Bad --iterations argument: must be non-negative')
+    if args.iterations is not None and args.iterations <= 0:
+        raise RuntimeError('Bad --iterations argument: must be positive')
     if args.start_seed < 0:
         raise RuntimeError('Bad --start_seed argument: must be non-negative')
 
