@@ -413,6 +413,7 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
 
     cp_debug_mode: coverpoint debug_mode;
 
+    `DV_FCOV_EXPR_SEEN(debug_wakeup, id_stage_i.controller_i.fcov_debug_wakeup)
     `DV_FCOV_EXPR_SEEN(interrupt_taken, id_stage_i.controller_i.fcov_interrupt_taken)
     `DV_FCOV_EXPR_SEEN(debug_entry_if, id_stage_i.controller_i.fcov_debug_entry_if)
     `DV_FCOV_EXPR_SEEN(debug_entry_id, id_stage_i.controller_i.fcov_debug_entry_id)
@@ -432,6 +433,25 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
       // TODO: VCS does not implement default sequence so illegal_bins will be empty
       illegal_bins illegal_transitions = default sequence;
     }
+
+    cp_controller_fsm_sleep: coverpoint id_stage_i.controller_i.ctrl_fsm_cs {
+      bins out_of_sleep = (SLEEP => FIRST_FETCH);
+      bins enter_sleep = (WAIT_SLEEP => SLEEP);
+      // TODO: VCS does not implement default sequence so illegal_bins will be empty
+      illegal_bins illegal_transitions = default sequence;
+    }
+
+    // This will only be seen when specific interrupt is disabled by MIE CSR
+    `DV_FCOV_EXPR_SEEN(irq_continue_sleep, id_stage_i.controller_i.ctrl_fsm_cs == SLEEP &&
+                                           id_stage_i.controller_i.ctrl_fsm_ns == SLEEP &&
+                                           (|cs_registers_i.mip))
+
+    // Include both mstatus.mie enabled/disabled because it should not affect wakeup condition
+    irq_wfi_cross: cross cp_controller_fsm_sleep, cs_registers_i.mstatus_q.mie iff
+                         (id_stage_i.irq_pending_i | id_stage_i.irq_nm_i);
+
+    debug_wfi_cross: cross cp_controller_fsm_sleep, cp_debug_wakeup iff
+                           (id_stage_i.controller_i.fcov_debug_wakeup);
 
     priv_mode_instr_cross: cross cp_priv_mode_id, cp_id_instr_category;
 
