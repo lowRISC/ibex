@@ -39,6 +39,8 @@ class core_ibex_base_test extends uvm_test;
     irq_collected_port  = new("irq_collected_port_test", this);
   endfunction
 
+  // NOTE: This logic should match the code in the get_isas_for_config() function in
+  //       core_ibex/scripts/scripts_lib.py: keep them in sync!
   function string get_isa_string();
     bit     RV32E;
     rv32m_e RV32M;

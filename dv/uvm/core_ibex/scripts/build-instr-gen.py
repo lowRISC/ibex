@@ -9,7 +9,7 @@ import os
 import shutil
 import sys
 
-from scripts_lib import run_one, start_riscv_dv_run_cmd
+from scripts_lib import run_one, start_riscv_dv_run_cmd, get_isas_for_config
 
 
 def main() -> int:
@@ -18,7 +18,7 @@ def main() -> int:
     parser.add_argument('--simulator', required=True)
     parser.add_argument('--end-signature-addr', required=True)
     parser.add_argument('--output', required=True)
-    parser.add_argument('--isa', required=True)
+    parser.add_argument('--ibex-config', required=True)
 
     args = parser.parse_args()
 
@@ -32,11 +32,13 @@ def main() -> int:
 
     os.makedirs(args.output, exist_ok=True)
 
+    isa, iss_isa = get_isas_for_config(args.ibex_config)
+
     cmd = (start_riscv_dv_run_cmd(args.verbose) +
            ['--co', '--steps=gen',
             '--simulator', args.simulator,
             '--output', args.output,
-            '--isa', args.isa,
+            '--isa', isa,
             '--end_signature_addr', args.end_signature_addr])
 
     log_path = os.path.join(args.output, 'build.log')

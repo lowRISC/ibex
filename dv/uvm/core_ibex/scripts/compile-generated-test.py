@@ -10,7 +10,8 @@ import shlex
 import sys
 import tempfile
 
-from scripts_lib import read_test_dot_seed, start_riscv_dv_run_cmd, run_one
+from scripts_lib import (read_test_dot_seed, start_riscv_dv_run_cmd,
+                         get_isas_for_config, run_one)
 
 
 def main() -> int:
@@ -18,13 +19,14 @@ def main() -> int:
     parser.add_argument('--verbose', action='store_true')
     parser.add_argument('--input', required=True)
     parser.add_argument('--output', required=True)
-    parser.add_argument('--isa', required=True)
+    parser.add_argument('--ibex-config', required=True)
 
     parser.add_argument('--test-dot-seed',
                         type=read_test_dot_seed, required=True)
 
     args = parser.parse_args()
 
+    isa, iss_isa = get_isas_for_config(args.ibex_config)
     testname, seed = args.test_dot_seed
 
     if not args.output.endswith('.bin'):
@@ -51,7 +53,7 @@ def main() -> int:
                           '--test', testname,
                           '--start_seed', str(seed),
                           '--iterations', '1',
-                          '--isa', args.isa,
+                          '--isa', isa,
                           '--debug', orig_list],
                          redirect_stdstreams=out_riscv_dv_path)
         if dv_ret:

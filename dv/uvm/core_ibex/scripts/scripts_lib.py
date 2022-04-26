@@ -12,9 +12,16 @@ import sys
 from typing import Dict, List, Optional, Tuple
 
 THIS_DIR = os.path.dirname(__file__)
-IBEX_ROOT = os.path.join(THIS_DIR, 4 * '../')
+IBEX_ROOT = os.path.normpath(os.path.join(THIS_DIR, 4 * '../'))
 RISCV_DV_ROOT = os.path.normpath(os.path.join(IBEX_ROOT,
                                               'vendor/google_riscv-dv'))
+
+_OLD_SYS_PATH = sys.path
+try:
+    sys.path = [os.path.join(IBEX_ROOT, 'util')] + sys.path
+    from ibex_config import parse_config
+finally:
+    sys.path = _OLD_SYS_PATH
 
 TestAndSeed = Tuple[str, int]
 
@@ -99,3 +106,28 @@ def read_test_dot_seed(arg: str) -> TestAndSeed:
                                          .format(arg))
 
     return (match.group(1), int(match.group(2), 10))
+
+
+def get_isas_for_config(ibex_cfg: str) -> Tuple[str, str]:
+    '''Get ISA and ISS_ISA keys for the given Ibex config'''
+    yaml_path = os.path.join(IBEX_ROOT, "ibex_configs.yaml")
+    cfg = parse_config(ibex_cfg, yaml_path)
+
+    # NOTE: This logic should match the code in the get_isa_string() function
+    # in core_ibex/tests/core_ibex_base_test.sv: keep them in sync!
+    has_multiplier = cfg.rv32m != 'ibex_pkg::RV32MNone'
+    base_isa = 'rv32{}{}c'.format('e' if cfg.rv32e else 'i',
+                                  'm' if has_multiplier else '')
+
+    bitmanip_mapping = {
+        'ibex_pkg::RV32BNone': [],
+        'ibex_pkg::RV32BBalanced': ['Zba', 'Zbb', 'Zbs', 'Xbitmanip'],
+        'ibex_pkg::RV32BOTEarlGrey': ['Zba', 'Zbb', 'Zbc', 'Zbs', 'Xbitmanip'],
+        'ibex_pkg::RV32BFull': ['Zba', 'Zbb', 'Zbc', 'Zbs', 'Xbitmanip'],
+    }
+
+    bitmanip_isa = bitmanip_mapping.get(cfg.rv32b)
+    if bitmanip_isa is None:
+        raise ValueError(f'Unknown RV32B value ({cfg.rv32b}) in config YAML')
+
+    return (base_isa, '_'.join([base_isa] + bitmanip_isa))
