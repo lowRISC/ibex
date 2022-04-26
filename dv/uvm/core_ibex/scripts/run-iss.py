@@ -8,7 +8,7 @@ import argparse
 import os
 import sys
 
-from scripts_lib import run_one
+from scripts_lib import get_isas_for_config, run_one
 
 
 def main() -> int:
@@ -17,9 +17,11 @@ def main() -> int:
     parser.add_argument('--iss', required=True)
     parser.add_argument('--input', required=True)
     parser.add_argument('--output', required=True)
-    parser.add_argument('--isa', required=True)
+    parser.add_argument('--ibex-config', required=True)
 
     args = parser.parse_args()
+
+    isa, iss_isa = get_isas_for_config(args.ibex_config)
 
     # riscv-dv knows how to run an ISS simulation (see yaml/iss.yaml in the
     # vendored directory), but it has definite (and inconvenient!) opinions
@@ -39,7 +41,7 @@ def main() -> int:
     else:
         spike = 'spike'
 
-    cmd = [spike, '--log-commits', '--isa', args.isa, '-l', args.input]
+    cmd = [spike, '--log-commits', '--isa', iss_isa, '-l', args.input]
     return run_one(args.verbose,
                    cmd,
                    redirect_stdstreams=args.output)
