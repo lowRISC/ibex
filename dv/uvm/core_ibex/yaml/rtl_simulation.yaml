@@ -39,7 +39,7 @@
       -cm_tgl structarr
       -cm_report noinitial
       -cm_seqnoconst
-      -cm_dir <out>/test.vdb
+      -cm_dir <shared_cov_dir>/test.vdb
       -cm_hier cover.cfg
     wave_opts: >
       -debug_access+all -ucli -do vcs.tcl
@@ -61,10 +61,10 @@
           +cosim_log_file=<sim_dir>/spike_cosim.log
     cov_opts: >
       -cm line+tgl+assert+fsm+branch
-      -cm_dir <out>/test.vdb
+      -cm_dir <shared_cov_dir>/test.vdb
       -cm_log /dev/null
       -assert nopostproc
-      -cm_name test_<test_name>_<iteration>
+      -cm_name test_<test_name>_<seed>
       +enable_ibex_fcov=1
     wave_opts: >
       -ucli -do <cwd>/vcs.tcl
@@ -186,9 +186,9 @@
            <cov_opts>
            <wave_opts>
     cov_opts: >
-      -covmodeldir <out>/coverage/default/<test_name>.<seed>
-      -covworkdir <out>/coverage
-      -covscope default
+      -covmodeldir <sim_dir>/coverage
+      -covworkdir <sim_dir>
+      -covscope coverage
       -covtest <test_name>.<seed>
       +enable_ibex_fcov=1
     wave_opts: >

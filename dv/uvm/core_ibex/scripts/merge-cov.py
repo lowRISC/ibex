@@ -30,10 +30,10 @@ def find_cov_dirs(start_dir: str, simulator: str) -> Set[str]:
             if file.endswith(".ucd") and simulator == 'xlm':
                 logging.info("Found coverage database (ucd) at %s" % path)
                 cov_dirs.add(path)
-            if vdb_dir_name in dirs and simulator == 'vcs':
-                vdb_path = os.path.join(path, vdb_dir_name)
-                logging.info("Found coverage database (vdb) at %s" % vdb_path)
-                cov_dirs.add(vdb_path)
+        if vdb_dir_name in dirs and simulator == 'vcs':
+            vdb_path = os.path.join(path, vdb_dir_name)
+            logging.info("Found coverage database (vdb) at %s" % vdb_path)
+            cov_dirs.add(vdb_path)
 
     return cov_dirs
 
@@ -74,10 +74,12 @@ def merge_cov_xlm(cov_dir: str, verbose: bool, cov_dirs: Set[str]) -> int:
     # that handles them)
     xlm_cov_dirs['cov_db_dirs'] = ' '.join(cov_dir_parents)
 
-    xlm_env = os.environ | xlm_cov_dirs
+    xlm_env = os.environ.copy()
+    xlm_env.update(xlm_cov_dirs)
 
     # First do the merge
     imc_cmd = ["imc", "-64bit", "-licqueue"]
+    os.makedirs(merge_dir, exist_ok=True)
     cov_merge_tcl = os.path.join(xcelium_scripts, "cov_merge.tcl")
     merge_ret = run_one(verbose,
                         imc_cmd + ["-exec", cov_merge_tcl,

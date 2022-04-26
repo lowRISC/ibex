@@ -85,12 +85,6 @@ RUN-DIR   := $(OUT-DIR)run
 # get printed when VERBOSE.
 verb = $(if $(filter-out 0,$(VERBOSE)),,@)
 
-# Convert VERBOSE, COV, WAVE and COSIM to "store_true" arguments
-verb-arg  := $(if $(filter-out 0,$(VERBOSE)),--verbose,)
-cov-arg   := $(if $(call equal,$(COV),1),--en_cov,)
-wave-arg  := $(if $(call equal,$(WAVES),1),--en_wave,)
-cosim-arg := $(if $(call equal,$(COSIM),1),--en_cosim,)
-
 SHELL=/bin/bash
 
 export PRJ_DIR        := $(realpath ../../..)
@@ -174,6 +168,12 @@ FORCE:
 #
 # Call it as $(call vars-prereq,X,TGT,VS)
 vars-prereq = $(if $(call vars-differ,$(call strip,$(1)),$(2),$(3)),FORCE,)
+
+# Convert VERBOSE, COV, WAVE and COSIM to "store_true" arguments
+verb-arg  := $(if $(filter-out 0,$(VERBOSE)),--verbose,)
+cov-arg   := $(if $(call equal,$(COV),1),--en_cov,)
+wave-arg  := $(if $(call equal,$(WAVES),1),--en_wave,)
+cosim-arg := $(if $(call equal,$(COSIM),1),--en_cosim,)
 
 ###############################################################################
 # Get a list of tests and seeds
@@ -355,11 +355,12 @@ $(BUILD-DIR)/tb/.compile.stamp: \
   $(tb-compile-vars-prereq) $(all-verilog) $(risc-dv-files) \
   scripts/compile-tb.py yaml/rtl_simulation.yaml \
   | $(BUILD-DIR)
-	$(verb)scripts/compile-tb.py           \
-	  $(verb-arg)                          \
-	  --ibex-config $(IBEX_CONFIG)         \
-	  --output=$(BUILD-DIR)/tb             \
-	  --simulator=$(SIMULATOR)             \
+	$(verb)scripts/compile-tb.py             \
+	  $(verb-arg)                            \
+	  --ibex-config $(IBEX_CONFIG)           \
+	  --output=$(BUILD-DIR)/tb               \
+	  --shared-cov-dir=$(RUN-DIR)/shared_cov \
+	  --simulator=$(SIMULATOR)               \
 	  $(cov-arg) $(wave-arg) $(cosim-arg)
 	$(call dump-vars,$(tb-compile-vars-path),comp,$(tb-compile-var-deps))
 	@touch $@
@@ -376,14 +377,15 @@ $(rtl-sim-logs): \
   $(RUN-DIR)/%/rtl.log:           \
   $(BUILD-DIR)/tb/.compile.stamp $(RUN-DIR)/%/test.bin scripts/run-rtl.py
 	@echo Running RTL simulation at $@
-	$(verb)scripts/run-rtl.py               \
-	  --ibex-config $(IBEX_CONFIG)          \
-	  --simulator $(SIMULATOR)              \
-	  $(cov-arg) $(wave-arg)                \
-	  --signature-addr $(SIGNATURE_ADDR)    \
-	  --test-dot-seed $*                    \
-	  --binary $(RUN-DIR)/$*/test.bin       \
-	  --rtl-sim-dir $(BUILD-DIR)/tb         \
+	$(verb)scripts/run-rtl.py                \
+	  --ibex-config $(IBEX_CONFIG)           \
+	  --simulator $(SIMULATOR)               \
+	  --shared-cov-dir=$(RUN-DIR)/shared_cov \
+	  $(cov-arg) $(wave-arg)                 \
+	  --signature-addr $(SIGNATURE_ADDR)     \
+	  --test-dot-seed $*                     \
+	  --binary $(RUN-DIR)/$*/test.bin        \
+	  --rtl-sim-dir $(BUILD-DIR)/tb          \
 	  --out-dir $(@D)
 
 .PHONY: rtl_sim_run

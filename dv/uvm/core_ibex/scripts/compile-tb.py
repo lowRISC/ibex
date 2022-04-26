@@ -19,6 +19,7 @@ def main() -> int:
 
     parser.add_argument('--ibex-config', required=True)
     parser.add_argument('--output', required=True)
+    parser.add_argument('--shared-cov-dir', required=True)
     parser.add_argument('--simulator', required=True)
     parser.add_argument('--en_cov', action='store_true')
     parser.add_argument('--en_wave', action='store_true')
@@ -47,6 +48,7 @@ def main() -> int:
                          {
                              'core_ibex': core_ibex,
                              'out': args.output,
+                             'shared_cov_dir': args.shared_cov_dir,
                              'cmp_opts': get_compile_opts(args.ibex_config,
                                                           args.simulator)
                          })
