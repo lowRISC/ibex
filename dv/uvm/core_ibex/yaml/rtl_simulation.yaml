@@ -17,7 +17,7 @@
 # As a result, passing -fno-extended-identifiers tells G++ to pretend that
 # everything is ASCII, preventing strange compilation errors.
 - tool: vcs
-  env_var: SPIKE_CFLAGS,SPIKE_LDFLAGS,SPIKE_LIBS,IBEX_ROOT
+  env_var: IBEX_ROOT
   compile:
     cmd:
       - "vcs -f <core_ibex>/ibex_dv.f  -full64
@@ -46,10 +46,11 @@
     cosim_opts: >
       -f <core_ibex>/ibex_dv_cosim_dpi.f
       +define+INC_IBEX_COSIM
-      -LDFLAGS '<SPIKE_LDFLAGS>'
-      -CFLAGS '<SPIKE_CFLAGS>'
+      -LDFLAGS '<ISS_LDFLAGS>'
+      -CFLAGS '<ISS_CFLAGS>'
       -CFLAGS '-I<IBEX_ROOT>/dv/cosim'
-      <SPIKE_LIBS> -lstdc++
+      <ISS_LIBS>
+      -lstdc++
   sim:
     cmd: >
       env SIM_DIR=<sim_dir>
@@ -145,7 +146,7 @@
 
 
 - tool: xlm
-  env_var: dv_root, DUT_TOP
+  env_var: dv_root, DUT_TOP, IBEX_ROOT
   compile:
     cmd:
       - "xrun -64bit
@@ -159,14 +160,20 @@
               -elaborate
               -l <out>/compile.log
               -xmlibdirpath <out>
-              <cmp_opts>
-              <cov_opts>
-              <wave_opts>"
+              <cmp_opts> <cov_opts> <wave_opts> <cosim_opts>"
     cov_opts: >
       -coverage all
       -nowarn COVDEF
     wave_opts: >
       -access rwc -linedebug
+    cosim_opts: >
+      -f ibex_dv_cosim_dpi.f
+      -I<IBEX_ROOT>/dv/cosim
+      <ISS_LIBS>
+      <ISS_CFLAGS>
+      -Wld,<ISS_LDFLAGS>
+      +define+INC_IBEX_COSIM
+      -lstdc++
   sim:
     cmd: >
       xrun -64bit
@@ -179,6 +186,7 @@
            +UVM_VERBOSITY=UVM_LOW
            +bin=<binary>
            +ibex_tracer_file_base=<sim_dir>/trace_core
+           +cosim_log_file=<sim_dir>/spike_cosim.log
            -l <sim_dir>/xrun.log
            -nokey
            <sim_opts>
