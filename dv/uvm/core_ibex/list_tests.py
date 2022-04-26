@@ -65,7 +65,7 @@ def filter_tests_by_config(cfg: str, test_list: _TestEntries) -> _TestEntries:
             param_dict = test['rtl_params']
             assert isinstance(param_dict, dict)
             for p, p_val in param_dict.items():
-                config_val = config.get(p, None)
+                config_val = config.params.get(p, None)
                 # Throw an error if required RTL parameters in the testlist
                 # have been formatted incorrectly (typos, wrong parameters,
                 # etc)
