@@ -32,6 +32,8 @@ export DUT_TOP := dut
 WAVES               := 1
 # Enable coverage dump
 COV                 := 0
+# Enable cosimulation flow
+COSIM               := 0
 # RTL simulator
 SIMULATOR           := vcs
 # ISS (spike, ovpsim)
@@ -145,9 +147,9 @@ vars-prereq = $(if $(call vars-differ,$(call strip,$(1)),$(2),$(3)),FORCE,)
 
 # Convert VERBOSE, COV, WAVE and COSIM to "store_true" arguments
 verb-arg  := $(if $(filter-out 0,$(VERBOSE)),--verbose,)
-cov-arg   := $(if $(call equal,$(COV),1),--en_cov,)
-wave-arg  := $(if $(call equal,$(WAVES),1),--en_wave,)
-cosim-arg := $(if $(call equal,$(COSIM),1),--en_cosim,)
+cov-arg   := $(if $(filter 1,$(COV)),--en_cov,)
+wave-arg  := $(if $(filter 1,$(WAVES)),--en_wave,)
+cosim-arg := $(if $(filter 1,$(COSIM)),--en_cosim,)
 
 ###############################################################################
 # Get a list of tests and seeds
