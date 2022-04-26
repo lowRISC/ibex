@@ -55,6 +55,7 @@ def get_test_sim_cmd(base_cmd, test, binary, seed, sim_dir):
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('--ibex-config', required=True)
+    parser.add_argument('--shared-cov-dir', required=True)
     parser.add_argument('--simulator', required=True)
     parser.add_argument("--en_cov", action='store_true')
     parser.add_argument("--en_wave", action='store_true')
@@ -85,6 +86,7 @@ def main() -> int:
     sim_cmd = subst_vars(base_cmd,
                          {
                              'out': args.rtl_sim_dir,
+                             'shared_cov_dir': args.shared_cov_dir,
                              'sim_opts': sim_opts,
                              'cwd': _CORE_IBEX,
                          })
