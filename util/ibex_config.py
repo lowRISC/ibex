@@ -29,12 +29,15 @@ class Config:
         ('WritebackStage', bool),
         ('ICache', bool),
         ('ICacheECC', bool),
+        ('ICacheScramble', bool),
         ('BranchPredictor', bool),
+        ('DbgTriggerEn', bool),
+        ('SecureIbex', bool),
         ('PMPEnable', bool),
         ('PMPGranularity', int),
         ('PMPNumRegions', int),
-        ('SecureIbex', bool),
-        ('ICacheScramble', bool)
+        ('MHPMCounterNum', int),
+        ('MHPMCounterWidth', int)
     ]
 
     def __init__(self, yml):
@@ -64,12 +67,15 @@ class Config:
         self.writeback_stage = Config.read_bool('WritebackStage', yml)
         self.icache = Config.read_bool('ICache', yml)
         self.icache_ecc = Config.read_bool('ICacheECC', yml)
+        self.icache_scramble = Config.read_bool('ICacheScramble', yml)
         self.branch_predictor = Config.read_bool('BranchPredictor', yml)
+        self.dbg_trigger_en = Config.read_bool('DbgTriggerEn', yml)
+        self.secure_ibex = Config.read_bool('SecureIbex', yml)
         self.pmp_enable = Config.read_bool('PMPEnable', yml)
         self.pmp_granularity = Config.read_int('PMPGranularity', yml)
         self.pmp_num_regions = Config.read_int('PMPNumRegions', yml)
-        self.secure_ibex = Config.read_bool('SecureIbex', yml)
-        self.icache_scramble = Config.read_bool('ICacheScramble', yml)
+        self.mhpm_counter_num = Config.read_int('MHPMCounterNum', yml)
+        self.mhpm_counter_width = Config.read_int('MHPMCounterWidth', yml)
 
     @staticmethod
     def read_bool(fld, yml):
