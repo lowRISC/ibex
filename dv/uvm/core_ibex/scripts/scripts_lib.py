@@ -19,7 +19,7 @@ RISCV_DV_ROOT = os.path.normpath(os.path.join(IBEX_ROOT,
 _OLD_SYS_PATH = sys.path
 try:
     sys.path = [os.path.join(IBEX_ROOT, 'util')] + sys.path
-    from ibex_config import parse_config
+    from ibex_config import Config, parse_config
 finally:
     sys.path = _OLD_SYS_PATH
 
@@ -108,11 +108,13 @@ def read_test_dot_seed(arg: str) -> TestAndSeed:
     return (match.group(1), int(match.group(2), 10))
 
 
-def get_isas_for_config(ibex_cfg: str) -> Tuple[str, str]:
-    '''Get ISA and ISS_ISA keys for the given Ibex config'''
+def get_config(cfg_name: str) -> Config:
     yaml_path = os.path.join(IBEX_ROOT, "ibex_configs.yaml")
-    cfg = parse_config(ibex_cfg, yaml_path)
+    return parse_config(cfg_name, yaml_path)
 
+
+def get_isas_for_config(cfg: Config) -> Tuple[str, str]:
+    '''Get ISA and ISS_ISA keys for the given Ibex config'''
     # NOTE: This logic should match the code in the get_isa_string() function
     # in core_ibex/tests/core_ibex_base_test.sv: keep them in sync!
     has_multiplier = cfg.rv32m != 'ibex_pkg::RV32MNone'

@@ -8,7 +8,7 @@ import argparse
 import os
 import sys
 
-from scripts_lib import get_isas_for_config, run_one
+from scripts_lib import get_config, get_isas_for_config, run_one
 
 
 def main() -> int:
@@ -21,7 +21,8 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    isa, iss_isa = get_isas_for_config(args.ibex_config)
+    cfg = get_config(args.ibex_config)
+    isa, iss_isa = get_isas_for_config(cfg)
 
     # riscv-dv knows how to run an ISS simulation (see yaml/iss.yaml in the
     # vendored directory), but it has definite (and inconvenient!) opinions

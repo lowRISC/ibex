@@ -11,7 +11,7 @@ import sys
 import tempfile
 
 from scripts_lib import (read_test_dot_seed, start_riscv_dv_run_cmd,
-                         get_isas_for_config, run_one)
+                         get_config, get_isas_for_config, run_one)
 
 
 def main() -> int:
@@ -26,7 +26,8 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    isa, iss_isa = get_isas_for_config(args.ibex_config)
+    cfg = get_config(args.ibex_config)
+    isa, iss_isa = get_isas_for_config(cfg)
     testname, seed = args.test_dot_seed
 
     if not args.output.endswith('.bin'):
