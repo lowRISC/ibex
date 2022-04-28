@@ -29,9 +29,6 @@ def main() -> int:
     parser.add_argument('--test-dot-seed',
                         type=read_test_dot_seed, required=True)
 
-    parser.add_argument('--pmp-num-regions', type=int, required=True)
-    parser.add_argument('--pmp-granularity', type=int, required=True)
-
     args = parser.parse_args()
 
     cfg = get_config(args.ibex_config)
@@ -47,8 +44,8 @@ def main() -> int:
     sim_opts_dict = {
         'uvm_set_inst_override': ','.join(inst_overrides),
         'signature_addr': args.end_signature_addr,
-        'pmp_num_regions': str(args.pmp_num_regions),
-        'pmp_granularity': str(args.pmp_granularity),
+        'pmp_num_regions': str(cfg.pmp_num_regions),
+        'pmp_granularity': str(cfg.pmp_granularity),
         'tvec_alignment': '8'
     }
     sim_opts_str = ' '.join('+{}={}'.format(k, v)
