@@ -62,12 +62,6 @@ CSR_FILE            := riscv_dv_extension/csr_description.yaml
 SIGNATURE_ADDR      := 8ffffffc
 
 ### Ibex top level parameters ###
-### Required by RISCV-DV, some ISS, and RTL ###
-# PMP Regions
-PMP_REGIONS         := 16
-# PMP Granularity
-PMP_GRANULARITY     := 0
-
 IBEX_CONFIG         := opentitan
 
 # Derived directories from $(OUT), used for stuff that's built once or
@@ -194,8 +188,7 @@ ts-dirs := $(foreach ts,$(tests-and-seeds),$(RUN-DIR)/$(ts)/)
 # This depends on the vendored in code in $(GEN_DIR). It also depends on the
 # values of the following Makefile variables (we want to regenerate things if,
 # for example, the simulator changes).
-instr-gen-build-var-deps := SIMULATOR CSR_OPTS \
-                            SIGNATURE_ADDR PMP_REGIONS PMP_GRANULARITY
+instr-gen-build-var-deps := SIMULATOR CSR_OPTS SIGNATURE_ADDR
 # To achieve this variable tracking, we dump each of the variables to a Makefile
 # fragment and try to load it up the next time around. This done with the
 # utility function "dump-vars" at the end of the recipe.
@@ -263,9 +256,7 @@ $(test-asms): \
 	  --output-dir $(@D)                     \
 	  --gen-build-dir $(BUILD-DIR)/instr-gen \
 	  --ibex-config $(IBEX_CONFIG)           \
-	  --test-dot-seed $*                     \
-	  --pmp-num-regions $(PMP_REGIONS)       \
-	  --pmp-granularity $(PMP_GRANULARITY)
+	  --test-dot-seed $*
 
 .PHONY: instr_gen_run
 instr_gen_run: $(test-asms)
