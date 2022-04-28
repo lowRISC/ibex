@@ -96,6 +96,8 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
                                                       csr_pmp_cfg[i_region].read});
 
       covergroup pmp_region_cg @(posedge clk_i);
+        option.per_instance = 1;
+        option.name = "pmp_region_cg";
         cp_region_mode : coverpoint csr_pmp_cfg[i_region].mode;
 
         cp_region_priv_bits : coverpoint pmp_region_priv_bits {
@@ -216,6 +218,9 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
     end
 
     covergroup pmp_top_cg @(posedge clk_i);
+      option.per_instance = 1;
+      option.name = "pmp_top_cg";
+
       cp_pmp_iside_region_override :
         coverpoint g_pmp.pmp_i.g_access_check[PMP_I].fcov_pmp_region_override
           iff (if_stage_i.if_id_pipe_reg_we);
