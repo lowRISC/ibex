@@ -9,7 +9,8 @@ import os
 import shutil
 import sys
 
-from scripts_lib import run_one, start_riscv_dv_run_cmd, get_isas_for_config
+from scripts_lib import (run_one, start_riscv_dv_run_cmd,
+                         get_config, get_isas_for_config)
 
 
 def main() -> int:
@@ -32,7 +33,8 @@ def main() -> int:
 
     os.makedirs(args.output, exist_ok=True)
 
-    isa, iss_isa = get_isas_for_config(args.ibex_config)
+    cfg = get_config(args.ibex_config)
+    isa, iss_isa = get_isas_for_config(cfg)
 
     cmd = (start_riscv_dv_run_cmd(args.verbose) +
            ['--co', '--steps=gen',
