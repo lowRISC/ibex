@@ -192,7 +192,7 @@ module ibex_simple_system (
       .PMPEnable       ( PMPEnable        ),
       .PMPGranularity  ( PMPGranularity   ),
       .PMPNumRegions   ( PMPNumRegions    ),
-      .MHPMCounterNum  ( 29               ),
+      .MHPMCounterNum  ( MHPMCounterNum   ),
       .MHPMCounterWidth( MHPMCounterWidth ),
       .RV32E           ( RV32E            ),
       .RV32M           ( RV32M            ),
