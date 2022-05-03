@@ -151,7 +151,7 @@ module ibex_core import ibex_pkg::*; #(
   output logic                         core_busy_o
 );
 
-  localparam int unsigned PMP_NUM_CHAN      = 3;
+  localparam int unsigned PMPNumChan      = 3;
   // SEC_CM: CORE.DATA_REG_SW.SCA
   localparam bit          DataIndTiming     = SecureIbex;
   localparam bit          PCIncrCheck       = SecureIbex;
@@ -309,7 +309,7 @@ module ibex_core import ibex_pkg::*; #(
   logic [33:0]  csr_pmp_addr [PMPNumRegions];
   pmp_cfg_t     csr_pmp_cfg  [PMPNumRegions];
   pmp_mseccfg_t csr_pmp_mseccfg;
-  logic         pmp_req_err  [PMP_NUM_CHAN];
+  logic         pmp_req_err  [PMPNumChan];
   logic         data_req_out;
 
   logic        csr_save_if;
@@ -1043,9 +1043,9 @@ module ibex_core import ibex_pkg::*; #(
   `ASSERT_KNOWN_IF(IbexCsrWdataIntKnown, cs_registers_i.csr_wdata_int, csr_op_en)
 
   if (PMPEnable) begin : g_pmp
-    logic [33:0] pmp_req_addr [PMP_NUM_CHAN];
-    pmp_req_e    pmp_req_type [PMP_NUM_CHAN];
-    priv_lvl_e   pmp_priv_lvl [PMP_NUM_CHAN];
+    logic [33:0] pmp_req_addr [PMPNumChan];
+    pmp_req_e    pmp_req_type [PMPNumChan];
+    priv_lvl_e   pmp_priv_lvl [PMPNumChan];
 
     assign pmp_req_addr[PMP_I]  = {2'b00, pc_if};
     assign pmp_req_type[PMP_I]  = PMP_ACC_EXEC;
@@ -1059,7 +1059,7 @@ module ibex_core import ibex_pkg::*; #(
 
     ibex_pmp #(
       .PMPGranularity(PMPGranularity),
-      .PMPNumChan    (PMP_NUM_CHAN),
+      .PMPNumChan    (PMPNumChan),
       .PMPNumRegions (PMPNumRegions)
     ) pmp_i (
       // Interface to CSRs
