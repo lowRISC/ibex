@@ -13,10 +13,6 @@ module ibex_pmp #(
   // Number of implemented regions
   parameter int unsigned PMPNumRegions  = 4
 ) (
-  // Clock and Reset
-  input  logic                    clk_i,
-  input  logic                    rst_ni,
-
   // Interface to CSRs
   input  ibex_pkg::pmp_cfg_t      csr_pmp_cfg_i     [PMPNumRegions],
   input  logic [33:0]             csr_pmp_addr_i    [PMPNumRegions],

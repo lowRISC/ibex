@@ -1062,8 +1062,6 @@ module ibex_core import ibex_pkg::*; #(
       .PMPNumChan    (PMP_NUM_CHAN),
       .PMPNumRegions (PMPNumRegions)
     ) pmp_i (
-      .clk_i            (clk_i),
-      .rst_ni           (rst_ni),
       // Interface to CSRs
       .csr_pmp_cfg_i    (csr_pmp_cfg),
       .csr_pmp_addr_i   (csr_pmp_addr),
