@@ -23,6 +23,8 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
 
   input logic lsu_req_done
 );
+  localparam int unsigned PMPNumChan = 3;
+
   `include "dv_fcov_macros.svh"
   import uvm_pkg::*;
 
@@ -94,6 +96,15 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
                                                       csr_pmp_cfg[i_region].exec,
                                                       csr_pmp_cfg[i_region].write,
                                                       csr_pmp_cfg[i_region].read});
+      // Do the permission check for Data channel with the privilege level from Instruction channels.
+      // This way we can check the effect of mstatus.mprv changing privilege levels for LSU related
+      // operations.
+      assign current_priv_perm_check[i_region] =
+        g_pmp.pmp_i.perm_check_wrapper(csr_pmp_mseccfg.mml,
+                                       csr_pmp_cfg[i_region],
+                                       g_pmp.pmp_i.pmp_req_type_i[PMP_D],
+                                       cs_registers_i.priv_mode_id_o,
+                                       g_pmp.pmp_i.region_basic_perm_check[PMP_D][i_region]);
 
       covergroup pmp_region_cg @(posedge clk_i);
         option.per_instance = 1;
