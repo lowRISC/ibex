@@ -107,6 +107,12 @@ parameters:
     default: 0
     description: "Enables ICache scrambling feature (EXPERIMENTAL) [0/1]"
 
+  XInterface:
+    datatype: int
+    default: 0
+    paramtype: vlogparam
+    description: "Enables the RISC-V Extension Interface (EXPERIMENTAL) [0/1]"
+
 targets:
   sim:
     default_tool: verilator
@@ -128,6 +134,7 @@ targets:
       - PMPNumRegions
       - SecureIbex
       - ICacheScramble
+      - XInterface
     toplevel: ibex_riscv_compliance
     tools:
       verilator:

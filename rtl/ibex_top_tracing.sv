@@ -28,7 +28,8 @@ module ibex_top_tracing import ibex_pkg::*; #(
   parameter lfsr_seed_t  RndCnstLfsrSeed  = RndCnstLfsrSeedDefault,
   parameter lfsr_perm_t  RndCnstLfsrPerm  = RndCnstLfsrPermDefault,
   parameter int unsigned DmHaltAddr       = 32'h1A110800,
-  parameter int unsigned DmExceptionAddr  = 32'h1A110808
+  parameter int unsigned DmExceptionAddr  = 32'h1A110808,
+  parameter bit          XInterface       = 1'b1
 ) (
   // Clock and Reset
   input  logic                         clk_i,
@@ -87,8 +88,13 @@ module ibex_top_tracing import ibex_pkg::*; #(
   output logic                         alert_minor_o,
   output logic                         alert_major_internal_o,
   output logic                         alert_major_bus_o,
-  output logic                         core_sleep_o
+  output logic                         core_sleep_o,
 
+  // X-Interface Signals
+  output logic                         x_compressed_valid_o,
+  input  logic                         x_compressed_ready_i,
+  output x_compressed_req_t            x_compressed_req_o,
+  input  x_compressed_resp_t           x_compressed_resp_i
 );
 
   // ibex_tracer relies on the signals from the RISC-V Formal Interface
@@ -158,7 +164,8 @@ module ibex_top_tracing import ibex_pkg::*; #(
     .RndCnstLfsrSeed  ( RndCnstLfsrSeed  ),
     .RndCnstLfsrPerm  ( RndCnstLfsrPerm  ),
     .DmHaltAddr       ( DmHaltAddr       ),
-    .DmExceptionAddr  ( DmExceptionAddr  )
+    .DmExceptionAddr  ( DmExceptionAddr  ),
+    .XInterface       ( XInterface       )
   ) u_ibex_top (
     .clk_i,
     .rst_ni,
@@ -237,7 +244,12 @@ module ibex_top_tracing import ibex_pkg::*; #(
     .alert_minor_o,
     .alert_major_internal_o,
     .alert_major_bus_o,
-    .core_sleep_o
+    .core_sleep_o,
+
+    .x_compressed_valid_o,
+    .x_compressed_ready_i,
+    .x_compressed_req_o,
+    .x_compressed_resp_i
   );
 
   ibex_tracer

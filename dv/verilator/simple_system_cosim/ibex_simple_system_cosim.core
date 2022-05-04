@@ -106,6 +106,12 @@ parameters:
     paramtype: vlogparam
     description: "Enables ICache scrambling feature (EXPERIMENTAL) [0/1]"
 
+  XInterface:
+    datatype: int
+    default: 0
+    paramtype: vlogparam
+    description: "Enables the RISC-V Extension Interface (EXPERIMENTAL) [0/1]"
+
 targets:
   default: &default_target
     filesets:
@@ -127,6 +133,7 @@ targets:
       - PMPNumRegions
       - ICacheScramble
       - SRAMInitFile
+      - XInterface
 
   lint:
     <<: *default_target

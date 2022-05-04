@@ -42,7 +42,8 @@ module ibex_core import ibex_pkg::*; #(
   parameter bit          MemECC            = 1'b0,
   parameter int unsigned MemDataWidth      = MemECC ? 32 + 7 : 32,
   parameter int unsigned DmHaltAddr        = 32'h1A110800,
-  parameter int unsigned DmExceptionAddr   = 32'h1A110808
+  parameter int unsigned DmExceptionAddr   = 32'h1A110808,
+  parameter bit          XInterface        = 1'b1
 ) (
   // Clock and Reset
   input  logic                         clk_i,
@@ -148,7 +149,14 @@ module ibex_core import ibex_pkg::*; #(
   output logic                         alert_major_internal_o,
   output logic                         alert_major_bus_o,
   output logic                         icache_inval_o,
-  output logic                         core_busy_o
+  output logic                         core_busy_o,
+
+  // X-Interface Signals
+  // Compressed Interface
+  output logic                         x_compressed_valid_o,
+  input  logic                         x_compressed_ready_i,
+  output x_compressed_req_t            x_compressed_req_o,
+  input  x_compressed_resp_t           x_compressed_resp_i
 );
 
   localparam int unsigned PMP_NUM_CHAN      = 3;
@@ -383,7 +391,8 @@ module ibex_core import ibex_pkg::*; #(
     .RndCnstLfsrPerm  (RndCnstLfsrPerm),
     .BranchPredictor  (BranchPredictor),
     .MemECC           (MemECC),
-    .MemDataWidth     (MemDataWidth)
+    .MemDataWidth     (MemDataWidth),
+    .XInterface       (XInterface)
   ) if_stage_i (
     .clk_i (clk_i),
     .rst_ni(rst_ni),
@@ -458,7 +467,14 @@ module ibex_core import ibex_pkg::*; #(
     .id_in_ready_i(id_in_ready),
 
     .pc_mismatch_alert_o(pc_mismatch_alert),
-    .if_busy_o          (if_busy)
+    .if_busy_o          (if_busy),
+
+    // commit interface signals
+    .priv_mode_i         (priv_mode_id),
+    .x_compressed_valid_o(x_compressed_valid_o),
+    .x_compressed_ready_i(x_compressed_ready_i),
+    .x_compressed_req_o  (x_compressed_req_o),
+    .x_compressed_resp_i (x_compressed_resp_i)
   );
 
   // Core is waiting for the ISide when ID/EX stage is ready for a new instruction but none are
