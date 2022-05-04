@@ -27,7 +27,8 @@ module ibex_if_stage import ibex_pkg::*; #(
   parameter lfsr_perm_t  RndCnstLfsrPerm   = RndCnstLfsrPermDefault,
   parameter bit          BranchPredictor   = 1'b0,
   parameter bit          MemECC            = 1'b0,
-  parameter int unsigned MemDataWidth      = MemECC ? 32 + 7 : 32
+  parameter int unsigned MemDataWidth      = MemECC ? 32 + 7 : 32,
+  parameter bit          XInterface        = 1'b1
 ) (
   input  logic                         clk_i,
   input  logic                         rst_ni,
@@ -114,7 +115,14 @@ module ibex_if_stage import ibex_pkg::*; #(
 
   // misc signals
   output logic                        pc_mismatch_alert_o,
-  output logic                        if_busy_o                 // IF stage is busy fetching instr
+  output logic                        if_busy_o,                // IF stage is busy fetching instr
+
+  // compressed interface signals
+  input  priv_lvl_e                   priv_mode_i,
+  output logic                        x_compressed_valid_o,
+  input  logic                        x_compressed_ready_i,
+  output x_compressed_req_t           x_compressed_req_o,
+  input  x_compressed_resp_t          x_compressed_resp_i
 );
 
   logic              instr_valid_id_d, instr_valid_id_q;
@@ -139,10 +147,11 @@ module ibex_if_stage import ibex_pkg::*; #(
   logic              fetch_err;
   logic              fetch_err_plus2;
 
-  logic [31:0]       instr_decompressed;
-  logic              illegal_c_insn;
+  logic [31:0]       instr_decompressed, instr_decompressed_dec;
+  logic              illegal_c_insn, illegal_c_insn_dec;
   logic              instr_is_compressed;
 
+  logic              if_instr_comp_valid;
   logic              if_instr_valid;
   logic       [31:0] if_instr_rdata;
   logic       [31:0] if_instr_addr;
@@ -172,6 +181,9 @@ module ibex_if_stage import ibex_pkg::*; #(
   logic        [7:0] unused_boot_addr;
   logic        [7:0] unused_csr_mtvec;
   logic              unused_exc_cause;
+
+  // Compressed interface offload signal
+  logic              stall_offl;
 
   assign unused_boot_addr = boot_addr_i[7:0];
   assign unused_csr_mtvec = csr_mtvec_i[7:0];
@@ -402,9 +414,9 @@ module ibex_if_stage import ibex_pkg::*; #(
     .rst_ni         (rst_ni),
     .valid_i        (fetch_valid & ~fetch_err),
     .instr_i        (if_instr_rdata),
-    .instr_o        (instr_decompressed),
+    .instr_o        (instr_decompressed_dec),
     .is_compressed_o(instr_is_compressed),
-    .illegal_instr_o(illegal_c_insn)
+    .illegal_instr_o(illegal_c_insn_dec)
   );
 
   // Dummy instruction insertion
@@ -651,16 +663,17 @@ module ibex_if_stage import ibex_pkg::*; #(
     // Do not branch predict on instruction errors.
     assign predict_branch_taken = predict_branch_taken_raw & ~instr_skid_valid_q & ~fetch_err;
 
-    assign if_instr_valid   = fetch_valid | (instr_skid_valid_q & ~nt_branch_mispredict_i);
-    assign if_instr_rdata   = instr_skid_valid_q ? instr_skid_data_q : fetch_rdata;
-    assign if_instr_addr    = instr_skid_valid_q ? instr_skid_addr_q : fetch_addr;
+    assign if_instr_comp_valid  = fetch_valid | (instr_skid_valid_q & ~nt_branch_mispredict_i);
+    assign if_instr_valid       = if_instr_comp_valid & ~stall_offl;
+    assign if_instr_rdata       = instr_skid_valid_q ? instr_skid_data_q : fetch_rdata;
+    assign if_instr_addr        = instr_skid_valid_q ? instr_skid_addr_q : fetch_addr;
 
     // Don't branch predict on instruction error so only instructions without errors end up in the
     // skid buffer.
     assign if_instr_bus_err = ~instr_skid_valid_q & fetch_err;
     assign instr_bp_taken_d = instr_skid_valid_q ? instr_skid_bp_taken_q : predict_branch_taken;
 
-    assign fetch_ready = id_in_ready_i & ~stall_dummy_instr & ~instr_skid_valid_q;
+    assign fetch_ready = id_in_ready_i & ~stall_dummy_instr & ~instr_skid_valid_q & ~stall_offl;
 
     assign instr_bp_taken_o = instr_bp_taken_q;
 
@@ -671,11 +684,80 @@ module ibex_if_stage import ibex_pkg::*; #(
     assign predict_branch_taken = 1'b0;
     assign predict_branch_pc    = 32'b0;
 
-    assign if_instr_valid = fetch_valid;
-    assign if_instr_rdata = fetch_rdata;
-    assign if_instr_addr  = fetch_addr;
-    assign if_instr_bus_err = fetch_err;
-    assign fetch_ready = id_in_ready_i & ~stall_dummy_instr;
+    assign if_instr_comp_valid = fetch_valid;
+    assign if_instr_valid      = if_instr_comp_valid & ~stall_offl;
+    assign if_instr_rdata      = fetch_rdata;
+    assign if_instr_addr       = fetch_addr;
+    assign if_instr_bus_err    = fetch_err;
+    assign fetch_ready         = id_in_ready_i & ~stall_dummy_instr & ~stall_offl;
+  end
+
+  /////////////////////////
+  // X-Interface Support //
+  /////////////////////////
+
+  if (XInterface) begin : gen_compressed_interface
+    logic x_compressed_accept;
+    logic x_compressed_id_bit_q, x_compressed_id_bit_d;
+    logic x_compressed_id_bit_flip;
+
+    // Valid signal high when:
+    // 1. There is a valid compressed instruction, and
+    // 2. The instruction is illegal in compressed decoder.
+    // According to the documentation, the handshake is a customized one.
+    // When the valid signal keeps high, the accelerator should keep providing valid response.
+    assign x_compressed_valid_o = if_instr_comp_valid & illegal_c_insn_dec;
+
+    assign stall_offl          = x_compressed_valid_o & ~x_compressed_ready_i;
+    assign illegal_c_insn      = x_compressed_valid_o & x_compressed_ready_i &
+                                 ~x_compressed_resp_i.accept;
+    assign x_compressed_accept = x_compressed_valid_o & x_compressed_ready_i &
+                                 x_compressed_resp_i.accept;
+    assign instr_decompressed  = x_compressed_accept ? x_compressed_resp_i.instr :
+                                                       instr_decompressed_dec;
+
+    // Interface output request signals
+    assign x_compressed_req_o.instr = if_instr_rdata[15:0];
+    assign x_compressed_req_o.mode  = priv_mode_i;
+    assign x_compressed_req_o.id    = {{X_ID_WIDTH-1{1'b0}}, x_compressed_id_bit_q};
+
+    // There will be a new instruction fetched next cycle
+    // when there is a fetch handshake transaction.
+    assign x_compressed_id_bit_flip = fetch_valid & fetch_ready;
+
+    // Next id is different from current id.
+    assign x_compressed_id_bit_d = ~x_compressed_id_bit_q;
+
+    if (ResetAll) begin : g_xif_compressed_buffer_ra
+      always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni) begin
+          x_compressed_id_bit_q <= '0;
+        end else if (x_compressed_id_bit_flip) begin
+          x_compressed_id_bit_q <= x_compressed_id_bit_d;
+        end
+      end
+    end else begin : g_xif_compressed_buffer_nr
+      always_ff @(posedge clk_i) begin
+        if (x_compressed_id_bit_flip) begin
+          x_compressed_id_bit_q <= x_compressed_id_bit_d;
+        end
+      end
+    end
+  end else begin : gen_no_compressed_interface
+    assign stall_offl         = 1'b0;
+    assign illegal_c_insn     = illegal_c_insn_dec;
+    assign instr_decompressed = instr_decompressed_dec;
+
+    ibex_pkg::priv_lvl_e unused_priv_mode;
+    logic                unused_x_compressed_ready;
+    x_compressed_resp_t  unused_x_compressed_resp;
+
+    assign unused_priv_mode          = priv_mode_i;
+    assign unused_x_compressed_ready = x_compressed_ready_i;
+    assign unused_x_compressed_resp  = x_compressed_resp_i;
+
+    assign x_compressed_valid_o = 1'b0;
+    assign x_compressed_req_o   = '0;
   end
 
   ////////////////

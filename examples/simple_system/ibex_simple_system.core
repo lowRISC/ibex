@@ -102,6 +102,12 @@ parameters:
     paramtype: vlogparam
     description: "Number of PMP regions"
 
+  XInterface:
+    datatype: int
+    default: 0
+    paramtype: vlogparam
+    description: "Enables the RISC-V Extension Interface (EXPERIMENTAL) [0/1]"
+
 targets:
   default: &default_target
     filesets:
@@ -123,6 +129,7 @@ targets:
       - PMPGranularity
       - PMPNumRegions
       - SRAMInitFile
+      - XInterface
 
   lint:
     <<: *default_target
