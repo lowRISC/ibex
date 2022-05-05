@@ -7,7 +7,7 @@ import sys
 
 from ibex_cmd import get_sim_opts
 from sim_cmd import get_simulator_cmd
-from scripts_lib import read_test_dot_seed, subst_vars
+from scripts_lib import read_test_dot_seed, subst_vars, run_one
 from test_entry import get_test_entry
 
 _CORE_IBEX = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
@@ -102,7 +102,7 @@ def main() -> int:
     sim_log = os.path.join(args.out_dir, 'rtl.log')
     os.makedirs(args.out_dir, exist_ok=True)
     with open(sim_log, 'wb') as sim_fd:
-        subprocess.run(test_cmd, shell=True, stdout=sim_fd, stderr=sim_fd)
+        run_one(False, test_cmd, redirect_stdstreams=sim_fd, timeout_s=900, shell=True)
 
     # Always return 0 (success), even if the test failed. We've successfully
     # generated a log either way.

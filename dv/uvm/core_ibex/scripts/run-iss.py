@@ -45,7 +45,8 @@ def main() -> int:
     cmd = [spike, '--log-commits', '--isa', iss_isa, '-l', args.input]
     return run_one(args.verbose,
                    cmd,
-                   redirect_stdstreams=args.output)
+                   redirect_stdstreams=args.output,
+                   timeout_s=30)  # Spike can run indefinitely in some cases
 
 
 if __name__ == '__main__':
