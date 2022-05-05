@@ -29,6 +29,8 @@ TestAndSeed = Tuple[str, int]
 def run_one(verbose: bool,
             cmd: List[str],
             redirect_stdstreams: Optional[Union[str, IO]] = None,
+            timeout_s: Optional[int] = None,
+            shell: Optional[bool] = False,
             env: Dict[str, str] = None) -> int:
     '''Run a command, returning its return code
 
@@ -75,11 +77,20 @@ def run_one(verbose: bool,
         # Passing close_fds=False ensures that if cmd is a call to Make then
         # we'll pass through the jobserver fds. If you don't do this, you get a
         # warning starting "warning: jobserver unavailable".
-        return subprocess.run(cmd,
-                              stdout=stdstream_dest,
-                              stderr=stdstream_dest,
-                              close_fds=False,
-                              env=env).returncode
+        ps = subprocess.run(cmd,
+                            stdout=stdstream_dest,
+                            stderr=stdstream_dest,
+                            close_fds=False,
+                            timeout=timeout_s,
+                            shell=shell,
+                            env=env)
+        return ps.returncode
+    except subprocess.CalledProcessError:
+        print(ps.communicate()[0])
+        return(1)
+    except subprocess.TimeoutExpired:
+        print("Error: Timeout[{}s]: {}".format(timeout_s, cmd))
+        return(1)
     finally:
         if needs_closing:
             stdstream_dest.close()
