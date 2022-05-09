@@ -247,9 +247,9 @@ PMP
 
 * Access fail & pass.
 
-  * All combinations of unaligned access split across a boundary, both halves pass, neither pass, just the first passes, just the second passes.
+  * ``misaligned_lsu_access_cross`` - All combinations of unaligned access split across a boundary, both halves pass, neither pass, just the first passes, just the second passes.
 
-    * Two possible boundary splits; across a 32-bit boundary within a region or a boundary between PMP regions.
+    * ``pmp_instr_edge_cross`` - Two possible boundary splits; across a 32-bit boundary within a region or a boundary between PMP regions.
 
   * ``cp_pmp_iside_region_override``, ``cp_pmp_iside2_region_override``, ``cp_pmp_dside_region_override`` - Higher priority entry allows access that lower priority entry prevents.
   * Compressed instruction access (16-bit) passes PMP but 32-bit access at same address crosses PMP region boundary.
@@ -258,17 +258,17 @@ PMP
 
   * RLB - rule locking bypass.
 
-    * Modify locked region with RLB set.
-    * Try to enable RLB when RLB is disabled and locked regions present.
+    * ``cp_edit_locked_pmpcfg``,``cp_edit_locked_pmpaddr`` - Modify locked region with RLB set.
+    * ``rlb_csr_cross`` - Try to enable RLB when RLB is disabled and locked regions present.
 
   * MMWP - machine mode whitelist policy.
 
-    * M-mode access fail due to not matching any PMP regions.
-    * Try to disable when enabled.
+    * ``pmp_dside/iside/iside2_nomatch_cross`` - M-mode access fail due to not matching any PMP regions.
+    * ``mmwp_csr_cross`` - Try to disable when enabled.
 
   * MML - machine mode lockdown policy.
 
-    * Try to disable when enabled.
+    * ``rlb_csr_cross`` - Try to disable when enabled.
 
 * Access close to PMP region modification that allows/disallows that access.
 
