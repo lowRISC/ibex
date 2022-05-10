@@ -33,7 +33,7 @@ WAVES               := 1
 # Enable coverage dump
 COV                 := 0
 # Enable cosimulation flow
-COSIM               := 0
+COSIM               := 1
 # RTL simulator
 SIMULATOR           := vcs
 # ISS (spike, ovpsim)
