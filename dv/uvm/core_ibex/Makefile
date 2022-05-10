@@ -380,7 +380,7 @@ comp-results := $(addsuffix test-result.yml,$(ts-dirs))
 
 $(comp-results): \
   $(RUN-DIR)/%/test-result.yml: \
-  $(RUN-DIR)/%/$(ISS).log $(RUN-DIR)/%/rtl.log compare.py
+  $(RUN-DIR)/%/rtl.log compare.py
 	@echo Comparing traces for $*
 	$(verb)./compare.py                         \
 	  --test-dot-seed $*                        \
@@ -388,6 +388,7 @@ $(comp-results): \
 	  --iss-trace $(@D)/$(ISS).log              \
 	  --rtl-log $(@D)/rtl.log                   \
 	  --rtl-trace $(@D)/trace_core_00000000.log \
+	  $(cosim-arg) --cosim-trace $(@D)/spike_cosim.log \
 	  --binary $(@D)/test.o                     \
 	  --compare-log $(@D)/compare.log           \
 	  --output $@
