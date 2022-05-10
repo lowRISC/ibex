@@ -47,6 +47,8 @@ def compare_test_run(test: TestEntry,
                      rtl_log: str,
                      rtl_trace: str,
                      iss_trace: str,
+                     en_cosim: bool,
+                     cosim_trace: str,
                      binary: str,
                      compare_log: str) -> TestRunResult:
     '''Compare results for a single run of a single test
@@ -78,16 +80,19 @@ def compare_test_run(test: TestEntry,
         'binary': binary,
         'uvm_log': rtl_log,
         'rtl_trace': rtl_trace,
-        'rtl_trace_csv': None,
-        'iss_trace': iss_trace,
+        'rtl_trace_csv': rtl_trace + '.csv',
+        'iss_trace': None,
         'iss_trace_csv': None,
+        'en_cosim': en_cosim,
+        'cosim_trace': None,
+        'cosim_trace_csv': None,
         'comparison_log': None,
         'passed': False,
         'failure_message': None
     }
 
-    # Have a look at the UVM log. Report a failure if an issue is seen in the
-    # log.
+    # Have a look at the UVM log.
+    # Report a failure if an issue is seen in the log.
     try:
         uvm_pass, uvm_log_lines = check_ibex_uvm_log(rtl_log)
     except IOError as e:
@@ -101,76 +106,98 @@ def compare_test_run(test: TestEntry,
         kv_data['failure_message'] += '\n[FAILED]: sim error seen'
         return TestRunResult(**kv_data)
 
-    rtl_trace_csv = rtl_trace + '.csv'
-
-    kv_data['rtl_trace_csv'] = rtl_trace_csv
+    # Both the cosim and non-cosim flows produce a trace from the ibex_tracer,
+    # so process that file for errors.
     try:
         # Convert the RTL log file to a trace CSV.
-        process_ibex_sim_log(rtl_trace, rtl_trace_csv, 1)
+        process_ibex_sim_log(kv_data['rtl_trace'],
+                             kv_data['rtl_trace_csv'])
     except (OSError, RuntimeError) as e:
         kv_data['failure_message'] = \
             '[FAILED]: Log processing failed: {}'.format(e)
         return TestRunResult(**kv_data)
 
-    no_post_compare = test.get('no_post_compare', False)
-    assert isinstance(no_post_compare, bool)
+    if en_cosim:
+        # Process the cosim logfile to check for errors
+        kv_data['cosim_trace'] = cosim_trace
+        kv_data['cosim_trace_csv'] = cosim_trace + '.csv'
+        try:
+            if iss == "spike":
+                process_spike_sim_log(kv_data['cosim_trace'],
+                                      kv_data['cosim_trace_csv'])
+            else:
+                raise RuntimeError('Unsupported simulator for cosim')
+        except (OSError, RuntimeError) as e:
+            kv_data['failure_message'] = \
+                '[FAILED]: Log processing failed: {}'.format(e)
+            return TestRunResult(**kv_data)
 
-    # no_post_compare skips the final ISS v RTL log check, so if we've reached
-    # here we're done when no_post_compare is set.
-    if no_post_compare:
+        # The comparison has already passed, since we passed the simulation
         kv_data['passed'] = True
         return TestRunResult(**kv_data)
 
-    # There were no UVM errors. Process the log file from the ISS. Note that
-    # the filename is a bit odd-looking. This is silly, but it ensures that
-    # riscv-dv's cov.py script won't pick it up for architectural coverage.
-    iss_trace_csv = iss_trace + '-csv'
-    kv_data['iss_trace_csv'] = iss_trace_csv
-    try:
-        if iss == "spike":
-            process_spike_sim_log(iss_trace, iss_trace_csv)
-        else:
-            assert iss == 'ovpsim'  # (should be checked by argparse)
-            process_ovpsim_sim_log(iss_trace, iss_trace_csv)
-    except (OSError, RuntimeError) as e:
-        kv_data['failure_message'] = \
-            '[FAILED]: Log processing failed: {}'.format(e)
+    else:
+        # no_post_compare skips the final ISS v RTL log check, so if we've reached
+        # here we're done when no_post_compare is set.
+        no_post_compare = test.get('no_post_compare', False)
+        assert isinstance(no_post_compare, bool)
+        if no_post_compare:
+            kv_data['passed'] = True
+            return TestRunResult(**kv_data)
+
+        # There were no UVM errors. Process the log file from the ISS. Note that
+        # the filename is a bit odd-looking. This is silly, but it ensures that
+        # riscv-dv's cov.py script won't pick it up for architectural coverage.
+        kv_data['iss_trace'] = iss_trace
+        kv_data['iss_trace_csv'] = iss_trace + '-csv'
+        try:
+            if iss == "spike":
+                process_spike_sim_log(kv_data['iss_trace'],
+                                      kv_data['iss_trace_csv'])
+            else:
+                assert iss == 'ovpsim'  # (should be checked by argparse)
+                process_ovpsim_sim_log(kv_data['iss_trace'],
+                                       kv_data['iss_trace_csv'])
+        except (OSError, RuntimeError) as e:
+            kv_data['failure_message'] = \
+                '[FAILED]: Log processing failed: {}'.format(e)
+            return TestRunResult(**kv_data)
+
+        kv_data['comparison_log'] = compare_log
+        # Delete any existing file at compare_log
+        # (the compare_trace_csv function would append to it, which is rather
+        # confusing).
+        try:
+            os.remove(compare_log)
+        except FileNotFoundError:
+            pass
+
+        compare_result = \
+            compare_trace_csv(kv_data['rtl_trace_csv'],
+                              kv_data['iss_trace_csv'],
+                              "ibex", iss, compare_log,
+                              **test.get('compare_opts', {}))
+
+        try:
+            compare_log_file = open(compare_log)
+            compare_log_contents = compare_log_file.read()
+            compare_log_file.close()
+        except IOError as e:
+            kv_data['failure_message'] = \
+                '[FAILED]: Could not read compare log: {}'.format(e)
+            return TestRunResult(**kv_data)
+
+        # Rather oddly, compare_result is a string. The comparison passed if it
+        # starts with '[PASSED]: ' and failed otherwise.
+        compare_passed = compare_result.startswith('[PASSED]: ')
+        kv_data['passed'] = compare_passed
+        if not compare_passed:
+            assert compare_result.startswith('[FAILED]: ')
+            kv_data['failure_message'] = ('RTL / ISS trace comparison failed\n' +
+                                          compare_log_contents)
+            return TestRunResult(**kv_data)
+
         return TestRunResult(**kv_data)
-
-    kv_data['comparison_log'] = compare_log
-
-    # Delete any existing file at compare_log (the compare_trace_csv function
-    # would append to it, which is rather confusing).
-    try:
-        os.remove(compare_log)
-    except FileNotFoundError:
-        pass
-
-    compare_result = \
-        compare_trace_csv(rtl_trace_csv, iss_trace_csv, "ibex",
-                          iss, compare_log,
-                          **test.get('compare_opts', {}))
-
-    try:
-        compare_log_file = open(compare_log)
-        compare_log_contents = compare_log_file.read()
-        compare_log_file.close()
-    except IOError as e:
-        kv_data['failure_message'] = \
-            '[FAILED]: Could not read compare log: {}'.format(e)
-        return TestRunResult(**kv_data)
-
-    # Rather oddly, compare_result is a string. The comparison passed if it
-    # starts with '[PASSED]: ' and failed otherwise.
-    compare_passed = compare_result.startswith('[PASSED]: ')
-    kv_data['passed'] = compare_passed
-    if not compare_passed:
-        assert compare_result.startswith('[FAILED]: ')
-        kv_data['failure_message'] = ('RTL / ISS trace comparison failed\n' +
-                                      compare_log_contents)
-        return TestRunResult(**kv_data)
-
-    return TestRunResult(**kv_data)
 
 
 # If any of these characters are present in a string output it in multi-line
@@ -220,6 +247,8 @@ def main() -> int:
     parser.add_argument('--iss-trace', required=True)
     parser.add_argument('--rtl-log', required=True)
     parser.add_argument('--rtl-trace', required=True)
+    parser.add_argument('--en_cosim', required=False, action='store_true')
+    parser.add_argument('--cosim-trace', required=True)
     parser.add_argument('--binary', required=True)
     parser.add_argument('--compare-log', required=True)
     parser.add_argument('--output', required=True)
@@ -231,7 +260,9 @@ def main() -> int:
     entry = get_test_entry(testname)
 
     result = compare_test_run(entry, seed, args.iss,
-                              args.rtl_log, args.rtl_trace, args.iss_trace,
+                              args.rtl_log,
+                              args.rtl_trace, args.iss_trace,
+                              args.en_cosim, args.cosim_trace,
                               args.binary, args.compare_log)
 
     with open(args.output, 'w', encoding='UTF-8') as outfile:
