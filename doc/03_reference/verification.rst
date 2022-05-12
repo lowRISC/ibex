@@ -126,6 +126,7 @@ to tell the RISCV-DV code where to find them:
     export RISCV_GCC="$RISCV_TOOLCHAIN/bin/riscv32-unknown-elf-gcc"
     export RISCV_OBJCOPY="$RISCV_TOOLCHAIN/bin/riscv32-unknown-elf-objcopy"
     export SPIKE_PATH=/path/to/spike/bin
+    export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/path/to/spike/lib/pkgconfig
 
 .. _LRSpike: https://github.com/lowRISC/riscv-isa-sim
 .. _riscv-toolchain-source: https://github.com/riscv/riscv-gnu-toolchain
