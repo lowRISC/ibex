@@ -9,7 +9,7 @@ import re
 import shlex
 import subprocess
 import sys
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, IO, List, Optional, Tuple, Union
 
 THIS_DIR = os.path.dirname(__file__)
 IBEX_ROOT = os.path.normpath(os.path.join(THIS_DIR, 4 * '../'))
@@ -28,30 +28,48 @@ TestAndSeed = Tuple[str, int]
 
 def run_one(verbose: bool,
             cmd: List[str],
-            redirect_stdstreams: Optional[str] = None,
+            redirect_stdstreams: Optional[Union[str, IO]] = None,
             env: Dict[str, str] = None) -> int:
     '''Run a command, returning its return code
 
     If verbose is true, print the command to stderr first (a bit like bash -x).
 
     If redirect_stdstreams is true, redirect the stdout and stderr of the
-    subprocess to the given path.
+    subprocess to the given file object or path.
 
     '''
-    if verbose:
-        # The equivalent of bash -x
-        cmd_str = ' '.join(shlex.quote(w) for w in cmd)
-        if redirect_stdstreams is not None:
-            cmd_str += f' >{shlex.quote(redirect_stdstreams)} 2>&1'
-
-        print('+ ' + cmd_str, file=sys.stderr)
-
     stdstream_dest = None
+    needs_closing = False
+
     if redirect_stdstreams is not None:
         if redirect_stdstreams == '/dev/null':
             stdstream_dest = subprocess.DEVNULL
-        else:
+        elif isinstance(redirect_stdstreams, str):
             stdstream_dest = open(redirect_stdstreams, 'wb')
+            needs_closing = True
+        else:
+            stdstream_dest = redirect_stdstreams
+
+    if verbose:
+        # The equivalent of bash -x
+        cmd_str = ' '.join(shlex.quote(w) for w in cmd)
+        redir_cmd = cmd_str
+        if redirect_stdstreams is not None:
+            if isinstance(redirect_stdstreams, str):
+                redir = f'>{shlex.quote(redirect_stdstreams)}'
+            else:
+                redir = f'>>{shlex.quote(redirect_stdstreams.name)}'
+            redir_cmd = f'{cmd_str} {redir} 2>&1'
+
+        print('+ ' + redir_cmd, file=sys.stderr)
+
+        # Try to print the command to the file as well. This will fail if it's
+        # a binary file: ignore the failure.
+        if stdstream_dest:
+            try:
+                print('+ ' + cmd_str, file=stdstream_dest)
+            except (TypeError, AttributeError):
+                pass
 
     try:
         # Passing close_fds=False ensures that if cmd is a call to Make then
@@ -63,7 +81,7 @@ def run_one(verbose: bool,
                               close_fds=False,
                               env=env).returncode
     finally:
-        if stdstream_dest not in [None, subprocess.DEVNULL]:
+        if needs_closing:
             stdstream_dest.close()
 
 

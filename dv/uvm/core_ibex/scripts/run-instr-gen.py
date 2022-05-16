@@ -54,8 +54,8 @@ def main() -> int:
     # Ensure that the output directory actually exists
     os.makedirs(args.output_dir, exist_ok=True)
 
-    riscv_dv_log = os.path.join(args.output_dir,
-                                f'{testname}.{seed}.riscv-dv.log')
+    riscv_dv_log = os.path.join(args.output_dir, f'riscv-dv.log')
+    gen_log = os.path.join(args.output_dir, f'gen-cmds.log')
 
     with tempfile.TemporaryDirectory() as td:
         orig_list = os.path.join(td, 'cmds.list')
@@ -90,13 +90,15 @@ def main() -> int:
                               testname,
                               orig_list)
 
-        # Run the commands in sequence to create "test_0.S" and "gen.log" in
-        # the temporary directory.
-        ret = 0
-        for cmd in cmds:
-            ret = run_one(args.verbose, cmd, redirect_stdstreams='/dev/null')
-            if ret != 0:
-                break
+        # Open up a file to take output from running the commands
+        with open(gen_log, 'w') as log_fd:
+            # Run the commands in sequence to create outputs in the temporary
+            # directory. Redirect stdout and stderr to gen_log
+            ret = 0
+            for cmd in cmds:
+                ret = run_one(args.verbose, cmd, redirect_stdstreams=log_fd)
+                if ret != 0:
+                    break
 
         test_file_copies = {
             'riscv_csr_test': [('riscv_csr_test_0.S', 'test.S', False)]
