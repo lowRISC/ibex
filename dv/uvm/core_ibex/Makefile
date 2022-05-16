@@ -29,7 +29,7 @@ export dv_root := $(realpath ../../../vendor/lowrisc_ip/dv)
 export DUT_TOP := dut
 
 # Enable waveform dumping
-WAVES               := 1
+WAVES               := 0
 # Enable coverage dump
 COV                 := 0
 # Enable cosimulation flow
