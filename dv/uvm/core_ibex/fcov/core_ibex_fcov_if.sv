@@ -460,12 +460,20 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     cp_controller_fsm: coverpoint id_stage_i.controller_i.ctrl_fsm_cs {
       bins out_of_reset = (RESET => BOOT_SET);
       bins out_of_boot_set = (BOOT_SET => FIRST_FETCH);
-      bins out_of_first_fetch[] = (FIRST_FETCH => DECODE, IRQ_TAKEN, DBG_TAKEN_IF);
-      bins out_of_decode[] = (DECODE => FLUSH, DBG_TAKEN_IF, IRQ_TAKEN);
+      bins out_of_first_fetch0 = (FIRST_FETCH => DECODE);
+      bins out_of_first_fetch1 = (FIRST_FETCH => IRQ_TAKEN);
+      bins out_of_first_fetch2 = (FIRST_FETCH => DBG_TAKEN_IF);
+      bins out_of_decode0 = (DECODE => FLUSH);
+      bins out_of_decode1 = (DECODE => DBG_TAKEN_IF);
+      bins out_of_decode2 = (DECODE => IRQ_TAKEN);
       bins out_of_irq_taken = (IRQ_TAKEN => DECODE);
       bins out_of_debug_taken_if = (DBG_TAKEN_IF => DECODE);
       bins out_of_debug_taken_id = (DBG_TAKEN_ID => DECODE);
-      bins out_of_flush[] = (FLUSH => DECODE, DBG_TAKEN_ID, WAIT_SLEEP, IRQ_TAKEN, DBG_TAKEN_IF);
+      bins out_of_flush0 = (FLUSH => DECODE);
+      bins out_of_flush1 = (FLUSH => DBG_TAKEN_ID);
+      bins out_of_flush2 = (FLUSH => WAIT_SLEEP);
+      bins out_of_flush3 = (FLUSH => IRQ_TAKEN);
+      bins out_of_flush4 = (FLUSH => DBG_TAKEN_IF);
       bins out_of_wait_sleep = (WAIT_SLEEP => SLEEP);
       bins out_of_sleep = (SLEEP => FIRST_FETCH);
       // TODO: VCS does not implement default sequence so illegal_bins will be empty
@@ -483,6 +491,35 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     `DV_FCOV_EXPR_SEEN(irq_continue_sleep, id_stage_i.controller_i.ctrl_fsm_cs == SLEEP &&
                                            id_stage_i.controller_i.ctrl_fsm_ns == SLEEP &&
                                            (|cs_registers_i.mip))
+
+    controller_instr_cross: cross cp_controller_fsm, cp_id_instr_category {
+    // Only expecting DECODE => FLUSH when we have the instruction categories constrained below.
+      bins decode_to_flush =
+        binsof(cp_controller_fsm.out_of_decode0) &&
+        binsof(cp_id_instr_category) intersect {InstrCategoryMRet, InstrCategoryDRet,
+                                                InstrCategoryEBreakDbg, InstrCategoryEBreakExc,
+                                                InstrCategoryECall, InstrCategoryFetchError,
+                                                InstrCategoryCSRAccess,
+                                                InstrCategoryCSRIllegal,
+                                                InstrCategoryUncompressedIllegal,
+                                                InstrCategoryCompressedIllegal,
+                                                InstrCategoryPrivIllegal,
+                                                InstrCategoryOtherIllegal};
+      bins decode_to_dbg = binsof(cp_controller_fsm.out_of_decode1);
+      bins decode_to_irq = binsof(cp_controller_fsm.out_of_decode2);
+    // Only expecting FLUSH => DECODE when we have the instruction categories constrained below.
+      bins flush_to_decode =
+        binsof(cp_controller_fsm.out_of_flush0) &&
+        !binsof(cp_id_instr_category) intersect {InstrCategoryEBreakDbg, InstrCategoryWFI};
+    // Only expecting FLUSH => IRQ_TAKEN when we have InstrCategoryCSRAccess in ID/EX
+      bins flush_to_irq_taken =
+        binsof(cp_controller_fsm.out_of_flush3) &&
+        binsof(cp_id_instr_category) intersect {InstrCategoryCSRAccess};
+    // Only expecting FLUSH => DEBUG_IF when we have InstrCategoryEBreakDbg in ID/EX
+      bins flush_to_dbg_if =
+        binsof(cp_controller_fsm.out_of_flush4) &&
+        !binsof(cp_id_instr_category) intersect {InstrCategoryEBreakDbg};
+    }
 
     // Include both mstatus.mie enabled/disabled because it should not affect wakeup condition
     irq_wfi_cross: cross cp_controller_fsm_sleep, cs_registers_i.mstatus_q.mie iff
