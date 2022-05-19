@@ -35,7 +35,7 @@ COV                 := 0
 # Enable cosimulation flow
 COSIM               := 1
 # RTL simulator
-SIMULATOR           := vcs
+SIMULATOR           := xlm
 # ISS (spike, ovpsim)
 ISS                 := spike
 # Test name (default: full regression)
