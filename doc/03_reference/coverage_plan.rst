@@ -200,16 +200,17 @@ Exceptions, interrupts and debug entry can all cause control flow changes combin
 Furthermore they can all occur together and must be appropriately prioritised (consider a instruction with hardware trigger point matching it, that causes some exception and an interrupt is raised the cycle it enters the ID/EX stage)
 
 * Exception from instruction fetch error (covered by the **FetchError** instruction category).
-* Exception from instruction PMP violation.
+* ``pmp_iside_mode_cross`` - Exception from instruction PMP violation.
 * Exception from illegal instruction (covered by the illegal instruction categories).
 * Exception from memory fetch error.
-* Exception from memory access PMP violation.
+* ``pmp_dside_mode_cross`` - Exception from memory access PMP violation.
 * Unaligned access cases (both accesses saw error, first or second only saw error, or neither saw error) for both kinds of memory exceptions.
 * Interrupt raised/taken.
 
-  * Interrupt raised/taken for each available interrupt line.
+  * ``cp_interrupt_taken`` - Interrupt raised/taken for each available interrupt line.
     For cross coverage, the precise interrupt that's raised/taken is not relevant and it only needs to be grouped by NMI vs non-NMI.
-  * Interrupt raised/taken the first cycle an instruction is in ID/EX or some other cycle the instruction is in ID/EX.
+    This is done by using ``cp_nmi_taken`` coverpoint in the crosses.
+  * ``interrupt_taken_instr_cross`` - Interrupt raised/taken the first cycle an instruction is in ID/EX or some other cycle the instruction is in ID/EX.
 
 * External debug request.
 * Instruction executed when debug single step enabled.

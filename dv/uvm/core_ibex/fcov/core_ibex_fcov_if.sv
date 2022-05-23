@@ -310,6 +310,14 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
                   id_instr_category == InstrCategoryLoad &&
                   prev_store_addr == curr_data_addr;
 
+  // Collect all the interrupts for collecting them in different bins.
+  logic [5:0] fcov_irqs = {id_stage_i.controller_i.irq_nm_ext_i,
+                           id_stage_i.controller_i.irq_nm_int,
+                           (|id_stage_i.controller_i.irqs_i.irq_fast),
+                           id_stage_i.controller_i.irqs_i.irq_external,
+                           id_stage_i.controller_i.irqs_i.irq_software,
+                           id_stage_i.controller_i.irqs_i.irq_timer};
+
   logic            instr_unstalled;
   logic            instr_unstalled_last;
   logic            id_stall_type_last_valid;
@@ -452,10 +460,22 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     cp_debug_mode: coverpoint debug_mode;
 
     `DV_FCOV_EXPR_SEEN(debug_wakeup, id_stage_i.controller_i.fcov_debug_wakeup)
-    `DV_FCOV_EXPR_SEEN(interrupt_taken, id_stage_i.controller_i.fcov_interrupt_taken)
     `DV_FCOV_EXPR_SEEN(debug_entry_if, id_stage_i.controller_i.fcov_debug_entry_if)
     `DV_FCOV_EXPR_SEEN(debug_entry_id, id_stage_i.controller_i.fcov_debug_entry_id)
     `DV_FCOV_EXPR_SEEN(pipe_flush, id_stage_i.controller_i.fcov_pipe_flush)
+
+    cp_nmi_taken: coverpoint (id_stage_i.controller_i.nmi_mode_d &
+                              (~id_stage_i.controller_i.nmi_mode_q)) iff
+                             (id_stage_i.controller_i.fcov_interrupt_taken);
+
+    cp_interrupt_taken: coverpoint fcov_irqs iff (id_stage_i.controller_i.fcov_interrupt_taken){
+      wildcard bins nmi_external  = {6'b1?????};
+      wildcard bins nmi_internal  = {6'b01????};
+      wildcard bins irq_fast      = {6'b001???};
+      wildcard bins irq_external  = {6'b0001??};
+      wildcard bins irq_software  = {6'b00001?};
+      wildcard bins irq_timer     = {6'b000001};
+    }
 
     cp_controller_fsm: coverpoint id_stage_i.controller_i.ctrl_fsm_cs {
       bins out_of_reset = (RESET => BOOT_SET);
@@ -561,8 +581,8 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
         binsof(cp_id_stage_state) intersect {PipeStageEmpty};
     }
 
-    interrupt_taken_instr_cross: cross cp_interrupt_taken, instr_unstalled_last,
-      cp_id_instr_category_last;
+    interrupt_taken_instr_cross: cross cp_nmi_taken, instr_unstalled_last,
+      cp_id_instr_category_last iff (id_stage_i.controller_i.fcov_interrupt_taken);
 
     debug_instruction_cross: cross cp_debug_mode, cp_id_instr_category;
 
