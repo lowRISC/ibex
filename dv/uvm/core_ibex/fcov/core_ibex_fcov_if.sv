@@ -276,6 +276,22 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     end
   end
 
+  logic instr_id_matches_trigger_d, instr_id_matches_trigger_q;
+
+  assign instr_id_matches_trigger_d = id_stage_i.controller_i.trigger_match_i &&
+                                      id_stage_i.controller_i.fcov_debug_entry_if;
+
+  // Delay instruction matching trigger point since it is catched in IF stage.
+  // We would want to cross it with decoded instruction categories and it does not matter
+  // when exactly we are hitting the condition.
+  always @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      instr_id_matches_trigger_q <= 1'b0;
+    end else begin
+      instr_id_matches_trigger_q <= instr_id_matches_trigger_d;
+    end
+  end
+
   // Keep track of previous data addr of Store to catch RAW hazard caused by STORE->LOAD
   logic [31:0]     prev_store_addr;
   logic [31:0]     data_addr_incr;
@@ -456,6 +472,10 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     `DV_FCOV_EXPR_SEEN(debug_entry_if, id_stage_i.controller_i.fcov_debug_entry_if)
     `DV_FCOV_EXPR_SEEN(debug_entry_id, id_stage_i.controller_i.fcov_debug_entry_id)
     `DV_FCOV_EXPR_SEEN(pipe_flush, id_stage_i.controller_i.fcov_pipe_flush)
+    `DV_FCOV_EXPR_SEEN(single_step_taken, id_stage_i.controller_i.fcov_debug_single_step_taken)
+    `DV_FCOV_EXPR_SEEN(insn_trigger_enter_debug, instr_id_matches_trigger_q)
+    `DV_FCOV_EXPR_SEEN(insn_trigger_exception, instr_id_matches_trigger_q &&
+                                               id_stage_i.controller_i.fcov_pipe_flush)
 
     cp_controller_fsm: coverpoint id_stage_i.controller_i.ctrl_fsm_cs {
       bins out_of_reset = (RESET => BOOT_SET);
@@ -491,6 +511,14 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     `DV_FCOV_EXPR_SEEN(irq_continue_sleep, id_stage_i.controller_i.ctrl_fsm_cs == SLEEP &&
                                            id_stage_i.controller_i.ctrl_fsm_ns == SLEEP &&
                                            (|cs_registers_i.mip))
+
+
+    single_step_instr_cp: coverpoint id_instr_category iff
+                                     (id_stage_i.controller_i.fcov_debug_single_step_taken) {
+      // Not certain if InstrCategoryOtherIllegal can occur. Put it in illegal_bins for now and
+      // revisit if any issues are seen
+      illegal_bins illegal = {InstrCategoryOther, InstrCategoryOtherIllegal};
+    }
 
     controller_instr_cross: cross cp_controller_fsm, cp_id_instr_category {
     // Only expecting DECODE => FLUSH when we have the instruction categories constrained below.

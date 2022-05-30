@@ -211,24 +211,25 @@ Furthermore they can all occur together and must be appropriately prioritised (c
     For cross coverage, the precise interrupt that's raised/taken is not relevant and it only needs to be grouped by NMI vs non-NMI.
   * Interrupt raised/taken the first cycle an instruction is in ID/EX or some other cycle the instruction is in ID/EX.
 
-* External debug request.
-* Instruction executed when debug single step enabled.
-* Instruction matches hardware trigger point.
+* ``cp_debug_req`` - External debug request.
+* ``cp_single_step_taken`` - Instruction executed when debug single step enabled.
+* ``cp_insn_trigger_enter_debug`` - Instruction matches hardware trigger point.
 
-  * Instruction matching trigger point causes exception
+  * ``cp_insn_trigger_exception`` - Instruction matching trigger point causes exception
 
-* Ibex operating in debug mode.
+* ``cp_debug_mode`` - Ibex operating in debug mode.
 * ``irq_wfi_cross``, ``debug_wfi_cross`` - Debug and Interrupt whilst sleeping with WFI
 
   * Cover with global interrupts enabled and disabled
   * Cover with specific interrupt enabled and disabled (Should exit sleep when
     interrupt is enabled but global interrupts set to disabled, should continue
     sleeping when both are disabled).
-    Continuing to sleep in the case explained above is covered by ``cp_irq_continue_sleep``
+    Continuing to sleep in the case explained above is covered by ``cp_irq_continue_sleep``, otherwise the behaviour is captured in ``irq_wfi_cross``
 
 * Debug and interrupt occurring whilst entering WFI
 
   * Covering period between WFI entering ID/EX stage and going into sleep
+    Covered by bin ``enter_sleep`` of ``cp_controller_fsm_sleep`` that is used by ``irq_wfi_cross`` and ``debug_wfi_cross``.
 
 * ``cp_double_fault`` - Double fault
 
@@ -342,3 +343,5 @@ There must be a documented reason a particular bin is added to the illegal or ig
 * ``pmp_iside_priv_bits_cross``, ``pmp_iside2_priv_bits_cross``, ``pmp_dside_priv_bits_cross``, PMP regions x permissions x access fail/pass x privilege level
 
   * Three crosses, one for each PMP channel (instruction, instruction 2 and data).
+
+* ``single_step_instr_cross`` - dcsr.step x Instruction Categories
