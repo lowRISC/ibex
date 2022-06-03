@@ -1210,6 +1210,13 @@ package riscv_instr_pkg;
 
   `include "riscv_core_setting.sv"
 
+  // ePMP machine security configuration
+  typedef struct packed {
+    bit rlb;
+    bit mmwp;
+    bit mml;
+  } mseccfg_reg_t;
+
   // PMP address matching mode
   typedef enum bit [1:0] {
     OFF   = 2'b00,
