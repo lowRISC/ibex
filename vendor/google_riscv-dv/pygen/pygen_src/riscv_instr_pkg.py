@@ -905,6 +905,8 @@ class privileged_reg_t(IntEnum):
     MCAUSE = 0x342  # Machine trap cause
     MTVAL = 0x343  # Machine bad address or instruction
     MIP = 0x344  # Machine interrupt pending
+    MSECCFG = 0x747 # Machine security configuration
+    MSECCFGH = 0x757 # Machine security configuration, RV32 only
     PMPCFG0 = 0x3A0  # Physical memory protection configuration
     PMPCFG1 = 0x3A1  # Physical memory protection configuration, RV32 only
     PMPCFG2 = 0x3A2  # Physical memory protection configuration
@@ -1174,6 +1176,13 @@ class store_lsu_hazard_e(IntEnum):
 class jalr_riscv_reg_t(IntEnum):
     RA = 0
     T1 = auto()
+
+
+# ePMP machine security configuration
+class mseccfg_reg_t(IntEnum):
+    rlb = 1b1
+    mmwp = 1b0
+    mml = 1b0
 
 
 # PMP address matching mode
