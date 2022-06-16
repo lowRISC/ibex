@@ -859,10 +859,12 @@ module ibex_core import ibex_pkg::*; #(
   // Crash dump output //
   ///////////////////////
 
+  logic [31:0] crash_dump_mtval;
   assign crash_dump_o.current_pc     = pc_id;
   assign crash_dump_o.next_pc        = pc_if;
   assign crash_dump_o.last_data_addr = lsu_addr_last;
-  assign crash_dump_o.exception_addr = csr_mepc;
+  assign crash_dump_o.exception_pc   = csr_mepc;
+  assign crash_dump_o.exception_addr = crash_dump_mtval;
 
   ///////////////////
   // Alert outputs //
@@ -977,6 +979,7 @@ module ibex_core import ibex_pkg::*; #(
     .csr_mstatus_mie_o(csr_mstatus_mie),
     .csr_mstatus_tw_o (csr_mstatus_tw),
     .csr_mepc_o       (csr_mepc),
+    .csr_mtval_o      (crash_dump_mtval),
 
     // PMP
     .csr_pmp_cfg_o    (csr_pmp_cfg),
