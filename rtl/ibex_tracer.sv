@@ -95,6 +95,7 @@ module ibex_tracer (
   localparam logic [4:0] RD  = (1 << 3);
   localparam logic [4:0] MEM = (1 << 4);
   logic [4:0] data_accessed;
+  logic [3:0] data_accessed_fp;
 
   logic trace_log_enable;
   initial begin
@@ -135,14 +136,26 @@ module ibex_tracer (
     if ((data_accessed & RS1) != 0) begin
       $fwrite(file_handle, " %s:0x%08x", reg_addr_to_str(rvfi_rs1_addr), rvfi_rs1_rdata);
     end
+    if ((data_accessed_fp & RS1) != 0) begin
+      $fwrite(file_handle, " %s:0x%08x", reg_addr_to_str_fp(rvfi_rs1_addr), rvfi_rs1_rdata);
+    end
     if ((data_accessed & RS2) != 0) begin
       $fwrite(file_handle, " %s:0x%08x", reg_addr_to_str(rvfi_rs2_addr), rvfi_rs2_rdata);
+    end
+    if ((data_accessed_fp & RS2) != 0) begin
+      $fwrite(file_handle, " %s:0x%08x", reg_addr_to_str_fp(rvfi_rs2_addr), rvfi_rs2_rdata);
     end
     if ((data_accessed & RS3) != 0) begin
       $fwrite(file_handle, " %s:0x%08x", reg_addr_to_str(rvfi_rs3_addr), rvfi_rs3_rdata);
     end
+    if ((data_accessed_fp & RS3) != 0) begin
+      $fwrite(file_handle, " %s:0x%08x", reg_addr_to_str_fp(rvfi_rs3_addr), rvfi_rs3_rdata);
+    end
     if ((data_accessed & RD) != 0) begin
       $fwrite(file_handle, " %s=0x%08x", reg_addr_to_str(rvfi_rd_addr), rvfi_rd_wdata);
+    end
+    if ((data_accessed_fp & RD) != 0) begin
+      $fwrite(file_handle, " %s=0x%08x", reg_addr_to_str_fp(rvfi_rd_addr), rvfi_rd_wdata);
     end
     if ((data_accessed & MEM) != 0) begin
       $fwrite(file_handle, " PA:0x%08x", rvfi_mem_addr);
@@ -165,6 +178,15 @@ module ibex_tracer (
       return $sformatf(" x%0d", addr);
     end else begin
       return $sformatf("x%0d", addr);
+    end
+  endfunction
+
+  // Format register address with "f" prefix, left-aligned to a fixed width of 3 characters.
+  function automatic string reg_addr_to_str_fp(input logic [4:0] addr);
+    if (addr < 10) begin
+      return $sformatf(" f%0d", addr);
+    end else begin
+      return $sformatf("f%0d", addr);
     end
   endfunction
 
@@ -735,6 +757,91 @@ module ibex_tracer (
     decoded_str = $sformatf("fence\t%s,%s", predecessor, successor);
   endfunction
 
+  // floating point support
+
+  function automatic void decode_fp_store_insn(input string mnemonic);
+    data_accessed = MEM;
+    data_accessed_fp = RS1 | RS2;
+    decoded_str = $sformatf("%s\tf%0d,%0d(x%0d)",
+                            mnemonic,
+                            rvfi_rs2_addr,
+                            $signed({{20{rvfi_insn[31]}}, rvfi_insn[31:25], rvfi_insn[11:7]}),
+                            rvfi_rs1_addr);
+  endfunction
+
+  function automatic void decode_fp_load_insn(input string mnemonic);
+    data_accessed = MEM;
+    data_accessed_fp = RD | RS1;
+    decoded_str = $sformatf("%s\tf%0d,%0d(x%0d)", mnemonic, rvfi_rd_addr,
+                    $signed({{20 {rvfi_insn[31]}}, rvfi_insn[31:20]}), rvfi_rs1_addr);
+  endfunction
+
+  function automatic void decode_fp_s_insn(input string mnemonic);
+    data_accessed_fp = RD | RS1;
+    decoded_str = $sformatf("%s\tf%0d,f%0d", mnemonic, rvfi_rd_addr, rvfi_rs1_addr);
+  endfunction
+
+  function automatic void decode_fp_s2_insn(input string mnemonic);
+    data_accessed_fp = RD | RS1 | RS2;
+    decoded_str = $sformatf("%s\tf%0d,f%0d,f%0d", mnemonic, rvfi_rd_addr, rvfi_rs1_addr,
+        rvfi_rs2_addr);
+  endfunction
+
+  function automatic void decode_fp_s3_insn(input string mnemonic);
+    data_accessed_fp = RD | RS1 | RS2 | RS3;
+    decoded_str = $sformatf("%s\tf%0d,f%0d,f%0d,f%0d", mnemonic, rvfi_rd_addr, rvfi_rs1_addr,
+        rvfi_rs2_addr, rvfi_rs3_addr);
+  endfunction
+
+  function automatic void decode_fp_w_s_insn(input string mnemonic);
+    data_accessed = RD;
+    data_accessed_fp = RS1;
+    decoded_str = $sformatf("%s\tx%0d,f%0d", mnemonic, rvfi_rd_addr, rvfi_rs1_addr);
+  endfunction
+
+  function automatic void decode_fp_w_s2_insn(input string mnemonic);
+    data_accessed = RD;
+    data_accessed_fp = RS1 | RS2;
+    decoded_str = $sformatf("%s\tx%0d,f%0d,f%0d", mnemonic, rvfi_rd_addr, rvfi_rs1_addr,
+        rvfi_rs2_addr);
+  endfunction
+
+  function automatic void decode_fp_s_w_insn(input string mnemonic);
+    data_accessed = RS1;
+    data_accessed_fp = RD;
+    decoded_str = $sformatf("%s\tf%0d,x%0d", mnemonic, rvfi_rd_addr, rvfi_rs1_addr);
+  endfunction
+
+  function automatic void decode_fp_compressed_load_insn(input string mnemonic);
+    logic [7:0] imm;
+    if (rvfi_insn[1:0] == OPCODE_C0) begin
+      // C.FLW
+      imm = {1'b0, rvfi_insn[5], rvfi_insn[12:10], rvfi_insn[6], 2'b00};
+    end else begin
+      // C.FLWSP
+      imm = {rvfi_insn[3:2], rvfi_insn[12], rvfi_insn[6:4], 2'b00};
+    end
+
+    data_accessed = MEM;
+    data_accessed_fp = RS1 | RD;
+    decoded_str = $sformatf("%s\tf%0d,%0d(x%0d)", mnemonic, rvfi_rd_addr, imm, rvfi_rs1_addr);
+  endfunction
+
+  function automatic void decode_fp_compressed_store_insn(input string mnemonic);
+    logic [7:0] imm;
+    if (rvfi_insn[1:0] == OPCODE_C0) begin
+      // C.FSW
+      imm = {1'b0, rvfi_insn[5], rvfi_insn[12:10], rvfi_insn[6], 2'b00};
+    end else begin
+      // C.FSWSP
+      imm = {rvfi_insn[8:7], rvfi_insn[12:9], 2'b00};
+    end
+
+    data_accessed = MEM;
+    data_accessed_fp = RS1 | RS2;
+    decoded_str = $sformatf("%s\tf%0d,%0d(x%0d)", mnemonic, rvfi_rs2_addr, imm, rvfi_rs1_addr);
+  endfunction
+
   // cycle counter
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
@@ -761,6 +868,7 @@ module ibex_tracer (
   always_comb begin
     decoded_str = "";
     data_accessed = 5'h0;
+    data_accessed_fp = 4'h0;
     insn_is_compressed = 0;
 
     // Check for compressed instructions
@@ -822,6 +930,11 @@ module ibex_tracer (
           INSN_CSLLI:      decode_ci_cslli_insn("c.slli");
           INSN_CLWSP:      decode_compressed_load_insn("c.lwsp");
           INSN_SWSP:       decode_compressed_store_insn("c.swsp");
+          // FP Instructions
+          INSN_C_FLW:      decode_fp_compressed_load_insn("c.flw");
+          INSN_C_FSW:      decode_fp_compressed_store_insn("c.fsw");
+          INSN_C_FLWSP:    decode_fp_compressed_load_insn("c.flwsp");
+          INSN_C_FSWSP:    decode_fp_compressed_store_insn("c.fswsp");
           default:         decode_mnemonic("INVALID");
         endcase
       end
@@ -1061,6 +1174,34 @@ module ibex_tracer (
         INSN_CRC32C_B:   decode_r1_insn("crc32c.b");
         INSN_CRC32C_H:   decode_r1_insn("crc32c.h");
         INSN_CRC32C_W:   decode_r1_insn("crc32c.w");
+
+        // RV32F
+        INSN_FLW:        decode_fp_load_insn("flw");
+        INSN_FSW:        decode_fp_store_insn("fsw");
+        INSN_FMADD_S:    decode_fp_s3_insn("fmadd.s");
+        INSN_FMSUB_S:    decode_fp_s3_insn("fmsub.s");
+        INSN_FNMADD_S:   decode_fp_s3_insn("fnmadd.s");
+        INSN_FNMSUB_S:   decode_fp_s3_insn("fnmsub.s");
+        INSN_FADD_S:     decode_fp_s2_insn("fadd.s");
+        INSN_FSUB_S:     decode_fp_s2_insn("fsub.s");
+        INSN_FMUL_S:     decode_fp_s2_insn("fmul.s");
+        INSN_FDIV_S:     decode_fp_s2_insn("fdiv.s");
+        INSN_FSQRT_S:    decode_fp_s_insn("fsqrt.s");
+        INSN_FSGNJ_S:    decode_fp_s2_insn("fsgnj.s");
+        INSN_FSGNJN_S:   decode_fp_s2_insn("fsgnjn.s");
+        INSN_FSGNJX_S:   decode_fp_s2_insn("fsgnjx.s");
+        INSN_FMIN_S:     decode_fp_s2_insn("fmin.s");
+        INSN_FMAX_S:     decode_fp_s2_insn("fmax.s");
+        INSN_FCVT_W_S:   decode_fp_w_s_insn("fcvt.w.s");
+        INSN_FCVT_WU_S:  decode_fp_w_s_insn("fcvt.wu.s");
+        INSN_FMV_X_W:    decode_fp_w_s_insn("fmv.x.w");
+        INSN_FEQ_S:      decode_fp_w_s2_insn("feq.s");
+        INSN_FLT_S:      decode_fp_w_s2_insn("flt.s");
+        INSN_FLE_S:      decode_fp_w_s2_insn("fle.s");
+        INSN_FCLASS_S:   decode_fp_w_s_insn("fclass.s");
+        INSN_FCVT_S_W:   decode_fp_s_w_insn("fcvt.s.w");
+        INSN_FCVT_S_WU:  decode_fp_s_w_insn("fcvt.s.wu");
+        INSN_FMV_W_X:    decode_fp_s_w_insn("fmv.w.x");
 
         default:         decode_mnemonic("INVALID");
       endcase

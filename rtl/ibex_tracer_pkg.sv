@@ -332,4 +332,40 @@ package ibex_tracer_pkg;
   parameter logic [15:0] INSN_CJR        = { 3'b100, 1'b0,        5'h0,  5'h0,       {OPCODE_C2} };
   parameter logic [15:0] INSN_CJALR      = { 3'b100, 1'b1,        5'h?,  5'h0,       {OPCODE_C2} };
 
+  // F Extension
+  parameter logic [31:0] INSN_FLW       = { 17'h?, 3'b010, 5'h?, 7'b0000111 };
+  parameter logic [31:0] INSN_FSW       = { 17'h?, 3'b010, 5'h?, 7'b0100111 };
+
+  parameter logic [31:0] INSN_FMADD_S   = { 5'h?, 2'b00, 18'h?, 7'b1000011 };
+  parameter logic [31:0] INSN_FMSUB_S   = { 5'h?, 2'b00, 18'h?, 7'b1000111 };
+  parameter logic [31:0] INSN_FNMSUB_S  = { 5'h?, 2'b00, 18'h?, 7'b1001011 };
+  parameter logic [31:0] INSN_FNMADD_S  = { 5'h?, 2'b00, 18'h?, 7'b1001111 };
+
+  parameter logic [31:0] INSN_FADD_S    = { 5'b00000, 2'b00, 18'h?, 7'b1010011 };
+  parameter logic [31:0] INSN_FSUB_S    = { 5'b00001, 2'b00, 18'h?, 7'b1010011 };
+  parameter logic [31:0] INSN_FMUL_S    = { 5'b00010, 2'b00, 18'h?, 7'b1010011 };
+  parameter logic [31:0] INSN_FDIV_S    = { 5'b00011, 2'b00, 18'h?, 7'b1010011 };
+  parameter logic [31:0] INSN_FSQRT_S   = { 5'b01011, 2'b00, 5'b00000, 13'h?, 7'b1010011 };
+  parameter logic [31:0] INSN_FSGNJ_S   = { 5'b00100, 2'b00, 10'h?, 3'b000, 5'h?, 7'b1010011 };
+  parameter logic [31:0] INSN_FSGNJN_S  = { 5'b00100, 2'b00, 10'h?, 3'b001, 5'h?, 7'b1010011 };
+  parameter logic [31:0] INSN_FSGNJX_S  = { 5'b00100, 2'b00, 10'h?, 3'b010, 5'h?, 7'b1010011 };
+  parameter logic [31:0] INSN_FMIN_S    = { 5'b00101, 2'b00, 10'h?, 3'b000, 5'h?, 7'b1010011 };
+  parameter logic [31:0] INSN_FMAX_S    = { 5'b00101, 2'b00, 10'h?, 3'b001, 5'h?, 7'b1010011 };
+  parameter logic [31:0] INSN_FCVT_W_S  = { 5'b11000, 2'b00, 5'b00000, 13'h?, 7'b1010011 };
+  parameter logic [31:0] INSN_FCVT_WU_S = { 5'b11000, 2'b00, 5'b00001, 13'h?, 7'b1010011 };
+  parameter logic [31:0] INSN_FMV_X_W   = { 5'b11100, 2'b00, 5'b00000, 5'h?, 3'b000, 5'h?, 7'b1010011 };
+  parameter logic [31:0] INSN_FEQ_S     = { 5'b10100, 2'b00, 10'h?, 3'b010, 5'h?, 7'b1010011 };
+  parameter logic [31:0] INSN_FLT_S     = { 5'b10100, 2'b00, 10'h?, 3'b001, 5'h?, 7'b1010011 };
+  parameter logic [31:0] INSN_FLE_S     = { 5'b10100, 2'b00, 10'h?, 3'b000, 5'h?, 7'b1010011 };
+  parameter logic [31:0] INSN_FCLASS_S  = { 5'b11100, 2'b00, 5'b00000, 5'h?, 3'b001, 5'h?, 7'b1010011 };
+  parameter logic [31:0] INSN_FCVT_S_W  = { 5'b11010, 2'b00, 5'b00000, 13'h?, 7'b1010011 };
+  parameter logic [31:0] INSN_FCVT_S_WU = { 5'b11010, 2'b00, 5'b00001, 13'h?, 7'b1010011 };
+  parameter logic [31:0] INSN_FMV_W_X   = { 5'b11110, 2'b00, 5'b00000, 5'h?, 3'b000, 5'h?, 7'b1010011 };
+
+  // Compressed F Instruction
+  parameter logic [15:0] INSN_C_FLWSP   = { 3'b011, 11'h?, {OPCODE_C2} };
+  parameter logic [15:0] INSN_C_FSWSP   = { 3'b111, 11'h?, {OPCODE_C2} };
+  parameter logic [15:0] INSN_C_FLW     = { 3'b011, 11'h?, {OPCODE_C0} };
+  parameter logic [15:0] INSN_C_FSW     = { 3'b111, 11'h?, {OPCODE_C0} };
+
 endpackage

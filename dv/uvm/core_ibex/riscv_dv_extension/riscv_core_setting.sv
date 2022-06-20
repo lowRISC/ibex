@@ -21,7 +21,7 @@
 parameter int XLEN = 32;
 
 // GPR setting
-parameter int NUM_FLOAT_GPR = 0;
+parameter int NUM_FLOAT_GPR = 32;
 parameter int NUM_GPR = 32;
 parameter int NUM_VEC_GPR = 0;
 
@@ -53,7 +53,7 @@ bit support_unaligned_load_store = 1'b1;
 
 // ISA supported by the processor
 riscv_instr_group_t supported_isa[$] = {RV32I, RV32M, RV32C,
-    RV32ZBA, RV32ZBB, RV32ZBC, RV32ZBS, RV32B};
+    RV32ZBA, RV32ZBB, RV32ZBC, RV32ZBS, RV32B, RV32F, RV32FC};
 
 // Interrupt mode support
 mtvec_mode_t supported_interrupt_mode[$] = {VECTORED};

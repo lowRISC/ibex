@@ -13,6 +13,54 @@
 +define+TRACE_EXECUTION
 +define+RVFI
 
+// common cells
++incdir+${PRJ_DIR}/vendor/pulp_common_cells/include
+${PRJ_DIR}/vendor/pulp_common_cells/src/cf_math_pkg.sv
+${PRJ_DIR}/vendor/pulp_common_cells/src/fifo_v3.sv
+${PRJ_DIR}/vendor/pulp_common_cells/src/stream_fifo.sv
+${PRJ_DIR}/vendor/pulp_common_cells/src/lzc.sv
+${PRJ_DIR}/vendor/pulp_common_cells/src/rr_arb_tree.sv
+
+// fpu_div_sqrt_mvp
++incdir+${PRJ_DIR}/vendor/pulp_fpu_div_sqrt_mvp/
+${PRJ_DIR}/vendor/pulp_fpu_div_sqrt_mvp/hdl/defs_div_sqrt_mvp.sv
+${PRJ_DIR}/vendor/pulp_fpu_div_sqrt_mvp/hdl/control_mvp.sv
+${PRJ_DIR}/vendor/pulp_fpu_div_sqrt_mvp/hdl/div_sqrt_mvp_wrapper.sv
+${PRJ_DIR}/vendor/pulp_fpu_div_sqrt_mvp/hdl/div_sqrt_top_mvp.sv
+${PRJ_DIR}/vendor/pulp_fpu_div_sqrt_mvp/hdl/iteration_div_sqrt_mvp.sv
+${PRJ_DIR}/vendor/pulp_fpu_div_sqrt_mvp/hdl/norm_div_sqrt_mvp.sv
+${PRJ_DIR}/vendor/pulp_fpu_div_sqrt_mvp/hdl/nrbd_nrsc_mvp.sv
+${PRJ_DIR}/vendor/pulp_fpu_div_sqrt_mvp/hdl/preprocess_mvp.sv
+
+// fpnew
++incdir+${PRJ_DIR}/vendor/openhwgroup_cvfpu/
+${PRJ_DIR}/vendor/openhwgroup_cvfpu/src/fpnew_pkg.sv
+${PRJ_DIR}/vendor/openhwgroup_cvfpu/src/fpnew_cast_multi.sv
+${PRJ_DIR}/vendor/openhwgroup_cvfpu/src/fpnew_classifier.sv
+${PRJ_DIR}/vendor/openhwgroup_cvfpu/src/fpnew_divsqrt_multi.sv
+${PRJ_DIR}/vendor/openhwgroup_cvfpu/src/fpnew_fma.sv
+${PRJ_DIR}/vendor/openhwgroup_cvfpu/src/fpnew_fma_multi.sv
+${PRJ_DIR}/vendor/openhwgroup_cvfpu/src/fpnew_noncomp.sv
+${PRJ_DIR}/vendor/openhwgroup_cvfpu/src/fpnew_opgroup_block.sv
+${PRJ_DIR}/vendor/openhwgroup_cvfpu/src/fpnew_opgroup_fmt_slice.sv
+${PRJ_DIR}/vendor/openhwgroup_cvfpu/src/fpnew_opgroup_multifmt_slice.sv
+${PRJ_DIR}/vendor/openhwgroup_cvfpu/src/fpnew_rounding.sv
+${PRJ_DIR}/vendor/openhwgroup_cvfpu/src/fpnew_top.sv
+
+// FPU Subsystem files
++incdir+${PRJ_DIR}/vendor/pulp_fpu_ss/src
+${PRJ_DIR}/vendor/pulp_fpu_ss/src/fpu_ss_pkg.sv
+${PRJ_DIR}/vendor/pulp_fpu_ss/src/fpu_ss_instr_pkg.sv
+${PRJ_DIR}/vendor/pulp_fpu_ss/src/fpu_ss_prd_f_pkg.sv
+${PRJ_DIR}/vendor/pulp_fpu_ss/src/fpu_ss_prd_zfinx_pkg.sv
+${PRJ_DIR}/vendor/pulp_fpu_ss/src/fpu_ss.sv
+${PRJ_DIR}/vendor/pulp_fpu_ss/src/fpu_ss_compressed_predecoder.sv
+${PRJ_DIR}/vendor/pulp_fpu_ss/src/fpu_ss_predecoder.sv
+${PRJ_DIR}/vendor/pulp_fpu_ss/src/fpu_ss_decoder.sv
+${PRJ_DIR}/vendor/pulp_fpu_ss/src/fpu_ss_regfile.sv
+${PRJ_DIR}/vendor/pulp_fpu_ss/src/fpu_ss_csr.sv
+${PRJ_DIR}/vendor/pulp_fpu_ss/src/fpu_ss_controller.sv
+
 // Shared lowRISC code
 +incdir+${PRJ_DIR}/vendor/lowrisc_ip/ip/prim/rtl
 ${PRJ_DIR}/vendor/lowrisc_ip/ip/prim/rtl/prim_assert.sv

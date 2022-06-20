@@ -768,3 +768,30 @@
   rtl_test: core_ibex_base_test
   rtl_params:
     RV32B: ["ibex_pkg::RV32BFull", "ibex_pkg::RV32BOTEarlGrey", "ibex_pkg::RV32BBalanced"]
+
+# Floating Point Tests
+- test: riscv_arithmetic_fp_test
+  description: >
+    Arithmetic instruction test, no load/store/branch instructions
+  gen_opts: >
+    +instr_cnt=10000
+    +num_of_sub_program=0
+    +no_fence=1
+    +no_data_page=1
+    +no_branch_jump=1
+    +boot_mode=m
+    +enable_floating_point=1
+  iterations: 10
+  gen_test: riscv_instr_base_test
+  rtl_test: core_ibex_base_test
+
+- test: riscv_rand_instr_fp_test
+  description: >
+    Random instruction stress test
+  iterations: 10
+  gen_test: riscv_instr_base_test
+  gen_opts: >
+    +instr_cnt=10000
+    +num_of_sub_program=5
+    +enable_floating_point=1
+  rtl_test: core_ibex_base_test

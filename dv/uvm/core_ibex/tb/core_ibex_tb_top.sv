@@ -68,6 +68,31 @@ module core_ibex_tb_top;
   parameter bit XInterface               = 1'b1;
   parameter bit MemInterface             = 1'b1;
 
+  logic                         x_compressed_valid;
+  logic                         x_compressed_ready;
+  ibex_pkg::x_compressed_req_t  x_compressed_req;
+  ibex_pkg::x_compressed_resp_t x_compressed_resp;
+
+  logic                         x_issue_valid;
+  logic                         x_issue_ready;
+  ibex_pkg::x_issue_req_t       x_issue_req;
+  ibex_pkg::x_issue_resp_t      x_issue_resp;
+
+  logic                         x_commit_valid;
+  ibex_pkg::x_commit_t          x_commit;
+
+  logic                         x_mem_valid;
+  logic                         x_mem_ready;
+  ibex_pkg::x_mem_req_t         x_mem_req;
+  ibex_pkg::x_mem_resp_t        x_mem_resp;
+
+  logic                         x_mem_result_valid;
+  ibex_pkg::x_mem_result_t      x_mem_result;
+
+  logic                         x_result_valid;
+  logic                         x_result_ready;
+  ibex_pkg::x_result_t          x_result;
+
   ibex_top_tracing #(
     .DmHaltAddr      (32'h`BOOT_ADDR + 'h0 ),
     .DmExceptionAddr (32'h`BOOT_ADDR + 'h4 ),
@@ -139,26 +164,82 @@ module core_ibex_tb_top;
     .alert_major_bus_o      (dut_if.alert_major_bus     ),
     .core_sleep_o           (dut_if.core_sleep          ),
 
-    .x_compressed_valid_o   (                           ),
-    .x_compressed_ready_i   (1'b0                       ),
-    .x_compressed_req_o     (                           ),
-    .x_compressed_resp_i    ('0                         ),
-    .x_issue_valid_o        (                           ),
-    .x_issue_ready_i        (1'b0                       ),
-    .x_issue_req_o          (                           ),
-    .x_issue_resp_i         ('0                         ),
-    .x_commit_valid_o       (                           ),
-    .x_commit_o             (                           ),
-    .x_mem_valid_i          (1'b0                       ),
-    .x_mem_ready_o          (                           ),
-    .x_mem_req_i            ('0                         ),
-    .x_mem_resp_o           (                           ),
-    .x_mem_result_valid_o   (                           ),
-    .x_mem_result_o         (                           ),
-    .x_result_valid_i       (1'b0                       ),
-    .x_result_ready_o       (                           ),
-    .x_result_i             ('0                         )
+    .x_compressed_valid_o   (x_compressed_valid         ),
+    .x_compressed_ready_i   (x_compressed_ready         ),
+    .x_compressed_req_o     (x_compressed_req           ),
+    .x_compressed_resp_i    (x_compressed_resp          ),
+    .x_issue_valid_o        (x_issue_valid              ),
+    .x_issue_ready_i        (x_issue_ready              ),
+    .x_issue_req_o          (x_issue_req                ),
+    .x_issue_resp_i         (x_issue_resp               ),
+    .x_commit_valid_o       (x_commit_valid             ),
+    .x_commit_o             (x_commit                   ),
+    .x_mem_valid_i          (x_mem_valid                ),
+    .x_mem_ready_o          (x_mem_ready                ),
+    .x_mem_req_i            (x_mem_req                  ),
+    .x_mem_resp_o           (x_mem_resp                 ),
+    .x_mem_result_valid_o   (x_mem_result_valid         ),
+    .x_mem_result_o         (x_mem_result               ),
+    .x_result_valid_i       (x_result_valid             ),
+    .x_result_ready_o       (x_result_ready             ),
+    .x_result_i             (x_result                   )
   );
+
+  fpu_ss #(
+      .PULP_ZFINX           ( 0 ),
+      .INPUT_BUFFER_DEPTH   ( 2 ),
+      .OUT_OF_ORDER         ( 1 ),
+      .FORWARDING           ( 1 ),
+      .FPU_FEATURES         (   ),
+      .FPU_IMPLEMENTATION   (   )
+  ) fpu_ss_i (
+      // clock and reset
+      .clk_i                (clk),
+      .rst_ni               (rst_n),
+
+      // Compressed Interface
+      .x_compressed_valid_i (x_compressed_valid),
+      .x_compressed_ready_o (x_compressed_ready),
+      .x_compressed_req_i   (x_compressed_req),
+      .x_compressed_resp_o  (x_compressed_resp),
+
+      // Issue Interface
+      .x_issue_valid_i      (x_issue_valid),
+      .x_issue_ready_o      (x_issue_ready),
+      .x_issue_req_i        (x_issue_req),
+      .x_issue_resp_o       (x_issue_resp),
+
+      // Commit Interface
+      .x_commit_valid_i     (x_commit_valid),
+      .x_commit_i           (x_commit),
+
+      // Memory Request/Response Interface
+      .x_mem_valid_o        (x_mem_valid),
+      .x_mem_ready_i        (x_mem_ready),
+      .x_mem_req_o          (x_mem_req),
+      .x_mem_resp_i         (x_mem_resp),
+
+      // Memory Result Interface
+      .x_mem_result_valid_i (x_mem_result_valid),
+      .x_mem_result_i       (x_mem_result),
+
+      // Result Interface
+      .x_result_valid_o     (x_result_valid),
+      .x_result_ready_i     (x_result_ready),
+      .x_result_o           (x_result)
+  );
+
+  // always_comb begin
+  //   if (fpu_ss_i.fpr_we) begin
+  //     force dut.u_ibex_top.u_ibex_core.rvfi_rd_wdata_d = fpu_ss_i.fpr_wb_data;
+  //   end else begin
+  //     release dut.u_ibex_top.u_ibex_core.rvfi_rd_wdata_d;
+  //   end
+  // end
+
+  always_comb begin
+    force dut.u_ibex_top.u_ibex_core.rvfi_rd_wdata_fp = fpu_ss_i.fpr_wb_data;
+  end
 
   // We should never see any alerts triggered in normal testing
   `ASSERT(NoAlertsTriggered,

@@ -149,6 +149,7 @@ targets:
           # RAM primitives wider than 64bit (required for ECC) fail to build in
           # Verilator without increasing the unroll count (see Verilator#1266)
           - "--unroll-count 72"
+          - "-Wno-BLKANDNBLK"
 
   sim:
     <<: *default_target
@@ -171,7 +172,17 @@ targets:
           - '-CFLAGS "-std=c++11 -Wall -DVM_TRACE_FMT_FST -DTOPLEVEL_NAME=ibex_simple_system -g"'
           - '-LDFLAGS "-pthread -lutil -lelf"'
           - "-Wall"
-          - "-Wwarn-IMPERFECTSCH"
+          # - "-Wwarn-IMPERFECTSCH"
           # RAM primitives wider than 64bit (required for ECC) fail to build in
           # Verilator without increasing the unroll count (see Verilator#1266)
           - "--unroll-count 72"
+          - "-Wno-BLKANDNBLK"
+          - "-Wno-UNUSED"
+          - "-Wno-WIDTH"
+          - "-Wno-LITENDIAN"
+          - "-Wno-UNOPTFLAT"
+          - "-Wno-UNSIGNED"
+          - "-Wno-WIDTHCONCAT"
+          - "-Wno-VARHIDDEN"
+          - "-Wno-IMPORTSTAR"
+          - "-Wno-DECLFILENAME"
