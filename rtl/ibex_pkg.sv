@@ -656,7 +656,7 @@ package ibex_pkg;
   ////////////////
   // Documentation page: https://docs.openhwgroup.org/projects/openhw-group-core-v-xif/en/latest/
 
-  parameter int X_ID_WIDTH  = 4;
+  parameter int unsigned X_ID_WIDTH  = 4;
 
   typedef struct packed {
     logic [15:0]           instr;
