@@ -3,9 +3,6 @@
 Coverage Plan
 =============
 
-.. note::
-  Work to implement the functional coverage described in this plan is on-going and the plan itself is not yet complete.
-
 .. todo::
   Branch prediction hasn't yet been considered, this will add more coverage points and alter some others
 
@@ -20,6 +17,12 @@ Architectural coverage is not Ibex specific. It can be determined directly from 
 
 Microarchitectural coverage will probe the Ibex RTL directly and is described here.
 There is some inevitable overlap between architectural and microarchitectural coverage but we aim to minimise it.
+
+Coverage Implementation
+-----------------------
+All coverpoints and cross coverage defined below is associated with a name ``cp_name``.
+This is the name of the coverpoint or cross that implements the described coverage.
+Coverage is implemented in two files; :file:`dv/uvm/core_ibex/fcov/core_ibex_pmp_fcov_if.sv` for PMP related coverage and :file:`dv/uvm/core_ibex/fcov/core_ibex_fcov_if.sv` for everything else.
 
 Microarchitectural Events and Behaviour
 ---------------------------------------
@@ -158,9 +161,10 @@ Some instructions will behave differently depending upon the state of the proces
     * ``tdata3``
 
 * Loads/stores with ``mstatus.mprv`` set and unset.
-  Covered by ````mprv_effect_cross``
+  Covered by ``mprv_effect_cross``
 * EBreak behaviour in U/M mode with different ``dcsr.ebreakm`` / ``dcsr.ebreaku`` settings.
   Covered by ``priv_mode_instr_cross``
+* ``cp_single_step_instr`` - Single step over every instruction category
 
 Pipeline State
 ^^^^^^^^^^^^^^
@@ -202,9 +206,13 @@ Furthermore they can all occur together and must be appropriately prioritised (c
 * Exception from instruction fetch error (covered by the **FetchError** instruction category).
 * ``pmp_iside_mode_cross`` - Exception from instruction PMP violation.
 * Exception from illegal instruction (covered by the illegal instruction categories).
-* Exception from memory fetch error.
+* ``cp_ls_error_exception`` - Exception from memory fetch error.
 * ``pmp_dside_mode_cross`` - Exception from memory access PMP violation.
-* Unaligned access cases (both accesses saw error, first or second only saw error, or neither saw error) for both kinds of memory exceptions.
+* Unaligned memory access
+
+    * Cover all error and no error scenarios for memory fetch error; first access saw error, second
+      access saw error, neither access saw error
+
 * Interrupt raised/taken.
 
   * ``cp_interrupt_taken`` - Interrupt raised/taken for each available interrupt line.
@@ -251,10 +259,10 @@ PMP
 
   * ``misaligned_lsu_access_cross`` - All combinations of unaligned access split across a boundary, both halves pass, neither pass, just the first passes, just the second passes.
 
-    * ``pmp_instr_edge_cross`` - Two possible boundary splits; across a 32-bit boundary within a region or a boundary between PMP regions.
+    * Two possible boundary splits; across a 32-bit boundary within a region or a boundary between PMP regions.
 
   * ``cp_pmp_iside_region_override``, ``cp_pmp_iside2_region_override``, ``cp_pmp_dside_region_override`` - Higher priority entry allows access that lower priority entry prevents.
-  * Compressed instruction access (16-bit) passes PMP but 32-bit access at same address crosses PMP region boundary.
+  * ``pmp_instr_edge_cross`` - Compressed instruction access (16-bit) passes PMP but 32-bit access at same address crosses PMP region boundary.
 
 * Each field of mssecfg enabled/disabled with relevant functionality tested.
 
@@ -344,5 +352,3 @@ There must be a documented reason a particular bin is added to the illegal or ig
 * ``pmp_iside_priv_bits_cross``, ``pmp_iside2_priv_bits_cross``, ``pmp_dside_priv_bits_cross``, PMP regions x permissions x access fail/pass x privilege level
 
   * Three crosses, one for each PMP channel (instruction, instruction 2 and data).
-
-* ``single_step_instr_cross`` - dcsr.step x Instruction Categories

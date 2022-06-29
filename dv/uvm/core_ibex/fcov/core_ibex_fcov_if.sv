@@ -151,7 +151,7 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
   // register writes minus some exclusions as an ALU operation.
   `ASSERT(InstrCategoryALUCorrect, id_instr_category == InstrCategoryALU |->
       (id_stage_i.rf_wdata_sel == RF_WD_EX) && id_stage_i.rf_we_dec && ~id_stage_i.mult_sel_ex_o &&
-      ~id_stage_i.div_sel_ex_o && ~id_stage_i.lsu_req_dec && ~id_stage_i.jump_in_dec);
+      ~id_stage_i.div_sel_ex_o && ~id_stage_i.lsu_req_dec && ~id_stage_i.jump_in_dec)
 
   `ASSERT(InstrCategoryMulCorrect,
       id_instr_category == InstrCategoryMul |-> id_stage_i.mult_sel_ex_o)
@@ -533,7 +533,7 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
                                            (|cs_registers_i.mip))
 
 
-    single_step_instr_cp: coverpoint id_instr_category iff
+    cp_single_step_instr: coverpoint id_instr_category iff
                                      (id_stage_i.controller_i.fcov_debug_single_step_taken) {
       // Not certain if InstrCategoryOtherIllegal can occur. Put it in illegal_bins for now and
       // revisit if any issues are seen
