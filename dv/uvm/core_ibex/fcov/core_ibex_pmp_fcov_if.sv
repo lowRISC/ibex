@@ -608,8 +608,8 @@ interface core_ibex_pmp_fcov_if import ibex_pkg::*; #(
                               iff (pmp_iside_boundary_cross);
 
       misaligned_lsu_access_cross: cross misaligned_pmp_err_last,
-                                         load_store_unit_i.fcov_ls_mis_pmp_err_2
-                                     iff (pmp_dside_boundary_cross);
+                                         load_store_unit_i.fcov_ls_mis_pmp_err_2,
+                                         pmp_dside_boundary_cross;
 
     endgroup
 
