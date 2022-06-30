@@ -357,6 +357,30 @@
   compare_opts:
     compare_final_value_only: 1
 
+- test: riscv_assorted_traps_interrupts_debug_test
+  description: >
+    Send assorted, intermixed stimulus to test trap-handling and recovery
+  iterations: 10
+  gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +require_signature_addr=1
+    +instr_cnt=20000
+    +enable_unaligned_load_store=1
+    +no_wfi=1
+    +enable_misaligned_instr=1
+    +illegal_instr_ratio=5
+    +enable_interrupt=1
+    +enable_timer_irq=1
+    +gen_debug_section=1
+    +randomize_csr=1
+    +no_csr_instr=1
+    +no_directed_instr=1
+    +num_of_sub_program=5
+    +num_debug_sub_program=5
+  rtl_test: core_ibex_assorted_traps_interrupts_debug_test
+  sim_opts: >
+    +require_signature_addr=1
+
 - test: riscv_single_interrupt_test
   description: >
     Random instruction test with complete interrupt handling
