@@ -389,6 +389,12 @@ module ibex_core import ibex_pkg::*; #(
   logic        perf_tbranch;
   logic        perf_load;
   logic        perf_store;
+  logic        perf_xif_instr_ret;
+  logic        perf_xif_instr_compressed;
+  logic        perf_xif_writeback;
+  logic        perf_xif_stall_offl;
+  logic        perf_xif_stall_external;
+  logic        perf_xif_stall_writeback;
 
   logic        x_mem_lsu_req;
   logic [4:0]  instr_rs1;
@@ -514,7 +520,9 @@ module ibex_core import ibex_pkg::*; #(
     .x_compressed_valid_o(x_compressed_valid_o),
     .x_compressed_ready_i(x_compressed_ready_i),
     .x_compressed_req_o  (x_compressed_req_o),
-    .x_compressed_resp_i (x_compressed_resp_i)
+    .x_compressed_resp_i (x_compressed_resp_i),
+
+    .perf_xif_instr_compressed_o(perf_xif_instr_compressed)
   );
 
   // Core is waiting for the ISide when ID/EX stage is ready for a new instruction but none are
@@ -699,21 +707,26 @@ module ibex_core import ibex_pkg::*; #(
     .outstanding_store_wb_i(outstanding_store_wb),
 
     // Performance Counters
-    .perf_jump_o      (perf_jump),
-    .perf_branch_o    (perf_branch),
-    .perf_tbranch_o   (perf_tbranch),
-    .perf_dside_wait_o(perf_dside_wait),
-    .perf_mul_wait_o  (perf_mul_wait),
-    .perf_div_wait_o  (perf_div_wait),
+    .perf_jump_o                (perf_jump),
+    .perf_branch_o              (perf_branch),
+    .perf_tbranch_o             (perf_tbranch),
+    .perf_dside_wait_o          (perf_dside_wait),
+    .perf_mul_wait_o            (perf_mul_wait),
+    .perf_div_wait_o            (perf_div_wait),
+    .perf_xif_instr_ret_o       (perf_xif_instr_ret),
+    .perf_xif_writeback_o       (perf_xif_writeback),
+    .perf_xif_stall_offl_o      (perf_xif_stall_offl),
+    .perf_xif_stall_external_o  (perf_xif_stall_external),
+    .perf_xif_stall_writeback_o (perf_xif_stall_writeback),
 
     // RVFI Signals
     .instr_id_internal_done_o(instr_id_internal_done),
     .instr_id_xif_offl_o     (instr_id_xif_offl),
     .instr_id_xif_done_o     (instr_id_xif_done),
-    .instr_rs1_o           (instr_rs1),
-    .instr_rs2_o           (instr_rs2),
-    .instr_rs3_o           (instr_rs3),
-    .instr_rd_o            (instr_rd),
+    .instr_rs1_o             (instr_rs1),
+    .instr_rs2_o             (instr_rs2),
+    .instr_rs3_o             (instr_rs3),
+    .instr_rd_o              (instr_rd),
 
     // Extend context status, from/to CSR
     .ecs_rd_i (ecs_rd),
@@ -1150,6 +1163,12 @@ module ibex_core import ibex_pkg::*; #(
     .dside_wait_i               (perf_dside_wait),
     .mul_wait_i                 (perf_mul_wait),
     .div_wait_i                 (perf_div_wait),
+    .xif_instr_ret_i            (perf_xif_instr_ret),
+    .xif_instr_compressed_i     (perf_xif_instr_compressed),
+    .xif_writeback_i            (perf_xif_writeback),
+    .xif_stall_offl_i           (perf_xif_stall_offl),
+    .xif_stall_external_i       (perf_xif_stall_external),
+    .xif_stall_writeback_i      (perf_xif_stall_writeback),
 
     // Extend context status, from/to X-Interface (ID stage)
     .ecs_rd_o (ecs_rd),

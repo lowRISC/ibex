@@ -120,6 +120,12 @@ module ibex_cs_registers #(
   input  logic                 dside_wait_i,                // core waiting for the dside
   input  logic                 mul_wait_i,                  // core waiting for multiply
   input  logic                 div_wait_i,                  // core waiting for divide
+  input  logic                 xif_instr_ret_i,             // external instructions retired
+  input  logic                 xif_instr_compressed_i,      // external compressed instr offloaded
+  input  logic                 xif_writeback_i,             // external writebacks
+  input  logic                 xif_stall_offl_i,            // offload stall
+  input  logic                 xif_stall_external_i,        // external stall
+  input  logic                 xif_stall_writeback_i,       // writeback stall
   // For X-Interface
   output logic [5:0]           ecs_rd_o,
   input  logic [5:0]           ecs_wr_i,
@@ -1268,6 +1274,12 @@ module ibex_cs_registers #(
     mhpmcounter_incr[10] = instr_ret_compressed_i; // num of compressed instr
     mhpmcounter_incr[11] = mul_wait_i;             // cycles waiting for multiply
     mhpmcounter_incr[12] = div_wait_i;             // cycles waiting for divide
+    mhpmcounter_incr[13] = xif_instr_ret_i;        // external instructions retired
+    mhpmcounter_incr[14] = xif_instr_compressed_i; // external compressed instr offloaded
+    mhpmcounter_incr[15] = xif_writeback_i;        // external writebacks
+    mhpmcounter_incr[16] = xif_stall_offl_i;       // cycles for offload stall
+    mhpmcounter_incr[17] = xif_stall_external_i;   // cycles for external stall
+    mhpmcounter_incr[18] = xif_stall_writeback_i;  // cycles for writeback stall
   end
 
   // event selector (hardwired, 0 means no event)

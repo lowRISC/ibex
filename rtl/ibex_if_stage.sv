@@ -122,7 +122,9 @@ module ibex_if_stage import ibex_pkg::*; #(
   output logic                        x_compressed_valid_o,
   input  logic                        x_compressed_ready_i,
   output x_compressed_req_t           x_compressed_req_o,
-  input  x_compressed_resp_t          x_compressed_resp_i
+  input  x_compressed_resp_t          x_compressed_resp_i,
+
+  output logic                        perf_xif_instr_compressed_o
 );
 
   logic              instr_valid_id_d, instr_valid_id_q;
@@ -728,6 +730,9 @@ module ibex_if_stage import ibex_pkg::*; #(
     // Next id is different from current id.
     assign x_compressed_id_bit_d = ~x_compressed_id_bit_q;
 
+    // Performance counter
+    assign perf_xif_instr_compressed_o = x_compressed_accept & x_compressed_id_bit_flip;
+
     if (ResetAll) begin : g_xif_compressed_buffer_ra
       always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
@@ -758,6 +763,8 @@ module ibex_if_stage import ibex_pkg::*; #(
 
     assign x_compressed_valid_o = 1'b0;
     assign x_compressed_req_o   = '0;
+
+    assign perf_xif_instr_compressed_o = 1'b0;
   end
 
   ////////////////

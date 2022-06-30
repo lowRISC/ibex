@@ -187,6 +187,11 @@ module ibex_id_stage import ibex_pkg::*; #(
                                                         // access to finish before proceeding
   output logic                      perf_mul_wait_o,
   output logic                      perf_div_wait_o,
+  output logic                      perf_xif_instr_ret_o,
+  output logic                      perf_xif_writeback_o,
+  output logic                      perf_xif_stall_offl_o,
+  output logic                      perf_xif_stall_external_o,
+  output logic                      perf_xif_stall_writeback_o,
 
   // RVFI Signals
   output logic                      instr_id_internal_done_o,
@@ -1224,6 +1229,15 @@ module ibex_id_stage import ibex_pkg::*; #(
 
   assign rf_rd_a_match_xif = (x_result_i.rd == rf_raddr_a_o) & |rf_raddr_a_o & x_result_wb_en;
   assign rf_rd_b_match_xif = (x_result_i.rd == rf_raddr_b_o) & |rf_raddr_b_o & x_result_wb_en;
+
+  // performance counter
+  assign perf_xif_instr_ret_o        = x_result_handshake;
+  assign perf_xif_writeback_o        = x_result_wb_en;
+  assign perf_xif_stall_offl_o       = stall_offl;
+  assign perf_xif_stall_external_o   = stall_external;
+  assign perf_xif_stall_writeback_o  = stall_xif_wb &
+                                       ~(stall_ld_hz | stall_mem | stall_multdiv | stall_jump |
+                                       stall_branch | stall_alu | stall_offl | stall_external);
 
   if (XInterface) begin : gen_x_interface
 
