@@ -25,6 +25,19 @@ package core_ibex_test_pkg;
 
   typedef class core_ibex_vseq;
 
+  // For new_seq_lib...
+
+  typedef enum bit [1:0] {
+    SingleRun,    // Single iteration
+    InfiniteRuns, // Run forever until stop is specified
+    MultipleRuns  // Multiple runs with configurable or randomizable iteration count
+    } run_type_e;
+  typedef enum bit [1:0] {
+    IsideErr, // Inject error in instruction side memory.
+    DsideErr, // Inject error in data side memory.
+    PickErr   // Pick which memory to inject error in.
+    } error_type_e;
+
   `include "core_ibex_report_server.sv"
   `include "core_ibex_seq_lib.sv"
   `include "core_ibex_new_seq_lib.sv"
