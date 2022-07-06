@@ -11,6 +11,10 @@ git+https://github.com/lowRISC/fusesoc.git@ot
 pyyaml
 mako
 junit-xml
+# dataclass  # needed for backports?
+gitpython
+typeguard
+portalocker
 
 # Needed by dvsim.py (not actually used in Ibex)
 hjson
