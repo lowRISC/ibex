@@ -39,6 +39,7 @@ module ibex_load_store_unit #(
   input  logic [1:0]   lsu_type_i,           // data type: word, half word, byte -> from ID/EX
   input  logic [31:0]  lsu_wdata_i,          // data to write to memory          -> from ID/EX
   input  logic         lsu_sign_ext_i,       // sign extension                   -> from ID/EX
+  input  logic [3:0]   lsu_x_mem_be_i,
 
   output logic [31:0]  lsu_rdata_o,          // requested data                   -> to ID/EX
   output logic         lsu_rdata_valid_o,
@@ -518,7 +519,7 @@ module ibex_load_store_unit #(
   // output to data interface
   assign data_addr_o   = data_addr_w_aligned;
   assign data_we_o     = lsu_we_i;
-  assign data_be_o     = data_be;
+  assign data_be_o     = data_be & lsu_x_mem_be_i;
 
   /////////////////////////////////////
   // Write data integrity generation //

@@ -23,6 +23,7 @@ small:
   SecureIbex               : 0
   ICacheScramble           : 0
   XInterface               : 0
+  MemInterface             : 0
 
 # Configuration to match that used in the OpenTitan project
 opentitan:
@@ -41,6 +42,7 @@ opentitan:
   SecureIbex               : 1
   ICacheScramble           : 0
   XInterface               : 0
+  MemInterface             : 0
 
 # ===============================
 # * EXPERIMENTAL CONFIGURATIONS *
@@ -65,6 +67,7 @@ experimental-maxperf:
   SecureIbex               : 0
   ICacheScramble           : 0
   XInterface               : 0
+  MemInterface             : 0
 
 # experimental-maxperf config above plus PMP enabled with 16 regions.
 experimental-maxperf-pmp:
@@ -83,6 +86,7 @@ experimental-maxperf-pmp:
   SecureIbex               : 0
   ICacheScramble           : 0
   XInterface               : 0
+  MemInterface             : 0
 
 # experimental-maxperf-pmp config above with balanced bitmanip extension
 experimental-maxperf-pmp-bmbalanced:
@@ -101,6 +105,7 @@ experimental-maxperf-pmp-bmbalanced:
   SecureIbex               : 0
   ICacheScramble           : 0
   XInterface               : 0
+  MemInterface             : 0
 
 # experimental-maxperf-pmp config above with full bitmanip extension
 experimental-maxperf-pmp-bmfull:
@@ -119,6 +124,7 @@ experimental-maxperf-pmp-bmfull:
   SecureIbex               : 0
   ICacheScramble           : 0
   XInterface               : 0
+  MemInterface             : 0
 
 # experimental-maxperf-pmp-bmfull config above with icache enabled
 experimental-maxperf-pmp-bmfull-icache:
@@ -137,6 +143,7 @@ experimental-maxperf-pmp-bmfull-icache:
   SecureIbex               : 0
   ICacheScramble           : 0
   XInterface               : 0
+  MemInterface             : 0
 
 # experimental-maxperf with branch predictor switched on. This exists to allow
 # easy use of Ibex with the branch predictor in particular for CI runs. The
@@ -158,6 +165,7 @@ experimental-branch-predictor:
   SecureIbex               : 0
   ICacheScramble           : 0
   XInterface               : 0
+  MemInterface             : 0
 
 # Small with X-Interface
 small-cvxif:
@@ -176,6 +184,7 @@ small-cvxif:
   SecureIbex               : 0
   ICacheScramble           : 0
   XInterface               : 1
+  MemInterface             : 1
 
 # Opentitan with X-Interface
 opentitan-cvxif:
@@ -194,6 +203,7 @@ opentitan-cvxif:
   SecureIbex               : 1
   ICacheScramble           : 0
   XInterface               : 1
+  MemInterface             : 1
 
 # experimental-maxperf-pmp config with X-Interface
 experimental-maxperf-pmp-bmfull-cvxif:
@@ -212,3 +222,4 @@ experimental-maxperf-pmp-bmfull-cvxif:
   SecureIbex               : 0
   ICacheScramble           : 0
   XInterface               : 1
+  MemInterface             : 1

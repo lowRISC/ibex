@@ -669,6 +669,7 @@ package ibex_pkg;
   parameter int unsigned XLEN        = 32;
   parameter int unsigned X_NUM_RS    = 3;
   parameter int unsigned X_ID_WIDTH  = 4;
+  parameter int unsigned X_MEM_WIDTH = 32;
   parameter int unsigned X_RFR_WIDTH = 32;
   parameter int unsigned X_RFW_WIDTH = 32;
   parameter logic [31:0] X_MISA      = 32'b0;
@@ -711,6 +712,32 @@ package ibex_pkg;
     logic [X_ID_WIDTH-1:0] id;
     logic                  commit_kill;
   } x_commit_t;
+
+  typedef struct packed {
+    logic [X_ID_WIDTH-1:0]    id;
+    logic [31:0]              addr;
+    priv_lvl_e                mode;
+    logic                     we;
+    logic [2:0]               size;
+    logic [X_MEM_WIDTH/8-1:0] be;
+    logic [1:0]               attr;
+    logic [X_MEM_WIDTH-1:0]   wdata;
+    logic                     last;
+    logic                     spec;
+  } x_mem_req_t;
+
+  typedef struct packed {
+    logic       exc;
+    logic [5:0] exccode;
+    logic       dbg;
+  } x_mem_resp_t;
+
+  typedef struct packed {
+    logic [X_ID_WIDTH-1:0]  id;
+    logic [X_MEM_WIDTH-1:0] rdata;
+    logic                   err;
+    logic                   dbg;
+  } x_mem_result_t;
 
   typedef struct packed {
     logic [X_ID_WIDTH-1:0]       id;

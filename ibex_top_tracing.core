@@ -113,6 +113,12 @@ parameters:
     paramtype: vlogparam
     description: "Enables the RISC-V Extension Interface (EXPERIMENTAL) [0/1]"
 
+  MemInterface:
+    datatype: int
+    default: 0
+    paramtype: vlogparam
+    description: "Enables Memory and Memory Result Interfaces for RISC-V Extension Interface (EXPERIMENTAL) [0/1]"
+
 targets:
   default: &default_target
     filesets:
@@ -141,6 +147,7 @@ targets:
       - PMPGranularity
       - PMPNumRegions
       - XInterface
+      - MemInterface
     default_tool: verilator
     tools:
       verilator:

@@ -43,7 +43,8 @@ module ibex_core import ibex_pkg::*; #(
   parameter int unsigned MemDataWidth      = MemECC ? 32 + 7 : 32,
   parameter int unsigned DmHaltAddr        = 32'h1A110800,
   parameter int unsigned DmExceptionAddr   = 32'h1A110808,
-  parameter bit          XInterface        = 1'b1
+  parameter bit          XInterface        = 1'b1,
+  parameter bit          MemInterface      = 1'b0
 ) (
   // Clock and Reset
   input  logic                         clk_i,
@@ -165,6 +166,14 @@ module ibex_core import ibex_pkg::*; #(
   // Commit Interface
   output logic                         x_commit_valid_o,
   output x_commit_t                    x_commit_o,
+  // Memory Interface
+  input  logic                         x_mem_valid_i,
+  output logic                         x_mem_ready_o,
+  input  x_mem_req_t                   x_mem_req_i,
+  output x_mem_resp_t                  x_mem_resp_o,
+  // Memory Result Interface
+  output logic                         x_mem_result_valid_o,
+  output x_mem_result_t                x_mem_result_o,
   // Result Interface
   input  logic                         x_result_valid_i,
   output logic                         x_result_ready_o,
@@ -226,6 +235,7 @@ module ibex_core import ibex_pkg::*; #(
   // LSU signals
   logic        lsu_addr_incr_req;
   logic [31:0] lsu_addr_last;
+  logic [3:0]  lsu_x_mem_be;
 
   // Jump and branch target and decision (EX->IF)
   logic [31:0] branch_target_ex;
@@ -296,6 +306,7 @@ module ibex_core import ibex_pkg::*; #(
   logic        lsu_we;
   logic [1:0]  lsu_type;
   logic        lsu_sign_ext;
+  logic        lsu_rdata_valid;
   logic        lsu_req;
   logic [31:0] lsu_wdata;
   logic        lsu_req_done;
@@ -343,6 +354,9 @@ module ibex_core import ibex_pkg::*; #(
   logic [31:0] csr_mtval;
   logic        csr_mstatus_tw;
   priv_lvl_e   priv_mode_id;
+  priv_lvl_e   priv_mode_lsu_csr;
+  priv_lvl_e   priv_mode_lsu_xif;
+  logic        priv_mode_lsu_xif_en;
   priv_lvl_e   priv_mode_lsu;
 
   // debug mode and dcsr configuration
@@ -375,6 +389,7 @@ module ibex_core import ibex_pkg::*; #(
   logic        perf_load;
   logic        perf_store;
 
+  logic        x_mem_lsu_req;
   logic [4:0]  instr_rs1;
   logic [4:0]  instr_rs2;
   logic [4:0]  instr_rs3;
@@ -538,8 +553,10 @@ module ibex_core import ibex_pkg::*; #(
     .DataIndTiming  (DataIndTiming),
     .WritebackStage (WritebackStage),
     .BranchPredictor(BranchPredictor),
+    .ResetAll       (ResetAll),
     .MemECC         (MemECC),
-    .XInterface     (XInterface)
+    .XInterface     (XInterface),
+    .MemInterface   (MemInterface)
   ) id_stage_i (
     .clk_i (clk_i),
     .rst_ni(rst_ni),
@@ -625,6 +642,8 @@ module ibex_core import ibex_pkg::*; #(
     .lsu_type_o    (lsu_type),  // to load store unit
     .lsu_sign_ext_o(lsu_sign_ext),  // to load store unit
     .lsu_wdata_o   (lsu_wdata),  // to load store unit
+    .lsu_rdata_i   (rf_wdata_lsu),
+    .lsu_x_mem_be_o(lsu_x_mem_be),
     .lsu_req_done_i(lsu_req_done),  // from load store unit
 
     .lsu_addr_incr_req_i(lsu_addr_incr_req),
@@ -700,6 +719,10 @@ module ibex_core import ibex_pkg::*; #(
     .ecs_wr_o (ecs_wr),
     .ecs_wen_o(ecs_wen),
 
+    // X-Interface LSU privilege signal, to PMP
+    .priv_mode_lsu_xif_o   (priv_mode_lsu_xif),
+    .priv_mode_lsu_xif_en_o(priv_mode_lsu_xif_en),
+
     // Issue Interface
     .x_issue_valid_o(x_issue_valid_o),
     .x_issue_ready_i(x_issue_ready_i),
@@ -710,10 +733,26 @@ module ibex_core import ibex_pkg::*; #(
     .x_commit_valid_o(x_commit_valid_o),
     .x_commit_o      (x_commit_o),
 
+    // Memory Interface
+    .x_mem_valid_i(x_mem_valid_i),
+    .x_mem_ready_o(x_mem_ready_o),
+    .x_mem_req_i  (x_mem_req_i),
+    .x_mem_resp_o (x_mem_resp_o),
+
+    // Memory Result Interface
+    .x_mem_result_valid_o(x_mem_result_valid_o),
+    .x_mem_result_o      (x_mem_result_o),
+
     // Result Interface
     .x_result_valid_i(x_result_valid_i),
     .x_result_ready_o(x_result_ready_o),
-    .x_result_i      (x_result_i)
+    .x_result_i      (x_result_i),
+
+    // To ex block
+    .x_mem_lsu_req_o(x_mem_lsu_req),
+
+    // Only for assertion
+    .outstanding_xif_load_store_o(outstanding_xif_load_store)
   );
 
   assign icache_inval_o = icache_inval;
@@ -755,6 +794,9 @@ module ibex_core import ibex_pkg::*; #(
     .imd_val_d_o (imd_val_d_ex),
     .imd_val_q_i (imd_val_q_ex),
 
+    // From ID
+    .x_mem_lsu_req_i(x_mem_lsu_req),
+
     // Outputs
     .alu_adder_result_ex_o(alu_adder_result_ex),  // to LSU
     .result_ex_o          (result_ex),  // to ID
@@ -771,6 +813,7 @@ module ibex_core import ibex_pkg::*; #(
 
   assign data_req_o   = data_req_out & ~pmp_req_err[PMP_D];
   assign lsu_resp_err = lsu_load_err | lsu_store_err;
+  assign rf_we_lsu    = lsu_rdata_valid & ~x_mem_result_valid_o;
 
   ibex_load_store_unit #(
     .MemECC(MemECC),
@@ -797,9 +840,10 @@ module ibex_core import ibex_pkg::*; #(
     .lsu_type_i    (lsu_type),
     .lsu_wdata_i   (lsu_wdata),
     .lsu_sign_ext_i(lsu_sign_ext),
+    .lsu_x_mem_be_i(lsu_x_mem_be),
 
     .lsu_rdata_o      (rf_wdata_lsu),
-    .lsu_rdata_valid_o(rf_we_lsu),
+    .lsu_rdata_valid_o(lsu_rdata_valid),
     .lsu_req_i        (lsu_req),
     .lsu_req_done_o   (lsu_req_done),
 
@@ -945,6 +989,8 @@ module ibex_core import ibex_pkg::*; #(
   // Major bus alert
   assign alert_major_bus_o = lsu_load_intg_err | instr_intg_err;
 
+  logic outstanding_xif_load_store;
+
   // Explict INC_ASSERT block to avoid unused signal lint warnings were asserts are not included
   `ifdef INC_ASSERT
   // Signals used for assertions only
@@ -981,8 +1027,12 @@ module ibex_core import ibex_pkg::*; #(
   end
 
   `ASSERT(NoMemResponseWithoutPendingAccess,
-    data_rvalid_i |-> outstanding_load_resp | outstanding_store_resp, clk_i, !rst_ni)
+    data_rvalid_i |-> outstanding_load_resp | outstanding_store_resp | outstanding_xif_load_store,
+    clk_i, !rst_ni)
   `endif
+
+  logic unused_outstanding_xif_load_store;
+  assign unused_outstanding_xif_load_store = outstanding_xif_load_store;
 
   ////////////////////////
   // RF (Register File) //
@@ -1021,7 +1071,7 @@ module ibex_core import ibex_pkg::*; #(
     // Hart ID from outside
     .hart_id_i      (hart_id_i),
     .priv_mode_id_o (priv_mode_id),
-    .priv_mode_lsu_o(priv_mode_lsu),
+    .priv_mode_lsu_o(priv_mode_lsu_csr),
 
     // mtvec
     .csr_mtvec_o     (csr_mtvec),
@@ -1107,6 +1157,9 @@ module ibex_core import ibex_pkg::*; #(
     .ecs_wr_i (ecs_wr),
     .ecs_wen_i(ecs_wen)
   );
+
+  // Multiplex between external and internal signals
+  assign priv_mode_lsu = priv_mode_lsu_xif_en ? priv_mode_lsu_xif : priv_mode_lsu_csr;
 
   // These assertions are in top-level as instr_valid_id required as the enable term
   `ASSERT(IbexCsrOpValid, instr_valid_id |-> csr_op inside {

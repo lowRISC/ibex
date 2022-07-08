@@ -29,7 +29,8 @@ module ibex_top_tracing import ibex_pkg::*; #(
   parameter lfsr_perm_t  RndCnstLfsrPerm  = RndCnstLfsrPermDefault,
   parameter int unsigned DmHaltAddr       = 32'h1A110800,
   parameter int unsigned DmExceptionAddr  = 32'h1A110808,
-  parameter bit          XInterface       = 1'b1
+  parameter bit          XInterface       = 1'b1,
+  parameter bit          MemInterface     = 1'b0
 ) (
   // Clock and Reset
   input  logic                         clk_i,
@@ -101,6 +102,12 @@ module ibex_top_tracing import ibex_pkg::*; #(
   input  x_issue_resp_t                x_issue_resp_i,
   output logic                         x_commit_valid_o,
   output x_commit_t                    x_commit_o,
+  input  logic                         x_mem_valid_i,
+  output logic                         x_mem_ready_o,
+  input  x_mem_req_t                   x_mem_req_i,
+  output x_mem_resp_t                  x_mem_resp_o,
+  output logic                         x_mem_result_valid_o,
+  output x_mem_result_t                x_mem_result_o,
   input  logic                         x_result_valid_i,
   output logic                         x_result_ready_o,
   input  x_result_t                    x_result_i
@@ -174,7 +181,8 @@ module ibex_top_tracing import ibex_pkg::*; #(
     .RndCnstLfsrPerm  ( RndCnstLfsrPerm  ),
     .DmHaltAddr       ( DmHaltAddr       ),
     .DmExceptionAddr  ( DmExceptionAddr  ),
-    .XInterface       ( XInterface       )
+    .XInterface       ( XInterface       ),
+    .MemInterface     ( MemInterface     )
   ) u_ibex_top (
     .clk_i,
     .rst_ni,
@@ -265,6 +273,12 @@ module ibex_top_tracing import ibex_pkg::*; #(
     .x_issue_resp_i,
     .x_commit_valid_o,
     .x_commit_o,
+    .x_mem_valid_i,
+    .x_mem_ready_o,
+    .x_mem_req_i,
+    .x_mem_resp_o,
+    .x_mem_result_valid_o,
+    .x_mem_result_o,
     .x_result_valid_i,
     .x_result_ready_o,
     .x_result_i

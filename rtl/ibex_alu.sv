@@ -29,7 +29,9 @@ module ibex_alu #(
 
   output logic [31:0]       result_o,
   output logic              comparison_result_o,
-  output logic              is_equal_result_o
+  output logic              is_equal_result_o,
+
+  input  logic              x_mem_lsu_req_i
 );
   import ibex_pkg::*;
 
@@ -82,23 +84,31 @@ module ibex_alu #(
 
   // prepare operand a
   always_comb begin
-    unique case(1'b1)
-      multdiv_sel_i:     adder_in_a = multdiv_operand_a_i;
-      adder_op_a_shift1: adder_in_a = {operand_a_i[30:0],2'b01};
-      adder_op_a_shift2: adder_in_a = {operand_a_i[29:0],3'b001};
-      adder_op_a_shift3: adder_in_a = {operand_a_i[28:0],4'b0001};
-      default:           adder_in_a = {operand_a_i,1'b1};
-    endcase
+    if (x_mem_lsu_req_i) begin
+      adder_in_a = {operand_a_i,1'b1};
+    end else begin
+      unique case(1'b1)
+        multdiv_sel_i:     adder_in_a = multdiv_operand_a_i;
+        adder_op_a_shift1: adder_in_a = {operand_a_i[30:0],2'b01};
+        adder_op_a_shift2: adder_in_a = {operand_a_i[29:0],3'b001};
+        adder_op_a_shift3: adder_in_a = {operand_a_i[28:0],4'b0001};
+        default:           adder_in_a = {operand_a_i,1'b1};
+      endcase
+    end
   end
 
   // prepare operand b
   assign operand_b_neg = {operand_b_i,1'b0} ^ {33{1'b1}};
   always_comb begin
-    unique case (1'b1)
-      multdiv_sel_i:     adder_in_b = multdiv_operand_b_i;
-      adder_op_b_negate: adder_in_b = operand_b_neg;
-      default:           adder_in_b = {operand_b_i, 1'b0};
-    endcase
+    if (x_mem_lsu_req_i) begin
+      adder_in_b = {operand_b_i, 1'b0};
+    end else begin
+      unique case (1'b1)
+        multdiv_sel_i:     adder_in_b = multdiv_operand_b_i;
+        adder_op_b_negate: adder_in_b = operand_b_neg;
+        default:           adder_in_b = {operand_b_i, 1'b0};
+      endcase
+    end
   end
 
   // actual adder

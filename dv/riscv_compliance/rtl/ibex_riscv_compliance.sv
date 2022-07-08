@@ -152,7 +152,8 @@ module ibex_riscv_compliance (
       .ICacheScramble  (ICacheScramble  ),
       .DmHaltAddr      (32'h00000000    ),
       .DmExceptionAddr (32'h00000000    ),
-      .XInterface      (XInterface      )
+      .XInterface      (XInterface      ),
+      .MemInterface    (MemInterface    )
     ) u_top (
       .clk_i                  (clk_sys                ),
       .rst_ni                 (rst_sys_n              ),
@@ -216,6 +217,12 @@ module ibex_riscv_compliance (
       .x_issue_resp_i         ('0                     ),
       .x_commit_valid_o       (                       ),
       .x_commit_o             (                       ),
+      .x_mem_valid_i          (1'b0                   ),
+      .x_mem_ready_o          (                       ),
+      .x_mem_req_i            ('0                     ),
+      .x_mem_resp_o           (                       ),
+      .x_mem_result_valid_o   (                       ),
+      .x_mem_result_o         (                       ),
       .x_result_valid_i       (1'b0                   ),
       .x_result_ready_o       (                       ),
       .x_result_i             ('0                     )

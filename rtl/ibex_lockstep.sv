@@ -39,7 +39,8 @@ module ibex_lockstep import ibex_pkg::*; #(
   parameter int unsigned MemDataWidth      = MemECC ? 32 + 7 : 32,
   parameter int unsigned DmHaltAddr        = 32'h1A110800,
   parameter int unsigned DmExceptionAddr   = 32'h1A110808,
-  parameter bit          XInterface        = 1'b1
+  parameter bit          XInterface        = 1'b1,
+  parameter bit          MemInterface      = 1'b0
 ) (
   input  logic                         clk_i,
   input  logic                         rst_ni,
@@ -115,6 +116,12 @@ module ibex_lockstep import ibex_pkg::*; #(
   input  x_issue_resp_t                x_issue_resp_i,
   input  logic                         x_commit_valid_i,
   input  x_commit_t                    x_commit_i,
+  input  logic                         x_mem_valid_i,
+  input  logic                         x_mem_ready_i,
+  input  x_mem_req_t                   x_mem_req_i,
+  input  x_mem_resp_t                  x_mem_resp_i,
+  input  logic                         x_mem_result_valid_i,
+  input  x_mem_result_t                x_mem_result_i,
   input  logic                         x_result_valid_i,
   input  logic                         x_result_ready_i,
   input  x_result_t                    x_result_i
@@ -204,6 +211,8 @@ module ibex_lockstep import ibex_pkg::*; #(
     x_compressed_resp_t          x_compressed_resp;
     logic                        x_issue_ready;
     x_issue_resp_t               x_issue_resp;
+    logic                        x_mem_valid;
+    x_mem_req_t                  x_mem_req;
     logic                        x_result_valid;
     x_result_t                   x_result;
   } delayed_inputs_t;
@@ -237,6 +246,8 @@ module ibex_lockstep import ibex_pkg::*; #(
   assign shadow_inputs_in.x_compressed_resp  = x_compressed_resp_i;
   assign shadow_inputs_in.x_issue_ready      = x_issue_ready_i;
   assign shadow_inputs_in.x_issue_resp       = x_issue_resp_i;
+  assign shadow_inputs_in.x_mem_valid        = x_mem_valid_i;
+  assign shadow_inputs_in.x_mem_req          = x_mem_req_i;
   assign shadow_inputs_in.x_result_valid     = x_result_valid_i;
   assign shadow_inputs_in.x_result           = x_result_i;
 
@@ -297,6 +308,10 @@ module ibex_lockstep import ibex_pkg::*; #(
     x_issue_req_t                x_issue_req;
     logic                        x_commit_valid;
     x_commit_t                   x_commit;
+    logic                        x_mem_ready;
+    x_mem_resp_t                 x_mem_resp;
+    logic                        x_mem_result_valid;
+    x_mem_result_t               x_mem_result;
     logic                        x_result_ready;
   } delayed_outputs_t;
 
@@ -337,6 +352,10 @@ module ibex_lockstep import ibex_pkg::*; #(
   assign core_outputs_in.x_issue_req         = x_issue_req_i;
   assign core_outputs_in.x_commit_valid      = x_commit_valid_i;
   assign core_outputs_in.x_commit            = x_commit_i;
+  assign core_outputs_in.x_mem_ready         = x_mem_ready_i;
+  assign core_outputs_in.x_mem_resp          = x_mem_resp_i;
+  assign core_outputs_in.x_mem_result_valid  = x_mem_result_valid_i;
+  assign core_outputs_in.x_mem_result        = x_mem_result_i;
   assign core_outputs_in.x_result_ready      = x_result_ready_i;
 
   // Delay the outputs
@@ -383,7 +402,8 @@ module ibex_lockstep import ibex_pkg::*; #(
     .MemDataWidth      ( MemDataWidth      ),
     .DmHaltAddr        ( DmHaltAddr        ),
     .DmExceptionAddr   ( DmExceptionAddr   ),
-    .XInterface        ( XInterface        )
+    .XInterface        ( XInterface        ),
+    .MemInterface      ( MemInterface      )
   ) u_shadow_core (
     .clk_i               (clk_i),
     .rst_ni              (rst_shadow_n),
@@ -487,6 +507,12 @@ module ibex_lockstep import ibex_pkg::*; #(
     .x_issue_resp_i         (shadow_inputs_q[0].x_issue_resp),
     .x_commit_valid_o       (shadow_outputs_d.x_commit_valid),
     .x_commit_o             (shadow_outputs_d.x_commit),
+    .x_mem_valid_i          (shadow_inputs_q[0].x_mem_valid),
+    .x_mem_ready_o          (shadow_outputs_d.x_mem_ready),
+    .x_mem_req_i            (shadow_inputs_q[0].x_mem_req),
+    .x_mem_resp_o           (shadow_outputs_d.x_mem_resp),
+    .x_mem_result_valid_o   (shadow_outputs_d.x_mem_result_valid),
+    .x_mem_result_o         (shadow_outputs_d.x_mem_result),
     .x_result_valid_i       (shadow_inputs_q[0].x_result_valid),
     .x_result_ready_o       (shadow_outputs_d.x_result_ready),
     .x_result_i             (shadow_inputs_q[0].x_result)
