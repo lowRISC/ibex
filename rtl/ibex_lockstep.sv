@@ -108,7 +108,16 @@ module ibex_lockstep import ibex_pkg::*; #(
   input  logic                         x_compressed_valid_i,
   input  logic                         x_compressed_ready_i,
   input  x_compressed_req_t            x_compressed_req_i,
-  input  x_compressed_resp_t           x_compressed_resp_i
+  input  x_compressed_resp_t           x_compressed_resp_i,
+  input  logic                         x_issue_valid_i,
+  input  logic                         x_issue_ready_i,
+  input  x_issue_req_t                 x_issue_req_i,
+  input  x_issue_resp_t                x_issue_resp_i,
+  input  logic                         x_commit_valid_i,
+  input  x_commit_t                    x_commit_i,
+  input  logic                         x_result_valid_i,
+  input  logic                         x_result_ready_i,
+  input  x_result_t                    x_result_i
 );
 
   localparam int unsigned LockstepOffsetW = $clog2(LockstepOffset);
@@ -193,6 +202,10 @@ module ibex_lockstep import ibex_pkg::*; #(
     logic                        ic_scr_key_valid;
     logic                        x_compressed_ready;
     x_compressed_resp_t          x_compressed_resp;
+    logic                        x_issue_ready;
+    x_issue_resp_t               x_issue_resp;
+    logic                        x_result_valid;
+    x_result_t                   x_result;
   } delayed_inputs_t;
 
   delayed_inputs_t [LockstepOffset-1:0] shadow_inputs_q;
@@ -222,6 +235,10 @@ module ibex_lockstep import ibex_pkg::*; #(
   assign shadow_inputs_in.ic_scr_key_valid   = ic_scr_key_valid_i;
   assign shadow_inputs_in.x_compressed_ready = x_compressed_ready_i;
   assign shadow_inputs_in.x_compressed_resp  = x_compressed_resp_i;
+  assign shadow_inputs_in.x_issue_ready      = x_issue_ready_i;
+  assign shadow_inputs_in.x_issue_resp       = x_issue_resp_i;
+  assign shadow_inputs_in.x_result_valid     = x_result_valid_i;
+  assign shadow_inputs_in.x_result           = x_result_i;
 
   // Delay the inputs
   always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -276,6 +293,11 @@ module ibex_lockstep import ibex_pkg::*; #(
     logic                        core_busy;
     logic                        x_compressed_valid;
     x_compressed_req_t           x_compressed_req;
+    logic                        x_issue_valid;
+    x_issue_req_t                x_issue_req;
+    logic                        x_commit_valid;
+    x_commit_t                   x_commit;
+    logic                        x_result_ready;
   } delayed_outputs_t;
 
   delayed_outputs_t [OutputsOffset-1:0]  core_outputs_q;
@@ -311,6 +333,11 @@ module ibex_lockstep import ibex_pkg::*; #(
   assign core_outputs_in.core_busy           = core_busy_i;
   assign core_outputs_in.x_compressed_valid  = x_compressed_valid_i;
   assign core_outputs_in.x_compressed_req    = x_compressed_req_i;
+  assign core_outputs_in.x_issue_valid       = x_issue_valid_i;
+  assign core_outputs_in.x_issue_req         = x_issue_req_i;
+  assign core_outputs_in.x_commit_valid      = x_commit_valid_i;
+  assign core_outputs_in.x_commit            = x_commit_i;
+  assign core_outputs_in.x_result_ready      = x_result_ready_i;
 
   // Delay the outputs
   always_ff @(posedge clk_i) begin
@@ -453,7 +480,16 @@ module ibex_lockstep import ibex_pkg::*; #(
     .x_compressed_valid_o   (shadow_outputs_d.x_compressed_valid),
     .x_compressed_ready_i   (shadow_inputs_q[0].x_compressed_ready),
     .x_compressed_req_o     (shadow_outputs_d.x_compressed_req),
-    .x_compressed_resp_i    (shadow_inputs_q[0].x_compressed_resp)
+    .x_compressed_resp_i    (shadow_inputs_q[0].x_compressed_resp),
+    .x_issue_valid_o        (shadow_outputs_d.x_issue_valid),
+    .x_issue_ready_i        (shadow_inputs_q[0].x_issue_ready),
+    .x_issue_req_o          (shadow_outputs_d.x_issue_req),
+    .x_issue_resp_i         (shadow_inputs_q[0].x_issue_resp),
+    .x_commit_valid_o       (shadow_outputs_d.x_commit_valid),
+    .x_commit_o             (shadow_outputs_d.x_commit),
+    .x_result_valid_i       (shadow_inputs_q[0].x_result_valid),
+    .x_result_ready_o       (shadow_outputs_d.x_result_ready),
+    .x_result_i             (shadow_inputs_q[0].x_result)
   );
 
   // Register the shadow core outputs

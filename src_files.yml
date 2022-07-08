@@ -22,6 +22,7 @@ ibex:
     rtl/ibex_fetch_fifo.sv,
     rtl/ibex_pmp.sv,
     rtl/ibex_core.sv,
+    rtl/ibex_xif_issue_commit_buffer.sv,
     shared/rtl/prim_assert.sv,
   ]
 ibex_vip_rtl:

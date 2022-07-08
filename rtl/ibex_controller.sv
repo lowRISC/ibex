@@ -13,7 +13,8 @@
 module ibex_controller #(
   parameter bit WritebackStage  = 1'b0,
   parameter bit BranchPredictor = 1'b0,
-  parameter bit MemECC          = 1'b0
+  parameter bit MemECC          = 1'b0,
+  parameter bit XInterface      = 1'b0
  ) (
   input  logic                  clk_i,
   input  logic                  rst_ni,
@@ -105,8 +106,13 @@ module ibex_controller #(
   // performance monitors
   output logic                  perf_jump_o,             // we are executing a jump
                                                          // instruction (j, jr, jal, jalr)
-  output logic                  perf_tbranch_o           // we are executing a taken branch
+  output logic                  perf_tbranch_o,          // we are executing a taken branch
                                                          // instruction
+
+  // X-Interface signals
+  input  logic                  x_issue_handshake_i,
+  input  logic                  x_result_exc_i,
+  input  logic [5:0]            x_result_exccode_i
 );
   import ibex_pkg::*;
 
@@ -119,6 +125,9 @@ module ibex_controller #(
   logic exc_req_q, exc_req_d;
   logic illegal_insn_q, illegal_insn_d;
 
+  logic       exc_req_xif_d, exc_req_xif_q;
+  exc_cause_t exc_cause_xif_d, exc_cause_xif_q;
+
   // Of the various exception/fault signals, which one takes priority in FLUSH and hence controls
   // what happens next (setting exc_cause, csr_mtval etc)
   logic instr_fetch_err_prio;
@@ -127,6 +136,7 @@ module ibex_controller #(
   logic ebrk_insn_prio;
   logic store_err_prio;
   logic load_err_prio;
+  logic xif_load_store_prio;
 
   logic stall;
   logic halt_if;
@@ -192,6 +202,12 @@ module ibex_controller #(
   assign csr_pipe_flush  = csr_pipe_flush_i  & instr_valid_i;
   assign instr_fetch_err = instr_fetch_err_i & instr_valid_i;
 
+  assign exc_cause_xif_d = '{
+      irq_ext:     x_result_exccode_i[5],
+      irq_int:     1'b0,
+      lower_cause: x_result_exccode_i[4:0]
+  };
+
   // This is recorded in the illegal_insn_q flop to help timing.  Specifically
   // it is needed to break the path from ibex_cs_registers/illegal_csr_insn_o
   // to pc_set_o.  Clear when controller is in FLUSH so it won't remain set
@@ -212,7 +228,7 @@ module ibex_controller #(
   // LSU exception requests
   assign exc_req_lsu = store_err_i | load_err_i;
 
-  assign id_exception_o = exc_req_d;
+  assign id_exception_o = exc_req_d | exc_req_xif_d;
 
   // special requests: special instructions, pipeline flushes, exceptions...
   // All terms in these expressions are qualified by instr_valid_i except exc_req_lsu which can come
@@ -222,8 +238,12 @@ module ibex_controller #(
   // that is outside the normal execution flow
   assign special_req_flush_only = wfi_insn | csr_pipe_flush;
 
+  assign exc_req_xif_d = x_result_exc_i &
+                         (exc_cause_xif_d == ExcCauseLoadAddrMisa |
+                          exc_cause_xif_d == ExcCauseStoreAddrMisa);
+
   // These special requests cause a change in PC
-  assign special_req_pc_change = mret_insn | dret_insn | exc_req_d | exc_req_lsu;
+  assign special_req_pc_change = mret_insn | dret_insn | exc_req_d | exc_req_lsu | exc_req_xif_d;
 
   // generic special request signal, applies to all instructions
   assign special_req = special_req_pc_change | special_req_flush_only;
@@ -240,11 +260,18 @@ module ibex_controller #(
       ebrk_insn_prio       = 0;
       store_err_prio       = 0;
       load_err_prio        = 0;
+      xif_load_store_prio  = 0;
 
       // Note that with the writeback stage store/load errors occur on the instruction in writeback,
       // all other exception/faults occur on the instruction in ID/EX. The faults from writeback
       // must take priority as that instruction is architecurally ordered before the one in ID/EX.
-      if (store_err_q) begin
+      // Note that at this point, we don't decide which instruction is architecturally ordered
+      // first: the offloaded instruction triggering exc_req_xif_q or the instruction in writeback
+      // triggering store/load_err_q. However, offloaded instructions that can trigger exceptions
+      // need to indicate this, in which case the internal pipeline is stalled.
+      if (exc_req_xif_q) begin
+        xif_load_store_prio = 1'b1;
+      end else if (store_err_q) begin
         store_err_prio = 1'b1;
       end else if (load_err_q) begin
         load_err_prio  = 1'b1;
@@ -269,8 +296,11 @@ module ibex_controller #(
       ebrk_insn_prio       = 0;
       store_err_prio       = 0;
       load_err_prio        = 0;
+      xif_load_store_prio  = 0;
 
-      if (instr_fetch_err) begin
+      if (exc_req_xif_q) begin
+        xif_load_store_prio = 1'b1;
+      end else if (instr_fetch_err) begin
         instr_fetch_err_prio = 1'b1;
       end else if (illegal_insn_q) begin
         illegal_insn_prio = 1'b1;
@@ -713,7 +743,7 @@ module ibex_controller #(
 
         // exceptions: set exception PC, save PC and exception cause
         // exc_req_lsu is high for one clock cycle only (in DECODE)
-        if (exc_req_q || store_err_q || load_err_q) begin
+        if (exc_req_q || store_err_q || load_err_q || exc_req_xif_q) begin
           pc_set_o         = 1'b1;
           pc_mux_o         = PC_EXC;
           exc_pc_mux_o     = debug_mode_q ? EXC_PC_DBG_EXC : EXC_PC_EXC;
@@ -785,6 +815,11 @@ module ibex_controller #(
               exc_cause_o = ExcCauseLoadAccessFault;
               csr_mtval_o = lsu_addr_last_i;
             end
+            xif_load_store_prio: begin
+              exc_cause_o = exc_cause_xif_q;
+              // CV-X-IF does not provide any address
+              csr_mtval_o = '0;
+            end
             default: ;
           endcase
         end else begin
@@ -848,14 +883,14 @@ module ibex_controller #(
   assign stall = stall_id_i | stall_wb_i;
 
   // signal to IF stage that ID stage is ready for next instr
-  assign id_in_ready_o = ~stall & ~halt_if & ~retain_id;
+  assign id_in_ready_o = (~stall & ~halt_if & ~retain_id) | x_issue_handshake_i;
 
   // kill instr in IF-ID pipeline reg that are done, or if a
   // multicycle instr causes an exception for example
   // retain_id is another kind of stall, where the instr_valid bit must remain
   // set (unless flush_id is set also). It cannot be factored directly into
   // stall as this causes a combinational loop.
-  assign instr_valid_clear_o = ~(stall | retain_id) | flush_id;
+  assign instr_valid_clear_o = ~(stall | retain_id) | flush_id | x_issue_handshake_i;
 
   // update registers
   always_ff @(posedge clk_i or negedge rst_ni) begin : update_regs
@@ -880,6 +915,21 @@ module ibex_controller #(
       exc_req_q               <= exc_req_d;
       illegal_insn_q          <= illegal_insn_d;
     end
+  end
+
+  if (XInterface) begin : gen_xif_exc_ff
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        exc_req_xif_q   <= 1'b0;
+        exc_cause_xif_q <= ExcCauseLoadAddrMisa;
+      end else begin
+        exc_req_xif_q   <= exc_req_xif_d;
+        exc_cause_xif_q <= exc_cause_xif_d;
+      end
+    end
+  end else begin : gen_no_xif_exc_ff
+    assign exc_req_xif_q   = 1'b0;
+    assign exc_cause_xif_q = ExcCauseLoadAddrMisa;
   end
 
   //////////

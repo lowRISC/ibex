@@ -339,8 +339,12 @@ package ibex_pkg;
     '{irq_ext: 1'b0, irq_int: 1'b0, lower_cause: 5'd02};
   localparam exc_cause_t ExcCauseBreakpoint =
     '{irq_ext: 1'b0, irq_int: 1'b0, lower_cause: 5'd03};
+  localparam exc_cause_t ExcCauseLoadAddrMisa     =
+    '{irq_ext: 1'b0, irq_int: 1'b0, lower_cause: 5'd04};
   localparam exc_cause_t ExcCauseLoadAccessFault  =
     '{irq_ext: 1'b0, irq_int: 1'b0, lower_cause: 5'd05};
+  localparam exc_cause_t ExcCauseStoreAddrMisa    =
+    '{irq_ext: 1'b0, irq_int: 1'b0, lower_cause: 5'd06};
   localparam exc_cause_t ExcCauseStoreAccessFault =
     '{irq_ext: 1'b0, irq_int: 1'b0, lower_cause: 5'd07};
   localparam exc_cause_t ExcCauseEcallUMode =
@@ -589,8 +593,14 @@ package ibex_pkg;
   // CSR status bits
   parameter int unsigned CSR_MSTATUS_MIE_BIT      = 3;
   parameter int unsigned CSR_MSTATUS_MPIE_BIT     = 7;
+  parameter int unsigned CSR_MSTATUS_VS_BIT_LOW   = 9;
+  parameter int unsigned CSR_MSTATUS_VS_BIT_HIGH  = 10;
   parameter int unsigned CSR_MSTATUS_MPP_BIT_LOW  = 11;
   parameter int unsigned CSR_MSTATUS_MPP_BIT_HIGH = 12;
+  parameter int unsigned CSR_MSTATUS_FS_BIT_LOW   = 13;
+  parameter int unsigned CSR_MSTATUS_FS_BIT_HIGH  = 14;
+  parameter int unsigned CSR_MSTATUS_XS_BIT_LOW   = 15;
+  parameter int unsigned CSR_MSTATUS_XS_BIT_HIGH  = 16;
   parameter int unsigned CSR_MSTATUS_MPRV_BIT     = 17;
   parameter int unsigned CSR_MSTATUS_TW_BIT       = 21;
 
@@ -656,7 +666,15 @@ package ibex_pkg;
   ////////////////
   // Documentation page: https://docs.openhwgroup.org/projects/openhw-group-core-v-xif/en/latest/
 
+  parameter int unsigned XLEN        = 32;
+  parameter int unsigned X_NUM_RS    = 3;
   parameter int unsigned X_ID_WIDTH  = 4;
+  parameter int unsigned X_RFR_WIDTH = 32;
+  parameter int unsigned X_RFW_WIDTH = 32;
+  parameter logic [31:0] X_MISA      = 32'b0;
+  parameter logic [1:0]  X_ECS_XS    = 2'b0;
+  parameter int unsigned X_DUALREAD  = 0;
+  parameter int unsigned X_DUALWRITE = 0;
 
   typedef struct packed {
     logic [15:0]           instr;
@@ -668,5 +686,56 @@ package ibex_pkg;
     logic [31:0] instr;
     logic        accept;
   } x_compressed_resp_t;
+
+  typedef struct packed {
+    logic [31:0]                          instr;
+    priv_lvl_e                            mode;
+    logic [X_ID_WIDTH-1:0]                id;
+    logic [X_NUM_RS-1:0][X_RFR_WIDTH-1:0] rs;
+    logic [X_NUM_RS-1:0]                  rs_valid;
+    logic [5:0]                           ecs;
+    logic                                 ecs_valid;
+  } x_issue_req_t;
+
+  typedef struct packed {
+    logic accept;
+    logic writeback;
+    logic dualwrite;
+    logic dualread;
+    logic loadstore;
+    logic ecswrite;
+    logic exc;
+  } x_issue_resp_t;
+
+  typedef struct packed {
+    logic [X_ID_WIDTH-1:0] id;
+    logic                  commit_kill;
+  } x_commit_t;
+
+  typedef struct packed {
+    logic [X_ID_WIDTH-1:0]       id;
+    logic [X_RFW_WIDTH-1:0]      data;
+    logic [4:0]                  rd;
+    logic [X_RFW_WIDTH/XLEN-1:0] we;
+    logic [2:0]                  ecswe;
+    logic [5:0]                  ecsdata;
+    logic                        exc;
+    logic [5:0]                  exccode;
+    logic                        dbg;
+    logic                        err;
+  } x_result_t;
+
+  /////////////////////////
+  // Issue-commit Buffer //
+  /////////////////////////
+
+  parameter int unsigned ICB_DEPTH  = 4;
+  parameter int unsigned ICB_ID_W   = $clog2(ICB_DEPTH);
+  parameter int unsigned ICF_DEPTH  = 2;
+
+  typedef struct packed {
+    logic [X_ID_WIDTH-1:0] id;
+    logic                  accept;
+  } icf_t;
 
 endpackage

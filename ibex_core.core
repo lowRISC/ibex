@@ -11,6 +11,7 @@ filesets:
       - lowrisc:prim:assert
       - lowrisc:prim:clock_gating
       - lowrisc:prim:lfsr
+      - lowrisc:prim:fifo
       - lowrisc:ibex:ibex_pkg
       - lowrisc:ibex:ibex_icache
       - lowrisc:dv:dv_fcov_macros
@@ -35,6 +36,7 @@ filesets:
       - rtl/ibex_wb_stage.sv
       - rtl/ibex_dummy_instr.sv
       - rtl/ibex_core.sv
+      - rtl/ibex_xif_issue_commit_buffer.sv
       - rtl/ibex_pmp_reset_default.svh: {is_include_file: true}
     file_type: systemVerilogSource
 

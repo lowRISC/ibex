@@ -17,7 +17,8 @@ module ibex_decoder #(
   parameter bit RV32E               = 0,
   parameter ibex_pkg::rv32m_e RV32M = ibex_pkg::RV32MFast,
   parameter ibex_pkg::rv32b_e RV32B = ibex_pkg::RV32BNone,
-  parameter bit BranchTargetALU     = 0
+  parameter bit BranchTargetALU     = 0,
+  parameter bit XInterface          = 0
 ) (
   input  logic                 clk_i,
   input  logic                 rst_ni,
@@ -94,7 +95,18 @@ module ibex_decoder #(
 
   // jump/branches
   output logic                 jump_in_dec_o,         // jump is being calculated in ALU
-  output logic                 branch_in_dec_o
+  output logic                 branch_in_dec_o,
+
+  // X-Interface
+  input  logic                 x_issue_handshake_i,
+  input  logic                 x_issue_get_rs3_i,
+  output logic                 x_issue_use_rs3_o,
+
+  // Output signals for RVFI
+  output logic [4:0]           instr_rs1_o,
+  output logic [4:0]           instr_rs2_o,
+  output logic [4:0]           instr_rs3_o,
+  output logic [4:0]           instr_rd_o
 );
 
   import ibex_pkg::*;
@@ -120,6 +132,11 @@ module ibex_decoder #(
 
   opcode_e     opcode;
   opcode_e     opcode_alu;
+
+  assign instr_rs1_o = instr_rs1;
+  assign instr_rs2_o = instr_rs2;
+  assign instr_rs3_o = instr_rs3;
+  assign instr_rd_o  = instr_rd;
 
   // To help timing the flops containing the current instruction are replicated to reduce fan-out.
   // instr_alu is used to determine the ALU control logic and associated operand/imm select signals
@@ -166,7 +183,8 @@ module ibex_decoder #(
   assign instr_rs1 = instr[19:15];
   assign instr_rs2 = instr[24:20];
   assign instr_rs3 = instr[31:27];
-  assign rf_raddr_a_o = (use_rs3_q & ~instr_first_cycle_i) ? instr_rs3 : instr_rs1; // rs3 / rs1
+  assign rf_raddr_a_o = ((use_rs3_q & ~instr_first_cycle_i) | x_issue_use_rs3_o) ?
+                        instr_rs3 : instr_rs1; // rs3 / rs1
   assign rf_raddr_b_o = instr_rs2; // rs2
 
   // destination register
@@ -196,6 +214,52 @@ module ibex_decoder #(
         instr_rs1 == '0) begin
       csr_op_o = CSR_OP_READ;
     end
+  end
+
+  /////////////////
+  // X-Interface //
+  /////////////////
+
+  if (XInterface && (X_NUM_RS == 3)) begin : gen_x_rs3
+    typedef enum logic { ISSUE_IDLE, ISSUE_GET_RS3 } x_issue_fsm_e;
+    x_issue_fsm_e x_issue_fsm_q, x_issue_fsm_d;
+
+    always_comb begin
+      x_issue_fsm_d     = x_issue_fsm_q;
+      x_issue_use_rs3_o = 1'b0;
+      unique case (x_issue_fsm_q)
+        ISSUE_IDLE: begin
+          x_issue_use_rs3_o = 1'b0;
+          if (x_issue_get_rs3_i) begin
+            x_issue_fsm_d = ISSUE_GET_RS3;
+          end
+        end
+        ISSUE_GET_RS3: begin
+          x_issue_use_rs3_o = 1'b1;
+          if (x_issue_handshake_i) begin
+            x_issue_fsm_d = ISSUE_IDLE;
+          end
+        end
+        default: begin
+          x_issue_fsm_d = ISSUE_IDLE;
+        end
+      endcase
+    end
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+      if (!rst_ni) begin
+        x_issue_fsm_q <= ISSUE_IDLE;
+      end else begin
+        x_issue_fsm_q <= x_issue_fsm_d;
+      end
+    end
+  end else begin : gen_no_x_rs3
+    logic unused_x_issue_get_rs3;
+    logic unused_x_issue_handshake;
+    assign unused_x_issue_get_rs3   = x_issue_get_rs3_i;
+    assign unused_x_issue_handshake = x_issue_handshake_i;
+    assign x_issue_use_rs3_o = 1'b0;
+
   end
 
   /////////////
