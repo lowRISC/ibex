@@ -306,7 +306,7 @@ module ibex_simple_system (
 
   fpu_ss #(
       .PULP_ZFINX           ( 0 ),
-      .INPUT_BUFFER_DEPTH   ( 2 ),
+      .INPUT_BUFFER_DEPTH   ( 1 ),
       .OUT_OF_ORDER         ( 1 ),
       .FORWARDING           ( 1 ),
       .FPU_FEATURES         (   ),

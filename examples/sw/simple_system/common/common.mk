@@ -27,8 +27,12 @@ OBJDUMP ?= $(CROSS_COMPILE)objdump
 
 LINKER_SCRIPT ?= $(COMMON_DIR)/link.ld
 CRT ?= $(COMMON_DIR)/crt0.S
-CFLAGS ?= -march=$(ARCH) -mabi=ilp32 -static -mcmodel=medany -Wall -g -Os\
-	-fvisibility=hidden -nostdlib -nostartfiles -ffreestanding $(PROGRAM_CFLAGS)
+# CFLAGS ?= -march=$(ARCH) -mabi=ilp32 -static -mcmodel=medany -Wall -g -Os\
+	# -fvisibility=hidden -nostdlib -nostartfiles -ffreestanding $(PROGRAM_CFLAGS)
+# CFLAGS ?= -march=$(ARCH) -mabi=ilp32 -static -mcmodel=medany -Wall -O3 -ffast-math\
+	# -fvisibility=hidden -nostdlib -nostartfiles -ffreestanding $(PROGRAM_CFLAGS)
+CFLAGS ?= -march=$(ARCH) -mabi=ilp32 -static -mcmodel=medlow -mtune=sifive-3-series \
+  -O3 -falign-functions=16 -funroll-all-loops -finline-functions -falign-jumps=4 -nostdlib -nostartfiles -ffreestanding -mstrict-align
 
 OBJS := ${C_SRCS:.c=.o} ${ASM_SRCS:.S=.o} ${CRT:.S=.o}
 DEPS = $(OBJS:%.o=%.d)
