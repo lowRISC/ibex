@@ -50,8 +50,8 @@ module ibex_wb_stage #(
   output logic [31:0]              rf_wdata_wb_o,
   output logic                     rf_we_wb_o,
 
-  input logic                      lsu_resp_valid_i,
-  input logic                      lsu_resp_err_i,
+  input  logic                     lsu_resp_valid_i,
+  input  logic                     lsu_resp_err_i,
 
   output logic                     instr_done_wb_o
 );

@@ -44,6 +44,9 @@ module ibex_ex_block #(
   output logic [33:0]           imd_val_d_o[2],
   input  logic [33:0]           imd_val_q_i[2],
 
+  // From ID stage
+  input  logic                  x_mem_lsu_req_i,
+
   // Outputs
   output logic [31:0]           alu_adder_result_ex_o, // to LSU
   output logic [31:0]           result_ex_o,
@@ -130,7 +133,8 @@ module ibex_ex_block #(
     .adder_result_ext_o (alu_adder_result_ext),
     .result_o           (alu_result),
     .comparison_result_o(alu_cmp_result),
-    .is_equal_result_o  (alu_is_equal_result)
+    .is_equal_result_o  (alu_is_equal_result),
+    .x_mem_lsu_req_i    (x_mem_lsu_req_i)
   );
 
   ////////////////

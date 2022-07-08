@@ -113,6 +113,12 @@ parameters:
     paramtype: vlogparam
     description: "Enables the RISC-V Extension Interface (EXPERIMENTAL) [0/1]"
 
+  MemInterface:
+    datatype: int
+    default: 0
+    paramtype: vlogparam
+    description: "Enables Memory and Memory Result Interfaces for RISC-V Extension Interface (EXPERIMENTAL) [0/1]"
+
 targets:
   sim:
     default_tool: verilator
@@ -135,6 +141,7 @@ targets:
       - SecureIbex
       - ICacheScramble
       - XInterface
+      - MemInterface
     toplevel: ibex_riscv_compliance
     tools:
       verilator:

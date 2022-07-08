@@ -20,6 +20,7 @@ module ibex_xif_issue_commit_buffer import ibex_pkg::*; (
   input  logic                  wb_exception_i,
   input  logic                  mem_in_wb_i,
   output logic                  external_exc_o,
+  output logic                  mem_xif_o,
   output logic                  illegal_insn_o,
 
   // issue interface
@@ -30,11 +31,20 @@ module ibex_xif_issue_commit_buffer import ibex_pkg::*; (
   input  logic                  issue_handshake_i,
   input  logic                  issue_reject_i,
   input  logic                  issue_exc_i,
+  input  logic                  issue_ls_i,
 
   // commit interface
   output logic                  commit_valid_o,
   output logic [X_ID_WIDTH-1:0] commit_id_o,
   output logic                  commit_kill_o,
+
+  // memory interface
+  input  logic [X_ID_WIDTH-1:0] mem_id_i,
+  output logic                  mem_commit_o,
+
+  // memory result interface
+  input  logic                  mem_result_fin_i, // Mem requests from a certain ID has finished.
+  input  logic [X_ID_WIDTH-1:0] mem_result_id_i,
 
   // result interface
   input  logic                  result_handshake_i,
@@ -43,7 +53,9 @@ module ibex_xif_issue_commit_buffer import ibex_pkg::*; (
 
   // issue-commit buffer
   logic [ICB_DEPTH-1:0] icb_valid_d, icb_valid_q;
+  logic [ICB_DEPTH-1:0] icb_commit_d, icb_commit_q;
   logic [ICB_DEPTH-1:0] icb_exc_d, icb_exc_q;
+  logic [ICB_DEPTH-1:0] icb_mem_d, icb_mem_q;
   logic [ICB_DEPTH-1:0] icb_reject_d, icb_reject_q;
 
   // IDs
@@ -56,7 +68,11 @@ module ibex_xif_issue_commit_buffer import ibex_pkg::*; (
   logic [ICB_ID_W-1:0]                issue_id;
   logic [ICB_ID_W-1:0]                commit_id;
   logic [ICB_ID_W-1:0]                result_id;
+  logic [ICB_ID_W-1:0]                mem_id;
+  logic [ICB_ID_W-1:0]                mem_result_id;
   logic [X_ID_WIDTH-ICB_ID_W-1:0]     unused_result_id;
+  logic [X_ID_WIDTH-ICB_ID_W-1:0]     unused_mem_id;
+  logic [X_ID_WIDTH-ICB_ID_W-1:0]     unused_mem_result_id;
 
   // Control signals
   logic insn_reject;
@@ -85,10 +101,15 @@ module ibex_xif_issue_commit_buffer import ibex_pkg::*; (
   // ID width transfer //
   ///////////////////////
 
-  assign issue_id_o       = {{X_ID_WIDTH-ICB_ID_W{1'b0}}, issue_id};
-  assign commit_id_o      = {{X_ID_WIDTH-ICB_ID_W{1'b0}}, commit_id};
-  assign result_id        = result_id_i[ICB_ID_W-1:0];
-  assign unused_result_id = result_id_i[X_ID_WIDTH-1:ICB_ID_W];
+  assign issue_id_o    = {{X_ID_WIDTH-ICB_ID_W{1'b0}}, issue_id};
+  assign commit_id_o   = {{X_ID_WIDTH-ICB_ID_W{1'b0}}, commit_id};
+  assign result_id     = result_id_i[ICB_ID_W-1:0];
+  assign mem_id        = mem_id_i[ICB_ID_W-1:0];
+  assign mem_result_id = mem_result_id_i[ICB_ID_W-1:0];
+
+  assign unused_result_id     = result_id_i[X_ID_WIDTH-1:ICB_ID_W];
+  assign unused_mem_id        = mem_id_i[X_ID_WIDTH-1:ICB_ID_W];
+  assign unused_mem_result_id = mem_result_id_i[X_ID_WIDTH-1:ICB_ID_W];
 
   ///////////////
   // ID lookup //
@@ -143,8 +164,10 @@ module ibex_xif_issue_commit_buffer import ibex_pkg::*; (
   assign issue_icb_valid_o = issue_id_valid_q & (~issue_id_new_q | icf_push_ready) &
                              ~insn_reject & ~is_killing;
   assign insn_reject       = |icb_reject_q;
-  assign external_exc_o    = |icb_exc_d | insn_reject;
+  assign external_exc_o    = |icb_exc_d | |icb_mem_d | insn_reject;
+  assign mem_xif_o         = |icb_mem_q;
   assign illegal_insn_o    = icb_reject_q[commit_id] | (issue_reject_i & (issue_id == commit_id));
+  assign mem_commit_o      = icb_commit_d[mem_id];
 
   ///////////////////////
   // issue-commit FIFO //
@@ -190,9 +213,9 @@ module ibex_xif_issue_commit_buffer import ibex_pkg::*; (
   assign lcb_id_d    = icf_pop_data;
   assign lcb_valid_d = lcb_push | (lcb_valid_q & ~lcb_pop);
   // Push committed instructions into the buffer.
-  assign lcb_push    = commit_valid_o & ~is_killing & ~icb_reject_q[commit_id];
+  assign lcb_push = commit_valid_o & ~is_killing & ~icb_reject_q[commit_id];
   // Pop only if the instruction could not raise exception in the future.
-  assign lcb_pop     = ~icb_exc_q[lcb_id_q] | is_killing;
+  assign lcb_pop = (~icb_exc_q[lcb_id_q] & (~icb_mem_q[lcb_id_q] | mem_result_fin_i)) | is_killing;
 
   //////////////////////////
   // finite state machine //
@@ -230,38 +253,49 @@ module ibex_xif_issue_commit_buffer import ibex_pkg::*; (
 
   always_comb begin
     icb_valid_d  = icb_valid_q;
+    icb_commit_d = icb_commit_q;
     icb_exc_d    = icb_exc_q;
+    icb_mem_d    = icb_mem_q;
     icb_reject_d = icb_reject_q;
     if (icf_push) begin
       icb_valid_d[issue_id]   = 1'b1;
       // Set 1 since instruction not yet acceptted could raise exception in the future.
-      icb_exc_d[issue_id]     = 1'b1;
+      icb_exc_d[issue_id]   = 1'b1;
     end
     if (issue_handshake_i) begin
-      icb_valid_d[issue_id]   = 1'b1;
-      icb_exc_d[issue_id]     = issue_exc_i;
-      icb_reject_d[issue_id]  = issue_reject_i;
+      icb_valid_d[issue_id]  = 1'b1;
+      icb_exc_d[issue_id]    = issue_exc_i;
+      icb_mem_d[issue_id]    = issue_ls_i;
+      icb_reject_d[issue_id] = issue_reject_i;
     end
     // If result arrives at the same cycle, overwrite issue
     if (result_handshake_i) begin
       icb_valid_d[result_id]  = 1'b0;
+      icb_commit_d[result_id] = 1'b0;
       icb_exc_d[result_id]    = 1'b0;
+      icb_mem_d[result_id]    = 1'b0;
     end
-    if (commit_valid_o & icb_reject_q[commit_id]) begin
-      // Clear all the bits for a rejected instruction
-      icb_valid_d[commit_id]  = 1'b0;
-      icb_exc_d[commit_id]    = 1'b0;
-      icb_reject_d[commit_id] = 1'b0;
+    if (mem_result_fin_i) begin
+      icb_mem_d[mem_result_id] = 1'b0;
     end
-    if (commit_valid_o & is_killing) begin
-      // Clear all the bits for a killed instruction
-      icb_valid_d[commit_id]  = 1'b0;
-      icb_exc_d[commit_id]    = 1'b0;
-      icb_reject_d[commit_id] = 1'b0;
+    if (commit_valid_o) begin
+      if (icb_reject_q[commit_id] | is_killing) begin
+        // Clear all the bits for a rejected or killed instruction
+        icb_valid_d[commit_id]  = 1'b0;
+        icb_commit_d[commit_id] = 1'b0;
+        icb_exc_d[commit_id]    = 1'b0;
+        icb_mem_d[commit_id]    = 1'b0;
+        icb_reject_d[commit_id] = 1'b0;
+      end else begin
+        icb_commit_d[commit_id] = 1'b1;
+      end
     end
     if (xif_exception_i) begin
-      icb_valid_d[lcb_id_q]   = 1'b0;
-      icb_exc_d[lcb_id_q]     = 1'b0;
+      icb_valid_d[lcb_id_q]  = 1'b0;
+      icb_commit_d[lcb_id_q] = 1'b0;
+      icb_exc_d[lcb_id_q]    = 1'b0;
+      icb_mem_d[lcb_id_q]    = 1'b0;
+      icb_reject_d[lcb_id_q] = 1'b0;
     end
   end
 
@@ -292,7 +326,9 @@ module ibex_xif_issue_commit_buffer import ibex_pkg::*; (
       lcb_valid_q      <= 1'b0;
       icb_fsm_q        <= ICB_COMMIT;
       icb_valid_q      <= '0;
+      icb_commit_q     <= '0;
       icb_exc_q        <= '0;
+      icb_mem_q        <= '0;
       icb_reject_q     <= '0;
     end else begin
       issue_id_valid_q <= issue_id_valid_d;
@@ -300,7 +336,9 @@ module ibex_xif_issue_commit_buffer import ibex_pkg::*; (
       lcb_valid_q      <= lcb_valid_d;
       icb_fsm_q        <= icb_fsm_d;
       icb_valid_q      <= icb_valid_d;
+      icb_commit_q     <= icb_commit_d;
       icb_exc_q        <= icb_exc_d;
+      icb_mem_q        <= icb_mem_d;
       icb_reject_q     <= icb_reject_d;
     end
   end
