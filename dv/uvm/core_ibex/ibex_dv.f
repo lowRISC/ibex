@@ -53,6 +53,7 @@ ${PRJ_DIR}/vendor/lowrisc_ip/ip/prim/rtl/prim_ram_1p_pkg.sv
 ${PRJ_DIR}/vendor/lowrisc_ip/ip/prim/rtl/prim_ram_1p_adv.sv
 ${PRJ_DIR}/vendor/lowrisc_ip/ip/prim/rtl/prim_ram_1p_scr.sv
 ${PRJ_DIR}/vendor/lowrisc_ip/ip/prim_generic/rtl/prim_generic_ram_1p.sv
+${PRJ_DIR}/vendor/lowrisc_ip/ip/prim/rtl/prim_fifo_sync.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/common/prim/prim_ram_1p.sv
 ${PRJ_DIR}/vendor/lowrisc_ip/ip/prim_generic/rtl/prim_generic_clock_gating.sv
 ${PRJ_DIR}/dv/uvm/core_ibex/common/prim/prim_clock_gating.sv
@@ -95,6 +96,7 @@ ${PRJ_DIR}/rtl/ibex_pmp.sv
 ${PRJ_DIR}/rtl/ibex_core.sv
 ${PRJ_DIR}/rtl/ibex_top.sv
 ${PRJ_DIR}/rtl/ibex_top_tracing.sv
+${PRJ_DIR}/rtl/ibex_xif_issue_commit_buffer.sv
 
 // Core DV files
 ${PRJ_DIR}/vendor/google_riscv-dv/src/riscv_signature_pkg.sv

@@ -259,7 +259,16 @@ module ibex_simple_system (
       .x_compressed_valid_o   (),
       .x_compressed_ready_i   (1'b0),
       .x_compressed_req_o     (),
-      .x_compressed_resp_i    ('0)
+      .x_compressed_resp_i    ('0),
+      .x_issue_valid_o        (),
+      .x_issue_ready_i        (1'b0),
+      .x_issue_req_o          (),
+      .x_issue_resp_i         ('0),
+      .x_commit_valid_o       (),
+      .x_commit_o             (),
+      .x_result_valid_i       (1'b0),
+      .x_result_ready_o       (),
+      .x_result_i             ('0)
     );
 
   // SRAM block for instruction and data storage

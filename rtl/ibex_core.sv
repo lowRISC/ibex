@@ -156,7 +156,19 @@ module ibex_core import ibex_pkg::*; #(
   output logic                         x_compressed_valid_o,
   input  logic                         x_compressed_ready_i,
   output x_compressed_req_t            x_compressed_req_o,
-  input  x_compressed_resp_t           x_compressed_resp_i
+  input  x_compressed_resp_t           x_compressed_resp_i,
+  // Issue Interface
+  output logic                         x_issue_valid_o,
+  input  logic                         x_issue_ready_i,
+  output x_issue_req_t                 x_issue_req_o,
+  input  x_issue_resp_t                x_issue_resp_i,
+  // Commit Interface
+  output logic                         x_commit_valid_o,
+  output x_commit_t                    x_commit_o,
+  // Result Interface
+  input  logic                         x_result_valid_i,
+  output logic                         x_result_ready_o,
+  input  x_result_t                    x_result_i
 );
 
   localparam int unsigned PMP_NUM_CHAN      = 3;
@@ -344,7 +356,9 @@ module ibex_core import ibex_pkg::*; #(
 
   // signals relating to instruction movements between pipeline stages
   // used by performance counters and RVFI
-  logic        instr_id_done;
+  logic        instr_id_internal_done;
+  logic        instr_id_xif_offl;
+  logic        instr_id_xif_done;
   logic        instr_done_wb;
 
   logic        perf_instr_ret_wb;
@@ -361,8 +375,18 @@ module ibex_core import ibex_pkg::*; #(
   logic        perf_load;
   logic        perf_store;
 
+  logic [4:0]  instr_rs1;
+  logic [4:0]  instr_rs2;
+  logic [4:0]  instr_rs3;
+  logic [4:0]  instr_rd;
+
   // for RVFI
   logic        illegal_insn_id, unused_illegal_insn_id; // ID stage sees an illegal instruction
+
+  // ECS Signals for X-Interface
+  logic [5:0]  ecs_rd;
+  logic [5:0]  ecs_wr;
+  logic [2:0]  ecs_wen;
 
   //////////////////////
   // Clock management //
@@ -514,7 +538,8 @@ module ibex_core import ibex_pkg::*; #(
     .DataIndTiming  (DataIndTiming),
     .WritebackStage (WritebackStage),
     .BranchPredictor(BranchPredictor),
-    .MemECC         (MemECC)
+    .MemECC         (MemECC),
+    .XInterface     (XInterface)
   ) id_stage_i (
     .clk_i (clk_i),
     .rst_ni(rst_ni),
@@ -660,7 +685,35 @@ module ibex_core import ibex_pkg::*; #(
     .perf_dside_wait_o(perf_dside_wait),
     .perf_mul_wait_o  (perf_mul_wait),
     .perf_div_wait_o  (perf_div_wait),
-    .instr_id_done_o  (instr_id_done)
+
+    // RVFI Signals
+    .instr_id_internal_done_o(instr_id_internal_done),
+    .instr_id_xif_offl_o     (instr_id_xif_offl),
+    .instr_id_xif_done_o     (instr_id_xif_done),
+    .instr_rs1_o           (instr_rs1),
+    .instr_rs2_o           (instr_rs2),
+    .instr_rs3_o           (instr_rs3),
+    .instr_rd_o            (instr_rd),
+
+    // Extend context status, from/to CSR
+    .ecs_rd_i (ecs_rd),
+    .ecs_wr_o (ecs_wr),
+    .ecs_wen_o(ecs_wen),
+
+    // Issue Interface
+    .x_issue_valid_o(x_issue_valid_o),
+    .x_issue_ready_i(x_issue_ready_i),
+    .x_issue_req_o  (x_issue_req_o),
+    .x_issue_resp_i (x_issue_resp_i),
+
+    // Commit Interface
+    .x_commit_valid_o(x_commit_valid_o),
+    .x_commit_o      (x_commit_o),
+
+    // Result Interface
+    .x_result_valid_i(x_result_valid_i),
+    .x_result_ready_o(x_result_ready_o),
+    .x_result_i      (x_result_i)
   );
 
   assign icache_inval_o = icache_inval;
@@ -959,7 +1012,8 @@ module ibex_core import ibex_pkg::*; #(
     .PMPNumRegions    (PMPNumRegions),
     .RV32E            (RV32E),
     .RV32M            (RV32M),
-    .RV32B            (RV32B)
+    .RV32B            (RV32B),
+    .XInterface       (XInterface)
   ) cs_registers_i (
     .clk_i (clk_i),
     .rst_ni(rst_ni),
@@ -1046,7 +1100,12 @@ module ibex_core import ibex_pkg::*; #(
     .mem_store_i                (perf_store),
     .dside_wait_i               (perf_dside_wait),
     .mul_wait_i                 (perf_mul_wait),
-    .div_wait_i                 (perf_div_wait)
+    .div_wait_i                 (perf_div_wait),
+
+    // Extend context status, from/to X-Interface (ID stage)
+    .ecs_rd_o (ecs_rd),
+    .ecs_wr_i (ecs_wr),
+    .ecs_wen_i(ecs_wen)
   );
 
   // These assertions are in top-level as instr_valid_id required as the enable term
@@ -1173,8 +1232,10 @@ module ibex_core import ibex_pkg::*; #(
   logic        rvfi_trap_id;
   logic        rvfi_trap_wb;
   logic [63:0] rvfi_stage_order_d;
+  logic [63:0] rvfi_stage_order_last;
   logic        rvfi_id_done;
   logic        rvfi_wb_done;
+  logic        rvfi_xif_last_q;
 
   logic            new_debug_req;
   logic            new_nmi;
@@ -1194,6 +1255,24 @@ module ibex_core import ibex_pkg::*; #(
 
 
   logic        rvfi_stage_valid_d   [RVFI_STAGES];
+
+  logic [ICB_DEPTH-1:0][63:0] rvfi_offl_order;
+  logic [ICB_DEPTH-1:0][31:0] rvfi_offl_rs1_rdata;
+  logic [ICB_DEPTH-1:0][31:0] rvfi_offl_rs2_rdata;
+  logic [ICB_DEPTH-1:0][31:0] rvfi_offl_rs3_rdata;
+  logic [ICB_DEPTH-1:0][4:0]  rvfi_offl_rs1_addr;
+  logic [ICB_DEPTH-1:0][4:0]  rvfi_offl_rs2_addr;
+  logic [ICB_DEPTH-1:0][4:0]  rvfi_offl_rs3_addr;
+  logic [ICB_DEPTH-1:0][4:0]  rvfi_offl_rd_addr;
+  logic [ICB_DEPTH-1:0][31:0] rvfi_offl_insn;
+  logic [ICB_DEPTH-1:0][31:0] rvfi_offl_pc_rdata;
+  logic [ICB_DEPTH-1:0][31:0] rvfi_offl_pc_wdata;
+  logic [ICB_DEPTH-1:0][1:0]  rvfi_offl_mode;
+
+  logic [ICB_ID_W-1:0] rvfi_xif_issue_id;
+  logic [ICB_ID_W-1:0] rvfi_xif_issue_id_q;
+  logic [ICB_ID_W-1:0] rvfi_xif_commit_id;
+  logic [ICB_ID_W-1:0] rvfi_xif_result_id;
 
   assign rvfi_valid     = rvfi_stage_valid    [RVFI_STAGES-1];
   assign rvfi_order     = rvfi_stage_order    [RVFI_STAGES-1];
@@ -1244,8 +1323,8 @@ module ibex_core import ibex_pkg::*; #(
 
   // Factor in exceptions taken in ID so RVFI tracking picks up flushed instructions that took
   // a trap
-  assign rvfi_id_done = instr_id_done | (id_stage_i.controller_i.rvfi_flush_next &
-                                         id_stage_i.controller_i.id_exception_o);
+  assign rvfi_id_done = instr_id_internal_done | (id_stage_i.controller_i.rvfi_flush_next &
+                                                  id_stage_i.controller_i.id_exception_o);
 
   if (WritebackStage) begin : gen_rvfi_wb_stage
     logic unused_instr_new_id;
@@ -1256,7 +1335,7 @@ module ibex_core import ibex_pkg::*; #(
     // awaiting instruction retirement and RF Write data/Mem read data whilst instruction is in WB
     // So first stage becomes valid when instruction leaves ID/EX stage and remains valid until
     // instruction leaves WB
-    assign rvfi_stage_valid_d[0] = (rvfi_id_done & ~dummy_instr_id) |
+    assign rvfi_stage_valid_d[0] = (rvfi_id_done & ~dummy_instr_id) | instr_id_xif_done |
                                    (rvfi_stage_valid[0] & ~rvfi_wb_done);
     // Second stage is output stage so simple valid cycle after instruction leaves WB (and so has
     // retired)
@@ -1284,7 +1363,7 @@ module ibex_core import ibex_pkg::*; #(
   end else begin : gen_rvfi_no_wb_stage
     // Without writeback stage first RVFI stage is output stage so simply valid the cycle after
     // instruction leaves ID/EX (and so has retired)
-    assign rvfi_stage_valid_d[0] = rvfi_id_done & ~dummy_instr_id;
+    assign rvfi_stage_valid_d[0] = (rvfi_id_done & ~dummy_instr_id) | instr_id_xif_done;
     // Without writeback stage signal new instr_new_wb when instruction enters ID/EX to correctly
     // setup register write signals
     assign rvfi_instr_new_wb = instr_new_id;
@@ -1293,7 +1372,10 @@ module ibex_core import ibex_pkg::*; #(
     assign rvfi_wb_done = instr_done_wb;
   end
 
-  assign rvfi_stage_order_d = dummy_instr_id ? rvfi_stage_order[0] : rvfi_stage_order[0] + 64'd1;
+  assign rvfi_stage_order_last = rvfi_xif_last_q ?
+                                 rvfi_offl_order[rvfi_xif_issue_id_q] : rvfi_stage_order[0];
+  assign rvfi_stage_order_d = dummy_instr_id ?
+                              rvfi_stage_order_last : rvfi_stage_order_last + 64'd1;
 
   // For interrupts and debug Ibex will take the relevant trap as soon as whatever instruction in ID
   // finishes or immediately if the ID stage is empty. The rvfi_ext interface provides the DV
@@ -1364,6 +1446,54 @@ module ibex_core import ibex_pkg::*; #(
     end
   end
 
+  assign rvfi_xif_issue_id  = x_issue_req_o.id[ICB_ID_W-1:0];
+  assign rvfi_xif_commit_id = x_commit_o.id[ICB_ID_W-1:0];
+  assign rvfi_xif_result_id = x_result_i.id[ICB_ID_W-1:0];
+
+  // Record the metadata of offloaded instructions, that writeback to the
+  // integer register file. those will appear in the core trace log.
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      rvfi_offl_order     <= '0;
+      rvfi_offl_rs1_rdata <= '0;
+      rvfi_offl_rs2_rdata <= '0;
+      rvfi_offl_rs3_rdata <= '0;
+      rvfi_offl_rs1_addr  <= '0;
+      rvfi_offl_rs2_addr  <= '0;
+      rvfi_offl_rs3_addr  <= '0;
+      rvfi_offl_rd_addr   <= '0;
+      rvfi_offl_insn      <= '0;
+      rvfi_offl_pc_rdata  <= '0;
+      rvfi_offl_pc_wdata  <= '0;
+      rvfi_offl_mode      <= '0;
+      rvfi_xif_issue_id_q <= '0;
+    end else if (instr_id_xif_offl) begin
+      rvfi_offl_order[rvfi_xif_issue_id]     <= rvfi_stage_order_d;
+      rvfi_offl_rs1_rdata[rvfi_xif_issue_id] <= x_issue_req_o.rs[0];
+      rvfi_offl_rs2_rdata[rvfi_xif_issue_id] <= x_issue_req_o.rs[1];
+      rvfi_offl_rs3_rdata[rvfi_xif_issue_id] <= (X_NUM_RS == 2) ? '0 : x_issue_req_o.rs[2];
+      rvfi_offl_rs1_addr[rvfi_xif_issue_id]  <= instr_rs1;
+      rvfi_offl_rs2_addr[rvfi_xif_issue_id]  <= instr_rs2;
+      rvfi_offl_rs3_addr[rvfi_xif_issue_id]  <= instr_rs3;
+      rvfi_offl_rd_addr[rvfi_xif_issue_id]   <= instr_rd;
+      rvfi_offl_insn[rvfi_xif_issue_id]      <= rvfi_insn_id;
+      rvfi_offl_pc_rdata[rvfi_xif_issue_id]  <= pc_id;
+      rvfi_offl_pc_wdata[rvfi_xif_issue_id]  <= pc_if;
+      rvfi_offl_mode[rvfi_xif_issue_id]      <= {priv_mode_id};
+      rvfi_xif_issue_id_q                    <= rvfi_xif_issue_id;
+    end
+  end
+
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      rvfi_xif_last_q <= 1'b0;
+    end else if (instr_id_xif_offl) begin
+      rvfi_xif_last_q <= 1'b1;
+    end else if (rvfi_id_done) begin
+      rvfi_xif_last_q <= 1'b0;
+    end
+  end
+
   for (genvar i = 0; i < RVFI_STAGES; i = i + 1) begin : g_rvfi_stages
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
@@ -1426,6 +1556,62 @@ module ibex_core import ibex_pkg::*; #(
             rvfi_ext_stage_nmi[i+1]       <= rvfi_ext_stage_nmi[i];
             rvfi_ext_stage_debug_req[i+1] <= rvfi_ext_stage_debug_req[i];
             rvfi_ext_stage_mcycle[i]      <= cs_registers_i.mcycle_counter_i.counter_val_o;
+          end else if (instr_id_xif_done) begin
+            if (instr_id_xif_offl & rvfi_xif_issue_id == rvfi_xif_result_id) begin
+              rvfi_stage_halt[i]            <= '0;
+              rvfi_stage_trap[i]            <= rvfi_trap_id;
+              rvfi_stage_intr[i]            <= rvfi_intr_d;
+              rvfi_stage_order[i]           <= rvfi_stage_order_d;
+              rvfi_stage_insn[i]            <= rvfi_insn_id;
+              rvfi_stage_mode[i]            <= {priv_mode_id};
+              rvfi_stage_ixl[i]             <= CSR_MISA_MXL;
+              rvfi_stage_rs1_addr[i]        <= instr_rs1;
+              rvfi_stage_rs2_addr[i]        <= instr_rs2;
+              rvfi_stage_rs3_addr[i]        <= instr_rs3;
+              rvfi_stage_pc_rdata[i]        <= pc_id;
+              rvfi_stage_pc_wdata[i]        <= pc_if;
+              rvfi_stage_mem_rmask[i]       <= rvfi_mem_mask_int;
+              rvfi_stage_mem_wmask[i]       <= data_we_o ? rvfi_mem_mask_int : 4'b0000;
+              rvfi_stage_rs1_rdata[i]       <= x_issue_req_o.rs[0];
+              rvfi_stage_rs2_rdata[i]       <= x_issue_req_o.rs[1];
+              rvfi_stage_rs3_rdata[i]       <= (X_NUM_RS == 2) ? '0 : x_issue_req_o.rs[2];
+              rvfi_stage_rd_addr[i]         <= instr_rd;
+              rvfi_stage_rd_wdata[i]        <= rvfi_rd_wdata_d;
+              rvfi_stage_mem_rdata[i]       <= '0;
+              rvfi_stage_mem_wdata[i]       <= '0;
+              rvfi_stage_mem_addr[i]        <= '0;
+              rvfi_ext_stage_mip[i+1]       <= rvfi_ext_stage_mip[i];
+              rvfi_ext_stage_nmi[i+1]       <= rvfi_ext_stage_nmi[i];
+              rvfi_ext_stage_debug_req[i+1] <= rvfi_ext_stage_debug_req[i];
+              rvfi_ext_stage_mcycle[i]      <= cs_registers_i.mcycle_counter_i.counter_val_o;
+            end else begin
+              rvfi_stage_halt[i]            <= '0;
+              rvfi_stage_trap[i]            <= rvfi_trap_id;
+              rvfi_stage_intr[i]            <= rvfi_intr_d;
+              rvfi_stage_order[i]           <= rvfi_offl_order[rvfi_xif_commit_id];
+              rvfi_stage_insn[i]            <= rvfi_offl_insn[rvfi_xif_result_id];
+              rvfi_stage_mode[i]            <= rvfi_offl_mode[rvfi_xif_result_id];
+              rvfi_stage_ixl[i]             <= CSR_MISA_MXL;
+              rvfi_stage_rs1_addr[i]        <= rvfi_offl_rs1_addr[rvfi_xif_result_id];
+              rvfi_stage_rs2_addr[i]        <= rvfi_offl_rs2_addr[rvfi_xif_result_id];
+              rvfi_stage_rs3_addr[i]        <= rvfi_offl_rs3_addr[rvfi_xif_result_id];
+              rvfi_stage_pc_rdata[i]        <= rvfi_offl_pc_rdata[rvfi_xif_result_id];
+              rvfi_stage_pc_wdata[i]        <= rvfi_offl_pc_wdata[rvfi_xif_result_id];
+              rvfi_stage_mem_rmask[i]       <= rvfi_mem_mask_int;
+              rvfi_stage_mem_wmask[i]       <= data_we_o ? rvfi_mem_mask_int : 4'b0000;
+              rvfi_stage_rs1_rdata[i]       <= rvfi_offl_rs1_rdata[rvfi_xif_result_id];
+              rvfi_stage_rs2_rdata[i]       <= rvfi_offl_rs2_rdata[rvfi_xif_result_id];
+              rvfi_stage_rs3_rdata[i]       <= rvfi_offl_rs3_rdata[rvfi_xif_result_id];
+              rvfi_stage_rd_addr[i]         <= rvfi_offl_rd_addr[rvfi_xif_result_id];
+              rvfi_stage_rd_wdata[i]        <= rvfi_rd_wdata_d;
+              rvfi_stage_mem_rdata[i]       <= '0;
+              rvfi_stage_mem_wdata[i]       <= '0;
+              rvfi_stage_mem_addr[i]        <= '0;
+              rvfi_ext_stage_mip[i+1]       <= rvfi_ext_stage_mip[i];
+              rvfi_ext_stage_nmi[i+1]       <= rvfi_ext_stage_nmi[i];
+              rvfi_ext_stage_debug_req[i+1] <= rvfi_ext_stage_debug_req[i];
+              rvfi_ext_stage_mcycle[i]      <= cs_registers_i.mcycle_counter_i.counter_val_o;
+            end
           end
         end else begin
           if (rvfi_wb_done) begin
@@ -1614,8 +1800,8 @@ module ibex_core import ibex_pkg::*; #(
   end
 
 `else
-  logic unused_instr_new_id, unused_instr_id_done, unused_instr_done_wb;
-  assign unused_instr_id_done = instr_id_done;
+  logic unused_instr_new_id, unused_instr_id_internal_done, unused_instr_done_wb;
+  assign unused_instr_id_internal_done = instr_id_internal_done;
   assign unused_instr_new_id = instr_new_id;
   assign unused_instr_done_wb = instr_done_wb;
 `endif

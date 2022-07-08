@@ -46,6 +46,7 @@ SRCS_SV ?=                              \
   $(SRC_DIR)/ibex_pmp.sv                \
   $(SRC_DIR)/ibex_register_file_ff.sv   \
   $(SRC_DIR)/ibex_wb_stage.sv           \
+  $(SRC_DIR)/ibex_xif_issue_commit_buffer.sv \
   $(SRC_DIR)/ibex_core.sv               \
   $(SRC_DIR)/ibex_top.sv
 
