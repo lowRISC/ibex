@@ -41,7 +41,7 @@ parameters:
     datatype: str
     paramtype: vlogdefine
     description: Primitives implementation to use, e.g. "prim_pkg::ImplGeneric".
- 
+
   FPGAPowerAnalysis:
     datatype: int
     paramtype: vlogparam
