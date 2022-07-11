@@ -491,9 +491,13 @@ class core_ibex_directed_test extends core_ibex_debug_intr_basic_test;
   // Illegal instruction checker
   virtual task check_illegal_insn(string exception_msg);
     check_next_core_status(HANDLING_EXCEPTION, "Core did not jump to vectored exception handler", 1000);
-    check_priv_mode(PRIV_LVL_M);
     check_next_core_status(ILLEGAL_INSTR_EXCEPTION, exception_msg, 1000);
     check_mcause(1'b0, ExcCauseIllegalInsn);
+    // Ibex will wait to change the privilege mode until it is allowed to FLUSH. This happens because
+    // we are blocking the current instruction until the instruction from WB stage is ready.
+    wait (dut_vif.dut_cb.ctrl_fsm_cs == FLUSH);
+    clk_vif.wait_clks(2);
+    check_priv_mode(PRIV_LVL_M);
     wait_ret("mret", 1500);
   endtask
 

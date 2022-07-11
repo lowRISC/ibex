@@ -191,6 +191,7 @@ module core_ibex_tb_top;
   assign dut_if.mret          = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.mret_insn;
   assign dut_if.reset         = ~rst_n;
   assign dut_if.priv_mode     = dut.u_ibex_top.u_ibex_core.priv_mode_id;
+  assign dut_if.ctrl_fsm_cs   = dut.u_ibex_top.u_ibex_core.id_stage_i.controller_i.ctrl_fsm_cs;
   // Instruction monitor connections
   assign instr_monitor_if.reset        = ~rst_n;
   assign instr_monitor_if.valid_id     = dut.u_ibex_top.u_ibex_core.id_stage_i.instr_valid_i;
