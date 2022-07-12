@@ -540,6 +540,21 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
       illegal_bins illegal = {InstrCategoryOther, InstrCategoryOtherIllegal};
     }
 
+    // Only sample the bus error from the first access of misaligned load/store when we are in
+    // the data phase of the second access. Without this, we cannot sample the case when both
+    // first and second access fails.
+    cp_misaligned_first_data_bus_err: coverpoint load_store_unit_i.fcov_mis_bus_err_1_q iff
+      (load_store_unit_i.fcov_mis_rvalid_2);
+
+    cp_misaligned_second_data_bus_err: coverpoint load_store_unit_i.data_bus_err_i iff
+      (load_store_unit_i.fcov_mis_rvalid_2);
+
+    misaligned_data_bus_err_cross: cross cp_misaligned_first_data_bus_err,
+                                         cp_misaligned_second_data_bus_err;
+
+    misaligned_insn_bus_err_cross: cross id_stage_i.instr_fetch_err_i,
+                                         id_stage_i.instr_fetch_err_plus2_i;
+
     controller_instr_cross: cross cp_controller_fsm, cp_id_instr_category {
     // Only expecting DECODE => FLUSH when we have the instruction categories constrained below.
       bins decode_to_flush =

@@ -210,8 +210,8 @@ Furthermore they can all occur together and must be appropriately prioritised (c
 * ``pmp_dside_mode_cross`` - Exception from memory access PMP violation.
 * Unaligned memory access
 
-    * Cover all error and no error scenarios for memory fetch error; first access saw error, second
-      access saw error, neither access saw error
+  * ``misaligned_insn_bus_err_cross``, ``misaligned_data_bus_err_cross`` - Cover all error and no error scenarios for memory fetch error; first access saw error, second
+    access saw error, neither access saw error
 
 * Interrupt raised/taken.
 
