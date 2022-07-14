@@ -7,7 +7,7 @@
 
 import sys
 import argparse
-import pathlib
+import pathlib3x as pathlib
 import shutil
 
 from metadata import RegressionMetadata, LockedMetadata

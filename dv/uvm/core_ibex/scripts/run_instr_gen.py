@@ -11,7 +11,7 @@ import shlex
 import shutil
 import sys
 import tempfile
-import pathlib
+import pathlib3x as pathlib
 from typing import List
 
 from test_entry import read_test_dot_seed

@@ -8,7 +8,7 @@ import shlex
 import subprocess
 import sys
 import pickle
-import pathlib
+import pathlib3x as pathlib
 from io import IOBase
 from typing import Dict, TextIO, Optional, Union, List
 import dataclasses

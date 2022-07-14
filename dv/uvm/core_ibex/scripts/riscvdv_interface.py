@@ -17,7 +17,7 @@ the riscdv way.
 
 import re
 import shlex
-import pathlib
+import pathlib3x as pathlib
 from typing import Union, List, Dict
 from typeguard import typechecked
 

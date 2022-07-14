@@ -4,7 +4,7 @@
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
 
-import pathlib
+import pathlib3x as pathlib
 from typing import Optional, List
 import dataclasses
 from typeguard import typechecked

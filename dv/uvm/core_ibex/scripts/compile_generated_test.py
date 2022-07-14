@@ -9,7 +9,7 @@ import os
 import shlex
 import sys
 import tempfile
-import pathlib
+import pathlib3x as pathlib
 
 from scripts_lib import run_one, format_to_cmd
 import riscvdv_interface

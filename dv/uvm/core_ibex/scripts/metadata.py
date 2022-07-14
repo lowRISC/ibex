@@ -8,7 +8,7 @@
 import sys
 import os
 from types import *
-import pathlib
+import pathlib3x as pathlib
 import pickle
 import typing
 from typing import Optional, Union, List, Tuple

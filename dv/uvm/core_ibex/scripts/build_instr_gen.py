@@ -9,7 +9,7 @@ import argparse
 import os
 import shutil
 import sys
-import pathlib
+import pathlib3x as pathlib
 
 from scripts_lib import run_one, format_to_cmd
 import riscvdv_interface
