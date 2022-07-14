@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import subprocess
+from typing import Tuple, Dict, List
 from typeguard import typechecked
 
 from setup_imports import _IBEX_ROOT
@@ -90,8 +91,8 @@ def get_config(cfg_name: str) -> Config:
     return parse_config(cfg_name, yaml_path)
 
 
-def get_isas_for_config(cfg: Config) -> tuple[str, str]:
-    """Get ISA and ISS_ISA keys for the given Ibex config"""
+def get_isas_for_config(cfg: Config) -> Tuple[str, str]:
+    """Get ISA and ISS_ISA keys for the given Ibex config."""
     # NOTE: This logic should match the code in the get_isa_string() function
     # in core_ibex/tests/core_ibex_base_test.sv: keep them in sync!
     has_multiplier = cfg.rv32m != 'ibex_pkg::RV32MNone'
@@ -117,8 +118,8 @@ def get_isas_for_config(cfg: Config) -> tuple[str, str]:
     return (toolchain_isa, '_'.join([base_isa] + bitmanip_isa))
 
 
-_TestEntry = dict[str, object]
-_TestEntries = list[_TestEntry]
+_TestEntry = Dict[str, object]
+_TestEntries = List[_TestEntry]
 
 
 @typechecked
@@ -174,7 +175,7 @@ def filter_tests_by_config(cfg: ibex_config.Config,
                     (isinstance(p_val, str)  and (config_val != p_val))):
                     logger.warning(
                         f"Rejecting test {test['test']}, 'rtl_params' specified "
-                        " not compatible with ibex_config")
+                        "not compatible with ibex_config")
                     break
 
                 # The test is accepted if we got this far

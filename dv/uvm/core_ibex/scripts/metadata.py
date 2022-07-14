@@ -11,7 +11,7 @@ from types import *
 import pathlib
 import pickle
 import typing
-from typing import Optional, Union
+from typing import Optional, Union, List, Tuple
 from enum import Enum
 import argparse
 import shlex
@@ -59,7 +59,7 @@ class RegressionMetadata(scripts_lib.testdata_cls):
     signature_addr: str = ' '
     ibex_config: str = ' '
 
-    tests_and_counts: list[tuple[str, int]] = field(default_factory=list)
+    tests_and_counts: List[Tuple[str, int]] = field(default_factory=list)
     isa_ibex: Optional[str] = None
     isa_iss: Optional[str] = None
 
@@ -73,13 +73,13 @@ class RegressionMetadata(scripts_lib.testdata_cls):
     # Build logs and commands
     riscvdv_build_log           : Optional[pathlib.Path]    = None
     riscvdv_build_stdout        : Optional[pathlib.Path]    = None
-    riscvdv_build_cmds          : Optional[list[list[str]]] = None
+    riscvdv_build_cmds          : Optional[List[List[str]]] = None
     tb_build_log                : Optional[pathlib.Path]    = None
     tb_build_stdout             : Optional[pathlib.Path]    = None
-    tb_build_cmds               : Optional[list[list[str]]] = None
+    tb_build_cmds               : Optional[List[List[str]]] = None
     riscvdv_fcov_log            : Optional[pathlib.Path]    = None
     riscvdv_fcov_stdout         : Optional[pathlib.Path]    = None
-    riscvdv_fcov_cmds           : Optional[list[list[str]]] = None
+    riscvdv_fcov_cmds           : Optional[List[List[str]]] = None
     regr_log                    : Optional[pathlib.Path]    = None
     regr_log_junit              : Optional[pathlib.Path]    = None
     regr_log_junit_merged       : Optional[pathlib.Path]    = None
@@ -102,7 +102,7 @@ class RegressionMetadata(scripts_lib.testdata_cls):
     dir_cov_merged              : pathlib.Path = field(init=False, compare=False, default_factory=pathlib.Path)
     dir_cov_report              : pathlib.Path = field(init=False, compare=False, default_factory=pathlib.Path)
 
-    tests_pickle_files: Optional[list[pathlib.Path]] = None
+    tests_pickle_files: Optional[List[pathlib.Path]] = None
 
     def __post_init__(self):
         """Construct all the dependent metadata."""
@@ -241,7 +241,7 @@ class RegressionMetadata(scripts_lib.testdata_cls):
         md = cls.construct_from_pickle(md_pickle)
         return md
 
-    def get_tests_and_counts(self) -> list[tuple[str, int]]:
+    def get_tests_and_counts(self) -> List[Tuple[str, int]]:
         """Get a list of tests and the number of iterations to run of each.
 
         ibex_config should be the name of the Ibex configuration to be tested.
@@ -285,8 +285,8 @@ class RegressionMetadata(scripts_lib.testdata_cls):
 
         return ret
 
-    def tds(self, give_tuple: bool = False) -> Union[list[str],
-                                                     list[tuple[str, int]]]:
+    def tds(self, give_tuple: bool = False) -> Union[List[str],
+                                                     List[Tuple[str, int]]]:
         """Return the TEST.SEED strings for all the tests configured in the regression.
 
         By default returns a list of strs which are TEST.SEED, but can return a list of

@@ -99,7 +99,7 @@ def run_one(verbose: bool,
 
 
 @typechecked
-def format_to_cmd(input_arg: Union[str, list[any]]) -> list[str]:
+def format_to_cmd(input_arg: Union[str, List[any]]) -> List[str]:
     """Format useful compound-lists into list[str], suitable for subprocess.
 
     Can be a list of [str, int, bool, pathlib.Path]
@@ -143,7 +143,7 @@ def subst_dict(string: str, var_dict: Dict[str, Union[str, pathlib.Path]]) -> st
 
 
 @typechecked
-def subst_env_vars(string: str, env_vars: list[str]) -> str:
+def subst_env_vars(string: str, env_vars: List[str]) -> str:
     """Substitute environment variables in string.
 
     For each environment variable, V, in the list, any
