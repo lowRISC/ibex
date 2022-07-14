@@ -139,7 +139,9 @@ module ibex_core import ibex_pkg::*; #(
   output logic                         rvfi_ext_nmi,
   output logic                         rvfi_ext_debug_req,
   output logic [63:0]                  rvfi_ext_mcycle,
-`endif
+  output logic [31:0]                  rvfi_ext_mhpmcounters [10],
+  output logic [31:0]                  rvfi_ext_mhpmcountersh [10],
+  `endif
 
   // CPU Control Signals
   // SEC_CM: FETCH.CTRL.LC_GATED
@@ -1171,11 +1173,12 @@ module ibex_core import ibex_pkg::*; #(
 
   // RVFI extension for co-simulation support
   // debug_req and MIP captured at IF -> ID transition so one extra stage
-  ibex_pkg::irqs_t rvfi_ext_stage_mip          [RVFI_STAGES+1];
-  logic            rvfi_ext_stage_nmi          [RVFI_STAGES+1];
-  logic            rvfi_ext_stage_debug_req    [RVFI_STAGES+1];
-  logic [63:0]     rvfi_ext_stage_mcycle       [RVFI_STAGES];
-
+  ibex_pkg::irqs_t rvfi_ext_stage_mip            [RVFI_STAGES+1];
+  logic            rvfi_ext_stage_nmi            [RVFI_STAGES+1];
+  logic            rvfi_ext_stage_debug_req      [RVFI_STAGES+1];
+  logic [63:0]     rvfi_ext_stage_mcycle         [RVFI_STAGES];
+  logic [31:0]     rvfi_ext_stage_mhpmcounters   [RVFI_STAGES][10];
+  logic [31:0]     rvfi_ext_stage_mhpmcountersh  [RVFI_STAGES][10];
 
 
   logic        rvfi_stage_valid_d   [RVFI_STAGES];
@@ -1218,9 +1221,11 @@ module ibex_core import ibex_pkg::*; #(
     rvfi_ext_mip[CSR_MFIX_BIT_HIGH:CSR_MFIX_BIT_LOW] = rvfi_ext_stage_mip[RVFI_STAGES].irq_fast;
   end
 
-  assign rvfi_ext_nmi       = rvfi_ext_stage_nmi[RVFI_STAGES];
-  assign rvfi_ext_debug_req = rvfi_ext_stage_debug_req[RVFI_STAGES];
-  assign rvfi_ext_mcycle    = rvfi_ext_stage_mcycle[RVFI_STAGES-1];
+  assign rvfi_ext_nmi           = rvfi_ext_stage_nmi            [RVFI_STAGES];
+  assign rvfi_ext_debug_req     = rvfi_ext_stage_debug_req      [RVFI_STAGES];
+  assign rvfi_ext_mcycle        = rvfi_ext_stage_mcycle         [RVFI_STAGES-1];
+  assign rvfi_ext_mhpmcounters  = rvfi_ext_stage_mhpmcounters   [RVFI_STAGES-1];
+  assign rvfi_ext_mhpmcountersh = rvfi_ext_stage_mhpmcountersh  [RVFI_STAGES-1];
 
   // When an instruction takes a trap the `rvfi_trap` signal will be set. Instructions that take
   // traps flush the pipeline so ordinarily wouldn't be seen to be retire. The RVFI tracking
@@ -1352,33 +1357,35 @@ module ibex_core import ibex_pkg::*; #(
   for (genvar i = 0; i < RVFI_STAGES; i = i + 1) begin : g_rvfi_stages
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
-        rvfi_stage_halt[i]            <= '0;
-        rvfi_stage_trap[i]            <= '0;
-        rvfi_stage_intr[i]            <= '0;
-        rvfi_stage_order[i]           <= '0;
-        rvfi_stage_insn[i]            <= '0;
-        rvfi_stage_mode[i]            <= {PRIV_LVL_M};
-        rvfi_stage_ixl[i]             <= CSR_MISA_MXL;
-        rvfi_stage_rs1_addr[i]        <= '0;
-        rvfi_stage_rs2_addr[i]        <= '0;
-        rvfi_stage_rs3_addr[i]        <= '0;
-        rvfi_stage_pc_rdata[i]        <= '0;
-        rvfi_stage_pc_wdata[i]        <= '0;
-        rvfi_stage_mem_rmask[i]       <= '0;
-        rvfi_stage_mem_wmask[i]       <= '0;
-        rvfi_stage_valid[i]           <= '0;
-        rvfi_stage_rs1_rdata[i]       <= '0;
-        rvfi_stage_rs2_rdata[i]       <= '0;
-        rvfi_stage_rs3_rdata[i]       <= '0;
-        rvfi_stage_rd_wdata[i]        <= '0;
-        rvfi_stage_rd_addr[i]         <= '0;
-        rvfi_stage_mem_rdata[i]       <= '0;
-        rvfi_stage_mem_wdata[i]       <= '0;
-        rvfi_stage_mem_addr[i]        <= '0;
-        rvfi_ext_stage_mip[i+1]       <= '0;
-        rvfi_ext_stage_nmi[i+1]       <= '0;
-        rvfi_ext_stage_debug_req[i+1] <= '0;
-        rvfi_ext_stage_mcycle[i]      <= '0;
+        rvfi_stage_halt[i]              <= '0;
+        rvfi_stage_trap[i]              <= '0;
+        rvfi_stage_intr[i]              <= '0;
+        rvfi_stage_order[i]             <= '0;
+        rvfi_stage_insn[i]              <= '0;
+        rvfi_stage_mode[i]              <= {PRIV_LVL_M};
+        rvfi_stage_ixl[i]               <= CSR_MISA_MXL;
+        rvfi_stage_rs1_addr[i]          <= '0;
+        rvfi_stage_rs2_addr[i]          <= '0;
+        rvfi_stage_rs3_addr[i]          <= '0;
+        rvfi_stage_pc_rdata[i]          <= '0;
+        rvfi_stage_pc_wdata[i]          <= '0;
+        rvfi_stage_mem_rmask[i]         <= '0;
+        rvfi_stage_mem_wmask[i]         <= '0;
+        rvfi_stage_valid[i]             <= '0;
+        rvfi_stage_rs1_rdata[i]         <= '0;
+        rvfi_stage_rs2_rdata[i]         <= '0;
+        rvfi_stage_rs3_rdata[i]         <= '0;
+        rvfi_stage_rd_wdata[i]          <= '0;
+        rvfi_stage_rd_addr[i]           <= '0;
+        rvfi_stage_mem_rdata[i]         <= '0;
+        rvfi_stage_mem_wdata[i]         <= '0;
+        rvfi_stage_mem_addr[i]          <= '0;
+        rvfi_ext_stage_mip[i+1]         <= '0;
+        rvfi_ext_stage_nmi[i+1]         <= '0;
+        rvfi_ext_stage_debug_req[i+1]   <= '0;
+        rvfi_ext_stage_mcycle[i]        <= '0;
+        rvfi_ext_stage_mhpmcounters[i]  <= '{10{'0}};
+        rvfi_ext_stage_mhpmcountersh[i] <= '{10{'0}};
       end else begin
         rvfi_stage_valid[i] <= rvfi_stage_valid_d[i];
 
@@ -1411,6 +1418,12 @@ module ibex_core import ibex_pkg::*; #(
             rvfi_ext_stage_nmi[i+1]       <= rvfi_ext_stage_nmi[i];
             rvfi_ext_stage_debug_req[i+1] <= rvfi_ext_stage_debug_req[i];
             rvfi_ext_stage_mcycle[i]      <= cs_registers_i.mcycle_counter_i.counter_val_o;
+            // This is done this way because SystemVerilog does not support looping through gen_cntrs[k]
+            // within a for loop.
+            for (int k=0; k < 10; k++) begin
+              rvfi_ext_stage_mhpmcounters[i][k]  <= cs_registers_i.mhpmcounter[k+3][31:0];
+              rvfi_ext_stage_mhpmcountersh[i][k] <= cs_registers_i.mhpmcounter[k+3][63:32];
+            end
           end
         end else begin
           if (rvfi_wb_done) begin
@@ -1442,10 +1455,12 @@ module ibex_core import ibex_pkg::*; #(
             rvfi_stage_rd_wdata[i]  <= rvfi_rd_wdata_d;
             rvfi_stage_mem_rdata[i] <= rvfi_mem_rdata_d;
 
-            rvfi_ext_stage_mip[i+1]       <= rvfi_ext_stage_mip[i];
-            rvfi_ext_stage_nmi[i+1]       <= rvfi_ext_stage_nmi[i];
-            rvfi_ext_stage_debug_req[i+1] <= rvfi_ext_stage_debug_req[i];
-            rvfi_ext_stage_mcycle[i]      <= rvfi_ext_stage_mcycle[i-1];
+            rvfi_ext_stage_mip[i+1]         <= rvfi_ext_stage_mip[i];
+            rvfi_ext_stage_nmi[i+1]         <= rvfi_ext_stage_nmi[i];
+            rvfi_ext_stage_debug_req[i+1]   <= rvfi_ext_stage_debug_req[i];
+            rvfi_ext_stage_mcycle[i]        <= rvfi_ext_stage_mcycle[i-1];
+            rvfi_ext_stage_mhpmcounters[i]  <= rvfi_ext_stage_mhpmcounters[i-1];
+            rvfi_ext_stage_mhpmcountersh[i] <= rvfi_ext_stage_mhpmcountersh[i-1];
           end
         end
       end

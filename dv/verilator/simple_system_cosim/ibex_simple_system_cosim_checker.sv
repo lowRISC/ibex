@@ -18,6 +18,7 @@ module ibex_simple_system_cosim_checker (
   input logic        host_dmem_err
 );
   import "DPI-C" function chandle get_spike_cosim;
+  import ibex_pkg::*;
 
   chandle cosim_handle;
 
@@ -31,6 +32,12 @@ module ibex_simple_system_cosim_checker (
       riscv_cosim_set_mip(cosim_handle, u_top.rvfi_ext_mip);
       riscv_cosim_set_debug_req(cosim_handle, u_top.rvfi_ext_debug_req);
       riscv_cosim_set_mcycle(cosim_handle, u_top.rvfi_ext_mcycle);
+      for (int i=0; i < 10; i++) begin
+        riscv_cosim_set_csr(cosim_handle, int'(CSR_MHPMCOUNTER3) + i,
+          u_top.rvfi_ext_mhpmcounters[i]);
+        riscv_cosim_set_csr(cosim_handle, int'(CSR_MHPMCOUNTER3H) + i,
+          u_top.rvfi_ext_mhpmcountersh[i]);
+      end
 
       if (riscv_cosim_step(cosim_handle, u_top.rvfi_rd_addr, u_top.rvfi_rd_wdata,
                            u_top.rvfi_pc_rdata, u_top.rvfi_trap) == 0)

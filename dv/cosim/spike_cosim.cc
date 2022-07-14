@@ -366,6 +366,16 @@ void SpikeCosim::set_mcycle(uint64_t mcycle) {
   processor->get_state()->mcycle->write(mcycle + 1);
 }
 
+void SpikeCosim::set_csr(const int csr_num, const uint32_t new_val) {
+  // Note that this is tested with ibex-cosim-v0.3 version of Spike. 'set_csr'
+  // method might have a hardwired zero for mhpmcounterX registers.
+#ifdef OLD_SPIKE
+  processor->set_csr(csr_num, new_val);
+#else
+  processor->put_csr(csr_num, new_val);
+#endif
+}
+
 void SpikeCosim::notify_dside_access(const DSideAccessInfo &access_info) {
   // Address must be 32-bit aligned
   assert((access_info.addr & 0x3) == 0);
