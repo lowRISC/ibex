@@ -68,12 +68,8 @@ class core_base_new_seq #(type REQ = uvm_sequence_item) extends uvm_sequence #(R
         drive_stimulus();
       end
       MultipleRuns: begin
-        // Randomize iteration_cnt if not specified externally by test
-        if(iteration_cnt == 0) begin
-          `DV_CHECK_MEMBER_RANDOMIZE_WITH_FATAL(iteration_cnt,
-            // with {"CONSTRAINTS"}
-            iteration_cnt > 0;)
-        end
+        // We randomize in pre_body(), but double-check we have a valid value here.
+        `DV_CHECK_FATAL(iteration_cnt != 0)
         `uvm_info(`gfn, $sformatf("Number of stimulus iterations = %0d", iteration_cnt), UVM_LOW)
         for (int i = 0; i <= iteration_cnt; i++) begin
           drive_stimulus();
