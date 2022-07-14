@@ -120,6 +120,8 @@ module ibex_top import ibex_pkg::*; #(
   output logic                         rvfi_ext_nmi,
   output logic                         rvfi_ext_debug_req,
   output logic [63:0]                  rvfi_ext_mcycle,
+  output logic [31:0]                  rvfi_ext_mhpmcounters [10],
+  output logic [31:0]                  rvfi_ext_mhpmcountersh [10],
 `endif
 
   // CPU Control Signals
@@ -364,6 +366,8 @@ module ibex_top import ibex_pkg::*; #(
     .rvfi_ext_nmi,
     .rvfi_ext_debug_req,
     .rvfi_ext_mcycle,
+    .rvfi_ext_mhpmcounters,
+    .rvfi_ext_mhpmcountersh,
 `endif
 
     .fetch_enable_i        (fetch_enable_buf),
