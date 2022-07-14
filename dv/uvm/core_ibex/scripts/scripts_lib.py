@@ -11,6 +11,7 @@ import pickle
 import pathlib3x as pathlib
 from io import IOBase
 from typing import Dict, TextIO, Optional, Union, List
+from typing_utils import get_args
 import dataclasses
 from typeguard import typechecked
 
@@ -232,7 +233,7 @@ def format_dict_to_printable_dict(arg: dict) -> dict:
 
 def format_to_str(arg: any) -> str:
     """Format single arg to str or raise exception if unable."""
-    if isinstance(arg, _YAML_PRINTABLE_TYPES):
+    if isinstance(arg, get_args(_YAML_PRINTABLE_TYPES)):
         return str(arg)
     elif isinstance(arg, pathlib.Path):
         return str(arg.resolve())
