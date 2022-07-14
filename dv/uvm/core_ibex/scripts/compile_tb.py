@@ -8,7 +8,7 @@ import argparse
 import os
 import sys
 import subprocess
-import pathlib
+import pathlib3x as pathlib
 
 from metadata import RegressionMetadata, LockedMetadata
 from ibex_cmd import get_compile_opts

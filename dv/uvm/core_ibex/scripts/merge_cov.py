@@ -11,7 +11,7 @@ import logging
 import os
 import shutil
 import sys
-import pathlib
+import pathlib3x as pathlib
 from typing import Set
 
 from metadata import RegressionMetadata

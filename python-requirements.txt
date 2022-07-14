@@ -12,6 +12,7 @@ pyyaml
 mako
 junit-xml
 # dataclass  # needed for backports?
+pathlib3x  # Backports some useful features
 gitpython
 typeguard
 portalocker

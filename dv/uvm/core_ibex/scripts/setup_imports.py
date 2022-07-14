@@ -5,13 +5,12 @@
 
 import sys
 import git
-import pathlib
-from pathlib import Path
+import pathlib3x as pathlib
 
 
 def get_project_root() -> pathlib.Path:
     """Get the project root directory using git."""
-    return Path(git.Repo('.', search_parent_directories=True).working_tree_dir)
+    return pathlib.Path(git.Repo('.', search_parent_directories=True).working_tree_dir)
 
 
 root = get_project_root()

@@ -7,8 +7,7 @@ import argparse
 import junit_xml
 import sys
 import io
-import pathlib
-from pathlib import Path
+import pathlib3x as pathlib
 import dataclasses
 from metadata import RegressionMetadata, LockedMetadata
 from test_run_result import TestRunResult

@@ -11,7 +11,7 @@ Pass/fail criteria is determined by any errors found.
 
 import argparse
 import sys
-import pathlib
+import pathlib3x as pathlib
 
 from test_entry import read_test_dot_seed
 from test_run_result import TestRunResult

@@ -7,7 +7,7 @@
 import argparse
 import os
 import sys
-import pathlib
+import pathlib3x as pathlib
 
 from ibex_cmd import get_sim_opts
 import riscvdv_interface
