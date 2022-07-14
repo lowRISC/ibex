@@ -5,7 +5,7 @@
 import argparse
 import re
 import logging
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 # Import riscv_trace_csv and lib from _DV_SCRIPTS before putting sys.path back
 # as it started.
@@ -15,7 +15,7 @@ import lib as riscvdv_lib  # type: ignore
 
 TestEntry = Dict[str, object]
 TestEntries = List[TestEntry]
-TestAndSeed = tuple[str, int]
+TestAndSeed = Tuple[str, int]
 
 
 def read_test_dot_seed(arg: str) -> TestAndSeed:

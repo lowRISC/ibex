@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import pathlib
-from typing import Optional
+from typing import Optional, List
 import dataclasses
 from typeguard import typechecked
 
@@ -60,11 +60,11 @@ class TestRunResult(scripts_lib.testdata_cls):
 
     dir_fcov: Optional[pathlib.Path] = None
 
-    riscvdv_run_gen_cmds: Optional[list[list[str]]] = None
-    riscvdv_run_cmds: Optional[list[list[str]]] = None
-    compile_asm_gen_cmds: Optional[list[str]] = None
-    compile_asm_cmds: Optional[list[list[str]]] = None
-    rtl_cmds: Optional[list[list[str]]] = None
+    riscvdv_run_gen_cmds: Optional[List[List[str]]] = None
+    riscvdv_run_cmds: Optional[List[List[str]]] = None
+    compile_asm_gen_cmds: Optional[List[str]] = None
+    compile_asm_cmds: Optional[List[List[str]]] = None
+    rtl_cmds: Optional[List[List[str]]] = None
 
     metadata_pickle_file: pathlib.Path = None
     pickle_file: Optional[pathlib.Path] = None

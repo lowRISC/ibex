@@ -18,7 +18,7 @@ the riscdv way.
 import re
 import shlex
 import pathlib
-from typing import Union
+from typing import Union, List, Dict
 from typeguard import typechecked
 
 from metadata import RegressionMetadata
@@ -38,7 +38,7 @@ parameter_regex = r'(<[\w]+>)'  # Find matches to the above format
 
 
 @typechecked
-def get_run_cmd(verbose: bool) -> list[Union[str, pathlib.Path]]:
+def get_run_cmd(verbose: bool) -> List[Union[str, pathlib.Path]]:
     """Return the command parts of a call to riscv-dv's run.py."""
     riscvdv_run_py = _RISCV_DV/'run.py'
     csr_desc = _CORE_IBEX_RISCV_DV_EXTENSION/'csr_description.yaml'
@@ -58,7 +58,7 @@ def get_run_cmd(verbose: bool) -> list[Union[str, pathlib.Path]]:
     return cmd
 
 
-def get_cov_cmd(md: RegressionMetadata) -> list[str]:
+def get_cov_cmd(md: RegressionMetadata) -> List[str]:
     """Return the the command to generate riscv-dv's functional coverage."""
     riscvdv_cov_py = _RISCV_DV/'cov.py'
 
@@ -81,8 +81,8 @@ def get_cov_cmd(md: RegressionMetadata) -> list[str]:
 def get_tool_cmds(yaml_path: pathlib.Path,
                   simulator: str,
                   cmd_type: str, # compile/sim
-                  user_enables: dict[str, bool],
-                  user_subst_options: dict[str, Union[str, pathlib.Path]]) -> list[list[str]]:
+                  user_enables: Dict[str, bool],
+                  user_subst_options: Dict[str, Union[str, pathlib.Path]]) -> List[List[str]]:
     """Substitute options and environment variables to construct a final command.
 
     simulator is the name of the simulator to use.
