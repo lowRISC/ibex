@@ -46,4 +46,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           suggest_fixes: 'false'
-          config_file: 'vendor/lowrisc_ip/lint/tools/veriblelint/rules.vbl'
+          config_file: 'vendor/lowrisc_ip/lint/tools/veriblelint/lowrisc-styleguide.rules.verible_lint'
