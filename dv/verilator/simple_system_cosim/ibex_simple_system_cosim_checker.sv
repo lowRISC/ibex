@@ -26,7 +26,7 @@ module ibex_simple_system_cosim_checker (
   end
 
   always @(posedge clk_i) begin
-    if (u_top.rvfi_valid & !u_top.rvfi_trap) begin
+    if (u_top.rvfi_valid) begin
       riscv_cosim_set_nmi(cosim_handle, u_top.rvfi_ext_nmi);
       riscv_cosim_set_mip(cosim_handle, u_top.rvfi_ext_mip);
       riscv_cosim_set_debug_req(cosim_handle, u_top.rvfi_ext_debug_req);
