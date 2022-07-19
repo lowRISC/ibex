@@ -76,10 +76,27 @@ steps:
           exit 1
         fi
 
+        echo "Running CoreMark"
+
         build/lowrisc_ibex_ibex_simple_system_cosim_0/sim-verilator/Vibex_simple_system --meminit=ram,examples/sw/benchmarks/coremark/coremark.elf
         if [ $? != 0 ]; then
           echo -n "##vso[task.logissue type=error]"
           echo "Running CoreMark failed co-simulation testing"
           exit 1
         fi
-      displayName: Run CoreMark for ${{ config }}
+
+        echo "CoreMark succeeded"
+
+        # Run pmp_exception_test if the config supports PMP
+        if ./util/ibex_config.py ${{ config }} query_fields PMPEnable | grep -q 'PMPEnable=1'; then
+          echo "Running pmp_exception_test"
+          build/lowrisc_ibex_ibex_simple_system_cosim_0/sim-verilator/Vibex_simple_system --meminit=ram,examples/sw/simple_system/pmp_exception_test/pmp_exception_test.elf
+          if [ $? != 0 ]; then
+            echo -n "##vso[task.logissue type=error]"
+            echo "Running pmp_exception_test failed co-simulation testing"
+            exit 1
+          fi
+        else
+          echo "PMP not supported on ${{ config }}, skipping pmp_exception_test"
+        fi
+      displayName: Run Verilator co-sim tests for for ${{ config }}

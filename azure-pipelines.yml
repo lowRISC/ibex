@@ -91,7 +91,8 @@ jobs:
   - bash: |
       # Build CoreMark without performance counter dump for co-simulation testing
       make -C ./examples/sw/benchmarks/coremark SUPPRESS_PCOUNT_DUMP=1
-    displayName: Build CoreMark
+      make -C ./examples/sw/simple_system/pmp_smoke_test
+    displayName: Build tests for verilator co-simulation
 
   # Run Ibex RTL CI per supported configuration
   - template : ci/ibex-rtl-ci-steps.yml
