@@ -327,12 +327,14 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
                   prev_store_addr == curr_data_addr;
 
   // Collect all the interrupts for collecting them in different bins.
-  logic [5:0] fcov_irqs = {id_stage_i.controller_i.irq_nm_ext_i,
-                           id_stage_i.controller_i.irq_nm_int,
-                           (|id_stage_i.controller_i.irqs_i.irq_fast),
-                           id_stage_i.controller_i.irqs_i.irq_external,
-                           id_stage_i.controller_i.irqs_i.irq_software,
-                           id_stage_i.controller_i.irqs_i.irq_timer};
+  logic [5:0] fcov_irqs;
+
+  assign fcov_irqs = {id_stage_i.controller_i.irq_nm_ext_i,
+                      id_stage_i.controller_i.irq_nm_int,
+                      (|id_stage_i.controller_i.irqs_i.irq_fast),
+                      id_stage_i.controller_i.irqs_i.irq_external,
+                      id_stage_i.controller_i.irqs_i.irq_software,
+                      id_stage_i.controller_i.irqs_i.irq_timer};
 
   logic            instr_unstalled;
   logic            instr_unstalled_last;
@@ -484,8 +486,7 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     `DV_FCOV_EXPR_SEEN(insn_trigger_exception, instr_id_matches_trigger_q &&
                                                id_stage_i.controller_i.fcov_pipe_flush)
 
-    cp_nmi_taken: coverpoint (id_stage_i.controller_i.nmi_mode_d &
-                              (~id_stage_i.controller_i.nmi_mode_q)) iff
+    cp_nmi_taken: coverpoint ((fcov_irqs[5] || fcov_irqs[4])) iff
                              (id_stage_i.controller_i.fcov_interrupt_taken);
 
     cp_interrupt_taken: coverpoint fcov_irqs iff (id_stage_i.controller_i.fcov_interrupt_taken){
