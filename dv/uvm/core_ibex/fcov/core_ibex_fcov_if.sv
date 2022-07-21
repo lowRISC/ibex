@@ -276,6 +276,22 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     end
   end
 
+  // This latch is needed because if we cannot register this condition being true
+  // with a clock. Being in the sleep mode implies that we don't have an active clock.
+  // So, we need to catch the condition, latch it and keep it until we wake up and decode
+  // an instruction (which guarantees we have a clock in the core)
+  logic kept_wfi_with_irq;
+
+  always_latch begin
+    if (id_stage_i.controller_i.ctrl_fsm_cs == DECODE) begin
+      kept_wfi_with_irq = 1'b0;
+    end else if (id_stage_i.controller_i.ctrl_fsm_cs == SLEEP &&
+                 id_stage_i.controller_i.ctrl_fsm_ns == SLEEP &&
+                 (|cs_registers_i.mip)) begin
+      kept_wfi_with_irq = 1'b1;
+    end
+  end
+
   logic instr_id_matches_trigger_d, instr_id_matches_trigger_q;
 
   assign instr_id_matches_trigger_d = id_stage_i.controller_i.trigger_match_i &&
@@ -528,10 +544,7 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
     }
 
     // This will only be seen when specific interrupt is disabled by MIE CSR
-    `DV_FCOV_EXPR_SEEN(irq_continue_sleep, id_stage_i.controller_i.ctrl_fsm_cs == SLEEP &&
-                                           id_stage_i.controller_i.ctrl_fsm_ns == SLEEP &&
-                                           (|cs_registers_i.mip))
-
+    `DV_FCOV_EXPR_SEEN(irq_continue_sleep, kept_wfi_with_irq)
 
     cp_single_step_instr: coverpoint id_instr_category iff
                                      (id_stage_i.controller_i.fcov_debug_single_step_taken) {
