@@ -46,7 +46,7 @@ privileged_mode_t supported_privileged_mode[] = {MACHINE_MODE, USER_MODE};
 // Unsupported instructions
 // Avoid generating these instructions in regular regression
 // FENCE.I is intentionally treated as illegal instruction by ibex core
-riscv_instr_name_t unsupported_instr[] = {FENCE_I};
+riscv_instr_name_t unsupported_instr[] = {};
 
 // Specify whether processor supports unaligned loads and stores
 bit support_unaligned_load_store = 1'b1;
