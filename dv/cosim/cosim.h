@@ -10,7 +10,7 @@
 
 // Information about a dside transaction observed on the DUT memory interface
 struct DSideAccessInfo {
-  // set when the access is a store, in which case `data` is the store data from
+  // Set when the access is a store, in which case `data` is the store data from
   // the DUT. Otherwise `data` is the load data provided to the DUT.
   bool store;
   // `addr` is the address and must be 32-bit aligned. `data` and `be` are
@@ -20,7 +20,7 @@ struct DSideAccessInfo {
   uint32_t addr;
   uint32_t be;
 
-  // set if an error response to the transaction is seen.
+  // Set to indicate an error response to the attempted DUT memory access.
   bool error;
 
   // `misaligned_first` and `misaligned_second` are set when the transaction is
@@ -30,9 +30,9 @@ struct DSideAccessInfo {
   //
   // For example an unaligned 32-bit load to 0x3 produces a transaction with
   // `addr` as 0x0 and `misaligned_first` set to true, then a transaction with
-  // `addr` as 0x4 and `misaligned_second` set to true. An unaligned 16-bit load
-  // to 0x01 only produces a transaction with `addr` as 0x0 and
-  // `misaligned_first` set to true, there is no second half.
+  // `addr` as 0x4 and `misaligned_second` set to true.
+  // An unaligned 16-bit load to 0x01 only produces a transaction with `addr`
+  // as 0x0 and `misaligned_first` set to true, there is no second half.
   bool misaligned_first;
   bool misaligned_second;
 };
