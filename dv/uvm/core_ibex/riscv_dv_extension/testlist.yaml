@@ -508,6 +508,7 @@
   sim_opts: >
     +disable_cosim=1
   no_post_compare: true
+  ignore_cosim_log: true
 
 - test: riscv_unaligned_load_store_test
   description: >
