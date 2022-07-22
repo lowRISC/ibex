@@ -185,7 +185,7 @@ class core_ibex_base_test extends uvm_test;
   virtual task wait_for_test_done();
     fork
       begin
-        wait (dut_vif.ecall === 1'b1);
+        wait (dut_vif.dut_cb.ecall === 1'b1);
         vseq.stop();
         `uvm_info(`gfn, "ECALL instruction is detected, test done", UVM_LOW)
         fork
