@@ -196,7 +196,8 @@ bool SpikeCosim::step(uint32_t write_reg, uint32_t write_reg_data,
   //   is presented on the RVFI but was not retired.)
 
   if (processor->get_state()->last_inst_pc == PC_INVALID) {
-    if (!(processor->get_state()->mcause->read() & 0x80000000)) {
+    if (!(processor->get_state()->mcause->read() & 0x80000000) ||
+        processor->get_state()->debug_mode) { // (Async-Traps are disabled in debug mode)
       // Spike encountered a synchronous trap
       pending_sync_exception = true;
 
