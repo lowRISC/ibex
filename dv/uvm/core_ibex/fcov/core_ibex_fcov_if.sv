@@ -338,7 +338,7 @@ interface core_ibex_fcov_if import ibex_pkg::*; (
 
   // If we have LOAD at ID/EX stage and STORE at WB stage, compare the calculated address for LOAD
   // and the saved STORE address. If they are matching we would have RAW hazard.
-  assign raw_hz = id_stage_i.instr_type_wb_o == WB_INSTR_STORE &&
+  assign raw_hz = wb_stage_i.outstanding_store_wb_o &&
                   id_instr_category == InstrCategoryLoad &&
                   prev_store_addr == curr_data_addr;
 
