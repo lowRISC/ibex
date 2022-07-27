@@ -226,6 +226,7 @@
     +no_csr_instr=1
     +no_fence=1
     +no_wfi=0
+    +set_mstatus_tw=0
     +randomize_csr=1
     +num_of_sub_program=0
   rtl_test: core_ibex_debug_wfi_test
@@ -326,6 +327,7 @@
     +require_signature_addr=1
     +gen_debug_section=1
     +enable_interrupt=1
+    +enable_timer_irq=1
     +randomize_csr=1
     +no_csr_instr=1
     +no_fence=1
@@ -346,6 +348,7 @@
     +require_signature_addr=1
     +gen_debug_section=1
     +enable_interrupt=1
+    +enable_timer_irq=1
     +randomize_csr=1
     +no_csr_instr=1
     +no_fence=1
@@ -390,6 +393,7 @@
     +instr_cnt=10000
     +require_signature_addr=1
     +enable_interrupt=1
+    +enable_timer_irq=1
     +randomize_csr=1
   rtl_test: core_ibex_debug_intr_basic_test
   sim_opts: >
@@ -407,6 +411,7 @@
     +instr_cnt=10000
     +require_signature_addr=1
     +enable_interrupt=1
+    +enable_timer_irq=1
     +randomize_csr=1
   rtl_test: core_ibex_debug_intr_basic_test
   sim_opts: >
@@ -424,6 +429,7 @@
     +instr_cnt=10000
     +require_signature_addr=1
     +enable_interrupt=1
+    +enable_timer_irq=1
     +enable_nested_interrupt=1
     +randomize_csr=1
     +no_csr_instr=1
@@ -472,7 +478,9 @@
     +instr_cnt=6000
     +require_signature_addr=1
     +enable_interrupt=1
+    +enable_timer_irq=1
     +randomize_csr=1
+    +set_mstatus_tw=0
     +no_wfi=0
   rtl_test: core_ibex_irq_wfi_test
   sim_opts: >
@@ -489,6 +497,7 @@
   gen_opts: >
     +require_signature_addr=1
     +enable_interrupt=1
+    +enable_timer_irq=1
     +randomize_csr=1
     +enable_dummy_csr_write=1
     +boot_mode=m
