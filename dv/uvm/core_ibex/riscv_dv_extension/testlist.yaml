@@ -701,6 +701,8 @@
     +pmp_region_14=X:0,W:0,R:0
     +pmp_region_15=X:0,W:0,R:0
     +enable_write_pmp_csr=1
+    +pmp_randomize=1
+    +pmp_allow_addr_overlap=1
   rtl_test: core_ibex_base_test
   rtl_params:
     PMPEnable: 1
@@ -722,24 +724,23 @@
   rtl_params:
     PMPEnable: 1
 
-    # TODO(udinator) this test is failing with arbitrary timeouts, need to fix this.
-    #- test: riscv_pmp_full_random_test
-    #  desc: >
-    #    Completely randomize the boot mode, mstatus.mprv, and all PMP configuration,
-    #    and allow PMP regions to overlap.
-    #    A large number of iterations will be required since this introduces a huge
-    #    state space of configurations.
-    #  iterations: 100
-    #  gen_test: riscv_rand_instr_test
-    #  gen_opts: >
-    #    +instr_cnt=6000
-    #    +pmp_max_offset=00024000
-    #    +pmp_randomize=1
-    #    +pmp_allow_addr_overlap=1
-    #    +enable_write_pmp_csr=1
-    #  rtl_test: core_ibex_base_test
-    #  rtl_params:
-    #    PMPEnable: 1
+- test: riscv_pmp_full_random_test
+  desc: >
+    Completely randomize the boot mode, mstatus.mprv, and all PMP configuration,
+    and allow PMP regions to overlap.
+    A large number of iterations will be required since this introduces a huge
+    state space of configurations.
+  iterations: 100
+  gen_test: riscv_rand_instr_test
+  gen_opts: >
+    +instr_cnt=6000
+    +pmp_max_offset=00024000
+    +pmp_randomize=1
+    +pmp_allow_addr_overlap=1
+    +enable_write_pmp_csr=1
+  rtl_test: core_ibex_base_test
+  rtl_params:
+    PMPEnable: 1
 
   # Disable cosim for bitmanip tests for now as Ibex implements a different
   # version of the spec compared to the Spike version used for the cosim.
