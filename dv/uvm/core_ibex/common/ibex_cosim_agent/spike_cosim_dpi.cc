@@ -23,6 +23,7 @@ void *spike_cosim_init(const char *isa_string, svBitVecVal *start_pc,
   SpikeCosim *cosim = new SpikeCosim(isa_string, start_pc[0], start_mtvec[0],
                                      log_file_path, false, true);
   cosim->add_memory(0x80000000, 0x80000000);
+  cosim->add_memory(0x00000000, 0x80000000);
   return static_cast<Cosim *>(cosim);
 }
 
