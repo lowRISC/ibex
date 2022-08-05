@@ -12,4 +12,4 @@
 +  import_cfgs:      ["{proj_root}/dv/uvm/common_project_cfg.hjson",
                       "{dv_root}/tools/dvsim/common_modes.hjson",
                       "{dv_root}/tools/dvsim/fusesoc.hjson",
-                      "{dv_root}/tools/dvsim/{tool}.hjson"]
+                      "{dv_root}/tools/dvsim/bazel.hjson",
