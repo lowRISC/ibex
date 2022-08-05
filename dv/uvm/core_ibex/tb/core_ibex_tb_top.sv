@@ -279,7 +279,8 @@ module core_ibex_tb_top;
     uvm_config_db#(virtual ibex_mem_intf)::set(null, "*instr_if_response*", "vif", instr_mem_vif);
     uvm_config_db#(virtual irq_if)::set(null, "*", "vif", irq_vif);
     uvm_config_db#(virtual core_ibex_ifetch_if)::set(null, "*", "ifetch_if", ifetch_if);
-    uvm_config_db#(virtual core_ibex_ifetch_pmp_if)::set(null, "*", "ifetch_pmp_if", ifetch_pmp_if);
+    uvm_config_db#(virtual core_ibex_ifetch_pmp_if)::set(null, "*", "ifetch_pmp_if",
+                   ifetch_pmp_if);
     uvm_config_db#(scrambling_key_vif)::set(
       null, "*.env.scrambling_key_agent*", "vif", scrambling_key_if);
 
@@ -291,4 +292,9 @@ module core_ibex_tb_top;
     run_test();
   end
 
+  // Disable the assertion for onhot check in case WrenCheck (set by SecureIbex) is enabled.
+  if (SecureIbex) begin : gen_disable_onehot_check
+    assign dut.u_ibex_top.gen_regfile_ff.register_file_i.gen_wren_check.u_prim_onehot_check.
+          unused_assert_connected = 1;
+  end
 endmodule
