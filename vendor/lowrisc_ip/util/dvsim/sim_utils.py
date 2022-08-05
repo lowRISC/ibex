@@ -8,6 +8,7 @@ This script provides common DV simulation specific utilities.
 
 import re
 from collections import OrderedDict
+from typing import List, Tuple
 
 
 # Capture the summary results as a list of lists.
@@ -99,3 +100,124 @@ def vcs_cov_summary_table(buf):
 
     # If we reached here, then we were unable to extract the coverage.
     raise SyntaxError(f"Coverage data not found in {buf.name}!")
+
+
+def get_job_runtime(log_text: List, tool: str) -> Tuple[float, str]:
+    """Returns the job runtime (wall clock time) along with its units.
+
+    EDA tools indicate how long the job ran in terms of CPU time in the log
+    file. This method invokes the tool specific method which parses the log
+    text and returns the runtime as a floating point value followed by its
+    units as a tuple.
+
+    `log_text` is the job's log file contents as a list of lines.
+    `tool` is the EDA tool used to run the job.
+    Returns the runtime, units as a tuple.
+    Raises NotImplementedError exception if the EDA tool is not supported.
+    """
+    if tool == 'xcelium':
+        return xcelium_job_runtime(log_text)
+    elif tool == 'vcs':
+        return vcs_job_runtime(log_text)
+    else:
+        raise NotImplementedError(f"{tool} is unsupported for job runtime "
+                                  "extraction.")
+
+
+def vcs_job_runtime(log_text: List) -> Tuple[float, str]:
+    """Returns the VCS job runtime (wall clock time) along with its units.
+
+    Search pattern example:
+    CPU time: 22.170 seconds to compile + .518 seconds to elab + 1.901 \
+        seconds to link
+    CPU Time:      0.610 seconds;       Data structure size:   1.6Mb
+
+    Returns the runtime, units as a tuple.
+    Raises RuntimeError exception if the search pattern is not found.
+    """
+    pattern = r"^CPU [tT]ime:\s*(\d+\.?\d*?)\s*(seconds|minutes|hours).*$"
+    for line in reversed(log_text):
+        m = re.search(pattern, line)
+        if m:
+            return float(m.group(1)), m.group(2)[0]
+    raise RuntimeError("Job runtime not found in the log.")
+
+
+def xcelium_job_runtime(log_text: List) -> Tuple[float, str]:
+    """Returns the Xcelium job runtime (wall clock time) along with its units.
+
+    Search pattern example:
+    TOOL:	xrun(64)	21.09-s006: Exiting on Aug 01, 2022 at 00:21:18 PDT \
+        (total: 00:00:05)
+
+    Returns the runtime, units as a tuple.
+    Raises RuntimeError exception if the search pattern is not found.
+    """
+    pattern = (r"^TOOL:\s*xrun.*: Exiting on .*\(total:\s*(\d+):(\d+):(\d+)\)"
+               r"\s*$")
+    for line in reversed(log_text):
+        m = re.search(pattern, line)
+        if m:
+            t = int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3))
+            return t, "s"
+    raise RuntimeError("Job runtime not found in the log.")
+
+
+def get_simulated_time(log_text: List, tool: str) -> Tuple[float, str]:
+    """Returns the simulated time along with its units.
+
+    EDA tools indicate how long the design was simulated for in the log file.
+    This method invokes the tool specific method which parses the log text and
+    returns the simulated time as a floating point value followed by its
+    units (typically, pico|nano|micro|milliseconds) as a tuple.
+
+    `log_text` is the job's log file contents as a list of lines.
+    `tool` is the EDA tool used to run the job.
+    Returns the simulated, units as a tuple.
+    Raises NotImplementedError exception if the EDA tool is not supported.
+    """
+    if tool == 'xcelium':
+        return xcelium_simulated_time(log_text)
+    elif tool == 'vcs':
+        return vcs_simulated_time(log_text)
+    else:
+        raise NotImplementedError(f"{tool} is unsupported for simulated time "
+                                  "extraction.")
+
+
+def xcelium_simulated_time(log_text: List) -> Tuple[float, str]:
+    """Returns the Xcelium simulated time along with its units.
+
+    Search pattern example:
+    Simulation complete via $finish(2) at time 11724965 PS + 13
+
+    Returns the simulated time, units as a tuple.
+    Raises RuntimeError exception if the search pattern is not found.
+    """
+    pattern = r"^Simulation complete .* at time (\d+\.?\d*?)\s*(.?[sS]).*$"
+    for line in reversed(log_text):
+        m = re.search(pattern, line)
+        if m:
+            return float(m.group(1)), m.group(2).lower()
+    raise RuntimeError("Simulated time not found in the log.")
+
+
+def vcs_simulated_time(log_text: List) -> Tuple[float, str]:
+    """Returns the VCS simulated time along with its units.
+
+    Search pattern example:
+               V C S   S i m u l a t i o n   R e p o r t
+    Time: 12241752 ps
+
+    Returns the simulated time, units as a tuple.
+    Raises RuntimeError exception if the search pattern is not found.
+    """
+    pattern = r"^Time:\s*(\d+\.?\d*?)\s*(.?[sS])\s*$"
+    next_line = ""
+    for line in reversed(log_text):
+        if "V C S   S i m u l a t i o n   R e p o r t" in line:
+            m = re.search(pattern, next_line)
+            if m:
+                return float(m.group(1)), m.group(2).lower()
+        next_line = line
+    raise RuntimeError("Simulated time not found in the log.")

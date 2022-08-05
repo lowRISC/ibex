@@ -8,10 +8,16 @@ class dv_base_env_cfg #(type RAL_T = dv_base_reg_block) extends uvm_object;
   bit en_scb            = 1; // can be changed at run-time
   bit en_scb_tl_err_chk = 1;
   bit en_scb_mem_chk    = 1;
+  bit en_scb_ping_chk   = 1;
   bit en_cov            = 0; // Enable via plusarg, only if coverage collection is turned on.
 
   bit under_reset       = 0;
   bit is_initialized;        // Indicates that the initialize() method has been called.
+
+  // JTAG DMI knob
+  // this has to be set test.build
+  // before cfg.initialize
+  bit use_jtag_dmi = 0;
 
   // The scope and runtime of a existing test can be reduced by setting this variable. This is
   // useful to keep the runtime down especially in time-sensitive runs such as CI, which is meant

@@ -18,10 +18,17 @@ from tabulate import tabulate
 class Result:
     '''The results for a single test'''
 
-    def __init__(self, name, passing=0, total=0):
+    def __init__(self,
+                 name,
+                 passing=0,
+                 total=0,
+                 job_runtime=None,
+                 simulated_time=None):
         self.name = name
         self.passing = passing
         self.total = total
+        self.job_runtime = job_runtime
+        self.simulated_time = simulated_time
         self.mapped = False
 
 
@@ -31,10 +38,10 @@ class Element():
     This is either a testpoint or a covergroup.
     """
     # Type of the testplan element. Must be set by the extended class.
-    kind = None
+    kind = "none"
 
     # Mandatory fields in a testplan element.
-    fields = ("name", "desc")
+    fields = ["name", "desc"]
 
     def __init__(self, raw_dict):
         """Initialize the testplan element.
@@ -127,7 +134,7 @@ class Testpoint(Element):
     - the list of actual developed tests that verify it
     """
     kind = "testpoint"
-    fields = Element.fields + ("milestone", "tests")
+    fields = Element.fields + ["milestone", "tests"]
 
     # Verification milestones.
     milestones = ("N.A.", "V1", "V2", "V2S", "V3")
@@ -202,7 +209,7 @@ class Testpoint(Element):
         # If no written tests were indicated for this testpoint, then reuse
         # the testpoint name to count towards "not run".
         if not self.tests:
-            self.test_results = [Result(name=self.name, passing=0, total=0)]
+            self.test_results = [Result(name=self.name)]
             return
 
         # Skip if this testpoint is not meant to be mapped to the simulation
@@ -221,7 +228,7 @@ class Testpoint(Element):
         tests_mapped = [tr.name for tr in self.test_results]
         for test in self.tests:
             if test not in tests_mapped:
-                self.test_results.append(Result(name=test, passing=0, total=0))
+                self.test_results.append(Result(name=test))
 
 
 class Testplan:
@@ -620,7 +627,7 @@ class Testplan:
             self.testpoints.append(unmapped)
         self.testpoints.append(totals["N.A."])
 
-        # Compute the progress rate fpr each milestone.
+        # Compute the progress rate for each milestone.
         for ms in Testpoint.milestones:
             stat = self.progress[ms]
 
@@ -667,9 +674,10 @@ class Testplan:
 
         assert self.test_results_mapped, "Have you invoked map_test_results()?"
         header = [
-            "Milestone", "Name", "Tests", "Passing", "Total", "Pass Rate"
+            "Milestone", "Name", "Tests", "Max Job Runtime", "Simulated Time",
+            "Passing", "Total", "Pass Rate"
         ]
-        colalign = ("center", "center", "left", "center", "center", "center")
+        colalign = ('center', ) * 2 + ('left', ) + ('center', ) * 5
         table = []
         for tp in self.testpoints:
             milestone = "" if tp.milestone == "N.A." else tp.milestone
@@ -678,9 +686,15 @@ class Testplan:
                 if tr.total == 0 and not map_full_testplan:
                     continue
                 pass_rate = self._get_percentage(tr.passing, tr.total)
+
+                job_runtime = "" if tr.job_runtime is None else str(
+                    tr.job_runtime)
+                simulated_time = "" if tr.simulated_time is None else str(
+                    tr.simulated_time)
+
                 table.append([
-                    milestone, tp_name, tr.name, tr.passing, tr.total,
-                    pass_rate
+                    milestone, tp_name, tr.name, job_runtime, simulated_time,
+                    tr.passing, tr.total, pass_rate
                 ])
                 milestone = ""
                 tp_name = ""

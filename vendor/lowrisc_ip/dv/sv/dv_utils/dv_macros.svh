@@ -380,6 +380,12 @@
   `DV_SPINWAIT_EXIT(WAIT_, wait_timeout(TIMEOUT_NS_, ID_, MSG_);, "", ID_)
 `endif
 
+// a shorthand of `DV_SPINWAIT(wait(...))
+`ifndef DV_WAIT
+`define DV_WAIT(WAIT_COND_, MSG_ = "wait timeout occurred!", TIMEOUT_NS_ = default_spinwait_timeout_ns, ID_ =`gfn) \
+  `DV_SPINWAIT(wait (WAIT_COND_);, MSG_, TIMEOUT_NS_, ID_)
+`endif
+
 // Control assertions in the DUT.
 //
 // This macro is invoked in top level testbench that instantiates the DUT. It spawns off an initial
@@ -423,7 +429,7 @@
 // PLUSARG_: the name of the plusarg (as raw text). This is typically the same as the enum variable.
 // CHECK_EXISTS_: Throws a fatal error if the plusarg is not set.
 `ifndef DV_GET_ENUM_PLUSARG
-`define DV_GET_ENUM_PLUSARG(ENUM_, VAR_, PLUSARG_ = VAR_, CHECK_EXISTS_ = 0, ID_ = `gfn) \
+`define DV_GET_ENUM_PLUSARG(ENUM_, VAR_, PLUSARG_, CHECK_EXISTS_ = 0, ID_ = `gfn) \
   begin \
     string str; \
     if ($value$plusargs("``PLUSARG_``=%0s", str)) begin \

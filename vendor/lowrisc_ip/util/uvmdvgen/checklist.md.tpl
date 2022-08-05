@@ -38,43 +38,45 @@ Code Quality  | [LINT_SETUP][]                 | Not Started |
 
 <%text>### D2</%text>
 
-Type          | Item                    | Resolution  | Note/Collaterals
---------------|-------------------------|-------------|------------------
-Documentation | [NEW_FEATURES][]        | Not Started |
-Documentation | [BLOCK_DIAGRAM][]       | Not Started |
-Documentation | [DOC_INTERFACE][]       | Not Started |
-Documentation | [MISSING_FUNC][]        | Not Started |
-Documentation | [FEATURE_FROZEN][]      | Not Started |
-RTL           | [FEATURE_COMPLETE][]    | Not Started |
-RTL           | [AREA_CHECK][]          | Not Started |
-RTL           | [PORT_FROZEN][]         | Not Started |
-RTL           | [ARCHITECTURE_FROZEN][] | Not Started |
-RTL           | [REVIEW_TODO][]         | Not Started |
-RTL           | [STYLE_X][]             | Not Started |
-Code Quality  | [LINT_PASS][]           | Not Started |
-Code Quality  | [CDC_SETUP][]           | Not Started |
-Code Quality  | [FPGA_TIMING][]         | Not Started |
-Code Quality  | [CDC_SYNCMACRO][]       | Not Started |
-Security      | [SEC_CM_DOCUMENTED][]   | Not Started |
-Security      | [SEC_RND_CNST][]        | Not Started |
+Type          | Item                      | Resolution  | Note/Collaterals
+--------------|---------------------------|-------------|------------------
+Documentation | [NEW_FEATURES][]          | Not Started |
+Documentation | [BLOCK_DIAGRAM][]         | Not Started |
+Documentation | [DOC_INTERFACE][]         | Not Started |
+Documentation | [DOC_INTEGRATION_GUIDE][] | Not Started |
+Documentation | [MISSING_FUNC][]          | Not Started |
+Documentation | [FEATURE_FROZEN][]        | Not Started |
+RTL           | [FEATURE_COMPLETE][]      | Not Started |
+RTL           | [PORT_FROZEN][]           | Not Started |
+RTL           | [ARCHITECTURE_FROZEN][]   | Not Started |
+RTL           | [REVIEW_TODO][]           | Not Started |
+RTL           | [STYLE_X][]               | Not Started |
+RTL           | [CDC_SYNCMACRO][]         | Not Started |
+Code Quality  | [LINT_PASS][]             | Not Started |
+Code Quality  | [CDC_SETUP][]             | Not Started |
+Code Quality  | [RDC_SETUP][]             | Not Started |
+Code Quality  | [AREA_CHECK][]            | Not Started |
+Code Quality  | [TIMING_CHECK][]          | Not Started |
+Security      | [SEC_CM_DOCUMENTED][]     | Not Started |
 
-[NEW_FEATURES]:        {{<relref "/doc/project/checklist.md#new_features" >}}
-[BLOCK_DIAGRAM]:       {{<relref "/doc/project/checklist.md#block_diagram" >}}
-[DOC_INTERFACE]:       {{<relref "/doc/project/checklist.md#doc_interface" >}}
-[MISSING_FUNC]:        {{<relref "/doc/project/checklist.md#missing_func" >}}
-[FEATURE_FROZEN]:      {{<relref "/doc/project/checklist.md#feature_frozen" >}}
-[FEATURE_COMPLETE]:    {{<relref "/doc/project/checklist.md#feature_complete" >}}
-[AREA_CHECK]:          {{<relref "/doc/project/checklist.md#area_check" >}}
-[PORT_FROZEN]:         {{<relref "/doc/project/checklist.md#port_frozen" >}}
-[ARCHITECTURE_FROZEN]: {{<relref "/doc/project/checklist.md#architecture_frozen" >}}
-[REVIEW_TODO]:         {{<relref "/doc/project/checklist.md#review_todo" >}}
-[STYLE_X]:             {{<relref "/doc/project/checklist.md#style_x" >}}
-[LINT_PASS]:           {{<relref "/doc/project/checklist.md#lint_pass" >}}
-[CDC_SETUP]:           {{<relref "/doc/project/checklist.md#cdc_setup" >}}
-[FPGA_TIMING]:         {{<relref "/doc/project/checklist.md#fpga_timing" >}}
-[CDC_SYNCMACRO]:       {{<relref "/doc/project/checklist.md#cdc_syncmacro" >}}
-[SEC_CM_DOCUMENTED]:   {{<relref "/doc/project/checklist.md#sec_cm_documented" >}}
-[SEC_RND_CNST]:        {{<relref "/doc/project/checklist.md#sec_rnd_cnst" >}}
+[NEW_FEATURES]:          {{<relref "/doc/project/checklist.md#new_features" >}}
+[BLOCK_DIAGRAM]:         {{<relref "/doc/project/checklist.md#block_diagram" >}}
+[DOC_INTERFACE]:         {{<relref "/doc/project/checklist.md#doc_interface" >}}
+[DOC_INTEGRATION_GUIDE]: {{<relref "/doc/project/checklist.md#doc_integration_guide" >}}
+[MISSING_FUNC]:          {{<relref "/doc/project/checklist.md#missing_func" >}}
+[FEATURE_FROZEN]:        {{<relref "/doc/project/checklist.md#feature_frozen" >}}
+[FEATURE_COMPLETE]:      {{<relref "/doc/project/checklist.md#feature_complete" >}}
+[PORT_FROZEN]:           {{<relref "/doc/project/checklist.md#port_frozen" >}}
+[ARCHITECTURE_FROZEN]:   {{<relref "/doc/project/checklist.md#architecture_frozen" >}}
+[REVIEW_TODO]:           {{<relref "/doc/project/checklist.md#review_todo" >}}
+[STYLE_X]:               {{<relref "/doc/project/checklist.md#style_x" >}}
+[CDC_SYNCMACRO]:         {{<relref "/doc/project/checklist.md#cdc_syncmacro" >}}
+[LINT_PASS]:             {{<relref "/doc/project/checklist.md#lint_pass" >}}
+[CDC_SETUP]:             {{<relref "/doc/project/checklist.md#cdc_setup" >}}
+[RDC_SETUP]:             {{<relref "/doc/project/checklist.md#rdc_setup" >}}
+[AREA_CHECK]:            {{<relref "/doc/project/checklist.md#area_check" >}}
+[TIMING_CHECK]:          {{<relref "/doc/project/checklist.md#timing_check" >}}
+[SEC_CM_DOCUMENTED]:     {{<relref "/doc/project/checklist.md#sec_cm_documented" >}}
 
 <%text>### D2S</%text>
 
@@ -82,11 +84,17 @@ Security      | [SEC_RND_CNST][]        | Not Started |
 --------------|------------------------------|-------------|------------------
 Security      | [SEC_CM_ASSETS_LISTED][]     | Not Started |
 Security      | [SEC_CM_IMPLEMENTED][]       | Not Started |
+Security      | [SEC_CM_RND_CNST][]          | Not Started |
+Security      | [SEC_CM_NON_RESET_FLOPS][]   | Not Started |
+Security      | [SEC_CM_SHADOW_REGS][]       | Not Started |
 Security      | [SEC_CM_RTL_REVIEWED][]      | Not Started |
 Security      | [SEC_CM_COUNCIL_REVIEWED][]  | Not Started |
 
 [SEC_CM_ASSETS_LISTED]:    {{<relref "/doc/project/checklist.md#sec_cm_assets_listed" >}}
 [SEC_CM_IMPLEMENTED]:      {{<relref "/doc/project/checklist.md#sec_cm_implemented" >}}
+[SEC_CM_RND_CNST]:         {{<relref "/doc/project/checklist.md#sec_cm_rnd_cnst" >}}
+[SEC_CM_NON_RESET_FLOPS]:  {{<relref "/doc/project/checklist.md#sec_cm_non_reset_flops" >}}
+[SEC_CM_SHADOW_REGS]:      {{<relref "/doc/project/checklist.md#sec_cm_shadow_regs" >}}
 [SEC_CM_RTL_REVIEWED]:     {{<relref "/doc/project/checklist.md#sec_cm_rtl_reviewed" >}}
 [SEC_CM_COUNCIL_REVIEWED]: {{<relref "/doc/project/checklist.md#sec_cm_council_reviewed" >}}
 
@@ -98,14 +106,11 @@ Documentation | [NEW_FEATURES_D3][]     | Not Started |
 RTL           | [TODO_COMPLETE][]       | Not Started |
 Code Quality  | [LINT_COMPLETE][]       | Not Started |
 Code Quality  | [CDC_COMPLETE][]        | Not Started |
+Code Quality  | [RDC_COMPLETE][]        | Not Started |
 Review        | [REVIEW_RTL][]          | Not Started |
 Review        | [REVIEW_DELETED_FF][]   | Not Started |
-Review        | [REVIEW_SW_CSR][]       | Not Started |
-Review        | [REVIEW_SW_FATAL_ERR][] | Not Started |
 Review        | [REVIEW_SW_CHANGE][]    | Not Started |
 Review        | [REVIEW_SW_ERRATA][]    | Not Started |
-Security      | [SEC_NON_RESET_FLOPS][] | Not Started |
-Security      | [SEC_SHADOW_REGS][]     | Not Started |
 Review        | Reviewer(s)             | Not Started |
 Review        | Signoff date            | Not Started |
 
@@ -113,15 +118,11 @@ Review        | Signoff date            | Not Started |
 [TODO_COMPLETE]:        {{<relref "/doc/project/checklist.md#todo_complete" >}}
 [LINT_COMPLETE]:        {{<relref "/doc/project/checklist.md#lint_complete" >}}
 [CDC_COMPLETE]:         {{<relref "/doc/project/checklist.md#cdc_complete" >}}
+[RDC_COMPLETE]:         {{<relref "/doc/project/checklist.md#rdc_complete" >}}
 [REVIEW_RTL]:           {{<relref "/doc/project/checklist.md#review_rtl" >}}
-[REVIEW_DBG]:           {{<relref "/doc/project/checklist.md#review_dbg" >}}
 [REVIEW_DELETED_FF]:    {{<relref "/doc/project/checklist.md#review_deleted_ff" >}}
-[REVIEW_SW_CSR]:        {{<relref "/doc/project/checklist.md#review_sw_csr" >}}
-[REVIEW_SW_FATAL_ERR]:  {{<relref "/doc/project/checklist.md#review_sw_fatal_err" >}}
 [REVIEW_SW_CHANGE]:     {{<relref "/doc/project/checklist.md#review_sw_change" >}}
 [REVIEW_SW_ERRATA]:     {{<relref "/doc/project/checklist.md#review_sw_errata" >}}
-[SEC_NON_RESET_FLOPS]:  {{<relref "/doc/project/checklist.md#sec_non_reset_flops" >}}
-[SEC_SHADOW_REGS]:      {{<relref "/doc/project/checklist.md#sec_shadow_regs" >}}
 
 <%text>## Verification Checklist</%text>
 
@@ -194,7 +195,6 @@ Coverage      | [SIM_CODE_COVERAGE_V2][]                | Not Started |
 Coverage      | [SIM_FUNCTIONAL_COVERAGE_V2][]          | Not Started |
 Coverage      | [FPV_CODE_COVERAGE_V2][]                | Not Started |
 Coverage      | [FPV_COI_COVERAGE_V2][]                 | Not Started |
-Code Quality  | [TB_LINT_PASS][]                        | Not Started |
 Integration   | [PRE_VERIFIED_SUB_MODULES_V2][]         | Not Started |
 Issues        | [NO_HIGH_PRIORITY_ISSUES_PENDING][]     | Not Started |
 Issues        | [ALL_LOW_PRIORITY_ISSUES_ROOT_CAUSED][] | Not Started |
@@ -216,7 +216,6 @@ Review        | [V3_CHECKLIST_SCOPED][]                 | Not Started |
 [SIM_FUNCTIONAL_COVERAGE_V2]:         {{<relref "/doc/project/checklist.md#sim_functional_coverage_v2" >}}
 [FPV_CODE_COVERAGE_V2]:               {{<relref "/doc/project/checklist.md#fpv_code_coverage_v2" >}}
 [FPV_COI_COVERAGE_V2]:                {{<relref "/doc/project/checklist.md#fpv_coi_coverage_v2" >}}
-[TB_LINT_PASS]:                       {{<relref "/doc/project/checklist.md#tb_lint_pass" >}}
 [PRE_VERIFIED_SUB_MODULES_V2]:        {{<relref "/doc/project/checklist.md#pre_verified_sub_modules_v2" >}}
 [NO_HIGH_PRIORITY_ISSUES_PENDING]:    {{<relref "/doc/project/checklist.md#no_high_priority_issues_pending" >}}
 [ALL_LOW_PRIORITY_ISSUES_ROOT_CAUSED]:{{<relref "/doc/project/checklist.md#all_low_priority_issues_root_caused" >}}
